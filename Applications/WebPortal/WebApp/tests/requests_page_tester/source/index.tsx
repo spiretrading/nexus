@@ -116,8 +116,132 @@ function makeEntries(count: number):
   return entries;
 }
 
+const AVATAR_TINTS = [
+  '#F44336', '#9C27B0', '#3F51B5', '#009688', '#FF9800',
+  '#795548', '#607D8B', '#E91E63', '#673AB7', '#2196F3'
+];
+
+function makeProfile(
+    account: Beam.DirectoryEntry): WebPortal.RequestsModel.AccountProfile {
+  const name = account.name;
+  const initials = name.substring(0, 2).toUpperCase();
+  const tint = AVATAR_TINTS[account.id % AVATAR_TINTS.length];
+  return {account, initials, tint};
+}
+
+const EntitlementStatus = WebPortal.RequestsModel.EntitlementStatus;
+
+function toDetailChanges(
+    entry: WebPortal.RequestsModel.RequestEntry):
+    WebPortal.RequestsModel.DetailChange[] {
+  const changes: WebPortal.RequestsModel.DetailChange[] = [];
+  const firstChange = entry.firstChange;
+  if(firstChange.type === 'entitlements') {
+    changes.push({
+      type: 'entitlement' as const,
+      name: firstChange.name,
+      oldStatus: firstChange.action === EntitlementAction.GRANT ?
+        EntitlementStatus.REVOKED : EntitlementStatus.GRANTED,
+      newStatus: firstChange.action === EntitlementAction.GRANT ?
+        EntitlementStatus.GRANTED : EntitlementStatus.REVOKED,
+      delta: {
+        value: `${firstChange.currency.sign}${firstChange.fee}`,
+        direction: firstChange.action === EntitlementAction.GRANT ?
+          Direction.POSITIVE : Direction.NEGATIVE
+      }
+    });
+  } else {
+    changes.push({
+      type: 'risk' as const,
+      name: firstChange.name,
+      oldValue: firstChange.oldValue,
+      newValue: firstChange.newValue,
+      delta: firstChange.delta
+    });
+  }
+  const pool = firstChange.type === 'entitlements' ?
+    ENTITLEMENT_CHANGES : RISK_CHANGES;
+  for(let j = 0; j < entry.additionalChangesCount; ++j) {
+    const extra = pool[(entry.id + j + 1) % pool.length];
+    if(extra.type === 'entitlements') {
+      changes.push({
+        type: 'entitlement' as const,
+        name: extra.name,
+        oldStatus: extra.action === EntitlementAction.GRANT ?
+          EntitlementStatus.REVOKED : EntitlementStatus.GRANTED,
+        newStatus: extra.action === EntitlementAction.GRANT ?
+          EntitlementStatus.GRANTED : EntitlementStatus.REVOKED
+      });
+    } else {
+      changes.push({
+        type: 'risk' as const,
+        name: extra.name,
+        oldValue: extra.oldValue,
+        newValue: extra.newValue,
+        delta: extra.delta
+      });
+    }
+  }
+  return changes;
+}
+
+function makeDetails(entries: WebPortal.RequestsModel.RequestEntry[]):
+    Map<number, WebPortal.RequestsModel.RequestDetail> {
+  const details = new Map<number, WebPortal.RequestsModel.RequestDetail>();
+  for(const entry of entries) {
+    const requester = ACCOUNTS[(entry.id + 5) % ACCOUNTS.length];
+    const activityList: WebPortal.RequestsModel.ActivityEntry[] = [
+      {
+        account: makeProfile(requester),
+        activity: Status.PENDING,
+        timestamp: entry.updateTime
+      }
+    ];
+    if(entry.commentCount > 0) {
+      for(let c = 0; c < entry.commentCount; ++c) {
+        const commenter = ACCOUNTS[(entry.id + c + 2) % ACCOUNTS.length];
+        activityList.push({
+          account: makeProfile(commenter),
+          activity: 'Reviewed the changes and left feedback.',
+          timestamp: new Date(
+            entry.updateTime.getTime() + (c + 1) * 3600000)
+        });
+      }
+    }
+    if(entry.state === Status.GRANTED) {
+      activityList.push({
+        account: makeProfile(ACCOUNTS[0]),
+        activity: Status.GRANTED,
+        timestamp: new Date(entry.updateTime.getTime() + 86400000)
+      });
+    } else if(entry.state === Status.REJECTED) {
+      activityList.push({
+        account: makeProfile(ACCOUNTS[0]),
+        activity: Status.REJECTED,
+        timestamp: new Date(entry.updateTime.getTime() + 86400000)
+      });
+    }
+    details.set(entry.id, {
+      id: entry.id,
+      category: entry.category,
+      state: entry.state,
+      createdTime: new Date(
+        entry.updateTime.getTime() - 86400000),
+      updateTime: entry.updateTime,
+      account: makeProfile(entry.account),
+      requester: makeProfile(requester),
+      effectiveDate: Beam.Date.fromDate(entry.effectiveDate),
+      changes: toDetailChanges(entry),
+      activityList,
+      accessRole: Nexus.AccountRoles.Role.ADMINISTRATOR
+    });
+  }
+  return details;
+}
+
+const ENTRIES = makeEntries(500);
 const MODEL = new WebPortal.LocalRequestsModel(
-  ACCOUNTS[0], makeEntries(500), new Map());
+  ACCOUNTS[0], ENTRIES, makeDetails(ENTRIES));
 
 const ROLES = new Nexus.AccountRoles();
 ROLES.set(Nexus.AccountRoles.Role.ADMINISTRATOR);

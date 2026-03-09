@@ -35,6 +35,9 @@ interface Properties {
   /** Called when the user requests to retrieve requests. */
   onSubmit?: (submission: RequestsModel.Submission) => void;
 
+  /** Called when a request entry is clicked. */
+  onClickRequest?: (id: number) => void;
+
   /** Called when a navigation tab is clicked, passing the page. */
   onNavigate?: (page: RequestsPage.Page) => void;
 }
@@ -101,7 +104,8 @@ export class RequestsPage extends React.Component<Properties, State> {
         filterCount={this.props.filterCount}
         pageIndex={this.props.pageIndex}
         response={this.props.response}
-        onSubmit={this.props.onSubmit}/>);
+        onSubmit={this.props.onSubmit}
+        onClickRequest={this.props.onClickRequest}/>);
   }
 
   private onNavigate = (href: string) => {

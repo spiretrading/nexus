@@ -45,6 +45,9 @@ interface Properties {
 
   /** Called when the user requests to retrieve requests. */
   onSubmit?: (submission: RequestsModel.Submission) => void;
+
+  /** Called when a request entry is clicked. */
+  onClickRequest?: (id: number) => void;
 }
 
 interface State {
@@ -265,7 +268,8 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
                 firstChange={item.firstChange}
                 additionalChangesCount={item.additionalChangesCount}
                 commentCount={item.commentCount}
-                managerApproval={item.managerApproval}/>
+                managerApproval={item.managerApproval}
+                onClick={this.props.onClickRequest}/>
             </li>)}
         </ul>
       </section>);

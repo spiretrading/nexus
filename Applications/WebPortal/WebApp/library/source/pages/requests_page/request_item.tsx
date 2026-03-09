@@ -43,6 +43,9 @@ interface Properties {
 
   /** The manager approval details. Only present when state is REVIEWED. */
   managerApproval?: RequestsModel.ManagerApproval;
+
+  /** Called when the request item is clicked, passing the request id. */
+  onClick?: (id: number) => void;
 }
 
 interface State {
@@ -75,7 +78,8 @@ export class RequestItem extends React.Component<Properties, State> {
     const showCommentCount = this.props.commentCount > 0;
     return (
       <a ref={this.containerRef} className={css(STYLES.link)}
-          href={`requests/${this.props.id}`}>
+          href={`requests/${this.props.id}`}
+          onClick={this.onClick}>
         <div className={css(STYLES.header)}>
           <RequestStateIndicator state={this.props.state}/>
           <h2 className={css(STYLES.id)}>#{this.props.id}</h2>
@@ -139,6 +143,11 @@ export class RequestItem extends React.Component<Properties, State> {
         </div>
       </a>);
   }
+
+  private onClick = (event: React.MouseEvent) => {
+    event.preventDefault();
+    this.props.onClick?.(this.props.id);
+  };
 
   private onResize = (entries: ResizeObserverEntry[]) => {
     for(const entry of entries) {

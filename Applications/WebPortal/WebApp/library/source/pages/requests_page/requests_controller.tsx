@@ -1,6 +1,9 @@
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
+import { LoadingPage } from '../loading_page';
+import { RequestDetailPage } from './request_detail_page';
 import { RequestDirectoryPage } from './request_directory_page';
 import { RequestsModel } from './requests_model';
 import { RequestsPage } from './requests_page';
@@ -16,6 +19,12 @@ interface Properties extends Router.RouteComponentProps {
   model: RequestsModel;
 }
 
+enum DetailStatus {
+  LOADING,
+  LOADED,
+  ERROR
+}
+
 interface State {
   redirect: string;
   displayStatus: RequestDirectoryPage.DisplayStatus;
@@ -24,6 +33,8 @@ interface State {
   filterCount: number;
   pageIndex: number;
   response: RequestsModel.Response;
+  detailStatus: DetailStatus;
+  detail: RequestsModel.RequestDetail;
 }
 
 /** Implements a controller for the RequestsPage. */
@@ -45,13 +56,41 @@ export class RequestsController extends React.Component<Properties, State> {
         status: RequestsModel.ResponseStatus.IN_PROGRESS,
         facetCounts: {pending: 0, approved: 0, rejected: 0},
         requestList: []
-      }
+      },
+      detailStatus: DetailStatus.LOADING,
+      detail: null
     };
   }
 
   public render(): JSX.Element {
     if(this.state.redirect) {
       return <Router.Redirect push to={this.state.redirect}/>;
+    }
+    const requestId = this.parseRequestId();
+    if(requestId !== null) {
+      if(this.state.detailStatus === DetailStatus.LOADING) {
+        return <LoadingPage/>;
+      }
+      if(this.state.detailStatus === DetailStatus.ERROR ||
+          !this.state.detail) {
+        return <div/>;
+      }
+      const detail = this.state.detail;
+      return (
+        <RequestDetailPage
+          id={detail.id}
+          category={detail.category}
+          state={detail.state}
+          createdTime={detail.createdTime}
+          updateTime={detail.updateTime}
+          account={detail.account}
+          requester={detail.requester}
+          effectiveDate={detail.effectiveDate}
+          changes={detail.changes}
+          activityList={detail.activityList}
+          accessRole={detail.accessRole}
+          onApprove={this.onApprove}
+          onReject={this.onReject}/>);
     }
     const page = this.currentPage();
     return (
@@ -65,11 +104,17 @@ export class RequestsController extends React.Component<Properties, State> {
         pageIndex={this.state.pageIndex}
         response={this.state.response}
         onSubmit={this.onSubmit}
+        onClickRequest={this.onClickRequest}
         onNavigate={this.onNavigate}/>);
   }
 
   public async componentDidMount(): Promise<void> {
-    await this.loadDirectory();
+    const requestId = this.parseRequestId();
+    if(requestId !== null) {
+      await this.loadDetail(requestId);
+    } else {
+      await this.loadDirectory();
+    }
   }
 
   public componentDidUpdate(prevProps: Properties): void {
@@ -77,7 +122,12 @@ export class RequestsController extends React.Component<Properties, State> {
       this.setState({redirect: null});
     }
     if(prevProps.location.pathname !== this.props.location.pathname) {
-      this.resetAndLoad();
+      const requestId = this.parseRequestId();
+      if(requestId !== null) {
+        this.loadDetail(requestId);
+      } else {
+        this.resetAndLoad();
+      }
     }
   }
 
@@ -86,6 +136,21 @@ export class RequestsController extends React.Component<Properties, State> {
       return RequestsPage.Page.GROUP_REQUESTS;
     }
     return RequestsPage.Page.YOUR_REQUESTS;
+  }
+
+  private onClickRequest = (id: number) => {
+    const prefix = this.parseUrlPrefix();
+    this.setState({redirect: `${prefix}/${id}`});
+  }
+
+  private parseRequestId(): number | null {
+    const url = this.props.location.pathname;
+    const segment = url.substring(url.lastIndexOf('/') + 1);
+    const id = parseInt(segment, 10);
+    if(isNaN(id)) {
+      return null;
+    }
+    return id;
   }
 
   private onNavigate = (page: RequestsPage.Page) => {
@@ -137,6 +202,40 @@ export class RequestsController extends React.Component<Properties, State> {
       pageIndex: submission.pageIndex
     });
     this.loadDirectory(submission);
+  }
+
+  private onApprove = async (effectiveDate: Beam.Date, comment: string) => {
+    const requestId = this.parseRequestId();
+    if(requestId === null) {
+      return;
+    }
+    try {
+      await this.props.model.approve(requestId, effectiveDate, comment);
+      await this.loadDetail(requestId);
+    } catch {
+    }
+  }
+
+  private onReject = async (comment: string) => {
+    const requestId = this.parseRequestId();
+    if(requestId === null) {
+      return;
+    }
+    try {
+      await this.props.model.reject(requestId, comment);
+      await this.loadDetail(requestId);
+    } catch {
+    }
+  }
+
+  private async loadDetail(id: number): Promise<void> {
+    this.setState({detailStatus: DetailStatus.LOADING, detail: null});
+    try {
+      const detail = await this.props.model.loadRequestDetail(id);
+      this.setState({detailStatus: DetailStatus.LOADED, detail});
+    } catch {
+      this.setState({detailStatus: DetailStatus.ERROR});
+    }
   }
 
   private async loadDirectory(
