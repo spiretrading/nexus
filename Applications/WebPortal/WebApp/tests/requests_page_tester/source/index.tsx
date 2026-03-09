@@ -47,6 +47,5 @@ const MODEL = new WebPortal.LocalRequestsModel(SAMPLE_ENTRIES, new Map());
 const ROLES = new Nexus.AccountRoles();
 ROLES.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
 
-ReactDOM.render(
-  <WebPortal.RequestsController roles={ROLES} model={MODEL}/>,
+ReactDOM.render(<WebPortal.RequestsController roles={ROLES} model={MODEL}/>,
   document.getElementById('main'));

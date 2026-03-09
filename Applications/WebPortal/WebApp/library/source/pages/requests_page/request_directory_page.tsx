@@ -245,7 +245,7 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
       return (
         <section aria-label='Requests' aria-live='polite' aria-busy='true'>
           <ul className={css(STYLES.requestList)}>
-            {Array.from({length: 5}, (_, i) =>
+            {[0, 1, 2, 3, 4].map(i =>
               <li key={i} className={css(STYLES.listItem,
                   i === 4 && STYLES.listItemLast)}>
                 <RequestItemPlaceholder/>
