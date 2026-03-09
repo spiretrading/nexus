@@ -126,12 +126,14 @@ namespace Details {
       std::shared_ptr<AssociativeValueModel<Mode>> m_mode;
       QWidget* m_body;
       QWidget* m_button_container;
+      bool m_is_first_show;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_mode_connection;
 
       QString display_text(Mode mode) const;
       CheckBox* make_mode_check_box(Mode mode) const;
       QLayout* make_mode_section_layout(Mode mode) const;
+      QWidget* find_next_focusable_widget() const;
       void submit();
       void on_current();
       void on_mode(Mode mode);
@@ -143,7 +145,8 @@ namespace Details {
       QWidget* parent)
       : QWidget(parent),
         m_tag_combo_box(&tag_combo_box),
-        m_mode(std::make_shared<AssociativeValueModel<Mode>>(Mode::INCLUDE)) {
+        m_mode(std::make_shared<AssociativeValueModel<Mode>>(Mode::INCLUDE)),
+        m_is_first_show(true) {
     m_tag_combo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     m_tag_combo_box->setMinimumSize(scale(160, 26));
     m_tag_combo_box->setMaximumHeight(scale_height(63));
@@ -202,14 +205,12 @@ namespace Details {
 
   template<typename T>
   void OpenFilterPanel<T>::showEvent(QShowEvent* event) {
-    auto next = m_tag_combo_box->nextInFocusChain();
-    while(next != m_tag_combo_box) {
-      next = next->nextInFocusChain();
-      if(!m_body->isAncestorOf(next) && next->focusPolicy() & Qt::TabFocus) {
-        break;
+    if(m_is_first_show) {
+      if(auto next = find_next_focusable_widget()) {
+        setTabOrder(find_focus_proxy(*m_tag_combo_box), next);
       }
+      m_is_first_show = false;
     }
-    setTabOrder(find_focus_proxy(*m_tag_combo_box), next);
     QWidget::showEvent(event);
   }
 
@@ -250,6 +251,18 @@ namespace Details {
     layout->addWidget(make_mode_check_box(mode));
     layout->addStretch(1);
     return layout;
+  }
+
+  template<typename T>
+  QWidget* OpenFilterPanel<T>::find_next_focusable_widget() const {
+    auto next = m_tag_combo_box->nextInFocusChain();
+    while(next != m_tag_combo_box && isAncestorOf(next)) {
+      if(!m_body->isAncestorOf(next) && next->focusPolicy() & Qt::TabFocus) {
+        return next;
+      }
+      next = next->nextInFocusChain();
+    }
+    return nullptr;
   }
 
   template<typename T>
