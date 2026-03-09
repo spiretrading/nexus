@@ -27,10 +27,6 @@ const ENTITLEMENT_NAMES = [
   'TSX Venture', 'ICE Futures'
 ];
 
-const RISK_NAMES = [
-  'Buying Power', 'Net Loss', 'Transition Time', 'Max Order Quantity'
-];
-
 const ENTITLEMENT_CHANGES: WebPortal.RequestsModel.ListChange[] =
   ENTITLEMENT_NAMES.map((name, i) => ({
     type: 'entitlements' as const,
@@ -40,21 +36,36 @@ const ENTITLEMENT_CHANGES: WebPortal.RequestsModel.ListChange[] =
     currency: i % 4 === 0 ? CAD : USD
   }));
 
-const RISK_CHANGES: WebPortal.RequestsModel.ListChange[] =
-  RISK_NAMES.map(name => {
-    const oldVal = 50000 + Math.floor(Math.random() * 100000);
-    const newVal = oldVal + 10000 + Math.floor(Math.random() * 40000);
-    return {
-      type: 'risk_controls' as const,
-      name,
-      oldValue: `$${oldVal.toLocaleString()}`,
-      newValue: `$${newVal.toLocaleString()}`,
-      delta: {
-        value: `$${(newVal - oldVal).toLocaleString()}`,
-        direction: Direction.POSITIVE
-      }
-    };
-  });
+function makeMoneyRiskChange(name: string):
+    WebPortal.RequestsModel.ListChange {
+  const oldVal = 50000 + Math.floor(Math.random() * 100000);
+  const newVal = oldVal + 10000 + Math.floor(Math.random() * 40000);
+  return {
+    type: 'risk_controls' as const,
+    name,
+    oldValue: `$${oldVal.toLocaleString()}`,
+    newValue: `$${newVal.toLocaleString()}`,
+    delta: {
+      value: `$${(newVal - oldVal).toLocaleString()}`,
+      direction: Direction.POSITIVE
+    }
+  };
+}
+
+const RISK_CHANGES: WebPortal.RequestsModel.ListChange[] = [
+  makeMoneyRiskChange('Buying Power'),
+  makeMoneyRiskChange('Net Loss'),
+  {
+    type: 'risk_controls' as const,
+    name: 'Transition Time',
+    oldValue: '30 minutes',
+    newValue: '45 minutes',
+    delta: {
+      value: '15 minutes',
+      direction: Direction.POSITIVE
+    }
+  }
+];
 
 const ALL_CHANGES = [...ENTITLEMENT_CHANGES, ...RISK_CHANGES];
 

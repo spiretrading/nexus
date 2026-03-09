@@ -326,4 +326,139 @@ export namespace RequestsModel {
     /** The current user's access role for the request. */
     accessRole: Nexus.AccountRoles.Role;
   }
+
+  /** Computes the list of risk control changes between two RiskParameters.
+   *  @param oldParameters - The current risk parameters.
+   *  @param newParameters - The requested risk parameters.
+   *  @param currencyDatabase - Used to look up currency signs.
+   *  @return The list of changes, one per parameter that differs.
+   */
+  export function computeRiskChanges(oldParameters: Nexus.RiskParameters,
+      newParameters: Nexus.RiskParameters,
+      currencyDatabase: Nexus.CurrencyDatabase): RiskControlsChange[] {
+    const changes: RiskControlsChange[] = [];
+    if(!oldParameters.currency.equals(newParameters.currency)) {
+      const oldCode =
+        currencyDatabase.fromCurrency(oldParameters.currency).code;
+      const newCode =
+        currencyDatabase.fromCurrency(newParameters.currency).code;
+      changes.push({
+        type: 'risk_controls',
+        name: 'Currency',
+        oldValue: oldCode,
+        newValue: newCode,
+        delta: {value: newCode, direction: Direction.NONE}
+      });
+    }
+    if(!oldParameters.buyingPower.equals(newParameters.buyingPower)) {
+      changes.push(makeMoneyChange('Buying Power',
+        oldParameters.buyingPower, newParameters.buyingPower,
+        currencyDatabase.fromCurrency(newParameters.currency).sign));
+    }
+    if(!oldParameters.netLoss.equals(newParameters.netLoss)) {
+      changes.push(makeMoneyChange('Net Loss',
+        oldParameters.netLoss, newParameters.netLoss,
+        currencyDatabase.fromCurrency(newParameters.currency).sign));
+    }
+    if(!oldParameters.transitionTime.equals(newParameters.transitionTime)) {
+      changes.push(makeDurationChange('Transition Time',
+        oldParameters.transitionTime, newParameters.transitionTime));
+    }
+    return changes;
+  }
+
+  /** Computes the list of entitlement changes between two entitlement sets.
+   *  @param oldEntitlements - The current set of entitlements.
+   *  @param newEntitlements - The requested set of entitlements.
+   *  @param entitlementDatabase - Used to look up entitlement details.
+   *  @param currencyDatabase - Used to look up currency signs.
+   *  @return The list of changes, one per entitlement that was granted or
+   *          revoked.
+   */
+  export function computeEntitlementChanges(
+      oldEntitlements: Beam.Set<Beam.DirectoryEntry>,
+      newEntitlements: Beam.Set<Beam.DirectoryEntry>,
+      entitlementDatabase: Nexus.EntitlementDatabase,
+      currencyDatabase: Nexus.CurrencyDatabase): EntitlementsChange[] {
+    const changes: EntitlementsChange[] = [];
+    for(const entry of newEntitlements) {
+      if(!oldEntitlements.test(entry)) {
+        const info = entitlementDatabase.fromGroup(entry);
+        changes.push({
+          type: 'entitlements',
+          name: info.name,
+          action: EntitlementAction.GRANT,
+          fee: info.price,
+          currency: currencyDatabase.fromCurrency(info.currency)
+        });
+      }
+    }
+    for(const entry of oldEntitlements) {
+      if(!newEntitlements.test(entry)) {
+        const info = entitlementDatabase.fromGroup(entry);
+        changes.push({
+          type: 'entitlements',
+          name: info.name,
+          action: EntitlementAction.REVOKE,
+          fee: info.price,
+          currency: currencyDatabase.fromCurrency(info.currency)
+        });
+      }
+    }
+    return changes;
+  }
+}
+
+function makeMoneyChange(name: string, oldValue: Nexus.Money,
+    newValue: Nexus.Money, sign: string): RequestsModel.RiskControlsChange {
+  const diff = newValue.subtract(oldValue);
+  const direction = diff.compare(Nexus.Money.ZERO) > 0 ?
+    RequestsModel.Direction.POSITIVE :
+    diff.compare(Nexus.Money.ZERO) < 0 ?
+    RequestsModel.Direction.NEGATIVE : RequestsModel.Direction.NONE;
+  return {
+    type: 'risk_controls',
+    name,
+    oldValue: `${sign}${oldValue}`,
+    newValue: `${sign}${newValue}`,
+    delta: {
+      value: `${sign}${diff.compare(Nexus.Money.ZERO) < 0 ?
+        Nexus.Money.ZERO.subtract(diff) : diff}`,
+      direction
+    }
+  };
+}
+
+function formatDuration(duration: Beam.Duration): string {
+  const parts = duration.split();
+  const segments: string[] = [];
+  if(parts.hours > 0) {
+    segments.push(`${parts.hours} ${parts.hours === 1 ? 'hour' : 'hours'}`);
+  }
+  if(parts.minutes > 0) {
+    segments.push(
+      `${parts.minutes} ${parts.minutes === 1 ? 'minute' : 'minutes'}`);
+  }
+  if(parts.seconds > 0 || segments.length === 0) {
+    segments.push(
+      `${parts.seconds} ${parts.seconds === 1 ? 'second' : 'seconds'}`);
+  }
+  return segments.join(' ');
+}
+
+function makeDurationChange(name: string, oldValue: Beam.Duration,
+    newValue: Beam.Duration): RequestsModel.RiskControlsChange {
+  const cmp = newValue.compare(oldValue);
+  const direction = cmp > 0 ? RequestsModel.Direction.POSITIVE :
+    cmp < 0 ? RequestsModel.Direction.NEGATIVE :
+    RequestsModel.Direction.NONE;
+  const diff = cmp >= 0 ?
+    newValue.subtract(oldValue) : oldValue.subtract(newValue);
+  return {
+    type: 'risk_controls',
+    name,
+    oldValue: formatDuration(oldValue),
+    newValue: formatDuration(newValue),
+    delta: {value: formatDuration(diff), direction}
+  };
 }
