@@ -16,6 +16,10 @@ export class PageLayout extends React.Component<{}> {
       marginLeft: 'auto',
       marginRight: 'auto',
       backgroundColor: '#FFFFFF',
+      flex: '1 1 auto',
+      minHeight: 0,
+      display: 'flex',
+      flexDirection: 'column' as 'column',
       '@media (min-width: 768px) and (max-width: 1035px)': {
         width: '768px'
       },
