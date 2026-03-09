@@ -84,6 +84,7 @@
 #include "Spire/Ui/RegionDropDownBox.hpp"
 #include "Spire/Ui/RegionListItem.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
+#include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
@@ -126,6 +127,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  using Spire::to_text;
 
   /** Keeps a model synchronized with a property (and vice-versa). */
   template<typename T>
@@ -186,6 +188,10 @@ namespace {
   QString to_string(const HighlightColor& highlight) {
     return highlight.m_background_color.name() + " " +
       highlight.m_text_color.name();
+  }
+
+  QString to_text(const Decimal& value) {
+    return to_string(value);
   }
 
   void update_widget_style(QWidget& widget,
@@ -521,6 +527,63 @@ namespace {
     } catch(const std::exception&) {
       return {};
     }
+  }
+
+  template<typename B, typename T = typename ScalarFilterPanel<B>::Type>
+  auto setup_scalar_filter_panel_profile(UiProfile& profile) {
+    using Panel = ScalarFilterPanel<B>;
+    using Type = T;
+    using PanelType = typename Panel::Type;
+    auto to_panel_type = [] (const Type& value) {
+      if constexpr(std::is_same_v<Type, QString> &&
+          std::is_same_v<PanelType, time_duration>) {
+        return parse_duration(value);
+      } else {
+        return value;
+      }
+    };
+    auto& min = get<Type>("min", profile.get_properties());
+    auto& max = get<Type>("max", profile.get_properties());
+    auto range = std::make_shared<LocalValueModel<typename Panel::Range>>();
+    range->set({to_panel_type(min.get()), to_panel_type(max.get())});
+    auto panel = new Panel(range);
+    apply_widget_properties(panel, profile.get_properties());
+    min.connect_changed_signal([=] (auto& value) {
+      range->set({to_panel_type(value), range->get().m_max});
+    });
+    max.connect_changed_signal([=] (auto& value) {
+      range->set({range->get().m_min, to_panel_type(value)});
+    });
+    auto filter_slot = profile.make_event_slot<QString>("CurrentSignal");
+    panel->get_current()->connect_update_signal(
+      [=] (const typename Panel::Range& submission) {
+      auto to_string = [&] (const auto& value) {
+        if(value) {
+          return to_text(*value);
+        }
+        return QString("null");
+      };
+      filter_slot(QString("%1, %2").
+        arg(to_string(submission.m_min)).
+        arg(to_string(submission.m_max)));
+    });
+    return panel;
+  }
+
+  template<typename T>
+  void populate_scalar_filter_panel_properties(
+      std::vector<std::shared_ptr<UiProperty>>& properties) {
+    properties.push_back(make_standard_property("min", T(0)));
+    properties.push_back(make_standard_property("max", T(100)));
+  }
+
+  template<>
+  void populate_scalar_filter_panel_properties<QString>(
+      std::vector<std::shared_ptr<UiProperty>>& properties) {
+    properties.push_back(
+      make_standard_property<QString>("min", "10:10:10.000"));
+    properties.push_back(
+      make_standard_property<QString>("max", "20:20:20.000"));
   }
 
   auto make_grid_image(const QSize& cell_size, int column_count,
@@ -1463,6 +1526,15 @@ UiProfile Spire::make_decimal_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_decimal_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  populate_scalar_filter_panel_properties<Decimal>(properties);
+  auto profile = UiProfile("DecimalFilterPanel", properties,
+    setup_scalar_filter_panel_profile<DecimalBox>);
+  return profile;
+}
+
 UiProfile Spire::make_deletable_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -1650,6 +1722,15 @@ UiProfile Spire::make_duration_box_profile() {
       profile.make_event_slot<optional<time_duration>>("Reject"));
     return duration_box;
   });
+  return profile;
+}
+
+UiProfile Spire::make_duration_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  populate_scalar_filter_panel_properties<QString>(properties);
+  auto profile = UiProfile("DurationFilterPanel", properties,
+    setup_scalar_filter_panel_profile<DurationBox, QString>);
   return profile;
 }
 
@@ -2380,6 +2461,15 @@ UiProfile Spire::make_integer_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_integer_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  populate_scalar_filter_panel_properties<int>(properties);
+  auto profile = UiProfile("IntegerFilterPanel", properties,
+    setup_scalar_filter_panel_profile<IntegerBox>);
+  return profile;
+}
+
 UiProfile Spire::make_key_input_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -2807,6 +2897,15 @@ UiProfile Spire::make_money_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_money_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  populate_scalar_filter_panel_properties<Money>(properties);
+  auto profile = UiProfile("MoneyFilterPanel", properties,
+    setup_scalar_filter_panel_profile<MoneyBox>);
+  return profile;
+}
+
 UiProfile Spire::make_navigation_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3217,6 +3316,15 @@ UiProfile Spire::make_quantity_box_profile() {
   populate_decimal_box_properties<Quantity>(properties, box_properties);
   auto profile = UiProfile(
     "QuantityBox", properties, setup_decimal_box_profile<QuantityBox>);
+  return profile;
+}
+
+UiProfile Spire::make_quantity_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  populate_scalar_filter_panel_properties<Quantity>(properties);
+  auto profile = UiProfile("QuantityFilterPanel", properties,
+    setup_scalar_filter_panel_profile<QuantityBox>);
   return profile;
 }
 
