@@ -48,11 +48,6 @@ interface Properties {
 }
 
 interface State {
-  query: string;
-  categories: Set<Type>;
-  requestState: RequestsModel.RequestState;
-  sortKey: RequestsModel.SortField;
-  pageIndex: number;
   isFilterModalOpen: boolean;
   filterModalSize: DisplaySize;
 }
@@ -62,11 +57,6 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      query: props.filters.query,
-      categories: new Set(props.filters.categories),
-      requestState: props.requestState,
-      sortKey: props.filters.sortKey,
-      pageIndex: props.pageIndex,
       isFilterModalOpen: false,
       filterModalSize: DisplaySize.SMALL
     };
@@ -95,10 +85,10 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
         {this.state.isFilterModalOpen &&
           <RequestFilterModal
             displaySize={this.state.filterModalSize}
-            categories={this.state.categories}
+            categories={this.props.filters.categories}
             startDate={this.props.filters.startDate}
             endDate={this.props.filters.endDate}
-            sortKey={this.state.sortKey}
+            sortKey={this.props.filters.sortKey}
             onSubmit={this.onFilterSubmit}
             onClose={this.onCloseFilterModal}/>}
       </form>);
@@ -111,7 +101,7 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
       <div className={css(STYLES.narrowToolbar)}>
         <div className={css(STYLES.narrowQueryRow)}>
           <div className={css(STYLES.narrowQueryCell)}>
-            <FilterInput value={this.state.query}
+            <FilterInput value={this.props.filters.query}
               placeholder='Filter requests'
               onChange={this.onQueryChange}/>
           </div>
@@ -143,19 +133,20 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
   private renderQuerySection(): JSX.Element {
     return (
       <div className={css(STYLES.querySection)}>
-        <FilterInput value={this.state.query} onChange={this.onQueryChange}/>
+        <FilterInput value={this.props.filters.query}
+          onChange={this.onQueryChange}/>
         <div className={css(STYLES.querySectionGap)}/>
         <div className={css(STYLES.chipRow)}>
           <FilterChip label='Risk Controls'
-            isChecked={this.state.categories.has(Type.RISK)}
+            isChecked={this.props.filters.categories.has(Type.RISK)}
             onChange={this.onToggleRisk}/>
           <div className={css(STYLES.chipSpacing)}/>
           <FilterChip label='Entitlements'
-            isChecked={this.state.categories.has(Type.ENTITLEMENTS)}
+            isChecked={this.props.filters.categories.has(Type.ENTITLEMENTS)}
             onChange={this.onToggleEntitlements}/>
           <div className={css(STYLES.chipSpacing)}/>
           <FilterChip label='Compliance'
-            isChecked={this.state.categories.has(Type.COMPLIANCE)}
+            isChecked={this.props.filters.categories.has(Type.COMPLIANCE)}
             onChange={this.onToggleCompliance}/>
         </div>
       </div>);
@@ -174,7 +165,7 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
           <div className={css(STYLES.sortLabelGap)}/>
           <div className={css(STYLES.sortByCell)}>
             <RequestSortSelect id='request-sort'
-              value={this.state.sortKey}
+              value={this.props.filters.sortKey}
               onChange={this.onSortChange}/>
           </div>
           <div className={css(STYLES.sortFiltersGap)}/>
@@ -203,19 +194,19 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
         <SegmentButton label='Pending'
           badge={this.formatBadge(
             this.props.response.facetCounts.pending)}
-          isChecked={this.state.requestState ===
+          isChecked={this.props.requestState ===
             RequestsModel.RequestState.PENDING}
           onChange={this.onSelectPending}/>
         <SegmentButton label='Approved'
           badge={this.formatBadge(
             this.props.response.facetCounts.approved)}
-          isChecked={this.state.requestState ===
+          isChecked={this.props.requestState ===
             RequestsModel.RequestState.APPROVED}
           onChange={this.onSelectApproved}/>
         <SegmentButton label='Rejected'
           badge={this.formatBadge(
             this.props.response.facetCounts.rejected)}
-          isChecked={this.state.requestState ===
+          isChecked={this.props.requestState ===
             RequestsModel.RequestState.REJECTED}
           onChange={this.onSelectRejected}/>
       </SegmentedControl>);
@@ -256,7 +247,7 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
         </section>);
     }
     const all = this.props.response.requestList;
-    const start = this.state.pageIndex * PAGE_SIZE;
+    const start = this.props.pageIndex * PAGE_SIZE;
     const items = all.slice(start, start + PAGE_SIZE);
     return (
       <section aria-label='Requests' aria-live='polite' aria-busy='false'>
@@ -296,7 +287,7 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
       <div className={css(STYLES.paginationSection)}>
         <Pagination
           pageSize={PAGE_SIZE}
-          pageIndex={this.state.pageIndex}
+          pageIndex={this.props.pageIndex}
           totalCount={this.props.response.requestList.length}
           onNavigate={this.onPageNavigate}/>
       </div>);
@@ -315,40 +306,32 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
   }
 
   private onQueryChange = (value: string) => {
-    this.setState({query: value});
     this.props.onSubmit?.({
       scope: this.props.scope,
-      requestState: this.state.requestState,
+      requestState: this.props.requestState,
       filters: {
-        query: value,
-        categories: this.state.categories,
-        startDate: this.props.filters.startDate,
-        endDate: this.props.filters.endDate,
-        sortKey: this.state.sortKey
+        ...this.props.filters,
+        query: value
       },
-      pageIndex: this.state.pageIndex
+      pageIndex: this.props.pageIndex
     });
   }
 
   private toggleCategory(type: Type) {
-    const next = new Set(this.state.categories);
+    const next = new Set(this.props.filters.categories);
     if(next.has(type)) {
       next.delete(type);
     } else {
       next.add(type);
     }
-    this.setState({categories: next});
     this.props.onSubmit?.({
       scope: this.props.scope,
-      requestState: this.state.requestState,
+      requestState: this.props.requestState,
       filters: {
-        query: this.state.query,
-        categories: next,
-        startDate: this.props.filters.startDate,
-        endDate: this.props.filters.endDate,
-        sortKey: this.state.sortKey
+        ...this.props.filters,
+        categories: next
       },
-      pageIndex: this.state.pageIndex
+      pageIndex: this.props.pageIndex
     });
   }
 
@@ -365,39 +348,26 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
   }
 
   private onSelectPending = () => {
-    this.setState({
-      requestState: RequestsModel.RequestState.PENDING
-    });
     this.submit(RequestsModel.RequestState.PENDING);
   }
 
   private onSelectApproved = () => {
-    this.setState({
-      requestState: RequestsModel.RequestState.APPROVED
-    });
     this.submit(RequestsModel.RequestState.APPROVED);
   }
 
   private onSelectRejected = () => {
-    this.setState({
-      requestState: RequestsModel.RequestState.REJECTED
-    });
     this.submit(RequestsModel.RequestState.REJECTED);
   }
 
   private onSortChange = (value: RequestsModel.SortField) => {
-    this.setState({sortKey: value});
     this.props.onSubmit?.({
       scope: this.props.scope,
-      requestState: this.state.requestState,
+      requestState: this.props.requestState,
       filters: {
-        query: this.state.query,
-        categories: this.state.categories,
-        startDate: this.props.filters.startDate,
-        endDate: this.props.filters.endDate,
+        ...this.props.filters,
         sortKey: value
       },
-      pageIndex: this.state.pageIndex
+      pageIndex: this.props.pageIndex
     });
   }
 
@@ -413,16 +383,12 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
   }
 
   private onFilterSubmit = (criteria: RequestFilterModal.Criteria) => {
-    this.setState({
-      categories: criteria.categories,
-      sortKey: criteria.sortKey,
-      isFilterModalOpen: false
-    });
+    this.setState({isFilterModalOpen: false});
     this.props.onSubmit?.({
       scope: this.props.scope,
-      requestState: this.state.requestState,
+      requestState: this.props.requestState,
       filters: {
-        query: this.state.query,
+        query: this.props.filters.query,
         categories: criteria.categories,
         startDate: criteria.startDate,
         endDate: criteria.endDate,
@@ -433,9 +399,8 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
   }
 
   private onPageNavigate = (pageIndex: number) => {
-    this.setState({pageIndex});
     this.scrollRef.current?.scrollTo(0, 0);
-    this.submit(this.state.requestState, pageIndex);
+    this.submit(this.props.requestState, pageIndex);
   }
 
   private mainRef = React.createRef<HTMLElement>();
@@ -446,14 +411,8 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
     this.props.onSubmit?.({
       scope: this.props.scope,
       requestState,
-      filters: {
-        query: this.state.query,
-        categories: this.state.categories,
-        startDate: this.props.filters.startDate,
-        endDate: this.props.filters.endDate,
-        sortKey: this.state.sortKey
-      },
-      pageIndex: pageIndex ?? this.state.pageIndex
+      filters: this.props.filters,
+      pageIndex: pageIndex ?? this.props.pageIndex
     });
   }
 }
