@@ -6,25 +6,24 @@ import * as WebPortal from 'web_portal';
 const USD_CURRENCY = new Nexus.CurrencyDatabase.Entry(
   new Nexus.Currency(840), 'USD', '$');
 
-const SAMPLE_CHANGES: WebPortal.RequestItem.Change[] = [
+const SAMPLE_CHANGES: WebPortal.RequestsModel.ListChange[] = [
   {type: 'entitlements', name: 'NYSE Arca Equities',
-    action: WebPortal.EntitlementsChangeItem.Action.GRANT,
+    action: WebPortal.RequestsModel.EntitlementAction.GRANT,
     fee: Nexus.Money.parse('14.50'), currency: USD_CURRENCY},
   {type: 'entitlements', name: 'OPRA',
-    action: WebPortal.EntitlementsChangeItem.Action.REVOKE,
+    action: WebPortal.RequestsModel.EntitlementAction.REVOKE,
     fee: Nexus.Money.parse('7.00'), currency: USD_CURRENCY},
   {type: 'risk_controls', name: 'Buying Power',
     oldValue: '$100,000', newValue: '$150,000',
     delta: {value: '$50,000',
-      direction: WebPortal.DiffBadge.Direction.POSITIVE}},
+      direction: WebPortal.RequestsModel.Direction.POSITIVE}},
   {type: 'risk_controls', name: 'Net Loss',
     oldValue: '$5,000', newValue: '$3,000',
     delta: {value: '$2,000',
-      direction: WebPortal.DiffBadge.Direction.NEGATIVE}}
+      direction: WebPortal.RequestsModel.Direction.NEGATIVE}}
 ];
 
-const SAMPLE_REQUEST_LIST:
-    WebPortal.RequestDirectoryPage.RequestEntry[] =
+const SAMPLE_ENTRIES: WebPortal.RequestsModel.RequestEntry[] =
   SAMPLE_CHANGES.map((change, i) => ({
     id: 1024 + i,
     category: change.type === 'entitlements' ?
@@ -43,24 +42,11 @@ const SAMPLE_REQUEST_LIST:
       {approver: 'cgreen01', self: false} : undefined
   }));
 
+const MODEL = new WebPortal.LocalRequestsModel(SAMPLE_ENTRIES, new Map());
+
 const ROLES = new Nexus.AccountRoles();
-ROLES.set(Nexus.AccountRoles.Role.MANAGER);
+ROLES.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
 
 ReactDOM.render(
-  <WebPortal.RequestsPage
-    roles={ROLES}
-    displayStatus={WebPortal.RequestDirectoryPage.DisplayStatus.READY}
-    requestState={WebPortal.RequestDirectoryPage.RequestState.PENDING}
-    filters={{
-      query: '',
-      categories: new Set<Nexus.AccountModificationRequest.Type>(),
-      sortKey: WebPortal.RequestSortSelect.Field.LAST_UPDATED
-    }}
-    filterCount={0}
-    pageIndex={0}
-    response={{
-      status: WebPortal.RequestDirectoryPage.ResponseStatus.READY,
-      facetCounts: {pending: 5, approved: 122, rejected: 3},
-      requestList: SAMPLE_REQUEST_LIST
-    }}/>,
+  <WebPortal.RequestsController roles={ROLES} model={MODEL}/>,
   document.getElementById('main'));
