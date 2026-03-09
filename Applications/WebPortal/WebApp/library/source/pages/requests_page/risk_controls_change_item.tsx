@@ -1,6 +1,7 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import { DiffBadge } from './diff_badge';
+import { RequestsModel } from './requests_model';
 
 interface Properties {
 
@@ -14,7 +15,7 @@ interface Properties {
   newValue: string;
 
   /** The Delta from old_value to new_value. */
-  delta: RiskControlsChangeItem.Delta;
+  delta: RequestsModel.Delta;
 }
 
 interface State {
@@ -44,7 +45,7 @@ export class RiskControlsChangeItem extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const hasDirection =
-      this.props.delta.direction !== DiffBadge.Direction.NONE;
+      this.props.delta.direction !== RequestsModel.Direction.NONE;
     return (
       <div ref={this.containerRef} className={css(STYLES.container)}>
         <div className={css(this.state.isWide ? STYLES.divWide : STYLES.div)}>
@@ -54,7 +55,7 @@ export class RiskControlsChangeItem extends React.Component<Properties, State> {
               <img aria-hidden='true' width='10' height='16'
                 className={css(STYLES.tick)}
                 src={this.props.delta.direction ===
-                  DiffBadge.Direction.NEGATIVE ?
+                  RequestsModel.Direction.NEGATIVE ?
                   'resources/requests_page/downtick.svg' :
                   'resources/requests_page/uptick.svg'}/>}
             <h2 className={css(STYLES.name)}>{this.props.name}</h2>
@@ -91,19 +92,6 @@ export class RiskControlsChangeItem extends React.Component<Properties, State> {
 
   private containerRef: React.RefObject<HTMLDivElement>;
   private resizeObserver?: ResizeObserver;
-}
-
-export namespace RiskControlsChangeItem {
-
-  /** Represents the difference between the old and new values. */
-  export interface Delta {
-
-    /** The formatted delta value. */
-    value: string;
-
-    /** The direction of the change. */
-    direction: DiffBadge.Direction;
-  }
 }
 
 const STYLES = StyleSheet.create({

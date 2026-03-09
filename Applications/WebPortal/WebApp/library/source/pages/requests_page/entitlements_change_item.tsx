@@ -2,6 +2,7 @@ import { css, StyleSheet } from 'aphrodite';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DiffBadge } from './diff_badge';
+import { RequestsModel } from './requests_model';
 
 interface Properties {
 
@@ -9,7 +10,7 @@ interface Properties {
   name: string;
 
   /** The action taken on the entitlement. */
-  action: EntitlementsChangeItem.Action;
+  action: RequestsModel.EntitlementAction;
 
   /** The fee associated with the entitlement. */
   fee: Nexus.Money;
@@ -19,7 +20,7 @@ interface Properties {
 
   /** The fee direction for the change. If not specified, inferred from the
    *  action and fee. */
-  direction?: DiffBadge.Direction;
+  direction?: RequestsModel.Direction;
 }
 
 interface State {
@@ -48,7 +49,7 @@ export class EntitlementsChangeItem extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const isRevoke = this.props.action === EntitlementsChangeItem.Action.REVOKE;
+    const isRevoke = this.props.action === RequestsModel.EntitlementAction.REVOKE;
     const direction = getDirection(this.props);
     return (
       <div ref={this.containerRef} className={css(STYLES.container)}>
@@ -84,36 +85,23 @@ export class EntitlementsChangeItem extends React.Component<Properties, State> {
   private resizeObserver?: ResizeObserver;
 }
 
-export namespace EntitlementsChangeItem {
-
-  /** Enumerates the action taken on an entitlement. */
-  export enum Action {
-
-    /** The entitlement is being granted. */
-    GRANT,
-
-    /** The entitlement is being revoked. */
-    REVOKE
-  }
-}
-
-function getDirection(props: Properties): DiffBadge.Direction {
+function getDirection(props: Properties): RequestsModel.Direction {
   if(props.direction !== undefined) {
     return props.direction;
   }
   if(props.fee.equals(Nexus.Money.ZERO)) {
-    return DiffBadge.Direction.NONE;
+    return RequestsModel.Direction.NONE;
   }
-  if(props.action === EntitlementsChangeItem.Action.GRANT) {
-    return DiffBadge.Direction.POSITIVE;
+  if(props.action === RequestsModel.EntitlementAction.GRANT) {
+    return RequestsModel.Direction.POSITIVE;
   }
-  return DiffBadge.Direction.NEGATIVE;
+  return RequestsModel.Direction.NEGATIVE;
 }
 
 function formatBadgeValue(props: Properties,
-    direction: DiffBadge.Direction): string {
-  if(direction === DiffBadge.Direction.NONE &&
-      props.action === EntitlementsChangeItem.Action.GRANT) {
+    direction: RequestsModel.Direction): string {
+  if(direction === RequestsModel.Direction.NONE &&
+      props.action === RequestsModel.EntitlementAction.GRANT) {
     return 'FREE';
   }
   return props.currency.sign + props.fee.toString() + ' ' + props.currency.code;

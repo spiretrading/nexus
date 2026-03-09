@@ -1,5 +1,4 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
-import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { DisplaySize } from '../../display_size';
@@ -15,6 +14,7 @@ import { SegmentedControl } from '../../components/segmented_control';
 import { RequestFilterModal } from './request_filter_modal';
 import { RequestItem } from './request_item';
 import { RequestItemPlaceholder } from './request_item_placeholder';
+import { RequestsModel } from './requests_model';
 import { RequestSortSelect } from './request_sort_select';
 
 type Type = Nexus.AccountModificationRequest.Type;
@@ -23,16 +23,16 @@ const Type = Nexus.AccountModificationRequest.Type;
 interface Properties {
 
   /** The scope of the displayed requests. */
-  scope: RequestDirectoryPage.Scope;
+  scope: RequestsModel.Scope;
 
   /** The status of the displayed requests list. */
   displayStatus: RequestDirectoryPage.DisplayStatus;
 
   /** The currently selected request state facet. */
-  requestState: RequestDirectoryPage.RequestState;
+  requestState: RequestsModel.RequestState;
 
   /** The user's filter criteria. */
-  filters: RequestDirectoryPage.Filters;
+  filters: RequestsModel.Filters;
 
   /** The number of filters currently active. */
   filterCount: number;
@@ -41,17 +41,17 @@ interface Properties {
   pageIndex: number;
 
   /** The response from the server. */
-  response: RequestDirectoryPage.Response;
+  response: RequestsModel.Response;
 
   /** Called when the user requests to retrieve requests. */
-  onSubmit?: (submission: RequestDirectoryPage.Submission) => void;
+  onSubmit?: (submission: RequestsModel.Submission) => void;
 }
 
 interface State {
   query: string;
   categories: Set<Type>;
-  requestState: RequestDirectoryPage.RequestState;
-  sortKey: RequestSortSelect.Field;
+  requestState: RequestsModel.RequestState;
+  sortKey: RequestsModel.SortField;
   pageIndex: number;
   isFilterModalOpen: boolean;
   filterModalSize: DisplaySize;
@@ -202,19 +202,19 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
           badge={this.formatBadge(
             this.props.response.facetCounts.pending)}
           isChecked={this.state.requestState ===
-            RequestDirectoryPage.RequestState.PENDING}
+            RequestsModel.RequestState.PENDING}
           onChange={this.onSelectPending}/>
         <SegmentButton label='Approved'
           badge={this.formatBadge(
             this.props.response.facetCounts.approved)}
           isChecked={this.state.requestState ===
-            RequestDirectoryPage.RequestState.APPROVED}
+            RequestsModel.RequestState.APPROVED}
           onChange={this.onSelectApproved}/>
         <SegmentButton label='Rejected'
           badge={this.formatBadge(
             this.props.response.facetCounts.rejected)}
           isChecked={this.state.requestState ===
-            RequestDirectoryPage.RequestState.REJECTED}
+            RequestsModel.RequestState.REJECTED}
           onChange={this.onSelectRejected}/>
       </SegmentedControl>);
   }
@@ -299,7 +299,7 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
 
   private formatBadge(count: number): string | undefined {
     if(this.props.response.status ===
-        RequestDirectoryPage.ResponseStatus.READY) {
+        RequestsModel.ResponseStatus.READY) {
       return String(count);
     }
     return undefined;
@@ -337,26 +337,26 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
 
   private onSelectPending = () => {
     this.setState({
-      requestState: RequestDirectoryPage.RequestState.PENDING
+      requestState: RequestsModel.RequestState.PENDING
     });
-    this.submit(RequestDirectoryPage.RequestState.PENDING);
+    this.submit(RequestsModel.RequestState.PENDING);
   }
 
   private onSelectApproved = () => {
     this.setState({
-      requestState: RequestDirectoryPage.RequestState.APPROVED
+      requestState: RequestsModel.RequestState.APPROVED
     });
-    this.submit(RequestDirectoryPage.RequestState.APPROVED);
+    this.submit(RequestsModel.RequestState.APPROVED);
   }
 
   private onSelectRejected = () => {
     this.setState({
-      requestState: RequestDirectoryPage.RequestState.REJECTED
+      requestState: RequestsModel.RequestState.REJECTED
     });
-    this.submit(RequestDirectoryPage.RequestState.REJECTED);
+    this.submit(RequestsModel.RequestState.REJECTED);
   }
 
-  private onSortChange = (value: RequestSortSelect.Field) => {
+  private onSortChange = (value: RequestsModel.SortField) => {
     this.setState({sortKey: value});
   }
 
@@ -398,7 +398,7 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
 
   private mainRef = React.createRef<HTMLElement>();
 
-  private submit(requestState: RequestDirectoryPage.RequestState,
+  private submit(requestState: RequestsModel.RequestState,
       pageIndex?: number) {
     this.props.onSubmit?.({
       scope: this.props.scope,
@@ -417,77 +417,12 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
 
 export namespace RequestDirectoryPage {
 
-  /** The scope of the displayed requests. */
-  export enum Scope {
-    YOU,
-    GROUP
-  }
-
   /** The status of the displayed requests list. */
   export enum DisplayStatus {
     IN_PROGRESS,
     ERROR,
     EMPTY,
     READY
-  }
-
-  /** The currently selected request state facet. */
-  export enum RequestState {
-    PENDING,
-    APPROVED,
-    REJECTED
-  }
-
-  /** The status of the server response. */
-  export enum ResponseStatus {
-    IN_PROGRESS,
-    READY,
-    ERROR
-  }
-
-  /** The user's filter criteria. */
-  export interface Filters {
-    query: string;
-    categories: Set<Type>;
-    startDate?: Beam.Date;
-    endDate?: Beam.Date;
-    sortKey: RequestSortSelect.Field;
-  }
-
-  /** The facet counts across request states. */
-  export interface FacetCounts {
-    pending: number;
-    approved: number;
-    rejected: number;
-  }
-
-  /** A single request list entry. */
-  export interface RequestEntry {
-    id: number;
-    category: Nexus.AccountModificationRequest.Type;
-    state: Nexus.AccountModificationRequest.Status;
-    updateTime: Date;
-    accountName: string;
-    effectiveDate: Date;
-    firstChange: RequestItem.Change;
-    additionalChangesCount: number;
-    commentCount: number;
-    managerApproval?: RequestItem.ManagerApproval;
-  }
-
-  /** The response from the server. */
-  export interface Response {
-    status: ResponseStatus;
-    facetCounts: FacetCounts;
-    requestList: RequestEntry[];
-  }
-
-  /** The submission signal payload. */
-  export interface Submission {
-    scope: Scope;
-    requestState: RequestState;
-    filters: Filters;
-    pageIndex: number;
   }
 }
 

@@ -1,5 +1,6 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
+import { RequestsModel } from './requests_model';
 
 interface Properties {
 
@@ -7,14 +8,14 @@ interface Properties {
   value: string;
 
   /** The direction of the change. */
-  direction: DiffBadge.Direction;
+  direction: RequestsModel.Direction;
 }
 
 /** Displays a badge indicating a change value and its direction. */
 export function DiffBadge(props: Properties) {
   const {color, backgroundColor, sign} = getDirectionStyle(props.direction);
   const dynamicStyle = StyleSheet.create({ tag: {color, backgroundColor} });
-  const hasSign = props.direction !== DiffBadge.Direction.NONE;
+  const hasSign = props.direction !== RequestsModel.Direction.NONE;
   return (
     <span className=
         {css(hasSign ? STYLES.tagWithSign : STYLES.tag, dynamicStyle.tag)}>
@@ -23,38 +24,22 @@ export function DiffBadge(props: Properties) {
     </span>);
 }
 
-export namespace DiffBadge {
-
-  /** Enumerates the direction of a change. */
-  export enum Direction {
-
-    /** The value increased. */
-    POSITIVE,
-
-    /** The value decreased. */
-    NEGATIVE,
-
-    /** No directional change. */
-    NONE
-  }
-}
-
-function getDirectionStyle(direction: DiffBadge.Direction):
+function getDirectionStyle(direction: RequestsModel.Direction):
     {color: string, backgroundColor: string, sign: string} {
   switch(direction) {
-    case DiffBadge.Direction.POSITIVE:
+    case RequestsModel.Direction.POSITIVE:
       return {
         color: '#29C764',
         backgroundColor: '#EBFFF2',
         sign: '+'
       };
-    case DiffBadge.Direction.NEGATIVE:
+    case RequestsModel.Direction.NEGATIVE:
       return {
         color: '#E63F44',
         backgroundColor: '#FFF1F1',
         sign: '-'
       };
-    case DiffBadge.Direction.NONE:
+    case RequestsModel.Direction.NONE:
       return {
         color: '#333333',
         backgroundColor: '#F8F8F8',

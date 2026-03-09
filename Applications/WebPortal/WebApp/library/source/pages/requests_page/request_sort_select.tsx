@@ -1,5 +1,6 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
+import { RequestsModel } from './requests_model';
 
 type SelectAttributes = Omit<
   React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'>;
@@ -7,10 +8,10 @@ type SelectAttributes = Omit<
 interface Properties extends SelectAttributes {
 
   /** The currently selected sort field. */
-  value: RequestSortSelect.Field;
+  value: RequestsModel.SortField;
 
   /** Called when the selected sort field changes. */
-  onChange?: (value: RequestSortSelect.Field) => void;
+  onChange?: (value: RequestsModel.SortField) => void;
 }
 
 /** A dropdown select for sorting requests. */
@@ -21,45 +22,23 @@ export class RequestSortSelect extends React.Component<Properties> {
       <select {...selectProps} value={value}
           onChange={this.onSelectChange}
           className={css(STYLES.select)}>
-        <option value={RequestSortSelect.Field.LAST_UPDATED}>
+        <option value={RequestsModel.SortField.LAST_UPDATED}>
           Last Updated</option>
-        <option value={RequestSortSelect.Field.CREATED}>
+        <option value={RequestsModel.SortField.CREATED}>
           Created</option>
-        <option value={RequestSortSelect.Field.ACCOUNT}>
+        <option value={RequestsModel.SortField.ACCOUNT}>
           Account</option>
-        <option value={RequestSortSelect.Field.REQUESTER}>
+        <option value={RequestsModel.SortField.REQUESTER}>
           Requester</option>
-        <option value={RequestSortSelect.Field.EFFECTIVE_DATE}>
+        <option value={RequestsModel.SortField.EFFECTIVE_DATE}>
           Effective Date</option>
       </select>);
   }
 
   private onSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     this.props.onChange?.(
-      Number(event.target.value) as RequestSortSelect.Field);
+      Number(event.target.value) as RequestsModel.SortField);
   };
-}
-
-export namespace RequestSortSelect {
-
-  /** Enumerates the fields by which requests can be sorted. */
-  export enum Field {
-
-    /** Sort by the last updated time. */
-    LAST_UPDATED,
-
-    /** Sort by the creation time. */
-    CREATED,
-
-    /** Sort by the account name. */
-    ACCOUNT,
-
-    /** Sort by the requester. */
-    REQUESTER,
-
-    /** Sort by the effective date. */
-    EFFECTIVE_DATE
-  }
 }
 
 const STYLES = StyleSheet.create({

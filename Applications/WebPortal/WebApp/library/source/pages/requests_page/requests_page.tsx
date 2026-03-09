@@ -4,6 +4,7 @@ import * as React from 'react';
 import { NavigationHeader } from '../../components/navigation_header';
 import { NavigationTab } from '../../components/navigation_tab';
 import { RequestDirectoryPage } from './request_directory_page';
+import { RequestsModel } from './requests_model';
 
 interface Properties {
 
@@ -17,10 +18,10 @@ interface Properties {
   displayStatus: RequestDirectoryPage.DisplayStatus;
 
   /** The currently selected request state facet. */
-  requestState: RequestDirectoryPage.RequestState;
+  requestState: RequestsModel.RequestState;
 
   /** The user's filter criteria. */
-  filters: RequestDirectoryPage.Filters;
+  filters: RequestsModel.Filters;
 
   /** The number of filters currently active. */
   filterCount: number;
@@ -29,10 +30,10 @@ interface Properties {
   pageIndex: number;
 
   /** The response from the server. */
-  response: RequestDirectoryPage.Response;
+  response: RequestsModel.Response;
 
   /** Called when the user requests to retrieve requests. */
-  onSubmit?: (submission: RequestDirectoryPage.Submission) => void;
+  onSubmit?: (submission: RequestsModel.Submission) => void;
 
   /** Called when a navigation tab is clicked, passing the page. */
   onNavigate?: (page: RequestsPage.Page) => void;
@@ -90,7 +91,7 @@ export class RequestsPage extends React.Component<Properties, State> {
   private renderContent(): JSX.Element {
     const current = this.props.current ?? RequestsPage.Page.YOUR_REQUESTS;
     const scope = current === RequestsPage.Page.YOUR_REQUESTS ?
-      RequestDirectoryPage.Scope.YOU : RequestDirectoryPage.Scope.GROUP;
+      RequestsModel.Scope.YOU : RequestsModel.Scope.GROUP;
     return (
       <RequestDirectoryPage
         scope={scope}

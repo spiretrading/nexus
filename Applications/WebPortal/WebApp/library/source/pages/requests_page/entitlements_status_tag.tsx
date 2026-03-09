@@ -1,10 +1,11 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
+import { RequestsModel } from './requests_model';
 
 interface Properties {
 
   /** The status of the entitlement. */
-  status: EntitlementsStatusTag.Status;
+  status: RequestsModel.EntitlementStatus;
 }
 
 /** Displays a colored tag indicating an entitlement's status. */
@@ -17,29 +18,16 @@ export function EntitlementsStatusTag(props: Properties) {
     </span>);
 }
 
-export namespace EntitlementsStatusTag {
-
-  /** Enumerates the status of an entitlement. */
-  export enum Status {
-
-    /** The entitlement has been granted. */
-    GRANTED,
-
-    /** The entitlement has been revoked. */
-    REVOKED
-  }
-}
-
-function getStatusStyle(status: EntitlementsStatusTag.Status):
+function getStatusStyle(status: RequestsModel.EntitlementStatus):
     {label: string, color: string, backgroundColor: string} {
   switch(status) {
-    case EntitlementsStatusTag.Status.GRANTED:
+    case RequestsModel.EntitlementStatus.GRANTED:
       return {
         label: 'Granted',
         color: '#0C7032',
         backgroundColor: '#EBFFF2'
       };
-    case EntitlementsStatusTag.Status.REVOKED:
+    case RequestsModel.EntitlementStatus.REVOKED:
       return {
         label: 'Revoked',
         color: '#7D7E90',
