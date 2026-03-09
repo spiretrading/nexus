@@ -142,6 +142,9 @@ export class RequestsPage extends React.Component<Properties, State> {
 
   private static readonly STYLES = StyleSheet.create({
     container: {
+      height: '100%',
+      display: 'flex',
+      flexDirection: 'column' as 'column',
       overflow: 'hidden'
     },
     header: {

@@ -78,8 +78,10 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
         <main ref={this.mainRef} className={css(STYLES.main)}>
           {this.renderToolbar()}
           <div className={css(STYLES.contentGap)}/>
-          {this.renderRequestContent()}
-          {this.renderPaginationSection()}
+          <div ref={this.scrollRef} className={css(STYLES.scrollArea)}>
+            {this.renderRequestContent()}
+            {this.renderPaginationSection()}
+          </div>
         </main>
       </PageLayout>);
   }
@@ -253,7 +255,9 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
           </ul>
         </section>);
     }
-    const items = this.props.response.requestList;
+    const all = this.props.response.requestList;
+    const start = this.state.pageIndex * PAGE_SIZE;
+    const items = all.slice(start, start + PAGE_SIZE);
     return (
       <section aria-label='Requests' aria-live='polite' aria-busy='false'>
         <ul className={css(STYLES.requestList)}>
@@ -285,13 +289,13 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
     }
     if(this.props.displayStatus ===
         RequestDirectoryPage.DisplayStatus.IN_PROGRESS &&
-        this.props.response.requestList.length <= 25) {
+        this.props.response.requestList.length <= PAGE_SIZE) {
       return null;
     }
     return (
       <div className={css(STYLES.paginationSection)}>
         <Pagination
-          pageSize={25}
+          pageSize={PAGE_SIZE}
           pageIndex={this.state.pageIndex}
           totalCount={this.props.response.requestList.length}
           onNavigate={this.onPageNavigate}/>
@@ -430,10 +434,12 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
 
   private onPageNavigate = (pageIndex: number) => {
     this.setState({pageIndex});
+    this.scrollRef.current?.scrollTo(0, 0);
     this.submit(this.state.requestState, pageIndex);
   }
 
   private mainRef = React.createRef<HTMLElement>();
+  private scrollRef = React.createRef<HTMLDivElement>();
 
   private submit(requestState: RequestsModel.RequestState,
       pageIndex?: number) {
@@ -452,6 +458,8 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
   }
 }
 
+const PAGE_SIZE = 25;
+
 export namespace RequestDirectoryPage {
 
   /** The status of the displayed requests list. */
@@ -465,12 +473,22 @@ export namespace RequestDirectoryPage {
 
 const STYLES = StyleSheet.create({
   main: {
-    padding: '18px 0 40px',
+    flex: '1 1 auto',
+    minHeight: 0,
+    display: 'flex',
+    flexDirection: 'column' as 'column',
+    paddingTop: '18px',
     backgroundColor: '#FFFFFF',
     fontFamily: "'Roboto', system-ui, sans-serif",
     fontWeight: 400,
     color: '#333333',
     containerType: 'inline-size'
+  },
+  scrollArea: {
+    flex: '1 1 auto',
+    minHeight: 0,
+    overflowY: 'auto' as 'auto',
+    paddingBottom: '40px'
   },
   toolbar: {
     padding: '0 18px'
