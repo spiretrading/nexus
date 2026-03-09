@@ -2,6 +2,7 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
+import { HashRouter, Redirect, Route, Switch } from 'react-router-dom';
 import * as WebPortal from 'web_portal';
 
 type Type = Nexus.AccountModificationRequest.Type;
@@ -121,5 +122,14 @@ const MODEL = new WebPortal.LocalRequestsModel(
 const ROLES = new Nexus.AccountRoles();
 ROLES.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
 
-ReactDOM.render(<WebPortal.RequestsController roles={ROLES} model={MODEL}/>,
+ReactDOM.render(
+  <HashRouter>
+    <Switch>
+      <Route path='/requests/:tab'
+        render={(props) =>
+          <WebPortal.RequestsController {...props}
+            roles={ROLES} model={MODEL}/>}/>
+      <Redirect to='/requests/you'/>
+    </Switch>
+  </HashRouter>,
   document.getElementById('main'));
