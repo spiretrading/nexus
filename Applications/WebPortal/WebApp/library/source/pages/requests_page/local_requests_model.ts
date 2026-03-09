@@ -71,8 +71,7 @@ export class LocalRequestsModel extends RequestsModel {
   }
 
   private filterEntries(entries: RequestsModel.RequestEntry[],
-      submission: RequestsModel.Submission):
-      RequestsModel.RequestEntry[] {
+      submission: RequestsModel.Submission): RequestsModel.RequestEntry[] {
     let result = entries;
     const filters = submission.filters;
     if(filters.categories.size > 0) {

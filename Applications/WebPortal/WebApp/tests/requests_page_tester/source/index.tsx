@@ -3,46 +3,106 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
-const USD_CURRENCY = new Nexus.CurrencyDatabase.Entry(
-  new Nexus.Currency(840), 'USD', '$');
+type Type = Nexus.AccountModificationRequest.Type;
+type Status = Nexus.AccountModificationRequest.Status;
+const Type = Nexus.AccountModificationRequest.Type;
+const Status = Nexus.AccountModificationRequest.Status;
+const Direction = WebPortal.RequestsModel.Direction;
+const EntitlementAction = WebPortal.RequestsModel.EntitlementAction;
 
-const SAMPLE_CHANGES: WebPortal.RequestsModel.ListChange[] = [
-  {type: 'entitlements', name: 'NYSE Arca Equities',
-    action: WebPortal.RequestsModel.EntitlementAction.GRANT,
-    fee: Nexus.Money.parse('14.50'), currency: USD_CURRENCY},
-  {type: 'entitlements', name: 'OPRA',
-    action: WebPortal.RequestsModel.EntitlementAction.REVOKE,
-    fee: Nexus.Money.parse('7.00'), currency: USD_CURRENCY},
-  {type: 'risk_controls', name: 'Buying Power',
-    oldValue: '$100,000', newValue: '$150,000',
-    delta: {value: '$50,000',
-      direction: WebPortal.RequestsModel.Direction.POSITIVE}},
-  {type: 'risk_controls', name: 'Net Loss',
-    oldValue: '$5,000', newValue: '$3,000',
-    delta: {value: '$2,000',
-      direction: WebPortal.RequestsModel.Direction.NEGATIVE}}
+const USD = new Nexus.CurrencyDatabase.Entry(
+  new Nexus.Currency(840), 'USD', '$');
+const CAD = new Nexus.CurrencyDatabase.Entry(
+  new Nexus.Currency(124), 'CAD', '$');
+
+const ACCOUNTS = [
+  'achen01', 'bsmith02', 'cgreen01', 'djones04', 'ewilson05',
+  'fgarcia06', 'hlee07', 'jmartin08', 'kpatel09', 'lnguyen10',
+  'mrobinson11', 'nthompson12', 'oanderson13', 'ptaylor14', 'qjackson15'
 ];
 
-const SAMPLE_ENTRIES: WebPortal.RequestsModel.RequestEntry[] =
-  SAMPLE_CHANGES.map((change, i) => ({
-    id: 1024 + i,
-    category: change.type === 'entitlements' ?
-      Nexus.AccountModificationRequest.Type.ENTITLEMENTS :
-      Nexus.AccountModificationRequest.Type.RISK,
-    state: i === 1 ?
-      Nexus.AccountModificationRequest.Status.REVIEWED :
-      Nexus.AccountModificationRequest.Status.PENDING,
-    updateTime: new Date(2025, 8, 23),
-    accountName: 'achen01',
-    effectiveDate: new Date(2025, 9, 30),
-    firstChange: change,
-    additionalChangesCount: i === 0 ? 3 : 0,
-    commentCount: i === 0 ? 2 : 0,
-    managerApproval: i === 1 ?
-      {approver: 'cgreen01', self: false} : undefined
+const ENTITLEMENT_NAMES = [
+  'NYSE Arca Equities', 'OPRA', 'NYSE American Equities',
+  'NASDAQ TotalView', 'CME Group', 'CBOE Equities',
+  'TSX Venture', 'ICE Futures'
+];
+
+const RISK_NAMES = [
+  'Buying Power', 'Net Loss', 'Transition Time', 'Max Order Quantity'
+];
+
+const ENTITLEMENT_CHANGES: WebPortal.RequestsModel.ListChange[] =
+  ENTITLEMENT_NAMES.map((name, i) => ({
+    type: 'entitlements' as const,
+    name,
+    action: i % 3 === 0 ? EntitlementAction.REVOKE : EntitlementAction.GRANT,
+    fee: Nexus.Money.parse(String((i + 1) * 7)),
+    currency: i % 4 === 0 ? CAD : USD
   }));
 
-const MODEL = new WebPortal.LocalRequestsModel(SAMPLE_ENTRIES, new Map());
+const RISK_CHANGES: WebPortal.RequestsModel.ListChange[] =
+  RISK_NAMES.map(name => {
+    const oldVal = 50000 + Math.floor(Math.random() * 100000);
+    const newVal = oldVal + 10000 + Math.floor(Math.random() * 40000);
+    return {
+      type: 'risk_controls' as const,
+      name,
+      oldValue: `$${oldVal.toLocaleString()}`,
+      newValue: `$${newVal.toLocaleString()}`,
+      delta: {
+        value: `$${(newVal - oldVal).toLocaleString()}`,
+        direction: Direction.POSITIVE
+      }
+    };
+  });
+
+const ALL_CHANGES = [...ENTITLEMENT_CHANGES, ...RISK_CHANGES];
+
+const STATUSES: Status[] = [
+  Status.PENDING, Status.PENDING, Status.PENDING,
+  Status.REVIEWED, Status.SCHEDULED,
+  Status.GRANTED, Status.GRANTED,
+  Status.REJECTED
+];
+
+function makeEntries(count: number):
+    WebPortal.RequestsModel.RequestEntry[] {
+  const entries: WebPortal.RequestsModel.RequestEntry[] = [];
+  const baseDate = new Date(2025, 0, 15);
+  for(let i = 0; i < count; ++i) {
+    const change = ALL_CHANGES[i % ALL_CHANGES.length];
+    const account = ACCOUNTS[i % ACCOUNTS.length];
+    const status = STATUSES[i % STATUSES.length];
+    const requestDate = new Date(baseDate);
+    requestDate.setDate(baseDate.getDate() + i);
+    const updateDate = new Date(requestDate);
+    updateDate.setDate(requestDate.getDate() + 1 + (i % 5));
+    const effectiveDate = new Date(updateDate);
+    effectiveDate.setDate(updateDate.getDate() + 7 + (i % 14));
+    const additionalChanges = i % 5 === 0 ? 3 : i % 7 === 0 ? 1 : 0;
+    const comments = i % 4 === 0 ? 2 : i % 6 === 0 ? 1 : 0;
+    const approval = status === Status.REVIEWED ?
+      {approver: ACCOUNTS[(i + 3) % ACCOUNTS.length], self: false} :
+      undefined;
+    entries.push({
+      id: 1000 + i,
+      category: change.type === 'entitlements' ?
+        Type.ENTITLEMENTS : Type.RISK,
+      state: status,
+      updateTime: updateDate,
+      accountName: account,
+      effectiveDate: effectiveDate,
+      firstChange: change,
+      additionalChangesCount: additionalChanges,
+      commentCount: comments,
+      managerApproval: approval
+    });
+  }
+  return entries;
+}
+
+const MODEL = new WebPortal.LocalRequestsModel(
+  makeEntries(500), new Map());
 
 const ROLES = new Nexus.AccountRoles();
 ROLES.set(Nexus.AccountRoles.Role.ADMINISTRATOR);

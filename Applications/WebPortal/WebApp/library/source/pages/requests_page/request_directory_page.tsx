@@ -285,12 +285,13 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
     }
     if(this.props.displayStatus ===
         RequestDirectoryPage.DisplayStatus.IN_PROGRESS &&
-        this.props.response.requestList.length <= 50) {
+        this.props.response.requestList.length <= 25) {
       return null;
     }
     return (
       <div className={css(STYLES.paginationSection)}>
         <Pagination
+          pageSize={25}
           pageIndex={this.state.pageIndex}
           totalCount={this.props.response.requestList.length}
           onNavigate={this.onPageNavigate}/>
@@ -311,6 +312,18 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
 
   private onQueryChange = (value: string) => {
     this.setState({query: value});
+    this.props.onSubmit?.({
+      scope: this.props.scope,
+      requestState: this.state.requestState,
+      filters: {
+        query: value,
+        categories: this.state.categories,
+        startDate: this.props.filters.startDate,
+        endDate: this.props.filters.endDate,
+        sortKey: this.state.sortKey
+      },
+      pageIndex: this.state.pageIndex
+    });
   }
 
   private toggleCategory(type: Type) {
@@ -321,6 +334,18 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
       next.add(type);
     }
     this.setState({categories: next});
+    this.props.onSubmit?.({
+      scope: this.props.scope,
+      requestState: this.state.requestState,
+      filters: {
+        query: this.state.query,
+        categories: next,
+        startDate: this.props.filters.startDate,
+        endDate: this.props.filters.endDate,
+        sortKey: this.state.sortKey
+      },
+      pageIndex: this.state.pageIndex
+    });
   }
 
   private onToggleRisk = () => {
@@ -358,6 +383,18 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
 
   private onSortChange = (value: RequestsModel.SortField) => {
     this.setState({sortKey: value});
+    this.props.onSubmit?.({
+      scope: this.props.scope,
+      requestState: this.state.requestState,
+      filters: {
+        query: this.state.query,
+        categories: this.state.categories,
+        startDate: this.props.filters.startDate,
+        endDate: this.props.filters.endDate,
+        sortKey: value
+      },
+      pageIndex: this.state.pageIndex
+    });
   }
 
   private onOpenFilterModal = () => {
