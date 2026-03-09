@@ -185,7 +185,8 @@ function toDetailChanges(
   return changes;
 }
 
-function makeDetails(entries: WebPortal.RequestsModel.RequestEntry[]):
+function makeDetails(entries: WebPortal.RequestsModel.RequestEntry[],
+    accessRole: Nexus.AccountRoles.Role):
     Map<number, WebPortal.RequestsModel.RequestDetail> {
   const details = new Map<number, WebPortal.RequestsModel.RequestDetail>();
   for(const entry of entries) {
@@ -233,18 +234,22 @@ function makeDetails(entries: WebPortal.RequestsModel.RequestEntry[]):
       effectiveDate: Beam.Date.fromDate(entry.effectiveDate),
       changes: toDetailChanges(entry),
       activityList,
-      accessRole: Nexus.AccountRoles.Role.ADMINISTRATOR
+      accessRole
     });
   }
   return details;
 }
 
-const ENTRIES = makeEntries(500);
-const MODEL = new WebPortal.LocalRequestsModel(
-  ACCOUNTS[0], ENTRIES, makeDetails(ENTRIES));
-
 const ROLES = new Nexus.AccountRoles();
 ROLES.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
+
+const ACCESS_ROLE = ROLES.test(Nexus.AccountRoles.Role.ADMINISTRATOR) ?
+  Nexus.AccountRoles.Role.ADMINISTRATOR :
+  ROLES.test(Nexus.AccountRoles.Role.MANAGER) ?
+  Nexus.AccountRoles.Role.MANAGER : Nexus.AccountRoles.Role.TRADER;
+const ENTRIES = makeEntries(500);
+const MODEL = new WebPortal.LocalRequestsModel(
+  ACCOUNTS[0], ENTRIES, makeDetails(ENTRIES, ACCESS_ROLE));
 
 ReactDOM.render(
   <HashRouter>
