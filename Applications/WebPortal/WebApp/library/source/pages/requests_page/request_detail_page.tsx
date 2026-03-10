@@ -71,7 +71,6 @@ interface Properties {
 interface State {
   comment: string;
   effectiveDate: Beam.Date;
-  containerWidth: number;
 }
 
 /** Displays the detail view for a single account modification request. */
@@ -81,16 +80,14 @@ export class RequestDetailPage extends
     super(props);
     this.state = {
       comment: '',
-      effectiveDate: props.effectiveDate,
-      containerWidth: 0
+      effectiveDate: props.effectiveDate
     };
-    this.mainRef = React.createRef<HTMLElement>();
   }
 
   public render(): JSX.Element {
     return (
       <PageLayout>
-        <main ref={this.mainRef} className={css(STYLES.main)}>
+        <main className={css(STYLES.main)}>
           {this.renderHeader()}
           <div className={css(STYLES.spacer30)}/>
           {this.renderChangesSection()}
@@ -108,8 +105,7 @@ export class RequestDetailPage extends
           <h1 className={css(STYLES.h1)}>#{this.props.id}</h1>
           <RequestCategoryTag category={this.props.category}/>
           <div className={css(STYLES.updateTime)}>
-            {this.state.containerWidth >= 768 &&
-              <span className={css(STYLES.updatePrefix)}>Updated</span>}
+            <span className={css(STYLES.updatePrefix)}>Updated</span>
             <RelativeDate datetime={this.props.updateTime}/>
           </div>
         </div>
@@ -203,8 +199,7 @@ export class RequestDetailPage extends
           value={this.state.comment}
           onChange={this.onCommentChange}/>
         <div className={css(STYLES.spacer30)}/>
-        <div className={css(STYLES.actions,
-            this.state.containerWidth >= 768 && STYLES.actionsWide)}>
+        <div className={css(STYLES.actions)}>
           {showApprove &&
             <Button label='Approve' readonly={this.props.isSubmitting}
               onClick={this.onApprove}/>}
@@ -257,23 +252,6 @@ export class RequestDetailPage extends
     this.props.onReject?.(this.state.comment);
   };
 
-  public componentDidMount() {
-    this.resizeObserver = new ResizeObserver(entries => {
-      for(const entry of entries) {
-        this.setState({containerWidth: entry.contentRect.width});
-      }
-    });
-    if(this.mainRef.current) {
-      this.resizeObserver.observe(this.mainRef.current);
-    }
-  }
-
-  public componentWillUnmount() {
-    this.resizeObserver?.disconnect();
-  }
-
-  private mainRef: React.RefObject<HTMLElement>;
-  private resizeObserver: ResizeObserver;
 }
 
 
@@ -291,7 +269,8 @@ const STYLES = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     fontFamily: '"Roboto", system-ui, sans-serif',
     fontWeight: 400,
-    color: '#333333'
+    color: '#333333',
+    containerType: 'inline-size'
   },
   titleBlock: {
     display: 'flex',
@@ -311,9 +290,13 @@ const STYLES = StyleSheet.create({
     gap: '4px'
   },
   updatePrefix: {
+    display: 'none',
     fontSize: '0.875rem',
     color: '#7D7E90',
-    textAlign: 'end'
+    textAlign: 'end',
+    '@container (min-width: 768px)': {
+      display: 'inline'
+    }
   },
   accountRow: {
     paddingTop: '10px'
@@ -376,7 +359,7 @@ const STYLES = StyleSheet.create({
     listStyle: 'none',
     padding: 0,
     margin: 0,
-    containerType: 'inline-size' as 'inline-size'
+    containerType: 'inline-size'
   },
   textarea: {
     width: '100%',
@@ -396,10 +379,10 @@ const STYLES = StyleSheet.create({
   actions: {
     display: 'flex',
     flexDirection: 'column' as 'column',
-    gap: '10px'
-  },
-  actionsWide: {
-    flexDirection: 'row' as 'row',
-    justifyContent: 'flex-end' as 'flex-end'
+    gap: '10px',
+    '@container (min-width: 768px)': {
+      flexDirection: 'row',
+      justifyContent: 'flex-end'
+    }
   }
 });
