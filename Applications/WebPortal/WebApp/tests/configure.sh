@@ -14,7 +14,6 @@ PROJECTS=(
   loading_page_tester
   login_page_tester
   mock
-  page_layout_tester
   page_not_found_page_tester
   profile_page_tester
   requests_page_tester
