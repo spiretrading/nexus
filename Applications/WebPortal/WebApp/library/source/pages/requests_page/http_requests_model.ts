@@ -143,7 +143,8 @@ export class HttpRequestsModel extends RequestsModel {
     if(request.type === Nexus.AccountModificationRequest.Type.RISK) {
       const modification = await admin.loadRiskModification(request.id);
       const current = await admin.loadRiskParameters(request.account);
-      return toFirstRiskChange(current, modification.parameters);
+      return toFirstRiskChange(current, modification.parameters,
+        this.serviceClients.definitionsClient.currencyDatabase);
     }
     if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
       const modification = await admin.loadEntitlementModification(request.id);
@@ -180,7 +181,8 @@ export class HttpRequestsModel extends RequestsModel {
     if(request.type === Nexus.AccountModificationRequest.Type.RISK) {
       const modification = await admin.loadRiskModification(request.id);
       const current = await admin.loadRiskParameters(request.account);
-      return toRiskChanges(current, modification.parameters);
+      return toRiskChanges(current, modification.parameters,
+        this.serviceClients.definitionsClient.currencyDatabase);
     }
     if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
       const modification = await admin.loadEntitlementModification(request.id);
@@ -266,7 +268,17 @@ function toManagerApproval(status: Nexus.AccountModificationRequest.Update):
 }
 
 function toFirstRiskChange(current: Nexus.RiskParameters,
-    requested: Nexus.RiskParameters): RequestsModel.RiskControlsChange {
+    requested: Nexus.RiskParameters,
+    currencyDatabase: Nexus.CurrencyDatabase): RequestsModel.RiskControlsChange {
+  if(!current.currency.equals(requested.currency)) {
+    return {
+      type: 'risk_controls',
+      name: 'Currency',
+      oldValue: currencyDatabase.fromCurrency(current.currency).code,
+      newValue: currencyDatabase.fromCurrency(requested.currency).code,
+      delta: {value: '', direction: RequestsModel.Direction.NONE}
+    };
+  }
   const oldBp = current.buyingPower.toString();
   const newBp = requested.buyingPower.toString();
   const diff = requested.buyingPower.subtract(current.buyingPower);
@@ -324,6 +336,7 @@ function toFirstEntitlementChange(current: Beam.Set<Beam.DirectoryEntry>,
 function countRiskChanges(current: Nexus.RiskParameters,
     requested: Nexus.RiskParameters): number {
   let count = 0;
+  if(!current.currency.equals(requested.currency)) { ++count; }
   if(!current.buyingPower.equals(requested.buyingPower)) { ++count; }
   if(!current.netLoss.equals(requested.netLoss)) { ++count; }
   if(!current.transitionTime.equals(requested.transitionTime)) { ++count; }
@@ -333,8 +346,12 @@ function countRiskChanges(current: Nexus.RiskParameters,
 }
 
 function toRiskChanges(current: Nexus.RiskParameters,
-    requested: Nexus.RiskParameters): RequestsModel.DetailChange[] {
+    requested: Nexus.RiskParameters,
+    currencyDatabase: Nexus.CurrencyDatabase): RequestsModel.DetailChange[] {
   const changes: RequestsModel.DetailChange[] = [];
+  addRiskChange(changes, 'Currency',
+    currencyDatabase.fromCurrency(current.currency).code,
+    currencyDatabase.fromCurrency(requested.currency).code);
   addMoneyRiskChange(
     changes, 'Buying Power', current.buyingPower, requested.buyingPower);
   addMoneyRiskChange(
