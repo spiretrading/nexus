@@ -113,6 +113,7 @@ export class RequestsController extends React.Component<Properties, State> {
   }
 
   public async componentDidMount(): Promise<void> {
+    await this.props.model.load();
     const requestId = this.parseRequestId();
     if(requestId !== null) {
       await this.loadDetail(requestId);
@@ -179,7 +180,8 @@ export class RequestsController extends React.Component<Properties, State> {
     return prefix;
   }
 
-  private resetAndLoad(): void {
+  private async resetAndLoad(): Promise<void> {
+    await this.props.model.load();
     const defaultFilters: RequestsModel.Filters = {
       query: '',
       categories: new Set<Type>(),

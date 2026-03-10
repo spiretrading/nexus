@@ -17,13 +17,29 @@ export class HttpRequestsModel extends RequestsModel {
     this.account = account;
     this.serviceClients = serviceClients;
     this.localModel = null;
-    this.loadPromise = null;
+  }
+
+  public async load(): Promise<void> {
+    const admin = this.serviceClients.administrationClient;
+    const ownIds = await admin.loadAccountModificationRequestIds(
+      this.account, 0, MAX_REQUEST_IDS);
+    const managedIds = await admin.loadManagedAccountModificationRequestIds(
+      this.account, 0, MAX_REQUEST_IDS);
+    const allIds = mergeIds(ownIds, managedIds);
+    const entries: RequestsModel.RequestEntry[] = [];
+    for(const id of allIds) {
+      const entry = await this.fetchEntry(id);
+      entries.push(entry);
+    }
+    const roles = await admin.loadAccountRoles(this.account);
+    this.accessRole = getAccessRole(roles);
+    this.localModel =
+      new LocalRequestsModel(this.account, entries, new Map());
   }
 
   public async loadRequestDirectory(submission: RequestsModel.Submission):
       Promise<RequestsModel.Response> {
     try {
-      await this.ensureLoaded();
       return this.localModel.loadRequestDirectory(submission);
     } catch {
       return {
@@ -36,7 +52,6 @@ export class HttpRequestsModel extends RequestsModel {
 
   public async loadRequestDetail(id: number):
       Promise<RequestsModel.RequestDetail> {
-    await this.ensureLoaded();
     try {
       return await this.localModel.loadRequestDetail(id);
     } catch {
@@ -52,6 +67,7 @@ export class HttpRequestsModel extends RequestsModel {
       Nexus.Message.fromPlainText(comment) : new Nexus.Message();
     const update = await this.serviceClients.administrationClient.
       approveAccountModificationRequest(id, message);
+    this.localModel.updateEntry(id, update);
     await this.refreshDetail(id);
     return update;
   }
@@ -62,35 +78,11 @@ export class HttpRequestsModel extends RequestsModel {
       Nexus.Message.fromPlainText(comment) : new Nexus.Message();
     const update = await this.serviceClients.administrationClient.
       rejectAccountModificationRequest(id, message);
+    this.localModel.updateEntry(id, update);
     await this.refreshDetail(id);
     return update;
   }
 
-  private async ensureLoaded(): Promise<void> {
-    if(this.localModel) {
-      return;
-    }
-    if(!this.loadPromise) {
-      this.loadPromise = (async () => {
-        const admin = this.serviceClients.administrationClient;
-        const ownIds = await admin.loadAccountModificationRequestIds(
-          this.account, 0, MAX_REQUEST_IDS);
-        const managedIds = await admin.loadManagedAccountModificationRequestIds(
-          this.account, 0, MAX_REQUEST_IDS);
-        const allIds = mergeIds(ownIds, managedIds);
-        const entries: RequestsModel.RequestEntry[] = [];
-        for(const id of allIds) {
-          const entry = await this.fetchEntry(id);
-          entries.push(entry);
-        }
-        const roles = await admin.loadAccountRoles(this.account);
-        this.accessRole = getAccessRole(roles);
-        this.localModel =
-          new LocalRequestsModel(this.account, entries, new Map());
-      })();
-    }
-    await this.loadPromise;
-  }
 
   private async fetchEntry(id: number): Promise<RequestsModel.RequestEntry> {
     const admin = this.serviceClients.administrationClient;
@@ -220,7 +212,6 @@ export class HttpRequestsModel extends RequestsModel {
   private account: Beam.DirectoryEntry;
   private serviceClients: Nexus.ServiceClients;
   private localModel: LocalRequestsModel;
-  private loadPromise: Promise<void>;
   private accessRole: Nexus.AccountRoles.Role;
 }
 

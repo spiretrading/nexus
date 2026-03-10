@@ -29,12 +29,30 @@ export class LocalRequestsModel extends RequestsModel {
     this.entries.push(entry);
   }
 
+  /** Updates an existing entry's state and update time.
+   *  @param id - The request id to update.
+   *  @param update - The update containing the new status.
+   */
+  public updateEntry(id: number,
+      update: Nexus.AccountModificationRequest.Update): void {
+    const index = this.entries.findIndex(e => e.id === id);
+    if(index >= 0) {
+      this.entries[index] = {
+        ...this.entries[index],
+        state: update.status,
+        updateTime: update.timestamp.toDate()
+      };
+    }
+  }
+
   /** Adds a request detail.
    *  @param detail - The detail to add.
    */
   public addDetail(detail: RequestsModel.RequestDetail): void {
     this.details.set(detail.id, detail);
   }
+
+  public async load(): Promise<void> {}
 
   public async loadRequestDirectory(submission: RequestsModel.Submission):
       Promise<RequestsModel.Response> {
