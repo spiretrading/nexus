@@ -37,6 +37,9 @@ export abstract class RequestsModel {
    */
   public abstract reject(id: number, comment: string):
     Promise<Nexus.AccountModificationRequest.Update>;
+
+  /** Loads/refreshes the model's data from the server. */
+  public abstract load(): Promise<void>;
 }
 
 export namespace RequestsModel {
