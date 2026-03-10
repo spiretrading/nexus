@@ -153,18 +153,8 @@ export class RequestsPage extends React.Component<Properties, State> {
     },
     header: {
       borderBottom: '1px solid #E6E6E6',
-      paddingLeft: '11px',
-      paddingRight: '18px',
       backgroundColor: '#FFFFFF',
-      '@media (min-width: 768px)': {
-        paddingLeft: '3px'
-      },
-      '> nav': {
-        width: 'clamp(76px, 24%, 92px)',
-        '@media (min-width: 768px)': {
-          width: 'auto'
-        }
-      }
+      paddingLeft: 'max(18px, calc((100% - 1036px) / 2 + 18px))'
     }
   });
 }
