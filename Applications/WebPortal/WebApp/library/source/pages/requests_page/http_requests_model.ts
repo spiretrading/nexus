@@ -79,9 +79,9 @@ export class HttpRequestsModel extends RequestsModel {
   private async load(): Promise<void> {
     const admin = this.serviceClients.administrationClient;
     const ownIds = await admin.loadAccountModificationRequestIds(
-      this.account, -1, MAX_REQUEST_IDS);
+      this.account, 0, MAX_REQUEST_IDS);
     const managedIds = await admin.loadManagedAccountModificationRequestIds(
-      this.account, -1, MAX_REQUEST_IDS);
+      this.account, 0, MAX_REQUEST_IDS);
     const allIds = mergeIds(ownIds, managedIds);
     const entries: RequestsModel.RequestEntry[] = [];
     for(const id of allIds) {
@@ -232,7 +232,7 @@ function mergeIds(ownIds: number[], managedIds: number[]): number[] {
   for(const id of managedIds) {
     set.add(id);
   }
-  return Array.from(set);
+  return [...set];
 }
 
 function getAccessRole(roles: Nexus.AccountRoles): Nexus.AccountRoles.Role {
