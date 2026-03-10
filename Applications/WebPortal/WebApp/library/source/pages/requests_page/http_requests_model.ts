@@ -46,8 +46,8 @@ export class HttpRequestsModel extends RequestsModel {
     }
   }
 
-  public async approve(id: number, effectiveDate: Beam.Date,
-      comment: string): Promise<Nexus.AccountModificationRequest.Update> {
+  public async approve(id: number, effectiveDate: Beam.Date, comment: string):
+      Promise<Nexus.AccountModificationRequest.Update> {
     const message = comment.length > 0 ?
       Nexus.Message.fromPlainText(comment) : new Nexus.Message();
     const update = await this.serviceClients.administrationClient.
@@ -71,26 +71,25 @@ export class HttpRequestsModel extends RequestsModel {
       return;
     }
     if(!this.loadPromise) {
-      this.loadPromise = this.load();
+      this.loadPromise = (async () => {
+        const admin = this.serviceClients.administrationClient;
+        const ownIds = await admin.loadAccountModificationRequestIds(
+          this.account, 0, MAX_REQUEST_IDS);
+        const managedIds = await admin.loadManagedAccountModificationRequestIds(
+          this.account, 0, MAX_REQUEST_IDS);
+        const allIds = mergeIds(ownIds, managedIds);
+        const entries: RequestsModel.RequestEntry[] = [];
+        for(const id of allIds) {
+          const entry = await this.fetchEntry(id);
+          entries.push(entry);
+        }
+        const roles = await admin.loadAccountRoles(this.account);
+        this.accessRole = getAccessRole(roles);
+        this.localModel =
+          new LocalRequestsModel(this.account, entries, new Map());
+      })();
     }
     await this.loadPromise;
-  }
-
-  private async load(): Promise<void> {
-    const admin = this.serviceClients.administrationClient;
-    const ownIds = await admin.loadAccountModificationRequestIds(
-      this.account, 0, MAX_REQUEST_IDS);
-    const managedIds = await admin.loadManagedAccountModificationRequestIds(
-      this.account, 0, MAX_REQUEST_IDS);
-    const allIds = mergeIds(ownIds, managedIds);
-    const entries: RequestsModel.RequestEntry[] = [];
-    for(const id of allIds) {
-      const entry = await this.fetchEntry(id);
-      entries.push(entry);
-    }
-    const roles = await admin.loadAccountRoles(this.account);
-    this.accessRole = getAccessRole(roles);
-    this.localModel = new LocalRequestsModel(this.account, entries, new Map());
   }
 
   private async fetchEntry(id: number): Promise<RequestsModel.RequestEntry> {
@@ -114,8 +113,7 @@ export class HttpRequestsModel extends RequestsModel {
     };
   }
 
-  private async fetchDetail(id: number):
-      Promise<RequestsModel.RequestDetail> {
+  private async fetchDetail(id: number): Promise<RequestsModel.RequestDetail> {
     const admin = this.serviceClients.administrationClient;
     const request = await admin.loadAccountModificationRequest(id);
     const status = await admin.loadAccountModificationRequestStatus(id);
@@ -287,7 +285,7 @@ function toFirstRiskChange(current: Nexus.RiskParameters,
     oldValue: oldBp,
     newValue: newBp,
     delta: {
-      value: (cmp >= 0 ? '+' : '') + diff.toString(),
+      value: diff.toString(),
       direction: cmp > 0 ? RequestsModel.Direction.POSITIVE :
         cmp < 0 ? RequestsModel.Direction.NEGATIVE :
         RequestsModel.Direction.NONE
@@ -323,14 +321,14 @@ function toFirstEntitlementChange(current: Beam.Set<Beam.DirectoryEntry>,
 function toRiskChanges(current: Nexus.RiskParameters,
     requested: Nexus.RiskParameters): RequestsModel.DetailChange[] {
   const changes: RequestsModel.DetailChange[] = [];
-  addMoneyRiskChange(changes, 'Buying Power',
-    current.buyingPower, requested.buyingPower);
-  addMoneyRiskChange(changes, 'Net Loss',
-    current.netLoss, requested.netLoss);
-  addRiskChange(changes, 'Transition Time',
-    current.transitionTime.toString(), requested.transitionTime.toString());
-  addRiskChange(changes, 'Allowed State',
-    riskStateToString(current.allowedState),
+  addMoneyRiskChange(
+    changes, 'Buying Power', current.buyingPower, requested.buyingPower);
+  addMoneyRiskChange(
+    changes, 'Net Loss', current.netLoss, requested.netLoss);
+  addDurationRiskChange(changes, 'Transition Time',
+    current.transitionTime, requested.transitionTime);
+  addRiskChange(
+    changes, 'Allowed State', riskStateToString(current.allowedState),
     riskStateToString(requested.allowedState));
   return changes;
 }
@@ -348,7 +346,28 @@ function addMoneyRiskChange(changes: RequestsModel.DetailChange[],
     oldValue: oldValue.toString(),
     newValue: newValue.toString(),
     delta: {
-      value: (cmp >= 0 ? '+' : '') + diff.toString(),
+      value: diff.toString(),
+      direction: cmp > 0 ? RequestsModel.Direction.POSITIVE :
+        cmp < 0 ? RequestsModel.Direction.NEGATIVE :
+        RequestsModel.Direction.NONE
+    }
+  });
+}
+
+function addDurationRiskChange(changes: RequestsModel.DetailChange[],
+    name: string, oldValue: Beam.Duration, newValue: Beam.Duration) {
+  if(oldValue.equals(newValue)) {
+    return;
+  }
+  const diff = newValue.subtract(oldValue);
+  const cmp = diff.compare(Beam.Duration.ZERO);
+  changes.push({
+    type: 'risk',
+    name: name,
+    oldValue: oldValue.toString(),
+    newValue: newValue.toString(),
+    delta: {
+      value: diff.toString(),
       direction: cmp > 0 ? RequestsModel.Direction.POSITIVE :
         cmp < 0 ? RequestsModel.Direction.NEGATIVE :
         RequestsModel.Direction.NONE
