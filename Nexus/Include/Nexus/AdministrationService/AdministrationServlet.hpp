@@ -110,7 +110,8 @@ namespace Nexus {
         const Beam::DirectoryEntry& session_account,
         const Beam::DirectoryEntry& submission_account,
         const Beam::DirectoryEntry& account, const AccountRoles& roles,
-        AccountModificationRequest::Type type);
+        AccountModificationRequest::Type type,
+        boost::posix_time::ptime effective_date);
       void store_modification_request(const AccountModificationRequest& request,
         const Message& comment, const AccountRoles& roles);
       std::vector<Beam::DirectoryEntry> on_load_accounts_by_roles(
@@ -172,18 +173,21 @@ namespace Nexus {
         ServiceProtocolClient& client, AccountModificationRequest::Id id);
       AccountModificationRequest on_submit_entitlement_modification_request(
         ServiceProtocolClient& client, Beam::DirectoryEntry account,
-        const EntitlementModification& modification, Message comment);
+        const EntitlementModification& modification,
+        boost::posix_time::ptime effective_date, Message comment);
       RiskModification on_load_risk_modification(
         ServiceProtocolClient& client, AccountModificationRequest::Id id);
       AccountModificationRequest on_submit_risk_modification_request(
         ServiceProtocolClient& client, Beam::DirectoryEntry account,
-        const RiskModification& modification, Message comment);
+        const RiskModification& modification,
+        boost::posix_time::ptime effective_date, Message comment);
       AccountModificationRequest::Update
         on_load_account_modification_request_status(
           ServiceProtocolClient& client, AccountModificationRequest::Id id);
       AccountModificationRequest::Update
         on_approve_account_modification_request(ServiceProtocolClient& client,
-          AccountModificationRequest::Id id, Message comment);
+          AccountModificationRequest::Id id,
+          boost::posix_time::ptime effective_date, Message comment);
       AccountModificationRequest::Update on_reject_account_modification_request(
         ServiceProtocolClient& client, AccountModificationRequest::Id id,
         Message comment);
@@ -631,7 +635,8 @@ namespace Nexus {
       make_modification_request(const Beam::DirectoryEntry& session_account,
         const Beam::DirectoryEntry& submission_account,
         const Beam::DirectoryEntry& account, const AccountRoles& roles,
-        AccountModificationRequest::Type type) {
+        AccountModificationRequest::Type type,
+        boost::posix_time::ptime effective_date) {
     if(!check_read_permission(session_account, submission_account)) {
       boost::throw_with_location(
         Beam::ServiceRequestException("Insufficient permissions."));
@@ -639,7 +644,7 @@ namespace Nexus {
     auto request_id = ++m_last_modification_request_id;
     auto timestamp = m_time_client->get_time();
     return AccountModificationRequest(
-      request_id, type, account, submission_account, timestamp);
+      request_id, type, account, submission_account, timestamp, effective_date);
   }
 
   template<typename C, typename S, typename D, typename R> requires
@@ -1180,7 +1185,8 @@ namespace Nexus {
   AccountModificationRequest AdministrationServlet<C, S, D, R>::
       on_submit_entitlement_modification_request(ServiceProtocolClient& client,
         Beam::DirectoryEntry account,
-        const EntitlementModification& modification, Message comment) {
+        const EntitlementModification& modification,
+        boost::posix_time::ptime effective_date, Message comment) {
     auto& session = client.get_session();
     if(account.m_id == -1) {
       account = session.get_account();
@@ -1188,7 +1194,7 @@ namespace Nexus {
     auto roles = load_account_roles(session.get_account(), account);
     auto request = make_modification_request(
       session.get_account(), session.get_account(), account, roles,
-      AccountModificationRequest::Type::ENTITLEMENTS);
+      AccountModificationRequest::Type::ENTITLEMENTS, effective_date);
     for(auto& entitlement : modification.get_entitlements()) {
       if(entitlement.m_type != Beam::DirectoryEntry::Type::DIRECTORY) {
         boost::throw_with_location(
@@ -1235,7 +1241,7 @@ namespace Nexus {
   AccountModificationRequest AdministrationServlet<C, S, D, R>::
       on_submit_risk_modification_request(ServiceProtocolClient& client,
         Beam::DirectoryEntry account, const RiskModification& modification,
-        Message comment) {
+        boost::posix_time::ptime effective_date, Message comment) {
     auto& session = client.get_session();
     if(account.m_id == -1) {
       account = session.get_account();
@@ -1243,7 +1249,7 @@ namespace Nexus {
     auto roles = load_account_roles(session.get_account(), account);
     auto request = make_modification_request(
       session.get_account(), session.get_account(), account, roles,
-      AccountModificationRequest::Type::RISK);
+      AccountModificationRequest::Type::RISK, effective_date);
     m_data_store->with_transaction([&] {
       m_data_store->store(request, modification);
       store_modification_request(request, comment, roles);
@@ -1281,7 +1287,8 @@ namespace Nexus {
         Beam::IsTimeClient<Beam::dereference_t<R>>
   AccountModificationRequest::Update AdministrationServlet<C, S, D, R>::
       on_approve_account_modification_request(ServiceProtocolClient& client,
-        AccountModificationRequest::Id id, Message comment) {
+        AccountModificationRequest::Id id,
+        boost::posix_time::ptime effective_date, Message comment) {
     auto& session = client.get_session();
     auto request = m_data_store->with_transaction([&] {
       return m_data_store->load_account_modification_request(id);
@@ -1309,6 +1316,9 @@ namespace Nexus {
       }
       if(comment.get_id() != -1) {
         m_data_store->store(request.get_id(), comment);
+      }
+      if(effective_date != boost::posix_time::not_a_date_time) {
+        m_data_store->store_effective_date(request.get_id(), effective_date);
       }
       if(roles.test(AccountRole::ADMINISTRATOR)) {
         update.m_status = AccountModificationRequest::Status::GRANTED;

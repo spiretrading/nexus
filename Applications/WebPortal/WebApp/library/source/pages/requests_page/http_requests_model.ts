@@ -66,7 +66,7 @@ export class HttpRequestsModel extends RequestsModel {
     const message = comment.length > 0 ?
       Nexus.Message.fromPlainText(comment) : new Nexus.Message();
     const update = await this.serviceClients.administrationClient.
-      approveAccountModificationRequest(id, message);
+      approveAccountModificationRequest(id, message, effectiveDate);
     this.localModel.updateEntry(id, update);
     await this.refreshDetail(id);
     return update;
@@ -97,7 +97,7 @@ export class HttpRequestsModel extends RequestsModel {
       state: status.status,
       updateTime: status.timestamp.toDate(),
       account: request.account,
-      effectiveDate: status.timestamp.toDate(),
+      effectiveDate: request.effectiveDate.toDate(),
       firstChange,
       additionalChangesCount: Math.max(0, changeCount - 1),
       commentCount: messageIds.length,
@@ -122,7 +122,7 @@ export class HttpRequestsModel extends RequestsModel {
       updateTime: status.timestamp.toDate(),
       account: toAccountProfile(request.account, accountIdentity),
       requester: toAccountProfile(request.submissionAccount, submitterIdentity),
-      effectiveDate: Beam.Date.fromDate(status.timestamp.toDate()),
+      effectiveDate: request.effectiveDate,
       changes,
       activityList,
       accessRole: this.accessRole

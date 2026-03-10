@@ -148,13 +148,15 @@ export class HttpAdministrationClient extends AdministrationClient {
 
   public async submitEntitlementModificationRequest(
       account: Beam.DirectoryEntry, modification: EntitlementModification,
-      comment: Message): Promise<AccountModificationRequest> {
+      comment: Message, effectiveDate: Beam.Date):
+      Promise<AccountModificationRequest> {
     const response = await Beam.post(
       '/api/administration_service/submit_entitlement_modification_request',
       {
         account: account.toJson(),
         modification: modification.toJson(),
-        comment: comment.toJson()
+        comment: comment.toJson(),
+        effective_date: effectiveDate.toJson()
       });
     return AccountModificationRequest.fromJson(response);
   }
@@ -179,14 +181,15 @@ export class HttpAdministrationClient extends AdministrationClient {
   }
 
   public async submitRiskModificationRequest(account: Beam.DirectoryEntry,
-      modification: RiskModification, comment: Message):
-      Promise<AccountModificationRequest> {
+      modification: RiskModification, comment: Message,
+      effectiveDate: Beam.Date): Promise<AccountModificationRequest> {
     const response = await Beam.post(
       '/api/administration_service/submit_risk_modification_request',
       {
         account: account.toJson(),
         modification: modification.toJson(),
-        comment: comment.toJson()
+        comment: comment.toJson(),
+        effective_date: effectiveDate.toJson()
       });
     return AccountModificationRequest.fromJson(response);
   }
@@ -238,12 +241,14 @@ export class HttpAdministrationClient extends AdministrationClient {
   }
 
   public async approveAccountModificationRequest(id: number,
-      comment: Message): Promise<AccountModificationRequest.Update> {
+      comment: Message, effectiveDate: Beam.Date):
+      Promise<AccountModificationRequest.Update> {
     const response = await Beam.post(
       '/api/administration_service/approve_account_modification_request',
       {
         id: id,
-        comment: comment.toJson()
+        comment: comment.toJson(),
+        effective_date: effectiveDate.toJson()
       });
     return AccountModificationRequest.Update.fromJson(response);
   }

@@ -118,11 +118,13 @@ export abstract class AdministrationClient {
    * @param account - The account to modify.
    * @param modification - The modification to apply.
    * @param comment - The comment to associate with the request.
+   * @param effectiveDate - The date the modification takes effect.
    * @return An object representing the request.
    */
   public abstract submitEntitlementModificationRequest(
     account: Beam.DirectoryEntry, modification: EntitlementModification,
-    comment: Message): Promise<AccountModificationRequest>;
+    comment: Message, effectiveDate: Beam.Date):
+    Promise<AccountModificationRequest>;
 
   /**
    * Loads an account's risk parameters.
@@ -145,11 +147,13 @@ export abstract class AdministrationClient {
    * @param account - The account to modify.
    * @param modification - The modification to apply.
    * @param comment - The comment to associate with the request.
+   * @param effectiveDate - The date the modification takes effect.
    * @return An object representing the request.
    */
   public abstract submitRiskModificationRequest(
     account: Beam.DirectoryEntry, modification: RiskModification,
-    comment: Message): Promise<AccountModificationRequest>;
+    comment: Message, effectiveDate: Beam.Date):
+    Promise<AccountModificationRequest>;
 
   /**
    * Loads an account modification request.
@@ -193,10 +197,12 @@ export abstract class AdministrationClient {
    * Approves an account modification request.
    * @param id - The id of the request to approve.
    * @param comment - The comment to associate with the approval.
+   * @param effectiveDate - The date the modification takes effect.
    * @return The resulting status update.
    */
   public abstract approveAccountModificationRequest(id: number,
-    comment: Message): Promise<AccountModificationRequest.Update>;
+    comment: Message, effectiveDate: Beam.Date):
+    Promise<AccountModificationRequest.Update>;
 
   /**
    * Rejects an account modification request.

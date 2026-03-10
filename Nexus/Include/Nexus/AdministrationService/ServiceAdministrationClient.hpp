@@ -80,16 +80,19 @@ namespace Nexus {
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
       AccountModificationRequest submit(const Beam::DirectoryEntry& account,
-        const EntitlementModification& modification, const Message& comment);
+        const EntitlementModification& modification,
+        boost::posix_time::ptime effective_date, const Message& comment);
       RiskModification load_risk_modification(
         AccountModificationRequest::Id id);
       AccountModificationRequest submit(const Beam::DirectoryEntry& account,
-        const RiskModification& modification, const Message& comment);
+        const RiskModification& modification,
+        boost::posix_time::ptime effective_date, const Message& comment);
       AccountModificationRequest::Update
         load_account_modification_request_status(
           AccountModificationRequest::Id id);
       AccountModificationRequest::Update approve_account_modification_request(
-        AccountModificationRequest::Id id, const Message& comment);
+        AccountModificationRequest::Id id,
+        boost::posix_time::ptime effective_date, const Message& comment);
       AccountModificationRequest::Update reject_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment);
       Message load_message(Message::Id id);
@@ -457,12 +460,13 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   AccountModificationRequest
       ServiceAdministrationClient<B>::submit(
         const Beam::DirectoryEntry& account,
-        const EntitlementModification& modification, const Message& comment) {
+        const EntitlementModification& modification,
+        boost::posix_time::ptime effective_date, const Message& comment) {
     return Beam::service_or_throw_with_nested([&] {
       auto client = m_client_handler.get_client();
       return client->template send_request<
         SubmitEntitlementModificationRequestService>(
-          account, modification, comment);
+          account, modification, effective_date, comment);
     }, "Failed to submit account modification request: " +
       boost::lexical_cast<std::string>(account));
   }
@@ -481,11 +485,13 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   AccountModificationRequest
       ServiceAdministrationClient<B>::submit(
         const Beam::DirectoryEntry& account,
-        const RiskModification& modification, const Message& comment) {
+        const RiskModification& modification,
+        boost::posix_time::ptime effective_date, const Message& comment) {
     return Beam::service_or_throw_with_nested([&] {
       auto client = m_client_handler.get_client();
       return client->template send_request<
-        SubmitRiskModificationRequestService>(account, modification, comment);
+        SubmitRiskModificationRequestService>(
+          account, modification, effective_date, comment);
     }, "Failed to submit account modification request: " +
       boost::lexical_cast<std::string>(account));
   }
@@ -505,11 +511,13 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   template<typename B>
   AccountModificationRequest::Update
       ServiceAdministrationClient<B>::approve_account_modification_request(
-        AccountModificationRequest::Id id, const Message& comment) {
+        AccountModificationRequest::Id id,
+        boost::posix_time::ptime effective_date, const Message& comment) {
     return Beam::service_or_throw_with_nested([&] {
       auto client = m_client_handler.get_client();
       return client->template send_request<
-        ApproveAccountModificationRequestService>(id, comment);
+        ApproveAccountModificationRequestService>(
+          id, effective_date, comment);
     }, "Failed to approve account modification request: " +
       boost::lexical_cast<std::string>(id));
   }

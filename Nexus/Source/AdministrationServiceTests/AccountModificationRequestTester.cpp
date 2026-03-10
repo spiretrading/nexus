@@ -14,6 +14,7 @@ namespace {
       AccountModificationRequest(42, AccountModificationRequest::Type::RISK,
         DirectoryEntry::make_account(100, "account"),
         DirectoryEntry::make_account(200, "submitter"),
+        time_from_string("2024-07-04 15:30:00"),
         time_from_string("2024-07-04 15:30:00"));
     return request;
   }
