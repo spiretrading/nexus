@@ -27,6 +27,7 @@ interface Properties {
 }
 
 interface State {
+  text: string;
   value: Nexus.Money;
 }
 
@@ -34,8 +35,10 @@ interface State {
 export class MoneyField extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
+    const value = props.value ?? Nexus.Money.ZERO;
     this.state = {
-      value: props.value ?? Nexus.Money.ZERO
+      text: value.toString(),
+      value
     };
   }
 
@@ -48,9 +51,9 @@ export class MoneyField extends React.Component<Properties, State> {
           type='text'
           disabled={this.props.readonly}
           ref={(input) => {this._input = input;}}
-          value={this.state.value.toString()}
+          value={this.state.text}
           onKeyDown={this.onKeyDown} onWheel={this.onWheel}
-          onChange={this.onChange}/>);
+          onChange={this.onChange} onBlur={this.onBlur}/>);
   }
 
   public componentDidUpdate() {
@@ -81,43 +84,24 @@ export class MoneyField extends React.Component<Properties, State> {
   }
 
   private onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const pointIndex = event.target.value.search('\\.');
-    const sanitizedValue = (() => {
-      if(pointIndex === -1) {
-        const leftPortion = event.target.value.substr(0,
-          this._input.selectionStart - 1);
-        const insertPortion = event.target.value.substr(
-          this._input.selectionEnd - 1, 1);
-        let rightPortion = event.target.value.substr(
-          this._input.selectionEnd);
-        rightPortion = rightPortion.padEnd(2, '0');
-        return leftPortion + insertPortion + '.' + rightPortion;
-      }
-      const secondPointIndex = event.target.value.substr(pointIndex + 1).search(
-        '\\.');
-      if(secondPointIndex === -1) {
-        return event.target.value;
-      } else if(this._input.selectionStart > pointIndex + 1) {
-        return '';
-      } else if(secondPointIndex === 0) {
-        return event.target.value.slice(0, pointIndex + 1) +
-          event.target.value.slice(pointIndex + 2);
+    const text = event.target.value.replace(/[^0-9.\-]/g, '');
+    this.setState({text});
+  }
+
+  private onBlur = () => {
+    const parsed = Nexus.Money.parse(this.state.text);
+    const value = (() => {
+      if(parsed === null) {
+        return this.state.value;
+      } else if(this.props.min && parsed.compare(this.props.min) < 0) {
+        return this.props.min;
+      } else if(this.props.max && parsed.compare(this.props.max) > 0) {
+        return this.props.max;
       } else {
-        return event.target.value.slice(0, pointIndex + 1) + '00';
+        return parsed;
       }
     })();
-    let value = Nexus.Money.parse(sanitizedValue);
-    if(value === null) {
-      this._start = this._input.selectionStart - 1;
-      this._end = this._input.selectionEnd - 1;
-      this.forceUpdate();
-      return;
-    }
-    if(this.props.min && value.compare(this.props.min) < 0 ||
-        this.props.max && value.compare(this.props.max) > 0) {
-      return;
-    }
-    this.update(value);
+    this.commit(value);
   }
 
   private increment = () => {
@@ -125,7 +109,7 @@ export class MoneyField extends React.Component<Properties, State> {
     if(this.props.max && increment.compare(this.props.max) > 0) {
       return;
     }
-    this.update(increment);
+    this.commit(increment);
   }
 
   private decrement = () => {
@@ -133,10 +117,10 @@ export class MoneyField extends React.Component<Properties, State> {
     if(this.props.min && decrement.compare(this.props.min) < 0) {
       return;
     }
-    this.update(decrement);
+    this.commit(decrement);
   }
 
-  private update = (value: Nexus.Money) => {
+  private commit = (value: Nexus.Money) => {
     if(this.props.onChange) {
       const commit = this.props.onChange(value);
       if(commit != null && commit === false) {
@@ -146,7 +130,8 @@ export class MoneyField extends React.Component<Properties, State> {
     this._start = this._input.selectionStart;
     this._end = this._input.selectionEnd;
     this.setState({
-      value: value
+      text: value.toString(),
+      value
     });
   }
 

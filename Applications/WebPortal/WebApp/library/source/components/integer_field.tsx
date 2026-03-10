@@ -29,7 +29,7 @@ interface Properties {
 }
 
 interface State {
-  value: number;
+  text: string;
 }
 
 /** An editable integer field. */
@@ -37,18 +37,16 @@ export class IntegerField extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      value: props.value ?? props.min ?? 0
+      text: padValue(props.value ?? props.min ?? 0, props.padding)
     };
   }
 
   public render(): JSX.Element {
-    const shownValue =  ('0'.repeat(this.props.padding) +
-      this.state.value).slice(-1 * (this.props.padding));
     return (
       <input
         onBlur={this.onBlur}
         style={{...IntegerField.STYLE.editBox, ...this.props.style}}
-        value={shownValue}
+        value={this.state.text}
         onChange={this.onChange}
         readOnly={this.props.readonly}
         disabled={this.props.readonly}
@@ -59,7 +57,9 @@ export class IntegerField extends React.Component<Properties, State> {
 
   public componentDidUpdate(prevProps: Properties) {
     if(this.props.value !== prevProps.value) {
-      this.setState({value: this.props.value});
+      this.setState({
+        text: padValue(this.props.value, this.props.padding)
+      });
     }
   }
 
@@ -83,35 +83,29 @@ export class IntegerField extends React.Component<Properties, State> {
   }
 
   private onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const value = (() => {
-      if(event.target.value.length === 0) {
-        return 0;
-      } else {
-        return parseInt(event.target.value.slice(-1 * this.props.padding), 10);
-      }
-    })();
-    if(isNaN(value)) {
-      this.forceUpdate();
-      return;
-    }
-    this.setState({value: value});
+    const text = event.target.value.replace(/[^0-9]/g, '');
+    this.setState({text});
   }
 
   private onBlur = () => {
+    const parsed = parseInt(this.state.text, 10);
     const value = (() => {
-      if(this.state.value < this.props.min) {
+      if(isNaN(parsed)) {
+        return this.props.min ?? 0;
+      } else if(this.props.min != null && parsed < this.props.min) {
         return this.props.min;
-      } else if(this.state.value > this.props.max) {
+      } else if(this.props.max != null && parsed > this.props.max) {
         return this.props.max;
       } else {
-        return this.state.value;
+        return parsed;
       }
     })();
     this.update(value);
   }
 
   private increment = () => {
-    const increment = this.state.value + 1;
+    const parsed = parseInt(this.state.text, 10) || 0;
+    const increment = parsed + 1;
     if(this.props.max != null && increment > this.props.max) {
       return;
     }
@@ -119,7 +113,8 @@ export class IntegerField extends React.Component<Properties, State> {
   }
 
   private decrement = () => {
-    const decrement = this.state.value - 1;
+    const parsed = parseInt(this.state.text, 10) || 0;
+    const decrement = parsed - 1;
     if(this.props.min != null && decrement < this.props.min) {
       return;
     }
@@ -134,7 +129,7 @@ export class IntegerField extends React.Component<Properties, State> {
       }
     }
     this.setState({
-      value: value
+      text: padValue(value, this.props.padding)
     });
   }
 
@@ -179,4 +174,8 @@ export class IntegerField extends React.Component<Properties, State> {
       }
     }
   });
+}
+
+function padValue(value: number, padding: number): string {
+  return ('0'.repeat(padding) + value).slice(-1 * padding);
 }
