@@ -79,22 +79,24 @@ export class RequestsController extends React.Component<Properties, State> {
       }
       const detail = this.state.detail;
       return (
-        <RequestDetailPage
-          id={detail.id}
-          category={detail.category}
-          state={detail.state}
-          createdTime={detail.createdTime}
-          updateTime={detail.updateTime}
-          account={detail.account}
-          requester={detail.requester}
-          effectiveDate={detail.effectiveDate}
-          changes={detail.changes}
-          activityList={detail.activityList}
-          accessRole={detail.accessRole}
-          isSubmitting={this.state.isSubmitting}
-          onClickAccount={this.onClickAccount}
-          onApprove={this.onApprove}
-          onReject={this.onReject}/>);
+        <div style={DETAIL_STYLE}>
+          <RequestDetailPage
+            id={detail.id}
+            category={detail.category}
+            state={detail.state}
+            createdTime={detail.createdTime}
+            updateTime={detail.updateTime}
+            account={detail.account}
+            requester={detail.requester}
+            effectiveDate={detail.effectiveDate}
+            changes={detail.changes}
+            activityList={detail.activityList}
+            accessRole={detail.accessRole}
+            isSubmitting={this.state.isSubmitting}
+            onClickAccount={this.onClickAccount}
+            onApprove={this.onApprove}
+            onReject={this.onReject}/>
+        </div>);
     }
     const page = this.currentPage();
     return (
@@ -278,6 +280,10 @@ export class RequestsController extends React.Component<Properties, State> {
     }
   }
 }
+
+const DETAIL_STYLE: React.CSSProperties = {
+  borderTop: '1px solid #E6E6E6'
+};
 
 function computeFilterCount(filters: RequestsModel.Filters): number {
   let count = filters.categories.size > 0 ? 1 : 0;
