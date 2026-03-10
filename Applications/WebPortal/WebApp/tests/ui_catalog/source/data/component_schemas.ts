@@ -230,10 +230,11 @@ const NAVIGATION_TABS = [
 
 const navigationHeader =
   new ComponentSchema('NavigationHeader',
-    [new PropertySchema('current', 'requests/you', TextInput),
-      new PropertySchema('children', NAVIGATION_TABS, ReadonlyInput)],
+    [new PropertySchema('current', 'requests/you', TextInput)],
     [new SignalSchema('onNavigate', 'current')],
-    WebPortal.NavigationHeader);
+    (props: any) =>
+      React.createElement(WebPortal.NavigationHeader, props,
+        ...NAVIGATION_TABS));
 
 const navigationTab =
   new ComponentSchema('NavigationTab',
@@ -673,7 +674,7 @@ const SAMPLE_REQUEST_LIST:
       Nexus.AccountModificationRequest.Status.REVIEWED :
       Nexus.AccountModificationRequest.Status.PENDING,
     updateTime: yesterday,
-    accountName: 'achen01',
+    account: Beam.DirectoryEntry.makeAccount(100, 'achen01'),
     effectiveDate: new Date(2025, 9, 30),
     firstChange: change,
     additionalChangesCount: i === 0 ? 3 : 0,
