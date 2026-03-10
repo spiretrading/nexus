@@ -56,6 +56,8 @@ namespace Nexus {
     { store.load_entitlement_modification(
       std::declval<AccountModificationRequest::Id>()) } ->
       std::same_as<EntitlementModification>;
+    store.store_effective_date(std::declval<AccountModificationRequest::Id>(),
+      std::declval<boost::posix_time::ptime>());
     store.store(std::declval<const AccountModificationRequest&>(),
       std::declval<const EntitlementModification&>());
     { store.load_risk_modification(
@@ -239,6 +241,14 @@ namespace Nexus {
         AccountModificationRequest::Id id);
 
       /**
+       * Stores the effective date of an AccountModificationRequest.
+       * @param id The id of the request.
+       * @param effective_date The effective date to store.
+       */
+      void store_effective_date(AccountModificationRequest::Id id,
+        boost::posix_time::ptime effective_date);
+
+      /**
        * Stores an EntitlementModification.
        * @param request The modification request.
        * @param modification The details of the modification.
@@ -352,6 +362,8 @@ namespace Nexus {
             AccountModificationRequest::Id start_id, int max_count) = 0;
         virtual EntitlementModification load_entitlement_modification(
           AccountModificationRequest::Id id) = 0;
+        virtual void store_effective_date(AccountModificationRequest::Id id,
+          boost::posix_time::ptime effective_date) = 0;
         virtual void store(const AccountModificationRequest& request,
           const EntitlementModification& modification) = 0;
         virtual RiskModification load_risk_modification(
@@ -408,6 +420,8 @@ namespace Nexus {
             AccountModificationRequest::Id start_id, int max_count) override;
         EntitlementModification load_entitlement_modification(
           AccountModificationRequest::Id id) override;
+        void store_effective_date(AccountModificationRequest::Id id,
+          boost::posix_time::ptime effective_date) override;
         void store(const AccountModificationRequest& request,
           const EntitlementModification& modification) override;
         RiskModification load_risk_modification(
@@ -515,6 +529,12 @@ namespace Nexus {
       AdministrationDataStore::load_entitlement_modification(
         AccountModificationRequest::Id id) {
     return m_data_store->load_entitlement_modification(id);
+  }
+
+  inline void AdministrationDataStore::store_effective_date(
+      AccountModificationRequest::Id id,
+      boost::posix_time::ptime effective_date) {
+    m_data_store->store_effective_date(id, effective_date);
   }
 
   inline void AdministrationDataStore::store(
@@ -683,6 +703,13 @@ namespace Nexus {
       WrappedAdministrationDataStore<D>::load_entitlement_modification(
         AccountModificationRequest::Id id) {
     return m_data_store->load_entitlement_modification(id);
+  }
+
+  template<typename D>
+  void AdministrationDataStore::WrappedAdministrationDataStore<D>::
+      store_effective_date(AccountModificationRequest::Id id,
+        boost::posix_time::ptime effective_date) {
+    m_data_store->store_effective_date(id, effective_date);
   }
 
   template<typename D>

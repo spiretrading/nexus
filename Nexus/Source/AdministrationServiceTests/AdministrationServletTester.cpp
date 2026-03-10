@@ -451,7 +451,7 @@ TEST_SUITE("AdministrationServlet") {
     SUBCASE("admin") {
       auto request = fixture.m_admin_client->send_request<
         SubmitEntitlementModificationRequestService>(
-          fixture.m_trader_account, modification, comment);
+          fixture.m_trader_account, modification, ptime(), comment);
       REQUIRE(request.get_id() == 1);
       REQUIRE(request.get_account() == fixture.m_trader_account);
       REQUIRE(request.get_submission_account() == fixture.m_admin_account);
@@ -478,7 +478,7 @@ TEST_SUITE("AdministrationServlet") {
     SUBCASE("trader") {
       auto request = fixture.m_trader_client->send_request<
         SubmitEntitlementModificationRequestService>(
-          DirectoryEntry(), modification, comment);
+          DirectoryEntry(), modification, ptime(), comment);
       REQUIRE(request.get_account() == fixture.m_trader_account);
       REQUIRE(request.get_submission_account() == fixture.m_trader_account);
       auto initial_status = fixture.m_trader_client->send_request<
@@ -491,7 +491,7 @@ TEST_SUITE("AdministrationServlet") {
           {Nexus::Message::Body::make_plain_text("Reviewed by manager")});
       auto review_update = fixture.m_manager_client->send_request<
         ApproveAccountModificationRequestService>(
-          request.get_id(), review_comment);
+          request.get_id(), ptime(), review_comment);
       REQUIRE(
         review_update.m_status == AccountModificationRequest::Status::REVIEWED);
       auto review_entitlements = fixture.m_manager_client->send_request<
@@ -502,7 +502,8 @@ TEST_SUITE("AdministrationServlet") {
           0, fixture.m_admin_account, fixture.m_time_client.get_time(),
             {Nexus::Message::Body::make_plain_text("Approved by admin")});
         auto update = fixture.m_admin_client->send_request<
-          ApproveAccountModificationRequestService>(request.get_id(), comment);
+          ApproveAccountModificationRequestService>(
+            request.get_id(), ptime(), comment);
         REQUIRE(
           update.m_status == AccountModificationRequest::Status::GRANTED);
         REQUIRE(update.m_account == fixture.m_admin_account);
@@ -552,7 +553,7 @@ TEST_SUITE("AdministrationServlet") {
     SUBCASE("admin") {
       auto request = fixture.m_admin_client->send_request<
         SubmitRiskModificationRequestService>(
-          fixture.m_trader_account, modification, comment);
+          fixture.m_trader_account, modification, ptime(), comment);
       REQUIRE(request.get_id() == 1);
       REQUIRE(request.get_account() == fixture.m_trader_account);
       REQUIRE(request.get_submission_account() == fixture.m_admin_account);
@@ -573,7 +574,7 @@ TEST_SUITE("AdministrationServlet") {
     SUBCASE("trader") {
       auto request = fixture.m_trader_client->send_request<
         SubmitRiskModificationRequestService>(
-          DirectoryEntry(), modification, comment);
+          DirectoryEntry(), modification, ptime(), comment);
       REQUIRE(request.get_account() == fixture.m_trader_account);
       REQUIRE(request.get_submission_account() == fixture.m_trader_account);
       auto initial_status = fixture.m_trader_client->send_request<

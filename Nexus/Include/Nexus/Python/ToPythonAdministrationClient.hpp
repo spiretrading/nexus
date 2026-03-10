@@ -77,16 +77,19 @@ namespace Nexus {
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
       AccountModificationRequest submit(const Beam::DirectoryEntry& account,
-        const EntitlementModification& modification, const Message& comment);
+        const EntitlementModification& modification,
+        boost::posix_time::ptime effective_date, const Message& comment);
       RiskModification load_risk_modification(
         AccountModificationRequest::Id id);
       AccountModificationRequest submit(const Beam::DirectoryEntry& account,
-        const RiskModification& modification, const Message& comment);
+        const RiskModification& modification,
+        boost::posix_time::ptime effective_date, const Message& comment);
       AccountModificationRequest::Update
         load_account_modification_request_status(
           AccountModificationRequest::Id id);
       AccountModificationRequest::Update approve_account_modification_request(
-        AccountModificationRequest::Id id, const Message& comment);
+        AccountModificationRequest::Id id,
+        boost::posix_time::ptime effective_date, const Message& comment);
       AccountModificationRequest::Update reject_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment);
       Message load_message(Message::Id id);
@@ -325,9 +328,10 @@ namespace Nexus {
   template<IsAdministrationClient C>
   AccountModificationRequest ToPythonAdministrationClient<C>::submit(
       const Beam::DirectoryEntry& account,
-      const EntitlementModification& modification, const Message& comment) {
+      const EntitlementModification& modification,
+      boost::posix_time::ptime effective_date, const Message& comment) {
     auto release = Beam::Python::GilRelease();
-    return m_client->submit(account, modification, comment);
+    return m_client->submit(account, modification, effective_date, comment);
   }
 
   template<IsAdministrationClient C>
@@ -340,9 +344,10 @@ namespace Nexus {
   template<IsAdministrationClient C>
   AccountModificationRequest ToPythonAdministrationClient<C>::submit(
       const Beam::DirectoryEntry& account,
-      const RiskModification& modification, const Message& comment) {
+      const RiskModification& modification,
+      boost::posix_time::ptime effective_date, const Message& comment) {
     auto release = Beam::Python::GilRelease();
-    return m_client->submit(account, modification, comment);
+    return m_client->submit(account, modification, effective_date, comment);
   }
 
   template<IsAdministrationClient C>
@@ -356,9 +361,11 @@ namespace Nexus {
   template<IsAdministrationClient C>
   AccountModificationRequest::Update
       ToPythonAdministrationClient<C>::approve_account_modification_request(
-        AccountModificationRequest::Id id, const Message& comment) {
+        AccountModificationRequest::Id id,
+        boost::posix_time::ptime effective_date, const Message& comment) {
     auto release = Beam::Python::GilRelease();
-    return m_client->approve_account_modification_request(id, comment);
+    return m_client->approve_account_modification_request(
+      id, effective_date, comment);
   }
 
   template<IsAdministrationClient C>

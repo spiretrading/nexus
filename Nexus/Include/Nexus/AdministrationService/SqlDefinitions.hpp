@@ -123,7 +123,7 @@ namespace Nexus {
         [] (auto& row, auto column) {
           row = AccountModificationRequest(column, row.get_type(),
             row.get_account(), row.get_submission_account(),
-            row.get_timestamp());
+            row.get_timestamp(), row.get_effective_date());
         }).
       add_column("type",
         [] (const auto& row) {
@@ -132,7 +132,7 @@ namespace Nexus {
         [] (auto& row, auto column) {
           row = AccountModificationRequest(row.get_id(), column,
             row.get_account(), row.get_submission_account(),
-            row.get_timestamp());
+            row.get_timestamp(), row.get_effective_date());
         }).
       add_column("account",
         [] (const auto& row) {
@@ -141,7 +141,8 @@ namespace Nexus {
         [] (auto& row, auto column) {
           row = AccountModificationRequest(row.get_id(), row.get_type(),
             Beam::DirectoryEntry::make_account(column),
-            row.get_submission_account(), row.get_timestamp());
+            row.get_submission_account(), row.get_timestamp(),
+            row.get_effective_date());
         }).
       add_column("submission_account",
         [] (const auto& row) {
@@ -150,7 +151,7 @@ namespace Nexus {
         [] (auto& row, auto column) {
           row = AccountModificationRequest(row.get_id(), row.get_type(),
             row.get_account(), Beam::DirectoryEntry::make_account(column),
-            row.get_timestamp());
+            row.get_timestamp(), row.get_effective_date());
         }).
       add_column("timestamp",
         [] (const auto& row) {
@@ -158,7 +159,17 @@ namespace Nexus {
         },
         [] (auto& row, auto column) {
           row = AccountModificationRequest(row.get_id(), row.get_type(),
-            row.get_account(), row.get_submission_account(), column);
+            row.get_account(), row.get_submission_account(), column,
+            row.get_effective_date());
+        }).
+      add_column("effective_date",
+        [] (const auto& row) {
+          return row.get_effective_date();
+        },
+        [] (auto& row, auto column) {
+          row = AccountModificationRequest(row.get_id(), row.get_type(),
+            row.get_account(), row.get_submission_account(),
+            row.get_timestamp(), column);
         }).
       set_primary_key("id").
       add_index("account_index", {"id", "account"});
