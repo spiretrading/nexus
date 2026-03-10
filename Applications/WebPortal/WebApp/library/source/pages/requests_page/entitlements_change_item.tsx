@@ -62,7 +62,7 @@ export class EntitlementsChangeItem extends React.Component<Properties, State> {
               STYLES.nameGrant, this.state.isWide && STYLES.nameWide)}>
             {this.props.name}
           </h2>
-          {this.state.isWide &&
+          {this.state.isWide && showBadge(this.props) &&
             <div className={css(STYLES.diffBadge)}>
               <DiffBadge
                 value={formatBadgeValue(this.props, direction)}
@@ -98,8 +98,15 @@ function getDirection(props: Properties): RequestsModel.Direction {
   return RequestsModel.Direction.NEGATIVE;
 }
 
+function showBadge(props: Properties): boolean {
+  return props.action !== RequestsModel.EntitlementAction.REVOKE || !!props.currency;
+}
+
 function formatBadgeValue(props: Properties,
     direction: RequestsModel.Direction): string {
+  if(!props.currency) {
+    return 'FREE';
+  }
   if(direction === RequestsModel.Direction.NONE &&
       props.action === RequestsModel.EntitlementAction.GRANT) {
     return 'FREE';
