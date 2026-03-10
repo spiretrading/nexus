@@ -76,6 +76,9 @@ export class LocalRequestsModel extends RequestsModel {
   private filterEntries(entries: RequestsModel.RequestEntry[],
       submission: RequestsModel.Submission): RequestsModel.RequestEntry[] {
     let result = entries;
+    if(submission.scope === RequestsModel.Scope.YOU) {
+      result = result.filter(e => e.account.equals(this.account));
+    }
     const filters = submission.filters;
     if(filters.categories.size > 0) {
       result = result.filter(e => filters.categories.has(e.category));

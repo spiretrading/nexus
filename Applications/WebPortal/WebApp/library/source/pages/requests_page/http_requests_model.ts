@@ -171,7 +171,9 @@ export class HttpRequestsModel extends RequestsModel {
       request: Nexus.AccountModificationRequest): Promise<number> {
     const admin = this.serviceClients.administrationClient;
     if(request.type === Nexus.AccountModificationRequest.Type.RISK) {
-      return RISK_PARAMETER_COUNT;
+      const modification = await admin.loadRiskModification(request.id);
+      const current = await admin.loadRiskParameters(request.account);
+      return countRiskChanges(current, modification.parameters);
     }
     if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
       const modification = await admin.loadEntitlementModification(request.id);
@@ -223,7 +225,6 @@ export class HttpRequestsModel extends RequestsModel {
 }
 
 const MAX_REQUEST_IDS = 1000;
-const RISK_PARAMETER_COUNT = 4;
 
 function mergeIds(ownIds: number[], managedIds: number[]): number[] {
   const set = new Set(ownIds);
@@ -297,17 +298,28 @@ function toFirstEntitlementChange(current: Beam.Set<Beam.DirectoryEntry>,
     requested: Beam.Set<Beam.DirectoryEntry>):
       RequestsModel.EntitlementsChange {
   for(const entry of requested) {
-    const isNew = !current.has(entry);
-    return {
-      type: 'entitlements',
-      name: entry.name,
-      action: isNew ? RequestsModel.EntitlementAction.GRANT :
-        RequestsModel.EntitlementAction.REVOKE,
-      fee: Nexus.Money.ZERO,
-      currency: undefined,
-      direction: isNew ? RequestsModel.Direction.POSITIVE :
-        RequestsModel.Direction.NEGATIVE
-    };
+    if(!current.has(entry)) {
+      return {
+        type: 'entitlements',
+        name: entry.name,
+        action: RequestsModel.EntitlementAction.GRANT,
+        fee: Nexus.Money.ZERO,
+        currency: undefined,
+        direction: RequestsModel.Direction.POSITIVE
+      };
+    }
+  }
+  for(const entry of current) {
+    if(!requested.has(entry)) {
+      return {
+        type: 'entitlements',
+        name: entry.name,
+        action: RequestsModel.EntitlementAction.REVOKE,
+        fee: Nexus.Money.ZERO,
+        currency: undefined,
+        direction: RequestsModel.Direction.NEGATIVE
+      };
+    }
   }
   return {
     type: 'entitlements',
@@ -316,6 +328,17 @@ function toFirstEntitlementChange(current: Beam.Set<Beam.DirectoryEntry>,
     fee: Nexus.Money.ZERO,
     currency: undefined
   };
+}
+
+function countRiskChanges(current: Nexus.RiskParameters,
+    requested: Nexus.RiskParameters): number {
+  let count = 0;
+  if(!current.buyingPower.equals(requested.buyingPower)) { ++count; }
+  if(!current.netLoss.equals(requested.netLoss)) { ++count; }
+  if(!current.transitionTime.equals(requested.transitionTime)) { ++count; }
+  if(riskStateToString(current.allowedState) !==
+      riskStateToString(requested.allowedState)) { ++count; }
+  return count;
 }
 
 function toRiskChanges(current: Nexus.RiskParameters,
@@ -405,15 +428,24 @@ function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
     requested: Beam.Set<Beam.DirectoryEntry>): RequestsModel.DetailChange[] {
   const changes: RequestsModel.DetailChange[] = [];
   for(const entry of requested) {
-    const isNew = !current.has(entry);
-    changes.push({
-      type: 'entitlement',
-      name: entry.name,
-      oldStatus: isNew ? RequestsModel.EntitlementStatus.REVOKED :
-        RequestsModel.EntitlementStatus.GRANTED,
-      newStatus: isNew ? RequestsModel.EntitlementStatus.GRANTED :
-        RequestsModel.EntitlementStatus.REVOKED
-    });
+    if(!current.has(entry)) {
+      changes.push({
+        type: 'entitlement',
+        name: entry.name,
+        oldStatus: RequestsModel.EntitlementStatus.REVOKED,
+        newStatus: RequestsModel.EntitlementStatus.GRANTED
+      });
+    }
+  }
+  for(const entry of current) {
+    if(!requested.has(entry)) {
+      changes.push({
+        type: 'entitlement',
+        name: entry.name,
+        oldStatus: RequestsModel.EntitlementStatus.GRANTED,
+        newStatus: RequestsModel.EntitlementStatus.REVOKED
+      });
+    }
   }
   return changes;
 }
