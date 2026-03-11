@@ -18,7 +18,7 @@ export class LocalRiskModel extends RiskModel {
   }
 
   /** Returns true if this model has been loaded. */
-  public isLoaded(): boolean {
+  public get isLoaded(): boolean {
     return this._isLoaded;
   }
 

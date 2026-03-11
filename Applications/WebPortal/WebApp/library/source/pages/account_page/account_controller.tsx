@@ -166,7 +166,6 @@ export class AccountController extends React.Component<Properties, State> {
   private renderRiskPage = () => {
     return <RiskController
       currencyDatabase={this.props.currencyDatabase}
-      displaySize={this.props.displaySize}
       model={this.props.model.riskModel}
       roles={this.props.model.roles}/>;
   }

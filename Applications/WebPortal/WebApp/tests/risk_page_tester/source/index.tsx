@@ -6,36 +6,29 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
-interface Properties {
+class TestRiskModel extends WebPortal.LocalRiskModel {
+  public shouldFail = false;
 
-  /** Determines the size to render components at. */
-  displaySize: WebPortal.DisplaySize;
+  public async submit(comment: string,
+      riskParameters: Nexus.RiskParameters): Promise<void> {
+    if(this.shouldFail) {
+      throw Error('Not Saved');
+    }
+  }
 }
 
 interface State {
-  comment: string;
-  parameters: Nexus.RiskParameters;
   roles: Nexus.AccountRoles;
-  status: string,
-  isError: boolean,
+  shouldFail: boolean;
 }
 
 /** Displays and tests the RiskPage. */
-class TestApp extends React.Component<Properties, State> {
-  constructor(props: Properties) {
+class TestApp extends React.Component<{}, State> {
+  constructor(props: {}) {
     super(props);
     this.state = {
-      comment: '',
-      parameters: new Nexus.RiskParameters(Nexus.DefaultCurrencies.CAD,
-        Nexus.Money.ONE.multiply(100000),
-        new Nexus.RiskState(Nexus.RiskState.Type.ACTIVE),
-        Nexus.Money.ONE.multiply(1000),
-        Beam.Duration.HOUR.multiply(5).add(
-          Beam.Duration.MINUTE.multiply(30)).add(
-            Beam.Duration.SECOND.multiply(15))),
       roles: new Nexus.AccountRoles(8),
-      status: '',
-      isError: false,
+      shouldFail: false,
     };
   }
 
@@ -47,33 +40,23 @@ class TestApp extends React.Component<Properties, State> {
       return 'Not Admin';
     })();
     const toggleErrorText = (() => {
-      if(this.state.isError) {
+      if(this.state.shouldFail) {
         return 'Error';
       }
       return 'No Error';
     })();
     return (
       <Dali.VBoxLayout width='100%' height='100%'>
-        <WebPortal.RiskPage
-          displaySize={this.props.displaySize}
-          comment={this.state.comment}
-          parameters={this.state.parameters}
+        <WebPortal.RiskController
           currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
           roles={this.state.roles}
-          status={this.state.status}
-          isError={this.state.isError}
-          onComment={this.onComment}
-          onParameters={this.onParameters}
-          onSubmit={this.onSubmit}/>
+          model={this.model}/>
         <div className={css(TestApp.STYLE.buttonWrapper)}>
           <button onClick={this.onToggleIsAdmin}>
             {toggleAdminButtonText}
           </button>
           <button onClick={this.onToggleError}>
             {toggleErrorText}
-          </button>
-          <button onClick={this.clearStatus}>
-            Clear Status
           </button>
         </div>
       </Dali.VBoxLayout>);
@@ -86,38 +69,25 @@ class TestApp extends React.Component<Properties, State> {
       }
       return new Nexus.AccountRoles();
     })();
-    this.setState({ roles: roles });
+    this.setState({roles});
   }
 
   private onToggleError = () => {
-    this.setState({isError: !this.state.isError});
+    this.model.shouldFail = !this.state.shouldFail;
+    this.setState({shouldFail: !this.state.shouldFail});
   }
 
-  private onComment = (comment: string) => {
-    this.setState({comment});
-  }
-
-  private onParameters = (parameters: Nexus.RiskParameters) => {
-    this.setState({parameters});
-  }
-
-  private onSubmit = (comment: string, parameters: Nexus.RiskParameters) => {
-    if(this.state.isError) {
-      this.setState({status: 'Not Saved'});
-    } else {
-      this.setState({status: 'Saved'});
-    }
-    return;
-  }
-
-  private clearStatus = () => {
-    this.setState({status: ''});
-  }
+  private model = new TestRiskModel(
+    new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 123, 'test'),
+    new Nexus.RiskParameters(Nexus.DefaultCurrencies.CAD,
+      Nexus.Money.ONE.multiply(100000),
+      new Nexus.RiskState(Nexus.RiskState.Type.ACTIVE),
+      Nexus.Money.ONE.multiply(1000),
+      Beam.Duration.HOUR.multiply(5).add(
+        Beam.Duration.MINUTE.multiply(30)).add(
+          Beam.Duration.SECOND.multiply(15))));
 
   private static STYLE = StyleSheet.create({
-    outerContainer: {
-      position: 'relative' as 'relative'
-    },
     buttonWrapper: {
       display: 'flex' as 'flex',
       flexDirection: 'row' as 'row',
@@ -126,5 +96,4 @@ class TestApp extends React.Component<Properties, State> {
   });
 }
 
-const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
-ReactDOM.render(<ResponsivePage/>, document.getElementById('main'));
+ReactDOM.render(<TestApp/>, document.getElementById('main'));
