@@ -534,6 +534,14 @@ namespace {
     using Panel = ScalarFilterPanel<B>;
     using Type = T;
     using PanelType = typename Panel::Type;
+    auto from_panel_type = [] (const PanelType& value) {
+      if constexpr(std::is_same_v<Type, QString> &&
+          std::is_same_v<PanelType, time_duration>) {
+        return to_text(value);
+      } else {
+        return static_cast<Type>(value);
+      }
+    };
     auto to_panel_type = [] (const Type& value) {
       if constexpr(std::is_same_v<Type, QString> &&
           std::is_same_v<PanelType, time_duration>) {
@@ -549,14 +557,32 @@ namespace {
     auto panel = new Panel(range);
     apply_widget_properties(panel, profile.get_properties());
     min.connect_changed_signal([=] (auto& value) {
-      range->set({to_panel_type(value), range->get().m_max});
+      if(auto min_value = to_panel_type(value);
+          range->get().m_min != min_value) {
+        range->set({min_value, range->get().m_max});
+      }
     });
     max.connect_changed_signal([=] (auto& value) {
-      range->set({range->get().m_min, to_panel_type(value)});
+      if(auto max_value = to_panel_type(value);
+          range->get().m_max != max_value) {
+        range->set({range->get().m_min, max_value});
+      }
     });
     auto filter_slot = profile.make_event_slot<QString>("CurrentSignal");
-    panel->get_current()->connect_update_signal(
-      [=] (const typename Panel::Range& submission) {
+    range->connect_update_signal(
+      [=, &min, &max] (const typename Panel::Range& value) {
+        if(value.m_min) {
+          if(auto min_value = from_panel_type(*value.m_min);
+              min.get() != min_value) {
+            min.set(min_value);
+          }
+        }
+        if(value.m_max) {
+          if(auto max_value = from_panel_type(*value.m_max);
+              max.get() != max_value) {
+            max.set(max_value);
+          }
+        }
         auto to_string = [&] (const auto& value) {
           if(value) {
             return to_text(*value);
@@ -564,8 +590,8 @@ namespace {
           return QString("null");
         };
         filter_slot(QString("%1, %2").
-          arg(to_string(submission.m_min)).
-          arg(to_string(submission.m_max)));
+          arg(to_string(value.m_min)).
+          arg(to_string(value.m_max)));
       });
     return panel;
   }
