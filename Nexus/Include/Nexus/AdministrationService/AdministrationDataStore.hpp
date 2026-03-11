@@ -70,6 +70,9 @@ namespace Nexus {
     { store.load_account_modification_request_status(
       std::declval<AccountModificationRequest::Id>()) } ->
       std::same_as<AccountModificationRequest::Update>;
+    { store.load_account_modification_request_updates(
+      std::declval<AccountModificationRequest::Id>()) } ->
+      std::same_as<std::vector<AccountModificationRequest::Update>>;
     store.store(std::declval<AccountModificationRequest::Id>(),
       std::declval<const AccountModificationRequest::Update&>());
     { store.load_last_message_id() } -> std::same_as<Message::Id>;
@@ -290,6 +293,15 @@ namespace Nexus {
           AccountModificationRequest::Id id);
 
       /**
+       * Loads all status updates of an AccountModificationRequest.
+       * @param id The id of the request.
+       * @return The list of all updates for the request with the specified id.
+       */
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_updates(
+          AccountModificationRequest::Id id);
+
+      /**
        * Stores the status of an AccountModificationRequest.
        * @param id The id of the request.
        * @param status The update containing the current status.
@@ -375,6 +387,9 @@ namespace Nexus {
         virtual AccountModificationRequest::Update
           load_account_modification_request_status(
             AccountModificationRequest::Id id) = 0;
+        virtual std::vector<AccountModificationRequest::Update>
+          load_account_modification_request_updates(
+            AccountModificationRequest::Id id) = 0;
         virtual void store(AccountModificationRequest::Id id,
           const AccountModificationRequest::Update& status) = 0;
         virtual Message::Id load_last_message_id() = 0;
@@ -432,6 +447,9 @@ namespace Nexus {
           AccountModificationRequest::Id id, const Message& message) override;
         AccountModificationRequest::Update
           load_account_modification_request_status(
+            AccountModificationRequest::Id id) override;
+        std::vector<AccountModificationRequest::Update>
+          load_account_modification_request_updates(
             AccountModificationRequest::Id id) override;
         void store(AccountModificationRequest::Id id,
           const AccountModificationRequest::Update& status) override;
@@ -563,6 +581,12 @@ namespace Nexus {
       AdministrationDataStore::load_account_modification_request_status(
         AccountModificationRequest::Id id) {
     return m_data_store->load_account_modification_request_status(id);
+  }
+
+  inline std::vector<AccountModificationRequest::Update>
+      AdministrationDataStore::load_account_modification_request_updates(
+        AccountModificationRequest::Id id) {
+    return m_data_store->load_account_modification_request_updates(id);
   }
 
   inline void AdministrationDataStore::store(AccountModificationRequest::Id id,
@@ -745,6 +769,14 @@ namespace Nexus {
         load_account_modification_request_status(
           AccountModificationRequest::Id id) {
     return m_data_store->load_account_modification_request_status(id);
+  }
+
+  template<typename D>
+  std::vector<AccountModificationRequest::Update> AdministrationDataStore::
+      WrappedAdministrationDataStore<D>::
+        load_account_modification_request_updates(
+          AccountModificationRequest::Id id) {
+    return m_data_store->load_account_modification_request_updates(id);
   }
 
   template<typename D>

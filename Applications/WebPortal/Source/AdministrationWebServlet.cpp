@@ -109,6 +109,11 @@ auto AdministrationWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
       &AdministrationWebServlet::on_load_account_modification_request_status,
       this));
   slots.emplace_back(matches_path(HttpMethod::POST,
+    "/api/administration_service/load_account_modification_request_updates"),
+    std::bind_front(
+      &AdministrationWebServlet::on_load_account_modification_request_updates,
+      this));
+  slots.emplace_back(matches_path(HttpMethod::POST,
     "/api/administration_service/approve_account_modification_request"),
     std::bind_front(
       &AdministrationWebServlet::on_approve_account_modification_request,
@@ -733,6 +738,29 @@ HttpResponse AdministrationWebServlet::
   auto status = clients.get_administration_client().
     load_account_modification_request_status(params.m_id);
   session->shuttle_response(status, out(response));
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::
+    on_load_account_modification_request_updates(const HttpRequest& request) {
+  struct Parameters {
+    AccountModificationRequest::Id m_id;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("id", m_id);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto params = session->shuttle_parameters<Parameters>(request);
+  auto& clients = session->get_clients();
+  auto updates = clients.get_administration_client().
+    load_account_modification_request_updates(params.m_id);
+  session->shuttle_response(updates, out(response));
   return response;
 }
 

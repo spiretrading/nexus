@@ -194,6 +194,14 @@ export abstract class AdministrationClient {
     Promise<AccountModificationRequest.Update>;
 
   /**
+   * Loads all status updates of an account modification request.
+   * @param id - The id of the request.
+   * @return The list of all updates for the request.
+   */
+  public abstract loadAccountModificationRequestUpdates(id: number):
+    Promise<AccountModificationRequest.Update[]>;
+
+  /**
    * Approves an account modification request.
    * @param id - The id of the request to approve.
    * @param comment - The comment to associate with the approval.

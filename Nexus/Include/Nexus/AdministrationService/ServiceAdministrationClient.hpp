@@ -90,6 +90,9 @@ namespace Nexus {
       AccountModificationRequest::Update
         load_account_modification_request_status(
           AccountModificationRequest::Id id);
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_updates(
+          AccountModificationRequest::Id id);
       AccountModificationRequest::Update approve_account_modification_request(
         AccountModificationRequest::Id id,
         boost::posix_time::ptime effective_date, const Message& comment);
@@ -505,6 +508,19 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       return client->template send_request<
         LoadAccountModificationRequestStatusService>(id);
     }, "Failed to load account modification request status: " +
+      boost::lexical_cast<std::string>(id));
+  }
+
+  template<typename B>
+  std::vector<AccountModificationRequest::Update>
+      ServiceAdministrationClient<B>::
+        load_account_modification_request_updates(
+          AccountModificationRequest::Id id) {
+    return Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      return client->template send_request<
+        LoadAccountModificationRequestUpdatesService>(id);
+    }, "Failed to load account modification request updates: " +
       boost::lexical_cast<std::string>(id));
   }
 

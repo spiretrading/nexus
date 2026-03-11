@@ -184,6 +184,9 @@ namespace Nexus {
       AccountModificationRequest::Update
         on_load_account_modification_request_status(
           ServiceProtocolClient& client, AccountModificationRequest::Id id);
+      std::vector<AccountModificationRequest::Update>
+        on_load_account_modification_request_updates(
+          ServiceProtocolClient& client, AccountModificationRequest::Id id);
       AccountModificationRequest::Update
         on_approve_account_modification_request(ServiceProtocolClient& client,
           AccountModificationRequest::Id id,
@@ -318,6 +321,10 @@ namespace Nexus {
     LoadAccountModificationRequestStatusService::add_slot(out(slots),
       std::bind_front(
         &AdministrationServlet::on_load_account_modification_request_status,
+        this));
+    LoadAccountModificationRequestUpdatesService::add_slot(out(slots),
+      std::bind_front(
+        &AdministrationServlet::on_load_account_modification_request_updates,
         this));
     ApproveAccountModificationRequestService::add_slot(
       out(slots), std::bind_front(
@@ -1278,6 +1285,27 @@ namespace Nexus {
     }
     return m_data_store->with_transaction([&] {
       return m_data_store->load_account_modification_request_status(id);
+    });
+  }
+
+  template<typename C, typename S, typename D, typename R> requires
+    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+      IsAdministrationDataStore<Beam::dereference_t<D>> &&
+        Beam::IsTimeClient<Beam::dereference_t<R>>
+  std::vector<AccountModificationRequest::Update>
+      AdministrationServlet<C, S, D, R>::
+        on_load_account_modification_request_updates(
+          ServiceProtocolClient& client, AccountModificationRequest::Id id) {
+    auto& session = client.get_session();
+    auto request = m_data_store->with_transaction([&] {
+      return m_data_store->load_account_modification_request(id);
+    });
+    if(!check_read_permission(session.get_account(), request.get_account())) {
+      boost::throw_with_location(
+        Beam::ServiceRequestException("Insufficient permissions."));
+    }
+    return m_data_store->with_transaction([&] {
+      return m_data_store->load_account_modification_request_updates(id);
     });
   }
 

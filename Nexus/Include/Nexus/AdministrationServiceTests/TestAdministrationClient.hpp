@@ -204,6 +204,13 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<AccountModificationRequest::Update> m_result;
       };
 
+      /** Records a call to load_account_modification_request_updates(). */
+      struct LoadAccountModificationRequestUpdatesOperation {
+        AccountModificationRequest::Id m_id;
+        Beam::Tests::ServiceResult<
+          std::vector<AccountModificationRequest::Update>> m_result;
+      };
+
       /** Records a call to approve_account_modification_request(). */
       struct ApproveAccountModificationRequestOperation {
         AccountModificationRequest::Id m_id;
@@ -260,6 +267,7 @@ namespace Nexus::Tests {
         LoadRiskModificationOperation,
         SubmitRiskModificationRequestOperation,
         LoadAccountModificationRequestStatusOperation,
+        LoadAccountModificationRequestUpdatesOperation,
         ApproveAccountModificationRequestOperation,
         RejectAccountModificationRequestOperation, LoadMessageOperation,
         LoadMessageIdsOperation,
@@ -330,6 +338,9 @@ namespace Nexus::Tests {
         boost::posix_time::ptime effective_date, const Message& comment);
       AccountModificationRequest::Update
         load_account_modification_request_status(
+          AccountModificationRequest::Id id);
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_updates(
           AccountModificationRequest::Id id);
       AccountModificationRequest::Update approve_account_modification_request(
         AccountModificationRequest::Id id,
@@ -554,6 +565,14 @@ namespace Nexus::Tests {
         AccountModificationRequest::Id id) {
     return m_queue.append_result<LoadAccountModificationRequestStatusOperation,
       AccountModificationRequest::Update>(id);
+  }
+
+  inline std::vector<AccountModificationRequest::Update>
+      TestAdministrationClient::load_account_modification_request_updates(
+        AccountModificationRequest::Id id) {
+    return m_queue.append_result<
+      LoadAccountModificationRequestUpdatesOperation,
+      std::vector<AccountModificationRequest::Update>>(id);
   }
 
   inline AccountModificationRequest::Update

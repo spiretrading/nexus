@@ -305,6 +305,16 @@ namespace Nexus {
       AccountModificationRequest::Update, (AccountModificationRequest::Id, id)),
 
     /**
+     * Loads all status updates of an account modification request.
+     * @param id The id of the request.
+     * @return The list of all updates for the request with the specified id.
+     */
+    (LoadAccountModificationRequestUpdatesService,
+      "Nexus.AdministrationServices.LoadAccountModificationRequestUpdatesService",
+      std::vector<AccountModificationRequest::Update>,
+      (AccountModificationRequest::Id, id)),
+
+    /**
      * Approves an account modification request.
      * @param id The id of the request.
      * @param effective_date The date when the modification should take effect.

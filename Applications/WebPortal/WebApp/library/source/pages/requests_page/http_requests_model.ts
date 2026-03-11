@@ -108,31 +108,41 @@ export class HttpRequestsModel extends RequestsModel {
   private async fetchDetail(id: number): Promise<RequestsModel.RequestDetail> {
     const admin = this.serviceClients.administrationClient;
     const request = await admin.loadAccountModificationRequest(id);
-    const status = await admin.loadAccountModificationRequestStatus(id);
+    const updates = await admin.loadAccountModificationRequestUpdates(id);
     const accountIdentity = await admin.loadAccountIdentity(request.account);
     const submitterIdentity =
       await admin.loadAccountIdentity(request.submissionAccount);
     const changes = await this.loadChanges(request);
-    const activityList = await this.loadActivityList(id);
-    if(status.status !== Nexus.AccountModificationRequest.Status.PENDING) {
-      const statusIdentity = await admin.loadAccountIdentity(status.account);
-      activityList.push({
-        account: toAccountProfile(status.account, statusIdentity),
-        activity: status.status,
-        timestamp: status.timestamp.toDate()
-      });
-    }
-    activityList.unshift({
+    const comments = await this.loadActivityList(id);
+    const statusEntries: RequestsModel.ActivityEntry[] = [];
+    statusEntries.push({
       account: toAccountProfile(request.submissionAccount, submitterIdentity),
       activity: Nexus.AccountModificationRequest.Status.PENDING,
       timestamp: request.timestamp.toDate()
     });
+    for(const update of updates) {
+      if(update.status !== Nexus.AccountModificationRequest.Status.PENDING) {
+        const updateIdentity = await admin.loadAccountIdentity(update.account);
+        statusEntries.push({
+          account: toAccountProfile(update.account, updateIdentity),
+          activity: update.status,
+          timestamp: update.timestamp.toDate()
+        });
+      }
+    }
+    const activityList = [...statusEntries, ...comments];
+    activityList.sort(
+      (a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    const latestUpdate = updates.length > 0 ? updates[updates.length - 1] :
+      null;
     return {
       id: request.id,
       category: request.type,
-      state: status.status,
+      state: latestUpdate?.status ??
+        Nexus.AccountModificationRequest.Status.PENDING,
       createdTime: request.timestamp.toDate(),
-      updateTime: status.timestamp.toDate(),
+      updateTime: latestUpdate?.timestamp.toDate() ??
+        request.timestamp.toDate(),
       account: toAccountProfile(request.account, accountIdentity),
       requester: toAccountProfile(request.submissionAccount, submitterIdentity),
       effectiveDate: request.effectiveDate,

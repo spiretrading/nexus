@@ -76,6 +76,9 @@ namespace Nexus {
       AccountModificationRequest::Update
         load_account_modification_request_status(
           AccountModificationRequest::Id id);
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_updates(
+          AccountModificationRequest::Id id);
       void store(AccountModificationRequest::Id id,
         const AccountModificationRequest::Update& status);
       Message::Id load_last_message_id();
@@ -445,6 +448,26 @@ namespace Nexus {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }
     return status;
+  }
+
+  template<typename C>
+  std::vector<AccountModificationRequest::Update>
+      SqlAdministrationDataStore<C>::load_account_modification_request_updates(
+        AccountModificationRequest::Id id) {
+    auto updates = std::vector<AccountModificationRequest::Update>();
+    try {
+      m_connection->execute(Viper::select(
+        get_account_modification_request_status_row(),
+        "account_modification_request_status", Viper::sym("id") == id,
+        Viper::order_by("sequence_number", Viper::Order::ASC),
+        std::back_inserter(updates)));
+      for(auto& update : updates) {
+        update.m_account = m_directory_entries.load(update.m_account.m_id);
+      }
+    } catch(const std::exception& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
+    return updates;
   }
 
   template<typename C>

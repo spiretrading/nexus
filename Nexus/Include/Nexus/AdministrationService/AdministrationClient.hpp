@@ -115,6 +115,9 @@ namespace Nexus {
       { client.load_account_modification_request_status(
           std::declval<AccountModificationRequest::Id>()) } ->
             std::same_as<AccountModificationRequest::Update>;
+      { client.load_account_modification_request_updates(
+          std::declval<AccountModificationRequest::Id>()) } ->
+            std::same_as<std::vector<AccountModificationRequest::Update>>;
       { client.approve_account_modification_request(
           std::declval<AccountModificationRequest::Id>(),
           std::declval<boost::posix_time::ptime>(),
@@ -389,6 +392,15 @@ namespace Nexus {
           AccountModificationRequest::Id id);
 
       /**
+       * Loads all status updates of an account modification request.
+       * @param id The id of the request.
+       * @return The list of all updates for the request with the specified id.
+       */
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_updates(
+          AccountModificationRequest::Id id);
+
+      /**
        * Approves an account modification request.
        * @param id The id of the request to approve.
        * @param effective_date The date when the modification should take effect.
@@ -503,6 +515,9 @@ namespace Nexus {
         virtual AccountModificationRequest::Update
           load_account_modification_request_status(
             AccountModificationRequest::Id id) = 0;
+        virtual std::vector<AccountModificationRequest::Update>
+          load_account_modification_request_updates(
+            AccountModificationRequest::Id id) = 0;
         virtual AccountModificationRequest::Update
           approve_account_modification_request(
             AccountModificationRequest::Id id,
@@ -586,6 +601,9 @@ namespace Nexus {
           const Message& comment) override;
         AccountModificationRequest::Update
           load_account_modification_request_status(
+            AccountModificationRequest::Id id) override;
+        std::vector<AccountModificationRequest::Update>
+          load_account_modification_request_updates(
             AccountModificationRequest::Id id) override;
         AccountModificationRequest::Update approve_account_modification_request(
           AccountModificationRequest::Id id,
@@ -785,6 +803,12 @@ namespace Nexus {
       AdministrationClient::load_account_modification_request_status(
         AccountModificationRequest::Id id) {
     return m_client->load_account_modification_request_status(id);
+  }
+
+  inline std::vector<AccountModificationRequest::Update>
+      AdministrationClient::load_account_modification_request_updates(
+        AccountModificationRequest::Id id) {
+    return m_client->load_account_modification_request_updates(id);
   }
 
   inline AccountModificationRequest::Update
@@ -1024,6 +1048,14 @@ namespace Nexus {
       WrappedAdministrationClient<C>::load_account_modification_request_status(
         AccountModificationRequest::Id id) {
     return m_client->load_account_modification_request_status(id);
+  }
+
+  template<typename C>
+  std::vector<AccountModificationRequest::Update> AdministrationClient::
+      WrappedAdministrationClient<C>::
+        load_account_modification_request_updates(
+          AccountModificationRequest::Id id) {
+    return m_client->load_account_modification_request_updates(id);
   }
 
   template<typename C>
