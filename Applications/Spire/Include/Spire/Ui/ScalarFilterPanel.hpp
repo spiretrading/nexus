@@ -1,6 +1,5 @@
 #ifndef SPIRE_SCALAR_FILTER_PANEL_HPP
 #define SPIRE_SCALAR_FILTER_PANEL_HPP
-#include <boost/signals2/connection.hpp>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/ScalarValueModelDecorator.hpp"
