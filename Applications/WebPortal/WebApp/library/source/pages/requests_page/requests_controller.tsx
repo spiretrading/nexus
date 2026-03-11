@@ -9,6 +9,7 @@ import { RequestsModel } from './requests_model';
 import { RequestsPage } from './requests_page';
 
 type Type = Nexus.AccountModificationRequest.Type;
+const Type = Nexus.AccountModificationRequest.Type;
 
 interface Properties extends Router.RouteComponentProps {
 
@@ -42,17 +43,14 @@ interface State {
 export class RequestsController extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
+    const parsed = parseSearch(props.location.search);
     this.state = {
       redirect: null,
       displayStatus: RequestDirectoryPage.DisplayStatus.IN_PROGRESS,
-      requestState: RequestsModel.RequestState.PENDING,
-      filters: {
-        query: '',
-        categories: new Set<Type>(),
-        sortKey: RequestsModel.SortField.LAST_UPDATED
-      },
-      filterCount: 0,
-      pageIndex: 0,
+      requestState: parsed.requestState,
+      filters: parsed.filters,
+      filterCount: computeFilterCount(parsed.filters),
+      pageIndex: parsed.pageIndex,
       response: {
         status: RequestsModel.ResponseStatus.IN_PROGRESS,
         facetCounts: {pending: 0, approved: 0, rejected: 0},
@@ -184,24 +182,20 @@ export class RequestsController extends React.Component<Properties, State> {
 
   private async resetAndLoad(): Promise<void> {
     await this.props.model.load();
-    const defaultFilters: RequestsModel.Filters = {
-      query: '',
-      categories: new Set<Type>(),
-      sortKey: RequestsModel.SortField.LAST_UPDATED
-    };
+    const parsed = parseSearch(this.props.location.search);
     this.setState({
       displayStatus: RequestDirectoryPage.DisplayStatus.IN_PROGRESS,
-      requestState: RequestsModel.RequestState.PENDING,
-      filters: defaultFilters,
-      filterCount: 0,
-      pageIndex: 0
+      requestState: parsed.requestState,
+      filters: parsed.filters,
+      filterCount: computeFilterCount(parsed.filters),
+      pageIndex: parsed.pageIndex
     });
     this.loadDirectory({
       scope: this.currentPage() === RequestsPage.Page.YOUR_REQUESTS ?
         RequestsModel.Scope.YOU : RequestsModel.Scope.GROUP,
-      requestState: RequestsModel.RequestState.PENDING,
-      filters: defaultFilters,
-      pageIndex: 0
+      requestState: parsed.requestState,
+      filters: parsed.filters,
+      pageIndex: parsed.pageIndex
     });
   }
 
@@ -212,6 +206,11 @@ export class RequestsController extends React.Component<Properties, State> {
       filters: submission.filters,
       filterCount: computeFilterCount(submission.filters),
       pageIndex: submission.pageIndex
+    });
+    const search = submissionToSearch(submission);
+    this.props.history.replace({
+      pathname: this.props.location.pathname,
+      search
     });
     this.loadDirectory(submission);
   }
@@ -284,6 +283,90 @@ export class RequestsController extends React.Component<Properties, State> {
 const DETAIL_STYLE: React.CSSProperties = {
   borderTop: '1px solid #E6E6E6'
 };
+
+const REQUEST_STATE_TO_PARAM: Record<RequestsModel.RequestState, string> = {
+  [RequestsModel.RequestState.PENDING]: 'pending',
+  [RequestsModel.RequestState.APPROVED]: 'approved',
+  [RequestsModel.RequestState.REJECTED]: 'rejected'
+};
+
+const PARAM_TO_REQUEST_STATE: Record<string, RequestsModel.RequestState> = {
+  'pending': RequestsModel.RequestState.PENDING,
+  'approved': RequestsModel.RequestState.APPROVED,
+  'rejected': RequestsModel.RequestState.REJECTED
+};
+
+const SORT_KEY_TO_PARAM: Record<RequestsModel.SortField, string> = {
+  [RequestsModel.SortField.LAST_UPDATED]: 'updated',
+  [RequestsModel.SortField.CREATED]: 'created',
+  [RequestsModel.SortField.ACCOUNT]: 'account',
+  [RequestsModel.SortField.REQUESTER]: 'requester',
+  [RequestsModel.SortField.EFFECTIVE_DATE]: 'date'
+};
+
+const PARAM_TO_SORT_KEY: Record<string, RequestsModel.SortField> = {
+  'updated': RequestsModel.SortField.LAST_UPDATED,
+  'created': RequestsModel.SortField.CREATED,
+  'account': RequestsModel.SortField.ACCOUNT,
+  'requester': RequestsModel.SortField.REQUESTER,
+  'date': RequestsModel.SortField.EFFECTIVE_DATE
+};
+
+function submissionToSearch(submission: RequestsModel.Submission): string {
+  const params = new URLSearchParams();
+  if(submission.requestState !== RequestsModel.RequestState.PENDING) {
+    params.set('status', REQUEST_STATE_TO_PARAM[submission.requestState]);
+  }
+  if(submission.filters.query) {
+    params.set('q', submission.filters.query);
+  }
+  if(submission.filters.categories.size > 0) {
+    params.set('cat', [...submission.filters.categories].join(','));
+  }
+  if(submission.filters.sortKey !== RequestsModel.SortField.LAST_UPDATED) {
+    params.set('sort', SORT_KEY_TO_PARAM[submission.filters.sortKey]);
+  }
+  if(submission.filters.startDate) {
+    params.set('from', submission.filters.startDate.toJson());
+  }
+  if(submission.filters.endDate) {
+    params.set('to', submission.filters.endDate.toJson());
+  }
+  if(submission.pageIndex > 0) {
+    params.set('page', submission.pageIndex.toString());
+  }
+  const str = params.toString();
+  return str ? `?${str}` : '';
+}
+
+function parseSearch(search: string): {
+    requestState: RequestsModel.RequestState;
+    filters: RequestsModel.Filters;
+    pageIndex: number;
+  } {
+  const params = new URLSearchParams(search);
+  const requestState =
+    PARAM_TO_REQUEST_STATE[params.get('status')] ??
+    RequestsModel.RequestState.PENDING;
+  const query = params.get('q') ?? '';
+  const categories = new Set<Type>(
+    (params.get('cat') ?? '').split(',')
+      .map(s => parseInt(s, 10))
+      .filter(n => !isNaN(n) && n >= Type.ENTITLEMENTS && n <= Type.COMPLIANCE));
+  const sortKey =
+    PARAM_TO_SORT_KEY[params.get('sort')] ??
+    RequestsModel.SortField.LAST_UPDATED;
+  const startDate = params.has('from') ?
+    Beam.Date.fromJson(params.get('from')) : undefined;
+  const endDate = params.has('to') ?
+    Beam.Date.fromJson(params.get('to')) : undefined;
+  const pageIndex = parseInt(params.get('page'), 10) || 0;
+  return {
+    requestState,
+    filters: {query, categories, sortKey, startDate, endDate},
+    pageIndex
+  };
+}
 
 function computeFilterCount(filters: RequestsModel.Filters): number {
   let count = filters.categories.size > 0 ? 1 : 0;
