@@ -557,16 +557,16 @@ namespace {
     auto filter_slot = profile.make_event_slot<QString>("CurrentSignal");
     panel->get_current()->connect_update_signal(
       [=] (const typename Panel::Range& submission) {
-      auto to_string = [&] (const auto& value) {
-        if(value) {
-          return to_text(*value);
-        }
-        return QString("null");
-      };
-      filter_slot(QString("%1, %2").
-        arg(to_string(submission.m_min)).
-        arg(to_string(submission.m_max)));
-    });
+        auto to_string = [&] (const auto& value) {
+          if(value) {
+            return to_text(*value);
+          }
+          return QString("null");
+        };
+        filter_slot(QString("%1, %2").
+          arg(to_string(submission.m_min)).
+          arg(to_string(submission.m_max)));
+      });
     return panel;
   }
 
