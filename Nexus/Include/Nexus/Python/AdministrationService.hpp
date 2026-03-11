@@ -98,6 +98,8 @@ namespace Nexus::Python {
         }).
       def("load_account_modification_request_status",
         &C::load_account_modification_request_status).
+      def("load_account_modification_request_updates",
+        &C::load_account_modification_request_updates).
       def("approve_account_modification_request",
         [] (C& self, AccountModificationRequest::Id id,
             boost::posix_time::ptime effective_date, const Message& comment) {
@@ -168,6 +170,8 @@ namespace Nexus::Python {
         AccountModificationRequest::Id, const Message&>(&D::store)).
       def("load_account_modification_request_status",
         &D::load_account_modification_request_status).
+      def("load_account_modification_request_updates",
+        &D::load_account_modification_request_updates).
       def("store", pybind11::overload_cast<AccountModificationRequest::Id,
         const AccountModificationRequest::Update&>(&D::store)).
       def("load_last_message_id", &D::load_last_message_id).

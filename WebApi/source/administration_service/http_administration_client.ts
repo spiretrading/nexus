@@ -240,6 +240,16 @@ export class HttpAdministrationClient extends AdministrationClient {
     return AccountModificationRequest.Update.fromJson(response);
   }
 
+  public async loadAccountModificationRequestUpdates(id: number):
+      Promise<AccountModificationRequest.Update[]> {
+    const response = await Beam.post(
+      '/api/administration_service/load_account_modification_request_updates',
+      {
+        id: id
+      });
+    return response.map(AccountModificationRequest.Update.fromJson);
+  }
+
   public async approveAccountModificationRequest(id: number,
       comment: Message, effectiveDate: Beam.Date):
       Promise<AccountModificationRequest.Update> {

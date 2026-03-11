@@ -58,6 +58,9 @@ namespace Nexus {
       AccountModificationRequest::Update
         load_account_modification_request_status(
           AccountModificationRequest::Id id);
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_updates(
+          AccountModificationRequest::Id id);
       void store(AccountModificationRequest::Id id,
         const AccountModificationRequest::Update& status);
       Message::Id load_last_message_id();
@@ -280,6 +283,16 @@ namespace Nexus {
       return AccountModificationRequest::Update();
     }
     return i->second.back();
+  }
+
+  inline std::vector<AccountModificationRequest::Update>
+      LocalAdministrationDataStore::load_account_modification_request_updates(
+        AccountModificationRequest::Id id) {
+    auto i = m_account_modification_request_updates.find(id);
+    if(i == m_account_modification_request_updates.end()) {
+      return {};
+    }
+    return i->second;
   }
 
   inline void LocalAdministrationDataStore::store(

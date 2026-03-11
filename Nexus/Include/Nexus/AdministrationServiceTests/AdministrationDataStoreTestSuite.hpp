@@ -293,6 +293,35 @@ namespace Nexus::Tests {
       REQUIRE(status == AccountModificationRequest::Update());
     }
 
+    SUBCASE("load_account_modification_request_updates") {
+      auto request_id = 1;
+      auto admin_account = DirectoryEntry::make_account(123, "admin");
+      auto manager_account = DirectoryEntry::make_account(456, "manager");
+      auto first_update = AccountModificationRequest::Update(
+        AccountModificationRequest::Status::PENDING, admin_account, 1,
+        time_from_string("2024-07-05 14:00:00"));
+      auto second_update = AccountModificationRequest::Update(
+        AccountModificationRequest::Status::GRANTED, manager_account, 2,
+        time_from_string("2024-07-05 14:05:00"));
+      data_store.with_transaction([&] {
+        data_store.store(request_id, first_update);
+        data_store.store(request_id, second_update);
+      });
+      auto updates = data_store.with_transaction([&] {
+        return data_store.load_account_modification_request_updates(request_id);
+      });
+      REQUIRE(updates.size() == 2);
+      REQUIRE(updates[0] == first_update);
+      REQUIRE(updates[1] == second_update);
+    }
+
+    SUBCASE("load_non_existent_updates") {
+      auto updates = data_store.with_transaction([&] {
+        return data_store.load_account_modification_request_updates(999);
+      });
+      REQUIRE(updates.empty());
+    }
+
     SUBCASE("store_and_load_message") {
       auto request_id = 1;
       auto account = DirectoryEntry::make_account(123, "user1");

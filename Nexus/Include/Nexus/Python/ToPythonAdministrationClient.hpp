@@ -87,6 +87,9 @@ namespace Nexus {
       AccountModificationRequest::Update
         load_account_modification_request_status(
           AccountModificationRequest::Id id);
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_updates(
+          AccountModificationRequest::Id id);
       AccountModificationRequest::Update approve_account_modification_request(
         AccountModificationRequest::Id id,
         boost::posix_time::ptime effective_date, const Message& comment);
@@ -356,6 +359,15 @@ namespace Nexus {
         AccountModificationRequest::Id id) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_account_modification_request_status(id);
+  }
+
+  template<IsAdministrationClient C>
+  std::vector<AccountModificationRequest::Update>
+      ToPythonAdministrationClient<C>::
+        load_account_modification_request_updates(
+          AccountModificationRequest::Id id) {
+    auto release = Beam::Python::GilRelease();
+    return m_client->load_account_modification_request_updates(id);
   }
 
   template<IsAdministrationClient C>
