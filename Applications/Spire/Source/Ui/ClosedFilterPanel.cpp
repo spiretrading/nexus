@@ -2,7 +2,6 @@
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QCoreApplication>
 #include <QEvent>
-#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
@@ -12,8 +11,8 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
-#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
