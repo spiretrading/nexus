@@ -1,16 +1,13 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize, LoadingPage, LoadingState } from '../../..';
+import { LoadingPage, LoadingState } from '../../..';
 import { RiskModel } from './risk_model';
 import { RiskPage } from './risk_page';
 
 interface Properties {
-  
+
   /** The database of currencies */
   currencyDatabase: Nexus.CurrencyDatabase;
-
-  /** The size at which the component should be displayed at. */
-  displaySize: DisplaySize;
 
   /** The model representing an account's risk settings. */
   model: RiskModel;
@@ -51,7 +48,7 @@ export class RiskController extends React.Component<Properties, State> {
     return <RiskPage comment={this.state.comment}
       parameters={this.state.parameters}
       currencyDatabase={this.props.currencyDatabase}
-      displaySize={this.props.displaySize} roles={this.props.roles}
+      roles={this.props.roles}
       canSubmit={this.state.canSubmit} isError={this.state.hasSubmissionError}
       status={this.state.status} onComment={this.onComment}
       onParameters={this.onParameters} onSubmit={this.onSubmit}/>;  
@@ -77,10 +74,7 @@ export class RiskController extends React.Component<Properties, State> {
   }
 
   private onComment = (comment: string) => {
-    this.setState({
-      canSubmit: true,
-      comment
-    });
+    this.setState({comment});
   }
 
   private onParameters = (parameters: Nexus.RiskParameters) => {
@@ -104,6 +98,7 @@ export class RiskController extends React.Component<Properties, State> {
       });
     } catch(e) {
       this.setState({
+        canSubmit: true,
         hasSubmissionError: true,
         status: e.toString()
       });

@@ -3,13 +3,9 @@ import { Center, HBoxLayout, Padding, VBoxLayout } from 'dali';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CurrencySelectionField, DisplaySize, IntegerField,
-  MoneyField } from '../../..';
+import { CurrencySelectionField, IntegerField, MoneyField } from '../../..';
 
 interface Properties {
-
-  /** The type of display to render on. */
-  displaySize: DisplaySize;
 
   /** The parameters to display. */
   parameters: Nexus.RiskParameters;
@@ -24,18 +20,8 @@ interface Properties {
   onChange?: (parameters: Nexus.RiskParameters) => void;
 }
 
-enum TimeUnit {
-  SECONDS,
-  MINUTES,
-  HOURS
-}
-
 /** Implements a React component to display a set of RiskParameters. */
 export class RiskParametersView extends React.Component<Properties> {
-  public static readonly defaultProps = {
-    onChange: () => {}
-  }
-
   public render(): JSX.Element {
     const splitTransitionTime = this.props.parameters.transitionTime.split();
     const currencySign = this.props.currencyDatabase.fromCurrency(
@@ -75,8 +61,7 @@ export class RiskParametersView extends React.Component<Properties> {
               <IntegerField min={0} value={splitTransitionTime.hours}
                 padding={2} className={
                   css(RiskParametersView.STYLE.inputBox)}
-                onChange={(value) => this.onTransitionTimeChange(
-                  value, TimeUnit.HOURS)}/>
+                onChange={this.onHoursChange}/>
               <Padding size='10px'/>
               <span className={
                   css(RiskParametersView.
@@ -94,8 +79,7 @@ export class RiskParametersView extends React.Component<Properties> {
               <IntegerField min={0} max={59} value={
                 splitTransitionTime.minutes} padding={2}
                 className={css(RiskParametersView.STYLE.inputBox)}
-                onChange={(value) => this.onTransitionTimeChange(
-                  value, TimeUnit.MINUTES)}/>
+                onChange={this.onMinutesChange}/>
               <Padding size='10px'/>
               <span className={
                   css(RiskParametersView.
@@ -113,8 +97,7 @@ export class RiskParametersView extends React.Component<Properties> {
               <IntegerField min={0} max={59} value={
                 splitTransitionTime.seconds} padding={2}
                 className={css(RiskParametersView.STYLE.inputBox)}
-                onChange={(value) => this.onTransitionTimeChange(
-                  value, TimeUnit.SECONDS)}/>
+                onChange={this.onSecondsChange}/>
               <Padding size='10px'/>
               <span className={
                   css(RiskParametersView.TRANSITION_TIME_STYLE.label)}>
@@ -130,51 +113,45 @@ export class RiskParametersView extends React.Component<Properties> {
   private onCurrencyChange = (value: Nexus.Currency) => {
     const newParameters = this.props.parameters.clone();
     newParameters.currency = value;
-    this.props.onChange(newParameters);
+    this.props.onChange?.(newParameters);
   }
 
   private onBuyingPowerChange = (value: Nexus.Money) => {
     const newParameters = this.props.parameters.clone();
     newParameters.buyingPower = value;
-    this.props.onChange(newParameters);
+    this.props.onChange?.(newParameters);
   }
 
   private onNetLossChange = (value: Nexus.Money) => {
     const newParameters = this.props.parameters.clone();
     newParameters.netLoss = value;
-    this.props.onChange(newParameters);
+    this.props.onChange?.(newParameters);
   }
 
-  private onTransitionTimeChange = (value: number, timeUnit: TimeUnit) => {
-    const timeJSON = this.props.parameters.transitionTime.split();
-    const newTimeJSON = (() => {
-      switch (timeUnit) {
-        case TimeUnit.HOURS:
-          return {
-            hours: value,
-            minutes: timeJSON.minutes,
-            seconds: timeJSON.seconds
-          };
-        case TimeUnit.MINUTES:
-          return {
-            hours: timeJSON.hours,
-            minutes: value,
-            seconds: timeJSON.seconds
-          };
-        case TimeUnit.SECONDS:
-          return {
-            hours: timeJSON.hours,
-            minutes: timeJSON.minutes,
-            seconds: value
-          };
-        }
-    })();
+  private onHoursChange = (value: number) => {
+    this.onTransitionTimeChange({hours: value});
+  }
+
+  private onMinutesChange = (value: number) => {
+    this.onTransitionTimeChange({minutes: value});
+  }
+
+  private onSecondsChange = (value: number) => {
+    this.onTransitionTimeChange({seconds: value});
+  }
+
+  private onTransitionTimeChange(
+      override: Partial<{hours: number; minutes: number; seconds: number}>) {
+    const time = {
+      ...this.props.parameters.transitionTime.split(),
+      ...override
+    };
     const newParameters = this.props.parameters.clone();
     newParameters.transitionTime = Beam.Duration.HOUR.multiply(
-      newTimeJSON.hours).add(Beam.Duration.MINUTE.multiply(
-      newTimeJSON.minutes)).add(Beam.Duration.SECOND.multiply(
-      newTimeJSON.seconds));
-    this.props.onChange(newParameters);
+      time.hours).add(Beam.Duration.MINUTE.multiply(
+      time.minutes)).add(Beam.Duration.SECOND.multiply(
+      time.seconds));
+    this.props.onChange?.(newParameters);
   }
 
   private static TRANSITION_TIME_STYLE = StyleSheet.create({
@@ -200,34 +177,26 @@ export class RiskParametersView extends React.Component<Properties> {
       border: '1px solid #C8C8C8',
       ':focus': {
         border: '1px solid #684BC7',
-        '-webkit-box-shadow': '0px 0px 1px 0px #684BC7',
-        '-moz-box-shadow': '0px 0px 1px 0px #684BC7',
         boxShadow: '0px 0px 1px 0px #684BC7'
       }
     }
   });
 }
 
-interface LabelProperties {
-  text: string;
+function Label(props: {text: string}): JSX.Element {
+  return (
+    <HBoxLayout width='100%'>
+      <span className={css(LABEL_STYLE.text)}>
+        {props.text}
+      </span>
+      <Padding/>
+    </HBoxLayout>);
 }
 
-class Label extends React.Component<LabelProperties> {
-  public render(): JSX.Element {
-    return (
-      <HBoxLayout width='100%'>
-        <span className={css(Label.STYLE.text)}>
-          {this.props.text}
-        </span>
-        <Padding/>
-      </HBoxLayout>);
+const LABEL_STYLE = StyleSheet.create({
+  text: {
+    font: '400 14px Roboto',
+    color: '#333333',
+    whiteSpace: 'nowrap'
   }
-
-  private static STYLE = StyleSheet.create({
-    text: {
-      font: '400 14px Roboto',
-      color: '#333333',
-      whiteSpace: 'nowrap'
-    }
-  });
-}
+});
