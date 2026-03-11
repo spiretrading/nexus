@@ -44,13 +44,13 @@ namespace Spire {
 
       /**
        * Constructs a ScalarFilterPanel.
-       * @param range The range of permissible values.
-       * @param parent The parent widget that shows the panel.
+       * @param current The current value model.
+       * @param parent The parent widget.
        */
       explicit ScalarFilterPanel(
         std::shared_ptr<RangeModel> current, QWidget* parent = nullptr);
 
-      /** Returns the permissible range of values. */
+      /** Returns the current value model. */
       const std::shared_ptr<RangeModel>& get_current() const;
 
     private:
