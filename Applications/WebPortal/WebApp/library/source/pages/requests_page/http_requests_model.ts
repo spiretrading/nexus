@@ -114,6 +114,19 @@ export class HttpRequestsModel extends RequestsModel {
       await admin.loadAccountIdentity(request.submissionAccount);
     const changes = await this.loadChanges(request);
     const activityList = await this.loadActivityList(id);
+    if(status.status !== Nexus.AccountModificationRequest.Status.PENDING) {
+      const statusIdentity = await admin.loadAccountIdentity(status.account);
+      activityList.push({
+        account: toAccountProfile(status.account, statusIdentity),
+        activity: status.status,
+        timestamp: status.timestamp.toDate()
+      });
+    }
+    activityList.unshift({
+      account: toAccountProfile(request.submissionAccount, submitterIdentity),
+      activity: Nexus.AccountModificationRequest.Status.PENDING,
+      timestamp: request.timestamp.toDate()
+    });
     return {
       id: request.id,
       category: request.type,
