@@ -115,7 +115,7 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
             onClick={this.onOpenFilterModal}/>
         </div>
         <div className={css(STYLES.narrowSegmentGap)}/>
-        {this.renderSegmentedControl('request-state-narrow')}
+        {this.renderSegmentedControl('request-state-narrow', false)}
       </div>);
   }
 
@@ -160,7 +160,7 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
       `Filters (${this.props.filterCount})` : 'Filters';
     return (
       <div className={css(STYLES.controlsSection)}>
-        {this.renderSegmentedControl('request-state')}
+        {this.renderSegmentedControl('request-state', true)}
         <div className={css(STYLES.controlsSectionGap)}/>
         <div className={css(STYLES.sortRow)}>
           <label className={css(STYLES.sortLabel)}
@@ -191,24 +191,24 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
       </div>);
   }
 
-  private renderSegmentedControl(name: string): JSX.Element {
+  private renderSegmentedControl(
+      name: string, showBadge: boolean): JSX.Element {
+    const badge = (count: number) =>
+      showBadge ? this.formatBadge(count) : undefined;
     return (
       <SegmentedControl name={name}>
         <SegmentButton label='Pending'
-          badge={this.formatBadge(
-            this.props.response.facetCounts.pending)}
+          badge={badge(this.props.response.facetCounts.pending)}
           isChecked={this.props.requestState ===
             RequestsModel.RequestState.PENDING}
           onChange={this.onSelectPending}/>
         <SegmentButton label='Approved'
-          badge={this.formatBadge(
-            this.props.response.facetCounts.approved)}
+          badge={badge(this.props.response.facetCounts.approved)}
           isChecked={this.props.requestState ===
             RequestsModel.RequestState.APPROVED}
           onChange={this.onSelectApproved}/>
         <SegmentButton label='Rejected'
-          badge={this.formatBadge(
-            this.props.response.facetCounts.rejected)}
+          badge={badge(this.props.response.facetCounts.rejected)}
           isChecked={this.props.requestState ===
             RequestsModel.RequestState.REJECTED}
           onChange={this.onSelectRejected}/>
