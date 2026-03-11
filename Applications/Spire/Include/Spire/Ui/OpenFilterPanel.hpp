@@ -200,8 +200,10 @@ namespace Details {
   template<typename T>
   bool OpenFilterPanel<T>::eventFilter(QObject* watched, QEvent* event) {
     if(watched == m_body && event->type() == QEvent::Resize) {
-      m_tag_combo_box->setMaximumWidth(
-        m_body->width() - m_button_container->width() - scale_width(18));
+      auto available_width =
+        m_body->width() - m_button_container->width() - scale_width(18);
+      m_tag_combo_box->setMaximumWidth(std::max(0,
+        std::max(m_tag_combo_box->minimumWidth(), available_width)));
     }
     return QWidget::eventFilter(watched, event);
   }
