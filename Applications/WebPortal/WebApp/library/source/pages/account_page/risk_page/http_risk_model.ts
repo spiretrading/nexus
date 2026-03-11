@@ -39,7 +39,7 @@ export class HttpRiskModel extends RiskModel {
     const modification = new Nexus.RiskModification(riskParameters);
     await this.serviceClients.administrationClient.
       submitRiskModificationRequest(this.account, modification,
-      Nexus.Message.fromPlainText(comment));
+      Nexus.Message.fromPlainText(comment), Beam.Date.NOT_A_DATE);
   }
 
   private model: LocalRiskModel;

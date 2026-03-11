@@ -40,7 +40,7 @@ export class HttpEntitlementsModel extends EntitlementsModel {
     const modification = new Nexus.EntitlementModification(entitlements);
     await this.serviceClients.administrationClient.
       submitEntitlementModificationRequest(this.account, modification,
-      Nexus.Message.fromPlainText(comment));
+      Nexus.Message.fromPlainText(comment), Beam.Date.NOT_A_DATE);
   }
 
   private model: LocalEntitlementsModel;
