@@ -654,8 +654,8 @@ HttpResponse AdministrationWebServlet::
   auto params = session->shuttle_parameters<Parameters>(request);
   auto& clients = session->get_clients();
   auto modification = clients.get_administration_client().submit(
-    params.m_account, params.m_modification, params.m_comment,
-    params.m_effective_date);
+    params.m_account, params.m_modification, params.m_effective_date,
+    params.m_comment);
   session->shuttle_response(modification, out(response));
   return response;
 }
@@ -707,8 +707,8 @@ HttpResponse AdministrationWebServlet::on_submit_risk_modification_request(
   auto params = session->shuttle_parameters<Parameters>(request);
   auto& clients = session->get_clients();
   auto modification = clients.get_administration_client().submit(
-    params.m_account, params.m_modification, params.m_comment,
-    params.m_effective_date);
+    params.m_account, params.m_modification, params.m_effective_date,
+    params.m_comment);
   session->shuttle_response(modification, out(response));
   return response;
 }
@@ -759,7 +759,7 @@ HttpResponse AdministrationWebServlet::on_approve_account_modification_request(
   auto& clients = session->get_clients();
   auto update =
     clients.get_administration_client().approve_account_modification_request(
-      params.m_id, params.m_comment, params.m_effective_date);
+      params.m_id, params.m_effective_date, params.m_comment);
   session->shuttle_response(update, out(response));
   return response;
 }
