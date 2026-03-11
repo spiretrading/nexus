@@ -44,7 +44,7 @@ export class RequestSortSelect extends React.Component<Properties> {
 const STYLES = StyleSheet.create({
   select: {
     boxSizing: 'border-box',
-    width: '246px',
+    width: '100%',
     height: '34px',
     backgroundColor: '#F8F8F8',
     border: '1px solid #C8C8C8',

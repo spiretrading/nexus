@@ -71,10 +71,8 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
         <main ref={this.mainRef} className={css(STYLES.main)}>
           {this.renderToolbar()}
           <div className={css(STYLES.contentGap)}/>
-          <div ref={this.scrollRef} className={css(STYLES.scrollArea)}>
-            {this.renderRequestContent()}
-            {this.renderPaginationSection()}
-          </div>
+          {this.renderRequestContent()}
+          {this.renderPaginationSection()}
         </main>
       </PageLayout>);
   }
@@ -137,6 +135,7 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
     return (
       <div className={css(STYLES.querySection)}>
         <FilterInput value={this.props.filters.query}
+          placeholder='Filter requests'
           onChange={this.onQueryChange}/>
         <div className={css(STYLES.querySectionGap)}/>
         <div className={css(STYLES.chipRow)}>
@@ -176,6 +175,7 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
             <IconLabelButton
               aria-label='Filters'
               variant={IconLabelButton.Variant.ICON_LABEL}
+              style={{width: '120px'}}
               icon='resources/requests_page/filters.svg'
               label={filtersLabel}
               onClick={this.onOpenFilterModal}/>
@@ -403,12 +403,11 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
   }
 
   private onPageNavigate = (pageIndex: number) => {
-    this.scrollRef.current?.scrollTo(0, 0);
+    this.mainRef.current?.scrollTo(0, 0);
     this.submit(this.props.requestState, pageIndex);
   }
 
   private mainRef = React.createRef<HTMLElement>();
-  private scrollRef = React.createRef<HTMLDivElement>();
 
   private submit(requestState: RequestsModel.RequestState,
       pageIndex?: number) {
@@ -438,20 +437,14 @@ const STYLES = StyleSheet.create({
   main: {
     flex: '1 1 auto',
     minHeight: 0,
-    display: 'flex',
-    flexDirection: 'column' as 'column',
+    overflowY: 'auto' as 'auto',
     paddingTop: '18px',
+    paddingBottom: '40px',
     backgroundColor: '#FFFFFF',
     fontFamily: "'Roboto', system-ui, sans-serif",
     fontWeight: 400,
     color: '#333333',
     containerType: 'inline-size'
-  },
-  scrollArea: {
-    flex: '1 1 auto',
-    minHeight: 0,
-    overflowY: 'auto' as 'auto',
-    paddingBottom: '40px'
   },
   toolbar: {
     padding: '0 18px'
@@ -493,7 +486,8 @@ const STYLES = StyleSheet.create({
     flexShrink: 0
   },
   wideControlsColumn: {
-    flex: '1 1 0'
+    width: '384px',
+    flexShrink: 0
   },
   querySection: {
     display: 'flex',

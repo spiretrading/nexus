@@ -1,3 +1,4 @@
+import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import { DisplaySize } from '..';
 
@@ -33,17 +34,20 @@ export class Modal extends React.Component<Properties> {
     if(this.props.displaySize === DisplaySize.SMALL) {
       return (
         <div style={Modal.STYLE.wrapper}>
-          <div style={Modal.STYLE.modalSmall}>
+          <div className={css(STYLES.modalBody)}
+              style={Modal.STYLE.modalSmall}>
             {header}
             {this.props.children}
           </div>
+          <div style={Modal.STYLE.overlay} onClick={this.props.onClose}/>
         </div>);
     }
     return (
       <div style={Modal.STYLE.wrapper}>
         <div style={Modal.STYLE.modalWrapper} onClick={this.outOfBoundsClick}>
           <div style={Modal.STYLE.filler} onClick={this.props.onClose}/>
-          <div style={Modal.STYLE.modalLarge}>
+          <div className={css(STYLES.modalBody)}
+              style={Modal.STYLE.modalLarge}>
             {header}
             {this.props.children}
           </div>
@@ -100,11 +104,10 @@ export class Modal extends React.Component<Properties> {
     modalSmall: {
       position: 'fixed',
       top: 0,
-      left: 0,
       right: 0,
       bottom: 0,
+      width: '282px',
       boxSizing: 'border-box',
-      backgroundColor: '#FFFFFF',
       display: 'flex',
       flexDirection: 'column',
       overflow: 'auto',
@@ -113,8 +116,6 @@ export class Modal extends React.Component<Properties> {
     } as React.CSSProperties,
     modalLarge: {
       boxSizing: 'border-box',
-      backgroundColor: '#FFFFFF',
-      boxShadow: '0px 0px 6px #00000066',
       flexGrow: 0,
       flexShrink: 0
     } as React.CSSProperties,
@@ -139,3 +140,20 @@ export class Modal extends React.Component<Properties> {
     } as React.CSSProperties
   };
 }
+
+const STYLES = StyleSheet.create({
+  modalBody: {
+    backgroundColor: '#FFFFFF',
+    boxShadow: '-3px 0 6px rgb(0 0 0 / 40%)',
+    borderRadius: '1px',
+    color: '#333333',
+    fontFamily: "'Roboto', system-ui, sans-serif",
+    transition: 'opacity 200ms ease-in',
+    '@media (min-width: 768px)': {
+      boxShadow: '0 0 6px rgb(0 0 0 / 40%)'
+    },
+    '@starting-style': {
+      opacity: 0
+    }
+  }
+});
