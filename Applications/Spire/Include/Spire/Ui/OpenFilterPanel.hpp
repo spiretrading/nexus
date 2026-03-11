@@ -4,8 +4,11 @@
 #include "Spire/Spire/AssociativeValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/FilterPanel.hpp"
+#include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/RegionBox.hpp"
 #include "Spire/Ui/TagComboBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Details {
@@ -33,10 +36,10 @@ namespace Details {
       return combo_box.get_current()->connect_operation_signal(
         [=] (const auto& operation) {
           visit(operation,
-            [&] (const ListModel<QString>::AddOperation& operation) {
+            [&] (const ListModel<T>::AddOperation& operation) {
               slot();
             },
-            [&] (const ListModel<QString>::RemoveOperation& operation) {
+            [&] (const ListModel<T>::RemoveOperation& operation) {
               slot();
             });
         });
