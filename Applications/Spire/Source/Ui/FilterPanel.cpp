@@ -22,7 +22,7 @@ FilterPanel::FilterPanel(QWidget& body, QWidget* parent)
     image_from_svg(":/Icons/reset.svg", scale(26, 26)));
   reset_button->setFixedSize(scale(26, 26));
   reset_button->connect_click_signal([=] { m_reset_signal(); });
-  layout->addWidget(reset_button);
+  layout->addWidget(reset_button, 0, Qt::AlignTop);
   auto box = new Box(box_body);
   enclose(*this, *box);
   proxy_style(*this, *box);
