@@ -116,7 +116,7 @@ export class IconLabelButton extends React.Component<Properties, State> {
     button: {
       display: 'inline-flex',
       alignItems: 'center',
-      justifyContent: 'center',
+      justifyContent: 'flex-start',
       height: '34px',
       padding: 0,
       border: '1px solid transparent',
