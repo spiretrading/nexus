@@ -160,8 +160,8 @@ namespace Details {
     m_body = new QWidget();
     m_body->installEventFilter(this);
     auto body_layout = make_hbox_layout(m_body);
-    body_layout->addWidget(m_button_container);
     body_layout->setSpacing(scale_width(18));
+    body_layout->addWidget(m_button_container);
     body_layout->addWidget(m_tag_combo_box);
     auto panel = new FilterPanel(*m_body);
     enclose(*this, *panel);

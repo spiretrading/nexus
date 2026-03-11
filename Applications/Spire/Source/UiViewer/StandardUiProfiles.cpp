@@ -2997,9 +2997,8 @@ UiProfile Spire::make_open_filter_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto profile = UiProfile("OpenFilterPanel", properties, [] (auto& profile) {
-    auto tag_combo_box = new TagComboBox(populate_tag_combo_box_model());
-    auto filter_panel = new OpenFilterPanel(*tag_combo_box);
-    auto& box = filter_panel->get_tag_combo_box();
+    auto filter_panel =
+      new OpenFilterPanel(*new TagComboBox(populate_tag_combo_box_model()));
     apply_widget_properties(filter_panel, profile.get_properties());
     auto submit_slot = profile.make_event_slot<QString>("Submit");
     filter_panel->connect_submit_signal(
@@ -3398,9 +3397,8 @@ UiProfile Spire::make_region_filter_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto profile = UiProfile("RegionFilterPanel", properties, [] (auto& profile) {
-    auto query_model = populate_region_box_model();
-    auto region_box = new RegionBox(query_model);
-    auto filter_panel = new RegionFilterPanel(*region_box);
+    auto filter_panel =
+      new RegionFilterPanel(*new RegionBox(populate_region_box_model()));
     apply_widget_properties(filter_panel, profile.get_properties());
     auto submit_slot = profile.make_event_slot<QString>("Submit");
     filter_panel->connect_submit_signal(
