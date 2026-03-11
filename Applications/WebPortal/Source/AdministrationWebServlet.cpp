@@ -636,11 +636,13 @@ HttpResponse AdministrationWebServlet::
     DirectoryEntry m_account;
     EntitlementModification m_modification;
     Message m_comment;
+    posix_time::ptime m_effective_date;
 
     void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.shuttle("account", m_account);
       shuttle.shuttle("modification", m_modification);
       shuttle.shuttle("comment", m_comment);
+      shuttle.shuttle("effective_date", m_effective_date);
     }
   };
   auto response = HttpResponse();
@@ -652,7 +654,8 @@ HttpResponse AdministrationWebServlet::
   auto params = session->shuttle_parameters<Parameters>(request);
   auto& clients = session->get_clients();
   auto modification = clients.get_administration_client().submit(
-    params.m_account, params.m_modification, params.m_comment);
+    params.m_account, params.m_modification, params.m_comment,
+    params.m_effective_date);
   session->shuttle_response(modification, out(response));
   return response;
 }
@@ -686,11 +689,13 @@ HttpResponse AdministrationWebServlet::on_submit_risk_modification_request(
     DirectoryEntry m_account;
     RiskModification m_modification;
     Message m_comment;
+    posix_time::ptime m_effective_date;
 
     void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.shuttle("account", m_account);
       shuttle.shuttle("modification", m_modification);
       shuttle.shuttle("comment", m_comment);
+      shuttle.shuttle("effective_date", m_effective_date);
     }
   };
   auto response = HttpResponse();
@@ -702,7 +707,8 @@ HttpResponse AdministrationWebServlet::on_submit_risk_modification_request(
   auto params = session->shuttle_parameters<Parameters>(request);
   auto& clients = session->get_clients();
   auto modification = clients.get_administration_client().submit(
-    params.m_account, params.m_modification, params.m_comment);
+    params.m_account, params.m_modification, params.m_comment,
+    params.m_effective_date);
   session->shuttle_response(modification, out(response));
   return response;
 }
@@ -735,10 +741,12 @@ HttpResponse AdministrationWebServlet::on_approve_account_modification_request(
   struct Parameters {
     AccountModificationRequest::Id m_id;
     Message m_comment;
+    posix_time::ptime m_effective_date;
 
     void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.shuttle("id", m_id);
       shuttle.shuttle("comment", m_comment);
+      shuttle.shuttle("effective_date", m_effective_date);
     }
   };
   auto response = HttpResponse();
@@ -751,7 +759,7 @@ HttpResponse AdministrationWebServlet::on_approve_account_modification_request(
   auto& clients = session->get_clients();
   auto update =
     clients.get_administration_client().approve_account_modification_request(
-      params.m_id, params.m_comment);
+      params.m_id, params.m_comment, params.m_effective_date);
   session->shuttle_response(update, out(response));
   return response;
 }
