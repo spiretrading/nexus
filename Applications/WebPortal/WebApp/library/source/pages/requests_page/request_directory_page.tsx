@@ -403,7 +403,12 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
   }
 
   private onPageNavigate = (pageIndex: number) => {
-    this.mainRef.current?.scrollTo(0, 0);
+    let element = this.mainRef.current?.parentElement;
+    while(element && element.scrollTop === 0 &&
+        element !== document.documentElement) {
+      element = element.parentElement;
+    }
+    element?.scrollTo(0, 0);
     this.submit(this.props.requestState, pageIndex);
   }
 
@@ -435,9 +440,6 @@ export namespace RequestDirectoryPage {
 
 const STYLES = StyleSheet.create({
   main: {
-    flex: '1 1 auto',
-    minHeight: 0,
-    overflowY: 'auto' as 'auto',
     paddingTop: '18px',
     paddingBottom: '40px',
     backgroundColor: '#FFFFFF',

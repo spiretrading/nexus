@@ -88,7 +88,10 @@ export class RequestsPage extends React.Component<Properties, State> {
           {content}
         </div>);
     }
-    return content;
+    return (
+      <div className={css(RequestsPage.STYLES.container)}>
+        {content}
+      </div>);
   }
 
   private renderContent(): JSX.Element {
@@ -149,7 +152,7 @@ export class RequestsPage extends React.Component<Properties, State> {
       height: '100%',
       display: 'flex',
       flexDirection: 'column' as 'column',
-      overflow: 'hidden'
+      overflowY: 'auto'
     },
     header: {
       borderBottom: '1px solid #E6E6E6',
