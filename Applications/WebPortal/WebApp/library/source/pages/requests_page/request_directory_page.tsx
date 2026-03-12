@@ -159,7 +159,12 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
       `Filters (${this.props.filterCount})` : 'Filters';
     return (
       <div className={css(STYLES.controlsSection)}>
-        {this.renderSegmentedControl('request-state', true)}
+        <div className={css(STYLES.mediumSegment)}>
+          {this.renderSegmentedControl('request-state-medium', false)}
+        </div>
+        <div className={css(STYLES.wideSegment)}>
+          {this.renderSegmentedControl('request-state', true)}
+        </div>
         <div className={css(STYLES.controlsSectionGap)}/>
         <div className={css(STYLES.sortRow)}>
           <label className={css(STYLES.sortLabel)}
@@ -535,6 +540,17 @@ const STYLES = StyleSheet.create({
     flexShrink: 0
   },
   wideFiltersButton: {
+    display: 'none',
+    '@container (min-width: 1036px)': {
+      display: 'block'
+    }
+  },
+  mediumSegment: {
+    '@container (min-width: 1036px)': {
+      display: 'none'
+    }
+  },
+  wideSegment: {
     display: 'none',
     '@container (min-width: 1036px)': {
       display: 'block'
