@@ -133,7 +133,8 @@ export class IconLabelButton extends React.Component<Properties, State> {
       }
     },
     iconButton: {
-      width: '34px'
+      width: '34px',
+      justifyContent: 'center'
     },
     iconLabelButton: {
       padding: '0 11px'

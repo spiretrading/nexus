@@ -157,7 +157,13 @@ export class RequestsPage extends React.Component<Properties, State> {
     header: {
       borderBottom: '1px solid #E6E6E6',
       backgroundColor: '#FFFFFF',
-      paddingLeft: 'max(18px, calc((100% - 1036px) / 2 + 18px))'
+      paddingLeft: 'calc((100% - 460px) / 2)',
+      '@media (min-width: 768px) and (max-width: 1035px)': {
+        paddingLeft: 'calc((100% - 768px) / 2)'
+      },
+      '@media (min-width: 1036px)': {
+        paddingLeft: 'calc((100% - 1036px) / 2)'
+      }
     }
   });
 }
