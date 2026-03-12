@@ -40,6 +40,7 @@
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DateBox.hpp"
+#include "Spire/Ui/DateFilterPanel.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DeletableListItem.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
@@ -1449,6 +1450,89 @@ UiProfile Spire::make_date_box_profile() {
       date_box->set_read_only(value);
     });
     return date_box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_date_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_date = day_clock::local_day();
+  properties.push_back(make_standard_property(
+    "default_start_date", to_text(current_date - months(3))));
+  properties.push_back(
+    make_standard_property("default_end_date", to_text(current_date)));
+  properties.push_back(make_standard_property("default_offset_value", 1));
+  auto unit_property = define_enum<DateFilterPanel::DateUnit>(
+    {{"Day", DateFilterPanel::DateUnit::DAY},
+     {"Week", DateFilterPanel::DateUnit::WEEK},
+     {"Month", DateFilterPanel::DateUnit::MONTH},
+     {"Year", DateFilterPanel::DateUnit::YEAR}});
+  properties.push_back(make_standard_enum_property(
+    "default_date_unit", unit_property));
+  auto profile = UiProfile("DateFilterPanel", properties, [] (auto& profile) {
+    auto& start_date =
+      get<QString>("default_start_date", profile.get_properties());
+    auto& end_date = get<QString>("default_end_date", profile.get_properties());
+    auto& offset_value =
+      get<int>("default_offset_value", profile.get_properties());
+    auto& date_unit = get<DateFilterPanel::DateUnit>(
+      "default_date_unit", profile.get_properties());
+    auto model =
+      std::make_shared<LocalValueModel<DateFilterPanel::DateRange>>();
+    auto date_range = [&] () -> DateFilterPanel::DateRange {
+      auto start = parse_date(start_date.get());
+      auto end = parse_date(end_date.get());
+      if(start || end) {
+        return DateFilterPanel::AbsoluteDateRange{
+          start.value_or(date()), end.value_or(date())};
+      }
+      return DateFilterPanel::RelativeDateRange{
+        date_unit.get(), offset_value.get()};
+    }();
+    model->set(date_range);
+    auto panel = new DateFilterPanel(model);
+    apply_widget_properties(panel, profile.get_properties());
+    panel->get_current()->connect_update_signal(
+      profile.make_event_slot<DateFilterPanel::DateRange>("Current",
+        [&] (const auto& date_range) {
+          auto result = QString();
+          std::visit([&] (auto&& date_range) {
+            using T = std::decay_t<decltype(date_range)>;
+            if constexpr(
+                std::is_same_v<T, DateFilterPanel::AbsoluteDateRange>) {
+              if(date_range.m_start.is_not_a_date()) {
+                result += "none";
+              } else {
+                result += to_text(date_range.m_start);
+              }
+              result += " ";
+              if(date_range.m_end.is_not_a_date()) {
+                result += "none";
+              } else {
+                result += to_text(date_range.m_end);
+              }
+            } else if constexpr(
+                std::is_same_v<T, DateFilterPanel::RelativeDateRange>) {
+              auto to_string = [] (auto unit) {
+                if(unit == DateFilterPanel::DateUnit::DAY) {
+                  return "Day";
+                } else if(unit == DateFilterPanel::DateUnit::WEEK) {
+                  return "Week";
+                } else if(unit == DateFilterPanel::DateUnit::MONTH) {
+                  return "Month";
+                } else {
+                  return "Year";
+                }
+              };
+              result += QString("%1 %2").
+                arg(date_range.m_value).
+                arg(to_string(date_range.m_unit));
+            }
+          }, date_range);
+          return result;
+        }));
+    return panel;
   });
   return profile;
 }
