@@ -1,6 +1,7 @@
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { HLine, PageLayout } from '../../..';
+import { DateField as DateInput, DisplaySize, HLine, PageLayout } from '../../..';
 import { SubmissionInput } from '..';
 import { RiskParametersView } from './risk_parameters_view';
 
@@ -14,6 +15,9 @@ interface Properties {
 
   /** The risk parameters to display. */
   parameters: Nexus.RiskParameters;
+
+  /** The effective date. */
+  effectiveDate?: Beam.Date;
 
   /** The account's roles. */
   roles: Nexus.AccountRoles;
@@ -40,6 +44,12 @@ interface Properties {
   onParameters?: (parameters: Nexus.RiskParameters) => void;
 
   /**
+   * Indicates a change to the effective date.
+   * @param date - The updated date.
+   */
+  onEffectiveDate?: (date: Beam.Date) => void;
+
+  /**
    * Indicates the form should be submitted.
    * @param comment - The comment to submit with the form.
    * @param parameters - The parameters to submit.
@@ -50,13 +60,6 @@ interface Properties {
 /** Displays a risk page. */
 export class RiskPage extends React.Component<Properties> {
   public render(): JSX.Element {
-    const lineWrapperStyle = (() => {
-      if(this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-        return RiskPage.STYLE.lineWrapperAdmin;
-      } else {
-        return RiskPage.STYLE.lineWrapper;
-      }
-    })();
     return(
       <PageLayout>
         <div style={RiskPage.STYLE.content}>
@@ -65,7 +68,14 @@ export class RiskPage extends React.Component<Properties> {
             currencyDatabase={this.props.currencyDatabase}
             onChange={this.props.onParameters}/>
           <div style={RiskPage.STYLE.mediumPadding}/>
-          <div style={lineWrapperStyle}>
+          <div style={RiskPage.STYLE.lineWrapper}>
+            <HLine color={RiskPage.LINE_COLOR}/>
+          </div>
+          <div style={RiskPage.STYLE.dateFieldPadding}/>
+          <DateField value={this.props.effectiveDate}
+            onChange={this.props.onEffectiveDate}/>
+          <div style={RiskPage.STYLE.mediumPadding}/>
+          <div style={RiskPage.STYLE.lineWrapper}>
             <HLine color={RiskPage.LINE_COLOR}/>
           </div>
           <div style={RiskPage.STYLE.mediumPadding}/>
@@ -98,8 +108,9 @@ export class RiskPage extends React.Component<Properties> {
       width: '100%',
       height: '30px'
     } as React.CSSProperties,
-    lineWrapperAdmin: {
-      width: '246px'
+    dateFieldPadding: {
+      width: '100%',
+      height: '32px'
     } as React.CSSProperties,
     lineWrapper: {
       width: '100%'
@@ -107,3 +118,41 @@ export class RiskPage extends React.Component<Properties> {
   };
   private static readonly LINE_COLOR = '#E6E6E6';
 }
+
+function today(): Beam.Date {
+  const now = new Date();
+  return new Beam.Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
+}
+
+function DateField(props: {
+    value?: Beam.Date,
+    onChange?: (date: Beam.Date) => void}): JSX.Element {
+  return (
+    <div style={DATE_FIELD_STYLE.wrapper}>
+      <label htmlFor='effective-date' style={DATE_FIELD_STYLE.label}>
+        Effective Date
+      </label>
+      <div style={DATE_FIELD_STYLE.labelPadding}/>
+      <DateInput displaySize={DisplaySize.SMALL}
+        value={props.value ?? today()} onChange={props.onChange}/>
+      <div style={DATE_FIELD_STYLE.errorSpace}/>
+    </div>);
+}
+
+const DATE_FIELD_STYLE = {
+  wrapper: {
+    width: '246px',
+    display: 'flex',
+    flexDirection: 'column'
+  } as React.CSSProperties,
+  label: {
+    font: '400 14px Roboto',
+    color: '#333333'
+  } as React.CSSProperties,
+  labelPadding: {
+    height: '12px'
+  } as React.CSSProperties,
+  errorSpace: {
+    flex: '1 1 auto'
+  } as React.CSSProperties
+};

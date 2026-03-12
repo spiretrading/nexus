@@ -43,17 +43,6 @@ export class SubmissionInput extends React.Component<Properties> {
   }
 
   public render(): JSX.Element {
-    const commentBox = (() => {
-      if(!this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-        return <CommentBox comment={this.props.comment}
-          onInput={this.props.onChange}/>;
-      }
-    })();
-    const commentBoxPadding = (() => {
-      if(!this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-        return <Padding size='30px'/>;
-      }
-    })();
     const message = (() => {
       if(this.props.status === '') {
         return <div/>;
@@ -67,8 +56,8 @@ export class SubmissionInput extends React.Component<Properties> {
     })();
     return (
       <VBoxLayout width='100%'>
-        {commentBox}
-        {commentBoxPadding}
+        <CommentBox comment={this.props.comment} onInput={this.props.onChange}/>
+        <Padding size='30px'/>
         <HBoxLayout width='100%'>
           <Padding size='calc(50% - 123px)'/>
           <SubmitButton isDisabled={!this.props.isEnabled}
