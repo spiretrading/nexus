@@ -53,8 +53,10 @@ interface Properties {
    * Indicates the form should be submitted.
    * @param comment - The comment to submit with the form.
    * @param parameters - The parameters to submit.
+   * @param effectiveDate - The effective date to submit.
    */
-  onSubmit?: (comment: string, parameters: Nexus.RiskParameters) => void;
+  onSubmit?: (comment: string, parameters: Nexus.RiskParameters,
+    effectiveDate: Beam.Date) => void;
 }
 
 /** Displays a risk page. */
@@ -90,7 +92,8 @@ export class RiskPage extends React.Component<Properties> {
   }
 
   private onSubmit = () => {
-    this.props.onSubmit?.(this.props.comment, this.props.parameters.clone());
+    this.props.onSubmit?.(this.props.comment, this.props.parameters.clone(),
+      this.props.effectiveDate ?? today());
   }
 
   private static readonly STYLE = {
