@@ -493,8 +493,11 @@ const STYLES = StyleSheet.create({
     flexShrink: 0
   },
   wideControlsColumn: {
-    width: '384px',
-    flexShrink: 0
+    width: '300px',
+    flexShrink: 0,
+    '@container (min-width: 1036px)': {
+      width: '384px'
+    }
   },
   querySection: {
     display: 'flex',
