@@ -41,7 +41,8 @@ export class LocalRiskModel extends RiskModel {
   }
 
   public async submit(comment: string,
-      riskParameters: Nexus.RiskParameters): Promise<void> {
+      riskParameters: Nexus.RiskParameters,
+      effectiveDate: Beam.Date): Promise<void> {
     return;
   }
 

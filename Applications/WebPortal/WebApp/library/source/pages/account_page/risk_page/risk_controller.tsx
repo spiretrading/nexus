@@ -1,3 +1,4 @@
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { LoadingPage, LoadingState } from '../../..';
@@ -19,6 +20,7 @@ interface Properties {
 interface State {
   loadingState: LoadingState;
   comment: string;
+  effectiveDate: Beam.Date;
   parameters: Nexus.RiskParameters;
   canSubmit: boolean;
   hasSubmissionError: boolean;
@@ -32,6 +34,7 @@ export class RiskController extends React.Component<Properties, State> {
     this.state = {
       loadingState: new LoadingState(),
       comment: '',
+      effectiveDate: Beam.Date.NOT_A_DATE,
       parameters: null,
       canSubmit: false,
       hasSubmissionError: false,
@@ -47,10 +50,12 @@ export class RiskController extends React.Component<Properties, State> {
     }
     return <RiskPage comment={this.state.comment}
       parameters={this.state.parameters}
+      effectiveDate={this.state.effectiveDate}
       currencyDatabase={this.props.currencyDatabase}
       roles={this.props.roles}
       canSubmit={this.state.canSubmit} isError={this.state.hasSubmissionError}
       status={this.state.status} onComment={this.onComment}
+      onEffectiveDate={this.onEffectiveDate}
       onParameters={this.onParameters} onSubmit={this.onSubmit}/>;  
   }
 
@@ -77,6 +82,10 @@ export class RiskController extends React.Component<Properties, State> {
     this.setState({comment});
   }
 
+  private onEffectiveDate = (effectiveDate: Beam.Date) => {
+    this.setState({effectiveDate});
+  }
+
   private onParameters = (parameters: Nexus.RiskParameters) => {
     this.setState({
       canSubmit: true,
@@ -85,14 +94,15 @@ export class RiskController extends React.Component<Properties, State> {
   }
 
   private onSubmit = async (
-      comment: string, parameters: Nexus.RiskParameters) => {
+      comment: string, parameters: Nexus.RiskParameters,
+      effectiveDate: Beam.Date) => {
     try {
       this.setState({
         canSubmit: false,
         hasSubmissionError: false,
         status: ''
       });
-      await this.props.model.submit(comment, parameters);
+      await this.props.model.submit(comment, parameters, effectiveDate);
       this.setState({
         status: 'Saved.'
       });

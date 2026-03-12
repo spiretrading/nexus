@@ -10,7 +10,8 @@ class TestRiskModel extends WebPortal.LocalRiskModel {
   public shouldFail = false;
 
   public async submit(comment: string,
-      riskParameters: Nexus.RiskParameters): Promise<void> {
+      riskParameters: Nexus.RiskParameters,
+      effectiveDate: Beam.Date): Promise<void> {
     if(this.shouldFail) {
       throw Error('Not Saved');
     }
