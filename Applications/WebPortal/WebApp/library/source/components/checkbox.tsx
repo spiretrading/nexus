@@ -1,108 +1,52 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
-import { DisplaySize } from '..';
 
-interface Properties {
-
-  /** The size to display the component at. */
-  displaySize?: DisplaySize;
-
-  /** Determines if the box is checked. */
-  isChecked: boolean;
-
-  /** Determines if the component can be edited. */
-  readonly?: boolean;
+interface Properties extends
+    Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onClick'> {
 
   /** Called when the check mark is clicked on.
-   * @param value - The new value.
+   * @param isChecked - The updated value.
    */
-  onClick?: () => void;
+  onClick?: (isChecked: boolean) => void;
 }
 
 /** A checkbox component. */
-export class Checkbox extends React.Component<Properties> {
-  public render(): JSX.Element {
-    const imgSrc = (() => {
-      if(this.props.isChecked) {
-        return 'resources/components/check-green.svg';
-      } else {
-        return 'resources/components/check-grey.svg';
-      }
-    })();
-    const size = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return '20px';
-      } else {
-        return '16px';
-      }
-    })();
-    const containerStyle = (() => {
-      if(this.props.readonly) {
-        return Checkbox.STYLE.containerReadonly;
-      } else {
-        return Checkbox.STYLE.container;
-      }
-    })();
-    return (
-      <div style={containerStyle}
-          className={css(Checkbox.EXTRA_STYLE.noDefaults)}
-          onClick={this.onClick}>
-        <img height={size} width={size} src={imgSrc}/>
-      </div>);
-  }
-
-  private onClick = () => {
-    if(!this.props.readonly) {
-      this.props.onClick?.();
-    }
-  }
-
-  private static readonly STYLE = {
-    container: {
-      boxSizing: 'border-box',
-      height: '20px',
-      width: '20px',
-      display: 'flex',
-      alignItems: 'center',
-      alignContent: 'center',
-      justifyContent: 'center',
-      cursor: 'pointer'
-    } as React.CSSProperties,
-    containerReadonly: {
-      boxSizing: 'border-box',
-      height: '20px',
-      width: '20px',
-      display: 'flex',
-      alignItems: 'center',
-      alignContent: 'center',
-      justifyContent: 'center',
-      cursor: 'default'
-    } as React.CSSProperties
+export function Checkbox(
+    {checked, onClick, className, ...rest}: Properties): JSX.Element {
+  const onChange = () => {
+    onClick?.(!checked);
   };
-  private static readonly EXTRA_STYLE = StyleSheet.create({
-    noDefaults: {
-      '-webkit-appearance': 'none',
-      ':active': {
-        outline: 'none',
-        boxShadow: 'none',
-        webkitBoxShadow: 'none',
-        outlineColor: 'transparent',
-        outlineStyle: 'none'
-      },
-      ':focus': {
-        outline: 'none',
-        boxShadow: 'none',
-        webkitBoxShadow: 'none',
-        outlineColor: 'transparent',
-        outlineStyle: 'none'
-      },
-      '::moz-focus-inner': {
-        border: 0
-      },
-      ':-moz-focusring': {
-        color: 'transparent',
-        textShadow: '0 0 0 #000000'
-      }
-    }
-  });
+  return (
+    <input type='checkbox'
+      {...rest}
+      checked={checked}
+      className={[css(STYLES.checkbox), className].join(' ')}
+      onChange={onChange}/>);
 }
+
+const STYLES = StyleSheet.create({
+  checkbox: {
+    appearance: 'none',
+    WebkitAppearance: 'none',
+    backgroundImage: 'url("resources/components/check-grey.svg")',
+    backgroundRepeat: 'no-repeat',
+    backgroundPosition: 'center',
+    backgroundSize: 'contain',
+    border: 'none',
+    cursor: 'pointer',
+    margin: 0,
+    width: '20px',
+    height: '20px',
+    ':checked': {
+      backgroundImage: 'url("resources/components/check-green.svg")'
+    },
+    ':disabled': {
+      cursor: 'not-allowed',
+      filter: 'saturate(0.3)',
+      opacity: 0.4
+    },
+    '@media (768px <= width)': {
+      backgroundSize: '16px 16px'
+    }
+  }
+});
