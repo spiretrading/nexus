@@ -11,8 +11,8 @@ namespace Spire {
     public:
 
       /**
-       * Signals a list of selected values to filter out.
-       * @param submission A list of selected values.
+       * Signals the list of values that are currently included.
+       * @param submission A list model containing the included values.
        */
       using SubmitSignal =
         Signal<void (const std::shared_ptr<AnyListModel>& submission)>;
@@ -27,7 +27,7 @@ namespace Spire {
       explicit ClosedFilterPanel(std::shared_ptr<TableModel> table,
         QWidget* parent = nullptr);
 
-      /** Returns the table of values and whether they are selected. */
+      /** Returns the table of values and whether they are included. */
       const std::shared_ptr<TableModel>& get_table() const;
 
       /** Connects a slot to the submit signal. */
