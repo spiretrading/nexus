@@ -1,6 +1,7 @@
 #include "Spire/Ui/ColorConversion.hpp"
-#include <boost/optional.hpp>
 #include <numbers>
+#include <unordered_map>
+#include <boost/optional.hpp>
 
 using namespace boost;
 using namespace Spire;
@@ -284,6 +285,7 @@ double Spire::apca(const QColor& text_color, const QColor& background_color) {
 QColor Spire::apca_text_color(const QColor& background_color) {
   static auto cache = std::unordered_map<QRgb, QColor>();
   static const auto MAX_CACHE_SIZE = 512;
+  static const auto APCA_CONTRAST_THRESHOLD = 60.0;
   auto key = background_color.rgb();
   if(auto it = cache.find(key); it != cache.end()) {
     return it->second;
@@ -297,15 +299,15 @@ QColor Spire::apca_text_color(const QColor& background_color) {
       max_contrast = contrast;
       max_contrast_color = text_color;
     }
-    if(contrast >= 60) {
-      if(cache.size() > MAX_CACHE_SIZE) {
+    if(contrast >= APCA_CONTRAST_THRESHOLD) {
+      if(cache.size() >= MAX_CACHE_SIZE) {
         cache.clear();
       }
       cache.emplace(key, text_color);
       return text_color;
     }
   }
-  if(cache.size() > MAX_CACHE_SIZE) {
+  if(cache.size() >= MAX_CACHE_SIZE) {
     cache.clear();
   }
   cache.emplace(key, max_contrast_color);
