@@ -94,7 +94,8 @@ export class TimeOfDayField extends React.Component<Properties, State> {
             value={splitTime.minutes}
             className={css(TimeOfDayField.EXTRA_STYLE.effects)}
             style={TimeOfDayField.STYLE.integerBox}
-            onChange={(minutes: number) => this.onChange(TimeUnit.MINUTES, minutes)}
+            onChange={
+              (minutes: number) => this.onChange(TimeUnit.MINUTES, minutes)}
             readOnly={this.props.readonly}
             leadingZeros={2}/>
           <div style={TimeOfDayField.STYLE.colon}>:</div>
@@ -103,7 +104,8 @@ export class TimeOfDayField extends React.Component<Properties, State> {
             value={splitTime.seconds}
             className={css(TimeOfDayField.EXTRA_STYLE.effects)}
             style={TimeOfDayField.STYLE.integerBox}
-            onChange={(seconds: number) => this.onChange(TimeUnit.SECONDS, seconds)}
+            onChange={
+              (seconds: number) => this.onChange(TimeUnit.SECONDS, seconds)}
             readOnly={this.props.readonly}
             leadingZeros={2}/>
         </div>

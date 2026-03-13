@@ -1,9 +1,8 @@
-import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { DisplaySize } from '..';
+import { Select } from '..';
 import { DateInput } from './date_input';
-import { DurationField } from './duration_field';
+import { DurationInput } from './duration_input';
 
 enum Periods {
   AM,
@@ -11,9 +10,6 @@ enum Periods {
 }
 
 interface Properties {
-
-  /** The size to display the component at. */
-  displaySize: DisplaySize;
 
   /** The value to display in the field. */
   value?: Beam.DateTime;
@@ -54,13 +50,6 @@ export class DateTimeField extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const selectionStyle = (() => {
-      if(this.props.readonly) {
-        return DateTimeField.STYLE.selectReadonly;
-      } else {
-        return DateTimeField.STYLE.select;
-      }
-    })();
     return (
       <div style={DateTimeField.STYLE.outerWrapper}>
         <DateInput
@@ -69,21 +58,20 @@ export class DateTimeField extends React.Component<Properties, State> {
           onChange={this.onDateChange}/>
         <div style={DateTimeField.STYLE.filler}/>
         <div style={DateTimeField.STYLE.durationWrapper}>
-          <DurationField 
-            displaySize={this.props.displaySize}
+          <DurationInput
             value={this.state.displayedTime}
             readonly={this.props.readonly}
             maxHourValue={12}
             minHourValue={1}
             onChange={this.onTimeChange}/>
-          <select style={selectionStyle}
+          <Select
               onChange={this.onPeriodChange}
-              value={this.state.period}
-              disabled={this.props.readonly}
-              className={css(DateTimeField.EXTRA_STYLE.effects)}>
-            <option value={Periods.AM}>AM</option>
-            <option value={Periods.PM}>PM</option>
-          </select>
+              value={String(this.state.period)}
+              readonly={this.props.readonly}
+              style={DateTimeField.STYLE.select}>
+            <option value={String(Periods.AM)}>AM</option>
+            <option value={String(Periods.PM)}>PM</option>
+          </Select>
         </div>
       </div>);
   }
@@ -160,8 +148,8 @@ export class DateTimeField extends React.Component<Properties, State> {
     }
   }
 
-  private onPeriodChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const period = parseInt(event.target.value);
+  private onPeriodChange = (value: string) => {
+    const period = parseInt(value);
     this.setState({
       period: period,
       displayedTime: this.getTimeIn12HourFormat()
@@ -192,78 +180,12 @@ export class DateTimeField extends React.Component<Properties, State> {
       flexDirection: 'row'
     } as React.CSSProperties,
     select: {
-      boxSizing: 'border-box',
-      font: '400 14px Roboto',
       marginLeft: '10px',
-      paddingLeft: '7px',
-      width: '64px',
-      height: '34px',
-      flexGrow: 0,
-      flexShrink: 0,
-      color: '#333333',
-      border: '1px solid #C8C8C8',
-      borderRadius: '1px',
-      backgroundColor: '#F2F2F2',
-      backgroundImage: 'url(resources/components/arrow-down.svg)',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'right 10px top 50%',
-      backgroundSize: '8px 6px',
-      MozAppearance: 'none',
-      WebkitAppearance: 'none',
-      appearance: 'none'
-    } as React.CSSProperties,
-    selectReadonly: {
-      boxSizing: 'border-box',
-      font: '400 14px Roboto',
-      marginLeft: '10px',
-      paddingLeft: '7px',
-      width: '64px',
-      height: '34px',
-      flexGrow: 0,
-      flexShrink: 0,
-      color: '#333333',
-      border: '1px solid #C8C8C8',
-      borderRadius: '1px',
-      backgroundColor: '#FFFFFF',
-      backgroundImage: 'url(resources/components/arrow-down-grey.svg)',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'right 10px top 50%',
-      backgroundSize: '8px 6px',
-      MozAppearance: 'none',
-      WebkitAppearance: 'none',
-      appearance: 'none'
+      width: '64px'
     } as React.CSSProperties,
     filler: {
       height: '10px',
       width: '100%'
     } as React.CSSProperties
   };
-  private static readonly EXTRA_STYLE = StyleSheet.create({
-    focusEffects: {
-      outlineColor: 'transparent',
-      outlineStyle: 'none',
-      border: '1px solid #684BC7',
-      borderRadius: '1px'
-    },
-    effects: {
-      ':focus': {
-        outline: 0,
-        outlineColor: 'transparent',
-        outlineStyle: 'none',
-        border: '1px solid #684BC7',
-        borderRadius: '1px'
-      },
-      '::moz-focus-inner': {
-        border: 0
-      },
-      ':-moz-focusring': {
-        color: 'transparent',
-        textShadow: '0 0 0 #000'
-      },
-      '-webkit-user-select': 'text',
-      '-moz-user-select': 'text',
-      '-ms-user-select': 'text',
-      'user-select': 'text'
-    }
-  });
 }

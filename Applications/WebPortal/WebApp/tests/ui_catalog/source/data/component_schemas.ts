@@ -86,9 +86,7 @@ const dateInput =
 
 const dateTimeField =
   new ComponentSchema('DateTimeField',
-    [new PropertySchema('displaySize', WebPortal.DisplaySize.SMALL,
-        EnumInput(WebPortal.DisplaySize)),
-      new PropertySchema('value',
+    [new PropertySchema('value',
         Beam.DateTime.fromDate(new Date()), BeamDateTimeInput),
       new PropertySchema('readonly', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
@@ -128,16 +126,15 @@ const errorMessage =
     [new SignalSchema('onRetry', '')],
     WebPortal.ErrorMessage, 640, 480);
 
-const durationField =
-  new ComponentSchema('DurationField',
-    [new PropertySchema('displaySize', WebPortal.DisplaySize.SMALL,
-        EnumInput(WebPortal.DisplaySize)),
-      new PropertySchema('value', new Beam.Duration(0), BeamDurationInput),
+const durationInput =
+  new ComponentSchema('DurationInput',
+    [new PropertySchema('value', new Beam.Duration(0), BeamDurationInput),
       new PropertySchema('maxHourValue', 99, NumberInput),
       new PropertySchema('minHourValue', 0, NumberInput),
-      new PropertySchema('readonly', false, BooleanInput)],
+      new PropertySchema('readonly', false, BooleanInput),
+      new PropertySchema('error', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
-    WebPortal.DurationField);
+    WebPortal.DurationInput);
 
 const hLine =
   new ComponentSchema('Hline',
@@ -752,7 +749,7 @@ const pageLayout =
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox,
     countrySelectionField, currencySelectionField, dateInput,
-    dateTimeField, dropDownButton, durationField, emptyMessage, errorMessage,
+    dateTimeField, dropDownButton, durationInput, emptyMessage, errorMessage,
     filterChip, filterInput, hLine,
     iconLabelButton, integerField, labeledCheckbox, modal, moneyField,
     navigationHeader, navigationTab, numberField, pageLayout,

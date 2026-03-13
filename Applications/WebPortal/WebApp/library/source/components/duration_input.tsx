@@ -1,12 +1,18 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { IntegerInput } from '..';
+import { IntegerInput } from './integer_input';
 
 interface Properties {
 
   /** The value to display in the field. */
-  value?: Beam.Date;
+  value?: Beam.Duration;
+
+  /** The largest value the hours field can hold. */
+  maxHourValue?: number;
+
+  /** The smallest value the hours field can hold. */
+  minHourValue?: number;
 
   /** Determines if the component is readonly. */
   readonly?: boolean;
@@ -17,32 +23,35 @@ interface Properties {
   /** Called when the value changes.
    * @param value - The updated value.
    */
-  onChange?: (value?: Beam.Date) => void;
+  onChange?: (value?: Beam.Duration) => void;
 }
 
-/** A component that displays a date. */
-export function DateInput(props: Properties): JSX.Element {
-  const year = React.useRef(props.value?.year);
-  const month = React.useRef(props.value?.month);
-  const day = React.useRef(props.value?.day);
-  year.current = props.value?.year;
-  month.current = props.value?.month;
-  day.current = props.value?.day;
-  const onchange = (y?: number, m?: number, d?: number) => {
-    if(y != null && m != null && d != null) {
-      props.onChange?.(new Beam.Date(y, m, d));
-    } else if(y == null && m == null && d == null) {
+/** A component that displays a duration. */
+export function DurationInput(props: Properties): JSX.Element {
+  const hours = React.useRef(props.value?.split().hours);
+  const minutes = React.useRef(props.value?.split().minutes);
+  const seconds = React.useRef(props.value?.split().seconds);
+  const split = props.value?.split();
+  hours.current = split?.hours;
+  minutes.current = split?.minutes;
+  seconds.current = split?.seconds;
+  const onchange = (h?: number, m?: number, s?: number) => {
+    if(h != null && m != null && s != null) {
+      props.onChange?.(Beam.Duration.HOUR.multiply(h).add(
+        Beam.Duration.MINUTE.multiply(m)).add(
+        Beam.Duration.SECOND.multiply(s)));
+    } else if(h == null && m == null && s == null) {
       props.onChange?.(undefined);
     }
   };
-  const onYearChange = (value?: number) => {
-    onchange(value, month.current, day.current);
+  const onHoursChange = (value?: number) => {
+    onchange(value, minutes.current, seconds.current);
   };
-  const onMonthChange = (value?: number) => {
-    onchange(year.current, value, day.current);
+  const onMinutesChange = (value?: number) => {
+    onchange(hours.current, value, seconds.current);
   };
-  const onDayChange = (value?: number) => {
-    onchange(year.current, month.current, value);
+  const onSecondsChange = (value?: number) => {
+    onchange(hours.current, minutes.current, value);
   };
   const separatorStyle = props.value ? undefined : {color: '#8C8C8C'};
   return (
@@ -50,43 +59,36 @@ export function DateInput(props: Properties): JSX.Element {
         props.error && STYLES.containerError,
         props.readonly && STYLES.containerReadonly)}>
       <IntegerInput
-        aria-label='Year' placeholder='YYYY'
-        min={0} max={9999}
-        value={props.value?.year}
+        aria-label='Hours' placeholder='hh'
+        min={props.minHourValue ?? 0} max={props.maxHourValue ?? 99}
+        value={split?.hours}
         readOnly={props.readonly}
-        onChange={onYearChange}
-        style={STYLE.yearInput}
-        leadingZeros={4}/>
-      <span className={css(STYLES.separator)} style={separatorStyle}>
-        -
-      </span>
-      <IntegerInput
-        aria-label='Month' placeholder='MM'
-        min={1} max={12}
-        value={props.value?.month}
-        readOnly={props.readonly}
-        onChange={onMonthChange}
-        style={STYLE.monthInput}
+        onChange={onHoursChange}
+        style={STYLE.hoursInput}
         leadingZeros={2}/>
       <span className={css(STYLES.separator)} style={separatorStyle}>
-        -
+        :
       </span>
       <IntegerInput
-        aria-label='Day' placeholder='DD'
-        min={1} max={31}
-        value={props.value?.day}
+        aria-label='Minutes' placeholder='mm'
+        min={0} max={59}
+        value={split?.minutes}
         readOnly={props.readonly}
-        onChange={onDayChange}
-        style={STYLE.dayInput}
+        onChange={onMinutesChange}
+        style={STYLE.minutesInput}
+        leadingZeros={2}/>
+      <span className={css(STYLES.separator)} style={separatorStyle}>
+        :
+      </span>
+      <IntegerInput
+        aria-label='Seconds' placeholder='ss'
+        min={0} max={59}
+        value={split?.seconds}
+        readOnly={props.readonly}
+        onChange={onSecondsChange}
+        style={STYLE.secondsInput}
         leadingZeros={2}/>
     </div>);
-}
-
-type DateLabelProperties = Omit<Properties, 'readonly' | 'onChange'>;
-
-/** A read-only date display. */
-export function DateLabel(props: DateLabelProperties): JSX.Element {
-  return <DateInput value={props.value} readonly/>;
 }
 
 const STYLES = StyleSheet.create({
@@ -95,9 +97,9 @@ const STYLES = StyleSheet.create({
     border: '1px solid #C8C8C8',
     borderRadius: '1px',
     color: '#000000',
-    fontSize: '0.875rem',
+    fontSize: '1rem',
     fontFamily: "'Roboto', system-ui, sans-serif",
-    padding: '9px 10px',
+    padding: '3px 9px',
     display: 'flex',
     flexDirection: 'row',
     alignItems: 'center',
@@ -129,35 +131,35 @@ const STYLES = StyleSheet.create({
     }
   },
   separator: {
-    width: '0.45rem',
+    width: '0.625rem',
     textAlign: 'center',
     userSelect: 'none'
   }
 });
 
 const STYLE = {
-  dayInput: {
+  hoursInput: {
     backgroundColor: 'transparent',
     border: 'none',
     padding: 0,
     textAlign: 'center',
     font: '400 14px Roboto',
-    width: '1.45rem'
+    width: '1rem'
   } as React.CSSProperties,
-  monthInput: {
+  minutesInput: {
     backgroundColor: 'transparent',
     border: 'none',
     padding: 0,
     textAlign: 'center',
     font: '400 14px Roboto',
-    width: '1.8rem'
+    width: '1.5rem'
   } as React.CSSProperties,
-  yearInput: {
+  secondsInput: {
     backgroundColor: 'transparent',
     border: 'none',
     padding: 0,
     textAlign: 'center',
     font: '400 14px Roboto',
-    width: '2.6rem'
+    width: '1rem'
   } as React.CSSProperties
 };
