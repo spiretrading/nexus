@@ -203,9 +203,9 @@ export class RequestDetailPage extends
         <div className={css(STYLES.spacer30)}/>
         <div className={css(STYLES.actions)}>
           {showApprove &&
-            <Button label='Approve' readonly={this.props.isSubmitting}
+            <Button label='Approve' disabled={this.props.isSubmitting}
               onClick={this.onApprove}/>}
-          <Button label='Reject' readonly={this.props.isSubmitting}
+          <Button label='Reject' disabled={this.props.isSubmitting}
             onClick={this.onReject}/>
         </div>
       </section>);

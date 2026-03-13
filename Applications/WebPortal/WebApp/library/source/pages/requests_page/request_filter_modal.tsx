@@ -73,7 +73,7 @@ export class RequestFilterModal extends React.Component<Properties, State> {
             </div>
             <div className={css(STYLES.actionsSmall)}>
               <Button label='Apply' onClick={this.onSubmit}
-                readonly={invalid}/>
+                disabled={invalid}/>
             </div>
           </div>
         </Modal>);
@@ -86,7 +86,7 @@ export class RequestFilterModal extends React.Component<Properties, State> {
             {this.renderDateCreatedLarge()}
             <div className={css(STYLES.inlineGap)}/>
             <Button label='Apply' onClick={this.onSubmit}
-              readonly={invalid}
+              disabled={invalid}
               style={STYLE.applyButtonLarge}/>
           </div>
           {this.renderErrorSectionLarge(invalid)}
