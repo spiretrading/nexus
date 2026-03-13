@@ -69,8 +69,8 @@ export class RequestFilterModal extends React.Component<Properties, State> {
               {this.renderCategories()}
               <div className={css(STYLES.sectionGap)}/>
               {this.renderDateCreatedSmall()}
+              {this.renderErrorSection(invalid)}
             </div>
-            {this.renderErrorSection(invalid)}
             <div className={css(STYLES.actionsSmall)}>
               <Button label='Apply' onClick={this.onSubmit}
                 readonly={invalid}/>
@@ -382,7 +382,8 @@ const STYLES = StyleSheet.create({
     flexShrink: 0
   },
   errorSectionSmall: {
-    padding: '18px 18px 0'
+    padding: '18px 18px 0',
+    flexGrow: 1
   },
   errorSpacerSmall: {
     flexGrow: 1

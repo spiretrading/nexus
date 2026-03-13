@@ -226,7 +226,8 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
     if(this.props.displayStatus ===
         RequestDirectoryPage.DisplayStatus.ERROR) {
       return (
-        <section aria-label='Requests' aria-live='polite'>
+        <section aria-label='Requests' aria-live='polite'
+            className={css(STYLES.fallbackSection)}>
           <div className={css(STYLES.fallback)}>
             <ErrorMessage message='There was an error loading the requests.'/>
           </div>
@@ -235,7 +236,8 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
     if(this.props.displayStatus ===
         RequestDirectoryPage.DisplayStatus.EMPTY) {
       return (
-        <section aria-label='Requests' aria-live='polite'>
+        <section aria-label='Requests' aria-live='polite'
+            className={css(STYLES.fallbackSection)}>
           <div className={css(STYLES.fallback)}>
             <EmptyMessage
               message='No results found. Try adjusting filters.'/>
@@ -247,8 +249,7 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
         <section aria-label='Requests' aria-live='polite' aria-busy='true'>
           <ul className={css(STYLES.requestList)}>
             {[0, 1, 2, 3, 4].map(i =>
-              <li key={i} className={css(STYLES.listItem,
-                  i === 4 && STYLES.listItemLast)}>
+              <li key={i}>
                 <RequestItemPlaceholder/>
               </li>)}
           </ul>
@@ -260,9 +261,8 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
     return (
       <section aria-label='Requests' aria-live='polite' aria-busy='false'>
         <ul className={css(STYLES.requestList)}>
-          {items.map((item, i) =>
-            <li key={item.id} className={css(STYLES.listItem,
-                i === items.length - 1 && STYLES.listItemLast)}>
+          {items.map(item =>
+            <li key={item.id}>
               <RequestItem
                 id={item.id}
                 category={item.category}
@@ -451,7 +451,10 @@ const STYLES = StyleSheet.create({
     fontFamily: "'Roboto', system-ui, sans-serif",
     fontWeight: 400,
     color: '#333333',
-    containerType: 'inline-size'
+    containerType: 'inline-size',
+    display: 'flex',
+    flexDirection: 'column',
+    flex: '1 1 auto'
   },
   toolbar: {
     padding: '0 18px'
@@ -567,20 +570,20 @@ const STYLES = StyleSheet.create({
   contentGap: {
     height: '30px'
   },
+  fallbackSection: {
+    display: 'flex',
+    flexDirection: 'column',
+    flex: '1 1 auto'
+  },
   fallback: {
     backgroundColor: '#FFFFFF',
-    padding: '0 18px'
+    padding: '0 18px',
+    flex: '1 1 auto'
   },
   requestList: {
     padding: 0,
     margin: 0,
     listStyle: 'none'
-  },
-  listItem: {
-    borderBottom: '1px solid #E6E6E6'
-  },
-  listItemLast: {
-    borderBottomColor: 'transparent'
   },
   paginationSection: {
     padding: '30px 18px 0'

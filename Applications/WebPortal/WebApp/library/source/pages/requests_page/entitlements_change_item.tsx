@@ -53,13 +53,11 @@ export class EntitlementsChangeItem extends React.Component<Properties, State> {
     const direction = getDirection(this.props);
     return (
       <div ref={this.containerRef} className={css(STYLES.container)}>
-        <div className={css(STYLES.signRow, isRevoke ?
-            STYLES.actionRevoke : STYLES.actionGrant)}>
-          <span className={css(STYLES.action)}>
+        <div className={css(this.state.isWide ? STYLES.divWide : STYLES.div)}>
+          <span className={css(STYLES.action, isRevoke ? STYLES.actionRevoke :
+              STYLES.actionGrant)}>
             {isRevoke ? '-' : '+'}
           </span>
-        </div>
-        <div className={css(this.state.isWide ? STYLES.divWide : STYLES.div)}>
           <h2 className={css(STYLES.name, isRevoke ? STYLES.nameRevoke :
               STYLES.nameGrant, this.state.isWide && STYLES.nameWide)}>
             {this.props.name}
@@ -128,15 +126,15 @@ const STYLES = StyleSheet.create({
     display: 'flex',
     alignItems: 'flex-start' as 'flex-start'
   },
-  signRow: {
-    display: 'flex'
-  },
   action: {
     fontSize: '0.875rem',
     color: '#333333',
-    textAlign: 'center',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
     width: '24px',
-    padding: '4px 0'
+    alignSelf: 'stretch',
+    flexShrink: 0
   },
   actionGrant: {
     backgroundColor: '#A1F2C1'
