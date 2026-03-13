@@ -154,9 +154,11 @@ export class RequestDetailPage extends
                   onChange={this.onEffectiveDateChange}/>
               </div>
             </div>}
-          <RequestEffectiveDate
-            date={this.state.effectiveDate.toDate()}
-            isApproved={isApproved}/>
+          {this.state.effectiveDate.equals(Beam.Date.NOT_A_DATE) ?
+            <span className={css(STYLES.effectiveDateText)}>Immediate</span> :
+            <RequestEffectiveDate
+              date={this.state.effectiveDate.toDate()}
+              isApproved={isApproved}/>}
         </div>
       </section>);
   }
@@ -351,6 +353,11 @@ const STYLES = StyleSheet.create({
     fontSize: '0.875rem',
     color: '#333333',
     whiteSpace: 'nowrap' as 'nowrap'
+  },
+  effectiveDateText: {
+    fontSize: '0.875rem',
+    fontFamily: 'Roboto',
+    color: '#5D5E6D'
   },
   activityList: {
     display: 'flex',

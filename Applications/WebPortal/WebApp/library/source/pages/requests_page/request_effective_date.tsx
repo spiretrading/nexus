@@ -43,7 +43,7 @@ function getPrefix(status: Status, isApproved: boolean): string {
   } else if(status === Status.LAPSED && isApproved) {
     return 'Applied';
   }
-  return 'Requested';
+  return 'Requested for';
 }
 
 function formatTimeToDate(date: Date, today: Date): string {
