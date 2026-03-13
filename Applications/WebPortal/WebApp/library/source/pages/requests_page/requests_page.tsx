@@ -85,12 +85,16 @@ export class RequestsPage extends React.Component<Properties, State> {
               label='Group Requests'
               href='requests/group'/>
           </NavigationHeader>
-          {content}
+          <div className={css(RequestsPage.STYLES.content)}>
+            {content}
+          </div>
         </div>);
     }
     return (
       <div className={css(RequestsPage.STYLES.container)}>
-        {content}
+        <div className={css(RequestsPage.STYLES.content)}>
+          {content}
+        </div>
       </div>);
   }
 
@@ -152,6 +156,11 @@ export class RequestsPage extends React.Component<Properties, State> {
       height: '100%',
       display: 'flex',
       flexDirection: 'column' as 'column',
+      overflow: 'hidden'
+    },
+    content: {
+      flex: '1 1 auto',
+      minHeight: 0,
       overflowY: 'auto'
     },
     header: {

@@ -80,7 +80,7 @@ export class RequestItem extends React.Component<Properties, State> {
       <a ref={this.containerRef} className={css(STYLES.link)}
           href={`requests/${this.props.id}`}
           onClick={this.onClick}>
-        <div className={css(STYLES.header)}>
+        <header className={css(STYLES.header)}>
           <RequestStateIndicator state={this.props.state}/>
           <h2 className={css(STYLES.id)}>#{this.props.id}</h2>
           <RequestCategoryTag category={this.props.category}/>
@@ -93,7 +93,7 @@ export class RequestItem extends React.Component<Properties, State> {
               <RelativeDate datetime={this.props.updateTime}/>
             </span>
           </div>
-        </div>
+        </header>
         <div className={css(STYLES.metadata)}>
           <span className={css(STYLES.account)}>
             {this.props.accountName}

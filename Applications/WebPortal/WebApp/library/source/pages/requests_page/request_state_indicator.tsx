@@ -13,8 +13,8 @@ interface Properties {
 /** Displays an icon indicating the state of a request. */
 export function RequestStateIndicator(props: Properties) {
   return (
-    <img width='16' height='16' alt={getAltText(props.state)}
-      src={getSrc(props.state)}/>);
+    <img style={{display: 'block'}} width='16' height='16'
+      alt={getAltText(props.state)} src={getSrc(props.state)}/>);
 }
 
 function getSrc(state: Status): string {
