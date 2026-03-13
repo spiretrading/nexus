@@ -43,6 +43,7 @@ namespace Spire {
       std::shared_ptr<ArrayListModel<std::any>> m_submission;
       boost::signals2::scoped_connection m_table_connection;
 
+      void update_submission();
       void on_list_model_operation(const AnyListModel::Operation& operation);
       void on_table_model_operation(const TableModel::Operation& operation);
       void on_reset();

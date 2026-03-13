@@ -97,6 +97,15 @@ bool ClosedFilterPanel::eventFilter(QObject* object, QEvent* event) {
   return QWidget::eventFilter(object, event);
 }
 
+void ClosedFilterPanel::update_submission() {
+  clear(*m_submission);
+  for(auto i = 0; i < m_table->get_row_size(); ++i) {
+    if(m_table->get<bool>(i, 1)) {
+      m_submission->push(to_any(m_table->at(i, 0)));
+    }
+  }
+}
+
 void ClosedFilterPanel::on_list_model_operation(
     const AnyListModel::Operation& operation) {
   visit(operation,
@@ -107,12 +116,7 @@ void ClosedFilterPanel::on_list_model_operation(
       }
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
-      clear(*m_submission);
-      for(auto i = 0; i < m_table->get_row_size(); ++i) {
-        if(m_table->get<bool>(i, 1)) {
-          m_submission->push(to_any(m_table->at(i, 0)));
-        }
-      }
+      update_submission();
       m_submit_signal(m_submission);
     });
 }
@@ -121,22 +125,11 @@ void ClosedFilterPanel::on_table_model_operation(
     const TableModel::Operation& operation) {
   visit(operation,
     [&] (const TableModel::UpdateOperation& operation) {
-      auto index = [&] {
-        auto value = to_text(m_table->at(operation.m_row, 0));
-        for(auto i = 0; i < m_submission->get_size(); ++i) {
-          if(value == to_text(m_submission->get(i))) {
-            return i;
-          }
-        }
-        return -1;
-      }();
-      if(index >= 0 && !m_table->get<bool>(operation.m_row, 1)) {
-        m_submission->remove(index);
-        m_submit_signal(m_submission);
-      } else if(index == -1 && m_table->get<bool>(operation.m_row, 1)) {
-        m_submission->push(to_any(m_table->at(operation.m_row, 0)));
-        m_submit_signal(m_submission);
+      if(operation.m_column != 1) {
+        return;
       }
+      update_submission();
+      m_submit_signal(m_submission);
     });
 }
 
