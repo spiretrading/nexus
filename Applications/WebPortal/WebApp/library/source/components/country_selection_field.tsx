@@ -1,7 +1,7 @@
-import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import * as Nexus from 'nexus';
 import { DisplaySize } from '..';
+import { Select } from './select';
 import { TextField } from './text_field';
 
 interface Properties {
@@ -23,94 +23,39 @@ interface Properties {
 }
 
 /** A country selection field. */
-export class CountrySelectionField extends React.Component<Properties> {
-  public render(): JSX.Element {
-    const boxSizing = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return CountrySelectionField.STYLE.boxSmall;
-      } else {
-        return CountrySelectionField.STYLE.boxLarge;
-      }
-    })();
-    const options = (() => {
-      const options = [];
-      for(const country of this.props.countryDatabase) {
-        options.push(
-          <option value={country.code.code} key={country.code.code}>
-            {country.name}
-          </option>);
-      }
-      return options;
-    })();
-    const content = (() => {
-      if(this.props.readonly) {
-        return (
-          <TextField
-            value={this.props.countryDatabase.fromCode(this.props.value).name}
-            displaySize={this.props.displaySize}/>);
-      } else {
-        return (
-          <select value={this.props.value.code}
-              className={css(CountrySelectionField.EXTRA_STYLE.noHighlighting)}
-              style={{...boxSizing,
-                ...CountrySelectionField.STYLE.selectionBoxStyle}}
-              onChange={this.onChange}>
-            {options}
-          </select>);
-      }
-    })();
-    return (<div>{content}</div>);
-  }
-
-  private onChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-    const code = new Nexus.CountryCode(parseInt(event.target.value, 10));
-    this.props.onChange?.(code);
-  }
-
-  private static readonly STYLE = {
-    boxSmall: {
-      height: '34px',
-      font: '400 16px Roboto',
-      width: '100%'
-    } as React.CSSProperties,
-    boxLarge: {
-      width: '200px',
-      height: '34px',
-      font: '400 14px Roboto'
-    } as React.CSSProperties,
-    selectionBoxStyle: {
-      boxSizing: 'border-box',
-      paddingLeft: '7px',
-      color: '#333333',
-      border: '1px solid #C8C8C8',
-      borderRadius: '1px',
-      backgroundColor: '#F2F2F2',
-      backgroundImage: 'url(resources/components/arrow-down.svg)',
-      backgroundRepeat: 'no-repeat',
-      backgroundPosition: 'right 10px top 50%',
-      backgroundSize: '8px 6px',
-      MozAppearance: 'none',
-      WebkitAppearance: 'none',
-      appearance: 'none'
-    } as React.CSSProperties
+export function CountrySelectionField(props: Properties): JSX.Element {
+  const onChange = (value: string) => {
+    props.onChange?.(new Nexus.CountryCode(parseInt(value, 10)));
   };
-  private static readonly EXTRA_STYLE = StyleSheet.create({
-    noHighlighting: {
-      ':focus': {
-        outlineColor: 'transparent',
-        outlineStyle: 'none'
-      },
-      '::moz-focus-inner': {
-        border: 0
-      },
-      ':-moz-focusring': {
-        color: 'transparent',
-        textShadow: '0 0 0 #000'
-      },
-      '-webkit-user-select': 'text',
-      '-moz-user-select': 'text',
-      '-ms-user-select': 'text',
-      'user-select': 'text'
-    }
-  });
+  if(props.readonly) {
+    return (
+      <TextField
+        value={props.countryDatabase.fromCode(props.value).name}
+        displaySize={props.displaySize}/>);
+  }
+  const style = props.displaySize === DisplaySize.SMALL ?
+    STYLE.boxSmall : STYLE.boxLarge;
+  const options = [];
+  for(const country of props.countryDatabase) {
+    options.push(
+      <option value={country.code.code} key={country.code.code}>
+        {country.name}
+      </option>);
+  }
+  return (
+    <Select value={props.value.code.toString()} style={style}
+        onChange={onChange}>
+      {options}
+    </Select>);
 }
+
+const STYLE = {
+  boxSmall: {
+    font: '400 16px Roboto',
+    width: '100%'
+  } as React.CSSProperties,
+  boxLarge: {
+    width: '200px',
+    font: '400 14px Roboto'
+  } as React.CSSProperties
+};
