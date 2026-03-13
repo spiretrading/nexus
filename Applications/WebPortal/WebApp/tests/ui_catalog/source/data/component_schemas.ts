@@ -292,6 +292,19 @@ const relativeDate =
     [],
     WebPortal.RelativeDate);
 
+const select =
+  new ComponentSchema('Select',
+    [new PropertySchema('value', 'Apple', TextInput),
+      new PropertySchema('readonly', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    (props: any) => React.createElement(WebPortal.Select, props,
+      React.createElement('option', {value: 'Apple'}, 'Apple'),
+      React.createElement('option', {value: 'Banana'}, 'Banana'),
+      React.createElement('option', {value: 'Cherry'}, 'Cherry'),
+      React.createElement('option', {value: 'Grape'}, 'Grape'),
+      React.createElement('option', {value: 'Mango'}, 'Mango'),
+      React.createElement('option', {value: 'Orange'}, 'Orange')));
+
 const securitiesField =
   new ComponentSchema('SecuritiesField',
     [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
@@ -745,7 +758,7 @@ export const componentSections = [
     iconLabelButton, integerField, labeledCheckbox, modal, moneyField,
     navigationHeader, navigationTab, numberField, pageLayout,
     pagination, regionField, regionItemInput, relativeDate, roleIcon, rolePanel,
-    securitiesField, securityFieldInput, securityField,
+    securitiesField, securityFieldInput, securityField, select,
     segmentButton,
     segmentedControl, textField,
     timeOfDayField]),
