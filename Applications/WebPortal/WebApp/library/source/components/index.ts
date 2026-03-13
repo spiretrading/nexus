@@ -1,8 +1,8 @@
 export * from './burger_button';
 export * from './button';
 export * from './checkbox';
-export * from './country_selection_field';
-export * from './currency_selection_field';
+export * from './country_select';
+export * from './currency_select';
 export * from './date_input';
 export * from './date_time_field';
 export * from './drop_down_button';
@@ -34,4 +34,4 @@ export * from './select';
 export * from './segment_button';
 export * from './segmented_control';
 export * from './text_field';
-export * from './time_of_day_field';
+export * from './time_of_day_input';

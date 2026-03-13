@@ -24,7 +24,7 @@ interface Properties {
 }
 
 /** A selection field for currencies. */
-export function CurrencySelectionField(props: Properties): JSX.Element {
+export function CurrencySelect(props: Properties): JSX.Element {
   const onChange = (value: string) => {
     props.onChange?.(props.currencyDatabase.fromCode(value).currency);
   };
