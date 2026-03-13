@@ -26,8 +26,10 @@ const accountLink =
 const button =
   new ComponentSchema('Button',
     [new PropertySchema('label', 'Submit', TextInput),
-      new PropertySchema('readonly', false, BooleanInput),
-      new PropertySchema('style', {}, CSSInput)],
+      new PropertySchema('theme', WebPortal.Button.Theme.LIGHT,
+        EnumInput(WebPortal.Button.Theme)),
+      new PropertySchema('disabled', false, BooleanInput),
+      new PropertySchema('style', {width: '100%', height: '100%'}, CSSInput)],
     [new SignalSchema('onClick', '')],
     WebPortal.Button);
 
