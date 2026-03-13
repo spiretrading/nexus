@@ -85,7 +85,9 @@ export class IntegerInput extends React.Component<Properties, State> {
 
   private onBlur = () => {
     if(this.state.text === '') {
-      this.props.onChange?.(undefined);
+      if(this.props.value != null) {
+        this.props.onChange?.(undefined);
+      }
       return;
     }
     const parsed = parseInt(this.state.text, 10);
@@ -100,7 +102,9 @@ export class IntegerInput extends React.Component<Properties, State> {
         return parsed;
       }
     })();
-    this.props.onChange?.(value);
+    if(value !== this.props.value) {
+      this.props.onChange?.(value);
+    }
   }
 
   private increment = () => {
