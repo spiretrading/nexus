@@ -75,6 +75,9 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> table,
     style.get(Any()).set(PaddingLeft(0));
   });
   enclose(*this, *filter_panel);
+  link(*this, *filter_panel);
+  link(*this, *scrollable_list_box);
+  link(*this, *list_view);
   proxy_style(*this, *filter_panel);
   list_view->get_current()->set(0);
 }
