@@ -65,7 +65,6 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.DATE_TIME:
           return <DateTimeField
             value={this.props.parameter.value.value}
-            displaySize={this.props.displaySize}
             readonly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DOUBLE:

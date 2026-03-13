@@ -6,7 +6,7 @@ export * from './currency_selection_field';
 export * from './date_input';
 export * from './date_time_field';
 export * from './drop_down_button';
-export * from './duration_field';
+export * from './duration_input';
 export * from './empty_message';
 export * from './error_message';
 export * from './filter_chip';
