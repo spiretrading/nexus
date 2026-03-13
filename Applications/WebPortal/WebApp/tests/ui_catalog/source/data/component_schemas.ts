@@ -44,11 +44,9 @@ const burgerButton =
 
 const checkbox =
   new ComponentSchema('Checkbox',
-    [new PropertySchema('displaySize', WebPortal.DisplaySize.SMALL,
-        EnumInput(WebPortal.DisplaySize)),
-      new PropertySchema('isChecked', true, BooleanInput),
-      new PropertySchema('readonly', false, BooleanInput)],
-    [new SignalSchema('onClick', '')],
+    [new PropertySchema('checked', true, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onClick', 'checked')],
     WebPortal.Checkbox);
 
 const countrySelectionField =

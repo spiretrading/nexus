@@ -53,9 +53,8 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.BOOLEAN:
           return <Checkbox
             onClick={this.onCheckboxChange}
-            displaySize={this.props.displaySize}
-            readonly={this.props.readonly}
-            isChecked={this.props.parameter.value.value}/>;
+            disabled={this.props.readonly}
+            checked={this.props.parameter.value.value}/>;
         case Nexus.ComplianceValue.Type.CURRENCY:
           return <CurrencySelectionField
             value={this.props.parameter.value.value}
@@ -146,8 +145,8 @@ export class ParameterEntry extends React.Component<Properties> {
       new Nexus.ComplianceValue(this.props.parameter.value.type, newValue)));
   }
 
-  private onCheckboxChange = () => {
-    this.onChange(!this.props.parameter.value.value);
+  private onCheckboxChange = (isChecked: boolean) => {
+    this.onChange(isChecked);
   }
 
   private convertFromParameterList(complianceValues: Nexus.ComplianceValue[]) {

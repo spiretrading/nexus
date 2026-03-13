@@ -1,6 +1,6 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
-import { Checkbox, DisplaySize } from '..';
+import { Checkbox } from '..';
 
 let nextId = 0;
 
@@ -36,8 +36,8 @@ export class LabeledCheckbox extends React.Component<Properties> {
           onChange={this.onChange}
           className={css(STYLES.input)}/>
         <label htmlFor={this.checkboxId} className={css(STYLES.label)}>
-          <Checkbox displaySize={DisplaySize.SMALL}
-            isChecked={this.props.isChecked}/>
+          <Checkbox
+            checked={this.props.isChecked}/>
           <span className={css(STYLES.labelText)}>
             {this.props.label}
           </span>
