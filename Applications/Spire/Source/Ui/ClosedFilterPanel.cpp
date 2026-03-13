@@ -50,7 +50,6 @@ ClosedFilterPanel::ClosedFilterPanel(std::shared_ptr<TableModel> table,
     [=] (const std::shared_ptr<ListModel<bool>>& list, int index) {
       auto check_box = new CheckBox(make_list_value_model(list, index));
       check_box->set_label(to_text(m_table->at(index, 0)));
-      check_box->setLayoutDirection(Qt::LeftToRight);
       check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
       check_box->focusProxy()->installEventFilter(this);
       return check_box;
