@@ -103,6 +103,7 @@ void ClosedFilterPanel::on_list_model_operation(
     [&] (const AnyListModel::AddOperation& operation) {
       if(m_table->get<bool>(operation.m_index, 1)) {
         m_submission->push(to_any(m_table->at(operation.m_index, 0)));
+        m_submit_signal(m_submission);
       }
     },
     [&] (const AnyListModel::RemoveOperation& operation) {
@@ -112,6 +113,7 @@ void ClosedFilterPanel::on_list_model_operation(
           m_submission->push(to_any(m_table->at(i, 0)));
         }
       }
+      m_submit_signal(m_submission);
     });
 }
 
