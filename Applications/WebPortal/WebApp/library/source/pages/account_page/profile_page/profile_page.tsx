@@ -2,7 +2,7 @@ import * as Beam from 'beam';
 import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { AddressField, CountrySelectionField, DisplaySize, HLine, PageWrapper,
+import { AddressField, CountrySelect, DisplaySize, HLine, PageWrapper,
   PhotoField } from '../../..';
 import { CommentBox } from '..';
 import { ChangePasswordBox } from './change_password_box';
@@ -203,7 +203,7 @@ export class ProfilePage extends React.Component<Properties, State> {
             readonly={this.props.readonly}/>);
       } else {
         return (
-          <CountrySelectionField
+          <CountrySelect
             displaySize={this.props.displaySize}
             value={this.state.newIdentity.country}
             onChange={this.onCountryChange}

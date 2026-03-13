@@ -49,28 +49,28 @@ const checkbox =
     [new SignalSchema('onClick', 'checked')],
     WebPortal.Checkbox);
 
-const countrySelectionField =
-  new ComponentSchema('CountrySelectionField',
+const countrySelect =
+  new ComponentSchema('CountrySelect',
     [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
         EnumInput(WebPortal.DisplaySize)),
       new PropertySchema('value', Nexus.DefaultCountries.US,
         CountryInput),
       new PropertySchema('readonly', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
-    (props: any) => React.createElement(WebPortal.CountrySelectionField, {
+    (props: any) => React.createElement(WebPortal.CountrySelect, {
       ...props,
       countryDatabase: Nexus.defaultCountryDatabase
     }));
 
 const currencyDatabase = Nexus.buildDefaultCurrencyDatabase();
 
-const currencySelectionField =
-  new ComponentSchema('CurrencySelectionField',
+const currencySelect =
+  new ComponentSchema('CurrencySelect',
     [new PropertySchema('value', Nexus.DefaultCurrencies.USD,
         CurrencyInput),
       new PropertySchema('readonly', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
-    (props: any) => React.createElement(WebPortal.CurrencySelectionField, {
+    (props: any) => React.createElement(WebPortal.CurrencySelect, {
       ...props,
       currencyDatabase
     }));
@@ -382,14 +382,13 @@ const textField =
     [new SignalSchema('onInput', 'value')],
     WebPortal.TextField);
 
-const timeOfDayField =
-  new ComponentSchema('TimeOfDayField',
-    [new PropertySchema('displaySize', WebPortal.DisplaySize.SMALL,
-        EnumInput(WebPortal.DisplaySize)),
-      new PropertySchema('value', new Beam.Duration(0), BeamTimeOfDayInput),
-      new PropertySchema('readonly', false, BooleanInput)],
+const timeOfDayInput =
+  new ComponentSchema('TimeOfDayInput',
+    [new PropertySchema('value', new Beam.Duration(0), BeamTimeOfDayInput),
+      new PropertySchema('readonly', false, BooleanInput),
+      new PropertySchema('error', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
-    WebPortal.TimeOfDayField);
+    WebPortal.TimeOfDayInput);
 
 const complianceRuleStatusTag =
   new ComponentSchema('ComplianceRuleStatusTag',
@@ -748,7 +747,7 @@ const pageLayout =
 
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox,
-    countrySelectionField, currencySelectionField, dateInput,
+    countrySelect, currencySelect, dateInput,
     dateTimeField, dropDownButton, durationInput, emptyMessage, errorMessage,
     filterChip, filterInput, hLine,
     iconLabelButton, integerField, labeledCheckbox, modal, moneyField,
@@ -757,7 +756,7 @@ export const componentSections = [
     securitiesField, securityFieldInput, securityField, select,
     segmentButton,
     segmentedControl, textField,
-    timeOfDayField]),
+    timeOfDayInput]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,

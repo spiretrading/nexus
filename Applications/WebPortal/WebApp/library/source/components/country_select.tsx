@@ -23,7 +23,7 @@ interface Properties {
 }
 
 /** A country selection field. */
-export function CountrySelectionField(props: Properties): JSX.Element {
+export function CountrySelect(props: Properties): JSX.Element {
   const onChange = (value: string) => {
     props.onChange?.(new Nexus.CountryCode(parseInt(value, 10)));
   };
