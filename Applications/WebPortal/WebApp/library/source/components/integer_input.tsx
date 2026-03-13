@@ -1,7 +1,9 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 
-interface Properties {
+interface Properties extends
+    Omit<React.InputHTMLAttributes<HTMLInputElement>,
+      'min' | 'max' | 'value' | 'onChange'> {
 
   /** The minimum allowed value. */
   min?: number;
@@ -9,23 +11,14 @@ interface Properties {
   /** The maximum allowed value. */
   max?: number;
 
-  /** The amount of padding to display (0s are used for padding). */
-  padding?: number;
+  /** The number of leading zeros to display. */
+  leadingZeros?: number;
 
   /** The value to display. */
   value?: number;
 
-  /** Additional CSS styles. */
-  style?: React.CSSProperties;
-
-  /** The class name of the input box. */
-  className?: string;
-
-  /** Determines if the component is readonly. */
-  readonly?: boolean;
-
   /** The event handler for when a change is made. */
-  onChange?: (value?: number) => (boolean | void);
+  onChange?: (value?: number) => void;
 }
 
 interface State {
@@ -33,32 +26,35 @@ interface State {
 }
 
 /** An editable integer field. */
-export class IntegerField extends React.Component<Properties, State> {
+export class IntegerInput extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      text: padValue(props.value ?? props.min ?? 0, props.padding)
+      text: padValue(props.value, props.leadingZeros)
     };
   }
 
   public render(): JSX.Element {
+    const {min, max, leadingZeros, value, readOnly, onChange,
+      style, className, ...rest} = this.props;
     return (
       <input
+        {...rest}
         onBlur={this.onBlur}
-        style={{...IntegerField.STYLE.editBox, ...this.props.style}}
+        style={{...IntegerInput.STYLE.editBox, ...style}}
         value={this.state.text}
         onChange={this.onChange}
-        readOnly={this.props.readonly}
-        disabled={this.props.readonly}
+        readOnly={readOnly}
+        disabled={readOnly}
         onKeyDown={this.onKeyDown} onWheel={this.onWheel}
-        className={css(IntegerField.EXTRA_STYLE.effects)}
+        className={[css(IntegerInput.EXTRA_STYLE.effects), className].join(' ')}
         type={'text'}/>);
   }
 
   public componentDidUpdate(prevProps: Properties) {
     if(this.props.value !== prevProps.value) {
       this.setState({
-        text: padValue(this.props.value, this.props.padding)
+        text: padValue(this.props.value, this.props.leadingZeros)
       });
     }
   }
@@ -88,6 +84,10 @@ export class IntegerField extends React.Component<Properties, State> {
   }
 
   private onBlur = () => {
+    if(this.state.text === '') {
+      this.props.onChange?.(undefined);
+      return;
+    }
     const parsed = parseInt(this.state.text, 10);
     const value = (() => {
       if(isNaN(parsed)) {
@@ -100,7 +100,7 @@ export class IntegerField extends React.Component<Properties, State> {
         return parsed;
       }
     })();
-    this.update(value);
+    this.props.onChange?.(value);
   }
 
   private increment = () => {
@@ -109,7 +109,7 @@ export class IntegerField extends React.Component<Properties, State> {
     if(this.props.max != null && increment > this.props.max) {
       return;
     }
-    this.update(increment);
+    this.props.onChange?.(increment);
   }
 
   private decrement = () => {
@@ -118,19 +118,7 @@ export class IntegerField extends React.Component<Properties, State> {
     if(this.props.min != null && decrement < this.props.min) {
       return;
     }
-    this.update(decrement);
-  }
-
-  private update = (value: number) => {
-    if(this.props.onChange) {
-      const commit = this.props.onChange(value);
-      if(commit != null && commit === false) {
-        return;
-      }
-    }
-    this.setState({
-      text: padValue(value, this.props.padding)
-    });
+    this.props.onChange?.(decrement);
   }
 
   private static readonly STYLE = {
@@ -176,6 +164,9 @@ export class IntegerField extends React.Component<Properties, State> {
   });
 }
 
-function padValue(value: number, padding: number): string {
-  return ('0'.repeat(padding) + value).slice(-1 * padding);
+function padValue(value: number | undefined, leadingZeros: number): string {
+  if(value == null) {
+    return '';
+  }
+  return ('0'.repeat(leadingZeros) + value).slice(-1 * leadingZeros);
 }

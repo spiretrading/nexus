@@ -3,7 +3,7 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Button } from '../../components/button';
-import { DateField } from '../../components/date_field';
+import { DateInput } from '../../components/date_input';
 import { DisplaySize } from '../../display_size';
 import { LabeledCheckbox } from '../../components/labeled_checkbox';
 import { Modal } from '../../components/modal';
@@ -133,7 +133,7 @@ export class RequestFilterModal extends React.Component<Properties, State> {
         <div className={css(STYLES.fieldRow)}>
           <div className={css(STYLES.fieldLabel)}>Start</div>
           <div className={css(STYLES.fieldLabelGap)}/>
-          <DateField displaySize={DisplaySize.SMALL}
+          <DateInput
             value={this.state.startDate}
             onChange={this.onStartDateChange}/>
         </div>
@@ -141,7 +141,7 @@ export class RequestFilterModal extends React.Component<Properties, State> {
         <div className={css(STYLES.fieldRow)}>
           <div className={css(STYLES.fieldLabel)}>End</div>
           <div className={css(STYLES.fieldLabelGap)}/>
-          <DateField displaySize={DisplaySize.SMALL}
+          <DateInput
             value={this.state.endDate}
             onChange={this.onEndDateChange}/>
         </div>
@@ -156,13 +156,13 @@ export class RequestFilterModal extends React.Component<Properties, State> {
         <div className={css(STYLES.dateFieldsRow)}>
           <div className={css(STYLES.dateFieldLabel)}>Start</div>
           <div className={css(STYLES.fieldLabelGap)}/>
-          <DateField displaySize={DisplaySize.LARGE}
+          <DateInput
             value={this.state.startDate}
             onChange={this.onStartDateChange}/>
           <div className={css(STYLES.dateFieldGapLarge)}/>
           <div className={css(STYLES.dateFieldLabel)}>End</div>
           <div className={css(STYLES.fieldLabelGap)}/>
-          <DateField displaySize={DisplaySize.LARGE}
+          <DateInput
             value={this.state.endDate}
             onChange={this.onEndDateChange}/>
         </div>

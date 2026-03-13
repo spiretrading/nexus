@@ -75,15 +75,14 @@ const currencySelectionField =
       currencyDatabase
     }));
 
-const dateField =
-  new ComponentSchema('DateField',
-    [new PropertySchema('displaySize', WebPortal.DisplaySize.SMALL,
-        EnumInput(WebPortal.DisplaySize)),
-      new PropertySchema('value',
+const dateInput =
+  new ComponentSchema('DateInput',
+    [new PropertySchema('value',
         Beam.Date.fromDate(new Date()), BeamDateInput),
-      new PropertySchema('readonly', false, BooleanInput)],
+      new PropertySchema('readonly', false, BooleanInput),
+      new PropertySchema('error', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
-    WebPortal.DateField);
+    WebPortal.DateInput);
 
 const dateTimeField =
   new ComponentSchema('DateTimeField',
@@ -162,14 +161,14 @@ const iconLabelButton =
     WebPortal.IconLabelButton);
 
 const integerField =
-  new ComponentSchema('IntegerField',
+  new ComponentSchema('IntegerInput',
     [new PropertySchema('min', 0, NumberInput),
       new PropertySchema('max', 100, NumberInput),
       new PropertySchema('value', 0, NumberInput),
       new PropertySchema('readonly', false, BooleanInput),
       new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onChange', 'value')],
-    WebPortal.IntegerField);
+    WebPortal.IntegerInput);
 
 const labeledCheckbox =
   new ComponentSchema('LabeledCheckbox',
@@ -752,7 +751,7 @@ const pageLayout =
 
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox,
-    countrySelectionField, currencySelectionField, dateField,
+    countrySelectionField, currencySelectionField, dateInput,
     dateTimeField, dropDownButton, durationField, emptyMessage, errorMessage,
     filterChip, filterInput, hLine,
     iconLabelButton, integerField, labeledCheckbox, modal, moneyField,

@@ -3,7 +3,7 @@ import { Center, HBoxLayout, Padding, VBoxLayout } from 'dali';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CurrencySelectionField, IntegerField, MoneyField } from '../../..';
+import { CurrencySelectionField, IntegerInput, MoneyField } from '../../..';
 
 interface Properties {
 
@@ -58,8 +58,8 @@ export class RiskParametersView extends React.Component<Properties> {
           <Padding size='12px'/>
           <HBoxLayout width='100%'>
             <VBoxLayout>
-              <IntegerField min={0} value={splitTransitionTime.hours}
-                padding={2} className={
+              <IntegerInput min={0} value={splitTransitionTime.hours}
+                leadingZeros={2} className={
                   css(RiskParametersView.STYLE.inputBox)}
                 onChange={this.onHoursChange}/>
               <Padding size='10px'/>
@@ -76,8 +76,8 @@ export class RiskParametersView extends React.Component<Properties> {
             </Center>
             <Padding size='10px'/>
             <VBoxLayout>
-              <IntegerField min={0} max={59} value={
-                splitTransitionTime.minutes} padding={2}
+              <IntegerInput min={0} max={59} value={
+                splitTransitionTime.minutes} leadingZeros={2}
                 className={css(RiskParametersView.STYLE.inputBox)}
                 onChange={this.onMinutesChange}/>
               <Padding size='10px'/>
@@ -94,8 +94,8 @@ export class RiskParametersView extends React.Component<Properties> {
             </Center>
             <Padding size='10px'/>
             <VBoxLayout>
-              <IntegerField min={0} max={59} value={
-                splitTransitionTime.seconds} padding={2}
+              <IntegerInput min={0} max={59} value={
+                splitTransitionTime.seconds} leadingZeros={2}
                 className={css(RiskParametersView.STYLE.inputBox)}
                 onChange={this.onSecondsChange}/>
               <Padding size='10px'/>

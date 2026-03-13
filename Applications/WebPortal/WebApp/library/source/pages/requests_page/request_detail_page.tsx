@@ -3,10 +3,9 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Button } from '../../components/button';
-import { DateField } from '../../components/date_field';
+import { DateInput } from '../../components/date_input';
 import { PageLayout } from '../../components/page_layout';
 import { RelativeDate } from '../../components/relative_date';
-import { DisplaySize } from '../../display_size';
 import { AccountLink } from './account_link';
 import { ChangeTable } from './change_table';
 import { RequestActivityItem } from './request_activity_item';
@@ -149,7 +148,7 @@ export class RequestDetailPage extends
                 Effective Date
               </label>
               <div className={css(STYLES.dateFieldInput)}>
-                <DateField displaySize={DisplaySize.SMALL}
+                <DateInput
                   value={this.state.effectiveDate}
                   onChange={this.onEffectiveDateChange}/>
               </div>
