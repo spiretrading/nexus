@@ -1,7 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DateField as DateInput, DisplaySize, HLine, PageLayout } from '../../..';
+import { DateInput, HLine, PageLayout } from '../../..';
 import { SubmissionInput } from '..';
 import { RiskParametersView } from './risk_parameters_view';
 
@@ -136,8 +136,7 @@ function DateField(props: {
         Effective Date
       </label>
       <div style={DATE_FIELD_STYLE.labelPadding}/>
-      <DateInput displaySize={DisplaySize.SMALL}
-        value={props.value ?? today()} onChange={props.onChange}/>
+      <DateInput value={props.value ?? today()} onChange={props.onChange}/>
       <div style={DATE_FIELD_STYLE.errorSpace}/>
     </div>);
 }

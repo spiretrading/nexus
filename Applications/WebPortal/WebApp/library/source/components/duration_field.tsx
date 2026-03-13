@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { DisplaySize } from '..';
-import { IntegerField } from './integer_field';
+import { IntegerInput } from './integer_input';
 
 enum TimeUnit {
   HOURS,
@@ -86,32 +86,32 @@ export class DurationField extends React.Component<Properties, State> {
           onFocus={this.onFocus}
           onBlur={this.onBlur}>
         <div style={DurationField.STYLE.inner}>
-          <IntegerField
+          <IntegerInput
             min={this.props.minHourValue ?? 0} max={this.props.maxHourValue ?? 99}
             value={splitTime.hours}
             className={css(DurationField.EXTRA_STYLE.effects)}
             style={DurationField.STYLE.integerBox}
             onChange={this.onChange.bind(this, TimeUnit.HOURS)}
-            readonly={this.props.readonly}
-            padding={2}/>
+            readOnly={this.props.readonly}
+            leadingZeros={2}/>
           <div style={DurationField.STYLE.colon}>:</div>
-          <IntegerField
+          <IntegerInput
             min={0} max={59}
             value={splitTime.minutes}
             className={css(DurationField.EXTRA_STYLE.effects)}
             style={DurationField.STYLE.integerBox}
             onChange={this.onChange.bind(this, TimeUnit.MINUTES)}
-            readonly={this.props.readonly}
-            padding={2}/>
+            readOnly={this.props.readonly}
+            leadingZeros={2}/>
           <div style={DurationField.STYLE.colon}>:</div>
-          <IntegerField
+          <IntegerInput
             min={0} max={59}
             value={splitTime.seconds}
             className={css(DurationField.EXTRA_STYLE.effects)}
             style={DurationField.STYLE.integerBox}
             onChange={this.onChange.bind(this, TimeUnit.SECONDS)}
-            readonly={this.props.readonly}
-            padding={2}/>
+            readOnly={this.props.readonly}
+            leadingZeros={2}/>
         </div>
         <div style={DurationField.STYLE.placeholder}>
           {hintText}

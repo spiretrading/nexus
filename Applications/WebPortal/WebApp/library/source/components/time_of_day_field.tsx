@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { DisplaySize } from '..';
-import { IntegerField } from './integer_field';
+import { IntegerInput } from './integer_input';
 
 enum TimeUnit {
   HOURS,
@@ -80,32 +80,32 @@ export class TimeOfDayField extends React.Component<Properties, State> {
           onFocus={this.onFocus}
           onBlur={this.onBlur}>
         <div style={TimeOfDayField.STYLE.inner}>
-          <IntegerField
+          <IntegerInput
             min={0} max={23}
             value={splitTime.hours}
             className={css(TimeOfDayField.EXTRA_STYLE.effects)}
             style={TimeOfDayField.STYLE.integerBox}
-            onChange={(hours) => this.onChange(TimeUnit.HOURS, hours)}
-            readonly={this.props.readonly}
-            padding={2}/>
+            onChange={(hours: number) => this.onChange(TimeUnit.HOURS, hours)}
+            readOnly={this.props.readonly}
+            leadingZeros={2}/>
           <div style={TimeOfDayField.STYLE.colon}>:</div>
-          <IntegerField
+          <IntegerInput
             min={0} max={59}
             value={splitTime.minutes}
             className={css(TimeOfDayField.EXTRA_STYLE.effects)}
             style={TimeOfDayField.STYLE.integerBox}
-            onChange={(minutes) => this.onChange(TimeUnit.MINUTES, minutes)}
-            readonly={this.props.readonly}
-            padding={2}/>
+            onChange={(minutes: number) => this.onChange(TimeUnit.MINUTES, minutes)}
+            readOnly={this.props.readonly}
+            leadingZeros={2}/>
           <div style={TimeOfDayField.STYLE.colon}>:</div>
-          <IntegerField
+          <IntegerInput
             min={0} max={59}
             value={splitTime.seconds}
             className={css(TimeOfDayField.EXTRA_STYLE.effects)}
             style={TimeOfDayField.STYLE.integerBox}
-            onChange={(seconds) => this.onChange(TimeUnit.SECONDS, seconds)}
-            readonly={this.props.readonly}
-            padding={2}/>
+            onChange={(seconds: number) => this.onChange(TimeUnit.SECONDS, seconds)}
+            readOnly={this.props.readonly}
+            leadingZeros={2}/>
         </div>
         <div style={TimeOfDayField.STYLE.placeholder}>
           {hintText}
