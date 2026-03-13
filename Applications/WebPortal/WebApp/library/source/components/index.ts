@@ -30,6 +30,7 @@ export * from './securities_field';
 export * from './region_field';
 export * from './region_item_input';
 export * from './relative_date';
+export * from './select';
 export * from './segment_button';
 export * from './segmented_control';
 export * from './text_field';
