@@ -17,22 +17,32 @@ interface Properties {
   /** Called when the value changes.
    * @param value - The updated value.
    */
-  onChange?: (value: Beam.Date) => void;
+  onChange?: (value?: Beam.Date) => void;
 }
 
 /** A component that displays a date. */
 export function DateInput(props: Properties): JSX.Element {
-  const onYearChange = (year: number) => {
-    const old = props.value ?? today();
-    props.onChange?.(new Beam.Date(year, old.month, old.day));
+  const year = React.useRef(props.value?.year);
+  const month = React.useRef(props.value?.month);
+  const day = React.useRef(props.value?.day);
+  year.current = props.value?.year;
+  month.current = props.value?.month;
+  day.current = props.value?.day;
+  const onchange = (y?: number, m?: number, d?: number) => {
+    if(y != null && m != null && d != null) {
+      props.onChange?.(new Beam.Date(y, m, d));
+    } else if(y == null && m == null && d == null) {
+      props.onChange?.(undefined);
+    }
   };
-  const onMonthChange = (month: number) => {
-    const old = props.value ?? today();
-    props.onChange?.(new Beam.Date(old.year, month, old.day));
+  const onYearChange = (value?: number) => {
+    onchange(value, month.current, day.current);
   };
-  const onDayChange = (day: number) => {
-    const old = props.value ?? today();
-    props.onChange?.(new Beam.Date(old.year, old.month, day));
+  const onMonthChange = (value?: number) => {
+    onchange(year.current, value, day.current);
+  };
+  const onDayChange = (value?: number) => {
+    onchange(year.current, month.current, value);
   };
   const separatorStyle = props.value ? undefined : {color: '#8C8C8C'};
   return (
@@ -70,11 +80,6 @@ export function DateInput(props: Properties): JSX.Element {
         style={STYLE.dayInput}
         leadingZeros={2}/>
     </div>);
-}
-
-function today(): Beam.Date {
-  const now = new Date();
-  return new Beam.Date(now.getFullYear(), now.getMonth() + 1, now.getDate());
 }
 
 type DateLabelProperties = Omit<Properties, 'readonly' | 'onChange'>;
