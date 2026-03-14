@@ -17,6 +17,9 @@ interface Properties {
   /** Determines if the component is readonly. */
   readonly?: boolean;
 
+  /** Determines if the component is disabled. */
+  disabled?: boolean;
+
   /** Determines if the component is in an error state. */
   error?: boolean;
 
@@ -56,6 +59,7 @@ export function DurationInput(props: Properties): JSX.Element {
   const separatorStyle = props.value ? undefined : {color: '#8C8C8C'};
   return (
     <div className={css(STYLES.container,
+        props.disabled && STYLES.containerDisabled,
         props.error && STYLES.containerError,
         props.readonly && STYLES.containerReadonly)}>
       <IntegerInput
@@ -63,6 +67,7 @@ export function DurationInput(props: Properties): JSX.Element {
         min={props.minHourValue ?? 0} max={props.maxHourValue ?? 99}
         value={split?.hours}
         readOnly={props.readonly}
+        disabled={props.disabled}
         onChange={onHoursChange}
         style={STYLE.hoursInput}
         leadingZeros={2}/>
@@ -74,6 +79,7 @@ export function DurationInput(props: Properties): JSX.Element {
         min={0} max={59}
         value={split?.minutes}
         readOnly={props.readonly}
+        disabled={props.disabled}
         onChange={onMinutesChange}
         style={STYLE.minutesInput}
         leadingZeros={2}/>
@@ -85,6 +91,7 @@ export function DurationInput(props: Properties): JSX.Element {
         min={0} max={59}
         value={split?.seconds}
         readOnly={props.readonly}
+        disabled={props.disabled}
         onChange={onSecondsChange}
         style={STYLE.secondsInput}
         leadingZeros={2}/>
@@ -110,6 +117,17 @@ const STYLES = StyleSheet.create({
     },
     ':focus-within': {
       borderColor: '#684BC7'
+    }
+  },
+  containerDisabled: {
+    opacity: 0.4,
+    cursor: 'not-allowed',
+    pointerEvents: 'none',
+    ':hover': {
+      borderColor: '#C8C8C8'
+    },
+    ':focus-within': {
+      borderColor: '#C8C8C8'
     }
   },
   containerReadonly: {

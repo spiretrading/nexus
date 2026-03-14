@@ -2,10 +2,14 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 
 interface Properties extends
-    Omit<React.SelectHTMLAttributes<HTMLSelectElement>, 'onChange'> {
+    Omit<React.SelectHTMLAttributes<HTMLSelectElement>,
+      'onChange' | 'disabled'> {
 
   /** Determines if the component is readonly. */
   readonly?: boolean;
+
+  /** Determines if the component is disabled. */
+  disabled?: boolean;
 
   /** Called when the selected value changes.
    * @param value - The new selected value.
@@ -14,18 +18,19 @@ interface Properties extends
 }
 
 /** A select dropdown component. */
-export function Select({readonly, onChange, className, children, ...rest}:
-    Properties): JSX.Element {
+export function Select({readonly, disabled, onChange, className, children,
+    ...rest}: Properties): JSX.Element {
   const onSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     onChange?.(event.target.value);
   };
   return (
     <select
       {...rest}
-      disabled={readonly}
+      disabled={readonly || disabled}
       className={[css(STYLES.select,
+        disabled && STYLES.selectDisabled,
         readonly && STYLES.selectReadonly), className].join(' ')}
-      onChange={readonly ? undefined : onSelectChange}>
+      onChange={readonly || disabled ? undefined : onSelectChange}>
       {children}
     </select>);
 }
@@ -53,6 +58,17 @@ const STYLES = StyleSheet.create({
     },
     ':focus': {
       borderColor: '#684BC7'
+    }
+  },
+  selectDisabled: {
+    opacity: 0.4,
+    cursor: 'not-allowed',
+    pointerEvents: 'none',
+    ':hover': {
+      borderColor: '#C8C8C8'
+    },
+    ':focus': {
+      borderColor: '#C8C8C8'
     }
   },
   selectReadonly: {
