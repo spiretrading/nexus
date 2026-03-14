@@ -76,7 +76,7 @@ const currencySelect =
 const dateInput =
   new ComponentSchema('DateInput',
     [new PropertySchema('value',
-        Beam.Date.fromDate(new Date()), BeamDateInput),
+        Beam.Date.today(), BeamDateInput),
       new PropertySchema('readonly', false, BooleanInput),
       new PropertySchema('error', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
@@ -85,7 +85,7 @@ const dateInput =
 const dateTimeInput =
   new ComponentSchema('DateTimeInput',
     [new PropertySchema('value',
-        Beam.DateTime.fromDate(new Date()), BeamDateTimeInput),
+        Beam.DateTime.now(), BeamDateTimeInput),
       new PropertySchema('readonly', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.DateTimeInput);

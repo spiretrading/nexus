@@ -24,7 +24,7 @@ const STYLE: React.CSSProperties = {
 
 /** A component that displays both date and time. */
 export function DateTimeInput(props: Properties): JSX.Element {
-  const value = props.value ?? today();
+  const value = props.value ?? Beam.DateTime.now();
   const onDateChange = (date?: Beam.Date) => {
     if(date != null) {
       props.onChange?.(new Beam.DateTime(date, value.timeOfDay));
@@ -49,9 +49,3 @@ export function DateTimeInput(props: Properties): JSX.Element {
     </div>);
 }
 
-function today(): Beam.DateTime {
-  const now = new Date();
-  return new Beam.DateTime(
-    new Beam.Date(now.getFullYear(), now.getMonth() + 1, now.getDate()),
-    new Beam.Duration(0));
-}
