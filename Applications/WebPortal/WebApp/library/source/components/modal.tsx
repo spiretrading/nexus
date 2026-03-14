@@ -1,11 +1,7 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
-import { DisplaySize } from '..';
 
 interface Properties {
-
-  /** The size of the viewport. */
-  displaySize: DisplaySize;
 
   /** The title displayed in the modal header. If provided, a header with a
    *  close button is rendered. */
@@ -13,133 +9,98 @@ interface Properties {
 
   /** Called when the modal should be closed. */
   onClose?: () => void;
+
+  children?: React.ReactNode;
 }
 
 /** This is a component that wraps a child component to style it as a modal. */
-export class Modal extends React.Component<Properties> {
-  public render(): JSX.Element {
-    const header = (() => {
-      if(this.props.title === undefined) {
-        return null;
-      }
-      return (
-        <div style={Modal.STYLE.header}>
-          <div style={Modal.STYLE.headerTitle}>{this.props.title}</div>
-          <img src='resources/close.svg'
-            style={Modal.STYLE.closeButton}
-            height='20px' width='20px'
-            onClick={this.props.onClose}/>
-        </div>);
-    })();
-    if(this.props.displaySize === DisplaySize.SMALL) {
-      return (
-        <div style={Modal.STYLE.wrapper}>
-          <div className={css(STYLES.modalBody)}
-              style={Modal.STYLE.modalSmall}>
-            {header}
-            {this.props.children}
-          </div>
-          <div style={Modal.STYLE.overlay} onClick={this.props.onClose}/>
-        </div>);
+export function Modal(props: Properties): JSX.Element {
+  const outOfBoundsClick = (event: React.MouseEvent<HTMLDivElement>) => {
+    if(event.target === event.currentTarget) {
+      props.onClose?.();
+    }
+  };
+  const header = (() => {
+    if(props.title === undefined) {
+      return null;
     }
     return (
-      <div style={Modal.STYLE.wrapper}>
-        <div style={Modal.STYLE.modalWrapper} onClick={this.outOfBoundsClick}>
-          <div style={Modal.STYLE.filler} onClick={this.props.onClose}/>
-          <div className={css(STYLES.modalBody)}
-              style={Modal.STYLE.modalLarge}>
-            {header}
-            {this.props.children}
-          </div>
-          <div style={Modal.STYLE.filler} onClick={this.props.onClose}/>
-        </div>
-        <div style={Modal.STYLE.overlay} onClick={this.props.onClose}/>
+      <div style={STYLE.header}>
+        <div style={STYLE.headerTitle}>{props.title}</div>
+        <img src='resources/close.svg'
+          style={STYLE.closeButton}
+          height='20px' width='20px'
+          onClick={props.onClose}/>
       </div>);
-  }
-
-  private outOfBoundsClick = (event: React.MouseEvent<HTMLDivElement>) => {
-    if(event.target === event.currentTarget) {
-      this.props.onClose?.();
-    }
-  }
-
-  private static readonly STYLE = {
-    wrapper: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      zIndex: 9998000
-    } as React.CSSProperties,
-    filler: {
-      flexBasis: '20px',
-      flexGrow: 1,
-      flexShrink: 0,
-      width: '100%'
-    } as React.CSSProperties,
-    overlay: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      backgroundColor: '#FFFFFF',
-      opacity: 0.9,
-      zIndex: 9999000
-    } as React.CSSProperties,
-    modalWrapper: {
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      right: 0,
-      bottom: 0,
-      display: 'flex',
-      flexDirection: 'column',
-      alignItems: 'center',
-      overflowY: 'auto',
-      overflowX: 'hidden',
-      zIndex: 10000000
-    } as React.CSSProperties,
-    modalSmall: {
-      position: 'fixed',
-      top: 0,
-      right: 0,
-      bottom: 0,
-      width: '282px',
-      boxSizing: 'border-box',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'auto',
-      paddingBottom: '40px',
-      zIndex: 10000000
-    } as React.CSSProperties,
-    modalLarge: {
-      boxSizing: 'border-box',
-      flexGrow: 0,
-      flexShrink: 0
-    } as React.CSSProperties,
-    header: {
-      boxSizing: 'border-box',
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      alignItems: 'center',
-      padding: '18px 18px 0 18px',
-      flexGrow: 0,
-      flexShrink: 0
-    } as React.CSSProperties,
-    headerTitle: {
-      font: '400 16px Roboto',
-      color: '#333333',
-      cursor: 'default'
-    } as React.CSSProperties,
-    closeButton: {
-      cursor: 'pointer',
-      flexShrink: 0
-    } as React.CSSProperties
-  };
+  })();
+  return (
+    <div style={STYLE.wrapper}>
+      <div className={css(STYLES.smallModal, STYLES.modalBody)}>
+        {header}
+        {props.children}
+      </div>
+      <div className={css(STYLES.largeModal)} onClick={outOfBoundsClick}>
+        <div style={STYLE.filler} onClick={props.onClose}/>
+        <div className={css(STYLES.modalBody)} style={STYLE.modalLarge}>
+          {header}
+          {props.children}
+        </div>
+        <div style={STYLE.filler} onClick={props.onClose}/>
+      </div>
+      <div style={STYLE.overlay} onClick={props.onClose}/>
+    </div>);
 }
+
+const STYLE = {
+  wrapper: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    zIndex: 9998000
+  } as React.CSSProperties,
+  filler: {
+    flexBasis: '20px',
+    flexGrow: 1,
+    flexShrink: 0,
+    width: '100%'
+  } as React.CSSProperties,
+  overlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: '#FFFFFF',
+    opacity: 0.9,
+    zIndex: 9999000
+  } as React.CSSProperties,
+  modalLarge: {
+    boxSizing: 'border-box',
+    flexGrow: 0,
+    flexShrink: 0
+  } as React.CSSProperties,
+  header: {
+    boxSizing: 'border-box',
+    display: 'flex',
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    padding: '18px 18px 0 18px',
+    flexGrow: 0,
+    flexShrink: 0
+  } as React.CSSProperties,
+  headerTitle: {
+    font: '400 16px Roboto',
+    color: '#333333',
+    cursor: 'default'
+  } as React.CSSProperties,
+  closeButton: {
+    cursor: 'pointer',
+    flexShrink: 0
+  } as React.CSSProperties
+};
 
 const STYLES = StyleSheet.create({
   modalBody: {
@@ -154,6 +115,38 @@ const STYLES = StyleSheet.create({
     },
     '@starting-style': {
       opacity: 0
+    }
+  },
+  smallModal: {
+    position: 'fixed',
+    top: 0,
+    right: 0,
+    bottom: 0,
+    width: '282px',
+    boxSizing: 'border-box',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'auto',
+    paddingBottom: '40px',
+    zIndex: 10000000,
+    '@media (min-width: 768px)': {
+      display: 'none'
+    }
+  },
+  largeModal: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    display: 'none',
+    flexDirection: 'column',
+    alignItems: 'center',
+    overflowY: 'auto',
+    overflowX: 'hidden',
+    zIndex: 10000000,
+    '@media (min-width: 768px)': {
+      display: 'flex'
     }
   }
 });

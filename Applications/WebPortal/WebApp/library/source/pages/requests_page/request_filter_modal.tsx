@@ -60,7 +60,7 @@ export class RequestFilterModal extends React.Component<Properties, State> {
     const invalid = this.isInvalid();
     if(this.props.displaySize === DisplaySize.SMALL) {
       return (
-        <Modal displaySize={this.props.displaySize}
+        <Modal
             title='Filters' onClose={this.props.onClose}>
           <div className={css(STYLES.smallContent)}>
             <div className={css(STYLES.filtersSection)}>
@@ -79,7 +79,7 @@ export class RequestFilterModal extends React.Component<Properties, State> {
         </Modal>);
     }
     return (
-      <Modal displaySize={this.props.displaySize}
+      <Modal
           title='Filters' onClose={this.props.onClose}>
         <div className={css(STYLES.largeContent)}>
           <div className={css(STYLES.filtersRow)}>
