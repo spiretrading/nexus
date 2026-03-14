@@ -13,8 +13,8 @@ interface Properties {
   /** The value as a 24-hour time of day. */
   value?: Beam.Duration;
 
-  /** Determines if the component is readonly. */
-  readonly?: boolean;
+  /** Determines if the component is readOnly. */
+  readOnly?: boolean;
 
   /** Determines if the component is disabled. */
   disabled?: boolean;
@@ -59,7 +59,7 @@ export function TimeOfDayInput(props: Properties): JSX.Element {
     <div style={STYLE.wrapper}>
       <DurationInput
         value={displayedTime}
-        readonly={props.readonly}
+        readOnly={props.readOnly}
         disabled={props.disabled}
         error={props.error}
         maxHourValue={12}
@@ -68,7 +68,7 @@ export function TimeOfDayInput(props: Properties): JSX.Element {
       <Select
           onChange={onPeriodChange}
           value={String(period)}
-          readonly={props.readonly}
+          readOnly={props.readOnly}
           disabled={props.disabled}
           style={STYLE.select}>
         <option value={String(Period.AM)}>AM</option>

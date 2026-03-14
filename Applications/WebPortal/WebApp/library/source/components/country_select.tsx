@@ -35,9 +35,9 @@ export function CountrySelect({countryDatabase, value, onChange, ...rest}:
     </Select>);
 }
 
-type CountryLabelProperties = Omit<Properties, 'readonly' | 'onChange'>;
+type CountryLabelProperties = Omit<Properties, 'readOnly' | 'onChange'>;
 
 /** A read-only country display. */
 export function CountryLabel(props: CountryLabelProperties): JSX.Element {
-  return <CountrySelect {...props} readonly/>;
+  return <CountrySelect {...props} readOnly/>;
 }

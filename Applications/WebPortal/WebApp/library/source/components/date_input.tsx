@@ -9,7 +9,7 @@ interface Properties {
   value?: Beam.Date;
 
   /** Determines if the component is readonly. */
-  readonly?: boolean;
+  readOnly?: boolean;
 
   /** Determines if the component is disabled. */
   disabled?: boolean;
@@ -52,12 +52,12 @@ export function DateInput(props: Properties): JSX.Element {
     <div className={css(STYLES.container,
         props.disabled && STYLES.containerDisabled,
         props.error && STYLES.containerError,
-        props.readonly && STYLES.containerReadonly)}>
+        props.readOnly && STYLES.containerReadonly)}>
       <IntegerInput
         aria-label='Year' placeholder='YYYY'
         min={0} max={9999}
         value={props.value?.year}
-        readOnly={props.readonly}
+        readOnly={props.readOnly}
         disabled={props.disabled}
         onChange={onYearChange}
         style={STYLE.yearInput}
@@ -69,7 +69,7 @@ export function DateInput(props: Properties): JSX.Element {
         aria-label='Month' placeholder='MM'
         min={1} max={12}
         value={props.value?.month}
-        readOnly={props.readonly}
+        readOnly={props.readOnly}
         disabled={props.disabled}
         onChange={onMonthChange}
         style={STYLE.monthInput}
@@ -81,7 +81,7 @@ export function DateInput(props: Properties): JSX.Element {
         aria-label='Day' placeholder='DD'
         min={1} max={31}
         value={props.value?.day}
-        readOnly={props.readonly}
+        readOnly={props.readOnly}
         disabled={props.disabled}
         onChange={onDayChange}
         style={STYLE.dayInput}
@@ -89,11 +89,11 @@ export function DateInput(props: Properties): JSX.Element {
     </div>);
 }
 
-type DateLabelProperties = Omit<Properties, 'readonly' | 'onChange'>;
+type DateLabelProperties = Omit<Properties, 'readOnly' | 'onChange'>;
 
 /** A read-only date display. */
 export function DateLabel(props: DateLabelProperties): JSX.Element {
-  return <DateInput value={props.value} readonly/>;
+  return <DateInput value={props.value} readOnly/>;
 }
 
 const STYLES = StyleSheet.create({

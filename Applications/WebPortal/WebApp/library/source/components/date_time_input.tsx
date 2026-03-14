@@ -9,7 +9,7 @@ interface Properties {
   value?: Beam.DateTime;
 
   /** Determines if the component is readonly. */
-  readonly?: boolean;
+  readOnly?: boolean;
 
   /** Determines if the component is disabled. */
   disabled?: boolean;
@@ -42,13 +42,13 @@ export function DateTimeInput(props: Properties): JSX.Element {
     <div style={STYLE}>
       <DateInput
         value={value.date}
-        readonly={props.readonly}
+        readOnly={props.readOnly}
         disabled={props.disabled}
         onChange={onDateChange}/>
       <div style={{height: '10px'}}/>
       <TimeOfDayInput
         value={value.timeOfDay}
-        readonly={props.readonly}
+        readOnly={props.readOnly}
         disabled={props.disabled}
         onChange={onTimeChange}/>
     </div>);

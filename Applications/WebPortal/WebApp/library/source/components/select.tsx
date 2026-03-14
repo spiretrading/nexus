@@ -5,8 +5,8 @@ interface Properties extends
     Omit<React.SelectHTMLAttributes<HTMLSelectElement>,
       'onChange' | 'disabled'> {
 
-  /** Determines if the component is readonly. */
-  readonly?: boolean;
+  /** Determines if the component is readOnly. */
+  readOnly?: boolean;
 
   /** Determines if the component is disabled. */
   disabled?: boolean;
@@ -18,7 +18,7 @@ interface Properties extends
 }
 
 /** A select dropdown component. */
-export function Select({readonly, disabled, onChange, className, children,
+export function Select({readOnly, disabled, onChange, className, children,
     ...rest}: Properties): JSX.Element {
   const onSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
     onChange?.(event.target.value);
@@ -26,11 +26,11 @@ export function Select({readonly, disabled, onChange, className, children,
   return (
     <select
       {...rest}
-      disabled={readonly || disabled}
+      disabled={readOnly || disabled}
       className={[css(STYLES.select,
         disabled && STYLES.selectDisabled,
-        readonly && STYLES.selectReadonly), className].join(' ')}
-      onChange={readonly || disabled ? undefined : onSelectChange}>
+        readOnly && STYLES.selectReadonly), className].join(' ')}
+      onChange={readOnly || disabled ? undefined : onSelectChange}>
       {children}
     </select>);
 }

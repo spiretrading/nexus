@@ -8,8 +8,8 @@ interface Properties {
   /** The size at which the component should be displayed at. */
   displaySize: DisplaySize;
 
-  /** Determines if the component is readonly. */
-  readonly?: boolean;
+  /** Determines if the component is readOnly. */
+  readOnly?: boolean;
 
   /** Determines if the component is disabled. */
   disabled?: boolean;
@@ -34,7 +34,7 @@ interface State {
 }
 
 /** A component that displays and edits a region. */
-export class RegionField extends React.Component<Properties, State> {
+export class RegionInput extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -48,57 +48,59 @@ export class RegionField extends React.Component<Properties, State> {
   public render() {
     const visibility = (() => {
       if(!this.state.isEditing) {
-        return RegionField.STYLE.hidden;
+        return RegionInput.STYLE.hidden;
       } else {
         return null;
       }
     })();
     const headerText = (() => {
-      if(this.props.readonly) {
-        return RegionField.MODAL_HEADER_READONLY;
+      if(this.props.readOnly) {
+        return RegionInput.MODAL_HEADER_READONLY;
       } else {
-        return RegionField.MODAL_HEADER;
+        return RegionInput.MODAL_HEADER;
       }
     })();
     const inputField = (() => {
-      if(this.props.readonly) {
+      if(this.props.readOnly) {
         return null;
       } else {
         return (
           <RegionItemInput
+            style={{width: '100%', marginBottom: '18px'}}
             value={this.state.inputString}
+            disabled={this.props.disabled}
             onChange={this.onInputChange}
             onEnter={this.addEntry}/>);
       }
     })();
     const iconRowStyle = (() => {
-      if(this.props.readonly) {
-        return RegionField.STYLE.hidden;
+      if(this.props.readOnly) {
+        return RegionInput.STYLE.hidden;
       } else {
         if(this.props.displaySize === DisplaySize.SMALL) {
-          return RegionField.STYLE.iconRowSmall;
+          return RegionInput.STYLE.iconRowSmall;
         } else {
-          return RegionField.STYLE.iconRowBig;
+          return RegionInput.STYLE.iconRowBig;
         }
       }
     })();
     const imageSize = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return RegionField.IMAGE_SIZE_SMALL_VIEWPORT;
+        return RegionInput.IMAGE_SIZE_SMALL_VIEWPORT;
       } else {
-        return RegionField.IMAGE_SIZE_LARGE_VIEWPORT;
+        return RegionInput.IMAGE_SIZE_LARGE_VIEWPORT;
       }
     })();
     const iconWrapperStyle = (() => {
       const displaySize = this.props.displaySize;
-      if(displaySize === DisplaySize.SMALL && this.props.readonly) {
-        return RegionField.STYLE.iconWrapperSmallReadonly;
-      } else if(displaySize === DisplaySize.SMALL && !this.props.readonly) {
-        return RegionField.STYLE.iconWrapperSmall;
-      } else if(displaySize === DisplaySize.LARGE && this.props.readonly) {
-        return RegionField.STYLE.iconWrapperLargeReadonly;
+      if(displaySize === DisplaySize.SMALL && this.props.readOnly) {
+        return RegionInput.STYLE.iconWrapperSmallReadonly;
+      } else if(displaySize === DisplaySize.SMALL && !this.props.readOnly) {
+        return RegionInput.STYLE.iconWrapperSmall;
+      } else if(displaySize === DisplaySize.LARGE && this.props.readOnly) {
+        return RegionInput.STYLE.iconWrapperLargeReadonly;
       } else {
-        return RegionField.STYLE.iconWrapperLarge;
+        return RegionInput.STYLE.iconWrapperLarge;
       }
     })();
     const uploadButton = (() => {
@@ -106,15 +108,15 @@ export class RegionField extends React.Component<Properties, State> {
         return (
           <div style={iconWrapperStyle}>
             <img height={imageSize} width={imageSize}
-              src={RegionField.PATH + 'upload-grey.svg'}/>
+              src={RegionInput.PATH + 'upload-grey.svg'}/>
           </div>);
       } else {
         return (
           <div style={iconWrapperStyle}>
             <img height={imageSize} width={imageSize}
-              src={RegionField.PATH + 'upload-grey.svg'}/>
-            <div style={RegionField.STYLE.iconLabelReadonly}>
-              {RegionField.UPLOAD_TEXT}
+              src={RegionInput.PATH + 'upload-grey.svg'}/>
+            <div style={RegionInput.STYLE.iconLabelReadonly}>
+              {RegionInput.UPLOAD_TEXT}
             </div>
           </div>);
       }
@@ -126,18 +128,18 @@ export class RegionField extends React.Component<Properties, State> {
             <div style={iconWrapperStyle}
                 onClick={this.removeEntry}>
               <img height={imageSize} width={imageSize}
-                style={RegionField.STYLE.iconClickableStyle}
-                src={RegionField.PATH + 'remove-purple.svg'}/>
+                style={RegionInput.STYLE.iconClickableStyle}
+                src={RegionInput.PATH + 'remove-purple.svg'}/>
             </div>);
         } else {
           return (
             <div style={iconWrapperStyle}
                 onClick={this.removeEntry}>
               <img height={imageSize} width={imageSize}
-                style={RegionField.STYLE.iconClickableStyle}
-                src={RegionField.PATH + 'remove-purple.svg'}/>
-              <div style={RegionField.STYLE.iconLabel}>
-                {RegionField.REMOVE_TEXT}
+                style={RegionInput.STYLE.iconClickableStyle}
+                src={RegionInput.PATH + 'remove-purple.svg'}/>
+              <div style={RegionInput.STYLE.iconLabel}>
+                {RegionInput.REMOVE_TEXT}
               </div>
             </div>);
         }
@@ -146,28 +148,28 @@ export class RegionField extends React.Component<Properties, State> {
           return (
             <div style={iconWrapperStyle}>
               <img height={imageSize} width={imageSize}
-                src={RegionField.PATH + 'remove-grey.svg'}/>
+                src={RegionInput.PATH + 'remove-grey.svg'}/>
             </div>);
         } else {
           return (
             <div style={iconWrapperStyle} onClick={this.removeEntry}>
               <img height={imageSize} width={imageSize}
-                src={RegionField.PATH + 'remove-grey.svg'}/>
-              <div style={RegionField.STYLE.iconLabelReadonly}>
-                {RegionField.REMOVE_TEXT}
+                src={RegionInput.PATH + 'remove-grey.svg'}/>
+              <div style={RegionInput.STYLE.iconLabelReadonly}>
+                {RegionInput.REMOVE_TEXT}
               </div>
             </div>);
         }
       }
     })();
     const confirmationButton = (() => {
-      if(this.props.readonly) {
+      if(this.props.readOnly) {
         return (
-          <Button label={RegionField.CONFIRM_TEXT}
+          <Button label={RegionInput.CONFIRM_TEXT}
             onClick={this.onClose}/>);
       } else {
         return (
-          <Button label={RegionField.SUBMIT_CHANGES_TEXT}
+          <Button label={RegionInput.SUBMIT_CHANGES_TEXT}
             onClick={this.onSubmitChange}/>);
       }
     })();
@@ -177,20 +179,20 @@ export class RegionField extends React.Component<Properties, State> {
         <Input
           readOnly={!this.props.disabled}
           disabled={this.props.disabled}
-          className={!this.props.readonly && !this.props.disabled ?
-            css(RegionField.INPUT_STYLE.interactive) : undefined}
-          style={RegionField.STYLE.textBox}
+          className={!this.props.readOnly && !this.props.disabled ?
+            css(RegionInput.INPUT_STYLE.interactive) : undefined}
+          style={RegionInput.STYLE.textBox}
           value={displayText}
           onFocus={this.onOpen}
           onClick={this.onOpen}/>
         <div style={visibility}>
           <Modal
               title={headerText} onClose={this.onClose}>
-            <div style={RegionField.STYLE.contentWrapper}>
+            <div style={RegionInput.STYLE.contentWrapper}>
               {inputField}
               <RegionItemList
                 displaySize={this.props.displaySize}
-                readonly={this.props.readonly}
+                readOnly={this.props.readOnly}
                 value={this.state.regionItems}
                 selection={this.state.selection}
                 onClick={this.selectEntry}/>
@@ -199,7 +201,7 @@ export class RegionField extends React.Component<Properties, State> {
                 {uploadButton}
               </div>
               <HLine color={'#e6e6e6'}/>
-              <div style={RegionField.STYLE.buttonWrapper}>
+              <div style={RegionInput.STYLE.buttonWrapper}>
                 {confirmationButton}
               </div>
             </div>
@@ -370,7 +372,7 @@ export class RegionField extends React.Component<Properties, State> {
 
 interface RegionItemListProperties {
   displaySize: DisplaySize;
-  readonly?: boolean;
+  readOnly?: boolean;
   selection: number;
   value: RegionItem[];
   onClick?: (index: number) => void;
@@ -379,7 +381,7 @@ interface RegionItemListProperties {
 class RegionItemList extends React.Component<RegionItemListProperties> {
   public render() {
     const scrollHeader = (() => {
-      if(!this.props.readonly) {
+      if(!this.props.readOnly) {
         return (
           <div style={RegionItemList.STYLE.scrollBoxHeaderSmall}>
             Subregions
@@ -390,20 +392,20 @@ class RegionItemList extends React.Component<RegionItemListProperties> {
     })();
     const selectedRegionsBox = (() => {
       const displaySize = this.props.displaySize;
-      if(displaySize === DisplaySize.SMALL && this.props.readonly) {
+      if(displaySize === DisplaySize.SMALL && this.props.readOnly) {
         return RegionItemList.STYLE.scrollBoxSmallReadonly;
-      } else if(displaySize === DisplaySize.SMALL && !this.props.readonly) {
+      } else if(displaySize === DisplaySize.SMALL && !this.props.readOnly) {
         return RegionItemList.STYLE.scrollBoxSmall;
-      } else if(displaySize !== DisplaySize.SMALL && this.props.readonly) {
+      } else if(displaySize !== DisplaySize.SMALL && this.props.readOnly) {
         return RegionItemList.STYLE.scrollBoxBigReadonly;
-      } else if (displaySize !== DisplaySize.SMALL && !this.props.readonly) {
+      } else if (displaySize !== DisplaySize.SMALL && !this.props.readOnly) {
         return RegionItemList.STYLE.scrollBoxBig;
       }
     })();
     const entries = [];
     for(let i = 0; i < this.props.value.length; ++i) {
       const symbol = makeRegionItemText(this.props.value[i]);
-      if(this.props.readonly) {
+      if(this.props.readOnly) {
         entries.push(
           <div
               key={i}
@@ -434,7 +436,7 @@ class RegionItemList extends React.Component<RegionItemListProperties> {
   }
 
   private selectEntry(index: number) {
-    if(!this.props.readonly) {
+    if(!this.props.readOnly) {
       if(index === this.props.selection) {
         this.props.onClick?.(-1);
       } else {

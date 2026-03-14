@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { Button, DisplaySize, TextField} from '../../..';
+import { Button, DisplaySize, Input} from '../../..';
 
 interface Properties {
 
@@ -116,14 +116,14 @@ export class CreateGroupModal extends React.Component<Properties, State> {
           </span>
           <div style={CreateGroupModal.STYLE.mediumPadding}/>
           <div style={inputStyle}>
-            <TextField
+            <Input
               autoFocus
-              displaySize={this.props.displaySize}
               value={this.state.groupName}
               placeholder={CreateGroupModal.PLACEHOLDER}
-              isError={this.state.isLocalError}
-              onInput={this.onNameChange}
-              style={CreateGroupModal.STYLE.textInputOverride}/>
+              style={{...CreateGroupModal.STYLE.textInputOverride,
+                ...(this.state.isLocalError ?
+                  CreateGroupModal.ERROR_STYLE : undefined)}}
+              onChange={this.onInputChange}/>
             <div style={CreateGroupModal.STYLE.inputFiller}/>
             <Button 
               label={CreateGroupModal.BUTTON_TEXT} 
@@ -166,8 +166,8 @@ export class CreateGroupModal extends React.Component<Properties, State> {
     }
   }
 
-  private onNameChange = (newValue: string) => {
-    this.setState({groupName: newValue, isLocalError: false});
+  private onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    this.setState({groupName: event.target.value, isLocalError: false});
   }
 
   private onClose = () => {
@@ -255,6 +255,9 @@ export class CreateGroupModal extends React.Component<Properties, State> {
       cursor: 'pointer' as 'pointer'
     } as React.CSSProperties
   }
+  private static readonly ERROR_STYLE: React.CSSProperties = {
+    borderColor: '#E63F44'
+  };
   private static readonly BUTTON_TEXT = 'Create';
   private static readonly HEADER_TEXT = 'Create Group';
   private static readonly IMAGE_SIZE = '20px';
