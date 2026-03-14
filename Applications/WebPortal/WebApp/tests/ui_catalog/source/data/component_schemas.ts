@@ -51,9 +51,7 @@ const checkbox =
 
 const countrySelect =
   new ComponentSchema('CountrySelect',
-    [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
-        EnumInput(WebPortal.DisplaySize)),
-      new PropertySchema('value', Nexus.DefaultCountries.US,
+    [new PropertySchema('value', Nexus.DefaultCountries.US,
         CountryInput),
       new PropertySchema('readonly', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
@@ -84,13 +82,13 @@ const dateInput =
     [new SignalSchema('onChange', 'value')],
     WebPortal.DateInput);
 
-const dateTimeField =
-  new ComponentSchema('DateTimeField',
+const dateTimeInput =
+  new ComponentSchema('DateTimeInput',
     [new PropertySchema('value',
         Beam.DateTime.fromDate(new Date()), BeamDateTimeInput),
       new PropertySchema('readonly', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
-    WebPortal.DateTimeField);
+    WebPortal.DateTimeInput);
 
 const dropDownButton =
   new ComponentSchema('DropDownButton',
@@ -748,7 +746,7 @@ const pageLayout =
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox,
     countrySelect, currencySelect, dateInput,
-    dateTimeField, dropDownButton, durationInput, emptyMessage, errorMessage,
+    dateTimeInput, dropDownButton, durationInput, emptyMessage, errorMessage,
     filterChip, filterInput, hLine,
     iconLabelButton, integerField, labeledCheckbox, modal, moneyField,
     navigationHeader, navigationTab, numberField, pageLayout,

@@ -2,58 +2,37 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Select } from './select';
 
-interface Properties {
+interface Properties extends
+    Omit<React.ComponentProps<typeof Select>, 'value' | 'onChange'> {
 
   /** The set of available currencies to select. */
   currencyDatabase: Nexus.CurrencyDatabase;
 
-  /** The initial currency selected. */
+  /** The currently selected currency. */
   value?: Nexus.Currency;
-
-  /** Additional CSS styles. */
-  style?: React.CSSProperties;
-
-  /** The class name of the currency selection box. */
-  className?: string;
-
-  /** Indicates if the component is readonly. */
-  readonly?: boolean;
 
   /** The event handler called when the selection changes. */
   onChange?: (currency: Nexus.Currency) => void;
 }
 
-/** A selection field for currencies. */
-export function CurrencySelect(props: Properties): JSX.Element {
-  const onChange = (value: string) => {
-    props.onChange?.(props.currencyDatabase.fromCode(value).currency);
+/** A currency selection component. */
+export function CurrencySelect({currencyDatabase, value, onChange, ...rest}:
+    Properties): JSX.Element {
+  const onSelectChange = (v: string) => {
+    onChange?.(currencyDatabase.fromCode(v).currency);
   };
-  const defaultValue = props.value
-    ? props.currencyDatabase.fromCurrency(props.value).code
+  const selectValue = value
+    ? currencyDatabase.fromCurrency(value).code
     : undefined;
   const options = [];
-  for(const currency of props.currencyDatabase) {
+  for(const currency of currencyDatabase) {
     options.push(
       <option value={currency.code} key={currency.code}>
         {currency.code}
       </option>);
   }
   return (
-    <Select
-      defaultValue={defaultValue}
-      readonly={props.readonly}
-      style={{...STYLE.base, ...props.style}}
-      className={props.className}
-      onChange={onChange}>
+    <Select {...rest} value={selectValue} onChange={onSelectChange}>
       {options}
     </Select>);
 }
-
-const STYLE = {
-  base: {
-    minWidth: '246px',
-    width: '100%',
-    flexGrow: 1,
-    flexShrink: 1
-  } as React.CSSProperties
-};

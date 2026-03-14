@@ -42,14 +42,14 @@ export class BurgerButton extends React.Component<Properties, State> {
       }
       return this.props.color;
     })();
-    const style = {
+    const style: React.CSSProperties = {
       minWidth: this.props.width,
       width: this.props.width,
       minHeight: this.props.height,
       height: this.props.height,
       display: 'block',
       cursor: 'pointer'
-    } as React.CSSProperties;
+    };
     return (
       <div style={style} role='button' tabIndex={0}
           aria-label='Menu' onKeyDown={this.onKeyDown}>

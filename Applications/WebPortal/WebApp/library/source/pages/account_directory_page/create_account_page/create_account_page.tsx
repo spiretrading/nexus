@@ -298,7 +298,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                 <FormEntry name='Country'
                     displaySize={this.props.displaySize}>
                   <CountrySelect
-                    displaySize={this.props.displaySize}
                     countryDatabase={this.props.countryDatabase}
                     value={this.state.identity.country}
                     onChange={this.onCountryChange}/>
