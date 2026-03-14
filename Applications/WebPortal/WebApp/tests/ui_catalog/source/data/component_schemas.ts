@@ -94,8 +94,11 @@ const dropDownButton =
   new ComponentSchema('DropDownButton',
     [new PropertySchema('size', 16, NumberSliderInput),
       new PropertySchema('isExpanded', false, BooleanInput)],
-    [new SignalSchema('onClick', '')],
-    WebPortal.DropDownButton);
+    [new SignalSchema('onClick', 'isExpanded')],
+    (props: any) => React.createElement(WebPortal.DropDownButton, {
+      ...props,
+      onClick: () => props.onClick(!props.isExpanded)
+    }));
 
 const emptyMessage =
   new ComponentSchema('EmptyMessage',
