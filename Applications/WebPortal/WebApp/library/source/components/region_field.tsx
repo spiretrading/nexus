@@ -11,6 +11,9 @@ interface Properties {
   /** Determines if the component is readonly. */
   readonly?: boolean;
 
+  /** Determines if the component is disabled. */
+  disabled?: boolean;
+
   /** The region to display. */
   value?: Nexus.Region;
 
@@ -172,7 +175,10 @@ export class RegionField extends React.Component<Properties, State> {
     return (
       <div>
         <Input
-          readOnly
+          readOnly={!this.props.disabled}
+          disabled={this.props.disabled}
+          className={!this.props.readonly && !this.props.disabled ?
+            css(RegionField.INPUT_STYLE.interactive) : undefined}
           style={RegionField.STYLE.textBox}
           value={displayText}
           onFocus={this.onOpen}
@@ -248,6 +254,17 @@ export class RegionField extends React.Component<Properties, State> {
     });
   }
 
+  private static readonly INPUT_STYLE = StyleSheet.create({
+    interactive: {
+      borderColor: '#C8C8C8 !important',
+      ':hover': {
+        borderColor: '#684BC7 !important'
+      },
+      ':focus': {
+        borderColor: '#684BC7 !important'
+      }
+    }
+  });
   private static readonly STYLE = {
     textBox: {
       textOverflow: 'ellipsis',
