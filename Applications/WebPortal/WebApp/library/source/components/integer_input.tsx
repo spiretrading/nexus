@@ -60,6 +60,9 @@ export class IntegerInput extends React.Component<Properties, State> {
   }
 
   private onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if(this.props.readOnly) {
+      return;
+    }
     if(event.key === 'ArrowUp') {
       this.increment();
     } else if(event.key === 'ArrowDown') {
@@ -68,7 +71,7 @@ export class IntegerInput extends React.Component<Properties, State> {
   }
 
   private onWheel = (event: React.WheelEvent<HTMLInputElement>) => {
-    if(document.activeElement !== event.target) {
+    if(this.props.readOnly || document.activeElement !== event.target) {
       return;
     }
     if(event.deltaY > 0) {
