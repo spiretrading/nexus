@@ -16,7 +16,7 @@ export * from './icon_label_button';
 export * from './integer_input';
 export * from './labeled_checkbox';
 export * from './modal';
-export * from './money_field';
+export * from './money_input';
 export * from './navigation_header';
 export * from './navigation_tab';
 export * from './number_field';
