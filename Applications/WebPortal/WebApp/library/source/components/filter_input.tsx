@@ -16,18 +16,15 @@ interface Properties {
 }
 
 /** A text input with a magnifying glass icon for filtering. */
-export class FilterInput extends React.Component<Properties> {
-  public render(): JSX.Element {
-    return (
-      <input type='text' placeholder={this.props.placeholder ?? 'Filter'}
-        value={this.props.value}
-        onChange={this.onInputChange}
-        className={css(STYLES.input)}/>);
-  }
-
-  private onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.props.onChange?.(event.target.value);
+export function FilterInput(props: Properties): JSX.Element {
+  const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    props.onChange?.(event.target.value);
   };
+  return (
+    <input type='text' placeholder={props.placeholder ?? 'Filter'}
+      value={props.value}
+      onChange={onChange}
+      className={css(STYLES.input)}/>);
 }
 
 const STYLES = StyleSheet.create({
@@ -49,9 +46,6 @@ const STYLES = StyleSheet.create({
     backgroundRepeat: 'no-repeat',
     '::placeholder': {
       color: '#8C8C8C'
-    },
-    '::-ms-clear': {
-      display: 'none'
     }
   }
 });

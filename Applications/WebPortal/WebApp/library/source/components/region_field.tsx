@@ -179,7 +179,7 @@ export class RegionField extends React.Component<Properties, State> {
           onFocus={this.onOpen}
           onClick={this.onOpen}/>
         <div style={visibility}>
-          <Modal displaySize={this.props.displaySize}
+          <Modal
               title={headerText} onClose={this.onClose}>
             <div style={RegionField.STYLE.contentWrapper}>
               {inputField}

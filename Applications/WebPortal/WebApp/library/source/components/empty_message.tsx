@@ -23,7 +23,7 @@ const STYLE = {
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    height: '100%'
+    height: '224px'
   } as React.CSSProperties,
   filler: {
     flexGrow: 1,

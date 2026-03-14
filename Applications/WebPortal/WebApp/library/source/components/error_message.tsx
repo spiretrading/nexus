@@ -11,73 +11,37 @@ interface Properties {
   onRetry?: () => void;
 }
 
-interface State {
-  isWide: boolean;
-}
-
 /** Displays an error message with a retry button. */
-export class ErrorMessage extends React.Component<Properties, State> {
-  constructor(props: Properties) {
-    super(props);
-    this.containerRef = React.createRef<HTMLDivElement>();
-    this.state = {
-      isWide: false
-    };
-  }
-
-  public componentDidMount(): void {
-    this.resizeObserver = new ResizeObserver(this.onResize);
-    if(this.containerRef.current) {
-      this.resizeObserver.observe(this.containerRef.current);
-    }
-  }
-
-  public componentWillUnmount(): void {
-    this.resizeObserver?.disconnect();
-  }
-
-  public render(): JSX.Element {
-    return (
-      <div ref={this.containerRef} className={css(STYLES.container)}>
-        <div className={css(STYLES.content)}>
-          <div className={css(STYLES.filler)}/>
-          <img src='resources/components/error.svg'
-            className={css(STYLES.errorIcon)}/>
+export function ErrorMessage(props: Properties): JSX.Element {
+  return (
+    <div className={css(STYLES.container)}>
+      <div className={css(STYLES.content)}>
+        <div className={css(STYLES.filler)}/>
+        <img src='resources/components/error.svg'
+          className={css(STYLES.errorIcon)}/>
+        <div className={css(STYLES.spacer)}/>
+        <span className={css(STYLES.message)}>{props.message}</span>
+        <div className={css(STYLES.inlineRetry)}>
           <div className={css(STYLES.spacer)}/>
-          <span className={css(STYLES.message)}>{this.props.message}</span>
-          {this.state.isWide && <>
-            <div className={css(STYLES.spacer)}/>
-            <Button label='Retry' onClick={this.props.onRetry}/>
-          </>}
-          <div className={css(STYLES.filler)}/>
+          <Button label='Retry' onClick={props.onRetry}
+            style={{width: '246px'}}/>
         </div>
-        {!this.state.isWide &&
-          <div className={css(STYLES.actions)}>
-            <Button label='Retry' onClick={this.props.onRetry}/>
-          </div>}
-      </div>);
-  }
-
-  private onResize = (entries: ResizeObserverEntry[]) => {
-    for(const entry of entries) {
-      const isWide = entry.contentRect.width >= 732;
-      if(isWide !== this.state.isWide) {
-        this.setState({isWide});
-      }
-    }
-  };
-
-  private containerRef: React.RefObject<HTMLDivElement>;
-  private resizeObserver?: ResizeObserver;
+        <div className={css(STYLES.filler)}/>
+      </div>
+      <div className={css(STYLES.actions)}>
+        <Button label='Retry' onClick={props.onRetry}/>
+      </div>
+    </div>);
 }
 
 const STYLES = StyleSheet.create({
   container: {
+    containerType: 'inline-size',
     fontFamily: 'Roboto',
     backgroundColor: '#FFFFFF',
     display: 'flex',
     flexDirection: 'column',
-    height: '100%'
+    height: '224px'
   },
   content: {
     display: 'flex',
@@ -104,6 +68,12 @@ const STYLES = StyleSheet.create({
     color: '#333333',
     fontSize: '0.875rem'
   },
+  inlineRetry: {
+    display: 'none',
+    '@container (min-width: 732px)': {
+      display: 'contents'
+    }
+  },
   actions: {
     position: 'fixed',
     bottom: 0,
@@ -113,6 +83,9 @@ const STYLES = StyleSheet.create({
     justifyContent: 'center',
     backgroundColor: '#FFFFFF',
     padding: '18px 18px 30px',
-    boxShadow: '0 0 6px rgb(0 0 0 / 25%)'
+    boxShadow: '0 0 6px rgb(0 0 0 / 25%)',
+    '@container (min-width: 732px)': {
+      display: 'none'
+    }
   }
 });

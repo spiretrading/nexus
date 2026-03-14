@@ -22,34 +22,25 @@ interface Properties {
 }
 
 /** A checkbox with an associated label. */
-export class LabeledCheckbox extends React.Component<Properties> {
-  constructor(props: Properties) {
-    super(props);
-    this.checkboxId = props.id ?? `labeled-checkbox-${nextId++}`;
-  }
-
-  public render(): JSX.Element {
-    return (
-      <div className={css(STYLES.container)}>
-        <input type='checkbox' id={this.checkboxId}
-          checked={this.props.isChecked}
-          onChange={this.onChange}
-          className={css(STYLES.input)}/>
-        <label htmlFor={this.checkboxId} className={css(STYLES.label)}>
-          <Checkbox
-            checked={this.props.isChecked}/>
-          <span className={css(STYLES.labelText)}>
-            {this.props.label}
-          </span>
-        </label>
-      </div>);
-  }
-
-  private onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.props.onChange?.(event.target.checked);
+export function LabeledCheckbox(props: Properties): JSX.Element {
+  const checkboxId = React.useRef(props.id ?? `labeled-checkbox-${nextId++}`);
+  const onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+    props.onChange?.(event.target.checked);
   };
-
-  private checkboxId: string;
+  return (
+    <div className={css(STYLES.container)}>
+      <input type='checkbox' id={checkboxId.current}
+        checked={props.isChecked}
+        onChange={onChange}
+        className={css(STYLES.input)}/>
+      <label htmlFor={checkboxId.current} className={css(STYLES.label)}>
+        <Checkbox
+          checked={props.isChecked}/>
+        <span className={css(STYLES.labelText)}>
+          {props.label}
+        </span>
+      </label>
+    </div>);
 }
 
 const STYLES = StyleSheet.create({

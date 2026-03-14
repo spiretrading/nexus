@@ -104,7 +104,7 @@ const emptyMessage =
   new ComponentSchema('EmptyMessage',
     [new PropertySchema('message', 'No items to display.', TextInput)],
     [],
-    WebPortal.EmptyMessage, 640, 480);
+    WebPortal.EmptyMessage, 732, -1);
 
 const filterInput =
   new ComponentSchema('FilterInput',
@@ -125,7 +125,7 @@ const errorMessage =
     [new PropertySchema('message',
       'Something went wrong. Please try again later.', TextInput)],
     [new SignalSchema('onRetry', '')],
-    WebPortal.ErrorMessage, 640, 480);
+    WebPortal.ErrorMessage, 732, -1);
 
 const durationInput =
   new ComponentSchema('DurationInput',
@@ -178,8 +178,6 @@ const labeledCheckbox =
 const modal =
   new ComponentSchema('Modal',
     [new PropertySchema('isOpen', false, BooleanInput),
-      new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
-        EnumInput(WebPortal.DisplaySize)),
       new PropertySchema('title', 'Modal Title', TextInput)],
     [new SignalSchema('onClose', 'isOpen')],
     (props: any) => {
@@ -187,7 +185,6 @@ const modal =
         return React.createElement('div', null, 'Modal is closed.');
       }
       return React.createElement(WebPortal.Modal, {
-        displaySize: props.displaySize,
         title: props.title,
         onClose: () => props.onClose(false)
       },

@@ -88,7 +88,7 @@ export class NewRuleModal extends React.Component<Properties, State> {
           <div style={NewRuleModal.STYLE.newRuleText}>Add New Rule</div>
         </div>
         <div style={modalVisibility}>
-          <Modal displaySize={this.props.displaySize}
+          <Modal
               title='Add New Rule' onClose={this.props.onToggleModal}>
             <div style={NewRuleModal.STYLE.contentWrapper}>
               <div style={NewRuleModal.STYLE.ruleItemWrapper}>
