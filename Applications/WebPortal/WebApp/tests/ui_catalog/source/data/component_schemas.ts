@@ -193,13 +193,13 @@ const modal =
         }));
     });
 
-const moneyField =
-  new ComponentSchema('MoneyField',
+const moneyInput =
+  new ComponentSchema('MoneyInput',
     [new PropertySchema('value', Nexus.Money.parse('100.00'), MoneyInput),
-      new PropertySchema('readonly', false, BooleanInput),
+      new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onChange', 'value')],
-    WebPortal.MoneyField);
+    WebPortal.MoneyInput);
 
 const NAVIGATION_TABS = [
   React.createElement(WebPortal.NavigationTab, {
@@ -748,7 +748,7 @@ export const componentSections = [
     countrySelect, currencySelect, dateInput,
     dateTimeInput, dropDownButton, durationInput, emptyMessage, errorMessage,
     filterChip, filterInput, hLine,
-    iconLabelButton, integerField, labeledCheckbox, modal, moneyField,
+    iconLabelButton, integerField, labeledCheckbox, modal, moneyInput,
     navigationHeader, navigationTab, numberField, pageLayout,
     pagination, regionField, regionItemInput, relativeDate, roleIcon, rolePanel,
     securitiesField, securityFieldInput, securityField, select,

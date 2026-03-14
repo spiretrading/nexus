@@ -3,7 +3,7 @@ import { Center, HBoxLayout, Padding, VBoxLayout } from 'dali';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { CurrencySelect, IntegerInput, MoneyField } from '../../..';
+import { CurrencySelect, IntegerInput, MoneyInput } from '../../..';
 
 interface Properties {
 
@@ -40,7 +40,7 @@ export class RiskParametersView extends React.Component<Properties> {
           <Padding size='30px'/>
           <Label text={`Buying Power (${currencySign})`}/>
           <Padding size='12px'/>
-          <MoneyField
+          <MoneyInput
             className={css(RiskParametersView.STYLE.inputBox)}
             value={this.props.parameters.buyingPower}
             min={Nexus.Money.ZERO}
@@ -48,7 +48,7 @@ export class RiskParametersView extends React.Component<Properties> {
           <Padding size='30px'/>
           <Label text={`Net Loss (${currencySign})`}/>
           <Padding size='12px'/>
-          <MoneyField
+          <MoneyInput
             className={css(RiskParametersView.STYLE.inputBox)}
             value={this.props.parameters.netLoss}
             min={Nexus.Money.ZERO}
