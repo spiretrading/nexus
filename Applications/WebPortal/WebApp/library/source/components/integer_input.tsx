@@ -1,9 +1,8 @@
-import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
+import { Input } from './input';
 
-interface Properties extends
-    Omit<React.InputHTMLAttributes<HTMLInputElement>,
-      'min' | 'max' | 'value' | 'onChange'> {
+interface Properties extends Omit<React.InputHTMLAttributes<HTMLInputElement>,
+    'min' | 'max' | 'value' | 'onChange'> {
 
   /** The minimum allowed value. */
   min?: number;
@@ -35,20 +34,14 @@ export class IntegerInput extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const {min, max, leadingZeros, value, readOnly, onChange,
-      style, className, ...rest} = this.props;
+    const {min, max, leadingZeros, value, onChange, ...rest} = this.props;
     return (
-      <input
+      <Input
         {...rest}
         onBlur={this.onBlur}
-        style={{...IntegerInput.STYLE.editBox, ...style}}
         value={this.state.text}
         onChange={this.onChange}
-        readOnly={readOnly}
-        disabled={readOnly}
-        onKeyDown={this.onKeyDown} onWheel={this.onWheel}
-        className={[css(IntegerInput.EXTRA_STYLE.effects), className].join(' ')}
-        type={'text'}/>);
+        onKeyDown={this.onKeyDown} onWheel={this.onWheel}/>);
   }
 
   public componentDidUpdate(prevProps: Properties) {
@@ -60,7 +53,7 @@ export class IntegerInput extends React.Component<Properties, State> {
   }
 
   private onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if(this.props.readOnly) {
+    if(this.props.readOnly || this.props.disabled) {
       return;
     }
     if(event.key === 'ArrowUp') {
@@ -71,7 +64,8 @@ export class IntegerInput extends React.Component<Properties, State> {
   }
 
   private onWheel = (event: React.WheelEvent<HTMLInputElement>) => {
-    if(this.props.readOnly || document.activeElement !== event.target) {
+    if(this.props.readOnly || this.props.disabled ||
+        document.activeElement !== event.target) {
       return;
     }
     if(event.deltaY > 0) {
@@ -127,48 +121,6 @@ export class IntegerInput extends React.Component<Properties, State> {
     }
     this.props.onChange?.(decrement);
   }
-
-  private static readonly STYLE = {
-    editBox: {
-      boxSizing: 'border-box',
-      font: '16px Roboto',
-      width: '66px',
-      height: '34px',
-      border: '1px solid #C8C8C8',
-      color: '#333333',
-      textAlign: 'center',
-      backgroundColor: '#FFFFFF'
-    } as React.CSSProperties
-  };
-  private static readonly EXTRA_STYLE = StyleSheet.create({
-    effects: {
-      '-moz-appearance': 'textfield',
-      ':focus': {
-        outline: 0,
-        borderColor: '#684BC7',
-        boxShadow: 'none',
-        webkitBoxShadow: 'none',
-        outlineColor: 'transparent',
-        outlineStyle: 'none'
-      },
-      ':active': {
-        borderColor: '#684BC7'
-      },
-      '::moz-focus-inner': {
-        border: 0
-      },
-      '::-webkit-inner-spin-button': {
-        '-webkit-appearance': 'none',
-        'appearance': 'none',
-        margin: 0
-      },
-      '::-webkit-outer-spin-button': {
-        '-webkit-appearance': 'none',
-        'appearance': 'none',
-        margin: 0
-      }
-    }
-  });
 }
 
 function padValue(value: number | undefined, leadingZeros: number): string {

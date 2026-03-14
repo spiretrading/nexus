@@ -11,6 +11,9 @@ interface Properties {
   /** Determines if the component is readonly. */
   readonly?: boolean;
 
+  /** Determines if the component is disabled. */
+  disabled?: boolean;
+
   /** Determines if the component is in an error state. */
   error?: boolean;
 
@@ -47,6 +50,7 @@ export function DateInput(props: Properties): JSX.Element {
   const separatorStyle = props.value ? undefined : {color: '#8C8C8C'};
   return (
     <div className={css(STYLES.container,
+        props.disabled && STYLES.containerDisabled,
         props.error && STYLES.containerError,
         props.readonly && STYLES.containerReadonly)}>
       <IntegerInput
@@ -54,6 +58,7 @@ export function DateInput(props: Properties): JSX.Element {
         min={0} max={9999}
         value={props.value?.year}
         readOnly={props.readonly}
+        disabled={props.disabled}
         onChange={onYearChange}
         style={STYLE.yearInput}
         leadingZeros={4}/>
@@ -65,6 +70,7 @@ export function DateInput(props: Properties): JSX.Element {
         min={1} max={12}
         value={props.value?.month}
         readOnly={props.readonly}
+        disabled={props.disabled}
         onChange={onMonthChange}
         style={STYLE.monthInput}
         leadingZeros={2}/>
@@ -76,6 +82,7 @@ export function DateInput(props: Properties): JSX.Element {
         min={1} max={31}
         value={props.value?.day}
         readOnly={props.readonly}
+        disabled={props.disabled}
         onChange={onDayChange}
         style={STYLE.dayInput}
         leadingZeros={2}/>
@@ -108,6 +115,17 @@ const STYLES = StyleSheet.create({
     },
     ':focus-within': {
       borderColor: '#684BC7'
+    }
+  },
+  containerDisabled: {
+    opacity: 0.4,
+    cursor: 'not-allowed',
+    pointerEvents: 'none',
+    ':hover': {
+      borderColor: '#C8C8C8'
+    },
+    ':focus-within': {
+      borderColor: '#C8C8C8'
     }
   },
   containerReadonly: {

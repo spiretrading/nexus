@@ -16,6 +16,9 @@ interface Properties {
   /** Determines if the component is readonly. */
   readonly?: boolean;
 
+  /** Determines if the component is disabled. */
+  disabled?: boolean;
+
   /** Determines if the component is in an error state. */
   error?: boolean;
 
@@ -57,6 +60,7 @@ export function TimeOfDayInput(props: Properties): JSX.Element {
       <DurationInput
         value={displayedTime}
         readonly={props.readonly}
+        disabled={props.disabled}
         error={props.error}
         maxHourValue={12}
         minHourValue={1}
@@ -65,6 +69,7 @@ export function TimeOfDayInput(props: Properties): JSX.Element {
           onChange={onPeriodChange}
           value={String(period)}
           readonly={props.readonly}
+          disabled={props.disabled}
           style={STYLE.select}>
         <option value={String(Period.AM)}>AM</option>
         <option value={String(Period.PM)}>PM</option>

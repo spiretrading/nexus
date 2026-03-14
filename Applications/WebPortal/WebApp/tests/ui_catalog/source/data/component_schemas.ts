@@ -53,7 +53,8 @@ const countrySelect =
   new ComponentSchema('CountrySelect',
     [new PropertySchema('value', Nexus.DefaultCountries.US,
         CountryInput),
-      new PropertySchema('readonly', false, BooleanInput)],
+      new PropertySchema('readonly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     (props: any) => React.createElement(WebPortal.CountrySelect, {
       ...props,
@@ -66,7 +67,8 @@ const currencySelect =
   new ComponentSchema('CurrencySelect',
     [new PropertySchema('value', Nexus.DefaultCurrencies.USD,
         CurrencyInput),
-      new PropertySchema('readonly', false, BooleanInput)],
+      new PropertySchema('readonly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     (props: any) => React.createElement(WebPortal.CurrencySelect, {
       ...props,
@@ -78,6 +80,7 @@ const dateInput =
     [new PropertySchema('value',
         Beam.Date.today(), BeamDateInput),
       new PropertySchema('readonly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput),
       new PropertySchema('error', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.DateInput);
@@ -86,7 +89,8 @@ const dateTimeInput =
   new ComponentSchema('DateTimeInput',
     [new PropertySchema('value',
         Beam.DateTime.now(), BeamDateTimeInput),
-      new PropertySchema('readonly', false, BooleanInput)],
+      new PropertySchema('readonly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.DateTimeInput);
 
@@ -108,7 +112,9 @@ const emptyMessage =
 
 const filterInput =
   new ComponentSchema('FilterInput',
-    [new PropertySchema('value', '', TextInput)],
+    [new PropertySchema('value', '', TextInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.FilterInput);
 
@@ -133,6 +139,7 @@ const durationInput =
       new PropertySchema('maxHourValue', 99, NumberInput),
       new PropertySchema('minHourValue', 0, NumberInput),
       new PropertySchema('readonly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput),
       new PropertySchema('error', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.DurationInput);
@@ -158,12 +165,25 @@ const iconLabelButton =
     [new SignalSchema('onClick', '')],
     WebPortal.IconLabelButton);
 
+const input =
+  new ComponentSchema('Input',
+    [new PropertySchema('value', '', TextInput),
+      new PropertySchema('placeholder', 'Enter text...', TextInput),
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    (props: any) => React.createElement(WebPortal.Input, {
+      ...props,
+      onChange: (e: any) => props.onChange(e.target.value)
+    }));
+
 const integerField =
   new ComponentSchema('IntegerInput',
     [new PropertySchema('min', 0, NumberInput),
       new PropertySchema('max', 100, NumberInput),
       new PropertySchema('value', 0, NumberInput),
       new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput),
       new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.IntegerInput);
@@ -196,16 +216,22 @@ const modal =
 const decimalInput =
   new ComponentSchema('DecimalInput',
     [new PropertySchema('value', 100, NumberInput),
+      new PropertySchema('min', 0, NumberInput),
+      new PropertySchema('max', 1000, NumberInput),
       new PropertySchema('decimalPlaces', 2, NumberInput),
-      new PropertySchema('readOnly', false, BooleanInput)],
+      new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.DecimalInput);
 
 const moneyInput =
   new ComponentSchema('MoneyInput',
     [new PropertySchema('value', Nexus.Money.parse('100.00'), MoneyInput),
+      new PropertySchema('min', Nexus.Money.ZERO, MoneyInput),
+      new PropertySchema('max', Nexus.Money.parse('10000.00'), MoneyInput),
       new PropertySchema('decimalPlaces', 2, NumberInput),
       new PropertySchema('readOnly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput),
       new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.MoneyInput);
@@ -252,15 +278,6 @@ const navigationTab =
     [new SignalSchema('onClick', '')],
     WebPortal.NavigationTab);
 
-const numberField =
-  new ComponentSchema('NumberField',
-    [new PropertySchema('value', 0, NumberInput),
-      new PropertySchema('min', 0, NumberInput),
-      new PropertySchema('max', 100, NumberInput),
-      new PropertySchema('readonly', false, BooleanInput),
-      new PropertySchema('style', {}, CSSInput)],
-    [new SignalSchema('onChange', 'value')],
-    WebPortal.NumberField);
 
 const pagination =
   new ComponentSchema('Pagination',
@@ -274,7 +291,8 @@ const regionField =
   new ComponentSchema('RegionField',
     [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
         EnumInput(WebPortal.DisplaySize)),
-      new PropertySchema('readonly', false, BooleanInput)],
+      new PropertySchema('readonly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.RegionField);
 
@@ -298,7 +316,8 @@ const relativeDate =
 const select =
   new ComponentSchema('Select',
     [new PropertySchema('value', 'Apple', TextInput),
-      new PropertySchema('readonly', false, BooleanInput)],
+      new PropertySchema('readonly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     (props: any) => React.createElement(WebPortal.Select, props,
       React.createElement('option', {value: 'Apple'}, 'Apple'),
@@ -393,6 +412,7 @@ const timeOfDayInput =
   new ComponentSchema('TimeOfDayInput',
     [new PropertySchema('value', new Beam.Duration(0), BeamTimeOfDayInput),
       new PropertySchema('readonly', false, BooleanInput),
+      new PropertySchema('disabled', false, BooleanInput),
       new PropertySchema('error', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.TimeOfDayInput);
@@ -758,8 +778,8 @@ export const componentSections = [
     dateTimeInput, decimalInput, dropDownButton, durationInput, emptyMessage,
     errorMessage,
     filterChip, filterInput, hLine,
-    iconLabelButton, integerField, labeledCheckbox, modal, moneyInput,
-    navigationHeader, navigationTab, numberField, pageLayout,
+    iconLabelButton, input, integerField, labeledCheckbox, modal, moneyInput,
+    navigationHeader, navigationTab, pageLayout,
     pagination, regionField, regionItemInput, relativeDate, roleIcon, rolePanel,
     securitiesField, securityFieldInput, securityField, select,
     segmentButton,

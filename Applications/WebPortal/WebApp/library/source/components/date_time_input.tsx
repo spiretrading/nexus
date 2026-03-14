@@ -11,6 +11,9 @@ interface Properties {
   /** Determines if the component is readonly. */
   readonly?: boolean;
 
+  /** Determines if the component is disabled. */
+  disabled?: boolean;
+
   /** Called when the value changes.
    * @param value - The updated value.
    */
@@ -40,11 +43,13 @@ export function DateTimeInput(props: Properties): JSX.Element {
       <DateInput
         value={value.date}
         readonly={props.readonly}
+        disabled={props.disabled}
         onChange={onDateChange}/>
       <div style={{height: '10px'}}/>
       <TimeOfDayInput
         value={value.timeOfDay}
         readonly={props.readonly}
+        disabled={props.disabled}
         onChange={onTimeChange}/>
     </div>);
 }

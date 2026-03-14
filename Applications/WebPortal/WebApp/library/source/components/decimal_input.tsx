@@ -1,9 +1,8 @@
-import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
+import { Input } from './input';
 
-interface Properties extends
-    Omit<React.InputHTMLAttributes<HTMLInputElement>,
-      'min' | 'max' | 'value' | 'onChange'> {
+interface Properties extends Omit<React.InputHTMLAttributes<HTMLInputElement>,
+    'min' | 'max' | 'value' | 'onChange'> {
 
   /** The minimum allowed value (inclusive). */
   min?: number;
@@ -37,16 +36,11 @@ export class DecimalInput extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const {min, max, value, decimalPlaces, readOnly, onChange, style, className,
-      ...rest} = this.props;
+    const {min, max, value, decimalPlaces, onChange, ...rest} = this.props;
     return (
-      <input
+      <Input
         {...rest}
-        style={{...STYLE.input, ...style}}
-        className={[css(STYLES.effects), className].join(' ')}
-        type='text'
-        disabled={readOnly}
-        ref={(input) => {this._input = input;}}
+        ref={this._inputRef}
         value={this.state.text}
         onKeyDown={this.onKeyDown} onWheel={this.onWheel}
         onChange={this.onChange} onBlur={this.onBlur}/>);
@@ -59,14 +53,14 @@ export class DecimalInput extends React.Component<Properties, State> {
       });
     }
     if(this._start != null) {
-      this._input.setSelectionRange(this._start, this._end);
+      this._inputRef.current?.setSelectionRange(this._start, this._end);
       this._start = null;
       this._end = null;
     }
   }
 
   private onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
-    if(this.props.readOnly) {
+    if(this.props.readOnly || this.props.disabled) {
       return;
     }
     if(event.key === 'ArrowUp') {
@@ -77,7 +71,8 @@ export class DecimalInput extends React.Component<Properties, State> {
   }
 
   private onWheel = (event: React.WheelEvent<HTMLInputElement>) => {
-    if(this.props.readOnly || document.activeElement !== event.target) {
+    if(this.props.readOnly || this.props.disabled ||
+        document.activeElement !== event.target) {
       return;
     }
     if(event.deltaY > 0) {
@@ -122,8 +117,8 @@ export class DecimalInput extends React.Component<Properties, State> {
     if(this.props.max != null && increment > this.props.max) {
       return;
     }
-    this._start = this._input.selectionStart;
-    this._end = this._input.selectionEnd;
+    this._start = this._inputRef.current?.selectionStart;
+    this._end = this._inputRef.current?.selectionEnd;
     this.props.onChange?.(increment);
   }
 
@@ -133,12 +128,12 @@ export class DecimalInput extends React.Component<Properties, State> {
     if(this.props.min != null && decrement < this.props.min) {
       return;
     }
-    this._start = this._input.selectionStart;
-    this._end = this._input.selectionEnd;
+    this._start = this._inputRef.current?.selectionStart;
+    this._end = this._inputRef.current?.selectionEnd;
     this.props.onChange?.(decrement);
   }
 
-  private _input: HTMLInputElement;
+  private _inputRef = React.createRef<HTMLInputElement>();
   private _start: number;
   private _end: number;
 }
@@ -159,29 +154,3 @@ function formatValue(value?: number, decimalPlaces?: number): string {
 export function DecimalLabel(props: DecimalLabelProperties): JSX.Element {
   return <DecimalInput {...props} readOnly/>;
 }
-
-const STYLE: Record<string, React.CSSProperties> = {
-  input: {
-    boxSizing: 'border-box',
-    height: '34px',
-    border: '1px solid #C8C8C8',
-    borderRadius: '1px',
-    font: '400 14px Roboto',
-    backgroundColor: '#FFFFFF',
-    color: '#333333',
-    flexGrow: 1,
-    maxWidth: '246px',
-    width: '100%',
-    paddingLeft: '10px'
-  }
-};
-
-const STYLES = StyleSheet.create({
-  effects: {
-    ':focus': {
-      borderColor: '#684BC7',
-      outline: 'none',
-      boxShadow: 'none'
-    }
-  }
-});

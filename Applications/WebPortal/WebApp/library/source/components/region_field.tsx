@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Button, DisplaySize, HLine, Modal, RegionItemInput } from '..';
+import { Button, DisplaySize, HLine, Input, Modal, RegionItemInput } from '..';
 
 interface Properties {
 
@@ -171,10 +171,9 @@ export class RegionField extends React.Component<Properties, State> {
     const displayText = makeDisplayText(this.props.value ?? new Nexus.Region());
     return (
       <div>
-        <input
+        <Input
           readOnly
           style={RegionField.STYLE.textBox}
-          className={css(RegionField.EXTRA_STYLE.effects)}
           value={displayText}
           onFocus={this.onOpen}
           onClick={this.onOpen}/>
@@ -252,19 +251,7 @@ export class RegionField extends React.Component<Properties, State> {
   private static readonly STYLE = {
     textBox: {
       textOverflow: 'ellipsis',
-      boxSizing: 'border-box',
-      height: '34px',
-      display: 'flex',
-      flexDirection: 'row',
-      flexWrap: 'nowrap',
-      alignItems: 'center',
-      border: '1px solid #C8C8C8',
-      borderRadius: '1px',
-      font: '400 14px Roboto',
-      color: '#333333',
-      flexGrow: 1,
       width: '100%',
-      paddingLeft: '10px',
       cursor: 'pointer'
     } as React.CSSProperties,
     hidden: {
@@ -352,57 +339,6 @@ export class RegionField extends React.Component<Properties, State> {
       alignItems: 'center'
     } as React.CSSProperties
   };
-  private static readonly EXTRA_STYLE = StyleSheet.create({
-    effects: {
-      ':focus': {
-        borderColor: '#684BC7',
-        boxShadow: 'none',
-        webkitBoxShadow: 'none',
-        outlineColor: 'transparent',
-        outlineStyle: 'none'
-      },
-      '::moz-focus-inner': {
-        border: 0
-      }
-    },
-    button: {
-      boxSizing: 'border-box',
-      height: '34px',
-      width: '246px',
-      backgroundColor: '#684BC7',
-      color: '#FFFFFF',
-      border: '0px solid #684BC7',
-      borderRadius: '1px',
-      font: '400 16px Roboto',
-      outline: 'none',
-      MozAppearance: 'none',
-      cursor: 'pointer',
-      ':active': {
-        backgroundColor: '#4B23A0'
-      },
-      ':focus': {
-        border: 0,
-        outline: 'none',
-        borderColor: '#4B23A0',
-        backgroundColor: '#4B23A0',
-        boxShadow: 'none',
-        webkitBoxShadow: 'none',
-        outlineColor: 'transparent',
-        outlineStyle: 'none',
-        MozAppearance: 'none'
-      },
-      ':hover':{
-        backgroundColor: '#4B23A0'
-      },
-      '::-moz-focus-inner': {
-        border: 0,
-        outline: 0
-      },
-      ':-moz-focusring': {
-        outline: 0
-      }
-    }
-  });
   private static readonly CONFIRM_TEXT = 'OK';
   private static readonly IMAGE_SIZE_SMALL_VIEWPORT = '20px';
   private static readonly IMAGE_SIZE_LARGE_VIEWPORT = '16px';

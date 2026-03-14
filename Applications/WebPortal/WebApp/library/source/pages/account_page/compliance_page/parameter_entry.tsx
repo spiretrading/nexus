@@ -1,7 +1,7 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Checkbox, CurrencySelect, DateTimeInput, DisplaySize,
-  MoneyInput, NumberField, RegionField, SecuritiesField, SecurityField,
+import { Checkbox, CurrencySelect, DateTimeInput, DecimalInput, DisplaySize,
+  MoneyInput, RegionField, SecuritiesField, SecurityField,
   TextField, TimeOfDayInput } from '../../..';
 
 interface Properties {
@@ -68,9 +68,9 @@ export class ParameterEntry extends React.Component<Properties> {
             readonly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DOUBLE:
-          return <NumberField 
+          return <DecimalInput
             value={this.props.parameter.value.value}
-            readonly={this.props.readonly}
+            readOnly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DURATION:
           return <TimeOfDayInput
@@ -83,9 +83,9 @@ export class ParameterEntry extends React.Component<Properties> {
             readOnly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.QUANTITY:
-          return <NumberField 
+          return <DecimalInput
             value={this.props.parameter.value.value}
-            readonly={this.props.readonly}
+            readOnly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.STRING:
           return <TextField
