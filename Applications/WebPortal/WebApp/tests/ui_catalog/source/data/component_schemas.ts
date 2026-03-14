@@ -163,7 +163,7 @@ const integerField =
     [new PropertySchema('min', 0, NumberInput),
       new PropertySchema('max', 100, NumberInput),
       new PropertySchema('value', 0, NumberInput),
-      new PropertySchema('readonly', false, BooleanInput),
+      new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onChange', 'value')],
     WebPortal.IntegerInput);
