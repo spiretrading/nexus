@@ -2,8 +2,8 @@ import * as Beam from 'beam';
 import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { AddressField, CountrySelect, DisplaySize, HLine, PageWrapper,
-  PhotoField } from '../../..';
+import { AddressField, CountryLabel, CountrySelect, DisplaySize, HLine,
+  PageWrapper, PhotoField } from '../../..';
 import { CommentBox } from '..';
 import { ChangePasswordBox } from './change_password_box';
 import { FormEntry } from './form_entry';
@@ -196,15 +196,12 @@ export class ProfilePage extends React.Component<Properties, State> {
     const countryBox = (() => {
       if(this.props.readonly) {
         return (
-          <TextField
-            value={this.props.countryDatabase.fromCode(
-              this.props.identity.country).name}
-            displaySize={this.props.displaySize}
-            readonly={this.props.readonly}/>);
+          <CountryLabel
+            value={this.props.identity.country}
+            countryDatabase={this.props.countryDatabase}/>);
       } else {
         return (
           <CountrySelect
-            displaySize={this.props.displaySize}
             value={this.state.newIdentity.country}
             onChange={this.onCountryChange}
             countryDatabase={this.props.countryDatabase}/>);

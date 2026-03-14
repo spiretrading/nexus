@@ -59,6 +59,7 @@ const STYLES = StyleSheet.create({
     borderColor: 'transparent',
     backgroundColor: '#FFFFFF',
     backgroundImage: 'none',
+    padding: '3px 9px',
     ':hover': {
       borderColor: 'transparent'
     },

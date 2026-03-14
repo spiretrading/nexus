@@ -135,7 +135,7 @@ const STYLES = StyleSheet.create({
   }
 });
 
-const STYLE = {
+const STYLE: Record<string, React.CSSProperties> = {
   dayInput: {
     backgroundColor: 'transparent',
     border: 'none',
@@ -143,7 +143,7 @@ const STYLE = {
     textAlign: 'center',
     font: '400 14px Roboto',
     width: '1.45rem'
-  } as React.CSSProperties,
+  },
   monthInput: {
     backgroundColor: 'transparent',
     border: 'none',
@@ -151,7 +151,7 @@ const STYLE = {
     textAlign: 'center',
     font: '400 14px Roboto',
     width: '1.8rem'
-  } as React.CSSProperties,
+  },
   yearInput: {
     backgroundColor: 'transparent',
     border: 'none',
@@ -159,5 +159,5 @@ const STYLE = {
     textAlign: 'center',
     font: '400 14px Roboto',
     width: '2.6rem'
-  } as React.CSSProperties
+  }
 };

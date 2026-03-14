@@ -4,7 +4,7 @@ export * from './checkbox';
 export * from './country_select';
 export * from './currency_select';
 export * from './date_input';
-export * from './date_time_field';
+export * from './date_time_input';
 export * from './drop_down_button';
 export * from './duration_input';
 export * from './empty_message';
