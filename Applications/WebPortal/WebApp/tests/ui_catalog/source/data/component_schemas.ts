@@ -193,9 +193,18 @@ const modal =
         }));
     });
 
+const decimalInput =
+  new ComponentSchema('DecimalInput',
+    [new PropertySchema('value', 100, NumberInput),
+      new PropertySchema('decimalPlaces', 2, NumberInput),
+      new PropertySchema('readOnly', false, BooleanInput)],
+    [new SignalSchema('onChange', 'value')],
+    WebPortal.DecimalInput);
+
 const moneyInput =
   new ComponentSchema('MoneyInput',
     [new PropertySchema('value', Nexus.Money.parse('100.00'), MoneyInput),
+      new PropertySchema('decimalPlaces', 2, NumberInput),
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onChange', 'value')],
@@ -746,7 +755,8 @@ const pageLayout =
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox,
     countrySelect, currencySelect, dateInput,
-    dateTimeInput, dropDownButton, durationInput, emptyMessage, errorMessage,
+    dateTimeInput, decimalInput, dropDownButton, durationInput, emptyMessage,
+    errorMessage,
     filterChip, filterInput, hLine,
     iconLabelButton, integerField, labeledCheckbox, modal, moneyInput,
     navigationHeader, navigationTab, numberField, pageLayout,
