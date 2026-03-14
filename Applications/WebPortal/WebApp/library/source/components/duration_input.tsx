@@ -15,7 +15,7 @@ interface Properties {
   minHourValue?: number;
 
   /** Determines if the component is readonly. */
-  readonly?: boolean;
+  readOnly?: boolean;
 
   /** Determines if the component is disabled. */
   disabled?: boolean;
@@ -61,12 +61,12 @@ export function DurationInput(props: Properties): JSX.Element {
     <div className={css(STYLES.container,
         props.disabled && STYLES.containerDisabled,
         props.error && STYLES.containerError,
-        props.readonly && STYLES.containerReadonly)}>
+        props.readOnly && STYLES.containerReadonly)}>
       <IntegerInput
         aria-label='Hours' placeholder='hh'
         min={props.minHourValue ?? 0} max={props.maxHourValue ?? 99}
         value={split?.hours}
-        readOnly={props.readonly}
+        readOnly={props.readOnly}
         disabled={props.disabled}
         onChange={onHoursChange}
         style={STYLE.hoursInput}
@@ -78,7 +78,7 @@ export function DurationInput(props: Properties): JSX.Element {
         aria-label='Minutes' placeholder='mm'
         min={0} max={59}
         value={split?.minutes}
-        readOnly={props.readonly}
+        readOnly={props.readOnly}
         disabled={props.disabled}
         onChange={onMinutesChange}
         style={STYLE.minutesInput}
@@ -90,7 +90,7 @@ export function DurationInput(props: Properties): JSX.Element {
         aria-label='Seconds' placeholder='ss'
         min={0} max={59}
         value={split?.seconds}
-        readOnly={props.readonly}
+        readOnly={props.readOnly}
         disabled={props.disabled}
         onChange={onSecondsChange}
         style={STYLE.secondsInput}

@@ -15,7 +15,7 @@ interface Properties {
   role: Nexus.AccountRoles.Role;
 
   /** Whether the roles can be changed. */
-  readonly?: boolean;
+  readOnly?: boolean;
 
   /** Determines if the role is set. */
   isSet: boolean;
@@ -51,7 +51,7 @@ export class RoleIcon extends React.Component<Properties, State> {
       return 'grey';
     })();
     const iconStyle = (() => {
-      if(this.props.readonly) {
+      if(this.props.readOnly) {
         return RoleIcon.STYLE.readonly;
       } else {
         return RoleIcon.STYLE.clickable;
@@ -118,13 +118,13 @@ export class RoleIcon extends React.Component<Properties, State> {
   }
 
   private onClick = () => {
-    if(!this.props.readonly && !this.props.isTouchTooltipShown) {
+    if(!this.props.readOnly && !this.props.isTouchTooltipShown) {
       this.props.onClick?.();
     }
   }
 
   private onTouch = () => {
-    if(!this.props.readonly) {
+    if(!this.props.readOnly) {
       this.props.onClick?.();
     }
     this.props.onTouch?.();
