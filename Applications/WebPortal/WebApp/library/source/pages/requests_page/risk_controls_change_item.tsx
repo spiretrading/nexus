@@ -49,7 +49,7 @@ export class RiskControlsChangeItem extends React.Component<Properties, State> {
     return (
       <div ref={this.containerRef} className={css(STYLES.container)}>
         <div className={css(this.state.isWide ? STYLES.divWide : STYLES.div)}>
-          <div className={
+          <header className={
               css(this.state.isWide ? STYLES.headerWide : STYLES.header)}>
             {hasDirection &&
               <img aria-hidden='true' width='10' height='16'
@@ -59,7 +59,7 @@ export class RiskControlsChangeItem extends React.Component<Properties, State> {
                   'resources/requests_page/downtick.svg' :
                   'resources/requests_page/uptick.svg'}/>}
             <h2 className={css(STYLES.name)}>{this.props.name}</h2>
-          </div>
+          </header>
           <div className={css(STYLES.values)}>
             <span className={css(STYLES.oldValue)}>
               {this.props.oldValue}

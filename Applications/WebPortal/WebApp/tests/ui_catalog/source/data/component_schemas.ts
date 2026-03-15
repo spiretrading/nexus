@@ -691,11 +691,18 @@ const riskControlsChangeItem =
     [new PropertySchema('name', 'Buying Power', TextInput),
       new PropertySchema('oldValue', '$100,000', TextInput),
       new PropertySchema('newValue', '$150,000', TextInput),
-      new PropertySchema('delta',
-        {value: '$50,000', direction: WebPortal.RequestsModel.Direction.POSITIVE},
-        ReadonlyInput)],
+      new PropertySchema('deltaValue', '$50,000', TextInput),
+      new PropertySchema('deltaDirection',
+        WebPortal.RequestsModel.Direction.POSITIVE,
+        EnumInput(WebPortal.RequestsModel.Direction))],
     [],
-    WebPortal.RiskControlsChangeItem);
+    (props: any) => {
+      const {deltaValue, deltaDirection, ...rest} = props;
+      return React.createElement(WebPortal.RiskControlsChangeItem, {
+        ...rest,
+        delta: {value: deltaValue, direction: deltaDirection}
+      });
+    });
 
 const SAMPLE_REQUEST_LIST:
     WebPortal.RequestsModel.RequestEntry[] = (() => {

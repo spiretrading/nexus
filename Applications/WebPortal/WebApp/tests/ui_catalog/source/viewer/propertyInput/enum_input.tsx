@@ -15,36 +15,22 @@ interface Properties {
  * @return A React component class that will render the enum input field.
  */
 export function EnumInput(enumType: any) {
+  const options = Object.keys(enumType)
+    .filter(key => isNaN(Number(key)))
+    .map(key =>
+      <option key={key} value={key}>
+        {key}
+      </option>);
   return class extends React.Component<Properties> {
-    constructor(props: Properties) {
-      super(props);
-      this._options = [];
-      let i = 0;
-      while(true) {
-        const value = enumType[i];
-        if(value !== undefined) {
-          this._options.push(
-            <option key={i} value={value}>
-              {value}
-            </option>);
-        } else {
-          break;
-        }
-        i += 1;
-      }
-    }
-
     public render(): JSX.Element {
       return (
         <select onChange={this.onChange} value={enumType[this.props.value]}>
-          {this._options}
+          {options}
         </select>);
     }
 
     private onChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
       this.props.update(enumType[event.target.value]);
     }
-
-    private _options: JSX.Element[];
   }
 }
