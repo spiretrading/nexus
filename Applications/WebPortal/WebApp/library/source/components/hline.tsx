@@ -13,13 +13,13 @@ interface Properties {
 export function HLine(props: Properties): JSX.Element {
   const height = (() => {
     const h = props.height ?? '1px';
-    if(typeof(h) === 'number') {
+    if(typeof h === 'number') {
       return `${h}px`;
     }
     return h;
   })();
-  const style = {
+  const style: React.CSSProperties = {
     borderBottom: `${height} solid ${props.color ?? '#000000'}`
-  } as React.CSSProperties;
+  };
   return <div style={style}/>;
 }

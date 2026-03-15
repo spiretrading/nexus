@@ -155,7 +155,7 @@ const STYLES = StyleSheet.create({
   }
 });
 
-const STYLE = {
+const STYLE: Record<string, React.CSSProperties> = {
   hoursInput: {
     backgroundColor: 'transparent',
     border: 'none',
@@ -163,7 +163,7 @@ const STYLE = {
     textAlign: 'center',
     font: '400 14px Roboto',
     width: '1rem'
-  } as React.CSSProperties,
+  },
   minutesInput: {
     backgroundColor: 'transparent',
     border: 'none',
@@ -171,7 +171,7 @@ const STYLE = {
     textAlign: 'center',
     font: '400 14px Roboto',
     width: '1.5rem'
-  } as React.CSSProperties,
+  },
   secondsInput: {
     backgroundColor: 'transparent',
     border: 'none',
@@ -179,5 +179,5 @@ const STYLE = {
     textAlign: 'center',
     font: '400 14px Roboto',
     width: '1rem'
-  } as React.CSSProperties
+  }
 };

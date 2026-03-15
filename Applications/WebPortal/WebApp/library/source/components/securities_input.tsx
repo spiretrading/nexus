@@ -186,7 +186,7 @@ export class SecuritiesInput extends React.Component<Properties, State> {
           style={SecuritiesInput.STYLE.hidden}
           onChange={this.onFileSelected}/>
         <Input
-          readOnly={!this.props.disabled}
+          readOnly
           disabled={this.props.disabled}
           className={!this.props.readOnly && !this.props.disabled ?
             css(SecuritiesInput.INPUT_STYLE.interactive) : undefined}
@@ -300,24 +300,24 @@ export class SecuritiesInput extends React.Component<Properties, State> {
     });
   }
 
-  private static readonly STYLE = {
+  private static readonly STYLE: Record<string, React.CSSProperties> = {
     textBox: {
       textOverflow: 'ellipsis',
       width: '100%',
       cursor: 'pointer'
-    } as React.CSSProperties,
+    },
     hidden: {
       visibility: 'hidden',
       display: 'none'
-    } as React.CSSProperties,
+    },
     contentWrapper: {
       boxSizing: 'border-box',
       width: '300px',
       padding: '30px 18px 18px 18px'
-    } as React.CSSProperties,
+    },
     iconClickableStyle: {
       cursor: 'pointer'
-    } as React.CSSProperties,
+    },
     iconWrapperSmall: {
       height: '24px',
       width: '24px',
@@ -325,8 +325,8 @@ export class SecuritiesInput extends React.Component<Properties, State> {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      pointer: 'pointer'
-    } as React.CSSProperties,
+      cursor: 'pointer'
+    },
     iconWrapperSmallReadonly: {
       height: '24px',
       width: '24px',
@@ -334,36 +334,36 @@ export class SecuritiesInput extends React.Component<Properties, State> {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      pointer: 'default'
-    } as React.CSSProperties,
+      cursor: 'default'
+    },
     iconWrapperLarge:  {
       height: '16px',
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      pointer: 'pointer'
-    } as React.CSSProperties,
+      cursor: 'pointer'
+    },
     iconWrapperLargeReadonly:  {
       height: '16px',
       display: 'flex',
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
-      pointer: 'default'
-    } as React.CSSProperties,
+      cursor: 'default'
+    },
     iconLabel: {
       color: '#333333',
       font: '400 14px Roboto',
       paddingLeft: '8px',
       cursor: 'pointer'
-    } as React.CSSProperties,
+    },
     iconLabelReadonly: {
       color: '#C8C8C8',
       font: '400 14px Roboto',
       paddingLeft: '8px',
       cursor: 'default'
-    } as React.CSSProperties,
+    },
     iconRowSmall: {
       height: '24px',
       width: '100%',
@@ -372,7 +372,7 @@ export class SecuritiesInput extends React.Component<Properties, State> {
       display: 'flex',
       flexDirection: 'row',
       justifyContent: 'space-evenly'
-    } as React.CSSProperties,
+    },
     iconRowBig: {
       height: '16px',
       width: '100%',
@@ -381,7 +381,7 @@ export class SecuritiesInput extends React.Component<Properties, State> {
       display: 'flex',
       flexDirection: 'row',
       justifyContent: 'space-evenly'
-    } as React.CSSProperties,
+    },
     buttonWrapper: {
       marginTop: '30px',
       display: 'flex',
@@ -389,7 +389,7 @@ export class SecuritiesInput extends React.Component<Properties, State> {
       flexWrap: 'wrap',
       justifyContent: 'center',
       alignItems: 'center'
-    } as React.CSSProperties
+    }
   };
   private static readonly INPUT_STYLE = StyleSheet.create({
     interactive: {
@@ -505,12 +505,12 @@ class SymbolsField extends React.Component<SymbolsFieldProperties> {
     }
   }
 
-  private static readonly STYLE = {
+  private static readonly STYLE: Record<string, React.CSSProperties> = {
     headerText: {
       font: '400 16px Roboto',
       flexGrow: 1,
       cursor: 'default'
-    } as React.CSSProperties,
+    },
     scrollBoxSmall: {
       boxSizing: 'border-box',
       height: '246px',
@@ -518,7 +518,7 @@ class SymbolsField extends React.Component<SymbolsFieldProperties> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       overflowY: 'auto'
-    } as React.CSSProperties,
+    },
     scrollBoxSmallReadonly: {
       boxSizing: 'border-box',
       height: '342px',
@@ -526,21 +526,21 @@ class SymbolsField extends React.Component<SymbolsFieldProperties> {
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       overflowY: 'auto'
-    } as React.CSSProperties,
+    },
     scrollBoxBig: {
       boxSizing: 'border-box',
       height: '280px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       overflowY: 'auto'
-    } as React.CSSProperties,
+    },
     scrollBoxBigReadonly: {
       boxSizing: 'border-box',
       height: '342px',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       overflowY: 'auto'
-    } as React.CSSProperties,
+    },
     scrollBoxHeaderSmall: {
       boxSizing: 'border-box',
       backgroundColor: '#FFFFFF',
@@ -556,7 +556,7 @@ class SymbolsField extends React.Component<SymbolsFieldProperties> {
       position: 'sticky',
       top: 0,
       cursor: 'default'
-    } as React.CSSProperties,
+    },
     scrollBoxHeaderLarge: {
       boxSizing: 'border-box',
       backgroundColor: '#FFFFFF',
@@ -572,7 +572,7 @@ class SymbolsField extends React.Component<SymbolsFieldProperties> {
       position: 'sticky',
       top: 0,
       cursor: 'default'
-    } as React.CSSProperties
+    }
   };
   private static readonly EXTRA_STYLE = StyleSheet.create({
     entry: {

@@ -21,7 +21,7 @@ interface Properties {
   disabled?: boolean;
 
   /** The onClick event handler. */
-  onClick?: (event?: React.MouseEvent<any>) => void;
+  onClick?: (event?: React.MouseEvent<HTMLDivElement>) => void;
 }
 
 interface State {

@@ -16,7 +16,7 @@ export function EmptyMessage(props: Properties): JSX.Element {
     </div>);
 }
 
-const STYLE = {
+const STYLE: Record<string, React.CSSProperties> = {
   container: {
     fontFamily: 'Roboto',
     backgroundColor: '#FFFFFF',
@@ -24,15 +24,15 @@ const STYLE = {
     flexDirection: 'column',
     alignItems: 'center',
     height: '224px'
-  } as React.CSSProperties,
+  },
   filler: {
     flexGrow: 1,
     flexShrink: 1,
     flexBasis: 0
-  } as React.CSSProperties,
+  },
   message: {
     textAlign: 'center',
     color: '#333333',
     fontSize: '0.875rem'
-  } as React.CSSProperties
+  }
 };

@@ -89,7 +89,7 @@ export class RoleIcon extends React.Component<Properties, State> {
             {(state) => (
               <div style={{...RoleIcon.STYLE.animationBase,
                   ...RoleIcon.STYLE.imageTooltip,
-                  ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
+                  ...RoleIcon.ANIMATION_STYLE[state]}}>
                 {this.getText(this.props.role)}
               </div>)}
           </Transition>
@@ -99,7 +99,7 @@ export class RoleIcon extends React.Component<Properties, State> {
             {(state) => (
               <div style={{...RoleIcon.STYLE.animationBase,
                   ...RoleIcon.STYLE.imageTooltip,
-                  ...(RoleIcon.ANIMATION_STYLE as any)[state]}}>
+                  ...RoleIcon.ANIMATION_STYLE[state]}}>
                 {this.getText(this.props.role)}
               </div>)}
           </Transition>
@@ -156,18 +156,18 @@ export class RoleIcon extends React.Component<Properties, State> {
     }
   }
 
-  private static readonly ANIMATION_STYLE = {
+  private static readonly ANIMATION_STYLE: Record<string, React.CSSProperties> = {
     entering: {
       opacity: 0
-    } as React.CSSProperties,
+    },
     entered: {
       opacity: 1
-    } as React.CSSProperties,
+    },
     exited: {
       display: 'none'
-    } as React.CSSProperties
+    }
   };
-  private static readonly STYLE = {
+  private static readonly STYLE: Record<string, React.CSSProperties> = {
     iconWrapperLarge: {
       boxSizing: 'border-box',
       display: 'flex',
@@ -177,7 +177,7 @@ export class RoleIcon extends React.Component<Properties, State> {
       width: '24px',
       padding: '2px',
       outline: 0
-    } as React.CSSProperties,
+    },
     iconWrapperSmall: {
       boxSizing: 'border-box',
       display: 'flex',
@@ -187,7 +187,7 @@ export class RoleIcon extends React.Component<Properties, State> {
       width: '34px',
       padding: '7px',
       outline: 0
-    } as React.CSSProperties,
+    },
     iconWrapperExtraSmall: {
       boxSizing: 'border-box',
       display: 'flex',
@@ -197,22 +197,22 @@ export class RoleIcon extends React.Component<Properties, State> {
       width: '14px',
       padding: 0,
       outline: 0
-    } as React.CSSProperties,
+    },
     clickable: {
       cursor: 'pointer'
-    } as React.CSSProperties,
+    },
     readonly: {
       cursor: 'inherit'
-    } as React.CSSProperties,
+    },
     tooltipAnchor: {
       position: 'relative',
       height: 0,
       width: 0
-    } as React.CSSProperties,
+    },
     animationBase: {
       opacity: 0,
       transition: 'opacity 200ms ease-in-out'
-    } as React.CSSProperties,
+    },
     imageTooltip: {
       display: 'flex',
       justifyContent: 'center',
@@ -228,9 +228,8 @@ export class RoleIcon extends React.Component<Properties, State> {
       left: '-20px',
       border: '1px solid #4B23A0',
       borderRadius: '1px',
-      boxShadow: '0px 0px 2px #00000064',
-      tabFocus: 0
-    } as React.CSSProperties
+      boxShadow: '0px 0px 2px #00000064'
+    }
   };
   private static readonly TIMEOUT_TOOLTIP = {
     enter: 100,

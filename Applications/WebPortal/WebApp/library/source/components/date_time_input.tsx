@@ -22,7 +22,8 @@ interface Properties {
 
 const STYLE: React.CSSProperties = {
   display: 'flex',
-  flexDirection: 'column'
+  flexDirection: 'column',
+  gap: '10px'
 };
 
 /** A component that displays both date and time. */
@@ -45,7 +46,6 @@ export function DateTimeInput(props: Properties): JSX.Element {
         readOnly={props.readOnly}
         disabled={props.disabled}
         onChange={onDateChange}/>
-      <div style={{height: '10px'}}/>
       <TimeOfDayInput
         value={value.timeOfDay}
         readOnly={props.readOnly}

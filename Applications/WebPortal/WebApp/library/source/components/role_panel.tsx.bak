@@ -10,7 +10,7 @@ interface Properties {
 }
 
 interface State {
-  mobileTooltipRole: Nexus.AccountRoles.Role;
+  mobileTooltipRole: Nexus.AccountRoles.Role | null;
 }
 
 /** Displays a panel of icons highlighting an account's roles. */

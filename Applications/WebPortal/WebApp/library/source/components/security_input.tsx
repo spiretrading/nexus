@@ -37,4 +37,3 @@ export function SecurityInput({onChange, onEnter, ...rest}:
       onChange={onInputChange}
       onKeyDown={onKeyDown}/>);
 }
-

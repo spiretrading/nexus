@@ -51,7 +51,7 @@ export function Modal(props: Properties): JSX.Element {
     </div>);
 }
 
-const STYLE = {
+const STYLE: Record<string, React.CSSProperties> = {
   wrapper: {
     position: 'fixed',
     top: 0,
@@ -59,13 +59,13 @@ const STYLE = {
     right: 0,
     bottom: 0,
     zIndex: 9998000
-  } as React.CSSProperties,
+  },
   filler: {
     flexBasis: '20px',
     flexGrow: 1,
     flexShrink: 0,
     width: '100%'
-  } as React.CSSProperties,
+  },
   overlay: {
     position: 'fixed',
     top: 0,
@@ -75,12 +75,12 @@ const STYLE = {
     backgroundColor: '#FFFFFF',
     opacity: 0.9,
     zIndex: 9999000
-  } as React.CSSProperties,
+  },
   modalLarge: {
     boxSizing: 'border-box',
     flexGrow: 0,
     flexShrink: 0
-  } as React.CSSProperties,
+  },
   header: {
     boxSizing: 'border-box',
     display: 'flex',
@@ -90,16 +90,16 @@ const STYLE = {
     padding: '18px 18px 0 18px',
     flexGrow: 0,
     flexShrink: 0
-  } as React.CSSProperties,
+  },
   headerTitle: {
     font: '400 16px Roboto',
     color: '#333333',
     cursor: 'default'
-  } as React.CSSProperties,
+  },
   closeButton: {
     cursor: 'pointer',
     flexShrink: 0
-  } as React.CSSProperties
+  }
 };
 
 const STYLES = StyleSheet.create({

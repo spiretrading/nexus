@@ -119,13 +119,13 @@ function to24Hour(displayedTime: Beam.Duration, period: Period): Beam.Duration {
     Beam.Duration.SECOND.multiply(seconds));
 }
 
-const STYLE = {
+const STYLE: Record<string, React.CSSProperties> = {
   wrapper: {
     display: 'flex',
     flexDirection: 'row'
-  } as React.CSSProperties,
+  },
   select: {
     marginLeft: '10px',
     width: '64px'
-  } as React.CSSProperties
+  }
 };
