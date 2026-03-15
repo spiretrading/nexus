@@ -38,7 +38,8 @@ const burgerButton =
     [new PropertySchema('width', 26, NumberSliderInput),
       new PropertySchema('height', 20, NumberSliderInput),
       new PropertySchema('color', '#684BC7', ColorInput),
-      new PropertySchema('highlightColor', '#684BC7', ColorInput)],
+      new PropertySchema('highlightColor', '#684BC7', ColorInput),
+      new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onClick', '')],
     WebPortal.BurgerButton);
 

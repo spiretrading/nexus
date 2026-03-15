@@ -17,6 +17,9 @@ interface Properties {
   /** The color of the bars when highlighted. */
   highlightColor?: string;
 
+  /** Determines if the button is disabled. */
+  disabled?: boolean;
+
   /** The onClick event handler. */
   onClick?: (event?: React.MouseEvent<any>) => void;
 }
@@ -48,11 +51,14 @@ export class BurgerButton extends React.Component<Properties, State> {
       minHeight: this.props.height,
       height: this.props.height,
       display: 'block',
-      cursor: 'pointer'
+      cursor: this.props.disabled ? 'not-allowed' : 'pointer',
+      opacity: this.props.disabled ? 0.4 : undefined,
+      pointerEvents: this.props.disabled ? 'none' : undefined
     };
     return (
-      <div style={style} role='button' tabIndex={0}
-          aria-label='Menu' onKeyDown={this.onKeyDown}>
+      <div style={style} role='button' tabIndex={this.props.disabled ? -1 : 0}
+          aria-label='Menu' aria-disabled={this.props.disabled}
+          onKeyDown={this.onKeyDown}>
         <VBoxLayout width={this.props.width}
             height={this.props.height} onMouseEnter={this.onHover}
             onMouseOut={this.onLeave} onClick={this.props.onClick}>
@@ -78,6 +84,9 @@ export class BurgerButton extends React.Component<Properties, State> {
   }
 
   private onKeyDown = (event: React.KeyboardEvent) => {
+    if(this.props.disabled) {
+      return;
+    }
     if(event.key === 'Enter' || event.key === ' ') {
       event.preventDefault();
       this.props.onClick?.();
