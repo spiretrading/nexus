@@ -31,6 +31,7 @@ export * from './region_input';
 export * from './region_item_input';
 export * from './relative_date';
 export * from './select';
+export * from './skeleton';
 export * from './segment_button';
 export * from './segmented_control';
 export * from './time_of_day_input';

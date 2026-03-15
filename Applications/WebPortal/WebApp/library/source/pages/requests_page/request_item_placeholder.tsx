@@ -1,19 +1,20 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as React from 'react';
+import { Skeleton } from '../..';
 
 /** Displays a skeleton loading placeholder for a RequestItem. */
 export function RequestItemPlaceholder() {
   return (
     <div className={css(STYLES.container)}>
       <div className={css(STYLES.header)}>
-        <div className={css(STYLES.skeleton, STYLES.headerLeft)}/>
-        <div className={css(STYLES.skeleton, STYLES.headerRight)}/>
+        <Skeleton className={css(STYLES.headerLeft)}/>
+        <Skeleton className={css(STYLES.headerRight)}/>
       </div>
       <div className={css(STYLES.metadata)}>
-        <div className={css(STYLES.skeleton, STYLES.metadataSkeleton)}/>
+        <Skeleton className={css(STYLES.metadataSkeleton)}/>
       </div>
       <div className={css(STYLES.changes)}>
-        <div className={css(STYLES.skeleton, STYLES.changesSkeleton)}/>
+        <Skeleton className={css(STYLES.changesSkeleton)}/>
       </div>
     </div>);
 }
@@ -24,11 +25,7 @@ const STYLES = StyleSheet.create({
     border: '1px solid transparent',
     borderBottomColor: '#E6E6E6',
     backgroundColor: '#FFFFFF',
-    padding: '11px 17px',
-    containerType: 'inline-size'
-  },
-  skeleton: {
-    background: 'linear-gradient(to right, #EAEAEA, #FAFAFA)'
+    padding: '11px 17px'
   },
   header: {
     display: 'flex',

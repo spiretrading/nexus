@@ -35,7 +35,8 @@ export class Stage extends React.Component<Properties> {
         <div style={{...Stage.STYLE.componentWrapper,
             ...(this.props.showBorder && Stage.STYLE.border),
             ...(this.props.containerWidth !== -1 &&
-              {width: `${this.props.containerWidth}px`}),
+              {width: `${this.props.containerWidth}px`,
+               containerType: 'inline-size'}),
             ...(this.props.containerHeight !== -1 &&
               {height: `${this.props.containerHeight}px`})}}>
           <this.props.component.render {...componentProps}>
