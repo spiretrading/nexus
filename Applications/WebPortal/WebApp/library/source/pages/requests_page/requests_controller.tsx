@@ -281,7 +281,9 @@ export class RequestsController extends React.Component<Properties, State> {
 }
 
 const DETAIL_STYLE: React.CSSProperties = {
-  borderTop: '1px solid #E6E6E6'
+  borderTop: '1px solid #E6E6E6',
+  height: '100%',
+  overflowY: 'auto'
 };
 
 const REQUEST_STATE_TO_PARAM: Record<RequestsModel.RequestState, string> = {
