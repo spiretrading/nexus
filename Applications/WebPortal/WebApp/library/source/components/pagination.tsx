@@ -47,8 +47,7 @@ export class Pagination extends React.Component<Properties, State> {
     const pageCount = Math.ceil(this.props.totalCount / pageSize);
     if(pageCount <= 1) {
       return (
-        <div hidden ref={this.containerRef}
-          className={css(STYLES.container)}/>);
+        <div hidden ref={this.containerRef}/>);
     }
     const hasPrevious = this.props.pageIndex > 0;
     const hasNext = this.props.pageIndex < pageCount - 1;
@@ -56,8 +55,7 @@ export class Pagination extends React.Component<Properties, State> {
     const variant = this.state.isWide ?
       IconLabelButton.Variant.ICON_LABEL : undefined;
     return (
-      <div ref={this.containerRef}
-          className={css(STYLES.container)}>
+      <div ref={this.containerRef}>
         <div className={css(STYLES.content,
             this.state.isWide && STYLES.wideContent)}>
           <Previous variant={variant} disabled={!hasPrevious}
@@ -286,9 +284,6 @@ class PageLink extends React.Component<PageLinkProperties, PageLinkState> {
 }
 
 const STYLES = StyleSheet.create({
-  container: {
-    containerType: 'inline-size'
-  },
   content: {
     display: 'flex',
     alignItems: 'center',

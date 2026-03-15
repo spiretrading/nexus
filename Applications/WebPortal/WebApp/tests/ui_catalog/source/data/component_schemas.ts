@@ -291,7 +291,7 @@ const pagination =
       new PropertySchema('pageSize', 50, NumberInput),
       new PropertySchema('totalCount', 500, NumberInput)],
     [new SignalSchema('onNavigate', 'pageIndex')],
-    WebPortal.Pagination, 800);
+    WebPortal.Pagination, 732);
 
 const regionInput =
   new ComponentSchema('RegionInput',
@@ -309,7 +309,8 @@ const regionItemInput =
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value'),
       new SignalSchema('onEnter', 'value')],
-    WebPortal.RegionItemInput);
+    (props: any) => React.createElement(WebPortal.RegionItemInput,
+      {...props, style: {width: '100%', ...props.style}}));
 
 const relativeDate =
   new ComponentSchema('RelativeDate',
@@ -358,7 +359,8 @@ const securityInput =
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value'),
       new SignalSchema('onEnter', 'value')],
-    WebPortal.SecurityInput);
+    (props: any) => React.createElement(WebPortal.SecurityInput,
+      {...props, style: {width: '100%', ...props.style}}));
 
 const segmentButton =
   new ComponentSchema('SegmentButton',
@@ -368,7 +370,8 @@ const segmentButton =
       new PropertySchema('isChecked', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', '')],
-    WebPortal.SegmentButton);
+    (props: any) => React.createElement(WebPortal.SegmentButton,
+      {...props, style: {width: '100%', ...props.style}}));
 
 const segmentedControl =
   new ComponentSchema('SegmentedControl',

@@ -46,8 +46,7 @@ export function NavigationHeader(props: React.PropsWithChildren<Properties>):
 
 const STYLES = StyleSheet.create({
   header: {
-    height: '40px',
-    containerType: 'inline-size'
+    height: '40px'
   },
   nav: {
     display: 'inline-flex',
