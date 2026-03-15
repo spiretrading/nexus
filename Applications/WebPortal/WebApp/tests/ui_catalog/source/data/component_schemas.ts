@@ -29,9 +29,10 @@ const button =
       new PropertySchema('theme', WebPortal.Button.Theme.LIGHT,
         EnumInput(WebPortal.Button.Theme)),
       new PropertySchema('disabled', false, BooleanInput),
-      new PropertySchema('style', {width: '100%', height: '100%'}, CSSInput)],
+      new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onClick', '')],
-    WebPortal.Button);
+    (props: any) => React.createElement(WebPortal.Button,
+      {...props, style: {width: '100%', height: '100%', ...props.style}}));
 
 const burgerButton =
   new ComponentSchema('BurgerButton',
@@ -175,6 +176,7 @@ const input =
     [new SignalSchema('onChange', 'value')],
     (props: any) => React.createElement(WebPortal.Input, {
       ...props,
+      style: {width: '100%', ...props.style},
       onChange: (e: any) => props.onChange(e.target.value)
     }));
 
@@ -187,7 +189,8 @@ const integerField =
       new PropertySchema('disabled', false, BooleanInput),
       new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onChange', 'value')],
-    WebPortal.IntegerInput);
+    (props: any) => React.createElement(WebPortal.IntegerInput,
+      {...props, style: {width: '100%', ...props.style}}));
 
 const labeledCheckbox =
   new ComponentSchema('LabeledCheckbox',
@@ -223,7 +226,8 @@ const decimalInput =
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
-    WebPortal.DecimalInput);
+    (props: any) => React.createElement(WebPortal.DecimalInput,
+      {...props, style: {width: '100%', ...props.style}}));
 
 const moneyInput =
   new ComponentSchema('MoneyInput',
@@ -235,7 +239,8 @@ const moneyInput =
       new PropertySchema('disabled', false, BooleanInput),
       new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onChange', 'value')],
-    WebPortal.MoneyInput);
+    (props: any) => React.createElement(WebPortal.MoneyInput,
+      {...props, style: {width: '100%', ...props.style}}));
 
 const NAVIGATION_TABS = [
   React.createElement(WebPortal.NavigationTab, {
@@ -322,7 +327,8 @@ const select =
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
-    (props: any) => React.createElement(WebPortal.Select, props,
+    (props: any) => React.createElement(WebPortal.Select,
+      {...props, style: {width: '100%'}},
       React.createElement('option', {value: 'Apple'}, 'Apple'),
       React.createElement('option', {value: 'Banana'}, 'Banana'),
       React.createElement('option', {value: 'Cherry'}, 'Cherry'),
