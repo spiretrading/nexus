@@ -21,13 +21,10 @@ export function CountrySelect({countryDatabase, value, onChange, ...rest}:
   const onSelectChange = (v: string) => {
     onChange?.(new Nexus.CountryCode(parseInt(v, 10)));
   };
-  const options = [];
-  for(const country of countryDatabase) {
-    options.push(
-      <option value={country.code.code} key={country.code.code}>
-        {country.name}
-      </option>);
-  }
+  const options = [...countryDatabase].map(country =>
+    <option value={country.code.code} key={country.code.code}>
+      {country.name}
+    </option>);
   return (
     <Select {...rest} value={value.code.toString()}
         onChange={onSelectChange}>

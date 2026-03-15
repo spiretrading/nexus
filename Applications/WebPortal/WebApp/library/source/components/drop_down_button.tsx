@@ -112,7 +112,7 @@ export class DropDownButton extends React.Component<Properties, State> {
       opacity: '1'
     }
   };
-  private static readonly CLOSE_AND_FADE_IN = {
+  private static readonly CLOSE_AND_FADEIN = {
     '0%' : {
       transform: 'rotate(90deg)',
       opacity: '0'
@@ -149,11 +149,11 @@ export class DropDownButton extends React.Component<Properties, State> {
     },
     spinCloseFadeIn:{
       position: 'static',
-      animationName: DropDownButton.CLOSE_AND_FADE_IN,
+      animationName: DropDownButton.CLOSE_AND_FADEIN,
       animationDuration: '200ms'
     }
   });
-  private static readonly STYLE = {
+  private static readonly STYLE: Record<string, React.CSSProperties> = {
     imageWrapper: {
       position: 'relative',
       display: 'flex',
@@ -162,10 +162,10 @@ export class DropDownButton extends React.Component<Properties, State> {
       width: '20px',
       height: '20px',
       cursor: 'pointer'
-    } as React.CSSProperties,
+    },
     componentWrapper: {
       width: '20px',
       height: '20px'
-    } as React.CSSProperties
+    }
   };
 }

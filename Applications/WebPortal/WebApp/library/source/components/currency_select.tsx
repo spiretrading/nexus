@@ -24,13 +24,10 @@ export function CurrencySelect({currencyDatabase, value, onChange, ...rest}:
   const selectValue = value
     ? currencyDatabase.fromCurrency(value).code
     : undefined;
-  const options = [];
-  for(const currency of currencyDatabase) {
-    options.push(
-      <option value={currency.code} key={currency.code}>
-        {currency.code}
-      </option>);
-  }
+  const options = [...currencyDatabase].map(currency =>
+    <option value={currency.code} key={currency.code}>
+      {currency.code}
+    </option>);
   return (
     <Select {...rest} value={selectValue} onChange={onSelectChange}>
       {options}
