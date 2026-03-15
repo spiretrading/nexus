@@ -203,8 +203,10 @@ export class RequestDetailPage extends
         <div className={css(STYLES.actions)}>
           {showApprove &&
             <Button label='Approve' disabled={this.props.isSubmitting}
+              className={css(STYLES.approveButton)}
               onClick={this.onApprove}/>}
           <Button label='Reject' disabled={this.props.isSubmitting}
+            className={css(STYLES.rejectButton)}
             onClick={this.onReject}/>
         </div>
       </section>);
@@ -295,7 +297,7 @@ const STYLES = StyleSheet.create({
     fontSize: '0.875rem',
     color: '#7D7E90',
     textAlign: 'end',
-    '@container (min-width: 768px)': {
+    '@container (min-width: 732px)': {
       display: 'inline'
     }
   },
@@ -386,9 +388,20 @@ const STYLES = StyleSheet.create({
     display: 'flex',
     flexDirection: 'column' as 'column',
     gap: '10px',
-    '@container (min-width: 768px)': {
+    '@container (min-width: 732px)': {
       flexDirection: 'row',
-      justifyContent: 'flex-end'
+      justifyContent: 'flex-end',
+      gap: '18px'
+    }
+  },
+  approveButton: {
+    '@container (min-width: 732px)': {
+      width: '140px'
+    }
+  },
+  rejectButton: {
+    '@container (min-width: 732px)': {
+      width: '140px'
     }
   }
 });

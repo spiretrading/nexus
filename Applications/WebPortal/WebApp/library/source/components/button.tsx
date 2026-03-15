@@ -49,7 +49,9 @@ const EXTRA_STYLE = StyleSheet.create({
     fontFamily: "'Roboto', system-ui, sans-serif",
     fontSize: '0.875rem',
     fontWeight: 500,
+    height: '34px',
     padding: '3px 9px',
+    boxSizing: 'border-box',
     cursor: 'pointer',
     outline: 'none',
     ':active': {
