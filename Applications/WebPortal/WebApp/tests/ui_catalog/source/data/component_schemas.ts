@@ -330,6 +330,12 @@ const select =
       React.createElement('option', {value: 'Mango'}, 'Mango'),
       React.createElement('option', {value: 'Orange'}, 'Orange')));
 
+const skeleton =
+  new ComponentSchema('Skeleton',
+    [],
+    [],
+    WebPortal.Skeleton);
+
 const securitiesInput =
   new ComponentSchema('SecuritiesInput',
     [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
@@ -766,7 +772,7 @@ export const componentSections = [
     iconLabelButton, input, integerField, labeledCheckbox, modal, moneyInput,
     navigationHeader, navigationTab, pageLayout,
     pagination, regionInput, regionItemInput, relativeDate, roleIcon, rolePanel,
-    securitiesInput, securityInput, select,
+    securitiesInput, securityInput, select, skeleton,
     segmentButton,
     segmentedControl,
     timeOfDayInput]),
