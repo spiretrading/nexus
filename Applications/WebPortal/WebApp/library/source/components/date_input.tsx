@@ -5,6 +5,9 @@ import { IntegerInput } from '..';
 
 interface Properties {
 
+  /** The id to apply to the first input field. */
+  id?: string;
+
   /** The value to display in the field. */
   value?: Beam.Date;
 
@@ -54,6 +57,7 @@ export function DateInput(props: Properties): JSX.Element {
         props.error && STYLES.containerError,
         props.readOnly && STYLES.containerReadonly)}>
       <IntegerInput
+        id={props.id}
         aria-label='Year' placeholder='YYYY'
         min={0} max={9999}
         value={props.value?.year}
