@@ -29,7 +29,8 @@ export function ErrorMessage(props: Properties): JSX.Element {
         <div className={css(STYLES.filler)}/>
       </div>
       <div className={css(STYLES.actions)}>
-        <Button label='Retry' onClick={props.onRetry}/>
+        <Button label='Retry' onClick={props.onRetry}
+          style={{width: '100%'}}/>
       </div>
     </div>);
 }

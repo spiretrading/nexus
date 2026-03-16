@@ -8,7 +8,8 @@ enum Period {
   PM
 }
 
-interface Properties {
+interface Properties extends
+    Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
 
   /** The value as a 24-hour time of day. */
   value?: Beam.Duration;
@@ -29,47 +30,50 @@ interface Properties {
 }
 
 /** A component that displays a time of day in 12-hour format with AM/PM. */
-export function TimeOfDayInput(props: Properties): JSX.Element {
-  const [period, setPeriod] = React.useState(() => getPeriod(props.value));
+export function TimeOfDayInput({className, style, value, readOnly, disabled,
+    error, onChange, ...rest}: Properties): JSX.Element {
+  const [period, setPeriod] = React.useState(() => getPeriod(value));
   const [displayedTime, setDisplayedTime] =
-    React.useState(() => to12Hour(props.value));
-  const prevValue = React.useRef(props.value);
-  if(props.value !== prevValue.current &&
-      !(props.value?.equals(prevValue.current))) {
-    prevValue.current = props.value;
-    setPeriod(getPeriod(props.value));
-    setDisplayedTime(to12Hour(props.value));
+    React.useState(() => to12Hour(value));
+  const prevValue = React.useRef(value);
+  if(value !== prevValue.current &&
+      !(value?.equals(prevValue.current))) {
+    prevValue.current = value;
+    setPeriod(getPeriod(value));
+    setDisplayedTime(to12Hour(value));
   }
   const onTimeChange = (time?: Beam.Duration) => {
     if(time != null) {
       setDisplayedTime(time);
-      props.onChange?.(to24Hour(time, period));
+      onChange?.(to24Hour(time, period));
     } else {
-      props.onChange?.(undefined);
+      onChange?.(undefined);
     }
   };
-  const onPeriodChange = (value: string) => {
-    const newPeriod = parseInt(value) as Period;
+  const onPeriodChange = (v: string) => {
+    const newPeriod = parseInt(v) as Period;
     setPeriod(newPeriod);
     if(displayedTime != null) {
-      props.onChange?.(to24Hour(displayedTime, newPeriod));
+      onChange?.(to24Hour(displayedTime, newPeriod));
     }
   };
   return (
-    <div style={STYLE.wrapper}>
+    <div {...rest} className={className}
+        style={{...STYLE.wrapper, ...style}}>
       <DurationInput
+        style={{flex: 1}}
         value={displayedTime}
-        readOnly={props.readOnly}
-        disabled={props.disabled}
-        error={props.error}
+        readOnly={readOnly}
+        disabled={disabled}
+        error={error}
         maxHourValue={12}
         minHourValue={1}
         onChange={onTimeChange}/>
       <Select
           onChange={onPeriodChange}
           value={String(period)}
-          readOnly={props.readOnly}
-          disabled={props.disabled}
+          readOnly={readOnly}
+          disabled={disabled}
           style={STYLE.select}>
         <option value={String(Period.AM)}>AM</option>
         <option value={String(Period.PM)}>PM</option>

@@ -343,7 +343,8 @@ const STYLE: Record<string, React.CSSProperties> = {
     boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center'
+    alignItems: 'center',
+    overflowY: 'auto'
   },
   section: {
     width: '100%',

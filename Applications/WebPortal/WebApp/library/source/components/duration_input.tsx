@@ -3,7 +3,8 @@ import * as Beam from 'beam';
 import * as React from 'react';
 import { IntegerInput } from './integer_input';
 
-interface Properties {
+interface Properties extends
+    Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
 
   /** The value to display in the field. */
   value?: Beam.Duration;
@@ -30,21 +31,22 @@ interface Properties {
 }
 
 /** A component that displays a duration. */
-export function DurationInput(props: Properties): JSX.Element {
-  const hours = React.useRef(props.value?.split().hours);
-  const minutes = React.useRef(props.value?.split().minutes);
-  const seconds = React.useRef(props.value?.split().seconds);
-  const split = props.value?.split();
+export function DurationInput({className, value, maxHourValue, minHourValue,
+    readOnly, disabled, error, onChange, ...rest}: Properties): JSX.Element {
+  const hours = React.useRef(value?.split().hours);
+  const minutes = React.useRef(value?.split().minutes);
+  const seconds = React.useRef(value?.split().seconds);
+  const split = value?.split();
   hours.current = split?.hours;
   minutes.current = split?.minutes;
   seconds.current = split?.seconds;
   const onchange = (h?: number, m?: number, s?: number) => {
     if(h != null && m != null && s != null) {
-      props.onChange?.(Beam.Duration.HOUR.multiply(h).add(
+      onChange?.(Beam.Duration.HOUR.multiply(h).add(
         Beam.Duration.MINUTE.multiply(m)).add(
         Beam.Duration.SECOND.multiply(s)));
     } else if(h == null && m == null && s == null) {
-      props.onChange?.(undefined);
+      onChange?.(undefined);
     }
   };
   const onHoursChange = (value?: number) => {
@@ -56,18 +58,19 @@ export function DurationInput(props: Properties): JSX.Element {
   const onSecondsChange = (value?: number) => {
     onchange(hours.current, minutes.current, value);
   };
-  const separatorStyle = props.value ? undefined : {color: '#8C8C8C'};
+  const separatorStyle = value ? undefined : {color: '#8C8C8C'};
   return (
-    <div className={css(STYLES.container,
-        props.disabled && STYLES.containerDisabled,
-        props.error && STYLES.containerError,
-        props.readOnly && STYLES.containerReadonly)}>
+    <div {...rest} className={[css(STYLES.container,
+        disabled && STYLES.containerDisabled,
+        error && STYLES.containerError,
+        readOnly && STYLES.containerReadonly),
+        className].filter(Boolean).join(' ')}>
       <IntegerInput
         aria-label='Hours' placeholder='hh'
-        min={props.minHourValue ?? 0} max={props.maxHourValue ?? 99}
+        min={minHourValue ?? 0} max={maxHourValue ?? 99}
         value={split?.hours}
-        readOnly={props.readOnly}
-        disabled={props.disabled}
+        readOnly={readOnly}
+        disabled={disabled}
         onChange={onHoursChange}
         style={STYLE.hoursInput}
         leadingZeros={2}/>
@@ -78,8 +81,8 @@ export function DurationInput(props: Properties): JSX.Element {
         aria-label='Minutes' placeholder='mm'
         min={0} max={59}
         value={split?.minutes}
-        readOnly={props.readOnly}
-        disabled={props.disabled}
+        readOnly={readOnly}
+        disabled={disabled}
         onChange={onMinutesChange}
         style={STYLE.minutesInput}
         leadingZeros={2}/>
@@ -90,8 +93,8 @@ export function DurationInput(props: Properties): JSX.Element {
         aria-label='Seconds' placeholder='ss'
         min={0} max={59}
         value={split?.seconds}
-        readOnly={props.readOnly}
-        disabled={props.disabled}
+        readOnly={readOnly}
+        disabled={disabled}
         onChange={onSecondsChange}
         style={STYLE.secondsInput}
         leadingZeros={2}/>

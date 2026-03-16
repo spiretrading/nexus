@@ -126,7 +126,8 @@ const STYLES = StyleSheet.create({
     boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
-    overflow: 'auto',
+    overflowY: 'auto',
+    overflowX: 'hidden',
     paddingBottom: '40px',
     zIndex: 10000000,
     '@media (min-width: 768px)': {

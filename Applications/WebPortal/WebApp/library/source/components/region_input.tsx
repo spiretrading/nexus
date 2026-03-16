@@ -166,11 +166,13 @@ export class RegionInput extends React.Component<Properties, State> {
       if(this.props.readOnly) {
         return (
           <Button label={RegionInput.CONFIRM_TEXT}
-            onClick={this.onClose}/>);
+            onClick={this.onClose}
+            style={{width: '100%'}}/>);
       } else {
         return (
           <Button label={RegionInput.SUBMIT_CHANGES_TEXT}
-            onClick={this.onSubmitChange}/>);
+            onClick={this.onSubmitChange}
+            style={{width: '100%'}}/>);
       }
     })();
     const displayText = makeDisplayText(this.props.value ?? new Nexus.Region());

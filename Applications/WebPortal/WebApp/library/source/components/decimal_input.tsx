@@ -64,8 +64,10 @@ export class DecimalInput extends React.Component<Properties, State> {
       return;
     }
     if(event.key === 'ArrowUp') {
+      event.preventDefault();
       this.increment();
     } else if(event.key === 'ArrowDown') {
+      event.preventDefault();
       this.decrement();
     }
   }

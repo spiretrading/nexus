@@ -164,11 +164,13 @@ export class SecuritiesInput extends React.Component<Properties, State> {
       if(this.props.readOnly) {
         return (
           <Button label={SecuritiesInput.CONFIRM_TEXT}
-            onClick={this.onClose}/>);
+            onClick={this.onClose}
+            style={{width: '100%'}}/>);
       } else {
         return (
           <Button label={SecuritiesInput.SUBMIT_CHANGES_TEXT}
-            onClick={this.onSubmitChange}/>);
+            onClick={this.onSubmitChange}
+            style={{width: '100%'}}/>);
       }
     })();
     const value = this.props.value ?? [];
