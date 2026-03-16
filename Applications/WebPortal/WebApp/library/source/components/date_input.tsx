@@ -3,10 +3,8 @@ import * as Beam from 'beam';
 import * as React from 'react';
 import { IntegerInput } from '..';
 
-interface Properties {
-
-  /** The id to apply to the first input field. */
-  id?: string;
+interface Properties extends
+    Omit<React.HTMLAttributes<HTMLDivElement>, 'onChange'> {
 
   /** The value to display in the field. */
   value?: Beam.Date;
@@ -27,55 +25,56 @@ interface Properties {
 }
 
 /** A component that displays a date. */
-export function DateInput(props: Properties): JSX.Element {
-  const year = React.useRef(props.value?.year);
-  const month = React.useRef(props.value?.month);
-  const day = React.useRef(props.value?.day);
-  const prevValue = React.useRef(props.value);
-  if(props.value !== prevValue.current) {
-    if(props.value != null ||
-        (year.current == null && month.current == null &&
-          day.current == null)) {
-      year.current = props.value?.year;
-      month.current = props.value?.month;
-      day.current = props.value?.day;
+export function DateInput({id, className, value, readOnly, disabled, error,
+    onChange, ...rest}: Properties): JSX.Element {
+  const yearRef = React.useRef(value?.year);
+  const monthRef = React.useRef(value?.month);
+  const dayRef = React.useRef(value?.day);
+  const prevValue = React.useRef(value);
+  if(value !== prevValue.current) {
+    if(value != null ||
+        (yearRef.current == null && monthRef.current == null &&
+          dayRef.current == null)) {
+      yearRef.current = value?.year;
+      monthRef.current = value?.month;
+      dayRef.current = value?.day;
     }
-    prevValue.current = props.value;
+    prevValue.current = value;
   }
   const onchange = (y?: number, m?: number, d?: number) => {
-    year.current = y;
-    month.current = m;
-    day.current = d;
+    yearRef.current = y;
+    monthRef.current = m;
+    dayRef.current = d;
     if(y != null && m != null && d != null) {
-      props.onChange?.(new Beam.Date(y, m, d));
+      onChange?.(new Beam.Date(y, m, d));
     } else if(y == null && m == null && d == null) {
-      props.onChange?.(undefined);
+      onChange?.(undefined);
     }
   };
   const onYearChange = (value?: number) => {
-    onchange(value, month.current, day.current);
+    onchange(value, monthRef.current, dayRef.current);
   };
   const onMonthChange = (value?: number) => {
-    onchange(year.current, value, day.current);
+    onchange(yearRef.current, value, dayRef.current);
   };
   const onDayChange = (value?: number) => {
-    onchange(year.current, month.current, value);
+    onchange(yearRef.current, monthRef.current, value);
   };
-  const hasValue = year.current != null || month.current != null ||
-    day.current != null;
+  const hasValue = yearRef.current != null || monthRef.current != null ||
+    dayRef.current != null;
   const separatorStyle = hasValue ? undefined : {color: '#8C8C8C'};
   return (
-    <div className={css(STYLES.container,
-        props.disabled && STYLES.containerDisabled,
-        props.error && STYLES.containerError,
-        props.readOnly && STYLES.containerReadonly)}>
+    <div {...rest} className={[css(STYLES.container,
+        disabled && STYLES.containerDisabled, error && STYLES.containerError,
+        readOnly && STYLES.containerReadonly),
+        className].filter(Boolean).join(' ')}>
       <IntegerInput
-        id={props.id}
+        id={id}
         aria-label='Year' placeholder='YYYY'
         min={0} max={9999}
-        value={year.current}
-        readOnly={props.readOnly}
-        disabled={props.disabled}
+        value={yearRef.current}
+        readOnly={readOnly}
+        disabled={disabled}
         onChange={onYearChange}
         style={STYLE.yearInput}
         leadingZeros={4}/>
@@ -85,9 +84,9 @@ export function DateInput(props: Properties): JSX.Element {
       <IntegerInput
         aria-label='Month' placeholder='MM'
         min={1} max={12}
-        value={month.current}
-        readOnly={props.readOnly}
-        disabled={props.disabled}
+        value={monthRef.current}
+        readOnly={readOnly}
+        disabled={disabled}
         onChange={onMonthChange}
         style={STYLE.monthInput}
         leadingZeros={2}/>
@@ -97,9 +96,9 @@ export function DateInput(props: Properties): JSX.Element {
       <IntegerInput
         aria-label='Day' placeholder='DD'
         min={1} max={31}
-        value={day.current}
-        readOnly={props.readOnly}
-        disabled={props.disabled}
+        value={dayRef.current}
+        readOnly={readOnly}
+        disabled={disabled}
         onChange={onDayChange}
         style={STYLE.dayInput}
         leadingZeros={2}/>

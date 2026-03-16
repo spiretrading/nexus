@@ -73,7 +73,8 @@ export class RequestFilterModal extends React.Component<Properties, State> {
             </div>
             <div className={css(STYLES.actionsSmall)}>
               <Button label='Apply' onClick={this.onSubmit}
-                disabled={invalid}/>
+                disabled={invalid}
+                style={STYLE.applyButtonSmall}/>
             </div>
           </div>
         </Modal>);
@@ -133,7 +134,7 @@ export class RequestFilterModal extends React.Component<Properties, State> {
         <div className={css(STYLES.fieldRow)}>
           <div className={css(STYLES.fieldLabel)}>Start</div>
           <div className={css(STYLES.fieldLabelGap)}/>
-          <DateInput
+          <DateInput className={css(STYLES.dateInputSmall)}
             value={this.state.startDate}
             onChange={this.onStartDateChange}/>
         </div>
@@ -141,7 +142,7 @@ export class RequestFilterModal extends React.Component<Properties, State> {
         <div className={css(STYLES.fieldRow)}>
           <div className={css(STYLES.fieldLabel)}>End</div>
           <div className={css(STYLES.fieldLabelGap)}/>
-          <DateInput
+          <DateInput className={css(STYLES.dateInputSmall)}
             value={this.state.endDate}
             onChange={this.onEndDateChange}/>
         </div>
@@ -272,18 +273,21 @@ export namespace RequestFilterModal {
 }
 
 function today(): Beam.Date {
-  return Beam.Date.fromDate(new Date());
+  return Beam.Date.today();
 }
 
 function isAfter(a: Beam.Date, b: Beam.Date): boolean {
   return a.compare(b) > 0;
 }
 
-const STYLE = {
+const STYLE: Record<string, React.CSSProperties> = {
+  applyButtonSmall: {
+    width: '100%'
+  },
   applyButtonLarge: {
     width: '140px',
     flexShrink: 0
-  } as React.CSSProperties
+  },
 };
 
 const STYLES = StyleSheet.create({
@@ -352,6 +356,9 @@ const STYLES = StyleSheet.create({
   },
   dateGap: {
     height: '10px'
+  },
+  dateInputSmall: {
+    width: '100%'
   },
   dateCreatedLarge: {
     flexGrow: 1
