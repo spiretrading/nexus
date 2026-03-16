@@ -1,7 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Button, DateInput, DisplaySize, HLine, PageLayout } from '../../..';
+import { Button, DateInput, DisplaySize, PageLayout } from '../../..';
 import { EntitlementRow } from './entitlement_row';
 
 interface Properties {
@@ -97,18 +97,21 @@ function Entitlements(props: {
   const rows = [];
   for(const entry of props.entitlements) {
     rows.push(
-      <EntitlementRow
-        key={entry.group.id}
-        entitlementEntry={entry}
-        currencyEntry={props.currencyDatabase.fromCurrency(entry.currency)}
-        isActive={props.checked.test(entry.group)}
-        onClick={() => props.onEntitlementClick?.(entry.group)}
-        displaySize={props.displaySize}
-        venueDatabase={props.venueDatabase}/>);
+      <li key={entry.group.id}>
+        <EntitlementRow
+          entitlementEntry={entry}
+          currencyEntry={props.currencyDatabase.fromCurrency(entry.currency)}
+          isActive={props.checked.test(entry.group)}
+          onClick={() => props.onEntitlementClick?.(entry.group)}
+          displaySize={props.displaySize}
+          venueDatabase={props.venueDatabase}/>
+      </li>);
   }
   return (
     <section style={STYLE.sectionFirst}>
-      {rows}
+      <ul style={STYLE.entitlementList}>
+        {rows}
+      </ul>
     </section>);
 }
 
@@ -131,9 +134,12 @@ function DateField(props: {
     <div style={DATE_FIELD_STYLE.wrapper}>
       <DateLabel/>
       <div style={DATE_FIELD_STYLE.spacer}/>
-      <DateInput id='effective-date' value={props.value}
-        onChange={props.onChange}/>
-      <DateError error={props.error}/>
+      <div style={DATE_FIELD_STYLE.inputColumn}>
+        <DateInput id='effective-date' value={props.value}
+          onChange={props.onChange}
+          style={DATE_FIELD_STYLE.dateInput}/>
+        <DateError error={props.error}/>
+      </div>
     </div>);
 }
 
@@ -229,7 +235,7 @@ function FeedbackMessage(props: {
 
 const STYLE: Record<string, React.CSSProperties> = {
   main: {
-    padding: '30px 18px 40px',
+    padding: '18px 18px 40px',
     fontFamily: "'Roboto', system-ui, sans-serif",
     fontWeight: 400,
     color: '#333333',
@@ -238,6 +244,12 @@ const STYLE: Record<string, React.CSSProperties> = {
     flexDirection: 'column',
     alignItems: 'center',
     overflowY: 'auto'
+  },
+  entitlementList: {
+    listStyle: 'none',
+    margin: 0,
+    padding: 0,
+    containerType: 'inline-size'
   },
   sectionFirst: {
     width: '100%',
@@ -266,16 +278,31 @@ const STYLE: Record<string, React.CSSProperties> = {
 const DATE_FIELD_STYLE: Record<string, React.CSSProperties> = {
   wrapper: {
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'row',
+    alignItems: 'flex-start'
   },
   label: {
+    width: '96px',
+    height: '34px',
+    flexShrink: 0,
+    display: 'flex',
+    alignItems: 'center',
     fontFamily: "'Roboto', system-ui, sans-serif",
     fontSize: '0.875rem',
     fontWeight: 500,
     color: '#333333'
   },
   spacer: {
-    height: '10px'
+    width: '8px',
+    flexShrink: 0
+  },
+  inputColumn: {
+    display: 'flex',
+    flexDirection: 'column',
+    flex: 1
+  },
+  dateInput: {
+    maxWidth: '246px'
   },
   errorSpacer: {
     height: '26px'
@@ -298,7 +325,7 @@ const DATE_FIELD_STYLE: Record<string, React.CSSProperties> = {
 const SUBMISSION_STYLE: Record<string, React.CSSProperties> = {
   comments: {
     width: '100%',
-    height: '100px',
+    height: '150px',
     boxSizing: 'border-box',
     border: '1px solid #C8C8C8',
     borderRadius: '1px',

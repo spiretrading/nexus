@@ -2,9 +2,8 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { DisplaySize, DropDownButton, HLine } from '../../..';
+import { Checkbox, DisplaySize, DropDownButton } from '../../..';
 import { ApplicabilityTable } from './applicability_table';
-import { CheckMarkButton } from './check_mark_button';
 
 interface Properties {
 
@@ -63,48 +62,44 @@ export class EntitlementRow extends React.Component<Properties, State> {
       }
       return this.state.isExpanded ? STYLE.amountExpanded : STYLE.name;
     })();
-    const applicabilityTablePadding =
-      this.props.displaySize === DisplaySize.SMALL ?
-        STYLE.mobileTablePadding : STYLE.tablePadding;
-    const applicabilityHeaderStyle =
-      this.props.displaySize === DisplaySize.SMALL ?
-        STYLE.tableHeaderSmall : STYLE.tableHeader;
     return (
       <div style={STYLE.wrapper}>
         <div style={STYLE.header}>
-          <CheckMarkButton size={buttonSize}
-            onClick={this.props.onClick}
-            isChecked={this.props.isActive}/>
+          <Checkbox
+            id={`${this.props.entitlementEntry.name}-active`}
+            name={`${this.props.entitlementEntry.name}-active`}
+            aria-label={`Toggle ${this.props.entitlementEntry.name} activation`}
+            checked={this.props.isActive}
+            onClick={() => this.props.onClick?.()}/>
           <div style={STYLE.headerPadding}/>
           <DropDownButton size={buttonSize}
             isExpanded={this.state.isExpanded}
             onClick={this.onToggle}/>
           <div style={STYLE.headerPadding}/>
-          <div style={entitlementNameStyle}>
+          <h2 style={entitlementNameStyle}>
             {this.props.entitlementEntry.name}
-          </div>
+          </h2>
           <div style={STYLE.headerFiller}/>
-          <div className={css(STYLES.desktopOnly)} style={amountStyle}>
+          <span className={css(STYLES.desktopOnly)} style={amountStyle}>
             {amount}
-          </div>
+          </span>
         </div>
         <Transition in={this.state.isExpanded}
             timeout={TRANSITION_LENGTH_MS}>
           {(state) => (
             <div ref={(el) => this.dropDownTable = el}
-                className={css((this.state.applicabilityStyle as any)[state])}
-                style={STYLE.expandableTable}>
-              <HLine color='#E6E6E6'/>
-              <div style={STYLE.header}>
-                <div style={applicabilityHeaderStyle}>
-                  Applicability
+                className={css(
+                  (this.state.applicabilityStyle as any)[state])}>
+              <div className={css(STYLES.applicabilitySection)}>
+                <div style={STYLE.header}>
+                  <h3 style={STYLE.tableHeaderSmall}>
+                    Applicability
+                  </h3>
+                  <div style={STYLE.headerFiller}/>
+                  <span className={css(STYLES.mobileOnly)} style={amountStyle}>
+                    {amount}
+                  </span>
                 </div>
-                <div style={STYLE.headerFiller}/>
-                <div className={css(STYLES.mobileOnly)} style={amountStyle}>
-                  {amount}
-                </div>
-              </div>
-              <div style={applicabilityTablePadding}>
                 <ApplicabilityTable
                   entitlementEntry={this.props.entitlementEntry}
                   venueDatabase={this.props.venueDatabase}/>
@@ -177,28 +172,19 @@ const STYLE: Record<string, React.CSSProperties> = {
   headerPadding: {
     width: '18px'
   },
-  expandableTable: {
-    width: '100%',
-    boxSizing: 'border-box'
-  },
-  tablePadding: {
-    paddingLeft: '76px',
-    paddingBottom: '20px',
-    boxSizing: 'border-box'
-  },
-  mobileTablePadding: {
-    paddingBottom: '20px'
-  },
   name: {
     fontFamily: "'Roboto', system-ui, sans-serif",
     fontSize: '0.875rem',
-    color: '#000000'
+    fontWeight: 400,
+    color: '#000000',
+    margin: 0
   },
   nameExpanded: {
     fontFamily: "'Roboto', system-ui, sans-serif",
     fontSize: '0.875rem',
     fontWeight: 500,
-    color: '#4B23A0'
+    color: '#4B23A0',
+    margin: 0
   },
   activeAmount: {
     fontFamily: "'Roboto', system-ui, sans-serif",
@@ -217,22 +203,25 @@ const STYLE: Record<string, React.CSSProperties> = {
     fontWeight: 500,
     color: '#000000'
   },
-  tableHeader: {
-    paddingLeft: '76px',
-    fontFamily: "'Roboto', system-ui, sans-serif",
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    color: '#4B23A0'
-  },
   tableHeaderSmall: {
     fontFamily: "'Roboto', system-ui, sans-serif",
     fontSize: '0.875rem',
     fontWeight: 500,
-    color: '#4B23A0'
+    color: '#4B23A0',
+    margin: 0
   }
 };
 
 const STYLES = StyleSheet.create({
+  applicabilitySection: {
+    borderTop: '1px solid #E6E6E6',
+    paddingBottom: '20px',
+    width: '100%',
+    boxSizing: 'border-box',
+    '@media (min-width: 768px)': {
+      paddingLeft: '76px'
+    }
+  },
   desktopOnly: {
     display: 'none',
     '@media (min-width: 460px)': {
