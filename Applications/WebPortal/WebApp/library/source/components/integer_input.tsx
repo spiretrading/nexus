@@ -38,6 +38,7 @@ export class IntegerInput extends React.Component<Properties, State> {
     return (
       <Input
         {...rest}
+        ref={this._inputRef}
         onBlur={this.onBlur}
         value={this.state.text}
         onChange={this.onChange}
@@ -49,6 +50,12 @@ export class IntegerInput extends React.Component<Properties, State> {
       this.setState({
         text: padValue(this.props.value, this.props.leadingZeros)
       });
+      return;
+    }
+    if(this._start != null) {
+      this._inputRef.current?.setSelectionRange(this._start, this._end);
+      this._start = null;
+      this._end = null;
     }
   }
 
@@ -112,6 +119,8 @@ export class IntegerInput extends React.Component<Properties, State> {
     if(this.props.max != null && increment > this.props.max) {
       return;
     }
+    this._start = this._inputRef.current?.selectionStart;
+    this._end = this._inputRef.current?.selectionEnd;
     this.props.onChange?.(increment);
   }
 
@@ -121,8 +130,14 @@ export class IntegerInput extends React.Component<Properties, State> {
     if(this.props.min != null && decrement < this.props.min) {
       return;
     }
+    this._start = this._inputRef.current?.selectionStart;
+    this._end = this._inputRef.current?.selectionEnd;
     this.props.onChange?.(decrement);
   }
+
+  private _inputRef = React.createRef<HTMLInputElement>();
+  private _start: number;
+  private _end: number;
 }
 
 function padValue(value: number | undefined, leadingZeros: number): string {

@@ -51,6 +51,7 @@ export class DecimalInput extends React.Component<Properties, State> {
       this.setState({
         text: formatValue(this.props.value, this.props.decimalPlaces)
       });
+      return;
     }
     if(this._start != null) {
       this._inputRef.current?.setSelectionRange(this._start, this._end);
