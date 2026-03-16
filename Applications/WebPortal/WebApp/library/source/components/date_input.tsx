@@ -31,10 +31,21 @@ export function DateInput(props: Properties): JSX.Element {
   const year = React.useRef(props.value?.year);
   const month = React.useRef(props.value?.month);
   const day = React.useRef(props.value?.day);
-  year.current = props.value?.year;
-  month.current = props.value?.month;
-  day.current = props.value?.day;
+  const prevValue = React.useRef(props.value);
+  if(props.value !== prevValue.current) {
+    if(props.value != null ||
+        (year.current == null && month.current == null &&
+          day.current == null)) {
+      year.current = props.value?.year;
+      month.current = props.value?.month;
+      day.current = props.value?.day;
+    }
+    prevValue.current = props.value;
+  }
   const onchange = (y?: number, m?: number, d?: number) => {
+    year.current = y;
+    month.current = m;
+    day.current = d;
     if(y != null && m != null && d != null) {
       props.onChange?.(new Beam.Date(y, m, d));
     } else if(y == null && m == null && d == null) {
@@ -50,7 +61,9 @@ export function DateInput(props: Properties): JSX.Element {
   const onDayChange = (value?: number) => {
     onchange(year.current, month.current, value);
   };
-  const separatorStyle = props.value ? undefined : {color: '#8C8C8C'};
+  const hasValue = year.current != null || month.current != null ||
+    day.current != null;
+  const separatorStyle = hasValue ? undefined : {color: '#8C8C8C'};
   return (
     <div className={css(STYLES.container,
         props.disabled && STYLES.containerDisabled,
@@ -60,7 +73,7 @@ export function DateInput(props: Properties): JSX.Element {
         id={props.id}
         aria-label='Year' placeholder='YYYY'
         min={0} max={9999}
-        value={props.value?.year}
+        value={year.current}
         readOnly={props.readOnly}
         disabled={props.disabled}
         onChange={onYearChange}
@@ -72,7 +85,7 @@ export function DateInput(props: Properties): JSX.Element {
       <IntegerInput
         aria-label='Month' placeholder='MM'
         min={1} max={12}
-        value={props.value?.month}
+        value={month.current}
         readOnly={props.readOnly}
         disabled={props.disabled}
         onChange={onMonthChange}
@@ -84,7 +97,7 @@ export function DateInput(props: Properties): JSX.Element {
       <IntegerInput
         aria-label='Day' placeholder='DD'
         min={1} max={31}
-        value={props.value?.day}
+        value={day.current}
         readOnly={props.readOnly}
         disabled={props.disabled}
         onChange={onDayChange}
