@@ -46,7 +46,10 @@ export class RiskController extends React.Component<Properties, State> {
     if(this.state.loadingState.isLoading()) {
       return <LoadingPage/>;
     } else if(this.state.loadingState.state === LoadingState.State.ERROR) {
-      return <div/>;
+      return <RiskPage comment='' parameters={Nexus.RiskParameters.INVALID}
+        currencyDatabase={this.props.currencyDatabase}
+        roles={this.props.roles}
+        isError status='Server issue'/>;
     }
     const hasDateError = this.state.effectiveDate == null;
     return <RiskPage comment={this.state.comment}
@@ -59,7 +62,7 @@ export class RiskController extends React.Component<Properties, State> {
       isError={this.state.hasSubmissionError}
       status={this.state.status} onComment={this.onComment}
       onEffectiveDate={this.onEffectiveDate}
-      onParameters={this.onParameters} onSubmit={this.onSubmit}/>;  
+      onParameters={this.onParameters} onSubmit={this.onSubmit}/>;
   }
 
   public async componentDidMount(): Promise<void> {
@@ -106,13 +109,13 @@ export class RiskController extends React.Component<Properties, State> {
       await this.props.model.submit(this.state.comment,
         this.state.parameters, this.state.effectiveDate ?? Beam.Date.today());
       this.setState({
-        status: 'Saved.'
+        status: 'Saved'
       });
     } catch(e) {
       this.setState({
         canSubmit: true,
         hasSubmissionError: true,
-        status: e.toString()
+        status: 'Server issue'
       });
     }
   }

@@ -90,7 +90,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return this.state.isExpanded ?
           STYLE.activeAmountExpanded : STYLE.activeAmount;
       }
-      return this.state.isExpanded ? STYLE.amountExpanded : {};
+      return this.state.isExpanded ? STYLE.amountExpanded : undefined;
     })();
     return (
       <div style={STYLE.wrapper}>
@@ -100,7 +100,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
             name={`${this.props.entitlementEntry.name}-active`}
             aria-label={`Toggle ${this.props.entitlementEntry.name} activation`}
             checked={this.props.isActive}
-            onClick={() => this.props.onClick?.()}/>
+            onClick={this.props.onClick}/>
           <div style={STYLE.headerPadding}/>
           <DropDownButton size={BUTTON_SIZE_PX}
             isExpanded={this.state.isExpanded}
