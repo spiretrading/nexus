@@ -20,7 +20,7 @@ interface Properties {
 interface State {
   loadingState: LoadingState;
   comment: string;
-  effectiveDate: Beam.Date;
+  effectiveDate?: Beam.Date;
   parameters: Nexus.RiskParameters;
   canSubmit: boolean;
   hasSubmissionError: boolean;
@@ -34,7 +34,7 @@ export class RiskController extends React.Component<Properties, State> {
     this.state = {
       loadingState: new LoadingState(),
       comment: '',
-      effectiveDate: Beam.Date.NOT_A_DATE,
+      effectiveDate: Beam.Date.today(),
       parameters: null,
       canSubmit: false,
       hasSubmissionError: false,
@@ -48,12 +48,15 @@ export class RiskController extends React.Component<Properties, State> {
     } else if(this.state.loadingState.state === LoadingState.State.ERROR) {
       return <div/>;
     }
+    const hasDateError = this.state.effectiveDate == null;
     return <RiskPage comment={this.state.comment}
       parameters={this.state.parameters}
       effectiveDate={this.state.effectiveDate}
       currencyDatabase={this.props.currencyDatabase}
       roles={this.props.roles}
-      canSubmit={this.state.canSubmit} isError={this.state.hasSubmissionError}
+      canSubmit={this.state.canSubmit && !hasDateError}
+      dateError={hasDateError}
+      isError={this.state.hasSubmissionError}
       status={this.state.status} onComment={this.onComment}
       onEffectiveDate={this.onEffectiveDate}
       onParameters={this.onParameters} onSubmit={this.onSubmit}/>;  
@@ -82,7 +85,7 @@ export class RiskController extends React.Component<Properties, State> {
     this.setState({comment});
   }
 
-  private onEffectiveDate = (effectiveDate: Beam.Date) => {
+  private onEffectiveDate = (effectiveDate?: Beam.Date) => {
     this.setState({effectiveDate});
   }
 

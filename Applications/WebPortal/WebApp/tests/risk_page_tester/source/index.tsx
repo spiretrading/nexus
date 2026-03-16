@@ -1,6 +1,4 @@
-import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
-import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
@@ -23,53 +21,48 @@ interface State {
   shouldFail: boolean;
 }
 
-/** Displays and tests the RiskPage. */
 class TestApp extends React.Component<{}, State> {
   constructor(props: {}) {
     super(props);
+    const roles = new Nexus.AccountRoles();
+    roles.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
     this.state = {
-      roles: new Nexus.AccountRoles(8),
-      shouldFail: false,
+      roles,
+      shouldFail: false
     };
   }
 
   public render(): JSX.Element {
-    const toggleAdminButtonText = (() => {
-      if(this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-        return 'Admin';
-      }
-      return 'Not Admin';
-    })();
-    const toggleErrorText = (() => {
-      if(this.state.shouldFail) {
-        return 'Error';
-      }
-      return 'No Error';
-    })();
+    const isAdmin =
+      this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR);
     return (
-      <Dali.VBoxLayout width='100%' height='100%'>
+      <div style={STYLE.wrapper}>
         <WebPortal.RiskController
           currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
           roles={this.state.roles}
           model={this.model}/>
-        <div className={css(TestApp.STYLE.buttonWrapper)}>
-          <button onClick={this.onToggleIsAdmin}>
-            {toggleAdminButtonText}
-          </button>
-          <button onClick={this.onToggleError}>
-            {toggleErrorText}
-          </button>
+        <div style={STYLE.toolbar}>
+          <label style={STYLE.toggle}>
+            <input type='checkbox' checked={isAdmin}
+              onChange={this.onToggleAdmin}/>
+            Admin
+          </label>
+          <label style={STYLE.toggle}>
+            <input type='checkbox' checked={this.state.shouldFail}
+              onChange={this.onToggleError}/>
+            Error
+          </label>
         </div>
-      </Dali.VBoxLayout>);
+      </div>);
   }
 
-  private onToggleIsAdmin = () => {
-    const roles = (() => {
-      if(!this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-        return new Nexus.AccountRoles(8);
-      }
-      return new Nexus.AccountRoles();
-    })();
+  private onToggleAdmin = () => {
+    const roles = this.state.roles.clone();
+    if(roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+      roles.unset(Nexus.AccountRoles.Role.ADMINISTRATOR);
+    } else {
+      roles.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
+    }
     this.setState({roles});
   }
 
@@ -87,14 +80,27 @@ class TestApp extends React.Component<{}, State> {
       Beam.Duration.HOUR.multiply(5).add(
         Beam.Duration.MINUTE.multiply(30)).add(
           Beam.Duration.SECOND.multiply(15))));
-
-  private static STYLE = StyleSheet.create({
-    buttonWrapper: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      position: 'absolute' as 'absolute'
-    }
-  });
 }
+
+const STYLE: Record<string, React.CSSProperties> = {
+  wrapper: {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  toolbar: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: '10px',
+    position: 'absolute'
+  },
+  toggle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    cursor: 'pointer'
+  }
+};
 
 ReactDOM.render(<TestApp/>, document.getElementById('main'));

@@ -237,7 +237,7 @@ function DateField(props: {
     <div style={DATE_FIELD_STYLE.wrapper}>
       <DateLabel/>
       <div style={DATE_FIELD_STYLE.spacer}/>
-      <DateInput id='effective-date' value={props.value ?? Beam.Date.today()}
+      <DateInput id='effective-date' value={props.value}
         onChange={props.onChange}/>
       <DateError error={props.error}/>
     </div>);
@@ -321,17 +321,16 @@ function Feedback(props: {
   return (
     <div style={SUBMISSION_STYLE.feedback}>
       <div style={SUBMISSION_STYLE.feedbackMessageSpacer}/>
-      <FeedbackMessage isError={props.isError} status={props.status}/>
+      <FeedbackMessage isError={props.isError}/>
     </div>);
 }
 
-function FeedbackMessage(props: {
-    isError?: boolean,
-    status: string}): JSX.Element {
+function FeedbackMessage(props: {isError?: boolean}): JSX.Element {
+  const message = props.isError ? 'Server issue' : 'Saved';
+  const color = props.isError ? '#E63F44' : '#36BB55';
   return (
-    <span style={{...SUBMISSION_STYLE.feedbackMessage,
-      color: props.isError ? '#E63F44' : '#36BB55'}}>
-      {props.status}
+    <span style={{...SUBMISSION_STYLE.feedbackMessage, color}}>
+      {message}
     </span>);
 }
 
