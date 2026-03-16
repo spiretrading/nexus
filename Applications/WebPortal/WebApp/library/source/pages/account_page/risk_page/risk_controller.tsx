@@ -96,16 +96,15 @@ export class RiskController extends React.Component<Properties, State> {
     });
   }
 
-  private onSubmit = async (
-      comment: string, parameters: Nexus.RiskParameters,
-      effectiveDate: Beam.Date) => {
+  private onSubmit = async () => {
     try {
       this.setState({
         canSubmit: false,
         hasSubmissionError: false,
         status: ''
       });
-      await this.props.model.submit(comment, parameters, effectiveDate);
+      await this.props.model.submit(this.state.comment,
+        this.state.parameters, this.state.effectiveDate ?? Beam.Date.today());
       this.setState({
         status: 'Saved.'
       });

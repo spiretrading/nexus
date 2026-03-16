@@ -51,22 +51,12 @@ interface Properties {
    */
   onEffectiveDate?: (date?: Beam.Date) => void;
 
-  /**
-   * Indicates the form should be submitted.
-   * @param comment - The comment to submit with the form.
-   * @param parameters - The parameters to submit.
-   * @param effectiveDate - The effective date to submit.
-   */
-  onSubmit?: (comment: string, parameters: Nexus.RiskParameters,
-    effectiveDate: Beam.Date) => void;
+  /** Indicates the form should be submitted. */
+  onSubmit?: () => void;
 }
 
 /** Displays a risk page. */
 export function RiskPage(props: Properties): JSX.Element {
-  const onSubmit = () => {
-    props.onSubmit?.(props.comment, props.parameters.clone(),
-      props.effectiveDate ?? Beam.Date.today());
-  };
   return (
     <PageLayout>
       <main style={STYLE.main}>
@@ -84,7 +74,7 @@ export function RiskPage(props: Properties): JSX.Element {
           isError={props.isError}
           status={props.status}
           onComment={props.onComment}
-          onSubmit={onSubmit}/>
+          onSubmit={props.onSubmit}/>
       </main>
     </PageLayout>);
 }
@@ -156,7 +146,7 @@ function Controls(props: {
 
 function CurrencyLabel(): JSX.Element {
   return (
-    <label htmlFor='currency' style={CONTROLS_STYLE.label}>
+    <label htmlFor='currency'>
       Currency
     </label>);
 }
@@ -167,14 +157,14 @@ function Currency(props: {
     onChange?: (value: Nexus.Currency) => void}): JSX.Element {
   return (
     <CurrencySelect id='currency' name='currency'
-      style={{width: '100%'}}
+      style={CONTROLS_STYLE.currencySelect}
       currencyDatabase={props.currencyDatabase}
       value={props.value} onChange={props.onChange}/>);
 }
 
 function BuyingPowerLabel(props: {sign: string}): JSX.Element {
   return (
-    <label htmlFor='buying-power' style={CONTROLS_STYLE.label}>
+    <label htmlFor='buying-power'>
       {`Buying Power (${props.sign})`}
     </label>);
 }
@@ -190,7 +180,7 @@ function BuyingPower(props: {
 
 function NetLossLabel(props: {sign: string}): JSX.Element {
   return (
-    <label htmlFor='net-loss' style={CONTROLS_STYLE.label}>
+    <label htmlFor='net-loss'>
       {`Net Loss (${props.sign})`}
     </label>);
 }
@@ -206,7 +196,7 @@ function NetLoss(props: {
 
 function TransitionTimeLabel(): JSX.Element {
   return (
-    <label htmlFor='transition-time' style={CONTROLS_STYLE.label}>
+    <label htmlFor='transition-time'>
       Transition Time
     </label>);
 }
@@ -245,7 +235,7 @@ function DateField(props: {
 
 function DateLabel(): JSX.Element {
   return (
-    <label htmlFor='effective-date' style={DATE_FIELD_STYLE.label}>
+    <label htmlFor='effective-date'>
       Effective Date
     </label>);
 }
@@ -276,8 +266,7 @@ function SubmissionBlock(props: {
     onSubmit?: () => void}): JSX.Element {
   const isAdmin = props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR);
   return (
-    <section style={{...STYLE.sectionLast, flexDirection: 'column',
-        alignItems: 'center'}}>
+    <section style={STYLE.submissionSection}>
       {!isAdmin &&
         <>
           <Comments value={props.comment} onChange={props.onComment}/>
@@ -327,17 +316,16 @@ function Feedback(props: {
 
 function FeedbackMessage(props: {isError?: boolean}): JSX.Element {
   const message = props.isError ? 'Server issue' : 'Saved';
-  const color = props.isError ? '#E63F44' : '#36BB55';
-  return (
-    <span style={{...SUBMISSION_STYLE.feedbackMessage, color}}>
-      {message}
-    </span>);
+  const style = props.isError ?
+    SUBMISSION_STYLE.feedbackError : SUBMISSION_STYLE.feedbackSuccess;
+  return <span style={style}>{message}</span>;
 }
 
 const STYLE: Record<string, React.CSSProperties> = {
   main: {
     padding: '30px 18px 40px',
     fontFamily: "'Roboto', system-ui, sans-serif",
+    fontSize: '0.875rem',
     fontWeight: 400,
     color: '#333333',
     boxSizing: 'border-box',
@@ -360,12 +348,12 @@ const STYLE: Record<string, React.CSSProperties> = {
     paddingBottom: '30px',
     borderBottom: '1px solid #E6E6E6'
   },
-  sectionLast: {
+  submissionSection: {
     width: '100%',
     display: 'flex',
-    justifyContent: 'center',
-    paddingTop: '30px',
-    paddingBottom: 0
+    flexDirection: 'column',
+    alignItems: 'center',
+    paddingTop: '30px'
   }
 };
 
@@ -375,8 +363,8 @@ const CONTROLS_STYLE: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column'
   },
-  label: {
-    fontSize: '0.875rem'
+  currencySelect: {
+    width: '100%'
   },
   labelSpacer: {
     height: '12px'
@@ -392,9 +380,6 @@ const DATE_FIELD_STYLE: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'column'
   },
-  label: {
-    fontSize: '0.875rem'
-  },
   spacer: {
     height: '12px'
   },
@@ -409,7 +394,6 @@ const DATE_FIELD_STYLE: Record<string, React.CSSProperties> = {
     height: '10px'
   },
   errorMessage: {
-    fontSize: '0.875rem',
     color: '#E63F44'
   }
 };
@@ -421,7 +405,7 @@ const SUBMISSION_STYLE: Record<string, React.CSSProperties> = {
     boxSizing: 'border-box',
     resize: 'none',
     fontFamily: 'inherit',
-    fontSize: '0.875rem',
+    fontSize: 'inherit',
     fontWeight: 'inherit',
     color: 'inherit',
     border: '1px solid #C8C8C8',
@@ -452,8 +436,12 @@ const SUBMISSION_STYLE: Record<string, React.CSSProperties> = {
   feedbackMessageSpacer: {
     height: '20px'
   },
-  feedbackMessage: {
-    fontSize: '0.875rem',
+  feedbackSuccess: {
+    color: '#36BB55',
+    textAlign: 'center'
+  },
+  feedbackError: {
+    color: '#E63F44',
     textAlign: 'center'
   }
 };
