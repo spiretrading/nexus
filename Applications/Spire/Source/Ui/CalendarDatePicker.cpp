@@ -234,8 +234,8 @@ class CalendarDatePicker::MonthSpinner : public QWidget {
         return months(1);
       }();
       m_current->set(
-        clamp(m_current->get() + step * direction, *m_current->get_minimum(),
-          *m_current->get_maximum()));
+        clamp(m_current->get() + step * direction, m_current->get_minimum(),
+          m_current->get_maximum()));
     }
 
     void on_current(const date& current) {
