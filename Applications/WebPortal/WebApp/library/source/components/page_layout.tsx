@@ -27,10 +27,10 @@ export class PageLayout extends React.Component<{}> {
       flexDirection: 'column',
       minHeight: '100%',
       '@media (min-width: 768px) and (max-width: 1035px)': {
-        width: '768px'
+        width: 'min(100%, 768px)'
       },
       '@media (min-width: 1036px)': {
-        width: '1036px'
+        width: 'min(100%, 1036px)'
       }
     }
   });
