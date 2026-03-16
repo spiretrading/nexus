@@ -375,23 +375,18 @@ const segmentButton =
     (props: any) => React.createElement(WebPortal.SegmentButton,
       {...props, style: {width: '100%', ...props.style}}));
 
-function SegmentedControlDemo(): JSX.Element {
-  const [current, setCurrent] = React.useState(0);
-  return React.createElement(WebPortal.SegmentedControl,
-    {name: 'demo-group'},
-    React.createElement(WebPortal.SegmentButton,
-      {name: '', label: 'Option A', badge: '3',
-        isChecked: current === 0, onChange: () => setCurrent(0)}),
-    React.createElement(WebPortal.SegmentButton,
-      {name: '', label: 'Option B', badge: '12',
-        isChecked: current === 1, onChange: () => setCurrent(1)}),
-    React.createElement(WebPortal.SegmentButton,
-      {name: '', label: 'Option C',
-        isChecked: current === 2, onChange: () => setCurrent(2)}));
-}
-
 const segmentedControl =
-  new ComponentSchema('SegmentedControl', [], [], SegmentedControlDemo);
+  new ComponentSchema('SegmentedControl',
+    [],
+    [],
+    () => React.createElement(WebPortal.SegmentedControl,
+      {name: 'demo-group'},
+      React.createElement(WebPortal.SegmentButton,
+        {name: '', label: 'Option A', badge: '3', isChecked: true}),
+      React.createElement(WebPortal.SegmentButton,
+        {name: '', label: 'Option B', badge: '12'}),
+      React.createElement(WebPortal.SegmentButton,
+        {name: '', label: 'Option C'})));
 
 const roleIcon =
   new ComponentSchema('RoleIcon',

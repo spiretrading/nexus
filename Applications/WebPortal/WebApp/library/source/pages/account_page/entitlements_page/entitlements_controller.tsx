@@ -31,6 +31,8 @@ interface State {
   canSubmit: boolean;
   isError: boolean;
   status: string;
+  comment: string;
+  effectiveDate?: Beam.Date;
   selectedEntitlements: Beam.Set<Beam.DirectoryEntry>;
 }
 
@@ -43,24 +45,32 @@ export class EntitlementsController extends React.Component<Properties, State> {
       canSubmit: false,
       isError: false,
       status: '',
+      comment: '',
+      effectiveDate: Beam.Date.today(),
       selectedEntitlements: new Beam.Set<Beam.DirectoryEntry>()
     };
-    this.onEntitlementClick = this.onEntitlementClick.bind(this);
-    this.onSubmit = this.onSubmit.bind(this);
   }
 
   public render(): JSX.Element {
     if(!this.state.isLoaded) {
       return <LoadingPage/>;
     }
+    const hasDateError = this.state.effectiveDate == null;
     return <EntitlementsPage roles={this.props.roles}
       entitlements={this.props.entitlements}
-      checked={this.state.selectedEntitlements} canSubmit={this.state.canSubmit}
+      checked={this.state.selectedEntitlements}
+      canSubmit={this.state.canSubmit && !hasDateError}
+      comment={this.state.comment}
+      effectiveDate={this.state.effectiveDate}
+      dateError={hasDateError}
       isError={this.state.isError} status={this.state.status}
       currencyDatabase={this.props.currencyDatabase}
       venueDatabase={this.props.venueDatabase}
       displaySize={this.props.displaySize}
-      onEntitlementClick={this.onEntitlementClick} onSubmit={this.onSubmit}/>;
+      onComment={this.onComment}
+      onEffectiveDate={this.onEffectiveDate}
+      onEntitlementClick={this.onEntitlementClick}
+      onSubmit={this.onSubmit}/>;
   }
 
   public componentDidMount(): void {
@@ -73,34 +83,46 @@ export class EntitlementsController extends React.Component<Properties, State> {
       });
   }
 
-  private onEntitlementClick(entitlement: Beam.DirectoryEntry) {
-    if(this.state.selectedEntitlements.test(entitlement)) {
-      this.state.selectedEntitlements.remove(entitlement);
+  private onComment = (comment: string) => {
+    this.setState({comment});
+  }
+
+  private onEffectiveDate = (effectiveDate?: Beam.Date) => {
+    this.setState({effectiveDate});
+  }
+
+  private onEntitlementClick = (entitlement: Beam.DirectoryEntry) => {
+    const next = this.state.selectedEntitlements.clone();
+    if(next.test(entitlement)) {
+      next.remove(entitlement);
     } else {
-      this.state.selectedEntitlements.add(entitlement);
+      next.add(entitlement);
     }
     this.setState({
       canSubmit: true,
       status: '',
-      selectedEntitlements: this.state.selectedEntitlements
+      selectedEntitlements: next
     });
   }
 
-  private async onSubmit(comment: string) {
+  private onSubmit = async () => {
     try {
       this.setState({
         canSubmit: false,
         isError: false,
         status: ''
       });
-      await this.props.model.submit(comment, this.state.selectedEntitlements);
+      await this.props.model.submit(this.state.comment,
+        this.state.selectedEntitlements,
+        this.state.effectiveDate ?? Beam.Date.today());
       this.setState({
-        status: 'Saved.'
+        status: 'Saved'
       });
     } catch(e) {
       this.setState({
+        canSubmit: true,
         isError: true,
-        status: e.toString()
+        status: 'Server issue'
       });
     }
   }
