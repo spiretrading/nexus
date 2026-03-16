@@ -249,6 +249,7 @@ struct DateFilterPanel::DateRangeComposerModel :
   scoped_connection m_end_connection;
   scoped_connection m_offset_value_connection;
   scoped_connection m_date_unit_connection;
+  scoped_connection m_mode_connection;
 
   explicit DateRangeComposerModel(
     std::shared_ptr<DateFilterPanel::DateRangeModel> source)
@@ -268,7 +269,9 @@ struct DateFilterPanel::DateRangeComposerModel :
         std::bind_front(&DateRangeComposerModel::on_offset_value_update,
           this))),
       m_date_unit_connection(m_date_unit->connect_update_signal(
-        std::bind_front(&DateRangeComposerModel::on_date_unit_update, this))) {
+        std::bind_front(&DateRangeComposerModel::on_date_unit_update, this))),
+      m_mode_connection(m_mode->connect_update_signal(
+        std::bind_front(&DateRangeComposerModel::on_mode_update, this))) {
     m_offset_value->set_minimum(1);
     for(auto unit : DateUnits) {
       m_date_unit->get_association(unit);
@@ -311,6 +314,7 @@ struct DateFilterPanel::DateRangeComposerModel :
   void on_current(const DateRange& current) {
     std::visit(Overloaded {
       [=] (const AbsoluteDateRange& date_range) {
+        auto mode_blocker = shared_connection_block(m_mode_connection);
         m_mode->set(Mode::RANGE);
         auto start_blocker = shared_connection_block(m_start_connection);
         if(date_range.m_start.is_not_a_date()) {
@@ -330,6 +334,7 @@ struct DateFilterPanel::DateRangeComposerModel :
         m_date_unit->set(DateUnit::DAY);
       },
       [=] (const RelativeDateRange& date_range) {
+        auto mode_blocker = shared_connection_block(m_mode_connection);
         m_mode->set(Mode::OFFSET);
         auto start_blocker = shared_connection_block(m_start_connection);
         m_start->set(none);
@@ -356,6 +361,14 @@ struct DateFilterPanel::DateRangeComposerModel :
 
   void on_date_unit_update(DateUnit current) {
     update_relative_date_range(current, m_offset_value->get());
+  }
+
+  void on_mode_update(Mode current) {
+    if(current == Mode::OFFSET) {
+      update_relative_date_range(m_date_unit->get(), m_offset_value->get());
+    } else {
+      update_absolute_date_range(m_start->get(), m_end->get());
+    }
   }
 };
 
