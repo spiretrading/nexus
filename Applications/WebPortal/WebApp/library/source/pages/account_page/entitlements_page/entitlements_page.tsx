@@ -236,7 +236,7 @@ const STYLE: Record<string, React.CSSProperties> = {
     boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
-    alignItems: 'center',
+    alignItems: 'center'
   },
   entitlementList: {
     listStyle: 'none',

@@ -82,9 +82,6 @@ const STYLES = StyleSheet.create({
   container: {
     border: '1px solid #C8C8C8',
     borderRadius: '1px',
-    fontFamily: "'Roboto', system-ui, sans-serif",
-    fontSize: '0.875rem',
-    color: '#333333',
     borderSpacing: 0,
     textAlign: 'center',
     padding: 0,

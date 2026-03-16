@@ -25,11 +25,47 @@ interface Properties {
 
 interface State {
   isExpanded: boolean;
-  applicabilityStyle: any;
+  transitionStyles: {
+    entering: object;
+    entered: object;
+    exiting: object;
+    exited: object;
+  };
 }
 
 const TRANSITION_LENGTH_MS = 600;
 const BUTTON_SIZE_PX = '16px';
+
+function computeTransitionStyles(
+    entitlementEntry: Nexus.EntitlementDatabase.Entry) {
+  let count = 0;
+  for(const _ of entitlementEntry.applicability) {
+    ++count;
+  }
+  const maxHeight = `${101 + count * 40}px`;
+  return StyleSheet.create({
+    entering: {
+      maxHeight,
+      overflow: 'hidden' as 'hidden',
+      transitionProperty: 'max-height',
+      transitionDuration: `${TRANSITION_LENGTH_MS}ms`
+    },
+    entered: {
+      maxHeight,
+      overflow: 'hidden' as 'hidden'
+    },
+    exiting: {
+      maxHeight: '0',
+      overflow: 'hidden' as 'hidden',
+      transitionProperty: 'max-height',
+      transitionDuration: `${TRANSITION_LENGTH_MS}ms`
+    },
+    exited: {
+      maxHeight: '0',
+      overflow: 'hidden' as 'hidden'
+    }
+  });
+}
 
 /** Displays an entitlement row with a name, amount, and applicability table. */
 export class EntitlementRow extends React.Component<Properties, State> {
@@ -37,7 +73,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
     super(props);
     this.state = {
       isExpanded: false,
-      applicabilityStyle: StyleSheet.create(this.applicabilityStyleDefinition)
+      transitionStyles: computeTransitionStyles(props.entitlementEntry)
     };
   }
 
@@ -54,7 +90,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
         return this.state.isExpanded ?
           STYLE.activeAmountExpanded : STYLE.activeAmount;
       }
-      return this.state.isExpanded ? STYLE.amountExpanded : STYLE.name;
+      return this.state.isExpanded ? STYLE.amountExpanded : {};
     })();
     return (
       <div style={STYLE.wrapper}>
@@ -81,12 +117,11 @@ export class EntitlementRow extends React.Component<Properties, State> {
         <Transition in={this.state.isExpanded}
             timeout={TRANSITION_LENGTH_MS}>
           {(state) => (
-            <div ref={(el) => this.dropDownTable = el}
-                className={css(
-                  (this.state.applicabilityStyle as any)[state])}>
+            <div className={css(
+                (this.state.transitionStyles as any)[state])}>
               <div className={css(STYLES.applicabilitySection)}>
                 <div style={STYLE.header}>
-                  <h3 style={STYLE.tableHeaderSmall}>
+                  <h3 style={STYLE.tableHeader}>
                     Applicability
                   </h3>
                   <div style={STYLE.headerFiller}/>
@@ -103,46 +138,9 @@ export class EntitlementRow extends React.Component<Properties, State> {
       </div>);
   }
 
-  public componentDidMount(): void {
-    let count = 0;
-    for(const _ of this.props.entitlementEntry.applicability) {
-      ++count;
-    }
-    const height = 101 + count * 40;
-    this.applicabilityStyleDefinition.entering.maxHeight = `${height}px`;
-    this.applicabilityStyleDefinition.entered.maxHeight = `${height}px`;
-    this.setState({
-      applicabilityStyle: StyleSheet.create(this.applicabilityStyleDefinition)
-    });
-  }
-
   private onToggle = () => {
     this.setState({isExpanded: !this.state.isExpanded});
   }
-
-  private applicabilityStyleDefinition = {
-    entering: {
-      maxHeight: '0',
-      overflow: 'hidden' as 'hidden',
-      transitionProperty: 'max-height',
-      transitionDuration: `${TRANSITION_LENGTH_MS}ms`
-    },
-    entered: {
-      maxHeight: '0',
-      overflow: 'hidden' as 'hidden'
-    },
-    exiting: {
-      maxHeight: '0',
-      overflow: 'hidden' as 'hidden',
-      transitionProperty: 'max-height',
-      transitionDuration: `${TRANSITION_LENGTH_MS}ms`
-    },
-    exited: {
-      maxHeight: '0',
-      overflow: 'hidden' as 'hidden'
-    }
-  };
-  private dropDownTable: HTMLDivElement;
 }
 
 const STYLE: Record<string, React.CSSProperties> = {
@@ -167,39 +165,28 @@ const STYLE: Record<string, React.CSSProperties> = {
     width: '18px'
   },
   name: {
-    fontFamily: "'Roboto', system-ui, sans-serif",
-    fontSize: '0.875rem',
+    fontSize: 'inherit',
     fontWeight: 400,
-    color: '#000000',
     margin: 0
   },
   nameExpanded: {
-    fontFamily: "'Roboto', system-ui, sans-serif",
-    fontSize: '0.875rem',
+    fontSize: 'inherit',
     fontWeight: 500,
     color: '#4B23A0',
     margin: 0
   },
   activeAmount: {
-    fontFamily: "'Roboto', system-ui, sans-serif",
-    fontSize: '0.875rem',
     color: '#36BB55'
   },
   activeAmountExpanded: {
-    fontFamily: "'Roboto', system-ui, sans-serif",
-    fontSize: '0.875rem',
     fontWeight: 500,
     color: '#36BB55'
   },
   amountExpanded: {
-    fontFamily: "'Roboto', system-ui, sans-serif",
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    color: '#000000'
+    fontWeight: 500
   },
-  tableHeaderSmall: {
-    fontFamily: "'Roboto', system-ui, sans-serif",
-    fontSize: '0.875rem',
+  tableHeader: {
+    fontSize: 'inherit',
     fontWeight: 500,
     color: '#4B23A0',
     margin: 0
@@ -218,12 +205,12 @@ const STYLES = StyleSheet.create({
   },
   desktopOnly: {
     display: 'none',
-    '@media (min-width: 460px)': {
+    '@media (min-width: 768px)': {
       display: 'block'
     }
   },
   mobileOnly: {
-    '@media (min-width: 460px)': {
+    '@media (min-width: 768px)': {
       display: 'none'
     }
   }

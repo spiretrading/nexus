@@ -76,6 +76,13 @@ export class EntitlementsController extends React.Component<Properties, State> {
           isLoaded: true,
           selectedEntitlements: this.props.model.entitlements
         });
+      },
+      () => {
+        this.setState({
+          isLoaded: true,
+          isError: true,
+          status: 'Server issue'
+        });
       });
   }
 
