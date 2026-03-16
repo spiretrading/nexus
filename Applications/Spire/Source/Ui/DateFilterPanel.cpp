@@ -33,7 +33,7 @@ namespace {
   template<class... Ts>
   Overloaded(Ts...) -> Overloaded<Ts...>;
 
-  auto display_text(DateFilterPanel::DateUnit unit) {
+  const QString& to_text(DateFilterPanel::DateUnit unit) {
     if(unit == DateFilterPanel::DateUnit::DAY) {
       static const auto value = QObject::tr("Day");
       return value;
@@ -73,7 +73,7 @@ namespace {
       medium_layout->setAlignment(Qt::AlignLeft);
       medium_layout->setSpacing(scale_width(4));
       for(auto unit : DateUnits) {
-        auto label = display_text(unit);
+        auto label = to_text(unit);
         auto small_button = make_button(label.left(1), unit);
         update_style(*small_button, [] (auto& style) {
           style.get(Any() > Body()).set(horizontal_padding(0));
@@ -83,7 +83,7 @@ namespace {
         auto medium_button = make_button(label, unit);
         medium_button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
         medium_layout->addWidget(medium_button);
-        m_buttons.emplace(unit, ButtonGroup(small_button, medium_button));
+        m_buttons.emplace(unit, ButtonGroup{small_button, medium_button});
         m_current->get_association(unit)->connect_update_signal(
           std::bind_front(&OffsetUnitButtonGroup::on_current, this, unit));
       }
@@ -208,7 +208,7 @@ class DateFilterPanel::DateRangeModeButtonGroup {
     void make_date_type_button(Mode mode) {
       auto button = make_radio_button();
       button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
-      button->set_label(display_text(mode));
+      button->set_label(to_text(mode));
       button->get_current()->connect_update_signal([=] (auto value) {
         if(m_current->get() == mode && !value) {
           button->get_current()->set(true);
@@ -221,7 +221,7 @@ class DateFilterPanel::DateRangeModeButtonGroup {
       m_buttons.emplace(mode, button);
     }
 
-    QString display_text(Mode type) const {
+    const QString& to_text(Mode type) const {
       if(type == Mode::OFFSET) {
         static const auto value = QObject::tr("Offset");
         return value;
