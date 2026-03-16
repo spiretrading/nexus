@@ -546,6 +546,26 @@ namespace {
     return image;
   }
 
+  auto make_filter_panel() {
+    auto component = new QWidget();
+    auto component_layout = new QGridLayout(component);
+    component_layout->setSpacing(scale_width(5));
+    component_layout->setContentsMargins({});
+    auto min_label = make_label("Min");
+    min_label->setMinimumWidth(scale_width(40));
+    component_layout->addWidget(min_label, 0, 0);
+    auto min_text = new TextBox();
+    min_text->setMinimumWidth(scale_width(120));
+    component_layout->addWidget(min_text, 0, 1);
+    auto max_label = make_label("Max");
+    max_label->setMinimumWidth(scale_width(40));
+    component_layout->addWidget(max_label, 0, 2);
+    auto max_text = new TextBox();
+    max_text->setMinimumWidth(scale_width(120));
+    component_layout->addWidget(max_text, 0, 3);
+    return new FilterPanel(*component);
+  }
+
   auto create_panel_body(const QString& button_name) {
     auto body = new QWidget();
     body->setFixedSize(scale(200, 200));
@@ -1793,21 +1813,7 @@ UiProfile Spire::make_filter_panel_profile() {
   properties.push_back(
     make_style_property("style_sheet", std::move(default_style)));
   auto profile = UiProfile("FilterPanel", properties, [] (auto& profile) {
-    auto body = new QWidget();
-    auto body_layout = new QGridLayout(body);
-    body_layout->setSpacing(scale_width(5));
-    body_layout->setContentsMargins({});
-    auto min_label = make_label("Min");
-    body_layout->addWidget(min_label, 0, 0);
-    auto min_text = new TextBox();
-    min_text->setMinimumWidth(scale_width(100));
-    body_layout->addWidget(min_text, 0, 1);
-    auto max_label = make_label("Max");
-    body_layout->addWidget(max_label, 0, 2);
-    auto max_text = new TextBox();
-    max_text->setMinimumWidth(scale_width(100));
-    body_layout->addWidget(max_text, 0, 3);
-    auto filter_panel = new FilterPanel(*body);
+    auto filter_panel = make_filter_panel();
     apply_widget_properties(filter_panel, profile.get_properties());
     filter_panel->connect_reset_signal(profile.make_event_slot("ResetSignal"));
     auto& style_sheet =
@@ -3106,85 +3112,50 @@ UiProfile Spire::make_percent_box_profile() {
 }
 
 UiProfile Spire::make_popup_box_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  auto size_policy_property = define_enum<int>(
-    {{"Blue", 0}, {"Green", 1}, {"Yellow", 2}});
-  properties.push_back(make_standard_enum_property("horizontal_size_policy",
-    size_policy_property));
-  properties.push_back(make_standard_enum_property("vertical_size_policy",
-    size_policy_property));
+    auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto panel_property = define_enum<int>(
+    {{"Custom Panel", 0}, {"FilterPanel", 1}});
+  properties.push_back(
+    make_standard_enum_property("panel", panel_property));
   auto profile = UiProfile("PopupBox", properties, [] (auto& profile) {
-    auto popup_boxes = std::vector<PopupBox*>();
-    auto widget = new QWidget();
-    auto grid_layout = new QGridLayout(widget);
-    grid_layout->setSpacing(0);
-    for(auto i = 0; i < 5; ++i) {
-      for(auto j = 0; j < 3; ++j) {
-        auto widget = [&] () {
-          if(i == 1 && j == 1) {
-            auto region_box = new RegionBox(populate_region_box_model());
-            region_box->set_placeholder("RegionBox");
-            return new PopupBox(*region_box);
-          } else if(i == 3 && j == 1) {
-            auto tag_box = new TagBox(populate_tag_box_model(),
-              std::make_shared<LocalTextModel>());
-            tag_box->set_placeholder("TagBox");
-            tag_box->connect_submit_signal([=] (const auto& value) {
-              if(!value.isEmpty()) {
-                tag_box->get_tags()->push(value);
-              }
-            });
-            return new PopupBox(*tag_box);
-          } else if(i == 4 && j == 2) {
-            auto tag_combo_box =
-              new TagComboBox(populate_tag_combo_box_model());
-            tag_combo_box->set_placeholder("TagComboBox");
-            return new PopupBox(*tag_combo_box);
+    auto& panel = get<int>("panel", profile.get_properties());
+    auto filter_panel = [&] () -> QWidget* {
+      auto value = panel.get();
+      if(value == 0) {
+        auto body = new QWidget();
+        auto body_layout = new QGridLayout(body);
+        body_layout->setSpacing(scale_width(5));
+        body_layout->setContentsMargins({});
+        for(auto i = 0; i < 2; ++i) {
+          for(auto j = 0; j < 2; ++j) {
+            auto label = make_label("Label:");
+            label->setMinimumWidth(scale_width(40));
+            body_layout->addWidget(label, i, 2 * j);
+            auto text_box = new TextBox();
+            text_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+            text_box->setMinimumWidth(scale_width(120));
+            body_layout->addWidget(text_box, i, 2 * j + 1);
           }
-          auto text_box = new TextBox(QString("%1").arg(i));
-          return new PopupBox(*text_box);
-        }();
-        popup_boxes.push_back(widget);
-        grid_layout->addWidget(widget, i, j);
-        if(j != 0) {
-          grid_layout->setColumnStretch(j, 1);
         }
+        auto box = new Box(body);
+        update_style(*box, [&] (auto& style) {
+          style.get(Any()).
+            set(BackgroundColor(QColor(0xFFFFFF))).
+            set(border(scale_width(1), QColor(Qt::transparent))).
+            set(horizontal_padding(scale_width(8))).
+            set(vertical_padding(scale_height(8)));
+        });
+        return box;
+      } else if(value == 1) {
+        return make_filter_panel();
       }
-    }
-    grid_layout->setColumnMinimumWidth(0, scale_width(30));
-    grid_layout->setColumnMinimumWidth(1, scale_width(120));
-    grid_layout->setColumnMinimumWidth(2, scale_width(100));
-    auto& horizontal_size_policy = get<int>("horizontal_size_policy",
-      profile.get_properties());
-    horizontal_size_policy.connect_changed_signal([=] (auto value) {
-      for(auto box : popup_boxes) {
-        auto policy = box->sizePolicy();
-        if(value == 0) {
-          policy.setHorizontalPolicy(QSizePolicy::Expanding);
-        } else if(value == 1) {
-          policy.setHorizontalPolicy(QSizePolicy::Preferred);
-        } else {
-          policy.setHorizontalPolicy(QSizePolicy::Fixed);
-        }
-        box->setSizePolicy(policy);
-      }
-    });
-    auto& vertical_size_policy = get<int>("vertical_size_policy",
-      profile.get_properties());
-    vertical_size_policy.connect_changed_signal([=] (auto value) {
-      for(auto box : popup_boxes) {
-        auto policy = box->sizePolicy();
-        if(value == 0) {
-          policy.setVerticalPolicy(QSizePolicy::Expanding);
-        } else if(value == 1) {
-          policy.setVerticalPolicy(QSizePolicy::Preferred);
-        } else {
-          policy.setVerticalPolicy(QSizePolicy::Fixed);
-        }
-        box->setSizePolicy(policy);
-      }
-    });
-    return widget;
+      return nullptr;
+    }();
+    auto parent = new QWidget();
+    enclose(*parent, *make_popup_panel(*filter_panel));
+    apply_widget_properties(parent, profile.get_properties());
+    return parent;
   });
   return profile;
 }
