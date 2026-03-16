@@ -10,6 +10,13 @@ class TestEntitlementsModel extends WebPortal.LocalEntitlementsModel {
   public async submit(comment: string,
       entitlements: Beam.Set<Beam.DirectoryEntry>,
       effectiveDate: Beam.Date): Promise<void> {
+    console.log('Submit:');
+    console.log(`  Comment: ${comment}`);
+    console.log('  Entitlements:');
+    for(const entry of entitlements) {
+      console.log(`    - ${entry.name}`);
+    }
+    console.log(`  Effective Date: ${effectiveDate.toString()}`);
     if(this.shouldFail) {
       throw Error('Server issue');
     }
@@ -75,26 +82,26 @@ class TestApp extends React.Component<{}, State> {
 
   private model = (() => {
     const checked = new Beam.Set<Beam.DirectoryEntry>();
-    checked.add(
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 89, 'BOOP'));
+    checked.add(new Beam.DirectoryEntry(
+      Beam.DirectoryEntry.Type.ACCOUNT, 89, 'ASX Total'));
     return new TestEntitlementsModel(
       new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 123, 'test'),
       checked);
   })();
 
   private entitlementDB = (() => {
-    const group1 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 89, 'BOOP');
-    const group2 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 42, 'MEEP');
-    const group3 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 34, 'MEH');
-    const group4 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 35, 'MEH');
-    const group5 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 36, 'MEH');
-    const group6 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 37, 'MEH');
+    const group1 = new Beam.DirectoryEntry(
+      Beam.DirectoryEntry.Type.ACCOUNT, 89, 'ASX Total');
+    const group2 = new Beam.DirectoryEntry(
+      Beam.DirectoryEntry.Type.ACCOUNT, 42, 'TSX Venture');
+    const group3 = new Beam.DirectoryEntry(
+      Beam.DirectoryEntry.Type.ACCOUNT, 34, 'TSX CDG');
+    const group4 = new Beam.DirectoryEntry(
+      Beam.DirectoryEntry.Type.ACCOUNT, 35, 'TSX TL1');
+    const group5 = new Beam.DirectoryEntry(
+      Beam.DirectoryEntry.Type.ACCOUNT, 36, 'CSE');
+    const group6 = new Beam.DirectoryEntry(
+      Beam.DirectoryEntry.Type.ACCOUNT, 37, 'Alpha APD');
     const dataset1 = new Nexus.MarketDataTypeSet(134);
     const venuecode1 = new Nexus.Venue('XASX');
     const ekey1 = new Nexus.EntitlementKey(venuecode1);

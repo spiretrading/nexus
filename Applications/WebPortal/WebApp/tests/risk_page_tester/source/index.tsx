@@ -4,12 +4,23 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
+const currencyDatabase = Nexus.buildDefaultCurrencyDatabase();
+
 class TestRiskModel extends WebPortal.LocalRiskModel {
   public shouldFail = false;
 
   public async submit(comment: string,
       riskParameters: Nexus.RiskParameters,
       effectiveDate: Beam.Date): Promise<void> {
+    const currency =
+      currencyDatabase.fromCurrency(riskParameters.currency).code;
+    console.log('Submit:');
+    console.log(`  Comment: ${comment}`);
+    console.log(`  Currency: ${currency}`);
+    console.log(`  Buying Power: ${riskParameters.buyingPower.toString()}`);
+    console.log(`  Net Loss: ${riskParameters.netLoss.toString()}`);
+    console.log(`  Transition Time: ${riskParameters.transitionTime.toString()}`);
+    console.log(`  Effective Date: ${effectiveDate.toString()}`);
     if(this.shouldFail) {
       throw Error('Not Saved');
     }
@@ -38,7 +49,7 @@ class TestApp extends React.Component<{}, State> {
     return (
       <div style={STYLE.wrapper}>
         <WebPortal.RiskController
-          currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
+          currencyDatabase={currencyDatabase}
           roles={this.state.roles}
           model={this.model}/>
         <div style={STYLE.toolbar}>
