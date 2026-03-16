@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { Checkbox, DisplaySize, DropDownButton } from '../../..';
+import { Checkbox, DropDownButton } from '../../..';
 import { ApplicabilityTable } from './applicability_table';
 
 interface Properties {
@@ -15,9 +15,6 @@ interface Properties {
 
   /** Determines if the entitlement is active. */
   isActive: boolean;
-
-  /** The size at which the component should be displayed at. */
-  displaySize: DisplaySize;
 
   /** The set of venues. */
   venueDatabase: Nexus.VenueDatabase;
@@ -32,8 +29,7 @@ interface State {
 }
 
 const TRANSITION_LENGTH_MS = 600;
-const MOBILE_BUTTON_SIZE_PX = '20px';
-const DESKTOP_BUTTON_SIZE_PX = '16px';
+const BUTTON_SIZE_PX = '16px';
 
 /** Displays an entitlement row with a name, amount, and applicability table. */
 export class EntitlementRow extends React.Component<Properties, State> {
@@ -46,8 +42,6 @@ export class EntitlementRow extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const buttonSize = this.props.displaySize === DisplaySize.SMALL ?
-      MOBILE_BUTTON_SIZE_PX : DESKTOP_BUTTON_SIZE_PX;
     const entitlementNameStyle = this.state.isExpanded ?
       STYLE.nameExpanded : STYLE.name;
     const amount = this.props.entitlementEntry.price.equals(Nexus.Money.ZERO) ?
@@ -72,7 +66,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
             checked={this.props.isActive}
             onClick={() => this.props.onClick?.()}/>
           <div style={STYLE.headerPadding}/>
-          <DropDownButton size={buttonSize}
+          <DropDownButton size={BUTTON_SIZE_PX}
             isExpanded={this.state.isExpanded}
             onClick={this.onToggle}/>
           <div style={STYLE.headerPadding}/>

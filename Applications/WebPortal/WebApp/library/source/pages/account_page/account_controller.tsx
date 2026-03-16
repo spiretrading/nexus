@@ -159,8 +159,7 @@ export class AccountController extends React.Component<Properties, State> {
       entitlements={this.props.entitlements}
       model={this.props.model.entitlementsModel}
       currencyDatabase={this.props.currencyDatabase}
-      venueDatabase={this.props.venueDatabase}
-      displaySize={this.props.displaySize}/>;
+      venueDatabase={this.props.venueDatabase}/>;
   }
 
   private renderRiskPage = () => {

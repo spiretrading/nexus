@@ -1,7 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Button, DateInput, DisplaySize, PageLayout } from '../../..';
+import { Button, DateInput, PageLayout } from '../../..';
 import { EntitlementRow } from './entitlement_row';
 
 interface Properties {
@@ -39,9 +39,6 @@ interface Properties {
   /** The set of venues. */
   venueDatabase: Nexus.VenueDatabase;
 
-  /** The size at which the component should be displayed at. */
-  displaySize: DisplaySize;
-
   /** Indicates a change to the comment.
    * @param comment - The updated comment.
    */
@@ -69,7 +66,6 @@ export function EntitlementsPage(props: Properties): JSX.Element {
           checked={props.checked}
           currencyDatabase={props.currencyDatabase}
           venueDatabase={props.venueDatabase}
-          displaySize={props.displaySize}
           onEntitlementClick={props.onEntitlementClick}/>
         <EffectiveDate value={props.effectiveDate}
           error={props.dateError}
@@ -91,7 +87,6 @@ function Entitlements(props: {
     checked: Beam.Set<Beam.DirectoryEntry>,
     currencyDatabase: Nexus.CurrencyDatabase,
     venueDatabase: Nexus.VenueDatabase,
-    displaySize: DisplaySize,
     onEntitlementClick?: (entitlement: Beam.DirectoryEntry) => void
     }): JSX.Element {
   const rows = [];
@@ -103,7 +98,6 @@ function Entitlements(props: {
           currencyEntry={props.currencyDatabase.fromCurrency(entry.currency)}
           isActive={props.checked.test(entry.group)}
           onClick={() => props.onEntitlementClick?.(entry.group)}
-          displaySize={props.displaySize}
           venueDatabase={props.venueDatabase}/>
       </li>);
   }
@@ -176,8 +170,7 @@ function SubmissionBlock(props: {
     onSubmit?: () => void}): JSX.Element {
   const isAdmin = props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR);
   return (
-    <section style={{...STYLE.sectionLast, flexDirection: 'column',
-        alignItems: 'center'}}>
+    <section style={STYLE.submissionSection}>
       {!isAdmin &&
         <>
           <Comments value={props.comment} onChange={props.onComment}/>
@@ -237,19 +230,18 @@ const STYLE: Record<string, React.CSSProperties> = {
   main: {
     padding: '18px 18px 40px',
     fontFamily: "'Roboto', system-ui, sans-serif",
+    fontSize: '0.875rem',
     fontWeight: 400,
     color: '#333333',
     boxSizing: 'border-box',
     display: 'flex',
     flexDirection: 'column',
     alignItems: 'center',
-    overflowY: 'auto'
   },
   entitlementList: {
     listStyle: 'none',
     margin: 0,
-    padding: 0,
-    containerType: 'inline-size'
+    padding: 0
   },
   sectionFirst: {
     width: '100%',
@@ -267,10 +259,11 @@ const STYLE: Record<string, React.CSSProperties> = {
     padding: '30px 0',
     borderBottom: '1px solid #E6E6E6'
   },
-  sectionLast: {
+  submissionSection: {
     width: '100%',
     display: 'flex',
-    justifyContent: 'center',
+    flexDirection: 'column',
+    alignItems: 'center',
     padding: '30px 0 0'
   }
 };
@@ -287,10 +280,7 @@ const DATE_FIELD_STYLE: Record<string, React.CSSProperties> = {
     flexShrink: 0,
     display: 'flex',
     alignItems: 'center',
-    fontFamily: "'Roboto', system-ui, sans-serif",
-    fontSize: '0.875rem',
-    fontWeight: 500,
-    color: '#333333'
+    fontWeight: 500
   },
   spacer: {
     width: '8px',
@@ -316,8 +306,6 @@ const DATE_FIELD_STYLE: Record<string, React.CSSProperties> = {
     height: '10px'
   },
   errorMessage: {
-    fontFamily: "'Roboto', system-ui, sans-serif",
-    fontSize: '0.875rem',
     color: '#E63F44'
   }
 };
@@ -329,8 +317,9 @@ const SUBMISSION_STYLE: Record<string, React.CSSProperties> = {
     boxSizing: 'border-box',
     border: '1px solid #C8C8C8',
     borderRadius: '1px',
-    fontFamily: "'Roboto', system-ui, sans-serif",
-    fontSize: '0.875rem',
+    fontFamily: 'inherit',
+    fontSize: 'inherit',
+    color: 'inherit',
     padding: '10px',
     resize: 'none',
     outline: 'none'
@@ -356,14 +345,10 @@ const SUBMISSION_STYLE: Record<string, React.CSSProperties> = {
     height: '18px'
   },
   feedbackSuccess: {
-    fontFamily: "'Roboto', system-ui, sans-serif",
-    fontSize: '0.875rem',
     color: '#36BB55',
     textAlign: 'center'
   },
   feedbackError: {
-    fontFamily: "'Roboto', system-ui, sans-serif",
-    fontSize: '0.875rem',
     color: '#E63F44',
     textAlign: 'center'
   }

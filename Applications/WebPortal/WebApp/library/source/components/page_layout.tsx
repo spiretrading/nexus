@@ -5,21 +5,27 @@ import * as React from 'react';
 export class PageLayout extends React.Component<{}> {
   public render(): JSX.Element {
     return (
-      <div className={css(PageLayout.STYLES.wrapper)}>
-        {this.props.children}
+      <div className={css(PageLayout.STYLES.outer)}>
+        <div className={css(PageLayout.STYLES.inner)}>
+          {this.props.children}
+        </div>
       </div>);
   }
 
   private static readonly STYLES = StyleSheet.create({
-    wrapper: {
+    outer: {
+      flex: '1 1 auto',
+      minHeight: 0,
+      overflowY: 'auto',
+      backgroundColor: '#FFFFFF'
+    },
+    inner: {
       width: 'min(100%, 460px)',
       marginLeft: 'auto',
       marginRight: 'auto',
-      backgroundColor: '#FFFFFF',
-      flex: '1 1 auto',
-      minHeight: 0,
       display: 'flex',
       flexDirection: 'column',
+      minHeight: '100%',
       '@media (min-width: 768px) and (max-width: 1035px)': {
         width: '768px'
       },

@@ -42,8 +42,7 @@ class TestApp extends React.Component<{}, State> {
           model={this.model}
           entitlements={this.entitlementDB}
           currencyDatabase={this.currencyDB}
-          venueDatabase={this.venueDB}
-          displaySize={WebPortal.DisplaySize.LARGE}/>
+          venueDatabase={this.venueDB}/>
         <div style={STYLE.toolbar}>
           <label style={STYLE.toggle}>
             <input type='checkbox' checked={isAdmin}

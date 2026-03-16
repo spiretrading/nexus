@@ -1,7 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize, LoadingPage } from '../../..';
+import { LoadingPage } from '../../..';
 import { EntitlementsModel } from './entitlements_model';
 import { EntitlementsPage } from './entitlements_page';
 
@@ -21,9 +21,6 @@ interface Properties {
 
   /** The set of venues. */
   venueDatabase: Nexus.VenueDatabase;
-
-  /** The size at which the component should be displayed at. */
-  displaySize: DisplaySize;
 }
 
 interface State {
@@ -66,7 +63,6 @@ export class EntitlementsController extends React.Component<Properties, State> {
       isError={this.state.isError} status={this.state.status}
       currencyDatabase={this.props.currencyDatabase}
       venueDatabase={this.props.venueDatabase}
-      displaySize={this.props.displaySize}
       onComment={this.onComment}
       onEffectiveDate={this.onEffectiveDate}
       onEntitlementClick={this.onEntitlementClick}
