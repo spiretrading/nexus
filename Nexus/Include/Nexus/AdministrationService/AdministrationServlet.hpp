@@ -244,7 +244,8 @@ namespace Nexus {
         m_timer(std::forward<TF>(timer)) {
     try {
       auto request_ids =
-        m_data_store->load_account_modification_request_ids(-1, 1);
+        m_data_store->load_account_modification_request_ids(
+          0, std::numeric_limits<int>::max());
       if(request_ids.empty()) {
         m_last_modification_request_id = 0;
       } else {
@@ -1196,8 +1197,8 @@ namespace Nexus {
       IsAdministrationDataStore<Beam::dereference_t<D>> &&
         Beam::IsTimeClient<Beam::dereference_t<R>> &&
           Beam::IsTimer<Beam::dereference_t<T>>
-  std::vector<Beam::DirectoryEntry>
-      AdministrationServlet<C, S, D, R, T>::on_load_managed_trading_groups_request(
+  std::vector<Beam::DirectoryEntry> AdministrationServlet<C, S, D, R, T>::
+      on_load_managed_trading_groups_request(
         ServiceProtocolClient& client, const Beam::DirectoryEntry& account) {
     auto& session = client.get_session();
     if(!check_read_permission(session.get_account(), account)) {
@@ -1361,8 +1362,9 @@ namespace Nexus {
       IsAdministrationDataStore<Beam::dereference_t<D>> &&
         Beam::IsTimeClient<Beam::dereference_t<R>> &&
           Beam::IsTimer<Beam::dereference_t<T>>
-  RiskModification AdministrationServlet<C, S, D, R, T>::on_load_risk_modification(
-      ServiceProtocolClient& client, AccountModificationRequest::Id id) {
+  RiskModification AdministrationServlet<C, S, D, R, T>::
+      on_load_risk_modification(
+        ServiceProtocolClient& client, AccountModificationRequest::Id id) {
     auto& session = client.get_session();
     ensure_modification_read_permission(session.get_account(), id);
     return m_data_store->with_transaction([&] {
