@@ -109,9 +109,9 @@ export class HttpRequestsModel extends RequestsModel {
     const admin = this.serviceClients.administrationClient;
     const request = await admin.loadAccountModificationRequest(id);
     const updates = await admin.loadAccountModificationRequestUpdates(id);
-    const accountIdentity = await admin.loadAccountIdentity(request.account);
+    const accountIdentity = await tryLoadIdentity(admin, request.account);
     const submitterIdentity =
-      await admin.loadAccountIdentity(request.submissionAccount);
+      await tryLoadIdentity(admin, request.submissionAccount);
     const changes = await this.loadChanges(request);
     const comments = await this.loadActivityList(id);
     const statusEntries: RequestsModel.ActivityEntry[] = [];
@@ -122,7 +122,7 @@ export class HttpRequestsModel extends RequestsModel {
     });
     for(const update of updates) {
       if(update.status !== Nexus.AccountModificationRequest.Status.PENDING) {
-        const updateIdentity = await admin.loadAccountIdentity(update.account);
+        const updateIdentity = await tryLoadIdentity(admin, update.account);
         statusEntries.push({
           account: toAccountProfile(update.account, updateIdentity),
           activity: update.status,
@@ -222,7 +222,7 @@ export class HttpRequestsModel extends RequestsModel {
     const activities: RequestsModel.ActivityEntry[] = [];
     for(const messageId of messageIds) {
       const message = await admin.loadMessage(messageId);
-      const identity = await admin.loadAccountIdentity(message.account);
+      const identity = await tryLoadIdentity(admin, message.account);
       const plainText = message.bodies.find(
         body => body.contentType === Nexus.Message.PLAIN_TEXT);
       activities.push({
@@ -241,6 +241,16 @@ export class HttpRequestsModel extends RequestsModel {
 }
 
 const MAX_REQUEST_IDS = 1000;
+
+async function tryLoadIdentity(
+    admin: Nexus.AdministrationClient,
+    account: Beam.DirectoryEntry): Promise<Nexus.AccountIdentity | undefined> {
+  try {
+    return await admin.loadAccountIdentity(account);
+  } catch {
+    return undefined;
+  }
+}
 
 function mergeIds(ownIds: number[], managedIds: number[]): number[] {
   const set = new Set(ownIds);
@@ -261,11 +271,11 @@ function getAccessRole(roles: Nexus.AccountRoles): Nexus.AccountRoles.Role {
 }
 
 function toAccountProfile(account: Beam.DirectoryEntry,
-    identity: Nexus.AccountIdentity): RequestsModel.AccountProfile {
-  const first = identity.firstName || '';
-  const last = identity.lastName || '';
+    identity?: Nexus.AccountIdentity): RequestsModel.AccountProfile {
+  const first = identity?.firstName || '';
+  const last = identity?.lastName || '';
   const initials = ((first[0] || '') + (last[0] || '')).toUpperCase() ||
-    account.name.substring(0, 2).toUpperCase();
+    account.name.substring(0, 1).toUpperCase();
   const tint = hashToColor(account.id);
   return {account, initials, tint};
 }
