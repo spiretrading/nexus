@@ -3199,7 +3199,7 @@ UiProfile Spire::make_popup_box_profile() {
     auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto panel_property = define_enum<int>(
-    {{"Custom Panel", 0}, {"FilterPanel", 1}});
+    {{"Custom Panel", 0}, {"FilterPanel", 1}, {"DateFilterPanel", 2}});
   properties.push_back(
     make_standard_enum_property("panel", panel_property));
   auto profile = UiProfile("PopupBox", properties, [] (auto& profile) {
@@ -3233,6 +3233,11 @@ UiProfile Spire::make_popup_box_profile() {
         return box;
       } else if(value == 1) {
         return make_filter_panel();
+      } else if(value == 2) {
+        return new DateFilterPanel(
+          std::make_shared<LocalValueModel<DateFilterPanel::DateRange>>(
+            DateFilterPanel::RelativeDateRange{
+              DateFilterPanel::DateUnit::WEEK, 10}));
       }
       return nullptr;
     }();
