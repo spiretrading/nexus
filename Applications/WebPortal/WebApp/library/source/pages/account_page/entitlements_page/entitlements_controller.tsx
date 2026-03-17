@@ -117,7 +117,7 @@ export class EntitlementsController extends React.Component<Properties, State> {
       });
       await this.props.model.submit(this.state.comment,
         this.state.selectedEntitlements,
-        this.state.effectiveDate ?? Beam.Date.today());
+        new Beam.DateTime(this.state.effectiveDate ?? Beam.Date.today()));
       this.setState({
         status: 'Saved'
       });

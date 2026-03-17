@@ -61,7 +61,7 @@ export class HttpRequestsModel extends RequestsModel {
     }
   }
 
-  public async approve(id: number, effectiveDate: Beam.Date, comment: string):
+  public async approve(id: number, effectiveDate: Beam.DateTime, comment: string):
       Promise<Nexus.AccountModificationRequest.Update> {
     const message = comment.length > 0 ?
       Nexus.Message.fromPlainText(comment) : new Nexus.Message();

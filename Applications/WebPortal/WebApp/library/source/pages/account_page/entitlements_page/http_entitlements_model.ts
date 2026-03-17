@@ -37,7 +37,7 @@ export class HttpEntitlementsModel extends EntitlementsModel {
 
   public async submit(comment: string,
       entitlements: Beam.Set<Beam.DirectoryEntry>,
-      effectiveDate: Beam.Date): Promise<void> {
+      effectiveDate: Beam.DateTime): Promise<void> {
     const modification = new Nexus.EntitlementModification(entitlements);
     await this.serviceClients.administrationClient.
       submitEntitlementModificationRequest(this.account, modification,

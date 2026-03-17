@@ -77,7 +77,7 @@ export class LocalRequestsModel extends RequestsModel {
     return detail;
   }
 
-  public async approve(id: number, effectiveDate: Beam.Date,
+  public async approve(id: number, effectiveDate: Beam.DateTime,
       comment: string): Promise<Nexus.AccountModificationRequest.Update> {
     return new Nexus.AccountModificationRequest.Update(
       Status.GRANTED, Beam.DirectoryEntry.INVALID, 0,

@@ -148,7 +148,7 @@ export class HttpAdministrationClient extends AdministrationClient {
 
   public async submitEntitlementModificationRequest(
       account: Beam.DirectoryEntry, modification: EntitlementModification,
-      comment: Message, effectiveDate: Beam.Date):
+      comment: Message, effectiveDate: Beam.DateTime):
       Promise<AccountModificationRequest> {
     const response = await Beam.post(
       '/api/administration_service/submit_entitlement_modification_request',
@@ -182,7 +182,7 @@ export class HttpAdministrationClient extends AdministrationClient {
 
   public async submitRiskModificationRequest(account: Beam.DirectoryEntry,
       modification: RiskModification, comment: Message,
-      effectiveDate: Beam.Date): Promise<AccountModificationRequest> {
+      effectiveDate: Beam.DateTime): Promise<AccountModificationRequest> {
     const response = await Beam.post(
       '/api/administration_service/submit_risk_modification_request',
       {
@@ -251,7 +251,7 @@ export class HttpAdministrationClient extends AdministrationClient {
   }
 
   public async approveAccountModificationRequest(id: number,
-      comment: Message, effectiveDate: Beam.Date):
+      comment: Message, effectiveDate: Beam.DateTime):
       Promise<AccountModificationRequest.Update> {
     const response = await Beam.post(
       '/api/administration_service/approve_account_modification_request',

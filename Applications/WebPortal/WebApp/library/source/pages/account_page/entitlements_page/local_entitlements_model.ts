@@ -41,7 +41,7 @@ export class LocalEntitlementsModel extends EntitlementsModel {
 
   public async submit(comment: string,
       entitlements: Beam.Set<Beam.DirectoryEntry>,
-      effectiveDate: Beam.Date): Promise<void> {
+      effectiveDate: Beam.DateTime): Promise<void> {
     return;
   }
 

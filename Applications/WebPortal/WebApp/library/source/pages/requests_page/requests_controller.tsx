@@ -222,7 +222,8 @@ export class RequestsController extends React.Component<Properties, State> {
     }
     this.setState({isSubmitting: true});
     try {
-      await this.props.model.approve(requestId, effectiveDate, comment);
+      await this.props.model.approve(requestId,
+        new Beam.DateTime(effectiveDate), comment);
       await this.loadDetail(requestId);
     } catch {
     } finally {

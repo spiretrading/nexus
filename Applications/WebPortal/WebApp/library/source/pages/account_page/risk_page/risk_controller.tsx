@@ -107,7 +107,8 @@ export class RiskController extends React.Component<Properties, State> {
         status: ''
       });
       await this.props.model.submit(this.state.comment,
-        this.state.parameters, this.state.effectiveDate ?? Beam.Date.today());
+        this.state.parameters,
+        new Beam.DateTime(this.state.effectiveDate ?? Beam.Date.today()));
       this.setState({
         status: 'Saved'
       });

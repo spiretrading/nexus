@@ -27,7 +27,7 @@ export abstract class RequestsModel {
    *  @param comment - An optional comment.
    *  @return The resulting status update.
    */
-  public abstract approve(id: number, effectiveDate: Beam.Date,
+  public abstract approve(id: number, effectiveDate: Beam.DateTime,
     comment: string): Promise<Nexus.AccountModificationRequest.Update>;
 
   /** Rejects a request.

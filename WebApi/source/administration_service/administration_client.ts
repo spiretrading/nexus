@@ -118,12 +118,12 @@ export abstract class AdministrationClient {
    * @param account - The account to modify.
    * @param modification - The modification to apply.
    * @param comment - The comment to associate with the request.
-   * @param effectiveDate - The date the modification takes effect.
+   * @param effectiveDate - The date/time the modification takes effect.
    * @return An object representing the request.
    */
   public abstract submitEntitlementModificationRequest(
     account: Beam.DirectoryEntry, modification: EntitlementModification,
-    comment: Message, effectiveDate: Beam.Date):
+    comment: Message, effectiveDate: Beam.DateTime):
     Promise<AccountModificationRequest>;
 
   /**
@@ -147,12 +147,12 @@ export abstract class AdministrationClient {
    * @param account - The account to modify.
    * @param modification - The modification to apply.
    * @param comment - The comment to associate with the request.
-   * @param effectiveDate - The date the modification takes effect.
+   * @param effectiveDate - The date/time the modification takes effect.
    * @return An object representing the request.
    */
   public abstract submitRiskModificationRequest(
     account: Beam.DirectoryEntry, modification: RiskModification,
-    comment: Message, effectiveDate: Beam.Date):
+    comment: Message, effectiveDate: Beam.DateTime):
     Promise<AccountModificationRequest>;
 
   /**
@@ -205,11 +205,11 @@ export abstract class AdministrationClient {
    * Approves an account modification request.
    * @param id - The id of the request to approve.
    * @param comment - The comment to associate with the approval.
-   * @param effectiveDate - The date the modification takes effect.
+   * @param effectiveDate - The date/time the modification takes effect.
    * @return The resulting status update.
    */
   public abstract approveAccountModificationRequest(id: number,
-    comment: Message, effectiveDate: Beam.Date):
+    comment: Message, effectiveDate: Beam.DateTime):
     Promise<AccountModificationRequest.Update>;
 
   /**

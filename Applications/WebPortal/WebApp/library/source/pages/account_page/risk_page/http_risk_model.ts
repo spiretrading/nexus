@@ -36,7 +36,7 @@ export class HttpRiskModel extends RiskModel {
 
   public async submit(comment: string,
       riskParameters: Nexus.RiskParameters,
-      effectiveDate: Beam.Date): Promise<void> {
+      effectiveDate: Beam.DateTime): Promise<void> {
     const modification = new Nexus.RiskModification(riskParameters);
     await this.serviceClients.administrationClient.
       submitRiskModificationRequest(this.account, modification,
