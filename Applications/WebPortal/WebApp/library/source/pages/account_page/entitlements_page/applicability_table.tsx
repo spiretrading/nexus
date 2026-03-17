@@ -85,7 +85,10 @@ const STYLES = StyleSheet.create({
     borderSpacing: 0,
     textAlign: 'center',
     padding: 0,
-    width: '100%'
+    width: '100%',
+    '@media (min-width: 768px)': {
+      width: '636px'
+    }
   },
   compactHeader: {
     height: '40px',

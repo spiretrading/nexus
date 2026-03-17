@@ -201,7 +201,8 @@ function Submit(props: {
   return (
     <div style={SUBMISSION_STYLE.submitRow}>
       <Button label={label} disabled={props.disabled}
-        onClick={props.onClick}/>
+        onClick={props.onClick}
+        style={SUBMISSION_STYLE.submitButton}/>
     </div>);
 }
 
@@ -276,11 +277,9 @@ const DATE_FIELD_STYLE: Record<string, React.CSSProperties> = {
   },
   label: {
     width: '96px',
-    height: '34px',
+    lineHeight: '34px',
     flexShrink: 0,
-    display: 'flex',
-    alignItems: 'center',
-    fontWeight: 500
+    fontWeight: 400
   },
   spacer: {
     width: '8px',
@@ -331,6 +330,9 @@ const SUBMISSION_STYLE: Record<string, React.CSSProperties> = {
     display: 'flex',
     flexDirection: 'row',
     justifyContent: 'center'
+  },
+  submitButton: {
+    width: '246px'
   },
   feedbackSpacer: {
     height: '34px'

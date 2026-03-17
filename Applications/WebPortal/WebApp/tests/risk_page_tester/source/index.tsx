@@ -11,7 +11,7 @@ class TestRiskModel extends WebPortal.LocalRiskModel {
 
   public async submit(comment: string,
       riskParameters: Nexus.RiskParameters,
-      effectiveDate: Beam.Date): Promise<void> {
+      effectiveDate: Beam.DateTime): Promise<void> {
     const currency =
       currencyDatabase.fromCurrency(riskParameters.currency).code;
     console.log('Submit:');

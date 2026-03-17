@@ -9,7 +9,7 @@ class TestEntitlementsModel extends WebPortal.LocalEntitlementsModel {
 
   public async submit(comment: string,
       entitlements: Beam.Set<Beam.DirectoryEntry>,
-      effectiveDate: Beam.Date): Promise<void> {
+      effectiveDate: Beam.DateTime): Promise<void> {
     console.log('Submit:');
     console.log(`  Comment: ${comment}`);
     console.log('  Entitlements:');
