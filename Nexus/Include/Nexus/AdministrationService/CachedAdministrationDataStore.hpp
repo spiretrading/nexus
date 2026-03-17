@@ -62,9 +62,14 @@ namespace Nexus {
         AccountModificationRequest::Id id);
       void store(const AccountModificationRequest& request,
         const RiskModification& modification);
+      void store_effective_date(AccountModificationRequest::Id id,
+        boost::posix_time::ptime effective_date);
       void store(AccountModificationRequest::Id id, const Message& message);
       AccountModificationRequest::Update
         load_account_modification_request_status(
+          AccountModificationRequest::Id id);
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_updates(
           AccountModificationRequest::Id id);
       void store(AccountModificationRequest::Id id,
         const AccountModificationRequest::Update& status);
@@ -217,6 +222,13 @@ namespace Nexus {
   }
 
   template<IsAdministrationDataStore D>
+  void CachedAdministrationDataStore<D>::store_effective_date(
+      AccountModificationRequest::Id id,
+      boost::posix_time::ptime effective_date) {
+    m_data_store->store_effective_date(id, effective_date);
+  }
+
+  template<IsAdministrationDataStore D>
   void CachedAdministrationDataStore<D>::store(
       AccountModificationRequest::Id id, const Message& message) {
     m_data_store->store(id, message);
@@ -227,6 +239,14 @@ namespace Nexus {
       load_account_modification_request_status(
         AccountModificationRequest::Id id) {
     return m_data_store->load_account_modification_request_status(id);
+  }
+
+  template<IsAdministrationDataStore D>
+  std::vector<AccountModificationRequest::Update>
+      CachedAdministrationDataStore<D>::
+        load_account_modification_request_updates(
+          AccountModificationRequest::Id id) {
+    return m_data_store->load_account_modification_request_updates(id);
   }
 
   template<IsAdministrationDataStore D>

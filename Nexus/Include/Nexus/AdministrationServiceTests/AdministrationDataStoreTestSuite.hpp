@@ -205,7 +205,8 @@ namespace Nexus::Tests {
       auto submission_time = time_from_string("2024-07-05 10:00:00");
       auto request = AccountModificationRequest(
         1, AccountModificationRequest::Type::ENTITLEMENTS, account,
-        submission_account, submission_time);
+        submission_account, submission_time,
+        time_from_string("2024-08-01 00:00:00"));
       auto entitlements = std::vector<DirectoryEntry>();
       entitlements.push_back(DirectoryEntry::make_directory(23, "TSX"));
       auto modification = EntitlementModification(entitlements);
@@ -235,7 +236,7 @@ namespace Nexus::Tests {
       auto submission_time = time_from_string("2024-07-05 11:00:00");
       auto request = AccountModificationRequest(
         2, AccountModificationRequest::Type::RISK, account, submission_account,
-        submission_time);
+        submission_time, time_from_string("2024-08-15 00:00:00"));
       auto parameters = RiskParameters(USD, 10000 * Money::ONE,
         RiskState::Type::ACTIVE, 1000 * Money::ONE, seconds(60));
       auto modification = RiskModification(parameters);
@@ -290,6 +291,35 @@ namespace Nexus::Tests {
         return data_store.load_account_modification_request_status(999);
       });
       REQUIRE(status == AccountModificationRequest::Update());
+    }
+
+    SUBCASE("load_account_modification_request_updates") {
+      auto request_id = 1;
+      auto admin_account = DirectoryEntry::make_account(123, "admin");
+      auto manager_account = DirectoryEntry::make_account(456, "manager");
+      auto first_update = AccountModificationRequest::Update(
+        AccountModificationRequest::Status::PENDING, admin_account, 1,
+        time_from_string("2024-07-05 14:00:00"));
+      auto second_update = AccountModificationRequest::Update(
+        AccountModificationRequest::Status::GRANTED, manager_account, 2,
+        time_from_string("2024-07-05 14:05:00"));
+      data_store.with_transaction([&] {
+        data_store.store(request_id, first_update);
+        data_store.store(request_id, second_update);
+      });
+      auto updates = data_store.with_transaction([&] {
+        return data_store.load_account_modification_request_updates(request_id);
+      });
+      REQUIRE(updates.size() == 2);
+      REQUIRE(updates[0] == first_update);
+      REQUIRE(updates[1] == second_update);
+    }
+
+    SUBCASE("load_non_existent_updates") {
+      auto updates = data_store.with_transaction([&] {
+        return data_store.load_account_modification_request_updates(999);
+      });
+      REQUIRE(updates.empty());
     }
 
     SUBCASE("store_and_load_message") {
@@ -379,16 +409,20 @@ namespace Nexus::Tests {
       data_store.with_transaction([&] {
         data_store.store(AccountModificationRequest(
           5, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:00:00")), modification);
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
         data_store.store(AccountModificationRequest(
           1, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:01:00")), modification);
+          time_from_string("2024-07-05 10:01:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
         data_store.store(AccountModificationRequest(
           10, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:02:00")), modification);
+          time_from_string("2024-07-05 10:02:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
         data_store.store(AccountModificationRequest(
           3, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:03:00")), modification);
+          time_from_string("2024-07-05 10:03:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
       });
       auto ids = data_store.with_transaction([&] {
         return data_store.load_account_modification_request_ids(0, 100);
@@ -406,16 +440,20 @@ namespace Nexus::Tests {
       data_store.with_transaction([&] {
         data_store.store(AccountModificationRequest(
           10, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:00:00")), modification);
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
         data_store.store(AccountModificationRequest(
           20, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:01:00")), modification);
+          time_from_string("2024-07-05 10:01:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
         data_store.store(AccountModificationRequest(
           30, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:02:00")), modification);
+          time_from_string("2024-07-05 10:02:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
         data_store.store(AccountModificationRequest(
           40, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:03:00")), modification);
+          time_from_string("2024-07-05 10:03:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
       });
       auto ids = data_store.with_transaction([&] {
         return data_store.load_account_modification_request_ids(20, 100);
@@ -431,16 +469,20 @@ namespace Nexus::Tests {
       data_store.with_transaction([&] {
         data_store.store(AccountModificationRequest(
           10, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:00:00")), modification);
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
         data_store.store(AccountModificationRequest(
           20, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:01:00")), modification);
+          time_from_string("2024-07-05 10:01:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
         data_store.store(AccountModificationRequest(
           30, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:02:00")), modification);
+          time_from_string("2024-07-05 10:02:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
         data_store.store(AccountModificationRequest(
           40, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:03:00")), modification);
+          time_from_string("2024-07-05 10:03:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
       });
       auto ids = data_store.with_transaction([&] {
         return data_store.load_account_modification_request_ids(0, 2);
@@ -457,13 +499,16 @@ namespace Nexus::Tests {
       data_store.with_transaction([&] {
         data_store.store(AccountModificationRequest(
           1, AccountModificationRequest::Type::ENTITLEMENTS, account_a,
-          account_a, time_from_string("2024-07-05 10:00:00")), modification);
+          account_a, time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
         data_store.store(AccountModificationRequest(
           2, AccountModificationRequest::Type::ENTITLEMENTS, account_b,
-          account_b, time_from_string("2024-07-05 10:01:00")), modification);
+          account_b, time_from_string("2024-07-05 10:01:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
         data_store.store(AccountModificationRequest(
           3, AccountModificationRequest::Type::ENTITLEMENTS, account_a,
-          account_a, time_from_string("2024-07-05 10:02:00")), modification);
+          account_a, time_from_string("2024-07-05 10:02:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
       });
       auto ids = data_store.with_transaction([&] {
         return data_store.load_account_modification_request_ids(
@@ -481,16 +526,20 @@ namespace Nexus::Tests {
       data_store.with_transaction([&] {
         data_store.store(AccountModificationRequest(1,
           AccountModificationRequest::Type::ENTITLEMENTS, account_a, account_a,
-          time_from_string("2024-07-05 10:00:00")), modification);
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
         data_store.store(AccountModificationRequest(2,
           AccountModificationRequest::Type::ENTITLEMENTS, account_b, account_b,
-          time_from_string("2024-07-05 10:01:00")), modification);
+          time_from_string("2024-07-05 10:01:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
         data_store.store(AccountModificationRequest(3,
           AccountModificationRequest::Type::ENTITLEMENTS, account_a, account_a,
-          time_from_string("2024-07-05 10:02:00")), modification);
+          time_from_string("2024-07-05 10:02:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
         data_store.store(AccountModificationRequest(4,
           AccountModificationRequest::Type::ENTITLEMENTS, account_a, account_a,
-          time_from_string("2024-07-05 10:03:00")), modification);
+          time_from_string("2024-07-05 10:03:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
       });
       auto ids = data_store.with_transaction([&] {
         return data_store.load_account_modification_request_ids(
@@ -499,6 +548,54 @@ namespace Nexus::Tests {
       REQUIRE(ids.size() == 2);
       REQUIRE(ids[0] == 3);
       REQUIRE(ids[1] == 4);
+    }
+
+    SUBCASE("store_and_load_effective_date") {
+      auto account = DirectoryEntry::make_account(123, "user1");
+      auto submission_account = DirectoryEntry::make_account(456, "admin");
+      auto submission_time = time_from_string("2024-07-05 10:00:00");
+      auto effective_date = time_from_string("2024-09-01 00:00:00");
+      auto request = AccountModificationRequest(
+        1, AccountModificationRequest::Type::ENTITLEMENTS, account,
+        submission_account, submission_time, effective_date);
+      auto modification = EntitlementModification();
+      data_store.with_transaction([&] {
+        data_store.store(request, modification);
+      });
+      auto loaded_request = data_store.with_transaction([&] {
+        return data_store.load_account_modification_request(request.get_id());
+      });
+      test_json_equality(loaded_request, request);
+      REQUIRE(loaded_request.get_effective_date() == effective_date);
+    }
+
+    SUBCASE("update_request_effective_date") {
+      auto account = DirectoryEntry::make_account(123, "user1");
+      auto submission_account = DirectoryEntry::make_account(456, "admin");
+      auto submission_time = time_from_string("2024-07-05 10:00:00");
+      auto effective_date = time_from_string("2024-09-01 00:00:00");
+      auto request = AccountModificationRequest(
+        1, AccountModificationRequest::Type::ENTITLEMENTS, account,
+        submission_account, submission_time, effective_date);
+      auto modification = EntitlementModification();
+      data_store.with_transaction([&] {
+        data_store.store(request, modification);
+      });
+      auto updated_effective_date = time_from_string("2024-10-15 00:00:00");
+      data_store.with_transaction([&] {
+        data_store.store_effective_date(request.get_id(),
+          updated_effective_date);
+      });
+      auto loaded_request = data_store.with_transaction([&] {
+        return data_store.load_account_modification_request(request.get_id());
+      });
+      REQUIRE(loaded_request.get_effective_date() == updated_effective_date);
+      REQUIRE(loaded_request.get_id() == request.get_id());
+      REQUIRE(loaded_request.get_type() == request.get_type());
+      REQUIRE(loaded_request.get_account() == request.get_account());
+      REQUIRE(loaded_request.get_submission_account() ==
+        request.get_submission_account());
+      REQUIRE(loaded_request.get_timestamp() == request.get_timestamp());
     }
   }
 }

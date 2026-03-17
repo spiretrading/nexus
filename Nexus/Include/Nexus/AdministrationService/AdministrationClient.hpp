@@ -101,6 +101,7 @@ namespace Nexus {
             std::same_as<EntitlementModification>;
       { client.submit(std::declval<const Beam::DirectoryEntry&>(),
           std::declval<const EntitlementModification&>(),
+          std::declval<boost::posix_time::ptime>(),
           std::declval<const Message&>()) } ->
             std::same_as<AccountModificationRequest>;
       { client.load_risk_modification(
@@ -108,13 +109,18 @@ namespace Nexus {
             std::same_as<RiskModification>;
       { client.submit(std::declval<const Beam::DirectoryEntry&>(),
           std::declval<const RiskModification&>(),
+          std::declval<boost::posix_time::ptime>(),
           std::declval<const Message&>()) } ->
             std::same_as<AccountModificationRequest>;
       { client.load_account_modification_request_status(
           std::declval<AccountModificationRequest::Id>()) } ->
             std::same_as<AccountModificationRequest::Update>;
+      { client.load_account_modification_request_updates(
+          std::declval<AccountModificationRequest::Id>()) } ->
+            std::same_as<std::vector<AccountModificationRequest::Update>>;
       { client.approve_account_modification_request(
           std::declval<AccountModificationRequest::Id>(),
+          std::declval<boost::posix_time::ptime>(),
           std::declval<const Message&>()) } ->
             std::same_as<AccountModificationRequest::Update>;
       { client.reject_account_modification_request(
@@ -348,11 +354,13 @@ namespace Nexus {
        * Submits a request to modify an account's entitlements.
        * @param account The account to modify.
        * @param modification The modification to apply.
+       * @param effective_date The date when the modification should take effect.
        * @param comment The comment to associate with the request.
        * @return An object representing the request.
        */
       AccountModificationRequest submit(const Beam::DirectoryEntry& account,
-        const EntitlementModification& modification, const Message& comment);
+        const EntitlementModification& modification,
+        boost::posix_time::ptime effective_date, const Message& comment);
 
       /**
        * Loads a risk modification.
@@ -366,11 +374,13 @@ namespace Nexus {
        * Submits a request to modify an account's risk parameters.
        * @param account The account to modify.
        * @param modification The modification to apply.
+       * @param effective_date The date when the modification should take effect.
        * @param comment The comment to associate with the request.
        * @return An object representing the request.
        */
       AccountModificationRequest submit(const Beam::DirectoryEntry& account,
-        const RiskModification& modification, const Message& comment);
+        const RiskModification& modification,
+        boost::posix_time::ptime effective_date, const Message& comment);
 
       /**
        * Loads the status of an account modification request.
@@ -382,13 +392,24 @@ namespace Nexus {
           AccountModificationRequest::Id id);
 
       /**
+       * Loads all status updates of an account modification request.
+       * @param id The id of the request.
+       * @return The list of all updates for the request with the specified id.
+       */
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_updates(
+          AccountModificationRequest::Id id);
+
+      /**
        * Approves an account modification request.
        * @param id The id of the request to approve.
+       * @param effective_date The date when the modification should take effect.
        * @param comment The comment to associate with the update.
        * @return An object representing the update.
        */
       AccountModificationRequest::Update approve_account_modification_request(
-        AccountModificationRequest::Id id, const Message& comment);
+        AccountModificationRequest::Id id,
+        boost::posix_time::ptime effective_date, const Message& comment);
 
       /**
        * Rejects an account modification request.
@@ -482,18 +503,26 @@ namespace Nexus {
         virtual AccountModificationRequest submit(
           const Beam::DirectoryEntry& account,
           const EntitlementModification& modification,
+          boost::posix_time::ptime effective_date,
           const Message& comment) = 0;
         virtual RiskModification load_risk_modification(
           AccountModificationRequest::Id id) = 0;
         virtual AccountModificationRequest submit(
           const Beam::DirectoryEntry& account,
-          const RiskModification& modification, const Message& comment) = 0;
+          const RiskModification& modification,
+          boost::posix_time::ptime effective_date,
+          const Message& comment) = 0;
         virtual AccountModificationRequest::Update
           load_account_modification_request_status(
             AccountModificationRequest::Id id) = 0;
+        virtual std::vector<AccountModificationRequest::Update>
+          load_account_modification_request_updates(
+            AccountModificationRequest::Id id) = 0;
         virtual AccountModificationRequest::Update
           approve_account_modification_request(
-            AccountModificationRequest::Id id, const Message& comment) = 0;
+            AccountModificationRequest::Id id,
+            boost::posix_time::ptime effective_date,
+            const Message& comment) = 0;
         virtual AccountModificationRequest::Update
           reject_account_modification_request(
             AccountModificationRequest::Id id, const Message& comment) = 0;
@@ -562,17 +591,24 @@ namespace Nexus {
           AccountModificationRequest::Id id) override;
         AccountModificationRequest submit(const Beam::DirectoryEntry& account,
           const EntitlementModification& modification,
+          boost::posix_time::ptime effective_date,
           const Message& comment) override;
         RiskModification load_risk_modification(
           AccountModificationRequest::Id id) override;
         AccountModificationRequest submit(const Beam::DirectoryEntry& account,
           const RiskModification& modification,
+          boost::posix_time::ptime effective_date,
           const Message& comment) override;
         AccountModificationRequest::Update
           load_account_modification_request_status(
             AccountModificationRequest::Id id) override;
+        std::vector<AccountModificationRequest::Update>
+          load_account_modification_request_updates(
+            AccountModificationRequest::Id id) override;
         AccountModificationRequest::Update approve_account_modification_request(
-          AccountModificationRequest::Id id, const Message& comment) override;
+          AccountModificationRequest::Id id,
+          boost::posix_time::ptime effective_date,
+          const Message& comment) override;
         AccountModificationRequest::Update reject_account_modification_request(
           AccountModificationRequest::Id id, const Message& comment) override;
         Message load_message(Message::Id id) override;
@@ -747,8 +783,9 @@ namespace Nexus {
 
   inline AccountModificationRequest AdministrationClient::submit(
       const Beam::DirectoryEntry& account,
-      const EntitlementModification& modification, const Message& comment) {
-    return m_client->submit(account, modification, comment);
+      const EntitlementModification& modification,
+      boost::posix_time::ptime effective_date, const Message& comment) {
+    return m_client->submit(account, modification, effective_date, comment);
   }
 
   inline RiskModification AdministrationClient::load_risk_modification(
@@ -758,8 +795,8 @@ namespace Nexus {
 
   inline AccountModificationRequest AdministrationClient::submit(
       const Beam::DirectoryEntry& account, const RiskModification& modification,
-      const Message& comment) {
-    return m_client->submit(account, modification, comment);
+      boost::posix_time::ptime effective_date, const Message& comment) {
+    return m_client->submit(account, modification, effective_date, comment);
   }
 
   inline AccountModificationRequest::Update
@@ -768,10 +805,18 @@ namespace Nexus {
     return m_client->load_account_modification_request_status(id);
   }
 
+  inline std::vector<AccountModificationRequest::Update>
+      AdministrationClient::load_account_modification_request_updates(
+        AccountModificationRequest::Id id) {
+    return m_client->load_account_modification_request_updates(id);
+  }
+
   inline AccountModificationRequest::Update
       AdministrationClient::approve_account_modification_request(
-        AccountModificationRequest::Id id, const Message& comment) {
-    return m_client->approve_account_modification_request(id, comment);
+        AccountModificationRequest::Id id,
+        boost::posix_time::ptime effective_date, const Message& comment) {
+    return m_client->approve_account_modification_request(
+      id, effective_date, comment);
   }
 
   inline AccountModificationRequest::Update
@@ -978,8 +1023,9 @@ namespace Nexus {
   AccountModificationRequest AdministrationClient::
       WrappedAdministrationClient<C>::submit(
         const Beam::DirectoryEntry& account,
-        const EntitlementModification& modification, const Message& comment) {
-    return m_client->submit(account, modification, comment);
+        const EntitlementModification& modification,
+        boost::posix_time::ptime effective_date, const Message& comment) {
+    return m_client->submit(account, modification, effective_date, comment);
   }
 
   template<typename C>
@@ -992,8 +1038,9 @@ namespace Nexus {
   AccountModificationRequest AdministrationClient::
       WrappedAdministrationClient<C>::submit(
         const Beam::DirectoryEntry& account,
-        const RiskModification& modification, const Message& comment) {
-    return m_client->submit(account, modification, comment);
+        const RiskModification& modification,
+        boost::posix_time::ptime effective_date, const Message& comment) {
+    return m_client->submit(account, modification, effective_date, comment);
   }
 
   template<typename C>
@@ -1004,10 +1051,20 @@ namespace Nexus {
   }
 
   template<typename C>
+  std::vector<AccountModificationRequest::Update> AdministrationClient::
+      WrappedAdministrationClient<C>::
+        load_account_modification_request_updates(
+          AccountModificationRequest::Id id) {
+    return m_client->load_account_modification_request_updates(id);
+  }
+
+  template<typename C>
   AccountModificationRequest::Update AdministrationClient::
       WrappedAdministrationClient<C>::approve_account_modification_request(
-        AccountModificationRequest::Id id, const Message& comment) {
-    return m_client->approve_account_modification_request(id, comment);
+        AccountModificationRequest::Id id,
+        boost::posix_time::ptime effective_date, const Message& comment) {
+    return m_client->approve_account_modification_request(
+      id, effective_date, comment);
   }
 
   template<typename C>

@@ -179,7 +179,7 @@ TEST_SUITE("AdministrationClient") {
     auto request = AccountModificationRequest(
       id, AccountModificationRequest::Type::ENTITLEMENTS,
       DirectoryEntry::make_account(12, "mod_account"),
-      DirectoryEntry::make_account(13, "submitter_account"), ptime());
+      DirectoryEntry::make_account(13, "submitter_account"), ptime(), ptime());
     require_operation<
       TestAdministrationClient::LoadAccountModificationRequestOperation>(
         [&] (auto& client) {
@@ -233,11 +233,11 @@ TEST_SUITE("AdministrationClient") {
     auto comment = Message(Message::Id(1), account, ptime(), {});
     auto request = AccountModificationRequest(AccountModificationRequest::Id(3),
       AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-      ptime());
+      ptime(), ptime());
     require_operation<
       TestAdministrationClient::SubmitEntitlementModificationRequestOperation>(
         [&] (auto& client) {
-          return client.submit(account, modification, comment);
+          return client.submit(account, modification, ptime(), comment);
         }, request,
         [&] (const auto& received) {
           REQUIRE(received.get_id() == request.get_id());
@@ -261,11 +261,12 @@ TEST_SUITE("AdministrationClient") {
     auto modification = RiskModification(get_test_risk_parameters());
     auto comment = Message(Message::Id(2), account, ptime(), {});
     auto request = AccountModificationRequest(AccountModificationRequest::Id(5),
-      AccountModificationRequest::Type::RISK, account, account, ptime());
+      AccountModificationRequest::Type::RISK, account, account, ptime(),
+      ptime());
     require_operation<
       TestAdministrationClient::SubmitRiskModificationRequestOperation>(
         [&] (auto& client) {
-          return client.submit(account, modification, comment);
+          return client.submit(account, modification, ptime(), comment);
         }, request,
         [&] (const auto& received) {
           REQUIRE(received.get_id() == request.get_id());
@@ -294,7 +295,8 @@ TEST_SUITE("AdministrationClient") {
     require_operation<
       TestAdministrationClient::ApproveAccountModificationRequestOperation>(
         [&] (auto& client) {
-          return client.approve_account_modification_request(id, comment);
+          return client.approve_account_modification_request(
+            id, ptime(), comment);
         }, update);
   }
 

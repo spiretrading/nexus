@@ -86,19 +86,26 @@ namespace Nexus::Python {
       def("submit",
         [] (C& self, const Beam::DirectoryEntry& account,
             const EntitlementModification& modification,
-            const Message& comment) {
-          return self.submit(account, modification, comment);
+            boost::posix_time::ptime effective_date, const Message& comment) {
+          return self.submit(account, modification, effective_date, comment);
         }).
       def("load_risk_modification", &C::load_risk_modification).
       def("submit",
         [] (C& self, const Beam::DirectoryEntry& account,
-            const RiskModification& modification, const Message& comment) {
-          return self.submit(account, modification, comment);
+            const RiskModification& modification,
+            boost::posix_time::ptime effective_date, const Message& comment) {
+          return self.submit(account, modification, effective_date, comment);
         }).
       def("load_account_modification_request_status",
         &C::load_account_modification_request_status).
+      def("load_account_modification_request_updates",
+        &C::load_account_modification_request_updates).
       def("approve_account_modification_request",
-        &C::approve_account_modification_request).
+        [] (C& self, AccountModificationRequest::Id id,
+            boost::posix_time::ptime effective_date, const Message& comment) {
+          return self.approve_account_modification_request(
+            id, effective_date, comment);
+        }).
       def("reject_account_modification_request",
         &C::reject_account_modification_request).
       def("load_message", &C::load_message).
@@ -158,10 +165,13 @@ namespace Nexus::Python {
       def("load_risk_modification", &D::load_risk_modification).
       def("store", pybind11::overload_cast<const AccountModificationRequest&,
         const RiskModification&>(&D::store)).
+      def("store_effective_date", &D::store_effective_date).
       def("store", pybind11::overload_cast<
         AccountModificationRequest::Id, const Message&>(&D::store)).
       def("load_account_modification_request_status",
         &D::load_account_modification_request_status).
+      def("load_account_modification_request_updates",
+        &D::load_account_modification_request_updates).
       def("store", pybind11::overload_cast<AccountModificationRequest::Id,
         const AccountModificationRequest::Update&>(&D::store)).
       def("load_last_message_id", &D::load_last_message_id).

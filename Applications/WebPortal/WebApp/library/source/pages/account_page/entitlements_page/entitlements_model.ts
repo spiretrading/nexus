@@ -15,7 +15,9 @@ export abstract class EntitlementsModel {
   /** Submits a request to update the entitlements.
    * @param comment - The comment to include in the request.
    * @param entitlements - The set of entitlements to grant.
+   * @param effectiveDate - The date/time on which the changes take effect.
    */
   public abstract submit(comment: string,
-    entitlements: Beam.Set<Beam.DirectoryEntry>): Promise<void>;
+    entitlements: Beam.Set<Beam.DirectoryEntry>,
+    effectiveDate: Beam.DateTime): Promise<void>;
 }

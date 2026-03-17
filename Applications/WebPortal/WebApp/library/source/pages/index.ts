@@ -9,3 +9,4 @@ export * from './loading_page';
 export * from './login_page';
 export * from './page_not_found_page';
 export * from './page_wrapper';
+export * from './requests_page';

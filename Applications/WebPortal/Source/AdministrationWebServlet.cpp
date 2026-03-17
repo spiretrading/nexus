@@ -109,6 +109,11 @@ auto AdministrationWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
       &AdministrationWebServlet::on_load_account_modification_request_status,
       this));
   slots.emplace_back(matches_path(HttpMethod::POST,
+    "/api/administration_service/load_account_modification_request_updates"),
+    std::bind_front(
+      &AdministrationWebServlet::on_load_account_modification_request_updates,
+      this));
+  slots.emplace_back(matches_path(HttpMethod::POST,
     "/api/administration_service/approve_account_modification_request"),
     std::bind_front(
       &AdministrationWebServlet::on_approve_account_modification_request,
@@ -636,11 +641,13 @@ HttpResponse AdministrationWebServlet::
     DirectoryEntry m_account;
     EntitlementModification m_modification;
     Message m_comment;
+    posix_time::ptime m_effective_date;
 
     void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.shuttle("account", m_account);
       shuttle.shuttle("modification", m_modification);
       shuttle.shuttle("comment", m_comment);
+      shuttle.shuttle("effective_date", m_effective_date);
     }
   };
   auto response = HttpResponse();
@@ -652,7 +659,8 @@ HttpResponse AdministrationWebServlet::
   auto params = session->shuttle_parameters<Parameters>(request);
   auto& clients = session->get_clients();
   auto modification = clients.get_administration_client().submit(
-    params.m_account, params.m_modification, params.m_comment);
+    params.m_account, params.m_modification, params.m_effective_date,
+    params.m_comment);
   session->shuttle_response(modification, out(response));
   return response;
 }
@@ -686,11 +694,13 @@ HttpResponse AdministrationWebServlet::on_submit_risk_modification_request(
     DirectoryEntry m_account;
     RiskModification m_modification;
     Message m_comment;
+    posix_time::ptime m_effective_date;
 
     void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.shuttle("account", m_account);
       shuttle.shuttle("modification", m_modification);
       shuttle.shuttle("comment", m_comment);
+      shuttle.shuttle("effective_date", m_effective_date);
     }
   };
   auto response = HttpResponse();
@@ -702,7 +712,8 @@ HttpResponse AdministrationWebServlet::on_submit_risk_modification_request(
   auto params = session->shuttle_parameters<Parameters>(request);
   auto& clients = session->get_clients();
   auto modification = clients.get_administration_client().submit(
-    params.m_account, params.m_modification, params.m_comment);
+    params.m_account, params.m_modification, params.m_effective_date,
+    params.m_comment);
   session->shuttle_response(modification, out(response));
   return response;
 }
@@ -730,15 +741,40 @@ HttpResponse AdministrationWebServlet::
   return response;
 }
 
+HttpResponse AdministrationWebServlet::
+    on_load_account_modification_request_updates(const HttpRequest& request) {
+  struct Parameters {
+    AccountModificationRequest::Id m_id;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("id", m_id);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto params = session->shuttle_parameters<Parameters>(request);
+  auto& clients = session->get_clients();
+  auto updates = clients.get_administration_client().
+    load_account_modification_request_updates(params.m_id);
+  session->shuttle_response(updates, out(response));
+  return response;
+}
+
 HttpResponse AdministrationWebServlet::on_approve_account_modification_request(
     const HttpRequest& request) {
   struct Parameters {
     AccountModificationRequest::Id m_id;
     Message m_comment;
+    posix_time::ptime m_effective_date;
 
     void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.shuttle("id", m_id);
       shuttle.shuttle("comment", m_comment);
+      shuttle.shuttle("effective_date", m_effective_date);
     }
   };
   auto response = HttpResponse();
@@ -751,7 +787,7 @@ HttpResponse AdministrationWebServlet::on_approve_account_modification_request(
   auto& clients = session->get_clients();
   auto update =
     clients.get_administration_client().approve_account_modification_request(
-      params.m_id, params.m_comment);
+      params.m_id, params.m_effective_date, params.m_comment);
   session->shuttle_response(update, out(response));
   return response;
 }
