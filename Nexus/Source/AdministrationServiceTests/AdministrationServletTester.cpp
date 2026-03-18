@@ -845,6 +845,125 @@ TEST_SUITE("AdministrationServlet") {
     }
   }
 
+  TEST_CASE("admin_submit_entitlements_with_future_effective_date") {
+    auto fixture = Fixture();
+    auto entitlements = std::vector<DirectoryEntry>();
+    for(auto& entry : fixture.m_entitlements.get_entries()) {
+      entitlements.push_back(entry.m_group_entry);
+    }
+    auto modification = EntitlementModification(entitlements);
+    auto future_date = time_from_string("2024-08-01 00:00:00");
+    auto comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto request = fixture.m_admin_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        fixture.m_trader_account, modification, future_date, comment);
+    auto status = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestStatusService>(request.get_id());
+    REQUIRE(
+      status.m_status == AccountModificationRequest::Status::SCHEDULED);
+    auto loaded_entitlements = fixture.m_admin_client->send_request<
+      LoadAccountEntitlementsService>(fixture.m_trader_account);
+    REQUIRE(loaded_entitlements.empty());
+  }
+
+  TEST_CASE("admin_submit_entitlements_with_past_effective_date") {
+    auto fixture = Fixture();
+    auto entitlements = std::vector<DirectoryEntry>();
+    for(auto& entry : fixture.m_entitlements.get_entries()) {
+      entitlements.push_back(entry.m_group_entry);
+    }
+    auto modification = EntitlementModification(entitlements);
+    auto past_date = time_from_string("2024-06-01 00:00:00");
+    auto comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto request = fixture.m_admin_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        fixture.m_trader_account, modification, past_date, comment);
+    auto status = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestStatusService>(request.get_id());
+    REQUIRE(status.m_status == AccountModificationRequest::Status::GRANTED);
+    auto loaded_entitlements = fixture.m_admin_client->send_request<
+      LoadAccountEntitlementsService>(fixture.m_trader_account);
+    REQUIRE(
+      loaded_entitlements.size() == fixture.m_entitlements.get_entries().size());
+  }
+
+  TEST_CASE("admin_submit_entitlements_with_not_a_date_time") {
+    auto fixture = Fixture();
+    auto entitlements = std::vector<DirectoryEntry>();
+    for(auto& entry : fixture.m_entitlements.get_entries()) {
+      entitlements.push_back(entry.m_group_entry);
+    }
+    auto modification = EntitlementModification(entitlements);
+    auto comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto request = fixture.m_admin_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        fixture.m_trader_account, modification, ptime(), comment);
+    auto status = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestStatusService>(request.get_id());
+    REQUIRE(status.m_status == AccountModificationRequest::Status::GRANTED);
+    auto loaded_entitlements = fixture.m_admin_client->send_request<
+      LoadAccountEntitlementsService>(fixture.m_trader_account);
+    REQUIRE(
+      loaded_entitlements.size() == fixture.m_entitlements.get_entries().size());
+  }
+
+  TEST_CASE("admin_submit_risk_with_future_effective_date") {
+    auto fixture = Fixture();
+    auto parameters = RiskParameters(
+      AUD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, seconds(1));
+    auto modification = RiskModification(parameters);
+    auto future_date = time_from_string("2024-08-01 00:00:00");
+    auto comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto request = fixture.m_admin_client->send_request<
+      SubmitRiskModificationRequestService>(
+        fixture.m_trader_account, modification, future_date, comment);
+    auto status = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestStatusService>(request.get_id());
+    REQUIRE(
+      status.m_status == AccountModificationRequest::Status::SCHEDULED);
+  }
+
+  TEST_CASE("admin_submit_risk_with_past_effective_date") {
+    auto fixture = Fixture();
+    auto parameters = RiskParameters(
+      AUD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, seconds(1));
+    auto modification = RiskModification(parameters);
+    auto past_date = time_from_string("2024-06-01 00:00:00");
+    auto comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto request = fixture.m_admin_client->send_request<
+      SubmitRiskModificationRequestService>(
+        fixture.m_trader_account, modification, past_date, comment);
+    auto status = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestStatusService>(request.get_id());
+    REQUIRE(status.m_status == AccountModificationRequest::Status::GRANTED);
+  }
+
+  TEST_CASE("admin_submit_risk_with_not_a_date_time") {
+    auto fixture = Fixture();
+    auto parameters = RiskParameters(
+      AUD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, seconds(1));
+    auto modification = RiskModification(parameters);
+    auto comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto request = fixture.m_admin_client->send_request<
+      SubmitRiskModificationRequestService>(
+        fixture.m_trader_account, modification, ptime(), comment);
+    auto status = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestStatusService>(request.get_id());
+    REQUIRE(status.m_status == AccountModificationRequest::Status::GRANTED);
+  }
+
   TEST_CASE("grant_scheduled_entitlements_on_timer") {
     auto fixture = Fixture();
     auto entitlements = std::vector<DirectoryEntry>();
