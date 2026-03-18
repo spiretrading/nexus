@@ -106,9 +106,18 @@ export class RiskController extends React.Component<Properties, State> {
         hasSubmissionError: false,
         status: ''
       });
+      const date = this.state.effectiveDate ?? Beam.Date.today();
+      const localMidnight =
+        new globalThis.Date(date.year, date.month - 1, date.day);
+      const effectiveDate = new Beam.DateTime(
+        new Beam.Date(localMidnight.getUTCFullYear(),
+          localMidnight.getUTCMonth() + 1 as Beam.Date.Month,
+          localMidnight.getUTCDate()),
+        new Beam.Duration(1000 * (3600 * localMidnight.getUTCHours() +
+          60 * localMidnight.getUTCMinutes() +
+          localMidnight.getUTCSeconds())));
       await this.props.model.submit(this.state.comment,
-        this.state.parameters,
-        new Beam.DateTime(this.state.effectiveDate ?? Beam.Date.today()));
+        this.state.parameters, effectiveDate);
       this.setState({
         status: 'Saved'
       });

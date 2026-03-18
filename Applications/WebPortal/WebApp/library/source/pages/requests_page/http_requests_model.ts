@@ -145,7 +145,7 @@ export class HttpRequestsModel extends RequestsModel {
         request.timestamp.toDate(),
       account: toAccountProfile(request.account, accountIdentity),
       requester: toAccountProfile(request.submissionAccount, submitterIdentity),
-      effectiveDate: request.effectiveDate,
+      effectiveDate: Beam.Date.fromDate(request.effectiveDate.toDate()),
       changes,
       activityList,
       accessRole: this.accessRole
