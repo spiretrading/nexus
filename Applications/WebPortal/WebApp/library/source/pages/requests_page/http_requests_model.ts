@@ -172,7 +172,8 @@ export class HttpRequestsModel extends RequestsModel {
     if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
       const modification = await admin.loadEntitlementModification(request.id);
       const current = await admin.loadAccountEntitlements(request.account);
-      return toFirstEntitlementChange(current, modification.entitlements);
+      return toFirstEntitlementChange(current, modification.entitlements,
+        this.serviceClients.definitionsClient.entitlementDatabase);
     }
     return {
       type: 'risk_controls',
@@ -210,7 +211,8 @@ export class HttpRequestsModel extends RequestsModel {
     if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
       const modification = await admin.loadEntitlementModification(request.id);
       const current = await admin.loadAccountEntitlements(request.account);
-      return toEntitlementChanges(current, modification.entitlements);
+      return toEntitlementChanges(current, modification.entitlements,
+        this.serviceClients.definitionsClient.entitlementDatabase);
     }
     return [];
   }
@@ -331,13 +333,17 @@ function toFirstRiskChange(current: Nexus.RiskParameters,
 }
 
 function toFirstEntitlementChange(current: Beam.Set<Beam.DirectoryEntry>,
-    requested: Beam.Set<Beam.DirectoryEntry>):
+    requested: Beam.Set<Beam.DirectoryEntry>,
+    entitlementDatabase: Nexus.EntitlementDatabase):
       RequestsModel.EntitlementsChange {
   for(const entry of requested) {
     if(!current.has(entry)) {
+      const info = entitlementDatabase.fromGroup(entry);
+      const name = info.group.equals(Beam.DirectoryEntry.INVALID) ?
+        entry.name : info.name;
       return {
         type: 'entitlements',
-        name: entry.name,
+        name,
         action: RequestsModel.EntitlementAction.GRANT,
         fee: Nexus.Money.ZERO,
         currency: undefined,
@@ -347,9 +353,12 @@ function toFirstEntitlementChange(current: Beam.Set<Beam.DirectoryEntry>,
   }
   for(const entry of current) {
     if(!requested.has(entry)) {
+      const info = entitlementDatabase.fromGroup(entry);
+      const name = info.group.equals(Beam.DirectoryEntry.INVALID) ?
+        entry.name : info.name;
       return {
         type: 'entitlements',
-        name: entry.name,
+        name,
         action: RequestsModel.EntitlementAction.REVOKE,
         fee: Nexus.Money.ZERO,
         currency: undefined,
@@ -466,13 +475,18 @@ function riskStateToString(state: Nexus.RiskState): string {
 }
 
 function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
-    requested: Beam.Set<Beam.DirectoryEntry>): RequestsModel.DetailChange[] {
+    requested: Beam.Set<Beam.DirectoryEntry>,
+    entitlementDatabase: Nexus.EntitlementDatabase):
+      RequestsModel.DetailChange[] {
   const changes: RequestsModel.DetailChange[] = [];
   for(const entry of requested) {
     if(!current.has(entry)) {
+      const info = entitlementDatabase.fromGroup(entry);
+      const name = info.group.equals(Beam.DirectoryEntry.INVALID) ?
+        entry.name : info.name;
       changes.push({
         type: 'entitlement',
-        name: entry.name,
+        name,
         oldStatus: RequestsModel.EntitlementStatus.REVOKED,
         newStatus: RequestsModel.EntitlementStatus.GRANTED
       });
@@ -480,9 +494,12 @@ function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
   }
   for(const entry of current) {
     if(!requested.has(entry)) {
+      const info = entitlementDatabase.fromGroup(entry);
+      const name = info.group.equals(Beam.DirectoryEntry.INVALID) ?
+        entry.name : info.name;
       changes.push({
         type: 'entitlement',
-        name: entry.name,
+        name,
         oldStatus: RequestsModel.EntitlementStatus.GRANTED,
         newStatus: RequestsModel.EntitlementStatus.REVOKED
       });
