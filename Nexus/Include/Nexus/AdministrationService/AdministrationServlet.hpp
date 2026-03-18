@@ -101,6 +101,9 @@ namespace Nexus {
       Beam::RoutineHandler m_grant_loop;
       Beam::OpenState m_open_state;
 
+      static AccountModificationRequest::Status resolve_modification_status(
+        AccountRoles roles, boost::posix_time::ptime effective_date,
+        boost::posix_time::ptime timestamp);
       AccountRoles load_account_roles(const Beam::DirectoryEntry& account);
       AccountRoles load_account_roles(
         const Beam::DirectoryEntry& parent, const Beam::DirectoryEntry& child);
@@ -129,7 +132,7 @@ namespace Nexus {
       void grant_scheduled_modifications();
       void grant_scheduled_modifications_loop();
       void store_modification_request(const AccountModificationRequest& request,
-        const Message& comment, const AccountRoles& roles);
+        const Message& comment, AccountRoles roles);
       std::vector<Beam::DirectoryEntry> on_load_accounts_by_roles(
         ServiceProtocolClient& client, AccountRoles roles);
       Beam::DirectoryEntry on_load_administrators_root_entry(
@@ -677,6 +680,27 @@ namespace Nexus {
       IsAdministrationDataStore<Beam::dereference_t<D>> &&
         Beam::IsTimeClient<Beam::dereference_t<R>> &&
           Beam::IsTimer<Beam::dereference_t<T>>
+  AccountModificationRequest::Status
+      AdministrationServlet<C, S, D, R, T>::resolve_modification_status(
+        AccountRoles roles, boost::posix_time::ptime effective_date,
+        boost::posix_time::ptime timestamp) {
+    if(roles.test(AccountRole::ADMINISTRATOR)) {
+      if(effective_date != boost::posix_time::not_a_date_time &&
+          effective_date > timestamp) {
+        return AccountModificationRequest::Status::SCHEDULED;
+      }
+      return AccountModificationRequest::Status::GRANTED;
+    } else if(roles.test(AccountRole::MANAGER)) {
+      return AccountModificationRequest::Status::REVIEWED;
+    }
+    return AccountModificationRequest::Status::PENDING;
+  }
+
+  template<typename C, typename S, typename D, typename R, typename T> requires
+    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+      IsAdministrationDataStore<Beam::dereference_t<D>> &&
+        Beam::IsTimeClient<Beam::dereference_t<R>> &&
+          Beam::IsTimer<Beam::dereference_t<T>>
   AccountModificationRequest AdministrationServlet<C, S, D, R, T>::
       make_modification_request(const Beam::DirectoryEntry& session_account,
         const Beam::DirectoryEntry& submission_account,
@@ -763,7 +787,7 @@ namespace Nexus {
           Beam::IsTimer<Beam::dereference_t<T>>
   void AdministrationServlet<C, S, D, R, T>::store_modification_request(
       const AccountModificationRequest& request, const Message& comment,
-      const AccountRoles& roles) {
+      AccountRoles roles) {
     if(comment.get_bodies().size() > 1 ||
         !comment.get_body().m_message.empty()) {
       auto message = Message(++m_last_message_id,
@@ -771,14 +795,8 @@ namespace Nexus {
         comment.get_bodies());
       m_data_store->store(request.get_id(), message);
     }
-    auto status = [&] {
-      if(roles.test(AccountRole::ADMINISTRATOR)) {
-        return AccountModificationRequest::Status::GRANTED;
-      } else if(roles.test(AccountRole::MANAGER)) {
-        return AccountModificationRequest::Status::REVIEWED;
-      }
-      return AccountModificationRequest::Status::PENDING;
-    }();
+    auto status = resolve_modification_status(
+      roles, request.get_effective_date(), request.get_timestamp());
     auto update = AccountModificationRequest::Update(
       status, request.get_submission_account(), 0, request.get_timestamp());
     m_data_store->store(request.get_id(), update);
@@ -1350,7 +1368,9 @@ namespace Nexus {
       m_data_store->store(request, modification);
       store_modification_request(request, comment, roles);
     });
-    if(roles.test(AccountRole::ADMINISTRATOR)) {
+    if(resolve_modification_status(
+        roles, request.get_effective_date(), request.get_timestamp()) ==
+          AccountModificationRequest::Status::GRANTED) {
       grant_entitlements(request.get_submission_account(),
         request.get_account(), modification.get_entitlements());
     }
@@ -1393,7 +1413,9 @@ namespace Nexus {
       m_data_store->store(request, modification);
       store_modification_request(request, comment, roles);
     });
-    if(roles.test(AccountRole::ADMINISTRATOR)) {
+    if(resolve_modification_status(
+        roles, request.get_effective_date(), request.get_timestamp()) ==
+          AccountModificationRequest::Status::GRANTED) {
       update_risk_parameters(
         request.get_account(), modification.get_parameters());
     }
@@ -1483,22 +1505,14 @@ namespace Nexus {
       if(effective_date != boost::posix_time::not_a_date_time) {
         m_data_store->store_effective_date(request.get_id(), effective_date);
       }
-      if(roles.test(AccountRole::ADMINISTRATOR)) {
-        auto resolved_effective_date = [&] {
-          if(effective_date != boost::posix_time::not_a_date_time) {
-            return effective_date;
-          }
-          return request.get_effective_date();
-        }();
-        if(resolved_effective_date != boost::posix_time::not_a_date_time &&
-            resolved_effective_date > timestamp) {
-          update.m_status = AccountModificationRequest::Status::SCHEDULED;
-        } else {
-          update.m_status = AccountModificationRequest::Status::GRANTED;
+      auto resolved_effective_date = [&] {
+        if(effective_date != boost::posix_time::not_a_date_time) {
+          return effective_date;
         }
-      } else if(roles.test(AccountRole::MANAGER)) {
-        update.m_status = AccountModificationRequest::Status::REVIEWED;
-      }
+        return request.get_effective_date();
+      }();
+      update.m_status = resolve_modification_status(
+        roles, resolved_effective_date, timestamp);
       update.m_account = session.get_account();
       ++update.m_sequence_number;
       update.m_timestamp = timestamp;
@@ -1506,8 +1520,7 @@ namespace Nexus {
       return update;
     });
     if(update.m_status == AccountModificationRequest::Status::GRANTED) {
-      if(request.get_type() ==
-          AccountModificationRequest::Type::ENTITLEMENTS) {
+      if(request.get_type() == AccountModificationRequest::Type::ENTITLEMENTS) {
         auto modification = m_data_store->with_transaction([&] {
           return m_data_store->load_entitlement_modification(
             request.get_id());
