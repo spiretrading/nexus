@@ -104,7 +104,7 @@ namespace Spire {
       bool is_filtered(const TableModel& model, int row);
       void update_scroll_sizes();
       void on_order_update(int index, TableHeaderItem::Order order);
-      void on_filter_clicked(int index);
+      void on_filter_clicked(int index, bool toggled);
       void on_filter(int column, TableFilter::Filter filter);
       void on_current(const boost::optional<Index>& current);
       void on_body_style();

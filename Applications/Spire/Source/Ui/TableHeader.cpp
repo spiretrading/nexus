@@ -39,16 +39,17 @@ TableHeader::TableHeader(
       }
     }
     item->set_is_resizeable(!is_last);
-    item->connect_start_resize_signal(
-      std::bind_front(&TableHeader::on_start_resize, this, i));
-    item->connect_end_resize_signal(
-      std::bind_front(&TableHeader::on_end_resize, this, i));
+    //item->connect_start_resize_signal(
+    //  std::bind_front(&TableHeader::on_start_resize, this, i));
+    //item->connect_end_resize_signal(
+    //  std::bind_front(&TableHeader::on_end_resize, this, i));
     item->connect_sort_signal(std::bind_front(&TableHeader::on_sort, this, i));
-    item->connect_filter_signal(
-      std::bind_front(&TableHeader::on_filter, this, i));
+    item->is_filtered()->connect_update_signal(
+      std::bind_front(&TableHeader::on_filtered, this, i));
     layout->addWidget(item);
     m_item_views.push_back(item);
     link(*this, *item);
+    item->installEventFilter(this);
   }
   auto box = new Box(body);
   update_style(*box, [] (auto& style) {
@@ -73,9 +74,9 @@ const std::shared_ptr<ListModel<int>>& TableHeader::get_widths() const {
   return m_widths;
 }
 
-Button& TableHeader::get_filter_button(int column) {
-  return m_item_views[column]->get_filter_button();
-}
+//ToggleButton& TableHeader::get_filter_button(int column) {
+//  return m_item_views[column]->get_filter_button();
+//}
 
 TableHeaderItem* TableHeader::get_item(int column) {
   if(column < 0 || column >= std::ssize(m_item_views)) {
@@ -97,21 +98,22 @@ connection TableHeader::connect_sort_signal(
   return m_sort_signal.connect(slot);
 }
 
-connection TableHeader::connect_filter_signal(
-    const FilterSignal::slot_type& slot) const {
+connection TableHeader::connect_toggle_filter_signal(
+    const ToggleFilterSignal::slot_type& slot) const {
   return m_filter_signal.connect(slot);
 }
 
-void TableHeader::mouseMoveEvent(QMouseEvent* event) {
-  if(m_resize_index == -1) {
-    return QWidget::mouseMoveEvent(event);
+bool TableHeader::eventFilter(QObject* watched, QEvent* event) {
+  if(event->type() == QEvent::Resize) {
+    if(auto index = get_index(static_cast<TableHeaderItem*>(watched));
+        index && *index < m_widths->get_size()) {
+      auto width = static_cast<TableHeaderItem*>(watched)->width();
+      if(width != m_widths->get(*index)) {
+        m_widths->set(*index, width);
+      }
+    }
   }
-  auto& item = *m_item_views[m_resize_index];
-  auto width =
-    std::max(scale_width(10), item.mapFromGlobal(QCursor::pos()).x());
-  if(width != m_widths->get(m_resize_index)) {
-    m_widths->set(m_resize_index, width);
-  }
+  return QWidget::eventFilter(watched, event);
 }
 
 void TableHeader::on_widths_operation(
@@ -123,18 +125,10 @@ void TableHeader::on_widths_operation(
     });
 }
 
-void TableHeader::on_start_resize(int index) {
-  m_resize_index = index;
-}
-
-void TableHeader::on_end_resize(int index) {
-  m_resize_index = -1;
-}
-
 void TableHeader::on_sort(int index, TableHeaderItem::Order order) {
   m_sort_signal(index, order);
 }
 
-void TableHeader::on_filter(int index) {
-  m_filter_signal(index);
+void TableHeader::on_filtered(int index, bool is_filtered) {
+  m_filter_signal(index, is_filtered);
 }

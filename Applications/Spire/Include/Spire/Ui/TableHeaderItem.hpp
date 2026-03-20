@@ -2,14 +2,17 @@
 #define SPIRE_TABLE_HEADER_ITEM_HPP
 #include <boost/signals2/connection.hpp>
 #include <QHBoxLayout>
+#include <QPointer>
 #include <QWidget>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Styles/StateSelector.hpp"
-#include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/Checkbox.hpp"
+#include "Spire/Ui/ClickObserver.hpp"
 #include "Spire/Ui/TableFilter.hpp"
 
 namespace Spire {
+  class ResponsiveLabel;
 
   /** Displays a single item within a TableViewHeader. */
   class TableHeaderItem : public QWidget {
@@ -25,10 +28,11 @@ namespace Spire {
       using Label = Styles::StateSelector<void, struct LabelTag>;
 
       /** Identifies styling for the filter button sub-component. */
-      using FilterButton = Styles::StateSelector<void, struct FilterButton>;
+      using FilterButton = Styles::StateSelector<void, struct FilterButtonTag>;
 
-      /** Identifies styling for the hover element sub-component. */
-      using HoverElement = Styles::StateSelector<void, struct HoverElementTag>;
+      /** Identifies styling for the active element sub-component. */
+      using ActiveElement =
+        Styles::StateSelector<void, struct ActiveElementTag>;
 
       /** Specifies whether and how the column is sorted. */
       enum class Order {
@@ -62,20 +66,11 @@ namespace Spire {
         TableFilter::Filter m_filter;
       };
 
-      /** Signals an action to start a column resize. */
-      using StartResizeSignal = Signal<void ()>;
-
-      /** Signals an action to end a column resize. */
-      using EndResizeSignal = Signal<void ()>;
-
       /**
        * Signals an action to change this column's sort order.
        * @param order The sort order to update this column to.
        */
       using SortSignal = Signal<void (Order order)>;
-
-      /** Signals an action to filter this column. */
-      using FilterSignal = Signal<void ()>;
 
       /**
        * Constructs a TableHeaderItem.
@@ -88,8 +83,8 @@ namespace Spire {
       /** Returns this item's model. */
       const std::shared_ptr<ValueModel<Model>>& get_model() const;
 
-      /** Returns the filter button. */
-      Button& get_filter_button();
+      /** Returns the boolean model used to track the filter state. */
+      const std::shared_ptr<BooleanModel>& is_filtered() const;
 
       /** Returns <code>true</code> iff this item is resizeable. */
       bool is_resizeable() const;
@@ -97,44 +92,41 @@ namespace Spire {
       /** Sets whether this item can be resized. */
       void set_is_resizeable(bool is_resizeable);
 
-      /** Connects a slot to the start resize signal. */
-      boost::signals2::connection connect_start_resize_signal(
-        const StartResizeSignal::slot_type& slot) const;
-
-      /** Connects a slot to the end resize signal. */
-      boost::signals2::connection connect_end_resize_signal(
-        const EndResizeSignal::slot_type& slot) const;
-
       /** Connects a slot to the SortSignal. */
       boost::signals2::connection connect_sort_signal(
         const SortSignal::slot_type& slot) const;
-
-      /** Connects a slot to the FilterSignal. */
-      boost::signals2::connection connect_filter_signal(
-        const FilterSignal::slot_type& slot) const;
 
       QSize minimumSizeHint() const override;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
-      void mouseReleaseEvent(QMouseEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
 
     private:
-      mutable StartResizeSignal m_start_resize_signal;
-      mutable EndResizeSignal m_end_resize_signal;
       mutable SortSignal m_sort_signal;
       std::shared_ptr<ValueModel<Model>> m_model;
+      std::shared_ptr<BooleanModel> m_is_filtered;
+      ClickObserver m_click_observer;
       bool m_is_resizeable;
-      Button* m_filter_button;
+      ResponsiveLabel* m_name_label;
+      QPointer<QWidget> m_filter_control;
+      QWidget* m_active_element;
+      QWidget* m_active_indicator;
+      QWidget* m_active_container;
       QWidget* m_sort_indicator;
-      QWidget* m_sash;
-      QHBoxLayout* m_contents_layout;
-      QHBoxLayout* m_bottom_layout;
+      QPointer<QWidget> m_sash;
+      QHBoxLayout* m_controls_layout;
+      bool m_is_resizing;
+      QFont m_font;
       boost::signals2::scoped_connection m_connection;
-      boost::signals2::scoped_connection m_style_connection;
+      boost::signals2::scoped_connection m_label_name_connection;
+      boost::signals2::scoped_connection m_label_style_connection;
 
+      void on_click();
+      void on_filter_checked(bool checked);
       void on_update(const Model& model);
-      void on_style();
+      void on_label_name_update(const QString& name);
+      void on_label_style();
   };
 }
 

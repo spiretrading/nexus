@@ -391,7 +391,7 @@ void Spire::register_selectors() {
   register_state_selector("sortable", TableHeaderItem::Sortable());
   register_state_selector("filtered", TableHeaderItem::Filtered());
   register_state_selector("filter_button", TableHeaderItem::FilterButton());
-  register_state_selector("hover_element", TableHeaderItem::HoverElement());
+  register_state_selector("active_element", TableHeaderItem::ActiveElement());
   register_state_selector("prompt", Prompt());
   register_state_selector("colon", Colon());
   register_state_selector("track", Track());

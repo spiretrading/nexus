@@ -19,10 +19,11 @@ namespace Spire {
         Signal<void (int column, TableHeaderItem::Order order)>;
 
       /**
-       * Signals an action to change a column's filter.
-       * @param column The index of the column that triggered the action.
+       * Signals that a column's filter button was toggled.
+       * @param column The index of the column whose filter button was toggled.
+       * @param toggled <code>true</code> iff the filter button is toggled on.
        */
-      using FilterSignal = Signal<void (int column)>;
+      using ToggleFilterSignal = Signal<void (int column, bool toggled)>;
 
       /**
        * Constructs a TableHeader.
@@ -40,9 +41,6 @@ namespace Spire {
       /** Returns the list of widths of each item. */
       const std::shared_ptr<ListModel<int>>& get_widths() const;
 
-      /** Returns a column's filter button. */
-      Button& get_filter_button(int column);
-
       /** Returns a column's header item. */
       TableHeaderItem* get_item(int column);
 
@@ -58,19 +56,19 @@ namespace Spire {
         const SortSignal::slot_type& slot) const;
 
       /**
-       * Connects a slot to the FilterSignal.
+       * Connects a slot to the ToggleFilterSignal.
        * @param slot The slot to connect.
-       * @return A connection to the FilterSignal.
+       * @return A connection to the ToggleFilterSignal.
        */
-      boost::signals2::connection connect_filter_signal(
-        const FilterSignal::slot_type& slot) const;
+      boost::signals2::connection connect_toggle_filter_signal(
+        const ToggleFilterSignal::slot_type& slot) const;
 
     protected:
-      void mouseMoveEvent(QMouseEvent* event) override;
+      bool eventFilter(QObject* watched, QEvent* event) override;
 
     private:
       mutable SortSignal m_sort_signal;
-      mutable FilterSignal m_filter_signal;
+      mutable ToggleFilterSignal m_filter_signal;
       std::shared_ptr<ListModel<TableHeaderItem::Model>> m_items;
       std::shared_ptr<ListModel<int>> m_widths;
       std::vector<TableHeaderItem*> m_item_views;
@@ -78,10 +76,8 @@ namespace Spire {
       boost::signals2::scoped_connection m_widths_connection;
 
       void on_widths_operation(const ListModel<int>::Operation& operation);
-      void on_start_resize(int index);
-      void on_end_resize(int index);
       void on_sort(int index, TableHeaderItem::Order order);
-      void on_filter(int index);
+      void on_filtered(int index, bool is_filtered);
   };
 }
 
