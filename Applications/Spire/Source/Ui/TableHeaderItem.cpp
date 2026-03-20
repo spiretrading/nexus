@@ -45,7 +45,7 @@ namespace {
         hover_selector || FocusVisible()) > FilterControl()).
       set(Visibility::VISIBLE);
     style.get(TableHeaderItem::Filtered() > TableHeaderItem::FilterButton() >
-        Body() > Body()).
+        is_a<Icon>()).
       set(Fill(QColor(0x4B23A0)));
     style.get(FocusVisible() > is_a<Box>()).
       set(border_color(QColor(0x4B23A0)));
@@ -70,13 +70,12 @@ namespace {
     }
 
     std::shared_ptr<ValueModel<TableHeaderItem::Order>> m_order;
-    TableHeaderItem::Order m_current_order;
+    optional<TableHeaderItem::Order> m_current_order;
     scoped_connection m_order_connection;
 
     explicit SortIndicator(
         std::shared_ptr<ValueModel<TableHeaderItem::Order>> order)
-        : m_order(std::move(order)),
-          m_current_order(TableHeaderItem::Order::UNORDERED) {
+        : m_order(std::move(order)) {
       auto layout = make_hbox_layout(this);
       on_order(m_order->get());
       m_order_connection = m_order->connect_update_signal(
@@ -84,7 +83,7 @@ namespace {
     }
 
     void on_order(TableHeaderItem::Order order) {
-      if(order == m_current_order) {
+      if(m_current_order == order) {
         return;
       }
       m_current_order = order;
@@ -224,6 +223,8 @@ namespace {
       style.get((Hover() || Press()) > Body()).
         set(BackgroundColor(QColor(0xF2F2FF)));
       style.get(Any() > is_a<Icon>()).set(Fill(QColor(0xA5A5A5)));
+      style.get((Hover() || Press()) > is_a<Icon>()).
+        set(Fill(QColor(0xA5A5A5)));
       style.get(Checked() > is_a<Icon>()).set(Fill(QColor(0x4B23A0)));
     });
     match(*button, TableHeaderItem::FilterButton());
@@ -244,7 +245,6 @@ namespace {
   std::tuple<QWidget*, QWidget*> make_active_indicator() {
     auto box = new Box(nullptr);
     box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    box->setMaximumWidth(scale_width(18));
     match(*box, TableHeaderItem::ActiveElement());
     auto indicator = new QWidget();
     indicator->setFixedHeight(scale_height(2));

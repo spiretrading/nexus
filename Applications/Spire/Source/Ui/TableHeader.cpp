@@ -1,5 +1,5 @@
 #include "Spire/Ui/TableHeader.hpp"
-#include <QMouseEvent>
+#include <QEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
@@ -15,8 +15,7 @@ using namespace Spire::Styles;
 TableHeader::TableHeader(
     std::shared_ptr<ListModel<TableHeaderItem::Model>> items, QWidget* parent)
     : QWidget(parent),
-      m_items(items),
-      m_resize_index(-1) {
+      m_items(items) {
   m_widths = std::make_shared<ArrayListModel<int>>();
   auto body = new QWidget();
   auto layout = new FixedHorizontalLayout(body);
@@ -39,10 +38,6 @@ TableHeader::TableHeader(
       }
     }
     item->set_is_resizeable(!is_last);
-    //item->connect_start_resize_signal(
-    //  std::bind_front(&TableHeader::on_start_resize, this, i));
-    //item->connect_end_resize_signal(
-    //  std::bind_front(&TableHeader::on_end_resize, this, i));
     item->connect_sort_signal(std::bind_front(&TableHeader::on_sort, this, i));
     item->is_filtered()->connect_update_signal(
       std::bind_front(&TableHeader::on_filtered, this, i));
@@ -73,10 +68,6 @@ const std::shared_ptr<ListModel<TableHeaderItem::Model>>&
 const std::shared_ptr<ListModel<int>>& TableHeader::get_widths() const {
   return m_widths;
 }
-
-//ToggleButton& TableHeader::get_filter_button(int column) {
-//  return m_item_views[column]->get_filter_button();
-//}
 
 TableHeaderItem* TableHeader::get_item(int column) {
   if(column < 0 || column >= std::ssize(m_item_views)) {

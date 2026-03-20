@@ -72,7 +72,6 @@ namespace Spire {
       std::shared_ptr<ListModel<TableHeaderItem::Model>> m_items;
       std::shared_ptr<ListModel<int>> m_widths;
       std::vector<TableHeaderItem*> m_item_views;
-      int m_resize_index;
       boost::signals2::scoped_connection m_widths_connection;
 
       void on_widths_operation(const ListModel<int>::Operation& operation);
