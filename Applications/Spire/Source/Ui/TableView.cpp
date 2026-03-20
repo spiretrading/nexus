@@ -304,9 +304,6 @@ void TableView::on_order_update(int index, TableHeaderItem::Order order) {
 }
 
 void TableView::on_filter_clicked(int index, bool toggled) {
-  //auto& filter_button = m_header_view->get_filter_button(index);
-  //auto widget = m_filter->make_filter_widget(index, filter_button);
-  //widget->show();
 }
 
 void TableView::on_filter(int column, TableFilter::Filter filter) {
