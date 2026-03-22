@@ -28,7 +28,7 @@ export class RolePanel extends React.Component<Properties, State> {
         <RoleIcon
           displaySize={DisplaySize.getDisplaySize()}
           isExtraSmall
-          readonly
+          readOnly
           role={Nexus.AccountRoles.Role.TRADER}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.TRADER)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
@@ -38,7 +38,7 @@ export class RolePanel extends React.Component<Properties, State> {
         <RoleIcon
           displaySize={DisplaySize.getDisplaySize()}
           isExtraSmall
-          readonly
+          readOnly
           role={Nexus.AccountRoles.Role.MANAGER}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.MANAGER)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
@@ -48,7 +48,7 @@ export class RolePanel extends React.Component<Properties, State> {
         <RoleIcon
           displaySize={DisplaySize.getDisplaySize()}
           isExtraSmall
-          readonly
+          readOnly
           role={Nexus.AccountRoles.Role.ADMINISTRATOR}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
@@ -58,7 +58,7 @@ export class RolePanel extends React.Component<Properties, State> {
         <RoleIcon
           displaySize={DisplaySize.getDisplaySize()}
           isExtraSmall
-          readonly
+          readOnly
           role={Nexus.AccountRoles.Role.SERVICE}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.SERVICE)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
@@ -77,7 +77,7 @@ export class RolePanel extends React.Component<Properties, State> {
 
   private timerID: NodeJS.Timeout;
 
-  private static readonly STYLE = {
+  private static readonly STYLE: Record<string, React.CSSProperties> = {
     containerStyle: {
       width: '100%',
       height: '100%',
@@ -89,6 +89,6 @@ export class RolePanel extends React.Component<Properties, State> {
       flexGrow: 0,
       flexShrink: 0,
       cursor: 'inherit'
-    } as React.CSSProperties
+    }
   };
 }

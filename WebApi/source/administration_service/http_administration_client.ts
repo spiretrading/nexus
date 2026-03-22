@@ -148,13 +148,15 @@ export class HttpAdministrationClient extends AdministrationClient {
 
   public async submitEntitlementModificationRequest(
       account: Beam.DirectoryEntry, modification: EntitlementModification,
-      comment: Message): Promise<AccountModificationRequest> {
+      comment: Message, effectiveDate: Beam.DateTime):
+      Promise<AccountModificationRequest> {
     const response = await Beam.post(
       '/api/administration_service/submit_entitlement_modification_request',
       {
         account: account.toJson(),
         modification: modification.toJson(),
-        comment: comment.toJson()
+        comment: comment.toJson(),
+        effective_date: effectiveDate.toJson()
       });
     return AccountModificationRequest.fromJson(response);
   }
@@ -179,16 +181,126 @@ export class HttpAdministrationClient extends AdministrationClient {
   }
 
   public async submitRiskModificationRequest(account: Beam.DirectoryEntry,
-      modification: RiskModification, comment: Message):
-      Promise<AccountModificationRequest> {
+      modification: RiskModification, comment: Message,
+      effectiveDate: Beam.DateTime): Promise<AccountModificationRequest> {
     const response = await Beam.post(
       '/api/administration_service/submit_risk_modification_request',
       {
         account: account.toJson(),
         modification: modification.toJson(),
-        comment: comment.toJson()
+        comment: comment.toJson(),
+        effective_date: effectiveDate.toJson()
       });
     return AccountModificationRequest.fromJson(response);
+  }
+
+  public async loadAccountModificationRequest(id: number):
+      Promise<AccountModificationRequest> {
+    const response = await Beam.post(
+      '/api/administration_service/load_account_modification_request',
+      {
+        id: id
+      });
+    return AccountModificationRequest.fromJson(response);
+  }
+
+  public async loadAccountModificationRequestIds(
+      account: Beam.DirectoryEntry, startId: number, maxCount: number):
+      Promise<number[]> {
+    const response = await Beam.post(
+      '/api/administration_service/load_account_modification_request_ids',
+      {
+        account: account.toJson(),
+        start_id: startId,
+        max_count: maxCount
+      });
+    return response;
+  }
+
+  public async loadManagedAccountModificationRequestIds(
+      account: Beam.DirectoryEntry, startId: number, maxCount: number):
+      Promise<number[]> {
+    const response = await Beam.post('/api/administration_service/' +
+      'load_managed_account_modification_request_ids',
+      {
+        account: account.toJson(),
+        start_id: startId,
+        max_count: maxCount
+      });
+    return response;
+  }
+
+  public async loadAccountModificationRequestStatus(id: number):
+      Promise<AccountModificationRequest.Update> {
+    const response = await Beam.post(
+      '/api/administration_service/load_account_modification_request_status',
+      {
+        id: id
+      });
+    return AccountModificationRequest.Update.fromJson(response);
+  }
+
+  public async loadAccountModificationRequestUpdates(id: number):
+      Promise<AccountModificationRequest.Update[]> {
+    const response = await Beam.post(
+      '/api/administration_service/load_account_modification_request_updates',
+      {
+        id: id
+      });
+    return response.map(AccountModificationRequest.Update.fromJson);
+  }
+
+  public async approveAccountModificationRequest(id: number,
+      comment: Message, effectiveDate: Beam.DateTime):
+      Promise<AccountModificationRequest.Update> {
+    const response = await Beam.post(
+      '/api/administration_service/approve_account_modification_request',
+      {
+        id: id,
+        comment: comment.toJson(),
+        effective_date: effectiveDate.toJson()
+      });
+    return AccountModificationRequest.Update.fromJson(response);
+  }
+
+  public async rejectAccountModificationRequest(id: number,
+      comment: Message): Promise<AccountModificationRequest.Update> {
+    const response = await Beam.post(
+      '/api/administration_service/reject_account_modification_request',
+      {
+        id: id,
+        comment: comment.toJson()
+      });
+    return AccountModificationRequest.Update.fromJson(response);
+  }
+
+  public async loadMessage(id: number): Promise<Message> {
+    const response = await Beam.post(
+      '/api/administration_service/load_message',
+      {
+        id: id
+      });
+    return Message.fromJson(response);
+  }
+
+  public async loadMessageIds(id: number): Promise<number[]> {
+    const response = await Beam.post(
+      '/api/administration_service/load_message_ids',
+      {
+        id: id
+      });
+    return response;
+  }
+
+  public async sendAccountModificationRequestMessage(id: number,
+      message: Message): Promise<Message> {
+    const response = await Beam.post('/api/administration_service/' +
+      'send_account_modification_request_message',
+      {
+        id: id,
+        message: message.toJson()
+      });
+    return Message.fromJson(response);
   }
 
   public async createGroup(name: string): Promise<Beam.DirectoryEntry> {

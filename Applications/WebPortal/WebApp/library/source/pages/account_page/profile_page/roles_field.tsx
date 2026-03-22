@@ -49,7 +49,7 @@ export class RolesField extends React.Component<Properties, State> {
       <div style={containerStyle}>
         <RoleIcon role={Nexus.AccountRoles.Role.TRADER}
           displaySize={this.props.displaySize}
-          readonly={this.props.readonly}
+          readOnly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.TRADER)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
             Nexus.AccountRoles.Role.TRADER}
@@ -58,7 +58,7 @@ export class RolesField extends React.Component<Properties, State> {
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.TRADER)}/>
         <RoleIcon role={Nexus.AccountRoles.Role.MANAGER}
           displaySize={this.props.displaySize}
-          readonly={this.props.readonly}
+          readOnly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.MANAGER)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
             Nexus.AccountRoles.Role.MANAGER}
@@ -67,7 +67,7 @@ export class RolesField extends React.Component<Properties, State> {
           onClick={() => this.props.onClick(Nexus.AccountRoles.Role.MANAGER)}/>
         <RoleIcon role={Nexus.AccountRoles.Role.ADMINISTRATOR}
           displaySize={this.props.displaySize}
-          readonly={this.props.readonly}
+          readOnly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
             Nexus.AccountRoles.Role.ADMINISTRATOR}
@@ -77,7 +77,7 @@ export class RolesField extends React.Component<Properties, State> {
             this.props.onClick(Nexus.AccountRoles.Role.ADMINISTRATOR)}/>
         <RoleIcon role={Nexus.AccountRoles.Role.SERVICE}
           displaySize={this.props.displaySize}
-          readonly={this.props.readonly}
+          readOnly={this.props.readonly}
           isSet={this.props.roles.test(Nexus.AccountRoles.Role.SERVICE)}
           isTouchTooltipShown={this.state.mobileTooltipRole ===
             Nexus.AccountRoles.Role.SERVICE}

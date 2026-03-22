@@ -66,6 +66,7 @@
     <file>Icons/close.svg</file>
     <file>Icons/maximize.svg</file>
     <file>Icons/minimize.svg</file>
+    <file>Icons/reset.svg</file>
     <file>Icons/restore.svg</file>
     <file>Icons/imbalance-indicator.svg</file>
     <file>Icons/key_bindings/error.svg</file>

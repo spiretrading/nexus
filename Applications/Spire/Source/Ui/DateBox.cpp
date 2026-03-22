@@ -312,6 +312,7 @@ DateBox::DateBox(std::shared_ptr<OptionalDateModel> current, QWidget* parent)
   link(*this, *m_year_dash);
   link(*this, *month_dash);
   update_style(*this, apply_date_box_style);
+  setFocusProxy(m_fields.m_year.m_box);
   m_style_connection = connect_style_signal(*this,
     std::bind_front(&DateBox::on_style, this));
   m_focus_observer.connect_state_signal(

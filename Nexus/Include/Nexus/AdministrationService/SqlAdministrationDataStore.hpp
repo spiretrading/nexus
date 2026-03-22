@@ -64,6 +64,8 @@ namespace Nexus {
           AccountModificationRequest::Id start_id, int max_count);
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
+      void store_effective_date(AccountModificationRequest::Id id,
+        boost::posix_time::ptime effective_date);
       void store(const AccountModificationRequest& request,
         const EntitlementModification& modification);
       RiskModification load_risk_modification(
@@ -73,6 +75,9 @@ namespace Nexus {
       void store(AccountModificationRequest::Id id, const Message& message);
       AccountModificationRequest::Update
         load_account_modification_request_status(
+          AccountModificationRequest::Id id);
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_updates(
           AccountModificationRequest::Id id);
       void store(AccountModificationRequest::Id id,
         const AccountModificationRequest::Update& status);
@@ -269,7 +274,7 @@ namespace Nexus {
       request = AccountModificationRequest(request.get_id(), request.get_type(),
         m_directory_entries.load(request.get_account().m_id),
         m_directory_entries.load(request.get_submission_account().m_id),
-          request.get_timestamp());
+        request.get_timestamp(), request.get_effective_date());
     } catch(const std::exception& e) {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }
@@ -337,6 +342,20 @@ namespace Nexus {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }
     return entitlements;
+  }
+
+  template<typename C>
+  void SqlAdministrationDataStore<C>::store_effective_date(
+      AccountModificationRequest::Id id,
+      boost::posix_time::ptime effective_date) {
+    try {
+      m_connection->execute(Viper::update(
+        "account_modification_requests",
+        Viper::SetClause("effective_date", effective_date),
+        Viper::sym("id") == id));
+    } catch(const Viper::ExecuteException& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
   }
 
   template<typename C>
@@ -429,6 +448,26 @@ namespace Nexus {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }
     return status;
+  }
+
+  template<typename C>
+  std::vector<AccountModificationRequest::Update>
+      SqlAdministrationDataStore<C>::load_account_modification_request_updates(
+        AccountModificationRequest::Id id) {
+    auto updates = std::vector<AccountModificationRequest::Update>();
+    try {
+      m_connection->execute(Viper::select(
+        get_account_modification_request_status_row(),
+        "account_modification_request_status", Viper::sym("id") == id,
+        Viper::order_by("sequence_number", Viper::Order::ASC),
+        std::back_inserter(updates)));
+      for(auto& update : updates) {
+        update.m_account = m_directory_entries.load(update.m_account.m_id);
+      }
+    } catch(const std::exception& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
+    return updates;
   }
 
   template<typename C>

@@ -88,24 +88,18 @@ export class NewRuleModal extends React.Component<Properties, State> {
           <div style={NewRuleModal.STYLE.newRuleText}>Add New Rule</div>
         </div>
         <div style={modalVisibility}>
-          <Modal displaySize={this.props.displaySize}
-              height='461px' width='300px'>
-            <div style={NewRuleModal.STYLE.header}>
-              <div style={NewRuleModal.STYLE.headerText}>
-                Add New Rule
+          <Modal
+              title='Add New Rule' onClose={this.props.onToggleModal}>
+            <div style={NewRuleModal.STYLE.contentWrapper}>
+              <div style={NewRuleModal.STYLE.ruleItemWrapper}>
+                {options}
               </div>
-              <img height={plusSignImageSize} width={plusSignImageSize}
-                onClick={this.props.onToggleModal}
-                src={NewRuleModal.CLOSE_PATH}/>
-            </div>
-            <div style={NewRuleModal.STYLE.ruleItemWrapper}>
-              {options}
-            </div>
-            <div style={NewRuleModal.STYLE.footerWrapper}>
-              <HLine color='#E6E6E6'/>
-              <div style={buttonWrapper}>
-                <Button label='Select'
-                  onClick={this.addNewRule}/>
+              <div style={NewRuleModal.STYLE.footerWrapper}>
+                <HLine color='#E6E6E6'/>
+                <div style={buttonWrapper}>
+                  <Button label='Select'
+                    onClick={this.addNewRule}/>
+                </div>
               </div>
             </div>
           </Modal>
@@ -157,37 +151,14 @@ export class NewRuleModal extends React.Component<Properties, State> {
       visibility: 'hidden' as 'hidden',
       display: 'none' as 'none'
     },
-    header: {
-      boxSizing: 'border-box' as 'border-box',
-      width: '100%',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      justifyContent: 'space-between' as 'space-between',
-      height: '38px',
-      paddingLeft: '18px',
-      paddingRight: '18px',
-      paddingTop: '18px',
-      cursor: 'default' as 'default'
+    contentWrapper: {
+      width: '300px',
+      boxSizing: 'border-box' as 'border-box'
     },
     footerWrapper: {
       boxSizing: 'border-box' as 'border-box',
       paddingLeft: '18px',
       paddingRight: '18px'
-    },
-    headerText: {
-      font: '400 16px Roboto',
-      height: '20px',
-      color: '#333333'
-    },
-    iconWrapperSmall: {
-      height: '24px',
-      width: '24px',
-      cursor: 'pointer' as 'pointer'
-    },
-    iconWrapperLarge: {
-      height: '16px',
-      width: '16px',
-      cursor: 'pointer' as 'pointer'
     },
     ruleItemWrapper: {
       paddingTop: '30px',
@@ -240,8 +211,6 @@ export class NewRuleModal extends React.Component<Properties, State> {
       paddingLeft: '18px'
     }
   });
-  private static readonly CLOSE_PATH =
-    'resources/account_page/compliance_page/new_rule_modal/close.svg';
-  private static readonly ADD_PATH = 
+  private static readonly ADD_PATH =
     'resources/account_page/compliance_page/new_rule_modal/add.svg';
 }
