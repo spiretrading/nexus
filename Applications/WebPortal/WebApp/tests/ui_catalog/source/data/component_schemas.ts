@@ -815,6 +815,26 @@ const metric =
     [],
     WebPortal.Metric);
 
+const PNL_HEADER_SAMPLE_RATES: WebPortal.CurrencyTooltip.ExchangeRate[] = [
+  {code: 'AUD', rate: '0.88'},
+  {code: 'EUR', rate: '1.51'},
+  {code: 'USD', rate: '1.36'}
+];
+
+const profitAndLossHeader =
+  new ComponentSchema('ProfitAndLossHeader',
+    [new PropertySchema('symbol', '$', TextInput),
+      new PropertySchema('code', 'CAD', TextInput),
+      new PropertySchema('totalPnl', '1,234.56', TextInput),
+      new PropertySchema('totalFees', '45.00', TextInput),
+      new PropertySchema('totalVolume', '12,500.00', TextInput),
+      new PropertySchema('loading', false, BooleanInput)],
+    [],
+    (props: any) => React.createElement(WebPortal.ProfitAndLossHeader, {
+      ...props,
+      foreignCurrencies: PNL_HEADER_SAMPLE_RATES
+    }), 800);
+
 const reportStatusIndicator =
   new ComponentSchema('ReportStatusIndicator',
     [new PropertySchema('id', 'report-status', TextInput),
@@ -844,4 +864,4 @@ export const componentSections = [
     requestFilterModal, requestItem, requestItemPlaceholder,
     requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
-    reportStatusIndicator])];
+    profitAndLossHeader, reportStatusIndicator])];
