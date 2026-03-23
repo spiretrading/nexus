@@ -788,6 +788,16 @@ const segmentedSpinner =
     [],
     WebPortal.SegmentedSpinner);
 
+const metric =
+  new ComponentSchema('Metric',
+    [new PropertySchema('id', 'total-pnl', TextInput),
+      new PropertySchema('label', 'Total P/L', TextInput),
+      new PropertySchema('value', '$1,234.56', TextInput),
+      new PropertySchema('unit', 'CAD', TextInput),
+      new PropertySchema('loading', false, BooleanInput)],
+    [],
+    WebPortal.Metric);
+
 const reportStatusIndicator =
   new ComponentSchema('ReportStatusIndicator',
     [new PropertySchema('id', 'report-status', TextInput),
@@ -816,4 +826,5 @@ export const componentSections = [
     requestDetailPage, requestDirectoryPage, requestEffectiveDate,
     requestFilterModal, requestItem, requestItemPlaceholder,
     requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
-  new ComponentSection('Profit and Loss Page', [reportStatusIndicator])];
+  new ComponentSection('Profit and Loss Page', [metric,
+    reportStatusIndicator])];
