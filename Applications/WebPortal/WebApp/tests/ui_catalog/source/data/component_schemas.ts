@@ -781,6 +781,15 @@ const pageLayout =
         React.createElement('div', {className: css(PAGE_LAYOUT_STYLES.blue)}))),
     -1);
 
+const reportStatusIndicator =
+  new ComponentSchema('ReportStatusIndicator',
+    [new PropertySchema('id', 'report-status', TextInput),
+      new PropertySchema('status',
+        WebPortal.ReportStatusIndicator.Status.NONE,
+        EnumInput(WebPortal.ReportStatusIndicator.Status))],
+    [],
+    WebPortal.ReportStatusIndicator);
+
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox,
     countrySelect, currencySelect, dateInput,
@@ -799,4 +808,5 @@ export const componentSections = [
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
     requestDetailPage, requestDirectoryPage, requestEffectiveDate,
     requestFilterModal, requestItem, requestItemPlaceholder,
-    requestSortSelect, requestStateIndicator, riskControlsChangeItem])];
+    requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
+  new ComponentSection('Profit and Loss Page', [reportStatusIndicator])];
