@@ -71,23 +71,83 @@ interface Properties {
 export function ProfitAndLossPage(props: Properties) {
   const formRef = React.useRef<HTMLFormElement>(null);
   const isLoading = props.status === ProfitAndLossPage.Status.IN_PROGRESS;
-  const isReady = props.status === ProfitAndLossPage.Status.READY;
-  const isStale = props.status === ProfitAndLossPage.Status.STALE;
-  const isError = props.status === ProfitAndLossPage.Status.ERROR;
-  const isNone = props.status === ProfitAndLossPage.Status.NONE;
-  const hasData = props.currencies.length > 0;
-  const isCustom = props.mode === ProfitAndLossPage.Mode.CUSTOM;
-  const showStatus = !(isNone || (isStale && !hasData));
-  const reportStatus = (() => {
-    if(isError) {
-      return ReportStatusIndicator.Status.NONE;
-    }
-    return props.status as number as ReportStatusIndicator.Status;
-  })();
   const onFormSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     props.onSubmit?.(props.startDate, props.endDate);
   };
+  return (
+    <div className={css(STYLES.page)}>
+      <main className={css(STYLES.main)}>
+        <FormContainer scrollHeight={formRef.current?.scrollHeight}>
+          <form ref={formRef} aria-label='Report Controls'
+              onSubmit={onFormSubmit} className={css(STYLES.form)}>
+            <DateFilterArea
+              mode={props.mode}
+              startDate={props.startDate}
+              endDate={props.endDate}
+              onModeChange={props.onModeChange}
+              onStartDateChange={props.onStartDateChange}
+              onEndDateChange={props.onEndDateChange}/>
+            <MobileStatusFeedback
+              status={props.status}
+              currencies={props.currencies}/>
+            <ActionsAndStatus
+              status={props.status}
+              currencies={props.currencies}
+              filepath={props.filepath}
+              isLoading={isLoading}
+              onCancel={props.onCancel}/>
+          </form>
+        </FormContainer>
+        <div style={CONTENT_SPACING}/>
+        <ProfitAndLossContent
+          symbol={props.symbol}
+          code={props.code}
+          status={props.status}
+          totalPnl={props.totalPnl}
+          totalFees={props.totalFees}
+          totalVolume={props.totalVolume}
+          currencies={props.currencies}
+          foreignCurrencies={props.foreignCurrencies}
+          startDate={props.startDate}
+          endDate={props.endDate}
+          onSubmit={props.onSubmit}/>
+      </main>
+      <ActionSheet
+        status={props.status}
+        currencies={props.currencies}
+        filepath={props.filepath}
+        startDate={props.startDate}
+        endDate={props.endDate}
+        onSubmit={props.onSubmit}
+        onCancel={props.onCancel}/>
+    </div>);
+}
+
+/** Div:FormContainer — animates form height changes. */
+function FormContainer(props: {
+    scrollHeight: number;
+    children: React.ReactNode;
+  }) {
+  return (
+    <div className={css(STYLES.formContainer)}
+      style={{maxHeight: props.scrollHeight}}>
+      {props.children}
+    </div>);
+}
+
+/** Div:DateFilterArea — contains Select and CustomDates.
+ *  Maps to DateFilter at >= 1036px, or direct Select+CustomDates at smaller
+ *  breakpoints. */
+function DateFilterArea(props: {
+    mode: ProfitAndLossPage.Mode;
+    startDate: Beam.Date;
+    endDate: Beam.Date;
+    onModeChange?: (mode: ProfitAndLossPage.Mode) => void;
+    onStartDateChange?: (date: Beam.Date) => void;
+    onEndDateChange?: (date: Beam.Date) => void;
+  }) {
+  const isCustom = props.mode === ProfitAndLossPage.Mode.CUSTOM;
   const onSelectChange = (value: string) => {
     if(value === 'custom') {
       props.onModeChange?.(ProfitAndLossPage.Mode.CUSTOM);
@@ -95,188 +155,296 @@ export function ProfitAndLossPage(props: Properties) {
       props.onModeChange?.(ProfitAndLossPage.Mode.PRESET);
     }
   };
+  const selectValue = isCustom ? 'custom' : 'this-month';
+  return (
+    <div className={css(STYLES.dateFilterArea)}>
+      <Select value={selectValue} aria-controls='custom-dates'
+          className={css(STYLES.select)} onChange={onSelectChange}>
+        <option value='this-month'>This Month</option>
+        <option value='last-month'>Last Month</option>
+        <option value='custom'>Custom</option>
+      </Select>
+      {isCustom &&
+        <CustomDates
+          startDate={props.startDate}
+          endDate={props.endDate}
+          onStartDateChange={props.onStartDateChange}
+          onEndDateChange={props.onEndDateChange}/>}
+    </div>);
+}
+
+/** Div:CustomDates — wraps DateInputs with responsive padding. */
+function CustomDates(props: {
+    startDate: Beam.Date;
+    endDate: Beam.Date;
+    onStartDateChange?: (date: Beam.Date) => void;
+    onEndDateChange?: (date: Beam.Date) => void;
+  }) {
+  return (
+    <div id='custom-dates' className={css(STYLES.customDates)}>
+      <DateInputs
+        startDate={props.startDate}
+        endDate={props.endDate}
+        onStartDateChange={props.onStartDateChange}
+        onEndDateChange={props.onEndDateChange}/>
+    </div>);
+}
+
+/** Div:DateInputs — responsive date input groups. */
+function DateInputs(props: {
+    startDate: Beam.Date;
+    endDate: Beam.Date;
+    onStartDateChange?: (date: Beam.Date) => void;
+    onEndDateChange?: (date: Beam.Date) => void;
+  }) {
+  return (
+    <div className={css(STYLES.dateInputs)}>
+      <DateGroup label='Start' id='start-date'
+        value={props.startDate} onChange={props.onStartDateChange}/>
+      <DateGroup label='End' id='end-date'
+        value={props.endDate} onChange={props.onEndDateChange}/>
+    </div>);
+}
+
+/** Div:StartDateGroup / Div:EndDateGroup — label + input pair. */
+function DateGroup(props: {
+    label: string;
+    id: string;
+    value: Beam.Date;
+    onChange?: (date: Beam.Date) => void;
+  }) {
+  return (
+    <div className={css(STYLES.dateGroup)}>
+      <label htmlFor={props.id}
+        className={css(STYLES.dateLabel)}>{props.label}</label>
+      <DateInput id={props.id} value={props.value}
+        className={css(STYLES.dateInput)} onChange={props.onChange}/>
+    </div>);
+}
+
+/** Div:StatusFeedback — wraps ReportStatusIndicator with padding. */
+function StatusFeedback(props: {
+    status: ProfitAndLossPage.Status;
+    currencies: ProfitAndLossPage.CurrencyEntry[];
+  }) {
+  const isNone = props.status === ProfitAndLossPage.Status.NONE;
+  const isStale = props.status === ProfitAndLossPage.Status.STALE;
+  const isError = props.status === ProfitAndLossPage.Status.ERROR;
+  const hasData = props.currencies.length > 0;
+  const hidden = isNone || (isStale && !hasData);
+  const reportStatus = (() => {
+    if(isError) {
+      return ReportStatusIndicator.Status.NONE;
+    }
+    return props.status as number as ReportStatusIndicator.Status;
+  })();
+  return (
+    <div className={css(STYLES.statusFeedback,
+        hidden && STYLES.statusFeedbackHidden)}>
+      <ReportStatusIndicator id='report-status' status={reportStatus}/>
+    </div>);
+}
+
+/** Mobile-only StatusFeedback wrapper — hidden at >= 768px. */
+function MobileStatusFeedback(props: {
+    status: ProfitAndLossPage.Status;
+    currencies: ProfitAndLossPage.CurrencyEntry[];
+  }) {
+  return (
+    <div className={css(STYLES.mobileStatusFeedback)}>
+      <StatusFeedback status={props.status} currencies={props.currencies}/>
+    </div>);
+}
+
+/** Div:ActionsAndStatus — desktop buttons + StatusFeedback.
+ *  Hidden on mobile, visible at >= 768px. */
+function ActionsAndStatus(props: {
+    status: ProfitAndLossPage.Status;
+    currencies: ProfitAndLossPage.CurrencyEntry[];
+    filepath: string;
+    isLoading: boolean;
+    onCancel?: () => void;
+  }) {
+  const isReady = props.status === ProfitAndLossPage.Status.READY;
+  const isStale = props.status === ProfitAndLossPage.Status.STALE;
+  const hasData = props.currencies.length > 0;
+  const showDownload = !props.isLoading && (isReady || (isStale && hasData));
+  return (
+    <div className={css(STYLES.desktopActionsAndStatus)}>
+      <div className={css(STYLES.buttonRow)}>
+        {!props.isLoading &&
+          <Button label='Apply' type='submit' style={BUTTON_STYLE}
+            aria-describedby={isStale ? 'report-status' : undefined}/>}
+        {props.isLoading &&
+          <Button label='Cancel' type='button' style={BUTTON_STYLE}
+            onClick={props.onCancel}/>}
+        {showDownload &&
+          <a download href={props.filepath}
+            className={css(STYLES.downloadLink)}>
+            Download
+          </a>}
+      </div>
+      <StatusFeedback status={props.status} currencies={props.currencies}/>
+    </div>);
+}
+
+/** Section:ActionSheet — mobile fixed-bottom action overlay.
+ *  Hidden at >= 768px. */
+function ActionSheet(props: {
+    status: ProfitAndLossPage.Status;
+    currencies: ProfitAndLossPage.CurrencyEntry[];
+    filepath: string;
+    startDate: Beam.Date;
+    endDate: Beam.Date;
+    onSubmit?: (start: Beam.Date, end: Beam.Date) => void;
+    onCancel?: () => void;
+  }) {
+  const isLoading = props.status === ProfitAndLossPage.Status.IN_PROGRESS;
+  const isReady = props.status === ProfitAndLossPage.Status.READY;
+  const isStale = props.status === ProfitAndLossPage.Status.STALE;
+  const isError = props.status === ProfitAndLossPage.Status.ERROR;
+  const isNone = props.status === ProfitAndLossPage.Status.NONE;
+  const hasData = props.currencies.length > 0;
+  if(isReady && !hasData) {
+    return null;
+  }
   const onRetry = () => {
     props.onSubmit?.(props.startDate, props.endDate);
   };
-  const selectValue = (() => {
-    if(isCustom) {
-      return 'custom';
-    }
-    return 'this-month';
-  })();
-  const dateInputs = (
-    <div className={css(STYLES.dateInputs)}>
-      <div className={css(STYLES.dateGroup)}>
-        <label htmlFor='start-date'
-          className={css(STYLES.dateLabel)}>Start</label>
-        <DateInput id='start-date' value={props.startDate}
-          className={css(STYLES.dateInput)}
-          onChange={props.onStartDateChange}/>
-      </div>
-      <div className={css(STYLES.dateGroup)}>
-        <label htmlFor='end-date'
-          className={css(STYLES.dateLabel)}>End</label>
-        <DateInput id='end-date' value={props.endDate}
-          className={css(STYLES.dateInput)}
-          onChange={props.onEndDateChange}/>
-      </div>
-    </div>);
-  const statusFeedback = (
-    <div className={css(STYLES.statusFeedback,
-        !showStatus && STYLES.statusFeedbackHidden)}>
-      <ReportStatusIndicator id='report-status' status={reportStatus}/>
-    </div>);
-  const applyButton = (
-    <Button label='Apply' type='submit' style={BUTTON_STYLE}
-      aria-describedby={isStale ? 'report-status' : undefined}/>);
-  const cancelButton = (
-    <Button label='Cancel' type='button' style={BUTTON_STYLE}
-      onClick={props.onCancel}/>);
-  const downloadLink = (
-    <a download href={props.filepath}
-      className={css(STYLES.downloadLink)}>
-      Download
-    </a>);
-  const actionSheet = (() => {
-    const hideSheet = isReady && !hasData;
-    if(hideSheet) {
-      return null;
-    }
-    return (
-      <section aria-label='Report Actions'
-          className={css(STYLES.actionSheet)}>
-        {isError &&
-          <Button label='Retry' type='button'
-            className={css(STYLES.actionSheetButton)} onClick={onRetry}/>}
-        {isLoading &&
-          <Button label='Cancel' type='button'
-            className={css(STYLES.actionSheetButton)}
-            onClick={props.onCancel}/>}
-        {isReady &&
-          <a download href={props.filepath}
-            className={css(STYLES.downloadLink,
-              STYLES.actionSheetButton)}>
-            Download
-          </a>}
-        {isStale && hasData && <>
-          <Button label='Apply' type='submit'
-            className={css(STYLES.actionSheetButton)}/>
-          <div style={ACTION_SHEET_GAP}/>
-          <a download href={props.filepath}
-            className={css(STYLES.downloadLink,
-              STYLES.actionSheetButton)}>
-            Download
-          </a>
-        </>}
-        {isStale && !hasData &&
-          <Button label='Apply' type='submit'
-            className={css(STYLES.actionSheetButton)}/>}
-        {isNone &&
-          <Button label='Apply' type='submit'
-            className={css(STYLES.actionSheetButton)}/>}
-      </section>);
-  })();
-  const content = (() => {
-    if(isNone || (isStale && !hasData)) {
-      return (
-        <div className={css(STYLES.emptyMessage)}>
-          Click Apply to generate a report for the selected period.
-        </div>);
-    }
-    if(isReady && !hasData) {
-      return (
-        <div className={css(STYLES.emptyMessage)}>
-          There is no activity for the selected period.
-        </div>);
-    }
-    if(isError) {
-      return (
-        <div className={css(STYLES.errorMessage)}>
-          <img
-            src='resources/account_page/profit_and_loss_page/error.svg'
-            style={ERROR_ICON_STYLE}/>
-          <span className={css(STYLES.errorText)}>
-            There was an error generating the report.
-          </span>
-          <Button label='Retry' type='button' onClick={onRetry}
-            className={css(STYLES.errorRetryButton)}/>
-        </div>);
-    }
-    return (
-      <section aria-label='Profit and Loss Report' aria-live='polite'
-          aria-busy={isLoading}>
-        <ProfitAndLossHeader
-          symbol={props.symbol}
-          code={props.code}
-          totalPnl={props.totalPnl}
-          totalFees={props.totalFees}
-          totalVolume={props.totalVolume}
-          foreignCurrencies={props.foreignCurrencies}
-          loading={isLoading}/>
-        <div style={LIST_SPACING}/>
-        <ul className={css(STYLES.list)}>
-          {isLoading ? renderPlaceholders() : renderItems(props)}
-        </ul>
-      </section>);
-  })();
+  const fullWidthStyle = css(STYLES.actionSheetButton);
+  const fullWidthDownload = css(STYLES.downloadLink, STYLES.actionSheetButton);
   return (
-    <div className={css(STYLES.page)}>
-      <main className={css(STYLES.main)}>
-        <div className={css(STYLES.formContainer)}
-            style={{maxHeight: formRef.current?.scrollHeight}}>
-          <form ref={formRef} aria-label='Report Controls'
-              onSubmit={onFormSubmit} className={css(STYLES.form)}>
-            <div className={css(STYLES.dateFilterArea)}>
-              <Select value={selectValue} aria-controls='custom-dates'
-                  className={css(STYLES.select)} onChange={onSelectChange}>
-                <option value='this-month'>This Month</option>
-                <option value='last-month'>Last Month</option>
-                <option value='custom'>Custom</option>
-              </Select>
-              {isCustom &&
-                <div id='custom-dates' className={css(STYLES.customDates)}>
-                  {dateInputs}
-                </div>}
-            </div>
-            <div className={css(STYLES.mobileStatusFeedback)}>
-              {statusFeedback}
-            </div>
-            <div className={css(STYLES.desktopActionsAndStatus)}>
-              <div className={css(STYLES.buttonRow)}>
-                {!isLoading && applyButton}
-                {isLoading && cancelButton}
-                {!isLoading && !(isReady || (isStale && hasData)) ? null :
-                  !isLoading && downloadLink}
-              </div>
-              {statusFeedback}
-            </div>
-          </form>
-        </div>
-        <div style={CONTENT_SPACING}/>
-        {content}
-      </main>
-      {actionSheet}
+    <section aria-label='Report Actions'
+        className={css(STYLES.actionSheet)}>
+      {isError &&
+        <Button label='Retry' type='button'
+          className={fullWidthStyle} onClick={onRetry}/>}
+      {isLoading &&
+        <Button label='Cancel' type='button'
+          className={fullWidthStyle} onClick={props.onCancel}/>}
+      {isReady &&
+        <a download href={props.filepath} className={fullWidthDownload}>
+          Download
+        </a>}
+      {isStale && hasData && <>
+        <Button label='Apply' type='submit'
+          className={fullWidthStyle}/>
+        <div style={ACTION_SHEET_GAP}/>
+        <a download href={props.filepath} className={fullWidthDownload}>
+          Download
+        </a>
+      </>}
+      {isStale && !hasData &&
+        <Button label='Apply' type='submit'
+          className={fullWidthStyle}/>}
+      {isNone &&
+        <Button label='Apply' type='submit'
+          className={fullWidthStyle}/>}
+    </section>);
+}
+
+/** Section:ProfitAndLossContent — report content area. */
+function ProfitAndLossContent(props: {
+    symbol: string;
+    code: string;
+    status: ProfitAndLossPage.Status;
+    totalPnl: string;
+    totalFees: string;
+    totalVolume: string;
+    currencies: ProfitAndLossPage.CurrencyEntry[];
+    foreignCurrencies: CurrencyTooltip.ExchangeRate[];
+    startDate: Beam.Date;
+    endDate: Beam.Date;
+    onSubmit?: (start: Beam.Date, end: Beam.Date) => void;
+  }) {
+  const isLoading = props.status === ProfitAndLossPage.Status.IN_PROGRESS;
+  const isReady = props.status === ProfitAndLossPage.Status.READY;
+  const isStale = props.status === ProfitAndLossPage.Status.STALE;
+  const isError = props.status === ProfitAndLossPage.Status.ERROR;
+  const isNone = props.status === ProfitAndLossPage.Status.NONE;
+  const hasData = props.currencies.length > 0;
+  if(isNone || (isStale && !hasData)) {
+    return (
+      <div className={css(STYLES.emptyMessage)}>
+        Click Apply to generate a report for the selected period.
+      </div>);
+  }
+  if(isReady && !hasData) {
+    return (
+      <div className={css(STYLES.emptyMessage)}>
+        There is no activity for the selected period.
+      </div>);
+  }
+  if(isError) {
+    return (
+      <ErrorMessage
+        startDate={props.startDate}
+        endDate={props.endDate}
+        onSubmit={props.onSubmit}/>);
+  }
+  return (
+    <section aria-label='Profit and Loss Report' aria-live='polite'
+        aria-busy={isLoading}>
+      <ProfitAndLossHeader
+        symbol={props.symbol}
+        code={props.code}
+        totalPnl={props.totalPnl}
+        totalFees={props.totalFees}
+        totalVolume={props.totalVolume}
+        foreignCurrencies={props.foreignCurrencies}
+        loading={isLoading}/>
+      <div style={LIST_SPACING}/>
+      <ProfitAndLossList
+        currencies={props.currencies}
+        isLoading={isLoading}/>
+    </section>);
+}
+
+/** Div:ErrorMessage — error display with icon, text, and retry. */
+function ErrorMessage(props: {
+    startDate: Beam.Date;
+    endDate: Beam.Date;
+    onSubmit?: (start: Beam.Date, end: Beam.Date) => void;
+  }) {
+  const onRetry = () => {
+    props.onSubmit?.(props.startDate, props.endDate);
+  };
+  return (
+    <div className={css(STYLES.errorMessage)}>
+      <img
+        src='resources/account_page/profit_and_loss_page/error.svg'
+        style={ERROR_ICON_STYLE}/>
+      <span className={css(STYLES.errorText)}>
+        There was an error generating the report.
+      </span>
+      <Button label='Retry' type='button' onClick={onRetry}
+        className={css(STYLES.errorRetryButton)}/>
     </div>);
 }
 
-function renderPlaceholders(): JSX.Element[] {
-  return Array.from({length: 5}, (_, i) =>
-    <li key={i} className={css(STYLES.listItem)}>
-      <ProfitAndLossItemPlaceholder/>
-    </li>);
-}
-
-function renderItems(props: Properties): JSX.Element[] {
-  return props.currencies.map(currency =>
-    <li key={currency.code} className={css(STYLES.listItem)}>
-      <ProfitAndLossItem
-        symbol={currency.symbol}
-        code={currency.code}
-        totalPnl={currency.totalPnl}
-        totalVolume={currency.totalVolume}
-        totalFees={currency.totalFees}
-        securities={currency.securities}/>
-    </li>);
+/** Ul:ProfitAndLossList — list of currency items or placeholders. */
+function ProfitAndLossList(props: {
+    currencies: ProfitAndLossPage.CurrencyEntry[];
+    isLoading: boolean;
+  }) {
+  return (
+    <ul className={css(STYLES.list)}>
+      {props.isLoading ?
+        Array.from({length: 5}, (_, i) =>
+          <li key={i} className={css(STYLES.listItem)}>
+            <ProfitAndLossItemPlaceholder/>
+          </li>) :
+        props.currencies.map(currency =>
+          <li key={currency.code} className={css(STYLES.listItem)}>
+            <ProfitAndLossItem
+              symbol={currency.symbol}
+              code={currency.code}
+              totalPnl={currency.totalPnl}
+              totalVolume={currency.totalVolume}
+              totalFees={currency.totalFees}
+              securities={currency.securities}/>
+          </li>)}
+    </ul>);
 }
 
 export namespace ProfitAndLossPage {
@@ -446,7 +614,12 @@ const STYLES = StyleSheet.create({
   dateLabel: {
     fontSize: '0.875rem',
     paddingInlineStart: '10px',
-    '@media (min-width: 768px)': {
+    '@media (min-width: 768px) and (max-width: 1035px)': {
+      paddingInlineStart: 0,
+      width: '50px',
+      flexShrink: 0
+    },
+    '@media (min-width: 1036px)': {
       paddingInlineStart: 0
     }
   },
