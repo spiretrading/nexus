@@ -38,7 +38,9 @@ export function Select({readOnly, disabled, onChange, className, children,
 const STYLES = StyleSheet.create({
   select: {
     backgroundColor: '#F8F8F8',
-    border: '1px solid #C8C8C8',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: '#C8C8C8',
     borderRadius: '1px',
     fontSize: '0.875rem',
     fontFamily: "'Roboto', system-ui, sans-serif",

@@ -1,0 +1,165 @@
+import * as Beam from 'beam';
+import * as Nexus from 'nexus';
+import * as React from 'react';
+import { CurrencyTooltip } from './currency_tooltip';
+import { ProfitAndLossModel } from './profit_and_loss_model';
+import { ProfitAndLossPage } from './profit_and_loss_page';
+import { ProfitAndLossTable } from './profit_and_loss_table';
+
+interface Properties {
+
+  /** The account's base currency. */
+  currency: Nexus.Currency;
+
+  /** The database of currencies. */
+  currencyDatabase: Nexus.CurrencyDatabase;
+
+  /** The model to use. */
+  model: ProfitAndLossModel;
+}
+
+interface State {
+  status: ProfitAndLossPage.Status;
+  previousStatus: ProfitAndLossPage.Status;
+  mode: ProfitAndLossPage.Mode;
+  startDate: Beam.Date;
+  endDate: Beam.Date;
+  report: ProfitAndLossModel.Report;
+}
+
+/** Implements a controller for the ProfitAndLossPage. */
+export class ProfitAndLossController extends
+    React.Component<Properties, State> {
+  constructor(props: Properties) {
+    super(props);
+    const today = Beam.Date.today();
+    this.state = {
+      status: ProfitAndLossPage.Status.NONE,
+      previousStatus: ProfitAndLossPage.Status.NONE,
+      mode: ProfitAndLossPage.Mode.PRESET,
+      startDate: new Beam.Date(today.year, today.month, 1),
+      endDate: today,
+      report: null
+    };
+    this._pendingReportId = null;
+  }
+
+  public render(): JSX.Element {
+    const accountEntry = this.props.currencyDatabase.fromCurrency(
+      this.props.currency);
+    const report = this.state.report;
+    return (
+      <ProfitAndLossPage
+        symbol={accountEntry.sign}
+        code={accountEntry.code}
+        status={this.state.status}
+        previousStatus={this.state.previousStatus}
+        mode={this.state.mode}
+        startDate={this.state.startDate}
+        endDate={this.state.endDate}
+        totalPnl={report?.totalProfitAndLoss.toString() ?? ''}
+        totalFees={report?.totalFees.toString() ?? ''}
+        totalVolume={report?.totalVolume.toLocaleString() ?? ''}
+        currencies={report ? this.toCurrencyEntries(report.currencies) : []}
+        foreignCurrencies={report ?
+          this.toExchangeRates(report.exchangeRates) : []}
+        filepath={report?.filepath ?? ''}
+        onModeChange={this.onModeChange}
+        onStartDateChange={this.onStartDateChange}
+        onEndDateChange={this.onEndDateChange}
+        onSubmit={this.onSubmit}
+        onCancel={this.onCancel}/>);
+  }
+
+  public async componentDidMount(): Promise<void> {
+    await this.props.model.load();
+  }
+
+  private onModeChange = (mode: ProfitAndLossPage.Mode) => {
+    this.setState({mode});
+  }
+
+  private onStartDateChange = (startDate: Beam.Date) => {
+    this.setState({startDate});
+  }
+
+  private onEndDateChange = (endDate: Beam.Date) => {
+    this.setState({endDate});
+  }
+
+  private onSubmit = async (start: Beam.Date, end: Beam.Date) => {
+    this.setState(state => ({
+      previousStatus: state.status,
+      status: ProfitAndLossPage.Status.IN_PROGRESS,
+      startDate: start,
+      endDate: end
+    }));
+    try {
+      const id = await this.props.model.startReport(start, end);
+      this._pendingReportId = id;
+      const report = await this.props.model.awaitReport(id);
+      this._pendingReportId = null;
+      this.setState({
+        status: ProfitAndLossPage.Status.READY,
+        report
+      });
+    } catch {
+      if(this._pendingReportId !== null) {
+        this._pendingReportId = null;
+        this.setState({status: ProfitAndLossPage.Status.ERROR});
+      }
+    }
+  }
+
+  private onCancel = async () => {
+    const id = this._pendingReportId;
+    this._pendingReportId = null;
+    this.setState(state => ({
+      status: state.previousStatus
+    }));
+    if(id !== null) {
+      await this.props.model.cancelReport(id);
+    }
+  }
+
+  private toCurrencyEntries(
+      entries: ProfitAndLossModel.CurrencyEntry[]):
+      ProfitAndLossPage.CurrencyEntry[] {
+    return entries.map(entry => {
+      const currencyEntry = this.props.currencyDatabase.fromCurrency(
+        entry.currency);
+      return {
+        symbol: currencyEntry.sign,
+        code: currencyEntry.code,
+        totalPnl: entry.totalProfitAndLoss.toString(),
+        totalVolume: entry.totalVolume.toLocaleString(),
+        totalFees: entry.totalFees.toString(),
+        securities: this.toSecurities(entry.securities)
+      };
+    });
+  }
+
+  private toSecurities(entries: ProfitAndLossModel.SecurityEntry[]):
+      ProfitAndLossTable.Security[] {
+    return entries.map(entry => ({
+      symbol: entry.security.toString(),
+      volume: entry.volume.toLocaleString(),
+      fees: entry.fees.toString(),
+      pnl: entry.profitAndLoss.toString()
+    }));
+  }
+
+  private toExchangeRates(
+      rates: Nexus.ExchangeRate[]): CurrencyTooltip.ExchangeRate[] {
+    return rates.map(rate => {
+      const entry = this.props.currencyDatabase.fromCurrency(
+        rate.pair.base);
+      return {
+        code: entry.code,
+        rate: rate.rate.valueOf().toFixed(2)
+      };
+    });
+  }
+
+  private _pendingReportId: number;
+}

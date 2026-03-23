@@ -1,18 +1,18 @@
 {
   "compilerOptions": {
-    "declaration": true,
-    "esModuleInterop": true,
     "experimentalDecorators": true,
+    "jsx": "react",
     "module": "commonjs",
     "noEmitOnError": true,
     "noImplicitAny": true,
-    "outDir": "./library",
+    "outDir": "./application",
     "preserveConstEnums": true,
     "removeComments": true,
     "sourceMap": true,
     "target": "es2017"
   },
   "include": [
-    "./source/*.ts"
+    "./source/*.ts",
+    "./source/*.tsx"
   ]
 }

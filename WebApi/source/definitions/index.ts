@@ -1,5 +1,7 @@
 export * from './country';
 export * from './currency';
+export * from './currency_pair';
+export * from './exchange_rate';
 export * from './money';
 export * from './region';
 export * from './security';

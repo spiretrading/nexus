@@ -5,7 +5,7 @@ CALL :CheckCache "nexus_webapi"
 IF ERRORLEVEL 1 EXIT /B 0
 CALL :AddRepo "Beam" ^
   "https://www.github.com/spiretrading/beam" ^
-  "93506e0493116461968163f00357ebca6b732eb2"
+  "e3c370339d8d40c8f2d19550cd6fb44659e5ef94"
 CALL :InstallRepos || EXIT /B 1
 CALL :Commit
 EXIT /B !ERRORLEVEL!
