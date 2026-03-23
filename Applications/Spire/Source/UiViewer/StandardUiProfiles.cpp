@@ -4196,13 +4196,14 @@ UiProfile Spire::make_table_header_profile() {
     header->connect_sort_signal(
       profile.make_event_slot<int, TableHeaderItem::Order>(
         "Sort", to_string_converter(get_order_property())));
-    header->connect_toggle_filter_signal(
-      profile.make_event_slot<int, bool>("Filter",
-        [] (auto triggered) {
-          if(triggered) {
-            return "True";
+    header->connect_filter_open_signal(
+      profile.make_event_slot<int, bool>("FilterOpen",
+        [] (auto index, auto is_open) {
+          auto result = QString("Column %1 ").arg(index);
+          if(is_open) {
+            return result + "True";
           }
-          return "False";
+          return result + "False";
         }));
       return header;
     });
@@ -4226,7 +4227,7 @@ UiProfile Spire::make_table_header_item_profile() {
   properties.push_back(
     make_standard_enum_property("filter", get_filter_property()));
   properties.push_back(make_standard_property<bool>("is_resizeable", true));
-  properties.push_back(make_standard_property<bool>("is_filtered", false));
+  properties.push_back(make_standard_property<bool>("is_filter_open", false));
   auto profile = UiProfile("TableHeaderItem", properties, [=] (auto& profile) {
     auto& name = get<QString>("name", profile.get_properties());
     auto& short_name = get<QString>("short_name", profile.get_properties());
@@ -4258,12 +4259,12 @@ UiProfile Spire::make_table_header_item_profile() {
       get<TableFilter::Filter>("filter", profile.get_properties()));
     link(&TableHeaderItem::is_resizeable, &TableHeaderItem::set_is_resizeable,
       *item, get<bool>("is_resizeable", profile.get_properties()));
-    link(item->is_filtered(),
-      get<bool>("is_filtered", profile.get_properties()));
+    link(item->is_filter_open(),
+      get<bool>("is_filter_open", profile.get_properties()));
     item->connect_sort_signal(profile.make_event_slot<TableHeaderItem::Order>(
       "Sort", to_string_converter(get_order_property())));
-    item->is_filtered()->connect_update_signal(
-      profile.make_event_slot<bool>("Filtered"));
+    item->is_filter_open()->connect_update_signal(
+      profile.make_event_slot<bool>("FilterOpen"));
     return item;
   });
   return profile;

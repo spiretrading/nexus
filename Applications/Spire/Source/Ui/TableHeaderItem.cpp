@@ -278,7 +278,7 @@ TableHeaderItem::TableHeaderItem(
     std::shared_ptr<ValueModel<Model>> model, QWidget* parent)
     : QWidget(parent),
       m_model(std::move(model)),
-      m_is_filtered(std::make_shared<LocalBooleanModel>(false)),
+      m_is_filter_open(std::make_shared<LocalBooleanModel>(false)),
       m_click_observer(*this),
       m_is_resizeable(true),
       m_is_resizing(false) {
@@ -335,11 +335,11 @@ TableHeaderItem::TableHeaderItem(
   on_update(m_model->get());
   on_label_style();
   on_label_name_update(m_name_label->get_current()->get());
-  on_filter_checked(m_is_filtered->get());
+  on_filter_checked(m_is_filter_open->get());
   if(m_is_resizeable) {
     match(*this, Resizeable());
   }
-  m_is_filtered->connect_update_signal(
+  m_is_filter_open->connect_update_signal(
     std::bind_front(&TableHeaderItem::on_filter_checked, this));
   m_connection = m_model->connect_update_signal(
     std::bind_front(&TableHeaderItem::on_update, this));
@@ -356,8 +356,8 @@ const std::shared_ptr<ValueModel<TableHeaderItem::Model>>&
   return m_model;
 }
 
-const std::shared_ptr<BooleanModel>& TableHeaderItem::is_filtered() const {
-  return m_is_filtered;
+const std::shared_ptr<BooleanModel>& TableHeaderItem::is_filter_open() const {
+  return m_is_filter_open;
 }
 
 bool TableHeaderItem::is_resizeable() const {
@@ -418,13 +418,13 @@ void TableHeaderItem::keyPressEvent(QKeyEvent* event) {
         (event->modifiers() & Qt::ControlModifier) &&
         (event->modifiers() & Qt::ShiftModifier)) {
       event->accept();
-      if(!m_is_filtered->get()) {
-        m_is_filtered->set(true);
+      if(!m_is_filter_open->get()) {
+        m_is_filter_open->set(true);
       }
     } else if(event->key() == Qt::Key_Escape) {
       event->accept();
-      if(m_is_filtered->get()) {
-        m_is_filtered->set(false);
+      if(m_is_filter_open->get()) {
+        m_is_filter_open->set(false);
       }
     }
   }
@@ -458,9 +458,10 @@ void TableHeaderItem::on_update(const Model& model) {
       m_controls_layout->removeWidget(m_filter_control);
       m_filter_control->deleteLater();
     }
-    m_is_filtered->set(false);
+    m_is_filter_open->set(false);
   } else if(!m_filter_control) {
-    auto [filter_control, filter_button] = make_filter_control(m_is_filtered);
+    auto [filter_control, filter_button] =
+      make_filter_control(m_is_filter_open);
     m_filter_control = filter_control;
     link(*this, *filter_button);
     link(*this, *m_filter_control);

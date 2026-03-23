@@ -83,8 +83,11 @@ namespace Spire {
       /** Returns this item's model. */
       const std::shared_ptr<ValueModel<Model>>& get_model() const;
 
-      /** Returns the boolean model used to track the filter state. */
-      const std::shared_ptr<BooleanModel>& is_filtered() const;
+      /**
+       * Returns the boolean model used to track whether the filter panel is
+       * currently open.
+       */
+      const std::shared_ptr<BooleanModel>& is_filter_open() const;
 
       /** Returns <code>true</code> iff this item is resizeable. */
       bool is_resizeable() const;
@@ -105,7 +108,7 @@ namespace Spire {
     private:
       mutable SortSignal m_sort_signal;
       std::shared_ptr<ValueModel<Model>> m_model;
-      std::shared_ptr<BooleanModel> m_is_filtered;
+      std::shared_ptr<BooleanModel> m_is_filter_open;
       ClickObserver m_click_observer;
       bool m_is_resizeable;
       ResponsiveLabel* m_name_label;

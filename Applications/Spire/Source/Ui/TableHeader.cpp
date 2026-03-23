@@ -39,8 +39,8 @@ TableHeader::TableHeader(
     }
     item->set_is_resizeable(!is_last);
     item->connect_sort_signal(std::bind_front(&TableHeader::on_sort, this, i));
-    item->is_filtered()->connect_update_signal(
-      std::bind_front(&TableHeader::on_filtered, this, i));
+    item->is_filter_open()->connect_update_signal(
+      std::bind_front(&TableHeader::on_filter_open, this, i));
     layout->addWidget(item);
     m_item_views.push_back(item);
     link(*this, *item);
@@ -89,8 +89,8 @@ connection TableHeader::connect_sort_signal(
   return m_sort_signal.connect(slot);
 }
 
-connection TableHeader::connect_toggle_filter_signal(
-    const ToggleFilterSignal::slot_type& slot) const {
+connection TableHeader::connect_filter_open_signal(
+    const FilterOpenSignal::slot_type& slot) const {
   return m_filter_signal.connect(slot);
 }
 
@@ -120,6 +120,6 @@ void TableHeader::on_sort(int index, TableHeaderItem::Order order) {
   m_sort_signal(index, order);
 }
 
-void TableHeader::on_filtered(int index, bool is_filtered) {
-  m_filter_signal(index, is_filtered);
+void TableHeader::on_filter_open(int index, bool is_open) {
+  m_filter_signal(index, is_open);
 }
