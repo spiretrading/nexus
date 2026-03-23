@@ -854,6 +854,19 @@ const profitAndLossTable =
       securities: PNL_TABLE_SAMPLE_SECURITIES
     }), 600);
 
+const profitAndLossItem =
+  new ComponentSchema('ProfitAndLossItem',
+    [new PropertySchema('symbol', '$', TextInput),
+      new PropertySchema('code', 'USD', TextInput),
+      new PropertySchema('totalPnl', '855.92', TextInput),
+      new PropertySchema('totalVolume', '2,850', TextInput),
+      new PropertySchema('totalFees', '28.50', TextInput)],
+    [],
+    (props: any) => React.createElement(WebPortal.ProfitAndLossItem, {
+      ...props,
+      securities: PNL_TABLE_SAMPLE_SECURITIES
+    }), 800);
+
 const reportStatusIndicator =
   new ComponentSchema('ReportStatusIndicator',
     [new PropertySchema('id', 'report-status', TextInput),
@@ -883,4 +896,5 @@ export const componentSections = [
     requestFilterModal, requestItem, requestItemPlaceholder,
     requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
-    profitAndLossHeader, profitAndLossTable, reportStatusIndicator])];
+    profitAndLossHeader, profitAndLossItem, profitAndLossTable,
+    reportStatusIndicator])];
