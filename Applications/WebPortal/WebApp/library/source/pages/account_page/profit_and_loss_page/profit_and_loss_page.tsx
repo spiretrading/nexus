@@ -71,10 +71,13 @@ interface Properties {
 /** Displays the profit and loss report page. */
 export function ProfitAndLossPage(props: Properties) {
   const isLoading = props.status === ProfitAndLossPage.Status.IN_PROGRESS;
+  const isDateRangeValid = props.endDate.compare(props.startDate) >= 0;
   const filename = `pl-${props.startDate.toJson()}-${props.endDate.toJson()}.csv`;
   const onFormSubmit = (event: React.FormEvent) => {
     event.preventDefault();
-    props.onSubmit?.(props.startDate, props.endDate);
+    if(isDateRangeValid) {
+      props.onSubmit?.(props.startDate, props.endDate);
+    }
   };
   return (
     <PageLayout>
@@ -98,6 +101,7 @@ export function ProfitAndLossPage(props: Properties) {
               filepath={props.filepath}
               filename={filename}
               isLoading={isLoading}
+              isDateRangeValid={isDateRangeValid}
               onCancel={props.onCancel}/>
           </form>
         </FormContainer>
@@ -120,6 +124,7 @@ export function ProfitAndLossPage(props: Properties) {
         currencies={props.currencies}
         filepath={props.filepath}
         filename={filename}
+        isDateRangeValid={isDateRangeValid}
         startDate={props.startDate}
         endDate={props.endDate}
         onSubmit={props.onSubmit}
@@ -149,14 +154,20 @@ function DateFilterArea(props: {
     onEndDateChange?: (date: Beam.Date) => void;
   }) {
   const isCustom = props.mode === ProfitAndLossPage.Mode.CUSTOM;
-  const onSelectChange = (value: string) => {
-    if(value === 'custom') {
-      props.onModeChange?.(ProfitAndLossPage.Mode.CUSTOM);
-    } else {
-      props.onModeChange?.(ProfitAndLossPage.Mode.PRESET);
-    }
+  const MODE_MAP: {[key: string]: ProfitAndLossPage.Mode} = {
+    'this-month': ProfitAndLossPage.Mode.THIS_MONTH,
+    'last-month': ProfitAndLossPage.Mode.LAST_MONTH,
+    'custom': ProfitAndLossPage.Mode.CUSTOM
   };
-  const selectValue = isCustom ? 'custom' : 'this-month';
+  const VALUE_MAP: {[key: number]: string} = {
+    [ProfitAndLossPage.Mode.THIS_MONTH]: 'this-month',
+    [ProfitAndLossPage.Mode.LAST_MONTH]: 'last-month',
+    [ProfitAndLossPage.Mode.CUSTOM]: 'custom'
+  };
+  const onSelectChange = (value: string) => {
+    props.onModeChange?.(MODE_MAP[value]);
+  };
+  const selectValue = VALUE_MAP[props.mode];
   return (
     <div className={css(STYLES.dateFilterArea)}>
       <Select value={selectValue} aria-controls='custom-dates'
@@ -263,6 +274,7 @@ function ActionsAndStatus(props: {
     filepath: string;
     filename: string;
     isLoading: boolean;
+    isDateRangeValid: boolean;
     onCancel?: () => void;
   }) {
   const isReady = props.status === ProfitAndLossPage.Status.READY;
@@ -274,6 +286,7 @@ function ActionsAndStatus(props: {
       <div className={css(STYLES.buttonRow)}>
         {!props.isLoading &&
           <Button label='Apply' type='submit' style={BUTTON_STYLE}
+            disabled={!props.isDateRangeValid}
             aria-describedby={isStale ? 'report-status' : undefined}/>}
         {props.isLoading &&
           <Button label='Cancel' type='button' style={BUTTON_STYLE}
@@ -295,6 +308,7 @@ function ActionSheet(props: {
     currencies: ProfitAndLossPage.CurrencyEntry[];
     filepath: string;
     filename: string;
+    isDateRangeValid: boolean;
     startDate: Beam.Date;
     endDate: Beam.Date;
     onSubmit?: (start: Beam.Date, end: Beam.Date) => void;
@@ -309,7 +323,9 @@ function ActionSheet(props: {
     return null;
   }
   const onApply = () => {
-    props.onSubmit?.(props.startDate, props.endDate);
+    if(props.isDateRangeValid) {
+      props.onSubmit?.(props.startDate, props.endDate);
+    }
   };
   const fullWidthStyle = css(STYLES.actionSheetButton);
   const fullWidthDownload = css(STYLES.downloadLink, STYLES.actionSheetButton);
@@ -326,6 +342,7 @@ function ActionSheet(props: {
         </a>}
       {isStale && hasData && <>
         <Button label='Apply' type='button'
+          disabled={!props.isDateRangeValid}
           className={fullWidthStyle} onClick={onApply}/>
         <div style={ACTION_SHEET_GAP}/>
         <a download={props.filename} href={props.filepath}
@@ -335,9 +352,11 @@ function ActionSheet(props: {
       </>}
       {isStale && !hasData &&
         <Button label='Apply' type='button'
+          disabled={!props.isDateRangeValid}
           className={fullWidthStyle} onClick={onApply}/>}
       {isNone &&
         <Button label='Apply' type='button'
+          disabled={!props.isDateRangeValid}
           className={fullWidthStyle} onClick={onApply}/>}
     </section>);
 }
@@ -448,8 +467,11 @@ export namespace ProfitAndLossPage {
   /** The input mode for the date range. */
   export enum Mode {
 
-    /** Start and end date determined by a selected preset. */
-    PRESET,
+    /** The current calendar month. */
+    THIS_MONTH,
+
+    /** The previous calendar month. */
+    LAST_MONTH,
 
     /** Start and end date are user-specified. */
     CUSTOM

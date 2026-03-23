@@ -36,7 +36,7 @@ export class ProfitAndLossController extends
     this.state = {
       status: ProfitAndLossPage.Status.NONE,
       previousStatus: ProfitAndLossPage.Status.NONE,
-      mode: ProfitAndLossPage.Mode.PRESET,
+      mode: ProfitAndLossPage.Mode.THIS_MONTH,
       startDate: new Beam.Date(today.year, today.month, 1),
       endDate: today,
       report: null
@@ -81,15 +81,43 @@ export class ProfitAndLossController extends
   }
 
   private onModeChange = (mode: ProfitAndLossPage.Mode) => {
-    this.setState({mode});
+    const status = this.getStaleStatus();
+    if(mode === ProfitAndLossPage.Mode.THIS_MONTH) {
+      const today = Beam.Date.today();
+      this.setState({
+        mode, status,
+        startDate: new Beam.Date(today.year, today.month, 1),
+        endDate: today
+      });
+    } else if(mode === ProfitAndLossPage.Mode.LAST_MONTH) {
+      const today = Beam.Date.today();
+      const year = today.month === 1 ? today.year - 1 : today.year;
+      const month = today.month === 1 ? 12 : today.month - 1;
+      const lastDay = new globalThis.Date(year, month, 0).getDate();
+      this.setState({
+        mode, status,
+        startDate: new Beam.Date(year, month, 1),
+        endDate: new Beam.Date(year, month, lastDay)
+      });
+    } else {
+      this.setState({mode, status});
+    }
   }
 
   private onStartDateChange = (startDate: Beam.Date) => {
-    this.setState({startDate});
+    this.setState({startDate, status: this.getStaleStatus()});
   }
 
   private onEndDateChange = (endDate: Beam.Date) => {
-    this.setState({endDate});
+    this.setState({endDate, status: this.getStaleStatus()});
+  }
+
+  private getStaleStatus(): ProfitAndLossPage.Status {
+    if(this.state.report !== null &&
+        this.state.status !== ProfitAndLossPage.Status.IN_PROGRESS) {
+      return ProfitAndLossPage.Status.STALE;
+    }
+    return this.state.status;
   }
 
   private onSubmit = async (start: Beam.Date, end: Beam.Date) => {
