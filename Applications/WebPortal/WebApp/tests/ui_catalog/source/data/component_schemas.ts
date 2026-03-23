@@ -835,6 +835,25 @@ const profitAndLossHeader =
       foreignCurrencies: PNL_HEADER_SAMPLE_RATES
     }), 800);
 
+const PNL_TABLE_SAMPLE_SECURITIES: WebPortal.ProfitAndLossTable.Security[] = [
+  {symbol: 'AAPL', volume: '1,250', fees: '12.50', pnl: '345.67'},
+  {symbol: 'MSFT', volume: '800', fees: '8.00', pnl: '-123.45'},
+  {symbol: 'GOOG', volume: '500', fees: '5.00', pnl: '678.90'},
+  {symbol: 'AMZN', volume: '300', fees: '3.00', pnl: '-45.20'}
+];
+
+const profitAndLossTable =
+  new ComponentSchema('ProfitAndLossTable',
+    [new PropertySchema('symbol', '$', TextInput),
+      new PropertySchema('totalPnl', '855.92', TextInput),
+      new PropertySchema('totalVolume', '2,850', TextInput),
+      new PropertySchema('totalFees', '28.50', TextInput)],
+    [],
+    (props: any) => React.createElement(WebPortal.ProfitAndLossTable, {
+      ...props,
+      securities: PNL_TABLE_SAMPLE_SECURITIES
+    }), 600);
+
 const reportStatusIndicator =
   new ComponentSchema('ReportStatusIndicator',
     [new PropertySchema('id', 'report-status', TextInput),
@@ -864,4 +883,4 @@ export const componentSections = [
     requestFilterModal, requestItem, requestItemPlaceholder,
     requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
-    profitAndLossHeader, reportStatusIndicator])];
+    profitAndLossHeader, profitAndLossTable, reportStatusIndicator])];
