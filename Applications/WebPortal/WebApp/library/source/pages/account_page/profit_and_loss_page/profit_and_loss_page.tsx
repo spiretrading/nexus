@@ -132,13 +132,32 @@ export function ProfitAndLossPage(props: Properties) {
     </PageLayout>);
 }
 
-/** Div:FormContainer — wraps the form with overflow control. */
+/** Div:FormContainer — wraps the form with overflow control.
+ *  Animates max-height based on the form's scrollHeight. */
 function FormContainer(props: {
     children: React.ReactNode;
   }) {
+  const containerRef = React.useRef<HTMLDivElement>(null);
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  React.useEffect(() => {
+    const container = containerRef.current;
+    const content = contentRef.current;
+    if(!container || !content) {
+      return;
+    }
+    const observer = new ResizeObserver(() => {
+      const height = content.scrollHeight;
+      container.style.maxHeight = `${height}px`;
+    });
+    container.style.maxHeight = `${content.scrollHeight}px`;
+    observer.observe(content);
+    return () => observer.disconnect();
+  }, []);
   return (
-    <div className={css(STYLES.formContainer)}>
-      {props.children}
+    <div ref={containerRef} className={css(STYLES.formContainer)}>
+      <div ref={contentRef}>
+        {props.children}
+      </div>
     </div>);
 }
 
