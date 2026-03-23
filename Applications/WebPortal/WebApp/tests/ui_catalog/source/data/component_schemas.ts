@@ -867,6 +867,12 @@ const profitAndLossItem =
       securities: PNL_TABLE_SAMPLE_SECURITIES
     }), 800);
 
+const profitAndLossItemPlaceholder =
+  new ComponentSchema('ProfitAndLossItemPlaceholder',
+    [],
+    [],
+    WebPortal.ProfitAndLossItemPlaceholder);
+
 const reportStatusIndicator =
   new ComponentSchema('ReportStatusIndicator',
     [new PropertySchema('id', 'report-status', TextInput),
@@ -896,5 +902,5 @@ export const componentSections = [
     requestFilterModal, requestItem, requestItemPlaceholder,
     requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
-    profitAndLossHeader, profitAndLossItem, profitAndLossTable,
-    reportStatusIndicator])];
+    profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
+    profitAndLossTable, reportStatusIndicator])];
