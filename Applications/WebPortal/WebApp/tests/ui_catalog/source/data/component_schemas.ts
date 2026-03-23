@@ -788,6 +788,23 @@ const segmentedSpinner =
     [],
     WebPortal.SegmentedSpinner);
 
+const CURRENCY_TOOLTIP_SAMPLE_RATES:
+    WebPortal.CurrencyTooltip.ExchangeRate[] = [
+  {code: 'AUD', rate: '0.88'},
+  {code: 'EUR', rate: '1.51'},
+  {code: 'GBP', rate: '1.76'},
+  {code: 'USD', rate: '1.36'}
+];
+
+const currencyTooltip =
+  new ComponentSchema('CurrencyTooltip',
+    [new PropertySchema('accountCurrency', 'CAD', TextInput)],
+    [],
+    (props: any) => React.createElement(WebPortal.CurrencyTooltip, {
+      ...props,
+      exchangeRates: CURRENCY_TOOLTIP_SAMPLE_RATES
+    }));
+
 const metric =
   new ComponentSchema('Metric',
     [new PropertySchema('id', 'total-pnl', TextInput),
@@ -826,5 +843,5 @@ export const componentSections = [
     requestDetailPage, requestDirectoryPage, requestEffectiveDate,
     requestFilterModal, requestItem, requestItemPlaceholder,
     requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
-  new ComponentSection('Profit and Loss Page', [metric,
+  new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     reportStatusIndicator])];
