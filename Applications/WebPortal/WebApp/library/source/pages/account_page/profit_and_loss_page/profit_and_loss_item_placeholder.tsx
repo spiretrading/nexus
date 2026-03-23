@@ -7,14 +7,22 @@ export function ProfitAndLossItemPlaceholder() {
   return (
     <div className={css(STYLES.container)}>
       <DropDownButton isExpanded={false}/>
-      <Skeleton style={SKELETON_STYLE}/>
+      <Skeleton style={CODE_SKELETON}/>
+      <div className={css(STYLES.filler)}/>
+      <Skeleton style={PNL_SKELETON}/>
     </div>);
 }
 
-const SKELETON_STYLE: React.CSSProperties = {
-  width: '100%',
-  height: '16px',
-  flex: 1
+const CODE_SKELETON: React.CSSProperties = {
+  width: '40px',
+  height: '20px',
+  flexShrink: 0
+};
+
+const PNL_SKELETON: React.CSSProperties = {
+  width: '80px',
+  height: '20px',
+  flexShrink: 0
 };
 
 const STYLES = StyleSheet.create({
@@ -22,8 +30,11 @@ const STYLES = StyleSheet.create({
     display: 'flex',
     alignItems: 'center',
     gap: '18px',
-    height: '40px',
-    pointerEvents: 'none',
-    opacity: 0.5
+    height: '40px'
+  },
+  filler: {
+    flexGrow: 1,
+    flexShrink: 1,
+    flexBasis: '70px'
   }
 });
