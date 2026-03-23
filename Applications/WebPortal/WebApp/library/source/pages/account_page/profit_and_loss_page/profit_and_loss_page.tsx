@@ -170,12 +170,14 @@ function DateFilterArea(props: {
   const selectValue = VALUE_MAP[props.mode];
   return (
     <div className={css(STYLES.dateFilterArea)}>
-      <Select value={selectValue} aria-controls='custom-dates'
-          className={css(STYLES.select)} onChange={onSelectChange}>
-        <option value='this-month'>This Month</option>
-        <option value='last-month'>Last Month</option>
-        <option value='custom'>Custom</option>
-      </Select>
+      <div className={css(STYLES.selectWrapper)}>
+        <Select value={selectValue} aria-controls='custom-dates'
+            style={{width: '100%'}} onChange={onSelectChange}>
+          <option value='this-month'>This Month</option>
+          <option value='last-month'>Last Month</option>
+          <option value='custom'>Custom</option>
+        </Select>
+      </div>
       {isCustom &&
         <CustomDates
           startDate={props.startDate}
@@ -217,17 +219,23 @@ function DateInputs(props: {
       <div className={css(STYLES.dateGroup)}>
         <label htmlFor='start-date'
           className={css(STYLES.dateLabel)}>Start</label>
-        <DateInput id='start-date' value={props.startDate}
-          className={css(STYLES.dateInput)}
-          onChange={props.onStartDateChange}/>
+        <div className={css(STYLES.dateInputWrapper)}>
+          <DateInput id='start-date' value={props.startDate}
+            style={{width: '100%'}}
+            onChange={props.onStartDateChange}/>
+        </div>
       </div>
-      <div className={css(STYLES.dateSpacer)}/>
+      <div className={css(STYLES.dateGroupGapNarrow)}/>
+      <div className={css(STYLES.dateGroupGapMedium)}/>
+      <div className={css(STYLES.dateGroupGapWide)}/>
       <div className={css(STYLES.dateGroup)}>
         <label htmlFor='end-date'
           className={css(STYLES.dateLabel)}>End</label>
-        <DateInput id='end-date' value={props.endDate}
-          className={css(STYLES.dateInput)}
-          onChange={props.onEndDateChange}/>
+        <div className={css(STYLES.dateInputWrapper)}>
+          <DateInput id='end-date' value={props.endDate}
+            style={{width: '100%'}}
+            onChange={props.onEndDateChange}/>
+        </div>
       </div>
     </div>);
 }
@@ -551,7 +559,7 @@ const STYLES = StyleSheet.create({
       alignItems: 'center'
     }
   },
-  select: {
+  selectWrapper: {
     width: '100%',
     '@media (min-width: 768px) and (max-width: 1035px)': {
       width: '246px'
@@ -559,7 +567,7 @@ const STYLES = StyleSheet.create({
     '@media (min-width: 1036px)': {
       width: '200px'
     }
-  } as any,
+  },
   customDates: {
     paddingTop: '18px',
     '@media (min-width: 768px) and (max-width: 1035px)': {
@@ -573,14 +581,9 @@ const STYLES = StyleSheet.create({
   dateInputs: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '0px',
-    '@media (min-width: 768px) and (max-width: 1035px)': {
-      gap: '8px'
-    },
     '@media (min-width: 1036px)': {
       flexDirection: 'row',
-      alignItems: 'center',
-      gap: '18px'
+      alignItems: 'center'
     }
   },
   dateGroup: {
@@ -610,17 +613,38 @@ const STYLES = StyleSheet.create({
       paddingInlineStart: 0
     }
   },
-  dateSpacer: {
+  dateGroupGapNarrow: {
     height: '20px',
     '@media (min-width: 768px)': {
       display: 'none'
     }
   },
-  dateInput: {
+  dateGroupGapMedium: {
+    height: '8px',
+    '@media (max-width: 767px)': {
+      display: 'none'
+    },
     '@media (min-width: 1036px)': {
-      width: '150px'
+      display: 'none'
     }
-  } as any,
+  },
+  dateGroupGapWide: {
+    width: '18px',
+    flexShrink: 0,
+    '@media (max-width: 1035px)': {
+      display: 'none'
+    }
+  },
+  dateInputWrapper: {
+    '@media (min-width: 768px) and (max-width: 1035px)': {
+      flex: '1 1 0',
+      minWidth: 0
+    },
+    '@media (min-width: 1036px)': {
+      width: '150px',
+      flexShrink: 0
+    }
+  },
   mobileStatusFeedback: {
     '@media (min-width: 768px)': {
       display: 'none'
@@ -662,7 +686,7 @@ const STYLES = StyleSheet.create({
     '@media (min-width: 768px)': {
       display: 'none'
     }
-  } as any,
+  },
   actionSheetButton: {
     width: '100%'
   },
@@ -701,7 +725,7 @@ const STYLES = StyleSheet.create({
     margin: 0,
     listStyle: 'none',
     containerType: 'inline-size'
-  } as any,
+  },
   listItem: {
     padding: 0
   }

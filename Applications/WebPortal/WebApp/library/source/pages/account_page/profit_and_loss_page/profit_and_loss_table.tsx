@@ -106,6 +106,7 @@ export namespace ProfitAndLossTable {
 
 const STYLES = StyleSheet.create({
   container: {
+    width: '100%',
     containerType: 'inline-size'
   },
   table: {
