@@ -457,6 +457,7 @@ void TableHeaderItem::on_update(const Model& model) {
     if(m_filter_control) {
       m_controls_layout->removeWidget(m_filter_control);
       m_filter_control->deleteLater();
+      m_filter_control = nullptr;
     }
     m_is_filter_open->set(false);
   } else if(!m_filter_control) {
