@@ -1,7 +1,8 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { Button, DateInput, Select } from '../../..';
+import { Button, DateInput, EmptyMessage, ErrorMessage, PageLayout,
+  Select } from '../../..';
 import { CurrencyTooltip } from './currency_tooltip';
 import { ProfitAndLossHeader } from './profit_and_loss_header';
 import { ProfitAndLossItem } from './profit_and_loss_item';
@@ -76,7 +77,7 @@ export function ProfitAndLossPage(props: Properties) {
     props.onSubmit?.(props.startDate, props.endDate);
   };
   return (
-    <div className={css(STYLES.page)}>
+    <PageLayout>
       <main className={css(STYLES.main)}>
         <FormContainer>
           <form aria-label='Report Controls'
@@ -123,7 +124,7 @@ export function ProfitAndLossPage(props: Properties) {
         endDate={props.endDate}
         onSubmit={props.onSubmit}
         onCancel={props.onCancel}/>
-    </div>);
+    </PageLayout>);
 }
 
 /** Div:FormContainer — wraps the form with overflow control. */
@@ -302,7 +303,6 @@ function ActionSheet(props: {
   const isLoading = props.status === ProfitAndLossPage.Status.IN_PROGRESS;
   const isReady = props.status === ProfitAndLossPage.Status.READY;
   const isStale = props.status === ProfitAndLossPage.Status.STALE;
-  const isError = props.status === ProfitAndLossPage.Status.ERROR;
   const isNone = props.status === ProfitAndLossPage.Status.NONE;
   const hasData = props.currencies.length > 0;
   if(isReady && !hasData) {
@@ -316,9 +316,6 @@ function ActionSheet(props: {
   return (
     <section aria-label='Report Actions'
         className={css(STYLES.actionSheet)}>
-      {isError &&
-        <Button label='Retry' type='button'
-          className={fullWidthStyle} onClick={onApply}/>}
       {isLoading &&
         <Button label='Cancel' type='button'
           className={fullWidthStyle} onClick={props.onCancel}/>}
@@ -367,22 +364,22 @@ function ProfitAndLossContent(props: {
   const hasData = props.currencies.length > 0;
   if(isNone || (isStale && !hasData)) {
     return (
-      <div className={css(STYLES.emptyMessage)}>
-        Click Apply to generate a report for the selected period.
-      </div>);
+      <EmptyMessage
+        message='Click Apply to generate a report for the selected period.'/>);
   }
   if(isReady && !hasData) {
     return (
-      <div className={css(STYLES.emptyMessage)}>
-        There is no activity for the selected period.
-      </div>);
+      <EmptyMessage
+        message='There is no activity for the selected period.'/>);
   }
   if(isError) {
+    const onRetry = () => {
+      props.onSubmit?.(props.startDate, props.endDate);
+    };
     return (
       <ErrorMessage
-        startDate={props.startDate}
-        endDate={props.endDate}
-        onSubmit={props.onSubmit}/>);
+        message='There was an error generating the report.'
+        onRetry={onRetry}/>);
   }
   return (
     <section aria-label='Profit and Loss Report' aria-live='polite'
@@ -400,28 +397,6 @@ function ProfitAndLossContent(props: {
         currencies={props.currencies}
         isLoading={isLoading}/>
     </section>);
-}
-
-/** Div:ErrorMessage — error display with icon, text, and retry. */
-function ErrorMessage(props: {
-    startDate: Beam.Date;
-    endDate: Beam.Date;
-    onSubmit?: (start: Beam.Date, end: Beam.Date) => void;
-  }) {
-  const onRetry = () => {
-    props.onSubmit?.(props.startDate, props.endDate);
-  };
-  return (
-    <div className={css(STYLES.errorMessage)}>
-      <img
-        src='resources/account_page/profit_and_loss_page/error.svg'
-        style={ERROR_ICON_STYLE}/>
-      <span className={css(STYLES.errorText)}>
-        There was an error generating the report.
-      </span>
-      <Button label='Retry' type='button' onClick={onRetry}
-        className={css(STYLES.errorRetryButton)}/>
-    </div>);
 }
 
 /** Ul:ProfitAndLossList — list of currency items or placeholders. */
@@ -503,11 +478,6 @@ export namespace ProfitAndLossPage {
   }
 }
 
-const ERROR_ICON_STYLE: React.CSSProperties = {
-  width: '44px',
-  height: '44px'
-};
-
 const BUTTON_STYLE: React.CSSProperties = {
   width: '140px'
 };
@@ -525,22 +495,11 @@ const CONTENT_SPACING: React.CSSProperties = {
 };
 
 const STYLES = StyleSheet.create({
-  page: {
-    display: 'flex',
-    justifyContent: 'center'
-  },
   main: {
-    width: 'min(100%, 460px)',
     padding: '18px 18px 40px',
     fontFamily: "'Roboto', system-ui, sans-serif",
     fontWeight: 400,
-    color: '#333333',
-    '@media (min-width: 768px) and (max-width: 1035px)': {
-      width: '768px'
-    },
-    '@media (min-width: 1036px)': {
-      width: '1036px'
-    }
+    color: '#333333'
   },
   formContainer: {
     overflow: 'hidden',
@@ -723,29 +682,5 @@ const STYLES = StyleSheet.create({
   } as any,
   listItem: {
     padding: 0
-  },
-  emptyMessage: {
-    textAlign: 'center',
-    padding: '80px 0'
-  },
-  errorMessage: {
-    display: 'flex',
-    flexDirection: 'column',
-    alignItems: 'center',
-    gap: '18px',
-    padding: '40px 0',
-    '@media (min-width: 768px)': {
-      padding: '47px 0'
-    }
-  },
-  errorText: {
-    textAlign: 'center'
-  },
-  errorRetryButton: {
-    display: 'none',
-    '@media (min-width: 768px)': {
-      display: 'inline-block',
-      width: '246px'
-    }
   }
 });
