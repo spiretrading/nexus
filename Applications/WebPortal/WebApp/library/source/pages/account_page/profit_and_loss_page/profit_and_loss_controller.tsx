@@ -42,6 +42,7 @@ export class ProfitAndLossController extends
       report: null
     };
     this._pendingReportId = null;
+    this._downloadUrl = null;
   }
 
   public render(): JSX.Element {
@@ -63,7 +64,7 @@ export class ProfitAndLossController extends
         currencies={report ? this.toCurrencyEntries(report.currencies) : []}
         foreignCurrencies={report ?
           this.toExchangeRates(report.exchangeRates) : []}
-        filepath={report?.filepath ?? ''}
+        filepath={this._downloadUrl ?? ''}
         onModeChange={this.onModeChange}
         onStartDateChange={this.onStartDateChange}
         onEndDateChange={this.onEndDateChange}
@@ -73,6 +74,10 @@ export class ProfitAndLossController extends
 
   public async componentDidMount(): Promise<void> {
     await this.props.model.load();
+  }
+
+  public componentWillUnmount(): void {
+    this.revokeDownloadUrl();
   }
 
   private onModeChange = (mode: ProfitAndLossPage.Mode) => {
@@ -99,6 +104,8 @@ export class ProfitAndLossController extends
       this._pendingReportId = id;
       const report = await this.props.model.awaitReport(id);
       this._pendingReportId = null;
+      this.revokeDownloadUrl();
+      this._downloadUrl = this.createDownloadUrl(report);
       this.setState({
         status: ProfitAndLossPage.Status.READY,
         report
@@ -119,6 +126,20 @@ export class ProfitAndLossController extends
     }));
     if(id !== null) {
       await this.props.model.cancelReport(id);
+    }
+  }
+
+  private createDownloadUrl(report: ProfitAndLossModel.Report): string {
+    const csv = ProfitAndLossModel.toCsv(report, this.props.currency,
+      this.props.currencyDatabase);
+    const blob = new Blob([csv], {type: 'text/csv'});
+    return URL.createObjectURL(blob);
+  }
+
+  private revokeDownloadUrl(): void {
+    if(this._downloadUrl) {
+      URL.revokeObjectURL(this._downloadUrl);
+      this._downloadUrl = null;
     }
   }
 
@@ -162,4 +183,5 @@ export class ProfitAndLossController extends
   }
 
   private _pendingReportId: number;
+  private _downloadUrl: string;
 }

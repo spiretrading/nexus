@@ -1,162 +1,233 @@
 import * as Beam from 'beam';
+import Fraction from 'fraction.js';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
+const CAD = new Nexus.Currency(124);
+const USD = new Nexus.Currency(840);
+const AUD = new Nexus.Currency(36);
+
+const currencyDatabase = new Nexus.CurrencyDatabase();
+currencyDatabase.add(new Nexus.CurrencyDatabase.Entry(CAD, 'CAD', '$'));
+currencyDatabase.add(new Nexus.CurrencyDatabase.Entry(USD, 'USD', '$'));
+currencyDatabase.add(new Nexus.CurrencyDatabase.Entry(AUD, 'AUD', '$'));
+
+const TSX = Nexus.DefaultMarkets.TSX;
+const NASDAQ = Nexus.DefaultMarkets.NASDAQ;
+const ASX = Nexus.DefaultMarkets.ASX;
+
+const REPORT: WebPortal.ProfitAndLossModel.Report = {
+  totalProfitAndLoss: Nexus.Money.parse('7562.94'),
+  totalFees: Nexus.Money.parse('498.00'),
+  totalVolume: 49800,
+  currencies: [
+    {
+      currency: CAD,
+      totalProfitAndLoss: Nexus.Money.parse('2769.95'),
+      totalVolume: 31800,
+      totalFees: Nexus.Money.parse('318.00'),
+      securities: [
+        {security: new Nexus.Security('RY', TSX), volume: 12450,
+          fees: Nexus.Money.parse('124.50'),
+          profitAndLoss: Nexus.Money.parse('3287.15')},
+        {security: new Nexus.Security('TD', TSX), volume: 8300,
+          fees: Nexus.Money.parse('83.00'),
+          profitAndLoss: Nexus.Money.parse('-1542.80')},
+        {security: new Nexus.Security('BNS', TSX), volume: 5200,
+          fees: Nexus.Money.parse('52.00'),
+          profitAndLoss: Nexus.Money.parse('891.33')},
+        {security: new Nexus.Security('ENB', TSX), volume: 3100,
+          fees: Nexus.Money.parse('31.00'),
+          profitAndLoss: Nexus.Money.parse('445.67')},
+        {security: new Nexus.Security('CNR', TSX), volume: 2750,
+          fees: Nexus.Money.parse('27.50'),
+          profitAndLoss: Nexus.Money.parse('-312.40')}
+      ]
+    },
+    {
+      currency: USD,
+      totalProfitAndLoss: Nexus.Money.parse('3402.14'),
+      totalVolume: 12500,
+      totalFees: Nexus.Money.parse('125.00'),
+      securities: [
+        {security: new Nexus.Security('AAPL', NASDAQ), volume: 6800,
+          fees: Nexus.Money.parse('68.00'),
+          profitAndLoss: Nexus.Money.parse('2145.90')},
+        {security: new Nexus.Security('MSFT', NASDAQ), volume: 4500,
+          fees: Nexus.Money.parse('45.00'),
+          profitAndLoss: Nexus.Money.parse('1823.44')},
+        {security: new Nexus.Security('GOOGL', NASDAQ), volume: 1200,
+          fees: Nexus.Money.parse('12.00'),
+          profitAndLoss: Nexus.Money.parse('-567.20')}
+      ]
+    },
+    {
+      currency: AUD,
+      totalProfitAndLoss: Nexus.Money.parse('1390.85'),
+      totalVolume: 5500,
+      totalFees: Nexus.Money.parse('55.00'),
+      securities: [
+        {security: new Nexus.Security('BHP', ASX), volume: 3400,
+          fees: Nexus.Money.parse('34.00'),
+          profitAndLoss: Nexus.Money.parse('912.55')},
+        {security: new Nexus.Security('CBA', ASX), volume: 2100,
+          fees: Nexus.Money.parse('21.00'),
+          profitAndLoss: Nexus.Money.parse('478.30')}
+      ]
+    }
+  ],
+  exchangeRates: [
+    new Nexus.ExchangeRate(
+      new Nexus.CurrencyPair(USD, CAD), new Fraction(136, 100)),
+    new Nexus.ExchangeRate(
+      new Nexus.CurrencyPair(AUD, CAD), new Fraction(88, 100))
+  ]
+};
+
+enum TestBehavior {
+  SUCCEED,
+  FAIL,
+  HANG
+}
+
+class TestModel extends WebPortal.ProfitAndLossModel {
+  public behavior = TestBehavior.SUCCEED;
+
+  constructor(report: WebPortal.ProfitAndLossModel.Report, delay: number) {
+    super();
+    this._report = report;
+    this._delay = delay;
+    this._nextId = 1;
+    this._pending = new Map();
+  }
+
+  public async load(): Promise<void> {
+    return;
+  }
+
+  public async startReport(
+      start: Beam.Date, end: Beam.Date): Promise<number> {
+    const id = this._nextId++;
+    this._pending.set(id, {reject: null});
+    return id;
+  }
+
+  public async awaitReport(
+      id: number): Promise<WebPortal.ProfitAndLossModel.Report> {
+    const entry = this._pending.get(id);
+    if(!entry) {
+      throw new Error(`Unknown report id: ${id}`);
+    }
+    if(this.behavior === TestBehavior.HANG) {
+      await new Promise<void>((_, reject) => {
+        entry.reject = () => {
+          reject(new Error('Report cancelled.'));
+        };
+      });
+    }
+    await new Promise<void>((resolve, reject) => {
+      const timer = setTimeout(() => {
+        if(this.behavior === TestBehavior.FAIL) {
+          reject(new Error('Report failed.'));
+        } else {
+          resolve();
+        }
+      }, this._delay);
+      entry.reject = () => {
+        clearTimeout(timer);
+        reject(new Error('Report cancelled.'));
+      };
+    });
+    this._pending.delete(id);
+    return this._report;
+  }
+
+  public async cancelReport(id: number): Promise<void> {
+    const entry = this._pending.get(id);
+    if(entry) {
+      entry.reject?.();
+      this._pending.delete(id);
+    }
+  }
+
+  private _report: WebPortal.ProfitAndLossModel.Report;
+  private _delay: number;
+  private _nextId: number;
+  private _pending: Map<number, {reject: () => void}>;
+}
+
+const model = new TestModel(REPORT, 2000);
+
 const Status = WebPortal.ProfitAndLossPage.Status;
 type Status = WebPortal.ProfitAndLossPage.Status;
-const Mode = WebPortal.ProfitAndLossPage.Mode;
-
-const SECURITIES_CAD: WebPortal.ProfitAndLossTable.Security[] = [
-  {symbol: 'RY', volume: '12,450', fees: '124.50', pnl: '3,287.15'},
-  {symbol: 'TD', volume: '8,300', fees: '83.00', pnl: '-1,542.80'},
-  {symbol: 'BNS', volume: '5,200', fees: '52.00', pnl: '891.33'},
-  {symbol: 'ENB', volume: '3,100', fees: '31.00', pnl: '445.67'},
-  {symbol: 'CNR', volume: '2,750', fees: '27.50', pnl: '-312.40'}
-];
-
-const SECURITIES_USD: WebPortal.ProfitAndLossTable.Security[] = [
-  {symbol: 'AAPL', volume: '6,800', fees: '68.00', pnl: '2,145.90'},
-  {symbol: 'MSFT', volume: '4,500', fees: '45.00', pnl: '1,823.44'},
-  {symbol: 'GOOGL', volume: '1,200', fees: '12.00', pnl: '-567.20'}
-];
-
-const SECURITIES_AUD: WebPortal.ProfitAndLossTable.Security[] = [
-  {symbol: 'BHP', volume: '3,400', fees: '34.00', pnl: '912.55'},
-  {symbol: 'CBA', volume: '2,100', fees: '21.00', pnl: '478.30'}
-];
-
-const CURRENCIES: WebPortal.ProfitAndLossPage.CurrencyEntry[] = [
-  {
-    symbol: '$',
-    code: 'CAD',
-    totalPnl: '2,769.95',
-    totalVolume: '31,800',
-    totalFees: '318.00',
-    securities: SECURITIES_CAD
-  },
-  {
-    symbol: '$',
-    code: 'USD',
-    totalPnl: '3,402.14',
-    totalVolume: '12,500',
-    totalFees: '125.00',
-    securities: SECURITIES_USD
-  },
-  {
-    symbol: '$',
-    code: 'AUD',
-    totalPnl: '1,390.85',
-    totalVolume: '5,500',
-    totalFees: '55.00',
-    securities: SECURITIES_AUD
-  }
-];
-
-const EXCHANGE_RATES: WebPortal.CurrencyTooltip.ExchangeRate[] = [
-  {code: 'USD', rate: '1.36'},
-  {code: 'AUD', rate: '0.88'}
-];
 
 interface State {
-  status: Status;
-  previousStatus: Status;
-  mode: WebPortal.ProfitAndLossPage.Mode;
-  startDate: Beam.Date;
-  endDate: Beam.Date;
+  behavior: TestBehavior;
 }
 
 class TestApp extends React.Component<{}, State> {
   constructor(props: {}) {
     super(props);
-    const today = Beam.Date.today();
     this.state = {
-      status: Status.NONE,
-      previousStatus: Status.NONE,
-      mode: Mode.PRESET,
-      startDate: new Beam.Date(today.year, today.month, 1),
-      endDate: today
+      behavior: TestBehavior.SUCCEED
     };
+    this._controllerRef = React.createRef();
   }
 
   public render(): JSX.Element {
-    const hasData = this.state.status === Status.READY ||
-      (this.state.status === Status.STALE && true);
     return (
       <div style={STYLE.wrapper}>
         <div style={STYLE.toolbar}>
-          <span style={STYLE.toolbarLabel}>Status:</span>
-          {this.renderStatusButton('NONE', Status.NONE)}
-          {this.renderStatusButton('IN_PROGRESS', Status.IN_PROGRESS)}
-          {this.renderStatusButton('READY', Status.READY)}
-          {this.renderStatusButton('STALE', Status.STALE)}
-          {this.renderStatusButton('ERROR', Status.ERROR)}
+          <span style={STYLE.toolbarLabel}>Behavior:</span>
+          {this.renderBehaviorButton('Succeed', TestBehavior.SUCCEED)}
+          {this.renderBehaviorButton('Fail', TestBehavior.FAIL)}
+          {this.renderBehaviorButton('Hang', TestBehavior.HANG)}
+          <span style={STYLE.toolbarSeparator}>|</span>
+          <span style={STYLE.toolbarLabel}>Force:</span>
+          {this.renderForceButton('NONE', Status.NONE)}
+          {this.renderForceButton('READY', Status.READY)}
+          {this.renderForceButton('STALE', Status.STALE)}
+          {this.renderForceButton('ERROR', Status.ERROR)}
         </div>
-        <WebPortal.ProfitAndLossPage
-          symbol='$'
-          code='CAD'
-          status={this.state.status}
-          previousStatus={this.state.previousStatus}
-          mode={this.state.mode}
-          startDate={this.state.startDate}
-          endDate={this.state.endDate}
-          totalPnl='7,562.94'
-          totalFees='498.00'
-          totalVolume='49,800'
-          currencies={hasData ? CURRENCIES : []}
-          foreignCurrencies={hasData ? EXCHANGE_RATES : []}
-          filepath='/sample-report.csv'
-          onModeChange={this.onModeChange}
-          onStartDateChange={this.onStartDateChange}
-          onEndDateChange={this.onEndDateChange}
-          onSubmit={this.onSubmit}
-          onCancel={this.onCancel}/>
+        <WebPortal.ProfitAndLossController
+          ref={this._controllerRef}
+          currency={CAD}
+          currencyDatabase={currencyDatabase}
+          model={model}/>
       </div>);
   }
 
-  private renderStatusButton(label: string, status: Status): JSX.Element {
-    const isActive = this.state.status === status;
+  private renderBehaviorButton(label: string,
+      behavior: TestBehavior): JSX.Element {
+    const isActive = this.state.behavior === behavior;
     return (
-      <button
-        key={label}
-        style={{...STYLE.statusButton,
-          ...(isActive && STYLE.statusButtonActive)}}
-        onClick={() => this.setState(state => ({
-          previousStatus: state.status,
-          status
-        }))}>
+      <button key={label}
+        style={{...STYLE.button, ...(isActive && STYLE.buttonActive)}}
+        onClick={() => {
+          model.behavior = behavior;
+          this.setState({behavior});
+        }}>
         {label}
       </button>);
   }
 
-  private onModeChange = (mode: WebPortal.ProfitAndLossPage.Mode) => {
-    this.setState({mode});
+  private renderForceButton(label: string, status: Status): JSX.Element {
+    return (
+      <button key={label} style={STYLE.button}
+        onClick={() => {
+          this._controllerRef.current?.setState({
+            status,
+            report: status === Status.NONE ? null : REPORT
+          } as any);
+        }}>
+        {label}
+      </button>);
   }
 
-  private onStartDateChange = (startDate: Beam.Date) => {
-    this.setState({startDate});
-  }
-
-  private onEndDateChange = (endDate: Beam.Date) => {
-    this.setState({endDate});
-  }
-
-  private onSubmit = (start: Beam.Date, end: Beam.Date) => {
-    console.log(`Submit: ${start.toJson()} - ${end.toJson()}`);
-    this.setState(state => ({
-      previousStatus: state.status,
-      status: Status.IN_PROGRESS,
-      startDate: start,
-      endDate: end
-    }));
-  }
-
-  private onCancel = () => {
-    console.log('Cancel');
-    this.setState(state => ({
-      status: state.previousStatus
-    }));
-  }
+  private _controllerRef:
+    React.RefObject<WebPortal.ProfitAndLossController>;
 }
 
 const STYLE: Record<string, React.CSSProperties> = {
@@ -179,7 +250,12 @@ const STYLE: Record<string, React.CSSProperties> = {
     fontWeight: 600,
     fontFamily: 'monospace'
   },
-  statusButton: {
+  toolbarSeparator: {
+    fontSize: '12px',
+    color: '#999',
+    padding: '0 4px'
+  },
+  button: {
     fontSize: '11px',
     fontFamily: 'monospace',
     padding: '2px 6px',
@@ -190,7 +266,7 @@ const STYLE: Record<string, React.CSSProperties> = {
     backgroundColor: '#fff',
     cursor: 'pointer'
   },
-  statusButtonActive: {
+  buttonActive: {
     backgroundColor: '#684BC7',
     color: '#fff',
     borderColor: '#684BC7'

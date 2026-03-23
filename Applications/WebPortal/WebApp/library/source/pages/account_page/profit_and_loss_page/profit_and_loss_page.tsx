@@ -69,8 +69,8 @@ interface Properties {
 
 /** Displays the profit and loss report page. */
 export function ProfitAndLossPage(props: Properties) {
-  const formRef = React.useRef<HTMLFormElement>(null);
   const isLoading = props.status === ProfitAndLossPage.Status.IN_PROGRESS;
+  const filename = `pl-${props.startDate.toJson()}-${props.endDate.toJson()}.csv`;
   const onFormSubmit = (event: React.FormEvent) => {
     event.preventDefault();
     props.onSubmit?.(props.startDate, props.endDate);
@@ -78,8 +78,8 @@ export function ProfitAndLossPage(props: Properties) {
   return (
     <div className={css(STYLES.page)}>
       <main className={css(STYLES.main)}>
-        <FormContainer scrollHeight={formRef.current?.scrollHeight}>
-          <form ref={formRef} aria-label='Report Controls'
+        <FormContainer>
+          <form aria-label='Report Controls'
               onSubmit={onFormSubmit} className={css(STYLES.form)}>
             <DateFilterArea
               mode={props.mode}
@@ -95,6 +95,7 @@ export function ProfitAndLossPage(props: Properties) {
               status={props.status}
               currencies={props.currencies}
               filepath={props.filepath}
+              filename={filename}
               isLoading={isLoading}
               onCancel={props.onCancel}/>
           </form>
@@ -117,6 +118,7 @@ export function ProfitAndLossPage(props: Properties) {
         status={props.status}
         currencies={props.currencies}
         filepath={props.filepath}
+        filename={filename}
         startDate={props.startDate}
         endDate={props.endDate}
         onSubmit={props.onSubmit}
@@ -124,14 +126,12 @@ export function ProfitAndLossPage(props: Properties) {
     </div>);
 }
 
-/** Div:FormContainer — animates form height changes. */
+/** Div:FormContainer — wraps the form with overflow control. */
 function FormContainer(props: {
-    scrollHeight: number;
     children: React.ReactNode;
   }) {
   return (
-    <div className={css(STYLES.formContainer)}
-      style={{maxHeight: props.scrollHeight}}>
+    <div className={css(STYLES.formContainer)}>
       {props.children}
     </div>);
 }
@@ -190,7 +190,10 @@ function CustomDates(props: {
     </div>);
 }
 
-/** Div:DateInputs — responsive date input groups. */
+/** Div:DateInputs — responsive date input layout.
+ *  Mobile: stacked labels above inputs.
+ *  768-1035px: two DateGroups (label beside input) stacked.
+ *  >= 1036px: single row of labels and inputs. */
 function DateInputs(props: {
     startDate: Beam.Date;
     endDate: Beam.Date;
@@ -199,26 +202,21 @@ function DateInputs(props: {
   }) {
   return (
     <div className={css(STYLES.dateInputs)}>
-      <DateGroup label='Start' id='start-date'
-        value={props.startDate} onChange={props.onStartDateChange}/>
-      <DateGroup label='End' id='end-date'
-        value={props.endDate} onChange={props.onEndDateChange}/>
-    </div>);
-}
-
-/** Div:StartDateGroup / Div:EndDateGroup — label + input pair. */
-function DateGroup(props: {
-    label: string;
-    id: string;
-    value: Beam.Date;
-    onChange?: (date: Beam.Date) => void;
-  }) {
-  return (
-    <div className={css(STYLES.dateGroup)}>
-      <label htmlFor={props.id}
-        className={css(STYLES.dateLabel)}>{props.label}</label>
-      <DateInput id={props.id} value={props.value}
-        className={css(STYLES.dateInput)} onChange={props.onChange}/>
+      <div className={css(STYLES.dateGroup)}>
+        <label htmlFor='start-date'
+          className={css(STYLES.dateLabel)}>Start</label>
+        <DateInput id='start-date' value={props.startDate}
+          className={css(STYLES.dateInput)}
+          onChange={props.onStartDateChange}/>
+      </div>
+      <div className={css(STYLES.dateSpacer)}/>
+      <div className={css(STYLES.dateGroup)}>
+        <label htmlFor='end-date'
+          className={css(STYLES.dateLabel)}>End</label>
+        <DateInput id='end-date' value={props.endDate}
+          className={css(STYLES.dateInput)}
+          onChange={props.onEndDateChange}/>
+      </div>
     </div>);
 }
 
@@ -262,6 +260,7 @@ function ActionsAndStatus(props: {
     status: ProfitAndLossPage.Status;
     currencies: ProfitAndLossPage.CurrencyEntry[];
     filepath: string;
+    filename: string;
     isLoading: boolean;
     onCancel?: () => void;
   }) {
@@ -279,7 +278,7 @@ function ActionsAndStatus(props: {
           <Button label='Cancel' type='button' style={BUTTON_STYLE}
             onClick={props.onCancel}/>}
         {showDownload &&
-          <a download href={props.filepath}
+          <a download={props.filename} href={props.filepath}
             className={css(STYLES.downloadLink)}>
             Download
           </a>}
@@ -294,6 +293,7 @@ function ActionSheet(props: {
     status: ProfitAndLossPage.Status;
     currencies: ProfitAndLossPage.CurrencyEntry[];
     filepath: string;
+    filename: string;
     startDate: Beam.Date;
     endDate: Beam.Date;
     onSubmit?: (start: Beam.Date, end: Beam.Date) => void;
@@ -308,7 +308,7 @@ function ActionSheet(props: {
   if(isReady && !hasData) {
     return null;
   }
-  const onRetry = () => {
+  const onApply = () => {
     props.onSubmit?.(props.startDate, props.endDate);
   };
   const fullWidthStyle = css(STYLES.actionSheetButton);
@@ -318,28 +318,30 @@ function ActionSheet(props: {
         className={css(STYLES.actionSheet)}>
       {isError &&
         <Button label='Retry' type='button'
-          className={fullWidthStyle} onClick={onRetry}/>}
+          className={fullWidthStyle} onClick={onApply}/>}
       {isLoading &&
         <Button label='Cancel' type='button'
           className={fullWidthStyle} onClick={props.onCancel}/>}
       {isReady &&
-        <a download href={props.filepath} className={fullWidthDownload}>
+        <a download={props.filename} href={props.filepath}
+          className={fullWidthDownload}>
           Download
         </a>}
       {isStale && hasData && <>
-        <Button label='Apply' type='submit'
-          className={fullWidthStyle}/>
+        <Button label='Apply' type='button'
+          className={fullWidthStyle} onClick={onApply}/>
         <div style={ACTION_SHEET_GAP}/>
-        <a download href={props.filepath} className={fullWidthDownload}>
+        <a download={props.filename} href={props.filepath}
+          className={fullWidthDownload}>
           Download
         </a>
       </>}
       {isStale && !hasData &&
-        <Button label='Apply' type='submit'
-          className={fullWidthStyle}/>}
+        <Button label='Apply' type='button'
+          className={fullWidthStyle} onClick={onApply}/>}
       {isNone &&
-        <Button label='Apply' type='submit'
-          className={fullWidthStyle}/>}
+        <Button label='Apply' type='button'
+          className={fullWidthStyle} onClick={onApply}/>}
     </section>);
 }
 
@@ -569,6 +571,10 @@ const STYLES = StyleSheet.create({
     }
   },
   select: {
+    width: '100%',
+    '@media (min-width: 768px) and (max-width: 1035px)': {
+      width: '246px'
+    },
     '@media (min-width: 1036px)': {
       width: '200px'
     }
@@ -586,7 +592,7 @@ const STYLES = StyleSheet.create({
   dateInputs: {
     display: 'flex',
     flexDirection: 'column',
-    gap: '20px',
+    gap: '0px',
     '@media (min-width: 768px) and (max-width: 1035px)': {
       gap: '8px'
     },
@@ -621,6 +627,12 @@ const STYLES = StyleSheet.create({
     },
     '@media (min-width: 1036px)': {
       paddingInlineStart: 0
+    }
+  },
+  dateSpacer: {
+    height: '20px',
+    '@media (min-width: 768px)': {
+      display: 'none'
     }
   },
   dateInput: {
