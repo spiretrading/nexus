@@ -63,7 +63,10 @@ export class Stage extends React.Component<Properties> {
       color: '#000000'
     } as React.CSSProperties,
     componentWrapper: {
-      alignSelf: 'flex-start'
+      alignSelf: 'flex-start',
+      fontFamily: "'Roboto', system-ui, sans-serif",
+      fontWeight: 400,
+      color: '#333333'
     } as React.CSSProperties,
     border: {
       border: '5px dashed #999'

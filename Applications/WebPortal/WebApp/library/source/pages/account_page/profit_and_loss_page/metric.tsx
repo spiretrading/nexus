@@ -25,7 +25,10 @@ export function Metric(props: Properties) {
   const valueId = `${props.id}-value`;
   const valueDisplay = (() => {
     if(props.loading) {
-      return <Skeleton className={css(STYLES.skeleton)}/>;
+      return (
+        <div className={css(STYLES.skeletonWrapper)}>
+          <Skeleton style={SKELETON_FILL}/>
+        </div>);
     }
     return (
       <div className={css(STYLES.valueGroup)}>
@@ -44,6 +47,11 @@ export function Metric(props: Properties) {
       {valueDisplay}
     </div>);
 }
+
+const SKELETON_FILL: React.CSSProperties = {
+  width: '100%',
+  height: '100%'
+};
 
 const STYLES = StyleSheet.create({
   container: {
@@ -85,7 +93,7 @@ const STYLES = StyleSheet.create({
       fontSize: '0.875rem'
     }
   },
-  skeleton: {
+  skeletonWrapper: {
     width: '60px',
     height: '16px',
     '@container (min-width: 768px)': {
