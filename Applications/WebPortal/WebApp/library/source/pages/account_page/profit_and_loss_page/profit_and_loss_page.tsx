@@ -197,29 +197,50 @@ function DateFilterArea(props: {
           <option value='custom'>Custom</option>
         </Select>
       </div>
-      {isCustom &&
-        <CustomDates
-          startDate={props.startDate}
-          endDate={props.endDate}
-          onStartDateChange={props.onStartDateChange}
-          onEndDateChange={props.onEndDateChange}/>}
+      <CustomDates
+        isOpen={isCustom}
+        startDate={props.startDate}
+        endDate={props.endDate}
+        onStartDateChange={props.onStartDateChange}
+        onEndDateChange={props.onEndDateChange}/>
     </div>);
 }
 
 /** Div:CustomDates — wraps DateInputs with responsive padding. */
 function CustomDates(props: {
+    isOpen: boolean;
     startDate: Beam.Date;
     endDate: Beam.Date;
     onStartDateChange?: (date: Beam.Date) => void;
     onEndDateChange?: (date: Beam.Date) => void;
   }) {
+  const contentRef = React.useRef<HTMLDivElement>(null);
+  const wrapperRef = React.useRef<HTMLDivElement>(null);
+  React.useLayoutEffect(() => {
+    const wrapper = wrapperRef.current;
+    const content = contentRef.current;
+    if(!wrapper || !content) {
+      return;
+    }
+    if(props.isOpen) {
+      wrapper.style.maxHeight = `${content.scrollHeight}px`;
+    } else {
+      wrapper.style.maxHeight = `${wrapper.scrollHeight}px`;
+      wrapper.getBoundingClientRect();
+      wrapper.style.maxHeight = '0px';
+    }
+  }, [props.isOpen]);
   return (
-    <div id='custom-dates' className={css(STYLES.customDates)}>
-      <DateInputs
-        startDate={props.startDate}
-        endDate={props.endDate}
-        onStartDateChange={props.onStartDateChange}
-        onEndDateChange={props.onEndDateChange}/>
+    <div ref={wrapperRef} id='custom-dates'
+        style={{overflow: 'hidden', transition: 'max-height 200ms ease-in-out',
+          maxHeight: props.isOpen ? undefined : '0px'}}>
+      <div ref={contentRef} className={css(STYLES.customDates)}>
+        <DateInputs
+          startDate={props.startDate}
+          endDate={props.endDate}
+          onStartDateChange={props.onStartDateChange}
+          onEndDateChange={props.onEndDateChange}/>
+      </div>
     </div>);
 }
 
