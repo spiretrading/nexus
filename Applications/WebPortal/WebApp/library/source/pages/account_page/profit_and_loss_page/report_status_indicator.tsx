@@ -73,7 +73,8 @@ const STYLE: Record<string, React.CSSProperties> = {
     alignItems: 'center',
     gap: '4px',
     color: '#333333',
-    fontSize: '0.875rem'
+    fontSize: '0.875rem',
+    height: '100%'
   },
   icon: {
     width: '16px',
