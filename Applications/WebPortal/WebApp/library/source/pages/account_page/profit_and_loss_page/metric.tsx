@@ -57,8 +57,9 @@ const STYLES = StyleSheet.create({
   container: {
     display: 'flex',
     flexDirection: 'column',
+    width: '100%',
     minWidth: '60px',
-    '@container (min-width: 768px)': {
+    '@media (min-width: 768px)': {
       minWidth: '80px',
       gap: '4px'
     }
@@ -68,7 +69,7 @@ const STYLES = StyleSheet.create({
     fontWeight: 500,
     color: '#7D7E90',
     textTransform: 'uppercase',
-    '@container (min-width: 768px)': {
+    '@media (min-width: 768px)': {
       fontSize: '0.875rem'
     }
   },
@@ -81,7 +82,7 @@ const STYLES = StyleSheet.create({
     fontSize: '0.875rem',
     fontWeight: 500,
     color: '#5D5E6D',
-    '@container (min-width: 768px)': {
+    '@media (min-width: 768px)': {
       fontSize: '1.25rem'
     }
   },
@@ -89,15 +90,14 @@ const STYLES = StyleSheet.create({
     fontSize: '0.75rem',
     fontWeight: 500,
     color: '#7D7E90',
-    '@container (min-width: 768px)': {
+    '@media (min-width: 768px)': {
       fontSize: '0.875rem'
     }
   },
   skeletonWrapper: {
-    width: '60px',
+    width: '100%',
     height: '16px',
-    '@container (min-width: 768px)': {
-      width: '80px',
+    '@media (min-width: 768px)': {
       height: '24px'
     }
   }
