@@ -781,6 +781,13 @@ const pageLayout =
         React.createElement('div', {className: css(PAGE_LAYOUT_STYLES.blue)}))),
     -1);
 
+const segmentedSpinner =
+  new ComponentSchema('SegmentedSpinner',
+    [new PropertySchema('color', '#000000', ColorInput),
+      new PropertySchema('size', 16, NumberSliderInput)],
+    [],
+    WebPortal.SegmentedSpinner);
+
 const reportStatusIndicator =
   new ComponentSchema('ReportStatusIndicator',
     [new PropertySchema('id', 'report-status', TextInput),
@@ -799,7 +806,7 @@ export const componentSections = [
     iconLabelButton, input, integerField, labeledCheckbox, modal, moneyInput,
     navigationHeader, navigationTab, pageLayout,
     pagination, regionInput, regionItemInput, relativeDate, roleIcon, rolePanel,
-    securitiesInput, securityInput, select, skeleton,
+    securitiesInput, securityInput, segmentedSpinner, select, skeleton,
     segmentButton,
     segmentedControl,
     timeOfDayInput]),

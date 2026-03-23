@@ -30,6 +30,7 @@ export * from './securities_input';
 export * from './region_input';
 export * from './region_item_input';
 export * from './relative_date';
+export * from './segmented_spinner';
 export * from './select';
 export * from './skeleton';
 export * from './segment_button';

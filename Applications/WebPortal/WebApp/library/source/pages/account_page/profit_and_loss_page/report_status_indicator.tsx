@@ -1,4 +1,5 @@
 import * as React from 'react';
+import { SegmentedSpinner } from '../../..';
 
 interface Properties {
 
@@ -25,6 +26,8 @@ export function ReportStatusIndicator(props: Properties) {
         <img
           src='resources/account_page/profit_and_loss_page/stale.svg'
           style={STYLE.icon} aria-hidden='true'/>);
+    } else if(props.status === ReportStatusIndicator.Status.IN_PROGRESS) {
+      return <SegmentedSpinner color='#333333'/>;
     }
     return null;
   })();
