@@ -6,7 +6,7 @@ import { DropDownButton, Skeleton } from '../../..';
 export function ProfitAndLossItemPlaceholder() {
   return (
     <div className={css(STYLES.container)}>
-      <DropDownButton isExpanded={false}/>
+      <DropDownButton size='20' isExpanded={false}/>
       <Skeleton style={CODE_SKELETON}/>
       <div className={css(STYLES.filler)}/>
       <Skeleton style={PNL_SKELETON}/>
