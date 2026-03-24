@@ -267,7 +267,10 @@ const NAVIGATION_TABS = [
 
 const navigationHeader =
   new ComponentSchema('NavigationHeader',
-    [new PropertySchema('current', 'requests/you', TextInput)],
+    [new PropertySchema('variant',
+        WebPortal.NavigationTab.Variant.ICON_LABEL,
+        EnumInput(WebPortal.NavigationTab.Variant)),
+      new PropertySchema('current', 'requests/you', TextInput)],
     [new SignalSchema('onNavigate', 'current')],
     (props: any) =>
       React.createElement(WebPortal.NavigationHeader, props,
