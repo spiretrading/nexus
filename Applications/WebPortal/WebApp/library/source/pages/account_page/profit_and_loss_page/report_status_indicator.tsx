@@ -13,7 +13,7 @@ interface Properties {
 /** Displays a status indicator for the profit and loss report. */
 export function ReportStatusIndicator(props: Properties) {
   if(props.status === ReportStatusIndicator.Status.NONE) {
-    return <div/>;
+    return <div style={STYLE.spacer}/>;
   }
   const icon = (() => {
     if(props.status === ReportStatusIndicator.Status.READY) {
@@ -80,5 +80,10 @@ const STYLE: Record<string, React.CSSProperties> = {
     width: '16px',
     height: '16px',
     flexShrink: 0
+  },
+  spacer: {
+    flex: 1,
+    width: '123px',
+    height: '24px'
   }
 };
