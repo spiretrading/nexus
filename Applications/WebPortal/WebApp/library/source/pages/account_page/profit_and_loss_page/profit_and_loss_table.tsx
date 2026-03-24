@@ -53,7 +53,7 @@ export function ProfitAndLossTable(props: Properties) {
                 <td className={css(STYLES.td)} aria-label='Profit and Loss'
                   style={{color: isNegative ? '#E63F44' : '#36BB55'}}>
                   {isNegative ?
-                    `-${props.symbol}${Math.abs(pnl)}` :
+                    `-${props.symbol}${security.pnl.replace('-', '')}` :
                     `${props.symbol}${security.pnl}`}
                 </td>
               </tr>);
@@ -77,7 +77,7 @@ export function ProfitAndLossTable(props: Properties) {
                 <td className={css(STYLES.td, STYLES.summaryCell)}
                   style={{color: isNegative ? '#E63F44' : '#36BB55'}}>
                   {isNegative ?
-                    `-${props.symbol}${Math.abs(totalPnl)}` :
+                    `-${props.symbol}${props.totalPnl.replace('-', '')}` :
                     `${props.symbol}${props.totalPnl}`}
                 </td>);
             })()}
@@ -107,7 +107,10 @@ export namespace ProfitAndLossTable {
 const STYLES = StyleSheet.create({
   container: {
     width: '100%',
-    containerType: 'inline-size'
+    containerType: 'inline-size',
+    '@container (min-width: 424px)': {
+      maxWidth: '528px'
+    }
   },
   table: {
     width: '100%',
@@ -117,11 +120,12 @@ const STYLES = StyleSheet.create({
     borderCollapse: 'separate',
     borderSpacing: 0,
     borderRadius: '1px',
-    border: '1px solid #E6E6E6',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: '#E6E6E6',
     tableLayout: 'fixed',
     '@container (min-width: 424px)': {
-      width: '528px',
-      tableLayout: 'auto' as any
+      tableLayout: 'auto'
     }
   },
   thead: {

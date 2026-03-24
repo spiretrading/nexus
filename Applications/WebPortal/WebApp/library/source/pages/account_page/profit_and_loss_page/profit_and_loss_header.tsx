@@ -45,16 +45,16 @@ export function ProfitAndLossHeader(props: Properties) {
           aria-busy={props.loading ? 'true' : 'false'}
           aria-label='Profit and Loss Report Summary Statistics'>
         <div className={css(STYLES.summaryGroup)}>
-          <div className={css(STYLES.metricWrapper)}>
+          <div>
             <Metric id='total-pnl' label='Total P/L'
               value={pnlValue} unit={props.code} loading={props.loading}/>
           </div>
-          <div className={css(STYLES.metricWrapper)}>
+          <div>
             <Metric id='total-fees' label='Fees'
               value={`${props.symbol}${props.totalFees}`} unit={props.code}
               loading={props.loading}/>
           </div>
-          <div className={css(STYLES.metricWrapper)}>
+          <div>
             <Metric id='total-volume' label='Volume'
               value={props.totalVolume} loading={props.loading}/>
           </div>
@@ -112,12 +112,6 @@ const STYLES = StyleSheet.create({
     flexShrink: 0,
     cursor: 'pointer',
     lineHeight: 0
-  },
-  metricWrapper: {
-    width: '100%',
-    '@container (min-width: 732px)': {
-      width: 'auto !important'
-    }
   },
   tooltipAnchor: {
     position: 'absolute',
