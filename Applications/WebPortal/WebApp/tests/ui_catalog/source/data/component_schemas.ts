@@ -89,6 +89,28 @@ const dateInput =
     [new SignalSchema('onChange', 'value')],
     WebPortal.DateInput);
 
+const disclosure =
+  new ComponentSchema('Disclosure',
+    [new PropertySchema('open', false, BooleanInput)],
+    [new SignalSchema('onToggle', 'open')],
+    (props: any) =>
+      React.createElement(WebPortal.Disclosure, {
+        ...props,
+        header: React.createElement('div', {
+          style: {
+            display: 'flex', alignItems: 'center', gap: '18px',
+            height: '40px', fontSize: '0.875rem'
+          }
+        },
+          React.createElement(WebPortal.DropDownButton, {
+            isExpanded: props.open, size: '20'
+          }),
+          'Section Title'),
+        details: React.createElement('div', {
+          style: {padding: '12px', fontSize: '0.875rem'}
+        }, 'This is the details content that is visible when the disclosure is open.')
+      }));
+
 const dateTimeInput =
   new ComponentSchema('DateTimeInput',
     [new PropertySchema('value',
@@ -887,7 +909,7 @@ const reportStatusIndicator =
 
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox,
-    countrySelect, currencySelect, dateInput,
+    countrySelect, currencySelect, dateInput, disclosure,
     dateTimeInput, decimalInput, dropDownButton, durationInput, emptyMessage,
     errorMessage,
     filterChip, filterInput, hLine,

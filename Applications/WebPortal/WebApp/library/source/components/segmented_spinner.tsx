@@ -3,10 +3,10 @@ import * as React from 'react';
 
 interface Properties {
 
-  /** The color of the spinner segments. */
+  /** The color of the spinner segments. Defaults to '#000000'. */
   color?: string;
 
-  /** The size of the spinner in pixels. */
+  /** The size of the spinner in pixels. Defaults to 16. */
   size?: number;
 }
 
@@ -14,19 +14,12 @@ interface Properties {
 export function SegmentedSpinner(props: Properties) {
   const color = props.color ?? '#000000';
   const size = props.size ?? 16;
-  const segmentWidth = size * 0.25;
-  const segmentHeight = size * 0.625;
-  const offset = -(size / 2 - segmentHeight / 2);
   const segments: React.ReactElement[] = [];
   for(let i = 0; i < SEGMENT_COUNT; ++i) {
     segments.push(
       <div key={i} className={css(STYLES.segment)} style={{
-        width: `${segmentWidth}px`,
-        height: `${segmentHeight}px`,
-        left: `${(size - segmentWidth) / 2}px`,
-        top: `${(size - segmentHeight) / 2}px`,
         backgroundColor: color,
-        transform: `rotate(${i * 45}deg) translateY(${offset}px)`,
+        transform: `rotate(${i * 45}deg) translateY(var(--offset))`,
         animationDelay: `${i * 60}ms`
       }}/>);
   }
@@ -50,12 +43,18 @@ const FADE = {
 
 const STYLES = StyleSheet.create({
   container: {
-    position: 'relative'
+    position: 'relative',
+    containerType: 'size'
   },
   segment: {
     position: 'absolute',
+    width: '12.5cqw',
+    height: '31.25cqh',
+    top: 'calc(50cqh - 31.25cqh / 2)',
+    left: 'calc(50cqw - 12.5cqw / 2)',
+    '--offset': 'calc(-1 * (50cqh - 31.25cqh / 2))',
+    opacity: 0.8,
     transformOrigin: 'center center',
-    borderRadius: '1px',
     animationName: FADE,
     animationDuration: '480ms',
     animationTimingFunction: 'linear',

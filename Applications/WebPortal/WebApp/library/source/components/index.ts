@@ -4,6 +4,7 @@ export * from './checkbox';
 export * from './country_select';
 export * from './currency_select';
 export * from './date_input';
+export * from './disclosure';
 export * from './decimal_input';
 export * from './date_time_input';
 export * from './drop_down_button';
