@@ -194,7 +194,6 @@ export class RequestsController extends React.Component<Properties, State> {
         requestList: []
       }
     });
-    await this.props.model.load();
     this.loadDirectory({
       scope: this.currentPage() === RequestsPage.Page.YOUR_REQUESTS ?
         RequestsModel.Scope.YOU : RequestsModel.Scope.GROUP,
