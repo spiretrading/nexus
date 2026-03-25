@@ -119,6 +119,10 @@ const STYLES = StyleSheet.create({
     right: 0,
     zIndex: 1,
     paddingTop: '4px',
-    lineHeight: 'normal'
+    lineHeight: 'normal',
+    '@container (min-width: 732px)': {
+      right: 'auto',
+      left: 0
+    }
   }
 });

@@ -74,12 +74,14 @@ const STYLES = StyleSheet.create({
   },
   code: {
     flex: 1,
-    fontSize: 'inherit',
+    fontSize: '0.875rem',
     fontWeight: 'inherit',
     color: '#333333',
-    margin: 0
+    margin: 0,
+    padding: 0
   },
   totalPnl: {
+    fontSize: '0.875rem',
     textAlign: 'end',
     whiteSpace: 'nowrap'
   },
