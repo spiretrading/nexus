@@ -374,20 +374,55 @@ function toFirstRiskChange(current: Nexus.RiskParameters,
     return {
       type: 'risk_controls',
       name: 'Currency',
-      oldValue: currencyDatabase.fromCurrency(current.currency).code,
-      newValue: currencyDatabase.fromCurrency(requested.currency).code,
+      oldValue: RequestsModel.currencyName(current.currency, currencyDatabase),
+      newValue: RequestsModel.currencyName(requested.currency, currencyDatabase),
       delta: {value: '', direction: RequestsModel.Direction.NONE}
     };
   }
-  const oldBp = current.buyingPower.toString();
-  const newBp = requested.buyingPower.toString();
-  const diff = requested.buyingPower.subtract(current.buyingPower);
+  if(!current.buyingPower.equals(requested.buyingPower)) {
+    return makeMoneyRiskChange('Buying Power',
+      current.buyingPower, requested.buyingPower);
+  }
+  if(!current.netLoss.equals(requested.netLoss)) {
+    return makeMoneyRiskChange('Net Loss',
+      current.netLoss, requested.netLoss);
+  }
+  if(!current.transitionTime.equals(requested.transitionTime)) {
+    const diff = requested.transitionTime.subtract(current.transitionTime);
+    const cmp = diff.compare(Beam.Duration.ZERO);
+    return {
+      type: 'risk_controls',
+      name: 'Transition Time',
+      oldValue: current.transitionTime.toString(),
+      newValue: requested.transitionTime.toString(),
+      delta: {
+        value: diff.toString(),
+        direction: cmp > 0 ? RequestsModel.Direction.POSITIVE :
+          cmp < 0 ? RequestsModel.Direction.NEGATIVE :
+          RequestsModel.Direction.NONE
+      }
+    };
+  }
+  const oldState = RequestsModel.riskStateToString(current.allowedState);
+  const newState = RequestsModel.riskStateToString(requested.allowedState);
+  return {
+    type: 'risk_controls',
+    name: 'Allowed State',
+    oldValue: oldState,
+    newValue: newState,
+    delta: {value: '', direction: RequestsModel.Direction.NONE}
+  };
+}
+
+function makeMoneyRiskChange(name: string, oldValue: Nexus.Money,
+    newValue: Nexus.Money): RequestsModel.RiskControlsChange {
+  const diff = newValue.subtract(oldValue);
   const cmp = diff.compare(Nexus.Money.ZERO);
   return {
     type: 'risk_controls',
-    name: 'Buying Power',
-    oldValue: oldBp,
-    newValue: newBp,
+    name,
+    oldValue: oldValue.toString(),
+    newValue: newValue.toString(),
     delta: {
       value: diff.toString(),
       direction: cmp > 0 ? RequestsModel.Direction.POSITIVE :
@@ -450,8 +485,8 @@ function countRiskChanges(current: Nexus.RiskParameters,
   if(!current.buyingPower.equals(requested.buyingPower)) { ++count; }
   if(!current.netLoss.equals(requested.netLoss)) { ++count; }
   if(!current.transitionTime.equals(requested.transitionTime)) { ++count; }
-  if(riskStateToString(current.allowedState) !==
-      riskStateToString(requested.allowedState)) { ++count; }
+  if(RequestsModel.riskStateToString(current.allowedState) !==
+      RequestsModel.riskStateToString(requested.allowedState)) { ++count; }
   return count;
 }
 
@@ -460,8 +495,8 @@ function toRiskChanges(current: Nexus.RiskParameters,
     currencyDatabase: Nexus.CurrencyDatabase): RequestsModel.DetailChange[] {
   const changes: RequestsModel.DetailChange[] = [];
   addRiskChange(changes, 'Currency',
-    currencyDatabase.fromCurrency(current.currency).code,
-    currencyDatabase.fromCurrency(requested.currency).code);
+    RequestsModel.currencyName(current.currency, currencyDatabase),
+    RequestsModel.currencyName(requested.currency, currencyDatabase));
   addMoneyRiskChange(
     changes, 'Buying Power', current.buyingPower, requested.buyingPower);
   addMoneyRiskChange(
@@ -469,8 +504,8 @@ function toRiskChanges(current: Nexus.RiskParameters,
   addDurationRiskChange(changes, 'Transition Time',
     current.transitionTime, requested.transitionTime);
   addRiskChange(
-    changes, 'Allowed State', riskStateToString(current.allowedState),
-    riskStateToString(requested.allowedState));
+    changes, 'Allowed State', RequestsModel.riskStateToString(current.allowedState),
+    RequestsModel.riskStateToString(requested.allowedState));
   return changes;
 }
 
@@ -529,19 +564,6 @@ function addRiskChange(changes: RequestsModel.DetailChange[],
   });
 }
 
-function riskStateToString(state: Nexus.RiskState): string {
-  switch(state.type) {
-    case Nexus.RiskState.Type.ACTIVE:
-      return 'Active';
-    case Nexus.RiskState.Type.CLOSED_ORDERS:
-      return 'Close Only';
-    case Nexus.RiskState.Type.DISABLED:
-      return 'Disabled';
-    default:
-      return 'None';
-  }
-}
-
 function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
     requested: Beam.Set<Beam.DirectoryEntry>,
     entitlementDatabase: Nexus.EntitlementDatabase,
@@ -558,7 +580,7 @@ function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
         name,
         oldStatus: RequestsModel.EntitlementStatus.REVOKED,
         newStatus: RequestsModel.EntitlementStatus.GRANTED,
-        delta: toEntitlementDelta(info, currencyDatabase,
+        delta: RequestsModel.entitlementDelta(info, currencyDatabase,
           RequestsModel.EntitlementStatus.GRANTED)
       });
     }
@@ -573,7 +595,7 @@ function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
         name,
         oldStatus: RequestsModel.EntitlementStatus.GRANTED,
         newStatus: RequestsModel.EntitlementStatus.REVOKED,
-        delta: toEntitlementDelta(info, currencyDatabase,
+        delta: RequestsModel.entitlementDelta(info, currencyDatabase,
           RequestsModel.EntitlementStatus.REVOKED)
       });
     }
@@ -581,16 +603,3 @@ function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
   return changes;
 }
 
-function toEntitlementDelta(info: Nexus.EntitlementDatabase.Entry,
-    currencyDatabase: Nexus.CurrencyDatabase,
-    status: RequestsModel.EntitlementStatus): RequestsModel.Delta {
-  if(info.price.equals(Nexus.Money.ZERO)) {
-    return {value: 'FREE', direction: RequestsModel.Direction.NONE};
-  }
-  const currency = currencyDatabase.fromCurrency(info.currency);
-  return {
-    value: `${currency.sign}${info.price.toString()}`,
-    direction: status === RequestsModel.EntitlementStatus.GRANTED ?
-      RequestsModel.Direction.POSITIVE : RequestsModel.Direction.NEGATIVE
-  };
-}
