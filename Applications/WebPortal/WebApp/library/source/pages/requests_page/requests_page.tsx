@@ -164,7 +164,8 @@ export class RequestsPage extends React.Component<Properties, State> {
     content: {
       flex: '1 1 auto',
       minHeight: 0,
-      overflowY: 'auto'
+      overflowY: 'auto',
+      scrollbarGutter: 'stable'
     },
     header: {
       borderBottom: '1px solid #E6E6E6',

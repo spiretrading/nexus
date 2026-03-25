@@ -96,6 +96,8 @@ export class LocalRequestsModel extends RequestsModel {
     let result = entries;
     if(submission.scope === RequestsModel.Scope.YOU) {
       result = result.filter(e => e.account.equals(this.account));
+    } else if(submission.scope === RequestsModel.Scope.GROUP) {
+      result = result.filter(e => !e.account.equals(this.account));
     }
     const filters = submission.filters;
     if(filters.categories.size > 0) {

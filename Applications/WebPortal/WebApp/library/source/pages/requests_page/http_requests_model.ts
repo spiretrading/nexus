@@ -558,7 +558,8 @@ function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
         name,
         oldStatus: RequestsModel.EntitlementStatus.REVOKED,
         newStatus: RequestsModel.EntitlementStatus.GRANTED,
-        delta: toEntitlementDelta(info, currencyDatabase)
+        delta: toEntitlementDelta(info, currencyDatabase,
+          RequestsModel.EntitlementStatus.GRANTED)
       });
     }
   }
@@ -572,7 +573,8 @@ function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
         name,
         oldStatus: RequestsModel.EntitlementStatus.GRANTED,
         newStatus: RequestsModel.EntitlementStatus.REVOKED,
-        delta: toEntitlementDelta(info, currencyDatabase)
+        delta: toEntitlementDelta(info, currencyDatabase,
+          RequestsModel.EntitlementStatus.REVOKED)
       });
     }
   }
@@ -580,13 +582,15 @@ function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
 }
 
 function toEntitlementDelta(info: Nexus.EntitlementDatabase.Entry,
-    currencyDatabase: Nexus.CurrencyDatabase): RequestsModel.Delta {
+    currencyDatabase: Nexus.CurrencyDatabase,
+    status: RequestsModel.EntitlementStatus): RequestsModel.Delta {
   if(info.price.equals(Nexus.Money.ZERO)) {
     return {value: 'FREE', direction: RequestsModel.Direction.NONE};
   }
   const currency = currencyDatabase.fromCurrency(info.currency);
   return {
     value: `${currency.sign}${info.price.toString()}`,
-    direction: RequestsModel.Direction.POSITIVE
+    direction: status === RequestsModel.EntitlementStatus.GRANTED ?
+      RequestsModel.Direction.POSITIVE : RequestsModel.Direction.NEGATIVE
   };
 }
