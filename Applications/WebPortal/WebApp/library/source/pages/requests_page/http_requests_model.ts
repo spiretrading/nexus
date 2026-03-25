@@ -218,7 +218,8 @@ export class HttpRequestsModel extends RequestsModel {
       const modification = await admin.loadEntitlementModification(request.id);
       const oldState = await this.loadOldEntitlementState(request);
       return toEntitlementChanges(oldState, modification.entitlements,
-        this.serviceClients.definitionsClient.entitlementDatabase);
+        this.serviceClients.definitionsClient.entitlementDatabase,
+        this.serviceClients.definitionsClient.currencyDatabase);
     }
     return [];
   }
@@ -543,7 +544,8 @@ function riskStateToString(state: Nexus.RiskState): string {
 
 function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
     requested: Beam.Set<Beam.DirectoryEntry>,
-    entitlementDatabase: Nexus.EntitlementDatabase):
+    entitlementDatabase: Nexus.EntitlementDatabase,
+    currencyDatabase: Nexus.CurrencyDatabase):
       RequestsModel.DetailChange[] {
   const changes: RequestsModel.DetailChange[] = [];
   for(const entry of requested) {
@@ -555,7 +557,8 @@ function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
         type: 'entitlement',
         name,
         oldStatus: RequestsModel.EntitlementStatus.REVOKED,
-        newStatus: RequestsModel.EntitlementStatus.GRANTED
+        newStatus: RequestsModel.EntitlementStatus.GRANTED,
+        delta: toEntitlementDelta(info, currencyDatabase)
       });
     }
   }
@@ -568,9 +571,22 @@ function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
         type: 'entitlement',
         name,
         oldStatus: RequestsModel.EntitlementStatus.GRANTED,
-        newStatus: RequestsModel.EntitlementStatus.REVOKED
+        newStatus: RequestsModel.EntitlementStatus.REVOKED,
+        delta: toEntitlementDelta(info, currencyDatabase)
       });
     }
   }
   return changes;
+}
+
+function toEntitlementDelta(info: Nexus.EntitlementDatabase.Entry,
+    currencyDatabase: Nexus.CurrencyDatabase): RequestsModel.Delta {
+  if(info.price.equals(Nexus.Money.ZERO)) {
+    return {value: 'FREE', direction: RequestsModel.Direction.NONE};
+  }
+  const currency = currencyDatabase.fromCurrency(info.currency);
+  return {
+    value: `${currency.sign}${info.price.toString()}`,
+    direction: RequestsModel.Direction.POSITIVE
+  };
 }
