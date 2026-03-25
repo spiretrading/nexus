@@ -71,6 +71,10 @@ interface Properties {
 /** Displays the profit and loss report page. */
 export function ProfitAndLossPage(props: Properties) {
   const isLoading = props.status === ProfitAndLossPage.Status.IN_PROGRESS;
+  const isError = props.status === ProfitAndLossPage.Status.ERROR;
+  const isReady = props.status === ProfitAndLossPage.Status.READY;
+  const hasData = props.currencies.length > 0;
+  const reducedPadding = isError || (isReady && !hasData);
   const isDateRangeValid = props.endDate.compare(props.startDate) >= 0;
   const filename = `pl-${props.startDate.toJson()}-${props.endDate.toJson()}.csv`;
   const onFormSubmit = (event: React.FormEvent) => {
@@ -81,7 +85,8 @@ export function ProfitAndLossPage(props: Properties) {
   };
   return (
     <PageLayout>
-      <main className={css(STYLES.main)}>
+      <main className={css(STYLES.main,
+          reducedPadding && STYLES.mainReducedPadding)}>
         <FormContainer>
           <form aria-label='Report Controls'
               onSubmit={onFormSubmit} className={css(STYLES.form)}>
@@ -327,21 +332,25 @@ function ActionsAndStatus(props: {
   }) {
   const isReady = props.status === ProfitAndLossPage.Status.READY;
   const isStale = props.status === ProfitAndLossPage.Status.STALE;
+  const isNone = props.status === ProfitAndLossPage.Status.NONE;
+  const isError = props.status === ProfitAndLossPage.Status.ERROR;
   const hasData = props.currencies.length > 0;
-  const showDownload = !props.isLoading && (isReady || (isStale && hasData));
+  const applyDisabled = props.isLoading || !props.isDateRangeValid;
+  const downloadDisabled = isError || isNone || props.isLoading;
   return (
     <div className={css(STYLES.desktopActionsAndStatus)}>
       <div className={css(STYLES.buttonRow)}>
-        {!props.isLoading &&
-          <Button label='Apply' type='submit' style={BUTTON_STYLE}
-            disabled={!props.isDateRangeValid}
-            aria-describedby={isStale ? 'report-status' : undefined}/>}
-        {props.isLoading &&
+        <Button label='Apply' type='submit' style={BUTTON_STYLE}
+          disabled={applyDisabled}
+          aria-describedby={isStale ? 'report-status' : undefined}/>
+        {props.isLoading ?
           <Button label='Cancel' type='button' style={BUTTON_STYLE}
-            onClick={props.onCancel}/>}
-        {showDownload &&
-          <a download={props.filename} href={props.filepath}
-            className={css(STYLES.downloadLink)}>
+            onClick={props.onCancel}/> :
+          <a download={props.filename}
+            href={downloadDisabled ? undefined : props.filepath}
+            className={css(STYLES.downloadLink,
+              downloadDisabled && STYLES.downloadLinkDisabled)}
+            aria-disabled={downloadDisabled || undefined}>
             Download
           </a>}
       </div>
@@ -367,7 +376,8 @@ function ActionSheet(props: {
   const isStale = props.status === ProfitAndLossPage.Status.STALE;
   const isNone = props.status === ProfitAndLossPage.Status.NONE;
   const hasData = props.currencies.length > 0;
-  if(isReady && !hasData) {
+  const isError = props.status === ProfitAndLossPage.Status.ERROR;
+  if(isError || (isReady && !hasData)) {
     return null;
   }
   const onApply = () => {
@@ -391,6 +401,7 @@ function ActionSheet(props: {
       {isStale && hasData && <>
         <Button label='Apply' type='button'
           disabled={!props.isDateRangeValid}
+          aria-describedby='report-status'
           className={fullWidthStyle} onClick={onApply}/>
         <div style={ACTION_SHEET_GAP}/>
         <a download={props.filename} href={props.filepath}
@@ -401,6 +412,7 @@ function ActionSheet(props: {
       {isStale && !hasData &&
         <Button label='Apply' type='button'
           disabled={!props.isDateRangeValid}
+          aria-describedby='report-status'
           className={fullWidthStyle} onClick={onApply}/>}
       {isNone &&
         <Button label='Apply' type='button'
@@ -429,28 +441,28 @@ function ProfitAndLossContent(props: {
   const isError = props.status === ProfitAndLossPage.Status.ERROR;
   const isNone = props.status === ProfitAndLossPage.Status.NONE;
   const hasData = props.currencies.length > 0;
-  if(isNone || (isStale && !hasData)) {
-    return (
-      <EmptyMessage
-        message='Click Apply to generate a report for the selected period.'/>);
-  }
-  if(isReady && !hasData) {
-    return (
-      <EmptyMessage
-        message='There is no activity for the selected period.'/>);
-  }
-  if(isError) {
-    const onRetry = () => {
-      props.onSubmit?.(props.startDate, props.endDate);
-    };
-    return (
-      <ErrorMessage
-        message='There was an error generating the report.'
-        onRetry={onRetry}/>);
-  }
-  return (
-    <section aria-label='Profit and Loss Report' aria-live='polite'
-        aria-busy={isLoading}>
+  const content = (() => {
+    if(isNone || (isStale && !hasData)) {
+      return (
+        <EmptyMessage
+          message='Click Apply to generate a report for the selected period.'/>);
+    }
+    if(isReady && !hasData) {
+      return (
+        <div className={css(STYLES.noneMessage)}>
+          There is no activity for the selected period.
+        </div>);
+    }
+    if(isError) {
+      const onRetry = () => {
+        props.onSubmit?.(props.startDate, props.endDate);
+      };
+      return (
+        <ErrorMessage
+          message='There was an error generating the report.'
+          onRetry={onRetry}/>);
+    }
+    return (<>
       <ProfitAndLossHeader
         symbol={props.symbol}
         code={props.code}
@@ -463,6 +475,12 @@ function ProfitAndLossContent(props: {
       <ProfitAndLossList
         currencies={props.currencies}
         isLoading={isLoading}/>
+    </>);
+  })();
+  return (
+    <section aria-label='Profit and Loss Report' aria-live='polite'
+        aria-busy={isLoading}>
+      {content}
     </section>);
 }
 
@@ -566,10 +584,16 @@ const CONTENT_SPACING: React.CSSProperties = {
 
 const STYLES = StyleSheet.create({
   main: {
-    padding: '18px 18px 40px',
+    padding: '18px 18px 166px',
     fontFamily: "'Roboto', system-ui, sans-serif",
     fontWeight: 400,
-    color: '#333333'
+    color: '#333333',
+    '@media (min-width: 768px)': {
+      paddingBottom: '40px'
+    }
+  },
+  mainReducedPadding: {
+    paddingBottom: '40px'
   },
   formContainer: {
     overflow: 'hidden',
@@ -759,6 +783,17 @@ const STYLES = StyleSheet.create({
     ':active': {
       backgroundColor: '#4B23A0'
     }
+  },
+  downloadLinkDisabled: {
+    backgroundColor: '#F8F8F8',
+    color: '#8C8C8C',
+    cursor: 'default',
+    pointerEvents: 'none'
+  },
+  noneMessage: {
+    textAlign: 'center',
+    backgroundColor: '#FFFFFF',
+    padding: '0 18px'
   },
   list: {
     padding: 0,
