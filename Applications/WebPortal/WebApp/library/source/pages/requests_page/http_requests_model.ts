@@ -173,7 +173,8 @@ export class HttpRequestsModel extends RequestsModel {
       const modification = await admin.loadEntitlementModification(request.id);
       const current = await admin.loadAccountEntitlements(request.account);
       return toFirstEntitlementChange(current, modification.entitlements,
-        this.serviceClients.definitionsClient.entitlementDatabase);
+        this.serviceClients.definitionsClient.entitlementDatabase,
+        this.serviceClients.definitionsClient.currencyDatabase);
     }
     return {
       type: 'risk_controls',
@@ -194,7 +195,11 @@ export class HttpRequestsModel extends RequestsModel {
     }
     if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
       const modification = await admin.loadEntitlementModification(request.id);
-      return modification.entitlements.size;
+      const current = await admin.loadAccountEntitlements(request.account);
+      return RequestsModel.computeEntitlementChanges(current,
+        modification.entitlements,
+        this.serviceClients.definitionsClient.entitlementDatabase,
+        this.serviceClients.definitionsClient.currencyDatabase).length;
     }
     return 0;
   }
@@ -334,20 +339,23 @@ function toFirstRiskChange(current: Nexus.RiskParameters,
 
 function toFirstEntitlementChange(current: Beam.Set<Beam.DirectoryEntry>,
     requested: Beam.Set<Beam.DirectoryEntry>,
-    entitlementDatabase: Nexus.EntitlementDatabase):
+    entitlementDatabase: Nexus.EntitlementDatabase,
+    currencyDatabase: Nexus.CurrencyDatabase):
       RequestsModel.EntitlementsChange {
   for(const entry of requested) {
     if(!current.has(entry)) {
       const info = entitlementDatabase.fromGroup(entry);
       const name = info.group.equals(Beam.DirectoryEntry.INVALID) ?
         entry.name : info.name;
+      const isFree = info.price.equals(Nexus.Money.ZERO);
       return {
         type: 'entitlements',
         name,
         action: RequestsModel.EntitlementAction.GRANT,
-        fee: Nexus.Money.ZERO,
-        currency: undefined,
-        direction: RequestsModel.Direction.POSITIVE
+        fee: info.price,
+        currency: currencyDatabase.fromCurrency(info.currency),
+        direction: isFree ? RequestsModel.Direction.NONE :
+          RequestsModel.Direction.POSITIVE
       };
     }
   }
@@ -360,8 +368,8 @@ function toFirstEntitlementChange(current: Beam.Set<Beam.DirectoryEntry>,
         type: 'entitlements',
         name,
         action: RequestsModel.EntitlementAction.REVOKE,
-        fee: Nexus.Money.ZERO,
-        currency: undefined,
+        fee: info.price,
+        currency: currencyDatabase.fromCurrency(info.currency),
         direction: RequestsModel.Direction.NEGATIVE
       };
     }

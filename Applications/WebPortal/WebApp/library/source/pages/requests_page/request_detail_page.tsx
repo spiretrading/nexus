@@ -123,9 +123,11 @@ export class RequestDetailPage extends
           </dd>
           <dt className={css(STYLES.dt)}>Created</dt>
           <dd className={css(STYLES.dd)}>
-            <time dateTime={this.props.createdTime.toISOString()}>
-              {formatDateTime(this.props.createdTime)}
-            </time>
+            {isNaN(this.props.createdTime.getTime()) ?
+              <span>Immediate</span> :
+              <time dateTime={this.props.createdTime.toISOString()}>
+                {formatDateTime(this.props.createdTime)}
+              </time>}
           </dd>
         </dl>
       </header>);
