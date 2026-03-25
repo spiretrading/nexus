@@ -79,7 +79,8 @@ export class RequestDetailPage extends
     super(props);
     this.state = {
       comment: '',
-      effectiveDate: props.effectiveDate
+      effectiveDate: props.effectiveDate.equals(Beam.Date.NOT_A_DATE) ?
+        Beam.Date.today() : props.effectiveDate
     };
   }
 

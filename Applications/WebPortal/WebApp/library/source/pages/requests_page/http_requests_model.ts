@@ -35,6 +35,7 @@ export class HttpRequestsModel extends RequestsModel {
     this.accessRole = getAccessRole(roles);
     this.localModel =
       new LocalRequestsModel(this.account, entries, new Map());
+    await this.buildGrantedChain(allIds);
   }
 
   public async loadRequestDirectory(submission: RequestsModel.Submission):
@@ -145,7 +146,7 @@ export class HttpRequestsModel extends RequestsModel {
         request.timestamp.toDate(),
       account: toAccountProfile(request.account, accountIdentity),
       requester: toAccountProfile(request.submissionAccount, submitterIdentity),
-      effectiveDate: Beam.Date.fromDate(request.effectiveDate.toDate()),
+      effectiveDate: request.effectiveDate,
       changes,
       activityList,
       accessRole: this.accessRole
@@ -165,14 +166,14 @@ export class HttpRequestsModel extends RequestsModel {
     const admin = this.serviceClients.administrationClient;
     if(request.type === Nexus.AccountModificationRequest.Type.RISK) {
       const modification = await admin.loadRiskModification(request.id);
-      const current = await admin.loadRiskParameters(request.account);
-      return toFirstRiskChange(current, modification.parameters,
+      const oldState = await this.loadOldRiskState(request);
+      return toFirstRiskChange(oldState, modification.parameters,
         this.serviceClients.definitionsClient.currencyDatabase);
     }
     if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
       const modification = await admin.loadEntitlementModification(request.id);
-      const current = await admin.loadAccountEntitlements(request.account);
-      return toFirstEntitlementChange(current, modification.entitlements,
+      const oldState = await this.loadOldEntitlementState(request);
+      return toFirstEntitlementChange(oldState, modification.entitlements,
         this.serviceClients.definitionsClient.entitlementDatabase,
         this.serviceClients.definitionsClient.currencyDatabase);
     }
@@ -190,13 +191,13 @@ export class HttpRequestsModel extends RequestsModel {
     const admin = this.serviceClients.administrationClient;
     if(request.type === Nexus.AccountModificationRequest.Type.RISK) {
       const modification = await admin.loadRiskModification(request.id);
-      const current = await admin.loadRiskParameters(request.account);
-      return countRiskChanges(current, modification.parameters);
+      const oldState = await this.loadOldRiskState(request);
+      return countRiskChanges(oldState, modification.parameters);
     }
     if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
       const modification = await admin.loadEntitlementModification(request.id);
-      const current = await admin.loadAccountEntitlements(request.account);
-      return RequestsModel.computeEntitlementChanges(current,
+      const oldState = await this.loadOldEntitlementState(request);
+      return RequestsModel.computeEntitlementChanges(oldState,
         modification.entitlements,
         this.serviceClients.definitionsClient.entitlementDatabase,
         this.serviceClients.definitionsClient.currencyDatabase).length;
@@ -209,14 +210,14 @@ export class HttpRequestsModel extends RequestsModel {
     const admin = this.serviceClients.administrationClient;
     if(request.type === Nexus.AccountModificationRequest.Type.RISK) {
       const modification = await admin.loadRiskModification(request.id);
-      const current = await admin.loadRiskParameters(request.account);
-      return toRiskChanges(current, modification.parameters,
+      const oldState = await this.loadOldRiskState(request);
+      return toRiskChanges(oldState, modification.parameters,
         this.serviceClients.definitionsClient.currencyDatabase);
     }
     if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
       const modification = await admin.loadEntitlementModification(request.id);
-      const current = await admin.loadAccountEntitlements(request.account);
-      return toEntitlementChanges(current, modification.entitlements,
+      const oldState = await this.loadOldEntitlementState(request);
+      return toEntitlementChanges(oldState, modification.entitlements,
         this.serviceClients.definitionsClient.entitlementDatabase);
     }
     return [];
@@ -241,10 +242,68 @@ export class HttpRequestsModel extends RequestsModel {
     return activities;
   }
 
+  private async buildGrantedChain(allIds: number[]): Promise<void> {
+    const admin = this.serviceClients.administrationClient;
+    const chains = new Map<string, {id: number;
+        grantTimestamp: Date}[]>();
+    for(const id of allIds) {
+      const request = await admin.loadAccountModificationRequest(id);
+      const status = await admin.loadAccountModificationRequestStatus(id);
+      if(status.status === Nexus.AccountModificationRequest.Status.GRANTED) {
+        const key = `${request.account.id}:${request.type}`;
+        if(!chains.has(key)) {
+          chains.set(key, []);
+        }
+        chains.get(key).push({id, grantTimestamp: status.timestamp.toDate()});
+      }
+    }
+    for(const chain of chains.values()) {
+      chain.sort(
+        (a, b) => a.grantTimestamp.getTime() - b.grantTimestamp.getTime());
+      for(let i = 1; i < chain.length; ++i) {
+        this.previousGrantedRequest.set(chain[i].id, chain[i - 1].id);
+      }
+    }
+  }
+
+  private async loadOldRiskState(
+      request: Nexus.AccountModificationRequest):
+      Promise<Nexus.RiskParameters> {
+    const admin = this.serviceClients.administrationClient;
+    const status = await admin.loadAccountModificationRequestStatus(request.id);
+    if(status.status !== Nexus.AccountModificationRequest.Status.GRANTED) {
+      return admin.loadRiskParameters(request.account);
+    }
+    const previousId = this.previousGrantedRequest.get(request.id);
+    if(previousId === undefined) {
+      return Nexus.RiskParameters.INVALID;
+    }
+    const previousModification = await admin.loadRiskModification(previousId);
+    return previousModification.parameters;
+  }
+
+  private async loadOldEntitlementState(
+      request: Nexus.AccountModificationRequest):
+      Promise<Beam.Set<Beam.DirectoryEntry>> {
+    const admin = this.serviceClients.administrationClient;
+    const status = await admin.loadAccountModificationRequestStatus(request.id);
+    if(status.status !== Nexus.AccountModificationRequest.Status.GRANTED) {
+      return admin.loadAccountEntitlements(request.account);
+    }
+    const previousId = this.previousGrantedRequest.get(request.id);
+    if(previousId === undefined) {
+      return new Beam.Set<Beam.DirectoryEntry>();
+    }
+    const previousModification =
+      await admin.loadEntitlementModification(previousId);
+    return previousModification.entitlements;
+  }
+
   private account: Beam.DirectoryEntry;
   private serviceClients: Nexus.ServiceClients;
   private localModel: LocalRequestsModel;
   private accessRole: Nexus.AccountRoles.Role;
+  private previousGrantedRequest: Map<number, number> = new Map();
 }
 
 const MAX_REQUEST_IDS = 1000;
