@@ -1,6 +1,7 @@
 export * from './currency_tooltip';
 export * from './http_profit_and_loss_model';
 export * from './metric';
+export * from './none_profit_and_loss_model';
 export * from './profit_and_loss_controller';
 export * from './profit_and_loss_header';
 export * from './profit_and_loss_model';
