@@ -1,4 +1,5 @@
 export * from './currency_tooltip';
+export * from './http_profit_and_loss_model';
 export * from './metric';
 export * from './profit_and_loss_controller';
 export * from './profit_and_loss_header';
