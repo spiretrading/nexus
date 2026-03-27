@@ -73,6 +73,7 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       enum class Mode {
@@ -84,6 +85,7 @@ namespace Spire {
       std::unique_ptr<DateRangeComposerModel> m_model;
       DateRange m_default_date_range;
       QWidget* m_offset_value_box;
+      QWidget* m_start_date_box;
       std::unique_ptr<DateRangeModeButtonGroup> m_range_mode_button_group;
 
       void on_reset();
