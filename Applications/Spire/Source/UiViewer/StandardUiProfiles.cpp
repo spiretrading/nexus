@@ -96,6 +96,7 @@
 #include "Spire/Ui/SecurityListItem.hpp"
 #include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/SideBox.hpp"
+#include "Spire/Ui/SideFilterPanel.hpp"
 #include "Spire/Ui/SingleSelectionModel.hpp"
 #include "Spire/Ui/Slider.hpp"
 #include "Spire/Ui/Slider2D.hpp"
@@ -475,6 +476,55 @@ namespace {
       std::vector<std::shared_ptr<UiProperty>>& properties) {
     populate_decimal_box_properties<T>(properties,
       DecimalBoxProfileProperties(1));
+  }
+
+  template<typename T,
+    typename ClosedFilterPanel* (*f)(std::shared_ptr<ListModel<T>>, QWidget*)>
+  auto setup_closed_filter_panel_profile(UiProfile& profile) {
+    auto& properties = profile.get_properties();
+    auto checked_properties = std::vector<std::shared_ptr<UiProperty>>();
+    auto model = std::make_shared<ArrayListModel<T>>();
+    for(auto property : properties) {
+      if(property->get_name() != "enabled" && property->get_name() != "width" &&
+          property->get_name() != "height") {
+        checked_properties.push_back(property);
+        model->push(*from_text<T>(property->get_name()));
+      }
+    }
+    auto panel = f(model, nullptr);
+    apply_widget_properties(panel, properties);
+    for(auto i = 0; i < static_cast<int>(checked_properties.size()); ++i) {
+      auto& checked =
+        get<bool>(checked_properties[i]->get_name(), profile.get_properties());
+      checked.connect_changed_signal([=] (const auto& value) {
+        if(panel->get_table()->get<bool>(i, 1) != value) {
+          panel->get_table()->set(i, 1, value);
+        }
+      });
+    }
+    panel->get_table()->connect_operation_signal(
+      [=, &profile] (const TableModel::Operation& operation) {
+        visit(operation,
+          [=, &profile] (const TableModel::UpdateOperation& operation) {
+            auto value = panel->get_table()->get<bool>(operation.m_row, 1);
+            auto& checked =
+              get<bool>(checked_properties[operation.m_row]->get_name(),
+              profile.get_properties());
+            if(checked.get() != value) {
+              checked.set(value);
+            }
+          });
+      });
+    auto submit_filter_slot = profile.make_event_slot<QString>("SubmitSignal");
+    panel->connect_submit_signal(
+      [=] (const std::shared_ptr<AnyListModel>& submission) {
+        auto result = QString();
+        for(auto i = 0; i < submission->get_size(); ++i) {
+          result += to_text(submission->get(i)) + " ";
+        }
+        submit_filter_slot(result);
+      });
+    return panel;
   }
 
   template<typename B, typename B* (*F)(QWidget*)>
@@ -4051,6 +4101,16 @@ UiProfile Spire::make_side_box_profile() {
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("SideBox", properties, std::bind_front(
     setup_enum_box_profile<SideBox, make_side_box>));
+  return profile;
+}
+
+UiProfile Spire::make_side_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<bool>("Buy"));
+  properties.push_back(make_standard_property<bool>("Sell"));
+  auto profile = UiProfile("SideFilterPanel", properties, std::bind_front(
+    setup_closed_filter_panel_profile<Side, make_side_filter_panel>));
   return profile;
 }
 
