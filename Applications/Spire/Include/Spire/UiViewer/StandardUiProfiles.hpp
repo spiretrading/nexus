@@ -155,6 +155,9 @@ namespace Spire {
   /** Returns a UiProfile for displaying number in a label. */
   UiProfile make_number_label_profile();
 
+  /** Returns a UiProfile for the OpenFilterPanel. */
+  UiProfile make_open_filter_panel_profile();
+
   /** Returns a UiProfile for the OrderFieldInfoTip. */
   UiProfile make_order_field_info_tip_profile();
 
@@ -184,6 +187,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the RegionDropDownBox. */
   UiProfile make_region_drop_down_box_profile();
+
+  /** Returns a UiProfile for the RegionFilterPanel. */
+  UiProfile make_region_filter_panel_profile();
 
   /** Returns a UiProfile for the RegionListItem. */
   UiProfile make_region_list_item_profile();
