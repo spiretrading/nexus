@@ -8,14 +8,22 @@ export class Quantity {
   public static readonly MULTIPLIER = 1000000;
 
   /** A value of 0. */
-  public static readonly ZERO = new Quantity(0);
+  public static readonly ZERO = Quantity.from_representation(0);
 
   /** A value of 1. */
-  public static readonly ONE = new Quantity(Quantity.MULTIPLIER);
+  public static readonly ONE = Quantity.from_representation(
+    Quantity.MULTIPLIER);
+
+  /** Constructs a Quantity value from its raw internal representation. */
+  public static from_representation(value: number): Quantity {
+    const quantity = new Quantity('0');
+    quantity._value = value;
+    return quantity;
+  }
 
   /** Makes a value from a JSON object. */
   public static fromJson(value: any): Quantity {
-    return new Quantity(value);
+    return Quantity.from_representation(value);
   }
 
   /** Parses a value from a string. */
@@ -67,32 +75,36 @@ export class Quantity {
     }
     let finalValue = sign * (leftHand * Math.pow(10, Quantity.DECIMAL_PLACES) +
       rightHand * multiplier);
-    return new Quantity(Math.trunc(finalValue));
+    return Quantity.from_representation(Math.trunc(finalValue));
   }
 
-  /** Constructs a Quantity value. */
-  constructor(value: number = 0) {
-    this._value = value;
+  /** Constructs a Quantity value from a string. */
+  constructor(value: string) {
+    const parsed = Quantity.parse(value);
+    if(!parsed) {
+      throw new Error(`Invalid Quantity value: "${value}".`);
+    }
+    this._value = parsed._value;
   }
 
   /** Adds two values together. */
   public add(value: Quantity): Quantity {
-    return new Quantity(this._value + value._value);
+    return Quantity.from_representation(this._value + value._value);
   }
 
   /** Subtracts two values from each other. */
   public subtract(value: Quantity): Quantity {
-    return new Quantity(this._value - value._value);
+    return Quantity.from_representation(this._value - value._value);
   }
 
   /** Multiplies this value by a scalar. */
   public multiply(value: number): Quantity {
-    return new Quantity(value * this._value);
+    return Quantity.from_representation(value * this._value);
   }
 
   /** Divides this value by a scalar. */
   public divide(value: number): Quantity {
-    return new Quantity(this._value / value);
+    return Quantity.from_representation(this._value / value);
   }
 
   /** Compares two values. */

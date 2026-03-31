@@ -252,7 +252,8 @@ HttpResponse ReportingWebServlet::on_load_profit_and_loss_report(
       shuttle.shuttle("report", m_report);
     }
   };
-  auto ready = ReadyResponse("ready", completed->second);
+  auto ready = ReadyResponse("ready", std::move(completed->second));
+  account->second->m_completed_reports.erase(completed);
   session->shuttle_response(ready, out(response));
   return response;
 }
