@@ -25,6 +25,15 @@ namespace Spire {
       /** Returns the body. */
       QWidget& get_body();
 
+      /** Returns the orientations that trigger popup. */
+      Qt::Orientations get_overflow_directions() const;
+
+      /**
+       * Sets which directions trigger popup on overflow.
+       * @param directions The orientations that trigger popup.
+       */
+      void set_overflow_directions(Qt::Orientations directions);
+
       QSize sizeHint() const override;
 
     protected:
@@ -33,6 +42,7 @@ namespace Spire {
 
     private:
       QWidget* m_body;
+      Qt::Orientations m_overflow_directions;
       QSize m_body_size;
       GlobalPositionObserver m_position_observer;
 

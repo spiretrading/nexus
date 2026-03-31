@@ -3443,6 +3443,11 @@ UiProfile Spire::make_popup_box_profile() {
     {{"Custom Panel", 0}, {"FilterPanel", 1}, {"DateFilterPanel", 2}});
   properties.push_back(
     make_standard_enum_property("panel", panel_property));
+  auto directions_property = define_enum<Qt::Orientations>(
+    {{"BOTH", Qt::Horizontal | Qt::Vertical}, {"HORIZONTAL", Qt::Horizontal},
+     {"VERTICAL", Qt::Vertical}, {"NONE", {}}});
+  properties.push_back(
+    make_standard_enum_property("overflow_directions", directions_property));
   auto profile = UiProfile("PopupBox", properties, [] (auto& profile) {
     auto& panel = get<int>("panel", profile.get_properties());
     auto filter_panel = [&] () -> QWidget* {
@@ -3483,8 +3488,14 @@ UiProfile Spire::make_popup_box_profile() {
       return nullptr;
     }();
     auto parent = new QWidget();
-    enclose(*parent, *make_popup_panel(*filter_panel));
+    auto popup_box = make_popup_panel(*filter_panel);
+    enclose(*parent, *popup_box);
     apply_widget_properties(parent, profile.get_properties());
+    auto& overflow_directions =
+      get<Qt::Orientations>("overflow_directions", profile.get_properties());
+    overflow_directions.connect_changed_signal([=] (auto value) {
+      popup_box->set_overflow_directions(value);
+    });
     return parent;
   });
   return profile;
