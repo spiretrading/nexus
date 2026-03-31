@@ -16,7 +16,7 @@ export class Quantity {
 
   /** Constructs a Quantity value from its raw internal representation. */
   public static from_representation(value: number): Quantity {
-    const quantity = new Quantity('0');
+    const quantity = Object.create(Quantity.prototype) as Quantity;
     quantity._value = value;
     return quantity;
   }
