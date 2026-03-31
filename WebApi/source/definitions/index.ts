@@ -3,6 +3,7 @@ export * from './currency';
 export * from './currency_pair';
 export * from './exchange_rate';
 export * from './money';
+export * from './quantity';
 export * from './region';
 export * from './security';
 export * from './venue';
