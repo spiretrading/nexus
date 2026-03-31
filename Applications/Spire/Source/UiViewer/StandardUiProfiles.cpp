@@ -78,6 +78,7 @@
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OpenFilterPanel.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
+#include "Spire/Ui/OrderTypeFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/PercentBox.hpp"
 #include "Spire/Ui/PopupBox.hpp"
@@ -3429,6 +3430,19 @@ UiProfile Spire::make_order_type_box_profile() {
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("OrderTypeBox", properties,
     std::bind_front(setup_enum_box_profile<OrderTypeBox, make_order_type_box>));
+  return profile;
+}
+
+UiProfile Spire::make_order_type_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<bool>("Limit"));
+  properties.push_back(make_standard_property<bool>("Market"));
+  properties.push_back(make_standard_property<bool>("Pegged"));
+  properties.push_back(make_standard_property<bool>("Stop"));
+  auto profile = UiProfile("OrderTypeFilterPanel", properties, std::bind_front(
+    setup_closed_filter_panel_profile<
+      OrderType, make_order_type_filter_panel>));
   return profile;
 }
 
