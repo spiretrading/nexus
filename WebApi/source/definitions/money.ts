@@ -26,7 +26,7 @@ export class Money {
 
   /** Constructs a Money value from its raw internal representation. */
   public static from_representation(value: number): Money {
-    const money = new Money('0');
+    const money = Object.create(Money.prototype) as Money;
     money._value = value;
     return money;
   }
