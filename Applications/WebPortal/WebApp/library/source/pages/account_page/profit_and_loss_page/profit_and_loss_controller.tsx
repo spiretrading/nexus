@@ -60,7 +60,7 @@ export class ProfitAndLossController extends
         endDate={this.state.endDate}
         totalPnl={report?.totalProfitAndLoss.toString() ?? ''}
         totalFees={report?.totalFees.toString() ?? ''}
-        totalVolume={report?.totalVolume.toLocaleString() ?? ''}
+        totalVolume={report?.totalVolume.toString() ?? ''}
         currencies={report ? this.toCurrencyEntries(report.currencies) : []}
         foreignCurrencies={report ?
           this.toExchangeRates(report.exchangeRates) : []}
@@ -181,7 +181,7 @@ export class ProfitAndLossController extends
         symbol: currencyEntry.sign,
         code: currencyEntry.code,
         totalPnl: entry.totalProfitAndLoss.toString(),
-        totalVolume: entry.totalVolume.toLocaleString(),
+        totalVolume: entry.totalVolume.toString(),
         totalFees: entry.totalFees.toString(),
         securities: this.toSecurities(entry.securities)
       };
@@ -192,7 +192,7 @@ export class ProfitAndLossController extends
       ProfitAndLossTable.Security[] {
     return entries.map(entry => ({
       symbol: entry.security.toString(),
-      volume: entry.volume.toLocaleString(),
+      volume: entry.volume.toString(),
       fees: entry.fees.toString(),
       pnl: entry.profitAndLoss.toString()
     }));

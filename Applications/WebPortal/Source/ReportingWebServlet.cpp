@@ -2,6 +2,7 @@
 #include <Beam/Queues/QueueReader.hpp>
 #include <Beam/Routines/Scheduler.hpp>
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
+#include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
@@ -97,8 +98,7 @@ void ReportingWebServlet::generate_reports(
           if(report.m_last_quantity == 0) {
             continue;
           }
-          auto quantity =
-            get_direction(fields.m_side) * report.m_last_quantity;
+          auto quantity = get_direction(fields.m_side) * report.m_last_quantity;
           bookkeeper.record(fields.m_security, fields.m_currency, quantity,
             report.m_last_quantity * report.m_last_price,
             get_fee_total(report));
@@ -108,6 +108,12 @@ void ReportingWebServlet::generate_reports(
     if(request.m_is_cancelled->load()) {
       continue;
     }
+    auto& definitions_client = clients.get_definitions_client();
+    auto exchange_rates =
+      ExchangeRateTable(definitions_client.load_exchange_rates());
+    auto risk_parameters = load_risk_parameters(
+      clients.get_administration_client(), request.m_account);
+    auto account_currency = risk_parameters.m_currency;
     auto report = ProfitAndLossReport();
     for(auto& total : bookkeeper.get_totals_range()) {
       auto currency_entry = CurrencyReportEntry();
@@ -130,6 +136,21 @@ void ReportingWebServlet::generate_reports(
         security_entry.m_profit_and_loss =
           inventory.m_gross_profit_and_loss - inventory.m_fees;
         currency_entry.m_securities.push_back(std::move(security_entry));
+      }
+      if(auto rate = exchange_rates.find(
+          CurrencyPair(total.m_position.m_currency, account_currency))) {
+        report.m_total_profit_and_loss +=
+          convert(currency_entry.m_total_profit_and_loss, *rate);
+        report.m_total_fees += convert(currency_entry.m_total_fees, *rate);
+        report.m_total_volume += rate->m_rate * currency_entry.m_total_volume;
+        if(total.m_position.m_currency != account_currency) {
+          report.m_exchange_rates.push_back(*rate);
+        }
+      } else {
+        report.m_total_profit_and_loss +=
+          currency_entry.m_total_profit_and_loss;
+        report.m_total_fees += currency_entry.m_total_fees;
+        report.m_total_volume += currency_entry.m_total_volume;
       }
       report.m_currencies.push_back(std::move(currency_entry));
     }

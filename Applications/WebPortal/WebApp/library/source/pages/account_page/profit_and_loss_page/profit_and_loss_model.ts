@@ -36,7 +36,7 @@ export namespace ProfitAndLossModel {
     security: Nexus.Security;
 
     /** The volume traded. */
-    volume: number;
+    volume: Nexus.Quantity;
 
     /** The fees incurred. */
     fees: Nexus.Money;
@@ -55,7 +55,7 @@ export namespace ProfitAndLossModel {
     totalProfitAndLoss: Nexus.Money;
 
     /** The total volume traded for this currency. */
-    totalVolume: number;
+    totalVolume: Nexus.Quantity;
 
     /** The total fees incurred for this currency. */
     totalFees: Nexus.Money;
@@ -74,7 +74,7 @@ export namespace ProfitAndLossModel {
     totalFees: Nexus.Money;
 
     /** The total volume in account currency. */
-    totalVolume: number;
+    totalVolume: Nexus.Quantity;
 
     /** The list of currencies with activity. */
     currencies: CurrencyEntry[];

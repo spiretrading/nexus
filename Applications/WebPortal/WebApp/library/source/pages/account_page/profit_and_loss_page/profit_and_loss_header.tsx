@@ -31,9 +31,8 @@ interface Properties {
 export function ProfitAndLossHeader(props: Properties) {
   const [isTooltipShown, setIsTooltipShown] = React.useState(false);
   const pnlValue = (() => {
-    const num = parseFloat(props.totalPnl);
-    if(num < 0) {
-      return `-${props.symbol}${Math.abs(num)}`;
+    if(props.totalPnl.startsWith('-')) {
+      return `-${props.symbol}${props.totalPnl.substring(1)}`;
     }
     return `${props.symbol}${props.totalPnl}`;
   })();
@@ -51,7 +50,9 @@ export function ProfitAndLossHeader(props: Properties) {
           </div>
           <div>
             <Metric id='total-fees' label='Fees'
-              value={`${props.symbol}${props.totalFees}`} unit={props.code}
+              value={props.totalFees.startsWith('-') ?
+                `-${props.symbol}${props.totalFees.substring(1)}` :
+                `${props.symbol}${props.totalFees}`} unit={props.code}
               loading={props.loading}/>
           </div>
           <div>

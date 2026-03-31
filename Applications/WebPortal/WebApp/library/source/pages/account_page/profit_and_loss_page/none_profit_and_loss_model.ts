@@ -23,7 +23,7 @@ export class NoneProfitAndLossModel extends ProfitAndLossModel {
 const EMPTY_REPORT: ProfitAndLossModel.Report = {
   totalProfitAndLoss: Nexus.Money.ZERO,
   totalFees: Nexus.Money.ZERO,
-  totalVolume: 0,
+  totalVolume: Nexus.Quantity.ZERO,
   currencies: [],
   exchangeRates: []
 };

@@ -21,27 +21,27 @@ const ASX = Nexus.DefaultMarkets.ASX;
 const REPORT: WebPortal.ProfitAndLossModel.Report = {
   totalProfitAndLoss: Nexus.Money.parse('7562.94'),
   totalFees: Nexus.Money.parse('498.00'),
-  totalVolume: 49800,
+  totalVolume: Nexus.Quantity.parse('49800'),
   currencies: [
     {
       currency: CAD,
       totalProfitAndLoss: Nexus.Money.parse('2769.95'),
-      totalVolume: 31800,
+      totalVolume: Nexus.Quantity.parse('31800'),
       totalFees: Nexus.Money.parse('318.00'),
       securities: [
-        {security: new Nexus.Security('RY', TSX), volume: 12450,
+        {security: new Nexus.Security('RY', TSX), volume: Nexus.Quantity.parse('12450'),
           fees: Nexus.Money.parse('124.50'),
           profitAndLoss: Nexus.Money.parse('3287.15')},
-        {security: new Nexus.Security('TD', TSX), volume: 8300,
+        {security: new Nexus.Security('TD', TSX), volume: Nexus.Quantity.parse('8300'),
           fees: Nexus.Money.parse('83.00'),
           profitAndLoss: Nexus.Money.parse('-1542.80')},
-        {security: new Nexus.Security('BNS', TSX), volume: 5200,
+        {security: new Nexus.Security('BNS', TSX), volume: Nexus.Quantity.parse('5200'),
           fees: Nexus.Money.parse('52.00'),
           profitAndLoss: Nexus.Money.parse('891.33')},
-        {security: new Nexus.Security('ENB', TSX), volume: 3100,
+        {security: new Nexus.Security('ENB', TSX), volume: Nexus.Quantity.parse('3100'),
           fees: Nexus.Money.parse('31.00'),
           profitAndLoss: Nexus.Money.parse('445.67')},
-        {security: new Nexus.Security('CNR', TSX), volume: 2750,
+        {security: new Nexus.Security('CNR', TSX), volume: Nexus.Quantity.parse('2750'),
           fees: Nexus.Money.parse('27.50'),
           profitAndLoss: Nexus.Money.parse('-312.40')}
       ]
@@ -49,16 +49,16 @@ const REPORT: WebPortal.ProfitAndLossModel.Report = {
     {
       currency: USD,
       totalProfitAndLoss: Nexus.Money.parse('3402.14'),
-      totalVolume: 12500,
+      totalVolume: Nexus.Quantity.parse('12500'),
       totalFees: Nexus.Money.parse('125.00'),
       securities: [
-        {security: new Nexus.Security('AAPL', NASDAQ), volume: 6800,
+        {security: new Nexus.Security('AAPL', NASDAQ), volume: Nexus.Quantity.parse('6800'),
           fees: Nexus.Money.parse('68.00'),
           profitAndLoss: Nexus.Money.parse('2145.90')},
-        {security: new Nexus.Security('MSFT', NASDAQ), volume: 4500,
+        {security: new Nexus.Security('MSFT', NASDAQ), volume: Nexus.Quantity.parse('4500'),
           fees: Nexus.Money.parse('45.00'),
           profitAndLoss: Nexus.Money.parse('1823.44')},
-        {security: new Nexus.Security('GOOGL', NASDAQ), volume: 1200,
+        {security: new Nexus.Security('GOOGL', NASDAQ), volume: Nexus.Quantity.parse('1200'),
           fees: Nexus.Money.parse('12.00'),
           profitAndLoss: Nexus.Money.parse('-567.20')}
       ]
@@ -66,13 +66,13 @@ const REPORT: WebPortal.ProfitAndLossModel.Report = {
     {
       currency: AUD,
       totalProfitAndLoss: Nexus.Money.parse('1390.85'),
-      totalVolume: 5500,
+      totalVolume: Nexus.Quantity.parse('5500'),
       totalFees: Nexus.Money.parse('55.00'),
       securities: [
-        {security: new Nexus.Security('BHP', ASX), volume: 3400,
+        {security: new Nexus.Security('BHP', ASX), volume: Nexus.Quantity.parse('3400'),
           fees: Nexus.Money.parse('34.00'),
           profitAndLoss: Nexus.Money.parse('912.55')},
-        {security: new Nexus.Security('CBA', ASX), volume: 2100,
+        {security: new Nexus.Security('CBA', ASX), volume: Nexus.Quantity.parse('2100'),
           fees: Nexus.Money.parse('21.00'),
           profitAndLoss: Nexus.Money.parse('478.30')}
       ]

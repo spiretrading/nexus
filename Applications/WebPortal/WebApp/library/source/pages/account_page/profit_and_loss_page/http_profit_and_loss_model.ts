@@ -67,7 +67,7 @@ function parseReport(value: any): ProfitAndLossModel.Report {
   return {
     totalProfitAndLoss: Nexus.Money.fromJson(value.total_profit_and_loss),
     totalFees: Nexus.Money.fromJson(value.total_fees),
-    totalVolume: value.total_volume,
+    totalVolume: Nexus.Quantity.fromJson(value.total_volume),
     currencies: currencies,
     exchangeRates: exchangeRates
   };
@@ -78,7 +78,7 @@ function parseCurrencyEntry(value: any): ProfitAndLossModel.CurrencyEntry {
   return {
     currency: Nexus.Currency.fromJson(value.currency),
     totalProfitAndLoss: Nexus.Money.fromJson(value.total_profit_and_loss),
-    totalVolume: value.total_volume,
+    totalVolume: Nexus.Quantity.fromJson(value.total_volume),
     totalFees: Nexus.Money.fromJson(value.total_fees),
     securities: securities
   };
@@ -87,7 +87,7 @@ function parseCurrencyEntry(value: any): ProfitAndLossModel.CurrencyEntry {
 function parseSecurityEntry(value: any): ProfitAndLossModel.SecurityEntry {
   return {
     security: Nexus.Security.fromJson(value.security),
-    volume: value.volume,
+    volume: Nexus.Quantity.fromJson(value.volume),
     fees: Nexus.Money.fromJson(value.fees),
     profitAndLoss: Nexus.Money.fromJson(value.profit_and_loss)
   };
