@@ -63,6 +63,7 @@ namespace {
 PopupBox::PopupBox(QWidget& body, QWidget* parent)
     : QWidget(parent),
       m_body(&body),
+      m_overflow_directions(Qt::Horizontal | Qt::Vertical),
       m_position_observer(*this) {
   enclose(*this, *m_body);
   proxy_style(*this, *m_body);
@@ -78,6 +79,18 @@ const QWidget& PopupBox::get_body() const {
 
 QWidget& PopupBox::get_body() {
   return *m_body;
+}
+
+Qt::Orientations PopupBox::get_overflow_directions() const {
+  return m_overflow_directions;
+}
+
+void PopupBox::set_overflow_directions(Qt::Orientations directions) {
+  if(m_overflow_directions == directions) {
+    return;
+  }
+  m_overflow_directions = directions;
+  handle_overflow();
 }
 
 QSize PopupBox::sizeHint() const {
@@ -135,7 +148,12 @@ void PopupBox::restore() {
 void PopupBox::handle_overflow() {
   auto size = this->size();
   auto body_size = m_body->sizeHint();
-  if(size.width() < body_size.width() || size.height() < body_size.height()) {
+  auto overflows =
+    ((m_overflow_directions & Qt::Horizontal) &&
+      size.width() < body_size.width()) ||
+    ((m_overflow_directions & Qt::Vertical) &&
+      size.height() < body_size.height());
+  if(overflows) {
     popup();
   } else {
     restore();
