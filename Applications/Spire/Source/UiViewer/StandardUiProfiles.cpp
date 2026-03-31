@@ -4412,6 +4412,8 @@ UiProfile Spire::make_table_header_profile() {
     auto items = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
     auto item = TableHeaderItem::Model();
     item.m_name = "Security";
+    item.m_short_name = "Sec";
+    item.m_filter = TableFilter::Filter::UNFILTERED;
     items->push(item);
     item = TableHeaderItem::Model();
     item.m_name = "Quantity";
@@ -4428,9 +4430,17 @@ UiProfile Spire::make_table_header_profile() {
     header->connect_sort_signal(
       profile.make_event_slot<int, TableHeaderItem::Order>(
         "Sort", to_string_converter(get_order_property())));
-    header->connect_filter_signal(profile.make_event_slot<int>("Filter"));
-    return header;
-  });
+    header->connect_filter_open_signal(
+      profile.make_event_slot<int, bool>("FilterOpen",
+        [] (auto index, auto is_open) {
+          auto result = QString("Column %1 ").arg(index);
+          if(is_open) {
+            return result + "True";
+          }
+          return result + "False";
+        }));
+      return header;
+    });
   return profile;
 }
 
@@ -4438,24 +4448,29 @@ UiProfile Spire::make_table_header_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto default_style = R"(
-    any {
-      padding_bottom: 0;
-    }
     any > :label {
       text_align: left;
+    }
+    any > :container {
+      padding_left: 10px;
     }
   )";
   properties.push_back(make_style_property("style_sheet",
     std::move(default_style)));
+  properties.push_back(make_standard_property<QString>("name", "Security"));
+  properties.push_back(make_standard_property<QString>("short_name", "Sec"));
   properties.push_back(
     make_standard_enum_property("order", get_order_property()));
   properties.push_back(
     make_standard_enum_property("filter", get_filter_property()));
   properties.push_back(make_standard_property<bool>("is_resizeable", true));
+  properties.push_back(make_standard_property<bool>("is_filter_open", false));
   auto profile = UiProfile("TableHeaderItem", properties, [=] (auto& profile) {
+    auto& name = get<QString>("name", profile.get_properties());
+    auto& short_name = get<QString>("short_name", profile.get_properties());
     auto item_model = TableHeaderItem::Model();
-    item_model.m_name = "Security";
-    item_model.m_order = TableHeaderItem::Order::ASCENDING;
+    item_model.m_name = name.get();
+    item_model.m_short_name = short_name.get();
     auto model =
       std::make_shared<LocalValueModel<TableHeaderItem::Model>>(item_model);
     auto item = new TableHeaderItem(model);
@@ -4465,17 +4480,28 @@ UiProfile Spire::make_table_header_item_profile() {
     style_sheet.connect_changed_signal([=] (const auto& styles) {
       update_widget_style(*item, styles);
     });
+    name.connect_changed_signal([=] (const auto& value) {
+      auto item_model = model->get();
+      item_model.m_name = value;
+      model->set(item_model);
+    });
+    short_name.connect_changed_signal([=] (const auto& value) {
+      auto item_model = model->get();
+      item_model.m_short_name = value;
+      model->set(item_model);
+    });
     link(make_field_value_model(model, &TableHeaderItem::Model::m_order),
       get<TableHeaderItem::Order>("order", profile.get_properties()));
     link(make_field_value_model(model, &TableHeaderItem::Model::m_filter),
       get<TableFilter::Filter>("filter", profile.get_properties()));
     link(&TableHeaderItem::is_resizeable, &TableHeaderItem::set_is_resizeable,
       *item, get<bool>("is_resizeable", profile.get_properties()));
+    link(item->is_filter_open(),
+      get<bool>("is_filter_open", profile.get_properties()));
     item->connect_sort_signal(profile.make_event_slot<TableHeaderItem::Order>(
       "Sort", to_string_converter(get_order_property())));
-    item->connect_filter_signal(profile.make_event_slot("Filter"));
-    item->connect_start_resize_signal(profile.make_event_slot("StartResize"));
-    item->connect_end_resize_signal(profile.make_event_slot("EndResize"));
+    item->is_filter_open()->connect_update_signal(
+      profile.make_event_slot<bool>("FilterOpen"));
     return item;
   });
   return profile;
