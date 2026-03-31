@@ -281,7 +281,6 @@ TableHeaderItem::TableHeaderItem(
       m_is_filter_open(std::make_shared<LocalBooleanModel>(false)),
       m_click_observer(*this),
       m_is_resizeable(true),
-      m_is_hideable(true),
       m_is_resizing(false) {
   setFocusPolicy(Qt::StrongFocus);
   m_name_label =
@@ -377,14 +376,6 @@ void TableHeaderItem::set_is_resizeable(bool is_resizeable) {
   } else {
     unmatch(*this, Resizeable());
   }
-}
-
-bool TableHeaderItem::is_hideable() const {
-  return m_is_hideable;
-}
-
-void TableHeaderItem::set_is_hideable(bool is_hideable) {
-  m_is_hideable = is_hideable;
 }
 
 connection TableHeaderItem::connect_sort_signal(

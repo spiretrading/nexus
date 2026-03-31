@@ -4217,6 +4217,9 @@ UiProfile Spire::make_table_header_item_profile() {
     any > :label {
       text_align: left;
     }
+    any > :container {
+      padding_left: 10px;
+    }
   )";
   properties.push_back(make_style_property("style_sheet",
     std::move(default_style)));

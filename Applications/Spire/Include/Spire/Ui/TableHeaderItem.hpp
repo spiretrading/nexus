@@ -34,11 +34,7 @@ namespace Spire {
       using ActiveElement =
         Styles::StateSelector<void, struct ActiveElementTag>;
 
-      /**
-       * Identifies styling for the container sub-component, allowing parent
-       * widgets such as TableHeader to style individual item containers (e.g.
-       * adjusting the padding of the first column).
-       */
+      /** Identifies styling for the container sub-component.  */
       using Container = Styles::StateSelector<void, struct ContainerTag>;
 
       /** Specifies whether and how the column is sorted. */
@@ -102,12 +98,6 @@ namespace Spire {
       /** Sets whether this item can be resized. */
       void set_is_resizeable(bool is_resizeable);
 
-      /** Returns <code>true</code> iff this item is hideable. */
-      bool is_hideable() const;
-
-      /** Sets whether this item can be hidden. */
-      void set_is_hideable(bool is_hideable);
-
       /** Connects a slot to the SortSignal. */
       boost::signals2::connection connect_sort_signal(
         const SortSignal::slot_type& slot) const;
@@ -124,7 +114,6 @@ namespace Spire {
       std::shared_ptr<BooleanModel> m_is_filter_open;
       ClickObserver m_click_observer;
       bool m_is_resizeable;
-      bool m_is_hideable;
       ResponsiveLabel* m_name_label;
       QPointer<QWidget> m_filter_control;
       QWidget* m_active_element;
