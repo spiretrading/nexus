@@ -391,6 +391,7 @@ DateFilterPanel::DateFilterPanel(std::shared_ptr<DateRangeModel> current,
   m_offset_value_box = offset_value_box;
   auto [range_widget, start_date_box, end_date_box] = make_range_widget(
     m_model->m_start, m_model->m_end);
+  m_start_date_box = start_date_box;
   auto parameter_widget = new QStackedWidget();
   parameter_widget->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -404,11 +405,6 @@ DateFilterPanel::DateFilterPanel(std::shared_ptr<DateRangeModel> current,
   proxy_style(*this, *filter_panel);
   auto switch_parameter_widget = [=] (Mode mode) {
     parameter_widget->setCurrentIndex(static_cast<int>(mode));
-    if(mode == Mode::OFFSET) {
-      setFocusProxy(m_offset_value_box);
-    } else {
-      setFocusProxy(start_date_box);
-    }
   };
   switch_parameter_widget(m_range_mode_button_group->get_current()->get());
   m_range_mode_button_group->get_current()->connect_update_signal(
@@ -426,6 +422,15 @@ bool DateFilterPanel::eventFilter(QObject* watched, QEvent* event) {
       find_focus_proxy(*m_offset_value_box), static_cast<QWidget*>(watched));
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void DateFilterPanel::showEvent(QShowEvent* event) {
+  QWidget::showEvent(event);
+  if(m_range_mode_button_group->get_current()->get() == Mode::OFFSET) {
+    m_offset_value_box->setFocus();
+  } else {
+    m_start_date_box->setFocus();
+  }
 }
 
 void DateFilterPanel::on_reset() {

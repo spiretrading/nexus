@@ -69,315 +69,29 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
     return (
       <PageLayout>
         <main ref={this.mainRef} className={css(STYLES.main)}>
-          {this.renderToolbar()}
+          <Toolbar
+            scope={this.props.scope}
+            displayStatus={this.props.displayStatus}
+            requestState={this.props.requestState}
+            filters={this.props.filters}
+            filterCount={this.props.filterCount}
+            pageIndex={this.props.pageIndex}
+            response={this.props.response}
+            isFilterModalOpen={this.state.isFilterModalOpen}
+            filterModalSize={this.state.filterModalSize}
+            onSubmit={this.props.onSubmit}
+            onOpenFilterModal={this.onOpenFilterModal}
+            onCloseFilterModal={this.onCloseFilterModal}
+            onFilterSubmit={this.onFilterSubmit}/>
           <div className={css(STYLES.contentGap)}/>
-          {this.renderRequestContent()}
-          {this.renderPaginationSection()}
+          <RequestDirectoryContent
+            displayStatus={this.props.displayStatus}
+            pageIndex={this.props.pageIndex}
+            response={this.props.response}
+            onClickRequest={this.props.onClickRequest}
+            onPageNavigate={this.onPageNavigate}/>
         </main>
       </PageLayout>);
-  }
-
-  private renderToolbar(): JSX.Element {
-    return (
-      <form aria-label='Request Filters' className={css(STYLES.toolbar)}
-        onSubmit={this.onFormSubmit}>
-        {this.renderNarrowToolbar()}
-        {this.renderWideToolbar()}
-        {this.state.isFilterModalOpen &&
-          <RequestFilterModal
-            displaySize={this.state.filterModalSize}
-            categories={this.props.filters.categories}
-            startDate={this.props.filters.startDate}
-            endDate={this.props.filters.endDate}
-            sortKey={this.props.filters.sortKey}
-            onSubmit={this.onFilterSubmit}
-            onClose={this.onCloseFilterModal}/>}
-      </form>);
-  }
-
-  private renderNarrowToolbar(): JSX.Element {
-    const filtersLabel = this.props.filterCount > 0 ?
-      `Filters (${this.props.filterCount})` : 'Filters';
-    return (
-      <div className={css(STYLES.narrowToolbar)}>
-        <div className={css(STYLES.narrowQueryRow)}>
-          <div className={css(STYLES.narrowQueryCell)}>
-            <FilterInput value={this.props.filters.query}
-              placeholder='Filter requests'
-              onChange={this.onQueryChange}/>
-          </div>
-          <div className={css(STYLES.narrowFiltersGap)}/>
-          <IconLabelButton
-            icon='resources/requests_page/filters.svg'
-            label={filtersLabel}
-            onClick={this.onOpenFilterModal}/>
-        </div>
-        <div className={css(STYLES.narrowSegmentGap)}/>
-        {this.renderSegmentedControl('request-state-narrow', false)}
-      </div>);
-  }
-
-  private renderWideToolbar(): JSX.Element {
-    return (
-      <div className={css(STYLES.wideToolbar)}>
-        <div className={css(STYLES.wideQueryColumn)}>
-          {this.renderQuerySection()}
-        </div>
-        <div className={css(STYLES.wideFlexColumn)}/>
-        <div className={css(STYLES.wideGapColumn)}/>
-        <div className={css(STYLES.wideControlsColumn)}>
-          {this.renderControlsSection()}
-        </div>
-      </div>);
-  }
-
-  private renderQuerySection(): JSX.Element {
-    return (
-      <div className={css(STYLES.querySection)}>
-        <FilterInput value={this.props.filters.query}
-          placeholder='Filter requests'
-          onChange={this.onQueryChange}/>
-        <div className={css(STYLES.querySectionGap)}/>
-        <div className={css(STYLES.chipRow)}>
-          <FilterChip label='Risk Controls'
-            isChecked={this.props.filters.categories.has(Type.RISK)}
-            onChange={this.onToggleRisk}/>
-          <div className={css(STYLES.chipSpacing)}/>
-          <FilterChip label='Entitlements'
-            isChecked={this.props.filters.categories.has(Type.ENTITLEMENTS)}
-            onChange={this.onToggleEntitlements}/>
-          <div className={css(STYLES.chipSpacing)}/>
-          <FilterChip label='Compliance'
-            isChecked={this.props.filters.categories.has(Type.COMPLIANCE)}
-            onChange={this.onToggleCompliance}/>
-        </div>
-      </div>);
-  }
-
-  private renderControlsSection(): JSX.Element {
-    const filtersLabel = this.props.filterCount > 0 ?
-      `Filters (${this.props.filterCount})` : 'Filters';
-    return (
-      <div className={css(STYLES.controlsSection)}>
-        <div className={css(STYLES.mediumSegment)}>
-          {this.renderSegmentedControl('request-state-medium', false)}
-        </div>
-        <div className={css(STYLES.wideSegment)}>
-          {this.renderSegmentedControl('request-state', true)}
-        </div>
-        <div className={css(STYLES.controlsSectionGap)}/>
-        <div className={css(STYLES.sortRow)}>
-          <label className={css(STYLES.sortLabel)}
-            htmlFor='request-sort'>Sort by</label>
-          <div className={css(STYLES.sortLabelGap)}/>
-          <div className={css(STYLES.sortByCell)}>
-            <RequestSortSelect id='request-sort'
-              value={this.props.filters.sortKey}
-              onChange={this.onSortChange}/>
-          </div>
-          <div className={css(STYLES.sortFiltersGap)}/>
-          <div className={css(STYLES.wideFiltersButton)}>
-            <IconLabelButton
-              aria-label='Filters'
-              variant={IconLabelButton.Variant.ICON_LABEL}
-              style={{width: '120px'}}
-              icon='resources/requests_page/filters.svg'
-              label={filtersLabel}
-              onClick={this.onOpenFilterModal}/>
-          </div>
-          <div className={css(STYLES.mediumFiltersButton)}>
-            <IconLabelButton
-              aria-label='Filters'
-              icon='resources/requests_page/filters.svg'
-              label='Filters'
-              onClick={this.onOpenFilterModal}/>
-          </div>
-        </div>
-      </div>);
-  }
-
-  private renderSegmentedControl(
-      name: string, showBadge: boolean): JSX.Element {
-    const badge = (count: number) =>
-      showBadge ? this.formatBadge(count) : undefined;
-    return (
-      <SegmentedControl name={name}>
-        <SegmentButton label='Pending'
-          badge={badge(this.props.response.facetCounts.pending)}
-          isChecked={this.props.requestState ===
-            RequestsModel.RequestState.PENDING}
-          onChange={this.onSelectPending}/>
-        <SegmentButton label='Approved'
-          badge={badge(this.props.response.facetCounts.approved)}
-          isChecked={this.props.requestState ===
-            RequestsModel.RequestState.APPROVED}
-          onChange={this.onSelectApproved}/>
-        <SegmentButton label='Rejected'
-          badge={badge(this.props.response.facetCounts.rejected)}
-          isChecked={this.props.requestState ===
-            RequestsModel.RequestState.REJECTED}
-          onChange={this.onSelectRejected}/>
-      </SegmentedControl>);
-  }
-
-  private renderRequestContent(): JSX.Element {
-    const isLoading = this.props.displayStatus ===
-      RequestDirectoryPage.DisplayStatus.IN_PROGRESS;
-    if(this.props.displayStatus ===
-        RequestDirectoryPage.DisplayStatus.ERROR) {
-      return (
-        <section aria-label='Requests' aria-live='polite'
-            className={css(STYLES.fallbackSection)}>
-          <div className={css(STYLES.fallback)}>
-            <ErrorMessage message='There was an error loading the requests.'/>
-          </div>
-        </section>);
-    }
-    if(this.props.displayStatus ===
-        RequestDirectoryPage.DisplayStatus.EMPTY) {
-      return (
-        <section aria-label='Requests' aria-live='polite'
-            className={css(STYLES.fallbackSection)}>
-          <div className={css(STYLES.fallback)}>
-            <EmptyMessage
-              message='No results found. Try adjusting filters.'/>
-          </div>
-        </section>);
-    }
-    if(isLoading) {
-      return (
-        <section aria-label='Requests' aria-live='polite' aria-busy='true'>
-          <ul className={css(STYLES.requestList)}>
-            {[0, 1, 2, 3, 4].map(i =>
-              <li key={i}>
-                <RequestItemPlaceholder/>
-              </li>)}
-          </ul>
-        </section>);
-    }
-    const all = this.props.response.requestList;
-    const start = this.props.pageIndex * PAGE_SIZE;
-    const items = all.slice(start, start + PAGE_SIZE);
-    return (
-      <section aria-label='Requests' aria-live='polite' aria-busy='false'>
-        <ul className={css(STYLES.requestList)}>
-          {items.map(item =>
-            <li key={item.id}>
-              <RequestItem
-                id={item.id}
-                category={item.category}
-                state={item.state}
-                updateTime={item.updateTime}
-                accountName={item.account.name}
-                effectiveDate={item.effectiveDate}
-                firstChange={item.firstChange}
-                additionalChangesCount={item.additionalChangesCount}
-                commentCount={item.commentCount}
-                managerApproval={item.managerApproval}
-                onClick={this.props.onClickRequest}/>
-            </li>)}
-        </ul>
-      </section>);
-  }
-
-  private renderPaginationSection(): JSX.Element {
-    if(this.props.displayStatus ===
-        RequestDirectoryPage.DisplayStatus.ERROR ||
-        this.props.displayStatus ===
-        RequestDirectoryPage.DisplayStatus.EMPTY) {
-      return null;
-    }
-    if(this.props.displayStatus ===
-        RequestDirectoryPage.DisplayStatus.IN_PROGRESS &&
-        this.props.response.requestList.length <= PAGE_SIZE) {
-      return null;
-    }
-    return (
-      <div className={css(STYLES.paginationSection)}>
-        <Pagination
-          pageSize={PAGE_SIZE}
-          pageIndex={this.props.pageIndex}
-          totalCount={this.props.response.requestList.length}
-          onNavigate={this.onPageNavigate}/>
-      </div>);
-  }
-
-  private formatBadge(count: number): string | undefined {
-    if(this.props.response.status ===
-        RequestsModel.ResponseStatus.READY) {
-      return String(count);
-    }
-    return undefined;
-  }
-
-  private onFormSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-  }
-
-  private onQueryChange = (value: string) => {
-    this.props.onSubmit?.({
-      scope: this.props.scope,
-      requestState: this.props.requestState,
-      filters: {
-        ...this.props.filters,
-        query: value
-      },
-      pageIndex: this.props.pageIndex
-    });
-  }
-
-  private toggleCategory(type: Type) {
-    const next = new Set(this.props.filters.categories);
-    if(next.has(type)) {
-      next.delete(type);
-    } else {
-      next.add(type);
-    }
-    this.props.onSubmit?.({
-      scope: this.props.scope,
-      requestState: this.props.requestState,
-      filters: {
-        ...this.props.filters,
-        categories: next
-      },
-      pageIndex: this.props.pageIndex
-    });
-  }
-
-  private onToggleRisk = () => {
-    this.toggleCategory(Type.RISK);
-  }
-
-  private onToggleEntitlements = () => {
-    this.toggleCategory(Type.ENTITLEMENTS);
-  }
-
-  private onToggleCompliance = () => {
-    this.toggleCategory(Type.COMPLIANCE);
-  }
-
-  private onSelectPending = () => {
-    this.submit(RequestsModel.RequestState.PENDING);
-  }
-
-  private onSelectApproved = () => {
-    this.submit(RequestsModel.RequestState.APPROVED);
-  }
-
-  private onSelectRejected = () => {
-    this.submit(RequestsModel.RequestState.REJECTED);
-  }
-
-  private onSortChange = (value: RequestsModel.SortField) => {
-    this.props.onSubmit?.({
-      scope: this.props.scope,
-      requestState: this.props.requestState,
-      filters: {
-        ...this.props.filters,
-        sortKey: value
-      },
-      pageIndex: this.props.pageIndex
-    });
   }
 
   private onOpenFilterModal = () => {
@@ -414,23 +128,448 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
       element = element.parentElement;
     }
     element?.scrollTo(0, 0);
-    this.submit(this.props.requestState, pageIndex);
+    this.props.onSubmit?.({
+      scope: this.props.scope,
+      requestState: this.props.requestState,
+      filters: this.props.filters,
+      pageIndex
+    });
   }
 
   private mainRef = React.createRef<HTMLElement>();
+}
 
-  private submit(requestState: RequestsModel.RequestState,
-      pageIndex?: number) {
-    this.props.onSubmit?.({
-      scope: this.props.scope,
-      requestState,
-      filters: this.props.filters,
-      pageIndex: pageIndex ?? this.props.pageIndex
+/** Form:Toolbar — contains search, filter chips, segmented control, sort,
+ *  and filter button. Has 3 layouts: narrow (default), medium (768-1035px),
+ *  and wide (>= 1036px). */
+function Toolbar(props: {
+    scope: RequestsModel.Scope;
+    displayStatus: RequestDirectoryPage.DisplayStatus;
+    requestState: RequestsModel.RequestState;
+    filters: RequestsModel.Filters;
+    filterCount: number;
+    pageIndex: number;
+    response: RequestsModel.Response;
+    isFilterModalOpen: boolean;
+    filterModalSize: DisplaySize;
+    onSubmit?: (submission: RequestsModel.Submission) => void;
+    onOpenFilterModal?: () => void;
+    onCloseFilterModal?: () => void;
+    onFilterSubmit?: (criteria: RequestFilterModal.Criteria) => void;
+  }) {
+  const onFormSubmit = (event: React.FormEvent) => {
+    event.preventDefault();
+  };
+  return (
+    <form aria-label='Request Filters' className={css(STYLES.toolbar)}
+        onSubmit={onFormSubmit}>
+      <NarrowToolbar
+        scope={props.scope}
+        requestState={props.requestState}
+        filters={props.filters}
+        filterCount={props.filterCount}
+        pageIndex={props.pageIndex}
+        response={props.response}
+        onSubmit={props.onSubmit}
+        onOpenFilterModal={props.onOpenFilterModal}/>
+      <WideToolbar
+        scope={props.scope}
+        requestState={props.requestState}
+        filters={props.filters}
+        filterCount={props.filterCount}
+        pageIndex={props.pageIndex}
+        response={props.response}
+        onSubmit={props.onSubmit}
+        onOpenFilterModal={props.onOpenFilterModal}/>
+      {props.isFilterModalOpen &&
+        <RequestFilterModal
+          displaySize={props.filterModalSize}
+          categories={props.filters.categories}
+          startDate={props.filters.startDate}
+          endDate={props.filters.endDate}
+          sortKey={props.filters.sortKey}
+          onSubmit={props.onFilterSubmit}
+          onClose={props.onCloseFilterModal}/>}
+    </form>);
+}
+
+/** Div:NarrowToolbar — mobile layout with Query + Filters on one row,
+ *  RequestStateSegment below. Hidden at >= 768px. */
+function NarrowToolbar(props: {
+    scope: RequestsModel.Scope;
+    requestState: RequestsModel.RequestState;
+    filters: RequestsModel.Filters;
+    filterCount: number;
+    pageIndex: number;
+    response: RequestsModel.Response;
+    onSubmit?: (submission: RequestsModel.Submission) => void;
+    onOpenFilterModal?: () => void;
+  }) {
+  const filtersLabel = props.filterCount > 0 ?
+    `Filters (${props.filterCount})` : 'Filters';
+  const onQueryChange = (value: string) => {
+    props.onSubmit?.({
+      scope: props.scope,
+      requestState: props.requestState,
+      filters: {...props.filters, query: value},
+      pageIndex: props.pageIndex
     });
+  };
+  const onSelectState = (state: RequestsModel.RequestState) => {
+    props.onSubmit?.({
+      scope: props.scope,
+      requestState: state,
+      filters: props.filters,
+      pageIndex: props.pageIndex
+    });
+  };
+  return (
+    <div className={css(STYLES.narrowToolbar)}>
+      <div className={css(STYLES.narrowQueryRow)}>
+        <div className={css(STYLES.narrowQueryCell)}>
+          <FilterInput value={props.filters.query}
+            placeholder='Filter requests'
+            onChange={onQueryChange}/>
+        </div>
+        <div className={css(STYLES.narrowFiltersGap)}/>
+        <IconLabelButton
+          icon='resources/requests_page/filters.svg'
+          label={filtersLabel}
+          onClick={props.onOpenFilterModal}/>
+      </div>
+      <div className={css(STYLES.narrowSegmentGap)}/>
+      <RequestStateSegment name='request-state-narrow' showBadge={false}
+        requestState={props.requestState}
+        response={props.response}
+        onSelectState={onSelectState}/>
+    </div>);
+}
+
+/** Div:WideToolbar — medium/wide layout with QuerySection and ControlsSection
+ *  side by side. Hidden below 768px. */
+function WideToolbar(props: {
+    scope: RequestsModel.Scope;
+    requestState: RequestsModel.RequestState;
+    filters: RequestsModel.Filters;
+    filterCount: number;
+    pageIndex: number;
+    response: RequestsModel.Response;
+    onSubmit?: (submission: RequestsModel.Submission) => void;
+    onOpenFilterModal?: () => void;
+  }) {
+  return (
+    <div className={css(STYLES.wideToolbar)}>
+      <div className={css(STYLES.wideQueryColumn)}>
+        <QuerySection
+          scope={props.scope}
+          requestState={props.requestState}
+          filters={props.filters}
+          pageIndex={props.pageIndex}
+          onSubmit={props.onSubmit}/>
+      </div>
+      <div className={css(STYLES.wideFlexColumn)}/>
+      <div className={css(STYLES.wideGapColumn)}/>
+      <div className={css(STYLES.wideControlsColumn)}>
+        <ControlsSection
+          scope={props.scope}
+          requestState={props.requestState}
+          filters={props.filters}
+          filterCount={props.filterCount}
+          pageIndex={props.pageIndex}
+          response={props.response}
+          onSubmit={props.onSubmit}
+          onOpenFilterModal={props.onOpenFilterModal}/>
+      </div>
+    </div>);
+}
+
+/** Div:QuerySection — Query input + 3 FilterChips.
+ *  Used in the wide toolbar at >= 768px. */
+function QuerySection(props: {
+    scope: RequestsModel.Scope;
+    requestState: RequestsModel.RequestState;
+    filters: RequestsModel.Filters;
+    pageIndex: number;
+    onSubmit?: (submission: RequestsModel.Submission) => void;
+  }) {
+  const onQueryChange = (value: string) => {
+    props.onSubmit?.({
+      scope: props.scope,
+      requestState: props.requestState,
+      filters: {...props.filters, query: value},
+      pageIndex: props.pageIndex
+    });
+  };
+  const toggleCategory = (type: Type) => {
+    const next = new Set(props.filters.categories);
+    if(next.has(type)) {
+      next.delete(type);
+    } else {
+      next.add(type);
+    }
+    props.onSubmit?.({
+      scope: props.scope,
+      requestState: props.requestState,
+      filters: {...props.filters, categories: next},
+      pageIndex: props.pageIndex
+    });
+  };
+  return (
+    <div className={css(STYLES.querySection)}>
+      <FilterInput value={props.filters.query}
+        placeholder='Filter requests'
+        onChange={onQueryChange}/>
+      <div className={css(STYLES.querySectionGap)}/>
+      <div className={css(STYLES.chipRow)}>
+        <FilterChip label='Risk Controls'
+          isChecked={props.filters.categories.has(Type.RISK)}
+          onChange={() => toggleCategory(Type.RISK)}/>
+        <div className={css(STYLES.chipSpacing)}/>
+        <FilterChip label='Entitlements'
+          isChecked={props.filters.categories.has(Type.ENTITLEMENTS)}
+          onChange={() => toggleCategory(Type.ENTITLEMENTS)}/>
+        <div className={css(STYLES.chipSpacing)}/>
+        <FilterChip label='Compliance'
+          isChecked={props.filters.categories.has(Type.COMPLIANCE)}
+          onChange={() => toggleCategory(Type.COMPLIANCE)}/>
+      </div>
+    </div>);
+}
+
+/** Div:ControlsSection — RequestStateSegment + Sort controls + Filters button.
+ *  Two layouts: default (300px) and wide (384px at >= 1036px). */
+function ControlsSection(props: {
+    scope: RequestsModel.Scope;
+    requestState: RequestsModel.RequestState;
+    filters: RequestsModel.Filters;
+    filterCount: number;
+    pageIndex: number;
+    response: RequestsModel.Response;
+    onSubmit?: (submission: RequestsModel.Submission) => void;
+    onOpenFilterModal?: () => void;
+  }) {
+  const filtersLabel = props.filterCount > 0 ?
+    `Filters (${props.filterCount})` : 'Filters';
+  const onSelectState = (state: RequestsModel.RequestState) => {
+    props.onSubmit?.({
+      scope: props.scope,
+      requestState: state,
+      filters: props.filters,
+      pageIndex: props.pageIndex
+    });
+  };
+  const onSortChange = (value: RequestsModel.SortField) => {
+    props.onSubmit?.({
+      scope: props.scope,
+      requestState: props.requestState,
+      filters: {...props.filters, sortKey: value},
+      pageIndex: props.pageIndex
+    });
+  };
+  return (
+    <div className={css(STYLES.controlsSection)}>
+      <div className={css(STYLES.mediumSegment)}>
+        <RequestStateSegment name='request-state-medium' showBadge={false}
+          requestState={props.requestState}
+          response={props.response}
+          onSelectState={onSelectState}/>
+      </div>
+      <div className={css(STYLES.wideSegment)}>
+        <RequestStateSegment name='request-state' showBadge={true}
+          requestState={props.requestState}
+          response={props.response}
+          onSelectState={onSelectState}/>
+      </div>
+      <div className={css(STYLES.controlsSectionGap)}/>
+      <div className={css(STYLES.sortRow)}>
+        <label className={css(STYLES.sortLabel)}
+          htmlFor='request-sort'>Sort by</label>
+        <div className={css(STYLES.sortLabelGap)}/>
+        <div className={css(STYLES.sortByCell)}>
+          <RequestSortSelect id='request-sort'
+            value={props.filters.sortKey}
+            onChange={onSortChange}/>
+        </div>
+        <div className={css(STYLES.sortFiltersGap)}/>
+        <div className={css(STYLES.wideFiltersButton)}>
+          <IconLabelButton
+            aria-label='Filters'
+            variant={IconLabelButton.Variant.ICON_LABEL}
+            style={{width: '120px'}}
+            icon='resources/requests_page/filters.svg'
+            label={filtersLabel}
+            onClick={props.onOpenFilterModal}/>
+        </div>
+        <div className={css(STYLES.mediumFiltersButton)}>
+          <IconLabelButton
+            aria-label='Filters'
+            icon='resources/requests_page/filters.svg'
+            label='Filters'
+            onClick={props.onOpenFilterModal}/>
+        </div>
+      </div>
+    </div>);
+}
+
+/** SegmentedControl for Pending/Approved/Rejected state selection. */
+function RequestStateSegment(props: {
+    name: string;
+    showBadge: boolean;
+    requestState: RequestsModel.RequestState;
+    response: RequestsModel.Response;
+    onSelectState?: (state: RequestsModel.RequestState) => void;
+  }) {
+  const badge = (count: number) => {
+    if(props.showBadge &&
+        props.response.status === RequestsModel.ResponseStatus.READY) {
+      return String(count);
+    }
+    return undefined;
+  };
+  return (
+    <SegmentedControl name={props.name}>
+      <SegmentButton label='Pending'
+        badge={badge(props.response.facetCounts.pending)}
+        isChecked={props.requestState ===
+          RequestsModel.RequestState.PENDING}
+        onChange={() =>
+          props.onSelectState?.(RequestsModel.RequestState.PENDING)}/>
+      <SegmentButton label='Approved'
+        badge={badge(props.response.facetCounts.approved)}
+        isChecked={props.requestState ===
+          RequestsModel.RequestState.APPROVED}
+        onChange={() =>
+          props.onSelectState?.(RequestsModel.RequestState.APPROVED)}/>
+      <SegmentButton label='Rejected'
+        badge={badge(props.response.facetCounts.rejected)}
+        isChecked={props.requestState ===
+          RequestsModel.RequestState.REJECTED}
+        onChange={() =>
+          props.onSelectState?.(RequestsModel.RequestState.REJECTED)}/>
+    </SegmentedControl>);
+}
+
+/** Section:RequestDirectoryContent — shows RequestList + PaginationSection,
+ *  or Fallback when ERROR/EMPTY. */
+function RequestDirectoryContent(props: {
+    displayStatus: RequestDirectoryPage.DisplayStatus;
+    pageIndex: number;
+    response: RequestsModel.Response;
+    onClickRequest?: (id: number) => void;
+    onPageNavigate?: (pageIndex: number) => void;
+  }) {
+  const isError = props.displayStatus ===
+    RequestDirectoryPage.DisplayStatus.ERROR;
+  const isEmpty = props.displayStatus ===
+    RequestDirectoryPage.DisplayStatus.EMPTY;
+  if(isError || isEmpty) {
+    return (
+      <Fallback displayStatus={props.displayStatus}/>);
   }
+  return (<>
+    <RequestList
+      displayStatus={props.displayStatus}
+      pageIndex={props.pageIndex}
+      response={props.response}
+      onClickRequest={props.onClickRequest}/>
+    <PaginationSection
+      displayStatus={props.displayStatus}
+      pageIndex={props.pageIndex}
+      response={props.response}
+      onPageNavigate={props.onPageNavigate}/>
+  </>);
+}
+
+/** Div:Fallback — shows EmptyMessage or ErrorMessage. */
+function Fallback(props: {
+    displayStatus: RequestDirectoryPage.DisplayStatus;
+  }) {
+  return (
+    <section aria-label='Requests' aria-live='polite'
+        className={css(STYLES.fallbackSection)}>
+      <div className={css(STYLES.fallback)}>
+        {props.displayStatus ===
+          RequestDirectoryPage.DisplayStatus.ERROR &&
+          <ErrorMessage message='There was an error loading the requests.'/>}
+        {props.displayStatus ===
+          RequestDirectoryPage.DisplayStatus.EMPTY &&
+          <EmptyMessage
+            message='No results found. Try adjusting filters.'/>}
+      </div>
+    </section>);
+}
+
+/** Ul:RequestList — list of RequestItem or RequestItemPlaceholder.
+ *  Shows 5 placeholders when IN_PROGRESS, otherwise paginated items. */
+function RequestList(props: {
+    displayStatus: RequestDirectoryPage.DisplayStatus;
+    pageIndex: number;
+    response: RequestsModel.Response;
+    onClickRequest?: (id: number) => void;
+  }) {
+  const isLoading = props.displayStatus ===
+    RequestDirectoryPage.DisplayStatus.IN_PROGRESS;
+  if(isLoading) {
+    return (
+      <section aria-label='Requests' aria-live='polite' aria-busy='true'>
+        <ul className={css(STYLES.requestList)}>
+          {[0, 1, 2, 3, 4].map(i =>
+            <li key={i}>
+              <RequestItemPlaceholder/>
+            </li>)}
+        </ul>
+      </section>);
+  }
+  const all = props.response.requestList;
+  const start = props.pageIndex * PAGE_SIZE;
+  const items = all.slice(start, start + PAGE_SIZE);
+  return (
+    <section aria-label='Requests' aria-live='polite' aria-busy='false'>
+      <ul className={css(STYLES.requestList)}>
+        {items.map(item =>
+          <li key={item.id}>
+            <RequestItem
+              id={item.id}
+              category={item.category}
+              state={item.state}
+              updateTime={item.updateTime}
+              accountName={item.account.name}
+              effectiveDate={item.effectiveDate}
+              firstChange={item.firstChange}
+              additionalChangesCount={item.additionalChangesCount}
+              commentCount={item.commentCount}
+              managerApproval={item.managerApproval}
+              onClick={props.onClickRequest}/>
+          </li>)}
+      </ul>
+    </section>);
+}
+
+/** Div:PaginationSection — shows Pagination or nothing.
+ *  Hidden when IN_PROGRESS and list size <= 50, or when ERROR/EMPTY. */
+function PaginationSection(props: {
+    displayStatus: RequestDirectoryPage.DisplayStatus;
+    pageIndex: number;
+    response: RequestsModel.Response;
+    onPageNavigate?: (pageIndex: number) => void;
+  }) {
+  if(props.displayStatus ===
+      RequestDirectoryPage.DisplayStatus.IN_PROGRESS &&
+      props.response.requestList.length <= PAGINATION_THRESHOLD) {
+    return null;
+  }
+  return (
+    <div className={css(STYLES.paginationSection)}>
+      <Pagination
+        pageSize={PAGE_SIZE}
+        pageIndex={props.pageIndex}
+        totalCount={props.response.requestList.length}
+        onNavigate={props.onPageNavigate}/>
+    </div>);
 }
 
 const PAGE_SIZE = 25;
+const PAGINATION_THRESHOLD = 50;
 
 export namespace RequestDirectoryPage {
 
@@ -451,7 +590,6 @@ const STYLES = StyleSheet.create({
     fontFamily: "'Roboto', system-ui, sans-serif",
     fontWeight: 400,
     color: '#333333',
-    containerType: 'inline-size',
     display: 'flex',
     flexDirection: 'column',
     flex: '1 1 auto'
@@ -460,7 +598,7 @@ const STYLES = StyleSheet.create({
     padding: '0 18px'
   },
   narrowToolbar: {
-    '@container (min-width: 768px)': {
+    '@media (min-width: 768px)': {
       display: 'none'
     }
   },
@@ -481,7 +619,7 @@ const STYLES = StyleSheet.create({
   },
   wideToolbar: {
     display: 'none',
-    '@container (min-width: 768px)': {
+    '@media (min-width: 768px)': {
       display: 'flex'
     }
   },
@@ -498,7 +636,7 @@ const STYLES = StyleSheet.create({
   wideControlsColumn: {
     width: '300px',
     flexShrink: 0,
-    '@container (min-width: 1036px)': {
+    '@media (min-width: 1036px)': {
       width: '384px'
     }
   },
@@ -547,23 +685,23 @@ const STYLES = StyleSheet.create({
   },
   wideFiltersButton: {
     display: 'none',
-    '@container (min-width: 1036px)': {
+    '@media (min-width: 1036px)': {
       display: 'block'
     }
   },
   mediumSegment: {
-    '@container (min-width: 1036px)': {
+    '@media (min-width: 1036px)': {
       display: 'none'
     }
   },
   wideSegment: {
     display: 'none',
-    '@container (min-width: 1036px)': {
+    '@media (min-width: 1036px)': {
       display: 'block'
     }
   },
   mediumFiltersButton: {
-    '@container (min-width: 1036px)': {
+    '@media (min-width: 1036px)': {
       display: 'none'
     }
   },

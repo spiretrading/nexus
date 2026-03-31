@@ -20,7 +20,9 @@ export const Input = React.forwardRef<HTMLInputElement, Properties>(
 const STYLES = StyleSheet.create({
   input: {
     backgroundColor: '#FFFFFF',
-    border: '1px solid #C8C8C8',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: '#C8C8C8',
     borderRadius: '1px',
     fontSize: '0.875rem',
     fontFamily: "'Roboto', sans-serif",

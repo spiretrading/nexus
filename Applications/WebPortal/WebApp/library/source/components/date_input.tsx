@@ -115,7 +115,9 @@ export function DateLabel(props: DateLabelProperties): JSX.Element {
 const STYLES = StyleSheet.create({
   container: {
     backgroundColor: '#FFFFFF',
-    border: '1px solid #C8C8C8',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: '#C8C8C8',
     borderRadius: '1px',
     color: '#000000',
     fontSize: '0.875rem',
