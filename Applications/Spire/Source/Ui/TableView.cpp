@@ -203,8 +203,6 @@ TableView::TableView(
   layout->addWidget(m_scroll_box);
   m_header_view->connect_sort_signal(
     std::bind_front(&TableView::on_order_update, this));
-  m_header_view->connect_filter_open_signal(
-    std::bind_front(&TableView::on_filter_clicked, this));
   m_filter_connection = m_filter->connect_filter_signal(
     std::bind_front(&TableView::on_filter, this));
   m_current_connection = m_current->connect_update_signal(
@@ -301,9 +299,6 @@ void TableView::on_order_update(int index, TableHeaderItem::Order order) {
     }
   }
   m_sort_signal(index, order);
-}
-
-void TableView::on_filter_clicked(int index, bool toggled) {
 }
 
 void TableView::on_filter(int column, TableFilter::Filter filter) {
