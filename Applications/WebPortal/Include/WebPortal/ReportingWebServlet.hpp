@@ -104,23 +104,23 @@ namespace Nexus {
       };
       struct AccountReports {
         int m_next_id;
-        std::shared_ptr<Beam::Queue<ReportRequest>> m_pending;
+        bool m_is_generating;
+        Beam::Queue<ReportRequest> m_pending_requests;
         std::unordered_map<int, std::shared_ptr<std::atomic_bool>>
           m_cancel_tokens;
-        std::unordered_map<int, ProfitAndLossReport> m_completed;
+        std::unordered_map<int, ProfitAndLossReport> m_completed_reports;
 
         AccountReports();
       };
       Beam::WebSessionStore<WebPortalSession>* m_sessions;
       mutable boost::mutex m_mutex;
-      std::unordered_map<int, AccountReports> m_accounts;
+      std::unordered_map<int, std::shared_ptr<AccountReports>> m_accounts;
       Beam::OpenState m_open_state;
 
       ReportingWebServlet(const ReportingWebServlet&) = delete;
       ReportingWebServlet& operator=(const ReportingWebServlet&) = delete;
-      void generate_reports(
-        int account_id, std::shared_ptr<WebPortalSession> session,
-        std::shared_ptr<Beam::Queue<ReportRequest>> pending);
+      void generate_reports(std::shared_ptr<AccountReports> account,
+        std::shared_ptr<WebPortalSession> session);
       Beam::HttpResponse on_start_profit_and_loss_report(
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_profit_and_loss_report(
