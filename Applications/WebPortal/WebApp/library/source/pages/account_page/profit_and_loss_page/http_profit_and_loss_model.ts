@@ -42,8 +42,6 @@ export class HttpProfitAndLossModel extends ProfitAndLossModel {
         });
       if(response.status === 'ready') {
         return parseReport(response.report);
-      } else if(response.status === 'error') {
-        throw new Beam.ServiceError('Report generation failed.');
       }
       await sleep(delay);
       delay = Math.min(delay * 2, 20000);

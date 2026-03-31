@@ -20,6 +20,7 @@ WebPortalServlet::WebPortalServlet(
     m_administration_servlet(Ref(m_sessions)),
     m_market_data_servlet(Ref(m_sessions)),
     m_compliance_servlet(Ref(m_sessions)),
+    m_reporting_servlet(Ref(m_sessions)),
     m_risk_servlet(Ref(m_sessions), std::move(clients)) {}
 
 WebPortalServlet::~WebPortalServlet() {
@@ -48,6 +49,8 @@ std::vector<HttpRequestSlot> WebPortalServlet::get_slots() {
   slots.insert(slots.end(), market_data_slots.begin(), market_data_slots.end());
   auto compliance_slots = m_compliance_servlet.get_slots();
   slots.insert(slots.end(), compliance_slots.begin(), compliance_slots.end());
+  auto reporting_slots = m_reporting_servlet.get_slots();
+  slots.insert(slots.end(), reporting_slots.begin(), reporting_slots.end());
   auto risk_slots = m_risk_servlet.get_slots();
   slots.insert(slots.end(), risk_slots.begin(), risk_slots.end());
   return slots;
@@ -66,6 +69,7 @@ void WebPortalServlet::close() {
     return;
   }
   m_risk_servlet.close();
+  m_reporting_servlet.close();
   m_compliance_servlet.close();
   m_market_data_servlet.close();
   m_administration_servlet.close();
