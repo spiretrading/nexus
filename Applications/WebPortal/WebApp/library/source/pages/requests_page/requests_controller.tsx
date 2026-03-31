@@ -181,14 +181,18 @@ export class RequestsController extends React.Component<Properties, State> {
   }
 
   private async resetAndLoad(): Promise<void> {
-    await this.props.model.load();
     const parsed = parseSearch(this.props.location.search);
     this.setState({
       displayStatus: RequestDirectoryPage.DisplayStatus.IN_PROGRESS,
       requestState: parsed.requestState,
       filters: parsed.filters,
       filterCount: computeFilterCount(parsed.filters),
-      pageIndex: parsed.pageIndex
+      pageIndex: parsed.pageIndex,
+      response: {
+        status: RequestsModel.ResponseStatus.IN_PROGRESS,
+        facetCounts: {pending: 0, approved: 0, rejected: 0},
+        requestList: []
+      }
     });
     this.loadDirectory({
       scope: this.currentPage() === RequestsPage.Page.YOUR_REQUESTS ?

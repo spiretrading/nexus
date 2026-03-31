@@ -35,6 +35,7 @@ export class HttpRequestsModel extends RequestsModel {
     this.accessRole = getAccessRole(roles);
     this.localModel =
       new LocalRequestsModel(this.account, entries, new Map());
+    await this.buildGrantedChain(allIds);
   }
 
   public async loadRequestDirectory(submission: RequestsModel.Submission):
@@ -145,7 +146,7 @@ export class HttpRequestsModel extends RequestsModel {
         request.timestamp.toDate(),
       account: toAccountProfile(request.account, accountIdentity),
       requester: toAccountProfile(request.submissionAccount, submitterIdentity),
-      effectiveDate: Beam.Date.fromDate(request.effectiveDate.toDate()),
+      effectiveDate: request.effectiveDate,
       changes,
       activityList,
       accessRole: this.accessRole
@@ -165,15 +166,16 @@ export class HttpRequestsModel extends RequestsModel {
     const admin = this.serviceClients.administrationClient;
     if(request.type === Nexus.AccountModificationRequest.Type.RISK) {
       const modification = await admin.loadRiskModification(request.id);
-      const current = await admin.loadRiskParameters(request.account);
-      return toFirstRiskChange(current, modification.parameters,
+      const oldState = await this.loadOldRiskState(request);
+      return toFirstRiskChange(oldState, modification.parameters,
         this.serviceClients.definitionsClient.currencyDatabase);
     }
     if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
       const modification = await admin.loadEntitlementModification(request.id);
-      const current = await admin.loadAccountEntitlements(request.account);
-      return toFirstEntitlementChange(current, modification.entitlements,
-        this.serviceClients.definitionsClient.entitlementDatabase);
+      const oldState = await this.loadOldEntitlementState(request);
+      return toFirstEntitlementChange(oldState, modification.entitlements,
+        this.serviceClients.definitionsClient.entitlementDatabase,
+        this.serviceClients.definitionsClient.currencyDatabase);
     }
     return {
       type: 'risk_controls',
@@ -189,12 +191,16 @@ export class HttpRequestsModel extends RequestsModel {
     const admin = this.serviceClients.administrationClient;
     if(request.type === Nexus.AccountModificationRequest.Type.RISK) {
       const modification = await admin.loadRiskModification(request.id);
-      const current = await admin.loadRiskParameters(request.account);
-      return countRiskChanges(current, modification.parameters);
+      const oldState = await this.loadOldRiskState(request);
+      return countRiskChanges(oldState, modification.parameters);
     }
     if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
       const modification = await admin.loadEntitlementModification(request.id);
-      return modification.entitlements.size;
+      const oldState = await this.loadOldEntitlementState(request);
+      return RequestsModel.computeEntitlementChanges(oldState,
+        modification.entitlements,
+        this.serviceClients.definitionsClient.entitlementDatabase,
+        this.serviceClients.definitionsClient.currencyDatabase).length;
     }
     return 0;
   }
@@ -204,15 +210,16 @@ export class HttpRequestsModel extends RequestsModel {
     const admin = this.serviceClients.administrationClient;
     if(request.type === Nexus.AccountModificationRequest.Type.RISK) {
       const modification = await admin.loadRiskModification(request.id);
-      const current = await admin.loadRiskParameters(request.account);
-      return toRiskChanges(current, modification.parameters,
+      const oldState = await this.loadOldRiskState(request);
+      return toRiskChanges(oldState, modification.parameters,
         this.serviceClients.definitionsClient.currencyDatabase);
     }
     if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
       const modification = await admin.loadEntitlementModification(request.id);
-      const current = await admin.loadAccountEntitlements(request.account);
-      return toEntitlementChanges(current, modification.entitlements,
-        this.serviceClients.definitionsClient.entitlementDatabase);
+      const oldState = await this.loadOldEntitlementState(request);
+      return toEntitlementChanges(oldState, modification.entitlements,
+        this.serviceClients.definitionsClient.entitlementDatabase,
+        this.serviceClients.definitionsClient.currencyDatabase);
     }
     return [];
   }
@@ -236,10 +243,68 @@ export class HttpRequestsModel extends RequestsModel {
     return activities;
   }
 
+  private async buildGrantedChain(allIds: number[]): Promise<void> {
+    const admin = this.serviceClients.administrationClient;
+    const chains = new Map<string, {id: number;
+        grantTimestamp: Date}[]>();
+    for(const id of allIds) {
+      const request = await admin.loadAccountModificationRequest(id);
+      const status = await admin.loadAccountModificationRequestStatus(id);
+      if(status.status === Nexus.AccountModificationRequest.Status.GRANTED) {
+        const key = `${request.account.id}:${request.type}`;
+        if(!chains.has(key)) {
+          chains.set(key, []);
+        }
+        chains.get(key).push({id, grantTimestamp: status.timestamp.toDate()});
+      }
+    }
+    for(const chain of chains.values()) {
+      chain.sort(
+        (a, b) => a.grantTimestamp.getTime() - b.grantTimestamp.getTime());
+      for(let i = 1; i < chain.length; ++i) {
+        this.previousGrantedRequest.set(chain[i].id, chain[i - 1].id);
+      }
+    }
+  }
+
+  private async loadOldRiskState(
+      request: Nexus.AccountModificationRequest):
+      Promise<Nexus.RiskParameters> {
+    const admin = this.serviceClients.administrationClient;
+    const status = await admin.loadAccountModificationRequestStatus(request.id);
+    if(status.status !== Nexus.AccountModificationRequest.Status.GRANTED) {
+      return admin.loadRiskParameters(request.account);
+    }
+    const previousId = this.previousGrantedRequest.get(request.id);
+    if(previousId === undefined) {
+      return Nexus.RiskParameters.INVALID;
+    }
+    const previousModification = await admin.loadRiskModification(previousId);
+    return previousModification.parameters;
+  }
+
+  private async loadOldEntitlementState(
+      request: Nexus.AccountModificationRequest):
+      Promise<Beam.Set<Beam.DirectoryEntry>> {
+    const admin = this.serviceClients.administrationClient;
+    const status = await admin.loadAccountModificationRequestStatus(request.id);
+    if(status.status !== Nexus.AccountModificationRequest.Status.GRANTED) {
+      return admin.loadAccountEntitlements(request.account);
+    }
+    const previousId = this.previousGrantedRequest.get(request.id);
+    if(previousId === undefined) {
+      return new Beam.Set<Beam.DirectoryEntry>();
+    }
+    const previousModification =
+      await admin.loadEntitlementModification(previousId);
+    return previousModification.entitlements;
+  }
+
   private account: Beam.DirectoryEntry;
   private serviceClients: Nexus.ServiceClients;
   private localModel: LocalRequestsModel;
   private accessRole: Nexus.AccountRoles.Role;
+  private previousGrantedRequest: Map<number, number> = new Map();
 }
 
 const MAX_REQUEST_IDS = 1000;
@@ -309,20 +374,55 @@ function toFirstRiskChange(current: Nexus.RiskParameters,
     return {
       type: 'risk_controls',
       name: 'Currency',
-      oldValue: currencyDatabase.fromCurrency(current.currency).code,
-      newValue: currencyDatabase.fromCurrency(requested.currency).code,
+      oldValue: RequestsModel.currencyName(current.currency, currencyDatabase),
+      newValue: RequestsModel.currencyName(requested.currency, currencyDatabase),
       delta: {value: '', direction: RequestsModel.Direction.NONE}
     };
   }
-  const oldBp = current.buyingPower.toString();
-  const newBp = requested.buyingPower.toString();
-  const diff = requested.buyingPower.subtract(current.buyingPower);
+  if(!current.buyingPower.equals(requested.buyingPower)) {
+    return makeMoneyRiskChange('Buying Power',
+      current.buyingPower, requested.buyingPower);
+  }
+  if(!current.netLoss.equals(requested.netLoss)) {
+    return makeMoneyRiskChange('Net Loss',
+      current.netLoss, requested.netLoss);
+  }
+  if(!current.transitionTime.equals(requested.transitionTime)) {
+    const diff = requested.transitionTime.subtract(current.transitionTime);
+    const cmp = diff.compare(Beam.Duration.ZERO);
+    return {
+      type: 'risk_controls',
+      name: 'Transition Time',
+      oldValue: current.transitionTime.toString(),
+      newValue: requested.transitionTime.toString(),
+      delta: {
+        value: diff.toString(),
+        direction: cmp > 0 ? RequestsModel.Direction.POSITIVE :
+          cmp < 0 ? RequestsModel.Direction.NEGATIVE :
+          RequestsModel.Direction.NONE
+      }
+    };
+  }
+  const oldState = RequestsModel.riskStateToString(current.allowedState);
+  const newState = RequestsModel.riskStateToString(requested.allowedState);
+  return {
+    type: 'risk_controls',
+    name: 'Allowed State',
+    oldValue: oldState,
+    newValue: newState,
+    delta: {value: '', direction: RequestsModel.Direction.NONE}
+  };
+}
+
+function makeMoneyRiskChange(name: string, oldValue: Nexus.Money,
+    newValue: Nexus.Money): RequestsModel.RiskControlsChange {
+  const diff = newValue.subtract(oldValue);
   const cmp = diff.compare(Nexus.Money.ZERO);
   return {
     type: 'risk_controls',
-    name: 'Buying Power',
-    oldValue: oldBp,
-    newValue: newBp,
+    name,
+    oldValue: oldValue.toString(),
+    newValue: newValue.toString(),
     delta: {
       value: diff.toString(),
       direction: cmp > 0 ? RequestsModel.Direction.POSITIVE :
@@ -334,20 +434,23 @@ function toFirstRiskChange(current: Nexus.RiskParameters,
 
 function toFirstEntitlementChange(current: Beam.Set<Beam.DirectoryEntry>,
     requested: Beam.Set<Beam.DirectoryEntry>,
-    entitlementDatabase: Nexus.EntitlementDatabase):
+    entitlementDatabase: Nexus.EntitlementDatabase,
+    currencyDatabase: Nexus.CurrencyDatabase):
       RequestsModel.EntitlementsChange {
   for(const entry of requested) {
     if(!current.has(entry)) {
       const info = entitlementDatabase.fromGroup(entry);
       const name = info.group.equals(Beam.DirectoryEntry.INVALID) ?
         entry.name : info.name;
+      const isFree = info.price.equals(Nexus.Money.ZERO);
       return {
         type: 'entitlements',
         name,
         action: RequestsModel.EntitlementAction.GRANT,
-        fee: Nexus.Money.ZERO,
-        currency: undefined,
-        direction: RequestsModel.Direction.POSITIVE
+        fee: info.price,
+        currency: currencyDatabase.fromCurrency(info.currency),
+        direction: isFree ? RequestsModel.Direction.NONE :
+          RequestsModel.Direction.POSITIVE
       };
     }
   }
@@ -360,8 +463,8 @@ function toFirstEntitlementChange(current: Beam.Set<Beam.DirectoryEntry>,
         type: 'entitlements',
         name,
         action: RequestsModel.EntitlementAction.REVOKE,
-        fee: Nexus.Money.ZERO,
-        currency: undefined,
+        fee: info.price,
+        currency: currencyDatabase.fromCurrency(info.currency),
         direction: RequestsModel.Direction.NEGATIVE
       };
     }
@@ -382,8 +485,8 @@ function countRiskChanges(current: Nexus.RiskParameters,
   if(!current.buyingPower.equals(requested.buyingPower)) { ++count; }
   if(!current.netLoss.equals(requested.netLoss)) { ++count; }
   if(!current.transitionTime.equals(requested.transitionTime)) { ++count; }
-  if(riskStateToString(current.allowedState) !==
-      riskStateToString(requested.allowedState)) { ++count; }
+  if(RequestsModel.riskStateToString(current.allowedState) !==
+      RequestsModel.riskStateToString(requested.allowedState)) { ++count; }
   return count;
 }
 
@@ -392,8 +495,8 @@ function toRiskChanges(current: Nexus.RiskParameters,
     currencyDatabase: Nexus.CurrencyDatabase): RequestsModel.DetailChange[] {
   const changes: RequestsModel.DetailChange[] = [];
   addRiskChange(changes, 'Currency',
-    currencyDatabase.fromCurrency(current.currency).code,
-    currencyDatabase.fromCurrency(requested.currency).code);
+    RequestsModel.currencyName(current.currency, currencyDatabase),
+    RequestsModel.currencyName(requested.currency, currencyDatabase));
   addMoneyRiskChange(
     changes, 'Buying Power', current.buyingPower, requested.buyingPower);
   addMoneyRiskChange(
@@ -401,8 +504,8 @@ function toRiskChanges(current: Nexus.RiskParameters,
   addDurationRiskChange(changes, 'Transition Time',
     current.transitionTime, requested.transitionTime);
   addRiskChange(
-    changes, 'Allowed State', riskStateToString(current.allowedState),
-    riskStateToString(requested.allowedState));
+    changes, 'Allowed State', RequestsModel.riskStateToString(current.allowedState),
+    RequestsModel.riskStateToString(requested.allowedState));
   return changes;
 }
 
@@ -461,22 +564,10 @@ function addRiskChange(changes: RequestsModel.DetailChange[],
   });
 }
 
-function riskStateToString(state: Nexus.RiskState): string {
-  switch(state.type) {
-    case Nexus.RiskState.Type.ACTIVE:
-      return 'Active';
-    case Nexus.RiskState.Type.CLOSED_ORDERS:
-      return 'Close Only';
-    case Nexus.RiskState.Type.DISABLED:
-      return 'Disabled';
-    default:
-      return 'None';
-  }
-}
-
 function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
     requested: Beam.Set<Beam.DirectoryEntry>,
-    entitlementDatabase: Nexus.EntitlementDatabase):
+    entitlementDatabase: Nexus.EntitlementDatabase,
+    currencyDatabase: Nexus.CurrencyDatabase):
       RequestsModel.DetailChange[] {
   const changes: RequestsModel.DetailChange[] = [];
   for(const entry of requested) {
@@ -488,7 +579,9 @@ function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
         type: 'entitlement',
         name,
         oldStatus: RequestsModel.EntitlementStatus.REVOKED,
-        newStatus: RequestsModel.EntitlementStatus.GRANTED
+        newStatus: RequestsModel.EntitlementStatus.GRANTED,
+        delta: RequestsModel.entitlementDelta(info, currencyDatabase,
+          RequestsModel.EntitlementStatus.GRANTED)
       });
     }
   }
@@ -501,9 +594,12 @@ function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
         type: 'entitlement',
         name,
         oldStatus: RequestsModel.EntitlementStatus.GRANTED,
-        newStatus: RequestsModel.EntitlementStatus.REVOKED
+        newStatus: RequestsModel.EntitlementStatus.REVOKED,
+        delta: RequestsModel.entitlementDelta(info, currencyDatabase,
+          RequestsModel.EntitlementStatus.REVOKED)
       });
     }
   }
   return changes;
 }
+

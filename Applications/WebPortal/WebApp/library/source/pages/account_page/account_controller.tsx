@@ -8,6 +8,7 @@ import { AccountPage } from './account_page';
 import { ComplianceController } from './compliance_page';
 import { EntitlementsController } from './entitlements_page';
 import { ProfileController } from './profile_page';
+import { ProfitAndLossController } from './profit_and_loss_page';
 import { RiskController } from './risk_page';
 import { SubPage } from './sub_page';
 
@@ -78,6 +79,8 @@ export class AccountController extends React.Component<Properties, State> {
         return SubPage.RISK_CONTROLS;
       } else if(this.props.location.pathname.endsWith('/compliance')) {
         return SubPage.COMPLIANCE;
+      } else if(this.props.location.pathname.endsWith('/profit_and_loss')) {
+        return SubPage.PROFIT_LOSS;
       }
       return SubPage.NONE;
     })();
@@ -94,6 +97,8 @@ export class AccountController extends React.Component<Properties, State> {
             render={this.renderRiskPage}/>
           <Router.Route path='/account/:id(\d+)?/compliance'
             render={this.renderCompliancePage}/>
+          <Router.Route path='/account/:id(\d+)?/profit_and_loss'
+            render={this.renderProfitAndLossPage}/>
           <Router.Route path='/account/:id(\d+)?'
             render={({match}: any) => {
               const url = (() => {
@@ -174,6 +179,13 @@ export class AccountController extends React.Component<Properties, State> {
       roles={this.props.roles} service={this.props.model.complianceService}/>;
   }
 
+  private renderProfitAndLossPage = () => {
+    return <ProfitAndLossController
+      currency={this.props.model.currency}
+      currencyDatabase={this.props.currencyDatabase}
+      model={this.props.model.profitAndLossModel}/>;
+  }
+
   private onMenuClick = (subPage: SubPage) => {
     const urlPrefix = this.parseUrlPrefix();
     if(subPage === SubPage.PROFILE) {
@@ -184,6 +196,8 @@ export class AccountController extends React.Component<Properties, State> {
       this.setState({redirect: `${urlPrefix}/risk`});
     } else if(subPage === SubPage.COMPLIANCE) {
       this.setState({redirect: `${urlPrefix}/compliance`});
+    } else if(subPage === SubPage.PROFIT_LOSS) {
+      this.setState({redirect: `${urlPrefix}/profit_and_loss`});
     }
   }
 }

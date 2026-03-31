@@ -15,7 +15,7 @@ interface Properties {
   /** Whether this tab corresponds to the current page. Defaults to false. */
   isCurrent?: boolean;
 
-  /** The visual representation of the tab. Defaults to ICON_LABEL. */
+  /** The visual representation of the tab. Defaults to ICON. */
   variant?: NavigationTab.Variant;
 
   /** Called when the tab is clicked. */
@@ -38,7 +38,7 @@ export class NavigationTab extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const variant = this.props.variant ?? NavigationTab.Variant.ICON_LABEL;
+    const variant = this.props.variant ?? NavigationTab.Variant.ICON;
     const isHighlighted = this.props.isCurrent || this.state.isHovered ||
       this.state.isFocused;
     const iconColor = isHighlighted ? '#4B23A0' : '#7D7E90';
@@ -85,8 +85,12 @@ export class NavigationTab extends React.Component<Properties, State> {
               <span style={labelStyle}>{this.props.label}</span>
             </>}
         </div>
-        <div className={css(NavigationTab.STYLES.indicator,
-          this.props.isCurrent && NavigationTab.STYLES.activeIndicator)}/>
+        <div className={css(NavigationTab.STYLES.indicatorTrack)}>
+          <div className={css(NavigationTab.STYLES.indicator,
+            variant === NavigationTab.Variant.ICON &&
+              NavigationTab.STYLES.iconIndicator,
+            this.props.isCurrent && NavigationTab.STYLES.activeIndicator)}/>
+        </div>
       </a>);
   }
 
@@ -114,7 +118,6 @@ export class NavigationTab extends React.Component<Properties, State> {
   private static readonly INLINE_STYLES = {
     label: {
       fontSize: '0.875rem',
-      fontFamily: 'Roboto',
       whiteSpace: 'nowrap'
     }
   };
@@ -124,14 +127,13 @@ export class NavigationTab extends React.Component<Properties, State> {
       display: 'inline-flex',
       flexDirection: 'column',
       height: '40px',
-      border: '1px solid transparent',
       cursor: 'pointer',
       textDecoration: 'none',
       boxSizing: 'border-box',
       '-webkit-tap-highlight-color': 'transparent',
       outline: 'none',
       ':focus-visible': {
-        borderColor: '#4B23A0'
+        outline: '1px solid #4B23A0'
       }
     },
     iconTab: {
@@ -151,12 +153,19 @@ export class NavigationTab extends React.Component<Properties, State> {
       width: '8px',
       flexShrink: 0
     },
+    indicatorTrack: {
+      display: 'flex',
+      justifyContent: 'center',
+      flexShrink: 0
+    },
     indicator: {
       height: '2px',
       width: '100%',
       backgroundColor: '#4B23A0',
-      opacity: 0,
-      flexShrink: 0
+      opacity: 0
+    },
+    iconIndicator: {
+      width: '24px'
     },
     activeIndicator: {
       opacity: 1

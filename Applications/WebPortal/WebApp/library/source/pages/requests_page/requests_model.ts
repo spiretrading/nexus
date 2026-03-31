@@ -341,10 +341,8 @@ export namespace RequestsModel {
       currencyDatabase: Nexus.CurrencyDatabase): RiskControlsChange[] {
     const changes: RiskControlsChange[] = [];
     if(!oldParameters.currency.equals(newParameters.currency)) {
-      const oldCode =
-        currencyDatabase.fromCurrency(oldParameters.currency).code;
-      const newCode =
-        currencyDatabase.fromCurrency(newParameters.currency).code;
+      const oldCode = currencyName(oldParameters.currency, currencyDatabase);
+      const newCode = currencyName(newParameters.currency, currencyDatabase);
       changes.push({
         type: 'risk_controls',
         name: 'Currency',
@@ -368,6 +366,19 @@ export namespace RequestsModel {
         oldParameters.transitionTime, newParameters.transitionTime));
     }
     return changes;
+  }
+
+  /** Returns the display name for a currency.
+   *  @param currency - The currency to look up.
+   *  @param currencyDatabase - Used to look up currency codes.
+   *  @return "None" for Currency.NONE, otherwise the currency code.
+   */
+  export function currencyName(currency: Nexus.Currency,
+      currencyDatabase: Nexus.CurrencyDatabase): string {
+    if(currency.equals(Nexus.Currency.NONE)) {
+      return 'None';
+    }
+    return currencyDatabase.fromCurrency(currency).code;
   }
 
   /** Computes the list of entitlement changes between two entitlement sets.
@@ -409,6 +420,43 @@ export namespace RequestsModel {
       }
     }
     return changes;
+  }
+
+  /** Returns a display string for a RiskState.
+   *  @param state - The risk state to convert.
+   *  @return The display name of the state.
+   */
+  export function riskStateToString(state: Nexus.RiskState): string {
+    switch(state.type) {
+      case Nexus.RiskState.Type.ACTIVE:
+        return 'Active';
+      case Nexus.RiskState.Type.CLOSED_ORDERS:
+        return 'Close Only';
+      case Nexus.RiskState.Type.DISABLED:
+        return 'Disabled';
+      default:
+        return 'None';
+    }
+  }
+
+  /** Computes the fee delta for an entitlement change.
+   *  @param info - The entitlement database entry.
+   *  @param currencyDatabase - Used to look up the currency sign.
+   *  @param status - Whether the entitlement is being granted or revoked.
+   *  @return The delta with value and direction.
+   */
+  export function entitlementDelta(info: Nexus.EntitlementDatabase.Entry,
+      currencyDatabase: Nexus.CurrencyDatabase,
+      status: EntitlementStatus): Delta {
+    if(info.price.equals(Nexus.Money.ZERO)) {
+      return {value: 'FREE', direction: Direction.NONE};
+    }
+    const currency = currencyDatabase.fromCurrency(info.currency);
+    return {
+      value: `${currency.sign}${info.price.toString()}`,
+      direction: status === EntitlementStatus.GRANTED ?
+        Direction.POSITIVE : Direction.NEGATIVE
+    };
   }
 }
 

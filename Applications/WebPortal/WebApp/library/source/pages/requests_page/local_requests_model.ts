@@ -96,6 +96,8 @@ export class LocalRequestsModel extends RequestsModel {
     let result = entries;
     if(submission.scope === RequestsModel.Scope.YOU) {
       result = result.filter(e => e.account.equals(this.account));
+    } else if(submission.scope === RequestsModel.Scope.GROUP) {
+      result = result.filter(e => !e.account.equals(this.account));
     }
     const filters = submission.filters;
     if(filters.categories.size > 0) {
@@ -126,15 +128,20 @@ export class LocalRequestsModel extends RequestsModel {
         sorted.sort((a, b) => b.updateTime.getTime() - a.updateTime.getTime());
         break;
       case RequestsModel.SortField.CREATED:
-        sorted.sort(
-          (a, b) => b.effectiveDate.getTime() - a.effectiveDate.getTime());
+        sorted.sort((a, b) => b.id - a.id);
         break;
       case RequestsModel.SortField.ACCOUNT:
         sorted.sort((a, b) => a.account.name.localeCompare(b.account.name));
         break;
       case RequestsModel.SortField.EFFECTIVE_DATE:
-        sorted.sort(
-          (a, b) => b.effectiveDate.getTime() - a.effectiveDate.getTime());
+        sorted.sort((a, b) => {
+          const aTime = a.effectiveDate.getTime();
+          const bTime = b.effectiveDate.getTime();
+          if(isNaN(aTime) && isNaN(bTime)) { return 0; }
+          if(isNaN(aTime)) { return 1; }
+          if(isNaN(bTime)) { return -1; }
+          return bTime - aTime;
+        });
         break;
       default:
         sorted.sort((a, b) => b.updateTime.getTime() - a.updateTime.getTime());

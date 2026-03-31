@@ -12,6 +12,9 @@ interface Properties {
 
 /** Displays a date/time relative to today. */
 export function RelativeDate(props: Properties): JSX.Element {
+  if(isNaN(props.datetime.getTime())) {
+    return <span className={css(STYLES.time)}>—</span>;
+  }
   const today = props.today ?? new Date();
   const relativeDay = getRelativeDay(props.datetime, today);
   const content = (() => {

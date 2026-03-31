@@ -7,6 +7,7 @@ export * from './entitlements_page';
 export * from './http_account_model';
 export * from './local_account_model';
 export * from './profile_page';
+export * from './profit_and_loss_page';
 export * from './risk_page';
 export * from './submission_input';
 export * from './sub_page';

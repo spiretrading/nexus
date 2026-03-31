@@ -89,6 +89,28 @@ const dateInput =
     [new SignalSchema('onChange', 'value')],
     WebPortal.DateInput);
 
+const disclosure =
+  new ComponentSchema('Disclosure',
+    [new PropertySchema('open', false, BooleanInput)],
+    [new SignalSchema('onToggle', 'open')],
+    (props: any) =>
+      React.createElement(WebPortal.Disclosure, {
+        ...props,
+        header: React.createElement('div', {
+          style: {
+            display: 'flex', alignItems: 'center', gap: '18px',
+            height: '40px', fontSize: '0.875rem'
+          }
+        },
+          React.createElement(WebPortal.DropDownButton, {
+            isExpanded: props.open, size: '20'
+          }),
+          'Section Title'),
+        details: React.createElement('div', {
+          style: {padding: '12px', fontSize: '0.875rem'}
+        }, 'This is the details content that is visible when the disclosure is open.')
+      }));
+
 const dateTimeInput =
   new ComponentSchema('DateTimeInput',
     [new PropertySchema('value',
@@ -267,7 +289,10 @@ const NAVIGATION_TABS = [
 
 const navigationHeader =
   new ComponentSchema('NavigationHeader',
-    [new PropertySchema('current', 'requests/you', TextInput)],
+    [new PropertySchema('variant',
+        WebPortal.NavigationTab.Variant.ICON_LABEL,
+        EnumInput(WebPortal.NavigationTab.Variant)),
+      new PropertySchema('current', 'requests/you', TextInput)],
     [new SignalSchema('onNavigate', 'current')],
     (props: any) =>
       React.createElement(WebPortal.NavigationHeader, props,
@@ -781,16 +806,117 @@ const pageLayout =
         React.createElement('div', {className: css(PAGE_LAYOUT_STYLES.blue)}))),
     -1);
 
+const segmentedSpinner =
+  new ComponentSchema('SegmentedSpinner',
+    [new PropertySchema('color', '#000000', ColorInput),
+      new PropertySchema('size', 16, NumberSliderInput)],
+    [],
+    WebPortal.SegmentedSpinner);
+
+const CURRENCY_TOOLTIP_SAMPLE_RATES:
+    WebPortal.CurrencyTooltip.ExchangeRate[] = [
+  {code: 'AUD', rate: '0.88'},
+  {code: 'EUR', rate: '1.51'},
+  {code: 'GBP', rate: '1.76'},
+  {code: 'USD', rate: '1.36'}
+];
+
+const currencyTooltip =
+  new ComponentSchema('CurrencyTooltip',
+    [new PropertySchema('accountCurrency', 'CAD', TextInput)],
+    [],
+    (props: any) => React.createElement(WebPortal.CurrencyTooltip, {
+      ...props,
+      exchangeRates: CURRENCY_TOOLTIP_SAMPLE_RATES
+    }));
+
+const metric =
+  new ComponentSchema('Metric',
+    [new PropertySchema('id', 'total-pnl', TextInput),
+      new PropertySchema('label', 'Total P/L', TextInput),
+      new PropertySchema('value', '$1,234.56', TextInput),
+      new PropertySchema('unit', 'CAD', TextInput),
+      new PropertySchema('loading', false, BooleanInput)],
+    [],
+    WebPortal.Metric);
+
+const PNL_HEADER_SAMPLE_RATES: WebPortal.CurrencyTooltip.ExchangeRate[] = [
+  {code: 'AUD', rate: '0.88'},
+  {code: 'EUR', rate: '1.51'},
+  {code: 'USD', rate: '1.36'}
+];
+
+const profitAndLossHeader =
+  new ComponentSchema('ProfitAndLossHeader',
+    [new PropertySchema('symbol', '$', TextInput),
+      new PropertySchema('code', 'CAD', TextInput),
+      new PropertySchema('totalPnl', '1,234.56', TextInput),
+      new PropertySchema('totalFees', '45.00', TextInput),
+      new PropertySchema('totalVolume', '12,500.00', TextInput),
+      new PropertySchema('loading', false, BooleanInput)],
+    [],
+    (props: any) => React.createElement(WebPortal.ProfitAndLossHeader, {
+      ...props,
+      foreignCurrencies: PNL_HEADER_SAMPLE_RATES
+    }), 800);
+
+const PNL_TABLE_SAMPLE_SECURITIES: WebPortal.ProfitAndLossTable.Security[] = [
+  {symbol: 'AAPL', volume: '1,250', fees: '12.50', pnl: '345.67'},
+  {symbol: 'MSFT', volume: '800', fees: '8.00', pnl: '-123.45'},
+  {symbol: 'GOOG', volume: '500', fees: '5.00', pnl: '678.90'},
+  {symbol: 'AMZN', volume: '300', fees: '3.00', pnl: '-45.20'}
+];
+
+const profitAndLossTable =
+  new ComponentSchema('ProfitAndLossTable',
+    [new PropertySchema('symbol', '$', TextInput),
+      new PropertySchema('totalPnl', '855.92', TextInput),
+      new PropertySchema('totalVolume', '2,850', TextInput),
+      new PropertySchema('totalFees', '28.50', TextInput)],
+    [],
+    (props: any) => React.createElement(WebPortal.ProfitAndLossTable, {
+      ...props,
+      securities: PNL_TABLE_SAMPLE_SECURITIES
+    }), 600);
+
+const profitAndLossItem =
+  new ComponentSchema('ProfitAndLossItem',
+    [new PropertySchema('symbol', '$', TextInput),
+      new PropertySchema('code', 'USD', TextInput),
+      new PropertySchema('totalPnl', '855.92', TextInput),
+      new PropertySchema('totalVolume', '2,850', TextInput),
+      new PropertySchema('totalFees', '28.50', TextInput)],
+    [],
+    (props: any) => React.createElement(WebPortal.ProfitAndLossItem, {
+      ...props,
+      securities: PNL_TABLE_SAMPLE_SECURITIES
+    }), 800);
+
+const profitAndLossItemPlaceholder =
+  new ComponentSchema('ProfitAndLossItemPlaceholder',
+    [],
+    [],
+    WebPortal.ProfitAndLossItemPlaceholder);
+
+const reportStatusIndicator =
+  new ComponentSchema('ReportStatusIndicator',
+    [new PropertySchema('id', 'report-status', TextInput),
+      new PropertySchema('status',
+        WebPortal.ReportStatusIndicator.Status.NONE,
+        EnumInput(WebPortal.ReportStatusIndicator.Status))],
+    [],
+    WebPortal.ReportStatusIndicator);
+
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox,
-    countrySelect, currencySelect, dateInput,
+    countrySelect, currencySelect, dateInput, disclosure,
     dateTimeInput, decimalInput, dropDownButton, durationInput, emptyMessage,
     errorMessage,
     filterChip, filterInput, hLine,
     iconLabelButton, input, integerField, labeledCheckbox, modal, moneyInput,
     navigationHeader, navigationTab, pageLayout,
     pagination, regionInput, regionItemInput, relativeDate, roleIcon, rolePanel,
-    securitiesInput, securityInput, select, skeleton,
+    securitiesInput, securityInput, segmentedSpinner, select, skeleton,
     segmentButton,
     segmentedControl,
     timeOfDayInput]),
@@ -799,4 +925,7 @@ export const componentSections = [
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
     requestDetailPage, requestDirectoryPage, requestEffectiveDate,
     requestFilterModal, requestItem, requestItemPlaceholder,
-    requestSortSelect, requestStateIndicator, riskControlsChangeItem])];
+    requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
+  new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
+    profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
+    profitAndLossTable, reportStatusIndicator])];

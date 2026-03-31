@@ -156,12 +156,16 @@ export class RequestsPage extends React.Component<Properties, State> {
       height: '100%',
       display: 'flex',
       flexDirection: 'column' as 'column',
-      overflow: 'hidden'
+      overflow: 'hidden',
+      backgroundColor: '#FFFFFF',
+      fontFamily: "'Roboto', system-ui, sans-serif",
+      fontWeight: 400
     },
     content: {
       flex: '1 1 auto',
       minHeight: 0,
-      overflowY: 'auto'
+      overflowY: 'auto',
+      scrollbarGutter: 'stable'
     },
     header: {
       borderBottom: '1px solid #E6E6E6',

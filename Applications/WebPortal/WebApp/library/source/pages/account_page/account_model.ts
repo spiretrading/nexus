@@ -3,6 +3,7 @@ import * as Nexus from 'nexus';
 import { ComplianceService } from './compliance_page';
 import { EntitlementsModel } from './entitlements_page';
 import { ProfileModel } from './profile_page'
+import { ProfitAndLossModel } from './profit_and_loss_page';
 import { RiskModel } from './risk_page';
 
 /** Interface for a model representing a single account. */
@@ -17,6 +18,9 @@ export abstract class AccountModel {
   /** The trading groups the account is a member of. */
   public abstract get groups(): Beam.DirectoryEntry[];
 
+  /** The account's base currency. */
+  public abstract get currency(): Nexus.Currency;
+
   /** Returns the account's EntitlementsModel. */
   public abstract get entitlementsModel(): EntitlementsModel;
 
@@ -25,6 +29,9 @@ export abstract class AccountModel {
 
   /** Returns the account's RiskModel. */
   public abstract get riskModel(): RiskModel;
+
+  /** Returns the account's ProfitAndLossModel. */
+  public abstract get profitAndLossModel(): ProfitAndLossModel;
 
   /** Returns the ComplianceService tied to the account. */
   public abstract get complianceService(): ComplianceService;
