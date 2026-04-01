@@ -129,9 +129,9 @@ export class Money {
 
   /** Returns the string representation. */
   public toString(): string {
-    var absolute = Math.abs(this._value);
+    var absolute = Math.round(Math.abs(this._value));
     var whole = Math.trunc(absolute / Money.MULTIPLIER);
-    var fraction = Math.trunc(absolute % Money.MULTIPLIER);
+    var fraction = Math.round(absolute % Money.MULTIPLIER);
     var fractionalString =
       fraction.toString().padStart(Money.DECIMAL_PLACES, '0');
     var minLength = 2;
