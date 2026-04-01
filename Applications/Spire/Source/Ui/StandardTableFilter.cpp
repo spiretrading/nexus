@@ -1,9 +1,8 @@
 #include "Spire/Ui/StandardTableFilter.hpp"
 #include <QPointer>
-#include <boost/date_time/gregorian/gregorian_types.hpp>
-#include "Spire/Ui/DateFilterPanel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
+#include "Spire/Ui/DateFilterPanel.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
 
 using namespace boost;
@@ -40,6 +39,75 @@ struct StandardTableFilter::ColumnFilter {
       m_filter_widget = make_panel(parent);
     }
     return m_filter_widget;
+  }
+};
+
+struct StandardTableFilter::DateColumnFilter : ColumnFilter {
+  using DateRange = DateFilterPanel::DateRange;
+  static constexpr auto DEFAULT_RANGE =
+    DateRange{DateFilterPanel::AbsoluteDateRange{}};
+  mutable FilterSignal m_filter_signal;
+  std::shared_ptr<LocalValueModel<DateRange>> m_current;
+  scoped_connection m_current_connection;
+
+  DateColumnFilter()
+      : m_current(std::make_shared<LocalValueModel<DateRange>>(DEFAULT_RANGE)) {
+    m_current->connect_update_signal(
+      std::bind_front(&DateColumnFilter::on_current, this));
+  }
+
+  TableFilter::Filter get_filter() const override {
+    if(m_current->get() == DEFAULT_RANGE) {
+      return TableFilter::Filter::UNFILTERED;
+    }
+    return TableFilter::Filter::FILTERED;
+  }
+
+  QWidget* make_panel(QWidget& parent) override {
+    return new DateFilterPanel(m_current, &parent);
+  }
+
+  bool is_filtered(const TableModel& model, int row, int column) const
+      override {
+    auto& value = any_cast<const date>(model.at(row, column));
+    auto [start, end] = resolve(m_current->get());
+    return !start.is_not_a_date() && value < start ||
+      !end.is_not_a_date() && value > end;
+  }
+
+  connection connect_filter_signal(
+      const FilterSignal::slot_type& slot) const override {
+    return m_filter_signal.connect(slot);
+  }
+
+  void on_current(const DateRange&) {
+    m_filter_signal(get_filter());
+  }
+
+  static std::tuple<date, date> resolve(const DateRange& range) {
+    return std::visit(Overloaded {
+      [] (const DateFilterPanel::AbsoluteDateRange& range) {
+        return std::tuple(range.m_start, range.m_end);
+      },
+      [] (const DateFilterPanel::RelativeDateRange& range) {
+        auto today = day_clock::local_day();
+        auto start = today;
+        switch(range.m_unit) {
+          case DateFilterPanel::DateUnit::DAY:
+            start -= days(range.m_value);
+            break;
+          case DateFilterPanel::DateUnit::WEEK:
+            start -= weeks(range.m_value);
+            break;
+          case DateFilterPanel::DateUnit::MONTH:
+            start -= months(range.m_value);
+            break;
+          case DateFilterPanel::DateUnit::YEAR:
+            start -= years(range.m_value);
+            break;
+        }
+        return std::tuple(start, today);
+      }}, range);
   }
 };
 
@@ -102,77 +170,8 @@ struct StandardTableFilter::ScalarColumnFilter : ColumnFilter {
     return m_filter_signal.connect(slot);
   }
 
-  void on_current(const Range& range) {
+  void on_current(const Range&) {
     m_filter_signal(get_filter());
-  }
-};
-
-struct StandardTableFilter::DateColumnFilter : ColumnFilter {
-  static constexpr auto DEFAULT_RANGE =
-    DateFilterPanel::DateRange{DateFilterPanel::AbsoluteDateRange{}};
-  mutable FilterSignal m_filter_signal;
-  std::shared_ptr<LocalValueModel<DateFilterPanel::DateRange>> m_current;
-  scoped_connection m_current_connection;
-
-  DateColumnFilter()
-    : m_current(std::make_shared<
-        LocalValueModel<DateFilterPanel::DateRange>>(DEFAULT_RANGE)),
-      m_current_connection(m_current->connect_update_signal(
-        std::bind_front(&DateColumnFilter::on_current, this))) {}
-
-  TableFilter::Filter get_filter() const override {
-    if(m_current->get() == DEFAULT_RANGE) {
-      return TableFilter::Filter::UNFILTERED;
-    }
-    return TableFilter::Filter::FILTERED;
-  }
-
-  QWidget* make_panel(QWidget& parent) override {
-    return new DateFilterPanel(m_current, &parent);
-  }
-
-  bool is_filtered(const TableModel& model, int row, int column) const
-      override {
-    auto& value = any_cast<const date>(model.at(row, column));
-    auto [start, end] = resolve(m_current->get());
-    return !start.is_not_a_date() && value < start ||
-      !end.is_not_a_date() && value > end;
-  }
-
-  connection connect_filter_signal(
-      const FilterSignal::slot_type& slot) const override {
-    return m_filter_signal.connect(slot);
-  }
-
-  void on_current(const DateFilterPanel::DateRange& range) {
-    m_filter_signal(get_filter());
-  }
-
-  static std::pair<date, date> resolve(
-      const DateFilterPanel::DateRange& range) {
-    return std::visit(Overloaded {
-      [] (const DateFilterPanel::AbsoluteDateRange& range) {
-        return std::pair{range.m_start, range.m_end};
-      },
-      [] (const DateFilterPanel::RelativeDateRange& range) {
-        auto today = day_clock::local_day();
-        auto start = today;
-        switch(range.m_unit) {
-          case DateFilterPanel::DateUnit::DAY:
-            start -= days(range.m_value);
-            break;
-          case DateFilterPanel::DateUnit::WEEK:
-            start -= weeks(range.m_value);
-            break;
-          case DateFilterPanel::DateUnit::MONTH:
-            start -= months(range.m_value);
-            break;
-          case DateFilterPanel::DateUnit::YEAR:
-            start -= years(range.m_value);
-            break;
-        }
-        return std::pair{start, today};
-      }}, range);
   }
 };
 

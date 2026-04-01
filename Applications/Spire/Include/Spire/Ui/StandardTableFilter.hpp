@@ -30,9 +30,9 @@ namespace Spire {
 
     private:
       struct ColumnFilter;
+      struct DateColumnFilter;
       struct EmptyColumnFilter;
       template<typename T> struct ScalarColumnFilter;
-      struct DateColumnFilter;
       mutable FilterSignal m_filter_signal;
       std::vector<std::unique_ptr<ColumnFilter>> m_column_filters;
 
