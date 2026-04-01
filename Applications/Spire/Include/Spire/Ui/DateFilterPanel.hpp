@@ -39,6 +39,8 @@ namespace Spire {
 
         /** The range's end date. */
         boost::gregorian::date m_end;
+
+        bool operator ==(const AbsoluteDateRange& rhs) const = default;
       };
 
       /**
@@ -52,6 +54,8 @@ namespace Spire {
 
         /** The number of units to offset by. */
         int m_value;
+
+        bool operator ==(const RelativeDateRange& rhs) const = default;
       };
 
       /** Represents a date range. */
