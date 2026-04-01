@@ -7,8 +7,8 @@
 
 using namespace boost;
 using namespace boost::gregorian;
-using namespace boost::signals2;
 using namespace boost::posix_time;
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
