@@ -45,7 +45,7 @@ struct StandardTableFilter::ColumnFilter {
 struct StandardTableFilter::DateColumnFilter : ColumnFilter {
   using DateRange = DateFilterPanel::DateRange;
   static constexpr auto DEFAULT_RANGE =
-    DateRange{DateFilterPanel::AbsoluteDateRange()};
+    DateRange(DateFilterPanel::AbsoluteDateRange());
   mutable FilterSignal m_filter_signal;
   std::shared_ptr<LocalValueModel<DateRange>> m_current;
   scoped_connection m_current_connection;
