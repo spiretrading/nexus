@@ -45,7 +45,7 @@ struct StandardTableFilter::ColumnFilter {
 struct StandardTableFilter::DateColumnFilter : ColumnFilter {
   using DateRange = DateFilterPanel::DateRange;
   static constexpr auto DEFAULT_RANGE =
-    DateRange{DateFilterPanel::AbsoluteDateRange{}};
+    DateRange{DateFilterPanel::AbsoluteDateRange()};
   mutable FilterSignal m_filter_signal;
   std::shared_ptr<LocalValueModel<DateRange>> m_current;
   scoped_connection m_current_connection;
@@ -92,19 +92,14 @@ struct StandardTableFilter::DateColumnFilter : ColumnFilter {
       [] (const DateFilterPanel::RelativeDateRange& range) {
         auto today = day_clock::local_day();
         auto start = today;
-        switch(range.m_unit) {
-          case DateFilterPanel::DateUnit::DAY:
-            start -= days(range.m_value);
-            break;
-          case DateFilterPanel::DateUnit::WEEK:
-            start -= weeks(range.m_value);
-            break;
-          case DateFilterPanel::DateUnit::MONTH:
-            start -= months(range.m_value);
-            break;
-          case DateFilterPanel::DateUnit::YEAR:
-            start -= years(range.m_value);
-            break;
+        if(range.m_unit == DateFilterPanel::DateUnit::DAY) {
+          start -= days(range.m_value);
+        } else if(range.m_unit == DateFilterPanel::DateUnit::WEEK) {
+          start -= weeks(range.m_value);
+        } else if(range.m_unit == DateFilterPanel::DateUnit::MONTH) {
+          start -= months(range.m_value);
+        } else if(range.m_unit == DateFilterPanel::DateUnit::YEAR) {
+          start -= years(range.m_value);
         }
         return std::tuple(start, today);
       }}, range);
