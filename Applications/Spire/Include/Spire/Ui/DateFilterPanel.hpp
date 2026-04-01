@@ -39,6 +39,8 @@ namespace Spire {
 
         /** The range's end date. */
         boost::gregorian::date m_end;
+
+        bool operator ==(const AbsoluteDateRange& rhs) const = default;
       };
 
       /**
@@ -52,6 +54,8 @@ namespace Spire {
 
         /** The number of units to offset by. */
         int m_value;
+
+        bool operator ==(const RelativeDateRange& rhs) const = default;
       };
 
       /** Represents a date range. */
@@ -73,6 +77,7 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       enum class Mode {
@@ -84,6 +89,7 @@ namespace Spire {
       std::unique_ptr<DateRangeComposerModel> m_model;
       DateRange m_default_date_range;
       QWidget* m_offset_value_box;
+      QWidget* m_start_date_box;
       std::unique_ptr<DateRangeModeButtonGroup> m_range_mode_button_group;
 
       void on_reset();

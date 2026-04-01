@@ -17,6 +17,9 @@ namespace Spire {
   /** Returns a UiProfile for the CheckBox. */
   UiProfile make_check_box_profile();
 
+  /** Returns a UiProfile for the ClosedFilterPanel. */
+  UiProfile make_closed_filter_panel_profile();
+
   /** Returns a UiProfile for the ColorBox. */
   UiProfile make_color_box_profile();
 
@@ -41,6 +44,9 @@ namespace Spire {
   /** Returns a UiProfile for the DecimalBox. */
   UiProfile make_decimal_box_profile();
 
+  /** Returns a UiProfile for the DecimalFilterPanel. */
+  UiProfile make_decimal_filter_panel_profile();
+
   /** Returns a UiProfile for the DeletableListItem. */
   UiProfile make_deletable_list_item_profile();
 
@@ -61,6 +67,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the DurationBox. */
   UiProfile make_duration_box_profile();
+
+  /** Returns a UiProfile for the DurationFilterPanel. */
+  UiProfile make_duration_filter_panel_profile();
 
   /** Returns a UiProfile for the EditableBox. */
   UiProfile make_editable_box_profile();
@@ -119,6 +128,9 @@ namespace Spire {
   /** Returns a UiProfile for the IntegerBox. */
   UiProfile make_integer_box_profile();
 
+  /** Returns a UiProfile for the IntegerFilterPanel. */
+  UiProfile make_integer_filter_panel_profile();
+
   /** Returns a UiProfile for the KeyInputBox. */
   UiProfile make_key_input_box_profile();
 
@@ -149,11 +161,17 @@ namespace Spire {
   /** Returns a UiProfile for the MoneyBox. */
   UiProfile make_money_box_profile();
 
+  /** Returns a UiProfile for the MoneyFilterPanel. */
+  UiProfile make_money_filter_panel_profile();
+
   /** Returns a UiProfile for the NavigationView. */
   UiProfile make_navigation_view_profile();
 
   /** Returns a UiProfile for displaying number in a label. */
   UiProfile make_number_label_profile();
+
+  /** Returns a UiProfile for the OpenFilterPanel. */
+  UiProfile make_open_filter_panel_profile();
 
   /** Returns a UiProfile for the OrderFieldInfoTip. */
   UiProfile make_order_field_info_tip_profile();
@@ -176,6 +194,9 @@ namespace Spire {
   /** Returns a UiProfile for the QuantityBox. */
   UiProfile make_quantity_box_profile();
 
+  /** Returns a UiProfile for the QuantityFilterPanel. */
+  UiProfile make_quantity_filter_panel_profile();
+
   /** Returns a UiProfile for the RadioButton. */
   UiProfile make_radio_button_profile();
 
@@ -184,6 +205,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the RegionDropDownBox. */
   UiProfile make_region_drop_down_box_profile();
+
+  /** Returns a UiProfile for the RegionFilterPanel. */
+  UiProfile make_region_filter_panel_profile();
 
   /** Returns a UiProfile for the RegionListItem. */
   UiProfile make_region_list_item_profile();
@@ -214,6 +238,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the SideBox. */
   UiProfile make_side_box_profile();
+
+  /** Returns a UiProfile for the SideFilterPanel. */
+  UiProfile make_side_filter_panel_profile();
 
   /** Returns a UiProfile for the Slider. */
   UiProfile make_slider_profile();

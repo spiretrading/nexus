@@ -74,7 +74,8 @@ export class RequestItem extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
-    const showEffectiveDate = this.props.state !== Status.REJECTED;
+    const showEffectiveDate = this.props.state !== Status.REJECTED &&
+      !isNaN(this.props.effectiveDate.getTime());
     const showCommentCount = this.props.commentCount > 0;
     return (
       <a ref={this.containerRef} className={css(STYLES.link)}

@@ -55,8 +55,8 @@ const STYLES = StyleSheet.create({
   },
   gap: {
     width: '30px',
-    '@container (min-width: 768px)': {
-      width: 0
+    '@media (min-width: 768px)': {
+      display: 'none'
     }
   }
 });

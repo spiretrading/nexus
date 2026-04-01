@@ -5,6 +5,8 @@ import { ComplianceModel, ComplianceService, LocalComplianceService } from
   './compliance_page';
 import { LocalEntitlementsModel } from './entitlements_page';
 import { LocalProfileModel } from './profile_page';
+import { NoneProfitAndLossModel, ProfitAndLossModel } from
+  './profit_and_loss_page';
 import { LocalRiskModel } from './risk_page';
 
 /** Implements an in-memory AccountModel. */
@@ -22,6 +24,7 @@ export class LocalAccountModel extends AccountModel {
       this._account, new Beam.Set<Beam.DirectoryEntry>());
     this._profileModel = new LocalProfileModel(
       this._account, this._roles,  new Nexus.AccountIdentity());
+    this._profitAndLossModel = new NoneProfitAndLossModel();
     this._riskModel =
       new LocalRiskModel(this._account, Nexus.RiskParameters.INVALID);
     this._complianceService = new LocalComplianceService(complianceModel);
@@ -47,6 +50,11 @@ export class LocalAccountModel extends AccountModel {
     return this._groups.slice();
   }
 
+  public get currency(): Nexus.Currency {
+    this.ensureLoaded();
+    return Nexus.Currency.NONE;
+  }
+
   public get entitlementsModel(): LocalEntitlementsModel {
     this.ensureLoaded();
     return this._entitlementsModel;
@@ -55,6 +63,11 @@ export class LocalAccountModel extends AccountModel {
   public get profileModel(): LocalProfileModel {
     this.ensureLoaded();
     return this._profileModel;
+  }
+
+  public get profitAndLossModel(): ProfitAndLossModel {
+    this.ensureLoaded();
+    return this._profitAndLossModel;
   }
 
   public get riskModel(): LocalRiskModel {
@@ -83,6 +96,7 @@ export class LocalAccountModel extends AccountModel {
   private _groups: Beam.DirectoryEntry[];
   private _entitlementsModel: LocalEntitlementsModel;
   private _profileModel: LocalProfileModel;
+  private _profitAndLossModel: ProfitAndLossModel;
   private _riskModel: LocalRiskModel;
   private _complianceService: LocalComplianceService;
 }

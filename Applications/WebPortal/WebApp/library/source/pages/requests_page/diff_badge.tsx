@@ -16,11 +16,13 @@ export function DiffBadge(props: Properties) {
   const {color, backgroundColor, sign} = getDirectionStyle(props.direction);
   const dynamicStyle = StyleSheet.create({ tag: {color, backgroundColor} });
   const hasSign = props.direction !== RequestsModel.Direction.NONE;
+  const displayValue = hasSign && props.value.startsWith('-') ?
+    props.value.substring(1) : props.value;
   return (
     <span className=
         {css(hasSign ? STYLES.tagWithSign : STYLES.tag, dynamicStyle.tag)}>
       {hasSign && <span className={css(STYLES.sign)}>{sign}</span>}
-      {props.value}
+      {displayValue}
     </span>);
 }
 

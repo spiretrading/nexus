@@ -44,7 +44,9 @@ const EXTRA_STYLE = StyleSheet.create({
   button: {
     backgroundColor: '#684BC7',
     color: '#FFFFFF',
-    border: '1px solid transparent',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'transparent',
     borderRadius: '1px',
     fontFamily: "'Roboto', system-ui, sans-serif",
     fontSize: '0.875rem',
@@ -78,7 +80,7 @@ const EXTRA_STYLE = StyleSheet.create({
     },
     ':focus-visible': {
       backgroundColor: '#B9B4EC',
-      border: '1px solid #FFFFFF'
+      borderColor: '#FFFFFF'
     }
   },
   buttonDisabled: {

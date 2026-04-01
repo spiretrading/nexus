@@ -131,6 +131,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_box_profile());
   add(make_calendar_date_picker_profile());
   add(make_check_box_profile());
+  add(make_closed_filter_panel_profile());
   add(make_color_box_profile());
   add(make_color_code_panel_profile());
   add(make_color_picker_profile());
@@ -139,6 +140,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_date_box_profile());
   add(make_date_filter_panel_profile());
   add(make_decimal_box_profile());
+  add(make_decimal_filter_panel_profile());
   add(make_deletable_list_item_profile());
   add(make_delete_icon_button_profile());
   add(make_destination_box_profile());
@@ -146,6 +148,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_drop_down_box_profile());
   add(make_drop_down_list_profile());
   add(make_duration_box_profile());
+  add(make_duration_filter_panel_profile());
   add(make_eye_dropper_profile());
   add(make_editable_box_profile());
   add(make_editable_table_view_profile());
@@ -165,6 +168,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_info_tip_profile());
   add(make_input_box_profile());
   add(make_integer_box_profile());
+  add(make_integer_filter_panel_profile());
   add(make_key_input_box_profile());
   add(make_key_tag_profile());
   add(make_label_button_profile());
@@ -175,8 +179,10 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_menu_icon_button_profile());
   add(make_menu_label_button_profile());
   add(make_money_box_profile());
+  add(make_money_filter_panel_profile());
   add(make_navigation_view_profile());
   add(make_number_label_profile());
+  add(make_open_filter_panel_profile());
   add(make_order_field_info_tip_profile());
   add(make_order_type_box_profile());
   add(make_overlay_panel_profile());
@@ -184,9 +190,11 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_popup_box_profile());
   add(make_progress_bar_profile());
   add(make_quantity_box_profile());
+  add(make_quantity_filter_panel_profile());
   add(make_radio_button_profile());
   add(make_region_box_profile());
   add(make_region_drop_down_box_profile());
+  add(make_region_filter_panel_profile());
   add(make_region_list_item_profile());
   add(make_responsive_label_profile());
   add(make_scroll_bar_profile());
@@ -197,6 +205,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_security_list_item_profile());
   add(make_security_view_profile());
   add(make_side_box_profile());
+  add(make_side_filter_panel_profile());
   add(make_slider_profile());
   add(make_slider_2d_profile());
   add(make_split_view_profile());
