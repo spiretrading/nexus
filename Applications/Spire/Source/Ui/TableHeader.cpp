@@ -176,7 +176,7 @@ void TableHeader::close_filter_panel() {
     body.hide();
   }
   auto animation = make_height_animation(*panel, panel->height(), 0);
-  connect(animation, &QVariantAnimation::finished, [=] {
+  connect(animation, &QVariantAnimation::finished, this, [=] {
     dismiss_filter_panel(*m_body_layout, *panel);
     m_closing_filter_panel = nullptr;
   });
@@ -195,7 +195,7 @@ void TableHeader::open_filter_panel(int index) {
     m_body_layout->addWidget(panel);
     panel->show();
     auto animation = make_height_animation(*panel, 0, target_height);
-    connect(animation, &QVariantAnimation::finished, [=] {
+    connect(animation, &QVariantAnimation::finished, this, [=] {
       reset_filter_panel_height(*panel);
       panel->set_overflow_directions(Qt::Horizontal);
     });
