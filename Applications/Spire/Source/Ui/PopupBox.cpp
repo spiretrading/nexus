@@ -17,10 +17,12 @@ namespace {
 
   struct PopupPanel : QWidget {
     QWidget* m_panel;
+    bool m_is_adjusting_position;
 
     explicit PopupPanel(QWidget& panel, QWidget* parent = nullptr)
         : QWidget(parent, Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint),
-          m_panel(&panel) {
+          m_panel(&panel),
+          m_is_adjusting_position(false) {
       setAttribute(Qt::WA_TranslucentBackground);
       enclose(*this, *m_panel);
       proxy_style(*this, *m_panel);
@@ -31,8 +33,14 @@ namespace {
       return m_panel->minimumSizeHint();
     }
 
-    QSize sizeHint() const override {
-      return m_panel->sizeHint();
+    void moveEvent(QMoveEvent* event) override {
+      if(isWindow() && !m_is_adjusting_position) {
+        m_is_adjusting_position = true;
+        auto size = scale(DROP_SHADOW_SIZE, DROP_SHADOW_SIZE);
+        move(pos() - QPoint(size.width(), size.height()));
+        m_is_adjusting_position = false;
+      }
+      QWidget::moveEvent(event);
     }
 
     void showEvent(QShowEvent* event) override {
@@ -90,7 +98,9 @@ void PopupBox::set_overflow_directions(Qt::Orientations directions) {
     return;
   }
   m_overflow_directions = directions;
-  handle_overflow();
+  if(isVisible()) {
+    handle_overflow();
+  }
 }
 
 QSize PopupBox::sizeHint() const {
@@ -102,12 +112,26 @@ QSize PopupBox::sizeHint() const {
 
 bool PopupBox::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_body && event->type() == QEvent::LayoutRequest) {
+    if(is_popped_up()) {
+      m_body->adjustSize();
+      if(auto body_layout = m_body->layout()) {
+        auto margins = body_layout->contentsMargins();
+        m_body_size = m_body->size() - QSize(
+          margins.left() + margins.right(), margins.top() + margins.bottom());
+      }
+      updateGeometry();
+    }
     handle_overflow();
   } else if(watched == window() && event->type() == QEvent::WindowDeactivate &&
       m_body->isActiveWindow()) {
     return true;
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void PopupBox::hideEvent(QHideEvent* event) {
+  restore();
+  QWidget::hideEvent(event);
 }
 
 void PopupBox::resizeEvent(QResizeEvent* event) {
@@ -128,8 +152,8 @@ void PopupBox::popup() {
   setFocusProxy(nullptr);
   layout()->removeWidget(m_body);
   m_body->setWindowFlags(m_body->windowFlags() | Qt::Tool);
-  m_body->show();
   m_body->move(mapToGlobal(QPoint(0, 0)));
+  m_body->show();
   m_body->adjustSize();
   m_body->activateWindow();
 }
@@ -147,7 +171,14 @@ void PopupBox::restore() {
 
 void PopupBox::handle_overflow() {
   auto size = this->size();
-  auto body_size = m_body->sizeHint();
+  auto body_size = [&] {
+    if(auto body_layout = m_body->layout()) {
+      auto margins = body_layout->contentsMargins();
+      return m_body->sizeHint() - QSize(
+        margins.left() + margins.right(), margins.top() + margins.bottom());
+    }
+    return m_body->sizeHint();
+  }();
   auto overflows =
     ((m_overflow_directions & Qt::Horizontal) &&
       size.width() < body_size.width()) ||

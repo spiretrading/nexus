@@ -77,31 +77,23 @@ void ReportingWebServlet::generate_reports(
     auto venues = clients.get_definitions_client().load_venue_database();
     auto time_zones =
       clients.get_definitions_client().load_time_zone_database();
-    auto bookkeeper = TrueAverageBookkeeper();
+    auto portfolio = Portfolio(TrueAverageBookkeeper(), venues);
     for(auto day = request.m_start; day <= request.m_end; day += days(1)) {
       if(request.m_is_cancelled->load()) {
         break;
       }
       auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
-      query_daily_order_submissions(request.m_account, ptime(day),
-        ptime(day + days(1)), venues, time_zones,
-        clients.get_order_execution_client(), order_queue);
+      query_daily_order_submissions(request.m_account, ptime(day), ptime(day),
+        venues, time_zones, clients.get_order_execution_client(), order_queue);
       auto orders = std::vector<std::shared_ptr<Order>>();
       flush(order_queue, std::back_inserter(orders));
       for(auto& order : orders) {
-        auto& fields = order->get_info().m_fields;
         auto reports = order->get_publisher().get_snapshot();
         if(!reports) {
           continue;
         }
         for(auto& report : *reports) {
-          if(report.m_last_quantity == 0) {
-            continue;
-          }
-          auto quantity = get_direction(fields.m_side) * report.m_last_quantity;
-          bookkeeper.record(fields.m_security, fields.m_currency, quantity,
-            report.m_last_quantity * report.m_last_price,
-            get_fee_total(report));
+          portfolio.update(order->get_info().m_fields, report);
         }
       }
     }
@@ -115,14 +107,14 @@ void ReportingWebServlet::generate_reports(
       clients.get_administration_client(), request.m_account);
     auto account_currency = risk_parameters.m_currency;
     auto report = ProfitAndLossReport();
-    for(auto& total : bookkeeper.get_totals_range()) {
+    for(auto& total : portfolio.get_bookkeeper().get_totals_range()) {
       auto currency_entry = CurrencyReportEntry();
       currency_entry.m_currency = total.m_position.m_currency;
       currency_entry.m_total_profit_and_loss =
         total.m_gross_profit_and_loss - total.m_fees;
       currency_entry.m_total_volume = total.m_volume;
       currency_entry.m_total_fees = total.m_fees;
-      for(auto& inventory : bookkeeper.get_inventory_range()) {
+      for(auto& inventory : portfolio.get_bookkeeper().get_inventory_range()) {
         if(inventory.m_position.m_currency != total.m_position.m_currency) {
           continue;
         }

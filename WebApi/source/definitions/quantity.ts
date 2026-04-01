@@ -16,7 +16,7 @@ export class Quantity {
 
   /** Constructs a Quantity value from its raw internal representation. */
   public static from_representation(value: number): Quantity {
-    const quantity = new Quantity('0');
+    const quantity = Object.create(Quantity.prototype) as Quantity;
     quantity._value = value;
     return quantity;
   }
@@ -119,23 +119,26 @@ export class Quantity {
 
   /** Returns the string representation. */
   public toString(): string {
-    let buffer = '';
-    if(this._value < 0) {
-      buffer += '-';
-    }
-    const whole = Math.trunc(Math.abs(this._value) / Quantity.MULTIPLIER);
-    buffer += whole.toString();
-    let fractionalPart = Math.abs(this._value) - (Quantity.MULTIPLIER * whole);
-    if(fractionalPart != 0) {
-      buffer += '.';
-      for(let i = 0; i < Quantity.DECIMAL_PLACES && fractionalPart != 0; ++i) {
-        const factor = Math.pow(10, Quantity.DECIMAL_PLACES - i - 1);
-        const code = 48 + Math.trunc(fractionalPart / factor);
-        buffer += String.fromCharCode(code);
-        fractionalPart %= factor;
+    var absolute = Math.abs(this._value);
+    var whole = Math.trunc(absolute / Quantity.MULTIPLIER);
+    var fraction = Math.trunc(absolute % Quantity.MULTIPLIER);
+    if(fraction === 0) {
+      if(this._value < 0) {
+        return '-' + whole.toString();
       }
+      return whole.toString();
     }
-    return buffer;
+    var fractionalString =
+      fraction.toString().padStart(Quantity.DECIMAL_PLACES, '0');
+    var trimmed = fractionalString.length;
+    while(trimmed > 0 && fractionalString[trimmed - 1] === '0') {
+      --trimmed;
+    }
+    fractionalString = fractionalString.substring(0, trimmed);
+    if(this._value < 0) {
+      return '-' + whole.toString() + '.' + fractionalString;
+    }
+    return whole.toString() + '.' + fractionalString;
   }
 
   /** Converts this value to JSON. */
