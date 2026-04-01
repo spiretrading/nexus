@@ -37,6 +37,8 @@ namespace Spire {
 
         /** The maximum permissible value (inclusive). */
         boost::optional<Type> m_max;
+
+        bool operator ==(const Range&) const = default;
       };
 
       /** The type of model over the permissible range of values. */
@@ -53,9 +55,13 @@ namespace Spire {
       /** Returns the current value model. */
       const std::shared_ptr<RangeModel>& get_current() const;
 
+    protected:
+      void showEvent(QShowEvent* event) override;
+
     private:
       std::shared_ptr<RangeModel> m_current;
       Range m_default_range;
+      ScalarBox* m_min_box;
 
       static TextBox* make_label_box(const QString& label);
       static ScalarBox* make_scalar_box(
@@ -72,9 +78,9 @@ namespace Spire {
     auto container = new QWidget();
     auto layout = make_hbox_layout(container);
     layout->addWidget(make_label_box(tr("Min")));
-    auto min_box = make_scalar_box(make_scalar_value_model_decorator(
+    m_min_box = make_scalar_box(make_scalar_value_model_decorator(
       make_field_value_model(m_current, &Range::m_min)));
-    layout->addWidget(min_box, 1);
+    layout->addWidget(m_min_box, 1);
     layout->addSpacing(scale_width(18));
     layout->addWidget(make_label_box(tr("Max")));
     auto max_box = make_scalar_box(make_scalar_value_model_decorator(
@@ -96,6 +102,12 @@ namespace Spire {
   const std::shared_ptr<typename ScalarFilterPanel<T>::RangeModel>&
       ScalarFilterPanel<T>::get_current() const {
     return m_current;
+  }
+
+  template<typename T>
+  void ScalarFilterPanel<T>::showEvent(QShowEvent* event) {
+    QWidget::showEvent(event);
+    m_min_box->setFocus();
   }
 
   template<typename T>
