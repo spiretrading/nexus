@@ -92,7 +92,6 @@ namespace Spire {
       std::shared_ptr<HeaderModel> m_header;
       std::shared_ptr<TableFilter> m_filter;
       TableHeader* m_header_view;
-      ScrollBox* m_header_scroll_box;
       TableBody* m_body;
       int m_horizontal_spacing;
       int m_vertical_spacing;

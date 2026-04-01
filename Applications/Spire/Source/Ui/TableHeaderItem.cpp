@@ -223,7 +223,7 @@ namespace {
       style.get((Hover() || Press()) > Body()).
         set(BackgroundColor(QColor(0xF2F2FF)));
       style.get(Any() > is_a<Icon>()).set(Fill(QColor(0xA5A5A5)));
-      style.get((Hover() || Press()) > is_a<Icon>()).
+      style.get(((Hover() || Press()) && !Checked()) > is_a<Icon>()).
         set(Fill(QColor(0xA5A5A5)));
       style.get(Checked() > is_a<Icon>()).set(Fill(QColor(0x4B23A0)));
     });

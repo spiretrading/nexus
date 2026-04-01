@@ -101,6 +101,7 @@
 #include "Spire/Ui/Slider.hpp"
 #include "Spire/Ui/Slider2D.hpp"
 #include "Spire/Ui/SplitView.hpp"
+#include "Spire/Ui/StandardTableFilter.hpp"
 #include "Spire/Ui/SubmenuItem.hpp"
 #include "Spire/Ui/TabView.hpp"
 #include "Spire/Ui/TableHeader.hpp"
@@ -4470,35 +4471,35 @@ UiProfile Spire::make_table_header_profile() {
   populate_widget_properties(properties);
   auto profile = UiProfile("TableHeader", properties, [] (auto& profile) {
     auto items = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
+    auto types = std::vector<std::type_index>();
     auto item = TableHeaderItem::Model();
     item.m_name = "Security";
     item.m_short_name = "Sec";
     item.m_filter = TableFilter::Filter::UNFILTERED;
     items->push(item);
+    types.push_back(typeid(int));
     item = TableHeaderItem::Model();
     item.m_name = "Quantity";
     item.m_order = TableHeaderItem::Order::ASCENDING;
+    item.m_filter = TableFilter::Filter::UNFILTERED;
     items->push(item);
+    types.push_back(typeid(int));
     item = TableHeaderItem::Model();
     item.m_name = "Side";
+    item.m_filter = TableFilter::Filter::UNFILTERED;
     items->push(item);
+    types.push_back(typeid(int));
     item = TableHeaderItem::Model();
     item.m_name = "Date";
+    item.m_filter = TableFilter::Filter::UNFILTERED;
     items->push(item);
-    auto header = new TableHeader(items);
+    types.push_back(typeid(date));
+    auto header = new TableHeader(items,
+      std::make_shared<StandardTableFilter>(types));
     apply_widget_properties(header, profile.get_properties());
     header->connect_sort_signal(
       profile.make_event_slot<int, TableHeaderItem::Order>(
         "Sort", to_string_converter(get_order_property())));
-    header->connect_filter_open_signal(
-      profile.make_event_slot<int, bool>("FilterOpen",
-        [] (auto index, auto is_open) {
-          auto result = QString("Column %1 ").arg(index);
-          if(is_open) {
-            return result + "True";
-          }
-          return result + "False";
-        }));
       return header;
     });
   return profile;

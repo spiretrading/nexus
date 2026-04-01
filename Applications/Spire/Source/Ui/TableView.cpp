@@ -161,15 +161,11 @@ TableView::TableView(
       m_header->set(i, revised_item);
     }
   }
-  m_header_view = new TableHeader(m_header);
+  m_header_view = new TableHeader(m_header, m_filter);
   m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   link(*this, *m_header_view);
   auto box = new Box(m_header_view);
   box->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
-  m_header_scroll_box = new ScrollBox(box);
-  m_header_scroll_box->set(ScrollBox::DisplayPolicy::NEVER);
-  m_header_scroll_box->setSizePolicy(
-    QSizePolicy::Expanding, QSizePolicy::Fixed);
   m_filtered_table = std::make_shared<FilteredTableModel>(
     m_table, std::bind_front(&TableView::is_filtered, this));
   if(comparator) {
@@ -199,7 +195,7 @@ TableView::TableView(
   m_scroll_box->get_horizontal_scroll_bar().connect_position_signal(
     std::bind_front(&TableView::on_scroll_position, this));
   auto layout = make_vbox_layout(this);
-  layout->addWidget(m_header_scroll_box);
+  layout->addWidget(m_header_view);
   layout->addWidget(m_scroll_box);
   m_header_view->connect_sort_signal(
     std::bind_front(&TableView::on_order_update, this));
@@ -302,12 +298,6 @@ void TableView::on_order_update(int index, TableHeaderItem::Order order) {
 }
 
 void TableView::on_filter(int column, TableFilter::Filter filter) {
-  auto& item = m_header->get(column);
-  if(item.m_filter != filter) {
-    auto revised_item = item;
-    revised_item.m_filter = filter;
-    m_header->set(column, revised_item);
-  }
   m_filtered_table->set_filter(std::bind_front(&TableView::is_filtered, this));
 }
 
@@ -361,7 +351,8 @@ void TableView::on_body_style() {
 }
 
 void TableView::on_scroll_position(int position) {
-  m_header_scroll_box->get_horizontal_scroll_bar().set_position(position);
+  m_header_view->get_scroll_box().get_horizontal_scroll_bar().set_position(
+    position);
 }
 
 TableViewBuilder::TableViewBuilder(
