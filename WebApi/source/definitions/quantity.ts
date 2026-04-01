@@ -119,9 +119,9 @@ export class Quantity {
 
   /** Returns the string representation. */
   public toString(): string {
-    var absolute = Math.abs(this._value);
+    var absolute = Math.round(Math.abs(this._value));
     var whole = Math.trunc(absolute / Quantity.MULTIPLIER);
-    var fraction = Math.trunc(absolute % Quantity.MULTIPLIER);
+    var fraction = Math.round(absolute % Quantity.MULTIPLIER);
     if(fraction === 0) {
       if(this._value < 0) {
         return '-' + whole.toString();
