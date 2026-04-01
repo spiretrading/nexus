@@ -83,7 +83,8 @@ void ReportingWebServlet::generate_reports(
         break;
       }
       auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
-      query_daily_order_submissions(request.m_account, ptime(day), ptime(day),
+      auto noon = ptime(day, hours(12));
+      query_daily_order_submissions(request.m_account, noon, noon,
         venues, time_zones, clients.get_order_execution_client(), order_queue);
       auto orders = std::vector<std::shared_ptr<Order>>();
       flush(order_queue, std::back_inserter(orders));
