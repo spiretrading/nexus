@@ -1,6 +1,8 @@
 #ifndef OASIS_US_FEE_TABLE_HPP
 #define OASIS_US_FEE_TABLE_HPP
 #include <iostream>
+#include <boost/rational.hpp>
+#include "Nexus/Definitions/Side.hpp"
 #include "Nexus/FeeHandling/OtcmFeeTable.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
@@ -10,8 +12,14 @@ namespace Nexus {
   /** Stores the fees among U.S. trading venues. */
   struct UsFeeTable {
 
-    /** The fee charged by the software. */
-    Money m_spire_fee;
+    /** The clearing fee per share. */
+    Money m_clearing_fee;
+
+    /** The SEC fee rate applied to the notional value of sell executions. */
+    boost::rational<int> m_sec_rate;
+
+    /** The Spire fee rate applied to the notional value of all executions. */
+    boost::rational<int> m_spire_rate;
 
     /** Fee table used by OTCM. */
     OtcmFeeTable m_otcm_fee_table;
@@ -20,12 +28,14 @@ namespace Nexus {
   /**
    * Parses a UsFeeTable from a YAML configuration.
    * @param config The configuration to parse the UsFeeTable from.
-   * @param venues The VenueDatabase used to parse Securities.
    * @return The UsFeeTable represented by the <i>config</i>.
    */
   inline UsFeeTable parse_us_fee_table(const YAML::Node& config) {
     auto table = UsFeeTable();
-    table.m_spire_fee = Beam::extract<Money>(config, "spire_fee");
+    table.m_clearing_fee = Beam::extract<Money>(config, "clearing_fee");
+    table.m_sec_rate = Beam::extract<boost::rational<int>>(config, "sec_rate");
+    table.m_spire_rate =
+      Beam::extract<boost::rational<int>>(config, "spire_rate");
     if(auto otcm_config = config["otcm"]) {
       table.m_otcm_fee_table = parse_otcm_fee_table(otcm_config);
     } else {
@@ -45,7 +55,15 @@ namespace Nexus {
   inline ExecutionReport calculate_fee(const UsFeeTable& table,
       const Order& order, const ExecutionReport& report) {
     auto fees_report = report;
-    fees_report.m_commission += fees_report.m_last_quantity * table.m_spire_fee;
+    auto notional = report.m_last_quantity * report.m_last_price;
+    fees_report.m_processing_fee +=
+      report.m_last_quantity * table.m_clearing_fee;
+    if(order.get_info().m_fields.m_side == Side::ASK) {
+      fees_report.m_processing_fee +=
+        round_to(table.m_sec_rate * notional, Money::CENT);
+    }
+    fees_report.m_commission +=
+      round_to(table.m_spire_rate * notional, Money::CENT);
     fees_report.m_execution_fee += [&] {
       auto last_market = [&] {
         if(!report.m_last_market.empty()) {

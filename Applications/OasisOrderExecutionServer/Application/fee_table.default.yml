@@ -366,7 +366,9 @@ ca_equities:
 
 # The fees charged for U.S. equity markets.
 us_equities:
-  spire_fee: 0.0
+  clearing_fee: 0.000200
+  sec_rate: 0.0000206
+  spire_rate: 0.00007
 
   # OTC Markets fees based on https://www.otcmarkets.com/files/OTC%20Link%20ECN%20Schedule%20A.pdf
   # Table is structured as:
