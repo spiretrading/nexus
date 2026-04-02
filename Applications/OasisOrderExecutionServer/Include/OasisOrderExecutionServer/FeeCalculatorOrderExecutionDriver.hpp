@@ -169,7 +169,7 @@ namespace Nexus {
       PrimitiveOrder& order, const ExecutionReport& report) {
     auto fees_report = calculate_fee(m_us_fee_table, order, report);
     order.with([&] (auto status, const auto& reports) {
-      order.update(report);
+      order.update(fees_report);
     });
   }
 
