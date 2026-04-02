@@ -78,6 +78,7 @@
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OpenFilterPanel.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
+#include "Spire/Ui/OrderTypeFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/PercentBox.hpp"
 #include "Spire/Ui/PopupBox.hpp"
@@ -113,6 +114,7 @@
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TimeInForceBox.hpp"
+#include "Spire/Ui/TimeInForceFilterPanel.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/Ui/TransitionView.hpp"
@@ -3433,6 +3435,19 @@ UiProfile Spire::make_order_type_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_order_type_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<bool>("Limit"));
+  properties.push_back(make_standard_property<bool>("Market"));
+  properties.push_back(make_standard_property<bool>("Pegged"));
+  properties.push_back(make_standard_property<bool>("Stop"));
+  auto profile = UiProfile("OrderTypeFilterPanel", properties,
+    std::bind_front(setup_closed_filter_panel_profile<
+      OrderType, make_order_type_filter_panel>));
+  return profile;
+}
+
 UiProfile Spire::make_overlay_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -5054,6 +5069,23 @@ UiProfile Spire::make_time_in_force_box_profile() {
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("TimeInForceBox", properties, std::bind_front(
     setup_enum_box_profile<TimeInForceBox, make_time_in_force_box>));
+  return profile;
+}
+
+UiProfile Spire::make_time_in_force_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<bool>("DAY"));
+  properties.push_back(make_standard_property<bool>("GTC"));
+  properties.push_back(make_standard_property<bool>("OPG"));
+  properties.push_back(make_standard_property<bool>("IOC"));
+  properties.push_back(make_standard_property<bool>("FOK"));
+  properties.push_back(make_standard_property<bool>("GTX"));
+  properties.push_back(make_standard_property<bool>("GTD"));
+  properties.push_back(make_standard_property<bool>("MOC"));
+  auto profile = UiProfile("TimeInForceFilterPanel", properties,
+    std::bind_front(setup_closed_filter_panel_profile<
+      TimeInForce, make_time_in_force_filter_panel>));
   return profile;
 }
 

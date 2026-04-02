@@ -29,6 +29,13 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<std::shared_ptr<Order>> m_result;
       };
 
+      /** Records a call to add. */
+      struct AddOperation {
+
+        /** The Order passed. */
+        std::shared_ptr<Order> m_order;
+      };
+
       /** Records a call to submit. */
       struct SubmitOperation {
 
@@ -70,7 +77,8 @@ namespace Nexus::Tests {
 
       /** A variant covering all possible operations. */
       using Operation = std::variant<
-        RecoverOperation, SubmitOperation, CancelOperation, UpdateOperation>;
+        RecoverOperation, AddOperation, SubmitOperation, CancelOperation,
+        UpdateOperation>;
 
       /** The type of Queue used to send and receive operations. */
       using Queue = Beam::Queue<std::shared_ptr<Operation>>;
@@ -111,7 +119,9 @@ namespace Nexus::Tests {
   }
 
   inline void TestOrderExecutionDriver::add(
-      const std::shared_ptr<Order>& order) {}
+      const std::shared_ptr<Order>& order) {
+    m_operations.push(std::make_shared<Operation>(AddOperation(order)));
+  }
 
   inline std::shared_ptr<Order> TestOrderExecutionDriver::submit(
       const OrderInfo& info) {
