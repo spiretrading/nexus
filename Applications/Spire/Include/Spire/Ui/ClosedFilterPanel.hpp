@@ -1,7 +1,9 @@
 #ifndef SPIRE_CLOSED_FILTER_PANEL_HPP
 #define SPIRE_CLOSED_FILTER_PANEL_HPP
+#include <algorithm>
 #include <QWidget>
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
 
 namespace Spire {
@@ -48,6 +50,22 @@ namespace Spire {
       void on_table_model_operation(const TableModel::Operation& operation);
       void on_reset();
   };
+
+  template<typename T>
+  ClosedFilterPanel* make_closed_filter_panel(const std::vector<T>& values,
+      std::shared_ptr<ListModel<T>> selection, QWidget* parent = nullptr) {
+    auto model = std::make_shared<ArrayTableModel>();
+    for(auto& value : values) {
+      model->push({value, false});
+    }
+    for(auto i = 0; i < selection->get_size(); ++i) {
+      if(auto j = std::find(values.begin(), values.end(), selection->get(i));
+          j != values.end()) {
+        model->set(std::distance(values.begin(), j), 1, true);
+      }
+    }
+    return new ClosedFilterPanel(std::move(model), parent);
+  }
 }
 
 #endif
