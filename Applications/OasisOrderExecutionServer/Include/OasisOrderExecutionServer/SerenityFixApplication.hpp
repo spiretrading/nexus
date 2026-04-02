@@ -56,6 +56,12 @@ namespace Nexus {
       Beam::SynchronizedUnorderedSet<OrderId> m_cancellations;
       FixOrderLog m_order_log;
 
+      void on_ca_message(const std::shared_ptr<Order>& order,
+        const FIX42::ExecutionReport& message,
+        Beam::Out<ExecutionReport> update);
+      void on_us_message(const std::shared_ptr<Order>& order,
+        const FIX42::ExecutionReport& message,
+        Beam::Out<ExecutionReport> update);
       BboQuote load_bbo_quote(const Security& security);
       std::shared_ptr<Order> submit_to_ca(const OrderInfo& info);
       std::shared_ptr<Order> submit_to_us(const OrderInfo& info);

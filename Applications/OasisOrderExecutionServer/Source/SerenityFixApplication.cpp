@@ -147,75 +147,99 @@ void SerenityFixApplication::onMessage(
     const FIX42::ExecutionReport& message, const FIX::SessionID& session_id) {
   m_order_log.update(message, session_id, m_time_client->get_time(),
     [=] (const std::shared_ptr<Order>& order, Out<ExecutionReport> update) {
-      auto liquidity_flag = std::string();
-      if(message.isSetField(UNIFORM_LIQUDITY_TAG)) {
-        liquidity_flag = message.getField(UNIFORM_LIQUDITY_TAG);
-      }
-      if(liquidity_flag == "A") {
-        update->m_liquidity_flag = "P";
-      } else if(liquidity_flag == "R") {
-        update->m_liquidity_flag = "A";
-      }
-      auto original_liquidity_flag = std::string();
-      if(message.isSetField(ORIGINAL_LIQUIDITY_TAG)) {
-        original_liquidity_flag = message.getField(ORIGINAL_LIQUIDITY_TAG);
-      }
-      auto last_mkt = FIX::LastMkt();
-      if(message.isSet(last_mkt)) {
-        message.get(last_mkt);
-        if(last_mkt == "XTSX") {
-          update->m_last_market = DefaultVenues::TSX.get_code().get_data();
-        } else if(last_mkt == "CHIX") {
-          update->m_last_market = DefaultVenues::CHIC.get_code().get_data();
-        } else if(last_mkt == "XCXD") {
-          if(!original_liquidity_flag.empty()) {
-            update->m_liquidity_flag = original_liquidity_flag;
-          }
-          update->m_last_market = DefaultVenues::CHIC.get_code().get_data();
-        } else if(last_mkt == "XCX2") {
-          update->m_last_market = DefaultVenues::XCX2.get_code().get_data();
-        } else if(last_mkt == "MATN") {
-          update->m_last_market = DefaultVenues::MATN.get_code().get_data();
-        } else if(last_mkt == "XCNQ") {
-          if(order->get_info().m_fields.m_security.get_venue() ==
-              DefaultVenues::CSE) {
-            update->m_last_market = DefaultVenues::CSE.get_code().get_data();
-          } else {
-            update->m_last_market = DefaultVenues::PURE.get_code().get_data();
-          }
-        } else if(last_mkt == "CSE2") {
-          update->m_last_market = DefaultVenues::CSE2.get_code().get_data();
-        } else if(last_mkt == "XATS") {
-          update->m_last_market = DefaultVenues::XATS.get_code().get_data();
-        } else if(last_mkt == "OMGA") {
-          update->m_last_market = DefaultVenues::OMGA.get_code().get_data();
-        } else if(last_mkt == "LYNX") {
-          update->m_last_market = DefaultVenues::LYNX.get_code().get_data();
-        } else if(
-            last_mkt == "NEON" || last_mkt == "NEOL" || last_mkt == "NEOD") {
-          update->m_last_market = DefaultVenues::NEOE.get_code().get_data();
-        } else if(last_mkt == "TSXV") {
-          update->m_last_market = DefaultVenues::TSXV.get_code().get_data();
-        }
-      }
-      if(update->m_last_market == DefaultVenues::TSXV.get_code() ||
-          update->m_last_market == DefaultVenues::TSX.get_code()) {
-        if(original_liquidity_flag == "O") {
-          update->m_liquidity_flag = "O";
-        } else if(original_liquidity_flag.size() >= 3) {
-          auto subflag = original_liquidity_flag.substr(1, 2);
-          if(subflag == "AO" || subflag == "AE") {
-            update->m_liquidity_flag = subflag;
-          }
-        }
-      } else if(update->m_last_market == DefaultVenues::PURE.get_code() ||
-          update->m_last_market == DefaultVenues::CSE.get_code() ||
-          update->m_last_market == DefaultVenues::CSE2.get_code()) {
-        if(original_liquidity_flag == "TC") {
-          update->m_liquidity_flag = "TC";
-        }
+      auto venue = order->get_info().m_fields.m_security.get_venue();
+      if(venue == DefaultVenues::OTCM) {
+        on_us_message(order, message, out(update));
+      } else {
+        on_ca_message(order, message, out(update));
       }
   });
+}
+
+void SerenityFixApplication::on_ca_message(const std::shared_ptr<Order>& order,
+    const FIX42::ExecutionReport& message, Out<ExecutionReport> update) {
+  auto liquidity_flag = std::string();
+  if(message.isSetField(UNIFORM_LIQUDITY_TAG)) {
+    liquidity_flag = message.getField(UNIFORM_LIQUDITY_TAG);
+  }
+  if(liquidity_flag == "A") {
+    update->m_liquidity_flag = "P";
+  } else if(liquidity_flag == "R") {
+    update->m_liquidity_flag = "A";
+  }
+  auto original_liquidity_flag = std::string();
+  if(message.isSetField(ORIGINAL_LIQUIDITY_TAG)) {
+    original_liquidity_flag = message.getField(ORIGINAL_LIQUIDITY_TAG);
+  }
+  auto last_mkt = FIX::LastMkt();
+  if(message.isSet(last_mkt)) {
+    message.get(last_mkt);
+    if(last_mkt == "XTSX") {
+      update->m_last_market = DefaultVenues::TSX.get_code().get_data();
+    } else if(last_mkt == "CHIX") {
+      update->m_last_market = DefaultVenues::CHIC.get_code().get_data();
+    } else if(last_mkt == "XCXD") {
+      if(!original_liquidity_flag.empty()) {
+        update->m_liquidity_flag = original_liquidity_flag;
+      }
+      update->m_last_market = DefaultVenues::CHIC.get_code().get_data();
+    } else if(last_mkt == "XCX2") {
+      update->m_last_market = DefaultVenues::XCX2.get_code().get_data();
+    } else if(last_mkt == "MATN") {
+      update->m_last_market = DefaultVenues::MATN.get_code().get_data();
+    } else if(last_mkt == "XCNQ") {
+      if(order->get_info().m_fields.m_security.get_venue() ==
+          DefaultVenues::CSE) {
+        update->m_last_market = DefaultVenues::CSE.get_code().get_data();
+      } else {
+        update->m_last_market = DefaultVenues::PURE.get_code().get_data();
+      }
+    } else if(last_mkt == "CSE2") {
+      update->m_last_market = DefaultVenues::CSE2.get_code().get_data();
+    } else if(last_mkt == "XATS") {
+      update->m_last_market = DefaultVenues::XATS.get_code().get_data();
+    } else if(last_mkt == "OMGA") {
+      update->m_last_market = DefaultVenues::OMGA.get_code().get_data();
+    } else if(last_mkt == "LYNX") {
+      update->m_last_market = DefaultVenues::LYNX.get_code().get_data();
+    } else if(
+        last_mkt == "NEON" || last_mkt == "NEOL" || last_mkt == "NEOD") {
+      update->m_last_market = DefaultVenues::NEOE.get_code().get_data();
+    } else if(last_mkt == "TSXV") {
+      update->m_last_market = DefaultVenues::TSXV.get_code().get_data();
+    }
+  }
+  if(update->m_last_market == DefaultVenues::TSXV.get_code() ||
+      update->m_last_market == DefaultVenues::TSX.get_code()) {
+    if(original_liquidity_flag == "O") {
+      update->m_liquidity_flag = "O";
+    } else if(original_liquidity_flag.size() >= 3) {
+      auto subflag = original_liquidity_flag.substr(1, 2);
+      if(subflag == "AO" || subflag == "AE") {
+        update->m_liquidity_flag = subflag;
+      }
+    }
+  } else if(update->m_last_market == DefaultVenues::PURE.get_code() ||
+      update->m_last_market == DefaultVenues::CSE.get_code() ||
+      update->m_last_market == DefaultVenues::CSE2.get_code()) {
+    if(original_liquidity_flag == "TC") {
+      update->m_liquidity_flag = "TC";
+    }
+  }
+}
+
+void SerenityFixApplication::on_us_message(const std::shared_ptr<Order>& order,
+    const FIX42::ExecutionReport& message, Out<ExecutionReport> update) {
+  auto last_mkt = FIX::LastMkt();
+  if(message.isSet(last_mkt)) {
+    message.get(last_mkt);
+    if(last_mkt == "US01") {
+      update->m_last_market = DefaultVenues::OTCM.get_code().get_data();
+      if(message.isSetField(ORIGINAL_LIQUIDITY_TAG)) {
+        update->m_liquidity_flag = message.getField(ORIGINAL_LIQUIDITY_TAG);
+      }
+    }
+  }
 }
 
 void SerenityFixApplication::onMessage(
