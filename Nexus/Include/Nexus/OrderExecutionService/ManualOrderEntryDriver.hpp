@@ -144,6 +144,7 @@ namespace Nexus {
       order->update(updated_report);
     });
     m_ids.insert(order->get_info().m_id);
+    m_driver->add(order);
     return order;
   }
 
