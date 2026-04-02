@@ -26,7 +26,7 @@ export class Money {
 
   /** Constructs a Money value from its raw internal representation. */
   public static from_representation(value: number): Money {
-    const money = new Money('0');
+    const money = Object.create(Money.prototype) as Money;
     money._value = value;
     return money;
   }
@@ -129,21 +129,21 @@ export class Money {
 
   /** Returns the string representation. */
   public toString(): string {
-    let buffer = '';
+    var absolute = Math.round(Math.abs(this._value));
+    var whole = Math.trunc(absolute / Money.MULTIPLIER);
+    var fraction = Math.round(absolute % Money.MULTIPLIER);
+    var fractionalString =
+      fraction.toString().padStart(Money.DECIMAL_PLACES, '0');
+    var minLength = 2;
+    var trimmed = fractionalString.length;
+    while(trimmed > minLength && fractionalString[trimmed - 1] === '0') {
+      --trimmed;
+    }
+    fractionalString = fractionalString.substring(0, trimmed);
     if(this._value < 0) {
-      buffer += '-';
+      return '-' + whole.toString() + '.' + fractionalString;
     }
-    const dollars = Math.trunc(Math.abs(this._value) / Money.MULTIPLIER);
-    buffer += dollars.toString();
-    buffer += '.';
-    let fractionalPart = Math.abs(this._value) - (Money.MULTIPLIER * dollars);
-    for(let i = 0; i < 2 || fractionalPart != 0; ++i) {
-      const factor = Math.pow(10, Money.DECIMAL_PLACES - i - 1);
-      const code = 48 + Math.trunc(fractionalPart / factor);
-      buffer += String.fromCharCode(code);
-      fractionalPart %= factor;
-    }
-    return buffer;
+    return whole.toString() + '.' + fractionalString;
   }
 
   /** Converts this value to JSON. */
