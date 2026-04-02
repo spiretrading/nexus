@@ -290,6 +290,9 @@ namespace Spire {
   /** Returns a UiProfile for the TimeInForceBox. */
   UiProfile make_time_in_force_box_profile();
 
+  /** Returns a UiProfile for the TimeInForceFilterPanel. */
+  UiProfile make_time_in_force_filter_panel_profile();
+
   /** Returns a UiProfile for the TitleBar. */
   UiProfile make_title_bar_profile();
 
