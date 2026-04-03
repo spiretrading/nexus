@@ -2,12 +2,14 @@
 venues:
   - venue: XASX
     country_code: AU
+    market_center: ASX
     time_zone: Australia/Sydney
     currency: AUD
     description: Australian Stock Market
     display_name: ASX
   - venue: CHIA
     country_code: AU
+    market_center: CXA
     time_zone: Australia/Sydney
     currency: AUD
     description: CHI-X Australia
