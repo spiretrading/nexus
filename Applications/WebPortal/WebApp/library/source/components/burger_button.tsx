@@ -17,8 +17,11 @@ interface Properties {
   /** The color of the bars when highlighted. */
   highlightColor?: string;
 
+  /** Determines if the button is disabled. */
+  disabled?: boolean;
+
   /** The onClick event handler. */
-  onClick?: (event?: React.MouseEvent<any>) => void;
+  onClick?: (event?: React.MouseEvent<HTMLDivElement>) => void;
 }
 
 interface State {
@@ -42,16 +45,20 @@ export class BurgerButton extends React.Component<Properties, State> {
       }
       return this.props.color;
     })();
-    const style = {
+    const style: React.CSSProperties = {
       minWidth: this.props.width,
       width: this.props.width,
       minHeight: this.props.height,
       height: this.props.height,
-      display: 'inline-block',
-      cursor: 'pointer'
-    } as React.CSSProperties;
+      display: 'block',
+      cursor: this.props.disabled ? 'not-allowed' : 'pointer',
+      opacity: this.props.disabled ? 0.4 : undefined,
+      pointerEvents: this.props.disabled ? 'none' : undefined
+    };
     return (
-      <div style={style}>
+      <div style={style} role='button' tabIndex={this.props.disabled ? -1 : 0}
+          aria-label='Menu' aria-disabled={this.props.disabled}
+          onKeyDown={this.onKeyDown}>
         <VBoxLayout width={this.props.width}
             height={this.props.height} onMouseEnter={this.onHover}
             onMouseOut={this.onLeave} onClick={this.props.onClick}>
@@ -74,5 +81,15 @@ export class BurgerButton extends React.Component<Properties, State> {
     this.setState({
       isHovered: false
     });
+  }
+
+  private onKeyDown = (event: React.KeyboardEvent) => {
+    if(this.props.disabled) {
+      return;
+    }
+    if(event.key === 'Enter' || event.key === ' ') {
+      event.preventDefault();
+      this.props.onClick?.();
+    }
   }
 }

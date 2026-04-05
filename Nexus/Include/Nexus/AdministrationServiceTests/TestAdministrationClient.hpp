@@ -178,6 +178,7 @@ namespace Nexus::Tests {
       struct SubmitEntitlementModificationRequestOperation {
         Beam::DirectoryEntry m_account;
         EntitlementModification m_modification;
+        boost::posix_time::ptime m_effective_date;
         Message m_comment;
         Beam::Tests::ServiceResult<AccountModificationRequest> m_result;
       };
@@ -192,6 +193,7 @@ namespace Nexus::Tests {
       struct SubmitRiskModificationRequestOperation {
         Beam::DirectoryEntry m_account;
         RiskModification m_modification;
+        boost::posix_time::ptime m_effective_date;
         Message m_comment;
         Beam::Tests::ServiceResult<AccountModificationRequest> m_result;
       };
@@ -202,9 +204,17 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<AccountModificationRequest::Update> m_result;
       };
 
+      /** Records a call to load_account_modification_request_updates(). */
+      struct LoadAccountModificationRequestUpdatesOperation {
+        AccountModificationRequest::Id m_id;
+        Beam::Tests::ServiceResult<
+          std::vector<AccountModificationRequest::Update>> m_result;
+      };
+
       /** Records a call to approve_account_modification_request(). */
       struct ApproveAccountModificationRequestOperation {
         AccountModificationRequest::Id m_id;
+        boost::posix_time::ptime m_effective_date;
         Message m_comment;
         Beam::Tests::ServiceResult<AccountModificationRequest::Update> m_result;
       };
@@ -257,6 +267,7 @@ namespace Nexus::Tests {
         LoadRiskModificationOperation,
         SubmitRiskModificationRequestOperation,
         LoadAccountModificationRequestStatusOperation,
+        LoadAccountModificationRequestUpdatesOperation,
         ApproveAccountModificationRequestOperation,
         RejectAccountModificationRequestOperation, LoadMessageOperation,
         LoadMessageIdsOperation,
@@ -318,16 +329,22 @@ namespace Nexus::Tests {
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
       AccountModificationRequest submit(const Beam::DirectoryEntry& account,
-        const EntitlementModification& modification, const Message& comment);
+        const EntitlementModification& modification,
+        boost::posix_time::ptime effective_date, const Message& comment);
       RiskModification load_risk_modification(
         AccountModificationRequest::Id id);
       AccountModificationRequest submit(const Beam::DirectoryEntry& account,
-        const RiskModification& modification, const Message& comment);
+        const RiskModification& modification,
+        boost::posix_time::ptime effective_date, const Message& comment);
       AccountModificationRequest::Update
         load_account_modification_request_status(
           AccountModificationRequest::Id id);
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_updates(
+          AccountModificationRequest::Id id);
       AccountModificationRequest::Update approve_account_modification_request(
-        AccountModificationRequest::Id id, const Message& comment);
+        AccountModificationRequest::Id id,
+        boost::posix_time::ptime effective_date, const Message& comment);
       AccountModificationRequest::Update reject_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment);
       Message load_message(Message::Id id);
@@ -522,9 +539,11 @@ namespace Nexus::Tests {
 
   inline AccountModificationRequest TestAdministrationClient::submit(
       const Beam::DirectoryEntry& account,
-      const EntitlementModification& modification, const Message& comment) {
+      const EntitlementModification& modification,
+      boost::posix_time::ptime effective_date, const Message& comment) {
     return m_queue.append_result<SubmitEntitlementModificationRequestOperation,
-      AccountModificationRequest>(account, modification, comment);
+      AccountModificationRequest>(account, modification, effective_date,
+        comment);
   }
 
   inline RiskModification TestAdministrationClient::load_risk_modification(
@@ -535,9 +554,10 @@ namespace Nexus::Tests {
 
   inline AccountModificationRequest TestAdministrationClient::submit(
       const Beam::DirectoryEntry& account, const RiskModification& modification,
-      const Message& comment) {
+      boost::posix_time::ptime effective_date, const Message& comment) {
     return m_queue.append_result<SubmitRiskModificationRequestOperation,
-      AccountModificationRequest>(account, modification, comment);
+      AccountModificationRequest>(account, modification, effective_date,
+        comment);
   }
 
   inline AccountModificationRequest::Update
@@ -547,11 +567,20 @@ namespace Nexus::Tests {
       AccountModificationRequest::Update>(id);
   }
 
+  inline std::vector<AccountModificationRequest::Update>
+      TestAdministrationClient::load_account_modification_request_updates(
+        AccountModificationRequest::Id id) {
+    return m_queue.append_result<
+      LoadAccountModificationRequestUpdatesOperation,
+      std::vector<AccountModificationRequest::Update>>(id);
+  }
+
   inline AccountModificationRequest::Update
       TestAdministrationClient::approve_account_modification_request(
-        AccountModificationRequest::Id id, const Message& comment) {
+        AccountModificationRequest::Id id,
+        boost::posix_time::ptime effective_date, const Message& comment) {
     return m_queue.append_result<ApproveAccountModificationRequestOperation,
-      AccountModificationRequest::Update>(id, comment);
+      AccountModificationRequest::Update>(id, effective_date, comment);
   }
 
   inline AccountModificationRequest::Update

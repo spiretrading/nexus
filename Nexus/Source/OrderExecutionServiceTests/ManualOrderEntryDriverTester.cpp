@@ -96,6 +96,24 @@ TEST_SUITE("ManualOrderEntryDriver") {
       "Insufficient permissions to execute a manual order.");
   }
 
+  TEST_CASE("submitted_order_added_to_driver") {
+    auto fixture = Fixture();
+    auto info = make_order_info(DirectoryEntry::make_account(123), "MANUAL");
+    auto future_order = std::async(std::launch::async, [&] {
+      return fixture.m_driver.submit(info);
+    });
+    auto admin_operation = fixture.m_admin_operations->pop();
+    auto& check_admin_operation =
+      std::get<TestAdministrationClient::CheckAdministratorOperation>(
+        *admin_operation);
+    check_admin_operation.m_result.set(true);
+    auto submitted_order = future_order.get();
+    auto driver_operation = fixture.m_driver_operations->pop();
+    auto& add_operation =
+      std::get<TestOrderExecutionDriver::AddOperation>(*driver_operation);
+    REQUIRE(add_operation.m_order == submitted_order);
+  }
+
   TEST_CASE("forward_submission") {
     auto fixture = Fixture();
     auto info = make_order_info(DirectoryEntry::make_account(123), "FORWARD");

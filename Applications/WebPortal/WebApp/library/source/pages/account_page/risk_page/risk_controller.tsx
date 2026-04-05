@@ -1,16 +1,14 @@
+import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize, LoadingPage, LoadingState } from '../../..';
+import { LoadingPage, LoadingState } from '../../..';
 import { RiskModel } from './risk_model';
 import { RiskPage } from './risk_page';
 
 interface Properties {
-  
+
   /** The database of currencies */
   currencyDatabase: Nexus.CurrencyDatabase;
-
-  /** The size at which the component should be displayed at. */
-  displaySize: DisplaySize;
 
   /** The model representing an account's risk settings. */
   model: RiskModel;
@@ -22,6 +20,7 @@ interface Properties {
 interface State {
   loadingState: LoadingState;
   comment: string;
+  effectiveDate?: Beam.Date;
   parameters: Nexus.RiskParameters;
   canSubmit: boolean;
   hasSubmissionError: boolean;
@@ -35,6 +34,7 @@ export class RiskController extends React.Component<Properties, State> {
     this.state = {
       loadingState: new LoadingState(),
       comment: '',
+      effectiveDate: Beam.Date.today(),
       parameters: null,
       canSubmit: false,
       hasSubmissionError: false,
@@ -46,15 +46,23 @@ export class RiskController extends React.Component<Properties, State> {
     if(this.state.loadingState.isLoading()) {
       return <LoadingPage/>;
     } else if(this.state.loadingState.state === LoadingState.State.ERROR) {
-      return <div/>;
+      return <RiskPage comment='' parameters={Nexus.RiskParameters.INVALID}
+        currencyDatabase={this.props.currencyDatabase}
+        roles={this.props.roles}
+        isError status='Server issue'/>;
     }
+    const hasDateError = this.state.effectiveDate == null;
     return <RiskPage comment={this.state.comment}
       parameters={this.state.parameters}
+      effectiveDate={this.state.effectiveDate}
       currencyDatabase={this.props.currencyDatabase}
-      displaySize={this.props.displaySize} roles={this.props.roles}
-      canSubmit={this.state.canSubmit} isError={this.state.hasSubmissionError}
+      roles={this.props.roles}
+      canSubmit={this.state.canSubmit && !hasDateError}
+      dateError={hasDateError}
+      isError={this.state.hasSubmissionError}
       status={this.state.status} onComment={this.onComment}
-      onParameters={this.onParameters} onSubmit={this.onSubmit}/>;  
+      onEffectiveDate={this.onEffectiveDate}
+      onParameters={this.onParameters} onSubmit={this.onSubmit}/>;
   }
 
   public async componentDidMount(): Promise<void> {
@@ -77,10 +85,11 @@ export class RiskController extends React.Component<Properties, State> {
   }
 
   private onComment = (comment: string) => {
-    this.setState({
-      canSubmit: true,
-      comment
-    });
+    this.setState({comment});
+  }
+
+  private onEffectiveDate = (effectiveDate?: Beam.Date) => {
+    this.setState({effectiveDate});
   }
 
   private onParameters = (parameters: Nexus.RiskParameters) => {
@@ -90,22 +99,33 @@ export class RiskController extends React.Component<Properties, State> {
     });
   }
 
-  private onSubmit = async (
-      comment: string, parameters: Nexus.RiskParameters) => {
+  private onSubmit = async () => {
     try {
       this.setState({
         canSubmit: false,
         hasSubmissionError: false,
         status: ''
       });
-      await this.props.model.submit(comment, parameters);
+      const date = this.state.effectiveDate ?? Beam.Date.today();
+      const localMidnight =
+        new globalThis.Date(date.year, date.month - 1, date.day);
+      const effectiveDate = new Beam.DateTime(
+        new Beam.Date(localMidnight.getUTCFullYear(),
+          localMidnight.getUTCMonth() + 1 as Beam.Date.Month,
+          localMidnight.getUTCDate()),
+        new Beam.Duration(1000 * (3600 * localMidnight.getUTCHours() +
+          60 * localMidnight.getUTCMinutes() +
+          localMidnight.getUTCSeconds())));
+      await this.props.model.submit(this.state.comment,
+        this.state.parameters, effectiveDate);
       this.setState({
-        status: 'Saved.'
+        status: 'Saved'
       });
     } catch(e) {
       this.setState({
+        canSubmit: true,
         hasSubmissionError: true,
-        status: e.toString()
+        status: 'Server issue'
       });
     }
   }

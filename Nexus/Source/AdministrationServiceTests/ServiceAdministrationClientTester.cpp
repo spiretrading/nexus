@@ -473,7 +473,7 @@ TEST_SUITE("ServiceAdministrationClient") {
     auto timestamp = ptime(gregorian::date(2024, 5, 20));
     auto request_data = AccountModificationRequest(id,
       AccountModificationRequest::Type::ENTITLEMENTS, account,
-      submission_account, timestamp);
+      submission_account, timestamp, ptime());
     fixture.on_request<LoadAccountModificationRequestService>(
       [&] (auto& request, auto received_id) {
         REQUIRE(received_id == id);
@@ -548,19 +548,23 @@ TEST_SUITE("ServiceAdministrationClient") {
       std::vector{DirectoryEntry::make_account(36, "entitlement")};
     auto modification = EntitlementModification(entitlements);
     auto comment = Nexus::Message();
+    auto effective_date = ptime(gregorian::date(2024, 6, 1));
     auto request_data = AccountModificationRequest(
       37, AccountModificationRequest::Type::ENTITLEMENTS, account,
       DirectoryEntry::make_account(38, "sub_account"),
-      ptime(gregorian::date(2024, 5, 21)));
+      ptime(gregorian::date(2024, 5, 21)), effective_date);
     fixture.on_request<SubmitEntitlementModificationRequestService>(
       [&] (auto& request, const auto& received_account,
-          const auto& received_modification, const auto& received_comment) {
+          const auto& received_modification,
+          const auto& received_effective_date,
+          const auto& received_comment) {
         REQUIRE(received_account == account);
         test_json_equality(received_modification, modification);
         request.set(request_data);
       });
     auto received_request = REQUIRE_NO_THROW(
-      fixture.m_client->submit(account, modification, comment));
+      fixture.m_client->submit(account, modification, effective_date,
+        comment));
     test_json_equality(received_request, request_data);
   }
 
@@ -587,19 +591,23 @@ TEST_SUITE("ServiceAdministrationClient") {
       RiskState::Type::ACTIVE, 50 * Money::ONE, seconds(60));
     auto modification = RiskModification(risk_parameters);
     auto comment = Nexus::Message();
+    auto effective_date = ptime(gregorian::date(2024, 6, 1));
     auto request_data = AccountModificationRequest(
       41, AccountModificationRequest::Type::RISK, account,
       DirectoryEntry::make_account(42, "risk_sub_account"),
-      ptime(gregorian::date(2024, 5, 22)));
+      ptime(gregorian::date(2024, 5, 22)), effective_date);
     fixture.on_request<SubmitRiskModificationRequestService>(
       [&] (auto& request, const auto& received_account,
-          const auto& received_modification, const auto& received_comment) {
+          const auto& received_modification,
+          const auto& received_effective_date,
+          const auto& received_comment) {
         REQUIRE(received_account == account);
         test_json_equality(received_modification, modification);
         request.set(request_data);
       });
     auto received_request = REQUIRE_NO_THROW(
-      fixture.m_client->submit(account, modification, comment));
+      fixture.m_client->submit(account, modification, effective_date,
+        comment));
     test_json_equality(received_request, request_data);
   }
 
@@ -628,13 +636,17 @@ TEST_SUITE("ServiceAdministrationClient") {
       AccountModificationRequest::Status::GRANTED,
       DirectoryEntry::make_account(46, "approver_account"), 2,
       ptime(gregorian::date(2024, 5, 24)));
+    auto effective_date = ptime(gregorian::date(2024, 6, 1));
     fixture.on_request<ApproveAccountModificationRequestService>(
-      [&] (auto& request, auto received_id, const auto& received_comment) {
+      [&] (auto& request, auto received_id,
+          const auto& received_effective_date,
+          const auto& received_comment) {
         REQUIRE(received_id == id);
         request.set(update);
       });
     auto received_update = REQUIRE_NO_THROW(
-      fixture.m_client->approve_account_modification_request(id, comment));
+      fixture.m_client->approve_account_modification_request(
+        id, effective_date, comment));
     REQUIRE(received_update == update);
   }
 

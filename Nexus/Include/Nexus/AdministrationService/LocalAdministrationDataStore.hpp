@@ -46,6 +46,8 @@ namespace Nexus {
           AccountModificationRequest::Id start_id, int max_count);
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
+      void store_effective_date(AccountModificationRequest::Id id,
+        boost::posix_time::ptime effective_date);
       void store(const AccountModificationRequest& request,
         const EntitlementModification& modification);
       RiskModification load_risk_modification(
@@ -55,6 +57,9 @@ namespace Nexus {
       void store(AccountModificationRequest::Id id, const Message& message);
       AccountModificationRequest::Update
         load_account_modification_request_status(
+          AccountModificationRequest::Id id);
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_updates(
           AccountModificationRequest::Id id);
       void store(AccountModificationRequest::Id id,
         const AccountModificationRequest::Update& status);
@@ -223,6 +228,19 @@ namespace Nexus {
     return i->second;
   }
 
+  inline void LocalAdministrationDataStore::store_effective_date(
+      AccountModificationRequest::Id id,
+      boost::posix_time::ptime effective_date) {
+    auto i = m_account_modification_requests.find(id);
+    if(i == m_account_modification_requests.end()) {
+      return;
+    }
+    auto& request = i->second;
+    request = AccountModificationRequest(request.get_id(), request.get_type(),
+      request.get_account(), request.get_submission_account(),
+      request.get_timestamp(), effective_date);
+  }
+
   inline void LocalAdministrationDataStore::store(
       const AccountModificationRequest& request,
       const EntitlementModification& modification) {
@@ -265,6 +283,16 @@ namespace Nexus {
       return AccountModificationRequest::Update();
     }
     return i->second.back();
+  }
+
+  inline std::vector<AccountModificationRequest::Update>
+      LocalAdministrationDataStore::load_account_modification_request_updates(
+        AccountModificationRequest::Id id) {
+    auto i = m_account_modification_request_updates.find(id);
+    if(i == m_account_modification_request_updates.end()) {
+      return {};
+    }
+    return i->second;
   }
 
   inline void LocalAdministrationDataStore::store(

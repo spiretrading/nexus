@@ -5,6 +5,7 @@ import { ComplianceModel, ComplianceService, HttpComplianceService } from
   './compliance_page';
 import { HttpEntitlementsModel } from './entitlements_page';
 import { HttpProfileModel } from './profile_page';
+import { HttpProfitAndLossModel } from './profit_and_loss_page';
 import { HttpRiskModel } from './risk_page';
 import { LocalAccountModel } from './local_account_model';
 
@@ -22,10 +23,13 @@ export class HttpAccountModel extends AccountModel {
     const roles = new Nexus.AccountRoles(0);
     this.model = new LocalAccountModel(account, roles, [],
       new ComplianceModel(account, [], [], new Nexus.CurrencyDatabase()));
+    this._currency = Nexus.Currency.NONE;
     this.serviceClients = serviceClients;
     this._entitlementsModel =
       new HttpEntitlementsModel(account, this.serviceClients);
     this._profileModel = new HttpProfileModel(account, this.serviceClients);
+    this._profitAndLossModel =
+      new HttpProfitAndLossModel(account, this.serviceClients);
     this._riskModel = new HttpRiskModel(account, this.serviceClients);
     this._complianceService =
       new HttpComplianceService(account, this.serviceClients);
@@ -43,12 +47,20 @@ export class HttpAccountModel extends AccountModel {
     return this.model.groups;
   }
 
+  public get currency(): Nexus.Currency {
+    return this._currency;
+  }
+
   public get entitlementsModel(): HttpEntitlementsModel {
     return this._entitlementsModel;
   }
 
   public get profileModel(): HttpProfileModel {
     return this._profileModel;
+  }
+
+  public get profitAndLossModel(): HttpProfitAndLossModel {
+    return this._profitAndLossModel;
   }
 
   public get riskModel(): HttpRiskModel {
@@ -83,6 +95,10 @@ export class HttpAccountModel extends AccountModel {
       }
       return [group];
     })();
+    const riskParameters =
+      await this.serviceClients.administrationClient.loadRiskParameters(
+        account);
+    this._currency = riskParameters.currency;
     const complianceRuleEntries =
       await this.serviceClients.complianceClient.load(account);
     this.model =
@@ -94,16 +110,20 @@ export class HttpAccountModel extends AccountModel {
     this._entitlementsModel =
       new HttpEntitlementsModel(account, this.serviceClients);
     this._profileModel = new HttpProfileModel(account, this.serviceClients);
+    this._profitAndLossModel =
+      new HttpProfitAndLossModel(account, this.serviceClients);
     this._riskModel = new HttpRiskModel(account, this.serviceClients);
     this._complianceService =
       new HttpComplianceService(account, this.serviceClients);
     return this.model.load();
   }
 
+  private _currency: Nexus.Currency;
   private model: LocalAccountModel;
   private serviceClients: Nexus.ServiceClients;
   private _entitlementsModel: HttpEntitlementsModel;
   private _profileModel: HttpProfileModel;
+  private _profitAndLossModel: HttpProfitAndLossModel;
   private _riskModel: HttpRiskModel;
   private _complianceService: HttpComplianceService;
 }

@@ -70,7 +70,8 @@ namespace Nexus::Tests {
         Beam::ServiceProtocolServletContainer<
           Beam::MetaAuthenticationServletAdapter<MetaAdministrationServlet<
             Beam::ServiceLocatorClient, LocalAdministrationDataStore*,
-            Beam::LocalTimeClient>, Beam::ServiceLocatorClient>,
+            Beam::LocalTimeClient, Beam::TriggerTimer>,
+            Beam::ServiceLocatorClient>,
           Beam::LocalServerConnection*, Beam::BinarySender<Beam::SharedBuffer>,
           Beam::NullEncoder, std::shared_ptr<Beam::TriggerTimer>>;
       using ServiceProtocolClientBuilder =
@@ -158,7 +159,8 @@ namespace Nexus::Tests {
       : m_service_locator_client(std::move(client)),
           m_container(Beam::init(m_service_locator_client,
             Beam::init(m_service_locator_client, std::move(entitlements),
-              &m_data_store, Beam::init())), &m_server_connection,
+              &m_data_store, Beam::init(), Beam::init())),
+            &m_server_connection,
             boost::factory<std::shared_ptr<Beam::TriggerTimer>>()) {
     make_administrator(m_service_locator_client.get_account());
     m_client.emplace(make_client(Beam::Ref(m_service_locator_client)));

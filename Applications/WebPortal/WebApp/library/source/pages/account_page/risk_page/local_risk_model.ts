@@ -18,7 +18,7 @@ export class LocalRiskModel extends RiskModel {
   }
 
   /** Returns true if this model has been loaded. */
-  public isLoaded(): boolean {
+  public get isLoaded(): boolean {
     return this._isLoaded;
   }
 
@@ -41,7 +41,8 @@ export class LocalRiskModel extends RiskModel {
   }
 
   public async submit(comment: string,
-      riskParameters: Nexus.RiskParameters): Promise<void> {
+      riskParameters: Nexus.RiskParameters,
+      effectiveDate: Beam.DateTime): Promise<void> {
     return;
   }
 

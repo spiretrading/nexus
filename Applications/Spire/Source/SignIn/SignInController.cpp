@@ -2,7 +2,7 @@
 #include <filesystem>
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/WebServices/HttpClient.hpp>
-#include <Beam/WebServices/TcpChannelFactory.hpp>
+#include <Beam/WebServices/TcpSocketChannelFactory.hpp>
 #include <QProcess>
 #include <QSharedMemory>
 #include <QStandardPaths>

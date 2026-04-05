@@ -1,102 +1,106 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 
-interface Properties {
+interface Properties extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
   /** The text to display on the button. */
   label: string;
 
-  /** The class name of the input box. */
-  className?: string;
-
-  /** Determines if the component is readonly. */
-  readonly?: boolean;
-
-  /** Additional CSS styles. */
-  style?: any;
-
-  /** Called when the value changes. */
-  onClick?: () => void;
+  /** The color theme. Defaults to LIGHT. */
+  theme?: Button.Theme;
 }
 
 /** A custom button component. */
-export class Button extends React.Component<Properties> {
-  public static readonly defaultProps = {
-    onClick: () => {}
-  }
-
-  public render() {
-    const style = (() => {
-      if(this.props.readonly) {
-        return Button.STYLE.readonly;
-      } else {
-        return Button.STYLE.default;
-      }
-    })();
-    return (
-      <button style={{...style, ...this.props.style}}
-          disabled={this.props.readonly}
-          className={
-            [css(Button.EXTRA_STYLE.button), this.props.className].join(' ')}
-          onClick={this.props.onClick}>
-        {this.props.label}
-      </button>);
-  }
-
-  private static readonly STYLE = {
-    default: {
-      boxSizing: 'border-box',
-      height: '34px',
-      width: '246px',
-      backgroundColor: '#684BC7',
-      color: '#FFFFFF',
-      border: '0px solid #684BC7',
-      borderRadius: '1px',
-      font: '400 16px Roboto',
-      outline: 'none',
-      MozAppearance: 'none',
-      cursor: 'pointer'
-    } as React.CSSProperties,
-    readonly: {
-      boxSizing: 'border-box',
-      height: '34px',
-      width: '246px',
-      backgroundColor: '#F8F8F8',
-      color: '#8C8C8C',
-      border: '0px solid #F8F8F8',
-      borderRadius: '1px',
-      font: '400 16px Roboto',
-      outline: 'none',
-      MozAppearance: 'none',
-      cursor: 'default'
-    } as React.CSSProperties
-  };
-  private static readonly EXTRA_STYLE = StyleSheet.create({
-    button: {
-      ':active': {
-        backgroundColor: '#4B23A0'
-      },
-      ':focus': {
-        border: 0,
-        outline: 'none',
-        borderColor: '#4B23A0',
-        backgroundColor: '#4B23A0',
-        boxShadow: 'none',
-        webkitBoxShadow: 'none',
-        outlineColor: 'transparent',
-        outlineStyle: 'none',
-        MozAppearance: 'none' as 'none'
-      },
-      ':hover': {
-        backgroundColor: '#4B23A0'
-      },
-      '::-moz-focus-inner': {
-        border: 0,
-        outline: 0
-      },
-      ':-moz-focusring': {
-        outline: 0
-      }
-    }
-  });
+export function Button(props: Properties): JSX.Element {
+  const theme = props.theme ?? Button.Theme.LIGHT;
+  return (
+    <button style={props.style}
+        disabled={props.disabled}
+        className={[css(EXTRA_STYLE.button,
+          theme === Button.Theme.DARK && EXTRA_STYLE.buttonDark,
+          props.disabled && EXTRA_STYLE.buttonDisabled,
+          props.disabled && theme === Button.Theme.DARK &&
+            EXTRA_STYLE.buttonDisabledDark),
+          props.className].join(' ')}
+        onClick={props.onClick}>
+      {props.label}
+    </button>);
 }
+
+export namespace Button {
+
+  /** The color theme of the button. */
+  export enum Theme {
+
+    /** For use on light backgrounds. Default. */
+    LIGHT,
+
+    /** For use on dark backgrounds. */
+    DARK
+  }
+}
+
+const EXTRA_STYLE = StyleSheet.create({
+  button: {
+    backgroundColor: '#684BC7',
+    color: '#FFFFFF',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'transparent',
+    borderRadius: '1px',
+    fontFamily: "'Roboto', system-ui, sans-serif",
+    fontSize: '0.875rem',
+    fontWeight: 500,
+    height: '34px',
+    padding: '3px 9px',
+    boxSizing: 'border-box',
+    cursor: 'pointer',
+    outline: 'none',
+    ':active': {
+      backgroundColor: '#4B23A0'
+    },
+    ':focus': {
+      backgroundColor: '#4B23A0'
+    },
+    ':hover': {
+      backgroundColor: '#4B23A0'
+    }
+  },
+  buttonDark: {
+    backgroundColor: '#E2E0FF',
+    color: '#4B23A0',
+    ':focus': {
+      backgroundColor: '#E2E0FF'
+    },
+    ':hover': {
+      backgroundColor: '#FFFFFF'
+    },
+    ':active': {
+      backgroundColor: '#FFFFFF'
+    },
+    ':focus-visible': {
+      backgroundColor: '#B9B4EC',
+      borderColor: '#FFFFFF'
+    }
+  },
+  buttonDisabled: {
+    backgroundColor: '#F8F8F8',
+    color: '#8C8C8C',
+    cursor: 'default',
+    ':hover': {
+      backgroundColor: '#F8F8F8'
+    },
+    ':active': {
+      backgroundColor: '#F8F8F8'
+    }
+  },
+  buttonDisabledDark: {
+    backgroundColor: '#684BC7',
+    ':hover': {
+      backgroundColor: '#684BC7'
+    },
+    ':active': {
+      backgroundColor: '#684BC7'
+    }
+  }
+});

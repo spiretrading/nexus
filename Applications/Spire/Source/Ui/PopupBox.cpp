@@ -1,41 +1,84 @@
 #include "Spire/Ui/PopupBox.hpp"
-#include <boost/signals2/shared_connection_block.hpp>
-#include <QEvent>
+#include <QGraphicsDropShadowEffect>
+#include <QResizeEvent>
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Styles/Stylist.hpp"
+#include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  const auto DROP_SHADOW_COLOR = QColor(0, 0, 0, 38);
+  const auto DROP_SHADOW_RADIUS = 5;
+  const auto DROP_SHADOW_SIZE = 5;
+
+  struct PopupPanel : QWidget {
+    QWidget* m_panel;
+    bool m_is_adjusting_position;
+
+    explicit PopupPanel(QWidget& panel, QWidget* parent = nullptr)
+        : QWidget(parent, Qt::FramelessWindowHint | Qt::NoDropShadowWindowHint),
+          m_panel(&panel),
+          m_is_adjusting_position(false) {
+      setAttribute(Qt::WA_TranslucentBackground);
+      enclose(*this, *m_panel);
+      proxy_style(*this, *m_panel);
+      setFocusProxy(m_panel);
+    }
+
+    QSize minimumSizeHint() const override {
+      return m_panel->minimumSizeHint();
+    }
+
+    void moveEvent(QMoveEvent* event) override {
+      if(isWindow() && !m_is_adjusting_position) {
+        m_is_adjusting_position = true;
+        auto size = scale(DROP_SHADOW_SIZE, DROP_SHADOW_SIZE);
+        move(pos() - QPoint(size.width(), size.height()));
+        m_is_adjusting_position = false;
+      }
+      QWidget::moveEvent(event);
+    }
+
+    void showEvent(QShowEvent* event) override {
+      if(isWindow()) {
+        update_style(*m_panel, [] (auto& style) {
+          style.get(Any()).set(border_color(QColor(0xA0A0A0)));
+        });
+        auto size = scale(DROP_SHADOW_SIZE, DROP_SHADOW_SIZE);
+        layout()->setContentsMargins(
+          size.width(), size.height(), size.width(), size.height());
+        auto shadow = new QGraphicsDropShadowEffect();
+        shadow->setColor(DROP_SHADOW_COLOR);
+        shadow->setOffset(translate(QPoint(0, 0)));
+        shadow->setBlurRadius(scale_width(DROP_SHADOW_RADIUS));
+        m_panel->setGraphicsEffect(shadow);
+      } else {
+        update_style(*m_panel, [] (auto& style) {
+          style.get(Any()).set(border_color(QColor(Qt::transparent)));
+        });
+        layout()->setContentsMargins({});
+        m_panel->setGraphicsEffect(nullptr);
+      }
+      QWidget::showEvent(event);
+    }
+  };
+}
+
 PopupBox::PopupBox(QWidget& body, QWidget* parent)
     : QWidget(parent),
       m_body(&body),
-      m_window(nullptr),
-      m_body_focus_observer(*m_body),
-      m_focus_observer(*this),
-      m_position_observer(*this),
-      m_alignment(Alignment::NONE),
-      m_max_height(QWIDGETSIZE_MAX),
-      m_above_space(0),
-      m_below_space(0),
-      m_right_space(0) {
-  m_body->installEventFilter(this);
+      m_overflow_directions(Qt::Horizontal | Qt::Vertical),
+      m_position_observer(*this) {
   enclose(*this, *m_body);
   proxy_style(*this, *m_body);
   setFocusProxy(m_body);
-  m_body_focus_observer.connect_state_signal(
-    std::bind_front(&PopupBox::on_body_focus, this));
-  m_focus_connection = m_focus_observer.connect_state_signal(
-    std::bind_front(&PopupBox::on_focus, this));
+  m_body->installEventFilter(this);
   m_position_observer.connect_position_signal(
     std::bind_front(&PopupBox::on_position, this));
-  m_min_height = [&] {
-    if(m_body->minimumSizeHint().height() <= 0) {
-      return m_body->sizeHint().height();
-    }
-    return m_body->minimumSizeHint().height();
-  }();
 }
 
 const QWidget& PopupBox::get_body() const {
@@ -46,151 +89,114 @@ QWidget& PopupBox::get_body() {
   return *m_body;
 }
 
+Qt::Orientations PopupBox::get_overflow_directions() const {
+  return m_overflow_directions;
+}
+
+void PopupBox::set_overflow_directions(Qt::Orientations directions) {
+  if(m_overflow_directions == directions) {
+    return;
+  }
+  m_overflow_directions = directions;
+  if(isVisible()) {
+    handle_overflow();
+  }
+}
+
 QSize PopupBox::sizeHint() const {
-  if(has_popped_up()) {
-    return m_last_size;
+  if(is_popped_up()) {
+    return m_body_size;
   }
   return QWidget::sizeHint();
 }
 
 bool PopupBox::eventFilter(QObject* watched, QEvent* event) {
-  if(watched == m_window) {
-    if(event->type() == QEvent::Resize || event->type() == QEvent::Move) {
-      update_space();
-      if(has_popped_up()) {
-        m_alignment = Alignment::NONE;
-        align();
-        adjust_size();
+  if(watched == m_body && event->type() == QEvent::LayoutRequest) {
+    if(is_popped_up()) {
+      m_body->adjustSize();
+      if(auto body_layout = m_body->layout()) {
+        auto margins = body_layout->contentsMargins();
+        m_body_size = m_body->size() - QSize(
+          margins.left() + margins.right(), margins.top() + margins.bottom());
       }
-    } else if(event->type() == QEvent::LayoutRequest && has_popped_up()) {
-      update_space();
-      adjust_size();
+      updateGeometry();
     }
-  } else if(watched == m_body && event->type() == QEvent::Show) {
-    update_window();
+    handle_overflow();
+  } else if(watched == window() && event->type() == QEvent::WindowDeactivate &&
+      m_body->isActiveWindow()) {
+    return true;
   }
-  return QObject::eventFilter(watched, event);
+  return QWidget::eventFilter(watched, event);
+}
+
+void PopupBox::hideEvent(QHideEvent* event) {
+  restore();
+  QWidget::hideEvent(event);
 }
 
 void PopupBox::resizeEvent(QResizeEvent* event) {
-  if(has_popped_up()) {
-    align();
-    adjust_size();
-  }
+  handle_overflow();
   QWidget::resizeEvent(event);
 }
 
-bool PopupBox::has_popped_up() const {
+bool PopupBox::is_popped_up() const {
   return layout()->count() == 0;
 }
 
-void PopupBox::align() {
-  auto position = mapToGlobal(QPoint(0, 0));
-  if(m_alignment == Alignment::ABOVE) {
-    set_position(
-      {position.x(), position.y() + m_min_height - m_body->height()});
+void PopupBox::popup() {
+  if(is_popped_up()) {
     return;
   }
-  if(m_body->sizeHint().height() >= m_below_space &&
-      m_above_space > m_below_space) {
-    m_alignment = Alignment::ABOVE;
-    m_max_height = m_above_space;
-    set_position(
-      {position.x(), position.y() + m_min_height - m_body->height()});
-  } else {
-    m_alignment = Alignment::BELOW;
-    m_max_height = m_below_space;
-    set_position(position);
-  }
-}
-
-void PopupBox::adjust_size() {
-  auto size_policy = sizePolicy();
-  if(size_policy.horizontalPolicy() == QSizePolicy::Preferred ||
-      size_policy.horizontalPolicy() == QSizePolicy::Ignored) {
-    if(m_body->sizeHint().width() > m_right_space) {
-      m_body->setMinimumWidth(width());
-      m_body->setMaximumWidth(m_right_space);
-    } else if(m_body->sizeHint().width() < width() && width() > m_right_space) {
-      m_body->setFixedWidth(m_right_space);
-    } else {
-      m_body->setMinimumWidth(width());
-      m_body->setMaximumWidth(std::min(m_right_space, maximumWidth()));
-    }
-  } else if(size_policy.horizontalPolicy() == QSizePolicy::Expanding) {
-    m_body->setFixedWidth(width());
-  } else if(size_policy.horizontalPolicy() == QSizePolicy::Fixed) {
-    m_body->setFixedWidth(m_last_size.width());
-  }
-  if(size_policy.verticalPolicy() == QSizePolicy::Preferred ||
-      size_policy.verticalPolicy() == QSizePolicy::Ignored) {
-    m_body->setMinimumHeight(m_min_height);
-    m_body->setMaximumHeight(std::min(m_max_height, maximumHeight()));
-  } else if(size_policy.verticalPolicy() == QSizePolicy::Expanding) {
-    m_body->setFixedHeight(height());
-  } else if(size_policy.verticalPolicy() == QSizePolicy::Fixed) {
-    m_body->setFixedHeight(m_last_size.height());
-  }
+  m_body_size = m_body->sizeHint();
+  window()->installEventFilter(this);
+  setFocusProxy(nullptr);
+  layout()->removeWidget(m_body);
+  m_body->setWindowFlags(m_body->windowFlags() | Qt::Tool);
+  m_body->move(mapToGlobal(QPoint(0, 0)));
+  m_body->show();
   m_body->adjustSize();
+  m_body->activateWindow();
 }
 
-void PopupBox::set_position(const QPoint& pos) {
-  m_body->move(m_window->mapFromGlobal(pos));
-}
-
-void PopupBox::update_window() {
-  if(!m_window) {
-    m_window = window();
-    m_window->installEventFilter(this);
-    update_space();
-    m_body->setFixedHeight(m_min_height);
-    adjustSize();
-  }
-}
-
-void PopupBox::update_space() {
-  if(!m_window) {
+void PopupBox::restore() {
+  if(!is_popped_up()) {
     return;
   }
-  auto& window_rect = m_window->geometry();
-  auto position = mapToGlobal(QPoint(0, 0));
-  m_above_space = std::max(position.y() + m_min_height - window_rect.y(), 0);
-  m_below_space = window_rect.bottom() - position.y();
-  m_right_space = window_rect.right() - position.x();
+  window()->removeEventFilter(this);
+  m_body->setWindowFlags(m_body->windowFlags() & ~Qt::Tool);
+  layout()->addWidget(m_body);
+  setFocusProxy(m_body);
+  updateGeometry();
 }
 
-void PopupBox::on_body_focus(FocusObserver::State state) {
-  if(state == FocusObserver::State::NONE && has_popped_up()) {
-    m_body->setFixedHeight(m_min_height);
-    m_body->setMinimumWidth(0);
-    m_body->setMaximumWidth(QWIDGETSIZE_MAX);
-    layout()->addWidget(m_body);
-    setFocusProxy(m_body);
-  }
-}
-
-void PopupBox::on_focus(FocusObserver::State state) {
-  if(state != FocusObserver::State::NONE && !has_popped_up()) {
-    update_window();
-    m_last_size = size();
-    {
-      auto blocker = shared_connection_block(m_focus_connection);
-      setFocusProxy(nullptr);
-      setFocus();
-      m_body->setParent(m_window);
+void PopupBox::handle_overflow() {
+  auto size = this->size();
+  auto body_size = [&] {
+    if(auto body_layout = m_body->layout()) {
+      auto margins = body_layout->contentsMargins();
+      return m_body->sizeHint() - QSize(
+        margins.left() + margins.right(), margins.top() + margins.bottom());
     }
-    layout()->removeWidget(m_body);
-    m_body->setMinimumSize(0, 0);
-    m_body->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
-    m_body->show();
-    m_body->setFocus();
-    m_alignment = Alignment::NONE;
-    align();
+    return m_body->sizeHint();
+  }();
+  auto overflows =
+    ((m_overflow_directions & Qt::Horizontal) &&
+      size.width() < body_size.width()) ||
+    ((m_overflow_directions & Qt::Vertical) &&
+      size.height() < body_size.height());
+  if(overflows) {
+    popup();
+  } else {
+    restore();
   }
 }
 
 void PopupBox::on_position(const QPoint& position) {
-  if(has_popped_up()) {
-    align();
+  if(is_popped_up()) {
+    m_body->move(position);
   }
+}
+
+PopupBox* Spire::make_popup_panel(QWidget& panel, QWidget* parent) {
+  return new PopupBox(*new PopupPanel(panel), parent);
 }

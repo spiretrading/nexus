@@ -66,7 +66,7 @@ void Nexus::Python::export_account_modification_request(module& module) {
       class_<AccountModificationRequest>(module, "AccountModificationRequest")).
         def(init<AccountModificationRequest::Id,
           AccountModificationRequest::Type, DirectoryEntry, DirectoryEntry,
-          ptime>()).
+          ptime, ptime>()).
         def_property_readonly("id", &AccountModificationRequest::get_id).
         def_property_readonly("type", &AccountModificationRequest::get_type).
         def_property_readonly(
@@ -74,10 +74,13 @@ void Nexus::Python::export_account_modification_request(module& module) {
         def_property_readonly("submission_account",
           &AccountModificationRequest::get_submission_account).
         def_property_readonly("timestamp",
-          &AccountModificationRequest::get_timestamp);
+          &AccountModificationRequest::get_timestamp).
+        def_property_readonly("effective_date",
+          &AccountModificationRequest::get_effective_date);
   enum_<AccountModificationRequest::Type>(request, "Type").
     value("ENTITLEMENTS", AccountModificationRequest::Type::ENTITLEMENTS).
-    value("RISK", AccountModificationRequest::Type::RISK);
+    value("RISK", AccountModificationRequest::Type::RISK).
+    value("COMPLIANCE", AccountModificationRequest::Type::COMPLIANCE);
   enum_<AccountModificationRequest::Status>(request, "Status").
     value("NONE", AccountModificationRequest::Status::NONE).
     value("PENDING", AccountModificationRequest::Status::PENDING).

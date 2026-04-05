@@ -22,7 +22,10 @@ namespace Nexus {
         ENTITLEMENTS,
 
         /** Modify an account's risk parameters. */
-        RISK
+        RISK,
+
+        /** Modify an account's compliance parameters. */
+        COMPLIANCE
       };
 
       /** Lists the status of a request. */
@@ -88,10 +91,12 @@ namespace Nexus {
        * @param account The account to modify.
        * @param submission_account The account that submitted the request.
        * @param timestamp The timestamp when the request was received.
+       * @param effective_date The date when the modification should take effect.
        */
       AccountModificationRequest(Id id, Type type, Beam::DirectoryEntry account,
         Beam::DirectoryEntry submission_account,
-        boost::posix_time::ptime timestamp) noexcept;
+        boost::posix_time::ptime timestamp,
+        boost::posix_time::ptime effective_date) noexcept;
 
       /** Returns the id that uniquely identifies this request. */
       Id get_id() const;
@@ -108,6 +113,9 @@ namespace Nexus {
       /** Returns the timestamp when the request was received. */
       boost::posix_time::ptime get_timestamp() const;
 
+      /** Returns the date when the modification should take effect. */
+      boost::posix_time::ptime get_effective_date() const;
+
     private:
       friend struct Beam::Shuttle<AccountModificationRequest>;
       Id m_id;
@@ -115,6 +123,7 @@ namespace Nexus {
       Beam::DirectoryEntry m_account;
       Beam::DirectoryEntry m_submission_account;
       boost::posix_time::ptime m_timestamp;
+      boost::posix_time::ptime m_effective_date;
   };
 
   /** Returns <code>true</code> iff a status represents a terminal state. */
@@ -129,6 +138,8 @@ namespace Nexus {
       return out << "ENTITLEMENTS";
     } else if(type == AccountModificationRequest::Type::RISK) {
       return out << "RISK";
+    } else if(type == AccountModificationRequest::Type::COMPLIANCE) {
+      return out << "COMPLIANCE";
     } else {
       return out << "UNKNOWN";
     }
@@ -178,12 +189,14 @@ namespace Nexus {
   inline AccountModificationRequest::AccountModificationRequest(
     Id id, Type type, Beam::DirectoryEntry account,
     Beam::DirectoryEntry submission_account,
-    boost::posix_time::ptime timestamp) noexcept
+    boost::posix_time::ptime timestamp,
+    boost::posix_time::ptime effective_date) noexcept
     : m_id(id),
       m_type(type),
       m_account(std::move(account)),
       m_submission_account(std::move(submission_account)),
-      m_timestamp(timestamp) {}
+      m_timestamp(timestamp),
+      m_effective_date(effective_date) {}
 
   inline AccountModificationRequest::Id
       AccountModificationRequest::get_id() const {
@@ -208,6 +221,11 @@ namespace Nexus {
   inline boost::posix_time::ptime
       AccountModificationRequest::get_timestamp() const {
     return m_timestamp;
+  }
+
+  inline boost::posix_time::ptime
+      AccountModificationRequest::get_effective_date() const {
+    return m_effective_date;
   }
 }
 
@@ -235,6 +253,7 @@ namespace Beam {
       shuttle.shuttle("account", value.m_account);
       shuttle.shuttle("submission_account", value.m_submission_account);
       shuttle.shuttle("timestamp", value.m_timestamp);
+      shuttle.shuttle("effective_date", value.m_effective_date);
     }
   };
 }

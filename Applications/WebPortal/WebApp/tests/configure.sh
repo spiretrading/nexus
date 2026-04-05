@@ -16,8 +16,11 @@ PROJECTS=(
   mock
   page_not_found_page_tester
   profile_page_tester
+  profit_and_loss_page_tester
+  requests_page_tester
   risk_page_tester
   scratch
+  ui_catalog
 )
 
 main() {

@@ -2,6 +2,7 @@
 #define SPIRE_CONTEXT_MENU_HPP
 #include <unordered_map>
 #include <variant>
+#include <QTimer>
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/CheckBox.hpp"
@@ -152,6 +153,7 @@ namespace Spire {
       bool event(QEvent* event) override;
       void hideEvent(QHideEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
       struct MenuItem {
@@ -168,13 +170,14 @@ namespace Spire {
       ListView* m_list_view;
       OverlayPanel* m_window;
       OverlayPanel* m_visible_submenu;
-      int m_pending_submenu_index;
-      int m_hide_count;
       int m_last_show_items;
       QRect m_active_item_geometry;
       int m_block_move;
       MouseMoveObserver m_mouse_observer;
-      QMargins m_window_border_size;
+      QMargins m_window_margins;
+      QTimer m_show_timer;
+      QTimer m_hide_timer;
+      bool m_is_hovered;
       boost::optional<QSize> m_window_size;
       boost::optional<QPoint> m_menu_position;
       std::unordered_map<int, OverlayPanel*> m_submenus;
@@ -183,16 +186,18 @@ namespace Spire {
 
       QWidget* build_item(const std::shared_ptr<AnyListModel>& list, int index);
       ListItem* get_current_item() const;
+      int find_submenu_index(const OverlayPanel& submenu) const;
       void clear_hover_style();
-      void focus_first_item();
       void handle_right_or_enter_event(QEvent* event);
       bool handle_mouse_event(QMouseEvent* event);
+      void forward_mouse_click(QWidget& target, const QMouseEvent& mouse_event);
       void position_submenu();
       void position_submenu(ListItem& item);
       bool is_submenu_hovered() const;
       void hide_submenu();
-      void defer_hide_submenu();
       void show_submenu(int index);
+      void on_defer_hide_submenu();
+      void on_defer_show_submenu();
       void on_mouse_move(QWidget& target, QMouseEvent& event);
       void on_list_operation(const ListModel<MenuItem>::Operation& operation);
       void on_submit(const std::any& submission);

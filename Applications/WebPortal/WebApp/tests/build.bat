@@ -22,8 +22,11 @@ CALL:build login_page_tester %*
 CALL:build mock %*
 CALL:build page_not_found_page_tester %*
 CALL:build profile_page_tester %*
+CALL:build profit_and_loss_page_tester %*
+CALL:build requests_page_tester %*
 CALL:build risk_page_tester %*
 CALL:build scratch %*
+CALL:build ui_catalog %*
 ENDLOCAL
 EXIT /B %ERRORLEVEL%
 
