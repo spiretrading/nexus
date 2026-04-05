@@ -249,9 +249,10 @@ void TableHeader::on_items_operation(
       if(operation.m_source == operation.m_destination) {
         return;
       }
-      auto body_layout = static_cast<FixedHorizontalLayout*>(
-        static_cast<Box*>(layout()->itemAt(0)->widget())->get_body()->layout());
-      body_layout->move(operation.m_source, operation.m_destination);
+      auto header_box = static_cast<Box*>(&m_scroll_box->get_body());
+      auto header_layout = static_cast<FixedHorizontalLayout*>(
+        header_box->get_body()->layout());
+      header_layout->move(operation.m_source, operation.m_destination);
       move_element(m_item_views, operation.m_source, operation.m_destination);
       m_widths->move(operation.m_source, operation.m_destination);
       m_translation.move(operation.m_source, operation.m_destination);

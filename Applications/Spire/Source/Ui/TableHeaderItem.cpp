@@ -455,7 +455,6 @@ void TableHeaderItem::on_click() {
   } else if(order == Order::ASCENDING) {
     m_sort_signal(Order::DESCENDING);
   }
-  QWidget::mouseReleaseEvent(event);
 }
 
 void TableHeaderItem::on_filter_checked(bool checked) {
