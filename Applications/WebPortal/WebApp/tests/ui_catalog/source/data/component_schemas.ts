@@ -918,15 +918,15 @@ const tableHeaderCell =
       const [sortOrder, setSortOrder] = React.useState(props.sortOrder);
       React.useEffect(() => setSortOrder(props.sortOrder), [props.sortOrder]);
       return React.createElement('table', {
-          style: {borderCollapse: 'collapse', width: '200px'}},
+          style: {borderCollapse: 'collapse', width: '100%'}},
         React.createElement('thead', null,
           React.createElement('tr', null,
             React.createElement(WebPortal.TableHeaderCell, {
               sortOrder: sortOrder,
-              textAlign: props.textAlign,
+              style: {textAlign: props.textAlign},
               onSort: setSortOrder
             }, 'Column'))));
-    }, 250);
+    }, 132);
 
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox,

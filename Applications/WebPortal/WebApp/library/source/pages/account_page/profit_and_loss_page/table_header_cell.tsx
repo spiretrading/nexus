@@ -2,50 +2,81 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 
 /** Displays a sortable table header cell with a sort indicator. */
-export function TableHeaderCell(props: TableHeaderCell.Properties) {
-  const onClick = () => {
-    if(props.sortOrder === TableHeaderCell.SortOrder.ASCENDING) {
-      props.onSort?.(TableHeaderCell.SortOrder.DESCENDING);
-    } else {
-      props.onSort?.(TableHeaderCell.SortOrder.ASCENDING);
-    }
-  };
-  const isEnd = props.textAlign === 'end';
-  const showIndicator =
-    props.sortOrder !== TableHeaderCell.SortOrder.NONE;
-  const [isHovered, setIsHovered] = React.useState(false);
-  const indicatorVisible = showIndicator || isHovered;
-  const indicator = (() => {
-    if(!indicatorVisible) {
-      return <div className={css(STYLES.indicatorSpacer)}/>;
-    }
-    const src = props.sortOrder === TableHeaderCell.SortOrder.DESCENDING ?
-      'resources/account_page/profit_and_loss_page/sort-descending.svg' :
-      'resources/account_page/profit_and_loss_page/sort-ascending.svg';
-    const fillClass = showIndicator ?
-      STYLES.sortIndicatorActive : STYLES.sortIndicatorInactive;
+interface Properties extends React.ThHTMLAttributes<HTMLTableCellElement> {
+
+  /** The sort order of the column. */
+  sortOrder: TableHeaderCell.SortOrder;
+
+  /** Called when the user signals to change the sort order. */
+  onSort?: (order: TableHeaderCell.SortOrder) => void;
+}
+
+interface State {
+  isHovered: boolean;
+}
+
+export class TableHeaderCell extends React.Component<Properties, State> {
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      isHovered: false
+    };
+  }
+
+  public render(): JSX.Element {
+    const isEnd = this.props.style?.textAlign === 'end';
+    const showIndicator =
+      this.props.sortOrder !== TableHeaderCell.SortOrder.NONE;
+    const indicatorVisible = showIndicator || this.state.isHovered;
+    const indicator = (() => {
+      if(!indicatorVisible) {
+        return <div className={css(STYLES.indicatorSpacer)}/>;
+      }
+      const src =
+        this.props.sortOrder === TableHeaderCell.SortOrder.DESCENDING ?
+          'resources/account_page/profit_and_loss_page/sort-descending.svg' :
+          'resources/account_page/profit_and_loss_page/sort-ascending.svg';
+      const fillClass = showIndicator ?
+        STYLES.sortIndicatorActive : STYLES.sortIndicatorInactive;
+      return (
+        <div className={css(STYLES.indicatorContainer)}>
+          <img src={src} aria-hidden='true'
+            className={css(STYLES.sortIndicator, fillClass)}/>
+        </div>);
+    })();
     return (
-      <div className={css(STYLES.indicatorContainer)}>
-        <img src={src} aria-hidden='true'
-          className={css(STYLES.sortIndicator, fillClass)}/>
-      </div>);
-  })();
-  return (
-    <th className={css(STYLES.th)}
-        aria-sort={ariaSort(props.sortOrder)}
-        style={{textAlign: props.textAlign || 'start'}}>
-      <button className={css(STYLES.button,
-          indicatorVisible && STYLES.buttonWithIndicator,
-          isEnd && STYLES.buttonEnd)}
-          onClick={onClick}
-          onMouseEnter={() => setIsHovered(true)}
-          onMouseLeave={() => setIsHovered(false)}>
-        {isEnd && <div className={css(STYLES.flexSpacer)}/>}
-        <span>{props.children}</span>
-        {indicator}
-        {!isEnd && <div className={css(STYLES.flexSpacer)}/>}
-      </button>
-    </th>);
+      <th className={css(STYLES.th)}
+          aria-sort={ariaSort(this.props.sortOrder)}
+          style={this.props.style}>
+        <button className={css(STYLES.button,
+            indicatorVisible && STYLES.buttonWithIndicator,
+            isEnd && STYLES.buttonEnd)}
+            onClick={this.onClick}
+            onMouseEnter={this.onMouseEnter}
+            onMouseLeave={this.onMouseLeave}>
+          {isEnd && <div className={css(STYLES.flexSpacer)}/>}
+          <span>{this.props.children}</span>
+          {indicator}
+          {!isEnd && <div className={css(STYLES.flexSpacer)}/>}
+        </button>
+      </th>);
+  }
+
+  private onClick = () => {
+    if(this.props.sortOrder === TableHeaderCell.SortOrder.ASCENDING) {
+      this.props.onSort?.(TableHeaderCell.SortOrder.DESCENDING);
+    } else {
+      this.props.onSort?.(TableHeaderCell.SortOrder.ASCENDING);
+    }
+  }
+
+  private onMouseEnter = () => {
+    this.setState({isHovered: true});
+  }
+
+  private onMouseLeave = () => {
+    this.setState({isHovered: false});
+  }
 }
 
 function ariaSort(
@@ -73,20 +104,6 @@ export namespace TableHeaderCell {
     DESCENDING
   }
 
-  export interface Properties {
-
-    /** The sort order of the column. */
-    sortOrder: SortOrder;
-
-    /** The text alignment of the cell. */
-    textAlign?: 'start' | 'end';
-
-    /** Called when the user signals to change the sort order. */
-    onSort?: (order: SortOrder) => void;
-
-    /** The content of the header cell. */
-    children?: React.ReactNode;
-  }
 }
 
 const STYLES = StyleSheet.create({
