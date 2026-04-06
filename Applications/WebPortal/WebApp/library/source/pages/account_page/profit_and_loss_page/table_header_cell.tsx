@@ -28,28 +28,23 @@ export class TableHeaderCell extends React.Component<Properties, State> {
     const showIndicator =
       this.props.sortOrder !== TableHeaderCell.SortOrder.NONE;
     const indicatorVisible = showIndicator || this.state.isHovered;
-    const indicator = (() => {
-      if(!indicatorVisible) {
-        return <div className={css(STYLES.indicatorSpacer)}/>;
-      }
-      const src =
-        this.props.sortOrder === TableHeaderCell.SortOrder.DESCENDING ?
-          'resources/account_page/profit_and_loss_page/sort-descending.svg' :
-          'resources/account_page/profit_and_loss_page/sort-ascending.svg';
-      const fillClass = showIndicator ?
-        STYLES.sortIndicatorActive : STYLES.sortIndicatorInactive;
-      return (
-        <div className={css(STYLES.indicatorContainer)}>
-          <img src={src} aria-hidden='true'
-            className={css(STYLES.sortIndicator, fillClass)}/>
-        </div>);
-    })();
+    const src =
+      this.props.sortOrder === TableHeaderCell.SortOrder.DESCENDING ?
+        'resources/account_page/profit_and_loss_page/sort-descending.svg' :
+        'resources/account_page/profit_and_loss_page/sort-ascending.svg';
+    const indicator = (
+      <div className={css(STYLES.indicatorContainer)}>
+        <img src={src} aria-hidden='true'
+          className={css(STYLES.sortIndicator,
+            showIndicator && STYLES.sortIndicatorActive,
+            !showIndicator && indicatorVisible && STYLES.sortIndicatorInactive,
+            !indicatorVisible && STYLES.sortIndicatorHidden)}/>
+      </div>);
     return (
       <th className={css(STYLES.th)}
           aria-sort={ariaSort(this.props.sortOrder)}
           style={this.props.style}>
         <button className={css(STYLES.button,
-            indicatorVisible && STYLES.buttonWithIndicator,
             isEnd && STYLES.buttonEnd)}
             onClick={this.onClick}
             onMouseEnter={this.onMouseEnter}
@@ -123,7 +118,7 @@ const STYLES = StyleSheet.create({
     borderStyle: 'none',
     font: 'inherit',
     color: 'inherit',
-    padding: '12px 19px',
+    padding: '12px 9px 12px 19px',
     cursor: 'pointer',
     ':hover': {
       backgroundColor: '#E6E6E6'
@@ -133,18 +128,11 @@ const STYLES = StyleSheet.create({
       outlineOffset: '-1px'
     }
   },
-  buttonWithIndicator: {
-    paddingInlineEnd: '9px'
-  },
   buttonEnd: {
     justifyContent: 'flex-end'
   },
   flexSpacer: {
     flex: 1
-  },
-  indicatorSpacer: {
-    width: '14px',
-    flex: '0 0 14px'
   },
   indicatorContainer: {
     display: 'flex',
@@ -163,5 +151,8 @@ const STYLES = StyleSheet.create({
   },
   sortIndicatorInactive: {
     opacity: 0.6
+  },
+  sortIndicatorHidden: {
+    visibility: 'hidden'
   }
 });
