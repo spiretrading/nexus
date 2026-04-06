@@ -259,11 +259,11 @@ namespace {
           std::bind_front(&EditableTableHeaderModel::on_operation, this))) {}
 
     int get_size() const override {
-      return m_source->get_size() + 2;
+      return m_source->get_size() + 1;
     }
 
     const TableHeaderItem::Model& get(int index) const override {
-      if(index == 0 || index == get_size() - 1) {
+      if(index == 0) {
         static auto model = TableHeaderItem::Model{"", "",
           TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE};
         return model;
@@ -273,7 +273,7 @@ namespace {
 
     QValidator::State set(int index,
         const TableHeaderItem::Model& value) override {
-      if(index == 0 || index == get_size() - 1) {
+      if(index == 0) {
         return QValidator::Invalid;
       }
       return m_source->set(index - 1, value);
@@ -285,15 +285,14 @@ namespace {
     }
 
     QValidator::State move(int source, int destination) override {
-      if(source == 0 || destination == 0 || source == get_size() - 1 ||
-          destination == get_size() - 1) {
+      if(source == 0 || destination == 0) {
         return QValidator::Invalid;
       }
       return m_source->move(source - 1, destination - 1);
     }
 
     QValidator::State remove(int index) override {
-      if(index == 0 || index == get_size() - 1) {
+      if(index == 0) {
         return QValidator::Invalid;
       }
       return m_source->remove(index - 1);
@@ -446,6 +445,7 @@ EditableTableView::EditableTableView(
   current_proxy->set_source(std::make_shared<EditableTableCurrentModel>(
     std::move(current), header->get_size() + 2));
   get_header().get_item(0)->set_is_resizeable(false);
+  get_header().get_item(0)->setFocusPolicy(Qt::NoFocus);
   get_header().get_widths()->set(0, scale_width(26));
   get_scroll_box().installEventFilter(this);
   set_style(*this, TABLE_VIEW_STYLE());

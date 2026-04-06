@@ -187,11 +187,11 @@ namespace Nexus {
   void SecurityOrderSimulator<T>::set_session_timestamps(
       boost::posix_time::ptime timestamp) {
     m_date = timestamp.date();
-    auto eastern_timestamp = Beam::adjust_date_time(
-      timestamp, "UTC", "Eastern_Time", get_default_time_zone_database());
-    m_market_close_time = Beam::adjust_date_time(
+    auto eastern_timestamp = Beam::to_timezone(timestamp, "Etc/UTC",
+      "America/New_York", get_default_time_zone_database());
+    m_market_close_time = Beam::to_timezone(
       boost::posix_time::ptime(eastern_timestamp.date(),
-        boost::posix_time::hours(16)), "Eastern_Time", "UTC",
+        boost::posix_time::hours(16)), "America/New_York", "Etc/UTC",
       get_default_time_zone_database());
     m_is_moc_pending = timestamp < m_market_close_time;
   }
@@ -201,8 +201,8 @@ namespace Nexus {
       PrimitiveOrder& order, Money price) {
     order.with([&] (auto status, const auto& reports) {
       auto& last_report = reports.back();
-      auto updated_report =
-        make_update(last_report, OrderStatus::FILLED, m_time_client->get_time());
+      auto updated_report = make_update(
+        last_report, OrderStatus::FILLED, m_time_client->get_time());
       updated_report.m_last_quantity = order.get_info().m_fields.m_quantity;
       updated_report.m_last_price = price;
       order.update(updated_report);

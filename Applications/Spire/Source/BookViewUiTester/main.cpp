@@ -25,6 +25,7 @@
 #include "Spire/Spire/OptionalScalarValueModelDecorator.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/Spire/ScalarValueModelDecorator.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/IntegerBox.hpp"

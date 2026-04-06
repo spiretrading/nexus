@@ -1,13 +1,13 @@
 #ifndef SPIRE_POPUP_BOX_HPP
 #define SPIRE_POPUP_BOX_HPP
-#include "Spire/Ui/FocusObserver.hpp"
+#include <QWidget>
 #include "Spire/Ui/GlobalPositionObserver.hpp"
 
 namespace Spire {
 
   /**
-   * Takes a body and allows the body to expand beyond the size of its parent
-   * by popping out of its parent.
+   * Takes a body and allows the body to grow beyond the layout,
+   * event expanding beyond the containing window when the content overflows.
    */
   class PopupBox : public QWidget {
     public:
@@ -25,42 +25,42 @@ namespace Spire {
       /** Returns the body. */
       QWidget& get_body();
 
+      /** Returns the orientations that trigger popup. */
+      Qt::Orientations get_overflow_directions() const;
+
+      /**
+       * Sets which directions trigger popup on overflow.
+       * @param directions The orientations that trigger popup.
+       */
+      void set_overflow_directions(Qt::Orientations directions);
+
       QSize sizeHint() const override;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void hideEvent(QHideEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
 
     private:
-      enum class Alignment : std::uint8_t {
-        NONE,
-        ABOVE,
-        BELOW
-      };
       QWidget* m_body;
-      QWidget* m_window;
-      FocusObserver m_body_focus_observer;
-      FocusObserver m_focus_observer;
+      Qt::Orientations m_overflow_directions;
+      QSize m_body_size;
       GlobalPositionObserver m_position_observer;
-      Alignment m_alignment;
-      QSize m_last_size;
-      int m_min_height;
-      int m_max_height;
-      int m_above_space;
-      int m_below_space;
-      int m_right_space;
-      boost::signals2::scoped_connection m_focus_connection;
 
-      bool has_popped_up() const;
-      void align();
-      void adjust_size();
-      void set_position(const QPoint& pos);
-      void update_window();
-      void update_space();
-      void on_body_focus(FocusObserver::State state);
-      void on_focus(FocusObserver::State state);
+      bool is_popped_up() const;
+      void popup();
+      void restore();
+      void handle_overflow();
       void on_position(const QPoint& position);
   };
+
+  /**
+   * Returns a PopupBox using the specified panel as its body,
+   * applying a drop shadow when the body is displayed as a popup.
+   * @param panel The widget used as the body of the PopupBox.
+   * @param parent The parent widget.
+   */
+  PopupBox* make_popup_panel(QWidget& panel, QWidget* parent = nullptr);
 }
 
 #endif

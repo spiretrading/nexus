@@ -18,6 +18,7 @@ export class PageWrapper extends React.Component {
       display: 'flex' as 'flex',
       overflowX: 'hidden' as 'hidden',
       overflowY: 'auto' as 'auto',
+      scrollbarGutter: 'stable' as 'stable',
       justifyContent: 'center' as 'center',
       alignItems: 'flex-start' as 'flex-start',
       margin: 0,

@@ -1,8 +1,8 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Checkmark, CurrencySelectionField, DateTimeField, DisplaySize,
-  MoneyField, NumberField, RegionField, SecuritiesField, SecurityField,
-  TextField, TimeOfDayField } from '../../..';
+import { Checkbox, CurrencySelect, DateTimeInput, DecimalInput, DisplaySize,
+  Input, MoneyInput, RegionInput, SecuritiesInput,
+  TimeOfDayInput } from '../../..';
 
 interface Properties {
 
@@ -51,79 +51,78 @@ export class ParameterEntry extends React.Component<Properties> {
     const input = (() => {
       switch(this.props.parameter.value.type) {
         case Nexus.ComplianceValue.Type.BOOLEAN:
-          return <Checkmark
-            onClick={this.onCheckmarkChange}
-            displaySize={this.props.displaySize}
-            readonly={this.props.readonly}
-            isChecked={this.props.parameter.value.value}/>;
+          return <Checkbox
+            onClick={this.onCheckboxChange}
+            disabled={this.props.readonly}
+            checked={this.props.parameter.value.value}/>;
         case Nexus.ComplianceValue.Type.CURRENCY:
-          return <CurrencySelectionField
+          return <CurrencySelect
             value={this.props.parameter.value.value}
             style={inputWrapper}
             onChange={this.onChange}
-            readonly={this.props.readonly}
+            readOnly={this.props.readonly}
             currencyDatabase={this.props.currencyDatabase}/>;
         case Nexus.ComplianceValue.Type.DATE_TIME:
-          return <DateTimeField
+          return <DateTimeInput
             value={this.props.parameter.value.value}
-            displaySize={this.props.displaySize}
-            readonly={this.props.readonly}
+            readOnly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DOUBLE:
-          return <NumberField 
+          return <DecimalInput
             value={this.props.parameter.value.value}
-            readonly={this.props.readonly}
+            readOnly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.DURATION:
-          return <TimeOfDayField
-            displaySize={this.props.displaySize}
+          return <TimeOfDayInput
             value={this.props.parameter.value.value}
-            readonly={this.props.readonly}
+            readOnly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.MONEY:
-          return <MoneyField
+          return <MoneyInput
             value={this.props.parameter.value.value}
-            readonly={this.props.readonly}
+            readOnly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.QUANTITY:
-          return <NumberField 
+          return <DecimalInput
             value={this.props.parameter.value.value}
-            readonly={this.props.readonly}
+            readOnly={this.props.readonly}
             onChange={this.onChange}/>;
         case Nexus.ComplianceValue.Type.STRING:
-          return <TextField
-            displaySize={this.props.displaySize}
+          return <Input
             value={this.props.parameter.value.value}
-            onInput={this.onChange}
-            readonly={this.props.readonly}
+            onChange={(e: React.ChangeEvent<HTMLInputElement>) =>
+              this.onChange(e.target.value)}
+            readOnly={this.props.readonly}
             style={inputWrapper}/>;
         case Nexus.ComplianceValue.Type.SECURITY:
-          return <SecurityField
+          return <SecuritiesInput
             displaySize={this.props.displaySize}
-            onChange={this.onChange}
-            value={this.props.parameter.value.value}/>;
+            onChange={(values: Nexus.Security[]) =>
+              this.onChange(values[0])}
+            value={this.props.parameter.value.value ?
+              [this.props.parameter.value.value] : []}/>;
         case Nexus.ComplianceValue.Type.REGION:
-          return <RegionField
+          return <RegionInput
             displaySize={this.props.displaySize}
-            readonly={this.props.readonly}
+            readOnly={this.props.readonly}
             onChange={this.onChange}
             value={this.props.parameter.value.value}/>;
         case Nexus.ComplianceValue.Type.LIST:
           if(this.props.parameter.value.value.length > 0) {
             if(this.props.parameter.value.value[0].type ===
                 Nexus.ComplianceValue.Type.SECURITY) {
-              return <SecuritiesField
+              return <SecuritiesInput
                 displaySize={this.props.displaySize}
                 onChange={this.onSecurityListChange}
-                readonly={this.props.readonly}
+                readOnly={this.props.readonly}
                 value={this.convertFromParameterList(
                   this.props.parameter.value.value)}/>;
             }
           } else {
-            return <SecuritiesField
+            return <SecuritiesInput
               displaySize={this.props.displaySize}
               onChange={this.onSecurityListChange}
-              readonly={this.props.readonly}
+              readOnly={this.props.readonly}
               value={[]}/>;
           }
         default:
@@ -146,8 +145,8 @@ export class ParameterEntry extends React.Component<Properties> {
       new Nexus.ComplianceValue(this.props.parameter.value.type, newValue)));
   }
 
-  private onCheckmarkChange = () => {
-    this.onChange(!this.props.parameter.value.value);
+  private onCheckboxChange = (isChecked: boolean) => {
+    this.onChange(isChecked);
   }
 
   private convertFromParameterList(complianceValues: Nexus.ComplianceValue[]) {

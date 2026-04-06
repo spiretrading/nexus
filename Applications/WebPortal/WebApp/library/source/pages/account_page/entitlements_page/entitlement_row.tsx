@@ -1,11 +1,9 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
-import { VBoxLayout } from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { DisplaySize, DropDownButton, HLine } from '../../..';
+import { Checkbox, DropDownButton } from '../../..';
 import { ApplicabilityTable } from './applicability_table';
-import { CheckMarkButton } from './check_mark_button';
 
 interface Properties {
 
@@ -18,287 +16,202 @@ interface Properties {
   /** Determines if the entitlement is active. */
   isActive: boolean;
 
-  /** The size at which the component should be displayed at. */
-  displaySize: DisplaySize;
-
   /** The set of venues. */
   venueDatabase: Nexus.VenueDatabase;
 
-  /** Indicates an entitlement has been clicked.
-   * @param entitlement - The entitlement that was clicked.
-   */
+  /** Indicates an entitlement has been clicked. */
   onClick?: () => void;
 }
 
 interface State {
   isExpanded: boolean;
-  applicabilityStyle: any;
+  transitionStyles: {
+    entering: object;
+    entered: object;
+    exiting: object;
+    exited: object;
+  };
 }
 
-/** Displays a Entitlement Row. It displays a name, a amount and
- * applicability table.
- */
-export class EntitlementRow extends React.Component<Properties, State> {
-  constructor(properties: Properties) {
-    super(properties);
-    this.state = {
-      isExpanded: false,
-      applicabilityStyle: StyleSheet.create(this.applicabilityStyleDefinition)
-    };
-    this.showApplicabilityTable = this.showApplicabilityTable.bind(this);
-  }
+const TRANSITION_LENGTH_MS = 600;
+const BUTTON_SIZE_PX = '16px';
 
-  public render(): JSX.Element {
-    const elementSize = (() => {
-      switch(this.props.displaySize) {
-        case DisplaySize.SMALL:
-          return EntitlementRow.STYLE.box.smallComponent;
-        case DisplaySize.MEDIUM:
-          return EntitlementRow.STYLE.box.mediumComponent;
-        case DisplaySize.LARGE:
-          return EntitlementRow.STYLE.box.largeComponent;
-      }
-    })();
-    const buttonSize = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return EntitlementRow.MOBILE_BUTTON_SIZE_PX;
-      } else {
-        return EntitlementRow.DESKTOP_BUTTON_SIZE_PX;
-      }
-    })();
-    const entitlementNameStyle = (() => {
-      if(this.state.isExpanded) {
-        return EntitlementRow.STYLE.text.nameWhenExpandedTable;
-      } else {
-        return EntitlementRow.STYLE.text.default;
-      }
-    })();
-    const amount = (() => {
-      if(this.props.entitlementEntry.price.equals(Nexus.Money.ZERO)) {
-        return 'FREE';
-      } else {
-        return (`${this.props.currencyEntry.sign}${
-          this.props.entitlementEntry.price.toString()} ${
-          this.props.currencyEntry.code}`);
-      }
-    })();
-    const amountColor = (() => {
-      if(this.props.isActive) {
-        if(this.state.isExpanded) {
-          return EntitlementRow.STYLE.text.activeAmountWhenExpandedTable;
-        } else {
-          return EntitlementRow.STYLE.text.activeAmount;
-        }
-      } else {
-        if(this.state.isExpanded) {
-          return EntitlementRow.STYLE.text.amountWhenExpandedTable;
-        } else {
-          return EntitlementRow.STYLE.text.default;
-        }
-      }
-    })();
-    const buttonRowAmountVisibility = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return EntitlementRow.STYLE.hidden;
-      } else {
-        return null;
-      }
-    })();
-    const tableHeaderAmountVisibility = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return null;
-      } else {
-        return EntitlementRow.STYLE.hidden;
-      }
-    })();
-    const applicabilityTablePadding = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return EntitlementRow.STYLE.box.mobileTablePadding;
-      } else {
-        return EntitlementRow.STYLE.box.tablePadding;
-      }
-    })();
-    const applicabilityTableHeaderStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return EntitlementRow.STYLE.text.tableHeaderSmall;
-      } else {
-        return EntitlementRow.STYLE.text.tableHeader;
-      }
-    })();
-    return (
-      <VBoxLayout style={elementSize}>
-        <div style={EntitlementRow.STYLE.box.header}>
-          <CheckMarkButton
-            size={buttonSize}
-            onClick={this.props.onClick}
-            isChecked={this.props.isActive}/>
-          <div style={EntitlementRow.STYLE.box.internalHeaderPadding}/>
-          <DropDownButton size={buttonSize}
-            isExpanded={this.state.isExpanded}
-            onClick={this.showApplicabilityTable}/>
-          <div style={EntitlementRow.STYLE.box.internalHeaderPadding}/>
-          <div style={entitlementNameStyle}>
-            {this.props.entitlementEntry.name}
-          </div>
-          <div style={EntitlementRow.STYLE.box.headerFiller}/>
-          <div style={{ ...amountColor, ...buttonRowAmountVisibility}}>
-            {amount}
-          </div>
-        </div>
-        <VBoxLayout>
-          <Transition in={this.state.isExpanded}
-              timeout={EntitlementRow.TRANSITION_LENGTH_MS}>
-            {(state) => (
-              <div ref={(divElement) => this.dropDownTable = divElement}
-                  className={css((this.state.applicabilityStyle as any)[state])}
-                  style={EntitlementRow.STYLE.box.expandableTable}>
-                <HLine color='#E6E6E6'/>
-                <div style={EntitlementRow.STYLE.box.header}>
-                  <div style={applicabilityTableHeaderStyle}>
-                    Applicability
-                  </div>
-                  <div style={EntitlementRow.STYLE.box.headerFiller}/>
-                  <div style={{...amountColor,
-                      ...tableHeaderAmountVisibility}}>
-                    {amount}
-                  </div>
-                </div>
-                <div style={applicabilityTablePadding}>
-                  <ApplicabilityTable
-                    entitlementEntry={this.props.entitlementEntry}
-                    displaySize={this.props.displaySize}
-                    venueDatabase={this.props.venueDatabase}/>
-                </div>
-              </div>)}
-          </Transition>
-        </VBoxLayout>
-      </VBoxLayout>);
+function computeTransitionStyles(
+    entitlementEntry: Nexus.EntitlementDatabase.Entry) {
+  let count = 0;
+  for(const _ of entitlementEntry.applicability) {
+    ++count;
   }
-
-  public componentDidMount(): void {
-    const height = (() => {
-      let count = 0;
-      for(const entry of this.props.entitlementEntry.applicability) {
-        ++count;
-      }
-      return 101 + count * 40;
-    })();
-    this.applicabilityStyleDefinition.entering.maxHeight = `${height}px`;
-    this.applicabilityStyleDefinition.entered.maxHeight = `${height}px`;
-    this.setState({
-      applicabilityStyle: StyleSheet.create(this.applicabilityStyleDefinition)
-    });
-  }
-
-  private showApplicabilityTable(): void {
-    this.setState({
-      isExpanded: !this.state.isExpanded
-    });
-  }
-
-  private static readonly TRANSITION_LENGTH_MS = 600;
-  private static readonly MOBILE_BUTTON_SIZE_PX = '20px';
-  private static readonly DESKTOP_BUTTON_SIZE_PX = '16px';
-  private static readonly STYLE = {
-    hidden: {
-      opacity: 0,
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none'
-    },
-    box: {
-      header: {
-        height: '40px',
-        boxSizing: 'border-box' as 'border-box',
-        display: 'flex ' as 'flex ',
-        flexDirection: 'row' as 'row',
-        flexWrap: 'nowrap' as 'nowrap',
-        alignItems: 'center' as 'center',
-        backgroundColor: '#FFFFFF'
-      },
-      headerFiller: {
-        flexGrow: 1
-      },
-      smallComponent: {
-        width: '100%',
-        maxWidth: '424px'
-      },
-      mediumComponent: {
-        width: '732px',
-        maxWidth: '732px'
-      },
-      largeComponent: {
-        width: '1000px',
-        maxWidth: '1000px'
-      },
-      internalHeaderPadding: {
-        width: '18px'
-      },
-      expandableTable: {
-        width: 'inherit' as 'inherit'
-      },
-      tablePadding: {
-        paddingLeft: '76px',
-        paddingBottom: '20px',
-        width: 'inherit' as 'inherit'
-      },
-      mobileTablePadding: {
-        paddingBottom: '20px',
-        width: 'inherit' as 'inherit'
-      }
-    },
-    text: {
-      default: {
-        font: '400 14px Roboto',
-        color: '#000000'
-      },
-      activeAmount: {
-        font: '400 14px Roboto',
-        color: '#36BB55'
-      },
-      activeAmountWhenExpandedTable: {
-        font: '500 14px Roboto',
-        color: '#36BB55'
-      },
-      amountWhenExpandedTable: {
-        font: '500 14px Roboto',
-        color: '#000000'
-      },
-      nameWhenExpandedTable: {
-        font: '500 14px Roboto',
-        color: '#4B23A0'
-      },
-      tableHeader: {
-        paddingLeft: '76px',
-        font: '500 14px Roboto',
-        color: '#4B23A0'
-      },
-      tableHeaderSmall: {
-        font: '500 14px Roboto',
-        color: '#4B23A0'
-      }
-    }
-  };
-  private applicabilityStyleDefinition = {
+  const maxHeight = `${101 + count * 40}px`;
+  return StyleSheet.create({
     entering: {
-      maxHeight: '0',
+      maxHeight,
       overflow: 'hidden' as 'hidden',
       transitionProperty: 'max-height',
-      transitionDuration: `${EntitlementRow.TRANSITION_LENGTH_MS}ms`
+      transitionDuration: `${TRANSITION_LENGTH_MS}ms`
     },
     entered: {
-      maxHeight: '0',
+      maxHeight,
       overflow: 'hidden' as 'hidden'
     },
     exiting: {
       maxHeight: '0',
       overflow: 'hidden' as 'hidden',
       transitionProperty: 'max-height',
-      transitionDuration: `${EntitlementRow.TRANSITION_LENGTH_MS}ms`
+      transitionDuration: `${TRANSITION_LENGTH_MS}ms`
     },
     exited: {
       maxHeight: '0',
       overflow: 'hidden' as 'hidden'
     }
-  };
-  private dropDownTable: HTMLDivElement;
+  });
 }
+
+/** Displays an entitlement row with a name, amount, and applicability table. */
+export class EntitlementRow extends React.Component<Properties, State> {
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      isExpanded: false,
+      transitionStyles: computeTransitionStyles(props.entitlementEntry)
+    };
+  }
+
+  public render(): JSX.Element {
+    const entitlementNameStyle = this.state.isExpanded ?
+      STYLE.nameExpanded : STYLE.name;
+    const amount = this.props.entitlementEntry.price.equals(Nexus.Money.ZERO) ?
+      'FREE' :
+      `${this.props.currencyEntry.sign}${
+        this.props.entitlementEntry.price.toString()} ${
+        this.props.currencyEntry.code}`;
+    const amountStyle = (() => {
+      if(this.props.isActive) {
+        return this.state.isExpanded ?
+          STYLE.activeAmountExpanded : STYLE.activeAmount;
+      }
+      return this.state.isExpanded ? STYLE.amountExpanded : undefined;
+    })();
+    return (
+      <div style={STYLE.wrapper}>
+        <div style={STYLE.header}>
+          <Checkbox
+            id={`${this.props.entitlementEntry.name}-active`}
+            name={`${this.props.entitlementEntry.name}-active`}
+            aria-label={`Toggle ${this.props.entitlementEntry.name} activation`}
+            checked={this.props.isActive}
+            onClick={this.props.onClick}/>
+          <div style={STYLE.headerPadding}/>
+          <DropDownButton size={BUTTON_SIZE_PX}
+            isExpanded={this.state.isExpanded}
+            onClick={this.onToggle}/>
+          <div style={STYLE.headerPadding}/>
+          <h2 style={entitlementNameStyle}>
+            {this.props.entitlementEntry.name}
+          </h2>
+          <div style={STYLE.headerFiller}/>
+          <span className={css(STYLES.desktopOnly)} style={amountStyle}>
+            {amount}
+          </span>
+        </div>
+        <Transition in={this.state.isExpanded}
+            timeout={TRANSITION_LENGTH_MS}>
+          {(state) => (
+            <div className={css(
+                (this.state.transitionStyles as any)[state])}>
+              <div className={css(STYLES.applicabilitySection)}>
+                <div style={STYLE.header}>
+                  <h3 style={STYLE.tableHeader}>
+                    Applicability
+                  </h3>
+                  <div style={STYLE.headerFiller}/>
+                  <span className={css(STYLES.mobileOnly)} style={amountStyle}>
+                    {amount}
+                  </span>
+                </div>
+                <ApplicabilityTable
+                  entitlementEntry={this.props.entitlementEntry}
+                  venueDatabase={this.props.venueDatabase}/>
+              </div>
+            </div>)}
+        </Transition>
+      </div>);
+  }
+
+  private onToggle = () => {
+    this.setState({isExpanded: !this.state.isExpanded});
+  }
+}
+
+const STYLE: Record<string, React.CSSProperties> = {
+  wrapper: {
+    display: 'flex',
+    flexDirection: 'column',
+    width: '100%'
+  },
+  header: {
+    height: '40px',
+    boxSizing: 'border-box',
+    display: 'flex',
+    flexDirection: 'row',
+    flexWrap: 'nowrap',
+    alignItems: 'center',
+    backgroundColor: '#FFFFFF'
+  },
+  headerFiller: {
+    flexGrow: 1
+  },
+  headerPadding: {
+    width: '18px'
+  },
+  name: {
+    fontSize: 'inherit',
+    fontWeight: 400,
+    margin: 0
+  },
+  nameExpanded: {
+    fontSize: 'inherit',
+    fontWeight: 500,
+    color: '#4B23A0',
+    margin: 0
+  },
+  activeAmount: {
+    color: '#36BB55'
+  },
+  activeAmountExpanded: {
+    fontWeight: 500,
+    color: '#36BB55'
+  },
+  amountExpanded: {
+    fontWeight: 500
+  },
+  tableHeader: {
+    fontSize: 'inherit',
+    fontWeight: 500,
+    color: '#4B23A0',
+    margin: 0
+  }
+};
+
+const STYLES = StyleSheet.create({
+  applicabilitySection: {
+    borderTop: '1px solid #E6E6E6',
+    paddingBottom: '20px',
+    width: '100%',
+    boxSizing: 'border-box',
+    '@media (min-width: 768px)': {
+      paddingLeft: '76px'
+    }
+  },
+  desktopOnly: {
+    display: 'none',
+    '@media (min-width: 768px)': {
+      display: 'block'
+    }
+  },
+  mobileOnly: {
+    '@media (min-width: 768px)': {
+      display: 'none'
+    }
+  }
+});

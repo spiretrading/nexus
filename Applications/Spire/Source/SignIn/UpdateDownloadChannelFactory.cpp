@@ -1,7 +1,7 @@
 #include "Spire/SignIn/UpdateDownloadChannelFactory.hpp"
 #include <boost/optional/optional.hpp>
 #include <Beam/IO/WrapperChannel.hpp>
-#include <Beam/WebServices/TcpChannelFactory.hpp>
+#include <Beam/WebServices/TcpSocketChannelFactory.hpp>
 
 using namespace Beam;
 using namespace boost;

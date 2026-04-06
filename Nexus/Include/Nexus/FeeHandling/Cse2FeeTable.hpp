@@ -75,6 +75,12 @@ namespace Nexus {
     /** The oddlot fees. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
       m_oddlot_table;
+
+    /** The large trade size threshold. */
+    Quantity m_large_trade_size;
+
+    /** The large trade fee applied when volume >= threshold. */
+    Money m_large_trade_fee;
   };
 
   /**
@@ -91,6 +97,9 @@ namespace Nexus {
     parse_fee_table(config, "cse_listed_government_bonds_table",
       Beam::out(table.m_cse_listed_government_bonds_table));
     parse_fee_table(config, "oddlot_table", Beam::out(table.m_oddlot_table));
+    table.m_large_trade_size =
+      Beam::extract<Quantity>(config, "large_trade_size");
+    table.m_large_trade_fee = Beam::extract<Money>(config, "large_trade_fee");
     return table;
   }
 
@@ -183,6 +192,9 @@ namespace Nexus {
     auto price_class = lookup_cse2_price_class(report);
     auto flag = lookup_cse2_liquidity_flag(report);
     auto fee = lookup_regular_fee(table, flag, price_class);
+    if(report.m_last_quantity >= table.m_large_trade_size) {
+      return table.m_large_trade_fee;
+    }
     return report.m_last_quantity * fee;
   }
 
@@ -237,6 +249,9 @@ namespace Nexus {
     auto flag = lookup_cse2_liquidity_flag(report);
     auto market = lookup_cse2_listing_market(report);
     auto fee = lookup_debentures_or_notes_fee(table, flag, market);
+    if(report.m_last_quantity >= table.m_large_trade_size) {
+      return table.m_large_trade_fee;
+    }
     return report.m_last_quantity * fee;
   }
 
@@ -261,6 +276,9 @@ namespace Nexus {
       const Cse2FeeTable& table, const ExecutionReport& report) {
     auto flag = lookup_cse2_liquidity_flag(report);
     auto fee = lookup_cse_listed_government_bonds_fee(table, flag);
+    if(report.m_last_quantity >= table.m_large_trade_size) {
+      return table.m_large_trade_fee;
+    }
     return report.m_last_quantity * fee;
   }
 

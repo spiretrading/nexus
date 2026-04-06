@@ -5,7 +5,7 @@ export class RiskModification {
 
   /** Constructs a RiskModification from a JSON object. */
   public static fromJson(value: any): RiskModification {
-    return new RiskModification(RiskParameters.fromJson(value));
+    return new RiskModification(RiskParameters.fromJson(value.parameters));
   }
 
   /**

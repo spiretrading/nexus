@@ -30,6 +30,7 @@ namespace Spire {
 
     private:
       struct ColumnFilter;
+      struct DateColumnFilter;
       struct EmptyColumnFilter;
       template<typename T> struct ScalarColumnFilter;
       mutable FilterSignal m_filter_signal;

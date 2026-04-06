@@ -5,7 +5,7 @@
 
 namespace Spire {
 
-  /** A CastListModel over a Nexus::TimeInForce. */
+  /** A ListModel over a Nexus::TimeInForce. */
   using TimeInForceListModel = ListModel<Nexus::TimeInForce>;
 
   /** Displays a ClosedFilterPanel over a list of Nexus::TimeInForce. */
@@ -15,7 +15,8 @@ namespace Spire {
    * Returns a new TimeInForceFilterPanel using an empty TimeInForceListModel.
    * @param parent The parent widget.
    */
-  TimeInForceFilterPanel* make_time_in_force_filter_panel(QWidget& parent);
+  TimeInForceFilterPanel* make_time_in_force_filter_panel(
+    QWidget* parent = nullptr);
 
   /**
    * Returns a new TimeInForceFilterPanel.
@@ -23,7 +24,7 @@ namespace Spire {
    * @param parent The parent widget.
    */
   TimeInForceFilterPanel* make_time_in_force_filter_panel(
-    std::shared_ptr<TimeInForceListModel> selection, QWidget& parent);
+    std::shared_ptr<TimeInForceListModel> selection, QWidget* parent = nullptr);
 }
 
 #endif

@@ -15,6 +15,7 @@
 #include "WebPortal/ComplianceWebServlet.hpp"
 #include "WebPortal/DefinitionsWebServlet.hpp"
 #include "WebPortal/MarketDataWebServlet.hpp"
+#include "WebPortal/ReportingWebServlet.hpp"
 #include "WebPortal/RiskWebServlet.hpp"
 #include "WebPortal/ServiceLocatorWebServlet.hpp"
 #include "WebPortal/WebPortalSession.hpp"
@@ -56,6 +57,7 @@ namespace Nexus {
       AdministrationWebServlet m_administration_servlet;
       MarketDataWebServlet m_market_data_servlet;
       ComplianceWebServlet m_compliance_servlet;
+      ReportingWebServlet m_reporting_servlet;
       RiskWebServlet m_risk_servlet;
       Beam::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;

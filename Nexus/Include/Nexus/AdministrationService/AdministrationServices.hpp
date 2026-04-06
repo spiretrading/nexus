@@ -262,13 +262,15 @@ namespace Nexus {
      * @param account The account to modify.
      * @param submission_account The account submitting the request.
      * @param modification The modification to apply.
+     * @param effective_date The date when the modification should take effect.
      * @param comment The comment to associate with the request.
      * @return An object representing the request.
      */
     (SubmitEntitlementModificationRequestService,
       "Nexus.AdministrationServices.SubmitEntitlementModificationRequestService",
       AccountModificationRequest, (Beam::DirectoryEntry, account),
-      (EntitlementModification, modification), (Message, comment)),
+      (EntitlementModification, modification),
+      (boost::posix_time::ptime, effective_date), (Message, comment)),
 
     /**
      * Loads a risk modification.
@@ -283,13 +285,15 @@ namespace Nexus {
      * Submits a request to modify an account's risk parameters.
      * @param account The account to modify.
      * @param modification The modification to apply.
+     * @param effective_date The date when the modification should take effect.
      * @param comment The comment to associate with the request.
      * @return An object representing the request.
      */
     (SubmitRiskModificationRequestService,
       "Nexus.AdministrationServices.SubmitRiskModificationRequestService",
       AccountModificationRequest, (Beam::DirectoryEntry, account),
-      (RiskModification, modification), (Message, comment)),
+      (RiskModification, modification),
+      (boost::posix_time::ptime, effective_date), (Message, comment)),
 
     /**
      * Loads the status of an account modification request.
@@ -301,15 +305,26 @@ namespace Nexus {
       AccountModificationRequest::Update, (AccountModificationRequest::Id, id)),
 
     /**
+     * Loads all status updates of an account modification request.
+     * @param id The id of the request.
+     * @return The list of all updates for the request with the specified id.
+     */
+    (LoadAccountModificationRequestUpdatesService,
+      "Nexus.AdministrationServices.LoadAccountModificationRequestUpdatesService",
+      std::vector<AccountModificationRequest::Update>,
+      (AccountModificationRequest::Id, id)),
+
+    /**
      * Approves an account modification request.
      * @param id The id of the request.
+     * @param effective_date The date when the modification should take effect.
      * @param comment The comment to associate with the approval.
      * @return An object representing the update.
      */
     (ApproveAccountModificationRequestService,
       "Nexus.AdministrationServices.ApproveAccountModificationRequestService",
       AccountModificationRequest::Update, (AccountModificationRequest::Id, id),
-      (Message, comment)),
+      (boost::posix_time::ptime, effective_date), (Message, comment)),
 
     /**
      * Rejects an account modification request.

@@ -16,7 +16,9 @@ export abstract class RiskModel {
   /** Submits a request to update the RiskParameters.
    * @param comment - The comment to include in the request.
    * @param riskParameters - The RiskParameters to request.
+   * @param effectiveDate - The date/time the changes take effect.
    */
   public abstract submit(comment: string,
-    riskParameters: Nexus.RiskParameters): Promise<void>;
+    riskParameters: Nexus.RiskParameters,
+    effectiveDate: Beam.DateTime): Promise<void>;
 }

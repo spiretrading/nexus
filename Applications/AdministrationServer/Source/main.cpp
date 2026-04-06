@@ -31,8 +31,9 @@ namespace {
     MetaAuthenticationServletAdapter<MetaAdministrationServlet<
       ApplicationServiceLocatorClient*, CachedAdministrationDataStore<
         SqlAdministrationDataStore<SqlConnection<MySql::Connection>>>,
-      LocalTimeClient>, ApplicationServiceLocatorClient*>, TcpServerSocket,
-      BinarySender<SharedBuffer>, NullEncoder, std::shared_ptr<LiveTimer>>;
+      LocalTimeClient, LiveTimer>, ApplicationServiceLocatorClient*>,
+      TcpServerSocket, BinarySender<SharedBuffer>, NullEncoder,
+      std::shared_ptr<LiveTimer>>;
 
   EntitlementDatabase parse_entitlements(
       const YAML::Node& config, const CurrencyDatabase& currencies,
@@ -95,6 +96,8 @@ int main(int argc, const char** argv) {
       ApplicationDefinitionsClient(Ref(service_locator_client));
     auto entitlements = parse_entitlements(get_node(config, "entitlements"),
       definitions_client.load_currency_database(), service_locator_client);
+    auto grant_interval =
+      extract<time_duration>(config, "grant_interval", hours(1));
     auto account_source = [&] (unsigned int id) {
       return service_locator_client.load_directory_entry(id);
     };
@@ -104,7 +107,7 @@ int main(int argc, const char** argv) {
           MySql::Connection(mysql_config.m_address.get_host(),
             mysql_config.m_address.get_port(), mysql_config.m_username,
             mysql_config.m_password, mysql_config.m_schema)), account_source)),
-        init())), init(service_config.m_interface),
+        init(), init(grant_interval))), init(service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     add(service_locator_client, service_config);
     wait_for_kill_event();

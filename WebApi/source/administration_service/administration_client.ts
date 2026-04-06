@@ -118,11 +118,13 @@ export abstract class AdministrationClient {
    * @param account - The account to modify.
    * @param modification - The modification to apply.
    * @param comment - The comment to associate with the request.
+   * @param effectiveDate - The date/time the modification takes effect.
    * @return An object representing the request.
    */
   public abstract submitEntitlementModificationRequest(
     account: Beam.DirectoryEntry, modification: EntitlementModification,
-    comment: Message): Promise<AccountModificationRequest>;
+    comment: Message, effectiveDate: Beam.DateTime):
+    Promise<AccountModificationRequest>;
 
   /**
    * Loads an account's risk parameters.
@@ -145,11 +147,102 @@ export abstract class AdministrationClient {
    * @param account - The account to modify.
    * @param modification - The modification to apply.
    * @param comment - The comment to associate with the request.
+   * @param effectiveDate - The date/time the modification takes effect.
    * @return An object representing the request.
    */
   public abstract submitRiskModificationRequest(
     account: Beam.DirectoryEntry, modification: RiskModification,
-    comment: Message): Promise<AccountModificationRequest>;
+    comment: Message, effectiveDate: Beam.DateTime):
+    Promise<AccountModificationRequest>;
+
+  /**
+   * Loads an account modification request.
+   * @param id - The id of the request to load.
+   * @return The account modification request with the specified id.
+   */
+  public abstract loadAccountModificationRequest(id: number):
+    Promise<AccountModificationRequest>;
+
+  /**
+   * Loads account modification request ids for an account.
+   * @param account - The account whose request ids are to be loaded.
+   * @param startId - The id to start loading from.
+   * @param maxCount - The maximum number of ids to load.
+   * @return The list of matching request ids.
+   */
+  public abstract loadAccountModificationRequestIds(
+    account: Beam.DirectoryEntry, startId: number, maxCount: number):
+    Promise<number[]>;
+
+  /**
+   * Loads managed account modification request ids.
+   * @param account - The account whose managed request ids are to be loaded.
+   * @param startId - The id to start loading from.
+   * @param maxCount - The maximum number of ids to load.
+   * @return The list of matching request ids.
+   */
+  public abstract loadManagedAccountModificationRequestIds(
+    account: Beam.DirectoryEntry, startId: number, maxCount: number):
+    Promise<number[]>;
+
+  /**
+   * Loads the status of an account modification request.
+   * @param id - The id of the request.
+   * @return The request's latest status update.
+   */
+  public abstract loadAccountModificationRequestStatus(id: number):
+    Promise<AccountModificationRequest.Update>;
+
+  /**
+   * Loads all status updates of an account modification request.
+   * @param id - The id of the request.
+   * @return The list of all updates for the request.
+   */
+  public abstract loadAccountModificationRequestUpdates(id: number):
+    Promise<AccountModificationRequest.Update[]>;
+
+  /**
+   * Approves an account modification request.
+   * @param id - The id of the request to approve.
+   * @param comment - The comment to associate with the approval.
+   * @param effectiveDate - The date/time the modification takes effect.
+   * @return The resulting status update.
+   */
+  public abstract approveAccountModificationRequest(id: number,
+    comment: Message, effectiveDate: Beam.DateTime):
+    Promise<AccountModificationRequest.Update>;
+
+  /**
+   * Rejects an account modification request.
+   * @param id - The id of the request to reject.
+   * @param comment - The comment to associate with the rejection.
+   * @return The resulting status update.
+   */
+  public abstract rejectAccountModificationRequest(id: number,
+    comment: Message): Promise<AccountModificationRequest.Update>;
+
+  /**
+   * Loads a message.
+   * @param id - The id of the message to load.
+   * @return The message with the specified id.
+   */
+  public abstract loadMessage(id: number): Promise<Message>;
+
+  /**
+   * Loads the message ids associated with a request.
+   * @param id - The id of the request.
+   * @return The list of message ids.
+   */
+  public abstract loadMessageIds(id: number): Promise<number[]>;
+
+  /**
+   * Sends a message on an account modification request.
+   * @param id - The id of the request.
+   * @param message - The message to send.
+   * @return The sent message.
+   */
+  public abstract sendAccountModificationRequestMessage(id: number,
+    message: Message): Promise<Message>;
 
   /**
    * Creates a new trading group.

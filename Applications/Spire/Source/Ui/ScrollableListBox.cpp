@@ -21,6 +21,10 @@ namespace {
       set(BackgroundColor(QColor(0xFFFFFF)));
     return style;
   }
+
+  auto has_range(const ScrollBar::Range& range) {
+    return range.m_end - range.m_start > 1;
+  }
 }
 
 ScrollableListBox::ScrollableListBox(ListView& list_view, QWidget* parent)
@@ -61,11 +65,29 @@ bool ScrollableListBox::eventFilter(QObject* watched, QEvent* event) {
       return m_styles.m_overflow_gap;
     }();
     if(auto item = m_list_view->get_list_item(0)) {
+      m_scroll_box->get_horizontal_scroll_bar().set_line_size(
+        item->width() + gap);
       m_scroll_box->get_vertical_scroll_bar().set_line_size(
         item->height() + gap);
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+void ScrollableListBox::keyPressEvent(QKeyEvent* event) {
+  if(event->modifiers() & Qt::AltModifier) {
+    auto& horizontal_scroll_bar = m_scroll_box->get_horizontal_scroll_bar();
+    if(has_range(horizontal_scroll_bar.get_range())) {
+      if(event->key() == Qt::Key_PageUp) {
+        scroll_page_up(horizontal_scroll_bar);
+        event->accept();
+      } else if(event->key() == Qt::Key_PageDown) {
+        scroll_page_down(horizontal_scroll_bar);
+        event->accept();
+      }
+    }
+  }
+  QWidget::keyPressEvent(event);
 }
 
 void ScrollableListBox::resizeEvent(QResizeEvent* event) {

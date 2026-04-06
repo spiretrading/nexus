@@ -66,6 +66,7 @@
     <file>Icons/close.svg</file>
     <file>Icons/maximize.svg</file>
     <file>Icons/minimize.svg</file>
+    <file>Icons/reset.svg</file>
     <file>Icons/restore.svg</file>
     <file>Icons/imbalance-indicator.svg</file>
     <file>Icons/key_bindings/error.svg</file>
@@ -138,6 +139,7 @@
     <file>Icons/sort_ascending.svg</file>
     <file>Icons/sort_descending.svg</file>
     <file>Icons/filter.svg</file>
+    <file>Icons/filter-close.svg</file>
     <file>Icons/menu-arrow.svg</file>
     <file>Icons/spinner.gif</file>
     <file>Icons/hue-spectrum.png</file>
