@@ -174,7 +174,7 @@ struct TableBody::RowCover : Cover {
 
   void mount(int index) {
     auto& body = *static_cast<TableBody*>(parentWidget());
-    for(auto i = 0; i != layout()->count(); ++i) {
+    for(auto i = 0; i != body.m_table->get_column_size(); ++i) {
       get_item(i)->mount(*body.m_item_builder.mount(
         body.m_table, index, body.m_visual_to_logical_columns[i]));
     }
