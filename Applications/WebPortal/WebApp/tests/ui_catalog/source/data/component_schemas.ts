@@ -907,6 +907,27 @@ const reportStatusIndicator =
     [],
     WebPortal.ReportStatusIndicator);
 
+const tableHeaderCell =
+  new ComponentSchema('TableHeaderCell',
+    [new PropertySchema('sortOrder',
+        WebPortal.TableHeaderCell.SortOrder.NONE,
+        EnumInput(WebPortal.TableHeaderCell.SortOrder)),
+      new PropertySchema('textAlign', 'start', TextInput)],
+    [],
+    (props: any) => {
+      const [sortOrder, setSortOrder] = React.useState(props.sortOrder);
+      React.useEffect(() => setSortOrder(props.sortOrder), [props.sortOrder]);
+      return React.createElement('table', {
+          style: {borderCollapse: 'collapse', width: '200px'}},
+        React.createElement('thead', null,
+          React.createElement('tr', null,
+            React.createElement(WebPortal.TableHeaderCell, {
+              sortOrder: sortOrder,
+              textAlign: props.textAlign,
+              onSort: setSortOrder
+            }, 'Column'))));
+    }, 250);
+
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox,
     countrySelect, currencySelect, dateInput, disclosure,
@@ -928,4 +949,4 @@ export const componentSections = [
     requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
-    profitAndLossTable, reportStatusIndicator])];
+    profitAndLossTable, reportStatusIndicator, tableHeaderCell])];
