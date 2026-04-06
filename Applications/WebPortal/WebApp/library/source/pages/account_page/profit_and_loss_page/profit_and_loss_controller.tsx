@@ -180,22 +180,12 @@ export class ProfitAndLossController extends
       return {
         symbol: currencyEntry.sign,
         code: currencyEntry.code,
-        totalPnl: entry.totalProfitAndLoss.toString(),
-        totalVolume: entry.totalVolume.toString(),
-        totalFees: entry.totalFees.toString(),
-        securities: this.toSecurities(entry.securities)
+        totalProfitAndLoss: entry.totalProfitAndLoss,
+        totalVolume: entry.totalVolume,
+        totalFees: entry.totalFees,
+        securities: entry.securities
       };
     });
-  }
-
-  private toSecurities(entries: ProfitAndLossModel.SecurityEntry[]):
-      ProfitAndLossTable.Security[] {
-    return entries.map(entry => ({
-      symbol: entry.security.toString(),
-      volume: entry.volume.toString(),
-      fees: entry.fees.toString(),
-      pnl: entry.profitAndLoss.toString()
-    }));
   }
 
   private toExchangeRates(

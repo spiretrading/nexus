@@ -861,34 +861,47 @@ const profitAndLossHeader =
     }), 800);
 
 const PNL_TABLE_SAMPLE_SECURITIES: WebPortal.ProfitAndLossTable.Security[] = [
-  {symbol: 'AAPL', volume: '1,250', fees: '12.50', pnl: '345.67'},
-  {symbol: 'MSFT', volume: '800', fees: '8.00', pnl: '-123.45'},
-  {symbol: 'GOOG', volume: '500', fees: '5.00', pnl: '678.90'},
-  {symbol: 'AMZN', volume: '300', fees: '3.00', pnl: '-45.20'}
+  {security: new Nexus.Security('AAPL', new Nexus.Venue('NASDAQ')),
+    volume: Nexus.Quantity.parse('1250'),
+    fees: Nexus.Money.parse('12.50'),
+    profitAndLoss: Nexus.Money.parse('345.67')},
+  {security: new Nexus.Security('MSFT', new Nexus.Venue('NASDAQ')),
+    volume: Nexus.Quantity.parse('800'),
+    fees: Nexus.Money.parse('8.00'),
+    profitAndLoss: Nexus.Money.parse('-123.45')},
+  {security: new Nexus.Security('GOOG', new Nexus.Venue('NASDAQ')),
+    volume: Nexus.Quantity.parse('500'),
+    fees: Nexus.Money.parse('5.00'),
+    profitAndLoss: Nexus.Money.parse('678.90')},
+  {security: new Nexus.Security('AMZN', new Nexus.Venue('NASDAQ')),
+    volume: Nexus.Quantity.parse('300'),
+    fees: Nexus.Money.parse('3.00'),
+    profitAndLoss: Nexus.Money.parse('-45.20')}
 ];
 
 const profitAndLossTable =
   new ComponentSchema('ProfitAndLossTable',
-    [new PropertySchema('symbol', '$', TextInput),
-      new PropertySchema('totalPnl', '855.92', TextInput),
-      new PropertySchema('totalVolume', '2,850', TextInput),
-      new PropertySchema('totalFees', '28.50', TextInput)],
+    [new PropertySchema('symbol', '$', TextInput)],
     [],
     (props: any) => React.createElement(WebPortal.ProfitAndLossTable, {
-      ...props,
+      symbol: props.symbol,
+      totalProfitAndLoss: Nexus.Money.parse('855.92'),
+      totalVolume: Nexus.Quantity.parse('2850'),
+      totalFees: Nexus.Money.parse('28.50'),
       securities: PNL_TABLE_SAMPLE_SECURITIES
     }), 600);
 
 const profitAndLossItem =
   new ComponentSchema('ProfitAndLossItem',
     [new PropertySchema('symbol', '$', TextInput),
-      new PropertySchema('code', 'USD', TextInput),
-      new PropertySchema('totalPnl', '855.92', TextInput),
-      new PropertySchema('totalVolume', '2,850', TextInput),
-      new PropertySchema('totalFees', '28.50', TextInput)],
+      new PropertySchema('code', 'USD', TextInput)],
     [],
     (props: any) => React.createElement(WebPortal.ProfitAndLossItem, {
-      ...props,
+      symbol: props.symbol,
+      code: props.code,
+      totalProfitAndLoss: Nexus.Money.parse('855.92'),
+      totalVolume: Nexus.Quantity.parse('2850'),
+      totalFees: Nexus.Money.parse('28.50'),
       securities: PNL_TABLE_SAMPLE_SECURITIES
     }), 800);
 

@@ -1,4 +1,5 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { TableHeaderCell } from './table_header_cell';
 
@@ -8,13 +9,13 @@ interface Properties {
   symbol: string;
 
   /** The total profit and loss. */
-  totalPnl: string;
+  totalProfitAndLoss: Nexus.Money;
 
   /** The total volume traded. */
-  totalVolume: string;
+  totalVolume: Nexus.Quantity;
 
   /** The total fees incurred. */
-  totalFees: string;
+  totalFees: Nexus.Money;
 
   /** The list of securities traded. */
   securities: ProfitAndLossTable.Security[];
@@ -36,6 +37,7 @@ export class ProfitAndLossTable extends React.Component<Properties, State> {
   }
 
   public render(): JSX.Element {
+    const sorted = this.sortedSecurities();
     return (
       <div className={css(STYLES.container)}>
         <table className={css(STYLES.table)}>
@@ -74,59 +76,79 @@ export class ProfitAndLossTable extends React.Component<Properties, State> {
             </tr>
           </thead>
           <tbody>
-            {this.props.securities.map((security, i) => {
-              const pnl = parseFloat(security.pnl);
-              const isNegative = pnl < 0;
+            {sorted.map((security, i) => {
+              const isNegative = security.profitAndLoss.compare(
+                Nexus.Money.ZERO) < 0;
               return (
                 <tr key={i} className={css(STYLES.row)}>
                   <td className={css(STYLES.td, STYLES.tdStart)}
                     aria-label='Security'>
-                    {security.symbol}
+                    {security.security.toString()}
                   </td>
                   <td className={css(STYLES.td, STYLES.collapsible)}
                     aria-label='Volume'>
-                    {security.volume}
+                    {security.volume.toString()}
                   </td>
                   <td className={css(STYLES.td, STYLES.collapsible)}
                     aria-label='Fees'>
-                    {`${this.props.symbol}${security.fees}`}
+                    {formatMoney(this.props.symbol, security.fees)}
                   </td>
                   <td className={css(STYLES.td)} aria-label='Profit and Loss'
                     style={{color: isNegative ? '#E63F44' : '#36BB55'}}>
-                    {isNegative ?
-                      `-${this.props.symbol}${security.pnl.replace('-', '')}` :
-                      `${this.props.symbol}${security.pnl}`}
+                    {formatMoney(this.props.symbol, security.profitAndLoss)}
                   </td>
                 </tr>);
             })}
-            <tr className={css(STYLES.summaryRow)}>
-              <td className={css(STYLES.td, STYLES.summaryCell, STYLES.tdStart)}>
-                {`(${this.props.securities.length})`}
-              </td>
-              <td className={css(STYLES.td, STYLES.summaryCell,
-                  STYLES.collapsible)}>
-                {this.props.totalVolume}
-              </td>
-              <td className={css(STYLES.td, STYLES.summaryCell,
-                  STYLES.collapsible)}>
-                {`${this.props.symbol}${this.props.totalFees}`}
-              </td>
-              {(() => {
-                const totalPnl = parseFloat(this.props.totalPnl);
-                const isNegative = totalPnl < 0;
-                return (
+            {(() => {
+              const isNegative = this.props.totalProfitAndLoss.compare(
+                Nexus.Money.ZERO) < 0;
+              return (
+                <tr className={css(STYLES.summaryRow)}>
+                  <td className={css(STYLES.td, STYLES.summaryCell,
+                      STYLES.tdStart)}>
+                    {`(${this.props.securities.length})`}
+                  </td>
+                  <td className={css(STYLES.td, STYLES.summaryCell,
+                      STYLES.collapsible)}>
+                    {this.props.totalVolume.toString()}
+                  </td>
+                  <td className={css(STYLES.td, STYLES.summaryCell,
+                      STYLES.collapsible)}>
+                    {formatMoney(this.props.symbol, this.props.totalFees)}
+                  </td>
                   <td className={css(STYLES.td, STYLES.summaryCell)}
                     style={{color: isNegative ? '#E63F44' : '#36BB55'}}>
-                    {isNegative ?
-                      `-${this.props.symbol}${
-                        this.props.totalPnl.replace('-', '')}` :
-                      `${this.props.symbol}${this.props.totalPnl}`}
-                  </td>);
-              })()}
-            </tr>
+                    {formatMoney(this.props.symbol,
+                      this.props.totalProfitAndLoss)}
+                  </td>
+                </tr>);
+            })()}
           </tbody>
         </table>
       </div>);
+  }
+
+  private sortedSecurities(): ProfitAndLossTable.Security[] {
+    if(this.state.sortOrder === TableHeaderCell.SortOrder.NONE) {
+      return this.props.securities;
+    }
+    var sorted = [...this.props.securities];
+    var direction =
+      this.state.sortOrder === TableHeaderCell.SortOrder.ASCENDING ? 1 : -1;
+    sorted.sort((a, b) => {
+      switch(this.state.sortColumn) {
+        case ProfitAndLossTable.Column.SECURITY:
+          return direction * a.security.toString().localeCompare(
+            b.security.toString());
+        case ProfitAndLossTable.Column.VOLUME:
+          return direction * a.volume.compare(b.volume);
+        case ProfitAndLossTable.Column.FEES:
+          return direction * a.fees.compare(b.fees);
+        case ProfitAndLossTable.Column.PNL:
+          return direction * a.profitAndLoss.compare(b.profitAndLoss);
+      }
+    });
+    return sorted;
   }
 
   private sortOrderFor(
@@ -143,6 +165,14 @@ export class ProfitAndLossTable extends React.Component<Properties, State> {
   }
 }
 
+function formatMoney(symbol: string, value: Nexus.Money): string {
+  var text = value.toString();
+  if(text.startsWith('-')) {
+    return `-${symbol}${text.substring(1)}`;
+  }
+  return `${symbol}${text}`;
+}
+
 export namespace ProfitAndLossTable {
 
   /** The columns that can be sorted. */
@@ -153,19 +183,20 @@ export namespace ProfitAndLossTable {
     PNL
   }
 
+  /** A row in the table. */
   export interface Security {
 
-    /** The symbol of the security. */
-    symbol: string;
+    /** The security traded. */
+    security: Nexus.Security;
 
     /** The volume traded. */
-    volume: string;
+    volume: Nexus.Quantity;
 
     /** The fees incurred. */
-    fees: string;
+    fees: Nexus.Money;
 
     /** The profit and loss. */
-    pnl: string;
+    profitAndLoss: Nexus.Money;
   }
 }
 

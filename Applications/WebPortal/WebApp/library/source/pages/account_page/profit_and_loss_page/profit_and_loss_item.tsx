@@ -1,4 +1,5 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Disclosure, DropDownButton } from '../../..';
 import { ProfitAndLossTable } from './profit_and_loss_table';
@@ -12,13 +13,13 @@ interface Properties {
   code: string;
 
   /** The total profit and loss. */
-  totalPnl: string;
+  totalProfitAndLoss: Nexus.Money;
 
   /** The total volume traded. */
-  totalVolume: string;
+  totalVolume: Nexus.Quantity;
 
   /** The total fees incurred. */
-  totalFees: string;
+  totalFees: Nexus.Money;
 
   /** The list of securities traded. */
   securities: ProfitAndLossTable.Security[];
@@ -27,11 +28,14 @@ interface Properties {
 /** Displays an expandable item for a single currency's P&L. */
 export function ProfitAndLossItem(props: Properties) {
   const [isOpen, setIsOpen] = React.useState(false);
-  const pnl = parseFloat(props.totalPnl);
-  const isNegative = pnl < 0;
-  const pnlText = isNegative ?
-    `-${props.symbol}${Math.abs(pnl)} ${props.code}` :
-    `${props.symbol}${props.totalPnl} ${props.code}`;
+  const isNegative = props.totalProfitAndLoss.compare(Nexus.Money.ZERO) < 0;
+  const pnlText = (() => {
+    var text = props.totalProfitAndLoss.toString();
+    if(isNegative) {
+      return `-${props.symbol}${text.substring(1)} ${props.code}`;
+    }
+    return `${props.symbol}${text} ${props.code}`;
+  })();
   const header = (
     <div className={css(STYLES.header)}>
       <DropDownButton size='20' isExpanded={isOpen}/>
@@ -49,7 +53,8 @@ export function ProfitAndLossItem(props: Properties) {
   const details = (
     <div className={css(STYLES.content)}>
       <ProfitAndLossTable symbol={props.symbol}
-        totalPnl={props.totalPnl} totalVolume={props.totalVolume}
+        totalProfitAndLoss={props.totalProfitAndLoss}
+        totalVolume={props.totalVolume}
         totalFees={props.totalFees} securities={props.securities}/>
     </div>);
   return (
