@@ -58,9 +58,9 @@ export class ProfitAndLossController extends
         mode={this.state.mode}
         startDate={this.state.startDate}
         endDate={this.state.endDate}
-        totalPnl={report?.totalProfitAndLoss.toString() ?? ''}
-        totalFees={report?.totalFees.toString() ?? ''}
-        totalVolume={report?.totalVolume.toString() ?? ''}
+        totalPnl={report?.totalProfitAndLoss.toLocaleString() ?? ''}
+        totalFees={report?.totalFees.toLocaleString() ?? ''}
+        totalVolume={report?.totalVolume.toLocaleString() ?? ''}
         currencies={report ? this.toCurrencyEntries(report.currencies) : []}
         foreignCurrencies={report ?
           this.toExchangeRates(report.exchangeRates) : []}

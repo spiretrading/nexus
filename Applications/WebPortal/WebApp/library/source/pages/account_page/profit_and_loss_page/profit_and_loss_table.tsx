@@ -87,7 +87,7 @@ export class ProfitAndLossTable extends React.Component<Properties, State> {
                   </td>
                   <td className={css(STYLES.td, STYLES.collapsible)}
                     aria-label='Volume'>
-                    {security.volume.toString()}
+                    {security.volume.toLocaleString()}
                   </td>
                   <td className={css(STYLES.td, STYLES.collapsible)}
                     aria-label='Fees'>
@@ -110,7 +110,7 @@ export class ProfitAndLossTable extends React.Component<Properties, State> {
                   </td>
                   <td className={css(STYLES.td, STYLES.summaryCell,
                       STYLES.collapsible)}>
-                    {this.props.totalVolume.toString()}
+                    {this.props.totalVolume.toLocaleString()}
                   </td>
                   <td className={css(STYLES.td, STYLES.summaryCell,
                       STYLES.collapsible)}>
@@ -166,7 +166,7 @@ export class ProfitAndLossTable extends React.Component<Properties, State> {
 }
 
 function formatMoney(symbol: string, value: Nexus.Money): string {
-  var text = value.toString();
+  var text = value.toLocaleString();
   if(text.startsWith('-')) {
     return `-${symbol}${text.substring(1)}`;
   }

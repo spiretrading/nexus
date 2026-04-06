@@ -30,7 +30,7 @@ export function ProfitAndLossItem(props: Properties) {
   const [isOpen, setIsOpen] = React.useState(false);
   const isNegative = props.totalProfitAndLoss.compare(Nexus.Money.ZERO) < 0;
   const pnlText = (() => {
-    var text = props.totalProfitAndLoss.toString();
+    var text = props.totalProfitAndLoss.toLocaleString();
     if(isNegative) {
       return `-${props.symbol}${text.substring(1)} ${props.code}`;
     }
