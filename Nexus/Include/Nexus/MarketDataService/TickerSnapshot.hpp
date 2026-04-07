@@ -3,7 +3,7 @@
 #include <vector>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/Definitions/Ticker.hpp"
-#include "Nexus/MarketDataService/TickerMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerQuery.hpp"
 
 namespace Nexus {
 

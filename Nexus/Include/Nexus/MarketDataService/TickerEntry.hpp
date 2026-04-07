@@ -96,8 +96,7 @@ namespace Nexus {
         SequencedTickerBookQuote m_quote;
         int m_source_id;
 
-        BookQuoteEntry(
-          const SequencedTickerBookQuote& quote, int source_id);
+        BookQuoteEntry(const SequencedTickerBookQuote& quote, int source_id);
       };
       Ticker m_ticker;
       VenueDatabase m_venues;
@@ -174,12 +173,10 @@ namespace Nexus {
         m_venues(std::move(venues)),
         m_time_zones(std::move(time_zones)),
         m_bbo_sequencer(initial_sequences.m_next_bbo_quote_sequence),
-        m_book_quote_sequencer(
-          initial_sequences.m_next_book_quote_sequence),
+        m_book_quote_sequencer(initial_sequences.m_next_book_quote_sequence),
         m_time_and_sale_sequencer(
           initial_sequences.m_next_time_and_sale_sequence) {
-    m_market_center =
-      m_venues.from(m_ticker.get_venue()).m_market_center;
+    m_market_center = m_venues.from(m_ticker.get_venue()).m_market_center;
     if(m_market_center.empty()) {
       m_market_center = m_ticker.get_venue().get_code().get_data();
     }
@@ -194,13 +191,11 @@ namespace Nexus {
     m_ticker = ticker;
   }
 
-  inline const TickerTechnicals&
-      TickerEntry::get_ticker_technicals() const {
+  inline const TickerTechnicals& TickerEntry::get_ticker_technicals() const {
     return m_technicals;
   }
 
-  inline boost::optional<TickerSnapshot>
-      TickerEntry::load_snapshot() const {
+  inline boost::optional<TickerSnapshot> TickerEntry::load_snapshot() const {
     if(!m_ticker.get_venue()) {
       return boost::none;
     }
@@ -220,8 +215,7 @@ namespace Nexus {
     return snapshot;
   }
 
-  inline const SequencedTickerBboQuote&
-      TickerEntry::get_bbo_quote() const {
+  inline const SequencedTickerBboQuote& TickerEntry::get_bbo_quote() const {
     return m_bbo_quote;
   }
 
@@ -253,8 +247,7 @@ namespace Nexus {
         m_technicals_reset_time += boost::gregorian::days(1);
       }
     }
-    auto value =
-      m_bbo_sequencer.make_sequenced_value(bbo_quote, m_ticker);
+    auto value = m_bbo_sequencer.make_sequenced_value(bbo_quote, m_ticker);
     m_bbo_quote = value;
     return value;
   }
@@ -270,8 +263,7 @@ namespace Nexus {
       if(quote.m_quote.m_size <= 0) {
         return boost::none;
       }
-      auto value =
-        m_book_quote_sequencer.make_sequenced_value(quote, m_ticker);
+      auto value = m_book_quote_sequencer.make_sequenced_value(quote, m_ticker);
       book.emplace_back(std::move(value), source_id);
       i = book.end() - 1;
     } else {
@@ -283,15 +275,12 @@ namespace Nexus {
         }
         if((*entry.m_quote)->m_quote.m_size == 0) {
           auto value =
-            m_book_quote_sequencer.make_sequenced_value(
-              quote, m_ticker);
-          auto quote_entry =
-            BookQuoteEntry(std::move(value), source_id);
+            m_book_quote_sequencer.make_sequenced_value(quote, m_ticker);
+          auto quote_entry = BookQuoteEntry(std::move(value), source_id);
           entry = quote_entry;
         } else {
           auto value =
-            m_book_quote_sequencer.make_sequenced_value(
-              quote, m_ticker);
+            m_book_quote_sequencer.make_sequenced_value(quote, m_ticker);
           i = book.emplace(i, std::move(value), source_id);
         }
       } else {
@@ -299,8 +288,7 @@ namespace Nexus {
           0, (*entry.m_quote)->m_quote.m_size + quote.m_quote.m_size);
         (*entry.m_quote)->m_timestamp = quote.m_timestamp;
         entry.m_quote.get_sequence() =
-          m_book_quote_sequencer.increment_next_sequence(
-            quote.m_timestamp);
+          m_book_quote_sequencer.increment_next_sequence(quote.m_timestamp);
         entry.m_source_id = source_id;
       }
     }
@@ -308,8 +296,7 @@ namespace Nexus {
   }
 
   inline boost::optional<SequencedTickerTimeAndSale>
-      TickerEntry::publish(
-        const TimeAndSale& time_and_sale, int source_id) {
+      TickerEntry::publish(const TimeAndSale& time_and_sale, int source_id) {
     if(m_technicals.m_open == Money::ZERO) {
       m_technicals.m_open = time_and_sale.m_price;
     }
@@ -325,8 +312,8 @@ namespace Nexus {
     if(time_and_sale.m_market_center == m_market_center) {
       m_next_close = time_and_sale.m_price;
     }
-    auto value = m_time_and_sale_sequencer.make_sequenced_value(
-      time_and_sale, m_ticker);
+    auto value =
+      m_time_and_sale_sequencer.make_sequenced_value(time_and_sale, m_ticker);
     m_time_and_sale = value;
     return value;
   }

@@ -31,7 +31,7 @@ namespace Nexus {
           [] (auto& row, auto value) {
             row = Ticker(std::move(value), row.get_venue());
           }).
-        add_column("symbol_venue", Viper::varchar(16),
+        add_column("ticker_venue", Viper::varchar(16),
           [] (const auto& row) {
             return row.get_venue();
           },
