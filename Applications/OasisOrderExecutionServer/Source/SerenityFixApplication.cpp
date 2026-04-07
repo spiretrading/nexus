@@ -15,7 +15,7 @@ namespace {
   const auto NO_TRADE_FEAT_TAG = 7713;
   const auto NO_TRADE_KEY_TAG = 7714;
   const auto LONG_LIFE_TAG = 7735;
-  const auto UNIFORM_LIQUDITY_TAG = 9730;
+  const auto UNIFORM_LIQUIDITY_TAG = 9730;
   const auto ORIGINAL_LIQUIDITY_TAG = 9731;
   const auto NEO_VISIBILITY_TYPE_TAG = 20000;
 
@@ -159,8 +159,8 @@ void SerenityFixApplication::onMessage(
 void SerenityFixApplication::on_ca_message(const std::shared_ptr<Order>& order,
     const FIX42::ExecutionReport& message, Out<ExecutionReport> update) {
   auto liquidity_flag = std::string();
-  if(message.isSetField(UNIFORM_LIQUDITY_TAG)) {
-    liquidity_flag = message.getField(UNIFORM_LIQUDITY_TAG);
+  if(message.isSetField(UNIFORM_LIQUIDITY_TAG)) {
+    liquidity_flag = message.getField(UNIFORM_LIQUIDITY_TAG);
   }
   if(liquidity_flag == "A") {
     update->m_liquidity_flag = "P";
@@ -235,8 +235,8 @@ void SerenityFixApplication::on_us_message(const std::shared_ptr<Order>& order,
     message.get(last_mkt);
     if(last_mkt == "US01") {
       update->m_last_market = DefaultVenues::OTCM.get_code().get_data();
-      if(message.isSetField(ORIGINAL_LIQUIDITY_TAG)) {
-        update->m_liquidity_flag = message.getField(ORIGINAL_LIQUIDITY_TAG);
+      if(message.isSetField(UNIFORM_LIQUIDITY_TAG)) {
+        update->m_liquidity_flag = message.getField(UNIFORM_LIQUIDITY_TAG);
       }
     }
   }
@@ -334,8 +334,8 @@ std::shared_ptr<Order> SerenityFixApplication::submit_to_ca(
 
 std::shared_ptr<Order> SerenityFixApplication::submit_to_us(
     const OrderInfo& info) {
-  return m_order_log.submit(info,
-    get_session_id().getSenderCompID(), get_session_id().getTargetCompID(),
+  return m_order_log.submit(info, get_session_id().getSenderCompID(),
+    get_session_id().getTargetCompID(),
     [&] (Out<FIX42::NewOrderSingle> new_order_single) {
       if(info.m_shorting_flag) {
         throw_with_location(
@@ -363,6 +363,12 @@ std::shared_ptr<Order> SerenityFixApplication::submit_to_us(
           FixOrderRejectedException("Invalid destination."));
       }();
       new_order_single->set(ex_destination);
+      if(new_order_single->isSetField(FIX::FIELD::ExecInst)) {
+        auto existing = new_order_single->getField(FIX::FIELD::ExecInst);
+        new_order_single->setField(FIX::ExecInst(existing + " a"));
+      } else {
+        new_order_single->set(FIX::ExecInst("a"));
+      }
     });
 }
 
@@ -620,7 +626,8 @@ std::string SerenityFixApplication::get_umir_user_id() const {
 
 std::string SerenityFixApplication::get_no_trade_feat() const {
   if(get_session_settings().get(get_session_id()).has("NoTradeFeat")) {
-    return get_session_settings().get(get_session_id()).getString("NoTradeFeat");
+    return get_session_settings().get(
+      get_session_id()).getString("NoTradeFeat");
   }
   return {};
 }

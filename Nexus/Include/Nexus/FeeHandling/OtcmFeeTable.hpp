@@ -212,8 +212,7 @@ namespace Nexus {
    * @return The LiquidityFlag for the specified <i>flag</i>, or NONE if the
    *         flag is not recognized.
    */
-  inline LiquidityFlag get_otcm_closing_cross_type(
-      const std::string& flag) {
+  inline LiquidityFlag get_otcm_closing_cross_type(const std::string& flag) {
     if(flag.size() == 1) {
       if(flag[0] == 'a' || flag[0] == 'd') {
         return LiquidityFlag::PASSIVE;
