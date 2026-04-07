@@ -6,8 +6,8 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
-#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/Side.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 
 namespace Nexus {
 

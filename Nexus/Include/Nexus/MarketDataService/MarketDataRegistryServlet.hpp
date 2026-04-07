@@ -18,7 +18,7 @@
 namespace Nexus {
 
   /**
-   * Maintains a registry of all Securities and data subscriptions.
+   * Maintains a registry of all Tickers and data subscriptions.
    * @param <C> The container instantiating this servlet.
    * @param <R> The registry storing all market data originating from this
    *        servlet.

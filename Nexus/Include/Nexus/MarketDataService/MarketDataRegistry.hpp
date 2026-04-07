@@ -112,7 +112,7 @@ namespace Nexus {
        * Publishes an OrderImbalance.
        * @param imbalance The OrderImbalance to publish.
        * @param source_id The id of the source setting the value.
-       * @param data_store Used to initialize the market's data.
+       * @param data_store Used to initialize the venue's data.
        * @param f Receives synchronized access to the updated data.
        */
       template<typename F>
