@@ -441,9 +441,8 @@ namespace Nexus {
   template<typename C, typename M, typename A> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       IsAdministrationClient<Beam::dereference_t<A>>
-  TickerTechnicals MarketDataRelayServlet<C, M, A>::
-      on_load_ticker_technicals(
-        ServiceProtocolClient& client, const Ticker& ticker) {
+  TickerTechnicals MarketDataRelayServlet<C, M, A>::on_load_ticker_technicals(
+      ServiceProtocolClient& client, const Ticker& ticker) {
     auto market_data_client = m_market_data_clients.load();
     return market_data_client->load_technicals(ticker);
   }
@@ -451,9 +450,8 @@ namespace Nexus {
   template<typename C, typename M, typename A> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       IsAdministrationClient<Beam::dereference_t<A>>
-  std::vector<TickerInfo> MarketDataRelayServlet<C, M, A>::
-      on_query_ticker_info(
-        ServiceProtocolClient& client, const TickerInfoQuery& query) {
+  std::vector<TickerInfo> MarketDataRelayServlet<C, M, A>::on_query_ticker_info(
+      ServiceProtocolClient& client, const TickerInfoQuery& query) {
     auto market_data_client = m_market_data_clients.load();
     return market_data_client->query(query);
   }

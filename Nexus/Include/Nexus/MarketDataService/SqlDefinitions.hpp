@@ -5,9 +5,9 @@
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/OrderImbalance.hpp"
-#include "Nexus/Definitions/Security.hpp"
-#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/SqlDefinitions.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
+#include "Nexus/Definitions/TickerInfo.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
@@ -23,68 +23,68 @@ namespace Nexus {
   /** Returns a row representing an order imbalance. */
   inline const auto& get_order_imbalance_row() {
     static auto ROW = Viper::Row<OrderImbalance>().
-      extend(Viper::Row<Security>().
+      extend(Viper::Row<Ticker>().
         add_column("symbol", Viper::varchar(16),
           [] (const auto& row) {
             return row.get_symbol();
           },
           [] (auto& row, auto value) {
-            row = Security(std::move(value), row.get_venue());
+            row = Ticker(std::move(value), row.get_venue());
           }).
         add_column("symbol_venue", Viper::varchar(16),
           [] (const auto& row) {
             return row.get_venue();
           },
           [] (auto& row, auto value) {
-            row = Security(std::move(row.get_symbol()), value);
-          }), &OrderImbalance::m_security).
+            row = Ticker(std::move(row.get_symbol()), value);
+          }), &OrderImbalance::m_ticker).
       add_column("side", &OrderImbalance::m_side).
       add_column("size", &OrderImbalance::m_size).
       add_column("price", &OrderImbalance::m_reference_price);
     return ROW;
   }
 
-  /** Returns a row representing a security. */
-  inline const auto& get_security_row() {
-    static auto ROW = Viper::Row<Security>().
+  /** Returns a row representing a ticker. */
+  inline const auto& get_ticker_row() {
+    static auto ROW = Viper::Row<Ticker>().
       add_column("symbol", Viper::varchar(16),
         [] (const auto& row) {
           return row.get_symbol();
         },
         [] (auto& row, auto value) {
-          row = Security(std::move(value), row.get_venue());
+          row = Ticker(std::move(value), row.get_venue());
         }).
       add_column("venue", Viper::varchar(16),
         [] (const auto& row) {
           return row.get_venue();
         },
         [] (auto& row, auto value) {
-          row = Security(std::move(row.get_symbol()), value);
+          row = Ticker(std::move(row.get_symbol()), value);
         });
     return ROW;
   }
 
-  /** Returns a row representing a SecurityInfo. */
-  inline const auto& get_security_info_row() {
-    static auto ROW = Viper::Row<SecurityInfo>().
-      extend(Viper::Row<Security>().
+  /** Returns a row representing a TickerInfo. */
+  inline const auto& get_ticker_info_row() {
+    static auto ROW = Viper::Row<TickerInfo>().
+      extend(Viper::Row<Ticker>().
         add_column("symbol", Viper::varchar(16),
           [] (const auto& row) {
             return row.get_symbol();
           },
           [] (auto& row, auto value) {
-            row = Security(std::move(value), row.get_venue());
+            row = Ticker(std::move(value), row.get_venue());
           }).
         add_column("venue", Viper::varchar(16),
           [] (const auto& row) {
             return row.get_venue();
           },
           [] (auto& row, auto value) {
-            row = Security(std::move(row.get_symbol()), value);
-          }), &SecurityInfo::m_security).
-      add_column("name", Viper::varchar(256), &SecurityInfo::m_name).
-      add_column("sector", Viper::varchar(256), &SecurityInfo::m_sector).
-      add_column("board_lot", &SecurityInfo::m_board_lot).
+            row = Ticker(std::move(row.get_symbol()), value);
+          }), &TickerInfo::m_ticker).
+      add_column("name", Viper::varchar(256), &TickerInfo::m_name).
+      add_column("sector", Viper::varchar(256), &TickerInfo::m_sector).
+      add_column("board_lot", &TickerInfo::m_board_lot).
       set_primary_key({"symbol", "venue"});
     return ROW;
   }

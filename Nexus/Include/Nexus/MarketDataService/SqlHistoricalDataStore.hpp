@@ -37,26 +37,26 @@ namespace Nexus {
 
       ~SqlHistoricalDataStore();
 
-      std::vector<SecurityInfo> load_security_info(
-        const SecurityInfoQuery& query);
-      void store(const SecurityInfo& info);
+      std::vector<TickerInfo> load_ticker_info(
+        const TickerInfoQuery& query);
+      void store(const TickerInfo& info);
       std::vector<SequencedOrderImbalance> load_order_imbalances(
-        const VenueMarketDataQuery& query);
+        const VenueQuery& query);
       void store(const SequencedVenueOrderImbalance& imbalance);
       void store(const std::vector<SequencedVenueOrderImbalance>& imbalances);
       std::vector<SequencedBboQuote> load_bbo_quotes(
-        const SecurityMarketDataQuery& query);
-      void store(const SequencedSecurityBboQuote& quote);
-      void store(const std::vector<SequencedSecurityBboQuote>& quotes);
+        const TickerQuery& query);
+      void store(const SequencedTickerBboQuote& quote);
+      void store(const std::vector<SequencedTickerBboQuote>& quotes);
       std::vector<SequencedBookQuote> load_book_quotes(
-        const SecurityMarketDataQuery& query);
-      void store(const SequencedSecurityBookQuote& quote);
-      void store(const std::vector<SequencedSecurityBookQuote>& quotes);
+        const TickerQuery& query);
+      void store(const SequencedTickerBookQuote& quote);
+      void store(const std::vector<SequencedTickerBookQuote>& quotes);
       std::vector<SequencedTimeAndSale> load_time_and_sales(
-        const SecurityMarketDataQuery& query);
-      void store(const SequencedSecurityTimeAndSale& time_and_sale);
+        const TickerQuery& query);
+      void store(const SequencedTickerTimeAndSale& time_and_sale);
       void store(
-        const std::vector<SequencedSecurityTimeAndSale>& time_and_sales);
+        const std::vector<SequencedTickerTimeAndSale>& time_and_sales);
       void close();
 
     private:
@@ -67,11 +67,11 @@ namespace Nexus {
       Beam::DatabaseConnectionPool<Connection> m_writer_pool;
       DataStore<Viper::Row<OrderImbalance>, Viper::Row<Venue>>
         m_order_imbalance_data_store;
-      DataStore<Viper::Row<BboQuote>, Viper::Row<Security>>
+      DataStore<Viper::Row<BboQuote>, Viper::Row<Ticker>>
         m_bbo_quote_data_store;
-      DataStore<Viper::Row<BookQuote>, Viper::Row<Security>>
+      DataStore<Viper::Row<BookQuote>, Viper::Row<Ticker>>
         m_book_quote_data_store;
-      DataStore<Viper::Row<TimeAndSale>, Viper::Row<Security>>
+      DataStore<Viper::Row<TimeAndSale>, Viper::Row<Ticker>>
         m_time_and_sale_data_store;
       Beam::OpenState m_open_state;
 
@@ -98,18 +98,18 @@ namespace Nexus {
           "order_imbalances", get_order_imbalance_row(), get_venue_row(),
           Beam::Ref(m_reader_pool), Beam::Ref(m_writer_pool)),
         m_bbo_quote_data_store("bbo_quotes", get_bbo_quote_row(),
-          get_security_row(), Beam::Ref(m_reader_pool),
+          get_ticker_row(), Beam::Ref(m_reader_pool),
           Beam::Ref(m_writer_pool)),
         m_book_quote_data_store("book_quotes", get_book_quote_row(),
-          get_security_row(), Beam::Ref(m_reader_pool),
+          get_ticker_row(), Beam::Ref(m_reader_pool),
           Beam::Ref(m_writer_pool)),
         m_time_and_sale_data_store("time_and_sales", get_time_and_sale_row(),
-          get_security_row(), Beam::Ref(m_reader_pool),
+          get_ticker_row(), Beam::Ref(m_reader_pool),
           Beam::Ref(m_writer_pool)) {
     try {
       auto connection = m_writer_pool.load();
       connection->execute(
-        Viper::create_if_not_exists(get_security_info_row(), "security_info"));
+        Viper::create_if_not_exists(get_ticker_info_row(), "security_info"));
     } catch(const std::exception&) {
       close();
       throw;
@@ -122,9 +122,9 @@ namespace Nexus {
   }
 
   template<typename C>
-  std::vector<SecurityInfo> SqlHistoricalDataStore<C>::load_security_info(
-      const SecurityInfoQuery& query) {
-    auto matches = std::vector<SecurityInfo>();
+  std::vector<TickerInfo> SqlHistoricalDataStore<C>::load_ticker_info(
+      const TickerInfoQuery& query) {
+    auto matches = std::vector<TickerInfo>();
     auto filter =
       Beam::make_sql_query<SqlTranslator>("security_info", query.get_filter());
     auto anchor = [&] {
@@ -166,14 +166,14 @@ namespace Nexus {
       region_filter = region_filter || Viper::sym("venue") ==
         Viper::literal(std::string(venue.get_code().get_data()));
     }
-    for(auto& security : query.get_index().get_securities()) {
+    for(auto& ticker : query.get_index().get_tickers()) {
       region_filter = region_filter ||
-        Viper::sym("symbol") == security.get_symbol() &&
-        Viper::sym("venue") == security.get_venue();
+        Viper::sym("symbol") == ticker.get_symbol() &&
+        Viper::sym("venue") == ticker.get_venue();
     }
     {
       auto reader = m_reader_pool.load();
-      reader->execute(Viper::select(get_security_info_row(), "security_info",
+      reader->execute(Viper::select(get_ticker_info_row(), "security_info",
         filter && anchor && region_filter,
         Viper::order_by({{"symbol", order}, {"venue", order}}),
         Viper::limit(query.get_snapshot_limit().get_size()),
@@ -187,15 +187,15 @@ namespace Nexus {
   }
 
   template<typename C>
-  void SqlHistoricalDataStore<C>::store(const SecurityInfo& info) {
+  void SqlHistoricalDataStore<C>::store(const TickerInfo& info) {
     auto writer = m_writer_pool.load();
     writer->execute(
-      Viper::upsert(get_security_info_row(), "security_info", &info));
+      Viper::upsert(get_ticker_info_row(), "security_info", &info));
   }
 
   template<typename C>
   std::vector<SequencedOrderImbalance> SqlHistoricalDataStore<C>::
-      load_order_imbalances(const VenueMarketDataQuery& query) {
+      load_order_imbalances(const VenueQuery& query) {
     return m_order_imbalance_data_store.load(query);
   }
 
@@ -213,56 +213,56 @@ namespace Nexus {
 
   template<typename C>
   std::vector<SequencedBboQuote> SqlHistoricalDataStore<C>::load_bbo_quotes(
-      const SecurityMarketDataQuery& query) {
+      const TickerQuery& query) {
     return m_bbo_quote_data_store.load(query);
   }
 
   template<typename C>
   void SqlHistoricalDataStore<C>::store(
-      const SequencedSecurityBboQuote& quote) {
+      const SequencedTickerBboQuote& quote) {
     m_bbo_quote_data_store.store(quote);
   }
 
   template<typename C>
   void SqlHistoricalDataStore<C>::store(
-      const std::vector<SequencedSecurityBboQuote>& quotes) {
+      const std::vector<SequencedTickerBboQuote>& quotes) {
     m_bbo_quote_data_store.store(quotes);
   }
 
 
   template<typename C>
   std::vector<SequencedBookQuote> SqlHistoricalDataStore<C>::load_book_quotes(
-      const SecurityMarketDataQuery& query) {
+      const TickerQuery& query) {
     return m_book_quote_data_store.load(query);
   }
 
   template<typename C>
   void SqlHistoricalDataStore<C>::store(
-      const SequencedSecurityBookQuote& quote) {
+      const SequencedTickerBookQuote& quote) {
     m_book_quote_data_store.store(quote);
   }
 
   template<typename C>
   void SqlHistoricalDataStore<C>::store(
-      const std::vector<SequencedSecurityBookQuote>& quotes) {
+      const std::vector<SequencedTickerBookQuote>& quotes) {
     m_book_quote_data_store.store(quotes);
   }
 
   template<typename C>
   std::vector<SequencedTimeAndSale> SqlHistoricalDataStore<C>::
-      load_time_and_sales(const SecurityMarketDataQuery& query) {
+      load_time_and_sales(const TickerQuery& query) {
     return m_time_and_sale_data_store.load(query);
   }
 
   template<typename C>
   void SqlHistoricalDataStore<C>::store(
-      const SequencedSecurityTimeAndSale& time_and_sale) {
+      const SequencedTickerTimeAndSale& time_and_sale) {
     m_time_and_sale_data_store.store(time_and_sale);
   }
 
   template<typename C>
   void SqlHistoricalDataStore<C>::store(
-      const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) {
+      const std::vector<SequencedTickerTimeAndSale>& time_and_sales) {
     m_time_and_sale_data_store.store(time_and_sales);
   }
 
