@@ -10,3 +10,4 @@ export * from './profit_and_loss_item_placeholder';
 export * from './profit_and_loss_page';
 export * from './profit_and_loss_table';
 export * from './report_status_indicator';
+export * from './table_header_cell';
