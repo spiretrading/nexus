@@ -8,8 +8,8 @@
 #include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 
 namespace Nexus {
 
@@ -19,8 +19,8 @@ namespace Nexus {
     /** Stores a key that can be used to identify a position. */
     struct Key {
 
-      /** The position's security. */
-      Security m_security;
+      /** The position's ticker. */
+      Ticker m_ticker;
 
       /** The currency used to trade the position. */
       CurrencyId m_currency;
@@ -28,8 +28,8 @@ namespace Nexus {
       bool operator ==(const Key&) const = default;
     };
 
-    /** The security held. */
-    Security m_security;
+    /** The ticker held. */
+    Ticker m_ticker;
 
     /** The position's currency. */
     CurrencyId m_currency;
@@ -45,18 +45,18 @@ namespace Nexus {
 
   inline std::ostream& operator <<(
       std::ostream& out, const Position& position) {
-    return out << '(' << position.m_security << ' ' << position.m_currency <<
+    return out << '(' << position.m_ticker << ' ' << position.m_currency <<
       ' ' << position.m_quantity << ' ' << position.m_cost_basis << ')';
   }
 
   inline std::ostream& operator <<(
       std::ostream& out, const Position::Key& key) {
-    return out << '(' << key.m_security << ' ' << key.m_currency << ')';
+    return out << '(' << key.m_ticker << ' ' << key.m_currency << ')';
   }
 
   /** Returns a Position's key. */
   inline Position::Key get_key(const Position& position) {
-    return Position::Key(position.m_security, position.m_currency);
+    return Position::Key(position.m_ticker, position.m_currency);
   }
 
   /**
@@ -87,7 +87,7 @@ namespace Beam {
     template<IsShuttle S>
     void operator ()(
         S& shuttle, Nexus::Position& value, unsigned int version) const {
-      shuttle.shuttle("security", value.m_security);
+      shuttle.shuttle("ticker", value.m_ticker);
       shuttle.shuttle("currency", value.m_currency);
       shuttle.shuttle("quantity", value.m_quantity);
       shuttle.shuttle("cost_basis", value.m_cost_basis);
@@ -99,7 +99,7 @@ namespace Beam {
     template<IsShuttle S>
     void operator ()(
         S& shuttle, Nexus::Position::Key& key, unsigned int version) const {
-      shuttle.shuttle("security", key.m_security);
+      shuttle.shuttle("ticker", key.m_ticker);
       shuttle.shuttle("currency", key.m_currency);
     }
   };
@@ -110,7 +110,7 @@ namespace std {
   struct hash<Nexus::Position::Key> {
     size_t operator()(const Nexus::Position::Key& value) const {
       auto seed = size_t(0);
-      boost::hash_combine(seed, std::hash<Nexus::Security>()(value.m_security));
+      boost::hash_combine(seed, std::hash<Nexus::Ticker>()(value.m_ticker));
       boost::hash_combine(seed, value.m_currency);
       return seed;
     }

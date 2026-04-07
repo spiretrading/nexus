@@ -1,6 +1,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/BookkeeperReactor.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 
@@ -14,7 +15,7 @@ using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
-  const auto TST = Security("TST", TSX);
+  const auto TST = parse_ticker("TST.TSX");
 }
 
 TEST_SUITE("BookkeeperReactor") {
@@ -45,7 +46,7 @@ TEST_SUITE("BookkeeperReactor") {
     REQUIRE(inventory.m_volume == 100);
     REQUIRE(inventory.m_transaction_count == 1);
     REQUIRE(inventory.m_fees == Money::ZERO);
-    REQUIRE(inventory.m_position.m_security == TST);
+    REQUIRE(inventory.m_position.m_ticker == TST);
     REQUIRE(inventory.m_position.m_currency == CAD);
     REQUIRE(inventory.m_position.m_quantity == 100);
     REQUIRE(inventory.m_position.m_cost_basis == 100 * Money::ONE);

@@ -31,14 +31,14 @@ namespace Nexus {
 
     /**
      * Constructs an Inventory.
-     * @param security The Security being managed.
+     * @param ticker The Ticker being managed.
      * @param currency The currency being transacted.
      */
-    Inventory(Security security, CurrencyId currency) noexcept;
+    Inventory(Ticker ticker, CurrencyId currency) noexcept;
 
     /**
      * Constructs an Inventory.
-     * @param key Stores the position's security and currency.
+     * @param key Stores the position's ticker and currency.
      */
     explicit Inventory(Position::Key key) noexcept;
 
@@ -64,20 +64,20 @@ namespace Nexus {
   */
   inline bool is_empty(const Inventory& inventory) {
     return inventory == Inventory(
-      inventory.m_position.m_security, inventory.m_position.m_currency);
+      inventory.m_position.m_ticker, inventory.m_position.m_currency);
   }
 
   inline Inventory::Inventory() noexcept
     : m_volume(0),
       m_transaction_count(0) {}
 
-  inline Inventory::Inventory(Security security, CurrencyId currency) noexcept
-    : m_position(std::move(security), currency),
+  inline Inventory::Inventory(Ticker ticker, CurrencyId currency) noexcept
+    : m_position(std::move(ticker), currency),
       m_volume(0),
       m_transaction_count(0) {}
 
   inline Inventory::Inventory(Position::Key key) noexcept
-    : Inventory(std::move(key.m_security), key.m_currency) {}
+    : Inventory(std::move(key.m_ticker), key.m_currency) {}
 
   inline Inventory::Inventory(Position position, Money gross_profit_and_loss,
     Money fees, Quantity volume, int transaction_count)

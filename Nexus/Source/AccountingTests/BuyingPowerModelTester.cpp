@@ -1,19 +1,19 @@
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/BuyingPowerModel.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
 
 namespace {
-  auto TST = Security("TST", TSX);
-  auto S32 = Security("S32", ASX);
+  auto TST = parse_ticker("TST.TSX");
+  auto S32 = parse_ticker("S32.ASX");
 
-  auto make_order_fields(Security security, CurrencyId currency, Side side,
+  auto make_order_fields(Ticker ticker, CurrencyId currency, Side side,
       Quantity quantity, Money price) {
     auto fields = OrderFields();
-    fields.m_security = security;
+    fields.m_ticker = ticker;
     fields.m_currency = currency;
     fields.m_side = side;
     fields.m_quantity = quantity;
@@ -171,7 +171,7 @@ TEST_SUITE("BuyingPowerModel") {
     REQUIRE(model.get_buying_power(CAD) == 1000 * Money::ONE);
   }
 
-  TEST_CASE("multiple_securities") {
+  TEST_CASE("multiple_tickers") {
     auto model = BuyingPowerModel();
     auto tst_fields =
       make_order_fields(TST, CAD, Side::BID, 100, 10 * Money::ONE);

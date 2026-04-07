@@ -1,5 +1,6 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/OrderExecutionService/OrderRecord.hpp"
 
 using namespace Beam;
@@ -13,7 +14,7 @@ using namespace Nexus::DefaultVenues;
 namespace {
   auto make_test_order_info() {
     auto fields = make_limit_order_fields(
-      DirectoryEntry::make_account(123, "test"), Security("TST", TSX), CAD,
+      DirectoryEntry::make_account(123, "test"), parse_ticker("TST.TSX"), CAD,
       Side::BID, DefaultDestinations::TSX, 100, Money::ONE);
     auto submission_account = DirectoryEntry::make_account(456, "submit");
     return OrderInfo(fields, submission_account, 123, true,

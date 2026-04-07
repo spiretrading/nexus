@@ -1,4 +1,5 @@
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheck.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
@@ -12,14 +13,14 @@ using namespace Nexus::DefaultVenues;
 namespace {
   auto make_test_order_fields() {
     auto account = DirectoryEntry::make_account(123, "test");
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto currency = CAD;
     auto side = Side::BID;
     auto destination = DefaultDestinations::TSX;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     return make_limit_order_fields(
-      account, security, currency, side, destination, quantity, price);
+      account, ticker, currency, side, destination, quantity, price);
   }
 
   struct TestOrderSubmissionCheck : OrderSubmissionCheck {

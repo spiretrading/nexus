@@ -1,6 +1,7 @@
 #include <Aspen/Aspen.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/OrderExecutionService/OrderCancellationReactor.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
@@ -30,9 +31,9 @@ TEST_SUITE("OrderCancellationReactor") {
     auto operations = std::make_shared<
       Beam::Queue<std::shared_ptr<TestOrderExecutionClient::Operation>>>();
     auto client = TestOrderExecutionClient(operations);
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto fields =
-      make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
+      make_limit_order_fields(ticker, CAD, Side::BID, "TSX", 100, Money::ONE);
     auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
       fields, 123, false, time_from_string("2024-07-21 10:00:00.000")));
     auto series = Shared<Aspen::Queue<std::shared_ptr<Order>>>();

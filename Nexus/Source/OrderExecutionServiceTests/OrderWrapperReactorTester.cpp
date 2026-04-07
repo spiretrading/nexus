@@ -1,4 +1,5 @@
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/OrderExecutionService/OrderWrapperReactor.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
@@ -15,13 +16,12 @@ using namespace Nexus::Tests;
 TEST_SUITE("OrderWrapperReactor") {
   TEST_CASE("single_order_evaluation") {
     auto commits = Beam::Queue<bool>();
-    auto trigger = Trigger(
-      [&] {
-        commits.push(true);
-      });
-    auto security = Security("TST", TSX);
+    auto trigger = Trigger([&] {
+      commits.push(true);
+    });
+    auto ticker = parse_ticker("TST.TSX");
     auto fields =
-      make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
+      make_limit_order_fields(ticker, CAD, Side::BID, "TSX", 100, Money::ONE);
     auto order = std::make_shared<PrimitiveOrder>(
       OrderInfo(fields, 1, false, time_from_string("2024-07-21 10:00:00.000")));
     auto reactor = OrderWrapperReactor(order);

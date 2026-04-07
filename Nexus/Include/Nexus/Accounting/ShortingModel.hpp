@@ -32,15 +32,15 @@ namespace Nexus {
         Quantity m_position;
       };
       struct OrderEntry {
-        Security m_security;
+        Ticker m_ticker;
         Side m_side;
         Quantity m_quantity;
         Quantity m_remaining_quantity;
       };
       std::unordered_map<OrderId, OrderEntry> m_order_entries;
-      std::unordered_map<Security, PositionEntry> m_position_entries;
+      std::unordered_map<Ticker, PositionEntry> m_position_entries;
 
-      PositionEntry& get_position(const Security& security);
+      PositionEntry& get_position(const Ticker& ticker);
   };
 
   inline bool ShortingModel::submit(OrderId id, const OrderFields& fields) {
@@ -49,12 +49,12 @@ namespace Nexus {
       m_order_entries.erase(order_iterator);
     }
     auto order_entry = OrderEntry();
-    order_entry.m_security = fields.m_security;
+    order_entry.m_ticker = fields.m_ticker;
     order_entry.m_side = fields.m_side;
     order_entry.m_quantity = fields.m_quantity;
     order_entry.m_remaining_quantity = fields.m_quantity;
     m_order_entries.insert(std::pair(id, order_entry));
-    auto& position = get_position(fields.m_security);
+    auto& position = get_position(fields.m_ticker);
     if(fields.m_side == Side::ASK) {
       position.m_ask_quantity_pending += fields.m_quantity;
       return position.m_ask_quantity_pending > position.m_position;
@@ -68,7 +68,7 @@ namespace Nexus {
       return;
     }
     auto& order_entry = order_iterator->second;
-    auto& position = get_position(order_entry.m_security);
+    auto& position = get_position(order_entry.m_ticker);
     if(order_entry.m_side == Side::BID) {
       position.m_position += report.m_last_quantity;
     } else {
@@ -86,11 +86,11 @@ namespace Nexus {
   }
 
   inline ShortingModel::PositionEntry&
-      ShortingModel::get_position(const Security& security) {
-    auto position_iterator = m_position_entries.find(security);
+      ShortingModel::get_position(const Ticker& ticker) {
+    auto position_iterator = m_position_entries.find(ticker);
     if(position_iterator == m_position_entries.end()) {
       position_iterator =
-        m_position_entries.insert(std::pair(security, PositionEntry())).first;
+        m_position_entries.insert(std::pair(ticker, PositionEntry())).first;
     }
     return position_iterator->second;
   }
