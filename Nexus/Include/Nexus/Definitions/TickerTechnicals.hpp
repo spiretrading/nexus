@@ -1,5 +1,5 @@
-#ifndef NEXUS_SECURITY_TECHNICALS_HPP
-#define NEXUS_SECURITY_TECHNICALS_HPP
+#ifndef NEXUS_TICKER_TECHNICALS_HPP
+#define NEXUS_TICKER_TECHNICALS_HPP
 #include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/Definitions/Money.hpp"
@@ -7,8 +7,8 @@
 
 namespace Nexus {
 
-  /** Stores various technical details about a Security. */
-  struct SecurityTechnicals {
+  /** Stores various technical details about a Ticker. */
+  struct TickerTechnicals {
 
     /** The day's volume. */
     Quantity m_volume;
@@ -27,7 +27,7 @@ namespace Nexus {
   };
 
   inline std::ostream& operator <<(
-      std::ostream& out, const SecurityTechnicals& value) {
+      std::ostream& out, const TickerTechnicals& value) {
     return out << '(' << value.m_volume << ' ' << value.m_high << ' ' <<
       value.m_low << ' ' << value.m_open << ' ' << value.m_close  << ')';
   }
@@ -35,9 +35,9 @@ namespace Nexus {
 
 namespace Beam {
   template<>
-  struct Shuttle<Nexus::SecurityTechnicals> {
+  struct Shuttle<Nexus::TickerTechnicals> {
     template<IsShuttle S>
-    void operator ()(S& shuttle, Nexus::SecurityTechnicals& value,
+    void operator ()(S& shuttle, Nexus::TickerTechnicals& value,
         unsigned int version) const {
       shuttle.shuttle("volume", value.m_volume);
       shuttle.shuttle("high", value.m_high);

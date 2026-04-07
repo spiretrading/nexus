@@ -23,15 +23,15 @@ TEST_SUITE("RegionMap") {
     REQUIRE(map.get(TSX) == 2);
   }
 
-  TEST_CASE("set_country_security_venue") {
+  TEST_CASE("set_country_ticker_venue") {
     auto map = RegionMap(-1);
     auto country = CA;
-    auto security = Security("TST", TSX);
+    auto ticker = Ticker("TST", TSX);
     map.set(country, 1);
-    map.set(security, 2);
+    map.set(ticker, 2);
     map.set(TSX, 3);
     REQUIRE(map.get(country) == 1);
-    REQUIRE(map.get(security) == 2);
+    REQUIRE(map.get(ticker) == 2);
     REQUIRE(map.get(TSX) == 3);
   }
 

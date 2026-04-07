@@ -1,20 +1,20 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/SecurityTechnicals.hpp"
+#include "Nexus/Definitions/TickerTechnicals.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
 using namespace Nexus;
 
-TEST_SUITE("SecurityTechnicals") {
+TEST_SUITE("TickerTechnicals") {
   TEST_CASE("stream") {
     auto volume = Quantity(100);
     auto high = Money(10);
     auto low = Money(5);
     auto open = Money(7);
     auto close = Money(8);
-    auto technicals = SecurityTechnicals(volume, high, low, open, close);
+    auto technicals = TickerTechnicals(volume, high, low, open, close);
     auto expected = std::stringstream();
     expected << '(' << volume << ' ' << high << ' ' << low << ' ' << open <<
       ' ' << close  << ')';
