@@ -14,7 +14,7 @@ namespace Nexus {
   /** Stores an index into a market data entitlement. */
   struct EntitlementKey {
 
-    /** The market that the data is being provided for. */
+    /** The venue that the data is being provided for. */
     Venue m_venue;
 
     /** The source of the market data. */
@@ -90,7 +90,7 @@ namespace Nexus {
        * Grants an entitlement to this session.
        * @param key The EntitlementKey to grant to this session.
        * @param messages The messages this session is entitled to on the
-       *        specified <i>market</i>.
+       *        specified <i>venue</i>.
        */
       void grant(const EntitlementKey& key, MarketDataTypeSet messages);
 

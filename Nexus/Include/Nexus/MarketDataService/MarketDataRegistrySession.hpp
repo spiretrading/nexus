@@ -53,7 +53,7 @@ namespace Nexus {
    */
   template<typename T>
   bool has_entitlement(const MarketDataRegistrySession& session,
-      const VenueMarketDataQuery& query) {
+      const VenueQuery& query) {
     return session.m_roles.test(AccountRole::SERVICE) ||
       session.m_roles.test(AccountRole::ADMINISTRATOR) ||
         contains<T>(session.m_entitlements, query);

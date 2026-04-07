@@ -452,9 +452,8 @@ namespace Nexus {
   template<typename C, typename R, typename D, typename A> requires
     IsHistoricalDataStore<Beam::dereference_t<D>> &&
       IsAdministrationClient<Beam::dereference_t<A>>
-  TickerSnapshot MarketDataRegistryServlet<C, R, D, A>::
-      on_load_ticker_snapshot(
-        ServiceProtocolClient& client, Ticker ticker) {
+  TickerSnapshot MarketDataRegistryServlet<C, R, D, A>::on_load_ticker_snapshot(
+      ServiceProtocolClient& client, Ticker ticker) {
     auto& session = client.get_session();
     ticker = normalize(ticker);
     if(!ticker) {
@@ -493,8 +492,7 @@ namespace Nexus {
     IsHistoricalDataStore<Beam::dereference_t<D>> &&
       IsAdministrationClient<Beam::dereference_t<A>>
   TickerTechnicals MarketDataRegistryServlet<C, R, D, A>::
-      on_load_ticker_technicals(
-        ServiceProtocolClient& client, Ticker ticker) {
+      on_load_ticker_technicals(ServiceProtocolClient& client, Ticker ticker) {
     ticker = normalize(ticker);
     if(auto technicals = m_registry->find_ticker_technicals(ticker)) {
       return *technicals;

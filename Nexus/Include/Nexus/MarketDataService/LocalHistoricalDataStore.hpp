@@ -95,7 +95,7 @@ namespace Nexus {
           Beam::AnyIterator(ticker_info.rend()));
       }();
       if(auto anchor = query.get_anchor()) {
-        while(begin != end && begin->m_security != *anchor) {
+        while(begin != end && begin->m_ticker != *anchor) {
           ++begin;
         }
         if(begin != end) {
@@ -125,7 +125,7 @@ namespace Nexus {
         [&] (const auto& left, const auto& right) {
           return left.m_ticker < right.m_ticker;
         });
-      if(i == ticker_info.end() || i->m_security != info.m_ticker) {
+      if(i == ticker_info.end() || i->m_ticker != info.m_ticker) {
         ticker_info.insert(i, info);
       } else {
         *i = info;

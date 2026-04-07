@@ -30,10 +30,10 @@ namespace Nexus {
    */
   template<typename TickerReactor>
   auto make_current_bbo_quote_reactor(
-      IsMarketDataClient auto& client, TickerReactor&& security) {
+      IsMarketDataClient auto& client, TickerReactor&& ticker) {
     return make_bbo_quote_reactor(
       client, Aspen::lift(&Beam::make_current_query<Ticker>,
-        std::forward<TickerReactor>(security)));
+        std::forward<TickerReactor>(ticker)));
   }
 
   /**
@@ -43,10 +43,10 @@ namespace Nexus {
    */
   template<typename TickerReactor>
   auto make_real_time_bbo_quote_reactor(
-      IsMarketDataClient auto& client, TickerReactor&& security) {
+      IsMarketDataClient auto& client, TickerReactor&& ticker) {
     return make_bbo_quote_reactor(
       client, Aspen::lift(&Beam::make_real_time_query<Ticker>,
-        std::forward<TickerReactor>(security)));
+        std::forward<TickerReactor>(ticker)));
   }
 
   /**
@@ -70,10 +70,10 @@ namespace Nexus {
    */
   template<typename TickerReactor>
   auto make_current_book_quote_reactor(
-      IsMarketDataClient auto& client, TickerReactor&& security) {
+      IsMarketDataClient auto& client, TickerReactor&& ticker) {
     return make_book_quote_reactor(
       client, Aspen::lift(&Beam::make_current_query<Ticker>,
-        std::forward<TickerReactor>(security)));
+        std::forward<TickerReactor>(ticker)));
   }
 
   /**
@@ -83,10 +83,10 @@ namespace Nexus {
    */
   template<typename TickerReactor>
   auto make_real_time_book_quote_reactor(
-      IsMarketDataClient auto& client, TickerReactor&& security) {
+      IsMarketDataClient auto& client, TickerReactor&& ticker) {
     return make_book_quote_reactor(
       client, Aspen::lift(&Beam::make_real_time_query<Ticker>,
-        std::forward<TickerReactor>(security)));
+        std::forward<TickerReactor>(ticker)));
   }
 
   /**
@@ -110,10 +110,10 @@ namespace Nexus {
    */
   template<typename TickerReactor>
   auto make_current_time_and_sales_reactor(
-      IsMarketDataClient auto& client, TickerReactor&& security) {
+      IsMarketDataClient auto& client, TickerReactor&& ticker) {
     return make_time_and_sales_reactor(
       client, Aspen::lift(&Beam::make_current_query<Ticker>,
-        std::forward<TickerReactor>(security)));
+        std::forward<TickerReactor>(ticker)));
   }
 
   /**
@@ -124,10 +124,10 @@ namespace Nexus {
    */
   template<typename TickerReactor>
   auto make_real_time_time_and_sales_reactor(
-      IsMarketDataClient auto& client, TickerReactor&& security) {
+      IsMarketDataClient auto& client, TickerReactor&& ticker) {
     return make_time_and_sales_reactor(
       client, Aspen::lift(&Beam::make_real_time_query<Ticker>,
-        std::forward<TickerReactor>(security)));
+        std::forward<TickerReactor>(ticker)));
   }
 }
 
