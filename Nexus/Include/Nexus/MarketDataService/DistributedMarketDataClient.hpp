@@ -25,26 +25,26 @@ namespace Nexus {
 
       ~DistributedMarketDataClient();
 
-      void query(const VenueMarketDataQuery& query,
+      void query(const VenueQuery& query,
         Beam::ScopedQueueWriter<SequencedOrderImbalance> queue);
-      void query(const VenueMarketDataQuery& query,
+      void query(const VenueQuery& query,
         Beam::ScopedQueueWriter<OrderImbalance> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedBboQuote> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<BboQuote> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedBookQuote> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<BookQuote> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<TimeAndSale> queue);
-      std::vector<SecurityInfo> query(const SecurityInfoQuery& query);
-      SecuritySnapshot load_snapshot(const Security& security);
-      SecurityTechnicals load_technicals(const Security& security);
-      std::vector<SecurityInfo> load_security_info_from_prefix(
+      std::vector<TickerInfo> query(const TickerInfoQuery& query);
+      TickerSnapshot load_snapshot(const Ticker& ticker);
+      TickerTechnicals load_technicals(const Ticker& ticker);
+      std::vector<TickerInfo> load_ticker_info_from_prefix(
         const std::string& prefix);
       void close();
 
@@ -65,8 +65,7 @@ namespace Nexus {
     close();
   }
 
-  inline void DistributedMarketDataClient::query(
-      const VenueMarketDataQuery& query,
+  inline void DistributedMarketDataClient::query(const VenueQuery& query,
       Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {
     if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
@@ -75,8 +74,7 @@ namespace Nexus {
     }
   }
 
-  inline void DistributedMarketDataClient::query(
-      const VenueMarketDataQuery& query,
+  inline void DistributedMarketDataClient::query(const VenueQuery& query,
       Beam::ScopedQueueWriter<OrderImbalance> queue) {
     if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
@@ -85,8 +83,7 @@ namespace Nexus {
     }
   }
 
-  inline void DistributedMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
+  inline void DistributedMarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
     if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
@@ -95,8 +92,7 @@ namespace Nexus {
     }
   }
 
-  inline void DistributedMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
+  inline void DistributedMarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<BboQuote> queue) {
     if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
@@ -105,8 +101,7 @@ namespace Nexus {
     }
   }
 
-  inline void DistributedMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
+  inline void DistributedMarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
     if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
@@ -115,8 +110,7 @@ namespace Nexus {
     }
   }
 
-  inline void DistributedMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
+  inline void DistributedMarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<BookQuote> queue) {
     if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
@@ -125,8 +119,7 @@ namespace Nexus {
     }
   }
 
-  inline void DistributedMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
+  inline void DistributedMarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
     if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
@@ -135,8 +128,7 @@ namespace Nexus {
     }
   }
 
-  inline void DistributedMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
+  inline void DistributedMarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<TimeAndSale> queue) {
     if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
@@ -145,8 +137,8 @@ namespace Nexus {
     }
   }
 
-  inline std::vector<SecurityInfo> DistributedMarketDataClient::query(
-      const SecurityInfoQuery& query) {
+  inline std::vector<TickerInfo> DistributedMarketDataClient::query(
+      const TickerInfoQuery& query) {
     for(auto& c : m_market_data_clients) {
       if(auto client = std::get<1>(c)) {
         return client->query(query);
@@ -155,26 +147,26 @@ namespace Nexus {
     return {};
   }
 
-  inline SecuritySnapshot DistributedMarketDataClient::load_snapshot(
-      const Security& security) {
-    if(auto client = m_market_data_clients.get(security)) {
-      return client->load_snapshot(security);
+  inline TickerSnapshot DistributedMarketDataClient::load_snapshot(
+      const Ticker& ticker) {
+    if(auto client = m_market_data_clients.get(ticker)) {
+      return client->load_snapshot(ticker);
     }
     return {};
   }
 
-  inline SecurityTechnicals DistributedMarketDataClient::load_technicals(
-      const Security& security) {
-    if(auto client = m_market_data_clients.get(security)) {
-      return client->load_technicals(security);
+  inline TickerTechnicals DistributedMarketDataClient::load_technicals(
+      const Ticker& ticker) {
+    if(auto client = m_market_data_clients.get(ticker)) {
+      return client->load_technicals(ticker);
     }
     return {};
   }
 
-  inline std::vector<SecurityInfo>
-      DistributedMarketDataClient::load_security_info_from_prefix(
+  inline std::vector<TickerInfo>
+      DistributedMarketDataClient::load_ticker_info_from_prefix(
         const std::string& prefix) {
-    auto security_infos = std::vector<SecurityInfo>();
+    auto ticker_infos = std::vector<TickerInfo>();
     auto clients = std::unordered_set<std::shared_ptr<MarketDataClient>>();
     for(auto& c : m_market_data_clients) {
       if(auto client = std::get<1>(c)) {
@@ -182,12 +174,12 @@ namespace Nexus {
       }
     }
     for(auto& client : clients) {
-      auto result = client->load_security_info_from_prefix(prefix);
-      security_infos.insert(security_infos.end(),
+      auto result = client->load_ticker_info_from_prefix(prefix);
+      ticker_infos.insert(ticker_infos.end(),
         std::make_move_iterator(result.begin()),
         std::make_move_iterator(result.end()));
     }
-    return security_infos;
+    return ticker_infos;
   }
 
   inline void DistributedMarketDataClient::close() {

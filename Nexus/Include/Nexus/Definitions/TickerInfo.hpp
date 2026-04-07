@@ -27,8 +27,7 @@ namespace Nexus {
     bool operator ==(const TickerInfo&) const = default;
   };
 
-  inline std::ostream& operator <<(
-      std::ostream& out, const TickerInfo& value) {
+  inline std::ostream& operator <<(std::ostream& out, const TickerInfo& value) {
     return out << '(' << value.m_ticker << ' ' << value.m_name << ' ' <<
       value.m_sector << ' ' << value.m_board_lot << ')';
   }

@@ -6,8 +6,8 @@
 #include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/MarketDataService/MarketDataType.hpp"
-#include "Nexus/MarketDataService/SecuritySnapshot.hpp"
-#include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerSnapshot.hpp"
+#include "Nexus/MarketDataService/VenueQuery.hpp"
 
 namespace Nexus {
 
@@ -102,30 +102,28 @@ namespace Nexus {
 
   /**
    * Checks if an EntitlementSet contains the entitlement needed for a
-   * SecurityMarketDataQuery.
+   * TickerQuery.
    * @param entitlements The EntitlementSet to check.
-   * @param query The SecurityMarketDataQuery to validate.
+   * @param query The TickerQuery to validate.
    * @return <code>true</code> iff the <i>entitlements</i> contains the valid
    *         entitlement for the specified <i>query</i>.
    */
   template<typename T>
-  bool contains(const EntitlementSet& entitlements,
-      const SecurityMarketDataQuery& query) {
+  bool contains(const EntitlementSet& entitlements, const TickerQuery& query) {
     return entitlements.contains(
       query.get_index().get_venue(), get_market_data_type<T>());
   }
 
   /**
    * Checks if an EntitlementSet contains the entitlement needed for a
-   * VenueMarketDataQuery.
+   * VenueQuery.
    * @param entitlements The EntitlementSet to check.
-   * @param query The VenueMarketDataQuery to validate.
+   * @param query The VenueQuery to validate.
    * @return <code>true</code> iff the <i>entitlements</i> contains the valid
    *         entitlement for the specified <i>query</i>.
    */
   template<typename T>
-  bool contains(
-      const EntitlementSet& entitlements, const VenueMarketDataQuery& query) {
+  bool contains(const EntitlementSet& entitlements, const VenueQuery& query) {
     return entitlements.contains(query.get_index(), get_market_data_type<T>());
   }
 
