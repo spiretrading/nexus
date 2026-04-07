@@ -146,7 +146,8 @@ void SerenityFixApplication::fromApp(
 void SerenityFixApplication::onMessage(
     const FIX42::ExecutionReport& message, const FIX::SessionID& session_id) {
   m_order_log.update(message, session_id, m_time_client->get_time(),
-    [=] (const std::shared_ptr<Order>& order, Out<ExecutionReport> update) {
+    [=, this] (
+        const std::shared_ptr<Order>& order, Out<ExecutionReport> update) {
       auto venue = order->get_info().m_fields.m_security.get_venue();
       if(venue == DefaultVenues::OTCM) {
         on_us_message(order, message, out(update));
