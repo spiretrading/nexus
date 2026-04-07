@@ -42,18 +42,16 @@ namespace Spire {
 }
 
 namespace Beam {
-namespace Serialization {
   template<>
   struct Shuttle<Spire::OrderLogProperties> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Spire::OrderLogProperties& value,
-        unsigned int version) {
-      shuttle.Shuttle("order_status_filter_type",
-        value.m_orderStatusFilterType);
-      shuttle.Shuttle("order_status_filter", value.m_orderStatusFilter);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::OrderLogProperties& value,
+        unsigned int version) const {
+      shuttle.shuttle(
+        "order_status_filter_type", value.m_orderStatusFilterType);
+      shuttle.shuttle("order_status_filter", value.m_orderStatusFilter);
     }
   };
-}
 }
 
 #endif

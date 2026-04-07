@@ -4,9 +4,9 @@
 #include <QPointer>
 #include <QTimer>
 #include <QWidget>
+#include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/SingleSelectionModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -14,6 +14,10 @@ namespace Styles {
   /** Selects a widget displaying a pop-up, ie. the DropDownBox's list. */
   using PopUp = StateSelector<void, struct PopUpSelectorTag>;
 }
+
+  class DropDownList;
+  class EmptyState;
+  class TextBox;
 
   /**
    * Represents a widget which allows the user to choose one value from
@@ -250,12 +254,12 @@ namespace Styles {
       ListViewItemBuilder<> m_item_builder;
       ToText m_to_text;
       TextBox* m_text_box;
-      Button* m_button;
       QTimer m_timer;
       bool m_is_read_only;
       bool m_has_update;
       boost::optional<int> m_submission;
-      boost::optional<PressObserver> m_button_press_observer;
+      FocusObserver m_focus_observer;
+      PressObserver m_press_observer;
       bool m_is_mouse_press_on_list;
       QPoint m_mouse_press_position;
       QPointer<QWidget> m_hovered_item;
@@ -274,7 +278,8 @@ namespace Styles {
       void show_drop_down_panel();
       void hide_drop_down_panel();
       void submit();
-      void on_button_press_end(PressObserver::Reason reason);
+      void on_focus(FocusObserver::State state);
+      void on_press_end(PressObserver::Reason reason);
       void on_current(const boost::optional<int>& current);
       void on_submit(const std::any& submission);
   };

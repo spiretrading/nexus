@@ -4,7 +4,6 @@
 #include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 using namespace std;
 
@@ -21,5 +20,3 @@ void DefaultCurrencyNode::Apply(CanvasNodeVisitor& visitor) const {
 unique_ptr<CanvasNode> DefaultCurrencyNode::Clone() const {
   return make_unique<DefaultCurrencyNode>(*this);
 }
-
-DefaultCurrencyNode::DefaultCurrencyNode(ReceiveBuilder) {}

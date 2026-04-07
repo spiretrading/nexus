@@ -3,7 +3,6 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Toolbar/ToolbarWindow.hpp"
 
 using namespace Beam;
 using namespace Spire;
@@ -20,16 +19,17 @@ std::string ToolbarWindowSettings::GetName() const {
 
 QWidget* ToolbarWindowSettings::Reopen(Ref<UserProfile> profile) const {
   auto account =
-    profile->GetServiceClients().GetServiceLocatorClient().GetAccount();
-  auto roles = profile->
-    GetServiceClients().GetAdministrationClient().LoadAccountRoles(account);
+    profile->GetClients().get_service_locator_client().get_account();
+  auto roles =
+    profile->GetClients().get_administration_client().load_account_roles(
+      account);
   auto pinned_blotters = std::make_shared<ArrayListModel<BlotterModel*>>();
   for(auto& blotter : profile->GetBlotterSettings().GetAllBlotters()) {
     pinned_blotters->push(&*blotter);
   }
   auto window = new ToolbarWindow(
     account, roles, profile->GetRecentlyClosedWindows(), pinned_blotters);
-  Apply(Ref(profile), Store(*window));
+  Apply(Ref(profile), out(*window));
   return window;
 }
 

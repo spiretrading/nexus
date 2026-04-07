@@ -7,10 +7,8 @@
 #include "ui_EntitlementEntryWidget.h"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
 using namespace Spire;
 using namespace std;
 
@@ -52,7 +50,7 @@ EntitlementEntryWidget::EntitlementEntryWidget(Ref<UserProfile> userProfile,
     Qt::WindowFlags flags)
     : QWidget(parent, flags),
       m_ui(std::make_unique<Ui_EntitlementEntryWidget>()),
-      m_userProfile(userProfile.Get()),
+      m_userProfile(userProfile.get()),
       m_isReadOnly(isReadOnly),
       m_entitlement(entitlement),
       m_model(model) {
@@ -70,20 +68,18 @@ EntitlementEntryWidget::EntitlementEntryWidget(Ref<UserProfile> userProfile,
     m_ui->m_priceLabel->setText(tr("Free"));
   } else {
     const CurrencyDatabase::Entry& currency =
-      m_userProfile->GetCurrencyDatabase().FromId(m_entitlement.m_currency);
+      DEFAULT_CURRENCIES.from(m_entitlement.m_currency);
     string price = currency.m_sign + lexical_cast<string>(entitlement.m_price) +
-      " " + currency.m_code.GetData();
+      " " + currency.m_code.get_data();
     m_ui->m_priceLabel->setText(QString::fromStdString(price));
   }
   m_ui->m_entitlementLabel->setChecked(
-    m_model->HasEntitlement(m_entitlement.m_groupEntry));
-  m_connections.AddConnection(
-    m_model->ConnectEntitlementGrantedSignal(
-      std::bind(&EntitlementEntryWidget::OnEntitlementGranted, this,
+    m_model->HasEntitlement(m_entitlement.m_group_entry));
+  m_connections.add(m_model->ConnectEntitlementGrantedSignal(
+    std::bind(&EntitlementEntryWidget::OnEntitlementGranted, this,
       std::placeholders::_1)));
-  m_connections.AddConnection(
-    m_model->ConnectEntitlementRevokedSignal(
-      std::bind(&EntitlementEntryWidget::OnEntitlementRevoked, this,
+  m_connections.add(m_model->ConnectEntitlementRevokedSignal(
+    std::bind(&EntitlementEntryWidget::OnEntitlementRevoked, this,
       std::placeholders::_1)));
   if(m_isReadOnly) {
     m_isChecked = m_ui->m_entitlementLabel->isChecked();
@@ -93,44 +89,39 @@ EntitlementEntryWidget::EntitlementEntryWidget(Ref<UserProfile> userProfile,
     connect(m_ui->m_entitlementLabel, &QCheckBox::stateChanged, this,
       &EntitlementEntryWidget::OnEntitlementChecked);
   }
-  m_connections.AddConnection(m_ui->m_expandButton->ConnectExpandedSignal(
+  m_connections.add(m_ui->m_expandButton->ConnectExpandedSignal(
     std::bind(&EntitlementEntryWidget::OnTableExpanded, this)));
-  m_connections.AddConnection(m_ui->m_expandButton->ConnectCollapsedSignal(
+  m_connections.add(m_ui->m_expandButton->ConnectCollapsedSignal(
     std::bind(&EntitlementEntryWidget::OnTableCollapsed, this)));
   int row = 1;
   for(const pair<EntitlementKey, MarketDataTypeSet>& entitlement :
       m_entitlement.m_applicability) {
-    MarketCode code;
-    if(entitlement.first.m_market == MarketCode()) {
-      code = entitlement.first.m_source;
+    Venue code;
+    if(entitlement.first.m_venue) {
+      code = entitlement.first.m_venue;
     } else {
-      code = entitlement.first.m_market;
+      code = entitlement.first.m_source;
     }
-    const MarketDatabase::Entry& market =
-      m_userProfile->GetMarketDatabase().FromCode(code);
+    auto& market = DEFAULT_VENUES.from(code);
     QLabel* marketLabel = new QLabel(
-      QString::fromStdString(market.m_displayName));
+      QString::fromStdString(market.m_display_name));
     m_ui->m_applicabilityTableLayout->addWidget(marketLabel, row,
       MARKET_COLUMN);
     MarketDataTypeSet applicability = entitlement.second;
     QHBoxLayout* bboCheckBox = MakeCheckboxLayout(
-      applicability.Test(MarketDataType::BBO_QUOTE));
+      applicability.test(MarketDataType::BBO_QUOTE));
     m_ui->m_applicabilityTableLayout->addLayout(bboCheckBox, row,
       BBO_COLUMN);
-    QHBoxLayout* marketQuoteCheckBox = MakeCheckboxLayout(
-      applicability.Test(MarketDataType::MARKET_QUOTE));
-    m_ui->m_applicabilityTableLayout->addLayout(marketQuoteCheckBox, row,
-      MARKET_QUOTES_COLUMN);
     QHBoxLayout* bookQuoteCheckBox = MakeCheckboxLayout(
-      applicability.Test(MarketDataType::BOOK_QUOTE));
+      applicability.test(MarketDataType::BOOK_QUOTE));
     m_ui->m_applicabilityTableLayout->addLayout(bookQuoteCheckBox, row,
       BOOK_QUOTES_COLUMN);
     QHBoxLayout* timeAndSalesCheckBox = MakeCheckboxLayout(
-      applicability.Test(MarketDataType::TIME_AND_SALE));
+      applicability.test(MarketDataType::TIME_AND_SALE));
     m_ui->m_applicabilityTableLayout->addLayout(timeAndSalesCheckBox, row,
       TIME_AND_SALES_COLUMN);
     QHBoxLayout* imbalancesCheckBox = MakeCheckboxLayout(
-      applicability.Test(MarketDataType::ORDER_IMBALANCE));
+      applicability.test(MarketDataType::ORDER_IMBALANCE));
     m_ui->m_applicabilityTableLayout->addLayout(imbalancesCheckBox, row,
       IMBALANCES_COLUMN);
     ++row;
@@ -141,7 +132,7 @@ EntitlementEntryWidget::EntitlementEntryWidget(Ref<UserProfile> userProfile,
 EntitlementEntryWidget::~EntitlementEntryWidget() {}
 
 void EntitlementEntryWidget::OnEntitlementGranted(const DirectoryEntry& entry) {
-  if(entry != m_entitlement.m_groupEntry) {
+  if(entry != m_entitlement.m_group_entry) {
     return;
   }
   m_ui->m_entitlementLabel->blockSignals(true);
@@ -150,7 +141,7 @@ void EntitlementEntryWidget::OnEntitlementGranted(const DirectoryEntry& entry) {
 }
 
 void EntitlementEntryWidget::OnEntitlementRevoked(const DirectoryEntry& entry) {
-  if(entry != m_entitlement.m_groupEntry) {
+  if(entry != m_entitlement.m_group_entry) {
     return;
   }
   m_ui->m_entitlementLabel->blockSignals(true);
@@ -160,19 +151,19 @@ void EntitlementEntryWidget::OnEntitlementRevoked(const DirectoryEntry& entry) {
 
 void EntitlementEntryWidget::OnEntitlementChecked(int checkState) {
   if(checkState == Qt::Checked) {
-    m_model->Grant(m_entitlement.m_groupEntry);
+    m_model->Grant(m_entitlement.m_group_entry);
   } else {
-    m_model->Revoke(m_entitlement.m_groupEntry);
+    m_model->Revoke(m_entitlement.m_group_entry);
   }
   m_ui->m_entitlementLabel->blockSignals(true);
   m_ui->m_entitlementLabel->setChecked(
-    m_model->HasEntitlement(m_entitlement.m_groupEntry));
+    m_model->HasEntitlement(m_entitlement.m_group_entry));
   m_ui->m_entitlementLabel->blockSignals(false);
 }
 
 void EntitlementEntryWidget::OnEntitlementClicked() {
   m_ui->m_entitlementLabel->setChecked(
-    m_model->HasEntitlement(m_entitlement.m_groupEntry));
+    m_model->HasEntitlement(m_entitlement.m_group_entry));
 }
 
 void EntitlementEntryWidget::OnTableExpanded() {

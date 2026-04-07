@@ -11,10 +11,10 @@
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Styles/EvaluatedBlock.hpp"
 #include "Spire/Styles/PseudoElement.hpp"
-#include "Spire/Styles/Styles.hpp"
 #include "Spire/Styles/StyleSheet.hpp"
 
 namespace Spire::Styles {
+  template<typename T> class RevertExpression;
 
   /** Specifies whether an element is visible. */
   enum class Visibility {
@@ -122,6 +122,9 @@ namespace Spire::Styles {
        * @param target The stylist to link from this.
        */
       void link(Stylist& target);
+
+      /** Returns the set of matched Selectors. */
+      const std::unordered_set<Selector>& get_matches() const;
 
       /**
        * Directs this Stylist to match a Selector.

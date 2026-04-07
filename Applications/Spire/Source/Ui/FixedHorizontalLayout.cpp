@@ -1,4 +1,5 @@
 #include "Spire/Ui/FixedHorizontalLayout.hpp"
+#include "Spire/Spire/ListModel.hpp"
 
 using namespace boost;
 using namespace Spire;
@@ -7,6 +8,11 @@ FixedHorizontalLayout::FixedHorizontalLayout(QWidget* parent)
     : QLayout(parent) {
   setSpacing(0);
   setContentsMargins({});
+}
+
+void FixedHorizontalLayout::move(int source, int destination) {
+  move_element(m_items, source, destination);
+  update();
 }
 
 void FixedHorizontalLayout::addItem(QLayoutItem* item) {

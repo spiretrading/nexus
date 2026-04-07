@@ -8,18 +8,17 @@
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace Beam;
-using namespace Beam::SignalHandling;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  void insert_proxies(
-      const Stylist& root, std::unordered_set<const Stylist*>& proxies) {
+  template<typename F>
+  void for_each_proxy(const Stylist& root, F f) {
     for(auto& proxy : root.get_proxies()) {
-      proxies.insert(proxy);
-      insert_proxies(*proxy, proxies);
+      f(*proxy);
+      for_each_proxy(*proxy, f);
     }
   }
 
@@ -48,7 +47,11 @@ namespace {
       }
       m_link_connection = stylist.connect_link_signal(
         std::bind_front(&ChildObserver::on_link, this));
-      insert_proxies(stylist, children);
+      for_each_proxy(stylist, [&] (auto& proxy) {
+        if(add(proxy)) {
+          children.insert(&proxy);
+        }
+      });
       if(!children.empty()) {
         m_on_update(std::move(children), {});
       }
@@ -83,7 +86,7 @@ namespace {
       }
       auto connection = stylist.connect_delete_signal(
         std::bind_front(&ChildObserver::remove, this, std::ref(child)));
-      m_delete_connections.AddConnection(&child, connection);
+      m_delete_connections.add(&child, connection);
       m_children_stylists.insert(i, std::pair(&child, &stylist));
       return true;
     }
@@ -93,7 +96,7 @@ namespace {
       if(i == m_children_stylists.end()) {
         return;
       }
-      m_delete_connections.Disconnect(&child);
+      m_delete_connections.disconnect(&child);
       auto stylist = i->second;
       m_children_stylists.erase(i);
       m_on_update({}, {stylist});
@@ -133,7 +136,7 @@ SelectConnection Spire::Styles::select(const ChildSelector& selector,
 }
 
 std::size_t std::hash<ChildSelector>::operator ()(
-    const ChildSelector& selector) const {
+    const ChildSelector& selector) const noexcept {
   auto seed = std::size_t(0);
   hash_combine(seed, std::hash<Selector>()(selector.get_base()));
   hash_combine(seed, std::hash<Selector>()(selector.get_child()));

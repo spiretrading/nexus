@@ -1,13 +1,8 @@
 #ifndef SPIRE_SCALAR_FILTER_PANEL_HPP
 #define SPIRE_SCALAR_FILTER_PANEL_HPP
-#include <memory>
-#include <type_traits>
-#include <QEvent>
-#include <QWidget>
-#include <boost/optional/optional.hpp>
-#include <boost/signals2/connection.hpp>
-#include "Spire/Spire/Decimal.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/FieldValueModel.hpp"
+#include "Spire/Spire/ScalarValueModelDecorator.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
@@ -16,7 +11,6 @@
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -51,161 +45,99 @@ namespace Spire {
       using RangeModel = ValueModel<Range>;
 
       /**
-       * Signals a submission to the range of values.
-       * @param submission The submitted range.
-       */
-      using SubmitSignal = Signal<void (const Range& submission)>;
-
-      /**
-       * Constructs a ScalarFilterPanel using a local model representing an
-       * unbounded range.
-       * @param title The title of the panel.
-       * @param parent The parent widget showing the panel.
-       */
-      ScalarFilterPanel(QString title, QWidget& parent);
-
-      /**
        * Constructs a ScalarFilterPanel.
-       * @param range The range of permissible values.
-       * @param title The title of the panel.
-       * @param parent The parent widget that shows the panel.
+       * @param current The current value model.
+       * @param parent The parent widget.
        */
-      ScalarFilterPanel(
-        std::shared_ptr<RangeModel> range, QString title, QWidget& parent);
+      explicit ScalarFilterPanel(
+        std::shared_ptr<RangeModel> current, QWidget* parent = nullptr);
 
-      /** Returns the permissible range of values. */
-      const std::shared_ptr<RangeModel>& get_range() const;
-
-      /** Connects a slot to the submit signal. */
-      boost::signals2::connection connect_submit_signal(
-        const typename SubmitSignal::slot_type& slot) const;
+      /** Returns the current value model. */
+      const std::shared_ptr<RangeModel>& get_current() const;
 
     protected:
-      bool event(QEvent* event) override;
+      void showEvent(QShowEvent* event) override;
 
     private:
-      mutable SubmitSignal m_submit_signal;
-      std::shared_ptr<RangeModel> m_range;
-      FilterPanel* m_filter_panel;
+      std::shared_ptr<RangeModel> m_current;
+      Range m_default_range;
       ScalarBox* m_min_box;
-      ScalarBox* m_max_box;
 
-      static ScalarBox* make_scalar_box(const boost::optional<Type>& current);
-      static QHBoxLayout* make_row_layout(QString label, ScalarBox& box);
+      static TextBox* make_label_box(const QString& label);
+      static ScalarBox* make_scalar_box(
+        std::shared_ptr<ScalarValueModel<boost::optional<Type>>> current);
       void on_reset();
-      void on_submit_min(const boost::optional<Type>& submission);
-      void on_submit_max(const boost::optional<Type>& submission);
   };
 
   template<typename T>
-  ScalarFilterPanel<T>::ScalarFilterPanel(QString title, QWidget& parent)
-    : ScalarFilterPanel(std::make_shared<LocalValueModel<Range>>(),
-        std::move(title), parent) {}
-
-  template<typename T>
   ScalarFilterPanel<T>::ScalarFilterPanel(
-      std::shared_ptr<RangeModel> range, QString title, QWidget& parent)
-      : QWidget(&parent),
-        m_range(std::move(range)) {
-    m_filter_panel = new FilterPanel(std::move(title), this, parent);
-    m_filter_panel->connect_reset_signal([=] { on_reset(); });
-    m_min_box = make_scalar_box(m_range->get().m_min);
-    auto min_layout = make_row_layout(tr("Min"), *m_min_box);
-    auto layout = make_vbox_layout(this);
-    layout->addLayout(min_layout);
-    layout->addSpacing(scale_height(10));
-    m_max_box = make_scalar_box(m_range->get().m_max);
-    auto max_layout = make_row_layout(tr("Max"), *m_max_box);
-    layout->addLayout(max_layout);
-    m_min_box->connect_submit_signal(
-      std::bind_front(&ScalarFilterPanel::on_submit_min, this));
-    m_max_box->connect_submit_signal(
-      std::bind_front(&ScalarFilterPanel::on_submit_max, this));
+      std::shared_ptr<RangeModel> current, QWidget* parent)
+      : QWidget(parent),
+        m_current(std::move(current)),
+        m_default_range(m_current->get()) {
+    auto container = new QWidget();
+    auto layout = make_hbox_layout(container);
+    layout->addWidget(make_label_box(tr("Min")));
+    m_min_box = make_scalar_box(make_scalar_value_model_decorator(
+      make_field_value_model(m_current, &Range::m_min)));
+    layout->addWidget(m_min_box, 1);
+    layout->addSpacing(scale_width(18));
+    layout->addWidget(make_label_box(tr("Max")));
+    auto max_box = make_scalar_box(make_scalar_value_model_decorator(
+      make_field_value_model(m_current, &Range::m_max)));
+    layout->addWidget(max_box, 1);
+    layout->addStretch();
+    container->setMinimumWidth(layout->minimumSize().width());
+    auto body = new QWidget();
+    body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    enclose(*body, *container);
+    auto panel = new FilterPanel(*body);
+    panel->connect_reset_signal(
+      std::bind_front(&ScalarFilterPanel::on_reset, this));
+    enclose(*this, *panel);
+    Styles::proxy_style(*this, *panel);
   }
 
   template<typename T>
   const std::shared_ptr<typename ScalarFilterPanel<T>::RangeModel>&
-      ScalarFilterPanel<T>::get_range() const {
-    return m_range;
+      ScalarFilterPanel<T>::get_current() const {
+    return m_current;
   }
 
   template<typename T>
-  boost::signals2::connection ScalarFilterPanel<T>::connect_submit_signal(
-      typename const SubmitSignal::slot_type& slot) const {
-    return m_submit_signal.connect(slot);
+  void ScalarFilterPanel<T>::showEvent(QShowEvent* event) {
+    QWidget::showEvent(event);
+    m_min_box->setFocus();
   }
 
   template<typename T>
-  bool ScalarFilterPanel<T>::event(QEvent* event) {
-    if(event->type() == QEvent::ShowToParent) {
-      m_filter_panel->show();
-      focusNextChild();
-    }
-    return QWidget::event(event);
+  TextBox* ScalarFilterPanel<T>::make_label_box(const QString& label) {
+    auto box = make_label(label);
+    box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Preferred);
+    Styles::update_style(*box, [] (auto& style) {
+      style.get(Styles::Any()).set(Styles::PaddingRight(scale_width(8)));
+    });
+    return box;
   }
 
   template<typename T>
   typename ScalarFilterPanel<T>::ScalarBox*
       ScalarFilterPanel<T>::make_scalar_box(
-        const boost::optional<Type>& current) {
-    auto field = [&] {
-      auto box = new ScalarBox();
-      auto width = [] {
-        if constexpr(std::is_same_v<ScalarBox, DurationBox>) {
-          return 132;
-        } else {
-          return 120;
-        }
-      }();
-      box->setFixedSize(scale(width, 26));
-      return box;
-    }();
-    field->get_current()->set(current);
-    return field;
-  }
-
-  template<typename T>
-  QHBoxLayout* ScalarFilterPanel<T>::make_row_layout(
-      QString label, ScalarBox& box) {
-    auto label_box = new TextBox(std::move(label));
-    label_box->set_read_only(true);
-    label_box->setFocusPolicy(Qt::NoFocus);
-    auto layout = make_hbox_layout();
-    layout->addWidget(label_box);
-    layout->addSpacing(scale_width(18));
-    layout->addStretch();
-    layout->addWidget(&box);
-    return layout;
+        std::shared_ptr<ScalarValueModel<boost::optional<Type>>> current) {
+    auto box = new ScalarBox(std::move(current));
+    if constexpr(std::is_same_v<ScalarBox, DurationBox>) {
+      box->setFixedWidth(box->layout()->minimumSize().width());
+    } else {
+      box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+      box->setMinimumWidth(scale_width(80));
+      box->setMaximumWidth(scale_width(120));
+    }
+    return box;
   }
 
   template<typename T>
   void ScalarFilterPanel<T>::on_reset() {
-    m_range->set({boost::none, boost::none});
-    m_submit_signal({boost::none, boost::none});
-  }
-
-  template<typename T>
-  void ScalarFilterPanel<T>::on_submit_min(
-      const boost::optional<Type>& submission) {
-    auto range = Range(submission, m_range->get().m_max);
-    if(range.m_max && submission && *range.m_max < *submission) {
-      range.m_max = submission;
-      m_max_box->get_current()->set(submission);
-    }
-    m_range->set(range);
-    m_submit_signal(range);
-  }
-
-  template<typename T>
-  void ScalarFilterPanel<T>::on_submit_max(
-      const boost::optional<Type>& submission) {
-    auto range = Range(m_range->get().m_min, submission);
-    if(range.m_min && submission && *range.m_min > *submission) {
-      range.m_min = submission;
-      m_min_box->get_current()->set(submission);
-    }
-    m_range->set(range);
-    m_submit_signal(range);
+    m_current->set(m_default_range);
   }
 
   using DecimalFilterPanel = ScalarFilterPanel<DecimalBox>;

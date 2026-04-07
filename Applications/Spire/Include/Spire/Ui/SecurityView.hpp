@@ -5,7 +5,6 @@
 #include <QStackedWidget>
 #include "Spire/Spire/SecurityDeck.hpp"
 #include "Spire/Ui/SecurityDialog.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -78,13 +77,13 @@ namespace Spire {
   };
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Spire::SecurityView::State> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Spire::SecurityView::State& value,
+    template<Beam::IsShuttle S>
+    void operator ()(S& shuttle, Spire::SecurityView::State& value,
         unsigned int version) const {
-      shuttle.Shuttle("securities", value.m_securities);
+      shuttle.shuttle("securities", value.m_securities);
     }
   };
 }

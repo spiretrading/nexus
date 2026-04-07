@@ -1,6 +1,5 @@
 #ifndef SPIRE_QUANTITY_SETTING_BOX_HPP
 #define SPIRE_QUANTITY_SETTING_BOX_HPP
-#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/KeyBindings/OrderTaskArguments.hpp"
 #include "Spire/Ui/EnumBox.hpp"
 

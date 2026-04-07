@@ -65,13 +65,9 @@ namespace Spire {
         FromText from_text);
 
       QValidator::State get_state() const override;
-
       const QString& get() const override;
-
       QValidator::State test(const QString& value) const override;
-
       QValidator::State set(const QString& value) override;
-
       boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 

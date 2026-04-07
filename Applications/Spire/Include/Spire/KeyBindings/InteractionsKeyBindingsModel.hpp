@@ -3,7 +3,8 @@
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <Beam/SignalHandling/ConnectionGroup.hpp>
-#include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Side.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 
@@ -47,7 +48,7 @@ namespace Spire {
       void reset();
 
     private:
-      friend struct Beam::Serialization::Shuttle<InteractionsKeyBindingsModel>;
+      friend struct Beam::Shuttle<InteractionsKeyBindingsModel>;
       bool m_is_detached;
       std::shared_ptr<QuantityModel> m_default_quantity;
       std::array<std::shared_ptr<QuantityModel>, MODIFIER_COUNT>
@@ -55,7 +56,7 @@ namespace Spire {
       std::array<std::shared_ptr<MoneyModel>, MODIFIER_COUNT>
         m_price_increments;
       std::shared_ptr<BooleanModel> m_is_cancel_on_fill;
-      Beam::SignalHandling::ConnectionGroup m_connections;
+      Beam::ConnectionGroup m_connections;
 
       void on_write();
   };
@@ -86,30 +87,30 @@ namespace Spire {
     Nexus::Side side);
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Spire::InteractionsKeyBindingsModel> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Spire::InteractionsKeyBindingsModel& value, unsigned int version) {
-      shuttle.Shuttle("is_detached", value.m_is_detached);
-      shuttle.Shuttle("default_quantity",
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::InteractionsKeyBindingsModel& value,
+        unsigned int version) const {
+      shuttle.shuttle("is_detached", value.m_is_detached);
+      shuttle.shuttle("default_quantity",
         static_cast<Spire::ValueModel<Nexus::Quantity>&>(
           *value.m_default_quantity));
       auto count = Spire::InteractionsKeyBindingsModel::MODIFIER_COUNT;
-      shuttle.StartSequence("quantity_increments", count);
+      shuttle.start_sequence("quantity_increments", count);
       for(auto& increment : value.m_quantity_increments) {
-        shuttle.Shuttle(
+        shuttle.shuttle(
           static_cast<Spire::ValueModel<Nexus::Quantity>&>(*increment));
       }
-      shuttle.EndSequence();
-      shuttle.StartSequence("price_increments", count);
+      shuttle.end_sequence();
+      shuttle.start_sequence("price_increments", count);
       for(auto& increment : value.m_price_increments) {
-        shuttle.Shuttle(
+        shuttle.shuttle(
           static_cast<Spire::ValueModel<Nexus::Money>&>(*increment));
       }
-      shuttle.EndSequence();
-      shuttle.Shuttle("is_cancel_on_fill", *value.m_is_cancel_on_fill);
+      shuttle.end_sequence();
+      shuttle.shuttle("is_cancel_on_fill", *value.m_is_cancel_on_fill);
     }
   };
 }

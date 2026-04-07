@@ -12,8 +12,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
@@ -46,14 +44,14 @@ void InteractionsProperties::Load(Out<UserProfile> userProfile) {
   }
   try {
     BasicIStreamReader<ifstream> reader(
-      Initialize(interactionsFilePath, ios::binary));
+      init(interactionsFilePath, ios::binary));
     SharedBuffer buffer;
-    reader.Read(Store(buffer));
+    reader.read(out(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-    receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(userProfile->GetInteractionProperties());
+    receiver.set(Ref(buffer));
+    receiver.shuttle(userProfile->GetInteractionProperties());
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load key bindings, using defaults."));
@@ -66,14 +64,14 @@ void InteractionsProperties::Save(const UserProfile& userProfile) {
   path keyBindingsFilePath = userProfile.GetProfilePath() / "interactions.dat";
   try {
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
     SharedBuffer buffer;
-    sender.SetSink(Ref(buffer));
-    sender.Shuttle(userProfile.GetInteractionProperties());
+    sender.set(Ref(buffer));
+    sender.shuttle(userProfile.GetInteractionProperties());
     BasicOStreamWriter<ofstream> writer(
-      Initialize(keyBindingsFilePath, ios::binary));
-    writer.Write(buffer);
+      init(keyBindingsFilePath, ios::binary));
+    writer.write(buffer);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save key bindings."));

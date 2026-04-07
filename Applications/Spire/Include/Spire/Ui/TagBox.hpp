@@ -4,9 +4,13 @@
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/TextBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class GlobalPositionObserver;
+  class InfoTip;
+  class ScrollableListBox;
+  class ScrollBar;
+  class TextAreaBox;
 
   /** Displays a list of tags within a box. */
   class TagBox : public QWidget {
@@ -51,13 +55,13 @@ namespace Spire {
         const SubmitSignal::slot_type& slot) const;
 
       QSize minimumSizeHint() const override;
-
       QSize sizeHint() const override;
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
       void changeEvent(QEvent* event) override;
+      bool focusNextPrevChild(bool next) override;
       void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
 
@@ -74,33 +78,36 @@ namespace Spire {
       QWidget* m_text_focus_proxy;
       FocusObserver m_focus_observer;
       std::unique_ptr<GlobalPositionObserver> m_text_box_position_observer;
-      Styles::Overflow m_list_view_overflow;
+      boost::optional<Styles::Overflow> m_list_view_overflow;
       QString m_placeholder;
       bool m_is_read_only;
       QMargins m_input_box_border;
       QMargins m_input_box_padding;
       QMargins m_list_view_padding;
       int m_list_item_gap;
+      int m_list_overflow_gap;
       int m_min_scroll_height;
       int m_horizontal_scroll_bar_end_range;
       int m_vertical_scroll_bar_end_range;
+      bool m_is_transaction;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_view_style_connection;
       boost::signals2::scoped_connection m_text_area_box_style_connection;
       mutable boost::optional<QSize> m_size_hint;
 
       QWidget* make_tag(const std::shared_ptr<AnyListModel>& model, int index);
+      int get_available_width() const;
+      int get_height_for_width(int width) const;
+      void set_overflow(Styles::Overflow overflow);
       void install_text_proxy_event_filter();
       void scroll_to_text_box();
       void update_placeholder();
       void update_scroll_bar_end_range(ScrollBar& scroll_bar, int& end_range);
-      void update_tag_size_policy();
       void update_tags_read_only();
       void update_tip();
       void update_tooltip();
       void update_overflow();
       void update_vertical_scroll_bar_visible();
-      void update_size_constraint();
       void on_focus(FocusObserver::State state);
       void on_operation(const AnyListModel::Operation& operation);
       void on_text_box_current(const QString& current);

@@ -10,7 +10,6 @@
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardCell.hpp"
 #include "Spire/Dashboard/DashboardRowBuilder.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
@@ -78,7 +77,7 @@ namespace Spire {
         Beam::Ref<UserProfile> userProfile) const;
 
     private:
-      friend struct Beam::Serialization::Shuttle<DashboardModelSchema>;
+      friend struct Beam::Shuttle<DashboardModelSchema>;
       std::vector<std::string> m_columnNames;
       std::vector<DashboardCell::Value> m_rowIndices;
       std::unique_ptr<DashboardRowBuilder> m_rowBuilder;
@@ -86,18 +85,16 @@ namespace Spire {
 }
 
 namespace Beam {
-namespace Serialization {
   template<>
   struct Shuttle<Spire::DashboardModelSchema> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Spire::DashboardModelSchema& value,
-        unsigned int version) {
-      shuttle.Shuttle("column_names", value.m_columnNames);
-      shuttle.Shuttle("row_indices", value.m_rowIndices);
-      shuttle.Shuttle("row_builder", value.m_rowBuilder);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::DashboardModelSchema& value,
+        unsigned int version) const {
+      shuttle.shuttle("column_names", value.m_columnNames);
+      shuttle.shuttle("row_indices", value.m_rowIndices);
+      shuttle.shuttle("row_builder", value.m_rowBuilder);
     }
   };
-}
 }
 
 #endif

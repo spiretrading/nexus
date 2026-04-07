@@ -3,7 +3,7 @@
 #include <utility>
 #include <Aspen/State.hpp>
 #include <Beam/Queues/QueueWriter.hpp>
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 
 namespace Spire {
@@ -16,7 +16,7 @@ namespace Spire {
   template<typename P>
   class OrderPublisherReactor {
     public:
-      using Type = const Nexus::OrderExecutionService::Order*;
+      using Type = std::shared_ptr<Nexus::Order>;
 
       /** The type of reactor producing the orders to push. */
       using Producer = P;
@@ -27,22 +27,21 @@ namespace Spire {
        * @param producer The reactor producing the orders to push.
        */
       OrderPublisherReactor(
-        Beam::QueueWriter<const Nexus::OrderExecutionService::Order*>& queue,
+        Beam::QueueWriter<std::shared_ptr<Nexus::Order>>& queue,
         Producer producer);
 
       Aspen::State commit(int sequence) noexcept;
 
-      const Nexus::OrderExecutionService::Order* eval() const;
+      const std::shared_ptr<Nexus::Order>& eval() const;
 
     private:
-      Beam::QueueWriter<const Nexus::OrderExecutionService::Order*>* m_queue;
+      Beam::QueueWriter<std::shared_ptr<Nexus::Order>>* m_queue;
       Producer m_producer;
   };
 
   template<typename P>
   OrderPublisherReactor<P>::OrderPublisherReactor(
-    Beam::QueueWriter<const Nexus::OrderExecutionService::Order*>& queue,
-    Producer producer)
+    Beam::QueueWriter<std::shared_ptr<Nexus::Order>>& queue, Producer producer)
     : m_queue(&queue),
       m_producer(std::move(producer)) {}
 
@@ -51,7 +50,7 @@ namespace Spire {
     auto state = m_producer.commit(sequence);
     if(Aspen::has_evaluation(state)) {
       try {
-        m_queue->Push(m_producer.eval());
+        m_queue->push(m_producer.eval());
       } catch(...) {
       }
     }
@@ -59,8 +58,7 @@ namespace Spire {
   }
 
   template<typename P>
-  const Nexus::OrderExecutionService::Order*
-      OrderPublisherReactor<P>::eval() const {
+  const std::shared_ptr<Nexus::Order>& OrderPublisherReactor<P>::eval() const {
     return m_producer.eval();
   }
 }

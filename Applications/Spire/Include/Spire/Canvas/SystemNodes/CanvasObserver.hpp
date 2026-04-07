@@ -3,7 +3,6 @@
 #include <memory>
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Reactors/Reactors.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/SignalHandling/ScopedSlotAdaptor.hpp>
 #include <boost/any.hpp>
@@ -11,7 +10,6 @@
 #include <QTimer>
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
@@ -53,7 +51,7 @@ namespace Spire {
       boost::any m_value;
       mutable UpdateSignal m_updateSignal;
       QTimer m_translateTimer;
-      Beam::SignalHandling::ScopedSlotAdaptor m_callbacks;
+      Beam::ScopedSlotAdaptor m_callbacks;
       EventHandler m_eventHandler;
 
       CanvasObserver(const CanvasObserver&) = delete;

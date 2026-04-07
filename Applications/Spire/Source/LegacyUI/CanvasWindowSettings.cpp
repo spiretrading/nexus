@@ -27,7 +27,7 @@ string CanvasWindowSettings::GetName() const {
 QWidget* CanvasWindowSettings::Reopen(Ref<UserProfile> userProfile) const {
   auto window = new CanvasWindow(Ref(userProfile));
   window->setAttribute(Qt::WA_DeleteOnClose);
-  Apply(Ref(userProfile), Store(*window));
+  Apply(Ref(userProfile), out(*window));
   return window;
 }
 

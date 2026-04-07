@@ -18,7 +18,7 @@ const CandlestickChartPlot::CandlestickValue&
 }
 
 void CandlestickChartPlot::Update(ChartValue value) {
-  m_value.Update(value);
+  m_value.update(value);
   m_updateSignal();
 }
 

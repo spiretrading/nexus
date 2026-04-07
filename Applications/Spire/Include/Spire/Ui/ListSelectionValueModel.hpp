@@ -3,7 +3,6 @@
 #include <memory>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -15,17 +14,11 @@ namespace Spire {
   class ListSelectionValueModel : public ListModel<T> {
     public:
       using Type = typename ListModel<T>::Type;
-
       using OperationSignal = typename ListModel<T>::OperationSignal;
-
       using AddOperation = typename ListModel<T>::AddOperation;
-
       using MoveOperation = typename ListModel<T>::MoveOperation;
-
       using PreRemoveOperation = typename ListModel<T>::PreRemoveOperation;
-
       using RemoveOperation = typename ListModel<T>::RemoveOperation;
-
       using UpdateOperation = typename ListModel<T>::UpdateOperation;
 
       /**

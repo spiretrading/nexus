@@ -6,38 +6,22 @@
 #include <QSortFilterProxyModel>
 #include <QStyledItemDelegate>
 #include <QVariant>
+#include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
+#include "Nexus/Definitions/Region.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
+#include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/Canvas/Tasks/Task.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/LegacyUI/LegacyUI.hpp"
 
 namespace Spire::LegacyUI {
-
-  /*! \struct MarketToken
-      \brief Wraps a MarketCode so that it can be displayed in a model.
-   */
-  struct MarketToken {
-
-    //! Wraps the MarketCode.
-    Nexus::MarketCode m_code;
-
-    //! Constructs a default MarketToken.
-    MarketToken();
-
-    //! Wraps a MarketCode.
-    /*!
-      \param code The MarketCode to wrap.
-    */
-    MarketToken(Nexus::MarketCode code);
-  };
 
   /*! \struct PositionSideToken
       \brief Wraps a Side so that it can be displayed within the context of a
@@ -47,15 +31,6 @@ namespace Spire::LegacyUI {
 
     //! Wraps the Side.
     Nexus::Side m_side;
-
-    //! Constructs a default PositionSideToken.
-    PositionSideToken();
-
-    //! Wraps a Side.
-    /*!
-      \param side The Side to wrap.
-    */
-    PositionSideToken(Nexus::Side side);
 
     //! Returns the string representation of this Side.
     QString ToString() const;
@@ -80,11 +55,10 @@ Q_DECLARE_METATYPE(Nexus::Security);
 Q_DECLARE_METATYPE(Nexus::Side);
 Q_DECLARE_METATYPE(Nexus::TimeAndSale::Condition);
 Q_DECLARE_METATYPE(Nexus::TimeInForce);
+Q_DECLARE_METATYPE(Nexus::Venue);
+Q_DECLARE_METATYPE(Spire::LegacyUI::PositionSideToken);
 Q_DECLARE_METATYPE(Spire::Task::State);
 #endif
-
-Q_DECLARE_METATYPE(Spire::LegacyUI::MarketToken);
-Q_DECLARE_METATYPE(Spire::LegacyUI::PositionSideToken);
 
 namespace Spire::LegacyUI {
 
@@ -103,37 +77,26 @@ namespace Spire::LegacyUI {
   //! Registers the custom QVariant types.
   void RegisterCustomQtVariants();
 
-  //! Returns the string representation of a Security, including wild-cards.
-  /*!
-    \param security The Security to represent.
-    \param marketDatabase The MarketDatabase used to represent the MarketCode.
-    \param countryDatabase The CountryDatabase used to represent the
-           CountryCode.
-    \return The string representation of the <i>security</i>.
-  */
-  std::string ToWildCardString(const Nexus::Security& security,
-    const Nexus::MarketDatabase& marketDatabase,
-    const Nexus::CountryDatabase& countryDatabase);
+  //! Returns the text representation of a CountryCode.
+  QString displayText(Nexus::CountryCode country);
 
-  //! Parses a Security containing wild cards.
-  /*!
-    \param source The string to parse.
-    \param marketDatabase The database containing all MarketCodes.
-    \param countryDatabase The database containing all CountryCodes.
-    \return The Security represented by the <i>source</i>.
-  */
-  boost::optional<Nexus::Security> ParseWildCardSecurity(
-    const std::string& source, const Nexus::MarketDatabase& marketDatabase,
-    const Nexus::CountryDatabase& countryDatabase);
+  //! Returns the text representation of a Region.
+  QString displayText(const Nexus::Region& region);
 
-  //! Returns the test representation of a Side.
+  //! Returns the text representation of a Security.
+  QString displayText(const Nexus::Security& security);
+
+  //! Returns the text representation of a Side.
   const QString& displayText(Nexus::Side side);
 
-  //! Returns the test representation of an OrderStatus.
+  //! Returns the text representation of an OrderStatus.
   const QString& displayText(Nexus::OrderStatus status);
 
-  //! Returns the test representation of an OrderType.
+  //! Returns the text representation of an OrderType.
   const QString& displayText(Nexus::OrderType type);
+
+  //! Returns the text representation of a Venue.
+  QString displayText(Nexus::Venue venue);
 
   /*! \class CustomVariantItemDelegate
       \brief Extends Qt's item delegate to support the custom QVariant types.

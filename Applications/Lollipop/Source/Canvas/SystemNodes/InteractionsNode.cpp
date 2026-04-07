@@ -1,6 +1,5 @@
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
 #include <boost/throw_exception.hpp>
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 #include "Spire/Canvas/Operations/CanvasTypeCompatibilityException.hpp"
 #include "Spire/Canvas/Types/IntegerType.hpp"
@@ -25,14 +24,14 @@ namespace {
 }
 
 InteractionsNode::InteractionsNode() {
-  Setup(Security(), GetDefaultMarketDatabase(),
+  Setup(Security(), DEFAULT_VENUES,
     InteractionsProperties::GetDefaultProperties());
 }
 
 InteractionsNode::InteractionsNode(Security security,
-    const MarketDatabase& marketDatabase,
+    const VenueDatabase& venueDatabase,
     const InteractionsProperties& properties) {
-  Setup(std::move(security), marketDatabase, properties);
+  Setup(std::move(security), venueDatabase, properties);
 }
 
 const InteractionsProperties& InteractionsNode::GetProperties() const {
@@ -81,13 +80,13 @@ unique_ptr<CanvasNode> InteractionsNode::Clone() const {
 }
 
 void InteractionsNode::Setup(Security security,
-    const MarketDatabase& marketDatabase,
+    const VenueDatabase& venueDatabase,
     const InteractionsProperties& properties) {
   m_properties = properties;
   SetText("");
   SetType(IntegerType::GetInstance());
   unique_ptr<CanvasNode> securityNode = std::make_unique<SecurityNode>(
-    std::move(security), marketDatabase);
+    std::move(security), venueDatabase);
   securityNode = securityNode->SetVisible(false);
   AddChild("security", std::move(securityNode));
   auto defaultQuantityNode = LinkedNode::SetReferent(

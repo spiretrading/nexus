@@ -18,18 +18,19 @@ using namespace Spire;
 
 std::shared_ptr<SecurityInfoQueryModel> populate_securities() {
   auto security_infos = std::vector<SecurityInfo>();
-  security_infos.emplace_back(ParseSecurity("MRU.TSX"), "Metro Inc.", "", 0);
-  security_infos.emplace_back(ParseSecurity("MG.TSX"),
-    "Magna International Inc.", "", 0);
-  security_infos.emplace_back(ParseSecurity("MGA.TSX"),
-    "Mega Uranium Ltd.", "", 0);
-  security_infos.emplace_back(ParseSecurity("MGAB.TSX"),
-    "Mackenzie Global Fixed Income Alloc ETF", "", 0);
-  security_infos.emplace_back(ParseSecurity("MON.NYSE"), "Monsanto Co.", "", 0);
-  security_infos.emplace_back(ParseSecurity("MFC.TSX"),
-    "Manulife Financial Corporation", "", 0);
-  security_infos.emplace_back(ParseSecurity("MX.TSX"),
-    "Methanex Corporation", "", 0);
+  auto add_security = [&] (const Security& security, const std::string& name) {
+    if(security) {
+      security_infos.emplace_back(security, name, "", 0);
+    }
+  };
+  add_security(parse_security("MRU.TSX"), "Metro Inc.");
+  add_security(parse_security("MG.TSX"), "Magna International Inc.");
+  add_security(parse_security("MGA.TSX"), "Mega Uranium Ltd.");
+  add_security(parse_security("MGAB.TSX"),
+    "Mackenzie Global Fixed Income Alloc ETF");
+  add_security(parse_security("MON.NYSE"), "Monsanto Co.");
+  add_security(parse_security("MFC.TSX"), "Manulife Financial Corporation");
+  add_security(parse_security("MX.TSX"), "Methanex Corporation");
   auto model = std::make_shared<LocalQueryModel<SecurityInfo>>();
   for(auto& security_info : security_infos) {
     model->add(to_text(security_info.m_security).toLower(), security_info);
@@ -174,25 +175,36 @@ struct TimeAndSalesTestWindow : QWidget {
 };
 
 struct TimeAndSalesWindowController {
-  TimeAndSalesWindow m_time_and_sales_window;
+  std::shared_ptr<TimeAndSalesPropertiesWindowFactory> m_factory;
+  std::array<TimeAndSalesWindow*, 3> m_time_and_sales_windows;
   TimeAndSalesTestWindow m_time_and_sales_test_window;
 
   explicit TimeAndSalesWindowController(
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory)
 BEAM_SUPPRESS_THIS_INITIALIZER()
-      : m_time_and_sales_window(populate_securities(),
-          GetDefaultMarketDatabase(), std::move(factory),
-          std::bind_front(&TimeAndSalesWindowController::model_builder, this)),
+      : m_factory(std::move(factory)),
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
         m_time_and_sales_test_window(
           std::make_shared<DemoTimeAndSalesModel>()) {
-    m_time_and_sales_window.show();
-    m_time_and_sales_window.installEventFilter(&m_time_and_sales_test_window);
+    auto last_window = static_cast<TimeAndSalesWindow*>(nullptr);
+    for(auto window : m_time_and_sales_windows) {
+      window = new TimeAndSalesWindow(populate_securities(), m_factory,
+        std::bind_front(&TimeAndSalesWindowController::model_builder, this));
+      window->setAttribute(Qt::WA_DeleteOnClose);
+      window->show();
+      window->installEventFilter(&m_time_and_sales_test_window);
+      if(last_window != nullptr) {
+        window->move(last_window->pos().x() +
+          last_window->frameGeometry().width() + scale_width(50),
+          last_window->pos().y());
+      }
+      last_window = window;
+    }
     m_time_and_sales_test_window.setAttribute(Qt::WA_ShowWithoutActivating);
     m_time_and_sales_test_window.show();
-    m_time_and_sales_test_window.move(m_time_and_sales_window.pos().x() +
-      m_time_and_sales_window.frameGeometry().width() + scale_width(100),
-      m_time_and_sales_window.pos().y());
+    m_time_and_sales_test_window.move(last_window->pos().x() +
+      last_window->frameGeometry().width() + scale_width(50),
+      last_window->pos().y());
   }
 
   std::shared_ptr<TimeAndSalesModel> model_builder(const Security&) {

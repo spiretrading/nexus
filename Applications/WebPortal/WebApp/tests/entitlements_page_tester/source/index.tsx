@@ -1,187 +1,157 @@
 import * as Beam from 'beam';
-import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
-interface Properties {
-  displaySize: WebPortal.DisplaySize;
+class TestEntitlementsModel extends WebPortal.LocalEntitlementsModel {
+  public shouldFail = false;
+
+  public async submit(comment: string,
+      entitlements: Beam.Set<Beam.DirectoryEntry>,
+      effectiveDate: Beam.DateTime): Promise<void> {
+    console.log('Submit:');
+    console.log(`  Comment: ${comment}`);
+    console.log('  Entitlements:');
+    for(const entry of entitlements) {
+      console.log(`    - ${entry.name}`);
+    }
+    console.log(`  Effective Date: ${effectiveDate.toString()}`);
+    if(this.shouldFail) {
+      throw Error('Server issue');
+    }
+  }
 }
 
 interface State {
   roles: Nexus.AccountRoles;
-  checkedDB: Beam.Set<Beam.DirectoryEntry>;
-  currencyDB: Nexus.CurrencyDatabase;
-  marketDB: Nexus.MarketDatabase;
-  entitlementDB: Nexus.EntitlementDatabase;
-  status: string;
-  displayedStatus: string;
-  submitEnabled: boolean;
+  shouldFail: boolean;
 }
 
-/**  Displays and tests the CreateAccountPage. */
-class TestApp extends React.Component<Properties, State> {
-  constructor(props: Properties) {
+class TestApp extends React.Component<{}, State> {
+  constructor(props: {}) {
     super(props);
+    const roles = new Nexus.AccountRoles();
+    roles.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
     this.state = {
-      roles:  new Nexus.AccountRoles(),
-      entitlementDB: new Nexus.EntitlementDatabase(),
-      checkedDB: new Beam.Set<Beam.DirectoryEntry>(),
-      currencyDB: Nexus.buildDefaultCurrencyDatabase(),
-      marketDB: Nexus.buildDefaultMarketDatabase(),
-      status: '',
-      displayedStatus: '',
-      submitEnabled: false
+      roles,
+      shouldFail: false
     };
   }
 
   public render(): JSX.Element {
+    const isAdmin =
+      this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR);
     return (
-      <Dali.VBoxLayout width='100%' height='100%'>
-        <WebPortal.EntitlementsPage displaySize={this.props.displaySize}
-          marketDatabase={this.state.marketDB} roles={this.state.roles}
-          entitlements={this.state.entitlementDB} checked={this.state.checkedDB}
-          currencyDatabase={this.state.currencyDB}
-          onEntitlementClick={this.toggleCheckMark}
-          status={this.state.displayedStatus}
-          canSubmit={this.state.submitEnabled}
-          onSubmit={this.commentsSubmitted}/>
-        <div style={TestApp.STYLE.testingComponents}>
-          <button tabIndex={-1} onClick={() =>
-              this.changeRole(Nexus.AccountRoles.Role.ADMINISTRATOR)}>
-            ADMINISTRATOR
-          </button>
-          <button tabIndex={-1}
-              onClick={() => this.changeRole(Nexus.AccountRoles.Role.TRADER)}>
-            TRADER
-          </button>
-          <button tabIndex={-1}
-              onClick={() => this.changeRole(Nexus.AccountRoles.Role.MANAGER)}>
-            MANAGER
-          </button>
-          <button tabIndex={-1} onClick={() => this.changeStatus('')}>
-            NOT SUBMITTED
-          </button>
-          <button tabIndex={-1} onClick={() => this.changeStatus('Saved')}>
-            SUCCESSFUL SUBMIT
-          </button>
-          <button tabIndex={-1}
-              onClick={() => this.changeStatus('Server issue')}>
-            UNSUCCESSFUL SUBMIT
-          </button>
-          <button tabIndex={-1} onClick={this.toggleButtonEnabled}>
-            TOGGLE SUBMIT
-          </button>
+      <div style={STYLE.wrapper}>
+        <WebPortal.EntitlementsController
+          roles={this.state.roles}
+          model={this.model}
+          entitlements={this.entitlementDB}
+          currencyDatabase={this.currencyDB}
+          venueDatabase={this.venueDB}/>
+        <div style={STYLE.toolbar}>
+          <label style={STYLE.toggle}>
+            <input type='checkbox' checked={isAdmin}
+              onChange={this.onToggleAdmin}/>
+            Admin
+          </label>
+          <label style={STYLE.toggle}>
+            <input type='checkbox' checked={this.state.shouldFail}
+              onChange={this.onToggleError}/>
+            Error
+          </label>
         </div>
-      </Dali.VBoxLayout>);
+      </div>);
   }
 
-  public componentDidMount(): void {
-    this.setState({ roles: this.testAdmin });
-    this.testAdmin.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
-    this.testTrader.set(Nexus.AccountRoles.Role.TRADER);
-    this.testManager.set(Nexus.AccountRoles.Role.MANAGER);
-    this.buildEntitlementDB();
-  }
-
-  private changeRole(newRole: Nexus.AccountRoles.Role): void {
-    if(newRole === Nexus.AccountRoles.Role.ADMINISTRATOR) {
-      this.setState({ roles: this.testAdmin });
-    } else if(newRole === Nexus.AccountRoles.Role.TRADER) {
-      this.setState({ roles: this.testTrader });
-    } else if(newRole === Nexus.AccountRoles.Role.MANAGER) {
-      this.setState({ roles: this.testManager });
-    }
-  }
-
-  private changeStatus(newStatus: string) {
-    if(newStatus === '') {
-      this.setState({displayedStatus: ''});
-    } else if(newStatus !== this.state.status) {
-      this.setState({ status: newStatus});
-    }
-  }
-
-  private commentsSubmitted = (value: string) => {
-    this.setState({ displayedStatus: this.state.status.toString()});
-  }
-
-  private toggleButtonEnabled = () => {
-    this.setState(state => {submitEnabled: !state.submitEnabled});
-  }
-
-  private toggleCheckMark = (value: Beam.DirectoryEntry) => {
-    if(!this.state.checkedDB.test(value)) {
-      this.state.checkedDB.add(value);
+  private onToggleAdmin = () => {
+    const roles = this.state.roles.clone();
+    if(roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+      roles.unset(Nexus.AccountRoles.Role.ADMINISTRATOR);
     } else {
-      this.state.checkedDB.remove(value);
+      roles.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
     }
-    this.setState({checkedDB: this.state.checkedDB});
+    this.setState({roles});
   }
 
-  private buildEntitlementDB() {
-    const group =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 89, 'BOOP');
-    const group2 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 42, 'MEEP');
-    const group3 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 34, 'MEH');
-    const group4 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 35, 'MEH');
-    const group5 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 36, 'MEH');
-    const group6 =
-      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 37, 'MEH');
+  private onToggleError = () => {
+    this.model.shouldFail = !this.state.shouldFail;
+    this.setState({shouldFail: !this.state.shouldFail});
+  }
 
+  private model = (() => {
+    const checked = new Beam.Set<Beam.DirectoryEntry>();
+    checked.add(new Beam.DirectoryEntry(
+      Beam.DirectoryEntry.Type.ACCOUNT, 89, 'ASX Total'));
+    return new TestEntitlementsModel(
+      new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 123, 'test'),
+      checked);
+  })();
+
+  private entitlementDB = (() => {
+    const group1 = new Beam.DirectoryEntry(
+      Beam.DirectoryEntry.Type.ACCOUNT, 89, 'ASX Total');
+    const group2 = new Beam.DirectoryEntry(
+      Beam.DirectoryEntry.Type.ACCOUNT, 42, 'TSX Venture');
+    const group3 = new Beam.DirectoryEntry(
+      Beam.DirectoryEntry.Type.ACCOUNT, 34, 'TSX CDG');
+    const group4 = new Beam.DirectoryEntry(
+      Beam.DirectoryEntry.Type.ACCOUNT, 35, 'TSX TL1');
+    const group5 = new Beam.DirectoryEntry(
+      Beam.DirectoryEntry.Type.ACCOUNT, 36, 'CSE');
+    const group6 = new Beam.DirectoryEntry(
+      Beam.DirectoryEntry.Type.ACCOUNT, 37, 'Alpha APD');
     const dataset1 = new Nexus.MarketDataTypeSet(134);
-    const marketcode1 = new Nexus.MarketCode('XASX');
-    const ekey1 = new Nexus.EntitlementKey(marketcode1);
+    const venuecode1 = new Nexus.Venue('XASX');
+    const ekey1 = new Nexus.EntitlementKey(venuecode1);
     const dataset2 = new Nexus.MarketDataTypeSet(1);
-    const marketcode2 = new Nexus.MarketCode('XCIS');
-    const ekey2 = new Nexus.EntitlementKey(marketcode2);
-
-    const app = new Beam.Map<Nexus.EntitlementKey, Nexus.MarketDataTypeSet>();
-    app.set(ekey1, dataset1);
-    app.set(ekey2, dataset2);
+    const venuecode2 = new Nexus.Venue('XCIS');
+    const ekey2 = new Nexus.EntitlementKey(venuecode2);
+    const app1 = new Beam.Map<Nexus.EntitlementKey, Nexus.MarketDataTypeSet>();
+    app1.set(ekey1, dataset1);
+    app1.set(ekey2, dataset2);
     const app2 = new Beam.Map<Nexus.EntitlementKey, Nexus.MarketDataTypeSet>();
     app2.set(ekey2, dataset2);
+    const db = new Nexus.EntitlementDatabase();
+    db.add(new Nexus.EntitlementDatabase.Entry('ASX Total',
+      Nexus.Money.parse('68'), Nexus.DefaultCurrencies.USD, group1, app1));
+    db.add(new Nexus.EntitlementDatabase.Entry('TSX CDG',
+      Nexus.Money.parse('45'), Nexus.DefaultCurrencies.EUR, group3, app2));
+    db.add(new Nexus.EntitlementDatabase.Entry('TSX Venture',
+      Nexus.Money.parse('200'), Nexus.DefaultCurrencies.EUR, group2, app2));
+    db.add(new Nexus.EntitlementDatabase.Entry('TSX TL1',
+      Nexus.Money.parse('68'), Nexus.DefaultCurrencies.USD, group4, app1));
+    db.add(new Nexus.EntitlementDatabase.Entry('CSE',
+      Nexus.Money.parse('175'), Nexus.DefaultCurrencies.USD, group5, app1));
+    db.add(new Nexus.EntitlementDatabase.Entry('Alpha APD',
+      Nexus.Money.parse('0'), Nexus.DefaultCurrencies.USD, group6, app1));
+    return db;
+  })();
 
-    const entitlementEntry1 = new Nexus.EntitlementDatabase.Entry('ASX Total',
-      Nexus.Money.parse('68'), Nexus.DefaultCurrencies.USD, group, app);
-    const entitlementEntry2 = new Nexus.EntitlementDatabase.Entry('TSX Venture',
-      Nexus.Money.parse('200'), Nexus.DefaultCurrencies.EUR, group2, app2);
-    const entitlementEntry3 = new Nexus.EntitlementDatabase.Entry('TSX CDG',
-      Nexus.Money.parse('45'), Nexus.DefaultCurrencies.EUR, group3, app2);
-    const entitlementEntry4 = new Nexus.EntitlementDatabase.Entry('TSX TL1',
-      Nexus.Money.parse('68'), Nexus.DefaultCurrencies.USD, group4, app);
-    const entitlementEntry5 = new Nexus.EntitlementDatabase.Entry('CSE',
-      Nexus.Money.parse('175'), Nexus.DefaultCurrencies.USD, group5, app);
-    const entitlementEntry6 = new Nexus.EntitlementDatabase.Entry('Alpha APD',
-      Nexus.Money.parse('0'), Nexus.DefaultCurrencies.USD, group6, app);
-
-    this.state.entitlementDB.add(entitlementEntry1);
-    this.state.entitlementDB.add(entitlementEntry3);
-    this.state.entitlementDB.add(entitlementEntry2);
-    this.state.entitlementDB.add(entitlementEntry4);
-    this.state.entitlementDB.add(entitlementEntry5);
-    this.state.entitlementDB.add(entitlementEntry6);
-
-    this.state.checkedDB.add(group);
-  }
-
-  private testAdmin = new Nexus.AccountRoles();
-  private testTrader = new Nexus.AccountRoles();
-  private testManager = new Nexus.AccountRoles();
-  private static STYLE = {
-    testingComponents: {
-      position: 'fixed' as 'fixed',
-      top: 0,
-      left: 0,
-      zIndex: 1
-    }
-  };
+  private currencyDB = Nexus.buildDefaultCurrencyDatabase();
+  private venueDB = Nexus.buildDefaultVenueDatabase();
 }
 
-const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
-ReactDOM.render(<ResponsivePage />, document.getElementById('main'));
+const STYLE: Record<string, React.CSSProperties> = {
+  wrapper: {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  toolbar: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: '10px',
+    position: 'absolute'
+  },
+  toggle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    cursor: 'pointer'
+  }
+};
+
+ReactDOM.render(<TestApp/>, document.getElementById('main'));

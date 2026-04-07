@@ -5,33 +5,31 @@ import nexus
 import sys
 import yaml
 
-def execute_report(start_date, end_date, security, market, account,
-    market_database, time_zone_database, service_locator_client,
-    order_execution_client):
+def execute_report(start_date, end_date, security, venue, account,
+    venues, time_zones, service_locator_client, order_execution_client):
   orders = []
   activity_log = []
   if account is not None:
     order_queue = beam.Queue()
-    nexus.order_execution_service.query_daily_order_submissions(account,
-      start_date, end_date, market_database, time_zone_database,
-      order_execution_client, order_queue)
+    nexus.query_daily_order_submissions(account, start_date, end_date, venues,
+      time_zones, order_execution_client, order_queue)
     account_orders = []
     beam.flush(order_queue, account_orders)
     for order in account_orders:
       if security is not None and security != order.info.fields.security:
         continue
-      if market is not None and market != order.info.fields.security.market:
+      if venue is not None and venue != order.info.fields.security.venue:
         continue
       orders.append(order)
-      execution_reports = order.get_publisher().get_snapshot()
+      execution_reports = order.publisher.get_snapshot()
       for execution_report in execution_reports:
         activity_log.append((order.info.fields, execution_report))
   else:
     accounts = service_locator_client.load_all_accounts()
     for account in accounts:
       (account_orders, account_log) = execute_report(start_date, end_date,
-        security, market, account, market_database, time_zone_database,
-        service_locator_client, order_execution_client)
+        security, venue, account, venues, time_zones, service_locator_client,
+        order_execution_client)
       orders += account_orders
       activity_log += account_log
     orders.sort(key = lambda value: value.info.timestamp)
@@ -71,8 +69,8 @@ def report_yaml_error(error):
 def parse_ip_address(source):
   separator = source.find(':')
   if separator == -1:
-    return beam.network.IpAddress(source, 0)
-  return beam.network.IpAddress(source[0:separator],
+    return beam.IpAddress(source, 0)
+  return beam.IpAddress(source[0:separator],
     int(source[separator + 1 :]))
 
 def main():
@@ -84,7 +82,7 @@ def main():
     required=True)
   parser.add_argument('-e', '--end', type=parse_date, help='End range',
     required=True)
-  parser.add_argument('-m', '--market', type=str, help='Market')
+  parser.add_argument('-v', '--venue', type=str, help='Venue')
   parser.add_argument('-t', '--symbol', type=str, help='Ticker symbol')
   parser.add_argument('-a', '--account', type=str, help='Account')
   args = parser.parse_args()
@@ -100,23 +98,22 @@ def main():
   address = parse_ip_address(config['service_locator'])
   username = config['username']
   password = config['password']
-  start_date = beam.time_service.to_utc_time(args.start)
-  end_date = beam.time_service.to_utc_time(args.end)
-  service_locator_client = beam.service_locator.ApplicationServiceLocatorClient(
+  start_date = beam.to_utc_time(args.start)
+  end_date = beam.to_utc_time(args.end)
+  service_locator_client = beam.ApplicationServiceLocatorClient(
     username, password, address)
-  definitions_client = nexus.definitions_service.ApplicationDefinitionsClient(
+  definitions_client = nexus.ApplicationDefinitionsClient(
     service_locator_client)
-  order_execution_client = \
-    nexus.order_execution_service.ApplicationOrderExecutionClient(
-      service_locator_client)
-  market_database = definitions_client.load_market_database()
-  time_zone_database = definitions_client.load_time_zone_database()
-  if args.market is not None:
-    market = nexus.parse_market_code(args.market, market_database)
+  order_execution_client = nexus.ApplicationOrderExecutionClient(
+    service_locator_client)
+  venues = definitions_client.load_venue_database()
+  time_zones = definitions_client.load_time_zones()
+  if args.venue is not None:
+    venue = nexus.parse_venue(args.venue, venues)
   else:
-    market = None
+    venue = None
   if args.symbol is not None:
-    security = nexus.parse_security(args.symbol, market_database)
+    security = nexus.parse_security(args.symbol, venues)
   else:
     security = None
   if args.account is not None:
@@ -124,8 +121,8 @@ def main():
   else:
     account = None
   (orders, activity_log) = execute_report(start_date, end_date, security,
-    market, account, market_database, time_zone_database,
-    service_locator_client, order_execution_client)
+    venue, account, venues, time_zones, service_locator_client,
+    order_execution_client)
   output_order_log(orders)
   output_activity_log(activity_log)
 

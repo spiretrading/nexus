@@ -8,23 +8,32 @@ export class Money {
   public static readonly MULTIPLIER = 1000000;
 
   /** A value of 0.00 */
-  public static readonly ZERO = new Money(0);
+  public static readonly ZERO = Money.from_representation(0);
 
   /** The smallest unit of Money. */
-  public static readonly EPSILON = new Money(1);
+  public static readonly EPSILON = Money.from_representation(1);
 
   /** A value of 0.0001 */
-  public static readonly BIP = new Money(Money.MULTIPLIER / 10000);
+  public static readonly BIP = Money.from_representation(
+    Money.MULTIPLIER / 10000);
 
   /** A value of 0.01 */
-  public static readonly CENT = new Money(Money.MULTIPLIER / 100);
+  public static readonly CENT = Money.from_representation(
+    Money.MULTIPLIER / 100);
 
   /** A value of 1.00 */
-  public static readonly ONE = new Money(Money.MULTIPLIER);
+  public static readonly ONE = Money.from_representation(Money.MULTIPLIER);
+
+  /** Constructs a Money value from its raw internal representation. */
+  public static from_representation(value: number): Money {
+    const money = Object.create(Money.prototype) as Money;
+    money._value = value;
+    return money;
+  }
 
   /** Makes a value from a JSON object. */
   public static fromJson(value: any): Money {
-    return new Money(value);
+    return Money.from_representation(value);
   }
 
   /** Parses a value from a string. */
@@ -76,32 +85,36 @@ export class Money {
     }
     let finalValue = sign * (leftHand * Math.pow(10, Money.DECIMAL_PLACES) +
       rightHand * multiplier);
-    return new Money(Math.trunc(finalValue));
+    return Money.from_representation(Math.trunc(finalValue));
   }
 
-  /** Constructs a Money value. */
-  constructor(value: number = 0) {
-    this._value = value;
+  /** Constructs a Money value from a string. */
+  constructor(value: string) {
+    const parsed = Money.parse(value);
+    if(!parsed) {
+      throw new Error(`Invalid Money value: "${value}".`);
+    }
+    this._value = parsed._value;
   }
 
   /** Adds two values together. */
   public add(value: Money): Money {
-    return new Money(this._value + value._value);
+    return Money.from_representation(this._value + value._value);
   }
 
   /** Subtracts two values from each other. */
   public subtract(value: Money): Money {
-    return new Money(this._value - value._value);
+    return Money.from_representation(this._value - value._value);
   }
 
   /** Multiplies this value by a scalar. */
   public multiply(value: number): Money {
-    return new Money(value * this._value);
+    return Money.from_representation(value * this._value);
   }
 
   /** Divides this value by a scalar. */
   public divide(value: number): Money {
-    return new Money(this._value / value);
+    return Money.from_representation(this._value / value);
   }
 
   /** Compares two values. */
@@ -116,21 +129,21 @@ export class Money {
 
   /** Returns the string representation. */
   public toString(): string {
-    let buffer = '';
+    var absolute = Math.round(Math.abs(this._value));
+    var whole = Math.trunc(absolute / Money.MULTIPLIER);
+    var fraction = Math.round(absolute % Money.MULTIPLIER);
+    var fractionalString =
+      fraction.toString().padStart(Money.DECIMAL_PLACES, '0');
+    var minLength = 2;
+    var trimmed = fractionalString.length;
+    while(trimmed > minLength && fractionalString[trimmed - 1] === '0') {
+      --trimmed;
+    }
+    fractionalString = fractionalString.substring(0, trimmed);
     if(this._value < 0) {
-      buffer += '-';
+      return '-' + whole.toString() + '.' + fractionalString;
     }
-    const dollars = Math.trunc(Math.abs(this._value) / Money.MULTIPLIER);
-    buffer += dollars.toString();
-    buffer += '.';
-    let fractionalPart = Math.abs(this._value) - (Money.MULTIPLIER * dollars);
-    for(let i = 0; i < 2 || fractionalPart != 0; ++i) {
-      const factor = Math.pow(10, Money.DECIMAL_PLACES - i - 1);
-      const code = 48 + Math.trunc(fractionalPart / factor);
-      buffer += String.fromCharCode(code);
-      fractionalPart %= factor;
-    }
-    return buffer;
+    return whole.toString() + '.' + fractionalString;
   }
 
   /** Converts this value to JSON. */

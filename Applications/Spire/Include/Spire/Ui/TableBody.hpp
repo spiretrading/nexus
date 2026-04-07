@@ -17,9 +17,9 @@
 #include "Spire/Ui/KeyObserver.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/TableCurrentController.hpp"
+#include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TableSelectionController.hpp"
 #include "Spire/Ui/TableViewItemBuilder.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -69,9 +69,7 @@ namespace Styles {
   class TableBody : public QWidget {
     public:
       using CurrentModel = TableCurrentController::CurrentModel;
-
       using SelectionModel = TableSelectionController::SelectionModel;
-
       using Index = TableIndex;
 
       /**
@@ -163,6 +161,7 @@ namespace Styles {
       KeyObserver m_key_observer;
       std::unordered_map<TableItem*, HoverObserver> m_hover_observers;
       boost::optional<Index> m_hover_index;
+      std::vector<int> m_visual_to_logical_columns;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_row_style_connection;
       boost::signals2::scoped_connection m_table_connection;

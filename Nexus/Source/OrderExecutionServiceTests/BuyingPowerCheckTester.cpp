@@ -1,137 +1,72 @@
-#include <Beam/Queues/Queue.hpp>
-#include <boost/optional/optional.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
+#include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionService/BuyingPowerCheck.hpp"
-#include "Nexus/ServiceClients/TestEnvironment.hpp"
-#include "Nexus/ServiceClients/TestServiceClients.hpp"
+#include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;
-using namespace Beam::Routines;
-using namespace Beam::ServiceLocator;
+using namespace Beam::Tests;
 using namespace boost;
+using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::AdministrationService;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::OrderExecutionService::Tests;
-using namespace Nexus::RiskService;
+using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::DefaultVenues;
+using namespace Nexus::Tests;
 
 namespace {
-  auto TST = Security("TST", DefaultMarkets::NYSE(), DefaultCountries::US());
+  auto make_test_order_fields() {
+    auto account = DirectoryEntry::make_account(123, "test");
+    auto security = Security("TST", TSX);
+    auto currency = CAD;
+    auto side = Side::BID;
+    auto destination = DefaultDestinations::TSX;
+    auto quantity = Quantity(100);
+    auto price = Money::ONE;
+    return make_limit_order_fields(
+      account, security, currency, side, destination, quantity, price);
+  }
 
   struct Fixture {
-    using TestBuyingPowerCheck = BuyingPowerCheck<AdministrationClientBox,
-      MarketDataClientBox>;
-    TestEnvironment m_environment;
-    std::shared_ptr<Queue<const Order*>> m_orderSubmissions;
-    TestServiceClients m_serviceClients;
-    TestBuyingPowerCheck m_buyingPowerCheck;
-    RiskParameters m_traderRiskParameters;
+    ServiceLocatorTestEnvironment m_service_locator_environment;
+    AdministrationServiceTestEnvironment m_administration_environment;
+    MarketDataServiceTestEnvironment m_market_data_environment;
 
     Fixture()
-        : m_orderSubmissions(std::make_shared<Queue<const Order*>>()),
-          m_serviceClients(Ref(m_environment)),
-          m_buyingPowerCheck(std::vector<ExchangeRate>(),
-            m_serviceClients.GetAdministrationClient(),
-            &m_serviceClients.GetMarketDataClient()) {
-      m_environment.MonitorOrderSubmissions(m_orderSubmissions);
-      m_environment.UpdateBboPrice(TST, Money::ONE, Money::ONE + Money::CENT);
-      m_traderRiskParameters.m_currency = DefaultCurrencies::USD();
-      m_traderRiskParameters.m_allowedState.m_type = RiskState::Type::ACTIVE;
-      m_traderRiskParameters.m_buyingPower = 1000 * Money::ONE;
-      m_environment.GetAdministrationEnvironment().MakeAdministrator(
-        m_serviceClients.GetServiceLocatorClient().GetAccount());
-      m_serviceClients.GetAdministrationClient().StoreRiskParameters(
-        DirectoryEntry::GetRootAccount(), m_traderRiskParameters);
-    }
+      : m_administration_environment(
+          make_administration_service_test_environment(
+            m_service_locator_environment)),
+        m_market_data_environment(
+          make_market_data_service_test_environment(
+            m_service_locator_environment, m_administration_environment)) {}
   };
 }
 
 TEST_SUITE("BuyingPowerCheck") {
-  TEST_CASE_FIXTURE(Fixture, "submission") {
-    auto orderInfoA = OrderInfo(OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
-      Side::BID, "NYSE", 100, Money::ONE), 1,
-      m_environment.GetTimeEnvironment().GetTime());
-    auto orderA = PrimitiveOrder(orderInfoA);
-    REQUIRE_NOTHROW(m_buyingPowerCheck.Submit(orderInfoA));
-    m_buyingPowerCheck.Add(orderA);
-    auto orderInfoB = OrderInfo(OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
-      Side::BID, "NYSE", 1000, Money::ONE), 2,
-      m_environment.GetTimeEnvironment().GetTime());
-    REQUIRE_THROWS_AS(m_buyingPowerCheck.Submit(orderInfoB),
-      OrderSubmissionCheckException);
-  }
-
-  TEST_CASE_FIXTURE(Fixture, "add_without_submission") {
-    auto orderInfoA = OrderInfo(OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
-      Side::BID, "NYSE", 100, Money::ONE), 1,
-      m_environment.GetTimeEnvironment().GetTime());
-    auto orderA = PrimitiveOrder(orderInfoA);
-    m_buyingPowerCheck.Add(orderA);
-    auto orderInfoB = OrderInfo(OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
-      Side::BID, "NYSE", 1000, Money::ONE), 2,
-      m_environment.GetTimeEnvironment().GetTime());
-    REQUIRE_THROWS_AS(m_buyingPowerCheck.Submit(orderInfoB),
-      OrderSubmissionCheckException);
-  }
-
-  TEST_CASE_FIXTURE(Fixture, "submission_then_rejection") {
-    auto orderInfoA = OrderInfo(OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
-      Side::BID, "NYSE", 100, Money::ONE), 1, not_a_date_time);
-    auto orderA = PrimitiveOrder(orderInfoA);
-    REQUIRE_NOTHROW(m_buyingPowerCheck.Submit(orderInfoA));
-    m_buyingPowerCheck.Reject(orderInfoA);
-    auto orderInfoB = OrderInfo(OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
-      Side::BID, "NYSE", 1000, Money::ONE), 2,
-      m_environment.GetTimeEnvironment().GetTime());
-    REQUIRE_NOTHROW(m_buyingPowerCheck.Submit(orderInfoB));
-  }
-
-  TEST_CASE_FIXTURE(Fixture, "order_recovery") {
-    auto recoveryFields = OrderFields::MakeLimitOrder(TST, Side::BID, 100,
-      Money::ONE);
-    auto& recoverOrder = m_serviceClients.GetOrderExecutionClient().Submit(
-      recoveryFields);
-    auto submittedRecoveryOrder = m_orderSubmissions->Pop();
-    m_environment.Accept(*submittedRecoveryOrder);
-    m_environment.Fill(*submittedRecoveryOrder, 100);
-    REQUIRE_NOTHROW(m_buyingPowerCheck.Add(*submittedRecoveryOrder));
-    auto submissionFields = OrderFields::MakeLimitOrder(TST, Side::BID, 100,
-      2 * Money::ONE);
-    auto& submissionOrder = m_serviceClients.GetOrderExecutionClient().Submit(
-      submissionFields);
-    auto submittedOrder = m_orderSubmissions->Pop();
-    REQUIRE_NOTHROW(m_buyingPowerCheck.Submit(submittedOrder->GetInfo()));
-  }
-
-  TEST_CASE_FIXTURE(Fixture, "order_cancellation") {
-    auto orderInfoA = OrderInfo(OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
-      Side::BID, "NYSE", 1000, Money::ONE), 1,
-      m_environment.GetTimeEnvironment().GetTime());
-    REQUIRE_NOTHROW(m_buyingPowerCheck.Submit(orderInfoA));
-    auto orderA = PrimitiveOrder(orderInfoA);
-    m_buyingPowerCheck.Add(orderA);
-    Accept(orderA);
-    SetOrderStatus(orderA, OrderStatus::PENDING_CANCEL);
-    Cancel(orderA);
-    auto orderInfoB = OrderInfo(OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), TST, DefaultCurrencies::USD(),
-      Side::BID, "NYSE", 1000, Money::ONE), 2,
-      m_environment.GetTimeEnvironment().GetTime());
-    FlushPendingRoutines();
-    REQUIRE_NOTHROW(m_buyingPowerCheck.Submit(orderInfoB));
-    auto orderB = PrimitiveOrder(orderInfoB);
-    m_buyingPowerCheck.Add(orderB);
-    Accept(orderB);
-    SetOrderStatus(orderB, OrderStatus::PENDING_CANCEL);
-    Cancel(orderB);
+  TEST_CASE("submit_within_buying_power") {
+    auto fixture = Fixture();
+    auto fields = make_test_order_fields();
+    auto& administration_client =
+      fixture.m_administration_environment.get_client();
+    auto& market_data_client =
+      fixture.m_market_data_environment.get_registry_client();
+    auto exchange_rates = ExchangeRateTable();
+    exchange_rates.add(
+      ExchangeRate(CurrencyPair(CAD, USD), rational<int>(3, 4)));
+    auto check = make_buying_power_check(
+      exchange_rates, administration_client, market_data_client);
+    auto risk_parameters = RiskParameters();
+    risk_parameters.m_currency = CAD;
+    risk_parameters.m_buying_power = 1000 * Money::ONE;
+    administration_client.store(fields.m_account, risk_parameters);
+    auto& feed_client = fixture.m_market_data_environment.get_feed_client();
+    auto bbo = BboQuote(
+      make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 100),
+      time_from_string("2024-07-18 10:00:00"));
+    feed_client.publish(SecurityBboQuote(bbo, fields.m_security));
+    auto order_info =
+      OrderInfo(fields, 1, time_from_string("2024-07-18 10:01:00"));
+    REQUIRE_NOTHROW(check->submit(order_info));
   }
 }

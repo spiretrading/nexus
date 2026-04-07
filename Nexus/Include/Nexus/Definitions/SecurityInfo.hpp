@@ -1,9 +1,9 @@
 #ifndef NEXUS_SECURITY_INFO_HPP
 #define NEXUS_SECURITY_INFO_HPP
-#include <string>
+#include <functional>
 #include <ostream>
+#include <string>
 #include <Beam/Serialization/DataShuttle.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/Security.hpp"
 
@@ -22,28 +22,28 @@ namespace Nexus {
     std::string m_sector;
 
     /** The board lot. */
-    Quantity m_boardLot;
+    Quantity m_board_lot;
 
-    bool operator ==(const SecurityInfo& rhs) const = default;
+    bool operator ==(const SecurityInfo&) const = default;
   };
 
-  inline std::ostream& operator <<(std::ostream& out,
-      const SecurityInfo& value) {
+  inline std::ostream& operator <<(
+      std::ostream& out, const SecurityInfo& value) {
     return out << '(' << value.m_security << ' ' << value.m_name << ' ' <<
-      value.m_sector << ' ' << value.m_boardLot << ')';
+      value.m_sector << ' ' << value.m_board_lot << ')';
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
   struct Shuttle<Nexus::SecurityInfo> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Nexus::SecurityInfo& value,
-        unsigned int version) {
-      shuttle.Shuttle("security", value.m_security);
-      shuttle.Shuttle("name", value.m_name);
-      shuttle.Shuttle("sector", value.m_sector);
-      shuttle.Shuttle("board_lot", value.m_boardLot);
+    template<IsShuttle S>
+    void operator ()(
+        S& shuttle, Nexus::SecurityInfo& value, unsigned int version) const {
+      shuttle.shuttle("security", value.m_security);
+      shuttle.shuttle("name", value.m_name);
+      shuttle.shuttle("sector", value.m_sector);
+      shuttle.shuttle("board_lot", value.m_board_lot);
     }
   };
 }

@@ -127,9 +127,22 @@ export class AccountDirectoryController extends
     });
   }
 
-  private onFilterChange = async (newFilter: string) => {
-    if(newFilter !== '') {
-      const accounts = await this.props.model.loadFilteredAccounts(newFilter);
+  private onFilterChange = (newFilter: string) => {
+    ++this._filterSequence;
+    if(newFilter === '') {
+      this.setState({
+        filter: newFilter,
+        filteredKeys: [],
+        openedGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>()
+      });
+      return;
+    }
+    this.setState({filter: newFilter});
+    const sequence = this._filterSequence;
+    this.props.model.loadFilteredAccounts(newFilter).then(accounts => {
+      if(sequence !== this._filterSequence) {
+        return;
+      }
       const keys = [] as Beam.DirectoryEntry[];
       for(const pair of accounts) {
         pair[1].sort(AccountDirectoryController.accountComparator);
@@ -137,18 +150,13 @@ export class AccountDirectoryController extends
       }
       keys.sort(this.groupComparator);
       this.setState({
-        filter: newFilter,
         filteredGroups: accounts,
         filteredKeys: keys
       });
-    } else {
-      this.setState({
-        filter: newFilter,
-        filteredKeys: [],
-        openedGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>()
-      });
-    }
+    });
   }
+
+  private _filterSequence = 0;
 
   private groupComparator =
       (groupA: Beam.DirectoryEntry, groupB: Beam.DirectoryEntry) => {

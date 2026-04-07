@@ -15,6 +15,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/DateBox.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DurationBox.hpp"
@@ -36,6 +37,18 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  optional<bool> convert_boolean(const Token::Type& value) {
+    if(value.type() == typeid(Identifier)) {
+      auto& identifier = boost::get<Identifier>(value);
+      if(identifier == "true") {
+        return true;
+      } else if(identifier == "false") {
+        return false;
+      }
+    }
+    return none;
+  }
+
   optional<int> convert_number(const Token::Type& value) {
     if(value.type() == typeid(Literal)) {
       auto& literal = boost::get<Literal>(value);
@@ -378,7 +391,8 @@ void Spire::register_selectors() {
   register_state_selector("sortable", TableHeaderItem::Sortable());
   register_state_selector("filtered", TableHeaderItem::Filtered());
   register_state_selector("filter_button", TableHeaderItem::FilterButton());
-  register_state_selector("hover_element", TableHeaderItem::HoverElement());
+  register_state_selector("active_element", TableHeaderItem::ActiveElement());
+  register_state_selector("container", TableHeaderItem::Container());
   register_state_selector("prompt", Prompt());
   register_state_selector("colon", Colon());
   register_state_selector("track", Track());
@@ -638,6 +652,18 @@ void Spire::register_property_converters() {
         for_each(composite_property, [&] (auto& property) {
           properties.push_back(property);
         });
+      }
+      return properties;
+    });
+
+  register_property_converter("year_field",
+    [] (const std::vector<PropertyValue>& values) {
+      auto properties = std::vector<Property>();
+      if(values.size() == 1 && values[0].type() == typeid(Token::Type)) {
+        if(auto year_field = convert_boolean(boost::get<Identifier>(
+            boost::get<Token::Type>(values[0])))) {
+          properties.push_back(YearField(*year_field));
+        }
       }
       return properties;
     });

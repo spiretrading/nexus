@@ -31,7 +31,7 @@ namespace {
           Ref<CatalogTabModel> model, QObject* parent)
           : QSortFilterProxyModel(parent),
             m_filter(filter),
-            m_model(model.Get()) {
+            m_model(model.get()) {
         for(const auto& entry : m_model->GetEntries()) {
           if(m_filter(*entry)) {
             m_entries.insert(entry);
@@ -63,9 +63,9 @@ CatalogTabView::CatalogTabView(Ref<CatalogTabModel> model,
     Qt::WindowFlags flags)
     : QWidget(parent, flags),
       m_ui(std::make_unique<Ui_CatalogTabView>()),
-      m_model(model.Get()),
-      m_searchBarModel(searchBarModel.Get()),
-      m_userProfile(userProfile.Get()),
+      m_model(model.get()),
+      m_searchBarModel(searchBarModel.get()),
+      m_userProfile(userProfile.get()),
       m_isAllTab(m_model == &m_userProfile->GetCatalogSettings().GetAllTab()),
       m_searchBarSelected(false) {
   m_ui->setupUi(this);

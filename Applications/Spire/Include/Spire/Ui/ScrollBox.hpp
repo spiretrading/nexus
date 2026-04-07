@@ -1,12 +1,14 @@
 #ifndef SPIRE_SCROLL_BOX_HPP
 #define SPIRE_SCROLL_BOX_HPP
+#include <QPropertyAnimation>
 #include <QWidget>
 #include "Spire/Styles/StyleSheetMap.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/ScrollBar.hpp"
 
 namespace Spire {
+  class ScrollableLayer;
 
   /**
    * A widget that serves as a container for another widget, with scroll bars

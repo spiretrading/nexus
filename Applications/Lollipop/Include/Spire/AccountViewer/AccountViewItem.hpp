@@ -6,7 +6,7 @@
 #include <Beam/Collections/Enum.hpp>
 #include <boost/noncopyable.hpp>
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class QIcon;
 

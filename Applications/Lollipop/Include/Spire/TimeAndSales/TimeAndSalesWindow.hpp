@@ -3,7 +3,6 @@
 #include <QFrame>
 #include "Nexus/Definitions/Quote.hpp"
 #include "Nexus/Definitions/Security.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
 #include "Spire/UI/SecurityContext.hpp"

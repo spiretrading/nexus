@@ -4,7 +4,6 @@
 #include <QColor>
 #include <QString>
 #include <QWidget>
-#include "Spire/SignIn/SignIn.hpp"
 
 namespace Spire {
 

@@ -1,13 +1,10 @@
 #ifndef NEXUS_SHORTING_MODEL_HPP
 #define NEXUS_SHORTING_MODEL_HPP
 #include <unordered_map>
-#include "Nexus/Accounting/Accounting.hpp"
-#include "Nexus/Definitions/Security.hpp"
-#include "Nexus/Definitions/Side.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
-namespace Nexus::Accounting {
+namespace Nexus {
 
   /** Tracks whether an Order should be submitted as a short sale. */
   class ShortingModel {
@@ -17,95 +14,85 @@ namespace Nexus::Accounting {
        * Tracks a submission and returns whether it should be marked as a
        * short sale.
        * @param id The id to pull from the ExecutionReport when updating.
-       * @param orderFields The OrderFields storing the details of the
-       *        submission.
+       * @param fields The OrderFields storing the details of the submission.
        * @return <code>true</code> iff the submission should be marked as a
        *         short sale.
        */
-      bool Submit(OrderExecutionService::OrderId id,
-        const OrderExecutionService::OrderFields& orderFields);
+      bool submit(OrderId id, const OrderFields& fields);
 
       /**
        * Updates this model with the contents of an ExecutionReport.
-       * @param executionReport The ExecutionReport to update this model with.
+       * @param report The ExecutionReport to update this model with.
        */
-      void Update(const OrderExecutionService::ExecutionReport&
-        executionReport);
+      void update(const ExecutionReport& report);
 
     private:
       struct PositionEntry {
-        Quantity m_askQuantityPending;
+        Quantity m_ask_quantity_pending;
         Quantity m_position;
       };
       struct OrderEntry {
         Security m_security;
         Side m_side;
         Quantity m_quantity;
-        Quantity m_remainingQuantity;
-
-        OrderEntry();
+        Quantity m_remaining_quantity;
       };
-      std::unordered_map<OrderExecutionService::OrderId, OrderEntry>
-        m_orderIdToOrderEntry;
-      std::unordered_map<Security, PositionEntry> m_securityToPositionEntry;
+      std::unordered_map<OrderId, OrderEntry> m_order_entries;
+      std::unordered_map<Security, PositionEntry> m_position_entries;
 
-      PositionEntry& GetPosition(const Security& security);
+      PositionEntry& get_position(const Security& security);
   };
 
-  inline ShortingModel::OrderEntry::OrderEntry()
-    : m_side(Side::BID),
-      m_quantity(0),
-      m_remainingQuantity(0) {}
-
-  inline bool ShortingModel::Submit(OrderExecutionService::OrderId id,
-      const OrderExecutionService::OrderFields& orderFields) {
-    auto orderIterator = m_orderIdToOrderEntry.find(id);
-    if(orderIterator != m_orderIdToOrderEntry.end()) {
-      m_orderIdToOrderEntry.erase(orderIterator);
+  inline bool ShortingModel::submit(OrderId id, const OrderFields& fields) {
+    auto order_iterator = m_order_entries.find(id);
+    if(order_iterator != m_order_entries.end()) {
+      m_order_entries.erase(order_iterator);
     }
-    auto orderEntry = OrderEntry();
-    orderEntry.m_security = orderFields.m_security;
-    orderEntry.m_side = orderFields.m_side;
-    orderEntry.m_quantity = orderFields.m_quantity;
-    orderEntry.m_remainingQuantity = orderFields.m_quantity;
-    m_orderIdToOrderEntry.insert(std::pair(id, orderEntry));
-    auto& position = GetPosition(orderFields.m_security);
-    if(orderFields.m_side == Side::ASK) {
-      position.m_askQuantityPending += orderFields.m_quantity;
-      return position.m_askQuantityPending > position.m_position;
+    auto order_entry = OrderEntry();
+    order_entry.m_security = fields.m_security;
+    order_entry.m_side = fields.m_side;
+    order_entry.m_quantity = fields.m_quantity;
+    order_entry.m_remaining_quantity = fields.m_quantity;
+    m_order_entries.insert(std::pair(id, order_entry));
+    auto& position = get_position(fields.m_security);
+    if(fields.m_side == Side::ASK) {
+      position.m_ask_quantity_pending += fields.m_quantity;
+      return position.m_ask_quantity_pending > position.m_position;
     }
     return false;
   }
 
-  inline void ShortingModel::Update(
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    auto orderIterator = m_orderIdToOrderEntry.find(executionReport.m_id);
-    if(orderIterator == m_orderIdToOrderEntry.end()) {
+  inline void ShortingModel::update(const ExecutionReport& report) {
+    auto order_iterator = m_order_entries.find(report.m_id);
+    if(order_iterator == m_order_entries.end()) {
       return;
     }
-    auto& orderEntry = orderIterator->second;
-    auto& position = GetPosition(orderEntry.m_security);
-    if(orderEntry.m_side == Side::BID) {
-      position.m_position += executionReport.m_lastQuantity;
+    auto& order_entry = order_iterator->second;
+    auto& position = get_position(order_entry.m_security);
+    if(order_entry.m_side == Side::BID) {
+      position.m_position += report.m_last_quantity;
     } else {
-      position.m_position -= executionReport.m_lastQuantity;
-      position.m_askQuantityPending -= executionReport.m_lastQuantity;
+      position.m_position -= report.m_last_quantity;
+      position.m_ask_quantity_pending -= report.m_last_quantity;
     }
-    orderEntry.m_remainingQuantity -= std::min(executionReport.m_lastQuantity,
-      orderEntry.m_remainingQuantity);
-    if(orderEntry.m_side == Side::ASK && IsTerminal(executionReport.m_status)) {
-      position.m_askQuantityPending -= orderEntry.m_remainingQuantity;
+    order_entry.m_remaining_quantity -=
+      std::min(report.m_last_quantity, order_entry.m_remaining_quantity);
+    if(order_entry.m_side == Side::ASK && is_terminal(report.m_status)) {
+      position.m_ask_quantity_pending -= order_entry.m_remaining_quantity;
+    }
+    if(is_terminal(report.m_status)) {
+      m_order_entries.erase(report.m_id);
     }
   }
 
-  inline ShortingModel::PositionEntry& ShortingModel::GetPosition(
-      const Security& security) {
-    auto positionIterator = m_securityToPositionEntry.find(security);
-    if(positionIterator == m_securityToPositionEntry.end()) {
-      positionIterator = m_securityToPositionEntry.insert(
-        std::pair(security, PositionEntry())).first;
+  inline ShortingModel::PositionEntry&
+      ShortingModel::get_position(const Security& security) {
+    auto position_iterator = m_position_entries.find(security);
+    if(position_iterator == m_position_entries.end()) {
+      position_iterator =
+        m_position_entries.insert(std::pair(security, PositionEntry())).first;
     }
-    return positionIterator->second;
+    return position_iterator->second;
   }
 }
 

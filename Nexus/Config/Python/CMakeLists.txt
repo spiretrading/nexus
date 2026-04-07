@@ -6,11 +6,12 @@ add_library(Python SHARED ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Python PROPERTIES OUTPUT_NAME nexus)
 target_compile_definitions(Python
-  PRIVATE ASPEN_USE_DLL BEAM_USE_DLL NEXUS_BUILD_DLL BEAM_ENABLE_STACK_PRINT)
+  PRIVATE ASPEN_USE_DLL BEAM_USE_DLL NEXUS_BUILD_DLL)
 set_target_properties(Python PROPERTIES CXX_VISIBILITY_PRESET default
   VISIBILITY_INLINES_HIDDEN 0)
 if(MSVC)
-  target_compile_definitions(Python PRIVATE HAVE_SNPRINTF)
+  target_compile_definitions(
+    Python PRIVATE HAVE_SNPRINTF BEAM_ENABLE_STACK_PRINT)
   set_target_properties(Python PROPERTIES SUFFIX ".pyd")
 endif()
 target_compile_options(Python PRIVATE
@@ -49,12 +50,10 @@ if(UNIX)
     optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     dl)
 endif()
 if(WIN32)
-  target_link_libraries(Python bcrypt crypt32 Secur32 shlwapi)
+  target_link_libraries(Python bcrypt crypt32 Secur32 shlwapi Ws2_32)
 endif()
 install(TARGETS Python CONFIGURATIONS Debug
   DESTINATION ${LIB_INSTALL_DIRECTORY}/Debug)

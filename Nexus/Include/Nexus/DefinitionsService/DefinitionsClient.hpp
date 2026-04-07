@@ -1,187 +1,267 @@
 #ifndef NEXUS_DEFINITIONS_CLIENT_HPP
 #define NEXUS_DEFINITIONS_CLIENT_HPP
-#include <sstream>
-#include <Beam/IO/ConnectException.hpp>
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <utility>
+#include <vector>
 #include <Beam/IO/Connection.hpp>
-#include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Services/ServiceProtocolClientHandler.hpp>
+#include <Beam/Pointers/VirtualPtr.hpp>
 #include <boost/date_time/local_time/tz_database.hpp>
-#include <boost/lexical_cast.hpp>
-#include "Nexus/DefinitionsService/DefinitionsService.hpp"
-#include "Nexus/DefinitionsService/DefinitionsServices.hpp"
+#include "Nexus/Compliance/ComplianceRuleSchema.hpp"
+#include "Nexus/Definitions/Country.hpp"
+#include "Nexus/Definitions/Currency.hpp"
+#include "Nexus/Definitions/Destination.hpp"
+#include "Nexus/Definitions/ExchangeRate.hpp"
+#include "Nexus/Definitions/TradingSchedule.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 
-namespace Nexus::DefinitionsService {
+namespace Nexus {
 
-  /**
-   * Client used to access the Nexus Definitions service.
-   * @param <B> The type used to build ServiceProtocolClients to the server.
-   */
-  template<typename B>
+  /** Concept for types that can be used as a DefinitionsClient. */
+  template<typename T>
+  concept IsDefinitionsClient = Beam::IsConnection<T> && requires(T& client) {
+    { client.load_minimum_spire_client_version() } ->
+      std::same_as<std::string>;
+    { client.load_organization_name() } -> std::same_as<std::string>;
+    { client.load_country_database() } -> std::same_as<CountryDatabase>;
+    { client.load_time_zone_database() } ->
+      std::same_as<boost::local_time::tz_database>;
+    { client.load_currency_database() } -> std::same_as<CurrencyDatabase>;
+    { client.load_destination_database() } ->
+      std::same_as<DestinationDatabase>;
+    { client.load_venue_database() } -> std::same_as<VenueDatabase>;
+    { client.load_exchange_rates() } -> std::same_as<std::vector<ExchangeRate>>;
+    { client.load_compliance_rule_schemas() } ->
+      std::same_as<std::vector<ComplianceRuleSchema>>;
+    { client.load_trading_schedule() } -> std::same_as<TradingSchedule>;
+  };
+
+  /** Provides a generic interface over an arbitrary DefinitionsClient. */
   class DefinitionsClient {
     public:
 
-      /** The type used to build ServiceProtocolClients to the server. */
-      using ServiceProtocolClientBuilder = Beam::GetTryDereferenceType<B>;
+      /**
+       * Constructs a DefinitionsClient of a specified type using emplacement.
+       * @tparam T The type of definitions client to emplace.
+       * @param args The arguments to pass to the emplaced definitions client.
+       */
+      template<IsDefinitionsClient T, typename... Args>
+      explicit DefinitionsClient(std::in_place_type_t<T>, Args&&... args);
 
       /**
-       * Constructs a DefinitionsClient.
-       * @param clientBuilder Initializes the ServiceProtocolClientBuilder.
+       * Constructs a DefinitionsClient by referencing an existing client.
+       * @param client The client to reference.
        */
-      template<typename BF>
-      explicit DefinitionsClient(BF&& clientBuilder);
+      template<Beam::DisableCopy<DefinitionsClient> T> requires
+        IsDefinitionsClient<Beam::dereference_t<T>>
+      DefinitionsClient(T&& client);
 
-      ~DefinitionsClient();
+      DefinitionsClient(const DefinitionsClient&) = default;
+      DefinitionsClient(DefinitionsClient&&) = default;
 
-      /** Loads the minimum version of the Spire client required to login. */
-      std::string LoadMinimumSpireClientVersion();
+      /** Returns the minimum Spire client version. */
+      std::string load_minimum_spire_client_version();
 
-      /** Loads the name of the organization. */
-      std::string LoadOrganizationName();
+      /** Returns the organization name. */
+      std::string load_organization_name();
 
-      /** Loads the CountryDatabase. */
-      CountryDatabase LoadCountryDatabase();
+      /** Returns the country database. */
+      CountryDatabase load_country_database();
 
-      /** Loads the time zone database. */
-      boost::local_time::tz_database LoadTimeZoneDatabase();
+      /** Returns the time zone database. */
+      boost::local_time::tz_database load_time_zone_database();
 
-      /** Loads the CurrencyDatabase. */
-      CurrencyDatabase LoadCurrencyDatabase();
+      /** Returns the currency database. */
+      CurrencyDatabase load_currency_database();
 
-      /** Loads the DestinationDatabase. */
-      DestinationDatabase LoadDestinationDatabase();
+      /** Returns the destination database. */
+      DestinationDatabase load_destination_database();
 
-      /** Loads the MarketDatabase. */
-      MarketDatabase LoadMarketDatabase();
+      /** Returns the venue database. */
+      VenueDatabase load_venue_database();
 
-      /** Loads the list of ExchangeRates. */
-      std::vector<ExchangeRate> LoadExchangeRates();
+      /** Returns the exchange rates. */
+      std::vector<ExchangeRate> load_exchange_rates();
 
-      /** Loads the list of ComplianceRuleSchemas. */
-      std::vector<Compliance::ComplianceRuleSchema> LoadComplianceRuleSchemas();
+      /** Returns the compliance rule schemas. */
+      std::vector<ComplianceRuleSchema> load_compliance_rule_schemas();
 
-      /** Loads the TradingSchedule. */
-      TradingSchedule LoadTradingSchedule();
+      /** Returns the trading schedule. */
+      TradingSchedule load_trading_schedule();
 
-      void Close();
+      void close();
 
     private:
-      Beam::Services::ServiceProtocolClientHandler<B> m_clientHandler;
-      Beam::IO::OpenState m_openState;
+      struct VirtualDefinitionsClient {
+        virtual ~VirtualDefinitionsClient() = default;
 
-      DefinitionsClient(const DefinitionsClient&) = delete;
-      DefinitionsClient& operator =(const DefinitionsClient&) = delete;
+        virtual std::string load_minimum_spire_client_version() = 0;
+        virtual std::string load_organization_name() = 0;
+        virtual CountryDatabase load_country_database() = 0;
+        virtual boost::local_time::tz_database load_time_zone_database() = 0;
+        virtual CurrencyDatabase load_currency_database() = 0;
+        virtual DestinationDatabase load_destination_database() = 0;
+        virtual VenueDatabase load_venue_database() = 0;
+        virtual std::vector<ExchangeRate> load_exchange_rates() = 0;
+        virtual std::vector<ComplianceRuleSchema>
+          load_compliance_rule_schemas() = 0;
+        virtual TradingSchedule load_trading_schedule() = 0;
+        virtual void close() = 0;
+      };
+      template<typename C>
+      struct WrappedDefinitionsClient final : VirtualDefinitionsClient {
+        using DefinitionsClient = C;
+        Beam::local_ptr_t<DefinitionsClient> m_client;
+
+        template<typename... Args>
+        WrappedDefinitionsClient(Args&&... args);
+
+        std::string load_minimum_spire_client_version() override;
+        std::string load_organization_name() override;
+        CountryDatabase load_country_database() override;
+        boost::local_time::tz_database load_time_zone_database() override;
+        CurrencyDatabase load_currency_database() override;
+        DestinationDatabase load_destination_database() override;
+        VenueDatabase load_venue_database() override;
+        std::vector<ExchangeRate> load_exchange_rates() override;
+        std::vector<ComplianceRuleSchema>
+          load_compliance_rule_schemas() override;
+        TradingSchedule load_trading_schedule() override;
+        void close() override;
+      };
+      Beam::VirtualPtr<VirtualDefinitionsClient> m_client;
   };
 
-  template<typename B>
-  template<typename BF>
-  DefinitionsClient<B>::DefinitionsClient(BF&& clientBuilder)
-      try : m_clientHandler(std::forward<BF>(clientBuilder)) {
-    RegisterDefinitionsServices(Beam::Store(m_clientHandler.GetSlots()));
-  } catch(const std::exception&) {
-    std::throw_with_nested(Beam::IO::ConnectException(
-      "Failed to connect to the definitions server."));
+  template<IsDefinitionsClient T, typename... Args>
+  DefinitionsClient::DefinitionsClient(std::in_place_type_t<T>, Args&&... args)
+    : m_client(Beam::make_virtual_ptr<WrappedDefinitionsClient<T>>(
+        std::forward<Args>(args)...)) {}
+
+  template<Beam::DisableCopy<DefinitionsClient> T> requires
+    IsDefinitionsClient<Beam::dereference_t<T>>
+  DefinitionsClient::DefinitionsClient(T&& client)
+    : m_client(Beam::make_virtual_ptr<
+        WrappedDefinitionsClient<std::remove_cvref_t<T>>>(
+          std::forward<T>(client))) {}
+
+  inline std::string DefinitionsClient::load_minimum_spire_client_version() {
+    return m_client->load_minimum_spire_client_version();
   }
 
-  template<typename B>
-  DefinitionsClient<B>::~DefinitionsClient() {
-    Close();
+  inline std::string DefinitionsClient::load_organization_name() {
+    return m_client->load_organization_name();
   }
 
-  template<typename B>
-  std::string DefinitionsClient<B>::LoadMinimumSpireClientVersion() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<
-        LoadMinimumSpireClientVersionService>();
-    }, "Failed to load minimum Spire client version.");
+  inline CountryDatabase DefinitionsClient::load_country_database() {
+    return m_client->load_country_database();
   }
 
-  template<typename B>
-  std::string DefinitionsClient<B>::LoadOrganizationName() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadOrganizationNameService>();
-    }, "Failed to load organization name.");
+  inline boost::local_time::tz_database
+      DefinitionsClient::load_time_zone_database() {
+    return m_client->load_time_zone_database();
   }
 
-  template<typename B>
-  CountryDatabase DefinitionsClient<B>::LoadCountryDatabase() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadCountryDatabaseService>();
-    }, "Failed to load country database.");
+  inline CurrencyDatabase DefinitionsClient::load_currency_database() {
+    return m_client->load_currency_database();
   }
 
-  template<typename B>
-  boost::local_time::tz_database DefinitionsClient<B>::LoadTimeZoneDatabase() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      auto timeZones =
-        client->template SendRequest<LoadTimeZoneDatabaseService>();
-      auto database = boost::local_time::tz_database();
-      auto stream = std::stringstream(timeZones);
-      database.load_from_stream(stream);
-      return database;
-    }, "Failed to load timezone database.");
+  inline DestinationDatabase DefinitionsClient::load_destination_database() {
+    return m_client->load_destination_database();
   }
 
-  template<typename B>
-  CurrencyDatabase DefinitionsClient<B>::LoadCurrencyDatabase() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadCurrencyDatabaseService>();
-    }, "Failed to load currency database.");
+  inline VenueDatabase DefinitionsClient::load_venue_database() {
+    return m_client->load_venue_database();
   }
 
-  template<typename B>
-  DestinationDatabase DefinitionsClient<B>::LoadDestinationDatabase() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadDestinationDatabaseService>();
-    }, "Failed to load destination database.");
+  inline std::vector<ExchangeRate> DefinitionsClient::load_exchange_rates() {
+    return m_client->load_exchange_rates();
   }
 
-  template<typename B>
-  MarketDatabase DefinitionsClient<B>::LoadMarketDatabase() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadMarketDatabaseService>();
-    }, "Failed to load market database.");
+  inline std::vector<ComplianceRuleSchema>
+      DefinitionsClient::load_compliance_rule_schemas() {
+    return m_client->load_compliance_rule_schemas();
   }
 
-  template<typename B>
-  std::vector<ExchangeRate> DefinitionsClient<B>::LoadExchangeRates() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadExchangeRatesService>();
-    }, "Failed to load exchange rates.");
+  inline TradingSchedule DefinitionsClient::load_trading_schedule() {
+    return m_client->load_trading_schedule();
   }
 
-  template<typename B>
-  std::vector<Compliance::ComplianceRuleSchema>
-      DefinitionsClient<B>::LoadComplianceRuleSchemas() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadComplianceRuleSchemasService>();
-    }, "Failed to load compliance rule schemas.");
+  inline void DefinitionsClient::close() {
+    m_client->close();
   }
 
-  template<typename B>
-  TradingSchedule DefinitionsClient<B>::LoadTradingSchedule() {
-    return Beam::Services::ServiceOrThrowWithNested([&] {
-      auto client = m_clientHandler.GetClient();
-      return client->template SendRequest<LoadTradingScheduleService>();
-    }, "Failed to load trading schedule.");
+  template<typename C>
+  template<typename... Args>
+  DefinitionsClient::WrappedDefinitionsClient<C>::WrappedDefinitionsClient(
+    Args&&... args)
+    : m_client(std::forward<Args>(args)...) {}
+
+  template<typename C>
+  std::string DefinitionsClient::WrappedDefinitionsClient<C>::
+      load_minimum_spire_client_version() {
+    return m_client->load_minimum_spire_client_version();
   }
 
-  template<typename B>
-  void DefinitionsClient<B>::Close() {
-    if(m_openState.SetClosing()) {
-      return;
-    }
-    m_clientHandler.Close();
-    m_openState.Close();
+  template<typename C>
+  std::string DefinitionsClient::WrappedDefinitionsClient<C>::
+      load_organization_name() {
+    return m_client->load_organization_name();
+  }
+
+  template<typename C>
+  CountryDatabase DefinitionsClient::WrappedDefinitionsClient<C>::
+      load_country_database() {
+    return m_client->load_country_database();
+  }
+
+  template<typename C>
+  boost::local_time::tz_database DefinitionsClient::
+      WrappedDefinitionsClient<C>::load_time_zone_database() {
+    return m_client->load_time_zone_database();
+  }
+
+  template<typename C>
+  CurrencyDatabase DefinitionsClient::WrappedDefinitionsClient<C>::
+      load_currency_database() {
+    return m_client->load_currency_database();
+  }
+
+  template<typename C>
+  DestinationDatabase DefinitionsClient::WrappedDefinitionsClient<C>::
+      load_destination_database() {
+    return m_client->load_destination_database();
+  }
+
+  template<typename C>
+  VenueDatabase DefinitionsClient::WrappedDefinitionsClient<C>::
+      load_venue_database() {
+    return m_client->load_venue_database();
+  }
+
+  template<typename C>
+  std::vector<ExchangeRate> DefinitionsClient::WrappedDefinitionsClient<C>::
+      load_exchange_rates() {
+    return m_client->load_exchange_rates();
+  }
+
+  template<typename C>
+  std::vector<ComplianceRuleSchema>
+      DefinitionsClient::WrappedDefinitionsClient<C>::
+        load_compliance_rule_schemas() {
+    return m_client->load_compliance_rule_schemas();
+  }
+
+  template<typename C>
+  TradingSchedule DefinitionsClient::WrappedDefinitionsClient<C>::
+      load_trading_schedule() {
+    return m_client->load_trading_schedule();
+  }
+
+  template<typename C>
+  void DefinitionsClient::WrappedDefinitionsClient<C>::close() {
+    m_client->close();
   }
 }
 

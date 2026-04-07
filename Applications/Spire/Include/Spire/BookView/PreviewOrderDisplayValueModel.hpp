@@ -1,6 +1,5 @@
 #ifndef SPIRE_PREVIEW_ORDER_DISPLAY_VALUE_MODEL_HPP
 #define SPIRE_PREVIEW_ORDER_DISPLAY_VALUE_MODEL_HPP
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Spire/ValueModel.hpp"

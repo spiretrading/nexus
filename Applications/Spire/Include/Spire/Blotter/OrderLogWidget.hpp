@@ -8,6 +8,7 @@
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/LegacyUI/LegacyUI.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 class Ui_OrderLogWidget;
@@ -27,8 +28,8 @@ namespace Spire {
         /** The state of the order log table header. */
         QByteArray m_tableState;
 
-        template<typename Shuttler>
-        void Shuttle(Shuttler& shuttle, unsigned int version);
+        template<Beam::IsShuttle S>
+        void shuttle(S& shuttle, unsigned int version);
       };
 
       /**
@@ -74,16 +75,15 @@ namespace Spire {
       void OnProxyOrderAdded(const QModelIndex& parent, int first, int last);
       void OnProxyOrderRemoved(const QModelIndex& parent, int first, int last);
       void OnCancel();
-      void OnExecutionReport(const Nexus::OrderExecutionService::Order* order,
-        const Nexus::OrderExecutionService::ExecutionReport& executionReport);
+      void OnExecutionReport(const std::shared_ptr<Nexus::Order>& order,
+        const Nexus::ExecutionReport& executionReport);
       void OnContextMenu(const QPoint& point);
   };
 
-  template<typename Shuttler>
-  void OrderLogWidget::UIState::Shuttle(Shuttler& shuttle,
-      unsigned int version) {
-    shuttle.Shuttle("table_geometry", m_tableGeometry);
-    shuttle.Shuttle("table_state", m_tableState);
+  template<Beam::IsShuttle S>
+  void OrderLogWidget::UIState::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("table_geometry", m_tableGeometry);
+    shuttle.shuttle("table_state", m_tableState);
   }
 }
 

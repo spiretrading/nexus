@@ -13,6 +13,7 @@
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -643,14 +644,15 @@ void DecimalBox::initialize_editable_data() const {
   auto self = const_cast<DecimalBox*>(this);
   self->m_data = std::make_unique<EditableData>();
   m_data->m_submission = m_current->get();
-  static auto up_icon = imageFromSvg(":/Icons/arrow-up.svg", BUTTON_SIZE());
+  static auto up_icon = image_from_svg(":/Icons/arrow-up.svg", BUTTON_SIZE());
   m_data->m_up_button = new StepButton(up_icon, self->m_text_box);
   m_data->m_up_button->show();
   m_data->m_up_button->connect_press_signal(
     std::bind_front(&DecimalBox::increment, self));
   link(*self, *m_data->m_up_button);
   match(*m_data->m_up_button, UpButton());
-  static auto down_icon = imageFromSvg(":/Icons/arrow-down.svg", BUTTON_SIZE());
+  static auto down_icon =
+    image_from_svg(":/Icons/arrow-down.svg", BUTTON_SIZE());
   m_data->m_down_button = new StepButton(down_icon, self->m_text_box);
   m_data->m_down_button->show();
   m_data->m_down_button->connect_press_signal(

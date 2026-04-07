@@ -1,56 +1,67 @@
-#include <boost/optional/optional.hpp>
+#include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Compliance/BuyingPowerComplianceRule.hpp"
-#include "Nexus/ServiceClients/TestEnvironment.hpp"
-#include "Nexus/ServiceClients/TestServiceClients.hpp"
+#include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
+#include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;
+using namespace Beam::Tests;
+using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::Compliance;
-using namespace Nexus::OrderExecutionService;
+using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::DefaultVenues;
+using namespace Nexus::Tests;
 
 namespace {
-  const auto TST =
-    Security("TST", DefaultMarkets::NYSE(), DefaultCountries::US());
+  using TestBuyingPowerComplianceRule =
+    BuyingPowerComplianceRule<MarketDataClient>;
 
   struct Fixture {
-    TestEnvironment m_testEnvironment;
-    std::shared_ptr<Beam::Queue<const Order*>> m_orderSubmissions;
-    TestServiceClients m_serviceClients;
+    ServiceLocatorTestEnvironment m_service_locator_environment;
+    AdministrationServiceTestEnvironment m_administration_environment;
+    MarketDataServiceTestEnvironment m_market_data_environment;
 
     Fixture()
-        : m_orderSubmissions(std::make_shared<Queue<const Order*>>()),
-          m_serviceClients(Ref(m_testEnvironment)) {
-      m_testEnvironment.MonitorOrderSubmissions(m_orderSubmissions);
-      m_testEnvironment.UpdateBboPrice(
-        TST, Money::ONE, Money::ONE + Money::CENT);
-    }
+      : m_administration_environment(
+          make_administration_service_test_environment(
+            m_service_locator_environment)),
+        m_market_data_environment(make_market_data_service_test_environment(
+          m_service_locator_environment, m_administration_environment)) {}
   };
 }
 
 TEST_SUITE("BuyingPowerComplianceRule") {
-  TEST_CASE_FIXTURE(Fixture, "order_recovery") {
-    auto parameters = std::vector<ComplianceParameter>();
-    parameters.emplace_back("currency", DefaultCurrencies::USD());
-    parameters.emplace_back("buying_power", 1000 * Money::ONE);
-    auto symbols = std::vector<ComplianceValue>();
-    symbols.push_back(Security("*", "", CountryCode::NONE));
-    parameters.emplace_back("symbols", symbols);
-    auto rule = BuyingPowerComplianceRule(
-      parameters, {}, &m_serviceClients.GetMarketDataClient());
-    auto recoveryFields =
-      OrderFields::MakeLimitOrder(TST, Side::BID, 100, Money::ONE);
-    auto& recoverOrder =
-      m_serviceClients.GetOrderExecutionClient().Submit(recoveryFields);
-    auto submittedRecoveryOrder = m_orderSubmissions->Pop();
-    m_testEnvironment.Accept(*submittedRecoveryOrder);
-    m_testEnvironment.Fill(*submittedRecoveryOrder, 100);
-    REQUIRE_NOTHROW(rule.Add(*submittedRecoveryOrder));
-    auto submissionFields =
-      OrderFields::MakeLimitOrder(TST, Side::BID, 100, 2 * Money::ONE);
-    auto& submissionOrder =
-      m_serviceClients.GetOrderExecutionClient().Submit(submissionFields);
-    auto submittedOrder = m_orderSubmissions->Pop();
-    REQUIRE_NOTHROW(rule.Submit(*submittedOrder));
+  TEST_CASE("submit_within_buying_power") {
+    auto fixture = Fixture();
+    auto exchange_rates = ExchangeRateTable();
+    auto rule = BuyingPowerComplianceRule(1000 * Money::ONE, AUD,
+      exchange_rates, fixture.m_market_data_environment.get_registry_client());
+    auto security = Security("TST", ASX);
+    fixture.m_market_data_environment.update_bbo(security, Money::ONE);
+    auto fields = make_limit_order_fields(
+      DirectoryEntry::make_account(1, "test"), security, AUD, Side::BID, "ASX",
+      10, 10 * Money::ONE);
+    auto order_info =
+      OrderInfo(fields, 1, time_from_string("2024-07-25 10:00:00"));
+    auto order = std::make_shared<PrimitiveOrder>(order_info);
+    REQUIRE_NOTHROW(rule.submit(order));
+  }
+
+  TEST_CASE("submit_exceeds_buying_power") {
+    auto fixture = Fixture();
+    auto exchange_rates = ExchangeRateTable();
+    auto rule = BuyingPowerComplianceRule(100 * Money::ONE, AUD, exchange_rates,
+      fixture.m_market_data_environment.get_registry_client());
+    auto security = Security("TST", ASX);
+    fixture.m_market_data_environment.update_bbo(security, Money::ONE);
+    auto fields = make_limit_order_fields(
+      DirectoryEntry::make_account(1, "test"), security, AUD, Side::BID, "ASX",
+      101, 2 * Money::ONE);
+    auto order_info =
+      OrderInfo(fields, 1, time_from_string("2024-07-25 10:00:00"));
+    auto order = std::make_shared<PrimitiveOrder>(order_info);
+    REQUIRE_THROWS_AS(rule.submit(order), ComplianceCheckException);
   }
 }

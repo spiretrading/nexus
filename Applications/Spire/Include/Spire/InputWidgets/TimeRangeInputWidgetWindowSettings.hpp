@@ -1,6 +1,7 @@
 #ifndef SPIRE_TIMERANGEINPUTWIDGETWINDOWSETTINGS_HPP
 #define SPIRE_TIMERANGEINPUTWIDGETWINDOWSETTINGS_HPP
 #include "Spire/InputWidgets/TimeRangeInputWidget.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 
 namespace Spire {
@@ -18,20 +19,19 @@ namespace Spire {
       TimeRangeInputWidgetWindowSettings(const TimeRangeInputWidget& widget);
 
       virtual QWidget* Reopen(Beam::Ref<UserProfile> userProfile) const;
-
       virtual void Apply(Beam::Ref<UserProfile> userProfile,
         Beam::Out<QWidget> widget) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
       TimeRangeInputWidgetWindowSettings();
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void TimeRangeInputWidgetWindowSettings::Shuttle(Shuttler& shuttle,
+  template<Beam::IsShuttle S>
+  void TimeRangeInputWidgetWindowSettings::shuttle(S& shuttle,
     unsigned int version) {}
 }
 

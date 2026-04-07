@@ -1,7 +1,7 @@
 #ifndef SPIRE_SIGNATURE_NODE_HPP
 #define SPIRE_SIGNATURE_NODE_HPP
 #include <vector>
-#include <boost/mpl/for_each.hpp>
+#include <boost/mp11.hpp>
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
@@ -35,7 +35,7 @@ namespace Details {
     template<typename T>
     void operator ()(T) {
       auto signature = std::vector<std::shared_ptr<NativeType>>();
-      boost::mpl::for_each<T>(
+      boost::mp11::mp_for_each<T>(
         Details::SignatureInnerLoop(m_typeRegistry, signature));
       m_signatures->push_back(std::move(signature));
     }
@@ -73,8 +73,8 @@ namespace Details {
       /** Returns the signatures supported by this CanvasNode. */
       virtual const std::vector<Signature>& GetSignatures() const = 0;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
 
     private:
       std::shared_ptr<CanvasType> m_type;
@@ -84,15 +84,15 @@ namespace Details {
   template<typename Signatures>
   std::vector<SignatureNode::Signature> MakeSignatures() {
     auto signatures = std::vector<SignatureNode::Signature>();
-    boost::mpl::for_each<typename Signatures::type>(
+    boost::mp11::mp_for_each<typename Signatures::type>(
       Details::SignatureOuterLoop(signatures));
     return signatures;
   }
 
-  template<typename Shuttler>
-  void SignatureNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    CanvasNode::Shuttle(shuttle, version);
-    shuttle.Shuttle("type", m_type);
+  template<Beam::IsShuttle S>
+  void SignatureNode::shuttle(S& shuttle, unsigned int version) {
+    CanvasNode::shuttle(shuttle, version);
+    shuttle.shuttle("type", m_type);
   }
 }
 

@@ -4,7 +4,6 @@
 namespace Spire {
   class SecurityInfoCompleter;
   class SecurityInfoModel;
-  class SecurityTechnicalsModel;
 }
 
 #endif

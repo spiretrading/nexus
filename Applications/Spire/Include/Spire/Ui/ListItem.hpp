@@ -2,7 +2,7 @@
 #define SPIRE_LIST_ITEM_HPP
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Ui/Box.hpp"
-#include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/ClickObserver.hpp"
 
 class QSpacerItem;
 
@@ -63,13 +63,16 @@ namespace Styles {
 
       QSize sizeHint() const override;
 
+    protected:
+      void keyPressEvent(QKeyEvent* event) override;
+
     private:
       friend class ListView;
       mutable SubmitSignal m_submit_signal;
       bool m_is_current;
       bool m_is_selected;
-      boost::optional<Button> m_button;
       boost::optional<Box> m_box;
+      boost::optional<ClickObserver> m_click_observer;
 
       void mount(QSpacerItem& body);
       void mount(QWidget& body);

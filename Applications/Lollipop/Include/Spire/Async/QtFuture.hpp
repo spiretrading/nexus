@@ -3,7 +3,6 @@
 #include <exception>
 #include <utility>
 #include <Beam/Routines/Async.hpp>
-#include "Spire/Async/Async.hpp"
 #include "Spire/Async/QtPromise.hpp"
 
 namespace Spire {
@@ -30,9 +29,9 @@ namespace Spire {
       void resolve(std::exception_ptr e);
 
     protected:
-      Beam::Routines::Eval<Type> m_eval;
+      Beam::Eval<Type> m_eval;
 
-      BaseQtFuture(Beam::Routines::Eval<Type> eval);
+      BaseQtFuture(Beam::Eval<Type> eval);
       BaseQtFuture(BaseQtFuture&&) = default;
       BaseQtFuture& operator =(BaseQtFuture&&) = default;
 
@@ -53,13 +52,11 @@ namespace Spire {
 
       QtFuture(QtFuture&&) = default;
 
-      QtFuture& operator =(QtFuture&&) = default;
-
-      using BaseQtFuture<T>::resolve;
-
       /** Resolves the QtPromise waiting on this future. */
       void resolve(Type value);
 
+      QtFuture& operator =(QtFuture&&) = default;
+      using BaseQtFuture<T>::resolve;
     private:
       friend struct std::pair<QtFuture, QtPromise<Type>>;
 
@@ -70,16 +67,13 @@ namespace Spire {
   template<>
   class QtFuture<void> : public BaseQtFuture<void> {
     public:
-
       QtFuture(QtFuture&&) = default;
-
-      QtFuture& operator =(QtFuture&&) = default;
-
-      using BaseQtFuture<void>::resolve;
 
       /** Resolves the QtPromise waiting on this future. */
       void resolve();
 
+      QtFuture& operator =(QtFuture&&) = default;
+      using BaseQtFuture<void>::resolve;
     private:
       friend struct std::pair<QtFuture, QtPromise<Type>>;
 
@@ -92,35 +86,35 @@ namespace Spire {
    */
   template<typename T>
   std::pair<QtFuture<T>, QtPromise<T>> make_future() {
-    auto async = std::make_unique<Beam::Routines::Async<T>>();
-    auto eval = async->GetEval();
+    auto async = std::make_unique<Beam::Async<T>>();
+    auto eval = async->get_eval();
     return std::pair<QtFuture<T>, QtPromise<T>>(std::piecewise_construct,
       std::forward_as_tuple(std::move(eval)),
       std::forward_as_tuple([async = std::move(async)] {
         if constexpr(std::is_same_v<T, void>) {
-          async->Get();
+          async->get();
         } else {
-          return async->Get();
+          return async->get();
         }
       }, LaunchPolicy::ASYNC));
   }
 
   template<typename T>
   void BaseQtFuture<T>::resolve(std::exception_ptr e) {
-    m_eval.SetException(std::move(e));
+    m_eval.set_exception(std::move(e));
   }
 
   template<typename T>
-  BaseQtFuture<T>::BaseQtFuture(Beam::Routines::Eval<Type> eval)
+  BaseQtFuture<T>::BaseQtFuture(Beam::Eval<Type> eval)
     : m_eval(std::move(eval)) {}
 
   template<typename T>
   void QtFuture<T>::resolve(Type value) {
-    this->m_eval.SetResult(std::move(value));
+    this->m_eval.set(std::move(value));
   }
 
   inline void QtFuture<void>::resolve() {
-    this->m_eval.SetResult();
+    this->m_eval.set();
   }
 }
 

@@ -1,7 +1,6 @@
 #ifndef SPIRE_LIST_SELECTION_MODEL_HPP
 #define SPIRE_LIST_SELECTION_MODEL_HPP
 #include "Spire/Spire/ListModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -37,17 +36,11 @@ namespace Spire {
       void set_mode(Mode mode);
 
       int get_size() const override;
-
       const int& get(int index) const override;
-
       QValidator::State set(int index, const int& value) override;
-
       QValidator::State insert(const int& value, int index) override;
-
       QValidator::State move(int source, int destination) override;
-
       QValidator::State remove(int index) override;
-
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
 

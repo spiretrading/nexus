@@ -1,285 +1,219 @@
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/BuyingPowerModel.hpp"
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/Definitions/Security.hpp"
 
-using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::Accounting;
-using namespace Nexus::OrderExecutionService;
+using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::DefaultVenues;
+
+namespace {
+  auto TST = Security("TST", TSX);
+  auto S32 = Security("S32", ASX);
+
+  auto make_order_fields(Security security, CurrencyId currency, Side side,
+      Quantity quantity, Money price) {
+    auto fields = OrderFields();
+    fields.m_security = security;
+    fields.m_currency = currency;
+    fields.m_side = side;
+    fields.m_quantity = quantity;
+    fields.m_price = price;
+    return fields;
+  }
+
+  auto make_execution_report(OrderId id, OrderStatus status,
+      Quantity last_quantity, Money last_price) {
+    auto report = ExecutionReport();
+    report.m_id = id;
+    report.m_status = status;
+    report.m_last_quantity = last_quantity;
+    report.m_last_price = last_price;
+    return report;
+  }
+}
 
 TEST_SUITE("BuyingPowerModel") {
-  TEST_CASE("two_bids") {
+  TEST_CASE("empty_model") {
     auto model = BuyingPowerModel();
-    auto security = Security("A", DefaultMarkets::NASDAQ(),
-      DefaultCountries::US());
-    auto bidFieldsA = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::BID, "", 100, Money::ONE);
-    auto buyingPower = model.Submit(0, bidFieldsA, bidFieldsA.m_price);
-    REQUIRE(buyingPower == 100 * Money::ONE);
-    auto bidFieldsB = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::BID, "", 200, Money::ONE);
-    buyingPower = model.Submit(1, bidFieldsB, 2 * Money::ONE);
-    REQUIRE(buyingPower == 500 * Money::ONE);
+    REQUIRE(model.get_buying_power(CAD) == Money::ZERO);
+    REQUIRE(model.get_buying_power(AUD) == Money::ZERO);
+    REQUIRE(!model.has_order(1));
   }
 
-  TEST_CASE("bid_and_smaller_ask") {
+  TEST_CASE("single_buy_order") {
     auto model = BuyingPowerModel();
-    auto security = Security("A", DefaultMarkets::NASDAQ(),
-      DefaultCountries::US());
-    auto bidFields = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::BID, "", 100, Money::ONE);
-    auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
-    REQUIRE(buyingPower == 100 * Money::ONE);
-    auto askFields = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::ASK, "", 50, Money::ONE);
-    buyingPower = model.Submit(1, askFields, askFields.m_price);
-    REQUIRE(buyingPower == 100 * Money::ONE);
+    auto fields = make_order_fields(TST, CAD, Side::BID, 100, 10 * Money::ONE);
+    model.submit(1, fields, 10 * Money::ONE);
+    REQUIRE(model.has_order(1));
+    REQUIRE(model.get_buying_power(CAD) == 1000 * Money::ONE);
   }
 
-  TEST_CASE("bid_and_greater_ask") {
+  TEST_CASE("single_sell_order") {
     auto model = BuyingPowerModel();
-    auto security = Security("A", DefaultMarkets::NASDAQ(),
-      DefaultCountries::US());
-    auto bidFields = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::BID, "", 100, Money::ONE);
-    auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
-    REQUIRE(buyingPower == 100 * Money::ONE);
-    auto askFields = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::ASK, "", 200, Money::ONE);
-    buyingPower = model.Submit(1, askFields, askFields.m_price);
-    REQUIRE(buyingPower == 200 * Money::ONE);
+    auto fields = make_order_fields(TST, CAD, Side::ASK, 100, 10 * Money::ONE);
+    model.submit(1, fields, 10 * Money::ONE);
+    REQUIRE(model.has_order(1));
+    REQUIRE(model.get_buying_power(CAD) == 1000 * Money::ONE);
   }
 
-  TEST_CASE("bid_and_cancel") {
+  TEST_CASE("buy_order_and_full_fill") {
     auto model = BuyingPowerModel();
-    auto security = Security("A", DefaultMarkets::NASDAQ(),
-      DefaultCountries::US());
-    auto bidFields = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::BID, "", 100, Money::ONE);
-    auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
-    REQUIRE(buyingPower == 100 * Money::ONE);
-    auto cancelReport = ExecutionReport();
-    cancelReport.m_id = 0;
-    cancelReport.m_status = OrderStatus::CANCELED;
-    model.Update(cancelReport);
-    buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
-    REQUIRE(buyingPower == Money::ZERO);
+    auto fields = make_order_fields(TST, CAD, Side::BID, 100, 10 * Money::ONE);
+    model.submit(1, fields, 10 * Money::ONE);
+    auto report =
+      make_execution_report(1, OrderStatus::FILLED, 100, 10 * Money::ONE);
+    model.update(report);
+    REQUIRE(model.get_buying_power(CAD) == 1000 * Money::ONE);
   }
 
-  TEST_CASE("bid_and_fill") {
+  TEST_CASE("sell_order_and_full_fill") {
     auto model = BuyingPowerModel();
-    auto security = Security("A", DefaultMarkets::NASDAQ(),
-      DefaultCountries::US());
-    auto bidFields = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::BID, "", 100, Money::ONE);
-    auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
-    REQUIRE(buyingPower == 100 * Money::ONE);
-    auto fillReport = ExecutionReport();
-    fillReport.m_id = 0;
-    fillReport.m_status = OrderStatus::FILLED;
-    fillReport.m_lastQuantity = 100;
-    fillReport.m_lastPrice = 50 * Money::CENT;
-    model.Update(fillReport);
-    buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
-    REQUIRE(buyingPower == 100 * 50 * Money::CENT);
+    auto fields = make_order_fields(TST, CAD, Side::ASK, 100, 10 * Money::ONE);
+    model.submit(1, fields, 10 * Money::ONE);
+    auto report =
+      make_execution_report(1, OrderStatus::FILLED, 100, 10 * Money::ONE);
+    model.update(report);
+    REQUIRE(model.get_buying_power(CAD) == 1000 * Money::ONE);
   }
 
-  TEST_CASE("bid_and_partial_fill_and_cancel") {
+  TEST_CASE("buy_order_and_partial_fill") {
     auto model = BuyingPowerModel();
-    auto security = Security("A", DefaultMarkets::NASDAQ(),
-      DefaultCountries::US());
-    auto bidFields = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::BID, "", 100, Money::ONE);
-    auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
-    REQUIRE(buyingPower == 100 * Money::ONE);
-    auto partialFillReport = ExecutionReport();
-    partialFillReport.m_id = 0;
-    partialFillReport.m_status = OrderStatus::PARTIALLY_FILLED;
-    partialFillReport.m_lastQuantity = 50;
-    partialFillReport.m_lastPrice = 50 * Money::CENT;
-    model.Update(partialFillReport);
-    buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
-    REQUIRE(buyingPower == (50 * 50 * Money::CENT) + (50 * Money::ONE));
-    auto cancelReport = ExecutionReport();
-    cancelReport.m_id = 0;
-    cancelReport.m_status = OrderStatus::CANCELED;
-    model.Update(cancelReport);
-    buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
-    REQUIRE(buyingPower == (50 * 50 * Money::CENT));
+    auto fields = make_order_fields(TST, CAD, Side::BID, 100, 10 * Money::ONE);
+    model.submit(1, fields, 10 * Money::ONE);
+    auto report = make_execution_report(
+      1, OrderStatus::PARTIALLY_FILLED, 50, 10 * Money::ONE);
+    model.update(report);
+    REQUIRE(model.get_buying_power(CAD) == 1000 * Money::ONE);
   }
 
-  TEST_CASE("bid_and_offsetting_ask") {
+  TEST_CASE("sell_order_and_partial_fill") {
     auto model = BuyingPowerModel();
-    auto security = Security("A", DefaultMarkets::NASDAQ(),
-      DefaultCountries::US());
-    auto bidFields = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::BID, "", 100, Money::ONE);
-    auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
-    REQUIRE(buyingPower == 100 * Money::ONE);
-    auto bidFillReport = ExecutionReport();
-    bidFillReport.m_id = 0;
-    bidFillReport.m_status = OrderStatus::FILLED;
-    bidFillReport.m_lastQuantity = 100;
-    bidFillReport.m_lastPrice = 50 * Money::CENT;
-    model.Update(bidFillReport);
-    buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
-    REQUIRE(buyingPower == 100 * 50 * Money::CENT);
-    auto askFields = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::ASK, "", 100, 2 * Money::ONE);
-    buyingPower = model.Submit(1, askFields, askFields.m_price);
-    REQUIRE(buyingPower == 100 * 50 * Money::CENT);
-    auto askFillReport = ExecutionReport();
-    askFillReport.m_id = 1;
-    askFillReport.m_status = OrderStatus::FILLED;
-    askFillReport.m_lastQuantity = 100;
-    askFillReport.m_lastPrice = 2 * Money::ONE;
-    model.Update(askFillReport);
-    buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
-    REQUIRE(buyingPower == Money::ZERO);
+    auto fields = make_order_fields(TST, CAD, Side::ASK, 100, 10 * Money::ONE);
+    model.submit(1, fields, 10 * Money::ONE);
+    auto report = make_execution_report(
+      1, OrderStatus::PARTIALLY_FILLED, 50, 10 * Money::ONE);
+    model.update(report);
+    REQUIRE(model.get_buying_power(CAD) == 1000 * Money::ONE);
   }
 
-  TEST_CASE("bid_and_partial_offsetting_ask") {
+  TEST_CASE("buy_order_and_cancellation") {
     auto model = BuyingPowerModel();
-    auto security = Security("A", DefaultMarkets::NASDAQ(),
-      DefaultCountries::US());
-    auto bidFields = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::BID, "", 100, Money::ONE);
-    auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
-    REQUIRE(buyingPower == 100 * Money::ONE);
-    auto bidFillReport = ExecutionReport();
-    bidFillReport.m_id = 0;
-    bidFillReport.m_status = OrderStatus::FILLED;
-    bidFillReport.m_lastQuantity = 100;
-    bidFillReport.m_lastPrice = 50 * Money::CENT;
-    model.Update(bidFillReport);
-    buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
-    REQUIRE(buyingPower == 100 * 50 * Money::CENT);
-    auto askFields = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::ASK, "", 50, 2 * Money::ONE);
-    buyingPower = model.Submit(1, askFields, askFields.m_price);
-    REQUIRE(buyingPower == 100 * 50 * Money::CENT);
-    auto askFillReport = ExecutionReport();
-    askFillReport.m_id = 1;
-    askFillReport.m_status = OrderStatus::FILLED;
-    askFillReport.m_lastQuantity = 50;
-    askFillReport.m_lastPrice = 2 * Money::ONE;
-    model.Update(askFillReport);
-    buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
-    REQUIRE(buyingPower == 50 * 50 * Money::CENT);
+    auto fields = make_order_fields(TST, CAD, Side::BID, 100, 10 * Money::ONE);
+    model.submit(1, fields, 10 * Money::ONE);
+    auto report =
+      make_execution_report(1, OrderStatus::CANCELED, 0, Money::ZERO);
+    model.update(report);
+    REQUIRE(model.get_buying_power(CAD) == Money::ZERO);
   }
 
-  TEST_CASE("partial_bid_and_offsetting_ask") {
+  TEST_CASE("long_position_and_sell_order") {
     auto model = BuyingPowerModel();
-    auto security = Security("A", DefaultMarkets::NASDAQ(),
-      DefaultCountries::US());
-    auto bidFields = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::BID, "", 100, Money::ONE);
-    auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
-    REQUIRE(buyingPower == 100 * Money::ONE);
-    auto bidFillReport = ExecutionReport();
-    bidFillReport.m_id = 0;
-    bidFillReport.m_status = OrderStatus::PARTIALLY_FILLED;
-    bidFillReport.m_lastQuantity = 50;
-    bidFillReport.m_lastPrice = bidFields.m_price;
-    model.Update(bidFillReport);
-    buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
-    REQUIRE(buyingPower == 100 * Money::ONE);
-    auto askFields = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::ASK, "", 50, 2 * Money::ONE);
-    buyingPower = model.Submit(1, askFields, askFields.m_price);
-    REQUIRE(buyingPower == 100 * Money::ONE);
-    auto askFillReport = ExecutionReport();
-    askFillReport.m_id = 1;
-    askFillReport.m_status = OrderStatus::FILLED;
-    askFillReport.m_lastQuantity = 50;
-    askFillReport.m_lastPrice = 2 * Money::ONE;
-    model.Update(askFillReport);
-    buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
-    REQUIRE(buyingPower == 50 * Money::ONE);
+    auto buy_fields =
+      make_order_fields(TST, CAD, Side::BID, 100, 10 * Money::ONE);
+    model.submit(1, buy_fields, 10 * Money::ONE);
+    auto buy_fill_report =
+      make_execution_report(1, OrderStatus::FILLED, 100, 10 * Money::ONE);
+    model.update(buy_fill_report);
+    auto sell_fields =
+      make_order_fields(TST, CAD, Side::ASK, 50, 11 * Money::ONE);
+    model.submit(2, sell_fields, 11 * Money::ONE);
+    REQUIRE(model.get_buying_power(CAD) == 1000 * Money::ONE);
+    auto sell_fill_report =
+      make_execution_report(2, OrderStatus::FILLED, 50, 11 * Money::ONE);
+    model.update(sell_fill_report);
+    REQUIRE(model.get_buying_power(CAD) == 500 * Money::ONE);
   }
 
-  TEST_CASE("partial_bid_and_partial_offsetting_ask") {
+  TEST_CASE("short_position_and_buy_order") {
     auto model = BuyingPowerModel();
-    auto security = Security("A", DefaultMarkets::NASDAQ(),
-      DefaultCountries::US());
-    auto bidFields = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::BID, "", 100, Money::ONE);
-    auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
-    REQUIRE(buyingPower == 100 * Money::ONE);
-    auto bidFillReport = ExecutionReport();
-    bidFillReport.m_id = 0;
-    bidFillReport.m_status = OrderStatus::PARTIALLY_FILLED;
-    bidFillReport.m_lastQuantity = 50;
-    bidFillReport.m_lastPrice = bidFields.m_price;
-    model.Update(bidFillReport);
-    buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
-    REQUIRE(buyingPower == 100 * Money::ONE);
-    auto askFields = OrderFields::MakeLimitOrder(
-      DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-      Side::ASK, "", 50, 2 * Money::ONE);
-    buyingPower = model.Submit(1, askFields, askFields.m_price);
-    REQUIRE(buyingPower == 100 * Money::ONE);
-    auto askFillReport = ExecutionReport();
-    askFillReport.m_id = 1;
-    askFillReport.m_status = OrderStatus::PARTIALLY_FILLED;
-    askFillReport.m_lastQuantity = 25;
-    askFillReport.m_lastPrice = 2 * Money::ONE;
-    model.Update(askFillReport);
-    buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
-    REQUIRE(buyingPower == 75 * Money::ONE);
+    auto sell_fields =
+      make_order_fields(TST, CAD, Side::ASK, 100, 10 * Money::ONE);
+    model.submit(1, sell_fields, 10 * Money::ONE);
+    auto sell_fill_report =
+      make_execution_report(1, OrderStatus::FILLED, 100, 10 * Money::ONE);
+    model.update(sell_fill_report);
+    auto buy_fields =
+      make_order_fields(TST, CAD, Side::BID, 50, 9 * Money::ONE);
+    model.submit(2, buy_fields, 9 * Money::ONE);
+    REQUIRE(model.get_buying_power(CAD) == 1000 * Money::ONE);
+    auto buy_fill_report =
+      make_execution_report(2, OrderStatus::FILLED, 50, 9 * Money::ONE);
+    model.update(buy_fill_report);
+    REQUIRE(model.get_buying_power(CAD) == 500 * Money::ONE);
   }
 
-  TEST_CASE("bid_and_multiple_asks") {
+  TEST_CASE("multiple_buy_orders") {
     auto model = BuyingPowerModel();
-    auto security = Security("A", DefaultMarkets::NASDAQ(),
-      DefaultCountries::US());
-    {
-      auto bidFields = OrderFields::MakeLimitOrder(
-        DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-        Side::BID, "", 100, Money::ONE);
-      auto buyingPower = model.Submit(0, bidFields, bidFields.m_price);
-      REQUIRE(buyingPower == 100 * Money::ONE);
-      auto fillReport = ExecutionReport();
-      fillReport.m_id = 0;
-      fillReport.m_status = OrderStatus::FILLED;
-      fillReport.m_lastQuantity = 100;
-      fillReport.m_lastPrice = 50 * Money::CENT;
-      model.Update(fillReport);
-      buyingPower = model.GetBuyingPower(DefaultCurrencies::USD());
-      REQUIRE(buyingPower == (50 * Money::ONE));
-    }
-    {
-      auto askFields = OrderFields::MakeLimitOrder(
-        DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-        Side::ASK, "", 100, 2 * Money::ONE);
-      auto buyingPower = model.Submit(1, askFields, askFields.m_price);
-      REQUIRE(buyingPower == 50 * Money::ONE);
-    }
-    {
-      auto askFields = OrderFields::MakeLimitOrder(
-        DirectoryEntry::GetRootAccount(), security, DefaultCurrencies::USD(),
-        Side::ASK, "", 100, 2 * Money::ONE);
-      auto buyingPower = model.Submit(1, askFields, askFields.m_price);
-      REQUIRE(buyingPower == 200 * Money::ONE);
-    }
+    auto fields1 = make_order_fields(TST, CAD, Side::BID, 100, 10 * Money::ONE);
+    model.submit(1, fields1, 10 * Money::ONE);
+    auto fields2 = make_order_fields(TST, CAD, Side::BID, 50, 11 * Money::ONE);
+    model.submit(2, fields2, 11 * Money::ONE);
+    REQUIRE(model.get_buying_power(CAD) == 1550 * Money::ONE);
+  }
+
+  TEST_CASE("multiple_sell_orders") {
+    auto model = BuyingPowerModel();
+    auto fields1 = make_order_fields(TST, CAD, Side::ASK, 100, 10 * Money::ONE);
+    model.submit(1, fields1, 10 * Money::ONE);
+    auto fields2 = make_order_fields(TST, CAD, Side::ASK, 50, 11 * Money::ONE);
+    model.submit(2, fields2, 11 * Money::ONE);
+    REQUIRE(model.get_buying_power(CAD) == 1550 * Money::ONE);
+  }
+
+  TEST_CASE("multiple_orders_opposite_sides") {
+    auto model = BuyingPowerModel();
+    auto buy_fields =
+      make_order_fields(TST, CAD, Side::BID, 100, 10 * Money::ONE);
+    model.submit(1, buy_fields, 10 * Money::ONE);
+    auto sell_fields =
+      make_order_fields(TST, CAD, Side::ASK, 50, 11 * Money::ONE);
+    model.submit(2, sell_fields, 11 * Money::ONE);
+    REQUIRE(model.get_buying_power(CAD) == 1000 * Money::ONE);
+  }
+
+  TEST_CASE("multiple_securities") {
+    auto model = BuyingPowerModel();
+    auto tst_fields =
+      make_order_fields(TST, CAD, Side::BID, 100, 10 * Money::ONE);
+    model.submit(1, tst_fields, 10 * Money::ONE);
+    auto S32_fields =
+      make_order_fields(S32, AUD, Side::BID, 50, 150 * Money::ONE);
+    model.submit(2, S32_fields, 150 * Money::ONE);
+    REQUIRE(model.get_buying_power(CAD) == 1000 * Money::ONE);
+    REQUIRE(model.get_buying_power(AUD) == 7500 * Money::ONE);
+  }
+
+  TEST_CASE("flipping_from_long_to_short") {
+    auto model = BuyingPowerModel();
+    auto buy_fields =
+      make_order_fields(TST, CAD, Side::BID, 100, 10 * Money::ONE);
+    model.submit(1, buy_fields, 10 * Money::ONE);
+    auto fill_report1 =
+      make_execution_report(1, OrderStatus::FILLED, 100, 10 * Money::ONE);
+    model.update(fill_report1);
+    auto sell_fields =
+      make_order_fields(TST, CAD, Side::ASK, 150, 11 * Money::ONE);
+    model.submit(2, sell_fields, 11 * Money::ONE);
+    auto fill_report2 =
+      make_execution_report(2, OrderStatus::FILLED, 150, 11 * Money::ONE);
+    model.update(fill_report2);
+    REQUIRE(model.get_buying_power(CAD) == 550 * Money::ONE);
+  }
+
+  TEST_CASE("flipping_from_short_to_long") {
+    auto model = BuyingPowerModel();
+    auto sell_fields =
+      make_order_fields(TST, CAD, Side::ASK, 100, 10 * Money::ONE);
+    model.submit(1, sell_fields, 10 * Money::ONE);
+    auto fill_report1 =
+      make_execution_report(1, OrderStatus::FILLED, 100, 10 * Money::ONE);
+    model.update(fill_report1);
+    auto buy_fields =
+      make_order_fields(TST, CAD, Side::BID, 150, 9 * Money::ONE);
+    model.submit(2, buy_fields, 9 * Money::ONE);
+    auto fill_report2 =
+      make_execution_report(2, OrderStatus::FILLED, 150, 9 * Money::ONE);
+    model.update(fill_report2);
+    REQUIRE(model.get_buying_power(CAD) == 450 * Money::ONE);
   }
 }

@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.28)
 project(Scratch LANGUAGES CXX)
-set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD 23)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_SCAN_FOR_MODULES OFF)
 set(D "${CMAKE_BINARY_DIR}/Dependencies" CACHE STRING
@@ -29,11 +29,14 @@ if(NOT configure_result EQUAL 0)
 endif()
 include(../../Nexus/Config/dependencies.cmake)
 include_directories(${NEXUS_INCLUDE_PATH})
+include_directories(SYSTEM ${ASPEN_INCLUDE_PATH})
 include_directories(SYSTEM ${BEAM_INCLUDE_PATH})
 include_directories(SYSTEM ${BOOST_INCLUDE_PATH})
 include_directories(SYSTEM ${CRYPTOPP_INCLUDE_PATH})
+include_directories(SYSTEM ${HTRIE_INCLUDE_PATH})
 include_directories(SYSTEM ${MYSQL_INCLUDE_PATH})
 include_directories(SYSTEM ${OPEN_SSL_INCLUDE_PATH})
+include_directories(SYSTEM ${SQLITE_INCLUDE_PATH})
 include_directories(SYSTEM ${TCLAP_INCLUDE_PATH})
 include_directories(SYSTEM ${VIPER_INCLUDE_PATH})
 include_directories(SYSTEM ${YAML_INCLUDE_PATH})
@@ -42,9 +45,9 @@ link_directories(${BOOST_DEBUG_PATH})
 link_directories(${BOOST_OPTIMIZED_PATH})
 if(MSVC)
   add_compile_options(/bigobj /external:anglebrackets /external:W0
-    $<$<CONFIG:Release>:/GL> /MP /WX)
+    $<$<CONFIG:Release>:/GL> /MP /WX /Zc:__cplusplus /Zc:preprocessor)
   add_compile_definitions(_CRT_SECURE_NO_DEPRECATE NOMINMAX
-    _SCL_SECURE_NO_WARNINGS WIN32_LEAN_AND_MEAN _WIN32_WINNT=0x0501)
+    _SCL_SECURE_NO_WARNINGS WIN32_LEAN_AND_MEAN _WIN32_WINNT=0x0A00)
   add_link_options($<$<CONFIG:Release>:/LTCG> /SAFESEH:NO)
 elseif(CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang")
   add_compile_options(-g $<$<CONFIG:Release>:-DNDEBUG>)
@@ -72,6 +75,8 @@ target_link_libraries(Scratch
   optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
   debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
   optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
+  debug ${SQLITE_LIBRARY_DEBUG_PATH}
+  optimized ${SQLITE_LIBRARY_OPTIMIZED_PATH}
   debug ${YAML_LIBRARY_DEBUG_PATH}
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
@@ -86,8 +91,6 @@ if(UNIX)
     optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     dl pthread rt)
 endif()
 if(WIN32)

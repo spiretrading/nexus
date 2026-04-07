@@ -9,31 +9,31 @@ namespace Nexus {
     public:
 
       /** Constructs an ActiveBacktesterEvent with an immediate timestamp. */
-      ActiveBacktesterEvent();
+      ActiveBacktesterEvent() noexcept;
 
       /**
        * Constructs an ActiveBacktesterEvent.
        * @param timestamp The time that this event is to take place.
        */
-      ActiveBacktesterEvent(boost::posix_time::ptime timestamp);
+      ActiveBacktesterEvent(boost::posix_time::ptime timestamp) noexcept;
 
-      bool IsPassive() const override;
+      bool is_passive() const final override;
 
-      void Execute() override;
+      void execute() override;
   };
 
-  inline ActiveBacktesterEvent::ActiveBacktesterEvent()
+  inline ActiveBacktesterEvent::ActiveBacktesterEvent() noexcept
     : ActiveBacktesterEvent(boost::posix_time::neg_infin) {}
 
   inline ActiveBacktesterEvent::ActiveBacktesterEvent(
-    boost::posix_time::ptime timestamp)
+    boost::posix_time::ptime timestamp) noexcept
     : BacktesterEvent(timestamp) {}
 
-  inline bool ActiveBacktesterEvent::IsPassive() const {
+  inline bool ActiveBacktesterEvent::is_passive() const {
     return false;
   }
 
-  inline void ActiveBacktesterEvent::Execute() {}
+  inline void ActiveBacktesterEvent::execute() {}
 }
 
 #endif

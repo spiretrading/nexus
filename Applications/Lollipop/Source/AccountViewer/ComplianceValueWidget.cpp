@@ -1,7 +1,10 @@
 #include "Spire/AccountViewer/ComplianceValueWidget.hpp"
+#include <QCheckBox>
+#include <QLineEdit>
 #include <QSpinBox>
 #include "Spire/InputWidgets/CurrencyInputWidget.hpp"
 #include "Spire/InputWidgets/MoneySpinBox.hpp"
+#include "Spire/InputWidgets/RegionInputWidget.hpp"
 #include "Spire/InputWidgets/SecurityInputWidget.hpp"
 #include "Spire/InputWidgets/TimeInputWidget.hpp"
 #include "Spire/InputWidgets/ValueListInputWidget.hpp"
@@ -10,7 +13,6 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::Compliance;
 using namespace Spire;
 using namespace std;
 
@@ -42,13 +44,47 @@ namespace {
     ComplianceWidgetVisitor(bool isReadOnly, Ref<UserProfile> userProfile,
         QWidget* parent, Qt::WindowFlags flags)
         : m_isReadOnly{isReadOnly},
-          m_userProfile{userProfile.Get()},
+          m_userProfile{userProfile.get()},
           m_parent{parent},
           m_flags(flags) {}
 
     template<typename T>
     QWidget* operator ()(const T& value) const {
       return new QWidget{m_parent, m_flags};
+    }
+
+    QWidget* operator ()(bool enabled) const {
+      auto widget = new QCheckBox{m_parent};
+      if(m_isReadOnly) {
+        widget->setAttribute(Qt::WA_TransparentForMouseEvents, true);
+        widget->setFocusPolicy(Qt::NoFocus);
+      }
+      return widget;
+    }
+
+    QWidget* operator ()(Quantity value) const {
+      auto widget = new QSpinBox{m_parent};
+      widget->setReadOnly(m_isReadOnly);
+      return widget;
+    }
+
+    QWidget* operator ()(double value) const {
+      auto widget = new QDoubleSpinBox{m_parent};
+      widget->setReadOnly(m_isReadOnly);
+      return widget;
+    }
+
+    QWidget* operator ()(const std::string& value) const {
+      auto widget = new QLineEdit{QString::fromStdString(value), m_parent};
+      widget->setReadOnly(m_isReadOnly);
+      return widget;
+    }
+
+    QWidget* operator ()(time_duration value) const {
+      auto widget = new TimeInputWidget{Ref(*m_userProfile), m_parent,
+        m_flags};
+      widget->SetReadOnly(m_isReadOnly);
+      return widget;
     }
 
     QWidget* operator ()(CurrencyId currency) const {
@@ -65,12 +101,6 @@ namespace {
       return widget;
     }
 
-    QWidget* operator ()(Quantity value) const {
-      auto widget = new QSpinBox{m_parent};
-      widget->setEnabled(!m_isReadOnly);
-      return widget;
-    }
-
     QWidget* operator ()(const Security& value) const {
       auto widget = new SecurityInputWidget{Ref(*m_userProfile), m_parent,
         m_flags};
@@ -78,9 +108,8 @@ namespace {
       return widget;
     }
 
-    QWidget* operator ()(const time_duration& value) const {
-      auto widget = new TimeInputWidget{Ref(*m_userProfile), m_parent,
-        m_flags};
+    QWidget* operator ()(const Region& value) const {
+      auto widget = new RegionInputWidget{Ref(*m_userProfile), m_parent};
       widget->SetReadOnly(m_isReadOnly);
       return widget;
     }
@@ -102,6 +131,26 @@ namespace {
     template<typename T>
     void operator ()(const T& value) const {}
 
+    void operator ()(bool isChecked) const {
+      static_cast<QCheckBox*>(m_widget)->setChecked(isChecked);
+    }
+
+    void operator ()(Quantity value) const {
+      static_cast<QSpinBox*>(m_widget)->setValue(static_cast<int>(value));
+    }
+
+    void operator ()(double value) const {
+      static_cast<QDoubleSpinBox*>(m_widget)->setValue(value);
+    }
+
+    void operator ()(const std::string& value) const {
+      static_cast<QLineEdit*>(m_widget)->setText(QString::fromStdString(value));
+    }
+
+    void operator ()(const time_duration& value) const {
+      static_cast<TimeInputWidget*>(m_widget)->SetTime(value);
+    }
+
     void operator ()(CurrencyId currency) const {
       static_cast<CurrencyInputWidget*>(m_widget)->SetCurrency(currency);
     }
@@ -110,16 +159,12 @@ namespace {
       static_cast<MoneySpinBox*>(m_widget)->SetValue(value);
     }
 
-    void operator ()(Quantity value) const {
-      static_cast<QSpinBox*>(m_widget)->setValue(static_cast<int>(value));
-    }
-
     void operator ()(const Security& value) const {
       static_cast<SecurityInputWidget*>(m_widget)->SetSecurity(value);
     }
 
-    void operator ()(const time_duration& value) const {
-      static_cast<TimeInputWidget*>(m_widget)->SetTime(value);
+    void operator ()(const Region& value) const {
+      static_cast<RegionInputWidget*>(m_widget)->SetRegion(value);
     }
 
     void operator ()(const vector<ComplianceValue>& value) const {
@@ -141,18 +186,28 @@ QWidget* Spire::MakeComplianceValueWidget(ComplianceValue value,
 }
 
 ComplianceValue Spire::GetComplianceValue(const QWidget& widget) {
-  if(auto currencyWidget =
+  if(auto boolWidget = dynamic_cast<const QCheckBox*>(&widget)) {
+    return boolWidget->isChecked();
+  } else if(auto quantityWidget = dynamic_cast<const QSpinBox*>(&widget)) {
+    return static_cast<Quantity>(quantityWidget->value());
+  } else if(auto doubleWidget = dynamic_cast<const QDoubleSpinBox*>(&widget)) {
+    return doubleWidget->value();
+  } else if(auto textWidget = dynamic_cast<const QLineEdit*>(&widget)) {
+    return textWidget->text().toStdString();
+  } else if(auto durationWidget =
+      dynamic_cast<const TimeInputWidget*>(&widget)) {
+    return durationWidget->GetTime();
+  } else if(auto currencyWidget =
       dynamic_cast<const CurrencyInputWidget*>(&widget)) {
     return currencyWidget->GetCurrency();
   } else if(auto moneyWidget = dynamic_cast<const MoneySpinBox*>(&widget)) {
     return moneyWidget->GetValue();
-  } else if(auto quantityWidget = dynamic_cast<const QSpinBox*>(&widget)) {
-    return static_cast<Quantity>(quantityWidget->value());
   } else if(auto securityWidget =
       dynamic_cast<const SecurityInputWidget*>(&widget)) {
     return securityWidget->GetSecurity();
-  } else if(auto timeWidget = dynamic_cast<const TimeInputWidget*>(&widget)) {
-    return timeWidget->GetTime();
+  } else if(auto regionWidget =
+      dynamic_cast<const RegionInputWidget*>(&widget)) {
+    return regionWidget->GetRegion();
   } else if(auto listWidget =
       dynamic_cast<const ValueListInputWidget*>(&widget)) {
     auto& listValue = listWidget->GetValues();

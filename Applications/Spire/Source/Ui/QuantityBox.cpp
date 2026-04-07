@@ -2,6 +2,7 @@
 #include <QKeyEvent>
 #include "Spire/Spire/UnsignedQuantityModel.hpp"
 #include "Spire/Styles/Selectors.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::multiprecision;

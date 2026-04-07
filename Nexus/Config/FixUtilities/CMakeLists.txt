@@ -11,11 +11,12 @@ if(UNIX)
     optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     pthread rt)
+endif()
+if(WIN32)
+  target_link_libraries(FixUtilitiesTests crypt32 Secur32 shlwapi ws2_32.lib)
 endif()
 add_custom_command(TARGET FixUtilitiesTests
   POST_BUILD COMMAND FixUtilitiesTests)

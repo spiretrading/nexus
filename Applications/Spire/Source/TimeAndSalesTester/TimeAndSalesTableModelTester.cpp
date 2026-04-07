@@ -4,7 +4,6 @@
 #include "Spire/TimeAndSales/TimeAndSalesTableModel.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
 using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -65,7 +64,7 @@ namespace {
     return TimeAndSalesModel::Entry{SequencedValue(
       TimeAndSale(timestamp, Money::ONE, 100, TimeAndSale::Condition(
         TimeAndSale::Condition::Type::REGULAR, "@"), "XNYS"),
-      Queries::Sequence(to_time_t_milliseconds(timestamp))),
+      Beam::Sequence(to_time_t_milliseconds(timestamp))),
       BboIndicator::UNKNOWN};
   }
 
@@ -90,10 +89,9 @@ namespace {
     }
 
     QtPromise<std::vector<Entry>> query_until(
-        Queries::Sequence sequence, int max_count) override {
+        Beam::Sequence sequence, int max_count) override {
       return QtPromise([=] {
-        if(sequence >=
-            Queries::Sequence(to_time_t_milliseconds(m_current_time))) {
+        if(sequence >= Beam::Sequence(to_time_t_milliseconds(m_current_time))) {
           return std::vector<Entry>(m_historical_data.end() - max_count,
             m_historical_data.end());
         } else {

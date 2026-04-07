@@ -1,94 +1,71 @@
 #ifndef NEXUS_MARKET_DATA_ASYNC_HISTORICAL_DATA_STORE_HPP
 #define NEXUS_MARKET_DATA_ASYNC_HISTORICAL_DATA_STORE_HPP
-#include <Beam/Collections/SynchronizedMap.hpp>
+#include <algorithm>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Queries/AsyncDataStore.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
-#include <Beam/Utilities/Algorithm.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStoreQueryWrapper.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /**
    * Implements a HistoricalDataStore using an AsyncDataStore as its backing.
    * @param <D> The underlying data store to commit the data to.
    */
-  template<typename D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   class AsyncHistoricalDataStore {
     public:
 
       /** The underlying data store to commit the data to. */
-      using HistoricalDataStore = Beam::GetTryDereferenceType<D>;
+      using HistoricalDataStore = Beam::dereference_t<D>;
 
       /**
        * Constructs an AsyncHistoricalDataStore.
-       * @param dataStore Initializes the data store to commit data to.
+       * @param data_store Initializes the data store to commit data to.
        */
-      template<typename DF>
-      AsyncHistoricalDataStore(DF&& dataStore);
+      template<Beam::Initializes<D> DF>
+      explicit AsyncHistoricalDataStore(DF&& data_store);
 
       ~AsyncHistoricalDataStore();
 
-      std::vector<SecurityInfo> LoadSecurityInfo(
+      std::vector<SecurityInfo> load_security_info(
         const SecurityInfoQuery& query);
-
-      std::vector<SequencedOrderImbalance> LoadOrderImbalances(
-        const MarketWideDataQuery& query);
-
-      std::vector<SequencedBboQuote> LoadBboQuotes(
+      void store(const SecurityInfo& info);
+      std::vector<SequencedOrderImbalance> load_order_imbalances(
+        const VenueMarketDataQuery& query);
+      void store(const SequencedVenueOrderImbalance& imbalance);
+      void store(const std::vector<SequencedVenueOrderImbalance>& imbalances);
+      std::vector<SequencedBboQuote> load_bbo_quotes(
         const SecurityMarketDataQuery& query);
-
-      std::vector<SequencedBookQuote> LoadBookQuotes(
+      void store(const SequencedSecurityBboQuote& quote);
+      void store(const std::vector<SequencedSecurityBboQuote>& quotes);
+      std::vector<SequencedBookQuote> load_book_quotes(
         const SecurityMarketDataQuery& query);
-
-      std::vector<SequencedMarketQuote> LoadMarketQuotes(
+      void store(const SequencedSecurityBookQuote& quote);
+      void store(const std::vector<SequencedSecurityBookQuote>& quotes);
+      std::vector<SequencedTimeAndSale> load_time_and_sales(
         const SecurityMarketDataQuery& query);
-
-      std::vector<SequencedTimeAndSale> LoadTimeAndSales(
-        const SecurityMarketDataQuery& query);
-
-      void Store(const SecurityInfo& info);
-
-      void Store(const SequencedMarketOrderImbalance& orderImbalance);
-
-      void Store(const std::vector<SequencedMarketOrderImbalance>&
-        orderImbalances);
-
-      void Store(const SequencedSecurityBboQuote& bboQuote);
-
-      void Store(const std::vector<SequencedSecurityBboQuote>& bboQuotes);
-
-      void Store(const SequencedSecurityMarketQuote& marketQuote);
-
-      void Store(const std::vector<SequencedSecurityMarketQuote>& marketQuotes);
-
-      void Store(const SequencedSecurityBookQuote& bookQuote);
-
-      void Store(const std::vector<SequencedSecurityBookQuote>& bookQuotes);
-
-      void Store(const SequencedSecurityTimeAndSale& timeAndSale);
-
-      void Store(const std::vector<SequencedSecurityTimeAndSale>& timeAndSales);
-
-      void Close();
+      void store(const SequencedSecurityTimeAndSale& time_and_sale);
+      void store(
+        const std::vector<SequencedSecurityTimeAndSale>& time_and_sales);
+      void close();
 
     private:
       template<typename T>
-      using DataStore = Beam::Queries::AsyncDataStore<
+      using DataStore = Beam::AsyncDataStore<
         HistoricalDataStoreQueryWrapper<T, HistoricalDataStore*>,
-        Queries::EvaluatorTranslator>;
-      Beam::GetOptionalLocalPtr<D> m_dataStore;
-      LocalHistoricalDataStore m_securityInfo;
-      DataStore<OrderImbalance> m_orderImbalanceDataStore;
-      DataStore<BboQuote> m_bboQuoteDataStore;
-      DataStore<BookQuote> m_bookQuoteDataStore;
-      DataStore<MarketQuote> m_marketQuoteDataStore;
-      DataStore<TimeAndSale> m_timeAndSaleDataStore;
-      Beam::IO::OpenState m_openState;
+        EvaluatorTranslator>;
+      Beam::local_ptr_t<D> m_data_store;
+      LocalHistoricalDataStore m_security_info;
+      DataStore<OrderImbalance> m_order_imbalance_data_store;
+      DataStore<BboQuote> m_bbo_quote_data_store;
+      DataStore<BookQuote> m_book_quote_data_store;
+      DataStore<TimeAndSale> m_time_and_sale_data_store;
+      Beam::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;
 
       AsyncHistoricalDataStore(const AsyncHistoricalDataStore&) = delete;
@@ -97,156 +74,140 @@ namespace Nexus::MarketDataService {
   };
 
   template<typename D>
-  template<typename DF>
-  AsyncHistoricalDataStore<D>::AsyncHistoricalDataStore(DF&& dataStore)
-    : m_dataStore(std::forward<DF>(dataStore)),
-      m_orderImbalanceDataStore(&*m_dataStore),
-      m_bboQuoteDataStore(&*m_dataStore),
-      m_bookQuoteDataStore(&*m_dataStore),
-      m_marketQuoteDataStore(&*m_dataStore),
-      m_timeAndSaleDataStore(&*m_dataStore) {}
+  AsyncHistoricalDataStore(D&&) ->
+    AsyncHistoricalDataStore<std::remove_cvref_t<D>>;
 
-  template<typename D>
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  template<Beam::Initializes<D> DF>
+  AsyncHistoricalDataStore<D>::AsyncHistoricalDataStore(DF&& data_store)
+    : m_data_store(std::forward<DF>(data_store)),
+      m_order_imbalance_data_store(&*m_data_store),
+      m_bbo_quote_data_store(&*m_data_store),
+      m_book_quote_data_store(&*m_data_store),
+      m_time_and_sale_data_store(&*m_data_store) {}
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   AsyncHistoricalDataStore<D>::~AsyncHistoricalDataStore() {
-    Close();
+    close();
   }
 
-  template<typename D>
-  std::vector<SecurityInfo> AsyncHistoricalDataStore<D>::LoadSecurityInfo(
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  std::vector<SecurityInfo> AsyncHistoricalDataStore<D>::load_security_info(
       const SecurityInfoQuery& query) {
-    auto localInfo = m_securityInfo.LoadSecurityInfo(query);
-    auto persistentInfo = m_dataStore->LoadSecurityInfo(query);
+    auto local_info = m_security_info.load_security_info(query);
+    auto persistent_info = m_data_store->load_security_info(query);
     auto info = std::vector<SecurityInfo>();
-    Beam::MergeWithoutDuplicates(localInfo.begin(), localInfo.end(),
-      persistentInfo.begin(), persistentInfo.end(), std::back_inserter(info),
-      [] (const auto& left, const auto& right) {
+    std::ranges::set_union(local_info, persistent_info,
+      std::back_inserter(info), [] (const auto& left, const auto& right) {
         return left.m_security < right.m_security;
       });
-    if(static_cast<int>(info.size()) > query.GetSnapshotLimit().GetSize()) {
-      if(query.GetSnapshotLimit().GetType() ==
-          Beam::Queries::SnapshotLimit::Type::HEAD) {
-        info.erase(info.begin() + query.GetSnapshotLimit().GetSize(),
-          info.end());
+    if(static_cast<int>(info.size()) > query.get_snapshot_limit().get_size()) {
+      if(query.get_snapshot_limit().get_type() ==
+          Beam::SnapshotLimit::Type::HEAD) {
+        info.erase(
+          info.begin() + query.get_snapshot_limit().get_size(), info.end());
       } else {
         info.erase(info.begin(),
-          info.begin() + (info.size() - query.GetSnapshotLimit().GetSize()));
+          info.begin() + (info.size() - query.get_snapshot_limit().get_size()));
       }
     }
     return info;
   }
 
-  template<typename D>
-  std::vector<SequencedOrderImbalance> AsyncHistoricalDataStore<D>::
-      LoadOrderImbalances(const MarketWideDataQuery& query) {
-    return m_orderImbalanceDataStore.Load(query);
-  }
-
-  template<typename D>
-  std::vector<SequencedBboQuote> AsyncHistoricalDataStore<D>::LoadBboQuotes(
-      const SecurityMarketDataQuery& query) {
-    return m_bboQuoteDataStore.Load(query);
-  }
-
-  template<typename D>
-  std::vector<SequencedBookQuote> AsyncHistoricalDataStore<D>::
-      LoadBookQuotes(const SecurityMarketDataQuery& query) {
-    return m_bookQuoteDataStore.Load(query);
-  }
-
-  template<typename D>
-  std::vector<SequencedMarketQuote> AsyncHistoricalDataStore<D>::
-      LoadMarketQuotes(const SecurityMarketDataQuery& query) {
-    return m_marketQuoteDataStore.Load(query);
-  }
-
-  template<typename D>
-  std::vector<SequencedTimeAndSale> AsyncHistoricalDataStore<D>::
-      LoadTimeAndSales(const SecurityMarketDataQuery& query) {
-    return m_timeAndSaleDataStore.Load(query);
-  }
-
-  template<typename D>
-  void AsyncHistoricalDataStore<D>::Store(const SecurityInfo& info) {
-    m_securityInfo.Store(info);
-    m_tasks.Push([=, this] {
-      m_dataStore->Store(info);
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void AsyncHistoricalDataStore<D>::store(const SecurityInfo& info) {
+    m_security_info.store(info);
+    m_tasks.push([=, this] {
+      m_data_store->store(info);
     });
   }
 
-  template<typename D>
-  void AsyncHistoricalDataStore<D>::Store(
-      const SequencedMarketOrderImbalance& orderImbalance) {
-    m_orderImbalanceDataStore.Store(orderImbalance);
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  std::vector<SequencedOrderImbalance> AsyncHistoricalDataStore<D>::
+      load_order_imbalances(const VenueMarketDataQuery& query) {
+    return m_order_imbalance_data_store.load(query);
   }
 
-  template<typename D>
-  void AsyncHistoricalDataStore<D>::Store(
-      const std::vector<SequencedMarketOrderImbalance>& orderImbalances) {
-    m_orderImbalanceDataStore.Store(orderImbalances);
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void AsyncHistoricalDataStore<D>::store(
+      const SequencedVenueOrderImbalance& imbalance) {
+    m_order_imbalance_data_store.store(imbalance);
   }
 
-  template<typename D>
-  void AsyncHistoricalDataStore<D>::Store(
-      const SequencedSecurityBboQuote& bboQuote) {
-    m_bboQuoteDataStore.Store(bboQuote);
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void AsyncHistoricalDataStore<D>::store(
+      const std::vector<SequencedVenueOrderImbalance>& imbalances) {
+    m_order_imbalance_data_store.store(imbalances);
   }
 
-  template<typename D>
-  void AsyncHistoricalDataStore<D>::Store(
-      const std::vector<SequencedSecurityBboQuote>& bboQuotes) {
-    m_bboQuoteDataStore.Store(bboQuotes);
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  std::vector<SequencedBboQuote> AsyncHistoricalDataStore<D>::load_bbo_quotes(
+      const SecurityMarketDataQuery& query) {
+    return m_bbo_quote_data_store.load(query);
   }
 
-  template<typename D>
-  void AsyncHistoricalDataStore<D>::Store(
-      const SequencedSecurityMarketQuote& marketQuote) {
-    m_marketQuoteDataStore.Store(marketQuote);
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void AsyncHistoricalDataStore<D>::store(
+      const SequencedSecurityBboQuote& quote) {
+    m_bbo_quote_data_store.store(quote);
   }
 
-  template<typename D>
-  void AsyncHistoricalDataStore<D>::Store(
-      const std::vector<SequencedSecurityMarketQuote>& marketQuotes) {
-    m_marketQuoteDataStore.Store(marketQuotes);
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void AsyncHistoricalDataStore<D>::store(
+      const std::vector<SequencedSecurityBboQuote>& quotes) {
+    m_bbo_quote_data_store.store(quotes);
   }
 
-  template<typename D>
-  void AsyncHistoricalDataStore<D>::Store(
-      const SequencedSecurityBookQuote& bookQuote) {
-    m_bookQuoteDataStore.Store(bookQuote);
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  std::vector<SequencedBookQuote> AsyncHistoricalDataStore<D>::load_book_quotes(
+      const SecurityMarketDataQuery& query) {
+    return m_book_quote_data_store.load(query);
   }
 
-  template<typename D>
-  void AsyncHistoricalDataStore<D>::Store(
-      const std::vector<SequencedSecurityBookQuote>& bookQuotes) {
-    m_bookQuoteDataStore.Store(bookQuotes);
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void AsyncHistoricalDataStore<D>::store(
+      const SequencedSecurityBookQuote& quote) {
+    m_book_quote_data_store.store(quote);
   }
 
-  template<typename D>
-  void AsyncHistoricalDataStore<D>::Store(
-      const SequencedSecurityTimeAndSale& timeAndSale) {
-    m_timeAndSaleDataStore.Store(timeAndSale);
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void AsyncHistoricalDataStore<D>::store(
+      const std::vector<SequencedSecurityBookQuote>& quotes) {
+    m_book_quote_data_store.store(quotes);
   }
 
-  template<typename D>
-  void AsyncHistoricalDataStore<D>::Store(
-      const std::vector<SequencedSecurityTimeAndSale>& timeAndSales) {
-    m_timeAndSaleDataStore.Store(timeAndSales);
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  std::vector<SequencedTimeAndSale>
+      AsyncHistoricalDataStore<D>::load_time_and_sales(
+        const SecurityMarketDataQuery& query) {
+    return m_time_and_sale_data_store.load(query);
   }
 
-  template<typename D>
-  void AsyncHistoricalDataStore<D>::Close() {
-    if(m_openState.SetClosing()) {
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void AsyncHistoricalDataStore<D>::store(
+      const SequencedSecurityTimeAndSale& time_and_sale) {
+    m_time_and_sale_data_store.store(time_and_sale);
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void AsyncHistoricalDataStore<D>::store(
+      const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) {
+    m_time_and_sale_data_store.store(time_and_sales);
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void AsyncHistoricalDataStore<D>::close() {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_timeAndSaleDataStore.Close();
-    m_marketQuoteDataStore.Close();
-    m_bookQuoteDataStore.Close();
-    m_bboQuoteDataStore.Close();
-    m_orderImbalanceDataStore.Close();
-    m_tasks.Break();
-    m_tasks.Wait();
-    m_dataStore->Close();
-    m_openState.Close();
+    m_time_and_sale_data_store.close();
+    m_book_quote_data_store.close();
+    m_bbo_quote_data_store.close();
+    m_order_imbalance_data_store.close();
+    m_tasks.close();
+    m_tasks.wait();
+    m_data_store->close();
+    m_open_state.close();
   }
 }
 

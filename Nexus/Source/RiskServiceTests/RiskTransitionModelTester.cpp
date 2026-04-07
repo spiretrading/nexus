@@ -1,263 +1,230 @@
+#include <future>
 #include <doctest/doctest.h>
-#include <Beam/ServicesTests/ServicesTests.hpp>
-#include <Beam/SignalHandling/NullSlot.hpp>
-#include <Beam/Threading/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
+#include "Nexus/OrderExecutionServiceTests/TestOrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/RiskService/RiskTransitionModel.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
-using namespace Beam::Services::Tests;
-using namespace Beam::SignalHandling;
-using namespace Beam::Threading;
+using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::Accounting;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::RiskService;
+using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::DefaultVenues;
+using namespace Nexus::Tests;
 
 namespace {
-  auto ACCOUNT = DirectoryEntry::MakeAccount(153, "simba");
-  auto TSLA = Security("TSLA", DefaultMarkets::NASDAQ(),
-    DefaultCountries::US());
-  auto XIU = Security("XIU", DefaultMarkets::TSX(), DefaultCountries::CA());
-
-  struct Fixture {
-    using TestOrderExecutionClient = OrderExecutionClient<
-      TestServiceProtocolClientBuilder>;
-    boost::optional<TestServiceProtocolServer> m_protocolServer;
-    boost::optional<TestOrderExecutionClient> m_serviceClient;
-
-    Fixture() {
-      auto serverConnection = std::make_shared<TestServerConnection>();
-      m_protocolServer.emplace(serverConnection,
-        factory<std::unique_ptr<TriggerTimer>>(), NullSlot(), NullSlot());
-      RegisterQueryTypes(Store(m_protocolServer->GetSlots().GetRegistry()));
-      RegisterOrderExecutionServices(Store(m_protocolServer->GetSlots()));
-      RegisterOrderExecutionMessages(Store(m_protocolServer->GetSlots()));
-      auto builder = TestServiceProtocolClientBuilder(
-        [=] {
-          return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
-            "test", *serverConnection);
-        }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
-      m_serviceClient.emplace(builder);
-      QueryOrderSubmissionsService::AddSlot(Store(m_protocolServer->GetSlots()),
-        [&] (auto& client, auto& query) {
-          return OrderSubmissionQueryResult();
-        });
-    }
-  };
+  auto ACCOUNT = DirectoryEntry::make_account(153, "simba");
+  auto S32 = Security("S32", ASX);
+  auto XIU = Security("XIU", TSX);
 }
 
 TEST_SUITE("RiskTransitionModel") {
-  TEST_CASE_FIXTURE(Fixture, "cancel_opening_orders") {
-    auto cancelQueue = std::make_shared<Queue<OrderId>>();
-    AddMessageSlot<CancelOrderMessage>(Store(m_protocolServer->GetSlots()),
-      [&] (auto& client, auto orderId) {
-        cancelQueue->Push(orderId);
-      });
-    auto model = RiskTransitionModel(ACCOUNT, {}, RiskState::Type::ACTIVE,
-      &*m_serviceClient, GetDefaultDestinationDatabase());
-    auto bidOrder = std::make_shared<PrimitiveOrder>(
-      OrderInfo(OrderFields::MakeLimitOrder(TSLA, DefaultCurrencies::USD(),
-      Side::BID, 100, Money::ONE), 112, time_from_string(
-      "2020-11-17 12:22:06")));
-    model.Add(*bidOrder);
-    auto bidReport = ExecutionReport();
-    bidOrder->With(
-      [&] (auto& state, auto& reports) {
-        bidReport = reports.front();
-      });
-    model.Update(bidReport);
-    bidReport = ExecutionReport::MakeUpdatedReport(bidReport, OrderStatus::NEW,
-      bidReport.m_timestamp);
-    model.Update(bidReport);
-    auto askOrder = std::make_shared<PrimitiveOrder>(
-      OrderInfo(OrderFields::MakeLimitOrder(TSLA, DefaultCurrencies::USD(),
-      Side::ASK, 100, Money::ONE + Money::CENT), 113, time_from_string(
-      "2020-11-17 12:22:06")));
-    model.Add(*askOrder);
-    auto askReport = ExecutionReport();
-    askOrder->With(
-      [&] (auto& state, auto& reports) {
-        askReport = reports.front();
-      });
-    model.Update(askReport);
-    askReport = ExecutionReport::MakeUpdatedReport(askReport, OrderStatus::NEW,
-      askReport.m_timestamp);
-    model.Update(askReport);
-    model.Update(RiskState::Type::CLOSE_ORDERS);
-    auto cancelIds = std::vector<OrderId>();
-    cancelIds.push_back(cancelQueue->Pop());
-    cancelIds.push_back(cancelQueue->Pop());
-    auto expectedCancelIds = std::vector<OrderId>{112, 113};
-    REQUIRE(std::is_permutation(cancelIds.begin(), cancelIds.end(),
-      expectedCancelIds.begin(), expectedCancelIds.end()));
+  TEST_CASE("cancel_opening_orders") {
+    auto operations = std::make_shared<TestOrderExecutionClient::Queue>();
+    auto client = TestOrderExecutionClient(operations);
+    auto model = RiskTransitionModel(
+      ACCOUNT, {}, RiskState::Type::ACTIVE, &client, DEFAULT_DESTINATIONS);
+    auto bid_order = std::make_shared<PrimitiveOrder>(
+      OrderInfo(make_limit_order_fields(S32, AUD, Side::BID, 100, Money::ONE),
+        112, time_from_string("2020-11-17 12:22:06")));
+    model.add(bid_order);
+    auto bid_report = ExecutionReport();
+    bid_order->with([&] (auto state, const auto& reports) {
+      bid_report = reports.front();
+    });
+    model.update(bid_report);
+    bid_report =
+      make_update(bid_report, OrderStatus::NEW, bid_report.m_timestamp);
+    model.update(bid_report);
+    auto ask_order =
+      std::make_shared<PrimitiveOrder>(OrderInfo(make_limit_order_fields(
+        S32, AUD, Side::ASK, 100, Money::ONE + Money::CENT),
+      113, time_from_string("2020-11-17 12:22:06")));
+    model.add(ask_order);
+    auto ask_report = ExecutionReport();
+    ask_order->with([&] (auto state, const auto& reports) {
+      ask_report = reports.front();
+    });
+    model.update(ask_report);
+    ask_report =
+      make_update(ask_report, OrderStatus::NEW, ask_report.m_timestamp);
+    model.update(ask_report);
+    model.update(RiskState::Type::CLOSE_ORDERS);
+    auto cancel_ids = std::vector<OrderId>();
+    auto operation = operations->pop();
+    auto cancel_operation =
+      std::get_if<TestOrderExecutionClient::CancelOperation>(&*operation);
+    REQUIRE(cancel_operation);
+    cancel_ids.push_back(cancel_operation->m_id);
+    operation = operations->pop();
+    cancel_operation =
+      std::get_if<TestOrderExecutionClient::CancelOperation>(&*operation);
+    REQUIRE(cancel_operation);
+    cancel_ids.push_back(cancel_operation->m_id);
+    auto expected_cancel_ids = std::vector<OrderId>{112, 113};
+    REQUIRE(std::is_permutation(cancel_ids.begin(), cancel_ids.end(),
+      expected_cancel_ids.begin(), expected_cancel_ids.end()));
   }
 
-  TEST_CASE_FIXTURE(Fixture, "flatten_disabled") {
-    auto cancelQueue = std::make_shared<Queue<OrderId>>();
-    AddMessageSlot<CancelOrderMessage>(Store(m_protocolServer->GetSlots()),
-      [&] (auto& client, auto orderId) {
-        cancelQueue->Push(orderId);
-      });
-    auto submissionQueue = std::make_shared<Queue<OrderFields>>();
-    NewOrderSingleService::AddSlot(Store(m_protocolServer->GetSlots()),
-      [&] (auto& client, const auto& fields) {
-        submissionQueue->Push(fields);
-        return SequencedValue(IndexedValue(
-          OrderInfo(fields, 100, time_from_string("2020-11-17 12:22:06")),
-          ACCOUNT), Beam::Queries::Sequence(100));
-      });
-    auto model = RiskTransitionModel(ACCOUNT, {}, RiskState::Type::ACTIVE,
-      &*m_serviceClient, GetDefaultDestinationDatabase());
-    auto bidOrder = std::make_shared<PrimitiveOrder>(
-      OrderInfo(OrderFields::MakeLimitOrder(TSLA, DefaultCurrencies::USD(),
-      Side::BID, 100, Money::ONE), 112, time_from_string(
-      "2020-11-17 12:22:06")));
-    model.Add(*bidOrder);
-    auto bidReport = ExecutionReport();
-    bidOrder->With(
-      [&] (auto& state, auto& reports) {
-        bidReport = reports.front();
-      });
-    model.Update(bidReport);
-    bidReport = ExecutionReport::MakeUpdatedReport(bidReport, OrderStatus::NEW,
-      bidReport.m_timestamp);
-    model.Update(bidReport);
-    bidReport = ExecutionReport::MakeUpdatedReport(bidReport,
-      OrderStatus::FILLED, bidReport.m_timestamp);
-    bidReport.m_lastPrice = Money::ONE;
-    bidReport.m_lastQuantity = 100;
-    model.Update(bidReport);
-    auto bidOrder2 = std::make_shared<PrimitiveOrder>(
-      OrderInfo(OrderFields::MakeLimitOrder(TSLA, DefaultCurrencies::USD(),
-      Side::BID, 100, Money::ONE), 127, time_from_string(
-      "2020-11-17 12:22:06")));
-    model.Add(*bidOrder2);
-    auto bidReport2 = ExecutionReport();
-    bidOrder2->With(
-      [&] (auto& state, auto& reports) {
-        bidReport2 = reports.front();
-      });
-    model.Update(bidReport2);
-    bidReport2 = ExecutionReport::MakeUpdatedReport(bidReport2,
-      OrderStatus::NEW, bidReport2.m_timestamp);
-    model.Update(bidReport2);
-    auto askOrder = std::make_shared<PrimitiveOrder>(
-      OrderInfo(OrderFields::MakeLimitOrder(TSLA, DefaultCurrencies::USD(),
-      Side::ASK, 100, Money::ONE + Money::CENT), 143, time_from_string(
-      "2020-11-17 12:22:06")));
-    model.Add(*askOrder);
-    auto askReport = ExecutionReport();
-    askOrder->With(
-      [&] (auto& state, auto& reports) {
-        askReport = reports.front();
-      });
-    model.Update(askReport);
-    askReport = ExecutionReport::MakeUpdatedReport(askReport, OrderStatus::NEW,
-      askReport.m_timestamp);
-    model.Update(askReport);
-    model.Update(RiskState::Type::CLOSE_ORDERS);
-    auto cancelId = cancelQueue->Pop();
-    REQUIRE(cancelId == 127);
-    bidReport2 = ExecutionReport::MakeUpdatedReport(bidReport2,
-      OrderStatus::CANCELED, bidReport2.m_timestamp);
-    bidReport2.m_id = 127;
-    model.Update(bidReport2);
-    model.Update(RiskState::Type::DISABLED);
-    cancelId = cancelQueue->Pop();
-    REQUIRE(cancelId == 143);
-    askReport = ExecutionReport::MakeUpdatedReport(askReport,
-      OrderStatus::CANCELED, askReport.m_timestamp);
-    model.Update(askReport);
-    auto flatteningOrder = submissionQueue->Pop();
-    REQUIRE(flatteningOrder.m_security == TSLA);
-    REQUIRE(flatteningOrder.m_side == Side::ASK);
-    REQUIRE(flatteningOrder.m_quantity == 100);
-    REQUIRE(flatteningOrder.m_type == OrderType::MARKET);
-    REQUIRE(flatteningOrder.m_destination == "NASDAQ");
+  TEST_CASE("flatten_disabled") {
+    auto operations = std::make_shared<TestOrderExecutionClient::Queue>();
+    auto client = TestOrderExecutionClient(operations);
+    auto model = RiskTransitionModel(
+      ACCOUNT, {}, RiskState::Type::ACTIVE, &client, DEFAULT_DESTINATIONS);
+    auto bid_order = std::make_shared<PrimitiveOrder>(
+      OrderInfo(make_limit_order_fields(S32, AUD, Side::BID, 100, Money::ONE),
+        112, time_from_string("2020-11-17 12:22:06")));
+    model.add(bid_order);
+    auto bid_report = ExecutionReport();
+    bid_order->with([&] (auto state, const auto& reports) {
+      bid_report = reports.front();
+    });
+    model.update(bid_report);
+    bid_report =
+      make_update(bid_report, OrderStatus::NEW, bid_report.m_timestamp);
+    model.update(bid_report);
+    bid_report =
+      make_update(bid_report, OrderStatus::FILLED, bid_report.m_timestamp);
+    bid_report.m_last_price = Money::ONE;
+    bid_report.m_last_quantity = 100;
+    model.update(bid_report);
+    auto bid_order2 = std::make_shared<PrimitiveOrder>(
+      OrderInfo(make_limit_order_fields(S32, AUD, Side::BID, 100, Money::ONE),
+        127, time_from_string("2020-11-17 12:22:06")));
+    model.add(bid_order2);
+    auto bid_report2 = ExecutionReport();
+    bid_order2->with([&] (auto state, const auto& reports) {
+      bid_report2 = reports.front();
+    });
+    model.update(bid_report2);
+    bid_report2 =
+      make_update(bid_report2, OrderStatus::NEW, bid_report2.m_timestamp);
+    model.update(bid_report2);
+    auto ask_order = std::make_shared<PrimitiveOrder>(
+      OrderInfo(make_limit_order_fields(S32, AUD, Side::ASK, 100,
+        Money::ONE + Money::CENT),
+      143, time_from_string("2020-11-17 12:22:06")));
+    model.add(ask_order);
+    auto ask_report = ExecutionReport();
+    ask_order->with([&] (auto state, const auto& reports) {
+      ask_report = reports.front();
+    });
+    model.update(ask_report);
+    ask_report =
+      make_update(ask_report, OrderStatus::NEW, ask_report.m_timestamp);
+    model.update(ask_report);
+    model.update(RiskState::Type::CLOSE_ORDERS);
+    auto operation = operations->pop();
+    auto cancel_operation =
+      std::get_if<TestOrderExecutionClient::CancelOperation>(&*operation);
+    REQUIRE(cancel_operation);
+    REQUIRE(cancel_operation->m_id == 127);
+    bid_report2 =
+      make_update(bid_report2, OrderStatus::CANCELED, bid_report2.m_timestamp);
+    bid_report2.m_id = 127;
+    model.update(bid_report2);
+    model.update(RiskState::Type::DISABLED);
+    operation = operations->pop();
+    cancel_operation =
+      std::get_if<TestOrderExecutionClient::CancelOperation>(&*operation);
+    REQUIRE(cancel_operation);
+    REQUIRE(cancel_operation->m_id == 143);
+    ask_report =
+      make_update(ask_report, OrderStatus::CANCELED, ask_report.m_timestamp);
+    auto submit_async = std::async(std::launch::async, [&] {
+      model.update(ask_report);
+    });
+    operation = operations->pop();
+    auto submit_operation =
+      std::get_if<TestOrderExecutionClient::SubmitOperation>(&*operation);
+    REQUIRE(submit_operation);
+    REQUIRE(submit_operation->m_fields.m_security == S32);
+    REQUIRE(submit_operation->m_fields.m_side == Side::ASK);
+    REQUIRE(submit_operation->m_fields.m_quantity == 100);
+    REQUIRE(submit_operation->m_fields.m_type == OrderType::MARKET);
+    REQUIRE(submit_operation->m_fields.m_destination == "ASXT");
+    submit_operation->m_result.set(std::make_shared<PrimitiveOrder>(
+      OrderInfo(submit_operation->m_fields, 100,
+        time_from_string("2020-11-17 12:22:06"))));
+    submit_async.get();
   }
 
-  TEST_CASE_FIXTURE(Fixture, "initial_inventory") {
-    auto cancelQueue = std::make_shared<Queue<OrderId>>();
-    AddMessageSlot<CancelOrderMessage>(Store(m_protocolServer->GetSlots()),
-      [&] (auto& client, auto orderId) {
-        cancelQueue->Push(orderId);
-      });
-    auto submissionQueue = std::make_shared<Queue<OrderFields>>();
-    NewOrderSingleService::AddSlot(Store(m_protocolServer->GetSlots()),
-      [&] (auto& client, const auto& fields) {
-        submissionQueue->Push(fields);
-        return SequencedValue(IndexedValue(
-          OrderInfo(fields, 100, time_from_string("2020-11-17 12:22:06")),
-          ACCOUNT), Beam::Queries::Sequence(100));
-      });
-    auto inventory = std::vector<RiskInventory>();
-    inventory.push_back(Inventory(Position<Security>(
-      Position<Security>::Key(XIU, DefaultCurrencies::CAD()), -300,
-      300 * Money::ONE), Money::ONE, Money::ZERO, 300, 1));
+  TEST_CASE("initial_inventory") {
+    auto inventory = std::vector<Inventory>();
+    inventory.push_back(Inventory(Position(XIU, CAD, -300, 300 * Money::ONE),
+      Money::ONE, Money::ZERO, 300, 1));
+    auto operations = std::make_shared<TestOrderExecutionClient::Queue>();
+    auto client = TestOrderExecutionClient(operations);
     auto model = RiskTransitionModel(ACCOUNT, inventory,
-      RiskState::Type::ACTIVE, &*m_serviceClient,
-      GetDefaultDestinationDatabase());
-    auto bidOrder = std::make_shared<PrimitiveOrder>(
-      OrderInfo(OrderFields::MakeLimitOrder(XIU, DefaultCurrencies::CAD(),
-      Side::BID, 300, Money::ONE), 113,
-      time_from_string("2020-11-17 12:22:06")));
-    model.Add(*bidOrder);
-    auto bidReport = ExecutionReport();
-    bidOrder->With(
-      [&] (auto& state, auto& reports) {
-        bidReport = reports.front();
-      });
-    model.Update(bidReport);
-    bidReport = ExecutionReport::MakeUpdatedReport(bidReport, OrderStatus::NEW,
-      bidReport.m_timestamp);
-    model.Update(bidReport);
-    auto bidOrder2 = std::make_shared<PrimitiveOrder>(
-      OrderInfo(OrderFields::MakeLimitOrder(XIU, DefaultCurrencies::CAD(),
-      Side::BID, 100, 2 * Money::ONE), 114,
-      time_from_string("2020-11-17 12:22:06")));
-    model.Add(*bidOrder2);
-    auto bidReport2 = ExecutionReport();
-    bidOrder2->With(
-      [&] (auto& state, auto& reports) {
-        bidReport2 = reports.front();
-      });
-    model.Update(bidReport2);
-    bidReport2 = ExecutionReport::MakeUpdatedReport(bidReport2,
-      OrderStatus::NEW, bidReport2.m_timestamp);
-    model.Update(bidReport2);
-    model.Update(RiskState::Type::CLOSE_ORDERS);
-    auto cancelId = cancelQueue->Pop();
-    REQUIRE(cancelId == 114);
-    bidReport2 = ExecutionReport::MakeUpdatedReport(bidReport2,
-      OrderStatus::CANCELED, bidReport2.m_timestamp);
-    model.Update(bidReport2);
-    auto syncOrder = std::make_shared<PrimitiveOrder>(
-      OrderInfo(OrderFields::MakeLimitOrder(XIU, DefaultCurrencies::CAD(),
-      Side::ASK, 100, Money::ONE + Money::CENT), 1000,
-      time_from_string("2020-11-17 12:22:06")));
-    m_serviceClient->Cancel(*syncOrder);
-    cancelId = cancelQueue->Pop();
-    REQUIRE(cancelId == 1000);
-    model.Update(RiskState::Type::DISABLED);
-    cancelId = cancelQueue->Pop();
-    REQUIRE(cancelId == 113);
-    bidReport = ExecutionReport::MakeUpdatedReport(bidReport,
-      OrderStatus::CANCELED, bidReport.m_timestamp);
-    model.Update(bidReport);
-    auto flatteningOrder = submissionQueue->Pop();
-    REQUIRE(flatteningOrder.m_security == XIU);
-    REQUIRE(flatteningOrder.m_side == Side::BID);
-    REQUIRE(flatteningOrder.m_quantity == 300);
-    REQUIRE(flatteningOrder.m_type == OrderType::MARKET);
-    REQUIRE(flatteningOrder.m_destination == "TSX");
+      RiskState::Type::ACTIVE, &client, DEFAULT_DESTINATIONS);
+    auto bid_order = std::make_shared<PrimitiveOrder>(
+      OrderInfo(make_limit_order_fields(XIU, CAD, Side::BID, 300, Money::ONE),
+        113, time_from_string("2020-11-17 12:22:06")));
+    model.add(bid_order);
+    auto bid_report = ExecutionReport();
+    bid_order->with([&] (auto state, const auto& reports) {
+      bid_report = reports.front();
+    });
+    model.update(bid_report);
+    bid_report =
+      make_update(bid_report, OrderStatus::NEW, bid_report.m_timestamp);
+    model.update(bid_report);
+    auto bid_order2 = std::make_shared<PrimitiveOrder>(OrderInfo(
+      make_limit_order_fields(XIU, CAD, Side::BID, 100, 2 * Money::ONE),
+      114, time_from_string("2020-11-17 12:22:06")));
+    model.add(bid_order2);
+    auto bid_report2 = ExecutionReport();
+    bid_order2->with([&] (auto state, const auto& reports) {
+      bid_report2 = reports.front();
+    });
+    model.update(bid_report2);
+    bid_report2 =
+      make_update(bid_report2, OrderStatus::NEW, bid_report2.m_timestamp);
+    model.update(bid_report2);
+    model.update(RiskState::Type::CLOSE_ORDERS);
+    auto operation = operations->pop();
+    auto cancel_operation =
+      std::get_if<TestOrderExecutionClient::CancelOperation>(&*operation);
+    REQUIRE(cancel_operation);
+    REQUIRE(cancel_operation->m_id == 114);
+    bid_report2 =
+      make_update(bid_report2, OrderStatus::CANCELED, bid_report2.m_timestamp);
+    model.update(bid_report2);
+    auto sync_order = std::make_shared<PrimitiveOrder>(OrderInfo(
+      make_limit_order_fields(
+        XIU, CAD, Side::ASK, 100, Money::ONE + Money::CENT),
+      1000, time_from_string("2020-11-17 12:22:06")));
+    client.cancel(*sync_order);
+    operation = operations->pop();
+    cancel_operation =
+      std::get_if<TestOrderExecutionClient::CancelOperation>(&*operation);
+    REQUIRE(cancel_operation);
+    REQUIRE(cancel_operation->m_id == 1000);
+    model.update(RiskState::Type::DISABLED);
+    operation = operations->pop();
+    cancel_operation =
+      std::get_if<TestOrderExecutionClient::CancelOperation>(&*operation);
+    REQUIRE(cancel_operation);
+    REQUIRE(cancel_operation->m_id == 113);
+    bid_report =
+      make_update(bid_report, OrderStatus::CANCELED, bid_report.m_timestamp);
+    auto submit_async = std::async(std::launch::async, [&] {
+      model.update(bid_report);
+    });
+    operation = operations->pop();
+    auto submit_operation =
+      std::get_if<TestOrderExecutionClient::SubmitOperation>(&*operation);
+    REQUIRE(submit_operation);
+    REQUIRE(submit_operation->m_fields.m_security == XIU);
+    REQUIRE(submit_operation->m_fields.m_side == Side::BID);
+    REQUIRE(submit_operation->m_fields.m_quantity == 300);
+    REQUIRE(submit_operation->m_fields.m_type == OrderType::MARKET);
+    REQUIRE(submit_operation->m_fields.m_destination == "TSX");
+    submit_operation->m_result.set(std::make_shared<PrimitiveOrder>(
+      OrderInfo(submit_operation->m_fields, 100,
+        time_from_string("2020-11-17 12:22:06"))));
+    submit_async.get();
   }
 }

@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
+#include <QIcon>
 #include "Spire/KeyBindings/CancelKeyBindingsForm.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsForm.hpp"
@@ -20,8 +21,6 @@ using namespace Spire::Styles;
 KeyBindingsWindow::KeyBindingsWindow(
     std::shared_ptr<KeyBindingsModel> key_bindings,
     std::shared_ptr<SecurityInfoQueryModel> securities,
-    const CountryDatabase& countries, const MarketDatabase& markets,
-    const DestinationDatabase& destinations,
     const AdditionalTagDatabase& additional_tags, QWidget* parent)
     : Window(parent),
       m_key_bindings(std::move(key_bindings)) {
@@ -31,8 +30,8 @@ KeyBindingsWindow::KeyBindingsWindow(
   auto navigation_view = new NavigationView();
   navigation_view->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto task_keys_page = new TaskKeysPage(m_key_bindings, std::move(securities),
-    countries, markets, destinations, additional_tags);
+  auto task_keys_page =
+    new TaskKeysPage(m_key_bindings, std::move(securities), additional_tags);
   task_keys_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   navigation_view->add_tab(*task_keys_page, tr("Task Keys"));
   auto cancel_keys_page =
@@ -40,8 +39,7 @@ KeyBindingsWindow::KeyBindingsWindow(
   cancel_keys_page->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
   navigation_view->add_tab(*cancel_keys_page, tr("Cancel Keys"));
-  auto interactions_page =
-    new InteractionsPage(m_key_bindings, countries, markets);
+  auto interactions_page = new InteractionsPage(m_key_bindings);
   interactions_page->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
   navigation_view->add_tab(*interactions_page, tr("Interactions"));

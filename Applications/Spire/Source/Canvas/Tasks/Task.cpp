@@ -1,5 +1,5 @@
 #include "Spire/Canvas/Tasks/Task.hpp"
-#include <Beam/Reactors/PublisherReactor.hpp>
+#include <Beam/Queues/PublisherReactor.hpp>
 #include "Nexus/OrderExecutionService/OrderCancellationReactor.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
@@ -8,14 +8,11 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::Reactors;
-using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 namespace {
-  auto nextId = 0;
+  std::atomic_int nextId = 0;
 }
 
 Task::StateEntry::StateEntry(State state)
@@ -76,13 +73,13 @@ void Task::Execute() {
     Aspen::chain(
       Aspen::lift([=] {
         m_state = State::INITIALIZING;
-        m_publisher.Push(StateEntry(m_state));
+        m_publisher.push(StateEntry(m_state));
       }),
       Aspen::until(m_cancelToken,
         Aspen::lift([=] (const Aspen::Maybe<void>& value) {
           if(m_state == State::INITIALIZING) {
             m_state = State::ACTIVE;
-            m_publisher.Push(StateEntry(m_state));
+            m_publisher.push(StateEntry(m_state));
           }
           try {
             value.get();
@@ -94,15 +91,14 @@ void Task::Execute() {
       Aspen::lift([=] {
         if(!m_isCancelable) {
           m_state = State::PENDING_CANCEL;
-          m_publisher.Push(StateEntry(m_state));
+          m_publisher.push(StateEntry(m_state));
         }
-        m_context.GetOrderPublisher().Break();
+        m_context.GetOrderPublisher().close();
       }),
       Aspen::until(!m_cancelToken,
-        Aspen::Box<void>(OrderCancellationReactor(
-          Ref(m_context.GetUserProfile().GetServiceClients().
-          GetOrderExecutionClient()), PublisherReactor(
-          m_context.GetOrderPublisher())))),
+        Aspen::Box<void>(OrderCancellationReactor(Ref(
+          m_context.GetUserProfile().GetClients().get_order_execution_client()),
+          publisher_reactor(m_context.GetOrderPublisher())))),
       Aspen::lift([=] {
         if(m_isFailed) {
           m_state = State::FAILED;
@@ -111,7 +107,7 @@ void Task::Execute() {
         } else {
           m_state = State::COMPLETE;
         }
-        m_publisher.Push(StateEntry(m_state));
+        m_publisher.push(StateEntry(m_state));
       }))));
   m_executor.Open();
 }
@@ -119,9 +115,9 @@ void Task::Execute() {
 void Task::Cancel() {
   if(m_isExecutable) {
     m_isExecutable = false;
-    m_publisher.Push(StateEntry(State::PENDING_CANCEL));
+    m_publisher.push(StateEntry(State::PENDING_CANCEL));
     m_state = State::CANCELED;
-    m_publisher.Push(StateEntry(m_state, "Canceled by user."));
+    m_publisher.push(StateEntry(m_state, "Canceled by user."));
   } else if(m_isCancelable.exchange(false)) {
     m_cancelToken->set_complete(true);
   }

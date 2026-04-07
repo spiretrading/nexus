@@ -6,9 +6,11 @@
 #include <unordered_map>
 #include <utility>
 #include "Spire/Styles/SelectConnection.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
+  class PseudoElement;
+  template<typename T, typename G> class PseudoElementSelector;
+
 namespace Details {
   SelectConnection select_pseudo_element(const PseudoElement& element,
     const Stylist& base, const SelectionUpdateSignal& on_update);
@@ -30,8 +32,6 @@ namespace Details {
       const U& as() const;
 
       bool operator ==(const PseudoElement& selector) const;
-
-      bool operator !=(const PseudoElement& selector) const;
 
     private:
       friend SelectConnection select(
@@ -140,13 +140,15 @@ namespace Details {
 namespace std {
   template<>
   struct hash<Spire::Styles::PseudoElement> {
-    std::size_t operator ()(const Spire::Styles::PseudoElement& element) const;
+    std::size_t operator ()(
+      const Spire::Styles::PseudoElement& element) const noexcept;
   };
 
   template<typename T, typename G>
   struct hash<Spire::Styles::PseudoElementSelector<T, G>> {
     std::size_t operator ()(
-        const Spire::Styles::PseudoElementSelector<T, G>& selector) {
+        const Spire::Styles::PseudoElementSelector<T, G>& selector)
+          const noexcept {
       return std::hash<T>()(selector.get_data());
     }
   };
@@ -154,8 +156,9 @@ namespace std {
   template<typename G>
   struct hash<Spire::Styles::PseudoElementSelector<void, G>> {
     std::size_t operator ()(
-        const Spire::Styles::PseudoElementSelector<void, G>& selector) {
-      return 1;
+        const Spire::Styles::PseudoElementSelector<void, G>& selector)
+          const noexcept {
+      return 0xd0970fbcaa28c137;
     }
   };
 }

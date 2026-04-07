@@ -23,10 +23,9 @@ QWidget* LegacyBookViewWindowSettings::Reopen(
   auto window = new BookViewWindow(Ref(user_profile),
     user_profile->GetSecurityInfoQueryModel(),
     user_profile->GetKeyBindings(),
-    user_profile->GetMarketDatabase(),
     user_profile->GetBookViewPropertiesWindowFactory(),
     user_profile->GetBookViewModelBuilder(), m_identifier);
-  Apply(Ref(user_profile), Store(*window));
+  Apply(Ref(user_profile), out(*window));
   return window;
 }
 
@@ -37,7 +36,7 @@ void LegacyBookViewWindowSettings::Apply(
   auto frame_height = get_frame_height();
   window.move(window.x(), window.y() - frame_height);
   window.resize(window.width(), window.height() + frame_height);
-  if(m_security != Security()) {
+  if(m_security) {
     window.m_security_view->get_current()->set(m_security);
   }
   window.m_link_identifier = m_link_identifier;

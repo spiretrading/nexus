@@ -1,156 +1,200 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
-SET DIRECTORY=%~dp0
-SET ROOT=%cd%
-:begin_args
-SET ARG=%~1
-IF "!IS_DEPENDENCY!" == "1" (
-  SET DEPENDENCIES=!ARG!
-  SET IS_DEPENDENCY=
+SET "DIRECTORY=%~dp0"
+SET "ROOT=%cd%"
+SET "WEB_PORTAL_PATH=Dependencies\library"
+CALL :ParseArgs %*
+IF /I "!CONFIG!"=="clean" (
+  CALL :CleanBuild "clean"
+  EXIT /B !ERRORLEVEL!
+)
+IF /I "!CONFIG!"=="reset" (
+  CALL :CleanBuild "reset"
+  EXIT /B !ERRORLEVEL!
+)
+CALL :Configure || EXIT /B 1
+CALL :BuildDependencies || EXIT /B 1
+CALL :CheckNodeModules || EXIT /B 1
+CALL :CheckBuild || EXIT /B 1
+CALL :RunBuild
+EXIT /B !ERRORLEVEL!
+ENDLOCAL
+
+:ParseArgs
+SET "DEPENDENCIES="
+SET "IS_DEPENDENCY="
+SET "IS_DIRECTORY="
+SET "CONFIG="
+:ParseArgsLoop
+SET "ARG=%~1"
+IF "!ARG!"=="" (
+  IF "!IS_DEPENDENCY!"=="1" (
+    ECHO Error: -DD requires a path argument.
+    EXIT /B 1
+  )
+  IF "!IS_DIRECTORY!"=="1" (
+    ECHO Error: -D requires a path argument.
+    EXIT /B 1
+  )
+  GOTO ParseArgsDone
+)
+IF "!IS_DEPENDENCY!"=="1" (
+  SET "DEPENDENCIES=!ARG!"
+  SET "IS_DEPENDENCY="
   SHIFT
-  GOTO begin_args
-) ELSE IF NOT "!ARG!" == "" (
-  IF "!ARG:~0,3!" == "-DD" (
-    SET IS_DEPENDENCY=1
+  GOTO ParseArgsLoop
+) ELSE IF "!IS_DIRECTORY!"=="1" (
+  SET "DIRECTORY=!ARG!"
+  SET "IS_DIRECTORY="
+  SHIFT
+  GOTO ParseArgsLoop
+) ELSE (
+  IF "!ARG:~0,4!"=="-DD=" (
+    SET "DEPENDENCIES=!ARG:~4!"
+    IF "!DEPENDENCIES!"=="" (
+      ECHO Error: -DD requires a path argument.
+      EXIT /B 1
+    )
+  ) ELSE IF "!ARG!"=="-DD" (
+    SET "IS_DEPENDENCY=1"
+  ) ELSE IF "!ARG:~0,3!"=="-D=" (
+    SET "DIRECTORY=!ARG:~3!"
+    IF "!DIRECTORY!"=="" (
+      ECHO Error: -D requires a path argument.
+      EXIT /B 1
+    )
+  ) ELSE IF "!ARG!"=="-D" (
+    SET "IS_DIRECTORY=1"
   ) ELSE (
-    SET CONFIG=!ARG!
+    SET "CONFIG=!ARG!"
   )
   SHIFT
-  GOTO begin_args
+  GOTO ParseArgsLoop
 )
-IF "!CONFIG!" == "" (
-  SET CONFIG=Release
+:ParseArgsDone
+IF "!CONFIG!"=="" (
+  SET "CONFIG=Release"
 )
-IF "!CONFIG!" == "clean" (
-  IF EXIST library (
-    RMDIR /q /s library
-  )
-  IF EXIST mod_time.txt (
-    DEL mod_time.txt
-  )
-  EXIT /B
-)
-IF "!CONFIG!" == "reset" (
-  IF EXIST library (
-    RMDIR /q /s library
-  )
-  IF EXIST mod_time.txt (
-    DEL mod_time.txt
-  )
-  IF EXIST node_modules (
-    RMDIR /q /s node_modules
-  )
-  IF EXIST package-lock.json (
-    DEL package-lock.json
-  )
-  IF NOT "!DIRECTORY!" == "!ROOT!\" (
+EXIT /B 0
+
+:CleanBuild
+RD /S /Q application 2>NUL
+DEL mod_time.txt >NUL 2>&1
+IF "%~1"=="reset" (
+  RD /S /Q Dependencies 2>NUL
+  RD /S /Q node_modules 2>NUL
+  IF NOT "!DIRECTORY!"=="!ROOT!\" (
     DEL package.json >NUL 2>&1
     DEL tsconfig.json >NUL 2>&1
     DEL webpack.config.js >NUL 2>&1
   )
-  EXIT /B
 )
-IF NOT "!DIRECTORY!" == "!ROOT!\" (
-  COPY /Y "!DIRECTORY!package.json" . >NUL
-  COPY /Y "!DIRECTORY!tsconfig.json" . >NUL
-  COPY /Y "!DIRECTORY!webpack.config.js" . >NUL
+EXIT /B 0
+
+:Configure
+IF NOT "!DIRECTORY!"=="!ROOT!\" (
+  COPY /Y "!DIRECTORY!package.json" . >NUL || EXIT /B 1
+  COPY /Y "!DIRECTORY!tsconfig.json" . >NUL || EXIT /B 1
+  COPY /Y "!DIRECTORY!webpack.config.js" . >NUL || EXIT /B 1
 )
-IF NOT "!DEPENDENCIES!" == "" (
-  CALL "!DIRECTORY!configure.bat" -DD=!DEPENDENCIES!
+IF NOT "!DEPENDENCIES!"=="" (
+  CALL "!DIRECTORY!configure.bat" -DD="!DEPENDENCIES!"
 ) ELSE (
   CALL "!DIRECTORY!configure.bat"
 )
-SET WEB_PORTAL_PATH=Dependencies\library
+EXIT /B !ERRORLEVEL!
+
+:BuildDependencies
 PUSHD !WEB_PORTAL_PATH!
-CALL build.bat %*
+CALL build.bat %* || (POPD & EXIT /B 1)
 POPD
-SET UPDATE_NODE=
+EXIT /B 0
+
+:CheckNodeModules
+SET "UPDATE_NODE="
 IF NOT EXIST node_modules (
-  SET UPDATE_NODE=1
+  SET "UPDATE_NODE=1"
+) ELSE IF NOT EXIST mod_time.txt (
+  SET "UPDATE_NODE=1"
 ) ELSE (
-  IF NOT EXIST mod_time.txt (
-    SET UPDATE_NODE=1
-  ) ELSE (
-    FOR /F %%i IN (
-        'ls -l --time-style=full-iso "!DIRECTORY!package.json" ^| awk "{print $6 $7}"') DO (
-      FOR /F %%j IN (
-          'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
-        IF "%%i" GEQ "%%j" (
-          SET UPDATE_NODE=1
-        )
-      )
-    )
+  SET CHECK_PKG_COMMAND=powershell -NoProfile -Command "& {" ^
+    "$mod = (Get-Item 'mod_time.txt').LastWriteTime.Ticks;" ^
+    "$pkg = (Get-Item '!DIRECTORY!package.json').LastWriteTime.Ticks;" ^
+    "if ($pkg -gt $mod) { 'YES' } else { 'NO' }" ^
+  "}"
+  FOR /F "delims=" %%r IN ('CALL !CHECK_PKG_COMMAND!') DO (
+    SET "NEEDS_NODE_UPDATE=%%r"
+  )
+  IF "!NEEDS_NODE_UPDATE!"=="YES" (
+    SET "UPDATE_NODE=1"
   )
 )
-SET UPDATE_BUILD=
-IF "!UPDATE_NODE!" == "1" (
-  SET UPDATE_BUILD=1
-  CALL npm install --no-package-lock
+IF "!UPDATE_NODE!"=="1" (
+  SET "UPDATE_BUILD=1"
+  CALL npm install || EXIT /B 1
 )
+EXIT /B 0
+
+:CheckBuild
 IF NOT EXIST application (
-  SET UPDATE_BUILD=1
+  SET "UPDATE_BUILD=1"
+) ELSE IF NOT EXIST mod_time.txt (
+  SET "UPDATE_BUILD=1"
 ) ELSE (
-  SET MAX_SOURCE_TIMESTAMP=
-  SET MAX_TARGET_TIMESTAMP=
-  SET CHUNK=100
-  FOR /F %%i IN ('DIR source /s/b/a-d ^| wc -l') DO SET LINE_COUNT=%%i
-  FOR /L %%i IN (0,!CHUNK!,!LINE_COUNT!) DO (
-    FOR /F %%j IN (
-        'DIR source /s/b/a-d ^| tail -n +%%i 2^>NUL ^| head -!CHUNK! ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
-      IF %%j GTR !MAX_SOURCE_TIMESTAMP! (
-        SET MAX_SOURCE_TIMESTAMP=%%j
-      )
-    )
+  SET CHECK_BUILD_COMMAND=powershell -NoProfile -Command "& {" ^
+    "$mod = (Get-Item 'mod_time.txt').LastWriteTime.Ticks;" ^
+    "$tsconfig = Get-Item '!DIRECTORY!tsconfig.json';" ^
+    "$webpack = Get-Item '!DIRECTORY!webpack.config.js';" ^
+    "$webPortalMod = Get-Item '!WEB_PORTAL_PATH!\mod_time.txt';" ^
+    "$sourceFiles = Get-ChildItem -Path '!DIRECTORY!source'" ^
+    "  -Recurse -File -ErrorAction SilentlyContinue;" ^
+    "$files = @($tsconfig, $webpack, $webPortalMod) + $sourceFiles;" ^
+    "if ($files) {" ^
+    "  $newest = $files | Sort-Object LastWriteTime -Descending |" ^
+    "    Select-Object -First 1;" ^
+    "  if ($newest.LastWriteTime.Ticks -gt $mod) {" ^
+    "    'Result: YES'" ^
+    "  } else {" ^
+    "    'Result: NO'" ^
+    "  }" ^
+    "} else {" ^
+    "  'Result: NO'" ^
+    "}" ^
+  "}"
+  FOR /F "tokens=2" %%r IN ('CALL !CHECK_BUILD_COMMAND!') DO (
+    SET "NEEDS_BUILD=%%r"
   )
-  FOR /F %%i IN ('DIR application /s/b/a-d ^| wc -l') DO SET LINE_COUNT=%%i
-  FOR /L %%i IN (0,!CHUNK!,!LINE_COUNT!) DO (
-    FOR /F %%j IN (
-        'DIR application /s/b/a-d ^| tail -n +%%i 2^>NUL ^| head -!CHUNK! ^| tr "\\" "/" ^| xargs ls -l --time-style=full-iso ^| awk "{print $6 $7}" ^| sort /R ^| head -1') DO (
-      IF %%j GTR !MAX_TARGET_TIMESTAMP! (
-        SET MAX_TARGET_TIMESTAMP=%%j
-      )
-    )
-  )
-  IF !MAX_SOURCE_TIMESTAMP! GEQ !MAX_TARGET_TIMESTAMP! (
-    SET UPDATE_BUILD=1
+  IF "!NEEDS_BUILD!"=="YES" (
+    SET "UPDATE_BUILD=1"
   )
 )
-IF NOT EXIST mod_time.txt (
-  SET UPDATE_BUILD=1
-) ELSE (
-  FOR /F %%i IN (
-      'ls -l --time-style=full-iso "!DIRECTORY!tsconfig.json" "!DIRECTORY!webpack.config.js" "!WEB_PORTAL_PATH!\mod_time.txt" ^| awk "{print $6 $7}"') DO (
-    FOR /F %%j IN (
-        'ls -l --time-style=full-iso mod_time.txt ^| awk "{print $6 $7}"') DO (
-      IF "%%i" GEQ "%%j" (
-        SET UPDATE_BUILD=1
-      )
-    )
-  )
-)
-IF "!UPDATE_BUILD!" == "1" (
+EXIT /B 0
+
+:RunBuild
+IF "!UPDATE_BUILD!"=="1" (
   IF EXIST application (
-    DEL /s /q /f application\* > NUL
+    DEL /S /Q /F application\* >NUL
   )
-  IF "!CONFIG!" == "Release" (
-    SET PROD_ENV=1
+  IF /I "!CONFIG!"=="Release" (
+    SET "PROD_ENV=1"
   )
-  node node_modules\webpack\bin\webpack.js
-  IF "!CONFIG!" == "Release" (
-    SET PROD_ENV=
+  node node_modules\webpack\bin\webpack.js || EXIT /B 1
+  IF /I "!CONFIG!"=="Release" (
+    SET "PROD_ENV="
   )
-  ECHO "timestamp" > mod_time.txt
+  ECHO. > mod_time.txt
   IF EXIST application (
-    robocopy "!DIRECTORY!..\resources" application\resources /E > NUL
-    COPY "!DIRECTORY!source\index.html" application\index.html > NUL
-    IF EXIST ..\..\Application (
+    robocopy "%~dp0..\resources" application\resources /E >NUL
+    COPY "!DIRECTORY!source\index.html" application\index.html >NUL
+    DIR /B /AD ..\..\  2>NUL | findstr /X "Application" >NUL
+    IF NOT ERRORLEVEL 1 (
       IF NOT EXIST ..\..\Application\web_app (
         PUSHD ..\..\Application
         MD web_app
         POPD
       )
-      robocopy application ..\..\Application\web_app /E > NUL
+      robocopy application ..\..\Application\web_app /E >NUL
     )
   )
 )
-ENDLOCAL
+EXIT /B 0

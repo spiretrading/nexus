@@ -3,7 +3,6 @@
 #include <memory>
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/signals2/connection.hpp>
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/Spire/Spire.hpp"
 

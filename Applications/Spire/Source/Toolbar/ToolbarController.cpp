@@ -3,8 +3,8 @@
 #include <QApplication>
 #include <QGuiApplication>
 #include <QScreen>
-#include "Nexus/Definitions/Market.hpp"
 #include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/AccountViewer/AccountViewWindow.hpp"
 #include "Spire/AccountViewer/TraderProfileWindow.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
@@ -23,6 +23,7 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindow.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindow.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesController.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 
 using namespace Beam;
@@ -39,17 +40,11 @@ namespace {
     auto next_height = 0;
     auto resolution = QGuiApplication::primaryScreen()->availableGeometry();
     auto securities = std::vector<Security>();
-    auto& market_entry = user_profile.GetMarketDatabase().FromCode("XTSE");
-    securities.push_back(
-      Security("RY", market_entry.m_code, market_entry.m_countryCode));
-    securities.push_back(
-      Security("XIU", market_entry.m_code, market_entry.m_countryCode));
-    securities.push_back(
-      Security("ABX", market_entry.m_code, market_entry.m_countryCode));
-    securities.push_back(
-      Security("SU", market_entry.m_code, market_entry.m_countryCode));
-    securities.push_back(
-      Security("BCE", market_entry.m_code, market_entry.m_countryCode));
+    securities.push_back(Security("RY", DefaultVenues::TSX));
+    securities.push_back(Security("XIU", DefaultVenues::TSX));
+    securities.push_back(Security("ABX", DefaultVenues::TSX));
+    securities.push_back(Security("SU", DefaultVenues::TSX));
+    securities.push_back(Security("BCE", DefaultVenues::TSX));
     auto index = std::size_t(0);
     auto windows = std::vector<QWidget*>();
     while(instantiate_security_windows && index < securities.size()) {
@@ -57,7 +52,6 @@ namespace {
       auto book_view_window = new BookViewWindow(Ref(user_profile),
         user_profile.GetSecurityInfoQueryModel(),
         user_profile.GetKeyBindings(),
-        user_profile.GetMarketDatabase(),
         user_profile.GetBookViewPropertiesWindowFactory(),
         user_profile.GetBookViewModelBuilder());
       book_view_window->move(next_position);
@@ -68,12 +62,11 @@ namespace {
       windows.push_back(book_view_window);
       auto time_and_sales_window = new TimeAndSalesWindow(
         user_profile.GetSecurityInfoQueryModel(),
-        user_profile.GetMarketDatabase(),
         user_profile.GetTimeAndSalesPropertiesWindowFactory(),
         user_profile.GetTimeAndSalesModelBuilder());
       book_view_window->Link(*time_and_sales_window);
-      time_and_sales_window->resize(time_and_sales_window->width(),
-        book_view_window->frameSize().height());
+      time_and_sales_window->resize(
+        time_and_sales_window->width(), book_view_window->frameSize().height());
       time_and_sales_window->move(next_position);
       time_and_sales_window->show();
       time_and_sales_window->Link(*book_view_window);
@@ -119,7 +112,7 @@ struct ToolbarController::EventFilter : QObject {
 };
 
 ToolbarController::ToolbarController(Ref<UserProfile> user_profile)
-    : m_user_profile(user_profile.Get()) {
+    : m_user_profile(user_profile.get()) {
   m_event_filter = std::make_unique<EventFilter>(*this);
 }
 
@@ -171,6 +164,12 @@ void ToolbarController::open() {
         std::make_unique<BookViewController>(Ref(*m_user_profile), *book_view);
       controller->open();
       m_book_view_controllers.push_back(std::move(controller));
+    } else if(auto time_and_sales_window =
+        dynamic_cast<TimeAndSalesWindow*>(window)) {
+      auto controller = std::make_unique<TimeAndSalesController>(
+        Ref(*m_user_profile), *time_and_sales_window);
+      controller->open();
+      m_time_and_sales_controllers.push_back(std::move(controller));
     } else {
       window->show();
     }
@@ -205,6 +204,10 @@ void ToolbarController::close() {
   for(auto& controller : book_view_controllers) {
     controller->close();
   }
+  auto time_and_sales_controllers = std::move(m_time_and_sales_controllers);
+  for(auto& controller : time_and_sales_controllers) {
+    controller->close();
+  }
   for(auto& window : QApplication::topLevelWidgets()) {
     if(window != &*m_toolbar_window) {
       window->close();
@@ -231,13 +234,12 @@ void ToolbarController::open_book_view_window() {
 }
 
 void ToolbarController::open_time_and_sales_window() {
-  auto window = new TimeAndSalesWindow(
-    m_user_profile->GetSecurityInfoQueryModel(),
-    m_user_profile->GetMarketDatabase(),
-    m_user_profile->GetTimeAndSalesPropertiesWindowFactory(),
-    m_user_profile->GetTimeAndSalesModelBuilder());
-  window->setAttribute(Qt::WA_DeleteOnClose);
-  window->show();
+  auto controller =
+    std::make_unique<TimeAndSalesController>(Ref(*m_user_profile));
+  controller->connect_closed_signal(std::bind_front(
+    &ToolbarController::on_time_and_sales_closed, this, std::ref(*controller)));
+  controller->open();
+  m_time_and_sales_controllers.push_back(std::move(controller));
 }
 
 void ToolbarController::open_canvas_window() {
@@ -296,8 +298,6 @@ void ToolbarController::open_key_bindings_window() {
   m_key_bindings_window = std::make_unique<KeyBindingsWindow>(
     m_user_profile->GetKeyBindings(),
     m_user_profile->GetSecurityInfoQueryModel(),
-    m_user_profile->GetCountryDatabase(), m_user_profile->GetMarketDatabase(),
-    m_user_profile->GetDestinationDatabase(),
     m_user_profile->GetAdditionalTagDatabase());
   m_key_bindings_window->installEventFilter(m_event_filter.get());
   m_key_bindings_window->show();
@@ -307,7 +307,7 @@ void ToolbarController::open_profile_window() {
   auto window = new TraderProfileWindow(Ref(*m_user_profile));
   window->setAttribute(Qt::WA_DeleteOnClose);
   window->Load(
-    m_user_profile->GetServiceClients().GetServiceLocatorClient().GetAccount());
+    m_user_profile->GetClients().get_service_locator_client().get_account());
   window->show();
 }
 
@@ -349,6 +349,12 @@ void ToolbarController::on_reopen(const WindowSettings& settings) {
       std::make_unique<BookViewController>(Ref(*m_user_profile), *book_view);
     controller->open();
     m_book_view_controllers.push_back(std::move(controller));
+  } else if(auto time_and_sales_window =
+      dynamic_cast<TimeAndSalesWindow*>(window)) {
+    auto controller = std::make_unique<TimeAndSalesController>(
+      Ref(*m_user_profile), *time_and_sales_window);
+    controller->open();
+    m_time_and_sales_controllers.push_back(std::move(controller));
   } else {
     window->show();
   }
@@ -375,13 +381,19 @@ void ToolbarController::on_restore_all() {
 
 void ToolbarController::on_import(
     UserSettings::Categories categories, const std::filesystem::path& path) {
-  auto windows = import_settings(categories, path, Store(*m_user_profile));
+  auto windows = import_settings(categories, path, out(*m_user_profile));
   for(auto& window : windows) {
     if(auto book_view = dynamic_cast<BookViewWindow*>(window)) {
       auto controller =
         std::make_unique<BookViewController>(Ref(*m_user_profile), *book_view);
       controller->open();
       m_book_view_controllers.push_back(std::move(controller));
+    } else if(auto time_and_sales_window =
+        dynamic_cast<TimeAndSalesWindow*>(window)) {
+      auto controller = std::make_unique<TimeAndSalesController>(
+        Ref(*m_user_profile), *time_and_sales_window);
+      controller->open();
+      m_time_and_sales_controllers.push_back(std::move(controller));
     } else {
       window->show();
     }
@@ -395,7 +407,7 @@ void ToolbarController::on_export(
 
 void ToolbarController::on_new_blotter(const QString& name) {
   auto blotter = std::make_unique<BlotterModel>(name.toStdString(),
-    m_user_profile->GetServiceClients().GetServiceLocatorClient().GetAccount(),
+    m_user_profile->GetClients().get_service_locator_client().get_account(),
     false, Ref(*m_user_profile),
     m_user_profile->GetBlotterSettings().GetDefaultBlotterTaskProperties(),
     m_user_profile->GetBlotterSettings().GetDefaultOrderLogProperties());
@@ -428,6 +440,13 @@ void ToolbarController::on_book_view_closed(BookViewController& controller) {
 void ToolbarController::on_key_bindings_window_closed() {
   auto window = std::move(m_key_bindings_window);
   window.release()->deleteLater();
+}
+
+void ToolbarController::on_time_and_sales_closed(
+    TimeAndSalesController& controller) {
+  std::erase_if(m_time_and_sales_controllers, [&] (const auto& entry) {
+    return &controller == entry.get();
+  });
 }
 
 void ToolbarController::on_sign_out() {

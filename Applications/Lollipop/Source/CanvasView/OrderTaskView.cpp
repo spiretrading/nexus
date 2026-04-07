@@ -31,8 +31,8 @@ using namespace std;
 OrderTaskView::OrderTaskView(const DisplayWidgetSlot& displayWidgetSlot,
     const RemoveWidgetSlot& removeWidgetSlot,  Ref<QWidget> parent,
     Ref<UserProfile> userProfile)
-    : m_parent{parent.Get()},
-      m_userProfile{userProfile.Get()},
+    : m_parent{parent.get()},
+      m_userProfile{userProfile.get()},
       m_isTaskEntryWidgetForInteractionsProperties{false},
       m_taskEntryWidget{nullptr},
       m_displayWidgetSlot{displayWidgetSlot},
@@ -49,7 +49,7 @@ bool OrderTaskView::HandleKeyPressEvent(const QKeyEvent& event,
     return HandleTaskInputEvent(event);
   } else if(security != Security{}) {
     auto taskBinding = m_userProfile->GetKeyBindings().GetTaskFromBinding(
-      security.GetMarket(), event.key());
+      security.get_venue(), event.key());
     if(taskBinding.is_initialized()) {
       return HandleKeyBindingEvent(*taskBinding);
     }
@@ -88,7 +88,7 @@ void OrderTaskView::ExecuteTask(const CanvasNode& node) {
   }
   auto& entry = activeBlotter.GetTasksModel().Add(node);
   m_tasksExecuted[*m_state->m_security].push_back(entry.m_task);
-  entry.m_task->GetPublisher().Monitor(m_slotHandler.GetSlot<Task::StateEntry>(
+  entry.m_task->GetPublisher().monitor(m_slotHandler.get_slot<Task::StateEntry>(
     [=, security = *m_state->m_security, task = entry.m_task] (
         const Task::StateEntry& update) {
       OnTaskState(task, security, update);
@@ -106,7 +106,7 @@ unique_ptr<CanvasNode> OrderTaskView::InitializeTaskNode(
         dynamic_cast<const SecurityNode*>(&*securityNode)) {
       CanvasNodeBuilder builder{*taskNode};
       builder.Replace(*securityNode, securityValueNode->SetValue(
-        *m_state->m_security, m_userProfile->GetMarketDatabase()));
+        *m_state->m_security, m_userProfile->GetVenueDatabase()));
       builder.SetReadOnly(*securityNode, true);
       auto sideNode = taskNode->FindNode(SingleOrderTaskNode::SIDE_PROPERTY);
       auto price = [&] {
@@ -147,11 +147,11 @@ unique_ptr<CanvasNode> OrderTaskView::InitializeTaskNode(
                 return m_userProfile->GetDefaultQuantity(*m_state->m_security,
                   sideValueNode->GetValue());
               } else {
-                return m_userProfile->GetInteractionProperties().Get(
+                return m_userProfile->GetInteractionProperties().get(
                   *m_state->m_security).m_defaultQuantity;
               }
             } else {
-              return m_userProfile->GetInteractionProperties().Get(
+              return m_userProfile->GetInteractionProperties().get(
                 *m_state->m_security).m_defaultQuantity;
             }
           }();
@@ -201,7 +201,7 @@ bool OrderTaskView::HandleTaskInputEvent(const QKeyEvent& event) {
     if(m_isTaskEntryWidgetForInteractionsProperties) {
       auto& interactionsNode = static_cast<const InteractionsNode&>(
         *m_taskEntryWidget->GetRoots().front());
-      m_userProfile->GetInteractionProperties().Set(*m_state->m_security,
+      m_userProfile->GetInteractionProperties().set(*m_state->m_security,
         interactionsNode.GetProperties());
       RemoveTaskEntry();
       return true;
@@ -218,7 +218,7 @@ bool OrderTaskView::HandleTaskInputEvent(const QKeyEvent& event) {
   } else {
     auto key = QKeySequence{static_cast<int>(event.modifiers() + event.key())};
     auto taskBinding = m_userProfile->GetKeyBindings().GetTaskFromBinding(
-      m_state->m_security->GetMarket(), key);
+      m_state->m_security->get_venue(), key);
     if(taskBinding.is_initialized()) {
       RemoveTaskEntry();
       return HandleKeyBindingEvent(*taskBinding);
@@ -229,9 +229,9 @@ bool OrderTaskView::HandleTaskInputEvent(const QKeyEvent& event) {
 
 void OrderTaskView::HandleInteractionsPropertiesEvent() {
   auto& interactionsProperties =
-    m_userProfile->GetInteractionProperties().Get(*m_state->m_security);
+    m_userProfile->GetInteractionProperties().get(*m_state->m_security);
   auto interactionsNode = std::make_unique<InteractionsNode>(
-    *m_state->m_security, m_userProfile->GetMarketDatabase(),
+    *m_state->m_security, m_userProfile->GetVenueDatabase(),
     interactionsProperties);
   m_taskEntryWidget = new CondensedCanvasWidget{"Interactions",
     Ref(*m_userProfile), m_parent};
@@ -244,15 +244,15 @@ void OrderTaskView::HandleInteractionsPropertiesEvent() {
 
 bool OrderTaskView::HandleCancelBindingEvent(
     const KeyBindings::CancelBinding& keyBinding) {
-  HandleTasks(m_slotHandler);
+  flush(m_slotHandler);
   KeyBindings::CancelBinding::HandleCancel(keyBinding,
-    Store(m_tasksExecuted[*m_state->m_security]));
+    out(m_tasksExecuted[*m_state->m_security]));
   return true;
 }
 
 void OrderTaskView::OnTaskState(const std::shared_ptr<Task>& task,
     const Security& security, const Task::StateEntry& update) {
   if(IsTerminal(update.m_state)) {
-    RemoveFirst(m_tasksExecuted[security], task);
+    remove_first(m_tasksExecuted[security], task);
   }
 }

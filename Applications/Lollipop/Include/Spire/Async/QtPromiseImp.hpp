@@ -8,7 +8,6 @@
 #include <QCoreApplication>
 #include <QEvent>
 #include <QObject>
-#include "Spire/Async/Async.hpp"
 #include "Spire/Async/QtPromiseEvent.hpp"
 
 namespace Spire {
@@ -22,6 +21,9 @@ namespace Spire {
     /** The executor should be invoked asynchronously. */
     ASYNC
   };
+
+  template<typename T>
+  class QtPromise;
 
   /** Type trait used to determine if a type represents a promise. */
   template<typename T>
@@ -80,7 +82,6 @@ namespace details {
       virtual ~BaseQtPromiseImp() = default;
 
       virtual void then(ContinuationType continuation) = 0;
-
       virtual void disconnect() = 0;
 
     private:
@@ -98,7 +99,6 @@ namespace details {
       virtual ~BaseQtPromiseImp() = default;
 
       virtual void then(ContinuationType continuation) = 0;
-
       virtual void disconnect() = 0;
 
     private:
@@ -116,13 +116,10 @@ namespace details {
 
       template<typename ExecutorForward>
       QtPromiseImp(ExecutorForward&& executor, LaunchPolicy launch_policy);
-
       ~QtPromiseImp() override;
 
       void bind(std::shared_ptr<void> self);
-
       void then(ContinuationType continuation) override;
-
       void disconnect() override;
 
     protected:
@@ -135,7 +132,7 @@ namespace details {
       boost::optional<Beam::Expect<Type>> m_value;
       boost::optional<ContinuationType> m_continuation;
       std::shared_ptr<void> m_self;
-      Beam::Routines::RoutineHandler m_routine;
+      Beam::RoutineHandler m_routine;
 
       void execute();
   };
@@ -159,7 +156,7 @@ namespace details {
     if(m_launch_policy == LaunchPolicy::DEFERRED) {
       QCoreApplication::postEvent(this, new QtDeferredExecutionEvent());
     } else if(m_launch_policy == LaunchPolicy::ASYNC) {
-      m_routine = Beam::Routines::Spawn([=] { execute(); });
+      m_routine = Beam::spawn([=] { execute(); });
     }
   }
 
@@ -181,7 +178,7 @@ namespace details {
   template<typename Executor>
   bool QtPromiseImp<Executor>::event(QEvent* event) {
     if(event->type() == QtDeferredExecutionEvent::EVENT_TYPE) {
-      auto result = Beam::Try(m_executor);
+      auto result = Beam::try_call(m_executor);
       if(m_is_disconnected) {
         m_self = nullptr;
         return true;
@@ -192,7 +189,7 @@ namespace details {
         (*m_continuation)(std::move(result));
         m_continuation = boost::none;
       } else {
-        m_value = std::move(result);
+        m_value.emplace(std::move(result));
       }
       return true;
     } else if(event->type() == QtBasePromiseEvent::EVENT_TYPE) {
@@ -207,7 +204,7 @@ namespace details {
         (*m_continuation)(std::move(promise_event.get_result()));
         m_continuation = boost::none;
       } else {
-        m_value = std::move(promise_event.get_result());
+        m_value.emplace(std::move(promise_event.get_result()));
       }
       return true;
     } else {
@@ -219,12 +216,12 @@ namespace details {
   void QtPromiseImp<Executor>::execute() {
     using Result = std::invoke_result_t<Executor>;
     if constexpr(is_promise_chained_v<Result>) {
-      auto result = Beam::Try(m_executor);
-      if(result.IsException()) {
+      auto result = Beam::try_call(m_executor);
+      if(result.is_exception()) {
         QCoreApplication::postEvent(this,
           make_qt_promise_event(Beam::Expect<Type>(result.GetException())));
       } else {
-        auto promise = std::make_shared<Result>(std::move(result.Get()));
+        auto promise = std::make_shared<Result>(std::move(result.get()));
         promise->then(
           [=, promise = std::move(promise)] (auto&& result) mutable {
             QCoreApplication::postEvent(this,
@@ -234,7 +231,7 @@ namespace details {
       }
     } else {
       QCoreApplication::postEvent(
-        this, make_qt_promise_event(Beam::Try(m_executor)));
+        this, make_qt_promise_event(Beam::try_call(m_executor)));
     }
   }
 }

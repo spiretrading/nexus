@@ -12,7 +12,7 @@
 #include <QRect>
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardRowRenderer.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 namespace Spire {
 
@@ -179,7 +179,7 @@ namespace Spire {
 
     private:
       friend struct DashboardRendererSettings;
-      template<typename, typename> friend struct Beam::Serialization::Shuttle;
+      template<typename, typename> friend struct Beam::Shuttle;
       struct RowEntry {
         const DashboardRow* m_row;
         std::unique_ptr<DashboardRowRenderer> m_renderer;
@@ -224,30 +224,28 @@ namespace Spire {
 }
 
 namespace Beam {
-namespace Serialization {
   template<>
   struct Shuttle<Spire::DashboardRenderer::ColumnEntry> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Spire::DashboardRenderer::ColumnEntry& value, unsigned int version) {
-      shuttle.Shuttle("width", value.m_width);
-      shuttle.Shuttle("index", value.m_index);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::DashboardRenderer::ColumnEntry& value,
+        unsigned int version) const {
+      shuttle.shuttle("width", value.m_width);
+      shuttle.shuttle("index", value.m_index);
     }
   };
 
   template<>
   struct Shuttle<Spire::DashboardRendererSettings> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Spire::DashboardRendererSettings& value,
-        unsigned int version) {
-      shuttle.Shuttle("columns", value.m_columns);
-      shuttle.Shuttle("empty_rows", value.m_emptyRows);
-      shuttle.Shuttle("default_column_width", value.m_defaultColumnWidth);
-      shuttle.Shuttle("minimum_column_width", value.m_minimumColumnWidth);
-      shuttle.Shuttle("max_row_height", value.m_maxRowHeight);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::DashboardRendererSettings& value,
+        unsigned int version) const {
+      shuttle.shuttle("columns", value.m_columns);
+      shuttle.shuttle("empty_rows", value.m_emptyRows);
+      shuttle.shuttle("default_column_width", value.m_defaultColumnWidth);
+      shuttle.shuttle("minimum_column_width", value.m_minimumColumnWidth);
+      shuttle.shuttle("max_row_height", value.m_maxRowHeight);
     }
   };
-}
 }
 
 #endif

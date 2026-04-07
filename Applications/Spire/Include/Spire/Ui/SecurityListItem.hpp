@@ -2,7 +2,6 @@
 #define SPIRE_SECURITY_LIST_ITEM_HPP
 #include <QWidget>
 #include "Nexus/Definitions/SecurityInfo.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -16,8 +15,8 @@ namespace Spire {
        *                      SecurityListItem.
        * @param parent The parent widget.
        */
-      explicit SecurityListItem(Nexus::SecurityInfo security_info,
-        QWidget* parent = nullptr);
+      explicit SecurityListItem(
+        Nexus::SecurityInfo security_info, QWidget* parent = nullptr);
 
       /** Returns the security. */
       const Nexus::SecurityInfo& get_security() const;

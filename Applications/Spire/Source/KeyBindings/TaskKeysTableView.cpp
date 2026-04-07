@@ -10,6 +10,7 @@
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ValidatedValueModel.hpp"
 #include "Spire/Ui/AnyInputBox.hpp"
+#include "Spire/Ui/BreakoutBox.hpp"
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
 #include "Spire/Ui/EditableBox.hpp"
@@ -25,6 +26,7 @@
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TimeInForceBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -223,10 +225,129 @@ namespace {
         m_region(std::move(region)) {}
   };
 
+  class BreakoutInputBox : public QWidget {
+    public:
+      explicit BreakoutInputBox(AnyInputBox& input_box,
+          QWidget* parent = nullptr)
+          : QWidget(parent),
+            m_is_setting_read_only(false) {
+        m_breakout_box = new BreakoutBox(input_box, this);
+        enclose(*this, *m_breakout_box);
+        setFocusProxy(m_breakout_box);
+        proxy_style(*this, *m_breakout_box);
+      }
+
+      const std::shared_ptr<AnyValueModel>& get_current() const {
+        return get_input_box().get_current();
+      }
+
+      const AnyRef& get_submission() const {
+        return get_input_box().get_submission();
+      }
+
+      void set_placeholder(const QString& placeholder) {
+        get_input_box().set_placeholder(placeholder);
+      }
+
+      bool is_read_only() const {
+        return get_input_box().is_read_only();
+      }
+
+      void set_read_only(bool read_only) {
+        if(m_is_setting_read_only) {
+          return;
+        }
+        m_is_setting_read_only = true;
+        if(read_only == is_read_only()) {
+          return;
+        }
+        get_input_box().set_read_only(read_only);
+        if(read_only) {
+          get_input_box().setFixedHeight(
+            get_input_box().minimumSizeHint().height());
+          restore();
+        } else {
+          get_input_box().setMinimumHeight(0);
+          get_input_box().setMaximumHeight(QWIDGETSIZE_MAX);
+          breakout();
+        }
+        m_is_setting_read_only = false;
+      }
+
+      connection connect_submit_signal(
+          const AnyInputBox::SubmitSignal::slot_type& slot) const {
+        return get_input_box().connect_submit_signal(slot);
+      }
+
+      connection connect_reject_signal(
+          const AnyInputBox::RejectSignal::slot_type& slot) const {
+        return get_input_box().connect_reject_signal(slot);
+      }
+
+    protected:
+      bool eventFilter(QObject* watched, QEvent* event) {
+        if(watched == &get_input_box() && event->type() == QEvent::KeyPress) {
+          auto& key_event = *static_cast<QKeyEvent*>(event);
+          if(key_event.key() == Qt::Key_Escape) {
+            if(auto parent = parentWidget()) {
+              QCoreApplication::sendEvent(parent, event);
+            }
+          }
+        } else if(watched == m_breakout_box &&
+            m_breakout_box->is_broken_out()) {
+          if(event->type() == QEvent::FocusIn) {
+            get_input_box().setFocus();
+          } else if(event->type() == QEvent::KeyPress) {
+            if(auto focus_proxy = find_focus_proxy(get_input_box())) {
+              QCoreApplication::sendEvent(focus_proxy, event);
+              return true;
+            }
+          }
+        }
+        return QWidget::eventFilter(watched, event);
+      }
+
+    private:
+      BreakoutBox* m_breakout_box;
+      optional<FocusObserver> m_input_box_focus_observer;
+      bool m_is_setting_read_only;
+
+      AnyInputBox& get_input_box() const {
+        return static_cast<AnyInputBox&>(m_breakout_box->get_body());
+      }
+
+      void breakout() {
+        m_breakout_box->breakout();
+        match(*this, PopUp());
+        get_input_box().installEventFilter(this);
+        m_breakout_box->installEventFilter(this);
+        m_input_box_focus_observer.emplace(get_input_box());
+        m_input_box_focus_observer->connect_state_signal(
+          std::bind_front(&BreakoutInputBox::on_input_box_focus, this));
+      }
+
+      void restore() {
+        m_breakout_box->restore();
+        unmatch(*this, PopUp());
+        m_input_box_focus_observer = none;
+        get_input_box().removeEventFilter(this);
+        m_breakout_box->removeEventFilter(this);
+      }
+
+      void on_input_box_focus(FocusObserver::State state) {
+        if(state == FocusObserver::State::NONE &&
+            m_breakout_box->is_broken_out()) {
+          if(auto parent = parentWidget()) {
+            auto key_event =
+              QKeyEvent(QEvent::KeyPress, Qt::Key_Escape, Qt::NoModifier);
+            QCoreApplication::sendEvent(parent, &key_event);
+          }
+        }
+      }
+  };
+
   struct TaskKeysTableViewItemBuilder {
     std::shared_ptr<RegionQueryModel> m_regions;
-    DestinationDatabase m_destinations;
-    MarketDatabase m_markets;
     AdditionalTagDatabase m_additional_tags;
     std::map<QWidget*, std::shared_ptr<ItemState>> m_item_states;
 
@@ -246,15 +367,18 @@ namespace {
           } else if(column_id == OrderTaskColumns::REGION) {
             auto current = make_proxy.operator ()<Region>();
             auto region_box = new RegionBox(m_regions, current);
-            region_box->setFixedHeight(region_box->minimumSizeHint().height());
-            return {new EditableBox(*region_box),
-              std::make_shared<ItemState>(current)};
+            auto breakout_input_box =
+              new BreakoutInputBox(*new AnyInputBox(*region_box));
+            auto editable_box =
+              new EditableBox(*new AnyInputBox(*breakout_input_box), [] {
+                return Region();
+              });
+            return {editable_box, std::make_shared<ItemState>(current)};
           } else if(column_id == OrderTaskColumns::DESTINATION) {
             auto region = make_proxy_value_model(
               make_table_value_model<Region>(table, row,
                 static_cast<int>(OrderTaskColumns::REGION)));
-            auto destinations = make_region_filtered_destination_list(
-              m_destinations, m_markets, region);
+            auto destinations = make_region_filtered_destination_list(region);
             auto current = make_proxy.operator ()<Destination>();
             return {new EditableBox(
               *make_destination_box(current, std::move(destinations))),
@@ -357,16 +481,15 @@ namespace {
 
 TableView* Spire::make_task_keys_table_view(
     std::shared_ptr<OrderTaskArgumentsListModel> order_task_arguments,
-    std::shared_ptr<RegionQueryModel> regions, DestinationDatabase destinations,
-    MarketDatabase markets, AdditionalTagDatabase additional_tags,
-    QWidget* parent) {
+    std::shared_ptr<RegionQueryModel> regions,
+    AdditionalTagDatabase additional_tags, QWidget* parent) {
   auto table =
     make_order_task_arguments_table_model(std::move(order_task_arguments));
   auto builder = EditableTableViewBuilder(
     std::make_shared<UniqueTaskKeyTableModel>(std::move(table))).
     set_header(make_header_model()).
-    set_item_builder(RecycledTableViewItemBuilder(TaskKeysTableViewItemBuilder(
-      regions, destinations, markets, additional_tags))).
+    set_item_builder(RecycledTableViewItemBuilder(
+      TaskKeysTableViewItemBuilder(regions, additional_tags))).
     set_comparator(&comparator);
   auto table_view = builder.make();
   auto widths = make_header_widths();
@@ -377,6 +500,9 @@ TableView* Spire::make_task_keys_table_view(
     style.get(Any() > is_a<TableBody>() >
         Row() > is_a<TableItem>() > is_a<EditableBox>() > is_a<DecimalBox>()).
       set(TextAlign(Qt::Alignment(Qt::AlignRight)));
+    style.get(Any() > is_a<TableBody>() > Selected() > is_a<TableItem>() >
+        is_a<EditableBox>() > PopUp() << Selected()).
+      set(BackgroundColor(QColor(0xE2E0FF)));
   });
   return table_view;
 }

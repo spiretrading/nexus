@@ -1,130 +1,117 @@
-import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
-import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
-interface Properties {
+const currencyDatabase = Nexus.buildDefaultCurrencyDatabase();
 
-  /** Determines the size to render components at. */
-  displaySize: WebPortal.DisplaySize;
+class TestRiskModel extends WebPortal.LocalRiskModel {
+  public shouldFail = false;
+
+  public async submit(comment: string,
+      riskParameters: Nexus.RiskParameters,
+      effectiveDate: Beam.DateTime): Promise<void> {
+    const currency =
+      currencyDatabase.fromCurrency(riskParameters.currency).code;
+    console.log('Submit:');
+    console.log(`  Comment: ${comment}`);
+    console.log(`  Currency: ${currency}`);
+    console.log(`  Buying Power: ${riskParameters.buyingPower.toString()}`);
+    console.log(`  Net Loss: ${riskParameters.netLoss.toString()}`);
+    console.log(`  Transition Time: ${riskParameters.transitionTime.toString()}`);
+    console.log(`  Effective Date: ${effectiveDate.toString()}`);
+    if(this.shouldFail) {
+      throw Error('Not Saved');
+    }
+  }
 }
 
 interface State {
-  comment: string;
-  parameters: Nexus.RiskParameters;
   roles: Nexus.AccountRoles;
-  status: string,
-  isError: boolean,
+  shouldFail: boolean;
 }
 
-/** Displays and tests the RiskPage. */
-class TestApp extends React.Component<Properties, State> {
-  constructor(props: Properties) {
+class TestApp extends React.Component<{}, State> {
+  constructor(props: {}) {
     super(props);
+    const roles = new Nexus.AccountRoles();
+    roles.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
     this.state = {
-      comment: '',
-      parameters: new Nexus.RiskParameters(Nexus.DefaultCurrencies.CAD,
-        Nexus.Money.ONE.multiply(100000),
-        new Nexus.RiskState(Nexus.RiskState.Type.ACTIVE),
-        Nexus.Money.ONE.multiply(1000), 100,
-        Beam.Duration.HOUR.multiply(5).add(
-          Beam.Duration.MINUTE.multiply(30)).add(
-            Beam.Duration.SECOND.multiply(15))),
-      roles: new Nexus.AccountRoles(8),
-      status: '',
-      isError: false,
+      roles,
+      shouldFail: false
     };
   }
 
   public render(): JSX.Element {
-    const toggleAdminButtonText = (() => {
-      if(this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-        return 'Admin';
-      }
-      return 'Not Admin';
-    })();
-    const toggleErrorText = (() => {
-      if(this.state.isError) {
-        return 'Error';
-      }
-      return 'No Error';
-    })();
+    const isAdmin =
+      this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR);
     return (
-      <Dali.VBoxLayout width='100%' height='100%'>
-        <WebPortal.RiskPage
-          displaySize={this.props.displaySize}
-          comment={this.state.comment}
-          parameters={this.state.parameters}
-          currencyDatabase={Nexus.buildDefaultCurrencyDatabase()}
+      <div style={STYLE.wrapper}>
+        <WebPortal.RiskController
+          currencyDatabase={currencyDatabase}
           roles={this.state.roles}
-          status={this.state.status}
-          isError={this.state.isError}
-          onComment={this.onComment}
-          onParameters={this.onParameters}
-          onSubmit={this.onSubmit}/>
-        <div className={css(TestApp.STYLE.buttonWrapper)}>
-          <button onClick={this.onToggleIsAdmin}>
-            {toggleAdminButtonText}
-          </button>
-          <button onClick={this.onToggleError}>
-            {toggleErrorText}
-          </button>
-          <button onClick={this.clearStatus}>
-            Clear Status
-          </button>
+          model={this.model}/>
+        <div style={STYLE.toolbar}>
+          <label style={STYLE.toggle}>
+            <input type='checkbox' checked={isAdmin}
+              onChange={this.onToggleAdmin}/>
+            Admin
+          </label>
+          <label style={STYLE.toggle}>
+            <input type='checkbox' checked={this.state.shouldFail}
+              onChange={this.onToggleError}/>
+            Error
+          </label>
         </div>
-      </Dali.VBoxLayout>);
+      </div>);
   }
 
-  private onToggleIsAdmin = () => {
-    const roles = (() => {
-      if(!this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
-        return new Nexus.AccountRoles(8);
-      }
-      return new Nexus.AccountRoles();
-    })();
-    this.setState({ roles: roles });
+  private onToggleAdmin = () => {
+    const roles = this.state.roles.clone();
+    if(roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR)) {
+      roles.unset(Nexus.AccountRoles.Role.ADMINISTRATOR);
+    } else {
+      roles.set(Nexus.AccountRoles.Role.ADMINISTRATOR);
+    }
+    this.setState({roles});
   }
 
   private onToggleError = () => {
-    this.setState({isError: !this.state.isError});
+    this.model.shouldFail = !this.state.shouldFail;
+    this.setState({shouldFail: !this.state.shouldFail});
   }
 
-  private onComment = (comment: string) => {
-    this.setState({comment});
-  }
-
-  private onParameters = (parameters: Nexus.RiskParameters) => {
-    this.setState({parameters});
-  }
-
-  private onSubmit = (comment: string, parameters: Nexus.RiskParameters) => {
-    if(this.state.isError) {
-      this.setState({status: 'Not Saved'});
-    } else {
-      this.setState({status: 'Saved'});
-    }
-    return;
-  }
-
-  private clearStatus = () => {
-    this.setState({status: ''});
-  }
-
-  private static STYLE = StyleSheet.create({
-    outerContainer: {
-      position: 'relative' as 'relative'
-    },
-    buttonWrapper: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      position: 'absolute' as 'absolute'
-    }
-  });
+  private model = new TestRiskModel(
+    new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 123, 'test'),
+    new Nexus.RiskParameters(Nexus.DefaultCurrencies.CAD,
+      Nexus.Money.ONE.multiply(100000),
+      new Nexus.RiskState(Nexus.RiskState.Type.ACTIVE),
+      Nexus.Money.ONE.multiply(1000),
+      Beam.Duration.HOUR.multiply(5).add(
+        Beam.Duration.MINUTE.multiply(30)).add(
+          Beam.Duration.SECOND.multiply(15))));
 }
 
-const ResponsivePage = WebPortal.displaySizeRenderer(TestApp);
-ReactDOM.render(<ResponsivePage/>, document.getElementById('main'));
+const STYLE: Record<string, React.CSSProperties> = {
+  wrapper: {
+    width: '100%',
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column'
+  },
+  toolbar: {
+    display: 'flex',
+    flexDirection: 'row',
+    gap: '10px',
+    position: 'absolute'
+  },
+  toggle: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '4px',
+    cursor: 'pointer'
+  }
+};
+
+ReactDOM.render(<TestApp/>, document.getElementById('main'));

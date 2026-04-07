@@ -1,7 +1,7 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindow.hpp"
 #include "Spire/InputWidgets/TimeRangeInputWidget.hpp"
-#include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorMarketSelectionWidget.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
+#include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorVenueSelectionWidget.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -28,7 +28,7 @@ OrderImbalanceIndicatorWindow::OrderImbalanceIndicatorWindow(
     Qt::WindowFlags flags)
     : QFrame(parent, flags),
       m_ui(std::make_unique<Ui_OrderImbalanceIndicatorWindow>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
   resize(scale(size()));
   m_ui->m_orderImbalanceIndicatorTableView->setItemDelegate(
@@ -79,8 +79,7 @@ void OrderImbalanceIndicatorWindow::SetModel(
     }
   }();
   m_ui->m_marketSelectionWidget->Initialize(
-    "Markets", new OrderImbalanceIndicatorMarketSelectionWidget(
-      m_userProfile->GetMarketDatabase(), Ref(*m_model)),
+    "Markets", new OrderImbalanceIndicatorVenueSelectionWidget(Ref(*m_model)),
     isMarketSelectionExpanded);
 }
 

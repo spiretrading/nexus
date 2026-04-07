@@ -13,8 +13,8 @@
 #include "Spire/Spire/Dimensions.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
+using namespace boost;
+using namespace Nexus;
 using namespace Spire;
 
 namespace {
@@ -22,14 +22,14 @@ namespace {
     auto properties = LegacyBookViewWindowSettings::Properties();
     try {
       auto reader =
-        BasicIStreamReader<std::ifstream>(Initialize(path, std::ios::binary));
+        BasicIStreamReader<std::ifstream>(init(path, std::ios::binary));
       auto buffer = SharedBuffer();
-      reader.Read(Store(buffer));
+      reader.read(out(buffer));
       auto type_registry = TypeRegistry<BinarySender<SharedBuffer>>();
-      RegisterSpireTypes(Store(type_registry));
+      RegisterSpireTypes(out(type_registry));
       auto receiver = BinaryReceiver<SharedBuffer>(Ref(type_registry));
-      receiver.SetSource(Ref(buffer));
-      receiver.Shuttle(properties);
+      receiver.set(Ref(buffer));
+      receiver.shuttle(properties);
     } catch(std::exception&) {
       throw std::runtime_error("Unable to load book view properties.");
     }
@@ -63,19 +63,19 @@ namespace {
       }
       return BookViewHighlightProperties::OrderVisibility::HIGHLIGHTED;
     }();
-    if(!legacy_properties.m_market_highlights.empty()) {
-      properties.m_highlight_properties.m_market_highlights.clear();
-      for(auto& highlight : legacy_properties.m_market_highlights) {
+    if(!legacy_properties.m_venue_highlights.empty()) {
+      properties.m_highlight_properties.m_venue_highlights.clear();
+      for(auto& highlight : legacy_properties.m_venue_highlights) {
         auto level = [&] {
           if(highlight.second.m_highlight_all_levels) {
-            return BookViewHighlightProperties::MarketHighlightLevel::ALL;
+            return BookViewHighlightProperties::VenueHighlightLevel::ALL;
           }
-          return BookViewHighlightProperties::MarketHighlightLevel::TOP;
+          return BookViewHighlightProperties::VenueHighlightLevel::TOP;
         }();
         auto color = HighlightColor(highlight.second.m_color,
           legacy_properties.m_book_quote_foreground_color);
-        properties.m_highlight_properties.m_market_highlights.push_back(
-          BookViewHighlightProperties::MarketHighlight(
+        properties.m_highlight_properties.m_venue_highlights.push_back(
+          BookViewHighlightProperties::VenueHighlight(
             highlight.first, color, level));
       }
     }
@@ -140,8 +140,8 @@ const QString& Spire::to_text(
 }
 
 const QString& Spire::to_text(
-    BookViewHighlightProperties::MarketHighlightLevel level) {
-  if(level == BookViewHighlightProperties::MarketHighlightLevel::TOP) {
+    BookViewHighlightProperties::VenueHighlightLevel level) {
+  if(level == BookViewHighlightProperties::VenueHighlightLevel::TOP) {
     static const auto value = QObject::tr("Top Level");
     return value;
   } else {
@@ -190,23 +190,20 @@ BookViewProperties Spire::load_book_view_properties(
   }
   auto properties = BookViewProperties();
   try {
-    auto reader = BasicIStreamReader<std::ifstream>(Initialize(file_path));
+    auto reader = BasicIStreamReader<std::ifstream>(init(file_path));
     auto buffer = SharedBuffer();
-    reader.Read(Store(buffer));
+    reader.read(out(buffer));
     auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
-    RegisterSpireTypes(Store(registry));
+    RegisterSpireTypes(out(registry));
     auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
-    receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(properties);
+    receiver.set(Ref(buffer));
+    receiver.shuttle(properties);
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load book view properties, using defaults."));
     return BookViewProperties::get_default();
   }
   return properties;
-
-
-  return BookViewProperties::get_default();
 }
 
 void Spire::save_book_view_properties(
@@ -214,13 +211,13 @@ void Spire::save_book_view_properties(
   auto file_path = path / "book_view.json";
   try {
     auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
-    RegisterSpireTypes(Store(registry));
+    RegisterSpireTypes(out(registry));
     auto sender = JsonSender<SharedBuffer>(Ref(registry));
     auto buffer = SharedBuffer();
-    sender.SetSink(Ref(buffer));
-    sender.Shuttle(properties);
-    auto writer = BasicOStreamWriter<std::ofstream>(Initialize(file_path));
-    writer.Write(buffer);
+    sender.set(Ref(buffer));
+    sender.shuttle(properties);
+    auto writer = BasicOStreamWriter<std::ofstream>(init(file_path));
+    writer.write(buffer);
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save book view properties."));

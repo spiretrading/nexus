@@ -3,7 +3,6 @@
 #include <QWidget>
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -30,6 +29,8 @@ namespace Spire {
 
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void keyPressEvent(QKeyEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
 
     private:
@@ -41,6 +42,7 @@ namespace Spire {
       ListView* m_list_view;
       QSizePolicy m_size_policy;
       ScrollBox* m_scroll_box;
+      bool m_is_showing;
       Styles m_styles;
       boost::signals2::scoped_connection m_list_view_style_connection;
       boost::signals2::scoped_connection m_current_connection;

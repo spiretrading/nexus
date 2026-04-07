@@ -6,7 +6,6 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::signals2;
 using namespace Nexus;
-using namespace Nexus::Accounting;
 using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
@@ -29,16 +28,16 @@ const CurrencyDatabase::Entry& ProfitAndLossEntryModel::GetCurrency() const {
 }
 
 void ProfitAndLossEntryModel::OnPortfolioUpdate(
-    const SpirePortfolioController::UpdateEntry& update) {
-  const SpirePosition::Key& key = update.m_securityInventory.m_position.m_key;
+    const PortfolioUpdateEntry& update) {
+  Position::Key key = get_key(update.m_security_inventory.m_position);
   Money currencyProfitAndLoss =
-    update.m_currencyInventory.m_grossProfitAndLoss -
-    update.m_currencyInventory.m_fees;
+    update.m_currency_inventory.m_gross_profit_and_loss -
+    update.m_currency_inventory.m_fees;
   if(m_showUnrealized) {
-    currencyProfitAndLoss += update.m_unrealizedCurrency;
+    currencyProfitAndLoss += update.m_unrealized_currency;
   }
   m_profitAndLossSignal(currencyProfitAndLoss);
-  Security security = key.m_index;
+  Security& security = key.m_security;
   auto entryIterator = m_securityToEntry.find(security);
   if(entryIterator == m_securityToEntry.end()) {
     beginInsertRows(QModelIndex(), static_cast<int>(m_entries.size()),
@@ -50,13 +49,14 @@ void ProfitAndLossEntryModel::OnPortfolioUpdate(
   }
   Entry& entry = *entryIterator->second;
   m_volume -= entry.m_volume;
-  entry.m_profitAndLoss = update.m_unrealizedSecurity +
-    update.m_securityInventory.m_grossProfitAndLoss -
-    update.m_securityInventory.m_fees;
-  entry.m_fees = update.m_securityInventory.m_fees;
-  entry.m_volume = update.m_securityInventory.m_volume;
-  entry.m_previousQuantity = update.m_securityInventory.m_position.m_quantity;
-  int entryIndex = static_cast<int>(Find(m_entries, entry) - m_entries.begin());
+  entry.m_profitAndLoss = update.m_unrealized_security +
+    update.m_security_inventory.m_gross_profit_and_loss -
+    update.m_security_inventory.m_fees;
+  entry.m_fees = update.m_security_inventory.m_fees;
+  entry.m_volume = update.m_security_inventory.m_volume;
+  entry.m_previousQuantity = update.m_security_inventory.m_position.m_quantity;
+  int entryIndex =
+    static_cast<int>(Beam::find(m_entries, entry) - m_entries.begin());
   m_volume += entry.m_volume;
   m_volumeSignal(m_volume);
   Q_EMIT dataChanged(index(entryIndex, 0), index(entryIndex, COLUMN_COUNT - 1));

@@ -3,8 +3,7 @@
 #include <optional>
 #include <string>
 #include <Beam/Pointers/Ref.hpp>
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
-#include "Nexus/RiskService/RiskService.hpp"
+#include "Nexus/RiskService/RiskParameters.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/ActivityLogModel.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
@@ -12,7 +11,6 @@
 #include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/Blotter/OrderLogProperties.hpp"
 #include "Spire/Blotter/ProfitAndLossModel.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
@@ -31,7 +29,7 @@ namespace Spire {
        * @param orderLogProperties The Order log's display properties.
        */
       BlotterModel(const std::string& name,
-        const Beam::ServiceLocator::DirectoryEntry& executingAccount,
+        const Beam::DirectoryEntry& executingAccount,
         bool isConsolidated, Beam::Ref<UserProfile> userProfile,
         const BlotterTaskProperties& taskProperties,
         const OrderLogProperties& orderLogProperties);
@@ -42,7 +40,7 @@ namespace Spire {
       const std::string& GetName() const;
 
       /** Returns the account used to execute new Orders. */
-      const Beam::ServiceLocator::DirectoryEntry& GetExecutingAccount() const;
+      const Beam::DirectoryEntry& GetExecutingAccount() const;
 
       /**
        * Returns <code>true</code> iff this is the executing account's
@@ -105,12 +103,13 @@ namespace Spire {
 
     private:
       std::string m_name;
-      Beam::ServiceLocator::DirectoryEntry m_executingAccount;
+      Beam::DirectoryEntry m_executingAccount;
       bool m_isConsolidated;
       UserProfile* m_userProfile;
       bool m_isPersistent;
       BlotterTasksModel m_tasksModel;
-      std::optional<SpirePortfolioController> m_portfolioController;
+      std::optional<ProfitAndLossModel::PortfolioController>
+        m_portfolioController;
       OrderLogModel m_orderLogModel;
       OpenPositionsModel m_openPositionsModel;
       ProfitAndLossModel m_profitAndLossModel;
@@ -123,8 +122,7 @@ namespace Spire {
       BlotterModel(const BlotterModel&) = delete;
       BlotterModel& operator =(const BlotterModel&) = delete;
       void InitializeModels();
-      void OnRiskParametersChanged(
-        const Nexus::RiskService::RiskParameters& riskParameters);
+      void OnRiskParametersChanged(const Nexus::RiskParameters& riskParameters);
   };
 }
 

@@ -5,7 +5,7 @@
 #include <QWidget>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Spire/Blotter/Blotter.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 class Ui_ProfitAndLossWidget;
 

@@ -1,30 +1,20 @@
 #ifndef NEXUS_COMPLIANCE_CHECK_EXCEPTION_HPP
 #define NEXUS_COMPLIANCE_CHECK_EXCEPTION_HPP
 #include <stdexcept>
-#include <boost/exception/exception.hpp>
-#include "Nexus/Compliance/Compliance.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Exception to indicate that an operation failed a compliance check. */
-  class ComplianceCheckException : public std::runtime_error,
-      public boost::exception {
+  class ComplianceCheckException : public std::runtime_error {
     public:
+      using std::runtime_error::runtime_error;
 
-      /**
-       * Constructs a ComplianceCheckException.
-       * @param message A message describing the failure.
-       */
-      explicit ComplianceCheckException(const std::string& message);
-
-      virtual ~ComplianceCheckException() throw();
+      /** Constructs a ComplianceCheckException. */
+      ComplianceCheckException();
   };
 
-  inline ComplianceCheckException::ComplianceCheckException(
-    const std::string& message)
-    : std::runtime_error{message} {}
-
-  inline ComplianceCheckException::~ComplianceCheckException() throw() {}
+  inline ComplianceCheckException::ComplianceCheckException()
+    : ComplianceCheckException("Compliance check failed.") {}
 }
 
 #endif

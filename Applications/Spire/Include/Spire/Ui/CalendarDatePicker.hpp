@@ -4,9 +4,11 @@
 #include <QWidget>
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 #include "Spire/Styles/StateSelector.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  template<typename> class ListModel;
+  class ListView;
+
 namespace Styles {
 
   /** Selects today. */

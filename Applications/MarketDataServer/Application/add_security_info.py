@@ -14,8 +14,8 @@ def report_yaml_error(error):
 def parse_ip_address(source):
   separator = source.find(':')
   if separator == -1:
-    return beam.network.IpAddress(source, 0)
-  return beam.network.IpAddress(source[0:separator],
+    return beam.IpAddress(source, 0)
+  return beam.IpAddress(source[0:separator],
     int(source[separator + 1 :]))
 
 def main():
@@ -45,15 +45,13 @@ def main():
   username = section['username']
   password = section['password']
   service_locator_client = \
-    beam.service_locator.ApplicationServiceLocatorClient(username, password,
-      address)
-  feed_client = nexus.market_data_service.ApplicationMarketDataFeedClient(
-    service_locator_client)
+    beam.ApplicationServiceLocatorClient(username, password, address)
+  feed_client = nexus.ApplicationMarketDataFeedClient(service_locator_client)
   security_info = nexus.SecurityInfo()
   security_info.security = nexus.parse_security('%s' % args.symbol)
   security_info.name = args.name
   security_info.sector = args.sector
-  security_info.board_lot = nexus.Quantity.from_value(args.board_lot)
+  security_info.board_lot = nexus.parse_quantity(args.board_lot)
   feed_client.add(security_info)
 
 if __name__ == '__main__':

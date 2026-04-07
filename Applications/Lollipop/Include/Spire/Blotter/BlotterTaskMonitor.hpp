@@ -45,18 +45,18 @@ namespace Spire {
       const CanvasNode& GetMonitor() const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::string m_name;
       std::unique_ptr<CanvasNode> m_monitor;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void BlotterTaskMonitor::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("name", m_name);
-    shuttle.Shuttle("monitor", m_monitor);
+  template<Beam::IsShuttle S>
+  void BlotterTaskMonitor::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("name", m_name);
+    shuttle.shuttle("monitor", m_monitor);
   }
 }
 

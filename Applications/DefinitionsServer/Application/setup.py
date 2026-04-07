@@ -42,7 +42,7 @@ def main():
     file.write(source)
     file.truncate()
   for file in ['countries.yml', 'currencies.yml', 'date_time_zonespec.csv',
-      'destinations.yml', 'markets.yml']:
+      'destinations.yml', 'venues.yml']:
     if not os.path.exists(file):
       base, ext = os.path.splitext(file)
       shutil.copy(base + '.default' + ext, file)

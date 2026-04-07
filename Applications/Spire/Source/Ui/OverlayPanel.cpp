@@ -2,6 +2,7 @@
 #include <QGraphicsDropShadowEffect>
 #include <QMouseEvent>
 #include <QScreen>
+#include <QTimer>
 #include <QWindow>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -51,27 +52,29 @@ OverlayPanel::OverlayPanel(QWidget& body, QWidget& parent)
       m_is_closed_on_focus_out(true),
       m_is_draggable(true),
       m_was_activated(false),
+      m_is_ready(false),
       m_positioning(Positioning::PARENT),
       m_parent_focus_observer(parent),
       m_focus_observer(*this),
       m_parent_position_observer(parent) {
   setAttribute(Qt::WA_TranslucentBackground);
   setAttribute(Qt::WA_QuitOnClose);
-  auto box = new Box(m_body);
-  box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-  setFocusProxy(box);
+  m_box = new Box(m_body);
+  m_box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+  m_box->installEventFilter(this);
+  setFocusProxy(m_box);
   auto layout = make_vbox_layout(this);
   layout->setContentsMargins(DROP_SHADOW_MARGINS());
-  layout->addWidget(box);
+  layout->addWidget(m_box);
   layout->addSpacerItem(
     new QSpacerItem(1, 1, QSizePolicy::Expanding, QSizePolicy::Expanding));
-  proxy_style(*this, *box);
+  proxy_style(*this, *m_box);
   set_style(*this, DEFAULT_STYLE());
   auto shadow = new QGraphicsDropShadowEffect();
   shadow->setColor(DROP_SHADOW_COLOR);
   shadow->setOffset(translate(DROP_SHADOW_OFFSET));
   shadow->setBlurRadius(scale_width(DROP_SHADOW_RADIUS));
-  box->setGraphicsEffect(shadow);
+  m_box->setGraphicsEffect(shadow);
   m_focus_connection = m_focus_observer.connect_state_signal(
     std::bind_front(&OverlayPanel::on_focus, this));
   m_parent_focus_connection = m_parent_focus_observer.connect_state_signal(
@@ -126,10 +129,9 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
       if(mouse_event.buttons() & Qt::LeftButton) {
         move(pos() + (mouse_event.pos() - m_mouse_pressed_position));
       }
-    } else if(event->type() == QEvent::LayoutRequest) {
-      setFixedSize(layout()->itemAt(0)->widget()->sizeHint().grownBy(
-        layout()->contentsMargins()));
     }
+  } else if(watched == m_box && event->type() == QEvent::Resize) {
+    setFixedSize(m_box->size().grownBy(layout()->contentsMargins()));
   } else if(watched == parentWidget() && event->type() == QEvent::Resize) {
     if(isVisible()) {
       position();
@@ -139,15 +141,15 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void OverlayPanel::showEvent(QShowEvent* event) {
+  m_is_ready = false;
   position();
   QWidget::showEvent(event);
+  QTimer::singleShot(0, this, [this] { m_is_ready = true; });
 }
 
 void OverlayPanel::closeEvent(QCloseEvent* event) {
   m_was_activated = false;
-  if(auto focused_widget = focusWidget()) {
-    focused_widget->clearFocus();
-  }
+  m_is_ready = false;
   QWidget::closeEvent(event);
 }
 
@@ -207,6 +209,9 @@ void OverlayPanel::on_focus(FocusObserver::State state) {
 }
 
 void OverlayPanel::on_parent_focus(FocusObserver::State state) {
+  if(!m_is_ready) {
+    return;
+  }
   if(state == FocusObserver::State::NONE && m_is_closed_on_focus_out &&
       !isActiveWindow() && m_was_activated) {
     close();

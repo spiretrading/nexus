@@ -2,11 +2,12 @@
 #define SPIRE_BBO_BOX_HPP
 #include <QHBoxLayout>
 #include <QSpacerItem>
-#include "Spire/BookView/BookView.hpp"
+#include <QWidget>
+#include "Nexus/Definitions/Quote.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class TextBox;
 
   /** A ValueModel over a Quote. */
   using QuoteModel = ValueModel<Nexus::Quote>;
@@ -23,8 +24,8 @@ namespace Spire {
        * @param quote The BBO quote to display.
        * @param parent The parent widget.
        */
-      explicit BboBox(std::shared_ptr<QuoteModel> quote,
-        QWidget* parent = nullptr);
+      explicit BboBox(
+        std::shared_ptr<QuoteModel> quote, QWidget* parent = nullptr);
 
       /** Returns the quote value model. */
       const std::shared_ptr<QuoteModel>& get_quote() const;

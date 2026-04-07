@@ -1,11 +1,11 @@
 #ifndef NEXUS_REJECT_SUBMISSIONS_COMPLIANCE_RULE_HPP
 #define NEXUS_REJECT_SUBMISSIONS_COMPLIANCE_RULE_HPP
-#include <string>
-#include "Nexus/Compliance/Compliance.hpp"
+#include <boost/throw_exception.hpp>
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
+#include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Rejects all submissions. */
   class RejectSubmissionsComplianceRule : public ComplianceRule {
@@ -23,11 +23,23 @@ namespace Nexus::Compliance {
        */
       explicit RejectSubmissionsComplianceRule(std::string reason);
 
-      void Submit(const OrderExecutionService::Order& order) override;
+      void submit(const std::shared_ptr<Order>& order) override;
 
     private:
       std::string m_reason;
   };
+
+  /** The standard name used to identify the RejectSubmissionsComplianceRule. */
+  inline const auto REJECT_SUBMISSIONS_RULE_NAME =
+    std::string("reject_submissions");
+
+  /**
+   * Returns a ComplianceRuleSchema representing a
+   * RejectSubmissionsComplianceRule.
+   */
+  inline ComplianceRuleSchema make_reject_submissions_compliance_rule_schema() {
+    return ComplianceRuleSchema(REJECT_SUBMISSIONS_RULE_NAME, {});
+  }
 
   inline RejectSubmissionsComplianceRule::RejectSubmissionsComplianceRule()
     : RejectSubmissionsComplianceRule("Submissions not allowed.") {}
@@ -36,9 +48,9 @@ namespace Nexus::Compliance {
     std::string reason)
     : m_reason(std::move(reason)) {}
 
-  inline void RejectSubmissionsComplianceRule::Submit(
-      const OrderExecutionService::Order& order) {
-    throw ComplianceCheckException(m_reason);
+  inline void RejectSubmissionsComplianceRule::submit(
+      const std::shared_ptr<Order>& order) {
+    boost::throw_with_location(ComplianceCheckException(m_reason));
   }
 }
 

@@ -10,22 +10,20 @@
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
-#include "Spire/PortfolioViewer/PortfolioSelectionModel.hpp"
-#include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
-#include "Spire/PortfolioViewer/PortfolioViewerModel.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/FunctionalAction.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/LegacyUI/ValueLabel.hpp"
+#include "Spire/PortfolioViewer/PortfolioSelectionModel.hpp"
+#include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
+#include "Spire/PortfolioViewer/PortfolioViewerModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Utilities/ExportModel.hpp"
 #include "ui_PortfolioViewerWindow.h"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 using namespace std;
@@ -35,16 +33,14 @@ namespace {
       UserProfile& userProfile) {
     auto& blotter = userProfile.GetBlotterSettings().GetConsolidatedBlotter(
       entry.m_account);
-    auto orderFields = OrderFields::MakeMarketOrder(
-      blotter.GetExecutingAccount(),
-      entry.m_inventory.m_position.m_key.m_index,
-      entry.m_inventory.m_position.m_key.m_currency,
-      GetOpposite(GetSide(entry.m_inventory.m_position)),
-      userProfile.GetDestinationDatabase().GetPreferredDestination(
-      entry.m_inventory.m_position.m_key.m_index.GetMarket()).m_id,
-      Abs(entry.m_inventory.m_position.m_quantity));
-    auto orderNode = MakeOrderTaskNodeFromOrderFields(orderFields,
-      userProfile);
+    auto orderFields = make_market_order_fields(blotter.GetExecutingAccount(),
+      entry.m_inventory.m_position.m_security,
+      entry.m_inventory.m_position.m_currency,
+      get_opposite(get_side(entry.m_inventory.m_position)),
+      DEFAULT_DESTINATIONS.get_preferred_destination(
+      entry.m_inventory.m_position.m_security.get_venue()).m_id,
+      abs(entry.m_inventory.m_position.m_quantity));
+    auto orderNode = MakeOrderTaskNodeFromOrderFields(orderFields, userProfile);
     auto& taskEntry = blotter.GetTasksModel().Add(*orderNode);
     taskEntry.m_task->Execute();
   }
@@ -55,7 +51,7 @@ PortfolioViewerWindow::PortfolioViewerWindow(Ref<UserProfile> userProfile,
     Qt::WindowFlags flags)
     : QFrame(parent, flags),
       m_ui(std::make_unique<Ui_PortfolioViewerWindow>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
   resize(scale(1900, 667));
   m_statusBar = new QStatusBar(this);
@@ -126,7 +122,7 @@ void PortfolioViewerWindow::SetProperties(
 }
 
 unique_ptr<WindowSettings> PortfolioViewerWindow::GetWindowSettings() const {
-  m_selectionModel->UpdateProperties(Store(m_properties));
+  m_selectionModel->UpdateProperties(out(m_properties));
   auto settings = std::make_unique<PortfolioViewerWindowSettings>(*this);
   return std::move(settings);
 }
@@ -137,7 +133,7 @@ void PortfolioViewerWindow::showEvent(QShowEvent* event) {
 }
 
 void PortfolioViewerWindow::closeEvent(QCloseEvent* event) {
-  m_selectionModel->UpdateProperties(Store(m_properties));
+  m_selectionModel->UpdateProperties(out(m_properties));
   auto settings = std::make_unique<PortfolioViewerWindowSettings>(*this);
   m_userProfile->SetInitialPortfolioViewerWindowSettings(*settings);
   m_userProfile->SetDefaultPortfolioViewerProperties(m_properties);

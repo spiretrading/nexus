@@ -1,12 +1,14 @@
 #include "Spire/Charting/ChartWindowSettings.hpp"
 #include "Spire/Charting/ChartIntervalComboBox.hpp"
 #include "Spire/Charting/ChartWindow.hpp"
+#include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
 #include "ui_ChartWindow.h"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
+using namespace Spire::UI;
 using namespace std;
 
 ChartWindowSettings::ChartWindowSettings() {}
@@ -24,11 +26,10 @@ ChartWindowSettings::ChartWindowSettings(const ChartWindow& window,
       m_chartPlotViewWindowSettings(window.m_ui->m_chart->GetWindowSettings()),
       m_chartIntervalComboBoxWindowSettings(
         window.m_intervalComboBox->GetWindowSettings()) {
-  if(m_security == Security()) {
+  if(!m_security) {
     m_name = "Chart";
   } else {
-    m_name = "Chart - " +
-      ToString(m_security, userProfile->GetMarketDatabase());
+    m_name = "Chart - " + displayText(m_security).toStdString();
   }
 }
 
@@ -41,7 +42,7 @@ string ChartWindowSettings::GetName() const {
 QWidget* ChartWindowSettings::Reopen(Ref<UserProfile> userProfile) const {
   ChartWindow* window = new ChartWindow(Ref(userProfile), m_identifier);
   window->setAttribute(Qt::WA_DeleteOnClose);
-  Apply(Ref(userProfile), Store(*window));
+  Apply(Ref(userProfile), out(*window));
   return window;
 }
 
@@ -51,7 +52,7 @@ void ChartWindowSettings::Apply(Ref<UserProfile> userProfile,
   window.restoreGeometry(m_geometry);
   if(window.m_ui->m_chart != nullptr) {
     m_chartPlotViewWindowSettings->Apply(Ref(userProfile),
-      Store(*window.m_ui->m_chart));
+      out(*window.m_ui->m_chart));
   }
   window.SetInteractionMode(m_interactionMode);
   window.SetAutoScale(m_isAutoScaleEnabled);
@@ -63,6 +64,6 @@ void ChartWindowSettings::Apply(Ref<UserProfile> userProfile,
   window.m_securityViewStack = m_securityViewStack;
   if(window.m_intervalComboBox != nullptr) {
     m_chartIntervalComboBoxWindowSettings->Apply(Ref(userProfile),
-      Store(*window.m_intervalComboBox));
+      out(*window.m_intervalComboBox));
   }
 }

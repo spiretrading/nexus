@@ -1,16 +1,12 @@
 #ifndef NEXUS_COMPLIANCE_RULE_HPP
 #define NEXUS_COMPLIANCE_RULE_HPP
-#include <vector>
-#include <boost/noncopyable.hpp>
-#include "Nexus/Compliance/Compliance.hpp"
-#include "Nexus/Compliance/ComplianceParameter.hpp"
-#include "Nexus/Compliance/ComplianceRuleEntry.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include <memory>
+#include "Nexus/OrderExecutionService/Order.hpp"
 
-namespace Nexus::Compliance {
+namespace Nexus {
 
   /** Base class for a single compliance check. */
-  class ComplianceRule : private boost::noncopyable {
+  class ComplianceRule {
     public:
       virtual ~ComplianceRule() = default;
 
@@ -18,19 +14,19 @@ namespace Nexus::Compliance {
        * Performs a compliance check on an Order submission.
        * @param order The Order being submitted.
        */
-      virtual void Submit(const OrderExecutionService::Order& order);
+      virtual void submit(const std::shared_ptr<Order>& order);
 
       /**
        * Cancels a previously submitted Order.
        * @param order The Order to cancel.
        */
-      virtual void Cancel(const OrderExecutionService::Order& order);
+      virtual void cancel(const std::shared_ptr<Order>& order);
 
       /**
        * Adds an Order that successfully passed all compliance checks.
        * @param order The Order that was successfully submitted.
        */
-      virtual void Add(const OrderExecutionService::Order& order);
+      virtual void add(const std::shared_ptr<Order>& order);
 
     protected:
 
@@ -38,15 +34,13 @@ namespace Nexus::Compliance {
       ComplianceRule() = default;
   };
 
-  inline void ComplianceRule::Submit(
-      const OrderExecutionService::Order& order) {
-    Add(order);
+  inline void ComplianceRule::submit(const std::shared_ptr<Order>& order) {
+    add(order);
   }
 
-  inline void ComplianceRule::Cancel(
-    const OrderExecutionService::Order& order) {}
+  inline void ComplianceRule::cancel(const std::shared_ptr<Order>& order) {}
 
-  inline void ComplianceRule::Add(const OrderExecutionService::Order& order) {}
+  inline void ComplianceRule::add(const std::shared_ptr<Order>& order) {}
 }
 
 #endif

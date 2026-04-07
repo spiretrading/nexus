@@ -30,12 +30,12 @@ namespace {
 MoveNodeCommand::MoveNodeCommand(Ref<CanvasNodeModel> view,
     const CanvasNodeModel::Coordinate& source,
     const CanvasNodeModel::Coordinate& destination)
-    : m_view(view.Get()),
+    : m_view(view.get()),
       m_source(source),
       m_destination(destination) {}
 
 void MoveNodeCommand::undo() {
-  m_snapshot.Restore(Store(*m_view));
+  m_snapshot.Restore(out(*m_view));
 }
 
 void MoveNodeCommand::redo() {
@@ -47,10 +47,10 @@ void MoveNodeCommand::redo() {
     if(IsRoot(*source)) {
       auto dropNode = CanvasNode::Clone(*source);
       m_view->Remove(*source);
-      auto placedNode = PlaceNodeCommand::TryPlaceNode(Store(*m_view),
+      auto placedNode = PlaceNodeCommand::TryPlaceNode(out(*m_view),
         m_destination, *dropNode, false);
       if(!placedNode.is_initialized()) {
-        m_snapshot.Restore(Store(*m_view));
+        m_snapshot.Restore(out(*m_view));
         BOOST_THROW_EXCEPTION(IgnoreCommandException());
       }
     } else if(&GetRoot(*source) == &GetRoot(*destination)) {
@@ -64,10 +64,10 @@ void MoveNodeCommand::redo() {
         builder.Replace(*m_view->GetNode(m_destination), std::move(dropNode));
         replacement = builder.Make();
       } catch(const std::exception&) {
-        m_snapshot.Restore(Store(*m_view));
+        m_snapshot.Restore(out(*m_view));
         BOOST_THROW_EXCEPTION(IgnoreCommandException());
       }
-      ReplaceNodeCommand::Replace(Store(*m_view), GetRoot(*source),
+      ReplaceNodeCommand::Replace(out(*m_view), GetRoot(*source),
         *replacement);
     } else {
       auto dropNode = CanvasNode::Clone(*source);
@@ -78,10 +78,10 @@ void MoveNodeCommand::redo() {
           ResetSourceNode(builder, *source);
           replacement = builder.Make();
         } catch(const std::exception&) {
-          m_snapshot.Restore(Store(*m_view));
+          m_snapshot.Restore(out(*m_view));
           BOOST_THROW_EXCEPTION(IgnoreCommandException());
         }
-        ReplaceNodeCommand::Replace(Store(*m_view), GetRoot(*source),
+        ReplaceNodeCommand::Replace(out(*m_view), GetRoot(*source),
           *replacement);
       }
       {
@@ -91,10 +91,10 @@ void MoveNodeCommand::redo() {
           builder.Replace(*destination, std::move(dropNode));
           replacement = builder.Make();
         } catch(const std::exception&) {
-          m_snapshot.Restore(Store(*m_view));
+          m_snapshot.Restore(out(*m_view));
           BOOST_THROW_EXCEPTION(IgnoreCommandException());
         }
-        ReplaceNodeCommand::Replace(Store(*m_view), GetRoot(*destination),
+        ReplaceNodeCommand::Replace(out(*m_view), GetRoot(*destination),
           *replacement);
       }
     }
@@ -112,10 +112,10 @@ void MoveNodeCommand::redo() {
         ResetSourceNode(builder, *source);
         replacement = builder.Make();
       } catch(const std::exception&) {
-        m_snapshot.Restore(Store(*m_view));
+        m_snapshot.Restore(out(*m_view));
         BOOST_THROW_EXCEPTION(IgnoreCommandException());
       }
-      ReplaceNodeCommand::Replace(Store(*m_view), GetRoot(*source),
+      ReplaceNodeCommand::Replace(out(*m_view), GetRoot(*source),
         *replacement);
       m_view->Add(m_destination, *Refresh(std::move(dropNode)));
     } else {

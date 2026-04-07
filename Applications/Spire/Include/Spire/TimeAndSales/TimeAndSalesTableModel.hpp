@@ -95,7 +95,7 @@ namespace Spire {
       TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_connection;
 
-      void load_snapshot(Beam::Queries::Sequence last, int count);
+      void load_snapshot(Beam::Sequence last, int count);
       void on_update(const TimeAndSalesModel::Entry& entry);
   };
 }

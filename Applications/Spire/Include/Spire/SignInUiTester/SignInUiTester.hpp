@@ -5,7 +5,6 @@
 #include <QSpinBox>
 #include <QTextEdit>
 #include <QWidget>
-#include "Spire/SignIn/SignIn.hpp"
 #include "Spire/SignIn/SignInWindow.hpp"
 #include "Spire/SignIn/Track.hpp"
 #include "Spire/Ui/ProgressBar.hpp"

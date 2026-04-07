@@ -27,7 +27,7 @@ namespace {
 TextDashboardCellRenderer::TextDashboardCellRenderer(
     Ref<const DashboardCell> cell, Ref<UserProfile> userProfile)
     : DashboardCellRenderer{Ref(cell)},
-      m_userProfile{userProfile.Get()},
+      m_userProfile{userProfile.get()},
       m_pen{QColor{255, 255, 255}},
       m_alignment(Qt::AlignRight | Qt::AlignBottom),
       m_delegate{std::make_unique<CustomVariantItemDelegate>(

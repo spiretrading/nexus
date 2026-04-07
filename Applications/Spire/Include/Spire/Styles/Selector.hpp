@@ -1,38 +1,35 @@
 #ifndef SPIRE_STYLES_SELECTOR_HPP
 #define SPIRE_STYLES_SELECTOR_HPP
 #include <any>
+#include <concepts>
 #include <functional>
 #include <typeindex>
 #include <type_traits>
 #include <unordered_map>
-#include <Beam/Utilities/Functional.hpp>
+#include <boost/callable_traits/args.hpp>
 #include "Spire/Styles/SelectConnection.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
-  /** Type trait indicating whether a type satisfies the Selector model. */
-  template<typename T, typename = void>
-  struct is_selector_t : std::false_type {};
-
+  /** Determines whether a type satisfies the Selector model. */
   template<typename T>
-  struct is_selector_t<T, std::enable_if_t<std::is_same_v<
-    decltype(select(std::declval<const T&>(), std::declval<const Stylist&>(),
-      std::declval<const SelectionUpdateSignal&>())), SelectConnection>>> :
-    std::true_type {};
-
-  template<typename T>
-  constexpr auto is_selector_v = is_selector_t<T>::value;
+  concept IsSelector = requires(const T& selector, const Stylist& stylist,
+      const SelectionUpdateSignal& signal) {
+    { select(selector, stylist, signal) } -> std::same_as<SelectConnection>;
+  };
 
   /** Selects the widget to apply a style rule to. */
   class Selector {
     public:
 
-      template<typename T, typename = std::enable_if_t<is_selector_v<T>>>
+      /**
+       * Constructs a Selector.
+       * @param selector The selector to store.
+       */
+      template<IsSelector T>
       Selector(T selector);
 
       Selector(const Selector&) = default;
-
       Selector(Selector&&) = default;
 
       /** Returns the underlying selector's type. */
@@ -51,26 +48,11 @@ namespace Spire::Styles {
 
       template<typename F, typename... G>
       decltype(auto) visit(F&& f, G&&... g) const;
-
       bool operator ==(const Selector& selector) const;
-
-      bool operator !=(const Selector& selector) const;
-
       Selector& operator =(const Selector&) = default;
-
       Selector& operator =(Selector&&) = default;
 
     private:
-      template<typename T>
-      struct TypeExtractor {};
-      template<typename T>
-      struct TypeExtractor<Beam::TypeSequence<T>> {
-        using type = std::decay_t<T>;
-      };
-      template<typename T, typename U>
-      struct TypeExtractor<Beam::TypeSequence<T, U>> {
-        using type = std::decay_t<U>;
-      };
       friend struct std::hash<Selector>;
       friend SelectConnection select(
         const Selector&, const Stylist&, const SelectionUpdateSignal&);
@@ -96,7 +78,7 @@ namespace Spire::Styles {
   SelectConnection select(const Selector& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update);
 
-  template<typename T, typename>
+  template<IsSelector T>
   Selector::Selector(T selector)
       : m_selector(std::move(selector)) {
     auto operations = m_operations.find(typeid(T));
@@ -123,11 +105,12 @@ namespace Spire::Styles {
 
   template<typename F>
   decltype(auto) Selector::visit(F&& f) const {
-    if constexpr(std::is_invocable_v<std::decay_t<F>>) {
+    if constexpr(std::is_invocable_v<std::remove_cvref_t<F>>) {
       return std::forward<F>(f)();
     } else {
-      using Parameter = typename TypeExtractor<
-        Beam::GetFunctionParameters<std::decay_t<F>>>::type;
+      using Args = boost::callable_traits::args_t<std::remove_cvref_t<F>>;
+      using Parameter = std::remove_cvref_t<
+        std::tuple_element_t<std::tuple_size_v<Args> - 1, Args>>;
       if(m_selector.type() == typeid(Parameter)) {
         return std::forward<F>(f)(std::any_cast<const Parameter&>(m_selector));
       }
@@ -137,8 +120,9 @@ namespace Spire::Styles {
 
   template<typename F, typename... G>
   decltype(auto) Selector::visit(F&& f, G&&... g) const {
-    using Parameter = typename TypeExtractor<
-      Beam::GetFunctionParameters<std::decay_t<F>>>::type;
+    using Args = boost::callable_traits::args_t<std::remove_cvref_t<F>>;
+    using Parameter = std::remove_cvref_t<
+      std::tuple_element_t<std::tuple_size_v<Args> - 1, Args>>;
     if(m_selector.type() == typeid(Parameter)) {
       return std::forward<F>(f)(std::any_cast<const Parameter&>(m_selector));
     }
@@ -149,7 +133,8 @@ namespace Spire::Styles {
 namespace std {
   template<>
   struct hash<Spire::Styles::Selector> {
-    std::size_t operator ()(const Spire::Styles::Selector& selector) const;
+    std::size_t operator ()(
+      const Spire::Styles::Selector& selector) const noexcept;
   };
 }
 

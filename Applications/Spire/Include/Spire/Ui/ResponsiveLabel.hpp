@@ -8,7 +8,6 @@
 #include <QSize>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 

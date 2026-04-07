@@ -4,7 +4,6 @@
 #include <vector>
 #include <boost/optional/optional.hpp>
 #include <QLayout>
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -18,18 +17,19 @@ namespace Spire {
        */
       explicit FixedHorizontalLayout(QWidget* parent = nullptr);
 
+      /**
+       * Moves an item from source to destination.
+       * @param source The index of the item to move.
+       * @param destination The index to move the item to.
+       */
+      void move(int source, int destination);
+
       void addItem(QLayoutItem* item) override;
-
       QSize sizeHint() const override;
-
       void setGeometry(const QRect& rect) override;
-
       QLayoutItem* itemAt(int index) const override;
-
       QLayoutItem* takeAt(int index) override;
-
       int count() const override;
-
       void invalidate() override;
 
     private:

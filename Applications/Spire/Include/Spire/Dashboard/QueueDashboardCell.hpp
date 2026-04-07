@@ -50,9 +50,10 @@ namespace Spire {
 
   template<typename T>
   QueueDashboardCell::QueueDashboardCell(
-      std::shared_ptr<Beam::QueueReader<T>> queue)
-      : QueueDashboardCell{Beam::MakeConverterQueueReader(queue,
-        Beam::StaticCastConverter<Value>())} {}
+    std::shared_ptr<Beam::QueueReader<T>> queue)
+    : QueueDashboardCell(Beam::convert(queue, [] (auto&& value) {
+        return static_cast<Value>(std::forward<decltype(value)>(value));
+      })) {}
 }
 
 #endif

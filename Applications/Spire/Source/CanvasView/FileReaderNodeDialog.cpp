@@ -6,7 +6,6 @@
 #include "ui_FileReaderNodeDialog.h"
 
 using namespace Beam;
-using namespace Beam::Parsers;
 using namespace boost;
 using namespace Spire;
 using namespace std;
@@ -23,14 +22,14 @@ namespace {
 FileReaderNodeDialog::FileReaderNodeDialog(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
     : m_ui(std::make_unique<Ui_FileReaderNodeDialog>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   Setup(FileReaderNode());
 }
 
 FileReaderNodeDialog::FileReaderNodeDialog(const FileReaderNode& node,
     Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
     : m_ui(std::make_unique<Ui_FileReaderNodeDialog>()),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   Setup(node);
 }
 
@@ -40,7 +39,7 @@ unique_ptr<FileReaderNode> FileReaderNodeDialog::GetNode() {
   std::shared_ptr<NativeType> readType;
   if(m_fields.empty()) {
     FileReaderNode baseNode;
-    auto emptyFileReader = StaticCast<std::unique_ptr<FileReaderNode>>(
+    auto emptyFileReader = static_pointer_cast<FileReaderNode>(
       baseNode.Replace(baseNode.GetChildren().front(),
       CanvasNode::Clone(m_originalNode->GetChildren().front())));
     return emptyFileReader;

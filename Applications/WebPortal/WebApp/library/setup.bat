@@ -1,5 +1,3 @@
 @ECHO OFF
-SETLOCAL
-SET ROOT=%cd%
 CALL "%~dp0..\setup.bat"
-ENDLOCAL
+EXIT /B %ERRORLEVEL%

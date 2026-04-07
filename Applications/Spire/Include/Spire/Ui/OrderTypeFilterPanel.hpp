@@ -2,11 +2,10 @@
 #define SPIRE_ORDER_TYPE_FILTER_PANEL_HPP
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Spire/Ui/ClosedFilterPanel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
-  /** A CastListModel over a Nexus::OrderType. */
+  /** A ListModel over a Nexus::OrderType. */
   using OrderTypeListModel = ListModel<Nexus::OrderType>;
 
   /** Displays a ClosedFilterPanel over a list of Nexus::OrderType. */
@@ -16,7 +15,7 @@ namespace Spire {
    * Returns a new OrderTypeFilterPanel using an empty OrderTypeListModel.
    * @param parent The parent widget.
    */
-  OrderTypeFilterPanel* make_order_type_filter_panel(QWidget& parent);
+  OrderTypeFilterPanel* make_order_type_filter_panel(QWidget* parent = nullptr);
 
   /**
    * Returns a new OrderTypeFilterPanel.
@@ -24,7 +23,7 @@ namespace Spire {
    * @param parent The parent widget.
    */
   OrderTypeFilterPanel* make_order_type_filter_panel(
-    std::shared_ptr<OrderTypeListModel> selection, QWidget& parent);
+    std::shared_ptr<OrderTypeListModel> selection, QWidget* parent = nullptr);
 }
 
 #endif

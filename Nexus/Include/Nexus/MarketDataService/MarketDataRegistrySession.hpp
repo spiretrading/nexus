@@ -3,17 +3,15 @@
 #include <Beam/ServiceLocator/AuthenticatedSession.hpp>
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/MarketDataService/EntitlementSet.hpp"
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Stores session info for a MarketDataRegistryServlet. */
-  class MarketDataRegistrySession :
-      public Beam::ServiceLocator::AuthenticatedSession {
+  class MarketDataRegistrySession : public Beam::AuthenticatedSession {
     public:
 
       /** The session's roles. */
-      AdministrationService::AccountRoles m_roles;
+      AccountRoles m_roles;
 
       /** The entitlements granted to the session. */
       EntitlementSet m_entitlements;
@@ -26,11 +24,11 @@ namespace Nexus::MarketDataService {
    * @param type The type of market data to test.
    * @return <code>true</code> iff the session has been granted the entitlement.
    */
-  inline bool HasEntitlement(const MarketDataRegistrySession& session,
+  inline bool has_entitlement(const MarketDataRegistrySession& session,
       const EntitlementKey& key, MarketDataType type) {
-    return session.m_roles.Test(AdministrationService::AccountRole::SERVICE) ||
-      session.m_roles.Test(AdministrationService::AccountRole::ADMINISTRATOR) ||
-      session.m_entitlements.HasEntitlement(key, type);
+    return session.m_roles.test(AccountRole::SERVICE) ||
+      session.m_roles.test(AccountRole::ADMINISTRATOR) ||
+        session.m_entitlements.contains(key, type);
   }
 
   /**
@@ -40,11 +38,11 @@ namespace Nexus::MarketDataService {
    * @return <code>true</code> iff the session has been granted the entitlement.
    */
   template<typename T>
-  bool HasEntitlement(const MarketDataRegistrySession& session,
+  bool has_entitlement(const MarketDataRegistrySession& session,
       const SecurityMarketDataQuery& query) {
-    return session.m_roles.Test(AdministrationService::AccountRole::SERVICE) ||
-      session.m_roles.Test(AdministrationService::AccountRole::ADMINISTRATOR) ||
-      HasEntitlement<T>(session.m_entitlements, query);
+    return session.m_roles.test(AccountRole::SERVICE) ||
+      session.m_roles.test(AccountRole::ADMINISTRATOR) ||
+        contains<T>(session.m_entitlements, query);
   }
 
   /**
@@ -54,11 +52,11 @@ namespace Nexus::MarketDataService {
    * @return <code>true</code> iff the session has been granted the entitlement.
    */
   template<typename T>
-  bool HasEntitlement(const MarketDataRegistrySession& session,
-      const MarketWideDataQuery& query) {
-    return session.m_roles.Test(AdministrationService::AccountRole::SERVICE) ||
-      session.m_roles.Test(AdministrationService::AccountRole::ADMINISTRATOR) ||
-      HasEntitlement<T>(session.m_entitlements, query);
+  bool has_entitlement(const MarketDataRegistrySession& session,
+      const VenueMarketDataQuery& query) {
+    return session.m_roles.test(AccountRole::SERVICE) ||
+      session.m_roles.test(AccountRole::ADMINISTRATOR) ||
+        contains<T>(session.m_entitlements, query);
   }
 }
 

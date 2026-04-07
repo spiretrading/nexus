@@ -1,5 +1,4 @@
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 #include "Spire/Canvas/Types/IntegerType.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
@@ -11,16 +10,14 @@ using namespace Nexus;
 using namespace Spire;
 
 InteractionsNode::InteractionsNode()
-  : InteractionsNode(
-      Security(), GetDefaultMarketDatabase(), InteractionsKeyBindingsModel()) {}
+  : InteractionsNode(Security(), InteractionsKeyBindingsModel()) {}
 
-InteractionsNode::InteractionsNode(Security security,
-    const MarketDatabase& marketDatabase,
-    const InteractionsKeyBindingsModel& interactions) {
+InteractionsNode::InteractionsNode(
+    Security security, const InteractionsKeyBindingsModel& interactions) {
   SetText("");
   SetType(IntegerType::GetInstance());
   auto securityNode = std::unique_ptr<CanvasNode>(
-    std::make_unique<SecurityNode>(std::move(security), marketDatabase));
+    std::make_unique<SecurityNode>(std::move(security)));
   securityNode = securityNode->SetVisible(false);
   AddChild("security", std::move(securityNode));
   auto defaultQuantityNode = LinkedNode::SetReferent(

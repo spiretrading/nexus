@@ -19,9 +19,6 @@ class Ui_CanvasWindow;
 namespace Spire {
 namespace LegacyUI {
 
-  /*! \class CanvasWindow
-      \brief Used to create/edit CanvasNodes.
-   */
   class CanvasWindow : public QFrame, public PersistentWindow {
     public:
 
@@ -65,7 +62,6 @@ namespace LegacyUI {
       QAction* m_openAction;
       QAction* m_saveAction;
       QAction* m_saveAsAction;
-      QAction* m_saveToRegistryAction;
       QAction* m_editAction;
       QAction* m_protectionAction;
       QAction* m_deleteAction;
@@ -93,7 +89,6 @@ namespace LegacyUI {
       void OnOpenAction();
       void OnSaveAction();
       void OnSaveAsAction();
-      void OnSaveToRegistryAction();
       void OnEditAction();
       void OnProtectionAction();
       void OnDeleteAction();

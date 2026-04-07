@@ -2,7 +2,6 @@
 #define SPIRE_STYLES_PROPERTY_MATCH_SELECTOR_HPP
 #include "Spire/Styles/Property.hpp"
 #include "Spire/Styles/Selector.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
@@ -40,7 +39,7 @@ namespace std {
   template<>
   struct hash<Spire::Styles::PropertyMatchSelector> {
     std::size_t operator ()(
-      const Spire::Styles::PropertyMatchSelector& selector) const;
+      const Spire::Styles::PropertyMatchSelector& selector) const noexcept;
   };
 }
 

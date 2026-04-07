@@ -1,12 +1,15 @@
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/Definitions/Region.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace Nexus;
+using namespace Nexus::DefaultCountries;
+using namespace Nexus::DefaultVenues;
 
 namespace {
-  void TestProperSubset(const Region& subset, const Region& superset) {
+  void require_proper_subset(const Region& subset, const Region& superset) {
     REQUIRE(subset < superset);
     REQUIRE(subset <= superset);
     REQUIRE(!(subset == superset));
@@ -21,7 +24,7 @@ namespace {
     REQUIRE(superset > subset);
   }
 
-  void TestDistinctSets(const Region& a, const Region& b) {
+  void require_distinct_regions(const Region& a, const Region& b) {
     REQUIRE(!(a < b));
     REQUIRE(!(a <= b));
     REQUIRE(!(a == b));
@@ -38,35 +41,28 @@ namespace {
 }
 
 TEST_SUITE("Region") {
-  TEST_CASE("market_region_subset_of_country_region") {
-    auto country = DefaultCountries::US();
-    auto market = GetDefaultMarketDatabase().FromCode(DefaultMarkets::NASDAQ());
-    TestProperSubset(market, country);
+  TEST_CASE("venue_region_subset_of_country_region") {
+    require_proper_subset(ASX, AU);
   }
 
-  TEST_CASE("security_region_subset_of_market_region") {
-    auto market = GetDefaultMarketDatabase().FromCode(DefaultMarkets::NASDAQ());
-    auto security =
-      Security("TST", DefaultMarkets::NASDAQ(), DefaultCountries::US());
-    TestProperSubset(security, market);
+  TEST_CASE("security_region_subset_of_venue_region") {
+    auto security = Security("TST", ASX);
+    require_proper_subset(security, ASX);
   }
 
   TEST_CASE("security_region_subset_of_country_region") {
-    auto country = DefaultCountries::US();
-    auto security =
-      Security("TST", DefaultMarkets::NASDAQ(), DefaultCountries::US());
-    TestProperSubset(security, country);
+    auto security = Security("TST", ASX);
+    require_proper_subset(security, AU);
   }
 
   TEST_CASE("distinct_country_regions") {
-    auto us = Region(DefaultCountries::US());
-    auto ca = Region(DefaultCountries::CA());
-    TestDistinctSets(us, ca);
-    auto northAmerica = us + ca;
-    auto br = DefaultCountries::BR();
-    TestDistinctSets(northAmerica, br);
-    TestProperSubset(us, northAmerica);
-    TestProperSubset(ca, northAmerica);
+    auto au = Region(AU);
+    auto ca = Region(CA);
+    require_distinct_regions(au, ca);
+    auto merged = au + ca;
+    require_distinct_regions(merged, BR);
+    require_proper_subset(au, merged);
+    require_proper_subset(ca, merged);
   }
 
   TEST_CASE("empty_regions_are_equal_and_subsets") {
@@ -80,9 +76,9 @@ TEST_SUITE("Region") {
   }
 
   TEST_CASE("named_and_unnamed_region_equality") {
-    auto r1 = Region(DefaultCountries::US());
-    auto r2 = Region(DefaultCountries::US());
-    r2.SetName("US Region");
+    auto r1 = Region(AU);
+    auto r2 = Region("AU Region");
+    r2 += AU;
     REQUIRE(r1 == r2);
     REQUIRE(r1 <= r2);
     REQUIRE(r1 >= r2);
@@ -91,60 +87,56 @@ TEST_SUITE("Region") {
   }
 
   TEST_CASE("global_region_superset_of_all") {
-    auto country = Region(DefaultCountries::US());
-    auto global = Region::Global();
-    auto namedGlobal = Region::Global("All Markets");
-    TestProperSubset(country, global);
-    TestProperSubset(country, namedGlobal);
-    REQUIRE(global == namedGlobal);
-    REQUIRE(global <= namedGlobal);
-    REQUIRE(global >= namedGlobal);
-    REQUIRE(!(global < namedGlobal));
-    REQUIRE(!(global > namedGlobal));
+    auto country = Region(AU);
+    auto global = Region::GLOBAL;
+    auto named_global = Region::make_global("All Venues");
+    require_proper_subset(country, global);
+    require_proper_subset(country, named_global);
+    REQUIRE(global == named_global);
+    REQUIRE(global <= named_global);
+    REQUIRE(global >= named_global);
+    REQUIRE(!(global < named_global));
+    REQUIRE(!(global > named_global));
   }
 
-  TEST_CASE("distinct_markets") {
-    auto nasdaq = Region(
-      GetDefaultMarketDatabase().FromCode(DefaultMarkets::NASDAQ()));
-    auto nyse = Region(
-      GetDefaultMarketDatabase().FromCode(DefaultMarkets::NYSE()));
-    TestDistinctSets(nasdaq, nyse);
-  }
-
-  TEST_CASE("market_entry_constructor_equivalence") {
-    auto fromCodes = Region(DefaultMarkets::NASDAQ(), DefaultCountries::US());
-    auto fromEntry = Region(
-      GetDefaultMarketDatabase().FromCode(DefaultMarkets::NASDAQ()));
-    REQUIRE(fromCodes == fromEntry);
-    REQUIRE(fromCodes <= fromEntry);
+  TEST_CASE("distinct_venues") {
+    auto asx = Region(ASX);
+    auto tsx = Region(TSX);
+    require_distinct_regions(asx, tsx);
   }
 
   TEST_CASE("empty_subset_of_non_empty") {
     auto empty = Region();
-    auto country = Region(DefaultCountries::US());
-    TestProperSubset(empty, country);
+    auto country = Region(AU);
+    require_proper_subset(empty, country);
   }
 
   TEST_CASE("security_in_union_region") {
-    auto us = Region(DefaultCountries::US());
-    auto ca = Region(DefaultCountries::CA());
-    auto unionRegion = us + ca;
-    auto security =
-      Security("TST", DefaultMarkets::NASDAQ(), DefaultCountries::US());
-    REQUIRE(security <= unionRegion);
-    REQUIRE(security < unionRegion);
-    REQUIRE(unionRegion >= security);
-    REQUIRE(unionRegion > security);
+    auto au = Region(AU);
+    auto ca = Region(CA);
+    auto union_region = au + ca;
+    auto security = Security("TST", ASX);
+    REQUIRE(security <= union_region);
+    REQUIRE(security < union_region);
+    REQUIRE(union_region >= security);
+    REQUIRE(union_region > security);
   }
 
   TEST_CASE("combine_regions_operator_plus_and_plus_eq") {
-    auto us = Region(DefaultCountries::US());
-    auto ca = Region(DefaultCountries::CA());
-    auto combined = us;
+    auto au = Region(AU);
+    auto ca = Region(CA);
+    auto combined = au;
     combined += ca;
-    auto plusCombined = us + ca;
-    REQUIRE(combined == plusCombined);
-    TestProperSubset(us, combined);
-    TestProperSubset(ca, combined);
+    auto plus_combined = au + ca;
+    REQUIRE(combined == plus_combined);
+    require_proper_subset(au, combined);
+    require_proper_subset(ca, combined);
+  }
+
+  TEST_CASE("shuttle") {
+    auto region = Region(AU);
+    region += TSX;
+    region += Security("TST", ASX);
+    test_round_trip_shuttle(region);
   }
 }

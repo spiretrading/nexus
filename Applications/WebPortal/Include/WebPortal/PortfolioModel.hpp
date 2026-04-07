@@ -7,13 +7,12 @@
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <boost/optional/optional.hpp>
+#include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
-#include "Nexus/ServiceClients/ServiceClientsBox.hpp"
-#include "WebPortal/WebPortal.hpp"
 
-namespace Nexus::WebPortal {
+namespace Nexus {
 
   /** Publishes updates for positions held by trading accounts. */
   class PortfolioModel {
@@ -23,13 +22,13 @@ namespace Nexus::WebPortal {
       struct Entry {
 
         /** The account holding the position. */
-        Beam::ServiceLocator::DirectoryEntry m_account;
+        Beam::DirectoryEntry m_account;
 
         /** The Entry's Inventory. */
-        RiskService::RiskInventory m_inventory;
+        Inventory m_inventory;
 
         /** The position's unrealized profit and loss. */
-        boost::optional<Money> m_unrealizedProfitAndLoss;
+        boost::optional<Money> m_unrealized_profit_and_loss;
 
         /**
          * Constructs an Entry.
@@ -37,13 +36,13 @@ namespace Nexus::WebPortal {
          * @param security The position's Security.
          * @param currency The position's currency.
          */
-        Entry(Beam::ServiceLocator::DirectoryEntry account, Security security,
+        Entry(Beam::DirectoryEntry account, Security security,
           CurrencyId currency);
 
         /**
          * Tests if two Entry's are equal.
          * @param rhs The right hand side of the comparison.
-         * @return <code>true</code> iff the two Entry's represent the same
+         * @return true iff the two Entry's represent the same
          *         account, security and currency.
          */
         bool operator ==(const Entry& rhs) const;
@@ -51,56 +50,53 @@ namespace Nexus::WebPortal {
 
       /**
        * Constructs a PortfolioModel.
-       * @param serviceClients The ServiceClients used to query for positions.
+       * @param clients The Clients used to query for positions.
        */
-      explicit PortfolioModel(ServiceClientsBox serviceClients);
+      explicit PortfolioModel(Clients clients);
 
       ~PortfolioModel();
 
       /** Returns the Publisher updating the position Entries. */
-      const Beam::Publisher<Entry>& GetPublisher() const;
+      const Beam::Publisher<Entry>& get_publisher() const;
 
-      void Close();
+      void close();
 
     private:
-      ServiceClientsBox m_serviceClients;
-      std::unordered_map<RiskService::RiskPortfolioKey, std::shared_ptr<Entry>>
-        m_entries;
+      Clients m_clients;
+      std::unordered_map<RiskPortfolioKey, std::shared_ptr<Entry>> m_entries;
       std::unordered_map<Security, std::vector<std::shared_ptr<Entry>>>
-        m_securityToEntries;
+        m_security_to_entries;
       Beam::QueueWriterPublisher<Entry> m_publisher;
-      std::unordered_map<Security, Accounting::SecurityValuation> m_valuations;
+      std::unordered_map<Security, SecurityValuation> m_valuations;
       Beam::RoutineTaskQueue m_tasks;
 
       PortfolioModel(const PortfolioModel&) = delete;
-      PortfolioModel& operator =(const PortfolioModel&) = delete;
-      void OnRiskPortfolioInventoryUpdate(
-        const RiskService::RiskInventoryEntry& inventory);
-      void OnBboQuote(const Security& security,
-        Accounting::SecurityValuation& valuation, const BboQuote& quote);
+      PortfolioModel& operator=(const PortfolioModel&) = delete;
+      void on_risk_portfolio_inventory_update(
+        const RiskInventoryEntry& inventory);
+      void on_bbo_quote(const Security& security, SecurityValuation& valuation,
+        const BboQuote& quote);
   };
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
-  struct Shuttle<Nexus::WebPortal::PortfolioModel::Entry> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::WebPortal::PortfolioModel::Entry& entry,
-        unsigned int version) {
-      shuttle.Shuttle("account", entry.m_account);
-      shuttle.Shuttle("inventory", entry.m_inventory);
-      shuttle.Shuttle("unrealized_profit_and_loss",
-        entry.m_unrealizedProfitAndLoss);
+  struct Shuttle<Nexus::PortfolioModel::Entry> {
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::PortfolioModel::Entry& entry,
+        unsigned int version) const {
+      shuttle.shuttle("account", entry.m_account);
+      shuttle.shuttle("inventory", entry.m_inventory);
+      shuttle.shuttle(
+        "unrealized_profit_and_loss", entry.m_unrealized_profit_and_loss);
     }
   };
 }
 
 namespace std {
   template <>
-  struct hash<Nexus::WebPortal::PortfolioModel::Entry> {
-    size_t operator()(
-      const Nexus::WebPortal::PortfolioModel::Entry& value) const;
+  struct hash<Nexus::PortfolioModel::Entry> {
+    size_t operator()(const Nexus::PortfolioModel::Entry& value) const;
   };
 }
 

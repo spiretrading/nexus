@@ -18,15 +18,15 @@ OrderLogPropertiesDialog::OrderLogPropertiesDialog(
     QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_OrderLogPropertiesDialog>()),
-      m_userProfile(userProfile.Get()),
-      m_blotterModel(blotterModel.Get()),
+      m_userProfile(userProfile.get()),
+      m_blotterModel(blotterModel.get()),
       m_properties(blotterModel->GetOrderLogModel().GetProperties()) {
   m_ui->setupUi(this);
-  for(auto status : MakeRange<OrderStatus>()) {
+  for(auto status : make_range<OrderStatus>()) {
     QCheckBox* checkBox = new QCheckBox(displayText(status));
     m_orderStatusCheckBoxes.insert(make_pair(status, checkBox));
     m_ui->m_orderStatusGroup->layout()->addWidget(checkBox);
-    checkBox->setChecked(m_properties.m_orderStatusFilter.Test(status));
+    checkBox->setChecked(m_properties.m_orderStatusFilter.test(status));
   }
   connect(m_ui->m_allOrderStatusButton, &QRadioButton::toggled, this,
     &OrderLogPropertiesDialog::OnAllOrdersClicked);
@@ -79,7 +79,7 @@ void OrderLogPropertiesDialog::OnLiveOrdersClicked(bool checked) {
   for(auto i = m_orderStatusCheckBoxes.begin();
       i != m_orderStatusCheckBoxes.end(); ++i) {
     i->second->setEnabled(false);
-    i->second->setChecked(!IsTerminal(i->first));
+    i->second->setChecked(!is_terminal(i->first));
   }
 }
 
@@ -92,7 +92,7 @@ void OrderLogPropertiesDialog::OnTerminalOrdersClicked(bool checked) {
   for(auto i = m_orderStatusCheckBoxes.begin();
       i != m_orderStatusCheckBoxes.end(); ++i) {
     i->second->setEnabled(false);
-    i->second->setChecked(IsTerminal(i->first));
+    i->second->setChecked(is_terminal(i->first));
   }
 }
 

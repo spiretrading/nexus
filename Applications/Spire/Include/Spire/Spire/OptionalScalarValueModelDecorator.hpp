@@ -28,20 +28,13 @@ namespace Spire {
         std::shared_ptr<ScalarValueModel<Scalar>> model);
 
       QValidator::State get_state() const override;
-
       const Type& get() const override;
-
       QValidator::State test(const Type& value) const override;
-
       QValidator::State set(const Type& value) override;
-
       boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
-
       boost::optional<Scalar> get_minimum() const override;
-
       boost::optional<Scalar> get_maximum() const override;
-
       boost::optional<Scalar> get_increment() const override;
 
     private:

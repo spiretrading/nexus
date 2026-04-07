@@ -20,38 +20,26 @@ entitlements:
     currency: USD
     group: demo_entitlements
     applicability:
-      - source: ARCX
-        messages: [BBO, BOOK, MQT, TAS, IMB]
-      - source: BATS
-        messages: [BBO, BOOK, MQT, TAS, IMB]
       - source: CHIC
-        messages: [BBO, BOOK, MQT, TAS, IMB]
+        messages: [BBO, BOOK, TAS, IMB]
       - source: LYNX
-        messages: [BBO, BOOK, MQT, TAS, IMB]
+        messages: [BBO, BOOK, TAS, IMB]
       - source: NEOE
-        messages: [BBO, BOOK, MQT, TAS, IMB]
+        messages: [BBO, BOOK, TAS, IMB]
       - source: OMGA
-        messages: [BBO, BOOK, MQT, TAS, IMB]
+        messages: [BBO, BOOK, TAS, IMB]
       - source: PURE
-        messages: [BBO, BOOK, MQT, TAS, IMB]
-      - source: XASE
-        messages: [BBO, BOOK, MQT, TAS, IMB]
+        messages: [BBO, BOOK, TAS, IMB]
       - source: XATS
-        messages: [BBO, BOOK, MQT, TAS, IMB]
+        messages: [BBO, BOOK, TAS, IMB]
       - source: XASX
-        messages: [BBO, BOOK, MQT, TAS, IMB]
+        messages: [BBO, BOOK, TAS, IMB]
       - source: XCNQ
-        messages: [BBO, MQT, BOOK, TAS, IMB]
+        messages: [BBO, BOOK, TAS, IMB]
       - source: XCX2
-        messages: [BBO, MQT, BOOK, TAS, IMB]
-      - source: XHKG
-        messages: [BBO, MQT, BOOK, TAS, IMB]
-      - source: XNAS
-        messages: [BBO, BOOK, MQT, TAS, IMB]
-      - source: XNYS
-        messages: [BBO, BOOK, MQT, TAS, IMB]
+        messages: [BBO, BOOK, TAS, IMB]
       - source: XTSE
-        messages: [BBO, BOOK, MQT, TAS, IMB]
-      - source: XTSE
-        messages: [BBO, BOOK, MQT, TAS, IMB]
+        messages: [BBO, BOOK, TAS, IMB]
+      - source: XTSX
+        messages: [BBO, BOOK, TAS, IMB]
 ...

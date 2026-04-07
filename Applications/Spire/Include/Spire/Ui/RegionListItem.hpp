@@ -2,12 +2,13 @@
 #define SPIRE_REGION_LIST_ITEM_HPP
 #include <QWidget>
 #include "Nexus/Definitions/Region.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Icon;
+  class TextBox;
 
   /**
-   * Represents a region item which can be a security, a market or a country
+   * Represents a region item which can be a security, a venue or a country
    * in a RegionBox.
    */
   class RegionListItem : public QWidget {
@@ -15,7 +16,7 @@ namespace Spire {
 
       /**
        * Constructs a RegionListItem.
-       * @param region The region which can be a security, a market or a country.
+       * @param region The region which can be a security, a venue or a country.
        * @param parent The parent widget.
        */
       explicit RegionListItem(Nexus::Region region, QWidget* parent = nullptr);
@@ -27,7 +28,7 @@ namespace Spire {
       enum class Type : std::uint8_t {
         NONE,
         SECURITY,
-        MARKET,
+        VENUE,
         COUNTRY
       };
       Nexus::Region m_region;

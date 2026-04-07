@@ -5,12 +5,11 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/TaskQueue.hpp>
 #include <QKeyEvent>
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
-#include "Spire/KeyBindings/KeyBindings.hpp"
+#include "Spire/KeyBindings/OrderTaskArguments.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {

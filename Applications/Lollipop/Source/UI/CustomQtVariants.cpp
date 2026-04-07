@@ -5,7 +5,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::date_time;
 using namespace boost::posix_time;
@@ -27,12 +26,12 @@ namespace {
     } else if(value.type() == typeid(posix_time::time_duration)) {
       return QVariant::fromValue(any_cast<posix_time::time_duration>(value));
     } else if(value.type() == typeid(string)) {
-      return QVariant::fromValue(QString::fromStdString(
-        any_cast<string>(value)));
+      return QVariant::fromValue(
+        QString::fromStdString(any_cast<string>(value)));
+    } else if(value.type() == typeid(CountryCode)) {
+      return QVariant::fromValue(any_cast<CountryCode>(value));
     } else if(value.type() == typeid(CurrencyId)) {
       return QVariant::fromValue(any_cast<CurrencyId>(value));
-    } else if(value.type() == typeid(MarketToken)) {
-      return QVariant::fromValue(any_cast<MarketToken>(value));
     } else if(value.type() == typeid(Money)) {
       return QVariant::fromValue(any_cast<Money>(value));
     } else if(value.type() == typeid(Quantity)) {
@@ -45,12 +44,16 @@ namespace {
       return QVariant::fromValue(any_cast<OrderType>(value));
     } else if(value.type() == typeid(PositionSideToken)) {
       return QVariant::fromValue(any_cast<PositionSideToken>(value));
+    } else if(value.type() == typeid(Region)) {
+      return QVariant::fromValue(any_cast<Region>(value));
     } else if(value.type() == typeid(Security)) {
       return QVariant::fromValue(any_cast<Security>(value));
     } else if(value.type() == typeid(Side)) {
       return QVariant::fromValue(any_cast<Side>(value));
     } else if(value.type() == typeid(TimeInForce)) {
       return QVariant::fromValue(any_cast<TimeInForce>(value));
+    } else if(value.type() == typeid(Venue)) {
+      return QVariant::fromValue(any_cast<Venue>(value));
     }
     return QString("N/A");
   }
@@ -65,11 +68,6 @@ namespace {
     }
   }
 }
-
-MarketToken::MarketToken() {}
-
-MarketToken::MarketToken(MarketCode code)
-    : m_code(code) {}
 
 PositionSideToken::PositionSideToken() {}
 
@@ -112,6 +110,22 @@ posix_time::ptime Spire::UI::ToPosixTime(const QDateTime& time) {
 }
 
 void Spire::UI::RegisterCustomQtVariants() {}
+
+QString Spire::UI::displayText(CountryCode country) {
+  auto& entry = DEFAULT_COUNTRIES.from(country);
+  return QString::fromStdString(entry.m_three_letter_code.get_data());
+}
+
+QString Spire::UI::displayText(const Region& region) {
+  if(region.is_global()) {
+    return "*";
+  }
+  return QString::fromStdString(lexical_cast<std::string>(region));
+}
+
+QString Spire::UI::displayText(const Security& security) {
+  return QString::fromStdString(lexical_cast<std::string>(security));
+}
 
 const QString& Spire::UI::displayText(Side side) {
   if(side == Side::ASK) {
@@ -188,112 +202,36 @@ const QString& Spire::UI::displayText(OrderType type) {
   }
 }
 
-std::string Spire::UI::ToWildCardString(const Security& security,
-    const MarketDatabase& marketDatabase,
-    const CountryDatabase& countryDatabase) {
-  if(security.GetSymbol() == "*" && security.GetMarket() == "*" &&
-      security.GetCountry() == CountryCode::NONE) {
-    return "*";
-  } else if(security == Security()) {
-    return {};
-  }
-  auto symbol = security.GetSymbol() + '.';
-  if(security.GetMarket() == "*") {
-    if(security.GetCountry() != CountryCode::NONE) {
-      auto& countryEntry = countryDatabase.FromCode(security.GetCountry());
-      symbol += countryEntry.m_twoLetterCode.GetData();
-    } else {
-      symbol += '*';
-    }
-    return symbol;
-  } else {
-    auto& market = marketDatabase.FromCode(security.GetMarket());
-    symbol += market.m_displayName;
-  }
-  return symbol;
-}
-
-boost::optional<Security> Spire::UI::ParseWildCardSecurity(
-    const std::string& source, const MarketDatabase& marketDatabase,
-    const CountryDatabase& countryDatabase) {
-  if(source == "*" || source == "*.*" || source == "*.*.*") {
-    return Security("*", "*", CountryCode::NONE);
-  }
-  auto seperator = source.find_last_of('.');
-  if(seperator == std::string::npos) {
-    return none;
-  }
-  auto header = source.substr(0, seperator);
-  auto trailer = source.substr(seperator + 1);
-  if(header == "*") {
-    auto& market = ParseMarketEntry(trailer, marketDatabase);
-    if(market.m_code != MarketCode()) {
-      return Security(header, market.m_code, market.m_countryCode);
-    }
-  }
-  auto prefixSecurity =
-    ParseWildCardSecurity(header, marketDatabase, countryDatabase);
-  if(prefixSecurity) {
-    if(trailer.size() == 2) {
-      auto code = countryDatabase.FromTwoLetterCode(trailer);
-      if(code.m_code != CountryCode::NONE) {
-        return Security(prefixSecurity->GetSymbol(),
-          prefixSecurity->GetMarket(), code.m_code);
-      } else {
-        return none;
-      }
-    } else if(trailer == "*") {
-      return Security(prefixSecurity->GetSymbol(),
-        prefixSecurity->GetMarket(), CountryCode::NONE);
-    } else {
-      return none;
-    }
-  }
-  auto market = MarketCode();
-  auto country = CountryCode();
-  if(trailer == "*") {
-    market = "*";
-    country = CountryCode::NONE;
-  } else {
-    auto& marketEntry = ParseMarketEntry(trailer, marketDatabase);
-    if(marketEntry.m_code == MarketCode()) {
-      return none;
-    }
-    market = marketEntry.m_code;
-    country = marketEntry.m_countryCode;
-  }
-  return Security(std::move(header), market, country);
+QString Spire::UI::displayText(Venue venue) {
+  return QString::fromStdString(lexical_cast<std::string>(venue));
 }
 
 CustomVariantItemDelegate::CustomVariantItemDelegate(
     Ref<UserProfile> userProfile, QObject* parent)
     : QStyledItemDelegate(parent),
-      m_userProfile(userProfile.Get()) {}
+      m_userProfile(userProfile.get()) {}
 
 CustomVariantItemDelegate::~CustomVariantItemDelegate() {}
 
 QString CustomVariantItemDelegate::displayText(const QVariant& value,
     const QLocale& locale) const {
   if(value.canConvert<ptime>()) {
-    ptime timeValue = ToLocalTime(value.value<ptime>());
+    ptime timeValue = to_local_time(value.value<ptime>());
     string a = to_simple_string(value.value<ptime>());
     string b = to_simple_string(timeValue);
-    auto currentTime = ToLocalTime(
-      m_userProfile->GetServiceClients().GetTimeClient().GetTime());
+    auto currentTime = to_local_time(
+      m_userProfile->GetClients().get_time_client().get_time());
     if(timeValue.date() == currentTime.date()) {
       return QString::fromStdString(to_simple_string(timeValue).substr(12));
     } else {
       return QString::fromStdString(to_simple_string(timeValue));
     }
+  } else if(value.canConvert<CountryCode>()) {
+    return ::displayText(value.value<CountryCode>());
   } else if(value.canConvert<CurrencyId>()) {
     const CurrencyDatabase::Entry& entry =
-      m_userProfile->GetCurrencyDatabase().FromId(value.value<CurrencyId>());
-    return QString::fromStdString(entry.m_code.GetData());
-  } else if(value.canConvert<MarketToken>()) {
-    const MarketDatabase::Entry& entry =
-      m_userProfile->GetMarketDatabase().FromCode(
-      value.value<MarketToken>().m_code);
-    return QString::fromStdString(entry.m_displayName);
+      m_userProfile->GetCurrencyDatabase().from(value.value<CurrencyId>());
+    return QString::fromStdString(entry.m_code.get_data());
   } else if(value.canConvert<Money>()) {
     return QString::fromStdString(lexical_cast<string>(value.value<Money>()));
   } else if(value.canConvert<Quantity>()) {
@@ -308,14 +246,17 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return Spire::UI::displayText(value.value<OrderType>());
   } else if(value.canConvert<PositionSideToken>()) {
     return value.value<PositionSideToken>().ToString();
+  } else if(value.canConvert<Region>()) {
+    return ::displayText(value.value<Region>());
   } else if(value.canConvert<Security>()) {
-    return QString::fromStdString(ToWildCardString(value.value<Security>(),
-      m_userProfile->GetMarketDatabase(), m_userProfile->GetCountryDatabase()));
+    return ::displayText(value.value<Security>());
   } else if(value.canConvert<Side>()) {
     return Spire::UI::displayText(value.value<Side>());
   } else if(value.canConvert<TimeInForce>()) {
     return QString::fromStdString(
-      lexical_cast<string>(value.value<TimeInForce>().GetType()));
+      lexical_cast<string>(value.value<TimeInForce>().get_type()));
+  } else if(value.canConvert<Venue>()) {
+    return ::displayText(value.value<Venue>());
   } else if(value.canConvert<any>()) {
     QVariant translatedValue = AnyToVariant(value.value<any>());
     return displayText(translatedValue, locale);
@@ -326,7 +267,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
 CustomVariantSortFilterProxyModel::CustomVariantSortFilterProxyModel(
     Ref<UserProfile> userProfile, QObject* parent)
     : QSortFilterProxyModel(parent),
-      m_userProfile(userProfile.Get()) {
+      m_userProfile(userProfile.get()) {
   setDynamicSortFilter(true);
 }
 
@@ -354,6 +295,9 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
   } else if(leftVariant.canConvert<posix_time::time_duration>()) {
     return Compare(leftVariant.value<posix_time::time_duration>(),
       rightVariant.value<posix_time::time_duration>(), left, right);
+  } else if(leftVariant.canConvert<CountryCode>()) {
+    return Compare(leftVariant.value<CountryCode>(),
+      rightVariant.value<CountryCode>(), left, right);
   } else if(leftVariant.canConvert<Money>()) {
     return Compare(leftVariant.value<Money>(), rightVariant.value<Money>(),
       left, right);
@@ -367,37 +311,33 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
     return Compare(displayText(leftVariant.value<OrderType>()),
       displayText(rightVariant.value<OrderType>()), left, right);
   } else if(leftVariant.canConvert<Security>()) {
-    return Compare(ToString(leftVariant.value<Security>(),
-      m_userProfile->GetMarketDatabase()),
-      ToString(rightVariant.value<Security>(),
-      m_userProfile->GetMarketDatabase()), left, right);
+    return Compare(::displayText(leftVariant.value<Security>()),
+      ::displayText(rightVariant.value<Security>()), left, right);
   } else if(leftVariant.canConvert<Side>()) {
     return Compare(displayText(leftVariant.value<Side>()),
       displayText(rightVariant.value<Side>()), left, right);
   } else if(leftVariant.canConvert<TimeInForce>()) {
     return Compare(
-      lexical_cast<string>(leftVariant.value<TimeInForce>().GetType()),
-      lexical_cast<string>(rightVariant.value<TimeInForce>().GetType()), left,
+      lexical_cast<string>(leftVariant.value<TimeInForce>().get_type()),
+      lexical_cast<string>(rightVariant.value<TimeInForce>().get_type()), left,
       right);
   } else if(leftVariant.canConvert<CurrencyId>()) {
     const CurrencyDatabase::Entry& leftEntry =
-      m_userProfile->GetCurrencyDatabase().FromId(
+      m_userProfile->GetCurrencyDatabase().from(
       leftVariant.value<CurrencyId>());
     const CurrencyDatabase::Entry& rightEntry =
-      m_userProfile->GetCurrencyDatabase().FromId(
+      m_userProfile->GetCurrencyDatabase().from(
       rightVariant.value<CurrencyId>());
     return leftEntry.m_code < rightEntry.m_code;
   } else if(leftVariant.canConvert<PositionSideToken>()) {
     return Compare(leftVariant.value<PositionSideToken>().ToString(),
       rightVariant.value<PositionSideToken>().ToString(), left, right);
-  } else if(leftVariant.canConvert<MarketToken>()) {
-    const MarketDatabase::Entry& leftEntry =
-      m_userProfile->GetMarketDatabase().FromCode(
-      leftVariant.value<MarketToken>().m_code);
-    const MarketDatabase::Entry& rightEntry =
-      m_userProfile->GetMarketDatabase().FromCode(
-      rightVariant.value<MarketToken>().m_code);
-    return leftEntry.m_displayName < rightEntry.m_displayName;
+  } else if(leftVariant.canConvert<Venue>()) {
+    const VenueDatabase::Entry& leftEntry =
+      m_userProfile->GetVenueDatabase().from(leftVariant.value<Venue>());
+    const VenueDatabase::Entry& rightEntry =
+      m_userProfile->GetVenueDatabase().from(rightVariant.value<Venue>());
+    return leftEntry.m_display_name < rightEntry.m_display_name;
   }
   if(leftVariant == rightVariant) {
     return left.row() < right.row();

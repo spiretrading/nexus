@@ -1,43 +1,37 @@
 #ifndef NEXUS_LOCAL_RISK_DATA_STORE_HPP
 #define NEXUS_LOCAL_RISK_DATA_STORE_HPP
 #include <Beam/Collections/SynchronizedMap.hpp>
-#include <boost/noncopyable.hpp>
 #include "Nexus/RiskService/RiskDataStore.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /** Implements a RiskDataStore in memory. */
-  class LocalRiskDataStore : private boost::noncopyable {
+  class LocalRiskDataStore {
     public:
-      InventorySnapshot LoadInventorySnapshot(
-        const Beam::ServiceLocator::DirectoryEntry& account);
-
-      void Store(const Beam::ServiceLocator::DirectoryEntry& account,
+      InventorySnapshot load_inventory_snapshot(
+        const Beam::DirectoryEntry& account);
+      void store(const Beam::DirectoryEntry& account,
         const InventorySnapshot& snapshot);
-
-      void Close();
+      void close();
 
     private:
-      Beam::SynchronizedUnorderedMap<Beam::ServiceLocator::DirectoryEntry,
-        InventorySnapshot> m_snapshots;
+      Beam::SynchronizedUnorderedMap<
+        Beam::DirectoryEntry, InventorySnapshot> m_snapshots;
   };
 
-  inline InventorySnapshot LocalRiskDataStore::LoadInventorySnapshot(
-      const Beam::ServiceLocator::DirectoryEntry& account) {
-    auto snapshot = m_snapshots.Find(account);
-    if(snapshot) {
-      return *snapshot;
-    }
-    return InventorySnapshot();
+  inline InventorySnapshot LocalRiskDataStore::load_inventory_snapshot(
+      const Beam::DirectoryEntry& account) {
+    return m_snapshots.try_load(account).value_or_eval([] {
+      return InventorySnapshot();
+    });
   }
 
-  inline void LocalRiskDataStore::Store(
-      const Beam::ServiceLocator::DirectoryEntry& account,
-      const InventorySnapshot& snapshot) {
-    m_snapshots.Update(account, Strip(snapshot));
+  inline void LocalRiskDataStore::store(
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot) {
+    m_snapshots.update(account, strip(snapshot));
   }
 
-  inline void LocalRiskDataStore::Close() {}
+  inline void LocalRiskDataStore::close() {}
 }
 
 #endif

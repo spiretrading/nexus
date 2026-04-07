@@ -1,14 +1,9 @@
 #ifndef NEXUS_PURE_FEE_TABLE_HPP
 #define NEXUS_PURE_FEE_TABLE_HPP
 #include <array>
-#include <unordered_set>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
-#include "Nexus/Definitions/Market.hpp"
-#include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Security.hpp"
-#include "Nexus/FeeHandling/FeeHandling.hpp"
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
+#include "Nexus/FeeHandling/ParseFeeTable.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 
 namespace Nexus {
@@ -59,7 +54,7 @@ namespace Nexus {
 
     /** The fee table. */
     std::array<std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, ROW_COUNT>,
-      SECTION_COUNT> m_feeTable;
+      SECTION_COUNT> m_fee_table;
   };
 
   /**
@@ -67,31 +62,29 @@ namespace Nexus {
    * @param config The configuration to parse the PureFeeTable from.
    * @return The PureFeeTable represented by the <i>config</i>.
    */
-  inline PureFeeTable ParsePureFeeTable(const YAML::Node& config,
-      const MarketDatabase& marketDatabase) {
-    auto feeTable = PureFeeTable();
-    ParseFeeTable(config, "fee_table", Beam::Store(
-      feeTable.m_feeTable[static_cast<int>(PureFeeTable::Section::DEFAULT)]));
-    ParseFeeTable(config, "interlisted_table", Beam::Store(feeTable.m_feeTable[
-      static_cast<int>(PureFeeTable::Section::INTERLISTED)]));
-    ParseFeeTable(config, "etf_table", Beam::Store(feeTable.m_feeTable[
-      static_cast<int>(PureFeeTable::Section::ETF)]));
-    return feeTable;
+  inline PureFeeTable parse_pure_fee_table(const YAML::Node& config) {
+    auto table = PureFeeTable();
+    parse_fee_table(config, "fee_table", Beam::out(
+      table.m_fee_table[static_cast<int>(PureFeeTable::Section::DEFAULT)]));
+    parse_fee_table(config, "interlisted_table", Beam::out(
+      table.m_fee_table[static_cast<int>(PureFeeTable::Section::INTERLISTED)]));
+    parse_fee_table(config, "etf_table", Beam::out(
+      table.m_fee_table[static_cast<int>(PureFeeTable::Section::ETF)]));
+    return table;
   }
 
   /**
    * Returns the row to use in a PureFeeTable based on an execution report.
-   * @param executionReport The execution report to get the row for.
+   * @param report The execution report to get the row for.
    */
-  inline PureFeeTable::Row LookupPureRow(
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    if(executionReport.m_liquidityFlag.size() >= 3 &&
-        executionReport.m_liquidityFlag[2] == 'D') {
-      if(executionReport.m_lastPrice < Money::ONE) {
+  inline PureFeeTable::Row lookup_pure_row(const ExecutionReport& report) {
+    if(report.m_liquidity_flag.size() >= 3 &&
+        report.m_liquidity_flag[2] == 'D') {
+      if(report.m_last_price < Money::ONE) {
         return PureFeeTable::Row::DARK_SUBDOLLAR;
       }
       return PureFeeTable::Row::DARK;
-    } else if(executionReport.m_lastPrice < Money::ONE) {
+    } else if(report.m_last_price < Money::ONE) {
       return PureFeeTable::Row::SUBDOLLAR;
     }
     return PureFeeTable::Row::DEFAULT;
@@ -99,55 +92,54 @@ namespace Nexus {
 
   /**
    * Returns the liquidity flag based on a Pure execution.
-   * @param executionReport The execution report to get the liquidity flag for.
+   * @param report The execution report to get the liquidity flag for.
    */
-  inline LiquidityFlag LookupPureLiquidityFlag(
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    if(!executionReport.m_liquidityFlag.empty()) {
-      if(executionReport.m_liquidityFlag[0] == 'P') {
+  inline LiquidityFlag lookup_pure_liquidity_flag(
+      const ExecutionReport& report) {
+    if(!report.m_liquidity_flag.empty()) {
+      if(report.m_liquidity_flag[0] == 'P') {
         return LiquidityFlag::PASSIVE;
-      } else if(executionReport.m_liquidityFlag[0] == 'T') {
+      } else if(report.m_liquidity_flag[0] == 'T') {
         return LiquidityFlag::ACTIVE;
       }
     }
     std::cout << "Unknown liquidity flag [PURE]: \"" <<
-      executionReport.m_liquidityFlag << "\"\n";
+      report.m_liquidity_flag << "\"\n";
     return LiquidityFlag::ACTIVE;
   }
 
   /**
    * Looks up a fee in the PureFeeTable.
-   * @param feeTable The PureFeeTable used to lookup the fee.
+   * @param table The PureFeeTable used to lookup the fee.
    * @param section The section of the fee table to lookup.
    * @param row The row of the table to lookup.
-   * @param liquidityFlag The liquidity flag to lookup.
+   * @param flag The liquidity flag to lookup.
    * @return The fee corresponding to the specified <i>section</i>, <i>row</i>,
-   *         and <i>liquidityFlag</i>.
+   *         and <i>flag</i>.
    */
-  inline Money LookupFee(const PureFeeTable& feeTable,
+  inline Money lookup_fee(const PureFeeTable& table,
       PureFeeTable::Section section, PureFeeTable::Row row,
-      LiquidityFlag liquidityFlag) {
-    return feeTable.m_feeTable[static_cast<int>(section)][
-      static_cast<int>(row)][static_cast<int>(liquidityFlag)];
+      LiquidityFlag flag) {
+    return table.m_fee_table[static_cast<int>(section)][
+      static_cast<int>(row)][static_cast<int>(flag)];
   }
 
   /**
    * Calculates the fee on a trade executed on PURE.
-   * @param feeTable The PureFeeTable used to calculate the fee.
+   * @param table The PureFeeTable used to calculate the fee.
    * @param section The section of the table to lookup.
-   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline Money CalculateFee(
-      const PureFeeTable& feeTable, PureFeeTable::Section section,
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    if(executionReport.m_lastQuantity == 0) {
+  inline Money calculate_fee(const PureFeeTable& table,
+      PureFeeTable::Section section, const ExecutionReport& report) {
+    if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }
-    auto row = LookupPureRow(executionReport);
-    auto liquidityFlag = LookupPureLiquidityFlag(executionReport);
-    auto fee = LookupFee(feeTable, section, row, liquidityFlag);
-    return executionReport.m_lastQuantity * fee;
+    auto row = lookup_pure_row(report);
+    auto flag = lookup_pure_liquidity_flag(report);
+    auto fee = lookup_fee(table, section, row, flag);
+    return report.m_last_quantity * fee;
   }
 }
 

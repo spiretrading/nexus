@@ -10,6 +10,7 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/Slider2D.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -32,13 +33,13 @@ namespace {
   }
 
   const auto& THUMB_ICON() {
-    static auto icon = imageFromSvg(":/Icons/color-thumb.svg", scale(14, 14));
+    static auto icon = image_from_svg(":/Icons/color-thumb.svg", scale(14, 14));
     return icon;
   }
 
   const auto& THUMB_INVERT_ICON() {
     static auto icon =
-      imageFromSvg(":/Icons/color-thumb-invert.svg", scale(14, 14));
+      image_from_svg(":/Icons/color-thumb-invert.svg", scale(14, 14));
     return icon;
   }
 

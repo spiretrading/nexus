@@ -1,20 +1,20 @@
 #ifndef NEXUS_QUANTITY_PARSER_HPP
 #define NEXUS_QUANTITY_PARSER_HPP
-#include <Beam/Parsers/Types.hpp>
+#include <Beam/Parsers/DefaultParser.hpp>
 #include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {
 
-  //! Returns a Quantity parser.
-  inline const auto& QuantityParser() {
-    static const auto parser = Beam::Parsers::DecimalParser<Quantity>();
+  /** Returns a Quantity parser. */
+  inline const auto& quantity_parser() {
+    static const auto parser = Beam::DecimalParser<Quantity>();
     return parser;
   }
 }
 
-namespace Beam::Parsers {
+namespace Beam {
   template<>
-  const auto default_parser<Nexus::Quantity> = Nexus::QuantityParser();
+  const auto default_parser<Nexus::Quantity> = Nexus::quantity_parser();
 }
 
 #endif

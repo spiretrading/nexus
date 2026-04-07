@@ -130,12 +130,11 @@ def build_repo(repo, path, branch):
       'ComplianceServer', 'DefinitionsServer', 'MarketDataRelayServer',
       'MarketDataServer', 'ReplayMarketDataFeedClient', 'RiskServer',
       'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
-      'TelemetryServer', 'WebPortal']
+      'WebPortal']
     if sys.platform == 'win32':
       nexus_applications.append('Spire')
     copy_build(nexus_applications, version, 'Nexus', repo.working_dir, path)
-    beam_applications = ['AdminClient', 'RegistryServer', 'ServiceLocator',
-      'UidServer']
+    beam_applications = ['AdminClient', 'ServiceLocator', 'UidServer']
     copy_build(beam_applications, version, 'Beam',
       os.path.join(repo.working_dir, 'Nexus', 'Dependencies', 'Beam'), path)
     shutil.copy2(os.path.join(repo.working_dir, 'Applications', 'setup.py'),

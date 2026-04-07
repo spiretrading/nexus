@@ -1,36 +1,40 @@
-#ifndef NEXUS_COUNTRYPARSER_HPP
-#define NEXUS_COUNTRYPARSER_HPP
+#ifndef NEXUS_COUNTRY_PARSER_HPP
+#define NEXUS_COUNTRY_PARSER_HPP
+#include <Beam/Parsers/DefaultParser.hpp>
 #include <Beam/Parsers/EnumeratorParser.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/Definitions/Country.hpp"
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Parsers/Parsers.hpp"
 
 namespace Nexus {
 
   /**
    * Parses a CountryCode.
-   * @param countryDatabase The database used to lookup country codes.
+   * @param countries The database used to lookup country codes.
    */
-  inline auto CountryParser(const CountryDatabase& countryDatabase) {
+  inline auto country_parser(const CountryDatabase& countries) {
     auto code = [] (const auto& entry) {
       return entry.m_code;
     };
-    return Beam::Parsers::EnumeratorParser(boost::make_transform_iterator(
-      countryDatabase.GetEntries().cbegin(), code),
-      boost::make_transform_iterator(countryDatabase.GetEntries().cend(), code),
-      [&] (auto code) {
+    return Beam::EnumeratorParser(
+      boost::make_transform_iterator(countries.get_entries().cbegin(), code),
+      boost::make_transform_iterator(countries.get_entries().cend(), code),
+      [=] (auto code) {
         return boost::lexical_cast<std::string>(
-          countryDatabase.FromCode(code).m_threeLetterCode);
+          countries.from(code).m_three_letter_code);
       });
   }
 
   /** Parses a CountryCode using the default CountryDatabase. */
-  inline const auto& CountryParser() {
-    static const auto& parser = CountryParser(GetDefaultCountryDatabase());
+  inline const auto& country_parser() {
+    static const auto& parser = country_parser(DEFAULT_COUNTRIES);
     return parser;
   }
+}
+
+namespace Beam {
+  template<>
+  const auto default_parser<Nexus::CountryCode> = Nexus::country_parser();
 }
 
 #endif

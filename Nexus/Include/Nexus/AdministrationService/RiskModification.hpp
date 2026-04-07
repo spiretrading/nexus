@@ -1,10 +1,10 @@
 #ifndef NEXUS_ADMINISTRATION_SERVICE_RISK_MODIFICATION_HPP
 #define NEXUS_ADMINISTRATION_SERVICE_RISK_MODIFICATION_HPP
+#include <ostream>
 #include <Beam/Serialization/DataShuttle.hpp>
-#include "Nexus/AdministrationService/AdministrationService.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /** Stores a request to update an account's risk parameters. */
   class RiskModification {
@@ -17,34 +17,31 @@ namespace Nexus::AdministrationService {
        * Constructs a RiskModification.
        * @param parameters The risk parameters being requested.
        */
-      RiskModification(RiskService::RiskParameters parameters);
+      RiskModification(RiskParameters parameters) noexcept;
 
       /** Returns the requested risk parameters. */
-      const RiskService::RiskParameters& GetParameters() const;
+      const RiskParameters& get_parameters() const;
 
     private:
-      friend struct Beam::Serialization::Shuttle<RiskModification>;
-      RiskService::RiskParameters m_parameters;
+      friend struct Beam::Shuttle<RiskModification>;
+      RiskParameters m_parameters;
   };
 
-  inline RiskModification::RiskModification(
-    RiskService::RiskParameters parameters)
+  inline RiskModification::RiskModification(RiskParameters parameters) noexcept
     : m_parameters(std::move(parameters)) {}
 
-  inline const RiskService::RiskParameters&
-      RiskModification::GetParameters() const {
+  inline const RiskParameters& RiskModification::get_parameters() const {
     return m_parameters;
   }
 }
 
-namespace Beam::Serialization {
+namespace Beam {
   template<>
-  struct Shuttle<Nexus::AdministrationService::RiskModification> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Nexus::AdministrationService::RiskModification& value,
-        unsigned int version) {
-      shuttle.Shuttle("parameters", value.m_parameters);
+  struct Shuttle<Nexus::RiskModification> {
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::RiskModification& value,
+        unsigned int version) const {
+      shuttle.shuttle("parameters", value.m_parameters);
     }
   };
 }

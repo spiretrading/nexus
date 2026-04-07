@@ -1,7 +1,4 @@
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Spire/KeyBindings/SearchBarOrderTaskArgumentsListModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 
@@ -23,8 +20,7 @@ TEST_SUITE("SearchBarOrderTaskArgumentsListModel") {
     source->push(task3);
     auto keywords = std::make_shared<LocalTextModel>();
     auto search_list = SearchBarOrderTaskArgumentsListModel(source, keywords,
-      GetDefaultCountryDatabase(), GetDefaultMarketDatabase(),
-      GetDefaultDestinationDatabase(), get_default_additional_tag_database());
+      get_default_additional_tag_database());
     REQUIRE(search_list.get_size() == 3);
     keywords->set("Q");
     REQUIRE(search_list.get_size() == 0);

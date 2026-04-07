@@ -5,7 +5,7 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <QWidget>
 #include "Spire/Blotter/Blotter.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 class Ui_ActivityLogWidget;
 
@@ -28,8 +28,8 @@ namespace Spire {
         //! The state of the open positions table header.
         QByteArray m_tableState;
 
-        template<typename Shuttler>
-        void Shuttle(Shuttler& shuttle, unsigned int version);
+        template<Beam::IsShuttle S>
+        void shuttle(S& shuttle, unsigned int version);
       };
 
       //! Constructs an ActivityLogWidget.
@@ -68,11 +68,11 @@ namespace Spire {
       void OnContextMenu(const QPoint& position);
   };
 
-  template<typename Shuttler>
-  void ActivityLogWidget::UIState::Shuttle(Shuttler& shuttle,
+  template<Beam::IsShuttle S>
+  void ActivityLogWidget::UIState::shuttle(S& shuttle,
       unsigned int version) {
-    shuttle.Shuttle("table_geometry", m_tableGeometry);
-    shuttle.Shuttle("table_state", m_tableState);
+    shuttle.shuttle("table_geometry", m_tableGeometry);
+    shuttle.shuttle("table_state", m_tableState);
   }
 }
 

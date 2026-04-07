@@ -46,7 +46,7 @@ BookViewLevelPropertiesWidget::~BookViewLevelPropertiesWidget() {}
 
 void BookViewLevelPropertiesWidget::Initialize(
     Ref<BookViewProperties> properties) {
-  m_properties = properties.Get();
+  m_properties = properties.get();
 }
 
 void BookViewLevelPropertiesWidget::Redisplay() {

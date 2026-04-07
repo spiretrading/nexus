@@ -11,7 +11,7 @@ namespace Spire {
     public:
 
       //! Defines the native type being represented.
-      using Type = Beam::Queries::Sequence;
+      using Type = Beam::Sequence;
 
       //! Returns an instance of this type.
       static const SequenceType& GetInstance();
@@ -25,16 +25,16 @@ namespace Spire {
       virtual void Apply(CanvasTypeVisitor& visitor) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
       SequenceType() = default;
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void SequenceType::Shuttle(Shuttler& shuttle, unsigned int version) {
-    NativeType::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void SequenceType::shuttle(S& shuttle, unsigned int version) {
+    NativeType::shuttle(shuttle, version);
   }
 }
 

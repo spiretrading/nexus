@@ -1,7 +1,8 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import { AccountDirectoryModel, AccountEntry, HttpAccountDirectoryModel,
-  HttpAccountModel, HttpGroupModel, LocalAccountDirectoryModel } from '..';
+  HttpAccountModel, HttpGroupModel, HttpRequestsModel,
+  LocalAccountDirectoryModel, LocalRequestsModel, RequestsModel } from '..';
 import { DashboardModel } from './dashboard_model';
 import { LocalDashboardModel } from './local_dashboard_model';
 
@@ -20,8 +21,9 @@ export class HttpDashboardModel extends DashboardModel {
     this.model = new LocalDashboardModel(Beam.DirectoryEntry.INVALID,
       new Nexus.AccountRoles(0), new Nexus.EntitlementDatabase(),
       new Nexus.CountryDatabase(), new Nexus.CurrencyDatabase(),
-      new Nexus.MarketDatabase(), new LocalAccountDirectoryModel(
-      new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>()));
+      new Nexus.VenueDatabase(), new LocalAccountDirectoryModel(
+      new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>()),
+      new LocalRequestsModel(Beam.DirectoryEntry.INVALID, [], new Map()));
   }
 
   public get entitlementDatabase(): Nexus.EntitlementDatabase {
@@ -36,8 +38,8 @@ export class HttpDashboardModel extends DashboardModel {
     return this.model.currencyDatabase;
   }
 
-  public get marketDatabase(): Nexus.MarketDatabase {
-    return this.model.marketDatabase;
+  public get venueDatabase(): Nexus.VenueDatabase {
+    return this.model.venueDatabase;
   }
 
   public get account(): Beam.DirectoryEntry {
@@ -50,6 +52,10 @@ export class HttpDashboardModel extends DashboardModel {
 
   public get accountDirectoryModel(): AccountDirectoryModel {
     return this.model.accountDirectoryModel;
+  }
+
+  public get requestsModel(): RequestsModel {
+    return this._requestsModel;
   }
 
   public makeAccountModel(account: Beam.DirectoryEntry): HttpAccountModel {
@@ -79,12 +85,14 @@ export class HttpDashboardModel extends DashboardModel {
       this.serviceClients.serviceLocatorClient.loadCurrentAccount();
     const roles = await
       this.serviceClients.administrationClient.loadAccountRoles(account);
+    this._requestsModel = new HttpRequestsModel(account, this.serviceClients);
     this.model = new LocalDashboardModel(account, roles,
       this.serviceClients.definitionsClient.entitlementDatabase,
       this.serviceClients.definitionsClient.countryDatabase,
       this.serviceClients.definitionsClient.currencyDatabase,
-      this.serviceClients.definitionsClient.marketDatabase,
-      new HttpAccountDirectoryModel(account, this.serviceClients));
+      this.serviceClients.definitionsClient.venueDatabase,
+      new HttpAccountDirectoryModel(account, this.serviceClients),
+      this._requestsModel);
     return this.model.load();
   }
 
@@ -96,4 +104,5 @@ export class HttpDashboardModel extends DashboardModel {
   private accountModels: Beam.Map<Beam.DirectoryEntry, HttpAccountModel>;
   private groupModels: Beam.Map<Beam.DirectoryEntry, HttpGroupModel>;
   private model: LocalDashboardModel;
+  private _requestsModel: RequestsModel;
 }

@@ -21,12 +21,17 @@ namespace {
       set(BackgroundColor(QColor(0xFFFFFF)));
     return style;
   }
+
+  auto has_range(const ScrollBar::Range& range) {
+    return range.m_end - range.m_start > 1;
+  }
 }
 
 ScrollableListBox::ScrollableListBox(ListView& list_view, QWidget* parent)
     : QWidget(parent),
       m_list_view(&list_view),
-      m_size_policy(m_list_view->sizePolicy()) {
+      m_size_policy(m_list_view->sizePolicy()),
+      m_is_showing(false) {
   m_list_view->installEventFilter(this);
   setFocusProxy(m_list_view);
   m_scroll_box = new ScrollBox(m_list_view);
@@ -60,6 +65,8 @@ bool ScrollableListBox::eventFilter(QObject* watched, QEvent* event) {
       return m_styles.m_overflow_gap;
     }();
     if(auto item = m_list_view->get_list_item(0)) {
+      m_scroll_box->get_horizontal_scroll_bar().set_line_size(
+        item->width() + gap);
       m_scroll_box->get_vertical_scroll_bar().set_line_size(
         item->height() + gap);
     }
@@ -67,10 +74,33 @@ bool ScrollableListBox::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-void ScrollableListBox::showEvent(QShowEvent* event) {
-  QTimer::singleShot(0, this, [=] {
+void ScrollableListBox::keyPressEvent(QKeyEvent* event) {
+  if(event->modifiers() & Qt::AltModifier) {
+    auto& horizontal_scroll_bar = m_scroll_box->get_horizontal_scroll_bar();
+    if(has_range(horizontal_scroll_bar.get_range())) {
+      if(event->key() == Qt::Key_PageUp) {
+        scroll_page_up(horizontal_scroll_bar);
+        event->accept();
+      } else if(event->key() == Qt::Key_PageDown) {
+        scroll_page_down(horizontal_scroll_bar);
+        event->accept();
+      }
+    }
+  }
+  QWidget::keyPressEvent(event);
+}
+
+void ScrollableListBox::resizeEvent(QResizeEvent* event) {
+  if(m_is_showing) {
+    m_is_showing = false;
     on_current(m_list_view->get_current()->get());
-  });
+  }
+  QWidget::resizeEvent(event);
+}
+
+void ScrollableListBox::showEvent(QShowEvent* event) {
+  m_is_showing = true;
+  QWidget::showEvent(event);
 }
 
 void ScrollableListBox::on_current(const optional<int>& current) {

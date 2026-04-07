@@ -1,6 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import { AccountDirectoryModel, AccountModel, GroupModel } from '..';
+import { RequestsModel } from '../requests_page/requests_model';
 
 /** Base class for the model used by the DashboardPage. */
 export abstract class DashboardModel {
@@ -14,8 +15,8 @@ export abstract class DashboardModel {
   /** Returns the database of currencies. */
   public abstract get currencyDatabase(): Nexus.CurrencyDatabase;
 
-  /** Returns the database of markets. */
-  public abstract get marketDatabase(): Nexus.MarketDatabase;
+  /** Returns the database of venues. */
+  public abstract get venueDatabase(): Nexus.VenueDatabase;
 
   /** The account currently logged in. */
   public abstract get account(): Beam.DirectoryEntry;
@@ -25,6 +26,9 @@ export abstract class DashboardModel {
 
   /** Returns the AccountDirectoryModel. */
   public abstract get accountDirectoryModel(): AccountDirectoryModel;
+
+  /** Returns the RequestsModel. */
+  public abstract get requestsModel(): RequestsModel;
 
   /** Makes a new account model. */
   public abstract makeAccountModel(account: Beam.DirectoryEntry): AccountModel;

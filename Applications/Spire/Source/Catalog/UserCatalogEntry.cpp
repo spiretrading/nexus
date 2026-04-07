@@ -12,8 +12,6 @@
 #include "Spire/LegacyUI/UISerialization.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace boost::uuids;
 using namespace Spire;
@@ -62,14 +60,14 @@ void UserCatalogEntry::Save() const {
   auto entryPath = m_catalogPath / (m_name + ".cat");
   try {
     auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
     auto buffer = SharedBuffer();
-    sender.SetSink(Ref(buffer));
-    sender.Shuttle(*this);
+    sender.set(Ref(buffer));
+    sender.shuttle(*this);
     auto writer = BasicOStreamWriter<std::ofstream>(
-      Initialize(entryPath, std::ios::binary));
-    writer.Write(buffer);
+      init(entryPath, std::ios::binary));
+    writer.write(buffer);
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save catalog entry."));

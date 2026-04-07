@@ -7,6 +7,7 @@
 #include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
+#include "Nexus/Definitions/Venue.hpp"
 #include "Spire/Canvas/Records/Record.hpp"
 #include "Spire/Canvas/LuaNodes/LuaReactor.hpp"
 #include "Spire/Canvas/LuaNodes/NativeLuaReactorParameter.hpp"
@@ -30,7 +31,7 @@ namespace Spire {
   template<>
   struct PopLuaValue<Nexus::Money> {
     Nexus::Money operator ()(lua_State& state) const {
-      return Nexus::Money{Nexus::Quantity::FromRepresentation(
+      return Nexus::Money{Nexus::Quantity::from_representation(
         lua_tonumber(&state, -1))};
     }
   };
@@ -39,14 +40,14 @@ namespace Spire {
   struct PushLuaValue<Nexus::Money> {
     void operator ()(lua_State& state, Nexus::Money value) const {
       lua_pushnumber(&state,
-        static_cast<Nexus::Quantity>(value).GetRepresentation());
+        static_cast<Nexus::Quantity>(value).get_representation());
     }
   };
 
   template<>
   struct PopLuaValue<Nexus::Quantity> {
     Nexus::Quantity operator ()(lua_State& state) const {
-      return Nexus::Quantity::FromRepresentation(lua_tonumber(&state, -1));
+      return Nexus::Quantity::from_representation(lua_tonumber(&state, -1));
     }
   };
 
@@ -54,7 +55,7 @@ namespace Spire {
   struct PushLuaValue<Nexus::Quantity> {
     void operator ()(lua_State& state, Nexus::Quantity value) const {
       lua_pushnumber(&state,
-        static_cast<Nexus::Quantity>(value).GetRepresentation());
+        static_cast<Nexus::Quantity>(value).get_representation());
     }
   };
 
@@ -93,36 +94,36 @@ namespace Spire {
   };
 
   template<>
-  struct PopLuaValue<Beam::Queries::Range> {
-    Beam::Queries::Range operator ()(lua_State& state) const {
+  struct PopLuaValue<Beam::Range> {
+    Beam::Range operator ()(lua_State& state) const {
 
       // TODO
-      return Beam::Queries::Range::Empty();
+      return Beam::Range::EMPTY;
     }
   };
 
   template<>
-  struct PushLuaValue<Beam::Queries::Range> {
+  struct PushLuaValue<Beam::Range> {
     void operator ()(lua_State& state,
-        const Beam::Queries::Range& value) const {
+        const Beam::Range& value) const {
 
       // TODO
     }
   };
 
   template<>
-  struct PopLuaValue<Beam::Queries::Sequence> {
-    Beam::Queries::Sequence operator ()(lua_State& state) const {
+  struct PopLuaValue<Beam::Sequence> {
+    Beam::Sequence operator ()(lua_State& state) const {
 
       // TODO
-      return Beam::Queries::Sequence();
+      return Beam::Sequence();
     }
   };
 
   template<>
-  struct PushLuaValue<Beam::Queries::Sequence> {
+  struct PushLuaValue<Beam::Sequence> {
     void operator ()(lua_State& state,
-        const Beam::Queries::Sequence& value) const {
+        const Beam::Sequence& value) const {
 
       // TODO
     }
@@ -134,6 +135,23 @@ namespace Spire {
 
       // TODO
       return Spire::Record();
+    }
+  };
+
+  template<>
+  struct PopLuaValue<Nexus::Venue> {
+    Nexus::Venue operator ()(lua_State& state) const {
+
+      // TODO
+      return Nexus::Venue();
+    }
+  };
+
+  template<>
+  struct PushLuaValue<Nexus::Venue> {
+    void operator ()(lua_State& state, Nexus::Venue value) const {
+
+      // TODO
     }
   };
 

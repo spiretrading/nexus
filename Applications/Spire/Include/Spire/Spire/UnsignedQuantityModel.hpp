@@ -19,21 +19,14 @@ namespace Spire {
         ScalarValueModel<boost::optional<Nexus::Quantity>>> model);
 
       boost::optional<Nexus::Quantity> get_minimum() const override;
-
       boost::optional<Nexus::Quantity> get_maximum() const override;
-
       boost::optional<Nexus::Quantity> get_increment() const override;
-
       QValidator::State get_state() const override;
-
       const boost::optional<Nexus::Quantity>& get() const override;
-
       QValidator::State test(
         const boost::optional<Nexus::Quantity>& value) const override;
-
       QValidator::State set(
         const boost::optional<Nexus::Quantity>& value) override;
-
       boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const override;
 

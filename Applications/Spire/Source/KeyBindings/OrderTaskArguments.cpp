@@ -108,7 +108,7 @@ std::unique_ptr<CanvasNode>
       node->FindChild(
         SingleOrderTaskNode::QUANTITY_PROPERTY)->SetVisible(false));
   }
-  if(arguments.m_time_in_force.GetType() != TimeInForce::Type::NONE) {
+  if(arguments.m_time_in_force.get_type() != TimeInForce::Type::NONE) {
     node = node->Replace(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       std::make_unique<TimeInForceNode>(
         arguments.m_time_in_force)->SetReadOnly(true)->SetVisible(false));
@@ -124,19 +124,17 @@ std::unique_ptr<CanvasNode>
   return node;
 }
 
-OrderTaskArguments Spire::to_order_task_arguments(const CanvasNode& node,
-    const MarketDatabase& markets, const DestinationDatabase& destinations) {
+OrderTaskArguments Spire::to_order_task_arguments(const CanvasNode& node) {
   auto arguments = OrderTaskArguments();
   arguments.m_name = QString::fromStdString(node.GetText());
   arguments.m_destination = extract<DestinationType>(
     node.FindChild(SingleOrderTaskNode::DESTINATION_PROPERTY));
   if(arguments.m_destination.empty()) {
-    arguments.m_region = Region::Global();
-    arguments.m_region.SetName("Global");
+    arguments.m_region = Region::make_global("Global");
   } else {
-    auto& destination = destinations.FromId(arguments.m_destination);
-    for(auto& market : destination.m_markets) {
-      arguments.m_region += Region(markets.FromCode(market));
+    auto& destination = DEFAULT_DESTINATIONS.from(arguments.m_destination);
+    for(auto& venue : destination.m_venues) {
+      arguments.m_region += venue;
     }
   }
   if(auto quantity = node.FindChild(SingleOrderTaskNode::QUANTITY_PROPERTY)) {

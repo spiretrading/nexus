@@ -1,7 +1,7 @@
 #ifndef SPIRE_ORDERFIELDSRECORDTYPE_HPP
 #define SPIRE_ORDERFIELDSRECORDTYPE_HPP
 #include <memory>
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 
 namespace Spire {
@@ -19,8 +19,7 @@ namespace Spire {
       \param value The OrderFields instance to convert.
       \return The Record representation of the <i>value</i>.
     */
-    Record operator ()(
-      const Nexus::OrderExecutionService::OrderFields& value) const;
+    Record operator ()(const Nexus::OrderFields& value) const;
   };
 }
 

@@ -8,12 +8,12 @@
 #include <Beam/Serialization/ShuttleUnorderedMap.hpp>
 #include <boost/optional/optional.hpp>
 #include <QKeySequence>
-#include "Nexus/Definitions/Market.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "Nexus/Definitions/Venue.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 #include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/HashQtTypes.hpp"
+#include "Spire/UI/UI.hpp"
 
 class QKeyEvent;
 
@@ -141,8 +141,7 @@ namespace Details {
           \param orders The Orders to cancel.
         */
         static void HandleCancel(const CancelBinding& cancelBinding,
-          Nexus::OrderExecutionService::OrderExecutionClientBox&
-            orderExecutionClient,
+          Nexus::OrderExecutionClient& orderExecutionClient,
           Beam::Out<std::vector<OrderLogModel::OrderEntry>> orders);
 
         //! Describes the type of cancel performed by this binding.
@@ -179,29 +178,28 @@ namespace Details {
 
       //! Returns the Task's CatalogEntry for a key binding.
       /*!
-        \param market The Market context.
+        \param venue The Venue context.
         \param binding The key binding to lookup.
         \return The TaskBinding for the specified <i>binding</i> within the
-                context of the specified <i>market</i>.
+                context of the specified <i>venue</i>.
       */
       boost::optional<const TaskBinding&> GetTaskFromBinding(
-        Nexus::MarketCode market, const QKeySequence& binding) const;
+        Nexus::Venue venue, const QKeySequence& binding) const;
 
       //! Resets a Task's CatalogEntry key binding.
       /*
-        \param market The Market context.
+        \param venue The Venue context.
         \param binding The key binding to associate.
       */
-      void ResetTaskBinding(Nexus::MarketCode market,
-        const QKeySequence& binding);
+      void ResetTaskBinding(Nexus::Venue venue, const QKeySequence& binding);
 
       //! Sets a key binding for a Task.
       /*
-        \param market The Market context.
+        \param venue The Venue context.
         \param binding The key binding to associate.
         \param taskBinding The TaskBinding to associate.
       */
-      void SetTaskBinding(Nexus::MarketCode market, const QKeySequence& binding,
+      void SetTaskBinding(Nexus::Venue venue, const QKeySequence& binding,
         const TaskBinding& taskBinding);
 
       //! Returns the CancelBinding associated with a key.
@@ -226,38 +224,36 @@ namespace Details {
       void SetCancelBinding(const QKeySequence& binding,
         const CancelBinding& cancelBinding);
 
-      //! Returns the default Order quantity in a specified market.
+      //! Returns the default Order quantity in a specified venue.
       /*!
-        \param market The market to lookup.
-        \return The default Order quantity in the specified market.
+        \param venue The venue to lookup.
+        \return The default Order quantity in the specified venue.
       */
-      Nexus::Quantity GetDefaultQuantity(Nexus::MarketCode market) const;
+      Nexus::Quantity GetDefaultQuantity(Nexus::Venue venue) const;
 
-      //! Sets the default Order quantity in a specified market.
+      //! Sets the default Order quantity in a specified venue.
       /*!
-        \param market The market to specify the default quantity for.
+        \param venue The venue to specify the default quantity for.
         \param quantity The default quantity.
       */
-      void SetDefaultQuantity(Nexus::MarketCode market,
-        Nexus::Quantity quantity);
+      void SetDefaultQuantity(Nexus::Venue venue, Nexus::Quantity quantity);
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
-      std::unordered_map<Nexus::MarketCode,
+      friend struct Beam::DataShuttle;
+      std::unordered_map<Nexus::Venue,
         std::unordered_map<QKeySequence, TaskBinding>> m_taskBindings;
       std::unordered_map<QKeySequence, CancelBinding> m_cancelBindings;
-      std::unordered_map<Nexus::MarketCode, Nexus::Quantity>
-        m_defaultQuantities;
+      std::unordered_map<Nexus::Venue, Nexus::Quantity> m_defaultQuantities;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void KeyBindings::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("task_bindings", m_taskBindings);
-    shuttle.Shuttle("cancel_bindings", m_cancelBindings);
-    shuttle.Shuttle("default_quantities", m_defaultQuantities);
+  template<Beam::IsShuttle S>
+  void KeyBindings::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("task_bindings", m_taskBindings);
+    shuttle.shuttle("cancel_bindings", m_cancelBindings);
+    shuttle.shuttle("default_quantities", m_defaultQuantities);
   }
 
   //! Returns the set of key modifiers represented by a key event.
@@ -269,27 +265,25 @@ namespace Details {
 }
 
 namespace Beam {
-namespace Serialization {
   template<>
   struct Shuttle<Spire::KeyBindings::TaskBinding> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Spire::KeyBindings::TaskBinding& value,
-        unsigned int version) {
-      shuttle.Shuttle("name", value.m_name);
-      shuttle.Shuttle("node", value.m_node);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::KeyBindings::TaskBinding& value,
+        unsigned int version) const {
+      shuttle.shuttle("name", value.m_name);
+      shuttle.shuttle("node", value.m_node);
     }
   };
 
   template<>
   struct Shuttle<Spire::KeyBindings::CancelBinding> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle,
-        Spire::KeyBindings::CancelBinding& value, unsigned int version) {
-      shuttle.Shuttle("description", value.m_description);
-      shuttle.Shuttle("type", value.m_type);
+    template<IsShuttle S>
+    void operator ()(S& shuttle,
+        Spire::KeyBindings::CancelBinding& value, unsigned int version) const {
+      shuttle.shuttle("description", value.m_description);
+      shuttle.shuttle("type", value.m_type);
     }
   };
-}
 }
 
 #endif

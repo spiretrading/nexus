@@ -2,6 +2,9 @@ file(GLOB_RECURSE
   header_files ${NEXUS_INCLUDE_PATH}/Nexus/FeeHandlingTests/*.hpp)
 file(GLOB_RECURSE source_files ${NEXUS_SOURCE_PATH}/FeeHandlingTests/*.cpp)
 add_executable(FeeHandlingTests ${header_files} ${source_files})
+target_link_libraries(FeeHandlingTests
+  debug ${YAML_LIBRARY_DEBUG_PATH}
+  optimized ${YAML_LIBRARY_OPTIMIZED_PATH})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
   target_link_libraries(FeeHandlingTests
@@ -11,8 +14,6 @@ if(UNIX)
     optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     pthread rt)

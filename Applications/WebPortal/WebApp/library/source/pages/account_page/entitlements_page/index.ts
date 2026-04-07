@@ -1,5 +1,4 @@
 export * from './applicability_table';
-export * from './check_mark_button';
 export * from './entitlements_controller';
 export * from './entitlements_model';
 export * from './entitlements_page';

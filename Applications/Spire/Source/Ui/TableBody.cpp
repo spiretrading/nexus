@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QKeyEvent>
 #include <QPainter>
+#include <QTimer>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/TableRowIndexTracker.hpp"
@@ -173,15 +174,16 @@ struct TableBody::RowCover : Cover {
 
   void mount(int index) {
     auto& body = *static_cast<TableBody*>(parentWidget());
-    for(auto i = 0; i != layout()->count(); ++i) {
-      get_item(i)->mount(*body.m_item_builder.mount(body.m_table, index, i));
+    for(auto i = 0; i != body.m_table->get_column_size(); ++i) {
+      get_item(i)->mount(*body.m_item_builder.mount(
+        body.m_table, index, body.m_visual_to_logical_columns[i]));
     }
   }
 
   void unmount() {
     move(-10000, -10000);
     auto& body = *static_cast<TableBody*>(parentWidget());
-    for(auto i = 0; i != layout()->count(); ++i) {
+    for(auto i = 0; i != body.m_table->get_column_size(); ++i) {
       if(auto item = get_item(i)) {
         body.m_item_builder.unmount(item->unmount());
       }
@@ -191,6 +193,11 @@ struct TableBody::RowCover : Cover {
     if(!testAttribute(Qt::WA_WState_Hidden)) {
       setAttribute(Qt::WA_WState_Hidden);
     }
+  }
+
+  void move_column(int source, int destination) {
+    static_cast<FixedHorizontalLayout*>(this->layout())->move(
+      source, destination);
   }
 
   QSize sizeHint() const override {
@@ -381,13 +388,29 @@ struct TableBody::Layout : QLayout {
     activate();
     auto additional_rows = size - get_top_index() - count();
     auto& styles = static_cast<TableBody*>(parent())->m_styles;
-    auto total_height = itemAt(count() - 1)->geometry().bottom() +
+    auto total_height = itemAt(count() - 1)->geometry().bottom() + 1 +
       styles.m_vertical_spacing - count() * styles.m_vertical_spacing;
     auto row_height = total_height / count();
     for(auto i = 0; i != additional_rows; ++i) {
       m_bottom.push_back(row_height);
       m_bottom_height += row_height;
     }
+  }
+
+  void update_row_height() {
+    if(m_items.empty()) {
+      return;
+    }
+    auto row_height = m_items[0]->sizeHint().height();
+    auto update_segment = [&] (std::vector<int>& segment, int& segment_height) {
+      if(segment.empty() || segment[0] == row_height) {
+        return;
+      }
+      std::fill(segment.begin(), segment.end(), row_height);
+      segment_height = row_height * static_cast<int>(segment.size());
+    };
+    update_segment(m_top, m_top_height);
+    update_segment(m_bottom, m_bottom_height);
   }
 
   void addItem(QLayoutItem* item) override {
@@ -655,6 +678,7 @@ TableBody::TableBody(
     }();
     add_column_cover(column, QRect(QPoint(left, 0), QSize(width, height())));
     left += width;
+    m_visual_to_logical_columns.push_back(column);
   }
   if(auto current = m_current_controller.get_column()) {
     match(*m_column_covers[*current], CurrentColumn());
@@ -1562,8 +1586,11 @@ void TableBody::on_style() {
     get_layout().setContentsMargins(m_styles.m_padding);
   }
   update_column_widths();
-  update_visible_region();
   update();
+  QTimer::singleShot(0, this, [=] {
+    get_layout().update_row_height();
+    update_visible_region();
+  });
 }
 
 void TableBody::on_cover_style(Cover& cover) {
@@ -1636,6 +1663,23 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
             }
           }
         }
+      }
+    },
+    [&] (const ListModel<int>::MoveOperation& operation) {
+      if(operation.m_source == operation.m_destination) {
+        return;
+      }
+      move_element(m_visual_to_logical_columns, operation.m_source,
+        operation.m_destination);
+      move_element(m_column_covers, operation.m_source,
+        operation.m_destination);
+      auto& layout = get_layout();
+      for(auto i = 0; i < layout.count(); ++i) {
+        layout.get_row(i).move_column(operation.m_source,
+          operation.m_destination);
+      }
+      for(auto& row_cover : m_recycled_rows) {
+        row_cover->move_column(operation.m_source, operation.m_destination);
       }
     });
 }

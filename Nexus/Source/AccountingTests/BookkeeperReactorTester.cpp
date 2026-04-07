@@ -1,8 +1,6 @@
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/BookkeeperReactor.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 
@@ -11,49 +9,45 @@ using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::Accounting;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::OrderExecutionService::Tests;
+using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::DefaultVenues;
+using namespace Nexus::Tests;
 
 namespace {
-  using TestBookkeeper = TrueAverageBookkeeper<Inventory<Position<Security>>>;
-
-  const auto TST_SECURITY = Security("TST", DefaultMarkets::NYSE(),
-    DefaultCountries::US());
+  const auto TST = Security("TST", TSX);
 }
 
 TEST_SUITE("BookkeeperReactor") {
   TEST_CASE("single_order") {
     auto commits = Beam::Queue<bool>();
-    auto trigger = Trigger(
-      [&] {
-        commits.Push(true);
-      });
+    auto trigger = Trigger([&] {
+      commits.push(true);
+    });
     Trigger::set_trigger(trigger);
-    auto order = PrimitiveOrder(OrderInfo(OrderFields::MakeLimitOrder(
-      TST_SECURITY, DefaultCurrencies::USD(), Side::BID, "NYSE", 1000,
-      Money::ONE), 10, ptime(date(2019, 10, 3))));
-    SetOrderStatus(order, OrderStatus::NEW, ptime(date(2019, 10, 3)));
-    Fill(order, 100, ptime(date(2019, 10, 3)));
-    auto bookkeeper = BookkeeperReactor<TestBookkeeper>(constant(&order));
+    auto order = std::make_shared<PrimitiveOrder>(
+      OrderInfo(make_limit_order_fields(TST, CAD, Side::BID, "TSX", 1000,
+        Money::ONE), 10, ptime(date(2019, 10, 3))));
+    set_order_status(*order, OrderStatus::NEW, ptime(date(2019, 10, 3)));
+    fill(*order, 100, ptime(date(2019, 10, 3)));
+    auto bookkeeper = make_bookkeeper_reactor<TrueAverageBookkeeper>(
+      constant(std::static_pointer_cast<Order>(order)));
     for(auto i = 0; i < 10; ++i) {
       auto state = bookkeeper.commit(i);
-      if(Aspen::has_evaluation(state)) {
+      if(has_evaluation(state)) {
         break;
-      } else if(Aspen::has_continuation(state)) {
+      } else if(has_continuation(state)) {
         continue;
       } else {
-        commits.Pop();
+        commits.pop();
       }
     }
     auto inventory = bookkeeper.eval();
     REQUIRE(inventory.m_volume == 100);
-    REQUIRE(inventory.m_transactionCount == 1);
+    REQUIRE(inventory.m_transaction_count == 1);
     REQUIRE(inventory.m_fees == Money::ZERO);
-    REQUIRE(inventory.m_position.m_key.m_index == TST_SECURITY);
-    REQUIRE(inventory.m_position.m_key.m_currency ==
-      DefaultCurrencies::USD());
+    REQUIRE(inventory.m_position.m_security == TST);
+    REQUIRE(inventory.m_position.m_currency == CAD);
     REQUIRE(inventory.m_position.m_quantity == 100);
-    REQUIRE(inventory.m_position.m_costBasis == 100 * Money::ONE);
+    REQUIRE(inventory.m_position.m_cost_basis == 100 * Money::ONE);
   }
 }

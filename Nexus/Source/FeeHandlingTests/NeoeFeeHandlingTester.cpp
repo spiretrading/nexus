@@ -3,221 +3,227 @@
 #include "Nexus/FeeHandlingTests/FeeTableTestUtilities.hpp"
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
+using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
-  auto GetTestSecurity() {
-    return Security("TST", DefaultMarkets::TSX(), DefaultCountries::CA());
+  auto TST = Security("TST", TSX);
+
+  auto make_order_fields(Money price) {
+    return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT, TST, CAD,
+      Side::BID, DefaultDestinations::NEOE, 100, price);
   }
 
-  auto MakeOrderFields(Money price) {
-    return OrderFields::MakeLimitOrder(DirectoryEntry::GetRootAccount(),
-      GetTestSecurity(), DefaultCurrencies::CAD(), Side::BID,
-      DefaultDestinations::NEOE(), 100, price);
+  auto make_fee_table() {
+    auto table = NeoeFeeTable();
+    populate_fee_table(out(table.m_general_fee_table));
+    populate_fee_table(out(table.m_interlisted_fee_table));
+    populate_fee_table(out(table.m_etf_table_fee));
+    return table;
   }
 
-  auto MakeFeeTable() {
-    auto feeTable = NeoeFeeTable();
-    PopulateFeeTable(Store(feeTable.m_generalFeeTable));
-    PopulateFeeTable(Store(feeTable.m_interlistedFeeTable));
-    PopulateFeeTable(Store(feeTable.m_etfFeeTable));
-    return feeTable;
-  }
-
-  auto GetFeeLookup(NeoeFeeTable::Classification classification) {
+  auto get_fee_lookup(NeoeFeeTable::Classification classification) {
     if(classification == NeoeFeeTable::Classification::GENERAL) {
-      return &LookupGeneralFee;
+      return &lookup_general_fee;
     } else if(classification == NeoeFeeTable::Classification::INTERLISTED) {
-      return &LookupInterlistedFee;
+      return &lookup_interlisted_fee;
     }
-    return &LookupEtfFee;
+    return &lookup_etf_fee;
   }
 }
 
 TEST_SUITE("NeoeFeeHandling") {
   TEST_CASE("fee_table_calculations") {
-    auto feeTable = MakeFeeTable();
-    TestFeeTableIndex(feeTable, feeTable.m_generalFeeTable, LookupGeneralFee,
+    auto table = make_fee_table();
+    test_fee_table_index(table, table.m_general_fee_table, lookup_general_fee,
       LIQUIDITY_FLAG_COUNT, NeoeFeeTable::PRICE_CLASS_COUNT);
-    TestFeeTableIndex(feeTable, feeTable.m_interlistedFeeTable,
-      LookupInterlistedFee, LIQUIDITY_FLAG_COUNT,
+    test_fee_table_index(table, table.m_interlisted_fee_table,
+      lookup_interlisted_fee, LIQUIDITY_FLAG_COUNT,
       NeoeFeeTable::PRICE_CLASS_COUNT);
-    TestFeeTableIndex(feeTable, feeTable.m_etfFeeTable, LookupEtfFee,
+    test_fee_table_index(table, table.m_etf_table_fee, lookup_etf_fee,
       LIQUIDITY_FLAG_COUNT, NeoeFeeTable::PRICE_CLASS_COUNT);
   }
 
   TEST_CASE("zero_quantity") {
-    auto feeTable = MakeFeeTable();
-    auto orderFields = MakeOrderFields(Money::ONE);
-    TestPerShareFeeCalculation(feeTable, orderFields.m_price, 0,
-      LiquidityFlag::NONE, std::bind(&CalculateFee, std::placeholders::_1,
-        NeoeFeeTable::Classification::GENERAL, orderFields,
-        std::placeholders::_2), Money::ZERO);
-    TestPerShareFeeCalculation(feeTable, orderFields.m_price, 0,
-      LiquidityFlag::NONE, std::bind(&CalculateFee, std::placeholders::_1,
-        NeoeFeeTable::Classification::INTERLISTED, orderFields,
-        std::placeholders::_2), Money::ZERO);
-    TestPerShareFeeCalculation(feeTable, orderFields.m_price, 0,
-      LiquidityFlag::NONE, std::bind(&CalculateFee, std::placeholders::_1,
-        NeoeFeeTable::Classification::ETF, orderFields, std::placeholders::_2),
-      Money::ZERO);
+    auto table = make_fee_table();
+    auto fields = make_order_fields(Money::ONE);
+    test_per_share_fee_calculation(table, fields.m_price, 0,
+      LiquidityFlag::NONE, Money::ZERO,
+      [&] (const auto& table, const auto& report) {
+        return calculate_fee(
+          table, NeoeFeeTable::Classification::GENERAL, fields, report);
+      });
+    test_per_share_fee_calculation(
+      table, fields.m_price, 0, LiquidityFlag::NONE, Money::ZERO,
+      [&] (const auto& table, const auto& report) {
+        return calculate_fee(
+          table, NeoeFeeTable::Classification::INTERLISTED, fields, report);
+      });
+    test_per_share_fee_calculation(
+      table, fields.m_price, 0, LiquidityFlag::NONE, Money::ZERO,
+      [&] (const auto& table, const auto& report) {
+        return calculate_fee(
+          table, NeoeFeeTable::Classification::ETF, fields, report);
+      });
   }
 
   TEST_CASE("active") {
-    auto feeTable = MakeFeeTable();
-    auto orderFields = MakeOrderFields(Money::ONE);
+    auto table = make_fee_table();
+    auto fields = make_order_fields(Money::ONE);
     for(auto classification : {NeoeFeeTable::Classification::GENERAL,
         NeoeFeeTable::Classification::INTERLISTED,
         NeoeFeeTable::Classification::ETF}) {
-      auto expectedFee = GetFeeLookup(classification)(
-        feeTable, LiquidityFlag::ACTIVE, NeoeFeeTable::PriceClass::DEFAULT);
-      TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
-        LiquidityFlag::ACTIVE, std::bind(&CalculateFee, std::placeholders::_1,
-          classification, orderFields, std::placeholders::_2), expectedFee);
+      auto expected_fee = get_fee_lookup(classification)(
+        table, LiquidityFlag::ACTIVE, NeoeFeeTable::PriceClass::DEFAULT);
+      test_per_share_fee_calculation(
+        table, Money::ONE, 100, LiquidityFlag::ACTIVE, expected_fee,
+        [&] (const auto& table, const auto& report) {
+          return calculate_fee(table, classification, fields, report);
+        });
     }
   }
 
   TEST_CASE("passive") {
-    auto feeTable = MakeFeeTable();
-    auto orderFields = MakeOrderFields(Money::ONE);
+    auto table = make_fee_table();
+    auto fields = make_order_fields(Money::ONE);
     for(auto classification : {NeoeFeeTable::Classification::GENERAL,
         NeoeFeeTable::Classification::INTERLISTED,
         NeoeFeeTable::Classification::ETF}) {
-      auto expectedFee = GetFeeLookup(classification)(
-        feeTable, LiquidityFlag::PASSIVE, NeoeFeeTable::PriceClass::DEFAULT);
-      TestPerShareFeeCalculation(feeTable, Money::ONE, 100,
-        LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-          classification, orderFields, std::placeholders::_2), expectedFee);
+      auto expected_fee = get_fee_lookup(classification)(
+        table, LiquidityFlag::PASSIVE, NeoeFeeTable::PriceClass::DEFAULT);
+      test_per_share_fee_calculation(
+        table, Money::ONE, 100, LiquidityFlag::PASSIVE, expected_fee,
+        [&] (const auto& table, const auto& report) {
+          return calculate_fee(table, classification, fields, report);
+        });
     }
   }
 
   TEST_CASE("subdollar_active") {
-    auto feeTable = MakeFeeTable();
-    auto orderFields = MakeOrderFields(Money::CENT);
+    auto table = make_fee_table();
+    auto fields = make_order_fields(Money::CENT);
     for(auto classification : {NeoeFeeTable::Classification::GENERAL,
         NeoeFeeTable::Classification::INTERLISTED,
         NeoeFeeTable::Classification::ETF}) {
-      auto expectedFee = GetFeeLookup(classification)(
-        feeTable, LiquidityFlag::ACTIVE, NeoeFeeTable::PriceClass::SUBDOLLAR);
-      TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
-        LiquidityFlag::ACTIVE, std::bind(&CalculateFee, std::placeholders::_1,
-          classification, orderFields, std::placeholders::_2), expectedFee);
+      auto expected_fee = get_fee_lookup(classification)(
+        table, LiquidityFlag::ACTIVE, NeoeFeeTable::PriceClass::SUBDOLLAR);
+      test_per_share_fee_calculation(
+        table, Money::CENT, 100, LiquidityFlag::ACTIVE, expected_fee,
+        [&] (const auto& table, const auto& report) {
+          return calculate_fee(table, classification, fields, report);
+        });
     }
   }
 
   TEST_CASE("subdollar_passive") {
-    auto feeTable = MakeFeeTable();
-    auto orderFields = MakeOrderFields(Money::CENT);
+    auto table = make_fee_table();
+    auto fields = make_order_fields(Money::CENT);
     for(auto classification : {NeoeFeeTable::Classification::GENERAL,
         NeoeFeeTable::Classification::INTERLISTED,
         NeoeFeeTable::Classification::ETF}) {
-      auto expectedFee = GetFeeLookup(classification)(
-        feeTable, LiquidityFlag::PASSIVE, NeoeFeeTable::PriceClass::SUBDOLLAR);
-      TestPerShareFeeCalculation(feeTable, Money::CENT, 100,
-        LiquidityFlag::PASSIVE, std::bind(&CalculateFee, std::placeholders::_1,
-          classification, orderFields, std::placeholders::_2), expectedFee);
+      auto expected_fee = get_fee_lookup(classification)(
+        table, LiquidityFlag::PASSIVE, NeoeFeeTable::PriceClass::SUBDOLLAR);
+      test_per_share_fee_calculation(
+        table, Money::CENT, 100, LiquidityFlag::PASSIVE, expected_fee,
+        [&] (const auto& table, const auto& report) {
+          return calculate_fee(table, classification, fields, report);
+        });
     }
   }
 
   TEST_CASE("unknown_liquidity_flag") {
-    auto feeTable = MakeFeeTable();
+    auto table = make_fee_table();
     {
-      auto executionReport =
-        ExecutionReport::MakeInitialReport(0, second_clock::universal_time());
-      executionReport.m_lastPrice = Money::ONE;
-      executionReport.m_lastQuantity = 100;
-      executionReport.m_liquidityFlag = "AP";
-      auto orderFields = MakeOrderFields(Money::ONE);
+      auto report = ExecutionReport(0, second_clock::universal_time());
+      report.m_last_price = Money::ONE;
+      report.m_last_quantity = 100;
+      report.m_liquidity_flag = "AP";
+      auto fields = make_order_fields(Money::ONE);
       for(auto classification : {NeoeFeeTable::Classification::GENERAL,
           NeoeFeeTable::Classification::INTERLISTED,
           NeoeFeeTable::Classification::ETF}) {
-        auto calculatedFee =
-          CalculateFee(feeTable, classification, orderFields, executionReport);
-        auto expectedFee = executionReport.m_lastQuantity *
-          GetFeeLookup(classification)(feeTable, LiquidityFlag::ACTIVE,
-            NeoeFeeTable::PriceClass::DEFAULT);
-        REQUIRE(calculatedFee == expectedFee);
+        auto calculated_fee =
+          calculate_fee(table, classification, fields, report);
+        auto expected_fee = report.m_last_quantity *
+          get_fee_lookup(classification)(
+            table, LiquidityFlag::ACTIVE, NeoeFeeTable::PriceClass::DEFAULT);
+        REQUIRE(calculated_fee == expected_fee);
       }
     }
     {
-      auto executionReport =
-        ExecutionReport::MakeInitialReport(0, second_clock::universal_time());
-      executionReport.m_lastPrice = Money::CENT;
-      executionReport.m_lastQuantity = 100;
-      executionReport.m_liquidityFlag = "PA";
-      auto orderFields = MakeOrderFields(Money::CENT);
+      auto report = ExecutionReport(0, second_clock::universal_time());
+      report.m_last_price = Money::CENT;
+      report.m_last_quantity = 100;
+      report.m_liquidity_flag = "PA";
+      auto fields = make_order_fields(Money::CENT);
       for(auto classification : {NeoeFeeTable::Classification::GENERAL,
           NeoeFeeTable::Classification::INTERLISTED,
           NeoeFeeTable::Classification::ETF}) {
-        auto calculatedFee =
-          CalculateFee(feeTable, classification, orderFields, executionReport);
-        auto expectedFee = executionReport.m_lastQuantity *
-          GetFeeLookup(classification)(feeTable, LiquidityFlag::ACTIVE,
-            NeoeFeeTable::PriceClass::SUBDOLLAR);
-        REQUIRE(calculatedFee == expectedFee);
+        auto calculated_fee =
+          calculate_fee(table, classification, fields, report);
+        auto expected_fee = report.m_last_quantity *
+          get_fee_lookup(classification)(
+            table, LiquidityFlag::ACTIVE, NeoeFeeTable::PriceClass::SUBDOLLAR);
+        REQUIRE(calculated_fee == expected_fee);
       }
     }
     {
-      auto executionReport =
-        ExecutionReport::MakeInitialReport(0, second_clock::universal_time());
-      executionReport.m_lastPrice = Money::ONE;
-      executionReport.m_lastQuantity = 100;
-      executionReport.m_liquidityFlag = "?????";
-      auto orderFields = MakeOrderFields(Money::ONE);
+      auto report = ExecutionReport(0, second_clock::universal_time());
+      report.m_last_price = Money::ONE;
+      report.m_last_quantity = 100;
+      report.m_liquidity_flag = "?????";
+      auto fields = make_order_fields(Money::ONE);
       for(auto classification : {NeoeFeeTable::Classification::GENERAL,
           NeoeFeeTable::Classification::INTERLISTED,
           NeoeFeeTable::Classification::ETF}) {
-        auto calculatedFee =
-          CalculateFee(feeTable, classification, orderFields, executionReport);
-        auto expectedFee = executionReport.m_lastQuantity *
-          GetFeeLookup(classification)(feeTable, LiquidityFlag::ACTIVE,
-            NeoeFeeTable::PriceClass::DEFAULT);
-        REQUIRE(calculatedFee == expectedFee);
+        auto calculated_fee =
+          calculate_fee(table, classification, fields, report);
+        auto expected_fee = report.m_last_quantity *
+          get_fee_lookup(classification)(
+            table, LiquidityFlag::ACTIVE, NeoeFeeTable::PriceClass::DEFAULT);
+        REQUIRE(calculated_fee == expected_fee);
       }
     }
   }
 
   TEST_CASE("empty_liquidity_flag") {
-    auto feeTable = MakeFeeTable();
+    auto table = make_fee_table();
     {
-      auto executionReport =
-        ExecutionReport::MakeInitialReport(0, second_clock::universal_time());
-      executionReport.m_lastPrice = Money::ONE;
-      executionReport.m_lastQuantity = 100;
-      executionReport.m_liquidityFlag = "";
-      auto orderFields = MakeOrderFields(Money::ONE);
+      auto report = ExecutionReport(0, second_clock::universal_time());
+      report.m_last_price = Money::ONE;
+      report.m_last_quantity = 100;
+      report.m_liquidity_flag = "";
+      auto fields = make_order_fields(Money::ONE);
       for(auto classification : {NeoeFeeTable::Classification::GENERAL,
           NeoeFeeTable::Classification::INTERLISTED,
           NeoeFeeTable::Classification::ETF}) {
-        auto calculatedFee =
-          CalculateFee(feeTable, classification, orderFields, executionReport);
-        auto expectedFee = executionReport.m_lastQuantity *
-          GetFeeLookup(classification)(feeTable, LiquidityFlag::ACTIVE,
-            NeoeFeeTable::PriceClass::DEFAULT);
-        REQUIRE(calculatedFee == expectedFee);
+        auto calculated_fee =
+          calculate_fee(table, classification, fields, report);
+        auto expected_fee = report.m_last_quantity *
+          get_fee_lookup(classification)(
+            table, LiquidityFlag::ACTIVE, NeoeFeeTable::PriceClass::DEFAULT);
+        REQUIRE(calculated_fee == expected_fee);
       }
     }
     {
-      auto executionReport =
-        ExecutionReport::MakeInitialReport(0, second_clock::universal_time());
-      executionReport.m_lastPrice = Money::CENT;
-      executionReport.m_lastQuantity = 100;
-      executionReport.m_liquidityFlag = "";
-      auto orderFields = MakeOrderFields(Money::CENT);
+      auto report = ExecutionReport(0, second_clock::universal_time());
+      report.m_last_price = Money::CENT;
+      report.m_last_quantity = 100;
+      report.m_liquidity_flag = "";
+      auto fields = make_order_fields(Money::CENT);
       for(auto classification : {NeoeFeeTable::Classification::GENERAL,
           NeoeFeeTable::Classification::INTERLISTED,
           NeoeFeeTable::Classification::ETF}) {
-        auto calculatedFee =
-          CalculateFee(feeTable, classification, orderFields, executionReport);
-        auto expectedFee = executionReport.m_lastQuantity *
-          GetFeeLookup(classification)(feeTable, LiquidityFlag::ACTIVE,
-            NeoeFeeTable::PriceClass::SUBDOLLAR);
-        REQUIRE(calculatedFee == expectedFee);
+        auto calculated_fee =
+          calculate_fee(table, classification, fields, report);
+        auto expected_fee = report.m_last_quantity *
+          get_fee_lookup(classification)(
+            table, LiquidityFlag::ACTIVE, NeoeFeeTable::PriceClass::SUBDOLLAR);
+        REQUIRE(calculated_fee == expected_fee);
       }
     }
   }

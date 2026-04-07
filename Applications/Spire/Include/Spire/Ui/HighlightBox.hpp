@@ -1,12 +1,14 @@
 #ifndef SPIRE_HIGHLIGHT_BOX_HPP
 #define SPIRE_HIGHLIGHT_BOX_HPP
 #include <any>
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/HighlightSwatch.hpp"
 #include "Spire/Ui/PressObserver.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Box;
+  class HighlightPicker;
 
   using HighlightColor = HighlightSwatch::Highlight;
 

@@ -73,7 +73,6 @@
 #include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
 #include "Spire/Canvas/ValueNodes/DurationNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
-#include "Spire/Canvas/ValueNodes/MarketNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
@@ -83,6 +82,7 @@
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeRangeNode.hpp"
+#include "Spire/Canvas/ValueNodes/VenueNode.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -358,8 +358,6 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(
     MARKET_BID_ORDER_TASK_UUID, ":/icons/flash_yellow.png", "",
     *GetMarketBidOrderTaskNode()));
-  entries.push_back(std::make_unique<BuiltInCatalogEntry>("Market",
-    MARKET_UUID, ":/icons/shopping_basket.png", "", MarketNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(
     MARKET_ORDER_TASK_UUID, ":/icons/flash_yellow.png", "",
     *GetMarketOrderTaskNode()));
@@ -437,6 +435,8 @@ vector<unique_ptr<CatalogEntry>> BuiltInCatalogEntry::
     TimeRangeParameterNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(UNTIL_TASK_UUID,
     ":/icons/flash_yellow.png", "", UntilNode()));
+  entries.push_back(std::make_unique<BuiltInCatalogEntry>("Venue",
+    MARKET_UUID, ":/icons/shopping_basket.png", "", VenueNode()));
   entries.push_back(std::make_unique<BuiltInCatalogEntry>(WHEN_TASK_UUID,
     ":/icons/flash_yellow.png", "", WhenNode()));
   return entries;

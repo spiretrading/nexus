@@ -70,8 +70,6 @@ namespace Spire {
   class LesserOrEqualsNode;
   class LuaScriptNode;
   class LinkedNode;
-  class MarketNode;
-  class MarketType;
   class MaxFloorNode;
   class MaxNode;
   class MinNode;
@@ -128,6 +126,8 @@ namespace Spire {
   class UnionType;
   class UntilNode;
   template<typename T> class ValueNode;
+  class VenueNode;
+  class VenueType;
   class WhenNode;
 }
 

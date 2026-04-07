@@ -5,12 +5,11 @@
 
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 
 namespace {
-  auto TEST_FIELDS = OrderFields::MakeLimitOrder(
-    ParseSecurity("ABC.TSX"), Side::BID, 100, Money::CENT);
+  auto TEST_FIELDS = make_limit_order_fields(
+    parse_security("ABC.TSX"), Side::BID, 100, Money::CENT);
 }
 
 TEST_SUITE("PreviewOrderDisplayValueModel") {

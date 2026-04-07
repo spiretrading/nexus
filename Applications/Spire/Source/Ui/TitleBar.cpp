@@ -14,6 +14,7 @@
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
 
 using namespace boost;
@@ -62,10 +63,23 @@ namespace {
     style.get(Any()).
       set(BackgroundColor(QColor(0xF5F5F5))).
       set(PaddingLeft(scale_height(8)));
+    style.get(Highlighted()).
+      set(BackgroundColor(QColor(0x7F5EEC)));
+    style.get(Highlighted() > is_a<Icon>()).
+      set(Fill(QColor(0xFFFFFF)));
+    style.get(Highlighted() > is_a<TextBox>()).
+      set(TextColor(QColor(0xFFFFFF)));
+    style.get(Highlighted() > is_a<Button>() > Body()).
+      set(BackgroundColor(QColor(0x7F5EEC)));
+    style.get(Highlighted() > is_a<Button>() > is_a<Icon>()).
+      set(Fill(QColor(0xFFFFFF)));
+    style.get(Highlighted() >
+        (is_a<Button>() && (Hover() || Press())) > Body()).
+      set(BackgroundColor(QColor(0x684BC8)));
   }
 
   auto make_button(const QString& icon) {
-    auto button = make_icon_button(imageFromSvg(icon, BUTTON_SIZE()));
+    auto button = make_icon_button(image_from_svg(icon, BUTTON_SIZE()));
     button->setFocusPolicy(Qt::FocusPolicy::NoFocus);
     button->setFixedSize(BUTTON_SIZE());
     set_style(*button, BUTTON_STYLE());
@@ -106,6 +120,11 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
   m_container_layout->addWidget(m_close_button);
   set_icon(icon);
   auto box = new Box(body);
+  link(*this, *m_title_label);
+  link(*this, *m_minimize_button);
+  link(*this, *m_maximize_button);
+  link(*this, *m_restore_button);
+  link(*this, *m_close_button);
   enclose(*this, *box);
   proxy_style(*this, *box);
   update_style(*this, apply_box_style);
@@ -114,6 +133,7 @@ TitleBar::TitleBar(QImage icon, QWidget* parent)
 
 void TitleBar::set_icon(const QImage& icon) {
   auto window_icon = new Icon(icon);
+  link(*this, *window_icon);
   window_icon->setFixedSize(scale(10, 10));
   set_style(*window_icon, WINDOW_ICON_STYLE());
   if(!m_window_icon) {

@@ -7,7 +7,6 @@
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/signal.hpp>
 #include <QWidget>
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/PersistentWindow.hpp"
 
 class QAbstractButton;
@@ -27,7 +26,7 @@ namespace Spire {
     boost::optional<boost::posix_time::time_duration> m_timeOfDay;
 
     //! Specifies the time parameter as a special query value.
-    boost::optional<Beam::Queries::Range::Point> m_specialValue;
+    boost::optional<Beam::Range::Point> m_specialValue;
   };
 
   /*! \class TimeRangeInputWidget
@@ -93,18 +92,16 @@ namespace Spire {
 }
 
 namespace Beam {
-namespace Serialization {
   template<>
   struct Shuttle<Spire::TimeRangeParameter> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Spire::TimeRangeParameter& value,
-        unsigned int version) {
-      shuttle.Shuttle("offset", value.m_offset);
-      shuttle.Shuttle("time_of_day", value.m_timeOfDay);
-      shuttle.Shuttle("special_value", value.m_specialValue);
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::TimeRangeParameter& value,
+        unsigned int version) const {
+      shuttle.shuttle("offset", value.m_offset);
+      shuttle.shuttle("time_of_day", value.m_timeOfDay);
+      shuttle.shuttle("special_value", value.m_specialValue);
     }
   };
-}
 }
 
 #endif

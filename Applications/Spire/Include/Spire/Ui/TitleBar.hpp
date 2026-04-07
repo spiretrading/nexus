@@ -2,9 +2,11 @@
 #define SPIRE_TITLE_BAR_HPP
 #include <QHBoxLayout>
 #include <QWidget>
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/TextBox.hpp"
 
 namespace Spire {
+  class Button;
+  class Icon;
 
   /** Displays a window's title bar. */
   class TitleBar : public QWidget {

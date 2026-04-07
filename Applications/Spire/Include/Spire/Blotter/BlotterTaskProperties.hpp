@@ -38,16 +38,16 @@ namespace Spire {
       void Replace(int index, const BlotterTaskMonitor& monitor);
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::vector<BlotterTaskMonitor> m_taskMonitors;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void BlotterTaskProperties::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("task_monitors", m_taskMonitors);
+  template<Beam::IsShuttle S>
+  void BlotterTaskProperties::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("task_monitors", m_taskMonitors);
   }
 }
 

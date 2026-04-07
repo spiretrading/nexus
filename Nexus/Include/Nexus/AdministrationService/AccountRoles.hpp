@@ -1,9 +1,9 @@
 #ifndef NEXUS_ACCOUNT_ROLES_HPP
 #define NEXUS_ACCOUNT_ROLES_HPP
 #include <Beam/Collections/Enum.hpp>
-#include "Nexus/AdministrationService/AdministrationService.hpp"
+#include <Beam/Collections/EnumSet.hpp>
 
-namespace Nexus::AdministrationService {
+namespace Nexus {
 
   /** Enumerates the roles of a Nexus account has. */
   BEAM_ENUM(AccountRole,

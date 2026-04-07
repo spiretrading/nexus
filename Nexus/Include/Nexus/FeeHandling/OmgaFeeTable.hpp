@@ -3,8 +3,8 @@
 #include <array>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/FeeHandling/FeeHandling.hpp"
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
+#include "Nexus/FeeHandling/ParseFeeTable.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
@@ -23,7 +23,7 @@ namespace Nexus {
       DEFAULT = 0,
 
       /** Price < $1.00. */
-      SUBDOLLAR,
+      SUBDOLLAR
     };
 
     /** The number of price classes enumerated. */
@@ -61,7 +61,7 @@ namespace Nexus {
     static constexpr auto TYPE_COUNT = std::size_t(7);
 
     /** The fee table. */
-    std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT> m_feeTable;
+    std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT> m_fee_table;
   };
 
   /**
@@ -69,23 +69,23 @@ namespace Nexus {
    * @param config The configuration to parse the OmgaFeeTable from.
    * @return The OmgaFeeTable represented by the <i>config</i>.
    */
-  inline OmgaFeeTable ParseOmgaFeeTable(const YAML::Node& config) {
-    auto feeTable = OmgaFeeTable();
-    ParseFeeTable(config, "fee_table", Beam::Store(feeTable.m_feeTable));
-    return feeTable;
+  inline OmgaFeeTable parse_omga_fee_table(const YAML::Node& config) {
+    auto table = OmgaFeeTable();
+    parse_fee_table(config, "fee_table", Beam::out(table.m_fee_table));
+    return table;
   }
 
   /**
    * Looks up a fee.
-   * @param feeTable The OmgaFeeTable used to lookup the fee.
+   * @param table The OmgaFeeTable used to lookup the fee.
    * @param type The trade's Type.
-   * @param priceClass The trade's PriceClass.
+   * @param price_class The trade's PriceClass.
    * @return The fee corresponding to the specified <i>type</i> and
-   *         <i>priceClass</i>.
+   *         <i>price_class</i>.
    */
-  inline Money LookupFee(const OmgaFeeTable& feeTable, OmgaFeeTable::Type type,
-      OmgaFeeTable::PriceClass priceClass) {
-    return feeTable.m_feeTable[static_cast<int>(priceClass)][
+  inline Money lookup_fee(const OmgaFeeTable& table, OmgaFeeTable::Type type,
+      OmgaFeeTable::PriceClass price_class) {
+    return table.m_fee_table[static_cast<int>(price_class)][
       static_cast<int>(type)];
   }
 
@@ -95,88 +95,86 @@ namespace Nexus {
    * @return <code>true</code> iff the <i>order</i> counts as a hidden liquidity
    *         provider.
    */
-  inline bool IsOmgaHiddenLiquidityProvider(
-      const OrderExecutionService::OrderFields& fields) {
+  inline bool is_omga_hidden_liquidity_provider(const OrderFields& fields) {
     return fields.m_type == OrderType::PEGGED &&
-      OrderExecutionService::HasField(fields, Tag{18, "M"});
+      has_field(fields, Tag{18, "M"});
   }
 
   /**
    * Calculates the fee on a trade executed on OMGA.
-   * @param feeTable The OmgaFeeTable used to calculate the fee.
-   * @param isEtf Whether the calculation is for an ETF.
+   * @param table The OmgaFeeTable used to calculate the fee.
+   * @param is_etf Whether the calculation is for an ETF.
    * @param order The Order the trade took place on.
-   * @param executionReport The ExecutionReport to calculate the fee for.
+   * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */
-  inline Money CalculateFee(const OmgaFeeTable& feeTable, bool isEtf,
-      const OrderExecutionService::OrderFields& fields,
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    if(executionReport.m_lastQuantity == 0) {
+  inline Money calculate_fee(const OmgaFeeTable& table, bool is_etf,
+      const OrderFields& fields, const ExecutionReport& report) {
+    if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }
-    auto priceClass = [&] {
-      if(executionReport.m_lastPrice < Money::ONE) {
+    auto price_class = [&] {
+      if(report.m_last_price < Money::ONE) {
         return OmgaFeeTable::PriceClass::SUBDOLLAR;
       } else {
         return OmgaFeeTable::PriceClass::DEFAULT;
       }
     }();
     auto type = [&] {
-      if(executionReport.m_lastQuantity < 100) {
+      if(report.m_last_quantity < 100) {
         return OmgaFeeTable::Type::ODD_LOT;
-      } else if(IsOmgaHiddenLiquidityProvider(fields)) {
-        if(executionReport.m_liquidityFlag.size() == 1) {
-          if(executionReport.m_liquidityFlag[0] == 'A') {
+      } else if(is_omga_hidden_liquidity_provider(fields)) {
+        if(report.m_liquidity_flag.size() == 1) {
+          if(report.m_liquidity_flag[0] == 'A') {
             return OmgaFeeTable::Type::HIDDEN_ACTIVE;
-          } else if(executionReport.m_liquidityFlag[0] == 'P') {
+          } else if(report.m_liquidity_flag[0] == 'P') {
             return OmgaFeeTable::Type::HIDDEN_PASSIVE;
           } else {
             std::cout << "Unknown liquidity flag [OMGA]: \"" <<
-              executionReport.m_liquidityFlag << "\"\n";
+              report.m_liquidity_flag << "\"\n";
             return OmgaFeeTable::Type::HIDDEN_PASSIVE;
           }
         } else {
           std::cout << "Unknown liquidity flag [OMGA]: \"" <<
-            executionReport.m_liquidityFlag << "\"\n";
+            report.m_liquidity_flag << "\"\n";
           return OmgaFeeTable::Type::HIDDEN_PASSIVE;
         }
-      } else if(isEtf) {
-        if(executionReport.m_liquidityFlag.size() == 1) {
-          if(executionReport.m_liquidityFlag[0] == 'A') {
+      } else if(is_etf) {
+        if(report.m_liquidity_flag.size() == 1) {
+          if(report.m_liquidity_flag[0] == 'A') {
             return OmgaFeeTable::Type::ETF_ACTIVE;
-          } else if(executionReport.m_liquidityFlag[0] == 'P') {
+          } else if(report.m_liquidity_flag[0] == 'P') {
             return OmgaFeeTable::Type::ETF_PASSIVE;
           } else {
             std::cout << "Unknown liquidity flag [OMGA]: \"" <<
-              executionReport.m_liquidityFlag << "\"\n";
+              report.m_liquidity_flag << "\"\n";
             return OmgaFeeTable::Type::ETF_PASSIVE;
           }
         } else {
           std::cout << "Unknown liquidity flag [OMGA]: \"" <<
-            executionReport.m_liquidityFlag << "\"\n";
+            report.m_liquidity_flag << "\"\n";
           return OmgaFeeTable::Type::ETF_PASSIVE;
         }
       } else {
-        if(executionReport.m_liquidityFlag.size() == 1) {
-          if(executionReport.m_liquidityFlag[0] == 'A') {
+        if(report.m_liquidity_flag.size() == 1) {
+          if(report.m_liquidity_flag[0] == 'A') {
             return OmgaFeeTable::Type::ACTIVE;
-          } else if(executionReport.m_liquidityFlag[0] == 'P') {
+          } else if(report.m_liquidity_flag[0] == 'P') {
             return OmgaFeeTable::Type::PASSIVE;
           } else {
             std::cout << "Unknown liquidity flag [OMGA]: \"" <<
-              executionReport.m_liquidityFlag << "\"\n";
+              report.m_liquidity_flag << "\"\n";
             return OmgaFeeTable::Type::PASSIVE;
           }
         } else {
           std::cout << "Unknown liquidity flag [OMGA]: \"" <<
-            executionReport.m_liquidityFlag << "\"\n";
+            report.m_liquidity_flag << "\"\n";
           return OmgaFeeTable::Type::PASSIVE;
         }
       }
     }();
-    auto fee = LookupFee(feeTable, type, priceClass);
-    return executionReport.m_lastQuantity * fee;
+    auto fee = lookup_fee(table, type, price_class);
+    return report.m_last_quantity * fee;
   }
 }
 

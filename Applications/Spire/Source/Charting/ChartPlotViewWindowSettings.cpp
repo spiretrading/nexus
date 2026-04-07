@@ -18,14 +18,14 @@ ChartPlotViewWindowSettings::~ChartPlotViewWindowSettings() {}
 QWidget* ChartPlotViewWindowSettings::Reopen(
     Ref<UserProfile> userProfile) const {
   ChartPlotView* view = new ChartPlotView();
-  Apply(Ref(userProfile), Store(*view));
+  Apply(Ref(userProfile), out(*view));
   return view;
 }
 
 void ChartPlotViewWindowSettings::Apply(Ref<UserProfile> userProfile,
     Out<QWidget> widget) const {
   ChartPlotView& view = dynamic_cast<ChartPlotView&>(*widget);
-  restore_geometry(view, m_geometry);
+  view.restoreGeometry(m_geometry);
   view.Initialize(Ref(userProfile), m_properties);
   view.SetXAxisParameters(m_xAxisParameters);
   view.SetYAxisParameters(m_yAxisParameters);

@@ -7,7 +7,6 @@
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -92,18 +91,18 @@ void MpidBox::update_row_state(int type_index) {
   }
 }
 
-void MpidBox::update_market_state(const BookEntry& entry) {
+void MpidBox::update_venue_state(const BookEntry& entry) {
   if(auto quote = get<BookQuote>(&entry)) {
-    if(quote->m_market != m_current_market) {
-      if(!m_current_market.IsEmpty()) {
-        unmatch(*this, MarketRow(m_current_market));
+    if(quote->m_venue != m_current_venue) {
+      if(m_current_venue) {
+        unmatch(*this, VenueRow(m_current_venue));
       }
-      m_current_market = quote->m_market;
-      match(*this, MarketRow(quote->m_market));
+      m_current_venue = quote->m_venue;
+      match(*this, VenueRow(quote->m_venue));
     }
-  } else if(!m_current_market.IsEmpty()) {
-    unmatch(*this, MarketRow(m_current_market));
-    m_current_market = MarketCode();
+  } else if(m_current_venue) {
+    unmatch(*this, VenueRow(m_current_venue));
+    m_current_venue = Venue();
   }
 }
 
@@ -134,7 +133,7 @@ void MpidBox::update_status(const BookEntry& entry) {
 
 void MpidBox::on_current(const BookEntry& entry) {
   update_row_state(entry.which());
-  update_market_state(entry);
+  update_venue_state(entry);
   update_status(entry);
 }
 
@@ -151,8 +150,8 @@ void MpidBox::on_level(int level) {
 
 void MpidBox::on_is_top_mpid(bool is_top) {
   if(is_top) {
-    match(*this, TopMarketRow());
+    match(*this, TopVenueRow());
   } else {
-    unmatch(*this, TopMarketRow());
+    unmatch(*this, TopVenueRow());
   }
 }

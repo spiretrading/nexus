@@ -5,7 +5,6 @@
 #include <boost/noncopyable.hpp>
 #include <boost/signals2/signal.hpp>
 #include <boost/variant/variant.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Security.hpp"
 #include "Spire/Dashboard/Dashboard.hpp"

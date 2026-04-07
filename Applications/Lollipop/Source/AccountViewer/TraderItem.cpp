@@ -2,12 +2,11 @@
 #include <QIcon>
 
 using namespace Beam;
-using namespace Beam::ServiceLocator;
 using namespace Spire;
 using namespace std;
 
 TraderItem::TraderItem(const DirectoryEntry& entry)
-    : m_entry(entry) {}
+  : m_entry(entry) {}
 
 TraderItem::~TraderItem() {}
 

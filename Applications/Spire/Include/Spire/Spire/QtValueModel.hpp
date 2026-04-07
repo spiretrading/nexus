@@ -29,11 +29,8 @@ namespace Spire {
       explicit QtValueModel(Type value);
 
       const Type& get() const;
-
       QValidator::State test(const Type& value) const override;
-
       QValidator::State set(const Type& value) override;
-
       boost::signals2::connection connect_update_signal(
         const typename UpdateSignal::slot_type& slot) const;
 

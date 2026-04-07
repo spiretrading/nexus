@@ -1,11 +1,11 @@
 #ifndef SPIRE_ORDERTASKNODES_HPP
 #define SPIRE_ORDERTASKNODES_HPP
 #include <memory>
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class UserProfile;
 
   //! Returns a SingleOrderTaskNode with an ASK Side.
   std::unique_ptr<SingleOrderTaskNode> GetAskOrderTaskNode();
@@ -58,8 +58,7 @@ namespace Spire {
     \param userProfile The user's profile.
   */
   std::unique_ptr<SingleOrderTaskNode> MakeOrderTaskNodeFromOrderFields(
-    const Nexus::OrderExecutionService::OrderFields& orderFields,
-    const UserProfile& userProfile);
+    const Nexus::OrderFields& orderFields, const UserProfile& userProfile);
 }
 
 #endif

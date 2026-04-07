@@ -1,4 +1,5 @@
 #include "Spire/BookView/BookViewWindowSettings.hpp"
+#include <Beam/Utilities/ToString.hpp>
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -13,10 +14,10 @@ BookViewWindowSettings::BookViewWindowSettings(const BookViewWindow& window)
       m_link_identifier(window.m_link_identifier),
       m_geometry(window.saveGeometry()) {
   auto& security = window.GetDisplayedSecurity();
-  if(security == Security()) {
-    m_name = "Book View";
+  if(security) {
+    m_name = "Book View - " + to_string(security);
   } else {
-    m_name = "Book View - " + to_text(security).toStdString();
+    m_name = "Book View";
   }
 }
 
@@ -28,10 +29,9 @@ QWidget* BookViewWindowSettings::Reopen(Ref<UserProfile> user_profile) const {
   auto window = new BookViewWindow(Ref(user_profile),
     user_profile->GetSecurityInfoQueryModel(),
     user_profile->GetKeyBindings(),
-    user_profile->GetMarketDatabase(),
     user_profile->GetBookViewPropertiesWindowFactory(),
     user_profile->GetBookViewModelBuilder(), m_identifier);
-  Apply(Ref(user_profile), Store(*window));
+  Apply(Ref(user_profile), out(*window));
   return window;
 }
 

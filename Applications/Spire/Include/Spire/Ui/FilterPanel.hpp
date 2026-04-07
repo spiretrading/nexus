@@ -1,6 +1,7 @@
 #ifndef SPIRE_FILTER_PANEL_HPP
 #define SPIRE_FILTER_PANEL_HPP
-#include "Spire/Ui/Ui.hpp"
+#include <QWidget>
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
@@ -13,11 +14,10 @@ namespace Spire {
 
       /**
        * Constructs a FilterPanel.
-       * @param title The title of the FilterPanel.
        * @param body The component displayed in the FilterPanel.
-       * @param parent The parent widget that shows the panel.
+       * @param parent The parent widget.
        */
-      FilterPanel(QString title, QWidget* body, QWidget& parent);
+      explicit FilterPanel(QWidget& body, QWidget* parent = nullptr);
 
       /** Returns the body displayed in the panel. */
       const QWidget& get_body() const;
@@ -29,13 +29,9 @@ namespace Spire {
       boost::signals2::connection connect_reset_signal(
         const ResetSignal::slot_type& slot) const;
 
-    protected:
-      bool event(QEvent* event) override;
-
     private:
       mutable ResetSignal m_reset_signal;
       QWidget* m_body;
-      OverlayPanel* m_panel;
   };
 }
 

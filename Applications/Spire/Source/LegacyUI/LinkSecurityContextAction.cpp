@@ -1,4 +1,5 @@
 #include "Spire/LegacyUI/LinkSecurityContextAction.hpp"
+#include <Beam/Utilities/ToString.hpp>
 #include <QApplication>
 #include <QWidget>
 #include "Spire/LegacyUI/SecurityContext.hpp"
@@ -32,19 +33,17 @@ vector<unique_ptr<LinkSecurityContextAction>>
   std::sort(linkActions.begin(), linkActions.end(),
     [&] (const unique_ptr<LinkSecurityContextAction>& lhs,
         const unique_ptr<LinkSecurityContextAction>& rhs) -> bool {
-      return ToString(lhs->GetSecurityContext().GetDisplayedSecurity(),
-        userProfile.GetMarketDatabase()) <
-        ToString(rhs->GetSecurityContext().GetDisplayedSecurity(),
-        userProfile.GetMarketDatabase());
+      return to_string(lhs->GetSecurityContext().GetDisplayedSecurity()) <
+        to_string(rhs->GetSecurityContext().GetDisplayedSecurity());
     });
   return linkActions;
 }
 
 LinkSecurityContextAction::LinkSecurityContextAction(
     Ref<SecurityContext> securityContext, QObject* parent)
-    : QAction(dynamic_cast<QWidget*>(securityContext.Get())->windowTitle(),
+    : QAction(dynamic_cast<QWidget*>(securityContext.get())->windowTitle(),
         parent),
-      m_securityContext(securityContext.Get()) {}
+      m_securityContext(securityContext.get()) {}
 
 LinkSecurityContextAction::~LinkSecurityContextAction() {}
 

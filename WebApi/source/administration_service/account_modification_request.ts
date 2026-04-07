@@ -8,7 +8,8 @@ export class AccountModificationRequest {
     return new AccountModificationRequest(value.id, value.type,
       Beam.DirectoryEntry.fromJson(value.account),
       Beam.DirectoryEntry.fromJson(value.submission_account),
-      Beam.DateTime.fromJson(value.timestamp));
+      Beam.DateTime.fromJson(value.timestamp),
+      Beam.Date.fromJson(value.effective_date));
   }
 
   /**
@@ -18,15 +19,17 @@ export class AccountModificationRequest {
    * @param account - The account to modify.
    * @param submissionAccount - The account that submitted the request.
    * @param timestamp - The timestamp when the request was received.
+   * @param effectiveDate - The date when the modification takes effect.
    */
   constructor(id: number, type: AccountModificationRequest.Type,
       account: Beam.DirectoryEntry, submissionAccount: Beam.DirectoryEntry,
-      timestamp: Beam.DateTime) {
+      timestamp: Beam.DateTime, effectiveDate: Beam.Date) {
     this._id = id;
     this._type = type;
     this._account = account;
     this._submissionAccount = submissionAccount;
     this._timestamp = timestamp;
+    this._effectiveDate = effectiveDate;
   }
 
   /** Returns the id that uniquely identifies this request. */
@@ -54,6 +57,11 @@ export class AccountModificationRequest {
     return this._timestamp;
   }
 
+  /** Returns the date when the modification takes effect. */
+  public get effectiveDate(): Beam.Date {
+    return this._effectiveDate;
+  }
+
   /** Converts this object to JSON. */
   public toJson(): any {
     return {
@@ -61,7 +69,8 @@ export class AccountModificationRequest {
       type: this._type,
       account: this._account.toJson(),
       submission_account: this._submissionAccount.toJson(),
-      timestamp: this._timestamp.toJson()
+      timestamp: this._timestamp.toJson(),
+      effective_date: this._effectiveDate.toJson()
     };
   }
 
@@ -70,6 +79,7 @@ export class AccountModificationRequest {
   private _account: Beam.DirectoryEntry;
   private _submissionAccount: Beam.DirectoryEntry;
   private _timestamp: Beam.DateTime;
+  private _effectiveDate: Beam.Date;
 }
 
 export module AccountModificationRequest {
@@ -81,7 +91,10 @@ export module AccountModificationRequest {
     ENTITLEMENTS = 0,
 
     /** Modify an account's risk parameters. */
-    RISK
+    RISK,
+
+    /** Modify an account's compliance settings. */
+    COMPLIANCE
   }
 
   /** Lists the status of a request. */

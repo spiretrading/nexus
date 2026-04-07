@@ -1,6 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import { AccountDirectoryModel, ComplianceModel, LocalAccountModel, LocalGroupModel } from '..';
+import { RequestsModel } from '../requests_page/requests_model';
 import { DashboardModel } from './dashboard_model';
 
 /** Implements the DashboardModel using local memory. */
@@ -13,24 +14,27 @@ export class LocalDashboardModel extends DashboardModel {
    * @param entitlementDatabase - The entitlement database to use.
    * @param countryDatabase - The country database to use.
    * @param currencyDatabase - The currency database to use.
-   * @param marketDatabase - The market database to use.
+   * @param venueDatabase - The venue database to use.
    * @param accountDirectoryModel - The AccountDirectoryModel to return.
+   * @param requestsModel - The RequestsModel to return.
    */
   constructor(account: Beam.DirectoryEntry, roles: Nexus.AccountRoles,
       entitlementDatabase: Nexus.EntitlementDatabase,
       countryDatabase: Nexus.CountryDatabase,
       currencyDatabase: Nexus.CurrencyDatabase,
-      marketDatabase: Nexus.MarketDatabase,
-      accountDirectoryModel: AccountDirectoryModel) {
+      venueDatabase: Nexus.VenueDatabase,
+      accountDirectoryModel: AccountDirectoryModel,
+      requestsModel: RequestsModel) {
     super();
     this._isLoaded = false;
     this._entitlementDatabase = entitlementDatabase;
     this._countryDatabase = countryDatabase;
     this._currencyDatabase = currencyDatabase;
-    this._marketDatabase = marketDatabase;
+    this._venueDatabase = venueDatabase;
     this._account = account;
     this._roles = roles;
     this._accountDirectoryModel = accountDirectoryModel;
+    this._requestsModel = requestsModel;
     this.accountModels = new Beam.Map<Beam.DirectoryEntry, LocalAccountModel>();
   }
 
@@ -54,9 +58,9 @@ export class LocalDashboardModel extends DashboardModel {
     return this._currencyDatabase;
   }
 
-  public get marketDatabase(): Nexus.MarketDatabase {
+  public get venueDatabase(): Nexus.VenueDatabase {
     this.ensureLoaded();
-    return this._marketDatabase;
+    return this._venueDatabase;
   }
 
   public get account(): Beam.DirectoryEntry {
@@ -72,6 +76,11 @@ export class LocalDashboardModel extends DashboardModel {
   public get accountDirectoryModel(): AccountDirectoryModel {
     this.ensureLoaded();
     return this._accountDirectoryModel;
+  }
+
+  public get requestsModel(): RequestsModel {
+    this.ensureLoaded();
+    return this._requestsModel;
   }
 
   public makeAccountModel(account: Beam.DirectoryEntry): LocalAccountModel {
@@ -115,9 +124,10 @@ export class LocalDashboardModel extends DashboardModel {
   private _entitlementDatabase: Nexus.EntitlementDatabase;
   private _countryDatabase: Nexus.CountryDatabase;
   private _currencyDatabase: Nexus.CurrencyDatabase;
-  private _marketDatabase: Nexus.MarketDatabase;
+  private _venueDatabase: Nexus.VenueDatabase;
   private _account: Beam.DirectoryEntry;
   private _roles: Nexus.AccountRoles;
   private _accountDirectoryModel: AccountDirectoryModel;
+  private _requestsModel: RequestsModel;
   private accountModels: Beam.Map<Beam.DirectoryEntry, LocalAccountModel>;
 }

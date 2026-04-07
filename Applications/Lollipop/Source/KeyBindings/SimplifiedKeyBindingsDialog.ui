@@ -115,19 +115,19 @@
        <item>
         <layout class="QVBoxLayout" name="m_taskButtonsLayout">
          <item>
-          <layout class="QVBoxLayout" name="m_taskMarketLayout">
+          <layout class="QVBoxLayout" name="m_taskVenueLayout">
            <property name="spacing">
             <number>3</number>
            </property>
            <item>
-            <widget class="QLabel" name="m_taskMarketLabel">
+            <widget class="QLabel" name="m_taskVenueLabel">
              <property name="text">
-              <string>Market</string>
+              <string>Venue</string>
              </property>
             </widget>
            </item>
            <item>
-            <widget class="QComboBox" name="m_taskMarketComboBox"/>
+            <widget class="QComboBox" name="m_taskVenueComboBox"/>
            </item>
           </layout>
          </item>

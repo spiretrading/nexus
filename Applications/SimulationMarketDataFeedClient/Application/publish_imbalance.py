@@ -17,8 +17,8 @@ def report_yaml_error(error):
 def parse_ip_address(source):
   separator = source.find(':')
   if separator == -1:
-    return beam.network.IpAddress(source, 0)
-  return beam.network.IpAddress(source[0:separator],
+    return beam.IpAddress(source, 0)
+  return beam.IpAddress(source[0:separator],
     int(source[separator + 1 :]))
 
 
@@ -61,15 +61,14 @@ def main():
   address = parse_ip_address(section['address'])
   username = section['username']
   password = section['password']
-  service_clients = \
-    nexus.ApplicationServiceClients(username, password, address)
+  service_clients = nexus.ServiceClients(username, password, address)
   markets = service_clients.get_definitions_client().load_market_database()
   market = nexus.parse_market_code(args.market, markets)
-  feed_client = nexus.market_data_service.ApplicationMarketDataFeedClient(
+  feed_client = nexus.ApplicationMarketDataFeedClient(
     service_clients.get_service_locator_client())
   timestamp = args.timestamp if args.timestamp is not None else \
     datetime.datetime.utcnow()
-  order_imbalance = beam.queries.IndexedValue(nexus.OrderImbalance(
+  order_imbalance = beam.IndexedValue(nexus.OrderImbalance(
     nexus.parse_security(args.symbol), args.side, args.quantity,
     args.reference_price, timestamp), market)
   feed_client.publish(order_imbalance)

@@ -5,6 +5,7 @@
 #include <QMetaObject>
 #include "Spire/Canvas/Types/RecordType.hpp"
 #include "Spire/CanvasView/CanvasView.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 class QAbstractButton;

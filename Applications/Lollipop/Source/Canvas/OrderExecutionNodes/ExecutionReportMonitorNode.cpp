@@ -6,7 +6,6 @@
 #include "Spire/Canvas/Types/OrderReferenceType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 using namespace std;
 
@@ -35,5 +34,3 @@ void ExecutionReportMonitorNode::Apply(CanvasNodeVisitor& visitor) const {
 unique_ptr<CanvasNode> ExecutionReportMonitorNode::Clone() const {
   return make_unique<ExecutionReportMonitorNode>(*this);
 }
-
-ExecutionReportMonitorNode::ExecutionReportMonitorNode(ReceiveBuilder) {}

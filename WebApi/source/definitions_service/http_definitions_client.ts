@@ -1,6 +1,6 @@
 import * as Beam from 'beam';
 import { CountryDatabase, CurrencyDatabase, EntitlementDatabase,
-  MarketDatabase } from '..';
+  VenueDatabase } from '..';
 import { ComplianceRuleSchema } from '../compliance_service';
 import { DefinitionsClient } from './definitions_client';
 
@@ -22,8 +22,8 @@ export class HttpDefinitionsClient extends DefinitionsClient {
     return this._currencyDatabase;
   }
 
-  public get marketDatabase(): MarketDatabase {
-    return this._marketDatabase;
+  public get venueDatabase(): VenueDatabase {
+    return this._venueDatabase;
   }
 
   public get complianceRuleSchemas(): ComplianceRuleSchema[] {
@@ -44,9 +44,9 @@ export class HttpDefinitionsClient extends DefinitionsClient {
     const currencyResponse = await Beam.post(
       '/api/definitions_service/load_currency_database', {});
     this._currencyDatabase = CurrencyDatabase.fromJson(currencyResponse);
-    const marketResponse = await Beam.post(
-      '/api/definitions_service/load_market_database', {});
-    this._marketDatabase = MarketDatabase.fromJson(marketResponse);
+    const venueResponse = await Beam.post(
+      '/api/definitions_service/load_venue_database', {});
+    this._venueDatabase = VenueDatabase.fromJson(venueResponse);
     const complianceRuleSchemasResponse = await Beam.post(
       '/api/definitions_service/load_compliance_rule_schemas', {});
     this._complianceRuleSchemas =
@@ -61,6 +61,6 @@ export class HttpDefinitionsClient extends DefinitionsClient {
   private _entitlementDatabase: EntitlementDatabase;
   private _countryDatabase: CountryDatabase;
   private _currencyDatabase: CurrencyDatabase;
-  private _marketDatabase: MarketDatabase;
+  private _venueDatabase: VenueDatabase;
   private _complianceRuleSchemas: ComplianceRuleSchema[];
 }

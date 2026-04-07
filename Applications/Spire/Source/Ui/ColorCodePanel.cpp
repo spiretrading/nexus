@@ -10,6 +10,7 @@
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/PercentBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

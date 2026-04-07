@@ -1,7 +1,6 @@
 #ifndef SPIRE_BLOTTERTASKENTRYITEMDELEGATE_HPP
 #define SPIRE_BLOTTERTASKENTRYITEMDELEGATE_HPP
 #include "Spire/Blotter/Blotter.hpp"
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 
 namespace Spire {

@@ -2,9 +2,16 @@
 #define SPIRE_WINDOW_HPP
 #include <boost/optional/optional.hpp>
 #include <QWidget>
-#include "Spire/Ui/Ui.hpp"
+#include "Spire/Styles/Selectors.hpp"
 
 namespace Spire {
+  class TitleBar;
+
+namespace Styles {
+
+  /** Selects a highlighted widget. */
+  using Highlighted = StateSelector<void, struct HighlightedTag>;
+}
 
   /** A customized window container for top-level windows. */
   class Window : public QWidget {
@@ -50,11 +57,14 @@ namespace Spire {
       TitleBar* m_title_bar;
       QWidget* m_body;
       bool m_is_resizable;
+      boost::optional<bool> m_is_bottom_border_mismatched;
       boost::optional<bool> m_has_maximize_attribute;
       boost::optional<QSize> m_frame_size;
 
-      QSize adjusted_window_size(const QSize& body_size);
+      QSize adjusted_window_size(const QSize& body_size) const;
+      void on_highlighted(bool is_match);
       void on_screen_changed(QScreen* screen);
+      void on_logical_dots_per_inch_changed();
       void set_window_attributes(bool is_resizeable);
   };
 }

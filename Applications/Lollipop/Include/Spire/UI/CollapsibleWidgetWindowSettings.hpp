@@ -1,7 +1,6 @@
 #ifndef SPIRE_COLLAPSIBLEWIDGETWINDOWSETTINGS_HPP
 #define SPIRE_COLLAPSIBLEWIDGETWINDOWSETTINGS_HPP
 #include <QByteArray>
-#include "Spire/Spire/Spire.hpp"
 #include "Spire/UI/ShuttleQtTypes.hpp"
 #include "Spire/UI/UI.hpp"
 #include "Spire/UI/WindowSettings.hpp"
@@ -34,23 +33,23 @@ namespace UI {
         Beam::Out<QWidget> widget) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::string m_label;
       bool m_isExpanded;
       QByteArray m_geometry;
       std::unique_ptr<WindowSettings> m_subWindowSettings;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void CollapsibleWidgetWindowSettings::Shuttle(Shuttler& shuttle,
+  template<Beam::IsShuttle S>
+  void CollapsibleWidgetWindowSettings::shuttle(S& shuttle,
       unsigned int version) {
-    shuttle.Shuttle("label", m_label);
-    shuttle.Shuttle("is_expanded", m_isExpanded);
-    shuttle.Shuttle("geometry", m_geometry);
-    shuttle.Shuttle("sub_window_settings", m_subWindowSettings);
+    shuttle.shuttle("label", m_label);
+    shuttle.shuttle("is_expanded", m_isExpanded);
+    shuttle.shuttle("geometry", m_geometry);
+    shuttle.shuttle("sub_window_settings", m_subWindowSettings);
   }
 }
 }

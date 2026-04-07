@@ -42,7 +42,7 @@ namespace {
 LinkBlotterAction::LinkBlotterAction(
   Ref<BlotterModel> blotterModel, QObject* parent)
   : QAction(parent),
-    m_blotterModel(blotterModel.Get()) {}
+    m_blotterModel(blotterModel.get()) {}
 
 BlotterModel& LinkBlotterAction::GetBlotterModel() {
   return *m_blotterModel;
@@ -55,13 +55,13 @@ BlotterWindow& BlotterWindow::GetBlotterWindow(
 
 BlotterWindow& BlotterWindow::GetBlotterWindow(Ref<UserProfile> userProfile,
     Ref<BlotterModel> model, QWidget* parent, Qt::WindowFlags flags) {
-  auto windowIterator = blotterWindows.find(model.Get());
+  auto windowIterator = blotterWindows.find(model.get());
   if(windowIterator == blotterWindows.end()) {
     auto window =
-      new BlotterWindow(userProfile.Get(), model.Get(), parent, flags);
+      new BlotterWindow(userProfile.get(), model.get(), parent, flags);
     window->setAttribute(Qt::WA_DeleteOnClose);
     windowIterator =
-      blotterWindows.insert(std::pair(model.Get(), window)).first;
+      blotterWindows.insert(std::pair(model.get(), window)).first;
   }
   return *windowIterator->second;
 }
@@ -247,7 +247,7 @@ bool BlotterWindow::eventFilter(QObject* object, QEvent* event) {
       auto cancelBinding = m_userProfile->
         GetKeyBindings()->get_cancel_key_bindings()->find_operation(key);
       if(cancelBinding) {
-        execute(*cancelBinding, Store(m_tasksExecuted));
+        execute(*cancelBinding, out(m_tasksExecuted));
         return true;
       }
     }
@@ -268,7 +268,7 @@ void BlotterWindow::OnTaskAdded(const BlotterTasksModel::TaskEntry& entry) {
       editorTimer.reset();
     });
   editorTimer->start(0);
-  entry.m_task->GetPublisher().Monitor(
+  entry.m_task->GetPublisher().monitor(
     m_eventHandler.get_slot<Task::StateEntry>(
       [=, task = entry.m_task] (const Task::StateEntry& update) {
         OnTaskState(task, update);
@@ -276,7 +276,7 @@ void BlotterWindow::OnTaskAdded(const BlotterTasksModel::TaskEntry& entry) {
 }
 
 void BlotterWindow::OnTaskRemoved(const BlotterTasksModel::TaskEntry& entry) {
-  RemoveFirst(m_tasksExecuted, entry.m_task);
+  remove_first(m_tasksExecuted, entry.m_task);
 }
 
 void BlotterWindow::SetActive(bool isActive) {
@@ -301,25 +301,25 @@ void BlotterWindow::OnActiveBlotterChanged(BlotterModel& blotter) {
   SetActive(m_model == &blotter);
 }
 
-void BlotterWindow::OnProfitAndLossUpdate(
-    const SpirePortfolioController::UpdateEntry& update) {
+void BlotterWindow::OnProfitAndLossUpdate(const PortfolioUpdateEntry& update) {
   m_totalProfitAndLossLabel->SetValue(QVariant::fromValue(
-    update.m_currencyInventory.m_grossProfitAndLoss -
-    update.m_currencyInventory.m_fees + update.m_unrealizedCurrency));
+    update.m_currency_inventory.m_gross_profit_and_loss -
+    update.m_currency_inventory.m_fees + update.m_unrealized_currency));
   m_realizedProfitAndLossLabel->SetValue(QVariant::fromValue(
-    update.m_currencyInventory.m_grossProfitAndLoss -
-    update.m_currencyInventory.m_fees));
+    update.m_currency_inventory.m_gross_profit_and_loss -
+    update.m_currency_inventory.m_fees));
   m_unrealizedProfitAndLossLabel->SetValue(QVariant::fromValue(
-    update.m_unrealizedCurrency));
-  m_feesLabel->SetValue(QVariant::fromValue(update.m_currencyInventory.m_fees));
+    update.m_unrealized_currency));
+  m_feesLabel->SetValue(
+    QVariant::fromValue(update.m_currency_inventory.m_fees));
   m_costBasisLabel->SetValue(QVariant::fromValue(
-    update.m_currencyInventory.m_position.m_costBasis));
+    update.m_currency_inventory.m_position.m_cost_basis));
 }
 
 void BlotterWindow::OnTaskState(
     const std::shared_ptr<Task>& task, const Task::StateEntry& update) {
   if(IsTerminal(update.m_state)) {
-    RemoveFirst(m_tasksExecuted, task);
+    remove_first(m_tasksExecuted, task);
   }
 }
 
@@ -424,9 +424,8 @@ void BlotterWindow::OnPositionsAdded(
     positionData["security"] = [&] {
       auto security = JsonObject();
       auto& position = positions[i];
-      security["symbol"] = position.m_key.m_index.GetSymbol();
-      security["market"] = ToString(position.m_key.m_index.GetMarket(),
-        m_userProfile->GetMarketDatabase());
+      security["symbol"] = position.m_key.m_security.get_symbol();
+      security["market"] = to_string(position.m_key.m_security.get_venue());
       return security;
     }();
   }

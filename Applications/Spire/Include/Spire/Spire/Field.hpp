@@ -40,15 +40,10 @@ namespace Spire {
       /** Tests if this Field represents the same member variable as another. */
       bool operator ==(const Field& field) const;
 
-      /**
-       * Tests if this Field represents a different member variable from
-       * another.
-       */
-      bool operator !=(const Field& field) const;
-
     private:
       struct VirtualAccessor {
         virtual ~VirtualAccessor() = default;
+
         virtual void* access(void* object) = 0;
         virtual std::size_t get_hash() const = 0;
         virtual bool operator ==(const VirtualAccessor& accessor) const = 0;
@@ -60,6 +55,7 @@ namespace Spire {
         std::size_t m_hash;
 
         Accessor(Type accessor);
+
         void* access(void* object) override;
         std::size_t get_hash() const override;
         bool operator ==(const VirtualAccessor& accessor) const override;
@@ -69,7 +65,7 @@ namespace Spire {
 
   template<typename T, typename M>
   Field::Field(M T::* accessor)
-      : m_accessor(std::make_shared<Accessor<T, M>>(std::move(accessor))) {}
+    : m_accessor(std::make_shared<Accessor<T, M>>(std::move(accessor))) {}
 
   template<typename M, typename T>
   const M& Field::access(const T& object) const {

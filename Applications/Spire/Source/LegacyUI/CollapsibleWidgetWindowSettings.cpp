@@ -45,6 +45,6 @@ void CollapsibleWidgetWindowSettings::Apply(Ref<UserProfile> userProfile,
   restore_geometry(collapsibleWidget, m_geometry);
   if(collapsibleWidget.m_widget != nullptr) {
     m_subWindowSettings->Apply(Ref(userProfile),
-      Store(*collapsibleWidget.m_widget));
+      out(*collapsibleWidget.m_widget));
   }
 }

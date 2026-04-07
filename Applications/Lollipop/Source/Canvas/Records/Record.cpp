@@ -1,5 +1,5 @@
 #include "Spire/Canvas/Records/Record.hpp"
-#include <Beam/Utilities/HashPtime.hpp>
+#include <Beam/Utilities/HashPosixTimeTypes.hpp>
 #include <boost/functional/hash.hpp>
 
 using namespace boost;

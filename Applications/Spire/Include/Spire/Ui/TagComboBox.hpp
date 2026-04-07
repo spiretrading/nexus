@@ -8,9 +8,11 @@
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ListViewItemBuilder.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class AnyComboBox;
+  class AnyInputBox;
+  class TagBox;
 
   /** Displays a ComboBox using the TagBox as the input box. */
   class AnyTagComboBox : public QWidget {
@@ -161,9 +163,8 @@ namespace Spire {
 
   template<std::derived_from<AnyQueryModel> QueryModel,
     std::derived_from<AnyListModel> ListModel, typename U>
-  TagComboBox(std::shared_ptr<QueryModel>, std::shared_ptr<ListModel>,
-    U) -> TagComboBox<typename QueryModel::Type>;
-
+  TagComboBox(std::shared_ptr<QueryModel>, std::shared_ptr<ListModel>, U) ->
+    TagComboBox<typename QueryModel::Type>;
 
   template<typename T>
   TagComboBox<T>::TagComboBox(

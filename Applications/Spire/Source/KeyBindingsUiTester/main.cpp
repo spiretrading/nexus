@@ -1,7 +1,4 @@
 #include <QApplication>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
@@ -15,18 +12,19 @@ using namespace Spire;
 
 std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
   auto security_infos = std::vector<SecurityInfo>();
-  security_infos.emplace_back(ParseSecurity("MRU.TSX"), "Metro Inc.", "", 0);
-  security_infos.emplace_back(
-    ParseSecurity("MG.TSX"), "Magna International Inc.", "", 0);
-  security_infos.emplace_back(
-    ParseSecurity("MGA.TSX"), "Mega Uranium Ltd.", "", 0);
-  security_infos.emplace_back(ParseSecurity("MGAB.TSX"),
-    "Mackenzie Global Fixed Income Alloc ETF", "", 0);
-  security_infos.emplace_back(ParseSecurity("MON.NYSE"), "Monsanto Co.", "", 0);
-  security_infos.emplace_back(
-    ParseSecurity("MFC.TSX"), "Manulife Financial Corporation", "", 0);
-  security_infos.emplace_back(
-    ParseSecurity("MX.TSX"), "Methanex Corporation", "", 0);
+  auto add_security = [&] (const Security& security, const std::string& name) {
+    if(security) {
+      security_infos.emplace_back(security, name, "", 0);
+    }
+  };
+  add_security(parse_security("MRU.TSX"), "Metro Inc.");
+  add_security(parse_security("MG.TSX"), "Magna International Inc.");
+  add_security(parse_security("MGA.TSX"), "Mega Uranium Ltd.");
+  add_security(parse_security("MGAB.TSX"),
+    "Mackenzie Global Fixed Income Alloc ETF");
+  add_security(parse_security("MON.NYSE"), "Monsanto Co.");
+  add_security(parse_security("MFC.TSX"), "Manulife Financial Corporation");
+  add_security(parse_security("MX.TSX"), "Methanex Corporation");
   auto securities = std::make_shared<LocalQueryModel<SecurityInfo>>();
   for(auto& security_info : security_infos) {
     securities->add(to_text(security_info.m_security).toLower(), security_info);
@@ -42,17 +40,16 @@ int main(int argc, char** argv) {
   application.setApplicationName(QObject::tr("KeyBindings Ui Tester"));
   application.setQuitOnLastWindowClosed(true);
   initialize_resources();
-  auto key_bindings =
-    std::make_shared<KeyBindingsModel>(GetDefaultMarketDatabase());
+  auto key_bindings = std::make_shared<KeyBindingsModel>();
   auto tasks = make_default_order_task_nodes();
   for(auto& task : tasks) {
-    key_bindings->get_order_task_arguments()->push(to_order_task_arguments(
-      *task, GetDefaultMarketDatabase(), GetDefaultDestinationDatabase()));
+    key_bindings->get_order_task_arguments()->push(
+      to_order_task_arguments(*task));
   }
   auto window = KeyBindingsWindow(key_bindings, populate_security_query_model(),
-    GetDefaultCountryDatabase(), GetDefaultMarketDatabase(),
-    GetDefaultDestinationDatabase(), get_default_additional_tag_database());
+    get_default_additional_tag_database());
   window.show();
   auto hotkey_override = HotkeyOverride();
+  application.installNativeEventFilter(&hotkey_override);
   application.exec();
 }

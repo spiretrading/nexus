@@ -3,7 +3,6 @@
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/BoxGeometry.hpp"
 #include "Spire/Ui/BoxPainter.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -52,7 +51,6 @@ namespace Styles {
       QWidget* get_body();
 
       QSize minimumSizeHint() const override;
-
       QSize sizeHint() const override;
 
     protected:

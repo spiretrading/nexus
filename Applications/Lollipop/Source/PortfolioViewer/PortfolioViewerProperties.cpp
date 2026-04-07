@@ -13,9 +13,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
-using namespace Beam::ServiceLocator;
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
@@ -27,10 +24,10 @@ namespace {
     PortfolioViewerProperties m_properties;
     boost::optional<PortfolioViewerWindowSettings> m_windowSettings;
 
-    template<typename Shuttler>
-    void Shuttle(Shuttler& shuttle, unsigned int version) {
-      shuttle.Shuttle("properties", m_properties);
-      shuttle.Shuttle("window_settings", m_windowSettings);
+    template<IsShuttle S>
+    void shuttle(S& shuttle, unsigned int version) {
+      shuttle.shuttle("properties", m_properties);
+      shuttle.shuttle("window_settings", m_windowSettings);
     }
   };
 }
@@ -39,7 +36,7 @@ PortfolioViewerProperties PortfolioViewerProperties::GetDefault() {
   PortfolioViewerProperties properties;
   properties.SetSelectingAllGroups(true);
   properties.SetSelectingAllCurrencies(true);
-  properties.SetSelectingAllMarkets(true);
+  properties.SetSelectingAllVenues(true);
   properties.GetSelectedSides().insert(Side::NONE);
   properties.GetSelectedSides().insert(Side::ASK);
   properties.GetSelectedSides().insert(Side::BID);
@@ -56,14 +53,14 @@ void PortfolioViewerProperties::Load(Out<UserProfile> userProfile) {
   PortfolioViewerFileSettings settings;
   try {
     BasicIStreamReader<ifstream> reader(
-      Initialize(portfolioViewerFilePath, ios::binary));
+      init(portfolioViewerFilePath, ios::binary));
     SharedBuffer buffer;
-    reader.Read(Store(buffer));
+    reader.read(out(buffer));
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-    receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(settings);
+    receiver.set(Ref(buffer));
+    receiver.shuttle(settings);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr(
@@ -83,18 +80,18 @@ void PortfolioViewerProperties::Save(const UserProfile& userProfile) {
     "portfolio_viewer.dat";
   try {
     TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(Store(typeRegistry));
+    RegisterSpireTypes(out(typeRegistry));
     auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
     SharedBuffer buffer;
-    sender.SetSink(Ref(buffer));
+    sender.set(Ref(buffer));
     PortfolioViewerFileSettings settings;
     settings.m_properties = userProfile.GetDefaultPortfolioViewerProperties();
     settings.m_windowSettings =
       userProfile.GetInitialPortfolioViewerWindowSettings();
-    sender.Shuttle(settings);
+    sender.shuttle(settings);
     BasicOStreamWriter<ofstream> writer(
-      Initialize(portfolioViewerFilePath, ios::binary));
-    writer.Write(buffer);
+      init(portfolioViewerFilePath, ios::binary));
+    writer.write(buffer);
   } catch(std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save the portfolio viewer properties."));
@@ -137,21 +134,21 @@ void PortfolioViewerProperties::SetSelectingAllCurrencies(bool value) {
   m_selectAllCurrencies = value;
 }
 
-const unordered_set<MarketCode>& PortfolioViewerProperties::
-    GetSelectedMarkets() const {
-  return m_selectedMarkets;
+const unordered_set<Venue>& PortfolioViewerProperties::
+    GetSelectedVenues() const {
+  return m_selectedVenues;
 }
 
-unordered_set<MarketCode>& PortfolioViewerProperties::GetSelectedMarkets() {
-  return m_selectedMarkets;
+unordered_set<Venue>& PortfolioViewerProperties::GetSelectedVenues() {
+  return m_selectedVenues;
 }
 
-bool PortfolioViewerProperties::IsSelectingAllMarkets() const {
-  return m_selectAllMarkets;
+bool PortfolioViewerProperties::IsSelectingAllVenues() const {
+  return m_selectAllVenues;
 }
 
-void PortfolioViewerProperties::SetSelectingAllMarkets(bool value) {
-  m_selectAllMarkets = value;
+void PortfolioViewerProperties::SetSelectingAllVenues(bool value) {
+  m_selectAllVenues = value;
 }
 
 const unordered_set<Side>& PortfolioViewerProperties::GetSelectedSides() const {

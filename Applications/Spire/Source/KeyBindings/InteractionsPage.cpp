@@ -52,52 +52,50 @@ namespace {
   }
 
   bool region_comparator(const Region& left, const Region& right) {
-    if(left.IsGlobal()) {
-      return !right.IsGlobal();
-    } else if(left.GetCountries().size() != 0) {
-      if(right.GetCountries().size() == 0) {
-        return !right.IsGlobal();
+    if(left.is_global()) {
+      return !right.is_global();
+    } else if(left.get_countries().size() != 0) {
+      if(right.get_countries().size() == 0) {
+        return !right.is_global();
       }
-      return to_text(*left.GetCountries().begin()) <
-        to_text(*right.GetCountries().begin());
-    } else if(left.GetMarkets().size() != 0) {
-      if(right.GetMarkets().size() == 0) {
-        return !right.IsGlobal() && right.GetCountries().size() == 0;
+      return to_text(*left.get_countries().begin()) <
+        to_text(*right.get_countries().begin());
+    } else if(left.get_venues().size() != 0) {
+      if(right.get_venues().size() == 0) {
+        return !right.is_global() && right.get_countries().size() == 0;
       }
-      return to_text(MarketToken(*left.GetMarkets().begin())) <
-        to_text(MarketToken(*right.GetMarkets().begin()));
+      return to_text(*left.get_venues().begin()) <
+        to_text(*right.get_venues().begin());
     }
-    if(left.GetSecurities().size() != 0) {
-      if(right.GetSecurities().size() == 0) {
-        return !right.IsGlobal() && right.GetCountries().size() == 0 &&
-          right.GetMarkets().size() == 0;
+    if(left.get_securities().size() != 0) {
+      if(right.get_securities().size() == 0) {
+        return !right.is_global() && right.get_countries().size() == 0 &&
+          right.get_venues().size() == 0;
       }
-      return to_text(*left.GetSecurities().begin()) <
-        to_text(*right.GetSecurities().begin());
+      return to_text(*left.get_securities().begin()) <
+        to_text(*right.get_securities().begin());
     }
     return false;
   }
 
-  auto make_region_list(const KeyBindingsModel& key_bindings,
-      const CountryDatabase& countries, const MarketDatabase& markets) {
+  auto make_region_list(const KeyBindingsModel& key_bindings) {
     auto regions = std::make_shared<ArrayListModel<Region>>(
       key_bindings.make_interactions_key_bindings_regions());
-    regions->insert(Region::Global("Global"), 0);
+    regions->insert(Region::make_global("Global"), 0);
     std::sort(regions->begin() + 1, regions->end(), &region_comparator);
     return regions;
   }
 
-  auto make_available_region_list(const KeyBindingsModel& key_bindings,
-      const CountryDatabase& countries, const MarketDatabase& markets) {
+  auto make_available_region_list(const KeyBindingsModel& key_bindings) {
     auto regions = std::make_shared<ArrayListModel<Region>>();
-    for(auto& country : countries.GetEntries()) {
-      auto region = Region(country.m_code);
-      region.SetName(country.m_name);
+    for(auto& country : DEFAULT_COUNTRIES.get_entries()) {
+      auto region = Region(country.m_name);
+      region += country.m_code;
       regions->push(region);
     }
-    for(auto& market : markets.GetEntries()) {
-      auto region = Region(market);
-      region.SetName(market.m_description);
+    for(auto& venue : DEFAULT_VENUES.get_entries()) {
+      auto region = Region(venue.m_description);
+      region += venue.m_venue;
       regions->push(region);
     }
     for(auto& region : key_bindings.make_interactions_key_bindings_regions()) {
@@ -112,15 +110,12 @@ namespace {
 }
 
 InteractionsPage::InteractionsPage(
-    std::shared_ptr<KeyBindingsModel> key_bindings,
-    const CountryDatabase& countries, const MarketDatabase& markets,
-    QWidget* parent)
+    std::shared_ptr<KeyBindingsModel> key_bindings, QWidget* parent)
     : QWidget(parent),
       m_key_bindings(std::move(key_bindings)),
       m_add_region_form(nullptr) {
-  m_regions = make_region_list(*m_key_bindings, countries, markets);
-  m_available_regions =
-    make_available_region_list(*m_key_bindings, countries, markets);
+  m_regions = make_region_list(*m_key_bindings);
+  m_available_regions = make_available_region_list(*m_key_bindings);
   auto list_view = new ListView(
     m_regions, std::bind_front(&InteractionsPage::make_region_list_item, this));
   list_view->setFocusPolicy(Qt::NoFocus);
@@ -259,7 +254,7 @@ void InteractionsPage::on_delete_region(const Region& region) {
     if(i != m_regions->end() &&
         m_regions->remove(i) == QValidator::Acceptable) {
       m_key_bindings->get_interactions_key_bindings(region)->reset();
-      if(region.GetSecurities().empty()) {
+      if(region.get_securities().empty()) {
         auto i = std::lower_bound(m_available_regions->begin(),
           m_available_regions->end(), region, &region_comparator);
         m_available_regions->insert(region, i);

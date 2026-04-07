@@ -1,14 +1,15 @@
 #ifndef SPIRE_SIGN_IN_UPDATE_BOX_HPP
 #define SPIRE_SIGN_IN_UPDATE_BOX_HPP
-#include <boost/optional/optional.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/optional/optional.hpp>
 #include <QWidget>
-#include "Spire/SignIn/SignIn.hpp"
 #include "Spire/Styles/PeriodicEvaluator.hpp"
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Ui/ProgressBar.hpp"
 
 namespace Spire {
+  template<typename> class ProxyValueModel;
+  class TextBox;
 
   /** Displays the status of an update operation during sign-in. */
   class SignInUpdateBox : public QWidget {

@@ -5,7 +5,6 @@
 #include <Beam/Serialization/ShuttleDeque.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Definitions/Security.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
@@ -44,16 +43,16 @@ namespace Spire {
       boost::optional<Nexus::Security> rotate_top();
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       std::deque<Nexus::Security> m_deck;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void SecurityDeck::Shuttle(Shuttler& shuttle, unsigned int version) {
-    shuttle.Shuttle("deck", m_deck);
+  template<Beam::IsShuttle S>
+  void SecurityDeck::shuttle(S& shuttle, unsigned int version) {
+    shuttle.shuttle("deck", m_deck);
   }
 }
 

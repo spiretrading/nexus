@@ -11,6 +11,7 @@
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Spire/Utility.hpp"
 #include "Spire/Styles/BasicProperty.hpp"
 #include "Spire/Ui/ClickObserver.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -18,7 +19,6 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListSelectionController.hpp"
 #include "Spire/Ui/ListViewItemBuilder.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 namespace Styles {
@@ -199,8 +199,7 @@ namespace Details {
        * @param parent The parent widget.
        */
       template<std::derived_from<AnyListModel> T>
-      ListView(std::shared_ptr<T> list,
-        std::shared_ptr<CurrentModel> current,
+      ListView(std::shared_ptr<T> list, std::shared_ptr<CurrentModel> current,
         std::shared_ptr<SelectionModel> selection,
         ListViewItemBuilder<ListModel<typename T::Type>> item_builder,
         QWidget* parent = nullptr);
@@ -258,7 +257,7 @@ namespace Details {
 
     private:
       struct ItemEntry {
-        ListItem m_item;
+        unique_qt_ptr<ListItem> m_item;
         int m_index;
         boost::optional<ClickObserver> m_click_observer;
 
@@ -286,10 +285,9 @@ namespace Details {
       Styles::Overflow m_overflow;
       QString m_query;
       QTimer m_query_timer;
-      int m_initialize_count;
       bool m_is_transaction;
       bool m_is_tab_focus_in;
-      Beam::Threading::TaskRunner m_operation_queue;
+      Beam::TaskRunner m_operation_queue;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_list_connection;
       boost::signals2::scoped_connection m_current_connection;

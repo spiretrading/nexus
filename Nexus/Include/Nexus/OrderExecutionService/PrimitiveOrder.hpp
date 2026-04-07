@@ -1,11 +1,11 @@
 #ifndef NEXUS_PRIMITIVE_ORDER_HPP
 #define NEXUS_PRIMITIVE_ORDER_HPP
+#include <memory>
 #include <Beam/Queues/SequencePublisher.hpp>
 #include "Nexus/OrderExecutionService/Order.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
 #include "Nexus/OrderExecutionService/OrderRecord.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Implements the Order interface using basic setters. */
   class PrimitiveOrder : public Order {
@@ -15,32 +15,28 @@ namespace Nexus::OrderExecutionService {
        * Constructs a PrimitiveOrder.
        * @param info The OrderInfo containing the submission details.
        */
-      PrimitiveOrder(OrderInfo info);
+      explicit PrimitiveOrder(OrderInfo info);
 
       /**
        * Constructs a PrimitiveOrder.
-       * @param orderRecord The OrderRecord containing the submission details.
+       * @param record The OrderRecord containing the submission details.
        */
-      PrimitiveOrder(OrderRecord orderRecord);
+      explicit PrimitiveOrder(OrderRecord record);
 
       /**
        * Updates this Order.
        * @param report The ExecutionReport storing the update.
        */
-      void Update(const ExecutionReport& report);
+      void update(const ExecutionReport& report);
 
       /** Provides synchronized access to this Order. */
-      template<typename F>
-      decltype(auto) With(F&& f);
+      template<typename Self, typename F>
+      decltype(auto) with(this Self&& self, F&& f);
 
-      /** Provides synchronized access to this Order. */
-      template<typename F>
-      decltype(auto) With(F&& f) const;
-
-      const OrderInfo& GetInfo() const override;
+      const OrderInfo& get_info() const override;
 
       const Beam::SnapshotPublisher<ExecutionReport,
-        std::vector<ExecutionReport>>& GetPublisher() const override;
+        std::vector<ExecutionReport>>& get_publisher() const override;
 
     private:
       OrderInfo m_info;
@@ -50,50 +46,42 @@ namespace Nexus::OrderExecutionService {
 
   inline PrimitiveOrder::PrimitiveOrder(OrderInfo info)
       : m_info(std::move(info)) {
-    auto report = ExecutionReport::MakeInitialReport(m_info.m_orderId,
-      m_info.m_timestamp);
-    Update(report);
+    auto report = ExecutionReport(m_info.m_id, m_info.m_timestamp);
+    update(report);
   }
 
-  inline PrimitiveOrder::PrimitiveOrder(OrderRecord orderRecord)
-      : m_info(std::move(orderRecord.m_info)) {
-    for(auto& executionReport : orderRecord.m_executionReports) {
-      Update(executionReport);
+  inline PrimitiveOrder::PrimitiveOrder(OrderRecord record)
+      : m_info(std::move(record.m_info)) {
+    for(auto& report : record.m_execution_reports) {
+      update(report);
     }
   }
 
-  inline void PrimitiveOrder::Update(const ExecutionReport& report) {
-    m_publisher.With([&] {
+  inline void PrimitiveOrder::update(const ExecutionReport& report) {
+    m_publisher.with([&] {
       if(report.m_status != OrderStatus::PARTIALLY_FILLED) {
         m_status = report.m_status;
       }
-      m_publisher.Push(report);
-      if(IsTerminal(report.m_status)) {
-        m_publisher.Break();
+      m_publisher.push(report);
+      if(is_terminal(report.m_status)) {
+        m_publisher.close();
       }
     });
   }
 
-  inline const OrderInfo& PrimitiveOrder::GetInfo() const {
+  inline const OrderInfo& PrimitiveOrder::get_info() const {
     return m_info;
   }
 
-  template<typename F>
-  decltype(auto) PrimitiveOrder::With(F&& f) {
-    return m_publisher.With([&] (auto executionReports) {
-      return std::forward<F>(f)(m_status, *executionReports);
-    });
-  }
-
-  template<typename F>
-  decltype(auto) PrimitiveOrder::With(F&& f) const {
-    return m_publisher.With([&] (auto executionReports) {
-      return std::forward<F>(f)(m_status, *executionReports);
+  template<typename Self, typename F>
+  decltype(auto) PrimitiveOrder::with(this Self&& self, F&& f) {
+    return std::forward<Self>(self).m_publisher.with([&] (auto reports) {
+      return std::forward<F>(f)(std::forward<Self>(self).m_status, *reports);
     });
   }
 
   inline const Beam::SnapshotPublisher<ExecutionReport,
-      std::vector<ExecutionReport>>& PrimitiveOrder::GetPublisher() const {
+      std::vector<ExecutionReport>>& PrimitiveOrder::get_publisher() const {
     return m_publisher;
   }
 
@@ -102,15 +90,15 @@ namespace Nexus::OrderExecutionService {
    * @param info The Order's submission info.
    * @param reason The reason for the rejection.
    */
-  inline std::unique_ptr<PrimitiveOrder> MakeRejectedOrder(OrderInfo info,
-      const std::string& reason) {
-    auto order = std::make_unique<PrimitiveOrder>(std::move(info));
-    order->With([&] (auto status, const auto& reports) {
-      auto& lastReport = reports.back();
-      auto updatedReport = ExecutionReport::MakeUpdatedReport(lastReport,
-        OrderStatus::REJECTED, order->GetInfo().m_timestamp);
-      updatedReport.m_text = reason;
-      order->Update(updatedReport);
+  inline std::shared_ptr<PrimitiveOrder>
+      make_rejected_order(OrderInfo info, const std::string& reason) {
+    auto order = std::make_shared<PrimitiveOrder>(std::move(info));
+    order->with([&] (auto status, const auto& reports) {
+      auto& last_report = reports.back();
+      auto updated_report = make_update(
+        last_report, OrderStatus::REJECTED, order->get_info().m_timestamp);
+      updated_report.m_text = reason;
+      order->update(updated_report);
     });
     return order;
   }
@@ -121,17 +109,17 @@ namespace Nexus::OrderExecutionService {
    * @param timestamp The time of the update.
    * @param reason The reason for the rejection.
    */
-  inline void RejectCancelRequest(PrimitiveOrder& order,
-      boost::posix_time::ptime timestamp, std::string reason) {
-    order.With([&] (auto status, const auto& reports) {
-      if(IsTerminal(status)) {
+  inline void reject_cancel_request(PrimitiveOrder& order,
+      boost::posix_time::ptime timestamp, const std::string& reason) {
+    order.with([&] (auto status, const auto& reports) {
+      if(is_terminal(status)) {
         return;
       }
-      auto& lastReport = reports.back();
-      auto updatedReport = ExecutionReport::MakeUpdatedReport(lastReport,
-        OrderStatus::CANCEL_REJECT, timestamp);
-      updatedReport.m_text = std::move(reason);
-      order.Update(updatedReport);
+      auto& last_report = reports.back();
+      auto updated_report =
+        make_update(last_report, OrderStatus::CANCEL_REJECT, timestamp);
+      updated_report.m_text = reason;
+      order.update(updated_report);
     });
   }
 }

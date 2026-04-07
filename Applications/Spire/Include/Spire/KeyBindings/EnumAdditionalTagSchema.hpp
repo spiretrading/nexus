@@ -2,7 +2,6 @@
 #define SPIRE_ENUM_ADDITIONAL_TAG_SCHEMA_HPP
 #include <vector>
 #include "Spire/KeyBindings/AdditionalTagSchema.hpp"
-#include "Spire/KeyBindings/KeyBindings.hpp"
 
 namespace Spire {
 
@@ -19,11 +18,9 @@ namespace Spire {
         OrderFieldInfoTip::Model order_field_model, int key);
 
       bool test(const AdditionalTag& tag) const override;
-
       AnyInputBox* make_input_box(
         std::shared_ptr<AdditionalTagValueModel> current,
         const SubmitSignal::slot_type& submission) const override;
-
       std::unique_ptr<CanvasNode> make_canvas_node(
         const boost::optional<Nexus::Tag::Type>& value) const override;
   };

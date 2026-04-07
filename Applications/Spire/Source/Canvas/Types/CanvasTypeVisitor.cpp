@@ -6,7 +6,6 @@
 #include "Spire/Canvas/Types/DestinationType.hpp"
 #include "Spire/Canvas/Types/DurationType.hpp"
 #include "Spire/Canvas/Types/IntegerType.hpp"
-#include "Spire/Canvas/Types/MarketType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/Canvas/Types/OrderReferenceType.hpp"
 #include "Spire/Canvas/Types/OrderStatusType.hpp"
@@ -19,6 +18,7 @@
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
 #include "Spire/Canvas/Types/UnionType.hpp"
+#include "Spire/Canvas/Types/VenueType.hpp"
 
 using namespace Spire;
 
@@ -49,10 +49,6 @@ void CanvasTypeVisitor::Visit(const DurationType& type) {
 }
 
 void CanvasTypeVisitor::Visit(const IntegerType& type) {
-  Visit(static_cast<const NativeType&>(type));
-}
-
-void CanvasTypeVisitor::Visit(const MarketType& type) {
   Visit(static_cast<const NativeType&>(type));
 }
 
@@ -106,4 +102,8 @@ void CanvasTypeVisitor::Visit(const TimeRangeType& type) {
 
 void CanvasTypeVisitor::Visit(const UnionType& type) {
   Visit(static_cast<const CanvasType&>(type));
+}
+
+void CanvasTypeVisitor::Visit(const VenueType& type) {
+  Visit(static_cast<const NativeType&>(type));
 }

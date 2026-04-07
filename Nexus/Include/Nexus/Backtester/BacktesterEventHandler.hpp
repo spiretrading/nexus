@@ -12,7 +12,6 @@
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <Beam/TimeServiceTests/TestTimer.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include "Nexus/Backtester/Backtester.hpp"
 #include "Nexus/Backtester/BacktesterEvent.hpp"
 
 namespace Nexus {
@@ -23,176 +22,174 @@ namespace Nexus {
 
       /**
        * Constructs a BacktesterEventHandler.
-       * @param startTime The starting point of the backtester.
+       * @param start The starting point of the backtester.
        */
-      BacktesterEventHandler(boost::posix_time::ptime startTime);
+      explicit BacktesterEventHandler(boost::posix_time::ptime start);
 
       /**
        * Constructs a BacktesterEventHandler.
-       * @param startTime The starting point of the backtester.
-       * @param endTime The time to stop backtesting.
+       * @param start The starting point of the backtester.
+       * @param end The time to stop backtesting.
        */
-      BacktesterEventHandler(boost::posix_time::ptime startTime,
-        boost::posix_time::ptime endTime);
+      BacktesterEventHandler(
+        boost::posix_time::ptime start, boost::posix_time::ptime end);
 
       ~BacktesterEventHandler();
 
       /** Returns the start time. */
-      boost::posix_time::ptime GetStartTime() const;
+      boost::posix_time::ptime get_start_time() const;
 
       /** Returns the end time. */
-      boost::posix_time::ptime GetEndTime() const;
+      boost::posix_time::ptime get_end_time() const;
 
-      /** Returns the current time. */
-      boost::posix_time::ptime GetTime() const;
+      /** Returns the current time in the backtester. */
+      boost::posix_time::ptime get_time() const;
 
       /**
        * Adds an event to be handled.
        * @param event The event to handle.
        */
-      void Add(std::shared_ptr<BacktesterEvent> event);
+      void add(const std::shared_ptr<BacktesterEvent>& event);
 
       /**
        * Adds a list of events to be handled.
        * @param events The list of events to handle.
        */
-      void Add(std::vector<std::shared_ptr<BacktesterEvent>> events);
+      void add(const std::vector<std::shared_ptr<BacktesterEvent>>& events);
 
-      void Close();
+      void close();
 
     private:
-      mutable Beam::Threading::Mutex m_mutex;
-      boost::posix_time::ptime m_startTime;
-      boost::posix_time::ptime m_endTime;
-      Beam::TimeService::Tests::TimeServiceTestEnvironment m_timeEnvironment;
+      mutable Beam::Mutex m_mutex;
+      boost::posix_time::ptime m_start_time;
+      boost::posix_time::ptime m_end_time;
+      Beam::Tests::TimeServiceTestEnvironment m_time_environment;
       std::deque<std::shared_ptr<BacktesterEvent>> m_events;
-      std::size_t m_activeCount;
-      Beam::Threading::ConditionVariable m_eventAvailableCondition;
-      Beam::Routines::RoutineHandler m_eventLoopRoutine;
-      Beam::IO::OpenState m_openState;
+      std::size_t m_active_count;
+      Beam::ConditionVariable m_event_available_condition;
+      Beam::RoutineHandler m_event_loop_routine;
+      Beam::OpenState m_open_state;
 
       BacktesterEventHandler(const BacktesterEventHandler&) = delete;
       BacktesterEventHandler& operator =(
         const BacktesterEventHandler&) = delete;
-      void EventLoop();
+      void event_loop();
   };
 
   inline BacktesterEventHandler::BacktesterEventHandler(
-    boost::posix_time::ptime startTime)
-    : BacktesterEventHandler(std::move(startTime),
-        boost::posix_time::pos_infin) {}
+    boost::posix_time::ptime start)
+    : BacktesterEventHandler(start, boost::posix_time::pos_infin) {}
 
   inline BacktesterEventHandler::BacktesterEventHandler(
-      boost::posix_time::ptime startTime, boost::posix_time::ptime endTime)
-      : m_startTime(std::move(startTime)),
-        m_endTime(std::move(endTime)),
-        m_activeCount(0),
-        m_timeEnvironment(m_startTime) {
+      boost::posix_time::ptime start, boost::posix_time::ptime end)
+      : m_start_time(start),
+        m_end_time(end),
+        m_active_count(0),
+        m_time_environment(m_start_time) {
     try {
-      m_eventLoopRoutine = Beam::Routines::Spawn(
-        std::bind_front(&BacktesterEventHandler::EventLoop, this));
+      m_event_loop_routine = Beam::spawn(
+        std::bind_front(&BacktesterEventHandler::event_loop, this));
     } catch(const std::exception&) {
-      Close();
-      BOOST_RETHROW;
+      close();
+      throw;
     }
   }
 
   inline BacktesterEventHandler::~BacktesterEventHandler() {
-    Close();
+    close();
   }
 
-  inline boost::posix_time::ptime BacktesterEventHandler::GetStartTime() const {
-    return m_startTime;
+  inline boost::posix_time::ptime
+      BacktesterEventHandler::get_start_time() const {
+    return m_start_time;
   }
 
-  inline boost::posix_time::ptime BacktesterEventHandler::GetEndTime() const {
-    return m_endTime;
+  inline boost::posix_time::ptime BacktesterEventHandler::get_end_time() const {
+    return m_end_time;
   }
 
-  inline boost::posix_time::ptime BacktesterEventHandler::GetTime() const {
-    return m_timeEnvironment.GetTime();
+  inline boost::posix_time::ptime BacktesterEventHandler::get_time() const {
+    return m_time_environment.get_time();
   }
 
-  inline void BacktesterEventHandler::Add(
-      std::shared_ptr<BacktesterEvent> event) {
-    auto isActive = !event->IsPassive();
+  inline void BacktesterEventHandler::add(
+      const std::shared_ptr<BacktesterEvent>& event) {
+    auto is_active = !event->is_passive();
     {
-      auto lock = boost::lock_guard(m_mutex);
-      auto insertIterator = std::lower_bound(m_events.begin(), m_events.end(),
-        event,
-        [] (auto& lhs, auto& rhs) {
-          return lhs->GetTimestamp() < rhs->GetTimestamp();
+      auto lock = std::lock_guard(m_mutex);
+      auto insert_iterator = std::lower_bound(m_events.begin(), m_events.end(),
+        event, [] (const auto& lhs, const auto& rhs) {
+          return lhs->get_timestamp() < rhs->get_timestamp();
         });
-      m_events.insert(insertIterator, std::move(event));
-      if(isActive) {
-        ++m_activeCount;
+      m_events.insert(insert_iterator, event);
+      if(is_active) {
+        ++m_active_count;
       }
     }
-    if(isActive) {
-      m_eventAvailableCondition.notify_one();
+    if(is_active) {
+      m_event_available_condition.notify_one();
     }
   }
 
-  inline void BacktesterEventHandler::Add(
-      std::vector<std::shared_ptr<BacktesterEvent>> events) {
+  inline void BacktesterEventHandler::add(
+      const std::vector<std::shared_ptr<BacktesterEvent>>& events) {
     if(events.empty()) {
       return;
     }
-    auto isActive = false;
+    auto is_active = false;
     {
-      auto lock = boost::lock_guard(m_mutex);
+      auto lock = std::lock_guard(m_mutex);
       for(auto& event : events) {
-        isActive |= !event->IsPassive();
-        auto insertIterator = std::lower_bound(m_events.begin(), m_events.end(),
-          event,
-          [] (auto& lhs, auto& rhs) {
-            return lhs->GetTimestamp() < rhs->GetTimestamp();
+        is_active |= !event->is_passive();
+        auto insert_iterator = std::lower_bound(m_events.begin(),
+          m_events.end(), event, [] (const auto& lhs, const auto& rhs) {
+            return lhs->get_timestamp() < rhs->get_timestamp();
           });
-        if(!event->IsPassive()) {
-          ++m_activeCount;
+        if(!event->is_passive()) {
+          ++m_active_count;
         }
-        m_events.insert(insertIterator, std::move(event));
+        m_events.insert(insert_iterator, event);
       }
     }
-    if(isActive) {
-      m_eventAvailableCondition.notify_one();
+    if(is_active) {
+      m_event_available_condition.notify_one();
     }
   }
 
-  inline void BacktesterEventHandler::Close() {
-    if(m_openState.SetClosing()) {
+  inline void BacktesterEventHandler::close() {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_eventAvailableCondition.notify_one();
-    m_eventLoopRoutine.Wait();
-    m_timeEnvironment.Close();
-    m_openState.Close();
-    Beam::Routines::FlushPendingRoutines();
+    m_event_available_condition.notify_one();
+    m_event_loop_routine.wait();
+    m_time_environment.close();
+    m_open_state.close();
+    Beam::flush_pending_routines();
   }
 
-  inline void BacktesterEventHandler::EventLoop() {
+  inline void BacktesterEventHandler::event_loop() {
     while(true) {
       auto event = std::shared_ptr<BacktesterEvent>();
       {
-        auto lock = boost::unique_lock(m_mutex);
-        while(m_openState.IsOpen() && m_activeCount == 0) {
-          m_eventAvailableCondition.wait(lock);
+        auto lock = std::unique_lock(m_mutex);
+        while(m_open_state.is_open() && m_active_count == 0) {
+          m_event_available_condition.wait(lock);
         }
-        if(!m_openState.IsOpen()) {
+        if(!m_open_state.is_open()) {
           return;
         }
         event = std::move(m_events.front());
         m_events.pop_front();
-        if(!event->IsPassive()) {
-          --m_activeCount;
+        if(!event->is_passive()) {
+          --m_active_count;
         }
       }
-      if(event->GetTimestamp() != boost::posix_time::neg_infin) {
-        m_timeEnvironment.SetTime(event->GetTimestamp());
+      if(event->get_timestamp() != boost::posix_time::neg_infin) {
+        m_time_environment.set(event->get_timestamp());
       }
-      event->Execute();
-      event->Complete();
-      Beam::Routines::FlushPendingRoutines();
+      event->execute();
+      event->complete();
+      Beam::flush_pending_routines();
     }
   }
 }

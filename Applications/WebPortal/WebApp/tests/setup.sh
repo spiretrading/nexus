@@ -1,16 +1,26 @@
 #!/bin/bash
-source="${BASH_SOURCE[0]}"
-while [ -h "$source" ]; do
-  dir="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd -P)"
-  source="$(readlink "$source")"
-  [[ $source != /* ]] && source="$dir/$source"
-done
-directory="$(cd -P "$(dirname "$source")" >/dev/null 2>&1 && pwd -P)"
-root=$(pwd -P)
-"$directory/../setup.sh"
-if [ ! -d library ]; then
-  mkdir library
-  pushd library
-  "$directory/../library/configure.sh" -DD="$root"
-  popd
-fi
+set -o errexit
+set -o pipefail
+
+main() {
+  resolve_paths
+  "$SCRIPT_DIR/../setup.sh"
+  setup_library
+}
+
+resolve_paths() {
+  SCRIPT_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1 && \
+    pwd -P)"
+  ROOT="$(pwd -P)"
+}
+
+setup_library() {
+  if [[ ! -d "library" ]]; then
+    mkdir library
+    pushd library > /dev/null
+    "$SCRIPT_DIR/../library/configure.sh" -DD="$ROOT"
+    popd > /dev/null
+  fi
+}
+
+main "$@"

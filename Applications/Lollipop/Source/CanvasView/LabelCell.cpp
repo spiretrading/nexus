@@ -8,7 +8,7 @@ using namespace std;
 
 LabelCell::LabelCell(const string& name, Ref<const CanvasNode> node)
     : m_name(name),
-      m_node(node.Get()) {
+      m_node(node.get()) {
   replace_all(m_name, "\\.", ".");
   setFlags(flags() & ~Qt::ItemIsEditable & ~Qt::ItemIsSelectable &
     ~Qt::ItemIsDragEnabled & ~Qt::ItemIsDropEnabled);

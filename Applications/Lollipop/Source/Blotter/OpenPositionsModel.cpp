@@ -4,11 +4,10 @@
 using namespace Beam;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::Accounting;
 using namespace Spire;
 using namespace Spire::UI;
 
-OpenPositionsModel::Entry::Entry(int index, const SpireBookkeeper::Key& key)
+OpenPositionsModel::Entry::Entry(int index, const Position::Key& key)
   : m_index(index),
     m_key(key),
     m_unrealizedEarnings(Money::ZERO) {}
@@ -19,7 +18,7 @@ OpenPositionsModel::OpenPositionsModel()
 }
 
 void OpenPositionsModel::SetPortfolioController(
-    Ref<SpirePortfolioController> portfolioController) {
+    Ref<ProfitAndLossModel::PortfolioController> portfolioController) {
   if(!m_entries.empty()) {
     beginRemoveRows(QModelIndex(), 0, m_entries.size() - 1);
     m_securityToEntry.clear();
@@ -28,9 +27,9 @@ void OpenPositionsModel::SetPortfolioController(
   }
   m_eventHandler = std::nullopt;
   m_eventHandler.emplace();
-  m_portfolioController = portfolioController.Get();
-  m_portfolioController->GetPublisher().Monitor(
-    m_eventHandler->get_slot<SpirePortfolioController::UpdateEntry>(
+  m_portfolioController = portfolioController.get();
+  m_portfolioController->get_publisher().monitor(
+    m_eventHandler->get_slot<PortfolioUpdateEntry>(
       std::bind_front(&OpenPositionsModel::OnPortfolioUpdate, this)));
 }
 
@@ -69,18 +68,19 @@ QVariant OpenPositionsModel::data(const QModelIndex& index, int role) const {
     return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
     if(index.column() == SECURITY_COLUMN) {
-      return QVariant::fromValue(entry.m_key.m_index);
+      return QVariant::fromValue(entry.m_key.m_security);
     } else if(index.column() == QUANTITY_COLUMN) {
-      return QVariant::fromValue(Abs(entry.m_inventory.m_position.m_quantity));
+      return QVariant::fromValue(abs(entry.m_inventory.m_position.m_quantity));
     } else if(index.column() == SIDE_COLUMN) {
-      auto side = GetSide(entry.m_inventory.m_position);
+      auto side = get_side(entry.m_inventory.m_position);
       return QVariant::fromValue(PositionSideToken(side));
     } else if(index.column() == AVERAGE_PRICE_COLUMN) {
-      return QVariant::fromValue(GetAveragePrice(entry.m_inventory.m_position));
+      return QVariant::fromValue(
+        get_average_price(entry.m_inventory.m_position));
     } else if(index.column() == PROFIT_LOSS_COLUMN) {
       return QVariant::fromValue(entry.m_unrealizedEarnings);
     } else if(index.column() == COST_BASIS_COLUMN) {
-      return QVariant::fromValue(entry.m_inventory.m_position.m_costBasis);
+      return QVariant::fromValue(entry.m_inventory.m_position.m_cost_basis);
     } else if(index.column() == CURRENCY_COLUMN) {
       return QVariant::fromValue(entry.m_key.m_currency);
     }
@@ -112,30 +112,29 @@ QVariant OpenPositionsModel::headerData(
   return QVariant();
 }
 
-void OpenPositionsModel::OnPortfolioUpdate(
-    const SpirePortfolioController::UpdateEntry& update) {
-  auto& key = update.m_securityInventory.m_position.m_key;
-  auto entryIterator = m_securityToEntry.find(key.m_index);
+void OpenPositionsModel::OnPortfolioUpdate(const PortfolioUpdateEntry& update) {
+  auto key = get_key(update.m_security_inventory.m_position);
+  auto entryIterator = m_securityToEntry.find(key.m_security);
   if(entryIterator == m_securityToEntry.end()) {
-    if(update.m_securityInventory.m_position.m_quantity == 0) {
+    if(update.m_security_inventory.m_position.m_quantity == 0) {
       return;
     }
     auto index = static_cast<int>(m_entries.size());
     beginInsertRows(QModelIndex(), index, index);
     auto entry = std::make_unique<Entry>(index, key);
     entryIterator =
-      m_securityToEntry.insert(std::pair(key.m_index, entry.get())).first;
+      m_securityToEntry.insert(std::pair(key.m_security, entry.get())).first;
     m_entries.emplace_back(std::move(entry));
     endInsertRows();
   }
   auto& entry = *entryIterator->second;
-  entry.m_inventory = update.m_securityInventory;
-  entry.m_unrealizedEarnings = update.m_unrealizedSecurity;
+  entry.m_inventory = update.m_security_inventory;
+  entry.m_unrealizedEarnings = update.m_unrealized_security;
   Q_EMIT dataChanged(
     index(entry.m_index, 0), index(entry.m_index, COLUMNS - 1));
   if(entry.m_inventory.m_position.m_quantity == 0) {
     beginRemoveRows(QModelIndex(), entry.m_index, entry.m_index);
-    m_securityToEntry.erase(key.m_index);
+    m_securityToEntry.erase(key.m_security);
     for(auto i = entry.m_index + 1;
         i < static_cast<int>(m_entries.size()); ++i) {
       --m_entries[i]->m_index;

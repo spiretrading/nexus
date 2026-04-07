@@ -2,10 +2,10 @@
 #define SPIRE_INTERACTIONSPROPERTIES_HPP
 #include <array>
 #include <Beam/Serialization/DataShuttle.hpp>
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/Money.hpp"
+#include "Nexus/Definitions/RegionMap.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/UI/UI.hpp"
 
 namespace Spire {
 
@@ -52,23 +52,22 @@ namespace Spire {
 }
 
 namespace Beam {
-namespace Serialization {
   template<>
   struct Shuttle<Spire::InteractionsProperties> {
-    template<typename Shuttler>
-    void operator ()(Shuttler& shuttle, Spire::InteractionsProperties& value,
-        unsigned int version) {
-      if(Beam::Serialization::IsReceiver<Shuttler>::value) {
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Spire::InteractionsProperties& value,
+        unsigned int version) const {
+      if(Beam::IsReceiver<S>) {
         std::int64_t defaultQuantity;
-        shuttle.Shuttle("default_quantity", defaultQuantity);
+        shuttle.shuttle("default_quantity", defaultQuantity);
         value.m_defaultQuantity = defaultQuantity;
         std::array<std::int64_t, Spire::KeyModifiers::COUNT> quantityIncrements;
-        shuttle.Shuttle("quantity_increments", quantityIncrements);
+        shuttle.shuttle("quantity_increments", quantityIncrements);
         for(auto i = 0; i < Spire::KeyModifiers::COUNT; ++i) {
           value.m_quantityIncrements[i] = quantityIncrements[i];
         }
         std::array<std::int64_t, Spire::KeyModifiers::COUNT> priceIncrements;
-        shuttle.Shuttle("price_increments", priceIncrements);
+        shuttle.shuttle("price_increments", priceIncrements);
         for(auto i = 0; i < Spire::KeyModifiers::COUNT; ++i) {
           value.m_priceIncrements[i] = Nexus::Money{
             Nexus::Quantity{priceIncrements[i]} / Nexus::Quantity::MULTIPLIER};
@@ -76,25 +75,24 @@ namespace Serialization {
       } else {
         std::int64_t defaultQuantity = static_cast<std::int64_t>(
           value.m_defaultQuantity);
-        shuttle.Shuttle("default_quantity", defaultQuantity);
+        shuttle.shuttle("default_quantity", defaultQuantity);
         std::array<std::int64_t, Spire::KeyModifiers::COUNT> quantityIncrements;
         for(auto i = 0; i < Spire::KeyModifiers::COUNT; ++i) {
           quantityIncrements[i] = static_cast<std::int64_t>(
             value.m_quantityIncrements[i]);
         }
-        shuttle.Shuttle("quantity_increments", quantityIncrements);
+        shuttle.shuttle("quantity_increments", quantityIncrements);
         std::array<std::int64_t, Spire::KeyModifiers::COUNT> priceIncrements;
         for(auto i = 0; i < Spire::KeyModifiers::COUNT; ++i) {
           priceIncrements[i] = static_cast<std::int64_t>(
             static_cast<Nexus::Quantity>(value.m_priceIncrements[i]) *
             Nexus::Quantity::MULTIPLIER);
         }
-        shuttle.Shuttle("price_increments", priceIncrements);
+        shuttle.shuttle("price_increments", priceIncrements);
       }
-      shuttle.Shuttle("cancel_on_fill", value.m_cancelOnFill);
+      shuttle.shuttle("cancel_on_fill", value.m_cancelOnFill);
     }
   };
-}
 }
 
 #endif

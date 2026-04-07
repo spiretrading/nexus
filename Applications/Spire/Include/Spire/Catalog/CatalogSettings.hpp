@@ -11,6 +11,7 @@
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
+  class UserProfile;
 
   /** Stores the user's catalog related settings. */
   class CatalogSettings {

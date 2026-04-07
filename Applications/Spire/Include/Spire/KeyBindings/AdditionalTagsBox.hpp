@@ -4,7 +4,6 @@
 #include <QWidget>
 #include "Spire/KeyBindings/AdditionalTag.hpp"
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
-#include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/ClickObserver.hpp"
@@ -48,8 +47,7 @@ namespace Spire {
       AdditionalTagsBox(std::shared_ptr<AdditionalTagsModel> current,
         AdditionalTagDatabase additional_tags,
         std::shared_ptr<DestinationModel> destination,
-        std::shared_ptr<RegionModel> region,
-        QWidget* parent = nullptr);
+        std::shared_ptr<RegionModel> region, QWidget* parent = nullptr);
 
       /** Returns the list of additional tags represented. */
       const std::shared_ptr<AdditionalTagsModel>& get_current() const;

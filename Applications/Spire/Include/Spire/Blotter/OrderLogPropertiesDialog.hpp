@@ -7,7 +7,7 @@
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/OrderLogProperties.hpp"
-#include "Spire/Spire/Spire.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 class QCheckBox;
 class Ui_OrderLogPropertiesDialog;

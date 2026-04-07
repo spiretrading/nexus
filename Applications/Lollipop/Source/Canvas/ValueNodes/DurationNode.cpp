@@ -38,10 +38,10 @@ void DurationNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> DurationNode::Clone() const {
-  return make_unique<DurationNode>(*this);
+std::unique_ptr<CanvasNode> DurationNode::Clone() const {
+  return std::make_unique<DurationNode>(*this);
 }
 
-unique_ptr<CanvasNode> DurationNode::Reset() const {
-  return make_unique<DurationNode>();
+std::unique_ptr<CanvasNode> DurationNode::Reset() const {
+  return std::make_unique<DurationNode>();
 }

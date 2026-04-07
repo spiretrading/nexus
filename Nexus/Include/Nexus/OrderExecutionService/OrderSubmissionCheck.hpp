@@ -1,8 +1,8 @@
 #ifndef NEXUS_ORDER_SUBMISSION_CHECK_HPP
 #define NEXUS_ORDER_SUBMISSION_CHECK_HPP
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "Nexus/OrderExecutionService/Order.hpp"
 
-namespace Nexus::OrderExecutionService {
+namespace Nexus {
 
   /** Interface used to check if an Order submission is valid. */
   class OrderSubmissionCheck {
@@ -11,21 +11,21 @@ namespace Nexus::OrderExecutionService {
 
       /**
        * Performs a check on a submission.
-       * @param orderInfo The OrderInfo being submitted.
+       * @param info The OrderInfo being submitted.
        */
-      virtual void Submit(const OrderInfo& orderInfo) = 0;
+      virtual void submit(const OrderInfo& info) = 0;
 
       /**
        * Adds an Order that successfully passed all submission checks.
        * @param order The successfully submitted Order.
        */
-      virtual void Add(const Order& order);
+      virtual void add(const std::shared_ptr<Order>& order);
 
       /**
        * Indicates that a submission was rejected.
-       * \param orderInfo The OrderInfo being rejected.
+       * @param info The OrderInfo being rejected.
        */
-      virtual void Reject(const OrderInfo& orderInfo);
+      virtual void reject(const OrderInfo& info);
 
     protected:
 
@@ -37,9 +37,9 @@ namespace Nexus::OrderExecutionService {
       OrderSubmissionCheck& operator =(const OrderSubmissionCheck&) = delete;
   };
 
-  inline void OrderSubmissionCheck::Add(const Order& order) {}
+  inline void OrderSubmissionCheck::add(const std::shared_ptr<Order>& order) {}
 
-  inline void OrderSubmissionCheck::Reject(const OrderInfo& orderInfo) {}
+  inline void OrderSubmissionCheck::reject(const OrderInfo& info) {}
 }
 
 #endif

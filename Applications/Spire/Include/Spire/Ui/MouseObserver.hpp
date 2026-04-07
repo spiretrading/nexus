@@ -3,7 +3,8 @@
 #include <functional>
 #include <memory>
 #include <QMouseEvent>
-#include "Spire/Ui/Ui.hpp"
+#include <QWidget>
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 

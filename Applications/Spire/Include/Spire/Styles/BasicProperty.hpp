@@ -2,7 +2,6 @@
 #define SPIRE_STYLES_BASIC_PROPERTY_HPP
 #include <utility>
 #include "Spire/Styles/Expression.hpp"
-#include "Spire/Styles/Styles.hpp"
 
 namespace Spire::Styles {
 
@@ -64,7 +63,7 @@ namespace std {
   template<typename T, typename G>
   struct hash<Spire::Styles::BasicProperty<T, G>> {
     std::size_t operator ()(
-        const Spire::Styles::BasicProperty<T, G>& property) const {
+        const Spire::Styles::BasicProperty<T, G>& property) const noexcept {
       return std::hash<Spire::Styles::BasicProperty<T, G>::Expression>()(
         property.get_expression());
     }

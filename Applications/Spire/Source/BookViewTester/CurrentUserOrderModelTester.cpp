@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
+#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/BookView/CurrentUserOrderModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -12,8 +12,8 @@ using namespace Spire;
 
 namespace {
   auto make_book_quote(Money price, Side side) {
-    return BookQuote("TSX", true, DefaultMarkets::TSX(),
-      Quote(price, 100, side), time_from_string("2016-07-31 19:00:00"));
+    return BookQuote("TSX", true, DefaultVenues::TSX, Quote(price, 100, side),
+      time_from_string("2016-07-31 19:00:00"));
   }
 }
 

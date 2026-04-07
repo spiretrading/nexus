@@ -51,14 +51,14 @@ namespace Details {
       virtual void Apply(CanvasTypeVisitor& visitor) const = 0;
 
     protected:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void CanvasType::Shuttle(Shuttler& shuttle, unsigned int version) {}
+  template<Beam::IsShuttle S>
+  void CanvasType::shuttle(S& shuttle, unsigned int version) {}
 
   //! Tests if a value represents CanvasType compatibility.
   /*!

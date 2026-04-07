@@ -33,14 +33,12 @@ namespace Spire {
       virtual ~OrderImbalanceIndicatorWindowSettings();
 
       virtual std::string GetName() const;
-
       virtual QWidget* Reopen(Beam::Ref<UserProfile> userProfile) const;
-
       virtual void Apply(Beam::Ref<UserProfile> userProfile,
         Beam::Out<QWidget> widget) const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
       OrderImbalanceIndicatorProperties m_properties;
       QByteArray m_geometry;
       QByteArray m_tableHeaderGeometry;
@@ -48,19 +46,19 @@ namespace Spire {
       std::shared_ptr<LegacyUI::WindowSettings> m_timeRangeSettings;
       std::shared_ptr<LegacyUI::WindowSettings> m_marketsSettings;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void OrderImbalanceIndicatorWindowSettings::Shuttle(Shuttler& shuttle,
-      unsigned int version) {
-    shuttle.Shuttle("properties", m_properties);
-    shuttle.Shuttle("geometry", m_geometry);
-    shuttle.Shuttle("table_header_geometry", m_tableHeaderGeometry);
-    shuttle.Shuttle("table_header_state", m_tableHeaderState);
-    shuttle.Shuttle("time_range_settings", m_timeRangeSettings);
-    shuttle.Shuttle("markets_settings", m_marketsSettings);
+  template<Beam::IsShuttle S>
+  void OrderImbalanceIndicatorWindowSettings::shuttle(
+      S& shuttle, unsigned int version) {
+    shuttle.shuttle("properties", m_properties);
+    shuttle.shuttle("geometry", m_geometry);
+    shuttle.shuttle("table_header_geometry", m_tableHeaderGeometry);
+    shuttle.shuttle("table_header_state", m_tableHeaderState);
+    shuttle.shuttle("time_range_settings", m_timeRangeSettings);
+    shuttle.shuttle("markets_settings", m_marketsSettings);
   }
 }
 

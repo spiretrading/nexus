@@ -4,7 +4,6 @@
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 
 using namespace Beam;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Spire;
@@ -13,7 +12,7 @@ using namespace std;
 namespace {
   string GetDisplayText(const time_duration& value) {
     QTime timeDisplay(0, 0, 0, 0);
-    auto localTime = ToLocalTime(value);
+    auto localTime = to_local_time(value);
     timeDisplay = timeDisplay.addMSecs(
       static_cast<int>(localTime.total_milliseconds()));
     return timeDisplay.toString("hh:mm:ss.zzz").toStdString();
@@ -21,7 +20,7 @@ namespace {
 }
 
 TimeNode::TimeNode()
-    : ValueNode(ToUtcTime(seconds(0))) {
+    : ValueNode(to_utc_time(seconds(0))) {
   SetText(GetDisplayText(GetValue()));
 }
 
@@ -41,10 +40,10 @@ void TimeNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> TimeNode::Clone() const {
-  return make_unique<TimeNode>(*this);
+std::unique_ptr<CanvasNode> TimeNode::Clone() const {
+  return std::make_unique<TimeNode>(*this);
 }
 
-unique_ptr<CanvasNode> TimeNode::Reset() const {
-  return make_unique<TimeNode>();
+std::unique_ptr<CanvasNode> TimeNode::Reset() const {
+  return std::make_unique<TimeNode>();
 }

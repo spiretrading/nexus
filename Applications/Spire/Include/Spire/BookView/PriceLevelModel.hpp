@@ -1,7 +1,6 @@
 #ifndef SPIRE_PRICE_LEVEL_MODEL_HPP
 #define SPIRE_PRICE_LEVEL_MODEL_HPP
 #include "Nexus/Definitions/Money.hpp"
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 
@@ -30,9 +29,7 @@ namespace Spire {
         std::shared_ptr<MaxLevelModel> max_level);
 
       int get_size() const override;
-
-      const Type& get(int index) const;
-
+      const Type& get(int index) const override;
       boost::signals2::connection connect_operation_signal(
         const OperationSignal::slot_type& slot) const override;
 

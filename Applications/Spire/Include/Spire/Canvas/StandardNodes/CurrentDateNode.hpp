@@ -20,24 +20,16 @@ namespace Spire {
       virtual std::unique_ptr<CanvasNode> Clone() const;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
-      CurrentDateNode(Beam::Serialization::ReceiveBuilder);
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void CurrentDateNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    CanvasNode::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void CurrentDateNode::shuttle(S& shuttle, unsigned int version) {
+    CanvasNode::shuttle(shuttle, version);
   }
-}
-
-namespace Beam {
-namespace Serialization {
-  template<>
-  struct IsDefaultConstructable<Spire::CurrentDateNode> : std::false_type {};
-}
 }
 
 #endif

@@ -3,7 +3,6 @@
 #include <deque>
 #include <memory>
 #include "Spire/Ui/TableViewItemBuilder.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -35,7 +34,6 @@ namespace Spire {
 
       QWidget* mount(
         const std::shared_ptr<TableModel>& table, int row, int column);
-
       void unmount(QWidget* widget);
 
     private:

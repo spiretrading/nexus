@@ -1,9 +1,9 @@
 #ifndef SPIRE_EVENT_HANDLER_HPP
 #define SPIRE_EVENT_HANDLER_HPP
+#include <concepts>
 #include <memory>
 #include <utility>
 #include <Beam/Queues/TaskQueue.hpp>
-#include "Spire/Async/Async.hpp"
 
 namespace Spire {
 
@@ -22,7 +22,7 @@ namespace Spire {
        * @param slot The slot to call when a new value is pushed.
        * @return A QueueWriter that translates a push into a slot invocation.
        */
-      template<typename T, typename F>
+      template<typename T, std::invocable<const T&> F>
       auto get_slot(F&& slot);
 
       /**
@@ -31,7 +31,8 @@ namespace Spire {
        * @param break_slot The slot to call when this Queue is broken.
        * @return A QueueWriter that translates a push into a slot invocation.
        */
-      template<typename T, typename F, typename B>
+      template<typename T, std::invocable<const T&> F,
+        std::invocable<const std::exception_ptr&> B>
       auto get_slot(F&& slot, B&& break_slot);
 
       /**
@@ -39,8 +40,7 @@ namespace Spire {
        * Qt event-loop.
        * @param f The task to push.
        */
-      template<typename F>
-      void push(F&& f);
+      void push(std::function<void ()> f);
 
     private:
       std::shared_ptr<Beam::TaskQueue> m_tasks;
@@ -49,20 +49,16 @@ namespace Spire {
       EventHandler& operator =(const EventHandler&) = delete;
   };
 
-  template<typename T, typename F>
+  template<typename T, std::invocable<const T&> F>
   auto EventHandler::get_slot(F&& slot) {
-    return m_tasks->GetSlot<T>(std::forward<F>(slot));
+    return m_tasks->get_slot<T>(std::forward<F>(slot));
   }
 
-  template<typename T, typename F, typename B>
+  template<typename T, std::invocable<const T&> F,
+    std::invocable<const std::exception_ptr&> B>
   auto EventHandler::get_slot(F&& slot, B&& break_slot) {
-    return m_tasks->GetSlot<T>(std::forward<F>(slot),
+    return m_tasks->get_slot<T>(std::forward<F>(slot),
       std::forward<B>(break_slot));
-  }
-
-  template<typename F>
-  void EventHandler::push(F&& f) {
-    m_tasks->Push(std::forward<F>(f));
   }
 }
 

@@ -1,117 +1,179 @@
 #ifndef NEXUS_EXCHANGE_RATE_TABLE_HPP
 #define NEXUS_EXCHANGE_RATE_TABLE_HPP
-#include <algorithm>
-#include <stdexcept>
+#include <queue>
+#include <unordered_map>
+#include <unordered_set>
 #include <vector>
-#include <boost/optional/optional.hpp>
-#include <boost/throw_exception.hpp>
+#include <Beam/Serialization/DataShuttle.hpp>
+#include <Beam/Serialization/ShuttleUnorderedMap.hpp>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
+#include <boost/optional/optional.hpp>
+#include <boost/throw_exception.hpp>
+#include "Nexus/Definitions/CurrencyPair.hpp"
 #include "Nexus/Definitions/CurrencyPairNotFoundException.hpp"
-#include "Nexus/Definitions/Definitions.hpp"
 #include "Nexus/Definitions/ExchangeRate.hpp"
+#include "Nexus/Definitions/Money.hpp"
 
 namespace Nexus {
 
-  /** Stores a table of ExchangeRates. */
+  /** Stores and retrieves exchange rates for currency conversions. */
   class ExchangeRateTable {
     public:
 
-      /**
-       * Finds an ExchangeRate.
-       * @param pair The ExchangeRate's CurrencyPair.
-       * @return The ExchangeRate for the specified <i>pair</i>.
-       */
-      boost::optional<ExchangeRate> Find(CurrencyPair pair) const;
+      /** Constructs an empty table. */
+      ExchangeRateTable() = default;
+
+      /** Constructs a table from a list of exchange rates. */
+      explicit ExchangeRateTable(const std::vector<ExchangeRate>& rates);
+
+      ExchangeRateTable(const ExchangeRateTable& table);
 
       /**
-       * Converts a Money value from a base currency to its counter currency.
-       * @param value The value to convert.
-       * @param base The base currency that the <i>value</i> represents.
-       * @param counter The counter currency to convert the <i>value</i> to.
-       * @return The <i>value</i> converted from the <i>base</i> currency to the
-       *         <i>counter</i> currency.
+       * Finds the exchange rate for a given currency pair.
+       * @param pair The currency pair to look up.
+       * @return The exchange rate if found or boost::none if no rate exists for
+       *         the pair.
        */
-      Money Convert(Money value, CurrencyId base, CurrencyId counter) const;
+      boost::optional<ExchangeRate> find(CurrencyPair pair) const;
 
       /**
-       * Adds an ExchangeRate to this table.
-       * @param pair The ExchangeRate to add.
+       * Converts an amount using the exchange rate for a given currency pair.
+       * @param value The monetary amount to convert.
+       * @param pair The currency pair specifying base and counter currencies.
+       * @return The converted monetary amount.
+       * @throws CurrencyPairNotFoundException If no exchange rate exists for
+       *         the pair.
        */
-      void Add(const ExchangeRate& exchangeRate);
+      Money convert(Money value, CurrencyPair pair) const;
+
+      /**
+       * Converts an amount using base and counter currency IDs.
+       * @param value The monetary amount to convert.
+       * @param base The base currency ID.
+       * @param counter The counter currency ID.
+       * @return The converted monetary amount.
+       * @throws CurrencyPairNotFoundException If no exchange rate exists for
+       *         the constructed pair.
+       */
+      Money convert(Money value, CurrencyId base, CurrencyId counter) const;
+
+      /**
+       * Adds or updates an exchange rate in the table.
+       * @param rate The exchange rate to add or update.
+       */
+      void add(const ExchangeRate& rate);
 
     private:
+      friend struct Beam::Shuttle<ExchangeRateTable>;
       mutable boost::mutex m_mutex;
-      mutable std::vector<ExchangeRate> m_exchangeRates;
-
-      void ImmutableAdd(const ExchangeRate& exchangeRate) const;
+      std::unordered_map<CurrencyPair, ExchangeRate> m_direct_rates;
+      mutable std::unordered_map<CurrencyPair, ExchangeRate> m_derived_rates;
   };
 
-  inline boost::optional<ExchangeRate> ExchangeRateTable::Find(
-      CurrencyPair pair) const {
+  inline ExchangeRateTable::ExchangeRateTable(
+      const std::vector<ExchangeRate>& rates) {
+    for(auto& rate : rates) {
+      add(rate);
+    }
+  }
+
+  inline ExchangeRateTable::ExchangeRateTable(const ExchangeRateTable& table) {
+    auto lock = boost::lock_guard(table.m_mutex);
+    m_direct_rates = table.m_direct_rates;
+    m_derived_rates = table.m_derived_rates;
+  }
+
+  inline boost::optional<ExchangeRate>
+      ExchangeRateTable::find(CurrencyPair pair) const {
+    {
+      auto lock = boost::lock_guard(m_mutex);
+      auto i = m_direct_rates.find(pair);
+      if(i != m_direct_rates.end()) {
+        return i->second;
+      }
+      auto j = m_derived_rates.find(pair);
+      if(j != m_derived_rates.end()) {
+        return j->second;
+      }
+    }
     if(pair.m_base == pair.m_counter) {
       return ExchangeRate(pair, 1);
     }
-    auto ExchangeRateSearch =
-      [&] (CurrencyPair pair) {
-        auto exchangeRateIterator = std::lower_bound(m_exchangeRates.begin(),
-          m_exchangeRates.end(), pair,
-          [] (auto& lhs, auto& rhs) {
-            return lhs.m_pair < rhs;
-          });
-        if(exchangeRateIterator == m_exchangeRates.end() ||
-            exchangeRateIterator->m_pair != pair) {
-          return m_exchangeRates.end();
+    auto rates = std::unordered_map<CurrencyPair, ExchangeRate>();
+    {
+      auto lock = boost::lock_guard(m_mutex);
+      rates = m_direct_rates;
+    }
+    auto visited = std::unordered_set<CurrencyId>();
+    auto queue = std::queue<std::pair<CurrencyId, boost::rational<int>>>();
+    queue.push(std::pair(pair.m_base, boost::rational<int>(1)));
+    visited.insert(pair.m_base);
+    while(!queue.empty()) {
+      auto [currency, cumulative_rate] = queue.front();
+      queue.pop();
+      if(currency == pair.m_counter) {
+        auto derived_rate = ExchangeRate(pair, cumulative_rate);
+        {
+          auto lock = boost::lock_guard(m_mutex);
+          m_derived_rates.insert(std::pair(pair, derived_rate));
         }
-        return exchangeRateIterator;
-      };
-    auto lock = boost::lock_guard(m_mutex);
-    auto exchangeRateIterator = ExchangeRateSearch(pair);
-    if(exchangeRateIterator == m_exchangeRates.end()) {
-      exchangeRateIterator = ExchangeRateSearch(Invert(pair));
-      if(exchangeRateIterator == m_exchangeRates.end()) {
-        return boost::none;
+        return derived_rate;
       }
-      auto invertedExchangeRate = Invert(*exchangeRateIterator);
-      ImmutableAdd(invertedExchangeRate);
-      return invertedExchangeRate;
+      for(auto& [pair, rate] : rates) {
+        if(pair.m_base == currency) {
+          auto next = pair.m_counter;
+          if(visited.insert(next).second) {
+            queue.push(std::pair(next, cumulative_rate * rate.m_rate));
+          }
+        } else if(pair.m_counter == currency) {
+          auto next = pair.m_base;
+          if(visited.insert(next).second) {
+            auto inverse = boost::rational<int>(
+              rate.m_rate.denominator(), rate.m_rate.numerator());
+            queue.push(std::pair(next, cumulative_rate * inverse));
+          }
+        }
+      }
     }
-    return *exchangeRateIterator;
+    return boost::none;
   }
 
-  inline Money ExchangeRateTable::Convert(Money value, CurrencyId base,
-      CurrencyId counter) const {
-    auto exchangeRate = Find({base, counter});
-    if(!exchangeRate.is_initialized()) {
-      BOOST_THROW_EXCEPTION(CurrencyPairNotFoundException());
+  inline Money ExchangeRateTable::convert(
+      Money value, CurrencyPair pair) const {
+    if(auto rate = find(pair)) {
+      return Nexus::convert(value, *rate);
     }
-    return Nexus::Convert(value, *exchangeRate);
+    boost::throw_with_location(CurrencyPairNotFoundException());
   }
 
-  inline void ExchangeRateTable::Add(const ExchangeRate& exchangeRate) {
-    if(exchangeRate.m_pair.m_base == exchangeRate.m_pair.m_counter) {
-      return;
-    }
+  inline Money ExchangeRateTable::convert(
+      Money value, CurrencyId base, CurrencyId counter) const {
+    return convert(value, CurrencyPair(base, counter));
+  }
+
+  inline void ExchangeRateTable::add(const ExchangeRate& rate) {
     auto lock = boost::lock_guard(m_mutex);
-    ImmutableAdd(exchangeRate);
-    ImmutableAdd(Invert(exchangeRate));
+    m_direct_rates[rate.m_pair] = rate;
+    auto inverse = invert(rate);
+    m_direct_rates[inverse.m_pair] = inverse;
+    m_derived_rates.clear();
   }
+}
 
-  inline void ExchangeRateTable::ImmutableAdd(
-      const ExchangeRate& exchangeRate) const {
-    auto exchangeRateIterator = std::lower_bound(m_exchangeRates.begin(),
-        m_exchangeRates.end(), exchangeRate,
-      [] (auto& lhs, auto& rhs) {
-        return lhs.m_pair < rhs.m_pair;
-      });
-    if(exchangeRateIterator == m_exchangeRates.end()) {
-      m_exchangeRates.push_back(exchangeRate);
-    } else if(exchangeRateIterator->m_pair == exchangeRate.m_pair) {
-      *exchangeRateIterator = exchangeRate;
-    } else {
-      m_exchangeRates.insert(exchangeRateIterator, exchangeRate);
+namespace Beam {
+  template<>
+  struct Shuttle<Nexus::ExchangeRateTable> {
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::ExchangeRateTable& value,
+        unsigned int version) const {
+      auto lock = boost::lock_guard(value.m_mutex);
+      shuttle.shuttle("direct_rates", value.m_direct_rates);
+      if constexpr(IsReceiver<S>) {
+        value.m_derived_rates.clear();
+      }
     }
-  }
+  };
 }
 
 #endif

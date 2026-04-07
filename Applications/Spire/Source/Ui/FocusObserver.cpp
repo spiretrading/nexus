@@ -147,7 +147,7 @@ void FocusObserver::ApplicationFocusFilter::on_focus_changed(
     return false;
   });
   for(auto& signaling_entry : signaling_entries) {
-    if(!signaling_entry->m_is_removed && signaling_entry->m_filter) {
+    if(m_filter_to_entry.contains(signaling_entry->m_filter)) {
       signaling_entry->m_filter->m_state_signal(
         signaling_entry->m_filter->m_state);
     }

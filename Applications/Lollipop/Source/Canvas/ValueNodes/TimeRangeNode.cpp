@@ -5,8 +5,6 @@
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::date_time;
 using namespace boost::posix_time;
@@ -16,22 +14,22 @@ using namespace std;
 
 namespace {
   string GetDisplayText(const Range& value) {
-    if(value == Range::RealTime()) {
+    if(value == Range::REAL_TIME) {
       return "Real-Time";
     }
     string startingPoint;
-    if(value.GetStart() == Queries::Sequence::Present()) {
+    if(value.get_start() == Beam::Sequence::PRESENT) {
       startingPoint = "Present";
     } else {
-      startingPoint = to_simple_string(ToLocalTime(boost::get<ptime>(
-        value.GetStart())));
+      startingPoint = to_simple_string(to_local_time(boost::get<ptime>(
+        value.get_start())));
     }
     string endingPoint;
-    if(value.GetStart() == Queries::Sequence::Present()) {
+    if(value.get_end() == Beam::Sequence::PRESENT) {
       endingPoint = "Present";
     } else {
-      endingPoint = to_simple_string(ToLocalTime(boost::get<ptime>(
-        value.GetEnd())));
+      endingPoint = to_simple_string(to_local_time(boost::get<ptime>(
+        value.get_end())));
     }
     return startingPoint + " -> " + endingPoint;
   }
@@ -58,7 +56,7 @@ void TimeRangeNode::Apply(CanvasNodeVisitor& visitor) const {
 }
 
 unique_ptr<CanvasNode> TimeRangeNode::Clone() const {
-  return make_unique<TimeRangeNode>(*this);
+  return std::make_unique<TimeRangeNode>(*this);
 }
 
 unique_ptr<CanvasNode> TimeRangeNode::Reset() const {

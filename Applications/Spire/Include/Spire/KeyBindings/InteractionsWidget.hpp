@@ -10,6 +10,7 @@
 class Ui_InteractionsWidget;
 
 namespace Spire {
+  class UserProfile;
 
   /** Displays and allows modification of the InteractionsProperties. */
   class InteractionsWidget : public QWidget {
@@ -39,6 +40,9 @@ namespace Spire {
       void Initialize(
         Beam::Ref<UserProfile> userProfile, const Nexus::Security& security);
 
+      /** Stores the current interactions to the UserProfile. */
+      void Store();
+
     private:
       struct RegionEntry {
         Nexus::Region m_region;
@@ -55,7 +59,6 @@ namespace Spire {
       void Add(RegionEntry region);
       void Style(const RegionEntry& region);
       void Update();
-      void Store();
       void OnRegionIndexChanged(int index);
       void OnKeyboardModifierIndexChanged(int index);
       void OnActivateRegionClicked();

@@ -9,7 +9,6 @@
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -36,7 +35,7 @@ TimeInputWidget::TimeInputWidget(Ref<UserProfile> userProfile,
 TimeInputWidget::~TimeInputWidget() {}
 
 void TimeInputWidget::Initialize(Ref<UserProfile> userProfile) {
-  m_userProfile = userProfile.Get();
+  m_userProfile = userProfile.get();
 }
 
 const time_duration& TimeInputWidget::GetTime() const {
@@ -46,9 +45,8 @@ const time_duration& TimeInputWidget::GetTime() const {
 void TimeInputWidget::SetTime(time_duration time) {
   m_time = std::move(time);
   QTime timeDisplay{0, 0, 0, 0};
-  auto localTime = ToLocalTime(m_time);
   timeDisplay = timeDisplay.addMSecs(
-    static_cast<int>(localTime.total_milliseconds()));
+    static_cast<int>(m_time.total_milliseconds()));
   m_lineEdit->setText(timeDisplay.toString("hh:mm:ss.zzz"));
   m_timeUpdatedSignal(m_time);
 }

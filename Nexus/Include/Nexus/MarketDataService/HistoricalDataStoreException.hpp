@@ -1,21 +1,20 @@
 #ifndef NEXUS_MARKET_DATA_SERVICE_HISTORICAL_DATA_STORE_EXCEPTION_HPP
 #define NEXUS_MARKET_DATA_SERVICE_HISTORICAL_DATA_STORE_EXCEPTION_HPP
 #include <Beam/IO/IOException.hpp>
-#include "Nexus/MarketDataService/MarketDataService.hpp"
 
-namespace Nexus::MarketDataService {
+namespace Nexus {
 
   /** Exception to indicate an operation on a HistoricalDataStore failed. */
-  class HistoricalDataStoreException : public Beam::IO::IOException {
+  class HistoricalDataStoreException : public Beam::IOException {
     public:
-      using Beam::IO::IOException::IOException;
+      using Beam::IOException::IOException;
 
       /** Constructs a HistoricalDataStoreException. */
       HistoricalDataStoreException();
   };
 
   inline HistoricalDataStoreException::HistoricalDataStoreException()
-    : Beam::IO::IOException("Operation failed") {}
+    : HistoricalDataStoreException("Operation failed") {}
 }
 
 #endif

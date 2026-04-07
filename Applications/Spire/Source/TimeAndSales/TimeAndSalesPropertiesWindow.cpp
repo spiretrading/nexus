@@ -1,6 +1,7 @@
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesWindow.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/FontBox.hpp"
 #include "Spire/Ui/HighlightBox.hpp"
 #include "Spire/Ui/Layouts.hpp"

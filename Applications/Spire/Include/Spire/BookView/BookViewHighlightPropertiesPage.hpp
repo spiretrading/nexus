@@ -1,7 +1,6 @@
 #ifndef SPIRE_BOOK_VIEW_HIGHLIGHT_PROPERTIES_PAGE_HPP
 #define SPIRE_BOOK_VIEW_HIGHLIGHT_PROPERTIES_PAGE_HPP
 #include <QWidget>
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 
@@ -21,12 +20,11 @@ namespace Spire {
       /**
        * Constructs a BookViewHighlightPropertiesPage.
        * @param current The initial current properties.
-       * @param markets The market database to use.
        * @param parent The parent widget.
        */
-      BookViewHighlightPropertiesPage(
+      explicit BookViewHighlightPropertiesPage(
         std::shared_ptr<HighlightPropertiesModel> current,
-        Nexus::MarketDatabase markets, QWidget* parent = nullptr);
+        QWidget* parent = nullptr);
 
       /** Returns the current properties. */
       const std::shared_ptr<HighlightPropertiesModel>& get_current() const;

@@ -1,5 +1,4 @@
 #include "Spire/Canvas/Common/CanvasNode.hpp"
-#include <Beam/Collections/DereferenceIterator.hpp>
 #include <boost/range/algorithm.hpp>
 #include <boost/throw_exception.hpp>
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
@@ -29,7 +28,7 @@ boost::optional<const CanvasNode&> CanvasNode::GetParent() const {
 }
 
 View<const CanvasNode> CanvasNode::GetChildren() const {
-  return MakeDereferenceView(m_children);
+  return make_dereference_view(m_children);
 }
 
 const CanvasType& CanvasNode::GetType() const {

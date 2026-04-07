@@ -1,181 +1,234 @@
+#include <future>
 #include <Aspen/Aspen.hpp>
+#include <Beam/Queues/Queue.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/OrderExecutionService/OrderReactor.hpp"
-#include "Nexus/ServiceClients/TestEnvironment.hpp"
-#include "Nexus/ServiceClients/TestServiceClients.hpp"
+#include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
+#include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
+#include "Nexus/OrderExecutionServiceTests/TestOrderExecutionClient.hpp"
 
 using namespace Aspen;
 using namespace Beam;
+using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::OrderExecutionService;
-using namespace Nexus::OrderExecutionService::Tests;
+using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::DefaultVenues;
+using namespace Nexus::Tests;
 
 namespace {
-  const auto SECURITY_A = Security("TST", DefaultMarkets::TSX(),
-    DefaultCountries::CA());
+  struct Fixture {
+    Beam::Queue<bool> m_commits;
+    Trigger m_trigger;
+    optional<Aspen::Shared<Aspen::Box<std::shared_ptr<Order>>>> m_order;
+    int m_sequence;
+    OrderId m_next_id;
+    std::shared_ptr<Beam::Queue<
+      std::shared_ptr<TestOrderExecutionClient::Operation>>> m_operations;
+    TestOrderExecutionClient m_client;
+
+    Fixture()
+      : m_trigger([&] {
+          m_commits.push(true);
+        }),
+        m_sequence(0),
+        m_next_id(123),
+        m_operations(std::make_shared<Beam::Queue<
+          std::shared_ptr<TestOrderExecutionClient::Operation>>>()),
+        m_client(m_operations) {
+      Trigger::set_trigger(m_trigger);
+    }
+
+    void set(Aspen::Shared<Aspen::Box<std::shared_ptr<Order>>> order) {
+      m_order.emplace(std::move(order));
+    }
+
+    void require_state(Aspen::State expected_state) {
+      if(m_sequence != 0) {
+        m_commits.pop();
+      }
+      REQUIRE(m_order->commit(m_sequence) == expected_state);
+      ++m_sequence;
+    }
+
+    template<typename F>
+    std::shared_ptr<PrimitiveOrder> require_submit(F&& expect) {
+      auto submit = std::async(std::launch::async, [&] {
+        auto operation = m_operations->pop();
+        auto submit = std::get_if<TestOrderExecutionClient::SubmitOperation>(
+          operation.get());
+        REQUIRE(submit);
+        std::forward<F>(expect)(submit->m_fields);
+        auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
+          submit->m_fields, m_next_id,
+          time_from_string("2025-05-06 10:12:13:00")));
+        ++m_next_id;
+        submit->m_result.set(order);
+        return order;
+      });
+      require_state(Aspen::State::EVALUATED);
+      auto expected_order = submit.get();
+      REQUIRE(m_order->eval() == expected_order);
+      require_state(Aspen::State::NONE);
+      return expected_order;
+    }
+
+    void require_cancel(PrimitiveOrder& order) {
+      auto cancel_async = std::async(std::launch::async, [&] {
+        auto operation = m_operations->pop();
+        auto cancel = std::get_if<TestOrderExecutionClient::CancelOperation>(
+          operation.get());
+        REQUIRE(cancel);
+        REQUIRE(cancel->m_id == order.get_info().m_id);
+      });
+      cancel_async.get();
+      set_order_status(order, OrderStatus::PENDING_CANCEL);
+      require_state(Aspen::State::NONE);
+      cancel(order);
+    }
+  };
 }
 
 TEST_SUITE("OrderReactor") {
-  TEST_CASE("empty_order_fields") {
-    auto trigger = Trigger();
-    Trigger::set_trigger(trigger);
-    auto environment = TestEnvironment();
-    auto serviceClients = TestServiceClients(Ref(environment));
-    auto reactor = MakeLimitOrderReactor(
-      Ref(serviceClients.GetOrderExecutionClient()), Aspen::none<Security>(),
-      Aspen::constant(Side::BID), Aspen::constant(100),
-      Aspen::constant(Money::ONE));
-    REQUIRE(reactor.commit(0) == Aspen::State::COMPLETE);
-    Trigger::set_trigger(nullptr);
+  TEST_CASE("empty_quantity") {
+    auto fixture = Fixture();
+    auto security = Security("TST", TSX);
+    auto fields =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 0, Money::ONE);
+    auto quantity_reactor = Aspen::constant(Quantity(0));
+    fixture.set(Aspen::Shared(make_limit_order_reactor(&fixture.m_client,
+      Aspen::constant(fields.m_account), Aspen::constant(fields.m_security),
+      Aspen::constant(fields.m_currency), Aspen::constant(fields.m_side),
+      Aspen::constant(fields.m_destination), quantity_reactor,
+      Aspen::constant(fields.m_price),
+      Aspen::constant(fields.m_time_in_force))));
+    fixture.require_state(Aspen::State::COMPLETE);
   }
 
-  TEST_CASE("single_order_fields") {
-    auto commits = Beam::Queue<bool>();
-    auto trigger = Trigger(
-      [&] {
-        commits.Push(true);
-      });
-    Trigger::set_trigger(trigger);
-    auto environment = TestEnvironment();
-    auto serviceClients = TestServiceClients(Ref(environment));
-    auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
-    environment.MonitorOrderSubmissions(orderSubmissions);
-    auto reactor = MakeLimitOrderReactor(
-      Ref(serviceClients.GetOrderExecutionClient()),
-      Aspen::constant(SECURITY_A), Aspen::constant(Side::BID),
-      Aspen::constant(100), Aspen::constant(Money::ONE));
-    REQUIRE(reactor.commit(0) == Aspen::State::EVALUATED);
-    auto sentOrder = reactor.eval();
-    REQUIRE(sentOrder->GetInfo().m_fields.m_security == SECURITY_A);
-    REQUIRE(sentOrder->GetInfo().m_fields.m_side == Side::BID);
-    REQUIRE(sentOrder->GetInfo().m_fields.m_quantity == 100);
-    REQUIRE(sentOrder->GetInfo().m_fields.m_price == Money::ONE);
-    auto receivedOrder = orderSubmissions->Pop();
-    commits.Pop();
-    REQUIRE(reactor.commit(1) == Aspen::State::NONE);
-    environment.Accept(*receivedOrder);
-    commits.Pop();
-    REQUIRE(reactor.commit(2) == Aspen::State::NONE);
-    environment.Fill(*receivedOrder, 100);
-    commits.Pop();
-    REQUIRE(reactor.commit(3) == Aspen::State::COMPLETE);
-    Trigger::set_trigger(nullptr);
+  TEST_CASE("single_limit_order_submission") {
+    auto fixture = Fixture();
+    auto security = Security("TST", TSX);
+    auto fields =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
+    fixture.set(Aspen::Shared(make_limit_order_reactor(&fixture.m_client,
+      Aspen::constant(fields.m_account), Aspen::constant(fields.m_security),
+      Aspen::constant(fields.m_currency), Aspen::constant(fields.m_side),
+      Aspen::constant(fields.m_destination), Aspen::constant(fields.m_quantity),
+      Aspen::constant(fields.m_price),
+      Aspen::constant(fields.m_time_in_force))));
+    auto expected_order = fixture.require_submit([&] (const auto& fields) {
+      REQUIRE(fields.m_security == security);
+      REQUIRE(fields.m_quantity == 100);
+      REQUIRE(fields.m_price == Money::ONE);
+      REQUIRE(fields.m_side == Side::BID);
+      REQUIRE(fields.m_currency == CAD);
+      REQUIRE(fields.m_destination == "TSX");
+    });
+    accept(*expected_order);
+    fixture.require_state(Aspen::State::NONE);
+    fill(*expected_order, 100);
+    fixture.require_state(Aspen::State::COMPLETE);
   }
 
-  TEST_CASE("order_fields_update") {
-    auto commits = Beam::Queue<bool>();
-    auto trigger = Trigger(
-      [&] {
-        commits.Push(true);
-      });
-    Trigger::set_trigger(trigger);
-    auto environment = TestEnvironment();
-    auto serviceClients = TestServiceClients(Ref(environment));
-    auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
-    environment.MonitorOrderSubmissions(orderSubmissions);
-    auto price = Aspen::Shared<Aspen::Queue<Money>>();
-    price->push(Money::CENT);
-    auto reactor = MakeLimitOrderReactor(
-      Ref(serviceClients.GetOrderExecutionClient()),
-      Aspen::constant(SECURITY_A), Aspen::constant(Side::ASK),
-      Aspen::constant(300), price);
-    REQUIRE(reactor.commit(0) == Aspen::State::EVALUATED);
-    auto sentOrder = reactor.eval();
-    REQUIRE(sentOrder->GetInfo().m_fields.m_security == SECURITY_A);
-    REQUIRE(sentOrder->GetInfo().m_fields.m_side == Side::ASK);
-    REQUIRE(sentOrder->GetInfo().m_fields.m_quantity == 300);
-    REQUIRE(sentOrder->GetInfo().m_fields.m_price == Money::CENT);
-    auto receivedOrder = orderSubmissions->Pop();
-    commits.Pop();
-    REQUIRE(reactor.commit(1) == Aspen::State::NONE);
-    environment.Accept(*receivedOrder);
-    commits.Pop();
-    REQUIRE(reactor.commit(2) == Aspen::State::NONE);
-    price->set_complete(2 * Money::ONE);
-    commits.Pop();
-    REQUIRE(reactor.commit(3) == Aspen::State::NONE);
-    commits.Pop();
-    environment.Cancel(*receivedOrder);
-    commits.Pop();
-    REQUIRE(reactor.commit(4) == Aspen::State::CONTINUE);
-    REQUIRE(reactor.commit(5) == Aspen::State::EVALUATED);
-    auto updatedSentOrder = reactor.eval();
-    REQUIRE(updatedSentOrder->GetInfo().m_fields.m_security ==
-      SECURITY_A);
-    REQUIRE(updatedSentOrder->GetInfo().m_fields.m_side == Side::ASK);
-    REQUIRE(updatedSentOrder->GetInfo().m_fields.m_quantity == 300);
-    REQUIRE(updatedSentOrder->GetInfo().m_fields.m_price ==
-      2 * Money::ONE);
-    auto updatedReceivedOrder = orderSubmissions->Pop();
-    commits.Pop();
-    REQUIRE(reactor.commit(6) == Aspen::State::NONE);
-    environment.Accept(*updatedReceivedOrder);
-    commits.Pop();
-    REQUIRE(reactor.commit(7) == Aspen::State::NONE);
-    environment.Fill(*updatedReceivedOrder, 300);
-    commits.Pop();
-    REQUIRE(reactor.commit(8) == Aspen::State::COMPLETE);
-    Trigger::set_trigger(nullptr);
+  TEST_CASE("order_partial_fill_and_resubmit") {
+    auto fixture = Fixture();
+    auto security = Security("TST", TSX);
+    auto fields =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
+    auto quantity = Shared<Aspen::Queue<Quantity>>();
+    quantity->push(100);
+    fixture.set(Aspen::Shared(make_limit_order_reactor(&fixture.m_client,
+      Aspen::constant(fields.m_account), Aspen::constant(fields.m_security),
+      Aspen::constant(fields.m_currency), Aspen::constant(fields.m_side),
+      Aspen::constant(fields.m_destination), quantity,
+      Aspen::constant(fields.m_price),
+      Aspen::constant(fields.m_time_in_force))));
+    auto order1 = fixture.require_submit([&] (const auto& fields) {
+      REQUIRE(fields.m_quantity == 100);
+    });
+    accept(*order1);
+    fixture.require_state(Aspen::State::NONE);
+    fill(*order1, 40);
+    fixture.require_state(Aspen::State::NONE);
+    quantity->set_complete(Quantity(70));
+    fixture.require_state(Aspen::State::NONE);
+    fixture.require_cancel(*order1);
+    auto order2 = fixture.require_submit([&] (const auto& fields) {
+      REQUIRE(fields.m_quantity == 30);
+    });
+    accept(*order2);
+    fixture.require_state(Aspen::State::NONE);
+    fill(*order2, 30);
+    fixture.require_state(Aspen::State::COMPLETE);
   }
 
-  TEST_CASE("partial_fill_and_update") {
+  TEST_CASE("order_rejection") {
+    auto fixture = Fixture();
+    auto security = Security("TST", TSX);
+    auto fields =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
+    fixture.set(Aspen::Shared(make_limit_order_reactor(&fixture.m_client,
+      Aspen::constant(fields.m_account), Aspen::constant(fields.m_security),
+      Aspen::constant(fields.m_currency), Aspen::constant(fields.m_side),
+      Aspen::constant(fields.m_destination), Aspen::constant(fields.m_quantity),
+      Aspen::constant(fields.m_price),
+      Aspen::constant(fields.m_time_in_force))));
+    auto order = fixture.require_submit([&] (const auto& fields) {});
+    accept(*order);
+    fixture.require_state(Aspen::State::NONE);
+    reject(*order);
+    fixture.require_state(Aspen::State::COMPLETE_EVALUATED);
+    REQUIRE_THROWS(fixture.m_order->eval());
   }
 
-  TEST_CASE("terminal_order_and_update") {
-    auto commits = Beam::Queue<bool>();
-    auto trigger = Trigger(
-      [&] {
-        commits.Push(true);
-      });
-    Trigger::set_trigger(trigger);
-    auto environment = TestEnvironment();
-    auto serviceClients = TestServiceClients(Ref(environment));
-    auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
-    environment.MonitorOrderSubmissions(orderSubmissions);
-    auto price = Aspen::Shared<Aspen::Queue<Money>>();
-    price->push(Money::CENT);
-    auto reactor = MakeLimitOrderReactor(
-      Ref(serviceClients.GetOrderExecutionClient()),
-      Aspen::constant(SECURITY_A), Aspen::constant(Side::ASK),
-      Aspen::constant(300), price);
-    REQUIRE(reactor.commit(0) == Aspen::State::EVALUATED);
-    auto sentOrder = reactor.eval();
-    auto receivedOrder = orderSubmissions->Pop();
-    commits.Pop();
-    REQUIRE(reactor.commit(1) == Aspen::State::NONE);
-    environment.Accept(*receivedOrder);
-    commits.Pop();
-    REQUIRE(reactor.commit(2) == Aspen::State::NONE);
-    environment.Reject(*receivedOrder);
-    commits.Pop();
-    REQUIRE(reactor.commit(3) == Aspen::State::COMPLETE_EVALUATED);
-    REQUIRE_THROWS_AS(reactor.eval(), std::runtime_error);
-    Trigger::set_trigger(nullptr);
+  TEST_CASE("order_cancellation") {
+    auto fixture = Fixture();
+    auto security = Security("TST", TSX);
+    auto fields =
+      make_limit_order_fields(security, CAD, Side::BID, "TSX", 100, Money::ONE);
+    auto quantity = Shared<Aspen::Queue<Quantity>>();
+    quantity->push(100);
+    fixture.set(Aspen::Shared(make_limit_order_reactor(&fixture.m_client,
+      Aspen::constant(fields.m_account), Aspen::constant(fields.m_security),
+      Aspen::constant(fields.m_currency), Aspen::constant(fields.m_side),
+      Aspen::constant(fields.m_destination), quantity,
+      Aspen::constant(fields.m_price),
+      Aspen::constant(fields.m_time_in_force))));
+    auto order = fixture.require_submit([&] (const auto& fields) {});
+    accept(*order);
+    fixture.require_state(Aspen::State::NONE);
+    quantity->set_complete(Quantity(0));
+    fixture.require_state(Aspen::State::NONE);
+    fixture.require_cancel(*order);
+    fixture.require_state(Aspen::State::COMPLETE);
   }
 
-  TEST_CASE("delayed_quantity") {
-    auto commits = Beam::Queue<bool>();
-    auto trigger = Trigger(
-      [&] {
-        commits.Push(true);
-      });
-    Trigger::set_trigger(trigger);
-    auto environment = TestEnvironment();
-    auto serviceClients = TestServiceClients(Ref(environment));
-    auto orderSubmissions = std::make_shared<Beam::Queue<const Order*>>();
-    environment.MonitorOrderSubmissions(orderSubmissions);
-    auto quantity = Aspen::Shared<Aspen::Queue<Quantity>>();
-    auto reactor = MakeLimitOrderReactor(
-      Ref(serviceClients.GetOrderExecutionClient()),
-      Aspen::constant(SECURITY_A), Aspen::constant(Side::ASK),
-      quantity, Aspen::constant(Money::ONE));
-    REQUIRE(reactor.commit(0) == Aspen::State::NONE);
-    quantity->push(1200);
-    REQUIRE(reactor.commit(1) == Aspen::State::EVALUATED);
-    auto sentOrder = reactor.eval();
-    auto receivedOrder = orderSubmissions->Pop();
-    commits.Pop();
-    REQUIRE(sentOrder->GetInfo().m_fields.m_quantity == 1200);
-    Trigger::set_trigger(nullptr);
+  TEST_CASE("fields_update_triggers_resubmission") {
+    auto fixture = Fixture();
+    auto security = Shared<Aspen::Queue<Security>>();
+    security->push(Security("TST", TSX));
+    auto fields = make_limit_order_fields(
+      Security("TST", TSX), CAD, Side::BID, "TSX", 100, Money::ONE);
+    fixture.set(Aspen::Shared(make_limit_order_reactor(&fixture.m_client,
+      Aspen::constant(fields.m_account), security,
+      Aspen::constant(fields.m_currency), Aspen::constant(fields.m_side),
+      Aspen::constant(fields.m_destination), Aspen::constant(fields.m_quantity),
+      Aspen::constant(fields.m_price),
+      Aspen::constant(fields.m_time_in_force))));
+    auto order1 = fixture.require_submit([&] (const auto& fields) {
+      REQUIRE(fields.m_security == Security("TST", TSX));
+    });
+    accept(*order1);
+    fixture.require_state(Aspen::State::NONE);
+    security->push(Security("TST2", TSX));
+    fixture.require_state(Aspen::State::NONE);
+    fixture.require_cancel(*order1);
+    auto order2 = fixture.require_submit([&] (const auto& fields) {
+      REQUIRE(fields.m_security == Security("TST2", TSX));
+    });
+    accept(*order2);
+    fixture.require_state(Aspen::State::NONE);
+    fill(*order2, 100);
+    fixture.require_state(Aspen::State::COMPLETE);
   }
 }

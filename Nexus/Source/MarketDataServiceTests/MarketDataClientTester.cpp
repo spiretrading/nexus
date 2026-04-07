@@ -1,110 +1,141 @@
 #include <Beam/Queues/Queue.hpp>
-#include <Beam/ServicesTests/ServicesTests.hpp>
-#include <boost/any.hpp>
-#include <boost/optional/optional.hpp>
-#include <Beam/SignalHandling/NullSlot.hpp>
-#include <boost/functional/factory.hpp>
+#include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
-#include "Nexus/Definitions/DefaultMarketDatabase.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
+#include "Nexus/MarketDataServiceTests/TestMarketDataClient.hpp"
 
 using namespace Beam;
-using namespace Beam::Queries;
-using namespace Beam::Routines;
-using namespace Beam::Services;
-using namespace Beam::Services::Tests;
-using namespace Beam::SignalHandling;
-using namespace Beam::Threading;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::MarketDataService;
-using namespace Nexus::Queries;
-
-namespace {
-  using TestMarketDataClient = MarketDataClient<
-    TestServiceProtocolClientBuilder>;
-
-  const auto SECURITY_A = Security("TST", DefaultMarkets::NYSE(),
-    DefaultCountries::US());
-
-  struct ClientEntry {
-    TestMarketDataClient m_client;
-
-    ClientEntry(const TestServiceProtocolClientBuilder& clientBuilder)
-      : m_client(clientBuilder) {}
-  };
-
-  struct Fixture {
-    std::shared_ptr<TestServerConnection> m_serverConnection;
-    TestServiceProtocolServer m_server;
-    std::shared_ptr<Queue<std::vector<any>>> m_requestQueue;
-
-    Fixture()
-      : m_serverConnection(std::make_shared<TestServerConnection>()),
-        m_server(m_serverConnection, factory<std::unique_ptr<TriggerTimer>>(),
-          NullSlot(), NullSlot()),
-        m_requestQueue(std::make_shared<Queue<std::vector<any>>>()) {
-      Nexus::Queries::RegisterQueryTypes(
-        Store(m_server.GetSlots().GetRegistry()));
-      RegisterMarketDataRegistryServices(Store(m_server.GetSlots()));
-      RegisterMarketDataRegistryMessages(Store(m_server.GetSlots()));
-      QueryBboQuotesService::AddRequestSlot(Store(m_server.GetSlots()),
-        std::bind_front(&Fixture::OnQuerySecurityBboQuotes, this));
-    }
-
-    template<typename T>
-    using Request = RequestToken<
-      TestServiceProtocolServer::ServiceProtocolClient, T>;
-
-    std::unique_ptr<ClientEntry> MakeClient() {
-      auto builder = TestServiceProtocolClientBuilder(
-        [this] {
-          return std::make_unique<TestServiceProtocolClientBuilder::Channel>(
-            "test", *m_serverConnection);
-        }, factory<std::unique_ptr<TestServiceProtocolClientBuilder::Timer>>());
-      return std::make_unique<ClientEntry>(builder);
-    }
-
-    void OnQuerySecurityBboQuotes(Request<QueryBboQuotesService>& request,
-        const SecurityMarketDataQuery& query) {
-      auto parameters = std::vector<any>();
-      parameters.push_back(request);
-      parameters.push_back(query);
-      m_requestQueue->Push(parameters);
-    }
-  };
-}
+using namespace Nexus::DefaultVenues;
+using namespace Nexus::Tests;
 
 TEST_SUITE("MarketDataClient") {
-  TEST_CASE_FIXTURE(Fixture, "real_time_bbo_quote_query") {
-    auto client = MakeClient();
-    auto query = SecurityMarketDataQuery();
-    query.SetIndex(SECURITY_A);
-    query.SetRange(Beam::Queries::Range::RealTime());
-    auto bboQuotes = std::make_shared<Queue<BboQuote>>();
-    client->m_client.QueryBboQuotes(query, bboQuotes);
-    auto request = m_requestQueue->Pop();
-    REQUIRE(request.size() == 2);
-    auto requestToken = optional<Request<QueryBboQuotesService>>();
-    REQUIRE_NOTHROW(requestToken =
-      any_cast<Request<QueryBboQuotesService>>(request[0]));
-    optional<SecurityMarketDataQuery> requestQuery;
-    REQUIRE_NOTHROW(requestQuery =
-      any_cast<SecurityMarketDataQuery>(request[1]));
-    REQUIRE(requestQuery->GetIndex() == SECURITY_A);
-    REQUIRE(requestQuery->GetRange() == Beam::Queries::Range::RealTime());
-    auto queryResponse = BboQuoteQueryResult();
-    queryResponse.m_queryId = 123;
-    requestToken->SetResult(queryResponse);
-    auto bbo = BboQuote(Quote(Money::ONE, 100, Side::BID),
-      Quote(Money::ONE + Money::CENT, 200, Side::ASK),
-      second_clock::universal_time());
-    SendRecordMessage<BboQuoteMessage>(requestToken->GetClient(),
-      SequencedValue(IndexedValue(bbo, SECURITY_A),
-      Beam::Queries::Sequence(1)));
-    auto updatedBbo = bboQuotes->Pop();
-    REQUIRE(updatedBbo == bbo);
+  TEST_CASE("query_real_time_with_snapshot_book_quotes_empty") {
+    auto operations = std::make_shared<
+      Queue<std::shared_ptr<TestMarketDataClient::Operation>>>();
+    auto client = TestMarketDataClient(operations);
+    auto book_queue = std::make_shared<Queue<BookQuote>>();
+    auto security = Security("SYM", TSX);
+    query_real_time_with_snapshot(client, security, book_queue);
+    auto operation1 = operations->pop();
+    auto load_operation =
+      std::get_if<TestMarketDataClient::LoadSecuritySnapshotOperation>(
+        &*operation1);
+    REQUIRE(load_operation);
+    REQUIRE(load_operation->m_security == security);
+    auto snapshot = SecuritySnapshot(security);
+    load_operation->m_result.set(snapshot);
+    auto operation2 = operations->pop();
+    auto query_operation =
+      std::get_if<TestMarketDataClient::QueryBookQuoteOperation>(&*operation2);
+    REQUIRE(query_operation);
+    REQUIRE(query_operation->m_query.get_index() == security);
+    REQUIRE(query_operation->m_query.get_range() == Range::REAL_TIME);
+    REQUIRE(query_operation->m_query.get_interruption_policy() ==
+      InterruptionPolicy::BREAK_QUERY);
+  }
+
+  TEST_CASE("query_real_time_with_snapshot_book_quotes") {
+    auto operations = std::make_shared<
+      Queue<std::shared_ptr<TestMarketDataClient::Operation>>>();
+    auto client = TestMarketDataClient(operations);
+    auto book_queue = std::make_shared<Queue<BookQuote>>();
+    auto security = Security("SYM", TSX);
+    query_real_time_with_snapshot(client, security, book_queue);
+    auto operation1 = operations->pop();
+    auto load_operation =
+      std::get_if<TestMarketDataClient::LoadSecuritySnapshotOperation>(
+        &*operation1);
+    auto snapshot = SecuritySnapshot(security);
+    snapshot.m_asks.push_back(SequencedBookQuote(
+      BookQuote("MP", false, CHIC, make_ask(12 * Money::CENT, 222),
+        time_from_string("2021-01-11 15:30:05.000")), Beam::Sequence(5)));
+    snapshot.m_bids.push_back(SequencedBookQuote(
+      BookQuote("MP", false, PURE, make_bid(9 * Money::CENT, 44),
+        time_from_string("2021-01-11 15:30:05.000")), Beam::Sequence(7)));
+    load_operation->m_result.set(snapshot);
+    auto book_quote = book_queue->pop();
+    REQUIRE(book_quote == snapshot.m_asks.front());
+    book_quote = book_queue->pop();
+    REQUIRE(book_quote == snapshot.m_bids.front());
+    auto operation2 = operations->pop();
+    auto continuation_operation =
+      std::get_if<TestMarketDataClient::QueryBookQuoteOperation>(&*operation2);
+    REQUIRE(continuation_operation);
+    REQUIRE(continuation_operation->m_query.get_index() == security);
+    REQUIRE(continuation_operation->m_query.get_range().get_start() ==
+      Beam::Sequence(8));
+    REQUIRE(continuation_operation->m_query.get_range().get_end() ==
+      Beam::Sequence::LAST);
+    REQUIRE(continuation_operation->m_query.get_snapshot_limit() ==
+      SnapshotLimit::UNLIMITED);
+  }
+
+  TEST_CASE("query_real_time_with_snapshot_bbo") {
+    auto operations = std::make_shared<
+      Queue<std::shared_ptr<TestMarketDataClient::Operation>>>();
+    auto client = TestMarketDataClient(operations);
+    auto quote_queue = std::make_shared<Queue<BboQuote>>();
+    auto security = Security("SYM", TSX);
+    query_real_time_with_snapshot(client, security, quote_queue);
+    auto operation1 = operations->pop();
+    auto* snapshot_operation =
+      std::get_if<TestMarketDataClient::QuerySequencedBboQuoteOperation>(
+        &*operation1);
+    REQUIRE(snapshot_operation);
+    REQUIRE(snapshot_operation->m_query.get_index() == security);
+    auto sequenced_quote = SequencedBboQuote(BboQuote(
+      make_bid(50 * Money::CENT, 213), make_ask(55 * Money::CENT, 312),
+      time_from_string("2021-02-25 15:30:05.000")), Beam::Sequence(3));
+    snapshot_operation->m_queue.push(sequenced_quote);
+    auto quote = quote_queue->pop();
+    REQUIRE(quote == *sequenced_quote);
+    auto operation2 = operations->pop();
+    auto continuation_operation =
+      std::get_if<TestMarketDataClient::QueryBboQuoteOperation>(&*operation2);
+    REQUIRE(continuation_operation);
+    REQUIRE(continuation_operation->m_query.get_index() == security);
+    REQUIRE(continuation_operation->m_query.get_range().get_start() ==
+      Beam::Sequence(4));
+    REQUIRE(continuation_operation->m_query.get_snapshot_limit() ==
+      SnapshotLimit::UNLIMITED);
+  }
+
+  TEST_CASE("load_security_info") {
+    auto operations = std::make_shared<
+      Queue<std::shared_ptr<TestMarketDataClient::Operation>>>();
+    auto client = TestMarketDataClient(operations);
+    auto security = Security("SYM", TSX);
+    auto queue = Queue<optional<SecurityInfo>>();
+    spawn([&] {
+      queue.push(load_security_info(client, security));
+    });
+    auto operation1 = operations->pop();
+    auto* info_operation =
+      std::get_if<TestMarketDataClient::SecurityInfoQueryOperation>(
+        &*operation1);
+    REQUIRE(info_operation);
+    REQUIRE(info_operation->m_query.get_index() == security);
+    SUBCASE("single_result") {
+      auto info_result = SecurityInfo(security, "SYMBOL", "Tech", 100);
+      info_operation->m_result.set({info_result});
+      auto received_info = queue.pop();
+      REQUIRE(received_info == info_result);
+    }
+    SUBCASE("empty") {
+      info_operation->m_result.set(std::vector<SecurityInfo>());
+      auto received_info = queue.pop();
+      REQUIRE(received_info == none);
+    }
+    SUBCASE("multiple_result") {
+      auto info_result = SecurityInfo(security, "SYMBOL", "Tech", 100);
+      auto info_result2 =
+        SecurityInfo(Security("FOO", ASX), "LOBMYS", "Hcet", 200);
+      info_operation->m_result.set({info_result, info_result2});
+      auto received_info = queue.pop();
+      REQUIRE(received_info == info_result);
+    }
   }
 }

@@ -3,6 +3,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include "Nexus/RiskService/RiskState.hpp"
 #include "Spire/Async/EventHandler.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/RiskTimer/RiskTimer.hpp"
 #include "Spire/Spire/Spire.hpp"
 
@@ -34,7 +35,7 @@ namespace Spire {
 
       RiskTimerMonitor(const RiskTimerMonitor&) = delete;
       RiskTimerMonitor& operator =(const RiskTimerMonitor&) = delete;
-      void OnRiskState(const Nexus::RiskService::RiskState& riskState);
+      void OnRiskState(const Nexus::RiskState& riskState);
   };
 }
 

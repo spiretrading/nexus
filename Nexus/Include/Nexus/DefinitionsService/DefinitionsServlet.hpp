@@ -1,78 +1,73 @@
 #ifndef NEXUS_DEFINITIONS_SERVLET_HPP
 #define NEXUS_DEFINITIONS_SERVLET_HPP
-#include <Beam/Pointers/LocalPtr.hpp>
-#include <boost/noncopyable.hpp>
-#include "Nexus/Definitions/Country.hpp"
-#include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Destination.hpp"
-#include "Nexus/Definitions/Market.hpp"
-#include "Nexus/DefinitionsService/DefinitionsService.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServices.hpp"
 #include "Nexus/DefinitionsService/DefinitionsSession.hpp"
 
-namespace Nexus::DefinitionsService {
+namespace Nexus {
 
   /**
    * Provides system wide definitions.
    * @param <C> The container instantiating this servlet.
    */
   template<typename C>
-  class DefinitionsServlet : private boost::noncopyable {
+  class DefinitionsServlet {
     public:
       using Container = C;
       using ServiceProtocolClient = typename Container::ServiceProtocolClient;
 
       /**
        * Constructs a DefinitionsServlet.
-       * @param minimumSpireClientVersion The minimum version of the Spire
+       * @param minimum_spire_client_version The minimum version of the Spire
        *        client required to login.
-       * @param organizationName The name of the organization.
-       * @param timeZoneDatabase The time zone database.
-       * @param countryDatabase The CountryDatabase to disseminate.
-       * @param currencyDatabase The CurrencyDatabase to disseminate.
-       * @param marketDatabase The MarketDatabase to disseminate.
-       * @param destinationDatabase The DestinationDatabase to disseminate.
-       * @param exchangeRates The list of ExchangeRates.
-       * @param complianceRuleSchemas The list of ComplianceRuleSchemas.
+       * @param organization_name The name of the organization.
+       * @param time_zone_database The time zone database.
+       * @param country_database The CountryDatabase to disseminate.
+       * @param currency_database The CurrencyDatabase to disseminate.
+       * @param destination_database The DestinationDatabase to disseminate.
+       * @param venue_database The MarketDatabase to disseminate.
+       * @param exchange_rates The list of ExchangeRates.
+       * @param compliance_rule_schemas The list of ComplianceRuleSchemas.
+       * @param trading_schedule The TradingSchedule to disseminate.
        */
-      DefinitionsServlet(std::string minimumSpireClientVersion,
-        std::string organizationName, std::string timeZoneDatabase,
-        CountryDatabase countryDatabase, CurrencyDatabase currencyDatabase,
-        MarketDatabase marketDatabase, DestinationDatabase destinationDatabase,
-        std::vector<ExchangeRate> exchangeRates,
-        std::vector<Compliance::ComplianceRuleSchema> complianceRuleSchemas);
+      DefinitionsServlet(std::string minimum_spire_client_version,
+        std::string organization_name, std::string time_zone_database,
+        CountryDatabase country_database, CurrencyDatabase currency_database,
+        DestinationDatabase destination_database, VenueDatabase venue_database,
+        std::vector<ExchangeRate> exchange_rates,
+        std::vector<ComplianceRuleSchema> compliance_rule_schemas,
+        TradingSchedule trading_schedule);
 
-      void RegisterServices(Beam::Out<Beam::Services::ServiceSlots<
-        ServiceProtocolClient>> slots);
-
-      void Close();
+      void register_services(
+        Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots);
+      void close();
 
     private:
-      std::string m_minimumSpireClientVersion;
-      std::string m_organizationName;
-      std::string m_timeZoneDatabase;
-      CountryDatabase m_countryDatabase;
-      CurrencyDatabase m_currencyDatabase;
-      DestinationDatabase m_destinationDatabase;
-      MarketDatabase m_marketDatabase;
-      std::vector<ExchangeRate> m_exchangeRates;
-      std::vector<Compliance::ComplianceRuleSchema> m_complianceRuleSchemas;
-      Beam::IO::OpenState m_openState;
+      std::string m_minimum_spire_client_version;
+      std::string m_organization_name;
+      std::string m_time_zone_database;
+      CountryDatabase m_country_database;
+      CurrencyDatabase m_currency_database;
+      DestinationDatabase m_destination_database;
+      VenueDatabase m_venue_database;
+      std::vector<ExchangeRate> m_exchange_rates;
+      std::vector<ComplianceRuleSchema> m_compliance_rule_schemas;
+      TradingSchedule m_trading_schedule;
+      Beam::OpenState m_open_state;
 
-      std::string OnLoadMinimumSpireClientVersion(
+      std::string on_load_minimum_spire_client_version(
         ServiceProtocolClient& client);
-      std::string OnLoadOrganizationName(ServiceProtocolClient& client);
-      CountryDatabase OnLoadCountryDatabase(ServiceProtocolClient& client);
-      std::string OnLoadTimeZoneDatabase(ServiceProtocolClient& client);
-      CurrencyDatabase OnLoadCurrencyDatabase(ServiceProtocolClient& client);
-      DestinationDatabase OnLoadDestinationDatabase(
+      std::string on_load_organization_name(ServiceProtocolClient& client);
+      CountryDatabase on_load_country_database(ServiceProtocolClient& client);
+      std::string on_load_time_zone_database(ServiceProtocolClient& client);
+      CurrencyDatabase on_load_currency_database(ServiceProtocolClient& client);
+      DestinationDatabase on_load_destination_database(
         ServiceProtocolClient& client);
-      MarketDatabase OnLoadMarketDatabase(ServiceProtocolClient& client);
-      std::vector<ExchangeRate> OnLoadExchangeRates(
+      VenueDatabase on_load_venue_database(ServiceProtocolClient& client);
+      std::vector<ExchangeRate> on_load_exchange_rates(
         ServiceProtocolClient& client);
-      std::vector<Compliance::ComplianceRuleSchema> OnLoadComplianceRuleSchemas(
+      std::vector<ComplianceRuleSchema> on_load_compliance_rule_schemas(
         ServiceProtocolClient& client);
-      TradingSchedule OnLoadTradingSchedule(ServiceProtocolClient& client);
+      TradingSchedule on_load_trading_schedule(ServiceProtocolClient& client);
   };
 
   struct MetaDefinitionsServlet {
@@ -85,112 +80,114 @@ namespace Nexus::DefinitionsService {
 
   template<typename C>
   DefinitionsServlet<C>::DefinitionsServlet(
-    std::string minimumSpireClientVersion, std::string organizationName,
-    std::string timeZoneDatabase, CountryDatabase countryDatabase,
-    CurrencyDatabase currencyDatabase, MarketDatabase marketDatabase,
-    DestinationDatabase destinationDatabase,
-    std::vector<ExchangeRate> exchangeRates,
-    std::vector<Compliance::ComplianceRuleSchema> complianceRuleSchemas)
-    : m_minimumSpireClientVersion(std::move(minimumSpireClientVersion)),
-      m_organizationName(std::move(organizationName)),
-      m_timeZoneDatabase(std::move(timeZoneDatabase)),
-      m_countryDatabase(std::move(countryDatabase)),
-      m_currencyDatabase(std::move(currencyDatabase)),
-      m_marketDatabase(std::move(marketDatabase)),
-      m_destinationDatabase(std::move(destinationDatabase)),
-      m_exchangeRates(std::move(exchangeRates)),
-      m_complianceRuleSchemas(std::move(complianceRuleSchemas)) {}
+    std::string minimum_spire_client_version, std::string organization_name,
+    std::string time_zone_database, CountryDatabase country_database,
+    CurrencyDatabase currency_database,
+    DestinationDatabase destination_database, VenueDatabase venue_database,
+    std::vector<ExchangeRate> exchange_rates,
+    std::vector<ComplianceRuleSchema> compliance_rule_schemas,
+    TradingSchedule trading_schedule)
+    : m_minimum_spire_client_version(std::move(minimum_spire_client_version)),
+      m_organization_name(std::move(organization_name)),
+      m_time_zone_database(std::move(time_zone_database)),
+      m_country_database(std::move(country_database)),
+      m_currency_database(std::move(currency_database)),
+      m_destination_database(std::move(destination_database)),
+      m_venue_database(std::move(venue_database)),
+      m_exchange_rates(std::move(exchange_rates)),
+      m_compliance_rule_schemas(std::move(compliance_rule_schemas)),
+      m_trading_schedule(std::move(trading_schedule)) {}
 
   template<typename C>
-  void DefinitionsServlet<C>::RegisterServices(
-      Beam::Out<Beam::Services::ServiceSlots<ServiceProtocolClient>> slots) {
-    RegisterDefinitionsServices(Store(slots));
-    LoadMinimumSpireClientVersionService::AddSlot(Store(slots), std::bind_front(
-      &DefinitionsServlet::OnLoadMinimumSpireClientVersion, this));
-    LoadOrganizationNameService::AddSlot(Store(slots), std::bind_front(
-      &DefinitionsServlet::OnLoadOrganizationName, this));
-    LoadCountryDatabaseService::AddSlot(Store(slots),
-      std::bind_front(&DefinitionsServlet::OnLoadCountryDatabase, this));
-    LoadTimeZoneDatabaseService::AddSlot(Store(slots),
-      std::bind_front(&DefinitionsServlet::OnLoadTimeZoneDatabase, this));
-    LoadCurrencyDatabaseService::AddSlot(Store(slots),
-      std::bind_front(&DefinitionsServlet::OnLoadCurrencyDatabase, this));
-    LoadDestinationDatabaseService::AddSlot(Store(slots),
-      std::bind_front(&DefinitionsServlet::OnLoadDestinationDatabase, this));
-    LoadMarketDatabaseService::AddSlot(Store(slots),
-      std::bind_front(&DefinitionsServlet::OnLoadMarketDatabase, this));
-    LoadExchangeRatesService::AddSlot(Store(slots),
-      std::bind_front(&DefinitionsServlet::OnLoadExchangeRates, this));
-    LoadComplianceRuleSchemasService::AddSlot(Store(slots),
-      std::bind_front(&DefinitionsServlet::OnLoadComplianceRuleSchemas, this));
-    LoadTradingScheduleService::AddSlot(Store(slots),
-      std::bind_front(&DefinitionsServlet::OnLoadTradingSchedule, this));
+  void DefinitionsServlet<C>::register_services(
+      Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots) {
+    register_definitions_services(out(slots));
+    LoadMinimumSpireClientVersionService::add_slot(out(slots), std::bind_front(
+      &DefinitionsServlet::on_load_minimum_spire_client_version, this));
+    LoadOrganizationNameService::add_slot(out(slots), std::bind_front(
+      &DefinitionsServlet::on_load_organization_name, this));
+    LoadCountryDatabaseService::add_slot(out(slots),
+      std::bind_front(&DefinitionsServlet::on_load_country_database, this));
+    LoadTimeZoneDatabaseService::add_slot(out(slots),
+      std::bind_front(&DefinitionsServlet::on_load_time_zone_database, this));
+    LoadCurrencyDatabaseService::add_slot(out(slots),
+      std::bind_front(&DefinitionsServlet::on_load_currency_database, this));
+    LoadDestinationDatabaseService::add_slot(out(slots),
+      std::bind_front(&DefinitionsServlet::on_load_destination_database, this));
+    LoadVenueDatabaseService::add_slot(out(slots),
+      std::bind_front(&DefinitionsServlet::on_load_venue_database, this));
+    LoadExchangeRatesService::add_slot(out(slots),
+      std::bind_front(&DefinitionsServlet::on_load_exchange_rates, this));
+    LoadComplianceRuleSchemasService::add_slot(out(slots), std::bind_front(
+      &DefinitionsServlet::on_load_compliance_rule_schemas, this));
+    LoadTradingScheduleService::add_slot(out(slots),
+      std::bind_front(&DefinitionsServlet::on_load_trading_schedule, this));
   }
 
   template<typename C>
-  void DefinitionsServlet<C>::Close() {
-    m_openState.Close();
+  void DefinitionsServlet<C>::close() {
+    m_open_state.close();
   }
 
   template<typename C>
-  std::string DefinitionsServlet<C>::OnLoadMinimumSpireClientVersion(
+  std::string DefinitionsServlet<C>::on_load_minimum_spire_client_version(
       ServiceProtocolClient& client) {
-    return m_minimumSpireClientVersion;
+    return m_minimum_spire_client_version;
   }
 
   template<typename C>
-  std::string DefinitionsServlet<C>::OnLoadOrganizationName(
+  std::string DefinitionsServlet<C>::on_load_organization_name(
       ServiceProtocolClient& client) {
-    return m_organizationName;
+    return m_organization_name;
   }
 
   template<typename C>
-  CountryDatabase DefinitionsServlet<C>::OnLoadCountryDatabase(
+  CountryDatabase DefinitionsServlet<C>::on_load_country_database(
       ServiceProtocolClient& client) {
-    return m_countryDatabase;
+    return m_country_database;
   }
 
   template<typename C>
-  std::string DefinitionsServlet<C>::OnLoadTimeZoneDatabase(
+  std::string DefinitionsServlet<C>::on_load_time_zone_database(
       ServiceProtocolClient& client) {
-    return m_timeZoneDatabase;
+    return m_time_zone_database;
   }
 
   template<typename C>
-  CurrencyDatabase DefinitionsServlet<C>::OnLoadCurrencyDatabase(
+  CurrencyDatabase DefinitionsServlet<C>::on_load_currency_database(
       ServiceProtocolClient& client) {
-    return m_currencyDatabase;
+    return m_currency_database;
   }
 
   template<typename C>
-  DestinationDatabase DefinitionsServlet<C>::OnLoadDestinationDatabase(
+  DestinationDatabase DefinitionsServlet<C>::on_load_destination_database(
       ServiceProtocolClient& client) {
-    return m_destinationDatabase;
+    return m_destination_database;
   }
 
   template<typename C>
-  MarketDatabase DefinitionsServlet<C>::OnLoadMarketDatabase(
+  VenueDatabase DefinitionsServlet<C>::on_load_venue_database(
       ServiceProtocolClient& client) {
-    return m_marketDatabase;
+    return m_venue_database;
   }
 
   template<typename C>
-  std::vector<ExchangeRate> DefinitionsServlet<C>::OnLoadExchangeRates(
+  std::vector<ExchangeRate> DefinitionsServlet<C>::on_load_exchange_rates(
       ServiceProtocolClient& client) {
-    return m_exchangeRates;
+    return m_exchange_rates;
   }
 
   template<typename C>
-  std::vector<Compliance::ComplianceRuleSchema>
-      DefinitionsServlet<C>::OnLoadComplianceRuleSchemas(
-      ServiceProtocolClient& client) {
-    return m_complianceRuleSchemas;
+  std::vector<ComplianceRuleSchema>
+      DefinitionsServlet<C>::on_load_compliance_rule_schemas(
+        ServiceProtocolClient& client) {
+    return m_compliance_rule_schemas;
   }
 
   template<typename C>
-  TradingSchedule DefinitionsServlet<C>::OnLoadTradingSchedule(
+  TradingSchedule DefinitionsServlet<C>::on_load_trading_schedule(
       ServiceProtocolClient& client) {
-    return TradingSchedule();
+    return m_trading_schedule;
   }
 }
 

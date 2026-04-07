@@ -7,11 +7,11 @@ set(BEAM_PYTHON_LIBRARY_DEBUG_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/Beam/Beam/Libraries/Debug/beam.lib")
 set(BEAM_PYTHON_LIBRARY_OPTIMIZED_PATH
   "${PROJECT_BINARY_DIR}/Dependencies/Beam/Beam/Libraries/Release/beam.lib")
-set(LUA_INCLUDE_PATH "${PROJECT_BINARY_DIR}/Dependencies/lua-5.4.7/src")
+set(LUA_INCLUDE_PATH "${PROJECT_BINARY_DIR}/Dependencies/lua-5.5.0/src")
 set(LUA_LIBRARY_DEBUG_PATH
-  "${PROJECT_BINARY_DIR}/Dependencies/lua-5.4.7/src/Debug/lua.lib")
+  "${PROJECT_BINARY_DIR}/Dependencies/lua-5.5.0/src/Debug/lua.lib")
 set(LUA_LIBRARY_OPTIMIZED_PATH
-  "${PROJECT_BINARY_DIR}/Dependencies/lua-5.4.7/src/Release/lua.lib")
+  "${PROJECT_BINARY_DIR}/Dependencies/lua-5.5.0/src/Release/lua.lib")
 set(QT_ROOT "${PROJECT_BINARY_DIR}/Dependencies/qt-5.15.13")
 set(QT_INCLUDE_PATH "${QT_ROOT}/qtbase/include")
 set(QT_CORE_INCLUDE_PATH "${QT_INCLUDE_PATH}/QtCore")
@@ -55,11 +55,11 @@ set(QT_PCRE_LIBRARY_OPTIMIZED_PATH "${QT_LIBRARY_OPTIMIZED_PATH}/qtpcre2.lib")
 set(QT_PNG_LIBRARY_DEBUG_PATH "${QT_LIBRARY_DEBUG_PATH}/qtlibpngd.lib")
 set(QT_PNG_LIBRARY_OPTIMIZED_PATH "${QT_LIBRARY_OPTIMIZED_PATH}/qtlibpng.lib")
 set(QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH
-  "${QT_ROOT}/qtsvg/plugins/iconengines/qsvgicond.lib")
+  "${QT_LIBRARY_DEBUG_PATH}/../plugins/iconengines/qsvgicond.lib")
 set(QT_SVG_ICON_PLUGIN_LIBRARY_OPTIMIZED_PATH
-  "${QT_ROOT}/qtsvg/plugins/iconengines/qsvgicon.lib")
-set(QT_SVG_LIBRARY_DEBUG_PATH "${QT_ROOT}/qtsvg/lib/Qt5Svgd.lib")
-set(QT_SVG_LIBRARY_OPTIMIZED_PATH "${QT_ROOT}/qtsvg/lib/Qt5Svg.lib")
+  "${QT_LIBRARY_OPTIMIZED_PATH}/../plugins/iconengines/qsvgicon.lib")
+set(QT_SVG_LIBRARY_DEBUG_PATH "${QT_LIBRARY_DEBUG_PATH}/Qt5Svgd.lib")
+set(QT_SVG_LIBRARY_OPTIMIZED_PATH "${QT_LIBRARY_OPTIMIZED_PATH}/Qt5Svg.lib")
 set(QT_THEME_LIBRARY_DEBUG_PATH "${QT_LIBRARY_DEBUG_PATH}/Qt5ThemeSupportd.lib")
 set(QT_THEME_LIBRARY_OPTIMIZED_PATH
   "${QT_LIBRARY_OPTIMIZED_PATH}/Qt5ThemeSupport.lib")

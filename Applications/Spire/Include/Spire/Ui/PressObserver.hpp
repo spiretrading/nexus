@@ -1,7 +1,8 @@
 #ifndef SPIRE_PRESS_OBSERVER_HPP
 #define SPIRE_PRESS_OBSERVER_HPP
 #include <memory>
-#include "Spire/Ui/Ui.hpp"
+#include <QWidget>
+#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
@@ -50,7 +51,7 @@ namespace Spire {
 
       /** Connects a slot to the press end signal. */
       boost::signals2::connection connect_press_end_signal(
-        const PressStartSignal::slot_type& slot) const;
+        const PressEndSignal::slot_type& slot) const;
 
     private:
       struct PressEventFilter;

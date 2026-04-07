@@ -6,6 +6,7 @@
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
+#include "Spire/Ui/TableColumnReorderController.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
@@ -141,12 +142,18 @@ namespace {
 
   struct TableViewStylist : QObject {
     std::shared_ptr<TimeAndSalesPropertiesModel> m_properties;
+    std::vector<int> m_last_column_order;
+    bool m_is_moving;
     scoped_connection m_connection;
 
     TableViewStylist(TableView& table_view,
         std::shared_ptr<TimeAndSalesPropertiesModel> properties)
         : QObject(&table_view),
-          m_properties(std::move(properties)) {
+          m_properties(std::move(properties)),
+          m_is_moving(false) {
+      m_last_column_order.resize(m_properties->get().get_column_order().size());
+      std::iota(m_last_column_order.begin(), m_last_column_order.end(), 0);
+      reorder_column_order(m_properties->get());
       update_style(table_view, [&] (auto& style) {
         style.get(ShowGrid() > is_a<TableBody>()).
           set(HorizontalSpacing(scale_width(1))).
@@ -173,10 +180,11 @@ namespace {
       auto header_properties = make_header_item_properties();
       auto& header = table_view.get_header();
       for(auto i = 0; i < std::ssize(header_properties); ++i) {
-        header.get_widths()->set(i, header_properties[i].m_width);
+        auto index = m_last_column_order[i];
+        header.get_widths()->set(i, header_properties[index].m_width);
         update_style(*header.get_item(i), [&] (auto& style) {
           style.get(Any() > TableHeaderItem::Label()).
-            set(TextAlign(header_properties[i].m_alignment));
+            set(TextAlign(header_properties[index].m_alignment));
         });
       }
       apply_column_visibility(m_properties->get());
@@ -223,7 +231,32 @@ namespace {
       }
     }
 
+    void reorder_column_order(const TimeAndSalesProperties& properties) {
+      auto& header = static_cast<TableView*>(parent())->get_header();
+      auto& order = properties.get_column_order();
+      for(int i = 0; i < order.size(); ++i) {
+        if(m_last_column_order[i] == order[i]) {
+          continue;
+        }
+        if(auto iter = std::find(m_last_column_order.begin() + i,
+            m_last_column_order.end(), order[i]);
+            iter != m_last_column_order.end()) {
+          auto from = static_cast<int>(iter - m_last_column_order.begin()) ;
+          header.get_items()->move(from, i);
+          auto value = m_last_column_order[from];
+          m_last_column_order.erase(m_last_column_order.begin() + from);
+          m_last_column_order.insert(m_last_column_order.begin() + i, value);
+        }
+      }
+    }
+
     void on_properties(const TimeAndSalesProperties& properties) {
+      if(m_is_moving) {
+        auto& column_order = properties.get_column_order();
+        m_last_column_order.assign(column_order.begin(), column_order.end());
+      } else {
+        reorder_column_order(properties);
+      }
       apply_column_visibility(properties);
       const auto DEBOUNCE_TIME_MS = 100;
       QTimer::singleShot(DEBOUNCE_TIME_MS, this, [=] {
@@ -236,14 +269,27 @@ namespace {
 TableView* Spire::make_time_and_sales_table_view(
     std::shared_ptr<TimeAndSalesTableModel> table,
     std::shared_ptr<TimeAndSalesPropertiesModel> properties, QWidget* parent) {
+  auto builder = ItemBuilder();
   auto table_view = TableViewBuilder(table).
     set_header(make_header_model()).
-    set_item_builder(RecycledTableViewItemBuilder(ItemBuilder())).
+    set_item_builder(RecycledTableViewItemBuilder(builder)).
     set_current(
       std::make_shared<ConstantValueModel<optional<TableIndex>>>(none)).
     make();
   make_header_menu(*table_view, properties);
   auto pull_indicator = new PullIndicator(*table_view);
-  auto stylist = new TableViewStylist(*table_view, std::move(properties));
+  auto stylist = new TableViewStylist(*table_view, properties);
+  auto& column_order = properties->get().get_column_order();
+  auto controller = new TableColumnReorderController(*table_view, builder,
+    std::vector<int>(column_order.begin(), column_order.end()));
+  controller->connect_column_moved_signal([=] (int source, int destination) {
+    auto current_properties = properties->get();
+    current_properties.move_column(
+      static_cast<TimeAndSalesTableModel::Column>(source),
+      static_cast<TimeAndSalesTableModel::Column>(destination));
+    stylist->m_is_moving = true;
+    properties->set(current_properties);
+    stylist->m_is_moving = false;
+  });
   return table_view;
 }

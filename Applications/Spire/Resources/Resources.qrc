@@ -66,6 +66,7 @@
     <file>Icons/close.svg</file>
     <file>Icons/maximize.svg</file>
     <file>Icons/minimize.svg</file>
+    <file>Icons/reset.svg</file>
     <file>Icons/restore.svg</file>
     <file>Icons/imbalance-indicator.svg</file>
     <file>Icons/key_bindings/error.svg</file>
@@ -124,8 +125,8 @@
     <file>Icons/delete.svg</file>
     <file>Icons/delete2.svg</file>
     <file>Icons/magnifying-glass.svg</file>
-    <file>Icons/market-symbol.svg</file>
     <file>Icons/security-symbol.svg</file>
+    <file>Icons/venue-symbol.svg</file>
     <file>Icons/flag_icons/aus.svg</file>
     <file>Icons/flag_icons/bra.svg</file>
     <file>Icons/flag_icons/can.svg</file>
@@ -136,9 +137,11 @@
     <file>Icons/dropdown-arrow.svg</file>
     <file>Icons/calendar-arrow-left.svg</file>
     <file>Icons/calendar-arrow-right.svg</file>
+    <file>Icons/calendar.svg</file>
     <file>Icons/sort_ascending.svg</file>
     <file>Icons/sort_descending.svg</file>
     <file>Icons/filter.svg</file>
+    <file>Icons/filter-close.svg</file>
     <file>Icons/menu-arrow.svg</file>
     <file>Icons/spinner.gif</file>
     <file>Icons/hue-spectrum.png</file>

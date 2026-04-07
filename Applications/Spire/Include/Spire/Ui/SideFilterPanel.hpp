@@ -2,7 +2,6 @@
 #define SPIRE_SIDE_FILTER_PANEL_HPP
 #include "Nexus/Definitions/Side.hpp"
 #include "Spire/Ui/ClosedFilterPanel.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
 
@@ -16,7 +15,7 @@ namespace Spire {
    * Returns a new SideFilterPanel using an empty SideListModel.
    * @param parent The parent widget.
    */
-  SideFilterPanel* make_side_filter_panel(QWidget& parent);
+  SideFilterPanel* make_side_filter_panel(QWidget* parent = nullptr);
 
   /**
    * Returns a new SideFilterPanel.
@@ -24,7 +23,7 @@ namespace Spire {
    * @param parent The parent widget.
    */
   SideFilterPanel* make_side_filter_panel(
-    std::shared_ptr<SideListModel> selection, QWidget& parent);
+    std::shared_ptr<SideListModel> selection, QWidget* parent = nullptr);
 }
 
 #endif

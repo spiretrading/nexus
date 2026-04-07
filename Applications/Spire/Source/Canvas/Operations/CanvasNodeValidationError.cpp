@@ -8,7 +8,7 @@ CanvasNodeValidationError::CanvasNodeValidationError() {}
 
 CanvasNodeValidationError::CanvasNodeValidationError(
     Ref<const CanvasNode> node, string message)
-    : m_node(node.Get()),
+    : m_node(node.get()),
       m_message(std::move(message)) {}
 
 const CanvasNode& CanvasNodeValidationError::GetNode() const {

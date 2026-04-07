@@ -13,8 +13,7 @@
 #include "Spire/TimeAndSales/LegacyTimeAndSalesWindowSettings.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
+using namespace boost;
 using namespace Spire;
 
 namespace {
@@ -22,14 +21,14 @@ namespace {
     auto properties = LegacyTimeAndSalesWindowSettings::Properties();
     try {
       auto reader =
-        BasicIStreamReader<std::ifstream>(Initialize(path, std::ios::binary));
+        BasicIStreamReader<std::ifstream>(init(path, std::ios::binary));
       auto buffer = SharedBuffer();
-      reader.Read(Store(buffer));
+      reader.read(out(buffer));
       auto type_registry = TypeRegistry<BinarySender<SharedBuffer>>();
-      RegisterSpireTypes(Store(type_registry));
+      RegisterSpireTypes(out(type_registry));
       auto receiver = BinaryReceiver<SharedBuffer>(Ref(type_registry));
-      receiver.SetSource(Ref(buffer));
-      receiver.Shuttle(properties);
+      receiver.set(Ref(buffer));
+      receiver.shuttle(properties);
     } catch(std::exception&) {
       throw std::runtime_error("Unable to load time and sales properties.");
     }
@@ -112,6 +111,10 @@ const TimeAndSalesProperties& TimeAndSalesProperties::get_default() {
   return PROPERTIES;
 }
 
+TimeAndSalesProperties::TimeAndSalesProperties() {
+  std::iota(m_column_order.begin(), m_column_order.end(), 0);
+}
+
 const HighlightColor& TimeAndSalesProperties::get_highlight_color(
     BboIndicator indicator) const {
   return m_highlight_colors[static_cast<int>(indicator)];
@@ -132,15 +135,15 @@ void TimeAndSalesProperties::set_font(const QFont& font) {
 
 bool TimeAndSalesProperties::is_visible(
     TimeAndSalesTableModel::Column column) const {
-  return m_visible_columns.test(static_cast<int>(column));
+  return m_visible_columns.test(m_column_order[static_cast<int>(column)]);
 }
 
 void TimeAndSalesProperties::set_visible(
     TimeAndSalesTableModel::Column column, bool is_visible) {
   if(is_visible) {
-    m_visible_columns.set(static_cast<int>(column));
+    m_visible_columns.set(m_column_order[static_cast<int>(column)]);
   } else {
-    m_visible_columns.reset(static_cast<int>(column));
+    m_visible_columns.reset(m_column_order[static_cast<int>(column)]);
   }
 }
 
@@ -150,6 +153,17 @@ bool TimeAndSalesProperties::is_grid_enabled() const {
 
 void TimeAndSalesProperties::set_grid_enabled(bool is_enabled) {
   m_is_grid_enabled = is_enabled;
+}
+
+const std::array<int, TimeAndSalesTableModel::COLUMN_SIZE>&
+    TimeAndSalesProperties::get_column_order() const {
+  return m_column_order;
+}
+
+void TimeAndSalesProperties::move_column(TimeAndSalesTableModel::Column source,
+        TimeAndSalesTableModel::Column destination) {
+  move_element(m_column_order, static_cast<int>(source),
+    static_cast<int>(destination));
 }
 
 TimeAndSalesProperties Spire::load_time_and_sales_properties(
@@ -171,14 +185,14 @@ TimeAndSalesProperties Spire::load_time_and_sales_properties(
   }
   auto properties = TimeAndSalesProperties();
   try {
-    auto reader = BasicIStreamReader<std::ifstream>(Initialize(file_path));
+    auto reader = BasicIStreamReader<std::ifstream>(init(file_path));
     auto buffer = SharedBuffer();
-    reader.Read(Store(buffer));
+    reader.read(out(buffer));
     auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
-    RegisterSpireTypes(Store(registry));
+    RegisterSpireTypes(out(registry));
     auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
-    receiver.SetSource(Ref(buffer));
-    receiver.Shuttle(properties);
+    receiver.set(Ref(buffer));
+    receiver.shuttle(properties);
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load time and sales properties, using defaults."));
@@ -193,13 +207,13 @@ void Spire::save_time_and_sales_properties(
   auto file_path = path / "time_and_sales.json";
   try {
     auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
-    RegisterSpireTypes(Store(registry));
+    RegisterSpireTypes(out(registry));
     auto sender = JsonSender<SharedBuffer>(Ref(registry));
     auto buffer = SharedBuffer();
-    sender.SetSink(Ref(buffer));
-    sender.Shuttle(properties);
-    auto writer = BasicOStreamWriter<std::ofstream>(Initialize(file_path));
-    writer.Write(buffer);
+    sender.set(Ref(buffer));
+    sender.shuttle(properties);
+    auto writer = BasicOStreamWriter<std::ofstream>(init(file_path));
+    writer.write(buffer);
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to save time and sales properties."));

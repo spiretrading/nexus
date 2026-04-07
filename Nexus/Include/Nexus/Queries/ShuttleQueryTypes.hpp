@@ -4,21 +4,8 @@
 #include "Nexus/Queries/StandardDataTypes.hpp"
 #include "Nexus/Queries/StandardValues.hpp"
 
-namespace Nexus::Queries {
-  BEAM_REGISTER_TYPES(RegisterDataTypes,
-    (MoneyType, "Nexus.Queries.MoneyType"),
-    (QuantityType, "Nexus.Queries.QuantityType"),
-    (SecurityType, "Nexus.Queries.SecurityType"),
-    (SecurityInfoType, "Nexus.Queries.SecurityInfoType"),
-    (OrderImbalanceType, "Nexus.Queries.OrderImbalanceType"),
-    (BboQuoteType, "Nexus.Queries.BboQuoteType"),
-    (BookQuoteType, "Nexus.Queries.BookQuoteType"),
-    (MarketQuoteType, "Nexus.Queries.MarketQuoteType"),
-    (TimeAndSaleType, "Nexus.Queries.TimeAndSaleType"),
-    (OrderFieldsType, "Nexus.Queries.OrderFieldsType"),
-    (OrderInfoType, "Nexus.Queries.OrderInfoType"));
-
-  BEAM_REGISTER_TYPES(RegisterValueTypes,
+namespace Nexus {
+  BEAM_REGISTER_TYPES(register_value_types,
     (QuantityValue, "Nexus.Queries.QuantityValue"),
     (SecurityValue, "Nexus.Queries.SecurityValue"),
     (SecurityInfoValue, "Nexus.Queries.SecurityInfoValue"),
@@ -26,17 +13,24 @@ namespace Nexus::Queries {
     (OrderImbalanceValue, "Nexus.Queries.OrderImbalanceValue"),
     (BboQuoteValue, "Nexus.Queries.BboQuoteValue"),
     (BookQuoteValue, "Nexus.Queries.BookQuoteValue"),
-    (MarketQuoteValue, "Nexus.Queries.MarketQuoteValue"),
     (TimeAndSaleValue, "Nexus.Queries.TimeAndSaleValue"),
     (OrderFieldsValue, "Nexus.Queries.OrderFieldsValue"),
     (OrderInfoValue, "Nexus.Queries.OrderInfoValue"));
 
-  template<typename Sender>
-  void RegisterQueryTypes(Beam::Out<Beam::Serialization::TypeRegistry<Sender>>
-      registry) {
-    Beam::Queries::RegisterQueryTypes(Beam::Store(registry));
-    RegisterDataTypes(Beam::Store(registry));
-    RegisterValueTypes(Beam::Store(registry));
+  template<Beam::IsSender S>
+  void register_query_types(Beam::Out<Beam::TypeRegistry<S>> registry) {
+    Beam::register_query_types(out(registry));
+    registry->add(typeid(Money), "Nexus.Money");
+    registry->add(typeid(Quantity), "Nexus.Quantity");
+    registry->add(typeid(Security), "Nexus.Securty");
+    registry->add(typeid(SecurityInfo), "Nexus.SecurtyInfo");
+    registry->add(typeid(OrderImbalance), "Nexus.OrderImbalance");
+    registry->add(typeid(BboQuote), "Nexus.BboQuote");
+    registry->add(typeid(BookQuote), "Nexus.BookQuote");
+    registry->add(typeid(TimeAndSale), "Nexus.TimeAndSale");
+    registry->add(typeid(OrderFields), "Nexus.OrderFields");
+    registry->add(typeid(OrderInfo), "Nexus.OrderInfo");
+    Nexus::register_value_types(out(registry));
   }
 }
 

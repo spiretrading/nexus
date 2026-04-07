@@ -17,8 +17,6 @@
 #include "Spire/UI/UISerialization.hpp"
 
 using namespace Beam;
-using namespace Beam::IO;
-using namespace Beam::Serialization;
 using namespace boost;
 using namespace Spire;
 using namespace std;
@@ -32,12 +30,12 @@ unique_ptr<QMimeData> Spire::EncodeAsMimeData(
     });
   auto mimeData = make_unique<QMimeData>();
   TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-  RegisterSpireTypes(Store(typeRegistry));
+  RegisterSpireTypes(out(typeRegistry));
   auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
   SharedBuffer buffer;
-  sender.SetSink(Ref(buffer));
-  sender.Shuttle(clonedNodes);
-  QByteArray encodedData(buffer.GetData(), buffer.GetSize());
+  sender.set(Ref(buffer));
+  sender.shuttle(clonedNodes);
+  QByteArray encodedData(buffer.get_data(), buffer.get_size());
   mimeData->setData(QString::fromStdString(CanvasNode::MIME_TYPE), encodedData);
   return mimeData;
 }
@@ -51,10 +49,10 @@ vector<unique_ptr<CanvasNode>> Spire::DecodeFromMimeData(
   }
   SharedBuffer buffer(encodedData.data(), encodedData.size());
   TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-  RegisterSpireTypes(Store(typeRegistry));
+  RegisterSpireTypes(out(typeRegistry));
   auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-  receiver.SetSource(Ref(buffer));
-  receiver.Shuttle(nodes);
+  receiver.set(Ref(buffer));
+  receiver.shuttle(nodes);
   return nodes;
 }
 

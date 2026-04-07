@@ -1,7 +1,6 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
 #include <boost/signals2/connection.hpp>
-#include "Nexus/Definitions/Market.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/SecurityContext.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
@@ -11,6 +10,9 @@
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class SecurityView;
+  class TableView;
+  class TransitionView;
 
   /** Display the time and sales window for a security. */
   class TimeAndSalesWindow : public Window, public LegacyUI::PersistentWindow,
@@ -29,21 +31,18 @@ namespace Spire {
       /**
        * Constructs a TimeAndSalesWindow.
        * @param securities The set of securities to use.
-       * @param markets The database of markets.
        * @param factory The factory used to create a
        *        TimeAndSalesPropertiesWindow.
        * @param model_builder The ModelBuilder to use.
        * @param parent The parent widget.
        */
       TimeAndSalesWindow(std::shared_ptr<SecurityInfoQueryModel> securities,
-        Nexus::MarketDatabase markets,
         std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
         ModelBuilder model_builder, QWidget* parent = nullptr);
 
       /**
        * Constructs a TimeAndSalesWindow.
        * @param securities The set of securities to use.
-       * @param markets The database of markets.
        * @param factory The factory used to create a
        *        TimeAndSalesPropertiesWindow.
        * @param model_builder The ModelBuilder to use.
@@ -51,7 +50,6 @@ namespace Spire {
        * @param parent The parent widget.
        */
       TimeAndSalesWindow(std::shared_ptr<SecurityInfoQueryModel> securities,
-        Nexus::MarketDatabase markets,
         std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
         ModelBuilder model_builder, std::string identifier,
         QWidget* parent = nullptr);
@@ -64,13 +62,12 @@ namespace Spire {
 
     protected:
       void showEvent(QShowEvent* event) override;
-      void HandleLink(SecurityContext& context) override;
+      void HandleLink(LegacyUI::SecurityContext& context) override;
       void HandleUnlink() override;
 
     private:
       friend class LegacyTimeAndSalesWindowSettings;
       friend class TimeAndSalesWindowSettings;
-      Nexus::MarketDatabase m_markets;
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory> m_factory;
       ModelBuilder m_model_builder;
       std::shared_ptr<TimeAndSalesTableModel> m_table_model;

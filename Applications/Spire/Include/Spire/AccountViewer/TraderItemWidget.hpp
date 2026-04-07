@@ -4,11 +4,11 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <QWidget>
 #include "Spire/AccountViewer/AccountViewer.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 class Ui_TraderItemWidget;
 
 namespace Spire {
+  class UserProfile;
 
   /*! \class TraderItemWidget
       \brief Shows the main widget used to display a TraderItem.

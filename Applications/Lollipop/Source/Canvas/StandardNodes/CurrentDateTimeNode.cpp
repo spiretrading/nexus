@@ -3,7 +3,6 @@
 #include "Spire/Canvas/Types/DateTimeType.hpp"
 
 using namespace Beam;
-using namespace Beam::Serialization;
 using namespace Spire;
 using namespace std;
 
@@ -19,5 +18,3 @@ void CurrentDateTimeNode::Apply(CanvasNodeVisitor& visitor) const {
 unique_ptr<CanvasNode> CurrentDateTimeNode::Clone() const {
   return make_unique<CurrentDateTimeNode>(*this);
 }
-
-CurrentDateTimeNode::CurrentDateTimeNode(ReceiveBuilder) {}

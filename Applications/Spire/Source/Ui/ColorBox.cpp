@@ -9,6 +9,7 @@
 #include "Spire/Ui/ColorPicker.hpp"
 #include "Spire/Ui/LayeredWidget.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;

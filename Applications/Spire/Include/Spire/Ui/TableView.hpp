@@ -3,11 +3,12 @@
 #include <memory>
 #include <QWidget>
 #include "Spire/Spire/SortedTableModel.hpp"
+#include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TableBody.hpp"
 #include "Spire/Ui/TableHeader.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class FilteredTableModel;
 
   /**
    * Displays a table of values represented by TableItems arranged along a grid.
@@ -19,15 +20,10 @@ namespace Spire {
       using HeaderModel = ListModel<TableHeaderItem::Model>;
 
       using Index = TableBody::Index;
-
       using CurrentModel = TableBody::CurrentModel;
-
       using SelectionModel = TableBody::SelectionModel;
-
       using SortSignal = TableHeader::SortSignal;
-
       using Comparator = SortedTableModel::Comparator;
-
       using ValueComparator = SortedTableModel::ValueComparator;
 
       /**
@@ -96,7 +92,6 @@ namespace Spire {
       std::shared_ptr<HeaderModel> m_header;
       std::shared_ptr<TableFilter> m_filter;
       TableHeader* m_header_view;
-      ScrollBox* m_header_scroll_box;
       TableBody* m_body;
       int m_horizontal_spacing;
       int m_vertical_spacing;
@@ -108,7 +103,6 @@ namespace Spire {
       bool is_filtered(const TableModel& model, int row);
       void update_scroll_sizes();
       void on_order_update(int index, TableHeaderItem::Order order);
-      void on_filter_clicked(int index);
       void on_filter(int column, TableFilter::Filter filter);
       void on_current(const boost::optional<Index>& current);
       void on_body_style();

@@ -11,7 +11,7 @@ using namespace std;
 
 DashboardRowRenderer::DashboardRowRenderer(Ref<const DashboardRow> row,
     const DashboardCellRendererBuilder& cellRendererBuilder)
-    : m_row{row.Get()},
+    : m_row{row.get()},
       m_cellRendererBuilder{cellRendererBuilder},
       m_defaultCellWidth{scale_width(75)} {
   for(auto i = 0; i < m_row->GetSize(); ++i) {

@@ -16,12 +16,9 @@ namespace Spire {
       /**
        * Constructs an InteractionsNode.
        * @param security The Security whose interactions are represented.
-       * @param marketDatabase The MarketDatabase containing the
-       *        <i>security</i>'s market.
        * @param interactions The interactions to represent.
        */
       InteractionsNode(Nexus::Security security,
-        const Nexus::MarketDatabase& marketDatabase,
         const InteractionsKeyBindingsModel& interactions);
 
       void Apply(CanvasNodeVisitor& visitor) const override;
@@ -30,10 +27,10 @@ namespace Spire {
       std::unique_ptr<CanvasNode> Clone() const override;
 
     private:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
   /**
@@ -43,8 +40,8 @@ namespace Spire {
    * @param interactions The <i>InteractionsKeyBindingsModel</i> to apply the
    *        values from the <i>node</i> to.
    */
-  void apply(const InteractionsNode& node,
-    InteractionsKeyBindingsModel& interactions);
+  void apply(
+    const InteractionsNode& node, InteractionsKeyBindingsModel& interactions);
 
   /**
    * Applies the value represented by an <i>InteractionsNode</i> to a
@@ -55,9 +52,9 @@ namespace Spire {
    */
   void apply(const InteractionsNode& node, KeyBindingsModel& keyBindings);
 
-  template<typename Shuttler>
-  void InteractionsNode::Shuttle(Shuttler& shuttle, unsigned int version) {
-    CanvasNode::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void InteractionsNode::shuttle(S& shuttle, unsigned int version) {
+    CanvasNode::shuttle(shuttle, version);
   }
 }
 

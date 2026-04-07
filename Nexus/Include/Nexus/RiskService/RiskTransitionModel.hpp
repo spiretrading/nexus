@@ -1,27 +1,27 @@
 #ifndef NEXUS_RISK_TRANSITION_MODEL_HPP
 #define NEXUS_RISK_TRANSITION_MODEL_HPP
 #include <iostream>
-#include <type_traits>
 #include <unordered_set>
+#include <vector>
+#include <Beam/Pointers/Dereference.hpp>
+#include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Utilities/ReportException.hpp>
+#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Accounting/PositionOrderBook.hpp"
 #include "Nexus/Definitions/Destination.hpp"
-#include "Nexus/Definitions/Market.hpp"
-#include "Nexus/OrderExecutionService/ExecutionReport.hpp"
-#include "Nexus/OrderExecutionService/Order.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
-#include "Nexus/RiskService/RiskService.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 
-namespace Nexus::RiskService {
+namespace Nexus {
 
   /**
    * Keeps track of an account's RiskState and performs the actions required to
    * transition from one RiskState to another.
-   * @param <O> The type of OrderExecutionClient used to cancel Orders and
+   * @param <C> The type of OrderExecutionClient used to cancel Orders and
    *        flatten Positions.
    */
-  template<typename O>
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   class RiskTransitionModel {
     public:
 
@@ -29,205 +29,203 @@ namespace Nexus::RiskService {
        * The type of OrderExecutionClient used to cancel Orders and flatten
        * Positions.
        */
-      using OrderExecutionClient = Beam::GetTryDereferenceType<O>;
+      using OrderExecutionClient = Beam::dereference_t<C>;
 
       /**
        * Constructs a RiskTransitionModel.
        * @param account The account being tracked.
        * @param inventory A snapshot of the account's positions.
-       * @param riskState The account's initial RiskState.
-       * @param orderExecutionClient The OrderExecutionClient used to cancel
+       * @param risk_state The account's initial RiskState.
+       * @param order_execution_client The OrderExecutionClient used to cancel
        *        Orders and flatten Positions.
        * @param destinations The database of destinations used to flatten
        *        Orders.
        */
-      template<typename OF>
-      RiskTransitionModel(Beam::ServiceLocator::DirectoryEntry account,
-        const std::vector<RiskInventory>& inventory, RiskState riskState,
-        OF&& orderExecutionClient, DestinationDatabase destinations);
+      template<Beam::Initializes<C> CF>
+      RiskTransitionModel(Beam::DirectoryEntry account,
+        const std::vector<Inventory>& inventory, RiskState risk_state,
+        CF&& order_execution_client, DestinationDatabase destinations) noexcept;
 
       /**
        * Adds an Order.
        * @param order The Order to add.
        */
-      void Add(const OrderExecutionService::Order& order);
+      void add(const std::shared_ptr<Order>& order);
 
       /**
        * Updates the RiskState.
        * @param state The new RiskState.
        */
-      void Update(const RiskState& state);
+      void update(const RiskState& state);
 
       /**
        * Updates an Order with an ExecutionReport.
        * @param report The ExecutionReport containing the details of the update.
        */
-      void Update(const OrderExecutionService::ExecutionReport& report);
+      void update(const ExecutionReport& report);
 
     private:
-      Beam::ServiceLocator::DirectoryEntry m_account;
-      RiskState m_riskState;
-      Beam::GetOptionalLocalPtr<O> m_orderExecutionClient;
+      Beam::DirectoryEntry m_account;
+      RiskState m_risk_state;
+      Beam::local_ptr_t<C> m_order_execution_client;
       DestinationDatabase m_destinations;
-      Accounting::PositionOrderBook m_book;
-      std::unordered_set<OrderExecutionService::OrderId> m_liveOrders;
+      PositionOrderBook m_book;
+      std::unordered_set<OrderId> m_live_orders;
       int m_state;
 
-      bool C0();
-      bool C1();
-      bool C2();
-      bool C3();
-      void S0();
-      void S1();
-      void S2();
-      void S3();
-      void S4();
-      void S5();
-      void S6();
+      bool c0();
+      bool c1();
+      bool c2();
+      bool c3();
+      void s0();
+      void s1();
+      void s2();
+      void s3();
+      void s4();
+      void s5();
+      void s6();
   };
 
-  template<typename OF>
-  RiskTransitionModel(Beam::ServiceLocator::DirectoryEntry,
-    const std::vector<RiskInventory>&, RiskState, OF&&, DestinationDatabase) ->
-    RiskTransitionModel<std::remove_reference_t<OF>>;
+  template<typename C>
+  RiskTransitionModel(Beam::DirectoryEntry,
+    const std::vector<Inventory>&, RiskState, C&&, DestinationDatabase) ->
+      RiskTransitionModel<std::remove_cvref_t<C>>;
 
-  template<typename O>
-  template<typename OF>
-  RiskTransitionModel<O>::RiskTransitionModel(
-    Beam::ServiceLocator::DirectoryEntry account,
-    const std::vector<RiskInventory>& inventory, RiskState riskState,
-    OF&& orderExecutionClient, DestinationDatabase destinations)
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
+  template<Beam::Initializes<C> CF>
+  RiskTransitionModel<C>::RiskTransitionModel(
+    Beam::DirectoryEntry account,
+    const std::vector<Inventory>& inventory, RiskState risk_state,
+    CF&& order_execution_client, DestinationDatabase destinations) noexcept
     : m_account(std::move(account)),
-      m_riskState(std::move(riskState)),
-      m_orderExecutionClient(std::forward<OF>(orderExecutionClient)),
+      m_risk_state(std::move(risk_state)),
+      m_order_execution_client(std::forward<CF>(order_execution_client)),
       m_destinations(std::move(destinations)),
       m_book(inventory),
       m_state(0) {}
 
-  template<typename O>
-  void RiskTransitionModel<O>::Add(const OrderExecutionService::Order& order) {
-    m_book.Add(order);
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
+  void RiskTransitionModel<C>::add(const std::shared_ptr<Order>& order) {
+    m_book.add(order);
   }
 
-  template<typename O>
-  void RiskTransitionModel<O>::Update(const RiskState& state) {
-    m_riskState = state;
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
+  void RiskTransitionModel<C>::update(const RiskState& state) {
+    m_risk_state = state;
     if(m_state == 0) {
-      return S0();
+      return s0();
     } else if(m_state == 2) {
-      return S2();
+      return s2();
     } else if(m_state == 4) {
-      return S4();
+      return s4();
     } else if(m_state == 6) {
-      return S6();
+      return s6();
     }
   }
 
-  template<typename O>
-  void RiskTransitionModel<O>::Update(
-      const OrderExecutionService::ExecutionReport& report) {
-    m_book.Update(report);
-    if(IsTerminal(report.m_status)) {
-      m_liveOrders.erase(report.m_id);
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
+  void RiskTransitionModel<C>::update(const ExecutionReport& report) {
+    m_book.update(report);
+    if(is_terminal(report.m_status)) {
+      m_live_orders.erase(report.m_id);
     }
     if(m_state == 4) {
-      return S4();
+      return s4();
     }
   }
 
-  template<typename O>
-  bool RiskTransitionModel<O>::C0() {
-    return m_riskState.m_type == RiskState::Type::CLOSE_ORDERS;
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
+  bool RiskTransitionModel<C>::c0() {
+    return m_risk_state.m_type == RiskState::Type::CLOSE_ORDERS;
   }
 
-  template<typename O>
-  bool RiskTransitionModel<O>::C1() {
-    return m_riskState.m_type == RiskState::Type::ACTIVE;
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
+  bool RiskTransitionModel<C>::c1() {
+    return m_risk_state.m_type == RiskState::Type::ACTIVE;
   }
 
-  template<typename O>
-  bool RiskTransitionModel<O>::C2() {
-    return m_riskState.m_type == RiskState::Type::DISABLED;
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
+  bool RiskTransitionModel<C>::c2() {
+    return m_risk_state.m_type == RiskState::Type::DISABLED;
   }
 
-  template<typename O>
-  bool RiskTransitionModel<O>::C3() {
-    return m_liveOrders.empty();
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
+  bool RiskTransitionModel<C>::c3() {
+    return m_live_orders.empty();
   }
 
-  template<typename O>
-  void RiskTransitionModel<O>::S0() {
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
+  void RiskTransitionModel<C>::s0() {
     m_state = 0;
-    if(C0()) {
-      return S1();
+    if(c0()) {
+      return s1();
     }
   }
 
-  template<typename O>
-  void RiskTransitionModel<O>::S1() {
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
+  void RiskTransitionModel<C>::s1() {
     m_state = 1;
-    for(auto& openingOrder : m_book.GetOpeningOrders()) {
-      m_orderExecutionClient->Cancel(*openingOrder);
+    for(auto& order : m_book.get_opening_orders()) {
+      m_order_execution_client->cancel(*order);
     }
-    return S2();
+    return s2();
   }
 
-  template<typename O>
-  void RiskTransitionModel<O>::S2() {
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
+  void RiskTransitionModel<C>::s2() {
     m_state = 2;
-    if(C1()) {
-      return S0();
-    } else if(C2()) {
-      return S3();
+    if(c1()) {
+      return s0();
+    } else if(c2()) {
+      return s3();
     }
   }
 
-  template<typename O>
-  void RiskTransitionModel<O>::S3() {
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
+  void RiskTransitionModel<C>::s3() {
     m_state = 3;
-    auto& liveOrders = m_book.GetLiveOrders();
-    m_liveOrders.clear();
-    for(auto& liveOrder : liveOrders) {
-      m_liveOrders.insert(liveOrder->GetInfo().m_orderId);
-      m_orderExecutionClient->Cancel(*liveOrder);
+    auto& live_orders = m_book.get_live_orders();
+    m_live_orders.clear();
+    for(auto& order : live_orders) {
+      m_live_orders.insert(order->get_info().m_id);
+      m_order_execution_client->cancel(*order);
     }
-    return S4();
+    return s4();
   }
 
-  template<typename O>
-  void RiskTransitionModel<O>::S4() {
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
+  void RiskTransitionModel<C>::s4() {
     m_state = 4;
-    if(C1()) {
-      return S0();
-    } else if(C3()) {
-      return S5();
+    if(c1()) {
+      return s0();
+    } else if(c3()) {
+      return s5();
     }
   }
 
-  template<typename O>
-  void RiskTransitionModel<O>::S5() {
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
+  void RiskTransitionModel<C>::s5() {
     m_state = 5;
-    for(auto& position : m_book.GetPositions()) {
-      auto destination = m_destinations.GetPreferredDestination(
-        position.m_security.GetMarket()).m_id;
-      auto orderFields = OrderExecutionService::OrderFields::MakeMarketOrder(
-        m_account, position.m_security,
-        GetOpposite(GetSide(position.m_quantity)), destination,
-        Abs(position.m_quantity));
+    for(auto& position : m_book.get_positions()) {
+      auto destination = m_destinations.get_preferred_destination(
+        position.m_security.get_venue()).m_id;
+      auto fields = make_market_order_fields(m_account, position.m_security,
+        get_opposite(get_side(position.m_quantity)), destination,
+        abs(position.m_quantity));
       try {
-        m_orderExecutionClient->Submit(orderFields);
+        m_order_execution_client->submit(fields);
       } catch(const std::exception&) {
         std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
       }
     }
-    return S6();
+    return s6();
   }
 
-  template<typename O>
-  void RiskTransitionModel<O>::S6() {
+  template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
+  void RiskTransitionModel<C>::s6() {
     m_state = 6;
-    if(C1()) {
-      return S0();
+    if(c1()) {
+      return s0();
     }
   }
 }

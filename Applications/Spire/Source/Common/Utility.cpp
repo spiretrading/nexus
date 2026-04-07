@@ -3,6 +3,12 @@
 
 using namespace Spire;
 
+void QObjectDeleter::operator ()(QObject* object) const noexcept {
+  if(object) {
+    object->deleteLater();
+  }
+}
+
 bool Spire::is_ancestor(const QWidget* ancestor, const QWidget* descendant) {
   auto current = descendant;
   while(current) {

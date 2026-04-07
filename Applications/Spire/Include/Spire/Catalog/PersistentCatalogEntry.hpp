@@ -20,7 +20,7 @@ namespace Spire {
       virtual void Delete() const = 0;
 
     protected:
-      friend struct Beam::Serialization::DataShuttle;
+      friend struct Beam::DataShuttle;
 
       //! Constructs a PersistentCatalogEntry.
       /*!
@@ -31,14 +31,13 @@ namespace Spire {
       //! Constructs a PersistentCatalogEntry.
       PersistentCatalogEntry();
 
-      template<typename Shuttler>
-      void Shuttle(Shuttler& shuttle, unsigned int version);
+      template<Beam::IsShuttle S>
+      void shuttle(S& shuttle, unsigned int version);
   };
 
-  template<typename Shuttler>
-  void PersistentCatalogEntry::Shuttle(Shuttler& shuttle,
-      unsigned int version) {
-    CatalogEntry::Shuttle(shuttle, version);
+  template<Beam::IsShuttle S>
+  void PersistentCatalogEntry::shuttle(S& shuttle, unsigned int version) {
+    CatalogEntry::shuttle(shuttle, version);
   }
 }
 

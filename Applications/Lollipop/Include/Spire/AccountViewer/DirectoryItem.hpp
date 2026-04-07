@@ -2,7 +2,6 @@
 #define SPIRE_DIRECTORYITEM_HPP
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Spire/AccountViewer/AccountViewItem.hpp"
-#include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
@@ -35,13 +34,13 @@ namespace Spire {
         \param entry The directory's DirectoryEntry.
         \param type The type of directory represented.
       */
-      DirectoryItem(const Beam::ServiceLocator::DirectoryEntry& entry,
+      DirectoryItem(const Beam::DirectoryEntry& entry,
         DirectoryType type);
 
       virtual ~DirectoryItem();
 
       //! Returns the directory's DirectoryEntry.
-      const Beam::ServiceLocator::DirectoryEntry& GetEntry() const;
+      const Beam::DirectoryEntry& GetEntry() const;
 
       //! Returns the DirectoryType represented.
       DirectoryType GetDirectoryType() const;
@@ -56,7 +55,7 @@ namespace Spire {
         const UserProfile& userProfile) const;
 
     private:
-      Beam::ServiceLocator::DirectoryEntry m_entry;
+      Beam::DirectoryEntry m_entry;
       DirectoryType m_directoryType;
   };
 }

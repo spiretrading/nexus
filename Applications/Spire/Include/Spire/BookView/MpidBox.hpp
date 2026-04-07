@@ -1,7 +1,6 @@
 #ifndef SPIRE_MPID_BOX_HPP
 #define SPIRE_MPID_BOX_HPP
 #include <boost/optional/optional.hpp>
-#include "Spire/BookView/BookView.hpp"
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/Styles/StateSelector.hpp"
 
@@ -11,12 +10,11 @@ namespace Styles {
   /** Styles an MpidBox based on its price level. */
   using PriceLevelRow = StateSelector<int, struct PriceLevelRowSelectorTag>;
 
-  /** Styles an MpidBox based on its market. */
-  using MarketRow =
-    StateSelector<Nexus::MarketCode, struct MarketRowSelectorTag>;
+  /** Styles an MpidBox based on its venue. */
+  using VenueRow = StateSelector<Nexus::Venue, struct VenueRowSelectorTag>;
 
-  /** Styles an MpidBox based on whether it's the top quote for its market. */
-  using TopMarketRow = StateSelector<void, struct TopMarketRowSelectorTag>;
+  /** Styles an MpidBox based on whether it's the top quote for its venue. */
+  using TopVenueRow = StateSelector<void, struct TopVenueRowSelectorTag>;
 
   /** Styles an MpidBox based on whether it represents a user's order. */
   using UserOrderRow =
@@ -56,7 +54,7 @@ namespace Styles {
     private:
       std::shared_ptr<BookEntryModel> m_current;
       boost::optional<int> m_current_type_index;
-      Nexus::MarketCode m_current_market;
+      Nexus::Venue m_current_venue;
       Nexus::OrderStatus m_current_status;
       std::shared_ptr<ValueModel<int>> m_level;
       int m_current_level;
@@ -66,7 +64,7 @@ namespace Styles {
       boost::signals2::scoped_connection m_is_top_mpid_connection;
 
       void update_row_state(int type_index);
-      void update_market_state(const BookEntry& entry);
+      void update_venue_state(const BookEntry& entry);
       void update_status(const BookEntry& entry);
       void on_current(const BookEntry& entry);
       void on_level(int level);

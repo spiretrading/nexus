@@ -1,13 +1,11 @@
 #ifndef NEXUS_FIX_ORDER_EXECUTION_DRIVER_HPP
 #define NEXUS_FIX_ORDER_EXECUTION_DRIVER_HPP
 #include <optional>
-#include <string>
-#include <unordered_map>
 #include <vector>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Threading/Sync.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/throw_exception.hpp>
 #include <quickfix/Application.h>
 #include <quickfix/FileStore.h>
 #include <quickfix/FileLog.h>
@@ -16,12 +14,10 @@
 #include <quickfix/SocketInitiator.h>
 #include "Nexus/FixUtilities/FixApplication.hpp"
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
-#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
-#include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Nexus/OrderExecutionService/OrderUnrecoverableException.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
-namespace Nexus::FixUtilities {
+namespace Nexus {
 
   /**
    * Stores the details of a single FIX Application used by a
@@ -29,8 +25,8 @@ namespace Nexus::FixUtilities {
    */
   struct FixApplicationEntry {
 
-    /** The path to the configuration file. */
-    std::string m_configPath;
+    /** The FIX session settings. */
+    FIX::SessionSettings m_settings;
 
     /** The list of destinations the FIX Application services. */
     std::vector<std::string> m_destinations;
@@ -45,49 +41,39 @@ namespace Nexus::FixUtilities {
 
       /**
        * Constructs a FixOrderExecutionDriver.
-       * @param fixApplicationEntries The list of FIX Application entries
-       *        servicing Order submissions.
+       * @param entries The list of FIX Application entries servicing Order
+       *        submissions.
        */
-      FixOrderExecutionDriver(
-        const std::vector<FixApplicationEntry>& fixApplicationEntries);
+      explicit FixOrderExecutionDriver(
+        const std::vector<FixApplicationEntry>& entries);
 
       ~FixOrderExecutionDriver();
 
-      const OrderExecutionService::Order& Recover(
-        const OrderExecutionService::SequencedAccountOrderRecord& orderRecord);
-
-      const OrderExecutionService::Order& Submit(
-        const OrderExecutionService::OrderInfo& info);
-
-      void Cancel(const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId orderId);
-
-      void Update(const OrderExecutionService::OrderExecutionSession& session,
-        OrderExecutionService::OrderId orderId,
-        const OrderExecutionService::ExecutionReport& executionReport);
-
-      void Close();
+      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      void add(const std::shared_ptr<Order>& order);
+      std::shared_ptr<Order> submit(const OrderInfo& info);
+      void cancel(const OrderExecutionSession& session, OrderId id);
+      void update(const OrderExecutionSession& session, OrderId id,
+        const ExecutionReport& report);
+      void close();
 
     private:
       struct Application {
         std::shared_ptr<FixApplication> m_application;
-        std::string m_configPath;
-        bool m_isConnected;
-        std::optional<FIX::SessionSettings> m_settings;
-        std::optional<FIX::FileStoreFactory> m_storeFactory;
-        std::optional<FIX::FileLogFactory> m_logFactory;
+        bool m_is_connected;
+        FIX::SessionSettings m_settings;
+        std::optional<FIX::FileStoreFactory> m_store_factory;
+        std::optional<FIX::FileLogFactory> m_log_factory;
         std::optional<FIX::SocketInitiator> m_initiator;
 
         Application(std::shared_ptr<FixApplication> application,
-          std::string configPath);
+          FIX::SessionSettings settings);
       };
       std::unordered_map<std::string, std::shared_ptr<Application>>
-        m_fixApplications;
-      Beam::Threading::Sync<std::unordered_map<OrderExecutionService::OrderId,
-        std::shared_ptr<Application>>> m_orderIdToFixApplication;
-      Beam::Threading::Sync<std::vector<
-        std::unique_ptr<OrderExecutionService::PrimitiveOrder>>> m_orders;
-      Beam::IO::OpenState m_openState;
+        m_applications;
+      Beam::SynchronizedUnorderedMap<OrderId, std::shared_ptr<Application>>
+        m_id_to_application;
+      Beam::OpenState m_open_state;
 
       FixOrderExecutionDriver(const FixOrderExecutionDriver&) = delete;
       FixOrderExecutionDriver& operator =(
@@ -95,169 +81,135 @@ namespace Nexus::FixUtilities {
   };
 
   inline FixOrderExecutionDriver::Application::Application(
-    std::shared_ptr<FixApplication> application, std::string configPath)
+    std::shared_ptr<FixApplication> application, FIX::SessionSettings settings)
     : m_application(std::move(application)),
-      m_configPath(std::move(configPath)),
-      m_isConnected(false) {}
+      m_is_connected(false),
+      m_settings(std::move(settings)) {}
 
   inline FixOrderExecutionDriver::FixOrderExecutionDriver(
-      const std::vector<FixApplicationEntry>& fixApplicationEntries) {
-    for(auto& entry : fixApplicationEntries) {
-      auto application = std::make_shared<Application>(entry.m_application,
-        entry.m_configPath);
-      for(const auto& destination : entry.m_destinations) {
-        m_fixApplications.insert(std::pair(destination, application));
+      const std::vector<FixApplicationEntry>& entries) {
+    for(auto& entry : entries) {
+      auto application =
+        std::make_shared<Application>(entry.m_application, entry.m_settings);
+      for(auto& destination : entry.m_destinations) {
+        m_applications.insert(std::pair(destination, application));
       }
     }
     try {
-      auto initializedApplications =
+      auto initialized_applications =
         std::unordered_set<std::shared_ptr<Application>>();
-      for(auto& fixApplication : m_fixApplications) {
-        if(!initializedApplications.insert(fixApplication.second).second) {
+      for(auto& application : m_applications) {
+        if(!initialized_applications.insert(application.second).second) {
           continue;
         }
         try {
-          auto& entry = *(fixApplication.second);
-          entry.m_settings.emplace(entry.m_configPath);
-          if(entry.m_settings->getSessions().size() != 1) {
-            BOOST_THROW_EXCEPTION(std::runtime_error(
+          auto& entry = *(application.second);
+          if(entry.m_settings.getSessions().size() != 1) {
+            boost::throw_with_location(std::runtime_error(
               "Only one session per application is permitted."));
           }
-          auto sessionId = *entry.m_settings->getSessions().begin();
-          entry.m_storeFactory.emplace(*entry.m_settings);
-          entry.m_logFactory.emplace(*entry.m_settings);
+          auto session_id = *entry.m_settings.getSessions().begin();
+          entry.m_store_factory.emplace(entry.m_settings);
+          entry.m_log_factory.emplace(entry.m_settings);
           entry.m_initiator.emplace(*entry.m_application,
-            *entry.m_storeFactory, *entry.m_settings, *entry.m_logFactory);
-          entry.m_application->SetSessionSettings(sessionId, *entry.m_settings);
-          for(auto& sessionId : entry.m_settings->getSessions()) {
-            auto session = FIX::Session::lookupSession(sessionId);
-            if(session != nullptr) {
-              auto dataDictionaryProvider =
-                session->getDataDictionaryProvider();
-              auto sessionDataDictionary =
-                dataDictionaryProvider.getSessionDataDictionary(
-                sessionId.getBeginString());
-              sessionDataDictionary.checkFieldsOutOfOrder(false);
-              sessionDataDictionary.checkFieldsHaveValues(false);
-              dataDictionaryProvider.addTransportDataDictionary(
-                sessionId.getBeginString(),
-                std::make_shared<FIX::DataDictionary>(sessionDataDictionary));
-              auto applicationDataDictionary =
-                dataDictionaryProvider.getApplicationDataDictionary(
-                FIX::Message::toApplVerID(sessionId.getBeginString()));
-              applicationDataDictionary.checkFieldsOutOfOrder(false);
-              applicationDataDictionary.checkFieldsHaveValues(false);
-              dataDictionaryProvider.addApplicationDataDictionary(
-                FIX::Message::toApplVerID(sessionId.getBeginString()),
+            *entry.m_store_factory, entry.m_settings, *entry.m_log_factory);
+          entry.m_application->set_session_settings(
+            session_id, entry.m_settings);
+          for(auto& session_id : entry.m_settings.getSessions()) {
+            if(auto session = FIX::Session::lookupSession(session_id)) {
+              auto dictionary_provider = session->getDataDictionaryProvider();
+              auto session_dictionary =
+                dictionary_provider.getSessionDataDictionary(
+                  session_id.getBeginString());
+              session_dictionary.checkFieldsOutOfOrder(false);
+              session_dictionary.checkFieldsHaveValues(false);
+              dictionary_provider.addTransportDataDictionary(
+                session_id.getBeginString(),
+                std::make_shared<FIX::DataDictionary>(session_dictionary));
+              auto application_dictionary =
+                dictionary_provider.getApplicationDataDictionary(
+                  FIX::Message::toApplVerID(session_id.getBeginString()));
+              application_dictionary.checkFieldsOutOfOrder(false);
+              application_dictionary.checkFieldsHaveValues(false);
+              dictionary_provider.addApplicationDataDictionary(
+                FIX::Message::toApplVerID(session_id.getBeginString()),
                 std::make_shared<FIX::DataDictionary>(
-                applicationDataDictionary));
-              session->setDataDictionaryProvider(dataDictionaryProvider);
+                  application_dictionary));
+              session->setDataDictionaryProvider(dictionary_provider);
             }
           }
           entry.m_initiator->start();
-          entry.m_isConnected = true;
+          entry.m_is_connected = true;
         } catch(const std::exception& e) {
-          std::cerr << "Error: " << fixApplication.first << ": " << e.what();
+          std::cerr << "Error: " << application.first << ": " << e.what();
         }
       }
     } catch(const std::exception&) {
-      Close();
-      BOOST_RETHROW;
+      close();
+      throw;
     }
   }
 
   inline FixOrderExecutionDriver::~FixOrderExecutionDriver() {
-    Close();
+    close();
   }
 
-  inline const OrderExecutionService::Order& FixOrderExecutionDriver::Recover(
-      const OrderExecutionService::SequencedAccountOrderRecord& orderRecord) {
-    auto fixApplicationEntryIterator = m_fixApplications.find(
-      (*orderRecord)->m_info.m_fields.m_destination);
-    if(fixApplicationEntryIterator == m_fixApplications.end()) {
-      BOOST_THROW_EXCEPTION(OrderExecutionService::OrderUnrecoverableException(
+  inline std::shared_ptr<Order> FixOrderExecutionDriver::recover(
+      const SequencedAccountOrderRecord& record) {
+    auto i = m_applications.find((*record)->m_info.m_fields.m_destination);
+    if(i == m_applications.end()) {
+      boost::throw_with_location(OrderUnrecoverableException(
         "FIX application for given destination not found: [" +
-        (*orderRecord)->m_info.m_fields.m_destination + "], " +
-        boost::lexical_cast<std::string>((*orderRecord)->m_info.m_orderId)));
+        (*record)->m_info.m_fields.m_destination + "], " +
+        boost::lexical_cast<std::string>((*record)->m_info.m_id)));
     }
-    auto fixApplicationEntry = fixApplicationEntryIterator->second;
-    auto& order = fixApplicationEntry->m_application->Recover(orderRecord);
-    Beam::Threading::With(m_orderIdToFixApplication,
-      [&] (auto& orderIdToFixApplication) {
-        orderIdToFixApplication.insert(std::pair(
-          (*orderRecord)->m_info.m_orderId, fixApplicationEntry));
-      });
+    auto entry = i->second;
+    auto order = entry->m_application->recover(record);
+    m_id_to_application.insert((*record)->m_info.m_id, entry);
     return order;
   }
 
-  inline const OrderExecutionService::Order& FixOrderExecutionDriver::Submit(
-      const OrderExecutionService::OrderInfo& info) {
-    auto fixApplicationEntryIterator = m_fixApplications.find(
-      info.m_fields.m_destination);
-    if(fixApplicationEntryIterator == m_fixApplications.end()) {
-      auto order = OrderExecutionService::MakeRejectedOrder(info,
+  inline void FixOrderExecutionDriver::add(
+    const std::shared_ptr<Order>& order) {}
+
+  inline std::shared_ptr<Order> FixOrderExecutionDriver::submit(
+      const OrderInfo& info) {
+    auto i = m_applications.find(info.m_fields.m_destination);
+    if(i == m_applications.end()) {
+      return make_rejected_order(info,
         "Destination [" + info.m_fields.m_destination + "] not available");
-      auto& submittedOrder = *order;
-      Beam::Threading::With(m_orders,
-        [&] (auto& orders) {
-          orders.push_back(std::move(order));
-        });
-      return submittedOrder;
     }
-    auto fixApplicationEntry = fixApplicationEntryIterator->second;
-    const auto& order = fixApplicationEntry->m_application->Submit(info);
-    Beam::Threading::With(m_orderIdToFixApplication,
-      [&] (auto& orderIdToFixApplication) {
-        orderIdToFixApplication.insert(
-          std::pair(info.m_orderId, fixApplicationEntry));
-      });
+    auto entry = i->second;
+    auto order = entry->m_application->submit(info);
+    m_id_to_application.insert(info.m_id, entry);
     return order;
   }
 
-  inline void FixOrderExecutionDriver::Cancel(
-      const OrderExecutionService::OrderExecutionSession& session,
-      OrderExecutionService::OrderId orderId) {
-    auto fixApplicationEntry = Beam::Threading::With(m_orderIdToFixApplication,
-      [&] (auto& orderIdToFixApplication) {
-        auto entryIterator = orderIdToFixApplication.find(orderId);
-        if(entryIterator == orderIdToFixApplication.end()) {
-          return std::shared_ptr<Application>();
-        }
-        return entryIterator->second;
-      });
-    if(fixApplicationEntry) {
-      fixApplicationEntry->m_application->Cancel(session, orderId);
+  inline void FixOrderExecutionDriver::cancel(
+      const OrderExecutionSession& session, OrderId id) {
+    if(auto entry = m_id_to_application.find(id)) {
+      (*entry)->m_application->cancel(session, id);
     }
   }
 
-  inline void FixOrderExecutionDriver::Update(
-      const OrderExecutionService::OrderExecutionSession& session,
-      OrderExecutionService::OrderId orderId,
-      const OrderExecutionService::ExecutionReport& executionReport) {
-    auto fixApplicationEntry = Beam::Threading::With(m_orderIdToFixApplication,
-      [&] (const auto& orderIdToFixApplication) {
-        auto entryIterator = orderIdToFixApplication.find(orderId);
-        if(entryIterator == orderIdToFixApplication.end()) {
-          return std::shared_ptr<Application>{};
-        }
-        return entryIterator->second;
-      });
-    if(fixApplicationEntry) {
-      fixApplicationEntry->m_application->Update(session, orderId,
-        executionReport);
+  inline void FixOrderExecutionDriver::update(
+      const OrderExecutionSession& session, OrderId id,
+      const ExecutionReport& report) {
+    if(auto entry = m_id_to_application.find(id)) {
+      (*entry)->m_application->update(session, id, report);
     }
   }
 
-  inline void FixOrderExecutionDriver::Close() {
-    if(m_openState.SetClosing()) {
+  inline void FixOrderExecutionDriver::close() {
+    if(m_open_state.set_closing()) {
       return;
     }
-    m_openState.Close();
-    for(auto& fixApplication : m_fixApplications) {
-      auto& entry = *(fixApplication.second);
+    for(auto& application : m_applications) {
+      auto& entry = *(application.second);
       entry.m_initiator->stop();
-      entry.m_isConnected = false;
+      entry.m_is_connected = false;
     }
+    m_open_state.close();
   }
 }
 

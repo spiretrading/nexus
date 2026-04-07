@@ -10,53 +10,43 @@
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
-#include <Beam/Threading/LiveTimer.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/lexical_cast.hpp>
+#include <boost/throw_exception.hpp>
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
-#include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
+#include "Nexus/MarketDataService/ServiceMarketDataFeedClient.hpp"
 #include "SimulationMarketDataFeedClient/SimulationMarketDataFeedClient.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
-using namespace Beam::Codecs;
-using namespace Beam::IO;
-using namespace Beam::Network;
-using namespace Beam::Parsers;
-using namespace Beam::Routines;
-using namespace Beam::Serialization;
-using namespace Beam::ServiceLocator;
-using namespace Beam::Services;
-using namespace Beam::Threading;
-using namespace Beam::TimeService;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefinitionsService;
-using namespace Nexus::MarketDataService;
 
 namespace {
-  using BaseMarketDataFeedClient = MarketDataFeedClient<std::string, LiveTimer,
+  using BaseMarketDataFeedClient = ServiceMarketDataFeedClient<
+    std::string, LiveTimer,
     MessageProtocol<TcpSocketChannel, BinarySender<SharedBuffer>,
       SizeDeclarativeEncoder<ZLibEncoder>>, LiveTimer>;
   using ApplicationMarketDataFeedClient = SimulationMarketDataFeedClient<
-    BaseMarketDataFeedClient, LiveNtpTimeClient*, LiveTimer, LiveTimer,
-    LiveTimer>;
+    BaseMarketDataFeedClient, LiveNtpTimeClient*, LiveTimer, LiveTimer>;
 
-  std::vector<Security> ParseSecurities(const YAML::Node& config,
-      const MarketDatabase& marketDatabase) {
-    return TryOrNest([&] {
+  std::vector<Security> parse_securities(
+      const YAML::Node& config, const VenueDatabase& venues) {
+    return try_or_nest([&] {
       auto securities = std::vector<Security>();
       for(auto& item : config) {
         auto symbol = item.as<std::string>();
-        auto security = ParseSecurity(symbol, marketDatabase);
-        if(security == Security()) {
-          throw std::runtime_error("Invalid security: " + symbol);
+        auto security = parse_security(symbol, venues);
+        if(!security) {
+          throw_with_location(
+            std::runtime_error("Invalid security: " + symbol));
         }
         securities.push_back(security);
       }
@@ -65,79 +55,75 @@ namespace {
   }
 
   std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>
-      BuildMockFeedClients(const YAML::Node& config,
-      const MarketDatabase& marketDatabase,
-      const std::vector<IpAddress>& addresses,
-      ApplicationMarketDataClient& marketDataClient,
-      ApplicationServiceLocatorClient& serviceLocatorClient,
-      LiveNtpTimeClient& timeClient) {
-    return TryOrNest([&] {
-      auto feedClients =
+      build_mock_feed_clients(
+        const YAML::Node& config, const VenueDatabase& venues,
+        const std::vector<IpAddress>& addresses,
+        ApplicationMarketDataClient& market_data_client,
+        ApplicationServiceLocatorClient& service_locator_client,
+        LiveNtpTimeClient& time_client) {
+    return try_or_nest([&] {
+      auto feed_clients =
         std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>();
-      auto securities = ParseSecurities(GetNode(config, "symbols"),
-        marketDatabase);
-      auto feedCount = std::min<int>(Extract<int>(config, "feeds"),
-        securities.size());
-      auto securitiesPerFeed = securities.size() / feedCount;
-      auto bboPeriod = Extract<time_duration>(config, "bbo_period");
-      auto marketQuotePeriod = Extract<time_duration>(config,
-        "market_quote_period");
-      auto timeAndSalesPeriod = Extract<time_duration>(config,
-        "time_and_sales_period");
-      auto sampling = Extract<time_duration>(config, "sampling");
-      for(auto i = 0; i < feedCount; ++i) {
-        auto feedSecurities = std::vector<Security>();
-        if(i < feedCount - 1) {
-          feedSecurities.insert(feedSecurities.end(), securities.begin() +
-            i * securitiesPerFeed, securities.begin() +
-            (i + 1) * securitiesPerFeed);
+      auto securities = parse_securities(get_node(config, "symbols"), venues);
+      auto feed_count =
+        std::min<int>(extract<int>(config, "feeds"), securities.size());
+      auto securities_per_feed = securities.size() / feed_count;
+      auto bbo_period = extract<time_duration>(config, "bbo_period");
+      auto time_and_sales_period =
+        extract<time_duration>(config, "time_and_sales_period");
+      auto sampling = extract<time_duration>(config, "sampling");
+      for(auto i = 0; i < feed_count; ++i) {
+        auto feed_securities = std::vector<Security>();
+        if(i < feed_count - 1) {
+          feed_securities.insert(feed_securities.end(), securities.begin() +
+            i * securities_per_feed, securities.begin() +
+              (i + 1) * securities_per_feed);
         } else {
-          feedSecurities.insert(feedSecurities.end(), securities.begin() +
-            i * securitiesPerFeed, securities.end());
+          feed_securities.insert(feed_securities.end(), securities.begin() +
+            i * securities_per_feed, securities.end());
         }
-        auto applicationMarketDataFeed =
-          std::make_unique<ApplicationMarketDataFeedClient>(feedSecurities,
-            marketDatabase, *marketDataClient, Initialize(Initialize(addresses),
-              SessionAuthenticator(serviceLocatorClient.Get()),
-              Initialize(sampling), Initialize(seconds(10))), &timeClient,
-            Initialize(bboPeriod), Initialize(marketQuotePeriod),
-            Initialize(timeAndSalesPeriod));
-        feedClients.push_back(std::move(applicationMarketDataFeed));
+        auto application_market_data_feed =
+          std::make_unique<ApplicationMarketDataFeedClient>(feed_securities,
+            venues, market_data_client, init(init(addresses),
+              SessionAuthenticator(Ref(service_locator_client)),
+              init(sampling), init(seconds(10))), &time_client,
+            init(bbo_period), init(time_and_sales_period));
+        feed_clients.push_back(std::move(application_market_data_feed));
       }
-      return feedClients;
+      return feed_clients;
     }, std::runtime_error("Failed to build feed clients."));
   }
 }
 
 int main(int argc, const char** argv) {
   try {
-    auto config = ParseCommandLine(argc, argv,
+    auto config = parse_command_line(argc, argv,
       "1.0-r" SIMULATION_MARKET_DATA_FEED_CLIENT_VERSION
-      "\nCopyright (C) 2020 Spire Trading Inc.");
-    auto serviceLocatorClient =
-      MakeApplicationServiceLocatorClient(GetNode(config, "service_locator"));
-    auto definitionsClient =
-      ApplicationDefinitionsClient(serviceLocatorClient.Get());
-    auto timeClient =
-      MakeLiveNtpTimeClientFromServiceLocator(*serviceLocatorClient);
-    auto marketDataServices =
-      serviceLocatorClient->Locate(MarketDataService::FEED_SERVICE_NAME);
-    if(marketDataServices.empty()) {
-      throw std::runtime_error("No market data services available.");
+      "\nCopyright (C) 2026 Spire Trading Inc.");
+    auto service_locator_client = ApplicationServiceLocatorClient(
+      ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
+    auto definitions_client =
+      ApplicationDefinitionsClient(Ref(service_locator_client));
+    auto time_client = make_live_ntp_time_client(service_locator_client);
+    auto market_data_services =
+      service_locator_client.locate(MARKET_DATA_FEED_SERVICE_NAME);
+    if(market_data_services.empty()) {
+      throw_with_location(
+        std::runtime_error("No market data services available."));
     }
-    auto& marketDataService = marketDataServices.front();
-    auto marketDataAddresses = Parse<std::vector<IpAddress>>(
-      get<std::string>(marketDataService.GetProperties().At("addresses")));
-    auto marketDataClient =
-      ApplicationMarketDataClient(serviceLocatorClient.Get());
-    auto feedClients =
-      BuildMockFeedClients(config, definitionsClient->LoadMarketDatabase(),
-        marketDataAddresses, marketDataClient, serviceLocatorClient,
-        *timeClient);
-    WaitForKillEvent();
-    serviceLocatorClient->Close();
+    auto& market_data_service = market_data_services.front();
+    auto market_data_addresses = parse<std::vector<IpAddress>>(
+      get<std::string>(market_data_service.get_properties().at("addresses")));
+    auto market_data_client =
+      ApplicationMarketDataClient(Ref(service_locator_client));
+    auto feed_clients =
+      build_mock_feed_clients(config, definitions_client.load_venue_database(),
+        market_data_addresses, market_data_client, service_locator_client,
+        *time_client);
+    wait_for_kill_event();
+    service_locator_client.close();
   } catch(...) {
-    ReportCurrentException();
+    report_current_exception();
     return -1;
   }
   return 0;
