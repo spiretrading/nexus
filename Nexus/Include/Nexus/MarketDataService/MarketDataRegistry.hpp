@@ -21,8 +21,7 @@
 #include "Nexus/Queries/StandardValues.hpp"
 
 namespace Nexus::Details {
-  Money load_close_price(
-      const Ticker& ticker, const std::string& market_center,
+  Money load_close_price(const Ticker& ticker, const std::string& market_center,
       IsHistoricalDataStore auto& data_store) {
     auto previous_close_query = TickerQuery();
     previous_close_query.set_index(ticker);
@@ -83,15 +82,14 @@ namespace Nexus {
       /**
        * Returns a Ticker's primary listing.
        * @param ticker The Ticker to search.
-       * @return The <i>ticker</i>'s primary listing, if no such listing
-       *         exists then the MarketCode will be set to empty.
+       * @return The <i>ticker</i>'s primary listing, if no such listing exists
+       *         then the MarketCode will be set to empty.
        */
       Ticker get_primary_listing(const Ticker& ticker) const;
 
       /**
        * Returns a Ticker's TickerTechnicals.
-       * @param ticker The Ticker whose TickerTechnicals is to be
-       *        returned.
+       * @param ticker The Ticker whose TickerTechnicals is to be returned.
        * @return A snapshot of the <i>ticker</i>'s TickerTechnicals.
        */
       boost::optional<TickerTechnicals>
@@ -102,8 +100,7 @@ namespace Nexus {
        * @param ticker The Ticker whose snapshot is to be returned.
        * @return The real-time snapshot of the <i>ticker</i>.
        */
-      boost::optional<TickerSnapshot>
-        find_snapshot(const Ticker& ticker) const;
+      boost::optional<TickerSnapshot> find_snapshot(const Ticker& ticker) const;
 
       /**
        * Adds or updates a TickerInfo to this registry.
@@ -228,8 +225,7 @@ namespace Nexus {
     if(ticker.get_symbol().empty() || !ticker.get_venue()) {
       return Ticker(ticker.get_symbol(), Venue());
     }
-    auto venue_key =
-      PrimaryListingKey(ticker.get_symbol(), ticker.get_venue());
+    auto venue_key = PrimaryListingKey(ticker.get_symbol(), ticker.get_venue());
     if(auto verified_ticker = m_primary_listings.try_load(venue_key)) {
       return *verified_ticker;
     }
@@ -248,8 +244,7 @@ namespace Nexus {
   }
 
   inline boost::optional<TickerTechnicals>
-      MarketDataRegistry::find_ticker_technicals(
-        const Ticker& ticker) const {
+      MarketDataRegistry::find_ticker_technicals(const Ticker& ticker) const {
     auto entry = m_ticker_entries.find(get_primary_listing(ticker));
     if(!entry || !(*entry)->is_available()) {
       return boost::none;
@@ -281,11 +276,11 @@ namespace Nexus {
     if(!venue_entry.m_venue) {
       return;
     }
-    auto venue_key = PrimaryListingKey(
-      info.m_ticker.get_symbol(), info.m_ticker.get_venue());
+    auto venue_key =
+      PrimaryListingKey(info.m_ticker.get_symbol(), info.m_ticker.get_venue());
     m_primary_listings.update(venue_key, info.m_ticker);
-    auto country_key = PrimaryListingKey(
-      info.m_ticker.get_symbol(), venue_entry.m_country_code);
+    auto country_key =
+      PrimaryListingKey(info.m_ticker.get_symbol(), venue_entry.m_country_code);
     m_primary_listings.update(country_key, info.m_ticker);
   }
 
