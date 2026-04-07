@@ -26,9 +26,9 @@ namespace Nexus {
    *         specified <i>venue</i>.
    */
   inline auto make_venue_filter(Venue venue) {
-    return std::string(venue.get_code().get_data()) ==
-      SecurityAccessor(OrderFieldsAccessor(OrderInfoAccessor::from_parameter(0).
-        get_fields()).get_security()).get_venue();
+    return std::string(venue.get_code().get_data()) == TickerAccessor(
+      OrderFieldsAccessor(OrderInfoAccessor::from_parameter(0).get_fields()).
+        get_ticker()).get_venue();
   }
 
   /**
@@ -185,8 +185,8 @@ namespace Nexus {
    * @param account The account to query.
    * @param ids The order ids to query.
    */
-  inline AccountQuery make_order_id_query(const Beam::DirectoryEntry& account,
-      const std::vector<OrderId>& ids) {
+  inline AccountQuery make_order_id_query(
+      const Beam::DirectoryEntry& account, const std::vector<OrderId>& ids) {
     auto query = AccountQuery();
     query.set_index(account);
     query.set_range(Beam::Range::HISTORICAL);

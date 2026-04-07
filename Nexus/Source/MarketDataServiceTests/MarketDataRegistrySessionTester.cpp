@@ -1,4 +1,5 @@
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistrySession.hpp"
 
 using namespace Beam;
@@ -24,11 +25,11 @@ TEST_SUITE("MarketDataRegistrySession") {
     REQUIRE(!has_entitlement(session, other_key, MarketDataType::BBO_QUOTE));
   }
 
-  TEST_CASE("has_entitlement_security_query") {
+  TEST_CASE("has_entitlement_ticker_query") {
     auto session = MarketDataRegistrySession();
-    auto security = Security("TST", TSX);
-    auto query = SecurityMarketDataQuery();
-    query.set_index(security);
+    auto ticker = parse_ticker("TST.TSX");
+    auto query = TickerQuery();
+    query.set_index(ticker);
     query.set_range(Range::REAL_TIME);
     REQUIRE(!has_entitlement<BboQuote>(session, query));
     session.m_roles.set(AccountRole::SERVICE);
@@ -41,16 +42,16 @@ TEST_SUITE("MarketDataRegistrySession") {
       EntitlementKey(TSX), MarketDataTypeSet(MarketDataType::BBO_QUOTE));
     REQUIRE(has_entitlement<BboQuote>(session, query));
     REQUIRE(!has_entitlement<BookQuote>(session, query));
-    auto other_security = Security("S32", ASX);
-    auto other_query = SecurityMarketDataQuery();
-    other_query.set_index(other_security);
+    auto other_ticker = parse_ticker("S32.ASX");
+    auto other_query = TickerQuery();
+    other_query.set_index(other_ticker);
     other_query.set_range(Range::REAL_TIME);
     REQUIRE(!has_entitlement<BboQuote>(session, other_query));
   }
 
   TEST_CASE("has_entitlement_venue_query") {
     auto session = MarketDataRegistrySession();
-    auto query = VenueMarketDataQuery();
+    auto query = VenueQuery();
     query.set_index(TSX);
     query.set_range(Range::REAL_TIME);
     REQUIRE(!has_entitlement<OrderImbalance>(session, query));
@@ -60,10 +61,10 @@ TEST_SUITE("MarketDataRegistrySession") {
     session.m_roles.set(AccountRole::ADMINISTRATOR);
     REQUIRE(has_entitlement<OrderImbalance>(session, query));
     session.m_roles = AccountRoles();
-    session.m_entitlements.grant(
-      EntitlementKey(TSX), MarketDataTypeSet(MarketDataType::ORDER_IMBALANCE));
+    session.m_entitlements.grant(EntitlementKey(TSX),
+      MarketDataTypeSet(MarketDataType::ORDER_IMBALANCE));
     REQUIRE(has_entitlement<OrderImbalance>(session, query));
-    auto other_query = VenueMarketDataQuery();
+    auto other_query = VenueQuery();
     other_query.set_index(ASX);
     other_query.set_range(Range::REAL_TIME);
     REQUIRE(!has_entitlement<OrderImbalance>(session, other_query));

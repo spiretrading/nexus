@@ -61,6 +61,10 @@ namespace Nexus {
       std::vector<T> submit(const Query& query);
   };
 
+  template<typename C>
+  ClientHistoricalDataStore(C&&) ->
+    ClientHistoricalDataStore<std::remove_cvref_t<C>>;
+
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   template<Beam::Initializes<C> CF>
   ClientHistoricalDataStore<C>::ClientHistoricalDataStore(CF&& client)

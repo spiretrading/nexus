@@ -11,10 +11,10 @@ TEST_SUITE("SqlTranslator") {
     auto info_parameter_expression = ParameterExpression(0, typeid(OrderInfo));
     auto fields_access_expression = MemberAccessExpression(
       "fields", typeid(OrderFields), info_parameter_expression);
-    auto security_access_expression = MemberAccessExpression(
-      "security", typeid(Security), fields_access_expression);
+    auto ticker_access_expression = MemberAccessExpression(
+      "ticker", typeid(Ticker), fields_access_expression);
     auto venue_access_expression = MemberAccessExpression(
-      "venue", typeid(std::string), security_access_expression);
+      "venue", typeid(std::string), ticker_access_expression);
     auto equal_expression = "XTSX" == venue_access_expression;
     auto translator = Nexus::SqlTranslator("submissions", equal_expression);
     auto translation = translator.make();

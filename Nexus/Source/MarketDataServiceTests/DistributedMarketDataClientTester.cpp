@@ -3,6 +3,7 @@
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/MarketDataService/DistributedMarketDataClient.hpp"
 #include "Nexus/MarketDataServiceTests/TestMarketDataClient.hpp"
 
@@ -59,7 +60,7 @@ TEST_SUITE("DistributedMarketDataClient") {
   TEST_CASE("query_sequenced_order_imbalances") {
     auto fixture = Fixture();
     auto imbalances = std::make_shared<Queue<SequencedOrderImbalance>>();
-    auto query = VenueMarketDataQuery();
+    auto query = VenueQuery();
 
     SUBCASE("exact") {
       query.set_index(TSX);
@@ -70,7 +71,7 @@ TEST_SUITE("DistributedMarketDataClient") {
         TestMarketDataClient::QuerySequencedOrderImbalanceOperation>(
           operations->pop());
       auto test_imbalance = SequencedValue(
-        OrderImbalance(Security("ABC", TSX), Side::BID, 100, Money::ONE,
+        OrderImbalance(parse_ticker("ABC.TSX"), Side::BID, 100, Money::ONE,
           time_from_string("2024-06-12 13:05:12:00")), Beam::Sequence(100));
       received_query->m_queue.push(test_imbalance);
       auto received_imbalance = imbalances->pop();
@@ -86,7 +87,7 @@ TEST_SUITE("DistributedMarketDataClient") {
         TestMarketDataClient::QuerySequencedOrderImbalanceOperation>(
           operations->pop());
       auto test_imbalance = SequencedValue(
-        OrderImbalance(Security("S32", ASX), Side::ASK, 200, 3 * Money::ONE,
+        OrderImbalance(parse_ticker("S32.ASX"), Side::ASK, 200, 3 * Money::ONE,
           time_from_string("2025-02-18 17:23:30:12")), Beam::Sequence(200));
       received_query->m_queue.push(test_imbalance);
       auto received_imbalance = imbalances->pop();
@@ -104,7 +105,7 @@ TEST_SUITE("DistributedMarketDataClient") {
   TEST_CASE("query_order_imbalances") {
     auto fixture = Fixture();
     auto imbalances = std::make_shared<Queue<OrderImbalance>>();
-    auto query = VenueMarketDataQuery();
+    auto query = VenueQuery();
 
     SUBCASE("exact") {
       query.set_index(TSX);
@@ -113,7 +114,7 @@ TEST_SUITE("DistributedMarketDataClient") {
       auto operations = fixture.m_operations.get(TSX);
       auto received_query = require_operation<
         TestMarketDataClient::QueryOrderImbalanceOperation>(operations->pop());
-      auto test_imbalance = OrderImbalance(Security("ABC", TSX), Side::BID,
+      auto test_imbalance = OrderImbalance(parse_ticker("ABC.TSX"), Side::BID,
         100, Money::ONE, time_from_string("2024-06-12 13:05:12:00"));
       received_query->m_queue.push(test_imbalance);
       auto received_imbalance = imbalances->pop();
@@ -127,7 +128,7 @@ TEST_SUITE("DistributedMarketDataClient") {
       auto operations = fixture.m_operations.get(ASX);
       auto received_query = require_operation<
         TestMarketDataClient::QueryOrderImbalanceOperation>(operations->pop());
-      auto test_imbalance = OrderImbalance(Security("S32", ASX), Side::ASK,
+      auto test_imbalance = OrderImbalance(parse_ticker("S32.ASX"), Side::ASK,
         200, 3 * Money::ONE, time_from_string("2025-02-18 17:23:30:12"));
       received_query->m_queue.push(test_imbalance);
       auto received_imbalance = imbalances->pop();
@@ -145,26 +146,26 @@ TEST_SUITE("DistributedMarketDataClient") {
   TEST_CASE("query_sequenced_bbo_quotes") {
     auto fixture = Fixture();
     auto bbo_quotes = std::make_shared<Queue<SequencedBboQuote>>();
-    auto query = SecurityMarketDataQuery();
+    auto query = TickerQuery();
 
     SUBCASE("exact") {
-      query.set_index(Security("ABC", TSX));
+      query.set_index(parse_ticker("ABC.TSX"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, bbo_quotes);
       auto operations = fixture.m_operations.get(TSX);
       auto received_query = require_operation<
         TestMarketDataClient::QuerySequencedBboQuoteOperation>(
           operations->pop());
-      auto test_bbo = SequencedValue(
-        BboQuote(make_bid(10 * Money::ONE, 100), make_ask(11 * Money::ONE, 100),
-          time_from_string("2024-06-12 13:05:12:00")), Beam::Sequence(100));
+      auto test_bbo = SequencedValue(BboQuote(
+        make_bid(10 * Money::ONE, 100), make_ask(11 * Money::ONE, 100),
+        time_from_string("2024-06-12 13:05:12:00")), Beam::Sequence(100));
       received_query->m_queue.push(test_bbo);
       auto received_bbo = bbo_quotes->pop();
       REQUIRE(received_bbo == test_bbo);
     }
 
     SUBCASE("parent") {
-      query.set_index(Security("S32", ASX));
+      query.set_index(parse_ticker("S32.ASX"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, bbo_quotes);
       auto operations = fixture.m_operations.get(ASX);
@@ -180,7 +181,7 @@ TEST_SUITE("DistributedMarketDataClient") {
     }
 
     SUBCASE("unavailable") {
-      query.set_index(Security("BHP", TSXV));
+      query.set_index(parse_ticker("BHP.TSXV"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, bbo_quotes);
       REQUIRE_THROWS_AS(bbo_quotes->pop(), PipeBrokenException);
@@ -190,10 +191,10 @@ TEST_SUITE("DistributedMarketDataClient") {
   TEST_CASE("query_bbo_quotes") {
     auto fixture = Fixture();
     auto bbo_quotes = std::make_shared<Queue<BboQuote>>();
-    auto query = SecurityMarketDataQuery();
+    auto query = TickerQuery();
 
     SUBCASE("exact") {
-      query.set_index(Security("ABC", TSX));
+      query.set_index(parse_ticker("ABC.TSX"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, bbo_quotes);
       auto operations = fixture.m_operations.get(TSX);
@@ -208,7 +209,7 @@ TEST_SUITE("DistributedMarketDataClient") {
     }
 
     SUBCASE("parent") {
-      query.set_index(Security("S32", ASX));
+      query.set_index(parse_ticker("S32.ASX"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, bbo_quotes);
       auto operations = fixture.m_operations.get(ASX);
@@ -223,7 +224,7 @@ TEST_SUITE("DistributedMarketDataClient") {
     }
 
     SUBCASE("unavailable") {
-      query.set_index(Security("BHP", TSXV));
+      query.set_index(parse_ticker("BHP.TSXV"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, bbo_quotes);
       REQUIRE_THROWS_AS(bbo_quotes->pop(), PipeBrokenException);
@@ -233,26 +234,26 @@ TEST_SUITE("DistributedMarketDataClient") {
   TEST_CASE("query_sequenced_book_quotes") {
     auto fixture = Fixture();
     auto book_quotes = std::make_shared<Queue<SequencedBookQuote>>();
-    auto query = SecurityMarketDataQuery();
+    auto query = TickerQuery();
 
     SUBCASE("exact") {
-      query.set_index(Security("ABC", TSX));
+      query.set_index(parse_ticker("ABC.TSX"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, book_quotes);
       auto operations = fixture.m_operations.get(TSX);
       auto received_query = require_operation<
         TestMarketDataClient::QuerySequencedBookQuoteOperation>(
           operations->pop());
-      auto test_book_quote = SequencedValue(BookQuote(
-        "MMID12", true, TSX, make_bid(10 * Money::ONE, 100),
-        time_from_string("2024-06-12 13:05:12:00")), Beam::Sequence(100));
+      auto test_book_quote = SequencedValue(
+        BookQuote("MMID12", true, TSX, make_bid(10 * Money::ONE, 100),
+          time_from_string("2024-06-12 13:05:12:00")), Beam::Sequence(100));
       received_query->m_queue.push(test_book_quote);
       auto received_book_quote = book_quotes->pop();
       REQUIRE(received_book_quote == test_book_quote);
     }
 
     SUBCASE("parent") {
-      query.set_index(Security("S32", ASX));
+      query.set_index(parse_ticker("S32.ASX"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, book_quotes);
       auto operations = fixture.m_operations.get(ASX);
@@ -268,7 +269,7 @@ TEST_SUITE("DistributedMarketDataClient") {
     }
 
     SUBCASE("unavailable") {
-      query.set_index(Security("BHP", TSXV));
+      query.set_index(parse_ticker("BHP.TSXV"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, book_quotes);
       REQUIRE_THROWS_AS(book_quotes->pop(), PipeBrokenException);
@@ -278,10 +279,10 @@ TEST_SUITE("DistributedMarketDataClient") {
   TEST_CASE("query_book_quotes") {
     auto fixture = Fixture();
     auto book_quotes = std::make_shared<Queue<BookQuote>>();
-    auto query = SecurityMarketDataQuery();
+    auto query = TickerQuery();
 
     SUBCASE("exact") {
-      query.set_index(Security("ABC", TSX));
+      query.set_index(parse_ticker("ABC.TSX"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, book_quotes);
       auto operations = fixture.m_operations.get(TSX);
@@ -296,23 +297,23 @@ TEST_SUITE("DistributedMarketDataClient") {
     }
 
     SUBCASE("parent") {
-      query.set_index(Security("S32", ASX));
+      query.set_index(parse_ticker("S32.ASX"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, book_quotes);
       auto operations = fixture.m_operations.get(ASX);
       auto received_query = require_operation<
         TestMarketDataClient::QueryBookQuoteOperation>(operations->pop());
-      auto test_book_quote = SequencedValue(BookQuote(
-        "MMID5", false, ASX, make_ask(20 * Money::ONE, 200),
-        time_from_string("2025-02-18 17:23:30:12")),
-        Beam::Sequence(200));
+      auto test_book_quote = SequencedValue(
+        BookQuote("MMID5", false, ASX, make_ask(20 * Money::ONE, 200),
+          time_from_string("2025-02-18 17:23:30:12")),
+          Beam::Sequence(200));
       received_query->m_queue.push(test_book_quote);
       auto received_book_quote = book_quotes->pop();
       REQUIRE(received_book_quote == test_book_quote);
     }
 
     SUBCASE("unavailable") {
-      query.set_index(Security("BHP", TSXV));
+      query.set_index(parse_ticker("BHP.TSXV"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, book_quotes);
       REQUIRE_THROWS_AS(book_quotes->pop(), PipeBrokenException);
@@ -322,10 +323,10 @@ TEST_SUITE("DistributedMarketDataClient") {
   TEST_CASE("query_sequenced_time_and_sales") {
     auto fixture = Fixture();
     auto time_and_sales = std::make_shared<Queue<SequencedTimeAndSale>>();
-    auto query = SecurityMarketDataQuery();
+    auto query = TickerQuery();
 
     SUBCASE("exact") {
-      query.set_index(Security("ABC", TSX));
+      query.set_index(parse_ticker("ABC.TSX"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, time_and_sales);
       auto operations = fixture.m_operations.get(TSX);
@@ -342,7 +343,7 @@ TEST_SUITE("DistributedMarketDataClient") {
     }
 
     SUBCASE("parent") {
-      query.set_index(Security("S32", ASX));
+      query.set_index(parse_ticker("S32.ASX"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, time_and_sales);
       auto operations = fixture.m_operations.get(ASX);
@@ -359,7 +360,7 @@ TEST_SUITE("DistributedMarketDataClient") {
     }
 
     SUBCASE("unavailable") {
-      query.set_index(Security("BHP", TSXV));
+      query.set_index(parse_ticker("BHP.TSXV"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, time_and_sales);
       REQUIRE_THROWS_AS(time_and_sales->pop(), PipeBrokenException);
@@ -369,10 +370,10 @@ TEST_SUITE("DistributedMarketDataClient") {
   TEST_CASE("query_time_and_sales") {
     auto fixture = Fixture();
     auto time_and_sales = std::make_shared<Queue<TimeAndSale>>();
-    auto query = SecurityMarketDataQuery();
+    auto query = TickerQuery();
 
     SUBCASE("exact") {
-      query.set_index(Security("ABC", TSX));
+      query.set_index(parse_ticker("ABC.TSX"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, time_and_sales);
       auto operations = fixture.m_operations.get(TSX);
@@ -388,7 +389,7 @@ TEST_SUITE("DistributedMarketDataClient") {
     }
 
     SUBCASE("parent") {
-      query.set_index(Security("S32", ASX));
+      query.set_index(parse_ticker("S32.ASX"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, time_and_sales);
       auto operations = fixture.m_operations.get(ASX);
@@ -404,77 +405,77 @@ TEST_SUITE("DistributedMarketDataClient") {
     }
 
     SUBCASE("unavailable") {
-      query.set_index(Security("BHP", TSXV));
+      query.set_index(parse_ticker("BHP.TSXV"));
       query.set_range(Range::REAL_TIME);
       fixture.m_client.query(query, time_and_sales);
       REQUIRE_THROWS_AS(time_and_sales->pop(), PipeBrokenException);
     }
   }
 
-  TEST_CASE("query_security_info") {
+  TEST_CASE("query_ticker_info") {
     auto fixture = Fixture();
-    auto query = SecurityInfoQuery();
-    query.set_index(Security("ABC", TSX));
+    auto query = TickerInfoQuery();
+    query.set_index(parse_ticker("ABC.TSX"));
     auto operations = fixture.m_operations.get(TSX);
     auto result = std::async(std::launch::async, [&] {
       return fixture.m_client.query(query);
     });
     auto received_query = require_operation<
-      TestMarketDataClient::SecurityInfoQueryOperation>(operations->pop());
-    REQUIRE(received_query->m_query.get_index() == Security("ABC", TSX));
-    auto test_security_info = SecurityInfo();
-    test_security_info.m_security = Security("ABC", TSX);
-    test_security_info.m_name = "Alphabet Inc.";
-    test_security_info.m_sector = "Technology";
-    test_security_info.m_board_lot = 100;
-    received_query->m_result.set({test_security_info});
-    auto received_security_info = result.get();
-    REQUIRE(received_security_info.size() == 1);
-    REQUIRE(received_security_info.front() == test_security_info);
+      TestMarketDataClient::TickerInfoQueryOperation>(operations->pop());
+    REQUIRE(received_query->m_query.get_index() == parse_ticker("ABC.TSX"));
+    auto test_ticker_info = TickerInfo();
+    test_ticker_info.m_ticker = parse_ticker("ABC.TSX");
+    test_ticker_info.m_name = "Alphabet Inc.";
+    test_ticker_info.m_sector = "Technology";
+    test_ticker_info.m_board_lot = 100;
+    received_query->m_result.set({test_ticker_info});
+    auto received_ticker_info = result.get();
+    REQUIRE(received_ticker_info.size() == 1);
+    REQUIRE(received_ticker_info.front() == test_ticker_info);
   }
 
   TEST_CASE("load_snapshot") {
     auto fixture = Fixture();
 
     SUBCASE("exact") {
-      auto security = Security("ABC", TSX);
+      auto ticker = parse_ticker("ABC.TSX");
       auto operations = fixture.m_operations.get(TSX);
       auto result = std::async(std::launch::async, [&] {
-        return fixture.m_client.load_snapshot(security);
+        return fixture.m_client.load_snapshot(ticker);
       });
       auto received_operation = require_operation<
-        TestMarketDataClient::LoadSecuritySnapshotOperation>(operations->pop());
-      REQUIRE(received_operation->m_security == security);
-      auto test_snapshot = SecuritySnapshot();
-      test_snapshot.m_bbo_quote = SequencedValue(BboQuote(
-        make_bid(10 * Money::ONE, 100), make_ask(11 * Money::ONE, 100),
-        time_from_string("2024-06-12 13:05:12:00")), Beam::Sequence(100));
+        TestMarketDataClient::LoadTickerSnapshotOperation>(operations->pop());
+      REQUIRE(received_operation->m_ticker == ticker);
+      auto test_snapshot = TickerSnapshot();
+      test_snapshot.m_bbo_quote = SequencedValue(
+        BboQuote(make_bid(10 * Money::ONE, 100), make_ask(11 * Money::ONE, 100),
+          time_from_string("2024-06-12 13:05:12:00")), Beam::Sequence(100));
       received_operation->m_result.set(test_snapshot);
       auto received_snapshot = result.get();
       REQUIRE(received_snapshot.m_bbo_quote == test_snapshot.m_bbo_quote);
     }
 
     SUBCASE("parent") {
-      auto security = Security("S32", ASX);
+      auto ticker = parse_ticker("S32.ASX");
       auto operations = fixture.m_operations.get(ASX);
       auto result = std::async(std::launch::async, [&] {
-        return fixture.m_client.load_snapshot(security);
+        return fixture.m_client.load_snapshot(ticker);
       });
       auto received_operation = require_operation<
-        TestMarketDataClient::LoadSecuritySnapshotOperation>(operations->pop());
-      REQUIRE(received_operation->m_security == security);
-      auto test_snapshot = SecuritySnapshot();
-      test_snapshot.m_bbo_quote = SequencedValue(BboQuote(
-        make_bid(20 * Money::ONE, 200), make_ask(21 * Money::ONE, 200),
-        time_from_string("2025-02-18 17:23:30:12")), Beam::Sequence(200));
+        TestMarketDataClient::LoadTickerSnapshotOperation>(operations->pop());
+      REQUIRE(received_operation->m_ticker == ticker);
+      auto test_snapshot = TickerSnapshot();
+      test_snapshot.m_bbo_quote = SequencedValue(
+        BboQuote(make_bid(20 * Money::ONE, 200), make_ask(21 * Money::ONE, 200),
+          time_from_string("2025-02-18 17:23:30:12")), Beam::Sequence(200));
       received_operation->m_result.set(test_snapshot);
       auto received_snapshot = result.get();
       REQUIRE(received_snapshot.m_bbo_quote == test_snapshot.m_bbo_quote);
     }
 
     SUBCASE("unavailable") {
-      auto security = Security("BHP", TSXV);
-      auto snapshot = fixture.m_client.load_snapshot(security);
+      auto ticker = parse_ticker("BHP.TSXV");
+      auto snapshot = fixture.m_client.load_snapshot(ticker);
       REQUIRE(snapshot.m_bbo_quote == SequencedBboQuote());
       REQUIRE(snapshot.m_asks.empty());
       REQUIRE(snapshot.m_bids.empty());
@@ -485,16 +486,15 @@ TEST_SUITE("DistributedMarketDataClient") {
     auto fixture = Fixture();
 
     SUBCASE("exact") {
-      auto security = Security("ABC", TSX);
+      auto ticker = parse_ticker("ABC.TSX");
       auto operations = fixture.m_operations.get(TSX);
       auto result = std::async(std::launch::async, [&] {
-        return fixture.m_client.load_technicals(security);
+        return fixture.m_client.load_technicals(ticker);
       });
       auto received_operation = require_operation<
-        TestMarketDataClient::LoadSecurityTechnicalsOperation>(
-          operations->pop());
-      REQUIRE(received_operation->m_security == security);
-      auto test_technicals = SecurityTechnicals();
+        TestMarketDataClient::LoadTickerTechnicalsOperation>(operations->pop());
+      REQUIRE(received_operation->m_ticker == ticker);
+      auto test_technicals = TickerTechnicals();
       test_technicals.m_close = Money::ONE;
       test_technicals.m_high = 2 * Money::ONE;
       test_technicals.m_low = Money::CENT;
@@ -506,16 +506,15 @@ TEST_SUITE("DistributedMarketDataClient") {
     }
 
     SUBCASE("parent") {
-      auto security = Security("S32", ASX);
+      auto ticker = parse_ticker("S32.ASX");
       auto operations = fixture.m_operations.get(ASX);
       auto result = std::async(std::launch::async, [&] {
-        return fixture.m_client.load_technicals(security);
+        return fixture.m_client.load_technicals(ticker);
       });
       auto received_operation = require_operation<
-        TestMarketDataClient::LoadSecurityTechnicalsOperation>(
-          operations->pop());
-      REQUIRE(received_operation->m_security == security);
-      auto test_technicals = SecurityTechnicals();
+        TestMarketDataClient::LoadTickerTechnicalsOperation>(operations->pop());
+      REQUIRE(received_operation->m_ticker == ticker);
+      auto test_technicals = TickerTechnicals();
       test_technicals.m_close = 150 * Money::ONE;
       test_technicals.m_high = 152 * Money::ONE;
       test_technicals.m_low = 148 * Money::ONE;
@@ -527,47 +526,46 @@ TEST_SUITE("DistributedMarketDataClient") {
     }
 
     SUBCASE("unavailable") {
-      auto security = Security("BHP", TSXV);
-      auto technicals = fixture.m_client.load_technicals(security);
-      test_json_equality(technicals, SecurityTechnicals());
+      auto ticker = parse_ticker("BHP.TSXV");
+      auto technicals = fixture.m_client.load_technicals(ticker);
+      test_json_equality(technicals, TickerTechnicals());
     }
   }
 
-  TEST_CASE("load_security_info_from_prefix") {
+  TEST_CASE("load_ticker_info_from_prefix") {
     auto fixture = Fixture();
     auto prefix = "A";
-    auto tsx_security_info = SecurityInfo();
-    tsx_security_info.m_security = Security("ABC", TSX);
-    tsx_security_info.m_name = "Alphabet Inc. Class C";
-    auto au_security_info = SecurityInfo();
-    au_security_info.m_security = Security("S32", ASX);
-    au_security_info.m_name = "S32 Inc.";
+    auto tsx_ticker_info = TickerInfo();
+    tsx_ticker_info.m_ticker = parse_ticker("ABC.TSX");
+    tsx_ticker_info.m_name = "Alphabet Inc. Class C";
+    auto au_ticker_info = TickerInfo();
+    au_ticker_info.m_ticker = parse_ticker("S32.ASX");
+    au_ticker_info.m_name = "S32 Inc.";
     auto tsx_handler = std::thread([&] {
       auto operations = fixture.m_operations.get(TSX);
       auto received_operation = require_operation<
-        TestMarketDataClient::LoadSecurityInfoFromPrefixOperation>(
+        TestMarketDataClient::LoadTickerInfoFromPrefixOperation>(
           operations->pop());
       REQUIRE(received_operation->m_prefix == prefix);
-      received_operation->m_result.set({tsx_security_info});
+      received_operation->m_result.set({tsx_ticker_info});
     });
     auto au_handler = std::thread([&] {
       auto operations = fixture.m_operations.get(AU);
       auto received_operation = require_operation<
-        TestMarketDataClient::LoadSecurityInfoFromPrefixOperation>(
+        TestMarketDataClient::LoadTickerInfoFromPrefixOperation>(
           operations->pop());
       REQUIRE(received_operation->m_prefix == prefix);
-      received_operation->m_result.set({au_security_info});
+      received_operation->m_result.set({au_ticker_info});
     });
-    auto received_infos =
-      fixture.m_client.load_security_info_from_prefix(prefix);
+    auto received_infos = fixture.m_client.load_ticker_info_from_prefix(prefix);
     tsx_handler.join();
     au_handler.join();
     REQUIRE(received_infos.size() == 2);
     std::sort(received_infos.begin(), received_infos.end(),
       [] (const auto& lhs, const auto& rhs) {
-        return lhs.m_security < rhs.m_security;
+        return lhs.m_ticker < rhs.m_ticker;
       });
-    REQUIRE(received_infos[0] == tsx_security_info);
-    REQUIRE(received_infos[1] == au_security_info);
+    REQUIRE(received_infos[0] == tsx_ticker_info);
+    REQUIRE(received_infos[1] == au_ticker_info);
   }
 }

@@ -14,7 +14,7 @@ TEST_SUITE("TestMarketDataClient") {
     auto operations = std::make_shared<TestMarketDataClient::Queue>();
     auto client = TestMarketDataClient(operations);
     auto imbalances = std::make_shared<Queue<OrderImbalance>>();
-    auto query = VenueMarketDataQuery();
+    auto query = VenueQuery();
     query.set_index(TSX);
     client.query(query, imbalances);
     auto operation = operations->pop();
@@ -31,10 +31,10 @@ TEST_SUITE("TestMarketDataClient") {
     auto imbalances = std::make_shared<Queue<OrderImbalance>>();
     auto sequenced_imbalances =
       std::make_shared<Queue<SequencedOrderImbalance>>();
-    auto query = VenueMarketDataQuery();
+    auto query = VenueQuery();
     query.set_index(TSX);
     client.query(query, imbalances);
-    auto sequenced_query = VenueMarketDataQuery();
+    auto sequenced_query = VenueQuery();
     sequenced_query.set_index(TSXV);
     client.query(sequenced_query, sequenced_imbalances);
     auto op1 = operations->pop();
@@ -55,7 +55,7 @@ TEST_SUITE("TestMarketDataClient") {
     auto client = TestMarketDataClient(operations);
     client.close();
     auto imbalances = std::make_shared<Queue<OrderImbalance>>();
-    auto query = VenueMarketDataQuery();
+    auto query = VenueQuery();
     query.set_index(TSX);
     client.query(query, imbalances);
     REQUIRE_FALSE(operations->try_pop());
@@ -66,6 +66,6 @@ TEST_SUITE("TestMarketDataClient") {
     auto operations = std::make_shared<TestMarketDataClient::Queue>();
     auto client = TestMarketDataClient(operations);
     client.close();
-    REQUIRE_THROWS_AS(client.load_snapshot(Security()), EndOfFileException);
+    REQUIRE_THROWS_AS(client.load_snapshot(Ticker()), EndOfFileException);
   }
 }
