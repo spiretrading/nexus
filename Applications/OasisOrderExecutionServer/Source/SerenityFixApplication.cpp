@@ -236,8 +236,8 @@ void SerenityFixApplication::on_us_message(const std::shared_ptr<Order>& order,
     message.get(last_mkt);
     if(last_mkt == "US01") {
       update->m_last_market = DefaultVenues::OTCM.get_code().get_data();
-      if(message.isSetField(UNIFORM_LIQUIDITY_TAG)) {
-        update->m_liquidity_flag = message.getField(UNIFORM_LIQUIDITY_TAG);
+      if(message.isSetField(ORIGINAL_LIQUIDITY_TAG)) {
+        update->m_liquidity_flag = message.getField(ORIGINAL_LIQUIDITY_TAG);
       }
     }
   }
