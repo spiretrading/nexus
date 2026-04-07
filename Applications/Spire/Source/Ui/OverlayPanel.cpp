@@ -2,6 +2,7 @@
 #include <QGraphicsDropShadowEffect>
 #include <QMouseEvent>
 #include <QScreen>
+#include <QTimer>
 #include <QWindow>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -51,6 +52,7 @@ OverlayPanel::OverlayPanel(QWidget& body, QWidget& parent)
       m_is_closed_on_focus_out(true),
       m_is_draggable(true),
       m_was_activated(false),
+      m_is_ready(false),
       m_positioning(Positioning::PARENT),
       m_parent_focus_observer(parent),
       m_focus_observer(*this),
@@ -139,12 +141,15 @@ bool OverlayPanel::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void OverlayPanel::showEvent(QShowEvent* event) {
+  m_is_ready = false;
   position();
   QWidget::showEvent(event);
+  QTimer::singleShot(0, this, [this] { m_is_ready = true; });
 }
 
 void OverlayPanel::closeEvent(QCloseEvent* event) {
   m_was_activated = false;
+  m_is_ready = false;
   QWidget::closeEvent(event);
 }
 
@@ -204,6 +209,9 @@ void OverlayPanel::on_focus(FocusObserver::State state) {
 }
 
 void OverlayPanel::on_parent_focus(FocusObserver::State state) {
+  if(!m_is_ready) {
+    return;
+  }
   if(state == FocusObserver::State::NONE && m_is_closed_on_focus_out &&
       !isActiveWindow() && m_was_activated) {
     close();

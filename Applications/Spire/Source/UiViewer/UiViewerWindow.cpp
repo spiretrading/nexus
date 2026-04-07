@@ -185,6 +185,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_open_filter_panel_profile());
   add(make_order_field_info_tip_profile());
   add(make_order_type_box_profile());
+  add(make_order_type_filter_panel_profile());
   add(make_overlay_panel_profile());
   add(make_percent_box_profile());
   add(make_popup_box_profile());
@@ -221,6 +222,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_text_box_profile());
   add(make_time_box_profile());
   add(make_time_in_force_box_profile());
+  add(make_time_in_force_filter_panel_profile());
   add(make_title_bar_profile());
   add(make_tooltip_profile());
   add(make_transition_view_profile());

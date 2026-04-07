@@ -33,6 +33,7 @@ namespace Details {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("XATS");
         entry.m_country_code = DefaultCountries::CA;
+        entry.m_market_center = "ALP";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = DefaultCurrencies::CAD;
         entry.m_description = "Alpha Exchange";
@@ -43,6 +44,7 @@ namespace Details {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("CHIC");
         entry.m_country_code = DefaultCountries::CA;
+        entry.m_market_center = "CHI";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = DefaultCurrencies::CAD;
         entry.m_description = "CHI-X Canada ATS";
@@ -53,6 +55,7 @@ namespace Details {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("XCNQ");
         entry.m_country_code = DefaultCountries::CA;
+        entry.m_market_center = "CNQ";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = DefaultCurrencies::CAD;
         entry.m_description = "Canadian Securities Exchange";
@@ -63,6 +66,7 @@ namespace Details {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("CSE2");
         entry.m_country_code = DefaultCountries::CA;
+        entry.m_market_center = "CS2";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = DefaultCurrencies::CAD;
         entry.m_description = "Canadian Securities Exchange - CSE2";
@@ -83,6 +87,7 @@ namespace Details {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("XCX2");
         entry.m_country_code = DefaultCountries::CA;
+        entry.m_market_center = "CHT";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = DefaultCurrencies::CAD;
         entry.m_description = "CX2";
@@ -93,6 +98,7 @@ namespace Details {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("LYNX");
         entry.m_country_code = DefaultCountries::CA;
+        entry.m_market_center = "LYX";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = DefaultCurrencies::CAD;
         entry.m_description = "Lynx ATS";
@@ -103,6 +109,7 @@ namespace Details {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("MATN");
         entry.m_country_code = DefaultCountries::CA;
+        entry.m_market_center = "TCM";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = DefaultCurrencies::CAD;
         entry.m_description = "MATCH Now";
@@ -124,6 +131,7 @@ namespace Details {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("OMGA");
         entry.m_country_code = DefaultCountries::CA;
+        entry.m_market_center = "OMG";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = DefaultCurrencies::CAD;
         entry.m_description = "Omega ATS";
@@ -134,6 +142,7 @@ namespace Details {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("PURE");
         entry.m_country_code = DefaultCountries::CA;
+        entry.m_market_center = "PUR";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = DefaultCurrencies::CAD;
         entry.m_description = "Pure Trading";

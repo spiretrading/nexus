@@ -83,6 +83,7 @@ namespace Spire {
       bool m_is_closed_on_focus_out;
       bool m_is_draggable;
       bool m_was_activated;
+      bool m_is_ready;
       Positioning m_positioning;
       QPoint m_mouse_pressed_position;
       FocusObserver m_parent_focus_observer;
