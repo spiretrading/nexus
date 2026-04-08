@@ -49,7 +49,7 @@ def main():
     if region:
       region = venues.select(region).venue
     else:
-      region = nexus.parse_security(args.region, venues)
+      region = nexus.parse_ticker(args.region, venues)
   service_clients.risk_client.reset(nexus.Region(region))
 
 if __name__ == '__main__':

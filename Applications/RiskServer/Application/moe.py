@@ -19,7 +19,7 @@ def parse_positions(file_path, currencies):
     reader = csv.DictReader(csvfile)
     for row in reader:
       position = nexus.Position()
-      position.security = nexus.parse_security(row['Security'])
+      position.ticker = nexus.parse_ticker(row['Ticker'])
       position.currency = currencies.from_code(row['Currency']).id
       position.quantity = nexus.Quantity.parse(row['Open Quantity'])
       position.cost_basis = nexus.Money.parse(row['Cost Basis'])
@@ -43,7 +43,7 @@ def moe(service_clients, position, destination, mode):
     side = nexus.opposite(side)
   price = abs(nexus.average_price(position.position))
   fields = nexus.make_limit_order_fields(
-    directory_entry, position.position.security, position.position.currency,
+    directory_entry, position.position.ticker, position.position.currency,
     side, destination, abs(position.position.quantity), price)
   service_clients.order_execution_client.submit(fields)
 
@@ -101,7 +101,7 @@ def main():
       if region:
         region = venues.select(region).venue
       else:
-        region = nexus.parse_security(args.region, venues)
+        region = nexus.parse_ticker(args.region, venues)
     region = nexus.Region(region)
   positions = parse_positions(args.positions,
     service_clients.definitions_client.load_currency_database())
@@ -109,7 +109,7 @@ def main():
     service_clients.definitions_client.load_destination_database()
   destination = destinations.manual_order_entry_destination.id
   for position in positions:
-    if region.contains(position.position.security):
+    if region.contains(position.position.ticker):
       if args.account:
         if position.account == args.account:
           moe(service_clients, position, destination, args.mode)

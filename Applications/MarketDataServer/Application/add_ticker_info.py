@@ -47,12 +47,12 @@ def main():
   service_locator_client = \
     beam.ApplicationServiceLocatorClient(username, password, address)
   feed_client = nexus.ApplicationMarketDataFeedClient(service_locator_client)
-  security_info = nexus.SecurityInfo()
-  security_info.security = nexus.parse_security('%s' % args.symbol)
-  security_info.name = args.name
-  security_info.sector = args.sector
-  security_info.board_lot = nexus.parse_quantity(args.board_lot)
-  feed_client.add(security_info)
+  ticker_info = nexus.TickerInfo()
+  ticker_info.ticker = nexus.parse_ticker('%s' % args.symbol)
+  ticker_info.name = args.name
+  ticker_info.sector = args.sector
+  ticker_info.board_lot = nexus.parse_quantity(args.board_lot)
+  feed_client.add(ticker_info)
 
 if __name__ == '__main__':
   main()
