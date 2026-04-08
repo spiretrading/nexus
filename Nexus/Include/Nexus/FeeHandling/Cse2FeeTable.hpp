@@ -44,8 +44,8 @@ namespace Nexus {
     /** The number of price classes enumerated. */
     static constexpr auto PRICE_CLASS_COUNT = std::size_t(2);
 
-    /** The market the security is listed on. */
-    enum class ListingMarket {
+    /** The venue the ticker is listed on. */
+    enum class ListingVenue {
 
       /** CSE listed. */
       CSE,
@@ -55,7 +55,7 @@ namespace Nexus {
     };
 
     /** The number of listings. */
-    static constexpr auto LISTING_MARKET_COUNT = std::size_t(2);
+    static constexpr auto LISTING_VENUE_COUNT = std::size_t(2);
 
     /** The regular fee table. */
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, PRICE_CLASS_COUNT>
@@ -66,7 +66,7 @@ namespace Nexus {
       m_dark_table;
 
     /** The debentures or notes table. */
-    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, LISTING_MARKET_COUNT>
+    std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, LISTING_VENUE_COUNT>
       m_debentures_or_notes_table;
 
     /** The CSE listed government bonds fees. */
@@ -117,10 +117,10 @@ namespace Nexus {
       return Cse2FeeTable::Section::DARK;
     } else if(report.m_last_quantity < 100) {
       return Cse2FeeTable::Section::ODDLOT;
-    } else if(fields.m_security.get_symbol().find(".DB") != std::string::npos ||
-        fields.m_security.get_symbol().find(".NT") != std::string::npos ||
-        fields.m_security.get_symbol().find(".NO") != std::string::npos ||
-        fields.m_security.get_symbol().find(".NS") != std::string::npos) {
+    } else if(fields.m_ticker.get_symbol().find(".DB") != std::string::npos ||
+        fields.m_ticker.get_symbol().find(".NT") != std::string::npos ||
+        fields.m_ticker.get_symbol().find(".NO") != std::string::npos ||
+        fields.m_ticker.get_symbol().find(".NS") != std::string::npos) {
       return Cse2FeeTable::Section::DEBENTURES_OR_NOTES;
     }
     return Cse2FeeTable::Section::REGULAR;
@@ -153,19 +153,19 @@ namespace Nexus {
   }
 
   /**
-   * Returns the listing market for a CSE2 execution report.
+   * Returns the listing venue for a CSE2 execution report.
    * @param report An ExecutionReport received from CSE2.
-   * @return The <i>report</i>'s listing market.
+   * @return The <i>report</i>'s listing venue.
    */
-  inline Cse2FeeTable::ListingMarket lookup_cse2_listing_market(
+  inline Cse2FeeTable::ListingVenue lookup_cse2_listing_venue(
       const ExecutionReport& report) {
     if(report.m_liquidity_flag.size() <= 1 ||
         report.m_liquidity_flag[1] == 'T' ||
         report.m_liquidity_flag[1] == 'V' ||
         report.m_liquidity_flag[1] == 'N') {
-      return Cse2FeeTable::ListingMarket::TSX_TSXV;
+      return Cse2FeeTable::ListingVenue::TSX_TSXV;
     }
-    return Cse2FeeTable::ListingMarket::CSE;
+    return Cse2FeeTable::ListingVenue::CSE;
   }
 
   /**
@@ -229,13 +229,13 @@ namespace Nexus {
    * Looks up the fee entry from a CSE2 debentures or notes table.
    * @param table The Cse2FeeTable to look up.
    * @param flag The fee's liquidity flag.
-   * @param market The listing market.
+   * @param venue The listing venue.
    * @return The debentures or notes table entry.
    */
   inline Money lookup_debentures_or_notes_fee(const Cse2FeeTable& table,
-      LiquidityFlag flag, Cse2FeeTable::ListingMarket market) {
+      LiquidityFlag flag, Cse2FeeTable::ListingVenue venue) {
     return table.m_debentures_or_notes_table[
-      static_cast<int>(market)][static_cast<int>(flag)];
+      static_cast<int>(venue)][static_cast<int>(flag)];
   }
 
   /**
@@ -247,8 +247,8 @@ namespace Nexus {
   inline Money calculate_debentures_or_notes_fee(
       const Cse2FeeTable& table, const ExecutionReport& report) {
     auto flag = lookup_cse2_liquidity_flag(report);
-    auto market = lookup_cse2_listing_market(report);
-    auto fee = lookup_debentures_or_notes_fee(table, flag, market);
+    auto venue = lookup_cse2_listing_venue(report);
+    auto fee = lookup_debentures_or_notes_fee(table, flag, venue);
     if(report.m_last_quantity >= table.m_large_trade_size) {
       return table.m_large_trade_fee;
     }

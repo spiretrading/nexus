@@ -6,7 +6,7 @@
 
 namespace Nexus {
 
-  /** Stores the table of fees used by NEX listed securities. */
+  /** Stores the table of fees used by NEX listed tickers. */
   struct NexFeeTable {
 
     /** The fee per share. */
