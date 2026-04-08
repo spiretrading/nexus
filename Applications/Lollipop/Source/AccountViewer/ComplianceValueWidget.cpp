@@ -5,7 +5,7 @@
 #include "Spire/InputWidgets/CurrencyInputWidget.hpp"
 #include "Spire/InputWidgets/MoneySpinBox.hpp"
 #include "Spire/InputWidgets/RegionInputWidget.hpp"
-#include "Spire/InputWidgets/SecurityInputWidget.hpp"
+#include "Spire/InputWidgets/TickerInputWidget.hpp"
 #include "Spire/InputWidgets/TimeInputWidget.hpp"
 #include "Spire/InputWidgets/ValueListInputWidget.hpp"
 
@@ -30,7 +30,7 @@ namespace {
       return {};
     }
 
-    ValueListInputDialog::Value operator ()(const Security& value) const {
+    ValueListInputDialog::Value operator ()(const Ticker& value) const {
       return value;
     }
   };
@@ -101,8 +101,8 @@ namespace {
       return widget;
     }
 
-    QWidget* operator ()(const Security& value) const {
-      auto widget = new SecurityInputWidget{Ref(*m_userProfile), m_parent,
+    QWidget* operator ()(const Ticker& value) const {
+      auto widget = new TickerInputWidget{Ref(*m_userProfile), m_parent,
         m_flags};
       widget->SetReadOnly(m_isReadOnly);
       return widget;
@@ -159,8 +159,8 @@ namespace {
       static_cast<MoneySpinBox*>(m_widget)->SetValue(value);
     }
 
-    void operator ()(const Security& value) const {
-      static_cast<SecurityInputWidget*>(m_widget)->SetSecurity(value);
+    void operator ()(const Ticker& value) const {
+      static_cast<TickerInputWidget*>(m_widget)->SetTicker(value);
     }
 
     void operator ()(const Region& value) const {
@@ -202,9 +202,9 @@ ComplianceValue Spire::GetComplianceValue(const QWidget& widget) {
     return currencyWidget->GetCurrency();
   } else if(auto moneyWidget = dynamic_cast<const MoneySpinBox*>(&widget)) {
     return moneyWidget->GetValue();
-  } else if(auto securityWidget =
-      dynamic_cast<const SecurityInputWidget*>(&widget)) {
-    return securityWidget->GetSecurity();
+  } else if(auto tickerWidget =
+      dynamic_cast<const TickerInputWidget*>(&widget)) {
+    return tickerWidget->GetTicker();
   } else if(auto regionWidget =
       dynamic_cast<const RegionInputWidget*>(&widget)) {
     return regionWidget->GetRegion();

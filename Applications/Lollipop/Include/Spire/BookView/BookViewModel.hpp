@@ -6,15 +6,15 @@
 #include <QAbstractItemModel>
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/SecurityInfo.hpp"
 #include "Nexus/Definitions/Side.hpp"
+#include "Nexus/Definitions/TickerInfo.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 
 namespace Spire {
 
-  /** Models a single Side of a Security's book. */
+  /** Models a single Side of a Ticker's book. */
   class BookViewModel : public QAbstractTableModel {
     public:
 
@@ -38,11 +38,11 @@ namespace Spire {
        * Constructs a BookViewModel.
        * @param userProfile The user's profile.
        * @param properties The BookViewProperties used to display the Quotes.
-       * @param security The Security whose book is to be modeled.
+       * @param ticker The Ticker whose book is to be modeled.
        * @param side The Side of the book to model.
        */
       BookViewModel(Beam::Ref<UserProfile> userProfile,
-        const BookViewProperties& properties, const Nexus::Security& security,
+        const BookViewProperties& properties, const Nexus::Ticker& ticker,
         Nexus::Side side);
 
       /**
@@ -73,9 +73,9 @@ namespace Spire {
       };
       UserProfile* m_userProfile;
       BookViewProperties m_properties;
-      Nexus::Security m_security;
+      Nexus::Ticker m_ticker;
       Nexus::Side m_side;
-      Nexus::SecurityInfo m_securityInfo;
+      Nexus::TickerInfo m_tickerInfo;
       std::unordered_map<Nexus::Venue, Nexus::BookQuote> m_topLevels;
       std::vector<std::unique_ptr<BookQuoteEntry>> m_bookQuotes;
       std::map<OrderKey, Nexus::Quantity> m_orderQuantities;

@@ -1,5 +1,5 @@
-#ifndef SPIRE_SECURITY_TECHNICALS_MODEL_HPP
-#define SPIRE_SECURITY_TECHNICALS_MODEL_HPP
+#ifndef SPIRE_TICKER_TECHNICALS_MODEL_HPP
+#define SPIRE_TICKER_TECHNICALS_MODEL_HPP
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/signals2/signal.hpp>
 #include "Nexus/Definitions/Money.hpp"
@@ -11,17 +11,17 @@
 
 namespace Spire {
 
-  /** Models a Security's technical stats. */
-  class SecurityTechnicalsModel {
+  /** Models a Ticker's technical stats. */
+  class TickerTechnicalsModel {
     public:
 
       /**
-       * Retrieves a SecurityTechnicalsModel.
+       * Retrieves a TickerTechnicalsModel.
        * @param userProfile The user's profile.
-       * @param security The Security to model.
+       * @param ticker The Ticker to model.
        */
-      static std::shared_ptr<SecurityTechnicalsModel> GetModel(
-        Beam::Ref<UserProfile> userProfile, const Nexus::Security& security);
+      static std::shared_ptr<TickerTechnicalsModel> GetModel(
+        Beam::Ref<UserProfile> userProfile, const Nexus::Ticker& ticker);
 
       /**
        * Signals a change in the opening price.
@@ -109,8 +109,8 @@ namespace Spire {
       std::shared_ptr<QtPromise<void>> m_loadPromise;
       EventHandler m_eventHandler;
 
-      SecurityTechnicalsModel(
-        Beam::Ref<UserProfile> userProfile, const Nexus::Security& security);
+      TickerTechnicalsModel(
+        Beam::Ref<UserProfile> userProfile, const Nexus::Ticker& ticker);
       void OnTimeAndSale(const Nexus::TimeAndSale& timeAndSale);
   };
 }

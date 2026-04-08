@@ -45,7 +45,7 @@ namespace Spire {
     //! The amount to increment the price field by.
     std::array<Nexus::Money, KeyModifiers::COUNT> m_priceIncrements;
 
-    //! Whether to cancel all Orders on a given Security's Side when one of them
+    //! Whether to cancel all Orders on a given Ticker's Side when one of them
     //! is filled.
     bool m_cancelOnFill;
   };

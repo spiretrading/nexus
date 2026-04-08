@@ -1,18 +1,18 @@
-#ifndef SPIRE_SECURITYPORTFOLIONODE_HPP
-#define SPIRE_SECURITYPORTFOLIONODE_HPP
+#ifndef SPIRE_TICKERPORTFOLIONODE_HPP
+#define SPIRE_TICKERPORTFOLIONODE_HPP
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
 
 namespace Spire {
 
-  /*! \class SecurityPortfolioNode
-      \brief The CanvasNode representation of a SecurityPortfolioExpression.
+  /*! \class TickerPortfolioNode
+      \brief The CanvasNode representation of a TickerPortfolioExpression.
    */
-  class SecurityPortfolioNode : public CanvasNode {
+  class TickerPortfolioNode : public CanvasNode {
     public:
 
-      //! Constructs a SecurityPortfolioNode.
-      SecurityPortfolioNode();
+      //! Constructs a TickerPortfolioNode.
+      TickerPortfolioNode();
 
       virtual std::unique_ptr<CanvasNode> Replace(const CanvasNode& child,
         std::unique_ptr<CanvasNode> replacement) const;
@@ -30,7 +30,7 @@ namespace Spire {
   };
 
   template<Beam::IsShuttle S>
-  void SecurityPortfolioNode::shuttle(S& shuttle, unsigned int version) {
+  void TickerPortfolioNode::shuttle(S& shuttle, unsigned int version) {
     CanvasNode::shuttle(shuttle, version);
   }
 }

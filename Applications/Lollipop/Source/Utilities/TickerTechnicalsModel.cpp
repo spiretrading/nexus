@@ -1,4 +1,4 @@
-#include "Spire/Utilities/SecurityTechnicalsModel.hpp"
+#include "Spire/Utilities/TickerTechnicalsModel.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
@@ -11,49 +11,49 @@ using namespace Spire;
 namespace {
   const auto EXPIRY_INTERVAL = 3000;
 
-  std::unordered_map<Security, std::weak_ptr<SecurityTechnicalsModel>>
+  std::unordered_map<Ticker, std::weak_ptr<TickerTechnicalsModel>>
     existingModels;
-  std::unordered_map<Security, std::unique_ptr<SecurityTechnicalsModel>>
+  std::unordered_map<Ticker, std::unique_ptr<TickerTechnicalsModel>>
     pendingExpiryModels;
-  std::unordered_map<Security, std::unique_ptr<SecurityTechnicalsModel>>
+  std::unordered_map<Ticker, std::unique_ptr<TickerTechnicalsModel>>
     expiringModels;
 
-  void ModelDeleter(const Security& security, SecurityTechnicalsModel* model) {
+  void ModelDeleter(const Ticker& ticker, TickerTechnicalsModel* model) {
     pendingExpiryModels.insert(
-      std::pair(security, std::unique_ptr<SecurityTechnicalsModel>(model)));
+      std::pair(ticker, std::unique_ptr<TickerTechnicalsModel>(model)));
   }
 
-  std::shared_ptr<SecurityTechnicalsModel> FindModel(const Security& security) {
-    auto model = std::shared_ptr<SecurityTechnicalsModel>();
-    auto existingModelIterator = existingModels.find(security);
+  std::shared_ptr<TickerTechnicalsModel> FindModel(const Ticker& ticker) {
+    auto model = std::shared_ptr<TickerTechnicalsModel>();
+    auto existingModelIterator = existingModels.find(ticker);
     if(existingModelIterator != existingModels.end()) {
       model = existingModelIterator->second.lock();
       if(!model) {
-        existingModels.erase(security);
+        existingModels.erase(ticker);
       }
     }
     if(!model) {
-      auto pendingExpiryModelIterator = pendingExpiryModels.find(security);
+      auto pendingExpiryModelIterator = pendingExpiryModels.find(ticker);
       if(pendingExpiryModelIterator != pendingExpiryModels.end()) {
         model = std::move(pendingExpiryModelIterator->second);
-        pendingExpiryModels.erase(security);
-        existingModels.insert(std::make_pair(security, model));
+        pendingExpiryModels.erase(ticker);
+        existingModels.insert(std::make_pair(ticker, model));
       }
     }
     if(!model) {
-      auto expiringModelIterator = expiringModels.find(security);
+      auto expiringModelIterator = expiringModels.find(ticker);
       if(expiringModelIterator != expiringModels.end()) {
         model = std::move(expiringModelIterator->second);
-        expiringModels.erase(security);
-        existingModels.insert(std::make_pair(security, model));
+        expiringModels.erase(ticker);
+        existingModels.insert(std::make_pair(ticker, model));
       }
     }
     return model;
   }
 }
 
-std::shared_ptr<SecurityTechnicalsModel> SecurityTechnicalsModel::GetModel(
-    Ref<UserProfile> userProfile, const Security& security) {
+std::shared_ptr<TickerTechnicalsModel> TickerTechnicalsModel::GetModel(
+    Ref<UserProfile> userProfile, const Ticker& ticker) {
   static auto expiryTimer = [] {
     auto expiryTimer = std::make_unique<QTimer>();
     expiryTimer->start(EXPIRY_INTERVAL);
@@ -63,16 +63,16 @@ std::shared_ptr<SecurityTechnicalsModel> SecurityTechnicalsModel::GetModel(
     });
     return expiryTimer;
   }();
-  auto model = FindModel(security);
+  auto model = FindModel(ticker);
   if(!model) {
-    model.reset(new SecurityTechnicalsModel(Ref(userProfile), security),
-      std::bind_front(&ModelDeleter, security));
-    existingModels.insert(std::make_pair(security, model));
+    model.reset(new TickerTechnicalsModel(Ref(userProfile), ticker),
+      std::bind_front(&ModelDeleter, ticker));
+    existingModels.insert(std::make_pair(ticker, model));
   }
   return model;
 }
 
-connection SecurityTechnicalsModel::ConnectOpenSignal(
+connection TickerTechnicalsModel::ConnectOpenSignal(
     const OpenSignal::slot_type& slot) const {
   if(m_open != Money::ZERO) {
     slot(m_open);
@@ -80,7 +80,7 @@ connection SecurityTechnicalsModel::ConnectOpenSignal(
   return m_openSignal.connect(slot);
 }
 
-connection SecurityTechnicalsModel::ConnectCloseSignal(
+connection TickerTechnicalsModel::ConnectCloseSignal(
     const CloseSignal::slot_type& slot) const {
   if(m_close != Money::ZERO) {
     slot(m_close);
@@ -88,7 +88,7 @@ connection SecurityTechnicalsModel::ConnectCloseSignal(
   return m_closeSignal.connect(slot);
 }
 
-connection SecurityTechnicalsModel::ConnectHighSignal(
+connection TickerTechnicalsModel::ConnectHighSignal(
     const HighSignal::slot_type& slot) const {
   if(m_high != Money::ZERO) {
     slot(m_high);
@@ -96,7 +96,7 @@ connection SecurityTechnicalsModel::ConnectHighSignal(
   return m_highSignal.connect(slot);
 }
 
-connection SecurityTechnicalsModel::ConnectLowSignal(
+connection TickerTechnicalsModel::ConnectLowSignal(
     const LowSignal::slot_type& slot) const {
   if(m_low != Money::ZERO) {
     slot(m_low);
@@ -104,28 +104,28 @@ connection SecurityTechnicalsModel::ConnectLowSignal(
   return m_lowSignal.connect(slot);
 }
 
-connection SecurityTechnicalsModel::ConnectVolumeSignal(
+connection TickerTechnicalsModel::ConnectVolumeSignal(
     const VolumeSignal::slot_type& slot) const {
   slot(m_volume);
   return m_volumeSignal.connect(slot);
 }
 
-SecurityTechnicalsModel::SecurityTechnicalsModel(
-    Ref<UserProfile> userProfile, const Security& security)
+TickerTechnicalsModel::TickerTechnicalsModel(
+    Ref<UserProfile> userProfile, const Ticker& ticker)
     : m_userProfile(userProfile.get()),
       m_volume(0) {
-  if(security == Security()) {
+  if(ticker == Ticker()) {
     return;
   }
-  auto timeAndSaleQuery = make_real_time_query(security);
+  auto timeAndSaleQuery = make_real_time_query(ticker);
   timeAndSaleQuery.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_userProfile->GetClients().get_market_data_client().query(
     timeAndSaleQuery, m_eventHandler.get_slot<TimeAndSale>(
-      std::bind_front(&SecurityTechnicalsModel::OnTimeAndSale, this)));
+      std::bind_front(&TickerTechnicalsModel::OnTimeAndSale, this)));
   m_loadPromise = std::make_shared<QtPromise<void>>(QtPromise([=] {
     return userProfile->GetClients().get_market_data_client().load_technicals(
-      security);
-  }, LaunchPolicy::ASYNC).then([=] (const SecurityTechnicals& technicals) {
+      ticker);
+  }, LaunchPolicy::ASYNC).then([=] (const TickerTechnicals& technicals) {
     if(technicals.m_open != Money::ZERO) {
       m_open = technicals.m_open;
       m_openSignal(m_open);
@@ -150,7 +150,7 @@ SecurityTechnicalsModel::SecurityTechnicalsModel(
   }));
 }
 
-void SecurityTechnicalsModel::OnTimeAndSale(const TimeAndSale& timeAndSale) {
+void TickerTechnicalsModel::OnTimeAndSale(const TimeAndSale& timeAndSale) {
   m_volume += timeAndSale.m_size;
   m_volumeSignal(m_volume);
   if(m_open == Money::ZERO) {

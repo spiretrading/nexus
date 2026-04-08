@@ -1,13 +1,13 @@
-#include "Spire/InputWidgets/SecurityInputDialog.hpp"
+#include "Spire/InputWidgets/TickerInputDialog.hpp"
 #include <QHeaderView>
 #include <QKeyEvent>
 #include <QScrollBar>
 #include <QTableView>
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
-#include "Spire/Utilities/SecurityInfoCompleter.hpp"
-#include "Spire/Utilities/SecurityInfoModel.hpp"
-#include "ui_SecurityInputDialog.h"
+#include "Spire/Utilities/TickerInfoCompleter.hpp"
+#include "Spire/Utilities/TickerInfoModel.hpp"
+#include "ui_TickerInputDialog.h"
 
 using namespace Beam;
 using namespace boost;
@@ -15,32 +15,32 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
 
-void Spire::ShowSecurityInputDialog(Ref<UserProfile> userProfile,
-    const variant<std::string, Security>& initialValue, QWidget* parent,
-    std::function<void (optional<Security>)> onResult) {
+void Spire::ShowTickerInputDialog(Ref<UserProfile> userProfile,
+    const variant<std::string, Ticker>& initialValue, QWidget* parent,
+    std::function<void (optional<Ticker>)> onResult) {
   auto dialog = [&] {
     if(auto text = get<std::string>(&initialValue)) {
-      return new SecurityInputDialog(Ref(userProfile), *text, parent);
+      return new TickerInputDialog(Ref(userProfile), *text, parent);
     }
-    return new SecurityInputDialog(
-      Ref(userProfile), get<Security>(initialValue), parent);
+    return new TickerInputDialog(
+      Ref(userProfile), get<Ticker>(initialValue), parent);
   }();
   dialog->setAttribute(Qt::WA_DeleteOnClose);
-  QObject::connect(dialog, &SecurityInputDialog::finished, parent,
+  QObject::connect(dialog, &TickerInputDialog::finished, parent,
     [=] (auto result) {
       if(result == QDialog::Rejected) {
         onResult(none);
       } else {
-        onResult(dialog->GetSecurity());
+        onResult(dialog->GetTicker());
       }
     });
   dialog->show();
 }
 
-SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
-    const Security& initial, QWidget* parent, Qt::WindowFlags flags)
+TickerInputDialog::TickerInputDialog(Ref<UserProfile> userProfile,
+    const Ticker& initial, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
-      m_ui(std::make_unique<Ui_SecurityInputDialog>()),
+      m_ui(std::make_unique<Ui_TickerInputDialog>()),
       m_userProfile(userProfile.get()) {
   Initialize();
   m_ui->m_input->setText(displayText(initial));
@@ -49,10 +49,10 @@ SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
   }
 }
 
-SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
+TickerInputDialog::TickerInputDialog(Ref<UserProfile> userProfile,
     const std::string& text, QWidget* parent, Qt::WindowFlags flags)
     : QDialog(parent, flags),
-      m_ui(std::make_unique<Ui_SecurityInputDialog>()),
+      m_ui(std::make_unique<Ui_TickerInputDialog>()),
       m_userProfile(userProfile.get()) {
   Initialize();
   m_ui->m_input->setText(QString::fromStdString(text));
@@ -61,18 +61,18 @@ SecurityInputDialog::SecurityInputDialog(Ref<UserProfile> userProfile,
   }
 }
 
-SecurityInputDialog::~SecurityInputDialog() = default;
+TickerInputDialog::~TickerInputDialog() = default;
 
-Security SecurityInputDialog::GetSecurity() const {
+Ticker TickerInputDialog::GetTicker() const {
   auto source = m_ui->m_input->text().toUpper().toStdString();
-  return parse_security(source, m_userProfile->GetVenueDatabase());
+  return parse_ticker(source, m_userProfile->GetVenueDatabase());
 }
 
-QLineEdit& SecurityInputDialog::GetSymbolInput() {
+QLineEdit& TickerInputDialog::GetSymbolInput() {
   return *m_ui->m_input;
 }
 
-bool SecurityInputDialog::eventFilter(QObject* receiver, QEvent* event) {
+bool TickerInputDialog::eventFilter(QObject* receiver, QEvent* event) {
   if(isVisible() && event->type() == QEvent::KeyPress) {
     auto forwardEvent = QKeyEvent(static_cast<QKeyEvent&>(*event));
     QCoreApplication::sendEvent(m_ui->m_input, &forwardEvent);
@@ -81,11 +81,11 @@ bool SecurityInputDialog::eventFilter(QObject* receiver, QEvent* event) {
   return QDialog::eventFilter(receiver, event);
 }
 
-void SecurityInputDialog::Initialize() {
+void TickerInputDialog::Initialize() {
   m_ui->setupUi(this);
   setFixedSize(width(), height());
-  m_model = std::make_unique<SecurityInfoModel>(Ref(*m_userProfile));
-  m_completer = new SecurityInfoCompleter(m_model.get(), this);
+  m_model = std::make_unique<TickerInfoModel>(Ref(*m_userProfile));
+  m_completer = new TickerInfoCompleter(m_model.get(), this);
   m_completer->setWrapAround(false);
   m_completerPopup = new QTableView();
   m_completerPopup->setShowGrid(false);
@@ -105,21 +105,21 @@ void SecurityInputDialog::Initialize() {
     QHeaderView::ResizeToContents);
   m_completerPopup->horizontalHeader()->stretchLastSection();
   connect(m_ui->m_input, &QLineEdit::textChanged, this,
-    &SecurityInputDialog::OnInputEdited);
+    &TickerInputDialog::OnInputEdited);
   connect(m_ui->m_input, &QLineEdit::returnPressed, this,
-    &SecurityInputDialog::accept);
+    &TickerInputDialog::accept);
   connect(m_completer->model(), &QAbstractItemModel::rowsInserted, this,
-    &SecurityInputDialog::OnRowsAddedRemoved);
+    &TickerInputDialog::OnRowsAddedRemoved);
   connect(m_completer->model(), &QAbstractItemModel::rowsRemoved, this,
-    &SecurityInputDialog::OnRowsAddedRemoved);
+    &TickerInputDialog::OnRowsAddedRemoved);
   connect(m_completer->model(),&QAbstractItemModel::dataChanged, this,
-    &SecurityInputDialog::OnDataChanged);
+    &TickerInputDialog::OnDataChanged);
 }
 
-void SecurityInputDialog::AdjustCompleterSize() {
+void TickerInputDialog::AdjustCompleterSize() {
   m_completerPopup->resizeColumnsToContents();
   auto width = 2 + m_completerPopup->verticalHeader()->width();
-  for(auto i = 0; i < SecurityInfoModel::COLUMN_COUNT; ++i) {
+  for(auto i = 0; i < TickerInfoModel::COLUMN_COUNT; ++i) {
     width += 4 + m_completerPopup->columnWidth(i);
   }
   width = std::max(width, m_ui->m_input->width());
@@ -133,17 +133,17 @@ void SecurityInputDialog::AdjustCompleterSize() {
   m_completerPopup->setMaximumHeight(height);
 }
 
-void SecurityInputDialog::OnInputEdited(const QString& text) {
+void TickerInputDialog::OnInputEdited(const QString& text) {
   m_model->Search(text.toStdString());
 }
 
-void SecurityInputDialog::OnRowsAddedRemoved(
+void TickerInputDialog::OnRowsAddedRemoved(
     const QModelIndex& parent, int start, int end) {
   m_completer->complete();
   AdjustCompleterSize();
 }
 
-void SecurityInputDialog::OnDataChanged(
+void TickerInputDialog::OnDataChanged(
     const QModelIndex& topLeft, const QModelIndex& bottomRight) {
   m_completer->complete();
   AdjustCompleterSize();

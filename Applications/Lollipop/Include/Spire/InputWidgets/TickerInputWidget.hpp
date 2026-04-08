@@ -1,41 +1,41 @@
-#ifndef SPIRE_SECURITY_INPUT_WIDGET_HPP
-#define SPIRE_SECURITY_INPUT_WIDGET_HPP
+#ifndef SPIRE_TICKER_INPUT_WIDGET_HPP
+#define SPIRE_TICKER_INPUT_WIDGET_HPP
 #include <QWidget>
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/signals2/signal.hpp>
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/UI/UI.hpp"
 
 class QLineEdit;
 
 namespace Spire {
 
-  /** Displays a widget to input and display a Security. */
-  class SecurityInputWidget : public QWidget {
+  /** Displays a widget to input and display a Ticker. */
+  class TickerInputWidget : public QWidget {
     public:
 
       /**
-       * Signals a change to the Security.
-       * @param value The updated Security.
+       * Signals a change to the Ticker.
+       * @param value The updated Ticker.
        */
-      using SecurityUpdatedSignal =
-        boost::signals2::signal<void (const Nexus::Security& value)>;
+      using TickerUpdatedSignal =
+        boost::signals2::signal<void (const Nexus::Ticker& value)>;
 
       /**
-       * Constructs a SecurityInputWidget.
+       * Constructs a TickerInputWidget.
        * @param parent The parent widget.
        * @param flags Qt flags passed to the parent widget.
        */
-      explicit SecurityInputWidget(
+      explicit TickerInputWidget(
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
       /**
-       * Constructs a SecurityInputWidget.
+       * Constructs a TickerInputWidget.
        * @param userProfile The user's profile.
        * @param parent The parent widget.
        * @param flags Qt flags passed to the parent widget.
        */
-      explicit SecurityInputWidget(Beam::Ref<UserProfile> userProfile,
+      explicit TickerInputWidget(Beam::Ref<UserProfile> userProfile,
         QWidget* parent = nullptr, Qt::WindowFlags flags = 0);
 
       /**
@@ -44,14 +44,14 @@ namespace Spire {
        */
       void Initialize(Beam::Ref<UserProfile> userProfile);
 
-      /** Returns the Security displayed. */
-      const Nexus::Security& GetSecurity() const;
+      /** Returns the Ticker displayed. */
+      const Nexus::Ticker& GetTicker() const;
 
       /**
-       * Sets the Security to display.
-       * @param security The Security to display.
+       * Sets the Ticker to display.
+       * @param ticker The Ticker to display.
        */
-      void SetSecurity(Nexus::Security security);
+      void SetTicker(Nexus::Ticker ticker);
 
       /**
        * Makes this widget read-only.
@@ -60,12 +60,12 @@ namespace Spire {
       void SetReadOnly(bool value);
 
       /**
-       * Connects a slot to the SecurityUpdatedSignal.
+       * Connects a slot to the TickerUpdatedSignal.
        * @param slot The slot to connect.
        * @return A connection to the signal.
        */
-      boost::signals2::connection ConnectSecurityUpdatedSignal(
-        const SecurityUpdatedSignal::slot_type& slot) const;
+      boost::signals2::connection ConnectTickerUpdatedSignal(
+        const TickerUpdatedSignal::slot_type& slot) const;
 
     protected:
       bool eventFilter(QObject* receiver, QEvent* event) override;
@@ -74,10 +74,10 @@ namespace Spire {
 
     private:
       UserProfile* m_userProfile;
-      Nexus::Security m_security;
+      Nexus::Ticker m_ticker;
       QLineEdit* m_lineEdit;
       bool m_isReadOnly;
-      mutable SecurityUpdatedSignal m_securityUpdatedSignal;
+      mutable TickerUpdatedSignal m_tickerUpdatedSignal;
   };
 }
 

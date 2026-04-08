@@ -2,7 +2,7 @@
 #include <QKeyEvent>
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
 using namespace Beam;
@@ -30,9 +30,9 @@ QuantitySpinBox::QuantitySpinBox(Ref<UserProfile> userProfile,
     }
   }
   if(referent.is_initialized()) {
-    auto securityValueNode = dynamic_cast<const SecurityNode*>(&*referent);
-    if(securityValueNode != nullptr) {
-      m_security = securityValueNode->GetValue();
+    auto tickerValueNode = dynamic_cast<const TickerNode*>(&*referent);
+    if(tickerValueNode != nullptr) {
+      m_ticker = tickerValueNode->GetValue();
       setMinimum(0);
     }
   }
@@ -53,11 +53,11 @@ void QuantitySpinBox::keyReleaseEvent(QKeyEvent* event) {
 }
 
 void QuantitySpinBox::AdjustIncrement(KeyModifiers modifier) {
-  if(!m_security.is_initialized()) {
+  if(!m_ticker.is_initialized()) {
     return;
   }
   auto quantityIncrement = m_userProfile->GetInteractionProperties().get(
-    *m_security).m_quantityIncrements[static_cast<int>(modifier)];
+    *m_ticker).m_quantityIncrements[static_cast<int>(modifier)];
   if(quantityIncrement != singleStep()) {
     setSingleStep(static_cast<int>(quantityIncrement));
   }

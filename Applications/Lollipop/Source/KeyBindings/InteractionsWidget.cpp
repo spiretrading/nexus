@@ -64,11 +64,11 @@ void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
     AddRegion(region);
   }
   for(auto i = m_properties.begin(); i != m_properties.end(); ++i) {
-    if(!std::get<0>(*i).get_securities().empty()) {
+    if(!std::get<0>(*i).get_tickers().empty()) {
       RegionEntry region;
-      Security security = *std::get<0>(*i).get_securities().begin();
-      region.m_region = Region(displayText(security).toStdString());
-      region.m_region += security;
+      Ticker ticker = *std::get<0>(*i).get_tickers().begin();
+      region.m_region = Region(displayText(ticker).toStdString());
+      region.m_region += ticker;
       AddRegion(region);
     }
   }
@@ -76,13 +76,13 @@ void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
 }
 
 void InteractionsWidget::Initialize(Ref<UserProfile> userProfile,
-    const Security& security) {
+    const Ticker& ticker) {
   m_userProfile = userProfile.get();
   m_properties = m_userProfile->GetInteractionProperties();
   m_ui->m_regionComboBox->clear();
   RegionEntry region;
-  region.m_region = Region(displayText(security).toStdString());
-  region.m_region += security;
+  region.m_region = Region(displayText(ticker).toStdString());
+  region.m_region += ticker;
   AddRegion(region);
   Update();
 }

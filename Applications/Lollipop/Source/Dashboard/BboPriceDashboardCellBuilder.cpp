@@ -14,7 +14,7 @@ BboPriceDashboardCellBuilder::BboPriceDashboardCellBuilder(Side side)
 
 std::unique_ptr<DashboardCell> BboPriceDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
-  auto& security = boost::get<Security>(index);
+  auto& ticker = boost::get<Ticker>(index);
   auto& marketDataClient =
     userProfile.get()->GetClients().get_market_data_client();
   auto baseQueue = std::make_shared<Queue<BboQuote>>();
@@ -23,7 +23,7 @@ std::unique_ptr<DashboardCell> BboPriceDashboardCellBuilder::Make(
     convert(baseQueue, [=] (const BboQuote& quote) {
       return pick(side, quote.m_ask.m_price, quote.m_bid.m_price);
     }));
-  auto query = make_current_query(security);
+  auto query = make_current_query(ticker);
   marketDataClient.query(query, baseQueue);
   return std::make_unique<QueueDashboardCell>(queue);
 }

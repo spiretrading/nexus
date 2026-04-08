@@ -1,26 +1,26 @@
-#ifndef SPIRE_SECURITYNODE_HPP
-#define SPIRE_SECURITYNODE_HPP
+#ifndef SPIRE_TICKERNODE_HPP
+#define SPIRE_TICKERNODE_HPP
 #include "Spire/Canvas/Canvas.hpp"
-#include "Spire/Canvas/Types/SecurityType.hpp"
+#include "Spire/Canvas/Types/TickerType.hpp"
 #include "Spire/Canvas/ValueNodes/ValueNode.hpp"
 
 namespace Spire {
 
-  /*! \class SecurityNode
-      \brief Implements the CanvasNode for a Security.
+  /*! \class TickerNode
+      \brief Implements the CanvasNode for a Ticker.
    */
-  class SecurityNode : public ValueNode<SecurityType> {
+  class TickerNode : public ValueNode<TickerType> {
     public:
 
-      //! Constructs a SecurityNode.
-      SecurityNode();
+      //! Constructs a TickerNode.
+      TickerNode();
 
-      //! Constructs a SecurityNode with an initial value.
+      //! Constructs a TickerNode with an initial value.
       /*!
         \param value The node's initial value.
         \param venueDatabase The database of all available venues.
       */
-      SecurityNode(const Nexus::Security& value,
+      TickerNode(const Nexus::Ticker& value,
         const Nexus::VenueDatabase& venueDatabase);
 
       //! Clones this CanvasNode with a new value.
@@ -29,7 +29,7 @@ namespace Spire {
         \param venueDatabase The database of all available venues.
         \return A clone of this CanvasNode with the specified <i>value</i>.
       */
-      std::unique_ptr<SecurityNode> SetValue(const Nexus::Security& value,
+      std::unique_ptr<TickerNode> SetValue(const Nexus::Ticker& value,
         const Nexus::VenueDatabase& venueDatabase) const;
 
       virtual void Apply(CanvasNodeVisitor& visitor) const;
@@ -47,8 +47,8 @@ namespace Spire {
   };
 
   template<Beam::IsShuttle S>
-  void SecurityNode::shuttle(S& shuttle, unsigned int version) {
-    ValueNode<SecurityType>::shuttle(shuttle, version);
+  void TickerNode::shuttle(S& shuttle, unsigned int version) {
+    ValueNode<TickerType>::shuttle(shuttle, version);
   }
 }
 

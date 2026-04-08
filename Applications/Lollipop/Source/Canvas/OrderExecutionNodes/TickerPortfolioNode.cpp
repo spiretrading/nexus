@@ -1,4 +1,4 @@
-#include "Spire/Canvas/OrderExecutionNodes/SecurityPortfolioNode.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
 #include <boost/throw_exception.hpp>
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 #include "Spire/Canvas/Operations/CanvasOperationException.hpp"
@@ -9,13 +9,13 @@ using namespace Beam;
 using namespace Spire;
 using namespace std;
 
-SecurityPortfolioNode::SecurityPortfolioNode() {
-  SetText("Security Portfolio");
+TickerPortfolioNode::TickerPortfolioNode() {
+  SetText("Ticker Portfolio");
   SetType(GetPortfolioEntryRecordType());
   AddChild("source", std::make_unique<ReferenceNode>());
 }
 
-unique_ptr<CanvasNode> SecurityPortfolioNode::Replace(const CanvasNode& child,
+unique_ptr<CanvasNode> TickerPortfolioNode::Replace(const CanvasNode& child,
     unique_ptr<CanvasNode> replacement) const {
   if(&child == &GetChildren().front()) {
     if(dynamic_cast<const ReferenceNode*>(replacement.get()) != nullptr) {
@@ -26,10 +26,10 @@ unique_ptr<CanvasNode> SecurityPortfolioNode::Replace(const CanvasNode& child,
   return CanvasNode::Replace(child, std::move(replacement));
 }
 
-void SecurityPortfolioNode::Apply(CanvasNodeVisitor& visitor) const {
+void TickerPortfolioNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> SecurityPortfolioNode::Clone() const {
-  return std::make_unique<SecurityPortfolioNode>(*this);
+unique_ptr<CanvasNode> TickerPortfolioNode::Clone() const {
+  return std::make_unique<TickerPortfolioNode>(*this);
 }

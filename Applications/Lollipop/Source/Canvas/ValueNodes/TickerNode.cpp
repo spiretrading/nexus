@@ -1,4 +1,4 @@
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 
@@ -8,17 +8,17 @@ using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
 
-SecurityNode::SecurityNode() {
+TickerNode::TickerNode() {
   SetText("");
 }
 
-SecurityNode::SecurityNode(const Security& value,
+TickerNode::TickerNode(const Ticker& value,
     const VenueDatabase& venueDatabase)
     : ValueNode(value) {
   SetText(displayText(value).toStdString());
 }
 
-unique_ptr<SecurityNode> SecurityNode::SetValue(const Security& value,
+unique_ptr<TickerNode> TickerNode::SetValue(const Ticker& value,
     const VenueDatabase& venueDatabase) const {
   auto clone = CanvasNode::Clone(*this);
   clone->SetInternalValue(value);
@@ -26,14 +26,14 @@ unique_ptr<SecurityNode> SecurityNode::SetValue(const Security& value,
   return clone;
 }
 
-void SecurityNode::Apply(CanvasNodeVisitor& visitor) const {
+void TickerNode::Apply(CanvasNodeVisitor& visitor) const {
   visitor.Visit(*this);
 }
 
-unique_ptr<CanvasNode> SecurityNode::Clone() const {
-  return make_unique<SecurityNode>(*this);
+unique_ptr<CanvasNode> TickerNode::Clone() const {
+  return make_unique<TickerNode>(*this);
 }
 
-unique_ptr<CanvasNode> SecurityNode::Reset() const {
-  return make_unique<SecurityNode>();
+unique_ptr<CanvasNode> TickerNode::Reset() const {
+  return make_unique<TickerNode>();
 }

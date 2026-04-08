@@ -8,8 +8,8 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <boost/noncopyable.hpp>
 #include "Nexus/Definitions/OrderStatus.hpp"
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/UI/UI.hpp"
@@ -50,8 +50,8 @@ namespace Spire {
       UserProfile* m_userProfile;
       const Beam::Publisher<std::shared_ptr<Nexus::Order>>*
         m_orderExecutionPublisher;
-      std::unordered_map<Nexus::Security, SideToOrderEntryList>
-        m_securityToOrderEntryList;
+      std::unordered_map<Nexus::Ticker, SideToOrderEntryList>
+        m_tickerToOrderEntryList;
       std::optional<Beam::RoutineTaskQueue> m_slotHandler;
 
       void OnOrderExecuted(const std::shared_ptr<Nexus::Order>& order);

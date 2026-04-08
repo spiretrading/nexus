@@ -1,24 +1,24 @@
-#ifndef SPIRE_SECURITY_INFO_MODEL_HPP
-#define SPIRE_SECURITY_INFO_MODEL_HPP
+#ifndef SPIRE_TICKER_INFO_MODEL_HPP
+#define SPIRE_TICKER_INFO_MODEL_HPP
 #include <unordered_set>
 #include <vector>
 #include <Beam/Pointers/Ref.hpp>
 #include <QAbstractTableModel>
-#include "Nexus/Definitions/SecurityInfo.hpp"
+#include "Nexus/Definitions/TickerInfo.hpp"
 #include "Spire/Async/QtPromise.hpp"
 #include "Spire/UI/UI.hpp"
 
 namespace Spire {
 
-  /** Models the SecurityInfo's available on the MarketDataServer. */
-  class SecurityInfoModel : public QAbstractTableModel {
+  /** Models the TickerInfo's available on the MarketDataServer. */
+  class TickerInfoModel : public QAbstractTableModel {
     public:
 
       /** Enumerates the model's columns. */
       enum Columns {
 
-        /** The Security column. */
-        SECURITY_COLUMN,
+        /** The Ticker column. */
+        TICKER_COLUMN,
 
         /** The name column. */
         NAME_COLUMN,
@@ -31,13 +31,13 @@ namespace Spire {
       static const auto COLUMN_COUNT = 3;
 
       /**
-       * Constructs a SecurityInfoModel.
+       * Constructs a TickerInfoModel.
        * @param userProfile The user's profile.
        */
-      explicit SecurityInfoModel(Beam::Ref<UserProfile> userProfile);
+      explicit TickerInfoModel(Beam::Ref<UserProfile> userProfile);
 
       /**
-       * Searches for SecurityInfo objects matching a prefix.
+       * Searches for TickerInfo objects matching a prefix.
        * @param prefix The prefix to search for.
        */
       void Search(const std::string& prefix);
@@ -53,12 +53,12 @@ namespace Spire {
 
     private:
       UserProfile* m_userProfile;
-      std::vector<Nexus::SecurityInfo> m_securityInfoItems;
+      std::vector<Nexus::TickerInfo> m_tickerInfoItems;
       std::unordered_set<std::string> m_prefixes;
       QtPromise<void> m_queryPromise;
 
-      void AddSecurityInfoItems(
-        std::vector<Nexus::SecurityInfo> securityInfoItems);
+      void AddTickerInfoItems(
+        std::vector<Nexus::TickerInfo> tickerInfoItems);
   };
 }
 

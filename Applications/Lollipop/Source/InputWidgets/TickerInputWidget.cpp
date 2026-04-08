@@ -1,9 +1,9 @@
-#include "Spire/InputWidgets/SecurityInputWidget.hpp"
+#include "Spire/InputWidgets/TickerInputWidget.hpp"
 #include <QApplication>
 #include <QKeyEvent>
 #include <QLineEdit>
 #include <QVBoxLayout>
-#include "Spire/InputWidgets/SecurityInputDialog.hpp"
+#include "Spire/InputWidgets/TickerInputDialog.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
@@ -14,7 +14,7 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
 
-SecurityInputWidget::SecurityInputWidget(QWidget* parent, Qt::WindowFlags flags)
+TickerInputWidget::TickerInputWidget(QWidget* parent, Qt::WindowFlags flags)
     : QWidget(parent, flags),
       m_isReadOnly(false) {
   auto layout = new QVBoxLayout(this);
@@ -25,36 +25,36 @@ SecurityInputWidget::SecurityInputWidget(QWidget* parent, Qt::WindowFlags flags)
   layout->addWidget(m_lineEdit);
 }
 
-SecurityInputWidget::SecurityInputWidget(Ref<UserProfile> userProfile,
+TickerInputWidget::TickerInputWidget(Ref<UserProfile> userProfile,
     QWidget* parent, Qt::WindowFlags flags)
-    : SecurityInputWidget{parent, flags} {
+    : TickerInputWidget{parent, flags} {
   Initialize(Ref(userProfile));
 }
 
-void SecurityInputWidget::Initialize(Ref<UserProfile> userProfile) {
+void TickerInputWidget::Initialize(Ref<UserProfile> userProfile) {
   m_userProfile = userProfile.get();
 }
 
-const Security& SecurityInputWidget::GetSecurity() const {
-  return m_security;
+const Ticker& TickerInputWidget::GetTicker() const {
+  return m_ticker;
 }
 
-void SecurityInputWidget::SetSecurity(Security security) {
-  m_security = std::move(security);
-  m_lineEdit->setText(displayText(m_security));
-  m_securityUpdatedSignal(m_security);
+void TickerInputWidget::SetTicker(Ticker ticker) {
+  m_ticker = std::move(ticker);
+  m_lineEdit->setText(displayText(m_ticker));
+  m_tickerUpdatedSignal(m_ticker);
 }
 
-void SecurityInputWidget::SetReadOnly(bool value) {
+void TickerInputWidget::SetReadOnly(bool value) {
   m_isReadOnly = value;
 }
 
-connection SecurityInputWidget::ConnectSecurityUpdatedSignal(
-    const SecurityUpdatedSignal::slot_type& slot) const {
-  return m_securityUpdatedSignal.connect(slot);
+connection TickerInputWidget::ConnectTickerUpdatedSignal(
+    const TickerUpdatedSignal::slot_type& slot) const {
+  return m_tickerUpdatedSignal.connect(slot);
 }
 
-bool SecurityInputWidget::eventFilter(QObject* receiver, QEvent* event) {
+bool TickerInputWidget::eventFilter(QObject* receiver, QEvent* event) {
   if(receiver == m_lineEdit) {
     if(event->type() == QEvent::MouseButtonDblClick) {
       mouseDoubleClickEvent(static_cast<QMouseEvent*>(event));
@@ -67,7 +67,7 @@ bool SecurityInputWidget::eventFilter(QObject* receiver, QEvent* event) {
   return QWidget::eventFilter(receiver, event);
 }
 
-void SecurityInputWidget::keyPressEvent(QKeyEvent* event) {
+void TickerInputWidget::keyPressEvent(QKeyEvent* event) {
   auto text = event->text().trimmed();
   if(event->key() == Qt::Key_Tab || event->key() == Qt::Key_Backtab ||
       event->key() == Qt::Key_Escape || text.isEmpty()) {
@@ -77,27 +77,27 @@ void SecurityInputWidget::keyPressEvent(QKeyEvent* event) {
   if(m_isReadOnly) {
     return;
   }
-  ShowSecurityInputDialog(Ref(*m_userProfile), text.toStdString(), this,
-    [=] (auto security) {
-      if(!security || security == Security()) {
+  ShowTickerInputDialog(Ref(*m_userProfile), text.toStdString(), this,
+    [=] (auto ticker) {
+      if(!ticker || ticker == Ticker()) {
         return;
       }
-      SetSecurity(std::move(*security));
+      SetTicker(std::move(*ticker));
     });
 }
 
-void SecurityInputWidget::mouseDoubleClickEvent(QMouseEvent* event) {
+void TickerInputWidget::mouseDoubleClickEvent(QMouseEvent* event) {
   if(m_isReadOnly) {
     return;
   }
-  auto dialog = SecurityInputDialog(Ref(*m_userProfile), m_security, this);
+  auto dialog = TickerInputDialog(Ref(*m_userProfile), m_ticker, this);
   dialog.GetSymbolInput().selectAll();
   if(dialog.exec() == QDialog::Rejected) {
     return;
   }
-  auto newValue = dialog.GetSecurity();
-  if(newValue == Security()) {
+  auto newValue = dialog.GetTicker();
+  if(newValue == Ticker()) {
     return;
   }
-  SetSecurity(newValue);
+  SetTicker(newValue);
 }

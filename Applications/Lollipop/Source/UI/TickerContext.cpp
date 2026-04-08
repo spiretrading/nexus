@@ -1,4 +1,4 @@
-#include "Spire/UI/SecurityContext.hpp"
+#include "Spire/UI/TickerContext.hpp"
 #include <unordered_map>
 #include <Beam/ServiceLocator/SessionEncryption.hpp>
 
@@ -12,7 +12,7 @@ using namespace Spire::UI;
 using namespace std;
 
 namespace {
-  std::unordered_map<std::string, SecurityContext*> contexts;
+  std::unordered_map<std::string, TickerContext*> contexts;
 
   std::string GenerateUniqueIdentifier() {
     std::string identifier;
@@ -23,7 +23,7 @@ namespace {
   }
 }
 
-boost::optional<SecurityContext&> SecurityContext::FindSecurityContext(
+boost::optional<TickerContext&> TickerContext::FindTickerContext(
     const std::string& identifier) {
   auto contextIterator = contexts.find(identifier);
   if(contextIterator == contexts.end()) {
@@ -32,12 +32,12 @@ boost::optional<SecurityContext&> SecurityContext::FindSecurityContext(
   return *contextIterator->second;
 }
 
-SecurityContext::~SecurityContext() {
+TickerContext::~TickerContext() {
   if(m_outgoingLink != nullptr) {
     m_outgoingLink->m_incomingLinks.erase(this);
   }
-  std::set<SecurityContext*> incomingLinks = m_incomingLinks;
-  for(SecurityContext* incomingLink : incomingLinks) {
+  std::set<TickerContext*> incomingLinks = m_incomingLinks;
+  for(TickerContext* incomingLink : incomingLinks) {
     if(m_outgoingLink == nullptr) {
       incomingLink->Unlink();
     } else {
@@ -47,7 +47,7 @@ SecurityContext::~SecurityContext() {
   contexts.erase(m_identifier);
 }
 
-void SecurityContext::Link(SecurityContext& context) {
+void TickerContext::Link(TickerContext& context) {
   if(&context == m_outgoingLink) {
     return;
   }
@@ -60,7 +60,7 @@ void SecurityContext::Link(SecurityContext& context) {
   HandleLink(context);
 }
 
-void SecurityContext::Unlink() {
+void TickerContext::Unlink() {
   if(m_outgoingLink == nullptr) {
     return;
   }
@@ -69,15 +69,15 @@ void SecurityContext::Unlink() {
   HandleUnlink();
 }
 
-const Security& SecurityContext::GetDisplayedSecurity() const {
-  return m_security;
+const Ticker& TickerContext::GetDisplayedTicker() const {
+  return m_ticker;
 }
 
-const std::string& SecurityContext::GetIdentifier() const {
+const std::string& TickerContext::GetIdentifier() const {
   return m_identifier;
 }
 
-const std::string& SecurityContext::GetLinkedIdentifier() const {
+const std::string& TickerContext::GetLinkedIdentifier() const {
   static const std::string NONE_IDENTIFIER;
   if(m_outgoingLink == nullptr) {
     return NONE_IDENTIFIER;
@@ -85,16 +85,16 @@ const std::string& SecurityContext::GetLinkedIdentifier() const {
   return m_outgoingLink->GetIdentifier();
 }
 
-connection SecurityContext::ConnectSecurityDisplaySignal(
-    const SecurityDisplaySignal::slot_type& slot) const {
-  return m_securityDisplaySignal.connect(slot);
+connection TickerContext::ConnectTickerDisplaySignal(
+    const TickerDisplaySignal::slot_type& slot) const {
+  return m_tickerDisplaySignal.connect(slot);
 }
 
-SecurityContext::SecurityContext()
+TickerContext::TickerContext()
     : m_identifier(GenerateUniqueIdentifier()),
       m_outgoingLink(nullptr) {}
 
-SecurityContext::SecurityContext(const std::string& identifier)
+TickerContext::TickerContext(const std::string& identifier)
     : m_identifier(identifier),
       m_outgoingLink(nullptr) {
   if(m_identifier.empty()) {
@@ -103,14 +103,14 @@ SecurityContext::SecurityContext(const std::string& identifier)
   contexts[m_identifier] = this;
 }
 
-void SecurityContext::HandleLink(SecurityContext& context) {}
+void TickerContext::HandleLink(TickerContext& context) {}
 
-void SecurityContext::HandleUnlink() {}
+void TickerContext::HandleUnlink() {}
 
-void SecurityContext::SetDisplayedSecurity(const Nexus::Security& security) {
-  if(m_security == security) {
+void TickerContext::SetDisplayedTicker(const Nexus::Ticker& ticker) {
+  if(m_ticker == ticker) {
     return;
   }
-  m_security = security;
-  m_securityDisplaySignal(m_security);
+  m_ticker = ticker;
+  m_tickerDisplaySignal(m_ticker);
 }

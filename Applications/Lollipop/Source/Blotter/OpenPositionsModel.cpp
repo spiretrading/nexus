@@ -21,7 +21,7 @@ void OpenPositionsModel::SetPortfolioController(
     Ref<ProfitAndLossModel::PortfolioController> portfolioController) {
   if(!m_entries.empty()) {
     beginRemoveRows(QModelIndex(), 0, m_entries.size() - 1);
-    m_securityToEntry.clear();
+    m_tickerToEntry.clear();
     m_entries.clear();
     endRemoveRows();
   }
@@ -43,9 +43,9 @@ std::vector<OpenPositionsModel::Entry>
 }
 
 boost::optional<const OpenPositionsModel::Entry&>
-    OpenPositionsModel::GetOpenPosition(const Security& security) const {
-  auto entryIterator = m_securityToEntry.find(security);
-  if(entryIterator == m_securityToEntry.end()) {
+    OpenPositionsModel::GetOpenPosition(const Ticker& ticker) const {
+  auto entryIterator = m_tickerToEntry.find(ticker);
+  if(entryIterator == m_tickerToEntry.end()) {
     return none;
   }
   return *entryIterator->second;
@@ -67,8 +67,8 @@ QVariant OpenPositionsModel::data(const QModelIndex& index, int role) const {
   if(role == Qt::TextAlignmentRole) {
     return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
-    if(index.column() == SECURITY_COLUMN) {
-      return QVariant::fromValue(entry.m_key.m_security);
+    if(index.column() == TICKER_COLUMN) {
+      return QVariant::fromValue(entry.m_key.m_ticker);
     } else if(index.column() == QUANTITY_COLUMN) {
       return QVariant::fromValue(abs(entry.m_inventory.m_position.m_quantity));
     } else if(index.column() == SIDE_COLUMN) {
@@ -93,8 +93,8 @@ QVariant OpenPositionsModel::headerData(
   if(role == Qt::TextAlignmentRole) {
     return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
-    if(section == SECURITY_COLUMN) {
-      return tr("Security");
+    if(section == TICKER_COLUMN) {
+      return tr("Ticker");
     } else if(section == QUANTITY_COLUMN) {
       return tr("Qty");
     } else if(section == SIDE_COLUMN) {
@@ -113,28 +113,28 @@ QVariant OpenPositionsModel::headerData(
 }
 
 void OpenPositionsModel::OnPortfolioUpdate(const PortfolioUpdateEntry& update) {
-  auto key = get_key(update.m_security_inventory.m_position);
-  auto entryIterator = m_securityToEntry.find(key.m_security);
-  if(entryIterator == m_securityToEntry.end()) {
-    if(update.m_security_inventory.m_position.m_quantity == 0) {
+  auto key = get_key(update.m_ticker_inventory.m_position);
+  auto entryIterator = m_tickerToEntry.find(key.m_ticker);
+  if(entryIterator == m_tickerToEntry.end()) {
+    if(update.m_ticker_inventory.m_position.m_quantity == 0) {
       return;
     }
     auto index = static_cast<int>(m_entries.size());
     beginInsertRows(QModelIndex(), index, index);
     auto entry = std::make_unique<Entry>(index, key);
     entryIterator =
-      m_securityToEntry.insert(std::pair(key.m_security, entry.get())).first;
+      m_tickerToEntry.insert(std::pair(key.m_ticker, entry.get())).first;
     m_entries.emplace_back(std::move(entry));
     endInsertRows();
   }
   auto& entry = *entryIterator->second;
-  entry.m_inventory = update.m_security_inventory;
-  entry.m_unrealizedEarnings = update.m_unrealized_security;
+  entry.m_inventory = update.m_ticker_inventory;
+  entry.m_unrealizedEarnings = update.m_unrealized_ticker;
   Q_EMIT dataChanged(
     index(entry.m_index, 0), index(entry.m_index, COLUMNS - 1));
   if(entry.m_inventory.m_position.m_quantity == 0) {
     beginRemoveRows(QModelIndex(), entry.m_index, entry.m_index);
-    m_securityToEntry.erase(key.m_security);
+    m_tickerToEntry.erase(key.m_ticker);
     for(auto i = entry.m_index + 1;
         i < static_cast<int>(m_entries.size()); ++i) {
       --m_entries[i]->m_index;

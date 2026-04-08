@@ -30,7 +30,7 @@ void ProfitAndLossModel::SetPortfolioController(
   m_currencyToModel.clear();
   m_update = PortfolioUpdateEntry();
   m_update.m_currency_inventory.m_position.m_currency = m_currency;
-  m_update.m_security_inventory.m_position.m_currency = m_currency;
+  m_update.m_ticker_inventory.m_position.m_currency = m_currency;
   m_eventHandler = std::nullopt;
   m_eventHandler.emplace();
   m_portfolioController = portfolioController.get();
@@ -50,7 +50,7 @@ void ProfitAndLossModel::SetCurrency(CurrencyId currency) {
   } else {
     m_update = PortfolioUpdateEntry();
     m_update.m_currency_inventory.m_position.m_currency = m_currency;
-    m_update.m_security_inventory.m_position.m_currency = m_currency;
+    m_update.m_ticker_inventory.m_position.m_currency = m_currency;
   }
 }
 
@@ -71,7 +71,7 @@ connection ProfitAndLossModel::ConnectProfitAndLossEntryModelRemovedSignal(
 }
 
 void ProfitAndLossModel::OnPortfolioUpdate(const PortfolioUpdateEntry& update) {
-  auto key = get_key(update.m_security_inventory.m_position);
+  auto key = get_key(update.m_ticker_inventory.m_position);
   auto& model = m_currencyToModel[key.m_currency];
   if(!model) {
     model = std::make_unique<ProfitAndLossEntryModel>(

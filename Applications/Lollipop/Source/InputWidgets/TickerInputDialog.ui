@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>SecurityInputDialog</class>
- <widget class="QWidget" name="SecurityInputDialog">
+ <class>TickerInputDialog</class>
+ <widget class="QWidget" name="TickerInputDialog">
   <property name="geometry">
    <rect>
     <x>0</x>
@@ -11,7 +11,7 @@
    </rect>
   </property>
   <property name="windowTitle">
-   <string>Security</string>
+   <string>Ticker</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
@@ -19,7 +19,7 @@
      <item>
       <widget class="QLabel" name="m_label">
        <property name="text">
-        <string>Security:</string>
+        <string>Ticker:</string>
        </property>
       </widget>
      </item>

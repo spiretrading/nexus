@@ -1,22 +1,22 @@
-#ifndef SPIRE_SECURITYTYPE_HPP
-#define SPIRE_SECURITYTYPE_HPP
-#include "Nexus/Definitions/Security.hpp"
+#ifndef SPIRE_TICKERTYPE_HPP
+#define SPIRE_TICKERTYPE_HPP
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Types/NativeType.hpp"
 
 namespace Spire {
 
-  /*! \class SecurityType
-      \brief Represents a Security.
+  /*! \class TickerType
+      \brief Represents a Ticker.
    */
-  class SecurityType : public NativeType {
+  class TickerType : public NativeType {
     public:
 
       //! Defines the native type being represented.
-      typedef Nexus::Security Type;
+      typedef Nexus::Ticker Type;
 
       //! Returns an instance of this type.
-      static const SecurityType& GetInstance();
+      static const TickerType& GetInstance();
 
       virtual std::string GetName() const;
 
@@ -29,13 +29,13 @@ namespace Spire {
     private:
       friend struct Beam::DataShuttle;
 
-      SecurityType() = default;
+      TickerType() = default;
       template<Beam::IsShuttle S>
       void shuttle(S& shuttle, unsigned int version);
   };
 
   template<Beam::IsShuttle S>
-  void SecurityType::shuttle(S& shuttle, unsigned int version) {
+  void TickerType::shuttle(S& shuttle, unsigned int version) {
     NativeType::shuttle(shuttle, version);
   }
 }

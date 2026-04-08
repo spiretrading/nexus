@@ -1,26 +1,26 @@
-#include "Spire/Utilities/SecurityInfoCompleter.hpp"
+#include "Spire/Utilities/TickerInfoCompleter.hpp"
 #include <QSortFilterProxyModel>
 #include <QStringList>
-#include "Spire/Utilities/SecurityInfoModel.hpp"
+#include "Spire/Utilities/TickerInfoModel.hpp"
 
 using namespace Beam;
 using namespace Spire;
 
-SecurityInfoCompleter::SecurityInfoCompleter(QObject* parent)
+TickerInfoCompleter::TickerInfoCompleter(QObject* parent)
     : QCompleter(parent) {
   Initialize();
 }
 
-SecurityInfoCompleter::SecurityInfoCompleter(SecurityInfoModel* model,
+TickerInfoCompleter::TickerInfoCompleter(TickerInfoModel* model,
     QObject* parent)
     : QCompleter(parent) {
   Initialize();
   setSourceModel(model);
 }
 
-SecurityInfoCompleter::~SecurityInfoCompleter() {}
+TickerInfoCompleter::~TickerInfoCompleter() {}
 
-QStringList SecurityInfoCompleter::splitPath(const QString& s) const {
+QStringList TickerInfoCompleter::splitPath(const QString& s) const {
   UpdateProxyModel();
   QRegExp regexp;
   if(s.isEmpty()) {
@@ -33,11 +33,11 @@ QStringList SecurityInfoCompleter::splitPath(const QString& s) const {
   return QStringList();
 }
 
-QAbstractItemModel* SecurityInfoCompleter::sourceModel() const {
+QAbstractItemModel* TickerInfoCompleter::sourceModel() const {
   return m_proxyModel->sourceModel();
 }
 
-void SecurityInfoCompleter::setSourceModel(SecurityInfoModel* source) {
+void TickerInfoCompleter::setSourceModel(TickerInfoModel* source) {
   QAbstractItemModel* model = source;
   m_proxyModel->setSourceModel(source);
   if(source != nullptr && model->parent() == this) {
@@ -47,11 +47,11 @@ void SecurityInfoCompleter::setSourceModel(SecurityInfoModel* source) {
   setModel(model);
 }
 
-void SecurityInfoCompleter::Initialize() {
+void TickerInfoCompleter::Initialize() {
   m_proxyModel = std::make_unique<QSortFilterProxyModel>(nullptr);
 }
 
-void SecurityInfoCompleter::UpdateProxyModel() const {
+void TickerInfoCompleter::UpdateProxyModel() const {
   m_proxyModel->setFilterCaseSensitivity(caseSensitivity());
   m_proxyModel->setFilterKeyColumn(-1);
 }

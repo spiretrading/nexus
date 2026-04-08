@@ -1,5 +1,5 @@
-#ifndef SPIRE_SECURITYINFOCOMPLETER_HPP
-#define SPIRE_SECURITYINFOCOMPLETER_HPP
+#ifndef SPIRE_TICKERINFOCOMPLETER_HPP
+#define SPIRE_TICKERINFOCOMPLETER_HPP
 #include <memory>
 #include <QCompleter>
 #include "Spire/Utilities/Utilities.hpp"
@@ -8,33 +8,33 @@ class QSortFilterProxyModel;
 
 namespace Spire {
 
-  /*! \class SecurityInfoCompleter
-      \brief Implements auto-completion for SecurityInfo items.
+  /*! \class TickerInfoCompleter
+      \brief Implements auto-completion for TickerInfo items.
    */
-  class SecurityInfoCompleter : public QCompleter {
+  class TickerInfoCompleter : public QCompleter {
     public:
 
-      //! Constructs a SecurityInfoCompleter.
+      //! Constructs a TickerInfoCompleter.
       /*!
         \param parent The parent object.
       */
-      SecurityInfoCompleter(QObject* parent = nullptr);
+      TickerInfoCompleter(QObject* parent = nullptr);
 
-      //! Constructs a SecurityInfoCompleter.
+      //! Constructs a TickerInfoCompleter.
       /*!
         \param model The model populating this completer.
         \param parent The parent object.
       */
-      SecurityInfoCompleter(SecurityInfoModel* model,
+      TickerInfoCompleter(TickerInfoModel* model,
         QObject* parent = nullptr);
 
-      virtual ~SecurityInfoCompleter();
+      virtual ~TickerInfoCompleter();
 
       virtual QStringList splitPath(const QString& s) const;
 
       QAbstractItemModel* sourceModel() const;
 
-      void setSourceModel(SecurityInfoModel* source);
+      void setSourceModel(TickerInfoModel* source);
 
     private:
       std::unique_ptr<QSortFilterProxyModel> m_proxyModel;
