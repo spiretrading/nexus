@@ -66,7 +66,7 @@ namespace Nexus {
 
   inline void RegionFilterComplianceRule::submit(
       const std::shared_ptr<Order>& order) {
-    if(m_region.contains(order->get_info().m_fields.m_security)) {
+    if(m_region.contains(order->get_info().m_fields.m_ticker)) {
       m_rule->submit(order);
     } else {
       add(order);
@@ -75,7 +75,7 @@ namespace Nexus {
 
   inline void RegionFilterComplianceRule::cancel(
       const std::shared_ptr<Order>& order) {
-    if(m_region.contains(order->get_info().m_fields.m_security)) {
+    if(m_region.contains(order->get_info().m_fields.m_ticker)) {
       m_rule->cancel(order);
     }
   }

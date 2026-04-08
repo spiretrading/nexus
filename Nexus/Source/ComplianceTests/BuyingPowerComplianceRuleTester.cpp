@@ -2,6 +2,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Compliance/BuyingPowerComplianceRule.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
@@ -38,10 +39,10 @@ TEST_SUITE("BuyingPowerComplianceRule") {
     auto exchange_rates = ExchangeRateTable();
     auto rule = BuyingPowerComplianceRule(1000 * Money::ONE, AUD,
       exchange_rates, fixture.m_market_data_environment.get_registry_client());
-    auto security = Security("TST", ASX);
-    fixture.m_market_data_environment.update_bbo(security, Money::ONE);
+    auto ticker = parse_ticker("TST.ASX");
+    fixture.m_market_data_environment.update_bbo(ticker, Money::ONE);
     auto fields = make_limit_order_fields(
-      DirectoryEntry::make_account(1, "test"), security, AUD, Side::BID, "ASX",
+      DirectoryEntry::make_account(1, "test"), ticker, AUD, Side::BID, "ASX",
       10, 10 * Money::ONE);
     auto order_info =
       OrderInfo(fields, 1, time_from_string("2024-07-25 10:00:00"));
@@ -54,10 +55,10 @@ TEST_SUITE("BuyingPowerComplianceRule") {
     auto exchange_rates = ExchangeRateTable();
     auto rule = BuyingPowerComplianceRule(100 * Money::ONE, AUD, exchange_rates,
       fixture.m_market_data_environment.get_registry_client());
-    auto security = Security("TST", ASX);
-    fixture.m_market_data_environment.update_bbo(security, Money::ONE);
+    auto ticker = parse_ticker("TST.ASX");
+    fixture.m_market_data_environment.update_bbo(ticker, Money::ONE);
     auto fields = make_limit_order_fields(
-      DirectoryEntry::make_account(1, "test"), security, AUD, Side::BID, "ASX",
+      DirectoryEntry::make_account(1, "test"), ticker, AUD, Side::BID, "ASX",
       101, 2 * Money::ONE);
     auto order_info =
       OrderInfo(fields, 1, time_from_string("2024-07-25 10:00:00"));
