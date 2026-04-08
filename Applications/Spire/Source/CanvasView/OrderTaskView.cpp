@@ -2,7 +2,7 @@
 #include <Beam/Utilities/Algorithm.hpp>
 #include <QKeyEvent>
 #include <QMessageBox>
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
@@ -15,8 +15,8 @@
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/CanvasView/CondensedCanvasWidget.hpp"
 #include "Spire/CanvasView/CanvasNodeNotVisibleException.hpp"
 #include "Spire/CanvasView/CondensedCanvasWidget.hpp"
@@ -37,19 +37,19 @@ OrderTaskView::OrderTaskView(const DisplayWidgetSlot& displayWidgetSlot,
     m_removeWidgetSlot(removeWidgetSlot) {}
 
 bool OrderTaskView::HandleKeyPressEvent(const QKeyEvent& event,
-    const Security& security, Money askPrice, Money bidPrice) {
+    const Ticker& ticker, Money askPrice, Money bidPrice) {
   auto state = State();
-  state.m_security = &security;
+  state.m_ticker = &ticker;
   state.m_askPrice = &askPrice;
   state.m_bidPrice = &bidPrice;
   m_state = &state;
   if(m_taskEntryWidget) {
     return HandleTaskInputEvent(event);
-  } else if(security != Security()) {
+  } else if(ticker) {
     auto& keyBindings = *m_userProfile->GetKeyBindings();
     auto taskBinding =
       find_order_task_arguments(*keyBindings.get_order_task_arguments(),
-        security.get_venue(), event.key());
+        ticker.get_venue(), event.key());
     if(taskBinding) {
       return HandleKeyBindingEvent(*taskBinding);
     }
@@ -87,11 +87,11 @@ void OrderTaskView::ExecuteTask(const CanvasNode& node) {
     m_parent->raise();
   }
   auto& entry = activeBlotter.GetTasksModel().Add(node);
-  m_tasksExecuted[*m_state->m_security].push_back(entry.m_task);
+  m_tasksExecuted[*m_state->m_ticker].push_back(entry.m_task);
   entry.m_task->GetPublisher().monitor(m_slotHandler.get_slot<Task::StateEntry>(
-    [=, security = *m_state->m_security, task = entry.m_task] (
+    [=, ticker = *m_state->m_ticker, task = entry.m_task] (
         const Task::StateEntry& update) {
-      OnTaskState(task, security, update);
+      OnTaskState(task, ticker, update);
     }));
   entry.m_task->Execute();
 }
@@ -99,15 +99,13 @@ void OrderTaskView::ExecuteTask(const CanvasNode& node) {
 std::unique_ptr<CanvasNode>
     OrderTaskView::InitializeTaskNode(const CanvasNode& baseNode) {
   auto taskNode = CanvasNode::Clone(baseNode);
-  auto securityNode =
-    taskNode->FindNode(SingleOrderTaskNode::SECURITY_PROPERTY);
-  if(securityNode && !securityNode->IsReadOnly()) {
-    if(auto securityValueNode =
-        dynamic_cast<const SecurityNode*>(&*securityNode)) {
+  auto tickerNode = taskNode->FindNode(SingleOrderTaskNode::TICKER_PROPERTY);
+  if(tickerNode && !tickerNode->IsReadOnly()) {
+    if(auto tickerValueNode = dynamic_cast<const TickerNode*>(&*tickerNode)) {
       auto builder = CanvasNodeBuilder(*taskNode);
-      builder.Replace(*securityNode, securityValueNode->SetValue(
-        *m_state->m_security));
-      builder.SetReadOnly(*securityNode, true);
+      builder.Replace(
+        *tickerNode, tickerValueNode->SetValue(*m_state->m_ticker));
+      builder.SetReadOnly(*tickerNode, true);
       auto sideNode = taskNode->FindNode(SingleOrderTaskNode::SIDE_PROPERTY);
       auto price = [&] {
         if(sideNode) {
@@ -138,12 +136,12 @@ std::unique_ptr<CanvasNode>
               taskNode->FindNode(SingleOrderTaskNode::SIDE_PROPERTY);
             auto& interactions =
               *m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
-                *m_state->m_security);
+                *m_state->m_ticker);
             if(sideNode) {
               if(auto sideValueNode =
                   dynamic_cast<const SideNode*>(&*sideNode)) {
                 return get_default_order_quantity(*m_userProfile,
-                  *m_state->m_security, sideValueNode->GetValue());
+                  *m_state->m_ticker, sideValueNode->GetValue());
               }
             }
             return interactions.get_default_quantity()->get();
@@ -210,7 +208,7 @@ bool OrderTaskView::HandleTaskInputEvent(const QKeyEvent& event) {
     auto key = QKeySequence(static_cast<int>(event.modifiers() + event.key()));
     auto arguments = find_order_task_arguments(
       *m_userProfile->GetKeyBindings()->get_order_task_arguments(),
-      *m_state->m_security, key);
+      *m_state->m_ticker, key);
     if(arguments) {
       RemoveTaskEntry();
       return HandleKeyBindingEvent(*arguments);
@@ -222,9 +220,9 @@ bool OrderTaskView::HandleTaskInputEvent(const QKeyEvent& event) {
 void OrderTaskView::HandleInteractionsPropertiesEvent() {
   auto& interactions =
     *m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
-      *m_state->m_security);
+      *m_state->m_ticker);
   auto interactionsNode = std::make_unique<InteractionsNode>(
-    *m_state->m_security, interactions);
+    *m_state->m_ticker, interactions);
   m_taskEntryWidget =
     new CondensedCanvasWidget("Interactions", Ref(*m_userProfile), m_parent);
   m_isTaskEntryWidgetForInteractionsProperties = true;
@@ -237,13 +235,13 @@ void OrderTaskView::HandleInteractionsPropertiesEvent() {
 bool OrderTaskView::HandleCancelBindingEvent(
     const CancelKeyBindingsModel::Operation& operation) {
   flush(m_slotHandler);
-  execute(operation, out(m_tasksExecuted[*m_state->m_security]));
+  execute(operation, out(m_tasksExecuted[*m_state->m_ticker]));
   return true;
 }
 
 void OrderTaskView::OnTaskState(const std::shared_ptr<Task>& task,
-    const Security& security, const Task::StateEntry& update) {
+    const Ticker& ticker, const Task::StateEntry& update) {
   if(IsTerminal(update.m_state)) {
-    remove_first(m_tasksExecuted[security], task);
+    remove_first(m_tasksExecuted[ticker], task);
   }
 }
