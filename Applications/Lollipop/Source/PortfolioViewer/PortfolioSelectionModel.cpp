@@ -86,7 +86,7 @@ bool PortfolioSelectionModel::TestSelectionAcceptsEntry(
     return false;
   }
   if(m_selectedVenues.find(
-      entry.m_inventory.m_position.m_security.get_venue()) ==
+      entry.m_inventory.m_position.m_ticker.get_venue()) ==
       m_selectedVenues.end()) {
     return false;
   }
