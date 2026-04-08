@@ -42,10 +42,10 @@ namespace Nexus::Python {
   void export_technical_analysis(pybind11::module& module);
 
   /**
-   * Exports the standard security queries.
+   * Exports the standard ticker queries.
    * @param module The module to export to.
    */
-  void export_standard_security_queries(pybind11::module& module);
+  void export_standard_ticker_queries(pybind11::module& module);
 }
 
 #endif
