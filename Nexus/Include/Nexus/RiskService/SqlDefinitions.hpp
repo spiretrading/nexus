@@ -24,23 +24,23 @@ namespace Nexus {
       add_column("account", &InventoryEntry::m_account).
         extend(Viper::Row<Inventory>().
           extend(Viper::Row<Position>().
-            extend(Viper::Row<Security>().
+            extend(Viper::Row<Ticker>().
               add_column("symbol", Viper::varchar(16),
                 [] (auto& row) {
                   return row.get_symbol();
                 },
                 [] (auto& row, auto column) {
-                  row = Security(std::move(column), row.get_venue());
+                  row = Ticker(std::move(column), row.get_venue());
                 }).
               add_column("venue", Viper::varchar(16),
                 [] (auto& row) {
                   return row.get_venue();
                 },
                 [] (auto& row, auto column) {
-                  row = Security(row.get_symbol(), column);
+                  row = Ticker(row.get_symbol(), column);
                 }),
               [] (auto& entry) -> auto& {
-                return entry.m_security;
+                return entry.m_ticker;
               }).
             add_column("currency",
               [] (auto& entry) -> auto& {

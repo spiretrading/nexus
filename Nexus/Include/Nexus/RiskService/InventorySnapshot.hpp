@@ -54,8 +54,7 @@ namespace Nexus {
    */
   std::tuple<RiskPortfolio, Beam::Sequence,
       std::vector<std::shared_ptr<Order>>> make_portfolio(
-        const InventorySnapshot& snapshot,
-        const Beam::DirectoryEntry& account,
+        const InventorySnapshot& snapshot, const Beam::DirectoryEntry& account,
         VenueDatabase venues, IsOrderExecutionClient auto& client) {
     auto excluded_orders =
       load_orders(account, snapshot.m_excluded_orders, client);

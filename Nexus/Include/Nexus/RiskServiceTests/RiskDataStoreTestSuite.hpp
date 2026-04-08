@@ -2,6 +2,7 @@
 #define NEXUS_RISK_DATA_STORE_TEST_SUITE_HPP
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/RiskService/RiskDataStore.hpp"
 
 namespace Nexus::Tests {
@@ -22,7 +23,7 @@ namespace Nexus::Tests {
 
     SUBCASE("store_load_inventory") {
       auto inventories = std::vector<Inventory>();
-      inventories.emplace_back(Position::Key(Security("A", ASX), AUD));
+      inventories.emplace_back(Position::Key(parse_ticker("A.ASX"), AUD));
       inventories.back().m_position.m_cost_basis = 1000 * Money::ONE;
       inventories.back().m_position.m_quantity = 123;
       inventories.back().m_fees = 3 * Money::ONE;
@@ -42,13 +43,13 @@ namespace Nexus::Tests {
 
     SUBCASE("store_empty_inventory") {
       auto inventories = std::vector<Inventory>();
-      inventories.emplace_back(Position::Key(Security("A", ASX), AUD));
+      inventories.emplace_back(Position::Key(parse_ticker("A.ASX"), AUD));
       inventories.back().m_position.m_cost_basis = 1000 * Money::ONE;
       inventories.back().m_position.m_quantity = 123;
       inventories.back().m_fees = 3 * Money::ONE;
       inventories.back().m_transaction_count = 332;
       inventories.back().m_volume = 433;
-      inventories.emplace_back(Position::Key(Security("B", ASX), AUD));
+      inventories.emplace_back(Position::Key(parse_ticker("B.ASX"), AUD));
       auto account = DirectoryEntry::make_account(123, "test");
       auto snapshot = InventorySnapshot(inventories, Sequence(200), {});
       data_store.store(account, snapshot);

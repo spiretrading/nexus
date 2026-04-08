@@ -174,10 +174,10 @@ namespace Nexus {
       for(auto& update : inventories) {
         if(update.inventory.m_transaction_count == 0) {
           m_publisher->erase(RiskPortfolioKey(update.account,
-            update.inventory.m_position.m_security), update.inventory);
+            update.inventory.m_position.m_ticker), update.inventory);
         } else {
           m_publisher->push(RiskPortfolioKey(update.account,
-            update.inventory.m_position.m_security), update.inventory);
+            update.inventory.m_position.m_ticker), update.inventory);
         }
       }
     });
