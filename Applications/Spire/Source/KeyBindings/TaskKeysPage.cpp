@@ -13,10 +13,10 @@
 #include "Spire/Ui/LineInputForm.hpp"
 #include "Spire/Ui/RegionBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
-#include "Spire/Ui/SecurityBox.hpp"
 #include "Spire/Ui/TableBody.hpp"
 #include "Spire/Ui/TableItem.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
+#include "Spire/Ui/TickerBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
@@ -52,9 +52,9 @@ namespace {
     return button;
   }
 
-  Region make_region(const SecurityInfo& security_info) {
-    auto region = Region(security_info.m_name);
-    region += security_info.m_security;
+  Region make_region(const TickerInfo& ticker_info) {
+    auto region = Region(ticker_info.m_name);
+    region += ticker_info.m_ticker;
     return region;
   }
 
@@ -76,34 +76,33 @@ namespace {
   }
 
   struct ConsolidatedRegionQueryModel : RegionQueryModel {
-    std::shared_ptr<SecurityInfoQueryModel> m_securities;
+    std::shared_ptr<TickerInfoQueryModel> m_tickers;
     std::shared_ptr<RegionQueryModel> m_regions;
 
-    ConsolidatedRegionQueryModel(
-      std::shared_ptr<SecurityInfoQueryModel> securities,
+    ConsolidatedRegionQueryModel(std::shared_ptr<TickerInfoQueryModel> tickers,
       std::shared_ptr<RegionQueryModel> regions)
-      : m_securities(std::move(securities)),
+      : m_tickers(std::move(tickers)),
         m_regions(std::move(regions)) {}
 
     optional<Region> parse(const QString& query) override {
-      if(auto security = m_securities->parse(query)) {
-        return make_region(*security);
+      if(auto ticker = m_tickers->parse(query)) {
+        return make_region(*ticker);
       }
       return m_regions->parse(query);
     }
 
     QtPromise<std::vector<Region>> submit(const QString& query) override {
-      return m_securities->submit(query).then([=] (auto&& security_result) {
-        auto security_matches = [&] {
+      return m_tickers->submit(query).then([=] (auto&& ticker_result) {
+        auto ticker_matches = [&] {
           try {
-            return security_result.get();
+            return ticker_result.get();
           } catch(const std::exception&) {
-            return std::vector<SecurityInfo>();
+            return std::vector<TickerInfo>();
           }
         }();
         auto regions = std::unordered_set<Region>();
-        for(auto& security : security_matches) {
-          regions.insert(make_region(security));
+        for(auto& ticker : ticker_matches) {
+          regions.insert(make_region(ticker));
         }
         return m_regions->submit(query).then(
           [regions = std::move(regions)] (auto&& region_result) mutable {
@@ -126,7 +125,7 @@ namespace {
 }
 
 TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
-    std::shared_ptr<SecurityInfoQueryModel> securities,
+    std::shared_ptr<TickerInfoQueryModel> tickers,
     AdditionalTagDatabase additional_tags, QWidget* parent)
     : QWidget(parent),
       m_key_bindings(std::move(key_bindings)) {
@@ -182,7 +181,7 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     additional_tags);
   m_table_view = make_task_keys_table_view(
     std::move(filtered_tasks), std::make_shared<ConsolidatedRegionQueryModel>(
-      std::move(securities), populate_region_query_model()), additional_tags);
+      std::move(tickers), populate_region_query_model()), additional_tags);
   layout->addWidget(m_table_view);
   auto box = new Box(body);
   update_style(*box, [] (auto& style) {

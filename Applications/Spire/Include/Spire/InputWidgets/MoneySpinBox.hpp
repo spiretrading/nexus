@@ -4,7 +4,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/signal.hpp>
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -47,14 +47,14 @@ namespace Spire {
        */
       void Initialize(Beam::Ref<UserProfile> userProfile);
 
-      /** Returns the Security linked to. */
-      const boost::optional<Nexus::Security>& GetLinkedSecurity() const;
+      /** Returns the Ticker linked to. */
+      const boost::optional<Nexus::Ticker>& GetLinkedTicker() const;
 
       /**
-       * Links this spin box to a Security.
-       * @param security The Security to link to.
+       * Links this spin box to a Ticker.
+       * @param ticker The Ticker to link to.
        */
-      void SetLinkedSecurity(const boost::optional<Nexus::Security>& security);
+      void SetLinkedTicker(const boost::optional<Nexus::Ticker>& ticker);
 
       /**
        * Sets the number of decimal places to display.
@@ -90,7 +90,7 @@ namespace Spire {
 
     private:
       UserProfile* m_userProfile;
-      boost::optional<Nexus::Security> m_security;
+      boost::optional<Nexus::Ticker> m_ticker;
       QDoubleSpinBox* m_spinBox;
       bool m_isReadOnly;
       mutable ValueUpdatedSignal m_valueUpdatedSignal;

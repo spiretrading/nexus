@@ -26,8 +26,8 @@ namespace {
     for(auto& venue : region.get_venues()) {
       tags.push_back(*regions.parse(to_text(venue)));
     }
-    for(auto& security : region.get_securities()) {
-      tags.push_back(*regions.parse(to_text(security)));
+    for(auto& ticker : region.get_tickers()) {
+      tags.push_back(*regions.parse(to_text(ticker)));
     }
     return tags;
   }
@@ -36,7 +36,7 @@ namespace {
     enum class EntryType : std::uint8_t {
       COUNTRY,
       VENUE,
-      SECURITY,
+      TICKER,
       NONE
     };
     struct Entry {
@@ -61,16 +61,16 @@ namespace {
       auto& region = list.get(i);
       auto& countries = region.get_countries();
       auto& venues = region.get_venues();
-      auto& securities = region.get_securities();
+      auto& tickers = region.get_tickers();
       if(!countries.empty()) {
         entry.m_type = EntryType::COUNTRY;
         entry.m_key = to_text(*countries.begin());
       } else if(!venues.empty()) {
         entry.m_type = EntryType::VENUE;
         entry.m_key = to_text(*venues.begin());
-      } else if(!securities.empty()) {
-        entry.m_type = EntryType::SECURITY;
-        entry.m_key = to_text(*securities.begin());
+      } else if(!tickers.empty()) {
+        entry.m_type = EntryType::TICKER;
+        entry.m_key = to_text(*tickers.begin());
       } else {
         entry.m_type = EntryType::NONE;
       }

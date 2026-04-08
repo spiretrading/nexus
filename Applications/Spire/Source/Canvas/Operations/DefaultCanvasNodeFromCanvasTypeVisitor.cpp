@@ -11,9 +11,9 @@
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/Canvas/ValueNodes/VenueNode.hpp"
 
@@ -40,9 +40,9 @@ namespace {
       virtual void Visit(const MoneyType& type);
       virtual void Visit(const OrderStatusType& type);
       virtual void Visit(const OrderTypeType& type);
-      virtual void Visit(const SecurityType& type);
       virtual void Visit(const SideType& type);
       virtual void Visit(const TextType& type);
+      virtual void Visit(const TickerType& type);
       virtual void Visit(const TimeInForceType& type);
       virtual void Visit(const TimeRangeType& type);
       virtual void Visit(const VenueType& type);
@@ -101,16 +101,16 @@ void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const OrderTypeType& type) {
   m_node = make_unique<OrderTypeNode>();
 }
 
-void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const SecurityType& type) {
-  m_node = make_unique<SecurityNode>();
-}
-
 void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const SideType& type) {
   m_node = make_unique<SideNode>();
 }
 
 void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const TextType& type) {
   m_node = make_unique<TextNode>();
+}
+
+void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(const TickerType& type) {
+  m_node = make_unique<TickerNode>();
 }
 
 void DefaultCanvasNodeFromCanvasTypeVisitor::Visit(

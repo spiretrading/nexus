@@ -10,22 +10,22 @@ using namespace Spire;
 using namespace std;
 
 BookViewPropertiesDialog::BookViewPropertiesDialog(
-    Ref<UserProfile> userProfile, const Security& security,
+    Ref<UserProfile> userProfile, const Ticker& ticker,
     const BookViewProperties& properties, QWidget* parent,
     Qt::WindowFlags flags)
     : QDialog(parent, flags),
       m_ui(std::make_unique<Ui_BookViewPropertiesDialog>()),
       m_userProfile(userProfile.get()),
-      m_security(security),
+      m_ticker(ticker),
       m_properties(properties) {
   m_ui->setupUi(this);
   setFixedSize(scale(size()));
   m_ui->m_levelsTab->Initialize(Ref(m_properties));
   m_ui->m_highlightsTab->Initialize(Ref(*m_userProfile), Ref(m_properties));
-  if(m_security == Security()) {
+  if(m_ticker == Ticker()) {
     m_ui->m_optionsTab->removeTab(m_ui->m_optionsTab->count() - 1);
   } else {
-    m_ui->m_interactionsTab->Initialize(Ref(*m_userProfile), m_security);
+    m_ui->m_interactionsTab->Initialize(Ref(*m_userProfile), m_ticker);
   }
   connect(m_ui->m_loadDefaultButton, &QPushButton::clicked, this,
     &BookViewPropertiesDialog::OnLoadDefault);
@@ -74,7 +74,7 @@ void BookViewPropertiesDialog::OnOk() {
 }
 
 void BookViewPropertiesDialog::OnApply() {
-  if(m_security) {
+  if(m_ticker) {
     m_ui->m_interactionsTab->Store();
   }
   BookViewWindow* window = dynamic_cast<BookViewWindow*>(parent());
@@ -85,7 +85,7 @@ void BookViewPropertiesDialog::OnApply() {
 }
 
 void BookViewPropertiesDialog::OnApplyToAll() {
-  if(m_security) {
+  if(m_ticker) {
     m_ui->m_interactionsTab->Store();
   }
   QWidgetList widgets = QApplication::topLevelWidgets();

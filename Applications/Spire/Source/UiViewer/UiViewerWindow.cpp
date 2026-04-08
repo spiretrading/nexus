@@ -202,9 +202,6 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_scroll_box_profile());
   add(make_scrollable_list_box_profile());
   add(make_search_box_profile());
-  add(make_security_box_profile());
-  add(make_security_list_item_profile());
-  add(make_security_view_profile());
   add(make_side_box_profile());
   add(make_side_filter_panel_profile());
   add(make_slider_profile());
@@ -220,6 +217,9 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_text_area_box_profile());
   add(make_text_area_label_profile());
   add(make_text_box_profile());
+  add(make_ticker_box_profile());
+  add(make_ticker_list_item_profile());
+  add(make_ticker_view_profile());
   add(make_time_box_profile());
   add(make_time_in_force_box_profile());
   add(make_time_in_force_filter_panel_profile());

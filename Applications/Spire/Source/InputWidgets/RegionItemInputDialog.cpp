@@ -6,7 +6,7 @@
 #include <boost/variant/get.hpp>
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
-#include "ui_SecurityInputDialog.h"
+#include "ui_TickerInputDialog.h"
 
 using namespace Beam;
 using namespace boost;
@@ -20,8 +20,8 @@ namespace {
       return QVariant::fromValue(country);
     } else if(auto venue = parse_venue(line)) {
       return QVariant::fromValue(venue);
-    } else if(auto security = parse_security(line)) {
-      return QVariant::fromValue(security);
+    } else if(auto ticker = parse_ticker(line)) {
+      return QVariant::fromValue(ticker);
     } else if(line == "*") {
       return QVariant::fromValue(Region::GLOBAL);
     }
@@ -42,7 +42,7 @@ RegionItemInputDialog::RegionItemInputDialog(
 RegionItemInputDialog::RegionItemInputDialog(
     const std::string& text, Ref<UserProfile> userProfile, QWidget* parent)
     : QDialog(parent),
-      m_ui(std::make_unique<Ui_SecurityInputDialog>()),
+      m_ui(std::make_unique<Ui_TickerInputDialog>()),
       m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
   setWindowTitle("Region");

@@ -7,7 +7,7 @@
 #include <boost/variant/variant.hpp>
 #include <QAbstractTableModel>
 #include "Nexus/Definitions/Region.hpp"
-#include "Nexus/Definitions/SecurityInfo.hpp"
+#include "Nexus/Definitions/TickerInfo.hpp"
 #include "Spire/Async/QtPromise.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
@@ -53,7 +53,7 @@ namespace Spire {
 
     private:
       using Item = boost::variant<
-        Nexus::CountryCode, Nexus::Venue, Nexus::SecurityInfo, Nexus::Region>;
+        Nexus::CountryCode, Nexus::Venue, Nexus::TickerInfo, Nexus::Region>;
       UserProfile* m_userProfile;
       std::vector<Item> m_items;
       std::unordered_set<std::string> m_prefixes;

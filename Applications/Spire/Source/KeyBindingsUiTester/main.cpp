@@ -10,28 +10,28 @@ using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 
-std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
-  auto security_infos = std::vector<SecurityInfo>();
-  auto add_security = [&] (const Security& security, const std::string& name) {
-    if(security) {
-      security_infos.emplace_back(security, name, "", 0);
+std::shared_ptr<TickerInfoQueryModel> populate_ticker_query_model() {
+  auto ticker_infos = std::vector<TickerInfo>();
+  auto add_ticker = [&] (const Ticker& ticker, const std::string& name) {
+    if(ticker) {
+      ticker_infos.emplace_back(ticker, name, "", 0);
     }
   };
-  add_security(parse_security("MRU.TSX"), "Metro Inc.");
-  add_security(parse_security("MG.TSX"), "Magna International Inc.");
-  add_security(parse_security("MGA.TSX"), "Mega Uranium Ltd.");
-  add_security(parse_security("MGAB.TSX"),
+  add_ticker(parse_ticker("MRU.TSX"), "Metro Inc.");
+  add_ticker(parse_ticker("MG.TSX"), "Magna International Inc.");
+  add_ticker(parse_ticker("MGA.TSX"), "Mega Uranium Ltd.");
+  add_ticker(parse_ticker("MGAB.TSX"),
     "Mackenzie Global Fixed Income Alloc ETF");
-  add_security(parse_security("MON.NYSE"), "Monsanto Co.");
-  add_security(parse_security("MFC.TSX"), "Manulife Financial Corporation");
-  add_security(parse_security("MX.TSX"), "Methanex Corporation");
-  auto securities = std::make_shared<LocalQueryModel<SecurityInfo>>();
-  for(auto& security_info : security_infos) {
-    securities->add(to_text(security_info.m_security).toLower(), security_info);
-    securities->add(
-      QString::fromStdString(security_info.m_name).toLower(), security_info);
+  add_ticker(parse_ticker("MON.NYSE"), "Monsanto Co.");
+  add_ticker(parse_ticker("MFC.TSX"), "Manulife Financial Corporation");
+  add_ticker(parse_ticker("MX.TSX"), "Methanex Corporation");
+  auto tickers = std::make_shared<LocalQueryModel<TickerInfo>>();
+  for(auto& ticker_info : ticker_infos) {
+    tickers->add(to_text(ticker_info.m_ticker).toLower(), ticker_info);
+    tickers->add(
+      QString::fromStdString(ticker_info.m_name).toLower(), ticker_info);
   }
-  return securities;
+  return tickers;
 }
 
 int main(int argc, char** argv) {
@@ -46,7 +46,7 @@ int main(int argc, char** argv) {
     key_bindings->get_order_task_arguments()->push(
       to_order_task_arguments(*task));
   }
-  auto window = KeyBindingsWindow(key_bindings, populate_security_query_model(),
+  auto window = KeyBindingsWindow(key_bindings, populate_ticker_query_model(),
     get_default_additional_tag_database());
   window.show();
   auto hotkey_override = HotkeyOverride();

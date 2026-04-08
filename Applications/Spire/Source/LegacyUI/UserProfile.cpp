@@ -6,7 +6,7 @@
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/ServiceSecurityQueryModel.hpp"
+#include "Spire/Spire/ServiceTickerQueryModel.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -27,7 +27,7 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
         QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
       m_recentlyClosedWindows(
         std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>()),
-      m_security_info_query_model(std::make_shared<ServiceSecurityQueryModel>(
+      m_ticker_info_query_model(std::make_shared<ServiceTickerQueryModel>(
         m_clients.get_market_data_client())),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_additionalTagDatabase(additionalTagDatabase) {
@@ -83,9 +83,9 @@ const std::shared_ptr<RecentlyClosedWindowListModel>&
   return m_recentlyClosedWindows;
 }
 
-const std::shared_ptr<SecurityInfoQueryModel>&
-    UserProfile::GetSecurityInfoQueryModel() const {
-  return m_security_info_query_model;
+const std::shared_ptr<TickerInfoQueryModel>&
+    UserProfile::GetTickerInfoQueryModel() const {
+  return m_ticker_info_query_model;
 }
 
 const BlotterSettings& UserProfile::GetBlotterSettings() const {
@@ -196,16 +196,16 @@ void UserProfile::SetInitialPortfolioViewerWindowSettings(
 }
 
 Quantity Spire::get_default_order_quantity(const UserProfile& userProfile,
-    const Security& security, Side side) {
+    const Ticker& ticker, Side side) {
   auto position = [&] {
     auto& blotter = userProfile.GetBlotterSettings().GetActiveBlotter();
     if(auto position = blotter.GetOpenPositionsModel().GetOpenPosition(
-        security)) {
+        ticker)) {
       return position->m_inventory.m_position.m_quantity;
     }
     return Quantity(0);
   }();
   return get_default_order_quantity(
-    *userProfile.GetKeyBindings()->get_interactions_key_bindings(security),
-    security, position, side);
+    *userProfile.GetKeyBindings()->get_interactions_key_bindings(ticker),
+    ticker, position, side);
 }

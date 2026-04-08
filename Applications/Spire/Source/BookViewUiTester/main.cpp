@@ -12,7 +12,7 @@ using namespace Spire;
 
 template<typename U>
 MoneyBox* make_money_box(
-    std::shared_ptr<SecurityTechnicalsModel> technicals, U field) {
+    std::shared_ptr<TickerTechnicalsModel> technicals, U field) {
   return new MoneyBox(
     std::make_shared<OptionalScalarValueModelDecorator<Money>>(
       std::make_shared<ScalarValueModelDecorator<Money>>(
@@ -21,7 +21,7 @@ MoneyBox* make_money_box(
 
 template<typename U>
 QuantityBox* make_quantity_box(
-    std::shared_ptr<SecurityTechnicalsModel> technicals, U field) {
+    std::shared_ptr<TickerTechnicalsModel> technicals, U field) {
   return new QuantityBox(
     std::make_shared<OptionalScalarValueModelDecorator<Quantity>>(
       std::make_shared<ScalarValueModelDecorator<Quantity>>(
@@ -30,7 +30,7 @@ QuantityBox* make_quantity_box(
 
 struct TechnicalsTestWindow : QWidget {
   TechnicalsTestWindow(
-      std::shared_ptr<SecurityTechnicalsModel> technicals,
+      std::shared_ptr<TickerTechnicalsModel> technicals,
       std::shared_ptr<QuantityModel> default_bid_quantity,
       std::shared_ptr<QuantityModel> default_ask_quantity,
       QWidget* parent = nullptr)
@@ -41,20 +41,20 @@ struct TechnicalsTestWindow : QWidget {
     layout->setHorizontalSpacing(scale_width(30));
     layout->setVerticalSpacing(scale_height(5));
     layout->addWidget(make_label(tr("High:")), 0, 0);
-    auto high_box = make_money_box(technicals, &SecurityTechnicals::m_high);
+    auto high_box = make_money_box(technicals, &TickerTechnicals::m_high);
     layout->addWidget(high_box, 0, 1);
     layout->addWidget(make_label(tr("Low:")), 1, 0);
-    auto low_box = make_money_box(technicals, &SecurityTechnicals::m_low);
+    auto low_box = make_money_box(technicals, &TickerTechnicals::m_low);
     layout->addWidget(low_box, 1, 1);
     layout->addWidget(make_label(tr("Open:")), 2, 0);
-    auto open_box = make_money_box(technicals, &SecurityTechnicals::m_open);
+    auto open_box = make_money_box(technicals, &TickerTechnicals::m_open);
     layout->addWidget(open_box, 2, 1);
     layout->addWidget(make_label(tr("Close:")), 3, 0);
-    auto close_box = make_money_box(technicals, &SecurityTechnicals::m_close);
+    auto close_box = make_money_box(technicals, &TickerTechnicals::m_close);
     layout->addWidget(close_box, 3, 1);
     layout->addWidget(make_label(tr("Volume:")), 4, 0);
     auto volume_box =
-      make_quantity_box(technicals, &SecurityTechnicals::m_volume);
+      make_quantity_box(technicals, &TickerTechnicals::m_volume);
     layout->addWidget(volume_box, 4, 1);
     layout->addWidget(make_label(tr("Default Bid Quantity:")), 5, 0);
     auto bid_quantity_box = new QuantityBox(
@@ -83,8 +83,8 @@ int main(int argc, char** argv) {
   application.setApplicationName(QObject::tr("BookView Ui Tester"));
   application.setQuitOnLastWindowClosed(true);
   initialize_resources();
-  auto technicals = std::make_shared<LocalSecuirtyTechnicalsModel>(
-    SecurityTechnicals{1100, Money(144.4), Money(142.11), Money(144.25),
+  auto technicals = std::make_shared<LocalTickerTechnicalsModel>(
+    TickerTechnicals{1100, Money(144.4), Money(142.11), Money(144.25),
       Money(144.99)});
   auto default_bid_quantity = std::make_shared<LocalQuantityModel>(100);
   auto default_ask_quantity = std::make_shared<LocalQuantityModel>(100);

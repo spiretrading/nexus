@@ -8,10 +8,10 @@
 #include "Spire/Charting/ChartIntervalComboBox.hpp"
 #include "Spire/Charting/ChartValue.hpp"
 #include "Spire/Charting/ChartWindowSettings.hpp"
-#include "Spire/Charting/SecurityTimePriceChartPlotSeries.hpp"
-#include "Spire/InputWidgets/SecurityInputDialog.hpp"
+#include "Spire/Charting/TickerTimePriceChartPlotSeries.hpp"
+#include "Spire/InputWidgets/TickerInputDialog.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
-#include "Spire/LegacyUI/LinkSecurityContextAction.hpp"
+#include "Spire/LegacyUI/LinkTickerContextAction.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_ChartWindow.h"
 
@@ -26,7 +26,7 @@ using namespace Spire::LegacyUI;
 ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
     const std::string& identifier, QWidget* parent, Qt::WindowFlags flags)
     : QMainWindow(parent, flags),
-      SecurityContext(identifier),
+      TickerContext(identifier),
       m_ui(std::make_unique<Ui_ChartWindow>()),
       m_userProfile(userProfile.get()),
       m_interactionMode(ChartInteractionMode::NONE) {
@@ -125,16 +125,16 @@ void ChartWindow::SetLockGrid(bool lockGrid) {
   m_ui->m_lockGridAction->setChecked(m_controller->IsLockGridEnabled());
 }
 
-void ChartWindow::DisplaySecurity(const Security& security) {
-  m_security = security;
-  if(m_security == Security()) {
+void ChartWindow::DisplayTicker(const Ticker& ticker) {
+  m_ticker = ticker;
+  if(!m_ticker) {
     setWindowTitle(tr("Chart - Spire"));
   } else {
-    setWindowTitle(displayText(m_security) + tr(" - Chart"));
+    setWindowTitle(displayText(m_ticker) + tr(" - Chart"));
     OnIntervalChanged(
       m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());
   }
-  SetDisplayedSecurity(m_security);
+  SetDisplayedTicker(m_ticker);
 }
 
 std::unique_ptr<WindowSettings> ChartWindow::GetWindowSettings() const {
@@ -142,7 +142,7 @@ std::unique_ptr<WindowSettings> ChartWindow::GetWindowSettings() const {
 }
 
 void ChartWindow::showEvent(QShowEvent* event) {
-  auto context = SecurityContext::FindSecurityContext(m_linkIdentifier);
+  auto context = TickerContext::FindTickerContext(m_linkIdentifier);
   if(context) {
     Link(*context);
   } else {
@@ -153,7 +153,7 @@ void ChartWindow::showEvent(QShowEvent* event) {
 }
 
 void ChartWindow::closeEvent(QCloseEvent* event) {
-  if(m_security != Security()) {
+  if(m_ticker) {
     auto settings = GetWindowSettings();
     m_userProfile->GetRecentlyClosedWindows()->push(std::move(settings));
   }
@@ -163,15 +163,15 @@ void ChartWindow::closeEvent(QCloseEvent* event) {
 void ChartWindow::keyPressEvent(QKeyEvent* event) {
   auto key = event->key();
   if(key == Qt::Key_PageUp) {
-    m_securityViewStack.PushUp(m_security,
-      [&] (const Security& security) {
-        DisplaySecurity(security);
+    m_tickerViewStack.PushUp(m_ticker,
+      [&] (const Ticker& ticker) {
+        DisplayTicker(ticker);
       });
     return;
   } else if(key == Qt::Key_PageDown) {
-    m_securityViewStack.PushDown(m_security,
-      [&] (const Security& security) {
-        DisplaySecurity(security);
+    m_tickerViewStack.PushDown(m_ticker,
+      [&] (const Ticker& ticker) {
+        DisplayTicker(ticker);
       });
     return;
   }
@@ -179,21 +179,21 @@ void ChartWindow::keyPressEvent(QKeyEvent* event) {
   if(text.isEmpty() || !text[0].isLetterOrNumber()) {
     return;
   }
-  ShowSecurityInputDialog(Ref(*m_userProfile), text.toStdString(), this,
-    [=] (auto security) {
-      if(!security || security == Security() || security == m_security) {
+  ShowTickerInputDialog(Ref(*m_userProfile), text.toStdString(), this,
+    [=] (auto ticker) {
+      if(!ticker || ticker == m_ticker) {
         return;
       }
-      m_securityViewStack.Push(m_security);
-      DisplaySecurity(*security);
+      m_tickerViewStack.Push(m_ticker);
+      DisplayTicker(*ticker);
     });
 }
 
-void ChartWindow::HandleLink(SecurityContext& context) {
+void ChartWindow::HandleLink(TickerContext& context) {
   m_linkIdentifier = context.GetIdentifier();
-  m_linkConnection = context.ConnectSecurityDisplaySignal(
-    std::bind_front(&ChartWindow::DisplaySecurity, this));
-  DisplaySecurity(context.GetDisplayedSecurity());
+  m_linkConnection = context.ConnectTickerDisplaySignal(
+    std::bind_front(&ChartWindow::DisplayTicker, this));
+  DisplayTicker(context.GetDisplayedTicker());
 }
 
 void ChartWindow::HandleUnlink() {
@@ -279,7 +279,7 @@ void ChartWindow::OnHorizontalSliderChanged(int previousMinimum,
 void ChartWindow::OnIntervalChanged(const std::shared_ptr<NativeType>& type,
     ChartValue value) {
   m_ui->m_chart->setFocus(Qt::ActiveWindowFocusReason);
-  if(m_security == Security()) {
+  if(!m_ticker) {
     return;
   }
   m_controller->Clear();
@@ -303,8 +303,8 @@ void ChartWindow::OnIntervalChanged(const std::shared_ptr<NativeType>& type,
   m_ui->m_chart->SetXAxisParameters(axisParameters);
   if(type->GetCompatibility(DurationType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
-    auto chartPlotSeries = std::make_shared<SecurityTimePriceChartPlotSeries>(
-      Ref(*m_userProfile), m_security, value.ToTimeDuration());
+    auto chartPlotSeries = std::make_shared<TickerTimePriceChartPlotSeries>(
+      Ref(*m_userProfile), m_ticker, value.ToTimeDuration());
     m_controller->Add(chartPlotSeries);
   }
 }
@@ -364,7 +364,7 @@ void ChartWindow::OnLinkMenuActionTriggered(bool triggered) {
     m_linkMenu->removeAction(action.get());
   }
   m_linkMenu->clear();
-  auto linkActions = LinkSecurityContextAction::MakeActions(
+  auto linkActions = LinkTickerContextAction::MakeActions(
     this, m_linkIdentifier, m_linkMenu, *m_userProfile);
   for(auto& linkAction : linkActions) {
     m_linkMenu->addAction(linkAction.get());
@@ -379,7 +379,7 @@ void ChartWindow::OnLinkMenuActionTriggered(bool triggered) {
 }
 
 void ChartWindow::OnLinkActionTriggered(QAction* action) {
-  auto linkAction = dynamic_cast<LinkSecurityContextAction*>(action);
+  auto linkAction = dynamic_cast<LinkTickerContextAction*>(action);
   if(!linkAction) {
     return;
   }

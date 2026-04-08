@@ -1,6 +1,6 @@
 #include "Spire/Dashboard/VolumeDashboardCellBuilder.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
-#include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
+#include "Nexus/TechnicalAnalysis/StandardTickerQueries.hpp"
 #include "Spire/Dashboard/QueueDashboardCell.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
@@ -13,9 +13,9 @@ using namespace std;
 
 std::unique_ptr<DashboardCell> VolumeDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
-  auto& security = boost::get<Security>(index);
+  auto& ticker = boost::get<Ticker>(index);
   auto& serviceClients = userProfile.get()->GetClients();
-  auto query = make_daily_volume_query(security,
+  auto query = make_daily_volume_query(ticker,
     serviceClients.get_time_client().get_time(), pos_infin, DEFAULT_VENUES,
     get_default_time_zone_database());
   auto baseQueue = std::make_shared<Queue<Nexus::QueryVariant>>();

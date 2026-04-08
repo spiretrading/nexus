@@ -15,8 +15,8 @@ BookViewWindowSettings::BookViewWindowSettings() {}
 BookViewWindowSettings::BookViewWindowSettings(const BookViewWindow& window,
     Ref<UserProfile> userProfile)
     : m_properties(window.GetBookViewProperties()),
-      m_security(window.m_security),
-      m_securityViewStack(window.m_securityViewStack),
+      m_ticker(window.m_ticker),
+      m_tickerViewStack(window.m_tickerViewStack),
       m_identifier(window.GetIdentifier()),
       m_linkIdentifier(window.m_linkIdentifier),
       m_geometry(window.saveGeometry()),
@@ -24,8 +24,8 @@ BookViewWindowSettings::BookViewWindowSettings(const BookViewWindow& window,
         horizontalHeader()->saveState()),
       m_askPanelHeader(window.m_ui->m_askPanel->m_ui->m_bookView->
         horizontalHeader()->saveState()) {
-  if(m_security != Security()) {
-    m_name = "Book View - " + to_string(m_security);
+  if(m_ticker != Ticker()) {
+    m_name = "Book View - " + to_string(m_ticker);
   } else {
     m_name = "Book View";
   }
@@ -52,9 +52,9 @@ void BookViewWindowSettings::Apply(Ref<UserProfile> userProfile,
     restoreState(m_bidPanelHeader);
   window.m_ui->m_askPanel->m_ui->m_bookView->horizontalHeader()->
     restoreState(m_askPanelHeader);
-  window.m_securityViewStack = m_securityViewStack;
-  if(m_security != Security()) {
-    window.DisplaySecurity(m_security);
+  window.m_tickerViewStack = m_tickerViewStack;
+  if(m_ticker != Ticker()) {
+    window.DisplayTicker(m_ticker);
   }
   window.m_linkIdentifier = m_linkIdentifier;
 }

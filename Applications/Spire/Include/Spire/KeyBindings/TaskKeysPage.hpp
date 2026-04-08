@@ -3,7 +3,7 @@
 #include <QWidget>
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/Spire/TableModel.hpp"
-#include "Spire/Ui/SecurityBox.hpp"
+#include "Spire/Ui/TickerBox.hpp"
 
 namespace Spire {
   class Button;
@@ -16,12 +16,12 @@ namespace Spire {
       /**
        * Constructs a TaskKeysPage.
        * @param key_bindings The task key bindings to display.
-       * @param securities The set of securities to use.
+       * @param tickers The set of tickers to use.
        * @param additional_tags Defines all available additional tags.
        * @param parent The parent widget.
        */
       TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
-        std::shared_ptr<SecurityInfoQueryModel> securities,
+        std::shared_ptr<TickerInfoQueryModel> tickers,
         AdditionalTagDatabase additional_tags, QWidget* parent = nullptr);
 
       /** Returns the key bindings being displayed. */

@@ -8,15 +8,15 @@ namespace Spire {
   class TextBox;
 
   /**
-   * Represents a region item which can be a security, a venue or a country
-   * in a RegionBox.
+   * Represents a region item which can be a ticker, a venue or a country in a
+   * RegionBox.
    */
   class RegionListItem : public QWidget {
     public:
 
       /**
        * Constructs a RegionListItem.
-       * @param region The region which can be a security, a venue or a country.
+       * @param region The region which can be a ticker, a venue or a country.
        * @param parent The parent widget.
        */
       explicit RegionListItem(Nexus::Region region, QWidget* parent = nullptr);
@@ -27,7 +27,7 @@ namespace Spire {
     private:
       enum class Type : std::uint8_t {
         NONE,
-        SECURITY,
+        TICKER,
         VENUE,
         COUNTRY
       };

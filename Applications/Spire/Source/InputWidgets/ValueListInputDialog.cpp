@@ -5,7 +5,7 @@
 #include <QLineEdit>
 #include <QMessageBox>
 #include <QMouseEvent>
-#include "Spire/InputWidgets/SecurityInputDialog.hpp"
+#include "Spire/InputWidgets/TickerInputDialog.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "ui_ValueListInputDialog.h"
@@ -19,7 +19,7 @@ using namespace Spire::LegacyUI;
 
 namespace {
   struct ValueToVariantConverter {
-    using type = mp_list<Security>;
+    using type = mp_list<Ticker>;
 
     template<typename T>
     void operator ()(std::vector<ValueListInputDialog::Value>& values,
@@ -29,7 +29,7 @@ namespace {
   };
 
   struct VariantToValueConverter {
-    using type = mp_list<Security>;
+    using type = mp_list<Ticker>;
 
     template<typename T>
     QVariant operator ()(const ValueListInputDialog::Value& value) const {
@@ -38,7 +38,7 @@ namespace {
   };
 
   struct ParseLine {
-    using type = mp_list<Security>;
+    using type = mp_list<Ticker>;
 
     template<typename T>
     ValueListInputDialog::Value operator ()(
@@ -47,13 +47,13 @@ namespace {
     }
 
     template<>
-    ValueListInputDialog::Value operator ()<Security>(
+    ValueListInputDialog::Value operator ()<Ticker>(
         const std::string& line, const UserProfile& userProfile) const {
-      auto security = parse_security(line);
-      if(!security) {
+      auto ticker = parse_ticker(line);
+      if(!ticker) {
         BOOST_THROW_EXCEPTION(std::runtime_error("Invalid symbol specified."));
       }
-      return security;
+      return ticker;
     }
   };
 }
@@ -126,28 +126,28 @@ bool ValueListInputDialog::eventFilter(QObject* receiver, QEvent* event) {
 }
 
 void ValueListInputDialog::ActivateRow(int row, QKeyEvent* event) {
-  if(*m_type == typeid(Security)) {
+  if(*m_type == typeid(Ticker)) {
     auto item = m_ui->m_valueListWidget->item(row, 0);
-    auto security = item->data(Qt::DisplayRole).value<Security>();
+    auto ticker = item->data(Qt::DisplayRole).value<Ticker>();
     auto text = [&] {
       if(event) {
         return event->text().trimmed();
       }
       return QString();
     }();
-    auto initialValue = [&] () -> variant<std::string, Security> {
+    auto initialValue = [&] () -> variant<std::string, Ticker> {
       if(text.isEmpty()) {
-        return security;
+        return ticker;
       }
       return text.toStdString();
     }();
-    ShowSecurityInputDialog(
+    ShowTickerInputDialog(
       Ref(*m_userProfile), initialValue, m_ui->m_valueListWidget,
-      [=] (auto security) {
-        if(!security || security == Security()) {
+      [=] (auto ticker) {
+        if(!ticker || ticker == Ticker()) {
           return;
         }
-        item->setData(Qt::DisplayRole, QVariant::fromValue(*security));
+        item->setData(Qt::DisplayRole, QVariant::fromValue(*ticker));
       });
   }
 }

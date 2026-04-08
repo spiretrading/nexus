@@ -1,6 +1,6 @@
 #ifndef SPIRE_TIMEANDSALERECORDTYPE_HPP
 #define SPIRE_TIMEANDSALERECORDTYPE_HPP
-#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
 
