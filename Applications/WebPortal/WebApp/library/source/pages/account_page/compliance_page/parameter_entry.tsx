@@ -1,7 +1,7 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Checkbox, CurrencySelect, DateTimeInput, DecimalInput, DisplaySize,
-  Input, MoneyInput, RegionInput, SecuritiesInput,
+  Input, MoneyInput, RegionInput, TickersInput,
   TimeOfDayInput } from '../../..';
 
 interface Properties {
@@ -94,10 +94,10 @@ export class ParameterEntry extends React.Component<Properties> {
               this.onChange(e.target.value)}
             readOnly={this.props.readonly}
             style={inputWrapper}/>;
-        case Nexus.ComplianceValue.Type.SECURITY:
-          return <SecuritiesInput
+        case Nexus.ComplianceValue.Type.TICKER:
+          return <TickersInput
             displaySize={this.props.displaySize}
-            onChange={(values: Nexus.Security[]) =>
+            onChange={(values: Nexus.Ticker[]) =>
               this.onChange(values[0])}
             value={this.props.parameter.value.value ?
               [this.props.parameter.value.value] : []}/>;
@@ -110,18 +110,18 @@ export class ParameterEntry extends React.Component<Properties> {
         case Nexus.ComplianceValue.Type.LIST:
           if(this.props.parameter.value.value.length > 0) {
             if(this.props.parameter.value.value[0].type ===
-                Nexus.ComplianceValue.Type.SECURITY) {
-              return <SecuritiesInput
+                Nexus.ComplianceValue.Type.TICKER) {
+              return <TickersInput
                 displaySize={this.props.displaySize}
-                onChange={this.onSecurityListChange}
+                onChange={this.onTickerListChange}
                 readOnly={this.props.readonly}
                 value={this.convertFromParameterList(
                   this.props.parameter.value.value)}/>;
             }
           } else {
-            return <SecuritiesInput
+            return <TickersInput
               displaySize={this.props.displaySize}
-              onChange={this.onSecurityListChange}
+              onChange={this.onTickerListChange}
               readOnly={this.props.readonly}
               value={[]}/>;
           }
@@ -150,20 +150,20 @@ export class ParameterEntry extends React.Component<Properties> {
   }
 
   private convertFromParameterList(complianceValues: Nexus.ComplianceValue[]) {
-    const securities = [];
+    const tickers = [];
     for(const value of complianceValues) {
-      const security = value.value as Nexus.Security;
-      if(!security.equals(Nexus.Security.NONE)) {
-        securities.push(security);
+      const ticker = value.value as Nexus.Ticker;
+      if(!ticker.equals(Nexus.Ticker.NONE)) {
+        tickers.push(ticker);
       }
     }
-    return securities;
+    return tickers;
   }
 
-  private onSecurityListChange = (newValues: Nexus.Security[]) => {
+  private onTickerListChange = (newValues: Nexus.Ticker[]) => {
     const newParameterList = newValues.map(newValue => {
       return new Nexus.ComplianceValue(
-        Nexus.ComplianceValue.Type.SECURITY, newValue);
+        Nexus.ComplianceValue.Type.TICKER, newValue);
     });
     this.props.onChange(new Nexus.ComplianceParameter(
       this.props.parameter.name, new Nexus.ComplianceValue(

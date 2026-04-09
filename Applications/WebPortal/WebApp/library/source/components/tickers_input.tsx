@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Button, DisplaySize, HLine, Input, Modal, SecurityInput } from '..';
+import { Button, DisplaySize, HLine, Input, Modal, TickerInput } from '..';
 
 interface Properties {
 
@@ -14,24 +14,24 @@ interface Properties {
   /** Determines if the component is disabled. */
   disabled?: boolean;
 
-  /** The list of securities to display. */
-  value?: Nexus.Security[];
+  /** The list of tickers to display. */
+  value?: Nexus.Ticker[];
 
   /** Called when the list of values changes.
    * @param value - The new list.
    */
-  onChange?: (value: Nexus.Security[]) => void;
+  onChange?: (value: Nexus.Ticker[]) => void;
 }
 
 interface State {
   inputString: string;
   isEditing: boolean;
-  localValue: Nexus.Security[];
+  localValue: Nexus.Ticker[];
   selection: number;
 }
 
-/** A component that displays a list of securities. */
-export class SecuritiesInput extends React.Component<Properties, State> {
+/** A component that displays a list of tickers. */
+export class TickersInput extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
@@ -46,16 +46,16 @@ export class SecuritiesInput extends React.Component<Properties, State> {
   public render() {
     const visibility = (() => {
       if(!this.state.isEditing) {
-        return SecuritiesInput.STYLE.hidden;
+        return TickersInput.STYLE.hidden;
       } else {
         return null;
       }
     })();
     const headerText = (() => {
       if(this.props.readOnly) {
-        return SecuritiesInput.MODAL_HEADER_READONLY;
+        return TickersInput.MODAL_HEADER_READONLY;
       } else {
-        return SecuritiesInput.MODAL_HEADER;
+        return TickersInput.MODAL_HEADER;
       }
     })();
     const inputField = (() => {
@@ -63,7 +63,7 @@ export class SecuritiesInput extends React.Component<Properties, State> {
         return null;
       } else {
         return (
-          <SecurityInput
+          <TickerInput
             style={{width: '100%', marginBottom: '18px'}}
             value={this.state.inputString}
             disabled={this.props.disabled}
@@ -73,32 +73,32 @@ export class SecuritiesInput extends React.Component<Properties, State> {
     })();
     const iconRowStyle = (() => {
       if(this.props.readOnly) {
-        return SecuritiesInput.STYLE.hidden;
+        return TickersInput.STYLE.hidden;
       } else {
         if(this.props.displaySize === DisplaySize.SMALL) {
-          return SecuritiesInput.STYLE.iconRowSmall;
+          return TickersInput.STYLE.iconRowSmall;
         } else {
-          return SecuritiesInput.STYLE.iconRowBig;
+          return TickersInput.STYLE.iconRowBig;
         }
       }
     })();
     const imageSize = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
-        return SecuritiesInput.IMAGE_SIZE_SMALL_VIEWPORT;
+        return TickersInput.IMAGE_SIZE_SMALL_VIEWPORT;
       } else {
-        return SecuritiesInput.IMAGE_SIZE_LARGE_VIEWPORT;
+        return TickersInput.IMAGE_SIZE_LARGE_VIEWPORT;
       }
     })();
     const iconWrapperStyle = (() => {
       const displaySize = this.props.displaySize;
       if(displaySize === DisplaySize.SMALL && this.props.readOnly) {
-        return SecuritiesInput.STYLE.iconWrapperSmallReadonly;
+        return TickersInput.STYLE.iconWrapperSmallReadonly;
       } else if(displaySize === DisplaySize.SMALL && !this.props.readOnly) {
-        return SecuritiesInput.STYLE.iconWrapperSmall;
+        return TickersInput.STYLE.iconWrapperSmall;
       } else if(displaySize === DisplaySize.LARGE && this.props.readOnly) {
-        return SecuritiesInput.STYLE.iconWrapperLargeReadonly;
+        return TickersInput.STYLE.iconWrapperLargeReadonly;
       } else {
-        return SecuritiesInput.STYLE.iconWrapperLarge;
+        return TickersInput.STYLE.iconWrapperLarge;
       }
     })();
     const uploadButton = (() => {
@@ -106,17 +106,17 @@ export class SecuritiesInput extends React.Component<Properties, State> {
         return (
           <div style={iconWrapperStyle} onClick={this.onUploadClick}>
             <img height={imageSize} width={imageSize}
-              style={SecuritiesInput.STYLE.iconClickableStyle}
-              src={SecuritiesInput.PATH + 'upload-purple.svg'}/>
+              style={TickersInput.STYLE.iconClickableStyle}
+              src={TickersInput.PATH + 'upload-purple.svg'}/>
           </div>);
       } else {
         return (
           <div style={iconWrapperStyle} onClick={this.onUploadClick}>
             <img height={imageSize} width={imageSize}
-              style={SecuritiesInput.STYLE.iconClickableStyle}
-              src={SecuritiesInput.PATH + 'upload-purple.svg'}/>
-            <div style={SecuritiesInput.STYLE.iconLabel}>
-              {SecuritiesInput.UPLOAD_TEXT}
+              style={TickersInput.STYLE.iconClickableStyle}
+              src={TickersInput.PATH + 'upload-purple.svg'}/>
+            <div style={TickersInput.STYLE.iconLabel}>
+              {TickersInput.UPLOAD_TEXT}
             </div>
           </div>);
       }
@@ -127,17 +127,17 @@ export class SecuritiesInput extends React.Component<Properties, State> {
           return (
             <div style={iconWrapperStyle} onClick={this.removeEntry}>
               <img height={imageSize} width={imageSize}
-                style={SecuritiesInput.STYLE.iconClickableStyle}
-                src={SecuritiesInput.PATH + 'remove-purple.svg'}/>
+                style={TickersInput.STYLE.iconClickableStyle}
+                src={TickersInput.PATH + 'remove-purple.svg'}/>
             </div>);
         } else {
           return (
             <div style={iconWrapperStyle} onClick={this.removeEntry}>
               <img height={imageSize} width={imageSize}
-                style={SecuritiesInput.STYLE.iconClickableStyle}
-                src={SecuritiesInput.PATH + 'remove-purple.svg'}/>
-              <div style={SecuritiesInput.STYLE.iconLabel}>
-                {SecuritiesInput.REMOVE_TEXT}
+                style={TickersInput.STYLE.iconClickableStyle}
+                src={TickersInput.PATH + 'remove-purple.svg'}/>
+              <div style={TickersInput.STYLE.iconLabel}>
+                {TickersInput.REMOVE_TEXT}
               </div>
             </div>);
         }
@@ -146,15 +146,15 @@ export class SecuritiesInput extends React.Component<Properties, State> {
           return (
             <div style={iconWrapperStyle}>
               <img height={imageSize} width={imageSize}
-                src={SecuritiesInput.PATH + 'remove-grey.svg'}/>
+                src={TickersInput.PATH + 'remove-grey.svg'}/>
             </div>);
         } else {
           return (
             <div style={iconWrapperStyle} onClick={this.removeEntry}>
               <img height={imageSize} width={imageSize}
-                src={SecuritiesInput.PATH + 'remove-grey.svg'}/>
-              <div style={SecuritiesInput.STYLE.iconLabelReadonly}>
-                {SecuritiesInput.REMOVE_TEXT}
+                src={TickersInput.PATH + 'remove-grey.svg'}/>
+              <div style={TickersInput.STYLE.iconLabelReadonly}>
+                {TickersInput.REMOVE_TEXT}
               </div>
             </div>);
         }
@@ -163,12 +163,12 @@ export class SecuritiesInput extends React.Component<Properties, State> {
     const confirmationButton = (() => {
       if(this.props.readOnly) {
         return (
-          <Button label={SecuritiesInput.CONFIRM_TEXT}
+          <Button label={TickersInput.CONFIRM_TEXT}
             onClick={this.onClose}
             style={{width: '100%'}}/>);
       } else {
         return (
-          <Button label={SecuritiesInput.SUBMIT_CHANGES_TEXT}
+          <Button label={TickersInput.SUBMIT_CHANGES_TEXT}
             onClick={this.onSubmitChange}
             style={{width: '100%'}}/>);
       }
@@ -185,21 +185,21 @@ export class SecuritiesInput extends React.Component<Properties, State> {
     return (
       <div>
         <input type='file' accept='.txt,.csv' ref={this.fileInputRef}
-          style={SecuritiesInput.STYLE.hidden}
+          style={TickersInput.STYLE.hidden}
           onChange={this.onFileSelected}/>
         <Input
           readOnly
           disabled={this.props.disabled}
           className={!this.props.readOnly && !this.props.disabled ?
-            css(SecuritiesInput.INPUT_STYLE.interactive) : undefined}
-          style={SecuritiesInput.STYLE.textBox}
+            css(TickersInput.INPUT_STYLE.interactive) : undefined}
+          style={TickersInput.STYLE.textBox}
           value={displayValue}
           onFocus={this.onOpen}
           onClick={this.onOpen}/>
         <div style={visibility}>
           <Modal
               title={headerText} onClose={this.onClose}>
-            <div style={SecuritiesInput.STYLE.contentWrapper}>
+            <div style={TickersInput.STYLE.contentWrapper}>
               {inputField}
               <SymbolsField
                 displaySize={this.props.displaySize}
@@ -212,7 +212,7 @@ export class SecuritiesInput extends React.Component<Properties, State> {
                 {uploadButton}
               </div>
               <HLine color={'#e6e6e6'}/>
-              <div style={SecuritiesInput.STYLE.buttonWrapper}>
+              <div style={TickersInput.STYLE.buttonWrapper}>
                 {confirmationButton}
               </div>
             </div>
@@ -220,7 +220,7 @@ export class SecuritiesInput extends React.Component<Properties, State> {
         </div>
       </div>);
   }
-  
+
   private readonly fileInputRef: React.RefObject<HTMLInputElement>;
 
   private onUploadClick = () => {
@@ -236,15 +236,15 @@ export class SecuritiesInput extends React.Component<Properties, State> {
     reader.onload = () => {
       const text = reader.result as string;
       const lines = text.split(/\r?\n/);
-      const parsed: Nexus.Security[] = [];
+      const parsed: Nexus.Ticker[] = [];
       for(const line of lines) {
         const trimmed = line.trim();
         if(trimmed === '') {
           continue;
         }
-        const security = Nexus.Security.parse(trimmed.toUpperCase());
-        if(!security.equals(Nexus.Security.NONE)) {
-          parsed.push(security);
+        const ticker = Nexus.Ticker.parse(trimmed.toUpperCase());
+        if(!ticker.equals(Nexus.Ticker.NONE)) {
+          parsed.push(ticker);
         }
       }
       if(parsed.length > 0) {
@@ -257,7 +257,7 @@ export class SecuritiesInput extends React.Component<Properties, State> {
     event.target.value = '';
   }
 
-  private addEntry = (parameter: Nexus.Security) => {
+  private addEntry = (parameter: Nexus.Ticker) => {
     this.setState({
       inputString: '',
       localValue: this.state.localValue.slice().concat(parameter)
@@ -410,7 +410,7 @@ export class SecuritiesInput extends React.Component<Properties, State> {
   private static readonly MODAL_HEADER = 'Edit Symbols';
   private static readonly MODAL_HEADER_READONLY = 'Added Symbols';
   private static readonly PATH =
-    'resources/account_page/compliance_page/security_input/';
+    'resources/account_page/compliance_page/ticker_input/';
   private static readonly REMOVE_TEXT = 'Remove';
   private static readonly SUBMIT_CHANGES_TEXT = 'Submit Changes';
   private static readonly UPLOAD_TEXT = 'Upload';
@@ -427,11 +427,11 @@ interface SymbolsFieldProperties {
   /** The index of the currently selected value. */
   selection: number;
 
-  /** The list of securities to display. */
-  value: Nexus.Security[];
+  /** The list of tickers to display. */
+  value: Nexus.Ticker[];
 
   /** Called when a list item is clicked on.
-   * @param index - The index of the selected security.
+   * @param index - The index of the selected ticker.
    */
   onClick?: (index: number) => void;
 }
@@ -456,7 +456,7 @@ class SymbolsField extends React.Component<SymbolsFieldProperties> {
         return null;
       }
     })();
-    const selectedSecuritiesBox = (() => {
+    const selectedTickersBox = (() => {
       const displaySize = this.props.displaySize;
       if(displaySize === DisplaySize.SMALL && this.props.readOnly) {
         return SymbolsField.STYLE.scrollBoxSmallReadonly;
@@ -491,7 +491,7 @@ class SymbolsField extends React.Component<SymbolsFieldProperties> {
       }
     }
     return (
-      <div style={selectedSecuritiesBox}>
+      <div style={selectedTickersBox}>
         {scrollHeader}
         {entries}
       </div>);

@@ -28,20 +28,20 @@ const REPORT: WebPortal.ProfitAndLossModel.Report = {
       totalProfitAndLoss: Nexus.Money.parse('2769.95'),
       totalVolume: Nexus.Quantity.parse('31800'),
       totalFees: Nexus.Money.parse('318.00'),
-      securities: [
-        {security: new Nexus.Security('RY', TSX), volume: Nexus.Quantity.parse('12450'),
+      tickers: [
+        {ticker: new Nexus.Ticker('RY', TSX), volume: Nexus.Quantity.parse('12450'),
           fees: Nexus.Money.parse('124.50'),
           profitAndLoss: Nexus.Money.parse('3287.15')},
-        {security: new Nexus.Security('TD', TSX), volume: Nexus.Quantity.parse('8300'),
+        {ticker: new Nexus.Ticker('TD', TSX), volume: Nexus.Quantity.parse('8300'),
           fees: Nexus.Money.parse('83.00'),
           profitAndLoss: Nexus.Money.parse('-1542.80')},
-        {security: new Nexus.Security('BNS', TSX), volume: Nexus.Quantity.parse('5200'),
+        {ticker: new Nexus.Ticker('BNS', TSX), volume: Nexus.Quantity.parse('5200'),
           fees: Nexus.Money.parse('52.00'),
           profitAndLoss: Nexus.Money.parse('891.33')},
-        {security: new Nexus.Security('ENB', TSX), volume: Nexus.Quantity.parse('3100'),
+        {ticker: new Nexus.Ticker('ENB', TSX), volume: Nexus.Quantity.parse('3100'),
           fees: Nexus.Money.parse('31.00'),
           profitAndLoss: Nexus.Money.parse('445.67')},
-        {security: new Nexus.Security('CNR', TSX), volume: Nexus.Quantity.parse('2750'),
+        {ticker: new Nexus.Ticker('CNR', TSX), volume: Nexus.Quantity.parse('2750'),
           fees: Nexus.Money.parse('27.50'),
           profitAndLoss: Nexus.Money.parse('-312.40')}
       ]
@@ -51,14 +51,14 @@ const REPORT: WebPortal.ProfitAndLossModel.Report = {
       totalProfitAndLoss: Nexus.Money.parse('3402.14'),
       totalVolume: Nexus.Quantity.parse('12500'),
       totalFees: Nexus.Money.parse('125.00'),
-      securities: [
-        {security: new Nexus.Security('AAPL', NASDAQ), volume: Nexus.Quantity.parse('6800'),
+      tickers: [
+        {ticker: new Nexus.Ticker('AAPL', NASDAQ), volume: Nexus.Quantity.parse('6800'),
           fees: Nexus.Money.parse('68.00'),
           profitAndLoss: Nexus.Money.parse('2145.90')},
-        {security: new Nexus.Security('MSFT', NASDAQ), volume: Nexus.Quantity.parse('4500'),
+        {ticker: new Nexus.Ticker('MSFT', NASDAQ), volume: Nexus.Quantity.parse('4500'),
           fees: Nexus.Money.parse('45.00'),
           profitAndLoss: Nexus.Money.parse('1823.44')},
-        {security: new Nexus.Security('GOOGL', NASDAQ), volume: Nexus.Quantity.parse('1200'),
+        {ticker: new Nexus.Ticker('GOOGL', NASDAQ), volume: Nexus.Quantity.parse('1200'),
           fees: Nexus.Money.parse('12.00'),
           profitAndLoss: Nexus.Money.parse('-567.20')}
       ]
@@ -68,11 +68,11 @@ const REPORT: WebPortal.ProfitAndLossModel.Report = {
       totalProfitAndLoss: Nexus.Money.parse('1390.85'),
       totalVolume: Nexus.Quantity.parse('5500'),
       totalFees: Nexus.Money.parse('55.00'),
-      securities: [
-        {security: new Nexus.Security('BHP', ASX), volume: Nexus.Quantity.parse('3400'),
+      tickers: [
+        {ticker: new Nexus.Ticker('BHP', ASX), volume: Nexus.Quantity.parse('3400'),
           fees: Nexus.Money.parse('34.00'),
           profitAndLoss: Nexus.Money.parse('912.55')},
-        {security: new Nexus.Security('CBA', ASX), volume: Nexus.Quantity.parse('2100'),
+        {ticker: new Nexus.Ticker('CBA', ASX), volume: Nexus.Quantity.parse('2100'),
           fees: Nexus.Money.parse('21.00'),
           profitAndLoss: Nexus.Money.parse('478.30')}
       ]

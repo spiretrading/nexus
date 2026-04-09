@@ -24,9 +24,8 @@ namespace Nexus {
      * @param query_id A unique id to identify the query by.
      * @return A snapshot of the query and its unique id.
      */
-    (QueryTickerService, "Nexus.ChartingServices.QuerySecurityService",
-      TickerChartingQueryResult, (TickerChartingQuery, query),
-      (int, query_id)),
+    (QueryTickerService, "Nexus.ChartingServices.QueryTickerService",
+      TickerChartingQueryResult, (TickerChartingQuery, query), (int, query_id)),
 
     /**
      * Loads a time/price series for a Ticker.
@@ -37,7 +36,7 @@ namespace Nexus {
      * @return The Ticker's time/price series with the specified parameters.
      */
     (LoadTickerTimePriceSeriesService,
-      "Nexus.ChartingServices.LoadSecurityTimePriceSeriesService",
+      "Nexus.ChartingServices.LoadTickerTimePriceSeriesService",
       TimePriceQueryResult, (Ticker, ticker),
       (boost::posix_time::ptime, start_time),
       (boost::posix_time::ptime, end_time),
@@ -51,14 +50,14 @@ namespace Nexus {
      * @param timestamp The value's Timestamp.
      * @param value The updated QueryValue.
      */
-    (TickerQueryMessage, "Nexus.ChartingService.SecurityQueryMessage",
+    (TickerQueryMessage, "Nexus.ChartingService.TickerQueryMessage",
       (int, query_id), (SequencedQueryVariant, value)),
 
     /**
      * Terminates a previous Ticker query.
      * @param query_id The id of query to end.
      */
-    (EndTickerQueryMessage, "Nexus.ChartingService.EndSecurityQueryMessage",
+    (EndTickerQueryMessage, "Nexus.ChartingService.EndTickerQueryMessage",
       (int, query_id)));
 }
 

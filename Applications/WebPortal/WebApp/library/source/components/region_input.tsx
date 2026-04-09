@@ -23,8 +23,7 @@ interface Properties {
   onChange?: (value: Nexus.Region) => void;
 }
 
-type RegionItem =
-  Nexus.CountryCode | Nexus.Venue | Nexus.Security | Nexus.Region;
+type RegionItem = Nexus.CountryCode | Nexus.Venue | Nexus.Ticker | Nexus.Region;
 
 interface State {
   inputString: string;
@@ -366,7 +365,7 @@ export class RegionInput extends React.Component<Properties, State> {
   private static readonly MODAL_HEADER = 'Edit Region';
   private static readonly MODAL_HEADER_READONLY = 'Region';
   private static readonly PATH =
-    'resources/account_page/compliance_page/security_input/';
+    'resources/account_page/compliance_page/ticker_input/';
   private static readonly REMOVE_TEXT = 'Remove';
   private static readonly SUBMIT_CHANGES_TEXT = 'Submit Changes';
   private static readonly UPLOAD_TEXT = 'Upload';
@@ -550,12 +549,12 @@ function isCountryCode(x: any): x is Nexus.CountryCode {
   return typeof x?.code === 'number';
 }
 
-function isSecurity(x: any): x is Nexus.Security {
+function isTicker(x: any): x is Nexus.Ticker {
   return typeof x?.symbol === 'string';
 }
 
 function isVenue(x: any): x is Nexus.Venue {
-  return !isSecurity(x) && typeof x?.toString === 'string';
+  return !isTicker(x) && typeof x?.toString === 'string';
 }
 
 function isRegion(x: any): x is Nexus.Region {
@@ -584,14 +583,14 @@ function decomposeRegion(region: Nexus.Region): RegionItem[] {
     const bName = Nexus.defaultVenueDatabase.fromVenue(b).displayName;
     return aName.localeCompare(bName);
   });
-  const securities = [];
-  for(const security of region.securities) {
-    securities.push(security);
+  const tickers = [];
+  for(const ticker of region.tickers) {
+    tickers.push(ticker);
   }
-  securities.sort((a: Nexus.Security, b: Nexus.Security) => {
+  tickers.sort((a: Nexus.Ticker, b: Nexus.Ticker) => {
     return a.toString().localeCompare(b.toString());
   })
-  return [].concat(countries).concat(venues).concat(securities);
+  return [].concat(countries).concat(venues).concat(tickers);
 }
 
 function recomposeRegion(members: RegionItem[]): Nexus.Region {
@@ -611,7 +610,7 @@ function makeRegionItemText(item: RegionItem): string {
     return Nexus.defaultCountryDatabase.fromCode(item).twoLetterCode;
   } else if(isVenue(item)) {
     return Nexus.defaultVenueDatabase.fromVenue(item).displayName;
-  } else if(isSecurity(item)) {
+  } else if(isTicker(item)) {
     return item.toString();
   } else {
     if(item.isGlobal) {
@@ -623,8 +622,8 @@ function makeRegionItemText(item: RegionItem): string {
     for(const venue of item.venues) {
       return makeRegionItemText(venue);
     }
-    for(const security of item.securities) {
-      return makeRegionItemText(security);
+    for(const ticker of item.tickers) {
+      return makeRegionItemText(ticker);
     }
   }
   return '';

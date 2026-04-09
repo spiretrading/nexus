@@ -11,22 +11,22 @@ interface Properties extends
   onChange?: (value: string) => void;
 
   /** Called when the value is submitted.
-   * @param value - The security.
+   * @param value - The ticker.
    */
-  onEnter?: (value: Nexus.Security) => void;
+  onEnter?: (value: Nexus.Ticker) => void;
 }
 
-/** The component that uses user input to get a security. */
-export function SecurityInput({onChange, onEnter, ...rest}:
-    Properties): JSX.Element {
+/** The component that uses user input to get a ticker. */
+export function TickerInput({onChange, onEnter, ...rest}: Properties):
+    JSX.Element {
   const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange?.(event.target.value.toUpperCase());
   };
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if(event.key === 'Enter') {
-      const security = Nexus.Security.parse(String(rest.value ?? ''));
-      if(!security.equals(Nexus.Security.NONE)) {
-        onEnter?.(security);
+      const ticker = Nexus.Ticker.parse(String(rest.value ?? ''));
+      if(!ticker.equals(Nexus.Ticker.NONE)) {
+        onEnter?.(ticker);
       }
     }
   };

@@ -22,8 +22,8 @@ namespace Nexus {
     Beam::register_query_types(out(registry));
     registry->add(typeid(Money), "Nexus.Money");
     registry->add(typeid(Quantity), "Nexus.Quantity");
-    registry->add(typeid(Ticker), "Nexus.Securty");
-    registry->add(typeid(TickerInfo), "Nexus.SecurtyInfo");
+    registry->add(typeid(Ticker), "Nexus.Ticker");
+    registry->add(typeid(TickerInfo), "Nexus.TickerInfo");
     registry->add(typeid(OrderImbalance), "Nexus.OrderImbalance");
     registry->add(typeid(BboQuote), "Nexus.BboQuote");
     registry->add(typeid(BookQuote), "Nexus.BookQuote");

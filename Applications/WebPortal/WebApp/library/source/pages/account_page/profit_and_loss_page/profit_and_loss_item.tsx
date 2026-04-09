@@ -21,8 +21,8 @@ interface Properties {
   /** The total fees incurred. */
   totalFees: Nexus.Money;
 
-  /** The list of securities traded. */
-  securities: ProfitAndLossTable.Security[];
+  /** The list of tickers traded. */
+  tickers: ProfitAndLossTable.Ticker[];
 }
 
 /** Displays an expandable item for a single currency's P&L. */
@@ -55,7 +55,7 @@ export function ProfitAndLossItem(props: Properties) {
       <ProfitAndLossTable symbol={props.symbol}
         totalProfitAndLoss={props.totalProfitAndLoss}
         totalVolume={props.totalVolume}
-        totalFees={props.totalFees} securities={props.securities}/>
+        totalFees={props.totalFees} tickers={props.tickers}/>
     </div>);
   return (
     <div className={css(STYLES.container)}>

@@ -17,8 +17,8 @@ interface Properties {
   /** The total fees incurred. */
   totalFees: Nexus.Money;
 
-  /** The list of securities traded. */
-  securities: ProfitAndLossTable.Security[];
+  /** The list of tickers traded. */
+  tickers: ProfitAndLossTable.Ticker[];
 }
 
 interface State {
@@ -26,18 +26,18 @@ interface State {
   sortOrder: TableHeaderCell.SortOrder;
 }
 
-/** Displays a table of securities with volume, fees, and P/L. */
+/** Displays a table of tickers with volume, fees, and P/L. */
 export class ProfitAndLossTable extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      sortColumn: ProfitAndLossTable.Column.SECURITY,
+      sortColumn: ProfitAndLossTable.Column.TICKER,
       sortOrder: TableHeaderCell.SortOrder.NONE
     };
   }
 
   public render(): JSX.Element {
-    const sorted = this.sortedSecurities();
+    const sorted = this.sortedTickers();
     return (
       <div className={css(STYLES.container)}>
         <table className={css(STYLES.table)}>
@@ -46,9 +46,9 @@ export class ProfitAndLossTable extends React.Component<Properties, State> {
               <TableHeaderCell
                   style={{textAlign: 'start'}}
                   sortOrder={this.sortOrderFor(
-                    ProfitAndLossTable.Column.SECURITY)}
-                  onSort={this.onSort(ProfitAndLossTable.Column.SECURITY)}>
-                Security
+                    ProfitAndLossTable.Column.TICKER)}
+                  onSort={this.onSort(ProfitAndLossTable.Column.TICKER)}>
+                Ticker
               </TableHeaderCell>
               <TableHeaderCell
                   className={css(STYLES.collapsible)}
@@ -76,26 +76,26 @@ export class ProfitAndLossTable extends React.Component<Properties, State> {
             </tr>
           </thead>
           <tbody>
-            {sorted.map((security, i) => {
-              const isNegative = security.profitAndLoss.compare(
+            {sorted.map((ticker, i) => {
+              const isNegative = ticker.profitAndLoss.compare(
                 Nexus.Money.ZERO) < 0;
               return (
                 <tr key={i} className={css(STYLES.row)}>
                   <td className={css(STYLES.td, STYLES.tdStart)}
-                    aria-label='Security'>
-                    {security.security.toString()}
+                    aria-label='Ticker'>
+                    {ticker.ticker.toString()}
                   </td>
                   <td className={css(STYLES.td, STYLES.collapsible)}
                     aria-label='Volume'>
-                    {security.volume.toLocaleString()}
+                    {ticker.volume.toLocaleString()}
                   </td>
                   <td className={css(STYLES.td, STYLES.collapsible)}
                     aria-label='Fees'>
-                    {formatMoney(this.props.symbol, security.fees)}
+                    {formatMoney(this.props.symbol, ticker.fees)}
                   </td>
                   <td className={css(STYLES.td)} aria-label='Profit and Loss'
                     style={{color: isNegative ? '#E63F44' : '#36BB55'}}>
-                    {formatMoney(this.props.symbol, security.profitAndLoss)}
+                    {formatMoney(this.props.symbol, ticker.profitAndLoss)}
                   </td>
                 </tr>);
             })}
@@ -106,7 +106,7 @@ export class ProfitAndLossTable extends React.Component<Properties, State> {
                 <tr className={css(STYLES.summaryRow)}>
                   <td className={css(STYLES.td, STYLES.summaryCell,
                       STYLES.tdStart)}>
-                    {`(${this.props.securities.length})`}
+                    {`(${this.props.tickers.length})`}
                   </td>
                   <td className={css(STYLES.td, STYLES.summaryCell,
                       STYLES.collapsible)}>
@@ -128,18 +128,18 @@ export class ProfitAndLossTable extends React.Component<Properties, State> {
       </div>);
   }
 
-  private sortedSecurities(): ProfitAndLossTable.Security[] {
+  private sortedTickers(): ProfitAndLossTable.Ticker[] {
     if(this.state.sortOrder === TableHeaderCell.SortOrder.NONE) {
-      return this.props.securities;
+      return this.props.tickers;
     }
-    var sorted = [...this.props.securities];
+    var sorted = [...this.props.tickers];
     var direction =
       this.state.sortOrder === TableHeaderCell.SortOrder.ASCENDING ? 1 : -1;
     sorted.sort((a, b) => {
       switch(this.state.sortColumn) {
-        case ProfitAndLossTable.Column.SECURITY:
-          return direction * a.security.toString().localeCompare(
-            b.security.toString());
+        case ProfitAndLossTable.Column.TICKER:
+          return direction * a.ticker.toString().localeCompare(
+            b.ticker.toString());
         case ProfitAndLossTable.Column.VOLUME:
           return direction * a.volume.compare(b.volume);
         case ProfitAndLossTable.Column.FEES:
@@ -177,17 +177,17 @@ export namespace ProfitAndLossTable {
 
   /** The columns that can be sorted. */
   export enum Column {
-    SECURITY,
+    TICKER,
     VOLUME,
     FEES,
     PNL
   }
 
   /** A row in the table. */
-  export interface Security {
+  export interface Ticker {
 
-    /** The security traded. */
-    security: Nexus.Security;
+    /** The ticker traded. */
+    ticker: Nexus.Ticker;
 
     /** The volume traded. */
     volume: Nexus.Quantity;
