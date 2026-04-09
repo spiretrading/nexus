@@ -1,26 +1,23 @@
 import * as Beam from 'beam';
-import { CountryCode, CountryDatabase } from './country';
-import { defaultCountryDatabase } from './default_country_database';
 import { defaultVenueDatabase } from './default_venue_database';
 import { Venue, VenueDatabase } from './venue';
 
-/** Identifies a financial security. */
-export class Security {
+/** Identifies a financial ticker. */
+export class Ticker {
 
-  /** Represents no Security. */
-  public static readonly NONE = new Security('', Venue.NONE);
+  /** Represents no Ticker. */
+  public static readonly NONE = new Ticker('', Venue.NONE);
 
   /** Makes a value from a JSON object. */
-  public static fromJson(value: any): Security {
-    return new Security(value.symbol, Venue.fromJson(value.venue));
+  public static fromJson(value: any): Ticker {
+    return new Ticker(value.symbol, Venue.fromJson(value.venue));
   }
 
   /** Parses a value from a string. */
-  public static parse(source: string, venueDatabase?: VenueDatabase):
-      Security {
+  public static parse(source: string, venueDatabase?: VenueDatabase): Ticker {
     const seperator = source.lastIndexOf('.');
     if(seperator === -1) {
-      return Security.NONE;
+      return Ticker.NONE;
     }
     const symbol = source.substring(0, seperator);
     const venueSource = new Venue(source.substring(seperator + 1));
@@ -29,16 +26,16 @@ export class Security {
     if(venue.venue.equals(Venue.NONE)) {
       venue = database.fromVenue(venueSource);
       if(venue.venue.equals(Venue.NONE)) {
-        return Security.NONE;
+        return Ticker.NONE;
       }
     }
-    return new Security(symbol, venue.venue);
+    return new Ticker(symbol, venue.venue);
   }
 
   /**
-   * Constructs a Security.
-   * @param symbol - The security's ticker symbol.
-   * @param venue - The security's venue.
+   * Constructs a Ticker.
+   * @param symbol - The ticker's symbol.
+   * @param venue - The ticker's venue.
    */
   public constructor(symbol: string, venue: Venue) {
     this._symbol = symbol;
@@ -55,8 +52,8 @@ export class Security {
     return this._venue;
   }
 
-  /** Tests if two Securities are equal. */
-  public equals(other: Security): boolean {
+  /** Tests if two Tickers are equal. */
+  public equals(other: Ticker): boolean {
     return this.symbol == other.symbol && this.venue.equals(other.venue);
   }
 
