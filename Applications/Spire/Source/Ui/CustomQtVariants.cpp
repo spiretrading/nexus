@@ -76,8 +76,8 @@ namespace {
     for(auto& venue : region.get_venues()) {
       texts.push_back(to_text(venue));
     }
-    for(auto& security : region.get_securities()) {
-      texts.push_back(to_text(security));
+    for(auto& ticker : region.get_tickers()) {
+      texts.push_back(to_text(ticker));
     }
     if(n >= static_cast<int>(texts.size())) {
       return QString();
@@ -202,10 +202,10 @@ QVariant Spire::to_qvariant(const std::any& value) {
     return QVariant::fromValue(std::any_cast<OrderType>(value));
   } else if(value.type() == typeid(PositionSideToken)) {
     return QVariant::fromValue(std::any_cast<PositionSideToken>(value));
-  } else if(value.type() == typeid(Security)) {
-    return QVariant::fromValue(std::any_cast<Security>(value));
   } else if(value.type() == typeid(Side)) {
     return QVariant::fromValue(std::any_cast<Side>(value));
+  } else if(value.type() == typeid(Ticker)) {
+    return QVariant::fromValue(std::any_cast<Ticker>(value));
   } else if(value.type() == typeid(TimeAndSale::Condition)) {
     return QVariant::fromValue(std::any_cast<TimeAndSale::Condition>(value));
   } else if(value.type() == typeid(TimeInForce)) {
@@ -415,21 +415,21 @@ QString Spire::to_text(const Region& region, const QLocale& locale) {
   if(region.is_global()) {
     return QObject::tr("Global");
   }
-  if(region.get_securities().size() == 1 && region.get_venues().empty() &&
+  if(region.get_tickers().size() == 1 && region.get_venues().empty() &&
       region.get_countries().empty()) {
-    return to_text(*region.get_securities().begin(), locale);
-  } else if(region.get_venues().size() == 1 && region.get_securities().empty() &&
+    return to_text(*region.get_tickers().begin(), locale);
+  } else if(region.get_venues().size() == 1 && region.get_tickers().empty() &&
       region.get_countries().empty()) {
     return to_text(Venue(*region.get_venues().begin()), locale);
   } else if(region.get_countries().size() == 1 &&
-      region.get_securities().empty() && region.get_venues().empty()) {
+      region.get_tickers().empty() && region.get_venues().empty()) {
     return to_text(*region.get_countries().begin(), locale);
   }
   return QString::fromStdString(region.get_name());
 }
 
-QString Spire::to_text(const Security& security, const QLocale& locale) {
-  return QString::fromStdString(to_string(security));
+QString Spire::to_text(const Ticker& ticker, const QLocale& locale) {
+  return QString::fromStdString(to_string(ticker));
 }
 
 QString Spire::to_text(Venue venue, const QLocale& locale) {
@@ -491,10 +491,10 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return to_text(std::any_cast<PositionSideToken>(value), locale);
   } else if(value.type() == typeid(Region)) {
     return to_text(std::any_cast<Region>(value), locale);
-  } else if(value.type() == typeid(Security)) {
-    return to_text(std::any_cast<Security>(value), locale);
   } else if(value.type() == typeid(Side)) {
     return to_text(std::any_cast<Side>(value), locale);
+  } else if(value.type() == typeid(Ticker)) {
+    return to_text(std::any_cast<Ticker>(value), locale);
   } else if(value.type() == typeid(TimeAndSale::Condition)) {
     return to_text(std::any_cast<TimeAndSale::Condition>(value), locale);
   } else if(value.type() == typeid(TimeInForce)) {
@@ -540,7 +540,7 @@ bool Spire::compare(const AnyRef& left, const AnyRef& right) {
     optional<std::int64_t>, std::uint64_t, optional<std::uint64_t>, Quantity,
     optional<Quantity>, double, optional<double>, gregorian::date, ptime,
     posix_time::time_duration, std::string, CountryCode, CurrencyId, Money,
-    optional<Money>, OrderStatus, OrderType, Security, Side, QKeySequence,
+    optional<Money>, OrderStatus, OrderType, Side, Ticker, QKeySequence,
     QString>(left, right);
 }
 
@@ -551,7 +551,7 @@ bool Spire::is_equal(const std::any& left, const std::any& right) {
   return is_equal_any<bool, int, std::int64_t, std::uint64_t, Quantity, double,
     gregorian::date, ptime, posix_time::time_duration, std::string, CountryCode,
     CurrencyId, CurrencyId, Money, Region, OrderStatus, OrderType,
-    PositionSideToken, Security, Side, TimeInForce, Venue, QColor, QKeySequence,
+    PositionSideToken, Side, Ticker, TimeInForce, Venue, QColor, QKeySequence,
     QString>(left, right);
 }
 
@@ -663,14 +663,6 @@ optional<OrderType> Spire::from_text(const QString& text) {
 }
 
 template<>
-optional<Security> Spire::from_text(const QString& text) {
-  if(auto security = parse_security(text.toStdString())) {
-    return security;
-  }
-  return none;
-}
-
-template<>
 optional<Side> Spire::from_text(const QString& text) {
   if(text == QObject::tr("Sell")) {
     return optional<Side>(Side::ASK);
@@ -678,6 +670,14 @@ optional<Side> Spire::from_text(const QString& text) {
     return optional<Side>(Side::BID);
   } else if(text == QObject::tr("None")) {
     return optional<Side>(Side::NONE);
+  }
+  return none;
+}
+
+template<>
+optional<Ticker> Spire::from_text(const QString& text) {
+  if(auto ticker = parse_ticker(text.toStdString())) {
+    return ticker;
   }
   return none;
 }

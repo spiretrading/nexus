@@ -40,7 +40,7 @@ void TimeAndSalesController::open() {
     return;
   }
   auto window = new TimeAndSalesWindow(
-    m_user_profile->GetSecurityInfoQueryModel(),
+    m_user_profile->GetTickerInfoQueryModel(),
     m_user_profile->GetTimeAndSalesPropertiesWindowFactory(),
     m_user_profile->GetTimeAndSalesModelBuilder());
   set_window(*window);

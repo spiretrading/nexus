@@ -63,14 +63,14 @@ namespace {
       make_buying_power_compliance_rule_schema()));
     schemas.push_back(make_region_filter_compliance_rule_schema(
       make_time_filter_compliance_rule_schema(
-        make_per_security_compliance_rule_schema(
+        make_per_ticker_compliance_rule_schema(
           make_opposing_cancel_compliance_rule_schema()))));
     schemas.push_back(make_region_filter_compliance_rule_schema(
       make_time_filter_compliance_rule_schema(
-        make_per_security_compliance_rule_schema(
+        make_per_ticker_compliance_rule_schema(
           make_opposing_submission_compliance_rule_schema()))));
     schemas.push_back(make_region_filter_compliance_rule_schema(
-      make_per_security_compliance_rule_schema(
+      make_per_ticker_compliance_rule_schema(
         make_order_count_limit_per_side_compliance_rule_schema())));
     return schemas;
   }

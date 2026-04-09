@@ -38,7 +38,7 @@ def execute_report(account, start_date, end_date, fee_table, service_clients):
   beam.flush(order_queue, orders)
   fee_state = nexus.ConsolidatedTmxFeeTable.State()
   for order in orders:
-    if order.info.fields.security.country != nexus.default_countries.CA:
+    if order.info.fields.ticker.country != nexus.default_countries.CA:
       continue
     if order.info.fields.destination == nexus.default_destinations.MOE:
       continue
@@ -56,7 +56,7 @@ def execute_report(account, start_date, end_date, fee_table, service_clients):
           execution_report.commission):
         print('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' %
           (order.info.order_id, execution_report.sequence,
-          order.info.fields.security.symbol, order.info.fields.security.venue,
+          order.info.fields.ticker.symbol, order.info.fields.ticker.venue,
           order.info.fields.side, execution_report.last_price,
           execution_report.last_quantity, execution_report.last_market,
           execution_report.liquidity_flag, execution_report.execution_fee,

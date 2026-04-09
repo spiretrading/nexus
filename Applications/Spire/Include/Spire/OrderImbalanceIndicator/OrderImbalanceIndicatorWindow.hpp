@@ -7,13 +7,12 @@
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Utilities/Utilities.hpp"
 
 class Ui_OrderImbalanceIndicatorWindow;
 
 namespace Spire {
 
-  /** Displays Market OrderImbalances. */
+  /** Displays Venue OrderImbalances. */
   class OrderImbalanceIndicatorWindow :
       public QFrame, public LegacyUI::PersistentWindow {
     public:

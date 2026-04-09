@@ -5,7 +5,7 @@ export * from './exchange_rate';
 export * from './money';
 export * from './quantity';
 export * from './region';
-export * from './security';
+export * from './ticker';
 export * from './venue';
 export * from './default_country_database';
 export * from './default_currency_database';

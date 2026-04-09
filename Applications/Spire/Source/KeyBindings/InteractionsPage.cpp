@@ -67,13 +67,13 @@ namespace {
       return to_text(*left.get_venues().begin()) <
         to_text(*right.get_venues().begin());
     }
-    if(left.get_securities().size() != 0) {
-      if(right.get_securities().size() == 0) {
+    if(left.get_tickers().size() != 0) {
+      if(right.get_tickers().size() == 0) {
         return !right.is_global() && right.get_countries().size() == 0 &&
           right.get_venues().size() == 0;
       }
-      return to_text(*left.get_securities().begin()) <
-        to_text(*right.get_securities().begin());
+      return to_text(*left.get_tickers().begin()) <
+        to_text(*right.get_tickers().begin());
     }
     return false;
   }
@@ -254,7 +254,7 @@ void InteractionsPage::on_delete_region(const Region& region) {
     if(i != m_regions->end() &&
         m_regions->remove(i) == QValidator::Acceptable) {
       m_key_bindings->get_interactions_key_bindings(region)->reset();
-      if(region.get_securities().empty()) {
+      if(region.get_tickers().empty()) {
         auto i = std::lower_bound(m_available_regions->begin(),
           m_available_regions->end(), region, &region_comparator);
         m_available_regions->insert(region, i);

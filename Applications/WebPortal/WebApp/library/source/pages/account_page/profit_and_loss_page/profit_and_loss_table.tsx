@@ -1,5 +1,7 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
+import * as Nexus from 'nexus';
 import * as React from 'react';
+import { TableHeaderCell } from './table_header_cell';
 
 interface Properties {
 
@@ -7,100 +9,194 @@ interface Properties {
   symbol: string;
 
   /** The total profit and loss. */
-  totalPnl: string;
+  totalProfitAndLoss: Nexus.Money;
 
   /** The total volume traded. */
-  totalVolume: string;
+  totalVolume: Nexus.Quantity;
 
   /** The total fees incurred. */
-  totalFees: string;
+  totalFees: Nexus.Money;
 
-  /** The list of securities traded. */
-  securities: ProfitAndLossTable.Security[];
+  /** The list of tickers traded. */
+  tickers: ProfitAndLossTable.Ticker[];
 }
 
-/** Displays a table of securities with volume, fees, and P/L. */
-export function ProfitAndLossTable(props: Properties) {
-  return (
-    <div className={css(STYLES.container)}>
-      <table className={css(STYLES.table)}>
-        <thead className={css(STYLES.thead)}>
-          <tr>
-            <th className={css(STYLES.th, STYLES.thStart)}>Security</th>
-            <th className={css(STYLES.th, STYLES.collapsible)}>Volume</th>
-            <th className={css(STYLES.th, STYLES.collapsible)}>Fees</th>
-            <th className={css(STYLES.th)}>P/L</th>
-          </tr>
-        </thead>
-        <tbody>
-          {props.securities.map((security, i) => {
-            const pnl = parseFloat(security.pnl);
-            const isNegative = pnl < 0;
-            return (
-              <tr key={i} className={css(STYLES.row)}>
-                <td className={css(STYLES.td, STYLES.tdStart)}
-                  aria-label='Security'>
-                  {security.symbol}
-                </td>
-                <td className={css(STYLES.td, STYLES.collapsible)}
-                  aria-label='Volume'>
-                  {security.volume}
-                </td>
-                <td className={css(STYLES.td, STYLES.collapsible)}
-                  aria-label='Fees'>
-                  {`${props.symbol}${security.fees}`}
-                </td>
-                <td className={css(STYLES.td)} aria-label='Profit and Loss'
-                  style={{color: isNegative ? '#E63F44' : '#36BB55'}}>
-                  {isNegative ?
-                    `-${props.symbol}${security.pnl.replace('-', '')}` :
-                    `${props.symbol}${security.pnl}`}
-                </td>
-              </tr>);
-          })}
-          <tr className={css(STYLES.summaryRow)}>
-            <td className={css(STYLES.td, STYLES.summaryCell, STYLES.tdStart)}>
-              {`(${props.securities.length})`}
-            </td>
-            <td className={css(STYLES.td, STYLES.summaryCell,
-                STYLES.collapsible)}>
-              {props.totalVolume}
-            </td>
-            <td className={css(STYLES.td, STYLES.summaryCell,
-                STYLES.collapsible)}>
-              {`${props.symbol}${props.totalFees}`}
-            </td>
-            {(() => {
-              const totalPnl = parseFloat(props.totalPnl);
-              const isNegative = totalPnl < 0;
+interface State {
+  sortColumn: ProfitAndLossTable.Column;
+  sortOrder: TableHeaderCell.SortOrder;
+}
+
+/** Displays a table of tickers with volume, fees, and P/L. */
+export class ProfitAndLossTable extends React.Component<Properties, State> {
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      sortColumn: ProfitAndLossTable.Column.TICKER,
+      sortOrder: TableHeaderCell.SortOrder.NONE
+    };
+  }
+
+  public render(): JSX.Element {
+    const sorted = this.sortedTickers();
+    return (
+      <div className={css(STYLES.container)}>
+        <table className={css(STYLES.table)}>
+          <thead className={css(STYLES.thead)}>
+            <tr>
+              <TableHeaderCell
+                  style={{textAlign: 'start'}}
+                  sortOrder={this.sortOrderFor(
+                    ProfitAndLossTable.Column.TICKER)}
+                  onSort={this.onSort(ProfitAndLossTable.Column.TICKER)}>
+                Ticker
+              </TableHeaderCell>
+              <TableHeaderCell
+                  className={css(STYLES.collapsible)}
+                  style={{textAlign: 'end'}}
+                  sortOrder={this.sortOrderFor(
+                    ProfitAndLossTable.Column.VOLUME)}
+                  onSort={this.onSort(ProfitAndLossTable.Column.VOLUME)}>
+                Volume
+              </TableHeaderCell>
+              <TableHeaderCell
+                  className={css(STYLES.collapsible)}
+                  style={{textAlign: 'end'}}
+                  sortOrder={this.sortOrderFor(
+                    ProfitAndLossTable.Column.FEES)}
+                  onSort={this.onSort(ProfitAndLossTable.Column.FEES)}>
+                Fees
+              </TableHeaderCell>
+              <TableHeaderCell
+                  style={{textAlign: 'end'}}
+                  sortOrder={this.sortOrderFor(
+                    ProfitAndLossTable.Column.PNL)}
+                  onSort={this.onSort(ProfitAndLossTable.Column.PNL)}>
+                P/L
+              </TableHeaderCell>
+            </tr>
+          </thead>
+          <tbody>
+            {sorted.map((ticker, i) => {
+              const isNegative = ticker.profitAndLoss.compare(
+                Nexus.Money.ZERO) < 0;
               return (
-                <td className={css(STYLES.td, STYLES.summaryCell)}
-                  style={{color: isNegative ? '#E63F44' : '#36BB55'}}>
-                  {isNegative ?
-                    `-${props.symbol}${props.totalPnl.replace('-', '')}` :
-                    `${props.symbol}${props.totalPnl}`}
-                </td>);
+                <tr key={i} className={css(STYLES.row)}>
+                  <td className={css(STYLES.td, STYLES.tdStart)}
+                    aria-label='Ticker'>
+                    {ticker.ticker.toString()}
+                  </td>
+                  <td className={css(STYLES.td, STYLES.collapsible)}
+                    aria-label='Volume'>
+                    {ticker.volume.toLocaleString()}
+                  </td>
+                  <td className={css(STYLES.td, STYLES.collapsible)}
+                    aria-label='Fees'>
+                    {formatMoney(this.props.symbol, ticker.fees)}
+                  </td>
+                  <td className={css(STYLES.td)} aria-label='Profit and Loss'
+                    style={{color: isNegative ? '#E63F44' : '#36BB55'}}>
+                    {formatMoney(this.props.symbol, ticker.profitAndLoss)}
+                  </td>
+                </tr>);
+            })}
+            {(() => {
+              const isNegative = this.props.totalProfitAndLoss.compare(
+                Nexus.Money.ZERO) < 0;
+              return (
+                <tr className={css(STYLES.summaryRow)}>
+                  <td className={css(STYLES.td, STYLES.summaryCell,
+                      STYLES.tdStart)}>
+                    {`(${this.props.tickers.length})`}
+                  </td>
+                  <td className={css(STYLES.td, STYLES.summaryCell,
+                      STYLES.collapsible)}>
+                    {this.props.totalVolume.toLocaleString()}
+                  </td>
+                  <td className={css(STYLES.td, STYLES.summaryCell,
+                      STYLES.collapsible)}>
+                    {formatMoney(this.props.symbol, this.props.totalFees)}
+                  </td>
+                  <td className={css(STYLES.td, STYLES.summaryCell)}
+                    style={{color: isNegative ? '#E63F44' : '#36BB55'}}>
+                    {formatMoney(this.props.symbol,
+                      this.props.totalProfitAndLoss)}
+                  </td>
+                </tr>);
             })()}
-          </tr>
-        </tbody>
-      </table>
-    </div>);
+          </tbody>
+        </table>
+      </div>);
+  }
+
+  private sortedTickers(): ProfitAndLossTable.Ticker[] {
+    if(this.state.sortOrder === TableHeaderCell.SortOrder.NONE) {
+      return this.props.tickers;
+    }
+    var sorted = [...this.props.tickers];
+    var direction =
+      this.state.sortOrder === TableHeaderCell.SortOrder.ASCENDING ? 1 : -1;
+    sorted.sort((a, b) => {
+      switch(this.state.sortColumn) {
+        case ProfitAndLossTable.Column.TICKER:
+          return direction * a.ticker.toString().localeCompare(
+            b.ticker.toString());
+        case ProfitAndLossTable.Column.VOLUME:
+          return direction * a.volume.compare(b.volume);
+        case ProfitAndLossTable.Column.FEES:
+          return direction * a.fees.compare(b.fees);
+        case ProfitAndLossTable.Column.PNL:
+          return direction * a.profitAndLoss.compare(b.profitAndLoss);
+      }
+    });
+    return sorted;
+  }
+
+  private sortOrderFor(
+      column: ProfitAndLossTable.Column): TableHeaderCell.SortOrder {
+    if(this.state.sortColumn === column) {
+      return this.state.sortOrder;
+    }
+    return TableHeaderCell.SortOrder.NONE;
+  }
+
+  private onSort = (column: ProfitAndLossTable.Column) =>
+      (order: TableHeaderCell.SortOrder) => {
+    this.setState({sortColumn: column, sortOrder: order});
+  }
+}
+
+function formatMoney(symbol: string, value: Nexus.Money): string {
+  var text = value.toLocaleString();
+  if(text.startsWith('-')) {
+    return `-${symbol}${text.substring(1)}`;
+  }
+  return `${symbol}${text}`;
 }
 
 export namespace ProfitAndLossTable {
-  export interface Security {
 
-    /** The symbol of the security. */
-    symbol: string;
+  /** The columns that can be sorted. */
+  export enum Column {
+    TICKER,
+    VOLUME,
+    FEES,
+    PNL
+  }
+
+  /** A row in the table. */
+  export interface Ticker {
+
+    /** The ticker traded. */
+    ticker: Nexus.Ticker;
 
     /** The volume traded. */
-    volume: string;
+    volume: Nexus.Quantity;
 
     /** The fees incurred. */
-    fees: string;
+    fees: Nexus.Money;
 
     /** The profit and loss. */
-    pnl: string;
+    profitAndLoss: Nexus.Money;
   }
 }
 
@@ -130,20 +226,9 @@ const STYLES = StyleSheet.create({
   },
   thead: {
     display: 'none',
-    backgroundColor: '#F8F8F8',
-    color: '#5D5E6D',
-    fontWeight: 500,
     '@container (min-width: 424px)': {
       display: 'table-header-group'
     }
-  },
-  th: {
-    padding: '12px 19px',
-    textAlign: 'end',
-    fontWeight: 'inherit'
-  },
-  thStart: {
-    textAlign: 'start'
   },
   row: {
     backgroundColor: '#FFFFFF',

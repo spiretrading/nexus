@@ -1,5 +1,6 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/MarketDataService/EntitlementSet.hpp"
 
 using namespace Beam;
@@ -35,11 +36,11 @@ TEST_SUITE("EntitlementSet") {
     REQUIRE(!entitlements.contains({OMGA, TSX}, MarketDataType::BBO_QUOTE));
   }
 
-  TEST_CASE("security_query") {
+  TEST_CASE("ticker_query") {
     auto entitlements = EntitlementSet();
     entitlements.grant({TSX, TSX}, {MarketDataType::BBO_QUOTE});
-    auto query = SecurityMarketDataQuery();
-    query.set_index(Security("TST", TSX));
+    auto query = TickerQuery();
+    query.set_index(parse_ticker("TST.TSX"));
     REQUIRE(contains<BboQuote>(entitlements, query));
     REQUIRE(!contains<BookQuote>(entitlements, query));
   }
@@ -47,7 +48,7 @@ TEST_SUITE("EntitlementSet") {
   TEST_CASE("venue_query") {
     auto entitlements = EntitlementSet();
     entitlements.grant({TSX, TSX}, {MarketDataType::ORDER_IMBALANCE});
-    auto query = VenueMarketDataQuery();
+    auto query = VenueQuery();
     query.set_index(TSX);
     REQUIRE(contains<OrderImbalance>(entitlements, query));
     REQUIRE(!contains<BboQuote>(entitlements, query));

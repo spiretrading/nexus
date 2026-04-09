@@ -259,7 +259,7 @@ namespace {
       std::string buy_name, std::string sell_name,
       std::vector<std::unique_ptr<CanvasNode>>& nodes) {
     auto limit = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField(
-      "max_floor", 111, LinkedNode::SetReferent(MaxFloorNode(), "security")));
+      "max_floor", 111, LinkedNode::SetReferent(MaxFloorNode(), "ticker")));
     populate_bid_ask(limit, limit_bid_name, limit_ask_name, destination,
       TimeInForce::Type::DAY, nodes);
     auto market = CanvasNodeBuilder(*GetMarketOrderTaskNode());
@@ -472,13 +472,13 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_chix_order_task_nodes() {
     DefaultDestinations::CHIX, "CHI-X", order_types);
   auto fee_sensitive =
     CanvasNodeBuilder(*SingleOrderTaskNode().AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker"))->AddField(
         "ex_destination", 100, std::make_unique<TextNode>("SMRTFEE")));
   populate_bid_ask_limit_market(fee_sensitive, DefaultDestinations::CHIX,
     TimeInForce::Type::DAY, "CHI-X Fee Sensitive", order_types);
   auto smart_dark =
     CanvasNodeBuilder(*SingleOrderTaskNode().AddField("max_floor", 111,
-      LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+      LinkedNode::SetReferent(MaxFloorNode(), "ticker"))->AddField(
         "ex_destination", 100,
           std::make_unique<TextNode>("SMRTXDARKNR"))->AddField(
         "long_life", 7735, std::make_unique<TextNode>("Y")));
@@ -663,7 +663,7 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_neoe_order_task_nodes() {
   populate_bid_ask(mid_peg, "NEOE Lit Mid Peg", DefaultDestinations::NEOE,
     TimeInForce::Type::DAY, order_types);
   auto book = CanvasNodeBuilder(*SingleOrderTaskNode().AddField("max_floor",
-    111, LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+    111, LinkedNode::SetReferent(MaxFloorNode(), "ticker"))->AddField(
       "ex_destination", 100, std::make_unique<TextNode>("N")));
   book.SetReadOnly("ex_destination", true);
   book.SetVisible("ex_destination", false);
@@ -710,7 +710,7 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_pure_order_task_nodes() {
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_tsx_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
   auto limit = CanvasNodeBuilder(*GetLimitOrderTaskNode()->AddField("max_floor",
-    111, LinkedNode::SetReferent(MaxFloorNode(), "security"))->AddField(
+    111, LinkedNode::SetReferent(MaxFloorNode(), "ticker"))->AddField(
       "long_life", 7735, std::make_unique<TextNode>("Y"))->AddField(
         "ex_destination", 100, std::make_unique<TextNode>("SMRTXOPG-X2")));
   limit.SetReadOnly("long_life", true);

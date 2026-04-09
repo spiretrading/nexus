@@ -3,14 +3,14 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <QTimer>
 #include "Nexus/Definitions/Quantity.hpp"
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/LocalScalarValueModel.hpp"
 
 namespace Spire {
 
-  /** Implements a model for a security's default quantity. */
+  /** Implements a model for a ticker's default quantity. */
   class DefaultQuantityModel :
       public ScalarValueModel<Nexus::Quantity>, private QObject {
     public:
@@ -19,11 +19,11 @@ namespace Spire {
        * Constructs a DefaultQuantityModel.
        * @param user_profile The profile to load the default quantity settings
        *        from.
-       * @param security The security the default quantity is loaded for.
+       * @param ticker The ticker the default quantity is loaded for.
        * @param side The side of the position to keep track of.
        */
       DefaultQuantityModel(Beam::Ref<UserProfile> user_profile,
-        Nexus::Security security, Nexus::Side side);
+        Nexus::Ticker ticker, Nexus::Side side);
 
       const Type& get() const override;
       boost::signals2::connection connect_update_signal(
@@ -31,7 +31,7 @@ namespace Spire {
 
     private:
       UserProfile* m_user_profile;
-      Nexus::Security m_security;
+      Nexus::Ticker m_ticker;
       Nexus::Side m_side;
       LocalScalarValueModel<Nexus::Quantity> m_current;
       QTimer m_update_timer;

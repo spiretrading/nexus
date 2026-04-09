@@ -1,7 +1,7 @@
 #include "Spire/TimeAndSales/LegacyTimeAndSalesWindowSettings.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
-#include "Spire/Ui/SecurityView.hpp"
+#include "Spire/Ui/TickerView.hpp"
 
 using namespace Beam;
 using namespace Nexus;
@@ -20,8 +20,7 @@ std::string LegacyTimeAndSalesWindowSettings::GetName() const {
 
 QWidget* LegacyTimeAndSalesWindowSettings::Reopen(
     Ref<UserProfile> user_profile) const {
-  auto window = new TimeAndSalesWindow(
-    user_profile->GetSecurityInfoQueryModel(),
+  auto window = new TimeAndSalesWindow(user_profile->GetTickerInfoQueryModel(),
     user_profile->GetTimeAndSalesPropertiesWindowFactory(),
     user_profile->GetTimeAndSalesModelBuilder(), m_identifier);
   window->setAttribute(Qt::WA_DeleteOnClose);
@@ -36,8 +35,8 @@ void LegacyTimeAndSalesWindowSettings::Apply(
   auto frame_height = get_frame_height();
   window.move(window.x(), window.y() - frame_height);
   window.resize(window.width(), window.height() + frame_height);
-  if(m_security) {
-    window.m_security_view->get_current()->set(m_security);
+  if(m_ticker) {
+    window.m_ticker_view->get_current()->set(m_ticker);
   }
   window.m_link_identifier = m_link_identifier;
 }

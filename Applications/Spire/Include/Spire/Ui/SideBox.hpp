@@ -33,7 +33,7 @@ namespace Spire {
    * @param parent The parent widget.
    */
    SideBox* make_side_box(
-    std::shared_ptr<SideModel> current, QWidget* parent = nullptr);
+     std::shared_ptr<SideModel> current, QWidget* parent = nullptr);
 }
 
 #endif

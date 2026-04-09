@@ -19,16 +19,16 @@
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/ExchangeRate.hpp"
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
 namespace Nexus {
 
-  /** A per-security breakdown within a currency. */
-  struct SecurityReportEntry {
+  /** A per-ticker breakdown within a currency. */
+  struct TickerReportEntry {
 
-    /** The security traded. */
-    Security m_security;
+    /** The ticker traded. */
+    Ticker m_ticker;
 
     /** The volume traded. */
     Quantity m_volume;
@@ -55,8 +55,8 @@ namespace Nexus {
     /** The total fees incurred for this currency. */
     Money m_total_fees;
 
-    /** The securities traded in this currency. */
-    std::vector<SecurityReportEntry> m_securities;
+    /** The tickers traded in this currency. */
+    std::vector<TickerReportEntry> m_tickers;
   };
 
   /** The result of a completed profit and loss report. */
@@ -132,11 +132,11 @@ namespace Nexus {
 
 namespace Beam {
   template<>
-  struct Shuttle<Nexus::SecurityReportEntry> {
+  struct Shuttle<Nexus::TickerReportEntry> {
     template<IsShuttle S>
-    void operator ()(S& shuttle, Nexus::SecurityReportEntry& value,
+    void operator ()(S& shuttle, Nexus::TickerReportEntry& value,
         unsigned int version) const {
-      shuttle.shuttle("security", value.m_security);
+      shuttle.shuttle("ticker", value.m_ticker);
       shuttle.shuttle("volume", value.m_volume);
       shuttle.shuttle("fees", value.m_fees);
       shuttle.shuttle("profit_and_loss", value.m_profit_and_loss);
@@ -152,7 +152,7 @@ namespace Beam {
       shuttle.shuttle("total_profit_and_loss", value.m_total_profit_and_loss);
       shuttle.shuttle("total_volume", value.m_total_volume);
       shuttle.shuttle("total_fees", value.m_total_fees);
-      shuttle.shuttle("securities", value.m_securities);
+      shuttle.shuttle("tickers", value.m_tickers);
     }
   };
 

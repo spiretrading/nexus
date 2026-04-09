@@ -31,26 +31,23 @@ namespace Nexus {
 
       ~ClientHistoricalDataStore();
 
-      std::vector<SecurityInfo> load_security_info(
-        const SecurityInfoQuery& query);
-      void store(const SecurityInfo& info);
+      std::vector<TickerInfo> load_ticker_info(const TickerInfoQuery& query);
+      void store(const TickerInfo& info);
       std::vector<SequencedOrderImbalance> load_order_imbalances(
-        const VenueMarketDataQuery& query);
+        const VenueQuery& query);
       void store(const SequencedVenueOrderImbalance& imbalance);
       void store(const std::vector<SequencedVenueOrderImbalance>& imbalances);
-      std::vector<SequencedBboQuote> load_bbo_quotes(
-        const SecurityMarketDataQuery& query);
-      void store(const SequencedSecurityBboQuote& quote);
-      void store(const std::vector<SequencedSecurityBboQuote>& quotes);
+      std::vector<SequencedBboQuote> load_bbo_quotes(const TickerQuery& query);
+      void store(const SequencedTickerBboQuote& quote);
+      void store(const std::vector<SequencedTickerBboQuote>& quotes);
       std::vector<SequencedBookQuote> load_book_quotes(
-        const SecurityMarketDataQuery& query);
-      void store(const SequencedSecurityBookQuote& quote);
-      void store(const std::vector<SequencedSecurityBookQuote>& quotes);
+        const TickerQuery& query);
+      void store(const SequencedTickerBookQuote& quote);
+      void store(const std::vector<SequencedTickerBookQuote>& quotes);
       std::vector<SequencedTimeAndSale> load_time_and_sales(
-        const SecurityMarketDataQuery& query);
-      void store(const SequencedSecurityTimeAndSale& time_and_sale);
-      void store(
-        const std::vector<SequencedSecurityTimeAndSale>& time_and_sales);
+        const TickerQuery& query);
+      void store(const SequencedTickerTimeAndSale& time_and_sale);
+      void store(const std::vector<SequencedTickerTimeAndSale>& time_and_sales);
       void close();
 
     private:
@@ -64,6 +61,10 @@ namespace Nexus {
       std::vector<T> submit(const Query& query);
   };
 
+  template<typename C>
+  ClientHistoricalDataStore(C&&) ->
+    ClientHistoricalDataStore<std::remove_cvref_t<C>>;
+
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   template<Beam::Initializes<C> CF>
   ClientHistoricalDataStore<C>::ClientHistoricalDataStore(CF&& client)
@@ -75,18 +76,18 @@ namespace Nexus {
   }
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
-  std::vector<SecurityInfo> ClientHistoricalDataStore<C>::load_security_info(
-      const SecurityInfoQuery& query) {
+  std::vector<TickerInfo> ClientHistoricalDataStore<C>::load_ticker_info(
+      const TickerInfoQuery& query) {
     return m_client->query(query);
   }
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
-  void ClientHistoricalDataStore<C>::store(const SecurityInfo& info) {}
+  void ClientHistoricalDataStore<C>::store(const TickerInfo& info) {}
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   std::vector<SequencedOrderImbalance>
       ClientHistoricalDataStore<C>::load_order_imbalances(
-        const VenueMarketDataQuery& query) {
+        const VenueQuery& query) {
     return submit<SequencedOrderImbalance>(query);
   }
 
@@ -100,48 +101,46 @@ namespace Nexus {
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   std::vector<SequencedBboQuote>
-      ClientHistoricalDataStore<C>::load_bbo_quotes(
-        const SecurityMarketDataQuery& query) {
+      ClientHistoricalDataStore<C>::load_bbo_quotes(const TickerQuery& query) {
     return submit<SequencedBboQuote>(query);
   }
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   void ClientHistoricalDataStore<C>::store(
-    const SequencedSecurityBboQuote& quote) {}
+    const SequencedTickerBboQuote& quote) {}
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   void ClientHistoricalDataStore<C>::store(
-    const std::vector<SequencedSecurityBboQuote>& quotes) {}
+    const std::vector<SequencedTickerBboQuote>& quotes) {}
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   std::vector<SequencedBookQuote>
-      ClientHistoricalDataStore<C>::load_book_quotes(
-        const SecurityMarketDataQuery& query) {
+      ClientHistoricalDataStore<C>::load_book_quotes(const TickerQuery& query) {
     return submit<SequencedBookQuote>(query);
   }
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   void ClientHistoricalDataStore<C>::store(
-    const SequencedSecurityBookQuote& quote) {}
+    const SequencedTickerBookQuote& quote) {}
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   void ClientHistoricalDataStore<C>::store(
-    const std::vector<SequencedSecurityBookQuote>& quotes) {}
+    const std::vector<SequencedTickerBookQuote>& quotes) {}
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   std::vector<SequencedTimeAndSale>
       ClientHistoricalDataStore<C>::load_time_and_sales(
-        const SecurityMarketDataQuery& query) {
+        const TickerQuery& query) {
     return submit<SequencedTimeAndSale>(query);
   }
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   void ClientHistoricalDataStore<C>::store(
-    const SequencedSecurityTimeAndSale& time_and_sale) {}
+    const SequencedTickerTimeAndSale& time_and_sale) {}
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   void ClientHistoricalDataStore<C>::store(
-    const std::vector<SequencedSecurityTimeAndSale>& time_and_sales) {}
+    const std::vector<SequencedTickerTimeAndSale>& time_and_sales) {}
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   void ClientHistoricalDataStore<C>::close() {

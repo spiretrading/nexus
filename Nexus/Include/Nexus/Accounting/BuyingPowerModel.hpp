@@ -5,7 +5,6 @@
 #include <vector>
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
@@ -64,7 +63,7 @@ namespace Nexus {
         Quantity m_quantity;
       };
       std::unordered_map<OrderId, OrderFields> m_order_fields;
-      std::unordered_map<Security, BuyingPowerEntry> m_buying_power_entries;
+      std::unordered_map<Ticker, BuyingPowerEntry> m_buying_power_entries;
       std::unordered_map<CurrencyId, Money> m_buying_power;
 
       static Money compute_buying_power(
@@ -93,7 +92,7 @@ namespace Nexus {
 
   inline Money BuyingPowerModel::submit(
       OrderId id, const OrderFields& fields, Money expected_price) {
-    auto& entry = m_buying_power_entries[fields.m_security];
+    auto& entry = m_buying_power_entries[fields.m_ticker];
     auto& buying_power = m_buying_power[fields.m_currency];
     buying_power -= compute_buying_power(entry);
     auto& order_entries = pick(fields.m_side, entry.m_asks, entry.m_bids);
@@ -126,7 +125,7 @@ namespace Nexus {
     }
     auto& order_fields = m_order_fields.at(report.m_id);
     auto& buying_power_entry =
-      m_buying_power_entries.at(order_fields.m_security);
+      m_buying_power_entries.at(order_fields.m_ticker);
     auto& buying_power = m_buying_power[order_fields.m_currency];
     buying_power -= compute_buying_power(buying_power_entry);
     auto& order_entries = pick(order_fields.m_side,
@@ -146,8 +145,7 @@ namespace Nexus {
         buying_power_entry.m_quantity < 0) ||
         (order_fields.m_side == Side::ASK &&
           buying_power_entry.m_quantity > 0)) {
-      auto delta =
-        std::min(abs(buying_power_entry.m_quantity), last_quantity);
+      auto delta = std::min(abs(buying_power_entry.m_quantity), last_quantity);
       buying_power_entry.m_expenditure -=
         get_direction(get_opposite(order_fields.m_side)) * delta *
           (buying_power_entry.m_expenditure / buying_power_entry.m_quantity);

@@ -31,14 +31,14 @@ def parse_ip_address(source):
   return beam.IpAddress(
     source[0:separator], int(source[separator + 1 :]))
 
-def load_securities(source):
-  securities = []
+def load_tickers(source):
+  tickers = []
   cursor = source.cursor()
   query = 'SELECT DISTINCT `symbol`, `venue` FROM `bbo_quotes`'
   cursor.execute(query)
   for result in cursor.fetchall():
-    securities.append(nexus.Security(result[0], nexus.Venue(result[1])))
-  return securities
+    tickers.append(nexus.Ticker(result[0], nexus.Venue(result[1])))
+  return tickers
 
 def load_venues(source):
   venues = []
@@ -49,16 +49,16 @@ def load_venues(source):
     venues.append(nexus.Venue(result[0]))
   return venues
 
-def backup_security_info(source, destination):
+def backup_ticker_info(source, destination):
   query = beam.PagedQuery()
   query.index = nexus.Region.GLOBAL
   query.snapshot_limit = beam.SnapshotLimit.UNLIMITED
-  rows = source.load_security_info(query)
+  rows = source.load_ticker_info(query)
   for info in rows:
     destination.store(info)
 
 def backup(index, start, end, loader, destination):
-  if isinstance(index, nexus.Security):
+  if isinstance(index, nexus.Ticker):
     country = nexus.DEFAULT_VENUES.select(index.venue).country_code
     if country == nexus.default_countries.CA or \
         country == nexus.default_countries.US:
@@ -136,7 +136,7 @@ def main():
   else:
     sqlite_path = args.input
     connection = sqlite3.connect(sqlite_path)
-  securities = load_securities(connection)
+  tickers = load_tickers(connection)
   venues = load_venues(connection)
   connection.close()
   mysql_data_store = nexus.MySqlHistoricalDataStore(
@@ -150,8 +150,8 @@ def main():
     destination = mysql_data_store
   routines = beam.RoutineHandlerGroup()
   count = 0
-  for security in securities:
-    routines.spawn(functools.partial(backup_spawn, security, args.start,
+  for ticker in tickers:
+    routines.spawn(functools.partial(backup_spawn, ticker, args.start,
       args.end, source, destination))
     count += 1
     if count % args.cores == 0:
@@ -166,7 +166,7 @@ def main():
     if count % args.cores == 0:
       routines.wait()
   routines.wait()
-  backup_security_info(source, destination)
+  backup_ticker_info(source, destination)
 
 if __name__ == '__main__':
   main()

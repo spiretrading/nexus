@@ -45,10 +45,10 @@ namespace {
       return QVariant::fromValue(any_cast<PositionSideToken>(value));
     } else if(value.type() == typeid(Region)) {
       return QVariant::fromValue(any_cast<Region>(value));
-    } else if(value.type() == typeid(Security)) {
-      return QVariant::fromValue(any_cast<Security>(value));
     } else if(value.type() == typeid(Side)) {
       return QVariant::fromValue(any_cast<Side>(value));
+    } else if(value.type() == typeid(Ticker)) {
+      return QVariant::fromValue(any_cast<Ticker>(value));
     } else if(value.type() == typeid(TimeInForce)) {
       return QVariant::fromValue(any_cast<TimeInForce>(value));
     } else if(value.type() == typeid(Venue)) {
@@ -118,10 +118,6 @@ QString Spire::LegacyUI::displayText(const Region& region) {
   return QString::fromStdString(lexical_cast<std::string>(region));
 }
 
-QString Spire::LegacyUI::displayText(const Security& security) {
-  return QString::fromStdString(lexical_cast<std::string>(security));
-}
-
 const QString& Spire::LegacyUI::displayText(Side side) {
   if(side == Side::ASK) {
     static const auto value = QObject::tr("Ask");
@@ -133,6 +129,10 @@ const QString& Spire::LegacyUI::displayText(Side side) {
     static const auto value = QObject::tr("None");
     return value;
   }
+}
+
+QString Spire::LegacyUI::displayText(const Ticker& ticker) {
+  return QString::fromStdString(lexical_cast<std::string>(ticker));
 }
 
 const QString& Spire::LegacyUI::displayText(OrderStatus status) {
@@ -244,10 +244,10 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return value.value<PositionSideToken>().ToString();
   } else if(value.canConvert<Region>()) {
     return ::displayText(value.value<Region>());
-  } else if(value.canConvert<Security>()) {
-    return ::displayText(value.value<Security>());
   } else if(value.canConvert<Side>()) {
     return Spire::LegacyUI::displayText(value.value<Side>());
+  } else if(value.canConvert<Ticker>()) {
+    return ::displayText(value.value<Ticker>());
   } else if(value.canConvert<TimeInForce>()) {
     return QString::fromStdString(
       lexical_cast<std::string>(value.value<TimeInForce>().get_type()));
@@ -307,12 +307,12 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
   } else if(leftVariant.canConvert<OrderType>()) {
     return Compare(displayText(leftVariant.value<OrderType>()),
       displayText(rightVariant.value<OrderType>()), left, right);
-  } else if(leftVariant.canConvert<Security>()) {
-    return Compare(::displayText(leftVariant.value<Security>()),
-      ::displayText(rightVariant.value<Security>()), left, right);
   } else if(leftVariant.canConvert<Side>()) {
     return Compare(displayText(leftVariant.value<Side>()),
       displayText(rightVariant.value<Side>()), left, right);
+  } else if(leftVariant.canConvert<Ticker>()) {
+    return Compare(::displayText(leftVariant.value<Ticker>()),
+      ::displayText(rightVariant.value<Ticker>()), left, right);
   } else if(leftVariant.canConvert<TimeInForce>()) {
     return Compare(
       lexical_cast<std::string>(leftVariant.value<TimeInForce>().get_type()),

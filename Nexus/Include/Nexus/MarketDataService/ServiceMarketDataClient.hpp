@@ -37,26 +37,26 @@ namespace Nexus {
 
       ~ServiceMarketDataClient();
 
-      void query(const VenueMarketDataQuery& query,
+      void query(const VenueQuery& query,
         Beam::ScopedQueueWriter<SequencedOrderImbalance> queue);
-      void query(const VenueMarketDataQuery& query,
-        Beam::ScopedQueueWriter<OrderImbalance> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(
+        const VenueQuery& query, Beam::ScopedQueueWriter<OrderImbalance> queue);
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedBboQuote> queue);
-      void query(const SecurityMarketDataQuery& query,
-        Beam::ScopedQueueWriter<BboQuote> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<BboQuote> queue);
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedBookQuote> queue);
-      void query(const SecurityMarketDataQuery& query,
-        Beam::ScopedQueueWriter<BookQuote> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<BookQuote> queue);
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
-      void query(const SecurityMarketDataQuery& query,
-        Beam::ScopedQueueWriter<TimeAndSale> queue);
-      std::vector<SecurityInfo> query(const SecurityInfoQuery& query);
-      SecuritySnapshot load_snapshot(const Security& security);
-      SecurityTechnicals load_technicals(const Security& security);
-      std::vector<SecurityInfo> load_security_info_from_prefix(
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue);
+      std::vector<TickerInfo> query(const TickerInfoQuery& query);
+      TickerSnapshot load_snapshot(const Ticker& ticker);
+      TickerTechnicals load_technicals(const Ticker& ticker);
+      std::vector<TickerInfo> load_ticker_info_from_prefix(
         const std::string& prefix);
       void close();
 
@@ -69,15 +69,15 @@ namespace Nexus {
       using ServiceProtocolClient =
         typename ServiceProtocolClientBuilder::Client;
       Beam::ServiceProtocolClientHandler<B> m_client_handler;
-      QueryClientPublisher<OrderImbalance, VenueMarketDataQuery,
+      QueryClientPublisher<OrderImbalance, VenueQuery,
         QueryOrderImbalancesService, EndOrderImbalanceQueryMessage>
           m_order_imbalance_publisher;
-      QueryClientPublisher<BboQuote, SecurityMarketDataQuery,
+      QueryClientPublisher<BboQuote, TickerQuery,
         QueryBboQuotesService, EndBboQuoteQueryMessage> m_bbo_quote_publisher;
-      QueryClientPublisher<BookQuote, SecurityMarketDataQuery,
+      QueryClientPublisher<BookQuote, TickerQuery,
         QueryBookQuotesService, EndBookQuoteQueryMessage>
           m_book_quote_publisher;
-      QueryClientPublisher<TimeAndSale, SecurityMarketDataQuery,
+      QueryClientPublisher<TimeAndSale, TickerQuery,
         QueryTimeAndSalesService, EndTimeAndSaleQueryMessage>
           m_time_and_sale_publisher;
       Beam::OpenState m_open_state;
@@ -122,94 +122,94 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
-  void ServiceMarketDataClient<B>::query(const VenueMarketDataQuery& query,
+  void ServiceMarketDataClient<B>::query(const VenueQuery& query,
       Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {
     m_order_imbalance_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
-  void ServiceMarketDataClient<B>::query(const VenueMarketDataQuery& query,
-      Beam::ScopedQueueWriter<OrderImbalance> queue) {
+  void ServiceMarketDataClient<B>::query(
+      const VenueQuery& query, Beam::ScopedQueueWriter<OrderImbalance> queue) {
     m_order_imbalance_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
-  void ServiceMarketDataClient<B>::query(const SecurityMarketDataQuery& query,
+  void ServiceMarketDataClient<B>::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
     m_bbo_quote_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
-  void ServiceMarketDataClient<B>::query(const SecurityMarketDataQuery& query,
-      Beam::ScopedQueueWriter<BboQuote> queue) {
+  void ServiceMarketDataClient<B>::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<BboQuote> queue) {
     m_bbo_quote_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
-  void ServiceMarketDataClient<B>::query(const SecurityMarketDataQuery& query,
+  void ServiceMarketDataClient<B>::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
     m_book_quote_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
-  void ServiceMarketDataClient<B>::query(const SecurityMarketDataQuery& query,
-      Beam::ScopedQueueWriter<BookQuote> queue) {
+  void ServiceMarketDataClient<B>::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<BookQuote> queue) {
     m_book_quote_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
-  void ServiceMarketDataClient<B>::query(const SecurityMarketDataQuery& query,
+  void ServiceMarketDataClient<B>::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
     m_time_and_sale_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
-  void ServiceMarketDataClient<B>::query(const SecurityMarketDataQuery& query,
-      Beam::ScopedQueueWriter<TimeAndSale> queue) {
+  void ServiceMarketDataClient<B>::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue) {
     m_time_and_sale_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
-  std::vector<SecurityInfo> ServiceMarketDataClient<B>::query(
-      const SecurityInfoQuery& query) {
+  std::vector<TickerInfo> ServiceMarketDataClient<B>::query(
+      const TickerInfoQuery& query) {
     return Beam::service_or_throw_with_nested([&] {
       auto client = m_client_handler.get_client();
-      return client->template send_request<QuerySecurityInfoService>(query);
-    }, "Failed to query for security info records: " +
+      return client->template send_request<QueryTickerInfoService>(query);
+    }, "Failed to query for ticker info records: " +
       boost::lexical_cast<std::string>(query));
   }
 
   template<typename B>
-  SecuritySnapshot ServiceMarketDataClient<B>::load_snapshot(
-      const Security& security) {
+  TickerSnapshot ServiceMarketDataClient<B>::load_snapshot(
+      const Ticker& ticker) {
     return Beam::service_or_throw_with_nested([&] {
       auto client = m_client_handler.get_client();
-      return client->template send_request<LoadSecuritySnapshotService>(
-        security);
-    }, "Failed to load security snapshot: " +
-      boost::lexical_cast<std::string>(security));
+      return client->template send_request<LoadTickerSnapshotService>(
+        ticker);
+    }, "Failed to load ticker snapshot: " +
+      boost::lexical_cast<std::string>(ticker));
   }
 
   template<typename B>
-  SecurityTechnicals ServiceMarketDataClient<B>::load_technicals(
-      const Security& security) {
+  TickerTechnicals ServiceMarketDataClient<B>::load_technicals(
+      const Ticker& ticker) {
     return Beam::service_or_throw_with_nested([&] {
       auto client = m_client_handler.get_client();
-      return client->template send_request<LoadSecurityTechnicalsService>(
-        security);
-    }, "Failed to load security technicals: " +
-      boost::lexical_cast<std::string>(security));
+      return client->template send_request<LoadTickerTechnicalsService>(
+        ticker);
+    }, "Failed to load ticker technicals: " +
+      boost::lexical_cast<std::string>(ticker));
   }
 
   template<typename B>
-  std::vector<SecurityInfo>
-      ServiceMarketDataClient<B>::load_security_info_from_prefix(
+  std::vector<TickerInfo>
+      ServiceMarketDataClient<B>::load_ticker_info_from_prefix(
         const std::string& prefix) {
     return Beam::service_or_throw_with_nested([&] {
       auto client = m_client_handler.get_client();
-      return client->template send_request<LoadSecurityInfoFromPrefixService>(
+      return client->template send_request<LoadTickerInfoFromPrefixService>(
         prefix);
-    }, "Failed to load security info from prefix: \"" + prefix + "\"");
+    }, "Failed to load ticker info from prefix: \"" + prefix + "\"");
   }
 
   template<typename B>

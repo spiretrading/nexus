@@ -9,13 +9,13 @@ using namespace Nexus;
 using namespace Spire;
 
 BookViewWindowSettings::BookViewWindowSettings(const BookViewWindow& window)
-    : m_security_view(window.m_security_view->save_state()),
+    : m_ticker_view(window.m_ticker_view->save_state()),
       m_identifier(window.GetIdentifier()),
       m_link_identifier(window.m_link_identifier),
       m_geometry(window.saveGeometry()) {
-  auto& security = window.GetDisplayedSecurity();
-  if(security) {
-    m_name = "Book View - " + to_string(security);
+  auto& ticker = window.GetDisplayedTicker();
+  if(ticker) {
+    m_name = "Book View - " + to_string(ticker);
   } else {
     m_name = "Book View";
   }
@@ -27,7 +27,7 @@ std::string BookViewWindowSettings::GetName() const {
 
 QWidget* BookViewWindowSettings::Reopen(Ref<UserProfile> user_profile) const {
   auto window = new BookViewWindow(Ref(user_profile),
-    user_profile->GetSecurityInfoQueryModel(),
+    user_profile->GetTickerInfoQueryModel(),
     user_profile->GetKeyBindings(),
     user_profile->GetBookViewPropertiesWindowFactory(),
     user_profile->GetBookViewModelBuilder(), m_identifier);
@@ -40,5 +40,5 @@ void BookViewWindowSettings::Apply(
   auto& window = dynamic_cast<BookViewWindow&>(*widget);
   restore_geometry(window, m_geometry);
   window.m_link_identifier = m_link_identifier;
-  window.m_security_view->restore(m_security_view);
+  window.m_ticker_view->restore(m_ticker_view);
 }

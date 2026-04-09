@@ -81,19 +81,18 @@ namespace Nexus::Python {
       def(pybind11::init<const Bookkeeper&>()).
       def(pybind11::init<const Bookkeeper&, const VenueDatabase&>()).
       def_property_readonly("bookkeeper", &Portfolio::get_bookkeeper).
-      def_property_readonly("security_entries",
-        &Portfolio::get_security_entries).
+      def_property_readonly("ticker_entries", &Portfolio::get_ticker_entries).
       def_property_readonly("unrealized_profit_and_losses",
         &Portfolio::get_unrealized_profit_and_losses).
       def("update", pybind11::overload_cast<
         const OrderFields&, const ExecutionReport&>(&Portfolio::update),
         pybind11::arg("fields"), pybind11::arg("report")).
-      def("update_ask", &Portfolio::update_ask, pybind11::arg("security"),
+      def("update_ask", &Portfolio::update_ask, pybind11::arg("ticker"),
         pybind11::arg("value")).
-      def("update_bid", &Portfolio::update_bid, pybind11::arg("security"),
+      def("update_bid", &Portfolio::update_bid, pybind11::arg("ticker"),
         pybind11::arg("value")).
-      def("update", pybind11::overload_cast<const Security&, Money, Money>(
-        &Portfolio::update), pybind11::arg("security"),
+      def("update", pybind11::overload_cast<const Ticker&, Money, Money>(
+        &Portfolio::update), pybind11::arg("ticker"),
         pybind11::arg("ask_value"), pybind11::arg("bid_value")).
       def("__iter__", [] (const Portfolio& portfolio) {
         auto updates = std::vector<PortfolioUpdateEntry>();
@@ -113,19 +112,19 @@ namespace Nexus::Python {
       portfolio.def(pybind11::init()).
         def(pybind11::init<const VenueDatabase&>());
     }
-    using SecurityEntry = typename Portfolio::SecurityEntry;
-    pybind11::class_<SecurityEntry>(portfolio, "SecurityEntry").
+    using TickerEntry = typename Portfolio::TickerEntry;
+    pybind11::class_<TickerEntry>(portfolio, "TickerEntry").
       def(pybind11::init<CurrencyId>()).
-      def_readwrite("valuation", &SecurityEntry::m_valuation).
-      def_readwrite("unrealized", &SecurityEntry::m_unrealized);
+      def_readwrite("valuation", &TickerEntry::m_valuation).
+      def_readwrite("unrealized", &TickerEntry::m_unrealized);
     module.def("get_realized_profit_and_loss",
       pybind11::overload_cast<const Inventory&>(&get_realized_profit_and_loss));
     module.def("get_unrealized_profit_and_loss",
-      [] (const Inventory& inventory, const SecurityValuation& valuation) {
+      [] (const Inventory& inventory, const TickerValuation& valuation) {
         return get_unrealized_profit_and_loss(inventory, valuation);
       });
     module.def("get_total_profit_and_loss",
-      [] (const Inventory& inventory, const SecurityValuation& valuation) {
+      [] (const Inventory& inventory, const TickerValuation& valuation) {
         return get_total_profit_and_loss(inventory, valuation);
       });
     module.def("get_total_profit_and_loss",
@@ -160,10 +159,10 @@ namespace Nexus::Python {
   void export_position_order_book(pybind11::module& module);
 
   /**
-   * Exports the SecurityValuation struct.
+   * Exports the TickerValuation struct.
    * @param module The module to export to.
    */
-  void export_security_valuation(pybind11::module& module);
+  void export_ticker_valuation(pybind11::module& module);
 
   /**
    * Exports the ShortingModel class.

@@ -80,9 +80,8 @@ bool PortfolioSelectionModel::TestSelectionAcceptsEntry(
       m_selectedCurrencies.end()) {
     return false;
   }
-  if(m_selectedVenues.find(
-      entry.m_inventory.m_position.m_security.get_venue()) ==
-        m_selectedVenues.end()) {
+  if(m_selectedVenues.find(entry.m_inventory.m_position.m_ticker.get_venue()) ==
+      m_selectedVenues.end()) {
     return false;
   }
   if(m_selectedSides.find(get_side(entry.m_inventory.m_position)) ==

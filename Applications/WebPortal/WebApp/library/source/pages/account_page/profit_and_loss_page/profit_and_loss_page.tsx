@@ -1,5 +1,6 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Button, DateInput, EmptyMessage, ErrorMessage, PageLayout,
   Select } from '../../..';
@@ -501,10 +502,10 @@ function ProfitAndLossList(props: {
             <ProfitAndLossItem
               symbol={currency.symbol}
               code={currency.code}
-              totalPnl={currency.totalPnl}
+              totalProfitAndLoss={currency.totalProfitAndLoss}
               totalVolume={currency.totalVolume}
               totalFees={currency.totalFees}
-              securities={currency.securities}/>
+              tickers={currency.tickers}/>
           </li>)}
     </ul>);
 }
@@ -553,16 +554,16 @@ export namespace ProfitAndLossPage {
     code: string;
 
     /** The total profit and loss. */
-    totalPnl: string;
+    totalProfitAndLoss: Nexus.Money;
 
     /** The total volume traded. */
-    totalVolume: string;
+    totalVolume: Nexus.Quantity;
 
     /** The total fees incurred. */
-    totalFees: string;
+    totalFees: Nexus.Money;
 
-    /** The list of securities traded. */
-    securities: ProfitAndLossTable.Security[];
+    /** The list of tickers traded. */
+    tickers: ProfitAndLossTable.Ticker[];
   }
 }
 

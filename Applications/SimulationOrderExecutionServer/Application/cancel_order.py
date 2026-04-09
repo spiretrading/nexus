@@ -44,7 +44,7 @@ def parse_region(service_clients, region):
     if region:
       region = venue_database.from_code(region)
     else:
-      region = nexus.parse_security(region)
+      region = nexus.parse_ticker(region)
   return nexus.Region(region)
 
 def cancel_order(service_clients, order, message):
@@ -78,7 +78,7 @@ def cancel_account(service_clients, account, region, begin, end, message):
   orders = []
   beam.flush(queue, orders)
   for order in orders:
-    if nexus.Region(order.info.fields.security) <= region:
+    if nexus.Region(order.info.fields.ticker) <= region:
       cancel_order(service_clients, order, message)
 
 def cancel_region(service_clients, region, begin, end, message):

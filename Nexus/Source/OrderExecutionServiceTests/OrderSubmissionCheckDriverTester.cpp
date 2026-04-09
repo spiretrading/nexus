@@ -1,6 +1,7 @@
 #include <future>
 #include <Beam/Queues/Queue.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/OrderExecutionService/OrderSubmissionCheckDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/TestOrderExecutionDriver.hpp"
 
@@ -66,7 +67,7 @@ namespace {
   auto make_order_info(const DirectoryEntry& account) {
     auto fields = OrderFields();
     fields.m_account = account;
-    fields.m_security = Security("TST", TSX);
+    fields.m_ticker = parse_ticker("TST.TSX");
     fields.m_currency = CAD;
     fields.m_type = OrderType::LIMIT;
     fields.m_side = Side::BID;

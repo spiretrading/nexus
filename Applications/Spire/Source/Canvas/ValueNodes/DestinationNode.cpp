@@ -1,7 +1,7 @@
 #include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
 #include "Spire/Canvas/Common/CanvasNodeOperations.hpp"
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
-#include "Spire/Canvas/Types/SecurityType.hpp"
+#include "Spire/Canvas/Types/TickerType.hpp"
 #include "Spire/Canvas/Types/VenueType.hpp"
 
 using namespace Beam;
@@ -43,12 +43,12 @@ Venue DestinationNode::GetVenue() const {
     return Venue();
   }
   if(name.empty()) {
-    if(auto securityNode = dynamic_cast<const ValueNode<SecurityType>*>(
+    if(auto tickerNode = dynamic_cast<const ValueNode<TickerType>*>(
         &*node)) {
-      return securityNode->GetValue().get_venue();
+      return tickerNode->GetValue().get_venue();
     }
-    if(auto marketNode = dynamic_cast<const ValueNode<VenueType>*>(&*node)) {
-      return marketNode->GetValue();
+    if(auto venueNode = dynamic_cast<const ValueNode<VenueType>*>(&*node)) {
+      return venueNode->GetValue();
     }
     return Venue();
   }
@@ -59,11 +59,11 @@ Venue DestinationNode::GetVenue() const {
   if(!node) {
     return Venue();
   }
-  if(auto securityNode = dynamic_cast<const ValueNode<SecurityType>*>(&*node)) {
-    return securityNode->GetValue().get_venue();
+  if(auto tickerNode = dynamic_cast<const ValueNode<TickerType>*>(&*node)) {
+    return tickerNode->GetValue().get_venue();
   }
-  if(auto marketNode = dynamic_cast<const ValueNode<VenueType>*>(&*node)) {
-    return marketNode->GetValue();
+  if(auto venueNode = dynamic_cast<const ValueNode<VenueType>*>(&*node)) {
+    return venueNode->GetValue();
   }
   return Venue();
 }

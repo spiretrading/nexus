@@ -122,13 +122,13 @@ void ReportingWebServlet::generate_reports(
         if(is_empty(inventory)) {
           continue;
         }
-        auto security_entry = SecurityReportEntry();
-        security_entry.m_security = inventory.m_position.m_security;
-        security_entry.m_volume = inventory.m_volume;
-        security_entry.m_fees = inventory.m_fees;
-        security_entry.m_profit_and_loss =
+        auto ticker_entry = TickerReportEntry();
+        ticker_entry.m_ticker = inventory.m_position.m_ticker;
+        ticker_entry.m_volume = inventory.m_volume;
+        ticker_entry.m_fees = inventory.m_fees;
+        ticker_entry.m_profit_and_loss =
           inventory.m_gross_profit_and_loss - inventory.m_fees;
-        currency_entry.m_securities.push_back(std::move(security_entry));
+        currency_entry.m_tickers.push_back(std::move(ticker_entry));
       }
       if(auto rate = exchange_rates.find(
           CurrencyPair(total.m_position.m_currency, account_currency))) {

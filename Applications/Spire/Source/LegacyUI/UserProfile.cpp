@@ -7,7 +7,7 @@
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/ServiceSecurityInfoQueryModel.hpp"
+#include "Spire/Spire/ServiceTickerInfoQueryModel.hpp"
 #include "Spire/TimeAndSales/ServiceTimeAndSalesModel.hpp"
 
 using namespace Beam;
@@ -18,14 +18,13 @@ using namespace Spire::LegacyUI;
 
 namespace {
   std::shared_ptr<TimeAndSalesModel> time_and_sales_model_builder(
-      const Security& security, MarketDataClient client) {
-    return std::make_shared<ServiceTimeAndSalesModel>(security, client);
+      const Ticker& ticker, MarketDataClient client) {
+    return std::make_shared<ServiceTimeAndSalesModel>(ticker, client);
   }
 
   std::shared_ptr<BookViewModel> book_view_model_builder(
-      const Security& security, BlotterSettings& blotter,
-      MarketDataClient client) {
-    return std::make_shared<ServiceBookViewModel>(security, blotter, client);
+      const Ticker& ticker, BlotterSettings& blotter, MarketDataClient client) {
+    return std::make_shared<ServiceBookViewModel>(ticker, blotter, client);
   }
 }
 
@@ -45,24 +44,23 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
         QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
       m_recentlyClosedWindows(
         std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>()),
-      m_security_info_query_model(
-        std::make_shared<ServiceSecurityInfoQueryModel>(
-          m_clients.get_market_data_client())),
+      m_ticker_info_query_model(std::make_shared<ServiceTickerInfoQueryModel>(
+        m_clients.get_market_data_client())),
       m_book_view_properties_window_factory(
         std::make_shared<BookViewPropertiesWindowFactory>(
           std::make_shared<LocalBookViewPropertiesModel>(
             std::move(book_view_properties)))),
-      m_book_view_model_builder([=] (const auto& security) {
+      m_book_view_model_builder([=] (const auto& ticker) {
         return book_view_model_builder(
-          security, *m_blotterSettings, m_clients.get_market_data_client());
+          ticker, *m_blotterSettings, m_clients.get_market_data_client());
       }),
       m_time_and_sales_properties_window_factory(
         std::make_shared<TimeAndSalesPropertiesWindowFactory>(
           std::make_shared<LocalTimeAndSalesPropertiesModel>(
             std::move(time_and_sales_properties)))),
-      m_time_and_sales_model_builder([=] (const auto& security) {
+      m_time_and_sales_model_builder([=] (const auto& ticker) {
         return time_and_sales_model_builder(
-          security, m_clients.get_market_data_client());
+          ticker, m_clients.get_market_data_client());
       }),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_additionalTagDatabase(additionalTagDatabase) {
@@ -119,9 +117,9 @@ const std::shared_ptr<RecentlyClosedWindowListModel>&
   return m_recentlyClosedWindows;
 }
 
-const std::shared_ptr<SecurityInfoQueryModel>&
-    UserProfile::GetSecurityInfoQueryModel() const {
-  return m_security_info_query_model;
+const std::shared_ptr<TickerInfoQueryModel>&
+    UserProfile::GetTickerInfoQueryModel() const {
+  return m_ticker_info_query_model;
 }
 
 const BlotterSettings& UserProfile::GetBlotterSettings() const {
@@ -242,16 +240,16 @@ std::filesystem::path Spire::get_profile_path(const std::string& username) {
 }
 
 Quantity Spire::get_default_order_quantity(const UserProfile& userProfile,
-    const Security& security, Side side) {
+    const Ticker& ticker, Side side) {
   auto position = [&] {
     auto& blotter = userProfile.GetBlotterSettings().GetActiveBlotter();
     if(auto position = blotter.GetOpenPositionsModel().GetOpenPosition(
-        security)) {
+        ticker)) {
       return position->m_inventory.m_position.m_quantity;
     }
     return Quantity(0);
   }();
   return get_default_order_quantity(
-    *userProfile.GetKeyBindings()->get_interactions_key_bindings(security),
-    security, position, side);
+    *userProfile.GetKeyBindings()->get_interactions_key_bindings(ticker),
+    ticker, position, side);
 }

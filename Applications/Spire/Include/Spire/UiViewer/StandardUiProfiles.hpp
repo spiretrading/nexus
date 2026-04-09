@@ -230,15 +230,6 @@ namespace Spire {
   /** Returns a UiProfile for the SearchBox. */
   UiProfile make_search_box_profile();
 
-  /** Returns a UiProfile for the SecurityBox. */
-  UiProfile make_security_box_profile();
-
-  /** Returns a UiProfile for the SecurityListItem. */
-  UiProfile make_security_list_item_profile();
-
-  /** Returns a UiProfile for the SecurityView. */
-  UiProfile make_security_view_profile();
-
   /** Returns a UiProfile for the SideBox. */
   UiProfile make_side_box_profile();
 
@@ -283,6 +274,15 @@ namespace Spire {
 
   /** Returns a UiProfile for the TextBox. */
   UiProfile make_text_box_profile();
+
+  /** Returns a UiProfile for the TickerBox. */
+  UiProfile make_ticker_box_profile();
+
+  /** Returns a UiProfile for the TickerListItem. */
+  UiProfile make_ticker_list_item_profile();
+
+  /** Returns a UiProfile for the TickerView. */
+  UiProfile make_ticker_view_profile();
 
   /** Returns a UiProfile for the TimeBox. */
   UiProfile make_time_box_profile();

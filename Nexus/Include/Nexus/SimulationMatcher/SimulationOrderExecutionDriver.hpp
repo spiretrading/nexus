@@ -10,7 +10,7 @@
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
-#include "Nexus/SimulationMatcher/SecurityOrderSimulator.hpp"
+#include "Nexus/SimulationMatcher/TickerOrderSimulator.hpp"
 
 namespace Nexus {
 
@@ -50,21 +50,21 @@ namespace Nexus {
       void close();
 
     private:
-      using SecurityOrderSimulator = Nexus::SecurityOrderSimulator<TimeClient*>;
+      using TickerOrderSimulator = Nexus::TickerOrderSimulator<TimeClient*>;
       Beam::local_ptr_t<M> m_market_data_client;
       Beam::local_ptr_t<T> m_time_client;
       Beam::SynchronizedUnorderedMap<OrderId, std::shared_ptr<PrimitiveOrder>>
         m_orders;
       OrderId m_next_order_id;
-      Beam::SynchronizedUnorderedMap<Security,
-        std::unique_ptr<SecurityOrderSimulator>, Beam::Mutex> m_simulators;
+      Beam::SynchronizedUnorderedMap<Ticker,
+        std::unique_ptr<TickerOrderSimulator>, Beam::Mutex> m_simulators;
       Beam::OpenState m_open_state;
 
       SimulationOrderExecutionDriver(
         const SimulationOrderExecutionDriver&) = delete;
       SimulationOrderExecutionDriver& operator =(
         const SimulationOrderExecutionDriver&) = delete;
-      SecurityOrderSimulator& load(const Security& security);
+      TickerOrderSimulator& load(const Ticker& ticker);
   };
 
   template<typename M, typename T>
@@ -95,7 +95,7 @@ namespace Nexus {
       const SequencedAccountOrderRecord& record) {
     auto order = std::make_shared<PrimitiveOrder>(**record);
     m_orders.insert((*record)->m_info.m_id, order);
-    auto& simulator = load((*record)->m_info.m_fields.m_security);
+    auto& simulator = load((*record)->m_info.m_fields.m_ticker);
     simulator.recover(order);
     return order;
   }
@@ -113,7 +113,7 @@ namespace Nexus {
       const OrderInfo& info) {
     auto order = std::make_shared<PrimitiveOrder>(info);
     m_orders.insert(info.m_id, order);
-    auto& simulator = load(info.m_fields.m_security);
+    auto& simulator = load(info.m_fields.m_ticker);
     simulator.submit(order);
     return order;
   }
@@ -124,7 +124,7 @@ namespace Nexus {
   void SimulationOrderExecutionDriver<M, T>::cancel(
       const OrderExecutionSession& session, OrderId id) {
     if(auto order = m_orders.find(id)) {
-      auto& simulator = load((*order)->get_info().m_fields.m_security);
+      auto& simulator = load((*order)->get_info().m_fields.m_ticker);
       simulator.cancel(*order);
     }
   }
@@ -136,7 +136,7 @@ namespace Nexus {
       const OrderExecutionSession& session, OrderId id,
       const ExecutionReport& report) {
     if(auto order = m_orders.find(id)) {
-      auto& simulator = load((*order)->get_info().m_fields.m_security);
+      auto& simulator = load((*order)->get_info().m_fields.m_ticker);
       simulator.update(*order, report);
     }
   }
@@ -155,11 +155,11 @@ namespace Nexus {
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  typename SimulationOrderExecutionDriver<M, T>::SecurityOrderSimulator&
-      SimulationOrderExecutionDriver<M, T>::load(const Security& security) {
-    return *m_simulators.get_or_insert(security, [&] {
-      return std::make_unique<SecurityOrderSimulator>(
-        *m_market_data_client, security, &*m_time_client);
+  typename SimulationOrderExecutionDriver<M, T>::TickerOrderSimulator&
+      SimulationOrderExecutionDriver<M, T>::load(const Ticker& ticker) {
+    return *m_simulators.get_or_insert(ticker, [&] {
+      return std::make_unique<TickerOrderSimulator>(
+        *m_market_data_client, ticker, &*m_time_client);
     });
   }
 }

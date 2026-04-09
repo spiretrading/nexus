@@ -12,13 +12,13 @@
 
 class QLineEdit;
 class QTableView;
-class Ui_SecurityInputDialog;
+class Ui_TickerInputDialog;
 
 namespace Spire {
 
   /**
    * Prompts the user for a single item within a Region. An item can be either a
-   * CountryCode, Venue, Security, or a Region.
+   * CountryCode, Venue, Ticker, or a Region.
    */
   class RegionItemInputDialog : public QDialog {
     public:
@@ -62,7 +62,7 @@ namespace Spire {
       bool eventFilter(QObject* receiver, QEvent* event) override;
 
     private:
-      std::unique_ptr<Ui_SecurityInputDialog> m_ui;
+      std::unique_ptr<Ui_TickerInputDialog> m_ui;
       UserProfile* m_userProfile;
       std::unique_ptr<RegionQueryModel> m_model;
       RegionCompleter* m_completer;

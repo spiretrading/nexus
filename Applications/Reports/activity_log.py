@@ -5,7 +5,7 @@ import nexus
 import sys
 import yaml
 
-def execute_report(start_date, end_date, security, venue, account,
+def execute_report(start_date, end_date, ticker, venue, account,
     venues, time_zones, service_locator_client, order_execution_client):
   orders = []
   activity_log = []
@@ -16,9 +16,9 @@ def execute_report(start_date, end_date, security, venue, account,
     account_orders = []
     beam.flush(order_queue, account_orders)
     for order in account_orders:
-      if security is not None and security != order.info.fields.security:
+      if ticker is not None and ticker != order.info.fields.ticker:
         continue
-      if venue is not None and venue != order.info.fields.security.venue:
+      if venue is not None and venue != order.info.fields.ticker.venue:
         continue
       orders.append(order)
       execution_reports = order.publisher.get_snapshot()
@@ -28,7 +28,7 @@ def execute_report(start_date, end_date, security, venue, account,
     accounts = service_locator_client.load_all_accounts()
     for account in accounts:
       (account_orders, account_log) = execute_report(start_date, end_date,
-        security, venue, account, venues, time_zones, service_locator_client,
+        ticker, venue, account, venues, time_zones, service_locator_client,
         order_execution_client)
       orders += account_orders
       activity_log += account_log
@@ -40,7 +40,7 @@ def output_order_log(orders):
   for order in orders:
     print('%s,%s,%s,%s,%s,%s,%s,%s,%s,%s' % (order.info.timestamp,
       order.info.fields.account.name, order.info.order_id,
-      order.info.fields.security.symbol, order.info.fields.type,
+      order.info.fields.ticker.symbol, order.info.fields.type,
       order.info.fields.side, order.info.fields.destination,
       order.info.fields.quantity, order.info.fields.price,
       order.info.fields.time_in_force.type))
@@ -48,7 +48,7 @@ def output_order_log(orders):
 def output_activity_log(activity_log):
   for report in activity_log:
     print('%s,%s,%s,%s,%s,%s,%s,%s,%s' % (report[1].timestamp, report[1].id,
-      report[0].side, report[0].security.symbol, report[1].status,
+      report[0].side, report[0].ticker.symbol, report[1].status,
       report[1].last_quantity, report[1].last_price, report[1].last_market,
       report[1].liquidity_flag))
 
@@ -113,14 +113,14 @@ def main():
   else:
     venue = None
   if args.symbol is not None:
-    security = nexus.parse_security(args.symbol, venues)
+    ticker = nexus.parse_ticker(args.symbol, venues)
   else:
-    security = None
+    ticker = None
   if args.account is not None:
     account = service_locator_client.find_account(args.account)
   else:
     account = None
-  (orders, activity_log) = execute_report(start_date, end_date, security,
+  (orders, activity_log) = execute_report(start_date, end_date, ticker,
     venue, account, venues, time_zones, service_locator_client,
     order_execution_client)
   output_order_log(orders)

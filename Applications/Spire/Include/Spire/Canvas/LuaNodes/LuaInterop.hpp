@@ -4,8 +4,8 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Spire/Canvas/Records/Record.hpp"
@@ -60,17 +60,17 @@ namespace Spire {
   };
 
   template<>
-  struct PopLuaValue<Nexus::Security> {
-    Nexus::Security operator ()(lua_State& state) const {
+  struct PopLuaValue<Nexus::Ticker> {
+    Nexus::Ticker operator ()(lua_State& state) const {
 
       // TODO
-      return Nexus::Security();
+      return Nexus::Ticker();
     }
   };
 
   template<>
-  struct PushLuaValue<Nexus::Security> {
-    void operator ()(lua_State& state, const Nexus::Security& value) const {
+  struct PushLuaValue<Nexus::Ticker> {
+    void operator ()(lua_State& state, const Nexus::Ticker& value) const {
 
       // TODO
     }

@@ -89,8 +89,8 @@ const Region& RegionListItem::get_region() const {
 }
 
 RegionListItem::Type RegionListItem::get_type() const {
-  if(!m_region.get_securities().empty()) {
-    return Type::SECURITY;
+  if(!m_region.get_tickers().empty()) {
+    return Type::TICKER;
   } else if(!m_region.get_venues().empty()) {
     return Type::VENUE;
   } else if(!m_region.get_countries().empty()) {
@@ -100,8 +100,8 @@ RegionListItem::Type RegionListItem::get_type() const {
 }
 
 TextBox* RegionListItem::make_value_label() const {
-  if(m_type == Type::SECURITY) {
-    return make_label(to_text(*m_region.get_securities().begin()));
+  if(m_type == Type::TICKER) {
+    return make_label(to_text(*m_region.get_tickers().begin()));
   } else if(m_type == Type::VENUE) {
     return make_label(to_text(*m_region.get_venues().begin()));
   } else if(m_type == Type::COUNTRY) {
@@ -111,9 +111,9 @@ TextBox* RegionListItem::make_value_label() const {
 }
 
 Icon* RegionListItem::make_type_icon() const {
-  if(m_type == Type::SECURITY) {
+  if(m_type == Type::TICKER) {
     auto icon =
-      new Icon(image_from_svg(":/Icons/security-symbol.svg", ICON_SIZE()));
+      new Icon(image_from_svg(":/Icons/ticker-symbol.svg", ICON_SIZE()));
     icon->setFixedSize(ICON_SIZE());
     return icon;
   } else if(m_type == Type::VENUE) {

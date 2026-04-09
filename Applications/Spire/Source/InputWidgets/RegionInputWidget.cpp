@@ -70,18 +70,18 @@ void RegionInputWidget::SetRegion(const Region& region) {
       }
       text += QString::fromStdString(name);
     }
-    auto securities = std::vector(
-      m_region.get_securities().begin(), m_region.get_securities().end());
-    std::sort(securities.begin(), securities.end(),
+    auto tickers = std::vector(
+      m_region.get_tickers().begin(), m_region.get_tickers().end());
+    std::sort(tickers.begin(), tickers.end(),
       [&] (const auto& left, const auto& right) {
         return displayText(left) < displayText(right);
       });
-    for(auto& security : securities) {
-      auto ticker = displayText(security);
+    for(auto& ticker : tickers) {
+      auto tickerText = displayText(ticker);
       if(!text.isEmpty()) {
         text += ", ";
       }
-      text += ticker;
+      text += tickerText;
     }
   }
   m_lineEdit->setText(text);

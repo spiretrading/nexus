@@ -18,7 +18,7 @@ namespace UI {
   class FunctionalAction;
   class IgnoreCommandException;
   class ImportExportDialog;
-  class LinkSecurityContextAction;
+  class LinkTickerContextAction;
   class LoginDialog;
   class MacroUndoCommand;
   class MaxFloorSpinBox;
@@ -28,8 +28,8 @@ namespace UI {
   class QuantitySpinBox;
   class ReadOnlyCheckBox;
   class ScalableScrollBar;
-  class SecurityContext;
-  class SecurityViewStack;
+  class TickerContext;
+  class TickerViewStack;
   class Toolbar;
   class ToolbarWindowSettings;
   class ValueLabel;

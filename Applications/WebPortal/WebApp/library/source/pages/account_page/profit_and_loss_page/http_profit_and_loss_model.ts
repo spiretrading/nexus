@@ -74,19 +74,19 @@ function parseReport(value: any): ProfitAndLossModel.Report {
 }
 
 function parseCurrencyEntry(value: any): ProfitAndLossModel.CurrencyEntry {
-  const securities = (value.securities as any[]).map(parseSecurityEntry);
+  const tickers = (value.tickers as any[]).map(parseTickerEntry);
   return {
     currency: Nexus.Currency.fromJson(value.currency),
     totalProfitAndLoss: Nexus.Money.fromJson(value.total_profit_and_loss),
     totalVolume: Nexus.Quantity.fromJson(value.total_volume),
     totalFees: Nexus.Money.fromJson(value.total_fees),
-    securities: securities
+    tickers: tickers
   };
 }
 
-function parseSecurityEntry(value: any): ProfitAndLossModel.SecurityEntry {
+function parseTickerEntry(value: any): ProfitAndLossModel.TickerEntry {
   return {
-    security: Nexus.Security.fromJson(value.security),
+    ticker: Nexus.Ticker.fromJson(value.ticker),
     volume: Nexus.Quantity.fromJson(value.volume),
     fees: Nexus.Money.fromJson(value.fees),
     profitAndLoss: Nexus.Money.fromJson(value.profit_and_loss)

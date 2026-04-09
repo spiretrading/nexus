@@ -58,9 +58,9 @@ export class ProfitAndLossController extends
         mode={this.state.mode}
         startDate={this.state.startDate}
         endDate={this.state.endDate}
-        totalPnl={report?.totalProfitAndLoss.toString() ?? ''}
-        totalFees={report?.totalFees.toString() ?? ''}
-        totalVolume={report?.totalVolume.toString() ?? ''}
+        totalPnl={report?.totalProfitAndLoss.toLocaleString() ?? ''}
+        totalFees={report?.totalFees.toLocaleString() ?? ''}
+        totalVolume={report?.totalVolume.toLocaleString() ?? ''}
         currencies={report ? this.toCurrencyEntries(report.currencies) : []}
         foreignCurrencies={report ?
           this.toExchangeRates(report.exchangeRates) : []}
@@ -180,22 +180,12 @@ export class ProfitAndLossController extends
       return {
         symbol: currencyEntry.sign,
         code: currencyEntry.code,
-        totalPnl: entry.totalProfitAndLoss.toString(),
-        totalVolume: entry.totalVolume.toString(),
-        totalFees: entry.totalFees.toString(),
-        securities: this.toSecurities(entry.securities)
+        totalProfitAndLoss: entry.totalProfitAndLoss,
+        totalVolume: entry.totalVolume,
+        totalFees: entry.totalFees,
+        tickers: entry.tickers
       };
     });
-  }
-
-  private toSecurities(entries: ProfitAndLossModel.SecurityEntry[]):
-      ProfitAndLossTable.Security[] {
-    return entries.map(entry => ({
-      symbol: entry.security.toString(),
-      volume: entry.volume.toString(),
-      fees: entry.fees.toString(),
-      pnl: entry.profitAndLoss.toString()
-    }));
   }
 
   private toExchangeRates(

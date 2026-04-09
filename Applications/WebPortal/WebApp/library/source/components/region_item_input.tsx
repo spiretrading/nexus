@@ -39,9 +39,9 @@ export function RegionItemInput({onChange, onEnter, ...rest}:
         onEnter?.(new Nexus.Region(venue));
         return;
       }
-      const security = Nexus.Security.parse(name);
-      if(!security.equals(Nexus.Security.NONE)) {
-        onEnter?.(new Nexus.Region(security));
+      const ticker = Nexus.Ticker.parse(name);
+      if(!ticker.equals(Nexus.Ticker.NONE)) {
+        onEnter?.(new Nexus.Region(ticker));
         return;
       }
     }

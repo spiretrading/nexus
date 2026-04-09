@@ -8,9 +8,9 @@ using namespace Nexus;
 using namespace Spire;
 
 DefaultQuantityModel::DefaultQuantityModel(
-    Ref<UserProfile> user_profile, Security security, Side side)
+    Ref<UserProfile> user_profile, Ticker ticker, Side side)
     : m_user_profile(user_profile.get()),
-      m_security(std::move(security)),
+      m_ticker(std::move(ticker)),
       m_side(side) {
   const auto UPDATE_INTERVAL_MS = 300;
   m_update_timer.setInterval(UPDATE_INTERVAL_MS);
@@ -30,7 +30,7 @@ connection DefaultQuantityModel::connect_update_signal(
 
 void DefaultQuantityModel::on_update() {
   auto quantity =
-    get_default_order_quantity(*m_user_profile, m_security, m_side);
+    get_default_order_quantity(*m_user_profile, m_ticker, m_side);
   if(quantity != m_current.get()) {
     m_current.set(quantity);
   }

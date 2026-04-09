@@ -28,11 +28,11 @@ namespace {
 
 BookViewInteractionPropertiesPage::BookViewInteractionPropertiesPage(
     std::shared_ptr<KeyBindingsModel> key_bindings,
-    std::shared_ptr<SecurityModel> security, QWidget* parent)
+    std::shared_ptr<TickerModel> ticker, QWidget* parent)
     : m_key_bindings(std::move(key_bindings)) {
-  m_current_region = make_transform_value_model(std::move(security),
-    [] (const auto& security) {
-      return Region(security);
+  m_current_region = make_transform_value_model(std::move(ticker),
+    [] (const auto& ticker) {
+      return Region(ticker);
     });
   auto interactions_form =
     new InteractionsKeyBindingsForm(m_key_bindings, m_current_region);

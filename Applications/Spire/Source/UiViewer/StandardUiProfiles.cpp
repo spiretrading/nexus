@@ -93,9 +93,6 @@
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
-#include "Spire/Ui/SecurityBox.hpp"
-#include "Spire/Ui/SecurityListItem.hpp"
-#include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
 #include "Spire/Ui/SingleSelectionModel.hpp"
@@ -113,6 +110,9 @@
 #include "Spire/Ui/TagComboBox.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/TickerBox.hpp"
+#include "Spire/Ui/TickerListItem.hpp"
+#include "Spire/Ui/TickerView.hpp"
 #include "Spire/Ui/TimeInForceBox.hpp"
 #include "Spire/Ui/TimeInForceFilterPanel.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
@@ -741,27 +741,27 @@ namespace {
     panel->show();
   }
 
-  std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
-    auto security_infos = std::vector<SecurityInfo>();
-    auto add_security = [&] (const Security& security,
+  std::shared_ptr<TickerInfoQueryModel> populate_ticker_query_model() {
+    auto ticker_infos = std::vector<TickerInfo>();
+    auto add_ticker = [&] (const Ticker& ticker,
         const std::string& name) {
-      if(security) {
-        security_infos.emplace_back(security, name, "", 0);
+      if(ticker) {
+        ticker_infos.emplace_back(ticker, name, "", 0);
       }
     };
-    add_security(parse_security("MRU.TSX"), "Metro Inc.");
-    add_security(parse_security("MG.TSX"), "Magna International Inc.");
-    add_security(parse_security("MGA.TSX"), "Mega Uranium Ltd.");
-    add_security(parse_security("MGAB.TSX"),
+    add_ticker(parse_ticker("MRU.TSX"), "Metro Inc.");
+    add_ticker(parse_ticker("MG.TSX"), "Magna International Inc.");
+    add_ticker(parse_ticker("MGA.TSX"), "Mega Uranium Ltd.");
+    add_ticker(parse_ticker("MGAB.TSX"),
       "Mackenzie Global Fixed Income Alloc ETF");
-    add_security(parse_security("MON.NYSE"), "Monsanto Co.");
-    add_security(parse_security("MFC.TSX"), "Manulife Financial Corporation");
-    add_security(parse_security("MX.TSX"), "Methanex Corporation");
-    auto model = std::make_shared<LocalQueryModel<SecurityInfo>>();
-    for(auto& security_info : security_infos) {
-      model->add(to_text(security_info.m_security).toLower(), security_info);
+    add_ticker(parse_ticker("MON.NYSE"), "Monsanto Co.");
+    add_ticker(parse_ticker("MFC.TSX"), "Manulife Financial Corporation");
+    add_ticker(parse_ticker("MX.TSX"), "Methanex Corporation");
+    auto model = std::make_shared<LocalQueryModel<TickerInfo>>();
+    for(auto& ticker_info : ticker_infos) {
+      model->add(to_text(ticker_info.m_ticker).toLower(), ticker_info);
       model->add(
-        QString::fromStdString(security_info.m_name).toLower(), security_info);
+        QString::fromStdString(ticker_info.m_name).toLower(), ticker_info);
     }
     return model;
   }
@@ -794,7 +794,7 @@ namespace {
   }
 
   auto populate_region_box_model() {
-    auto securities = std::vector<std::pair<std::string, std::string>>{
+    auto tickers = std::vector<std::pair<std::string, std::string>>{
       {"MSFT.NSDQ", "Microsoft Corporation"},
       {"MG.TSX", "Magna International Inc."},
       {"MRU.TSX", "Metro Inc."},
@@ -806,14 +806,14 @@ namespace {
     auto countries = std::vector{DefaultCountries::US, DefaultCountries::CA,
       DefaultCountries::AU, DefaultCountries::JP, DefaultCountries::CN};
     auto model = std::make_shared<LocalQueryModel<Region>>();
-    for(auto& security_info : securities) {
-      auto security = parse_security(security_info.first);
-      if(!security) {
+    for(auto& ticker_info : tickers) {
+      auto ticker = parse_ticker(ticker_info.first);
+      if(!ticker) {
         continue;
       }
-      auto region = Region(security_info.second);
-      region += security;
-      model->add(to_text(security).toLower(), region);
+      auto region = Region(ticker_info.second);
+      region += ticker;
+      model->add(to_text(ticker).toLower(), region);
       model->add(QString::fromStdString(region.get_name()).toLower(), region);
     }
     for(auto& venue : venues) {
@@ -1012,9 +1012,9 @@ namespace {
       result += to_text(venue);
       result += " ";
     }
-    result += "} Securities{";
-    for(auto& security : region.get_securities()) {
-      result += to_text(security);
+    result += "} Tickers{";
+    for(auto& ticker : region.get_tickers()) {
+      result += to_text(ticker);
       result += " ";
     }
     result += "}}";
@@ -1606,8 +1606,8 @@ UiProfile Spire::make_context_menu_profile() {
         sort_menu->add_action("Size",
           profile.make_event_slot<>(QString("Action:Size")));
         auto type_menu = new ContextMenu(*static_cast<QWidget*>(sort_menu));
-        type_menu->add_action("Security",
-          profile.make_event_slot<>(QString("Action:Security")));
+        type_menu->add_action("Ticker",
+          profile.make_event_slot<>(QString("Action:Ticker")));
         type_menu->add_action("Side",
           profile.make_event_slot<>(QString("Action:Side")));
         sort_menu->add_menu("Type", *type_menu);
@@ -3208,11 +3208,11 @@ UiProfile Spire::make_navigation_view_profile() {
     layout1->setSpacing(scale_width(5));
     layout1->addWidget(make_label_button("Button1"));
     layout1->addWidget(make_label_button("Button2"));
-    auto model = populate_security_query_model();
-    auto security_box = new SecurityBox(model);
-    security_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    security_box->set_placeholder("SecurityBox");
-    layout1->addWidget(security_box);
+    auto model = populate_ticker_query_model();
+    auto ticker_box = new TickerBox(model);
+    ticker_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    ticker_box->set_placeholder("TickerBox");
+    layout1->addWidget(ticker_box);
     auto region_box = new RegionBox(populate_region_box_model());
     region_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     region_box->set_placeholder("RegionBox");
@@ -3642,8 +3642,8 @@ UiProfile Spire::make_region_box_profile() {
       for(auto& venue : region.get_venues()) {
         text = text % to_text(venue) % ",";
       }
-      for(auto& security : region.get_securities()) {
-        text = text % to_text(security) % ",";
+      for(auto& ticker : region.get_tickers()) {
+        text = text % to_text(ticker) % ",";
       }
       text.remove(text.length() - 1, 1);
       return text;
@@ -3748,15 +3748,15 @@ UiProfile Spire::make_region_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto type_property = define_enum<int>(
-    {{"SECURITY", 0}, {"VENUE", 1}, {"COUNTRY", 2}});
+    {{"TICKER", 0}, {"VENUE", 1}, {"COUNTRY", 2}});
   properties.push_back(make_standard_enum_property("type", type_property));
   auto profile = UiProfile("RegionListItem", properties, [] (auto& profile) {
     auto& type = get<int>("type", profile.get_properties());
     auto region = [&] {
       if(type.get() == 0) {
-        auto security = parse_security("MRU.TSX");
+        auto ticker = parse_ticker("MRU.TSX");
         auto region = Region("Metro Inc.");
-        region += security;
+        region += ticker;
         return region;
       } else if(type.get() == 1) {
         auto venue = DEFAULT_VENUES.from(DefaultVenues::ASX);
@@ -4020,101 +4020,6 @@ UiProfile Spire::make_search_box_profile() {
     search_box->connect_submit_signal(
       profile.make_event_slot<QString>("Submit"));
     return search_box;
-  });
-  return profile;
-}
-
-UiProfile Spire::make_security_box_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QString>("current", "MX.TSX"));
-  properties.push_back(make_standard_property<QString>("placeholder"));
-  properties.push_back(make_standard_property("read_only", false));
-  auto profile = UiProfile("SecurityBox", properties, [] (auto& profile) {
-    auto model = populate_security_query_model();
-    auto& current = get<QString>("current", profile.get_properties());
-    auto security = [&] {
-      if(auto value = model->parse(current.get())) {
-        return value->m_security;
-      }
-      return Security();
-    }();
-    auto current_model = std::make_shared<LocalValueModel<Security>>(security);
-    auto box = new SecurityBox(model, current_model);
-    box->setFixedWidth(scale_width(112));
-    apply_widget_properties(box, profile.get_properties());
-    auto current_connection = box->get_current()->connect_update_signal(
-      profile.make_event_slot<Security>("Current"));
-    current.connect_changed_signal([=] (const auto& current) {
-      if(auto value = model->parse(current)) {
-        box->get_current()->set(value->m_security);
-      } else {
-        auto current_blocker = shared_connection_block(current_connection);
-        box->get_current()->set(Security());
-      }
-    });
-    auto& placeholder = get<QString>("placeholder", profile.get_properties());
-    placeholder.connect_changed_signal([=] (const auto& placeholder) {
-      box->set_placeholder(placeholder);
-    });
-    auto& read_only = get<bool>("read_only", profile.get_properties());
-    read_only.connect_changed_signal(
-      std::bind_front(&SecurityBox::set_read_only, box));
-    box->connect_submit_signal(profile.make_event_slot<Security>("Submit"));
-    return box;
-  });
-  return profile;
-}
-
-UiProfile Spire::make_security_list_item_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  auto profile = UiProfile("SecurityListItem", properties, [] (auto& profile) {
-    auto security = parse_security("MRU.TSX");
-    auto security_info = SecurityInfo(security, "Metro Inc.", "", 0);
-    auto item = new SecurityListItem(security_info);
-    apply_widget_properties(item, profile.get_properties());
-    return item;
-  });
-  return profile;
-}
-
-UiProfile Spire::make_security_view_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  properties.push_back(make_standard_property<int>("width", 266));
-  properties.push_back(make_standard_property<int>("height", 361));
-  auto profile = UiProfile("SecurityView", properties, [] (auto& profile) {
-    auto model = populate_security_query_model();
-    auto label = make_label("");
-    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    auto security_view = new SecurityView(model, *label);
-    auto box = new Box(security_view);
-    update_style(*box, [] (auto& style) {
-      style.get(Hover() || Focus()).
-        set(border(scale_width(1), QColor(0x4B23A0)));
-    });
-    security_view->get_current()->connect_update_signal(
-      profile.make_event_slot<Security>("Current", [=] (const auto& security) {
-        label->get_current()->set(to_text(security));
-        return security;
-      }));
-    auto& width = get<int>("width", profile.get_properties());
-    width.connect_changed_signal([=] (auto value) {
-      if(value != 0) {
-        if(unscale_width(security_view->width()) != value) {
-          security_view->setFixedWidth(scale_width(value));
-        }
-      }
-    });
-    auto& height = get<int>("height", profile.get_properties());
-    height.connect_changed_signal([=] (auto value) {
-      if(value != 0) {
-        if(unscale_height(security_view->height()) != value) {
-          security_view->setFixedHeight(scale_height(value));
-        }
-      }
-    });
-    return box;
   });
   return profile;
 }
@@ -4488,7 +4393,7 @@ UiProfile Spire::make_table_header_profile() {
     auto items = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
     auto types = std::vector<std::type_index>();
     auto item = TableHeaderItem::Model();
-    item.m_name = "Security";
+    item.m_name = "Ticker";
     item.m_short_name = "Sec";
     item.m_filter = TableFilter::Filter::UNFILTERED;
     items->push(item);
@@ -4533,7 +4438,7 @@ UiProfile Spire::make_table_header_item_profile() {
   )";
   properties.push_back(make_style_property("style_sheet",
     std::move(default_style)));
-  properties.push_back(make_standard_property<QString>("name", "Security"));
+  properties.push_back(make_standard_property<QString>("name", "Ticker"));
   properties.push_back(make_standard_property<QString>("short_name", "Sec"));
   properties.push_back(
     make_standard_enum_property("order", get_order_property()));
@@ -4661,7 +4566,7 @@ UiProfile Spire::make_table_view_profile() {
     }
     auto header = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
     auto item = TableHeaderItem::Model();
-    item.m_name = "Security";
+    item.m_name = "Ticker";
     item.m_short_name = "Sec";
     header->push(item);
     item = TableHeaderItem::Model();
@@ -4996,6 +4901,101 @@ UiProfile Spire::make_text_box_profile() {
     text_box->connect_submit_signal(profile.make_event_slot<QString>("Submit"));
     text_box->connect_reject_signal(profile.make_event_slot<QString>("Reject"));
     return text_box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_ticker_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current", "MX.TSX"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("TickerBox", properties, [] (auto& profile) {
+    auto model = populate_ticker_query_model();
+    auto& current = get<QString>("current", profile.get_properties());
+    auto ticker = [&] {
+      if(auto value = model->parse(current.get())) {
+        return value->m_ticker;
+      }
+      return Ticker();
+    }();
+    auto current_model = std::make_shared<LocalValueModel<Ticker>>(ticker);
+    auto box = new TickerBox(model, current_model);
+    box->setFixedWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    auto current_connection = box->get_current()->connect_update_signal(
+      profile.make_event_slot<Ticker>("Current"));
+    current.connect_changed_signal([=] (const auto& current) {
+      if(auto value = model->parse(current)) {
+        box->get_current()->set(value->m_ticker);
+      } else {
+        auto current_blocker = shared_connection_block(current_connection);
+        box->get_current()->set(Ticker());
+      }
+    });
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal([=] (const auto& placeholder) {
+      box->set_placeholder(placeholder);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&TickerBox::set_read_only, box));
+    box->connect_submit_signal(profile.make_event_slot<Ticker>("Submit"));
+    return box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_ticker_list_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("TickerListItem", properties, [] (auto& profile) {
+    auto ticker = parse_ticker("MRU.TSX");
+    auto ticker_info = TickerInfo(ticker, "Metro Inc.", "", 0);
+    auto item = new TickerListItem(ticker_info);
+    apply_widget_properties(item, profile.get_properties());
+    return item;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_ticker_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property<int>("width", 266));
+  properties.push_back(make_standard_property<int>("height", 361));
+  auto profile = UiProfile("TickerView", properties, [] (auto& profile) {
+    auto model = populate_ticker_query_model();
+    auto label = make_label("");
+    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto ticker_view = new TickerView(model, *label);
+    auto box = new Box(ticker_view);
+    update_style(*box, [] (auto& style) {
+      style.get(Hover() || Focus()).
+        set(border(scale_width(1), QColor(0x4B23A0)));
+    });
+    ticker_view->get_current()->connect_update_signal(
+      profile.make_event_slot<Ticker>("Current", [=] (const auto& ticker) {
+        label->get_current()->set(to_text(ticker));
+        return ticker;
+      }));
+    auto& width = get<int>("width", profile.get_properties());
+    width.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_width(ticker_view->width()) != value) {
+          ticker_view->setFixedWidth(scale_width(value));
+        }
+      }
+    });
+    auto& height = get<int>("height", profile.get_properties());
+    height.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_height(ticker_view->height()) != value) {
+          ticker_view->setFixedHeight(scale_height(value));
+        }
+      }
+    });
+    return box;
   });
   return profile;
 }

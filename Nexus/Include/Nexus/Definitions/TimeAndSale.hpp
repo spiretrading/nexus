@@ -35,13 +35,13 @@ namespace Details {
   }
 }
 
-  /** Stores a record of a transaction on a Security. */
+  /** Stores a record of a transaction on a Ticker. */
   struct TimeAndSale {
 
     /** The sale's condition. */
     struct Condition {
 
-      /** Lists types of conditions shared amongst multiple markets. */
+      /** Lists types of conditions shared amongst multiple venues. */
       using Type = Details::ConditionTypeDefinition;
 
       /** The type of condition. */

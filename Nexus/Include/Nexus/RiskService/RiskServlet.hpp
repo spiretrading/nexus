@@ -308,8 +308,8 @@ namespace Nexus {
     auto reset_inventories = std::vector<InventoryUpdate>();
     for(auto inventory : portfolio.get_bookkeeper().get_inventory_range()) {
       auto& base_inventory = base_portfolio.get_bookkeeper().get_inventory(
-        inventory.m_position.m_security, inventory.m_position.m_currency);
-      if(base_inventory.m_position.m_security <= region) {
+        inventory.m_position.m_ticker, inventory.m_position.m_currency);
+      if(base_inventory.m_position.m_ticker <= region) {
         if(inventory.m_position.m_quantity == 0) {
           auto update = InventoryUpdate();
           update.account = account;
@@ -328,7 +328,7 @@ namespace Nexus {
           inventory.m_transaction_count;
         updated_snapshot.m_inventories.push_back(inventory);
         m_tasks.push([this,
-            key = RiskPortfolioKey(account, inventory.m_position.m_security)] {
+            key = RiskPortfolioKey(account, inventory.m_position.m_ticker)] {
           m_volumes[key] = -1;
         });
       } else {

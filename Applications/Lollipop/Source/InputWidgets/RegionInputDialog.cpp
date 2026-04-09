@@ -20,9 +20,9 @@ namespace {
       return QVariant::fromValue(country);
     } else if(auto venue = parse_venue(line, userProfile.GetVenueDatabase())) {
       return QVariant::fromValue(venue);
-    } else if(auto security =
-        parse_security(line, userProfile.GetVenueDatabase())) {
-      return QVariant::fromValue(security);
+    } else if(auto ticker =
+        parse_ticker(line, userProfile.GetVenueDatabase())) {
+      return QVariant::fromValue(ticker);
     } else if(line == "*") {
       return QVariant::fromValue(Region::GLOBAL);
     }
@@ -87,14 +87,14 @@ RegionInputDialog::RegionInputDialog(
     for(auto& venue : venues) {
       Append(QVariant::fromValue(venue));
     }
-    auto securities = std::vector(
-      m_region.get_securities().begin(), m_region.get_securities().end());
-    std::sort(securities.begin(), securities.end(),
+    auto tickers = std::vector(
+      m_region.get_tickers().begin(), m_region.get_tickers().end());
+    std::sort(tickers.begin(), tickers.end(),
       [&] (const auto& left, const auto& right) {
         return displayText(left) < displayText(right);
       });
-    for(auto& security : securities) {
-      Append(QVariant::fromValue(security));
+    for(auto& ticker : tickers) {
+      Append(QVariant::fromValue(ticker));
     }
   }
 }
@@ -148,8 +148,8 @@ void RegionInputDialog::OnAccept() {
         m_region += value.value<CountryCode>();
       } else if(value.canConvert<Venue>()) {
         m_region += value.value<Venue>();
-      } else if(value.canConvert<Security>()) {
-        m_region += value.value<Security>();
+      } else if(value.canConvert<Ticker>()) {
+        m_region += value.value<Ticker>();
       } else if(value.canConvert<Region>()) {
         m_region += value.value<Region>();
       }

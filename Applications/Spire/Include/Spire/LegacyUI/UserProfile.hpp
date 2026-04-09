@@ -22,7 +22,7 @@
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
-#include "Spire/Ui/SecurityBox.hpp"
+#include "Spire/Ui/TickerBox.hpp"
 
 namespace Spire {
 
@@ -91,9 +91,9 @@ namespace Spire {
       const std::shared_ptr<RecentlyClosedWindowListModel>&
         GetRecentlyClosedWindows() const;
 
-      /** Returns the model used to query securities. */
-      const std::shared_ptr<SecurityInfoQueryModel>&
-        GetSecurityInfoQueryModel() const;
+      /** Returns the model used to query tickers. */
+      const std::shared_ptr<TickerInfoQueryModel>&
+        GetTickerInfoQueryModel() const;
 
       /** Returns the BlotterSettings. */
       const BlotterSettings& GetBlotterSettings() const;
@@ -194,7 +194,7 @@ namespace Spire {
       mutable Nexus::Clients m_clients;
       std::filesystem::path m_profilePath;
       std::shared_ptr<RecentlyClosedWindowListModel> m_recentlyClosedWindows;
-      std::shared_ptr<SecurityInfoQueryModel> m_security_info_query_model;
+      std::shared_ptr<TickerInfoQueryModel> m_ticker_info_query_model;
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties
         m_defaultOrderImbalanceIndicatorProperties;
@@ -230,11 +230,11 @@ namespace Spire {
    * Returns the default order quantity to display to a user.
    * @param userProfile The profile of the user to display the default order
    *        quantity to.
-   * @param security The security that the user is entering a quantity for.
+   * @param ticker The ticker that the user is entering a quantity for.
    * @return The default quantity to display.
    */
   Nexus::Quantity get_default_order_quantity(const UserProfile& userProfile,
-    const Nexus::Security& security, Nexus::Side side);
+    const Nexus::Ticker& ticker, Nexus::Side side);
 }
 
 #endif

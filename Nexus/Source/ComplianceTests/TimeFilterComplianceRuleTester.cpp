@@ -4,6 +4,7 @@
 #include "Nexus/Compliance/TimeFilterComplianceRule.hpp"
 #include "Nexus/ComplianceTests/TestComplianceRule.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 using namespace Beam;
@@ -16,10 +17,10 @@ using namespace Nexus::Tests;
 
 namespace {
   void require_check(auto& rule, auto& time_client, auto& operations) {
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto order_info = OrderInfo();
     order_info.m_fields = make_limit_order_fields(
-      DirectoryEntry::make_account(1, "alice"), security, CAD, Side::BID, "TSX",
+      DirectoryEntry::make_account(1, "alice"), ticker, CAD, Side::BID, "TSX",
       100, Money::ONE);
     order_info.m_timestamp = time_client.get_time();
     order_info.m_id = 1;
@@ -47,10 +48,10 @@ namespace {
   }
 
   void require_passthrough(auto& rule, auto& time_client, auto& operations) {
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto order_info = OrderInfo();
     order_info.m_fields = make_limit_order_fields(
-      DirectoryEntry::make_account(1, "alice"), security, CAD, Side::BID, "TSX",
+      DirectoryEntry::make_account(1, "alice"), ticker, CAD, Side::BID, "TSX",
       100, Money::ONE);
     order_info.m_timestamp = time_client.get_time();
     order_info.m_id = 1;
@@ -132,11 +133,10 @@ TEST_SUITE("TimeFilterComplianceRule") {
     auto rule = TimeFilterComplianceRule(hours(10), hours(10),
       get_default_time_zone_database(), DEFAULT_VENUES, &time_client,
       std::make_unique<TestComplianceRule>(operations));
-    auto unknown_venue = Venue("XXXX");
-    auto security = Security("TST", unknown_venue);
+    auto ticker = Ticker("TST", Venue("XXXX"));
     auto order_info = OrderInfo();
     order_info.m_fields = make_limit_order_fields(
-      DirectoryEntry::make_account(1, "alice"), security, CAD, Side::BID,
+      DirectoryEntry::make_account(1, "alice"), ticker, CAD, Side::BID,
       "XXXX", 100, Money::ONE);
     order_info.m_timestamp = time_client.get_time();
     order_info.m_id = 6;

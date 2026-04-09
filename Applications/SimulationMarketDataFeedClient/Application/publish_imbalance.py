@@ -69,7 +69,7 @@ def main():
   timestamp = args.timestamp if args.timestamp is not None else \
     datetime.datetime.utcnow()
   order_imbalance = beam.IndexedValue(nexus.OrderImbalance(
-    nexus.parse_security(args.symbol), args.side, args.quantity,
+    nexus.parse_ticker(args.symbol), args.side, args.quantity,
     args.reference_price, timestamp), market)
   feed_client.publish(order_imbalance)
 

@@ -51,8 +51,8 @@ namespace Nexus {
           return make_compliance_rule(schema, market_data_client,
             definitions_client, time_client);
         });
-    } else if(schema.get_name() == PER_SECURITY_RULE_NAME) {
-      return make_per_security_compliance_rule(
+    } else if(schema.get_name() == PER_TICKER_RULE_NAME) {
+      return make_per_ticker_compliance_rule(
         unwrap(schema), [&] (const auto& schema) {
           return make_compliance_rule(schema, market_data_client,
             definitions_client, time_client);

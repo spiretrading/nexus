@@ -10,8 +10,8 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  bool is_order_displayed(const Order& order, const Security& security) {
-    return order.get_info().m_fields.m_security == security &&
+  bool is_order_displayed(const Order& order, const Ticker& ticker) {
+    return order.get_info().m_fields.m_ticker == ticker &&
       order.get_info().m_fields.m_type == OrderType::LIMIT;
   }
 
@@ -37,8 +37,8 @@ namespace {
 }
 
 ServiceBookViewModel::ServiceBookViewModel(
-    Security security, BlotterSettings& blotter, MarketDataClient client)
-    : m_security(std::move(security)),
+    Ticker ticker, BlotterSettings& blotter, MarketDataClient client)
+    : m_ticker(std::move(ticker)),
       m_blotter(&blotter),
       m_client(std::move(client)),
       m_model(make_local_aggregate_book_view_model()),
@@ -46,24 +46,24 @@ ServiceBookViewModel::ServiceBookViewModel(
         std::make_shared<ReversedListModel<BookQuote>>(m_model->get_bids())),
       m_ask_quotes(
         std::make_shared<ReversedListModel<BookQuote>>(m_model->get_asks())) {
-  if(!m_security) {
+  if(!m_ticker) {
     return;
   }
-  auto bbo_query = make_current_query(m_security);
+  auto bbo_query = make_current_query(m_ticker);
   bbo_query.set_interruption_policy(InterruptionPolicy::IGNORE_CONTINUE);
   m_client.query(bbo_query, m_event_handler.get_slot<BboQuote>(
     std::bind_front(&ServiceBookViewModel::on_bbo, this)));
-  query_real_time_with_snapshot(m_client, m_security,
+  query_real_time_with_snapshot(m_client, m_ticker,
     m_event_handler.get_slot<BookQuote>(
       std::bind_front(&ServiceBookViewModel::buffer_book_quote, this),
       std::bind_front(&ServiceBookViewModel::on_book_quote_interruption, this)),
     InterruptionPolicy::BREAK_QUERY);
-  auto time_and_sale_query = make_real_time_query(m_security);
+  auto time_and_sale_query = make_real_time_query(m_ticker);
   time_and_sale_query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_client.query(time_and_sale_query, m_event_handler.get_slot<TimeAndSale>(
     std::bind_front(&ServiceBookViewModel::on_time_and_sales, this)));
   m_load_promise = std::make_shared<QtPromise<void>>(QtPromise([=] {
-    return m_client.load_technicals(m_security);
+    return m_client.load_technicals(m_ticker);
   }, LaunchPolicy::ASYNC).then([model = m_model] (const auto& technicals) {
     model->get_technicals()->set(technicals);
   }));
@@ -102,7 +102,7 @@ const std::shared_ptr<BboQuoteModel>&
   return m_model->get_bbo_quote();
 }
 
-const std::shared_ptr<SecurityTechnicalsModel>&
+const std::shared_ptr<TickerTechnicalsModel>&
     ServiceBookViewModel::get_technicals() const {
   return m_model->get_technicals();
 }
@@ -208,7 +208,7 @@ void ServiceBookViewModel::on_book_quote_interruption(
   clear(*get_asks());
   clear(*get_bids());
   query_real_time_with_snapshot(
-    m_client, m_security, m_event_handler.get_slot<BookQuote>(
+    m_client, m_ticker, m_event_handler.get_slot<BookQuote>(
       std::bind_front(&ServiceBookViewModel::on_book_quote, this),
       std::bind_front(&ServiceBookViewModel::on_book_quote_interruption, this)),
     InterruptionPolicy::BREAK_QUERY);
@@ -245,7 +245,7 @@ void ServiceBookViewModel::on_execution_report(
 
 void ServiceBookViewModel::on_order_added(
     const OrderLogModel::OrderEntry& order) {
-  if(!is_order_displayed(*order.m_order, m_security)) {
+  if(!is_order_displayed(*order.m_order, m_ticker)) {
     return;
   }
   auto& fields = order.m_order->get_info().m_fields;
@@ -272,7 +272,7 @@ void ServiceBookViewModel::on_order_added(
 
 void ServiceBookViewModel::on_order_removed(
     const OrderLogModel::OrderEntry& order) {
-  if(!is_order_displayed(*order.m_order, m_security)) {
+  if(!is_order_displayed(*order.m_order, m_ticker)) {
     return;
   }
   auto entry = pick(order.m_order, m_ask_orders, m_bid_orders, *m_model);

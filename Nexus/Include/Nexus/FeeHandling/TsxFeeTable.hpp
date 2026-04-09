@@ -92,7 +92,7 @@ namespace Nexus {
     /** The number of AuctionTypes enumerated. */
     static constexpr auto AUCTION_TYPE_COUNT = std::size_t(2);
 
-    /** Enumerates various classifications for a Security. */
+    /** Enumerates various classifications for a Ticker. */
     enum class Classification {
 
       /** Unknown. */
@@ -192,7 +192,7 @@ namespace Nexus {
   /**
    * Calculates the fee on a trade executed on TSX.
    * @param table The TsxFeeTable used to calculate the fee.
-   * @param classification The Security's classification.
+   * @param classification The Ticker's classification.
    * @param order The Order that executed the trade.
    * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.

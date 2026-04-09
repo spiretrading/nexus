@@ -28,8 +28,8 @@ namespace Spire {
         /** The Order status. */
         STATUS_COLUMN,
 
-        /** The Security acted upon. */
-        SECURITY_COLUMN,
+        /** The Ticker acted upon. */
+        TICKER_COLUMN,
 
         /** The Currency used. */
         CURRENCY_COLUMN,

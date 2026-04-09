@@ -3,6 +3,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/Compliance/ComplianceRuleSet.hpp"
 #include "Nexus/ComplianceTests/TestComplianceClient.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
 
@@ -46,9 +47,9 @@ TEST_SUITE("ComplianceRuleSet") {
         };
         return std::make_unique<DummyRule>();
       });
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
-      make_limit_order_fields(account, security, CAD, Side::BID, "TSX", 100,
+      make_limit_order_fields(account, ticker, CAD, Side::BID, "TSX", 100,
         Money::ONE), 123, time_from_string("2024-03-12 13:12:00:00")));
     auto submission = std::async(std::launch::async, [&] {
       rule_set.submit(order);

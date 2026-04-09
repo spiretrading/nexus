@@ -3,7 +3,7 @@
 #include <QApplication>
 #include <QGuiApplication>
 #include <QScreen>
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Spire/AccountViewer/AccountViewWindow.hpp"
 #include "Spire/AccountViewer/TraderProfileWindow.hpp"
@@ -35,23 +35,22 @@ using namespace Spire::LegacyUI;
 namespace {
   std::vector<QWidget*> load_default_layout(
       UserProfile& user_profile, ToolbarWindow& toolbar_window) {
-    auto instantiate_security_windows = true;
+    auto instantiate_ticker_windows = true;
     auto next_position = QPoint(0, 0);
     auto next_height = 0;
     auto resolution = QGuiApplication::primaryScreen()->availableGeometry();
-    auto securities = std::vector<Security>();
-    securities.push_back(Security("RY", DefaultVenues::TSX));
-    securities.push_back(Security("XIU", DefaultVenues::TSX));
-    securities.push_back(Security("ABX", DefaultVenues::TSX));
-    securities.push_back(Security("SU", DefaultVenues::TSX));
-    securities.push_back(Security("BCE", DefaultVenues::TSX));
+    auto tickers = std::vector<Ticker>();
+    tickers.push_back(parse_ticker("RY.TSX"));
+    tickers.push_back(parse_ticker("XIU.TSX"));
+    tickers.push_back(parse_ticker("ABX.TSX"));
+    tickers.push_back(parse_ticker("SU.TSX"));
+    tickers.push_back(parse_ticker("BCE.TSX"));
     auto index = std::size_t(0);
     auto windows = std::vector<QWidget*>();
-    while(instantiate_security_windows && index < securities.size()) {
+    while(instantiate_ticker_windows && index < tickers.size()) {
       auto width = 0;
       auto book_view_window = new BookViewWindow(Ref(user_profile),
-        user_profile.GetSecurityInfoQueryModel(),
-        user_profile.GetKeyBindings(),
+        user_profile.GetTickerInfoQueryModel(), user_profile.GetKeyBindings(),
         user_profile.GetBookViewPropertiesWindowFactory(),
         user_profile.GetBookViewModelBuilder());
       book_view_window->move(next_position);
@@ -61,7 +60,7 @@ namespace {
       next_height = book_view_window->frameSize().height();
       windows.push_back(book_view_window);
       auto time_and_sales_window = new TimeAndSalesWindow(
-        user_profile.GetSecurityInfoQueryModel(),
+        user_profile.GetTickerInfoQueryModel(),
         user_profile.GetTimeAndSalesPropertiesWindowFactory(),
         user_profile.GetTimeAndSalesModelBuilder());
       book_view_window->Link(*time_and_sales_window);
@@ -71,10 +70,10 @@ namespace {
       time_and_sales_window->show();
       time_and_sales_window->Link(*book_view_window);
       windows.push_back(time_and_sales_window);
-      book_view_window->get_current()->set(securities[index]);
+      book_view_window->get_current()->set(tickers[index]);
       next_position.rx() += time_and_sales_window->frameSize().width();
       width += time_and_sales_window->frameSize().width();
-      instantiate_security_windows = index < securities.size() &&
+      instantiate_ticker_windows = index < tickers.size() &&
         (next_position.x() + width < resolution.width());
       ++index;
     }
@@ -296,8 +295,7 @@ void ToolbarController::open_key_bindings_window() {
     return;
   }
   m_key_bindings_window = std::make_unique<KeyBindingsWindow>(
-    m_user_profile->GetKeyBindings(),
-    m_user_profile->GetSecurityInfoQueryModel(),
+    m_user_profile->GetKeyBindings(), m_user_profile->GetTickerInfoQueryModel(),
     m_user_profile->GetAdditionalTagDatabase());
   m_key_bindings_window->installEventFilter(m_event_filter.get());
   m_key_bindings_window->show();

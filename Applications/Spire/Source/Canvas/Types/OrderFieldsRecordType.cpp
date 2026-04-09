@@ -7,8 +7,8 @@
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/Canvas/Types/OrderTypeType.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
-#include "Spire/Canvas/Types/SecurityType.hpp"
 #include "Spire/Canvas/Types/SideType.hpp"
+#include "Spire/Canvas/Types/TickerType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 
 using namespace Nexus;
@@ -18,7 +18,7 @@ using namespace std;
 namespace {
   std::shared_ptr<RecordType> MakeType() {
     vector<RecordType::Field> fields;
-    fields.emplace_back("security", SecurityType::GetInstance());
+    fields.emplace_back("ticker", TickerType::GetInstance());
     fields.emplace_back("currency", CurrencyType::GetInstance());
     fields.emplace_back("type", OrderTypeType::GetInstance());
     fields.emplace_back("side", SideType::GetInstance());
@@ -37,7 +37,7 @@ const RecordType& Spire::GetOrderFieldsRecordType() {
 
 Record OrderFieldsToRecordConverter::operator ()(
     const OrderFields& value) const {
-  return Record({value.m_security, value.m_currency, value.m_type, value.m_side,
+  return Record({value.m_ticker, value.m_currency, value.m_type, value.m_side,
     value.m_destination, value.m_quantity, value.m_price,
     value.m_time_in_force});
 }

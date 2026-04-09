@@ -7,7 +7,7 @@ import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   BeamDateTimeInput, BeamDurationInput, BeamTimeOfDayInput, BooleanInput,
   ColorInput, CountryInput, CurrencyInput, CSSInput, DateInput, EnumInput,
   NumberInput, NumberSliderInput, OptionalInput, MoneyInput, ReadonlyInput,
-  SecurityInput, StyleDeclarationValueInput,
+  TickerInput, StyleDeclarationValueInput,
   TextInput } from '../viewer/propertyInput';
 import {ComponentSchema, ComponentSection, PropertySchema,
   SignalSchema} from './schemas';
@@ -370,23 +370,23 @@ const skeleton =
     [],
     WebPortal.Skeleton);
 
-const securitiesInput =
-  new ComponentSchema('SecuritiesInput',
+const tickersInput =
+  new ComponentSchema('TickersInput',
     [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
         EnumInput(WebPortal.DisplaySize)),
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
-    WebPortal.SecuritiesInput);
+    WebPortal.TickersInput);
 
-const securityInput =
-  new ComponentSchema('SecurityInput',
+const tickerInput =
+  new ComponentSchema('TickerInput',
     [new PropertySchema('value', '', TextInput),
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value'),
       new SignalSchema('onEnter', 'value')],
-    (props: any) => React.createElement(WebPortal.SecurityInput,
+    (props: any) => React.createElement(WebPortal.TickerInput,
       {...props, style: {width: '100%', ...props.style}}));
 
 const segmentButton =
@@ -860,36 +860,49 @@ const profitAndLossHeader =
       foreignCurrencies: PNL_HEADER_SAMPLE_RATES
     }), 800);
 
-const PNL_TABLE_SAMPLE_SECURITIES: WebPortal.ProfitAndLossTable.Security[] = [
-  {symbol: 'AAPL', volume: '1,250', fees: '12.50', pnl: '345.67'},
-  {symbol: 'MSFT', volume: '800', fees: '8.00', pnl: '-123.45'},
-  {symbol: 'GOOG', volume: '500', fees: '5.00', pnl: '678.90'},
-  {symbol: 'AMZN', volume: '300', fees: '3.00', pnl: '-45.20'}
+const PNL_TABLE_SAMPLE_TICKERS: WebPortal.ProfitAndLossTable.Ticker[] = [
+  {ticker: new Nexus.Ticker('AAPL', new Nexus.Venue('NASDAQ')),
+    volume: Nexus.Quantity.parse('1250'),
+    fees: Nexus.Money.parse('12.50'),
+    profitAndLoss: Nexus.Money.parse('345.67')},
+  {ticker: new Nexus.Ticker('MSFT', new Nexus.Venue('NASDAQ')),
+    volume: Nexus.Quantity.parse('800'),
+    fees: Nexus.Money.parse('8.00'),
+    profitAndLoss: Nexus.Money.parse('-123.45')},
+  {ticker: new Nexus.Ticker('GOOG', new Nexus.Venue('NASDAQ')),
+    volume: Nexus.Quantity.parse('500'),
+    fees: Nexus.Money.parse('5.00'),
+    profitAndLoss: Nexus.Money.parse('678.90')},
+  {ticker: new Nexus.Ticker('AMZN', new Nexus.Venue('NASDAQ')),
+    volume: Nexus.Quantity.parse('300'),
+    fees: Nexus.Money.parse('3.00'),
+    profitAndLoss: Nexus.Money.parse('-45.20')}
 ];
 
 const profitAndLossTable =
   new ComponentSchema('ProfitAndLossTable',
-    [new PropertySchema('symbol', '$', TextInput),
-      new PropertySchema('totalPnl', '855.92', TextInput),
-      new PropertySchema('totalVolume', '2,850', TextInput),
-      new PropertySchema('totalFees', '28.50', TextInput)],
+    [new PropertySchema('symbol', '$', TextInput)],
     [],
     (props: any) => React.createElement(WebPortal.ProfitAndLossTable, {
-      ...props,
-      securities: PNL_TABLE_SAMPLE_SECURITIES
+      symbol: props.symbol,
+      totalProfitAndLoss: Nexus.Money.parse('855.92'),
+      totalVolume: Nexus.Quantity.parse('2850'),
+      totalFees: Nexus.Money.parse('28.50'),
+      tickers: PNL_TABLE_SAMPLE_TICKERS
     }), 600);
 
 const profitAndLossItem =
   new ComponentSchema('ProfitAndLossItem',
     [new PropertySchema('symbol', '$', TextInput),
-      new PropertySchema('code', 'USD', TextInput),
-      new PropertySchema('totalPnl', '855.92', TextInput),
-      new PropertySchema('totalVolume', '2,850', TextInput),
-      new PropertySchema('totalFees', '28.50', TextInput)],
+      new PropertySchema('code', 'USD', TextInput)],
     [],
     (props: any) => React.createElement(WebPortal.ProfitAndLossItem, {
-      ...props,
-      securities: PNL_TABLE_SAMPLE_SECURITIES
+      symbol: props.symbol,
+      code: props.code,
+      totalProfitAndLoss: Nexus.Money.parse('855.92'),
+      totalVolume: Nexus.Quantity.parse('2850'),
+      totalFees: Nexus.Money.parse('28.50'),
+      tickers: PNL_TABLE_SAMPLE_TICKERS
     }), 800);
 
 const profitAndLossItemPlaceholder =
@@ -907,6 +920,27 @@ const reportStatusIndicator =
     [],
     WebPortal.ReportStatusIndicator);
 
+const tableHeaderCell =
+  new ComponentSchema('TableHeaderCell',
+    [new PropertySchema('sortOrder',
+        WebPortal.TableHeaderCell.SortOrder.NONE,
+        EnumInput(WebPortal.TableHeaderCell.SortOrder)),
+      new PropertySchema('textAlign', 'start', TextInput)],
+    [],
+    (props: any) => {
+      const [sortOrder, setSortOrder] = React.useState(props.sortOrder);
+      React.useEffect(() => setSortOrder(props.sortOrder), [props.sortOrder]);
+      return React.createElement('table', {
+          style: {borderCollapse: 'collapse', width: '100%'}},
+        React.createElement('thead', null,
+          React.createElement('tr', null,
+            React.createElement(WebPortal.TableHeaderCell, {
+              sortOrder: sortOrder,
+              style: {textAlign: props.textAlign},
+              onSort: setSortOrder
+            }, 'Column'))));
+    }, 132);
+
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox,
     countrySelect, currencySelect, dateInput, disclosure,
@@ -916,7 +950,7 @@ export const componentSections = [
     iconLabelButton, input, integerField, labeledCheckbox, modal, moneyInput,
     navigationHeader, navigationTab, pageLayout,
     pagination, regionInput, regionItemInput, relativeDate, roleIcon, rolePanel,
-    securitiesInput, securityInput, segmentedSpinner, select, skeleton,
+    tickersInput, tickerInput, segmentedSpinner, select, skeleton,
     segmentButton,
     segmentedControl,
     timeOfDayInput]),
@@ -928,4 +962,4 @@ export const componentSections = [
     requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
-    profitAndLossTable, reportStatusIndicator])];
+    profitAndLossTable, reportStatusIndicator, tableHeaderCell])];

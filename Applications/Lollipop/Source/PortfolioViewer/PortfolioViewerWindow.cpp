@@ -32,11 +32,11 @@ namespace {
     auto& blotter = userProfile.GetBlotterSettings().GetConsolidatedBlotter(
       entry.m_account);
     auto orderFields = make_market_order_fields(blotter.GetExecutingAccount(),
-      entry.m_inventory.m_position.m_security,
+      entry.m_inventory.m_position.m_ticker,
       entry.m_inventory.m_position.m_currency,
       get_opposite(get_side(entry.m_inventory.m_position)),
       userProfile.GetDestinationDatabase().get_preferred_destination(
-      entry.m_inventory.m_position.m_security.get_venue()).m_id,
+      entry.m_inventory.m_position.m_ticker.get_venue()).m_id,
       abs(entry.m_inventory.m_position.m_quantity));
     auto orderNode = MakeOrderTaskNodeFromOrderFields(orderFields,
       userProfile);

@@ -45,14 +45,14 @@ TEST_SUITE("Region") {
     require_proper_subset(ASX, AU);
   }
 
-  TEST_CASE("security_region_subset_of_venue_region") {
-    auto security = Security("TST", ASX);
-    require_proper_subset(security, ASX);
+  TEST_CASE("ticker_region_subset_of_venue_region") {
+    auto ticker = Ticker("TST", ASX);
+    require_proper_subset(ticker, ASX);
   }
 
-  TEST_CASE("security_region_subset_of_country_region") {
-    auto security = Security("TST", ASX);
-    require_proper_subset(security, AU);
+  TEST_CASE("ticker_region_subset_of_country_region") {
+    auto ticker = Ticker("TST", ASX);
+    require_proper_subset(ticker, AU);
   }
 
   TEST_CASE("distinct_country_regions") {
@@ -111,15 +111,15 @@ TEST_SUITE("Region") {
     require_proper_subset(empty, country);
   }
 
-  TEST_CASE("security_in_union_region") {
+  TEST_CASE("ticker_in_union_region") {
     auto au = Region(AU);
     auto ca = Region(CA);
     auto union_region = au + ca;
-    auto security = Security("TST", ASX);
-    REQUIRE(security <= union_region);
-    REQUIRE(security < union_region);
-    REQUIRE(union_region >= security);
-    REQUIRE(union_region > security);
+    auto ticker = Ticker("TST", ASX);
+    REQUIRE(ticker <= union_region);
+    REQUIRE(ticker < union_region);
+    REQUIRE(union_region >= ticker);
+    REQUIRE(union_region > ticker);
   }
 
   TEST_CASE("combine_regions_operator_plus_and_plus_eq") {
@@ -136,7 +136,7 @@ TEST_SUITE("Region") {
   TEST_CASE("shuttle") {
     auto region = Region(AU);
     region += TSX;
-    region += Security("TST", ASX);
+    region += Ticker("TST", ASX);
     test_round_trip_shuttle(region);
   }
 }

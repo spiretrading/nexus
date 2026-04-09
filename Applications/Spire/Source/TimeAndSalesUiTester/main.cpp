@@ -16,26 +16,26 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 
-std::shared_ptr<SecurityInfoQueryModel> populate_securities() {
-  auto security_infos = std::vector<SecurityInfo>();
-  auto add_security = [&] (const Security& security, const std::string& name) {
-    if(security) {
-      security_infos.emplace_back(security, name, "", 0);
+std::shared_ptr<TickerInfoQueryModel> populate_tickers() {
+  auto ticker_infos = std::vector<TickerInfo>();
+  auto add_ticker = [&] (const Ticker& ticker, const std::string& name) {
+    if(ticker) {
+      ticker_infos.emplace_back(ticker, name, "", 0);
     }
   };
-  add_security(parse_security("MRU.TSX"), "Metro Inc.");
-  add_security(parse_security("MG.TSX"), "Magna International Inc.");
-  add_security(parse_security("MGA.TSX"), "Mega Uranium Ltd.");
-  add_security(parse_security("MGAB.TSX"),
+  add_ticker(parse_ticker("MRU.TSX"), "Metro Inc.");
+  add_ticker(parse_ticker("MG.TSX"), "Magna International Inc.");
+  add_ticker(parse_ticker("MGA.TSX"), "Mega Uranium Ltd.");
+  add_ticker(parse_ticker("MGAB.TSX"),
     "Mackenzie Global Fixed Income Alloc ETF");
-  add_security(parse_security("MON.NYSE"), "Monsanto Co.");
-  add_security(parse_security("MFC.TSX"), "Manulife Financial Corporation");
-  add_security(parse_security("MX.TSX"), "Methanex Corporation");
-  auto model = std::make_shared<LocalQueryModel<SecurityInfo>>();
-  for(auto& security_info : security_infos) {
-    model->add(to_text(security_info.m_security).toLower(), security_info);
+  add_ticker(parse_ticker("MON.NYSE"), "Monsanto Co.");
+  add_ticker(parse_ticker("MFC.TSX"), "Manulife Financial Corporation");
+  add_ticker(parse_ticker("MX.TSX"), "Methanex Corporation");
+  auto model = std::make_shared<LocalQueryModel<TickerInfo>>();
+  for(auto& ticker_info : ticker_infos) {
+    model->add(to_text(ticker_info.m_ticker).toLower(), ticker_info);
     model->add(
-      QString::fromStdString(security_info.m_name).toLower(), security_info);
+      QString::fromStdString(ticker_info.m_name).toLower(), ticker_info);
   }
   return model;
 }
@@ -188,7 +188,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
           std::make_shared<DemoTimeAndSalesModel>()) {
     auto last_window = static_cast<TimeAndSalesWindow*>(nullptr);
     for(auto window : m_time_and_sales_windows) {
-      window = new TimeAndSalesWindow(populate_securities(), m_factory,
+      window = new TimeAndSalesWindow(populate_tickers(), m_factory,
         std::bind_front(&TimeAndSalesWindowController::model_builder, this));
       window->setAttribute(Qt::WA_DeleteOnClose);
       window->show();
@@ -207,7 +207,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       last_window->pos().y());
   }
 
-  std::shared_ptr<TimeAndSalesModel> model_builder(const Security&) {
+  std::shared_ptr<TimeAndSalesModel> model_builder(const Ticker&) {
     auto time_and_sales = m_time_and_sales_test_window.m_time_and_sales;
     auto new_time_and_sales = std::make_shared<DemoTimeAndSalesModel>();
     new_time_and_sales->set_price(time_and_sales->get_price());

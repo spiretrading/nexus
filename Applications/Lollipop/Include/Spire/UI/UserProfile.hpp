@@ -221,12 +221,12 @@ namespace Spire {
 
       /**
        * Returns the default Quantity.
-       * @param security The Security to lookup the default Quantity for.
+       * @param ticker The Ticker to lookup the default Quantity for.
        * @param side The Side to get the default Quantity on.
        * @return The default Quantity used for Tasks.
        */
       Nexus::Quantity GetDefaultQuantity(
-        const Nexus::Security& security, Nexus::Side side) const;
+        const Nexus::Ticker& ticker, Nexus::Side side) const;
 
       /** Returns the initial PortfolioViewerWindowSettings. */
       const boost::optional<PortfolioViewerWindowSettings>&

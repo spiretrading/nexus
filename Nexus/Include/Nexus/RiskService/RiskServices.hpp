@@ -11,8 +11,8 @@
 #include "Nexus/RiskService/RiskState.hpp"
 
 namespace Nexus {
-  BEAM_DEFINE_RECORD(SecurityValuationUpdate, (Security, security),
-    (SecurityValuation, valuation));
+  BEAM_DEFINE_RECORD(TickerValuationUpdate, (Ticker, ticker),
+    (TickerValuation, valuation));
   BEAM_DEFINE_RECORD(InventoryUpdate,
     (Beam::DirectoryEntry, account), (Inventory, inventory));
   BEAM_DEFINE_RECORD(RiskStateUpdate, (Beam::DirectoryEntry, account),
@@ -33,7 +33,7 @@ namespace Nexus {
       (Beam::DirectoryEntry, account)),
 
     /**
-     * Resets all inventories whose Security is within a Region.
+     * Resets all inventories whose Ticker is within a Region.
      * @param region The Region to reset.
      */
     (ResetRegionService, "Nexus.RiskService.ResetRegionService", void,

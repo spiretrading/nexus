@@ -17,6 +17,6 @@ export * from './number_input';
 export * from './number_slider_input';
 export * from './optional_input';
 export * from './readonly_input';
-export * from './security_input';
+export * from './ticker_input';
 export * from './style_declaration_value_input';
 export * from './text_input';

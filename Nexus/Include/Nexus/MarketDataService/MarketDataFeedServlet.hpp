@@ -48,8 +48,8 @@ namespace Nexus {
 
       MarketDataFeedServlet(const MarketDataFeedServlet&) = delete;
       MarketDataFeedServlet& operator =(const MarketDataFeedServlet&) = delete;
-      void on_set_security_info_message(
-        ServiceProtocolClient& client, const SecurityInfo& info);
+      void on_set_ticker_info_message(
+        ServiceProtocolClient& client, const TickerInfo& info);
       void on_send_market_data_feed_messages(ServiceProtocolClient& client,
         const std::vector<MarketDataFeedMessage>& messages);
   };
@@ -81,8 +81,8 @@ namespace Nexus {
   void MarketDataFeedServlet<C, R>::register_services(Beam::Out<
       Beam::ServiceSlots<ServiceProtocolClient>> slots) {
     register_market_data_feed_messages(Beam::out(slots));
-    Beam::add_message_slot<SetSecurityInfoMessage>(out(slots), std::bind_front(
-      &MarketDataFeedServlet::on_set_security_info_message, this));
+    Beam::add_message_slot<SetTickerInfoMessage>(out(slots), std::bind_front(
+      &MarketDataFeedServlet::on_set_ticker_info_message, this));
     Beam::add_message_slot<SendMarketDataFeedMessages>(
       out(slots), std::bind_front(
         &MarketDataFeedServlet::on_send_market_data_feed_messages, this));
@@ -108,8 +108,8 @@ namespace Nexus {
   }
 
   template<typename C, typename R>
-  void MarketDataFeedServlet<C, R>::on_set_security_info_message(
-      ServiceProtocolClient& client, const SecurityInfo& info) {
+  void MarketDataFeedServlet<C, R>::on_set_ticker_info_message(
+      ServiceProtocolClient& client, const TickerInfo& info) {
     m_registry->add(info);
   }
 

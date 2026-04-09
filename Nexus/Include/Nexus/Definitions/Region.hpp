@@ -7,7 +7,7 @@
 #include <Beam/Serialization/ShuttleUnorderedSet.hpp>
 #include <boost/functional/hash.hpp>
 #include "Nexus/Definitions/Country.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
 namespace Nexus {
@@ -47,10 +47,10 @@ namespace Nexus {
       Region(Venue venue);
 
       /**
-       * Constructs a Region consisting of a single Security.
-       * @param security The Security to represent.
+       * Constructs a Region consisting of a single Ticker.
+       * @param ticker The Ticker to represent.
        */
-      Region(Security security);
+      Region(Ticker ticker);
 
       /** Returns the name of this Region. */
       const std::string& get_name() const;
@@ -67,8 +67,8 @@ namespace Nexus {
       /** Returns the venues in this Region. */
       const std::unordered_set<Venue>& get_venues() const;
 
-      /** Returns the Securities in this Region. */
-      const std::unordered_set<Security>& get_securities() const;
+      /** Returns the Tickers in this Region. */
+      const std::unordered_set<Ticker>& get_tickers() const;
 
       /**
        * Returns <code>true</code> iff <i>region</i> is a subset of
@@ -126,7 +126,7 @@ namespace Nexus {
       bool m_is_global;
       std::unordered_set<CountryCode> m_countries;
       std::unordered_set<Venue> m_venues;
-      std::unordered_set<Security> m_securities;
+      std::unordered_set<Ticker> m_tickers;
 
       explicit Region(GlobalTag);
       Region(GlobalTag, std::string name);
@@ -146,7 +146,7 @@ namespace Nexus {
     }
     const auto COUNTRY_SALT = std::size_t(0x1bd11bdaa9fc1a22);
     const auto VENUE_SALT = std::size_t(0x3c79ac492ba7b653);
-    const auto SECURITY_SALT = std::size_t(0x1f123bb5dfcbb123);
+    const auto TICKER_SALT = std::size_t(0x1f123bb5dfcbb123);
     auto mix = [] (auto x) {
       x += 0x9e3779b97f4a7c15ull;
       x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ull;
@@ -168,34 +168,34 @@ namespace Nexus {
     };
     auto countries_hash = set_hash(region.get_countries(), COUNTRY_SALT);
     auto venues_hash = set_hash(region.get_venues(), VENUE_SALT);
-    auto securities_hash = set_hash(region.get_securities(), SECURITY_SALT);
+    auto tickers_hash = set_hash(region.get_tickers(), TICKER_SALT);
     auto hash = countries_hash + rotate_left(venues_hash, 21) +
-      rotate_left(securities_hash, 42);
+      rotate_left(tickers_hash, 42);
     return mix(hash);
   }
 
-  inline bool operator <(const Security& security, const Region& region) {
-    return Region(security) < region;
+  inline bool operator <(const Ticker& ticker, const Region& region) {
+    return Region(ticker) < region;
   }
 
-  inline bool operator <=(const Security& security, const Region& region) {
-    return Region(security) <= region;
+  inline bool operator <=(const Ticker& ticker, const Region& region) {
+    return Region(ticker) <= region;
   }
 
-  inline bool operator ==(const Security& security, const Region& region) {
-    return Region(security) == region;
+  inline bool operator ==(const Ticker& ticker, const Region& region) {
+    return Region(ticker) == region;
   }
 
-  inline bool operator !=(const Security& security, const Region& region) {
-    return Region(security) != region;
+  inline bool operator !=(const Ticker& ticker, const Region& region) {
+    return Region(ticker) != region;
   }
 
-  inline bool operator >=(const Security& security, const Region& region) {
-    return Region(security) >= region;
+  inline bool operator >=(const Ticker& ticker, const Region& region) {
+    return Region(ticker) >= region;
   }
 
-  inline bool operator >(const Security& security, const Region& region) {
-    return Region(security) > region;
+  inline bool operator >(const Ticker& ticker, const Region& region) {
+    return Region(ticker) > region;
   }
 
   inline Region operator +(Region left, const Region& right) {
@@ -226,9 +226,9 @@ namespace Nexus {
     m_venues.insert(venue);
   }
 
-  inline Region::Region(Security security)
+  inline Region::Region(Ticker ticker)
       : m_is_global(false) {
-    m_securities.insert(std::move(security));
+    m_tickers.insert(std::move(ticker));
   }
 
   inline const std::string& Region::get_name() const {
@@ -240,7 +240,7 @@ namespace Nexus {
   }
 
   inline bool Region::is_empty() const {
-    return m_countries.empty() && m_venues.empty() && m_securities.empty() &&
+    return m_countries.empty() && m_venues.empty() && m_tickers.empty() &&
       !is_global();
   }
 
@@ -252,8 +252,8 @@ namespace Nexus {
     return m_venues;
   }
 
-  inline const std::unordered_set<Security>& Region::get_securities() const {
-    return m_securities;
+  inline const std::unordered_set<Ticker>& Region::get_tickers() const {
+    return m_tickers;
   }
 
   inline bool Region::contains(const Region& region) const {
@@ -265,12 +265,11 @@ namespace Nexus {
       m_is_global = true;
       m_countries = {};
       m_venues = {};
-      m_securities = {};
+      m_tickers = {};
     } else if(!m_is_global) {
       m_countries.insert(region.m_countries.begin(), region.m_countries.end());
       m_venues.insert(region.m_venues.begin(), region.m_venues.end());
-      m_securities.insert(
-        region.m_securities.begin(), region.m_securities.end());
+      m_tickers.insert(region.m_tickers.begin(), region.m_tickers.end());
     }
     return *this;
   }
@@ -285,14 +284,14 @@ namespace Nexus {
     } else if(m_is_global) {
       return false;
     }
-    for(auto& security : m_securities) {
-      if(region.m_securities.contains(security)) {
+    for(auto& ticker : m_tickers) {
+      if(region.m_tickers.contains(ticker)) {
         continue;
       }
-      if(region.m_venues.contains(security.get_venue())) {
+      if(region.m_venues.contains(ticker.get_venue())) {
         continue;
       }
-      auto country = DEFAULT_VENUES.from(security.get_venue()).m_country_code;
+      auto country = DEFAULT_VENUES.from(ticker.get_venue()).m_country_code;
       if(country && region.m_countries.contains(country)) {
         continue;
       }
@@ -318,9 +317,9 @@ namespace Nexus {
   }
 
   inline bool Region::operator ==(const Region& region) const {
-    return std::tie(m_is_global, m_countries, m_venues, m_securities) ==
+    return std::tie(m_is_global, m_countries, m_venues, m_tickers) ==
       std::tie(region.m_is_global, region.m_countries, region.m_venues,
-        region.m_securities);
+        region.m_tickers);
   }
 
   inline bool Region::operator !=(const Region& region) const {
@@ -353,7 +352,7 @@ namespace Beam {
       shuttle.shuttle("is_global", value.m_is_global);
       shuttle.shuttle("countries", value.m_countries);
       shuttle.shuttle("venues", value.m_venues);
-      shuttle.shuttle("securities", value.m_securities);
+      shuttle.shuttle("tickers", value.m_tickers);
     }
   };
 }

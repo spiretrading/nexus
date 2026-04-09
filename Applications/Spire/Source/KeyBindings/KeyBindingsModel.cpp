@@ -43,13 +43,13 @@ const std::shared_ptr<InteractionsKeyBindingsModel>&
       i = m_interactions.insert(std::pair(venue.m_venue, interactions)).first;
     }
     return i->second;
-  } else if(region.get_securities().size() == 1) {
-    auto security = *region.get_securities().begin();
-    auto i = m_interactions.find(security);
+  } else if(region.get_tickers().size() == 1) {
+    auto ticker = *region.get_tickers().begin();
+    auto i = m_interactions.find(ticker);
     if(i == m_interactions.end()) {
       auto interactions = std::make_shared<InteractionsKeyBindingsModel>(
-        get_interactions_key_bindings(security.get_venue()));
-      i = m_interactions.insert(std::pair(security, interactions)).first;
+        get_interactions_key_bindings(ticker.get_venue()));
+      i = m_interactions.insert(std::pair(ticker, interactions)).first;
     }
     return i->second;
   } else if(region.is_global()) {

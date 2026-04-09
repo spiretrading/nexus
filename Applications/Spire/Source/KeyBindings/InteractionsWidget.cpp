@@ -77,25 +77,25 @@ void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
   auto regions =
     m_userProfile->GetKeyBindings()->make_interactions_key_bindings_regions();
   for(auto& regionKey : regions) {
-    if(regionKey.get_securities().empty()) {
+    if(regionKey.get_tickers().empty()) {
       continue;
     }
     auto region = RegionEntry();
-    auto security = *regionKey.get_securities().begin();
-    region.m_region = Region(to_string(security));
-    region.m_region += security;
+    auto ticker = *regionKey.get_tickers().begin();
+    region.m_region = Region(to_string(ticker));
+    region.m_region += ticker;
     Add(region);
   }
   Update();
 }
 
 void InteractionsWidget::Initialize(
-    Ref<UserProfile> userProfile, const Security& security) {
+    Ref<UserProfile> userProfile, const Ticker& ticker) {
   m_userProfile = userProfile.get();
   m_ui->m_regionComboBox->clear();
   auto region = RegionEntry();
-  region.m_region = Region(to_string(security));
-  region.m_region += security;
+  region.m_region = Region(to_string(ticker));
+  region.m_region += ticker;
   Add(region);
   Update();
 }

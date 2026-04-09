@@ -32,9 +32,9 @@ void RegionQueryModel::Search(const std::string& prefix) {
   }
   m_queryPromise = QtPromise([=] {
     return m_userProfile->GetClients().get_market_data_client().
-      load_security_info_from_prefix(uppercasePrefix);
+      load_ticker_info_from_prefix(uppercasePrefix);
   }, LaunchPolicy::ASYNC).then(
-    [=] (const std::vector<SecurityInfo>& info) {
+    [=] (const std::vector<TickerInfo>& info) {
       QTimer::singleShot(0, this, [=] {
         auto items = std::vector<Item>();
         for(auto& i : info) {
@@ -67,8 +67,8 @@ QVariant RegionQueryModel::data(const QModelIndex& index, int role) const {
       } else if(auto venue = get<Venue>(&item)) {
         return QString::fromStdString(
           m_userProfile->GetVenueDatabase().from(*venue).m_display_name);
-      } else if(auto info = get<SecurityInfo>(&item)) {
-        return displayText(info->m_security);
+      } else if(auto info = get<TickerInfo>(&item)) {
+        return displayText(info->m_ticker);
       } else if(auto region = get<Region>(&item)) {
         return displayText(*region);
       }
@@ -80,7 +80,7 @@ QVariant RegionQueryModel::data(const QModelIndex& index, int role) const {
       } else if(auto venue = get<Venue>(&item)) {
         return QString::fromStdString(
           m_userProfile->GetVenueDatabase().from(*venue).m_display_name);
-      } else if(auto info = get<SecurityInfo>(&item)) {
+      } else if(auto info = get<TickerInfo>(&item)) {
         return QString::fromStdString(info->m_name);
       } else if(auto region = get<Region>(&item)) {
         if(region->is_global()) {
@@ -95,7 +95,7 @@ QVariant RegionQueryModel::data(const QModelIndex& index, int role) const {
       } else if(auto venue = get<Venue>(&item)) {
         return QString::fromStdString(
           m_userProfile->GetVenueDatabase().from(*venue).m_description);
-      } else if(auto info = get<SecurityInfo>(&item)) {
+      } else if(auto info = get<TickerInfo>(&item)) {
         return QString::fromStdString(info->m_sector);
       } else if(auto region = get<Region>(&item)) {
         if(region->is_global()) {
@@ -135,8 +135,8 @@ void RegionQueryModel::Add(std::vector<Item> items) {
           return *country == get<CountryCode>(*i);
         } else if(auto venue = get<Venue>(&item)) {
           return *venue == get<Venue>(*i);
-        } else if(auto info = get<SecurityInfo>(&item)) {
-          return info->m_security == get<SecurityInfo>(*i).m_security;
+        } else if(auto info = get<TickerInfo>(&item)) {
+          return info->m_ticker == get<TickerInfo>(*i).m_ticker;
         } else if(auto region = get<Region>(&item)) {
           return *region == get<Region>(*i);
         }

@@ -52,10 +52,10 @@ namespace Nexus::Python {
   void export_charting_service_test_environment(pybind11::module& module);
 
   /**
-   * Exports the SecurityChartingQuery class.
+   * Exports the TickerChartingQuery class.
    * @param module The module to export to.
    */
-  void export_security_charting_query(pybind11::module& module);
+  void export_ticker_charting_query(pybind11::module& module);
 }
 
 #endif

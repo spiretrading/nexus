@@ -29,11 +29,11 @@ namespace {
 BookViewPropertiesWindow::BookViewPropertiesWindow(
     std::shared_ptr<BookViewPropertiesModel> properties,
     std::shared_ptr<KeyBindingsModel> key_bindings,
-    std::shared_ptr<SecurityModel> security, QWidget* parent)
+    std::shared_ptr<TickerModel> ticker, QWidget* parent)
     : Window(parent),
       m_properties(std::move(properties)),
       m_key_bindings(std::move(key_bindings)),
-      m_security(std::move(security)),
+      m_ticker(std::move(ticker)),
       m_initial_properties(m_properties->get()) {
   set_svg_icon(":/Icons/bookview.svg");
   setWindowTitle(tr("Book View Properties"));
@@ -54,7 +54,7 @@ BookViewPropertiesWindow::BookViewPropertiesWindow(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_navigation_view->add_tab(*m_highlights_page, tr("Highlights"));
   auto interactions_page =
-    new BookViewInteractionPropertiesPage(m_key_bindings, m_security);
+    new BookViewInteractionPropertiesPage(m_key_bindings, m_ticker);
   interactions_page->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_navigation_view->add_tab(*interactions_page, tr("Interactions"));
@@ -85,15 +85,15 @@ BookViewPropertiesWindow::BookViewPropertiesWindow(
   layout->addWidget(m_navigation_view);
   layout->addWidget(actions_box);
   set_body(body);
-  m_security_connection = m_security->connect_update_signal(
-    std::bind_front(&BookViewPropertiesWindow::on_security_update, this));
-  on_security_update(m_security->get());
+  m_ticker_connection = m_ticker->connect_update_signal(
+    std::bind_front(&BookViewPropertiesWindow::on_ticker_update, this));
+  on_ticker_update(m_ticker->get());
 }
 
 void BookViewPropertiesWindow::on_cancel_button_click() {
   m_properties->set(m_initial_properties);
   auto& current_interactions =
-    m_key_bindings->get_interactions_key_bindings(m_security->get());
+    m_key_bindings->get_interactions_key_bindings(m_ticker->get());
   if(current_interactions && current_interactions->is_detached()) {
     if(m_are_interactions_detached) {
       copy_interactions(m_initial_interactions, *current_interactions);
@@ -107,7 +107,7 @@ void BookViewPropertiesWindow::on_cancel_button_click() {
 void BookViewPropertiesWindow::on_done_button_click() {
   m_initial_properties = m_properties->get();
   if(auto& current_interactions =
-      m_key_bindings->get_interactions_key_bindings(m_security->get())) {
+      m_key_bindings->get_interactions_key_bindings(m_ticker->get())) {
     copy_interactions(*current_interactions, m_initial_interactions);
     m_are_interactions_detached = current_interactions->is_detached();
   }
@@ -122,12 +122,12 @@ void BookViewPropertiesWindow::on_level_update(
   });
 }
 
-void BookViewPropertiesWindow::on_security_update(const Security& security) {
+void BookViewPropertiesWindow::on_ticker_update(const Ticker& ticker) {
   m_navigation_view->set_enabled(m_navigation_view->get_count() - 1,
-    static_cast<bool>(security));
-  if(security) {
+    static_cast<bool>(ticker));
+  if(ticker) {
     if(auto& current_interactions =
-        m_key_bindings->get_interactions_key_bindings(security)) {
+        m_key_bindings->get_interactions_key_bindings(ticker)) {
       m_are_interactions_detached = current_interactions->is_detached();
       copy_interactions(*current_interactions, m_initial_interactions);
     } else {

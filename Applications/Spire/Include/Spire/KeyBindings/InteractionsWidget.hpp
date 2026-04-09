@@ -35,10 +35,10 @@ namespace Spire {
       /**
        * Initializes the InteractionsWidget, must be called after construction.
        * @param userProfile The user's profile.
-       * @param security The Security to display the InteractionsProperties for.
+       * @param ticker The Ticker to display the InteractionsProperties for.
        */
       void Initialize(
-        Beam::Ref<UserProfile> userProfile, const Nexus::Security& security);
+        Beam::Ref<UserProfile> userProfile, const Nexus::Ticker& ticker);
 
       /** Stores the current interactions to the UserProfile. */
       void Store();

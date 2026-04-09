@@ -11,8 +11,8 @@ namespace Nexus {
   /** Stores the table of fees used by CXD. */
   struct CxdFeeTable {
 
-    /** Enumerates the types of security classifications. */
-    enum class SecurityClass {
+    /** Enumerates the types of ticker classifications. */
+    enum class TickerClass {
 
       /** Default class. */
       DEFAULT = 0,
@@ -21,8 +21,8 @@ namespace Nexus {
       ETF
     };
 
-    /** The number of security classes enumerated. */
-    static constexpr auto SECURITY_CLASS_COUNT = std::size_t(2);
+    /** The number of ticker classes enumerated. */
+    static constexpr auto TICKER_CLASS_COUNT = std::size_t(2);
 
     /** Enumerates the types of price classes. */
     enum class PriceClass {
@@ -60,15 +60,15 @@ namespace Nexus {
     static constexpr auto BBO_PRICE_PAIR_COUNT =
       BBO_TYPE_COUNT * PRICE_CLASS_COUNT;
 
-    /** The fee table for default securities. */
+    /** The fee table for default tickers. */
     std::array<std::array<Money, BBO_PRICE_PAIR_COUNT>, LIQUIDITY_FLAG_COUNT>
       m_fee_table;
 
-    /** The max fee table for default securities. */
+    /** The max fee table for default tickers. */
     std::array<std::array<Money, BBO_PRICE_PAIR_COUNT>, LIQUIDITY_FLAG_COUNT>
       m_max_fee_table;
 
-    /** The fee table for ETF securities. */
+    /** The fee table for ETF tickers. */
     std::array<std::array<Money, BBO_PRICE_PAIR_COUNT>, LIQUIDITY_FLAG_COUNT>
       m_etf_fee_table;
   };
@@ -132,20 +132,20 @@ namespace Nexus {
    * Looks up the fee in the CXD fee table.
    * @param table The CxdFeeTable to use.
    * @param flag The LiquidityFlag (ACTIVE or PASSIVE).
-   * @param security_class The SecurityClass (DEFAULT or ETF).
+   * @param ticker_class The ticker classification (DEFAULT or ETF).
    * @param price_class The PriceClass (SUBDOLLAR, SUBFIVE, DEFAULT).
    * @param bbo_type The BboType (AT_BBO or INSIDE_BBO).
    * @return The fee for the specified parameters.
    */
   inline Money lookup_fee(const CxdFeeTable& table, LiquidityFlag flag,
-      CxdFeeTable::SecurityClass security_class,
+      CxdFeeTable::TickerClass ticker_class,
       CxdFeeTable::PriceClass price_class, CxdFeeTable::BboType bbo_type) {
     auto bbo_index = static_cast<std::size_t>(bbo_type);
     auto price_index = static_cast<std::size_t>(price_class);
     auto liquidity_index = static_cast<std::size_t>(flag);
     auto column_index =
       bbo_index * CxdFeeTable::PRICE_CLASS_COUNT + price_index;
-    if(security_class == CxdFeeTable::SecurityClass::ETF) {
+    if(ticker_class == CxdFeeTable::TickerClass::ETF) {
       return table.m_etf_fee_table[liquidity_index][column_index];
     }
     return table.m_fee_table[liquidity_index][column_index];
@@ -172,13 +172,12 @@ namespace Nexus {
   /**
    * Calculates the fee for a trade executed on CXD.
    * @param table The CxdFeeTable to use.
-   * @param security_class The SecurityClass (DEFAULT or ETF).
+   * @param ticker_class The ticker classification (DEFAULT or ETF).
    * @param report The ExecutionReport to calculate the fee for.
    * @return The fee for the specified trade.
    */
-  inline Money calculate_fee(
-      const CxdFeeTable& table, CxdFeeTable::SecurityClass security_class,
-      const ExecutionReport& report) {
+  inline Money calculate_fee(const CxdFeeTable& table,
+      CxdFeeTable::TickerClass ticker_class, const ExecutionReport& report) {
     if(report.m_last_quantity == 0) {
       return Money::ZERO;
     }
@@ -192,8 +191,8 @@ namespace Nexus {
     }
     auto price_class = get_cxd_price_class(report.m_last_price);
     auto per_share_fee =
-      lookup_fee(table, flag, security_class, price_class, bbo_type);
-    if(security_class == CxdFeeTable::SecurityClass::ETF) {
+      lookup_fee(table, flag, ticker_class, price_class, bbo_type);
+    if(ticker_class == CxdFeeTable::TickerClass::ETF) {
       return report.m_last_quantity * per_share_fee;
     } else {
       auto max_fee = lookup_max_fee(table, flag, price_class, bbo_type);

@@ -3,7 +3,7 @@
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
-#include "Nexus/Definitions/SecurityTechnicals.hpp"
+#include "Nexus/Definitions/TickerTechnicals.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -19,12 +19,12 @@ namespace Spire {
   /** Models a list of BookQuotes. */
   using BookQuoteListModel = ListModel<Nexus::BookQuote>;
 
-  /** A ValueModel over a SecurityTechnicals. */
-  using SecurityTechnicalsModel = ValueModel<Nexus::SecurityTechnicals>;
+  /** A ValueModel over a TickerTechnicals. */
+  using TickerTechnicalsModel = ValueModel<Nexus::TickerTechnicals>;
 
-  /** A LocalValueModel over a SecurityTechnicals. */
-  using LocalSecurityTechnicalsModel =
-    LocalValueModel<Nexus::SecurityTechnicals>;
+  /** A LocalValueModel over a TickerTechnicals. */
+  using LocalTickerTechnicalsModel =
+    LocalValueModel<Nexus::TickerTechnicals>;
 
   /** The model for the book view. */
   class BookViewModel {
@@ -77,8 +77,8 @@ namespace Spire {
       /** Returns the Bbo quote. */
       virtual const std::shared_ptr<BboQuoteModel>& get_bbo_quote() const = 0;
 
-      /** Returns the technical details about a Security. */
-      virtual const std::shared_ptr<SecurityTechnicalsModel>&
+      /** Returns the technical details about a Ticker. */
+      virtual const std::shared_ptr<TickerTechnicalsModel>&
         get_technicals() const = 0;
 
     protected:
