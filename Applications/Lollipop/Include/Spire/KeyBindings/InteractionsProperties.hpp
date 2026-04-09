@@ -3,7 +3,7 @@
 #include <array>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/RegionMap.hpp"
+#include "Nexus/Definitions/ScopeMap.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/UI/UI.hpp"
 
@@ -21,7 +21,7 @@ namespace Spire {
     /*!
       \param userProfile The user's profile.
     */
-    static Nexus::RegionMap<InteractionsProperties> GetDefaultPropertiesMap(
+    static Nexus::ScopeMap<InteractionsProperties> GetDefaultPropertiesMap(
       const UserProfile& userProfile);
 
     //! Loads the InteractionsProperties from a UserProfile.

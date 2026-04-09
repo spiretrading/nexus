@@ -3,7 +3,7 @@
 #include "Nexus/Definitions/Destination.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/EnumBox.hpp"
-#include "Spire/Ui/RegionBox.hpp"
+#include "Spire/Ui/ScopeBox.hpp"
 
 namespace Spire {
 
@@ -17,11 +17,11 @@ namespace Spire {
   using DestinationBox = EnumBox<Nexus::Destination>;
 
   /**
-   * Makes a list of destinations that are restricted to a region.
+   * Makes a list of destinations that are restricted to a scope.
    * @param destinations The destinations available.
    */
   std::shared_ptr<ListModel<Nexus::DestinationDatabase::Entry>>
-    make_region_filtered_destination_list(std::shared_ptr<RegionModel> region);
+    make_scope_filtered_destination_list(std::shared_ptr<ScopeModel> scope);
 
   /**
    * Returns a DestinationBox.

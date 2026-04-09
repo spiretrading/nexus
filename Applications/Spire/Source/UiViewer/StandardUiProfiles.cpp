@@ -84,9 +84,9 @@
 #include "Spire/Ui/PopupBox.hpp"
 #include "Spire/Ui/ProgressBar.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
-#include "Spire/Ui/RegionBox.hpp"
-#include "Spire/Ui/RegionDropDownBox.hpp"
-#include "Spire/Ui/RegionListItem.hpp"
+#include "Spire/Ui/ScopeBox.hpp"
+#include "Spire/Ui/ScopeDropDownBox.hpp"
+#include "Spire/Ui/ScopeListItem.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
@@ -793,7 +793,7 @@ namespace {
     return model;
   }
 
-  auto populate_region_box_model() {
+  auto populate_scope_box_model() {
     auto tickers = std::vector<std::pair<std::string, std::string>>{
       {"MSFT.NSDQ", "Microsoft Corporation"},
       {"MG.TSX", "Magna International Inc."},
@@ -805,29 +805,29 @@ namespace {
       DefaultVenues::CSE, DefaultVenues::TSX, DefaultVenues::TSXV};
     auto countries = std::vector{DefaultCountries::US, DefaultCountries::CA,
       DefaultCountries::AU, DefaultCountries::JP, DefaultCountries::CN};
-    auto model = std::make_shared<LocalQueryModel<Region>>();
+    auto model = std::make_shared<LocalQueryModel<Scope>>();
     for(auto& ticker_info : tickers) {
       auto ticker = parse_ticker(ticker_info.first);
       if(!ticker) {
         continue;
       }
-      auto region = Region(ticker_info.second);
-      region += ticker;
-      model->add(to_text(ticker).toLower(), region);
-      model->add(QString::fromStdString(region.get_name()).toLower(), region);
+      auto scope = Scope(ticker_info.second);
+      scope += ticker;
+      model->add(to_text(ticker).toLower(), scope);
+      model->add(QString::fromStdString(scope.get_name()).toLower(), scope);
     }
     for(auto& venue : venues) {
       auto entry = DEFAULT_VENUES.from(venue);
-      auto region = Region(entry.m_description);
-      region += venue;
-      model->add(to_text(venue).toLower(), region);
-      model->add(QString::fromStdString(region.get_name()).toLower(), region);
+      auto scope = Scope(entry.m_description);
+      scope += venue;
+      model->add(to_text(venue).toLower(), scope);
+      model->add(QString::fromStdString(scope.get_name()).toLower(), scope);
     }
     for(auto& country : countries) {
-      auto region = Region(DEFAULT_COUNTRIES.from(country).m_name);
-      region += country;
-      model->add(to_text(country).toLower(), region);
-      model->add(QString::fromStdString(region.get_name()).toLower(), region);
+      auto scope = Scope(DEFAULT_COUNTRIES.from(country).m_name);
+      scope += country;
+      model->add(to_text(country).toLower(), scope);
+      model->add(QString::fromStdString(scope.get_name()).toLower(), scope);
     }
     return model;
   }
@@ -999,21 +999,21 @@ namespace {
     return QString("Exclude");
   }
 
-  auto print_region(const Region& region) {
+  auto print_scope(const Scope& scope) {
     auto result = QString();
-    result += "Region{Countries{";
-    for(auto& country : region.get_countries()) {
+    result += "Scope{Countries{";
+    for(auto& country : scope.get_countries()) {
       result +=
         DEFAULT_COUNTRIES.from(country).m_three_letter_code.get_data();
       result += " ";
     }
     result += "} Venues{";
-    for(auto& venue : region.get_venues()) {
+    for(auto& venue : scope.get_venues()) {
       result += to_text(venue);
       result += " ";
     }
     result += "} Tickers{";
-    for(auto& ticker : region.get_tickers()) {
+    for(auto& ticker : scope.get_tickers()) {
       result += to_text(ticker);
       result += " ";
     }
@@ -2016,7 +2016,7 @@ UiProfile Spire::make_editable_box_profile() {
   populate_widget_properties(properties);
   auto test_widget_property = define_enum<int>(
     {{"TextBox", 0}, {"DropDownBox", 1}, {"DecimalBox", 2}, {"QuantityBox", 3},
-      {"KeyInputBox", 4}, {"RegionBox", 5}});
+      {"KeyInputBox", 4}, {"ScopeBox", 5}});
   properties.push_back(
     make_standard_enum_property("input_box", test_widget_property));
   auto profile = UiProfile("EditableBox", properties, [] (auto& profile) {
@@ -2044,10 +2044,10 @@ UiProfile Spire::make_editable_box_profile() {
             return key_input_box_validator(sequence) == QValidator::Acceptable;
           });
       }
-      auto query_model = populate_region_box_model();
-      auto current = std::make_shared<LocalValueModel<Region>>();
-      current->set(std::any_cast<Region>(*query_model->parse("TSX")));
-      return new EditableBox(*new RegionBox(query_model, current));
+      auto query_model = populate_scope_box_model();
+      auto current = std::make_shared<LocalValueModel<Scope>>();
+      current->set(std::any_cast<Scope>(*query_model->parse("TSX")));
+      return new EditableBox(*new ScopeBox(query_model, current));
     }();
     input_box->setMinimumWidth(scale_width(112));
     apply_widget_properties(input_box, profile.get_properties());
@@ -3213,10 +3213,10 @@ UiProfile Spire::make_navigation_view_profile() {
     ticker_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     ticker_box->set_placeholder("TickerBox");
     layout1->addWidget(ticker_box);
-    auto region_box = new RegionBox(populate_region_box_model());
-    region_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    region_box->set_placeholder("RegionBox");
-    layout1->addWidget(region_box);
+    auto scope_box = new ScopeBox(populate_scope_box_model());
+    scope_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    scope_box->set_placeholder("ScopeBox");
+    layout1->addWidget(scope_box);
     navigation_view->add_tab(*page1, "NavTab1");
     auto new_page = [] {
       auto page = new QWidget();
@@ -3616,48 +3616,48 @@ UiProfile Spire::make_radio_button_profile() {
   });
 }
 
-UiProfile Spire::make_region_box_profile() {
+UiProfile Spire::make_scope_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   properties.push_back(make_standard_property<QString>("current",
     "TSX,USA,CAN"));
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
-  auto profile = UiProfile("RegionBox", properties, [] (auto& profile) {
-    auto query_model = populate_region_box_model();
-    auto to_region = [=] (const auto& text) {
-      auto region = Region();
+  auto profile = UiProfile("ScopeBox", properties, [] (auto& profile) {
+    auto query_model = populate_scope_box_model();
+    auto to_scope = [=] (const auto& text) {
+      auto scope = Scope();
       for(auto& value : text.split(",")) {
         if(auto parse_value = query_model->parse(value)) {
-          region += *parse_value;
+          scope += *parse_value;
         }
       }
-      return region;
+      return scope;
     };
-    auto to_string = [] (const auto& region) {
+    auto to_string = [] (const auto& scope) {
       auto text = QString();
-      for(auto& country : region.get_countries()) {
+      for(auto& country : scope.get_countries()) {
         text = text % to_text(country) % ",";
       }
-      for(auto& venue : region.get_venues()) {
+      for(auto& venue : scope.get_venues()) {
         text = text % to_text(venue) % ",";
       }
-      for(auto& ticker : region.get_tickers()) {
+      for(auto& ticker : scope.get_tickers()) {
         text = text % to_text(ticker) % ",";
       }
       text.remove(text.length() - 1, 1);
       return text;
     };
     auto& current = get<QString>("current", profile.get_properties());
-    auto current_model = std::make_shared<LocalValueModel<Region>>(
-      to_region(current.get()));
+    auto current_model = std::make_shared<LocalValueModel<Scope>>(
+      to_scope(current.get()));
     current.connect_changed_signal([=] (const auto& value) {
-      auto region = to_region(value);
-      if(current_model->get() != region) {
-        current_model->set(region);
+      auto scope = to_scope(value);
+      if(current_model->get() != scope) {
+        current_model->set(scope);
       }
     });
-    auto box = new RegionBox(query_model, current_model);
+    auto box = new ScopeBox(query_model, current_model);
     box->setMinimumWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
@@ -3666,111 +3666,111 @@ UiProfile Spire::make_region_box_profile() {
     });
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
-      std::bind_front(&RegionBox::set_read_only, box));
+      std::bind_front(&ScopeBox::set_read_only, box));
     auto current_slot = profile.make_event_slot<QString>("Current");
     box->get_current()->connect_update_signal(
-      [=, &current] (const Region& region) {
-        current_slot(print_region(region));
-        if(to_region(current.get()) != region) {
-          current.set(to_string(region));
+      [=, &current] (const Scope& scope) {
+        current_slot(print_scope(scope));
+        if(to_scope(current.get()) != scope) {
+          current.set(to_string(scope));
         }
       });
     auto submit_slot = profile.make_event_slot<QString>("Submit");
-    box->connect_submit_signal([=] (const Region& region) {
-      submit_slot(print_region(region));
+    box->connect_submit_signal([=] (const Scope& scope) {
+      submit_slot(print_scope(scope));
     });
     return box;
   });
   return profile;
 }
 
-UiProfile Spire::make_region_drop_down_box_profile() {
+UiProfile Spire::make_scope_drop_down_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  auto current_region = define_enum<Region>(
+  auto current_scope = define_enum<Scope>(
     {{"ASX", DefaultVenues::ASX}, {"CXD", DefaultVenues::CXD},
-     {"TSX", DefaultVenues::TSX}, {"USA", Region(DefaultCountries::US)},
-     {"CAN", Region(DefaultCountries::CA)}});
-  properties.push_back(make_standard_enum_property("current", current_region));
+     {"TSX", DefaultVenues::TSX}, {"USA", Scope(DefaultCountries::US)},
+     {"CAN", Scope(DefaultCountries::CA)}});
+  properties.push_back(make_standard_enum_property("current", current_scope));
   properties.push_back(make_standard_property("read_only", false));
-  auto profile = UiProfile("RegionDropDownBox", properties, [] (auto& profile) {
+  auto profile = UiProfile("ScopeDropDownBox", properties, [] (auto& profile) {
     auto venues = std::vector{DefaultVenues::ASX, DefaultVenues::CXD,
       DefaultVenues::TSX};
     auto countries = std::vector{DefaultCountries::US, DefaultCountries::CA};
-    auto regions = std::make_shared<ArrayListModel<Region>>();
+    auto scopes = std::make_shared<ArrayListModel<Scope>>();
     for(auto& venue : venues) {
-      auto region = Region(DEFAULT_VENUES.from(venue).m_display_name);
-      region += venue;
-      regions->push(region);
+      auto scope = Scope(DEFAULT_VENUES.from(venue).m_display_name);
+      scope += venue;
+      scopes->push(scope);
     }
     for(auto& country : countries) {
-      auto region = Region(DEFAULT_COUNTRIES.from(country).m_name);
-      region += country;
-      regions->push(region);
+      auto scope = Scope(DEFAULT_COUNTRIES.from(country).m_name);
+      scope += country;
+      scopes->push(scope);
     }
-    auto box = make_region_drop_down_box(std::move(regions));
+    auto box = make_scope_drop_down_box(std::move(scopes));
     box->setFixedWidth(scale_width(150));
     apply_widget_properties(box, profile.get_properties());
-    auto& current = get<Region>("current", profile.get_properties());
+    auto& current = get<Scope>("current", profile.get_properties());
     current.connect_changed_signal([=] (auto value) {
       box->get_current()->set(value);
     });
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
-      std::bind_front(&RegionDropDownBox::set_read_only, box));
+      std::bind_front(&ScopeDropDownBox::set_read_only, box));
     box->get_current()->connect_update_signal(
-      profile.make_event_slot<Region>("Current"));
-    box->connect_submit_signal(profile.make_event_slot<Region>("Submit"));
+      profile.make_event_slot<Scope>("Current"));
+    box->connect_submit_signal(profile.make_event_slot<Scope>("Submit"));
     return box;
   });
   return profile;
 }
 
-UiProfile Spire::make_region_filter_panel_profile() {
+UiProfile Spire::make_scope_filter_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  auto profile = UiProfile("RegionFilterPanel", properties, [] (auto& profile) {
+  auto profile = UiProfile("ScopeFilterPanel", properties, [] (auto& profile) {
     auto filter_panel =
-      new RegionFilterPanel(*new RegionBox(populate_region_box_model()));
+      new ScopeFilterPanel(*new ScopeBox(populate_scope_box_model()));
     apply_widget_properties(filter_panel, profile.get_properties());
     auto submit_slot = profile.make_event_slot<QString>("Submit");
     filter_panel->connect_submit_signal(
-      [=] (const auto& region, auto mode) {
+      [=] (const auto& scope, auto mode) {
         submit_slot(QString("Mode:%1 %2").
-          arg(to_string<RegionBox>(mode)).arg(print_region(region)));
+          arg(to_string<ScopeBox>(mode)).arg(print_scope(scope)));
       });
     return filter_panel;
   });
   return profile;
 }
 
-UiProfile Spire::make_region_list_item_profile() {
+UiProfile Spire::make_scope_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto type_property = define_enum<int>(
     {{"TICKER", 0}, {"VENUE", 1}, {"COUNTRY", 2}});
   properties.push_back(make_standard_enum_property("type", type_property));
-  auto profile = UiProfile("RegionListItem", properties, [] (auto& profile) {
+  auto profile = UiProfile("ScopeListItem", properties, [] (auto& profile) {
     auto& type = get<int>("type", profile.get_properties());
-    auto region = [&] {
+    auto scope = [&] {
       if(type.get() == 0) {
         auto ticker = parse_ticker("MRU.TSX");
-        auto region = Region("Metro Inc.");
-        region += ticker;
-        return region;
+        auto scope = Scope("Metro Inc.");
+        scope += ticker;
+        return scope;
       } else if(type.get() == 1) {
         auto venue = DEFAULT_VENUES.from(DefaultVenues::ASX);
-        auto region = Region(venue.m_description);
-        region += venue.m_venue;
-        return region;
+        auto scope = Scope(venue.m_description);
+        scope += venue.m_venue;
+        return scope;
       } else {
         auto country = DefaultCountries::US;
-        auto region = Region(DEFAULT_COUNTRIES.from(country).m_name);
-        region += country;
-        return region;
+        auto scope = Scope(DEFAULT_COUNTRIES.from(country).m_name);
+        scope += country;
+        return scope;
       }
     }();
-    auto item = new RegionListItem(region);
+    auto item = new ScopeListItem(scope);
     apply_widget_properties(item, profile.get_properties());
     item->setMinimumSize(0, 0);
     item->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);

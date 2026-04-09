@@ -12,7 +12,7 @@
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
-#include "Nexus/Definitions/Region.hpp"
+#include "Nexus/Definitions/Scope.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
@@ -47,7 +47,7 @@ Q_DECLARE_METATYPE(Nexus::Money);
 Q_DECLARE_METATYPE(Nexus::OrderStatus);
 Q_DECLARE_METATYPE(Nexus::OrderType);
 Q_DECLARE_METATYPE(Nexus::Quantity);
-Q_DECLARE_METATYPE(Nexus::Region);
+Q_DECLARE_METATYPE(Nexus::Scope);
 Q_DECLARE_METATYPE(Nexus::Side);
 Q_DECLARE_METATYPE(Nexus::Ticker);
 Q_DECLARE_METATYPE(Nexus::TimeAndSale::Condition);
@@ -147,9 +147,9 @@ namespace Spire {
   /** Returns the text representation of a PositionSideToken. */
   QString to_text(PositionSideToken token, const QLocale& locale = QLocale());
 
-  /** Returns the text representation of a Region. */
+  /** Returns the text representation of a Scope. */
   QString to_text(
-    const Nexus::Region& region, const QLocale& locale = QLocale());
+    const Nexus::Scope& scope, const QLocale& locale = QLocale());
 
   /** Returns the text representation of a Ticker. */
   QString to_text(
@@ -225,7 +225,7 @@ namespace Spire {
   boost::optional<Nexus::Quantity> from_text(const QString& text);
 
   template<>
-  boost::optional<Nexus::Region> from_text(const QString& text);
+  boost::optional<Nexus::Scope> from_text(const QString& text);
 
   template<>
   boost::optional<Nexus::OrderStatus> from_text(const QString& text);

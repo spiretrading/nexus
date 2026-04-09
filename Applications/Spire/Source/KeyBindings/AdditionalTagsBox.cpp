@@ -12,10 +12,10 @@ using namespace Spire::Styles;
 namespace {
   auto to_text(const std::vector<AdditionalTag>& tags,
       const AdditionalTagDatabase& additional_tags,
-      const Destination& destination, const Region& region) {
+      const Destination& destination, const Scope& scope) {
     auto label = QString();
     for(auto& tag : tags) {
-      auto schema = find(additional_tags, destination, region, tag.m_key);
+      auto schema = find(additional_tags, destination, scope, tag.m_key);
       if(schema) {
         if(!label.isEmpty()) {
           label.append(", ");
@@ -31,22 +31,22 @@ AdditionalTagsBox::AdditionalTagsBox(
     std::shared_ptr<AdditionalTagsModel> current,
     AdditionalTagDatabase additional_tags,
     std::shared_ptr<DestinationModel> destination,
-    std::shared_ptr<RegionModel> region, QWidget* parent)
+    std::shared_ptr<ScopeModel> scope, QWidget* parent)
     : QWidget(parent),
       m_additional_tags(std::move(additional_tags)),
       m_destination(std::move(destination)),
       m_destination_connection(m_destination->connect_update_signal(
         std::bind_front(&AdditionalTagsBox::on_destination, this))),
-      m_region(std::move(region)),
-      m_region_connection(m_region->connect_update_signal(
-        std::bind_front(&AdditionalTagsBox::on_region, this))),
+      m_scope(std::move(scope)),
+      m_scope_connection(m_scope->connect_update_signal(
+        std::bind_front(&AdditionalTagsBox::on_scope, this))),
       m_current(std::move(current)),
       m_is_read_only(false),
       m_click_observer(*this) {
   m_tags_text = make_transform_value_model(m_current,
     [=] (const auto& current) {
       return ::to_text(
-        current, m_additional_tags, m_destination->get(), m_region->get());
+        current, m_additional_tags, m_destination->get(), m_scope->get());
     });
   m_label = make_label(m_tags_text);
   enclose(*this, *m_label);
@@ -81,9 +81,9 @@ connection AdditionalTagsBox::connect_submit_signal(
 }
 
 void AdditionalTagsBox::update_current(
-    const Destination& destination, const Region& region) {
+    const Destination& destination, const Scope& scope) {
   auto current = m_current->get();
-  auto tags = Spire::find(m_additional_tags, destination, region);
+  auto tags = Spire::find(m_additional_tags, destination, scope);
   auto erasures = std::erase_if(current, [&] (const auto& current) {
     auto i = std::find_if(tags.begin(), tags.end(), [&] (const auto& tag) {
       return tag->get_key() == current.m_key;
@@ -96,11 +96,11 @@ void AdditionalTagsBox::update_current(
 }
 
 void AdditionalTagsBox::on_destination(const Destination& destination) {
-  update_current(destination, m_region->get());
+  update_current(destination, m_scope->get());
 }
 
-void AdditionalTagsBox::on_region(const Region& region) {
-  update_current(m_destination->get(), region);
+void AdditionalTagsBox::on_scope(const Scope& scope) {
+  update_current(m_destination->get(), scope);
 }
 
 void AdditionalTagsBox::on_click() {
@@ -108,7 +108,7 @@ void AdditionalTagsBox::on_click() {
     return;
   }
   auto window = new AdditionalTagsWindow(
-    m_current, m_additional_tags, m_destination, m_region, this);
+    m_current, m_additional_tags, m_destination, m_scope, this);
   window->setAttribute(Qt::WA_DeleteOnClose);
   window->setWindowModality(Qt::WindowModal);
   window->show();

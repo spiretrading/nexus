@@ -5,7 +5,7 @@
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <boost/optional/optional.hpp>
-#include "Nexus/Definitions/RegionMap.hpp"
+#include "Nexus/Definitions/ScopeMap.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"

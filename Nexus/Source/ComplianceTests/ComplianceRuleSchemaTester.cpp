@@ -29,11 +29,11 @@ TEST_SUITE("ComplianceRuleSchema") {
     auto parameters = std::vector{parameter};
     auto base_schema = ComplianceRuleSchema("base_rule", parameters);
     auto wrapped_schema = wrap("wrapper_rule",
-      {{"region", ComplianceValue(Region::GLOBAL)}}, base_schema);
+      {{"scope", ComplianceValue(Scope::GLOBAL)}}, base_schema);
     REQUIRE(wrapped_schema.get_name() == "wrapper_rule");
     auto found_name = false;
     auto found_arguments = false;
-    auto found_region = false;
+    auto found_scope = false;
     for(auto& parameter : wrapped_schema.get_parameters()) {
       if(parameter.m_name == "name") {
         REQUIRE(get<std::string>(parameter.m_value) == "base_rule");
@@ -46,14 +46,14 @@ TEST_SUITE("ComplianceRuleSchema") {
         REQUIRE(get<std::string>(argument[0]) == "ticker");
         REQUIRE(get<Ticker>(argument[1]) == parse_ticker("ABC.TSX"));
         found_arguments = true;
-      } else if(parameter.m_name == "region") {
-        REQUIRE(get<Region>(parameter.m_value) == Region::GLOBAL);
-        found_region = true;
+      } else if(parameter.m_name == "scope") {
+        REQUIRE(get<Scope>(parameter.m_value) == Scope::GLOBAL);
+        found_scope = true;
       }
     }
     REQUIRE(found_name);
     REQUIRE(found_arguments);
-    REQUIRE(found_region);
+    REQUIRE(found_scope);
     auto unwrapped_schema = unwrap(wrapped_schema);
     REQUIRE(unwrapped_schema.get_name() == "base_rule");
     REQUIRE(unwrapped_schema.get_parameters().size() == 1);

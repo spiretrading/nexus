@@ -148,28 +148,28 @@ namespace Nexus {
       }
       return Viper::Order::DESC;
     }();
-    auto region_filter = Viper::literal(query.get_index().is_global());
+    auto scope_filter = Viper::literal(query.get_index().is_global());
     for(auto country : query.get_index().get_countries()) {
       for(auto entry : m_venues.get_entries()) {
         if(entry.m_country_code == country) {
-          region_filter = region_filter || Viper::sym("venue") ==
+          scope_filter = scope_filter || Viper::sym("venue") ==
             Viper::literal(std::string(entry.m_venue.get_code().get_data()));
         }
       }
     }
     for(auto venue : query.get_index().get_venues()) {
-      region_filter = region_filter || Viper::sym("venue") ==
+      scope_filter = scope_filter || Viper::sym("venue") ==
         Viper::literal(std::string(venue.get_code().get_data()));
     }
     for(auto& ticker : query.get_index().get_tickers()) {
-      region_filter = region_filter ||
+      scope_filter = scope_filter ||
         Viper::sym("symbol") == ticker.get_symbol() &&
         Viper::sym("venue") == ticker.get_venue();
     }
     {
       auto reader = m_reader_pool.load();
       reader->execute(Viper::select(get_ticker_info_row(), "ticker_info",
-        filter && anchor && region_filter,
+        filter && anchor && scope_filter,
         Viper::order_by({{"symbol", order}, {"venue", order}}),
         Viper::limit(query.get_snapshot_limit().get_size()),
         std::back_inserter(matches)));

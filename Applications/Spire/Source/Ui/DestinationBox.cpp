@@ -12,19 +12,19 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  auto make_filter(const Region& region) {
+  auto make_filter(const Scope& scope) {
     return [=] (const auto& list, auto index) {
-      if(region.is_global()) {
+      if(scope.is_global()) {
         return false;
       }
       auto& entry = list.get(index);
-      for(auto& venue : region.get_venues()) {
+      for(auto& venue : scope.get_venues()) {
         auto i = std::find(entry.m_venues.begin(), entry.m_venues.end(), venue);
         if(i == entry.m_venues.end()) {
           return true;
         }
       }
-      for(auto& country : region.get_countries()) {
+      for(auto& country : scope.get_countries()) {
         auto i = std::find_if(entry.m_venues.begin(), entry.m_venues.end(),
           [&] (const auto& venue) {
             return DEFAULT_VENUES.from(venue).m_country_code == country;
@@ -37,35 +37,35 @@ namespace {
     };
   }
 
-  struct RegionFilteredList : FilteredListModel<DestinationDatabase::Entry> {
-    std::shared_ptr<RegionModel> m_region;
+  struct ScopeFilteredList : FilteredListModel<DestinationDatabase::Entry> {
+    std::shared_ptr<ScopeModel> m_scope;
     scoped_connection m_connection;
 
-    RegionFilteredList(
+    ScopeFilteredList(
         std::shared_ptr<ListModel<DestinationDatabase::Entry>> destinations,
-        std::shared_ptr<RegionModel> region)
+        std::shared_ptr<ScopeModel> scope)
         : FilteredListModel(
-            std::move(destinations), make_filter(region->get())),
-          m_region(std::move(region)) {
-      m_connection = m_region->connect_update_signal(
-        std::bind_front(&RegionFilteredList::on_region, this));
+            std::move(destinations), make_filter(scope->get())),
+          m_scope(std::move(scope)) {
+      m_connection = m_scope->connect_update_signal(
+        std::bind_front(&ScopeFilteredList::on_scope, this));
     }
 
-    void on_region(const Region& region) {
-      set_filter(make_filter(region));
+    void on_scope(const Scope& scope) {
+      set_filter(make_filter(scope));
     }
   };
 }
 
 std::shared_ptr<ListModel<DestinationDatabase::Entry>>
-    Spire::make_region_filtered_destination_list(
-      std::shared_ptr<RegionModel> region) {
+    Spire::make_scope_filtered_destination_list(
+      std::shared_ptr<ScopeModel> scope) {
   auto selection =
     DEFAULT_DESTINATIONS.select_all([] (const auto&) { return true; });
   auto full_list =
     std::make_shared<ArrayListModel<DestinationDatabase::Entry>>(selection);
-  return std::make_shared<RegionFilteredList>(
-    std::move(full_list), std::move(region));
+  return std::make_shared<ScopeFilteredList>(
+    std::move(full_list), std::move(scope));
 }
 
 DestinationBox* Spire::make_destination_box(

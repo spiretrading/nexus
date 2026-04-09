@@ -26,7 +26,7 @@ namespace {
   }
 
   auto make_operations_queues() {
-    auto operations = RegionMap<std::shared_ptr<
+    auto operations = ScopeMap<std::shared_ptr<
       Queue<std::shared_ptr<TestMarketDataClient::Operation>>>>(nullptr);
     operations.set(TSX, std::make_shared<
       Queue<std::shared_ptr<TestMarketDataClient::Operation>>>());
@@ -35,9 +35,9 @@ namespace {
     return operations;
   }
 
-  auto make_market_data_clients(const RegionMap<std::shared_ptr<
+  auto make_market_data_clients(const ScopeMap<std::shared_ptr<
       Queue<std::shared_ptr<TestMarketDataClient::Operation>>>>& operations) {
-    auto clients = RegionMap<std::shared_ptr<MarketDataClient>>(nullptr);
+    auto clients = ScopeMap<std::shared_ptr<MarketDataClient>>(nullptr);
     clients.set(TSX, std::make_shared<MarketDataClient>(
       std::in_place_type<TestMarketDataClient>, operations.get(TSX)));
     clients.set(AU, std::make_shared<MarketDataClient>(
@@ -46,7 +46,7 @@ namespace {
   }
 
   struct Fixture {
-    RegionMap<std::shared_ptr<
+    ScopeMap<std::shared_ptr<
       Queue<std::shared_ptr<TestMarketDataClient::Operation>>>> m_operations;
     DistributedMarketDataClient m_client;
 

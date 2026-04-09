@@ -51,7 +51,7 @@ def load_venues(source):
 
 def backup_ticker_info(source, destination):
   query = beam.PagedQuery()
-  query.index = nexus.Region.GLOBAL
+  query.index = nexus.Scope.GLOBAL
   query.snapshot_limit = beam.SnapshotLimit.UNLIMITED
   rows = source.load_ticker_info(query)
   for info in rows:

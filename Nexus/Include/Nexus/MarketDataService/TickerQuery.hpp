@@ -6,7 +6,7 @@
 #include <Beam/Queries/SequencedValue.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
-#include "Nexus/Definitions/Region.hpp"
+#include "Nexus/Definitions/Scope.hpp"
 #include "Nexus/Definitions/TickerInfo.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
@@ -26,7 +26,7 @@ namespace Nexus {
   using TickerQuery = Beam::BasicQuery<Ticker>;
 
   /** Defines the type of query used to load TickerInfo objects. */
-  using TickerInfoQuery = Beam::PagedQuery<Region, Ticker>;
+  using TickerInfoQuery = Beam::PagedQuery<Scope, Ticker>;
 
   /**
    * Returns a query to retrieve the TickerInfo for a single ticker.

@@ -14,7 +14,7 @@
 #include <QMessageBox>
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
-#include "Nexus/Definitions/RegionMap.hpp"
+#include "Nexus/Definitions/ScopeMap.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
 #include "Spire/Canvas/Operations/CanvasOperationException.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/MaxFloorNode.hpp"
@@ -287,7 +287,7 @@ namespace {
 
   auto load_legacy_interactions_properties(const std::filesystem::path& path) {
     auto interactions_properties =
-      RegionMap<LegacyInteractionsProperties>("Global", {});
+      ScopeMap<LegacyInteractionsProperties>("Global", {});
     try {
       auto reader =
         BasicIStreamReader<std::ifstream>(init(path, std::ios::binary));

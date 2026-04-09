@@ -140,7 +140,7 @@ namespace Nexus {
         const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue);
 
       /**
-       * Queries for all TickerInfo objects that are within a region.
+       * Queries for all TickerInfo objects that are within a scope.
        * @param query The query to submit.
        * @return The list of TickerInfo objects that match the <i>query</i>.
        */

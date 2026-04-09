@@ -221,11 +221,11 @@ void UserProfile::SetDefaultPortfolioViewerProperties(
   m_defaultPortfolioViewerProperties = properties;
 }
 
-RegionMap<InteractionsProperties>& UserProfile::GetInteractionProperties() {
+ScopeMap<InteractionsProperties>& UserProfile::GetInteractionProperties() {
   return m_interactionProperties;
 }
 
-const RegionMap<InteractionsProperties>&
+const ScopeMap<InteractionsProperties>&
     UserProfile::GetInteractionProperties() const {
   return m_interactionProperties;
 }

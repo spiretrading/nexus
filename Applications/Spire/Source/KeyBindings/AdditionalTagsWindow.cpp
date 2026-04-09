@@ -38,7 +38,7 @@ namespace {
     std::shared_ptr<ArrayTableModel> m_source;
     AdditionalTagDatabase m_additional_tags;
     std::shared_ptr<DestinationModel> m_destination;
-    std::shared_ptr<RegionModel> m_region;
+    std::shared_ptr<ScopeModel> m_scope;
     std::vector<std::shared_ptr<ListModel<int>>> m_available_tags;
     scoped_connection m_connection;
     TableModelTransactionLog m_transaction;
@@ -46,11 +46,11 @@ namespace {
     AppendableTableModel(std::shared_ptr<ArrayTableModel> source,
         AdditionalTagDatabase additional_tags,
         std::shared_ptr<DestinationModel> destination,
-        std::shared_ptr<RegionModel> region)
+        std::shared_ptr<ScopeModel> scope)
         : m_source(std::move(source)),
           m_additional_tags(std::move(additional_tags)),
           m_destination(std::move(destination)),
-          m_region(std::move(region)) {
+          m_scope(std::move(scope)) {
       for(auto i = 0; i != get_row_size(); ++i) {
         add_available_tags(i);
       }
@@ -120,7 +120,7 @@ namespace {
     void add_available_tags(int row) {
       auto available_tags = std::make_shared<ArrayListModel<int>>();
       auto keys =
-        find(m_additional_tags, m_destination->get(), m_region->get());
+        find(m_additional_tags, m_destination->get(), m_scope->get());
       for(auto& key : keys) {
         available_tags->push(key->get_key());
       }
@@ -213,18 +213,18 @@ namespace {
     std::shared_ptr<AdditionalTagKeyModel> m_key;
     AdditionalTagDatabase m_additional_tags;
     std::shared_ptr<DestinationModel> m_destination;
-    std::shared_ptr<RegionModel> m_region;
+    std::shared_ptr<ScopeModel> m_scope;
     scoped_connection m_connection;
     LocalAdditionalTagSchemaModel m_schema;
 
     KeyToSchemaModel(std::shared_ptr<AdditionalTagKeyModel> key,
         AdditionalTagDatabase additional_tags,
         std::shared_ptr<DestinationModel> destination,
-        std::shared_ptr<RegionModel> region)
+        std::shared_ptr<ScopeModel> scope)
         : m_key(std::move(key)),
           m_additional_tags(std::move(additional_tags)),
           m_destination(std::move(destination)),
-          m_region(std::move(region)) {
+          m_scope(std::move(scope)) {
       m_connection = m_key->connect_update_signal(
         std::bind_front(&KeyToSchemaModel::on_update, this));
       on_update(m_key->get());
@@ -256,7 +256,7 @@ namespace {
         m_schema.set(NoneAdditionalTagSchema::get_instance());
       } else {
         auto schema =
-          find(m_additional_tags, m_destination->get(), m_region->get(), key);
+          find(m_additional_tags, m_destination->get(), m_scope->get(), key);
         if(schema) {
           m_schema.set(schema);
         } else {
@@ -269,7 +269,7 @@ namespace {
   auto make_tags_table(const std::vector<AdditionalTag>& tags,
       AdditionalTagDatabase additional_tags,
       std::shared_ptr<DestinationModel> destination,
-      std::shared_ptr<RegionModel> region) {
+      std::shared_ptr<ScopeModel> scope) {
     auto table = std::make_shared<ArrayTableModel>();
     for(auto& tag : tags) {
       auto row = std::vector<std::any>();
@@ -278,7 +278,7 @@ namespace {
       table->push(std::move(row));
     }
     return std::make_shared<AppendableTableModel>(std::move(table),
-      std::move(additional_tags), std::move(destination), std::move(region));
+      std::move(additional_tags), std::move(destination), std::move(scope));
   }
 
   auto make_table_view(
@@ -368,12 +368,12 @@ AdditionalTagsWindow::AdditionalTagsWindow(
     std::shared_ptr<AdditionalTagsModel> current,
     AdditionalTagDatabase additional_tags,
     std::shared_ptr<DestinationModel> destination,
-    std::shared_ptr<RegionModel> region, QWidget* parent)
+    std::shared_ptr<ScopeModel> scope, QWidget* parent)
     : Window(parent),
       m_current(std::move(current)),
       m_additional_tags(std::move(additional_tags)),
       m_destination(std::move(destination)),
-      m_region(std::move(region)) {
+      m_scope(std::move(scope)) {
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint);
   setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
   setWindowTitle(tr("Additional Tags"));
@@ -381,7 +381,7 @@ AdditionalTagsWindow::AdditionalTagsWindow(
   setWindowIcon(QIcon(":/Icons/taskbar_icons/key-bindings.png"));
   setFixedSize(scale(272, 384));
   m_tags = make_tags_table(
-    m_current->get(), m_additional_tags, m_destination, m_region);
+    m_current->get(), m_additional_tags, m_destination, m_scope);
   auto body = new QWidget();
   auto layout = make_vbox_layout(body);
   auto table_view = make_table_view(
@@ -412,7 +412,7 @@ EditableBox* AdditionalTagsWindow::make_key_item(
     static_cast<AppendableTableModel&>(*m_tags).m_available_tags[row];
   return new EditableBox(
     *new AdditionalTagKeyBox(std::move(current), std::move(available_tags),
-      m_additional_tags, m_destination, m_region));
+      m_additional_tags, m_destination, m_scope));
 }
 
 EditableBox* AdditionalTagsWindow::make_value_item(
@@ -422,7 +422,7 @@ EditableBox* AdditionalTagsWindow::make_value_item(
   auto value =
     make_table_value_model<optional<Nexus::Tag::Type>>(table, row, column);
   auto schema = std::make_shared<KeyToSchemaModel>(
-    std::move(key), m_additional_tags, m_destination, m_region);
+    std::move(key), m_additional_tags, m_destination, m_scope);
   return new EditableBox(*new AdditionalTagValueBox(value, schema));
 }
 

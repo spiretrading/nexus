@@ -16,8 +16,8 @@
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/Quote.hpp"
-#include "Nexus/Definitions/Region.hpp"
-#include "Nexus/Definitions/RegionMap.hpp"
+#include "Nexus/Definitions/Scope.hpp"
+#include "Nexus/Definitions/ScopeMap.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
@@ -240,8 +240,8 @@ void Nexus::Python::export_definitions(module& module) {
   export_order_type(module);
   export_quantity(module);
   export_quote(module);
-  export_region(module);
-  export_region_map(module);
+  export_scope(module);
+  export_scope_map(module);
   export_ticker(module);
   export_ticker_info(module);
   export_ticker_technicals(module);
@@ -468,45 +468,46 @@ void Nexus::Python::export_quote(module& module) {
   module.def("offer_comparator", &offer_comparator);
 }
 
-void Nexus::Python::export_region(module& module) {
-  export_default_methods(class_<Region>(module, "Region")).
-    def_property_readonly_static("GLOBAL", [] (const object&) { return Region::GLOBAL; }).
-    def_static("make_global", &Region::make_global).
+void Nexus::Python::export_scope(module& module) {
+  export_default_methods(class_<Scope>(module, "Scope")).
+    def_property_readonly_static(
+      "GLOBAL", [] (const object&) { return Scope::GLOBAL; }).
+    def_static("make_global", &Scope::make_global).
     def(init<std::string>()).
     def(init<CountryCode>()).
     def(init<Venue>()).
     def(init<Ticker>()).
-    def_property_readonly("name", &Region::get_name).
-    def_property_readonly("is_global", &Region::is_global).
-    def_property_readonly("is_empty", &Region::is_empty).
-    def_property_readonly("countries", &Region::get_countries).
-    def_property_readonly("venues", &Region::get_venues).
-    def_property_readonly("tickers", &Region::get_tickers).
-    def("contains", &Region::contains);
-  implicitly_convertible<CountryCode, Region>();
-  implicitly_convertible<Venue, Region>();
-  implicitly_convertible<Ticker, Region>();
+    def_property_readonly("name", &Scope::get_name).
+    def_property_readonly("is_global", &Scope::is_global).
+    def_property_readonly("is_empty", &Scope::is_empty).
+    def_property_readonly("countries", &Scope::get_countries).
+    def_property_readonly("venues", &Scope::get_venues).
+    def_property_readonly("tickers", &Scope::get_tickers).
+    def("contains", &Scope::contains);
+  implicitly_convertible<CountryCode, Scope>();
+  implicitly_convertible<Venue, Scope>();
+  implicitly_convertible<Ticker, Scope>();
 }
 
-void Nexus::Python::export_region_map(module& module) {
-  using PythonRegionMap = RegionMap<object>;
-  class_<PythonRegionMap>(module, "RegionMap").
+void Nexus::Python::export_scope_map(module& module) {
+  using PythonScopeMap = ScopeMap<object>;
+  class_<PythonScopeMap>(module, "ScopeMap").
     def(init<object>()).
     def(init<std::string, object>()).
-    def_property_readonly("size", &PythonRegionMap::get_size).
+    def_property_readonly("size", &PythonScopeMap::get_size).
     def("get", static_cast<
-      const object& (PythonRegionMap::*)(const Region&) const>(
-        &PythonRegionMap::get), return_value_policy::reference_internal).
-    def("get", static_cast<object& (PythonRegionMap::*)(const Region&)>(
-      &PythonRegionMap::get), return_value_policy::reference_internal).
-    def("set", &PythonRegionMap::set).
-    def("erase", &PythonRegionMap::erase).
-    def("__getitem__", static_cast<const object& (PythonRegionMap::*)(
-      const Region&) const>(&PythonRegionMap::get),
+      const object& (PythonScopeMap::*)(const Scope&) const>(
+        &PythonScopeMap::get), return_value_policy::reference_internal).
+    def("get", static_cast<object& (PythonScopeMap::*)(const Scope&)>(
+      &PythonScopeMap::get), return_value_policy::reference_internal).
+    def("set", &PythonScopeMap::set).
+    def("erase", &PythonScopeMap::erase).
+    def("__getitem__", static_cast<const object& (PythonScopeMap::*)(
+      const Scope&) const>(&PythonScopeMap::get),
       return_value_policy::reference_internal).
-    def("__setitem__", &PythonRegionMap::set).
-    def("__delitem__", &PythonRegionMap::erase).
-    def("__iter__", [] (const PythonRegionMap& p) {
+    def("__setitem__", &PythonScopeMap::set).
+    def("__delitem__", &PythonScopeMap::erase).
+    def("__iter__", [] (const PythonScopeMap& p) {
       return make_iterator(p.begin(), p.end());
     }, keep_alive<0, 1>());
 }

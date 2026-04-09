@@ -3,7 +3,7 @@
 #include <memory>
 #include <unordered_set>
 #include <Beam/IO/OpenState.hpp>
-#include "Nexus/Definitions/RegionMap.hpp"
+#include "Nexus/Definitions/ScopeMap.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 
 namespace Nexus {
@@ -17,11 +17,11 @@ namespace Nexus {
 
       /**
        * Constructs a DistributedMarketDataClient.
-       * @param market_data_clients Maps regions to the appropriate market data
+       * @param market_data_clients Maps scopes to the appropriate market data
        *        client.
        */
       explicit DistributedMarketDataClient(
-        RegionMap<std::shared_ptr<MarketDataClient>> market_data_clients);
+        ScopeMap<std::shared_ptr<MarketDataClient>> market_data_clients);
 
       ~DistributedMarketDataClient();
 
@@ -49,7 +49,7 @@ namespace Nexus {
       void close();
 
     private:
-      RegionMap<std::shared_ptr<MarketDataClient>> m_market_data_clients;
+      ScopeMap<std::shared_ptr<MarketDataClient>> m_market_data_clients;
       Beam::OpenState m_open_state;
 
       DistributedMarketDataClient(const DistributedMarketDataClient&) = delete;
@@ -58,7 +58,7 @@ namespace Nexus {
   };
 
   inline DistributedMarketDataClient::DistributedMarketDataClient(
-    RegionMap<std::shared_ptr<MarketDataClient>> market_data_clients)
+    ScopeMap<std::shared_ptr<MarketDataClient>> market_data_clients)
     : m_market_data_clients(std::move(market_data_clients)) {}
 
   inline DistributedMarketDataClient::~DistributedMarketDataClient() {

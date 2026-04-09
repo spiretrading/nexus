@@ -8,9 +8,9 @@
 #include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/Definitions/Destination.hpp"
-#include "Nexus/Definitions/RegionMap.hpp"
+#include "Nexus/Definitions/ExchangeRateTable.hpp"
+#include "Nexus/Definitions/ScopeMap.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Spire/Blotter/Blotter.hpp"
@@ -212,11 +212,11 @@ namespace Spire {
       void SetDefaultPortfolioViewerProperties(
         const PortfolioViewerProperties& properties);
 
-      /** Returns the RegionMap storing the InteractionProperties. */
-      Nexus::RegionMap<InteractionsProperties>& GetInteractionProperties();
+      /** Returns the ScopeMap storing the InteractionProperties. */
+      Nexus::ScopeMap<InteractionsProperties>& GetInteractionProperties();
 
-      /** Returns the RegionMap storing the InteractionProperties. */
-      const Nexus::RegionMap<InteractionsProperties>&
+      /** Returns the ScopeMap storing the InteractionProperties. */
+      const Nexus::ScopeMap<InteractionsProperties>&
         GetInteractionProperties() const;
 
       /**
@@ -257,7 +257,7 @@ namespace Spire {
       RiskTimerProperties m_riskTimerProperties;
       TimeAndSalesProperties m_defaultTimeAndSalesProperties;
       PortfolioViewerProperties m_defaultPortfolioViewerProperties;
-      Nexus::RegionMap<InteractionsProperties> m_interactionProperties;
+      Nexus::ScopeMap<InteractionsProperties> m_interactionProperties;
       CatalogSettings m_catalogSettings;
       KeyBindings m_keyBindings;
       CanvasTypeRegistry m_typeRegistry;

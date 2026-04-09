@@ -145,7 +145,7 @@ namespace Nexus {
         m_data_store(std::forward<DF>(data_store)) {
     try {
       auto query = TickerInfoQuery();
-      query.set_index(Region::GLOBAL);
+      query.set_index(Scope::GLOBAL);
       query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
       auto info = m_data_store->load_ticker_info(query);
       for(auto& entry : info) {

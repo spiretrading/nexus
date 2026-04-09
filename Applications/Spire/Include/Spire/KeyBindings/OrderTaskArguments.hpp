@@ -10,7 +10,7 @@
 #include <QString>
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
-#include "Nexus/Definitions/Region.hpp"
+#include "Nexus/Definitions/Scope.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
@@ -38,8 +38,8 @@ namespace Spire {
     /** The name of the order task. */
     QString m_name;
 
-    /** The region this task applies to. */
-    Nexus::Region m_region;
+    /** The scope this task applies to. */
+    Nexus::Scope m_scope;
 
     /** The destination to submit the order to. */
     Nexus::Destination m_destination;
@@ -68,15 +68,15 @@ namespace Spire {
 
   /**
    * Finds the <i>OrderTaskArguments</i> bound to a given <i>key</i> for a
-   * specified <i>region</i>.
+   * specified <i>scope</i>.
    * @param arguments The list of OrderTaskArguments to search.
-   * @param region The region that the binding belongs to.
+   * @param scope The scope that the binding belongs to.
    * @param key The key binding to find.
    * @return The <i>OrderTaskArguments</i> with the specified <i>key</i> whose
-   *         region field is a subset of the specified <i>region</i>.
+   *         scope field is a subset of the specified <i>scope</i>.
    */
   boost::optional<const OrderTaskArguments&> find_order_task_arguments(
-    const OrderTaskArgumentsListModel& arguments, const Nexus::Region& region,
+    const OrderTaskArgumentsListModel& arguments, const Nexus::Scope& scope,
     const QKeySequence& key);
 
   /**
@@ -107,7 +107,7 @@ namespace Beam {
     void operator ()(S& shuttle, Spire::OrderTaskArguments& value,
         unsigned int version) const {
       shuttle.shuttle("name", value.m_name);
-      shuttle.shuttle("region", value.m_region);
+      shuttle.shuttle("scope", value.m_scope);
       shuttle.shuttle("destination", value.m_destination);
       shuttle.shuttle("order_type", value.m_order_type);
       shuttle.shuttle("side", value.m_side);

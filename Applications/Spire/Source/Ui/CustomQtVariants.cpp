@@ -68,15 +68,15 @@ namespace {
     return to_text(any_cast<T>(left)) < to_text(any_cast<T>(right));
   }
 
-  QString find_smallest_text(const Region& region, int n) {
+  QString find_smallest_text(const Scope& scope, int n) {
     auto texts = std::vector<QString>();
-    for(auto& country : region.get_countries()) {
+    for(auto& country : scope.get_countries()) {
       texts.push_back(to_text(country));
     }
-    for(auto& venue : region.get_venues()) {
+    for(auto& venue : scope.get_venues()) {
       texts.push_back(to_text(venue));
     }
-    for(auto& ticker : region.get_tickers()) {
+    for(auto& ticker : scope.get_tickers()) {
       texts.push_back(to_text(ticker));
     }
     if(n >= static_cast<int>(texts.size())) {
@@ -87,13 +87,13 @@ namespace {
   }
 
   template<>
-  bool compare_text<Region>(const AnyRef& left, const AnyRef& right) {
-    auto& left_region = any_cast<Region>(left);
-    auto& right_region = any_cast<Region>(right);
+  bool compare_text<Scope>(const AnyRef& left, const AnyRef& right) {
+    auto& left_scope = any_cast<Scope>(left);
+    auto& right_scope = any_cast<Scope>(right);
     auto i = 0;
     while(true) {
-      auto left_text = find_smallest_text(left_region, i);
-      auto right_text = find_smallest_text(right_region, i);
+      auto left_text = find_smallest_text(left_scope, i);
+      auto right_text = find_smallest_text(right_scope, i);
       auto comparator = left_text.compare(right_text);
       if(comparator == 0) {
         if(left_text.isEmpty()) {
@@ -194,8 +194,8 @@ QVariant Spire::to_qvariant(const std::any& value) {
     return QVariant::fromValue(std::any_cast<Money>(value));
   } else if(value.type() == typeid(Quantity)) {
     return QVariant::fromValue(std::any_cast<Quantity>(value));
-  } else if(value.type() == typeid(Region)) {
-    return QVariant::fromValue(std::any_cast<Region>(value));
+  } else if(value.type() == typeid(Scope)) {
+    return QVariant::fromValue(std::any_cast<Scope>(value));
   } else if(value.type() == typeid(OrderStatus)) {
     return QVariant::fromValue(std::any_cast<OrderStatus>(value));
   } else if(value.type() == typeid(OrderType)) {
@@ -411,21 +411,21 @@ QString Spire::to_text(PositionSideToken token, const QLocale& locale) {
   return token.to_string();
 }
 
-QString Spire::to_text(const Region& region, const QLocale& locale) {
-  if(region.is_global()) {
+QString Spire::to_text(const Scope& scope, const QLocale& locale) {
+  if(scope.is_global()) {
     return QObject::tr("Global");
   }
-  if(region.get_tickers().size() == 1 && region.get_venues().empty() &&
-      region.get_countries().empty()) {
-    return to_text(*region.get_tickers().begin(), locale);
-  } else if(region.get_venues().size() == 1 && region.get_tickers().empty() &&
-      region.get_countries().empty()) {
-    return to_text(Venue(*region.get_venues().begin()), locale);
-  } else if(region.get_countries().size() == 1 &&
-      region.get_tickers().empty() && region.get_venues().empty()) {
-    return to_text(*region.get_countries().begin(), locale);
+  if(scope.get_tickers().size() == 1 && scope.get_venues().empty() &&
+      scope.get_countries().empty()) {
+    return to_text(*scope.get_tickers().begin(), locale);
+  } else if(scope.get_venues().size() == 1 && scope.get_tickers().empty() &&
+      scope.get_countries().empty()) {
+    return to_text(Venue(*scope.get_venues().begin()), locale);
+  } else if(scope.get_countries().size() == 1 &&
+      scope.get_tickers().empty() && scope.get_venues().empty()) {
+    return to_text(*scope.get_countries().begin(), locale);
   }
-  return QString::fromStdString(region.get_name());
+  return QString::fromStdString(scope.get_name());
 }
 
 QString Spire::to_text(const Ticker& ticker, const QLocale& locale) {
@@ -489,8 +489,8 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return to_text(std::any_cast<OrderType>(value), locale);
   } else if(value.type() == typeid(PositionSideToken)) {
     return to_text(std::any_cast<PositionSideToken>(value), locale);
-  } else if(value.type() == typeid(Region)) {
-    return to_text(std::any_cast<Region>(value), locale);
+  } else if(value.type() == typeid(Scope)) {
+    return to_text(std::any_cast<Scope>(value), locale);
   } else if(value.type() == typeid(Side)) {
     return to_text(std::any_cast<Side>(value), locale);
   } else if(value.type() == typeid(Ticker)) {
@@ -533,8 +533,8 @@ bool Spire::compare(const AnyRef& left, const AnyRef& right) {
   }
   if(left.get_type() == typeid(TimeInForce)) {
     return compare_text<TimeInForce>(left, right);
-  } else if(left.get_type() == typeid(Region)) {
-    return compare_text<Region>(left, right);
+  } else if(left.get_type() == typeid(Scope)) {
+    return compare_text<Scope>(left, right);
   }
   return compare_any<bool, int, optional<int>, std::int64_t,
     optional<std::int64_t>, std::uint64_t, optional<std::uint64_t>, Quantity,
@@ -550,7 +550,7 @@ bool Spire::is_equal(const std::any& left, const std::any& right) {
   }
   return is_equal_any<bool, int, std::int64_t, std::uint64_t, Quantity, double,
     gregorian::date, ptime, posix_time::time_duration, std::string, CountryCode,
-    CurrencyId, CurrencyId, Money, Region, OrderStatus, OrderType,
+    CurrencyId, CurrencyId, Money, Scope, OrderStatus, OrderType,
     PositionSideToken, Side, Ticker, TimeInForce, Venue, QColor, QKeySequence,
     QString>(left, right);
 }
@@ -610,8 +610,8 @@ optional<Quantity> Spire::from_text(const QString& text) {
 }
 
 template<>
-optional<Region> Spire::from_text(const QString& text) {
-  return Region(text.toStdString());
+optional<Scope> Spire::from_text(const QString& text) {
+  return Scope(text.toStdString());
 }
 
 template<>

@@ -59,12 +59,12 @@ namespace {
 }
 
 optional<const OrderTaskArguments&> Spire::find_order_task_arguments(
-    const OrderTaskArgumentsListModel& arguments, const Region& region,
+    const OrderTaskArgumentsListModel& arguments, const Scope& scope,
     const QKeySequence& key) {
   auto candidates = std::vector<int>();
   for(auto i = 0; i != arguments.get_size(); ++i) {
     auto& argument = arguments.get(i);
-    if(argument.m_key == key && region <= argument.m_region) {
+    if(argument.m_key == key && scope <= argument.m_scope) {
       candidates.push_back(i);
     }
   }
@@ -72,7 +72,7 @@ optional<const OrderTaskArguments&> Spire::find_order_task_arguments(
     return none;
   }
   std::sort(candidates.begin(), candidates.end(), [&] (auto left, auto right) {
-    return arguments.get(left).m_region < arguments.get(right).m_region;
+    return arguments.get(left).m_scope < arguments.get(right).m_scope;
   });
   return arguments.get(candidates.front());
 }
@@ -115,7 +115,7 @@ std::unique_ptr<CanvasNode>
   }
   for(auto& tag : arguments.m_additional_tags) {
     if(auto schema = Spire::find(additional_tags, arguments.m_destination,
-        arguments.m_region, tag.m_key)) {
+        arguments.m_scope, tag.m_key)) {
       node = static_cast<SingleOrderTaskNode*>(node.get())->AddField(
         schema->get_name(), schema->get_key(),
         schema->make_canvas_node(tag.m_value));
@@ -130,11 +130,11 @@ OrderTaskArguments Spire::to_order_task_arguments(const CanvasNode& node) {
   arguments.m_destination = extract<DestinationType>(
     node.FindChild(SingleOrderTaskNode::DESTINATION_PROPERTY));
   if(arguments.m_destination.empty()) {
-    arguments.m_region = Region::make_global("Global");
+    arguments.m_scope = Scope::make_global("Global");
   } else {
     auto& destination = DEFAULT_DESTINATIONS.from(arguments.m_destination);
     for(auto& venue : destination.m_venues) {
-      arguments.m_region += venue;
+      arguments.m_scope += venue;
     }
   }
   if(auto quantity = node.FindChild(SingleOrderTaskNode::QUANTITY_PROPERTY)) {
