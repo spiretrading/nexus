@@ -119,8 +119,7 @@ namespace {
 
     void add_available_tags(int row) {
       auto available_tags = std::make_shared<ArrayListModel<int>>();
-      auto keys =
-        find(m_additional_tags, m_destination->get(), m_scope->get());
+      auto keys = find(m_additional_tags, m_destination->get(), m_scope->get());
       for(auto& key : keys) {
         available_tags->push(key->get_key());
       }

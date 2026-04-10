@@ -7,13 +7,13 @@ using namespace Spire;
 
 ScopeDropDownBox* Spire::make_scope_drop_down_box(
     std::shared_ptr<ScopeListModel> scopes, QWidget* parent) {
-  return make_scope_drop_down_box(std::move(scopes),
-    std::make_shared<LocalScopeModel>(), parent);
+  return make_scope_drop_down_box(
+    std::move(scopes), std::make_shared<LocalScopeModel>(), parent);
 }
 
 ScopeDropDownBox* Spire::make_scope_drop_down_box(
-    std::shared_ptr<ScopeListModel> scopes,
-    std::shared_ptr<ScopeModel> current, QWidget* parent) {
+    std::shared_ptr<ScopeListModel> scopes, std::shared_ptr<ScopeModel> current,
+    QWidget* parent) {
   auto settings = ScopeDropDownBox::Settings();
   settings.m_cases = std::move(scopes);
   settings.m_current = std::move(current);

@@ -27,7 +27,7 @@ namespace Spire {
         NAME,
 
         /** The description column. */
-        DESCRIPTION,
+        DESCRIPTION
       };
 
       /** The number of columns available. */

@@ -21,7 +21,6 @@ namespace Spire {
         ScopeQueryModel* model, QObject* parent = nullptr);
 
       ~ScopeCompleter() override;
-
       QStringList splitPath(const QString& s) const override;
 
     private:

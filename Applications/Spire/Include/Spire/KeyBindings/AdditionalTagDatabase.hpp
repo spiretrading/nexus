@@ -74,8 +74,7 @@ namespace Spire {
    */
   const std::shared_ptr<AdditionalTagSchema>& find(
     const AdditionalTagDatabase& database,
-    const Nexus::Destination& destination, const Nexus::Scope& scope,
-    int key);
+    const Nexus::Destination& destination, const Nexus::Scope& scope, int key);
 
   /** Returns the list of all schemas for a destination and scope. */
   std::vector<std::shared_ptr<AdditionalTagSchema>> find(

@@ -3619,8 +3619,8 @@ UiProfile Spire::make_radio_button_profile() {
 UiProfile Spire::make_scope_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QString>("current",
-    "TSX,USA,CAN"));
+  properties.push_back(
+    make_standard_property<QString>("current", "TSX,USA,CAN"));
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("ScopeBox", properties, [] (auto& profile) {
@@ -3649,8 +3649,8 @@ UiProfile Spire::make_scope_box_profile() {
       return text;
     };
     auto& current = get<QString>("current", profile.get_properties());
-    auto current_model = std::make_shared<LocalValueModel<Scope>>(
-      to_scope(current.get()));
+    auto current_model =
+      std::make_shared<LocalValueModel<Scope>>(to_scope(current.get()));
     current.connect_changed_signal([=] (const auto& value) {
       auto scope = to_scope(value);
       if(current_model->get() != scope) {

@@ -23,8 +23,7 @@ const std::shared_ptr<CancelKeyBindingsModel>&
 }
 
 const std::shared_ptr<InteractionsKeyBindingsModel>&
-    KeyBindingsModel::get_interactions_key_bindings(
-      const Scope& scope) const {
+    KeyBindingsModel::get_interactions_key_bindings(const Scope& scope) const {
   if(scope.get_countries().size() == 1) {
     auto country = *scope.get_countries().begin();
     auto i = m_interactions.find(country);

@@ -296,8 +296,8 @@ void AdditionalTagDatabase::add(const Destination& destination,
   m_destination_schemas[destination][schema->get_key()] = schema;
 }
 
-void AdditionalTagDatabase::add(const Scope& scope,
-    const std::shared_ptr<AdditionalTagSchema>& schema) {
+void AdditionalTagDatabase::add(
+    const Scope& scope, const std::shared_ptr<AdditionalTagSchema>& schema) {
   auto i = m_schemas.find(scope);
   if(std::get<0>(*i) == scope) {
     std::get<1>(*i)[schema->get_key()] = schema;

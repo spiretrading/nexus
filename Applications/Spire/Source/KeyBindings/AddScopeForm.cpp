@@ -21,8 +21,8 @@ namespace {
   }
 }
 
-AddScopeForm::AddScopeForm(std::shared_ptr<ScopeListModel> scopes,
-    QWidget& parent)
+AddScopeForm::AddScopeForm(
+    std::shared_ptr<ScopeListModel> scopes, QWidget& parent)
     : QWidget(&parent),
       m_scopes(std::move(scopes)) {
   auto heading = make_label(tr("Add Scope"));

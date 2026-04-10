@@ -89,7 +89,7 @@ namespace Beam {
 namespace std {
   template<>
   struct hash<Nexus::CurrencyPair> {
-    size_t operator()(Nexus::CurrencyPair value) const {
+    size_t operator()(Nexus::CurrencyPair value) const noexcept {
       auto seed = std::size_t(0);
       boost::hash_combine(seed, value.m_base);
       boost::hash_combine(seed, value.m_counter);

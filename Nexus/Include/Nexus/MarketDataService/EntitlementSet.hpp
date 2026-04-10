@@ -62,7 +62,7 @@ namespace Nexus {
 namespace std {
   template<>
   struct hash<Nexus::EntitlementKey> {
-    std::size_t operator ()(const Nexus::EntitlementKey& value) const {
+    std::size_t operator ()(const Nexus::EntitlementKey& value) const noexcept {
       return Nexus::hash_value(value);
     }
   };

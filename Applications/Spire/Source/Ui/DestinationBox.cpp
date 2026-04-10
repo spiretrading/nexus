@@ -44,8 +44,7 @@ namespace {
     ScopeFilteredList(
         std::shared_ptr<ListModel<DestinationDatabase::Entry>> destinations,
         std::shared_ptr<ScopeModel> scope)
-        : FilteredListModel(
-            std::move(destinations), make_filter(scope->get())),
+        : FilteredListModel(std::move(destinations), make_filter(scope->get())),
           m_scope(std::move(scope)) {
       m_connection = m_scope->connect_update_signal(
         std::bind_front(&ScopeFilteredList::on_scope, this));

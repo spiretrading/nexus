@@ -205,8 +205,7 @@ ComplianceValue Spire::GetComplianceValue(const QWidget& widget) {
   } else if(auto tickerWidget =
       dynamic_cast<const TickerInputWidget*>(&widget)) {
     return tickerWidget->GetTicker();
-  } else if(auto scopeWidget =
-      dynamic_cast<const ScopeInputWidget*>(&widget)) {
+  } else if(auto scopeWidget = dynamic_cast<const ScopeInputWidget*>(&widget)) {
     return scopeWidget->GetScope();
   } else if(auto listWidget =
       dynamic_cast<const ValueListInputWidget*>(&widget)) {

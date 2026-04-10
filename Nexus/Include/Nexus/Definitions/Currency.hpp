@@ -367,7 +367,7 @@ namespace Beam {
 namespace std {
   template <>
   struct hash<Nexus::CurrencyId> {
-    size_t operator()(Nexus::CurrencyId value) const {
+    size_t operator()(Nexus::CurrencyId value) const noexcept {
       return Nexus::hash_value(value);
     }
   };

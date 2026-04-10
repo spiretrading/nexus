@@ -100,7 +100,7 @@ namespace {
 
   struct ScopeKeyHash {
     std::size_t operator()(
-        const std::pair<Scope, QKeySequence>& scope_key) const {
+        const std::pair<Scope, QKeySequence>& scope_key) const noexcept {
       auto seed = std::size_t(0);
       hash_combine(seed, scope_key.first);
       hash_combine(seed, qHash(scope_key.second));

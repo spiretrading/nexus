@@ -7,7 +7,7 @@ class QKeySequence;
 namespace std {
   template<>
   struct hash<QKeySequence> {
-    std::size_t operator ()(const QKeySequence& value) const;
+    std::size_t operator ()(const QKeySequence& value) const noexcept;
   };
 }
 

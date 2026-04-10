@@ -50,7 +50,7 @@ namespace Beam {
 namespace std {
   template <>
   struct hash<Nexus::TickerInfo> {
-    size_t operator()(const Nexus::TickerInfo& value) const {
+    size_t operator()(const Nexus::TickerInfo& value) const noexcept {
       return Nexus::hash_value(value.m_ticker);
     }
   };

@@ -203,6 +203,9 @@ namespace Spire {
   /** Returns a UiProfile for the RadioButton. */
   UiProfile make_radio_button_profile();
 
+  /** Returns a UiProfile for the ResponsiveLabel. */
+  UiProfile make_responsive_label_profile();
+
   /** Returns a UiProfile for the ScopeBox. */
   UiProfile make_scope_box_profile();
 
@@ -214,9 +217,6 @@ namespace Spire {
 
   /** Returns a UiProfile for the ScopeListItem. */
   UiProfile make_scope_list_item_profile();
-
-  /** Returns a UiProfile for the ResponsiveLabel. */
-  UiProfile make_responsive_label_profile();
 
   /** Returns a UiProfile for the ScrollBar. */
   UiProfile make_scroll_bar_profile();

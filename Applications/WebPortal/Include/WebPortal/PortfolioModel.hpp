@@ -95,7 +95,7 @@ namespace Beam {
 namespace std {
   template <>
   struct hash<Nexus::PortfolioModel::Entry> {
-    size_t operator()(const Nexus::PortfolioModel::Entry& value) const;
+    size_t operator()(const Nexus::PortfolioModel::Entry& value) const noexcept;
   };
 }
 

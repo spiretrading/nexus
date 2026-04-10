@@ -17,8 +17,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  std::vector<Scope> to_tag_list(
-      const Scope& scope, ScopeQueryModel& scopes) {
+  std::vector<Scope> to_tag_list(const Scope& scope, ScopeQueryModel& scopes) {
     auto tags = std::vector<Scope>();
     for(auto& country : scope.get_countries()) {
       tags.push_back(*scopes.parse(to_text(country)));
@@ -113,8 +112,7 @@ namespace {
 }
 
 ScopeBox::ScopeBox(std::shared_ptr<ScopeQueryModel> scopes, QWidget* parent)
-  : ScopeBox(
-      std::move(scopes), std::make_shared<LocalScopeModel>(), parent) {}
+  : ScopeBox(std::move(scopes), std::make_shared<LocalScopeModel>(), parent) {}
 
 ScopeBox::ScopeBox(std::shared_ptr<ScopeQueryModel> scopes,
     std::shared_ptr<ScopeModel> current, QWidget* parent)
@@ -201,8 +199,7 @@ void ScopeBox::on_current(const Scope& scope) {
   adjustSize();
 }
 
-void ScopeBox::on_submit(
-    const std::shared_ptr<ListModel<Scope>>& submission) {
+void ScopeBox::on_submit(const std::shared_ptr<ListModel<Scope>>& submission) {
   sort(*m_tag_combo_box->get_current());
   sort(*submission);
   auto scope = Nexus::Scope();
