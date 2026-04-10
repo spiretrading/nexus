@@ -87,7 +87,7 @@ std::shared_ptr<Order> SerenityFixApplication::submit(const OrderInfo& info) {
       modified_info->m_fields.m_type = OrderType::LIMIT;
       modified_info->m_fields.m_price = Money::ZERO;
     }
-    auto bboQuote = load_bbo_quote(modified_info->m_fields.m_security);
+    auto bboQuote = load_bbo_quote(modified_info->m_fields.m_ticker);
     if(modified_info->m_fields.m_price == Money::ZERO) {
       if(info.m_fields.m_side == Side::BID) {
         modified_info->m_fields.m_price =
@@ -252,7 +252,7 @@ void SerenityFixApplication::onMessage(
         } else if(last_mkt == "MATN") {
           update->m_last_market = DefaultVenues::MATN.get_code().get_data();
         } else if(last_mkt == "XCNQ") {
-          if(order->get_info().m_fields.m_security.get_venue() ==
+          if(order->get_info().m_fields.m_ticker.get_venue() ==
               DefaultVenues::CSE) {
             update->m_last_market = DefaultVenues::CSE.get_code().get_data();
           } else {
@@ -299,16 +299,16 @@ void SerenityFixApplication::onMessage(
 void SerenityFixApplication::onMessage(
   const FIX42::OrderCancelReject&, const FIX::SessionID&) {}
 
-BboQuote SerenityFixApplication::load_bbo_quote(const Security& security) {
-  auto bbo = m_bbo_quotes.get_or_insert(security, [&] {
+BboQuote SerenityFixApplication::load_bbo_quote(const Ticker& ticker) {
+  auto bbo = m_bbo_quotes.get_or_insert(ticker, [&] {
     auto bbo = std::make_shared<StateQueue<BboQuote>>();
-    query_real_time_with_snapshot(*m_market_data_client, security, bbo);
+    query_real_time_with_snapshot(*m_market_data_client, ticker, bbo);
     return bbo;
   });
   try {
     return bbo->peek();
   } catch(const Beam::PipeBrokenException&) {
-    m_bbo_quotes.erase(security);
+    m_bbo_quotes.erase(ticker);
     throw_with_location(FixOrderRejectedException("No BBO quote available."));
   }
 }
@@ -532,7 +532,7 @@ void SerenityFixApplication::route_to_tsx(
   }
   if(!has_destination) {
     auto destination = [&] {
-      if(info.m_fields.m_security.get_venue() == DefaultVenues::TSXV) {
+      if(info.m_fields.m_ticker.get_venue() == DefaultVenues::TSXV) {
         return FIX::ExDestination("TSXV");
       }
       return FIX::ExDestination("XTSX");

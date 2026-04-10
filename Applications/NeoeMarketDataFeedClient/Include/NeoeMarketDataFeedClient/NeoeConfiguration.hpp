@@ -19,8 +19,8 @@ namespace Nexus {
     /** The difference in time between the data provider's time and UTC. */
     boost::posix_time::time_duration m_time_offset;
 
-    /** The set of Securities listed on the market. */
-    std::unordered_set<std::string> m_securities;
+    /** The set of Tickers listed on the venue. */
+    std::unordered_set<std::string> m_tickers;
 
     /** Maps native MPIDs. */
     std::unordered_map<std::string, std::string> m_mpid_mappings;

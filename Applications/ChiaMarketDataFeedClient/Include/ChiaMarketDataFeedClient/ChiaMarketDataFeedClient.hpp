@@ -47,7 +47,7 @@ namespace Nexus {
 
     private:
       struct OrderEntry {
-        Security m_security;
+        Ticker m_ticker;
         Money m_price;
         Side m_side;
         std::string m_mpid;
@@ -128,11 +128,11 @@ namespace Nexus {
     auto symbol = PitchMessage::parse_alphanumeric(6, Beam::out(cursor));
     auto price = PitchMessage::parse_price(Beam::out(cursor));
     auto mpid = parse_mpid(Beam::out(cursor));
-    auto security = Security(symbol, m_config.m_primary_venue);
+    auto ticker = Ticker(symbol, m_config.m_primary_venue);
     if(m_config.m_is_time_and_sale_feed) {
-      m_order_entries[order_id] = OrderEntry(security, price, side, mpid);
+      m_order_entries[order_id] = OrderEntry(ticker, price, side, mpid);
     }
-    m_feed_client->add_order(security, m_config.m_disseminating_venue,
+    m_feed_client->add_order(ticker, m_config.m_disseminating_venue,
       m_config.m_mpid, false, order_id, side, price, quantity, timestamp);
     if(m_config.m_is_logging_messages) {
       std::cout << timestamp << ',' << message.m_type << ',' << order_id <<
@@ -170,8 +170,8 @@ namespace Nexus {
         auto time_and_sale = TimeAndSale(timestamp, order_entry->m_price,
           executed_quantity, std::move(condition), m_config.m_mpid, *buyer_mpid,
           *seller_mpid);
-        m_feed_client->publish(SecurityTimeAndSale(
-          std::move(time_and_sale), order_entry->m_security));
+        m_feed_client->publish(TickerTimeAndSale(
+          std::move(time_and_sale), order_entry->m_ticker));
       }
     }
     if(m_config.m_is_logging_messages) {
@@ -251,14 +251,13 @@ namespace Nexus {
     auto contra_order_id = PitchMessage::parse_uint64(Beam::out(cursor));
     auto buyer_mpid = parse_mpid(Beam::out(cursor));
     auto seller_mpid = parse_mpid(Beam::out(cursor));
-    auto security = Security(symbol, m_config.m_primary_venue);
+    auto ticker = Ticker(symbol, m_config.m_primary_venue);
     auto condition = TimeAndSale::Condition();
     condition.m_code = "@";
     auto time_and_sale = TimeAndSale(
       timestamp, price, quantity, std::move(condition), m_config.m_mpid,
       std::move(buyer_mpid), std::move(seller_mpid));
-    m_feed_client->publish(
-      SecurityTimeAndSale(std::move(time_and_sale), security));
+    m_feed_client->publish(TickerTimeAndSale(std::move(time_and_sale), ticker));
     if(m_config.m_is_logging_messages) {
       std::cout << timestamp << ',' << message.m_type << ',' << symbol << ',' <<
         quantity << ',' << price << std::endl;

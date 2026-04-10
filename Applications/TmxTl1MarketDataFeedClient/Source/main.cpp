@@ -63,7 +63,7 @@ namespace {
   TmxTl1Configuration parse_configuration(const YAML::Node& config) {
     return try_or_nest([&] {
       auto time_zone =
-        extract<std::string>(config, "time_zone", "Eastern_Time");
+        extract<std::string>(config, "time_zone", "America/Toronto");
       auto tmx_tl1_config = TmxTl1Configuration();
       tmx_tl1_config.m_is_logging_messages =
         extract<bool>(config, "enable_logging", false);

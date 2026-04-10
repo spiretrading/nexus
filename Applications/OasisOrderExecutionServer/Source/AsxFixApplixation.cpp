@@ -44,7 +44,7 @@ std::shared_ptr<Order> AsxFixApplication::submit(const OrderInfo& info) {
         new_order_single->getHeader().setField(
           FIX::DeliverToCompID(*deliver_to_comp_id));
       }
-      if(info.m_fields.m_security.get_venue() == DefaultVenues::ASX) {
+      if(info.m_fields.m_ticker.get_venue() == DefaultVenues::ASX) {
         new_order_single->set(FIX::SecurityExchange("ASX"));
       } else {
         throw_with_location(FixOrderRejectedException("Invalid venue."));
@@ -79,7 +79,7 @@ void AsxFixApplication::cancel(
           FIX::DeliverToCompID(*deliver_to_comp_id));
       }
       auto& fields = order->get_info().m_fields;
-      if(fields.m_security.get_venue() == DefaultVenues::ASX) {
+      if(fields.m_ticker.get_venue() == DefaultVenues::ASX) {
         request->set(FIX::SecurityExchange("ASX"));
       } else {
         throw_with_location(FixOrderRejectedException("Invalid venue."));
