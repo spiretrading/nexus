@@ -30,12 +30,12 @@ BookViewInteractionPropertiesPage::BookViewInteractionPropertiesPage(
     std::shared_ptr<KeyBindingsModel> key_bindings,
     std::shared_ptr<TickerModel> ticker, QWidget* parent)
     : m_key_bindings(std::move(key_bindings)) {
-  m_current_region = make_transform_value_model(std::move(ticker),
+  m_current_scope = make_transform_value_model(std::move(ticker),
     [] (const auto& ticker) {
-      return Region(ticker);
+      return Scope(ticker);
     });
   auto interactions_form =
-    new InteractionsKeyBindingsForm(m_key_bindings, m_current_region);
+    new InteractionsKeyBindingsForm(m_key_bindings, m_current_scope);
   interactions_form->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   auto [reset_container, reset_button] = make_reset_container();
   auto body = new QWidget();
@@ -53,5 +53,5 @@ BookViewInteractionPropertiesPage::BookViewInteractionPropertiesPage(
 
 void BookViewInteractionPropertiesPage::on_reset_click() {
   m_key_bindings->get_interactions_key_bindings(
-    m_current_region->get())->reset();
+    m_current_scope->get())->reset();
 }

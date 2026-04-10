@@ -2,7 +2,7 @@
 #define SPIRE_BOOK_VIEW_INTERACTION_PROPERTIES_PAGE_HPP
 #include <QWidget>
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
-#include "Spire/Ui/RegionDropDownBox.hpp"
+#include "Spire/Ui/ScopeDropDownBox.hpp"
 #include "Spire/Ui/TickerBox.hpp"
 
 namespace Spire {
@@ -24,7 +24,7 @@ namespace Spire {
 
     private:
       std::shared_ptr<KeyBindingsModel> m_key_bindings;
-      std::shared_ptr<RegionModel> m_current_region;
+      std::shared_ptr<ScopeModel> m_current_scope;
 
       void on_reset_click();
   };
