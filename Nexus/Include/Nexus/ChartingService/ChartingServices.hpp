@@ -10,8 +10,8 @@
 
 namespace Nexus {
   using TickerChartingQueryResult = Beam::QueryResult<SequencedQueryVariant>;
-  BEAM_DEFINE_RECORD(TimePriceQueryResult, (Beam::Sequence, start),
-    (Beam::Sequence, end), (TimePriceSeries, series));
+  BEAM_DEFINE_RECORD(PriceQueryResult, (Beam::Sequence, start),
+    (Beam::Sequence, end), (PriceSeries, series));
 
   /** Standard name for the charting service. */
   inline const auto CHARTING_SERVICE_NAME = std::string("charting_service");
@@ -35,10 +35,9 @@ namespace Nexus {
      * @param interval The time interval per Candlestick.
      * @return The Ticker's time/price series with the specified parameters.
      */
-    (LoadTickerTimePriceSeriesService,
-      "Nexus.ChartingServices.LoadTickerTimePriceSeriesService",
-      TimePriceQueryResult, (Ticker, ticker),
-      (boost::posix_time::ptime, start_time),
+    (LoadTickerPriceSeriesService,
+      "Nexus.ChartingServices.LoadTickerPriceSeriesService", PriceQueryResult,
+      (Ticker, ticker), (boost::posix_time::ptime, start_time),
       (boost::posix_time::ptime, end_time),
       (boost::posix_time::time_duration, interval)));
 

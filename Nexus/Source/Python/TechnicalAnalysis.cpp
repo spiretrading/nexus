@@ -16,7 +16,7 @@ using namespace pybind11;
 
 void Nexus::Python::export_technical_analysis(module& module) {
   export_candlestick<Candlestick<object, object>>(module, "Candlestick");
-  export_candlestick<TimePriceCandlestick>(module, "TimePriceCandlestick");
+  export_candlestick<PriceCandlestick>(module, "PriceCandlestick");
   export_standard_ticker_queries(module);
 }
 

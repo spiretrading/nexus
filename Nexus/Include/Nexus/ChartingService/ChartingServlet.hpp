@@ -84,7 +84,7 @@ namespace Details {
         ServiceProtocolClient, QueryTickerService>& request,
         const TickerChartingQuery& query, int client_query_id);
       void on_end_ticker_query(ServiceProtocolClient& client, int id);
-      TimePriceQueryResult on_load_ticker_time_price_series_request(
+      PriceQueryResult on_load_ticker_price_series_request(
         ServiceProtocolClient& client, const Ticker& ticker,
         boost::posix_time::ptime start_time, boost::posix_time::ptime end_time,
         boost::posix_time::time_duration interval);
@@ -127,8 +127,8 @@ namespace Details {
       std::bind_front(&ChartingServlet::on_query_ticker_request, this));
     Beam::add_message_slot<EndTickerQueryMessage>(out(slots),
       std::bind_front(&ChartingServlet::on_end_ticker_query, this));
-    LoadTickerTimePriceSeriesService::add_slot(out(slots), std::bind_front(
-      &ChartingServlet::on_load_ticker_time_price_series_request, this));
+    LoadTickerPriceSeriesService::add_slot(out(slots), std::bind_front(
+      &ChartingServlet::on_load_ticker_price_series_request, this));
   }
 
   template<typename C, typename M> requires
@@ -172,11 +172,10 @@ namespace Details {
 
   template<typename C, typename M> requires
     IsMarketDataClient<Beam::dereference_t<M>>
-  TimePriceQueryResult ChartingServlet<C, M>::
-      on_load_ticker_time_price_series_request(ServiceProtocolClient& client,
-        const Ticker& ticker, boost::posix_time::ptime start_time,
-        boost::posix_time::ptime end_time,
-        boost::posix_time::time_duration interval) {
+  PriceQueryResult ChartingServlet<C, M>::on_load_ticker_price_series_request(
+      ServiceProtocolClient& client, const Ticker& ticker,
+      boost::posix_time::ptime start_time, boost::posix_time::ptime end_time,
+      boost::posix_time::time_duration interval) {
     if(end_time < start_time + interval ||
         start_time == boost::posix_time::neg_infin  ||
         end_time == boost::posix_time::pos_infin) {
@@ -191,7 +190,7 @@ namespace Details {
     m_market_data_client->query(time_and_sale_query, queue);
     auto time_and_sales = std::vector<SequencedTimeAndSale>();
     Beam::flush(queue, std::back_inserter(time_and_sales));
-    auto result = TimePriceQueryResult();
+    auto result = PriceQueryResult();
     if(!time_and_sales.empty()) {
       result.start = time_and_sales.front().get_sequence();
       result.end = time_and_sales.back().get_sequence();
@@ -201,7 +200,7 @@ namespace Details {
     auto time_and_sales_iterator = time_and_sales.begin();
     while(time_and_sales_iterator != time_and_sales.end() &&
         current_start <= end_time) {
-      auto candlestick = TimePriceCandlestick(current_start, current_end);
+      auto candlestick = PriceCandlestick(current_start, current_end);
       auto has_point = false;
       while(time_and_sales_iterator != time_and_sales.end() &&
           (*time_and_sales_iterator)->m_timestamp < current_end) {

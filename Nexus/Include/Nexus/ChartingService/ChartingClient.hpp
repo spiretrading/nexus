@@ -20,11 +20,11 @@ namespace Nexus {
   concept IsChartingClient = Beam::IsConnection<T> && requires(T& client) {
     client.query(std::declval<const TickerChartingQuery&>(),
       std::declval<Beam::ScopedQueueWriter<QueryVariant>>());
-    { client.load_time_price_series(std::declval<const Ticker&>(),
+    { client.load_price_series(std::declval<const Ticker&>(),
         std::declval<boost::posix_time::ptime>(),
         std::declval<boost::posix_time::ptime>(),
         std::declval<boost::posix_time::time_duration>()) } ->
-          std::same_as<TimePriceQueryResult>;
+          std::same_as<PriceQueryResult>;
   };
 
   /** Provides a generic interface over an arbitrary ChartingClient. */
@@ -67,7 +67,7 @@ namespace Nexus {
        * @param interval The time interval per Candlestick.
        * @return The Ticker's time/price series with the specified parameters.
        */
-      TimePriceQueryResult load_time_price_series(const Ticker& ticker,
+      PriceQueryResult load_price_series(const Ticker& ticker,
         boost::posix_time::ptime start, boost::posix_time::ptime end,
         boost::posix_time::time_duration interval);
 
@@ -79,9 +79,8 @@ namespace Nexus {
 
         virtual void query(const TickerChartingQuery& query,
           Beam::ScopedQueueWriter<QueryVariant> queue) = 0;
-        virtual TimePriceQueryResult load_time_price_series(
-          const Ticker& ticker, boost::posix_time::ptime start,
-          boost::posix_time::ptime end,
+        virtual PriceQueryResult load_price_series(const Ticker& ticker,
+          boost::posix_time::ptime start, boost::posix_time::ptime end,
           boost::posix_time::time_duration interval) = 0;
         virtual void close() = 0;
       };
@@ -95,7 +94,7 @@ namespace Nexus {
 
         void query(const TickerChartingQuery& query,
           Beam::ScopedQueueWriter<QueryVariant> queue) override;
-        TimePriceQueryResult load_time_price_series(const Ticker& ticker,
+        PriceQueryResult load_price_series(const Ticker& ticker,
           boost::posix_time::ptime start, boost::posix_time::ptime end,
           boost::posix_time::time_duration interval) override;
         void close() override;
@@ -119,10 +118,10 @@ namespace Nexus {
     m_client->query(query, std::move(queue));
   }
 
-  inline TimePriceQueryResult ChartingClient::load_time_price_series(
+  inline PriceQueryResult ChartingClient::load_price_series(
       const Ticker& ticker, boost::posix_time::ptime start,
       boost::posix_time::ptime end, boost::posix_time::time_duration interval) {
-    return m_client->load_time_price_series(ticker, start, end, interval);
+    return m_client->load_price_series(ticker, start, end, interval);
   }
 
   inline void ChartingClient::close() {
@@ -143,11 +142,11 @@ namespace Nexus {
   }
 
   template<typename C>
-  TimePriceQueryResult ChartingClient::WrappedChartingClient<C>::
-      load_time_price_series(const Ticker& ticker,
+  PriceQueryResult ChartingClient::WrappedChartingClient<C>::
+      load_price_series(const Ticker& ticker,
         boost::posix_time::ptime start, boost::posix_time::ptime end,
         boost::posix_time::time_duration interval) {
-    return m_client->load_time_price_series(ticker, start, end, interval);
+    return m_client->load_price_series(ticker, start, end, interval);
   }
 
   template<typename C>

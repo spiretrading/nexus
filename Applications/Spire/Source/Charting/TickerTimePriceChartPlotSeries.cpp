@@ -52,7 +52,7 @@ void TickerTimePriceChartPlotSeries::Query(ChartValue start, ChartValue end) {
       auto max = end.ToDateTime() +
         (m_interval - Normalize(end.ToDateTime(), m_interval));
       auto result = m_userProfile->GetClients().get_charting_client().
-        load_time_price_series(m_ticker, min, max, m_interval);
+        load_price_series(m_ticker, min, max, m_interval);
       for(auto& candlestick : result.series) {
         auto chartCandlestick = Candlestick(
           ChartValue(candlestick.get_start()),
