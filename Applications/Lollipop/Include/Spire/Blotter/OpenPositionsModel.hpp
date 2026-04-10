@@ -17,8 +17,8 @@ namespace Spire {
       /** Enumerates the columns displayed in the open positions table. */
       enum Columns {
 
-        /** The Security. */
-        SECURITY_COLUMN,
+        /** The Ticker. */
+        TICKER_COLUMN,
 
         /** The position's quantity. */
         QUANTITY_COLUMN,
@@ -48,7 +48,7 @@ namespace Spire {
         /** The Entry's index. */
         int m_index;
 
-        /** The open position's Security. */
+        /** The open position's Ticker. */
         Nexus::Position::Key m_key;
 
         /** The Inventory representing the open position. */
@@ -60,7 +60,7 @@ namespace Spire {
         /**
          * Constructs an Entry.
          * @param index The Entry's index.
-         * @param key The open position's Security.
+         * @param key The open position's Ticker.
          */
         Entry(int index, const Nexus::Position::Key& key);
       };
@@ -81,13 +81,13 @@ namespace Spire {
 
       /**
        * Returns the Entry for an open position.
-       * @param security The Security whose open position Entry is to be
+       * @param ticker The Ticker whose open position Entry is to be
        *        retrieved.
-       * @return The Entry for the <i>security</i>'s open position iff it
+       * @return The Entry for the <i>ticker</i>'s open position iff it
        *         exists.
        */
       boost::optional<const Entry&>
-        GetOpenPosition(const Nexus::Security& security) const;
+        GetOpenPosition(const Nexus::Ticker& ticker) const;
 
       int rowCount(const QModelIndex& parent) const override;
 
@@ -101,7 +101,7 @@ namespace Spire {
     private:
       ProfitAndLossModel::PortfolioController* m_portfolioController;
       std::vector<std::unique_ptr<Entry>> m_entries;
-      std::unordered_map<Nexus::Security, Entry*> m_securityToEntry;
+      std::unordered_map<Nexus::Ticker, Entry*> m_tickerToEntry;
       std::optional<EventHandler> m_eventHandler;
 
       void OnPortfolioUpdate(const Nexus::PortfolioUpdateEntry& update);

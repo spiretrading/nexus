@@ -1,6 +1,6 @@
 #ifndef SPIRE_ORDERIMBALANCERECORDTYPE_HPP
 #define SPIRE_ORDERIMBALANCERECORDTYPE_HPP
-#include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/VenueQuery.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
 

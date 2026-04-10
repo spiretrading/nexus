@@ -6,8 +6,8 @@
 #include <QFrame>
 #include <QTimer>
 #include "Nexus/Definitions/Quote.hpp"
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/BlotterTasksModel.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
@@ -16,8 +16,8 @@
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/OrderTaskArguments.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
-#include "Spire/LegacyUI/SecurityContext.hpp"
-#include "Spire/LegacyUI/SecurityViewStack.hpp"
+#include "Spire/LegacyUI/TickerContext.hpp"
+#include "Spire/LegacyUI/TickerViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -28,16 +28,16 @@ class Ui_BookViewWindow;
 
 namespace Spire {
 
-  /** Displays a Security's BookQuotes. */
+  /** Displays a Ticker's BookQuotes. */
   class BookViewWindow : public QFrame, public LegacyUI::PersistentWindow,
-      public LegacyUI::SecurityContext {
+      public LegacyUI::TickerContext {
     public:
 
       /**
        * Constructs a BookViewWindow.
        * @param userProfile The user's profile.
        * @param properties The window's Properties.
-       * @param identifier The SecurityContext identifier.
+       * @param identifier The TickerContext identifier.
        * @param parent The parent widget.
        * @param flags Qt flags passed to the parent widget.
        */
@@ -53,10 +53,10 @@ namespace Spire {
       void SetProperties(const BookViewProperties& properties);
 
       /**
-       * Sets the Security to display.
-       * @param security The Security to display.
+       * Sets the Ticker to display.
+       * @param ticker The Ticker to display.
        */
-      void DisplaySecurity(const Nexus::Security& security);
+      void DisplayTicker(const Nexus::Ticker& ticker);
 
       std::unique_ptr<LegacyUI::WindowSettings>
         GetWindowSettings() const override;
@@ -65,7 +65,7 @@ namespace Spire {
       void showEvent(QShowEvent* event) override;
       void closeEvent(QCloseEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void HandleLink(SecurityContext& context) override;
+      void HandleLink(TickerContext& context) override;
       void HandleUnlink() override;
 
     private:
@@ -73,26 +73,26 @@ namespace Spire {
       std::unique_ptr<Ui_BookViewWindow> m_ui;
       UserProfile* m_userProfile;
       BookViewProperties m_properties;
-      Nexus::Security m_security;
-      LegacyUI::SecurityViewStack m_securityViewStack;
+      Nexus::Ticker m_ticker;
+      LegacyUI::TickerViewStack m_tickerViewStack;
       std::string m_linkIdentifier;
       boost::signals2::scoped_connection m_linkConnection;
       CondensedCanvasWidget* m_taskEntryWidget;
       bool m_isTaskEntryWidgetForInteractionsProperties;
-      std::shared_ptr<SecurityTechnicalsModel> m_securityTechnicalsModel;
-      Beam::ConnectionGroup m_securityTechnicalsConnections;
-      std::unordered_map<Nexus::Security, std::vector<std::shared_ptr<Task>>>
+      std::shared_ptr<TickerTechnicalsModel> m_tickerTechnicalsModel;
+      Beam::ConnectionGroup m_tickerTechnicalsConnections;
+      std::unordered_map<Nexus::Ticker, std::vector<std::shared_ptr<Task>>>
         m_tasksExecuted;
       bool m_bidPanelGuard;
       bool m_askPanelGuard;
       QTimer m_updateTimer;
       EventHandler m_eventHandler;
 
-      void SetupSecurityTechnicalsModel();
+      void SetupTickerTechnicalsModel();
       std::unique_ptr<CanvasNode> PrepareTaskNode(const CanvasNode& node);
       void RemoveTaskEntry();
       void ExecuteTask(const CanvasNode& node);
-      void HandleSecurityInputEvent(QKeyEvent* event);
+      void HandleTickerInputEvent(QKeyEvent* event);
       void HandleKeyBindingEvent(const OrderTaskArguments& arguments);
       void HandleInteractionsPropertiesEvent();
       void HandleCancelBindingEvent(

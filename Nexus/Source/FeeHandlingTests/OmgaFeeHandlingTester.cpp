@@ -13,7 +13,7 @@ using namespace Nexus::Tests;
 namespace {
   auto make_order_fields(Money price, Quantity quantity) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
-      Security("TST", TSX), CAD, Side::BID, DefaultDestinations::OMEGA,
+      parse_ticker("TST.TSX"), CAD, Side::BID, DefaultDestinations::OMEGA,
       quantity, price);
   }
 

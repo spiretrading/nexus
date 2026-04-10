@@ -82,8 +82,8 @@ namespace Spire {
         /** The total amount of fees paid/received by the account. */
         ACCOUNT_FEES_COLUMN,
 
-        /** The Security traded. */
-        SECURITY_COLUMN,
+        /** The Ticker traded. */
+        TICKER_COLUMN,
 
         /** The position's current quantity. */
         OPEN_QUANTITY_COLUMN,
@@ -184,11 +184,11 @@ namespace Spire {
       TotalEntry m_totals;
       std::unordered_map<Beam::DirectoryEntry,
         Beam::DirectoryEntry> m_groups;
-      std::unordered_map<Nexus::Security, Nexus::SecurityValuation>
+      std::unordered_map<Nexus::Ticker, Nexus::TickerValuation>
         m_valuations;
       std::unordered_map<Beam::DirectoryEntry, AccountTotals>
         m_accountTotals;
-      std::unordered_map<Nexus::Security, std::vector<int>> m_securityToIndexes;
+      std::unordered_map<Nexus::Ticker, std::vector<int>> m_tickerToIndexes;
       std::unordered_map<Nexus::RiskPortfolioKey, int>
         m_inventoryKeyToIndex;
       EventHandler m_eventHandler;
@@ -197,7 +197,7 @@ namespace Spire {
       boost::optional<Nexus::Money> GetUnrealizedProfitAndLoss(
         const Nexus::Inventory& inventory) const;
       void OnBboQuote(
-        const Nexus::Security& security, const Nexus::BboQuote& bboQuote);
+        const Nexus::Ticker& ticker, const Nexus::BboQuote& bboQuote);
       void OnRiskPortfolioInventoryUpdate(
         const Nexus::RiskInventoryEntry& entry);
       void OnSelectionModelUpdated(

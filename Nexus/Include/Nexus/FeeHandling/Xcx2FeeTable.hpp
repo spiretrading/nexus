@@ -68,28 +68,28 @@ namespace Nexus {
     /** The number of trade types enumerated. */
     static constexpr auto TYPE_COUNT = std::size_t(7);
 
-    /** The fee table for non-TSX listed securities. */
+    /** The fee table for non-TSX listed tickers. */
     std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT>
       m_default_table;
 
-    /** The fee table for TSX listed securities. */
+    /** The fee table for TSX listed tickers. */
     std::array<std::array<Money, TYPE_COUNT>, PRICE_CLASS_COUNT> m_tsx_table;
 
     /** The large trade size threshold. */
     Quantity m_large_trade_size;
 
     /** The set of ETFs. */
-    std::unordered_set<Security> m_etfs;
+    std::unordered_set<Ticker> m_etfs;
   };
 
   /**
    * Parses an Xcx2FeeTable from a YAML configuration.
    * @param config The configuration to parse the Xcx2FeeTable from.
-   * @param etfs The set of ETF Securities.
+   * @param etfs The set of ETF Tickers.
    * @return The Xcx2FeeTable represented by the <i>config</i>.
    */
   inline Xcx2FeeTable parse_xcx2_fee_table(
-      const YAML::Node& config, std::unordered_set<Security> etfs) {
+      const YAML::Node& config, std::unordered_set<Ticker> etfs) {
     auto table = Xcx2FeeTable();
     parse_fee_table(
       config, "default_table", Beam::out(table.m_default_table));
@@ -111,7 +111,7 @@ namespace Nexus {
    */
   inline Money lookup_fee(const Xcx2FeeTable& table, const OrderFields& fields,
       Xcx2FeeTable::Type type, Xcx2FeeTable::PriceClass price_class) {
-    if(fields.m_security.get_venue() == DefaultVenues::TSX) {
+    if(fields.m_ticker.get_venue() == DefaultVenues::TSX) {
       return table.m_tsx_table[static_cast<int>(price_class)][
         static_cast<int>(type)];
     } else {
@@ -133,7 +133,7 @@ namespace Nexus {
       return Money::ZERO;
     }
     auto price_class = [&] {
-      if(table.m_etfs.contains(fields.m_security)) {
+      if(table.m_etfs.contains(fields.m_ticker)) {
         return Xcx2FeeTable::PriceClass::ETF;
       } else if(report.m_last_price < 10 * Money::CENT) {
         return Xcx2FeeTable::PriceClass::SUBDIME;

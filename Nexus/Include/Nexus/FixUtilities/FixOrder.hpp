@@ -94,14 +94,14 @@ namespace Details {
       : PrimitiveOrder(std::move(info)),
         m_side(side),
         m_cancel_id(0) {
-    m_symbol = get_info().m_fields.m_security.get_symbol();
+    m_symbol = get_info().m_fields.m_ticker.get_symbol();
   }
 
   inline FixOrder::FixOrder(OrderRecord record, FIX::Side side)
       : PrimitiveOrder(std::move(record)),
         m_side(side),
         m_cancel_id(0) {
-    m_symbol = get_info().m_fields.m_security.get_symbol();
+    m_symbol = get_info().m_fields.m_ticker.get_symbol();
   }
 
   inline const FIX::Symbol& FixOrder::get_symbol() const {

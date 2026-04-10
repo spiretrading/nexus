@@ -32,9 +32,9 @@ namespace {
     tab->Add(Ref(*settings.FindEntry(BuiltInCatalogEntry::DURATION_UUID)));
     tab->Add(Ref(*settings.FindEntry(BuiltInCatalogEntry::INTEGER_UUID)));
     tab->Add(Ref(*settings.FindEntry(BuiltInCatalogEntry::MONEY_UUID)));
-    tab->Add(Ref(*settings.FindEntry(BuiltInCatalogEntry::SECURITY_UUID)));
     tab->Add(Ref(*settings.FindEntry(BuiltInCatalogEntry::SIDE_UUID)));
     tab->Add(Ref(*settings.FindEntry(BuiltInCatalogEntry::TEXT_UUID)));
+    tab->Add(Ref(*settings.FindEntry(BuiltInCatalogEntry::TICKER_UUID)));
     tab->Add(Ref(*settings.FindEntry(BuiltInCatalogEntry::TIME_IN_FORCE_UUID)));
     settings.Add(std::move(tab));
   }

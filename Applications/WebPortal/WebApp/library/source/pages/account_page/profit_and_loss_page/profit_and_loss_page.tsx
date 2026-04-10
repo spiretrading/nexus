@@ -505,7 +505,7 @@ function ProfitAndLossList(props: {
               totalProfitAndLoss={currency.totalProfitAndLoss}
               totalVolume={currency.totalVolume}
               totalFees={currency.totalFees}
-              securities={currency.securities}/>
+              tickers={currency.tickers}/>
           </li>)}
     </ul>);
 }
@@ -562,8 +562,8 @@ export namespace ProfitAndLossPage {
     /** The total fees incurred. */
     totalFees: Nexus.Money;
 
-    /** The list of securities traded. */
-    securities: ProfitAndLossTable.Security[];
+    /** The list of tickers traded. */
+    tickers: ProfitAndLossTable.Ticker[];
   }
 }
 

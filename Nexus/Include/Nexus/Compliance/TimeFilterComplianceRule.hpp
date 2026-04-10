@@ -130,7 +130,7 @@ namespace Nexus {
   template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   void TimeFilterComplianceRule<C>::submit(
       const std::shared_ptr<Order>& order) {
-    if(is_within_period(order->get_info().m_fields.m_security.get_venue())) {
+    if(is_within_period(order->get_info().m_fields.m_ticker.get_venue())) {
       m_rule->submit(order);
     } else {
       add(order);
@@ -140,7 +140,7 @@ namespace Nexus {
   template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   void TimeFilterComplianceRule<C>::cancel(
       const std::shared_ptr<Order>& order) {
-    if(is_within_period(order->get_info().m_fields.m_security.get_venue())) {
+    if(is_within_period(order->get_info().m_fields.m_ticker.get_venue())) {
       m_rule->cancel(order);
     }
   }

@@ -23,7 +23,7 @@ bool RiskWebServlet::PortfolioFilter::is_filtered(
       m_currencies.end()) {
     return true;
   }
-  if(m_venues.find(entry.m_inventory.m_position.m_security.get_venue()) ==
+  if(m_venues.find(entry.m_inventory.m_position.m_ticker.get_venue()) ==
       m_venues.end()) {
     return true;
   }
@@ -133,7 +133,7 @@ void RiskWebServlet::on_portfolio_timer_expired(Timer::Result result) {
     m_updated_portfolio_entries.end(), std::back_inserter(updated_entries));
   for(auto& updated_entry : updated_entries) {
     auto key = RiskPortfolioKey(
-      updated_entry.m_account, updated_entry.m_inventory.m_position.m_security);
+      updated_entry.m_account, updated_entry.m_inventory.m_position.m_ticker);
     auto entry_result =
       m_portfolio_entries.insert(std::pair(key, updated_entry));
     if(!entry_result.second) {

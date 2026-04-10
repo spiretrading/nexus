@@ -131,7 +131,7 @@ namespace {
     void Visit(const OrderTypeType& type) override {
     }
 
-    void Visit(const SecurityType& type) override {
+    void Visit(const TickerType& type) override {
     }
 
     void Visit(const SideType& type) override {

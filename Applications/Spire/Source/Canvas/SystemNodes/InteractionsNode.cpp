@@ -3,25 +3,25 @@
 #include "Spire/Canvas/Types/IntegerType.hpp"
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
 
 InteractionsNode::InteractionsNode()
-  : InteractionsNode(Security(), InteractionsKeyBindingsModel()) {}
+  : InteractionsNode(Ticker(), InteractionsKeyBindingsModel()) {}
 
 InteractionsNode::InteractionsNode(
-    Security security, const InteractionsKeyBindingsModel& interactions) {
+    Ticker ticker, const InteractionsKeyBindingsModel& interactions) {
   SetText("");
   SetType(IntegerType::GetInstance());
-  auto securityNode = std::unique_ptr<CanvasNode>(
-    std::make_unique<SecurityNode>(std::move(security)));
-  securityNode = securityNode->SetVisible(false);
-  AddChild("security", std::move(securityNode));
+  auto tickerNode = std::unique_ptr<CanvasNode>(
+    std::make_unique<TickerNode>(std::move(ticker)));
+  tickerNode = tickerNode->SetVisible(false);
+  AddChild("ticker", std::move(tickerNode));
   auto defaultQuantityNode = LinkedNode::SetReferent(
-    IntegerNode(interactions.get_default_quantity()->get()), "security");
+    IntegerNode(interactions.get_default_quantity()->get()), "ticker");
   AddChild("default_quantity", std::move(defaultQuantityNode));
   AddChild("quantity_increment", std::make_unique<IntegerNode>(
     interactions.get_quantity_increment(Qt::NoModifier)->get()));
@@ -61,11 +61,11 @@ void Spire::apply(const InteractionsNode& node,
 }
 
 void Spire::apply(const InteractionsNode& node, KeyBindingsModel& keyBindings) {
-  if(auto securityNode = node.FindChild("security")) {
-    if(auto security =
-        dynamic_cast<const SecurityNode*>(&*securityNode)) {
+  if(auto tickerNode = node.FindChild("ticker")) {
+    if(auto ticker =
+        dynamic_cast<const TickerNode*>(&*tickerNode)) {
       apply(
-        node, *keyBindings.get_interactions_key_bindings(security->GetValue()));
+        node, *keyBindings.get_interactions_key_bindings(ticker->GetValue()));
     }
   }
 }

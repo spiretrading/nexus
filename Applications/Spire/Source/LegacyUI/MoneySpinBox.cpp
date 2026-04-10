@@ -2,7 +2,7 @@
 #include <QKeyEvent>
 #include "Spire/Canvas/ReferenceNodes/ReferenceNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
@@ -41,8 +41,8 @@ MoneySpinBox::MoneySpinBox(Ref<UserProfile> userProfile,
     }
   }
   if(referent) {
-    if(auto securityValueNode = dynamic_cast<const SecurityNode*>(&*referent)) {
-      m_security = securityValueNode->GetValue();
+    if(auto tickerValueNode = dynamic_cast<const TickerNode*>(&*referent)) {
+      m_ticker = tickerValueNode->GetValue();
     }
   }
   AdjustIncrement(Qt::NoModifier);
@@ -72,12 +72,12 @@ void MoneySpinBox::keyReleaseEvent(QKeyEvent* event) {
 }
 
 void MoneySpinBox::AdjustIncrement(Qt::KeyboardModifier modifier) {
-  if(!m_userProfile || !m_security) {
+  if(!m_userProfile || !m_ticker) {
     return;
   }
   auto priceIncrement =
     m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
-      *m_security)->get_price_increment(modifier)->get();
+      *m_ticker)->get_price_increment(modifier)->get();
   if(modifier == Qt::KeyboardModifier::ControlModifier) {
     priceIncrement /= 10;
   }

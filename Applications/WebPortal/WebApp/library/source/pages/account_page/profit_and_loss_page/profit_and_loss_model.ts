@@ -29,11 +29,11 @@ export abstract class ProfitAndLossModel {
 
 export namespace ProfitAndLossModel {
 
-  /** A per-security breakdown within a currency. */
-  export interface SecurityEntry {
+  /** A per-ticker breakdown within a currency. */
+  export interface TickerEntry {
 
-    /** The security traded. */
-    security: Nexus.Security;
+    /** The ticker traded. */
+    ticker: Nexus.Ticker;
 
     /** The volume traded. */
     volume: Nexus.Quantity;
@@ -60,8 +60,8 @@ export namespace ProfitAndLossModel {
     /** The total fees incurred for this currency. */
     totalFees: Nexus.Money;
 
-    /** The securities traded in this currency. */
-    securities: SecurityEntry[];
+    /** The tickers traded in this currency. */
+    tickers: TickerEntry[];
   }
 
   /** The result of a completed report. */
@@ -94,16 +94,16 @@ export namespace ProfitAndLossModel {
       currencyDatabase: Nexus.CurrencyDatabase): string {
     const accountEntry = currencyDatabase.fromCurrency(accountCurrency);
     const rows: string[][] = [];
-    rows.push(['Currency', 'Security', 'Volume', 'Fees', 'Profit/Loss']);
+    rows.push(['Currency', 'Ticker', 'Volume', 'Fees', 'Profit/Loss']);
     for(const currency of report.currencies) {
       const currencyEntry = currencyDatabase.fromCurrency(currency.currency);
-      for(const security of currency.securities) {
+      for(const ticker of currency.tickers) {
         rows.push([
           currencyEntry.code,
-          security.security.toString(),
-          security.volume.toString(),
-          currencyEntry.sign + security.fees.toString(),
-          currencyEntry.sign + security.profitAndLoss.toString()
+          ticker.ticker.toString(),
+          ticker.volume.toString(),
+          currencyEntry.sign + ticker.fees.toString(),
+          currencyEntry.sign + ticker.profitAndLoss.toString()
         ]);
       }
       rows.push([

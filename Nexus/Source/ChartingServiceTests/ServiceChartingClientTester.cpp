@@ -2,6 +2,7 @@
 #include <Beam/ServicesTests/ServiceClientFixture.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/ChartingService/ServiceChartingClient.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
@@ -27,28 +28,29 @@ namespace {
 TEST_SUITE("ServiceChartingClient") {
   TEST_CASE("load_time_price_series") {
     auto fixture = Fixture();
-    auto security = Security("TST", TSX);
-    auto start = from_iso_string("20240131T100000");
-    auto end = from_iso_string("20240131T110000");
+    auto ticker = parse_ticker("TST.TSX");
+    auto start = time_from_string("2024-01-31 10:00:00");
+    auto end = time_from_string("2024-01-31 11:00:00");
     auto interval = time_duration(0, 1, 0);
     auto result = TimePriceQueryResult();
     result.start = Beam::Sequence(543);
     result.end = Beam::Sequence(654);
     result.series.push_back(TimePriceCandlestick(
-      from_iso_string("20240131T100000"), from_iso_string("20240131T100100"),
+      time_from_string("2024-01-31 10:00:00"),
+      time_from_string("2024-01-31 10:01:00"),
       10 * Money::ONE, 11 * Money::ONE, 12 * Money::ONE, 9 * Money::ONE));
-    fixture.on_request<LoadSecurityTimePriceSeriesService>(
-      [&] (auto& request, const auto& received_security,
+    fixture.on_request<LoadTickerTimePriceSeriesService>(
+      [&] (auto& request, const auto& received_ticker,
           const auto& received_start, const auto& received_end,
           const auto& received_interval) {
-        REQUIRE(received_security == security);
+        REQUIRE(received_ticker == ticker);
         REQUIRE(received_start == start);
         REQUIRE(received_end == end);
         REQUIRE(received_interval == interval);
         request.set(result);
       });
     auto received_result =
-      fixture.m_client->load_time_price_series(security, start, end, interval);
+      fixture.m_client->load_time_price_series(ticker, start, end, interval);
     REQUIRE(result.series == received_result.series);
     REQUIRE(result.start == received_result.start);
     REQUIRE(result.end == received_result.end);

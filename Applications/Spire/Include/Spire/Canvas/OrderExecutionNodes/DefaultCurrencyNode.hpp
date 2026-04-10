@@ -6,7 +6,7 @@
 namespace Spire {
 
   /*! \class DefaultCurrencyNode
-      \brief Evaluates the the default Currency used for a Security.
+      \brief Evaluates the the default Currency used for a Ticker.
    */
   class DefaultCurrencyNode : public CanvasNode {
     public:

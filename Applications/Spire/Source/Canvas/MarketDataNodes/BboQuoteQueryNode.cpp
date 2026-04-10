@@ -2,8 +2,8 @@
 #include "Spire/Canvas/Common/CanvasNodeVisitor.hpp"
 #include "Spire/Canvas/Operations/DefaultCanvasNodeFromCanvasTypeVisitor.hpp"
 #include "Spire/Canvas/Types/QuoteRecordType.hpp"
-#include "Spire/Canvas/Types/SecurityType.hpp"
 #include "Spire/Canvas/Types/SideType.hpp"
+#include "Spire/Canvas/Types/TickerType.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
 
 using namespace Beam;
@@ -13,7 +13,7 @@ using namespace std;
 BboQuoteQueryNode::BboQuoteQueryNode() {
   SetText("BBO Quote Query");
   SetType(GetQuoteRecordType());
-  AddChild("security", MakeDefaultCanvasNode(SecurityType::GetInstance()));
+  AddChild("ticker", MakeDefaultCanvasNode(TickerType::GetInstance()));
   AddChild("side", MakeDefaultCanvasNode(SideType::GetInstance()));
   AddChild("range", MakeDefaultCanvasNode(TimeRangeType::GetInstance()));
 }

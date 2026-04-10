@@ -99,9 +99,6 @@ namespace Spire {
   class RecordType;
   class ReferenceNode;
   class RoundNode;
-  class SecurityNode;
-  class SecurityPortfolioNode;
-  class SecurityType;
   class SequenceType;
   class SideNode;
   class SideType;
@@ -113,6 +110,9 @@ namespace Spire {
   class TaskStateParser;
   class TextNode;
   class TextType;
+  class TickerNode;
+  class TickerPortfolioNode;
+  class TickerType;
   class TimeAndSaleQueryNode;
   class TimeInForceNode;
   class TimeInForceType;

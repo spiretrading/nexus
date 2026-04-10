@@ -1,7 +1,7 @@
 #ifndef SPIRE_KEY_BINDINGS_WINDOW_HPP
 #define SPIRE_KEY_BINDINGS_WINDOW_HPP
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
-#include "Spire/Ui/SecurityBox.hpp"
+#include "Spire/Ui/TickerBox.hpp"
 #include "Spire/Ui/Window.hpp"
 
 namespace Spire {
@@ -13,12 +13,12 @@ namespace Spire {
       /**
        * Constructs a KeyBindingsWindow.
        * @param key_bindings The KeyBindingsModel to display.
-       * @param securities The set of securities to use.
+       * @param tickers The set of tickers to use.
        * @param additional_tags Defines all available additional tags.
        * @param parent The parent widget.
        */
       KeyBindingsWindow(std::shared_ptr<KeyBindingsModel> key_bindings,
-        std::shared_ptr<SecurityInfoQueryModel> securities,
+        std::shared_ptr<TickerInfoQueryModel> tickers,
         const AdditionalTagDatabase& additional_tags,
         QWidget* parent = nullptr);
 

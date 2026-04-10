@@ -2,10 +2,10 @@
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
 #include <QFrame>
 #include "Nexus/Definitions/Quote.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
-#include "Spire/LegacyUI/SecurityContext.hpp"
-#include "Spire/LegacyUI/SecurityViewStack.hpp"
+#include "Spire/LegacyUI/TickerContext.hpp"
+#include "Spire/LegacyUI/TickerViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
@@ -18,14 +18,14 @@ namespace Spire {
 
   /** Displays TimeAndSale prints. */
   class TimeAndSalesWindow : public QFrame, public LegacyUI::PersistentWindow,
-      public LegacyUI::SecurityContext {
+      public LegacyUI::TickerContext {
     public:
 
       /**
        * Constructs a TimeAndSalesWindow.
        * @param userProfile The user's profile.
        * @param properties The properties used to display this window.
-       * @param identifier The SecurityContext's identifier.
+       * @param identifier The TickerContext's identifier.
        * @param parent The parent widget.
        * @param flags Qt flags passed to the parent widget.
        */
@@ -41,10 +41,10 @@ namespace Spire {
       void SetProperties(const TimeAndSalesProperties& properties);
 
       /**
-       * Sets the Security to display.
-       * @param security The Security to display.
+       * Sets the Ticker to display.
+       * @param ticker The Ticker to display.
        */
-      void DisplaySecurity(const Nexus::Security& security);
+      void DisplayTicker(const Nexus::Ticker& ticker);
 
       std::unique_ptr<LegacyUI::WindowSettings>
         GetWindowSettings() const override;
@@ -53,7 +53,7 @@ namespace Spire {
       void showEvent(QShowEvent* event) override;
       void closeEvent(QCloseEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void HandleLink(SecurityContext& context) override;
+      void HandleLink(TickerContext& context) override;
       void HandleUnlink() override;
 
     private:
@@ -61,17 +61,17 @@ namespace Spire {
       std::unique_ptr<Ui_TimeAndSalesWindow> m_ui;
       UserProfile* m_userProfile;
       TimeAndSalesProperties m_properties;
-      Nexus::Security m_security;
-      LegacyUI::SecurityViewStack m_securityViewStack;
+      Nexus::Ticker m_ticker;
+      LegacyUI::TickerViewStack m_tickerViewStack;
       QStatusBar* m_statusBar;
       LegacyUI::ValueLabel* m_volumeLabel;
       std::unique_ptr<TimeAndSalesModel> m_model;
-      std::shared_ptr<SecurityTechnicalsModel> m_securityTechnicalsModel;
+      std::shared_ptr<TickerTechnicalsModel> m_tickerTechnicalsModel;
       boost::signals2::scoped_connection m_volumeConnection;
       boost::signals2::scoped_connection m_linkConnection;
       std::string m_linkIdentifier;
 
-      void SetupSecurityTechnicals();
+      void SetupTickerTechnicals();
       void OnVolumeUpdate(Nexus::Quantity volume);
       void OnContextMenu(const QPoint& position);
       void OnSectionMoved(

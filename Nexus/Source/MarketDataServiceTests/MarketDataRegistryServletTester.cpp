@@ -9,6 +9,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServlet.hpp"
@@ -80,12 +81,12 @@ namespace {
       m_servlet.emplace(
         *m_servlet_administration_client, &m_registry, &m_data_store);
       m_container.emplace(init(
-        *m_servlet_service_locator_client, &*m_servlet),
-        m_server_connection, factory<std::unique_ptr<TriggerTimer>>());
-      m_client_account =
-        make_account("client", DirectoryEntry::STAR_DIRECTORY);
-      auto global_entitlement = m_servlet_administration_client->
-        load_entitlements().get_entries().front().m_group_entry;
+        *m_servlet_service_locator_client, &*m_servlet), m_server_connection,
+        factory<std::unique_ptr<TriggerTimer>>());
+      m_client_account = make_account("client", DirectoryEntry::STAR_DIRECTORY);
+      auto global_entitlement =
+        m_servlet_administration_client->load_entitlements().
+          get_entries().front().m_group_entry;
       m_servlet_administration_client->store_entitlements(
         m_client_account, {global_entitlement});
       std::tie(m_client_account, m_client) = make_client("client");
@@ -94,11 +95,11 @@ namespace {
 
   template<typename QueryService, typename MessageType,
     typename MakeData, typename LoadFromStore, typename GetRecord>
-  void test_query_publish(Fixture& fixture, const Security& security,
+  void test_query_publish(Fixture& fixture, const Ticker& ticker,
       MakeData&& make_data, LoadFromStore&& load_from_store,
       GetRecord&& get_record) {
-    auto query = SecurityMarketDataQuery();
-    query.set_index(security);
+    auto query = TickerQuery();
+    query.set_index(ticker);
     query.set_range(Range::REAL_TIME);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     auto result = fixture.m_client->send_request<QueryService>(query);
@@ -111,8 +112,8 @@ namespace {
       RecordMessage<MessageType, TestServiceProtocolClient>>(message);
     auto received_data = get_record(received_message->get_record());
     REQUIRE(*received_data == *data);
-    auto data_store_query = SecurityMarketDataQuery();
-    data_store_query.set_index(security);
+    auto data_store_query = TickerQuery();
+    data_store_query.set_index(ticker);
     data_store_query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     data_store_query.set_range(
       received_data.get_sequence(), increment(received_data.get_sequence()));
@@ -124,8 +125,8 @@ namespace {
         fixture.make_account("client2", DirectoryEntry::STAR_DIRECTORY);
       auto client = std::unique_ptr<TestServiceProtocolClient>();
       std::tie(client_account, client) = fixture.make_client("client2");
-      auto query = SecurityMarketDataQuery();
-      query.set_index(security);
+      auto query = TickerQuery();
+      query.set_index(ticker);
       query.set_range(Range::TOTAL);
       query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
       auto result = client->send_request<QueryService>(query);
@@ -136,42 +137,41 @@ namespace {
 }
 
 TEST_SUITE("MarketDataRegistryServlet") {
-  TEST_CASE("query_security_info") {
+  TEST_CASE("query_ticker_info") {
     auto fixture = Fixture();
-    auto security = Security("A", TSX);
-    auto info = SecurityInfo(security, "SECURITY A", "", 100);
+    auto ticker = parse_ticker("A.TSX");
+    auto info = TickerInfo(ticker, "TICKER A", "", 100);
     fixture.m_data_store.store(info);
     fixture.m_registry.add(info);
-    auto query = make_security_info_query(security);
-    auto result =
-      fixture.m_client->send_request<QuerySecurityInfoService>(query);
+    auto query = make_ticker_info_query(ticker);
+    auto result = fixture.m_client->send_request<QueryTickerInfoService>(query);
     REQUIRE(result.size() == 1);
     REQUIRE(result.front() == info);
   }
 
-  TEST_CASE("load_security_info_from_prefix") {
+  TEST_CASE("load_ticker_info_from_prefix") {
     auto fixture = Fixture();
-    auto security_a = Security("A", TSX);
-    auto info_a = SecurityInfo(security_a, "SECURITY A", "", 100);
+    auto ticker_a = parse_ticker("A.TSX");
+    auto info_a = TickerInfo(ticker_a, "TICKER A", "", 100);
     fixture.m_registry.add(info_a);
-    auto security_b = Security("B", TSX);
-    auto info_b = SecurityInfo(security_b, "SECURITY B", "", 100);
+    auto ticker_b = parse_ticker("B.TSX");
+    auto info_b = TickerInfo(ticker_b, "TICKER B", "", 100);
     fixture.m_registry.add(info_b);
-    auto security_c = Security("C", TSX);
-    auto info_c = SecurityInfo(security_c, "SECURITY C", "", 100);
+    auto ticker_c = parse_ticker("C.TSX");
+    auto info_c = TickerInfo(ticker_c, "TICKER C", "", 100);
     fixture.m_registry.add(info_c);
     auto result =
-      fixture.m_client->send_request<LoadSecurityInfoFromPrefixService>("A");
+      fixture.m_client->send_request<LoadTickerInfoFromPrefixService>("A");
     REQUIRE(result.size() == 1);
     REQUIRE(result.front() == info_a);
   }
 
   TEST_CASE("query_publish_order_imbalance") {
     auto fixture = Fixture();
-    auto security = Security("A", TSX);
-    auto info = SecurityInfo(security, "SECURITY A", "", 100);
+    auto ticker = parse_ticker("A.TSX");
+    auto info = TickerInfo(ticker, "TICKER A", "", 100);
     fixture.m_registry.add(info);
-    auto query = VenueMarketDataQuery();
+    auto query = VenueQuery();
     query.set_index(TSX);
     query.set_range(Range::REAL_TIME);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
@@ -180,7 +180,7 @@ TEST_SUITE("MarketDataRegistryServlet") {
     REQUIRE(result.m_id != -1);
     REQUIRE(result.m_snapshot.empty());
     auto imbalance = VenueOrderImbalance(
-      OrderImbalance(security, Side::ASK, 100, Money::ONE,
+      OrderImbalance(ticker, Side::ASK, 100, Money::ONE,
         fixture.m_time_client.get_time()), TSX);
     fixture.m_servlet->publish(imbalance, 1);
     auto message = fixture.m_client->read_message();
@@ -189,7 +189,7 @@ TEST_SUITE("MarketDataRegistryServlet") {
     auto received_imbalance =
       received_imbalance_message->get_record().order_imbalance;
     REQUIRE(*received_imbalance == *imbalance);
-    auto data_store_query = VenueMarketDataQuery();
+    auto data_store_query = VenueQuery();
     data_store_query.set_index(TSX);
     data_store_query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     data_store_query.set_range(received_imbalance.get_sequence(),
@@ -197,14 +197,14 @@ TEST_SUITE("MarketDataRegistryServlet") {
     auto stored_imbalances =
       fixture.m_data_store.load_order_imbalances(data_store_query);
     REQUIRE(stored_imbalances.size() == 1);
-    REQUIRE(
-      stored_imbalances.front() == to_sequenced_value(received_imbalance));
+    REQUIRE(stored_imbalances.front() ==
+      to_sequenced_value(received_imbalance));
     SUBCASE("query_no_entitlement") {
       auto client_account =
         fixture.make_account("client2", DirectoryEntry::STAR_DIRECTORY);
       auto client = std::unique_ptr<TestServiceProtocolClient>();
       std::tie(client_account, client) = fixture.make_client("client2");
-      auto query = VenueMarketDataQuery();
+      auto query = VenueQuery();
       query.set_index(TSX);
       query.set_range(Range::TOTAL);
       query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
@@ -216,14 +216,14 @@ TEST_SUITE("MarketDataRegistryServlet") {
 
   TEST_CASE("query_publish_bbo_quote") {
     auto fixture = Fixture();
-    auto security = Security("A", TSX);
-    auto info = SecurityInfo(security, "SECURITY A", "", 100);
+    auto ticker = parse_ticker("A.TSX");
+    auto info = TickerInfo(ticker, "TICKER A", "", 100);
     fixture.m_registry.add(info);
-    test_query_publish<QueryBboQuotesService, BboQuoteMessage>(
-      fixture, security, [&] {
-        return SecurityBboQuote(
+    test_query_publish<QueryBboQuotesService, BboQuoteMessage>(fixture, ticker,
+      [&] {
+        return TickerBboQuote(
           BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
-            fixture.m_time_client.get_time()), security);
+            fixture.m_time_client.get_time()), ticker);
       }, [&] (const auto& query) {
         return fixture.m_data_store.load_bbo_quotes(query);
       }, [] (const auto& record) {
@@ -233,14 +233,14 @@ TEST_SUITE("MarketDataRegistryServlet") {
 
   TEST_CASE("query_publish_book_quote") {
     auto fixture = Fixture();
-    auto security = Security("A", TSX);
-    auto info = SecurityInfo(security, "SECURITY A", "", 100);
+    auto ticker = parse_ticker("A.TSX");
+    auto info = TickerInfo(ticker, "TICKER A", "", 100);
     fixture.m_registry.add(info);
     test_query_publish<QueryBookQuotesService, BookQuoteMessage>(
-      fixture, security, [&] {
-        return SecurityBookQuote(
-          BookQuote("MP1", false, TSX, make_bid(Money::CENT, 100),
-            fixture.m_time_client.get_time()), security);
+      fixture, ticker, [&] {
+        return TickerBookQuote(BookQuote("MP1", false, TSX,
+          make_bid(Money::CENT, 100), fixture.m_time_client.get_time()),
+          ticker);
       }, [&] (const auto& query) {
         return fixture.m_data_store.load_book_quotes(query);
       }, [] (const auto& record) {
@@ -250,13 +250,14 @@ TEST_SUITE("MarketDataRegistryServlet") {
 
   TEST_CASE("query_publish_time_and_sale") {
     auto fixture = Fixture();
-    auto security = Security("A", TSX);
-    auto info = SecurityInfo(security, "SECURITY A", "", 100);
+    auto ticker = parse_ticker("A.TSX");
+    auto info = TickerInfo(ticker, "TICKER A", "", 100);
     fixture.m_registry.add(info);
     test_query_publish<QueryTimeAndSalesService, TimeAndSaleMessage>(
-      fixture, security, [&] {
-        return SecurityTimeAndSale(TimeAndSale(fixture.m_time_client.get_time(),
-          Money::ONE, 100, TimeAndSale::Condition(), "TSX", "", ""), security);
+      fixture, ticker, [&] {
+        return TickerTimeAndSale(
+          TimeAndSale(fixture.m_time_client.get_time(), Money::ONE, 100,
+            TimeAndSale::Condition(), "TSX", "", ""), ticker);
       }, [&] (const auto& query) {
         return fixture.m_data_store.load_time_and_sales(query);
       }, [] (const auto& record) {

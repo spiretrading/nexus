@@ -10,7 +10,7 @@
 
 namespace Nexus {
 
-  /** Stores the best bid and ask Quotes across all markets. */
+  /** Stores the best bid and ask Quotes across all venues. */
   struct BboQuote {
 
     /** The best bid. */

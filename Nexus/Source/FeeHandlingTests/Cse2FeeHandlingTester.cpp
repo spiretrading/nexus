@@ -26,7 +26,7 @@ namespace {
   auto make_order_fields(
       std::string symbol, Money price, Quantity quantity, Venue venue) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
-      Security(symbol, venue), CAD, Side::BID, DefaultDestinations::CSE2,
+      Ticker(symbol, venue), CAD, Side::BID, DefaultDestinations::CSE2,
       quantity, price);
   }
 
@@ -134,7 +134,7 @@ TEST_SUITE("Cse2FeeHandling") {
   TEST_CASE("active_cse_debenture") {
     auto table = make_fee_table();
     auto expected_fee = 100 * lookup_debentures_or_notes_fee(table,
-      LiquidityFlag::ACTIVE, Cse2FeeTable::ListingMarket::CSE);
+      LiquidityFlag::ACTIVE, Cse2FeeTable::ListingVenue::CSE);
     auto fee = calculate_fee(table, make_order_fields("TST.DB", Money::CENT,
       CSE), make_execution_report(Money::CENT, 100, "TC "));
     REQUIRE(fee == expected_fee);
@@ -143,7 +143,7 @@ TEST_SUITE("Cse2FeeHandling") {
   TEST_CASE("passive_cse_debenture") {
     auto table = make_fee_table();
     auto expected_fee = 100 * lookup_debentures_or_notes_fee(table,
-      LiquidityFlag::PASSIVE, Cse2FeeTable::ListingMarket::CSE);
+      LiquidityFlag::PASSIVE, Cse2FeeTable::ListingVenue::CSE);
     auto fee = calculate_fee(table, make_order_fields("TST.NO", Money::CENT,
       CSE), make_execution_report(Money::CENT, 100, "PC "));
     REQUIRE(fee == expected_fee);
@@ -152,7 +152,7 @@ TEST_SUITE("Cse2FeeHandling") {
   TEST_CASE("active_tsx_debenture") {
     auto table = make_fee_table();
     auto expected_fee = 300 * lookup_debentures_or_notes_fee(table,
-      LiquidityFlag::ACTIVE, Cse2FeeTable::ListingMarket::TSX_TSXV);
+      LiquidityFlag::ACTIVE, Cse2FeeTable::ListingVenue::TSX_TSXV);
     auto fee = calculate_fee(table, make_order_fields("TST.NT", Money::CENT,
       TSX), make_execution_report(Money::CENT, 300, "TT "));
     REQUIRE(fee == expected_fee);
@@ -161,7 +161,7 @@ TEST_SUITE("Cse2FeeHandling") {
   TEST_CASE("passive_tsx_debenture") {
     auto table = make_fee_table();
     auto expected_fee = 400 * lookup_debentures_or_notes_fee(table,
-      LiquidityFlag::PASSIVE, Cse2FeeTable::ListingMarket::TSX_TSXV);
+      LiquidityFlag::PASSIVE, Cse2FeeTable::ListingVenue::TSX_TSXV);
     auto fee = calculate_fee(table, make_order_fields("TST.NS", Money::ONE,
       TSXV), make_execution_report(Money::ONE, 400, "PV "));
     REQUIRE(fee == expected_fee);

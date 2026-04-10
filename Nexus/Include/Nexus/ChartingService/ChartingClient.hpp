@@ -11,16 +11,16 @@
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/ChartingService/ChartingServices.hpp"
-#include "Nexus/ChartingService/SecurityChartingQuery.hpp"
+#include "Nexus/ChartingService/TickerChartingQuery.hpp"
 
 namespace Nexus {
 
   /** Checks if a type implements a ChartingClient. */
   template<typename T>
   concept IsChartingClient = Beam::IsConnection<T> && requires(T& client) {
-    client.query(std::declval<const SecurityChartingQuery&>(),
+    client.query(std::declval<const TickerChartingQuery&>(),
       std::declval<Beam::ScopedQueueWriter<QueryVariant>>());
-    { client.load_time_price_series(std::declval<const Security&>(),
+    { client.load_time_price_series(std::declval<const Ticker&>(),
         std::declval<boost::posix_time::ptime>(),
         std::declval<boost::posix_time::ptime>(),
         std::declval<boost::posix_time::time_duration>()) } ->
@@ -52,22 +52,22 @@ namespace Nexus {
       ChartingClient(ChartingClient&&) = default;
 
       /**
-       * Submits a query for a Security's technical info.
+       * Submits a query for a Ticker's technical info.
        * @param query The query to submit.
        * @param queue The queue that will store the result of the query.
        */
-      void query(const SecurityChartingQuery& query,
+      void query(const TickerChartingQuery& query,
         Beam::ScopedQueueWriter<QueryVariant> queue);
 
       /**
-       * Loads a Security's time/price series.
-       * @param security The Security to load the series for.
+       * Loads a Ticker's time/price series.
+       * @param ticker The Ticker to load the series for.
        * @param start The series start time (inclusive).
        * @param end The series end time (inclusive).
        * @param interval The time interval per Candlestick.
-       * @return The Security's time/price series with the specified parameters.
+       * @return The Ticker's time/price series with the specified parameters.
        */
-      TimePriceQueryResult load_time_price_series(const Security& security,
+      TimePriceQueryResult load_time_price_series(const Ticker& ticker,
         boost::posix_time::ptime start, boost::posix_time::ptime end,
         boost::posix_time::time_duration interval);
 
@@ -77,10 +77,10 @@ namespace Nexus {
       struct VirtualChartingClient {
         virtual ~VirtualChartingClient() = default;
 
-        virtual void query(const SecurityChartingQuery& query,
+        virtual void query(const TickerChartingQuery& query,
           Beam::ScopedQueueWriter<QueryVariant> queue) = 0;
         virtual TimePriceQueryResult load_time_price_series(
-          const Security& security, boost::posix_time::ptime start,
+          const Ticker& ticker, boost::posix_time::ptime start,
           boost::posix_time::ptime end,
           boost::posix_time::time_duration interval) = 0;
         virtual void close() = 0;
@@ -93,9 +93,9 @@ namespace Nexus {
         template<typename... Args>
         WrappedChartingClient(Args&&... args);
 
-        void query(const SecurityChartingQuery& query,
+        void query(const TickerChartingQuery& query,
           Beam::ScopedQueueWriter<QueryVariant> queue) override;
-        TimePriceQueryResult load_time_price_series(const Security& security,
+        TimePriceQueryResult load_time_price_series(const Ticker& ticker,
           boost::posix_time::ptime start, boost::posix_time::ptime end,
           boost::posix_time::time_duration interval) override;
         void close() override;
@@ -114,15 +114,15 @@ namespace Nexus {
     : m_client(Beam::make_virtual_ptr<WrappedChartingClient<
         std::remove_cvref_t<T>>>(std::forward<T>(client))) {}
 
-  inline void ChartingClient::query(const SecurityChartingQuery& query,
+  inline void ChartingClient::query(const TickerChartingQuery& query,
       Beam::ScopedQueueWriter<QueryVariant> queue) {
     m_client->query(query, std::move(queue));
   }
 
   inline TimePriceQueryResult ChartingClient::load_time_price_series(
-      const Security& security, boost::posix_time::ptime start,
+      const Ticker& ticker, boost::posix_time::ptime start,
       boost::posix_time::ptime end, boost::posix_time::time_duration interval) {
-    return m_client->load_time_price_series(security, start, end, interval);
+    return m_client->load_time_price_series(ticker, start, end, interval);
   }
 
   inline void ChartingClient::close() {
@@ -137,17 +137,17 @@ namespace Nexus {
 
   template<typename C>
   void ChartingClient::WrappedChartingClient<C>::query(
-      const SecurityChartingQuery& query,
+      const TickerChartingQuery& query,
       Beam::ScopedQueueWriter<QueryVariant> queue) {
     m_client->query(query, std::move(queue));
   }
 
   template<typename C>
   TimePriceQueryResult ChartingClient::WrappedChartingClient<C>::
-      load_time_price_series(const Security& security,
+      load_time_price_series(const Ticker& ticker,
         boost::posix_time::ptime start, boost::posix_time::ptime end,
         boost::posix_time::time_duration interval) {
-    return m_client->load_time_price_series(security, start, end, interval);
+    return m_client->load_time_price_series(ticker, start, end, interval);
   }
 
   template<typename C>

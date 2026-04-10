@@ -1,18 +1,18 @@
 #ifndef SPIRE_TECHNICALS_PANEL_HPP
 #define SPIRE_TECHNICALS_PANEL_HPP
-#include "Nexus/Definitions/SecurityTechnicals.hpp"
+#include "Nexus/Definitions/TickerTechnicals.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 
 namespace Spire {
   class AdaptiveBox;
 
-  /** A ValueModel over a SecurityTechnicals. */
-  using SecurityTechnicalsModel = ValueModel<Nexus::SecurityTechnicals>;
+  /** A ValueModel over a TickerTechnicals. */
+  using TickerTechnicalsModel = ValueModel<Nexus::TickerTechnicals>;
 
-  /** A LocalValueModel over a SecurityTechnicals. */
-  using LocalSecuirtyTechnicalsModel =
-    LocalValueModel<Nexus::SecurityTechnicals>;
+  /** A LocalValueModel over a TickerTechnicals. */
+  using LocalTickerTechnicalsModel =
+    LocalValueModel<Nexus::TickerTechnicals>;
 
   /** Displays the technical details on the adaptive panel. */
   class TechnicalsPanel : public QWidget {
@@ -25,13 +25,13 @@ namespace Spire {
        * @param default_bid_quantity The default ask quantity to display.
        * @param parent The parent widget.
        */
-      TechnicalsPanel(std::shared_ptr<SecurityTechnicalsModel> technicals,
+      TechnicalsPanel(std::shared_ptr<TickerTechnicalsModel> technicals,
         std::shared_ptr<QuantityModel> default_bid_quantity,
         std::shared_ptr<QuantityModel> default_ask_quantity,
         QWidget* parent = nullptr);
 
       /** Returns the technicals value model. */
-      const std::shared_ptr<SecurityTechnicalsModel>& get_technicals() const;
+      const std::shared_ptr<TickerTechnicalsModel>& get_technicals() const;
 
       /** Returns the default bid quantity value model. */
       const std::shared_ptr<QuantityModel>& get_default_bid_quantity() const;
@@ -42,7 +42,7 @@ namespace Spire {
       QSize minimumSizeHint() const override;
 
     private:
-      std::shared_ptr<SecurityTechnicalsModel> m_technicals;
+      std::shared_ptr<TickerTechnicalsModel> m_technicals;
       std::shared_ptr<QuantityModel> m_bid_quantity;
       std::shared_ptr<QuantityModel> m_ask_quantity;
       AdaptiveBox* m_adaptive_box;

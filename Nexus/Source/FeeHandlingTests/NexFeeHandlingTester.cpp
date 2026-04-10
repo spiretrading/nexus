@@ -9,7 +9,7 @@ using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
-  auto TST = Security("TST", TSXV);
+  auto TST = parse_ticker("TST.TSXV");
 
   auto make_order_fields(Money price) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT, TST, CAD,

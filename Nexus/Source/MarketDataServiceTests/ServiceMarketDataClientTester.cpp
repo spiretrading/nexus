@@ -1,6 +1,7 @@
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/ServicesTests/ServiceClientFixture.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/MarketDataService/ServiceMarketDataClient.hpp"
 
 using namespace Beam;
@@ -11,7 +12,7 @@ using namespace Nexus;
 using namespace Nexus::DefaultVenues;
 
 namespace {
-  const auto SECURITY_A = Security("TST", TSX);
+  const auto TICKER_A = parse_ticker("TST.TSX");
 
   struct Fixture : ServiceClientFixture {
     using TestMarketDataClient =
@@ -30,8 +31,8 @@ namespace {
 TEST_SUITE("ServiceMarketDataClient") {
   TEST_CASE("real_time_bbo_quote_query") {
     auto fixture = Fixture();
-    auto query = SecurityMarketDataQuery();
-    query.set_index(SECURITY_A);
+    auto query = TickerQuery();
+    query.set_index(TICKER_A);
     query.set_range(Range::REAL_TIME);
     auto bbo_quotes = std::make_shared<Queue<BboQuote>>();
     auto bbo = BboQuote(
@@ -39,13 +40,13 @@ TEST_SUITE("ServiceMarketDataClient") {
       time_from_string("2021-01-11 15:30:05.000"));
     fixture.on_request<QueryBboQuotesService>(
       [&] (auto& request, const auto& query) {
-        REQUIRE(query.get_index() == SECURITY_A);
+        REQUIRE(query.get_index() == TICKER_A);
         REQUIRE(query.get_range() == Range::REAL_TIME);
         auto response = BboQuoteQueryResult();
         response.m_id = 123;
         request.set(response);
         send_record_message<BboQuoteMessage>(request.get_client(),
-          SequencedValue(IndexedValue(bbo, SECURITY_A), Beam::Sequence(1)));
+          SequencedValue(IndexedValue(bbo, TICKER_A), Beam::Sequence(1)));
       });
     fixture.m_client->query(query, bbo_quotes);
     auto updated_bbo = bbo_quotes->pop();

@@ -183,7 +183,7 @@ export class ProfitAndLossController extends
         totalProfitAndLoss: entry.totalProfitAndLoss,
         totalVolume: entry.totalVolume,
         totalFees: entry.totalFees,
-        securities: entry.securities
+        tickers: entry.tickers
       };
     });
   }

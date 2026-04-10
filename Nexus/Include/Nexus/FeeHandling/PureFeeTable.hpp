@@ -20,7 +20,7 @@ namespace Nexus {
       /** The default fee table. */
       DEFAULT,
 
-      /** Applies to interlisted securities. */
+      /** Applies to interlisted tickers. */
       INTERLISTED,
 
       /** Applies to ETFs. */

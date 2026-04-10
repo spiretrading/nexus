@@ -35,27 +35,27 @@ namespace Nexus {
 
       /**
        * Submits a query for OrderImbalances.
-       * @param query The venue market data query to submit.
+       * @param query The venue query to submit.
        */
-      void query_order_imbalances(const VenueMarketDataQuery& query);
+      void query_order_imbalances(const VenueQuery& query);
 
       /**
        * Submits a query for BboQuotes.
-       * @param query The security market data query to submit.
+       * @param query The ticker query to submit.
        */
-      void query_bbo_quotes(const SecurityMarketDataQuery& query);
+      void query_bbo_quotes(const TickerQuery& query);
 
       /**
        * Submits a query for BookQuotes.
-       * @param query The security market data query to submit.
+       * @param query The ticker query to submit.
        */
-      void query_book_quotes(const SecurityMarketDataQuery& query);
+      void query_book_quotes(const TickerQuery& query);
 
       /**
        * Submits a query for TimeAndSales.
-       * @param query The security market data query to submit.
+       * @param query The ticker query to submit.
        */
-      void query_time_and_sales(const SecurityMarketDataQuery& query);
+      void query_time_and_sales(const TickerQuery& query);
 
     private:
       template<typename, typename> friend class MarketDataEvent;
@@ -65,7 +65,7 @@ namespace Nexus {
       Tests::MarketDataServiceTestEnvironment* m_market_data_environment;
       MarketDataClient m_market_data_client;
       std::unordered_set<
-        std::tuple<boost::variant<Security, Venue>, MarketDataType>> m_queries;
+        std::tuple<boost::variant<Ticker, Venue>, MarketDataType>> m_queries;
 
       BacktesterMarketDataService(const BacktesterMarketDataService&) = delete;
       BacktesterMarketDataService& operator =(
@@ -180,28 +180,28 @@ namespace Nexus {
       m_market_data_client(std::move(market_data_client)) {}
 
   inline void BacktesterMarketDataService::query_order_imbalances(
-      const VenueMarketDataQuery& query) {
+      const VenueQuery& query) {
     auto event = std::make_shared<MarketDataQueryEvent<OrderImbalance>>(
       query, Beam::Ref(*this));
     m_event_handler->add(event);
   }
 
   inline void BacktesterMarketDataService::query_bbo_quotes(
-      const SecurityMarketDataQuery& query) {
+      const TickerQuery& query) {
     auto event = std::make_shared<MarketDataQueryEvent<BboQuote>>(
       query, Beam::Ref(*this));
     m_event_handler->add(event);
   }
 
   inline void BacktesterMarketDataService::query_book_quotes(
-      const SecurityMarketDataQuery& query) {
+      const TickerQuery& query) {
     auto event = std::make_shared<MarketDataQueryEvent<BookQuote>>(
       query, Beam::Ref(*this));
     m_event_handler->add(event);
   }
 
   inline void BacktesterMarketDataService::query_time_and_sales(
-      const SecurityMarketDataQuery& query) {
+      const TickerQuery& query) {
     auto event = std::make_shared<MarketDataQueryEvent<TimeAndSale>>(
       query, Beam::Ref(*this));
     m_event_handler->add(event);
