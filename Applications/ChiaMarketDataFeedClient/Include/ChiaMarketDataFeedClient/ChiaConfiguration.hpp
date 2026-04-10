@@ -16,7 +16,7 @@ namespace Nexus {
     /** The market's CountryCode. */
     CountryCode m_country;
 
-    /** The market on which the Security is listed. */
+    /** The market on which the Ticker is listed. */
     Venue m_primary_venue;
 
     /** The Market disseminating the data. */

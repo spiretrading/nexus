@@ -40,22 +40,22 @@ namespace {
 
   static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(16777216);
 
-  std::vector<SecurityInfo> parse_security_info_list(const std::string& path) {
+  std::vector<TickerInfo> parse_ticker_info_list(const std::string& path) {
     return try_or_nest([&] {
       auto config = load_file(path);
-      auto securities = std::vector<SecurityInfo>();
+      auto tickers = std::vector<TickerInfo>();
       for(auto node : config) {
         auto symbol = extract<std::string>(node, "symbol");
         auto name = extract<std::string>(node, "name");
         auto board_lot = extract<Quantity>(node, "board_lot");
-        auto info = SecurityInfo();
+        auto info = TickerInfo();
         info.m_name = name;
-        info.m_security = Security(symbol, DefaultVenues::CSE);
+        info.m_ticker = Ticker(symbol, DefaultVenues::CSE);
         info.m_board_lot = board_lot;
-        securities.push_back(std::move(info));
+        tickers.push_back(std::move(info));
       }
-      return securities;
-    }, std::runtime_error("Unable to parse security info list."));
+      return tickers;
+    }, std::runtime_error("Unable to parse ticker info list."));
   }
 
   std::unordered_map<std::string, std::string> load_mpid_mappings(
@@ -145,10 +145,10 @@ int main(int argc, const char** argv) {
       extract<int>(config, "retransmission_block_size", 20000);
     auto cse_config = parse_configuration(config);
     auto symbol_list = extract<std::string>(config, "symbol_list");
-    auto securities = parse_security_info_list(symbol_list);
-    for(auto& security : securities) {
-      cse_config.m_securities.insert(security.m_security.get_symbol());
-      market_data_feed_client.add(security);
+    auto tickers = parse_ticker_info_list(symbol_list);
+    for(auto& ticker : tickers) {
+      cse_config.m_tickers.insert(ticker.m_ticker.get_symbol());
+      market_data_feed_client.add(ticker);
     }
     auto service_access_client = ApplicationCseServiceAccessClient(
       service_access_config, &feed_channel,

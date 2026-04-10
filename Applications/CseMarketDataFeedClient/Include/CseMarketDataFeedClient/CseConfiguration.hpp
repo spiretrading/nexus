@@ -23,8 +23,8 @@ namespace Nexus {
     /** The venue symbols are assigned to. */
     Venue m_venue;
 
-    /** The set of Securities listed on the market. */
-    std::unordered_set<std::string> m_securities;
+    /** The set of Tickers listed on the venue. */
+    std::unordered_set<std::string> m_tickers;
 
     /** Maps native MPIDs. */
     std::unordered_map<std::string, std::string> m_mpid_mappings;

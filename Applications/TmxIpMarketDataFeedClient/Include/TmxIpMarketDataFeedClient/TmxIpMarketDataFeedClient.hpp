@@ -233,11 +233,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         return;
       }
     }
-    auto security = Security(std::move(*symbol), m_config.m_venue);
+    auto ticker = Ticker(std::move(*symbol), m_config.m_venue);
     auto bid = make_bid(*bid_price, *bid_volume);
     auto ask = make_ask(*ask_price, *ask_volume);
     auto bbo = BboQuote(bid, ask, m_time_client->get_time());
-    m_feed_client->publish(SecurityBboQuote(bbo, std::move(security)));
+    m_feed_client->publish(TickerBboQuote(bbo, std::move(ticker)));
   }
 
   template<typename M, typename S, typename T>
@@ -274,14 +274,13 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       get_mpid(message.get_business_field<std::string>(70, 0).value_or(""));
     auto seller_mpid =
       get_mpid(message.get_business_field<std::string>(70, 1).value_or(""));
-    auto security = Security(std::move(*symbol), m_config.m_venue);
+    auto ticker = Ticker(std::move(*symbol), m_config.m_venue);
     auto condition = TimeAndSale::Condition();
     condition.m_code = "@";
     auto time_and_sale = TimeAndSale(*timestamp, *price, *volume,
       std::move(condition), *exchange_id, std::move(buyer_mpid),
       std::move(seller_mpid));
-    m_feed_client->publish(
-      SecurityTimeAndSale(time_and_sale, std::move(security)));
+    m_feed_client->publish(TickerTimeAndSale(time_and_sale, std::move(ticker)));
   }
 
   template<typename M, typename S, typename T>
@@ -382,9 +381,9 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     } else if(m_config.m_is_neo_book && !is_primary_mpid) {
       m_feed_client->remove_order(order_id, *timestamp);
     }
-    auto security = Security(std::move(*symbol), m_config.m_venue);
+    auto ticker = Ticker(std::move(*symbol), m_config.m_venue);
     *quantity = get_board_lot_portion(*quantity, *price);
-    m_feed_client->add_order(security, m_config.m_venue, mpid, is_primary_mpid,
+    m_feed_client->add_order(ticker, m_config.m_venue, mpid, is_primary_mpid,
       order_id, *side, *price, *quantity, *timestamp);
   }
 
@@ -546,8 +545,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     if(!imbalance_volume) {
       return;
     }
-    auto security = Security(std::move(*symbol), m_config.m_venue);
-    auto imbalance = VenueOrderImbalance(OrderImbalance(std::move(security),
+    auto ticker = Ticker(std::move(*symbol), m_config.m_venue);
+    auto imbalance = VenueOrderImbalance(OrderImbalance(std::move(ticker),
       *imbalance_side, *imbalance_volume, Money::ZERO, *timestamp),
       m_config.m_venue);
     m_feed_client->publish(imbalance);
@@ -603,11 +602,10 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     if(venue == Venue()) {
       return;
     }
-    auto security = Security(std::move(*symbol), venue);
+    auto ticker = Ticker(std::move(*symbol), venue);
     auto name = message.get_business_field<std::string>(177).value_or("");
     auto board_lot = message.get_business_field<std::int64_t>(115).value_or(0);
-    auto info =
-      SecurityInfo(std::move(security), std::move(name), "", board_lot);
+    auto info = TickerInfo(std::move(ticker), std::move(name), "", board_lot);
     m_feed_client->add(info);
   }
 

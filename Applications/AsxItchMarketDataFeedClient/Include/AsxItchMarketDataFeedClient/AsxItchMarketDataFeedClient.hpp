@@ -15,7 +15,7 @@
 #include <boost/endian.hpp>
 #include "AsxItchMarketDataFeedClient/AsxItchConfiguration.hpp"
 #include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/SecurityInfo.hpp"
+#include "Nexus/Definitions/TickerInfo.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 #include "Nexus/MoldUdp64/MoldUdp64Client.hpp"
 #include "Nexus/SoupBinTcp/SoupBinTcpClient.hpp"
@@ -35,7 +35,7 @@ namespace Nexus {
     EQUITY,
   };
 
-  /** Stores info needed to maintain a Security's order book. */
+  /** Stores info needed to maintain a Ticker's order book. */
   struct OrderBookDirectory {
 
     /** The order book id. */
@@ -44,8 +44,8 @@ namespace Nexus {
     /** The type of product. */
     ProductType m_product_type;
 
-    /** Details about the Security represented by this order book. */
-    SecurityInfo m_security;
+    /** Details about the Ticker represented by this order book. */
+    TickerInfo m_ticker;
 
     /** The book's currency. */
     CurrencyId m_currency;
@@ -121,7 +121,7 @@ namespace Nexus {
       boost::posix_time::ptime m_last_time_point;
       std::unordered_map<std::uint32_t, OrderBookDirectory>
         m_order_book_directories;
-      std::unordered_map<Security, BboEntry> m_bbo_entries;
+      std::unordered_map<Ticker, BboEntry> m_bbo_entries;
       std::unordered_map<std::string, OrderEntry> m_order_entries;
       Beam::RoutineHandler m_read_loop;
       Beam::OpenState m_open_state;
@@ -144,9 +144,9 @@ namespace Nexus {
       std::string parse_mpid(Beam::Out<const char*> cursor) const;
       std::tuple<std::string, std::string> parse_buyer_seller_mpids(
         Side side, Beam::Out<const char*> cursor) const;
-      std::string build_order_key(const Security& security, Side side,
-        std::uint64_t order_id) const;
-      void update_bbo(const Security& security, Side side, Money price,
+      std::string build_order_key(
+        const Ticker& ticker, Side side, std::uint64_t order_id) const;
+      void update_bbo(const Ticker& ticker, Side side, Money price,
         Quantity delta, boost::posix_time::ptime timestamp);
       void handle_seconds_message(const MoldUdp64Message& message);
       void handle_add_order_message(
@@ -332,8 +332,8 @@ namespace Nexus {
 
   template<typename M, typename I, typename G>
   std::string AsxItchMarketDataFeedClient<M, I, G>::build_order_key(
-      const Security& security, Side side, std::uint64_t order_id) const {
-    auto result = security.get_symbol();
+      const Ticker& ticker, Side side, std::uint64_t order_id) const {
+    auto result = ticker.get_symbol();
     result += '-';
     if(side == Side::ASK) {
       result += 'A';
@@ -356,9 +356,9 @@ namespace Nexus {
 
   template<typename M, typename I, typename G>
   void AsxItchMarketDataFeedClient<M, I, G>::update_bbo(
-      const Security& security, Side side, Money price, Quantity delta,
+      const Ticker& ticker, Side side, Money price, Quantity delta,
       boost::posix_time::ptime timestamp) {
-    auto& bbo_entry = m_bbo_entries[security];
+    auto& bbo_entry = m_bbo_entries[ticker];
     auto& levels = pick(side, bbo_entry.m_asks, bbo_entry.m_bids);
     auto i = std::lower_bound(
       levels.begin(), levels.end(), price, [&] (const auto& lhs, auto rhs) {
@@ -403,7 +403,7 @@ namespace Nexus {
         bid.m_size = bbo_entry.m_bids.front().m_quantity;
       }
       auto bbo = BboQuote(bid, ask, timestamp);
-      m_market_data_feed_client->publish(SecurityBboQuote(bbo, security));
+      m_market_data_feed_client->publish(TickerBboQuote(bbo, ticker));
     }
   }
 
@@ -435,17 +435,16 @@ namespace Nexus {
       }
     }();
     auto order_key =
-      build_order_key(directory->m_security.m_security, side, order_id);
+      build_order_key(directory->m_ticker.m_ticker, side, order_id);
     auto order_entry = OrderEntry();
     order_entry.m_mpid = mpid;
     order_entry.m_price = price;
     order_entry.m_remaining_quantity = quantity;
     m_order_entries[order_key] = order_entry;
-    m_market_data_feed_client->add_order(directory->m_security.m_security,
+    m_market_data_feed_client->add_order(directory->m_ticker.m_ticker,
       m_config.m_venue.m_venue, mpid, false, order_key, side, price, quantity,
       timestamp);
-    update_bbo(
-      directory->m_security.m_security, side, price, quantity, timestamp);
+    update_bbo(directory->m_ticker.m_ticker, side, price, quantity, timestamp);
   }
 
   template<typename M, typename I, typename G>
@@ -463,7 +462,7 @@ namespace Nexus {
     auto executed_quantity =
       static_cast<std::int64_t>(parse_int64(Beam::out(cursor)));
     auto order_key =
-      build_order_key(directory->m_security.m_security, side, order_id);
+      build_order_key(directory->m_ticker.m_ticker, side, order_id);
     auto match_id = parse_alpha(12, Beam::out(cursor));
     auto [buyer_mpid, seller_mpid] =
       parse_buyer_seller_mpids(side, Beam::out(cursor));
@@ -478,10 +477,10 @@ namespace Nexus {
           executed_quantity, std::move(condition),
           m_config.m_venue.m_display_name, std::move(buyer_mpid),
           std::move(seller_mpid));
-        m_market_data_feed_client->publish(SecurityTimeAndSale(
-          std::move(time_and_sale), directory->m_security.m_security));
+        m_market_data_feed_client->publish(TickerTimeAndSale(
+          std::move(time_and_sale), directory->m_ticker.m_ticker));
       }
-      update_bbo(directory->m_security.m_security, side, order_entry->m_price,
+      update_bbo(directory->m_ticker.m_ticker, side, order_entry->m_price,
         -executed_quantity, timestamp);
     }
   }
@@ -507,7 +506,7 @@ namespace Nexus {
     auto at_cross = parse_char(Beam::out(cursor));
     auto printable = parse_char(Beam::out(cursor));
     auto order_key =
-      build_order_key(directory->m_security.m_security, side, order_id);
+      build_order_key(directory->m_ticker.m_ticker, side, order_id);
     m_market_data_feed_client->offset_order_size(
       order_key, -executed_quantity, timestamp);
     if(auto order_entry = Beam::lookup(m_order_entries, order_key)) {
@@ -518,10 +517,10 @@ namespace Nexus {
         auto time_and_sale = TimeAndSale(timestamp, price, executed_quantity,
           std::move(condition), m_config.m_venue.m_display_name,
           std::move(buyer_mpid), std::move(seller_mpid));
-        m_market_data_feed_client->publish(SecurityTimeAndSale(
-          std::move(time_and_sale), directory->m_security.m_security));
+        m_market_data_feed_client->publish(TickerTimeAndSale(
+          std::move(time_and_sale), directory->m_ticker.m_ticker));
       }
-      update_bbo(directory->m_security.m_security, side, order_entry->m_price,
+      update_bbo(directory->m_ticker.m_ticker, side, order_entry->m_price,
         -executed_quantity, timestamp);
     }
   }
@@ -543,23 +542,22 @@ namespace Nexus {
     auto price = parse_price(*directory, Beam::out(cursor));
     auto type = parse_int16(Beam::out(cursor));
     auto order_key =
-      build_order_key(directory->m_security.m_security, side, order_id);
+      build_order_key(directory->m_ticker.m_ticker, side, order_id);
     m_market_data_feed_client->remove_order(order_key, timestamp);
     auto order_entry = Beam::lookup(m_order_entries, order_key);
     if(!order_entry) {
       return;
     }
-    update_bbo(directory->m_security.m_security, side, order_entry->m_price,
+    update_bbo(directory->m_ticker.m_ticker, side, order_entry->m_price,
       -order_entry->m_remaining_quantity, timestamp);
     auto new_order_entry = *order_entry;
     new_order_entry.m_price = price;
     new_order_entry.m_remaining_quantity = quantity;
     m_order_entries[order_key] = new_order_entry;
-    m_market_data_feed_client->add_order(directory->m_security.m_security,
-      m_config.m_venue.m_venue, new_order_entry.m_mpid, false, order_key,
-      side, price, quantity, timestamp);
-    update_bbo(
-      directory->m_security.m_security, side, price, quantity, timestamp);
+    m_market_data_feed_client->add_order(directory->m_ticker.m_ticker,
+      m_config.m_venue.m_venue, new_order_entry.m_mpid, false, order_key, side,
+      price, quantity, timestamp);
+    update_bbo(directory->m_ticker.m_ticker, side, price, quantity, timestamp);
   }
 
   template<typename M, typename I, typename G>
@@ -575,13 +573,13 @@ namespace Nexus {
     }
     auto side = parse_side(Beam::out(cursor));
     auto order_key =
-      build_order_key(directory->m_security.m_security, side, order_id);
+      build_order_key(directory->m_ticker.m_ticker, side, order_id);
     m_market_data_feed_client->remove_order(order_key, timestamp);
     auto order_entry = Beam::lookup(m_order_entries, order_key);
     if(!order_entry) {
       return;
     }
-    update_bbo(directory->m_security.m_security, side, order_entry->m_price,
+    update_bbo(directory->m_ticker.m_ticker, side, order_entry->m_price,
       -order_entry->m_remaining_quantity, timestamp);
     m_order_entries.erase(order_key);
   }
@@ -610,8 +608,8 @@ namespace Nexus {
       auto time_and_sale = TimeAndSale(timestamp, price, quantity,
         std::move(condition), m_config.m_venue.m_display_name,
         std::move(buyer_mpid), std::move(seller_mpid));
-      m_market_data_feed_client->publish(SecurityTimeAndSale(
-        std::move(time_and_sale), directory->m_security.m_security));
+      m_market_data_feed_client->publish(TickerTimeAndSale(
+        std::move(time_and_sale), directory->m_ticker.m_ticker));
     }
   }
 
@@ -623,9 +621,8 @@ namespace Nexus {
     auto timestamp = parse_timestamp(Beam::out(cursor));
     directory.m_id = parse_int32(Beam::out(cursor));
     auto symbol = parse_alpha(32, Beam::out(cursor));
-    directory.m_security.m_security =
-      Security(symbol, m_config.m_venue.m_venue);
-    directory.m_security.m_name = parse_alpha(32, Beam::out(cursor));
+    directory.m_ticker.m_ticker = Ticker(symbol, m_config.m_venue.m_venue);
+    directory.m_ticker.m_name = parse_alpha(32, Beam::out(cursor));
     auto isin = parse_alpha(12, Beam::out(cursor));
     auto product_type = parse_int8(Beam::out(cursor));
     if(product_type == 1) {
@@ -640,13 +637,13 @@ namespace Nexus {
     directory.m_price_decimal_places = parse_int16(Beam::out(cursor));
     directory.m_value_decimal_places = parse_int16(Beam::out(cursor));
     directory.m_odd_lot_size = parse_int32(Beam::out(cursor));
-    directory.m_security.m_board_lot = parse_int32(Beam::out(cursor));
+    directory.m_ticker.m_board_lot = parse_int32(Beam::out(cursor));
     directory.m_block_lot_size = parse_int64(Beam::out(cursor));
     if(directory.m_product_type != ProductType::EQUITY) {
       return;
     }
     m_order_book_directories[directory.m_id] = directory;
-    m_market_data_feed_client->add(directory.m_security);
+    m_market_data_feed_client->add(directory.m_ticker);
   }
 
   template<typename M, typename I, typename G>
