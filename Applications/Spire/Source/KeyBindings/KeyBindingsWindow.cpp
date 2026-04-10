@@ -20,7 +20,7 @@ using namespace Spire::Styles;
 
 KeyBindingsWindow::KeyBindingsWindow(
     std::shared_ptr<KeyBindingsModel> key_bindings,
-    std::shared_ptr<SecurityInfoQueryModel> securities,
+    std::shared_ptr<TickerInfoQueryModel> tickers,
     const AdditionalTagDatabase& additional_tags, QWidget* parent)
     : Window(parent),
       m_key_bindings(std::move(key_bindings)) {
@@ -31,7 +31,7 @@ KeyBindingsWindow::KeyBindingsWindow(
   navigation_view->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto task_keys_page =
-    new TaskKeysPage(m_key_bindings, std::move(securities), additional_tags);
+    new TaskKeysPage(m_key_bindings, std::move(tickers), additional_tags);
   task_keys_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   navigation_view->add_tab(*task_keys_page, tr("Task Keys"));
   auto cancel_keys_page =

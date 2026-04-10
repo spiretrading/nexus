@@ -1,14 +1,14 @@
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 
 using namespace Nexus;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
 
 namespace {
-  auto TST = Security("TST", TSX);
-  auto S32 = Security("S32", ASX);
+  auto TST = parse_ticker("TST.TSX");
+  auto S32 = parse_ticker("S32.ASX");
 }
 
 TEST_SUITE("TrueAverageBookkeeper") {

@@ -3,10 +3,10 @@
 #include <string>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <QByteArray>
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Charting/Charting.hpp"
 #include "Spire/Charting/ChartInteractions.hpp"
-#include "Spire/LegacyUI/SecurityViewStack.hpp"
+#include "Spire/LegacyUI/TickerViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 
@@ -43,9 +43,9 @@ namespace Spire {
       ChartInteractionMode m_interactionMode;
       bool m_isAutoScaleEnabled;
       bool m_isLockGridEnabled;
-      Nexus::Security m_security;
+      Nexus::Ticker m_ticker;
       std::string m_name;
-      LegacyUI::SecurityViewStack m_securityViewStack;
+      LegacyUI::TickerViewStack m_tickerViewStack;
       std::string m_identifier;
       std::string m_linkIdentifier;
       QByteArray m_geometry;
@@ -62,9 +62,9 @@ namespace Spire {
     shuttle.shuttle("interaction_mode", m_interactionMode);
     shuttle.shuttle("is_auto_scale_enabled", m_isAutoScaleEnabled);
     shuttle.shuttle("is_lock_grid_enabled", m_isLockGridEnabled);
-    shuttle.shuttle("security", m_security);
+    shuttle.shuttle("ticker", m_ticker);
     shuttle.shuttle("name", m_name);
-    shuttle.shuttle("security_view_stack", m_securityViewStack);
+    shuttle.shuttle("ticker_view_stack", m_tickerViewStack);
     shuttle.shuttle("identifier", m_identifier);
     shuttle.shuttle("link_identifier", m_linkIdentifier);
     shuttle.shuttle("geometry", m_geometry);

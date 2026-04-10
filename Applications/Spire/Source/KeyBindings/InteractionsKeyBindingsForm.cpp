@@ -21,8 +21,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  auto make_region_header(std::shared_ptr<RegionModel> region) {
-    auto label = make_label(make_to_text_model(std::move(region)));
+  auto make_scope_header(std::shared_ptr<ScopeModel> scope) {
+    auto label = make_label(make_to_text_model(std::move(scope)));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     update_style(*label, [] (auto& style) {
       auto font = QFont("Roboto");
@@ -35,16 +35,16 @@ namespace {
     return label;
   }
 
-  auto make_description(std::shared_ptr<RegionModel> region) {
-    auto description = make_to_text_model(std::move(region),
-      [] (const auto& region) {
-        if(region.is_global()) {
+  auto make_description(std::shared_ptr<ScopeModel> scope) {
+    auto description = make_to_text_model(std::move(scope),
+      [] (const auto& scope) {
+        if(scope.is_global()) {
           return QObject::tr("Customize the default interactions for all "
-            "regions to suit your trading style.");
+            "scopes to suit your trading style.");
         }
         return QObject::tr(
           "Customize interactions on %1 to suit your trading style.").
-            arg(Spire::to_text(region));
+            arg(Spire::to_text(scope));
       });
     auto label = make_text_area_label(std::move(description));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -125,13 +125,13 @@ namespace {
 
     template<typename F>
     InteractionsProxyModel(std::shared_ptr<KeyBindingsModel> key_bindings,
-        std::shared_ptr<RegionModel> region, F accessor)
+        std::shared_ptr<ScopeModel> scope, F accessor)
         : ProxyModel(accessor(
-            *key_bindings->get_interactions_key_bindings(region->get()))) {
-      m_connection = region->connect_update_signal(
-        [=, accessor = std::move(accessor)] (const auto& region) {
+            *key_bindings->get_interactions_key_bindings(scope->get()))) {
+      m_connection = scope->connect_update_signal(
+        [=, accessor = std::move(accessor)] (const auto& scope) {
           this->set_source(
-            accessor(*key_bindings->get_interactions_key_bindings(region)));
+            accessor(*key_bindings->get_interactions_key_bindings(scope)));
         });
     }
   };
@@ -139,28 +139,28 @@ namespace {
   template<typename ProxyModel, typename F>
   auto make_interactions_proxy_model(
       std::shared_ptr<KeyBindingsModel> key_bindings,
-      std::shared_ptr<RegionModel> region, F accessor) {
+      std::shared_ptr<ScopeModel> scope, F accessor) {
     return std::make_shared<InteractionsProxyModel<ProxyModel>>(
-      std::move(key_bindings), std::move(region), std::move(accessor));
+      std::move(key_bindings), std::move(scope), std::move(accessor));
   }
 }
 
 InteractionsKeyBindingsForm::InteractionsKeyBindingsForm(
     std::shared_ptr<KeyBindingsModel> key_bindings,
-    std::shared_ptr<RegionModel> region, QWidget* parent)
+    std::shared_ptr<ScopeModel> scope, QWidget* parent)
     : QWidget(parent),
       m_key_bindings(std::move(key_bindings)),
-      m_region(std::move(region)) {
+      m_scope(std::move(scope)) {
   auto body = new QWidget();
   body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   auto layout = make_vbox_layout(body);
   layout->setSpacing(scale_height(18));
-  layout->addWidget(make_region_header(m_region));
+  layout->addWidget(make_scope_header(m_scope));
   layout->addSpacing(scale_height(-18));
-  layout->addWidget(make_description(m_region));
+  layout->addWidget(make_description(m_scope));
   auto default_quantity = make_interactions_proxy_model<
     ProxyScalarValueModel<Quantity>>(
-      m_key_bindings, m_region, [] (const auto& interactions) {
+      m_key_bindings, m_scope, [] (const auto& interactions) {
         return interactions.get_default_quantity();
       });
   layout->addWidget(
@@ -172,12 +172,12 @@ InteractionsKeyBindingsForm::InteractionsKeyBindingsForm(
   for(auto i = 0; i != InteractionsKeyBindingsModel::MODIFIER_COUNT; ++i) {
     quantity_increments[i] = make_interactions_proxy_model<
       ProxyScalarValueModel<Quantity>>(
-        m_key_bindings, m_region, [=] (const auto& interactions) {
+        m_key_bindings, m_scope, [=] (const auto& interactions) {
           return interactions.get_quantity_increment(to_modifier(i));
         });
     price_increments[i] = make_interactions_proxy_model<
       ProxyScalarValueModel<Money>>(
-        m_key_bindings, m_region, [=] (const auto& interactions) {
+        m_key_bindings, m_scope, [=] (const auto& interactions) {
           return interactions.get_price_increment(to_modifier(i));
         });
   }
@@ -186,7 +186,7 @@ InteractionsKeyBindingsForm::InteractionsKeyBindingsForm(
   layout->addWidget(
     make_field_set(tr("Price Increments"), std::move(price_increments)));
   auto is_cancel_on_fill = make_interactions_proxy_model<ProxyValueModel<bool>>(
-    m_key_bindings, m_region, [] (const auto& interactions) {
+    m_key_bindings, m_scope, [] (const auto& interactions) {
       return interactions.is_cancel_on_fill();
     });
   auto cancel_on_fill = new CheckBox(std::move(is_cancel_on_fill));

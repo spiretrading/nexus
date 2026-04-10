@@ -2,12 +2,12 @@
 #define SPIRE_TIME_AND_SALES_WINDOW_SETTINGS_HPP
 #include <vector>
 #include <QByteArray>
-#include "Nexus/Definitions/Security.hpp"
-#include "Spire/LegacyUI/SecurityViewStack.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
+#include "Spire/LegacyUI/TickerViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Ui/SecurityView.hpp"
+#include "Spire/Ui/TickerView.hpp"
 
 namespace Spire {
   class TimeAndSalesWindow;
@@ -33,7 +33,7 @@ namespace Spire {
     private:
       friend struct Beam::DataShuttle;
       std::string m_name;
-      SecurityView::State m_security_view;
+      TickerView::State m_ticker_view;
       std::vector<int> m_column_widths;
       std::string m_identifier;
       std::string m_link_identifier;
@@ -46,7 +46,7 @@ namespace Spire {
   template<Beam::IsShuttle S>
   void TimeAndSalesWindowSettings::shuttle(S& shuttle, unsigned int version) {
     shuttle.shuttle("name", m_name);
-    shuttle.shuttle("security_view", m_security_view);
+    shuttle.shuttle("ticker_view", m_ticker_view);
     shuttle.shuttle("column_widths", m_column_widths);
     shuttle.shuttle("identifier", m_identifier);
     shuttle.shuttle("link_identifier", m_link_identifier);

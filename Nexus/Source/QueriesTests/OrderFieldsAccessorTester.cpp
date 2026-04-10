@@ -19,11 +19,11 @@ TEST_SUITE("OrderFieldsAccessor") {
     REQUIRE(member.get_type() == typeid(DirectoryEntry));
   }
 
-  TEST_CASE("get_security") {
+  TEST_CASE("get_ticker") {
     auto accessor = OrderFieldsAccessor::from_parameter(0);
-    auto member = accessor.get_security();
-    REQUIRE(member.get_name() == "security");
-    REQUIRE(member.get_type() == typeid(Security));
+    auto member = accessor.get_ticker();
+    REQUIRE(member.get_name() == "ticker");
+    REQUIRE(member.get_type() == typeid(Ticker));
   }
 
   TEST_CASE("get_currency") {

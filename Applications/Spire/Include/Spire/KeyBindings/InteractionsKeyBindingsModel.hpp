@@ -3,8 +3,8 @@
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
 #include <Beam/SignalHandling/ConnectionGroup.hpp>
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 
@@ -76,15 +76,14 @@ namespace Spire {
   /**
    * Returns the default order quantity to display to a user.
    * @param interactions The user's interactions.
-   * @param security The security that the user is entering a quantity for.
-   * @param position The current position in the given <i>security</i>.
+   * @param ticker The ticker that the user is entering a quantity for.
+   * @param position The current position in the given <i>ticker</i>.
    * @param side The side of the order that the user is entering a quantity for.
    * @return The default quantity to display.
    */
   Nexus::Quantity get_default_order_quantity(
     const InteractionsKeyBindingsModel& interactions,
-    const Nexus::Security& security, Nexus::Quantity position,
-    Nexus::Side side);
+    const Nexus::Ticker& ticker, Nexus::Quantity position, Nexus::Side side);
 }
 
 namespace Beam {

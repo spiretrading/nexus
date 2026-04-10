@@ -12,11 +12,11 @@ namespace Spire {
 
       /**
        * Constructs a ServiceTimeAndSalesModel with 50 entries initially loaded.
-       * @param security The security whose time and sales are queried.
+       * @param ticker The ticker whose time and sales are queried.
        * @param client The market data client used to query for time and sales.
        */
       ServiceTimeAndSalesModel(
-        Nexus::Security security, Nexus::MarketDataClient client);
+        Nexus::Ticker ticker, Nexus::MarketDataClient client);
 
       QtPromise<std::vector<Entry>> query_until(
         Beam::Sequence sequence, int max_count) override;
@@ -25,7 +25,7 @@ namespace Spire {
 
     private:
       mutable UpdateSignal m_update_signal;
-      Nexus::Security m_security;
+      Nexus::Ticker m_ticker;
       Nexus::MarketDataClient m_client;
       Nexus::SequencedBboQuote m_bbo;
       EventHandler m_event_handler;

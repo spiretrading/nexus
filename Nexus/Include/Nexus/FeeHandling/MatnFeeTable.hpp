@@ -63,7 +63,7 @@ namespace Nexus {
     /** The number of Categories enumerated. */
     static constexpr auto CATEGORY_COUNT = std::size_t(2);
 
-    /** Enumerates various classifications for a Security. */
+    /** Enumerates various classifications for a Ticker. */
     enum class Classification {
 
       /** Unknown. */
@@ -134,7 +134,7 @@ namespace Nexus {
   /**
    * Calculates the fee on a trade executed on MATN.
    * @param table The MatnFeeTable used to calculate the fee.
-   * @param classification The Security's classification.
+   * @param classification The Ticker's classification.
    * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
    */

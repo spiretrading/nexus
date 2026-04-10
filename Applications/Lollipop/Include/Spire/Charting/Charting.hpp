@@ -19,7 +19,7 @@ namespace Spire {
   class ChartWindow;
   class ChartWindowSettings;
   class PointChartPlot;
-  class SecurityTimePriceChartPlotSeries;
+  class TickerTimePriceChartPlotSeries;
   class TimeAndSalesChartPointSeries;
 }
 

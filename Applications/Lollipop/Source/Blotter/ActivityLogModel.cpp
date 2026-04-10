@@ -60,8 +60,8 @@ QVariant ActivityLogModel::data(const QModelIndex& index, int role) const {
       return entry.m_report.m_id;
     } else if(index.column() == SIDE_COLUMN) {
       return QVariant::fromValue(fields.m_side);
-    } else if(index.column() == SECURITY_COLUMN) {
-      return QVariant::fromValue(fields.m_security);
+    } else if(index.column() == TICKER_COLUMN) {
+      return QVariant::fromValue(fields.m_ticker);
     } else if(index.column() == STATUS_COLUMN) {
       return QVariant::fromValue(entry.m_report.m_status);
     } else if(index.column() == LAST_QUANTITY_COLUMN) {
@@ -96,7 +96,7 @@ QVariant ActivityLogModel::headerData(
       return tr("ID");
     } else if(section == SIDE_COLUMN) {
       return tr("Side");
-    } else if(section == SECURITY_COLUMN) {
+    } else if(section == TICKER_COLUMN) {
       return tr("Symbol");
     } else if(section == STATUS_COLUMN) {
       return tr("Status");

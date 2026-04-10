@@ -60,11 +60,11 @@ namespace Nexus {
       Beam::Sync<BuyingPowerModel> m_buying_power_model;
       Beam::MultiQueueWriter<ExecutionReport> m_execution_report_queue;
       std::unordered_map<OrderId, CurrencyId> m_currencies;
-      Beam::SynchronizedUnorderedMap<Security,
+      Beam::SynchronizedUnorderedMap<Ticker,
         std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bbo_quotes;
       std::vector<Beam::RoutineHandler> m_query_routines;
 
-      BboQuote load_bbo_quote(const Security& security);
+      BboQuote load_bbo_quote(const Ticker& ticker);
       Money get_expected_price(const OrderFields& fields);
   };
 
@@ -202,17 +202,17 @@ namespace Nexus {
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   BboQuote BuyingPowerComplianceRule<C>::load_bbo_quote(
-      const Security& security) {
-    auto publisher = m_bbo_quotes.get_or_insert(security, [&] {
+      const Ticker& ticker) {
+    auto publisher = m_bbo_quotes.get_or_insert(ticker, [&] {
       auto publisher = std::make_shared<Beam::StateQueue<BboQuote>>();
       m_query_routines.push_back(query_real_time_with_snapshot(
-        *m_market_data_client, security, publisher));
+        *m_market_data_client, ticker, publisher));
       return publisher;
     });
     try {
       return publisher->peek();
     } catch(const Beam::PipeBrokenException&) {
-      m_bbo_quotes.erase(security);
+      m_bbo_quotes.erase(ticker);
       boost::throw_with_location(
         ComplianceCheckException("No BBO quote available."));
     }
@@ -221,7 +221,7 @@ namespace Nexus {
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   Money BuyingPowerComplianceRule<C>::get_expected_price(
       const OrderFields& fields) {
-    auto bbo = load_bbo_quote(fields.m_security);
+    auto bbo = load_bbo_quote(fields.m_ticker);
     if(fields.m_type == OrderType::LIMIT) {
       if(fields.m_price <= Money::ZERO) {
         boost::throw_with_location(ComplianceCheckException("Invalid price."));

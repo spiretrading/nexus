@@ -7,7 +7,7 @@
 
 namespace Nexus {
 
-  /** Represents a quote on a security. */
+  /** Represents a quote on a ticker. */
   struct Quote {
 
     /** The quote's price. */

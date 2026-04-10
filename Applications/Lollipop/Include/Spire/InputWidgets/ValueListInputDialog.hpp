@@ -6,7 +6,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/variant/variant.hpp>
 #include <QDialog>
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/UI/UI.hpp"
 
 class Ui_ValueListInputDialog;
@@ -18,7 +18,7 @@ namespace Spire {
     public:
 
       /** The types that can be edited by this dialog. */
-      using Value = boost::variant<Nexus::Security>;
+      using Value = boost::variant<Nexus::Ticker>;
 
       /**
        * Constructs a ValueListInputDialog.

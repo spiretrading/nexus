@@ -443,7 +443,7 @@ namespace Beam {
 namespace std {
   template <>
   struct hash<Nexus::CountryCode> {
-    size_t operator()(Nexus::CountryCode value) const {
+    size_t operator()(Nexus::CountryCode value) const noexcept {
       return Nexus::hash_value(value);
     }
   };

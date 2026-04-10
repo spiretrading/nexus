@@ -51,7 +51,7 @@ TEST_SUITE("MergedBookEntryListModel") {
   TEST_CASE("constructor_preview") {
     auto preview = std::make_shared<LocalValueModel<optional<OrderFields>>>();
     preview->set(make_limit_order_fields(
-      parse_security("ABC.TSX"), Side::BID, 100, Money::CENT));
+      parse_ticker("ABC.TSX"), Side::BID, 100, Money::CENT));
     auto list = MergedBookEntryListModel(
       std::make_shared<ArrayListModel<BookQuote>>(),
       std::make_shared<ArrayListModel<BookViewModel::UserOrder>>(), preview);
@@ -75,7 +75,7 @@ TEST_SUITE("MergedBookEntryListModel") {
       "TSX", 3 * Money::ONE, 200, OrderStatus::CANCELED));
     auto preview = std::make_shared<LocalValueModel<optional<OrderFields>>>();
     preview->set(make_limit_order_fields(
-      parse_security("ABC.TSX"), Side::BID, 100, Money::CENT));
+      parse_ticker("ABC.TSX"), Side::BID, 100, Money::CENT));
     auto list = MergedBookEntryListModel(quotes, orders, preview);
     REQUIRE(list.get_size() == 6);
     REQUIRE((list.get(0) == BookEntry(quotes->get(0))));
@@ -118,11 +118,11 @@ TEST_SUITE("MergedBookEntryListModel") {
       std::make_shared<ArrayListModel<BookQuote>>(),
       std::make_shared<ArrayListModel<BookViewModel::UserOrder>>(), preview);
     preview->set(make_limit_order_fields(
-      parse_security("ABC.TSX"), Side::BID, 100, Money::CENT));
+      parse_ticker("ABC.TSX"), Side::BID, 100, Money::CENT));
     REQUIRE(list.get_size() == 1);
     REQUIRE((list.get(0) == BookEntry(*preview->get())));
     preview->set(make_limit_order_fields(
-      parse_security("ABC.TSX"), Side::BID, 200, 5 * Money::CENT));
+      parse_ticker("ABC.TSX"), Side::BID, 200, 5 * Money::CENT));
     REQUIRE(list.get_size() == 1);
     REQUIRE((list.get(0) == BookEntry(*preview->get())));
     preview->set(none);
@@ -146,7 +146,7 @@ TEST_SUITE("MergedBookEntryListModel") {
     REQUIRE((list.get(0) == BookEntry(quotes->get(0))));
     REQUIRE((list.get(1) == BookEntry(orders->get(0))));
     preview->set(make_limit_order_fields(
-      parse_security("ABC.TSX"), Side::BID, 100, Money::CENT));
+      parse_ticker("ABC.TSX"), Side::BID, 100, Money::CENT));
     REQUIRE(list.get_size() == 3);
     REQUIRE((list.get(0) == BookEntry(quotes->get(0))));
     REQUIRE((list.get(1) == BookEntry(orders->get(0))));

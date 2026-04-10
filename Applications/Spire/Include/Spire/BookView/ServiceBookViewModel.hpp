@@ -19,13 +19,13 @@ namespace Spire {
     public:
 
       /**
-       * Constructs a ServiceBookViewModel for a given security.
-       * @param security The Security whose order book is to be modeled.
+       * Constructs a ServiceBookViewModel for a given ticker.
+       * @param ticker The Ticker whose order book is to be modeled.
        * @param blotter The blotter used to keep track of tasks on the given
-       *        <i>security</i>.
+       *        <i>ticker</i>.
        * @param client The client used to access market data.
        */
-      ServiceBookViewModel(Nexus::Security security, BlotterSettings& blotter,
+      ServiceBookViewModel(Nexus::Ticker ticker, BlotterSettings& blotter,
         Nexus::MarketDataClient client);
 
       const std::shared_ptr<BookQuoteListModel>& get_bids() const override;
@@ -37,11 +37,11 @@ namespace Spire {
       const std::shared_ptr<PreviewOrderModel>&
         get_preview_order() const override;
       const std::shared_ptr<BboQuoteModel>& get_bbo_quote() const override;
-      const std::shared_ptr<SecurityTechnicalsModel>&
+      const std::shared_ptr<TickerTechnicalsModel>&
         get_technicals() const override;
 
     private:
-      Nexus::Security m_security;
+      Nexus::Ticker m_ticker;
       BlotterSettings* m_blotter;
       Nexus::MarketDataClient m_client;
       std::shared_ptr<BookViewModel> m_model;

@@ -18,8 +18,8 @@ namespace Nexus::Tests {
       /** Records a call to query(...) for SequencedOrderImbalance. */
       struct QuerySequencedOrderImbalanceOperation {
 
-        /** The VenueMarketDataQuery passed. */
-        VenueMarketDataQuery m_query;
+        /** The VenueQuery passed. */
+        VenueQuery m_query;
 
         /** The queue writer for SequencedOrderImbalance. */
         Beam::ScopedQueueWriter<SequencedOrderImbalance> m_queue;
@@ -28,8 +28,8 @@ namespace Nexus::Tests {
       /** Records a call to query(...) for OrderImbalance. */
       struct QueryOrderImbalanceOperation {
 
-        /** The VenueMarketDataQuery passed. */
-        VenueMarketDataQuery m_query;
+        /** The VenueQuery passed. */
+        VenueQuery m_query;
 
         /** The queue writer for OrderImbalance. */
         Beam::ScopedQueueWriter<OrderImbalance> m_queue;
@@ -38,8 +38,8 @@ namespace Nexus::Tests {
       /** Records a call to query(...) for SequencedBboQuote. */
       struct QuerySequencedBboQuoteOperation {
 
-        /** The SecurityMarketDataQuery passed. */
-        SecurityMarketDataQuery m_query;
+        /** The TickerQuery passed. */
+        TickerQuery m_query;
 
         /** The queue writer for SequencedBboQuote. */
         Beam::ScopedQueueWriter<SequencedBboQuote> m_queue;
@@ -48,8 +48,8 @@ namespace Nexus::Tests {
       /** Records a call to query(...) for BboQuote. */
       struct QueryBboQuoteOperation {
 
-        /** The SecurityMarketDataQuery passed. */
-        SecurityMarketDataQuery m_query;
+        /** The TickerQuery passed. */
+        TickerQuery m_query;
 
         /** The queue writer for BboQuote. */
         Beam::ScopedQueueWriter<BboQuote> m_queue;
@@ -58,8 +58,8 @@ namespace Nexus::Tests {
       /** Records a call to query(...) for SequencedBookQuote. */
       struct QuerySequencedBookQuoteOperation {
 
-        /** The SecurityMarketDataQuery passed. */
-        SecurityMarketDataQuery m_query;
+        /** The TickerQuery passed. */
+        TickerQuery m_query;
 
         /** The queue writer for SequencedBookQuote. */
         Beam::ScopedQueueWriter<SequencedBookQuote> m_queue;
@@ -68,8 +68,8 @@ namespace Nexus::Tests {
       /** Records a call to query(...) for BookQuote. */
       struct QueryBookQuoteOperation {
 
-        /** The SecurityMarketDataQuery passed. */
-        SecurityMarketDataQuery m_query;
+        /** The TickerQuery passed. */
+        TickerQuery m_query;
 
         /** The queue writer for BookQuote. */
         Beam::ScopedQueueWriter<BookQuote> m_queue;
@@ -78,8 +78,8 @@ namespace Nexus::Tests {
       /** Records a call to query(...) for SequencedTimeAndSale. */
       struct QuerySequencedTimeAndSaleOperation {
 
-        /** The SecurityMarketDataQuery passed. */
-        SecurityMarketDataQuery m_query;
+        /** The TickerQuery passed. */
+        TickerQuery m_query;
 
         /** The queue writer for SequencedTimeAndSale. */
         Beam::ScopedQueueWriter<SequencedTimeAndSale> m_queue;
@@ -88,51 +88,51 @@ namespace Nexus::Tests {
       /** Records a call to query(...) for TimeAndSale. */
       struct QueryTimeAndSaleOperation {
 
-        /** The SecurityMarketDataQuery passed. */
-        SecurityMarketDataQuery m_query;
+        /** The TickerQuery passed. */
+        TickerQuery m_query;
 
         /** The queue writer for TimeAndSale. */
         Beam::ScopedQueueWriter<TimeAndSale> m_queue;
       };
 
-      /** Records a call to query(...) for SecurityInfoQuery. */
-      struct SecurityInfoQueryOperation {
+      /** Records a call to query(...) for TickerInfoQuery. */
+      struct TickerInfoQueryOperation {
 
-        /** The SecurityInfoQuery passed. */
-        SecurityInfoQuery m_query;
+        /** The TickerInfoQuery passed. */
+        TickerInfoQuery m_query;
 
         /** Used to return a value to the caller. */
-        Beam::Tests::ServiceResult<std::vector<SecurityInfo>> m_result;
+        Beam::Tests::ServiceResult<std::vector<TickerInfo>> m_result;
       };
 
       /** Records a call to load_snapshot(...). */
-      struct LoadSecuritySnapshotOperation {
+      struct LoadTickerSnapshotOperation {
 
-        /** The Security passed. */
-        Security m_security;
+        /** The Ticker passed. */
+        Ticker m_ticker;
 
         /** Used to return a value to the caller. */
-        Beam::Tests::ServiceResult<SecuritySnapshot> m_result;
+        Beam::Tests::ServiceResult<TickerSnapshot> m_result;
       };
 
       /** Records a call to load_technicals(...). */
-      struct LoadSecurityTechnicalsOperation {
+      struct LoadTickerTechnicalsOperation {
 
-        /** The Security passed. */
-        Security m_security;
+        /** The Ticker passed. */
+        Ticker m_ticker;
 
         /** Used to return a value to the caller. */
-        Beam::Tests::ServiceResult<SecurityTechnicals> m_result;
+        Beam::Tests::ServiceResult<TickerTechnicals> m_result;
       };
 
-      /** Records a call to load_security_info_from_prefix(...). */
-      struct LoadSecurityInfoFromPrefixOperation {
+      /** Records a call to load_ticker_info_from_prefix(...). */
+      struct LoadTickerInfoFromPrefixOperation {
 
         /** The prefix string passed. */
         std::string m_prefix;
 
         /** Used to return a value to the caller. */
-        Beam::Tests::ServiceResult<std::vector<SecurityInfo>> m_result;
+        Beam::Tests::ServiceResult<std::vector<TickerInfo>> m_result;
       };
 
       /** A variant covering all possible TestMarketDataClient operations. */
@@ -140,9 +140,9 @@ namespace Nexus::Tests {
         QueryOrderImbalanceOperation, QuerySequencedBboQuoteOperation,
         QueryBboQuoteOperation, QuerySequencedBookQuoteOperation,
         QueryBookQuoteOperation, QuerySequencedTimeAndSaleOperation,
-        QueryTimeAndSaleOperation, SecurityInfoQueryOperation,
-        LoadSecuritySnapshotOperation, LoadSecurityTechnicalsOperation,
-        LoadSecurityInfoFromPrefixOperation>;
+        QueryTimeAndSaleOperation, TickerInfoQueryOperation,
+        LoadTickerSnapshotOperation, LoadTickerTechnicalsOperation,
+        LoadTickerInfoFromPrefixOperation>;
 
       /** The type of Queue used to send and receive operations. */
       using Queue = Beam::Queue<std::shared_ptr<Operation>>;
@@ -156,26 +156,26 @@ namespace Nexus::Tests {
 
       ~TestMarketDataClient();
 
-      void query(const VenueMarketDataQuery& query,
+      void query(const VenueQuery& query,
         Beam::ScopedQueueWriter<SequencedOrderImbalance> queue);
-      void query(const VenueMarketDataQuery& query,
-        Beam::ScopedQueueWriter<OrderImbalance> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(
+        const VenueQuery& query, Beam::ScopedQueueWriter<OrderImbalance> queue);
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedBboQuote> queue);
-      void query(const SecurityMarketDataQuery& query,
-        Beam::ScopedQueueWriter<BboQuote> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<BboQuote> queue);
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedBookQuote> queue);
-      void query(const SecurityMarketDataQuery& query,
-        Beam::ScopedQueueWriter<BookQuote> queue);
-      void query(const SecurityMarketDataQuery& query,
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<BookQuote> queue);
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
-      void query(const SecurityMarketDataQuery& query,
-        Beam::ScopedQueueWriter<TimeAndSale> queue);
-      std::vector<SecurityInfo> query(const SecurityInfoQuery& query);
-      SecuritySnapshot load_snapshot(const Security& security);
-      SecurityTechnicals load_technicals(const Security& security);
-      std::vector<SecurityInfo> load_security_info_from_prefix(
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue);
+      std::vector<TickerInfo> query(const TickerInfoQuery& query);
+      TickerSnapshot load_snapshot(const Ticker& ticker);
+      TickerTechnicals load_technicals(const Ticker& ticker);
+      std::vector<TickerInfo> load_ticker_info_from_prefix(
         const std::string& prefix);
       void close();
 
@@ -194,7 +194,7 @@ namespace Nexus::Tests {
     close();
   }
 
-  inline void TestMarketDataClient::query(const VenueMarketDataQuery& query,
+  inline void TestMarketDataClient::query(const VenueQuery& query,
       Beam::ScopedQueueWriter<SequencedOrderImbalance> queue) {
     auto operation = std::make_shared<Operation>(
       std::in_place_type<QuerySequencedOrderImbalanceOperation>,
@@ -202,16 +202,15 @@ namespace Nexus::Tests {
     m_queue.append_queue<QuerySequencedOrderImbalanceOperation>(operation);
   }
 
-  inline void TestMarketDataClient::query(const VenueMarketDataQuery& query,
-      Beam::ScopedQueueWriter<OrderImbalance> queue) {
+  inline void TestMarketDataClient::query(
+      const VenueQuery& query, Beam::ScopedQueueWriter<OrderImbalance> queue) {
     auto operation = std::make_shared<Operation>(
       std::in_place_type<QueryOrderImbalanceOperation>,
       query, std::move(queue));
     m_queue.append_queue<QueryOrderImbalanceOperation>(operation);
   }
 
-  inline void TestMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
+  inline void TestMarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedBboQuote> queue) {
     auto operation = std::make_shared<Operation>(
       std::in_place_type<QuerySequencedBboQuoteOperation>,
@@ -220,16 +219,13 @@ namespace Nexus::Tests {
   }
 
   inline void TestMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
-      Beam::ScopedQueueWriter<BboQuote> queue) {
+      const TickerQuery& query, Beam::ScopedQueueWriter<BboQuote> queue) {
     auto operation = std::make_shared<Operation>(
-      std::in_place_type<QueryBboQuoteOperation>,
-      query, std::move(queue));
+      std::in_place_type<QueryBboQuoteOperation>, query, std::move(queue));
     m_queue.append_queue<QueryBboQuoteOperation>(operation);
   }
 
-  inline void TestMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
+  inline void TestMarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedBookQuote> queue) {
     auto operation = std::make_shared<Operation>(
       std::in_place_type<QuerySequencedBookQuoteOperation>,
@@ -238,16 +234,13 @@ namespace Nexus::Tests {
   }
 
   inline void TestMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
-      Beam::ScopedQueueWriter<BookQuote> queue) {
+      const TickerQuery& query, Beam::ScopedQueueWriter<BookQuote> queue) {
     auto operation = std::make_shared<Operation>(
-      std::in_place_type<QueryBookQuoteOperation>,
-      query, std::move(queue));
+      std::in_place_type<QueryBookQuoteOperation>, query, std::move(queue));
     m_queue.append_queue<QueryBookQuoteOperation>(operation);
   }
 
-  inline void TestMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
+  inline void TestMarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
     auto operation = std::make_shared<Operation>(
       std::in_place_type<QuerySequencedTimeAndSaleOperation>,
@@ -256,36 +249,34 @@ namespace Nexus::Tests {
   }
 
   inline void TestMarketDataClient::query(
-      const SecurityMarketDataQuery& query,
-      Beam::ScopedQueueWriter<TimeAndSale> queue) {
+      const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue) {
     auto operation = std::make_shared<Operation>(
-      std::in_place_type<QueryTimeAndSaleOperation>,
-      query, std::move(queue));
+      std::in_place_type<QueryTimeAndSaleOperation>, query, std::move(queue));
     m_queue.append_queue<QueryTimeAndSaleOperation>(operation);
   }
 
-  inline std::vector<SecurityInfo> TestMarketDataClient::query(
-      const SecurityInfoQuery& query) {
+  inline std::vector<TickerInfo> TestMarketDataClient::query(
+      const TickerInfoQuery& query) {
     return m_queue.append_result<
-      SecurityInfoQueryOperation, std::vector<SecurityInfo>>(query);
+      TickerInfoQueryOperation, std::vector<TickerInfo>>(query);
   }
 
-  inline SecuritySnapshot TestMarketDataClient::load_snapshot(
-      const Security& security) {
-    return m_queue.append_result<
-      LoadSecuritySnapshotOperation, SecuritySnapshot>(security);
+  inline TickerSnapshot TestMarketDataClient::load_snapshot(
+      const Ticker& ticker) {
+    return m_queue.append_result<LoadTickerSnapshotOperation, TickerSnapshot>(
+      ticker);
   }
 
-  inline SecurityTechnicals TestMarketDataClient::load_technicals(
-      const Security& security) {
+  inline TickerTechnicals TestMarketDataClient::load_technicals(
+      const Ticker& ticker) {
     return m_queue.append_result<
-      LoadSecurityTechnicalsOperation, SecurityTechnicals>(security);
+      LoadTickerTechnicalsOperation, TickerTechnicals>(ticker);
   }
 
-  inline std::vector<SecurityInfo> TestMarketDataClient::
-      load_security_info_from_prefix(const std::string& prefix) {
+  inline std::vector<TickerInfo> TestMarketDataClient::
+      load_ticker_info_from_prefix(const std::string& prefix) {
     return m_queue.append_result<
-      LoadSecurityInfoFromPrefixOperation, std::vector<SecurityInfo>>(prefix);
+      LoadTickerInfoFromPrefixOperation, std::vector<TickerInfo>>(prefix);
   }
 
   inline void TestMarketDataClient::close() {

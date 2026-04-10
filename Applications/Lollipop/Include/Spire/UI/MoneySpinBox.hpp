@@ -3,7 +3,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/optional/optional.hpp>
 #include <QDoubleSpinBox>
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/KeyBindings/KeyBindings.hpp"
 #include "Spire/UI/UI.hpp"
@@ -46,7 +46,7 @@ namespace UI {
 
     private:
       UserProfile* m_userProfile;
-      boost::optional<Nexus::Security> m_security;
+      boost::optional<Nexus::Ticker> m_ticker;
 
       void AdjustIncrement(KeyModifiers modifier);
   };

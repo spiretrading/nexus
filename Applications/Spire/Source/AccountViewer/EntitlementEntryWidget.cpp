@@ -14,7 +14,7 @@ using namespace std;
 
 namespace {
   enum {
-    MARKET_COLUMN = 0,
+    VENUE_COLUMN = 0,
     BBO_COLUMN = 1,
     MARKET_QUOTES_COLUMN = 2,
     BOOK_QUOTES_COLUMN = 3,
@@ -102,11 +102,11 @@ EntitlementEntryWidget::EntitlementEntryWidget(Ref<UserProfile> userProfile,
     } else {
       code = entitlement.first.m_source;
     }
-    auto& market = DEFAULT_VENUES.from(code);
-    QLabel* marketLabel = new QLabel(
-      QString::fromStdString(market.m_display_name));
-    m_ui->m_applicabilityTableLayout->addWidget(marketLabel, row,
-      MARKET_COLUMN);
+    auto& venue = DEFAULT_VENUES.from(code);
+    QLabel* venueLabel =
+      new QLabel(QString::fromStdString(venue.m_display_name));
+    m_ui->m_applicabilityTableLayout->addWidget(venueLabel, row,
+      VENUE_COLUMN);
     MarketDataTypeSet applicability = entitlement.second;
     QHBoxLayout* bboCheckBox = MakeCheckboxLayout(
       applicability.test(MarketDataType::BBO_QUOTE));

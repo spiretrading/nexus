@@ -5,9 +5,9 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-LocalTechnicalsModel::LocalTechnicalsModel(Security security)
-    : m_security(std::move(security)),
-      m_volume(0) {}
+LocalTechnicalsModel::LocalTechnicalsModel(Ticker ticker)
+  : m_ticker(std::move(ticker)),
+    m_volume(0) {}
 
 void LocalTechnicalsModel::set_close(Money price) {
   m_close = price;
@@ -39,8 +39,8 @@ void LocalTechnicalsModel::update(const TimeAndSale& time_and_sale) {
   m_volume_signal(m_volume);
 }
 
-const Security& LocalTechnicalsModel::get_security() const {
-  return m_security;
+const Ticker& LocalTechnicalsModel::get_ticker() const {
+  return m_ticker;
 }
 
 optional<Money> LocalTechnicalsModel::get_high() const {

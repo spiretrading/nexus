@@ -20,10 +20,10 @@ namespace Nexus {
       explicit TrueAverageBookkeeper(
         const Beam::View<const Inventory>& inventories);
 
-      void record(const Security& security, CurrencyId currency,
-        Quantity quantity, Money cost_basis, Money fees);
+      void record(const Ticker& ticker, CurrencyId currency, Quantity quantity,
+        Money cost_basis, Money fees);
       const Inventory& get_inventory(
-        const Security& security, CurrencyId currency) const;
+        const Ticker& ticker, CurrencyId currency) const;
       const Inventory& get_total(CurrencyId currency) const;
       Beam::View<const Inventory> get_inventory_range() const;
       Beam::View<const Inventory> get_totals_range() const;
@@ -52,9 +52,9 @@ namespace Nexus {
     }
   }
 
-  inline void TrueAverageBookkeeper::record(const Security& security,
+  inline void TrueAverageBookkeeper::record(const Ticker& ticker,
       CurrencyId currency, Quantity quantity, Money cost_basis, Money fees) {
-    auto key = Position::Key(security, currency);
+    auto key = Position::Key(ticker, currency);
     auto entry_iterator = m_inventories.find(key);
     if(entry_iterator == m_inventories.end()) {
       entry_iterator =
@@ -115,8 +115,8 @@ namespace Nexus {
   }
 
   inline const Inventory& TrueAverageBookkeeper::get_inventory(
-      const Security& security, CurrencyId currency) const {
-    auto key = Position::Key(security, currency);
+      const Ticker& ticker, CurrencyId currency) const {
+    auto key = Position::Key(ticker, currency);
     auto inventory_iterator = m_inventories.find(key);
     if(inventory_iterator == m_inventories.end()) {
       static auto empty_inventories =

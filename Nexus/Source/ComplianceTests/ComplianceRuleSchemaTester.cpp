@@ -1,8 +1,9 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Compliance/ComplianceRuleSchema.hpp"
 #include "Nexus/Compliance/ComplianceParameter.hpp"
+#include "Nexus/Compliance/ComplianceRuleSchema.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
@@ -13,8 +14,8 @@ using namespace Nexus::DefaultVenues;
 TEST_SUITE("ComplianceRuleSchema") {
   TEST_CASE("constructor") {
     auto parameter = ComplianceParameter();
-    parameter.m_name = "security";
-    parameter.m_value = ComplianceValue(Security("TST", TSX));
+    parameter.m_name = "ticker";
+    parameter.m_value = ComplianceValue(parse_ticker("TST.TSX"));
     auto parameters = std::vector<ComplianceParameter>();
     parameters.push_back(parameter);
     auto rule = ComplianceRuleSchema("test_rule", parameters);
@@ -24,15 +25,15 @@ TEST_SUITE("ComplianceRuleSchema") {
   }
 
   TEST_CASE("wrap_and_unwrap") {
-    auto parameter = ComplianceParameter("security", Security("ABC", TSX));
+    auto parameter = ComplianceParameter("ticker", parse_ticker("ABC.TSX"));
     auto parameters = std::vector{parameter};
     auto base_schema = ComplianceRuleSchema("base_rule", parameters);
     auto wrapped_schema = wrap("wrapper_rule",
-      {{"region", ComplianceValue(Region::GLOBAL)}}, base_schema);
+      {{"scope", ComplianceValue(Scope::GLOBAL)}}, base_schema);
     REQUIRE(wrapped_schema.get_name() == "wrapper_rule");
     auto found_name = false;
     auto found_arguments = false;
-    auto found_region = false;
+    auto found_scope = false;
     for(auto& parameter : wrapped_schema.get_parameters()) {
       if(parameter.m_name == "name") {
         REQUIRE(get<std::string>(parameter.m_value) == "base_rule");
@@ -42,17 +43,17 @@ TEST_SUITE("ComplianceRuleSchema") {
         REQUIRE(arguments.size() == 1);
         auto argument = get<std::vector<ComplianceValue>>(arguments[0]);
         REQUIRE(argument.size() == 2);
-        REQUIRE(get<std::string>(argument[0]) == "security");
-        REQUIRE(get<Security>(argument[1]) == Security("ABC", TSX));
+        REQUIRE(get<std::string>(argument[0]) == "ticker");
+        REQUIRE(get<Ticker>(argument[1]) == parse_ticker("ABC.TSX"));
         found_arguments = true;
-      } else if(parameter.m_name == "region") {
-        REQUIRE(get<Region>(parameter.m_value) == Region::GLOBAL);
-        found_region = true;
+      } else if(parameter.m_name == "scope") {
+        REQUIRE(get<Scope>(parameter.m_value) == Scope::GLOBAL);
+        found_scope = true;
       }
     }
     REQUIRE(found_name);
     REQUIRE(found_arguments);
-    REQUIRE(found_region);
+    REQUIRE(found_scope);
     auto unwrapped_schema = unwrap(wrapped_schema);
     REQUIRE(unwrapped_schema.get_name() == "base_rule");
     REQUIRE(unwrapped_schema.get_parameters().size() == 1);
@@ -83,11 +84,11 @@ TEST_SUITE("ComplianceRuleSchema") {
 
   TEST_CASE("stream_operator") {
     auto parameter = ComplianceParameter();
-    parameter.m_name = "security";
-    parameter.m_value = ComplianceValue(Security("TST", TSX));
+    parameter.m_name = "ticker";
+    parameter.m_value = ComplianceValue(parse_ticker("TST.TSX"));
     auto rule = ComplianceRuleSchema(
       "test_rule", std::vector<ComplianceParameter>(1, parameter));
-    REQUIRE(to_string(rule) == "(test_rule [(security TST.TSX)])");
+    REQUIRE(to_string(rule) == "(test_rule [(ticker TST.TSX)])");
     test_round_trip_shuttle(rule);
   }
 }

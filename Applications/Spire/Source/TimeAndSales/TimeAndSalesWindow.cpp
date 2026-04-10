@@ -10,7 +10,7 @@
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/SecurityView.hpp"
+#include "Spire/Ui/TickerView.hpp"
 #include "Spire/Ui/TransitionView.hpp"
 #include "Spire/Utilities/LinkMenu.hpp"
 
@@ -30,18 +30,18 @@ namespace {
 }
 
 TimeAndSalesWindow::TimeAndSalesWindow(
-  std::shared_ptr<SecurityInfoQueryModel> securities,
+  std::shared_ptr<TickerInfoQueryModel> tickers,
   std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
   ModelBuilder model_builder, QWidget* parent)
-  : TimeAndSalesWindow(std::move(securities), std::move(factory),
+  : TimeAndSalesWindow(std::move(tickers), std::move(factory),
       std::move(model_builder), std::string(), parent) {}
 
 TimeAndSalesWindow::TimeAndSalesWindow(
-    std::shared_ptr<SecurityInfoQueryModel> securities,
+    std::shared_ptr<TickerInfoQueryModel> tickers,
     std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
     ModelBuilder model_builder, std::string identifier, QWidget* parent)
     : Window(parent),
-      SecurityContext(std::move(identifier)),
+      TickerContext(std::move(identifier)),
       m_factory(std::move(factory)),
       m_model_builder(std::move(model_builder)),
       m_table_model(std::make_shared<TimeAndSalesTableModel>(
@@ -52,24 +52,23 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   setWindowIcon(QIcon(":/Icons/taskbar_icons/time-sales.png"));
   setWindowTitle(TITLE_NAME);
   m_transition_view = new TransitionView(new QWidget());
-  m_security_view = new SecurityView(std::move(securities), *m_transition_view);
-  m_security_view->get_current()->connect_update_signal(
+  m_ticker_view = new TickerView(std::move(tickers), *m_transition_view);
+  m_ticker_view->get_current()->connect_update_signal(
     std::bind_front(&TimeAndSalesWindow::on_current, this));
-  m_security_view->setSizePolicy(
+  m_ticker_view->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_security_view->setContextMenuPolicy(Qt::CustomContextMenu);
-  set_body(m_security_view);
+  m_ticker_view->setContextMenuPolicy(Qt::CustomContextMenu);
+  set_body(m_ticker_view);
   update_style(*this, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
   });
-  connect(m_security_view, &QWidget::customContextMenuRequested,
-    std::bind_front(&TimeAndSalesWindow::on_context_menu, this,
-      m_security_view));
-  resize(m_security_view->sizeHint().width(), scale_height(361));
+  connect(m_ticker_view, &QWidget::customContextMenuRequested,
+    std::bind_front(&TimeAndSalesWindow::on_context_menu, this, m_ticker_view));
+  resize(m_ticker_view->sizeHint().width(), scale_height(361));
 }
 
-const std::shared_ptr<SecurityModel>& TimeAndSalesWindow::get_current() const {
-  return m_security_view->get_current();
+const std::shared_ptr<TickerModel>& TimeAndSalesWindow::get_current() const {
+  return m_ticker_view->get_current();
 }
 
 std::unique_ptr<LegacyUI::WindowSettings>
@@ -78,7 +77,7 @@ std::unique_ptr<LegacyUI::WindowSettings>
 }
 
 void TimeAndSalesWindow::showEvent(QShowEvent* event) {
-  if(auto context = SecurityContext::FindSecurityContext(m_link_identifier)) {
+  if(auto context = TickerContext::FindTickerContext(m_link_identifier)) {
     Link(*context);
   } else {
     HandleUnlink();
@@ -86,15 +85,15 @@ void TimeAndSalesWindow::showEvent(QShowEvent* event) {
   Window::showEvent(event);
 }
 
-void TimeAndSalesWindow::HandleLink(SecurityContext& context) {
+void TimeAndSalesWindow::HandleLink(TickerContext& context) {
   m_link_identifier = context.GetIdentifier();
-  m_link_connection = context.ConnectSecurityDisplaySignal(
-    [=] (const auto& security) {
-      if(m_security_view->get_current()->get() != security) {
-         m_security_view->get_current()->set(security);
+  m_link_connection = context.ConnectTickerDisplaySignal(
+    [=] (const auto& ticker) {
+      if(m_ticker_view->get_current()->get() != ticker) {
+         m_ticker_view->get_current()->set(ticker);
       }
     });
-  m_security_view->get_current()->set(context.GetDisplayedSecurity());
+  m_ticker_view->get_current()->set(context.GetDisplayedTicker());
 }
 
 void TimeAndSalesWindow::HandleUnlink() {
@@ -159,11 +158,11 @@ void TimeAndSalesWindow::on_end_loading() {
   m_transition_view->set_status(TransitionView::Status::READY);
 }
 
-void TimeAndSalesWindow::on_current(const Security& security) {
-  if(!security) {
+void TimeAndSalesWindow::on_current(const Ticker& ticker) {
+  if(!ticker) {
     return;
   }
-  setWindowTitle(to_text(security) + " " + QString(0x2013) + " " + TITLE_NAME);
+  setWindowTitle(to_text(ticker) + " " + QString(0x2013) + " " + TITLE_NAME);
   auto column_widths = [&] () -> std::shared_ptr<ListModel<int>> {
     if(m_table_view) {
       m_table_view->get_header().get_widths();
@@ -172,7 +171,7 @@ void TimeAndSalesWindow::on_current(const Security& security) {
   }();
   m_transition_view->set_status(TransitionView::Status::NONE);
   m_table_model =
-    std::make_shared<TimeAndSalesTableModel>(m_model_builder(security));
+    std::make_shared<TimeAndSalesTableModel>(m_model_builder(ticker));
   m_table_model->connect_begin_loading_signal(
     std::bind_front(&TimeAndSalesWindow::on_begin_loading, this));
   m_table_model->connect_end_loading_signal(
@@ -187,7 +186,7 @@ void TimeAndSalesWindow::on_current(const Security& security) {
     }
   }
   m_transition_view->set_body(*m_table_view);
-  m_table_model->load_history(m_security_view->height() /
+  m_table_model->load_history(m_ticker_view->height() /
     estimate_row_height(properties->get().get_font()));
-  SetDisplayedSecurity(security);
+  SetDisplayedTicker(ticker);
 }

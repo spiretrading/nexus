@@ -8,22 +8,22 @@
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/OrderTaskArguments.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
-#include "Spire/LegacyUI/SecurityContext.hpp"
+#include "Spire/LegacyUI/TickerContext.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Ui/KeyObserver.hpp"
-#include "Spire/Ui/SecurityBox.hpp"
+#include "Spire/Ui/TickerBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
 
 namespace Spire {
   class BookDepth;
   class CurrentUserOrder;
-  class SecurityView;
+  class TickerView;
   class TransitionView;
 
-  /** Display the book view window for a security. */
+  /** Display the book view window for a ticker. */
   class BookViewWindow : public Window, public LegacyUI::PersistentWindow,
-      public LegacyUI::SecurityContext {
+      public LegacyUI::TickerContext {
     public:
 
       /**
@@ -46,34 +46,34 @@ namespace Spire {
       /**
        * Signals that a cancellation operation is emitted.
        * @param operation The cancellation operation.
-       * @param security The security for which orders will be canceled.
+       * @param ticker The ticker for which orders will be canceled.
        * @param criteria The criteria of the tasks to cancel.
        */
       using CancelOperationSignal = Signal<void (
         CancelKeyBindingsModel::Operation operation,
-        const Nexus::Security& security,
+        const Nexus::Ticker& ticker,
         const boost::optional<CancelCriteria>& criteria)>;
 
       /**
        * The type of function used to build a BookViewModel based on
-       * the security.
-       * @param security The security that the window is representing.
+       * the ticker.
+       * @param ticker The ticker that the window is representing.
        * @return the BookViewModel.
        */
       using ModelBuilder = std::function<
-        std::shared_ptr<BookViewModel> (const Nexus::Security& security)>;
+        std::shared_ptr<BookViewModel> (const Nexus::Ticker& ticker)>;
 
       /**
        * Constructs a BookViewWindow.
        * @param user_profile The user's profile.
-       * @param securities The set of securities to use.
+       * @param tickers The set of tickers to use.
        * @param key_bindings The user's key bindings.
        * @param factory The factory used to create a BookViewPropertiesWindow.
        * @param model_builder The ModelBuilder to use.
        * @param parent The parent widget.
        */
       BookViewWindow(Beam::Ref<UserProfile> user_profile,
-        std::shared_ptr<SecurityInfoQueryModel> securities,
+        std::shared_ptr<TickerInfoQueryModel> tickers,
         std::shared_ptr<KeyBindingsModel> key_bindings,
         std::shared_ptr<BookViewPropertiesWindowFactory> factory,
         ModelBuilder model_builder, QWidget* parent = nullptr);
@@ -81,23 +81,23 @@ namespace Spire {
       /**
        * Constructs a BookViewWindow.
        * @param user_profile The user's profile.
-       * @param securities The set of securities to use.
+       * @param tickers The set of tickers to use.
        * @param key_bindings The user's key bindings.
-       * @param markets The database of markets.
+       * @param venues The database of venues.
        * @param factory The factory used to create a BookViewPropertiesWindow.
        * @param model_builder The ModelBuilder to use.
-       * @param identifier The SecurityContext identifier.
+       * @param identifier The TickerContext identifier.
        * @param parent The parent widget.
        */
       BookViewWindow(Beam::Ref<UserProfile> user_profile,
-        std::shared_ptr<SecurityInfoQueryModel> securities,
+        std::shared_ptr<TickerInfoQueryModel> tickers,
         std::shared_ptr<KeyBindingsModel> key_bindings,
         std::shared_ptr<BookViewPropertiesWindowFactory> factory,
         ModelBuilder model_builder, std::string identifier,
         QWidget* parent = nullptr);
 
-      /** Returns the currently displayed security. */
-      const std::shared_ptr<SecurityModel>& get_current() const;
+      /** Returns the currently displayed ticker. */
+      const std::shared_ptr<TickerModel>& get_current() const;
 
       /** Connects a slot to the SubmitTaskSignal. */
       boost::signals2::connection connect_submit_task_signal(
@@ -113,7 +113,7 @@ namespace Spire {
     protected:
       void keyPressEvent(QKeyEvent* event) override;
       void showEvent(QShowEvent* event) override;
-      void HandleLink(SecurityContext& context) override;
+      void HandleLink(TickerContext& context) override;
       void HandleUnlink() override;
 
     private:
@@ -132,7 +132,7 @@ namespace Spire {
       boost::optional<KeyObserver> m_page_key_observer;
       std::string m_link_identifier;
       boost::signals2::scoped_connection m_link_connection;
-      SecurityView* m_security_view;
+      TickerView* m_ticker_view;
       CondensedCanvasWidget* m_task_entry_panel;
       bool m_is_task_entry_panel_for_interactions;
       boost::signals2::scoped_connection m_bid_order_connection;
@@ -148,7 +148,7 @@ namespace Spire {
       void on_cancel_most_recent(const CurrentUserOrder& user_order);
       void on_cancel_all(const CurrentUserOrder& user_order);
       void on_properties_menu();
-      void on_current(const Nexus::Security& security);
+      void on_current(const Nexus::Ticker& ticker);
       void on_order_operation(Nexus::Side side,
         const ListModel<BookViewModel::UserOrder>::Operation& operation);
   };

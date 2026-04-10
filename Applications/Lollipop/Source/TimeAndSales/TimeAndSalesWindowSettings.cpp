@@ -15,8 +15,8 @@ TimeAndSalesWindowSettings::TimeAndSalesWindowSettings() {}
 TimeAndSalesWindowSettings::TimeAndSalesWindowSettings(
     const TimeAndSalesWindow& window, Ref<UserProfile> userProfile)
     : m_properties(window.GetProperties()),
-      m_security(window.m_security),
-      m_securityViewStack(window.m_securityViewStack),
+      m_ticker(window.m_ticker),
+      m_tickerViewStack(window.m_tickerViewStack),
       m_identifier(window.GetIdentifier()),
       m_linkIdentifier(window.m_linkIdentifier),
       m_geometry(window.saveGeometry()),
@@ -25,10 +25,10 @@ TimeAndSalesWindowSettings::TimeAndSalesWindowSettings(
         window.m_ui->m_timeAndSalesView->horizontalHeader()->saveState()),
       m_snapshotHeaderState(
         window.m_ui->m_snapshotView->horizontalHeader()->saveState()) {
-  if(m_security == Security()) {
+  if(m_ticker == Ticker()) {
     m_name = "Time And Sales";
   } else {
-    m_name = "Time And Sales - " + displayText(m_security).toStdString();
+    m_name = "Time And Sales - " + displayText(m_ticker).toStdString();
   }
 }
 
@@ -56,9 +56,9 @@ void TimeAndSalesWindowSettings::Apply(Ref<UserProfile> userProfile,
     m_viewHeaderState);
   window.m_ui->m_snapshotView->horizontalHeader()->restoreState(
     m_snapshotHeaderState);
-  window.m_securityViewStack = m_securityViewStack;
-  if(m_security != Security()) {
-    window.DisplaySecurity(m_security);
+  window.m_tickerViewStack = m_tickerViewStack;
+  if(m_ticker != Ticker()) {
+    window.DisplayTicker(m_ticker);
   }
   window.m_linkIdentifier = m_linkIdentifier;
 }

@@ -65,7 +65,7 @@ void Nexus::Python::export_asx_trade_match_fee_table(module& module) {
 void Nexus::Python::export_chic_fee_table(module& module) {
   auto fee_table = export_default_methods(
     class_<ChicFeeTable>(module, "ChicFeeTable")).
-    def_readwrite("security_table", &ChicFeeTable::m_security_table).
+    def_readwrite("ticker_table", &ChicFeeTable::m_ticker_table).
     def_readwrite("interlisted", &ChicFeeTable::m_interlisted).
     def_readwrite("etfs", &ChicFeeTable::m_etfs);
   enum_<ChicFeeTable::Classification>(fee_table, "Classification").
@@ -82,7 +82,7 @@ void Nexus::Python::export_chic_fee_table(module& module) {
     value("HIDDEN_ACTIVE", ChicFeeTable::Index::HIDDEN_ACTIVE).
     value("HIDDEN_PASSIVE", ChicFeeTable::Index::HIDDEN_PASSIVE);
   module.def("parse_chic_fee_table", overload_cast<const YAML::Node&,
-    std::unordered_set<Security>, std::unordered_set<Security>>(
+    std::unordered_set<Ticker>, std::unordered_set<Ticker>>(
       &parse_chic_fee_table));
   module.def("lookup_fee", overload_cast<const ChicFeeTable&,
     ChicFeeTable::Index, ChicFeeTable::Classification>(&lookup_fee));
@@ -167,9 +167,9 @@ void Nexus::Python::export_cse2_fee_table(module& module) {
   enum_<Cse2FeeTable::PriceClass>(fee_table, "PriceClass").
     value("DEFAULT", Cse2FeeTable::PriceClass::DEFAULT).
     value("SUBDOLLAR", Cse2FeeTable::PriceClass::SUBDOLLAR);
-  enum_<Cse2FeeTable::ListingMarket>(fee_table, "ListingMarket").
-    value("CSE", Cse2FeeTable::ListingMarket::CSE).
-    value("TSX_TSXV", Cse2FeeTable::ListingMarket::TSX_TSXV);
+  enum_<Cse2FeeTable::ListingVenue>(fee_table, "ListingVenue").
+    value("CSE", Cse2FeeTable::ListingVenue::CSE).
+    value("TSX_TSXV", Cse2FeeTable::ListingVenue::TSX_TSXV);
   module.def("parse_cse2_fee_table",
     overload_cast<const YAML::Node&>(&parse_cse2_fee_table));
   module.def("lookup_cse2_fee_table_section", overload_cast<const OrderFields&,
@@ -178,8 +178,8 @@ void Nexus::Python::export_cse2_fee_table(module& module) {
     overload_cast<const ExecutionReport&>(&lookup_cse2_price_class));
   module.def("lookup_cse2_liquidity_flag",
     overload_cast<const ExecutionReport&>(&lookup_cse2_liquidity_flag));
-  module.def("lookup_cse2_listing_market",
-    overload_cast<const ExecutionReport&>(&lookup_cse2_listing_market));
+  module.def("lookup_cse2_listing_venue",
+    overload_cast<const ExecutionReport&>(&lookup_cse2_listing_venue));
   module.def("lookup_regular_fee", overload_cast<const Cse2FeeTable&,
     LiquidityFlag, Cse2FeeTable::PriceClass>(&lookup_regular_fee));
   module.def("calculate_regular_fee", overload_cast<const Cse2FeeTable&,
@@ -189,7 +189,7 @@ void Nexus::Python::export_cse2_fee_table(module& module) {
   module.def("calculate_dark_fee", overload_cast<const Cse2FeeTable&,
     const ExecutionReport&>(&calculate_dark_fee));
   module.def("lookup_debentures_or_notes_fee", overload_cast<
-    const Cse2FeeTable&, LiquidityFlag, Cse2FeeTable::ListingMarket>(
+    const Cse2FeeTable&, LiquidityFlag, Cse2FeeTable::ListingVenue>(
       &lookup_debentures_or_notes_fee));
   module.def("calculate_debentures_or_notes_fee",
     overload_cast<const Cse2FeeTable&, const ExecutionReport&>(
@@ -214,9 +214,9 @@ void Nexus::Python::export_cxd_fee_table(module& module) {
       def_readwrite("fee_table", &CxdFeeTable::m_fee_table).
       def_readwrite("max_fee_table", &CxdFeeTable::m_max_fee_table).
       def_readwrite("etf_fee_table", &CxdFeeTable::m_etf_fee_table);
-  enum_<CxdFeeTable::SecurityClass>(fee_table, "SecurityClass").
-    value("DEFAULT", CxdFeeTable::SecurityClass::DEFAULT).
-    value("ETF", CxdFeeTable::SecurityClass::ETF);
+  enum_<CxdFeeTable::TickerClass>(fee_table, "TickerClass").
+    value("DEFAULT", CxdFeeTable::TickerClass::DEFAULT).
+    value("ETF", CxdFeeTable::TickerClass::ETF);
   enum_<CxdFeeTable::PriceClass>(fee_table, "PriceClass").
     value("SUBDOLLAR", CxdFeeTable::PriceClass::SUBDOLLAR).
     value("SUBFIVE", CxdFeeTable::PriceClass::SUBFIVE).
@@ -234,13 +234,13 @@ void Nexus::Python::export_cxd_fee_table(module& module) {
   module.def("get_cxd_price_class",
     overload_cast<Money>(&get_cxd_price_class));
   module.def("lookup_fee", overload_cast<const CxdFeeTable&, LiquidityFlag,
-    CxdFeeTable::SecurityClass, CxdFeeTable::PriceClass, CxdFeeTable::BboType>(
+    CxdFeeTable::TickerClass, CxdFeeTable::PriceClass, CxdFeeTable::BboType>(
       &lookup_fee));
   module.def("lookup_max_fee", overload_cast<const CxdFeeTable&,
     LiquidityFlag, CxdFeeTable::PriceClass, CxdFeeTable::BboType>(
       &lookup_max_fee));
   module.def("calculate_fee", overload_cast<const CxdFeeTable&,
-    CxdFeeTable::SecurityClass, const ExecutionReport&>(&calculate_fee));
+    CxdFeeTable::TickerClass, const ExecutionReport&>(&calculate_fee));
 }
 
 void Nexus::Python::export_consolidated_tmx_fee_table(module& module) {
@@ -285,13 +285,12 @@ void Nexus::Python::export_consolidated_tmx_fee_table(module& module) {
     def_readonly("per_order_charges",
       &ConsolidatedTmxFeeTable::State::m_per_order_charges).
     def_readonly("fill_count", &ConsolidatedTmxFeeTable::State::m_fill_count);
-  module.def("parse_tmx_interlisted_securities", overload_cast<
-    const std::string&, const VenueDatabase&>(
-      &parse_tmx_interlisted_securities));
-  module.def("parse_tmx_etf_securities", overload_cast<
-    const std::string&, const VenueDatabase&>(&parse_tmx_etf_securities));
-  module.def("parse_nex_listed_securities", overload_cast<
-    const std::string&, const VenueDatabase&>(&parse_nex_listed_securities));
+  module.def("parse_tmx_interlisted_tickers", overload_cast<
+    const std::string&, const VenueDatabase&>(&parse_tmx_interlisted_tickers));
+  module.def("parse_tmx_etf_tickers", overload_cast<
+    const std::string&, const VenueDatabase&>(&parse_tmx_etf_tickers));
+  module.def("parse_nex_listed_tickers", overload_cast<
+    const std::string&, const VenueDatabase&>(&parse_nex_listed_tickers));
   module.def("parse_consolidated_tmx_fee_table",
     overload_cast<const YAML::Node&, const VenueDatabase&>(
       &parse_consolidated_tmx_fee_table));
@@ -341,7 +340,7 @@ void Nexus::Python::export_lynx_fee_table(module& module) {
     value("SUBDOLLAR", LynxFeeTable::Classification::SUBDOLLAR).
     value("MIDPOINT", LynxFeeTable::Classification::MIDPOINT);
   module.def("parse_lynx_fee_table", overload_cast<const YAML::Node&,
-    std::unordered_set<Security>, std::unordered_set<Security>>(
+    std::unordered_set<Ticker>, std::unordered_set<Ticker>>(
       &parse_lynx_fee_table));
   module.def("is_lynx_midpoint_order",
     overload_cast<const OrderFields&>(&is_lynx_midpoint_order));
@@ -599,8 +598,8 @@ void Nexus::Python::export_xcx2_fee_table(module& module) {
     value("HIDDEN_ACTIVE", Xcx2FeeTable::Type::HIDDEN_ACTIVE).
     value("HIDDEN_PASSIVE", Xcx2FeeTable::Type::HIDDEN_PASSIVE).
     value("ODD_LOT", Xcx2FeeTable::Type::ODD_LOT);
-  module.def("parse_xcx2_fee_table", overload_cast<const YAML::Node&,
-    std::unordered_set<Security>>(&parse_xcx2_fee_table));
+  module.def("parse_xcx2_fee_table", overload_cast<
+    const YAML::Node&, std::unordered_set<Ticker>>(&parse_xcx2_fee_table));
   module.def("lookup_fee", overload_cast<const Xcx2FeeTable&,
     const OrderFields&, Xcx2FeeTable::Type, Xcx2FeeTable::PriceClass>(
       &lookup_fee));

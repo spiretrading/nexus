@@ -55,7 +55,7 @@ TEST_SUITE("IsTopMpidModel") {
     }
     SUBCASE("preview") {
       auto missing_mpid = make_limit_order_fields(
-        parse_security("TST.TSX"), Side::BID, "TSX", 100, Money::ONE);
+        parse_ticker("TST.TSX"), Side::BID, "TSX", 100, Money::ONE);
       auto mpid = std::make_shared<LocalValueModel<BookEntry>>(missing_mpid);
       auto price = std::make_shared<LocalValueModel<Money>>(2 * Money::ONE);
       auto is_top = IsTopMpidModel(top_mpid_prices, mpid, price);

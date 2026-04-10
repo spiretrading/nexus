@@ -5,8 +5,8 @@
 #include <QByteArray>
 #include <QColor>
 #include <QFont>
-#include "Nexus/Definitions/Security.hpp"
-#include "Spire/LegacyUI/SecurityViewStack.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
+#include "Spire/LegacyUI/TickerViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
@@ -93,9 +93,9 @@ namespace Spire {
     private:
       friend struct Beam::DataShuttle;
       Properties m_properties;
-      Nexus::Security m_security;
+      Nexus::Ticker m_ticker;
       std::string m_name;
-      LegacyUI::SecurityViewStack m_security_view_stack;
+      LegacyUI::TickerViewStack m_ticker_view_stack;
       std::string m_identifier;
       std::string m_link_identifier;
       QByteArray m_geometry;
@@ -136,9 +136,9 @@ namespace Spire {
   template<Beam::IsShuttle S>
   void LegacyBookViewWindowSettings::shuttle(S& shuttle, unsigned int version) {
     shuttle.shuttle("properties", m_properties);
-    shuttle.shuttle("security", m_security);
+    shuttle.shuttle("ticker", m_ticker);
     shuttle.shuttle("name", m_name);
-    shuttle.shuttle("security_view_stack", m_security_view_stack);
+    shuttle.shuttle("ticker_view_stack", m_ticker_view_stack);
     shuttle.shuttle("identifier", m_identifier);
     shuttle.shuttle("link_identifier", m_link_identifier);
     shuttle.shuttle("geometry", m_geometry);

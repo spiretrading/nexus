@@ -2,7 +2,7 @@
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/Inventory.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
@@ -11,7 +11,7 @@ using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
 
 namespace {
-  auto TST = Security("TST", TSX);
+  auto TST = parse_ticker("TST.TSX");
 }
 
 TEST_SUITE("Inventory") {
@@ -28,7 +28,7 @@ TEST_SUITE("Inventory") {
   TEST_CASE("key_constructor") {
     auto key = Position::Key(TST, CAD);
     auto inventory = Inventory(key);
-    REQUIRE(inventory.m_position.m_security == TST);
+    REQUIRE(inventory.m_position.m_ticker == TST);
     REQUIRE(inventory.m_position.m_currency == CAD);
     REQUIRE(inventory.m_position.m_quantity == 0);
     REQUIRE(inventory.m_position.m_cost_basis == Money::ZERO);

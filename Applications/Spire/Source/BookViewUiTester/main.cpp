@@ -96,26 +96,26 @@ const QString& to_text(CancelKeyBindingsModel::Operation operation) {
   return none;
 }
 
-std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
-  auto security_infos = std::vector<SecurityInfo>();
-  auto add_security = [&] (const Security& security, const std::string& name) {
-    if(security) {
-      security_infos.emplace_back(security, name, "", 0);
+std::shared_ptr<TickerInfoQueryModel> populate_ticker_query_model() {
+  auto ticker_infos = std::vector<TickerInfo>();
+  auto add_ticker = [&] (const Ticker& ticker, const std::string& name) {
+    if(ticker) {
+      ticker_infos.emplace_back(ticker, name, "", 0);
     }
   };
-  add_security(parse_security("MRU.TSX"), "Metro Inc.");
-  add_security(parse_security("MG.TSX"), "Magna International Inc.");
-  add_security(parse_security("MGA.TSX"), "Mega Uranium Ltd.");
-  add_security(parse_security("MGAB.TSX"),
+  add_ticker(parse_ticker("MRU.TSX"), "Metro Inc.");
+  add_ticker(parse_ticker("MG.TSX"), "Magna International Inc.");
+  add_ticker(parse_ticker("MGA.TSX"), "Mega Uranium Ltd.");
+  add_ticker(parse_ticker("MGAB.TSX"),
     "Mackenzie Global Fixed Income Alloc ETF");
-  add_security(parse_security("MON.NYSE"), "Monsanto Co.");
-  add_security(parse_security("MFC.TSX"), "Manulife Financial Corporation");
-  add_security(parse_security("MX.TSX"), "Methanex Corporation");
-  auto model = std::make_shared<LocalQueryModel<SecurityInfo>>();
-  for(auto& security_info : security_infos) {
-    model->add(to_text(security_info.m_security).toLower(), security_info);
+  add_ticker(parse_ticker("MON.NYSE"), "Monsanto Co.");
+  add_ticker(parse_ticker("MFC.TSX"), "Manulife Financial Corporation");
+  add_ticker(parse_ticker("MX.TSX"), "Methanex Corporation");
+  auto model = std::make_shared<LocalQueryModel<TickerInfo>>();
+  for(auto& ticker_info : ticker_infos) {
+    model->add(to_text(ticker_info.m_ticker).toLower(), ticker_info);
     model->add(
-      QString::fromStdString(security_info.m_name).toLower(), security_info);
+      QString::fromStdString(ticker_info.m_name).toLower(), ticker_info);
   }
   return model;
 }
@@ -354,7 +354,7 @@ struct BookViewTester : QWidget {
   QTimer m_quote_timer;
   int m_line_number;
 
-  BookViewTester(std::shared_ptr<SecurityTechnicalsModel> technicals,
+  BookViewTester(std::shared_ptr<TickerTechnicalsModel> technicals,
     std::shared_ptr<BookViewModel> model,
     KeyBindingsWindow& key_bindings_window, QWidget* parent = nullptr)
       : QWidget(parent),
@@ -362,7 +362,7 @@ struct BookViewTester : QWidget {
         m_user_profile("", false, false, {}, {},
           get_default_additional_tag_database(), {}, {}, m_clients),
         m_model(std::move(model)),
-        m_technicals_model(Security()),
+        m_technicals_model(Ticker()),
         m_key_bindings_window(&key_bindings_window),
         m_update_period(std::make_shared<LocalOptionalIntegerModel>(1000)),
 BEAM_SUPPRESS_THIS_INITIALIZER()
@@ -447,7 +447,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       create_preview_order_button->setEnabled(false);
       submit_preview_order_button->setEnabled(true);
       m_model.get_model()->get_preview_order()->set(make_limit_order_fields(
-        Security(), preview_order_side_box->get_current()->get(),
+        Ticker(), preview_order_side_box->get_current()->get(),
         preview_order_destination_box->get_current()->get().toStdString(),
         *preview_order_quantity_box->get_current()->get(),
         *preview_order_price_box->get_current()->get()));
@@ -545,7 +545,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   void on_cancel_order(CancelKeyBindingsModel::Operation operation,
-      const Security& security,
+      const Ticker& ticker,
       const optional<BookViewWindow::CancelCriteria>& criteria) {
     auto log = QString("%1: Operation:[%2]").
       arg(++m_line_number).
@@ -561,7 +561,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
 std::shared_ptr<BookViewModel> model_builder(
     std::shared_ptr<BookViewModel> model, BookViewTester* tester,
-    const Security&) {
+    const Ticker&) {
   model->get_preview_order()->set(none);
   clear(*model->get_bids());
   clear(*model->get_asks());
@@ -580,22 +580,22 @@ int main(int argc, char** argv) {
   initialize_resources();
   auto key_bindings = std::make_shared<KeyBindingsModel>();
   auto key_bindings_window = KeyBindingsWindow(key_bindings,
-    populate_security_query_model(), get_default_additional_tag_database());
+    populate_ticker_query_model(), get_default_additional_tag_database());
   auto book_views = make_local_aggregate_book_view_model();
   auto factory = std::make_shared<BookViewPropertiesWindowFactory>();
   auto order_tester = BookViewOrderTester(book_views);
   auto tester = BookViewTester(
     book_views->get_technicals(), book_views, key_bindings_window);
   auto book_view_window = BookViewWindow(Ref(tester.m_user_profile),
-    populate_security_query_model(), key_bindings, factory,
+    populate_ticker_query_model(), key_bindings, factory,
     std::bind_front(&model_builder, book_views, &tester));
   book_view_window.connect_cancel_operation_signal(
     std::bind_front(&BookViewTester::on_cancel_order, &tester));
   book_view_window.installEventFilter(&tester);
   book_view_window.show();
   auto book_view_window1 = BookViewWindow(Ref(tester.m_user_profile),
-    populate_security_query_model(), key_bindings, factory,
-    [] (const Security&) {
+    populate_ticker_query_model(), key_bindings, factory,
+    [] (const Ticker&) {
       return make_local_aggregate_book_view_model();
     });
   book_view_window1.installEventFilter(&tester);

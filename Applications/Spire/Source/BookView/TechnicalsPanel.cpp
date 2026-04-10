@@ -36,7 +36,7 @@ namespace {
 
   template<typename T, typename U>
   auto make_technicals_value_field(
-      std::shared_ptr<SecurityTechnicalsModel> technicals, U field) {
+      std::shared_ptr<TickerTechnicalsModel> technicals, U field) {
     auto label = make_label(
       make_to_text_model(make_field_value_model(technicals, field),
         [] (const auto& value) {
@@ -93,7 +93,7 @@ namespace {
 }
 
 TechnicalsPanel::TechnicalsPanel(
-    std::shared_ptr<SecurityTechnicalsModel> technicals,
+    std::shared_ptr<TickerTechnicalsModel> technicals,
     std::shared_ptr<QuantityModel> default_bid_quantity,
     std::shared_ptr<QuantityModel> default_ask_quantity, QWidget* parent)
     : QWidget(parent),
@@ -119,15 +119,15 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     make_indicator_label(tr("V")), make_indicator_label(tr("D"))};
   auto fields = std::vector<TextBox*>{
     make_technicals_value_field<Money>(m_technicals,
-      &SecurityTechnicals::m_high),
+      &TickerTechnicals::m_high),
     make_technicals_value_field<Money>(m_technicals,
-      &SecurityTechnicals::m_low),
+      &TickerTechnicals::m_low),
     make_technicals_value_field<Money>(m_technicals,
-      &SecurityTechnicals::m_open),
+      &TickerTechnicals::m_open),
     make_technicals_value_field<Money>(m_technicals,
-      &SecurityTechnicals::m_close),
+      &TickerTechnicals::m_close),
     make_technicals_value_field<Quantity>(m_technicals,
-      &SecurityTechnicals::m_volume),
+      &TickerTechnicals::m_volume),
     m_default_field};
   for(auto i = 0; i < std::ssize(fields); ++i) {
     link(*this, *name_indicators[i]);
@@ -159,7 +159,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   });
 }
 
-const std::shared_ptr<SecurityTechnicalsModel>&
+const std::shared_ptr<TickerTechnicalsModel>&
     TechnicalsPanel::get_technicals() const {
   return m_technicals;
 }

@@ -3,7 +3,7 @@
 #include <unordered_map>
 #include <Beam/Pointers/Ref.hpp>
 #include <QWidget>
-#include "Nexus/Definitions/RegionMap.hpp"
+#include "Nexus/Definitions/ScopeMap.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
 #include "Spire/Spire/Spire.hpp"
 
@@ -35,34 +35,34 @@ namespace Spire {
       /**
        * Initializes the InteractionsWidget, must be called after construction.
        * @param userProfile The user's profile.
-       * @param security The Security to display the InteractionsProperties for.
+       * @param ticker The Ticker to display the InteractionsProperties for.
        */
       void Initialize(
-        Beam::Ref<UserProfile> userProfile, const Nexus::Security& security);
+        Beam::Ref<UserProfile> userProfile, const Nexus::Ticker& ticker);
 
       /** Stores the current interactions to the UserProfile. */
       void Store();
 
     private:
-      struct RegionEntry {
-        Nexus::Region m_region;
+      struct ScopeEntry {
+        Nexus::Scope m_scope;
         bool m_isActive;
       };
       std::unique_ptr<Ui_InteractionsWidget> m_ui;
       UserProfile* m_userProfile;
       std::shared_ptr<InteractionsKeyBindingsModel> m_interactions;
-      std::unordered_map<std::string, RegionEntry> m_regions;
-      std::string m_regionIndex;
+      std::unordered_map<std::string, ScopeEntry> m_scopes;
+      std::string m_scopeIndex;
       int m_quantityModifierIndex;
       int m_priceModifierIndex;
 
-      void Add(RegionEntry region);
-      void Style(const RegionEntry& region);
+      void Add(ScopeEntry scope);
+      void Style(const ScopeEntry& scope);
       void Update();
-      void OnRegionIndexChanged(int index);
+      void OnScopeIndexChanged(int index);
       void OnKeyboardModifierIndexChanged(int index);
-      void OnActivateRegionClicked();
-      void OnResetRegionClicked();
+      void OnActivateScopeClicked();
+      void OnResetScopeClicked();
   };
 }
 

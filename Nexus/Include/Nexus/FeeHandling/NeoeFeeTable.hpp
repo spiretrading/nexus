@@ -35,7 +35,7 @@ namespace Nexus {
       /** General listing. */
       GENERAL,
 
-      /** Interlisted security. */
+      /** Interlisted ticker. */
       INTERLISTED,
 
       /** ETF listing. */
@@ -148,7 +148,7 @@ namespace Nexus {
   /**
    * Calculates the fee on a trade executed on NEOE.
    * @param table The NeoeFeeTable used to calculate the fee.
-   * @param classification The listing classification of the security.
+   * @param classification The listing classification of the ticker.
    * @param fields The OrderFields submitted for the Order.
    * @param report The ExecutionReport to calculate the fee for.
    * @return The fee calculated for the specified trade.
