@@ -1,7 +1,7 @@
-#include "Spire/Charting/TickerTimePriceChartPlotSeries.hpp"
+#include "Spire/Charting/TickerPriceChartPlotSeries.hpp"
 #include "Spire/Charting/CandlestickChartPlot.hpp"
 #include "Spire/Charting/ChartPoint.hpp"
-#include "Spire/UI/UserProfile.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -21,19 +21,18 @@ namespace {
   }
 }
 
-std::size_t TickerTimePriceChartPlotSeries::TimestampHash::operator ()(
+std::size_t TickerPriceChartPlotSeries::TimestampHash::operator ()(
     ptime value) const {
   auto totalTicks = value - BASE_DATE;
   return static_cast<std::size_t>(totalTicks.ticks());
 }
 
-TickerTimePriceChartPlotSeries::TickerTimePriceChartPlotSeries(
-    Ref<UserProfile> userProfile, const Ticker& ticker,
-    time_duration interval)
+TickerPriceChartPlotSeries::TickerPriceChartPlotSeries(
+    Ref<UserProfile> userProfile, const Ticker& ticker, time_duration interval)
     : m_userProfile(userProfile.get()),
       m_ticker(ticker),
       m_interval(interval) {
-  if(ticker == Ticker()) {
+  if(!ticker) {
     return;
   }
   auto query = TickerQuery();
@@ -43,10 +42,10 @@ TickerTimePriceChartPlotSeries::TickerTimePriceChartPlotSeries(
   query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_userProfile->GetClients().get_market_data_client().query(
     query, m_eventHandler.get_slot<TimeAndSale>(
-      std::bind_front(&TickerTimePriceChartPlotSeries::OnTimeAndSale, this)));
+      std::bind_front(&TickerPriceChartPlotSeries::OnTimeAndSale, this)));
 }
 
-void TickerTimePriceChartPlotSeries::Query(ChartValue start, ChartValue end) {
+void TickerPriceChartPlotSeries::Query(ChartValue start, ChartValue end) {
   m_taskQueue.push(
     [=] {
       auto min = start.ToDateTime() - Normalize(start.ToDateTime(), m_interval);
@@ -55,21 +54,19 @@ void TickerTimePriceChartPlotSeries::Query(ChartValue start, ChartValue end) {
       auto result = m_userProfile->GetClients().get_charting_client().
         load_price_series(m_ticker, min, max, m_interval);
       for(auto& candlestick : result.series) {
-        auto chartCandlestick = Candlestick(
-          ChartValue(candlestick.get_start()),
-          ChartValue(candlestick.get_end()),
-          ChartValue(candlestick.get_open()),
+        auto chartCandlestick = Candlestick(ChartValue(candlestick.get_start()),
+          ChartValue(candlestick.get_end()), ChartValue(candlestick.get_open()),
           ChartValue(candlestick.get_close()),
-          ChartValue(candlestick.get_high()),
-          ChartValue(candlestick.get_low()));
+          ChartValue(candlestick.get_high()), ChartValue(candlestick.get_low()),
+          candlestick.get_volume());
         m_eventHandler.push(std::bind_front(
-          &TickerTimePriceChartPlotSeries::OnCandlestickLoaded, this,
+          &TickerPriceChartPlotSeries::OnCandlestickLoaded, this,
           chartCandlestick));
       }
     });
 }
 
-ChartValue TickerTimePriceChartPlotSeries::LoadLastCurrentDomain() {
+ChartValue TickerPriceChartPlotSeries::LoadLastCurrentDomain() {
   auto timeAndSalesQueue = std::make_shared<Queue<TimeAndSale>>();
   auto query = TickerQuery();
   query.set_index(m_ticker);
@@ -85,13 +82,13 @@ ChartValue TickerTimePriceChartPlotSeries::LoadLastCurrentDomain() {
   }
 }
 
-connection TickerTimePriceChartPlotSeries::ConnectChartPointAddedSignal(
+connection TickerPriceChartPlotSeries::ConnectChartPointAddedSignal(
     const ChartPlotAddedSignal::slot_function_type& slot) const {
   return m_chartPlotAddedSignal.connect(slot);
 }
 
-TickerTimePriceChartPlotSeries::CandlestickEntry&
-    TickerTimePriceChartPlotSeries::LoadCandlestick(ptime timestamp) {
+TickerPriceChartPlotSeries::CandlestickEntry&
+    TickerPriceChartPlotSeries::LoadCandlestick(ptime timestamp) {
   auto key = timestamp - Normalize(timestamp, m_interval);
   auto entryIterator = m_candlestickEntries.find(key);
   if(entryIterator == m_candlestickEntries.end()) {
@@ -104,7 +101,7 @@ TickerTimePriceChartPlotSeries::CandlestickEntry&
   return entryIterator->second;
 }
 
-void TickerTimePriceChartPlotSeries::OnCandlestickLoaded(
+void TickerPriceChartPlotSeries::OnCandlestickLoaded(
     const Candlestick<ChartValue, ChartValue>& candlestick) {
   auto& entry = LoadCandlestick(candlestick.get_start().ToDateTime());
   auto isFirstUpdate = entry.m_lastTimestamp.is_not_a_date_time();
@@ -122,7 +119,7 @@ void TickerTimePriceChartPlotSeries::OnCandlestickLoaded(
   }
 }
 
-void TickerTimePriceChartPlotSeries::OnTimeAndSale(
+void TickerPriceChartPlotSeries::OnTimeAndSale(
     const TimeAndSale& timeAndSale) {
   auto& entry = LoadCandlestick(timeAndSale.m_timestamp);
   auto isFirstUpdate = entry.m_lastTimestamp.is_not_a_date_time();

@@ -8,7 +8,7 @@
 #include "Spire/Charting/ChartIntervalComboBox.hpp"
 #include "Spire/Charting/ChartValue.hpp"
 #include "Spire/Charting/ChartWindowSettings.hpp"
-#include "Spire/Charting/TickerTimePriceChartPlotSeries.hpp"
+#include "Spire/Charting/TickerPriceChartPlotSeries.hpp"
 #include "Spire/InputWidgets/TickerInputDialog.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
 #include "Spire/UI/LinkTickerContextAction.hpp"
@@ -302,7 +302,7 @@ void ChartWindow::OnIntervalChanged(const std::shared_ptr<NativeType>& type,
   m_ui->m_chart->SetXAxisParameters(axisParameters);
   if(type->GetCompatibility(DurationType::GetInstance()) ==
       CanvasType::Compatibility::EQUAL) {
-    auto chartPlotSeries = std::make_shared<TickerTimePriceChartPlotSeries>(
+    auto chartPlotSeries = std::make_shared<TickerPriceChartPlotSeries>(
       Ref(*m_userProfile), m_ticker, value.ToTimeDuration());
     m_controller->Add(chartPlotSeries);
   }

@@ -1,5 +1,5 @@
-#ifndef SPIRE_TICKER_TIME_PRICE_CHART_PLOT_SERIES_HPP
-#define SPIRE_TICKER_TIME_PRICE_CHART_PLOT_SERIES_HPP
+#ifndef SPIRE_TICKER_PRICE_CHART_PLOT_SERIES_HPP
+#define SPIRE_TICKER_PRICE_CHART_PLOT_SERIES_HPP
 #include <unordered_map>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
@@ -15,16 +15,16 @@
 namespace Spire {
 
   /** Implements a ChartPlotSeries from a Ticker's TimeAndSales. */
-  class TickerTimePriceChartPlotSeries : public ChartPlotSeries {
+  class TickerPriceChartPlotSeries : public ChartPlotSeries {
     public:
 
       /**
-       * Constructs a TickerTimePriceChartPlotSeries.
+       * Constructs a TickerPriceChartPlotSeries.
        * @param userProfile The user's profile.
        * @param ticker The Ticker to plot.
        * @param interval The size of each candlestick.
        */
-      TickerTimePriceChartPlotSeries(Beam::Ref<UserProfile> userProfile,
+      TickerPriceChartPlotSeries(Beam::Ref<UserProfile> userProfile,
         const Nexus::Ticker& ticker, boost::posix_time::time_duration interval);
 
       void Query(ChartValue start, ChartValue end) override;
