@@ -289,6 +289,40 @@ namespace Nexus {
   inline Scope::Scope(GlobalTag, std::string name)
     : m_is_global(true),
       m_name(std::move(name)) {}
+
+  inline std::size_t hash_value(const Scope& scope) noexcept {
+    if(scope.is_global()) {
+      return std::size_t(0x9e3779b97f4a7c15);
+    }
+    const auto COUNTRY_SALT = std::size_t(0x1bd11bdaa9fc1a22);
+    const auto VENUE_SALT = std::size_t(0x3c79ac492ba7b653);
+    const auto TICKER_SALT = std::size_t(0x1f123bb5dfcbb123);
+    auto mix = [] (auto x) {
+      x += 0x9e3779b97f4a7c15ull;
+      x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ull;
+      x = (x ^ (x >> 27)) * 0x94d049bb133111ebull;
+      return x ^ (x >> 31);
+    };
+    auto rotate_left = [] (auto x, auto r) {
+      return (x << r) | (x >> (64 - r));
+    };
+    auto set_hash = [&] (const auto& set, auto salt) {
+      auto sum = std::size_t(0);
+      auto xors = std::size_t(0);
+      for(auto& element : set) {
+        auto hv = mix(set.hash_function()(element) + salt);
+        sum += hv;
+        xors ^= rotate_left(hv, 23);
+      }
+      return mix(sum + rotate_left(xors, 17));
+    };
+    auto countries_hash = set_hash(scope.get_countries(), COUNTRY_SALT);
+    auto venues_hash = set_hash(scope.get_venues(), VENUE_SALT);
+    auto tickers_hash = set_hash(scope.get_tickers(), TICKER_SALT);
+    auto hash = countries_hash + rotate_left(venues_hash, 21) +
+      rotate_left(tickers_hash, 42);
+    return mix(hash);
+  }
 }
 
 namespace Beam {
@@ -310,37 +344,7 @@ namespace std {
   template<>
   struct hash<Nexus::Scope> {
     std::size_t operator ()(const Nexus::Scope& scope) const noexcept {
-      if(scope.is_global()) {
-        return std::size_t(0x9e3779b97f4a7c15);
-      }
-      const auto COUNTRY_SALT = std::size_t(0x1bd11bdaa9fc1a22);
-      const auto VENUE_SALT = std::size_t(0x3c79ac492ba7b653);
-      const auto TICKER_SALT = std::size_t(0x1f123bb5dfcbb123);
-      auto mix = [] (auto x) {
-        x += 0x9e3779b97f4a7c15ull;
-        x = (x ^ (x >> 30)) * 0xbf58476d1ce4e5b9ull;
-        x = (x ^ (x >> 27)) * 0x94d049bb133111ebull;
-        return x ^ (x >> 31);
-      };
-      auto rotate_left = [] (auto x, auto r) {
-        return (x << r) | (x >> (64 - r));
-      };
-      auto set_hash = [&] (const auto& set, auto salt) {
-        auto sum = std::size_t(0);
-        auto xors = std::size_t(0);
-        for(auto& element : set) {
-          auto hv = mix(set.hash_function()(element) + salt);
-          sum += hv;
-          xors ^= rotate_left(hv, 23);
-        }
-        return mix(sum + rotate_left(xors, 17));
-      };
-      auto countries_hash = set_hash(scope.get_countries(), COUNTRY_SALT);
-      auto venues_hash = set_hash(scope.get_venues(), VENUE_SALT);
-      auto tickers_hash = set_hash(scope.get_tickers(), TICKER_SALT);
-      auto hash = countries_hash + rotate_left(venues_hash, 21) +
-        rotate_left(tickers_hash, 42);
-      return mix(hash);
+      return Nexus::hash_value(scope);
     }
   };
 }

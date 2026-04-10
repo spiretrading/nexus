@@ -14,9 +14,9 @@ currencyDatabase.add(new Nexus.CurrencyDatabase.Entry(CAD, 'CAD', '$'));
 currencyDatabase.add(new Nexus.CurrencyDatabase.Entry(USD, 'USD', '$'));
 currencyDatabase.add(new Nexus.CurrencyDatabase.Entry(AUD, 'AUD', '$'));
 
-const TSX = Nexus.DefaultMarkets.TSX;
-const NASDAQ = Nexus.DefaultMarkets.NASDAQ;
-const ASX = Nexus.DefaultMarkets.ASX;
+const TSX = Nexus.DefaultVenues.TSX;
+const NASDAQ = Nexus.DefaultVenues.NASDAQ;
+const ASX = Nexus.DefaultVenues.ASX;
 
 const REPORT: WebPortal.ProfitAndLossModel.Report = {
   totalProfitAndLoss: Nexus.Money.parse('7562.94'),
