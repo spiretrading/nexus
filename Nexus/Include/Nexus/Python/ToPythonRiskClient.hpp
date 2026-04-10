@@ -35,7 +35,7 @@ namespace Nexus {
 
       InventorySnapshot load_inventory_snapshot(
         const Beam::DirectoryEntry& account);
-      void reset(const Region& region);
+      void reset(const Scope& scope);
       const RiskPortfolioUpdatePublisher& get_risk_portfolio_update_publisher();
       void close();
 
@@ -81,9 +81,9 @@ namespace Nexus {
   }
 
   template<IsRiskClient C>
-  void ToPythonRiskClient<C>::reset(const Region& region) {
+  void ToPythonRiskClient<C>::reset(const Scope& scope) {
     auto release = Beam::Python::GilRelease();
-    m_client->reset(region);
+    m_client->reset(scope);
   }
 
   template<IsRiskClient C>

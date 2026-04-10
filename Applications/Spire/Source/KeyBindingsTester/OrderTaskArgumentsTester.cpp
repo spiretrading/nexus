@@ -18,7 +18,7 @@ namespace {
   }
 
   auto TSX() {
-    return Region(DefaultVenues::TSX);
+    return Scope(DefaultVenues::TSX);
   }
 }
 
@@ -50,7 +50,7 @@ TEST_SUITE("OrderTaskArguments") {
     REQUIRE((!find_order_task_arguments(arguments, ABX(), Qt::Key_F4)));
   }
 
-  TEST_CASE("find_venue_region_argument_match") {
+  TEST_CASE("find_venue_scope_argument_match") {
     auto arguments = ArrayListModel<OrderTaskArguments>();
     arguments.push({"Test1", TSX(), DefaultDestinations::TSX,
       OrderType::LIMIT, Side::BID, QuantitySetting::ADJUSTABLE,

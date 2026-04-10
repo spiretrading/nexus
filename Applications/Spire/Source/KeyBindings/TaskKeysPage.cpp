@@ -11,7 +11,7 @@
 #include "Spire/Ui/EditableBox.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/LineInputForm.hpp"
-#include "Spire/Ui/RegionBox.hpp"
+#include "Spire/Ui/ScopeBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
 #include "Spire/Ui/TableBody.hpp"
 #include "Spire/Ui/TableItem.hpp"
@@ -52,46 +52,46 @@ namespace {
     return button;
   }
 
-  Region make_region(const TickerInfo& ticker_info) {
-    auto region = Region(ticker_info.m_name);
-    region += ticker_info.m_ticker;
-    return region;
+  Scope make_scope(const TickerInfo& ticker_info) {
+    auto scope = Scope(ticker_info.m_name);
+    scope += ticker_info.m_ticker;
+    return scope;
   }
 
-  auto populate_region_query_model() {
-    auto regions = std::make_shared<LocalQueryModel<Region>>();
+  auto populate_scope_query_model() {
+    auto scopes = std::make_shared<LocalQueryModel<Scope>>();
     for(auto& country : DEFAULT_COUNTRIES.get_entries()) {
-      auto region = Region(country.m_name);
-      region += country.m_code;
-      regions->add(to_text(country.m_code).toLower(), region);
-      regions->add(QString::fromStdString(region.get_name()).toLower(), region);
+      auto scope = Scope(country.m_name);
+      scope += country.m_code;
+      scopes->add(to_text(country.m_code).toLower(), scope);
+      scopes->add(QString::fromStdString(scope.get_name()).toLower(), scope);
     }
     for(auto& venue : DEFAULT_VENUES.get_entries()) {
-      auto region = Region(venue.m_description);
-      region += venue.m_venue;
-      regions->add(to_text(venue.m_venue).toLower(), region);
-      regions->add(QString::fromStdString(region.get_name()).toLower(), region);
+      auto scope = Scope(venue.m_description);
+      scope += venue.m_venue;
+      scopes->add(to_text(venue.m_venue).toLower(), scope);
+      scopes->add(QString::fromStdString(scope.get_name()).toLower(), scope);
     }
-    return regions;
+    return scopes;
   }
 
-  struct ConsolidatedRegionQueryModel : RegionQueryModel {
+  struct ConsolidatedScopeQueryModel : ScopeQueryModel {
     std::shared_ptr<TickerInfoQueryModel> m_tickers;
-    std::shared_ptr<RegionQueryModel> m_regions;
+    std::shared_ptr<ScopeQueryModel> m_scopes;
 
-    ConsolidatedRegionQueryModel(std::shared_ptr<TickerInfoQueryModel> tickers,
-      std::shared_ptr<RegionQueryModel> regions)
+    ConsolidatedScopeQueryModel(std::shared_ptr<TickerInfoQueryModel> tickers,
+      std::shared_ptr<ScopeQueryModel> scopes)
       : m_tickers(std::move(tickers)),
-        m_regions(std::move(regions)) {}
+        m_scopes(std::move(scopes)) {}
 
-    optional<Region> parse(const QString& query) override {
+    optional<Scope> parse(const QString& query) override {
       if(auto ticker = m_tickers->parse(query)) {
-        return make_region(*ticker);
+        return make_scope(*ticker);
       }
-      return m_regions->parse(query);
+      return m_scopes->parse(query);
     }
 
-    QtPromise<std::vector<Region>> submit(const QString& query) override {
+    QtPromise<std::vector<Scope>> submit(const QString& query) override {
       return m_tickers->submit(query).then([=] (auto&& ticker_result) {
         auto ticker_matches = [&] {
           try {
@@ -100,24 +100,24 @@ namespace {
             return std::vector<TickerInfo>();
           }
         }();
-        auto regions = std::unordered_set<Region>();
+        auto scopes = std::unordered_set<Scope>();
         for(auto& ticker : ticker_matches) {
-          regions.insert(make_region(ticker));
+          scopes.insert(make_scope(ticker));
         }
-        return m_regions->submit(query).then(
-          [regions = std::move(regions)] (auto&& region_result) mutable {
-            auto region_matches = [&] {
+        return m_scopes->submit(query).then(
+          [scopes = std::move(scopes)] (auto&& scope_result) mutable {
+            auto scope_matches = [&] {
               try {
-                return region_result.get();
+                return scope_result.get();
               } catch(const std::exception&) {
-                return std::vector<Region>();
+                return std::vector<Scope>();
               }
             }();
-            for(auto& region : region_matches) {
-              regions.insert(region);
+            for(auto& scope : scope_matches) {
+              scopes.insert(scope);
             }
-            return std::vector<Region>(std::make_move_iterator(regions.begin()),
-              std::make_move_iterator(regions.end()));
+            return std::vector<Scope>(std::make_move_iterator(scopes.begin()),
+              std::make_move_iterator(scopes.end()));
           });
       });
     }
@@ -180,8 +180,8 @@ TaskKeysPage::TaskKeysPage(std::shared_ptr<KeyBindingsModel> key_bindings,
     m_key_bindings->get_order_task_arguments(), search_box->get_current(),
     additional_tags);
   m_table_view = make_task_keys_table_view(
-    std::move(filtered_tasks), std::make_shared<ConsolidatedRegionQueryModel>(
-      std::move(tickers), populate_region_query_model()), additional_tags);
+    std::move(filtered_tasks), std::make_shared<ConsolidatedScopeQueryModel>(
+      std::move(tickers), populate_scope_query_model()), additional_tags);
   layout->addWidget(m_table_view);
   auto box = new Box(body);
   update_style(*box, [] (auto& style) {

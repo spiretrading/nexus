@@ -131,7 +131,7 @@ namespace Beam {
 namespace std {
   template <>
   struct hash<Nexus::Ticker> {
-    size_t operator()(const Nexus::Ticker& value) const {
+    size_t operator()(const Nexus::Ticker& value) const noexcept {
       return Nexus::hash_value(value);
     }
   };

@@ -320,23 +320,23 @@ const pagination =
     [new SignalSchema('onNavigate', 'pageIndex')],
     WebPortal.Pagination, 732);
 
-const regionInput =
-  new ComponentSchema('RegionInput',
+const scopeInput =
+  new ComponentSchema('ScopeInput',
     [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
         EnumInput(WebPortal.DisplaySize)),
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
-    WebPortal.RegionInput);
+    WebPortal.ScopeInput);
 
-const regionItemInput =
-  new ComponentSchema('RegionItemInput',
+const scopeItemInput =
+  new ComponentSchema('ScopeItemInput',
     [new PropertySchema('value', '', TextInput),
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value'),
       new SignalSchema('onEnter', 'value')],
-    (props: any) => React.createElement(WebPortal.RegionItemInput,
+    (props: any) => React.createElement(WebPortal.ScopeItemInput,
       {...props, style: {width: '100%', ...props.style}}));
 
 const relativeDate =
@@ -949,7 +949,7 @@ export const componentSections = [
     filterChip, filterInput, hLine,
     iconLabelButton, input, integerField, labeledCheckbox, modal, moneyInput,
     navigationHeader, navigationTab, pageLayout,
-    pagination, regionInput, regionItemInput, relativeDate, roleIcon, rolePanel,
+    pagination, scopeInput, scopeItemInput, relativeDate, roleIcon, rolePanel,
     tickersInput, tickerInput, segmentedSpinner, select, skeleton,
     segmentButton,
     segmentedControl,

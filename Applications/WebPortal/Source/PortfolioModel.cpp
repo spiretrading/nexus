@@ -82,7 +82,7 @@ void PortfolioModel::on_bbo_quote(
 }
 
 std::size_t std::hash<PortfolioModel::Entry>::operator()(
-    const PortfolioModel::Entry& value) const {
+    const PortfolioModel::Entry& value) const noexcept {
   auto seed = std::size_t(0);
   boost::hash_combine(seed, value.m_account);
   boost::hash_combine(seed, value.m_inventory.m_position.m_ticker);

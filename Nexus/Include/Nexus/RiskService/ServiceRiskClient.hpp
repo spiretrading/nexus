@@ -33,7 +33,7 @@ namespace Nexus {
       ~ServiceRiskClient();
       InventorySnapshot load_inventory_snapshot(
         const Beam::DirectoryEntry& account);
-      void reset(const Region& region);
+      void reset(const Scope& scope);
       const RiskPortfolioUpdatePublisher& get_risk_portfolio_update_publisher();
       void close();
 
@@ -106,11 +106,11 @@ namespace Nexus {
   }
 
   template<typename B>
-  void ServiceRiskClient<B>::reset(const Region& region) {
+  void ServiceRiskClient<B>::reset(const Scope& scope) {
     return Beam::service_or_throw_with_nested([&] {
       auto client = m_client_handler.get_client();
-      client->template send_request<ResetRegionService>(region);
-    }, "Failed to reset region.");
+      client->template send_request<ResetScopeService>(scope);
+    }, "Failed to reset scope.");
   }
 
   template<typename B>

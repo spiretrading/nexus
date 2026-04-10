@@ -348,6 +348,7 @@ bool TagBox::focusNextPrevChild(bool next) {
 
 void TagBox::resizeEvent(QResizeEvent* event) {
   update_overflow();
+  update_placeholder();
   update_tooltip();
   update_vertical_scroll_bar_visible();
   QWidget::resizeEvent(event);
@@ -494,8 +495,13 @@ void TagBox::scroll_to_text_box() {
 void TagBox::update_placeholder() {
   if(m_model->m_source->get_size() == 0) {
     m_text_box->set_placeholder(m_placeholder);
+    auto content_width = width() - horizontal_length(m_input_box_padding) -
+      horizontal_length(m_input_box_border) -
+      horizontal_length(m_list_view_padding);
+    m_text_box->setMinimumWidth(std::max(0, content_width));
   } else {
     m_text_box->set_placeholder("");
+    m_text_box->setMinimumWidth(0);
   }
 }
 

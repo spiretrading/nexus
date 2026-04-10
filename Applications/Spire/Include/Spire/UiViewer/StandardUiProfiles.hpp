@@ -203,20 +203,20 @@ namespace Spire {
   /** Returns a UiProfile for the RadioButton. */
   UiProfile make_radio_button_profile();
 
-  /** Returns a UiProfile for the RegionBox. */
-  UiProfile make_region_box_profile();
-
-  /** Returns a UiProfile for the RegionDropDownBox. */
-  UiProfile make_region_drop_down_box_profile();
-
-  /** Returns a UiProfile for the RegionFilterPanel. */
-  UiProfile make_region_filter_panel_profile();
-
-  /** Returns a UiProfile for the RegionListItem. */
-  UiProfile make_region_list_item_profile();
-
   /** Returns a UiProfile for the ResponsiveLabel. */
   UiProfile make_responsive_label_profile();
+
+  /** Returns a UiProfile for the ScopeBox. */
+  UiProfile make_scope_box_profile();
+
+  /** Returns a UiProfile for the ScopeDropDownBox. */
+  UiProfile make_scope_drop_down_box_profile();
+
+  /** Returns a UiProfile for the ScopeFilterPanel. */
+  UiProfile make_scope_filter_panel_profile();
+
+  /** Returns a UiProfile for the ScopeListItem. */
+  UiProfile make_scope_list_item_profile();
 
   /** Returns a UiProfile for the ScrollBar. */
   UiProfile make_scroll_bar_profile();

@@ -64,7 +64,7 @@ namespace Beam {
 namespace std {
   template <>
   struct hash<Nexus::RiskPortfolioKey> {
-    size_t operator()(const Nexus::RiskPortfolioKey& value) const {
+    size_t operator()(const Nexus::RiskPortfolioKey& value) const noexcept {
       return Nexus::hash_value(value);
     }
   };

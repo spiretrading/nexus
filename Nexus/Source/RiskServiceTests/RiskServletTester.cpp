@@ -205,8 +205,8 @@ TEST_SUITE("RiskServlet") {
         Inventory(Position(SHOP, CAD, 300, 300 * Money::ONE),
           Money::ZERO, 10 * Money::ONE, 300, 1)
       });
-    auto region = Region(SHOP);
-    admin_client->send_request<ResetRegionService>(region);
+    auto scope = Scope(SHOP);
+    admin_client->send_request<ResetScopeService>(scope);
     auto reset_inventories1 = admin_client->send_request<
       LoadInventorySnapshotService>(account1).m_inventories;
     std::sort(reset_inventories1.begin(), reset_inventories1.end(),
@@ -233,8 +233,8 @@ TEST_SUITE("RiskServlet") {
     REQUIRE(reset_inventories2[1].m_fees == Money::ZERO);
     REQUIRE(reset_inventories2[1].m_volume == 0);
     REQUIRE(reset_inventories2[1].m_transaction_count == 0);
-    REQUIRE_THROWS_AS(client1->send_request<ResetRegionService>(region),
-      ServiceRequestException);
+    REQUIRE_THROWS_AS(
+      client1->send_request<ResetScopeService>(scope), ServiceRequestException);
   }
 
   TEST_CASE("subscribe") {

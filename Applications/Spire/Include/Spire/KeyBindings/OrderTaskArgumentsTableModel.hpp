@@ -11,8 +11,8 @@ namespace Spire {
     /** The name column. */
     NAME,
 
-    /** The region column. */
-    REGION,
+    /** The scope column. */
+    SCOPE,
 
     /** The destination column. */
     DESTINATION,

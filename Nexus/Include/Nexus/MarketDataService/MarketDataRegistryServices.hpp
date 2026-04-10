@@ -80,7 +80,7 @@ namespace Nexus {
       TickerTechnicals, (Ticker, ticker)),
 
     /**
-     * Queries for all TickerInfo objects that are within a region.
+     * Queries for all TickerInfo objects that are within a scope.
      * @param ticker The Ticker whose TickerInfo is to be loaded.
      * @return The list of TickerInfo objects that match the <i>query</i>.
      */

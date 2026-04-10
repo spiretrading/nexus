@@ -27,9 +27,9 @@ InteractionsProperties InteractionsProperties::GetDefaultProperties() {
   return properties;
 }
 
-RegionMap<InteractionsProperties> InteractionsProperties::
+ScopeMap<InteractionsProperties> InteractionsProperties::
     GetDefaultPropertiesMap(const UserProfile& userProfile) {
-  RegionMap<InteractionsProperties> propertiesMap("Global",
+  ScopeMap<InteractionsProperties> propertiesMap("Global",
     GetDefaultProperties());
   return propertiesMap;
 }

@@ -43,8 +43,8 @@ namespace {
       return QVariant::fromValue(any_cast<OrderType>(value));
     } else if(value.type() == typeid(PositionSideToken)) {
       return QVariant::fromValue(any_cast<PositionSideToken>(value));
-    } else if(value.type() == typeid(Region)) {
-      return QVariant::fromValue(any_cast<Region>(value));
+    } else if(value.type() == typeid(Scope)) {
+      return QVariant::fromValue(any_cast<Scope>(value));
     } else if(value.type() == typeid(Side)) {
       return QVariant::fromValue(any_cast<Side>(value));
     } else if(value.type() == typeid(Ticker)) {
@@ -111,11 +111,11 @@ QString Spire::LegacyUI::displayText(CountryCode country) {
   return QString::fromStdString(entry.m_three_letter_code.get_data());
 }
 
-QString Spire::LegacyUI::displayText(const Region& region) {
-  if(region.is_global()) {
+QString Spire::LegacyUI::displayText(const Scope& scope) {
+  if(scope.is_global()) {
     return "*";
   }
-  return QString::fromStdString(lexical_cast<std::string>(region));
+  return QString::fromStdString(lexical_cast<std::string>(scope));
 }
 
 const QString& Spire::LegacyUI::displayText(Side side) {
@@ -242,8 +242,8 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return Spire::LegacyUI::displayText(value.value<OrderType>());
   } else if(value.canConvert<PositionSideToken>()) {
     return value.value<PositionSideToken>().ToString();
-  } else if(value.canConvert<Region>()) {
-    return ::displayText(value.value<Region>());
+  } else if(value.canConvert<Scope>()) {
+    return ::displayText(value.value<Scope>());
   } else if(value.canConvert<Side>()) {
     return Spire::LegacyUI::displayText(value.value<Side>());
   } else if(value.canConvert<Ticker>()) {

@@ -32,20 +32,20 @@ def parse_ip_address(source):
   return beam.IpAddress(source[0:separator],
     int(source[separator + 1 :]))
 
-def parse_region(service_clients, region):
-  if region == '*':
-    return nexus.Region.GLOBAL
+def parse_scope(service_clients, scope):
+  if scope == '*':
+    return nexus.Scope.GLOBAL
   venue_database = \
     service_clients.definitions_client.load_venue_database()
   countries = service_clients.definitions_client.load_country_database()
-  region = nexus.parse_country_code(region, countries)
-  if region == nexus.CountryCode.NONE:
-    region = nexus.parse_venue(region)
-    if region:
-      region = venue_database.from_code(region)
+  scope = nexus.parse_country_code(scope, countries)
+  if scope == nexus.CountryCode.NONE:
+    scope = nexus.parse_venue(scope)
+    if scope:
+      scope = venue_database.from_code(scope)
     else:
-      region = nexus.parse_ticker(region)
-  return nexus.Region(region)
+      scope = nexus.parse_ticker(scope)
+  return nexus.Scope(scope)
 
 def cancel_order(service_clients, order, message):
   execution_reports = order.publisher.get_snapshot()
@@ -67,7 +67,7 @@ def cancel_order_by_id(service_clients, order_id, message):
   order = service_clients.order_execution_client.load_order(order_id)
   cancel_order(service_clients, order, message)
 
-def cancel_account(service_clients, account, region, begin, end, message):
+def cancel_account(service_clients, account, scope, begin, end, message):
   venue_database = \
     service_clients.definitions_client.load_venue_database()
   time_zone_database = \
@@ -78,10 +78,10 @@ def cancel_account(service_clients, account, region, begin, end, message):
   orders = []
   beam.flush(queue, orders)
   for order in orders:
-    if nexus.Region(order.info.fields.ticker) <= region:
+    if nexus.Scope(order.info.fields.ticker) <= scope:
       cancel_order(service_clients, order, message)
 
-def cancel_region(service_clients, region, begin, end, message):
+def cancel_scope(service_clients, scope, begin, end, message):
   count = 0
   routines = beam.RoutineHandlerGroup()
   for account in \
@@ -90,7 +90,7 @@ def cancel_region(service_clients, region, begin, end, message):
       count = 0
       routines.wait()
     routines.spawn(functools.partial(cancel_account, service_clients[count],
-      account, region, begin, end, message))
+      account, scope, begin, end, message))
     count += 1
   routines.wait()
 
@@ -103,7 +103,7 @@ def main():
     help='Number of connections', default=(os.cpu_count() // 2))
   parser.add_argument('-o', '--order', type=int, help='Order ID.')
   parser.add_argument('-a', '--account', type=str, help='Account name.')
-  parser.add_argument('-r', '--region', type=str, help='The region to cancel.')
+  parser.add_argument('-r', '--scope', type=str, help='The scope to cancel.')
   parser.add_argument('-b', '--begin', type=parse_date, help='Start date.')
   parser.add_argument('-e', '--end', type=parse_date, help='End date.')
   parser.add_argument('-m', '--message', type=str, help='Cancel message.',
@@ -128,23 +128,23 @@ def main():
   if args.order:
     cancel_order_by_id(service_clients[0], args.order, args.message)
   elif args.account:
-    if args.region:
-      region = parse_region(service_clients[0], args.region)
+    if args.scope:
+      scope = parse_scope(service_clients[0], args.scope)
     else:
-      region = nexus.Region.GLOBAL
+      scope = nexus.Scope.GLOBAL
     account = service_clients[0].service_locator_client.find_account(
       args.account)
     if not account:
       print('Account %s not found.' % args.account)
       return
-    cancel_account(service_clients[0], account, region, args.begin, args.end,
+    cancel_account(service_clients[0], account, scope, args.begin, args.end,
       args.message)
-  elif args.region:
-    cancel_region(service_clients,
-      parse_region(service_clients[0], args.region),
+  elif args.scope:
+    cancel_scope(service_clients,
+      parse_scope(service_clients[0], args.scope),
       args.begin, args.end, args.message)
   else:
-    print('The --account or --region argument is required.')
+    print('The --account or --scope argument is required.')
 
 if __name__ == '__main__':
   main()

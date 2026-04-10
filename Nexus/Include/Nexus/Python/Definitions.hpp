@@ -119,16 +119,16 @@ namespace Nexus::Python {
   void export_quote(pybind11::module& module);
 
   /**
-   * Exports the Region class.
+   * Exports the Scope class.
    * @param module The module to export to.
    */
-  void export_region(pybind11::module& module);
+  void export_scope(pybind11::module& module);
 
   /**
-   * Exports the RegionMap class.
+   * Exports the ScopeMap class.
    * @param module The module to export to.
    */
-  void export_region_map(pybind11::module& module);
+  void export_scope_map(pybind11::module& module);
 
   /**
    * Exports the Ticker class.

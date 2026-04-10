@@ -38,7 +38,7 @@ namespace Nexus::Details {
 
   struct PrimaryListingKey {
     std::string m_symbol;
-    boost::variant<Venue, CountryCode> m_region;
+    boost::variant<Venue, CountryCode> m_scope;
 
     bool operator ==(const PrimaryListingKey&) const = default;
   };
@@ -51,7 +51,7 @@ namespace std {
         const Nexus::Details::PrimaryListingKey& key) const noexcept {
       auto seed = std::size_t(0);
       boost::hash_combine(seed, key.m_symbol);
-      boost::hash_combine(seed, key.m_region);
+      boost::hash_combine(seed, key.m_scope);
       return seed;
     }
   };

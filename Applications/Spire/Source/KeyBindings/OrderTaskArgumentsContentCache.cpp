@@ -30,8 +30,8 @@ const std::vector<QString>& OrderTaskArgumentsContentCache::get(int index) {
   for(auto& name : split(arguments.m_name)) {
     row_words.push_back(name);
   }
-  for(auto& region : ::to_text(arguments.m_region)) {
-    row_words.push_back(region);
+  for(auto& scope : ::to_text(arguments.m_scope)) {
+    row_words.push_back(scope);
   }
   row_words.push_back(QString::fromStdString(
     DEFAULT_DESTINATIONS.from(arguments.m_destination).m_id));
@@ -41,7 +41,7 @@ const std::vector<QString>& OrderTaskArgumentsContentCache::get(int index) {
   row_words.push_back(to_text(arguments.m_time_in_force));
   for(auto& tag : arguments.m_additional_tags) {
     auto schema = find(m_additional_tags, arguments.m_destination,
-      arguments.m_region, tag.m_key);
+      arguments.m_scope, tag.m_key);
     row_words.push_back(QString::fromStdString(schema->get_name()));
   }
   for(auto& name : split(arguments.m_key.toString().replace('+', ' '))) {

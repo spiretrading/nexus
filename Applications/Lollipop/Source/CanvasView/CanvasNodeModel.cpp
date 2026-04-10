@@ -144,7 +144,7 @@ std::ostream& Spire::operator <<(
 }
 
 size_t std::hash<CanvasNodeModel::Coordinate>::operator()(
-    const CanvasNodeModel::Coordinate& value) const {
+    const CanvasNodeModel::Coordinate& value) const noexcept {
   auto seed = std::size_t(0);
   hash_combine(seed, value.m_row);
   hash_combine(seed, value.m_column);

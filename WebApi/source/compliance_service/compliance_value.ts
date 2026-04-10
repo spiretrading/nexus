@@ -1,5 +1,5 @@
 import * as Beam from 'beam';
-import { Currency, Money, Region, Ticker, Venue } from '..';
+import { Currency, Money, Scope, Ticker, Venue } from '..';
 
 /** Used to represent one of the various types of values used by a
  *  ComplianceParameter.
@@ -29,8 +29,8 @@ export class ComplianceValue {
         return Ticker.fromJson(value.value);
       } else if(value.which === ComplianceValue.Type.VENUE) {
         return Venue.fromJson(value.value);
-      } else if(value.which === ComplianceValue.Type.REGION) {
-        return Region.fromJson(value.value);
+      } else if(value.which === ComplianceValue.Type.SCOPE) {
+        return Scope.fromJson(value.value);
       } else if(value.which === ComplianceValue.Type.LIST) {
         return Beam.arrayFromJson(ComplianceValue, value.value);
       }
@@ -125,8 +125,8 @@ export module ComplianceValue {
     /** Resolves to a Venue. */
     VENUE = 10,
 
-    /** Resolves to a Region. */
-    REGION = 11,
+    /** Resolves to a Scope. */
+    SCOPE = 11,
 
     /** Resolves to a list of ComplianceValues. */
     LIST = 12

@@ -595,7 +595,7 @@ namespace Beam {
 namespace std {
   template<>
   struct hash<Nexus::Venue> {
-    std::size_t operator ()(Nexus::Venue venue) const {
+    std::size_t operator ()(Nexus::Venue venue) const noexcept {
       return hash_value(venue);
     }
   };

@@ -1,7 +1,7 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Checkbox, CurrencySelect, DateTimeInput, DecimalInput, DisplaySize,
-  Input, MoneyInput, RegionInput, TickersInput,
+  Input, MoneyInput, ScopeInput, TickersInput,
   TimeOfDayInput } from '../../..';
 
 interface Properties {
@@ -101,8 +101,8 @@ export class ParameterEntry extends React.Component<Properties> {
               this.onChange(values[0])}
             value={this.props.parameter.value.value ?
               [this.props.parameter.value.value] : []}/>;
-        case Nexus.ComplianceValue.Type.REGION:
-          return <RegionInput
+        case Nexus.ComplianceValue.Type.SCOPE:
+          return <ScopeInput
             displaySize={this.props.displaySize}
             readOnly={this.props.readonly}
             onChange={this.onChange}
