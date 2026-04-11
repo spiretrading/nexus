@@ -9,7 +9,6 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/VirtualPtr.hpp>
 #include "Nexus/Definitions/TickerInfo.hpp"
-#include "Nexus/Definitions/TickerTechnicals.hpp"
 #include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Nexus/MarketDataService/VenueQuery.hpp"
 

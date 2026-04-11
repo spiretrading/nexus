@@ -482,53 +482,53 @@ TEST_SUITE("DistributedMarketDataClient") {
     }
   }
 
-  TEST_CASE("load_technicals") {
+  TEST_CASE("load_session_candlestick") {
     auto fixture = Fixture();
 
     SUBCASE("exact") {
       auto ticker = parse_ticker("ABC.TSX");
       auto operations = fixture.m_operations.get(TSX);
       auto result = std::async(std::launch::async, [&] {
-        return fixture.m_client.load_technicals(ticker);
+        return fixture.m_client.load_session_candlestick(ticker);
       });
       auto received_operation = require_operation<
-        TestMarketDataClient::LoadTickerTechnicalsOperation>(operations->pop());
+        TestMarketDataClient::LoadSessionCandlestickOperation>(
+          operations->pop());
       REQUIRE(received_operation->m_ticker == ticker);
-      auto test_technicals = TickerTechnicals();
-      test_technicals.m_close = Money::ONE;
-      test_technicals.m_high = 2 * Money::ONE;
-      test_technicals.m_low = Money::CENT;
-      test_technicals.m_open = Money::ONE + Money::CENT;
-      test_technicals.m_volume = 100;
-      received_operation->m_result.set(test_technicals);
-      auto received_technicals = result.get();
-      test_json_equality(received_technicals, test_technicals);
+      auto test_candlestick = PriceCandlestick();
+      test_candlestick.update(Money::ONE + Money::CENT);
+      test_candlestick.update(2 * Money::ONE, 100);
+      test_candlestick.update(Money::CENT);
+      test_candlestick.update(Money::ONE);
+      received_operation->m_result.set(test_candlestick);
+      auto received_candlestick = result.get();
+      test_json_equality(received_candlestick, test_candlestick);
     }
 
     SUBCASE("parent") {
       auto ticker = parse_ticker("S32.ASX");
       auto operations = fixture.m_operations.get(ASX);
       auto result = std::async(std::launch::async, [&] {
-        return fixture.m_client.load_technicals(ticker);
+        return fixture.m_client.load_session_candlestick(ticker);
       });
       auto received_operation = require_operation<
-        TestMarketDataClient::LoadTickerTechnicalsOperation>(operations->pop());
+        TestMarketDataClient::LoadSessionCandlestickOperation>(
+          operations->pop());
       REQUIRE(received_operation->m_ticker == ticker);
-      auto test_technicals = TickerTechnicals();
-      test_technicals.m_close = 150 * Money::ONE;
-      test_technicals.m_high = 152 * Money::ONE;
-      test_technicals.m_low = 148 * Money::ONE;
-      test_technicals.m_open = 151 * Money::ONE;
-      test_technicals.m_volume = 10000;
-      received_operation->m_result.set(test_technicals);
-      auto received_technicals = result.get();
-      test_json_equality(received_technicals, test_technicals);
+      auto test_candlestick = PriceCandlestick();
+      test_candlestick.update(151 * Money::ONE);
+      test_candlestick.update(152 * Money::ONE, 10000);
+      test_candlestick.update(148 * Money::ONE);
+      test_candlestick.update(150 * Money::ONE);
+      received_operation->m_result.set(test_candlestick);
+      auto received_candlestick = result.get();
+      test_json_equality(received_candlestick, test_candlestick);
     }
 
     SUBCASE("unavailable") {
       auto ticker = parse_ticker("BHP.TSXV");
-      auto technicals = fixture.m_client.load_technicals(ticker);
-      test_json_equality(technicals, TickerTechnicals());
+      auto candlestick = fixture.m_client.load_session_candlestick(ticker);
+      test_json_equality(candlestick, PriceCandlestick());
     }
   }
 

@@ -22,7 +22,6 @@
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/TickerInfo.hpp"
-#include "Nexus/Definitions/TickerTechnicals.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Nexus/Definitions/TradingSchedule.hpp"
@@ -244,7 +243,6 @@ void Nexus::Python::export_definitions(module& module) {
   export_scope_map(module);
   export_ticker(module);
   export_ticker_info(module);
-  export_ticker_technicals(module);
   export_side(module);
   export_tag(module);
   export_time_and_sale(module);
@@ -533,15 +531,6 @@ void Nexus::Python::export_ticker_info(module& module) {
     def_readwrite("name", &TickerInfo::m_name).
     def_readwrite("sector", &TickerInfo::m_sector).
     def_readwrite("board_lot", &TickerInfo::m_board_lot);
-}
-
-void Nexus::Python::export_ticker_technicals(module& module) {
-  export_default_methods(class_<TickerTechnicals>(module, "TickerTechnicals")).
-    def_readwrite("volume", &TickerTechnicals::m_volume).
-    def_readwrite("high", &TickerTechnicals::m_high).
-    def_readwrite("low", &TickerTechnicals::m_low).
-    def_readwrite("open", &TickerTechnicals::m_open).
-    def_readwrite("close", &TickerTechnicals::m_close);
 }
 
 void Nexus::Python::export_side(module& module) {

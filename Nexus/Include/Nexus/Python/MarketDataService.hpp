@@ -150,7 +150,7 @@ namespace Nexus::Python {
       def("query_ticker_info",
         pybind11::overload_cast<const TickerInfoQuery&>(&C::query)).
       def("load_snapshot", &C::load_snapshot).
-      def("load_technicals", &C::load_technicals).
+      def("load_session_candlestick", &C::load_session_candlestick).
       def("load_ticker_info_from_prefix", &C::load_ticker_info_from_prefix).
       def("close", &C::close);
     if constexpr(!std::is_same_v<C, MarketDataClient>) {

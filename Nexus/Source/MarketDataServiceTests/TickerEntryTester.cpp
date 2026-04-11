@@ -144,17 +144,17 @@ TEST_SUITE("TickerEntry") {
     REQUIRE(**entry.get_bbo_quote() == expected_snapshot.m_bbo_quote);
   }
 
-  TEST_CASE("technicals") {
+  TEST_CASE("session_candlestick") {
     auto initial_sequences = TickerEntry::InitialSequences();
     auto ticker = parse_ticker("TST.TSX");
     auto entry = TickerEntry(ticker, DEFAULT_VENUES,
       get_default_time_zone_database(), Money::ONE, initial_sequences);
-    auto technicals1 = entry.get_ticker_technicals();
-    REQUIRE(technicals1.m_close == Money::ONE);
-    REQUIRE(technicals1.m_open == Money::ZERO);
-    REQUIRE(technicals1.m_high == Money::ZERO);
-    REQUIRE(technicals1.m_low == Money::ZERO);
-    REQUIRE(technicals1.m_volume == 0);
+    auto& candlestick1 = entry.get_session_candlestick();
+    REQUIRE(candlestick1.get_close() == Money::ONE);
+    REQUIRE(candlestick1.get_open() == Money::ONE);
+    REQUIRE(candlestick1.get_high() == Money::ONE);
+    REQUIRE(candlestick1.get_low() == Money::ONE);
+    REQUIRE(candlestick1.get_volume() == 0);
     entry.publish(BboQuote(make_bid(Money::ONE, 100),
       make_ask(Money::ONE + Money::CENT, 100),
       time_from_string("2024-07-11 09:30:00")), 1);
@@ -162,43 +162,43 @@ TEST_SUITE("TickerEntry") {
       Money::ONE + 5 * Money::CENT, 100, TimeAndSale::Condition(), "TSE", "",
       "");
     entry.publish(ts1, 1);
-    auto technicals2 = entry.get_ticker_technicals();
-    REQUIRE(technicals2.m_close == Money::ONE);
-    REQUIRE(technicals2.m_open == Money::ONE + 5 * Money::CENT);
-    REQUIRE(technicals2.m_high == Money::ONE + 5 * Money::CENT);
-    REQUIRE(technicals2.m_low == Money::ONE + 5 * Money::CENT);
-    REQUIRE(technicals2.m_volume == 100);
+    auto& candlestick2 = entry.get_session_candlestick();
+    REQUIRE(candlestick2.get_close() == Money::ONE + 5 * Money::CENT);
+    REQUIRE(candlestick2.get_open() == Money::ONE);
+    REQUIRE(candlestick2.get_high() == Money::ONE + 5 * Money::CENT);
+    REQUIRE(candlestick2.get_low() == Money::ONE);
+    REQUIRE(candlestick2.get_volume() == 100);
     auto ts2 = TimeAndSale(time_from_string("2024-07-11 09:30:02"),
       Money::ONE + 10 * Money::CENT, 200, TimeAndSale::Condition(), "TSE", "",
       "");
     entry.publish(ts2, 1);
-    auto technicals3 = entry.get_ticker_technicals();
-    REQUIRE(technicals3.m_high == Money::ONE + 10 * Money::CENT);
-    REQUIRE(technicals3.m_volume == 300);
+    auto& candlestick3 = entry.get_session_candlestick();
+    REQUIRE(candlestick3.get_high() == Money::ONE + 10 * Money::CENT);
+    REQUIRE(candlestick3.get_volume() == 300);
     auto ts3 = TimeAndSale(time_from_string("2024-07-11 09:30:03"),
       Money::ONE + 7 * Money::CENT, 50, TimeAndSale::Condition(), "TSE", "",
       "");
     entry.publish(ts3, 1);
-    auto technicals4 = entry.get_ticker_technicals();
-    REQUIRE(technicals4.m_high == Money::ONE + 10 * Money::CENT);
-    REQUIRE(technicals4.m_low == Money::ONE + 5 * Money::CENT);
-    REQUIRE(technicals4.m_volume == 350);
+    auto& candlestick4 = entry.get_session_candlestick();
+    REQUIRE(candlestick4.get_high() == Money::ONE + 10 * Money::CENT);
+    REQUIRE(candlestick4.get_low() == Money::ONE);
+    REQUIRE(candlestick4.get_volume() == 350);
     auto ts4 = TimeAndSale(time_from_string("2024-07-11 09:30:04"),
       Money::ONE + 2 * Money::CENT, 150, TimeAndSale::Condition(), "TSE", "",
       "");
     entry.publish(ts4, 1);
-    auto technicals5 = entry.get_ticker_technicals();
-    REQUIRE(technicals5.m_low == Money::ONE + 2 * Money::CENT);
-    REQUIRE(technicals5.m_volume == 500);
+    auto& candlestick5 = entry.get_session_candlestick();
+    REQUIRE(candlestick5.get_low() == Money::ONE);
+    REQUIRE(candlestick5.get_volume() == 500);
     entry.publish(BboQuote(make_bid(Money::ONE, 100),
       make_ask(Money::ONE + Money::CENT, 100),
       time_from_string("2024-07-12 09:30:00")), 1);
-    auto technicals6 = entry.get_ticker_technicals();
-    REQUIRE(technicals6.m_close == Money::ONE + 2 * Money::CENT);
-    REQUIRE(technicals6.m_open == Money::ZERO);
-    REQUIRE(technicals6.m_high == Money::ZERO);
-    REQUIRE(technicals6.m_low == Money::ZERO);
-    REQUIRE(technicals6.m_volume == 0);
+    auto& candlestick6 = entry.get_session_candlestick();
+    REQUIRE(candlestick6.get_close() == Money::ONE + 2 * Money::CENT);
+    REQUIRE(candlestick6.get_open() == Money::ONE + 2 * Money::CENT);
+    REQUIRE(candlestick6.get_high() == Money::ONE + 2 * Money::CENT);
+    REQUIRE(candlestick6.get_low() == Money::ONE + 2 * Money::CENT);
+    REQUIRE(candlestick6.get_volume() == 0);
   }
 
   TEST_CASE("load_initial_sequences") {

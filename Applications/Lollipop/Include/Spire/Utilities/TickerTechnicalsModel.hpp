@@ -7,7 +7,6 @@
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Async/QtPromise.hpp"
 #include "Spire/UI/UI.hpp"
-#include "Spire/Utilities/Utilities.hpp"
 
 namespace Spire {
 

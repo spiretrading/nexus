@@ -1,6 +1,7 @@
 #ifndef SPIRE_TRANSFORM_VALUE_MODEL_HPP
 #define SPIRE_TRANSFORM_VALUE_MODEL_HPP
 #include <concepts>
+#include <functional>
 #include <memory>
 #include <type_traits>
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -146,7 +147,7 @@ namespace Details {
       : m_source(std::move(source)),
         m_f(std::forward<FF>(f)),
         m_g(std::forward<GG>(g)),
-        m_model(m_f(m_source->get())) {
+        m_model(std::invoke(m_f, m_source->get())) {
     m_connection = m_source->connect_update_signal(
       std::bind_front(&TransformValueModel::on_update, this));
   }
@@ -190,7 +191,7 @@ namespace Details {
 
   template<typename T, typename U, std::invocable<U> F, typename G>
   void TransformValueModel<T, U, F, G>::on_update(const Source& value) {
-    m_model.set(m_f(value));
+    m_model.set(std::invoke(m_f, value));
   }
 }
 

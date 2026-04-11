@@ -8,7 +8,6 @@
 #include "Spire/Async/QtPromise.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Utilities/Utilities.hpp"
 
 namespace Spire {
 

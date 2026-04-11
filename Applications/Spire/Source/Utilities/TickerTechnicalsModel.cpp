@@ -1,5 +1,6 @@
 #include "Spire/Utilities/TickerTechnicalsModel.hpp"
 #include <QTimer>
+#include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
@@ -124,27 +125,27 @@ TickerTechnicalsModel::TickerTechnicalsModel(
     timeAndSaleQuery, m_eventHandler.get_slot<TimeAndSale>(
       std::bind_front(&TickerTechnicalsModel::OnTimeAndSale, this)));
   m_loadPromise = std::make_shared<QtPromise<void>>(QtPromise([=] {
-    return userProfile->GetClients().get_market_data_client().load_technicals(
-      ticker);
-  }, LaunchPolicy::ASYNC).then([=] (const TickerTechnicals& technicals) {
-    if(technicals.m_open != Money::ZERO) {
-      m_open = technicals.m_open;
+    return userProfile->GetClients().get_market_data_client().
+      load_session_candlestick(ticker);
+  }, LaunchPolicy::ASYNC).then([=] (const PriceCandlestick& candlestick) {
+    if(candlestick.get_open() != Money::ZERO) {
+      m_open = candlestick.get_open();
       m_openSignal(m_open);
     }
-    if(technicals.m_close != Money::ZERO) {
-      m_close = technicals.m_close;
+    if(candlestick.get_close() != Money::ZERO) {
+      m_close = candlestick.get_close();
       m_closeSignal(m_close);
     }
-    if(technicals.m_high != Money::ZERO) {
-      m_high = technicals.m_high;
+    if(candlestick.get_high() != Money::ZERO) {
+      m_high = candlestick.get_high();
       m_highSignal(m_high);
     }
-    if(technicals.m_low != Money::ZERO) {
-      m_low = technicals.m_low;
+    if(candlestick.get_low() != Money::ZERO) {
+      m_low = candlestick.get_low();
       m_lowSignal(m_low);
     }
-    if(technicals.m_volume != 0) {
-      m_volume = technicals.m_volume;
+    if(candlestick.get_volume() != 0) {
+      m_volume = candlestick.get_volume();
       m_volumeSignal(m_volume);
     }
     m_loadPromise = nullptr;

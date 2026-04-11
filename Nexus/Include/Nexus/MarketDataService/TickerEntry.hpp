@@ -3,11 +3,11 @@
 #include <Beam/Queries/Sequencer.hpp>
 #include <boost/date_time/local_time/tz_database.hpp>
 #include <boost/optional/optional.hpp>
-#include "Nexus/Definitions/TickerTechnicals.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Nexus/MarketDataService/TickerSnapshot.hpp"
 #include "Nexus/MarketDataService/VenueQuery.hpp"
+#include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
 
 namespace Nexus {
 
@@ -46,8 +46,8 @@ namespace Nexus {
       /** Sets the Ticker. */
       void set_ticker(const Ticker& ticker);
 
-      /** Returns the TickerTechnicals. */
-      const TickerTechnicals& get_ticker_technicals() const;
+      /** Returns the session candlestick. */
+      const PriceCandlestick& get_session_candlestick() const;
 
       /**
        * Returns the Ticker's current snapshot.
@@ -104,10 +104,10 @@ namespace Nexus {
       Beam::Sequencer m_bbo_sequencer;
       Beam::Sequencer m_book_quote_sequencer;
       Beam::Sequencer m_time_and_sale_sequencer;
-      TickerTechnicals m_technicals;
+      PriceCandlestick m_session_candlestick;
       std::string m_market_center;
       Money m_next_close;
-      boost::posix_time::ptime m_technicals_reset_time;
+      boost::posix_time::ptime m_session_reset_time;
       SequencedTickerBboQuote m_bbo_quote;
       SequencedTickerTimeAndSale m_time_and_sale;
       std::vector<BookQuoteEntry> m_asks;
@@ -180,7 +180,7 @@ namespace Nexus {
     if(m_market_center.empty()) {
       m_market_center = m_ticker.get_venue().get_code().get_data();
     }
-    m_technicals.m_close = close;
+    m_session_candlestick.update(close);
   }
 
   inline const Ticker& TickerEntry::get_ticker() const {
@@ -191,8 +191,8 @@ namespace Nexus {
     m_ticker = ticker;
   }
 
-  inline const TickerTechnicals& TickerEntry::get_ticker_technicals() const {
-    return m_technicals;
+  inline const PriceCandlestick& TickerEntry::get_session_candlestick() const {
+    return m_session_candlestick;
   }
 
   inline boost::optional<TickerSnapshot> TickerEntry::load_snapshot() const {
@@ -221,7 +221,7 @@ namespace Nexus {
 
   inline boost::optional<SequencedTickerBboQuote> TickerEntry::publish(
       const BboQuote& bbo_quote, int source_id) {
-    if(m_technicals_reset_time == boost::posix_time::not_a_date_time) {
+    if(m_session_reset_time == boost::posix_time::not_a_date_time) {
       auto& venue_entry = m_venues.from(m_ticker.get_venue());
       if(venue_entry.m_venue) {
         auto time_zone =
@@ -229,22 +229,19 @@ namespace Nexus {
         auto reset_time = boost::local_time::local_date_time(
           bbo_quote.m_timestamp, time_zone) + boost::gregorian::days(1);
         reset_time -= reset_time.local_time().time_of_day();
-        m_technicals_reset_time = reset_time.utc_time();
+        m_session_reset_time = reset_time.utc_time();
       } else {
-        m_technicals_reset_time = boost::posix_time::pos_infin;
+        m_session_reset_time = boost::posix_time::pos_infin;
       }
     }
-    if(bbo_quote.m_timestamp >= m_technicals_reset_time) {
-      m_technicals.m_volume = 0;
-      m_technicals.m_high = Money::ZERO;
-      m_technicals.m_low = Money::ZERO;
-      m_technicals.m_open = Money::ZERO;
-      m_technicals.m_close = m_next_close;
-      auto delta =
-        bbo_quote.m_timestamp.date() - m_technicals_reset_time.date();
-      m_technicals_reset_time += delta;
-      if(m_technicals_reset_time <= bbo_quote.m_timestamp) {
-        m_technicals_reset_time += boost::gregorian::days(1);
+    if(bbo_quote.m_timestamp >= m_session_reset_time) {
+      auto close = m_next_close;
+      m_session_candlestick = PriceCandlestick();
+      m_session_candlestick.update(close);
+      auto delta = bbo_quote.m_timestamp.date() - m_session_reset_time.date();
+      m_session_reset_time += delta;
+      if(m_session_reset_time <= bbo_quote.m_timestamp) {
+        m_session_reset_time += boost::gregorian::days(1);
       }
     }
     auto value = m_bbo_sequencer.make_sequenced_value(bbo_quote, m_ticker);
@@ -297,18 +294,7 @@ namespace Nexus {
 
   inline boost::optional<SequencedTickerTimeAndSale>
       TickerEntry::publish(const TimeAndSale& time_and_sale, int source_id) {
-    if(m_technicals.m_open == Money::ZERO) {
-      m_technicals.m_open = time_and_sale.m_price;
-    }
-    if(m_technicals.m_high == Money::ZERO ||
-        time_and_sale.m_price > m_technicals.m_high) {
-      m_technicals.m_high = time_and_sale.m_price;
-    }
-    if(m_technicals.m_low == Money::ZERO ||
-        time_and_sale.m_price < m_technicals.m_low) {
-      m_technicals.m_low = time_and_sale.m_price;
-    }
-    m_technicals.m_volume += time_and_sale.m_size;
+    m_session_candlestick.update(time_and_sale.m_price, time_and_sale.m_size);
     if(time_and_sale.m_market_center == m_market_center) {
       m_next_close = time_and_sale.m_price;
     }
