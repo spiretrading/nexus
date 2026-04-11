@@ -17,17 +17,17 @@ namespace Nexus {
   /** Stores an update to a Portfolio's snapshot. */
   struct PortfolioUpdateEntry {
 
-    /** The updated Ticker Inventory. */
-    Inventory m_ticker_inventory;
+    /** The updated Inventory. */
+    Inventory m_inventory;
 
-    /** The updated unrealized gross earnings for the Ticker. */
-    Money m_unrealized_ticker;
+    /** The updated unrealized gross earnings. */
+    Money m_unrealized;
 
     /** The updated Currency Inventory. */
     Inventory m_currency_inventory;
 
-    /** The updated unrealized gross earnings for the Currency. */
-    Money m_unrealized_currency;
+    /** The updated currency unrealized gross earnings. */
+    Money m_currency_unrealized;
   };
 
   /** Stores the valuation used for a Ticker. */
@@ -263,12 +263,12 @@ namespace Nexus {
       auto& ticker = ticker_entry_pair.first;
       auto& ticker_entry = ticker_entry_pair.second;
       auto update = PortfolioUpdateEntry();
-      update.m_ticker_inventory = portfolio.get_bookkeeper().get_inventory(
+      update.m_inventory = portfolio.get_bookkeeper().get_inventory(
         ticker);
-      if(is_empty(update.m_ticker_inventory)) {
+      if(is_empty(update.m_inventory)) {
         continue;
       }
-      update.m_unrealized_ticker = ticker_entry.m_unrealized;
+      update.m_unrealized = ticker_entry.m_unrealized;
       update.m_currency_inventory = portfolio.get_bookkeeper().get_total(
         ticker_entry.m_valuation.m_currency);
       auto unrealized_currency_iterator =
@@ -276,9 +276,9 @@ namespace Nexus {
           ticker_entry.m_valuation.m_currency);
       if(unrealized_currency_iterator ==
           portfolio.get_unrealized_profit_and_losses().end()) {
-        update.m_unrealized_currency = Money::ZERO;
+        update.m_currency_unrealized = Money::ZERO;
       } else {
-        update.m_unrealized_currency = unrealized_currency_iterator->second;
+        update.m_currency_unrealized = unrealized_currency_iterator->second;
       }
       f(std::move(update));
     }
@@ -286,9 +286,9 @@ namespace Nexus {
 
   inline std::ostream& operator <<(
       std::ostream& out, const PortfolioUpdateEntry& entry) {
-    return out << '(' << entry.m_ticker_inventory << ' ' <<
-      entry.m_unrealized_ticker << ' ' << entry.m_currency_inventory << ' ' <<
-      entry.m_unrealized_currency << ')';
+    return out << '(' << entry.m_inventory << ' ' <<
+      entry.m_unrealized << ' ' << entry.m_currency_inventory << ' ' <<
+      entry.m_currency_unrealized << ')';
   }
 
   inline std::ostream& operator <<(
@@ -452,10 +452,10 @@ namespace Beam {
     template<IsShuttle S>
     void operator ()(S& shuttle, Nexus::PortfolioUpdateEntry& value,
         unsigned int version) const {
-      shuttle.shuttle("ticker_inventory", value.m_ticker_inventory);
-      shuttle.shuttle("unrealized_ticker", value.m_unrealized_ticker);
+      shuttle.shuttle("inventory", value.m_inventory);
+      shuttle.shuttle("unrealized", value.m_unrealized);
       shuttle.shuttle("currency_inventory", value.m_currency_inventory);
-      shuttle.shuttle("unrealized_currency", value.m_unrealized_currency);
+      shuttle.shuttle("currency_unrealized", value.m_currency_unrealized);
     }
   };
 

@@ -247,9 +247,8 @@ namespace Nexus {
             IsRiskDataStore<Beam::dereference_t<D>>
   void ConsolidatedRiskController<A, M, O, R, T, D>::on_portfolio_entry(
       const Beam::DirectoryEntry& account, const PortfolioUpdateEntry& entry) {
-    auto key = RiskPortfolioKey(
-      account, entry.m_ticker_inventory.m_position.m_ticker);
-    m_portfolio_publisher.push(std::move(key), entry.m_ticker_inventory);
+    auto key = RiskPortfolioKey(account, entry.m_inventory.m_position.m_ticker);
+    m_portfolio_publisher.push(std::move(key), entry.m_inventory);
   }
 }
 

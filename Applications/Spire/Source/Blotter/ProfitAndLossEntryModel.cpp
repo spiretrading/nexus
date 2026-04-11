@@ -29,12 +29,12 @@ const CurrencyDatabase::Entry& ProfitAndLossEntryModel::GetCurrency() const {
 
 void ProfitAndLossEntryModel::OnPortfolioUpdate(
     const PortfolioUpdateEntry& update) {
-  auto& ticker = update.m_ticker_inventory.m_position.m_ticker;
+  auto& ticker = update.m_inventory.m_position.m_ticker;
   Money currencyProfitAndLoss =
     update.m_currency_inventory.m_gross_profit_and_loss -
     update.m_currency_inventory.m_fees;
   if(m_showUnrealized) {
-    currencyProfitAndLoss += update.m_unrealized_currency;
+    currencyProfitAndLoss += update.m_currency_unrealized;
   }
   m_profitAndLossSignal(currencyProfitAndLoss);
   auto entryIterator = m_tickerToEntry.find(ticker);
@@ -48,12 +48,12 @@ void ProfitAndLossEntryModel::OnPortfolioUpdate(
   }
   Entry& entry = *entryIterator->second;
   m_volume -= entry.m_volume;
-  entry.m_profitAndLoss = update.m_unrealized_ticker +
-    update.m_ticker_inventory.m_gross_profit_and_loss -
-    update.m_ticker_inventory.m_fees;
-  entry.m_fees = update.m_ticker_inventory.m_fees;
-  entry.m_volume = update.m_ticker_inventory.m_volume;
-  entry.m_previousQuantity = update.m_ticker_inventory.m_position.m_quantity;
+  entry.m_profitAndLoss = update.m_unrealized +
+    update.m_inventory.m_gross_profit_and_loss -
+    update.m_inventory.m_fees;
+  entry.m_fees = update.m_inventory.m_fees;
+  entry.m_volume = update.m_inventory.m_volume;
+  entry.m_previousQuantity = update.m_inventory.m_position.m_quantity;
   int entryIndex =
     static_cast<int>(Beam::find(m_entries, entry) - m_entries.begin());
   m_volume += entry.m_volume;

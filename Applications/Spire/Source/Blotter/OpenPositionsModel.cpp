@@ -112,10 +112,10 @@ QVariant OpenPositionsModel::headerData(
 }
 
 void OpenPositionsModel::OnPortfolioUpdate(const PortfolioUpdateEntry& update) {
-  auto& ticker = update.m_ticker_inventory.m_position.m_ticker;
+  auto& ticker = update.m_inventory.m_position.m_ticker;
   auto entryIterator = m_tickerToEntry.find(ticker);
   if(entryIterator == m_tickerToEntry.end()) {
-    if(update.m_ticker_inventory.m_position.m_quantity == 0) {
+    if(update.m_inventory.m_position.m_quantity == 0) {
       return;
     }
     auto index = static_cast<int>(m_entries.size());
@@ -127,8 +127,8 @@ void OpenPositionsModel::OnPortfolioUpdate(const PortfolioUpdateEntry& update) {
     endInsertRows();
   }
   auto& entry = *entryIterator->second;
-  entry.m_inventory = update.m_ticker_inventory;
-  entry.m_unrealizedEarnings = update.m_unrealized_ticker;
+  entry.m_inventory = update.m_inventory;
+  entry.m_unrealizedEarnings = update.m_unrealized;
   Q_EMIT dataChanged(
     index(entry.m_index, 0), index(entry.m_index, COLUMNS - 1));
   if(entry.m_inventory.m_position.m_quantity == 0) {

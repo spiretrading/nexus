@@ -304,12 +304,12 @@ void BlotterWindow::OnActiveBlotterChanged(BlotterModel& blotter) {
 void BlotterWindow::OnProfitAndLossUpdate(const PortfolioUpdateEntry& update) {
   m_totalProfitAndLossLabel->SetValue(QVariant::fromValue(
     update.m_currency_inventory.m_gross_profit_and_loss -
-    update.m_currency_inventory.m_fees + update.m_unrealized_currency));
+    update.m_currency_inventory.m_fees + update.m_currency_unrealized));
   m_realizedProfitAndLossLabel->SetValue(QVariant::fromValue(
     update.m_currency_inventory.m_gross_profit_and_loss -
     update.m_currency_inventory.m_fees));
   m_unrealizedProfitAndLossLabel->SetValue(QVariant::fromValue(
-    update.m_unrealized_currency));
+    update.m_currency_unrealized));
   m_feesLabel->SetValue(
     QVariant::fromValue(update.m_currency_inventory.m_fees));
   m_costBasisLabel->SetValue(QVariant::fromValue(

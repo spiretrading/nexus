@@ -130,10 +130,10 @@ TEST_SUITE("Portfolio") {
     auto update_count = 0;
     for_each(portfolio, [&] (const auto& update) {
       ++update_count;
-      REQUIRE(update.m_ticker_inventory.m_position.m_quantity == 100);
-      REQUIRE(update.m_unrealized_ticker == 100 * Money::ONE);
+      REQUIRE(update.m_inventory.m_position.m_quantity == 100);
+      REQUIRE(update.m_unrealized == 100 * Money::ONE);
       REQUIRE(update.m_currency_inventory.m_position.m_quantity == 100);
-      REQUIRE(update.m_unrealized_currency == 100 * Money::ONE);
+      REQUIRE(update.m_currency_unrealized == 100 * Money::ONE);
     });
     REQUIRE(update_count == 1);
   }

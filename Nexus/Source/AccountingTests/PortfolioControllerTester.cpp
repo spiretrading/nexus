@@ -75,10 +75,9 @@ TEST_SUITE("PortfolioController") {
     auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_publisher().monitor(updates);
     auto update = updates->pop();
-    REQUIRE(update.m_ticker_inventory.m_position.m_ticker == TST);
-    REQUIRE(update.m_ticker_inventory.m_position.m_quantity == 100);
-    REQUIRE(
-      update.m_ticker_inventory.m_position.m_cost_basis == 100 * Money::ONE);
+    REQUIRE(update.m_inventory.m_position.m_ticker == TST);
+    REQUIRE(update.m_inventory.m_position.m_quantity == 100);
+    REQUIRE(update.m_inventory.m_position.m_cost_basis == 100 * Money::ONE);
   }
 
   TEST_CASE("multiple_orders_multiple_tickers") {
@@ -108,10 +107,9 @@ TEST_SUITE("PortfolioController") {
     accept(*order1, timestamp + seconds(1));
     fill(*order1, 50, timestamp + seconds(2));
     auto update1 = updates->pop();
-    REQUIRE(update1.m_ticker_inventory.m_position.m_ticker == ticker1);
-    REQUIRE(update1.m_ticker_inventory.m_position.m_quantity == 50);
-    REQUIRE(
-      update1.m_ticker_inventory.m_position.m_cost_basis == 50 * Money::ONE);
+    REQUIRE(update1.m_inventory.m_position.m_ticker == ticker1);
+    REQUIRE(update1.m_inventory.m_position.m_quantity == 50);
+    REQUIRE(update1.m_inventory.m_position.m_cost_basis == 50 * Money::ONE);
     auto fields2 =
       make_limit_order_fields(ticker2, CAD, Side::BID, "TSX", 75, Money::ONE);
     auto info2 = OrderInfo(fields2, 2, false, timestamp);
@@ -121,10 +119,9 @@ TEST_SUITE("PortfolioController") {
     fill(*order2, 75, timestamp + seconds(2));
     order_queue->close();
     auto update2 = updates->pop();
-    REQUIRE(update2.m_ticker_inventory.m_position.m_ticker == ticker2);
-    REQUIRE(update2.m_ticker_inventory.m_position.m_quantity == 75);
-    REQUIRE(
-      update2.m_ticker_inventory.m_position.m_cost_basis == 75 * Money::ONE);
+    REQUIRE(update2.m_inventory.m_position.m_ticker == ticker2);
+    REQUIRE(update2.m_inventory.m_position.m_quantity == 75);
+    REQUIRE(update2.m_inventory.m_position.m_cost_basis == 75 * Money::ONE);
   }
 
   TEST_CASE("bbo_quote_update_triggers_portfolio_update") {
@@ -151,12 +148,10 @@ TEST_SUITE("PortfolioController") {
     fixture.m_market_data_environment.get_feed_client().publish(
       TickerBboQuote(new_bbo, TST));
     auto bbo_update = updates->pop();
-    REQUIRE(bbo_update.m_ticker_inventory.m_position.m_ticker == TST);
-    REQUIRE(bbo_update.m_ticker_inventory.m_position.m_quantity == 100);
-    REQUIRE(
-      bbo_update.m_unrealized_ticker != initial_update.m_unrealized_ticker);
-    REQUIRE(bbo_update.m_ticker_inventory.m_position.m_cost_basis ==
-      100 * Money::ONE);
+    REQUIRE(bbo_update.m_inventory.m_position.m_ticker == TST);
+    REQUIRE(bbo_update.m_inventory.m_position.m_quantity == 100);
+    REQUIRE(bbo_update.m_unrealized != initial_update.m_unrealized);
+    REQUIRE(bbo_update.m_inventory.m_position.m_cost_basis == 100 * Money::ONE);
   }
 
   TEST_CASE("bbo_quote_no_change_no_update") {
@@ -188,9 +183,9 @@ TEST_SUITE("PortfolioController") {
     fixture.m_market_data_environment.get_feed_client().publish(
       TickerBboQuote(changed_bbo, TST));
     auto final_update = updates->pop();
-    REQUIRE(final_update.m_ticker_inventory.m_position.m_ticker == TST);
-    REQUIRE(final_update.m_ticker_inventory.m_position.m_quantity == 100);
-    REQUIRE(final_update.m_unrealized_ticker == 100 * Money::ONE);
+    REQUIRE(final_update.m_inventory.m_position.m_ticker == TST);
+    REQUIRE(final_update.m_inventory.m_position.m_quantity == 100);
+    REQUIRE(final_update.m_unrealized == 100 * Money::ONE);
   }
 
   TEST_CASE("portfolio_initialization_with_existing_inventory") {
@@ -218,14 +213,13 @@ TEST_SUITE("PortfolioController") {
     auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_publisher().monitor(updates);
     auto update1 = updates->pop();
-    REQUIRE(update1.m_ticker_inventory.m_position.m_ticker == TST);
-    REQUIRE(update1.m_ticker_inventory.m_position.m_quantity == 50);
-    REQUIRE(
-      update1.m_ticker_inventory.m_position.m_cost_basis == 50 * Money::CENT);
+    REQUIRE(update1.m_inventory.m_position.m_ticker == TST);
+    REQUIRE(update1.m_inventory.m_position.m_quantity == 50);
+    REQUIRE(update1.m_inventory.m_position.m_cost_basis == 50 * Money::CENT);
     auto update2 = updates->pop();
-    REQUIRE(update2.m_ticker_inventory.m_position.m_ticker == TST);
-    REQUIRE(update2.m_ticker_inventory.m_position.m_quantity == 150);
-    REQUIRE(update2.m_ticker_inventory.m_position.m_cost_basis ==
+    REQUIRE(update2.m_inventory.m_position.m_ticker == TST);
+    REQUIRE(update2.m_inventory.m_position.m_quantity == 150);
+    REQUIRE(update2.m_inventory.m_position.m_cost_basis ==
       100 * Money::ONE + 50 * Money::CENT);
   }
 
@@ -253,8 +247,7 @@ TEST_SUITE("PortfolioController") {
     fixture.m_market_data_environment.get_feed_client().publish(
       TickerBboQuote(new_bbo, TST));
     auto bbo_update = updates->pop();
-    REQUIRE(
-      bbo_update.m_unrealized_ticker != initial_update.m_unrealized_ticker);
+    REQUIRE(bbo_update.m_unrealized != initial_update.m_unrealized);
   }
 
   TEST_CASE("out_of_order_execution_reports") {
@@ -286,19 +279,16 @@ TEST_SUITE("PortfolioController") {
     accept(*order_c, timestamp + seconds(3));
     fill(*order_a, 100, timestamp + seconds(4));
     auto update1 = updates->pop();
-    REQUIRE(update1.m_ticker_inventory.m_position.m_quantity == 100);
-    REQUIRE(update1.m_ticker_inventory.m_position.m_cost_basis ==
-      100 * Money::CENT);
+    REQUIRE(update1.m_inventory.m_position.m_quantity == 100);
+    REQUIRE(update1.m_inventory.m_position.m_cost_basis == 100 * Money::CENT);
     fill(*order_c, 100, timestamp + seconds(5));
     auto update2 = updates->pop();
-    REQUIRE(update2.m_ticker_inventory.m_position.m_quantity == 0);
-    REQUIRE(update2.m_ticker_inventory.m_position.m_cost_basis ==
-      Money::ZERO);
+    REQUIRE(update2.m_inventory.m_position.m_quantity == 0);
+    REQUIRE(update2.m_inventory.m_position.m_cost_basis == Money::ZERO);
     fill(*order_b, 100, timestamp + seconds(6));
     auto update3 = updates->pop();
-    REQUIRE(update3.m_ticker_inventory.m_position.m_quantity == 100);
-    REQUIRE(update3.m_ticker_inventory.m_position.m_cost_basis ==
-      200 * Money::CENT);
+    REQUIRE(update3.m_inventory.m_position.m_quantity == 100);
+    REQUIRE(update3.m_inventory.m_position.m_cost_basis == 200 * Money::CENT);
     REQUIRE(!updates->try_pop());
   }
 
@@ -319,8 +309,8 @@ TEST_SUITE("PortfolioController") {
     accept(*order_buy, timestamp + seconds(1));
     fill(*order_buy, 100, timestamp + seconds(2));
     auto update1 = updates->pop();
-    REQUIRE(update1.m_ticker_inventory.m_position.m_quantity == 100);
-    REQUIRE(update1.m_unrealized_ticker == Money::ZERO);
+    REQUIRE(update1.m_inventory.m_position.m_quantity == 100);
+    REQUIRE(update1.m_unrealized == Money::ZERO);
     auto fields_sell = make_limit_order_fields(
       parse_ticker("FOO.TSX"), CAD, Side::ASK, "TSX", 100, Money::ONE);
     auto info_sell = OrderInfo(fields_sell, 2, false, timestamp);
@@ -329,8 +319,8 @@ TEST_SUITE("PortfolioController") {
     accept(*order_sell, timestamp + seconds(3));
     fill(*order_sell, 100, timestamp + seconds(4));
     auto update2 = updates->pop();
-    REQUIRE(update2.m_ticker_inventory.m_position.m_quantity == 0);
-    REQUIRE(update2.m_unrealized_ticker == Money::ZERO);
+    REQUIRE(update2.m_inventory.m_position.m_quantity == 0);
+    REQUIRE(update2.m_unrealized == Money::ZERO);
     auto new_bbo =
       BboQuote(make_bid(2 * Money::ONE, 100), make_ask(2 * Money::ONE, 100),
         timestamp + seconds(5));
@@ -345,7 +335,7 @@ TEST_SUITE("PortfolioController") {
     accept(*order_short, timestamp + seconds(6));
     fill(*order_short, 100, timestamp + seconds(7));
     auto update3 = updates->pop();
-    REQUIRE(update3.m_ticker_inventory.m_position.m_quantity == -100);
+    REQUIRE(update3.m_inventory.m_position.m_quantity == -100);
   }
 
   TEST_CASE("empty_snapshot") {
@@ -380,15 +370,15 @@ TEST_SUITE("PortfolioController") {
     accept(*order, timestamp + seconds(1));
     fill(*order, 100, timestamp + seconds(2));
     auto update1 = updates->pop();
-    REQUIRE(update1.m_ticker_inventory.m_position.m_quantity == 100);
-    REQUIRE(update1.m_unrealized_ticker == Money::ZERO);
+    REQUIRE(update1.m_inventory.m_position.m_quantity == 100);
+    REQUIRE(update1.m_unrealized == Money::ZERO);
     auto new_bbo =
       BboQuote(make_bid(2 * Money::ONE, 100), make_ask(2 * Money::ONE, 100),
         timestamp + seconds(3));
     fixture.m_market_data_environment.get_feed_client().publish(
       TickerBboQuote(new_bbo, TST));
     auto update2 = updates->pop();
-    REQUIRE(update2.m_ticker_inventory.m_position.m_quantity == 100);
-    REQUIRE(update2.m_unrealized_ticker == 100 * Money::ONE);
+    REQUIRE(update2.m_inventory.m_position.m_quantity == 100);
+    REQUIRE(update2.m_unrealized == 100 * Money::ONE);
   }
 }

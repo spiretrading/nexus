@@ -101,14 +101,12 @@ void Nexus::Python::export_portfolio_update_entry(module& module) {
   export_default_methods(
       class_<PortfolioUpdateEntry>(module, "PortfolioUpdateEntry")).
     def(init<Inventory, Money, Inventory, Money>()).
-    def_readwrite(
-      "ticker_inventory", &PortfolioUpdateEntry::m_ticker_inventory).
-    def_readwrite(
-      "unrealized_ticker", &PortfolioUpdateEntry::m_unrealized_ticker).
+    def_readwrite("inventory", &PortfolioUpdateEntry::m_inventory).
+    def_readwrite("unrealized", &PortfolioUpdateEntry::m_unrealized).
     def_readwrite(
       "currency_inventory", &PortfolioUpdateEntry::m_currency_inventory).
     def_readwrite(
-      "unrealized_currency", &PortfolioUpdateEntry::m_unrealized_currency);
+      "currency_unrealized", &PortfolioUpdateEntry::m_currency_unrealized);
 }
 
 void Nexus::Python::export_position(module& module) {

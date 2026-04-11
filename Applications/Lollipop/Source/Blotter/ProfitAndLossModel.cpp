@@ -30,7 +30,7 @@ void ProfitAndLossModel::SetPortfolioController(
   m_currencyToModel.clear();
   m_update = PortfolioUpdateEntry();
   m_update.m_currency_inventory.m_position.m_currency = m_currency;
-  m_update.m_ticker_inventory.m_position.m_currency = m_currency;
+  m_update.m_inventory.m_position.m_currency = m_currency;
   m_eventHandler = std::nullopt;
   m_eventHandler.emplace();
   m_portfolioController = portfolioController.get();
@@ -50,7 +50,7 @@ void ProfitAndLossModel::SetCurrency(CurrencyId currency) {
   } else {
     m_update = PortfolioUpdateEntry();
     m_update.m_currency_inventory.m_position.m_currency = m_currency;
-    m_update.m_ticker_inventory.m_position.m_currency = m_currency;
+    m_update.m_inventory.m_position.m_currency = m_currency;
   }
 }
 
@@ -71,7 +71,7 @@ connection ProfitAndLossModel::ConnectProfitAndLossEntryModelRemovedSignal(
 }
 
 void ProfitAndLossModel::OnPortfolioUpdate(const PortfolioUpdateEntry& update) {
-  auto currency = update.m_ticker_inventory.m_position.m_currency;
+  auto currency = update.m_inventory.m_position.m_currency;
   auto& model = m_currencyToModel[currency];
   if(!model) {
     model = std::make_unique<ProfitAndLossEntryModel>(
@@ -97,8 +97,8 @@ void ProfitAndLossModel::OnPortfolioUpdate(const PortfolioUpdateEntry& update) {
         previous.m_currency_inventory.m_volume;
       m_update.m_currency_inventory.m_transaction_count -=
         previous.m_currency_inventory.m_transaction_count;
-      m_update.m_unrealized_currency -= m_exchangeRates->convert(
-        previous.m_unrealized_currency, currency, m_currency);
+      m_update.m_currency_unrealized -= m_exchangeRates->convert(
+        previous.m_currency_unrealized, currency, m_currency);
     }
     previous = update;
   }
@@ -120,8 +120,8 @@ void ProfitAndLossModel::OnPortfolioUpdate(const PortfolioUpdateEntry& update) {
       update.m_currency_inventory.m_volume;
     m_update.m_currency_inventory.m_transaction_count +=
       update.m_currency_inventory.m_transaction_count;
-    m_update.m_unrealized_currency += m_exchangeRates->convert(
-      update.m_unrealized_currency, currency, m_currency);
+    m_update.m_currency_unrealized += m_exchangeRates->convert(
+      update.m_currency_unrealized, currency, m_currency);
     m_profitAndLossUpdateSignal(m_update);
   }
 }
