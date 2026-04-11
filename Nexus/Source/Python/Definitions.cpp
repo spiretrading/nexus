@@ -493,15 +493,14 @@ void Nexus::Python::export_scope_map(module& module) {
     def(init<object>()).
     def(init<std::string, object>()).
     def_property_readonly("size", &PythonScopeMap::get_size).
-    def("get", static_cast<
-      const object& (PythonScopeMap::*)(const Scope&) const>(
-        &PythonScopeMap::get), return_value_policy::reference_internal).
-    def("get", static_cast<object& (PythonScopeMap::*)(const Scope&)>(
-      &PythonScopeMap::get), return_value_policy::reference_internal).
+    def("get", overload_cast<const Scope&>(&PythonScopeMap::get, const_),
+      return_value_policy::reference_internal).
+    def("get", overload_cast<const Scope&>(&PythonScopeMap::get),
+      return_value_policy::reference_internal).
     def("set", &PythonScopeMap::set).
     def("erase", &PythonScopeMap::erase).
-    def("__getitem__", static_cast<const object& (PythonScopeMap::*)(
-      const Scope&) const>(&PythonScopeMap::get),
+    def("__getitem__",
+      overload_cast<const Scope&>(&PythonScopeMap::get, const_),
       return_value_policy::reference_internal).
     def("__setitem__", &PythonScopeMap::set).
     def("__delitem__", &PythonScopeMap::erase).
@@ -538,12 +537,12 @@ void Nexus::Python::export_side(module& module) {
     value("NONE", Side::NONE).
     value("ASK", Side::ASK).
     value("BID", Side::BID);
-  module.def("pick", static_cast<
-    const object& (*)(Side, const object&, const object&)>(&pick<object>));
+  module.def(
+    "pick", overload_cast<Side, const object&, const object&>(&pick<object>));
   module.def("direction", &get_direction);
   module.def("side", &get_side);
   module.def("opposite", &get_opposite);
-  module.def("to_char", static_cast<char (*)(Side)>(&to_char));
+  module.def("to_char", overload_cast<Side>(&to_char));
 }
 
 void Nexus::Python::export_tag(module& module) {
