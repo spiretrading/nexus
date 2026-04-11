@@ -140,8 +140,8 @@ namespace Nexus {
       return;
     }
     auto& ticker_entry = ticker_entry_iterator->second;
-    auto& ticker_inventory = m_portfolio->get_bookkeeper().get_inventory(
-      ticker, ticker_entry.m_valuation.m_currency);
+    auto& ticker_inventory =
+      m_portfolio->get_bookkeeper().get_inventory(ticker);
     auto update = PortfolioUpdateEntry();
     update.m_ticker_inventory = ticker_inventory;
     update.m_unrealized_ticker = ticker_entry.m_unrealized;

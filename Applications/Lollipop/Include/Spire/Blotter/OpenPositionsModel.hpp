@@ -48,9 +48,6 @@ namespace Spire {
         /** The Entry's index. */
         int m_index;
 
-        /** The open position's Ticker. */
-        Nexus::Position::Key m_key;
-
         /** The Inventory representing the open position. */
         Nexus::Inventory m_inventory;
 
@@ -60,9 +57,8 @@ namespace Spire {
         /**
          * Constructs an Entry.
          * @param index The Entry's index.
-         * @param key The open position's Ticker.
          */
-        Entry(int index, const Nexus::Position::Key& key);
+        explicit Entry(int index);
       };
 
       /** Constructs an empty OpenPositionsModel. */

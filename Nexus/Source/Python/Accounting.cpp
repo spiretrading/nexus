@@ -76,7 +76,6 @@ void Nexus::Python::export_inventory(module& module) {
   export_view<const Inventory>(module, "InventoryConstView");
   export_default_methods(class_<Inventory>(module, "Inventory")).
     def(init<const Ticker&, CurrencyId>()).
-    def(init<const Position::Key&>()).
     def(init<const Position&, Money, Money, Quantity, int>()).
     def_readwrite("position", &Inventory::m_position).
     def_readwrite("gross_profit_and_loss", &Inventory::m_gross_profit_and_loss).
@@ -119,18 +118,6 @@ void Nexus::Python::export_position(module& module) {
     def_readwrite("currency", &Position::m_currency).
     def_readwrite("quantity", &Position::m_quantity).
     def_readwrite("cost_basis", &Position::m_cost_basis);
-  export_default_methods(class_<Position::Key>(position, "Key")).
-    def(init<const Ticker&, CurrencyId>()).
-    def(init([] (const tuple& tuple) {
-      if(tuple.size() != 2) {
-        throw std::runtime_error("Invalid tuple size.");
-      }
-      return Position::Key(
-        tuple[0].cast<Ticker>(), tuple[1].cast<CurrencyId>());
-    })).
-    def_readwrite("ticker", &Position::Key::m_ticker).
-    def_readwrite("currency", &Position::Key::m_currency);
-  implicitly_convertible<tuple, Position::Key>();
   module.def("average_price", &get_average_price);
   module.def("side", overload_cast<const Position&>(&get_side));
 }

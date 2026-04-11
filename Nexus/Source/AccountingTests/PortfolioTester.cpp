@@ -54,7 +54,7 @@ TEST_SUITE("Portfolio") {
     auto report = make_execution_report(100, 10 * Money::ONE);
     portfolio.update(fields, report);
     auto& bookkeeper = portfolio.get_bookkeeper();
-    auto& inventory = bookkeeper.get_inventory(TST, CAD);
+    auto& inventory = bookkeeper.get_inventory(TST);
     REQUIRE(inventory.m_position.m_quantity == 100);
     REQUIRE(inventory.m_position.m_cost_basis == 1000 * Money::ONE);
     REQUIRE(portfolio.get_unrealized_profit_and_losses().empty());

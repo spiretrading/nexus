@@ -308,12 +308,13 @@ namespace Nexus {
     auto reset_inventories = std::vector<InventoryUpdate>();
     for(auto inventory : portfolio.get_bookkeeper().get_inventory_range()) {
       auto& base_inventory = base_portfolio.get_bookkeeper().get_inventory(
-        inventory.m_position.m_ticker, inventory.m_position.m_currency);
+        inventory.m_position.m_ticker);
       if(base_inventory.m_position.m_ticker <= scope) {
         if(inventory.m_position.m_quantity == 0) {
           auto update = InventoryUpdate();
           update.account = account;
-          update.inventory = Inventory(get_key(inventory.m_position));
+          update.inventory = Inventory(
+            inventory.m_position.m_ticker, inventory.m_position.m_currency);
           reset_inventories.push_back(update);
         }
         inventory.m_position.m_quantity = base_inventory.m_position.m_quantity;

@@ -25,9 +25,8 @@ TEST_SUITE("Inventory") {
     REQUIRE(inventory.m_transaction_count == 0);
   }
 
-  TEST_CASE("key_constructor") {
-    auto key = Position::Key(TST, CAD);
-    auto inventory = Inventory(key);
+  TEST_CASE("ticker_currency_constructor") {
+    auto inventory = Inventory(TST, CAD);
     REQUIRE(inventory.m_position.m_ticker == TST);
     REQUIRE(inventory.m_position.m_currency == CAD);
     REQUIRE(inventory.m_position.m_quantity == 0);
@@ -53,12 +52,11 @@ TEST_SUITE("Inventory") {
   }
 
   TEST_CASE("is_empty") {
-    auto key = Position::Key(TST, CAD);
     auto empty_by_default = Inventory();
     REQUIRE(is_empty(empty_by_default));
-    auto empty_by_key = Inventory(key);
-    REQUIRE(is_empty(empty_by_key));
-    auto non_empty = Inventory(key);
+    auto empty_by_ticker = Inventory(TST, CAD);
+    REQUIRE(is_empty(empty_by_ticker));
+    auto non_empty = Inventory(TST, CAD);
     non_empty.m_volume = 100;
     REQUIRE(!is_empty(non_empty));
   }

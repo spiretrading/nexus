@@ -29,7 +29,7 @@ const CurrencyDatabase::Entry& ProfitAndLossEntryModel::GetCurrency() const {
 
 void ProfitAndLossEntryModel::OnPortfolioUpdate(
     const PortfolioUpdateEntry& update) {
-  Position::Key key = get_key(update.m_ticker_inventory.m_position);
+  auto& ticker = update.m_ticker_inventory.m_position.m_ticker;
   Money currencyProfitAndLoss =
     update.m_currency_inventory.m_gross_profit_and_loss -
     update.m_currency_inventory.m_fees;
@@ -37,7 +37,6 @@ void ProfitAndLossEntryModel::OnPortfolioUpdate(
     currencyProfitAndLoss += update.m_unrealized_currency;
   }
   m_profitAndLossSignal(currencyProfitAndLoss);
-  Ticker& ticker = key.m_ticker;
   auto entryIterator = m_tickerToEntry.find(ticker);
   if(entryIterator == m_tickerToEntry.end()) {
     beginInsertRows(QModelIndex(), static_cast<int>(m_entries.size()),

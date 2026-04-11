@@ -14,9 +14,9 @@ namespace {
 TEST_SUITE("TrueAverageBookkeeper") {
   TEST_CASE("empty_bookkeeper") {
     auto bookkeeper = TrueAverageBookkeeper();
-    auto cad_inventory = bookkeeper.get_inventory(TST, CAD);
+    auto cad_inventory = bookkeeper.get_inventory(TST);
     REQUIRE(is_empty(cad_inventory));
-    auto aud_inventory = bookkeeper.get_inventory(S32, AUD);
+    auto aud_inventory = bookkeeper.get_inventory(S32);
     REQUIRE(is_empty(aud_inventory));
     auto cad_total = bookkeeper.get_total(CAD);
     REQUIRE(is_empty(cad_total));
@@ -27,13 +27,13 @@ TEST_SUITE("TrueAverageBookkeeper") {
   TEST_CASE("buy_and_sell_to_flat") {
     auto bookkeeper = TrueAverageBookkeeper();
     bookkeeper.record(TST, CAD, 100, 1000 * Money::ONE, Money::CENT);
-    auto& inventory1 = bookkeeper.get_inventory(TST, CAD);
+    auto& inventory1 = bookkeeper.get_inventory(TST);
     REQUIRE(inventory1.m_position.m_quantity == 100);
     REQUIRE(inventory1.m_position.m_cost_basis == 1000 * Money::ONE);
     REQUIRE(inventory1.m_fees == Money::CENT);
     REQUIRE(inventory1.m_gross_profit_and_loss == Money::ZERO);
     bookkeeper.record(TST, CAD, -100, -1200 * Money::ONE, Money::CENT);
-    auto& inventory2 = bookkeeper.get_inventory(TST, CAD);
+    auto& inventory2 = bookkeeper.get_inventory(TST);
     REQUIRE(inventory2.m_position.m_quantity == 0);
     REQUIRE(inventory2.m_position.m_cost_basis == Money::ZERO);
     REQUIRE(inventory2.m_fees == 2 * Money::CENT);
@@ -48,13 +48,13 @@ TEST_SUITE("TrueAverageBookkeeper") {
   TEST_CASE("sell_to_short_and_buy_to_flat") {
     auto bookkeeper = TrueAverageBookkeeper();
     bookkeeper.record(TST, CAD, -100, -1000 * Money::ONE, Money::CENT);
-    auto& inventory1 = bookkeeper.get_inventory(TST, CAD);
+    auto& inventory1 = bookkeeper.get_inventory(TST);
     REQUIRE(inventory1.m_position.m_quantity == -100);
     REQUIRE(inventory1.m_position.m_cost_basis == -1000 * Money::ONE);
     REQUIRE(inventory1.m_fees == Money::CENT);
     REQUIRE(inventory1.m_gross_profit_and_loss == Money::ZERO);
     bookkeeper.record(TST, CAD, 100, 1200 * Money::ONE, Money::CENT);
-    auto& inventory2 = bookkeeper.get_inventory(TST, CAD);
+    auto& inventory2 = bookkeeper.get_inventory(TST);
     REQUIRE(inventory2.m_position.m_quantity == 0);
     REQUIRE(inventory2.m_position.m_cost_basis == Money::ZERO);
     REQUIRE(inventory2.m_fees == 2 * Money::CENT);
@@ -70,11 +70,11 @@ TEST_SUITE("TrueAverageBookkeeper") {
     auto bookkeeper = TrueAverageBookkeeper();
     bookkeeper.record(TST, CAD, 100, 1000 * Money::ONE, Money::ZERO);
     bookkeeper.record(TST, CAD, 100, 1200 * Money::ONE, Money::ZERO);
-    auto& inventory1 = bookkeeper.get_inventory(TST, CAD);
+    auto& inventory1 = bookkeeper.get_inventory(TST);
     REQUIRE(inventory1.m_position.m_quantity == 200);
     REQUIRE(inventory1.m_position.m_cost_basis == 2200 * Money::ONE);
     bookkeeper.record(TST, CAD, -150, -1950 * Money::ONE, Money::ZERO);
-    auto& inventory2 = bookkeeper.get_inventory(TST, CAD);
+    auto& inventory2 = bookkeeper.get_inventory(TST);
     REQUIRE(inventory2.m_position.m_quantity == 50);
     REQUIRE(inventory2.m_position.m_cost_basis == 550 * Money::ONE);
     REQUIRE(inventory2.m_gross_profit_and_loss == 300 * Money::ONE);
@@ -84,10 +84,10 @@ TEST_SUITE("TrueAverageBookkeeper") {
     auto bookkeeper = TrueAverageBookkeeper();
     bookkeeper.record(TST, CAD, 100, 1000 * Money::ONE, Money::CENT);
     bookkeeper.record(S32, AUD, 50, 7500 * Money::ONE, Money::CENT);
-    auto& tst_inventory = bookkeeper.get_inventory(TST, CAD);
+    auto& tst_inventory = bookkeeper.get_inventory(TST);
     REQUIRE(tst_inventory.m_position.m_quantity == 100);
     REQUIRE(tst_inventory.m_position.m_cost_basis == 1000 * Money::ONE);
-    auto& msft_inventory = bookkeeper.get_inventory(S32, AUD);
+    auto& msft_inventory = bookkeeper.get_inventory(S32);
     REQUIRE(msft_inventory.m_position.m_quantity == 50);
     REQUIRE(msft_inventory.m_position.m_cost_basis == 7500 * Money::ONE);
     auto& cad_total = bookkeeper.get_total(CAD);

@@ -264,7 +264,7 @@ namespace Nexus {
       auto& ticker_entry = ticker_entry_pair.second;
       auto update = PortfolioUpdateEntry();
       update.m_ticker_inventory = portfolio.get_bookkeeper().get_inventory(
-        ticker, ticker_entry.m_valuation.m_currency);
+        ticker);
       if(is_empty(update.m_ticker_inventory)) {
         continue;
       }
@@ -367,7 +367,7 @@ namespace Nexus {
     auto quantity = get_direction(fields.m_side) * report.m_last_quantity;
     m_bookkeeper.record(ticker, currency, quantity,
       report.m_last_quantity * report.m_last_price, get_fee_total(report));
-    auto inventory = m_bookkeeper.get_inventory(ticker, currency);
+    auto inventory = m_bookkeeper.get_inventory(ticker);
     if(auto unrealized_ticker = calculate_unrealized(inventory, entry)) {
       auto& unrealized_currency = m_unrealized_currencies[currency];
       if(*unrealized_ticker != entry.m_unrealized) {
@@ -432,8 +432,7 @@ namespace Nexus {
 
   template<IsBookkeeper B>
   bool Portfolio<B>::update(const Ticker& ticker, TickerEntry& entry) {
-    auto inventory =
-      m_bookkeeper.get_inventory(ticker, entry.m_valuation.m_currency);
+    auto inventory = m_bookkeeper.get_inventory(ticker);
     auto unrealized_ticker = calculate_unrealized(inventory, entry);
     if(!unrealized_ticker || *unrealized_ticker == entry.m_unrealized) {
       return false;

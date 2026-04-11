@@ -424,8 +424,9 @@ void BlotterWindow::OnPositionsAdded(
     positionData["ticker"] = [&] {
       auto ticker = JsonObject();
       auto& position = positions[i];
-      ticker["symbol"] = position.m_key.m_ticker.get_symbol();
-      ticker["venue"] = to_string(position.m_key.m_ticker.get_venue());
+      ticker["symbol"] = position.m_inventory.m_position.m_ticker.get_symbol();
+      ticker["venue"] = displayText(
+        position.m_inventory.m_position.m_ticker.get_venue()).toStdString();
       return ticker;
     }();
   }

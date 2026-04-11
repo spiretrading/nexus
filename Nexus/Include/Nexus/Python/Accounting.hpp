@@ -35,8 +35,7 @@ namespace Nexus::Python {
       def("record", &B::record, pybind11::arg("index"),
         pybind11::arg("currency"), pybind11::arg("quantity"),
         pybind11::arg("cost_basis"), pybind11::arg("fees")).
-      def("get_inventory", &B::get_inventory, pybind11::arg("index"),
-        pybind11::arg("currency")).
+      def("get_inventory", &B::get_inventory, pybind11::arg("ticker")).
       def("get_total", &B::get_total, pybind11::arg("currency")).
       def_property_readonly("inventories", &B::get_inventory_range).
       def_property_readonly("totals", &B::get_totals_range);
