@@ -9,7 +9,7 @@ import yaml
 def report_positions(service_clients, account, venues, currencies, writer):
   snapshot = service_clients.risk_client.load_inventory_snapshot(account)
   portfolio, sequence, excluded_orders = nexus.make_portfolio(
-    snapshot, account, venues, service_clients.order_execution_client)
+    snapshot, account, service_clients.order_execution_client)
   for order in excluded_orders:
     execution_reports = order.publisher.get_snapshot()
     if execution_reports is not None:

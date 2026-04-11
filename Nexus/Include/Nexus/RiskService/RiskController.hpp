@@ -123,8 +123,7 @@ namespace Nexus {
       RiskController& operator =(const RiskController&) = delete;
       void update_snapshot(const Order& order);
       std::tuple<RiskPortfolio, Beam::Sequence,
-        std::vector<std::shared_ptr<Order>>> make_portfolio(
-          VenueDatabase venues);
+        std::vector<std::shared_ptr<Order>>> make_portfolio();
       template<typename F>
       void update(F&& f);
       void on_transition_timer(Beam::Timer::Result result);
@@ -163,11 +162,9 @@ namespace Nexus {
         m_administration_client(std::forward<AF>(administration_client)),
         m_order_execution_client(std::forward<OF>(order_execution_client)),
         m_transition_timer(std::forward<RF>(transition_timer)),
-        m_data_store(std::forward<DF>(data_store)),
-        m_snapshot_portfolio(venues) {
+        m_data_store(std::forward<DF>(data_store)) {
     auto lock = std::lock_guard(m_mutex);
-    auto [portfolio, sequence, excluded_orders] =
-      make_portfolio(std::move(venues));
+    auto [portfolio, sequence, excluded_orders] = make_portfolio();
     auto inventories = std::vector<Inventory>();
     for(auto& inventory : portfolio.get_bookkeeper().get_inventory_range()) {
       inventories.push_back(inventory);
@@ -269,12 +266,11 @@ namespace Nexus {
           Beam::IsTimer<Beam::dereference_t<R>> &&
             Beam::IsTimeClient<Beam::dereference_t<T>> &&
               IsRiskDataStore<Beam::dereference_t<D>>
-  std::tuple<RiskPortfolio, Beam::Sequence,
-      std::vector<std::shared_ptr<Order>>>
-        RiskController<A, M, O, R, T, D>::make_portfolio(VenueDatabase venues) {
+  std::tuple<RiskPortfolio, Beam::Sequence, std::vector<std::shared_ptr<Order>>>
+      RiskController<A, M, O, R, T, D>::make_portfolio() {
     auto [portfolio, sequence, excluded_orders] = Nexus::make_portfolio(
       m_data_store->load_inventory_snapshot(m_account), m_account,
-      std::move(venues), *m_order_execution_client);
+      *m_order_execution_client);
     m_snapshot_portfolio = portfolio;
     m_snapshot_sequence = sequence;
     std::transform(excluded_orders.begin(), excluded_orders.end(),

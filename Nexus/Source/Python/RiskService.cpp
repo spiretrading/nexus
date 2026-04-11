@@ -48,8 +48,8 @@ void Nexus::Python::export_inventory_snapshot(module& module) {
   module.def("strip", &strip);
   module.def("make_portfolio",
     [] (const InventorySnapshot& snapshot, const DirectoryEntry& account,
-        const VenueDatabase& venues, OrderExecutionClient& client) {
-      return make_portfolio(snapshot, account, venues, client);
+        OrderExecutionClient& client) {
+      return make_portfolio(snapshot, account, client);
     }, call_guard<GilRelease>());
 }
 

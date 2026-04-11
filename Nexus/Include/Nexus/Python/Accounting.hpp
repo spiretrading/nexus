@@ -78,7 +78,6 @@ namespace Nexus::Python {
     using Bookkeeper = typename Portfolio::Bookkeeper;
     auto portfolio = pybind11::class_<Portfolio>(module, name.data()).
       def(pybind11::init<const Bookkeeper&>()).
-      def(pybind11::init<const Bookkeeper&, const VenueDatabase&>()).
       def_property_readonly("bookkeeper", &Portfolio::get_bookkeeper).
       def_property_readonly("entries", &Portfolio::get_entries).
       def_property_readonly("unrealized_profit_and_losses",
@@ -102,14 +101,10 @@ namespace Nexus::Python {
       }, pybind11::keep_alive<0, 1>());
     if constexpr(std::is_same_v<Bookkeeper, Nexus::Bookkeeper>) {
       portfolio.def(pybind11::init([] {
-          return Portfolio(Bookkeeper(TrueAverageBookkeeper()));
-        })).
-        def(pybind11::init([] (const VenueDatabase& venues) {
-          return Portfolio(Bookkeeper(TrueAverageBookkeeper()), venues);
-        }));
+        return Portfolio(Bookkeeper(TrueAverageBookkeeper()));
+      }));
     } else {
-      portfolio.def(pybind11::init()).
-        def(pybind11::init<const VenueDatabase&>());
+      portfolio.def(pybind11::init());
     }
     using Entry = typename Portfolio::Entry;
     pybind11::class_<Entry>(portfolio, "Entry").

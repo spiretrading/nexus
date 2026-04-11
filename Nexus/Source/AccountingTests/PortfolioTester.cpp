@@ -33,7 +33,7 @@ namespace {
 
 TEST_SUITE("Portfolio") {
   TEST_CASE("empty_portfolio") {
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     REQUIRE(portfolio.get_entries().empty());
     REQUIRE(portfolio.get_unrealized_profit_and_losses().empty());
   }
@@ -41,7 +41,7 @@ TEST_SUITE("Portfolio") {
   TEST_CASE("constructor") {
     auto bookkeeper = TrueAverageBookkeeper();
     bookkeeper.record(TST, CAD, 1, Money::ONE, Money::ZERO);
-    auto portfolio = Portfolio(bookkeeper, DEFAULT_VENUES);
+    auto portfolio = Portfolio(bookkeeper);
     REQUIRE(portfolio.get_entries().at(TST).m_unrealized == Money::ZERO);
     portfolio.update(TST, 3 * Money::ONE, 2 * Money::ONE);
     REQUIRE(portfolio.get_unrealized_profit_and_losses().at(CAD) == Money::ONE);
@@ -49,7 +49,7 @@ TEST_SUITE("Portfolio") {
   }
 
   TEST_CASE("update_with_fill_and_valuation") {
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto fields = make_order_fields(TST, CAD, Side::BID, 100);
     auto report = make_execution_report(100, 10 * Money::ONE);
     portfolio.update(fields, report);
@@ -69,7 +69,7 @@ TEST_SUITE("Portfolio") {
   }
 
   TEST_CASE("short_position_pnl") {
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto fields = make_order_fields(TST, CAD, Side::ASK, 100);
     auto report = make_execution_report(100, 10 * Money::ONE);
     portfolio.update(fields, report);
@@ -112,7 +112,7 @@ TEST_SUITE("Portfolio") {
   }
 
   TEST_CASE("get_total_profit_and_loss_portfolio") {
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto fields = make_order_fields(TST, CAD, Side::BID, 100);
     auto report = make_execution_report(100, 10 * Money::ONE);
     portfolio.update(fields, report);
@@ -122,7 +122,7 @@ TEST_SUITE("Portfolio") {
   }
 
   TEST_CASE("for_each") {
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto fields = make_order_fields(TST, CAD, Side::BID, 100);
     auto report = make_execution_report(100, 10 * Money::ONE);
     portfolio.update(fields, report);

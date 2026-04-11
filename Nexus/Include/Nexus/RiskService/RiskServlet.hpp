@@ -283,8 +283,8 @@ namespace Nexus {
   void RiskServlet<C, A, M, O, R, T, D>::reset(
       const Beam::DirectoryEntry& account, const Scope& scope) {
     auto snapshot = m_data_store->load_inventory_snapshot(account);
-    auto [portfolio, sequence, excluded_orders] = make_portfolio(
-      snapshot, account, m_venues, *m_order_execution_client);
+    auto [portfolio, sequence, excluded_orders] =
+      make_portfolio(snapshot, account, *m_order_execution_client);
     auto reports = std::vector<ExecutionReportEntry>();
     for(auto& order : excluded_orders) {
       if(auto order_snapshot = order->get_publisher().get_snapshot()) {

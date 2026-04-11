@@ -47,7 +47,7 @@ namespace {
 TEST_SUITE("PortfolioController") {
   TEST_CASE("empty_orders") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     order_queue->close();
     auto controller = PortfolioController(
@@ -59,7 +59,7 @@ TEST_SUITE("PortfolioController") {
 
   TEST_CASE("single_order_lifecycle") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
@@ -82,7 +82,7 @@ TEST_SUITE("PortfolioController") {
 
   TEST_CASE("multiple_orders_multiple_tickers") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
@@ -126,7 +126,7 @@ TEST_SUITE("PortfolioController") {
 
   TEST_CASE("bbo_quote_update_triggers_portfolio_update") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
@@ -156,7 +156,7 @@ TEST_SUITE("PortfolioController") {
 
   TEST_CASE("bbo_quote_no_change_no_update") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
@@ -190,7 +190,7 @@ TEST_SUITE("PortfolioController") {
 
   TEST_CASE("portfolio_initialization_with_existing_inventory") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto timestamp = time_from_string("2024-07-21 09:00:00.000");
     auto pre_fields =
       make_limit_order_fields(TST, CAD, Side::BID, "TSX", 50, Money::CENT);
@@ -225,7 +225,7 @@ TEST_SUITE("PortfolioController") {
 
   TEST_CASE("unrealized_pnl_update") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
@@ -252,7 +252,7 @@ TEST_SUITE("PortfolioController") {
 
   TEST_CASE("out_of_order_execution_reports") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
@@ -294,7 +294,7 @@ TEST_SUITE("PortfolioController") {
 
   TEST_CASE("zero_position_bbo_update") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
@@ -343,7 +343,7 @@ TEST_SUITE("PortfolioController") {
     auto portfolio = [&] {
       auto inventories = std::vector{Inventory(TST, CAD)};
       auto bookkeeper = TestPortfolio::Bookkeeper(inventories);
-      return TestPortfolio(DEFAULT_VENUES);
+      return TestPortfolio(bookkeeper);
     }();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
@@ -355,7 +355,7 @@ TEST_SUITE("PortfolioController") {
 
   TEST_CASE("no_bbo_available") {
     auto fixture = Fixture();
-    auto portfolio = TestPortfolio(DEFAULT_VENUES);
+    auto portfolio = TestPortfolio();
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);

@@ -8,7 +8,6 @@
 #include "Nexus/Accounting/Bookkeeper.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
-#include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
@@ -85,30 +84,14 @@ namespace Nexus {
       /** The type used to map currencies to unrealized profit and losses. */
       using UnrealizedProfitAndLossMap = std::unordered_map<CurrencyId, Money>;
 
-      /** Constructs an empty Portfolio using the default venues. */
-      Portfolio();
-
-      /**
-       * Constructs an empty Portfolio.
-       * @param venues The venues used to identify the currency used for an
-       *        position.
-       */
-      explicit Portfolio(VenueDatabase venues);
-
-      /**
-       * Constructs a Portfolio for an existing set of positions using the
-       * default venues.
-       * @param bookkeeper The bookkeeper with the existing set of positions.
-       */
-      explicit Portfolio(Bookkeeper bookkeeper);
+      /** Constructs an empty Portfolio. */
+      Portfolio() = default;
 
       /**
        * Constructs a Portfolio for an existing set of positions.
        * @param bookkeeper The bookkeeper with the existing set of positions.
-       * @param venues The venues used to identify the currency used for an
-       *        position.
        */
-      Portfolio(Bookkeeper bookkeeper, VenueDatabase venues);
+      explicit Portfolio(Bookkeeper bookkeeper);
 
       /** Returns the Bookkeeper. */
       const Bookkeeper& get_bookkeeper() const;
@@ -159,13 +142,12 @@ namespace Nexus {
 
     private:
       Bookkeeper m_bookkeeper;
-      VenueDatabase m_venues;
       EntryMap m_entries;
       UnrealizedProfitAndLossMap m_unrealized_currencies;
 
       static boost::optional<Money> calculate_unrealized(
         const Inventory& inventory, const Entry& entry);
-      Entry& get_entry(const Ticker& ticker);
+      Entry& get_entry(const Ticker& ticker, CurrencyId currency);
       bool update(const Ticker& ticker, Entry& entry);
   };
 
@@ -314,23 +296,11 @@ namespace Nexus {
     : m_valuation(currency) {}
 
   template<IsBookkeeper B>
-  Portfolio<B>::Portfolio()
-    : Portfolio(DEFAULT_VENUES) {}
-
-  template<IsBookkeeper B>
-  Portfolio<B>::Portfolio(VenueDatabase venues)
-    : m_venues(std::move(venues)) {}
-
-  template<IsBookkeeper B>
   Portfolio<B>::Portfolio(Bookkeeper bookkeeper)
-    : Portfolio(std::move(bookkeeper), DEFAULT_VENUES) {}
-
-  template<IsBookkeeper B>
-  Portfolio<B>::Portfolio(Bookkeeper bookkeeper, VenueDatabase venues)
-      : m_bookkeeper(std::move(bookkeeper)),
-        m_venues(std::move(venues)) {
+      : m_bookkeeper(std::move(bookkeeper)) {
     for(auto& inventory : m_bookkeeper.get_inventory_range()) {
-      get_entry(inventory.m_position.m_ticker);
+      get_entry(inventory.m_position.m_ticker,
+        inventory.m_position.m_currency);
     }
   }
 
@@ -359,7 +329,7 @@ namespace Nexus {
     }
     auto& ticker = fields.m_ticker;
     auto currency = fields.m_currency;
-    auto& entry = get_entry(ticker);
+    auto& entry = get_entry(ticker, currency);
     auto quantity = get_direction(fields.m_side) * report.m_last_quantity;
     m_bookkeeper.record(ticker, currency, quantity,
       report.m_last_quantity * report.m_last_price, get_fee_total(report));
@@ -377,14 +347,14 @@ namespace Nexus {
 
   template<IsBookkeeper B>
   bool Portfolio<B>::update_ask(const Ticker& ticker, Money value) {
-    auto& entry = get_entry(ticker);
+    auto& entry = get_entry(ticker, CurrencyId());
     entry.m_valuation.m_ask_value = value;
     return update(ticker, entry);
   }
 
   template<IsBookkeeper B>
   bool Portfolio<B>::update_bid(const Ticker& ticker, Money value) {
-    auto& entry = get_entry(ticker);
+    auto& entry = get_entry(ticker, CurrencyId());
     entry.m_valuation.m_bid_value = value;
     return update(ticker, entry);
   }
@@ -392,7 +362,7 @@ namespace Nexus {
   template<IsBookkeeper B>
   bool Portfolio<B>::update(
       const Ticker& ticker, Money ask_value, Money bid_value) {
-    auto& entry = get_entry(ticker);
+    auto& entry = get_entry(ticker, CurrencyId());
     entry.m_valuation.m_ask_value = ask_value;
     entry.m_valuation.m_bid_value = bid_value;
     return update(ticker, entry);
@@ -415,12 +385,14 @@ namespace Nexus {
   }
 
   template<IsBookkeeper B>
-  typename Portfolio<B>::Entry& Portfolio<B>::get_entry(const Ticker& ticker) {
+  typename Portfolio<B>::Entry& Portfolio<B>::get_entry(
+      const Ticker& ticker, CurrencyId currency) {
     auto entry_iterator = m_entries.find(ticker);
     if(entry_iterator == m_entries.end()) {
-      auto currency = m_venues.from(ticker.get_venue()).m_currency;
       entry_iterator =
         m_entries.insert(std::pair(ticker, Entry(currency))).first;
+    } else if(!entry_iterator->second.m_valuation.m_currency) {
+      entry_iterator->second.m_valuation.m_currency = currency;
     }
     return entry_iterator->second;
   }
