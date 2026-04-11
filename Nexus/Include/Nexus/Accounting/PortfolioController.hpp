@@ -135,8 +135,8 @@ namespace Nexus {
   template<typename P, typename C> requires
     IsMarketDataClient<Beam::dereference_t<C>>
   void PortfolioController<P, C>::push_update(const Ticker& ticker) {
-    auto ticker_entry_iterator = m_portfolio->get_ticker_entries().find(ticker);
-    if(ticker_entry_iterator == m_portfolio->get_ticker_entries().end()) {
+    auto ticker_entry_iterator = m_portfolio->get_entries().find(ticker);
+    if(ticker_entry_iterator == m_portfolio->get_entries().end()) {
       return;
     }
     auto& ticker_entry = ticker_entry_iterator->second;

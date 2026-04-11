@@ -31,7 +31,7 @@ namespace Nexus {
   };
 
   /** Stores the valuation used for a Ticker. */
-  struct TickerValuation {
+  struct Valuation {
 
     /** The currency used to value the Ticker. */
     CurrencyId m_currency;
@@ -42,14 +42,14 @@ namespace Nexus {
     /** The bid side value. */
     boost::optional<Money> m_bid_value;
 
-    /** Constructs a TickerValuation. */
-    TickerValuation() = default;
+    /** Constructs a Valuation. */
+    Valuation() = default;
 
     /**
-     * Constructs a TickerValuation.
+     * Constructs a Valuation.
      * @param currency The currency used to value the Ticker.
      */
-    explicit TickerValuation(CurrencyId currency) noexcept;
+    explicit Valuation(CurrencyId currency) noexcept;
   };
 
   /**
@@ -64,23 +64,23 @@ namespace Nexus {
       using Bookkeeper = B;
 
       /** Stores portfolio related info about a single Ticker. */
-      struct TickerEntry {
+      struct Entry {
 
         /** The current value of the Ticker. */
-        TickerValuation m_valuation;
+        Valuation m_valuation;
 
         /** The unrealized profit and loss. */
         Money m_unrealized;
 
         /**
-         * Constructs a TickerEntry.
+         * Constructs an Entry.
          * @param currency The currency used to value the Ticker.
          */
-        explicit TickerEntry(CurrencyId currency) noexcept;
+        explicit Entry(CurrencyId currency) noexcept;
       };
 
-      /** The type used to map Tickers to TickerEntries. */
-      using TickerEntryMap = std::unordered_map<Ticker, TickerEntry>;
+      /** The type used to map Tickers to Entries. */
+      using EntryMap = std::unordered_map<Ticker, Entry>;
 
       /** The type used to map currencies to unrealized profit and losses. */
       using UnrealizedProfitAndLossMap = std::unordered_map<CurrencyId, Money>;
@@ -113,8 +113,8 @@ namespace Nexus {
       /** Returns the Bookkeeper. */
       const Bookkeeper& get_bookkeeper() const;
 
-      /** Returns the Portfolio's TickerEntries. */
-      const TickerEntryMap& get_ticker_entries() const;
+      /** Returns the Portfolio's Entries. */
+      const EntryMap& get_entries() const;
 
       /** Returns the Portfolio's unrealized profit and losses. */
       const UnrealizedProfitAndLossMap&
@@ -160,13 +160,13 @@ namespace Nexus {
     private:
       Bookkeeper m_bookkeeper;
       VenueDatabase m_venues;
-      TickerEntryMap m_ticker_entries;
+      EntryMap m_entries;
       UnrealizedProfitAndLossMap m_unrealized_currencies;
 
       static boost::optional<Money> calculate_unrealized(
-        const Inventory& inventory, const TickerEntry& entry);
-      TickerEntry& get_entry(const Ticker& ticker);
-      bool update(const Ticker& ticker, TickerEntry& entry);
+        const Inventory& inventory, const Entry& entry);
+      Entry& get_entry(const Ticker& ticker);
+      bool update(const Ticker& ticker, Entry& entry);
   };
 
   /**
@@ -187,7 +187,7 @@ namespace Nexus {
    * @return The <i>inventory</i>'s unrealized profit and loss.
    */
   inline boost::optional<Money> get_unrealized_profit_and_loss(
-      const Inventory& inventory, const TickerValuation& valuation) {
+      const Inventory& inventory, const Valuation& valuation) {
     if(inventory.m_position.m_quantity == 0) {
       return Money::ZERO;
     }
@@ -217,7 +217,7 @@ namespace Nexus {
    * @return The <i>inventory</i>'s total profit and loss.
    */
   inline boost::optional<Money> get_total_profit_and_loss(
-      const Inventory& inventory, const TickerValuation& valuation) {
+      const Inventory& inventory, const Valuation& valuation) {
     if(auto unrealized_profit_and_loss =
         get_unrealized_profit_and_loss(inventory, valuation)) {
       return get_realized_profit_and_loss(inventory) +
@@ -258,22 +258,19 @@ namespace Nexus {
   template<typename B, typename F>
     requires std::invocable<F, PortfolioUpdateEntry>
   void for_each(const Portfolio<B>& portfolio, F f) {
-    auto& ticker_entries = portfolio.get_ticker_entries();
-    for(auto& ticker_entry_pair : ticker_entries) {
-      auto& ticker = ticker_entry_pair.first;
-      auto& ticker_entry = ticker_entry_pair.second;
+    auto& entries = portfolio.get_entries();
+    for(auto& [ticker, entry] : entries) {
       auto update = PortfolioUpdateEntry();
-      update.m_inventory = portfolio.get_bookkeeper().get_inventory(
-        ticker);
+      update.m_inventory = portfolio.get_bookkeeper().get_inventory(ticker);
       if(is_empty(update.m_inventory)) {
         continue;
       }
-      update.m_unrealized = ticker_entry.m_unrealized;
-      update.m_currency_inventory = portfolio.get_bookkeeper().get_total(
-        ticker_entry.m_valuation.m_currency);
+      update.m_unrealized = entry.m_unrealized;
+      update.m_currency_inventory =
+        portfolio.get_bookkeeper().get_total(entry.m_valuation.m_currency);
       auto unrealized_currency_iterator =
         portfolio.get_unrealized_profit_and_losses().find(
-          ticker_entry.m_valuation.m_currency);
+          entry.m_valuation.m_currency);
       if(unrealized_currency_iterator ==
           portfolio.get_unrealized_profit_and_losses().end()) {
         update.m_currency_unrealized = Money::ZERO;
@@ -286,13 +283,13 @@ namespace Nexus {
 
   inline std::ostream& operator <<(
       std::ostream& out, const PortfolioUpdateEntry& entry) {
-    return out << '(' << entry.m_inventory << ' ' <<
-      entry.m_unrealized << ' ' << entry.m_currency_inventory << ' ' <<
-      entry.m_currency_unrealized << ')';
+    return out << '(' << entry.m_inventory << ' ' << entry.m_unrealized <<
+      ' ' << entry.m_currency_inventory << ' ' << entry.m_currency_unrealized <<
+      ')';
   }
 
   inline std::ostream& operator <<(
-      std::ostream& out, const TickerValuation& valuation) {
+      std::ostream& out, const Valuation& valuation) {
     out << '(' << valuation.m_currency << ' ';
     if(valuation.m_ask_value) {
       out << *valuation.m_ask_value;
@@ -309,11 +306,11 @@ namespace Nexus {
     return out;
   }
 
-  inline TickerValuation::TickerValuation(CurrencyId currency) noexcept
+  inline Valuation::Valuation(CurrencyId currency) noexcept
     : m_currency(currency) {}
 
   template<IsBookkeeper B>
-  Portfolio<B>::TickerEntry::TickerEntry(CurrencyId currency) noexcept
+  Portfolio<B>::Entry::Entry(CurrencyId currency) noexcept
     : m_valuation(currency) {}
 
   template<IsBookkeeper B>
@@ -344,9 +341,8 @@ namespace Nexus {
   }
 
   template<IsBookkeeper B>
-  const typename Portfolio<B>::TickerEntryMap&
-      Portfolio<B>::get_ticker_entries() const {
-    return m_ticker_entries;
+  const typename Portfolio<B>::EntryMap& Portfolio<B>::get_entries() const {
+    return m_entries;
   }
 
   template<IsBookkeeper B>
@@ -404,7 +400,7 @@ namespace Nexus {
 
   template<IsBookkeeper B>
   boost::optional<Money> Portfolio<B>::calculate_unrealized(
-      const Inventory& inventory, const TickerEntry& entry) {
+      const Inventory& inventory, const Entry& entry) {
     auto valuation = [&] {
       if(inventory.m_position.m_quantity >= 0) {
         return entry.m_valuation.m_bid_value;
@@ -419,19 +415,18 @@ namespace Nexus {
   }
 
   template<IsBookkeeper B>
-  typename Portfolio<B>::TickerEntry& Portfolio<B>::get_entry(
-      const Ticker& ticker) {
-    auto ticker_iterator = m_ticker_entries.find(ticker);
-    if(ticker_iterator == m_ticker_entries.end()) {
+  typename Portfolio<B>::Entry& Portfolio<B>::get_entry(const Ticker& ticker) {
+    auto entry_iterator = m_entries.find(ticker);
+    if(entry_iterator == m_entries.end()) {
       auto currency = m_venues.from(ticker.get_venue()).m_currency;
-      ticker_iterator = m_ticker_entries.insert(
-        std::pair(ticker, TickerEntry(currency))).first;
+      entry_iterator =
+        m_entries.insert(std::pair(ticker, Entry(currency))).first;
     }
-    return ticker_iterator->second;
+    return entry_iterator->second;
   }
 
   template<IsBookkeeper B>
-  bool Portfolio<B>::update(const Ticker& ticker, TickerEntry& entry) {
+  bool Portfolio<B>::update(const Ticker& ticker, Entry& entry) {
     auto inventory = m_bookkeeper.get_inventory(ticker);
     auto unrealized_ticker = calculate_unrealized(inventory, entry);
     if(!unrealized_ticker || *unrealized_ticker == entry.m_unrealized) {
@@ -460,10 +455,10 @@ namespace Beam {
   };
 
   template<>
-  struct Shuttle<Nexus::TickerValuation> {
+  struct Shuttle<Nexus::Valuation> {
     template<IsShuttle S>
-    void operator ()(S& shuttle, Nexus::TickerValuation& value,
-        unsigned int version) const {
+    void operator ()(
+        S& shuttle, Nexus::Valuation& value, unsigned int version) const {
       shuttle.shuttle("currency", value.m_currency);
       shuttle.shuttle("ask_value", value.m_ask_value);
       shuttle.shuttle("bid_value", value.m_bid_value);

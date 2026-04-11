@@ -15,7 +15,7 @@ def report_positions(service_clients, account, venues, currencies, writer):
     if execution_reports is not None:
       for execution_report in execution_reports:
         portfolio.update(order.info.fields, execution_report)
-  for ticker in portfolio.ticker_entries:
+  for ticker in portfolio.entries:
     currency = venues.select(ticker.venue).currency
     inventory = portfolio.bookkeeper.get_inventory(ticker, currency)
     position = inventory.position

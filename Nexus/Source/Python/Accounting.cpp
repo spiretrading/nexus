@@ -43,8 +43,8 @@ void Nexus::Python::export_accounting(module& module) {
   export_portfolio_controller(module);
   export_position(module);
   export_position_order_book(module);
-  export_ticker_valuation(module);
   export_shorting_model(module);
+  export_valuation(module);
 }
 
 void Nexus::Python::export_bookkeeper_reactor(module& module) {
@@ -140,17 +140,17 @@ void Nexus::Python::export_position_order_book(module& module) {
     def_readwrite("quantity", &PositionOrderBook::PositionEntry::m_quantity);
 }
 
-void Nexus::Python::export_ticker_valuation(module& module) {
-  export_default_methods(class_<TickerValuation>(module, "TickerValuation")).
-    def(init<CurrencyId>()).
-    def_readwrite("currency", &TickerValuation::m_currency).
-    def_readwrite("ask_value", &TickerValuation::m_ask_value).
-    def_readwrite("bid_value", &TickerValuation::m_bid_value);
-}
-
 void Nexus::Python::export_shorting_model(module& module) {
   class_<ShortingModel>(module, "ShortingModel").
     def(init()).
     def("submit", &ShortingModel::submit, arg("id"), arg("fields")).
     def("update", &ShortingModel::update, arg("report"));
+}
+
+void Nexus::Python::export_valuation(module& module) {
+  export_default_methods(class_<Valuation>(module, "Valuation")).
+    def(init<CurrencyId>()).
+    def_readwrite("currency", &Valuation::m_currency).
+    def_readwrite("ask_value", &Valuation::m_ask_value).
+    def_readwrite("bid_value", &Valuation::m_bid_value);
 }

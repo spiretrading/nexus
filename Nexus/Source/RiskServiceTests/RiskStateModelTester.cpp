@@ -24,7 +24,7 @@ TEST_SUITE("RiskStateModel") {
       RiskParameters(AUD, Money::ZERO, allowed_state, Money::ONE, minutes(1));
     auto model =
       RiskStateModel(portfolio, parameters, ExchangeRateTable(), &time_client);
-    REQUIRE(model.get_portfolio().get_ticker_entries().size() == 0);
+    REQUIRE(model.get_portfolio().get_entries().size() == 0);
     REQUIRE(model.get_parameters() == parameters);
     REQUIRE(model.get_risk_state() == allowed_state);
     auto new_allowed_state = RiskState(RiskState::Type::CLOSE_ORDERS);

@@ -53,7 +53,7 @@ TEST_SUITE("PortfolioController") {
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
     auto updates = *controller.get_publisher().get_snapshot();
-    REQUIRE(updates->get_ticker_entries().empty());
+    REQUIRE(updates->get_entries().empty());
     REQUIRE(updates->get_unrealized_profit_and_losses().empty());
   }
 

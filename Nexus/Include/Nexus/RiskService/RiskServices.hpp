@@ -11,12 +11,8 @@
 #include "Nexus/RiskService/RiskState.hpp"
 
 namespace Nexus {
-  BEAM_DEFINE_RECORD(TickerValuationUpdate, (Ticker, ticker),
-    (TickerValuation, valuation));
   BEAM_DEFINE_RECORD(InventoryUpdate,
     (Beam::DirectoryEntry, account), (Inventory, inventory));
-  BEAM_DEFINE_RECORD(RiskStateUpdate, (Beam::DirectoryEntry, account),
-    (RiskState, risk_state));
 
   /** Standard name for the risk service. */
   inline const auto RISK_SERVICE_NAME = std::string("risk_service");
