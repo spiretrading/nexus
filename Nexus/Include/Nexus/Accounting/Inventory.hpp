@@ -62,8 +62,7 @@ namespace Nexus {
   }
 
   inline Inventory::Inventory(Ticker ticker, CurrencyId currency) noexcept
-    : m_position(std::move(ticker), currency),
-      m_transaction_count(0) {}
+    : m_position(std::move(ticker), currency) {}
 
   inline Inventory::Inventory(Position position, Money gross_profit_and_loss,
     Money fees, Quantity volume, int transaction_count)

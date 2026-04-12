@@ -9,9 +9,6 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/VirtualPtr.hpp>
 #include "Nexus/Accounting/Inventory.hpp"
-#include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {
 

@@ -6,8 +6,6 @@
 #include <Beam/Serialization/ShuttleOptional.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Accounting/Bookkeeper.hpp"
-#include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
