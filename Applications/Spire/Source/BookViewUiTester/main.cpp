@@ -354,7 +354,7 @@ struct BookViewTester : QWidget {
   QTimer m_quote_timer;
   int m_line_number;
 
-  BookViewTester(std::shared_ptr<TickerTechnicalsModel> technicals,
+  BookViewTester(std::shared_ptr<SessionCandlestickModel> session_candlestick,
     std::shared_ptr<BookViewModel> model,
     KeyBindingsWindow& key_bindings_window, QWidget* parent = nullptr)
       : QWidget(parent),
@@ -482,29 +482,29 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       }
     });
     m_technicals_model.connect_high_slot([=] (Nexus::Money value) {
-      auto t = technicals->get();
-      t.m_high = value;
-      technicals->set(t);
+      auto t = session_candlestick->get();
+      session_candlestick->set(PriceCandlestick(t.get_start(), t.get_end(),
+        t.get_open(), t.get_close(), value, t.get_low(), t.get_volume()));
     });
     m_technicals_model.connect_low_slot([=] (Nexus::Money value) {
-      auto t = technicals->get();
-      t.m_low = value;
-      technicals->set(t);
+      auto t = session_candlestick->get();
+      session_candlestick->set(PriceCandlestick(t.get_start(), t.get_end(),
+        t.get_open(), t.get_close(), t.get_high(), value, t.get_volume()));
     });
     m_technicals_model.connect_open_slot([=] (Nexus::Money value) {
-      auto t = technicals->get();
-      t.m_open = value;
-      technicals->set(t);
+      auto t = session_candlestick->get();
+      session_candlestick->set(PriceCandlestick(t.get_start(), t.get_end(),
+        value, t.get_close(), t.get_high(), t.get_low(), t.get_volume()));
     });
     m_technicals_model.connect_close_slot([=] (Nexus::Money value) {
-      auto t = technicals->get();
-      t.m_close = value;
-      technicals->set(t);
+      auto t = session_candlestick->get();
+      session_candlestick->set(PriceCandlestick(t.get_start(), t.get_end(),
+        t.get_open(), value, t.get_high(), t.get_low(), t.get_volume()));
     });
     m_technicals_model.connect_volume_slot([=] (Nexus::Quantity value) {
-      auto t = technicals->get();
-      t.m_volume = value;
-      technicals->set(t);
+      auto t = session_candlestick->get();
+      session_candlestick->set(PriceCandlestick(t.get_start(), t.get_end(),
+        t.get_open(), t.get_close(), t.get_high(), t.get_low(), value));
     });
   }
 
@@ -585,7 +585,7 @@ int main(int argc, char** argv) {
   auto factory = std::make_shared<BookViewPropertiesWindowFactory>();
   auto order_tester = BookViewOrderTester(book_views);
   auto tester = BookViewTester(
-    book_views->get_technicals(), book_views, key_bindings_window);
+    book_views->get_session_candlestick(), book_views, key_bindings_window);
   auto book_view_window = BookViewWindow(Ref(tester.m_user_profile),
     populate_ticker_query_model(), key_bindings, factory,
     std::bind_front(&model_builder, book_views, &tester));

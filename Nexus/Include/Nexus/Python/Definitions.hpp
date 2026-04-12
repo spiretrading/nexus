@@ -143,12 +143,6 @@ namespace Nexus::Python {
   void export_ticker_info(pybind11::module& module);
 
   /**
-   * Exports the TickerTechnicals class.
-   * @param module The module to export to.
-   */
-  void export_ticker_technicals(pybind11::module& module);
-
-  /**
    * Exports the Side enum.
    * @param module The module to export to.
    */

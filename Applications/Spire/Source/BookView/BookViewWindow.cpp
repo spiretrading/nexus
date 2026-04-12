@@ -375,7 +375,7 @@ void BookViewWindow::on_current(const Ticker& ticker) {
   m_model = m_model_builder(ticker);
   auto body = new QWidget();
   auto layout = make_vbox_layout(body);
-  auto panel = new TechnicalsPanel(m_model->get_technicals(),
+  auto panel = new TechnicalsPanel(m_model->get_session_candlestick(),
     std::make_shared<DefaultQuantityModel>(
       Ref(*m_user_profile), ticker, Side::BID),
     std::make_shared<DefaultQuantityModel>(

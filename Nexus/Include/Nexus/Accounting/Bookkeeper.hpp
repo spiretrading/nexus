@@ -9,9 +9,6 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/VirtualPtr.hpp>
 #include "Nexus/Accounting/Inventory.hpp"
-#include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Quantity.hpp"
 
 namespace Nexus {
 
@@ -21,8 +18,8 @@ namespace Nexus {
     bookkeeper.record(std::declval<const Ticker&>(),
       std::declval<CurrencyId>(), std::declval<Quantity>(),
       std::declval<Money>(), std::declval<Money>());
-    { bookkeeper.get_inventory(std::declval<const Ticker&>(),
-        std::declval<CurrencyId>()) } -> std::same_as<const Inventory&>;
+    { bookkeeper.get_inventory(
+        std::declval<const Ticker&>()) } -> std::same_as<const Inventory&>;
     { bookkeeper.get_total(std::declval<CurrencyId>()) } ->
         std::same_as<const Inventory&>;
     { bookkeeper.get_inventory_range() } ->
@@ -62,18 +59,16 @@ namespace Nexus {
        * @param cost_basis The cost basis of the transaction.
        * @param fees Any fees incurred from the transaction.
        */
-      void record(const Ticker& ticker, CurrencyId currency,
-        Quantity quantity, Money cost_basis, Money fees);
+      void record(const Ticker& ticker, CurrencyId currency, Quantity quantity,
+        Money cost_basis, Money fees);
 
       /**
-       * Returns the Inventory for a given ticker and currency.
+       * Returns the Inventory for a given ticker.
        * @param ticker The Ticker of the Inventory to retrieve.
-       * @param currency The currency of the Inventory to retrieve.
-       * @return The Inventory for the specified ticker and currency.
+       * @return The Inventory for the specified ticker.
        * @throws std::out_of_range If no inventory is found.
        */
-      const Inventory& get_inventory(
-        const Ticker& ticker, CurrencyId currency) const;
+      const Inventory& get_inventory(const Ticker& ticker) const;
 
       /**
        * Returns the total Inventory for a given currency.
@@ -95,8 +90,7 @@ namespace Nexus {
 
         virtual void record(
           const Ticker&, CurrencyId, Quantity, Money, Money) = 0;
-        virtual const Inventory& get_inventory(
-          const Ticker&, CurrencyId) const = 0;
+        virtual const Inventory& get_inventory(const Ticker&) const = 0;
         virtual const Inventory& get_total(CurrencyId) const = 0;
         virtual Beam::View<const Inventory> get_inventory_range() const = 0;
         virtual Beam::View<const Inventory> get_totals_range() const = 0;
@@ -111,8 +105,7 @@ namespace Nexus {
 
         void record(const Ticker& ticker, CurrencyId currency,
           Quantity quantity, Money cost_basis, Money fees) override;
-        const Inventory& get_inventory(
-          const Ticker& ticker, CurrencyId currency) const override;
+        const Inventory& get_inventory(const Ticker& ticker) const override;
         const Inventory& get_total(CurrencyId currency) const override;
         Beam::View<const Inventory> get_inventory_range() const override;
         Beam::View<const Inventory> get_totals_range() const override;
@@ -137,8 +130,8 @@ namespace Nexus {
   }
 
   inline const Inventory& Bookkeeper::get_inventory(
-      const Ticker& ticker, CurrencyId currency) const {
-    return m_bookkeeper->get_inventory(ticker, currency);
+      const Ticker& ticker) const {
+    return m_bookkeeper->get_inventory(ticker);
   }
 
   inline const Inventory& Bookkeeper::get_total(CurrencyId currency) const {
@@ -166,8 +159,8 @@ namespace Nexus {
 
   template<typename B>
   const Inventory& Bookkeeper::WrappedBookkeeper<B>::get_inventory(
-      const Ticker& ticker, CurrencyId currency) const {
-    return m_bookkeeper->get_inventory(ticker, currency);
+      const Ticker& ticker) const {
+    return m_bookkeeper->get_inventory(ticker);
   }
 
   template<typename B>

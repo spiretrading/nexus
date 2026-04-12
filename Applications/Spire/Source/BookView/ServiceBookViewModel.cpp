@@ -63,9 +63,9 @@ ServiceBookViewModel::ServiceBookViewModel(
   m_client.query(time_and_sale_query, m_event_handler.get_slot<TimeAndSale>(
     std::bind_front(&ServiceBookViewModel::on_time_and_sales, this)));
   m_load_promise = std::make_shared<QtPromise<void>>(QtPromise([=] {
-    return m_client.load_technicals(m_ticker);
-  }, LaunchPolicy::ASYNC).then([model = m_model] (const auto& technicals) {
-    model->get_technicals()->set(technicals);
+    return m_client.load_session_candlestick(m_ticker);
+  }, LaunchPolicy::ASYNC).then([model = m_model] (const auto& candlestick) {
+    model->get_session_candlestick()->set(candlestick);
   }));
   on_active_blotter(m_blotter->GetActiveBlotter());
   m_active_blotter_connection = m_blotter->ConnectActiveBlotterChangedSignal(
@@ -102,9 +102,9 @@ const std::shared_ptr<BboQuoteModel>&
   return m_model->get_bbo_quote();
 }
 
-const std::shared_ptr<TickerTechnicalsModel>&
-    ServiceBookViewModel::get_technicals() const {
-  return m_model->get_technicals();
+const std::shared_ptr<SessionCandlestickModel>&
+    ServiceBookViewModel::get_session_candlestick() const {
+  return m_model->get_session_candlestick();
 }
 
 void ServiceBookViewModel::on_bbo(const BboQuote& bbo) {
@@ -215,19 +215,9 @@ void ServiceBookViewModel::on_book_quote_interruption(
 }
 
 void ServiceBookViewModel::on_time_and_sales(const TimeAndSale& time_and_sale) {
-  auto technicals = m_model->get_technicals()->get();
-  technicals.m_volume += time_and_sale.m_size;
-  if(technicals.m_open == Money::ZERO) {
-    technicals.m_open = time_and_sale.m_price;
-  }
-  if(time_and_sale.m_price > technicals.m_high) {
-    technicals.m_high = time_and_sale.m_price;
-  }
-  if(time_and_sale.m_price < technicals.m_low ||
-      technicals.m_low == Money::ZERO) {
-    technicals.m_low = time_and_sale.m_price;
-  }
-  m_model->get_technicals()->set(technicals);
+  auto candlestick = m_model->get_session_candlestick()->get();
+  candlestick.update(time_and_sale.m_price, time_and_sale.m_size);
+  m_model->get_session_candlestick()->set(candlestick);
 }
 
 void ServiceBookViewModel::on_execution_report(

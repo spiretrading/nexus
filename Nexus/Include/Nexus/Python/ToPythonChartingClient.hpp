@@ -35,7 +35,7 @@ namespace Nexus {
 
       void query(const TickerChartingQuery& query,
         Beam::ScopedQueueWriter<QueryVariant> queue);
-      TimePriceQueryResult load_time_price_series(const Ticker& ticker,
+      PriceQueryResult load_price_series(const Ticker& ticker,
         boost::posix_time::ptime start, boost::posix_time::ptime end,
         boost::posix_time::time_duration interval);
       void close();
@@ -84,11 +84,11 @@ namespace Nexus {
   }
 
   template<IsChartingClient C>
-  TimePriceQueryResult ToPythonChartingClient<C>::load_time_price_series(
+  PriceQueryResult ToPythonChartingClient<C>::load_price_series(
       const Ticker& ticker, boost::posix_time::ptime start,
       boost::posix_time::ptime end, boost::posix_time::time_duration interval) {
     auto release = Beam::Python::GilRelease();
-    return m_client->load_time_price_series(ticker, start, end, interval);
+    return m_client->load_price_series(ticker, start, end, interval);
   }
 
   template<IsChartingClient C>

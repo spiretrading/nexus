@@ -37,8 +37,8 @@ namespace Spire {
       const std::shared_ptr<PreviewOrderModel>&
         get_preview_order() const override;
       const std::shared_ptr<BboQuoteModel>& get_bbo_quote() const override;
-      const std::shared_ptr<TickerTechnicalsModel>&
-        get_technicals() const override;
+      const std::shared_ptr<SessionCandlestickModel>&
+        get_session_candlestick() const override;
 
     private:
       Nexus::Ticker m_ticker;

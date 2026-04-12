@@ -22,7 +22,7 @@ namespace Nexus::Python {
   auto export_charting_client(pybind11::module& module, std::string_view name) {
     auto client = pybind11::class_<C>(module, name.data()).
       def("query", &C::query).
-      def("load_time_price_series", &C::load_time_price_series).
+      def("load_price_series", &C::load_price_series).
       def("close", &C::close);
     if constexpr(!std::is_same_v<C, ChartingClient>) {
       pybind11::implicitly_convertible<C, ChartingClient>();

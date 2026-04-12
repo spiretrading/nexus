@@ -46,12 +46,12 @@ void PortfolioModel::on_risk_portfolio_inventory_update(
       m_entries.insert(std::pair(m_inventory.m_key, entry)).first;
     m_ticker_to_entries[ticker].push_back(entry);
   }
-  auto& valuation = [&] () -> TickerValuation& {
+  auto& valuation = [&] () -> Valuation& {
     auto valuation_iterator = m_valuations.find(ticker);
     if(valuation_iterator == m_valuations.end()) {
       auto query = make_current_query(ticker);
-      valuation_iterator = m_valuations.insert(std::pair(ticker,
-        TickerValuation(m_inventory.m_value.m_position.m_currency))).first;
+      valuation_iterator = m_valuations.insert(std::pair(
+        ticker, Valuation(m_inventory.m_value.m_position.m_currency))).first;
       m_clients.get_market_data_client().query(query,
         m_tasks.get_slot<BboQuote>(
           std::bind_front(&PortfolioModel::on_bbo_quote,
@@ -67,7 +67,7 @@ void PortfolioModel::on_risk_portfolio_inventory_update(
 }
 
 void PortfolioModel::on_bbo_quote(
-    const Ticker& ticker, TickerValuation& valuation, const BboQuote& quote) {
+    const Ticker& ticker, Valuation& valuation, const BboQuote& quote) {
   if(valuation.m_bid_value == quote.m_bid.m_price &&
       valuation.m_ask_value == quote.m_ask.m_price) {
     return;

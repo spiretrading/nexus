@@ -135,16 +135,16 @@ namespace Nexus {
   template<typename P, typename C> requires
     IsMarketDataClient<Beam::dereference_t<C>>
   void PortfolioController<P, C>::push_update(const Ticker& ticker) {
-    auto ticker_entry_iterator = m_portfolio->get_ticker_entries().find(ticker);
-    if(ticker_entry_iterator == m_portfolio->get_ticker_entries().end()) {
+    auto ticker_entry_iterator = m_portfolio->get_entries().find(ticker);
+    if(ticker_entry_iterator == m_portfolio->get_entries().end()) {
       return;
     }
     auto& ticker_entry = ticker_entry_iterator->second;
-    auto& ticker_inventory = m_portfolio->get_bookkeeper().get_inventory(
-      ticker, ticker_entry.m_valuation.m_currency);
+    auto& ticker_inventory =
+      m_portfolio->get_bookkeeper().get_inventory(ticker);
     auto update = PortfolioUpdateEntry();
-    update.m_ticker_inventory = ticker_inventory;
-    update.m_unrealized_ticker = ticker_entry.m_unrealized;
+    update.m_inventory = ticker_inventory;
+    update.m_unrealized = ticker_entry.m_unrealized;
     update.m_currency_inventory = m_portfolio->get_bookkeeper().get_total(
       ticker_entry.m_valuation.m_currency);
     auto unrealized_currency_iterator =
@@ -152,9 +152,9 @@ namespace Nexus {
         ticker_entry.m_valuation.m_currency);
     if(unrealized_currency_iterator ==
         m_portfolio->get_unrealized_profit_and_losses().end()) {
-      update.m_unrealized_currency = Money::ZERO;
+      update.m_currency_unrealized = Money::ZERO;
     } else {
-      update.m_unrealized_currency = unrealized_currency_iterator->second;
+      update.m_currency_unrealized = unrealized_currency_iterator->second;
     }
     m_publisher.push(update);
   }

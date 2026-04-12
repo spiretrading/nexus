@@ -136,7 +136,7 @@ void BlotterModel::InitializeModels() {
     auto [portfolio, sequence, excludedOrders] = make_portfolio(
       m_userProfile->GetClients().get_risk_client().load_inventory_snapshot(
         m_executingAccount), m_executingAccount,
-      DEFAULT_VENUES, m_userProfile->GetClients().get_order_execution_client());
+      m_userProfile->GetClients().get_order_execution_client());
     auto orders = std::make_shared<Queue<std::shared_ptr<Order>>>();
     for(auto& order : excludedOrders) {
       orders->push(order);
@@ -153,8 +153,7 @@ void BlotterModel::InitializeModels() {
   } else {
     auto orders = std::make_shared<Queue<std::shared_ptr<Order>>>();
     orderExecutionPublisher.monitor(orders);
-    m_portfolioController.emplace(
-      Portfolio<TrueAverageBookkeeper>(DEFAULT_VENUES),
+    m_portfolioController.emplace(Portfolio<TrueAverageBookkeeper>(),
       &m_userProfile->GetClients().get_market_data_client(), std::move(orders));
   }
   m_orderLogModel.SetOrderExecutionPublisher(Ref(orderExecutionPublisher));

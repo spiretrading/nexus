@@ -94,9 +94,8 @@ TEST_SUITE("InventorySnapshot") {
         SequencedValue(IndexedValue(info, fixture.m_client_account),
           Beam::Sequence(id)));
     }
-    auto [portfolio, sequence, excluded_orders] =
-      make_portfolio(snapshot, fixture.m_client_account, DEFAULT_VENUES,
-        *fixture.m_order_execution_client);
+    auto [portfolio, sequence, excluded_orders] = make_portfolio(
+      snapshot, fixture.m_client_account, *fixture.m_order_execution_client);
     REQUIRE(sequence == Beam::Sequence(102));
     auto expected_excluded_ids = excluded_order_ids;
     expected_excluded_ids.insert(expected_excluded_ids.end(),

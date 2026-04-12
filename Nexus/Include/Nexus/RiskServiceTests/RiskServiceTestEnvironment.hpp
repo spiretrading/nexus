@@ -41,7 +41,6 @@ namespace Nexus::Tests {
        * @param transition_timer_factory The transition Timer to use.
        * @param time_client The TimeClient to use.
        * @param exchange_rates The exchange rates to use.
-       * @param venues The venues available to the portfolio.
        * @param destinations The destinations available to flatten positions.
        */
       RiskServiceTestEnvironment(
@@ -51,7 +50,7 @@ namespace Nexus::Tests {
         OrderExecutionClient order_execution_client,
         std::function<std::unique_ptr<Beam::Timer> ()> transition_timer_factory,
         Beam::TimeClient time_client, ExchangeRateTable exchange_rates,
-        VenueDatabase venues, DestinationDatabase destinations);
+        DestinationDatabase destinations);
 
       ~RiskServiceTestEnvironment();
 
@@ -96,7 +95,7 @@ namespace Nexus::Tests {
       OrderExecutionClient order_execution_client,
       std::function<std::unique_ptr<Beam::Timer> ()> transition_timer_factory,
       Beam::TimeClient time_client, ExchangeRateTable exchange_rates,
-      VenueDatabase venues, DestinationDatabase destinations) {
+      DestinationDatabase destinations) {
     auto accounts = std::make_shared<Beam::Queue<Beam::AccountUpdate>>();
     service_locator_client.monitor(accounts);
     m_container.emplace(Beam::init(service_locator_client,
@@ -110,7 +109,7 @@ namespace Nexus::Tests {
         std::move(administration_client), std::move(market_data_client),
         std::move(order_execution_client), std::move(transition_timer_factory),
         std::move(time_client), &m_data_store, std::move(exchange_rates),
-        std::move(venues), std::move(destinations))), &m_server_connection,
+        std::move(destinations))), &m_server_connection,
       boost::factory<std::shared_ptr<Beam::TriggerTimer>>());
   }
 

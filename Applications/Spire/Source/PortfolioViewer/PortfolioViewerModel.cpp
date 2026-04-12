@@ -260,8 +260,8 @@ void PortfolioViewerModel::OnRiskPortfolioInventoryUpdate(
   auto& ticker = entry.m_key.m_ticker;
   auto baseCurrency = entry.m_value.m_position.m_currency;
   if(m_valuations.find(ticker) == m_valuations.end()) {
-    m_valuations.insert(std::pair(
-      ticker, TickerValuation(entry.m_value.m_position.m_currency)));
+    m_valuations.insert(
+      std::pair(ticker, Valuation(entry.m_value.m_position.m_currency)));
     auto bboQuery = make_current_query(ticker);
     bboQuery.set_interruption_policy(InterruptionPolicy::IGNORE_CONTINUE);
     m_userProfile->GetClients().get_market_data_client().query(

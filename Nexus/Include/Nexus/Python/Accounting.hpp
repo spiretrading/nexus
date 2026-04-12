@@ -35,8 +35,7 @@ namespace Nexus::Python {
       def("record", &B::record, pybind11::arg("index"),
         pybind11::arg("currency"), pybind11::arg("quantity"),
         pybind11::arg("cost_basis"), pybind11::arg("fees")).
-      def("get_inventory", &B::get_inventory, pybind11::arg("index"),
-        pybind11::arg("currency")).
+      def("get_inventory", &B::get_inventory, pybind11::arg("ticker")).
       def("get_total", &B::get_total, pybind11::arg("currency")).
       def_property_readonly("inventories", &B::get_inventory_range).
       def_property_readonly("totals", &B::get_totals_range);
@@ -79,9 +78,8 @@ namespace Nexus::Python {
     using Bookkeeper = typename Portfolio::Bookkeeper;
     auto portfolio = pybind11::class_<Portfolio>(module, name.data()).
       def(pybind11::init<const Bookkeeper&>()).
-      def(pybind11::init<const Bookkeeper&, const VenueDatabase&>()).
       def_property_readonly("bookkeeper", &Portfolio::get_bookkeeper).
-      def_property_readonly("ticker_entries", &Portfolio::get_ticker_entries).
+      def_property_readonly("entries", &Portfolio::get_entries).
       def_property_readonly("unrealized_profit_and_losses",
         &Portfolio::get_unrealized_profit_and_losses).
       def("update", pybind11::overload_cast<
@@ -103,28 +101,24 @@ namespace Nexus::Python {
       }, pybind11::keep_alive<0, 1>());
     if constexpr(std::is_same_v<Bookkeeper, Nexus::Bookkeeper>) {
       portfolio.def(pybind11::init([] {
-          return Portfolio(Bookkeeper(TrueAverageBookkeeper()));
-        })).
-        def(pybind11::init([] (const VenueDatabase& venues) {
-          return Portfolio(Bookkeeper(TrueAverageBookkeeper()), venues);
-        }));
+        return Portfolio(Bookkeeper(TrueAverageBookkeeper()));
+      }));
     } else {
-      portfolio.def(pybind11::init()).
-        def(pybind11::init<const VenueDatabase&>());
+      portfolio.def(pybind11::init());
     }
-    using TickerEntry = typename Portfolio::TickerEntry;
-    pybind11::class_<TickerEntry>(portfolio, "TickerEntry").
+    using Entry = typename Portfolio::Entry;
+    pybind11::class_<Entry>(portfolio, "Entry").
       def(pybind11::init<CurrencyId>()).
-      def_readwrite("valuation", &TickerEntry::m_valuation).
-      def_readwrite("unrealized", &TickerEntry::m_unrealized);
+      def_readwrite("valuation", &Entry::m_valuation).
+      def_readwrite("unrealized", &Entry::m_unrealized);
     module.def("get_realized_profit_and_loss",
       pybind11::overload_cast<const Inventory&>(&get_realized_profit_and_loss));
     module.def("get_unrealized_profit_and_loss",
-      [] (const Inventory& inventory, const TickerValuation& valuation) {
+      [] (const Inventory& inventory, const Valuation& valuation) {
         return get_unrealized_profit_and_loss(inventory, valuation);
       });
     module.def("get_total_profit_and_loss",
-      [] (const Inventory& inventory, const TickerValuation& valuation) {
+      [] (const Inventory& inventory, const Valuation& valuation) {
         return get_total_profit_and_loss(inventory, valuation);
       });
     module.def("get_total_profit_and_loss",
@@ -159,16 +153,16 @@ namespace Nexus::Python {
   void export_position_order_book(pybind11::module& module);
 
   /**
-   * Exports the TickerValuation struct.
-   * @param module The module to export to.
-   */
-  void export_ticker_valuation(pybind11::module& module);
-
-  /**
    * Exports the ShortingModel class.
    * @param module The module to export to.
    */
   void export_shorting_model(pybind11::module& module);
+
+  /**
+   * Exports the Valuation struct.
+   * @param module The module to export to.
+   */
+  void export_valuation(pybind11::module& module);
 }
 
 #endif

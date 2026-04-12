@@ -77,7 +77,7 @@ void ReportingWebServlet::generate_reports(
     auto venues = clients.get_definitions_client().load_venue_database();
     auto time_zones =
       clients.get_definitions_client().load_time_zone_database();
-    auto portfolio = Portfolio(TrueAverageBookkeeper(), venues);
+    auto portfolio = Portfolio(TrueAverageBookkeeper());
     for(auto day = request.m_start; day <= request.m_end; day += days(1)) {
       if(request.m_is_cancelled->load()) {
         break;

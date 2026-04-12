@@ -32,8 +32,7 @@ namespace Nexus {
         get_direction(order.get_info().m_fields.m_side) *
           report.m_last_quantity,
         report.m_last_quantity * report.m_last_price, get_fee_total(report));
-      return bookkeeper.get_inventory(order.get_info().m_fields.m_ticker,
-        order.get_info().m_fields.m_currency);
+      return bookkeeper.get_inventory(order.get_info().m_fields.m_ticker);
     }, Aspen::concur(Aspen::lift([] (const std::shared_ptr<Order>& order) {
       return Aspen::Shared(Aspen::lift([=] (const ExecutionReport& report) {
         return std::tuple(order, report);

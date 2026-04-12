@@ -22,7 +22,6 @@
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/TickerInfo.hpp"
-#include "Nexus/Definitions/TickerTechnicals.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Nexus/Definitions/TradingSchedule.hpp"
@@ -244,7 +243,6 @@ void Nexus::Python::export_definitions(module& module) {
   export_scope_map(module);
   export_ticker(module);
   export_ticker_info(module);
-  export_ticker_technicals(module);
   export_side(module);
   export_tag(module);
   export_time_and_sale(module);
@@ -495,15 +493,14 @@ void Nexus::Python::export_scope_map(module& module) {
     def(init<object>()).
     def(init<std::string, object>()).
     def_property_readonly("size", &PythonScopeMap::get_size).
-    def("get", static_cast<
-      const object& (PythonScopeMap::*)(const Scope&) const>(
-        &PythonScopeMap::get), return_value_policy::reference_internal).
-    def("get", static_cast<object& (PythonScopeMap::*)(const Scope&)>(
-      &PythonScopeMap::get), return_value_policy::reference_internal).
+    def("get", overload_cast<const Scope&>(&PythonScopeMap::get, const_),
+      return_value_policy::reference_internal).
+    def("get", overload_cast<const Scope&>(&PythonScopeMap::get),
+      return_value_policy::reference_internal).
     def("set", &PythonScopeMap::set).
     def("erase", &PythonScopeMap::erase).
-    def("__getitem__", static_cast<const object& (PythonScopeMap::*)(
-      const Scope&) const>(&PythonScopeMap::get),
+    def("__getitem__",
+      overload_cast<const Scope&>(&PythonScopeMap::get, const_),
       return_value_policy::reference_internal).
     def("__setitem__", &PythonScopeMap::set).
     def("__delitem__", &PythonScopeMap::erase).
@@ -535,26 +532,17 @@ void Nexus::Python::export_ticker_info(module& module) {
     def_readwrite("board_lot", &TickerInfo::m_board_lot);
 }
 
-void Nexus::Python::export_ticker_technicals(module& module) {
-  export_default_methods(class_<TickerTechnicals>(module, "TickerTechnicals")).
-    def_readwrite("volume", &TickerTechnicals::m_volume).
-    def_readwrite("high", &TickerTechnicals::m_high).
-    def_readwrite("low", &TickerTechnicals::m_low).
-    def_readwrite("open", &TickerTechnicals::m_open).
-    def_readwrite("close", &TickerTechnicals::m_close);
-}
-
 void Nexus::Python::export_side(module& module) {
   enum_<Side::Type>(module, "Side").
     value("NONE", Side::NONE).
     value("ASK", Side::ASK).
     value("BID", Side::BID);
-  module.def("pick", static_cast<
-    const object& (*)(Side, const object&, const object&)>(&pick<object>));
+  module.def(
+    "pick", overload_cast<Side, const object&, const object&>(&pick<object>));
   module.def("direction", &get_direction);
   module.def("side", &get_side);
   module.def("opposite", &get_opposite);
-  module.def("to_char", static_cast<char (*)(Side)>(&to_char));
+  module.def("to_char", overload_cast<Side>(&to_char));
 }
 
 void Nexus::Python::export_tag(module& module) {
