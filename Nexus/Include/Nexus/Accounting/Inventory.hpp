@@ -3,7 +3,6 @@
 #include <ostream>
 #include <utility>
 #include <Beam/Serialization/DataShuttle.hpp>
-#include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Accounting/Position.hpp"
 
 namespace Nexus {
