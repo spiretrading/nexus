@@ -7,9 +7,8 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
 
-OpenPositionsModel::Entry::Entry(int index, const Position::Key& key)
+OpenPositionsModel::Entry::Entry(int index)
   : m_index(index),
-    m_key(key),
     m_unrealizedEarnings(Money::ZERO) {}
 
 OpenPositionsModel::OpenPositionsModel()
@@ -68,7 +67,7 @@ QVariant OpenPositionsModel::data(const QModelIndex& index, int role) const {
     return static_cast<int>(Qt::AlignHCenter | Qt::AlignVCenter);
   } else if(role == Qt::DisplayRole) {
     if(index.column() == TICKER_COLUMN) {
-      return QVariant::fromValue(entry.m_key.m_ticker);
+      return QVariant::fromValue(entry.m_inventory.m_position.m_ticker);
     } else if(index.column() == QUANTITY_COLUMN) {
       return QVariant::fromValue(abs(entry.m_inventory.m_position.m_quantity));
     } else if(index.column() == SIDE_COLUMN) {
@@ -82,7 +81,7 @@ QVariant OpenPositionsModel::data(const QModelIndex& index, int role) const {
     } else if(index.column() == COST_BASIS_COLUMN) {
       return QVariant::fromValue(entry.m_inventory.m_position.m_cost_basis);
     } else if(index.column() == CURRENCY_COLUMN) {
-      return QVariant::fromValue(entry.m_key.m_currency);
+      return QVariant::fromValue(entry.m_inventory.m_position.m_currency);
     }
   }
   return QVariant();
@@ -113,28 +112,28 @@ QVariant OpenPositionsModel::headerData(
 }
 
 void OpenPositionsModel::OnPortfolioUpdate(const PortfolioUpdateEntry& update) {
-  auto key = get_key(update.m_ticker_inventory.m_position);
-  auto entryIterator = m_tickerToEntry.find(key.m_ticker);
+  auto& ticker = update.m_inventory.m_position.m_ticker;
+  auto entryIterator = m_tickerToEntry.find(ticker);
   if(entryIterator == m_tickerToEntry.end()) {
-    if(update.m_ticker_inventory.m_position.m_quantity == 0) {
+    if(update.m_inventory.m_position.m_quantity == 0) {
       return;
     }
     auto index = static_cast<int>(m_entries.size());
     beginInsertRows(QModelIndex(), index, index);
-    auto entry = std::make_unique<Entry>(index, key);
+    auto entry = std::make_unique<Entry>(index);
     entryIterator =
-      m_tickerToEntry.insert(std::pair(key.m_ticker, entry.get())).first;
+      m_tickerToEntry.insert(std::pair(ticker, entry.get())).first;
     m_entries.emplace_back(std::move(entry));
     endInsertRows();
   }
   auto& entry = *entryIterator->second;
-  entry.m_inventory = update.m_ticker_inventory;
-  entry.m_unrealizedEarnings = update.m_unrealized_ticker;
+  entry.m_inventory = update.m_inventory;
+  entry.m_unrealizedEarnings = update.m_unrealized;
   Q_EMIT dataChanged(
     index(entry.m_index, 0), index(entry.m_index, COLUMNS - 1));
   if(entry.m_inventory.m_position.m_quantity == 0) {
     beginRemoveRows(QModelIndex(), entry.m_index, entry.m_index);
-    m_tickerToEntry.erase(key.m_ticker);
+    m_tickerToEntry.erase(ticker);
     for(auto i = entry.m_index + 1;
         i < static_cast<int>(m_entries.size()); ++i) {
       --m_entries[i]->m_index;

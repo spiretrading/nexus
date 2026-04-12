@@ -38,7 +38,7 @@ namespace Nexus {
         const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue);
       std::vector<TickerInfo> query(const TickerInfoQuery& query);
       TickerSnapshot load_snapshot(const Ticker& ticker);
-      TickerTechnicals load_technicals(const Ticker& ticker);
+      PriceCandlestick load_session_candlestick(const Ticker& ticker);
       std::vector<TickerInfo> load_ticker_info_from_prefix(
         const std::string& prefix);
       void close();
@@ -121,9 +121,9 @@ namespace Nexus {
     return m_market_data_client.load_snapshot(ticker);
   }
 
-  inline TickerTechnicals BacktesterMarketDataClient::load_technicals(
+  inline PriceCandlestick BacktesterMarketDataClient::load_session_candlestick(
       const Ticker& ticker) {
-    return m_market_data_client.load_technicals(ticker);
+    return m_market_data_client.load_session_candlestick(ticker);
   }
 
   inline std::vector<TickerInfo> BacktesterMarketDataClient::

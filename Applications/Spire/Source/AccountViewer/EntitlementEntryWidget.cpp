@@ -16,10 +16,9 @@ namespace {
   enum {
     VENUE_COLUMN = 0,
     BBO_COLUMN = 1,
-    MARKET_QUOTES_COLUMN = 2,
-    BOOK_QUOTES_COLUMN = 3,
-    TIME_AND_SALES_COLUMN = 4,
-    IMBALANCES_COLUMN = 5,
+    BOOK_QUOTES_COLUMN = 2,
+    TIME_AND_SALES_COLUMN = 3,
+    IMBALANCES_COLUMN = 4,
   };
 
   QHBoxLayout* MakeCheckboxLayout(bool checked) {

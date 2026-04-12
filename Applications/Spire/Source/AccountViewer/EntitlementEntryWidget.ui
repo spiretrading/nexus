@@ -175,22 +175,6 @@
             </widget>
            </item>
            <item row="0" column="2">
-            <widget class="QLabel" name="m_marketQuotesLabel">
-             <property name="sizePolicy">
-              <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
-               <horstretch>0</horstretch>
-               <verstretch>0</verstretch>
-              </sizepolicy>
-             </property>
-             <property name="text">
-              <string>Market Quotes</string>
-             </property>
-             <property name="alignment">
-              <set>Qt::AlignCenter</set>
-             </property>
-            </widget>
-           </item>
-           <item row="0" column="3">
             <widget class="QLabel" name="m_bookQuotesLabel">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -206,7 +190,7 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="4">
+           <item row="0" column="3">
             <widget class="QLabel" name="m_timeAndSalesLabel">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">
@@ -222,7 +206,7 @@
              </property>
             </widget>
            </item>
-           <item row="0" column="5">
+           <item row="0" column="4">
             <widget class="QLabel" name="m_imbalancesLabel">
              <property name="sizePolicy">
               <sizepolicy hsizetype="Preferred" vsizetype="Maximum">

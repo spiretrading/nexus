@@ -42,7 +42,7 @@ namespace Nexus {
 
       void query(const TickerChartingQuery& query,
         Beam::ScopedQueueWriter<QueryVariant> queue);
-      TimePriceQueryResult load_time_price_series(const Ticker& ticker,
+      PriceQueryResult load_price_series(const Ticker& ticker,
         boost::posix_time::ptime start, boost::posix_time::ptime end,
         boost::posix_time::time_duration interval);
       void close();
@@ -134,12 +134,12 @@ namespace Nexus {
   }
 
   template<typename B>
-  TimePriceQueryResult ServiceChartingClient<B>::load_time_price_series(
+  PriceQueryResult ServiceChartingClient<B>::load_price_series(
       const Ticker& ticker, boost::posix_time::ptime start,
       boost::posix_time::ptime end, boost::posix_time::time_duration interval) {
     return Beam::service_or_throw_with_nested([&] {
       auto client = m_client_handler.get_client();
-      return client->template send_request<LoadTickerTimePriceSeriesService>(
+      return client->template send_request<LoadTickerPriceSeriesService>(
         ticker, start, end, interval);
     }, "Failed to load time price series: " +
       boost::lexical_cast<std::string>(ticker) + ", " +

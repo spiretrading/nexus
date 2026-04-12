@@ -22,14 +22,13 @@ namespace Nexus {
 
       void record(const Ticker& ticker, CurrencyId currency, Quantity quantity,
         Money cost_basis, Money fees);
-      const Inventory& get_inventory(
-        const Ticker& ticker, CurrencyId currency) const;
+      const Inventory& get_inventory(const Ticker& ticker) const;
       const Inventory& get_total(CurrencyId currency) const;
       Beam::View<const Inventory> get_inventory_range() const;
       Beam::View<const Inventory> get_totals_range() const;
 
     private:
-      std::unordered_map<Position::Key, Inventory> m_inventories;
+      std::unordered_map<Ticker, Inventory> m_inventories;
       std::unordered_map<CurrencyId, Inventory> m_totals;
 
       Inventory& internal_get_total(CurrencyId currency);
@@ -41,7 +40,7 @@ namespace Nexus {
       if(is_empty(inventory)) {
         continue;
       }
-      m_inventories.insert(std::pair(get_key(inventory.m_position), inventory));
+      m_inventories.insert(std::pair(inventory.m_position.m_ticker, inventory));
       auto& total = internal_get_total(inventory.m_position.m_currency);
       total.m_gross_profit_and_loss += inventory.m_gross_profit_and_loss;
       total.m_position.m_quantity += abs(inventory.m_position.m_quantity);
@@ -54,11 +53,10 @@ namespace Nexus {
 
   inline void TrueAverageBookkeeper::record(const Ticker& ticker,
       CurrencyId currency, Quantity quantity, Money cost_basis, Money fees) {
-    auto key = Position::Key(ticker, currency);
-    auto entry_iterator = m_inventories.find(key);
+    auto entry_iterator = m_inventories.find(ticker);
     if(entry_iterator == m_inventories.end()) {
       entry_iterator =
-        m_inventories.insert(std::pair(key, Inventory(key))).first;
+        m_inventories.insert(std::pair(ticker, Inventory(ticker, currency))).first;
     }
     auto& entry = entry_iterator->second;
     entry.m_fees += fees;
@@ -115,14 +113,13 @@ namespace Nexus {
   }
 
   inline const Inventory& TrueAverageBookkeeper::get_inventory(
-      const Ticker& ticker, CurrencyId currency) const {
-    auto key = Position::Key(ticker, currency);
-    auto inventory_iterator = m_inventories.find(key);
+      const Ticker& ticker) const {
+    auto inventory_iterator = m_inventories.find(ticker);
     if(inventory_iterator == m_inventories.end()) {
       static auto empty_inventories =
-        Beam::SynchronizedUnorderedMap<Position::Key, Inventory>();
-      return empty_inventories.get_or_insert(key, [&] {
-        return Inventory(key);
+        Beam::SynchronizedUnorderedMap<Ticker, Inventory>();
+      return empty_inventories.get_or_insert(ticker, [&] {
+        return Inventory();
       });
     }
     return inventory_iterator->second;

@@ -115,14 +115,14 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<TickerSnapshot> m_result;
       };
 
-      /** Records a call to load_technicals(...). */
-      struct LoadTickerTechnicalsOperation {
+      /** Records a call to load_session_candlestick(...). */
+      struct LoadSessionCandlestickOperation {
 
         /** The Ticker passed. */
         Ticker m_ticker;
 
         /** Used to return a value to the caller. */
-        Beam::Tests::ServiceResult<TickerTechnicals> m_result;
+        Beam::Tests::ServiceResult<PriceCandlestick> m_result;
       };
 
       /** Records a call to load_ticker_info_from_prefix(...). */
@@ -141,7 +141,7 @@ namespace Nexus::Tests {
         QueryBboQuoteOperation, QuerySequencedBookQuoteOperation,
         QueryBookQuoteOperation, QuerySequencedTimeAndSaleOperation,
         QueryTimeAndSaleOperation, TickerInfoQueryOperation,
-        LoadTickerSnapshotOperation, LoadTickerTechnicalsOperation,
+        LoadTickerSnapshotOperation, LoadSessionCandlestickOperation,
         LoadTickerInfoFromPrefixOperation>;
 
       /** The type of Queue used to send and receive operations. */
@@ -174,7 +174,7 @@ namespace Nexus::Tests {
         const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue);
       std::vector<TickerInfo> query(const TickerInfoQuery& query);
       TickerSnapshot load_snapshot(const Ticker& ticker);
-      TickerTechnicals load_technicals(const Ticker& ticker);
+      PriceCandlestick load_session_candlestick(const Ticker& ticker);
       std::vector<TickerInfo> load_ticker_info_from_prefix(
         const std::string& prefix);
       void close();
@@ -267,10 +267,10 @@ namespace Nexus::Tests {
       ticker);
   }
 
-  inline TickerTechnicals TestMarketDataClient::load_technicals(
+  inline PriceCandlestick TestMarketDataClient::load_session_candlestick(
       const Ticker& ticker) {
     return m_queue.append_result<
-      LoadTickerTechnicalsOperation, TickerTechnicals>(ticker);
+      LoadSessionCandlestickOperation, PriceCandlestick>(ticker);
   }
 
   inline std::vector<TickerInfo> TestMarketDataClient::

@@ -14,10 +14,10 @@
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Routines/Routine.hpp>
 #include "Nexus/Definitions/TickerInfo.hpp"
-#include "Nexus/Definitions/TickerTechnicals.hpp"
 #include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Nexus/MarketDataService/TickerSnapshot.hpp"
 #include "Nexus/MarketDataService/VenueQuery.hpp"
+#include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
 
 namespace Nexus {
 
@@ -44,8 +44,8 @@ namespace Nexus {
         std::same_as<std::vector<TickerInfo>>;
     { client.load_snapshot(std::declval<const Ticker&>()) } ->
         std::same_as<TickerSnapshot>;
-    { client.load_technicals(std::declval<const Ticker&>()) } ->
-        std::same_as<TickerTechnicals>;
+    { client.load_session_candlestick(std::declval<const Ticker&>()) } ->
+        std::same_as<PriceCandlestick>;
     { client.load_ticker_info_from_prefix(
         std::declval<const std::string&>()) } ->
           std::same_as<std::vector<TickerInfo>>;
@@ -154,11 +154,11 @@ namespace Nexus {
       TickerSnapshot load_snapshot(const Ticker& ticker);
 
       /**
-       * Loads the TickerTechnicals for a specified Ticker.
-       * @param ticker The Ticker whose TickerTechnicals is to be loaded.
-       * @return The TickerTechnicals for the specified <i>ticker</i>.
+       * Loads the session candlestick for a specified Ticker.
+       * @param ticker The Ticker whose session candlestick is to be loaded.
+       * @return The PriceCandlestick for the specified <i>ticker</i>.
        */
-      TickerTechnicals load_technicals(const Ticker& ticker);
+      PriceCandlestick load_session_candlestick(const Ticker& ticker);
 
       /**
        * Loads TickerInfo objects that match a prefix.
@@ -192,7 +192,8 @@ namespace Nexus {
           Beam::ScopedQueueWriter<TimeAndSale> queue) = 0;
         virtual std::vector<TickerInfo> query(const TickerInfoQuery& query) = 0;
         virtual TickerSnapshot load_snapshot(const Ticker& ticker) = 0;
-        virtual TickerTechnicals load_technicals(const Ticker& ticker) = 0;
+        virtual PriceCandlestick load_session_candlestick(
+          const Ticker& ticker) = 0;
         virtual std::vector<TickerInfo> load_ticker_info_from_prefix(
           const std::string& prefix) = 0;
         virtual void close() = 0;
@@ -223,7 +224,8 @@ namespace Nexus {
           Beam::ScopedQueueWriter<TimeAndSale> queue) override;
         std::vector<TickerInfo> query(const TickerInfoQuery& query) override;
         TickerSnapshot load_snapshot(const Ticker& ticker) override;
-        TickerTechnicals load_technicals(const Ticker& ticker) override;
+        PriceCandlestick load_session_candlestick(
+          const Ticker& ticker) override;
         std::vector<TickerInfo> load_ticker_info_from_prefix(
           const std::string& prefix) override;
         void close() override;
@@ -389,9 +391,9 @@ namespace Nexus {
     return m_client->load_snapshot(ticker);
   }
 
-  inline TickerTechnicals MarketDataClient::load_technicals(
+  inline PriceCandlestick MarketDataClient::load_session_candlestick(
       const Ticker& ticker) {
-    return m_client->load_technicals(ticker);
+    return m_client->load_session_candlestick(ticker);
   }
 
   inline std::vector<TickerInfo> MarketDataClient::load_ticker_info_from_prefix(
@@ -474,9 +476,9 @@ namespace Nexus {
   }
 
   template<typename C>
-  TickerTechnicals MarketDataClient::WrappedMarketDataClient<C>::
-      load_technicals(const Ticker& ticker) {
-    return m_client->load_technicals(ticker);
+  PriceCandlestick MarketDataClient::WrappedMarketDataClient<C>::
+      load_session_candlestick(const Ticker& ticker) {
+    return m_client->load_session_candlestick(ticker);
   }
 
   template<typename C>

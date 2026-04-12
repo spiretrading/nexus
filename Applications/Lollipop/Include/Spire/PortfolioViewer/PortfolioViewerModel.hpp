@@ -182,15 +182,11 @@ namespace Spire {
       std::vector<IndexedEntry> m_entries;
       int m_displayCount;
       TotalEntry m_totals;
-      std::unordered_map<Beam::DirectoryEntry,
-        Beam::DirectoryEntry> m_groups;
-      std::unordered_map<Nexus::Ticker, Nexus::TickerValuation>
-        m_valuations;
-      std::unordered_map<Beam::DirectoryEntry, AccountTotals>
-        m_accountTotals;
+      std::unordered_map<Beam::DirectoryEntry, Beam::DirectoryEntry> m_groups;
+      std::unordered_map<Nexus::Ticker, Nexus::Valuation> m_valuations;
+      std::unordered_map<Beam::DirectoryEntry, AccountTotals> m_accountTotals;
       std::unordered_map<Nexus::Ticker, std::vector<int>> m_tickerToIndexes;
-      std::unordered_map<Nexus::RiskPortfolioKey, int>
-        m_inventoryKeyToIndex;
+      std::unordered_map<Nexus::RiskPortfolioKey, int> m_inventoryKeyToIndex;
       EventHandler m_eventHandler;
       mutable TotalsUpdatedSignal m_totalsUpdatedSignal;
 

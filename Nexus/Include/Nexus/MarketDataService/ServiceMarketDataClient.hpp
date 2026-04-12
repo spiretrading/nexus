@@ -55,7 +55,7 @@ namespace Nexus {
         const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue);
       std::vector<TickerInfo> query(const TickerInfoQuery& query);
       TickerSnapshot load_snapshot(const Ticker& ticker);
-      TickerTechnicals load_technicals(const Ticker& ticker);
+      PriceCandlestick load_session_candlestick(const Ticker& ticker);
       std::vector<TickerInfo> load_ticker_info_from_prefix(
         const std::string& prefix);
       void close();
@@ -191,13 +191,13 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
-  TickerTechnicals ServiceMarketDataClient<B>::load_technicals(
+  PriceCandlestick ServiceMarketDataClient<B>::load_session_candlestick(
       const Ticker& ticker) {
     return Beam::service_or_throw_with_nested([&] {
       auto client = m_client_handler.get_client();
-      return client->template send_request<LoadTickerTechnicalsService>(
+      return client->template send_request<LoadSessionCandlestickService>(
         ticker);
-    }, "Failed to load ticker technicals: " +
+    }, "Failed to load session candlestick: " +
       boost::lexical_cast<std::string>(ticker));
   }
 
