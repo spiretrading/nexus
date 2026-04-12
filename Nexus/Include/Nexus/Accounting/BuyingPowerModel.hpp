@@ -3,9 +3,6 @@
 #include <algorithm>
 #include <unordered_map>
 #include <vector>
-#include "Nexus/Definitions/Currency.hpp"
-#include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Side.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 

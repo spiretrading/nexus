@@ -75,7 +75,6 @@ namespace Nexus {
        * @param time_client Initializes the TimeClient.
        * @param data_store Initializes the RiskDataStore.
        * @param exchange_rates The exchange rates.
-       * @param venues The venues used by the portfolio.
        * @param destinations The destinations used to flatten positions.
        */
       template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
@@ -85,7 +84,7 @@ namespace Nexus {
         AF&& administration_client, MF&& market_data_client,
         OF&& order_execution_client,
         TransitionTimerFactory transition_timer_factory, TF&& time_client,
-        DF&& data_store, ExchangeRateTable exchange_rates, VenueDatabase venues,
+        DF&& data_store, ExchangeRateTable exchange_rates,
         DestinationDatabase destinations);
 
       void register_services(
@@ -106,7 +105,6 @@ namespace Nexus {
       Beam::local_ptr_t<T> m_time_client;
       Beam::local_ptr_t<D> m_data_store;
       ExchangeRateTable m_exchange_rates;
-      VenueDatabase m_venues;
       DestinationDatabase m_destinations;
       std::shared_ptr<Beam::SnapshotPublisher<Beam::DirectoryEntry,
         std::vector<Beam::DirectoryEntry>>> m_account_publisher;
@@ -159,7 +157,7 @@ namespace Nexus {
       AF&& administration_client, MF&& market_data_client,
       OF&& order_execution_client,
       TransitionTimerFactory transition_timer_factory, TF&& time_client,
-      DF&& data_store, ExchangeRateTable exchange_rates, VenueDatabase venues,
+      DF&& data_store, ExchangeRateTable exchange_rates,
       DestinationDatabase destinations)
     : m_administration_client(std::forward<AF>(administration_client)),
       m_market_data_client(std::forward<MF>(market_data_client)),
@@ -168,7 +166,6 @@ namespace Nexus {
       m_time_client(std::forward<TF>(time_client)),
       m_data_store(std::forward<DF>(data_store)),
       m_exchange_rates(std::move(exchange_rates)),
-      m_venues(std::move(venues)),
       m_destinations(std::move(destinations)),
       m_account_publisher(Beam::make_sequence_publisher_adaptor(
         std::make_unique<Beam::QueueReaderPublisher<Beam::DirectoryEntry>>(
@@ -264,7 +261,7 @@ namespace Nexus {
     m_controller.emplace(std::move(accounts), &*m_administration_client,
       &*m_market_data_client, &*m_order_execution_client,
       m_transition_timer_factory, &*m_time_client, &*m_data_store,
-      m_exchange_rates, m_venues, m_destinations);
+      m_exchange_rates, m_destinations);
     m_controller->get_risk_state_publisher().monitor(
       m_tasks.get_slot<RiskStateEntry>(
         std::bind_front(&RiskServlet::on_risk_state, this)));

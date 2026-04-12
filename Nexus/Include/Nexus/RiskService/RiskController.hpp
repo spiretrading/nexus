@@ -82,7 +82,6 @@ namespace Nexus {
        * @param time_client Initializes the TimeClient.
        * @param data_store Initializes the RiskDataStore.
        * @param exchange_rates The exchange rates.
-       * @param venues The venues used by the portfolio.
        * @param destinations The destination database used to flatten positions.
        */
       template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
@@ -92,7 +91,7 @@ namespace Nexus {
         AF&& administration_client, MF&& market_data_client,
         OF&& order_execution_client, RF&& transition_timer, TF&& time_client,
         DF&& data_store, const ExchangeRateTable& exchange_rates,
-        VenueDatabase venues, DestinationDatabase destinations);
+        DestinationDatabase destinations);
 
       /** Returns a Publisher for the account's RiskState. */
       const Beam::Publisher<RiskState>& get_risk_state_publisher() const;
@@ -137,11 +136,10 @@ namespace Nexus {
   template<typename A, typename M, typename O, typename R, typename T,
     typename D>
   RiskController(const Beam::DirectoryEntry&, A&&, M&&, O&&,
-    R&&, T&&, D&&, const ExchangeRateTable&, VenueDatabase,
-    DestinationDatabase) -> RiskController<std::remove_reference_t<A>,
-      std::remove_reference_t<M>, std::remove_reference_t<O>,
-      std::remove_reference_t<R>, std::remove_reference_t<T>,
-      std::remove_reference_t<D>>;
+    R&&, T&&, D&&, const ExchangeRateTable&, DestinationDatabase) ->
+      RiskController<std::remove_reference_t<A>, std::remove_reference_t<M>,
+        std::remove_reference_t<O>, std::remove_reference_t<R>,
+        std::remove_reference_t<T>, std::remove_reference_t<D>>;
 
   template<typename A, typename M, typename O, typename R, typename T,
     typename D> requires IsAdministrationClient<Beam::dereference_t<A>> &&
@@ -157,7 +155,7 @@ namespace Nexus {
       AF&& administration_client, MF&& market_data_client,
       OF&& order_execution_client, RF&& transition_timer, TF&& time_client,
       DF&& data_store, const ExchangeRateTable& exchange_rates,
-      VenueDatabase venues, DestinationDatabase destinations)
+      DestinationDatabase destinations)
       : m_account(std::move(account)),
         m_administration_client(std::forward<AF>(administration_client)),
         m_order_execution_client(std::forward<OF>(order_execution_client)),

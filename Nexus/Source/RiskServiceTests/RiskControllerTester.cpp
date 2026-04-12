@@ -98,7 +98,7 @@ TEST_SUITE("RiskController") {
       *fixture.m_administration_client, *fixture.m_market_data_client,
       *fixture.m_service_order_execution_client, &fixture.m_timer,
       &fixture.m_time_client, &fixture.m_data_store, fixture.m_exchange_rates,
-      DEFAULT_VENUES, DEFAULT_DESTINATIONS);
+      DEFAULT_DESTINATIONS);
     auto state = std::make_shared<Queue<RiskState>>();
     controller.get_risk_state_publisher().monitor(state);
     REQUIRE(state->pop() == RiskState::Type::ACTIVE);
@@ -134,7 +134,7 @@ TEST_SUITE("RiskController") {
       *fixture.m_administration_client, *fixture.m_market_data_client,
       *fixture.m_service_order_execution_client, &fixture.m_timer,
       &fixture.m_time_client, &fixture.m_data_store, fixture.m_exchange_rates,
-      DEFAULT_VENUES, DEFAULT_DESTINATIONS);
+      DEFAULT_DESTINATIONS);
     auto state = std::make_shared<Queue<RiskState>>();
     controller.get_risk_state_publisher().monitor(state);
     REQUIRE(state->pop() == RiskState::Type::ACTIVE);

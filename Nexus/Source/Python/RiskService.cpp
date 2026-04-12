@@ -119,7 +119,6 @@ void Nexus::Python::export_risk_service_test_environment(module& module) {
           OrderExecutionClient& order_execution_client,
           std::function<std::shared_ptr<Timer> ()> timer_builder,
           TimeClient& time_client, const ExchangeRateTable& exchange_rates,
-          const VenueDatabase& venue_database,
           const DestinationDatabase& destination_database) {
         auto timer_adaptor = [timer_builder = std::move(timer_builder)] {
           return std::make_unique<Timer>(timer_builder());
@@ -127,7 +126,7 @@ void Nexus::Python::export_risk_service_test_environment(module& module) {
         return make_python_shared<RiskServiceTestEnvironment>(
           service_locator_client, administration_client, market_data_client,
           order_execution_client, std::move(timer_adaptor), time_client,
-          exchange_rates, venue_database, destination_database);
+          exchange_rates, destination_database);
       }), keep_alive<1, 2>(), keep_alive<1, 3>(),
       keep_alive<1, 4>(), keep_alive<1, 5>(), keep_alive<1, 7>()).
     def("make_client",
