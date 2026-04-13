@@ -218,6 +218,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_text_area_label_profile());
   add(make_text_box_profile());
   add(make_ticker_box_profile());
+  add(make_ticker_filter_panel_profile());
   add(make_ticker_list_box_profile());
   add(make_ticker_list_item_profile());
   add(make_ticker_view_profile());
