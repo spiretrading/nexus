@@ -8,6 +8,7 @@
 
 namespace Spire {
   template<typename> class ComboBox;
+  class TickerInfoToTickerQueryModel;
 
   /** Represents a ValueModel for a Ticker. */
   using TickerModel = ValueModel<Nexus::Ticker>;
@@ -74,8 +75,7 @@ namespace Spire {
         const SubmitSignal::slot_type& slot) const;
 
     private:
-      struct TickerQueryModel;
-      std::shared_ptr<TickerQueryModel> m_tickers;
+      std::shared_ptr<TickerInfoToTickerQueryModel> m_tickers;
       std::shared_ptr<CurrentModel> m_current;
       ComboBox<Nexus::Ticker>* m_combo_box;
   };
