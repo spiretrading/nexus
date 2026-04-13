@@ -3,10 +3,13 @@
 #include <map>
 #include <unordered_map>
 #include <Beam/Pointers/Ref.hpp>
+#include <Beam/Routines/RoutineHandler.hpp>
 #include <QAbstractItemModel>
+#include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/TickerInfo.hpp"
+#include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -72,6 +75,7 @@ namespace Spire {
       BookViewProperties m_properties;
       Nexus::Ticker m_ticker;
       Nexus::Side m_side;
+      Beam::RoutineHandler m_snapshot_routine;
       Nexus::TickerInfo m_tickerInfo;
       std::unordered_map<Nexus::Venue, Nexus::BookQuote> m_topLevels;
       std::vector<std::unique_ptr<BookQuoteEntry>> m_bookQuotes;

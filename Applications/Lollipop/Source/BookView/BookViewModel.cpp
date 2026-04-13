@@ -21,10 +21,10 @@ BookViewModel::BookViewModel(Ref<UserProfile> userProfile,
       m_properties(properties),
       m_ticker(ticker),
       m_side(side) {
-  if(m_ticker == Ticker()) {
+  if(!m_ticker) {
     return;
   }
-  query_real_time_with_snapshot(
+  m_snapshot_routine = query_real_time_with_snapshot(
     m_userProfile->GetClients().get_market_data_client(), m_ticker,
     m_eventHandler.get_slot<BookQuote>(
       std::bind_front(&BookViewModel::OnBookQuote, this),
