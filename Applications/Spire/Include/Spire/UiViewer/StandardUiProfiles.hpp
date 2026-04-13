@@ -308,6 +308,9 @@ namespace Spire {
   /** Returns a UiProfile for the VenueBox. */
   UiProfile make_venue_box_profile();
 
+  /** Returns a UiProfile for the VenueListBox. */
+  UiProfile make_venue_list_box_profile();
+
   /** Returns a UiProfile for the WindowHighlight. */
   UiProfile make_window_highlight_profile();
 }
