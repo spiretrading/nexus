@@ -3,7 +3,6 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/TickerListItem.hpp"
 
-using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 
