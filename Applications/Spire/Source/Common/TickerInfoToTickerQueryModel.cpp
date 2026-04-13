@@ -24,11 +24,11 @@ optional<Ticker> TickerInfoToTickerQueryModel::parse(const QString& query) {
 QtPromise<std::vector<Ticker>>
     TickerInfoToTickerQueryModel::submit(const QString& query) {
   return m_source->submit(query.toUpper()).then(
-    [] (std::vector<TickerInfo> matches) {
+    [] (const std::vector<TickerInfo>& matches) {
       auto tickers = std::unordered_set<Ticker>();
       for(auto& match : matches) {
         tickers.insert(match.m_ticker);
       }
-      return std::vector<Ticker>(tickers.begin(), tickers.end());
+      return std::vector(tickers.begin(), tickers.end());
     });
 }
