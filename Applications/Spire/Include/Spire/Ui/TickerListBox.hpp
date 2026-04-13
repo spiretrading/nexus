@@ -1,11 +1,11 @@
 #ifndef SPIRE_TICKER_LIST_BOX_HPP
 #define SPIRE_TICKER_LIST_BOX_HPP
+#include "Spire/Spire/TickerInfoToTickerQueryModel.hpp"
 #include "Spire/Ui/TagComboBox.hpp"
-#include "Spire/Ui/TickerBox.hpp"
 
 namespace Spire {
 
-  /** The type of model used for a list of Ticker. */
+  /** Represents a ListModel for the Ticker. */
   using TickerListModel = ListModel<Nexus::Ticker>;
 
   /** A TagComboBox specialized for a Nexus::Ticker. */

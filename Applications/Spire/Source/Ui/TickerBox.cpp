@@ -1,5 +1,4 @@
 #include "Spire/Ui/TickerBox.hpp"
-#include "Spire/Spire/TickerInfoToTickerQueryModel.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/ComboBox.hpp"

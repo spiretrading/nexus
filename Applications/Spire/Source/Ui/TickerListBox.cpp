@@ -1,6 +1,5 @@
 #include "Spire/Ui/TickerListBox.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/TickerInfoToTickerQueryModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/TickerListItem.hpp"
 
@@ -19,7 +18,7 @@ TickerListBox* Spire::make_ticker_list_box(
     std::shared_ptr<TickerListModel> current, QWidget* parent) {
   return new TagComboBox<Ticker>(
     std::make_shared<TickerInfoToTickerQueryModel>(tickers), std::move(current),
-    [=] (const std::shared_ptr<ListModel<Ticker>>& list, int index) {
+    [=] (const std::shared_ptr<TickerListModel>& list, int index) {
       if(auto info = tickers->parse(to_text(list->get(index)))) {
         return new TickerListItem(*info);
       }
