@@ -64,10 +64,6 @@ void ChartIntervalComboBox::SetInterval(std::shared_ptr<NativeType> type,
 }
 
 void ChartIntervalComboBox::SetInterval(time_duration value) {
-  if(ChartValue(value) == m_value && m_type->GetCompatibility(
-      DurationType::GetInstance()) == CanvasType::Compatibility::EQUAL) {
-    return;
-  }
   m_ui->m_comboBox->blockSignals(true);
   m_ui->m_comboBox->clear();
   IntervalEntry entry(value);
@@ -114,6 +110,7 @@ bool ChartIntervalComboBox::eventFilter(QObject* object, QEvent* event) {
       return true;
     } else if(event->type() == QEvent::FocusOut) {
       m_ui->m_comboBox->setEditable(false);
+      SetInterval(m_value.ToTimeDuration());
       return true;
     }
   }
@@ -142,21 +139,29 @@ vector<ChartIntervalComboBox::IntervalEntry>
 }
 
 void ChartIntervalComboBox::OnCurrentIndexChanged(int index) {
-  regex durationRegex("^\\s*(\\d{0,4})\\s*(\\w+)\\s*$");
-  smatch matcher;
+  if(index < 0) {
+    return;
+  }
+  auto durationRegex = regex("^\\s*(\\d{1,4})\\s*(\\w+)\\s*$");
+  auto matcher = smatch();
   auto textValue = m_ui->m_comboBox->itemText(index).toStdString();
   if(regex_match(textValue, matcher, durationRegex)) {
-    int value = lexical_cast<int>(string(matcher[1]));
-    string unit = to_lower_copy(string(matcher[2]));
-    if(string("minutes").substr(0, unit.size()) == unit) {
-      SetInterval(minutes(value));
-      return;
-    } else if(string("seconds").substr(0, unit.size()) == unit) {
-      SetInterval(seconds(value));
-      return;
-    } else if(string("hours").substr(0, unit.size()) == unit) {
-      SetInterval(hours(value));
-      return;
-    }
+    try {
+      auto value = lexical_cast<int>(string(matcher[1]));
+      if(value > 0) {
+        auto unit = to_lower_copy(string(matcher[2]));
+        if(string("minutes").substr(0, unit.size()) == unit) {
+          SetInterval(minutes(value));
+          return;
+        } else if(string("seconds").substr(0, unit.size()) == unit) {
+          SetInterval(seconds(value));
+          return;
+        } else if(string("hours").substr(0, unit.size()) == unit) {
+          SetInterval(hours(value));
+          return;
+        }
+      }
+    } catch(const bad_lexical_cast&) {}
   }
+  SetInterval(m_value.ToTimeDuration());
 }

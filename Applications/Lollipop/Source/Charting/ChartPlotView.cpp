@@ -208,54 +208,56 @@ void ChartPlotView::PaintGrids() {
   QPen labelPen(m_properties.m_gridLabelColor);
   auto xScale = GetScale(m_xAxisParameters);
   auto chartWidth = m_xAxisParameters.m_max - m_xAxisParameters.m_min;
-  auto gridPoint = m_xAxisParameters.m_min +
-    (xScale - (m_xAxisParameters.m_min % xScale));
   QRectF previousTextBox(-100, 0, 0, 0);
-  while(true) {
-    painter.setPen(gridPen);
-    auto topPoint = ComputeScreenPoint(gridPoint, m_yAxisParameters.m_min);
-    auto bottomPoint = ComputeScreenPoint(gridPoint, m_yAxisParameters.m_max);
-    if(topPoint.x() > GetChartWidth()) {
-      break;
+  if(xScale > ChartValue() && chartWidth > ChartValue()) {
+    auto gridPoint = m_xAxisParameters.m_min +
+      (xScale - (m_xAxisParameters.m_min % xScale));
+    for(; gridPoint <= m_xAxisParameters.m_max; gridPoint += xScale) {
+      painter.setPen(gridPen);
+      auto topPoint = ComputeScreenPoint(gridPoint, m_yAxisParameters.m_min);
+      auto bottomPoint = ComputeScreenPoint(gridPoint, m_yAxisParameters.m_max);
+      if(topPoint.x() > GetChartWidth()) {
+        break;
+      }
+      auto label = LoadLabel(gridPoint, *GetXAxisParameters().m_type);
+      auto boundingBox = painter.fontMetrics().boundingRect(label);
+      QRectF textBox(topPoint.x() - boundingBox.width() / 2, topPoint.y() + 4,
+        boundingBox.width() + 4, boundingBox.height());
+      if(textBox.x() > previousTextBox.x() + previousTextBox.width()) {
+        painter.drawLine(topPoint, bottomPoint);
+        painter.setPen(labelPen);
+        painter.setFont(m_properties.m_gridLabelFont);
+        painter.drawText(textBox, Qt::AlignLeft | Qt::AlignVCenter, label);
+        previousTextBox = textBox;
+      }
     }
-    auto label = LoadLabel(gridPoint, *GetXAxisParameters().m_type);
-    auto boundingBox = painter.fontMetrics().boundingRect(label);
-    QRectF textBox(topPoint.x() - boundingBox.width() / 2, topPoint.y() + 4,
-      boundingBox.width() + 4, boundingBox.height());
-    if(textBox.x() > previousTextBox.x() + previousTextBox.width()) {
-      painter.drawLine(topPoint, bottomPoint);
-      painter.setPen(labelPen);
-      painter.setFont(m_properties.m_gridLabelFont);
-      painter.drawText(textBox, Qt::AlignLeft | Qt::AlignVCenter, label);
-      previousTextBox = textBox;
-    }
-    gridPoint += xScale;
   }
   auto yScale = GetScale(m_yAxisParameters);
   auto chartHeight = m_yAxisParameters.m_max - m_yAxisParameters.m_min;
-  gridPoint = m_yAxisParameters.m_min +
-    (yScale - (m_yAxisParameters.m_min % yScale));
   previousTextBox = QRectF(0, height() + 100, 0, 0);
-  while(true) {
-    painter.setPen(gridPen);
-    auto leftPoint = ComputeScreenPoint(m_xAxisParameters.m_min, gridPoint);
-    auto rightPoint = ComputeScreenPoint(m_xAxisParameters.m_max, gridPoint);
-    if(leftPoint.y() <= 0) {
-      break;
+  if(yScale > ChartValue() && chartHeight > ChartValue()) {
+    auto gridPoint = m_yAxisParameters.m_min +
+      (yScale - (m_yAxisParameters.m_min % yScale));
+    for(; gridPoint <= m_yAxisParameters.m_max; gridPoint += yScale) {
+      painter.setPen(gridPen);
+      auto leftPoint = ComputeScreenPoint(m_xAxisParameters.m_min, gridPoint);
+      auto rightPoint = ComputeScreenPoint(m_xAxisParameters.m_max, gridPoint);
+      if(leftPoint.y() <= 0) {
+        break;
+      }
+      auto label = LoadLabel(gridPoint, *GetYAxisParameters().m_type);
+      auto boundingBox = painter.fontMetrics().boundingRect(label);
+      QRectF textBox(rightPoint.x() + 4,
+        rightPoint.y() - boundingBox.height() / 2, boundingBox.width() + 4,
+        boundingBox.height());
+      if(textBox.y() + textBox.height() < previousTextBox.y()) {
+        painter.drawLine(leftPoint, rightPoint);
+        painter.setPen(labelPen);
+        painter.setFont(m_properties.m_gridLabelFont);
+        painter.drawText(textBox, Qt::AlignLeft | Qt::AlignVCenter, label);
+        previousTextBox = textBox;
+      }
     }
-    auto label = LoadLabel(gridPoint, *GetYAxisParameters().m_type);
-    auto boundingBox = painter.fontMetrics().boundingRect(label);
-    QRectF textBox(rightPoint.x() + 4,
-      rightPoint.y() - boundingBox.height() / 2, boundingBox.width() + 4,
-      boundingBox.height());
-    if(textBox.y() + textBox.height() < previousTextBox.y()) {
-      painter.drawLine(leftPoint, rightPoint);
-      painter.setPen(labelPen);
-      painter.setFont(m_properties.m_gridLabelFont);
-      painter.drawText(textBox, Qt::AlignLeft | Qt::AlignVCenter, label);
-      previousTextBox = textBox;
-    }
-    gridPoint += yScale;
   }
 }
 

@@ -365,9 +365,8 @@ void BlotterTasksModel::OnOrderSubmitted(const std::shared_ptr<Order>& order) {
     return;
   }
   m_submittedOrders.erase(order);
-  auto reportQueue = std::make_shared<StateQueue<ExecutionReport>>();
-  order->get_publisher().monitor(reportQueue);
-  if(auto report = reportQueue->peek(); is_terminal(report.m_status)) {
+  auto reports = order->get_publisher().get_snapshot();
+  if(reports && !reports->empty() && is_terminal(reports->back().m_status)) {
     m_orders->push(order);
     return;
   }
