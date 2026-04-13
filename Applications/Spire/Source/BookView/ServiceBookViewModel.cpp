@@ -12,7 +12,23 @@ using namespace Spire;
 namespace {
   bool is_order_displayed(const Order& order, const Ticker& ticker) {
     return order.get_info().m_fields.m_ticker == ticker &&
-      order.get_info().m_fields.m_type == OrderType::LIMIT;
+      (order.get_info().m_fields.m_type == OrderType::LIMIT ||
+        order.get_info().m_fields.m_type == OrderType::PEGGED);
+  }
+
+  Money calculate_pegged_price(
+      Side side, Money quote_price, Money peg_difference, Money limit_price) {
+    if(quote_price == Money::ZERO) {
+      return limit_price;
+    }
+    auto effective = quote_price - peg_difference;
+    if(side == Side::BID && limit_price != Money::ZERO) {
+      return std::min(effective, limit_price);
+    }
+    if(side == Side::ASK && limit_price != Money::ZERO) {
+      return std::max(effective, limit_price);
+    }
+    return effective;
   }
 
   optional<std::tuple<std::vector<std::shared_ptr<Order>>&, int,
@@ -21,14 +37,11 @@ namespace {
         std::vector<std::shared_ptr<Order>>& bid_orders, BookViewModel& model) {
     auto& fields = order->get_info().m_fields;
     auto& orders = pick(fields.m_side, ask_orders, bid_orders);
-    auto i = std::find_if(orders.begin(), orders.end(),
-      [&] (const auto& element) {
-        return order == element;
-      });
+    auto i = std::ranges::find(orders, order);
     if(i == orders.end()) {
       return none;
     }
-    auto index = std::distance(orders.begin(), i);
+    auto index = std::ranges::distance(orders.begin(), i);
     auto& user_orders = *pick(
       fields.m_side, model.get_ask_orders(), model.get_bid_orders());
     return std::tuple<std::vector<std::shared_ptr<Order>>&, int,
@@ -109,6 +122,34 @@ const std::shared_ptr<SessionCandlestickModel>&
 
 void ServiceBookViewModel::on_bbo(const BboQuote& bbo) {
   m_model->get_bbo_quote()->set(bbo);
+  update_pegged_orders(bbo);
+}
+
+void ServiceBookViewModel::update_pegged_orders(const BboQuote& bbo) {
+  for(auto& [order, info] : m_pegged_orders) {
+    auto& fields = order->get_info().m_fields;
+    auto& quote = pick(fields.m_side, bbo.m_ask, bbo.m_bid);
+    auto new_price = calculate_pegged_price(
+      fields.m_side, quote.m_price, info.m_peg_difference, info.m_limit_price);
+    if(fields.m_side == Side::BID && new_price >= info.m_effective_price) {
+      continue;
+    }
+    if(fields.m_side == Side::ASK && new_price <= info.m_effective_price) {
+      continue;
+    }
+    info.m_effective_price = new_price;
+    auto& orders = pick(fields.m_side, m_ask_orders, m_bid_orders);
+    auto i = std::ranges::find(orders, order);
+    if(i == orders.end()) {
+      continue;
+    }
+    auto index = static_cast<int>(std::ranges::distance(orders.begin(), i));
+    auto& user_orders = *pick(
+      fields.m_side, m_model->get_ask_orders(), m_model->get_bid_orders());
+    auto user_order = user_orders.get(index);
+    user_order.m_price = new_price;
+    user_orders.set(index, user_order);
+  }
 }
 
 void ServiceBookViewModel::buffer_book_quote(const Nexus::BookQuote& quote) {
@@ -256,8 +297,23 @@ void ServiceBookViewModel::on_order_added(
       status = report.m_status;
     }
   }
+  auto display_price = fields.m_price;
+  if(fields.m_type == OrderType::PEGGED) {
+    auto peg_difference = Money::ZERO;
+    if(auto tag = find_field(fields, 211)) {
+      if(auto* money = boost::get<Money>(&tag->get_value())) {
+        peg_difference = *money;
+      }
+    }
+    auto& bbo = m_model->get_bbo_quote()->get();
+    auto& quote = pick(fields.m_side, bbo.m_ask, bbo.m_bid);
+    display_price = calculate_pegged_price(
+      fields.m_side, quote.m_price, peg_difference, fields.m_price);
+    m_pegged_orders[order.m_order] =
+      {peg_difference, fields.m_price, display_price};
+  }
   user_orders.push(UserOrder(
-    fields.m_destination, fields.m_price, remaining_quantity, status));
+    fields.m_destination, display_price, remaining_quantity, status));
 }
 
 void ServiceBookViewModel::on_order_removed(
@@ -270,6 +326,7 @@ void ServiceBookViewModel::on_order_removed(
     return;
   }
   auto& [orders, index, user_orders] = *entry;
+  m_pegged_orders.erase(order.m_order);
   orders.erase(orders.begin() + index);
   user_orders.remove(index);
 }
@@ -277,6 +334,7 @@ void ServiceBookViewModel::on_order_removed(
 void ServiceBookViewModel::on_active_blotter(BlotterModel& blotter) {
   m_order_event_handler.reset();
   m_order_event_handler.emplace();
+  m_pegged_orders.clear();
   auto& orders = blotter.GetOrderLogModel();
   auto reinitialize = [&] (UserOrderListModel& user_orders, Side side) {
     user_orders.transact([&] {
