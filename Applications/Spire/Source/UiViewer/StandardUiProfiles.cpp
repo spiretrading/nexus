@@ -111,6 +111,7 @@
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TickerBox.hpp"
+#include "Spire/Ui/TickerListBox.hpp"
 #include "Spire/Ui/TickerListItem.hpp"
 #include "Spire/Ui/TickerView.hpp"
 #include "Spire/Ui/TimeInForceBox.hpp"
@@ -666,6 +667,57 @@ namespace {
       make_standard_property<QString>("min", "10:10:10.000"));
     properties.push_back(
       make_standard_property<QString>("max", "20:20:20.000"));
+  }
+
+  template<typename F>
+  auto setup_tag_combo_box_profile(const QString& name, F make_box) {
+    auto properties = std::vector<std::shared_ptr<UiProperty>>();
+    populate_widget_properties(properties);
+    properties.push_back(make_standard_property<QString>("placeholder"));
+    properties.push_back(make_standard_property("read_only", false));
+    return UiProfile(name, properties, [=] (auto& profile) {
+      auto box = make_box();
+      using T = typename std::decay_t<decltype(*box)>::Type;
+      box->setMinimumWidth(scale_width(112));
+      apply_widget_properties(box, profile.get_properties());
+      auto& placeholder =
+        get<QString>("placeholder", profile.get_properties());
+      placeholder.connect_changed_signal([=] (const auto& placeholder) {
+        box->set_placeholder(placeholder);
+      });
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal(
+        std::bind_front(&std::decay_t<decltype(*box)>::set_read_only, box));
+      auto current_filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("Current"));
+      auto print_current = [=] {
+        auto result = QString();
+        for(auto i = 0; i < box->get_current()->get_size(); ++i) {
+          result += to_text(box->get_current()->get(i)) + " ";
+        }
+        current_filter_slot(result);
+      };
+      box->get_current()->connect_operation_signal(
+        [=] (const auto& operation) {
+          visit(operation,
+            [=] (const typename ListModel<T>::AddOperation&) {
+              print_current();
+            },
+            [=] (const typename ListModel<T>::RemoveOperation&) {
+              print_current();
+            });
+        });
+      auto submit_filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("Submit"));
+      box->connect_submit_signal([=] (const auto& submission) {
+        auto result = QString();
+        for(auto i = 0; i < submission->get_size(); ++i) {
+          result += to_text(submission->get(i)) + " ";
+        }
+        submit_filter_slot(result);
+      });
+      return box;
+    });
   }
 
   auto make_grid_image(const QSize& cell_size, int column_count,
@@ -4717,51 +4769,8 @@ UiProfile Spire::make_tag_box_profile() {
 }
 
 UiProfile Spire::make_tag_combo_box_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QString>("placeholder"));
-  properties.push_back(make_standard_property("read_only", false));
-  auto profile = UiProfile("TagComboBox", properties, [] (auto& profile) {
-    auto box = new TagComboBox(populate_tag_combo_box_model());
-    box->setMinimumWidth(scale_width(112));
-    apply_widget_properties(box, profile.get_properties());
-    auto& placeholder = get<QString>("placeholder", profile.get_properties());
-    placeholder.connect_changed_signal([=] (const auto& placeholder) {
-      box->set_placeholder(placeholder);
-    });
-    auto& read_only = get<bool>("read_only", profile.get_properties());
-    read_only.connect_changed_signal(
-      std::bind_front(&TagComboBox<QString>::set_read_only, box));
-    auto current_filter_slot =
-      profile.make_event_slot<QString>(QString::fromUtf8("Current"));
-    auto print_current = [=] {
-      auto result = QString();
-      for(auto i = 0; i < box->get_current()->get_size(); ++i) {
-        result += box->get_current()->get(i) + " ";
-      }
-      current_filter_slot(result);
-    };
-    box->get_current()->connect_operation_signal([=] (const auto& operation) {
-      visit(operation,
-        [=] (const ListModel<QString>::AddOperation& operation) {
-          print_current();
-        },
-        [=] (const ListModel<QString>::RemoveOperation& operation) {
-          print_current();
-        });
-    });
-    auto submit_filter_slot =
-      profile.make_event_slot<QString>(QString::fromUtf8("Submit"));
-    box->connect_submit_signal([=] (const auto& submission) {
-      auto result = QString();
-      for(auto i = 0; i < submission->get_size(); ++i) {
-        result += submission->get(i) + " ";
-      }
-      submit_filter_slot(result);
-    });
-    return box;
-  });
-  return profile;
+  return setup_tag_combo_box_profile("TagComboBox",
+    [] { return new TagComboBox(populate_tag_combo_box_model()); });
 }
 
 UiProfile Spire::make_text_area_box_profile() {
@@ -4948,6 +4957,11 @@ UiProfile Spire::make_ticker_box_profile() {
     return box;
   });
   return profile;
+}
+
+UiProfile Spire::make_ticker_list_box_profile() {
+  return setup_tag_combo_box_profile("TickerListBox",
+    [] { return make_ticker_list_box(populate_ticker_query_model()); });
 }
 
 UiProfile Spire::make_ticker_list_item_profile() {
