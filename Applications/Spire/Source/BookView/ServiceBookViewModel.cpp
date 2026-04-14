@@ -1,5 +1,8 @@
 #include "Spire/BookView/ServiceBookViewModel.hpp"
 #include <ranges>
+#include <sstream>
+#include <quickfix/FixFields.h>
+#include <quickfix/FixValues.h>
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/BookView/AggregateBookViewModel.hpp"
@@ -14,21 +17,6 @@ namespace {
     return order.get_info().m_fields.m_ticker == ticker &&
       (order.get_info().m_fields.m_type == OrderType::LIMIT ||
         order.get_info().m_fields.m_type == OrderType::PEGGED);
-  }
-
-  Money calculate_pegged_price(
-      Side side, Money quote_price, Money peg_difference, Money limit_price) {
-    if(quote_price == Money::ZERO) {
-      return limit_price;
-    }
-    auto effective = quote_price - peg_difference;
-    if(side == Side::BID && limit_price != Money::ZERO) {
-      return std::min(effective, limit_price);
-    }
-    if(side == Side::ASK && limit_price != Money::ZERO) {
-      return std::max(effective, limit_price);
-    }
-    return effective;
   }
 
   optional<std::tuple<std::vector<std::shared_ptr<Order>>&, int,
@@ -120,36 +108,97 @@ const std::shared_ptr<SessionCandlestickModel>&
   return m_model->get_session_candlestick();
 }
 
+void ServiceBookViewModel::submit_pegged(const Order& order) {
+  auto& fields = order.get_info().m_fields;
+  auto entry = PeggedOrderEntry();
+  entry.m_exec_inst = FIX::ExecInst_PRIMARY_PEG;
+  if(auto tag = find_field(fields, FIX::FIELD::ExecInst)) {
+    if(auto* value = boost::get<std::string>(&tag->get_value())) {
+      auto stream = std::istringstream(*value);
+      auto token = std::string();
+      while(stream >> token) {
+        if(token.size() == 1 &&
+            (token[0] == FIX::ExecInst_PRIMARY_PEG ||
+              token[0] == FIX::ExecInst_MARKET_PEG ||
+              token[0] == FIX::ExecInst_MID_PRICE_PEG)) {
+          entry.m_exec_inst = token[0];
+          break;
+        }
+      }
+    }
+  }
+  entry.m_peg_difference = Money::ZERO;
+  if(auto tag = find_field(fields, FIX::FIELD::PegDifference)) {
+    if(auto* money = boost::get<Money>(&tag->get_value())) {
+      entry.m_peg_difference = *money;
+    }
+  }
+  auto direction = get_direction(fields.m_side);
+  auto& bbo = m_model->get_bbo_quote()->get();
+  auto [same_price, opposite_price] = pick(fields.m_side,
+    std::pair(bbo.m_ask.m_price, bbo.m_bid.m_price),
+    std::pair(bbo.m_bid.m_price, bbo.m_ask.m_price));
+  entry.m_effective_price = [&] {
+    if(entry.m_exec_inst == FIX::ExecInst_MARKET_PEG) {
+      return opposite_price;
+    } else if(entry.m_exec_inst == FIX::ExecInst_MID_PRICE_PEG) {
+      return (same_price + opposite_price) / 2;
+    }
+    return same_price;
+  }();
+  entry.m_effective_price -= direction * entry.m_peg_difference;
+  auto limit_price = fields.m_price;
+  if(limit_price != Money::ZERO &&
+      direction * entry.m_effective_price > direction * limit_price) {
+    entry.m_effective_price = limit_price;
+  }
+  m_pegged_entries[order.get_info().m_id] = entry;
+}
+
 void ServiceBookViewModel::on_bbo(const BboQuote& bbo) {
   m_model->get_bbo_quote()->set(bbo);
   update_pegged_orders(bbo);
 }
 
 void ServiceBookViewModel::update_pegged_orders(const BboQuote& bbo) {
-  for(auto& [order, info] : m_pegged_orders) {
-    auto& fields = order->get_info().m_fields;
-    auto& quote = pick(fields.m_side, bbo.m_ask, bbo.m_bid);
-    auto new_price = calculate_pegged_price(
-      fields.m_side, quote.m_price, info.m_peg_difference, info.m_limit_price);
-    if(fields.m_side == Side::BID && new_price >= info.m_effective_price) {
-      continue;
+  auto update_side = [&] (auto& orders, auto& user_orders, Side side) {
+    auto direction = get_direction(side);
+    for(auto i = 0; i != static_cast<int>(orders.size()); ++i) {
+      auto& order = orders[i];
+      auto it = m_pegged_entries.find(order->get_info().m_id);
+      if(it == m_pegged_entries.end()) {
+        continue;
+      }
+      auto& entry = it->second;
+      auto [same_price, opposite_price] = pick(side,
+        std::pair(bbo.m_ask.m_price, bbo.m_bid.m_price),
+        std::pair(bbo.m_bid.m_price, bbo.m_ask.m_price));
+      auto candidate = [&] {
+        if(entry.m_exec_inst == FIX::ExecInst_MARKET_PEG) {
+          return opposite_price;
+        } else if(entry.m_exec_inst == FIX::ExecInst_MID_PRICE_PEG) {
+          return (same_price + opposite_price) / 2;
+        }
+        return same_price;
+      }();
+      candidate -= direction * entry.m_peg_difference;
+      if(direction * candidate > direction * entry.m_effective_price) {
+        entry.m_effective_price = candidate;
+      }
+      auto limit_price = order->get_info().m_fields.m_price;
+      if(limit_price != Money::ZERO &&
+          direction * entry.m_effective_price > direction * limit_price) {
+        entry.m_effective_price = limit_price;
+      }
+      auto user_order = user_orders.get(i);
+      if(user_order.m_price != entry.m_effective_price) {
+        user_order.m_price = entry.m_effective_price;
+        user_orders.set(i, user_order);
+      }
     }
-    if(fields.m_side == Side::ASK && new_price <= info.m_effective_price) {
-      continue;
-    }
-    info.m_effective_price = new_price;
-    auto& orders = pick(fields.m_side, m_ask_orders, m_bid_orders);
-    auto i = std::ranges::find(orders, order);
-    if(i == orders.end()) {
-      continue;
-    }
-    auto index = static_cast<int>(std::ranges::distance(orders.begin(), i));
-    auto& user_orders = *pick(
-      fields.m_side, m_model->get_ask_orders(), m_model->get_bid_orders());
-    auto user_order = user_orders.get(index);
-    user_order.m_price = new_price;
-    user_orders.set(index, user_order);
-  }
+  };
+  update_side(m_bid_orders, *m_model->get_bid_orders(), Side::BID);
+  update_side(m_ask_orders, *m_model->get_ask_orders(), Side::ASK);
 }
 
 void ServiceBookViewModel::buffer_book_quote(const Nexus::BookQuote& quote) {
@@ -272,6 +321,9 @@ void ServiceBookViewModel::on_execution_report(
   user_order.m_status = report.m_status;
   user_order.m_size -= report.m_last_quantity;
   user_orders.set(index, user_order);
+  if(is_terminal(report.m_status)) {
+    m_pegged_entries.erase(order->get_info().m_id);
+  }
 }
 
 void ServiceBookViewModel::on_order_added(
@@ -299,18 +351,9 @@ void ServiceBookViewModel::on_order_added(
   }
   auto display_price = fields.m_price;
   if(fields.m_type == OrderType::PEGGED) {
-    auto peg_difference = Money::ZERO;
-    if(auto tag = find_field(fields, 211)) {
-      if(auto* money = boost::get<Money>(&tag->get_value())) {
-        peg_difference = *money;
-      }
-    }
-    auto& bbo = m_model->get_bbo_quote()->get();
-    auto& quote = pick(fields.m_side, bbo.m_ask, bbo.m_bid);
-    display_price = calculate_pegged_price(
-      fields.m_side, quote.m_price, peg_difference, fields.m_price);
-    m_pegged_orders[order.m_order] =
-      {peg_difference, fields.m_price, display_price};
+    submit_pegged(*order.m_order);
+    display_price =
+      m_pegged_entries[order.m_order->get_info().m_id].m_effective_price;
   }
   user_orders.push(UserOrder(
     fields.m_destination, display_price, remaining_quantity, status));
@@ -326,7 +369,7 @@ void ServiceBookViewModel::on_order_removed(
     return;
   }
   auto& [orders, index, user_orders] = *entry;
-  m_pegged_orders.erase(order.m_order);
+  m_pegged_entries.erase(order.m_order->get_info().m_id);
   orders.erase(orders.begin() + index);
   user_orders.remove(index);
 }
@@ -334,7 +377,7 @@ void ServiceBookViewModel::on_order_removed(
 void ServiceBookViewModel::on_active_blotter(BlotterModel& blotter) {
   m_order_event_handler.reset();
   m_order_event_handler.emplace();
-  m_pegged_orders.clear();
+  m_pegged_entries.clear();
   auto& orders = blotter.GetOrderLogModel();
   auto reinitialize = [&] (UserOrderListModel& user_orders, Side side) {
     user_orders.transact([&] {

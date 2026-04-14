@@ -54,18 +54,18 @@ namespace Spire {
       std::shared_ptr<QtPromise<void>> m_load_promise;
       EventHandler m_event_handler;
       boost::optional<EventHandler> m_order_event_handler;
-      struct PeggedOrderInfo {
+      struct PeggedOrderEntry {
+        char m_exec_inst;
         Nexus::Money m_peg_difference;
-        Nexus::Money m_limit_price;
         Nexus::Money m_effective_price;
       };
-      std::unordered_map<std::shared_ptr<Nexus::Order>, PeggedOrderInfo>
-        m_pegged_orders;
+      std::unordered_map<Nexus::OrderId, PeggedOrderEntry> m_pegged_entries;
       boost::signals2::scoped_connection m_order_added_connection;
       boost::signals2::scoped_connection m_order_removed_connection;
       boost::signals2::scoped_connection m_active_blotter_connection;
 
       void clear(const BookQuoteListModel& quotes);
+      void submit_pegged(const Nexus::Order& order);
       void on_bbo(const Nexus::BboQuote& quote);
       void update_pegged_orders(const Nexus::BboQuote& bbo);
       void buffer_book_quote(const Nexus::BookQuote& quote);
