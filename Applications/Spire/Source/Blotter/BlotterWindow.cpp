@@ -304,12 +304,12 @@ void BlotterWindow::OnActiveBlotterChanged(BlotterModel& blotter) {
 void BlotterWindow::OnProfitAndLossUpdate(const PortfolioUpdateEntry& update) {
   m_totalProfitAndLossLabel->SetValue(QVariant::fromValue(
     update.m_currency_inventory.m_gross_profit_and_loss -
-    update.m_currency_inventory.m_fees + update.m_unrealized_currency));
+    update.m_currency_inventory.m_fees + update.m_currency_unrealized));
   m_realizedProfitAndLossLabel->SetValue(QVariant::fromValue(
     update.m_currency_inventory.m_gross_profit_and_loss -
     update.m_currency_inventory.m_fees));
   m_unrealizedProfitAndLossLabel->SetValue(QVariant::fromValue(
-    update.m_unrealized_currency));
+    update.m_currency_unrealized));
   m_feesLabel->SetValue(
     QVariant::fromValue(update.m_currency_inventory.m_fees));
   m_costBasisLabel->SetValue(QVariant::fromValue(
@@ -421,12 +421,13 @@ void BlotterWindow::OnPositionsAdded(
     auto positionData = JsonObject();
     positionData["blotter_id"] = reinterpret_cast<std::intptr_t>(this);
     positionData["index"] = i;
-    positionData["security"] = [&] {
-      auto security = JsonObject();
+    positionData["ticker"] = [&] {
+      auto ticker = JsonObject();
       auto& position = positions[i];
-      security["symbol"] = position.m_key.m_security.get_symbol();
-      security["market"] = to_string(position.m_key.m_security.get_venue());
-      return security;
+      ticker["symbol"] = position.m_inventory.m_position.m_ticker.get_symbol();
+      ticker["venue"] = displayText(
+        position.m_inventory.m_position.m_ticker.get_venue()).toStdString();
+      return ticker;
     }();
   }
 }

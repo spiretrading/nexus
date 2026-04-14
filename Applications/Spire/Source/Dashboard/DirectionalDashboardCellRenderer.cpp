@@ -1,7 +1,7 @@
 #include "Spire/Dashboard/DirectionalDashboardCellRenderer.hpp"
 #include <boost/variant/apply_visitor.hpp>
 #include <QPainter>
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 
 using namespace Beam;
 using namespace boost;

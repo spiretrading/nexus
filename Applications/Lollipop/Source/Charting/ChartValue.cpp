@@ -102,3 +102,7 @@ Quantity ChartValue::ToQuantity() const {
 time_duration ChartValue::ToTimeDuration() const {
   return milliseconds(static_cast<std::int64_t>(m_value));
 }
+
+size_t std::hash<ChartValue>::operator()(ChartValue value) const noexcept {
+  return static_cast<size_t>(value.ToQuantity());
+}

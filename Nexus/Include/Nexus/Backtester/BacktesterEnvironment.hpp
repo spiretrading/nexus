@@ -171,7 +171,6 @@ namespace Nexus {
         m_administration_client, m_market_data_client,
         *m_order_execution_client, transition_timer_factory, m_time_client,
         ExchangeRateTable(definitions_client.load_exchange_rates()),
-        definitions_client.load_venue_database(),
         definitions_client.load_destination_database());
       auto root_account = m_service_locator_client.get_account();
       m_service_locator_client.associate(root_account,

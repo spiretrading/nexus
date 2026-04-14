@@ -28,15 +28,15 @@ namespace Spire {
        * Returns the singleton instance of the BookViewPropertiesWindow.
        * @param key_bindings The KeyBindingsModel storing all of the user's
        *        interactions.
-       * @param security The security whose interactions are to be displayed.
+       * @param ticker The ticker whose interactions are to be displayed.
        */
       BookViewPropertiesWindow* make(
         std::shared_ptr<KeyBindingsModel> key_bindings,
-        const Nexus::Security& security);
+        const Nexus::Ticker& ticker);
 
     private:
       std::shared_ptr<BookViewPropertiesModel> m_properties;
-      std::shared_ptr<SecurityModel> m_security;
+      std::shared_ptr<TickerModel> m_ticker;
       std::unique_ptr<BookViewPropertiesWindow> m_properties_window;
   };
 }

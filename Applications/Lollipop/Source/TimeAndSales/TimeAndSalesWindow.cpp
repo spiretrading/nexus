@@ -9,16 +9,16 @@
 #include <QSplitter>
 #include <QStandardPaths>
 #include <QStatusBar>
-#include "Spire/InputWidgets/SecurityInputDialog.hpp"
+#include "Spire/InputWidgets/TickerInputDialog.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesDialog.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
 #include "Spire/UI/CustomQtVariants.hpp"
-#include "Spire/UI/LinkSecurityContextAction.hpp"
+#include "Spire/UI/LinkTickerContextAction.hpp"
 #include "Spire/UI/UserProfile.hpp"
 #include "Spire/UI/ValueLabel.hpp"
 #include "Spire/Utilities/ExportModel.hpp"
-#include "Spire/Utilities/SecurityTechnicalsModel.hpp"
+#include "Spire/Utilities/TickerTechnicalsModel.hpp"
 #include "ui_TimeAndSalesWindow.h"
 
 using namespace Beam;
@@ -37,7 +37,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(Ref<UserProfile> userProfile,
     const TimeAndSalesProperties& properties, const std::string& identifier,
     QWidget* parent, Qt::WindowFlags flags)
     : QFrame(parent, flags),
-      SecurityContext(identifier),
+      TickerContext(identifier),
       m_ui(std::make_unique<Ui_TimeAndSalesWindow>()),
       m_userProfile(userProfile.get()) {
   m_ui->setupUi(this);
@@ -54,7 +54,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(Ref<UserProfile> userProfile,
   connect(m_ui->m_timeAndSalesView->horizontalHeader(),
     &QHeaderView::sectionResized, this, &TimeAndSalesWindow::OnSectionResized);
   m_model = std::make_unique<TimeAndSalesModel>(
-    Ref(*m_userProfile), properties, Security());
+    Ref(*m_userProfile), properties, Ticker());
   m_ui->m_timeAndSalesView->horizontalHeader()->setSectionsMovable(true);
   m_ui->m_timeAndSalesView->horizontalHeader()->setMinimumSectionSize(1);
   m_ui->m_timeAndSalesView->verticalHeader()->setMinimumSectionSize(0);
@@ -82,7 +82,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(Ref<UserProfile> userProfile,
   for(auto i = 0; i < TimeAndSalesModel::COLUMN_COUNT; ++i) {
     m_ui->m_timeAndSalesView->setColumnWidth(i, DEFAULT_COLUMN_SIZES[i]);
   }
-  SetupSecurityTechnicals();
+  SetupTickerTechnicals();
 }
 
 const TimeAndSalesProperties& TimeAndSalesWindow::GetProperties() const {
@@ -136,15 +136,15 @@ void TimeAndSalesWindow::SetProperties(
   m_ui->m_snapshotView->setShowGrid(m_properties.GetShowGridLines());
 }
 
-void TimeAndSalesWindow::DisplaySecurity(const Security& security) {
-  m_security = security;
-  setWindowTitle(displayText(m_security) + tr(" - Time and Sales"));
+void TimeAndSalesWindow::DisplayTicker(const Ticker& ticker) {
+  m_ticker = ticker;
+  setWindowTitle(displayText(m_ticker) + tr(" - Time and Sales"));
   auto widths = std::vector<int>();
   for(auto i = 0; i < TimeAndSalesProperties::COLUMN_COUNT; ++i) {
     widths.push_back(m_ui->m_timeAndSalesView->columnWidth(i));
   }
   auto newModel = std::make_unique<TimeAndSalesModel>(
-    Ref(*m_userProfile), m_properties, m_security);
+    Ref(*m_userProfile), m_properties, m_ticker);
   m_ui->m_timeAndSalesView->setModel(newModel.get());
   m_model = std::move(newModel);
   m_ui->m_timeAndSalesView->setModel(m_model.get());
@@ -152,8 +152,8 @@ void TimeAndSalesWindow::DisplaySecurity(const Security& security) {
   for(auto i = 0; i < TimeAndSalesProperties::COLUMN_COUNT; ++i) {
     m_ui->m_timeAndSalesView->setColumnWidth(i, widths[i]);
   }
-  SetupSecurityTechnicals();
-  SetDisplayedSecurity(m_security);
+  SetupTickerTechnicals();
+  SetDisplayedTicker(m_ticker);
 }
 
 std::unique_ptr<WindowSettings> TimeAndSalesWindow::GetWindowSettings() const {
@@ -162,7 +162,7 @@ std::unique_ptr<WindowSettings> TimeAndSalesWindow::GetWindowSettings() const {
 }
 
 void TimeAndSalesWindow::showEvent(QShowEvent* event) {
-  if(auto context = SecurityContext::FindSecurityContext(m_linkIdentifier)) {
+  if(auto context = TickerContext::FindTickerContext(m_linkIdentifier)) {
     Link(*context);
   } else {
     m_linkConnection.disconnect();
@@ -174,7 +174,7 @@ void TimeAndSalesWindow::showEvent(QShowEvent* event) {
 }
 
 void TimeAndSalesWindow::closeEvent(QCloseEvent* event) {
-  if(m_security != Security()) {
+  if(m_ticker != Ticker()) {
     auto window =
       std::make_unique<TimeAndSalesWindowSettings>(*this, Ref(*m_userProfile));
     m_userProfile->AddRecentlyClosedWindow(std::move(window));
@@ -185,13 +185,13 @@ void TimeAndSalesWindow::closeEvent(QCloseEvent* event) {
 void TimeAndSalesWindow::keyPressEvent(QKeyEvent* event) {
   auto key = event->key();
   if(key == Qt::Key_PageUp) {
-    m_securityViewStack.PushUp(m_security, [&] (const auto& security) {
-      DisplaySecurity(security);
+    m_tickerViewStack.PushUp(m_ticker, [&] (const auto& ticker) {
+      DisplayTicker(ticker);
     });
     return;
   } else if(key == Qt::Key_PageDown) {
-    m_securityViewStack.PushDown(m_security, [&] (const auto& security) {
-      DisplaySecurity(security);
+    m_tickerViewStack.PushDown(m_ticker, [&] (const auto& ticker) {
+      DisplayTicker(ticker);
     });
     return;
   }
@@ -199,21 +199,21 @@ void TimeAndSalesWindow::keyPressEvent(QKeyEvent* event) {
   if(text.isEmpty() || !text[0].isLetterOrNumber()) {
     return;
   }
-  ShowSecurityInputDialog(Ref(*m_userProfile), text.toStdString(), this,
-    [=] (auto security) {
-      if(!security || security == Security() || security == m_security) {
+  ShowTickerInputDialog(Ref(*m_userProfile), text.toStdString(), this,
+    [=] (auto ticker) {
+      if(!ticker || ticker == Ticker() || ticker == m_ticker) {
         return;
       }
-      m_securityViewStack.Push(m_security);
-      DisplaySecurity(*security);
+      m_tickerViewStack.Push(m_ticker);
+      DisplayTicker(*ticker);
     });
 }
 
-void TimeAndSalesWindow::HandleLink(SecurityContext& context) {
+void TimeAndSalesWindow::HandleLink(TickerContext& context) {
   m_linkIdentifier = context.GetIdentifier();
-  m_linkConnection = context.ConnectSecurityDisplaySignal(
-    std::bind_front(&TimeAndSalesWindow::DisplaySecurity, this));
-  DisplaySecurity(context.GetDisplayedSecurity());
+  m_linkConnection = context.ConnectTickerDisplaySignal(
+    std::bind_front(&TimeAndSalesWindow::DisplayTicker, this));
+  DisplayTicker(context.GetDisplayedTicker());
 }
 
 void TimeAndSalesWindow::HandleUnlink() {
@@ -221,12 +221,12 @@ void TimeAndSalesWindow::HandleUnlink() {
   m_linkIdentifier.clear();
 }
 
-void TimeAndSalesWindow::SetupSecurityTechnicals() {
+void TimeAndSalesWindow::SetupTickerTechnicals() {
   m_volumeLabel->Reset();
   m_volumeConnection.disconnect();
-  m_securityTechnicalsModel =
-    SecurityTechnicalsModel::GetModel(Ref(*m_userProfile), m_security);
-  m_volumeConnection = m_securityTechnicalsModel->ConnectVolumeSignal(
+  m_tickerTechnicalsModel =
+    TickerTechnicalsModel::GetModel(Ref(*m_userProfile), m_ticker);
+  m_volumeConnection = m_tickerTechnicalsModel->ConnectVolumeSignal(
     std::bind_front(&TimeAndSalesWindow::OnVolumeUpdate, this));
 }
 
@@ -241,7 +241,7 @@ void TimeAndSalesWindow::OnContextMenu(const QPoint& position) {
   propertiesAction.setToolTip(tr("Opens the Time and Sales properties."));
   contextMenu.addAction(&propertiesAction);
   auto linkMenu = QMenu("Links");
-  auto linkActions = LinkSecurityContextAction::MakeActions(
+  auto linkActions = LinkTickerContextAction::MakeActions(
     this, m_linkIdentifier, &linkMenu, *m_userProfile);
   for(auto& action : linkActions) {
     linkMenu.addAction(action.get());
@@ -273,7 +273,7 @@ void TimeAndSalesWindow::OnContextMenu(const QPoint& position) {
     auto exportFile = std::ofstream(path.toStdString());
     ExportModelAsCsv(*m_userProfile, *m_model, exportFile);
   } else if(auto linkAction =
-      dynamic_cast<LinkSecurityContextAction*>(selectedAction)) {
+      dynamic_cast<LinkTickerContextAction*>(selectedAction)) {
     linkAction->Execute(out(*this));
   }
 }

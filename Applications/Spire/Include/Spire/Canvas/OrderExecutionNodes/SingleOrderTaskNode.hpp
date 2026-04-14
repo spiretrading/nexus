@@ -14,8 +14,8 @@ namespace Spire {
   class SingleOrderTaskNode : public CanvasNode {
     public:
 
-      /** The name of the property used to specify the Security. */
-      static const std::string SECURITY_PROPERTY;
+      /** The name of the property used to specify the Ticker. */
+      static const std::string TICKER_PROPERTY;
 
       /** The name of the property used to specify the OrderType. */
       static const std::string ORDER_TYPE_PROPERTY;

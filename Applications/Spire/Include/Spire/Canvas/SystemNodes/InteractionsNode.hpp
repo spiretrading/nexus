@@ -15,11 +15,11 @@ namespace Spire {
 
       /**
        * Constructs an InteractionsNode.
-       * @param security The Security whose interactions are represented.
+       * @param ticker The Ticker whose interactions are represented.
        * @param interactions The interactions to represent.
        */
-      InteractionsNode(Nexus::Security security,
-        const InteractionsKeyBindingsModel& interactions);
+      InteractionsNode(
+        Nexus::Ticker ticker, const InteractionsKeyBindingsModel& interactions);
 
       void Apply(CanvasNodeVisitor& visitor) const override;
 

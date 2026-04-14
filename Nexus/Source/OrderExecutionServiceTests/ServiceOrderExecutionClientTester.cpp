@@ -1,5 +1,6 @@
 #include <Beam/ServicesTests/ServiceClientFixture.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/OrderExecutionService/ServiceOrderExecutionClient.hpp"
 
 using namespace Beam;
@@ -12,7 +13,7 @@ using namespace Nexus::DefaultVenues;
 namespace {
   auto make_order_fields() {
     return make_limit_order_fields(
-      Security("TST", TSX), Side::BID, "TSX", Quantity(100), Money::ONE);
+      parse_ticker("TST.TSX"), Side::BID, "TSX", Quantity(100), Money::ONE);
   }
 
   struct Fixture : ServiceClientFixture {

@@ -9,7 +9,7 @@
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
@@ -19,9 +19,9 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  optional<Security> find_security(const CanvasNode& node) {
-    return find_value<SecurityNode>(
-      node, SingleOrderTaskNode::SECURITY_PROPERTY);
+  optional<Ticker> find_ticker(const CanvasNode& node) {
+    return find_value<TickerNode>(
+      node, SingleOrderTaskNode::TICKER_PROPERTY);
   }
 
   optional<Money> find_price(const CanvasNode& node) {
@@ -68,7 +68,7 @@ void BookViewController::open() {
     return;
   }
   auto window = new BookViewWindow(Ref(*m_user_profile),
-    m_user_profile->GetSecurityInfoQueryModel(),
+    m_user_profile->GetTickerInfoQueryModel(),
     m_user_profile->GetKeyBindings(),
     m_user_profile->GetBookViewPropertiesWindowFactory(),
     m_user_profile->GetBookViewModelBuilder());
@@ -80,7 +80,7 @@ void BookViewController::close() {
   if(!m_window) {
     return;
   }
-  if(m_window->GetDisplayedSecurity()) {
+  if(m_window->GetDisplayedTicker()) {
     m_user_profile->GetRecentlyClosedWindows()->push(
       m_window->GetWindowSettings());
   }
@@ -128,7 +128,7 @@ void BookViewController::on_submit_task(
 }
 
 void BookViewController::on_cancel_operation(
-    CancelKeyBindingsModel::Operation operation, const Security& security,
+    CancelKeyBindingsModel::Operation operation, const Ticker& ticker,
     const optional<BookViewWindow::CancelCriteria>& criteria) {
   auto& tasks_model =
     m_user_profile->GetBlotterSettings().GetActiveBlotter().GetTasksModel();
@@ -138,7 +138,7 @@ void BookViewController::on_cancel_operation(
     if(!IsTerminal(entry.m_state) &&
         entry.m_state != Task::State::PENDING_CANCEL) {
       auto& task = entry.m_task;
-      if(find_security(task->GetNode()) == security) {
+      if(find_ticker(task->GetNode()) == ticker) {
         if(!criteria || find_price(task->GetNode()) == criteria->m_price &&
             find_destination(task->GetNode()) == criteria->m_destination) {
           tasks.push_back(task);

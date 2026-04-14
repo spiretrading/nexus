@@ -84,18 +84,15 @@
 #include "Spire/Ui/PopupBox.hpp"
 #include "Spire/Ui/ProgressBar.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
-#include "Spire/Ui/RegionBox.hpp"
-#include "Spire/Ui/RegionDropDownBox.hpp"
-#include "Spire/Ui/RegionListItem.hpp"
+#include "Spire/Ui/ScopeBox.hpp"
+#include "Spire/Ui/ScopeDropDownBox.hpp"
+#include "Spire/Ui/ScopeListItem.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/SearchBox.hpp"
-#include "Spire/Ui/SecurityBox.hpp"
-#include "Spire/Ui/SecurityListItem.hpp"
-#include "Spire/Ui/SecurityView.hpp"
 #include "Spire/Ui/SideBox.hpp"
 #include "Spire/Ui/SideFilterPanel.hpp"
 #include "Spire/Ui/SingleSelectionModel.hpp"
@@ -113,6 +110,10 @@
 #include "Spire/Ui/TagComboBox.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/TickerBox.hpp"
+#include "Spire/Ui/TickerListBox.hpp"
+#include "Spire/Ui/TickerListItem.hpp"
+#include "Spire/Ui/TickerView.hpp"
 #include "Spire/Ui/TimeInForceBox.hpp"
 #include "Spire/Ui/TimeInForceFilterPanel.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
@@ -668,6 +669,57 @@ namespace {
       make_standard_property<QString>("max", "20:20:20.000"));
   }
 
+  template<typename F>
+  auto setup_tag_combo_box_profile(const QString& name, F make_box) {
+    auto properties = std::vector<std::shared_ptr<UiProperty>>();
+    populate_widget_properties(properties);
+    properties.push_back(make_standard_property<QString>("placeholder"));
+    properties.push_back(make_standard_property("read_only", false));
+    return UiProfile(name, properties, [=] (auto& profile) {
+      auto box = make_box();
+      using T = typename std::decay_t<decltype(*box)>::Type;
+      box->setMinimumWidth(scale_width(112));
+      apply_widget_properties(box, profile.get_properties());
+      auto& placeholder =
+        get<QString>("placeholder", profile.get_properties());
+      placeholder.connect_changed_signal([=] (const auto& placeholder) {
+        box->set_placeholder(placeholder);
+      });
+      auto& read_only = get<bool>("read_only", profile.get_properties());
+      read_only.connect_changed_signal(
+        std::bind_front(&std::decay_t<decltype(*box)>::set_read_only, box));
+      auto current_filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("Current"));
+      auto print_current = [=] {
+        auto result = QString();
+        for(auto i = 0; i < box->get_current()->get_size(); ++i) {
+          result += to_text(box->get_current()->get(i)) + " ";
+        }
+        current_filter_slot(result);
+      };
+      box->get_current()->connect_operation_signal(
+        [=] (const auto& operation) {
+          visit(operation,
+            [=] (const typename ListModel<T>::AddOperation&) {
+              print_current();
+            },
+            [=] (const typename ListModel<T>::RemoveOperation&) {
+              print_current();
+            });
+        });
+      auto submit_filter_slot =
+        profile.make_event_slot<QString>(QString::fromUtf8("Submit"));
+      box->connect_submit_signal([=] (const auto& submission) {
+        auto result = QString();
+        for(auto i = 0; i < submission->get_size(); ++i) {
+          result += to_text(submission->get(i)) + " ";
+        }
+        submit_filter_slot(result);
+      });
+      return box;
+    });
+  }
+
   auto make_grid_image(const QSize& cell_size, int column_count,
       int row_count) {
     auto image = QImage(QSize(cell_size.width() * column_count,
@@ -741,27 +793,27 @@ namespace {
     panel->show();
   }
 
-  std::shared_ptr<SecurityInfoQueryModel> populate_security_query_model() {
-    auto security_infos = std::vector<SecurityInfo>();
-    auto add_security = [&] (const Security& security,
+  std::shared_ptr<TickerInfoQueryModel> populate_ticker_query_model() {
+    auto ticker_infos = std::vector<TickerInfo>();
+    auto add_ticker = [&] (const Ticker& ticker,
         const std::string& name) {
-      if(security) {
-        security_infos.emplace_back(security, name, "", 0);
+      if(ticker) {
+        ticker_infos.emplace_back(ticker, name, "", 0);
       }
     };
-    add_security(parse_security("MRU.TSX"), "Metro Inc.");
-    add_security(parse_security("MG.TSX"), "Magna International Inc.");
-    add_security(parse_security("MGA.TSX"), "Mega Uranium Ltd.");
-    add_security(parse_security("MGAB.TSX"),
+    add_ticker(parse_ticker("MRU.TSX"), "Metro Inc.");
+    add_ticker(parse_ticker("MG.TSX"), "Magna International Inc.");
+    add_ticker(parse_ticker("MGA.TSX"), "Mega Uranium Ltd.");
+    add_ticker(parse_ticker("MGAB.TSX"),
       "Mackenzie Global Fixed Income Alloc ETF");
-    add_security(parse_security("MON.NYSE"), "Monsanto Co.");
-    add_security(parse_security("MFC.TSX"), "Manulife Financial Corporation");
-    add_security(parse_security("MX.TSX"), "Methanex Corporation");
-    auto model = std::make_shared<LocalQueryModel<SecurityInfo>>();
-    for(auto& security_info : security_infos) {
-      model->add(to_text(security_info.m_security).toLower(), security_info);
+    add_ticker(parse_ticker("MON.NYSE"), "Monsanto Co.");
+    add_ticker(parse_ticker("MFC.TSX"), "Manulife Financial Corporation");
+    add_ticker(parse_ticker("MX.TSX"), "Methanex Corporation");
+    auto model = std::make_shared<LocalQueryModel<TickerInfo>>();
+    for(auto& ticker_info : ticker_infos) {
+      model->add(to_text(ticker_info.m_ticker).toLower(), ticker_info);
       model->add(
-        QString::fromStdString(security_info.m_name).toLower(), security_info);
+        QString::fromStdString(ticker_info.m_name).toLower(), ticker_info);
     }
     return model;
   }
@@ -793,8 +845,8 @@ namespace {
     return model;
   }
 
-  auto populate_region_box_model() {
-    auto securities = std::vector<std::pair<std::string, std::string>>{
+  auto populate_scope_box_model() {
+    auto tickers = std::vector<std::pair<std::string, std::string>>{
       {"MSFT.NSDQ", "Microsoft Corporation"},
       {"MG.TSX", "Magna International Inc."},
       {"MRU.TSX", "Metro Inc."},
@@ -805,29 +857,29 @@ namespace {
       DefaultVenues::CSE, DefaultVenues::TSX, DefaultVenues::TSXV};
     auto countries = std::vector{DefaultCountries::US, DefaultCountries::CA,
       DefaultCountries::AU, DefaultCountries::JP, DefaultCountries::CN};
-    auto model = std::make_shared<LocalQueryModel<Region>>();
-    for(auto& security_info : securities) {
-      auto security = parse_security(security_info.first);
-      if(!security) {
+    auto model = std::make_shared<LocalQueryModel<Scope>>();
+    for(auto& ticker_info : tickers) {
+      auto ticker = parse_ticker(ticker_info.first);
+      if(!ticker) {
         continue;
       }
-      auto region = Region(security_info.second);
-      region += security;
-      model->add(to_text(security).toLower(), region);
-      model->add(QString::fromStdString(region.get_name()).toLower(), region);
+      auto scope = Scope(ticker_info.second);
+      scope += ticker;
+      model->add(to_text(ticker).toLower(), scope);
+      model->add(QString::fromStdString(scope.get_name()).toLower(), scope);
     }
     for(auto& venue : venues) {
       auto entry = DEFAULT_VENUES.from(venue);
-      auto region = Region(entry.m_description);
-      region += venue;
-      model->add(to_text(venue).toLower(), region);
-      model->add(QString::fromStdString(region.get_name()).toLower(), region);
+      auto scope = Scope(entry.m_description);
+      scope += venue;
+      model->add(to_text(venue).toLower(), scope);
+      model->add(QString::fromStdString(scope.get_name()).toLower(), scope);
     }
     for(auto& country : countries) {
-      auto region = Region(DEFAULT_COUNTRIES.from(country).m_name);
-      region += country;
-      model->add(to_text(country).toLower(), region);
-      model->add(QString::fromStdString(region.get_name()).toLower(), region);
+      auto scope = Scope(DEFAULT_COUNTRIES.from(country).m_name);
+      scope += country;
+      model->add(to_text(country).toLower(), scope);
+      model->add(QString::fromStdString(scope.get_name()).toLower(), scope);
     }
     return model;
   }
@@ -999,22 +1051,22 @@ namespace {
     return QString("Exclude");
   }
 
-  auto print_region(const Region& region) {
+  auto print_scope(const Scope& scope) {
     auto result = QString();
-    result += "Region{Countries{";
-    for(auto& country : region.get_countries()) {
+    result += "Scope{Countries{";
+    for(auto& country : scope.get_countries()) {
       result +=
         DEFAULT_COUNTRIES.from(country).m_three_letter_code.get_data();
       result += " ";
     }
     result += "} Venues{";
-    for(auto& venue : region.get_venues()) {
+    for(auto& venue : scope.get_venues()) {
       result += to_text(venue);
       result += " ";
     }
-    result += "} Securities{";
-    for(auto& security : region.get_securities()) {
-      result += to_text(security);
+    result += "} Tickers{";
+    for(auto& ticker : scope.get_tickers()) {
+      result += to_text(ticker);
       result += " ";
     }
     result += "}}";
@@ -1606,8 +1658,8 @@ UiProfile Spire::make_context_menu_profile() {
         sort_menu->add_action("Size",
           profile.make_event_slot<>(QString("Action:Size")));
         auto type_menu = new ContextMenu(*static_cast<QWidget*>(sort_menu));
-        type_menu->add_action("Security",
-          profile.make_event_slot<>(QString("Action:Security")));
+        type_menu->add_action("Ticker",
+          profile.make_event_slot<>(QString("Action:Ticker")));
         type_menu->add_action("Side",
           profile.make_event_slot<>(QString("Action:Side")));
         sort_menu->add_menu("Type", *type_menu);
@@ -2016,7 +2068,7 @@ UiProfile Spire::make_editable_box_profile() {
   populate_widget_properties(properties);
   auto test_widget_property = define_enum<int>(
     {{"TextBox", 0}, {"DropDownBox", 1}, {"DecimalBox", 2}, {"QuantityBox", 3},
-      {"KeyInputBox", 4}, {"RegionBox", 5}});
+      {"KeyInputBox", 4}, {"ScopeBox", 5}});
   properties.push_back(
     make_standard_enum_property("input_box", test_widget_property));
   auto profile = UiProfile("EditableBox", properties, [] (auto& profile) {
@@ -2044,10 +2096,10 @@ UiProfile Spire::make_editable_box_profile() {
             return key_input_box_validator(sequence) == QValidator::Acceptable;
           });
       }
-      auto query_model = populate_region_box_model();
-      auto current = std::make_shared<LocalValueModel<Region>>();
-      current->set(std::any_cast<Region>(*query_model->parse("TSX")));
-      return new EditableBox(*new RegionBox(query_model, current));
+      auto query_model = populate_scope_box_model();
+      auto current = std::make_shared<LocalValueModel<Scope>>();
+      current->set(std::any_cast<Scope>(*query_model->parse("TSX")));
+      return new EditableBox(*new ScopeBox(query_model, current));
     }();
     input_box->setMinimumWidth(scale_width(112));
     apply_widget_properties(input_box, profile.get_properties());
@@ -3208,15 +3260,15 @@ UiProfile Spire::make_navigation_view_profile() {
     layout1->setSpacing(scale_width(5));
     layout1->addWidget(make_label_button("Button1"));
     layout1->addWidget(make_label_button("Button2"));
-    auto model = populate_security_query_model();
-    auto security_box = new SecurityBox(model);
-    security_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    security_box->set_placeholder("SecurityBox");
-    layout1->addWidget(security_box);
-    auto region_box = new RegionBox(populate_region_box_model());
-    region_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-    region_box->set_placeholder("RegionBox");
-    layout1->addWidget(region_box);
+    auto model = populate_ticker_query_model();
+    auto ticker_box = new TickerBox(model);
+    ticker_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    ticker_box->set_placeholder("TickerBox");
+    layout1->addWidget(ticker_box);
+    auto scope_box = new ScopeBox(populate_scope_box_model());
+    scope_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+    scope_box->set_placeholder("ScopeBox");
+    layout1->addWidget(scope_box);
     navigation_view->add_tab(*page1, "NavTab1");
     auto new_page = [] {
       auto page = new QWidget();
@@ -3616,48 +3668,48 @@ UiProfile Spire::make_radio_button_profile() {
   });
 }
 
-UiProfile Spire::make_region_box_profile() {
+UiProfile Spire::make_scope_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QString>("current",
-    "TSX,USA,CAN"));
+  properties.push_back(
+    make_standard_property<QString>("current", "TSX,USA,CAN"));
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
-  auto profile = UiProfile("RegionBox", properties, [] (auto& profile) {
-    auto query_model = populate_region_box_model();
-    auto to_region = [=] (const auto& text) {
-      auto region = Region();
+  auto profile = UiProfile("ScopeBox", properties, [] (auto& profile) {
+    auto query_model = populate_scope_box_model();
+    auto to_scope = [=] (const auto& text) {
+      auto scope = Scope();
       for(auto& value : text.split(",")) {
         if(auto parse_value = query_model->parse(value)) {
-          region += *parse_value;
+          scope += *parse_value;
         }
       }
-      return region;
+      return scope;
     };
-    auto to_string = [] (const auto& region) {
+    auto to_string = [] (const auto& scope) {
       auto text = QString();
-      for(auto& country : region.get_countries()) {
+      for(auto& country : scope.get_countries()) {
         text = text % to_text(country) % ",";
       }
-      for(auto& venue : region.get_venues()) {
+      for(auto& venue : scope.get_venues()) {
         text = text % to_text(venue) % ",";
       }
-      for(auto& security : region.get_securities()) {
-        text = text % to_text(security) % ",";
+      for(auto& ticker : scope.get_tickers()) {
+        text = text % to_text(ticker) % ",";
       }
       text.remove(text.length() - 1, 1);
       return text;
     };
     auto& current = get<QString>("current", profile.get_properties());
-    auto current_model = std::make_shared<LocalValueModel<Region>>(
-      to_region(current.get()));
+    auto current_model =
+      std::make_shared<LocalValueModel<Scope>>(to_scope(current.get()));
     current.connect_changed_signal([=] (const auto& value) {
-      auto region = to_region(value);
-      if(current_model->get() != region) {
-        current_model->set(region);
+      auto scope = to_scope(value);
+      if(current_model->get() != scope) {
+        current_model->set(scope);
       }
     });
-    auto box = new RegionBox(query_model, current_model);
+    auto box = new ScopeBox(query_model, current_model);
     box->setMinimumWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
@@ -3666,111 +3718,111 @@ UiProfile Spire::make_region_box_profile() {
     });
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
-      std::bind_front(&RegionBox::set_read_only, box));
+      std::bind_front(&ScopeBox::set_read_only, box));
     auto current_slot = profile.make_event_slot<QString>("Current");
     box->get_current()->connect_update_signal(
-      [=, &current] (const Region& region) {
-        current_slot(print_region(region));
-        if(to_region(current.get()) != region) {
-          current.set(to_string(region));
+      [=, &current] (const Scope& scope) {
+        current_slot(print_scope(scope));
+        if(to_scope(current.get()) != scope) {
+          current.set(to_string(scope));
         }
       });
     auto submit_slot = profile.make_event_slot<QString>("Submit");
-    box->connect_submit_signal([=] (const Region& region) {
-      submit_slot(print_region(region));
+    box->connect_submit_signal([=] (const Scope& scope) {
+      submit_slot(print_scope(scope));
     });
     return box;
   });
   return profile;
 }
 
-UiProfile Spire::make_region_drop_down_box_profile() {
+UiProfile Spire::make_scope_drop_down_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  auto current_region = define_enum<Region>(
+  auto current_scope = define_enum<Scope>(
     {{"ASX", DefaultVenues::ASX}, {"CXD", DefaultVenues::CXD},
-     {"TSX", DefaultVenues::TSX}, {"USA", Region(DefaultCountries::US)},
-     {"CAN", Region(DefaultCountries::CA)}});
-  properties.push_back(make_standard_enum_property("current", current_region));
+     {"TSX", DefaultVenues::TSX}, {"USA", Scope(DefaultCountries::US)},
+     {"CAN", Scope(DefaultCountries::CA)}});
+  properties.push_back(make_standard_enum_property("current", current_scope));
   properties.push_back(make_standard_property("read_only", false));
-  auto profile = UiProfile("RegionDropDownBox", properties, [] (auto& profile) {
+  auto profile = UiProfile("ScopeDropDownBox", properties, [] (auto& profile) {
     auto venues = std::vector{DefaultVenues::ASX, DefaultVenues::CXD,
       DefaultVenues::TSX};
     auto countries = std::vector{DefaultCountries::US, DefaultCountries::CA};
-    auto regions = std::make_shared<ArrayListModel<Region>>();
+    auto scopes = std::make_shared<ArrayListModel<Scope>>();
     for(auto& venue : venues) {
-      auto region = Region(DEFAULT_VENUES.from(venue).m_display_name);
-      region += venue;
-      regions->push(region);
+      auto scope = Scope(DEFAULT_VENUES.from(venue).m_display_name);
+      scope += venue;
+      scopes->push(scope);
     }
     for(auto& country : countries) {
-      auto region = Region(DEFAULT_COUNTRIES.from(country).m_name);
-      region += country;
-      regions->push(region);
+      auto scope = Scope(DEFAULT_COUNTRIES.from(country).m_name);
+      scope += country;
+      scopes->push(scope);
     }
-    auto box = make_region_drop_down_box(std::move(regions));
+    auto box = make_scope_drop_down_box(std::move(scopes));
     box->setFixedWidth(scale_width(150));
     apply_widget_properties(box, profile.get_properties());
-    auto& current = get<Region>("current", profile.get_properties());
+    auto& current = get<Scope>("current", profile.get_properties());
     current.connect_changed_signal([=] (auto value) {
       box->get_current()->set(value);
     });
     auto& read_only = get<bool>("read_only", profile.get_properties());
     read_only.connect_changed_signal(
-      std::bind_front(&RegionDropDownBox::set_read_only, box));
+      std::bind_front(&ScopeDropDownBox::set_read_only, box));
     box->get_current()->connect_update_signal(
-      profile.make_event_slot<Region>("Current"));
-    box->connect_submit_signal(profile.make_event_slot<Region>("Submit"));
+      profile.make_event_slot<Scope>("Current"));
+    box->connect_submit_signal(profile.make_event_slot<Scope>("Submit"));
     return box;
   });
   return profile;
 }
 
-UiProfile Spire::make_region_filter_panel_profile() {
+UiProfile Spire::make_scope_filter_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
-  auto profile = UiProfile("RegionFilterPanel", properties, [] (auto& profile) {
+  auto profile = UiProfile("ScopeFilterPanel", properties, [] (auto& profile) {
     auto filter_panel =
-      new RegionFilterPanel(*new RegionBox(populate_region_box_model()));
+      new ScopeFilterPanel(*new ScopeBox(populate_scope_box_model()));
     apply_widget_properties(filter_panel, profile.get_properties());
     auto submit_slot = profile.make_event_slot<QString>("Submit");
     filter_panel->connect_submit_signal(
-      [=] (const auto& region, auto mode) {
+      [=] (const auto& scope, auto mode) {
         submit_slot(QString("Mode:%1 %2").
-          arg(to_string<RegionBox>(mode)).arg(print_region(region)));
+          arg(to_string<ScopeBox>(mode)).arg(print_scope(scope)));
       });
     return filter_panel;
   });
   return profile;
 }
 
-UiProfile Spire::make_region_list_item_profile() {
+UiProfile Spire::make_scope_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto type_property = define_enum<int>(
-    {{"SECURITY", 0}, {"VENUE", 1}, {"COUNTRY", 2}});
+    {{"TICKER", 0}, {"VENUE", 1}, {"COUNTRY", 2}});
   properties.push_back(make_standard_enum_property("type", type_property));
-  auto profile = UiProfile("RegionListItem", properties, [] (auto& profile) {
+  auto profile = UiProfile("ScopeListItem", properties, [] (auto& profile) {
     auto& type = get<int>("type", profile.get_properties());
-    auto region = [&] {
+    auto scope = [&] {
       if(type.get() == 0) {
-        auto security = parse_security("MRU.TSX");
-        auto region = Region("Metro Inc.");
-        region += security;
-        return region;
+        auto ticker = parse_ticker("MRU.TSX");
+        auto scope = Scope("Metro Inc.");
+        scope += ticker;
+        return scope;
       } else if(type.get() == 1) {
         auto venue = DEFAULT_VENUES.from(DefaultVenues::ASX);
-        auto region = Region(venue.m_description);
-        region += venue.m_venue;
-        return region;
+        auto scope = Scope(venue.m_description);
+        scope += venue.m_venue;
+        return scope;
       } else {
         auto country = DefaultCountries::US;
-        auto region = Region(DEFAULT_COUNTRIES.from(country).m_name);
-        region += country;
-        return region;
+        auto scope = Scope(DEFAULT_COUNTRIES.from(country).m_name);
+        scope += country;
+        return scope;
       }
     }();
-    auto item = new RegionListItem(region);
+    auto item = new ScopeListItem(scope);
     apply_widget_properties(item, profile.get_properties());
     item->setMinimumSize(0, 0);
     item->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
@@ -4020,101 +4072,6 @@ UiProfile Spire::make_search_box_profile() {
     search_box->connect_submit_signal(
       profile.make_event_slot<QString>("Submit"));
     return search_box;
-  });
-  return profile;
-}
-
-UiProfile Spire::make_security_box_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QString>("current", "MX.TSX"));
-  properties.push_back(make_standard_property<QString>("placeholder"));
-  properties.push_back(make_standard_property("read_only", false));
-  auto profile = UiProfile("SecurityBox", properties, [] (auto& profile) {
-    auto model = populate_security_query_model();
-    auto& current = get<QString>("current", profile.get_properties());
-    auto security = [&] {
-      if(auto value = model->parse(current.get())) {
-        return value->m_security;
-      }
-      return Security();
-    }();
-    auto current_model = std::make_shared<LocalValueModel<Security>>(security);
-    auto box = new SecurityBox(model, current_model);
-    box->setFixedWidth(scale_width(112));
-    apply_widget_properties(box, profile.get_properties());
-    auto current_connection = box->get_current()->connect_update_signal(
-      profile.make_event_slot<Security>("Current"));
-    current.connect_changed_signal([=] (const auto& current) {
-      if(auto value = model->parse(current)) {
-        box->get_current()->set(value->m_security);
-      } else {
-        auto current_blocker = shared_connection_block(current_connection);
-        box->get_current()->set(Security());
-      }
-    });
-    auto& placeholder = get<QString>("placeholder", profile.get_properties());
-    placeholder.connect_changed_signal([=] (const auto& placeholder) {
-      box->set_placeholder(placeholder);
-    });
-    auto& read_only = get<bool>("read_only", profile.get_properties());
-    read_only.connect_changed_signal(
-      std::bind_front(&SecurityBox::set_read_only, box));
-    box->connect_submit_signal(profile.make_event_slot<Security>("Submit"));
-    return box;
-  });
-  return profile;
-}
-
-UiProfile Spire::make_security_list_item_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  auto profile = UiProfile("SecurityListItem", properties, [] (auto& profile) {
-    auto security = parse_security("MRU.TSX");
-    auto security_info = SecurityInfo(security, "Metro Inc.", "", 0);
-    auto item = new SecurityListItem(security_info);
-    apply_widget_properties(item, profile.get_properties());
-    return item;
-  });
-  return profile;
-}
-
-UiProfile Spire::make_security_view_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  properties.push_back(make_standard_property<int>("width", 266));
-  properties.push_back(make_standard_property<int>("height", 361));
-  auto profile = UiProfile("SecurityView", properties, [] (auto& profile) {
-    auto model = populate_security_query_model();
-    auto label = make_label("");
-    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    auto security_view = new SecurityView(model, *label);
-    auto box = new Box(security_view);
-    update_style(*box, [] (auto& style) {
-      style.get(Hover() || Focus()).
-        set(border(scale_width(1), QColor(0x4B23A0)));
-    });
-    security_view->get_current()->connect_update_signal(
-      profile.make_event_slot<Security>("Current", [=] (const auto& security) {
-        label->get_current()->set(to_text(security));
-        return security;
-      }));
-    auto& width = get<int>("width", profile.get_properties());
-    width.connect_changed_signal([=] (auto value) {
-      if(value != 0) {
-        if(unscale_width(security_view->width()) != value) {
-          security_view->setFixedWidth(scale_width(value));
-        }
-      }
-    });
-    auto& height = get<int>("height", profile.get_properties());
-    height.connect_changed_signal([=] (auto value) {
-      if(value != 0) {
-        if(unscale_height(security_view->height()) != value) {
-          security_view->setFixedHeight(scale_height(value));
-        }
-      }
-    });
-    return box;
   });
   return profile;
 }
@@ -4483,7 +4440,7 @@ UiProfile Spire::make_table_header_profile() {
     auto items = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
     auto types = std::vector<std::type_index>();
     auto item = TableHeaderItem::Model();
-    item.m_name = "Security";
+    item.m_name = "Ticker";
     item.m_short_name = "Sec";
     item.m_filter = TableFilter::Filter::UNFILTERED;
     items->push(item);
@@ -4528,7 +4485,7 @@ UiProfile Spire::make_table_header_item_profile() {
   )";
   properties.push_back(make_style_property("style_sheet",
     std::move(default_style)));
-  properties.push_back(make_standard_property<QString>("name", "Security"));
+  properties.push_back(make_standard_property<QString>("name", "Ticker"));
   properties.push_back(make_standard_property<QString>("short_name", "Sec"));
   properties.push_back(
     make_standard_enum_property("order", get_order_property()));
@@ -4656,7 +4613,7 @@ UiProfile Spire::make_table_view_profile() {
     }
     auto header = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
     auto item = TableHeaderItem::Model();
-    item.m_name = "Security";
+    item.m_name = "Ticker";
     item.m_short_name = "Sec";
     header->push(item);
     item = TableHeaderItem::Model();
@@ -4804,51 +4761,8 @@ UiProfile Spire::make_tag_box_profile() {
 }
 
 UiProfile Spire::make_tag_combo_box_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QString>("placeholder"));
-  properties.push_back(make_standard_property("read_only", false));
-  auto profile = UiProfile("TagComboBox", properties, [] (auto& profile) {
-    auto box = new TagComboBox(populate_tag_combo_box_model());
-    box->setMinimumWidth(scale_width(112));
-    apply_widget_properties(box, profile.get_properties());
-    auto& placeholder = get<QString>("placeholder", profile.get_properties());
-    placeholder.connect_changed_signal([=] (const auto& placeholder) {
-      box->set_placeholder(placeholder);
-    });
-    auto& read_only = get<bool>("read_only", profile.get_properties());
-    read_only.connect_changed_signal(
-      std::bind_front(&TagComboBox<QString>::set_read_only, box));
-    auto current_filter_slot =
-      profile.make_event_slot<QString>(QString::fromUtf8("Current"));
-    auto print_current = [=] {
-      auto result = QString();
-      for(auto i = 0; i < box->get_current()->get_size(); ++i) {
-        result += box->get_current()->get(i) + " ";
-      }
-      current_filter_slot(result);
-    };
-    box->get_current()->connect_operation_signal([=] (const auto& operation) {
-      visit(operation,
-        [=] (const ListModel<QString>::AddOperation& operation) {
-          print_current();
-        },
-        [=] (const ListModel<QString>::RemoveOperation& operation) {
-          print_current();
-        });
-    });
-    auto submit_filter_slot =
-      profile.make_event_slot<QString>(QString::fromUtf8("Submit"));
-    box->connect_submit_signal([=] (const auto& submission) {
-      auto result = QString();
-      for(auto i = 0; i < submission->get_size(); ++i) {
-        result += submission->get(i) + " ";
-      }
-      submit_filter_slot(result);
-    });
-    return box;
-  });
-  return profile;
+  return setup_tag_combo_box_profile("TagComboBox",
+    [] { return new TagComboBox(populate_tag_combo_box_model()); });
 }
 
 UiProfile Spire::make_text_area_box_profile() {
@@ -4991,6 +4905,106 @@ UiProfile Spire::make_text_box_profile() {
     text_box->connect_submit_signal(profile.make_event_slot<QString>("Submit"));
     text_box->connect_reject_signal(profile.make_event_slot<QString>("Reject"));
     return text_box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_ticker_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current", "MX.TSX"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("TickerBox", properties, [] (auto& profile) {
+    auto model = populate_ticker_query_model();
+    auto& current = get<QString>("current", profile.get_properties());
+    auto ticker = [&] {
+      if(auto value = model->parse(current.get())) {
+        return value->m_ticker;
+      }
+      return Ticker();
+    }();
+    auto current_model = std::make_shared<LocalValueModel<Ticker>>(ticker);
+    auto box = new TickerBox(model, current_model);
+    box->setFixedWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    auto current_connection = box->get_current()->connect_update_signal(
+      profile.make_event_slot<Ticker>("Current"));
+    current.connect_changed_signal([=] (const auto& current) {
+      if(auto value = model->parse(current)) {
+        box->get_current()->set(value->m_ticker);
+      } else {
+        auto current_blocker = shared_connection_block(current_connection);
+        box->get_current()->set(Ticker());
+      }
+    });
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal([=] (const auto& placeholder) {
+      box->set_placeholder(placeholder);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&TickerBox::set_read_only, box));
+    box->connect_submit_signal(profile.make_event_slot<Ticker>("Submit"));
+    return box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_ticker_list_box_profile() {
+  return setup_tag_combo_box_profile("TickerListBox",
+    [] { return make_ticker_list_box(populate_ticker_query_model()); });
+}
+
+UiProfile Spire::make_ticker_list_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("TickerListItem", properties, [] (auto& profile) {
+    auto ticker = parse_ticker("MRU.TSX");
+    auto ticker_info = TickerInfo(ticker, "Metro Inc.", "", 0);
+    auto item = new TickerListItem(ticker_info);
+    apply_widget_properties(item, profile.get_properties());
+    return item;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_ticker_view_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  properties.push_back(make_standard_property<int>("width", 266));
+  properties.push_back(make_standard_property<int>("height", 361));
+  auto profile = UiProfile("TickerView", properties, [] (auto& profile) {
+    auto model = populate_ticker_query_model();
+    auto label = make_label("");
+    label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+    auto ticker_view = new TickerView(model, *label);
+    auto box = new Box(ticker_view);
+    update_style(*box, [] (auto& style) {
+      style.get(Hover() || Focus()).
+        set(border(scale_width(1), QColor(0x4B23A0)));
+    });
+    ticker_view->get_current()->connect_update_signal(
+      profile.make_event_slot<Ticker>("Current", [=] (const auto& ticker) {
+        label->get_current()->set(to_text(ticker));
+        return ticker;
+      }));
+    auto& width = get<int>("width", profile.get_properties());
+    width.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_width(ticker_view->width()) != value) {
+          ticker_view->setFixedWidth(scale_width(value));
+        }
+      }
+    });
+    auto& height = get<int>("height", profile.get_properties());
+    height.connect_changed_signal([=] (auto value) {
+      if(value != 0) {
+        if(unscale_height(ticker_view->height()) != value) {
+          ticker_view->setFixedHeight(scale_height(value));
+        }
+      }
+    });
+    return box;
   });
   return profile;
 }

@@ -8,7 +8,7 @@
 #include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/ClickObserver.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
-#include "Spire/Ui/RegionBox.hpp"
+#include "Spire/Ui/ScopeBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 namespace Spire {
@@ -41,13 +41,13 @@ namespace Spire {
        * @param current The list of additional tags to represent.
        * @param additional_tags The definitions of all additional tags.
        * @param destination The destination to constrain the available tags to.
-       * @param region The region to constrain the available tags to.
+       * @param scope The scope to constrain the available tags to.
        * @param parent The parent widget.
        */
       AdditionalTagsBox(std::shared_ptr<AdditionalTagsModel> current,
         AdditionalTagDatabase additional_tags,
         std::shared_ptr<DestinationModel> destination,
-        std::shared_ptr<RegionModel> region, QWidget* parent = nullptr);
+        std::shared_ptr<ScopeModel> scope, QWidget* parent = nullptr);
 
       /** Returns the list of additional tags represented. */
       const std::shared_ptr<AdditionalTagsModel>& get_current() const;
@@ -72,8 +72,8 @@ namespace Spire {
       AdditionalTagDatabase m_additional_tags;
       std::shared_ptr<DestinationModel> m_destination;
       boost::signals2::scoped_connection m_destination_connection;
-      std::shared_ptr<RegionModel> m_region;
-      boost::signals2::scoped_connection m_region_connection;
+      std::shared_ptr<ScopeModel> m_scope;
+      boost::signals2::scoped_connection m_scope_connection;
       std::shared_ptr<AdditionalTagsModel> m_current;
       std::shared_ptr<TextModel> m_tags_text;
       TextBox* m_label;
@@ -81,9 +81,9 @@ namespace Spire {
       ClickObserver m_click_observer;
 
       void update_current(
-        const Nexus::Destination& destination, const Nexus::Region& region);
+        const Nexus::Destination& destination, const Nexus::Scope& scope);
       void on_destination(const Nexus::Destination& destination);
-      void on_region(const Nexus::Region& region);
+      void on_scope(const Nexus::Scope& scope);
       void on_click();
   };
 }

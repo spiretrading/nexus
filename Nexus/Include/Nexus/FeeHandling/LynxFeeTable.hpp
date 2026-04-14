@@ -6,7 +6,7 @@
 #include <unordered_set>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/FeeHandling/LiquidityFlag.hpp"
 #include "Nexus/FeeHandling/ParseFeeTable.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
@@ -46,23 +46,22 @@ namespace Nexus {
     std::array<std::array<Money, LIQUIDITY_FLAG_COUNT>, CLASSIFICATION_COUNT>
       m_fee_table;
 
-    /** The set of interlisted securities. */
-    std::unordered_set<Security> m_interlisted;
+    /** The set of interlisted tickers. */
+    std::unordered_set<Ticker> m_interlisted;
 
     /** The set of ETFs. */
-    std::unordered_set<Security> m_etfs;
+    std::unordered_set<Ticker> m_etfs;
   };
 
   /**
    * Parses a LynxFeeTable from a YAML configuration.
    * @param config The configuration to parse the LynxFeeTable from.
-   * @param interlisted The set of interlisted Securities.
-   * @param etfs The set of ETF Securities.
+   * @param interlisted The set of interlisted Tickers.
+   * @param etfs The set of ETF Tickers.
    * @return The LynxFeeTable represented by the <i>config</i>.
    */
   inline LynxFeeTable parse_lynx_fee_table(const YAML::Node& config,
-      std::unordered_set<Security> etfs,
-      std::unordered_set<Security> interlisted) {
+      std::unordered_set<Ticker> etfs, std::unordered_set<Ticker> interlisted) {
     auto table = LynxFeeTable();
     parse_fee_table(config, "fee_table", Beam::out(table.m_fee_table));
     table.m_interlisted = std::move(interlisted);
@@ -129,9 +128,9 @@ namespace Nexus {
         return LynxFeeTable::Classification::MIDPOINT;
       } else if(report.m_last_price < Money::ONE) {
         return LynxFeeTable::Classification::SUBDOLLAR;
-      } else if(table.m_interlisted.count(fields.m_security) == 1) {
+      } else if(table.m_interlisted.count(fields.m_ticker) == 1) {
         return LynxFeeTable::Classification::INTERLISTED;
-      } else if(table.m_etfs.count(fields.m_security) == 1) {
+      } else if(table.m_etfs.count(fields.m_ticker) == 1) {
         return LynxFeeTable::Classification::ETF;
       } else {
         return LynxFeeTable::Classification::DEFAULT;

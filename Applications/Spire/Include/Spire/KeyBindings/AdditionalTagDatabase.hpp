@@ -3,14 +3,14 @@
 #include <memory>
 #include <unordered_map>
 #include "Nexus/Definitions/Destination.hpp"
-#include "Nexus/Definitions/RegionMap.hpp"
+#include "Nexus/Definitions/ScopeMap.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Spire/KeyBindings/AdditionalTagSchema.hpp"
 
 namespace Spire {
 
   /**
-   * Stores a database of additional tags with retrieval by region or
+   * Stores a database of additional tags with retrieval by scope or
    * destination.
    */
   class AdditionalTagDatabase {
@@ -29,10 +29,10 @@ namespace Spire {
 
       /**
        * Adds a schema to this database.
-       * @param region The region the schema applies to.
+       * @param scope The scope the schema applies to.
        * @param schema The schema to add.
        */
-      void add(const Nexus::Region& region,
+      void add(const Nexus::Scope& scope,
         const std::shared_ptr<AdditionalTagSchema>& schema);
 
       /**
@@ -43,22 +43,22 @@ namespace Spire {
         find(const Nexus::Destination& destination, int key) const;
 
       /**
-       * Returns the schema associated with a region and tag key or
+       * Returns the schema associated with a scope and tag key or
        * <i>nullptr</i> iff no schema exists.
        */
       const std::shared_ptr<AdditionalTagSchema>&
-        find(const Nexus::Region& region, int key) const;
+        find(const Nexus::Scope& scope, int key) const;
 
       /** Returns a list of all schemas for a given destination. */
       std::vector<std::shared_ptr<AdditionalTagSchema>>
         find(const Nexus::Destination& destination) const;
 
-      /** Returns a list of all schemas for a given region. */
+      /** Returns a list of all schemas for a given scope. */
       std::vector<std::shared_ptr<AdditionalTagSchema>>
-        find(const Nexus::Region& region) const;
+        find(const Nexus::Scope& scope) const;
 
     private:
-      Nexus::RegionMap<std::unordered_map<
+      Nexus::ScopeMap<std::unordered_map<
         int, std::shared_ptr<AdditionalTagSchema>>> m_schemas;
       std::unordered_map<Nexus::Destination, std::unordered_map<
         int, std::shared_ptr<AdditionalTagSchema>>> m_destination_schemas;
@@ -69,18 +69,17 @@ namespace Spire {
 
   /**
    * Returns the schema associated with a destination, and if no such schema is
-   * found, then searches for the schema associated with a region. Returns
+   * found, then searches for the schema associated with a scope. Returns
    * <i>nullptr</i> iff no schema exists.
    */
   const std::shared_ptr<AdditionalTagSchema>& find(
     const AdditionalTagDatabase& database,
-    const Nexus::Destination& destination, const Nexus::Region& region,
-    int key);
+    const Nexus::Destination& destination, const Nexus::Scope& scope, int key);
 
-  /** Returns the list of all schemas for a destination and region. */
+  /** Returns the list of all schemas for a destination and scope. */
   std::vector<std::shared_ptr<AdditionalTagSchema>> find(
     const AdditionalTagDatabase& database,
-    const Nexus::Destination& destination, const Nexus::Region& region);
+    const Nexus::Destination& destination, const Nexus::Scope& scope);
 }
 
 #endif

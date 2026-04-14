@@ -1,6 +1,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterMarketDataClient.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 
 using namespace Beam;
@@ -12,7 +13,7 @@ using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
-  const auto TD = Security("TD", TSX);
+  const auto TD = parse_ticker("TD.TSX");
 
   struct Fixture {
     TestEnvironment m_source_environment;
@@ -76,7 +77,7 @@ TEST_SUITE("BacktesterMarketDataClient") {
     }
     auto client = BacktesterMarketDataClient(Ref(fixture.m_market_data_service),
       make_market_data_client(fixture.m_event_handler_environment, "handler1"));
-    auto query = SecurityMarketDataQuery();
+    auto query = TickerQuery();
     query.set_index(TD);
     query.set_range(Range::HISTORICAL);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);

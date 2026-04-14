@@ -18,18 +18,18 @@ ChartWindowSettings::ChartWindowSettings(const ChartWindow& window,
     : m_interactionMode(window.GetInteractionMode()),
       m_isAutoScaleEnabled(window.IsAutoScaleEnabled()),
       m_isLockGridEnabled(window.IsLockGridEnabled()),
-      m_security(window.GetDisplayedSecurity()),
-      m_securityViewStack(window.m_securityViewStack),
+      m_ticker(window.GetDisplayedTicker()),
+      m_tickerViewStack(window.m_tickerViewStack),
       m_identifier(window.GetIdentifier()),
       m_linkIdentifier(window.m_linkIdentifier),
       m_geometry(window.saveGeometry()),
       m_chartPlotViewWindowSettings(window.m_ui->m_chart->GetWindowSettings()),
       m_chartIntervalComboBoxWindowSettings(
         window.m_intervalComboBox->GetWindowSettings()) {
-  if(!m_security) {
+  if(!m_ticker) {
     m_name = "Chart";
   } else {
-    m_name = "Chart - " + displayText(m_security).toStdString();
+    m_name = "Chart - " + displayText(m_ticker).toStdString();
   }
 }
 
@@ -57,11 +57,11 @@ void ChartWindowSettings::Apply(Ref<UserProfile> userProfile,
   window.SetInteractionMode(m_interactionMode);
   window.SetAutoScale(m_isAutoScaleEnabled);
   window.SetLockGrid(m_isLockGridEnabled);
-  if(m_security != Security()) {
-    window.DisplaySecurity(m_security);
+  if(m_ticker != Ticker()) {
+    window.DisplayTicker(m_ticker);
   }
   window.m_linkIdentifier = m_linkIdentifier;
-  window.m_securityViewStack = m_securityViewStack;
+  window.m_tickerViewStack = m_tickerViewStack;
   if(window.m_intervalComboBox != nullptr) {
     m_chartIntervalComboBoxWindowSettings->Apply(Ref(userProfile),
       out(*window.m_intervalComboBox));

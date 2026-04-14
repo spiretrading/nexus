@@ -11,7 +11,7 @@ using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
-  const auto TST = Security("TST", TSX);
+  const auto TST = parse_ticker("TST.TSX");
 
   auto make_order_fields(Money price) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT, TST, CAD,
@@ -22,14 +22,14 @@ namespace {
 TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("fee_table_calculations") {
     auto table = ChicFeeTable();
-    populate_fee_table(out(table.m_security_table));
-    test_fee_table_index(table, table.m_security_table, lookup_fee,
+    populate_fee_table(out(table.m_ticker_table));
+    test_fee_table_index(table, table.m_ticker_table, lookup_fee,
       ChicFeeTable::INDEX_COUNT, ChicFeeTable::CLASSIFICATION_COUNT);
   }
 
   TEST_CASE("zero_quantity") {
     auto table = ChicFeeTable();
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::ONE);
     fields.m_quantity = 0;
     auto expected_fee = Money::ZERO;
@@ -39,7 +39,7 @@ TEST_SUITE("ChicFeeHandling") {
 
   TEST_CASE("default_active") {
     auto table = ChicFeeTable();
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::NON_INTERLISTED);
@@ -49,7 +49,7 @@ TEST_SUITE("ChicFeeHandling") {
 
   TEST_CASE("default_passive") {
     auto table = ChicFeeTable();
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::PASSIVE,
       ChicFeeTable::Classification::NON_INTERLISTED);
@@ -59,7 +59,7 @@ TEST_SUITE("ChicFeeHandling") {
 
   TEST_CASE("default_hidden_passive") {
     auto table = ChicFeeTable();
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_PASSIVE,
       ChicFeeTable::Classification::NON_INTERLISTED);
@@ -69,7 +69,7 @@ TEST_SUITE("ChicFeeHandling") {
 
   TEST_CASE("default_hidden_active") {
     auto table = ChicFeeTable();
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_ACTIVE,
       ChicFeeTable::Classification::NON_INTERLISTED);
@@ -79,7 +79,7 @@ TEST_SUITE("ChicFeeHandling") {
 
   TEST_CASE("subdollar_active") {
     auto table = ChicFeeTable();
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(20 * Money::CENT);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
@@ -89,7 +89,7 @@ TEST_SUITE("ChicFeeHandling") {
 
   TEST_CASE("subdollar_passive") {
     auto table = ChicFeeTable();
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(20 * Money::CENT);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::PASSIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
@@ -99,7 +99,7 @@ TEST_SUITE("ChicFeeHandling") {
 
   TEST_CASE("subdime_active") {
     auto table = ChicFeeTable();
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDIME);
@@ -109,7 +109,7 @@ TEST_SUITE("ChicFeeHandling") {
 
   TEST_CASE("subdime_passive") {
     auto table = ChicFeeTable();
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::PASSIVE,
       ChicFeeTable::Classification::SUBDIME);
@@ -119,7 +119,7 @@ TEST_SUITE("ChicFeeHandling") {
 
   TEST_CASE("subdollar_hidden_active") {
     auto table = ChicFeeTable();
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(20 * Money::CENT);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_ACTIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
@@ -129,7 +129,7 @@ TEST_SUITE("ChicFeeHandling") {
 
   TEST_CASE("subdollar_hidden_passive") {
     auto table = ChicFeeTable();
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(20 * Money::CENT);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_PASSIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
@@ -139,7 +139,7 @@ TEST_SUITE("ChicFeeHandling") {
 
   TEST_CASE("subdime_hidden_active") {
     auto table = ChicFeeTable();
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_ACTIVE,
       ChicFeeTable::Classification::SUBDIME);
@@ -149,7 +149,7 @@ TEST_SUITE("ChicFeeHandling") {
 
   TEST_CASE("subdime_hidden_passive") {
     auto table = ChicFeeTable();
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_PASSIVE,
       ChicFeeTable::Classification::SUBDIME);
@@ -160,7 +160,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("interlisted_active") {
     auto table = ChicFeeTable();
     table.m_interlisted.insert(TST);
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::INTERLISTED);
@@ -171,7 +171,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("interlisted_passive") {
     auto table = ChicFeeTable();
     table.m_interlisted.insert(TST);
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::PASSIVE,
       ChicFeeTable::Classification::INTERLISTED);
@@ -182,7 +182,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("interlisted_hidden_passive") {
     auto table = ChicFeeTable();
     table.m_interlisted.insert(TST);
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_PASSIVE,
       ChicFeeTable::Classification::INTERLISTED);
@@ -193,7 +193,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("interlisted_hidden_active") {
     auto table = ChicFeeTable();
     table.m_interlisted.insert(TST);
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_ACTIVE,
       ChicFeeTable::Classification::INTERLISTED);
@@ -204,7 +204,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("subdollar_interlisted_active") {
     auto table = ChicFeeTable();
     table.m_interlisted.insert(TST);
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(20 * Money::CENT);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
@@ -215,7 +215,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("subdime_interlisted_active") {
     auto table = ChicFeeTable();
     table.m_interlisted.insert(TST);
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDIME);
@@ -226,7 +226,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("etf_active") {
     auto table = ChicFeeTable();
     table.m_etfs.insert(TST);
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(
       table, ChicFeeTable::Index::ACTIVE, ChicFeeTable::Classification::ETF);
@@ -237,7 +237,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("etf_passive") {
     auto table = ChicFeeTable();
     table.m_etfs.insert(TST);
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(
       table, ChicFeeTable::Index::PASSIVE, ChicFeeTable::Classification::ETF);
@@ -248,7 +248,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("etf_hidden_passive") {
     auto table = ChicFeeTable();
     table.m_etfs.insert(TST);
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_PASSIVE,
       ChicFeeTable::Classification::ETF);
@@ -259,7 +259,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("etf_hidden_active") {
     auto table = ChicFeeTable();
     table.m_etfs.insert(TST);
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_ACTIVE,
       ChicFeeTable::Classification::ETF);
@@ -270,7 +270,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("subdollar_etf_active") {
     auto table = ChicFeeTable();
     table.m_etfs.insert(TST);
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(20 * Money::CENT);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
@@ -281,7 +281,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("subdime_etf_active") {
     auto table = ChicFeeTable();
     table.m_etfs.insert(TST);
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::CENT);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDIME);
@@ -291,7 +291,7 @@ TEST_SUITE("ChicFeeHandling") {
 
   TEST_CASE("unknown_liquidity_flag") {
     auto table = ChicFeeTable();
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::ONE);
     {
       auto report = ExecutionReport(0, second_clock::universal_time());
@@ -330,7 +330,7 @@ TEST_SUITE("ChicFeeHandling") {
 
   TEST_CASE("empty_liquidity_flag") {
     auto table = ChicFeeTable();
-    populate_fee_table(out(table.m_security_table));
+    populate_fee_table(out(table.m_ticker_table));
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::NON_INTERLISTED);

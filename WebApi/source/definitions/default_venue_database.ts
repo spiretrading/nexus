@@ -91,7 +91,7 @@ export function buildDefaultVenueDatabase(): VenueDatabase {
 
 export const defaultVenueDatabase = buildDefaultVenueDatabase();
 
-export namespace DefaultMarkets {
+export namespace DefaultVenues {
   export const ASX = new Venue('XASX');
   export const CXA = new Venue('CHIA');
   export const ASEX = new Venue('XASE');

@@ -5,6 +5,7 @@
 #include "Nexus/Compliance/ComplianceCheckOrderExecutionDriver.hpp"
 #include "Nexus/ComplianceTests/TestComplianceClient.hpp"
 #include "Nexus/ComplianceTests/TestComplianceRule.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionServiceTests/TestOrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
@@ -66,9 +67,9 @@ TEST_SUITE("ComplianceCheckOrderExecutionDriver") {
   TEST_CASE("submit") {
     auto fixture = Fixture();
     auto schema = ComplianceRuleSchema("test_rule", {});
-    auto security = Security("TST", TSX);
+    auto ticker = parse_ticker("TST.TSX");
     auto info = OrderInfo(make_limit_order_fields(
-      fixture.m_account, security, CAD, Side::BID, "TSX", 100, Money::ONE), 123,
+      fixture.m_account, ticker, CAD, Side::BID, "TSX", 100, Money::ONE), 123,
       time_from_string("2025-03-22 15:12:22:00"));
     auto async_order = std::async(std::launch::async, [&] {
       return fixture.m_compliance_driver->submit(info);

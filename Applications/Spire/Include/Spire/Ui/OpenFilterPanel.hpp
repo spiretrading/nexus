@@ -6,7 +6,7 @@
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/Layouts.hpp"
-#include "Spire/Ui/RegionBox.hpp"
+#include "Spire/Ui/ScopeBox.hpp"
 #include "Spire/Ui/TagComboBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -47,23 +47,23 @@ namespace Details {
   };
 
   template<>
-  struct TagComboBoxTraits<RegionBox> {
-    using SubmissionType = Nexus::Region;
+  struct TagComboBoxTraits<ScopeBox> {
+    using SubmissionType = Nexus::Scope;
 
-    static bool is_empty(RegionBox& combo_box) {
+    static bool is_empty(ScopeBox& combo_box) {
       return combo_box.get_current()->get().is_empty();
     }
 
-    static void clear(RegionBox& combo_box) {
-      combo_box.get_current()->set(Nexus::Region());
+    static void clear(ScopeBox& combo_box) {
+      combo_box.get_current()->set(Nexus::Scope());
     }
 
-    static SubmissionType get_current(RegionBox& combo_box) {
+    static SubmissionType get_current(ScopeBox& combo_box) {
       return combo_box.get_current()->get();
     }
 
     static boost::signals2::connection connect_current(
-        RegionBox& combo_box, const std::function<void()>& slot) {
+        ScopeBox& combo_box, const std::function<void()>& slot) {
       return combo_box.get_current()->connect_update_signal([=] (const auto&) {
         slot();
       });
@@ -304,7 +304,7 @@ namespace Details {
     submit();
   }
 
-  using RegionFilterPanel = OpenFilterPanel<RegionBox>;
+  using ScopeFilterPanel = OpenFilterPanel<ScopeBox>;
 }
 
 #endif

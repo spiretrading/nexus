@@ -4,6 +4,7 @@
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
@@ -20,8 +21,8 @@ using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
-  auto S32 = Security("S32", ASX);
-  auto XIU = Security("XIU", TSX);
+  auto S32 = parse_ticker("S32.ASX");
+  auto XIU = parse_ticker("XIU.TSX");
 
   struct Fixture {
     ServiceLocatorTestEnvironment m_service_locator_environment;
@@ -84,20 +85,20 @@ namespace {
       m_order_execution_environment.get_driver().as<MockOrderExecutionDriver>().
         get_publisher().monitor(m_order_submissions);
       m_market_data_environment.get_feed_client().publish(
-        SecurityBboQuote(BboQuote(make_bid(parse_money("1.00"), 100),
+        TickerBboQuote(BboQuote(make_bid(parse_money("1.00"), 100),
           make_ask(parse_money("1.01"), 100), m_time_client.get_time()), S32));
     }
   };
 }
 
 TEST_SUITE("RiskController") {
-  TEST_CASE("single_security_no_position") {
+  TEST_CASE("single_ticker_no_position") {
     auto fixture = Fixture();
     auto controller = RiskController(fixture.m_trader_account,
       *fixture.m_administration_client, *fixture.m_market_data_client,
       *fixture.m_service_order_execution_client, &fixture.m_timer,
       &fixture.m_time_client, &fixture.m_data_store, fixture.m_exchange_rates,
-      DEFAULT_VENUES, DEFAULT_DESTINATIONS);
+      DEFAULT_DESTINATIONS);
     auto state = std::make_shared<Queue<RiskState>>();
     controller.get_risk_state_publisher().monitor(state);
     REQUIRE(state->pop() == RiskState::Type::ACTIVE);
@@ -109,10 +110,10 @@ TEST_SUITE("RiskController") {
     accept(*received_order);
     fill(*received_order, parse_money("1.01"), 100);
     auto update = portfolio->pop();
-    REQUIRE(update.m_unrealized_security == -Money::ONE);
-    REQUIRE(update.m_unrealized_currency == -Money::ONE);
+    REQUIRE(update.m_unrealized == -Money::ONE);
+    REQUIRE(update.m_currency_unrealized == -Money::ONE);
     fixture.m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(BboQuote(
+      TickerBboQuote(BboQuote(
         make_bid(parse_money("0.99"), 100), make_ask(parse_money("1.00"), 100),
         fixture.m_time_client.get_time()), S32));
     REQUIRE((state->pop().m_type == RiskState::Type::CLOSE_ORDERS));
@@ -123,7 +124,7 @@ TEST_SUITE("RiskController") {
     REQUIRE(state->pop().m_type == RiskState::Type::ACTIVE);
   }
 
-  TEST_CASE("single_security_existing_position") {
+  TEST_CASE("single_ticker_existing_position") {
     auto fixture = Fixture();
     auto snapshot = InventorySnapshot();
     snapshot.m_inventories.push_back(Inventory(Position(S32, AUD,
@@ -133,28 +134,28 @@ TEST_SUITE("RiskController") {
       *fixture.m_administration_client, *fixture.m_market_data_client,
       *fixture.m_service_order_execution_client, &fixture.m_timer,
       &fixture.m_time_client, &fixture.m_data_store, fixture.m_exchange_rates,
-      DEFAULT_VENUES, DEFAULT_DESTINATIONS);
+      DEFAULT_DESTINATIONS);
     auto state = std::make_shared<Queue<RiskState>>();
     controller.get_risk_state_publisher().monitor(state);
     REQUIRE(state->pop() == RiskState::Type::ACTIVE);
     auto portfolio = std::make_shared<Queue<PortfolioUpdateEntry>>();
     controller.get_portfolio_publisher().monitor(portfolio);
     auto update = portfolio->pop();
-    REQUIRE(update.m_security_inventory.m_position.m_security == S32);
-    REQUIRE(update.m_security_inventory.m_position.m_currency == AUD);
-    REQUIRE(update.m_unrealized_security == 2 * Money::ONE);
-    REQUIRE(update.m_unrealized_currency == 2 * Money::ONE);
-    REQUIRE(update.m_security_inventory.m_position.m_quantity == 200);
+    REQUIRE(update.m_inventory.m_position.m_ticker == S32);
+    REQUIRE(update.m_inventory.m_position.m_currency == AUD);
+    REQUIRE(update.m_unrealized == 2 * Money::ONE);
+    REQUIRE(update.m_currency_unrealized == 2 * Money::ONE);
+    REQUIRE(update.m_inventory.m_position.m_quantity == 200);
     auto order = fixture.m_trader_order_execution_client->submit(
       make_market_order_fields(S32, Side::BID, 100));
     auto received_order = fixture.m_order_submissions->pop();
     accept(*received_order);
     fill(*received_order, parse_money("0.99"), 100);
     update = portfolio->pop();
-    REQUIRE(update.m_security_inventory.m_position.m_security == S32);
-    REQUIRE(update.m_security_inventory.m_position.m_quantity == 300);
+    REQUIRE(update.m_inventory.m_position.m_ticker == S32);
+    REQUIRE(update.m_inventory.m_position.m_quantity == 300);
     fixture.m_market_data_environment.get_feed_client().publish(
-      SecurityBboQuote(BboQuote(
+      TickerBboQuote(BboQuote(
         make_bid(parse_money("0.98"), 100), make_ask(parse_money("0.99"), 100),
         fixture.m_time_client.get_time()), S32));
     REQUIRE(state->pop().m_type == RiskState::Type::CLOSE_ORDERS);

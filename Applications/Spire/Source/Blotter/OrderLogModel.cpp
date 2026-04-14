@@ -87,8 +87,8 @@ QVariant OrderLogModel::data(const QModelIndex& index, int role) const {
       return entry.m_order->get_info().m_id;
     } else if(index.column() == STATUS_COLUMN) {
       return QVariant::fromValue(entry.m_status);
-    } else if(index.column() == SECURITY_COLUMN) {
-      return QVariant::fromValue(fields.m_security);
+    } else if(index.column() == TICKER_COLUMN) {
+      return QVariant::fromValue(fields.m_ticker);
     } else if(index.column() == CURRENCY_COLUMN) {
       return QVariant::fromValue(fields.m_currency);
     } else if(index.column() == ORDER_TYPE_COLUMN) {
@@ -124,7 +124,7 @@ QVariant OrderLogModel::headerData(int section, Qt::Orientation orientation,
       return tr("ID");
     } else if(section == STATUS_COLUMN) {
       return tr("Status");
-    } else if(section == SECURITY_COLUMN) {
+    } else if(section == TICKER_COLUMN) {
       return tr("Symbol");
     } else if(section == CURRENCY_COLUMN) {
       return tr("Currency");

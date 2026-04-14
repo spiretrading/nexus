@@ -9,21 +9,21 @@ import yaml
 def report_positions(service_clients, account, venues, currencies, writer):
   snapshot = service_clients.risk_client.load_inventory_snapshot(account)
   portfolio, sequence, excluded_orders = nexus.make_portfolio(
-    snapshot, account, venues, service_clients.order_execution_client)
+    snapshot, account, service_clients.order_execution_client)
   for order in excluded_orders:
     execution_reports = order.publisher.get_snapshot()
     if execution_reports is not None:
       for execution_report in execution_reports:
         portfolio.update(order.info.fields, execution_report)
-  for security in portfolio.security_entries:
-    currency = venues.select(security.venue).currency
-    inventory = portfolio.bookkeeper.get_inventory(security, currency)
+  for ticker in portfolio.entries:
+    currency = venues.select(ticker.venue).currency
+    inventory = portfolio.bookkeeper.get_inventory(ticker, currency)
     position = inventory.position
     if nexus.side(position) == nexus.Side.BID:
       side_code = 'Long'
     else:
       side_code = 'Short'
-    writer.writerow([account.name, str(security),
+    writer.writerow([account.name, str(ticker),
       currencies.from_id(currency).code, side_code, position.quantity,
       position.cost_basis])
 
@@ -62,7 +62,7 @@ def main():
   password = section['password']
   service_clients = nexus.ServiceClients(username, password, address)
   csv_writer = csv.writer(sys.stdout, quoting=csv.QUOTE_NONNUMERIC)
-  csv_writer.writerow(["Account", "Security", "Currency", "Side",
+  csv_writer.writerow(["Account", "Ticker", "Currency", "Side",
     "Open Quantity", "Cost Basis"])
   venues = service_clients.definitions_client.load_venue_database()
   currencies = service_clients.definitions_client.load_currency_database()

@@ -77,7 +77,7 @@ void ReportingWebServlet::generate_reports(
     auto venues = clients.get_definitions_client().load_venue_database();
     auto time_zones =
       clients.get_definitions_client().load_time_zone_database();
-    auto portfolio = Portfolio(TrueAverageBookkeeper(), venues);
+    auto portfolio = Portfolio(TrueAverageBookkeeper());
     for(auto day = request.m_start; day <= request.m_end; day += days(1)) {
       if(request.m_is_cancelled->load()) {
         break;
@@ -122,13 +122,13 @@ void ReportingWebServlet::generate_reports(
         if(is_empty(inventory)) {
           continue;
         }
-        auto security_entry = SecurityReportEntry();
-        security_entry.m_security = inventory.m_position.m_security;
-        security_entry.m_volume = inventory.m_volume;
-        security_entry.m_fees = inventory.m_fees;
-        security_entry.m_profit_and_loss =
+        auto ticker_entry = TickerReportEntry();
+        ticker_entry.m_ticker = inventory.m_position.m_ticker;
+        ticker_entry.m_volume = inventory.m_volume;
+        ticker_entry.m_fees = inventory.m_fees;
+        ticker_entry.m_profit_and_loss =
           inventory.m_gross_profit_and_loss - inventory.m_fees;
-        currency_entry.m_securities.push_back(std::move(security_entry));
+        currency_entry.m_tickers.push_back(std::move(ticker_entry));
       }
       if(auto rate = exchange_rates.find(
           CurrencyPair(total.m_position.m_currency, account_currency))) {

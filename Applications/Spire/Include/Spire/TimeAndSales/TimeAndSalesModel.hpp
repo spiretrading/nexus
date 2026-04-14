@@ -1,6 +1,6 @@
 #ifndef SPIRE_TIME_AND_SALES_MODEL_HPP
 #define SPIRE_TIME_AND_SALES_MODEL_HPP
-#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Spire/Async/QtPromise.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/BboIndicator.hpp"

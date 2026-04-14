@@ -11,10 +11,10 @@
 #include "Spire/Canvas/Types/OrderStatusType.hpp"
 #include "Spire/Canvas/Types/OrderTypeType.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
-#include "Spire/Canvas/Types/SecurityType.hpp"
 #include "Spire/Canvas/Types/SequenceType.hpp"
 #include "Spire/Canvas/Types/SideType.hpp"
 #include "Spire/Canvas/Types/TextType.hpp"
+#include "Spire/Canvas/Types/TickerType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
 #include "Spire/Canvas/Types/UnionType.hpp"
@@ -76,10 +76,6 @@ void CanvasTypeVisitor::Visit(const RecordType& type) {
   Visit(static_cast<const NativeType&>(type));
 }
 
-void CanvasTypeVisitor::Visit(const SecurityType& type) {
-  Visit(static_cast<const NativeType&>(type));
-}
-
 void CanvasTypeVisitor::Visit(const SequenceType& type) {
   Visit(static_cast<const NativeType&>(type));
 }
@@ -89,6 +85,10 @@ void CanvasTypeVisitor::Visit(const SideType& type) {
 }
 
 void CanvasTypeVisitor::Visit(const TextType& type) {
+  Visit(static_cast<const NativeType&>(type));
+}
+
+void CanvasTypeVisitor::Visit(const TickerType& type) {
   Visit(static_cast<const NativeType&>(type));
 }
 

@@ -27,7 +27,7 @@ ValueListInputWidget::ValueListInputWidget(QWidget* parent,
     Qt::WindowFlags flags)
     : QWidget{parent, flags},
       m_userProfile{nullptr},
-      m_type{&typeid(Security)},
+      m_type{&typeid(Ticker)},
       m_isReadOnly{false} {
   auto layout = new QVBoxLayout{this};
   layout->setContentsMargins(0, 0, 0, 0);

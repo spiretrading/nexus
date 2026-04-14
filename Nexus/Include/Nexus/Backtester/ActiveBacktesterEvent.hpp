@@ -18,7 +18,6 @@ namespace Nexus {
       ActiveBacktesterEvent(boost::posix_time::ptime timestamp) noexcept;
 
       bool is_passive() const final override;
-
       void execute() override;
   };
 

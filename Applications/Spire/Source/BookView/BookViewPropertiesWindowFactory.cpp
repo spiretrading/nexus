@@ -11,7 +11,7 @@ BookViewPropertiesWindowFactory::BookViewPropertiesWindowFactory()
 BookViewPropertiesWindowFactory::BookViewPropertiesWindowFactory(
   std::shared_ptr<BookViewPropertiesModel> properties)
   : m_properties(std::move(properties)),
-    m_security(std::make_shared<LocalSecurityModel>()) {}
+    m_ticker(std::make_shared<LocalTickerModel>()) {}
 
 const std::shared_ptr<BookViewPropertiesModel>&
     BookViewPropertiesWindowFactory::get_properties() const {
@@ -19,12 +19,12 @@ const std::shared_ptr<BookViewPropertiesModel>&
 }
 
 BookViewPropertiesWindow* BookViewPropertiesWindowFactory::make(
-    std::shared_ptr<KeyBindingsModel> key_bindings, const Security& security) {
-  m_security->set(security);
+    std::shared_ptr<KeyBindingsModel> key_bindings, const Ticker& ticker) {
+  m_ticker->set(ticker);
   if(m_properties_window) {
     return m_properties_window.get();
   }
   m_properties_window = std::make_unique<BookViewPropertiesWindow>(
-    m_properties, key_bindings, m_security);
+    m_properties, key_bindings, m_ticker);
   return m_properties_window.get();
 }

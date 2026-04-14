@@ -25,8 +25,8 @@ namespace Spire {
         /** The side. */
         SIDE_COLUMN,
 
-        /** The Security acted upon. */
-        SECURITY_COLUMN,
+        /** The Ticker acted upon. */
+        TICKER_COLUMN,
 
         /** The Order status. */
         STATUS_COLUMN,

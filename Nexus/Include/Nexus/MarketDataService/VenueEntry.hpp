@@ -3,8 +3,8 @@
 #include <Beam/Queries/Sequencer.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/MarketDataService/HistoricalDataStore.hpp"
-#include "Nexus/MarketDataService/SecuritySnapshot.hpp"
-#include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerSnapshot.hpp"
+#include "Nexus/MarketDataService/VenueQuery.hpp"
 
 namespace Nexus {
 
@@ -54,7 +54,7 @@ namespace Nexus {
    */
   VenueEntry::InitialSequences load_initial_sequences(
       IsHistoricalDataStore auto& data_store, Venue venue) {
-    auto query = VenueMarketDataQuery();
+    auto query = VenueQuery();
     query.set_index(venue);
     query.set_range(Beam::Range::TOTAL);
     query.set_snapshot_limit(Beam::SnapshotLimit::Type::TAIL, 1);

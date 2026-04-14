@@ -8,23 +8,23 @@
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderImbalance.hpp"
-#include "Nexus/Definitions/SecurityInfo.hpp"
+#include "Nexus/Definitions/TickerInfo.hpp"
 #include "Nexus/Queries/OrderFieldsAccessor.hpp"
 #include "Nexus/Queries/OrderInfoAccessor.hpp"
-#include "Nexus/Queries/SecurityAccessor.hpp"
+#include "Nexus/Queries/TickerAccessor.hpp"
 #include "Nexus/Queries/TimeAndSaleAccessor.hpp"
 
 namespace Nexus {
   using QueryVariant = boost::variant<bool, char, int, double, std::uint64_t,
     std::string, boost::posix_time::ptime, boost::posix_time::time_duration,
-    Quantity, Money, Security, SecurityInfo, OrderImbalance, BboQuote,
-    BookQuote, TimeAndSale, OrderFields, OrderInfo>;
+    Quantity, Money, Ticker, TickerInfo, OrderImbalance, BboQuote, BookQuote,
+    TimeAndSale, OrderFields, OrderInfo>;
   using SequencedQueryVariant = Beam::SequencedValue<QueryVariant>;
 
   struct QueryTypes {
-    using ExtendedNativeTypes = boost::mp11::mp_list<Quantity, Money, Security,
-      SecurityInfo, OrderImbalance, BboQuote, BookQuote, TimeAndSale,
-      OrderFields, OrderInfo>;
+    using ExtendedNativeTypes = boost::mp11::mp_list<Quantity, Money, Ticker,
+      TickerInfo, OrderImbalance, BboQuote, BookQuote, TimeAndSale, OrderFields,
+      OrderInfo>;
     using NativeTypes = boost::mp11::mp_append<
       Beam::QueryTypes::NativeTypes, ExtendedNativeTypes>;
     using ExtendedValueTypes = boost::mp11::mp_list<Quantity, Money>;

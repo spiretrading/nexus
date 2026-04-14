@@ -15,14 +15,14 @@ class TestPeggedOrder(unittest.TestCase):
   # Reject the order submission.
   # Expect the PeggedOrder to terminate.
   def test_rejection(self):
-    security = nexus.parse_security('ABX.TSX')
+    ticker = nexus.parse_ticker('ABX.TSX')
     order_fields = nexus.make_limit_order_fields(
-      security, nexus.Side.BID, 1000, nexus.Money.ZERO)
+      ticker, nexus.Side.BID, 1000, nexus.Money.ZERO)
     order = pegged_order.PeggedOrder(
       self.clients, order_fields, nexus.Money.CENT)
     order.start()
     self.environment.update_bbo_price(
-      security, nexus.Money.parse('1.00'), nexus.Money.parse('1.01'))
+      ticker, nexus.Money.parse('1.00'), nexus.Money.parse('1.01'))
     submission_queue = beam.Queue()
     self.environment.monitor_order_submissions(submission_queue)
     expected_order = submission_queue.pop()
@@ -45,14 +45,14 @@ class TestPeggedOrder(unittest.TestCase):
   # Fill the order submission for 1000 shares.
   # Expect the PeggedOrder to terminate.
   def test_price_retreat(self):
-    security = nexus.parse_security('ABX.TSX')
+    ticker = nexus.parse_ticker('ABX.TSX')
     order_fields = nexus.make_limit_order_fields(
-      security, nexus.Side.ASK, 1000, nexus.Money.ZERO)
+      ticker, nexus.Side.ASK, 1000, nexus.Money.ZERO)
     order = pegged_order.PeggedOrder(
       self.clients, order_fields, nexus.Money.CENT)
     order.start()
     self.environment.update_bbo_price(
-      security, nexus.Money.parse('1.00'), nexus.Money.parse('1.01'))
+      ticker, nexus.Money.parse('1.00'), nexus.Money.parse('1.01'))
     submission_queue = beam.Queue()
     self.environment.monitor_order_submissions(submission_queue)
     expected_order = submission_queue.pop()
@@ -61,7 +61,7 @@ class TestPeggedOrder(unittest.TestCase):
     self.assertEqual(expected_order.info.fields.quantity, 1000)
     self.environment.accept(expected_order)
     self.environment.update_bbo_price(
-      security, nexus.Money.parse('0.90'), nexus.Money.parse('0.91'))
+      ticker, nexus.Money.parse('0.90'), nexus.Money.parse('0.91'))
     self.assertTrue(nexus.tests.is_pending_cancel(expected_order))
     self.environment.cancel(expected_order)
     expected_order = submission_queue.pop()

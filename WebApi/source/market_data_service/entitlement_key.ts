@@ -12,9 +12,9 @@ export class EntitlementKey {
 
   /**
    * Constructs an EntitlementKey.
-   * @param venue - The venue the security belongs to.
-   * @param source - The venue disseminating the data, the default value is
-   *        the venue.
+   * @param venue - The venue the ticker belongs to.
+   * @param source - The venue disseminating the data, the default value is the
+   *        venue.
    */
   constructor(venue: Venue, source?: Venue) {
     this._venue = venue;
@@ -25,7 +25,7 @@ export class EntitlementKey {
     }
   }
 
-  /** Returns the venue the security belongs to. */
+  /** Returns the venue the ticker belongs to. */
   public get venue(): Venue {
     return this._venue;
   }

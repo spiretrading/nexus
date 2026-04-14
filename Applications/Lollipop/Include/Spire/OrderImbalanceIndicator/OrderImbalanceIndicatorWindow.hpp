@@ -12,7 +12,7 @@ class Ui_OrderImbalanceIndicatorWindow;
 
 namespace Spire {
 
-  /** Displays Market OrderImbalances. */
+  /** Displays Venue OrderImbalances. */
   class OrderImbalanceIndicatorWindow :
       public QFrame, public UI::PersistentWindow {
     public:

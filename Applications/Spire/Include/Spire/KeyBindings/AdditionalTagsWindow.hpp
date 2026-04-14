@@ -18,13 +18,13 @@ namespace Spire {
        * @param current The list of additional tags to represent.
        * @param additional_tags The definitions of all additional tags.
        * @param destination The destination to constrain the available tags to.
-       * @param region The region to constrain the available tags to.
+       * @param scope The scope to constrain the available tags to.
        * @param parent The parent widget.
        */
       AdditionalTagsWindow(std::shared_ptr<AdditionalTagsModel> current,
         AdditionalTagDatabase additional_tags,
         std::shared_ptr<DestinationModel> destination,
-        std::shared_ptr<RegionModel> region, QWidget* parent = nullptr);
+        std::shared_ptr<ScopeModel> scope, QWidget* parent = nullptr);
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;
@@ -33,7 +33,7 @@ namespace Spire {
       std::shared_ptr<AdditionalTagsModel> m_current;
       AdditionalTagDatabase m_additional_tags;
       std::shared_ptr<DestinationModel> m_destination;
-      std::shared_ptr<RegionModel> m_region;
+      std::shared_ptr<ScopeModel> m_scope;
       std::shared_ptr<TableModel> m_tags;
       std::shared_ptr<TextModel> m_error_message;
 

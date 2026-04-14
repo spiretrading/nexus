@@ -141,6 +141,20 @@ export class Quantity {
     return whole.toString() + '.' + fractionalString;
   }
 
+  /** Returns a locale-formatted string representation. */
+  public toLocaleString(
+      locales?: string, options?: Intl.NumberFormatOptions): string {
+    var value = Math.round(Math.abs(this._value)) / Quantity.MULTIPLIER;
+    if(this._value < 0) {
+      value = -value;
+    }
+    return value.toLocaleString(locales, {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: Quantity.DECIMAL_PLACES,
+      ...options
+    });
+  }
+
   /** Converts this value to JSON. */
   public toJson(): any {
     return this._value;

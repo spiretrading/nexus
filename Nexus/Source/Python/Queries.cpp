@@ -2,9 +2,9 @@
 #include <Beam/Python/Beam.hpp>
 #include "Nexus/Queries/OrderFieldsAccessor.hpp"
 #include "Nexus/Queries/OrderInfoAccessor.hpp"
-#include "Nexus/Queries/SecurityAccessor.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 #include "Nexus/Queries/StandardValues.hpp"
+#include "Nexus/Queries/TickerAccessor.hpp"
 #include "Nexus/Queries/TimeAndSaleAccessor.hpp"
 
 using namespace Beam;
@@ -17,7 +17,7 @@ void Nexus::Python::export_order_fields_accessor(module& module) {
     def(init<Expression>()).
     def_static("from_parameter", &OrderFieldsAccessor::from_parameter).
     def_property_readonly("account", &OrderFieldsAccessor::get_account).
-    def_property_readonly("security", &OrderFieldsAccessor::get_security).
+    def_property_readonly("ticker", &OrderFieldsAccessor::get_ticker).
     def_property_readonly("currency", &OrderFieldsAccessor::get_currency).
     def_property_readonly("type", &OrderFieldsAccessor::get_type).
     def_property_readonly("side", &OrderFieldsAccessor::get_side).
@@ -45,26 +45,26 @@ void Nexus::Python::export_order_info_accessor(module& module) {
 void Nexus::Python::export_queries(module& module) {
   export_order_fields_accessor(module);
   export_order_info_accessor(module);
-  export_security_accessor(module);
+  export_ticker_accessor(module);
   export_time_and_sale_accessor(module);
-  export_indexed_query<Security>(module, "SecurityIndexedQuery");
-  export_basic_query<Security>(module, "SecurityQuery");
+  export_indexed_query<Ticker>(module, "TickerIndexedQuery");
+  export_basic_query<Ticker>(module, "TickerQuery");
   export_indexed_query<Venue>(module, "VenueIndexedQuery");
   export_basic_query<Venue>(module, "VenueQuery");
   export_queue_suite<Nexus::QueryVariant>(module, "QueryVariant");
   export_queue_suite<Quantity>(module, "Quantity");
   export_queue_suite<Money>(module, "Money");
-  export_queue_suite<Security>(module, "Security");
+  export_queue_suite<Ticker>(module, "Ticker");
   export_queue_suite<Venue>(module, "Venue");
-  export_queue_suite<SecurityInfo>(module, "SecurityInfo");
+  export_queue_suite<TickerInfo>(module, "TickerInfo");
 }
 
-void Nexus::Python::export_security_accessor(module& module) {
-  class_<SecurityAccessor>(module, "SecurityAccessor").
+void Nexus::Python::export_ticker_accessor(module& module) {
+  class_<TickerAccessor>(module, "TickerAccessor").
     def(init<Expression>()).
-    def_static("from_parameter", &SecurityAccessor::from_parameter).
-    def_property_readonly("symbol", &SecurityAccessor::get_symbol).
-    def_property_readonly("venue", &SecurityAccessor::get_venue);
+    def_static("from_parameter", &TickerAccessor::from_parameter).
+    def_property_readonly("symbol", &TickerAccessor::get_symbol).
+    def_property_readonly("venue", &TickerAccessor::get_venue);
 }
 
 void Nexus::Python::export_time_and_sale_accessor(module& module) {
@@ -83,8 +83,8 @@ void Nexus::Python::export_time_and_sale_accessor(module& module) {
 void Nexus::Python::export_value(module& module) {
   export_native_value<QuantityValue>(module, "QuantityValue");
   export_native_value<MoneyValue>(module, "MoneyValue");
-  export_native_value<SecurityValue>(module, "SecurityValue");
-  export_native_value<SecurityInfoValue>(module, "SecurityInfoValue");
+  export_native_value<TickerValue>(module, "TickerValue");
+  export_native_value<TickerInfoValue>(module, "TickerInfoValue");
   export_native_value<OrderImbalanceValue>(module, "OrderImbalanceValue");
   export_native_value<BboQuoteValue>(module, "BboQuoteValue");
   export_native_value<BookQuoteValue>(module, "BookQuoteValue");

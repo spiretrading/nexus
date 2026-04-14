@@ -11,8 +11,8 @@
 #include "Nexus/Parsers/MoneyParser.hpp"
 #include "Nexus/Parsers/OrderStatusParser.hpp"
 #include "Nexus/Parsers/OrderTypeParser.hpp"
-#include "Nexus/Parsers/SecurityParser.hpp"
 #include "Nexus/Parsers/SideParser.hpp"
+#include "Nexus/Parsers/TickerParser.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/Canvas/Records/RecordParser.hpp"
 
@@ -86,8 +86,8 @@ namespace Spire {
   };
 
   template<>
-  struct ParserType<Nexus::Security> {
-    typedef Nexus::SecurityParser type;
+  struct ParserType<Nexus::Ticker> {
+    typedef Nexus::TickerParser type;
   };
 
   template<>

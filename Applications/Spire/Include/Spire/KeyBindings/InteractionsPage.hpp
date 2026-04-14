@@ -4,10 +4,10 @@
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Ui/RegionDropDownBox.hpp"
+#include "Spire/Ui/ScopeDropDownBox.hpp"
 
 namespace Spire {
-  class AddRegionForm;
+  class AddScopeForm;
   class Button;
   class InteractionsKeyBindingsForm;
   class ScrollableListBox;
@@ -29,20 +29,20 @@ namespace Spire {
 
     private:
       std::shared_ptr<KeyBindingsModel> m_key_bindings;
-      std::shared_ptr<ArrayListModel<Nexus::Region>> m_regions;
-      std::shared_ptr<ListModel<Nexus::Region>> m_available_regions;
-      std::shared_ptr<RegionModel> m_current_region;
+      std::shared_ptr<ArrayListModel<Nexus::Scope>> m_scopes;
+      std::shared_ptr<ListModel<Nexus::Scope>> m_available_scopes;
+      std::shared_ptr<ScopeModel> m_current_scope;
       InteractionsKeyBindingsForm* m_interactions_form;
       ScrollableListBox* m_list_box;
-      Button* m_add_region_button;
-      AddRegionForm* m_add_region_form;
+      Button* m_add_scope_button;
+      AddScopeForm* m_add_scope_form;
 
-      QWidget* make_region_list_item(
-        const std::shared_ptr<RegionListModel>& list, int index);
-      void on_add_region_click();
+      QWidget* make_scope_list_item(
+        const std::shared_ptr<ScopeListModel>& list, int index);
+      void on_add_scope_click();
       void on_current_index(const boost::optional<int>& current);
-      void on_add_region(const Nexus::Region& region);
-      void on_delete_region(const Nexus::Region& region);
+      void on_add_scope(const Nexus::Scope& scope);
+      void on_delete_scope(const Nexus::Scope& scope);
   };
 }
 

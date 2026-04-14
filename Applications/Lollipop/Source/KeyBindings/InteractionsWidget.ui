@@ -17,16 +17,16 @@
    <item>
     <layout class="QHBoxLayout" name="m_topLayout">
      <item>
-      <layout class="QVBoxLayout" name="m_regionLayout">
+      <layout class="QVBoxLayout" name="m_scopeLayout">
        <item>
-        <widget class="QLabel" name="m_regionLabel">
+        <widget class="QLabel" name="m_scopeLabel">
          <property name="text">
-          <string>Region</string>
+          <string>Scope</string>
          </property>
         </widget>
        </item>
        <item>
-        <widget class="QComboBox" name="m_regionComboBox"/>
+        <widget class="QComboBox" name="m_scopeComboBox"/>
        </item>
       </layout>
      </item>
@@ -64,14 +64,14 @@
    <item>
     <layout class="QHBoxLayout" name="m_resetLayout">
      <item>
-      <widget class="QPushButton" name="m_activateRegionButton">
+      <widget class="QPushButton" name="m_activateScopeButton">
        <property name="text">
         <string>Activate</string>
        </property>
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="m_resetRegionButton">
+      <widget class="QPushButton" name="m_resetScopeButton">
        <property name="text">
         <string>Reset</string>
        </property>

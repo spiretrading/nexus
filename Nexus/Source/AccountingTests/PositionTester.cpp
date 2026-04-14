@@ -2,7 +2,7 @@
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/Position.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
@@ -12,7 +12,7 @@ using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultVenues;
 
 namespace {
-  auto TST = Security("TST", TSX);
+  auto TST = parse_ticker("TST.TSX");
 }
 
 TEST_SUITE("Position") {

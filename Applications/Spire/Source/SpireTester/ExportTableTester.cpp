@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 #include <Beam/TimeService/ToLocalTime.hpp>
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
 #include "Spire/Spire/ExportTable.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -35,27 +36,27 @@ TEST_SUITE("ExportTable") {
       ts3, ts3.substr(0, 10), ts3.substr(11));
     auto table = ArrayTableModel();
     auto venue = Venue("XNYS");
-    auto security = parse_security("MRU.TSX");
+    auto ticker = parse_ticker("MRU.TSX");
     auto country = DefaultCountries::CA;
     auto condition =
       TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@");
     table.push({time1, date1, time_duration1, 100, 1234.56, Money(1000.55),
-      Quantity(1000.32), venue, security, country, condition});
+      Quantity(1000.32), venue, ticker, country, condition});
     table.push({time2, date2, time_duration2, 1000, 0.21, Money(20),
-      Quantity(10.5), venue, security, country, condition});
+      Quantity(10.5), venue, ticker, country, condition});
     table.push({time3, date3, time_duration3, 10000, 1000, Money(30.12),
-      Quantity(4000), venue, security, country, condition});
+      Quantity(4000), venue, ticker, country, condition});
     auto out = std::stringstream();
     export_as_csv(table, {}, out);
     REQUIRE(out.str() == result);
     result = std::format(
       "\"Time\",\"Date\",\"Duration\",\"Int\",\"Double\",\"Price\","
-      "\"Quantity\",\"Venue\",\"Security\",\"Country\",\"Condition\"\n") +
+      "\"Quantity\",\"Venue\",\"Ticker\",\"Country\",\"Condition\"\n") +
       result;
     out.str("");
     auto headers = std::vector<QString>{
       "Time", "Date", "Duration", "Int", "Double", "Price", "Quantity", "Venue",
-      "Security", "Country", "Condition"};
+      "Ticker", "Country", "Condition"};
     export_as_csv(table, headers, out);
     REQUIRE(out.str() == result);
   }

@@ -10,7 +10,7 @@
 
 namespace Nexus {
 
-  /** Stores a Quote booked by an MPID for a particular market. */
+  /** Stores a Quote booked by an MPID for a particular venue. */
   struct BookQuote {
 
     /** The quote's MPID. */

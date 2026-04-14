@@ -98,25 +98,25 @@ void DashboardWindow::keyPressEvent(QKeyEvent* event) {
     QApplication::sendEvent(m_ui->m_dashboard, event);
     return;
   }
-  auto security = GetActiveSecurity();
-  if(!security.is_initialized()) {
+  auto ticker = GetActiveTicker();
+  if(!ticker.is_initialized()) {
     return QWidget::keyPressEvent(event);
   }
   auto bboQuote = [&] {
-    auto bboQuoteIterator = m_bboQuotes.find(*security);
+    auto bboQuoteIterator = m_bboQuotes.find(*ticker);
     if(bboQuoteIterator == m_bboQuotes.end()) {
       return BboQuote();
     }
     return bboQuoteIterator->second.m_bboQuote->peek();
   }();
-  if(m_orderTaskView->HandleKeyPressEvent(*event, *security,
+  if(m_orderTaskView->HandleKeyPressEvent(*event, *ticker,
       bboQuote.m_ask.m_price, bboQuote.m_bid.m_price)) {
     return;
   }
   QWidget::keyPressEvent(event);
 }
 
-boost::optional<Security> DashboardWindow::GetActiveSecurity() const {
+boost::optional<Ticker> DashboardWindow::GetActiveTicker() const {
   auto activeRow = m_ui->m_dashboard->GetSelectionModel().GetActiveRow();
   if(!activeRow.is_initialized()) {
     return none;
@@ -129,11 +129,11 @@ boost::optional<Security> DashboardWindow::GetActiveSecurity() const {
   if(values.empty()) {
     return none;
   }
-  auto security = boost::get<Security>(&values.back());
-  if(security == nullptr) {
+  auto ticker = boost::get<Ticker>(&values.back());
+  if(ticker == nullptr) {
     return none;
   }
-  return *security;
+  return *ticker;
 }
 
 void DashboardWindow::Save() {
@@ -180,15 +180,15 @@ void DashboardWindow::OnRowAdded(const DashboardRow& row) {
   if(values.empty()) {
     return;
   }
-  auto security = boost::get<Security>(&values.back());
-  if(security == nullptr) {
+  auto ticker = boost::get<Ticker>(&values.back());
+  if(ticker == nullptr) {
     return;
   }
-  auto& bboQuoteEntry = get_or_insert(m_bboQuotes, *security);
+  auto& bboQuoteEntry = get_or_insert(m_bboQuotes, *ticker);
   if(bboQuoteEntry.m_counter == 0) {
     bboQuoteEntry.m_bboQuote = std::make_shared<StateQueue<BboQuote>>();
     bboQuoteEntry.m_bboQuote->push(BboQuote());
-    auto query = make_current_query(*security);
+    auto query = make_current_query(*ticker);
     m_userProfile->GetClients().get_market_data_client().query(
       query, bboQuoteEntry.m_bboQuote);
   }
@@ -200,11 +200,11 @@ void DashboardWindow::OnRowRemoved(const DashboardRow& row) {
   if(values.empty()) {
     return;
   }
-  auto security = boost::get<Security>(&values.back());
-  if(security == nullptr) {
+  auto ticker = boost::get<Ticker>(&values.back());
+  if(ticker == nullptr) {
     return;
   }
-  auto bboQuoteIterator = m_bboQuotes.find(*security);
+  auto bboQuoteIterator = m_bboQuotes.find(*ticker);
   if(bboQuoteIterator == m_bboQuotes.end()) {
     return;
   }

@@ -12,7 +12,7 @@ namespace Nexus {
   /** Stores the table of fees used by ASX TradeMatch. */
   struct AsxTradeMatchFeeTable {
 
-    /** Used to categorize fees based on the price of the security. */
+    /** Used to categorize fees based on the price of the ticker. */
     enum class PriceClass {
 
       /** Not recognized. */
@@ -125,7 +125,7 @@ namespace Nexus {
   }
 
   /**
-   * Calculates the clearing fee on a trade executed on the ASX market.
+   * Calculates the clearing fee on a trade executed on the ASX venue.
    * @param table The AsxTradeMatchFeeTable used to calculate the fee.
    * @param fields The fields that were submitted.
    * @param report The ExecutionReport to calculate the fee for.
@@ -141,7 +141,7 @@ namespace Nexus {
   }
 
   /**
-   * Calculates the execution fee on a trade executed on the ASX market.
+   * Calculates the execution fee on a trade executed on the ASX venue.
    * @param table The AsxTradeMatchFeeTable used to calculate the fee.
    * @param report The ExecutionReport to calculate the fee for.
    * @return The execution fee for the given trade.

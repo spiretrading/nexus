@@ -19,7 +19,7 @@ def parse_positions(file_path, currencies):
     reader = csv.DictReader(csvfile)
     for row in reader:
       position = nexus.Position()
-      position.security = nexus.parse_security(row['Security'])
+      position.ticker = nexus.parse_ticker(row['Ticker'])
       position.currency = currencies.from_code(row['Currency']).id
       position.quantity = nexus.Quantity.parse(row['Open Quantity'])
       position.cost_basis = nexus.Money.parse(row['Cost Basis'])
@@ -43,7 +43,7 @@ def moe(service_clients, position, destination, mode):
     side = nexus.opposite(side)
   price = abs(nexus.average_price(position.position))
   fields = nexus.make_limit_order_fields(
-    directory_entry, position.position.security, position.position.currency,
+    directory_entry, position.position.ticker, position.position.currency,
     side, destination, abs(position.position.quantity), price)
   service_clients.order_execution_client.submit(fields)
 
@@ -67,7 +67,7 @@ def main():
   parser.add_argument('-c', '--config', type=str, help='Configuration file',
     default='config.yml')
   parser.add_argument('-a', '--account', type=str, help='Account name.')
-  parser.add_argument('-r', '--region', type=str, help='The region to MOE.')
+  parser.add_argument('-r', '--scope', type=str, help='The scope to MOE.')
   parser.add_argument('-p', '--positions', type=str,
     help='Path to positions file', required=True)
   group = parser.add_mutually_exclusive_group(required=True)
@@ -92,24 +92,24 @@ def main():
   service_clients = nexus.ServiceClients(username, password, address)
   countries = service_clients.definitions_client.load_country_database()
   venues = service_clients.definitions_client.load_venue_database()
-  if args.region is None:
-    region = nexus.Region.GLOBAL
+  if args.scope is None:
+    scope = nexus.Scope.GLOBAL
   else:
-    region = nexus.parse_country_code(args.region, countries)
-    if region == nexus.CountryCode.NONE:
-      region = nexus.parse_venue(args.region, venues)
-      if region:
-        region = venues.select(region).venue
+    scope = nexus.parse_country_code(args.scope, countries)
+    if scope == nexus.CountryCode.NONE:
+      scope = nexus.parse_venue(args.scope, venues)
+      if scope:
+        scope = venues.select(scope).venue
       else:
-        region = nexus.parse_security(args.region, venues)
-    region = nexus.Region(region)
+        scope = nexus.parse_ticker(args.scope, venues)
+    scope = nexus.Scope(scope)
   positions = parse_positions(args.positions,
     service_clients.definitions_client.load_currency_database())
   destinations = \
     service_clients.definitions_client.load_destination_database()
   destination = destinations.manual_order_entry_destination.id
   for position in positions:
-    if region.contains(position.position.security):
+    if scope.contains(position.position.ticker):
       if args.account:
         if position.account == args.account:
           moe(service_clients, position, destination, args.mode)

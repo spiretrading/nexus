@@ -595,7 +595,7 @@ namespace Nexus {
         order_fields = revised_fields.get_ptr();
       }
       revised_fields->m_destination = m_destinations.get_preferred_destination(
-        order_fields->m_security.get_venue()).m_id;
+        order_fields->m_ticker.get_venue()).m_id;
     }
     if(!order_fields->m_currency) {
       if(!revised_fields) {
@@ -603,7 +603,7 @@ namespace Nexus {
         order_fields = revised_fields.get_ptr();
       }
       revised_fields->m_currency =
-        m_venues.from(order_fields->m_security.get_venue()).m_currency;
+        m_venues.from(order_fields->m_ticker.get_venue()).m_currency;
     }
     auto order_id = m_uid_client->load_next_uid();
     auto shorting_model =
@@ -620,11 +620,11 @@ namespace Nexus {
           order_info, "Insufficient permissions to execute order.");
         m_rejected_orders.push_back(order);
         return order;
-      } else if(!order_info.m_fields.m_security.get_venue()) {
-        auto order = make_rejected_order(order_info, "Market not specified.");
+      } else if(!order_info.m_fields.m_ticker.get_venue()) {
+        auto order = make_rejected_order(order_info, "Venue not specified.");
         m_rejected_orders.push_back(order);
         return order;
-      } else if(order_info.m_fields.m_security.get_symbol().empty()) {
+      } else if(order_info.m_fields.m_ticker.get_symbol().empty()) {
         auto order =
           make_rejected_order(order_info, "Ticker symbol not specified.");
         m_rejected_orders.push_back(order);

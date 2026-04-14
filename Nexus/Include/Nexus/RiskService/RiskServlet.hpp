@@ -75,7 +75,6 @@ namespace Nexus {
        * @param time_client Initializes the TimeClient.
        * @param data_store Initializes the RiskDataStore.
        * @param exchange_rates The exchange rates.
-       * @param venues The venues used by the portfolio.
        * @param destinations The destinations used to flatten positions.
        */
       template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
@@ -85,7 +84,7 @@ namespace Nexus {
         AF&& administration_client, MF&& market_data_client,
         OF&& order_execution_client,
         TransitionTimerFactory transition_timer_factory, TF&& time_client,
-        DF&& data_store, ExchangeRateTable exchange_rates, VenueDatabase venues,
+        DF&& data_store, ExchangeRateTable exchange_rates,
         DestinationDatabase destinations);
 
       void register_services(
@@ -106,7 +105,6 @@ namespace Nexus {
       Beam::local_ptr_t<T> m_time_client;
       Beam::local_ptr_t<D> m_data_store;
       ExchangeRateTable m_exchange_rates;
-      VenueDatabase m_venues;
       DestinationDatabase m_destinations;
       std::shared_ptr<Beam::SnapshotPublisher<Beam::DirectoryEntry,
         std::vector<Beam::DirectoryEntry>>> m_account_publisher;
@@ -122,13 +120,13 @@ namespace Nexus {
       RiskServlet(const RiskServlet&) = delete;
       RiskServlet& operator =(const RiskServlet&) = delete;
       void make_controller();
-      void reset(const Beam::DirectoryEntry& account, const Region& region);
+      void reset(const Beam::DirectoryEntry& account, const Scope& scope);
       Beam::DirectoryEntry load_group(const Beam::DirectoryEntry& account);
       void on_risk_state(const RiskStateEntry& entry);
       void on_portfolio(const RiskInventoryEntry& entry);
       InventorySnapshot on_load_inventory_snapshot(
         ServiceProtocolClient& client, const Beam::DirectoryEntry& account);
-      void on_reset_region(ServiceProtocolClient& client, const Region& region);
+      void on_reset_scope(ServiceProtocolClient& client, const Scope& scope);
       void on_subscribe_risk_portfolio_updates_request(
         Beam::RequestToken<ServiceProtocolClient,
           SubscribeRiskPortfolioUpdatesService>& request);
@@ -159,7 +157,7 @@ namespace Nexus {
       AF&& administration_client, MF&& market_data_client,
       OF&& order_execution_client,
       TransitionTimerFactory transition_timer_factory, TF&& time_client,
-      DF&& data_store, ExchangeRateTable exchange_rates, VenueDatabase venues,
+      DF&& data_store, ExchangeRateTable exchange_rates,
       DestinationDatabase destinations)
     : m_administration_client(std::forward<AF>(administration_client)),
       m_market_data_client(std::forward<MF>(market_data_client)),
@@ -168,7 +166,6 @@ namespace Nexus {
       m_time_client(std::forward<TF>(time_client)),
       m_data_store(std::forward<DF>(data_store)),
       m_exchange_rates(std::move(exchange_rates)),
-      m_venues(std::move(venues)),
       m_destinations(std::move(destinations)),
       m_account_publisher(Beam::make_sequence_publisher_adaptor(
         std::make_unique<Beam::QueueReaderPublisher<Beam::DirectoryEntry>>(
@@ -194,8 +191,8 @@ namespace Nexus {
     register_risk_messages(out(slots));
     LoadInventorySnapshotService::add_slot(out(slots),
       std::bind_front(&RiskServlet::on_load_inventory_snapshot, this));
-    ResetRegionService::add_slot(
-      out(slots), std::bind_front(&RiskServlet::on_reset_region, this));
+    ResetScopeService::add_slot(
+      out(slots), std::bind_front(&RiskServlet::on_reset_scope, this));
     SubscribeRiskPortfolioUpdatesService::add_request_slot(
       out(slots), std::bind_front(
         &RiskServlet::on_subscribe_risk_portfolio_updates_request, this));
@@ -264,7 +261,7 @@ namespace Nexus {
     m_controller.emplace(std::move(accounts), &*m_administration_client,
       &*m_market_data_client, &*m_order_execution_client,
       m_transition_timer_factory, &*m_time_client, &*m_data_store,
-      m_exchange_rates, m_venues, m_destinations);
+      m_exchange_rates, m_destinations);
     m_controller->get_risk_state_publisher().monitor(
       m_tasks.get_slot<RiskStateEntry>(
         std::bind_front(&RiskServlet::on_risk_state, this)));
@@ -281,10 +278,10 @@ namespace Nexus {
             Beam::IsTimeClient<Beam::dereference_t<T>> &&
               IsRiskDataStore<Beam::dereference_t<D>>
   void RiskServlet<C, A, M, O, R, T, D>::reset(
-      const Beam::DirectoryEntry& account, const Region& region) {
+      const Beam::DirectoryEntry& account, const Scope& scope) {
     auto snapshot = m_data_store->load_inventory_snapshot(account);
-    auto [portfolio, sequence, excluded_orders] = make_portfolio(
-      snapshot, account, m_venues, *m_order_execution_client);
+    auto [portfolio, sequence, excluded_orders] =
+      make_portfolio(snapshot, account, *m_order_execution_client);
     auto reports = std::vector<ExecutionReportEntry>();
     for(auto& order : excluded_orders) {
       if(auto order_snapshot = order->get_publisher().get_snapshot()) {
@@ -308,12 +305,13 @@ namespace Nexus {
     auto reset_inventories = std::vector<InventoryUpdate>();
     for(auto inventory : portfolio.get_bookkeeper().get_inventory_range()) {
       auto& base_inventory = base_portfolio.get_bookkeeper().get_inventory(
-        inventory.m_position.m_security, inventory.m_position.m_currency);
-      if(base_inventory.m_position.m_security <= region) {
+        inventory.m_position.m_ticker);
+      if(base_inventory.m_position.m_ticker <= scope) {
         if(inventory.m_position.m_quantity == 0) {
           auto update = InventoryUpdate();
           update.account = account;
-          update.inventory = Inventory(get_key(inventory.m_position));
+          update.inventory = Inventory(
+            inventory.m_position.m_ticker, inventory.m_position.m_currency);
           reset_inventories.push_back(update);
         }
         inventory.m_position.m_quantity = base_inventory.m_position.m_quantity;
@@ -328,7 +326,7 @@ namespace Nexus {
           inventory.m_transaction_count;
         updated_snapshot.m_inventories.push_back(inventory);
         m_tasks.push([this,
-            key = RiskPortfolioKey(account, inventory.m_position.m_security)] {
+            key = RiskPortfolioKey(account, inventory.m_position.m_ticker)] {
           m_volumes[key] = -1;
         });
       } else {
@@ -437,8 +435,8 @@ namespace Nexus {
           IsOrderExecutionClient<Beam::dereference_t<O>> &&
             Beam::IsTimeClient<Beam::dereference_t<T>> &&
               IsRiskDataStore<Beam::dereference_t<D>>
-  void RiskServlet<C, A, M, O, R, T, D>::on_reset_region(
-      ServiceProtocolClient& client, const Region& region) {
+  void RiskServlet<C, A, M, O, R, T, D>::on_reset_scope(
+      ServiceProtocolClient& client, const Scope& scope) {
     auto& session = client.get_session();
     if(!m_administration_client->check_administrator(session.get_account())) {
       boost::throw_with_location(
@@ -448,9 +446,9 @@ namespace Nexus {
     if(auto accounts = m_account_publisher->get_snapshot()) {
       for(auto& account : *accounts) {
         try {
-          reset(account, region);
+          reset(account, scope);
         } catch(const std::exception&) {
-          std::cerr << "Region reset failed for account:\n\t" << "Account: " <<
+          std::cerr << "Scope reset failed for account:\n\t" << "Account: " <<
             account << "\n\t" << BEAM_REPORT_CURRENT_EXCEPTION() << std::endl;
         }
       }

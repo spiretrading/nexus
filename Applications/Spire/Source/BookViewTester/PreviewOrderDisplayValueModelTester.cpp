@@ -9,7 +9,7 @@ using namespace Spire;
 
 namespace {
   auto TEST_FIELDS = make_limit_order_fields(
-    parse_security("ABC.TSX"), Side::BID, 100, Money::CENT);
+    parse_ticker("ABC.TSX"), Side::BID, 100, Money::CENT);
 }
 
 TEST_SUITE("PreviewOrderDisplayValueModel") {

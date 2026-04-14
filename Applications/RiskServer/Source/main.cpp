@@ -73,7 +73,6 @@ int main(int argc, const char** argv) {
         mysql_config.m_schema)));
     auto exchange_rates =
       ExchangeRateTable(definitions_client.load_exchange_rates());
-    auto venues = definitions_client.load_venue_database();
     auto destinations = definitions_client.load_destination_database();
     auto accounts = std::make_shared<Queue<AccountUpdate>>();
     service_locator_client.monitor(accounts);
@@ -90,7 +89,7 @@ int main(int argc, const char** argv) {
           [] {
             return std::make_unique<LiveTimer>(seconds(1));
           }, std::move(time_client), &data_store, std::move(exchange_rates),
-        std::move(venues), std::move(destinations))),
+        std::move(destinations))),
       init(service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     add(service_locator_client, service_config);

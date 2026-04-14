@@ -7,10 +7,10 @@ using namespace Nexus;
 using namespace Spire;
 
 ServiceTimeAndSalesModel::ServiceTimeAndSalesModel(
-    Security security, MarketDataClient client)
-    : m_security(std::move(security)),
+    Ticker ticker, MarketDataClient client)
+    : m_ticker(std::move(ticker)),
       m_client(std::move(client)) {
-  auto query = make_real_time_query(m_security);
+  auto query = make_real_time_query(m_ticker);
   query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_client.query(query, m_event_handler.get_slot<SequencedBboQuote>(
     std::bind_front(&ServiceTimeAndSalesModel::on_bbo, this)));
@@ -22,9 +22,9 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
     ServiceTimeAndSalesModel::query_until(
       Beam::Sequence sequence, int max_count) {
   return QtPromise(
-    [sequence, max_count, security = m_security, client = m_client] () mutable {
-      auto query = SecurityMarketDataQuery();
-      query.set_index(security);
+    [sequence, max_count, ticker = m_ticker, client = m_client] () mutable {
+      auto query = TickerQuery();
+      query.set_index(ticker);
       query.set_range(Beam::Sequence::FIRST, sequence);
       query.set_snapshot_limit(SnapshotLimit::from_tail(max_count));
       auto queue = std::make_shared<Queue<SequencedTimeAndSale>>();

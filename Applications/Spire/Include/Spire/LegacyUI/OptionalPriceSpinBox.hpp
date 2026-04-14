@@ -4,7 +4,7 @@
 #include <boost/optional/optional.hpp>
 #include <QDoubleSpinBox>
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Canvas/Canvas.hpp"
 #include "Spire/LegacyUI/LegacyUI.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -39,7 +39,7 @@ namespace Spire::LegacyUI {
 
     private:
       UserProfile* m_userProfile;
-      boost::optional<Nexus::Security> m_security;
+      boost::optional<Nexus::Ticker> m_ticker;
       Nexus::Money m_referencePrice;
 
       void AdjustIncrement(Qt::KeyboardModifier modifier);

@@ -136,9 +136,8 @@ if(UNIX)
 endif()
 install(
   TARGETS KeyBindingsUiTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
-file(GLOB_RECURSE header_files ../../Include/Spire/KeyBindingsTester/*.hpp)
 file(GLOB_RECURSE source_files ../../Source/KeyBindingsTester/*.cpp)
-add_executable(KeyBindingsTester ${header_files} ${source_files})
+add_executable(KeyBindingsTester ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
   target_link_libraries(KeyBindingsTester

@@ -191,7 +191,8 @@ namespace Beam {
 namespace std {
   template <>
   struct hash<Spire::CanvasNodeModel::Coordinate> {
-    size_t operator()(const Spire::CanvasNodeModel::Coordinate& value) const;
+    size_t operator()(
+      const Spire::CanvasNodeModel::Coordinate& value) const noexcept;
   };
 }
 

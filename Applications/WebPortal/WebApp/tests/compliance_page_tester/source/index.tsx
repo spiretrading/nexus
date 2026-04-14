@@ -150,30 +150,30 @@ function makeEntries() {
           new Beam.DateTime(new Beam.Date(2004, 2, 4),
             new Beam.Duration(5105000)))),
       new Nexus.ComplianceParameter(
-        'Securities',
+        'Tickers',
         new Nexus.ComplianceValue(
           Nexus.ComplianceValue.Type.LIST, [
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY,
-              Nexus.Security.parse('S32.ASX')),
+              Nexus.ComplianceValue.Type.TICKER,
+              Nexus.Ticker.parse('S32.ASX')),
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY,
-              Nexus.Security.parse('TD.TSX')),
+              Nexus.ComplianceValue.Type.TICKER,
+              Nexus.Ticker.parse('TD.TSX')),
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY,
-              Nexus.Security.parse('RY.TSX')),
+              Nexus.ComplianceValue.Type.TICKER,
+              Nexus.Ticker.parse('RY.TSX')),
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY,
-              Nexus.Security.parse('SHOP.TSX')),
+              Nexus.ComplianceValue.Type.TICKER,
+              Nexus.Ticker.parse('SHOP.TSX')),
             new Nexus.ComplianceValue(
-              Nexus.ComplianceValue.Type.SECURITY,
-              Nexus.Security.parse('RIO.ASX'))
+              Nexus.ComplianceValue.Type.TICKER,
+              Nexus.Ticker.parse('RIO.ASX'))
           ])),
       new Nexus.ComplianceParameter(
-        'Security',
+        'Ticker',
         new Nexus.ComplianceValue(
-          Nexus.ComplianceValue.Type.SECURITY,
-          Nexus.Security.parse('TD.TSX')))
+          Nexus.ComplianceValue.Type.TICKER,
+          Nexus.Ticker.parse('TD.TSX')))
     ])));
   return entries;
 }

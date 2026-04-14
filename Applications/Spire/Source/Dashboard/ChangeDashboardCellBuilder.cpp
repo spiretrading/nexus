@@ -1,6 +1,6 @@
 #include "Spire/Dashboard/ChangeDashboardCellBuilder.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
-#include "Nexus/TechnicalAnalysis/StandardSecurityQueries.hpp"
+#include "Nexus/TechnicalAnalysis/StandardTickerQueries.hpp"
 #include "Spire/Dashboard/QueueDashboardCell.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
@@ -13,7 +13,7 @@ using namespace std;
 
 std::unique_ptr<DashboardCell> ChangeDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
-  auto& security = boost::get<Security>(index);
+  auto& ticker = boost::get<Ticker>(index);
   std::shared_ptr<Money> closePrice = std::make_shared<Money>();
   auto baseQueue = std::make_shared<Queue<TimeAndSale>>();
   auto queue = std::static_pointer_cast<QueueReader<double>>(
@@ -25,18 +25,18 @@ std::unique_ptr<DashboardCell> ChangeDashboardCellBuilder::Make(
   spawn([=] {
     auto& serviceClients = selfUserProfile->GetClients();
     auto close = load_previous_close(serviceClients.get_market_data_client(),
-      security, serviceClients.get_time_client().get_time(),
-      DEFAULT_VENUES, get_default_time_zone_database());
+      ticker, serviceClients.get_time_client().get_time(), DEFAULT_VENUES,
+      get_default_time_zone_database());
     if(!close) {
       baseQueue->close();
       return;
     }
     *closePrice = close->m_price;
     auto& marketDataClient = serviceClients.get_market_data_client();
-    auto venueStartOfDay = utc_start_of_day(security.get_venue(),
+    auto venueStartOfDay = utc_start_of_day(ticker.get_venue(),
       serviceClients.get_time_client().get_time(), DEFAULT_VENUES,
       get_default_time_zone_database());
-    auto query = make_current_query(security);
+    auto query = make_current_query(ticker);
     marketDataClient.query(query, baseQueue);
   });
   return cell;

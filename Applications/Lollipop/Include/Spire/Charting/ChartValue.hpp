@@ -228,9 +228,7 @@ namespace Beam {
 namespace std {
   template <>
   struct hash<Spire::ChartValue> {
-    size_t operator()(Spire::ChartValue value) const {
-      return static_cast<size_t>(value.ToQuantity());
-    }
+    size_t operator()(Spire::ChartValue value) const noexcept;
   };
 };
 

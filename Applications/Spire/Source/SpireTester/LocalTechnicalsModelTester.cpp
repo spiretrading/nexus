@@ -1,7 +1,7 @@
 #include <doctest/doctest.h>
 #include <boost/date_time/posix_time/ptime.hpp>
 #include <boost/optional/optional_io.hpp>
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Spire/Spire/LocalTechnicalsModel.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
@@ -18,7 +18,7 @@ namespace {
 
 TEST_SUITE("LocalTechnicalsModel") {
   TEST_CASE("signals") {
-    auto model = LocalTechnicalsModel(Security());
+    auto model = LocalTechnicalsModel(Ticker());
     auto test_high = Money();
     auto test_low = Money();
     auto test_open = Money();
@@ -69,7 +69,7 @@ TEST_SUITE("LocalTechnicalsModel") {
   }
 
   TEST_CASE("signals_emit_only_as_required") {
-    auto model = LocalTechnicalsModel(Security());
+    auto model = LocalTechnicalsModel(Ticker());
     auto test_high = std::optional<Money>();
     auto test_low = std::optional<Money>();
     auto test_open = std::optional<Money>();
@@ -124,7 +124,7 @@ TEST_SUITE("LocalTechnicalsModel") {
   }
 
   TEST_CASE("setting_and_getting_values") {
-    auto model = LocalTechnicalsModel(Security());
+    auto model = LocalTechnicalsModel(Ticker());
     model.update(test_sale(10, 100));
     REQUIRE(model.get_high() == Money(10 * Money::ONE));
     REQUIRE(model.get_low() == Money(10 * Money::ONE));

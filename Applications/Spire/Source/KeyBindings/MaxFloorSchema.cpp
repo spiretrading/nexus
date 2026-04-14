@@ -86,7 +86,7 @@ std::unique_ptr<CanvasNode> MaxFloorSchema::make_canvas_node(
     }
     return MaxFloorNode();
   }();
-  return LinkedNode::SetReferent(std::move(max_floor_node), "security");
+  return LinkedNode::SetReferent(std::move(max_floor_node), "ticker");
 }
 
 MaxFloorSchema::MaxFloorSchema()

@@ -4,13 +4,13 @@
 #include <boost/optional.hpp>
 #include <boost/signals2.hpp>
 #include "Nexus/Definitions/Money.hpp"
-#include "Nexus/Definitions/Security.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Async/QtPromise.hpp"
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
 
-  /** Models a security's technical indicators. */
+  /** Models a ticker's technical indicators. */
   class TechnicalsModel {
     public:
 
@@ -22,8 +22,8 @@ namespace Spire {
 
       virtual ~TechnicalsModel() = default;
 
-      /** Returns the security being modeled. */
-      virtual const Nexus::Security& get_security() const = 0;
+      /** Returns the ticker being modeled. */
+      virtual const Nexus::Ticker& get_ticker() const = 0;
 
       /** Returns the highest price of the session. */
       virtual boost::optional<Nexus::Money> get_high() const = 0;

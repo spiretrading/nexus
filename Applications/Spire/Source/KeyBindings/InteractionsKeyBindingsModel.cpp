@@ -336,7 +336,7 @@ int Spire::to_index(Qt::KeyboardModifier modifier) {
 }
 
 Quantity Spire::get_default_order_quantity(
-    const InteractionsKeyBindingsModel& interactions, const Security& security,
+    const InteractionsKeyBindingsModel& interactions, const Ticker& ticker,
     Quantity position, Side side) {
   auto baseQuantity = interactions.get_default_quantity()->get();
   if(baseQuantity <= 0) {

@@ -6,16 +6,16 @@
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
-#include "Nexus/Definitions/Security.hpp"
 #include "Nexus/Definitions/Side.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 
 namespace Nexus {
 
   /** Represents an order imbalance. */
   struct OrderImbalance {
 
-    /** The Security with the order imbalance. */
-    Security m_security;
+    /** The Ticker with the order imbalance. */
+    Ticker m_ticker;
 
     /** The Side of the imbalance. */
     Side m_side;
@@ -34,7 +34,7 @@ namespace Nexus {
 
   inline std::ostream& operator <<(
       std::ostream& out, const OrderImbalance& value) {
-    return out << "(" << value.m_security << " " << value.m_side << " " <<
+    return out << "(" << value.m_ticker << " " << value.m_side << " " <<
       value.m_size << " " << value.m_reference_price << " " <<
       value.m_timestamp << ")";
   }
@@ -46,7 +46,7 @@ namespace Beam {
     template<IsShuttle S>
     void operator ()(
         S& shuttle, Nexus::OrderImbalance& value, unsigned int version) const {
-      shuttle.shuttle("security", value.m_security);
+      shuttle.shuttle("ticker", value.m_ticker);
       shuttle.shuttle("side", value.m_side);
       shuttle.shuttle("size", value.m_size);
       shuttle.shuttle("reference_price", value.m_reference_price);

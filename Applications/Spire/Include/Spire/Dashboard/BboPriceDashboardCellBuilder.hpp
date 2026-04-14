@@ -7,7 +7,7 @@
 namespace Spire {
 
   /*! \class BboPriceDashboardCellBuilder
-      \brief Constructs a DashboardCell emitting a Security's BBO price.
+      \brief Constructs a DashboardCell emitting a Ticker's BBO price.
    */
   class BboPriceDashboardCellBuilder : public DashboardCellBuilder {
     public:

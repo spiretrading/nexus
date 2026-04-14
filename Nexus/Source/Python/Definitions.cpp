@@ -16,19 +16,18 @@
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/Quote.hpp"
-#include "Nexus/Definitions/Region.hpp"
-#include "Nexus/Definitions/RegionMap.hpp"
-#include "Nexus/Definitions/Security.hpp"
-#include "Nexus/Definitions/SecurityInfo.hpp"
-#include "Nexus/Definitions/SecurityTechnicals.hpp"
+#include "Nexus/Definitions/Scope.hpp"
+#include "Nexus/Definitions/ScopeMap.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Tag.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
+#include "Nexus/Definitions/TickerInfo.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Nexus/Definitions/TradingSchedule.hpp"
 #include "Nexus/Definitions/Venue.hpp"
-#include "Nexus/MarketDataService/SecurityMarketDataQuery.hpp"
-#include "Nexus/MarketDataService/VenueMarketDataQuery.hpp"
+#include "Nexus/MarketDataService/TickerQuery.hpp"
+#include "Nexus/MarketDataService/VenueQuery.hpp"
 
 using namespace Beam;
 using namespace Beam::Python;
@@ -240,11 +239,10 @@ void Nexus::Python::export_definitions(module& module) {
   export_order_type(module);
   export_quantity(module);
   export_quote(module);
-  export_region(module);
-  export_region_map(module);
-  export_security(module);
-  export_security_info(module);
-  export_security_technicals(module);
+  export_scope(module);
+  export_scope_map(module);
+  export_ticker(module);
+  export_ticker_info(module);
   export_side(module);
   export_tag(module);
   export_time_and_sale(module);
@@ -356,8 +354,8 @@ void Nexus::Python::export_money(module& module) {
 
 void Nexus::Python::export_order_imbalance(module& module) {
   export_default_methods(class_<OrderImbalance>(module, "OrderImbalance")).
-    def(init<Security, Side, Quantity, Money, ptime>()).
-    def_readwrite("security", &OrderImbalance::m_security).
+    def(init<Ticker, Side, Quantity, Money, ptime>()).
+    def_readwrite("ticker", &OrderImbalance::m_ticker).
     def_readwrite("side", &OrderImbalance::m_side).
     def_readwrite("size", &OrderImbalance::m_size).
     def_readwrite("reference_price", &OrderImbalance::m_reference_price).
@@ -468,80 +466,70 @@ void Nexus::Python::export_quote(module& module) {
   module.def("offer_comparator", &offer_comparator);
 }
 
-void Nexus::Python::export_region(module& module) {
-  export_default_methods(class_<Region>(module, "Region")).
-    def_property_readonly_static("GLOBAL", [] (const object&) { return Region::GLOBAL; }).
-    def_static("make_global", &Region::make_global).
+void Nexus::Python::export_scope(module& module) {
+  export_default_methods(class_<Scope>(module, "Scope")).
+    def_property_readonly_static(
+      "GLOBAL", [] (const object&) { return Scope::GLOBAL; }).
+    def_static("make_global", &Scope::make_global).
     def(init<std::string>()).
     def(init<CountryCode>()).
     def(init<Venue>()).
-    def(init<Security>()).
-    def_property_readonly("name", &Region::get_name).
-    def_property_readonly("is_global", &Region::is_global).
-    def_property_readonly("is_empty", &Region::is_empty).
-    def_property_readonly("countries", &Region::get_countries).
-    def_property_readonly("venues", &Region::get_venues).
-    def_property_readonly("securities", &Region::get_securities).
-    def("contains", &Region::contains);
-  implicitly_convertible<CountryCode, Region>();
-  implicitly_convertible<Venue, Region>();
-  implicitly_convertible<Security, Region>();
+    def(init<Ticker>()).
+    def_property_readonly("name", &Scope::get_name).
+    def_property_readonly("is_global", &Scope::is_global).
+    def_property_readonly("is_empty", &Scope::is_empty).
+    def_property_readonly("countries", &Scope::get_countries).
+    def_property_readonly("venues", &Scope::get_venues).
+    def_property_readonly("tickers", &Scope::get_tickers).
+    def("contains", &Scope::contains);
+  implicitly_convertible<CountryCode, Scope>();
+  implicitly_convertible<Venue, Scope>();
+  implicitly_convertible<Ticker, Scope>();
 }
 
-void Nexus::Python::export_region_map(module& module) {
-  using PythonRegionMap = RegionMap<object>;
-  class_<PythonRegionMap>(module, "RegionMap").
+void Nexus::Python::export_scope_map(module& module) {
+  using PythonScopeMap = ScopeMap<object>;
+  class_<PythonScopeMap>(module, "ScopeMap").
     def(init<object>()).
     def(init<std::string, object>()).
-    def_property_readonly("size", &PythonRegionMap::get_size).
-    def("get", static_cast<
-      const object& (PythonRegionMap::*)(const Region&) const>(
-        &PythonRegionMap::get), return_value_policy::reference_internal).
-    def("get", static_cast<object& (PythonRegionMap::*)(const Region&)>(
-      &PythonRegionMap::get), return_value_policy::reference_internal).
-    def("set", &PythonRegionMap::set).
-    def("erase", &PythonRegionMap::erase).
-    def("__getitem__", static_cast<const object& (PythonRegionMap::*)(
-      const Region&) const>(&PythonRegionMap::get),
+    def_property_readonly("size", &PythonScopeMap::get_size).
+    def("get", overload_cast<const Scope&>(&PythonScopeMap::get, const_),
       return_value_policy::reference_internal).
-    def("__setitem__", &PythonRegionMap::set).
-    def("__delitem__", &PythonRegionMap::erase).
-    def("__iter__", [] (const PythonRegionMap& p) {
+    def("get", overload_cast<const Scope&>(&PythonScopeMap::get),
+      return_value_policy::reference_internal).
+    def("set", &PythonScopeMap::set).
+    def("erase", &PythonScopeMap::erase).
+    def("__getitem__",
+      overload_cast<const Scope&>(&PythonScopeMap::get, const_),
+      return_value_policy::reference_internal).
+    def("__setitem__", &PythonScopeMap::set).
+    def("__delitem__", &PythonScopeMap::erase).
+    def("__iter__", [] (const PythonScopeMap& p) {
       return make_iterator(p.begin(), p.end());
     }, keep_alive<0, 1>());
 }
 
-void Nexus::Python::export_security(module& module) {
-  export_default_methods(class_<Security>(module, "Security")).
+void Nexus::Python::export_ticker(module& module) {
+  export_default_methods(class_<Ticker>(module, "Ticker")).
     def(init<std::string, Venue>()).
-    def_property_readonly("symbol", &Security::get_symbol).
-    def_property_readonly("venue", &Security::get_venue);
-  module.def("parse_security",
-    overload_cast<std::string_view, const VenueDatabase&>(&parse_security));
-  module.def("parse_security", overload_cast<std::string_view>(&parse_security));
-  module.def("parse_security_set", overload_cast<
-    const YAML::Node&, const VenueDatabase&>(&parse_security_set));
-  module.def("parse_security_set",
-    overload_cast<const YAML::Node&>(&parse_security_set));
+    def_property_readonly("symbol", &Ticker::get_symbol).
+    def_property_readonly("venue", &Ticker::get_venue);
+  module.def("parse_ticker",
+    overload_cast<std::string_view, const VenueDatabase&>(&parse_ticker));
+  module.def("parse_ticker", overload_cast<std::string_view>(&parse_ticker));
+  module.def("parse_ticker_set", overload_cast<
+    const YAML::Node&, const VenueDatabase&>(&parse_ticker_set));
+  module.def("parse_ticker_set",
+    overload_cast<const YAML::Node&>(&parse_ticker_set));
 }
 
-void Nexus::Python::export_security_info(module& module) {
-  export_default_methods(class_<SecurityInfo>(module, "SecurityInfo")).
-    def(init<Security, std::string, std::string, Quantity>()).
-    def_readwrite("security", &SecurityInfo::m_security).
-    def_readwrite("name", &SecurityInfo::m_name).
-    def_readwrite("sector", &SecurityInfo::m_sector).
-    def_readwrite("board_lot", &SecurityInfo::m_board_lot);
-}
-
-void Nexus::Python::export_security_technicals(module& module) {
-  export_default_methods(
-    class_<SecurityTechnicals>(module, "SecurityTechnicals")).
-    def_readwrite("volume", &SecurityTechnicals::m_volume).
-    def_readwrite("high", &SecurityTechnicals::m_high).
-    def_readwrite("low", &SecurityTechnicals::m_low).
-    def_readwrite("open", &SecurityTechnicals::m_open).
-    def_readwrite("close", &SecurityTechnicals::m_close);
+void Nexus::Python::export_ticker_info(module& module) {
+  export_default_methods(class_<TickerInfo>(module, "TickerInfo")).
+    def(init<Ticker, std::string, std::string, Quantity>()).
+    def_readwrite("ticker", &TickerInfo::m_ticker).
+    def_readwrite("name", &TickerInfo::m_name).
+    def_readwrite("sector", &TickerInfo::m_sector).
+    def_readwrite("board_lot", &TickerInfo::m_board_lot);
 }
 
 void Nexus::Python::export_side(module& module) {
@@ -549,12 +537,12 @@ void Nexus::Python::export_side(module& module) {
     value("NONE", Side::NONE).
     value("ASK", Side::ASK).
     value("BID", Side::BID);
-  module.def("pick", static_cast<
-    const object& (*)(Side, const object&, const object&)>(&pick<object>));
+  module.def(
+    "pick", overload_cast<Side, const object&, const object&>(&pick<object>));
   module.def("direction", &get_direction);
   module.def("side", &get_side);
   module.def("opposite", &get_opposite);
-  module.def("to_char", static_cast<char (*)(Side)>(&to_char));
+  module.def("to_char", overload_cast<Side>(&to_char));
 }
 
 void Nexus::Python::export_tag(module& module) {

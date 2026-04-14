@@ -55,7 +55,7 @@ namespace Spire {
       void set_window(BookViewWindow& window);
       void on_submit_task(const std::shared_ptr<CanvasNode>& task);
       void on_cancel_operation(CancelKeyBindingsModel::Operation operation,
-        const Nexus::Security& security,
+        const Nexus::Ticker& ticker,
         const boost::optional<BookViewWindow::CancelCriteria>& criteria);
   };
 }

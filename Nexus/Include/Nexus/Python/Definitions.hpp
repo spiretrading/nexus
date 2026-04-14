@@ -119,34 +119,28 @@ namespace Nexus::Python {
   void export_quote(pybind11::module& module);
 
   /**
-   * Exports the Region class.
+   * Exports the Scope class.
    * @param module The module to export to.
    */
-  void export_region(pybind11::module& module);
+  void export_scope(pybind11::module& module);
 
   /**
-   * Exports the RegionMap class.
+   * Exports the ScopeMap class.
    * @param module The module to export to.
    */
-  void export_region_map(pybind11::module& module);
+  void export_scope_map(pybind11::module& module);
 
   /**
-   * Exports the Security class.
+   * Exports the Ticker class.
    * @param module The module to export to.
    */
-  void export_security(pybind11::module& module);
+  void export_ticker(pybind11::module& module);
 
   /**
-   * Exports the SecurityInfo class.
+   * Exports the TickerInfo class.
    * @param module The module to export to.
    */
-  void export_security_info(pybind11::module& module);
-
-  /**
-   * Exports the SecurityTechnicals class.
-   * @param module The module to export to.
-   */
-  void export_security_technicals(pybind11::module& module);
+  void export_ticker_info(pybind11::module& module);
 
   /**
    * Exports the Side enum.

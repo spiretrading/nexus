@@ -4,7 +4,7 @@
 #include <unordered_map>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
-#include "Nexus/Definitions/Region.hpp"
+#include "Nexus/Definitions/Scope.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/InteractionsKeyBindingsModel.hpp"
@@ -28,20 +28,20 @@ namespace Spire {
       const std::shared_ptr<CancelKeyBindingsModel>&
         get_cancel_key_bindings() const;
 
-      /** Returns the interactions key bindings for a given region. */
+      /** Returns the interactions key bindings for a given scope. */
       const std::shared_ptr<InteractionsKeyBindingsModel>&
-        get_interactions_key_bindings(const Nexus::Region& region) const;
+        get_interactions_key_bindings(const Nexus::Scope& scope) const;
 
       /**
-       * Returns the list of regions that have interactions settings available.
+       * Returns the list of scopes that have interactions settings available.
        */
-      std::vector<Nexus::Region> make_interactions_key_bindings_regions() const;
+      std::vector<Nexus::Scope> make_interactions_key_bindings_scopes() const;
 
     private:
       friend struct Beam::Shuttle<KeyBindingsModel>;
       std::shared_ptr<OrderTaskArgumentsListModel> m_order_task_arguments;
       std::shared_ptr<CancelKeyBindingsModel> m_cancel_key_bindings;
-      mutable std::unordered_map<Nexus::Region,
+      mutable std::unordered_map<Nexus::Scope,
         std::shared_ptr<InteractionsKeyBindingsModel>> m_interactions;
 
       KeyBindingsModel(const KeyBindingsModel&) = delete;
@@ -75,9 +75,9 @@ namespace Beam {
         auto size = int();
         shuttle.start_sequence("interactions", size);
         for(auto i = 0; i != size / 2; ++i) {
-          auto region = Nexus::Region();
-          shuttle.shuttle(region);
-          auto& interactions = value.get_interactions_key_bindings(region);
+          auto scope = Nexus::Scope();
+          shuttle.shuttle(scope);
+          auto& interactions = value.get_interactions_key_bindings(scope);
           shuttle.shuttle(*interactions);
         }
       }

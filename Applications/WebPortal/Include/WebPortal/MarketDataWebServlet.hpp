@@ -30,7 +30,7 @@ namespace Nexus {
 
       MarketDataWebServlet(const MarketDataWebServlet&) = delete;
       MarketDataWebServlet& operator=(const MarketDataWebServlet&) = delete;
-      Beam::HttpResponse on_load_security_info_from_prefix(
+      Beam::HttpResponse on_load_ticker_info_from_prefix(
         const Beam::HttpRequest& request);
   };
 }

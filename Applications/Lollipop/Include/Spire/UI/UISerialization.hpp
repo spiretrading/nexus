@@ -20,8 +20,8 @@
 #include "Spire/Canvas/OrderExecutionNodes/ExecutionReportMonitorNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/MaxFloorNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OptionalPriceNode.hpp"
-#include "Spire/Canvas/OrderExecutionNodes/SecurityPortfolioNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
 #include "Spire/Canvas/Records/QueryNode.hpp"
 #include "Spire/Canvas/Records/RecordNode.hpp"
 #include "Spire/Canvas/ReferenceNodes/ProxyNode.hpp"
@@ -73,10 +73,10 @@
 #include "Spire/Canvas/Types/OrderStatusType.hpp"
 #include "Spire/Canvas/Types/OrderTypeType.hpp"
 #include "Spire/Canvas/Types/RecordType.hpp"
-#include "Spire/Canvas/Types/SecurityType.hpp"
 #include "Spire/Canvas/Types/SequenceType.hpp"
 #include "Spire/Canvas/Types/SideType.hpp"
 #include "Spire/Canvas/Types/TextType.hpp"
+#include "Spire/Canvas/Types/TickerType.hpp"
 #include "Spire/Canvas/Types/TimeInForceType.hpp"
 #include "Spire/Canvas/Types/TimeRangeType.hpp"
 #include "Spire/Canvas/Types/UnionType.hpp"
@@ -91,9 +91,9 @@
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderStatusNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
 #include "Spire/Canvas/ValueNodes/TextNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeRangeNode.hpp"
@@ -152,8 +152,8 @@ namespace Spire {
     (ExecutionReportMonitorNode, "Spire.ExecutionReportMonitorNode"),
     (MaxFloorNode, "Spire.MaxFloorNode"),
     (OptionalPriceNode, "Spire.OptionalPriceNode"),
-    (SecurityPortfolioNode, "Spire.SecurityPortfolioNode"),
-    (SingleOrderTaskNode, "Spire.SingleOrderTaskNode"));
+    (SingleOrderTaskNode, "Spire.SingleOrderTaskNode"),
+    (TickerPortfolioNode, "Spire.TickerPortfolioNode"));
 
   BEAM_REGISTER_TYPES(RegisterCanvasRecordTypes,
     (QueryNode, "Spire.QueryNode"),
@@ -215,10 +215,10 @@ namespace Spire {
     (OrderStatusType, "Spire.OrderStatusType"),
     (OrderTypeType, "Spire.OrderTypeType"),
     (RecordType, "Spire.RecordType"),
-    (SecurityType, "Spire.SecurityType"),
     (SequenceType, "Spire.SequenceType"),
     (SideType, "Spire.SideType"),
     (TextType, "Spire.TextType"),
+    (TickerType, "Spire.TickerType"),
     (TimeInForceType, "Spire.TimeInForceType"),
     (TimeRangeType, "Spire.TimeRangeType"),
     (UnionType, "Spire.UnionType"),
@@ -235,9 +235,9 @@ namespace Spire {
     (MoneyNode, "Spire.MoneyNode"),
     (OrderStatusNode, "Spire.OrderStatusNode"),
     (OrderTypeNode, "Spire.OrderTypeNode"),
-    (SecurityNode, "Spire.SecurityNode"),
     (SideNode, "Spire.SideNode"),
     (TextNode, "Spire.TextNode"),
+    (TickerNode, "Spire.TickerNode"),
     (TimeInForceNode, "Spire.TimeInForceNode"),
     (TimeNode, "Spire.TimeNode"),
     (TimeRangeNode, "Spire.TimeRangeNode"),

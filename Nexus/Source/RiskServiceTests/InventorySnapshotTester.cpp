@@ -4,6 +4,7 @@
 #include <boost/optional/optional.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/RiskService/InventorySnapshot.hpp"
 
@@ -47,8 +48,8 @@ namespace {
 
 TEST_SUITE("InventorySnapshot") {
   TEST_CASE("strip") {
-    auto abc = Security("ABC", TSX);
-    auto xyz = Security("XYZ", TSX);
+    auto abc = parse_ticker("ABC.TSX");
+    auto xyz = parse_ticker("XYZ.TSX");
     auto abc_inventory = Inventory(
       Position(abc, CAD, 1, Money::ONE), Money::ZERO, Money::ZERO, 1, 1);
     auto xyz_inventory = Inventory(
@@ -63,8 +64,8 @@ TEST_SUITE("InventorySnapshot") {
 
   TEST_CASE("make_portfolio") {
     auto fixture = Fixture();
-    auto abc = Security("ABC", TSX);
-    auto xyz = Security("XYZ", TSX);
+    auto abc = parse_ticker("ABC.TSX");
+    auto xyz = parse_ticker("XYZ.TSX");
     auto abc_inventory = Inventory(
       Position(abc, CAD, 10, Money::ONE), Money::ZERO, Money::ZERO, 2, 2);
     auto xyz_inventory = Inventory(
@@ -93,9 +94,8 @@ TEST_SUITE("InventorySnapshot") {
         SequencedValue(IndexedValue(info, fixture.m_client_account),
           Beam::Sequence(id)));
     }
-    auto [portfolio, sequence, excluded_orders] =
-      make_portfolio(snapshot, fixture.m_client_account, DEFAULT_VENUES,
-        *fixture.m_order_execution_client);
+    auto [portfolio, sequence, excluded_orders] = make_portfolio(
+      snapshot, fixture.m_client_account, *fixture.m_order_execution_client);
     REQUIRE(sequence == Beam::Sequence(102));
     auto expected_excluded_ids = excluded_order_ids;
     expected_excluded_ids.insert(expected_excluded_ids.end(),
@@ -122,8 +122,8 @@ TEST_SUITE("InventorySnapshot") {
   }
 
   TEST_CASE("shuttle") {
-    auto abc = Security("ABC", TSX);
-    auto xyz = Security("XYZ", TSX);
+    auto abc = parse_ticker("ABC.TSX");
+    auto xyz = parse_ticker("XYZ.TSX");
     auto abc_inventory = Inventory(Position(abc, CAD, 5, 12 * Money::CENT),
       10 * Money::ONE, 6 * Money::ONE, 5, 3);
     auto xyz_inventory = Inventory(

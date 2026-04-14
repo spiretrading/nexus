@@ -14,7 +14,7 @@ namespace Spire::LegacyUI {
   class FontSelectionWidget;
   class FunctionalAction;
   class IgnoreCommandException;
-  class LinkSecurityContextAction;
+  class LinkTickerContextAction;
   class MacroUndoCommand;
   class MaxFloorSpinBox;
   class MoneySpinBox;
@@ -23,8 +23,8 @@ namespace Spire::LegacyUI {
   class QuantitySpinBox;
   class ReadOnlyCheckBox;
   class ScalableScrollBar;
-  class SecurityContext;
-  class SecurityViewStack;
+  class TickerContext;
+  class TickerViewStack;
   class ValueLabel;
   class WindowSettings;
 }
