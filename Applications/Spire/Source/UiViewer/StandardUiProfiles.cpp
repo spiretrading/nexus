@@ -111,6 +111,7 @@
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TickerBox.hpp"
+#include "Spire/Ui/TickerFilterPanel.hpp"
 #include "Spire/Ui/TickerListBox.hpp"
 #include "Spire/Ui/TickerListItem.hpp"
 #include "Spire/Ui/TickerView.hpp"
@@ -722,13 +723,13 @@ namespace {
   }
 
   template<typename F>
-  auto setup_open_filter_panel_profile(const QString& name, F make_box) {
+  auto setup_open_filter_panel_profile(const QString& name, F make_panel) {
     auto properties = std::vector<std::shared_ptr<UiProperty>>();
     populate_widget_properties(properties);
     return UiProfile(name, properties, [=] (auto& profile) {
-      auto box = make_box();
-      using TagComboBox = std::decay_t<decltype(*box)>;
-      auto filter_panel = new OpenFilterPanel(*box);
+      auto filter_panel = make_panel();
+      using TagComboBox =
+        std::decay_t<decltype(filter_panel->get_tag_combo_box())>;
       apply_widget_properties(filter_panel, profile.get_properties());
       auto submit_slot = profile.make_event_slot<QString>("Submit");
       filter_panel->connect_submit_signal(
@@ -3401,7 +3402,10 @@ UiProfile Spire::make_number_label_profile() {
 
 UiProfile Spire::make_open_filter_panel_profile() {
   return setup_open_filter_panel_profile("OpenFilterPanel",
-    [] { return new TagComboBox(populate_tag_combo_box_model()); });
+    [] {
+      return new OpenFilterPanel(
+        *new TagComboBox(populate_tag_combo_box_model()));
+    });
 }
 
 UiProfile Spire::make_order_field_info_tip_profile() {
@@ -4968,7 +4972,7 @@ UiProfile Spire::make_ticker_box_profile() {
 
 UiProfile Spire::make_ticker_filter_panel_profile() {
   return setup_open_filter_panel_profile("TickerFilterPanel",
-    [] { return make_ticker_list_box(populate_ticker_query_model()); });
+    [] { return make_ticker_filter_panel(populate_ticker_query_model()); });
 }
 
 UiProfile Spire::make_ticker_list_box_profile() {
