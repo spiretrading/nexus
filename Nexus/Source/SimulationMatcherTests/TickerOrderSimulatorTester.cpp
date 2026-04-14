@@ -299,4 +299,101 @@ TEST_SUITE("TickerOrderSimulator") {
       REQUIRE(report.m_last_price == parse_money("10.02"));
     }
   }
+
+  TEST_CASE("midpoint_peg") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(
+      ABX, parse_money("9.90"), parse_money("10.10"));
+    auto simulator = TickerOrderSimulator(
+      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
+        Ref(fixture.m_environment.get_time_environment())));
+    auto info = OrderInfo();
+    info.m_fields = OrderFields(
+      {}, ABX, CurrencyId::NONE, OrderType::PEGGED, Side::ASK, {}, 100,
+      Money::ZERO, TimeInForce(TimeInForce::Type::DAY),
+      {Tag(18, std::string(1, 'M'))});
+    info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    simulator.submit(order);
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    order->get_publisher().monitor(reports);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::PENDING_NEW);
+    report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::NEW);
+    fixture.m_environment.advance(minutes(1));
+
+    SUBCASE("no_fill_below_midpoint") {
+      fixture.m_environment.update_bbo_price(
+        ABX, parse_money("9.99"), parse_money("10.10"));
+      REQUIRE(!reports->try_pop());
+    }
+
+    SUBCASE("fill_at_midpoint") {
+      fixture.m_environment.update_bbo_price(
+        ABX, parse_money("10.00"), parse_money("10.10"));
+      report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("10.00"));
+    }
+
+    SUBCASE("follows_midpoint_down") {
+      fixture.m_environment.update_bbo_price(
+        ABX, parse_money("9.70"), parse_money("9.90"));
+      REQUIRE(!reports->try_pop());
+      fixture.m_environment.advance(minutes(1));
+      fixture.m_environment.update_bbo_price(
+        ABX, parse_money("9.80"), parse_money("9.90"));
+      report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("9.80"));
+    }
+
+    SUBCASE("effective_holds_when_midpoint_rises") {
+      fixture.m_environment.update_bbo_price(
+        ABX, parse_money("10.10"), parse_money("10.30"));
+      report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("10.10"));
+    }
+  }
+
+  TEST_CASE("midpoint_peg_with_peg_difference") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(
+      ABX, parse_money("10.00"), parse_money("10.10"));
+    auto simulator = TickerOrderSimulator(
+      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
+        Ref(fixture.m_environment.get_time_environment())));
+    auto info = OrderInfo();
+    info.m_fields = OrderFields(
+      {}, ABX, CurrencyId::NONE, OrderType::PEGGED, Side::BID, {}, 100,
+      Money::ZERO, TimeInForce(TimeInForce::Type::DAY),
+      {Tag(18, std::string(1, 'M')),
+       Tag(211, parse_money("0.02"))});
+    info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    simulator.submit(order);
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    order->get_publisher().monitor(reports);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::PENDING_NEW);
+    report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::NEW);
+    fixture.m_environment.advance(minutes(1));
+
+    SUBCASE("no_fill_above_effective") {
+      fixture.m_environment.update_bbo_price(
+        ABX, parse_money("10.00"), parse_money("10.10"));
+      REQUIRE(!reports->try_pop());
+    }
+
+    SUBCASE("fill_at_effective") {
+      fixture.m_environment.update_bbo_price(
+        ABX, parse_money("10.02"), parse_money("10.03"));
+      report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("10.03"));
+    }
+  }
 }

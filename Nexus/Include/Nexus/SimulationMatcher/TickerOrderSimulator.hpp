@@ -244,6 +244,8 @@ namespace Nexus {
     entry.m_effective_price = [&] {
       if(entry.m_exec_inst == FIX::ExecInst_MARKET_PEG) {
         return opposite_price;
+      } else if(entry.m_exec_inst == FIX::ExecInst_MID_PRICE_PEG) {
+        return (same_price + opposite_price) / 2;
       }
       return same_price;
     }();
@@ -310,6 +312,8 @@ namespace Nexus {
     auto candidate = [&] {
       if(entry.m_exec_inst == FIX::ExecInst_MARKET_PEG) {
         return opposite_price;
+      } else if(entry.m_exec_inst == FIX::ExecInst_MID_PRICE_PEG) {
+        return (same_price + opposite_price) / 2;
       }
       return same_price;
     }();
