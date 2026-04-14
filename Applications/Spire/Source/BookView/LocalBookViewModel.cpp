@@ -11,9 +11,8 @@ using namespace Nexus;
 using namespace Spire;
 
 LocalBookViewModel::LocalBookViewModel()
-  : m_model(
-      std::make_shared<ReversedListModel<BookQuote>>(
-        std::make_shared<ArrayListModel<BookQuote>>()),
+  : m_model(std::make_shared<ReversedListModel<BookQuote>>(
+      std::make_shared<ArrayListModel<BookQuote>>()),
       std::make_shared<ReversedListModel<BookQuote>>(
         std::make_shared<ArrayListModel<BookQuote>>()),
       std::make_shared<ArrayListModel<UserOrder>>(),
@@ -51,9 +50,9 @@ void LocalBookViewModel::update(const BookQuote& quote) {
       auto insert_iterator = lower_bound;
       while(insert_iterator != quotes->end() &&
           insert_iterator->m_quote.m_price == quote.m_quote.m_price &&
-          std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
-          std::tie(insert_iterator->m_quote.m_size,
-            insert_iterator->m_timestamp, insert_iterator->m_mpid)) {
+            std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
+              std::tie(insert_iterator->m_quote.m_size,
+                insert_iterator->m_timestamp, insert_iterator->m_mpid)) {
         ++insert_iterator;
       }
       quotes->insert(quote, insert_iterator);
@@ -66,9 +65,9 @@ void LocalBookViewModel::update(const BookQuote& quote) {
     auto insert_iterator = lower_bound;
     while(insert_iterator != quotes->end() &&
         insert_iterator->m_quote.m_price == quote.m_quote.m_price &&
-        std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
-        std::tie(insert_iterator->m_quote.m_size,
-          insert_iterator->m_timestamp, insert_iterator->m_mpid)) {
+          std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
+            std::tie(insert_iterator->m_quote.m_size,
+              insert_iterator->m_timestamp, insert_iterator->m_mpid)) {
       ++insert_iterator;
     }
     if(insert_iterator == existing_iterator) {

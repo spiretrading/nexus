@@ -27,8 +27,8 @@ ServiceBookViewModel::ServiceBookViewModel(
   bbo_query.set_interruption_policy(InterruptionPolicy::IGNORE_CONTINUE);
   m_client.query(bbo_query, m_event_handler.get_slot<BboQuote>(
     std::bind_front(&ServiceBookViewModel::on_bbo, this)));
-  query_real_time_with_snapshot(m_client, m_ticker,
-    m_event_handler.get_slot<BookQuote>(
+  query_real_time_with_snapshot(
+    m_client, m_ticker, m_event_handler.get_slot<BookQuote>(
       std::bind_front(&ServiceBookViewModel::buffer_book_quote, this),
       std::bind_front(&ServiceBookViewModel::on_book_quote_interruption, this)),
     InterruptionPolicy::BREAK_QUERY);
@@ -36,7 +36,7 @@ ServiceBookViewModel::ServiceBookViewModel(
   time_and_sale_query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_client.query(time_and_sale_query, m_event_handler.get_slot<TimeAndSale>(
     std::bind_front(&ServiceBookViewModel::on_time_and_sales, this)));
-  m_load_promise = std::make_shared<QtPromise<void>>(QtPromise([=] {
+  m_load_promise = std::make_shared<QtPromise<void>>(QtPromise([this] {
     return m_client.load_session_candlestick(m_ticker);
   }, LaunchPolicy::ASYNC).then([this] (const auto& candlestick) {
     m_model.get_session_candlestick()->set(candlestick);
@@ -102,7 +102,8 @@ void ServiceBookViewModel::on_end_book_quote_buffer() {
   m_buffered_book_quotes.clear();
 }
 
-void ServiceBookViewModel::on_book_quote_interruption(const std::exception_ptr&) {
+void ServiceBookViewModel::on_book_quote_interruption(
+    const std::exception_ptr&) {
   m_model.clear_book_quotes();
   query_real_time_with_snapshot(
     m_client, m_ticker, m_event_handler.get_slot<BookQuote>(
@@ -148,15 +149,13 @@ void ServiceBookViewModel::on_order_removed(
 void ServiceBookViewModel::on_active_blotter(BlotterModel& blotter) {
   m_order_event_handler.reset();
   m_order_event_handler.emplace();
-  m_model.clear_orders();
   auto& orders = blotter.GetOrderLogModel();
-  m_model.get_ask_orders()->transact([&] {
-    m_model.get_bid_orders()->transact([&] {
-      for(auto i = 0; i != orders.rowCount(orders.index(0, 0)); ++i) {
-        auto& entry = orders.GetEntry(orders.index(i, 0));
-        on_order_added(entry);
-      }
-    });
+  m_model.transact([&] {
+    m_model.clear_orders();
+    for(auto i = 0; i != orders.rowCount(orders.index(0, 0)); ++i) {
+      auto& entry = orders.GetEntry(orders.index(i, 0));
+      on_order_added(entry);
+    }
   });
   m_order_added_connection = orders.ConnectOrderAddedSignal(
     std::bind_front(&ServiceBookViewModel::on_order_added, this));
