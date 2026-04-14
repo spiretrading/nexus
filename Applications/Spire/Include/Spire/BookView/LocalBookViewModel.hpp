@@ -64,7 +64,7 @@ namespace Spire {
         Nexus::Money m_peg_difference;
         Nexus::Money m_effective_price;
       };
-      std::shared_ptr<AggregateBookViewModel> m_model;
+      AggregateBookViewModel m_model;
       std::vector<std::shared_ptr<Nexus::Order>> m_bid_orders;
       std::vector<std::shared_ptr<Nexus::Order>> m_ask_orders;
       std::unordered_map<Nexus::OrderId, PeggedOrderEntry> m_pegged_entries;
