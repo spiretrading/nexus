@@ -221,6 +221,19 @@ namespace Nexus {
       if(order.get_info().m_fields.m_type == OrderType::MARKET) {
         auto price = pick(side, m_bbo.m_bid.m_price, m_bbo.m_ask.m_price);
         return fill(order, price);
+      } else if(order.get_info().m_fields.m_type == OrderType::PEGGED) {
+        auto direction = get_direction(side);
+        auto [effective_price, opposite_price] = pick(side,
+          std::pair(m_bbo.m_ask.m_price, m_bbo.m_bid.m_price),
+          std::pair(m_bbo.m_bid.m_price, m_bbo.m_ask.m_price));
+        auto limit_price = order.get_info().m_fields.m_price;
+        if(limit_price != Money::ZERO &&
+            direction * effective_price > direction * limit_price) {
+          effective_price = limit_price;
+        }
+        if(direction * opposite_price <= direction * effective_price) {
+          return fill(order, opposite_price);
+        }
       } else if(side == Side::BID && m_bbo.m_ask.m_price <=
           order.get_info().m_fields.m_price) {
         return fill(order, m_bbo.m_ask.m_price);
