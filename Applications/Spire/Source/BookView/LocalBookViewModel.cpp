@@ -4,31 +4,32 @@
 #include <quickfix/FixFields.h>
 #include <quickfix/FixValues.h>
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ReversedListModel.hpp"
 
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 
 LocalBookViewModel::LocalBookViewModel()
-  : m_bids(std::make_shared<ReversedListModel<BookQuote>>(
-      std::make_shared<ArrayListModel<BookQuote>>())),
-    m_asks(std::make_shared<ReversedListModel<BookQuote>>(
-      std::make_shared<ArrayListModel<BookQuote>>())),
-    m_bid_orders_model(std::make_shared<ArrayListModel<UserOrder>>()),
-    m_ask_orders_model(std::make_shared<ArrayListModel<UserOrder>>()),
-    m_preview_order(
-      std::make_shared<LocalValueModel<optional<OrderFields>>>()),
-    m_bbo_quote(std::make_shared<LocalBboQuoteModel>()),
-    m_session_candlestick(std::make_shared<LocalSessionCandlestickModel>()) {}
+  : m_model(std::make_shared<AggregateBookViewModel>(
+      std::make_shared<ReversedListModel<BookQuote>>(
+        std::make_shared<ArrayListModel<BookQuote>>()),
+      std::make_shared<ReversedListModel<BookQuote>>(
+        std::make_shared<ArrayListModel<BookQuote>>()),
+      std::make_shared<ArrayListModel<UserOrder>>(),
+      std::make_shared<ArrayListModel<UserOrder>>(),
+      std::make_shared<LocalValueModel<optional<OrderFields>>>(),
+      std::make_shared<LocalBboQuoteModel>(),
+      std::make_shared<LocalSessionCandlestickModel>())) {}
 
 void LocalBookViewModel::update(const BboQuote& bbo) {
-  m_bbo_quote->set(bbo);
+  m_model->get_bbo_quote()->set(bbo);
   update_pegged_orders();
 }
 
 void LocalBookViewModel::update(const BookQuote& quote) {
   auto direction = get_direction(quote.m_quote.m_side);
-  auto quotes = pick(quote.m_quote.m_side, m_asks, m_bids);
+  auto quotes = pick(quote.m_quote.m_side, m_model->get_asks(), m_model->get_bids());
   auto lower_bound = [&] {
     for(auto i = quotes->begin(); i != quotes->end(); ++i) {
       if(direction * i->m_quote.m_price <= direction * quote.m_quote.m_price) {
@@ -88,9 +89,9 @@ void LocalBookViewModel::update(const BookQuote& quote) {
 }
 
 void LocalBookViewModel::update(const TimeAndSale& time_and_sale) {
-  auto candlestick = m_session_candlestick->get();
+  auto candlestick = m_model->get_session_candlestick()->get();
   candlestick.update(time_and_sale.m_price, time_and_sale.m_size);
-  m_session_candlestick->set(candlestick);
+  m_model->get_session_candlestick()->set(candlestick);
 }
 
 void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order) {
@@ -100,7 +101,7 @@ void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order) {
   }
   auto& orders = pick(fields.m_side, m_ask_orders, m_bid_orders);
   orders.push_back(order.m_order);
-  auto& user_orders = *pick(fields.m_side, m_ask_orders_model, m_bid_orders_model);
+  auto& user_orders = *pick(fields.m_side, m_model->get_ask_orders(), m_model->get_bid_orders());
   auto remaining_quantity = fields.m_quantity;
   auto status = OrderStatus::PENDING_NEW;
   auto display_price = fields.m_price;
@@ -124,7 +125,7 @@ void LocalBookViewModel::remove(const OrderLogModel::OrderEntry& order) {
     return;
   }
   auto index = static_cast<int>(std::ranges::distance(orders.begin(), i));
-  auto& user_orders = *pick(fields.m_side, m_ask_orders_model, m_bid_orders_model);
+  auto& user_orders = *pick(fields.m_side, m_model->get_ask_orders(), m_model->get_bid_orders());
   m_pegged_entries.erase(order.m_order->get_info().m_id);
   orders.erase(i);
   user_orders.remove(index);
@@ -148,16 +149,39 @@ void LocalBookViewModel::update(const ExecutionReport& report) {
       m_pegged_entries.erase(report.m_id);
     }
   };
-  if(auto index = find_order(m_bid_orders, *m_bid_orders_model)) {
-    update_order(*index, *m_bid_orders_model);
-  } else if(auto index = find_order(m_ask_orders, *m_ask_orders_model)) {
-    update_order(*index, *m_ask_orders_model);
+  if(auto index = find_order(m_bid_orders, *m_model->get_bid_orders())) {
+    update_order(*index, *m_model->get_bid_orders());
+  } else if(auto index = find_order(m_ask_orders, *m_model->get_ask_orders())) {
+    update_order(*index, *m_model->get_ask_orders());
   }
 }
 
+void LocalBookViewModel::clear_orders() {
+  Spire::clear(*m_model->get_bid_orders());
+  Spire::clear(*m_model->get_ask_orders());
+  m_bid_orders.clear();
+  m_ask_orders.clear();
+  m_pegged_entries.clear();
+}
+
+void LocalBookViewModel::clear_book_quotes() {
+  auto clear_side = [&] (auto& quotes) {
+    auto cleared = std::vector(quotes.begin(), quotes.end());
+    for(auto& quote : cleared) {
+      if(!quote.m_mpid.empty()) {
+        auto cleared_quote = quote;
+        cleared_quote.m_quote.m_size = 0;
+        update(cleared_quote);
+      }
+    }
+  };
+  clear_side(*m_model->get_asks());
+  clear_side(*m_model->get_bids());
+}
+
 void LocalBookViewModel::transact(const std::function<void ()>& f) {
-  m_asks->transact([&] {
-    m_bids->transact([&] {
+  m_model->get_asks()->transact([&] {
+    m_model->get_bids()->transact([&] {
       f();
     });
   });
@@ -189,7 +213,7 @@ void LocalBookViewModel::submit_pegged(const Order& order) {
     }
   }
   auto direction = get_direction(fields.m_side);
-  auto& bbo = m_bbo_quote->get();
+  auto& bbo = m_model->get_bbo_quote()->get();
   auto [same_price, opposite_price] = pick(fields.m_side,
     std::pair(bbo.m_ask.m_price, bbo.m_bid.m_price),
     std::pair(bbo.m_bid.m_price, bbo.m_ask.m_price));
@@ -211,7 +235,7 @@ void LocalBookViewModel::submit_pegged(const Order& order) {
 }
 
 void LocalBookViewModel::update_pegged_orders() {
-  auto& bbo = m_bbo_quote->get();
+  auto& bbo = m_model->get_bbo_quote()->get();
   auto update_side = [&] (auto& orders, auto& user_orders, Side side) {
     auto direction = get_direction(side);
     for(auto i = 0; i != static_cast<int>(orders.size()); ++i) {
@@ -248,41 +272,41 @@ void LocalBookViewModel::update_pegged_orders() {
       }
     }
   };
-  update_side(m_bid_orders, *m_bid_orders_model, Side::BID);
-  update_side(m_ask_orders, *m_ask_orders_model, Side::ASK);
+  update_side(m_bid_orders, *m_model->get_bid_orders(), Side::BID);
+  update_side(m_ask_orders, *m_model->get_ask_orders(), Side::ASK);
 }
 
 const std::shared_ptr<BookQuoteListModel>&
     LocalBookViewModel::get_bids() const {
-  return m_bids;
+  return m_model->get_bids();
 }
 
 const std::shared_ptr<BookQuoteListModel>&
     LocalBookViewModel::get_asks() const {
-  return m_asks;
+  return m_model->get_asks();
 }
 
 const std::shared_ptr<LocalBookViewModel::UserOrderListModel>&
     LocalBookViewModel::get_bid_orders() const {
-  return m_bid_orders_model;
+  return m_model->get_bid_orders();
 }
 
 const std::shared_ptr<LocalBookViewModel::UserOrderListModel>&
     LocalBookViewModel::get_ask_orders() const {
-  return m_ask_orders_model;
+  return m_model->get_ask_orders();
 }
 
 const std::shared_ptr<LocalBookViewModel::PreviewOrderModel>&
     LocalBookViewModel::get_preview_order() const {
-  return m_preview_order;
+  return m_model->get_preview_order();
 }
 
 const std::shared_ptr<BboQuoteModel>&
     LocalBookViewModel::get_bbo_quote() const {
-  return m_bbo_quote;
+  return m_model->get_bbo_quote();
 }
 
 const std::shared_ptr<SessionCandlestickModel>&
     LocalBookViewModel::get_session_candlestick() const {
-  return m_session_candlestick;
+  return m_model->get_session_candlestick();
 }

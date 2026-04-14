@@ -204,6 +204,34 @@ TEST_SUITE("LocalBookViewModel") {
     REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("10.00"));
   }
 
+  TEST_CASE("clear_orders") {
+    auto model = LocalBookViewModel();
+    model.update(make_bbo(parse_money("10.00"), parse_money("10.01")));
+    model.add(make_entry(make_order(make_limit_order_fields(
+      parse_ticker("ABX.TSX"), Side::BID, 100, parse_money("10.00")))));
+    model.add(make_entry(make_order(make_pegged_order_fields(
+      parse_ticker("ABX.TSX"), Side::ASK, 200, Money::ZERO, Money::ZERO))));
+    REQUIRE(model.get_bid_orders()->get_size() == 1);
+    REQUIRE(model.get_ask_orders()->get_size() == 1);
+    model.clear_orders();
+    REQUIRE(model.get_bid_orders()->get_size() == 0);
+    REQUIRE(model.get_ask_orders()->get_size() == 0);
+  }
+
+  TEST_CASE("clear_book_quotes") {
+    auto model = LocalBookViewModel();
+    model.update(make_book_quote("TSX", parse_money("10.00"), 100, Side::BID));
+    model.update(
+      make_book_quote("ARCA", parse_money("9.99"), 200, Side::BID));
+    model.update(
+      make_book_quote("TSX", parse_money("10.01"), 150, Side::ASK));
+    REQUIRE(model.get_bids()->get_size() == 2);
+    REQUIRE(model.get_asks()->get_size() == 1);
+    model.clear_book_quotes();
+    REQUIRE(model.get_bids()->get_size() == 0);
+    REQUIRE(model.get_asks()->get_size() == 0);
+  }
+
   TEST_CASE("transact") {
     auto model = LocalBookViewModel();
     model.transact([&] {

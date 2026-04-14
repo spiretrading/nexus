@@ -8,8 +8,7 @@
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Spire/Blotter/OrderLogModel.hpp"
-#include "Spire/BookView/BookViewModel.hpp"
-#include "Spire/Spire/ReversedListModel.hpp"
+#include "Spire/BookView/AggregateBookViewModel.hpp"
 
 namespace Spire {
 
@@ -38,6 +37,12 @@ namespace Spire {
       /** Updates from an execution report. */
       void update(const Nexus::ExecutionReport& report);
 
+      /** Removes all orders and pegged entries. */
+      void clear_orders();
+
+      /** Removes all book quotes. */
+      void clear_book_quotes();
+
       /** Performs a transaction. */
       void transact(const std::function<void ()>& f);
 
@@ -59,13 +64,7 @@ namespace Spire {
         Nexus::Money m_peg_difference;
         Nexus::Money m_effective_price;
       };
-      std::shared_ptr<BookQuoteListModel> m_bids;
-      std::shared_ptr<BookQuoteListModel> m_asks;
-      std::shared_ptr<UserOrderListModel> m_bid_orders_model;
-      std::shared_ptr<UserOrderListModel> m_ask_orders_model;
-      std::shared_ptr<PreviewOrderModel> m_preview_order;
-      std::shared_ptr<BboQuoteModel> m_bbo_quote;
-      std::shared_ptr<SessionCandlestickModel> m_session_candlestick;
+      std::shared_ptr<AggregateBookViewModel> m_model;
       std::vector<std::shared_ptr<Nexus::Order>> m_bid_orders;
       std::vector<std::shared_ptr<Nexus::Order>> m_ask_orders;
       std::unordered_map<Nexus::OrderId, PeggedOrderEntry> m_pegged_entries;

@@ -1,14 +1,12 @@
 #ifndef SPIRE_SERVICE_BOOK_VIEW_MODEL_HPP
 #define SPIRE_SERVICE_BOOK_VIEW_MODEL_HPP
-#include <unordered_map>
 #include <vector>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Async/QtPromise.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/OrderLogModel.hpp"
-#include "Spire/BookView/BookViewModel.hpp"
-#include "Spire/Spire/ReversedListModel.hpp"
+#include "Spire/BookView/LocalBookViewModel.hpp"
 
 namespace Spire {
 
@@ -44,37 +42,21 @@ namespace Spire {
       Nexus::Ticker m_ticker;
       BlotterSettings* m_blotter;
       Nexus::MarketDataClient m_client;
-      std::shared_ptr<BookViewModel> m_model;
-      std::shared_ptr<BookQuoteListModel> m_bid_quotes;
-      std::shared_ptr<BookQuoteListModel> m_ask_quotes;
+      LocalBookViewModel m_model;
       std::vector<Nexus::BookQuote> m_buffered_book_quotes;
-      std::unordered_map<Nexus::Venue, Nexus::Venue> m_venue_quotes;
-      std::vector<std::shared_ptr<Nexus::Order>> m_ask_orders;
-      std::vector<std::shared_ptr<Nexus::Order>> m_bid_orders;
       std::shared_ptr<QtPromise<void>> m_load_promise;
       EventHandler m_event_handler;
       boost::optional<EventHandler> m_order_event_handler;
-      struct PeggedOrderEntry {
-        char m_exec_inst;
-        Nexus::Money m_peg_difference;
-        Nexus::Money m_effective_price;
-      };
-      std::unordered_map<Nexus::OrderId, PeggedOrderEntry> m_pegged_entries;
       boost::signals2::scoped_connection m_order_added_connection;
       boost::signals2::scoped_connection m_order_removed_connection;
       boost::signals2::scoped_connection m_active_blotter_connection;
 
-      void clear(const BookQuoteListModel& quotes);
-      void submit_pegged(const Nexus::Order& order);
-      void on_bbo(const Nexus::BboQuote& quote);
-      void update_pegged_orders(const Nexus::BboQuote& bbo);
+      void on_bbo(const Nexus::BboQuote& bbo);
       void buffer_book_quote(const Nexus::BookQuote& quote);
       void on_end_book_quote_buffer();
-      void on_book_quote(const Nexus::BookQuote& quote);
       void on_book_quote_interruption(const std::exception_ptr& e);
       void on_time_and_sales(const Nexus::TimeAndSale& time_and_sale);
-      void on_execution_report(const std::shared_ptr<Nexus::Order>& order,
-        const Nexus::ExecutionReport& report);
+      void on_execution_report(const Nexus::ExecutionReport& report);
       void on_order_added(const OrderLogModel::OrderEntry& order);
       void on_order_removed(const OrderLogModel::OrderEntry& order);
       void on_active_blotter(BlotterModel& blotter);
