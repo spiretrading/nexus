@@ -8,7 +8,6 @@
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScopeBox.hpp"
 #include "Spire/Ui/TagComboBox.hpp"
-#include "Spire/Ui/TickerListBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
@@ -306,7 +305,6 @@ namespace Details {
   }
 
   using ScopeFilterPanel = OpenFilterPanel<ScopeBox>;
-  using TickerFilterPanel = OpenFilterPanel<TickerListBox>;
 }
 
 #endif
