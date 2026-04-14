@@ -2,6 +2,7 @@
 #define NEXUS_TICKER_ORDER_SIMULATOR_HPP
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
+#include <quickfix/FixFields.h>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
@@ -223,9 +224,17 @@ namespace Nexus {
         return fill(order, price);
       } else if(order.get_info().m_fields.m_type == OrderType::PEGGED) {
         auto direction = get_direction(side);
-        auto [effective_price, opposite_price] = pick(side,
-          std::pair(m_bbo.m_ask.m_price, m_bbo.m_bid.m_price),
-          std::pair(m_bbo.m_bid.m_price, m_bbo.m_ask.m_price));
+        auto [effective_price, opposite_price] =
+          pick(side, std::pair(m_bbo.m_ask.m_price, m_bbo.m_bid.m_price),
+            std::pair(m_bbo.m_bid.m_price, m_bbo.m_ask.m_price));
+        auto peg_difference = Money::ZERO;
+        if(auto tag =
+            find_field(order.get_info().m_fields, FIX::FIELD::PegDifference)) {
+          if(auto* money = boost::get<Money>(&tag->get_value())) {
+            peg_difference = *money;
+          }
+        }
+        effective_price -= peg_difference;
         auto limit_price = order.get_info().m_fields.m_price;
         if(limit_price != Money::ZERO &&
             direction * effective_price > direction * limit_price) {
