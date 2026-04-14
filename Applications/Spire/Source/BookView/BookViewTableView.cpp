@@ -300,6 +300,7 @@ namespace {
         auto column_width = resize_event.size().width() / 3;
         table_view.get_header().get_widths()->set(0, column_width);
         table_view.get_header().get_widths()->set(1, column_width);
+        table_view.get_header().get_widths()->set(2, column_width);
       }
       return QObject::eventFilter(watched, event);
     }
