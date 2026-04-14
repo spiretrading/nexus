@@ -1,10 +1,8 @@
 #ifndef SPIRE_TICKER_BOX_HPP
 #define SPIRE_TICKER_BOX_HPP
 #include <QWidget>
-#include "Nexus/Definitions/Ticker.hpp"
-#include "Nexus/Definitions/TickerInfo.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Spire/QueryModel.hpp"
+#include "Spire/Spire/TickerInfoToTickerQueryModel.hpp"
 
 namespace Spire {
   template<typename> class ComboBox;
@@ -14,9 +12,6 @@ namespace Spire {
 
   /** Represents a LocalValueModel for a Ticker. */
   using LocalTickerModel = LocalValueModel<Nexus::Ticker>;
-
-  /** Represents the QueryModel used for TickerInfo objects. */
-  using TickerInfoQueryModel = QueryModel<Nexus::TickerInfo>;
 
   /** Displays a ticker over an open set of ticker values. */
   class TickerBox : public QWidget {
@@ -74,8 +69,7 @@ namespace Spire {
         const SubmitSignal::slot_type& slot) const;
 
     private:
-      struct TickerQueryModel;
-      std::shared_ptr<TickerQueryModel> m_tickers;
+      std::shared_ptr<TickerInfoToTickerQueryModel> m_tickers;
       std::shared_ptr<CurrentModel> m_current;
       ComboBox<Nexus::Ticker>* m_combo_box;
   };

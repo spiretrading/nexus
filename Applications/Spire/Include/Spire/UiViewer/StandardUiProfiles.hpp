@@ -278,6 +278,9 @@ namespace Spire {
   /** Returns a UiProfile for the TickerBox. */
   UiProfile make_ticker_box_profile();
 
+  /** Returns a UiProfile for the TickerListBox. */
+  UiProfile make_ticker_list_box_profile();
+
   /** Returns a UiProfile for the TickerListItem. */
   UiProfile make_ticker_list_item_profile();
 

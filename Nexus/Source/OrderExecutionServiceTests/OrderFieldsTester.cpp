@@ -328,6 +328,88 @@ TEST_SUITE("OrderFields") {
     REQUIRE(fields.m_additional_fields.empty());
   }
 
+  TEST_CASE("make_pegged_order_fields_all_parameters") {
+    auto account = DirectoryEntry::make_account(123, "test");
+    auto ticker = parse_ticker("TST.TSX");
+    auto currency = USD;
+    auto side = Side::BID;
+    auto destination = DefaultDestinations::TSX;
+    auto quantity = Quantity(100);
+    auto limit_price = parse_money("10.05");
+    auto peg_difference = parse_money("0.03");
+    auto fields = make_pegged_order_fields(
+      account, ticker, currency, side, destination, quantity, limit_price,
+      peg_difference);
+    REQUIRE(fields.m_account == account);
+    REQUIRE(fields.m_ticker == ticker);
+    REQUIRE(fields.m_currency == currency);
+    REQUIRE(fields.m_type == OrderType::PEGGED);
+    REQUIRE(fields.m_side == side);
+    REQUIRE(fields.m_destination == destination);
+    REQUIRE(fields.m_quantity == quantity);
+    REQUIRE(fields.m_price == limit_price);
+    REQUIRE(fields.m_time_in_force == TimeInForce::Type::DAY);
+    REQUIRE(fields.m_additional_fields.size() == 1);
+    REQUIRE(fields.m_additional_fields[0] == Tag(211, peg_difference));
+  }
+
+  TEST_CASE("make_pegged_order_fields_no_destination") {
+    auto ticker = parse_ticker("TST.TSX");
+    auto side = Side::BID;
+    auto quantity = Quantity(100);
+    auto limit_price = parse_money("10.05");
+    auto peg_difference = parse_money("0.03");
+    auto fields = make_pegged_order_fields(
+      ticker, side, quantity, limit_price, peg_difference);
+    REQUIRE(fields.m_type == OrderType::PEGGED);
+    REQUIRE(fields.m_destination.empty());
+    REQUIRE(fields.m_price == limit_price);
+    REQUIRE(fields.m_additional_fields.size() == 1);
+    REQUIRE(fields.m_additional_fields[0] == Tag(211, peg_difference));
+  }
+
+  TEST_CASE("make_market_pegged_order_fields_all_parameters") {
+    auto account = DirectoryEntry::make_account(123, "test");
+    auto ticker = parse_ticker("TST.TSX");
+    auto currency = USD;
+    auto side = Side::ASK;
+    auto destination = DefaultDestinations::TSX;
+    auto quantity = Quantity(100);
+    auto limit_price = parse_money("9.95");
+    auto peg_difference = parse_money("0.03");
+    auto fields = make_market_pegged_order_fields(
+      account, ticker, currency, side, destination, quantity, limit_price,
+      peg_difference);
+    REQUIRE(fields.m_account == account);
+    REQUIRE(fields.m_ticker == ticker);
+    REQUIRE(fields.m_currency == currency);
+    REQUIRE(fields.m_type == OrderType::PEGGED);
+    REQUIRE(fields.m_side == side);
+    REQUIRE(fields.m_destination == destination);
+    REQUIRE(fields.m_quantity == quantity);
+    REQUIRE(fields.m_price == limit_price);
+    REQUIRE(fields.m_time_in_force == TimeInForce::Type::DAY);
+    REQUIRE(fields.m_additional_fields.size() == 2);
+    REQUIRE(fields.m_additional_fields[0] == Tag(18, std::string(1, 'P')));
+    REQUIRE(fields.m_additional_fields[1] == Tag(211, peg_difference));
+  }
+
+  TEST_CASE("make_market_pegged_order_fields_no_destination") {
+    auto ticker = parse_ticker("TST.TSX");
+    auto side = Side::ASK;
+    auto quantity = Quantity(100);
+    auto limit_price = parse_money("9.95");
+    auto peg_difference = parse_money("0.03");
+    auto fields = make_market_pegged_order_fields(
+      ticker, side, quantity, limit_price, peg_difference);
+    REQUIRE(fields.m_type == OrderType::PEGGED);
+    REQUIRE(fields.m_destination.empty());
+    REQUIRE(fields.m_price == limit_price);
+    REQUIRE(fields.m_additional_fields.size() == 2);
+    REQUIRE(fields.m_additional_fields[0] == Tag(18, std::string(1, 'P')));
+    REQUIRE(fields.m_additional_fields[1] == Tag(211, peg_difference));
+  }
+
   TEST_CASE("less_than_operator") {
     auto fields1 = OrderFields();
     fields1.m_type = OrderType::LIMIT;

@@ -1,7 +1,11 @@
 #ifndef NEXUS_TICKER_ORDER_SIMULATOR_HPP
 #define NEXUS_TICKER_ORDER_SIMULATOR_HPP
+#include <sstream>
+#include <unordered_map>
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
+#include <quickfix/FixFields.h>
+#include <quickfix/FixValues.h>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
@@ -63,19 +67,28 @@ namespace Nexus {
         const ExecutionReport& report);
 
     private:
+      struct PeggedOrderEntry {
+        char m_exec_inst;
+        Money m_peg_difference;
+        Money m_effective_price;
+      };
       Beam::local_ptr_t<T> m_time_client;
       boost::gregorian::date m_date;
       boost::posix_time::ptime m_venue_close_time;
       bool m_is_moc_pending;
       std::vector<std::shared_ptr<PrimitiveOrder>> m_orders;
+      std::unordered_map<OrderId, PeggedOrderEntry> m_pegged_entries;
       BboQuote m_bbo;
       Beam::RoutineTaskQueue m_tasks;
 
       TickerOrderSimulator(const TickerOrderSimulator&) = delete;
       TickerOrderSimulator& operator =(const TickerOrderSimulator&) = delete;
       void set_session_timestamps(boost::posix_time::ptime timestamp);
+      void submit_pegged(const PrimitiveOrder& order);
       OrderStatus fill(PrimitiveOrder& order, Money price);
       OrderStatus update(PrimitiveOrder& order);
+      OrderStatus update_pegged(
+        PrimitiveOrder& order, OrderStatus status);
       void on_bbo(const BboQuote& bbo);
       void on_time_and_sale(const TimeAndSale& time_and_sale);
   };
@@ -135,6 +148,9 @@ namespace Nexus {
       });
       if(is_live) {
         m_orders.push_back(order);
+        if(order->get_info().m_fields.m_type == OrderType::PEGGED) {
+          submit_pegged(*order);
+        }
         update(*order);
       }
     });
@@ -154,6 +170,7 @@ namespace Nexus {
         auto cancel_report = make_update(
           reports.back(), OrderStatus::CANCELED, m_time_client->get_time());
         order->update(cancel_report);
+        m_pegged_entries.erase(order->get_info().m_id);
       });
     });
   }
@@ -196,6 +213,51 @@ namespace Nexus {
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void TickerOrderSimulator<T>::submit_pegged(const PrimitiveOrder& order) {
+    auto& fields = order.get_info().m_fields;
+    auto entry = PeggedOrderEntry();
+    entry.m_exec_inst = FIX::ExecInst_PRIMARY_PEG;
+    if(auto tag = find_field(fields, FIX::FIELD::ExecInst)) {
+      if(auto* value = boost::get<std::string>(&tag->get_value())) {
+        auto stream = std::istringstream(*value);
+        auto token = std::string();
+        while(stream >> token) {
+          if(token.size() == 1 &&
+              (token[0] == FIX::ExecInst_PRIMARY_PEG ||
+                token[0] == FIX::ExecInst_MARKET_PEG ||
+                token[0] == FIX::ExecInst_MID_PRICE_PEG)) {
+            entry.m_exec_inst = token[0];
+            break;
+          }
+        }
+      }
+    }
+    if(auto tag = find_field(fields, FIX::FIELD::PegDifference)) {
+      if(auto* money = boost::get<Money>(&tag->get_value())) {
+        entry.m_peg_difference = *money;
+      }
+    }
+    auto direction = get_direction(fields.m_side);
+    auto [same_price, opposite_price] = pick(fields.m_side,
+      std::pair(m_bbo.m_ask.m_price, m_bbo.m_bid.m_price),
+      std::pair(m_bbo.m_bid.m_price, m_bbo.m_ask.m_price));
+    entry.m_effective_price = [&] {
+      if(entry.m_exec_inst == FIX::ExecInst_MARKET_PEG) {
+        return opposite_price;
+      } else if(entry.m_exec_inst == FIX::ExecInst_MID_PRICE_PEG) {
+        return (same_price + opposite_price) / 2;
+      }
+      return same_price;
+    }();
+    entry.m_effective_price -= direction * entry.m_peg_difference;
+    if(fields.m_price != Money::ZERO &&
+        direction * entry.m_effective_price > direction * fields.m_price) {
+      entry.m_effective_price = fields.m_price;
+    }
+    m_pegged_entries[order.get_info().m_id] = entry;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   OrderStatus TickerOrderSimulator<T>::fill(
       PrimitiveOrder& order, Money price) {
     order.with([&] (auto status, const auto& reports) {
@@ -221,6 +283,8 @@ namespace Nexus {
       if(order.get_info().m_fields.m_type == OrderType::MARKET) {
         auto price = pick(side, m_bbo.m_bid.m_price, m_bbo.m_ask.m_price);
         return fill(order, price);
+      } else if(order.get_info().m_fields.m_type == OrderType::PEGGED) {
+        return update_pegged(order, status);
       } else if(side == Side::BID && m_bbo.m_ask.m_price <=
           order.get_info().m_fields.m_price) {
         return fill(order, m_bbo.m_ask.m_price);
@@ -233,13 +297,54 @@ namespace Nexus {
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  OrderStatus TickerOrderSimulator<T>::update_pegged(
+      PrimitiveOrder& order, OrderStatus status) {
+    auto i = m_pegged_entries.find(order.get_info().m_id);
+    if(i == m_pegged_entries.end()) {
+      return status;
+    }
+    auto& entry = i->second;
+    auto side = order.get_info().m_fields.m_side;
+    auto direction = get_direction(side);
+    auto [same_price, opposite_price] =
+      pick(side, std::pair(m_bbo.m_ask.m_price, m_bbo.m_bid.m_price),
+        std::pair(m_bbo.m_bid.m_price, m_bbo.m_ask.m_price));
+    auto candidate = [&] {
+      if(entry.m_exec_inst == FIX::ExecInst_MARKET_PEG) {
+        return opposite_price;
+      } else if(entry.m_exec_inst == FIX::ExecInst_MID_PRICE_PEG) {
+        return (same_price + opposite_price) / 2;
+      }
+      return same_price;
+    }();
+    candidate -= direction * entry.m_peg_difference;
+    if(direction * candidate > direction * entry.m_effective_price) {
+      entry.m_effective_price = candidate;
+    }
+    auto limit_price = order.get_info().m_fields.m_price;
+    if(limit_price != Money::ZERO &&
+        direction * entry.m_effective_price > direction * limit_price) {
+      entry.m_effective_price = limit_price;
+    }
+    if(direction * opposite_price <= direction * entry.m_effective_price) {
+      m_pegged_entries.erase(i);
+      return fill(order, opposite_price);
+    }
+    return status;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   void TickerOrderSimulator<T>::on_bbo(const BboQuote& bbo) {
     if(bbo.m_timestamp.date() != m_date) {
       set_session_timestamps(bbo.m_timestamp);
     }
     m_bbo = bbo;
     std::erase_if(m_orders, [&] (auto& order) {
-      return is_terminal(update(*order));
+      auto terminal = is_terminal(update(*order));
+      if(terminal) {
+        m_pegged_entries.erase(order->get_info().m_id);
+      }
+      return terminal;
     });
   }
 
