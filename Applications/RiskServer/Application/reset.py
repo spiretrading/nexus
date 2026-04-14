@@ -25,7 +25,8 @@ def main():
     description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
   parser.add_argument('-c', '--config', type=str, help='Configuration file.',
     default='config.yml')
-  parser.add_argument('-r', '--scope', type=str, help='The scope to reset.')
+  parser.add_argument('-r', '--scope', type=str, help='The scope to reset.',
+    required=True)
   args = parser.parse_args()
   try:
     stream = open(args.config, 'r').read()
