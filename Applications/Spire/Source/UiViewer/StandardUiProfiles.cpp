@@ -121,6 +121,7 @@
 #include "Spire/Ui/TransitionView.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/VenueBox.hpp"
+#include "Spire/Ui/VenueListBox.hpp"
 #include "Spire/Ui/Window.hpp"
 #include "Spire/Ui/WindowHighlight.hpp"
 #include "Spire/UiViewer/StandardUiProperties.hpp"
@@ -5260,6 +5261,11 @@ UiProfile Spire::make_venue_box_profile() {
     return box;
   });
   return profile;
+}
+
+UiProfile Spire::make_venue_list_box_profile() {
+  return setup_tag_combo_box_profile("VenueListBox",
+    [] { return make_venue_list_box(); });
 }
 
 UiProfile Spire::make_window_highlight_profile() {
