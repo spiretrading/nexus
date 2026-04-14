@@ -317,6 +317,30 @@ void Nexus::Python::export_order_fields(module& module) {
       &make_market_order_fields));
   module.def("make_market_order_fields",
     overload_cast<Ticker, Side, Quantity>(&make_market_order_fields));
+  module.def("make_pegged_order_fields",
+    overload_cast<DirectoryEntry, Ticker, CurrencyId, Side, Destination,
+      Quantity, Money, Money>(&make_pegged_order_fields));
+  module.def("make_pegged_order_fields",
+    overload_cast<Ticker, CurrencyId, Side, Destination, Quantity, Money,
+      Money>(&make_pegged_order_fields));
+  module.def("make_pegged_order_fields",
+    overload_cast<Ticker, Side, Destination, Quantity, Money, Money>(
+      &make_pegged_order_fields));
+  module.def("make_pegged_order_fields",
+    overload_cast<Ticker, Side, Quantity, Money, Money>(
+      &make_pegged_order_fields));
+  module.def("make_market_pegged_order_fields",
+    overload_cast<DirectoryEntry, Ticker, CurrencyId, Side, Destination,
+      Quantity, Money, Money>(&make_market_pegged_order_fields));
+  module.def("make_market_pegged_order_fields",
+    overload_cast<Ticker, CurrencyId, Side, Destination, Quantity, Money,
+      Money>(&make_market_pegged_order_fields));
+  module.def("make_market_pegged_order_fields",
+    overload_cast<Ticker, Side, Destination, Quantity, Money, Money>(
+      &make_market_pegged_order_fields));
+  module.def("make_market_pegged_order_fields",
+    overload_cast<Ticker, Side, Quantity, Money, Money>(
+      &make_market_pegged_order_fields));
   module.def("find_field", &find_field);
   module.def("has_field", &has_field);
 }

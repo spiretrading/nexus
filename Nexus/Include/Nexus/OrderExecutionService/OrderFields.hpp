@@ -293,6 +293,97 @@ namespace Nexus {
   }
 
   /**
+   * Returns OrderFields for a PEGGED order with all mandatory fields populated.
+   * @param account The account to assign the Order to.
+   * @param ticker The Ticker the Order was submitted for.
+   * @param currency The Currency being used.
+   * @param side The Side of the Order.
+   * @param destination The destination to submit the Order to.
+   * @param quantity The quantity to order.
+   * @param limit_price The limit price of the Order.
+   * @param peg_difference The peg difference.
+   */
+  inline OrderFields make_pegged_order_fields(Beam::DirectoryEntry account,
+      Ticker ticker, CurrencyId currency, Side side, Destination destination,
+      Quantity quantity, Money limit_price, Money peg_difference) {
+    auto additional_fields = std::vector<Tag>();
+    if(peg_difference != Money::ZERO) {
+      additional_fields.emplace_back(211, peg_difference);
+    }
+    return OrderFields(std::move(account), std::move(ticker), currency,
+      OrderType::PEGGED, side, std::move(destination), quantity, limit_price,
+      TimeInForce(TimeInForce::Type::DAY), std::move(additional_fields));
+  }
+
+  inline OrderFields make_pegged_order_fields(Ticker ticker,
+      CurrencyId currency, Side side, Destination destination,
+      Quantity quantity, Money limit_price, Money peg_difference) {
+    return make_pegged_order_fields(Beam::DirectoryEntry(), std::move(ticker),
+      currency, side, std::move(destination), quantity, limit_price,
+      peg_difference);
+  }
+
+  inline OrderFields make_pegged_order_fields(Ticker ticker, Side side,
+      Destination destination, Quantity quantity, Money limit_price,
+      Money peg_difference) {
+    return make_pegged_order_fields(std::move(ticker), CurrencyId::NONE, side,
+      std::move(destination), quantity, limit_price, peg_difference);
+  }
+
+  inline OrderFields make_pegged_order_fields(Ticker ticker, Side side,
+      Quantity quantity, Money limit_price, Money peg_difference) {
+    return make_pegged_order_fields(std::move(ticker), side, {}, quantity,
+      limit_price, peg_difference);
+  }
+
+  /**
+   * Returns OrderFields for a market PEGGED order with all mandatory fields
+   * populated.
+   * @param account The account to assign the Order to.
+   * @param ticker The Ticker the Order was submitted for.
+   * @param currency The Currency being used.
+   * @param side The Side of the Order.
+   * @param destination The destination to submit the Order to.
+   * @param quantity The quantity to order.
+   * @param limit_price The limit price of the Order.
+   * @param peg_difference The peg difference.
+   */
+  inline OrderFields make_market_pegged_order_fields(
+      Beam::DirectoryEntry account, Ticker ticker, CurrencyId currency,
+      Side side, Destination destination, Quantity quantity, Money limit_price,
+      Money peg_difference) {
+    auto additional_fields = std::vector<Tag>();
+    additional_fields.emplace_back(18, std::string(1, 'P'));
+    if(peg_difference != Money::ZERO) {
+      additional_fields.emplace_back(211, peg_difference);
+    }
+    return OrderFields(std::move(account), std::move(ticker), currency,
+      OrderType::PEGGED, side, std::move(destination), quantity, limit_price,
+      TimeInForce(TimeInForce::Type::DAY), std::move(additional_fields));
+  }
+
+  inline OrderFields make_market_pegged_order_fields(Ticker ticker,
+      CurrencyId currency, Side side, Destination destination,
+      Quantity quantity, Money limit_price, Money peg_difference) {
+    return make_market_pegged_order_fields(Beam::DirectoryEntry(),
+      std::move(ticker), currency, side, std::move(destination), quantity,
+      limit_price, peg_difference);
+  }
+
+  inline OrderFields make_market_pegged_order_fields(Ticker ticker, Side side,
+      Destination destination, Quantity quantity, Money limit_price,
+      Money peg_difference) {
+    return make_market_pegged_order_fields(std::move(ticker), CurrencyId::NONE,
+      side, std::move(destination), quantity, limit_price, peg_difference);
+  }
+
+  inline OrderFields make_market_pegged_order_fields(Ticker ticker, Side side,
+      Quantity quantity, Money limit_price, Money peg_difference) {
+    return make_market_pegged_order_fields(std::move(ticker), side, {},
+      quantity, limit_price, peg_difference);
+  }
+
+  /**
    * Checks if a Tag with a specified key is part of an OrderFields.
    * @param fields The OrderFields to search.
    * @param key The key of the Tag to find.

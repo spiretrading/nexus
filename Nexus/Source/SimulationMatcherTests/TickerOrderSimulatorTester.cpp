@@ -1,5 +1,4 @@
 #include <doctest/doctest.h>
-#include <quickfix/FixFields.h>
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/SimulationMatcher/TickerOrderSimulator.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
@@ -71,7 +70,7 @@ TEST_SUITE("TickerOrderSimulator") {
     }
   }
 
-  TEST_CASE("pegged_bid") {
+  TEST_CASE("pegged") {
     auto fixture = Fixture();
     fixture.m_environment.update_bbo_price(
       ABX, parse_money("10.00"), parse_money("10.01"));
@@ -79,9 +78,8 @@ TEST_SUITE("TickerOrderSimulator") {
       fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
         Ref(fixture.m_environment.get_time_environment())));
     auto info = OrderInfo();
-    info.m_fields = OrderFields(
-      {}, ABX, CurrencyId::NONE, OrderType::PEGGED, Side::BID, {}, 100,
-      Money::ZERO, TimeInForce(TimeInForce::Type::DAY), {});
+    info.m_fields =
+      make_pegged_order_fields(ABX, Side::BID, 100, Money::ZERO, Money::ZERO);
     info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);
@@ -94,8 +92,6 @@ TEST_SUITE("TickerOrderSimulator") {
     fixture.m_environment.advance(minutes(1));
 
     SUBCASE("no_fill_with_spread") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.00"), parse_money("10.01"));
       REQUIRE(!reports->try_pop());
     }
 
@@ -108,7 +104,7 @@ TEST_SUITE("TickerOrderSimulator") {
       REQUIRE(report.m_last_quantity == 100);
     }
 
-    SUBCASE("fill_when_ask_drops_to_bid") {
+    SUBCASE("fill_when_ask_drops_below_bid") {
       fixture.m_environment.update_bbo_price(
         ABX, parse_money("10.00"), parse_money("9.99"));
       report = reports->pop();
@@ -116,16 +112,23 @@ TEST_SUITE("TickerOrderSimulator") {
       REQUIRE(report.m_last_price == parse_money("9.99"));
     }
 
-    SUBCASE("pegged_price_tracks_bid") {
+    SUBCASE("effective_holds_when_bid_drops") {
       fixture.m_environment.update_bbo_price(
         ABX, parse_money("9.50"), parse_money("9.60"));
-      REQUIRE(!reports->try_pop());
-      fixture.m_environment.advance(minutes(1));
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("9.50"), parse_money("9.50"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
-      REQUIRE(report.m_last_price == parse_money("9.50"));
+      REQUIRE(report.m_last_price == parse_money("9.60"));
+    }
+
+    SUBCASE("follows_bid_up") {
+      fixture.m_environment.update_bbo_price(
+        ABX, parse_money("10.50"), parse_money("10.60"));
+      REQUIRE(!reports->try_pop());
+      fixture.m_environment.update_bbo_price(
+        ABX, parse_money("10.50"), parse_money("10.50"));
+      report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("10.50"));
     }
 
     SUBCASE("cancel") {
@@ -137,7 +140,7 @@ TEST_SUITE("TickerOrderSimulator") {
     }
   }
 
-  TEST_CASE("pegged_ask") {
+  TEST_CASE("pegged_with_limit") {
     auto fixture = Fixture();
     fixture.m_environment.update_bbo_price(
       ABX, parse_money("9.99"), parse_money("10.00"));
@@ -145,110 +148,8 @@ TEST_SUITE("TickerOrderSimulator") {
       fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
         Ref(fixture.m_environment.get_time_environment())));
     auto info = OrderInfo();
-    info.m_fields = OrderFields(
-      {}, ABX, CurrencyId::NONE, OrderType::PEGGED, Side::ASK, {}, 100,
-      Money::ZERO, TimeInForce(TimeInForce::Type::DAY), {});
-    info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
-    auto order = std::make_shared<PrimitiveOrder>(info);
-    simulator.submit(order);
-    auto reports = std::make_shared<Queue<ExecutionReport>>();
-    order->get_publisher().monitor(reports);
-    auto report = reports->pop();
-    REQUIRE(report.m_status == OrderStatus::PENDING_NEW);
-    report = reports->pop();
-    REQUIRE(report.m_status == OrderStatus::NEW);
-    fixture.m_environment.advance(minutes(1));
-
-    SUBCASE("no_fill_with_spread") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("9.99"), parse_money("10.00"));
-      REQUIRE(!reports->try_pop());
-    }
-
-    SUBCASE("fill_on_crossed_market") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.00"), parse_money("10.00"));
-      report = reports->pop();
-      REQUIRE(report.m_status == OrderStatus::FILLED);
-      REQUIRE(report.m_last_price == parse_money("10.00"));
-      REQUIRE(report.m_last_quantity == 100);
-    }
-
-    SUBCASE("fill_when_bid_rises_to_ask") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.01"), parse_money("10.00"));
-      report = reports->pop();
-      REQUIRE(report.m_status == OrderStatus::FILLED);
-      REQUIRE(report.m_last_price == parse_money("10.01"));
-    }
-
-    SUBCASE("pegged_price_tracks_ask") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.40"), parse_money("10.50"));
-      REQUIRE(!reports->try_pop());
-      fixture.m_environment.advance(minutes(1));
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.50"), parse_money("10.50"));
-      report = reports->pop();
-      REQUIRE(report.m_status == OrderStatus::FILLED);
-      REQUIRE(report.m_last_price == parse_money("10.50"));
-    }
-  }
-
-  TEST_CASE("pegged_bid_with_limit") {
-    auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("10.00"), parse_money("10.01"));
-    auto simulator = TickerOrderSimulator(
-      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())));
-    auto info = OrderInfo();
-    info.m_fields = OrderFields(
-      {}, ABX, CurrencyId::NONE, OrderType::PEGGED, Side::BID, {}, 100,
-      parse_money("10.05"), TimeInForce(TimeInForce::Type::DAY), {});
-    info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
-    auto order = std::make_shared<PrimitiveOrder>(info);
-    simulator.submit(order);
-    auto reports = std::make_shared<Queue<ExecutionReport>>();
-    order->get_publisher().monitor(reports);
-    auto report = reports->pop();
-    REQUIRE(report.m_status == OrderStatus::PENDING_NEW);
-    report = reports->pop();
-    REQUIRE(report.m_status == OrderStatus::NEW);
-    fixture.m_environment.advance(minutes(1));
-
-    SUBCASE("limit_prevents_fill") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.08"), parse_money("10.09"));
-      REQUIRE(!reports->try_pop());
-      fixture.m_environment.advance(minutes(1));
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.05"), parse_money("10.05"));
-      report = reports->pop();
-      REQUIRE(report.m_status == OrderStatus::FILLED);
-      REQUIRE(report.m_last_price == parse_money("10.05"));
-    }
-
-    SUBCASE("bid_below_limit_uses_bid") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.00"), parse_money("10.00"));
-      report = reports->pop();
-      REQUIRE(report.m_status == OrderStatus::FILLED);
-      REQUIRE(report.m_last_price == parse_money("10.00"));
-    }
-  }
-
-  TEST_CASE("pegged_ask_with_limit") {
-    auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("9.99"), parse_money("10.00"));
-    auto simulator = TickerOrderSimulator(
-      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())));
-    auto info = OrderInfo();
-    info.m_fields = OrderFields(
-      {}, ABX, CurrencyId::NONE, OrderType::PEGGED, Side::ASK, {}, 100,
-      parse_money("9.95"), TimeInForce(TimeInForce::Type::DAY), {});
+    info.m_fields = make_pegged_order_fields(
+      ABX, Side::ASK, 100, parse_money("9.95"), Money::ZERO);
     info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);
@@ -264,7 +165,6 @@ TEST_SUITE("TickerOrderSimulator") {
       fixture.m_environment.update_bbo_price(
         ABX, parse_money("9.78"), parse_money("9.80"));
       REQUIRE(!reports->try_pop());
-      fixture.m_environment.advance(minutes(1));
       fixture.m_environment.update_bbo_price(
         ABX, parse_money("9.95"), parse_money("9.95"));
       report = reports->pop();
@@ -281,7 +181,7 @@ TEST_SUITE("TickerOrderSimulator") {
     }
   }
 
-  TEST_CASE("pegged_bid_with_peg_difference") {
+  TEST_CASE("pegged_with_peg_difference") {
     auto fixture = Fixture();
     fixture.m_environment.update_bbo_price(
       ABX, parse_money("10.00"), parse_money("10.01"));
@@ -289,10 +189,8 @@ TEST_SUITE("TickerOrderSimulator") {
       fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
         Ref(fixture.m_environment.get_time_environment())));
     auto info = OrderInfo();
-    info.m_fields = OrderFields(
-      {}, ABX, CurrencyId::NONE, OrderType::PEGGED, Side::BID, {}, 100,
-      Money::ZERO, TimeInForce(TimeInForce::Type::DAY),
-      {Tag(FIX::FIELD::PegDifference, parse_money("0.03"))});
+    info.m_fields = make_pegged_order_fields(
+      ABX, Side::BID, 100, Money::ZERO, parse_money("0.03"));
     info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);
@@ -306,32 +204,40 @@ TEST_SUITE("TickerOrderSimulator") {
 
     SUBCASE("no_fill_above_effective_price") {
       fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.00"), parse_money("9.98"));
+        ABX, parse_money("9.97"), parse_money("9.98"));
       REQUIRE(!reports->try_pop());
     }
 
     SUBCASE("fill_at_effective_price") {
       fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.00"), parse_money("9.97"));
+        ABX, parse_money("9.96"), parse_money("9.97"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_price == parse_money("9.97"));
     }
 
-    SUBCASE("tracks_bid_with_offset") {
+    SUBCASE("follows_bid_up_with_offset") {
       fixture.m_environment.update_bbo_price(
-        ABX, parse_money("9.80"), parse_money("9.90"));
+        ABX, parse_money("10.20"), parse_money("10.30"));
       REQUIRE(!reports->try_pop());
       fixture.m_environment.advance(minutes(1));
       fixture.m_environment.update_bbo_price(
-        ABX, parse_money("9.80"), parse_money("9.77"));
+        ABX, parse_money("10.16"), parse_money("10.17"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
-      REQUIRE(report.m_last_price == parse_money("9.77"));
+      REQUIRE(report.m_last_price == parse_money("10.17"));
+    }
+
+    SUBCASE("effective_holds_when_bid_drops_with_offset") {
+      fixture.m_environment.update_bbo_price(
+        ABX, parse_money("9.80"), parse_money("9.90"));
+      report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("9.90"));
     }
   }
 
-  TEST_CASE("pegged_ask_with_peg_difference") {
+  TEST_CASE("market_peg") {
     auto fixture = Fixture();
     fixture.m_environment.update_bbo_price(
       ABX, parse_money("9.99"), parse_money("10.00"));
@@ -339,10 +245,35 @@ TEST_SUITE("TickerOrderSimulator") {
       fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
         Ref(fixture.m_environment.get_time_environment())));
     auto info = OrderInfo();
-    info.m_fields = OrderFields(
-      {}, ABX, CurrencyId::NONE, OrderType::PEGGED, Side::ASK, {}, 100,
-      Money::ZERO, TimeInForce(TimeInForce::Type::DAY),
-      {Tag(FIX::FIELD::PegDifference, parse_money("0.03"))});
+    info.m_fields = make_market_pegged_order_fields(
+      ABX, Side::ASK, 100, Money::ZERO, Money::ZERO);
+    info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    simulator.submit(order);
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    order->get_publisher().monitor(reports);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::PENDING_NEW);
+    report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::NEW);
+
+    SUBCASE("fills_immediately") {
+      report = reports->pop();
+      REQUIRE(report.m_status == OrderStatus::FILLED);
+      REQUIRE(report.m_last_price == parse_money("9.99"));
+    }
+  }
+
+  TEST_CASE("market_peg_with_peg_difference") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(
+      ABX, parse_money("10.00"), parse_money("10.05"));
+    auto simulator = TickerOrderSimulator(
+      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
+        Ref(fixture.m_environment.get_time_environment())));
+    auto info = OrderInfo();
+    info.m_fields = make_market_pegged_order_fields(
+      ABX, Side::BID, 100, Money::ZERO, parse_money("0.03"));
     info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);
@@ -354,30 +285,18 @@ TEST_SUITE("TickerOrderSimulator") {
     REQUIRE(report.m_status == OrderStatus::NEW);
     fixture.m_environment.advance(minutes(1));
 
-    SUBCASE("no_fill_below_effective_price") {
+    SUBCASE("no_fill_with_offset") {
       fixture.m_environment.update_bbo_price(
-        ABX, parse_money("9.96"), parse_money("10.00"));
+        ABX, parse_money("10.00"), parse_money("10.03"));
       REQUIRE(!reports->try_pop());
     }
 
-    SUBCASE("fill_at_effective_price") {
+    SUBCASE("fill_when_ask_drops") {
       fixture.m_environment.update_bbo_price(
-        ABX, parse_money("9.97"), parse_money("10.00"));
+        ABX, parse_money("10.00"), parse_money("10.02"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
-      REQUIRE(report.m_last_price == parse_money("9.97"));
-    }
-
-    SUBCASE("tracks_ask_with_offset") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.10"), parse_money("10.20"));
-      REQUIRE(!reports->try_pop());
-      fixture.m_environment.advance(minutes(1));
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.17"), parse_money("10.20"));
-      report = reports->pop();
-      REQUIRE(report.m_status == OrderStatus::FILLED);
-      REQUIRE(report.m_last_price == parse_money("10.17"));
+      REQUIRE(report.m_last_price == parse_money("10.02"));
     }
   }
 }
