@@ -122,6 +122,7 @@
 #include "Spire/Ui/TransitionView.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/VenueBox.hpp"
+#include "Spire/Ui/VenueFilterPanel.hpp"
 #include "Spire/Ui/VenueListBox.hpp"
 #include "Spire/Ui/Window.hpp"
 #include "Spire/Ui/WindowHighlight.hpp"
@@ -5265,6 +5266,11 @@ UiProfile Spire::make_venue_box_profile() {
     return box;
   });
   return profile;
+}
+
+UiProfile Spire::make_venue_filter_panel_profile() {
+  return setup_open_filter_panel_profile("VenueFilterPanel",
+    [] { return make_venue_filter_panel(); });
 }
 
 UiProfile Spire::make_venue_list_box_profile() {
