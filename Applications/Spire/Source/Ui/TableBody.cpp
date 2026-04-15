@@ -1673,12 +1673,12 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
       }
       move_element(m_visual_to_logical_columns, operation.m_source,
         operation.m_destination);
-      move_element(m_column_covers, operation.m_source,
-        operation.m_destination);
+      move_element(
+        m_column_covers, operation.m_source, operation.m_destination);
       auto& layout = get_layout();
       for(auto i = 0; i < layout.count(); ++i) {
-        layout.get_row(i).move_column(operation.m_source,
-          operation.m_destination);
+        layout.get_row(i).move_column(
+          operation.m_source, operation.m_destination);
       }
       for(auto& row_cover : m_recycled_rows) {
         row_cover->move_column(operation.m_source, operation.m_destination);
