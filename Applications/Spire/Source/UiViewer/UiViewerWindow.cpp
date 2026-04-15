@@ -229,6 +229,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_tooltip_profile());
   add(make_transition_view_profile());
   add(make_venue_box_profile());
+  add(make_venue_filter_panel_profile());
   add(make_venue_list_box_profile());
   add(make_window_highlight_profile());
   m_widget_list->setCurrentRow(0);
