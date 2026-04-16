@@ -122,6 +122,7 @@ bool Box::event(QEvent* event) {
 
 void Box::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
+  painter.setRenderHint(QPainter::Antialiasing);
   m_painter.paint(painter);
 }
 
