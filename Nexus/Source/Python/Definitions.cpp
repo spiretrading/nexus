@@ -10,6 +10,7 @@
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/ExchangeRate.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
+#include "Nexus/Definitions/FixTags.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
@@ -245,6 +246,7 @@ void Nexus::Python::export_definitions(module& module) {
   export_ticker_info(module);
   export_side(module);
   export_tag(module);
+  export_fix_tags(module);
   export_time_and_sale(module);
   export_time_in_force(module);
   export_trading_schedule(module);
@@ -550,6 +552,20 @@ void Nexus::Python::export_tag(module& module) {
     def(init<int, Tag::Type>()).
     def_property_readonly("key", &Tag::get_key).
     def_property_readonly("value", &Tag::get_value);
+}
+
+void Nexus::Python::export_fix_tags(module& module) {
+  module.attr("EX_DESTINATION_KEY") = EX_DESTINATION_KEY;
+  module.attr("EXEC_INST_KEY") = EXEC_INST_KEY;
+  module.attr("MARKET_PEG") = std::string(MARKET_PEG);
+  module.attr("MAX_FLOOR_KEY") = MAX_FLOOR_KEY;
+  module.attr("MID_PRICE_PEG") = std::string(MID_PRICE_PEG);
+  module.attr("PEG_DIFFERENCE_KEY") = PEG_DIFFERENCE_KEY;
+  module.attr("PRIMARY_PEG") = std::string(PRIMARY_PEG);
+  module.def("make_ex_destination", &make_ex_destination);
+  module.def("make_exec_inst", &make_exec_inst);
+  module.def("make_max_floor", &make_max_floor);
+  module.def("make_peg_difference", &make_peg_difference);
 }
 
 void Nexus::Python::export_time_and_sale(module& module) {
