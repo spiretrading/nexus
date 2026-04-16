@@ -12,14 +12,14 @@ AggregateBookViewModel::AggregateBookViewModel(
   std::shared_ptr<UserOrderListModel> ask_orders,
   std::shared_ptr<PreviewOrderModel> preview_order,
   std::shared_ptr<BboQuoteModel> bbo_quote,
-  std::shared_ptr<TickerTechnicalsModel> technicals)
+  std::shared_ptr<SessionCandlestickModel> session_candlestick)
   : m_bids(std::move(bids)),
     m_asks(std::move(asks)),
     m_bid_orders(std::move(bid_orders)),
     m_ask_orders(std::move(ask_orders)),
     m_preview_order(std::move(preview_order)),
     m_bbo_quote(std::move(bbo_quote)),
-    m_technicals(std::move(technicals)) {}
+    m_session_candlestick(std::move(session_candlestick)) {}
 
 const std::shared_ptr<BookQuoteListModel>&
     AggregateBookViewModel::get_bids() const {
@@ -51,9 +51,9 @@ const std::shared_ptr<BboQuoteModel>&
   return m_bbo_quote;
 }
 
-const std::shared_ptr<TickerTechnicalsModel>&
-    AggregateBookViewModel::get_technicals() const {
-  return m_technicals;
+const std::shared_ptr<SessionCandlestickModel>&
+    AggregateBookViewModel::get_session_candlestick() const {
+  return m_session_candlestick;
 }
 
 std::shared_ptr<AggregateBookViewModel>
@@ -65,5 +65,5 @@ std::shared_ptr<AggregateBookViewModel>
     std::make_shared<ArrayListModel<AggregateBookViewModel::UserOrder>>(),
     std::make_shared<LocalValueModel<optional<OrderFields>>>(),
     std::make_shared<LocalBboQuoteModel>(),
-    std::make_shared<LocalTickerTechnicalsModel>());
+    std::make_shared<LocalSessionCandlestickModel>());
 }

@@ -83,6 +83,12 @@ namespace Nexus::Python {
   void export_exchange_rate_table(pybind11::module& module);
 
   /**
+   * Exports the FIX tag constants and factory functions.
+   * @param module The module to export to.
+   */
+  void export_fix_tags(pybind11::module& module);
+
+  /**
    * Exports the Money class.
    * @param module The module to export to.
    */
@@ -141,12 +147,6 @@ namespace Nexus::Python {
    * @param module The module to export to.
    */
   void export_ticker_info(pybind11::module& module);
-
-  /**
-   * Exports the TickerTechnicals class.
-   * @param module The module to export to.
-   */
-  void export_ticker_technicals(pybind11::module& module);
 
   /**
    * Exports the Side enum.

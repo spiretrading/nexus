@@ -46,7 +46,6 @@ namespace Nexus {
    * Returns a RiskPortfolio from an InventorySnapshot.
    * @param snapshot The InventorySnapshot used to build the portfolio.
    * @param account The account the portfolio represents.
-   * @param venues The available venues.
    * @param client The OrderExecutionClient to query.
    * @return A triple consisting of the portfolio that was built, the Order
    *         query sequence that the portfolio is valid up to for the specified
@@ -55,7 +54,7 @@ namespace Nexus {
   std::tuple<RiskPortfolio, Beam::Sequence,
       std::vector<std::shared_ptr<Order>>> make_portfolio(
         const InventorySnapshot& snapshot, const Beam::DirectoryEntry& account,
-        VenueDatabase venues, IsOrderExecutionClient auto& client) {
+        IsOrderExecutionClient auto& client) {
     auto excluded_orders =
       load_orders(account, snapshot.m_excluded_orders, client);
     auto trailing_order_query = AccountQuery();
@@ -71,8 +70,8 @@ namespace Nexus {
       excluded_orders.push_back(order.get_value());
       sequence = std::max(sequence, order.get_sequence());
     });
-    auto portfolio = RiskPortfolio(
-      RiskPortfolio::Bookkeeper(snapshot.m_inventories), std::move(venues));
+    auto portfolio =
+      RiskPortfolio(RiskPortfolio::Bookkeeper(snapshot.m_inventories));
     return {std::move(portfolio), sequence, std::move(excluded_orders)};
   }
 }

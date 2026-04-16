@@ -20,7 +20,7 @@ namespace Spire {
        * @param ask_orders The list of ask orders.
        * @param preview_order The preview order model.
        * @param bbo_quote The BBO quote model.
-       * @param technicals The ticker technicals model.
+       * @param session_candlestick The session candlestick model.
        */
       AggregateBookViewModel(std::shared_ptr<BookQuoteListModel> bids,
         std::shared_ptr<BookQuoteListModel> asks,
@@ -28,7 +28,7 @@ namespace Spire {
         std::shared_ptr<UserOrderListModel> ask_orders,
         std::shared_ptr<PreviewOrderModel> preview_order,
         std::shared_ptr<BboQuoteModel> bbo_quote,
-        std::shared_ptr<TickerTechnicalsModel> technicals);
+        std::shared_ptr<SessionCandlestickModel> session_candlestick);
 
       const std::shared_ptr<BookQuoteListModel>& get_bids() const override;
 
@@ -45,8 +45,8 @@ namespace Spire {
 
       const std::shared_ptr<BboQuoteModel>& get_bbo_quote() const override;
 
-      const std::shared_ptr<TickerTechnicalsModel>&
-        get_technicals() const override;
+      const std::shared_ptr<SessionCandlestickModel>&
+        get_session_candlestick() const override;
 
     private:
       std::shared_ptr<BookQuoteListModel> m_bids;
@@ -55,7 +55,7 @@ namespace Spire {
       std::shared_ptr<UserOrderListModel> m_ask_orders;
       std::shared_ptr<PreviewOrderModel> m_preview_order;
       std::shared_ptr<BboQuoteModel> m_bbo_quote;
-      std::shared_ptr<TickerTechnicalsModel> m_technicals;
+      std::shared_ptr<SessionCandlestickModel> m_session_candlestick;
   };
 
   /**

@@ -10,6 +10,7 @@
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/ExchangeRate.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
+#include "Nexus/Definitions/FixTags.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
@@ -22,7 +23,6 @@
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/TickerInfo.hpp"
-#include "Nexus/Definitions/TickerTechnicals.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Nexus/Definitions/TradingSchedule.hpp"
@@ -244,9 +244,9 @@ void Nexus::Python::export_definitions(module& module) {
   export_scope_map(module);
   export_ticker(module);
   export_ticker_info(module);
-  export_ticker_technicals(module);
   export_side(module);
   export_tag(module);
+  export_fix_tags(module);
   export_time_and_sale(module);
   export_time_in_force(module);
   export_trading_schedule(module);
@@ -495,15 +495,14 @@ void Nexus::Python::export_scope_map(module& module) {
     def(init<object>()).
     def(init<std::string, object>()).
     def_property_readonly("size", &PythonScopeMap::get_size).
-    def("get", static_cast<
-      const object& (PythonScopeMap::*)(const Scope&) const>(
-        &PythonScopeMap::get), return_value_policy::reference_internal).
-    def("get", static_cast<object& (PythonScopeMap::*)(const Scope&)>(
-      &PythonScopeMap::get), return_value_policy::reference_internal).
+    def("get", overload_cast<const Scope&>(&PythonScopeMap::get, const_),
+      return_value_policy::reference_internal).
+    def("get", overload_cast<const Scope&>(&PythonScopeMap::get),
+      return_value_policy::reference_internal).
     def("set", &PythonScopeMap::set).
     def("erase", &PythonScopeMap::erase).
-    def("__getitem__", static_cast<const object& (PythonScopeMap::*)(
-      const Scope&) const>(&PythonScopeMap::get),
+    def("__getitem__",
+      overload_cast<const Scope&>(&PythonScopeMap::get, const_),
       return_value_policy::reference_internal).
     def("__setitem__", &PythonScopeMap::set).
     def("__delitem__", &PythonScopeMap::erase).
@@ -535,26 +534,17 @@ void Nexus::Python::export_ticker_info(module& module) {
     def_readwrite("board_lot", &TickerInfo::m_board_lot);
 }
 
-void Nexus::Python::export_ticker_technicals(module& module) {
-  export_default_methods(class_<TickerTechnicals>(module, "TickerTechnicals")).
-    def_readwrite("volume", &TickerTechnicals::m_volume).
-    def_readwrite("high", &TickerTechnicals::m_high).
-    def_readwrite("low", &TickerTechnicals::m_low).
-    def_readwrite("open", &TickerTechnicals::m_open).
-    def_readwrite("close", &TickerTechnicals::m_close);
-}
-
 void Nexus::Python::export_side(module& module) {
   enum_<Side::Type>(module, "Side").
     value("NONE", Side::NONE).
     value("ASK", Side::ASK).
     value("BID", Side::BID);
-  module.def("pick", static_cast<
-    const object& (*)(Side, const object&, const object&)>(&pick<object>));
+  module.def(
+    "pick", overload_cast<Side, const object&, const object&>(&pick<object>));
   module.def("direction", &get_direction);
   module.def("side", &get_side);
   module.def("opposite", &get_opposite);
-  module.def("to_char", static_cast<char (*)(Side)>(&to_char));
+  module.def("to_char", overload_cast<Side>(&to_char));
 }
 
 void Nexus::Python::export_tag(module& module) {
@@ -562,6 +552,20 @@ void Nexus::Python::export_tag(module& module) {
     def(init<int, Tag::Type>()).
     def_property_readonly("key", &Tag::get_key).
     def_property_readonly("value", &Tag::get_value);
+}
+
+void Nexus::Python::export_fix_tags(module& module) {
+  module.attr("EX_DESTINATION_KEY") = EX_DESTINATION_KEY;
+  module.attr("EXEC_INST_KEY") = EXEC_INST_KEY;
+  module.attr("MARKET_PEG") = std::string(MARKET_PEG);
+  module.attr("MAX_FLOOR_KEY") = MAX_FLOOR_KEY;
+  module.attr("MID_PRICE_PEG") = std::string(MID_PRICE_PEG);
+  module.attr("PEG_DIFFERENCE_KEY") = PEG_DIFFERENCE_KEY;
+  module.attr("PRIMARY_PEG") = std::string(PRIMARY_PEG);
+  module.def("make_ex_destination", &make_ex_destination);
+  module.def("make_exec_inst", &make_exec_inst);
+  module.def("make_max_floor", &make_max_floor);
+  module.def("make_peg_difference", &make_peg_difference);
 }
 
 void Nexus::Python::export_time_and_sale(module& module) {

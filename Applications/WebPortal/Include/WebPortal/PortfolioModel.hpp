@@ -66,15 +66,15 @@ namespace Nexus {
       std::unordered_map<Ticker, std::vector<std::shared_ptr<Entry>>>
         m_ticker_to_entries;
       Beam::QueueWriterPublisher<Entry> m_publisher;
-      std::unordered_map<Ticker, TickerValuation> m_valuations;
+      std::unordered_map<Ticker, Valuation> m_valuations;
       Beam::RoutineTaskQueue m_tasks;
 
       PortfolioModel(const PortfolioModel&) = delete;
       PortfolioModel& operator=(const PortfolioModel&) = delete;
       void on_risk_portfolio_inventory_update(
         const RiskInventoryEntry& inventory);
-      void on_bbo_quote(const Ticker& ticker, TickerValuation& valuation,
-        const BboQuote& quote);
+      void on_bbo_quote(
+        const Ticker& ticker, Valuation& valuation, const BboQuote& quote);
   };
 }
 

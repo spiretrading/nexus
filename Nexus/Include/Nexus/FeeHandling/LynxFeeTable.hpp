@@ -77,7 +77,7 @@ namespace Nexus {
    */
   inline bool is_lynx_midpoint_order(const OrderFields& fields) {
     return fields.m_type == OrderType::PEGGED &&
-      has_field(fields, Tag(18, "M"));
+      has_field(fields, make_exec_inst("M"));
   }
 
   /**

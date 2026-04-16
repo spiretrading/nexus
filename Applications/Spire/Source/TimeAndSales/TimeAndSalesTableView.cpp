@@ -35,7 +35,6 @@ namespace {
     add_item(QObject::tr("Condition"), QObject::tr("Cond"));
     add_item(QObject::tr("Buyer"), QObject::tr("Buy"));
     add_item(QObject::tr("Seller"), QObject::tr("Sell"));
-    add_item("", "");
     return model;
   }
 

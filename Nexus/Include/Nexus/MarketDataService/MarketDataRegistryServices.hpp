@@ -6,10 +6,10 @@
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
 #include "Nexus/Definitions/TickerInfo.hpp"
-#include "Nexus/Definitions/TickerTechnicals.hpp"
 #include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Nexus/MarketDataService/TickerSnapshot.hpp"
 #include "Nexus/MarketDataService/VenueQuery.hpp"
+#include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
 
 namespace Nexus {
   using OrderImbalanceQueryResult = Beam::QueryResult<SequencedOrderImbalance>;
@@ -71,13 +71,13 @@ namespace Nexus {
       (Ticker, ticker)),
 
     /**
-     * Loads the TickerTechnicals for a specified Ticker.
-     * @param ticker The Ticker whose TickerTechnicals is to be loaded.
-     * @return The TickerTechnicals for the specified <i>ticker</i>.
+     * Loads the session candlestick for a specified Ticker.
+     * @param ticker The Ticker whose session candlestick is to be loaded.
+     * @return The PriceCandlestick for the specified <i>ticker</i>.
      */
-    (LoadTickerTechnicalsService,
-      "Nexus.MarketDataService.LoadTickerTechnicalsService",
-      TickerTechnicals, (Ticker, ticker)),
+    (LoadSessionCandlestickService,
+      "Nexus.MarketDataService.LoadSessionCandlestickService", PriceCandlestick,
+      (Ticker, ticker)),
 
     /**
      * Queries for all TickerInfo objects that are within a scope.

@@ -34,12 +34,12 @@ const RecordType& Spire::GetPortfolioEntryRecordType() {
 
 Record PortfolioEntryToRecordConverter::operator ()(
     const PortfolioUpdateEntry& value) const {
-  return Record({value.m_ticker_inventory.m_position.m_ticker,
-    value.m_ticker_inventory.m_position.m_currency,
-    get_side(value.m_ticker_inventory.m_position),
-    abs(value.m_ticker_inventory.m_position.m_quantity),
-    value.m_ticker_inventory.m_position.m_cost_basis,
-    value.m_ticker_inventory.m_gross_profit_and_loss,
-    value.m_ticker_inventory.m_fees, value.m_ticker_inventory.m_volume,
-    static_cast<Quantity>(value.m_ticker_inventory.m_transaction_count)});
+  return Record({value.m_inventory.m_position.m_ticker,
+    value.m_inventory.m_position.m_currency,
+    get_side(value.m_inventory.m_position),
+    abs(value.m_inventory.m_position.m_quantity),
+    value.m_inventory.m_position.m_cost_basis,
+    value.m_inventory.m_gross_profit_and_loss,
+    value.m_inventory.m_fees, value.m_inventory.m_volume,
+    static_cast<Quantity>(value.m_inventory.m_transaction_count)});
 }

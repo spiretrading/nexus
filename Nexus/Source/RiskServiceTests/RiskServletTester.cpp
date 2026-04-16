@@ -83,8 +83,7 @@ namespace {
         init(m_accounts_queue, *m_administration_client, *m_market_data_client,
           *m_service_order_execution_client,
           factory<std::unique_ptr<TriggerTimer>>(), &m_time_client,
-          &m_data_store, m_exchange_rates, DEFAULT_VENUES,
-          DEFAULT_DESTINATIONS)),
+          &m_data_store, m_exchange_rates, DEFAULT_DESTINATIONS)),
         m_server_connection, factory<std::unique_ptr<TriggerTimer>>());
       m_order_execution_environment.get_driver().as<
         MockOrderExecutionDriver>().get_publisher().monitor(
