@@ -13,31 +13,6 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
-struct TickerBox::TickerQueryModel : QueryModel<Ticker> {
-  std::shared_ptr<TickerInfoQueryModel> m_source;
-
-  explicit TickerQueryModel(std::shared_ptr<TickerInfoQueryModel> source)
-    : m_source(std::move(source)) {}
-
-  optional<Ticker> parse(const QString& query) override {
-    if(auto value = m_source->parse(query.toUpper())) {
-      return value->m_ticker;
-    }
-    return none;
-  }
-
-  QtPromise<std::vector<Ticker>> submit(const QString& query) override {
-    return m_source->submit(query.toUpper()).then(
-      [] (std::vector<TickerInfo> matches) {
-        auto tickers = std::unordered_set<Ticker>();
-        for(auto& match : matches) {
-          tickers.insert(match.m_ticker);
-        }
-        return std::vector<Ticker>(tickers.begin(), tickers.end());
-      });
-  }
-};
-
 TickerBox::TickerBox(
   std::shared_ptr<TickerInfoQueryModel> tickers, QWidget* parent)
   : TickerBox(
@@ -46,12 +21,13 @@ TickerBox::TickerBox(
 TickerBox::TickerBox(std::shared_ptr<TickerInfoQueryModel> tickers,
     std::shared_ptr<CurrentModel> current, QWidget* parent)
     : QWidget(parent),
-      m_tickers(std::make_shared<TickerQueryModel>(std::move(tickers))),
+      m_tickers(
+        std::make_shared<TickerInfoToTickerQueryModel>(std::move(tickers))),
       m_current(std::move(current)) {
   m_combo_box = new ComboBox(m_tickers, m_current,
     [=] (const auto& list, auto index) {
       return new TickerListItem(
-        *m_tickers->m_source->parse(to_text(list->get(index))));
+        *m_tickers->get_source()->parse(to_text(list->get(index))));
     });
   enclose(*this, *m_combo_box);
   proxy_style(*this, *m_combo_box);
@@ -59,7 +35,7 @@ TickerBox::TickerBox(std::shared_ptr<TickerInfoQueryModel> tickers,
 }
 
 const std::shared_ptr<TickerInfoQueryModel>& TickerBox::get_tickers() const {
-  return m_tickers->m_source;
+  return m_tickers->get_source();
 }
 
 const std::shared_ptr<TickerBox::CurrentModel>& TickerBox::get_current() const {

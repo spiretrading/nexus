@@ -61,7 +61,7 @@ namespace {
   auto make_midpoint_order_fields(Money price, Quantity quantity) {
     auto fields = make_order_fields(TST, price, quantity);
     fields.m_type = OrderType::PEGGED;
-    fields.m_additional_fields.emplace_back(18, "M");
+    fields.m_additional_fields.push_back(make_exec_inst(MID_PRICE_PEG));
     return fields;
   }
 

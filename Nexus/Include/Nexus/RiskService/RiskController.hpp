@@ -199,7 +199,10 @@ namespace Nexus {
     m_transition_timer->get_publisher().monitor(
       m_tasks.get_slot<Beam::Timer::Result>(
         std::bind_front(&RiskController::on_transition_timer, this)));
-    m_transition_timer->start();
+    if(m_state_model->get_risk_state().m_type ==
+        RiskState::Type::CLOSE_ORDERS) {
+      m_transition_timer->start();
+    }
     m_state_publisher.push(m_state_model->get_risk_state());
   }
 
@@ -300,6 +303,11 @@ namespace Nexus {
     if(previous_state != current_state) {
       m_transition_model->update(current_state);
       m_state_publisher.push(current_state);
+      if(current_state.m_type == RiskState::Type::CLOSE_ORDERS) {
+        m_transition_timer->start();
+      } else {
+        m_transition_timer->cancel();
+      }
     }
   }
 
@@ -314,8 +322,11 @@ namespace Nexus {
       Beam::Timer::Result result) {
     update([&] {
       m_state_model->update_time();
+      if(m_state_model->get_risk_state().m_type ==
+          RiskState::Type::CLOSE_ORDERS) {
+        m_transition_timer->start();
+      }
     });
-    m_transition_timer->start();
   }
 
   template<typename A, typename M, typename O, typename R, typename T,
