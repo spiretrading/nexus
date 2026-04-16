@@ -245,8 +245,8 @@ TEST_SUITE("TickerOrderSimulator") {
       fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
         Ref(fixture.m_environment.get_time_environment())));
     auto info = OrderInfo();
-    info.m_fields = make_market_pegged_order_fields(
-      ABX, Side::ASK, 100, Money::ZERO, Money::ZERO);
+    info.m_fields = make_pegged_order_fields(
+      ABX, Side::ASK, 100, Money::ZERO, Money::ZERO, PegType::MARKET);
     info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);
@@ -272,8 +272,9 @@ TEST_SUITE("TickerOrderSimulator") {
       fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
         Ref(fixture.m_environment.get_time_environment())));
     auto info = OrderInfo();
-    info.m_fields = make_market_pegged_order_fields(
-      ABX, Side::BID, 100, Money::ZERO, parse_money("0.03"));
+    info.m_fields = make_pegged_order_fields(
+      ABX, Side::BID, 100, Money::ZERO, parse_money("0.03"),
+      PegType::MARKET);
     info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);
@@ -311,7 +312,7 @@ TEST_SUITE("TickerOrderSimulator") {
     info.m_fields = OrderFields(
       {}, ABX, CurrencyId::NONE, OrderType::PEGGED, Side::ASK, {}, 100,
       Money::ZERO, TimeInForce(TimeInForce::Type::DAY),
-      {Tag(18, std::string(1, 'M'))});
+      {make_exec_inst(MID_PRICE_PEG)});
     info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);
@@ -369,8 +370,8 @@ TEST_SUITE("TickerOrderSimulator") {
     info.m_fields = OrderFields(
       {}, ABX, CurrencyId::NONE, OrderType::PEGGED, Side::BID, {}, 100,
       Money::ZERO, TimeInForce(TimeInForce::Type::DAY),
-      {Tag(18, std::string(1, 'M')),
-       Tag(211, parse_money("0.02"))});
+      {make_exec_inst(MID_PRICE_PEG),
+       make_peg_difference(parse_money("0.02"))});
     info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);

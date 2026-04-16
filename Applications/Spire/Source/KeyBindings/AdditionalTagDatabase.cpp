@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
+#include "Nexus/Definitions/FixTags.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/KeyBindings/BasicAdditionalTagSchema.hpp"
 #include "Spire/KeyBindings/EnumAdditionalTagSchema.hpp"
@@ -25,7 +26,7 @@ namespace {
     model.m_tag.m_description =
       "Amount (signed) added to the price of the peg for a pegged order.";
     auto schema  = std::make_shared<BasicAdditionalTagSchema>(
-      std::move(model), 211, MoneyType::GetInstance());
+      std::move(model), PEG_DIFFERENCE_KEY, MoneyType::GetInstance());
     return schema;
   }
 
@@ -41,8 +42,8 @@ namespace {
       "R", "Primary peg (primary market - buy at bid/sell at offer)");
     model.m_tag.m_arguments.emplace_back("P", "Market peg");
     sort(model.m_tag.m_arguments);
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
     return schema;
   }
 
@@ -113,8 +114,8 @@ namespace {
       "Ping CHI-X Dark/CX2/CHIC, MATN, TSX mid-point, split residual between "
       "CHI-X Dark and MATN.");
     sort(model.m_tag.m_arguments);
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 100);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EX_DESTINATION_KEY);
     return schema;
   }
 
@@ -131,8 +132,8 @@ namespace {
     model.m_tag.m_arguments.emplace_back(
       "x", "Minimum Price Improvement (CXD Only)");
     model.m_tag.m_arguments.emplace_back("f", "CSO (Not supported on CXD)");
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
     return schema;
   }
 
@@ -151,8 +152,8 @@ namespace {
       "Ping CHI-X Dark/CX2/CHIC & MATN mid-point. Spray all protected markets. "
       "Post on TSX. Dynamic re-spray.");
     sort(model.m_tag.m_arguments);
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 100);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EX_DESTINATION_KEY);
     return schema;
   }
 
@@ -187,8 +188,8 @@ namespace {
     model.m_tag.m_arguments.emplace_back("P", "Market peg");
     model.m_tag.m_arguments.emplace_back("9", "Post on bid");
     model.m_tag.m_arguments.emplace_back("0", "Post on offer");
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
     return schema;
   }
 
@@ -209,8 +210,8 @@ namespace {
       "PNBBO midpoint or minimum improvement from the PNBBO.");
     model.m_tag.m_arguments.emplace_back(
       "B", "Trade at any eligible price within the PNBBO.");
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
     return schema;
   }
 
@@ -232,8 +233,8 @@ namespace {
     model.m_tag.m_description = "Specifies the NEO book to route to.";
     model.m_tag.m_arguments.emplace_back("L", "Route to the lit book.");
     model.m_tag.m_arguments.emplace_back("N", "Route to the NEOE book.");
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 100);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EX_DESTINATION_KEY);
     return schema;
   }
 
@@ -248,8 +249,8 @@ namespace {
     model.m_tag.m_arguments.emplace_back(
       "100", "Re-price (resting orders only).");
     model.m_tag.m_arguments.emplace_back("x", "Minimum price improvement");
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
     return schema;
   }
 
@@ -271,8 +272,8 @@ namespace {
     model.m_tag.m_arguments.emplace_back(
       "SMRTXOPG-X2", "Ping CX2 and CHIC before posting to TSX.");
     sort(model.m_tag.m_arguments);
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 100);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EX_DESTINATION_KEY);
     return schema;
   }
 
