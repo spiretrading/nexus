@@ -60,7 +60,7 @@ namespace Spire {
 
     private:
       struct PeggedOrderEntry {
-        char m_exec_inst;
+        std::string m_exec_inst;
         Nexus::Money m_peg_difference;
         Nexus::Money m_effective_price;
       };
