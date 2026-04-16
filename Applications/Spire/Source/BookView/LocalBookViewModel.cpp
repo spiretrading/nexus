@@ -1,8 +1,7 @@
 #include "Spire/BookView/LocalBookViewModel.hpp"
 #include <ranges>
 #include <sstream>
-#include <quickfix/FixFields.h>
-#include <quickfix/FixValues.h>
+#include "Nexus/Definitions/FixTags.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ReversedListModel.hpp"
 
@@ -194,24 +193,22 @@ void LocalBookViewModel::transact(const std::function<void ()>& f) {
 void LocalBookViewModel::submit_pegged(const Order& order) {
   auto& fields = order.get_info().m_fields;
   auto entry = PeggedOrderEntry();
-  entry.m_exec_inst = FIX::ExecInst_PRIMARY_PEG;
-  if(auto tag = find_field(fields, FIX::FIELD::ExecInst)) {
+  entry.m_exec_inst = PRIMARY_PEG;
+  if(auto tag = find_field(fields, EXEC_INST_KEY)) {
     if(auto* value = boost::get<std::string>(&tag->get_value())) {
       auto stream = std::istringstream(*value);
       auto token = std::string();
       while(stream >> token) {
-        if(token.size() == 1 &&
-            (token[0] == FIX::ExecInst_PRIMARY_PEG ||
-              token[0] == FIX::ExecInst_MARKET_PEG ||
-              token[0] == FIX::ExecInst_MID_PRICE_PEG)) {
-          entry.m_exec_inst = token[0];
+        if(token == PRIMARY_PEG || token == MARKET_PEG ||
+            token == MID_PRICE_PEG) {
+          entry.m_exec_inst = token;
           break;
         }
       }
     }
   }
   entry.m_peg_difference = Money::ZERO;
-  if(auto tag = find_field(fields, FIX::FIELD::PegDifference)) {
+  if(auto tag = find_field(fields, PEG_DIFFERENCE_KEY)) {
     if(auto* money = boost::get<Money>(&tag->get_value())) {
       entry.m_peg_difference = *money;
     }
@@ -222,9 +219,9 @@ void LocalBookViewModel::submit_pegged(const Order& order) {
     std::pair(bbo.m_ask.m_price, bbo.m_bid.m_price),
     std::pair(bbo.m_bid.m_price, bbo.m_ask.m_price));
   entry.m_effective_price = [&] {
-    if(entry.m_exec_inst == FIX::ExecInst_MARKET_PEG) {
+    if(entry.m_exec_inst == MARKET_PEG) {
       return opposite_price;
-    } else if(entry.m_exec_inst == FIX::ExecInst_MID_PRICE_PEG) {
+    } else if(entry.m_exec_inst == MID_PRICE_PEG) {
       return (same_price + opposite_price) / 2;
     }
     return same_price;
@@ -253,9 +250,9 @@ void LocalBookViewModel::update_pegged_orders() {
         std::pair(bbo.m_ask.m_price, bbo.m_bid.m_price),
         std::pair(bbo.m_bid.m_price, bbo.m_ask.m_price));
       auto candidate = [&] {
-        if(entry.m_exec_inst == FIX::ExecInst_MARKET_PEG) {
+        if(entry.m_exec_inst == MARKET_PEG) {
           return opposite_price;
-        } else if(entry.m_exec_inst == FIX::ExecInst_MID_PRICE_PEG) {
+        } else if(entry.m_exec_inst == MID_PRICE_PEG) {
           return (same_price + opposite_price) / 2;
         }
         return same_price;
