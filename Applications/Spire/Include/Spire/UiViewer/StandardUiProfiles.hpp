@@ -245,6 +245,9 @@ namespace Spire {
   /** Returns a UiProfile for the SplitView. */
   UiProfile make_split_view_profile();
 
+  /** Returns a UiProfile for the SwitchButton. */
+  UiProfile make_switch_button_profile();
+
   /** Returns a UiProfile for the TabView. */
   UiProfile make_tab_view_profile();
 
