@@ -82,6 +82,7 @@
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/PercentBox.hpp"
 #include "Spire/Ui/PopupBox.hpp"
+#include "Spire/Ui/PositionSideBox.hpp"
 #include "Spire/Ui/ProgressBar.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/ScopeBox.hpp"
@@ -534,8 +535,9 @@ namespace {
     return panel;
   }
 
-  template<typename B, typename B* (*F)(QWidget*)>
-  auto setup_enum_box_profile(UiProfile& profile) {
+  template<typename B, typename B* (*F)(QWidget*), typename... Converters>
+  auto setup_enum_box_profile(UiProfile& profile,
+      const Converters&... converters) {
     using Type = B::Type;
     auto box = F(nullptr);
     box->setFixedWidth(scale_width(150));
@@ -548,7 +550,8 @@ namespace {
     read_only.connect_changed_signal([=] (auto is_read_only) {
       box->set_read_only(is_read_only);
     });
-    box->connect_submit_signal(profile.make_event_slot<std::any>("Submit"));
+    box->connect_submit_signal(
+      profile.make_event_slot<std::any>("Submit", converters...));
     return box;
   }
 
@@ -3628,6 +3631,23 @@ UiProfile Spire::make_popup_box_profile() {
     });
     return parent;
   });
+  return profile;
+}
+
+UiProfile Spire::make_position_side_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_property = define_enum<Side>(
+    {{"Long", Side::BID}, {"Short", Side::ASK}, {"Flat", Side::NONE}});
+  populate_enum_properties(properties, "current", current_property);
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("PositionSideBox", properties,
+    [] (auto& profile) {
+      return setup_enum_box_profile<SideBox, make_position_side_box>(
+        profile, [] (const std::any& value) {
+          return PositionSideToken(std::any_cast<Side>(value));
+        });
+    });
   return profile;
 }
 
