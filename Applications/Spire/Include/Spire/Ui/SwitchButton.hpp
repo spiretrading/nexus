@@ -3,6 +3,7 @@
 #include <boost/optional/optional.hpp>
 #include "Spire/Styles/PeriodicEvaluator.hpp"
 #include "Spire/Ui/CheckBox.hpp"
+#include "Spire/Ui/FocusObserver.hpp"
 
 namespace Spire {
   class Box;
@@ -53,13 +54,15 @@ namespace Spire {
       boost::optional<Styles::PeriodicEvaluator<int>> m_switch_pos_evaluator;
       boost::optional<Styles::PeriodicEvaluator<QColor>>
         m_track_color_evaluator;
+      boost::optional<FocusObserver> m_focus_observer;
       boost::signals2::scoped_connection m_connection;
 
       int get_switch_position(bool checked) const;
       void animate_switch_position(bool checked);
-      void animate_track_color(bool checked);
+      void animate_track_color(const QColor& target);
       void on_click();
       void on_current(bool current);
+      void on_focus(FocusObserver::State state);
   };
 }
 

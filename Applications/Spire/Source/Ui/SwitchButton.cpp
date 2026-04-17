@@ -16,8 +16,7 @@ namespace {
   using Track = StateSelector<void, struct TrackTag>;
 
   const auto ANIMATION_DURATION_MS = 200;
-  const auto CHECKED_BACKGROUND_COLOR = QColor(0x4B23A0);
-  const auto UNCHECKED_BACKGROUND_COLOR = QColor(0x808080);
+  const auto UNCHECKED_TRACK_COLOR = QColor(0xA0A0A0);
 
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
@@ -25,7 +24,7 @@ namespace {
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(border_size(0));
     style.get(Any() > Track()).
-      set(BackgroundColor(UNCHECKED_BACKGROUND_COLOR)).
+      set(BackgroundColor(UNCHECKED_TRACK_COLOR)).
       set(border_size(0)).
       set(border_radius(scale_width(6))).
       set(horizontal_padding(scale_width(2))).
@@ -39,11 +38,15 @@ namespace {
     return style;
   }
 
-  auto get_track_color(bool checked) {
-    if(checked) {
-      return CHECKED_BACKGROUND_COLOR;
+  auto get_track_color(bool checked, bool is_focus_visible) {
+    if(checked && is_focus_visible) {
+      return QColor(0x4B23A0);
+    } else if(checked) {
+      return QColor(0x684BC7);
+    } else if(is_focus_visible) {
+      return QColor(0x808080);
     }
-    return UNCHECKED_BACKGROUND_COLOR;
+    return UNCHECKED_TRACK_COLOR;
   }
 
   void set_track_color(SwitchButton& switch_button, const QColor& color) {
@@ -63,7 +66,6 @@ SwitchButton::SwitchButton(
       m_is_layout_done(false) {
   auto track_body = new QWidget();
   track_body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  track_body->setAttribute(Qt::WA_TranslucentBackground);
   m_track = new Box(track_body);
   match(*m_track, Track());
   link(*this, *m_track);
@@ -78,6 +80,9 @@ SwitchButton::SwitchButton(
   setFocusProxy(button);
   m_switch->move(get_switch_position(m_current->get()), 0);
   m_switch->show();
+  m_focus_observer.emplace(*button);
+  m_focus_observer->connect_state_signal(
+    std::bind_front(&SwitchButton::on_focus, this));
   button->connect_click_signal(
     std::bind_front(&SwitchButton::on_click, this));
   m_connection = m_current->connect_update_signal(
@@ -99,7 +104,8 @@ void SwitchButton::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
     m_track_color_evaluator = boost::none;
     if(isEnabled()) {
-      set_track_color(*this, get_track_color(m_current->get()));
+      set_track_color(*this, get_track_color(m_current->get(),
+        m_focus_observer->get_state() == FocusObserver::State::FOCUS_VISIBLE));
     }
   }
   QWidget::changeEvent(event);
@@ -143,7 +149,7 @@ void SwitchButton::animate_switch_position(bool checked) {
     });
 }
 
-void SwitchButton::animate_track_color(bool checked) {
+void SwitchButton::animate_track_color(const QColor& target) {
   if(!isEnabled()) {
     m_track_color_evaluator = boost::none;
     return;
@@ -155,9 +161,11 @@ void SwitchButton::animate_track_color(bool checked) {
         return property.as<QColor>();
       }
     }
-    return UNCHECKED_BACKGROUND_COLOR;
+    return UNCHECKED_TRACK_COLOR;
   }();
-  auto target = get_track_color(checked);
+  if(start == target) {
+    return;
+  }
   m_track_color_evaluator.emplace(
     make_evaluator(ease(start, target, milliseconds(ANIMATION_DURATION_MS)),
       find_stylist(*this)));
@@ -181,6 +189,12 @@ void SwitchButton::on_current(bool current) {
   } else {
     unmatch(*this, Checked());
   }
-  animate_track_color(current);
+  animate_track_color(get_track_color(current,
+    m_focus_observer->get_state() == FocusObserver::State::FOCUS_VISIBLE));
   animate_switch_position(current);
+}
+
+void SwitchButton::on_focus(FocusObserver::State state) {
+  animate_track_color(get_track_color(m_current->get(),
+    state == FocusObserver::State::FOCUS_VISIBLE));
 }
