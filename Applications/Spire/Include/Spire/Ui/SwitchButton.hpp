@@ -44,6 +44,7 @@ namespace Spire {
     protected:
       void changeEvent(QEvent* event) override;
       bool eventFilter(QObject* watched, QEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       mutable SubmitSignal m_submit_signal;
@@ -57,6 +58,7 @@ namespace Spire {
       boost::optional<FocusObserver> m_focus_observer;
       boost::signals2::scoped_connection m_connection;
 
+      bool is_focus_visible() const;
       int get_switch_position(bool checked) const;
       void animate_switch_position(bool checked);
       void animate_track_color(const QColor& target);

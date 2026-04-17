@@ -1,5 +1,5 @@
 #include "Spire/Ui/SwitchButton.hpp"
-#include <QEvent>
+#include <QResizeEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Styles/CubicBezierExpression.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -17,6 +17,11 @@ namespace {
 
   const auto ANIMATION_DURATION_MS = 200;
   const auto UNCHECKED_TRACK_COLOR = QColor(0xA0A0A0);
+
+  auto SWITCH_BUTTON_SIZE() {
+    static auto size = scale(24, 12);
+    return size;
+  }
 
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
@@ -69,7 +74,6 @@ SwitchButton::SwitchButton(
   m_track = new Box(track_body);
   match(*m_track, Track());
   link(*this, *m_track);
-  m_track->setFixedSize(scale(24, 12));
   m_switch = new Box(nullptr, track_body);
   match(*m_switch, Switch());
   link(*this, *m_switch);
@@ -89,6 +93,7 @@ SwitchButton::SwitchButton(
     std::bind_front(&SwitchButton::on_current, this));
   track_body->installEventFilter(this);
   on_current(m_current->get());
+  setFixedSize(SWITCH_BUTTON_SIZE());
 }
 
 const std::shared_ptr<BooleanModel>& SwitchButton::get_current() const {
@@ -104,8 +109,8 @@ void SwitchButton::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
     m_track_color_evaluator = boost::none;
     if(isEnabled()) {
-      set_track_color(*this, get_track_color(m_current->get(),
-        m_focus_observer->get_state() == FocusObserver::State::FOCUS_VISIBLE));
+      set_track_color(*this,
+        get_track_color(m_current->get(), is_focus_visible()));
     }
   }
   QWidget::changeEvent(event);
@@ -126,6 +131,17 @@ bool SwitchButton::eventFilter(QObject* watched, QEvent* event) {
     }
   }
   return QWidget::eventFilter(watched, event);
+}
+
+bool SwitchButton::is_focus_visible() const {
+  return m_focus_observer->get_state() == FocusObserver::State::FOCUS_VISIBLE;
+}
+
+void SwitchButton::resizeEvent(QResizeEvent* event) {
+  if(event->size() != SWITCH_BUTTON_SIZE()) {
+    setFixedSize(SWITCH_BUTTON_SIZE());
+  }
+  QWidget::resizeEvent(event);
 }
 
 int SwitchButton::get_switch_position(bool checked) const {
@@ -189,12 +205,10 @@ void SwitchButton::on_current(bool current) {
   } else {
     unmatch(*this, Checked());
   }
-  animate_track_color(get_track_color(current,
-    m_focus_observer->get_state() == FocusObserver::State::FOCUS_VISIBLE));
+  animate_track_color(get_track_color(current, is_focus_visible()));
   animate_switch_position(current);
 }
 
 void SwitchButton::on_focus(FocusObserver::State state) {
-  animate_track_color(get_track_color(m_current->get(),
-    state == FocusObserver::State::FOCUS_VISIBLE));
+  animate_track_color(get_track_color(m_current->get(), is_focus_visible()));
 }
