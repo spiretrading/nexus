@@ -182,6 +182,9 @@ namespace Spire {
   /** Returns a UiProfile for the OrderFieldInfoTip. */
   UiProfile make_order_field_info_tip_profile();
 
+  /** Returns a UiProfile for the OrderStatusBox. */
+  UiProfile make_order_status_box_profile();
+
   /** Returns a UiProfile for the OrderTypeBox. */
   UiProfile make_order_type_box_profile();
 
