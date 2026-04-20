@@ -191,6 +191,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_overlay_panel_profile());
   add(make_percent_box_profile());
   add(make_popup_box_profile());
+  add(make_position_side_box_profile());
   add(make_progress_bar_profile());
   add(make_quantity_box_profile());
   add(make_quantity_filter_panel_profile());
