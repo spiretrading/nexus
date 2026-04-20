@@ -72,7 +72,7 @@ const EXTRA_STYLE = StyleSheet.create({
     ':active': {
       backgroundColor: '#4B23A0'
     },
-    ':focus': {
+    ':focus-visible': {
       backgroundColor: '#4B23A0'
     },
     ':hover': {
@@ -101,7 +101,7 @@ const EXTRA_STYLE = StyleSheet.create({
       backgroundColor: '#E8E8E8',
       borderColor: '#C8C8C8'
     },
-    ':focus': {
+    ':focus-visible': {
       backgroundColor: '#E8E8E8',
       borderColor: '#C8C8C8'
     },
