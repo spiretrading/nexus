@@ -28,6 +28,8 @@ const button =
     [new PropertySchema('label', 'Submit', TextInput),
       new PropertySchema('theme', WebPortal.Button.Theme.LIGHT,
         EnumInput(WebPortal.Button.Theme)),
+      new PropertySchema('variant', WebPortal.Button.Variant.PRIMARY,
+        EnumInput(WebPortal.Button.Variant)),
       new PropertySchema('disabled', false, BooleanInput),
       new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onClick', '')],
@@ -47,9 +49,25 @@ const burgerButton =
 const checkbox =
   new ComponentSchema('Checkbox',
     [new PropertySchema('checked', true, BooleanInput),
+      new PropertySchema('indeterminate', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onClick', 'checked')],
-    WebPortal.Checkbox);
+    (props: any) => {
+      const ref = React.useCallback((node: HTMLDivElement) => {
+        if(node) {
+          const input = node.querySelector('input');
+          if(input) {
+            input.indeterminate = props.indeterminate;
+          }
+        }
+      }, [props.indeterminate]);
+      return React.createElement('div', {ref: ref},
+        React.createElement(WebPortal.Checkbox, {
+          checked: props.checked,
+          disabled: props.disabled,
+          onClick: props.onClick
+        }));
+    });
 
 const countrySelect =
   new ComponentSchema('CountrySelect',
@@ -222,6 +240,13 @@ const labeledCheckbox =
       new PropertySchema('isChecked', true, BooleanInput)],
     [new SignalSchema('onChange', 'isChecked')],
     WebPortal.LabeledCheckbox);
+
+const link =
+  new ComponentSchema('Link',
+    [new PropertySchema('label', 'Learn more', TextInput),
+      new PropertySchema('href', '#', TextInput)],
+    [new SignalSchema('onClick', '')],
+    WebPortal.Link);
 
 const modal =
   new ComponentSchema('Modal',
@@ -947,7 +972,8 @@ export const componentSections = [
     dateTimeInput, decimalInput, dropDownButton, durationInput, emptyMessage,
     errorMessage,
     filterChip, filterInput, hLine,
-    iconLabelButton, input, integerField, labeledCheckbox, modal, moneyInput,
+    iconLabelButton, input, integerField, labeledCheckbox, link, modal,
+    moneyInput,
     navigationHeader, navigationTab, pageLayout,
     pagination, scopeInput, scopeItemInput, relativeDate, roleIcon, rolePanel,
     tickersInput, tickerInput, segmentedSpinner, select, skeleton,

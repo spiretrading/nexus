@@ -45,6 +45,8 @@
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DeletableListItem.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
+#include "Spire/Ui/DestinationFilterPanel.hpp"
+#include "Spire/Ui/DestinationListBox.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DropDownList.hpp"
@@ -82,6 +84,7 @@
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/PercentBox.hpp"
 #include "Spire/Ui/PopupBox.hpp"
+#include "Spire/Ui/PositionSideBox.hpp"
 #include "Spire/Ui/ProgressBar.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/ScopeBox.hpp"
@@ -101,6 +104,7 @@
 #include "Spire/Ui/SplitView.hpp"
 #include "Spire/Ui/StandardTableFilter.hpp"
 #include "Spire/Ui/SubmenuItem.hpp"
+#include "Spire/Ui/SwitchButton.hpp"
 #include "Spire/Ui/TabView.hpp"
 #include "Spire/Ui/TableHeader.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
@@ -534,8 +538,9 @@ namespace {
     return panel;
   }
 
-  template<typename B, typename B* (*F)(QWidget*)>
-  auto setup_enum_box_profile(UiProfile& profile) {
+  template<typename B, typename B* (*F)(QWidget*), typename... Converters>
+  auto setup_enum_box_profile(UiProfile& profile,
+      const Converters&... converters) {
     using Type = B::Type;
     auto box = F(nullptr);
     box->setFixedWidth(scale_width(150));
@@ -548,7 +553,8 @@ namespace {
     read_only.connect_changed_signal([=] (auto is_read_only) {
       box->set_read_only(is_read_only);
     });
-    box->connect_submit_signal(profile.make_event_slot<std::any>("Submit"));
+    box->connect_submit_signal(
+      profile.make_event_slot<std::any>("Submit", converters...));
     return box;
   }
 
@@ -1947,6 +1953,16 @@ UiProfile Spire::make_destination_box_profile() {
     return box;
   });
   return profile;
+}
+
+UiProfile Spire::make_destination_filter_panel_profile() {
+  return setup_open_filter_panel_profile("DestinationFilterPanel",
+    [] { return make_destination_filter_panel(); });
+}
+
+UiProfile Spire::make_destination_list_box_profile() {
+  return setup_tag_combo_box_profile("DestinationListBox",
+    [] { return make_destination_list_box(); });
 }
 
 UiProfile Spire::make_destination_list_item_profile() {
@@ -3631,6 +3647,23 @@ UiProfile Spire::make_popup_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_position_side_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_property = define_enum<Side>(
+    {{"Long", Side::BID}, {"Short", Side::ASK}, {"Flat", Side::NONE}});
+  populate_enum_properties(properties, "current", current_property);
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("PositionSideBox", properties,
+    [] (auto& profile) {
+      return setup_enum_box_profile<SideBox, make_position_side_box>(
+        profile, [] (const std::any& value) {
+          return PositionSideToken(std::any_cast<Side>(value));
+        });
+    });
+  return profile;
+}
+
 UiProfile Spire::make_progress_bar_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -4431,6 +4464,23 @@ UiProfile Spire::make_split_view_profile() {
       }
     });
     return view;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_switch_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<bool>("checked"));
+  auto profile = UiProfile("SwitchButton", properties, [] (auto& profile) {
+    auto button = new SwitchButton();
+    apply_widget_properties(button, profile.get_properties());
+    link(button->get_current(), get<bool>("checked", profile.get_properties()));
+    button->get_current()->connect_update_signal(
+      profile.make_event_slot<bool>("CurrentSignal"));
+    button->connect_submit_signal(
+      profile.make_event_slot<bool>("SubmitSignal"));
+    return button;
   });
   return profile;
 }
