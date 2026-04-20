@@ -345,6 +345,12 @@ const notificationItem =
         props.onSelect(selected)
     }), -1);
 
+const notificationItemPlaceholder =
+  new ComponentSchema('NotificationItemPlaceholder',
+    [],
+    [],
+    WebPortal.NotificationItemPlaceholder, -1);
+
 const notificationsButton =
   new ComponentSchema('NotificationsButton',
     [new PropertySchema('isCurrent', false, BooleanInput),
@@ -1017,7 +1023,7 @@ export const componentSections = [
     requestFilterModal, requestItem, requestItemPlaceholder,
     requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
   new ComponentSection('Notifications', [notificationItem,
-    notificationsButton]),
+    notificationItemPlaceholder, notificationsButton]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator, tableHeaderCell])];
