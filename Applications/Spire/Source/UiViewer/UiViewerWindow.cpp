@@ -209,6 +209,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_slider_profile());
   add(make_slider_2d_profile());
   add(make_split_view_profile());
+  add(make_switch_button_profile());
   add(make_tab_view_profile());
   add(make_table_header_profile());
   add(make_table_header_item_profile());

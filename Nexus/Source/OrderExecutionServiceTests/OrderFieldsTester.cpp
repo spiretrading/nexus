@@ -350,7 +350,8 @@ TEST_SUITE("OrderFields") {
     REQUIRE(fields.m_price == limit_price);
     REQUIRE(fields.m_time_in_force == TimeInForce::Type::DAY);
     REQUIRE(fields.m_additional_fields.size() == 1);
-    REQUIRE(fields.m_additional_fields[0] == Tag(211, peg_difference));
+    REQUIRE(
+      fields.m_additional_fields[0] == make_peg_difference(peg_difference));
   }
 
   TEST_CASE("make_pegged_order_fields_no_destination") {
@@ -365,7 +366,8 @@ TEST_SUITE("OrderFields") {
     REQUIRE(fields.m_destination.empty());
     REQUIRE(fields.m_price == limit_price);
     REQUIRE(fields.m_additional_fields.size() == 1);
-    REQUIRE(fields.m_additional_fields[0] == Tag(211, peg_difference));
+    REQUIRE(
+      fields.m_additional_fields[0] == make_peg_difference(peg_difference));
   }
 
   TEST_CASE("make_market_pegged_order_fields_all_parameters") {
@@ -377,9 +379,9 @@ TEST_SUITE("OrderFields") {
     auto quantity = Quantity(100);
     auto limit_price = parse_money("9.95");
     auto peg_difference = parse_money("0.03");
-    auto fields = make_market_pegged_order_fields(
+    auto fields = make_pegged_order_fields(
       account, ticker, currency, side, destination, quantity, limit_price,
-      peg_difference);
+      peg_difference, PegType::MARKET);
     REQUIRE(fields.m_account == account);
     REQUIRE(fields.m_ticker == ticker);
     REQUIRE(fields.m_currency == currency);
@@ -390,8 +392,9 @@ TEST_SUITE("OrderFields") {
     REQUIRE(fields.m_price == limit_price);
     REQUIRE(fields.m_time_in_force == TimeInForce::Type::DAY);
     REQUIRE(fields.m_additional_fields.size() == 2);
-    REQUIRE(fields.m_additional_fields[0] == Tag(18, std::string(1, 'P')));
-    REQUIRE(fields.m_additional_fields[1] == Tag(211, peg_difference));
+    REQUIRE(fields.m_additional_fields[0] == make_exec_inst(MARKET_PEG));
+    REQUIRE(
+      fields.m_additional_fields[1] == make_peg_difference(peg_difference));
   }
 
   TEST_CASE("make_market_pegged_order_fields_no_destination") {
@@ -400,14 +403,15 @@ TEST_SUITE("OrderFields") {
     auto quantity = Quantity(100);
     auto limit_price = parse_money("9.95");
     auto peg_difference = parse_money("0.03");
-    auto fields = make_market_pegged_order_fields(
-      ticker, side, quantity, limit_price, peg_difference);
+    auto fields = make_pegged_order_fields(
+      ticker, side, quantity, limit_price, peg_difference, PegType::MARKET);
     REQUIRE(fields.m_type == OrderType::PEGGED);
     REQUIRE(fields.m_destination.empty());
     REQUIRE(fields.m_price == limit_price);
     REQUIRE(fields.m_additional_fields.size() == 2);
-    REQUIRE(fields.m_additional_fields[0] == Tag(18, std::string(1, 'P')));
-    REQUIRE(fields.m_additional_fields[1] == Tag(211, peg_difference));
+    REQUIRE(fields.m_additional_fields[0] == make_exec_inst(MARKET_PEG));
+    REQUIRE(
+      fields.m_additional_fields[1] == make_peg_difference(peg_difference));
   }
 
   TEST_CASE("less_than_operator") {

@@ -277,6 +277,10 @@ void Nexus::Python::export_order_fields(module& module) {
     def_readwrite("price", &OrderFields::m_price).
     def_readwrite("time_in_force", &OrderFields::m_time_in_force).
     def_readwrite("additional_fields", &OrderFields::m_additional_fields);
+  enum_<PegType>(module, "PegType").
+    value("PRIMARY", PegType::PRIMARY).
+    value("MARKET", PegType::MARKET).
+    value("MID_POINT", PegType::MID_POINT);
   module.def("make_limit_order_fields",
     overload_cast<DirectoryEntry, Ticker, CurrencyId, Side, Destination,
       Quantity, Money>(&make_limit_order_fields));
@@ -319,28 +323,32 @@ void Nexus::Python::export_order_fields(module& module) {
     overload_cast<Ticker, Side, Quantity>(&make_market_order_fields));
   module.def("make_pegged_order_fields",
     overload_cast<DirectoryEntry, Ticker, CurrencyId, Side, Destination,
-      Quantity, Money, Money>(&make_pegged_order_fields));
+      Quantity, Money, Money, PegType>(&make_pegged_order_fields),
+    pybind11::arg("account"), pybind11::arg("ticker"),
+    pybind11::arg("currency"), pybind11::arg("side"),
+    pybind11::arg("destination"), pybind11::arg("quantity"),
+    pybind11::arg("limit_price"), pybind11::arg("peg_difference"),
+    pybind11::arg("peg_type") = PegType::PRIMARY);
   module.def("make_pegged_order_fields",
     overload_cast<Ticker, CurrencyId, Side, Destination, Quantity, Money,
-      Money>(&make_pegged_order_fields));
+      Money, PegType>(&make_pegged_order_fields), pybind11::arg("ticker"),
+    pybind11::arg("currency"), pybind11::arg("side"),
+    pybind11::arg("destination"), pybind11::arg("quantity"),
+    pybind11::arg("limit_price"), pybind11::arg("peg_difference"),
+    pybind11::arg("peg_type") = PegType::PRIMARY);
   module.def("make_pegged_order_fields",
-    overload_cast<Ticker, Side, Destination, Quantity, Money, Money>(
-      &make_pegged_order_fields));
+    overload_cast<Ticker, Side, Destination, Quantity, Money, Money, PegType>(
+      &make_pegged_order_fields), pybind11::arg("ticker"),
+    pybind11::arg("side"), pybind11::arg("destination"),
+    pybind11::arg("quantity"), pybind11::arg("limit_price"),
+    pybind11::arg("peg_difference"),
+    pybind11::arg("peg_type") = PegType::PRIMARY);
   module.def("make_pegged_order_fields",
-    overload_cast<Ticker, Side, Quantity, Money, Money>(
-      &make_pegged_order_fields));
-  module.def("make_market_pegged_order_fields",
-    overload_cast<DirectoryEntry, Ticker, CurrencyId, Side, Destination,
-      Quantity, Money, Money>(&make_market_pegged_order_fields));
-  module.def("make_market_pegged_order_fields",
-    overload_cast<Ticker, CurrencyId, Side, Destination, Quantity, Money,
-      Money>(&make_market_pegged_order_fields));
-  module.def("make_market_pegged_order_fields",
-    overload_cast<Ticker, Side, Destination, Quantity, Money, Money>(
-      &make_market_pegged_order_fields));
-  module.def("make_market_pegged_order_fields",
-    overload_cast<Ticker, Side, Quantity, Money, Money>(
-      &make_market_pegged_order_fields));
+    overload_cast<Ticker, Side, Quantity, Money, Money, PegType>(
+      &make_pegged_order_fields), pybind11::arg("ticker"),
+    pybind11::arg("side"), pybind11::arg("quantity"),
+    pybind11::arg("limit_price"), pybind11::arg("peg_difference"),
+    pybind11::arg("peg_type") = PegType::PRIMARY);
   module.def("find_field", &find_field);
   module.def("has_field", &has_field);
 }

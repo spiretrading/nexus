@@ -4,8 +4,6 @@
 #include <unordered_map>
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
-#include <quickfix/FixFields.h>
-#include <quickfix/FixValues.h>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
@@ -13,6 +11,7 @@
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/FixTags.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
@@ -68,7 +67,7 @@ namespace Nexus {
 
     private:
       struct PeggedOrderEntry {
-        char m_exec_inst;
+        std::string m_exec_inst;
         Money m_peg_difference;
         Money m_effective_price;
       };
@@ -216,23 +215,21 @@ namespace Nexus {
   void TickerOrderSimulator<T>::submit_pegged(const PrimitiveOrder& order) {
     auto& fields = order.get_info().m_fields;
     auto entry = PeggedOrderEntry();
-    entry.m_exec_inst = FIX::ExecInst_PRIMARY_PEG;
-    if(auto tag = find_field(fields, FIX::FIELD::ExecInst)) {
+    entry.m_exec_inst = PRIMARY_PEG;
+    if(auto tag = find_field(fields, EXEC_INST_KEY)) {
       if(auto* value = boost::get<std::string>(&tag->get_value())) {
         auto stream = std::istringstream(*value);
         auto token = std::string();
         while(stream >> token) {
-          if(token.size() == 1 &&
-              (token[0] == FIX::ExecInst_PRIMARY_PEG ||
-                token[0] == FIX::ExecInst_MARKET_PEG ||
-                token[0] == FIX::ExecInst_MID_PRICE_PEG)) {
-            entry.m_exec_inst = token[0];
+          if(token == PRIMARY_PEG || token == MARKET_PEG ||
+              token == MID_PRICE_PEG) {
+            entry.m_exec_inst = token;
             break;
           }
         }
       }
     }
-    if(auto tag = find_field(fields, FIX::FIELD::PegDifference)) {
+    if(auto tag = find_field(fields, PEG_DIFFERENCE_KEY)) {
       if(auto* money = boost::get<Money>(&tag->get_value())) {
         entry.m_peg_difference = *money;
       }
@@ -242,9 +239,9 @@ namespace Nexus {
       std::pair(m_bbo.m_ask.m_price, m_bbo.m_bid.m_price),
       std::pair(m_bbo.m_bid.m_price, m_bbo.m_ask.m_price));
     entry.m_effective_price = [&] {
-      if(entry.m_exec_inst == FIX::ExecInst_MARKET_PEG) {
+      if(entry.m_exec_inst == MARKET_PEG) {
         return opposite_price;
-      } else if(entry.m_exec_inst == FIX::ExecInst_MID_PRICE_PEG) {
+      } else if(entry.m_exec_inst == MID_PRICE_PEG) {
         return (same_price + opposite_price) / 2;
       }
       return same_price;
@@ -310,9 +307,9 @@ namespace Nexus {
       pick(side, std::pair(m_bbo.m_ask.m_price, m_bbo.m_bid.m_price),
         std::pair(m_bbo.m_bid.m_price, m_bbo.m_ask.m_price));
     auto candidate = [&] {
-      if(entry.m_exec_inst == FIX::ExecInst_MARKET_PEG) {
+      if(entry.m_exec_inst == MARKET_PEG) {
         return opposite_price;
-      } else if(entry.m_exec_inst == FIX::ExecInst_MID_PRICE_PEG) {
+      } else if(entry.m_exec_inst == MID_PRICE_PEG) {
         return (same_price + opposite_price) / 2;
       }
       return same_price;

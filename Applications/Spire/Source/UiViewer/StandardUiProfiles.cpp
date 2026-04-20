@@ -103,6 +103,7 @@
 #include "Spire/Ui/SplitView.hpp"
 #include "Spire/Ui/StandardTableFilter.hpp"
 #include "Spire/Ui/SubmenuItem.hpp"
+#include "Spire/Ui/SwitchButton.hpp"
 #include "Spire/Ui/TabView.hpp"
 #include "Spire/Ui/TableHeader.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
@@ -4443,6 +4444,23 @@ UiProfile Spire::make_split_view_profile() {
       }
     });
     return view;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_switch_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<bool>("checked"));
+  auto profile = UiProfile("SwitchButton", properties, [] (auto& profile) {
+    auto button = new SwitchButton();
+    apply_widget_properties(button, profile.get_properties());
+    link(button->get_current(), get<bool>("checked", profile.get_properties()));
+    button->get_current()->connect_update_signal(
+      profile.make_event_slot<bool>("CurrentSignal"));
+    button->connect_submit_signal(
+      profile.make_event_slot<bool>("SubmitSignal"));
+    return button;
   });
   return profile;
 }

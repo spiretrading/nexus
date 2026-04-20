@@ -13,7 +13,7 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/OrderType.hpp"
 #include "Nexus/Definitions/Side.hpp"
-#include "Nexus/Definitions/Tag.hpp"
+#include "Nexus/Definitions/FixTags.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 
@@ -81,6 +81,19 @@ namespace Nexus {
     bool operator <(const OrderFields& rhs) const;
 
     bool operator ==(const OrderFields&) const = default;
+  };
+
+  /** Enumerates the standard peg types. */
+  enum class PegType {
+
+    /** Peg to the same side of the BBO. */
+    PRIMARY,
+
+    /** Peg to the opposite side of the BBO. */
+    MARKET,
+
+    /** Peg to the midpoint of the BBO. */
+    MID_POINT
   };
 
   /**
@@ -302,13 +315,20 @@ namespace Nexus {
    * @param quantity The quantity to order.
    * @param limit_price The limit price of the Order.
    * @param peg_difference The peg difference.
+   * @param peg_type The type of peg.
    */
   inline OrderFields make_pegged_order_fields(Beam::DirectoryEntry account,
       Ticker ticker, CurrencyId currency, Side side, Destination destination,
-      Quantity quantity, Money limit_price, Money peg_difference) {
+      Quantity quantity, Money limit_price, Money peg_difference,
+      PegType peg_type = PegType::PRIMARY) {
     auto additional_fields = std::vector<Tag>();
+    if(peg_type == PegType::MARKET) {
+      additional_fields.push_back(make_exec_inst(MARKET_PEG));
+    } else if(peg_type == PegType::MID_POINT) {
+      additional_fields.push_back(make_exec_inst(MID_PRICE_PEG));
+    }
     if(peg_difference != Money::ZERO) {
-      additional_fields.emplace_back(211, peg_difference);
+      additional_fields.push_back(make_peg_difference(peg_difference));
     }
     return OrderFields(std::move(account), std::move(ticker), currency,
       OrderType::PEGGED, side, std::move(destination), quantity, limit_price,
@@ -317,70 +337,25 @@ namespace Nexus {
 
   inline OrderFields make_pegged_order_fields(Ticker ticker,
       CurrencyId currency, Side side, Destination destination,
-      Quantity quantity, Money limit_price, Money peg_difference) {
+      Quantity quantity, Money limit_price, Money peg_difference,
+      PegType peg_type = PegType::PRIMARY) {
     return make_pegged_order_fields(Beam::DirectoryEntry(), std::move(ticker),
       currency, side, std::move(destination), quantity, limit_price,
-      peg_difference);
+      peg_difference, peg_type);
   }
 
   inline OrderFields make_pegged_order_fields(Ticker ticker, Side side,
       Destination destination, Quantity quantity, Money limit_price,
-      Money peg_difference) {
+      Money peg_difference, PegType peg_type = PegType::PRIMARY) {
     return make_pegged_order_fields(std::move(ticker), CurrencyId::NONE, side,
-      std::move(destination), quantity, limit_price, peg_difference);
+      std::move(destination), quantity, limit_price, peg_difference, peg_type);
   }
 
   inline OrderFields make_pegged_order_fields(Ticker ticker, Side side,
-      Quantity quantity, Money limit_price, Money peg_difference) {
+      Quantity quantity, Money limit_price, Money peg_difference,
+      PegType peg_type = PegType::PRIMARY) {
     return make_pegged_order_fields(std::move(ticker), side, {}, quantity,
-      limit_price, peg_difference);
-  }
-
-  /**
-   * Returns OrderFields for a market PEGGED order with all mandatory fields
-   * populated.
-   * @param account The account to assign the Order to.
-   * @param ticker The Ticker the Order was submitted for.
-   * @param currency The Currency being used.
-   * @param side The Side of the Order.
-   * @param destination The destination to submit the Order to.
-   * @param quantity The quantity to order.
-   * @param limit_price The limit price of the Order.
-   * @param peg_difference The peg difference.
-   */
-  inline OrderFields make_market_pegged_order_fields(
-      Beam::DirectoryEntry account, Ticker ticker, CurrencyId currency,
-      Side side, Destination destination, Quantity quantity, Money limit_price,
-      Money peg_difference) {
-    auto additional_fields = std::vector<Tag>();
-    additional_fields.emplace_back(18, std::string(1, 'P'));
-    if(peg_difference != Money::ZERO) {
-      additional_fields.emplace_back(211, peg_difference);
-    }
-    return OrderFields(std::move(account), std::move(ticker), currency,
-      OrderType::PEGGED, side, std::move(destination), quantity, limit_price,
-      TimeInForce(TimeInForce::Type::DAY), std::move(additional_fields));
-  }
-
-  inline OrderFields make_market_pegged_order_fields(Ticker ticker,
-      CurrencyId currency, Side side, Destination destination,
-      Quantity quantity, Money limit_price, Money peg_difference) {
-    return make_market_pegged_order_fields(Beam::DirectoryEntry(),
-      std::move(ticker), currency, side, std::move(destination), quantity,
-      limit_price, peg_difference);
-  }
-
-  inline OrderFields make_market_pegged_order_fields(Ticker ticker, Side side,
-      Destination destination, Quantity quantity, Money limit_price,
-      Money peg_difference) {
-    return make_market_pegged_order_fields(std::move(ticker), CurrencyId::NONE,
-      side, std::move(destination), quantity, limit_price, peg_difference);
-  }
-
-  inline OrderFields make_market_pegged_order_fields(Ticker ticker, Side side,
-      Quantity quantity, Money limit_price, Money peg_difference) {
-    return make_market_pegged_order_fields(std::move(ticker), side, {},
-      quantity, limit_price, peg_difference);
+      limit_price, peg_difference, peg_type);
   }
 
   /**
