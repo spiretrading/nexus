@@ -47,9 +47,25 @@ const burgerButton =
 const checkbox =
   new ComponentSchema('Checkbox',
     [new PropertySchema('checked', true, BooleanInput),
+      new PropertySchema('indeterminate', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onClick', 'checked')],
-    WebPortal.Checkbox);
+    (props: any) => {
+      const ref = React.useCallback((node: HTMLDivElement) => {
+        if(node) {
+          const input = node.querySelector('input');
+          if(input) {
+            input.indeterminate = props.indeterminate;
+          }
+        }
+      }, [props.indeterminate]);
+      return React.createElement('div', {ref: ref},
+        React.createElement(WebPortal.Checkbox, {
+          checked: props.checked,
+          disabled: props.disabled,
+          onClick: props.onClick
+        }));
+    });
 
 const countrySelect =
   new ComponentSchema('CountrySelect',

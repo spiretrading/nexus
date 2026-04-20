@@ -11,17 +11,16 @@ interface Properties extends
 }
 
 /** A checkbox component. */
-export function Checkbox(
-    {checked, onClick, className, ...rest}: Properties): JSX.Element {
+export function Checkbox(props: Properties): JSX.Element {
   const onChange = () => {
-    onClick?.(!checked);
+    props.onClick?.(!props.checked);
   };
   return (
     <input type='checkbox'
-      {...rest}
-      checked={checked}
-      className={[css(STYLES.checkbox), className].join(' ')}
-      onChange={onChange}/>);
+        checked={props.checked}
+        disabled={props.disabled}
+        className={[css(STYLES.checkbox), props.className].join(' ')}
+        onChange={onChange}/>);
 }
 
 const STYLES = StyleSheet.create({
@@ -43,9 +42,11 @@ const STYLES = StyleSheet.create({
     ':checked': {
       backgroundImage: 'url("resources/components/check-green.svg")'
     },
+    ':indeterminate': {
+      backgroundImage: 'url("resources/components/check-indeterminate.svg")'
+    },
     ':disabled': {
       cursor: 'not-allowed',
-      filter: 'saturate(0.3)',
       opacity: 0.4
     },
     '@media (768px <= width)': {
