@@ -298,6 +298,28 @@ const navigationHeader =
       React.createElement(WebPortal.NavigationHeader, props,
         ...NAVIGATION_TABS));
 
+const notificationItem =
+  new ComponentSchema('NotificationItem',
+    [new PropertySchema('id', 1, NumberInput),
+      new PropertySchema('description',
+        'Your request to update risk controls for achen01 has been approved.',
+        TextInput),
+      new PropertySchema('timestamp', (() => {
+        const d = new Date();
+        d.setHours(d.getHours() - 2);
+        return d;
+      })(), DateInput),
+      new PropertySchema('url', '#', TextInput),
+      new PropertySchema('isUnread', true, BooleanInput),
+      new PropertySchema('isSelected', false, BooleanInput),
+      new PropertySchema('hideIndicator', false, BooleanInput)],
+    [new SignalSchema('onSelect', 'isSelected')],
+    (props: any) => React.createElement(WebPortal.NotificationItem, {
+      ...props,
+      onSelect: (_id: number, selected: boolean) =>
+        props.onSelect(selected)
+    }), 320);
+
 const notificationsButton =
   new ComponentSchema('NotificationsButton',
     [new PropertySchema('isCurrent', false, BooleanInput),
@@ -968,7 +990,8 @@ export const componentSections = [
     requestDetailPage, requestDirectoryPage, requestEffectiveDate,
     requestFilterModal, requestItem, requestItemPlaceholder,
     requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
-  new ComponentSection('Notifications', [notificationsButton]),
+  new ComponentSection('Notifications', [notificationItem,
+    notificationsButton]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator, tableHeaderCell])];
