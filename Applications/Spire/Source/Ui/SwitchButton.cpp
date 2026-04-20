@@ -15,7 +15,7 @@ namespace {
   using Switch = StateSelector<void, struct SwitchTag>;
   using Track = StateSelector<void, struct TrackTag>;
 
-  const auto ANIMATION_DURATION_MS = 200;
+  const auto ANIMATION_DURATION = milliseconds(200);
   const auto UNCHECKED_TRACK_COLOR = QColor(0xA0A0A0);
 
   auto SWITCH_BUTTON_SIZE() {
@@ -157,8 +157,8 @@ void SwitchButton::animate_switch_position(bool checked) {
   }
   auto target = get_switch_position(checked);
   m_switch_pos_evaluator.emplace(
-    make_evaluator(ease(m_switch->x(), target,
-      milliseconds(ANIMATION_DURATION_MS)), find_stylist(*m_switch)));
+    make_evaluator(ease(m_switch->x(), target, ANIMATION_DURATION),
+      find_stylist(*m_switch)));
   m_switch_pos_evaluator->connect_evaluated_signal(
     [=] (auto x) {
       m_switch->move(x, 0);
@@ -183,7 +183,7 @@ void SwitchButton::animate_track_color(const QColor& target) {
     return;
   }
   m_track_color_evaluator.emplace(
-    make_evaluator(ease(start, target, milliseconds(ANIMATION_DURATION_MS)),
+    make_evaluator(ease(start, target, ANIMATION_DURATION),
       find_stylist(*this)));
   m_track_color_evaluator->connect_evaluated_signal(
     [=] (const auto& color) {
