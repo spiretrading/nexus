@@ -27,7 +27,7 @@ const STYLES = StyleSheet.create({
   checkbox: {
     appearance: 'none',
     WebkitAppearance: 'none',
-    backgroundImage: 'url("resources/components/check-grey.svg")',
+    backgroundImage: 'url("resources/components/none.svg")',
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'center',
     backgroundSize: 'contain',
@@ -40,7 +40,7 @@ const STYLES = StyleSheet.create({
     width: '20px',
     height: '20px',
     ':checked': {
-      backgroundImage: 'url("resources/components/check-green.svg")'
+      backgroundImage: 'url("resources/components/check.svg")'
     },
     ':indeterminate': {
       backgroundImage: 'url("resources/components/check-indeterminate.svg")'
