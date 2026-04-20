@@ -12,6 +12,6 @@ DestinationFilterPanel* Spire::make_destination_filter_panel(QWidget* parent) {
 DestinationFilterPanel* Spire::make_destination_filter_panel(
     std::shared_ptr<DestinationListModel> current, QWidget* parent) {
   auto box = make_destination_list_box(std::move(current));
-  box->set_placeholder(QObject::tr("Enter securities, markets, or countries"));
+  box->set_placeholder(QObject::tr("Enter destinations"));
   return new OpenFilterPanel(*box, parent);
 }
