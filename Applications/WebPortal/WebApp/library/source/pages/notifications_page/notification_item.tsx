@@ -87,7 +87,6 @@ const STYLES = StyleSheet.create({
       outlineOffset: '-1px',
       outline: '1px solid #684BC7'
     },
-    containerType: 'inline-size',
     '@container (min-width: 768px)': {
       padding: '10px 18px 9px'
     }

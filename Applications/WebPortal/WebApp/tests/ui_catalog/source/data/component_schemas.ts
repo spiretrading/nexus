@@ -341,7 +341,7 @@ const notificationItem =
       ...props,
       onSelect: (_id: number, selected: boolean) =>
         props.onSelect(selected)
-    }), 320);
+    }), -1);
 
 const notificationsButton =
   new ComponentSchema('NotificationsButton',
