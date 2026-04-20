@@ -45,6 +45,8 @@
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DeletableListItem.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
+#include "Spire/Ui/DestinationFilterPanel.hpp"
+#include "Spire/Ui/DestinationListBox.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DropDownList.hpp"
@@ -101,6 +103,7 @@
 #include "Spire/Ui/SplitView.hpp"
 #include "Spire/Ui/StandardTableFilter.hpp"
 #include "Spire/Ui/SubmenuItem.hpp"
+#include "Spire/Ui/SwitchButton.hpp"
 #include "Spire/Ui/TabView.hpp"
 #include "Spire/Ui/TableHeader.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
@@ -1947,6 +1950,16 @@ UiProfile Spire::make_destination_box_profile() {
     return box;
   });
   return profile;
+}
+
+UiProfile Spire::make_destination_filter_panel_profile() {
+  return setup_open_filter_panel_profile("DestinationFilterPanel",
+    [] { return make_destination_filter_panel(); });
+}
+
+UiProfile Spire::make_destination_list_box_profile() {
+  return setup_tag_combo_box_profile("DestinationListBox",
+    [] { return make_destination_list_box(); });
 }
 
 UiProfile Spire::make_destination_list_item_profile() {
@@ -4431,6 +4444,23 @@ UiProfile Spire::make_split_view_profile() {
       }
     });
     return view;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_switch_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<bool>("checked"));
+  auto profile = UiProfile("SwitchButton", properties, [] (auto& profile) {
+    auto button = new SwitchButton();
+    apply_widget_properties(button, profile.get_properties());
+    link(button->get_current(), get<bool>("checked", profile.get_properties()));
+    button->get_current()->connect_update_signal(
+      profile.make_event_slot<bool>("CurrentSignal"));
+    button->connect_submit_signal(
+      profile.make_event_slot<bool>("SubmitSignal"));
+    return button;
   });
   return profile;
 }

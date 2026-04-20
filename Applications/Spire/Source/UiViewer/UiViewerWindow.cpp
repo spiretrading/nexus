@@ -144,6 +144,8 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_deletable_list_item_profile());
   add(make_delete_icon_button_profile());
   add(make_destination_box_profile());
+  add(make_destination_filter_panel_profile());
+  add(make_destination_list_box_profile());
   add(make_destination_list_item_profile());
   add(make_drop_down_box_profile());
   add(make_drop_down_list_profile());
@@ -207,6 +209,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_slider_profile());
   add(make_slider_2d_profile());
   add(make_split_view_profile());
+  add(make_switch_button_profile());
   add(make_tab_view_profile());
   add(make_table_header_profile());
   add(make_table_header_item_profile());

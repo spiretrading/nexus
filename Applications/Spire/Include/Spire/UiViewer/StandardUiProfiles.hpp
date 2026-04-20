@@ -56,6 +56,12 @@ namespace Spire {
   /** Returns a UiProfile for the DestinationBox. */
   UiProfile make_destination_box_profile();
 
+  /** Returns a UiProfile for the DestinationFilterPanel. */
+  UiProfile make_destination_filter_panel_profile();
+
+  /** Returns a UiProfile for the DestinationListBox. */
+  UiProfile make_destination_list_box_profile();
+
   /** Returns a UiProfile for the DestinationListItem. */
   UiProfile make_destination_list_item_profile();
 
@@ -244,6 +250,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the SplitView. */
   UiProfile make_split_view_profile();
+
+  /** Returns a UiProfile for the SwitchButton. */
+  UiProfile make_switch_button_profile();
 
   /** Returns a UiProfile for the TabView. */
   UiProfile make_tab_view_profile();
