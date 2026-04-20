@@ -96,7 +96,10 @@ const STYLES = StyleSheet.create({
   },
   linkSelected: {
     '@container (min-width: 768px)': {
-      backgroundColor: '#E2E0FF'
+      backgroundColor: '#E2E0FF',
+      ':hover': {
+        backgroundColor: '#E2E0FF'
+      }
     }
   },
   checkboxContainer: {
