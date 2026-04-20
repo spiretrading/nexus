@@ -239,6 +239,13 @@ const labeledCheckbox =
     [new SignalSchema('onChange', 'isChecked')],
     WebPortal.LabeledCheckbox);
 
+const link =
+  new ComponentSchema('Link',
+    [new PropertySchema('label', 'Learn more', TextInput),
+      new PropertySchema('href', '#', TextInput)],
+    [new SignalSchema('onClick', '')],
+    WebPortal.Link);
+
 const modal =
   new ComponentSchema('Modal',
     [new PropertySchema('isOpen', false, BooleanInput),
@@ -963,7 +970,8 @@ export const componentSections = [
     dateTimeInput, decimalInput, dropDownButton, durationInput, emptyMessage,
     errorMessage,
     filterChip, filterInput, hLine,
-    iconLabelButton, input, integerField, labeledCheckbox, modal, moneyInput,
+    iconLabelButton, input, integerField, labeledCheckbox, link, modal,
+    moneyInput,
     navigationHeader, navigationTab, pageLayout,
     pagination, scopeInput, scopeItemInput, relativeDate, roleIcon, rolePanel,
     tickersInput, tickerInput, segmentedSpinner, select, skeleton,
