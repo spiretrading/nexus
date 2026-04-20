@@ -21,6 +21,7 @@ export * from './labeled_checkbox';
 export * from './modal';
 export * from './money_input';
 export * from './navigation_header';
+export * from './notifications_button';
 export * from './navigation_tab';
 export * from './page_layout';
 export * from './pagination';

@@ -298,6 +298,14 @@ const navigationHeader =
       React.createElement(WebPortal.NavigationHeader, props,
         ...NAVIGATION_TABS));
 
+const notificationsButton =
+  new ComponentSchema('NotificationsButton',
+    [new PropertySchema('isCurrent', false, BooleanInput),
+      new PropertySchema('hasUnread', true, BooleanInput),
+      new PropertySchema('isOpen', false, BooleanInput)],
+    [new SignalSchema('onClick', '')],
+    WebPortal.NotificationsButton);
+
 const navigationTab =
   new ComponentSchema('NavigationTab',
     [new PropertySchema('icon', 'resources/requests_page/your-requests.svg',
@@ -960,6 +968,7 @@ export const componentSections = [
     requestDetailPage, requestDirectoryPage, requestEffectiveDate,
     requestFilterModal, requestItem, requestItemPlaceholder,
     requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
+  new ComponentSection('Notifications', [notificationsButton]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator, tableHeaderCell])];
