@@ -28,6 +28,8 @@ const button =
     [new PropertySchema('label', 'Submit', TextInput),
       new PropertySchema('theme', WebPortal.Button.Theme.LIGHT,
         EnumInput(WebPortal.Button.Theme)),
+      new PropertySchema('variant', WebPortal.Button.Variant.PRIMARY,
+        EnumInput(WebPortal.Button.Variant)),
       new PropertySchema('disabled', false, BooleanInput),
       new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onClick', '')],

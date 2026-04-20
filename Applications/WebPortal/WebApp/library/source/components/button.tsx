@@ -8,19 +8,22 @@ interface Properties extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
   /** The color theme. Defaults to LIGHT. */
   theme?: Button.Theme;
+
+  /** The button variant. Defaults to PRIMARY. */
+  variant?: Button.Variant;
 }
 
 /** A custom button component. */
 export function Button(props: Properties): JSX.Element {
   const theme = props.theme ?? Button.Theme.LIGHT;
+  const variant = props.variant ?? Button.Variant.PRIMARY;
   return (
     <button style={props.style}
         disabled={props.disabled}
         className={[css(EXTRA_STYLE.button,
+          variant === Button.Variant.SECONDARY && EXTRA_STYLE.buttonSecondary,
           theme === Button.Theme.DARK && EXTRA_STYLE.buttonDark,
-          props.disabled && EXTRA_STYLE.buttonDisabled,
-          props.disabled && theme === Button.Theme.DARK &&
-            EXTRA_STYLE.buttonDisabledDark),
+          props.disabled && EXTRA_STYLE.buttonDisabled),
           props.className].join(' ')}
         onClick={props.onClick}>
       {props.label}
@@ -38,6 +41,16 @@ export namespace Button {
     /** For use on dark backgrounds. */
     DARK
   }
+
+  /** The button variant. */
+  export enum Variant {
+
+    /** For use as the primary action on a page. Default. */
+    PRIMARY,
+
+    /** For use of secondary actions. */
+    SECONDARY
+  }
 }
 
 const EXTRA_STYLE = StyleSheet.create({
@@ -50,7 +63,7 @@ const EXTRA_STYLE = StyleSheet.create({
     borderRadius: '1px',
     fontFamily: "'Roboto', system-ui, sans-serif",
     fontSize: '0.875rem',
-    fontWeight: 500,
+    fontWeight: 400,
     height: '34px',
     padding: '3px 9px',
     boxSizing: 'border-box',
@@ -69,9 +82,6 @@ const EXTRA_STYLE = StyleSheet.create({
   buttonDark: {
     backgroundColor: '#E2E0FF',
     color: '#4B23A0',
-    ':focus': {
-      backgroundColor: '#E2E0FF'
-    },
     ':hover': {
       backgroundColor: '#FFFFFF'
     },
@@ -83,24 +93,31 @@ const EXTRA_STYLE = StyleSheet.create({
       borderColor: '#FFFFFF'
     }
   },
-  buttonDisabled: {
+  buttonSecondary: {
     backgroundColor: '#F8F8F8',
-    color: '#8C8C8C',
-    cursor: 'default',
+    borderColor: '#E3E3E3',
+    color: '#5D5E6D',
     ':hover': {
-      backgroundColor: '#F8F8F8'
+      backgroundColor: '#E8E8E8',
+      borderColor: '#C8C8C8'
+    },
+    ':focus': {
+      backgroundColor: '#E8E8E8',
+      borderColor: '#C8C8C8'
     },
     ':active': {
-      backgroundColor: '#F8F8F8'
+      backgroundColor: '#E8E8E8',
+      borderColor: '#C8C8C8'
     }
   },
-  buttonDisabledDark: {
-    backgroundColor: '#684BC7',
+  buttonDisabled: {
+    opacity: 0.4,
+    cursor: 'not-allowed',
     ':hover': {
-      backgroundColor: '#684BC7'
+      backgroundColor: undefined
     },
     ':active': {
-      backgroundColor: '#684BC7'
+      backgroundColor: undefined
     }
   }
 });
