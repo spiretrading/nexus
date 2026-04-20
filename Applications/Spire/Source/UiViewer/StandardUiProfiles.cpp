@@ -45,6 +45,8 @@
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DeletableListItem.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
+#include "Spire/Ui/DestinationFilterPanel.hpp"
+#include "Spire/Ui/DestinationListBox.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DropDownList.hpp"
@@ -1948,6 +1950,16 @@ UiProfile Spire::make_destination_box_profile() {
     return box;
   });
   return profile;
+}
+
+UiProfile Spire::make_destination_filter_panel_profile() {
+  return setup_open_filter_panel_profile("DestinationFilterPanel",
+    [] { return make_destination_filter_panel(); });
+}
+
+UiProfile Spire::make_destination_list_box_profile() {
+  return setup_tag_combo_box_profile("DestinationListBox",
+    [] { return make_destination_list_box(); });
 }
 
 UiProfile Spire::make_destination_list_item_profile() {
