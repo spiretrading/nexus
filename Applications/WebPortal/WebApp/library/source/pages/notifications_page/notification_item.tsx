@@ -87,7 +87,8 @@ const STYLES = StyleSheet.create({
       outlineOffset: '-1px',
       outline: '1px solid #684BC7'
     },
-    '@media (768px <= width)': {
+    containerType: 'inline-size',
+    '@container (min-width: 768px)': {
       padding: '10px 18px 9px'
     }
   },
@@ -95,7 +96,7 @@ const STYLES = StyleSheet.create({
     paddingInlineStart: '18px'
   },
   linkSelected: {
-    '@media (768px <= width)': {
+    '@container (min-width: 768px)': {
       backgroundColor: '#E2E0FF'
     }
   },
@@ -104,7 +105,7 @@ const STYLES = StyleSheet.create({
     flexShrink: 0,
     alignItems: 'center',
     marginRight: '18px',
-    '@media (768px <= width)': {
+    '@container (min-width: 768px)': {
       display: 'flex'
     }
   },
@@ -117,13 +118,15 @@ const STYLES = StyleSheet.create({
   header: {
     display: 'flex',
     alignItems: 'flex-start',
-    minWidth: 0
+    flex: 1,
+    minWidth: 0,
+    overflow: 'hidden'
   },
   indicator: {
     flexShrink: 0,
     width: '12px',
     paddingTop: '5px',
-    '@media (768px <= width)': {
+    '@container (min-width: 768px)': {
       paddingTop: '4px'
     }
   },
@@ -141,9 +144,10 @@ const STYLES = StyleSheet.create({
     color: '#333333',
     display: '-webkit-box' as any,
     WebkitLineClamp: 2,
-    WebkitBoxOrient: 'vertical',
+    WebkitBoxOrient: 'vertical' as any,
     overflow: 'hidden',
-    '@media (768px <= width)': {
+    width: '100%',
+    '@container (min-width: 768px)': {
       display: 'inline-block',
       whiteSpace: 'nowrap',
       textOverflow: 'ellipsis'
@@ -160,7 +164,7 @@ const STYLES = StyleSheet.create({
     flexShrink: 0,
     textTransform: 'capitalize',
     textAlign: 'end',
-    '@media (768px <= width)': {
+    '@container (min-width: 768px)': {
       textTransform: 'none'
     }
   }
