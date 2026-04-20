@@ -57,6 +57,22 @@ export class IconLabelButton extends React.Component<Properties, State> {
       WebkitMaskRepeat: 'no-repeat',
       maskRepeat: 'no-repeat'
     };
+    if(variant === IconLabelButton.Variant.LABEL) {
+      const labelStyle = {
+        ...IconLabelButton.INLINE_STYLES.label,
+        color: fillColor
+      };
+      return (
+        <button {...buttonProps} className={css(IconLabelButton.STYLES.button,
+            IconLabelButton.STYLES.iconLabelButton,
+            buttonProps.disabled && IconLabelButton.STYLES.buttonDisabled)}
+            onMouseEnter={this.onMouseEnter}
+            onMouseLeave={this.onMouseLeave}>
+          <div className={css(IconLabelButton.STYLES.content)}>
+            <span style={labelStyle}>{label}</span>
+          </div>
+        </button>);
+    }
     if(variant === IconLabelButton.Variant.ICON_LABEL) {
       const isTrailing =
         iconPlacement === IconLabelButton.Placement.TRAILING;
@@ -66,7 +82,8 @@ export class IconLabelButton extends React.Component<Properties, State> {
       };
       return (
         <button {...buttonProps} className={css(IconLabelButton.STYLES.button,
-            IconLabelButton.STYLES.iconLabelButton)}
+            IconLabelButton.STYLES.iconLabelButton,
+            buttonProps.disabled && IconLabelButton.STYLES.buttonDisabled)}
             onMouseEnter={this.onMouseEnter}
             onMouseLeave={this.onMouseLeave}>
           <div className={css(IconLabelButton.STYLES.content)}>
@@ -86,7 +103,8 @@ export class IconLabelButton extends React.Component<Properties, State> {
     }
     return (
       <button {...buttonProps} className={css(IconLabelButton.STYLES.button,
-            IconLabelButton.STYLES.iconButton)}
+            IconLabelButton.STYLES.iconButton,
+            buttonProps.disabled && IconLabelButton.STYLES.buttonDisabled)}
           onMouseEnter={this.onMouseEnter}
           onMouseLeave={this.onMouseLeave}>
         <div className={css(IconLabelButton.STYLES.content)}>
@@ -96,7 +114,9 @@ export class IconLabelButton extends React.Component<Properties, State> {
   }
 
   private onMouseEnter = () => {
-    this.setState({isHovered: true});
+    if(!this.props.disabled) {
+      this.setState({isHovered: true});
+    }
   }
 
   private onMouseLeave = () => {
@@ -148,6 +168,12 @@ export class IconLabelButton extends React.Component<Properties, State> {
     spacer: {
       width: '8px',
       flexShrink: 0
+    },
+    buttonDisabled: {
+      cursor: 'not-allowed',
+      ':hover': {
+        backgroundColor: '#FFFFFF'
+      }
     }
   });
 }
@@ -161,7 +187,10 @@ export namespace IconLabelButton {
     ICON,
 
     /** Displays both the icon and the label. */
-    ICON_LABEL
+    ICON_LABEL,
+
+    /** Displays only the label. */
+    LABEL
   }
 
   /** The location of the icon relative to the label. */
