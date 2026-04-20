@@ -5,9 +5,6 @@ import { RelativeDate } from '../../components';
 
 interface Properties {
 
-  /** The unique identifier for the notification. */
-  id: number;
-
   /** The description of the notification. */
   description: string;
 
@@ -30,7 +27,7 @@ interface Properties {
   today?: Date;
 
   /** Called when the selected state changes. */
-  onSelect?: (id: number, isSelected: boolean) => void;
+  onSelect?: (isSelected: boolean) => void;
 }
 
 /** Displays a single notification as a linked item. */
@@ -39,12 +36,11 @@ export function NotificationItem(props: Properties): JSX.Element {
   const isSelected = props.isSelected ?? false;
   const hideIndicator = props.hideIndicator ?? false;
   const onCheckboxClick = (checked: boolean) => {
-    props.onSelect?.(props.id, checked);
+    props.onSelect?.(checked);
   };
   return (
     <a href={props.url}
-        className={css(STYLES.link,
-          hideIndicator && STYLES.linkHideIndicator,
+        className={css(STYLES.link, hideIndicator && STYLES.linkHideIndicator,
           isSelected && STYLES.linkSelected)}>
       <div className={css(STYLES.checkboxContainer)}>
         <Checkbox checked={isSelected} onClick={onCheckboxClick}/>
@@ -63,9 +59,7 @@ export function NotificationItem(props: Properties): JSX.Element {
         </div>
         <div className={css(STYLES.dateSpacer)}/>
         <div className={css(STYLES.date)}>
-          <RelativeDate
-              datetime={props.timestamp}
-              today={props.today}/>
+          <RelativeDate datetime={props.timestamp} today={props.today}/>
         </div>
       </div>
     </a>);

@@ -325,8 +325,7 @@ const navigationHeader =
 
 const notificationItem =
   new ComponentSchema('NotificationItem',
-    [new PropertySchema('id', 1, NumberInput),
-      new PropertySchema('description',
+    [new PropertySchema('description',
         'Your request to update risk controls for achen01 has been approved.',
         TextInput),
       new PropertySchema('timestamp', (() => {
@@ -339,11 +338,7 @@ const notificationItem =
       new PropertySchema('isSelected', false, BooleanInput),
       new PropertySchema('hideIndicator', false, BooleanInput)],
     [new SignalSchema('onSelect', 'isSelected')],
-    (props: any) => React.createElement(WebPortal.NotificationItem, {
-      ...props,
-      onSelect: (_id: number, selected: boolean) =>
-        props.onSelect(selected)
-    }), -1);
+    WebPortal.NotificationItem, -1);
 
 const notificationItemPlaceholder =
   new ComponentSchema('NotificationItemPlaceholder',
