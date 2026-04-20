@@ -121,7 +121,7 @@ const STYLES = StyleSheet.create({
   },
   indicator: {
     flexShrink: 0,
-    width: '12px',
+    width: '16px',
     paddingTop: '5px',
     '@container (min-width: 768px)': {
       paddingTop: '4px'
