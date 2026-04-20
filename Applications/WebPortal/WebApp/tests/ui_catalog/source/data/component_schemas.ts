@@ -346,6 +346,53 @@ const notificationItemPlaceholder =
     [],
     WebPortal.NotificationItemPlaceholder, -1);
 
+const SAMPLE_NOTIFICATIONS: WebPortal.Notification[] = [
+  {description: 'Your request to update risk controls for achen01 has been approved.',
+    timestamp: (() => { const d = new Date(); d.setHours(d.getHours() - 2); return d; })(),
+    url: '#', isUnread: true},
+  {description: 'New entitlements request from jberrios01 requires your review.',
+    timestamp: (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d; })(),
+    url: '#', isUnread: true},
+  {description: 'Risk parameters for trodriguez have been updated.',
+    timestamp: (() => { const d = new Date(); d.setDate(d.getDate() - 3); return d; })(),
+    url: '#', isUnread: false}
+];
+
+const SAMPLE_NOTIFICATIONS_ALL_READ: WebPortal.Notification[] = [
+  {description: 'Your request to update risk controls for achen01 has been approved.',
+    timestamp: (() => { const d = new Date(); d.setHours(d.getHours() - 2); return d; })(),
+    url: '#', isUnread: false},
+  {description: 'Risk parameters for trodriguez have been updated.',
+    timestamp: (() => { const d = new Date(); d.setDate(d.getDate() - 3); return d; })(),
+    url: '#', isUnread: false}
+];
+
+enum PopoverMode {
+  HAS_UNREAD,
+  NO_UNREAD,
+  EMPTY
+}
+
+const POPOVER_NOTIFICATIONS: Record<PopoverMode, WebPortal.Notification[]> = {
+  [PopoverMode.HAS_UNREAD]: SAMPLE_NOTIFICATIONS,
+  [PopoverMode.NO_UNREAD]: SAMPLE_NOTIFICATIONS_ALL_READ,
+  [PopoverMode.EMPTY]: []
+};
+
+const notificationsPopover =
+  new ComponentSchema('NotificationsPopover',
+    [new PropertySchema('isOpen', true, BooleanInput),
+      new PropertySchema('mode', PopoverMode.HAS_UNREAD,
+        EnumInput(PopoverMode))],
+    [new SignalSchema('onDismissAll', ''),
+      new SignalSchema('onClose', 'isOpen')],
+    (props: any) => React.createElement(WebPortal.NotificationsPopover, {
+      notifications: POPOVER_NOTIFICATIONS[props.mode as PopoverMode],
+      isOpen: props.isOpen,
+      onDismissAll: props.onDismissAll,
+      onClose: () => props.onClose(false)
+    }));
+
 const notificationsButton =
   new ComponentSchema('NotificationsButton',
     [new PropertySchema('isCurrent', false, BooleanInput),
@@ -1018,7 +1065,8 @@ export const componentSections = [
     requestFilterModal, requestItem, requestItemPlaceholder,
     requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
   new ComponentSection('Notifications', [notificationItem,
-    notificationItemPlaceholder, notificationsButton]),
+    notificationItemPlaceholder, notificationsButton,
+    notificationsPopover]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator, tableHeaderCell])];
