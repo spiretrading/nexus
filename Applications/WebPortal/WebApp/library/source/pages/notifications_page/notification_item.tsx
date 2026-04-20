@@ -72,6 +72,7 @@ const STYLES = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     borderBottom: '1px solid #E6E6E6',
     textDecoration: 'none',
+    fontFamily: '"Roboto", system-ui, sans-serif',
     padding: '18px 18px 17px 8px',
     boxSizing: 'border-box',
     ':hover': {

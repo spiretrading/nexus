@@ -19,13 +19,15 @@ interface Properties {
 /** A bell icon button that indicates unread notifications. */
 export function NotificationsButton(props: Properties): JSX.Element {
   const hasUnread = props.hasUnread ?? false;
-  const fillColor = (() => {
+  const bellStyle = (() => {
     if(props.isCurrent) {
-      return '#4B23A0';
+      return {backgroundColor: '#4B23A0'};
+    }
+    if(props.isOpen) {
+      return {backgroundColor: '#7D7E90'};
     }
     return undefined;
   })();
-  const bellStyle = fillColor ? {backgroundColor: fillColor} : undefined;
   return (
     <button aria-label='Notifications'
         className={css(STYLES.button, props.isOpen && STYLES.buttonOpen)}
