@@ -79,6 +79,7 @@
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OpenFilterPanel.hpp"
+#include "Spire/Ui/OrderStatusBox.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OrderTypeFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
@@ -3497,6 +3498,30 @@ UiProfile Spire::make_order_field_info_tip_profile() {
     auto tip = new OrderFieldInfoTip(std::move(model), label);
     return label;
   });
+  return profile;
+}
+
+UiProfile Spire::make_order_status_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_property = define_enum<OrderStatus>(
+    {{"Pending New", OrderStatus::PENDING_NEW},
+     {"Rejected", OrderStatus::REJECTED},
+     {"New", OrderStatus::NEW},
+     {"Partially Filled", OrderStatus::PARTIALLY_FILLED},
+     {"Expired", OrderStatus::EXPIRED},
+     {"Canceled", OrderStatus::CANCELED},
+     {"Suspended", OrderStatus::SUSPENDED},
+     {"Stopped", OrderStatus::STOPPED},
+     {"Filled", OrderStatus::FILLED},
+     {"Done For Day", OrderStatus::DONE_FOR_DAY},
+     {"Pending Cancel", OrderStatus::PENDING_CANCEL},
+     {"Cancel Reject", OrderStatus::CANCEL_REJECT}});
+  populate_enum_properties(properties, "current", current_property);
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("OrderStatusBox", properties,
+    std::bind_front(
+      setup_enum_box_profile<OrderStatusBox, make_order_status_box>));
   return profile;
 }
 

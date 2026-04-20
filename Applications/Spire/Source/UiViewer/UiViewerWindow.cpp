@@ -186,6 +186,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_number_label_profile());
   add(make_open_filter_panel_profile());
   add(make_order_field_info_tip_profile());
+  add(make_order_status_box_profile());
   add(make_order_type_box_profile());
   add(make_order_type_filter_panel_profile());
   add(make_overlay_panel_profile());
