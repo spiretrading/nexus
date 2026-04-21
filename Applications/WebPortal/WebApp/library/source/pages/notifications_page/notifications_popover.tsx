@@ -78,8 +78,9 @@ export function NotificationsPopover(props: Properties): JSX.Element {
     observer.observe(contentRef.current);
     return () => observer.disconnect();
   }, []);
-  const unreadCount = props.notifications.filter(
-    (notification) => notification.isUnread).length;
+  const unreadNotifications = props.notifications.filter(
+    (notification) => notification.isUnread);
+  const unreadCount = unreadNotifications.length;
   const hasNotifications = props.notifications.length > 0;
   const viewAllHref = unreadCount > 0 ?
     '/notifications' : '/notifications?status=all';
@@ -114,8 +115,7 @@ export function NotificationsPopover(props: Properties): JSX.Element {
           {unreadCount > 0 &&
             <>
               <ul className={css(STYLES.list)}>
-                {props.notifications.filter(
-                    (notification) => notification.isUnread).map(
+                {unreadNotifications.map(
                     (notification, index) =>
                   <li key={index}>
                     <NotificationItem
@@ -124,7 +124,9 @@ export function NotificationsPopover(props: Properties): JSX.Element {
                         url={notification.url}
                         isUnread={true}
                         hideIndicator={true}
-                        today={props.today}/>
+                        today={props.today}
+                        style={index === unreadNotifications.length - 1 ?
+                          {borderBottomColor: 'transparent'} : undefined}/>
                   </li>)}
               </ul>
               <div className={css(STYLES.spacer)}/>
@@ -184,7 +186,7 @@ const STYLES = StyleSheet.create({
     overflowY: 'auto',
     overscrollBehavior: 'contain',
     containerType: 'inline-size',
-    minHeight: 0
+    minHeight: '224px'
   },
   spacer: {
     height: '8px',
@@ -197,6 +199,8 @@ const STYLES = StyleSheet.create({
     padding: '0 18px'
   },
   emptyMessage: {
-    padding: '18px'
+    padding: '18px',
+    height: '224px',
+    boxSizing: 'border-box'
   }
 });

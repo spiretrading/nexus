@@ -26,6 +26,9 @@ interface Properties {
   /** The current date for RelativeDate. */
   today?: Date;
 
+  /** Additional inline styles for the link element. */
+  style?: React.CSSProperties;
+
   /** Called when the selected state changes. */
   onSelect?: (isSelected: boolean) => void;
 }
@@ -39,7 +42,7 @@ export function NotificationItem(props: Properties): JSX.Element {
     props.onSelect?.(checked);
   };
   return (
-    <a href={props.url}
+    <a href={props.url} style={props.style}
         className={css(STYLES.link, hideIndicator && STYLES.linkHideIndicator,
           isSelected && STYLES.linkSelected)}>
       <div className={css(STYLES.checkboxContainer)}>
@@ -108,13 +111,13 @@ const STYLES = StyleSheet.create({
   },
   body: {
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'baseline',
     flex: 1,
     minWidth: 0
   },
   header: {
     display: 'flex',
-    alignItems: 'flex-start',
+    alignItems: 'baseline',
     flex: 1,
     minWidth: 0,
     overflow: 'hidden'
@@ -158,6 +161,7 @@ const STYLES = StyleSheet.create({
     width: '18px'
   },
   date: {
+    display: 'flex',
     flexShrink: 0,
     textTransform: 'capitalize',
     textAlign: 'end',
