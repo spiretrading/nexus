@@ -10,6 +10,7 @@
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
+#include "Nexus/AdministrationService/Notification.hpp"
 #include "Nexus/AdministrationService/RiskModification.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
@@ -362,7 +363,19 @@ namespace Nexus {
      */
     (SendAccountModificationRequestMessageService,
       "Nexus.AdministrationServices.SendAccountModificationRequestMessageService",
-      Message, (AccountModificationRequest::Id, id), (Message, message)));
+      Message, (AccountModificationRequest::Id, id), (Message, message)),
+
+    /**
+     * Sends a notification to an account.
+     * @param account The account to send the notification to.
+     * @param description The description of the notification.
+     * @param category The category of the notification.
+     * @return The fully constructed notification.
+     */
+    (SendNotificationService,
+      "Nexus.AdministrationServices.SendNotificationService", Notification,
+      (Beam::DirectoryEntry, account), (std::string, description),
+      (Notification::Category, category)));
 
   BEAM_DEFINE_MESSAGES(administration_messages,
 

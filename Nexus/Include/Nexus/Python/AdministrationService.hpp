@@ -112,6 +112,7 @@ namespace Nexus::Python {
       def("load_message_ids", &C::load_message_ids).
       def("send_account_modification_request_message",
         &C::send_account_modification_request_message).
+      def("send_notification", &C::send_notification).
       def("close", &C::close);
     if constexpr(!std::is_same_v<C, AdministrationClient>) {
       pybind11::implicitly_convertible<C, AdministrationClient>();

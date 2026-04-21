@@ -100,6 +100,8 @@ namespace Nexus {
         AccountModificationRequest::Id id);
       Message send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message);
+      Notification send_notification(const Beam::DirectoryEntry& account,
+        const std::string& description, Notification::Category category);
       void close();
 
     private:
@@ -407,6 +409,14 @@ namespace Nexus {
         AccountModificationRequest::Id id, const Message& message) {
     auto release = Beam::Python::GilRelease();
     return m_client->send_account_modification_request_message(id, message);
+  }
+
+  template<IsAdministrationClient C>
+  Notification ToPythonAdministrationClient<C>::send_notification(
+      const Beam::DirectoryEntry& account, const std::string& description,
+      Notification::Category category) {
+    auto release = Beam::Python::GilRelease();
+    return m_client->send_notification(account, description, category);
   }
 
   template<IsAdministrationClient C>

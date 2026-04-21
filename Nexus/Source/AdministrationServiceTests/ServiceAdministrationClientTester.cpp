@@ -713,4 +713,30 @@ TEST_SUITE("ServiceAdministrationClient") {
       fixture.m_client->send_account_modification_request_message(id, message));
     test_json_equality(received_message, appended_message);
   }
+
+  TEST_CASE("send_notification") {
+    auto fixture = Fixture();
+    auto account = DirectoryEntry::make_account(58, "notified_account");
+    auto description = std::string("Your request has been approved.");
+    auto category = Notification::Category::ACCOUNT_MODIFICATION;
+    auto notification = Notification{
+      "abc-123", account, description, category,
+      ptime(gregorian::date(2026, 4, 21)), false};
+    fixture.on_request<SendNotificationService>(
+      [&] (auto& request, const auto& received_account,
+          const auto& received_description, auto received_category) {
+        REQUIRE(received_account == account);
+        REQUIRE(received_description == description);
+        REQUIRE(received_category == category);
+        request.set(notification);
+      });
+    auto received = REQUIRE_NO_THROW(
+      fixture.m_client->send_notification(account, description, category));
+    REQUIRE(received.m_id == notification.m_id);
+    REQUIRE(received.m_account == notification.m_account);
+    REQUIRE(received.m_description == notification.m_description);
+    REQUIRE(received.m_category == notification.m_category);
+    REQUIRE(received.m_timestamp == notification.m_timestamp);
+    REQUIRE(received.m_is_read == notification.m_is_read);
+  }
 }

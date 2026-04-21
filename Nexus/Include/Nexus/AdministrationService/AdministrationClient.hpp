@@ -16,6 +16,7 @@
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
+#include "Nexus/AdministrationService/Notification.hpp"
 #include "Nexus/AdministrationService/RiskModification.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
@@ -135,6 +136,9 @@ namespace Nexus {
       { client.send_account_modification_request_message(
           std::declval<AccountModificationRequest::Id>(),
           std::declval<const Message&>()) } -> std::same_as<Message>;
+      { client.send_notification(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const std::string&>(),
+        std::declval<Notification::Category>()) } -> std::same_as<Notification>;
     };
 
   /** Provides a generic interface over an arbitrary AdministrationClient. */
@@ -444,6 +448,16 @@ namespace Nexus {
       Message send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message);
 
+      /**
+       * Sends a notification to an account.
+       * @param account The account to send the notification to.
+       * @param description The description of the notification.
+       * @param category The category of the notification.
+       * @return The fully constructed notification.
+       */
+      Notification send_notification(const Beam::DirectoryEntry& account,
+        const std::string& description, Notification::Category category);
+
       void close();
 
     private:
@@ -531,6 +545,9 @@ namespace Nexus {
           AccountModificationRequest::Id id) = 0;
         virtual Message send_account_modification_request_message(
           AccountModificationRequest::Id id, const Message& message) = 0;
+        virtual Notification send_notification(
+          const Beam::DirectoryEntry& account, const std::string& description,
+          Notification::Category category) = 0;
         virtual void close() = 0;
       };
       template<typename C>
@@ -616,6 +633,9 @@ namespace Nexus {
           AccountModificationRequest::Id id) override;
         Message send_account_modification_request_message(
           AccountModificationRequest::Id id, const Message& message) override;
+        Notification send_notification(
+          const Beam::DirectoryEntry& account, const std::string& description,
+          Notification::Category category) override;
         void close() override;
       };
       Beam::VirtualPtr<VirtualAdministrationClient> m_client;
@@ -838,6 +858,12 @@ namespace Nexus {
       send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message) {
     return m_client->send_account_modification_request_message(id, message);
+  }
+
+  inline Notification AdministrationClient::send_notification(
+      const Beam::DirectoryEntry& account, const std::string& description,
+      Notification::Category category) {
+    return m_client->send_notification(account, description, category);
   }
 
   inline void AdministrationClient::close() {
@@ -1092,6 +1118,13 @@ namespace Nexus {
       send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message) {
     return m_client->send_account_modification_request_message(id, message);
+  }
+
+  template<typename C>
+  Notification AdministrationClient::WrappedAdministrationClient<C>::
+      send_notification(const Beam::DirectoryEntry& account,
+        const std::string& description, Notification::Category category) {
+    return m_client->send_notification(account, description, category);
   }
 
   template<typename C>

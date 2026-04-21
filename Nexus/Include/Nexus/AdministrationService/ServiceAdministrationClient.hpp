@@ -103,6 +103,8 @@ namespace Nexus {
         AccountModificationRequest::Id id);
       Message send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message);
+      Notification send_notification(const Beam::DirectoryEntry& account,
+        const std::string& description, Notification::Category category);
       void close();
 
     private:
@@ -577,6 +579,18 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         SendAccountModificationRequestMessageService>(id, message);
     }, "Failed to send account modification request message: " +
       boost::lexical_cast<std::string>(id));
+  }
+
+  template<typename B>
+  Notification ServiceAdministrationClient<B>::send_notification(
+      const Beam::DirectoryEntry& account, const std::string& description,
+      Notification::Category category) {
+    return Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      return client->template send_request<SendNotificationService>(
+        account, description, category);
+    }, "Failed to send notification: " +
+      boost::lexical_cast<std::string>(account));
   }
 
   template<typename B>

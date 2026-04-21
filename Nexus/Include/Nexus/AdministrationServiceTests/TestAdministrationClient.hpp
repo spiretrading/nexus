@@ -245,6 +245,14 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<Message> m_result;
       };
 
+      /** Records a call to send_notification(). */
+      struct SendNotificationOperation {
+        Beam::DirectoryEntry m_account;
+        std::string m_description;
+        Notification::Category m_category;
+        Beam::Tests::ServiceResult<Notification> m_result;
+      };
+
       /**
        * A variant covering all possible TestAdministrationClient operations.
        */
@@ -271,7 +279,8 @@ namespace Nexus::Tests {
         ApproveAccountModificationRequestOperation,
         RejectAccountModificationRequestOperation, LoadMessageOperation,
         LoadMessageIdsOperation,
-        SendAccountModificationRequestMessageOperation>;
+        SendAccountModificationRequestMessageOperation,
+        SendNotificationOperation>;
 
       /** The type of Queue used to send and receive operations. */
       using Queue = Beam::Queue<std::shared_ptr<Operation>>;
@@ -352,6 +361,8 @@ namespace Nexus::Tests {
         AccountModificationRequest::Id id);
       Message send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message);
+      Notification send_notification(const Beam::DirectoryEntry& account,
+        const std::string& description, Notification::Category category);
       void close();
 
     private:
@@ -605,6 +616,13 @@ namespace Nexus::Tests {
         AccountModificationRequest::Id id, const Message& message) {
     return m_queue.append_result<
       SendAccountModificationRequestMessageOperation, Message>(id, message);
+  }
+
+  inline Notification TestAdministrationClient::send_notification(
+      const Beam::DirectoryEntry& account, const std::string& description,
+      Notification::Category category) {
+    return m_queue.append_result<SendNotificationOperation, Notification>(
+      account, description, category);
   }
 
   inline void TestAdministrationClient::close() {

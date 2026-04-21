@@ -343,4 +343,26 @@ TEST_SUITE("AdministrationClient") {
           return client.send_account_modification_request_message(id, message);
         }, message);
   }
+
+  TEST_CASE("send_notification") {
+    auto account = DirectoryEntry::make_account(23, "notified_account");
+    auto notification = Notification(
+      "abc-123", account, "Your request has been approved.",
+      Notification::Category::ACCOUNT_MODIFICATION,
+      time_from_string("2026-04-21 12:00:00"), false);
+    require_operation<TestAdministrationClient::SendNotificationOperation>(
+      [&] (auto& client) {
+        return client.send_notification(account,
+          "Your request has been approved.",
+          Notification::Category::ACCOUNT_MODIFICATION);
+      }, notification,
+      [&] (const auto& received) {
+        REQUIRE(received.m_id == notification.m_id);
+        REQUIRE(received.m_account == notification.m_account);
+        REQUIRE(received.m_description == notification.m_description);
+        REQUIRE(received.m_category == notification.m_category);
+        REQUIRE(received.m_timestamp == notification.m_timestamp);
+        REQUIRE(received.m_is_read == notification.m_is_read);
+      });
+  }
 }
