@@ -196,12 +196,12 @@ export class DashboardPage extends React.Component<Properties, State> {
     },
     popoverPosition: {
       '@media (min-width: 376px)': {
-        top: '60px',
+        top: '50px',
         right: '28px',
         margin: 0
       },
       '@media (max-width: 375px)': {
-        top: '60px',
+        top: '50px',
         left: 0,
         right: 0,
         margin: '0 auto'
