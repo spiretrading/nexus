@@ -15,6 +15,19 @@ namespace Nexus {
     /** The type used to uniquely identify a notification. */
     using Id = std::string;
 
+    /** Filters notifications by read state. */
+    enum class ReadState {
+
+      /** Matches unread notifications. */
+      UNREAD = 1,
+
+      /** Matches read notifications. */
+      READ = 2,
+
+      /** Matches all notifications. */
+      ALL = 3
+    };
+
     /** Lists the categories of notifications. */
     enum class Category {
 

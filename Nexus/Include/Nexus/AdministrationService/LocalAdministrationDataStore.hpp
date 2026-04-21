@@ -68,6 +68,9 @@ namespace Nexus {
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
       void store(const Notification& notification);
+      std::vector<Notification> load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state);
       template<typename F>
       decltype(auto) with_transaction(F&& transaction);
       void close();
@@ -332,6 +335,52 @@ namespace Nexus {
   inline void LocalAdministrationDataStore::store(
       const Notification& notification) {
     m_notifications[notification.m_account].push_back(notification);
+  }
+
+  inline std::vector<Notification>
+      LocalAdministrationDataStore::load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state) {
+    auto i = m_notifications.find(account);
+    if(i == m_notifications.end()) {
+      return {};
+    }
+    auto& notifications = i->second;
+    auto matches = std::vector<Notification>();
+    for(auto& notification : notifications) {
+      if(read_state == Notification::ReadState::UNREAD &&
+          notification.m_is_read ||
+          read_state == Notification::ReadState::READ &&
+            !notification.m_is_read) {
+        continue;
+      }
+      matches.push_back(notification);
+    }
+    if(id.empty()) {
+      if(limit.get_type() == Beam::SnapshotLimit::Type::TAIL) {
+        if(static_cast<int>(matches.size()) > limit.get_size()) {
+          matches.erase(
+            matches.begin(), matches.end() - limit.get_size());
+        }
+      } else if(static_cast<int>(matches.size()) > limit.get_size()) {
+        matches.erase(matches.begin() + limit.get_size(), matches.end());
+      }
+      return matches;
+    }
+    auto position = std::ranges::find_if(matches, [&] (const auto& n) {
+      return n.m_id == id;
+    });
+    if(position == matches.end()) {
+      return {};
+    }
+    if(limit.get_type() == Beam::SnapshotLimit::Type::TAIL) {
+      auto start = position - std::min(
+        static_cast<int>(position - matches.begin()), limit.get_size() - 1);
+      return std::vector(start, position + 1);
+    }
+    auto end = position + std::min(
+      static_cast<int>(matches.end() - position), limit.get_size());
+    return std::vector(position, end);
   }
 
   template<typename F>

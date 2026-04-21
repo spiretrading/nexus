@@ -363,7 +363,7 @@ namespace Nexus {
       add_column("timestamp", &Notification::m_timestamp).
       add_column("is_read", &Notification::m_is_read).
       set_primary_key("id").
-      add_index("account_index", "account");
+      add_index("account_read_state_index", {"account", "is_read"});
     return ROW;
   }
 }

@@ -86,6 +86,9 @@ namespace Nexus {
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
       void store(const Notification& notification);
+      std::vector<Notification> load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state);
       template<typename F>
       decltype(auto) with_transaction(F&& transaction);
       void close();
@@ -543,6 +546,48 @@ namespace Nexus {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }
     return ids;
+  }
+
+  template<typename C>
+  std::vector<Notification> SqlAdministrationDataStore<C>::load_notifications(
+      const Beam::DirectoryEntry& account, const Notification::Id& id,
+      Beam::SnapshotLimit limit, Notification::ReadState read_state) {
+    auto notifications = std::vector<Notification>();
+    try {
+      auto condition = Viper::sym("account") == account.m_id;
+      if(read_state == Notification::ReadState::UNREAD) {
+        condition = condition && Viper::sym("is_read") == false;
+      } else if(read_state == Notification::ReadState::READ) {
+        condition = condition && Viper::sym("is_read") == true;
+      }
+      if(!id.empty()) {
+        if(limit.get_type() == Beam::SnapshotLimit::Type::TAIL) {
+          condition = condition && Viper::sym("id") <= id;
+        } else {
+          condition = condition && Viper::sym("id") >= id;
+        }
+      }
+      auto order = [&] {
+        if(limit.get_type() == Beam::SnapshotLimit::Type::TAIL) {
+          return Viper::Order::DESC;
+        }
+        return Viper::Order::ASC;
+      }();
+      m_connection->execute(Viper::select(get_notification_row(),
+        "notifications", std::move(condition),
+        Viper::order_by("timestamp", order), Viper::limit(limit.get_size()),
+        std::back_inserter(notifications)));
+      for(auto& notification : notifications) {
+        notification.m_account =
+          m_directory_entries.load(notification.m_account.m_id);
+      }
+      if(limit.get_type() == Beam::SnapshotLimit::Type::TAIL) {
+        std::ranges::reverse(notifications);
+      }
+    } catch(const std::exception& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
+    return notifications;
   }
 
   template<typename C>

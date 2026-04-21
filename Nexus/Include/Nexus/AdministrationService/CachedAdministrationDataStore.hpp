@@ -78,6 +78,9 @@ namespace Nexus {
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
       void store(const Notification& notification);
+      std::vector<Notification> load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state);
       template<typename F>
       decltype(auto) with_transaction(F&& transaction);
       void close();
@@ -277,6 +280,14 @@ namespace Nexus {
   void CachedAdministrationDataStore<D>::store(
       const Notification& notification) {
     m_data_store->store(notification);
+  }
+
+  template<IsAdministrationDataStore D>
+  std::vector<Notification> CachedAdministrationDataStore<D>::
+      load_notifications(const Beam::DirectoryEntry& account,
+        const Notification::Id& id, Beam::SnapshotLimit limit,
+        Notification::ReadState read_state) {
+    return m_data_store->load_notifications(account, id, limit, read_state);
   }
 
   template<IsAdministrationDataStore D>

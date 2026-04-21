@@ -81,6 +81,9 @@ namespace Nexus {
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
       void store(const Notification& notification);
+      std::vector<Notification> load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state);
       void with_transaction(const std::function<void ()>& transaction);
       void close();
 
@@ -308,6 +311,15 @@ namespace Nexus {
       const Notification& notification) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(notification);
+  }
+
+  template<IsAdministrationDataStore D>
+  std::vector<Notification> ToPythonAdministrationDataStore<D>::
+      load_notifications(const Beam::DirectoryEntry& account,
+        const Notification::Id& id, Beam::SnapshotLimit limit,
+        Notification::ReadState read_state) {
+    auto release = Beam::Python::GilRelease();
+    return m_data_store->load_notifications(account, id, limit, read_state);
   }
 
   template<IsAdministrationDataStore D>

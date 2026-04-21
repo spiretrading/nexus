@@ -569,6 +569,150 @@ namespace Nexus::Tests {
       REQUIRE(loaded_request.get_effective_date() == effective_date);
     }
 
+    SUBCASE("store_and_load_notifications") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto notification_a = Notification("aaa-001", account,
+        "First notification.", Notification::Category::ACCOUNT_MODIFICATION,
+        time_from_string("2026-04-21 10:00:00"), false);
+      auto notification_b = Notification("aaa-002", account,
+        "Second notification.", Notification::Category::REPORT,
+        time_from_string("2026-04-21 11:00:00"), true);
+      auto notification_c = Notification("aaa-003", account,
+        "Third notification.", Notification::Category::ACCOUNT_MODIFICATION,
+        time_from_string("2026-04-21 12:00:00"), false);
+      data_store.with_transaction([&] {
+        data_store.store(notification_a);
+        data_store.store(notification_b);
+        data_store.store(notification_c);
+      });
+      auto all = data_store.with_transaction([&] {
+        return data_store.load_notifications(
+          account, "", SnapshotLimit::UNLIMITED, Notification::ReadState::ALL);
+      });
+      REQUIRE(all.size() == 3);
+      REQUIRE(all[0].m_id == "aaa-001");
+      REQUIRE(all[1].m_id == "aaa-002");
+      REQUIRE(all[2].m_id == "aaa-003");
+    }
+
+    SUBCASE("load_notifications_unread_only") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      data_store.with_transaction([&] {
+        data_store.store(Notification(
+          "bbb-001", account, "Unread.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 10:00:00"), false));
+        data_store.store(Notification(
+          "bbb-002", account, "Read.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 11:00:00"), true));
+        data_store.store(Notification(
+          "bbb-003", account, "Unread.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 12:00:00"), false));
+      });
+      auto unread = data_store.with_transaction([&] {
+        return data_store.load_notifications(account, "",
+          SnapshotLimit::UNLIMITED, Notification::ReadState::UNREAD);
+      });
+      REQUIRE(unread.size() == 2);
+      REQUIRE(unread[0].m_id == "bbb-001");
+      REQUIRE(unread[1].m_id == "bbb-003");
+    }
+
+    SUBCASE("load_notifications_read_only") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      data_store.with_transaction([&] {
+        data_store.store(Notification(
+          "ccc-001", account, "Unread.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 10:00:00"), false));
+        data_store.store(Notification(
+          "ccc-002", account, "Read.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 11:00:00"), true));
+      });
+      auto read = data_store.with_transaction([&] {
+        return data_store.load_notifications(
+          account, "", SnapshotLimit::UNLIMITED, Notification::ReadState::READ);
+      });
+      REQUIRE(read.size() == 1);
+      REQUIRE(read[0].m_id == "ccc-002");
+    }
+
+    SUBCASE("load_notifications_tail_limit") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      data_store.with_transaction([&] {
+        data_store.store(Notification(
+          "ddd-001", account, "First.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 10:00:00"), false));
+        data_store.store(Notification(
+          "ddd-002", account, "Second.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 11:00:00"), false));
+        data_store.store(Notification(
+          "ddd-003", account, "Third.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 12:00:00"), false));
+      });
+      auto tail = data_store.with_transaction([&] {
+        return data_store.load_notifications(account, "",
+          SnapshotLimit::from_tail(2), Notification::ReadState::ALL);
+      });
+      REQUIRE(tail.size() == 2);
+      REQUIRE(tail[0].m_id == "ddd-002");
+      REQUIRE(tail[1].m_id == "ddd-003");
+    }
+
+    SUBCASE("load_notifications_head_limit") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      data_store.with_transaction([&] {
+        data_store.store(Notification(
+          "eee-001", account, "First.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 10:00:00"), false));
+        data_store.store(Notification(
+          "eee-002", account, "Second.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 11:00:00"), false));
+        data_store.store(Notification(
+          "eee-003", account, "Third.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 12:00:00"), false));
+      });
+      auto head = data_store.with_transaction([&] {
+        return data_store.load_notifications(account, "",
+          SnapshotLimit::from_head(2), Notification::ReadState::ALL);
+      });
+      REQUIRE(head.size() == 2);
+      REQUIRE(head[0].m_id == "eee-001");
+      REQUIRE(head[1].m_id == "eee-002");
+    }
+
+    SUBCASE("load_notifications_different_accounts") {
+      auto account_a = DirectoryEntry::make_account(100, "user_a");
+      auto account_b = DirectoryEntry::make_account(200, "user_b");
+      data_store.with_transaction([&] {
+        data_store.store(Notification(
+          "fff-001", account_a, "For A.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 10:00:00"), false));
+        data_store.store(Notification(
+          "fff-002", account_b, "For B.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 11:00:00"), false));
+      });
+      auto a_notifications = data_store.with_transaction([&] {
+        return data_store.load_notifications(account_a, "",
+          SnapshotLimit::UNLIMITED, Notification::ReadState::ALL);
+      });
+      REQUIRE(a_notifications.size() == 1);
+      REQUIRE(a_notifications[0].m_id == "fff-001");
+      auto b_notifications = data_store.with_transaction([&] {
+        return data_store.load_notifications(account_b, "",
+          SnapshotLimit::UNLIMITED, Notification::ReadState::ALL);
+      });
+      REQUIRE(b_notifications.size() == 1);
+      REQUIRE(b_notifications[0].m_id == "fff-002");
+    }
+
+    SUBCASE("load_notifications_empty") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto notifications = data_store.with_transaction([&] {
+        return data_store.load_notifications(
+          account, "", SnapshotLimit::UNLIMITED, Notification::ReadState::ALL);
+      });
+      REQUIRE(notifications.empty());
+    }
+
     SUBCASE("update_request_effective_date") {
       auto account = DirectoryEntry::make_account(123, "user1");
       auto submission_account = DirectoryEntry::make_account(456, "admin");
@@ -583,8 +727,8 @@ namespace Nexus::Tests {
       });
       auto updated_effective_date = time_from_string("2024-10-15 00:00:00");
       data_store.with_transaction([&] {
-        data_store.store_effective_date(request.get_id(),
-          updated_effective_date);
+        data_store.store_effective_date(
+          request.get_id(), updated_effective_date);
       });
       auto loaded_request = data_store.with_transaction([&] {
         return data_store.load_account_modification_request(request.get_id());

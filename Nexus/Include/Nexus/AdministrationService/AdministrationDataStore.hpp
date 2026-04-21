@@ -11,6 +11,7 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/VirtualPtr.hpp>
+#include <Beam/Queries/SnapshotLimit.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
@@ -83,6 +84,11 @@ namespace Nexus {
       std::declval<AccountModificationRequest::Id>()) } ->
       std::same_as<std::vector<Message::Id>>;
     store.store(std::declval<const Notification&>());
+    { store.load_notifications(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const Notification::Id&>(),
+        std::declval<Beam::SnapshotLimit>(),
+        std::declval<Notification::ReadState>()) } ->
+          std::same_as<std::vector<Notification>>;
     { store.with_transaction(
       std::declval<const std::function<void ()>&>()) } -> std::same_as<void>;
   };
@@ -341,6 +347,18 @@ namespace Nexus {
       void store(const Notification& notification);
 
       /**
+       * Loads notifications for an account.
+       * @param account The account whose notifications are to be loaded.
+       * @param id The id of the notification to start loading from.
+       * @param limit The maximum number of notifications to load.
+       * @param read_state Filters notifications by read state.
+       * @return The list of notifications matching the criteria.
+       */
+      std::vector<Notification> load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state);
+
+      /**
        * Performs an atomic transaction.
        * @param transaction The transaction to perform.
        */
@@ -405,6 +423,9 @@ namespace Nexus {
         virtual std::vector<Message::Id> load_message_ids(
           AccountModificationRequest::Id id) = 0;
         virtual void store(const Notification& notification) = 0;
+        virtual std::vector<Notification> load_notifications(
+          const Beam::DirectoryEntry& account, const Notification::Id& id,
+          Beam::SnapshotLimit limit, Notification::ReadState read_state) = 0;
         virtual void with_transaction(
           const std::function<void ()>& transaction) = 0;
         virtual void close() = 0;
@@ -467,6 +488,9 @@ namespace Nexus {
         std::vector<Message::Id> load_message_ids(
           AccountModificationRequest::Id id) override;
         void store(const Notification& notification) override;
+        std::vector<Notification> load_notifications(
+          const Beam::DirectoryEntry& account, const Notification::Id& id,
+          Beam::SnapshotLimit limit, Notification::ReadState read_state) override;
         void with_transaction(
           const std::function<void ()>& transaction) override;
         void close() override;
@@ -619,6 +643,12 @@ namespace Nexus {
 
   inline void AdministrationDataStore::store(const Notification& notification) {
     m_data_store->store(notification);
+  }
+
+  inline std::vector<Notification> AdministrationDataStore::load_notifications(
+      const Beam::DirectoryEntry& account, const Notification::Id& id,
+      Beam::SnapshotLimit limit, Notification::ReadState read_state) {
+    return m_data_store->load_notifications(account, id, limit, read_state);
   }
 
   template<std::invocable<> F>
@@ -823,6 +853,14 @@ namespace Nexus {
   void AdministrationDataStore::WrappedAdministrationDataStore<D>::store(
       const Notification& notification) {
     m_data_store->store(notification);
+  }
+
+  template<typename D>
+  std::vector<Notification> AdministrationDataStore::
+      WrappedAdministrationDataStore<D>::load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state) {
+    return m_data_store->load_notifications(account, id, limit, read_state);
   }
 
   template<typename D>

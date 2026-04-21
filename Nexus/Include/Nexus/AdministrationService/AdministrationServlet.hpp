@@ -410,8 +410,7 @@ namespace Nexus {
     });
     Beam::with(m_notification_subscribers,
       [&] (auto& notification_subscribers) {
-        for(auto& subscribers :
-            notification_subscribers | std::views::values) {
+        for(auto& subscribers : notification_subscribers | std::views::values) {
           Beam::with(subscribers, [&] (auto& subscribers) {
             std::erase(subscribers, &client);
           });

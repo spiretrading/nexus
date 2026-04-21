@@ -126,6 +126,10 @@ void Nexus::Python::export_notification(module& module) {
     value("ACCOUNT_MODIFICATION",
       Notification::Category::ACCOUNT_MODIFICATION).
     value("REPORT", Notification::Category::REPORT);
+  enum_<Notification::ReadState>(notification, "ReadState").
+    value("UNREAD", Notification::ReadState::UNREAD).
+    value("READ", Notification::ReadState::READ).
+    value("ALL", Notification::ReadState::ALL);
 }
 
 void Nexus::Python::export_administration_data_store_exception(module& module) {
