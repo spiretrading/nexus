@@ -80,6 +80,7 @@
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OpenFilterPanel.hpp"
 #include "Spire/Ui/OrderStatusBox.hpp"
+#include "Spire/Ui/OrderStatusListBox.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OrderTypeFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
@@ -703,7 +704,7 @@ namespace {
       auto print_current = [=] {
         auto result = QString();
         for(auto i = 0; i < box->get_current()->get_size(); ++i) {
-          result += to_text(box->get_current()->get(i)) + " ";
+          result += QString("[%1] ").arg(to_text(box->get_current()->get(i)));
         }
         current_filter_slot(result);
       };
@@ -722,7 +723,7 @@ namespace {
       box->connect_submit_signal([=] (const auto& submission) {
         auto result = QString();
         for(auto i = 0; i < submission->get_size(); ++i) {
-          result += to_text(submission->get(i)) + " ";
+          result += QString("[%1] ").arg(to_text(submission->get(i)));
         }
         submit_filter_slot(result);
       });
@@ -3523,6 +3524,11 @@ UiProfile Spire::make_order_status_box_profile() {
     std::bind_front(
       setup_enum_box_profile<OrderStatusBox, make_order_status_box>));
   return profile;
+}
+
+UiProfile Spire::make_order_status_list_box_profile() {
+  return setup_tag_combo_box_profile("OrderStatusListBox",
+    [] { return make_order_status_list_box(); });
 }
 
 UiProfile Spire::make_order_type_box_profile() {
