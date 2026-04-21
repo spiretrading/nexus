@@ -224,6 +224,12 @@ namespace Nexus::Python {
   void export_entitlement_modification(pybind11::module& module);
 
   /**
+   * Exports the Notification class.
+   * @param module The module to export to.
+   */
+  void export_notification(pybind11::module& module);
+
+  /**
    * Exports the IndexedAccountIdentity struct.
    * @param module The module to export to.
    */
