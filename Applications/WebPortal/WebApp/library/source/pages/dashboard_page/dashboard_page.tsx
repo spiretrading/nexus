@@ -4,7 +4,9 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { BurgerButton } from '../..';
-import { NotificationButton } from './notification_button';
+import { Notification } from '../notifications_page/notifications_model';
+import { NotificationsButton } from '../notifications_page/notifications_button';
+import { NotificationsPopover } from '../notifications_page/notifications_popover';
 import { SideMenu } from './side_menu';
 
 interface Properties {
@@ -12,15 +14,22 @@ interface Properties {
   /** The account's roles. */
   roles: Nexus.AccountRoles;
 
+  /** The list of notifications. */
+  notifications: Notification[];
+
   /**
    * Indicates a side menu item was clicked.
    * @param item - The item that was clicked.
    */
   onSideMenuClick?: (item: SideMenu.Item) => void;
+
+  /** Called when the dismiss all button is clicked. */
+  onDismissAll?: () => void;
 }
 
 interface State {
   isSideMenuOpen: boolean;
+  isPopoverOpen: boolean;
 }
 
 /** Displays the main dashboard. */
@@ -29,6 +38,7 @@ export class DashboardPage extends React.Component<Properties, State> {
     super(props);
     this.state = {
       isSideMenuOpen: false,
+      isPopoverOpen: false
     };
   }
 
@@ -82,13 +92,21 @@ export class DashboardPage extends React.Component<Properties, State> {
             </VBoxLayout>
           </HBoxLayout>
           <Padding/>
-          <VBoxLayout height='60px' width='45px' className={
+          <div className={
               css(DashboardPage.STYLE.notificationButtonWrapper)}>
-            <Padding size='20px'/>
-            <NotificationButton items={0} isOpen={false}/>
-            <Padding size='20px'/>
-            <Padding/>
-          </VBoxLayout>
+            <NotificationsButton
+              hasUnread={this.props.notifications.some(
+                (n) => n.isUnread)}
+              isOpen={this.state.isPopoverOpen}
+              popoverTarget='notifications-popover'/>
+            <NotificationsPopover
+              id='notifications-popover'
+              notifications={this.props.notifications}
+              onDismissAll={this.props.onDismissAll}
+              onOpen={this.onOpenPopover}
+              onClose={this.onClosePopover}
+              className={css(DashboardPage.STYLE.popoverPosition)}/>
+          </div>
         </HBoxLayout>
         <div className={css(DashboardPage.STYLE.separator)}/>
         <Transition in={this.state.isSideMenuOpen}
@@ -128,6 +146,14 @@ export class DashboardPage extends React.Component<Properties, State> {
     this.setState({isSideMenuOpen: !this.state.isSideMenuOpen});
   }
 
+  private onOpenPopover = () => {
+    this.setState({isPopoverOpen: true});
+  }
+
+  private onClosePopover = () => {
+    this.setState({isPopoverOpen: false});
+  }
+
   private static readonly defaultProps = {
     onSideMenuClick: () => {}
   }
@@ -165,8 +191,21 @@ export class DashboardPage extends React.Component<Properties, State> {
     },
     notificationButtonWrapper: {
       position: 'absolute' as 'absolute',
-      top: 0,
-      left: 'calc(100% - 45px)'
+      top: '15px',
+      right: '18px'
+    },
+    popoverPosition: {
+      '@media (min-width: 376px)': {
+        top: '60px',
+        right: '28px',
+        margin: 0
+      },
+      '@media (max-width: 375px)': {
+        top: '60px',
+        left: 0,
+        right: 0,
+        margin: '0 auto'
+      }
     }
   });
   private static readonly HEADER_STYLE = StyleSheet.create({

@@ -50,6 +50,7 @@ export class DashboardController extends React.Component<Properties, State> {
     }
     return (
       <DashboardPage roles={this.props.model.roles}
+          notifications={this.props.model.notifications}
           onSideMenuClick={this.onSideMenuClick}>
         <Router.Switch>
           <Router.Route path='/account' render={this.renderAccountPage}/>

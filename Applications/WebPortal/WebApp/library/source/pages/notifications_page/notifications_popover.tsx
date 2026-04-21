@@ -6,20 +6,26 @@ import { Notification } from './notifications_model';
 
 interface Properties {
 
+  /** The id of the popover element. */
+  id?: string;
+
   /** The list of notifications to display. */
   notifications: Notification[];
 
   /** The current date for relative date display. */
   today?: Date;
 
-  /** Whether the popover is open. */
-  isOpen?: boolean;
-
   /** Called when the dismiss all button is clicked. */
   onDismissAll?: () => void;
 
+  /** Called when the popover is opened. */
+  onOpen?: () => void;
+
   /** Called when the popover is closed. */
   onClose?: () => void;
+
+  /** An additional class name to apply to the popover element. */
+  className?: string;
 }
 
 interface State {
@@ -51,16 +57,6 @@ export class NotificationsPopover extends React.Component<Properties, State> {
     }
   }
 
-  public componentDidUpdate(previous: Properties): void {
-    if(previous.isOpen !== this.props.isOpen && this.popoverRef.current) {
-      if(this.props.isOpen) {
-        (this.popoverRef.current as any).showPopover();
-      } else {
-        (this.popoverRef.current as any).hidePopover();
-      }
-    }
-  }
-
   public componentWillUnmount(): void {
     if(this.popoverRef.current) {
       this.popoverRef.current.removeEventListener('toggle', this.onToggle);
@@ -80,8 +76,9 @@ export class NotificationsPopover extends React.Component<Properties, State> {
       return '/notifications?status=all';
     })();
     return (
-      <div ref={this.popoverRef} {...{popover: 'auto'} as any}
-          className={css(STYLES.popover)}>
+      <div ref={this.popoverRef} id={this.props.id}
+          {...{popover: 'auto'} as any}
+          className={`${css(STYLES.popover)} ${this.props.className || ''}`}>
         <div className={css(STYLES.header)}>
           <h2 className={css(STYLES.title)}>Notifications</h2>
         </div>
@@ -138,7 +135,9 @@ export class NotificationsPopover extends React.Component<Properties, State> {
   private contentRef: React.RefObject<HTMLDivElement>;
   private observer: ResizeObserver | undefined;
   private onToggle = (event: Event) => {
-    if((event as any).newState === 'closed') {
+    if((event as any).newState === 'open') {
+      this.props.onOpen?.();
+    } else {
       this.props.onClose?.();
     }
   };
@@ -155,6 +154,7 @@ const STYLES = StyleSheet.create({
     borderRadius: '1px',
     boxShadow: '0 0 6px rgb(0 0 0 / 0.40)',
     padding: '18px 0',
+    inset: 'unset',
     overflow: 'hidden',
     fontSize: '0.875rem',
     color: '#333333',

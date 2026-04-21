@@ -12,6 +12,9 @@ interface Properties {
   /** Whether the popover is open. */
   isOpen?: boolean;
 
+  /** The id of the popover element to toggle. */
+  popoverTarget?: string;
+
   /** Called when the button is clicked. */
   onClick?: () => void;
 }
@@ -31,6 +34,7 @@ export function NotificationsButton(props: Properties): JSX.Element {
   return (
     <button aria-label='Notifications'
         className={css(STYLES.button, props.isOpen && STYLES.buttonOpen)}
+        {...{popovertarget: props.popoverTarget} as any}
         onClick={props.onClick}>
       <div aria-hidden='true' className={css(STYLES.bell)} style={bellStyle}/>
       {hasUnread && <span aria-hidden='true' className={css(STYLES.dot)}/>}

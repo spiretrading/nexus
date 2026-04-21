@@ -3,6 +3,7 @@ import * as Nexus from 'nexus';
 import { AccountDirectoryModel, AccountEntry, HttpAccountDirectoryModel,
   HttpAccountModel, HttpGroupModel, HttpRequestsModel,
   LocalAccountDirectoryModel, LocalRequestsModel, RequestsModel } from '..';
+import { Notification } from '../notifications_page/notifications_model';
 import { DashboardModel } from './dashboard_model';
 import { LocalDashboardModel } from './local_dashboard_model';
 
@@ -56,6 +57,10 @@ export class HttpDashboardModel extends DashboardModel {
 
   public get requestsModel(): RequestsModel {
     return this._requestsModel;
+  }
+
+  public get notifications(): Notification[] {
+    return this.model.notifications;
   }
 
   public makeAccountModel(account: Beam.DirectoryEntry): HttpAccountModel {

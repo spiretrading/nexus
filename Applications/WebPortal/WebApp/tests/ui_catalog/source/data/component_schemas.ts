@@ -406,16 +406,17 @@ const POPOVER_NOTIFICATIONS: Record<PopoverMode, WebPortal.Notification[]> = {
 
 const notificationsPopover =
   new ComponentSchema('NotificationsPopover',
-    [new PropertySchema('isOpen', true, BooleanInput),
-      new PropertySchema('mode', PopoverMode.HAS_UNREAD,
+    [new PropertySchema('mode', PopoverMode.HAS_UNREAD,
         EnumInput(PopoverMode))],
     [new SignalSchema('onDismissAll', ''),
-      new SignalSchema('onClose', 'isOpen')],
+      new SignalSchema('onOpen', ''),
+      new SignalSchema('onClose', '')],
     (props: any) => React.createElement(WebPortal.NotificationsPopover, {
+      id: 'catalog-notifications-popover',
       notifications: POPOVER_NOTIFICATIONS[props.mode as PopoverMode],
-      isOpen: props.isOpen,
       onDismissAll: props.onDismissAll,
-      onClose: () => props.onClose(false)
+      onOpen: props.onOpen,
+      onClose: props.onClose
     }));
 
 const notificationsButton =
