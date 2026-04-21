@@ -964,6 +964,67 @@ TEST_SUITE("AdministrationServlet") {
     REQUIRE(status.m_status == AccountModificationRequest::Status::GRANTED);
   }
 
+  TEST_CASE("send_notification") {
+    auto fixture = Fixture();
+    auto notification = fixture.m_admin_client->send_request<
+      SendNotificationService>(fixture.m_trader_account,
+        "Your request has been approved.",
+        Notification::Category::ACCOUNT_MODIFICATION);
+    REQUIRE(!notification.m_id.empty());
+    REQUIRE(notification.m_account == fixture.m_trader_account);
+    REQUIRE(notification.m_description == "Your request has been approved.");
+    REQUIRE(notification.m_category ==
+      Notification::Category::ACCOUNT_MODIFICATION);
+    REQUIRE(notification.m_timestamp == fixture.m_time_client.get_time());
+    REQUIRE(!notification.m_is_read);
+  }
+
+  TEST_CASE("send_notification_insufficient_permissions") {
+    auto fixture = Fixture();
+    REQUIRE_THROWS_AS(fixture.m_trader_client->send_request<
+      SendNotificationService>(fixture.m_trader_account, "test",
+        Notification::Category::REPORT), ServiceRequestException);
+  }
+
+  TEST_CASE("send_notification_stored_in_data_store") {
+    auto fixture = Fixture();
+    auto notification = fixture.m_admin_client->send_request<
+      SendNotificationService>(fixture.m_trader_account, "Stored notification.",
+        Notification::Category::REPORT);
+    auto loaded = fixture.m_data_store.with_transaction([&] {
+      return fixture.m_data_store.load_notifications(
+        fixture.m_trader_account, "", SnapshotLimit::UNLIMITED,
+        Notification::ReadState::ALL);
+    });
+    REQUIRE(loaded.size() == 1);
+    REQUIRE(loaded[0].m_id == notification.m_id);
+    REQUIRE(loaded[0].m_description == "Stored notification.");
+  }
+
+  TEST_CASE("monitor_notifications_returns_last_id") {
+    auto fixture = Fixture();
+    auto notification = fixture.m_admin_client->send_request<
+      SendNotificationService>(fixture.m_trader_account, "First.",
+        Notification::Category::REPORT);
+    auto last_id = fixture.m_trader_client->send_request<
+      MonitorNotificationsService>(fixture.m_trader_account);
+    REQUIRE(last_id == notification.m_id);
+  }
+
+  TEST_CASE("monitor_notifications_empty") {
+    auto fixture = Fixture();
+    auto last_id = fixture.m_trader_client->send_request<
+      MonitorNotificationsService>(fixture.m_trader_account);
+    REQUIRE(last_id.empty());
+  }
+
+  TEST_CASE("monitor_notifications_insufficient_permissions") {
+    auto fixture = Fixture();
+    REQUIRE_THROWS_AS(fixture.m_trader_client->send_request<
+      MonitorNotificationsService>(fixture.m_admin_account),
+      ServiceRequestException);
+  }
+
   TEST_CASE("grant_scheduled_entitlements_on_timer") {
     auto fixture = Fixture();
     auto entitlements = std::vector<DirectoryEntry>();

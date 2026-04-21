@@ -102,6 +102,7 @@ namespace Nexus::Python {
         &C::send_account_modification_request_message).
       def("send_notification", &C::send_notification).
       def("monitor_notifications", &C::monitor_notifications).
+      def("load_notifications", &C::load_notifications).
       def("close", &C::close);
     if constexpr(!std::is_same_v<C, AdministrationClient>) {
       pybind11::implicitly_convertible<C, AdministrationClient>();

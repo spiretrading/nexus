@@ -1,6 +1,7 @@
 #ifndef NEXUS_ADMINISTRATION_SERVICES_HPP
 #define NEXUS_ADMINISTRATION_SERVICES_HPP
 #include <string>
+#include <Beam/Queries/SnapshotLimit.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Services/RecordMessage.hpp>
@@ -384,7 +385,21 @@ namespace Nexus {
      */
     (MonitorNotificationsService,
       "Nexus.AdministrationServices.MonitorNotificationsService",
-      Notification::Id, (Beam::DirectoryEntry, account)));
+      Notification::Id, (Beam::DirectoryEntry, account)),
+
+    /**
+     * Loads notifications for an account.
+     * @param account The account whose notifications are to be loaded.
+     * @param id The id of the notification to start loading from.
+     * @param limit The maximum number of notifications to load.
+     * @param read_state Filters notifications by read state.
+     * @return The list of notifications matching the criteria.
+     */
+    (LoadNotificationsService,
+      "Nexus.AdministrationServices.LoadNotificationsService",
+      std::vector<Notification>, (Beam::DirectoryEntry, account),
+      (Notification::Id, id), (Beam::SnapshotLimit, limit),
+      (Notification::ReadState, read_state)));
 
   BEAM_DEFINE_MESSAGES(administration_messages,
 

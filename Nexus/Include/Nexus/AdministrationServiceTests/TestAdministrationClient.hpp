@@ -253,6 +253,15 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<Notification> m_result;
       };
 
+      /** Records a call to load_notifications(). */
+      struct LoadNotificationsOperation {
+        Beam::DirectoryEntry m_account;
+        Notification::Id m_id;
+        Beam::SnapshotLimit m_limit;
+        Notification::ReadState m_read_state;
+        Beam::Tests::ServiceResult<std::vector<Notification>> m_result;
+      };
+
       /** Records a call to monitor_notifications(). */
       struct MonitorNotificationsOperation {
         Beam::DirectoryEntry m_account;
@@ -287,7 +296,8 @@ namespace Nexus::Tests {
         RejectAccountModificationRequestOperation, LoadMessageOperation,
         LoadMessageIdsOperation,
         SendAccountModificationRequestMessageOperation,
-        SendNotificationOperation, MonitorNotificationsOperation>;
+        SendNotificationOperation, MonitorNotificationsOperation,
+        LoadNotificationsOperation>;
 
       /** The type of Queue used to send and receive operations. */
       using Queue = Beam::Queue<std::shared_ptr<Operation>>;
@@ -373,6 +383,9 @@ namespace Nexus::Tests {
       Notification::Id monitor_notifications(
         const Beam::DirectoryEntry& account,
         Beam::ScopedQueueWriter<Notification> queue);
+      std::vector<Notification> load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state);
       void close();
 
     private:
@@ -640,6 +653,14 @@ namespace Nexus::Tests {
       Beam::ScopedQueueWriter<Notification> queue) {
     return m_queue.append_result<MonitorNotificationsOperation,
       Notification::Id>(account, std::move(queue));
+  }
+
+  inline std::vector<Notification>
+      TestAdministrationClient::load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state) {
+    return m_queue.append_result<LoadNotificationsOperation,
+      std::vector<Notification>>(account, id, limit, read_state);
   }
 
   inline void TestAdministrationClient::close() {

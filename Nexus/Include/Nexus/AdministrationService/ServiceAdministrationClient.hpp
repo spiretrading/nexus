@@ -109,6 +109,9 @@ namespace Nexus {
       Notification::Id monitor_notifications(
         const Beam::DirectoryEntry& account,
         Beam::ScopedQueueWriter<Notification> queue);
+      std::vector<Notification> load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state);
       void close();
 
     private:
@@ -629,6 +632,18 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       last_id.get_eval().set(entry.m_last_id);
     });
     return last_id.get();
+  }
+
+  template<typename B>
+  std::vector<Notification> ServiceAdministrationClient<B>::load_notifications(
+      const Beam::DirectoryEntry& account, const Notification::Id& id,
+      Beam::SnapshotLimit limit, Notification::ReadState read_state) {
+    return Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      return client->template send_request<LoadNotificationsService>(
+        account, id, limit, read_state);
+    }, "Failed to load notifications: " +
+      boost::lexical_cast<std::string>(account));
   }
 
   template<typename B>

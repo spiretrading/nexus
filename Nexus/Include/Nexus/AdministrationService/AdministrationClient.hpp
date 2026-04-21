@@ -9,6 +9,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/VirtualPtr.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
+#include <Beam/Queries/SnapshotLimit.hpp>
 #include <Beam/Queues/Publisher.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Queues/StateQueue.hpp>
@@ -144,6 +145,11 @@ namespace Nexus {
           std::declval<const Beam::DirectoryEntry&>(),
           std::declval<Beam::ScopedQueueWriter<Notification>>()) } ->
             std::same_as<Notification::Id>;
+      { client.load_notifications(std::declval<const Beam::DirectoryEntry&>(),
+          std::declval<const Notification::Id&>(),
+          std::declval<Beam::SnapshotLimit>(),
+          std::declval<Notification::ReadState>()) } ->
+            std::same_as<std::vector<Notification>>;
     };
 
   /** Provides a generic interface over an arbitrary AdministrationClient. */
@@ -473,6 +479,18 @@ namespace Nexus {
         const Beam::DirectoryEntry& account,
         Beam::ScopedQueueWriter<Notification> queue);
 
+      /**
+       * Loads notifications for an account.
+       * @param account The account whose notifications are to be loaded.
+       * @param id The id of the notification to start loading from.
+       * @param limit The maximum number of notifications to load.
+       * @param read_state Filters notifications by read state.
+       * @return The list of notifications matching the criteria.
+       */
+      std::vector<Notification> load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state);
+
       void close();
 
     private:
@@ -566,6 +584,9 @@ namespace Nexus {
         virtual Notification::Id monitor_notifications(
           const Beam::DirectoryEntry& account,
           Beam::ScopedQueueWriter<Notification> queue) = 0;
+        virtual std::vector<Notification> load_notifications(
+          const Beam::DirectoryEntry& account, const Notification::Id& id,
+          Beam::SnapshotLimit limit, Notification::ReadState read_state) = 0;
         virtual void close() = 0;
       };
       template<typename C>
@@ -657,6 +678,9 @@ namespace Nexus {
         Notification::Id monitor_notifications(
           const Beam::DirectoryEntry& account,
           Beam::ScopedQueueWriter<Notification> queue) override;
+        std::vector<Notification> load_notifications(
+          const Beam::DirectoryEntry& account, const Notification::Id& id,
+          Beam::SnapshotLimit limit, Notification::ReadState read_state) override;
         void close() override;
       };
       Beam::VirtualPtr<VirtualAdministrationClient> m_client;
@@ -891,6 +915,12 @@ namespace Nexus {
       const Beam::DirectoryEntry& account,
       Beam::ScopedQueueWriter<Notification> queue) {
     return m_client->monitor_notifications(account, std::move(queue));
+  }
+
+  inline std::vector<Notification> AdministrationClient::load_notifications(
+      const Beam::DirectoryEntry& account, const Notification::Id& id,
+      Beam::SnapshotLimit limit, Notification::ReadState read_state) {
+    return m_client->load_notifications(account, id, limit, read_state);
   }
 
   inline void AdministrationClient::close() {
@@ -1159,6 +1189,14 @@ namespace Nexus {
       monitor_notifications(const Beam::DirectoryEntry& account,
         Beam::ScopedQueueWriter<Notification> queue) {
     return m_client->monitor_notifications(account, std::move(queue));
+  }
+
+  template<typename C>
+  std::vector<Notification> AdministrationClient::
+      WrappedAdministrationClient<C>::load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state) {
+    return m_client->load_notifications(account, id, limit, read_state);
   }
 
   template<typename C>
