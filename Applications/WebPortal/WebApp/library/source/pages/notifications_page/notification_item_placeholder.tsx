@@ -11,10 +11,10 @@ export function NotificationItemPlaceholder(): JSX.Element {
       </div>
       <div className={css(STYLES.body)}>
         <Skeleton style={{width: '138px', height: '18px', flexShrink: 0}}
-            className={css(STYLES.descriptionSkeleton)}/>
+          className={css(STYLES.descriptionSkeleton)}/>
         <div className={css(STYLES.spacer)}/>
         <Skeleton style={{width: '60px', height: '18px', flexShrink: 0}}
-            className={css(STYLES.dateSkeleton)}/>
+          className={css(STYLES.dateSkeleton)}/>
       </div>
     </div>);
 }

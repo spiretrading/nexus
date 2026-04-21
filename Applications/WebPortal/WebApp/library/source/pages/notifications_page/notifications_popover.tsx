@@ -37,109 +37,126 @@ interface Properties {
   onClose?: () => void;
 }
 
+interface State {
+  contentHeight: number | undefined;
+}
+
 /** Displays a popover with a list of notifications. */
-export function NotificationsPopover(props: Properties): JSX.Element {
-  const ref = React.useRef<HTMLDivElement>(null);
-  const contentRef = React.useRef<HTMLDivElement>(null);
-  const [contentHeight, setContentHeight] =
-    React.useState<number | undefined>(undefined);
-  React.useEffect(() => {
-    if(!ref.current) {
-      return;
-    }
-    if(props.isOpen) {
-      (ref.current as any).showPopover();
-    } else {
-      (ref.current as any).hidePopover();
-    }
-  }, [props.isOpen]);
-  React.useEffect(() => {
-    if(!ref.current) {
-      return;
-    }
-    const element = ref.current;
-    const onToggle = (event: Event) => {
-      if((event as any).newState === 'closed') {
-        props.onClose?.();
-      }
+export class NotificationsPopover extends React.Component<Properties, State> {
+  constructor(props: Properties) {
+    super(props);
+    this.state = {
+      contentHeight: undefined
     };
-    element.addEventListener('toggle', onToggle);
-    return () => element.removeEventListener('toggle', onToggle);
-  }, [props.onClose]);
-  React.useEffect(() => {
-    if(!contentRef.current) {
-      return;
+    this.popoverRef = React.createRef();
+    this.contentRef = React.createRef();
+  }
+
+  public componentDidMount(): void {
+    if(this.popoverRef.current) {
+      this.popoverRef.current.addEventListener('toggle', this.onToggle);
     }
-    const observer = new ResizeObserver((entries) => {
-      for(const entry of entries) {
-        setContentHeight(entry.target.scrollHeight);
+    if(this.contentRef.current) {
+      this.observer = new ResizeObserver((entries) => {
+        for(const entry of entries) {
+          this.setState({contentHeight: entry.target.scrollHeight});
+        }
+      });
+      this.observer.observe(this.contentRef.current);
+    }
+  }
+
+  public componentDidUpdate(previous: Properties): void {
+    if(previous.isOpen !== this.props.isOpen && this.popoverRef.current) {
+      if(this.props.isOpen) {
+        (this.popoverRef.current as any).showPopover();
+      } else {
+        (this.popoverRef.current as any).hidePopover();
       }
-    });
-    observer.observe(contentRef.current);
-    return () => observer.disconnect();
-  }, []);
-  const unreadNotifications = props.notifications.filter(
-    (notification) => notification.isUnread);
-  const unreadCount = unreadNotifications.length;
-  const hasNotifications = props.notifications.length > 0;
-  const viewAllHref = unreadCount > 0 ?
-    '/notifications' : '/notifications?status=all';
-  return (
-    <div ref={ref} {...{popover: 'auto'} as any}
-        className={css(STYLES.popover)}>
-      <div className={css(STYLES.header)}>
-        <h2 className={css(STYLES.title)}>Notifications</h2>
-      </div>
-      <div className={css(STYLES.heightWrapper)}
-          style={{height: contentHeight}}>
-        <div ref={contentRef}>
-          {!hasNotifications &&
-            <div className={css(STYLES.emptyMessage)}>
-              <EmptyMessage message='No notifications.'/>
-            </div>}
-          {hasNotifications && unreadCount === 0 &&
-            <>
+    }
+  }
+
+  public componentWillUnmount(): void {
+    if(this.popoverRef.current) {
+      this.popoverRef.current.removeEventListener('toggle', this.onToggle);
+    }
+    this.observer?.disconnect();
+  }
+
+  public render(): JSX.Element {
+    const unreadNotifications = this.props.notifications.filter(
+      (notification) => notification.isUnread);
+    const unreadCount = unreadNotifications.length;
+    const hasNotifications = this.props.notifications.length > 0;
+    const viewAllHref = (() => {
+      if(unreadCount > 0) {
+        return '/notifications';
+      }
+      return '/notifications?status=all';
+    })();
+    return (
+      <div ref={this.popoverRef} {...{popover: 'auto'} as any}
+          className={css(STYLES.popover)}>
+        <div className={css(STYLES.header)}>
+          <h2 className={css(STYLES.title)}>Notifications</h2>
+        </div>
+        <div className={css(STYLES.heightWrapper)}
+            style={{height: this.state.contentHeight}}>
+          <div ref={this.contentRef}>
+            {!hasNotifications &&
               <div className={css(STYLES.emptyMessage)}>
-                <EmptyMessage
-                    message={
-                      'There are no new notifications at the moment.'}/>
-              </div>
-              <div className={css(STYLES.spacer)}/>
-              <div className={css(STYLES.footer)}>
-                <IconLabelButton icon='' label='Dismiss All'
-                    variant={IconLabelButton.Variant.LABEL}
-                    disabled={true}/>
-                <Link label='View All' href={viewAllHref}/>
-              </div>
-            </>}
-          {unreadCount > 0 &&
-            <>
-              <ul className={css(STYLES.list)}>
-                {unreadNotifications.map(
-                    (notification, index) =>
-                  <li key={index}>
-                    <NotificationItem
+                <EmptyMessage message='No notifications.'/>
+              </div>}
+            {hasNotifications && unreadCount === 0 &&
+              <>
+                <div className={css(STYLES.emptyMessage)}>
+                  <EmptyMessage
+                    message='There are no new notifications at the moment.'/>
+                </div>
+                <div className={css(STYLES.spacer)}/>
+                <div className={css(STYLES.footer)}>
+                  <IconLabelButton icon='' label='Dismiss All'
+                    variant={IconLabelButton.Variant.LABEL} disabled/>
+                  <Link label='View All' href={viewAllHref}/>
+                </div>
+              </>}
+            {unreadCount > 0 &&
+              <>
+                <ul className={css(STYLES.list)}>
+                  {unreadNotifications.map((notification, index) =>
+                    <li key={index}>
+                      <NotificationItem
                         description={notification.description}
                         timestamp={notification.timestamp}
                         url={notification.url}
                         isUnread={true}
                         hideIndicator={true}
-                        today={props.today}
+                        today={this.props.today}
                         style={index === unreadNotifications.length - 1 ?
                           {borderBottomColor: 'transparent'} : undefined}/>
-                  </li>)}
-              </ul>
-              <div className={css(STYLES.spacer)}/>
-              <div className={css(STYLES.footer)}>
-                <IconLabelButton icon='' label='Dismiss All'
+                    </li>)}
+                </ul>
+                <div className={css(STYLES.spacer)}/>
+                <div className={css(STYLES.footer)}>
+                  <IconLabelButton icon='' label='Dismiss All'
                     variant={IconLabelButton.Variant.LABEL}
-                    onClick={props.onDismissAll}/>
-                <Link label='View All' href={viewAllHref}/>
-              </div>
-            </>}
+                    onClick={this.props.onDismissAll}/>
+                  <Link label='View All' href={viewAllHref}/>
+                </div>
+              </>}
+          </div>
         </div>
-      </div>
-    </div>);
+      </div>);
+  }
+
+  private popoverRef: React.RefObject<HTMLDivElement>;
+  private contentRef: React.RefObject<HTMLDivElement>;
+  private observer: ResizeObserver | undefined;
+  private onToggle = (event: Event) => {
+    if((event as any).newState === 'closed') {
+      this.props.onClose?.();
+    }
+  };
 }
 
 const STYLES = StyleSheet.create({

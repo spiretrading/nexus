@@ -323,6 +323,26 @@ const navigationHeader =
       React.createElement(WebPortal.NavigationHeader, props,
         ...NAVIGATION_TABS));
 
+const notificationsFilterModal =
+  new ComponentSchema('NotificationsFilterModal',
+    [new PropertySchema('isOpen', false, BooleanInput)],
+    [new SignalSchema('onSubmit', ''),
+      new SignalSchema('onClose', 'isOpen')],
+    (props: any) => {
+      if(!props.isOpen) {
+        return React.createElement('div', null, 'Modal is closed.');
+      }
+      return React.createElement(WebPortal.NotificationsFilterModal, {
+        filter: {
+          categories: new Set<WebPortal.NotificationCategory>(),
+          startDate: Beam.Date.today(),
+          endDate: Beam.Date.today()
+        },
+        onSubmit: props.onSubmit,
+        onClose: () => props.onClose(false)
+      });
+    });
+
 const notificationItem =
   new ComponentSchema('NotificationItem',
     [new PropertySchema('description',
@@ -1064,8 +1084,8 @@ export const componentSections = [
     requestDetailPage, requestDirectoryPage, requestEffectiveDate,
     requestFilterModal, requestItem, requestItemPlaceholder,
     requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
-  new ComponentSection('Notifications', [notificationItem,
-    notificationItemPlaceholder, notificationsButton,
+  new ComponentSection('Notifications', [notificationsFilterModal,
+    notificationItem, notificationItemPlaceholder, notificationsButton,
     notificationsPopover]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
