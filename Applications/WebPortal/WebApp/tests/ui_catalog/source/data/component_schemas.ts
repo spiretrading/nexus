@@ -367,24 +367,29 @@ const notificationItemPlaceholder =
     WebPortal.NotificationItemPlaceholder, -1);
 
 const SAMPLE_NOTIFICATIONS: WebPortal.Notification[] = [
-  {description: 'Your request to update risk controls for achen01 has been approved.',
+  {id: '1', description: 'Your request to update risk controls for achen01 has been approved.',
+    category: WebPortal.NotificationCategory.ACCOUNT_MODIFICATION,
     timestamp: (() => { const d = new Date(); d.setHours(d.getHours() - 2); return d; })(),
-    url: '#', isUnread: true},
-  {description: 'New entitlements request from jberrios01 requires your review.',
+    isUnread: true},
+  {id: '2', description: 'New entitlements request from jberrios01 requires your review.',
+    category: WebPortal.NotificationCategory.ACCOUNT_MODIFICATION,
     timestamp: (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d; })(),
-    url: '#', isUnread: true},
-  {description: 'Risk parameters for trodriguez have been updated.',
+    isUnread: true},
+  {id: '3', description: 'Risk parameters for trodriguez have been updated.',
+    category: WebPortal.NotificationCategory.REPORT,
     timestamp: (() => { const d = new Date(); d.setDate(d.getDate() - 3); return d; })(),
-    url: '#', isUnread: false}
+    isUnread: false}
 ];
 
 const SAMPLE_NOTIFICATIONS_ALL_READ: WebPortal.Notification[] = [
-  {description: 'Your request to update risk controls for achen01 has been approved.',
+  {id: '1', description: 'Your request to update risk controls for achen01 has been approved.',
+    category: WebPortal.NotificationCategory.ACCOUNT_MODIFICATION,
     timestamp: (() => { const d = new Date(); d.setHours(d.getHours() - 2); return d; })(),
-    url: '#', isUnread: false},
-  {description: 'Risk parameters for trodriguez have been updated.',
+    isUnread: false},
+  {id: '3', description: 'Risk parameters for trodriguez have been updated.',
+    category: WebPortal.NotificationCategory.REPORT,
     timestamp: (() => { const d = new Date(); d.setDate(d.getDate() - 3); return d; })(),
-    url: '#', isUnread: false}
+    isUnread: false}
 ];
 
 enum PopoverMode {

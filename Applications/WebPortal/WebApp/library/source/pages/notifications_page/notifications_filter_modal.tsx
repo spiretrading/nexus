@@ -2,16 +2,7 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { Button, DateInput, LabeledCheckbox, Modal } from '../../components';
-
-/** The category of a notification. */
-export enum NotificationCategory {
-
-  /** The notification pertains to an account modification. */
-  ACCOUNT_MODIFICATION = 'ACCOUNT_MODIFICATION',
-
-  /** The notification pertains to a report. */
-  REPORT = 'REPORT'
-}
+import { NotificationCategory } from './notifications_model';
 
 /** The filter criteria for notifications. */
 export interface NotificationsFilter {

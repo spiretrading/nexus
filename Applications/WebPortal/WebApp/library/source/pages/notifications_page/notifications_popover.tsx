@@ -2,22 +2,7 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
 import { EmptyMessage, IconLabelButton, Link } from '../../components';
 import { NotificationItem } from './notification_item';
-
-/** A single notification entry. */
-export interface Notification {
-
-  /** The description of the notification. */
-  description: string;
-
-  /** The datetime when the notification was created. */
-  timestamp: Date;
-
-  /** The link to the page for the notification. */
-  url: string;
-
-  /** Whether the notification is unread. */
-  isUnread: boolean;
-}
+import { Notification } from './notifications_model';
 
 interface Properties {
 
@@ -128,7 +113,7 @@ export class NotificationsPopover extends React.Component<Properties, State> {
                       <NotificationItem
                         description={notification.description}
                         timestamp={notification.timestamp}
-                        url={notification.url}
+                        url={`/notifications/${notification.id}`}
                         isUnread={true}
                         hideIndicator={true}
                         today={this.props.today}
