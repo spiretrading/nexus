@@ -253,6 +253,13 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<Notification> m_result;
       };
 
+      /** Records a call to monitor_notifications(). */
+      struct MonitorNotificationsOperation {
+        Beam::DirectoryEntry m_account;
+        Beam::ScopedQueueWriter<Notification> m_queue;
+        Beam::Tests::ServiceResult<Notification::Id> m_result;
+      };
+
       /**
        * A variant covering all possible TestAdministrationClient operations.
        */
@@ -280,7 +287,7 @@ namespace Nexus::Tests {
         RejectAccountModificationRequestOperation, LoadMessageOperation,
         LoadMessageIdsOperation,
         SendAccountModificationRequestMessageOperation,
-        SendNotificationOperation>;
+        SendNotificationOperation, MonitorNotificationsOperation>;
 
       /** The type of Queue used to send and receive operations. */
       using Queue = Beam::Queue<std::shared_ptr<Operation>>;
@@ -363,6 +370,9 @@ namespace Nexus::Tests {
         AccountModificationRequest::Id id, const Message& message);
       Notification send_notification(const Beam::DirectoryEntry& account,
         const std::string& description, Notification::Category category);
+      Notification::Id monitor_notifications(
+        const Beam::DirectoryEntry& account,
+        Beam::ScopedQueueWriter<Notification> queue);
       void close();
 
     private:
@@ -623,6 +633,13 @@ namespace Nexus::Tests {
       Notification::Category category) {
     return m_queue.append_result<SendNotificationOperation, Notification>(
       account, description, category);
+  }
+
+  inline Notification::Id TestAdministrationClient::monitor_notifications(
+      const Beam::DirectoryEntry& account,
+      Beam::ScopedQueueWriter<Notification> queue) {
+    return m_queue.append_result<MonitorNotificationsOperation,
+      Notification::Id>(account, std::move(queue));
   }
 
   inline void TestAdministrationClient::close() {

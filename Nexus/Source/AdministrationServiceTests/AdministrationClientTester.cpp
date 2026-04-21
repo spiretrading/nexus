@@ -365,4 +365,23 @@ TEST_SUITE("AdministrationClient") {
         REQUIRE(received.m_is_read == notification.m_is_read);
       });
   }
+
+  TEST_CASE("monitor_notifications") {
+    auto account = DirectoryEntry::make_account(24, "monitored_account");
+    auto expected_last_id = Notification::Id("last-notification-id");
+    auto operations = std::make_shared<TestAdministrationClient::Queue>();
+    auto client = AdministrationClient(
+      std::in_place_type<TestAdministrationClient>, operations);
+    auto queue = std::make_shared<Queue<Notification>>();
+    auto future = std::async(std::launch::async, [&] {
+      return client.monitor_notifications(account, queue);
+    });
+    auto operation = operations->pop();
+    auto specific = std::get_if<
+      TestAdministrationClient::MonitorNotificationsOperation>(&*operation);
+    REQUIRE(specific);
+    specific->m_result.set(expected_last_id);
+    auto last_id = future.get();
+    REQUIRE(last_id == expected_last_id);
+  }
 }

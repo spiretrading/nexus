@@ -375,7 +375,16 @@ namespace Nexus {
     (SendNotificationService,
       "Nexus.AdministrationServices.SendNotificationService", Notification,
       (Beam::DirectoryEntry, account), (std::string, description),
-      (Notification::Category, category)));
+      (Notification::Category, category)),
+
+    /**
+     * Monitors notifications for an account.
+     * @param account The account to monitor.
+     * @return The id of the most recent notification.
+     */
+    (MonitorNotificationsService,
+      "Nexus.AdministrationServices.MonitorNotificationsService",
+      Notification::Id, (Beam::DirectoryEntry, account)));
 
   BEAM_DEFINE_MESSAGES(administration_messages,
 
@@ -394,7 +403,14 @@ namespace Nexus {
      * @param risk_state The <i>account</i>'s current RiskState.
      */
     (RiskStateMessage, "Nexus.AdministrationService.RiskStateMessage",
-      (Beam::DirectoryEntry, account), (RiskState, risk_state)));
+      (Beam::DirectoryEntry, account), (RiskState, risk_state)),
+
+    /**
+     * Indicates a new notification for an account.
+     * @param notification The new notification.
+     */
+    (NotificationMessage, "Nexus.AdministrationService.NotificationMessage",
+      (Notification, notification)));
 }
 
 #endif

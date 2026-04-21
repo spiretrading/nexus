@@ -8,6 +8,7 @@
 #include <Beam/Queues/StatePublisher.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
+#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <Beam/Utilities/Streamable.hpp>
 #include <boost/lexical_cast.hpp>
@@ -105,6 +106,9 @@ namespace Nexus {
         AccountModificationRequest::Id id, const Message& message);
       Notification send_notification(const Beam::DirectoryEntry& account,
         const std::string& description, Notification::Category category);
+      Notification::Id monitor_notifications(
+        const Beam::DirectoryEntry& account,
+        Beam::ScopedQueueWriter<Notification> queue);
       void close();
 
     private:
@@ -112,12 +116,18 @@ namespace Nexus {
         typename ServiceProtocolClientBuilder::Client;
       using RiskParameterPublisher = Beam::StatePublisher<RiskParameters>;
       using RiskStatePublisher = Beam::StatePublisher<RiskState>;
+      struct NotificationEntry {
+        std::vector<Beam::ScopedQueueWriter<Notification>> m_queues;
+        Notification::Id m_last_id;
+      };
       Beam::ServiceProtocolClientHandler<B> m_client_handler;
       Beam::OpenState m_open_state;
       Beam::SynchronizedUnorderedMap<Beam::DirectoryEntry,
         std::shared_ptr<RiskParameterPublisher>> m_risk_parameter_publishers;
       Beam::SynchronizedUnorderedMap<Beam::DirectoryEntry,
         std::shared_ptr<RiskStatePublisher>> m_risk_state_publishers;
+      Beam::SynchronizedUnorderedMap<Beam::DirectoryEntry, NotificationEntry,
+        Beam::Mutex> m_notification_entries;
       Beam::RoutineTaskQueue m_tasks;
 
       ServiceAdministrationClient(const ServiceAdministrationClient&) = delete;
@@ -131,6 +141,9 @@ namespace Nexus {
         const RiskParameters& risk_parameters);
       void on_risk_state_message(ServiceProtocolClient& client,
         const Beam::DirectoryEntry& account, RiskState risk_state);
+      void recover_notifications(ServiceProtocolClient& client);
+      void on_notification_message(
+        ServiceProtocolClient& client, Notification notification);
   };
 
   template<typename B>
@@ -148,6 +161,9 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
     Beam::add_message_slot<RiskStateMessage>(
       Beam::out(m_client_handler.get_slots()), std::bind_front(
         &ServiceAdministrationClient::on_risk_state_message, this));
+    Beam::add_message_slot<NotificationMessage>(
+      Beam::out(m_client_handler.get_slots()), std::bind_front(
+        &ServiceAdministrationClient::on_notification_message, this));
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::ConnectException(
@@ -594,6 +610,28 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
+  Notification::Id ServiceAdministrationClient<B>::monitor_notifications(
+      const Beam::DirectoryEntry& account,
+      Beam::ScopedQueueWriter<Notification> queue) {
+    auto last_id = Beam::Async<Notification::Id>();
+    m_tasks.push([&] {
+      auto& entry = m_notification_entries.get_or_insert(account, [&] {
+        auto entry = NotificationEntry();
+        entry.m_last_id = Beam::service_or_throw_with_nested([&] {
+          auto client = m_client_handler.get_client();
+          return client->template send_request<MonitorNotificationsService>(
+            account);
+        }, "Failed to monitor notifications: " +
+          boost::lexical_cast<std::string>(account));
+        return entry;
+      });
+      entry.m_queues.push_back(std::move(queue));
+      last_id.get_eval().set(entry.m_last_id);
+    });
+    return last_id.get();
+  }
+
+  template<typename B>
   void ServiceAdministrationClient<B>::close() {
     if(m_open_state.set_closing()) {
       return;
@@ -601,6 +639,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_tasks.close();
     m_tasks.wait();
     m_client_handler.close();
+    m_notification_entries.clear();
     m_risk_state_publishers.clear();
     m_risk_parameter_publishers.clear();
     m_open_state.close();
@@ -612,6 +651,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_tasks.push([=, this] {
       recover_risk_parameters(*client);
       recover_risk_state(*client);
+      recover_notifications(*client);
     });
   }
 
@@ -694,6 +734,29 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         } catch(const Beam::PipeBrokenException&) {
           m_risk_state_publishers.erase(account);
         }
+      }
+    });
+  }
+
+  /** TODO */
+  template<typename B>
+  void ServiceAdministrationClient<B>::recover_notifications(
+      ServiceProtocolClient& client) {}
+
+  template<typename B>
+  void ServiceAdministrationClient<B>::on_notification_message(
+      ServiceProtocolClient& client, Notification notification) {
+    m_tasks.push([=, this, notification = std::move(notification)] {
+      if(auto entry = m_notification_entries.find(notification.m_account)) {
+        entry->m_last_id = notification.m_id;
+        std::erase_if(entry->m_queues, [&] (auto& queue) {
+          try {
+            queue.push(notification);
+            return false;
+          } catch(const Beam::PipeBrokenException&) {
+            return true;
+          }
+        });
       }
     });
   }

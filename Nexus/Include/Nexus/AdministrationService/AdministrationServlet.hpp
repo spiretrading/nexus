@@ -16,6 +16,8 @@
 #include <Beam/Utilities/Algorithm.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/throw_exception.hpp>
+#include <boost/uuid/time_generator_v7.hpp>
+#include <boost/uuid/uuid_io.hpp>
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/AdministrationServices.hpp"
 #include "Nexus/AdministrationService/AdministrationSession.hpp"
@@ -86,6 +88,12 @@ namespace Nexus {
       using AccountToRiskSubscribers =
         std::unordered_map<Beam::DirectoryEntry, SyncRiskParameterSubscribers>;
       using SyncAccountToSubscribers = Beam::Sync<AccountToRiskSubscribers>;
+      using NotificationSubscribers = std::vector<ServiceProtocolClient*>;
+      using SyncNotificationSubscribers = Beam::Sync<NotificationSubscribers>;
+      using AccountToNotificationSubscribers =
+        std::unordered_map<Beam::DirectoryEntry, SyncNotificationSubscribers>;
+      using SyncAccountToNotificationSubscribers =
+        Beam::Sync<AccountToNotificationSubscribers>;
       Beam::local_ptr_t<S> m_service_locator_client;
       EntitlementDatabase m_entitlements;
       Beam::local_ptr_t<D> m_data_store;
@@ -96,8 +104,10 @@ namespace Nexus {
       Beam::DirectoryEntry m_trading_groups_root;
       SyncAccountToSubscribers m_risk_parameters_subscribers;
       SyncRiskStateEntries m_risk_state_entries;
+      SyncAccountToNotificationSubscribers m_notification_subscribers;
       std::atomic_int m_last_modification_request_id;
       std::atomic_int m_last_message_id;
+      boost::uuids::time_generator_v7 m_uuid_generator;
       Beam::RoutineHandler m_grant_loop;
       Beam::OpenState m_open_state;
 
@@ -219,6 +229,11 @@ namespace Nexus {
       Message on_send_account_modification_request_message(
         ServiceProtocolClient& client, AccountModificationRequest::Id id,
         Message message);
+      Notification on_send_notification(ServiceProtocolClient& client,
+        Beam::DirectoryEntry account, std::string description,
+        Notification::Category category);
+      Notification::Id on_monitor_notifications(
+        ServiceProtocolClient& client, const Beam::DirectoryEntry& account);
   };
 
   template<typename S, typename D, typename R, typename T>
@@ -366,6 +381,10 @@ namespace Nexus {
       std::bind_front(
         &AdministrationServlet::on_send_account_modification_request_message,
         this));
+    SendNotificationService::add_slot(out(slots),
+      std::bind_front(&AdministrationServlet::on_send_notification, this));
+    MonitorNotificationsService::add_slot(out(slots),
+      std::bind_front(&AdministrationServlet::on_monitor_notifications, this));
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires
@@ -389,6 +408,15 @@ namespace Nexus {
         std::erase(entry.m_subscribers, &client);
       }
     });
+    Beam::with(m_notification_subscribers,
+      [&] (auto& notification_subscribers) {
+        for(auto& subscribers :
+            notification_subscribers | std::views::values) {
+          Beam::with(subscribers, [&] (auto& subscribers) {
+            std::erase(subscribers, &client);
+          });
+        }
+      });
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires
@@ -1642,6 +1670,67 @@ namespace Nexus {
       m_data_store->store(id, message);
     });
     return message;
+  }
+
+  template<typename C, typename S, typename D, typename R, typename T> requires
+    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+      IsAdministrationDataStore<Beam::dereference_t<D>> &&
+        Beam::IsTimeClient<Beam::dereference_t<R>> &&
+          Beam::IsTimer<Beam::dereference_t<T>>
+  Notification AdministrationServlet<C, S, D, R, T>::on_send_notification(
+      ServiceProtocolClient& client, Beam::DirectoryEntry account,
+      std::string description, Notification::Category category) {
+    auto& session = client.get_session();
+    if(!check_administrator(session.get_account())) {
+      boost::throw_with_location(
+        Beam::ServiceRequestException("Insufficient permissions."));
+    }
+    auto notification = Notification();
+    notification.m_id = boost::uuids::to_string(m_uuid_generator());
+    notification.m_account = std::move(account);
+    notification.m_description = std::move(description);
+    notification.m_category = category;
+    notification.m_timestamp = m_time_client->get_time();
+    notification.m_is_read = false;
+    m_data_store->with_transaction([&] {
+      m_data_store->store(notification);
+    });
+    auto& subscribers = Beam::with(m_notification_subscribers,
+      [&] (auto& notification_subscribers) -> decltype(auto) {
+        return notification_subscribers[notification.m_account];
+      });
+    Beam::with(subscribers, [&] (auto& subscribers) {
+      for(auto& subscriber : subscribers) {
+        Beam::send_record_message<NotificationMessage>(
+          *subscriber, notification);
+      }
+    });
+    return notification;
+  }
+
+  template<typename C, typename S, typename D, typename R, typename T> requires
+    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+      IsAdministrationDataStore<Beam::dereference_t<D>> &&
+        Beam::IsTimeClient<Beam::dereference_t<R>> &&
+          Beam::IsTimer<Beam::dereference_t<T>>
+  Notification::Id AdministrationServlet<C, S, D, R, T>::
+      on_monitor_notifications(ServiceProtocolClient& client,
+        const Beam::DirectoryEntry& account) {
+    auto& session = client.get_session();
+    if(!check_read_permission(session.get_account(), account)) {
+      boost::throw_with_location(
+        Beam::ServiceRequestException("Insufficient permissions."));
+    }
+    auto& subscribers = Beam::with(m_notification_subscribers,
+      [&] (auto& notification_subscribers) -> decltype(auto) {
+        return notification_subscribers[account];
+      });
+    Beam::with(subscribers, [&] (auto& subscribers) {
+      if(!std::ranges::contains(subscribers, &client)) {
+        subscribers.push_back(&client);
+      }
+    });
+    return {};
   }
 }
 

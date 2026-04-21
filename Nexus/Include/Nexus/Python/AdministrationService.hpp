@@ -57,25 +57,23 @@ namespace Nexus::Python {
           &C::load_account_roles)).
       def("load_parent_trading_group", &C::load_parent_trading_group).
       def("load_identity", &C::load_identity).
-      def("store", pybind11::overload_cast<const Beam::DirectoryEntry&,
-        const AccountIdentity&>(&C::store)).
+      def("store", pybind11::overload_cast<
+        const Beam::DirectoryEntry&, const AccountIdentity&>(&C::store)).
       def("load_trading_group", &C::load_trading_group).
       def("load_managed_trading_groups", &C::load_managed_trading_groups).
       def("load_administrators", &C::load_administrators).
       def("load_services", &C::load_services).
-      def("load_entitlements",
-        [] (C& self, const Beam::DirectoryEntry& account) {
-          return self.load_entitlements(account);
-        }).
+      def("load_entitlements", pybind11::overload_cast<
+        const Beam::DirectoryEntry&>(&C::load_entitlements)).
       def("store_entitlements", &C::store_entitlements).
       def("get_risk_parameters_publisher", &C::get_risk_parameters_publisher,
         pybind11::return_value_policy::reference_internal).
-      def("store", pybind11::overload_cast<const Beam::DirectoryEntry&,
-        const RiskParameters&>(&C::store)).
+      def("store", pybind11::overload_cast<
+        const Beam::DirectoryEntry&, const RiskParameters&>(&C::store)).
       def("get_risk_state_publisher", &C::get_risk_state_publisher,
         pybind11::return_value_policy::reference_internal).
-      def("store", pybind11::overload_cast<const Beam::DirectoryEntry&,
-        const RiskState&>(&C::store)).
+      def("store", pybind11::overload_cast<
+        const Beam::DirectoryEntry&, const RiskState&>(&C::store)).
       def("load_account_modification_request",
         &C::load_account_modification_request).
       def("load_account_modification_request_ids",
@@ -83,29 +81,19 @@ namespace Nexus::Python {
       def("load_managed_account_modification_request_ids",
         &C::load_managed_account_modification_request_ids).
       def("load_entitlement_modification", &C::load_entitlement_modification).
-      def("submit",
-        [] (C& self, const Beam::DirectoryEntry& account,
-            const EntitlementModification& modification,
-            boost::posix_time::ptime effective_date, const Message& comment) {
-          return self.submit(account, modification, effective_date, comment);
-        }).
+      def("submit", pybind11::overload_cast<
+        const Beam::DirectoryEntry&, const EntitlementModification&,
+        boost::posix_time::ptime, const Message&>(&C::submit)).
       def("load_risk_modification", &C::load_risk_modification).
-      def("submit",
-        [] (C& self, const Beam::DirectoryEntry& account,
-            const RiskModification& modification,
-            boost::posix_time::ptime effective_date, const Message& comment) {
-          return self.submit(account, modification, effective_date, comment);
-        }).
+      def("submit", pybind11::overload_cast<const Beam::DirectoryEntry&,
+        const RiskModification&, boost::posix_time::ptime, const Message&>(
+          &C::submit)).
       def("load_account_modification_request_status",
         &C::load_account_modification_request_status).
       def("load_account_modification_request_updates",
         &C::load_account_modification_request_updates).
       def("approve_account_modification_request",
-        [] (C& self, AccountModificationRequest::Id id,
-            boost::posix_time::ptime effective_date, const Message& comment) {
-          return self.approve_account_modification_request(
-            id, effective_date, comment);
-        }).
+        &C::approve_account_modification_request).
       def("reject_account_modification_request",
         &C::reject_account_modification_request).
       def("load_message", &C::load_message).
@@ -113,6 +101,7 @@ namespace Nexus::Python {
       def("send_account_modification_request_message",
         &C::send_account_modification_request_message).
       def("send_notification", &C::send_notification).
+      def("monitor_notifications", &C::monitor_notifications).
       def("close", &C::close);
     if constexpr(!std::is_same_v<C, AdministrationClient>) {
       pybind11::implicitly_convertible<C, AdministrationClient>();
@@ -135,37 +124,31 @@ namespace Nexus::Python {
     auto data_store = pybind11::class_<D>(module, name.data()).
       def("load_all_account_identities", &D::load_all_account_identities).
       def("load_identity", &D::load_identity).
-      def("store", pybind11::overload_cast<const Beam::DirectoryEntry&,
-        const AccountIdentity&>(&D::store)).
+      def("store", pybind11::overload_cast<
+        const Beam::DirectoryEntry&, const AccountIdentity&>(&D::store)).
       def("load_all_risk_parameters", &D::load_all_risk_parameters).
       def("load_risk_parameters", &D::load_risk_parameters).
-      def("store", pybind11::overload_cast<const Beam::DirectoryEntry&,
-        const RiskParameters&>(&D::store)).
+      def("store", pybind11::overload_cast<
+        const Beam::DirectoryEntry&, const RiskParameters&>(&D::store)).
       def("load_all_risk_states", &D::load_all_risk_states).
       def("load_risk_state", &D::load_risk_state).
-      def("store", pybind11::overload_cast<const Beam::DirectoryEntry&,
-        const RiskState&>(&D::store)).
+      def("store", pybind11::overload_cast<
+        const Beam::DirectoryEntry&, const RiskState&>(&D::store)).
       def("load_account_modification_request",
         &D::load_account_modification_request).
+      def("load_account_modification_request_ids", pybind11::overload_cast<
+        const Beam::DirectoryEntry&, AccountModificationRequest::Id, int>(
+          &D::load_account_modification_request_ids)).
       def("load_account_modification_request_ids",
-        [] (D& self, const Beam::DirectoryEntry& account,
-            AccountModificationRequest::Id start_id, int max_count) {
-          return self.load_account_modification_request_ids(
-            account, start_id, max_count);
-        }).
-      def("load_account_modification_request_ids",
-        [] (D& self, AccountModificationRequest::Id start_id,
-            int max_count) {
-          return self.load_account_modification_request_ids(
-            start_id, max_count);
-        }).
+        pybind11::overload_cast<AccountModificationRequest::Id, int>(
+          &D::load_account_modification_request_ids)).
       def("load_entitlement_modification", &D::load_entitlement_modification).
       def("store", pybind11::overload_cast<
         const AccountModificationRequest&, const EntitlementModification&>(
           &D::store)).
       def("load_risk_modification", &D::load_risk_modification).
-      def("store", pybind11::overload_cast<const AccountModificationRequest&,
-        const RiskModification&>(&D::store)).
+      def("store", pybind11::overload_cast<
+        const AccountModificationRequest&, const RiskModification&>(&D::store)).
       def("store_effective_date", &D::store_effective_date).
       def("store", pybind11::overload_cast<
         AccountModificationRequest::Id, const Message&>(&D::store)).

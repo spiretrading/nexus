@@ -719,9 +719,8 @@ TEST_SUITE("ServiceAdministrationClient") {
     auto account = DirectoryEntry::make_account(58, "notified_account");
     auto description = std::string("Your request has been approved.");
     auto category = Notification::Category::ACCOUNT_MODIFICATION;
-    auto notification = Notification{
-      "abc-123", account, description, category,
-      ptime(gregorian::date(2026, 4, 21)), false};
+    auto notification = Notification("abc-123", account, description, category,
+      time_from_string("2026-04-21 00:00:00"), false);
     fixture.on_request<SendNotificationService>(
       [&] (auto& request, const auto& received_account,
           const auto& received_description, auto received_category) {
@@ -738,5 +737,70 @@ TEST_SUITE("ServiceAdministrationClient") {
     REQUIRE(received.m_category == notification.m_category);
     REQUIRE(received.m_timestamp == notification.m_timestamp);
     REQUIRE(received.m_is_read == notification.m_is_read);
+  }
+
+  TEST_CASE("monitor_notifications") {
+    auto fixture = Fixture();
+    auto account = DirectoryEntry::make_account(59, "monitored_account");
+    auto expected_last_id = Notification::Id("last-abc-123");
+    auto queue = std::make_shared<Queue<Notification>>();
+    fixture.on_request<MonitorNotificationsService>(
+      [&] (auto& request, const auto& received_account) {
+        REQUIRE(received_account == account);
+        request.set(expected_last_id);
+      });
+    auto last_id =
+      REQUIRE_NO_THROW(fixture.m_client->monitor_notifications(account, queue));
+    REQUIRE(last_id == expected_last_id);
+  }
+
+  TEST_CASE("monitor_notifications_receive_message") {
+    auto fixture = Fixture();
+    auto account = DirectoryEntry::make_account(60, "monitored_account");
+    auto queue = std::make_shared<Queue<Notification>>();
+    auto server_side_client =
+      static_cast<TestServiceProtocolServer::ServiceProtocolClient*>(nullptr);
+    fixture.on_request<MonitorNotificationsService>(
+      [&] (auto& request, const auto& received_account) {
+        server_side_client = &request.get_client();
+        request.set(Notification::Id());
+      });
+    REQUIRE_NO_THROW(fixture.m_client->monitor_notifications(account, queue));
+    auto notification = Notification("notif-1", account, "New notification.",
+      Notification::Category::REPORT, time_from_string("2026-04-22 00:00:00"),
+      false);
+    send_record_message<NotificationMessage>(*server_side_client, notification);
+    auto received = queue->pop();
+    REQUIRE(received.m_id == notification.m_id);
+    REQUIRE(received.m_account == notification.m_account);
+    REQUIRE(received.m_description == notification.m_description);
+    REQUIRE(received.m_category == notification.m_category);
+    REQUIRE(received.m_timestamp == notification.m_timestamp);
+    REQUIRE(received.m_is_read == notification.m_is_read);
+  }
+
+  TEST_CASE("monitor_notifications_second_call_returns_updated_last_id") {
+    auto fixture = Fixture();
+    auto account = DirectoryEntry::make_account(61, "monitored_account");
+    auto queue_a = std::make_shared<Queue<Notification>>();
+    auto server_side_client =
+      static_cast<TestServiceProtocolServer::ServiceProtocolClient*>(nullptr);
+    fixture.on_request<MonitorNotificationsService>(
+      [&] (auto& request, const auto& received_account) {
+        server_side_client = &request.get_client();
+        request.set(Notification::Id("initial-id"));
+      });
+    auto last_id = REQUIRE_NO_THROW(
+      fixture.m_client->monitor_notifications(account, queue_a));
+    REQUIRE(last_id == "initial-id");
+    auto notification = Notification("updated-id", account, "New notification.",
+      Notification::Category::ACCOUNT_MODIFICATION,
+      time_from_string("2026-04-22 00:00:00"), false);
+    send_record_message<NotificationMessage>(*server_side_client, notification);
+    queue_a->pop();
+    auto queue_b = std::make_shared<Queue<Notification>>();
+    last_id = REQUIRE_NO_THROW(
+      fixture.m_client->monitor_notifications(account, queue_b));
+    REQUIRE(last_id == "updated-id");
   }
 }

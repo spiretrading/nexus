@@ -10,6 +10,7 @@
 #include <Beam/Pointers/VirtualPtr.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Queues/Publisher.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
@@ -139,6 +140,10 @@ namespace Nexus {
       { client.send_notification(std::declval<const Beam::DirectoryEntry&>(),
         std::declval<const std::string&>(),
         std::declval<Notification::Category>()) } -> std::same_as<Notification>;
+      { client.monitor_notifications(
+          std::declval<const Beam::DirectoryEntry&>(),
+          std::declval<Beam::ScopedQueueWriter<Notification>>()) } ->
+            std::same_as<Notification::Id>;
     };
 
   /** Provides a generic interface over an arbitrary AdministrationClient. */
@@ -458,6 +463,16 @@ namespace Nexus {
       Notification send_notification(const Beam::DirectoryEntry& account,
         const std::string& description, Notification::Category category);
 
+      /**
+       * Monitors notifications for an account.
+       * @param account The account to monitor.
+       * @param queue The queue to push new notifications to.
+       * @return The id of the most recent notification.
+       */
+      Notification::Id monitor_notifications(
+        const Beam::DirectoryEntry& account,
+        Beam::ScopedQueueWriter<Notification> queue);
+
       void close();
 
     private:
@@ -548,6 +563,9 @@ namespace Nexus {
         virtual Notification send_notification(
           const Beam::DirectoryEntry& account, const std::string& description,
           Notification::Category category) = 0;
+        virtual Notification::Id monitor_notifications(
+          const Beam::DirectoryEntry& account,
+          Beam::ScopedQueueWriter<Notification> queue) = 0;
         virtual void close() = 0;
       };
       template<typename C>
@@ -636,6 +654,9 @@ namespace Nexus {
         Notification send_notification(
           const Beam::DirectoryEntry& account, const std::string& description,
           Notification::Category category) override;
+        Notification::Id monitor_notifications(
+          const Beam::DirectoryEntry& account,
+          Beam::ScopedQueueWriter<Notification> queue) override;
         void close() override;
       };
       Beam::VirtualPtr<VirtualAdministrationClient> m_client;
@@ -864,6 +885,12 @@ namespace Nexus {
       const Beam::DirectoryEntry& account, const std::string& description,
       Notification::Category category) {
     return m_client->send_notification(account, description, category);
+  }
+
+  inline Notification::Id AdministrationClient::monitor_notifications(
+      const Beam::DirectoryEntry& account,
+      Beam::ScopedQueueWriter<Notification> queue) {
+    return m_client->monitor_notifications(account, std::move(queue));
   }
 
   inline void AdministrationClient::close() {
@@ -1125,6 +1152,13 @@ namespace Nexus {
       send_notification(const Beam::DirectoryEntry& account,
         const std::string& description, Notification::Category category) {
     return m_client->send_notification(account, description, category);
+  }
+
+  template<typename C>
+  Notification::Id AdministrationClient::WrappedAdministrationClient<C>::
+      monitor_notifications(const Beam::DirectoryEntry& account,
+        Beam::ScopedQueueWriter<Notification> queue) {
+    return m_client->monitor_notifications(account, std::move(queue));
   }
 
   template<typename C>
