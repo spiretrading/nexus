@@ -1,63 +1,44 @@
 #include "Spire/Ui/OrderStatusListBox.hpp"
-#include <map>
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/LocalQueryModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
-#include "Spire/Ui/ListView.hpp"
 
+using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  template<typename T>
-  struct MultiValueQueryModel : QueryModel<T> {
-    using Type = typename QueryModel<T>::Type;
-    std::multimap<QString, Type> m_values;
+  struct OrderStatusQueryModel : QueryModel<OrderStatus> {
+    LocalQueryModel<OrderStatus> m_statuses;
+    LocalQueryModel<OrderStatus> m_terms;
 
-    void add(const Type& value) {
-      add(to_text(value).toLower(), value);
-    }
-
-    void add(const QString& id, const Type& value) {
-      m_values.emplace(id.toLower(), value);
-    }
-
-    boost::optional<Type> parse(const QString& query) override {
-      auto lower_query = query.toLower();
-      auto range = m_values.equal_range(lower_query);
-      for(auto i = range.first; i != range.second; ++i) {
-        if(to_text(i->second).toLower() == lower_query) {
-          return i->second;
-        }
+    void add(OrderStatus status) {
+      m_statuses.add(status);
+      auto words = to_text(status).split(' ', Qt::SkipEmptyParts);
+      for(auto i = 1; i < words.size(); ++i) {
+        m_terms.add(words[i], status);
       }
-      return boost::none;
     }
 
-    QtPromise<std::vector<Type>> submit(const QString& query) override {
-      auto matches = std::vector<Type>();
-      auto lower_query = query.toLower();
-      for(auto i = m_values.lower_bound(lower_query);
-          i != m_values.end() && i->first.startsWith(lower_query); ++i) {
-        if constexpr(requires(const Type& a, const Type& b) { a == b; }) {
-          auto j = std::find(matches.begin(), matches.end(), i->second);
-          if(j == matches.end()) {
-            matches.push_back(i->second);
+    optional<OrderStatus> parse(const QString& query) override {
+      return m_statuses.parse(query);
+    }
+
+    QtPromise<std::vector<OrderStatus>>
+        submit(const QString& query) override {
+      return m_statuses.submit(query).then([=] (auto&& source_result) {
+        auto matches = source_result.get();
+        auto term_matches = wait(m_terms.submit(query));
+        for(auto& value : term_matches) {
+          if(std::find(matches.begin(), matches.end(), value) ==
+              matches.end()) {
+            matches.push_back(value);
           }
-        } else {
-          matches.push_back(i->second);
         }
-      }
-      return QtPromise(std::move(matches));
+        return matches;
+      });
     }
   };
-
-  void add_order_status(
-      MultiValueQueryModel<OrderStatus>& model, OrderStatus status) {
-    model.add(status);
-    auto words = to_text(status).split(' ', Qt::SkipEmptyParts);
-    for(auto i = 1; i < words.size(); ++i) {
-      model.add(words[i], status);
-    }
-  }
 }
 
 OrderStatusListBox* Spire::make_order_status_list_box(QWidget* parent) {
@@ -67,19 +48,19 @@ OrderStatusListBox* Spire::make_order_status_list_box(QWidget* parent) {
 
 OrderStatusListBox* Spire::make_order_status_list_box(
     std::shared_ptr<OrderStatusListModel> current, QWidget* parent) {
-  auto query_model = std::make_shared<MultiValueQueryModel<OrderStatus>>();
-  add_order_status(*query_model, OrderStatus::CANCELED);
-  add_order_status(*query_model, OrderStatus::CANCEL_REJECT);
-  add_order_status(*query_model, OrderStatus::DONE_FOR_DAY);
-  add_order_status(*query_model, OrderStatus::EXPIRED);
-  add_order_status(*query_model, OrderStatus::FILLED);
-  add_order_status(*query_model, OrderStatus::NEW);
-  add_order_status(*query_model, OrderStatus::PARTIALLY_FILLED);
-  add_order_status(*query_model, OrderStatus::PENDING_CANCEL);
-  add_order_status(*query_model, OrderStatus::PENDING_NEW);
-  add_order_status(*query_model, OrderStatus::REJECTED);
-  add_order_status(*query_model, OrderStatus::STOPPED);
-  add_order_status(*query_model, OrderStatus::SUSPENDED);
+  auto query_model = std::make_shared<OrderStatusQueryModel>();
+  query_model->add(OrderStatus::CANCELED);
+  query_model->add(OrderStatus::CANCEL_REJECT);
+  query_model->add(OrderStatus::DONE_FOR_DAY);
+  query_model->add(OrderStatus::EXPIRED);
+  query_model->add(OrderStatus::FILLED);
+  query_model->add(OrderStatus::NEW);
+  query_model->add(OrderStatus::PARTIALLY_FILLED);
+  query_model->add(OrderStatus::PENDING_CANCEL);
+  query_model->add(OrderStatus::PENDING_NEW);
+  query_model->add(OrderStatus::REJECTED);
+  query_model->add(OrderStatus::STOPPED);
+  query_model->add(OrderStatus::SUSPENDED);
   return new TagComboBox<OrderStatus>(std::move(query_model),
     std::move(current), &ListView::default_item_builder, parent);
 }
