@@ -128,9 +128,15 @@ export class DashboardPage extends React.Component<Properties, State> {
             component={null}>
           {(status: string) => {
             return (
-              <div className={css([DashboardPage.STYLE.dropShaddow,
-                DashboardPage.FADE_TRANSITION_STYLE.base,
-                DashboardPage.FADE_TRANSITION_STYLE[status]])}/>);
+              <>
+                <div className={css([DashboardPage.STYLE.overlay,
+                  DashboardPage.FADE_TRANSITION_STYLE.base,
+                  DashboardPage.FADE_TRANSITION_STYLE[status]])}
+                  onClick={this.onToggleSideMenu}/>
+                <div className={css([DashboardPage.STYLE.dropShaddow,
+                  DashboardPage.FADE_TRANSITION_STYLE.base,
+                  DashboardPage.FADE_TRANSITION_STYLE[status]])}/>
+              </>);
           }}
         </Transition>
         {this.props.children}
@@ -167,6 +173,14 @@ export class DashboardPage extends React.Component<Properties, State> {
       top: 60,
       left: 0,
       zIndex: -1
+    },
+    overlay: {
+      position: 'fixed' as 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      zIndex: 0
     },
     dropShaddow: {
       width: '1px',
