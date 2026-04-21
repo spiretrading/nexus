@@ -67,6 +67,7 @@ namespace Nexus {
       Message load_message(Message::Id id);
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
+      void store(const Notification& notification);
       template<typename F>
       decltype(auto) with_transaction(F&& transaction);
       void close();
@@ -91,6 +92,8 @@ namespace Nexus {
         std::vector<Message::Id>> m_request_messages;
       std::unordered_map<Message::Id, Message> m_messages;
       Message::Id m_last_message_id;
+      std::unordered_map<Beam::DirectoryEntry, std::vector<Notification>>
+        m_notifications;
 
       LocalAdministrationDataStore(
         const LocalAdministrationDataStore&) = delete;
@@ -324,6 +327,11 @@ namespace Nexus {
       return std::vector<Message::Id>();
     }
     return i->second;
+  }
+
+  inline void LocalAdministrationDataStore::store(
+      const Notification& notification) {
+    m_notifications[notification.m_account].push_back(notification);
   }
 
   template<typename F>

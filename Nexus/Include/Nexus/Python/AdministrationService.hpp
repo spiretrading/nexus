@@ -175,6 +175,7 @@ namespace Nexus::Python {
         &D::load_account_modification_request_updates).
       def("store", pybind11::overload_cast<AccountModificationRequest::Id,
         const AccountModificationRequest::Update&>(&D::store)).
+      def("store", pybind11::overload_cast<const Notification&>(&D::store)).
       def("load_last_message_id", &D::load_last_message_id).
       def("load_message", &D::load_message).
       def("load_message_ids", &D::load_message_ids).

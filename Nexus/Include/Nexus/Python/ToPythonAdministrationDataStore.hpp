@@ -80,6 +80,7 @@ namespace Nexus {
       Message load_message(Message::Id id);
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
+      void store(const Notification& notification);
       void with_transaction(const std::function<void ()>& transaction);
       void close();
 
@@ -300,6 +301,13 @@ namespace Nexus {
       AccountModificationRequest::Id id) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_message_ids(id);
+  }
+
+  template<IsAdministrationDataStore D>
+  void ToPythonAdministrationDataStore<D>::store(
+      const Notification& notification) {
+    auto release = Beam::Python::GilRelease();
+    m_data_store->store(notification);
   }
 
   template<IsAdministrationDataStore D>

@@ -77,6 +77,7 @@ namespace Nexus {
       Message load_message(Message::Id id);
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
+      void store(const Notification& notification);
       template<typename F>
       decltype(auto) with_transaction(F&& transaction);
       void close();
@@ -270,6 +271,12 @@ namespace Nexus {
   std::vector<Message::Id> CachedAdministrationDataStore<D>::load_message_ids(
       AccountModificationRequest::Id id) {
     return m_data_store->load_message_ids(id);
+  }
+
+  template<IsAdministrationDataStore D>
+  void CachedAdministrationDataStore<D>::store(
+      const Notification& notification) {
+    m_data_store->store(notification);
   }
 
   template<IsAdministrationDataStore D>

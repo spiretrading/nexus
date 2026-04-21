@@ -85,6 +85,7 @@ namespace Nexus {
       Message load_message(Message::Id id);
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
+      void store(const Notification& notification);
       template<typename F>
       decltype(auto) with_transaction(F&& transaction);
       void close();
@@ -128,6 +129,8 @@ namespace Nexus {
       m_connection->execute(Viper::create_if_not_exists(
         get_account_modification_request_message_index_row(),
         "account_modification_request_messages"));
+      m_connection->execute(Viper::create_if_not_exists(
+        get_notification_row(), "notifications"));
     } catch(const std::exception&) {
       close();
       throw;
@@ -540,6 +543,16 @@ namespace Nexus {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }
     return ids;
+  }
+
+  template<typename C>
+  void SqlAdministrationDataStore<C>::store(const Notification& notification) {
+    try {
+      m_connection->execute(Viper::insert(
+        get_notification_row(), "notifications", &notification));
+    } catch(const Viper::ExecuteException& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
   }
 
   template<typename C>

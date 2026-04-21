@@ -346,6 +346,26 @@ namespace Nexus {
         add_index("id_index", "request_id");
     return ROW;
   }
+
+  /** Returns a row representing a Notification. */
+  inline const auto& get_notification_row() {
+    static const auto ROW = Viper::Row<Notification>().
+      add_column("id", Viper::varchar(36), &Notification::m_id).
+      add_column("account",
+        [] (const auto& row) {
+          return row.m_account.m_id;
+        },
+        [] (auto& row, auto column) {
+          row.m_account = Beam::DirectoryEntry::make_account(column);
+        }).
+      add_column("description", Viper::text, &Notification::m_description).
+      add_column("category", &Notification::m_category).
+      add_column("timestamp", &Notification::m_timestamp).
+      add_column("is_read", &Notification::m_is_read).
+      set_primary_key("id").
+      add_index("account_index", "account");
+    return ROW;
+  }
 }
 
 #endif

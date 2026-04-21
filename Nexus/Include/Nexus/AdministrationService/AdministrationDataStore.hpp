@@ -16,6 +16,7 @@
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
+#include "Nexus/AdministrationService/Notification.hpp"
 #include "Nexus/AdministrationService/RiskModification.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
@@ -81,6 +82,7 @@ namespace Nexus {
     { store.load_message_ids(
       std::declval<AccountModificationRequest::Id>()) } ->
       std::same_as<std::vector<Message::Id>>;
+    store.store(std::declval<const Notification&>());
     { store.with_transaction(
       std::declval<const std::function<void ()>&>()) } -> std::same_as<void>;
   };
@@ -333,6 +335,12 @@ namespace Nexus {
         AccountModificationRequest::Id id);
 
       /**
+       * Stores a Notification.
+       * @param notification The Notification to store.
+       */
+      void store(const Notification& notification);
+
+      /**
        * Performs an atomic transaction.
        * @param transaction The transaction to perform.
        */
@@ -396,6 +404,7 @@ namespace Nexus {
         virtual Message load_message(Message::Id id) = 0;
         virtual std::vector<Message::Id> load_message_ids(
           AccountModificationRequest::Id id) = 0;
+        virtual void store(const Notification& notification) = 0;
         virtual void with_transaction(
           const std::function<void ()>& transaction) = 0;
         virtual void close() = 0;
@@ -457,6 +466,7 @@ namespace Nexus {
         Message load_message(Message::Id id) override;
         std::vector<Message::Id> load_message_ids(
           AccountModificationRequest::Id id) override;
+        void store(const Notification& notification) override;
         void with_transaction(
           const std::function<void ()>& transaction) override;
         void close() override;
@@ -605,6 +615,10 @@ namespace Nexus {
   inline std::vector<Message::Id> AdministrationDataStore::load_message_ids(
       AccountModificationRequest::Id id) {
     return m_data_store->load_message_ids(id);
+  }
+
+  inline void AdministrationDataStore::store(const Notification& notification) {
+    m_data_store->store(notification);
   }
 
   template<std::invocable<> F>
@@ -803,6 +817,12 @@ namespace Nexus {
       WrappedAdministrationDataStore<D>::load_message_ids(
         AccountModificationRequest::Id id) {
     return m_data_store->load_message_ids(id);
+  }
+
+  template<typename D>
+  void AdministrationDataStore::WrappedAdministrationDataStore<D>::store(
+      const Notification& notification) {
+    m_data_store->store(notification);
   }
 
   template<typename D>
