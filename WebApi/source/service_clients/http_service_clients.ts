@@ -6,12 +6,15 @@ import { ServiceClients } from './service_clients';
 /** Implements the ServiceClients class using HTTP requests. */
 export class HttpServiceClients extends ServiceClients {
 
-  /** Constructs all service clients. */
-  constructor() {
+  /**
+   * Constructs all service clients.
+   * @param serviceUrl - The WebSocket URL for the service protocol.
+   */
+  constructor(serviceUrl: URL) {
     super();
     this.isOpen = false;
     this._serviceLocatorClient = new Beam.HttpServiceLocatorClient();
-    this._administrationClient = new HttpAdministrationClient();
+    this._administrationClient = new HttpAdministrationClient(serviceUrl);
     this._definitionsClient = new HttpDefinitionsClient();
     this._complianceClient = new HttpComplianceClient();
     this._riskClient = new HttpRiskClient();

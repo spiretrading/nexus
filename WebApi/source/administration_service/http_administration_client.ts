@@ -6,12 +6,31 @@ import { AccountRoles } from './account_roles';
 import { AdministrationClient } from './administration_client';
 import { EntitlementModification } from './entitlement_modification';
 import { Message } from './message';
+import { MonitorNotificationsRequest } from './monitor_notifications_request';
 import { Notification } from './notification';
+import { NotificationMessage } from './notification_message';
 import { RiskModification } from './risk_modification';
 import { TradingGroup } from './trading_group';
 
+interface NotificationEntry {
+  queues: Beam.QueueWriter<Notification>[];
+  lastId: Notification.Id;
+}
+
 /** Implements the AdministrationClient using HTTP requests. */
 export class HttpAdministrationClient extends AdministrationClient {
+
+  /**
+   * Constructs an HttpAdministrationClient.
+   * @param serviceUrl - The WebSocket URL for the service protocol.
+   */
+  public constructor(serviceUrl: URL) {
+    super();
+    this._serviceClient = new Beam.ServiceProtocolClient(serviceUrl);
+    this._tasks = new Beam.AsyncWorkQueue();
+    this._notificationEntries = new Map();
+  }
+
   public async loadAccountsByRoles(roles: AccountRoles):
       Promise<Beam.DirectoryEntry[]> {
     const response = await Beam.post(
@@ -304,9 +323,25 @@ export class HttpAdministrationClient extends AdministrationClient {
     return Message.fromJson(response);
   }
 
-  public async monitorNotifications(account: Beam.DirectoryEntry,
-      queue: Beam.QueueWriter<Notification>): Promise<Notification.Id> {
-    throw new Error('Not implemented.');
+  public async monitorNotifications(
+      account: Beam.DirectoryEntry, queue: Beam.QueueWriter<Notification>):
+        Promise<Notification.Id> {
+    const key = account.id;
+    const entry = this._notificationEntries.get(key);
+    if(entry) {
+      entry.queues.push(queue);
+      return entry.lastId;
+    }
+    const newEntry: NotificationEntry = {
+      queues: [queue],
+      lastId: ''
+    };
+    this._notificationEntries.set(key, newEntry);
+    this._serviceClient.monitor(NotificationMessage,
+      this._tasks.getSlot<NotificationMessage>(this.onNotificationMessage));
+    newEntry.lastId = await this._serviceClient.sendRequest(
+      new MonitorNotificationsRequest(account));
+    return newEntry.lastId;
   }
 
   public async sendNotification(account: Beam.DirectoryEntry,
@@ -365,10 +400,32 @@ export class HttpAdministrationClient extends AdministrationClient {
   }
 
   public async open(): Promise<void> {
-    return;
+    await this._serviceClient.open();
   }
 
   public async close(): Promise<void> {
-    return;
+    this._serviceClient.close();
   }
+
+  private onNotificationMessage = (message: NotificationMessage): void => {
+    const notification = message.notification;
+    const key = notification.account.id;
+    const entry = this._notificationEntries.get(key);
+    if(!entry) {
+      return;
+    }
+    entry.lastId = notification.id;
+    entry.queues = entry.queues.filter((queue) => {
+      try {
+        queue.push(notification);
+        return true;
+      } catch(e) {
+        return false;
+      }
+    });
+  }
+
+  private _serviceClient: Beam.ServiceProtocolClient;
+  private _tasks: Beam.AsyncWorkQueue;
+  private _notificationEntries: Map<number, NotificationEntry>;
 }
