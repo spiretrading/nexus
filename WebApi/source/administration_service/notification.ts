@@ -84,6 +84,9 @@ export class Notification {
 
 export namespace Notification {
 
+  /** Uniquely identifies a notification. */
+  export type Id = string;
+
   /** Lists the categories of notifications. */
   export enum Category {
     ACCOUNT_MODIFICATION = 0,

@@ -304,6 +304,11 @@ export class HttpAdministrationClient extends AdministrationClient {
     return Message.fromJson(response);
   }
 
+  public async monitorNotifications(account: Beam.DirectoryEntry,
+      queue: Beam.QueueWriter<Notification>): Promise<Notification.Id> {
+    throw new Error('Not implemented.');
+  }
+
   public async sendNotification(account: Beam.DirectoryEntry,
       description: string, category: Notification.Category):
         Promise<Notification> {

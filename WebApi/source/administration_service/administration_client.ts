@@ -246,6 +246,15 @@ export abstract class AdministrationClient {
     message: Message): Promise<Message>;
 
   /**
+   * Monitors notifications for an account.
+   * @param account - The account to monitor.
+   * @param queue - The queue to push notifications onto.
+   * @return The id of the most recent notification.
+   */
+  public abstract monitorNotifications(account: Beam.DirectoryEntry,
+    queue: Beam.QueueWriter<Notification>): Promise<Notification.Id>;
+
+  /**
    * Sends a notification to an account.
    * @param account - The account to send the notification to.
    * @param description - The description of the notification.
