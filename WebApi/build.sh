@@ -145,6 +145,7 @@ run_build() {
   if [[ "$UPDATE_BUILD" == "1" ]]; then
     rm -rf library
     npm run build || return 1
+    npm test || return 1
     local source_hash
     source_hash=$(find "$DIRECTORY/source" -type f -print0 | sort -z |
       xargs -0 cat | md5hash)

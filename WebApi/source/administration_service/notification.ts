@@ -82,7 +82,7 @@ export class Notification {
   private _isRead: boolean;
 }
 
-export module Notification {
+export namespace Notification {
 
   /** Lists the categories of notifications. */
   export enum Category {

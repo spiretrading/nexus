@@ -153,6 +153,7 @@ EXIT /B 0
 IF "!UPDATE_BUILD!"=="1" (
   RD /S /Q library 2>NUL
   CALL npm run build || EXIT /B 1
+  CALL npm test || EXIT /B 1
   ECHO. > mod_time.txt
 )
 EXIT /B 0
