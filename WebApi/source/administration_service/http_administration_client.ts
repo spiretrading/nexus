@@ -6,6 +6,7 @@ import { AccountRoles } from './account_roles';
 import { AdministrationClient } from './administration_client';
 import { EntitlementModification } from './entitlement_modification';
 import { Message } from './message';
+import { Notification } from './notification';
 import { RiskModification } from './risk_modification';
 import { TradingGroup } from './trading_group';
 
@@ -301,6 +302,41 @@ export class HttpAdministrationClient extends AdministrationClient {
         message: message.toJson()
       });
     return Message.fromJson(response);
+  }
+
+  public async sendNotification(account: Beam.DirectoryEntry,
+      description: string, category: Notification.Category):
+      Promise<Notification> {
+    const response = await Beam.post(
+      '/api/administration_service/send_notification',
+      {
+        account: account.toJson(),
+        description: description,
+        category: category
+      });
+    return Notification.fromJson(response);
+  }
+
+  public async loadNotifications(account: Beam.DirectoryEntry, id: string,
+      limit: Beam.SnapshotLimit, readState: Notification.ReadState):
+      Promise<Notification[]> {
+    const response = await Beam.post(
+      '/api/administration_service/load_notifications',
+      {
+        account: account.toJson(),
+        id: id,
+        limit: limit.toJson(),
+        read_state: readState
+      });
+    return response.map(Notification.fromJson);
+  }
+
+  public async markNotificationAsRead(id: string): Promise<void> {
+    await Beam.post(
+      '/api/administration_service/mark_notification_as_read',
+      {
+        id: id
+      });
   }
 
   public async createGroup(name: string): Promise<Beam.DirectoryEntry> {

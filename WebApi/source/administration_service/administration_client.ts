@@ -4,6 +4,7 @@ import { AccountIdentity } from './account_identity';
 import { AccountModificationRequest } from './account_modification_request';
 import { AccountRoles } from './account_roles';
 import { EntitlementModification } from './entitlement_modification';
+import { Notification } from './notification';
 import { RiskModification } from './risk_modification';
 import { TradingGroup } from './trading_group';
 
@@ -243,6 +244,35 @@ export abstract class AdministrationClient {
    */
   public abstract sendAccountModificationRequestMessage(id: number,
     message: Message): Promise<Message>;
+
+  /**
+   * Sends a notification to an account.
+   * @param account - The account to send the notification to.
+   * @param description - The description of the notification.
+   * @param category - The category of the notification.
+   * @return The fully constructed notification.
+   */
+  public abstract sendNotification(account: Beam.DirectoryEntry,
+    description: string, category: Notification.Category):
+    Promise<Notification>;
+
+  /**
+   * Loads notifications for an account.
+   * @param account - The account whose notifications are to be loaded.
+   * @param id - The id of the notification to start loading from.
+   * @param limit - The maximum number of notifications to load.
+   * @param readState - Filters notifications by read state.
+   * @return The list of notifications matching the criteria.
+   */
+  public abstract loadNotifications(account: Beam.DirectoryEntry,
+    id: string, limit: Beam.SnapshotLimit, readState: Notification.ReadState):
+    Promise<Notification[]>;
+
+  /**
+   * Marks a notification as read.
+   * @param id - The id of the notification to mark as read.
+   */
+  public abstract markNotificationAsRead(id: string): Promise<void>;
 
   /**
    * Creates a new trading group.
