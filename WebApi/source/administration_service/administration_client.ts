@@ -254,7 +254,7 @@ export abstract class AdministrationClient {
    */
   public abstract sendNotification(account: Beam.DirectoryEntry,
     description: string, category: Notification.Category):
-    Promise<Notification>;
+      Promise<Notification>;
 
   /**
    * Loads notifications for an account.
@@ -266,7 +266,7 @@ export abstract class AdministrationClient {
    */
   public abstract loadNotifications(account: Beam.DirectoryEntry,
     id: string, limit: Beam.SnapshotLimit, readState: Notification.ReadState):
-    Promise<Notification[]>;
+      Promise<Notification[]>;
 
   /**
    * Marks a notification as read.

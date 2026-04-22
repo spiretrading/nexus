@@ -306,7 +306,7 @@ export class HttpAdministrationClient extends AdministrationClient {
 
   public async sendNotification(account: Beam.DirectoryEntry,
       description: string, category: Notification.Category):
-      Promise<Notification> {
+        Promise<Notification> {
     const response = await Beam.post(
       '/api/administration_service/send_notification',
       {
@@ -319,7 +319,7 @@ export class HttpAdministrationClient extends AdministrationClient {
 
   public async loadNotifications(account: Beam.DirectoryEntry, id: string,
       limit: Beam.SnapshotLimit, readState: Notification.ReadState):
-      Promise<Notification[]> {
+        Promise<Notification[]> {
     const response = await Beam.post(
       '/api/administration_service/load_notifications',
       {
@@ -332,8 +332,7 @@ export class HttpAdministrationClient extends AdministrationClient {
   }
 
   public async markNotificationAsRead(id: string): Promise<void> {
-    await Beam.post(
-      '/api/administration_service/mark_notification_as_read',
+    await Beam.post('/api/administration_service/mark_notification_as_read',
       {
         id: id
       });
