@@ -126,7 +126,9 @@ IF NOT EXIST library (
     "$testconfig = Get-Item" ^
     "  '!DIRECTORY!tsconfig.test.json'" ^
     "  -ErrorAction SilentlyContinue;" ^
-    "$beamMod = Get-Item '!BEAM_PATH!\mod_time.txt' -ErrorAction SilentlyContinue;" ^
+    "$beamMod = Get-Item" ^
+    "  '!BEAM_PATH!\mod_time.txt'" ^
+    "  -ErrorAction SilentlyContinue;" ^
     "$sourceFiles = Get-ChildItem -Path '!DIRECTORY!source'" ^
     "  -Recurse -File -ErrorAction SilentlyContinue;" ^
     "$testFiles = Get-ChildItem -Path '!DIRECTORY!tests'" ^
