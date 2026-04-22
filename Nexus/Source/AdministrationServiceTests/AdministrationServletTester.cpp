@@ -1018,6 +1018,98 @@ TEST_SUITE("AdministrationServlet") {
     REQUIRE(last_id.empty());
   }
 
+  TEST_CASE("load_notifications") {
+    auto fixture = Fixture();
+    fixture.m_admin_client->send_request<SendNotificationService>(
+      fixture.m_trader_account, "First.",
+      Notification::Category::ACCOUNT_MODIFICATION);
+    fixture.m_admin_client->send_request<SendNotificationService>(
+      fixture.m_trader_account, "Second.", Notification::Category::REPORT);
+    auto notifications = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::UNLIMITED, Notification::ReadState::ALL);
+    REQUIRE(notifications.size() == 2);
+    REQUIRE(notifications[0].m_description == "First.");
+    REQUIRE(notifications[1].m_description == "Second.");
+  }
+
+  TEST_CASE("load_notifications_unread_filter") {
+    auto fixture = Fixture();
+    auto notification = fixture.m_admin_client->send_request<
+      SendNotificationService>(
+        fixture.m_trader_account, "Unread.", Notification::Category::REPORT);
+    fixture.m_admin_client->send_request<SendNotificationService>(
+      fixture.m_trader_account, "Also unread.",
+      Notification::Category::REPORT);
+    auto unread = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::UNLIMITED, Notification::ReadState::UNREAD);
+    REQUIRE(unread.size() == 2);
+  }
+
+  TEST_CASE("load_notifications_tail_limit") {
+    auto fixture = Fixture();
+    fixture.m_admin_client->send_request<SendNotificationService>(
+      fixture.m_trader_account, "First.", Notification::Category::REPORT);
+    fixture.m_admin_client->send_request<SendNotificationService>(
+      fixture.m_trader_account, "Second.", Notification::Category::REPORT);
+    fixture.m_admin_client->send_request<SendNotificationService>(
+      fixture.m_trader_account, "Third.", Notification::Category::REPORT);
+    auto tail = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::from_tail(2), Notification::ReadState::ALL);
+    REQUIRE(tail.size() == 2);
+    REQUIRE(tail[0].m_description == "Second.");
+    REQUIRE(tail[1].m_description == "Third.");
+  }
+
+  TEST_CASE("load_notifications_insufficient_permissions") {
+    auto fixture = Fixture();
+    REQUIRE_THROWS_AS(fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_admin_account, "",
+        SnapshotLimit::UNLIMITED, Notification::ReadState::ALL),
+      ServiceRequestException);
+  }
+
+  TEST_CASE("mark_notification_as_read_own") {
+    auto fixture = Fixture();
+    auto notification = fixture.m_admin_client->send_request<
+      SendNotificationService>(fixture.m_trader_account, "To be read.",
+        Notification::Category::REPORT);
+    REQUIRE_NOTHROW(fixture.m_trader_client->send_request<
+      MarkNotificationAsReadService>(notification.m_id));
+    auto loaded = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::UNLIMITED, Notification::ReadState::READ);
+    REQUIRE(loaded.size() == 1);
+    REQUIRE(loaded[0].m_id == notification.m_id);
+    REQUIRE(loaded[0].m_is_read);
+  }
+
+  TEST_CASE("mark_notification_as_read_admin") {
+    auto fixture = Fixture();
+    auto notification = fixture.m_admin_client->send_request<
+      SendNotificationService>(fixture.m_trader_account, "Admin marks.",
+        Notification::Category::REPORT);
+    REQUIRE_NOTHROW(fixture.m_admin_client->send_request<
+      MarkNotificationAsReadService>(notification.m_id));
+    auto loaded = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::UNLIMITED, Notification::ReadState::READ);
+    REQUIRE(loaded.size() == 1);
+    REQUIRE(loaded[0].m_is_read);
+  }
+
+  TEST_CASE("mark_notification_as_read_insufficient_permissions") {
+    auto fixture = Fixture();
+    auto notification = fixture.m_admin_client->send_request<
+      SendNotificationService>(fixture.m_admin_account, "Admin only.",
+        Notification::Category::REPORT);
+    REQUIRE_THROWS_AS(fixture.m_trader_client->send_request<
+      MarkNotificationAsReadService>(notification.m_id),
+      ServiceRequestException);
+  }
+
   TEST_CASE("monitor_notifications_insufficient_permissions") {
     auto fixture = Fixture();
     REQUIRE_THROWS_AS(fixture.m_trader_client->send_request<

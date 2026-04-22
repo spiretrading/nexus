@@ -152,6 +152,16 @@ void Nexus::Python::export_administration_service(module& module) {
     [] (AdministrationClient& client, const DirectoryEntry& account) {
       return load_risk_parameters(client, account);
     }, call_guard<GilRelease>());
+  module.def("load_notification",
+    [] (AdministrationClient& client, const DirectoryEntry& account,
+        const Notification::Id& id) {
+      return load_notification(client, account, id);
+    }, call_guard<GilRelease>());
+  module.def("load_notification",
+    [] (AdministrationDataStore& data_store, const DirectoryEntry& account,
+        const Notification::Id& id) {
+      return load_notification(data_store, account, id);
+    }, call_guard<GilRelease>());
   export_administration_data_store_exception(module);
   export_cached_administration_data_store(module);
   export_entitlement_modification(module);

@@ -1,5 +1,6 @@
 #ifndef NEXUS_LOCAL_ADMINISTRATION_DATA_STORE_HPP
 #define NEXUS_LOCAL_ADMINISTRATION_DATA_STORE_HPP
+#include <ranges>
 #include <unordered_map>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
@@ -68,6 +69,7 @@ namespace Nexus {
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
       void store(const Notification& notification);
+      void mark_notification_as_read(const Notification::Id& id);
       std::vector<Notification> load_notifications(
         const Beam::DirectoryEntry& account, const Notification::Id& id,
         Beam::SnapshotLimit limit, Notification::ReadState read_state);
@@ -335,6 +337,15 @@ namespace Nexus {
   inline void LocalAdministrationDataStore::store(
       const Notification& notification) {
     m_notifications[notification.m_account].push_back(notification);
+  }
+
+  inline void LocalAdministrationDataStore::mark_notification_as_read(
+      const Notification::Id& id) {
+    auto all = m_notifications | std::views::values | std::views::join;
+    auto i = std::ranges::find(all, id, &Notification::m_id);
+    if(i != all.end()) {
+      i->m_is_read = true;
+    }
   }
 
   inline std::vector<Notification>

@@ -384,4 +384,33 @@ TEST_SUITE("AdministrationClient") {
     auto last_id = future.get();
     REQUIRE(last_id == expected_last_id);
   }
+
+  TEST_CASE("load_notifications") {
+    auto account = DirectoryEntry::make_account(25, "load_account");
+    auto notifications = std::vector<Notification>();
+    notifications.push_back(Notification(
+      "notif-1", account, "First.", Notification::Category::REPORT,
+      time_from_string("2026-04-21 10:00:00"), false));
+    notifications.push_back(Notification("notif-2", account, "Second.",
+      Notification::Category::ACCOUNT_MODIFICATION,
+      time_from_string("2026-04-21 11:00:00"), true));
+    require_operation<TestAdministrationClient::LoadNotificationsOperation>(
+      [&] (auto& client) {
+        return client.load_notifications(
+          account, "", SnapshotLimit::UNLIMITED, Notification::ReadState::ALL);
+      }, notifications,
+      [&] (const auto& received) {
+        REQUIRE(received.size() == 2);
+        REQUIRE(received[0].m_id == "notif-1");
+        REQUIRE(received[1].m_id == "notif-2");
+      });
+  }
+
+  TEST_CASE("mark_notification_as_read") {
+    require_operation<
+      TestAdministrationClient::MarkNotificationAsReadOperation>(
+        [&] (auto& client) {
+          client.mark_notification_as_read("notif-1");
+        });
+  }
 }

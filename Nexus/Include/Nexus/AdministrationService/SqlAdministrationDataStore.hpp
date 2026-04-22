@@ -86,6 +86,7 @@ namespace Nexus {
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
       void store(const Notification& notification);
+      void mark_notification_as_read(const Notification::Id& id);
       std::vector<Notification> load_notifications(
         const Beam::DirectoryEntry& account, const Notification::Id& id,
         Beam::SnapshotLimit limit, Notification::ReadState read_state);
@@ -588,6 +589,17 @@ namespace Nexus {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }
     return notifications;
+  }
+
+  template<typename C>
+  void SqlAdministrationDataStore<C>::mark_notification_as_read(
+      const Notification::Id& id) {
+    try {
+      m_connection->execute(Viper::update("notifications",
+        Viper::SetClause("is_read", true), Viper::sym("id") == id));
+    } catch(const Viper::ExecuteException& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
   }
 
   template<typename C>

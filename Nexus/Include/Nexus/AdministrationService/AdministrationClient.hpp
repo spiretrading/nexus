@@ -150,6 +150,7 @@ namespace Nexus {
           std::declval<Beam::SnapshotLimit>(),
           std::declval<Notification::ReadState>()) } ->
             std::same_as<std::vector<Notification>>;
+      client.mark_notification_as_read(std::declval<const Notification::Id&>());
     };
 
   /** Provides a generic interface over an arbitrary AdministrationClient. */
@@ -491,6 +492,12 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const Notification::Id& id,
         Beam::SnapshotLimit limit, Notification::ReadState read_state);
 
+      /**
+       * Marks a notification as read.
+       * @param id The id of the notification to mark as read.
+       */
+      void mark_notification_as_read(const Notification::Id& id);
+
       void close();
 
     private:
@@ -587,6 +594,7 @@ namespace Nexus {
         virtual std::vector<Notification> load_notifications(
           const Beam::DirectoryEntry& account, const Notification::Id& id,
           Beam::SnapshotLimit limit, Notification::ReadState read_state) = 0;
+        virtual void mark_notification_as_read(const Notification::Id& id) = 0;
         virtual void close() = 0;
       };
       template<typename C>
@@ -680,7 +688,9 @@ namespace Nexus {
           Beam::ScopedQueueWriter<Notification> queue) override;
         std::vector<Notification> load_notifications(
           const Beam::DirectoryEntry& account, const Notification::Id& id,
-          Beam::SnapshotLimit limit, Notification::ReadState read_state) override;
+          Beam::SnapshotLimit limit,
+          Notification::ReadState read_state) override;
+        void mark_notification_as_read(const Notification::Id& id) override;
         void close() override;
       };
       Beam::VirtualPtr<VirtualAdministrationClient> m_client;
@@ -697,6 +707,25 @@ namespace Nexus {
     auto queue = std::make_shared<Beam::StateQueue<RiskParameters>>();
     client.get_risk_parameters_publisher(account).monitor(queue);
     return queue->pop();
+  }
+
+  /**
+   * Loads a single notification by id.
+   * @param client The AdministrationClient to use.
+   * @param account The account the notification belongs to.
+   * @param id The id of the notification to load.
+   * @return The notification, or boost::none if not found.
+   */
+  template<IsAdministrationClient C>
+  boost::optional<Notification> load_notification(C& client,
+      const Beam::DirectoryEntry& account, const Notification::Id& id) {
+    auto notifications = client.load_notifications(
+      account, id, Beam::SnapshotLimit::from_head(1),
+      Notification::ReadState::ALL);
+    if(!notifications.empty() && notifications.front().m_id == id) {
+      return notifications.front();
+    }
+    return boost::none;
   }
 
   template<IsAdministrationClient T, typename... Args>
@@ -921,6 +950,11 @@ namespace Nexus {
       const Beam::DirectoryEntry& account, const Notification::Id& id,
       Beam::SnapshotLimit limit, Notification::ReadState read_state) {
     return m_client->load_notifications(account, id, limit, read_state);
+  }
+
+  inline void AdministrationClient::mark_notification_as_read(
+      const Notification::Id& id) {
+    m_client->mark_notification_as_read(id);
   }
 
   inline void AdministrationClient::close() {
@@ -1197,6 +1231,12 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const Notification::Id& id,
         Beam::SnapshotLimit limit, Notification::ReadState read_state) {
     return m_client->load_notifications(account, id, limit, read_state);
+  }
+
+  template<typename C>
+  void AdministrationClient::WrappedAdministrationClient<C>::
+      mark_notification_as_read(const Notification::Id& id) {
+    m_client->mark_notification_as_read(id);
   }
 
   template<typename C>

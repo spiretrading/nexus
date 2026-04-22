@@ -103,6 +103,7 @@ namespace Nexus::Python {
       def("send_notification", &C::send_notification).
       def("monitor_notifications", &C::monitor_notifications).
       def("load_notifications", &C::load_notifications).
+      def("mark_notification_as_read", &C::mark_notification_as_read).
       def("close", &C::close);
     if constexpr(!std::is_same_v<C, AdministrationClient>) {
       pybind11::implicitly_convertible<C, AdministrationClient>();
@@ -161,6 +162,7 @@ namespace Nexus::Python {
         const AccountModificationRequest::Update&>(&D::store)).
       def("store", pybind11::overload_cast<const Notification&>(&D::store)).
       def("load_notifications", &D::load_notifications).
+      def("mark_notification_as_read", &D::mark_notification_as_read).
       def("load_last_message_id", &D::load_last_message_id).
       def("load_message", &D::load_message).
       def("load_message_ids", &D::load_message_ids).

@@ -1,6 +1,7 @@
 #ifndef NEXUS_ADMINISTRATION_DATA_STORE_TEST_SUITE_HPP
 #define NEXUS_ADMINISTRATION_DATA_STORE_TEST_SUITE_HPP
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
+#include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 
@@ -711,6 +712,84 @@ namespace Nexus::Tests {
           account, "", SnapshotLimit::UNLIMITED, Notification::ReadState::ALL);
       });
       REQUIRE(notifications.empty());
+    }
+
+    SUBCASE("mark_notification_as_read") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      data_store.with_transaction([&] {
+        data_store.store(Notification(
+          "ggg-001", account, "Unread.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 10:00:00"), false));
+        data_store.store(Notification(
+          "ggg-002", account, "Also unread.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 11:00:00"), false));
+      });
+      data_store.with_transaction([&] {
+        data_store.mark_notification_as_read("ggg-001");
+      });
+      auto all = data_store.with_transaction([&] {
+        return data_store.load_notifications(
+          account, "", SnapshotLimit::UNLIMITED, Notification::ReadState::ALL);
+      });
+      REQUIRE(all.size() == 2);
+      REQUIRE(all[0].m_id == "ggg-001");
+      REQUIRE(all[0].m_is_read);
+      REQUIRE(all[1].m_id == "ggg-002");
+      REQUIRE(!all[1].m_is_read);
+    }
+
+    SUBCASE("mark_notification_as_read_filters") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      data_store.with_transaction([&] {
+        data_store.store(Notification(
+          "hhh-001", account, "First.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 10:00:00"), false));
+        data_store.store(Notification(
+          "hhh-002", account, "Second.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 11:00:00"), false));
+      });
+      data_store.with_transaction([&] {
+        data_store.mark_notification_as_read("hhh-001");
+      });
+      auto unread = data_store.with_transaction([&] {
+        return data_store.load_notifications(account, "",
+          SnapshotLimit::UNLIMITED, Notification::ReadState::UNREAD);
+      });
+      REQUIRE(unread.size() == 1);
+      REQUIRE(unread[0].m_id == "hhh-002");
+      auto read = data_store.with_transaction([&] {
+        return data_store.load_notifications(account, "",
+          SnapshotLimit::UNLIMITED, Notification::ReadState::READ);
+      });
+      REQUIRE(read.size() == 1);
+      REQUIRE(read[0].m_id == "hhh-001");
+    }
+
+    SUBCASE("load_notification_helper") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      data_store.with_transaction([&] {
+        data_store.store(Notification(
+          "iii-001", account, "First.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 10:00:00"), false));
+        data_store.store(Notification(
+          "iii-002", account, "Second.", Notification::Category::REPORT,
+          time_from_string("2026-04-21 11:00:00"), false));
+      });
+      auto found = data_store.with_transaction([&] {
+        return load_notification(data_store, account, "iii-001");
+      });
+      REQUIRE(found);
+      REQUIRE(found->m_id == "iii-001");
+      REQUIRE(found->m_description == "First.");
+      auto not_found = data_store.with_transaction([&] {
+        return load_notification(data_store, account, "nonexistent");
+      });
+      REQUIRE(!not_found);
+      auto wrong_account = DirectoryEntry::make_account(200, "user_b");
+      auto wrong = data_store.with_transaction([&] {
+        return load_notification(data_store, wrong_account, "iii-001");
+      });
+      REQUIRE(!wrong);
     }
 
     SUBCASE("update_request_effective_date") {

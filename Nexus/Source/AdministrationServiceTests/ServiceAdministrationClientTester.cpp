@@ -803,4 +803,89 @@ TEST_SUITE("ServiceAdministrationClient") {
       fixture.m_client->monitor_notifications(account, queue_b));
     REQUIRE(last_id == "updated-id");
   }
+
+  TEST_CASE("load_notifications") {
+    auto fixture = Fixture();
+    auto account = DirectoryEntry::make_account(62, "load_account");
+    auto notifications = std::vector<Notification>();
+    notifications.push_back(Notification(
+      "load-001", account, "First.", Notification::Category::REPORT,
+      time_from_string("2026-04-21 10:00:00"), false));
+    notifications.push_back(Notification("load-002", account, "Second.",
+      Notification::Category::ACCOUNT_MODIFICATION,
+      time_from_string("2026-04-21 11:00:00"), true));
+    fixture.on_request<LoadNotificationsService>(
+      [&] (auto& request, const auto& received_account,
+          const auto& received_id, auto received_limit,
+          auto received_read_state) {
+        REQUIRE(received_account == account);
+        REQUIRE(received_id.empty());
+        REQUIRE(received_limit == SnapshotLimit::UNLIMITED);
+        REQUIRE(received_read_state == Notification::ReadState::ALL);
+        request.set(notifications);
+      });
+    auto received = REQUIRE_NO_THROW(fixture.m_client->load_notifications(
+      account, "", SnapshotLimit::UNLIMITED, Notification::ReadState::ALL));
+    REQUIRE(received.size() == 2);
+    REQUIRE(received[0].m_id == "load-001");
+    REQUIRE(received[1].m_id == "load-002");
+  }
+
+  TEST_CASE("recover_notifications") {
+    auto fixture = Fixture();
+    auto account = DirectoryEntry::make_account(63, "recover_account");
+    auto queue = std::make_shared<Queue<Notification>>();
+    auto server_side_client =
+      static_cast<TestServiceProtocolServer::ServiceProtocolClient*>(nullptr);
+    fixture.on_request<MonitorNotificationsService>(
+      [&] (auto& request, const auto& received_account) {
+        server_side_client = &request.get_client();
+        request.set(Notification::Id("initial-id"));
+      });
+    REQUIRE_NO_THROW(fixture.m_client->monitor_notifications(account, queue));
+    auto notification_a = Notification("notif-a", account, "Before disconnect.",
+      Notification::Category::REPORT, time_from_string("2026-04-21 10:00:00"),
+      false);
+    send_record_message<NotificationMessage>(
+      *server_side_client, notification_a);
+    REQUIRE(queue->pop().m_id == "notif-a");
+    auto missed_notification = Notification("notif-missed", account,
+      "During disconnect.", Notification::Category::ACCOUNT_MODIFICATION,
+      time_from_string("2026-04-21 11:00:00"), false);
+    auto recovered_token =
+      Async<TestServiceProtocolServer::ServiceProtocolClient*>();
+    fixture.on_request<MonitorNotificationsService>(
+      [&] (auto& request, const auto& received_account) {
+        REQUIRE(received_account == account);
+        request.set(Notification::Id("notif-missed"));
+      });
+    fixture.on_request<LoadNotificationsService>(
+      [&] (auto& request, const auto& received_account,
+          const auto& received_id, auto received_limit,
+          auto received_read_state) {
+        REQUIRE(received_account == account);
+        REQUIRE(received_id == "notif-a");
+        recovered_token.get_eval().set(&request.get_client());
+        request.set(std::vector<Notification>({missed_notification}));
+      });
+    fixture.close_server_side();
+    server_side_client = recovered_token.get();
+    REQUIRE(queue->pop().m_id == "notif-missed");
+    auto notification_c = Notification("notif-c", account, "After reconnect.",
+      Notification::Category::REPORT, time_from_string("2026-04-21 12:00:00"),
+      false);
+    send_record_message<NotificationMessage>(
+      *server_side_client, notification_c);
+    REQUIRE(queue->pop().m_id == "notif-c");
+  }
+
+  TEST_CASE("mark_notification_as_read") {
+    auto fixture = Fixture();
+    fixture.on_request<MarkNotificationAsReadService>(
+      [&] (auto& request, const auto& received_id) {
+        REQUIRE(received_id == "notif-1");
+        request.set();
+      });
+    REQUIRE_NOTHROW(fixture.m_client->mark_notification_as_read("notif-1"));
+  }
 }

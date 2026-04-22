@@ -253,6 +253,12 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<Notification> m_result;
       };
 
+      /** Records a call to mark_notification_as_read(). */
+      struct MarkNotificationAsReadOperation {
+        Notification::Id m_id;
+        Beam::Tests::ServiceResult<void> m_result;
+      };
+
       /** Records a call to load_notifications(). */
       struct LoadNotificationsOperation {
         Beam::DirectoryEntry m_account;
@@ -297,7 +303,7 @@ namespace Nexus::Tests {
         LoadMessageIdsOperation,
         SendAccountModificationRequestMessageOperation,
         SendNotificationOperation, MonitorNotificationsOperation,
-        LoadNotificationsOperation>;
+        LoadNotificationsOperation, MarkNotificationAsReadOperation>;
 
       /** The type of Queue used to send and receive operations. */
       using Queue = Beam::Queue<std::shared_ptr<Operation>>;
@@ -386,6 +392,7 @@ namespace Nexus::Tests {
       std::vector<Notification> load_notifications(
         const Beam::DirectoryEntry& account, const Notification::Id& id,
         Beam::SnapshotLimit limit, Notification::ReadState read_state);
+      void mark_notification_as_read(const Notification::Id& id);
       void close();
 
     private:
@@ -661,6 +668,11 @@ namespace Nexus::Tests {
         Beam::SnapshotLimit limit, Notification::ReadState read_state) {
     return m_queue.append_result<LoadNotificationsOperation,
       std::vector<Notification>>(account, id, limit, read_state);
+  }
+
+  inline void TestAdministrationClient::mark_notification_as_read(
+      const Notification::Id& id) {
+    m_queue.append_result<MarkNotificationAsReadOperation, void>(id);
   }
 
   inline void TestAdministrationClient::close() {

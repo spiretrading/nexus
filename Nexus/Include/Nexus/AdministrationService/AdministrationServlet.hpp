@@ -235,6 +235,8 @@ namespace Nexus {
         ServiceProtocolClient& client, const Beam::DirectoryEntry& account,
         const Notification::Id& id, Beam::SnapshotLimit limit,
         Notification::ReadState read_state);
+      void on_mark_notification_as_read(
+        ServiceProtocolClient& client, const Notification::Id& id);
   };
 
   template<typename S, typename D, typename R, typename T>
@@ -388,6 +390,8 @@ namespace Nexus {
       std::bind_front(&AdministrationServlet::on_monitor_notifications, this));
     LoadNotificationsService::add_slot(out(slots),
       std::bind_front(&AdministrationServlet::on_load_notifications, this));
+    MarkNotificationAsReadService::add_slot(out(slots), std::bind_front(
+      &AdministrationServlet::on_mark_notification_as_read, this));
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires
@@ -1750,6 +1754,28 @@ namespace Nexus {
     }
     return m_data_store->with_transaction([&] {
       return m_data_store->load_notifications(account, id, limit, read_state);
+    });
+  }
+
+  template<typename C, typename S, typename D, typename R, typename T> requires
+    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+      IsAdministrationDataStore<Beam::dereference_t<D>> &&
+        Beam::IsTimeClient<Beam::dereference_t<R>> &&
+          Beam::IsTimer<Beam::dereference_t<T>>
+  void AdministrationServlet<C, S, D, R, T>::on_mark_notification_as_read(
+      ServiceProtocolClient& client, const Notification::Id& id) {
+    auto& session = client.get_session();
+    if(!check_administrator(session.get_account())) {
+      auto notification = m_data_store->with_transaction([&] {
+        return load_notification(*m_data_store, session.get_account(), id);
+      });
+      if(!notification) {
+        boost::throw_with_location(
+          Beam::ServiceRequestException("Insufficient permissions."));
+      }
+    }
+    m_data_store->with_transaction([&] {
+      m_data_store->mark_notification_as_read(id);
     });
   }
 }

@@ -112,6 +112,7 @@ namespace Nexus {
       std::vector<Notification> load_notifications(
         const Beam::DirectoryEntry& account, const Notification::Id& id,
         Beam::SnapshotLimit limit, Notification::ReadState read_state);
+      void mark_notification_as_read(const Notification::Id& id);
       void close();
 
     private:
@@ -647,6 +648,15 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
+  void ServiceAdministrationClient<B>::mark_notification_as_read(
+      const Notification::Id& id) {
+    Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      client->template send_request<MarkNotificationAsReadService>(id);
+    }, "Failed to mark notification as read: " + id);
+  }
+
+  template<typename B>
   void ServiceAdministrationClient<B>::close() {
     if(m_open_state.set_closing()) {
       return;
@@ -753,10 +763,50 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     });
   }
 
-  /** TODO */
   template<typename B>
   void ServiceAdministrationClient<B>::recover_notifications(
-      ServiceProtocolClient& client) {}
+      ServiceProtocolClient& client) {
+    auto entries =
+      std::vector<std::pair<Beam::DirectoryEntry, Notification::Id>>();
+    m_notification_entries.for_each([&] (auto& entry) {
+      entries.emplace_back(entry.first, entry.second.m_last_id);
+    });
+    for(auto& [account, last_id] : entries) {
+      try {
+        client.template send_request<MonitorNotificationsService>(account);
+        if(last_id.empty()) {
+          continue;
+        }
+        auto missed = client.template send_request<LoadNotificationsService>(
+          account, last_id, Beam::SnapshotLimit::UNLIMITED,
+          Notification::ReadState::ALL);
+        if(auto entry = m_notification_entries.find(account)) {
+          for(auto& notification : missed) {
+            if(notification.m_id == last_id) {
+              continue;
+            }
+            entry->m_last_id = notification.m_id;
+            std::erase_if(entry->m_queues, [&] (auto& queue) {
+              try {
+                queue.push(notification);
+                return false;
+              } catch(const Beam::PipeBrokenException&) {
+                return true;
+              }
+            });
+          }
+        }
+      } catch(const std::exception&) {
+        if(auto entry = m_notification_entries.find(account)) {
+          for(auto& queue : entry->m_queues) {
+            queue.close(Beam::make_nested_service_exception(
+              "Failed to recover notifications."));
+          }
+          m_notification_entries.erase(account);
+        }
+      }
+    }
+  }
 
   template<typename B>
   void ServiceAdministrationClient<B>::on_notification_message(

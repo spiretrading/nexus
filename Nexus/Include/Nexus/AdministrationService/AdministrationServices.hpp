@@ -399,7 +399,15 @@ namespace Nexus {
       "Nexus.AdministrationServices.LoadNotificationsService",
       std::vector<Notification>, (Beam::DirectoryEntry, account),
       (Notification::Id, id), (Beam::SnapshotLimit, limit),
-      (Notification::ReadState, read_state)));
+      (Notification::ReadState, read_state)),
+
+    /**
+     * Marks a notification as read.
+     * @param id The id of the notification to mark as read.
+     */
+    (MarkNotificationAsReadService,
+      "Nexus.AdministrationServices.MarkNotificationAsReadService",
+      void, (Notification::Id, id)));
 
   BEAM_DEFINE_MESSAGES(administration_messages,
 
