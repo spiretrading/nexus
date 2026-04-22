@@ -66,7 +66,7 @@ export class NotificationsPopover extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const unreadNotifications = this.props.notifications.filter(
-      (notification) => notification.isUnread);
+      (notification) => !notification.isRead);
     const unreadCount = unreadNotifications.length;
     const hasNotifications = this.props.notifications.length > 0;
     const viewAllHref = (() => {
@@ -109,7 +109,7 @@ export class NotificationsPopover extends React.Component<Properties, State> {
                     <li key={index}>
                       <NotificationItem
                         description={notification.description}
-                        timestamp={notification.timestamp}
+                        timestamp={notification.timestamp.toDate()}
                         url={`/notifications/${notification.id}`}
                         isUnread={true}
                         hideIndicator={true}
@@ -201,7 +201,7 @@ const STYLES = StyleSheet.create({
     padding: '0 18px'
   },
   emptyMessage: {
-    padding: '18px',
+    padding: '0 18px',
     height: '224px',
     boxSizing: 'border-box'
   }

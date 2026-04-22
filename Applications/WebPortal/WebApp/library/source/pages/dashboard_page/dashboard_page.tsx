@@ -96,7 +96,7 @@ export class DashboardPage extends React.Component<Properties, State> {
               css(DashboardPage.STYLE.notificationButtonWrapper)}>
             <NotificationsButton
               hasUnread={this.props.notifications.some(
-                (n) => n.isUnread)}
+                (n) => !n.isRead)}
               isOpen={this.state.isPopoverOpen}
               popoverTarget='notifications-popover'/>
             <NotificationsPopover

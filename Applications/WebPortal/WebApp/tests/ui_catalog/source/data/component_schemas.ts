@@ -366,30 +366,40 @@ const notificationItemPlaceholder =
     [],
     WebPortal.NotificationItemPlaceholder, -1);
 
-const SAMPLE_NOTIFICATIONS: WebPortal.Notification[] = [
-  {id: '1', description: 'Your request to update risk controls for achen01 has been approved.',
-    category: WebPortal.NotificationCategory.ACCOUNT_MODIFICATION,
-    timestamp: (() => { const d = new Date(); d.setHours(d.getHours() - 2); return d; })(),
-    isUnread: true},
-  {id: '2', description: 'New entitlements request from jberrios01 requires your review.',
-    category: WebPortal.NotificationCategory.ACCOUNT_MODIFICATION,
-    timestamp: (() => { const d = new Date(); d.setDate(d.getDate() - 1); return d; })(),
-    isUnread: true},
-  {id: '3', description: 'Risk parameters for trodriguez have been updated.',
-    category: WebPortal.NotificationCategory.REPORT,
-    timestamp: (() => { const d = new Date(); d.setDate(d.getDate() - 3); return d; })(),
-    isUnread: false}
+const SAMPLE_NOTIFICATIONS: Nexus.Notification[] = [
+  new Nexus.Notification('1', Beam.DirectoryEntry.INVALID,
+    'Your request to update risk controls for achen01 has been approved.',
+    Nexus.Notification.Category.ACCOUNT_MODIFICATION,
+    Beam.DateTime.fromDate((() => {
+      const d = new Date(); d.setHours(d.getHours() - 2); return d;
+    })()), false),
+  new Nexus.Notification('2', Beam.DirectoryEntry.INVALID,
+    'New entitlements request from jberrios01 requires your review.',
+    Nexus.Notification.Category.ACCOUNT_MODIFICATION,
+    Beam.DateTime.fromDate((() => {
+      const d = new Date(); d.setDate(d.getDate() - 1); return d;
+    })()), false),
+  new Nexus.Notification('3', Beam.DirectoryEntry.INVALID,
+    'Risk parameters for trodriguez have been updated.',
+    Nexus.Notification.Category.REPORT,
+    Beam.DateTime.fromDate((() => {
+      const d = new Date(); d.setDate(d.getDate() - 3); return d;
+    })()), true)
 ];
 
-const SAMPLE_NOTIFICATIONS_ALL_READ: WebPortal.Notification[] = [
-  {id: '1', description: 'Your request to update risk controls for achen01 has been approved.',
-    category: WebPortal.NotificationCategory.ACCOUNT_MODIFICATION,
-    timestamp: (() => { const d = new Date(); d.setHours(d.getHours() - 2); return d; })(),
-    isUnread: false},
-  {id: '3', description: 'Risk parameters for trodriguez have been updated.',
-    category: WebPortal.NotificationCategory.REPORT,
-    timestamp: (() => { const d = new Date(); d.setDate(d.getDate() - 3); return d; })(),
-    isUnread: false}
+const SAMPLE_NOTIFICATIONS_ALL_READ: Nexus.Notification[] = [
+  new Nexus.Notification('1', Beam.DirectoryEntry.INVALID,
+    'Your request to update risk controls for achen01 has been approved.',
+    Nexus.Notification.Category.ACCOUNT_MODIFICATION,
+    Beam.DateTime.fromDate((() => {
+      const d = new Date(); d.setHours(d.getHours() - 2); return d;
+    })()), true),
+  new Nexus.Notification('3', Beam.DirectoryEntry.INVALID,
+    'Risk parameters for trodriguez have been updated.',
+    Nexus.Notification.Category.REPORT,
+    Beam.DateTime.fromDate((() => {
+      const d = new Date(); d.setDate(d.getDate() - 3); return d;
+    })()), true)
 ];
 
 enum PopoverMode {
@@ -411,13 +421,17 @@ const notificationsPopover =
     [new SignalSchema('onDismissAll', ''),
       new SignalSchema('onOpen', ''),
       new SignalSchema('onClose', '')],
-    (props: any) => React.createElement(WebPortal.NotificationsPopover, {
-      id: 'catalog-notifications-popover',
-      notifications: POPOVER_NOTIFICATIONS[props.mode as PopoverMode],
-      onDismissAll: props.onDismissAll,
-      onOpen: props.onOpen,
-      onClose: props.onClose
-    }));
+    (props: any) => React.createElement('div', null,
+      React.createElement('button',
+        {popovertarget: 'catalog-notifications-popover'},
+        'Toggle Popover'),
+      React.createElement(WebPortal.NotificationsPopover, {
+        id: 'catalog-notifications-popover',
+        notifications: POPOVER_NOTIFICATIONS[props.mode as PopoverMode],
+        onDismissAll: props.onDismissAll,
+        onOpen: props.onOpen,
+        onClose: props.onClose
+      })));
 
 const notificationsButton =
   new ComponentSchema('NotificationsButton',
