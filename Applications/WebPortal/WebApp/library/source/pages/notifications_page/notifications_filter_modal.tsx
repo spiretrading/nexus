@@ -143,17 +143,14 @@ export class NotificationsFilterModal
 
 const STYLES = StyleSheet.create({
   content: {
-    display: 'flex',
-    flexDirection: 'column',
     backgroundColor: '#FFFFFF',
     width: '282px',
-    height: '568px'
+    height: '568px',
+    overflowY: 'auto',
+    position: 'relative' as 'relative'
   },
   filters: {
-    padding: '30px 18px 18px',
-    overflowY: 'auto',
-    flex: 1,
-    minHeight: 0
+    padding: '30px 18px 100px'
   },
   fieldset: {
     display: 'flex',
@@ -195,9 +192,8 @@ const STYLES = StyleSheet.create({
     flex: 1
   },
   errorSection: {
-    padding: '0 18px 18px',
-    minHeight: '50px',
-    boxSizing: 'border-box'
+    padding: '0 0 18px',
+    minHeight: '50px'
   },
   errorMessage: {
     display: 'block',
@@ -206,7 +202,8 @@ const STYLES = StyleSheet.create({
     color: '#E63F44'
   },
   actions: {
-    flexShrink: 0,
+    position: 'absolute' as 'absolute',
+    inset: 'auto 0 0',
     backgroundColor: '#FFFFFF',
     padding: '18px 18px 30px',
     borderTop: '1px solid #E6E6E6'
