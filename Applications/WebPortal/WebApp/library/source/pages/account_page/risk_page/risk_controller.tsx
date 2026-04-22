@@ -75,7 +75,7 @@ export class RiskController extends React.Component<Properties, State> {
           parameters: this.props.model.riskParameters.clone()
         };
       });
-    } catch(error) {
+    } catch(error: any) {
       this.setState(state => {
         return {
           loadingState: state.loadingState.fail(error.toString())
@@ -121,7 +121,7 @@ export class RiskController extends React.Component<Properties, State> {
       this.setState({
         status: 'Saved'
       });
-    } catch(e) {
+    } catch(e: any) {
       this.setState({
         canSubmit: true,
         hasSubmissionError: true,
