@@ -123,10 +123,17 @@ IF NOT EXIST library (
   SET CHECK_BUILD_COMMAND=powershell -NoProfile -Command "& {" ^
     "$mod = (Get-Item 'mod_time.txt').LastWriteTime.Ticks;" ^
     "$tsconfig = Get-Item '!DIRECTORY!tsconfig.json';" ^
+    "$testconfig = Get-Item" ^
+    "  '!DIRECTORY!tsconfig.test.json'" ^
+    "  -ErrorAction SilentlyContinue;" ^
     "$beamMod = Get-Item '!BEAM_PATH!\mod_time.txt' -ErrorAction SilentlyContinue;" ^
     "$sourceFiles = Get-ChildItem -Path '!DIRECTORY!source'" ^
     "  -Recurse -File -ErrorAction SilentlyContinue;" ^
+    "$testFiles = Get-ChildItem -Path '!DIRECTORY!tests'" ^
+    "  -Recurse -File -ErrorAction SilentlyContinue;" ^
     "$files = @($tsconfig) + $sourceFiles;" ^
+    "if ($testconfig) { $files += $testconfig };" ^
+    "if ($testFiles) { $files += $testFiles };" ^
     "if ($beamMod) { $files += $beamMod };" ^
     "if ($files) {" ^
     "  $newest = $files | Sort-Object LastWriteTime -Descending |" ^

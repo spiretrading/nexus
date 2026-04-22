@@ -115,9 +115,12 @@ check_build() {
     return
   fi
   local source_hash cached_hash
-  source_hash=$(find "$DIRECTORY/source" -type f -print0 | sort -z |
-    xargs -0 cat | md5hash)
+  source_hash=$(find "$DIRECTORY/source" "$DIRECTORY/tests" -type f -print0 \
+    2>/dev/null | sort -z | xargs -0 cat | md5hash)
   source_hash+=$(md5hash < "$DIRECTORY/tsconfig.json")
+  if [[ -f "$DIRECTORY/tsconfig.test.json" ]]; then
+    source_hash+=$(md5hash < "$DIRECTORY/tsconfig.test.json")
+  fi
   if [[ -f "$BEAM_PATH/mod_time.txt" ]]; then
     source_hash+=$(< "$BEAM_PATH/mod_time.txt")
   fi
@@ -147,9 +150,12 @@ run_build() {
     npm run build || return 1
     npm test || return 1
     local source_hash
-    source_hash=$(find "$DIRECTORY/source" -type f -print0 | sort -z |
-      xargs -0 cat | md5hash)
+    source_hash=$(find "$DIRECTORY/source" "$DIRECTORY/tests" -type f -print0 \
+      2>/dev/null | sort -z | xargs -0 cat | md5hash)
     source_hash+=$(md5hash < "$DIRECTORY/tsconfig.json")
+    if [[ -f "$DIRECTORY/tsconfig.test.json" ]]; then
+      source_hash+=$(md5hash < "$DIRECTORY/tsconfig.test.json")
+    fi
     if [[ -f "$BEAM_PATH/mod_time.txt" ]]; then
       source_hash+=$(< "$BEAM_PATH/mod_time.txt")
     fi
