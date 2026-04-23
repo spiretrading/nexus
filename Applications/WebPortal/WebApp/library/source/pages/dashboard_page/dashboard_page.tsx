@@ -4,7 +4,6 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { BurgerButton } from '../..';
-import { Notification } from '../notifications_page/notifications_model';
 import { NotificationsButton } from '../notifications_page/notifications_button';
 import { NotificationsPopover } from '../notifications_page/notifications_popover';
 import { SideMenu } from './side_menu';
@@ -15,7 +14,7 @@ interface Properties {
   roles: Nexus.AccountRoles;
 
   /** The list of notifications. */
-  notifications: Notification[];
+  notifications: Nexus.Notification[];
 
   /**
    * Indicates a side menu item was clicked.

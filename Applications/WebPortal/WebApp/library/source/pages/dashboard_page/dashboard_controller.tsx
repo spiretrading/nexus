@@ -1,4 +1,5 @@
 import * as Beam from 'beam';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
 import * as Path from 'path-to-regexp';
@@ -25,6 +26,7 @@ interface State {
   isLoaded: boolean;
   cannotLoad: boolean;
   redirect: string;
+  notifications: Nexus.Notification[];
 }
 
 /** Implements the controller for the DashboardPage. */
@@ -34,8 +36,10 @@ export class DashboardController extends React.Component<Properties, State> {
     this.state = {
       isLoaded: false,
       cannotLoad: false,
-      redirect: null
+      redirect: null,
+      notifications: []
     };
+    this._tasks = new Beam.AsyncWorkQueue();
   }
 
   public render(): JSX.Element {
@@ -50,7 +54,7 @@ export class DashboardController extends React.Component<Properties, State> {
     }
     return (
       <DashboardPage roles={this.props.model.roles}
-          notifications={this.props.model.notifications}
+          notifications={this.state.notifications}
           onSideMenuClick={this.onSideMenuClick}>
         <Router.Switch>
           <Router.Route path='/account' render={this.renderAccountPage}/>
@@ -85,6 +89,8 @@ export class DashboardController extends React.Component<Properties, State> {
   public async componentDidMount(): Promise<void> {
     try {
       await this.props.model.load();
+      this.props.model.monitorNotifications(
+        this._tasks.getSlot<Nexus.Notification>(this.onNotification));
       if(this.props.location.pathname === '/') {
         this.setState({isLoaded: true, redirect: '/account'});
       } else {
@@ -93,6 +99,10 @@ export class DashboardController extends React.Component<Properties, State> {
     } catch {
       this.setState({cannotLoad: true});
     }
+  }
+
+  public componentWillUnmount(): void {
+    this._tasks.close();
   }
 
   public componentDidUpdate(): void {
@@ -141,12 +151,19 @@ export class DashboardController extends React.Component<Properties, State> {
     return <PageNotFoundPage displaySize={this.props.displaySize}/>;
   }
 
+  private onNotification = (notification: Nexus.Notification) => {
+    this.setState((prev) => ({
+      notifications: [notification, ...prev.notifications]
+    }));
+  };
+
   private onSideMenuClick = (item: SideMenu.Item) => {
     if(item === SideMenu.Item.SIGN_OUT) {
       this.props.model.logout().then(this.props.onLogout);
     }
   }
 
+  private _tasks: Beam.AsyncWorkQueue;
   private static readonly ACCOUNT_PATTERN = Path.pathToRegexp(
     '/account/:id(\\d+)?', [], { end: false });
   private static readonly GROUP_PATTERN = Path.pathToRegexp(

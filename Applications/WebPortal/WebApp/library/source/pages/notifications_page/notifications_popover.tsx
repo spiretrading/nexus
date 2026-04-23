@@ -1,8 +1,8 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { EmptyMessage, IconLabelButton, Link } from '../../components';
 import { NotificationItem } from './notification_item';
-import { Notification } from './notifications_model';
 
 interface Properties {
 
@@ -10,7 +10,7 @@ interface Properties {
   id?: string;
 
   /** The list of notifications to display. */
-  notifications: Notification[];
+  notifications: Nexus.Notification[];
 
   /** The current date for relative date display. */
   today?: Date;

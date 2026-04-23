@@ -1,7 +1,7 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import { AccountDirectoryModel, ComplianceModel, LocalAccountModel, LocalGroupModel } from '..';
-import { Notification } from '../notifications_page/notifications_model';
+import { AccountDirectoryModel, ComplianceModel, LocalAccountModel,
+  LocalGroupModel } from '..';
 import { RequestsModel } from '../requests_page/requests_model';
 import { DashboardModel } from './dashboard_model';
 
@@ -25,8 +25,7 @@ export class LocalDashboardModel extends DashboardModel {
       currencyDatabase: Nexus.CurrencyDatabase,
       venueDatabase: Nexus.VenueDatabase,
       accountDirectoryModel: AccountDirectoryModel,
-      requestsModel: RequestsModel,
-      notifications: Notification[] = []) {
+      requestsModel: RequestsModel, notifications: Nexus.Notification[] = []) {
     super();
     this._isLoaded = false;
     this._entitlementDatabase = entitlementDatabase;
@@ -86,9 +85,12 @@ export class LocalDashboardModel extends DashboardModel {
     return this._requestsModel;
   }
 
-  public get notifications(): Notification[] {
+  public monitorNotifications(
+      queue: Beam.QueueWriter<Nexus.Notification>): void {
     this.ensureLoaded();
-    return this._notifications;
+    for(const notification of this._notifications) {
+      queue.push(notification);
+    }
   }
 
   public makeAccountModel(account: Beam.DirectoryEntry): LocalAccountModel {
@@ -137,6 +139,6 @@ export class LocalDashboardModel extends DashboardModel {
   private _roles: Nexus.AccountRoles;
   private _accountDirectoryModel: AccountDirectoryModel;
   private _requestsModel: RequestsModel;
-  private _notifications: Notification[];
+  private _notifications: Nexus.Notification[];
   private accountModels: Beam.Map<Beam.DirectoryEntry, LocalAccountModel>;
 }

@@ -1,14 +1,14 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Button, DateInput, LabeledCheckbox, Modal } from '../../components';
-import { NotificationCategory } from './notifications_model';
 
 /** The filter criteria for notifications. */
 export interface NotificationsFilter {
 
   /** The set of selected categories. */
-  categories: Set<NotificationCategory>;
+  categories: Set<Nexus.Notification.Category>;
 
   /** The selected start date. */
   startDate: Beam.Date;
@@ -30,7 +30,7 @@ interface Properties {
 }
 
 interface State {
-  categories: Set<NotificationCategory>;
+  categories: Set<Nexus.Notification.Category>;
   startDate: Beam.Date;
   endDate: Beam.Date;
 }
@@ -61,14 +61,14 @@ export class NotificationsFilterModal
               <div className={css(STYLES.fieldGap)}/>
               <LabeledCheckbox label='Account Modification'
                 isChecked={this.state.categories.has(
-                  NotificationCategory.ACCOUNT_MODIFICATION)}
+                  Nexus.Notification.Category.ACCOUNT_MODIFICATION)}
                 onChange={(isChecked) => this.onCategoryChange(
-                  NotificationCategory.ACCOUNT_MODIFICATION, isChecked)}/>
+                  Nexus.Notification.Category.ACCOUNT_MODIFICATION, isChecked)}/>
               <LabeledCheckbox label='Report'
                 isChecked={this.state.categories.has(
-                  NotificationCategory.REPORT)}
+                  Nexus.Notification.Category.REPORT)}
                 onChange={(isChecked) => this.onCategoryChange(
-                  NotificationCategory.REPORT, isChecked)}/>
+                  Nexus.Notification.Category.REPORT, isChecked)}/>
             </fieldset>
             <div className={css(STYLES.sectionGap)}/>
             <fieldset className={css(STYLES.fieldset)}>
@@ -114,7 +114,7 @@ export class NotificationsFilterModal
   }
 
   private onCategoryChange = (
-      category: NotificationCategory, isChecked: boolean) => {
+      category: Nexus.Notification.Category, isChecked: boolean) => {
     const updated = new Set(this.state.categories);
     if(isChecked) {
       updated.add(category);

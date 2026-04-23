@@ -1,7 +1,6 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import { AccountDirectoryModel, AccountModel, GroupModel } from '..';
-import { Notification } from '../notifications_page/notifications_model';
 import { RequestsModel } from '../requests_page/requests_model';
 
 /** Base class for the model used by the DashboardPage. */
@@ -31,8 +30,12 @@ export abstract class DashboardModel {
   /** Returns the RequestsModel. */
   public abstract get requestsModel(): RequestsModel;
 
-  /** Returns the list of notifications. */
-  public abstract get notifications(): Notification[];
+  /**
+   * Monitors notifications for the logged in account.
+   * @param queue - The queue to push notifications onto.
+   */
+  public abstract monitorNotifications(
+    queue: Beam.QueueWriter<Nexus.Notification>): void;
 
   /** Makes a new account model. */
   public abstract makeAccountModel(account: Beam.DirectoryEntry): AccountModel;
