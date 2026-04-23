@@ -145,8 +145,6 @@ const STYLES = StyleSheet.create({
   popover: {
     width: '320px',
     maxHeight: 'calc(100dvh - 80px)',
-    display: 'flex',
-    flexDirection: 'column',
     backgroundColor: '#FFFFFF',
     border: 'none',
     borderRadius: '1px',
@@ -159,7 +157,7 @@ const STYLES = StyleSheet.create({
     positionAnchor: '--notifications-anchor',
     positionArea: 'bottom span-left',
     positionTryFallbacks: 'flip-block flip-inline',
-    margin: '8px',
+    margin: '8px 0',
     opacity: 0,
     transitionProperty: 'opacity, display',
     transitionDuration: '200ms',
