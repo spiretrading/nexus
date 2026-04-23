@@ -24,8 +24,6 @@ interface Properties {
   /** Called when the popover is closed. */
   onClose?: () => void;
 
-  /** An additional class name to apply to the popover element. */
-  className?: string;
 }
 
 interface State {
@@ -78,7 +76,7 @@ export class NotificationsPopover extends React.Component<Properties, State> {
     return (
       <div ref={this.popoverRef} id={this.props.id}
           {...{popover: 'auto'} as any}
-          className={`${css(STYLES.popover)} ${this.props.className || ''}`}>
+          className={css(STYLES.popover)}>
         <div className={css(STYLES.header)}>
           <h2 className={css(STYLES.title)}>Notifications</h2>
         </div>
@@ -154,16 +152,19 @@ const STYLES = StyleSheet.create({
     borderRadius: '1px',
     boxShadow: '0 0 6px rgb(0 0 0 / 0.40)',
     padding: '18px 0',
-    inset: 'unset',
     overflow: 'hidden',
     fontSize: '0.875rem',
     color: '#333333',
     fontFamily: '"Roboto", system-ui, sans-serif',
+    positionAnchor: '--notifications-anchor',
+    positionArea: 'bottom span-left',
+    positionTryFallbacks: 'flip-block flip-inline',
+    margin: '8px',
     opacity: 0,
     transitionProperty: 'opacity, display',
     transitionDuration: '200ms',
     transitionTimingFunction: 'ease-out',
-    transitionBehavior: 'allow-discrete' as any,
+    transitionBehavior: 'allow-discrete',
     ':popover-open': {
       opacity: 1
     }

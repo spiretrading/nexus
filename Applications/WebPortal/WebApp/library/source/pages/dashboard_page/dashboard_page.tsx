@@ -104,8 +104,7 @@ export class DashboardPage extends React.Component<Properties, State> {
               notifications={this.props.notifications}
               onDismissAll={this.props.onDismissAll}
               onOpen={this.onOpenPopover}
-              onClose={this.onClosePopover}
-              className={css(DashboardPage.STYLE.popoverPosition)}/>
+              onClose={this.onClosePopover}/>
           </div>
         </HBoxLayout>
         <div className={css(DashboardPage.STYLE.separator)}/>
@@ -208,19 +207,6 @@ export class DashboardPage extends React.Component<Properties, State> {
       top: '15px',
       right: '18px'
     },
-    popoverPosition: {
-      '@media (min-width: 376px)': {
-        top: '50px',
-        right: '28px',
-        margin: 0
-      },
-      '@media (max-width: 375px)': {
-        top: '50px',
-        left: 0,
-        right: 0,
-        margin: '0 auto'
-      }
-    }
   });
   private static readonly HEADER_STYLE = StyleSheet.create({
     base: {

@@ -5,8 +5,7 @@ import * as ReactDOM from 'react-dom';
 import * as Router from 'react-router-dom';
 import * as WebPortal from 'web_portal';
 
-const roles = new Nexus.AccountRoles(0);
-const notifications: Nexus.Notification[] = [
+const INITIAL_NOTIFICATIONS: Nexus.Notification[] = [
   new Nexus.Notification('1', Beam.DirectoryEntry.INVALID,
     'Your request to update risk controls for achen01 has been approved.',
     Nexus.Notification.Category.ACCOUNT_MODIFICATION,
@@ -27,8 +26,32 @@ const notifications: Nexus.Notification[] = [
     })()), true)
 ];
 
-ReactDOM.render(
-  <Router.BrowserRouter>
-    <WebPortal.DashboardPage roles={roles} notifications={notifications}/>
-  </Router.BrowserRouter>,
-  document.getElementById('main'));
+const roles = new Nexus.AccountRoles(0);
+
+interface State {
+  notifications: Nexus.Notification[];
+}
+
+class App extends React.Component<{}, State> {
+  constructor(props: {}) {
+    super(props);
+    this.state = {
+      notifications: INITIAL_NOTIFICATIONS
+    };
+  }
+
+  public render(): JSX.Element {
+    return (
+      <Router.BrowserRouter>
+        <WebPortal.DashboardPage roles={roles}
+          notifications={this.state.notifications}
+          onDismissAll={this.onDismissAll}/>
+      </Router.BrowserRouter>);
+  }
+
+  private onDismissAll = () => {
+    this.setState({notifications: []});
+  };
+}
+
+ReactDOM.render(<App/>, document.getElementById('main'));

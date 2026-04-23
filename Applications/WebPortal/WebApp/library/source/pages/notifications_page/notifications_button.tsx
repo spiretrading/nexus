@@ -43,6 +43,7 @@ export function NotificationsButton(props: Properties): JSX.Element {
 
 const STYLES = StyleSheet.create({
   button: {
+    anchorName: '--notifications-anchor',
     position: 'relative',
     display: 'inline-flex',
     alignItems: 'center',
