@@ -4,7 +4,7 @@ import * as ReactDOM from 'react-dom';
 import * as Router from 'react-router-dom';
 import * as WebPortal from 'web_portal';
 
-const serviceUrl = new URL('/api/services',
+const serviceUrl = new URL('/api/administration_service/websocket',
   (window.location.protocol === 'https:' ? 'wss://' : 'ws://') +
   window.location.host);
 const model =

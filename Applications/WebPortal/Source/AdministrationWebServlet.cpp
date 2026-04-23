@@ -2,10 +2,12 @@
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
+#include "Nexus/AdministrationService/AdministrationServices.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
 using namespace Beam;
 using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
 
 AdministrationWebServlet::AdministrationWebServlet(
@@ -137,8 +139,30 @@ auto AdministrationWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
   return slots;
 }
 
+std::vector<HttpUpgradeSlot<AdministrationWebServlet::WebSocketChannel>>
+    AdministrationWebServlet::get_web_socket_slots() {
+  auto slots = std::vector<HttpUpgradeSlot<WebSocketChannel>>();
+  slots.emplace_back(
+    matches_path(HttpMethod::GET, "/api/administration_service/websocket"),
+    std::bind_front(&AdministrationWebServlet::on_websocket_upgrade, this));
+  return slots;
+}
+
 void AdministrationWebServlet::close() {
   m_open_state.close();
+}
+
+void AdministrationWebServlet::on_websocket_upgrade(
+    const HttpRequest& request, std::unique_ptr<WebSocketChannel> channel) {
+  auto session = m_sessions->find(request);
+  if(!session) {
+    channel->get_connection().close();
+    return;
+  }
+  auto protocol_client = std::make_unique<WebServiceProtocolClient>(
+    std::move(channel), init(seconds(30)));
+  register_administration_services(out(protocol_client->get_slots()));
+  register_administration_messages(out(protocol_client->get_slots()));
 }
 
 HttpResponse AdministrationWebServlet::on_load_accounts_by_roles(
@@ -887,3 +911,4 @@ HttpResponse AdministrationWebServlet::
   session->shuttle_response(message, out(response));
   return response;
 }
+

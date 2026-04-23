@@ -1,9 +1,17 @@
 #ifndef NEXUS_ADMINISTRATION_WEB_SERVLET_HPP
 #define NEXUS_ADMINISTRATION_WEB_SERVLET_HPP
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/IO/SharedBuffer.hpp>
+#include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Pointers/Ref.hpp>
+#include <Beam/Queues/RoutineTaskQueue.hpp>
+#include <Beam/Serialization/JsonSender.hpp>
+#include <Beam/Services/ServiceProtocolClient.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
+#include <Beam/WebServices/HttpUpgradeSlot.hpp>
 #include <Beam/WebServices/WebSessionStore.hpp>
+#include <Beam/WebServices/WebSocketChannel.hpp>
 #include "WebPortal/WebPortalSession.hpp"
 
 namespace Nexus {
@@ -11,6 +19,15 @@ namespace Nexus {
   /** Provides a web interface to the AdministrationService. */
   class AdministrationWebServlet {
     public:
+
+      /** The type of WebSocketChannel used. */
+      using WebSocketChannel =
+        Beam::WebSocketChannel<std::shared_ptr<Beam::TcpSocketChannel>>;
+
+      /** The type of ServiceProtocolClient used over WebSocket. */
+      using WebServiceProtocolClient = Beam::ServiceProtocolClient<
+        Beam::MessageProtocol<std::unique_ptr<WebSocketChannel>,
+          Beam::JsonSender<Beam::SharedBuffer>>, Beam::LiveTimer>;
 
       /**
        * Constructs an AdministrationWebServlet.
@@ -22,15 +39,20 @@ namespace Nexus {
       ~AdministrationWebServlet();
 
       std::vector<Beam::HttpRequestSlot> get_slots();
+      std::vector<Beam::HttpUpgradeSlot<WebSocketChannel>>
+        get_web_socket_slots();
       void close();
 
     private:
       Beam::WebSessionStore<WebPortalSession>* m_sessions;
       Beam::OpenState m_open_state;
+      Beam::RoutineTaskQueue m_tasks;
 
       AdministrationWebServlet(const AdministrationWebServlet&) = delete;
       AdministrationWebServlet& operator=(
         const AdministrationWebServlet&) = delete;
+      void on_websocket_upgrade(const Beam::HttpRequest& request,
+        std::unique_ptr<WebSocketChannel> channel);
       Beam::HttpResponse on_load_accounts_by_roles(
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_administrators_root_entry(
