@@ -13,7 +13,7 @@ import { RiskModification } from './risk_modification';
 import { TradingGroup } from './trading_group';
 
 interface NotificationEntry {
-  queues: Beam.QueueWriter<Notification>[];
+  publisher: Beam.QueueWriterPublisher<Notification>;
   lastId: Notification.Id;
 }
 
@@ -329,13 +329,14 @@ export class HttpAdministrationClient extends AdministrationClient {
     const key = account.id;
     const entry = this._notificationEntries.get(key);
     if(entry) {
-      entry.queues.push(queue);
+      entry.publisher.monitor(queue);
       return entry.lastId;
     }
     const newEntry: NotificationEntry = {
-      queues: [queue],
+      publisher: new Beam.QueueWriterPublisher<Notification>(),
       lastId: ''
     };
+    newEntry.publisher.monitor(queue);
     this._notificationEntries.set(key, newEntry);
     this._serviceClient.monitor(NotificationMessage,
       this._tasks.getSlot<NotificationMessage>(this.onNotificationMessage));
@@ -415,14 +416,7 @@ export class HttpAdministrationClient extends AdministrationClient {
       return;
     }
     entry.lastId = notification.id;
-    entry.queues = entry.queues.filter((queue) => {
-      try {
-        queue.push(notification);
-        return true;
-      } catch(e) {
-        return false;
-      }
-    });
+    entry.publisher.push(notification);
   }
 
   private _serviceClient: Beam.ServiceProtocolClient;
