@@ -93,6 +93,11 @@ export class LocalDashboardModel extends DashboardModel {
     }
   }
 
+  public async markNotificationAsRead(
+      id: Nexus.Notification.Id): Promise<void> {
+    return;
+  }
+
   public makeAccountModel(account: Beam.DirectoryEntry): LocalAccountModel {
     this.ensureLoaded();
     let model = this.accountModels.get(account);

@@ -37,6 +37,13 @@ export abstract class DashboardModel {
   public abstract monitorNotifications(
     queue: Beam.QueueWriter<Nexus.Notification>): void;
 
+  /**
+   * Marks a notification as read.
+   * @param id - The id of the notification to mark as read.
+   */
+  public abstract markNotificationAsRead(
+    id: Nexus.Notification.Id): Promise<void>;
+
   /** Makes a new account model. */
   public abstract makeAccountModel(account: Beam.DirectoryEntry): AccountModel;
 

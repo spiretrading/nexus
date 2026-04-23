@@ -64,6 +64,11 @@ export class HttpDashboardModel extends DashboardModel {
       this.model.account, queue);
   }
 
+  public async markNotificationAsRead(
+      id: Nexus.Notification.Id): Promise<void> {
+    await this.serviceClients.administrationClient.markNotificationAsRead(id);
+  }
+
   public makeAccountModel(account: Beam.DirectoryEntry): HttpAccountModel {
     let model = this.accountModels.get(account);
     if(model === undefined) {

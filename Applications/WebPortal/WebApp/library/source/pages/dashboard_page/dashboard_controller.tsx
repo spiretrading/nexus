@@ -55,7 +55,8 @@ export class DashboardController extends React.Component<Properties, State> {
     return (
       <DashboardPage roles={this.props.model.roles}
           notifications={this.state.notifications}
-          onSideMenuClick={this.onSideMenuClick}>
+          onSideMenuClick={this.onSideMenuClick}
+          onDismissAll={this.onDismissAll}>
         <Router.Switch>
           <Router.Route path='/account' render={this.renderAccountPage}/>
           <Router.Route path='/account_directory'
@@ -155,6 +156,15 @@ export class DashboardController extends React.Component<Properties, State> {
     this.setState((prev) => ({
       notifications: [notification, ...prev.notifications]
     }));
+  };
+
+  private onDismissAll = () => {
+    for(const notification of this.state.notifications) {
+      if(!notification.isRead) {
+        this.props.model.markNotificationAsRead(notification.id);
+      }
+    }
+    this.setState({notifications: []});
   };
 
   private onSideMenuClick = (item: SideMenu.Item) => {
