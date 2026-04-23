@@ -4,15 +4,15 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Pointers/Ref.hpp>
-#include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
-#include <Beam/Services/ServiceProtocolClient.hpp>
+#include <Beam/Services/ServiceProtocolServer.hpp>
 #include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/WebServices/HttpRequestSlot.hpp>
 #include <Beam/WebServices/HttpUpgradeSlot.hpp>
 #include <Beam/WebServices/WebSessionStore.hpp>
 #include <Beam/WebServices/WebSocketChannel.hpp>
 #include "WebPortal/WebPortalSession.hpp"
+#include "WebPortal/WebSocketServerConnection.hpp"
 
 namespace Nexus {
 
@@ -24,10 +24,10 @@ namespace Nexus {
       using WebSocketChannel =
         Beam::WebSocketChannel<std::shared_ptr<Beam::TcpSocketChannel>>;
 
-      /** The type of ServiceProtocolClient used over WebSocket. */
-      using WebServiceProtocolClient = Beam::ServiceProtocolClient<
-        Beam::MessageProtocol<std::unique_ptr<WebSocketChannel>,
-          Beam::JsonSender<Beam::SharedBuffer>>, Beam::LiveTimer>;
+      /** The type of ServiceProtocolServer used over WebSocket. */
+      using WebServiceProtocolServer = Beam::ServiceProtocolServer<
+        WebSocketServerConnection*, Beam::JsonSender<Beam::SharedBuffer>,
+        Beam::NullEncoder, std::unique_ptr<Beam::LiveTimer>>;
 
       /**
        * Constructs an AdministrationWebServlet.
@@ -45,14 +45,19 @@ namespace Nexus {
 
     private:
       Beam::WebSessionStore<WebPortalSession>* m_sessions;
+      WebSocketServerConnection m_websocket_connections;
+      WebServiceProtocolServer m_server;
       Beam::OpenState m_open_state;
-      Beam::RoutineTaskQueue m_tasks;
 
       AdministrationWebServlet(const AdministrationWebServlet&) = delete;
       AdministrationWebServlet& operator=(
         const AdministrationWebServlet&) = delete;
       void on_websocket_upgrade(const Beam::HttpRequest& request,
         std::unique_ptr<WebSocketChannel> channel);
+      void on_client_accepted(
+        WebServiceProtocolServer::ServiceProtocolClient& client);
+      void on_client_closed(
+        WebServiceProtocolServer::ServiceProtocolClient& client);
       Beam::HttpResponse on_load_accounts_by_roles(
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_administrators_root_entry(

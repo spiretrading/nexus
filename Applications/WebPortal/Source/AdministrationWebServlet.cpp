@@ -12,7 +12,14 @@ using namespace Nexus;
 
 AdministrationWebServlet::AdministrationWebServlet(
   Ref<WebSessionStore<WebPortalSession>> sessions)
-  : m_sessions(sessions.get()) {}
+  : m_sessions(sessions.get()),
+    m_server(&m_websocket_connections,
+      [] { return std::make_unique<LiveTimer>(seconds(30)); },
+      std::bind_front(&AdministrationWebServlet::on_client_accepted, this),
+      std::bind_front(&AdministrationWebServlet::on_client_closed, this)) {
+  register_administration_services(out(m_server.get_slots()));
+  register_administration_messages(out(m_server.get_slots()));
+}
 
 AdministrationWebServlet::~AdministrationWebServlet() {
   close();
@@ -149,6 +156,10 @@ std::vector<HttpUpgradeSlot<AdministrationWebServlet::WebSocketChannel>>
 }
 
 void AdministrationWebServlet::close() {
+  if(m_open_state.set_closing()) {
+    return;
+  }
+  m_server.close();
   m_open_state.close();
 }
 
@@ -159,10 +170,15 @@ void AdministrationWebServlet::on_websocket_upgrade(
     channel->get_connection().close();
     return;
   }
-  auto protocol_client = std::make_unique<WebServiceProtocolClient>(
-    std::move(channel), init(seconds(30)));
-  register_administration_services(out(protocol_client->get_slots()));
-  register_administration_messages(out(protocol_client->get_slots()));
+  m_websocket_connections.push(std::move(channel));
+}
+
+void AdministrationWebServlet::on_client_accepted(
+    WebServiceProtocolServer::ServiceProtocolClient& client) {
+}
+
+void AdministrationWebServlet::on_client_closed(
+    WebServiceProtocolServer::ServiceProtocolClient& client) {
 }
 
 HttpResponse AdministrationWebServlet::on_load_accounts_by_roles(
@@ -911,4 +927,3 @@ HttpResponse AdministrationWebServlet::
   session->shuttle_response(message, out(response));
   return response;
 }
-
