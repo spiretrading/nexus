@@ -61,7 +61,15 @@ export class HttpDashboardModel extends DashboardModel {
   public monitorNotifications(
       queue: Beam.QueueWriter<Nexus.Notification>): void {
     this.serviceClients.administrationClient.monitorNotifications(
-      this.model.account, queue);
+      this.model.account, queue).then(async (lastId) => {
+        const notifications =
+          await this.serviceClients.administrationClient.loadNotifications(
+            this.model.account, lastId, Beam.SnapshotLimit.fromTail(5),
+            Nexus.Notification.ReadState.UNREAD);
+        for(const notification of notifications) {
+          queue.push(notification);
+        }
+      });
   }
 
   public async markNotificationAsRead(

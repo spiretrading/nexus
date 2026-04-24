@@ -153,9 +153,22 @@ export class DashboardController extends React.Component<Properties, State> {
   }
 
   private onNotification = (notification: Nexus.Notification) => {
-    this.setState((prev) => ({
-      notifications: [notification, ...prev.notifications]
-    }));
+    this.setState((prev) => {
+      const existing = prev.notifications.findIndex(
+        (n) => n.id === notification.id);
+      if(existing !== -1) {
+        if(notification.isRead) {
+          const notifications = [...prev.notifications];
+          notifications.splice(existing, 1);
+          return {notifications};
+        }
+        return null;
+      }
+      if(notification.isRead) {
+        return null;
+      }
+      return {notifications: [notification, ...prev.notifications]};
+    });
   };
 
   private onDismissAll = () => {
