@@ -258,11 +258,12 @@ export abstract class AdministrationClient {
    * Sends a notification to an account.
    * @param account - The account to send the notification to.
    * @param description - The description of the notification.
+   * @param data - Arbitrary data associated with the notification.
    * @param category - The category of the notification.
    * @return The fully constructed notification.
    */
   public abstract sendNotification(account: Beam.DirectoryEntry,
-    description: string, category: Notification.Category):
+    description: string, data: string, category: Notification.Category):
       Promise<Notification>;
 
   /**

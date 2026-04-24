@@ -12,7 +12,7 @@ namespace {
   const auto& get_test_notification() {
     static auto notification = Notification(
       "abc-123", DirectoryEntry::make_account(100, "account"),
-      "Your request has been approved.",
+      "Your request has been approved.", "{\"request_id\":42}",
       Notification::Category::ACCOUNT_MODIFICATION,
       time_from_string("2026-04-21 12:00:00"), false);
     return notification;
@@ -26,6 +26,7 @@ TEST_SUITE("Notification") {
       REQUIRE(received.m_id == expected.m_id);
       REQUIRE(received.m_account == expected.m_account);
       REQUIRE(received.m_description == expected.m_description);
+      REQUIRE(received.m_data == expected.m_data);
       REQUIRE(received.m_category == expected.m_category);
       REQUIRE(received.m_timestamp == expected.m_timestamp);
       REQUIRE(received.m_is_read == expected.m_is_read);
@@ -35,7 +36,7 @@ TEST_SUITE("Notification") {
   TEST_CASE("shuttle_read_notification") {
     auto notification = Notification(
       "def-456", DirectoryEntry::make_account(200, "user"),
-      "Risk parameters updated.", Notification::Category::REPORT,
+      "Risk parameters updated.", "", Notification::Category::REPORT,
       time_from_string("2026-04-20 09:30:00"), true);
     test_round_trip_shuttle(notification, [] (const auto& received) {
       REQUIRE(received.m_id == "def-456");
@@ -47,8 +48,9 @@ TEST_SUITE("Notification") {
   TEST_CASE("stream") {
     auto& notification = get_test_notification();
     auto expected = std::string(
-      "(abc-123 (ACCOUNT 100 account) \"Your request has been approved.\""
-      " ACCOUNT_MODIFICATION 2026-Apr-21 12:00:00 0)");
+      R"((abc-123 (ACCOUNT 100 account) "Your request has been approved.")"
+      R"( "{"request_id":42}" ACCOUNT_MODIFICATION)"
+      R"( 2026-Apr-21 12:00:00 0))");
     REQUIRE(to_string(notification) == expected);
   }
 

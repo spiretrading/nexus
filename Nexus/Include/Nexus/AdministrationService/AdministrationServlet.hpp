@@ -227,7 +227,7 @@ namespace Nexus {
         ServiceProtocolClient& client, AccountModificationRequest::Id id,
         Message message);
       Notification on_send_notification(ServiceProtocolClient& client,
-        Beam::DirectoryEntry account, std::string description,
+        Beam::DirectoryEntry account, std::string description, std::string data,
         Notification::Category category);
       Notification::Id on_monitor_notifications(
         ServiceProtocolClient& client, const Beam::DirectoryEntry& account);
@@ -1680,7 +1680,8 @@ namespace Nexus {
           Beam::IsTimer<Beam::dereference_t<T>>
   Notification AdministrationServlet<C, S, D, R, T>::on_send_notification(
       ServiceProtocolClient& client, Beam::DirectoryEntry account,
-      std::string description, Notification::Category category) {
+      std::string description, std::string data,
+      Notification::Category category) {
     auto& session = client.get_session();
     if(!check_administrator(session.get_account())) {
       boost::throw_with_location(
@@ -1690,6 +1691,7 @@ namespace Nexus {
     notification.m_id = boost::uuids::to_string(m_uuid_generator());
     notification.m_account = std::move(account);
     notification.m_description = std::move(description);
+    notification.m_data = std::move(data);
     notification.m_category = category;
     notification.m_timestamp = m_time_client->get_time();
     notification.m_is_read = false;

@@ -139,7 +139,7 @@ namespace Nexus {
           std::declval<AccountModificationRequest::Id>(),
           std::declval<const Message&>()) } -> std::same_as<Message>;
       { client.send_notification(std::declval<const Beam::DirectoryEntry&>(),
-        std::declval<const std::string&>(),
+        std::declval<const std::string&>(), std::declval<const std::string&>(),
         std::declval<Notification::Category>()) } -> std::same_as<Notification>;
       { client.monitor_notifications(
           std::declval<const Beam::DirectoryEntry&>(),
@@ -464,11 +464,13 @@ namespace Nexus {
        * Sends a notification to an account.
        * @param account The account to send the notification to.
        * @param description The description of the notification.
+       * @param data Arbitrary data associated with the notification.
        * @param category The category of the notification.
        * @return The fully constructed notification.
        */
       Notification send_notification(const Beam::DirectoryEntry& account,
-        const std::string& description, Notification::Category category);
+        const std::string& description, const std::string& data,
+        Notification::Category category);
 
       /**
        * Monitors notifications for an account.
@@ -587,7 +589,7 @@ namespace Nexus {
           AccountModificationRequest::Id id, const Message& message) = 0;
         virtual Notification send_notification(
           const Beam::DirectoryEntry& account, const std::string& description,
-          Notification::Category category) = 0;
+          const std::string& data, Notification::Category category) = 0;
         virtual Notification::Id monitor_notifications(
           const Beam::DirectoryEntry& account,
           Beam::ScopedQueueWriter<Notification> queue) = 0;
@@ -682,7 +684,7 @@ namespace Nexus {
           AccountModificationRequest::Id id, const Message& message) override;
         Notification send_notification(
           const Beam::DirectoryEntry& account, const std::string& description,
-          Notification::Category category) override;
+          const std::string& data, Notification::Category category) override;
         Notification::Id monitor_notifications(
           const Beam::DirectoryEntry& account,
           Beam::ScopedQueueWriter<Notification> queue) override;
@@ -936,8 +938,8 @@ namespace Nexus {
 
   inline Notification AdministrationClient::send_notification(
       const Beam::DirectoryEntry& account, const std::string& description,
-      Notification::Category category) {
-    return m_client->send_notification(account, description, category);
+      const std::string& data, Notification::Category category) {
+    return m_client->send_notification(account, description, data, category);
   }
 
   inline Notification::Id AdministrationClient::monitor_notifications(
@@ -1214,8 +1216,9 @@ namespace Nexus {
   template<typename C>
   Notification AdministrationClient::WrappedAdministrationClient<C>::
       send_notification(const Beam::DirectoryEntry& account,
-        const std::string& description, Notification::Category category) {
-    return m_client->send_notification(account, description, category);
+        const std::string& description, const std::string& data,
+        Notification::Category category) {
+    return m_client->send_notification(account, description, data, category);
   }
 
   template<typename C>

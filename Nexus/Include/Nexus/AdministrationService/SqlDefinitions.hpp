@@ -359,6 +359,7 @@ namespace Nexus {
           row.m_account = Beam::DirectoryEntry::make_account(column);
         }).
       add_column("description", Viper::text, &Notification::m_description).
+      add_column("data", Viper::text, &Notification::m_data).
       add_column("category", &Notification::m_category).
       add_column("timestamp", &Notification::m_timestamp).
       add_column("is_read", &Notification::m_is_read).

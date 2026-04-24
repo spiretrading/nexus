@@ -7,7 +7,8 @@ export class Notification {
   public static fromJson(value: any): Notification {
     return new Notification(value.id,
       Beam.DirectoryEntry.fromJson(value.account), value.description,
-      value.category, Beam.DateTime.fromJson(value.timestamp), value.is_read);
+      value.data, value.category, Beam.DateTime.fromJson(value.timestamp),
+      value.is_read);
   }
 
   /**
@@ -15,18 +16,22 @@ export class Notification {
    * @param id - The unique identifier for the notification.
    * @param account - The account that the notification is for.
    * @param description - The description of the notification.
+   * @param data - Arbitrary data associated with the notification.
    * @param category - The category of the notification.
    * @param timestamp - The timestamp when the notification was created.
    * @param isRead - Whether the notification has been read.
    */
-  constructor(id: string = '', account: Beam.DirectoryEntry =
-      Beam.DirectoryEntry.INVALID, description: string = '',
-      category: Notification.Category = Notification.Category.ACCOUNT_MODIFICATION,
+  constructor(id: string = '',
+      account: Beam.DirectoryEntry = Beam.DirectoryEntry.INVALID,
+      description: string = '', data: string = '',
+      category: Notification.Category =
+        Notification.Category.ACCOUNT_MODIFICATION,
       timestamp: Beam.DateTime = Beam.DateTime.NOT_A_DATE_TIME,
       isRead: boolean = false) {
     this._id = id;
     this._account = account;
     this._description = description;
+    this._data = data;
     this._category = category;
     this._timestamp = timestamp;
     this._isRead = isRead;
@@ -45,6 +50,11 @@ export class Notification {
   /** Returns the description of the notification. */
   public get description(): string {
     return this._description;
+  }
+
+  /** Returns the arbitrary data associated with the notification. */
+  public get data(): string {
+    return this._data;
   }
 
   /** Returns the category of the notification. */
@@ -68,6 +78,7 @@ export class Notification {
       id: this._id,
       account: this._account.toJson(),
       description: this._description,
+      data: this._data,
       category: this._category,
       timestamp: this._timestamp.toJson(),
       is_read: this._isRead
@@ -77,6 +88,7 @@ export class Notification {
   private _id: string;
   private _account: Beam.DirectoryEntry;
   private _description: string;
+  private _data: string;
   private _category: Notification.Category;
   private _timestamp: Beam.DateTime;
   private _isRead: boolean;

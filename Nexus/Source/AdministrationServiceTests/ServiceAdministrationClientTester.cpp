@@ -718,22 +718,26 @@ TEST_SUITE("ServiceAdministrationClient") {
     auto fixture = Fixture();
     auto account = DirectoryEntry::make_account(58, "notified_account");
     auto description = std::string("Your request has been approved.");
+    auto data = std::string("{\"request_id\":42}");
     auto category = Notification::Category::ACCOUNT_MODIFICATION;
-    auto notification = Notification("abc-123", account, description, category,
-      time_from_string("2026-04-21 00:00:00"), false);
+    auto notification = Notification("abc-123", account, description, data,
+      category, time_from_string("2026-04-21 00:00:00"), false);
     fixture.on_request<SendNotificationService>(
       [&] (auto& request, const auto& received_account,
-          const auto& received_description, auto received_category) {
+          const auto& received_description, const auto& received_data,
+          auto received_category) {
         REQUIRE(received_account == account);
         REQUIRE(received_description == description);
+        REQUIRE(received_data == data);
         REQUIRE(received_category == category);
         request.set(notification);
       });
-    auto received = REQUIRE_NO_THROW(
-      fixture.m_client->send_notification(account, description, category));
+    auto received = REQUIRE_NO_THROW(fixture.m_client->send_notification(
+      account, description, data, category));
     REQUIRE(received.m_id == notification.m_id);
     REQUIRE(received.m_account == notification.m_account);
     REQUIRE(received.m_description == notification.m_description);
+    REQUIRE(received.m_data == notification.m_data);
     REQUIRE(received.m_category == notification.m_category);
     REQUIRE(received.m_timestamp == notification.m_timestamp);
     REQUIRE(received.m_is_read == notification.m_is_read);
@@ -767,8 +771,8 @@ TEST_SUITE("ServiceAdministrationClient") {
       });
     REQUIRE_NO_THROW(fixture.m_client->monitor_notifications(account, queue));
     auto notification = Notification("notif-1", account, "New notification.",
-      Notification::Category::REPORT, time_from_string("2026-04-22 00:00:00"),
-      false);
+      "", Notification::Category::REPORT,
+      time_from_string("2026-04-22 00:00:00"), false);
     send_record_message<NotificationMessage>(*server_side_client, notification);
     auto received = queue->pop();
     REQUIRE(received.m_id == notification.m_id);
@@ -793,8 +797,8 @@ TEST_SUITE("ServiceAdministrationClient") {
     auto last_id = REQUIRE_NO_THROW(
       fixture.m_client->monitor_notifications(account, queue_a));
     REQUIRE(last_id == "initial-id");
-    auto notification = Notification("updated-id", account, "New notification.",
-      Notification::Category::ACCOUNT_MODIFICATION,
+    auto notification = Notification("updated-id", account,
+      "New notification.", "", Notification::Category::ACCOUNT_MODIFICATION,
       time_from_string("2026-04-22 00:00:00"), false);
     send_record_message<NotificationMessage>(*server_side_client, notification);
     queue_a->pop();
@@ -808,16 +812,15 @@ TEST_SUITE("ServiceAdministrationClient") {
     auto fixture = Fixture();
     auto account = DirectoryEntry::make_account(62, "load_account");
     auto notifications = std::vector<Notification>();
-    notifications.push_back(Notification(
-      "load-001", account, "First.", Notification::Category::REPORT,
-      time_from_string("2026-04-21 10:00:00"), false));
-    notifications.push_back(Notification("load-002", account, "Second.",
+    notifications.push_back(Notification("load-001", account, "First.", "",
+      Notification::Category::REPORT, time_from_string("2026-04-21 10:00:00"),
+      false));
+    notifications.push_back(Notification("load-002", account, "Second.", "",
       Notification::Category::ACCOUNT_MODIFICATION,
       time_from_string("2026-04-21 11:00:00"), true));
     fixture.on_request<LoadNotificationsService>(
-      [&] (auto& request, const auto& received_account,
-          const auto& received_id, auto received_limit,
-          auto received_read_state) {
+      [&] (auto& request, const auto& received_account, const auto& received_id,
+          auto received_limit, auto received_read_state) {
         REQUIRE(received_account == account);
         REQUIRE(received_id.empty());
         REQUIRE(received_limit == SnapshotLimit::UNLIMITED);
@@ -843,14 +846,14 @@ TEST_SUITE("ServiceAdministrationClient") {
         request.set(Notification::Id("initial-id"));
       });
     REQUIRE_NO_THROW(fixture.m_client->monitor_notifications(account, queue));
-    auto notification_a = Notification("notif-a", account, "Before disconnect.",
-      Notification::Category::REPORT, time_from_string("2026-04-21 10:00:00"),
-      false);
+    auto notification_a = Notification("notif-a", account,
+      "Before disconnect.", "", Notification::Category::REPORT,
+      time_from_string("2026-04-21 10:00:00"), false);
     send_record_message<NotificationMessage>(
       *server_side_client, notification_a);
     REQUIRE(queue->pop().m_id == "notif-a");
     auto missed_notification = Notification("notif-missed", account,
-      "During disconnect.", Notification::Category::ACCOUNT_MODIFICATION,
+      "During disconnect.", "", Notification::Category::ACCOUNT_MODIFICATION,
       time_from_string("2026-04-21 11:00:00"), false);
     auto recovered_token =
       Async<TestServiceProtocolServer::ServiceProtocolClient*>();
@@ -872,8 +875,8 @@ TEST_SUITE("ServiceAdministrationClient") {
     server_side_client = recovered_token.get();
     REQUIRE(queue->pop().m_id == "notif-missed");
     auto notification_c = Notification("notif-c", account, "After reconnect.",
-      Notification::Category::REPORT, time_from_string("2026-04-21 12:00:00"),
-      false);
+      "", Notification::Category::REPORT,
+      time_from_string("2026-04-21 12:00:00"), false);
     send_record_message<NotificationMessage>(
       *server_side_client, notification_c);
     REQUIRE(queue->pop().m_id == "notif-c");

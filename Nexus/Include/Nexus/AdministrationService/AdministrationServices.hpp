@@ -370,13 +370,14 @@ namespace Nexus {
      * Sends a notification to an account.
      * @param account The account to send the notification to.
      * @param description The description of the notification.
+     * @param data Arbitrary data associated with the notification.
      * @param category The category of the notification.
      * @return The fully constructed notification.
      */
     (SendNotificationService,
       "Nexus.AdministrationServices.SendNotificationService", Notification,
       (Beam::DirectoryEntry, account), (std::string, description),
-      (Notification::Category, category)),
+      (std::string, data), (Notification::Category, category)),
 
     /**
      * Monitors notifications for an account.

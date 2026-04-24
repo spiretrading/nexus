@@ -346,13 +346,14 @@ export class HttpAdministrationClient extends AdministrationClient {
   }
 
   public async sendNotification(account: Beam.DirectoryEntry,
-      description: string, category: Notification.Category):
-        Promise<Notification> {
+      description: string, data: string,
+      category: Notification.Category): Promise<Notification> {
     const response = await Beam.post(
       '/api/administration_service/send_notification',
       {
         account: account.toJson(),
         description: description,
+        data: data,
         category: category
       });
     return Notification.fromJson(response);

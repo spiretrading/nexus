@@ -47,6 +47,9 @@ namespace Nexus {
     /** The description of the notification. */
     std::string m_description;
 
+    /** Arbitrary data associated with the notification. */
+    std::string m_data;
+
     /** The category of the notification. */
     Category m_category;
 
@@ -71,8 +74,9 @@ namespace Nexus {
   inline std::ostream& operator <<(
       std::ostream& out, const Notification& notification) {
     return out << '(' << notification.m_id << ' ' << notification.m_account <<
-      " \"" << notification.m_description << "\" " << notification.m_category <<
-      ' ' << notification.m_timestamp << ' ' << notification.m_is_read << ')';
+      " \"" << notification.m_description << "\" \"" << notification.m_data <<
+      "\" " << notification.m_category << ' ' << notification.m_timestamp <<
+      ' ' << notification.m_is_read << ')';
   }
 }
 
@@ -85,6 +89,7 @@ namespace Beam {
       shuttle.shuttle("id", value.m_id);
       shuttle.shuttle("account", value.m_account);
       shuttle.shuttle("description", value.m_description);
+      shuttle.shuttle("data", value.m_data);
       shuttle.shuttle("category", value.m_category);
       shuttle.shuttle("timestamp", value.m_timestamp);
       shuttle.shuttle("is_read", value.m_is_read);

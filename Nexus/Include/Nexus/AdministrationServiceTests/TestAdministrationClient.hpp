@@ -249,6 +249,7 @@ namespace Nexus::Tests {
       struct SendNotificationOperation {
         Beam::DirectoryEntry m_account;
         std::string m_description;
+        std::string m_data;
         Notification::Category m_category;
         Beam::Tests::ServiceResult<Notification> m_result;
       };
@@ -385,7 +386,8 @@ namespace Nexus::Tests {
       Message send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message);
       Notification send_notification(const Beam::DirectoryEntry& account,
-        const std::string& description, Notification::Category category);
+        const std::string& description, const std::string& data,
+        Notification::Category category);
       Notification::Id monitor_notifications(
         const Beam::DirectoryEntry& account,
         Beam::ScopedQueueWriter<Notification> queue);
@@ -650,9 +652,9 @@ namespace Nexus::Tests {
 
   inline Notification TestAdministrationClient::send_notification(
       const Beam::DirectoryEntry& account, const std::string& description,
-      Notification::Category category) {
+      const std::string& data, Notification::Category category) {
     return m_queue.append_result<SendNotificationOperation, Notification>(
-      account, description, category);
+      account, description, data, category);
   }
 
   inline Notification::Id TestAdministrationClient::monitor_notifications(

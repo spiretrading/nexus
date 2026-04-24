@@ -573,13 +573,13 @@ namespace Nexus::Tests {
     SUBCASE("store_and_load_notifications") {
       auto account = DirectoryEntry::make_account(100, "user_a");
       auto notification_a = Notification("aaa-001", account,
-        "First notification.", Notification::Category::ACCOUNT_MODIFICATION,
+        "First notification.", "", Notification::Category::ACCOUNT_MODIFICATION,
         time_from_string("2026-04-21 10:00:00"), false);
       auto notification_b = Notification("aaa-002", account,
-        "Second notification.", Notification::Category::REPORT,
+        "Second notification.", "", Notification::Category::REPORT,
         time_from_string("2026-04-21 11:00:00"), true);
       auto notification_c = Notification("aaa-003", account,
-        "Third notification.", Notification::Category::ACCOUNT_MODIFICATION,
+        "Third notification.", "", Notification::Category::ACCOUNT_MODIFICATION,
         time_from_string("2026-04-21 12:00:00"), false);
       data_store.with_transaction([&] {
         data_store.store(notification_a);
@@ -600,13 +600,13 @@ namespace Nexus::Tests {
       auto account = DirectoryEntry::make_account(100, "user_a");
       data_store.with_transaction([&] {
         data_store.store(Notification(
-          "bbb-001", account, "Unread.", Notification::Category::REPORT,
+          "bbb-001", account, "Unread.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 10:00:00"), false));
         data_store.store(Notification(
-          "bbb-002", account, "Read.", Notification::Category::REPORT,
+          "bbb-002", account, "Read.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 11:00:00"), true));
         data_store.store(Notification(
-          "bbb-003", account, "Unread.", Notification::Category::REPORT,
+          "bbb-003", account, "Unread.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 12:00:00"), false));
       });
       auto unread = data_store.with_transaction([&] {
@@ -622,10 +622,10 @@ namespace Nexus::Tests {
       auto account = DirectoryEntry::make_account(100, "user_a");
       data_store.with_transaction([&] {
         data_store.store(Notification(
-          "ccc-001", account, "Unread.", Notification::Category::REPORT,
+          "ccc-001", account, "Unread.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 10:00:00"), false));
         data_store.store(Notification(
-          "ccc-002", account, "Read.", Notification::Category::REPORT,
+          "ccc-002", account, "Read.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 11:00:00"), true));
       });
       auto read = data_store.with_transaction([&] {
@@ -640,13 +640,13 @@ namespace Nexus::Tests {
       auto account = DirectoryEntry::make_account(100, "user_a");
       data_store.with_transaction([&] {
         data_store.store(Notification(
-          "ddd-001", account, "First.", Notification::Category::REPORT,
+          "ddd-001", account, "First.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 10:00:00"), false));
         data_store.store(Notification(
-          "ddd-002", account, "Second.", Notification::Category::REPORT,
+          "ddd-002", account, "Second.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 11:00:00"), false));
         data_store.store(Notification(
-          "ddd-003", account, "Third.", Notification::Category::REPORT,
+          "ddd-003", account, "Third.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 12:00:00"), false));
       });
       auto tail = data_store.with_transaction([&] {
@@ -662,13 +662,13 @@ namespace Nexus::Tests {
       auto account = DirectoryEntry::make_account(100, "user_a");
       data_store.with_transaction([&] {
         data_store.store(Notification(
-          "eee-001", account, "First.", Notification::Category::REPORT,
+          "eee-001", account, "First.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 10:00:00"), false));
         data_store.store(Notification(
-          "eee-002", account, "Second.", Notification::Category::REPORT,
+          "eee-002", account, "Second.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 11:00:00"), false));
         data_store.store(Notification(
-          "eee-003", account, "Third.", Notification::Category::REPORT,
+          "eee-003", account, "Third.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 12:00:00"), false));
       });
       auto head = data_store.with_transaction([&] {
@@ -685,10 +685,10 @@ namespace Nexus::Tests {
       auto account_b = DirectoryEntry::make_account(200, "user_b");
       data_store.with_transaction([&] {
         data_store.store(Notification(
-          "fff-001", account_a, "For A.", Notification::Category::REPORT,
+          "fff-001", account_a, "For A.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 10:00:00"), false));
         data_store.store(Notification(
-          "fff-002", account_b, "For B.", Notification::Category::REPORT,
+          "fff-002", account_b, "For B.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 11:00:00"), false));
       });
       auto a_notifications = data_store.with_transaction([&] {
@@ -718,10 +718,10 @@ namespace Nexus::Tests {
       auto account = DirectoryEntry::make_account(100, "user_a");
       data_store.with_transaction([&] {
         data_store.store(Notification(
-          "ggg-001", account, "Unread.", Notification::Category::REPORT,
+          "ggg-001", account, "Unread.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 10:00:00"), false));
         data_store.store(Notification(
-          "ggg-002", account, "Also unread.", Notification::Category::REPORT,
+          "ggg-002", account, "Also unread.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 11:00:00"), false));
       });
       data_store.with_transaction([&] {
@@ -742,10 +742,10 @@ namespace Nexus::Tests {
       auto account = DirectoryEntry::make_account(100, "user_a");
       data_store.with_transaction([&] {
         data_store.store(Notification(
-          "hhh-001", account, "First.", Notification::Category::REPORT,
+          "hhh-001", account, "First.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 10:00:00"), false));
         data_store.store(Notification(
-          "hhh-002", account, "Second.", Notification::Category::REPORT,
+          "hhh-002", account, "Second.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 11:00:00"), false));
       });
       data_store.with_transaction([&] {
@@ -769,10 +769,10 @@ namespace Nexus::Tests {
       auto account = DirectoryEntry::make_account(100, "user_a");
       data_store.with_transaction([&] {
         data_store.store(Notification(
-          "iii-001", account, "First.", Notification::Category::REPORT,
+          "iii-001", account, "First.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 10:00:00"), false));
         data_store.store(Notification(
-          "iii-002", account, "Second.", Notification::Category::REPORT,
+          "iii-002", account, "Second.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 11:00:00"), false));
       });
       auto found = data_store.with_transaction([&] {

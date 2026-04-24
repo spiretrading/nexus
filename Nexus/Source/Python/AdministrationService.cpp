@@ -119,6 +119,7 @@ void Nexus::Python::export_notification(module& module) {
         def_readwrite("id", &Notification::m_id).
         def_readwrite("account", &Notification::m_account).
         def_readwrite("description", &Notification::m_description).
+        def_readwrite("data", &Notification::m_data).
         def_readwrite("category", &Notification::m_category).
         def_readwrite("timestamp", &Notification::m_timestamp).
         def_readwrite("is_read", &Notification::m_is_read);

@@ -105,7 +105,8 @@ namespace Nexus {
       Message send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message);
       Notification send_notification(const Beam::DirectoryEntry& account,
-        const std::string& description, Notification::Category category);
+        const std::string& description, const std::string& data,
+        Notification::Category category);
       Notification::Id monitor_notifications(
         const Beam::DirectoryEntry& account,
         Beam::ScopedQueueWriter<Notification> queue);
@@ -604,11 +605,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   template<typename B>
   Notification ServiceAdministrationClient<B>::send_notification(
       const Beam::DirectoryEntry& account, const std::string& description,
-      Notification::Category category) {
+      const std::string& data, Notification::Category category) {
     return Beam::service_or_throw_with_nested([&] {
       auto client = m_client_handler.get_client();
       return client->template send_request<SendNotificationService>(
-        account, description, category);
+        account, description, data, category);
     }, "Failed to send notification: " +
       boost::lexical_cast<std::string>(account));
   }
