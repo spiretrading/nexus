@@ -162,6 +162,7 @@ void AdministrationWebServlet::close() {
   if(m_open_state.set_closing()) {
     return;
   }
+  m_websocket_server.close();
   m_protocol_server.close();
   {
     auto lock = std::lock_guard(m_websocket_session_mutex);
