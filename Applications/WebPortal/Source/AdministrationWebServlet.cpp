@@ -1,4 +1,7 @@
 #include "WebPortal/AdministrationWebServlet.hpp"
+#include <Beam/Queues/Queue.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
+#include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
@@ -13,19 +16,19 @@ using namespace Nexus;
 AdministrationWebServlet::AdministrationWebServlet(
   Ref<WebSessionStore<WebPortalSession>> sessions)
   : m_sessions(sessions.get()),
-    m_server(&m_websocket_connections,
+    m_protocol_server(&m_websocket_server,
       [] { return std::make_unique<LiveTimer>(seconds(30)); },
       std::bind_front(&AdministrationWebServlet::on_client_accepted, this),
       std::bind_front(&AdministrationWebServlet::on_client_closed, this)) {
-  register_administration_services(out(m_server.get_slots()));
-  register_administration_messages(out(m_server.get_slots()));
+  register_administration_services(out(m_protocol_server.get_slots()));
+  register_administration_messages(out(m_protocol_server.get_slots()));
 }
 
 AdministrationWebServlet::~AdministrationWebServlet() {
   close();
 }
 
-auto AdministrationWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
+std::vector<HttpRequestSlot> AdministrationWebServlet::get_slots() {
   auto slots = std::vector<HttpRequestSlot>();
   slots.emplace_back(matches_path(HttpMethod::POST,
     "/api/administration_service/load_accounts_by_roles"), std::bind_front(
@@ -159,7 +162,12 @@ void AdministrationWebServlet::close() {
   if(m_open_state.set_closing()) {
     return;
   }
-  m_server.close();
+  m_protocol_server.close();
+  {
+    auto lock = std::lock_guard(m_websocket_session_mutex);
+    m_pending_websocket_session.reset();
+    m_websocket_session_condition.notify_one();
+  }
   m_open_state.close();
 }
 
@@ -170,11 +178,19 @@ void AdministrationWebServlet::on_websocket_upgrade(
     channel->get_connection().close();
     return;
   }
-  m_websocket_connections.push(std::move(channel));
+  auto lock = std::unique_lock(m_websocket_session_mutex);
+  m_pending_websocket_session = session;
+  m_websocket_server.push(std::move(channel));
+  while(m_pending_websocket_session) {
+    m_websocket_session_condition.wait(lock);
+  }
 }
 
 void AdministrationWebServlet::on_client_accepted(
     WebServiceProtocolServer::ServiceProtocolClient& client) {
+  auto lock = std::lock_guard(m_websocket_session_mutex);
+  client.get_session().m_session = std::move(m_pending_websocket_session);
+  m_websocket_session_condition.notify_one();
 }
 
 void AdministrationWebServlet::on_client_closed(

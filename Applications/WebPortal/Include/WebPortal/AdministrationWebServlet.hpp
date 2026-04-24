@@ -1,6 +1,8 @@
 #ifndef NEXUS_ADMINISTRATION_WEB_SERVLET_HPP
 #define NEXUS_ADMINISTRATION_WEB_SERVLET_HPP
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Threading/ConditionVariable.hpp>
+#include <Beam/Threading/Mutex.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Pointers/Ref.hpp>
@@ -16,6 +18,11 @@
 
 namespace Nexus {
 
+  /** Stores session info for a WebSocket service protocol client. */
+  struct WebSocketSession {
+    std::shared_ptr<WebPortalSession> m_session;
+  };
+
   /** Provides a web interface to the AdministrationService. */
   class AdministrationWebServlet {
     public:
@@ -27,7 +34,7 @@ namespace Nexus {
       /** The type of ServiceProtocolServer used over WebSocket. */
       using WebServiceProtocolServer = Beam::ServiceProtocolServer<
         WebSocketServerConnection*, Beam::JsonSender<Beam::SharedBuffer>,
-        Beam::NullEncoder, std::unique_ptr<Beam::LiveTimer>>;
+        Beam::NullEncoder, std::unique_ptr<Beam::LiveTimer>, WebSocketSession>;
 
       /**
        * Constructs an AdministrationWebServlet.
@@ -45,8 +52,11 @@ namespace Nexus {
 
     private:
       Beam::WebSessionStore<WebPortalSession>* m_sessions;
-      WebSocketServerConnection m_websocket_connections;
-      WebServiceProtocolServer m_server;
+      WebSocketServerConnection m_websocket_server;
+      Beam::Mutex m_websocket_session_mutex;
+      Beam::ConditionVariable m_websocket_session_condition;
+      std::shared_ptr<WebPortalSession> m_pending_websocket_session;
+      WebServiceProtocolServer m_protocol_server;
       Beam::OpenState m_open_state;
 
       AdministrationWebServlet(const AdministrationWebServlet&) = delete;
