@@ -112,6 +112,7 @@
 #include "Spire/Ui/TableHeaderItem.hpp"
 #include "Spire/Ui/TableView.hpp"
 #include "Spire/Ui/Tag.hpp"
+#include "Spire/Ui/TaskStateBox.hpp"
 #include "Spire/Ui/TagBox.hpp"
 #include "Spire/Ui/TagComboBox.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
@@ -4864,6 +4865,24 @@ UiProfile Spire::make_tag_box_profile() {
 UiProfile Spire::make_tag_combo_box_profile() {
   return setup_tag_combo_box_profile("TagComboBox",
     [] { return new TagComboBox(populate_tag_combo_box_model()); });
+}
+
+UiProfile Spire::make_task_state_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_property = define_enum<Task::State>(
+    {{"Ready", Task::State::READY},
+     {"Started", Task::State::INITIALIZING},
+     {"Active", Task::State::ACTIVE},
+     {"Pending Canceled", Task::State::PENDING_CANCEL},
+     {"Canceled", Task::State::CANCELED},
+     {"Complete", Task::State::COMPLETE},
+     {"Error", Task::State::FAILED}});
+  populate_enum_properties(properties, "current", current_property);
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("TaskStateBox", properties,
+    std::bind_front(setup_enum_box_profile<TaskStateBox, make_task_state_box>));
+  return profile;
 }
 
 UiProfile Spire::make_text_area_box_profile() {

@@ -18,6 +18,7 @@
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Nexus/Definitions/Venue.hpp"
+#include "Spire/Canvas/Tasks/Task.hpp"
 #include "Spire/Spire/AnyRef.hpp"
 
 namespace Spire {
@@ -146,6 +147,10 @@ namespace Spire {
 
   /** Returns the text representation of a PositionSideToken. */
   QString to_text(PositionSideToken token, const QLocale& locale = QLocale());
+
+  /** Returns the text representation of a Task::State. */
+  const QString& to_text(
+    Task::State state, const QLocale& locale = QLocale());
 
   /** Returns the text representation of a Scope. */
   QString to_text(
