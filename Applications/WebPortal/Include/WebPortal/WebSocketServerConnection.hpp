@@ -1,6 +1,7 @@
 #ifndef NEXUS_WEB_SOCKET_SERVER_CONNECTION_HPP
 #define NEXUS_WEB_SOCKET_SERVER_CONNECTION_HPP
 #include <memory>
+#include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/WebServices/WebSocketChannel.hpp>
@@ -41,7 +42,7 @@ namespace Nexus {
   }
 
   inline void WebSocketServerConnection::close() {
-    m_channels.close();
+    m_channels.close(Beam::EndOfFileException());
   }
 }
 
