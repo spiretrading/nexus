@@ -13,6 +13,8 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  constexpr auto BODY_PADDING = 18;
+
   constexpr auto LIVE_STATUSES = std::array{
     OrderStatus::PENDING_NEW, OrderStatus::NEW, OrderStatus::PARTIALLY_FILLED,
     OrderStatus::SUSPENDED, OrderStatus::STOPPED, OrderStatus::PENDING_CANCEL,
@@ -39,7 +41,7 @@ struct OrderStatusFilterPanel::PresetButtonContainer : QWidget {
     on_preset(m_preset->get(), true);
   }
 
-  const QString& display_text(Preset preset) const {
+  static const QString& display_text(Preset preset) {
     if(preset == Preset::ALL) {
       static const auto value = QObject::tr("All Orders");
       return value;
@@ -90,8 +92,8 @@ struct OrderStatusFilterPanel::PresetButtonContainer : QWidget {
 };
 
 OrderStatusFilterPanel::OrderStatusFilterPanel(QWidget* parent)
-    : OrderStatusFilterPanel(
-        std::make_shared<ArrayListModel<OrderStatus>>(), parent) {}
+  : OrderStatusFilterPanel(
+      std::make_shared<ArrayListModel<OrderStatus>>(), parent) {}
 
 OrderStatusFilterPanel::OrderStatusFilterPanel(
     std::shared_ptr<OrderStatusListModel> current, QWidget* parent)
@@ -107,7 +109,7 @@ OrderStatusFilterPanel::OrderStatusFilterPanel(
   m_body = new QWidget();
   m_body->installEventFilter(this);
   auto body_layout = make_hbox_layout(m_body);
-  body_layout->setSpacing(scale_width(18));
+  body_layout->setSpacing(scale_width(BODY_PADDING));
   body_layout->addWidget(m_button_container);
   body_layout->addWidget(m_list_box);
   auto panel = new FilterPanel(*m_body);
@@ -140,7 +142,7 @@ connection OrderStatusFilterPanel::connect_submit_signal(
 bool OrderStatusFilterPanel::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_body && event->type() == QEvent::Resize) {
     auto available_width =
-      m_body->width() - m_button_container->width() - scale_width(18);
+      m_body->width() - m_button_container->width() - scale_width(BODY_PADDING);
     m_list_box->setMaximumWidth(std::max(0,
       std::max(m_list_box->minimumWidth(), available_width)));
   }
