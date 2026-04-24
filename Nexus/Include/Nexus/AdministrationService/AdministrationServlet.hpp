@@ -128,6 +128,9 @@ namespace Nexus {
         const std::vector<Beam::DirectoryEntry>& entitlements);
       void update_risk_parameters(
         const Beam::DirectoryEntry& account, const RiskParameters& parameters);
+      Notification send_notification(const Beam::DirectoryEntry& account,
+        std::string description, std::string data,
+        Notification::Category category);
       void ensure_modification_read_permission(
         const Beam::DirectoryEntry& account, AccountModificationRequest::Id id);
       AccountModificationRequest make_modification_request(
@@ -685,6 +688,39 @@ namespace Nexus {
         }
       });
     });
+    send_notification(account, "Risk parameters have been updated.", "",
+      Notification::Category::ACCOUNT_MODIFICATION);
+  }
+
+  template<typename C, typename S, typename D, typename R, typename T> requires
+    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+      IsAdministrationDataStore<Beam::dereference_t<D>> &&
+        Beam::IsTimeClient<Beam::dereference_t<R>> &&
+          Beam::IsTimer<Beam::dereference_t<T>>
+  Notification AdministrationServlet<C, S, D, R, T>::send_notification(
+      const Beam::DirectoryEntry& account, std::string description,
+      std::string data, Notification::Category category) {
+    auto notification = Notification();
+    notification.m_id = boost::uuids::to_string(m_uuid_generator());
+    notification.m_account = account;
+    notification.m_description = std::move(description);
+    notification.m_data = std::move(data);
+    notification.m_category = category;
+    notification.m_timestamp = m_time_client->get_time();
+    notification.m_is_read = false;
+    m_notification_subscribers.with([&] (auto& notification_subscribers) {
+      m_data_store->with_transaction([&] {
+        m_data_store->store(notification);
+      });
+      auto i = notification_subscribers.find(notification.m_account);
+      if(i == notification_subscribers.end()) {
+        return;
+      }
+      auto& subscribers = i->second;
+      Beam::broadcast_record_message<NotificationMessage>(
+        subscribers, notification);
+    });
+    return notification;
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires
@@ -1051,8 +1087,9 @@ namespace Nexus {
       IsAdministrationDataStore<Beam::dereference_t<D>> &&
         Beam::IsTimeClient<Beam::dereference_t<R>> &&
           Beam::IsTimer<Beam::dereference_t<T>>
-  TradingGroup AdministrationServlet<C, S, D, R, T>::on_load_trading_group_request(
-      ServiceProtocolClient& client, const Beam::DirectoryEntry& directory) {
+  TradingGroup AdministrationServlet<C, S, D, R, T>::
+      on_load_trading_group_request(
+        ServiceProtocolClient& client, const Beam::DirectoryEntry& directory) {
     auto& session = client.get_session();
     auto proper_directory =
       m_service_locator_client->load_directory_entry(directory.m_id);
@@ -1687,27 +1724,8 @@ namespace Nexus {
       boost::throw_with_location(
         Beam::ServiceRequestException("Insufficient permissions."));
     }
-    auto notification = Notification();
-    notification.m_id = boost::uuids::to_string(m_uuid_generator());
-    notification.m_account = std::move(account);
-    notification.m_description = std::move(description);
-    notification.m_data = std::move(data);
-    notification.m_category = category;
-    notification.m_timestamp = m_time_client->get_time();
-    notification.m_is_read = false;
-    m_notification_subscribers.with([&] (auto& notification_subscribers) {
-      m_data_store->with_transaction([&] {
-        m_data_store->store(notification);
-      });
-      auto i = notification_subscribers.find(notification.m_account);
-      if(i == notification_subscribers.end()) {
-        return;
-      }
-      auto& subscribers = i->second;
-      Beam::broadcast_record_message<NotificationMessage>(
-        subscribers, notification);
-    });
-    return notification;
+    return send_notification(
+      account, std::move(description), std::move(data), category);
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires
