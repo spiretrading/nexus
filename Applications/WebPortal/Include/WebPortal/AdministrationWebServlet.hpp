@@ -1,11 +1,13 @@
 #ifndef NEXUS_ADMINISTRATION_WEB_SERVLET_HPP
 #define NEXUS_ADMINISTRATION_WEB_SERVLET_HPP
 #include <Beam/IO/OpenState.hpp>
+#include "Nexus/AdministrationService/Notification.hpp"
 #include <Beam/Threading/ConditionVariable.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Pointers/Ref.hpp>
+#include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
 #include <Beam/Services/ServiceProtocolServer.hpp>
 #include <Beam/TimeService/LiveTimer.hpp>
@@ -20,7 +22,12 @@ namespace Nexus {
 
   /** Stores session info for a WebSocket service protocol client. */
   struct WebSocketSession {
+
+    /** The authenticated web portal session. */
     std::shared_ptr<WebPortalSession> m_session;
+
+    /** The queue used to receive and forward notifications to the client. */
+    std::shared_ptr<Beam::ScopedQueueWriter<Notification>> m_notification_queue;
   };
 
   /** Provides a web interface to the AdministrationService. */
@@ -57,6 +64,7 @@ namespace Nexus {
       Beam::ConditionVariable m_websocket_session_condition;
       std::shared_ptr<WebPortalSession> m_pending_websocket_session;
       WebServiceProtocolServer m_protocol_server;
+      Beam::RoutineTaskQueue m_tasks;
       Beam::OpenState m_open_state;
 
       AdministrationWebServlet(const AdministrationWebServlet&) = delete;
@@ -126,6 +134,23 @@ namespace Nexus {
       Beam::HttpResponse on_load_message_ids(const Beam::HttpRequest& request);
       Beam::HttpResponse on_send_account_modification_request_message(
         const Beam::HttpRequest& request);
+      Notification on_send_notification(
+        WebServiceProtocolServer::ServiceProtocolClient& client,
+        Beam::DirectoryEntry account, std::string description,
+        std::string data, Notification::Category category);
+      Notification::Id on_monitor_notifications(
+        WebServiceProtocolServer::ServiceProtocolClient& client,
+        const Beam::DirectoryEntry& account);
+      std::vector<Notification> on_load_notifications(
+        WebServiceProtocolServer::ServiceProtocolClient& client,
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state);
+      void on_mark_notification_as_read(
+        WebServiceProtocolServer::ServiceProtocolClient& client,
+        const Notification::Id& id);
+      void on_notification(
+        WebServiceProtocolServer::ServiceProtocolClient& client,
+        const Notification& notification);
   };
 }
 

@@ -1,6 +1,7 @@
 #include "WebPortal/AdministrationWebServlet.hpp"
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
+#include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
@@ -22,6 +23,16 @@ AdministrationWebServlet::AdministrationWebServlet(
       std::bind_front(&AdministrationWebServlet::on_client_closed, this)) {
   register_administration_services(out(m_protocol_server.get_slots()));
   register_administration_messages(out(m_protocol_server.get_slots()));
+  SendNotificationService::add_slot(out(m_protocol_server.get_slots()),
+    std::bind_front(&AdministrationWebServlet::on_send_notification, this));
+  MonitorNotificationsService::add_slot(out(m_protocol_server.get_slots()),
+    std::bind_front(
+      &AdministrationWebServlet::on_monitor_notifications, this));
+  LoadNotificationsService::add_slot(out(m_protocol_server.get_slots()),
+    std::bind_front(&AdministrationWebServlet::on_load_notifications, this));
+  MarkNotificationAsReadService::add_slot(out(m_protocol_server.get_slots()),
+    std::bind_front(
+      &AdministrationWebServlet::on_mark_notification_as_read, this));
 }
 
 AdministrationWebServlet::~AdministrationWebServlet() {
@@ -162,6 +173,7 @@ void AdministrationWebServlet::close() {
   if(m_open_state.set_closing()) {
     return;
   }
+  m_tasks.close();
   m_websocket_server.close();
   m_protocol_server.close();
   {
@@ -196,6 +208,9 @@ void AdministrationWebServlet::on_client_accepted(
 
 void AdministrationWebServlet::on_client_closed(
     WebServiceProtocolServer::ServiceProtocolClient& client) {
+  if(client.get_session().m_notification_queue) {
+    client.get_session().m_notification_queue->close();
+  }
 }
 
 HttpResponse AdministrationWebServlet::on_load_accounts_by_roles(
@@ -943,4 +958,51 @@ HttpResponse AdministrationWebServlet::
     send_account_modification_request_message(params.m_id, params.m_message);
   session->shuttle_response(message, out(response));
   return response;
+}
+
+Notification AdministrationWebServlet::on_send_notification(
+    WebServiceProtocolServer::ServiceProtocolClient& client,
+    DirectoryEntry account, std::string description, std::string data,
+    Notification::Category category) {
+  auto& session = client.get_session();
+  auto& clients = session.m_session->get_clients();
+  return clients.get_administration_client().send_notification(
+    account, description, data, category);
+}
+
+Notification::Id AdministrationWebServlet::on_monitor_notifications(
+    WebServiceProtocolServer::ServiceProtocolClient& client,
+    const DirectoryEntry& account) {
+  auto& session = client.get_session();
+  auto& clients = session.m_session->get_clients();
+  session.m_notification_queue = std::make_shared<
+    ScopedQueueWriter<Notification>>(
+    m_tasks.get_slot<Notification>(std::bind_front(
+      &AdministrationWebServlet::on_notification, this, std::ref(client))));
+  return clients.get_administration_client().monitor_notifications(
+    account, session.m_notification_queue);
+}
+
+std::vector<Notification> AdministrationWebServlet::on_load_notifications(
+    WebServiceProtocolServer::ServiceProtocolClient& client,
+    const DirectoryEntry& account, const Notification::Id& id,
+    SnapshotLimit limit, Notification::ReadState read_state) {
+  auto& session = client.get_session();
+  auto& clients = session.m_session->get_clients();
+  return clients.get_administration_client().load_notifications(
+    account, id, limit, read_state);
+}
+
+void AdministrationWebServlet::on_mark_notification_as_read(
+    WebServiceProtocolServer::ServiceProtocolClient& client,
+    const Notification::Id& id) {
+  auto& session = client.get_session();
+  auto& clients = session.m_session->get_clients();
+  clients.get_administration_client().mark_notification_as_read(id);
+}
+
+void AdministrationWebServlet::on_notification(
+    WebServiceProtocolServer::ServiceProtocolClient& client,
+    const Notification& notification) {
+  send_record_message<NotificationMessage>(client, notification);
 }
