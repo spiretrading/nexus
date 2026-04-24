@@ -191,6 +191,7 @@ void AdministrationWebServlet::on_websocket_upgrade(
     channel->get_connection().close();
     return;
   }
+  channel->get_socket().set_binary_mode();
   auto lock = std::unique_lock(m_websocket_session_mutex);
   m_pending_websocket_session = session;
   m_websocket_server.push(std::move(channel));
