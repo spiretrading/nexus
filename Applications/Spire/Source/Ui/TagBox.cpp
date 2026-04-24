@@ -333,6 +333,16 @@ bool TagBox::event(QEvent* event) {
 void TagBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
     update_tags_read_only();
+    for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
+      auto& item = *m_list_view->get_list_item(i);
+      if(item.is_mounted()) {
+        if(auto parent = item.parentWidget()) {
+          parent->resize(0, 0);
+          break;
+        }
+        break;
+      }
+    }
     update_tooltip();
     update_vertical_scroll_bar_visible();
   }
