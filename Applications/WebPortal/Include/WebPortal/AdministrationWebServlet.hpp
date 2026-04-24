@@ -134,20 +134,14 @@ namespace Nexus {
       Beam::HttpResponse on_load_message_ids(const Beam::HttpRequest& request);
       Beam::HttpResponse on_send_account_modification_request_message(
         const Beam::HttpRequest& request);
-      Notification on_send_notification(
-        WebServiceProtocolServer::ServiceProtocolClient& client,
-        Beam::DirectoryEntry account, std::string description,
-        std::string data, Notification::Category category);
+      Beam::HttpResponse on_send_notification(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_load_notifications(
+        const Beam::HttpRequest& request);
+      Beam::HttpResponse on_mark_notification_as_read(
+        const Beam::HttpRequest& request);
       Notification::Id on_monitor_notifications(
         WebServiceProtocolServer::ServiceProtocolClient& client,
         const Beam::DirectoryEntry& account);
-      std::vector<Notification> on_load_notifications(
-        WebServiceProtocolServer::ServiceProtocolClient& client,
-        const Beam::DirectoryEntry& account, const Notification::Id& id,
-        Beam::SnapshotLimit limit, Notification::ReadState read_state);
-      void on_mark_notification_as_read(
-        WebServiceProtocolServer::ServiceProtocolClient& client,
-        const Notification::Id& id);
       void on_notification(
         WebServiceProtocolServer::ServiceProtocolClient& client,
         const Notification& notification);

@@ -23,16 +23,9 @@ AdministrationWebServlet::AdministrationWebServlet(
       std::bind_front(&AdministrationWebServlet::on_client_closed, this)) {
   register_administration_services(out(m_protocol_server.get_slots()));
   register_administration_messages(out(m_protocol_server.get_slots()));
-  SendNotificationService::add_slot(out(m_protocol_server.get_slots()),
-    std::bind_front(&AdministrationWebServlet::on_send_notification, this));
   MonitorNotificationsService::add_slot(out(m_protocol_server.get_slots()),
     std::bind_front(
       &AdministrationWebServlet::on_monitor_notifications, this));
-  LoadNotificationsService::add_slot(out(m_protocol_server.get_slots()),
-    std::bind_front(&AdministrationWebServlet::on_load_notifications, this));
-  MarkNotificationAsReadService::add_slot(out(m_protocol_server.get_slots()),
-    std::bind_front(
-      &AdministrationWebServlet::on_mark_notification_as_read, this));
 }
 
 AdministrationWebServlet::~AdministrationWebServlet() {
@@ -157,6 +150,15 @@ std::vector<HttpRequestSlot> AdministrationWebServlet::get_slots() {
     std::bind_front(
       &AdministrationWebServlet::on_send_account_modification_request_message,
       this));
+  slots.emplace_back(matches_path(
+    HttpMethod::POST, "/api/administration_service/send_notification"),
+    std::bind_front(&AdministrationWebServlet::on_send_notification, this));
+  slots.emplace_back(matches_path(
+    HttpMethod::POST, "/api/administration_service/load_notifications"),
+    std::bind_front(&AdministrationWebServlet::on_load_notifications, this));
+  slots.emplace_back(matches_path(HttpMethod::POST,
+    "/api/administration_service/mark_notification_as_read"), std::bind_front(
+      &AdministrationWebServlet::on_mark_notification_as_read, this));
   return slots;
 }
 
@@ -961,14 +963,83 @@ HttpResponse AdministrationWebServlet::
   return response;
 }
 
-Notification AdministrationWebServlet::on_send_notification(
-    WebServiceProtocolServer::ServiceProtocolClient& client,
-    DirectoryEntry account, std::string description, std::string data,
-    Notification::Category category) {
-  auto& session = client.get_session();
-  auto& clients = session.m_session->get_clients();
-  return clients.get_administration_client().send_notification(
-    account, description, data, category);
+HttpResponse AdministrationWebServlet::on_send_notification(
+    const HttpRequest& request) {
+  struct Parameters {
+    DirectoryEntry m_account;
+    std::string m_description;
+    std::string m_data;
+    Notification::Category m_category;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("account", m_account);
+      shuttle.shuttle("description", m_description);
+      shuttle.shuttle("data", m_data);
+      shuttle.shuttle("category", m_category);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto params = session->shuttle_parameters<Parameters>(request);
+  auto& clients = session->get_clients();
+  auto notification = clients.get_administration_client().send_notification(
+    params.m_account, params.m_description, params.m_data, params.m_category);
+  session->shuttle_response(notification, out(response));
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::on_load_notifications(
+    const HttpRequest& request) {
+  struct Parameters {
+    DirectoryEntry m_account;
+    Notification::Id m_id;
+    SnapshotLimit m_limit;
+    Notification::ReadState m_read_state;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("account", m_account);
+      shuttle.shuttle("id", m_id);
+      shuttle.shuttle("limit", m_limit);
+      shuttle.shuttle("read_state", m_read_state);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto params = session->shuttle_parameters<Parameters>(request);
+  auto& clients = session->get_clients();
+  auto notifications = clients.get_administration_client().load_notifications(
+    params.m_account, params.m_id, params.m_limit, params.m_read_state);
+  session->shuttle_response(notifications, out(response));
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::on_mark_notification_as_read(
+    const HttpRequest& request) {
+  struct Parameters {
+    Notification::Id m_id;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("id", m_id);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto params = session->shuttle_parameters<Parameters>(request);
+  auto& clients = session->get_clients();
+  clients.get_administration_client().mark_notification_as_read(params.m_id);
+  return response;
 }
 
 Notification::Id AdministrationWebServlet::on_monitor_notifications(
@@ -982,24 +1053,6 @@ Notification::Id AdministrationWebServlet::on_monitor_notifications(
       &AdministrationWebServlet::on_notification, this, std::ref(client))));
   return clients.get_administration_client().monitor_notifications(
     account, session.m_notification_queue);
-}
-
-std::vector<Notification> AdministrationWebServlet::on_load_notifications(
-    WebServiceProtocolServer::ServiceProtocolClient& client,
-    const DirectoryEntry& account, const Notification::Id& id,
-    SnapshotLimit limit, Notification::ReadState read_state) {
-  auto& session = client.get_session();
-  auto& clients = session.m_session->get_clients();
-  return clients.get_administration_client().load_notifications(
-    account, id, limit, read_state);
-}
-
-void AdministrationWebServlet::on_mark_notification_as_read(
-    WebServiceProtocolServer::ServiceProtocolClient& client,
-    const Notification::Id& id) {
-  auto& session = client.get_session();
-  auto& clients = session.m_session->get_clients();
-  clients.get_administration_client().mark_notification_as_read(id);
 }
 
 void AdministrationWebServlet::on_notification(
