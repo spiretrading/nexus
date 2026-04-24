@@ -185,11 +185,11 @@ namespace Spire {
   /** Returns a UiProfile for the OrderStatusBox. */
   UiProfile make_order_status_box_profile();
 
-  /** Returns a UiProfile for the OrderStatusListBox. */
-  UiProfile make_order_status_list_box_profile();
-
   /** Returns a UiProfile for the OrderStatusFilterPanel. */
   UiProfile make_order_status_filter_panel_profile();
+
+  /** Returns a UiProfile for the OrderStatusListBox. */
+  UiProfile make_order_status_list_box_profile();
 
   /** Returns a UiProfile for the OrderTypeBox. */
   UiProfile make_order_type_box_profile();

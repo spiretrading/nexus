@@ -80,8 +80,8 @@
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OpenFilterPanel.hpp"
 #include "Spire/Ui/OrderStatusBox.hpp"
-#include "Spire/Ui/OrderStatusListBox.hpp"
 #include "Spire/Ui/OrderStatusFilterPanel.hpp"
+#include "Spire/Ui/OrderStatusListBox.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OrderTypeFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
@@ -3527,11 +3527,6 @@ UiProfile Spire::make_order_status_box_profile() {
   return profile;
 }
 
-UiProfile Spire::make_order_status_list_box_profile() {
-  return setup_tag_combo_box_profile("OrderStatusListBox",
-    [] { return make_order_status_list_box(); });
-}
-
 UiProfile Spire::make_order_status_filter_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3586,6 +3581,11 @@ UiProfile Spire::make_order_status_filter_panel_profile() {
       return panel;
     });
   return profile;
+}
+
+UiProfile Spire::make_order_status_list_box_profile() {
+  return setup_tag_combo_box_profile("OrderStatusListBox",
+    [] { return make_order_status_list_box(); });
 }
 
 UiProfile Spire::make_order_type_box_profile() {
