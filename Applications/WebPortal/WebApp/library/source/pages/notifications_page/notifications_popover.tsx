@@ -2,6 +2,7 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { EmptyMessage, IconLabelButton, Link } from '../../components';
+import { getNotificationUrl } from './notification_url';
 import { NotificationItem } from './notification_item';
 
 interface Properties {
@@ -108,7 +109,7 @@ export class NotificationsPopover extends React.Component<Properties, State> {
                       <NotificationItem
                         description={notification.description}
                         timestamp={notification.timestamp.toDate()}
-                        url={`/notifications/${notification.id}`}
+                        url={getNotificationUrl(notification)}
                         isUnread={true}
                         hideIndicator={true}
                         today={this.props.today}
