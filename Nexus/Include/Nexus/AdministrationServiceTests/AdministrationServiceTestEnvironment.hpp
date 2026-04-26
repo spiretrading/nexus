@@ -49,6 +49,9 @@ namespace Nexus::Tests {
       /** Returns this test environment's AdministrationClient. */
       AdministrationClient& get_client();
 
+      /** Returns the data store used by this test environment. */
+      LocalAdministrationDataStore& get_data_store();
+
       /**
        * Grants an account administrative privileges.
        * @param account The account to grant administrative privileges to.
@@ -62,7 +65,8 @@ namespace Nexus::Tests {
       void grant_all_entitlements(const Beam::DirectoryEntry& account);
 
       /**
-       * Stores an account's RiskParameters directly in the data store.
+       * Stores an account's RiskParameters by submitting a modification
+       * request through the admin client.
        * @param account The account whose RiskParameters are to be set.
        * @param parameters The RiskParameters to assign.
        */
@@ -173,6 +177,11 @@ namespace Nexus::Tests {
     return *m_client;
   }
 
+  inline LocalAdministrationDataStore&
+      AdministrationServiceTestEnvironment::get_data_store() {
+    return m_data_store;
+  }
+
   inline void AdministrationServiceTestEnvironment::make_administrator(
       const Beam::DirectoryEntry& account) {
     auto administrators = m_service_locator_client.load_directory_entry(
@@ -189,7 +198,8 @@ namespace Nexus::Tests {
 
   inline void AdministrationServiceTestEnvironment::store(
       const Beam::DirectoryEntry& account, const RiskParameters& parameters) {
-    m_data_store.store(account, parameters);
+    get_client().submit(account, RiskModification(parameters),
+      boost::posix_time::not_a_date_time, Nexus::Message());
   }
 
   inline AdministrationClient AdministrationServiceTestEnvironment::make_client(

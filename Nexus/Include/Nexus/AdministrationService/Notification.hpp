@@ -97,8 +97,7 @@ namespace Nexus {
       boost::posix_time::ptime timestamp) {
     auto description = [&] {
       if(status == AccountModificationRequest::Status::GRANTED) {
-        return std::string(
-          "Entitlement modification request has been granted.");
+        return std::string("Entitlements have been updated.");
       }
       return std::string("Entitlement modification request has been rejected.");
     }();
@@ -129,8 +128,7 @@ namespace Nexus {
       boost::posix_time::ptime timestamp) {
     auto description = [&] {
       if(status == AccountModificationRequest::Status::GRANTED) {
-        return std::string(
-          "Risk modification request has been granted.");
+        return std::string("Risk parameters have been updated.");
       }
       return std::string("Risk modification request has been rejected.");
     }();

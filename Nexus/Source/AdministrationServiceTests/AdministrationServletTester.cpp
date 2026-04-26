@@ -545,7 +545,7 @@ TEST_SUITE("AdministrationServlet") {
     REQUIRE(notifications.size() == 1);
     REQUIRE(notifications[0].m_account == fixture.m_trader_account);
     REQUIRE(notifications[0].m_description ==
-      "Entitlement modification request has been granted.");
+      "Entitlements have been updated.");
     REQUIRE(notifications[0].m_category ==
       Notification::Category::ACCOUNT_MODIFICATION);
   }
@@ -909,7 +909,7 @@ TEST_SUITE("AdministrationServlet") {
     REQUIRE(notifications.size() == 1);
     REQUIRE(notifications[0].m_account == fixture.m_trader_account);
     REQUIRE(notifications[0].m_description ==
-      "Risk modification request has been granted.");
+      "Risk parameters have been updated.");
     REQUIRE(notifications[0].m_category ==
       Notification::Category::ACCOUNT_MODIFICATION);
   }

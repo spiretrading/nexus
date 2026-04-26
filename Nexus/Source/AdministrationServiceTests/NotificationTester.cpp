@@ -63,7 +63,7 @@ TEST_SUITE("Notification") {
     REQUIRE(notification.m_account ==
       DirectoryEntry::make_account(100, "account"));
     REQUIRE(notification.m_description ==
-      "Entitlement modification request has been granted.");
+      "Entitlements have been updated.");
     REQUIRE(notification.m_data == R"({"request_id":42,"status":"GRANTED"})");
     REQUIRE(notification.m_category ==
       Notification::Category::ACCOUNT_MODIFICATION);
@@ -91,7 +91,7 @@ TEST_SUITE("Notification") {
     REQUIRE(notification.m_account ==
       DirectoryEntry::make_account(100, "account"));
     REQUIRE(notification.m_description ==
-      "Risk modification request has been granted.");
+      "Risk parameters have been updated.");
     REQUIRE(notification.m_data == R"({"request_id":50,"status":"GRANTED"})");
     REQUIRE(notification.m_category ==
       Notification::Category::ACCOUNT_MODIFICATION);
