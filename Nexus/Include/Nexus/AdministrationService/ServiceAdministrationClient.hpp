@@ -61,8 +61,6 @@ namespace Nexus {
         const Beam::DirectoryEntry& account);
       const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
         const Beam::DirectoryEntry& account);
-      void store(
-        const Beam::DirectoryEntry& account, const RiskParameters& parameters);
       const Beam::Publisher<RiskState>& get_risk_state_publisher(
         const Beam::DirectoryEntry& account);
       void store(const Beam::DirectoryEntry& account, const RiskState& state);
@@ -364,18 +362,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       });
       return publisher;
     });
-  }
-
-  template<typename B>
-  void ServiceAdministrationClient<B>::store(
-      const Beam::DirectoryEntry& account, const RiskParameters& parameters) {
-    return Beam::service_or_throw_with_nested([&] {
-      auto client = m_client_handler.get_client();
-      client->template send_request<StoreRiskParametersService>(
-        account, parameters);
-    }, "Failed to store risk parameters: " +
-      boost::lexical_cast<std::string>(account) + ", " +
-      boost::lexical_cast<std::string>(parameters));
   }
 
   template<typename B>

@@ -880,6 +880,68 @@ TEST_SUITE("AdministrationServlet") {
     }
   }
 
+  TEST_CASE("risk_modification_granted_notification") {
+    auto fixture = Fixture();
+    auto parameters = RiskParameters(
+      AUD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, seconds(1));
+    auto modification = RiskModification(parameters);
+    auto comment = Nexus::Message(
+      0, fixture.m_trader_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test")});
+    auto request = fixture.m_trader_client->send_request<
+      SubmitRiskModificationRequestService>(
+        DirectoryEntry(), modification, ptime(), comment);
+    auto review_comment = Nexus::Message(
+      0, fixture.m_manager_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("reviewed")});
+    fixture.m_manager_client->send_request<
+      ApproveAccountModificationRequestService>(
+        request.get_id(), ptime(), review_comment);
+    auto approve_comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("approved")});
+    fixture.m_admin_client->send_request<
+      ApproveAccountModificationRequestService>(
+        request.get_id(), ptime(), approve_comment);
+    auto notifications = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::from_tail(1), Notification::ReadState::ALL);
+    REQUIRE(notifications.size() == 1);
+    REQUIRE(notifications[0].m_account == fixture.m_trader_account);
+    REQUIRE(notifications[0].m_description ==
+      "Risk modification request has been granted.");
+    REQUIRE(notifications[0].m_category ==
+      Notification::Category::ACCOUNT_MODIFICATION);
+  }
+
+  TEST_CASE("risk_modification_rejected_notification") {
+    auto fixture = Fixture();
+    auto parameters = RiskParameters(
+      AUD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, seconds(1));
+    auto modification = RiskModification(parameters);
+    auto comment = Nexus::Message(
+      0, fixture.m_trader_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test")});
+    auto request = fixture.m_trader_client->send_request<
+      SubmitRiskModificationRequestService>(
+        DirectoryEntry(), modification, ptime(), comment);
+    auto reject_comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("rejected")});
+    fixture.m_admin_client->send_request<
+      RejectAccountModificationRequestService>(
+        request.get_id(), reject_comment);
+    auto notifications = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::from_tail(1), Notification::ReadState::ALL);
+    REQUIRE(notifications.size() == 1);
+    REQUIRE(notifications[0].m_account == fixture.m_trader_account);
+    REQUIRE(notifications[0].m_description ==
+      "Risk modification request has been rejected.");
+    REQUIRE(notifications[0].m_category ==
+      Notification::Category::ACCOUNT_MODIFICATION);
+  }
+
   TEST_CASE("admin_submit_entitlements_with_future_effective_date") {
     auto fixture = Fixture();
     auto entitlements = std::vector<DirectoryEntry>();

@@ -67,8 +67,6 @@ namespace Nexus::Python {
         const Beam::DirectoryEntry&>(&C::load_entitlements)).
       def("get_risk_parameters_publisher", &C::get_risk_parameters_publisher,
         pybind11::return_value_policy::reference_internal).
-      def("store", pybind11::overload_cast<
-        const Beam::DirectoryEntry&, const RiskParameters&>(&C::store)).
       def("get_risk_state_publisher", &C::get_risk_state_publisher,
         pybind11::return_value_policy::reference_internal).
       def("store", pybind11::overload_cast<

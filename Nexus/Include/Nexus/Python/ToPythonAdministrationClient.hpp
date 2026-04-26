@@ -57,8 +57,6 @@ namespace Nexus {
         const Beam::DirectoryEntry& account);
       const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
         const Beam::DirectoryEntry& account);
-      void store(
-        const Beam::DirectoryEntry& account, const RiskParameters& parameters);
       const Beam::Publisher<RiskState>& get_risk_state_publisher(
         const Beam::DirectoryEntry& account);
       void store(const Beam::DirectoryEntry& account, const RiskState& state);
@@ -268,13 +266,6 @@ namespace Nexus {
         const Beam::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_client->get_risk_parameters_publisher(account);
-  }
-
-  template<IsAdministrationClient C>
-  void ToPythonAdministrationClient<C>::store(
-      const Beam::DirectoryEntry& account, const RiskParameters& parameters) {
-    auto release = Beam::Python::GilRelease();
-    m_client->store(account, parameters);
   }
 
   template<IsAdministrationClient C>

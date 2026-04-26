@@ -114,13 +114,6 @@ namespace Nexus::Tests {
         Beam::QueueWriterPublisher<RiskParameters> m_queue;
       };
 
-      /** Records a call to store_risk_parameters(). */
-      struct StoreRiskParametersOperation {
-        Beam::DirectoryEntry m_account;
-        RiskParameters m_parameters;
-        Beam::Tests::ServiceResult<void> m_result;
-      };
-
       /** Records a call to get_risk_state_publisher(). */
       struct MonitorRiskStateOperation {
         Beam::DirectoryEntry m_account;
@@ -281,7 +274,7 @@ namespace Nexus::Tests {
         LoadManagedTradingGroupsOperation, LoadAdministratorsOperation,
         LoadServicesOperation, LoadEntitlementsOperation,
         LoadAccountEntitlementsOperation,
-        MonitorRiskParametersOperation, StoreRiskParametersOperation,
+        MonitorRiskParametersOperation,
         MonitorRiskStateOperation, StoreRiskStateOperation,
         LoadAccountModificationRequestOperation,
         LoadAccountModificationRequestIdsOperation,
@@ -335,8 +328,6 @@ namespace Nexus::Tests {
         const Beam::DirectoryEntry& account);
       const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
         const Beam::DirectoryEntry& account);
-      void store(
-        const Beam::DirectoryEntry& account, const RiskParameters& parameters);
       const Beam::Publisher<RiskState>& get_risk_state_publisher(
         const Beam::DirectoryEntry& account);
       void store(const Beam::DirectoryEntry& account, const RiskState& state);
@@ -508,12 +499,6 @@ namespace Nexus::Tests {
       std::in_place_type<MonitorRiskParametersOperation>, account);
     m_queue.append_queue<MonitorRiskParametersOperation>(operation);
     return std::get<MonitorRiskParametersOperation>(*operation).m_queue;
-  }
-
-  inline void TestAdministrationClient::store(
-      const Beam::DirectoryEntry& account, const RiskParameters& parameters) {
-    return m_queue.append_result<StoreRiskParametersOperation, void>(
-      account, parameters);
   }
 
   inline const Beam::Publisher<RiskState>&

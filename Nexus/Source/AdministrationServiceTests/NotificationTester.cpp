@@ -82,6 +82,34 @@ TEST_SUITE("Notification") {
     REQUIRE(notification.m_data == R"({"request_id":99,"status":"REJECTED"})");
   }
 
+  TEST_CASE("make_risk_modification_notification_granted") {
+    auto notification = make_risk_modification_notification(
+      "notif-3", DirectoryEntry::make_account(100, "account"),
+      50, AccountModificationRequest::Status::GRANTED,
+      time_from_string("2026-04-25 12:00:00"));
+    REQUIRE(notification.m_id == "notif-3");
+    REQUIRE(notification.m_account ==
+      DirectoryEntry::make_account(100, "account"));
+    REQUIRE(notification.m_description ==
+      "Risk modification request has been granted.");
+    REQUIRE(notification.m_data == R"({"request_id":50,"status":"GRANTED"})");
+    REQUIRE(notification.m_category ==
+      Notification::Category::ACCOUNT_MODIFICATION);
+    REQUIRE(notification.m_timestamp ==
+      time_from_string("2026-04-25 12:00:00"));
+    REQUIRE(!notification.m_is_read);
+  }
+
+  TEST_CASE("make_risk_modification_notification_rejected") {
+    auto notification = make_risk_modification_notification(
+      "notif-4", DirectoryEntry::make_account(200, "user"),
+      101, AccountModificationRequest::Status::REJECTED,
+      time_from_string("2026-04-25 13:00:00"));
+    REQUIRE(notification.m_description ==
+      "Risk modification request has been rejected.");
+    REQUIRE(notification.m_data == R"({"request_id":101,"status":"REJECTED"})");
+  }
+
   TEST_CASE("stream_category") {
     auto out = std::ostringstream();
     out << Notification::Category::ACCOUNT_MODIFICATION;

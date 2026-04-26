@@ -82,9 +82,6 @@ std::vector<HttpRequestSlot> AdministrationWebServlet::get_slots() {
   slots.emplace_back(matches_path(
     HttpMethod::POST, "/api/administration_service/load_risk_parameters"),
     std::bind_front(&AdministrationWebServlet::on_load_risk_parameters, this));
-  slots.emplace_back(matches_path(
-    HttpMethod::POST, "/api/administration_service/store_risk_parameters"),
-    std::bind_front(&AdministrationWebServlet::on_store_risk_parameters, this));
   slots.emplace_back(matches_path(HttpMethod::POST,
     "/api/administration_service/load_account_modification_request"),
     std::bind_front(
@@ -553,29 +550,6 @@ HttpResponse AdministrationWebServlet::on_load_risk_parameters(
   return response;
 }
 
-HttpResponse AdministrationWebServlet::on_store_risk_parameters(
-    const HttpRequest& request) {
-  struct Parameters {
-    DirectoryEntry m_account;
-    RiskParameters m_risk_parameters;
-
-    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("account", m_account);
-      shuttle.shuttle("risk_parameters", m_risk_parameters);
-    }
-  };
-  auto response = HttpResponse();
-  auto session = m_sessions->find(request);
-  if(!session) {
-    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto params = session->shuttle_parameters<Parameters>(request);
-  auto& clients = session->get_clients();
-  clients.get_administration_client().store(
-    params.m_account, params.m_risk_parameters);
-  return response;
-}
 
 HttpResponse AdministrationWebServlet::on_load_account_modification_request(
     const HttpRequest& request) {

@@ -112,6 +112,38 @@ namespace Nexus {
       std::move(description), std::move(data),
       Notification::Category::ACCOUNT_MODIFICATION, timestamp, false);
   }
+
+  /**
+   * Makes a Notification for a risk modification.
+   * @param id The unique identifier for the notification.
+   * @param account The account whose risk parameters were modified.
+   * @param request_id The modification request id.
+   * @param status The status of the modification request.
+   * @param timestamp The timestamp of the notification.
+   * @return The constructed Notification.
+   */
+  inline Notification make_risk_modification_notification(
+      Notification::Id id, Beam::DirectoryEntry account,
+      AccountModificationRequest::Id request_id,
+      AccountModificationRequest::Status status,
+      boost::posix_time::ptime timestamp) {
+    auto description = [&] {
+      if(status == AccountModificationRequest::Status::GRANTED) {
+        return std::string(
+          "Risk modification request has been granted.");
+      }
+      return std::string("Risk modification request has been rejected.");
+    }();
+    auto data = [&] {
+      auto ss = std::ostringstream();
+      ss << "{\"request_id\":" << request_id << ",\"status\":\"";
+      ss << status << "\"}";
+      return ss.str();
+    }();
+    return Notification(std::move(id), std::move(account),
+      std::move(description), std::move(data),
+      Notification::Category::ACCOUNT_MODIFICATION, timestamp, false);
+  }
 }
 
 namespace Beam {

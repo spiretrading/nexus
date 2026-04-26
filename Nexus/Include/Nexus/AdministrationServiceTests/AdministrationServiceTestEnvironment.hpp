@@ -62,6 +62,14 @@ namespace Nexus::Tests {
       void grant_all_entitlements(const Beam::DirectoryEntry& account);
 
       /**
+       * Stores an account's RiskParameters directly in the data store.
+       * @param account The account whose RiskParameters are to be set.
+       * @param parameters The RiskParameters to assign.
+       */
+      void store(
+        const Beam::DirectoryEntry& account, const RiskParameters& parameters);
+
+      /**
        * Returns a new AdministrationClient.
        * @param client The ServiceLocatorClient used to authenticate the
        *        AdministrationClient.
@@ -177,6 +185,11 @@ namespace Nexus::Tests {
     for(auto& entry : get_client().load_entitlements().get_entries()) {
       m_service_locator_client.associate(account, entry.m_group_entry);
     }
+  }
+
+  inline void AdministrationServiceTestEnvironment::store(
+      const Beam::DirectoryEntry& account, const RiskParameters& parameters) {
+    m_data_store.store(account, parameters);
   }
 
   inline AdministrationClient AdministrationServiceTestEnvironment::make_client(

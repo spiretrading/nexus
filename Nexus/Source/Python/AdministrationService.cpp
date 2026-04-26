@@ -133,6 +133,8 @@ void Nexus::Python::export_notification(module& module) {
     value("ALL", Notification::ReadState::ALL);
   module.def("make_entitlement_modification_notification",
     &make_entitlement_modification_notification);
+  module.def("make_risk_modification_notification",
+    &make_risk_modification_notification);
 }
 
 void Nexus::Python::export_administration_data_store_exception(module& module) {

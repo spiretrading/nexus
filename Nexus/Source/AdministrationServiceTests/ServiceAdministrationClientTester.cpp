@@ -351,22 +351,6 @@ TEST_SUITE("ServiceAdministrationClient") {
     REQUIRE(account_b_parameters == parameters_b->pop());
   }
 
-  TEST_CASE("store_risk_parameters") {
-    auto fixture = Fixture();
-    auto account = DirectoryEntry::make_account(19, "risk_account");
-    auto parameters = RiskParameters(AUD, 100 * Money::ONE,
-      RiskState::Type::ACTIVE, 10 * Money::ONE, seconds(10));
-    fixture.on_request<StoreRiskParametersService>(
-      [&] (auto& request, const auto& received_account,
-          const auto& received_parameters) {
-        REQUIRE(received_account == account);
-        REQUIRE(received_parameters == parameters);
-        request.set();
-      });
-    REQUIRE_NOTHROW(
-      fixture.m_client->store(account, parameters));
-  }
-
   TEST_CASE("get_risk_state_publisher") {
     auto fixture = Fixture();
     auto account_a = DirectoryEntry::make_account(58, "Alexis");

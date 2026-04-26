@@ -155,16 +155,6 @@ TEST_SUITE("AdministrationClient") {
       });
   }
 
-  TEST_CASE("store_risk_parameters") {
-    auto account = DirectoryEntry::make_account(10, "risk_account");
-    auto risk_parameters = RiskParameters(USD, Money(1000),
-      RiskState(RiskState::Type::ACTIVE, ptime()), Money(500), seconds(60));
-    require_operation<TestAdministrationClient::StoreRiskParametersOperation>(
-      [&] (auto& client) {
-        client.store(account, risk_parameters);
-      });
-  }
-
   TEST_CASE("store_risk_state") {
     auto account = DirectoryEntry::make_account(11, "risk_state_account");
     auto risk_state = RiskState(RiskState::Type::DISABLED, ptime());

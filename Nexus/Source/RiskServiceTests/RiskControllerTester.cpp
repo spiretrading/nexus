@@ -66,7 +66,7 @@ namespace {
       m_trader_account =
         m_service_locator_environment.get_root().make_account("trader", "",
           DirectoryEntry::STAR_DIRECTORY);
-      m_administration_environment.get_client().store(m_trader_account,
+      m_administration_environment.store(m_trader_account,
         RiskParameters(AUD, 100000 * Money::ONE, RiskState::Type::ACTIVE,
           2 * Money::ONE, minutes(10)));
       m_administration_environment.get_client().store(
@@ -119,7 +119,7 @@ TEST_SUITE("RiskController") {
     REQUIRE((state->pop().m_type == RiskState::Type::CLOSE_ORDERS));
     auto new_parameters = RiskParameters(AUD, 100000 * Money::ONE,
       RiskState::Type::ACTIVE, 1000 * Money::ONE, minutes(10));
-    fixture.m_administration_client->store(
+    fixture.m_administration_environment.store(
       fixture.m_trader_account, new_parameters);
     REQUIRE(state->pop().m_type == RiskState::Type::ACTIVE);
   }

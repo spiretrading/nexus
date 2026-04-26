@@ -127,8 +127,9 @@ namespace Nexus {
         const Beam::DirectoryEntry& account,
         const std::vector<Beam::DirectoryEntry>& entitlements,
         const AccountModificationRequest::Id& request_id);
-      void update_risk_parameters(
-        const Beam::DirectoryEntry& account, const RiskParameters& parameters);
+      void update_risk_parameters(const Beam::DirectoryEntry& account,
+        const RiskParameters& parameters,
+        const AccountModificationRequest::Id& request_id);
       Notification send_notification(const Beam::DirectoryEntry& account,
         std::string description, std::string data,
         Notification::Category category);
@@ -178,8 +179,6 @@ namespace Nexus {
         ServiceProtocolClient& client, const Beam::DirectoryEntry& account);
       RiskParameters on_monitor_risk_parameters_request(
         ServiceProtocolClient& client, const Beam::DirectoryEntry& account);
-      void on_store_risk_parameters_request(ServiceProtocolClient& client,
-        const Beam::DirectoryEntry& account, const RiskParameters& parameters);
       RiskState on_monitor_risk_state_request(
         ServiceProtocolClient& client, const Beam::DirectoryEntry& account);
       void on_store_risk_state_request(Beam::RequestToken<
@@ -334,8 +333,6 @@ namespace Nexus {
       &AdministrationServlet::on_load_account_entitlements_request, this));
     MonitorRiskParametersService::add_slot(out(slots), std::bind_front(
       &AdministrationServlet::on_monitor_risk_parameters_request, this));
-    StoreRiskParametersService::add_slot(out(slots), std::bind_front(
-      &AdministrationServlet::on_store_risk_parameters_request, this));
     MonitorRiskStateService::add_slot(out(slots), std::bind_front(
       &AdministrationServlet::on_monitor_risk_state_request, this));
     StoreRiskStateService::add_request_slot(out(slots), std::bind_front(
@@ -675,7 +672,8 @@ namespace Nexus {
           Beam::IsTimer<Beam::dereference_t<T>>
   void AdministrationServlet<C, S, D, R, T>::update_risk_parameters(
       const Beam::DirectoryEntry& account,
-      const RiskParameters& parameters) {
+      const RiskParameters& parameters,
+      const AccountModificationRequest::Id& request_id) {
     auto& subscribers = Beam::with(m_risk_parameters_subscribers,
       [&] (auto& risk_parameters_subscribers) -> decltype(auto) {
         return risk_parameters_subscribers[account];
@@ -689,8 +687,10 @@ namespace Nexus {
         }
       });
     });
-    send_notification(account, "Risk parameters have been updated.", "",
-      Notification::Category::ACCOUNT_MODIFICATION);
+    send_notification(make_risk_modification_notification(
+      boost::uuids::to_string(m_uuid_generator()), account, request_id,
+      AccountModificationRequest::Status::GRANTED,
+      m_time_client->get_time()));
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires
@@ -845,7 +845,7 @@ namespace Nexus {
           return m_data_store->load_risk_modification(id);
         });
         update_risk_parameters(
-          request.get_account(), modification.get_parameters());
+          request.get_account(), modification.get_parameters(), id);
       }
     }
   }
@@ -1216,22 +1216,6 @@ namespace Nexus {
       IsAdministrationDataStore<Beam::dereference_t<D>> &&
         Beam::IsTimeClient<Beam::dereference_t<R>> &&
           Beam::IsTimer<Beam::dereference_t<T>>
-  void AdministrationServlet<C, S, D, R, T>::on_store_risk_parameters_request(
-      ServiceProtocolClient& client, const Beam::DirectoryEntry& account,
-      const RiskParameters& parameters) {
-    auto& session = client.get_session();
-    if(!check_administrator(session.get_account())) {
-      boost::throw_with_location(
-        Beam::ServiceRequestException("Insufficient permissions."));
-    }
-    update_risk_parameters(account, parameters);
-  }
-
-  template<typename C, typename S, typename D, typename R, typename T> requires
-    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
-      IsAdministrationDataStore<Beam::dereference_t<D>> &&
-        Beam::IsTimeClient<Beam::dereference_t<R>> &&
-          Beam::IsTimer<Beam::dereference_t<T>>
   RiskState AdministrationServlet<C, S, D, R, T>::on_monitor_risk_state_request(
       ServiceProtocolClient& client, const Beam::DirectoryEntry& account) {
     auto& session = client.get_session();
@@ -1491,7 +1475,8 @@ namespace Nexus {
         roles, request.get_effective_date(), request.get_timestamp()) ==
           AccountModificationRequest::Status::GRANTED) {
       update_risk_parameters(
-        request.get_account(), modification.get_parameters());
+        request.get_account(), modification.get_parameters(),
+        request.get_id());
     }
     return request;
   }
@@ -1606,7 +1591,8 @@ namespace Nexus {
           return m_data_store->load_risk_modification(request.get_id());
         });
         update_risk_parameters(
-          request.get_account(), modification.get_parameters());
+          request.get_account(), modification.get_parameters(),
+          request.get_id());
       }
     }
     return update;
@@ -1657,6 +1643,11 @@ namespace Nexus {
     });
     if(request.get_type() == AccountModificationRequest::Type::ENTITLEMENTS) {
       send_notification(make_entitlement_modification_notification(
+        boost::uuids::to_string(m_uuid_generator()), request.get_account(),
+        request.get_id(), AccountModificationRequest::Status::REJECTED,
+        timestamp));
+    } else if(request.get_type() == AccountModificationRequest::Type::RISK) {
+      send_notification(make_risk_modification_notification(
         boost::uuids::to_string(m_uuid_generator()), request.get_account(),
         request.get_id(), AccountModificationRequest::Status::REJECTED,
         timestamp));

@@ -77,8 +77,6 @@ namespace Nexus {
       { client.get_risk_parameters_publisher(
           std::declval<const Beam::DirectoryEntry&>()) } ->
             std::same_as<const Beam::Publisher<RiskParameters>&>;
-      client.store(std::declval<const Beam::DirectoryEntry&>(),
-        std::declval<const RiskParameters&>());
       { client.get_risk_state_publisher(
           std::declval<const Beam::DirectoryEntry&>()) } ->
             std::same_as<const Beam::Publisher<RiskState>&>;
@@ -288,15 +286,6 @@ namespace Nexus {
        */
       const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
         const Beam::DirectoryEntry& account);
-
-      /**
-       * Sets an account's RiskParameters.
-       * @param account The account whose RiskParameters are to be set.
-       * @param parameters The RiskParameters to assign to the
-       *        <i>account</i>.
-       */
-      void store(
-        const Beam::DirectoryEntry& account, const RiskParameters& parameters);
 
       /**
        * Returns the object publishing an account's RiskState.
@@ -525,8 +514,6 @@ namespace Nexus {
         virtual const Beam::Publisher<RiskParameters>&
           get_risk_parameters_publisher(
             const Beam::DirectoryEntry& account) = 0;
-        virtual void store(const Beam::DirectoryEntry& account,
-          const RiskParameters& risk_parameters) = 0;
         virtual const Beam::Publisher<RiskState>& get_risk_state_publisher(
           const Beam::DirectoryEntry& account) = 0;
         virtual void store(const Beam::DirectoryEntry& account,
@@ -622,8 +609,6 @@ namespace Nexus {
           const Beam::DirectoryEntry& account) override;
         const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
           const Beam::DirectoryEntry& account) override;
-        void store(const Beam::DirectoryEntry& account,
-          const RiskParameters& risk_parameters) override;
         const Beam::Publisher<RiskState>& get_risk_state_publisher(
           const Beam::DirectoryEntry& account) override;
         void store(const Beam::DirectoryEntry& account,
@@ -812,11 +797,6 @@ namespace Nexus {
       AdministrationClient::get_risk_parameters_publisher(
         const Beam::DirectoryEntry& account) {
     return m_client->get_risk_parameters_publisher(account);
-  }
-
-  inline void AdministrationClient::store(
-      const Beam::DirectoryEntry& account, const RiskParameters& parameters) {
-    m_client->store(account, parameters);
   }
 
   inline const Beam::Publisher<RiskState>&
@@ -1055,12 +1035,6 @@ namespace Nexus {
       AdministrationClient::WrappedAdministrationClient<C>::
         get_risk_parameters_publisher(const Beam::DirectoryEntry& account) {
     return m_client->get_risk_parameters_publisher(account);
-  }
-
-  template<typename C>
-  void AdministrationClient::WrappedAdministrationClient<C>::store(
-      const Beam::DirectoryEntry& account, const RiskParameters& parameters) {
-    m_client->store(account, parameters);
   }
 
   template<typename C>

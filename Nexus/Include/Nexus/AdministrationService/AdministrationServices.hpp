@@ -167,15 +167,6 @@ namespace Nexus {
       RiskParameters, (Beam::DirectoryEntry, account)),
 
     /**
-     * Sets an account's RiskParameters.
-     * @param account The account to set the RiskParameters for.
-     * @param riskParameters The RiskParameters to assign to the <i>account</i>.
-     */
-    (StoreRiskParametersService,
-      "Nexus.AdministrationServices.StoreRiskParametersService", void,
-      (Beam::DirectoryEntry, account), (RiskParameters, risk_parameters)),
-
-    /**
      * Monitors an account's RiskState.
      * @param account The account to monitor.
      * @return The <i>account</i>'s current RiskState.
