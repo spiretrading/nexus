@@ -19,6 +19,9 @@ interface Properties {
   /** Called when the dismiss all button is clicked. */
   onDismissAll?: () => void;
 
+  /** Called when a notification is clicked. */
+  onNotificationClick?: (notification: Nexus.Notification) => void;
+
   /** Called when the popover is opened. */
   onOpen?: () => void;
 
@@ -67,7 +70,6 @@ export class NotificationsPopover extends React.Component<Properties, State> {
     const unreadNotifications = this.props.notifications.filter(
       (notification) => !notification.isRead);
     const unreadCount = unreadNotifications.length;
-    const hasNotifications = this.props.notifications.length > 0;
     const viewAllHref = (() => {
       if(unreadCount > 0) {
         return '/notifications';
@@ -84,11 +86,7 @@ export class NotificationsPopover extends React.Component<Properties, State> {
         <div className={css(STYLES.heightWrapper)}
             style={{height: this.state.contentHeight}}>
           <div ref={this.contentRef}>
-            {!hasNotifications &&
-              <div className={css(STYLES.emptyMessage)}>
-                <EmptyMessage message='No notifications.'/>
-              </div>}
-            {hasNotifications && unreadCount === 0 &&
+            {unreadCount === 0 &&
               <>
                 <div className={css(STYLES.emptyMessage)}>
                   <EmptyMessage
@@ -110,9 +108,11 @@ export class NotificationsPopover extends React.Component<Properties, State> {
                         description={notification.description}
                         timestamp={notification.timestamp.toDate()}
                         url={getNotificationUrl(notification)}
-                        isUnread={true}
-                        hideIndicator={true}
+                        isUnread
+                        hideIndicator
                         today={this.props.today}
+                        onClick={() =>
+                          this.props.onNotificationClick?.(notification)}
                         style={index === unreadNotifications.length - 1 ?
                           {borderBottomColor: 'transparent'} : undefined}/>
                     </li>)}

@@ -7,7 +7,7 @@ export function NotificationItemPlaceholder(): JSX.Element {
   return (
     <div className={css(STYLES.container)}>
       <div className={css(STYLES.checkboxContainer)}>
-        <Checkbox disabled={true}/>
+        <Checkbox disabled/>
       </div>
       <div className={css(STYLES.body)}>
         <Skeleton style={{width: '138px', height: '18px', flexShrink: 0}}

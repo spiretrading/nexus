@@ -29,6 +29,9 @@ interface Properties {
   /** Additional inline styles for the link element. */
   style?: React.CSSProperties;
 
+  /** Called when the notification is clicked. */
+  onClick?: () => void;
+
   /** Called when the selected state changes. */
   onSelect?: (isSelected: boolean) => void;
 }
@@ -43,6 +46,7 @@ export function NotificationItem(props: Properties): JSX.Element {
   };
   return (
     <a href={props.url} style={props.style}
+        onClick={props.onClick}
         className={css(STYLES.link, hideIndicator && STYLES.linkHideIndicator,
           isSelected && STYLES.linkSelected)}>
       <div className={css(STYLES.checkboxContainer)}>

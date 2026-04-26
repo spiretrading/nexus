@@ -56,7 +56,8 @@ export class DashboardController extends React.Component<Properties, State> {
       <DashboardPage roles={this.props.model.roles}
           notifications={this.state.notifications}
           onSideMenuClick={this.onSideMenuClick}
-          onDismissAll={this.onDismissAll}>
+          onDismissAll={this.onDismissAll}
+          onNotificationClick={this.onNotificationClick}>
         <Router.Switch>
           <Router.Route path='/account' render={this.renderAccountPage}/>
           <Router.Route path='/account_directory'
@@ -169,6 +170,12 @@ export class DashboardController extends React.Component<Properties, State> {
       }
       return {notifications: [notification, ...prev.notifications]};
     });
+  };
+
+  private onNotificationClick = (notification: Nexus.Notification) => {
+    if(!notification.isRead) {
+      this.props.model.markNotificationAsRead(notification.id);
+    }
   };
 
   private onDismissAll = () => {

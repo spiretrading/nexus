@@ -24,6 +24,9 @@ interface Properties {
 
   /** Called when the dismiss all button is clicked. */
   onDismissAll?: () => void;
+
+  /** Called when a notification is clicked. */
+  onNotificationClick?: (notification: Nexus.Notification) => void;
 }
 
 interface State {
@@ -102,6 +105,7 @@ export class DashboardPage extends React.Component<Properties, State> {
               id='notifications-popover'
               notifications={this.props.notifications}
               onDismissAll={this.props.onDismissAll}
+              onNotificationClick={this.props.onNotificationClick}
               onOpen={this.onOpenPopover}
               onClose={this.onClosePopover}/>
           </div>
