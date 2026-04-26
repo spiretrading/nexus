@@ -80,10 +80,6 @@ std::vector<HttpRequestSlot> AdministrationWebServlet::get_slots() {
     std::bind_front(
       &AdministrationWebServlet::on_load_account_entitlements, this));
   slots.emplace_back(matches_path(
-    HttpMethod::POST, "/api/administration_service/store_account_entitlements"),
-    std::bind_front(
-      &AdministrationWebServlet::on_store_account_entitlements, this));
-  slots.emplace_back(matches_path(
     HttpMethod::POST, "/api/administration_service/load_risk_parameters"),
     std::bind_front(&AdministrationWebServlet::on_load_risk_parameters, this));
   slots.emplace_back(matches_path(
@@ -529,30 +525,6 @@ HttpResponse AdministrationWebServlet::on_load_account_entitlements(
   auto entitlements =
     clients.get_administration_client().load_entitlements(params.m_account);
   session->shuttle_response(entitlements, out(response));
-  return response;
-}
-
-HttpResponse AdministrationWebServlet::on_store_account_entitlements(
-    const HttpRequest& request) {
-  struct Parameters {
-    DirectoryEntry m_account;
-    std::vector<DirectoryEntry> m_entitlements;
-
-    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("account", m_account);
-      shuttle.shuttle("entitlements", m_entitlements);
-    }
-  };
-  auto response = HttpResponse();
-  auto session = m_sessions->find(request);
-  if(!session) {
-    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto params = session->shuttle_parameters<Parameters>(request);
-  auto& clients = session->get_clients();
-  clients.get_administration_client().store_entitlements(
-    params.m_account, params.m_entitlements);
   return response;
 }
 

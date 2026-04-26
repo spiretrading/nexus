@@ -158,16 +158,6 @@ namespace Nexus {
       std::vector<Beam::DirectoryEntry>, (Beam::DirectoryEntry, account)),
 
     /**
-     * Sets the entitlements granted to an account.
-     * @param account The account to set the entitlements for.
-     * @param entitlements The entitlements to grant to the <i>account</i>.
-     */
-    (StoreEntitlementsService,
-      "Nexus.AdministrationServices.StoreEntitlementsService", void,
-      (Beam::DirectoryEntry, account),
-      (std::vector<Beam::DirectoryEntry>, entitlements)),
-
-    /**
      * Monitors an account's RiskParameters.
      * @param account The account to monitor.
      * @return The <i>account</i>'s RiskParameters.

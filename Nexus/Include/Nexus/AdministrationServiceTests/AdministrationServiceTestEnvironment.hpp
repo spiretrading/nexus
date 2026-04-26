@@ -56,6 +56,12 @@ namespace Nexus::Tests {
       void make_administrator(const Beam::DirectoryEntry& account);
 
       /**
+       * Grants all available entitlements to an account.
+       * @param account The account to grant the entitlements to.
+       */
+      void grant_all_entitlements(const Beam::DirectoryEntry& account);
+
+      /**
        * Returns a new AdministrationClient.
        * @param client The ServiceLocatorClient used to authenticate the
        *        AdministrationClient.
@@ -131,23 +137,6 @@ namespace Nexus::Tests {
       environment.make_client("administration_service", "1234"));
   }
 
-  /**
-   * Grants all available entitlements to an account.
-   * @param environment The test environment that the entitlements are being
-   *        granted on.
-   * @param account The account to grant the entitlements to.
-   */
-  inline void grant_all_entitlements(
-      AdministrationServiceTestEnvironment& environment,
-      const Beam::DirectoryEntry& account) {
-    auto entitlements = std::vector<Beam::DirectoryEntry>();
-    for(auto& entry :
-        environment.get_client().load_entitlements().get_entries()) {
-      entitlements.push_back(entry.m_group_entry);
-    }
-    environment.get_client().store_entitlements(account, entitlements);
-  }
-
   inline AdministrationServiceTestEnvironment::
     AdministrationServiceTestEnvironment(Beam::ServiceLocatorClient client)
     : AdministrationServiceTestEnvironment(
@@ -181,6 +170,13 @@ namespace Nexus::Tests {
     auto administrators = m_service_locator_client.load_directory_entry(
       Beam::DirectoryEntry::STAR_DIRECTORY, "administrators");
     m_service_locator_client.associate(account, administrators);
+  }
+
+  inline void AdministrationServiceTestEnvironment::grant_all_entitlements(
+      const Beam::DirectoryEntry& account) {
+    for(auto& entry : get_client().load_entitlements().get_entries()) {
+      m_service_locator_client.associate(account, entry.m_group_entry);
+    }
   }
 
   inline AdministrationClient AdministrationServiceTestEnvironment::make_client(

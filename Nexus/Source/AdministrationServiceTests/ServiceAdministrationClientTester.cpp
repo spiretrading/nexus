@@ -282,23 +282,6 @@ TEST_SUITE("ServiceAdministrationClient") {
     REQUIRE(received_entitlements == entitlements);
   }
 
-  TEST_CASE("store_entitlements") {
-    auto fixture = Fixture();
-    auto account = DirectoryEntry::make_account(16, "entitled_account");
-    auto entitlements = std::vector{
-      DirectoryEntry::make_account(17, "entitlement1"),
-      DirectoryEntry::make_account(18, "entitlement2")};
-    fixture.on_request<StoreEntitlementsService>(
-      [&] (auto& request, const auto& received_account,
-          const auto& received_entitlements) {
-        REQUIRE(received_account == account);
-        REQUIRE(received_entitlements == entitlements);
-        request.set();
-      });
-    REQUIRE_NOTHROW(
-      fixture.m_client->store_entitlements(account, entitlements));
-  }
-
   TEST_CASE("get_risk_parameters_publisher") {
     auto fixture = Fixture();
     auto account_a = DirectoryEntry::make_account(55, "Alexis");

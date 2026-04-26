@@ -186,8 +186,8 @@ namespace Nexus::Tests {
       account_name, "", Beam::DirectoryEntry::STAR_DIRECTORY);
     auto service_locator =
       service_locator_environment.make_client(account_name, "");
-    grant_all_entitlements(
-      administration_environment, service_locator.get_account());
+    administration_environment.grant_all_entitlements(
+      service_locator.get_account());
     return market_data_environment.make_registry_client(
       Beam::Ref(service_locator));
   }

@@ -1,11 +1,13 @@
 #ifndef NEXUS_ADMINISTRATION_SERVICE_NOTIFICATION_HPP
 #define NEXUS_ADMINISTRATION_SERVICE_NOTIFICATION_HPP
 #include <ostream>
+#include <sstream>
 #include <string>
 #include <Beam/Serialization/DataShuttle.hpp>
 #include <Beam/Serialization/ShuttleDateTime.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 
 namespace Nexus {
 
@@ -77,6 +79,38 @@ namespace Nexus {
       " \"" << notification.m_description << "\" \"" << notification.m_data <<
       "\" " << notification.m_category << ' ' << notification.m_timestamp <<
       ' ' << notification.m_is_read << ')';
+  }
+
+  /**
+   * Makes a Notification for an entitlement modification.
+   * @param id The unique identifier for the notification.
+   * @param account The account whose entitlements were modified.
+   * @param request_id The modification request id.
+   * @param status The status of the modification request.
+   * @param timestamp The timestamp of the notification.
+   * @return The constructed Notification.
+   */
+  inline Notification make_entitlement_modification_notification(
+      Notification::Id id, Beam::DirectoryEntry account,
+      AccountModificationRequest::Id request_id,
+      AccountModificationRequest::Status status,
+      boost::posix_time::ptime timestamp) {
+    auto description = [&] {
+      if(status == AccountModificationRequest::Status::GRANTED) {
+        return std::string(
+          "Entitlement modification request has been granted.");
+      }
+      return std::string("Entitlement modification request has been rejected.");
+    }();
+    auto data = [&] {
+      auto ss = std::ostringstream();
+      ss << "{\"request_id\":" << request_id << ",\"status\":\"";
+      ss << status << "\"}";
+      return ss.str();
+    }();
+    return Notification(std::move(id), std::move(account),
+      std::move(description), std::move(data),
+      Notification::Category::ACCOUNT_MODIFICATION, timestamp, false);
   }
 }
 

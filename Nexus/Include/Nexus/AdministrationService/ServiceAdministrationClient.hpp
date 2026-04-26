@@ -59,8 +59,6 @@ namespace Nexus {
       EntitlementDatabase load_entitlements();
       std::vector<Beam::DirectoryEntry> load_entitlements(
         const Beam::DirectoryEntry& account);
-      void store_entitlements(const Beam::DirectoryEntry& account,
-        const std::vector<Beam::DirectoryEntry>& entitlements);
       const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
         const Beam::DirectoryEntry& account);
       void store(
@@ -343,19 +341,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         account);
     }, "Failed to load entitlements: " +
       boost::lexical_cast<std::string>(account));
-  }
-
-  template<typename B>
-  void ServiceAdministrationClient<B>::store_entitlements(
-      const Beam::DirectoryEntry& account,
-      const std::vector<Beam::DirectoryEntry>& entitlements) {
-    return Beam::service_or_throw_with_nested([&] {
-      auto client = m_client_handler.get_client();
-      client->template send_request<StoreEntitlementsService>(
-        account, entitlements);
-    }, "Failed to store entitlements: " +
-      boost::lexical_cast<std::string>(account) +
-      boost::lexical_cast<std::string>(Beam::Stream(entitlements)));
   }
 
   template<typename B>

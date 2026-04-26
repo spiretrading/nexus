@@ -55,8 +55,6 @@ namespace Nexus {
       EntitlementDatabase load_entitlements();
       std::vector<Beam::DirectoryEntry> load_entitlements(
         const Beam::DirectoryEntry& account);
-      void store_entitlements(const Beam::DirectoryEntry& account,
-        const std::vector<Beam::DirectoryEntry>& entitlements);
       const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
         const Beam::DirectoryEntry& account);
       void store(
@@ -262,14 +260,6 @@ namespace Nexus {
         const Beam::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_entitlements(account);
-  }
-
-  template<IsAdministrationClient C>
-  void ToPythonAdministrationClient<C>::store_entitlements(
-      const Beam::DirectoryEntry& account,
-      const std::vector<Beam::DirectoryEntry>& entitlements) {
-    auto release = Beam::Python::GilRelease();
-    m_client->store_entitlements(account, entitlements);
   }
 
   template<IsAdministrationClient C>

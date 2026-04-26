@@ -125,12 +125,14 @@ namespace Nexus {
         const Beam::DirectoryEntry& account);
       void grant_entitlements(const Beam::DirectoryEntry& admin_account,
         const Beam::DirectoryEntry& account,
-        const std::vector<Beam::DirectoryEntry>& entitlements);
+        const std::vector<Beam::DirectoryEntry>& entitlements,
+        const AccountModificationRequest::Id& request_id);
       void update_risk_parameters(
         const Beam::DirectoryEntry& account, const RiskParameters& parameters);
       Notification send_notification(const Beam::DirectoryEntry& account,
         std::string description, std::string data,
         Notification::Category category);
+      void send_notification(const Notification& notification);
       void ensure_modification_read_permission(
         const Beam::DirectoryEntry& account, AccountModificationRequest::Id id);
       AccountModificationRequest make_modification_request(
@@ -174,9 +176,6 @@ namespace Nexus {
         ServiceProtocolClient& client);
       std::vector<Beam::DirectoryEntry> on_load_account_entitlements_request(
         ServiceProtocolClient& client, const Beam::DirectoryEntry& account);
-      void on_store_entitlements_request(
-        ServiceProtocolClient& client, const Beam::DirectoryEntry& account,
-        const std::vector<Beam::DirectoryEntry>& entitlements);
       RiskParameters on_monitor_risk_parameters_request(
         ServiceProtocolClient& client, const Beam::DirectoryEntry& account);
       void on_store_risk_parameters_request(ServiceProtocolClient& client,
@@ -333,8 +332,6 @@ namespace Nexus {
       &AdministrationServlet::on_load_entitlements_request, this));
     LoadAccountEntitlementsService::add_slot(out(slots), std::bind_front(
       &AdministrationServlet::on_load_account_entitlements_request, this));
-    StoreEntitlementsService::add_slot(out(slots), std::bind_front(
-      &AdministrationServlet::on_store_entitlements_request, this));
     MonitorRiskParametersService::add_slot(out(slots), std::bind_front(
       &AdministrationServlet::on_monitor_risk_parameters_request, this));
     StoreRiskParametersService::add_slot(out(slots), std::bind_front(
@@ -637,7 +634,8 @@ namespace Nexus {
   void AdministrationServlet<C, S, D, R, T>::grant_entitlements(
       const Beam::DirectoryEntry& admin_account,
       const Beam::DirectoryEntry& account,
-      const std::vector<Beam::DirectoryEntry>& entitlements) {
+      const std::vector<Beam::DirectoryEntry>& entitlements,
+      const AccountModificationRequest::Id& request_id) {
     auto existing_entitlements = load_entitlements(account);
     auto entitlement_set =
       std::unordered_set(entitlements.begin(), entitlements.end());
@@ -665,6 +663,9 @@ namespace Nexus {
         }
       }
     }
+    send_notification(make_entitlement_modification_notification(
+      boost::uuids::to_string(m_uuid_generator()), account, request_id,
+      AccountModificationRequest::Status::GRANTED, m_time_client->get_time()));
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires
@@ -728,9 +729,30 @@ namespace Nexus {
       IsAdministrationDataStore<Beam::dereference_t<D>> &&
         Beam::IsTimeClient<Beam::dereference_t<R>> &&
           Beam::IsTimer<Beam::dereference_t<T>>
-  void AdministrationServlet<C, S, D, R, T>::ensure_modification_read_permission(
-      const Beam::DirectoryEntry& account,
-      AccountModificationRequest::Id id) {
+  void AdministrationServlet<C, S, D, R, T>::send_notification(
+      const Notification& notification) {
+    m_notification_subscribers.with([&] (auto& notification_subscribers) {
+      m_data_store->with_transaction([&] {
+        m_data_store->store(notification);
+      });
+      auto i = notification_subscribers.find(notification.m_account);
+      if(i == notification_subscribers.end()) {
+        return;
+      }
+      auto& subscribers = i->second;
+      Beam::broadcast_record_message<NotificationMessage>(
+        subscribers, notification);
+    });
+  }
+
+  template<typename C, typename S, typename D, typename R, typename T> requires
+    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+      IsAdministrationDataStore<Beam::dereference_t<D>> &&
+        Beam::IsTimeClient<Beam::dereference_t<R>> &&
+          Beam::IsTimer<Beam::dereference_t<T>>
+  void AdministrationServlet<C, S, D, R, T>::
+      ensure_modification_read_permission(const Beam::DirectoryEntry& account,
+        AccountModificationRequest::Id id) {
     auto request = m_data_store->with_transaction([&] {
       return m_data_store->load_account_modification_request(id);
     });
@@ -817,7 +839,7 @@ namespace Nexus {
           return m_data_store->load_entitlement_modification(id);
         });
         grant_entitlements(update.m_account, request.get_account(),
-          modification.get_entitlements());
+          modification.get_entitlements(), id);
       } else if(request.get_type() == AccountModificationRequest::Type::RISK) {
         auto modification = m_data_store->with_transaction([&] {
           return m_data_store->load_risk_modification(id);
@@ -1151,30 +1173,15 @@ namespace Nexus {
         Beam::IsTimeClient<Beam::dereference_t<R>> &&
           Beam::IsTimer<Beam::dereference_t<T>>
   std::vector<Beam::DirectoryEntry>
-      AdministrationServlet<C, S, D, R, T>::on_load_account_entitlements_request(
-        ServiceProtocolClient& client, const Beam::DirectoryEntry& account) {
+      AdministrationServlet<C, S, D, R, T>::
+        on_load_account_entitlements_request(
+          ServiceProtocolClient& client, const Beam::DirectoryEntry& account) {
     auto& session = client.get_session();
     if(!check_read_permission(session.get_account(), account)) {
       boost::throw_with_location(
         Beam::ServiceRequestException("Insufficient permissions."));
     }
     return load_entitlements(account);
-  }
-
-  template<typename C, typename S, typename D, typename R, typename T> requires
-    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
-      IsAdministrationDataStore<Beam::dereference_t<D>> &&
-        Beam::IsTimeClient<Beam::dereference_t<R>> &&
-          Beam::IsTimer<Beam::dereference_t<T>>
-  void AdministrationServlet<C, S, D, R, T>::on_store_entitlements_request(
-      ServiceProtocolClient& client, const Beam::DirectoryEntry& account,
-      const std::vector<Beam::DirectoryEntry>& entitlements) {
-    auto& session = client.get_session();
-    if(!check_administrator(session.get_account())) {
-      boost::throw_with_location(
-        Beam::ServiceRequestException("Insufficient permissions."));
-    }
-    grant_entitlements(session.get_account(), account, entitlements);
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires
@@ -1438,7 +1445,8 @@ namespace Nexus {
         roles, request.get_effective_date(), request.get_timestamp()) ==
           AccountModificationRequest::Status::GRANTED) {
       grant_entitlements(request.get_submission_account(),
-        request.get_account(), modification.get_entitlements());
+        request.get_account(), modification.get_entitlements(),
+        request.get_id());
     }
     return request;
   }
@@ -1592,7 +1600,7 @@ namespace Nexus {
             request.get_id());
         });
         grant_entitlements(update.m_account, request.get_account(),
-          modification.get_entitlements());
+          modification.get_entitlements(), request.get_id());
       } else if(request.get_type() == AccountModificationRequest::Type::RISK) {
         auto modification = m_data_store->with_transaction([&] {
           return m_data_store->load_risk_modification(request.get_id());
@@ -1647,6 +1655,12 @@ namespace Nexus {
       m_data_store->store(request.get_id(), update);
       return update;
     });
+    if(request.get_type() == AccountModificationRequest::Type::ENTITLEMENTS) {
+      send_notification(make_entitlement_modification_notification(
+        boost::uuids::to_string(m_uuid_generator()), request.get_account(),
+        request.get_id(), AccountModificationRequest::Status::REJECTED,
+        timestamp));
+    }
     return update;
   }
 

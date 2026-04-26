@@ -102,8 +102,6 @@ namespace Nexus {
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_account_entitlements(
         const Beam::HttpRequest& request);
-      Beam::HttpResponse on_store_account_entitlements(
-        const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_risk_parameters(
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_store_risk_parameters(

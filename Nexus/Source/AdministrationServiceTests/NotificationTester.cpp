@@ -54,6 +54,34 @@ TEST_SUITE("Notification") {
     REQUIRE(to_string(notification) == expected);
   }
 
+  TEST_CASE("make_entitlement_modification_notification_granted") {
+    auto notification = make_entitlement_modification_notification(
+      "notif-1", DirectoryEntry::make_account(100, "account"),
+      42, AccountModificationRequest::Status::GRANTED,
+      time_from_string("2026-04-25 10:00:00"));
+    REQUIRE(notification.m_id == "notif-1");
+    REQUIRE(notification.m_account ==
+      DirectoryEntry::make_account(100, "account"));
+    REQUIRE(notification.m_description ==
+      "Entitlement modification request has been granted.");
+    REQUIRE(notification.m_data == R"({"request_id":42,"status":"GRANTED"})");
+    REQUIRE(notification.m_category ==
+      Notification::Category::ACCOUNT_MODIFICATION);
+    REQUIRE(notification.m_timestamp ==
+      time_from_string("2026-04-25 10:00:00"));
+    REQUIRE(!notification.m_is_read);
+  }
+
+  TEST_CASE("make_entitlement_modification_notification_rejected") {
+    auto notification = make_entitlement_modification_notification(
+      "notif-2", DirectoryEntry::make_account(200, "user"),
+      99, AccountModificationRequest::Status::REJECTED,
+      time_from_string("2026-04-25 11:00:00"));
+    REQUIRE(notification.m_description ==
+      "Entitlement modification request has been rejected.");
+    REQUIRE(notification.m_data == R"({"request_id":99,"status":"REJECTED"})");
+  }
+
   TEST_CASE("stream_category") {
     auto out = std::ostringstream();
     out << Notification::Category::ACCOUNT_MODIFICATION;

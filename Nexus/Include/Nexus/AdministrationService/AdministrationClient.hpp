@@ -74,8 +74,6 @@ namespace Nexus {
       { client.load_entitlements(
           std::declval<const Beam::DirectoryEntry&>()) } ->
             std::same_as<std::vector<Beam::DirectoryEntry>>;
-      client.store_entitlements(std::declval<const Beam::DirectoryEntry&>(),
-        std::declval<const std::vector<Beam::DirectoryEntry>&>());
       { client.get_risk_parameters_publisher(
           std::declval<const Beam::DirectoryEntry&>()) } ->
             std::same_as<const Beam::Publisher<RiskParameters>&>;
@@ -283,15 +281,6 @@ namespace Nexus {
        */
       std::vector<Beam::DirectoryEntry> load_entitlements(
         const Beam::DirectoryEntry& account);
-
-      /**
-       * Sets an account's entitlements.
-       * @param account The account of the entitlements to set.
-       * @param entitlements The list of entitlements to grant to the
-       *        <i>account</i>.
-       */
-      void store_entitlements(const Beam::DirectoryEntry& account,
-        const std::vector<Beam::DirectoryEntry>& entitlements);
 
       /**
        * Returns the object publishing an account's RiskParameters.
@@ -533,8 +522,6 @@ namespace Nexus {
         virtual EntitlementDatabase load_entitlements() = 0;
         virtual std::vector<Beam::DirectoryEntry> load_entitlements(
           const Beam::DirectoryEntry& account) = 0;
-        virtual void store_entitlements(const Beam::DirectoryEntry& account,
-          const std::vector<Beam::DirectoryEntry>& entitlements) = 0;
         virtual const Beam::Publisher<RiskParameters>&
           get_risk_parameters_publisher(
             const Beam::DirectoryEntry& account) = 0;
@@ -633,8 +620,6 @@ namespace Nexus {
         EntitlementDatabase load_entitlements() override;
         std::vector<Beam::DirectoryEntry> load_entitlements(
           const Beam::DirectoryEntry& account) override;
-        void store_entitlements(const Beam::DirectoryEntry& account,
-          const std::vector<Beam::DirectoryEntry>& entitlements) override;
         const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
           const Beam::DirectoryEntry& account) override;
         void store(const Beam::DirectoryEntry& account,
@@ -821,12 +806,6 @@ namespace Nexus {
       AdministrationClient::load_entitlements(
         const Beam::DirectoryEntry& account) {
     return m_client->load_entitlements(account);
-  }
-
-  inline void AdministrationClient::store_entitlements(
-      const Beam::DirectoryEntry& account,
-      const std::vector<Beam::DirectoryEntry>& entitlements) {
-    m_client->store_entitlements(account, entitlements);
   }
 
   inline const Beam::Publisher<RiskParameters>&
@@ -1069,13 +1048,6 @@ namespace Nexus {
       AdministrationClient::WrappedAdministrationClient<C>::load_entitlements(
         const Beam::DirectoryEntry& account) {
     return m_client->load_entitlements(account);
-  }
-
-  template<typename C>
-  void AdministrationClient::WrappedAdministrationClient<C>::
-      store_entitlements(const Beam::DirectoryEntry& account,
-        const std::vector<Beam::DirectoryEntry>& entitlements) {
-    m_client->store_entitlements(account, entitlements);
   }
 
   template<typename C>

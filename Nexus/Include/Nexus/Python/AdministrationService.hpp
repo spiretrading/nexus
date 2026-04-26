@@ -65,7 +65,6 @@ namespace Nexus::Python {
       def("load_services", &C::load_services).
       def("load_entitlements", pybind11::overload_cast<
         const Beam::DirectoryEntry&>(&C::load_entitlements)).
-      def("store_entitlements", &C::store_entitlements).
       def("get_risk_parameters_publisher", &C::get_risk_parameters_publisher,
         pybind11::return_value_policy::reference_internal).
       def("store", pybind11::overload_cast<

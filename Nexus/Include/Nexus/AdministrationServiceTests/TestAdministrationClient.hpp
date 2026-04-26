@@ -108,13 +108,6 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<std::vector<Beam::DirectoryEntry>> m_result;
       };
 
-      /** Records a call to store_entitlements(). */
-      struct StoreEntitlementsOperation {
-        Beam::DirectoryEntry m_account;
-        std::vector<Beam::DirectoryEntry> m_entitlements;
-        Beam::Tests::ServiceResult<void> m_result;
-      };
-
       /** Records a call to get_risk_parameters_publisher(). */
       struct MonitorRiskParametersOperation {
         Beam::DirectoryEntry m_account;
@@ -287,7 +280,7 @@ namespace Nexus::Tests {
         StoreIdentityOperation, LoadTradingGroupOperation,
         LoadManagedTradingGroupsOperation, LoadAdministratorsOperation,
         LoadServicesOperation, LoadEntitlementsOperation,
-        LoadAccountEntitlementsOperation, StoreEntitlementsOperation,
+        LoadAccountEntitlementsOperation,
         MonitorRiskParametersOperation, StoreRiskParametersOperation,
         MonitorRiskStateOperation, StoreRiskStateOperation,
         LoadAccountModificationRequestOperation,
@@ -340,8 +333,6 @@ namespace Nexus::Tests {
       EntitlementDatabase load_entitlements();
       std::vector<Beam::DirectoryEntry> load_entitlements(
         const Beam::DirectoryEntry& account);
-      void store_entitlements(const Beam::DirectoryEntry& account,
-        const std::vector<Beam::DirectoryEntry>& entitlements);
       const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
         const Beam::DirectoryEntry& account);
       void store(
@@ -508,13 +499,6 @@ namespace Nexus::Tests {
         const Beam::DirectoryEntry& account) {
     return m_queue.append_result<LoadAccountEntitlementsOperation,
       std::vector<Beam::DirectoryEntry>>(account);
-  }
-
-  inline void TestAdministrationClient::store_entitlements(
-      const Beam::DirectoryEntry& account,
-      const std::vector<Beam::DirectoryEntry>& entitlements) {
-    return m_queue.append_result<StoreEntitlementsOperation, void>(
-      account, entitlements);
   }
 
   inline const Beam::Publisher<RiskParameters>&

@@ -378,37 +378,6 @@ TEST_SUITE("AdministrationServlet") {
     test_json_equality(result, fixture.m_entitlements);
   }
 
-  TEST_CASE("store_and_load_account_entitlements") {
-    auto fixture = Fixture();
-    auto entitlements = std::vector<DirectoryEntry>();
-    for(auto& entry : fixture.m_entitlements.get_entries()) {
-      entitlements.push_back(entry.m_group_entry);
-    }
-    SUBCASE("admin") {
-      REQUIRE_NOTHROW(
-        fixture.m_admin_client->send_request<StoreEntitlementsService>(
-          fixture.m_trader_account, entitlements));
-      auto result = fixture.m_admin_client->send_request<
-        LoadAccountEntitlementsService>(fixture.m_trader_account);
-      REQUIRE(result.size() == entitlements.size());
-      for(auto& entitlement : entitlements) {
-        REQUIRE(
-          std::find(result.begin(), result.end(), entitlement) != result.end());
-      }
-      REQUIRE_NOTHROW(
-        fixture.m_admin_client->send_request<StoreEntitlementsService>(
-          fixture.m_trader_account, std::vector<DirectoryEntry>()));
-      result = fixture.m_admin_client->send_request<
-        LoadAccountEntitlementsService>(fixture.m_trader_account);
-      REQUIRE(result.empty());
-    }
-    SUBCASE("trader") {
-      REQUIRE_THROWS_AS(
-        fixture.m_trader_client->send_request<StoreEntitlementsService>(
-          fixture.m_trader_account, entitlements), ServiceRequestException);
-    }
-  }
-
   TEST_CASE("load_managed_trading_groups") {
     auto fixture = Fixture();
     auto trading_group1 = fixture.make_trading_group("group1");
@@ -543,6 +512,72 @@ TEST_SUITE("AdministrationServlet") {
         REQUIRE(entitlements.empty());
       }
     }
+  }
+
+  TEST_CASE("entitlement_modification_granted_notification") {
+    auto fixture = Fixture();
+    auto entitlements = std::vector<DirectoryEntry>();
+    for(auto& entry : fixture.m_entitlements.get_entries()) {
+      entitlements.push_back(entry.m_group_entry);
+    }
+    auto modification = EntitlementModification(entitlements);
+    auto comment = Nexus::Message(
+      0, fixture.m_trader_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test")});
+    auto request = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        DirectoryEntry(), modification, ptime(), comment);
+    auto review_comment = Nexus::Message(
+      0, fixture.m_manager_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("reviewed")});
+    fixture.m_manager_client->send_request<
+      ApproveAccountModificationRequestService>(
+        request.get_id(), ptime(), review_comment);
+    auto approve_comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("approved")});
+    fixture.m_admin_client->send_request<
+      ApproveAccountModificationRequestService>(
+        request.get_id(), ptime(), approve_comment);
+    auto notifications = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::from_tail(1), Notification::ReadState::ALL);
+    REQUIRE(notifications.size() == 1);
+    REQUIRE(notifications[0].m_account == fixture.m_trader_account);
+    REQUIRE(notifications[0].m_description ==
+      "Entitlement modification request has been granted.");
+    REQUIRE(notifications[0].m_category ==
+      Notification::Category::ACCOUNT_MODIFICATION);
+  }
+
+  TEST_CASE("entitlement_modification_rejected_notification") {
+    auto fixture = Fixture();
+    auto entitlements = std::vector<DirectoryEntry>();
+    for(auto& entry : fixture.m_entitlements.get_entries()) {
+      entitlements.push_back(entry.m_group_entry);
+    }
+    auto modification = EntitlementModification(entitlements);
+    auto comment = Nexus::Message(
+      0, fixture.m_trader_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test")});
+    auto request = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        DirectoryEntry(), modification, ptime(), comment);
+    auto reject_comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("rejected")});
+    fixture.m_admin_client->send_request<
+      RejectAccountModificationRequestService>(
+        request.get_id(), reject_comment);
+    auto notifications = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::from_tail(1), Notification::ReadState::ALL);
+    REQUIRE(notifications.size() == 1);
+    REQUIRE(notifications[0].m_account == fixture.m_trader_account);
+    REQUIRE(notifications[0].m_description ==
+      "Entitlement modification request has been rejected.");
+    REQUIRE(notifications[0].m_category ==
+      Notification::Category::ACCOUNT_MODIFICATION);
   }
 
   TEST_CASE("approve_entitlements_with_future_effective_date") {

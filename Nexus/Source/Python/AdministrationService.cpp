@@ -131,6 +131,8 @@ void Nexus::Python::export_notification(module& module) {
     value("UNREAD", Notification::ReadState::UNREAD).
     value("READ", Notification::ReadState::READ).
     value("ALL", Notification::ReadState::ALL);
+  module.def("make_entitlement_modification_notification",
+    &make_entitlement_modification_notification);
 }
 
 void Nexus::Python::export_administration_data_store_exception(module& module) {
@@ -210,6 +212,8 @@ void Nexus::Python::export_administration_service_test_environment(
     }).
     def("make_administrator", &TestEnvironment::make_administrator,
       call_guard<GilRelease>()).
+    def("grant_all_entitlements",
+      &TestEnvironment::grant_all_entitlements, call_guard<GilRelease>()).
     def("make_client",
       [] (TestEnvironment& self, ServiceLocatorClient& client) {
         return ToPythonAdministrationClient(self.make_client(Ref(client)));
@@ -220,7 +224,6 @@ void Nexus::Python::export_administration_service_test_environment(
     call_guard<GilRelease>());
   module.def("make_administration_service_test_environment",
     &make_administration_service_test_environment, call_guard<GilRelease>());
-  module.def("grant_all_entitlements", &grant_all_entitlements);
 }
 
 void Nexus::Python::export_cached_administration_data_store(module& module) {
