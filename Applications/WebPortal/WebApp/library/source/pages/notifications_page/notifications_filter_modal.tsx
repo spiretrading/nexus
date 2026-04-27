@@ -122,6 +122,7 @@ export class NotificationsFilterModal
 
   private onSubmit = () => {
     this.props.onSubmit?.({
+      query: this.props.filter.query,
       categories: this.state.categories,
       startDate: this.state.startDate,
       endDate: this.state.endDate
