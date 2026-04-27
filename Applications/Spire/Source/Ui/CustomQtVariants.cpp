@@ -412,19 +412,19 @@ const QString& Spire::to_text(Task::State state, const QLocale& locale) {
     static const auto value = QObject::tr("Ready");
     return value;
   } else if(state == Task::State::INITIALIZING) {
-    static const auto value = QObject::tr("Started");
+    static const auto value = QObject::tr("Initializing");
     return value;
   } else if(state == Task::State::ACTIVE) {
     static const auto value = QObject::tr("Active");
     return value;
   } else if(state == Task::State::PENDING_CANCEL) {
-    static const auto value = QObject::tr("Pending Canceled");
+    static const auto value = QObject::tr("Pending Cancel");
     return value;
   } else if(state == Task::State::CANCELED) {
     static const auto value = QObject::tr("Canceled");
     return value;
   } else if(state == Task::State::FAILED) {
-    static const auto value = QObject::tr("Error");
+    static const auto value = QObject::tr("Failed");
     return value;
   } else if(state == Task::State::COMPLETE) {
     static const auto value = QObject::tr("Complete");

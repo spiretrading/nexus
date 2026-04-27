@@ -4872,12 +4872,12 @@ UiProfile Spire::make_task_state_box_profile() {
   populate_widget_properties(properties);
   auto current_property = define_enum<Task::State>(
     {{"Ready", Task::State::READY},
-     {"Started", Task::State::INITIALIZING},
+     {"Initializing", Task::State::INITIALIZING},
      {"Active", Task::State::ACTIVE},
-     {"Pending Canceled", Task::State::PENDING_CANCEL},
+     {"Pending Cancel", Task::State::PENDING_CANCEL},
      {"Canceled", Task::State::CANCELED},
      {"Complete", Task::State::COMPLETE},
-     {"Error", Task::State::FAILED}});
+     {"Failed", Task::State::FAILED}});
   populate_enum_properties(properties, "current", current_property);
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("TaskStateBox", properties,
