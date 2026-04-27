@@ -284,6 +284,9 @@ namespace Spire {
   /** Returns a UiProfile for the TagComboBox. */
   UiProfile make_tag_combo_box_profile();
 
+  /** Returns a UiProfile for the TaskStateBox. */
+  UiProfile make_task_state_box_profile();
+
   /** Returns a UiProfile for the TextAreaBox. */
   UiProfile make_text_area_box_profile();
 

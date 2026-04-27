@@ -428,6 +428,34 @@ QString Spire::to_text(const Scope& scope, const QLocale& locale) {
   return QString::fromStdString(scope.get_name());
 }
 
+const QString& Spire::to_text(Task::State state, const QLocale& locale) {
+  if(state == Task::State::READY) {
+    static const auto value = QObject::tr("Ready");
+    return value;
+  } else if(state == Task::State::INITIALIZING) {
+    static const auto value = QObject::tr("Initializing");
+    return value;
+  } else if(state == Task::State::ACTIVE) {
+    static const auto value = QObject::tr("Active");
+    return value;
+  } else if(state == Task::State::PENDING_CANCEL) {
+    static const auto value = QObject::tr("Pending Cancel");
+    return value;
+  } else if(state == Task::State::CANCELED) {
+    static const auto value = QObject::tr("Canceled");
+    return value;
+  } else if(state == Task::State::FAILED) {
+    static const auto value = QObject::tr("Failed");
+    return value;
+  } else if(state == Task::State::COMPLETE) {
+    static const auto value = QObject::tr("Complete");
+    return value;
+  } else {
+    static const auto value = QObject::tr("");
+    return value;
+  }
+}
+
 QString Spire::to_text(const Ticker& ticker, const QLocale& locale) {
   return QString::fromStdString(to_string(ticker));
 }
@@ -493,6 +521,8 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return to_text(std::any_cast<Scope>(value), locale);
   } else if(value.type() == typeid(Side)) {
     return to_text(std::any_cast<Side>(value), locale);
+  } else if(value.type() == typeid(Task::State)) {
+    return to_text(std::any_cast<Task::State>(value), locale);
   } else if(value.type() == typeid(Ticker)) {
     return to_text(std::any_cast<Ticker>(value), locale);
   } else if(value.type() == typeid(TimeAndSale::Condition)) {
