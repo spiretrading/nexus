@@ -91,7 +91,7 @@ export class DashboardController extends React.Component<Properties, State> {
   public async componentDidMount(): Promise<void> {
     try {
       await this.props.model.load();
-      this.props.model.monitorNotifications(
+      this.props.model.notificationsModel.monitorNotifications(
         this._tasks.getSlot<Nexus.Notification>(this.onNotification));
       if(this.props.location.pathname === '/') {
         this.setState({isLoaded: true, redirect: '/account'});
@@ -174,16 +174,12 @@ export class DashboardController extends React.Component<Properties, State> {
 
   private onNotificationClick = (notification: Nexus.Notification) => {
     if(!notification.isRead) {
-      this.props.model.markNotificationAsRead(notification.id);
+      this.props.model.notificationsModel.markAsRead([notification.id]);
     }
   };
 
   private onDismissAll = () => {
-    for(const notification of this.state.notifications) {
-      if(!notification.isRead) {
-        this.props.model.markNotificationAsRead(notification.id);
-      }
-    }
+    this.props.model.notificationsModel.markAllAsRead();
     this.setState({notifications: []});
   };
 

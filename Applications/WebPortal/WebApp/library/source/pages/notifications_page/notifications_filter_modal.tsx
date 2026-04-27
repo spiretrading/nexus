@@ -3,19 +3,7 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Button, DateInput, LabeledCheckbox, Modal } from '../../components';
-
-/** The filter criteria for notifications. */
-export interface NotificationsFilter {
-
-  /** The set of selected categories. */
-  categories: Set<Nexus.Notification.Category>;
-
-  /** The selected start date. */
-  startDate: Beam.Date;
-
-  /** The selected end date. */
-  endDate: Beam.Date;
-}
+import { NotificationsFilter } from './notifications_model';
 
 interface Properties {
 

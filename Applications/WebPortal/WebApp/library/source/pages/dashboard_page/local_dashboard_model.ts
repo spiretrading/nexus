@@ -2,6 +2,9 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import { AccountDirectoryModel, ComplianceModel, LocalAccountModel,
   LocalGroupModel } from '..';
+import { LocalNotificationsModel } from
+  '../notifications_page/local_notifications_model';
+import { NotificationsModel } from '../notifications_page/notifications_model';
 import { RequestsModel } from '../requests_page/requests_model';
 import { DashboardModel } from './dashboard_model';
 
@@ -36,7 +39,7 @@ export class LocalDashboardModel extends DashboardModel {
     this._roles = roles;
     this._accountDirectoryModel = accountDirectoryModel;
     this._requestsModel = requestsModel;
-    this._notifications = notifications;
+    this._notificationsModel = new LocalNotificationsModel(notifications);
     this.accountModels = new Beam.Map<Beam.DirectoryEntry, LocalAccountModel>();
   }
 
@@ -85,17 +88,9 @@ export class LocalDashboardModel extends DashboardModel {
     return this._requestsModel;
   }
 
-  public monitorNotifications(
-      queue: Beam.QueueWriter<Nexus.Notification>): void {
+  public get notificationsModel(): NotificationsModel {
     this.ensureLoaded();
-    for(const notification of this._notifications) {
-      queue.push(notification);
-    }
-  }
-
-  public async markNotificationAsRead(
-      id: Nexus.Notification.Id): Promise<void> {
-    return;
+    return this._notificationsModel;
   }
 
   public makeAccountModel(account: Beam.DirectoryEntry): LocalAccountModel {
@@ -144,6 +139,6 @@ export class LocalDashboardModel extends DashboardModel {
   private _roles: Nexus.AccountRoles;
   private _accountDirectoryModel: AccountDirectoryModel;
   private _requestsModel: RequestsModel;
-  private _notifications: Nexus.Notification[];
+  private _notificationsModel: NotificationsModel;
   private accountModels: Beam.Map<Beam.DirectoryEntry, LocalAccountModel>;
 }

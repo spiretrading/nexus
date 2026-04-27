@@ -3,6 +3,9 @@ import * as Nexus from 'nexus';
 import { AccountDirectoryModel, AccountEntry, HttpAccountDirectoryModel,
   HttpAccountModel, HttpGroupModel, HttpRequestsModel,
   LocalAccountDirectoryModel, LocalRequestsModel, RequestsModel } from '..';
+import { HttpNotificationsModel } from
+  '../notifications_page/http_notifications_model';
+import { NotificationsModel } from '../notifications_page/notifications_model';
 import { DashboardModel } from './dashboard_model';
 import { LocalDashboardModel } from './local_dashboard_model';
 
@@ -58,23 +61,8 @@ export class HttpDashboardModel extends DashboardModel {
     return this._requestsModel;
   }
 
-  public monitorNotifications(
-      queue: Beam.QueueWriter<Nexus.Notification>): void {
-    this.serviceClients.administrationClient.monitorNotifications(
-      this.model.account, queue).then(async (lastId) => {
-        const notifications =
-          await this.serviceClients.administrationClient.loadNotifications(
-            this.model.account, lastId, Beam.SnapshotLimit.fromTail(5),
-            Nexus.Notification.ReadState.UNREAD);
-        for(const notification of notifications) {
-          queue.push(notification);
-        }
-      });
-  }
-
-  public async markNotificationAsRead(
-      id: Nexus.Notification.Id): Promise<void> {
-    await this.serviceClients.administrationClient.markNotificationAsRead(id);
+  public get notificationsModel(): NotificationsModel {
+    return this._notificationsModel;
   }
 
   public makeAccountModel(account: Beam.DirectoryEntry): HttpAccountModel {
@@ -105,6 +93,8 @@ export class HttpDashboardModel extends DashboardModel {
     const roles = await
       this.serviceClients.administrationClient.loadAccountRoles(account);
     this._requestsModel = new HttpRequestsModel(account, this.serviceClients);
+    this._notificationsModel = new HttpNotificationsModel(
+      account, this.serviceClients.administrationClient);
     this.model = new LocalDashboardModel(account, roles,
       this.serviceClients.definitionsClient.entitlementDatabase,
       this.serviceClients.definitionsClient.countryDatabase,
@@ -124,4 +114,5 @@ export class HttpDashboardModel extends DashboardModel {
   private groupModels: Beam.Map<Beam.DirectoryEntry, HttpGroupModel>;
   private model: LocalDashboardModel;
   private _requestsModel: RequestsModel;
+  private _notificationsModel: NotificationsModel;
 }
