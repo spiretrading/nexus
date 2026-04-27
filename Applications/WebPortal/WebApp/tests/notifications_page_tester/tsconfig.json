@@ -1,0 +1,21 @@
+{
+  "compilerOptions": {
+    "experimentalDecorators": true,
+    "jsx": "react",
+    "module": "commonjs",
+    "noEmitOnError": true,
+    "noImplicitAny": true,
+    "outDir": "./application",
+    "preserveConstEnums": true,
+    "removeComments": true,
+    "sourceMap": true,
+    "rootDir": "./source",
+    "strictNullChecks": false,
+    "target": "es2017",
+    "types": []
+  },
+  "include": [
+    "./source/*.ts",
+    "./source/*.tsx"
+  ]
+}
