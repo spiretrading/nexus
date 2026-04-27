@@ -28,12 +28,13 @@ TaskStateBox* Spire::make_task_state_box(QWidget* parent) {
 }
 
 TaskStateBox* Spire::make_task_state_box(Task::State current, QWidget* parent) {
-  return make_task_state_box(std::make_shared<LocalTaskStateModel>(current), parent);
+  return make_task_state_box(
+    std::make_shared<LocalTaskStateModel>(current), parent);
 }
 
-TaskStateBox* Spire::make_task_state_box(std::shared_ptr<TaskStateModel> model,
-    QWidget* parent) {
+TaskStateBox* Spire::make_task_state_box(
+    std::shared_ptr<TaskStateModel> current, QWidget* parent) {
   auto settings = setup();
-  settings.m_current = std::move(model);
+  settings.m_current = std::move(current);
   return new TaskStateBox(std::move(settings), parent);
 }

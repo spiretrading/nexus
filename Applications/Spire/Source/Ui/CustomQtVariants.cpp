@@ -407,6 +407,27 @@ const QString& Spire::to_text(OrderType type, const QLocale& locale) {
   }
 }
 
+QString Spire::to_text(PositionSideToken token, const QLocale& locale) {
+  return token.to_string();
+}
+
+QString Spire::to_text(const Scope& scope, const QLocale& locale) {
+  if(scope.is_global()) {
+    return QObject::tr("Global");
+  }
+  if(scope.get_tickers().size() == 1 && scope.get_venues().empty() &&
+      scope.get_countries().empty()) {
+    return to_text(*scope.get_tickers().begin(), locale);
+  } else if(scope.get_venues().size() == 1 && scope.get_tickers().empty() &&
+      scope.get_countries().empty()) {
+    return to_text(Venue(*scope.get_venues().begin()), locale);
+  } else if(scope.get_countries().size() == 1 &&
+      scope.get_tickers().empty() && scope.get_venues().empty()) {
+    return to_text(*scope.get_countries().begin(), locale);
+  }
+  return QString::fromStdString(scope.get_name());
+}
+
 const QString& Spire::to_text(Task::State state, const QLocale& locale) {
   if(state == Task::State::READY) {
     static const auto value = QObject::tr("Ready");
@@ -433,27 +454,6 @@ const QString& Spire::to_text(Task::State state, const QLocale& locale) {
     static const auto value = QObject::tr("");
     return value;
   }
-}
-
-QString Spire::to_text(PositionSideToken token, const QLocale& locale) {
-  return token.to_string();
-}
-
-QString Spire::to_text(const Scope& scope, const QLocale& locale) {
-  if(scope.is_global()) {
-    return QObject::tr("Global");
-  }
-  if(scope.get_tickers().size() == 1 && scope.get_venues().empty() &&
-      scope.get_countries().empty()) {
-    return to_text(*scope.get_tickers().begin(), locale);
-  } else if(scope.get_venues().size() == 1 && scope.get_tickers().empty() &&
-      scope.get_countries().empty()) {
-    return to_text(Venue(*scope.get_venues().begin()), locale);
-  } else if(scope.get_countries().size() == 1 &&
-      scope.get_tickers().empty() && scope.get_venues().empty()) {
-    return to_text(*scope.get_countries().begin(), locale);
-  }
-  return QString::fromStdString(scope.get_name());
 }
 
 QString Spire::to_text(const Ticker& ticker, const QLocale& locale) {
@@ -519,10 +519,10 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return to_text(std::any_cast<PositionSideToken>(value), locale);
   } else if(value.type() == typeid(Scope)) {
     return to_text(std::any_cast<Scope>(value), locale);
-  } else if(value.type() == typeid(Task::State)) {
-    return to_text(std::any_cast<Task::State>(value), locale);
   } else if(value.type() == typeid(Side)) {
     return to_text(std::any_cast<Side>(value), locale);
+  } else if(value.type() == typeid(Task::State)) {
+    return to_text(std::any_cast<Task::State>(value), locale);
   } else if(value.type() == typeid(Ticker)) {
     return to_text(std::any_cast<Ticker>(value), locale);
   } else if(value.type() == typeid(TimeAndSale::Condition)) {

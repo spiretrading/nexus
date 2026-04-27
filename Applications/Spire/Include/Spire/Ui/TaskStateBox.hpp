@@ -31,7 +31,7 @@ namespace Spire {
 
   /**
    * Returns a TaskStateBox.
-   * @param model The current value model.
+   * @param current The current value model.
    * @param parent The parent widget.
    */
   TaskStateBox* make_task_state_box(
