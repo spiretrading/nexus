@@ -1,5 +1,6 @@
 #ifndef NEXUS_LOCAL_ADMINISTRATION_DATA_STORE_HPP
 #define NEXUS_LOCAL_ADMINISTRATION_DATA_STORE_HPP
+#include <ranges>
 #include <unordered_map>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
@@ -67,6 +68,12 @@ namespace Nexus {
       Message load_message(Message::Id id);
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
+      void store(const Notification& notification);
+      void mark_notification_as_read(const Notification::Id& id);
+      void mark_notification_as_unread(const Notification::Id& id);
+      std::vector<Notification> load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state);
       template<typename F>
       decltype(auto) with_transaction(F&& transaction);
       void close();
@@ -91,6 +98,8 @@ namespace Nexus {
         std::vector<Message::Id>> m_request_messages;
       std::unordered_map<Message::Id, Message> m_messages;
       Message::Id m_last_message_id;
+      std::unordered_map<Beam::DirectoryEntry, std::vector<Notification>>
+        m_notifications;
 
       LocalAdministrationDataStore(
         const LocalAdministrationDataStore&) = delete;
@@ -324,6 +333,75 @@ namespace Nexus {
       return std::vector<Message::Id>();
     }
     return i->second;
+  }
+
+  inline void LocalAdministrationDataStore::store(
+      const Notification& notification) {
+    m_notifications[notification.m_account].push_back(notification);
+  }
+
+  inline void LocalAdministrationDataStore::mark_notification_as_read(
+      const Notification::Id& id) {
+    auto all = m_notifications | std::views::values | std::views::join;
+    auto i = std::ranges::find(all, id, &Notification::m_id);
+    if(i != all.end()) {
+      i->m_is_read = true;
+    }
+  }
+
+  inline void LocalAdministrationDataStore::mark_notification_as_unread(
+      const Notification::Id& id) {
+    auto all = m_notifications | std::views::values | std::views::join;
+    auto i = std::ranges::find(all, id, &Notification::m_id);
+    if(i != all.end()) {
+      i->m_is_read = false;
+    }
+  }
+
+  inline std::vector<Notification>
+      LocalAdministrationDataStore::load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state) {
+    auto i = m_notifications.find(account);
+    if(i == m_notifications.end()) {
+      return {};
+    }
+    auto& notifications = i->second;
+    auto matches = std::vector<Notification>();
+    for(auto& notification : notifications) {
+      if(read_state == Notification::ReadState::UNREAD &&
+          notification.m_is_read ||
+          read_state == Notification::ReadState::READ &&
+            !notification.m_is_read) {
+        continue;
+      }
+      matches.push_back(notification);
+    }
+    if(id.empty()) {
+      if(limit.get_type() == Beam::SnapshotLimit::Type::TAIL) {
+        if(static_cast<int>(matches.size()) > limit.get_size()) {
+          matches.erase(
+            matches.begin(), matches.end() - limit.get_size());
+        }
+      } else if(static_cast<int>(matches.size()) > limit.get_size()) {
+        matches.erase(matches.begin() + limit.get_size(), matches.end());
+      }
+      return matches;
+    }
+    auto position = std::ranges::find_if(matches, [&] (const auto& n) {
+      return n.m_id == id;
+    });
+    if(position == matches.end()) {
+      return {};
+    }
+    if(limit.get_type() == Beam::SnapshotLimit::Type::TAIL) {
+      auto start = position - std::min(
+        static_cast<int>(position - matches.begin()), limit.get_size() - 1);
+      return std::vector(start, position + 1);
+    }
+    auto end = position + std::min(
+      static_cast<int>(matches.end() - position), limit.get_size());
+    return std::vector(position, end);
   }
 
   template<typename F>

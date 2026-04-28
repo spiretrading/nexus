@@ -158,6 +158,9 @@ namespace Spire {
   QString to_text(
     const Nexus::Scope& scope, const QLocale& locale = QLocale());
 
+  /** Returns the text representation of a Task::State. */
+  const QString& to_text(Task::State state, const QLocale& locale = QLocale());
+
   /** Returns the text representation of a Ticker. */
   QString to_text(
     const Nexus::Ticker& ticker, const QLocale& locale = QLocale());

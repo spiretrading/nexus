@@ -49,11 +49,29 @@ namespace Nexus::Tests {
       /** Returns this test environment's AdministrationClient. */
       AdministrationClient& get_client();
 
+      /** Returns the data store used by this test environment. */
+      LocalAdministrationDataStore& get_data_store();
+
       /**
        * Grants an account administrative privileges.
        * @param account The account to grant administrative privileges to.
        */
       void make_administrator(const Beam::DirectoryEntry& account);
+
+      /**
+       * Grants all available entitlements to an account.
+       * @param account The account to grant the entitlements to.
+       */
+      void grant_all_entitlements(const Beam::DirectoryEntry& account);
+
+      /**
+       * Stores an account's RiskParameters by submitting a modification
+       * request through the admin client.
+       * @param account The account whose RiskParameters are to be set.
+       * @param parameters The RiskParameters to assign.
+       */
+      void store(
+        const Beam::DirectoryEntry& account, const RiskParameters& parameters);
 
       /**
        * Returns a new AdministrationClient.
@@ -131,23 +149,6 @@ namespace Nexus::Tests {
       environment.make_client("administration_service", "1234"));
   }
 
-  /**
-   * Grants all available entitlements to an account.
-   * @param environment The test environment that the entitlements are being
-   *        granted on.
-   * @param account The account to grant the entitlements to.
-   */
-  inline void grant_all_entitlements(
-      AdministrationServiceTestEnvironment& environment,
-      const Beam::DirectoryEntry& account) {
-    auto entitlements = std::vector<Beam::DirectoryEntry>();
-    for(auto& entry :
-        environment.get_client().load_entitlements().get_entries()) {
-      entitlements.push_back(entry.m_group_entry);
-    }
-    environment.get_client().store_entitlements(account, entitlements);
-  }
-
   inline AdministrationServiceTestEnvironment::
     AdministrationServiceTestEnvironment(Beam::ServiceLocatorClient client)
     : AdministrationServiceTestEnvironment(
@@ -176,11 +177,29 @@ namespace Nexus::Tests {
     return *m_client;
   }
 
+  inline LocalAdministrationDataStore&
+      AdministrationServiceTestEnvironment::get_data_store() {
+    return m_data_store;
+  }
+
   inline void AdministrationServiceTestEnvironment::make_administrator(
       const Beam::DirectoryEntry& account) {
     auto administrators = m_service_locator_client.load_directory_entry(
       Beam::DirectoryEntry::STAR_DIRECTORY, "administrators");
     m_service_locator_client.associate(account, administrators);
+  }
+
+  inline void AdministrationServiceTestEnvironment::grant_all_entitlements(
+      const Beam::DirectoryEntry& account) {
+    for(auto& entry : get_client().load_entitlements().get_entries()) {
+      m_service_locator_client.associate(account, entry.m_group_entry);
+    }
+  }
+
+  inline void AdministrationServiceTestEnvironment::store(
+      const Beam::DirectoryEntry& account, const RiskParameters& parameters) {
+    get_client().submit(account, RiskModification(parameters),
+      boost::posix_time::not_a_date_time, Nexus::Message());
   }
 
   inline AdministrationClient AdministrationServiceTestEnvironment::make_client(

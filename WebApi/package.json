@@ -7,10 +7,13 @@
   "types": "library/index.d.ts",
   "scripts": {
     "compile": "node node_modules/typescript/bin/tsc -p .",
-    "build": "npm run compile"
+    "build": "npm run compile",
+    "test": "node --import tsx --test-reporter dot --test-timeout 60000 --test tests/**/*_tester.ts"
   },
   "devDependencies": {
-    "typescript": "4.5.2"
+    "@types/node": "22.19.17",
+    "tsx": "4.19.4",
+    "typescript": "6.0.3"
   },
   "dependencies": {
     "beam": "file:Dependencies/Beam/WebApi",
