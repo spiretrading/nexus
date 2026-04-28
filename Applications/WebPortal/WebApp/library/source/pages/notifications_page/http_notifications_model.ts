@@ -34,21 +34,30 @@ export class HttpNotificationsModel extends NotificationsModel {
   }
 
   public async markAsRead(ids: Nexus.Notification.Id[]): Promise<void> {
-    for(const id of ids) {
-      await this._administrationClient.markNotificationAsRead(id);
-    }
+    await Promise.all(
+      ids.map((id) => this._administrationClient.markNotificationAsRead(id)));
     await this._model.markAsRead(ids);
   }
 
-  public async markAllAsRead(): Promise<void> {
-    // TODO: Call a dedicated API endpoint when available.
-    await this._model.markAllAsRead();
+  public async markAllAsRead(id: Nexus.Notification.Id): Promise<void> {
+    var cursor = id;
+    while(true) {
+      const batch = await this._administrationClient.loadNotifications(
+        this._account, cursor, Beam.SnapshotLimit.fromTail(20),
+        Nexus.Notification.ReadState.UNREAD);
+      if(batch.length === 0) {
+        break;
+      }
+      await Promise.all(batch.map((notification) =>
+        this._administrationClient.markNotificationAsRead(notification.id)));
+      cursor = batch[0].id;
+    }
+    await this._model.markAllAsRead(id);
   }
 
   public async markAsUnread(ids: Nexus.Notification.Id[]): Promise<void> {
-    for(const id of ids) {
-      await this._administrationClient.markNotificationAsUnread(id);
-    }
+    await Promise.all(
+      ids.map((id) => this._administrationClient.markNotificationAsUnread(id)));
     await this._model.markAsUnread(ids);
   }
 

@@ -99,10 +99,17 @@ export class LocalNotificationsModel extends NotificationsModel {
     }
   }
 
-  public async markAllAsRead(): Promise<void> {
+  public async markAllAsRead(id: Nexus.Notification.Id): Promise<void> {
     this.ensureLoaded();
-    await this.markAsRead(
-      this._notifications.filter((n) => !n.isRead).map((n) => n.id));
+    const index = this._notifications.findIndex((n) => n.id === id);
+    if(index === -1) {
+      return;
+    }
+    const ids = this._notifications.
+      slice(0, index + 1).
+      filter((n) => !n.isRead).
+      map((n) => n.id);
+    await this.markAsRead(ids);
   }
 
   public async markAsUnread(ids: Nexus.Notification.Id[]): Promise<void> {
@@ -111,9 +118,8 @@ export class LocalNotificationsModel extends NotificationsModel {
     for(let i = 0; i < this._notifications.length; ++i) {
       const n = this._notifications[i];
       if(idSet.has(n.id) && n.isRead) {
-        const updated = new Nexus.Notification(
-          n.id, n.account, n.description, n.data, n.category, n.timestamp,
-          false);
+        const updated = new Nexus.Notification(n.id, n.account, n.description,
+          n.data, n.category, n.timestamp, false);
         this._notifications[i] = updated;
         this._publisher.push(updated);
       }

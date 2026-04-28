@@ -42,8 +42,10 @@ export abstract class NotificationsModel {
    */
   public abstract markAsRead(ids: Nexus.Notification.Id[]): Promise<void>;
 
-  /** Marks all notifications as read. */
-  public abstract markAllAsRead(): Promise<void>;
+  /** Marks all unread notifications up to and including the given id as read.
+   *  @param id - The id of the oldest notification to mark as read.
+   */
+  public abstract markAllAsRead(id: Nexus.Notification.Id): Promise<void>;
 
   /** Marks notifications as unread.
    *  @param ids - The ids of the notifications to mark as unread.

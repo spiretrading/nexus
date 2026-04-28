@@ -185,7 +185,10 @@ export class DashboardController extends React.Component<Properties, State> {
   };
 
   private onDismissAll = () => {
-    this.props.model.notificationsModel.markAllAsRead();
+    if(this.state.notifications.length > 0) {
+      this.props.model.notificationsModel.markAllAsRead(
+        this.state.notifications[this.state.notifications.length - 1].id);
+    }
     this.setState({notifications: []});
   };
 
