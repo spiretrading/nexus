@@ -28,6 +28,10 @@ interface State {
 /** Implements a controller for the NotificationsPage. */
 export class NotificationsController
     extends React.Component<Properties, State> {
+
+  /** The maximum number of notifications displayed per page. */
+  public static readonly PAGE_SIZE = 50;
+
   constructor(props: Properties) {
     super(props);
     const parsed = parseSearch(props.location.search);
@@ -43,6 +47,7 @@ export class NotificationsController
     };
     this._readStatus = parsed.readStatus;
     this._filter = parsed.filter;
+    this._pageIndex = parsed.pageIndex;
   }
 
   public render(): JSX.Element {
@@ -89,6 +94,7 @@ export class NotificationsController
       filter: NotificationsFilter, pageIndex: number) => {
     this._readStatus = readStatus;
     this._filter = filter;
+    this._pageIndex = pageIndex;
     this.setState({
       displayStatus: NotificationsPage.DisplayStatus.IN_PROGRESS,
       pageIndex,
@@ -143,21 +149,23 @@ export class NotificationsController
     const rs = readStatus ?? this._readStatus;
     const f = filter ?? this._filter;
     try {
-      const notifications =
+      const allNotifications =
         await this.props.model.loadNotifications(rs, f);
       const displayStatus = (() => {
         if(this.props.model.totalCount === 0) {
           return NotificationsPage.DisplayStatus.EMPTY;
         }
-        if(notifications.length === 0) {
+        if(allNotifications.length === 0) {
           return NotificationsPage.DisplayStatus.NO_RESULTS;
         }
         return NotificationsPage.DisplayStatus.READY;
       })();
+      const start = this._pageIndex * NotificationsController.PAGE_SIZE;
+      const notifications = allNotifications.slice(start, start + NotificationsController.PAGE_SIZE);
       this.setState({
         displayStatus,
         notifications,
-        filteredCount: notifications.length
+        filteredCount: allNotifications.length
       });
     } catch {
       this.setState({
@@ -168,6 +176,7 @@ export class NotificationsController
 
   private _readStatus: Nexus.Notification.ReadState;
   private _filter: NotificationsFilter;
+  private _pageIndex: number;
 }
 
 function toSearch(readStatus: Nexus.Notification.ReadState,

@@ -2,8 +2,12 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DateInput, FilterChip, FilterInput, IconLabelButton, PageLayout,
-  SegmentButton, SegmentedControl } from '../../components';
+import { Checkbox, DateInput, EmptyMessage, FilterChip, FilterInput,
+  IconLabelButton, PageLayout, Pagination, SegmentButton, SegmentedControl
+  } from '../../components';
+import { NotificationItem } from './notification_item';
+import { NotificationItemPlaceholder } from './notification_item_placeholder';
+import { getNotificationUrl } from './notification_url';
 import { NotificationsFilterModal } from './notifications_filter_modal';
 import { NotificationsFilter } from './notifications_model';
 
@@ -80,7 +84,20 @@ export class NotificationsPage extends React.Component<Properties, State> {
             onCloseFilterModal={this.onCloseFilterModal}
             onFilterSubmit={this.onFilterSubmit}/>
           <div className={css(STYLES.contentGap)}/>
-          <NotificationsContent/>
+          <NotificationsContent
+            displayStatus={this.props.displayStatus}
+            notifications={this.props.notifications}
+            selected={this.props.selected}
+            readStatus={this.state.readStatus}
+            hasFilters={this.state.filter.query.length > 0 ||
+              this.state.filter.categories.size > 0 ||
+              this.state.filter.startDate != null ||
+              this.state.filter.endDate != null}
+            filteredCount={this.props.filteredCount}
+            pageIndex={this.props.pageIndex}
+            onSelectionChange={this.props.onSelectionChange}
+            onMarkAsRead={this.props.onMarkAsRead}
+            onMarkAsUnread={this.props.onMarkAsUnread}/>
         </main>
       </PageLayout>);
   }
@@ -220,45 +237,87 @@ function WideToolbar(props: {
     onStartDateChange?: (date: Beam.Date) => void;
     onEndDateChange?: (date: Beam.Date) => void;
   }): JSX.Element {
+  return (
+    <div className={css(STYLES.wideToolbar)}>
+      <FilterBar
+        readStatus={props.readStatus}
+        filter={props.filter}
+        onQueryChange={props.onQueryChange}
+        onReadStatusChange={props.onReadStatusChange}
+        onStartDateChange={props.onStartDateChange}
+        onEndDateChange={props.onEndDateChange}/>
+      <div className={css(STYLES.wideCategoriesGap)}/>
+      <Categories
+        categories={props.filter.categories}
+        onCategoryChange={props.onCategoryChange}/>
+    </div>);
+}
+
+function FilterBar(props: {
+    readStatus: Nexus.Notification.ReadState;
+    filter: NotificationsFilter;
+    onQueryChange?: (query: string) => void;
+    onReadStatusChange?: (readStatus: Nexus.Notification.ReadState) => void;
+    onStartDateChange?: (date: Beam.Date) => void;
+    onEndDateChange?: (date: Beam.Date) => void;
+  }): JSX.Element {
+  return (
+    <div className={css(STYLES.filterBar)}>
+      <QueryAndDate
+        filter={props.filter}
+        onQueryChange={props.onQueryChange}
+        onStartDateChange={props.onStartDateChange}
+        onEndDateChange={props.onEndDateChange}/>
+      <div className={css(STYLES.filterBarFlexGap)}/>
+      <div className={css(STYLES.filterBarFixedGap)}/>
+      <div className={css(STYLES.filterBarReadStatus)}>
+        <ReadStatusSegment name='read-status-wide'
+          readStatus={props.readStatus}
+          onSelectStatus={props.onReadStatusChange}/>
+      </div>
+    </div>);
+}
+
+function QueryAndDate(props: {
+    filter: NotificationsFilter;
+    onQueryChange?: (query: string) => void;
+    onStartDateChange?: (date: Beam.Date) => void;
+    onEndDateChange?: (date: Beam.Date) => void;
+  }): JSX.Element {
   const isInvalid = props.filter.startDate && props.filter.endDate &&
     props.filter.startDate.toDate() > props.filter.endDate.toDate();
   return (
-    <div className={css(STYLES.wideToolbar)}>
-      <div className={css(STYLES.filterBar)}>
-        <div className={css(STYLES.queryAndDate)}>
-          <FilterInput value={props.filter.query}
-            placeholder='Filter notifications'
-            onChange={props.onQueryChange}/>
-          <div className={css(STYLES.queryDateGap)}/>
-          <DateCreated
-            startDate={props.filter.startDate}
-            endDate={props.filter.endDate}
-            onStartDateChange={props.onStartDateChange}
-            onEndDateChange={props.onEndDateChange}/>
-          <ErrorSection isInvalid={isInvalid}/>
-        </div>
-        <div className={css(STYLES.filterBarFlexGap)}/>
-        <div className={css(STYLES.filterBarFixedGap)}/>
-        <div className={css(STYLES.filterBarReadStatus)}>
-          <ReadStatusSegment name='read-status-wide'
-            readStatus={props.readStatus}
-            onSelectStatus={props.onReadStatusChange}/>
-        </div>
-      </div>
-      <div className={css(STYLES.wideCategoriesGap)}/>
-      <div className={css(STYLES.chipRow)}>
-        <FilterChip label='Account Modification'
-          isChecked={props.filter.categories.has(
-            Nexus.Notification.Category.ACCOUNT_MODIFICATION)}
-          onChange={(isChecked) => props.onCategoryChange?.(
-            Nexus.Notification.Category.ACCOUNT_MODIFICATION, isChecked)}/>
-        <div className={css(STYLES.chipSpacing)}/>
-        <FilterChip label='Report'
-          isChecked={props.filter.categories.has(
-            Nexus.Notification.Category.REPORT)}
-          onChange={(isChecked) => props.onCategoryChange?.(
-            Nexus.Notification.Category.REPORT, isChecked)}/>
-      </div>
+    <div className={css(STYLES.queryAndDate)}>
+      <FilterInput value={props.filter.query}
+        placeholder='Filter notifications'
+        onChange={props.onQueryChange}/>
+      <div className={css(STYLES.queryDateGap)}/>
+      <DateCreated
+        startDate={props.filter.startDate}
+        endDate={props.filter.endDate}
+        onStartDateChange={props.onStartDateChange}
+        onEndDateChange={props.onEndDateChange}/>
+      <ErrorSection isInvalid={isInvalid}/>
+    </div>);
+}
+
+function Categories(props: {
+    categories: Set<Nexus.Notification.Category>;
+    onCategoryChange?: (
+      category: Nexus.Notification.Category, isChecked: boolean) => void;
+  }): JSX.Element {
+  return (
+    <div className={css(STYLES.chipRow)}>
+      <FilterChip label='Account Modification'
+        isChecked={props.categories.has(
+          Nexus.Notification.Category.ACCOUNT_MODIFICATION)}
+        onChange={(isChecked) => props.onCategoryChange?.(
+          Nexus.Notification.Category.ACCOUNT_MODIFICATION, isChecked)}/>
+      <div className={css(STYLES.chipSpacing)}/>
+      <FilterChip label='Report'
+        isChecked={props.categories.has(Nexus.Notification.Category.REPORT)}
+        onChange={(isChecked) => props.onCategoryChange?.(
+          Nexus.Notification.Category.REPORT, isChecked)}/>
     </div>);
 }
 
@@ -317,8 +376,180 @@ function ReadStatusSegment(props: {
     </SegmentedControl>);
 }
 
-function NotificationsContent(): JSX.Element {
-  return <div/>;
+function NotificationsContent(props: {
+    displayStatus: NotificationsPage.DisplayStatus;
+    notifications: Nexus.Notification[];
+    selected: Set<Nexus.Notification.Id>;
+    readStatus: Nexus.Notification.ReadState;
+    hasFilters: boolean;
+    filteredCount: number;
+    pageIndex: number;
+    onSelectionChange?: (selected: Set<Nexus.Notification.Id>) => void;
+    onMarkAsRead?: () => void;
+    onMarkAsUnread?: () => void;
+  }): JSX.Element {
+  const isFallback =
+    props.displayStatus === NotificationsPage.DisplayStatus.ERROR ||
+    props.displayStatus === NotificationsPage.DisplayStatus.NO_RESULTS ||
+    props.displayStatus === NotificationsPage.DisplayStatus.EMPTY;
+  if(isFallback) {
+    return (
+      <Fallback
+        displayStatus={props.displayStatus}
+        readStatus={props.readStatus}
+        hasFilters={props.hasFilters}/>);
+  }
+  return (
+    <>
+      <NotificationsSection
+        displayStatus={props.displayStatus}
+        notifications={props.notifications}
+        selected={props.selected}
+        onSelectionChange={props.onSelectionChange}
+        onMarkAsRead={props.onMarkAsRead}
+        onMarkAsUnread={props.onMarkAsUnread}/>
+      <PaginationSection
+        displayStatus={props.displayStatus}
+        filteredCount={props.filteredCount}
+        pageIndex={props.pageIndex}/>
+    </>);
+}
+
+function NotificationsSection(props: {
+    displayStatus: NotificationsPage.DisplayStatus;
+    notifications: Nexus.Notification[];
+    selected: Set<Nexus.Notification.Id>;
+    onSelectionChange?: (selected: Set<Nexus.Notification.Id>) => void;
+    onMarkAsRead?: () => void;
+    onMarkAsUnread?: () => void;
+  }): JSX.Element {
+  const isAllSelected = props.notifications.length > 0 &&
+    props.notifications.every((n) => props.selected.has(n.id));
+  const onSelectAll = () => {
+    if(isAllSelected) {
+      props.onSelectionChange?.(new Set());
+    } else {
+      props.onSelectionChange?.(
+        new Set(props.notifications.map((n) => n.id)));
+    }
+  };
+  return (
+    <div className={css(STYLES.notificationsSection)}>
+      <div className={css(STYLES.selectionControlsContainer)}>
+        <SelectionControls
+          isAllSelected={isAllSelected}
+          onSelectAll={onSelectAll}
+          onMarkAsRead={props.onMarkAsRead}
+          onMarkAsUnread={props.onMarkAsUnread}/>
+      </div>
+      <NotificationsList
+        displayStatus={props.displayStatus}
+        notifications={props.notifications}
+        selected={props.selected}
+        onSelectionChange={props.onSelectionChange}/>
+    </div>);
+}
+
+function SelectionControls(props: {
+    isAllSelected: boolean;
+    onSelectAll?: () => void;
+    onMarkAsRead?: () => void;
+    onMarkAsUnread?: () => void;
+  }): JSX.Element {
+  return (
+    <div className={css(STYLES.selectionControls)}>
+      <Checkbox checked={props.isAllSelected}
+        onClick={props.onSelectAll}/>
+      <div className={css(STYLES.selectionControlsGap1)}/>
+      <IconLabelButton icon='' label='Mark as Read'
+        variant={IconLabelButton.Variant.LABEL}
+        onClick={props.onMarkAsRead}/>
+      <div className={css(STYLES.selectionControlsGap2)}/>
+      <IconLabelButton icon='' label='Mark as Unread'
+        variant={IconLabelButton.Variant.LABEL}
+        onClick={props.onMarkAsUnread}/>
+    </div>);
+}
+
+function NotificationsList(props: {
+    displayStatus: NotificationsPage.DisplayStatus;
+    notifications: Nexus.Notification[];
+    selected: Set<Nexus.Notification.Id>;
+    onSelectionChange?: (selected: Set<Nexus.Notification.Id>) => void;
+  }): JSX.Element {
+  const isLoading =
+    props.displayStatus === NotificationsPage.DisplayStatus.IN_PROGRESS;
+  if(isLoading) {
+    return (
+      <ul className={css(STYLES.notificationsList)}>
+        {Array.from({length: 5}, (_, i) =>
+          <li key={i}><NotificationItemPlaceholder/></li>)}
+      </ul>);
+  }
+  const onSelect = (id: Nexus.Notification.Id, isSelected: boolean) => {
+    const next = new Set(props.selected);
+    if(isSelected) {
+      next.add(id);
+    } else {
+      next.delete(id);
+    }
+    props.onSelectionChange?.(next);
+  };
+  return (
+    <ul className={css(STYLES.notificationsList)}>
+      {props.notifications.map((notification) =>
+        <li key={notification.id}>
+          <NotificationItem
+            description={notification.description}
+            timestamp={notification.timestamp.toDate()}
+            url={getNotificationUrl(notification)}
+            isUnread={!notification.isRead}
+            isSelected={props.selected.has(notification.id)}
+            onSelect={(isSelected) =>
+              onSelect(notification.id, isSelected)}/>
+        </li>)}
+    </ul>);
+}
+
+function PaginationSection(props: {
+    displayStatus: NotificationsPage.DisplayStatus;
+    filteredCount: number;
+    pageIndex: number;
+  }): JSX.Element {
+  const isHidden =
+    props.displayStatus === NotificationsPage.DisplayStatus.IN_PROGRESS ||
+    props.filteredCount <= 50;
+  return (
+    <div className={css(STYLES.paginationSection,
+        isHidden && STYLES.paginationSectionHidden)}>
+      <div className={css(STYLES.paginationGap)}/>
+      <Pagination pageIndex={props.pageIndex}
+        totalCount={props.filteredCount}/>
+    </div>);
+}
+
+function Fallback(props: {
+    displayStatus: NotificationsPage.DisplayStatus;
+    readStatus: Nexus.Notification.ReadState;
+    hasFilters: boolean;
+  }): JSX.Element {
+  const message = (() => {
+    if(props.displayStatus === NotificationsPage.DisplayStatus.ERROR) {
+      return 'There was an error loading your notifications.';
+    }
+    if(props.displayStatus === NotificationsPage.DisplayStatus.EMPTY) {
+      return 'No notifications.';
+    }
+    if(props.readStatus === Nexus.Notification.ReadState.UNREAD &&
+        !props.hasFilters) {
+      return 'There are no new notifications at the moment.';
+    }
+    return 'No results found. Try adjusting filters.';
+  })();
+  return (
+    <div className={css(STYLES.fallback)}>
+      <EmptyMessage message={message}/>
+    </div>);
 }
 
 const STYLES = StyleSheet.create({
@@ -368,13 +599,15 @@ const STYLES = StyleSheet.create({
   },
   queryAndDate: {
     display: 'flex',
-    flexDirection: 'column'
+    flexDirection: 'column',
+    flex: '388 1 0',
+    minWidth: 0
   },
   queryDateGap: {
     height: '12px'
   },
   filterBarFlexGap: {
-    flex: '1 1 0'
+    flex: '84 1 0'
   },
   filterBarFixedGap: {
     width: '18px',
@@ -435,6 +668,48 @@ const STYLES = StyleSheet.create({
   },
   contentGap: {
     height: '30px'
+  },
+  notificationsSection: {
+    containerType: 'inline-size'
+  },
+  notificationsList: {
+    padding: 0,
+    margin: 0,
+    listStyle: 'none',
+    containerType: 'inline-size'
+  },
+  selectionControlsContainer: {
+    display: 'none',
+    '@container (min-width: 768px)': {
+      display: 'block'
+    }
+  },
+  paginationSection: {
+    padding: '0 18px'
+  },
+  paginationSectionHidden: {
+    maxHeight: 0,
+    overflow: 'hidden'
+  },
+  paginationGap: {
+    height: '30px'
+  },
+  selectionControls: {
+    display: 'flex',
+    alignItems: 'center',
+    height: '50px'
+  },
+  selectionControlsGap1: {
+    width: '10px',
+    flexShrink: 0
+  },
+  selectionControlsGap2: {
+    width: '8px',
+    flexShrink: 0
+  },
+  fallback: {
+    padding: '0 18px',
+    flex: '1 1 auto'
   }
 });
 
