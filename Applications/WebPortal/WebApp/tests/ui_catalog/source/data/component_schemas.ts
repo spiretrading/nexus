@@ -334,6 +334,7 @@ const notificationsFilterModal =
       }
       return React.createElement(WebPortal.NotificationsFilterModal, {
         filter: {
+          query: '',
           categories: new Set<Nexus.Notification.Category>(),
           startDate: Beam.Date.today(),
           endDate: Beam.Date.today()
