@@ -650,15 +650,13 @@ const STYLES = StyleSheet.create({
   },
   queryAndDate: {
     display: 'flex',
-    flexDirection: 'column',
-    flex: '388 1 0',
-    minWidth: 0
+    flexDirection: 'column'
   },
   queryDateGap: {
     height: '12px'
   },
   filterBarFlexGap: {
-    flex: '84 1 0'
+    flex: '1 1 0'
   },
   filterBarFixedGap: {
     width: '18px',
