@@ -457,6 +457,10 @@ function NotificationsSection(props: {
       <div className={css(STYLES.selectionControlsContainer)}>
         <SelectionControls
           isAllSelected={isAllSelected}
+          hasSelectedUnread={props.notifications.some(
+            (n) => props.selected.has(n.id) && !n.isRead)}
+          hasSelectedRead={props.notifications.some(
+            (n) => props.selected.has(n.id) && n.isRead)}
           onSelectAll={onSelectAll}
           onMarkAsRead={props.onMarkAsRead}
           onMarkAsUnread={props.onMarkAsUnread}/>
@@ -472,6 +476,8 @@ function NotificationsSection(props: {
 
 function SelectionControls(props: {
     isAllSelected: boolean;
+    hasSelectedUnread: boolean;
+    hasSelectedRead: boolean;
     onSelectAll?: () => void;
     onMarkAsRead?: () => void;
     onMarkAsUnread?: () => void;
@@ -483,10 +489,12 @@ function SelectionControls(props: {
       <div className={css(STYLES.selectionControlsGap1)}/>
       <IconLabelButton icon='' label='Mark as Read'
         variant={IconLabelButton.Variant.LABEL}
+        disabled={!props.hasSelectedUnread}
         onClick={props.onMarkAsRead}/>
       <div className={css(STYLES.selectionControlsGap2)}/>
       <IconLabelButton icon='' label='Mark as Unread'
         variant={IconLabelButton.Variant.LABEL}
+        disabled={!props.hasSelectedRead}
         onClick={props.onMarkAsUnread}/>
     </div>);
 }
