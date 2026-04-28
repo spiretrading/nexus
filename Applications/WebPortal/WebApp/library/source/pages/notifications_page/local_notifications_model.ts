@@ -37,12 +37,12 @@ export class LocalNotificationsModel extends NotificationsModel {
     const last = this._notifications[this._notifications.length - 1];
     if(!last || last.timestamp.compare(notification.timestamp) >= 0) {
       this._notifications.push(notification);
-      this._publisher.push(notification);
     } else {
       const index = this._notifications.findIndex(
         (n) => n.timestamp.compare(notification.timestamp) <= 0);
       this._notifications.splice(index, 0, notification);
     }
+    this._publisher.push(notification);
   }
 
   public get totalCount(): number {
