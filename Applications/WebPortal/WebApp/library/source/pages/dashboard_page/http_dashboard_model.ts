@@ -102,7 +102,8 @@ export class HttpDashboardModel extends DashboardModel {
       this.serviceClients.definitionsClient.venueDatabase,
       new HttpAccountDirectoryModel(account, this.serviceClients),
       this._requestsModel);
-    return this.model.load();
+    await this.model.load();
+    await this._notificationsModel.load();
   }
 
   public async logout(): Promise<void> {

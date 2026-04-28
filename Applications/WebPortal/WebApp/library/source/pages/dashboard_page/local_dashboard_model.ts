@@ -118,6 +118,7 @@ export class LocalDashboardModel extends DashboardModel {
 
   public async load(): Promise<void> {
     this._isLoaded = true;
+    await this._notificationsModel.load();
   }
 
   public async logout(): Promise<void> {
