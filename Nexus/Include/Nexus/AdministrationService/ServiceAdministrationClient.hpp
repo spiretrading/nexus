@@ -110,6 +110,7 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const Notification::Id& id,
         Beam::SnapshotLimit limit, Notification::ReadState read_state);
       void mark_notification_as_read(const Notification::Id& id);
+      void mark_notification_as_unread(const Notification::Id& id);
       void close();
 
     private:
@@ -626,6 +627,15 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       auto client = m_client_handler.get_client();
       client->template send_request<MarkNotificationAsReadService>(id);
     }, "Failed to mark notification as read: " + id);
+  }
+
+  template<typename B>
+  void ServiceAdministrationClient<B>::mark_notification_as_unread(
+      const Notification::Id& id) {
+    Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      client->template send_request<MarkNotificationAsUnreadService>(id);
+    }, "Failed to mark notification as unread: " + id);
   }
 
   template<typename B>

@@ -135,6 +135,8 @@ namespace Nexus {
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_mark_notification_as_read(
         const Beam::HttpRequest& request);
+      Beam::HttpResponse on_mark_notification_as_unread(
+        const Beam::HttpRequest& request);
       Notification::Id on_monitor_notifications(
         WebServiceProtocolServer::ServiceProtocolClient& client,
         const Beam::DirectoryEntry& account);

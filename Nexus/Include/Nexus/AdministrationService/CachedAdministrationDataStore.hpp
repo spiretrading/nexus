@@ -82,6 +82,7 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const Notification::Id& id,
         Beam::SnapshotLimit limit, Notification::ReadState read_state);
       void mark_notification_as_read(const Notification::Id& id);
+      void mark_notification_as_unread(const Notification::Id& id);
       template<typename F>
       decltype(auto) with_transaction(F&& transaction);
       void close();
@@ -295,6 +296,12 @@ namespace Nexus {
   void CachedAdministrationDataStore<D>::mark_notification_as_read(
       const Notification::Id& id) {
     m_data_store->mark_notification_as_read(id);
+  }
+
+  template<IsAdministrationDataStore D>
+  void CachedAdministrationDataStore<D>::mark_notification_as_unread(
+      const Notification::Id& id) {
+    m_data_store->mark_notification_as_unread(id);
   }
 
   template<IsAdministrationDataStore D>

@@ -85,6 +85,7 @@ namespace Nexus {
       std::same_as<std::vector<Message::Id>>;
     store.store(std::declval<const Notification&>());
     store.mark_notification_as_read(std::declval<const Notification::Id&>());
+    store.mark_notification_as_unread(std::declval<const Notification::Id&>());
     { store.load_notifications(std::declval<const Beam::DirectoryEntry&>(),
         std::declval<const Notification::Id&>(),
         std::declval<Beam::SnapshotLimit>(),
@@ -366,6 +367,12 @@ namespace Nexus {
       void mark_notification_as_read(const Notification::Id& id);
 
       /**
+       * Marks a notification as unread.
+       * @param id The id of the notification to mark as unread.
+       */
+      void mark_notification_as_unread(const Notification::Id& id);
+
+      /**
        * Performs an atomic transaction.
        * @param transaction The transaction to perform.
        */
@@ -434,6 +441,8 @@ namespace Nexus {
           const Beam::DirectoryEntry& account, const Notification::Id& id,
           Beam::SnapshotLimit limit, Notification::ReadState read_state) = 0;
         virtual void mark_notification_as_read(const Notification::Id& id) = 0;
+        virtual void mark_notification_as_unread(
+          const Notification::Id& id) = 0;
         virtual void with_transaction(
           const std::function<void ()>& transaction) = 0;
         virtual void close() = 0;
@@ -501,6 +510,7 @@ namespace Nexus {
           Beam::SnapshotLimit limit,
           Notification::ReadState read_state) override;
         void mark_notification_as_read(const Notification::Id& id) override;
+        void mark_notification_as_unread(const Notification::Id& id) override;
         void with_transaction(
           const std::function<void ()>& transaction) override;
         void close() override;
@@ -683,6 +693,11 @@ namespace Nexus {
   inline void AdministrationDataStore::mark_notification_as_read(
       const Notification::Id& id) {
     m_data_store->mark_notification_as_read(id);
+  }
+
+  inline void AdministrationDataStore::mark_notification_as_unread(
+      const Notification::Id& id) {
+    m_data_store->mark_notification_as_unread(id);
   }
 
   template<std::invocable<> F>
@@ -901,6 +916,12 @@ namespace Nexus {
   void AdministrationDataStore::WrappedAdministrationDataStore<D>::
       mark_notification_as_read(const Notification::Id& id) {
     m_data_store->mark_notification_as_read(id);
+  }
+
+  template<typename D>
+  void AdministrationDataStore::WrappedAdministrationDataStore<D>::
+      mark_notification_as_unread(const Notification::Id& id) {
+    m_data_store->mark_notification_as_unread(id);
   }
 
   template<typename D>

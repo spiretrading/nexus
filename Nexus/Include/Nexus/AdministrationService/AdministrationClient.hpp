@@ -147,6 +147,8 @@ namespace Nexus {
           std::declval<Notification::ReadState>()) } ->
             std::same_as<std::vector<Notification>>;
       client.mark_notification_as_read(std::declval<const Notification::Id&>());
+      client.mark_notification_as_unread(
+        std::declval<const Notification::Id&>());
     };
 
   /** Provides a generic interface over an arbitrary AdministrationClient. */
@@ -478,6 +480,12 @@ namespace Nexus {
        */
       void mark_notification_as_read(const Notification::Id& id);
 
+      /**
+       * Marks a notification as unread.
+       * @param id The id of the notification to mark as unread.
+       */
+      void mark_notification_as_unread(const Notification::Id& id);
+
       void close();
 
     private:
@@ -571,6 +579,8 @@ namespace Nexus {
           const Beam::DirectoryEntry& account, const Notification::Id& id,
           Beam::SnapshotLimit limit, Notification::ReadState read_state) = 0;
         virtual void mark_notification_as_read(const Notification::Id& id) = 0;
+        virtual void mark_notification_as_unread(
+          const Notification::Id& id) = 0;
         virtual void close() = 0;
       };
       template<typename C>
@@ -663,6 +673,7 @@ namespace Nexus {
           Beam::SnapshotLimit limit,
           Notification::ReadState read_state) override;
         void mark_notification_as_read(const Notification::Id& id) override;
+        void mark_notification_as_unread(const Notification::Id& id) override;
         void close() override;
       };
       Beam::VirtualPtr<VirtualAdministrationClient> m_client;
@@ -916,6 +927,11 @@ namespace Nexus {
   inline void AdministrationClient::mark_notification_as_read(
       const Notification::Id& id) {
     m_client->mark_notification_as_read(id);
+  }
+
+  inline void AdministrationClient::mark_notification_as_unread(
+      const Notification::Id& id) {
+    m_client->mark_notification_as_unread(id);
   }
 
   inline void AdministrationClient::close() {
@@ -1186,6 +1202,12 @@ namespace Nexus {
   void AdministrationClient::WrappedAdministrationClient<C>::
       mark_notification_as_read(const Notification::Id& id) {
     m_client->mark_notification_as_read(id);
+  }
+
+  template<typename C>
+  void AdministrationClient::WrappedAdministrationClient<C>::
+      mark_notification_as_unread(const Notification::Id& id) {
+    m_client->mark_notification_as_unread(id);
   }
 
   template<typename C>

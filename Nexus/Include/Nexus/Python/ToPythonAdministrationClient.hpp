@@ -106,6 +106,7 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const Notification::Id& id,
         Beam::SnapshotLimit limit, Notification::ReadState read_state);
       void mark_notification_as_read(const Notification::Id& id);
+      void mark_notification_as_unread(const Notification::Id& id);
       void close();
 
     private:
@@ -429,6 +430,13 @@ namespace Nexus {
       const Notification::Id& id) {
     auto release = Beam::Python::GilRelease();
     m_client->mark_notification_as_read(id);
+  }
+
+  template<IsAdministrationClient C>
+  void ToPythonAdministrationClient<C>::mark_notification_as_unread(
+      const Notification::Id& id) {
+    auto release = Beam::Python::GilRelease();
+    m_client->mark_notification_as_unread(id);
   }
 
   template<IsAdministrationClient C>

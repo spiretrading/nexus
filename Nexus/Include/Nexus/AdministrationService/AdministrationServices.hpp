@@ -389,6 +389,14 @@ namespace Nexus {
      */
     (MarkNotificationAsReadService,
       "Nexus.AdministrationServices.MarkNotificationAsReadService",
+      void, (Notification::Id, id)),
+
+    /**
+     * Marks a notification as unread.
+     * @param id The id of the notification to mark as unread.
+     */
+    (MarkNotificationAsUnreadService,
+      "Nexus.AdministrationServices.MarkNotificationAsUnreadService",
       void, (Notification::Id, id)));
 
   BEAM_DEFINE_MESSAGES(administration_messages,

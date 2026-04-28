@@ -152,6 +152,9 @@ std::vector<HttpRequestSlot> AdministrationWebServlet::get_slots() {
   slots.emplace_back(matches_path(HttpMethod::POST,
     "/api/administration_service/mark_notification_as_read"), std::bind_front(
       &AdministrationWebServlet::on_mark_notification_as_read, this));
+  slots.emplace_back(matches_path(HttpMethod::POST,
+    "/api/administration_service/mark_notification_as_unread"), std::bind_front(
+      &AdministrationWebServlet::on_mark_notification_as_unread, this));
   return slots;
 }
 
@@ -985,6 +988,27 @@ HttpResponse AdministrationWebServlet::on_mark_notification_as_read(
   auto params = session->shuttle_parameters<Parameters>(request);
   auto& clients = session->get_clients();
   clients.get_administration_client().mark_notification_as_read(params.m_id);
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::on_mark_notification_as_unread(
+    const HttpRequest& request) {
+  struct Parameters {
+    Notification::Id m_id;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("id", m_id);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto params = session->shuttle_parameters<Parameters>(request);
+  auto& clients = session->get_clients();
+  clients.get_administration_client().mark_notification_as_unread(params.m_id);
   return response;
 }
 

@@ -70,6 +70,7 @@ namespace Nexus {
         AccountModificationRequest::Id id);
       void store(const Notification& notification);
       void mark_notification_as_read(const Notification::Id& id);
+      void mark_notification_as_unread(const Notification::Id& id);
       std::vector<Notification> load_notifications(
         const Beam::DirectoryEntry& account, const Notification::Id& id,
         Beam::SnapshotLimit limit, Notification::ReadState read_state);
@@ -345,6 +346,15 @@ namespace Nexus {
     auto i = std::ranges::find(all, id, &Notification::m_id);
     if(i != all.end()) {
       i->m_is_read = true;
+    }
+  }
+
+  inline void LocalAdministrationDataStore::mark_notification_as_unread(
+      const Notification::Id& id) {
+    auto all = m_notifications | std::views::values | std::views::join;
+    auto i = std::ranges::find(all, id, &Notification::m_id);
+    if(i != all.end()) {
+      i->m_is_read = false;
     }
   }
 
