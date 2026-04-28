@@ -18,6 +18,7 @@ CALL:configure dashboard_page_tester %*
 CALL:configure entitlements_page_tester %*
 CALL:configure group_info_page_tester %*
 CALL:configure group_page_tester %*
+CALL:configure group_profit_and_loss_page_tester %*
 CALL:configure loading_page_tester %*
 CALL:configure login_page_tester %*
 CALL:configure mock %*
