@@ -26,6 +26,14 @@ export class HttpNotificationsModel extends NotificationsModel {
   public monitorNotifications(
       queue: Beam.QueueWriter<Nexus.Notification>): void {
     this._model.monitorNotifications(queue);
+    this._model.loadNotifications(
+      Nexus.Notification.ReadState.UNREAD, {
+        query: '', categories: new Set(), startDate: null, endDate: null
+      }).then((notifications) => {
+        for(const notification of notifications) {
+          queue.push(notification);
+        }
+      });
   }
 
   public async loadNotifications(readStatus: Nexus.Notification.ReadState,
