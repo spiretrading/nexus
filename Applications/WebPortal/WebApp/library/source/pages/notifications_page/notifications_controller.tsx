@@ -78,11 +78,17 @@ export class NotificationsController extends
   public async componentDidMount(): Promise<void> {
     try {
       await this.props.model.load();
+      this.props.model.monitorNotifications(
+        this._tasks.getSlot<Nexus.Notification>(this.onNotification));
       this.setState({isLoaded: true});
       await this.loadNotifications();
     } catch {
       this.setState({cannotLoad: true});
     }
+  }
+
+  public componentWillUnmount(): void {
+    this._tasks.close();
   }
 
   public componentDidUpdate(): void {
@@ -175,6 +181,11 @@ export class NotificationsController extends
     }
   }
 
+  private onNotification = () => {
+    this.loadNotifications();
+  };
+
+  private _tasks = new Beam.AsyncWorkQueue();
   private _readStatus: Nexus.Notification.ReadState;
   private _filter: NotificationsFilter;
   private _pageIndex: number;
