@@ -13,6 +13,9 @@ import { NotificationsFilter } from './notifications_model';
 
 interface Properties {
 
+  /** The initial read status filter. */
+  readStatus: Nexus.Notification.ReadState;
+
   /** The current display status. */
   displayStatus: NotificationsPage.DisplayStatus;
 
@@ -56,7 +59,7 @@ export class NotificationsPage extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      readStatus: Nexus.Notification.ReadState.UNREAD,
+      readStatus: props.readStatus,
       filter: {
         query: '',
         categories: new Set<Nexus.Notification.Category>(),

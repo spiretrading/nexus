@@ -62,6 +62,7 @@ export class NotificationsController extends
     }
     return (
       <NotificationsPage
+        readStatus={this._readStatus}
         displayStatus={this.state.displayStatus}
         notifications={this.state.notifications}
         filteredCount={this.state.filteredCount}
