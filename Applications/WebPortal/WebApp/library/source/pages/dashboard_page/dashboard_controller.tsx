@@ -1,10 +1,12 @@
 import * as Beam from 'beam';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
 import * as Path from 'path-to-regexp';
 import { DisplaySize, LoadingPage, PageNotFoundPage } from '../..';
 import { AccountController, AccountDirectoryController, CreateAccountController,
-  GroupController, RequestsController } from '..';
+  getNotificationUrl, GroupController, NotificationsController,
+  RequestsController } from '..';
 import { DashboardModel } from './dashboard_model';
 import { DashboardPage } from './dashboard_page';
 import { SideMenu } from './side_menu';
@@ -25,6 +27,7 @@ interface State {
   isLoaded: boolean;
   cannotLoad: boolean;
   redirect: string;
+  notifications: Nexus.Notification[];
 }
 
 /** Implements the controller for the DashboardPage. */
@@ -34,8 +37,10 @@ export class DashboardController extends React.Component<Properties, State> {
     this.state = {
       isLoaded: false,
       cannotLoad: false,
-      redirect: null
+      redirect: null,
+      notifications: []
     };
+    this._tasks = new Beam.AsyncWorkQueue();
   }
 
   public render(): JSX.Element {
@@ -50,7 +55,10 @@ export class DashboardController extends React.Component<Properties, State> {
     }
     return (
       <DashboardPage roles={this.props.model.roles}
-          onSideMenuClick={this.onSideMenuClick}>
+          notifications={this.state.notifications}
+          onSideMenuClick={this.onSideMenuClick}
+          onDismissAll={this.onDismissAll}
+          onNotificationClick={this.onNotificationClick}>
         <Router.Switch>
           <Router.Route path='/account' render={this.renderAccountPage}/>
           <Router.Route path='/account_directory'
@@ -70,6 +78,10 @@ export class DashboardController extends React.Component<Properties, State> {
                 groupSuggestionModel={
                   this.props.model.accountDirectoryModel.groupSuggestionModel}
                 />}/>
+          <Router.Route path='/notifications'
+            render={(props) =>
+              <NotificationsController {...props}
+                model={this.props.model.notificationsModel}/>}/>
           <Router.Route path='/request_history'
             render={(props) =>
               <RequestsController {...props}
@@ -84,6 +96,8 @@ export class DashboardController extends React.Component<Properties, State> {
   public async componentDidMount(): Promise<void> {
     try {
       await this.props.model.load();
+      this.props.model.notificationsModel.monitorNotifications(
+        this._tasks.getSlot<Nexus.Notification>(this.onNotification));
       if(this.props.location.pathname === '/') {
         this.setState({isLoaded: true, redirect: '/account'});
       } else {
@@ -92,6 +106,10 @@ export class DashboardController extends React.Component<Properties, State> {
     } catch {
       this.setState({cannotLoad: true});
     }
+  }
+
+  public componentWillUnmount(): void {
+    this._tasks.close();
   }
 
   public componentDidUpdate(): void {
@@ -140,12 +158,47 @@ export class DashboardController extends React.Component<Properties, State> {
     return <PageNotFoundPage displaySize={this.props.displaySize}/>;
   }
 
+  private onNotification = (notification: Nexus.Notification) => {
+    this.setState((prev) => {
+      const existing = prev.notifications.findIndex(
+        (n) => n.id === notification.id);
+      if(existing !== -1) {
+        if(notification.isRead) {
+          const notifications = [...prev.notifications];
+          notifications.splice(existing, 1);
+          return {notifications};
+        }
+        return null;
+      }
+      if(notification.isRead) {
+        return null;
+      }
+      return {notifications: [notification, ...prev.notifications]};
+    });
+  };
+
+  private onNotificationClick = (notification: Nexus.Notification) => {
+    if(!notification.isRead) {
+      this.props.model.notificationsModel.markAsRead([notification.id]);
+    }
+    this.setState({redirect: getNotificationUrl(notification)});
+  };
+
+  private onDismissAll = () => {
+    if(this.state.notifications.length > 0) {
+      this.props.model.notificationsModel.markAllAsRead(
+        this.state.notifications[this.state.notifications.length - 1].id);
+    }
+    this.setState({notifications: []});
+  };
+
   private onSideMenuClick = (item: SideMenu.Item) => {
     if(item === SideMenu.Item.SIGN_OUT) {
       this.props.model.logout().then(this.props.onLogout);
     }
   }
 
+  private _tasks: Beam.AsyncWorkQueue;
   private static readonly ACCOUNT_PATTERN = Path.pathToRegexp(
     '/account/:id(\\d+)?', [], { end: false });
   private static readonly GROUP_PATTERN = Path.pathToRegexp(

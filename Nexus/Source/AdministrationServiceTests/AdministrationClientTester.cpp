@@ -155,16 +155,6 @@ TEST_SUITE("AdministrationClient") {
       });
   }
 
-  TEST_CASE("store_risk_parameters") {
-    auto account = DirectoryEntry::make_account(10, "risk_account");
-    auto risk_parameters = RiskParameters(USD, Money(1000),
-      RiskState(RiskState::Type::ACTIVE, ptime()), Money(500), seconds(60));
-    require_operation<TestAdministrationClient::StoreRiskParametersOperation>(
-      [&] (auto& client) {
-        client.store(account, risk_parameters);
-      });
-  }
-
   TEST_CASE("store_risk_state") {
     auto account = DirectoryEntry::make_account(11, "risk_state_account");
     auto risk_state = RiskState(RiskState::Type::DISABLED, ptime());
@@ -342,5 +332,84 @@ TEST_SUITE("AdministrationClient") {
         [&] (auto& client) {
           return client.send_account_modification_request_message(id, message);
         }, message);
+  }
+
+  TEST_CASE("send_notification") {
+    auto account = DirectoryEntry::make_account(23, "notified_account");
+    auto notification = Notification(
+      "abc-123", account, "Your request has been approved.",
+      "{\"request_id\":42}", Notification::Category::ACCOUNT_MODIFICATION,
+      time_from_string("2026-04-21 12:00:00"), false);
+    require_operation<TestAdministrationClient::SendNotificationOperation>(
+      [&] (auto& client) {
+        return client.send_notification(account,
+          "Your request has been approved.", "{\"request_id\":42}",
+          Notification::Category::ACCOUNT_MODIFICATION);
+      }, notification,
+      [&] (const auto& received) {
+        REQUIRE(received.m_id == notification.m_id);
+        REQUIRE(received.m_account == notification.m_account);
+        REQUIRE(received.m_description == notification.m_description);
+        REQUIRE(received.m_data == notification.m_data);
+        REQUIRE(received.m_category == notification.m_category);
+        REQUIRE(received.m_timestamp == notification.m_timestamp);
+        REQUIRE(received.m_is_read == notification.m_is_read);
+      });
+  }
+
+  TEST_CASE("monitor_notifications") {
+    auto account = DirectoryEntry::make_account(24, "monitored_account");
+    auto expected_last_id = Notification::Id("last-notification-id");
+    auto operations = std::make_shared<TestAdministrationClient::Queue>();
+    auto client = AdministrationClient(
+      std::in_place_type<TestAdministrationClient>, operations);
+    auto queue = std::make_shared<Queue<Notification>>();
+    auto future = std::async(std::launch::async, [&] {
+      return client.monitor_notifications(account, queue);
+    });
+    auto operation = operations->pop();
+    auto specific = std::get_if<
+      TestAdministrationClient::MonitorNotificationsOperation>(&*operation);
+    REQUIRE(specific);
+    specific->m_result.set(expected_last_id);
+    auto last_id = future.get();
+    REQUIRE(last_id == expected_last_id);
+  }
+
+  TEST_CASE("load_notifications") {
+    auto account = DirectoryEntry::make_account(25, "load_account");
+    auto notifications = std::vector<Notification>();
+    notifications.push_back(Notification("notif-1", account, "First.", "",
+      Notification::Category::REPORT, time_from_string("2026-04-21 10:00:00"),
+      false));
+    notifications.push_back(Notification("notif-2", account, "Second.", "",
+      Notification::Category::ACCOUNT_MODIFICATION,
+      time_from_string("2026-04-21 11:00:00"), true));
+    require_operation<TestAdministrationClient::LoadNotificationsOperation>(
+      [&] (auto& client) {
+        return client.load_notifications(
+          account, "", SnapshotLimit::UNLIMITED, Notification::ReadState::ALL);
+      }, notifications,
+      [&] (const auto& received) {
+        REQUIRE(received.size() == 2);
+        REQUIRE(received[0].m_id == "notif-1");
+        REQUIRE(received[1].m_id == "notif-2");
+      });
+  }
+
+  TEST_CASE("mark_notification_as_read") {
+    require_operation<
+      TestAdministrationClient::MarkNotificationAsReadOperation>(
+        [&] (auto& client) {
+          client.mark_notification_as_read("notif-1");
+        });
+  }
+
+  TEST_CASE("mark_notification_as_unread") {
+    require_operation<
+      TestAdministrationClient::MarkNotificationAsUnreadOperation>(
+        [&] (auto& client) {
+          client.mark_notification_as_unread("notif-1");
+        });
   }
 }

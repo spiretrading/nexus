@@ -53,8 +53,8 @@ namespace {
       m_administration_environment.make_administrator(servlet_account);
       m_service_locator.emplace(
         m_service_locator_environment.make_client("risk_service", ""));
-      grant_all_entitlements(
-        m_administration_environment, m_service_locator->get_account());
+      m_administration_environment.grant_all_entitlements(
+        m_service_locator->get_account());
       m_administration_client.emplace(
         m_administration_environment.make_client(Ref(*m_service_locator)));
       m_market_data_client.emplace(
@@ -82,22 +82,20 @@ TEST_SUITE("ConsolidatedRiskController") {
     consolidated_controller.get_risk_state_publisher().monitor(state_updates);
     auto account1 = fixture.m_service_locator_environment.get_root().
       make_account("trader", "", DirectoryEntry::STAR_DIRECTORY);
-    fixture.m_administration_environment.get_client().store(
+    fixture.m_administration_environment.store(
       account1, RiskParameters(USD, 100000 * Money::ONE,
         RiskState::Type::ACTIVE, 2 * Money::ONE, minutes(10)));
-    fixture.m_administration_environment.get_client().store(
-      account1, RiskState::Type::ACTIVE);
+    fixture.m_administration_client->store(account1, RiskState::Type::ACTIVE);
     fixture.m_accounts_queue->push(account1);
     auto state_entry = state_updates->pop();
     REQUIRE(state_entry.m_key == account1);
     REQUIRE(state_entry.m_value == RiskState::Type::ACTIVE);
     auto account2 = fixture.m_service_locator_environment.get_root().
       make_account("trader2", "", DirectoryEntry::STAR_DIRECTORY);
-    fixture.m_administration_environment.get_client().store(
+    fixture.m_administration_environment.store(
       account2, RiskParameters(USD, 50000 * Money::ONE, RiskState::Type::ACTIVE,
-        1 * Money::ONE, minutes(5)));
-    fixture.m_administration_environment.get_client().store(
-      account2, RiskState::Type::ACTIVE);
+        Money::ONE, minutes(5)));
+    fixture.m_administration_client->store(account2, RiskState::Type::ACTIVE);
     fixture.m_accounts_queue->push(account2);
     state_entry = state_updates->pop();
     REQUIRE(state_entry.m_key == account2);

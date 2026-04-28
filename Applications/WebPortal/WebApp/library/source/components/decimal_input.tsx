@@ -43,11 +43,11 @@ export class DecimalInput extends React.Component<Properties, State> {
         ref={this._inputRef}
         value={this.state.text}
         onKeyDown={this.onKeyDown} onWheel={this.onWheel}
-        onChange={this.onChange} onBlur={this.onBlur}/>);
+        onChange={this.onChange} onFocus={this.onFocus} onBlur={this.onBlur}/>);
   }
 
   public componentDidUpdate(prevProps: Properties) {
-    if(this.props.value !== prevProps.value) {
+    if(this.props.value !== prevProps.value && !this._isFocused) {
       this.setState({
         text: formatValue(this.props.value, this.props.decimalPlaces)
       });
@@ -85,12 +85,24 @@ export class DecimalInput extends React.Component<Properties, State> {
     }
   }
 
+  private onFocus = () => {
+    this._isFocused = true;
+  }
+
   private onChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     const text = event.target.value.replace(/[^0-9.\-]/g, '');
     this.setState({text});
+    const parsed = parseFloat(text);
+    if(!isNaN(parsed) && !text.endsWith('.') && !text.endsWith('-') &&
+        (this.props.min == null || parsed >= this.props.min) &&
+        (this.props.max == null || parsed <= this.props.max) &&
+        parsed !== this.props.value) {
+      this.props.onChange?.(parsed);
+    }
   }
 
   private onBlur = () => {
+    this._isFocused = false;
     if(this.state.text === '') {
       if(this.props.value != null) {
         this.props.onChange?.(undefined);
@@ -111,6 +123,10 @@ export class DecimalInput extends React.Component<Properties, State> {
     })();
     if(value !== this.props.value) {
       this.props.onChange?.(value);
+    } else {
+      this.setState({
+        text: formatValue(value, this.props.decimalPlaces)
+      });
     }
   }
 
@@ -137,6 +153,7 @@ export class DecimalInput extends React.Component<Properties, State> {
   }
 
   private _inputRef = React.createRef<HTMLInputElement>();
+  private _isFocused = false;
   private _start: number;
   private _end: number;
 }

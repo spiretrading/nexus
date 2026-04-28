@@ -90,11 +90,7 @@ namespace {
             Ref(*m_servlet_service_locator_client)))),
         m_server_connection, factory<std::unique_ptr<TriggerTimer>>());
       m_client_account = make_account("client", DirectoryEntry::STAR_DIRECTORY);
-      auto global_entitlement =
-        m_servlet_administration_client->load_entitlements().
-          get_entries().front().m_group_entry;
-      m_servlet_administration_client->store_entitlements(
-        m_client_account, {global_entitlement});
+      m_administration_environment.grant_all_entitlements(m_client_account);
       std::tie(m_client_account, m_client) = make_client("client");
     }
   };

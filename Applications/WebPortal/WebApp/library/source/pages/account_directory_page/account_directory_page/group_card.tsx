@@ -111,7 +111,7 @@ export class GroupCard extends React.Component<Properties, State> {
               displaySize={this.props.displaySize}
               account={account}
               filter={this.props.filter}
-              isOpen={true}/>);
+              isOpen/>);
         } else {
           accounts.push(
             <AccountEntryRow

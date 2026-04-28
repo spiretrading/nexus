@@ -59,6 +59,10 @@ std::vector<HttpRequestSlot> WebPortalServlet::get_slots() {
 std::vector<HttpUpgradeSlot<WebPortalServlet::WebSocketChannel>>
     WebPortalServlet::get_web_socket_slots() {
   auto slots = std::vector<HttpUpgradeSlot<WebSocketChannel>>();
+  auto administration_slots =
+    m_administration_servlet.get_web_socket_slots();
+  slots.insert(
+    slots.end(), administration_slots.begin(), administration_slots.end());
   auto risk_slots = m_risk_servlet.get_web_socket_slots();
   slots.insert(slots.end(), risk_slots.begin(), risk_slots.end());
   return slots;
