@@ -26,6 +26,9 @@ interface Properties {
   /** The current date for RelativeDate. */
   today?: Date;
 
+  /** Text to highlight in the description. */
+  highlight?: string;
+
   /** Additional inline styles for the link element. */
   style?: React.CSSProperties;
 
@@ -44,6 +47,9 @@ export function NotificationItem(props: Properties): JSX.Element {
   const onCheckboxClick = (checked: boolean) => {
     props.onSelect?.(checked);
   };
+  const onCheckboxContainerClick = (event: React.MouseEvent) => {
+    event.stopPropagation();
+  };
   const onLinkClick = (event: React.MouseEvent) => {
     if(props.onClick) {
       event.preventDefault();
@@ -55,7 +61,8 @@ export function NotificationItem(props: Properties): JSX.Element {
         onClick={onLinkClick}
         className={css(STYLES.link, hideIndicator && STYLES.linkHideIndicator,
           isSelected && STYLES.linkSelected)}>
-      <div className={css(STYLES.checkboxContainer)}>
+      <div className={css(STYLES.checkboxContainer)}
+          onClick={onCheckboxContainerClick}>
         <Checkbox checked={isSelected} onClick={onCheckboxClick}/>
       </div>
       <div className={css(STYLES.body)}>
@@ -67,7 +74,7 @@ export function NotificationItem(props: Properties): JSX.Element {
             </div>}
           <h2 className={css(STYLES.description,
               isUnread && STYLES.descriptionUnread)}>
-            {props.description}
+            {highlightText(props.description, props.highlight)}
           </h2>
         </div>
         <div className={css(STYLES.dateSpacer)}/>
@@ -76,6 +83,24 @@ export function NotificationItem(props: Properties): JSX.Element {
         </div>
       </div>
     </a>);
+}
+
+function highlightText(
+    text: string, highlight: string): React.ReactNode {
+  if(!highlight) {
+    return text;
+  }
+  const escaped = highlight.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const parts = text.split(new RegExp(`(${escaped})`, 'gi'));
+  if(parts.length === 1) {
+    return text;
+  }
+  return parts.map((part, i) => {
+    if(part.toLowerCase() === highlight.toLowerCase()) {
+      return <mark key={i} className={css(STYLES.highlight)}>{part}</mark>;
+    }
+    return part;
+  });
 }
 
 const STYLES = StyleSheet.create({
@@ -178,5 +203,10 @@ const STYLES = StyleSheet.create({
     '@container (min-width: 768px)': {
       textTransform: 'none'
     }
+  },
+  highlight: {
+    backgroundColor: '#FFF7C4',
+    color: 'inherit',
+    borderRadius: '1px'
   }
 });

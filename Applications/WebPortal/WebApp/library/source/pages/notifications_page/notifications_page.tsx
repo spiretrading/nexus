@@ -49,7 +49,6 @@ interface Properties {
 }
 
 interface State {
-  readStatus: Nexus.Notification.ReadState;
   filter: NotificationsFilter;
   isFilterModalOpen: boolean;
 }
@@ -59,7 +58,6 @@ export class NotificationsPage extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      readStatus: props.readStatus,
       filter: {
         query: '',
         categories: new Set<Nexus.Notification.Category>(),
@@ -75,7 +73,7 @@ export class NotificationsPage extends React.Component<Properties, State> {
       <PageLayout>
         <main ref={this._mainRef} className={css(STYLES.main)}>
           <Toolbar
-            readStatus={this.state.readStatus}
+            readStatus={this.props.readStatus}
             filter={this.state.filter}
             isFilterModalOpen={this.state.isFilterModalOpen}
             onQueryChange={this.onQueryChange}
@@ -91,11 +89,12 @@ export class NotificationsPage extends React.Component<Properties, State> {
             displayStatus={this.props.displayStatus}
             notifications={this.props.notifications}
             selected={this.props.selected}
-            readStatus={this.state.readStatus}
+            readStatus={this.props.readStatus}
             hasFilters={this.state.filter.query.length > 0 ||
               this.state.filter.categories.size > 0 ||
               this.state.filter.startDate != null ||
               this.state.filter.endDate != null}
+            query={this.state.filter.query}
             filteredCount={this.props.filteredCount}
             pageIndex={this.props.pageIndex}
             onSelectionChange={this.props.onSelectionChange}
@@ -115,11 +114,10 @@ export class NotificationsPage extends React.Component<Properties, State> {
   private onQueryChange = (query: string) => {
     const filter = {...this.state.filter, query};
     this.setState({filter});
-    this.submit(this.state.readStatus, filter);
+    this.submit(this.props.readStatus, filter);
   };
 
   private onReadStatusChange = (readStatus: Nexus.Notification.ReadState) => {
-    this.setState({readStatus});
     this.submit(readStatus, this.state.filter);
   };
 
@@ -133,19 +131,19 @@ export class NotificationsPage extends React.Component<Properties, State> {
     }
     const filter = {...this.state.filter, categories};
     this.setState({filter});
-    this.submit(this.state.readStatus, filter);
+    this.submit(this.props.readStatus, filter);
   };
 
   private onStartDateChange = (startDate: Beam.Date) => {
     const filter = {...this.state.filter, startDate};
     this.setState({filter});
-    this.submit(this.state.readStatus, filter);
+    this.submit(this.props.readStatus, filter);
   };
 
   private onEndDateChange = (endDate: Beam.Date) => {
     const filter = {...this.state.filter, endDate};
     this.setState({filter});
-    this.submit(this.state.readStatus, filter);
+    this.submit(this.props.readStatus, filter);
   };
 
   private onOpenFilterModal = () => {
@@ -158,7 +156,7 @@ export class NotificationsPage extends React.Component<Properties, State> {
 
   private onFilterSubmit = (submitted: NotificationsFilter) => {
     this.setState({filter: submitted, isFilterModalOpen: false});
-    this.submit(this.state.readStatus, submitted);
+    this.submit(this.props.readStatus, submitted);
   };
 
   private onPageNavigate = (pageIndex: number) => {
@@ -168,7 +166,7 @@ export class NotificationsPage extends React.Component<Properties, State> {
       element = element.parentElement;
     }
     element?.scrollTo(0, 0);
-    this.props.onSubmit?.(this.state.readStatus, this.state.filter, pageIndex);
+    this.props.onSubmit?.(this.props.readStatus, this.state.filter, pageIndex);
   };
 
   private _mainRef = React.createRef<HTMLElement>();
@@ -233,6 +231,7 @@ function NarrowToolbar(props: {
         </div>
         <div className={css(STYLES.narrowFiltersGap)}/>
         <IconLabelButton
+          aria-label='Filters'
           icon='resources/notifications_page/filters.svg'
           label='Filters'
           onClick={props.onOpenFilterModal}/>
@@ -312,6 +311,7 @@ function QueryAndDate(props: {
       <DateCreated
         startDate={props.filter.startDate}
         endDate={props.filter.endDate}
+        error={isInvalid}
         onStartDateChange={props.onStartDateChange}
         onEndDateChange={props.onEndDateChange}/>
       <ErrorSection isInvalid={isInvalid}/>
@@ -341,6 +341,7 @@ function Categories(props: {
 function DateCreated(props: {
     startDate: Beam.Date;
     endDate: Beam.Date;
+    error?: boolean;
     onStartDateChange?: (date: Beam.Date) => void;
     onEndDateChange?: (date: Beam.Date) => void;
   }): JSX.Element {
@@ -359,6 +360,7 @@ function DateCreated(props: {
       </label>
       <div className={css(STYLES.dateLabelGap)}/>
       <DateInput id='end-date' value={props.endDate}
+        error={props.error}
         onChange={props.onEndDateChange}
         className={css(STYLES.dateInput)}/>
     </fieldset>);
@@ -399,6 +401,7 @@ function NotificationsContent(props: {
     selected: Set<Nexus.Notification.Id>;
     readStatus: Nexus.Notification.ReadState;
     hasFilters: boolean;
+    query: string;
     filteredCount: number;
     pageIndex: number;
     onSelectionChange?: (selected: Set<Nexus.Notification.Id>) => void;
@@ -424,6 +427,7 @@ function NotificationsContent(props: {
         displayStatus={props.displayStatus}
         notifications={props.notifications}
         selected={props.selected}
+        query={props.query}
         onSelectionChange={props.onSelectionChange}
         onMarkAsRead={props.onMarkAsRead}
         onMarkAsUnread={props.onMarkAsUnread}
@@ -440,13 +444,16 @@ function NotificationsSection(props: {
     displayStatus: NotificationsPage.DisplayStatus;
     notifications: Nexus.Notification[];
     selected: Set<Nexus.Notification.Id>;
+    query: string;
     onSelectionChange?: (selected: Set<Nexus.Notification.Id>) => void;
     onMarkAsRead?: () => void;
     onMarkAsUnread?: () => void;
     onNotificationClick?: (notification: Nexus.Notification) => void;
   }): JSX.Element {
+  const hasSelection = props.selected.size > 0;
   const isAllSelected = props.notifications.length > 0 &&
     props.notifications.every((n) => props.selected.has(n.id));
+  const isIndeterminate = hasSelection && !isAllSelected;
   const onSelectAll = () => {
     if(isAllSelected) {
       props.onSelectionChange?.(new Set());
@@ -460,6 +467,7 @@ function NotificationsSection(props: {
       <div className={css(STYLES.selectionControlsContainer)}>
         <SelectionControls
           isAllSelected={isAllSelected}
+          isIndeterminate={isIndeterminate}
           hasSelectedUnread={props.notifications.some(
             (n) => props.selected.has(n.id) && !n.isRead)}
           hasSelectedRead={props.notifications.some(
@@ -472,6 +480,7 @@ function NotificationsSection(props: {
         displayStatus={props.displayStatus}
         notifications={props.notifications}
         selected={props.selected}
+        query={props.query}
         onSelectionChange={props.onSelectionChange}
         onNotificationClick={props.onNotificationClick}/>
     </div>);
@@ -479,6 +488,7 @@ function NotificationsSection(props: {
 
 function SelectionControls(props: {
     isAllSelected: boolean;
+    isIndeterminate: boolean;
     hasSelectedUnread: boolean;
     hasSelectedRead: boolean;
     onSelectAll?: () => void;
@@ -488,6 +498,7 @@ function SelectionControls(props: {
   return (
     <div className={css(STYLES.selectionControls)}>
       <Checkbox checked={props.isAllSelected}
+        indeterminate={props.isIndeterminate}
         onClick={props.onSelectAll}/>
       <div className={css(STYLES.selectionControlsGap1)}/>
       <IconLabelButton icon='' label='Mark as Read'
@@ -506,6 +517,7 @@ function NotificationsList(props: {
     displayStatus: NotificationsPage.DisplayStatus;
     notifications: Nexus.Notification[];
     selected: Set<Nexus.Notification.Id>;
+    query: string;
     onSelectionChange?: (selected: Set<Nexus.Notification.Id>) => void;
     onNotificationClick?: (notification: Nexus.Notification) => void;
   }): JSX.Element {
@@ -538,6 +550,7 @@ function NotificationsList(props: {
             url={getNotificationUrl(notification)}
             isUnread={!notification.isRead}
             isSelected={props.selected.has(notification.id)}
+            highlight={props.query}
             onClick={() => props.onNotificationClick?.(notification)}
             onSelect={(isSelected) =>
               onSelect(notification.id, isSelected)}
@@ -735,7 +748,8 @@ const STYLES = StyleSheet.create({
   selectionControls: {
     display: 'flex',
     alignItems: 'center',
-    height: '50px'
+    padding: '8px 18px 7px',
+    borderBottom: '1px solid #E6E6E6'
   },
   selectionControlsGap1: {
     width: '10px',

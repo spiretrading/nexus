@@ -18,6 +18,7 @@ interface State {
   isLoaded: boolean;
   cannotLoad: boolean;
   redirect: string;
+  readStatus: Nexus.Notification.ReadState;
   displayStatus: NotificationsPage.DisplayStatus;
   notifications: Nexus.Notification[];
   filteredCount: number;
@@ -39,6 +40,7 @@ export class NotificationsController extends
       isLoaded: false,
       cannotLoad: false,
       redirect: null,
+      readStatus: parsed.readStatus,
       displayStatus: NotificationsPage.DisplayStatus.IN_PROGRESS,
       notifications: [],
       filteredCount: 0,
@@ -62,7 +64,7 @@ export class NotificationsController extends
     }
     return (
       <NotificationsPage
-        readStatus={this._readStatus}
+        readStatus={this.state.readStatus}
         displayStatus={this.state.displayStatus}
         notifications={this.state.notifications}
         filteredCount={this.state.filteredCount}
@@ -103,6 +105,7 @@ export class NotificationsController extends
     this._filter = filter;
     this._pageIndex = pageIndex;
     this.setState({
+      readStatus,
       displayStatus: NotificationsPage.DisplayStatus.IN_PROGRESS,
       pageIndex,
       selected: new Set()
