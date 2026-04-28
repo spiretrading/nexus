@@ -765,6 +765,57 @@ namespace Nexus::Tests {
       REQUIRE(read[0].m_id == "hhh-001");
     }
 
+    SUBCASE("mark_notification_as_unread") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      data_store.with_transaction([&] {
+        data_store.store(Notification(
+          "jjj-001", account, "Read.", "", Notification::Category::REPORT,
+          time_from_string("2026-04-21 10:00:00"), true));
+        data_store.store(Notification(
+          "jjj-002", account, "Also read.", "", Notification::Category::REPORT,
+          time_from_string("2026-04-21 11:00:00"), true));
+      });
+      data_store.with_transaction([&] {
+        data_store.mark_notification_as_unread("jjj-001");
+      });
+      auto all = data_store.with_transaction([&] {
+        return data_store.load_notifications(
+          account, "", SnapshotLimit::UNLIMITED, Notification::ReadState::ALL);
+      });
+      REQUIRE(all.size() == 2);
+      REQUIRE(all[0].m_id == "jjj-001");
+      REQUIRE(!all[0].m_is_read);
+      REQUIRE(all[1].m_id == "jjj-002");
+      REQUIRE(all[1].m_is_read);
+    }
+
+    SUBCASE("mark_notification_as_unread_filters") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      data_store.with_transaction([&] {
+        data_store.store(Notification(
+          "kkk-001", account, "First.", "", Notification::Category::REPORT,
+          time_from_string("2026-04-21 10:00:00"), true));
+        data_store.store(Notification(
+          "kkk-002", account, "Second.", "", Notification::Category::REPORT,
+          time_from_string("2026-04-21 11:00:00"), true));
+      });
+      data_store.with_transaction([&] {
+        data_store.mark_notification_as_unread("kkk-001");
+      });
+      auto unread = data_store.with_transaction([&] {
+        return data_store.load_notifications(account, "",
+          SnapshotLimit::UNLIMITED, Notification::ReadState::UNREAD);
+      });
+      REQUIRE(unread.size() == 1);
+      REQUIRE(unread[0].m_id == "kkk-001");
+      auto read = data_store.with_transaction([&] {
+        return data_store.load_notifications(account, "",
+          SnapshotLimit::UNLIMITED, Notification::ReadState::READ);
+      });
+      REQUIRE(read.size() == 1);
+      REQUIRE(read[0].m_id == "kkk-002");
+    }
+
     SUBCASE("load_notification_helper") {
       auto account = DirectoryEntry::make_account(100, "user_a");
       data_store.with_transaction([&] {

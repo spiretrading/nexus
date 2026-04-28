@@ -858,4 +858,14 @@ TEST_SUITE("ServiceAdministrationClient") {
       });
     REQUIRE_NOTHROW(fixture.m_client->mark_notification_as_read("notif-1"));
   }
+
+  TEST_CASE("mark_notification_as_unread") {
+    auto fixture = Fixture();
+    fixture.on_request<MarkNotificationAsUnreadService>(
+      [&] (auto& request, const auto& received_id) {
+        REQUIRE(received_id == "notif-1");
+        request.set();
+      });
+    REQUIRE_NOTHROW(fixture.m_client->mark_notification_as_unread("notif-1"));
+  }
 }

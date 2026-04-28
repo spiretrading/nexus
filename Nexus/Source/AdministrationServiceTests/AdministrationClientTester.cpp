@@ -404,4 +404,12 @@ TEST_SUITE("AdministrationClient") {
           client.mark_notification_as_read("notif-1");
         });
   }
+
+  TEST_CASE("mark_notification_as_unread") {
+    require_operation<
+      TestAdministrationClient::MarkNotificationAsUnreadOperation>(
+        [&] (auto& client) {
+          client.mark_notification_as_unread("notif-1");
+        });
+  }
 }
