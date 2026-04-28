@@ -5,7 +5,8 @@ import * as Router from 'react-router-dom';
 import * as Path from 'path-to-regexp';
 import { DisplaySize, LoadingPage, PageNotFoundPage } from '../..';
 import { AccountController, AccountDirectoryController, CreateAccountController,
-  GroupController, RequestsController } from '..';
+  getNotificationUrl, GroupController, NotificationsController,
+  RequestsController } from '..';
 import { DashboardModel } from './dashboard_model';
 import { DashboardPage } from './dashboard_page';
 import { SideMenu } from './side_menu';
@@ -77,6 +78,10 @@ export class DashboardController extends React.Component<Properties, State> {
                 groupSuggestionModel={
                   this.props.model.accountDirectoryModel.groupSuggestionModel}
                 />}/>
+          <Router.Route path='/notifications'
+            render={(props) =>
+              <NotificationsController {...props}
+                model={this.props.model.notificationsModel}/>}/>
           <Router.Route path='/request_history'
             render={(props) =>
               <RequestsController {...props}
@@ -176,6 +181,7 @@ export class DashboardController extends React.Component<Properties, State> {
     if(!notification.isRead) {
       this.props.model.notificationsModel.markAsRead([notification.id]);
     }
+    this.setState({redirect: getNotificationUrl(notification)});
   };
 
   private onDismissAll = () => {

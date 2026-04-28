@@ -44,9 +44,15 @@ export function NotificationItem(props: Properties): JSX.Element {
   const onCheckboxClick = (checked: boolean) => {
     props.onSelect?.(checked);
   };
+  const onLinkClick = (event: React.MouseEvent) => {
+    if(props.onClick) {
+      event.preventDefault();
+      props.onClick();
+    }
+  };
   return (
     <a href={props.url} style={props.style}
-        onClick={props.onClick}
+        onClick={onLinkClick}
         className={css(STYLES.link, hideIndicator && STYLES.linkHideIndicator,
           isSelected && STYLES.linkSelected)}>
       <div className={css(STYLES.checkboxContainer)}>

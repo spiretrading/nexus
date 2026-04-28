@@ -70,7 +70,7 @@ export class NotificationsPage extends React.Component<Properties, State> {
   public render(): JSX.Element {
     return (
       <PageLayout>
-        <main className={css(STYLES.main)}>
+        <main ref={this._mainRef} className={css(STYLES.main)}>
           <Toolbar
             readStatus={this.state.readStatus}
             filter={this.state.filter}
@@ -98,7 +98,8 @@ export class NotificationsPage extends React.Component<Properties, State> {
             onSelectionChange={this.props.onSelectionChange}
             onMarkAsRead={this.props.onMarkAsRead}
             onMarkAsUnread={this.props.onMarkAsUnread}
-            onPageNavigate={this.onPageNavigate}/>
+            onPageNavigate={this.onPageNavigate}
+            onNotificationClick={this.props.onNotificationClick}/>
         </main>
       </PageLayout>);
   }
@@ -158,8 +159,16 @@ export class NotificationsPage extends React.Component<Properties, State> {
   };
 
   private onPageNavigate = (pageIndex: number) => {
+    let element = this._mainRef.current?.parentElement;
+    while(element && element.scrollTop === 0 &&
+        element !== document.documentElement) {
+      element = element.parentElement;
+    }
+    element?.scrollTo(0, 0);
     this.props.onSubmit?.(this.state.readStatus, this.state.filter, pageIndex);
   };
+
+  private _mainRef = React.createRef<HTMLElement>();
 }
 
 function Toolbar(props: {
@@ -393,6 +402,7 @@ function NotificationsContent(props: {
     onMarkAsRead?: () => void;
     onMarkAsUnread?: () => void;
     onPageNavigate?: (pageIndex: number) => void;
+    onNotificationClick?: (notification: Nexus.Notification) => void;
   }): JSX.Element {
   const isFallback =
     props.displayStatus === NotificationsPage.DisplayStatus.ERROR ||
@@ -413,7 +423,8 @@ function NotificationsContent(props: {
         selected={props.selected}
         onSelectionChange={props.onSelectionChange}
         onMarkAsRead={props.onMarkAsRead}
-        onMarkAsUnread={props.onMarkAsUnread}/>
+        onMarkAsUnread={props.onMarkAsUnread}
+        onNotificationClick={props.onNotificationClick}/>
       <PaginationSection
         displayStatus={props.displayStatus}
         filteredCount={props.filteredCount}
@@ -429,6 +440,7 @@ function NotificationsSection(props: {
     onSelectionChange?: (selected: Set<Nexus.Notification.Id>) => void;
     onMarkAsRead?: () => void;
     onMarkAsUnread?: () => void;
+    onNotificationClick?: (notification: Nexus.Notification) => void;
   }): JSX.Element {
   const isAllSelected = props.notifications.length > 0 &&
     props.notifications.every((n) => props.selected.has(n.id));
@@ -453,7 +465,8 @@ function NotificationsSection(props: {
         displayStatus={props.displayStatus}
         notifications={props.notifications}
         selected={props.selected}
-        onSelectionChange={props.onSelectionChange}/>
+        onSelectionChange={props.onSelectionChange}
+        onNotificationClick={props.onNotificationClick}/>
     </div>);
 }
 
@@ -483,6 +496,7 @@ function NotificationsList(props: {
     notifications: Nexus.Notification[];
     selected: Set<Nexus.Notification.Id>;
     onSelectionChange?: (selected: Set<Nexus.Notification.Id>) => void;
+    onNotificationClick?: (notification: Nexus.Notification) => void;
   }): JSX.Element {
   const isLoading =
     props.displayStatus === NotificationsPage.DisplayStatus.IN_PROGRESS;
@@ -502,9 +516,10 @@ function NotificationsList(props: {
     }
     props.onSelectionChange?.(next);
   };
+  const lastIndex = props.notifications.length - 1;
   return (
     <ul className={css(STYLES.notificationsList)}>
-      {props.notifications.map((notification) =>
+      {props.notifications.map((notification, i) =>
         <li key={notification.id}>
           <NotificationItem
             description={notification.description}
@@ -512,8 +527,11 @@ function NotificationsList(props: {
             url={getNotificationUrl(notification)}
             isUnread={!notification.isRead}
             isSelected={props.selected.has(notification.id)}
+            onClick={() => props.onNotificationClick?.(notification)}
             onSelect={(isSelected) =>
-              onSelect(notification.id, isSelected)}/>
+              onSelect(notification.id, isSelected)}
+            style={i === lastIndex ?
+              {borderBottomColor: 'transparent'} : undefined}/>
         </li>)}
     </ul>);
 }

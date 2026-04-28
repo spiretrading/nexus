@@ -26,8 +26,8 @@ interface State {
 }
 
 /** Implements a controller for the NotificationsPage. */
-export class NotificationsController
-    extends React.Component<Properties, State> {
+export class NotificationsController extends
+    React.Component<Properties, State> {
 
   /** The maximum number of notifications displayed per page. */
   public static readonly PAGE_SIZE = 50;
@@ -143,14 +143,13 @@ export class NotificationsController
     this.setState({redirect: getNotificationUrl(notification)});
   };
 
-  private async loadNotifications(
-      readStatus?: Nexus.Notification.ReadState,
+  private async loadNotifications(readStatus?: Nexus.Notification.ReadState,
       filter?: NotificationsFilter): Promise<void> {
-    const rs = readStatus ?? this._readStatus;
-    const f = filter ?? this._filter;
+    const effectiveReadStatus = readStatus ?? this._readStatus;
+    const effectiveFilter = filter ?? this._filter;
     try {
-      const allNotifications =
-        await this.props.model.loadNotifications(rs, f);
+      const allNotifications = await this.props.model.loadNotifications(
+        effectiveReadStatus, effectiveFilter);
       const displayStatus = (() => {
         if(this.props.model.totalCount === 0) {
           return NotificationsPage.DisplayStatus.EMPTY;
@@ -161,7 +160,8 @@ export class NotificationsController
         return NotificationsPage.DisplayStatus.READY;
       })();
       const start = this._pageIndex * NotificationsController.PAGE_SIZE;
-      const notifications = allNotifications.slice(start, start + NotificationsController.PAGE_SIZE);
+      const notifications = allNotifications.slice(
+        start, start + NotificationsController.PAGE_SIZE);
       this.setState({
         displayStatus,
         notifications,
@@ -205,20 +205,19 @@ function toSearch(readStatus: Nexus.Notification.ReadState,
 }
 
 function parseSearch(search: string): {
-    readStatus: Nexus.Notification.ReadState;
-    filter: NotificationsFilter;
-    pageIndex: number;
-  } {
+      readStatus: Nexus.Notification.ReadState;
+      filter: NotificationsFilter;
+      pageIndex: number;
+    } {
   const params = new URLSearchParams(search);
   const readStatus = params.get('status') === 'all' ?
     Nexus.Notification.ReadState.ALL : Nexus.Notification.ReadState.UNREAD;
   const query = params.get('q') ?? '';
-  const categories =
-    new Set<Nexus.Notification.Category>(
-      (params.get('cat') ?? '').split(',')
-        .map(s => parseInt(s, 10))
-        .filter(n => !isNaN(n) &&
-          n >= Nexus.Notification.Category.ACCOUNT_MODIFICATION &&
+  const categories = new Set<Nexus.Notification.Category>(
+    (params.get('cat') ?? '').split(',').
+      map(s => parseInt(s, 10)).
+      filter(n => !isNaN(n) &&
+        n >= Nexus.Notification.Category.ACCOUNT_MODIFICATION &&
           n <= Nexus.Notification.Category.REPORT));
   const startDate = params.has('from') ?
     Beam.Date.fromJson(params.get('from')) : null;
