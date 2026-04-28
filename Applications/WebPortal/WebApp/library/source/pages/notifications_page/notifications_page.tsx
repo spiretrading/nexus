@@ -97,7 +97,8 @@ export class NotificationsPage extends React.Component<Properties, State> {
             pageIndex={this.props.pageIndex}
             onSelectionChange={this.props.onSelectionChange}
             onMarkAsRead={this.props.onMarkAsRead}
-            onMarkAsUnread={this.props.onMarkAsUnread}/>
+            onMarkAsUnread={this.props.onMarkAsUnread}
+            onPageNavigate={this.onPageNavigate}/>
         </main>
       </PageLayout>);
   }
@@ -154,6 +155,10 @@ export class NotificationsPage extends React.Component<Properties, State> {
   private onFilterSubmit = (submitted: NotificationsFilter) => {
     this.setState({filter: submitted, isFilterModalOpen: false});
     this.submit(this.state.readStatus, submitted);
+  };
+
+  private onPageNavigate = (pageIndex: number) => {
+    this.props.onSubmit?.(this.state.readStatus, this.state.filter, pageIndex);
   };
 }
 
@@ -387,6 +392,7 @@ function NotificationsContent(props: {
     onSelectionChange?: (selected: Set<Nexus.Notification.Id>) => void;
     onMarkAsRead?: () => void;
     onMarkAsUnread?: () => void;
+    onPageNavigate?: (pageIndex: number) => void;
   }): JSX.Element {
   const isFallback =
     props.displayStatus === NotificationsPage.DisplayStatus.ERROR ||
@@ -411,7 +417,8 @@ function NotificationsContent(props: {
       <PaginationSection
         displayStatus={props.displayStatus}
         filteredCount={props.filteredCount}
-        pageIndex={props.pageIndex}/>
+        pageIndex={props.pageIndex}
+        onNavigate={props.onPageNavigate}/>
     </>);
 }
 
@@ -515,6 +522,7 @@ function PaginationSection(props: {
     displayStatus: NotificationsPage.DisplayStatus;
     filteredCount: number;
     pageIndex: number;
+    onNavigate?: (pageIndex: number) => void;
   }): JSX.Element {
   const isHidden =
     props.displayStatus === NotificationsPage.DisplayStatus.IN_PROGRESS ||
@@ -524,7 +532,8 @@ function PaginationSection(props: {
         isHidden && STYLES.paginationSectionHidden)}>
       <div className={css(STYLES.paginationGap)}/>
       <Pagination pageIndex={props.pageIndex}
-        totalCount={props.filteredCount}/>
+        totalCount={props.filteredCount}
+        onNavigate={props.onNavigate}/>
     </div>);
 }
 
