@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { PageLayout, Select } from '../../..';
+import { Button, PageLayout, Select } from '../../..';
 
 interface Properties {
 
@@ -308,8 +308,25 @@ class Form extends React.Component<FormProperties> {
         <CustomDates isOpen={isCustom}/>
         <DateFilter/>
         <StatusFeedback/>
-        <ActionsAndStatus/>
-        {!hideActionSheet && <ActionSheet/>}
+        <ActionsAndStatus
+            status={this.props.status}
+            accounts={this.props.accounts}
+            filepath={this.props.filepath}
+            isDateRangeValid={isDateRangeValid}
+            startDate={this.props.startDate}
+            endDate={this.props.endDate}
+            onSubmit={this.props.onSubmit}
+            onCancel={this.props.onCancel}/>
+        {!hideActionSheet &&
+          <ActionSheet
+            status={this.props.status}
+            accounts={this.props.accounts}
+            filepath={this.props.filepath}
+            isDateRangeValid={isDateRangeValid}
+            startDate={this.props.startDate}
+            endDate={this.props.endDate}
+            onSubmit={this.props.onSubmit}
+            onCancel={this.props.onCancel}/>}
       </form>);
   }
 
@@ -328,13 +345,118 @@ function StatusFeedback(): JSX.Element {
   return <div className={css(STYLES.statusFeedback)}/>;
 }
 
-function ActionsAndStatus(): JSX.Element {
-  return <div className={css(STYLES.actionsAndStatus)}/>;
+function ActionsAndStatus(props: {
+      status: GroupProfitAndLossPage.Status;
+      accounts: GroupProfitAndLossPage.AccountEntry[];
+      filepath: string;
+      isDateRangeValid: boolean;
+      startDate: Beam.Date;
+      endDate: Beam.Date;
+      onSubmit?: (start: Beam.Date, end: Beam.Date) => void;
+      onCancel?: () => void;
+    }): JSX.Element {
+  const isLoading = props.status === GroupProfitAndLossPage.Status.IN_PROGRESS;
+  const isReady = props.status === GroupProfitAndLossPage.Status.READY;
+  const isStale = props.status === GroupProfitAndLossPage.Status.STALE;
+  const isEmpty = props.status === GroupProfitAndLossPage.Status.EMPTY;
+  const isNoResults = props.status === GroupProfitAndLossPage.Status.NO_RESULTS;
+  const hasData = props.accounts.length > 0;
+  const applyDisabled = isReady || isNoResults || !props.isDateRangeValid;
+  const downloadDisabled = isEmpty || isNoResults || isLoading;
+  const filename =
+    `group-pl-${props.startDate.toJson()}-${props.endDate.toJson()}.csv`;
+  const onApply = () => {
+    if(props.isDateRangeValid) {
+      props.onSubmit?.(props.startDate, props.endDate);
+    }
+  };
+  const showStatus = !isEmpty && !isNoResults && !(isStale && !hasData);
+  return (
+    <div className={css(STYLES.actionsAndStatus)}>
+      <div className={css(STYLES.buttonRow)}>
+        {isLoading ?
+          <>
+            <Button label='Apply' type='submit' disabled={applyDisabled}
+              style={BUTTON_STYLE}/>
+            <Button label='Cancel' type='button' style={BUTTON_STYLE}
+              onClick={props.onCancel}/>
+          </> :
+          <>
+            <Button label='Apply' type='submit' disabled={applyDisabled}
+              style={BUTTON_STYLE}
+              aria-describedby={isStale ? 'report-status' : undefined}/>
+            <a download={downloadDisabled ? undefined : filename}
+              href={downloadDisabled ? undefined : props.filepath}
+              className={css(STYLES.downloadLink,
+                downloadDisabled && STYLES.downloadLinkDisabled)}
+              aria-disabled={downloadDisabled || undefined}>
+              Download
+            </a>
+          </>}
+      </div>
+      {showStatus && <div className={css(STYLES.desktopStatusFeedback)}/>}
+    </div>);
 }
 
-function ActionSheet(): JSX.Element {
-  return <section className={css(STYLES.actionSheet)}/>;
+function ActionSheet(props: {
+      status: GroupProfitAndLossPage.Status;
+      accounts: GroupProfitAndLossPage.AccountEntry[];
+      filepath: string;
+      isDateRangeValid: boolean;
+      startDate: Beam.Date;
+      endDate: Beam.Date;
+      onSubmit?: (start: Beam.Date, end: Beam.Date) => void;
+      onCancel?: () => void;
+    }): JSX.Element {
+  const isLoading = props.status === GroupProfitAndLossPage.Status.IN_PROGRESS;
+  const isReady = props.status === GroupProfitAndLossPage.Status.READY;
+  const isStale = props.status === GroupProfitAndLossPage.Status.STALE;
+  const hasData = props.accounts.length > 0;
+  const applyDisabled = !props.isDateRangeValid;
+  const filename =
+    `group-pl-${props.startDate.toJson()}-${props.endDate.toJson()}.csv`;
+  const onApply = () => {
+    if(props.isDateRangeValid) {
+      props.onSubmit?.(props.startDate, props.endDate);
+    }
+  };
+  return (
+    <section aria-label='Report Actions' className={css(STYLES.actionSheet)}>
+      {isReady &&
+        <a download={filename} href={props.filepath}
+            className={css(STYLES.downloadLink, STYLES.actionSheetButton)}>
+          Download
+        </a>}
+      {isStale && hasData && <>
+        <Button label='Apply' type='button' disabled={applyDisabled}
+          aria-describedby='report-status'
+          className={css(STYLES.actionSheetButton)} onClick={onApply}/>
+        <div style={ACTION_SHEET_GAP}/>
+        <a download={filename} href={props.filepath}
+            className={css(STYLES.downloadLink, STYLES.actionSheetButton)}>
+          Download
+        </a>
+      </>}
+      {isStale && !hasData &&
+        <Button label='Apply' type='button' disabled={applyDisabled}
+          aria-describedby='report-status'
+          className={css(STYLES.actionSheetButton)} onClick={onApply}/>}
+      {isLoading && <>
+        <Button label='Apply' type='button' disabled={applyDisabled}
+          className={css(STYLES.actionSheetButton)} onClick={onApply}/>
+        <div style={ACTION_SHEET_GAP}/>
+        <Button label='Cancel' type='button'
+          className={css(STYLES.actionSheetButton)}
+          onClick={props.onCancel}/>
+      </>}
+      {!isReady && !isStale && !isLoading &&
+        <Button label='Apply' type='button' disabled={applyDisabled}
+          className={css(STYLES.actionSheetButton)} onClick={onApply}/>}
+    </section>);
 }
+
+const BUTTON_STYLE: React.CSSProperties = {width: '140px'};
+const ACTION_SHEET_GAP: React.CSSProperties = {height: '10px'};
 
 function ProfitAndLossContent(): JSX.Element {
   return (
@@ -436,8 +558,58 @@ const STYLES = StyleSheet.create({
     backgroundColor: '#FFFFFF',
     padding: '18px 18px 30px',
     boxShadow: '0 0 6px rgb(0 0 0 / 25%)',
+    display: 'flex',
+    flexDirection: 'column',
     '@media (min-width: 768px)': {
       display: 'none'
     }
+  },
+  actionSheetButton: {
+    width: '100%'
+  },
+  buttonRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '18px'
+  },
+  desktopStatusFeedback: {
+    paddingTop: '12px',
+    display: 'flex',
+    justifyContent: 'flex-end'
+  },
+  downloadLink: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#684BC7',
+    color: '#FFFFFF',
+    borderWidth: '1px',
+    borderStyle: 'solid',
+    borderColor: 'transparent',
+    borderRadius: '1px',
+    fontFamily: '"Roboto", system-ui, sans-serif',
+    fontSize: '0.875rem',
+    fontWeight: 400,
+    padding: '3px 9px',
+    width: '140px',
+    height: '34px',
+    boxSizing: 'border-box',
+    cursor: 'pointer',
+    outline: 'none',
+    textDecoration: 'none',
+    ':hover': {
+      backgroundColor: '#4B23A0'
+    },
+    ':focus-visible': {
+      backgroundColor: '#4B23A0'
+    },
+    ':active': {
+      backgroundColor: '#4B23A0'
+    }
+  },
+  downloadLinkDisabled: {
+    opacity: 0.4,
+    cursor: 'not-allowed',
+    pointerEvents: 'none' as any
   }
 });
