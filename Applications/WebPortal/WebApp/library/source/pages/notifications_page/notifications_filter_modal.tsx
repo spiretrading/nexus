@@ -134,7 +134,7 @@ const STYLES = StyleSheet.create({
   content: {
     backgroundColor: '#FFFFFF',
     width: '282px',
-    height: '568px',
+    flex: '1 1 auto',
     overflowY: 'auto',
     position: 'relative' as 'relative'
   },
