@@ -285,6 +285,12 @@ export abstract class AdministrationClient {
   public abstract markNotificationAsRead(id: string): Promise<void>;
 
   /**
+   * Marks a notification as unread.
+   * @param id - The id of the notification to mark as unread.
+   */
+  public abstract markNotificationAsUnread(id: string): Promise<void>;
+
+  /**
    * Creates a new trading group.
    * @param name The name of the group.
    * @return The new group's DirectoryEntry.

@@ -380,6 +380,13 @@ export class HttpAdministrationClient extends AdministrationClient {
       });
   }
 
+  public async markNotificationAsUnread(id: string): Promise<void> {
+    await Beam.post('/api/administration_service/mark_notification_as_unread',
+      {
+        id: id
+      });
+  }
+
   public async createGroup(name: string): Promise<Beam.DirectoryEntry> {
     const response = await Beam.post('/api/service_locator/create_group',
       {

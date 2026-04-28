@@ -46,7 +46,9 @@ export class HttpNotificationsModel extends NotificationsModel {
   }
 
   public async markAsUnread(ids: Nexus.Notification.Id[]): Promise<void> {
-    // Not yet supported by the API.
+    for(const id of ids) {
+      await this._administrationClient.markNotificationAsUnread(id);
+    }
     await this._model.markAsUnread(ids);
   }
 
