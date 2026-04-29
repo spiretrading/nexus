@@ -1,10 +1,11 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Button, DateInput, EmptyMessage, ErrorMessage, PageLayout,
   Select } from '../../..';
 import { ProfitAndLossHeader, ProfitAndLossItemPlaceholder,
-  ReportStatusIndicator } from
+  ProfitAndLossTable, ReportStatusIndicator } from
     '../../../pages/account_page/profit_and_loss_page';
 import { AccountProfitAndLossItem } from './account_profit_and_loss_item';
 
@@ -154,32 +155,16 @@ export namespace GroupProfitAndLossPage {
     code: string;
 
     /** The total profit and loss. */
-    totalProfitAndLoss: string;
+    totalProfitAndLoss: Nexus.Money;
 
     /** The total volume traded. */
-    totalVolume: string;
+    totalVolume: Nexus.Quantity;
 
     /** The total fees incurred. */
-    totalFees: string;
+    totalFees: Nexus.Money;
 
     /** The list of tickers traded. */
-    tickers: TickerEntry[];
-  }
-
-  /** A ticker entry within a currency. */
-  export interface TickerEntry {
-
-    /** The symbol of the ticker. */
-    symbol: string;
-
-    /** The volume traded. */
-    volume: string;
-
-    /** The fees incurred. */
-    fees: string;
-
-    /** The profit and loss. */
-    pnl: string;
+    tickers: ProfitAndLossTable.Ticker[];
   }
 
   /** An account entry within the group report. */

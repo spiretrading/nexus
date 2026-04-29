@@ -1,9 +1,11 @@
+import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
-const Status = WebPortal.GroupProfitAndLossPage.Status;
-type Status = WebPortal.GroupProfitAndLossPage.Status;
+const TSX = Nexus.DefaultVenues.TSX;
+const NASDAQ = Nexus.DefaultVenues.NASDAQ;
+const ASX = Nexus.DefaultVenues.ASX;
 
 const ACCOUNTS: WebPortal.GroupProfitAndLossPage.AccountEntry[] = [
   {
@@ -13,26 +15,47 @@ const ACCOUNTS: WebPortal.GroupProfitAndLossPage.AccountEntry[] = [
       {
         symbol: '$',
         code: 'CAD',
-        totalProfitAndLoss: '2,769.95',
-        totalVolume: '31,800',
-        totalFees: '318.00',
+        totalProfitAndLoss: Nexus.Money.parse('2769.95'),
+        totalVolume: Nexus.Quantity.parse('31800'),
+        totalFees: Nexus.Money.parse('318.00'),
         tickers: [
-          {symbol: 'RY', volume: '12,450', fees: '124.50', pnl: '3,287.15'},
-          {symbol: 'TD', volume: '8,300', fees: '83.00', pnl: '-1,542.80'},
-          {symbol: 'BNS', volume: '5,200', fees: '52.00', pnl: '891.33'},
-          {symbol: 'ENB', volume: '3,100', fees: '31.00', pnl: '445.67'},
-          {symbol: 'CNR', volume: '2,750', fees: '27.50', pnl: '-312.40'}
+          {ticker: new Nexus.Ticker('RY', TSX),
+            volume: Nexus.Quantity.parse('12450'),
+            fees: Nexus.Money.parse('124.50'),
+            profitAndLoss: Nexus.Money.parse('3287.15')},
+          {ticker: new Nexus.Ticker('TD', TSX),
+            volume: Nexus.Quantity.parse('8300'),
+            fees: Nexus.Money.parse('83.00'),
+            profitAndLoss: Nexus.Money.parse('-1542.80')},
+          {ticker: new Nexus.Ticker('BNS', TSX),
+            volume: Nexus.Quantity.parse('5200'),
+            fees: Nexus.Money.parse('52.00'),
+            profitAndLoss: Nexus.Money.parse('891.33')},
+          {ticker: new Nexus.Ticker('ENB', TSX),
+            volume: Nexus.Quantity.parse('3100'),
+            fees: Nexus.Money.parse('31.00'),
+            profitAndLoss: Nexus.Money.parse('445.67')},
+          {ticker: new Nexus.Ticker('CNR', TSX),
+            volume: Nexus.Quantity.parse('2750'),
+            fees: Nexus.Money.parse('27.50'),
+            profitAndLoss: Nexus.Money.parse('-312.40')}
         ]
       },
       {
         symbol: '$',
         code: 'USD',
-        totalProfitAndLoss: '1,542.80',
-        totalVolume: '8,500',
-        totalFees: '85.00',
+        totalProfitAndLoss: Nexus.Money.parse('1542.80'),
+        totalVolume: Nexus.Quantity.parse('8500'),
+        totalFees: Nexus.Money.parse('85.00'),
         tickers: [
-          {symbol: 'AAPL', volume: '4,800', fees: '48.00', pnl: '1,145.90'},
-          {symbol: 'MSFT', volume: '3,700', fees: '37.00', pnl: '396.90'}
+          {ticker: new Nexus.Ticker('AAPL', NASDAQ),
+            volume: Nexus.Quantity.parse('4800'),
+            fees: Nexus.Money.parse('48.00'),
+            profitAndLoss: Nexus.Money.parse('1145.90')},
+          {ticker: new Nexus.Ticker('MSFT', NASDAQ),
+            volume: Nexus.Quantity.parse('3700'),
+            fees: Nexus.Money.parse('37.00'),
+            profitAndLoss: Nexus.Money.parse('396.90')}
         ]
       }
     ]
@@ -44,23 +67,35 @@ const ACCOUNTS: WebPortal.GroupProfitAndLossPage.AccountEntry[] = [
       {
         symbol: '$',
         code: 'USD',
-        totalProfitAndLoss: '1,859.34',
-        totalVolume: '4,000',
-        totalFees: '40.00',
+        totalProfitAndLoss: Nexus.Money.parse('1859.34'),
+        totalVolume: Nexus.Quantity.parse('4000'),
+        totalFees: Nexus.Money.parse('40.00'),
         tickers: [
-          {symbol: 'GOOGL', volume: '2,500', fees: '25.00', pnl: '1,223.44'},
-          {symbol: 'TSLA', volume: '1,500', fees: '15.00', pnl: '635.90'}
+          {ticker: new Nexus.Ticker('GOOGL', NASDAQ),
+            volume: Nexus.Quantity.parse('2500'),
+            fees: Nexus.Money.parse('25.00'),
+            profitAndLoss: Nexus.Money.parse('1223.44')},
+          {ticker: new Nexus.Ticker('TSLA', NASDAQ),
+            volume: Nexus.Quantity.parse('1500'),
+            fees: Nexus.Money.parse('15.00'),
+            profitAndLoss: Nexus.Money.parse('635.90')}
         ]
       },
       {
         symbol: '$',
         code: 'AUD',
-        totalProfitAndLoss: '290.85',
-        totalVolume: '2,100',
-        totalFees: '21.00',
+        totalProfitAndLoss: Nexus.Money.parse('290.85'),
+        totalVolume: Nexus.Quantity.parse('2100'),
+        totalFees: Nexus.Money.parse('21.00'),
         tickers: [
-          {symbol: 'BHP', volume: '1,200', fees: '12.00', pnl: '190.55'},
-          {symbol: 'CBA', volume: '900', fees: '9.00', pnl: '100.30'}
+          {ticker: new Nexus.Ticker('BHP', ASX),
+            volume: Nexus.Quantity.parse('1200'),
+            fees: Nexus.Money.parse('12.00'),
+            profitAndLoss: Nexus.Money.parse('190.55')},
+          {ticker: new Nexus.Ticker('CBA', ASX),
+            volume: Nexus.Quantity.parse('900'),
+            fees: Nexus.Money.parse('9.00'),
+            profitAndLoss: Nexus.Money.parse('100.30')}
         ]
       }
     ]
@@ -72,12 +107,18 @@ const ACCOUNTS: WebPortal.GroupProfitAndLossPage.AccountEntry[] = [
       {
         symbol: '$',
         code: 'CAD',
-        totalProfitAndLoss: '1,100.00',
-        totalVolume: '9,500',
-        totalFees: '95.00',
+        totalProfitAndLoss: Nexus.Money.parse('1100.00'),
+        totalVolume: Nexus.Quantity.parse('9500'),
+        totalFees: Nexus.Money.parse('95.00'),
         tickers: [
-          {symbol: 'SU', volume: '5,000', fees: '50.00', pnl: '780.00'},
-          {symbol: 'CP', volume: '4,500', fees: '45.00', pnl: '320.00'}
+          {ticker: new Nexus.Ticker('SU', TSX),
+            volume: Nexus.Quantity.parse('5000'),
+            fees: Nexus.Money.parse('50.00'),
+            profitAndLoss: Nexus.Money.parse('780.00')},
+          {ticker: new Nexus.Ticker('CP', TSX),
+            volume: Nexus.Quantity.parse('4500'),
+            fees: Nexus.Money.parse('45.00'),
+            profitAndLoss: Nexus.Money.parse('320.00')}
         ]
       }
     ]
@@ -89,6 +130,9 @@ const FOREIGN_CURRENCIES:
   {code: 'USD', symbol: '$', rate: '1.36'},
   {code: 'AUD', symbol: '$', rate: '0.88'}
 ];
+
+const Status = WebPortal.GroupProfitAndLossPage.Status;
+type Status = WebPortal.GroupProfitAndLossPage.Status;
 
 interface State {
   forceStatus: Status;
@@ -135,17 +179,7 @@ class TestApp extends React.Component<{}, State> {
               status: Status.EMPTY,
               accounts: []
             } as any);
-          } else if(status === Status.READY) {
-            this._controllerRef.current?.setState({
-              status,
-              totalPnl: '7,562.94',
-              totalFees: '498.00',
-              totalVolume: '49,800',
-              accounts: ACCOUNTS,
-              foreignCurrencies: FOREIGN_CURRENCIES,
-              filepath: '/reports/group-pl.csv'
-            } as any);
-          } else if(status === Status.STALE) {
+          } else if(status === Status.READY || status === Status.STALE) {
             this._controllerRef.current?.setState({
               status,
               totalPnl: '7,562.94',
