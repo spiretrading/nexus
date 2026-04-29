@@ -59,7 +59,7 @@ export function ProfitAndLossItem(props: Properties) {
     </div>);
   return (
     <div className={css(STYLES.container)}>
-      <Disclosure open={isOpen} header={header}
+      <Disclosure open={isOpen} transition={200} header={header}
         details={details} onToggle={setIsOpen}/>
     </div>);
 }

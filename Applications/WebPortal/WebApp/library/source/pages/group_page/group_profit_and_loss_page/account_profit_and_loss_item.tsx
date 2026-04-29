@@ -52,8 +52,8 @@ export class AccountProfitAndLossItem extends
       <CurrencyList
         currencies={this.props.currencies}/>);
     return (
-      <Disclosure open={this.state.isOpen} header={header}
-        details={details} onToggle={this.onToggle}/>);
+      <Disclosure open={this.state.isOpen}
+        header={header} details={details} onToggle={this.onToggle}/>);
   }
 
   private onToggle = (isOpen: boolean) => {
