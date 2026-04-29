@@ -625,7 +625,8 @@ function ActionsAndStatus(props: {
   const isEmpty = props.status === GroupProfitAndLossPage.Status.EMPTY;
   const isNoResults = props.status === GroupProfitAndLossPage.Status.NO_RESULTS;
   const hasData = props.accounts.length > 0;
-  const applyDisabled = isReady || isNoResults || !props.isDateRangeValid;
+  const applyDisabled =
+    isLoading || isReady || isNoResults || !props.isDateRangeValid;
   const downloadDisabled = isEmpty || isNoResults || isError || isLoading;
   const filename =
     `group-pl-${props.startDate.toJson()}-${props.endDate.toJson()}.csv`;
@@ -680,7 +681,7 @@ function ActionSheet(props: {
   const isReady = props.status === GroupProfitAndLossPage.Status.READY;
   const isStale = props.status === GroupProfitAndLossPage.Status.STALE;
   const hasData = props.accounts.length > 0;
-  const applyDisabled = !props.isDateRangeValid;
+  const applyDisabled = isLoading || !props.isDateRangeValid;
   const filename =
     `group-pl-${props.startDate.toJson()}-${props.endDate.toJson()}.csv`;
   const onApply = () => {
