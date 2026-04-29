@@ -7,6 +7,7 @@ import { ComplianceController } from '..';
 import { GroupInfoController } from './group_info_page';
 import { GroupModel } from './group_model';
 import { GroupPage } from './group_page';
+import { GroupProfitAndLossController } from './group_profit_and_loss_page';
 import { GroupSubPage } from './group_sub_page';
 
 interface Properties extends Router.RouteComponentProps {
@@ -16,6 +17,9 @@ interface Properties extends Router.RouteComponentProps {
 
   /** The authenticated user's roles. */
   roles: Nexus.AccountRoles;
+
+  /** The database of currencies. */
+  currencyDatabase: Nexus.CurrencyDatabase;
 
   /** The model representing the group to display. */
   model: GroupModel;
@@ -117,7 +121,10 @@ export class GroupController extends React.Component<Properties, State> {
   }
 
   private renderProfitLossPage = () => {
-    return <div/>;
+    return <GroupProfitAndLossController
+      currency={this.props.model.currency}
+      currencyDatabase={this.props.currencyDatabase}
+      model={this.props.model.profitAndLossModel}/>;
   }
 
   private onMenuClick = (subPage: GroupSubPage) => {
