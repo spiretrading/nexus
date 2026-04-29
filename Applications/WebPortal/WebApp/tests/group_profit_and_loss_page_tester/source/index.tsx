@@ -8,89 +8,76 @@ type Status = WebPortal.GroupProfitAndLossPage.Status;
 const ACCOUNTS: WebPortal.GroupProfitAndLossPage.AccountEntry[] = [
   {
     username: 'trader_one',
-    totalPnl: '$4,312.75',
+    totalPnl: '4,312.75',
     currencies: [
       {
         symbol: '$',
         code: 'CAD',
-        totalProfitAndLoss: '$2,769.95',
+        totalProfitAndLoss: '2,769.95',
         totalVolume: '31,800',
-        totalFees: '$318.00',
+        totalFees: '318.00',
         tickers: [
-          {symbol: 'RY', volume: '12,450', fees: '$124.50',
-            pnl: '$3,287.15'},
-          {symbol: 'TD', volume: '8,300', fees: '$83.00',
-            pnl: '-$1,542.80'},
-          {symbol: 'BNS', volume: '5,200', fees: '$52.00',
-            pnl: '$891.33'},
-          {symbol: 'ENB', volume: '3,100', fees: '$31.00',
-            pnl: '$445.67'},
-          {symbol: 'CNR', volume: '2,750', fees: '$27.50',
-            pnl: '-$312.40'}
+          {symbol: 'RY', volume: '12,450', fees: '124.50', pnl: '3,287.15'},
+          {symbol: 'TD', volume: '8,300', fees: '83.00', pnl: '-1,542.80'},
+          {symbol: 'BNS', volume: '5,200', fees: '52.00', pnl: '891.33'},
+          {symbol: 'ENB', volume: '3,100', fees: '31.00', pnl: '445.67'},
+          {symbol: 'CNR', volume: '2,750', fees: '27.50', pnl: '-312.40'}
         ]
       },
       {
         symbol: '$',
         code: 'USD',
-        totalProfitAndLoss: '$1,542.80',
+        totalProfitAndLoss: '1,542.80',
         totalVolume: '8,500',
-        totalFees: '$85.00',
+        totalFees: '85.00',
         tickers: [
-          {symbol: 'AAPL', volume: '4,800', fees: '$48.00',
-            pnl: '$1,145.90'},
-          {symbol: 'MSFT', volume: '3,700', fees: '$37.00',
-            pnl: '$396.90'}
+          {symbol: 'AAPL', volume: '4,800', fees: '48.00', pnl: '1,145.90'},
+          {symbol: 'MSFT', volume: '3,700', fees: '37.00', pnl: '396.90'}
         ]
       }
     ]
   },
   {
     username: 'trader_two',
-    totalPnl: '$2,150.19',
+    totalPnl: '2,150.19',
     currencies: [
       {
         symbol: '$',
         code: 'USD',
-        totalProfitAndLoss: '$1,859.34',
+        totalProfitAndLoss: '1,859.34',
         totalVolume: '4,000',
-        totalFees: '$40.00',
+        totalFees: '40.00',
         tickers: [
-          {symbol: 'GOOGL', volume: '2,500', fees: '$25.00',
-            pnl: '$1,223.44'},
-          {symbol: 'TSLA', volume: '1,500', fees: '$15.00',
-            pnl: '$635.90'}
+          {symbol: 'GOOGL', volume: '2,500', fees: '25.00', pnl: '1,223.44'},
+          {symbol: 'TSLA', volume: '1,500', fees: '15.00', pnl: '635.90'}
         ]
       },
       {
         symbol: '$',
         code: 'AUD',
-        totalProfitAndLoss: '$290.85',
+        totalProfitAndLoss: '290.85',
         totalVolume: '2,100',
-        totalFees: '$21.00',
+        totalFees: '21.00',
         tickers: [
-          {symbol: 'BHP', volume: '1,200', fees: '$12.00',
-            pnl: '$190.55'},
-          {symbol: 'CBA', volume: '900', fees: '$9.00',
-            pnl: '$100.30'}
+          {symbol: 'BHP', volume: '1,200', fees: '12.00', pnl: '190.55'},
+          {symbol: 'CBA', volume: '900', fees: '9.00', pnl: '100.30'}
         ]
       }
     ]
   },
   {
     username: 'trader_three',
-    totalPnl: '$1,100.00',
+    totalPnl: '1,100.00',
     currencies: [
       {
         symbol: '$',
         code: 'CAD',
-        totalProfitAndLoss: '$1,100.00',
+        totalProfitAndLoss: '1,100.00',
         totalVolume: '9,500',
-        totalFees: '$95.00',
+        totalFees: '95.00',
         tickers: [
-          {symbol: 'SU', volume: '5,000', fees: '$50.00',
-            pnl: '$780.00'},
-          {symbol: 'CP', volume: '4,500', fees: '$45.00',
-            pnl: '$320.00'}
+          {symbol: 'SU', volume: '5,000', fees: '50.00', pnl: '780.00'},
+          {symbol: 'CP', volume: '4,500', fees: '45.00', pnl: '320.00'}
         ]
       }
     ]
@@ -151,8 +138,8 @@ class TestApp extends React.Component<{}, State> {
           } else if(status === Status.READY) {
             this._controllerRef.current?.setState({
               status,
-              totalPnl: '$7,562.94',
-              totalFees: '$498.00',
+              totalPnl: '7,562.94',
+              totalFees: '498.00',
               totalVolume: '49,800',
               accounts: ACCOUNTS,
               foreignCurrencies: FOREIGN_CURRENCIES,
@@ -161,8 +148,8 @@ class TestApp extends React.Component<{}, State> {
           } else if(status === Status.STALE) {
             this._controllerRef.current?.setState({
               status,
-              totalPnl: '$7,562.94',
-              totalFees: '$498.00',
+              totalPnl: '7,562.94',
+              totalFees: '498.00',
               totalVolume: '49,800',
               accounts: ACCOUNTS,
               foreignCurrencies: FOREIGN_CURRENCIES,

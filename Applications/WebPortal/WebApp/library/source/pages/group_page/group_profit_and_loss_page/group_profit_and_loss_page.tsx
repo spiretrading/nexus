@@ -3,7 +3,7 @@ import * as Beam from 'beam';
 import * as React from 'react';
 import { Button, DateInput, EmptyMessage, ErrorMessage, PageLayout,
   Select } from '../../..';
-import { ReportStatusIndicator } from
+import { ProfitAndLossHeader, ReportStatusIndicator } from
   '../../../pages/account_page/profit_and_loss_page';
 
 interface Properties {
@@ -696,14 +696,17 @@ function ProfitAndLossContent(props: {
   return (
     <section aria-label='Profit and Loss Report' aria-live='polite'
         aria-busy={isLoading ? 'true' : 'false'}>
-      <ProfitAndLossHeader/>
+      <ProfitAndLossHeader
+        symbol={props.symbol}
+        code={props.code}
+        totalPnl={props.totalPnl}
+        totalFees={props.totalFees}
+        totalVolume={props.totalVolume}
+        foreignCurrencies={props.foreignCurrencies}
+        loading={isLoading}/>
       <div className={css(STYLES.listSpacing)}/>
       <ProfitAndLossList/>
     </section>);
-}
-
-function ProfitAndLossHeader(): JSX.Element {
-  return <div/>;
 }
 
 function ProfitAndLossList(): JSX.Element {
