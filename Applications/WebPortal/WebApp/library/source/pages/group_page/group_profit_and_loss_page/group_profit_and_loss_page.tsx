@@ -2,6 +2,8 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
 import { Button, DateInput, PageLayout, Select } from '../../..';
+import { ReportStatusIndicator } from
+  '../../../pages/account_page/profit_and_loss_page';
 
 interface Properties {
 
@@ -319,7 +321,9 @@ class Form extends React.Component<FormProperties> {
           onModeChange={this.props.onModeChange}
           onStartDateChange={this.props.onStartDateChange}
           onEndDateChange={this.props.onEndDateChange}/>
-        <StatusFeedback/>
+        <StatusFeedback
+          status={this.props.status}
+          accounts={this.props.accounts}/>
         <ActionsAndStatus
           status={this.props.status}
           accounts={this.props.accounts}
@@ -496,8 +500,22 @@ function DateFilter(props: {
     </div>);
 }
 
-function StatusFeedback(): JSX.Element {
-  return <div className={css(STYLES.statusFeedback)}/>;
+function StatusFeedback(props: {
+    status: GroupProfitAndLossPage.Status;
+    accounts: GroupProfitAndLossPage.AccountEntry[];
+  }): JSX.Element {
+  const isEmpty = props.status === GroupProfitAndLossPage.Status.EMPTY;
+  const isNoResults =
+    props.status === GroupProfitAndLossPage.Status.NO_RESULTS;
+  const isStale = props.status === GroupProfitAndLossPage.Status.STALE;
+  const hasData = props.accounts.length > 0;
+  const hidden = isEmpty || isNoResults || (isStale && !hasData);
+  return (
+    <div className={css(STYLES.statusFeedback,
+        hidden && STYLES.statusFeedbackHidden)}>
+      <ReportStatusIndicator id='report-status'
+        status={toReportStatus(props.status)}/>
+    </div>);
 }
 
 function ActionsAndStatus(props: {
@@ -549,7 +567,11 @@ function ActionsAndStatus(props: {
             </a>
           </>}
       </div>
-      {showStatus && <div className={css(STYLES.desktopStatusFeedback)}/>}
+      {showStatus &&
+        <div className={css(STYLES.desktopStatusFeedback)}>
+          <ReportStatusIndicator id='report-status'
+            status={toReportStatus(props.status)}/>
+        </div>}
     </div>);
 }
 
@@ -608,6 +630,14 @@ function ActionSheet(props: {
         <Button label='Apply' type='button' disabled={applyDisabled}
           className={css(STYLES.actionSheetButton)} onClick={onApply}/>}
     </section>);
+}
+
+function toReportStatus(
+    status: GroupProfitAndLossPage.Status): ReportStatusIndicator.Status {
+  if(status === GroupProfitAndLossPage.Status.ERROR) {
+    return ReportStatusIndicator.Status.NONE;
+  }
+  return status as number as ReportStatusIndicator.Status;
 }
 
 const BUTTON_STYLE: React.CSSProperties = {width: '140px'};
@@ -816,9 +846,13 @@ const STYLES = StyleSheet.create({
     paddingInlineStart: '18px'
   },
   statusFeedback: {
+    paddingTop: '18px',
     '@media (min-width: 768px)': {
       display: 'none'
     }
+  },
+  statusFeedbackHidden: {
+    display: 'none'
   },
   actionsAndStatus: {
     '@media (max-width: 767px)': {
