@@ -11,6 +11,7 @@ PROJECTS=(
   entitlements_page_tester
   group_info_page_tester
   group_page_tester
+  group_profit_and_loss_page_tester
   loading_page_tester
   login_page_tester
   mock

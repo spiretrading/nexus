@@ -13,7 +13,7 @@ interface Properties {
 /** Displays a status indicator for the profit and loss report. */
 export function ReportStatusIndicator(props: Properties) {
   if(props.status === ReportStatusIndicator.Status.NONE) {
-    return <div style={STYLE.spacer}/>;
+    return null;
   }
   const icon = (() => {
     if(props.status === ReportStatusIndicator.Status.READY) {

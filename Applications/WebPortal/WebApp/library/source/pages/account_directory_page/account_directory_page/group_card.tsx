@@ -3,7 +3,7 @@ import { VBoxLayout } from 'dali';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
 import { Transition } from 'react-transition-group';
-import { DisplaySize, DropDownButton, HLine } from '../../..';
+import { DisplaySize, ExpandButton, HLine } from '../../..';
 import { AccountEntry } from './account_entry';
 import { AccountEntryRow } from './account_entry_row';
 
@@ -69,15 +69,14 @@ export class GroupCard extends React.Component<Properties, State> {
     const dropDownButton = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return (
-          <DropDownButton size='20px'
+          <ExpandButton size='20px'
             isExpanded={this.state.isOpen}
             onClick={this.props.onDropDownClick}/>);
       } else {
         return (
           <div style={GroupCard.STYLE.dropDownButtonWrapper}
               onClick={this.props.onDropDownClick}>
-            <DropDownButton size='16px'
-              isExpanded={this.state.isOpen}/>
+            <ExpandButton size='16px' isExpanded={this.state.isOpen}/>
           </div>);
       }
     })();
