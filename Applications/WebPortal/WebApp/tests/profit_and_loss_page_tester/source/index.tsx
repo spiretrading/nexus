@@ -5,14 +5,10 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
-const CAD = new Nexus.Currency(124);
-const USD = new Nexus.Currency(840);
-const AUD = new Nexus.Currency(36);
-
-const currencyDatabase = new Nexus.CurrencyDatabase();
-currencyDatabase.add(new Nexus.CurrencyDatabase.Entry(CAD, 'CAD', '$'));
-currencyDatabase.add(new Nexus.CurrencyDatabase.Entry(USD, 'USD', '$'));
-currencyDatabase.add(new Nexus.CurrencyDatabase.Entry(AUD, 'AUD', '$'));
+const currencyDatabase = Nexus.buildDefaultCurrencyDatabase();
+const CAD = Nexus.DefaultCurrencies.CAD;
+const USD = Nexus.DefaultCurrencies.USD;
+const AUD = Nexus.DefaultCurrencies.AUD;
 
 const TSX = Nexus.DefaultVenues.TSX;
 const NASDAQ = Nexus.DefaultVenues.NASDAQ;
@@ -29,19 +25,24 @@ const REPORT: WebPortal.ProfitAndLossModel.Report = {
       totalVolume: Nexus.Quantity.parse('31800'),
       totalFees: Nexus.Money.parse('318.00'),
       tickers: [
-        {ticker: new Nexus.Ticker('RY', TSX), volume: Nexus.Quantity.parse('12450'),
+        {ticker: new Nexus.Ticker('RY', TSX),
+          volume: Nexus.Quantity.parse('12450'),
           fees: Nexus.Money.parse('124.50'),
           profitAndLoss: Nexus.Money.parse('3287.15')},
-        {ticker: new Nexus.Ticker('TD', TSX), volume: Nexus.Quantity.parse('8300'),
+        {ticker: new Nexus.Ticker('TD', TSX),
+          volume: Nexus.Quantity.parse('8300'),
           fees: Nexus.Money.parse('83.00'),
           profitAndLoss: Nexus.Money.parse('-1542.80')},
-        {ticker: new Nexus.Ticker('BNS', TSX), volume: Nexus.Quantity.parse('5200'),
+        {ticker: new Nexus.Ticker('BNS', TSX),
+          volume: Nexus.Quantity.parse('5200'),
           fees: Nexus.Money.parse('52.00'),
           profitAndLoss: Nexus.Money.parse('891.33')},
-        {ticker: new Nexus.Ticker('ENB', TSX), volume: Nexus.Quantity.parse('3100'),
+        {ticker: new Nexus.Ticker('ENB', TSX),
+          volume: Nexus.Quantity.parse('3100'),
           fees: Nexus.Money.parse('31.00'),
           profitAndLoss: Nexus.Money.parse('445.67')},
-        {ticker: new Nexus.Ticker('CNR', TSX), volume: Nexus.Quantity.parse('2750'),
+        {ticker: new Nexus.Ticker('CNR', TSX),
+          volume: Nexus.Quantity.parse('2750'),
           fees: Nexus.Money.parse('27.50'),
           profitAndLoss: Nexus.Money.parse('-312.40')}
       ]
@@ -52,13 +53,16 @@ const REPORT: WebPortal.ProfitAndLossModel.Report = {
       totalVolume: Nexus.Quantity.parse('12500'),
       totalFees: Nexus.Money.parse('125.00'),
       tickers: [
-        {ticker: new Nexus.Ticker('AAPL', NASDAQ), volume: Nexus.Quantity.parse('6800'),
+        {ticker: new Nexus.Ticker('AAPL', NASDAQ),
+          volume: Nexus.Quantity.parse('6800'),
           fees: Nexus.Money.parse('68.00'),
           profitAndLoss: Nexus.Money.parse('2145.90')},
-        {ticker: new Nexus.Ticker('MSFT', NASDAQ), volume: Nexus.Quantity.parse('4500'),
+        {ticker: new Nexus.Ticker('MSFT', NASDAQ),
+          volume: Nexus.Quantity.parse('4500'),
           fees: Nexus.Money.parse('45.00'),
           profitAndLoss: Nexus.Money.parse('1823.44')},
-        {ticker: new Nexus.Ticker('GOOGL', NASDAQ), volume: Nexus.Quantity.parse('1200'),
+        {ticker: new Nexus.Ticker('GOOGL', NASDAQ),
+          volume: Nexus.Quantity.parse('1200'),
           fees: Nexus.Money.parse('12.00'),
           profitAndLoss: Nexus.Money.parse('-567.20')}
       ]
@@ -69,10 +73,12 @@ const REPORT: WebPortal.ProfitAndLossModel.Report = {
       totalVolume: Nexus.Quantity.parse('5500'),
       totalFees: Nexus.Money.parse('55.00'),
       tickers: [
-        {ticker: new Nexus.Ticker('BHP', ASX), volume: Nexus.Quantity.parse('3400'),
+        {ticker: new Nexus.Ticker('BHP', ASX),
+          volume: Nexus.Quantity.parse('3400'),
           fees: Nexus.Money.parse('34.00'),
           profitAndLoss: Nexus.Money.parse('912.55')},
-        {ticker: new Nexus.Ticker('CBA', ASX), volume: Nexus.Quantity.parse('2100'),
+        {ticker: new Nexus.Ticker('CBA', ASX),
+          volume: Nexus.Quantity.parse('2100'),
           fees: Nexus.Money.parse('21.00'),
           profitAndLoss: Nexus.Money.parse('478.30')}
       ]
