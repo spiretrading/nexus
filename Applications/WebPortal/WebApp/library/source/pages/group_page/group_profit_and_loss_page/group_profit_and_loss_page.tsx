@@ -209,10 +209,17 @@ interface FormContainerProperties {
 }
 
 class FormContainer extends React.Component<FormContainerProperties> {
+  constructor(props: FormContainerProperties) {
+    super(props);
+    this.containerRef = React.createRef<HTMLDivElement>();
+    this.formRef = React.createRef<Form>();
+    this.lastHeight = 0;
+  }
+
   public render(): JSX.Element {
     return (
-      <div ref={this._containerRef} className={css(STYLES.formContainer)}>
-        <Form ref={this._formRef}
+      <div ref={this.containerRef} className={css(STYLES.formContainer)}>
+        <Form ref={this.formRef}
           status={this.props.status}
           mode={this.props.mode}
           startDate={this.props.startDate}
@@ -228,25 +235,36 @@ class FormContainer extends React.Component<FormContainerProperties> {
   }
 
   public componentDidMount(): void {
-    const container = this._containerRef.current;
-    const form = this._formRef.current?.element;
+    const container = this.containerRef.current;
+    const form = this.formRef.current?.element;
     if(!container || !form) {
       return;
     }
     container.style.maxHeight = `${form.scrollHeight}px`;
-    this._observer = new ResizeObserver(() => {
-      container.style.maxHeight = `${form.scrollHeight}px`;
+    this.lastHeight = form.scrollHeight;
+    this.observer = new ResizeObserver(() => {
+      const height = form.scrollHeight;
+      if(height > this.lastHeight) {
+        container.style.transition = 'none';
+        container.style.maxHeight = `${height}px`;
+        container.getBoundingClientRect();
+        container.style.transition = '';
+      } else {
+        container.style.maxHeight = `${height}px`;
+      }
+      this.lastHeight = height;
     });
-    this._observer.observe(form);
+    this.observer.observe(form);
   }
 
   public componentWillUnmount(): void {
-    this._observer?.disconnect();
+    this.observer?.disconnect();
   }
 
-  private _containerRef = React.createRef<HTMLDivElement>();
-  private _formRef = React.createRef<Form>();
-  private _observer: ResizeObserver;
+  private containerRef: React.RefObject<HTMLDivElement>;
+  private formRef: React.RefObject<Form>;
+  private observer: ResizeObserver;
+  private lastHeight: number;
 }
 
 interface FormProperties {
@@ -264,8 +282,13 @@ interface FormProperties {
 }
 
 class Form extends React.Component<FormProperties> {
+  constructor(props: FormProperties) {
+    super(props);
+    this.formRef = React.createRef<HTMLFormElement>();
+  }
+
   public get element(): HTMLFormElement {
-    return this._formRef.current;
+    return this.formRef.current;
   }
 
   public render(): JSX.Element {
@@ -296,7 +319,7 @@ class Form extends React.Component<FormProperties> {
       }
     };
     return (
-      <form ref={this._formRef} aria-label='Report Controls'
+      <form ref={this.formRef} aria-label='Report Controls'
           onSubmit={onFormSubmit} className={css(STYLES.form)}>
         <div className={css(STYLES.selectWrapper)}>
           <Select value={VALUE_MAP[this.props.mode]}
@@ -346,17 +369,25 @@ class Form extends React.Component<FormProperties> {
       </form>);
   }
 
-  private _formRef = React.createRef<HTMLFormElement>();
+  private formRef: React.RefObject<HTMLFormElement>;
 }
 
-class CustomDates extends React.Component<{
-      className?: string;
-      isOpen: boolean;
-      startDate: Beam.Date;
-      endDate: Beam.Date;
-      onStartDateChange?: (date: Beam.Date) => void;
-      onEndDateChange?: (date: Beam.Date) => void;
-    }> {
+interface CustomDatesProperties {
+  className?: string;
+  isOpen: boolean;
+  startDate: Beam.Date;
+  endDate: Beam.Date;
+  onStartDateChange?: (date: Beam.Date) => void;
+  onEndDateChange?: (date: Beam.Date) => void;
+}
+
+class CustomDates extends React.Component<CustomDatesProperties> {
+  constructor(props: CustomDatesProperties) {
+    super(props);
+    this.wrapperRef = React.createRef<HTMLDivElement>();
+    this.contentRef = React.createRef<HTMLDivElement>();
+  }
+
   public render(): JSX.Element {
     const className = [css(STYLES.customDatesWrapper),
       this.props.className].join(' ');
@@ -406,8 +437,8 @@ class CustomDates extends React.Component<{
     this.observer?.disconnect();
   }
 
-  private wrapperRef = React.createRef<HTMLDivElement>();
-  private contentRef = React.createRef<HTMLDivElement>();
+  private wrapperRef: React.RefObject<HTMLDivElement>;
+  private contentRef: React.RefObject<HTMLDivElement>;
   private observer: ResizeObserver;
 }
 
@@ -423,8 +454,8 @@ function DateInputs(props: {
       <StartDate value={props.startDate} onChange={props.onStartDateChange}/>
       <EndLabel/>
       <EndDate value={props.endDate} onChange={props.onEndDateChange}/>
-      <ValidityCheckSection startDate={props.startDate}
-        endDate={props.endDate}/>
+      <ValidityCheckSection
+        startDate={props.startDate} endDate={props.endDate}/>
     </div>);
 }
 
@@ -462,10 +493,20 @@ function EndDate(props: {
     </div>);
 }
 
-class ValidityCheckSection extends React.Component<{
-    startDate: Beam.Date;
-    endDate: Beam.Date;
-  }> {
+interface ValidityCheckSectionProperties {
+  startDate: Beam.Date;
+  endDate: Beam.Date;
+}
+
+class ValidityCheckSection extends
+    React.Component<ValidityCheckSectionProperties> {
+  constructor(props: ValidityCheckSectionProperties) {
+    super(props);
+    this.wrapperRef = React.createRef<HTMLDivElement>();
+    this.messageRef = React.createRef<HTMLSpanElement>();
+    this.maxHeight = '0px';
+  }
+
   public render(): JSX.Element {
     const isInvalid = this.props.endDate.compare(this.props.startDate) < 0;
     return (
@@ -502,10 +543,10 @@ class ValidityCheckSection extends React.Component<{
     }
   }
 
-  private wrapperRef = React.createRef<HTMLDivElement>();
-  private messageRef = React.createRef<HTMLSpanElement>();
+  private wrapperRef: React.RefObject<HTMLDivElement>;
+  private messageRef: React.RefObject<HTMLSpanElement>;
   private observer: ResizeObserver;
-  private maxHeight = '0px';
+  private maxHeight: string;
 }
 
 function DateFilter(props: {
@@ -551,18 +592,17 @@ function DateFilter(props: {
 }
 
 function StatusFeedback(props: {
-    status: GroupProfitAndLossPage.Status;
-    accounts: GroupProfitAndLossPage.AccountEntry[];
-  }): JSX.Element {
+      status: GroupProfitAndLossPage.Status;
+      accounts: GroupProfitAndLossPage.AccountEntry[];
+    }): JSX.Element {
   const isEmpty = props.status === GroupProfitAndLossPage.Status.EMPTY;
-  const isNoResults =
-    props.status === GroupProfitAndLossPage.Status.NO_RESULTS;
+  const isNoResults = props.status === GroupProfitAndLossPage.Status.NO_RESULTS;
   const isStale = props.status === GroupProfitAndLossPage.Status.STALE;
   const hasData = props.accounts.length > 0;
   const hidden = isEmpty || isNoResults || (isStale && !hasData);
   return (
-    <div className={css(STYLES.statusFeedback,
-        hidden && STYLES.statusFeedbackHidden)}>
+    <div className={
+        css(STYLES.statusFeedback, hidden && STYLES.statusFeedbackHidden)}>
       <ReportStatusIndicator id='report-status'
         status={toReportStatus(props.status)}/>
     </div>);
