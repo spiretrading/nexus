@@ -31,7 +31,7 @@ namespace {
 
   auto make_order_fields(Money price, Quantity quantity) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
-      Security("TST", OTCM), USD, Side::BID, DefaultDestinations::OTCM,
+      Ticker("TST", OTCM), USD, Side::BID, DefaultDestinations::OTCM,
       quantity, price);
   }
 
