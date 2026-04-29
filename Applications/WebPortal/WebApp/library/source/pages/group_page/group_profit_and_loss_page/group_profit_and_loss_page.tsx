@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { Button, PageLayout, Select } from '../../..';
+import { Button, DateInput, PageLayout, Select } from '../../..';
 
 interface Properties {
 
@@ -305,18 +305,30 @@ class Form extends React.Component<FormProperties> {
             <option value='custom'>Custom</option>
           </Select>
         </div>
-        <CustomDates isOpen={isCustom}/>
-        <DateFilter/>
+        <CustomDates className={css(STYLES.customDates)}
+          isOpen={isCustom}
+          startDate={this.props.startDate}
+          endDate={this.props.endDate}
+          onStartDateChange={this.props.onStartDateChange}
+          onEndDateChange={this.props.onEndDateChange}/>
+        <DateFilter
+          mode={this.props.mode}
+          isCustom={isCustom}
+          startDate={this.props.startDate}
+          endDate={this.props.endDate}
+          onModeChange={this.props.onModeChange}
+          onStartDateChange={this.props.onStartDateChange}
+          onEndDateChange={this.props.onEndDateChange}/>
         <StatusFeedback/>
         <ActionsAndStatus
-            status={this.props.status}
-            accounts={this.props.accounts}
-            filepath={this.props.filepath}
-            isDateRangeValid={isDateRangeValid}
-            startDate={this.props.startDate}
-            endDate={this.props.endDate}
-            onSubmit={this.props.onSubmit}
-            onCancel={this.props.onCancel}/>
+          status={this.props.status}
+          accounts={this.props.accounts}
+          filepath={this.props.filepath}
+          isDateRangeValid={isDateRangeValid}
+          startDate={this.props.startDate}
+          endDate={this.props.endDate}
+          onSubmit={this.props.onSubmit}
+          onCancel={this.props.onCancel}/>
         {!hideActionSheet &&
           <ActionSheet
             status={this.props.status}
@@ -333,12 +345,155 @@ class Form extends React.Component<FormProperties> {
   private _formRef = React.createRef<HTMLFormElement>();
 }
 
-function CustomDates(props: {isOpen: boolean}): JSX.Element {
-  return <div className={css(STYLES.customDates)}/>;
+class CustomDates extends React.Component<{
+      className?: string;
+      isOpen: boolean;
+      startDate: Beam.Date;
+      endDate: Beam.Date;
+      onStartDateChange?: (date: Beam.Date) => void;
+      onEndDateChange?: (date: Beam.Date) => void;
+    }> {
+  public render(): JSX.Element {
+    const className = [css(STYLES.customDatesWrapper),
+      this.props.className].join(' ');
+    return (
+      <div ref={this._wrapperRef} id='custom-dates'
+          className={className}
+          style={{maxHeight: this.props.isOpen ? undefined : '0px'}}>
+        <div ref={this._contentRef} className={css(STYLES.customDatesContent)}>
+          <DateInputs
+            startDate={this.props.startDate}
+            endDate={this.props.endDate}
+            onStartDateChange={this.props.onStartDateChange}
+            onEndDateChange={this.props.onEndDateChange}/>
+        </div>
+      </div>);
+  }
+
+  public componentDidUpdate(prevProps: {isOpen: boolean}): void {
+    const wrapper = this._wrapperRef.current;
+    const content = this._contentRef.current;
+    if(!wrapper || !content) {
+      return;
+    }
+    if(this.props.isOpen && !prevProps.isOpen) {
+      wrapper.style.maxHeight = `${content.scrollHeight}px`;
+    } else if(!this.props.isOpen && prevProps.isOpen) {
+      wrapper.style.maxHeight = `${wrapper.scrollHeight}px`;
+      wrapper.getBoundingClientRect();
+      wrapper.style.maxHeight = '0px';
+    }
+  }
+
+  private _wrapperRef = React.createRef<HTMLDivElement>();
+  private _contentRef = React.createRef<HTMLDivElement>();
 }
 
-function DateFilter(): JSX.Element {
-  return <div className={css(STYLES.dateFilter)}/>;
+function DateInputs(props: {
+      startDate: Beam.Date;
+      endDate: Beam.Date;
+      onStartDateChange?: (date: Beam.Date) => void;
+      onEndDateChange?: (date: Beam.Date) => void;
+    }): JSX.Element {
+  return (
+    <div className={css(STYLES.dateInputs)}>
+      <StartLabel/>
+      <StartDate value={props.startDate} onChange={props.onStartDateChange}/>
+      <EndLabel/>
+      <EndDate value={props.endDate} onChange={props.onEndDateChange}/>
+      <ValidityCheckSection startDate={props.startDate}
+        endDate={props.endDate}/>
+    </div>);
+}
+
+function StartLabel(): JSX.Element {
+  return (
+    <label htmlFor='start-date'
+      className={css(STYLES.dateLabel, STYLES.startLabel)}>Start</label>);
+}
+
+function EndLabel(): JSX.Element {
+  return (
+    <label htmlFor='end-date'
+      className={css(STYLES.dateLabel, STYLES.endLabel)}>End</label>);
+}
+
+function StartDate(props: {
+      value: Beam.Date;
+      onChange?: (date: Beam.Date) => void;
+    }): JSX.Element {
+  return (
+    <div className={css(STYLES.startDate)}>
+      <DateInput id='start-date' value={props.value}
+        style={{width: '100%'}} onChange={props.onChange}/>
+    </div>);
+}
+
+function EndDate(props: {
+      value: Beam.Date;
+      onChange?: (date: Beam.Date) => void;
+    }): JSX.Element {
+  return (
+    <div className={css(STYLES.endDate)}>
+      <DateInput id='end-date' value={props.value}
+        style={{width: '100%'}} onChange={props.onChange}/>
+    </div>);
+}
+
+function ValidityCheckSection(props: {
+      startDate: Beam.Date;
+      endDate: Beam.Date;
+    }): JSX.Element {
+  const isInvalid = props.endDate.compare(props.startDate) < 0;
+  return (
+    <div className={css(STYLES.validityCheckSection,
+        isInvalid && STYLES.validityCheckSectionVisible)}>
+      <span className={css(STYLES.invalidMessage)}>
+        End date must be greater than start date
+      </span>
+    </div>);
+}
+
+function DateFilter(props: {
+      mode: GroupProfitAndLossPage.Mode;
+      isCustom: boolean;
+      startDate: Beam.Date;
+      endDate: Beam.Date;
+      onModeChange?: (mode: GroupProfitAndLossPage.Mode) => void;
+      onStartDateChange?: (date: Beam.Date) => void;
+      onEndDateChange?: (date: Beam.Date) => void;
+    }): JSX.Element {
+  const MODE_MAP: Record<string, GroupProfitAndLossPage.Mode> = {
+    'this-month': GroupProfitAndLossPage.Mode.THIS_MONTH,
+    'last-month': GroupProfitAndLossPage.Mode.LAST_MONTH,
+    'custom': GroupProfitAndLossPage.Mode.CUSTOM
+  };
+  const VALUE_MAP: Record<number, string> = {
+    [GroupProfitAndLossPage.Mode.THIS_MONTH]: 'this-month',
+    [GroupProfitAndLossPage.Mode.LAST_MONTH]: 'last-month',
+    [GroupProfitAndLossPage.Mode.CUSTOM]: 'custom'
+  };
+  const onSelectChange = (value: string) => {
+    props.onModeChange?.(MODE_MAP[value]);
+  };
+  return (
+    <div className={css(STYLES.dateFilter)}>
+      <div className={css(STYLES.dateFilterSelect)}>
+        <Select value={VALUE_MAP[props.mode]}
+            aria-controls='custom-dates' style={{width: '100%'}}
+            onChange={onSelectChange}>
+          <option value='this-month'>This Month</option>
+          <option value='last-month'>Last Month</option>
+          <option value='custom'>Custom</option>
+        </Select>
+      </div>
+      <CustomDates className={css(STYLES.dateFilterDates)}
+        isOpen={props.isCustom}
+        startDate={props.startDate}
+        endDate={props.endDate}
+        onStartDateChange={props.onStartDateChange}
+        onEndDateChange={props.onEndDateChange}/>
+    </div>);
 }
 
 function StatusFeedback(): JSX.Element {
@@ -518,6 +673,10 @@ const STYLES = StyleSheet.create({
       display: 'none'
     }
   },
+  customDatesWrapper: {
+    overflow: 'hidden',
+    transition: 'max-height 200ms ease-in-out'
+  },
   customDates: {
     '@media (min-width: 768px) and (max-width: 1035px)': {
       gridColumn: 1,
@@ -527,13 +686,134 @@ const STYLES = StyleSheet.create({
       display: 'none'
     }
   },
+  customDatesContent: {
+    '@media (max-width: 767px)': {
+      paddingTop: '18px'
+    },
+    '@media (min-width: 768px) and (max-width: 1035px)': {
+      paddingTop: '12px'
+    }
+  },
+  dateInputs: {
+    '@media (max-width: 767px)': {
+      display: 'grid',
+      gridTemplateColumns: '1fr',
+      gridTemplateRows: 'auto 12px auto 20px auto 12px auto auto',
+    },
+    '@media (min-width: 768px) and (max-width: 1035px)': {
+      display: 'grid',
+      gridTemplateColumns: '50px 8px 1fr',
+      gridTemplateRows: 'auto 8px auto auto',
+      alignItems: 'center'
+    },
+    '@media (min-width: 1036px)': {
+      display: 'grid',
+      gridTemplateColumns: 'auto 8px 150px 18px auto 8px 150px',
+      gridTemplateRows: 'auto auto',
+      alignItems: 'center'
+    }
+  },
+  dateLabel: {
+    fontSize: '0.875rem',
+    paddingInlineStart: '10px',
+    '@media (min-width: 768px)': {
+      paddingInlineStart: 0
+    }
+  },
+  startLabel: {
+    '@media (max-width: 767px)': {
+      gridRow: 1
+    },
+    '@media (min-width: 768px) and (max-width: 1035px)': {
+      gridColumn: 1,
+      gridRow: 1
+    },
+    '@media (min-width: 1036px)': {
+      gridColumn: 1,
+      gridRow: 1
+    }
+  },
+  endLabel: {
+    '@media (max-width: 767px)': {
+      gridRow: 5
+    },
+    '@media (min-width: 768px) and (max-width: 1035px)': {
+      gridColumn: 1,
+      gridRow: 3
+    },
+    '@media (min-width: 1036px)': {
+      gridColumn: 5,
+      gridRow: 1
+    }
+  },
+  startDate: {
+    '@media (max-width: 767px)': {
+      gridRow: 3
+    },
+    '@media (min-width: 768px) and (max-width: 1035px)': {
+      gridColumn: 3,
+      gridRow: 1
+    },
+    '@media (min-width: 1036px)': {
+      gridColumn: 3,
+      gridRow: 1
+    }
+  },
+  endDate: {
+    '@media (max-width: 767px)': {
+      gridRow: 7
+    },
+    '@media (min-width: 768px) and (max-width: 1035px)': {
+      gridColumn: 3,
+      gridRow: 3
+    },
+    '@media (min-width: 1036px)': {
+      gridColumn: 7,
+      gridRow: 1
+    }
+  },
+  validityCheckSection: {
+    overflow: 'hidden',
+    maxHeight: 0,
+    transition: 'max-height 200ms ease-in-out',
+    '@media (max-width: 767px)': {
+      gridRow: 8
+    },
+    '@media (min-width: 768px) and (max-width: 1035px)': {
+      gridColumn: '1 / -1',
+      gridRow: 4
+    },
+    '@media (min-width: 1036px)': {
+      gridColumn: '1 / -1',
+      gridRow: 2
+    }
+  },
+  validityCheckSectionVisible: {
+    maxHeight: '28px'
+  },
+  invalidMessage: {
+    display: 'block',
+    paddingTop: '12px',
+    fontSize: '0.875rem',
+    color: '#E63F44'
+  },
   dateFilter: {
     '@media (max-width: 1035px)': {
       display: 'none'
     },
     '@media (min-width: 1036px)': {
-      gridColumn: 1
+      gridColumn: 1,
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center'
     }
+  },
+  dateFilterSelect: {
+    width: '200px',
+    flexShrink: 0
+  },
+  dateFilterDates: {
+    paddingInlineStart: '18px'
   },
   statusFeedback: {
     '@media (min-width: 768px)': {
