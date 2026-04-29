@@ -17,10 +17,7 @@ void RiskModel::Load() {
   m_riskParameters = queue->pop();
 }
 
-void RiskModel::Commit() {
-  m_userProfile->GetClients().get_administration_client().store(
-    m_account, m_riskParameters);
-}
+void RiskModel::Commit() {}
 
 const DirectoryEntry& RiskModel::GetAccount() const {
   return m_account;
