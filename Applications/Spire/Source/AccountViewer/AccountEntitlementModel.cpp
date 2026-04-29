@@ -26,10 +26,6 @@ void AccountEntitlementModel::Load() {
 }
 
 void AccountEntitlementModel::Commit() {
-  vector<DirectoryEntry> entitlements(m_entitlementsGranted.begin(),
-    m_entitlementsGranted.end());
-  m_userProfile->GetClients().get_administration_client().store_entitlements(
-    m_account, entitlements);
 }
 
 bool AccountEntitlementModel::HasEntitlement(

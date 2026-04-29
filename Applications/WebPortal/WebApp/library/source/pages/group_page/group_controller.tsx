@@ -82,7 +82,7 @@ export class GroupController extends React.Component<Properties, State> {
           loadingState: state.loadingState.succeed()
         };
       });
-    } catch(error) {
+    } catch(error: any) {
       this.setState(state => {
         return {
           loadingState: state.loadingState.fail(error.toString())

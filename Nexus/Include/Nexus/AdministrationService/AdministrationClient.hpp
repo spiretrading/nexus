@@ -9,13 +9,16 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/VirtualPtr.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
+#include <Beam/Queries/SnapshotLimit.hpp>
 #include <Beam/Queues/Publisher.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
+#include "Nexus/AdministrationService/Notification.hpp"
 #include "Nexus/AdministrationService/RiskModification.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
@@ -71,13 +74,9 @@ namespace Nexus {
       { client.load_entitlements(
           std::declval<const Beam::DirectoryEntry&>()) } ->
             std::same_as<std::vector<Beam::DirectoryEntry>>;
-      client.store_entitlements(std::declval<const Beam::DirectoryEntry&>(),
-        std::declval<const std::vector<Beam::DirectoryEntry>&>());
       { client.get_risk_parameters_publisher(
           std::declval<const Beam::DirectoryEntry&>()) } ->
             std::same_as<const Beam::Publisher<RiskParameters>&>;
-      client.store(std::declval<const Beam::DirectoryEntry&>(),
-        std::declval<const RiskParameters&>());
       { client.get_risk_state_publisher(
           std::declval<const Beam::DirectoryEntry&>()) } ->
             std::same_as<const Beam::Publisher<RiskState>&>;
@@ -135,6 +134,21 @@ namespace Nexus {
       { client.send_account_modification_request_message(
           std::declval<AccountModificationRequest::Id>(),
           std::declval<const Message&>()) } -> std::same_as<Message>;
+      { client.send_notification(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const std::string&>(), std::declval<const std::string&>(),
+        std::declval<Notification::Category>()) } -> std::same_as<Notification>;
+      { client.monitor_notifications(
+          std::declval<const Beam::DirectoryEntry&>(),
+          std::declval<Beam::ScopedQueueWriter<Notification>>()) } ->
+            std::same_as<Notification::Id>;
+      { client.load_notifications(std::declval<const Beam::DirectoryEntry&>(),
+          std::declval<const Notification::Id&>(),
+          std::declval<Beam::SnapshotLimit>(),
+          std::declval<Notification::ReadState>()) } ->
+            std::same_as<std::vector<Notification>>;
+      client.mark_notification_as_read(std::declval<const Notification::Id&>());
+      client.mark_notification_as_unread(
+        std::declval<const Notification::Id&>());
     };
 
   /** Provides a generic interface over an arbitrary AdministrationClient. */
@@ -269,29 +283,11 @@ namespace Nexus {
         const Beam::DirectoryEntry& account);
 
       /**
-       * Sets an account's entitlements.
-       * @param account The account of the entitlements to set.
-       * @param entitlements The list of entitlements to grant to the
-       *        <i>account</i>.
-       */
-      void store_entitlements(const Beam::DirectoryEntry& account,
-        const std::vector<Beam::DirectoryEntry>& entitlements);
-
-      /**
        * Returns the object publishing an account's RiskParameters.
        * @param account The account to monitor.
        */
       const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
         const Beam::DirectoryEntry& account);
-
-      /**
-       * Sets an account's RiskParameters.
-       * @param account The account whose RiskParameters are to be set.
-       * @param parameters The RiskParameters to assign to the
-       *        <i>account</i>.
-       */
-      void store(
-        const Beam::DirectoryEntry& account, const RiskParameters& parameters);
 
       /**
        * Returns the object publishing an account's RiskState.
@@ -444,6 +440,52 @@ namespace Nexus {
       Message send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message);
 
+      /**
+       * Sends a notification to an account.
+       * @param account The account to send the notification to.
+       * @param description The description of the notification.
+       * @param data Arbitrary data associated with the notification.
+       * @param category The category of the notification.
+       * @return The fully constructed notification.
+       */
+      Notification send_notification(const Beam::DirectoryEntry& account,
+        const std::string& description, const std::string& data,
+        Notification::Category category);
+
+      /**
+       * Monitors notifications for an account.
+       * @param account The account to monitor.
+       * @param queue The queue to push new notifications to.
+       * @return The id of the most recent notification.
+       */
+      Notification::Id monitor_notifications(
+        const Beam::DirectoryEntry& account,
+        Beam::ScopedQueueWriter<Notification> queue);
+
+      /**
+       * Loads notifications for an account.
+       * @param account The account whose notifications are to be loaded.
+       * @param id The id of the notification to start loading from.
+       * @param limit The maximum number of notifications to load.
+       * @param read_state Filters notifications by read state.
+       * @return The list of notifications matching the criteria.
+       */
+      std::vector<Notification> load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state);
+
+      /**
+       * Marks a notification as read.
+       * @param id The id of the notification to mark as read.
+       */
+      void mark_notification_as_read(const Notification::Id& id);
+
+      /**
+       * Marks a notification as unread.
+       * @param id The id of the notification to mark as unread.
+       */
+      void mark_notification_as_unread(const Notification::Id& id);
+
       void close();
 
     private:
@@ -477,13 +519,9 @@ namespace Nexus {
         virtual EntitlementDatabase load_entitlements() = 0;
         virtual std::vector<Beam::DirectoryEntry> load_entitlements(
           const Beam::DirectoryEntry& account) = 0;
-        virtual void store_entitlements(const Beam::DirectoryEntry& account,
-          const std::vector<Beam::DirectoryEntry>& entitlements) = 0;
         virtual const Beam::Publisher<RiskParameters>&
           get_risk_parameters_publisher(
             const Beam::DirectoryEntry& account) = 0;
-        virtual void store(const Beam::DirectoryEntry& account,
-          const RiskParameters& risk_parameters) = 0;
         virtual const Beam::Publisher<RiskState>& get_risk_state_publisher(
           const Beam::DirectoryEntry& account) = 0;
         virtual void store(const Beam::DirectoryEntry& account,
@@ -531,6 +569,18 @@ namespace Nexus {
           AccountModificationRequest::Id id) = 0;
         virtual Message send_account_modification_request_message(
           AccountModificationRequest::Id id, const Message& message) = 0;
+        virtual Notification send_notification(
+          const Beam::DirectoryEntry& account, const std::string& description,
+          const std::string& data, Notification::Category category) = 0;
+        virtual Notification::Id monitor_notifications(
+          const Beam::DirectoryEntry& account,
+          Beam::ScopedQueueWriter<Notification> queue) = 0;
+        virtual std::vector<Notification> load_notifications(
+          const Beam::DirectoryEntry& account, const Notification::Id& id,
+          Beam::SnapshotLimit limit, Notification::ReadState read_state) = 0;
+        virtual void mark_notification_as_read(const Notification::Id& id) = 0;
+        virtual void mark_notification_as_unread(
+          const Notification::Id& id) = 0;
         virtual void close() = 0;
       };
       template<typename C>
@@ -567,12 +617,8 @@ namespace Nexus {
         EntitlementDatabase load_entitlements() override;
         std::vector<Beam::DirectoryEntry> load_entitlements(
           const Beam::DirectoryEntry& account) override;
-        void store_entitlements(const Beam::DirectoryEntry& account,
-          const std::vector<Beam::DirectoryEntry>& entitlements) override;
         const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
           const Beam::DirectoryEntry& account) override;
-        void store(const Beam::DirectoryEntry& account,
-          const RiskParameters& risk_parameters) override;
         const Beam::Publisher<RiskState>& get_risk_state_publisher(
           const Beam::DirectoryEntry& account) override;
         void store(const Beam::DirectoryEntry& account,
@@ -616,6 +662,18 @@ namespace Nexus {
           AccountModificationRequest::Id id) override;
         Message send_account_modification_request_message(
           AccountModificationRequest::Id id, const Message& message) override;
+        Notification send_notification(
+          const Beam::DirectoryEntry& account, const std::string& description,
+          const std::string& data, Notification::Category category) override;
+        Notification::Id monitor_notifications(
+          const Beam::DirectoryEntry& account,
+          Beam::ScopedQueueWriter<Notification> queue) override;
+        std::vector<Notification> load_notifications(
+          const Beam::DirectoryEntry& account, const Notification::Id& id,
+          Beam::SnapshotLimit limit,
+          Notification::ReadState read_state) override;
+        void mark_notification_as_read(const Notification::Id& id) override;
+        void mark_notification_as_unread(const Notification::Id& id) override;
         void close() override;
       };
       Beam::VirtualPtr<VirtualAdministrationClient> m_client;
@@ -632,6 +690,25 @@ namespace Nexus {
     auto queue = std::make_shared<Beam::StateQueue<RiskParameters>>();
     client.get_risk_parameters_publisher(account).monitor(queue);
     return queue->pop();
+  }
+
+  /**
+   * Loads a single notification by id.
+   * @param client The AdministrationClient to use.
+   * @param account The account the notification belongs to.
+   * @param id The id of the notification to load.
+   * @return The notification, or boost::none if not found.
+   */
+  template<IsAdministrationClient C>
+  boost::optional<Notification> load_notification(C& client,
+      const Beam::DirectoryEntry& account, const Notification::Id& id) {
+    auto notifications = client.load_notifications(
+      account, id, Beam::SnapshotLimit::from_head(1),
+      Notification::ReadState::ALL);
+    if(!notifications.empty() && notifications.front().m_id == id) {
+      return notifications.front();
+    }
+    return boost::none;
   }
 
   template<IsAdministrationClient T, typename... Args>
@@ -727,21 +804,10 @@ namespace Nexus {
     return m_client->load_entitlements(account);
   }
 
-  inline void AdministrationClient::store_entitlements(
-      const Beam::DirectoryEntry& account,
-      const std::vector<Beam::DirectoryEntry>& entitlements) {
-    m_client->store_entitlements(account, entitlements);
-  }
-
   inline const Beam::Publisher<RiskParameters>&
       AdministrationClient::get_risk_parameters_publisher(
         const Beam::DirectoryEntry& account) {
     return m_client->get_risk_parameters_publisher(account);
-  }
-
-  inline void AdministrationClient::store(
-      const Beam::DirectoryEntry& account, const RiskParameters& parameters) {
-    m_client->store(account, parameters);
   }
 
   inline const Beam::Publisher<RiskState>&
@@ -838,6 +904,34 @@ namespace Nexus {
       send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message) {
     return m_client->send_account_modification_request_message(id, message);
+  }
+
+  inline Notification AdministrationClient::send_notification(
+      const Beam::DirectoryEntry& account, const std::string& description,
+      const std::string& data, Notification::Category category) {
+    return m_client->send_notification(account, description, data, category);
+  }
+
+  inline Notification::Id AdministrationClient::monitor_notifications(
+      const Beam::DirectoryEntry& account,
+      Beam::ScopedQueueWriter<Notification> queue) {
+    return m_client->monitor_notifications(account, std::move(queue));
+  }
+
+  inline std::vector<Notification> AdministrationClient::load_notifications(
+      const Beam::DirectoryEntry& account, const Notification::Id& id,
+      Beam::SnapshotLimit limit, Notification::ReadState read_state) {
+    return m_client->load_notifications(account, id, limit, read_state);
+  }
+
+  inline void AdministrationClient::mark_notification_as_read(
+      const Notification::Id& id) {
+    m_client->mark_notification_as_read(id);
+  }
+
+  inline void AdministrationClient::mark_notification_as_unread(
+      const Notification::Id& id) {
+    m_client->mark_notification_as_unread(id);
   }
 
   inline void AdministrationClient::close() {
@@ -953,23 +1047,10 @@ namespace Nexus {
   }
 
   template<typename C>
-  void AdministrationClient::WrappedAdministrationClient<C>::
-      store_entitlements(const Beam::DirectoryEntry& account,
-        const std::vector<Beam::DirectoryEntry>& entitlements) {
-    m_client->store_entitlements(account, entitlements);
-  }
-
-  template<typename C>
   const Beam::Publisher<RiskParameters>&
       AdministrationClient::WrappedAdministrationClient<C>::
         get_risk_parameters_publisher(const Beam::DirectoryEntry& account) {
     return m_client->get_risk_parameters_publisher(account);
-  }
-
-  template<typename C>
-  void AdministrationClient::WrappedAdministrationClient<C>::store(
-      const Beam::DirectoryEntry& account, const RiskParameters& parameters) {
-    m_client->store(account, parameters);
   }
 
   template<typename C>
@@ -1092,6 +1173,41 @@ namespace Nexus {
       send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message) {
     return m_client->send_account_modification_request_message(id, message);
+  }
+
+  template<typename C>
+  Notification AdministrationClient::WrappedAdministrationClient<C>::
+      send_notification(const Beam::DirectoryEntry& account,
+        const std::string& description, const std::string& data,
+        Notification::Category category) {
+    return m_client->send_notification(account, description, data, category);
+  }
+
+  template<typename C>
+  Notification::Id AdministrationClient::WrappedAdministrationClient<C>::
+      monitor_notifications(const Beam::DirectoryEntry& account,
+        Beam::ScopedQueueWriter<Notification> queue) {
+    return m_client->monitor_notifications(account, std::move(queue));
+  }
+
+  template<typename C>
+  std::vector<Notification> AdministrationClient::
+      WrappedAdministrationClient<C>::load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state) {
+    return m_client->load_notifications(account, id, limit, read_state);
+  }
+
+  template<typename C>
+  void AdministrationClient::WrappedAdministrationClient<C>::
+      mark_notification_as_read(const Notification::Id& id) {
+    m_client->mark_notification_as_read(id);
+  }
+
+  template<typename C>
+  void AdministrationClient::WrappedAdministrationClient<C>::
+      mark_notification_as_unread(const Notification::Id& id) {
+    m_client->mark_notification_as_unread(id);
   }
 
   template<typename C>

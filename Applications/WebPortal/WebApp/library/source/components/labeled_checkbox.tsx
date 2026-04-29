@@ -34,8 +34,7 @@ export function LabeledCheckbox(props: Properties): JSX.Element {
         onChange={onChange}
         className={css(STYLES.input)}/>
       <label htmlFor={checkboxId.current} className={css(STYLES.label)}>
-        <Checkbox
-          checked={props.isChecked}/>
+        <Checkbox checked={props.isChecked} onClick={props.onChange}/>
         <span className={css(STYLES.labelText)}>
           {props.label}
         </span>

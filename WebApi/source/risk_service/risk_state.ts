@@ -49,7 +49,7 @@ export class RiskState {
   private _expiry: Beam.DateTime;
 }
 
-export module RiskState {
+export namespace RiskState {
 
   /** The state that an account can be in for the purpose of risk monitoring. */
   export enum Type {

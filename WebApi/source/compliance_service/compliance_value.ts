@@ -84,7 +84,7 @@ export class ComplianceValue {
   private _value: any;
 }
 
-export module ComplianceValue {
+export namespace ComplianceValue {
 
   /** Enumerates the types of values used by a ComplianceValue object. */
   export enum Type {

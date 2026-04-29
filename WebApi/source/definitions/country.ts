@@ -118,7 +118,7 @@ export class CountryDatabase {
   private _entries: CountryDatabase.Entry[];
 }
 
-export module CountryDatabase {
+export namespace CountryDatabase {
 
   /** Stores a single country database entry. */
   export class Entry {
