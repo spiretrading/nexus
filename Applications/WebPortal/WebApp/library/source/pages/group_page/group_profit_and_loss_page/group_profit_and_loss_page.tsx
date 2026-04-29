@@ -3,8 +3,10 @@ import * as Beam from 'beam';
 import * as React from 'react';
 import { Button, DateInput, EmptyMessage, ErrorMessage, PageLayout,
   Select } from '../../..';
-import { ProfitAndLossHeader, ReportStatusIndicator } from
-  '../../../pages/account_page/profit_and_loss_page';
+import { ProfitAndLossHeader, ProfitAndLossItemPlaceholder,
+  ReportStatusIndicator } from
+    '../../../pages/account_page/profit_and_loss_page';
+import { AccountProfitAndLossItem } from './account_profit_and_loss_item';
 
 interface Properties {
 
@@ -705,12 +707,40 @@ function ProfitAndLossContent(props: {
         foreignCurrencies={props.foreignCurrencies}
         loading={isLoading}/>
       <div className={css(STYLES.listSpacing)}/>
-      <ProfitAndLossList/>
+      <ProfitAndLossList
+        symbol={props.symbol}
+        status={props.status}
+        previousStatus={props.previousStatus}
+        accounts={props.accounts}/>
     </section>);
 }
 
-function ProfitAndLossList(): JSX.Element {
-  return <div/>;
+function ProfitAndLossList(props: {
+    symbol: string;
+    status: GroupProfitAndLossPage.Status;
+    previousStatus: GroupProfitAndLossPage.Status;
+    accounts: GroupProfitAndLossPage.AccountEntry[];
+  }): JSX.Element {
+  const isLoading =
+    props.status === GroupProfitAndLossPage.Status.IN_PROGRESS;
+  if(isLoading) {
+    return (
+      <ul className={css(STYLES.profitAndLossList)}>
+        {Array.from({length: 5}, (_, i) =>
+          <li key={i}><ProfitAndLossItemPlaceholder/></li>)}
+      </ul>);
+  }
+  return (
+    <ul className={css(STYLES.profitAndLossList)}>
+      {props.accounts.map((account, i) =>
+        <li key={i}>
+          <AccountProfitAndLossItem
+            username={account.username}
+            symbol={props.symbol}
+            totalPnl={account.totalPnl}
+            currencies={account.currencies}/>
+        </li>)}
+    </ul>);
 }
 
 const STYLES = StyleSheet.create({
@@ -741,6 +771,11 @@ const STYLES = StyleSheet.create({
   },
   listSpacing: {
     height: '30px'
+  },
+  profitAndLossList: {
+    padding: 0,
+    listStyle: 'none',
+    containerType: 'inline-size'
   },
   form: {
     '@media (max-width: 767px)': {
