@@ -148,30 +148,32 @@ enum TestBehavior {
 }
 
 class TestModel extends WebPortal.GroupProfitAndLossModel {
-  public behavior = TestBehavior.SUCCEED;
-
-  constructor(report: WebPortal.GroupProfitAndLossModel.Report,
-      delay: number) {
+  constructor(report: WebPortal.GroupProfitAndLossModel.Report, delay: number) {
     super();
     this.report = report;
     this.delay = delay;
     this.nextId = 1;
     this.pending = new Map();
+    this.behavior = TestBehavior.SUCCEED;
+  }
+
+  public setBehavior(behavior: TestBehavior): void {
+    this.behavior = behavior;
   }
 
   public async load(): Promise<void> {
     return;
   }
 
-  public async startReport(
-      _start: Beam.Date, _end: Beam.Date): Promise<number> {
+  public async startReport(_start: Beam.Date, _end: Beam.Date):
+      Promise<number> {
     const id = this.nextId++;
     this.pending.set(id, {reject: null});
     return id;
   }
 
-  public async awaitReport(
-      id: number): Promise<WebPortal.GroupProfitAndLossModel.Report> {
+  public async awaitReport(id: number):
+      Promise<WebPortal.GroupProfitAndLossModel.Report> {
     const entry = this.pending.get(id);
     if(!entry) {
       throw new Error(`Unknown report id: ${id}`);
@@ -212,12 +214,10 @@ class TestModel extends WebPortal.GroupProfitAndLossModel {
   private delay: number;
   private nextId: number;
   private pending: Map<number, {reject: () => void}>;
+  private behavior: TestBehavior;
 }
 
 const model = new TestModel(REPORT, 2000);
-
-const Status = WebPortal.GroupProfitAndLossPage.Status;
-type Status = WebPortal.GroupProfitAndLossPage.Status;
 
 interface State {
   behavior: TestBehavior;
@@ -229,7 +229,6 @@ class TestApp extends React.Component<{}, State> {
     this.state = {
       behavior: TestBehavior.SUCCEED
     };
-    this.controllerRef = React.createRef();
   }
 
   public render(): JSX.Element {
@@ -240,50 +239,28 @@ class TestApp extends React.Component<{}, State> {
           {this.renderBehaviorButton('Succeed', TestBehavior.SUCCEED)}
           {this.renderBehaviorButton('Fail', TestBehavior.FAIL)}
           {this.renderBehaviorButton('Hang', TestBehavior.HANG)}
-          <span style={STYLE.toolbarSeparator}>|</span>
-          <span style={STYLE.toolbarLabel}>Force:</span>
-          {this.renderForceButton('EMPTY', Status.EMPTY)}
-          {this.renderForceButton('READY', Status.READY)}
-          {this.renderForceButton('STALE', Status.STALE)}
-          {this.renderForceButton('ERROR', Status.ERROR)}
         </div>
         <WebPortal.GroupProfitAndLossController
-          ref={this.controllerRef}
           currency={CAD}
           currencyDatabase={currencyDatabase}
           model={model}/>
       </div>);
   }
 
-  private renderBehaviorButton(label: string,
-      behavior: TestBehavior): JSX.Element {
+  private renderBehaviorButton(
+      label: string, behavior: TestBehavior): JSX.Element {
     const isActive = this.state.behavior === behavior;
     return (
       <button key={label}
         style={{...STYLE.button, ...(isActive && STYLE.buttonActive)}}
         onClick={() => {
-          model.behavior = behavior;
+          model.setBehavior(behavior);
           this.setState({behavior});
         }}>
         {label}
       </button>);
   }
 
-  private renderForceButton(label: string, status: Status): JSX.Element {
-    return (
-      <button key={label} style={STYLE.button}
-        onClick={() => {
-          this.controllerRef.current?.setState({
-            status,
-            report: status === Status.EMPTY ? null : REPORT
-          } as any);
-        }}>
-        {label}
-      </button>);
-  }
-
-  private controllerRef:
-    React.RefObject<WebPortal.GroupProfitAndLossController>;
 }
 
 const STYLE: Record<string, React.CSSProperties> = {

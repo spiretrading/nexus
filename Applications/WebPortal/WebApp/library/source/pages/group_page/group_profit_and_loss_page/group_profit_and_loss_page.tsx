@@ -361,10 +361,10 @@ class CustomDates extends React.Component<{
     const className = [css(STYLES.customDatesWrapper),
       this.props.className].join(' ');
     return (
-      <div ref={this._wrapperRef} id='custom-dates'
+      <div ref={this.wrapperRef} id='custom-dates'
           className={className}
           style={{maxHeight: this.props.isOpen ? undefined : '0px'}}>
-        <div ref={this._contentRef} className={css(STYLES.customDatesContent)}>
+        <div ref={this.contentRef} className={css(STYLES.customDatesContent)}>
           <DateInputs
             startDate={this.props.startDate}
             endDate={this.props.endDate}
@@ -374,9 +374,22 @@ class CustomDates extends React.Component<{
       </div>);
   }
 
+  public componentDidMount(): void {
+    this.observer = new ResizeObserver(() => {
+      const wrapper = this.wrapperRef.current;
+      const content = this.contentRef.current;
+      if(wrapper && content && this.props.isOpen) {
+        wrapper.style.maxHeight = `${content.scrollHeight}px`;
+      }
+    });
+    if(this.contentRef.current) {
+      this.observer.observe(this.contentRef.current);
+    }
+  }
+
   public componentDidUpdate(prevProps: {isOpen: boolean}): void {
-    const wrapper = this._wrapperRef.current;
-    const content = this._contentRef.current;
+    const wrapper = this.wrapperRef.current;
+    const content = this.contentRef.current;
     if(!wrapper || !content) {
       return;
     }
@@ -389,8 +402,13 @@ class CustomDates extends React.Component<{
     }
   }
 
-  private _wrapperRef = React.createRef<HTMLDivElement>();
-  private _contentRef = React.createRef<HTMLDivElement>();
+  public componentWillUnmount(): void {
+    this.observer?.disconnect();
+  }
+
+  private wrapperRef = React.createRef<HTMLDivElement>();
+  private contentRef = React.createRef<HTMLDivElement>();
+  private observer: ResizeObserver;
 }
 
 function DateInputs(props: {
@@ -444,18 +462,50 @@ function EndDate(props: {
     </div>);
 }
 
-function ValidityCheckSection(props: {
-      startDate: Beam.Date;
-      endDate: Beam.Date;
-    }): JSX.Element {
-  const isInvalid = props.endDate.compare(props.startDate) < 0;
-  return (
-    <div className={css(STYLES.validityCheckSection,
-        isInvalid && STYLES.validityCheckSectionVisible)}>
-      <span className={css(STYLES.invalidMessage)}>
-        End date must be greater than start date
-      </span>
-    </div>);
+class ValidityCheckSection extends React.Component<{
+    startDate: Beam.Date;
+    endDate: Beam.Date;
+  }> {
+  public render(): JSX.Element {
+    const isInvalid = this.props.endDate.compare(this.props.startDate) < 0;
+    return (
+      <div ref={this.wrapperRef} className={css(STYLES.validityCheckSection)}
+          style={{maxHeight: isInvalid ? this.maxHeight : '0px'}}>
+        <span ref={this.messageRef} className={css(STYLES.invalidMessage)}>
+          End date must be greater than start date
+        </span>
+      </div>);
+  }
+
+  public componentDidMount(): void {
+    this.observer = new ResizeObserver(() => this.updateMaxHeight());
+    if(this.messageRef.current) {
+      this.observer.observe(this.messageRef.current);
+    }
+    this.updateMaxHeight();
+  }
+
+  public componentWillUnmount(): void {
+    this.observer?.disconnect();
+  }
+
+  private updateMaxHeight(): void {
+    const message = this.messageRef.current;
+    if(message) {
+      this.maxHeight = `${message.offsetHeight + 12}px`;
+      const wrapper = this.wrapperRef.current;
+      const isInvalid =
+        this.props.endDate.compare(this.props.startDate) < 0;
+      if(wrapper && isInvalid) {
+        wrapper.style.maxHeight = this.maxHeight;
+      }
+    }
+  }
+
+  private wrapperRef = React.createRef<HTMLDivElement>();
+  private messageRef = React.createRef<HTMLSpanElement>();
+  private observer: ResizeObserver;
+  private maxHeight = '0px';
 }
 
 function DateFilter(props: {
@@ -531,11 +581,12 @@ function ActionsAndStatus(props: {
   const isLoading = props.status === GroupProfitAndLossPage.Status.IN_PROGRESS;
   const isReady = props.status === GroupProfitAndLossPage.Status.READY;
   const isStale = props.status === GroupProfitAndLossPage.Status.STALE;
+  const isError = props.status === GroupProfitAndLossPage.Status.ERROR;
   const isEmpty = props.status === GroupProfitAndLossPage.Status.EMPTY;
   const isNoResults = props.status === GroupProfitAndLossPage.Status.NO_RESULTS;
   const hasData = props.accounts.length > 0;
   const applyDisabled = isReady || isNoResults || !props.isDateRangeValid;
-  const downloadDisabled = isEmpty || isNoResults || isLoading;
+  const downloadDisabled = isEmpty || isNoResults || isError || isLoading;
   const filename =
     `group-pl-${props.startDate.toJson()}-${props.endDate.toJson()}.csv`;
   const onApply = () => {
@@ -675,9 +726,13 @@ function ProfitAndLossContent(props: {
       </section>);
   }
   if(isError) {
+    const onRetry = () => {
+      props.onSubmit?.(props.startDate, props.endDate);
+    };
     return (
       <section aria-label='Profit and Loss Report' aria-live='polite'>
-        <ErrorMessage message='There was an error generating the report.'/>
+        <ErrorMessage message='There was an error generating the report.'
+          onRetry={onRetry}/>
       </section>);
   }
   return (
@@ -770,6 +825,7 @@ const STYLES = StyleSheet.create({
     '@media (min-width: 768px) and (max-width: 1035px)': {
       display: 'grid',
       gridTemplateColumns: '246px 1fr auto',
+      gridTemplateRows: 'auto auto',
       columnGap: '18px',
       alignItems: 'start'
     },
@@ -890,7 +946,6 @@ const STYLES = StyleSheet.create({
   },
   validityCheckSection: {
     overflow: 'hidden',
-    maxHeight: 0,
     transition: 'max-height 200ms ease-in-out',
     '@media (max-width: 767px)': {
       gridRow: 8
@@ -903,9 +958,6 @@ const STYLES = StyleSheet.create({
       gridColumn: '1 / -1',
       gridRow: 2
     }
-  },
-  validityCheckSectionVisible: {
-    maxHeight: '28px'
   },
   invalidMessage: {
     display: 'block',
@@ -921,7 +973,7 @@ const STYLES = StyleSheet.create({
       gridColumn: 1,
       display: 'flex',
       flexDirection: 'row',
-      alignItems: 'center'
+      alignItems: 'flex-start'
     }
   },
   dateFilterSelect: {
@@ -945,10 +997,15 @@ const STYLES = StyleSheet.create({
       display: 'none'
     },
     '@media (min-width: 768px) and (max-width: 1035px)': {
+      display: 'flex',
+      flexDirection: 'column',
       gridColumn: 3,
-      gridRow: '1 / -1'
+      gridRow: '1 / -1',
+      alignSelf: 'stretch'
     },
     '@media (min-width: 1036px)': {
+      display: 'flex',
+      flexDirection: 'column',
       gridColumn: 3
     }
   },
@@ -975,7 +1032,10 @@ const STYLES = StyleSheet.create({
   desktopStatusFeedback: {
     paddingTop: '12px',
     display: 'flex',
-    justifyContent: 'flex-end'
+    justifyContent: 'flex-end',
+    '@media (min-width: 768px) and (max-width: 1035px)': {
+      marginTop: 'auto'
+    }
   },
   downloadLink: {
     display: 'flex',

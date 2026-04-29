@@ -99,30 +99,33 @@ enum TestBehavior {
 }
 
 class TestModel extends WebPortal.ProfitAndLossModel {
-  public behavior = TestBehavior.SUCCEED;
-
   constructor(report: WebPortal.ProfitAndLossModel.Report, delay: number) {
     super();
-    this._report = report;
-    this._delay = delay;
-    this._nextId = 1;
-    this._pending = new Map();
+    this.report = report;
+    this.delay = delay;
+    this.nextId = 1;
+    this.pending = new Map();
+    this.behavior = TestBehavior.SUCCEED;
+  }
+
+  public setBehavior(behavior: TestBehavior): void {
+    this.behavior = behavior;
   }
 
   public async load(): Promise<void> {
     return;
   }
 
-  public async startReport(
-      start: Beam.Date, end: Beam.Date): Promise<number> {
-    const id = this._nextId++;
-    this._pending.set(id, {reject: null});
+  public async startReport(_start: Beam.Date, _end: Beam.Date):
+      Promise<number> {
+    const id = this.nextId++;
+    this.pending.set(id, {reject: null});
     return id;
   }
 
-  public async awaitReport(
-      id: number): Promise<WebPortal.ProfitAndLossModel.Report> {
-    const entry = this._pending.get(id);
+  public async awaitReport(id: number):
+      Promise<WebPortal.ProfitAndLossModel.Report> {
+    const entry = this.pending.get(id);
     if(!entry) {
       throw new Error(`Unknown report id: ${id}`);
     }
@@ -140,34 +143,32 @@ class TestModel extends WebPortal.ProfitAndLossModel {
         } else {
           resolve();
         }
-      }, this._delay);
+      }, this.delay);
       entry.reject = () => {
         clearTimeout(timer);
         reject(new Error('Report cancelled.'));
       };
     });
-    this._pending.delete(id);
-    return this._report;
+    this.pending.delete(id);
+    return this.report;
   }
 
   public async cancelReport(id: number): Promise<void> {
-    const entry = this._pending.get(id);
+    const entry = this.pending.get(id);
     if(entry) {
       entry.reject?.();
-      this._pending.delete(id);
+      this.pending.delete(id);
     }
   }
 
-  private _report: WebPortal.ProfitAndLossModel.Report;
-  private _delay: number;
-  private _nextId: number;
-  private _pending: Map<number, {reject: () => void}>;
+  private report: WebPortal.ProfitAndLossModel.Report;
+  private delay: number;
+  private nextId: number;
+  private pending: Map<number, {reject: () => void}>;
+  private behavior: TestBehavior;
 }
 
 const model = new TestModel(REPORT, 2000);
-
-const Status = WebPortal.ProfitAndLossPage.Status;
-type Status = WebPortal.ProfitAndLossPage.Status;
 
 interface State {
   behavior: TestBehavior;
@@ -179,7 +180,6 @@ class TestApp extends React.Component<{}, State> {
     this.state = {
       behavior: TestBehavior.SUCCEED
     };
-    this._controllerRef = React.createRef();
   }
 
   public render(): JSX.Element {
@@ -190,15 +190,8 @@ class TestApp extends React.Component<{}, State> {
           {this.renderBehaviorButton('Succeed', TestBehavior.SUCCEED)}
           {this.renderBehaviorButton('Fail', TestBehavior.FAIL)}
           {this.renderBehaviorButton('Hang', TestBehavior.HANG)}
-          <span style={STYLE.toolbarSeparator}>|</span>
-          <span style={STYLE.toolbarLabel}>Force:</span>
-          {this.renderForceButton('NONE', Status.NONE)}
-          {this.renderForceButton('READY', Status.READY)}
-          {this.renderForceButton('STALE', Status.STALE)}
-          {this.renderForceButton('ERROR', Status.ERROR)}
         </div>
         <WebPortal.ProfitAndLossController
-          ref={this._controllerRef}
           currency={CAD}
           currencyDatabase={currencyDatabase}
           model={model}/>
@@ -212,28 +205,12 @@ class TestApp extends React.Component<{}, State> {
       <button key={label}
         style={{...STYLE.button, ...(isActive && STYLE.buttonActive)}}
         onClick={() => {
-          model.behavior = behavior;
+          model.setBehavior(behavior);
           this.setState({behavior});
         }}>
         {label}
       </button>);
   }
-
-  private renderForceButton(label: string, status: Status): JSX.Element {
-    return (
-      <button key={label} style={STYLE.button}
-        onClick={() => {
-          this._controllerRef.current?.setState({
-            status,
-            report: status === Status.NONE ? null : REPORT
-          } as any);
-        }}>
-        {label}
-      </button>);
-  }
-
-  private _controllerRef:
-    React.RefObject<WebPortal.ProfitAndLossController>;
 }
 
 const STYLE: Record<string, React.CSSProperties> = {
