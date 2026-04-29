@@ -2,8 +2,7 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { DisplaySize } from '../../..';
-import { DropDownButton, HLine } from '../../..';
+import { DisplaySize, ExpandButton, HLine } from '../../..';
 import { ParametersList } from './parameter_list';
 import { RuleExecutionDropDown } from './rule_execution_drop_down';
 
@@ -89,7 +88,7 @@ export class RuleRow extends React.Component<Properties, State> {
         <div style={boxStyle}>
           {spacing}
           <div style={{...RuleRow.STYLE.prefix}}>
-            <DropDownButton
+            <ExpandButton
               onClick={this.onRuleOpen}
               size={buttonSize}
               isExpanded={this.state.isExpanded}/>

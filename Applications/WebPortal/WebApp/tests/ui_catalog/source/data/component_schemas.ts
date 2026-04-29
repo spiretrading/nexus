@@ -120,7 +120,7 @@ const disclosure =
             height: '40px', fontSize: '0.875rem'
           }
         },
-          React.createElement(WebPortal.DropDownButton, {
+          React.createElement(WebPortal.ExpandButton, {
             isExpanded: props.open, size: '20'
           }),
           'Section Title'),
@@ -138,12 +138,12 @@ const dateTimeInput =
     [new SignalSchema('onChange', 'value')],
     WebPortal.DateTimeInput);
 
-const dropDownButton =
-  new ComponentSchema('DropDownButton',
+const expandButton =
+  new ComponentSchema('ExpandButton',
     [new PropertySchema('size', 16, NumberSliderInput),
       new PropertySchema('isExpanded', false, BooleanInput)],
     [new SignalSchema('onClick', 'isExpanded')],
-    (props: any) => React.createElement(WebPortal.DropDownButton, {
+    (props: any) => React.createElement(WebPortal.ExpandButton, {
       ...props,
       onClick: () => props.onClick(!props.isExpanded)
     }));
@@ -1086,25 +1086,20 @@ const tableHeaderCell =
     }, 132);
 
 export const componentSections = [
-  new ComponentSection('UI Kit', [button, burgerButton, checkbox,
-    countrySelect, currencySelect, dateInput, disclosure,
-    dateTimeInput, decimalInput, dropDownButton, durationInput, emptyMessage,
-    errorMessage,
-    filterChip, filterInput, hLine,
-    iconLabelButton, input, integerField, labeledCheckbox, link, modal,
-    moneyInput,
-    navigationHeader, navigationTab, pageLayout,
+  new ComponentSection('UI Kit', [button, burgerButton, checkbox, countrySelect,
+    currencySelect, dateInput, disclosure, dateTimeInput, decimalInput,
+    durationInput, emptyMessage, errorMessage, expandButton, filterChip,
+    filterInput, hLine, iconLabelButton, input, integerField, labeledCheckbox,
+    link, modal, moneyInput, navigationHeader, navigationTab, pageLayout,
     pagination, scopeInput, scopeItemInput, relativeDate, roleIcon, rolePanel,
     tickersInput, tickerInput, segmentedSpinner, select, skeleton,
-    segmentButton,
-    segmentedControl,
-    timeOfDayInput]),
+    segmentButton, segmentedControl, timeOfDayInput]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
     requestDetailPage, requestDirectoryPage, requestEffectiveDate,
-    requestFilterModal, requestItem, requestItemPlaceholder,
-    requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
+    requestFilterModal, requestItem, requestItemPlaceholder, requestSortSelect,
+    requestStateIndicator, riskControlsChangeItem]),
   new ComponentSection('Notifications', [notificationsFilterModal,
     notificationItem, notificationItemPlaceholder, notificationsButton,
     notificationsPopover]),

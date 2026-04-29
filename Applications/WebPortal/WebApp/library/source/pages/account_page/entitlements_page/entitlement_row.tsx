@@ -2,7 +2,7 @@ import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
-import { Checkbox, DropDownButton } from '../../..';
+import { Checkbox, ExpandButton } from '../../..';
 import { ApplicabilityTable } from './applicability_table';
 
 interface Properties {
@@ -102,7 +102,7 @@ export class EntitlementRow extends React.Component<Properties, State> {
             checked={this.props.isActive}
             onClick={this.props.onClick}/>
           <div style={STYLE.headerPadding}/>
-          <DropDownButton size={BUTTON_SIZE_PX}
+          <ExpandButton size={BUTTON_SIZE_PX}
             isExpanded={this.state.isExpanded}
             onClick={this.onToggle}/>
           <div style={STYLE.headerPadding}/>

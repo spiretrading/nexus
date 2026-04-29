@@ -6,6 +6,9 @@ interface Properties {
   /** Determines the size of the element. */
   size?: number | string;
 
+  /** Disables the button and sets cursor to default. */
+  disabled?: boolean;
+
   /** The onClick event handler. */
   onClick?: (event?: React.MouseEvent<HTMLDivElement>) => void;
 
@@ -18,7 +21,7 @@ interface State {
 }
 
 /** An animated button that toggles between a collapsed and expanded state. */
-export class DropDownButton extends React.Component<Properties, State> {
+export class ExpandButton extends React.Component<Properties, State> {
   constructor(properties: Properties) {
     super(properties);
     this.state = {
@@ -44,34 +47,37 @@ export class DropDownButton extends React.Component<Properties, State> {
     })();
     const endStyle = (() => {
       if(this.state.isFirstTime) {
-        return DropDownButton.ANIMATION.noAnimation;
+        return ExpandButton.ANIMATION.noAnimation;
       } else if(this.props.isExpanded) {
-        return DropDownButton.ANIMATION.spinOpenFadeIn;
+        return ExpandButton.ANIMATION.spinOpenFadeIn;
       } else {
-        return DropDownButton.ANIMATION.spinCloseFadeIn;
+        return ExpandButton.ANIMATION.spinCloseFadeIn;
       }
     })();
     const startStyle = (() => {
       if(this.state.isFirstTime) {
-        return DropDownButton.ANIMATION.noAnimationHidden;
+        return ExpandButton.ANIMATION.noAnimationHidden;
       } else if(this.props.isExpanded) {
-        return DropDownButton.ANIMATION.spinOpen;
+        return ExpandButton.ANIMATION.spinOpen;
       } else {
-        return DropDownButton.ANIMATION.spinClose;
+        return ExpandButton.ANIMATION.spinClose;
       }
     })();
+    const imageWrapperStyle = this.props.disabled ?
+      {...ExpandButton.STYLE.imageWrapper, cursor: 'default' as const} :
+      ExpandButton.STYLE.imageWrapper;
     return (
-      <div style={DropDownButton.STYLE.componentWrapper}
-          onClick={this.props.onClick}>
-        <div style={DropDownButton.STYLE.imageWrapper}>
+      <div style={ExpandButton.STYLE.componentWrapper}
+          onClick={this.props.disabled ? undefined : this.props.onClick}>
+        <div style={imageWrapperStyle}>
           <img src={endSource}
             width={size}
             height={size}
-            className={css(DropDownButton.ANIMATION.base, startStyle)}/>
+            className={css(ExpandButton.ANIMATION.base, startStyle)}/>
           <img src={startSource}
             width={size}
             height={size}
-            className={css(DropDownButton.ANIMATION.base, endStyle)}/>
+            className={css(ExpandButton.ANIMATION.base, endStyle)}/>
         </div>
       </div>);
   }
@@ -137,19 +143,19 @@ export class DropDownButton extends React.Component<Properties, State> {
       animationFillMode: 'forwards'
     },
     spinOpen: {
-      animationName: DropDownButton.OPEN_AND_FADEOUT
+      animationName: ExpandButton.OPEN_AND_FADEOUT
     },
     spinClose: {
-      animationName: DropDownButton.CLOSE_AND_FADEOUT,
+      animationName: ExpandButton.CLOSE_AND_FADEOUT,
       animationDuration: '200ms'
     },
     spinOpenFadeIn: {
       position: 'static',
-      animationName: DropDownButton.OPEN_AND_FADEIN
+      animationName: ExpandButton.OPEN_AND_FADEIN
     },
     spinCloseFadeIn:{
       position: 'static',
-      animationName: DropDownButton.CLOSE_AND_FADEIN,
+      animationName: ExpandButton.CLOSE_AND_FADEIN,
       animationDuration: '200ms'
     }
   });

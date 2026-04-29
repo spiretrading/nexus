@@ -1,6 +1,6 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
-import { Disclosure, DropDownButton } from '../../..';
+import { Disclosure, ExpandButton } from '../../..';
 import { ProfitAndLossItem } from
   '../../../pages/account_page/profit_and_loss_page';
 import { GroupProfitAndLossPage } from './group_profit_and_loss_page';
@@ -53,7 +53,6 @@ export class AccountProfitAndLossItem extends
         currencies={this.props.currencies}/>);
     return (
       <Disclosure open={this.state.isOpen}
-        disabled={this.props.currencies.length === 0}
         header={header} details={details} onToggle={this.onToggle}/>);
   }
 
@@ -69,7 +68,7 @@ function AccountHeader(props: {
     }): JSX.Element {
   return (
     <div className={css(STYLES.header)}>
-      <DropDownButton size='20' isExpanded={props.isOpen}/>
+      <ExpandButton size='20' isExpanded={props.isOpen}/>
       <h3 className={css(STYLES.username)}
           style={
             props.isOpen ? {color: '#4B23A0', fontWeight: 500} : undefined}>

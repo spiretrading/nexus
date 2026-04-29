@@ -1,7 +1,7 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Disclosure, DropDownButton } from '../../..';
+import { Disclosure, ExpandButton } from '../../..';
 import { ProfitAndLossTable } from './profit_and_loss_table';
 
 interface Properties {
@@ -38,7 +38,7 @@ export function ProfitAndLossItem(props: Properties) {
   })();
   const header = (
     <div className={css(STYLES.header)}>
-      <DropDownButton size='20' isExpanded={isOpen}/>
+      <ExpandButton size='20' isExpanded={isOpen}/>
       <h2 className={css(STYLES.code)}
         style={isOpen ?
           {color: '#4B23A0', fontWeight: 500} : undefined}>
