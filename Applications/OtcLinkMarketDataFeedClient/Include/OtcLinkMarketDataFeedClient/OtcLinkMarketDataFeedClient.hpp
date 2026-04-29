@@ -72,12 +72,12 @@ namespace Nexus {
 
     private:
       struct BookQuoteEntry {
-        Security m_security;
+        Ticker m_ticker;
         BookQuote m_bid;
         BookQuote m_ask;
       };
       struct BboQuoteEntry {
-        Security m_security;
+        Ticker m_ticker;
         BboQuote m_bbo;
       };
       OtcLinkConfiguration m_configuration;
@@ -86,7 +86,7 @@ namespace Nexus {
       Beam::local_ptr_t<O> m_otc_link_client;
       Beam::local_ptr_t<R> m_recovery_client;
       SnapshotClientBuilder m_snapshot_client_builder;
-      std::unordered_map<std::uint32_t, Security> m_securities;
+      std::unordered_map<std::uint32_t, Ticker> m_tickers;
       std::unordered_map<std::uint32_t, BookQuoteEntry> m_book_quotes;
       std::unordered_map<std::uint32_t, BboQuoteEntry> m_bbo_quotes;
       Beam::RoutineHandler m_read_loop;
@@ -101,7 +101,7 @@ namespace Nexus {
       static Money parse_money(const char* data);
       static std::string parse_alphanumeric(const char* data, std::size_t size);
       static boost::posix_time::ptime parse_timestamp(const char* data);
-      const Security& find_security(std::uint32_t id) const;
+      const Ticker& find_ticker(std::uint32_t id) const;
       void parse_security_message(const OtcLinkMessage& message);
       void parse_quote_message(const OtcLinkMessage& message);
       void parse_quote_update_message(const OtcLinkMessage& message);
@@ -109,8 +109,8 @@ namespace Nexus {
       void parse_inside_update_message(const OtcLinkMessage& message);
       void parse_trade_message(const OtcLinkMessage& message);
       void parse_message(const OtcLinkMessage& message);
-      void load_securities();
-      void save_securities();
+      void load_tickers();
+      void save_tickers();
       std::uint32_t initialize_snapshot();
       void read_loop();
   };
@@ -206,11 +206,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename M, typename O, typename R, typename S>
-  const Security& OtcLinkMarketDataFeedClient<M, O, R, S>::find_security(
+  const Ticker& OtcLinkMarketDataFeedClient<M, O, R, S>::find_ticker(
       std::uint32_t id) const {
-    auto i = m_securities.find(id);
-    if(i == m_securities.end()) {
-      static const auto NONE = Security();
+    auto i = m_tickers.find(id);
+    if(i == m_tickers.end()) {
+      static const auto NONE = Ticker();
       return NONE;
     }
     return i->second;
@@ -236,17 +236,17 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     auto id = parse_uint32(data + SECURITY_ID_OFFSET);
     if(action == ADD_ACTION ||
         action == UPDATE_ACTION || action == SPIN_ACTION) {
-      if(!m_securities.contains(id)) {
-        auto security = Security(std::move(symbol), m_configuration.m_venue);
-        m_securities[id] = security;
+      if(!m_tickers.contains(id)) {
+        auto ticker = Ticker(std::move(symbol), m_configuration.m_venue);
+        m_tickers[id] = ticker;
         if(m_configuration.m_recovery_channel ==
             OtcLinkChannelId::QUOTE_INSIDE_REAL_TIME) {
-          m_feed_client->add(SecurityInfo(
-            security, boost::lexical_cast<std::string>(security), "", 100));
+          m_feed_client->add(TickerInfo(
+            ticker, boost::lexical_cast<std::string>(ticker), "", 100));
         }
       }
     } else if(action == DELETE_ACTION) {
-      m_securities.erase(id);
+      m_tickers.erase(id);
     }
   }
 
@@ -279,10 +279,9 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         bid.m_timestamp = now;
         if(m_configuration.m_is_logging_messages) {
           std::cout << boost::posix_time::microsec_clock::universal_time() <<
-            " Delete: " << SecurityBookQuote(bid, stored.m_security) <<
-            std::endl;
+            " Delete: " << TickerBookQuote(bid, stored.m_ticker) << std::endl;
         }
-        m_feed_client->publish(SecurityBookQuote(bid, stored.m_security));
+        m_feed_client->publish(TickerBookQuote(bid, stored.m_ticker));
       }
       if(stored.m_ask.m_quote.m_price != Money::ZERO) {
         auto ask = stored.m_ask;
@@ -290,10 +289,9 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         ask.m_timestamp = now;
         if(m_configuration.m_is_logging_messages) {
           std::cout << boost::posix_time::microsec_clock::universal_time() <<
-            " Delete: " << SecurityBookQuote(ask, stored.m_security) <<
-            std::endl;
+            " Delete: " << TickerBookQuote(ask, stored.m_ticker) << std::endl;
         }
-        m_feed_client->publish(SecurityBookQuote(ask, stored.m_security));
+        m_feed_client->publish(TickerBookQuote(ask, stored.m_ticker));
       }
       m_book_quotes.erase(i);
       return;
@@ -301,11 +299,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     auto quote_flags = parse_byte(data + 9);
     auto security_id = parse_uint32(data + 10);
     auto mpid = std::string(data + 14, 4);
-    auto& security = find_security(security_id);
-    if(!security) {
+    auto& ticker = find_ticker(security_id);
+    if(!ticker) {
       if(m_configuration.m_is_logging_messages) {
         std::cout << boost::posix_time::microsec_clock::universal_time() <<
-          " Security not found: " << security_id << std::endl;
+          " Ticker not found: " << security_id << std::endl;
       }
       return;
     }
@@ -321,9 +319,9 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         make_bid(bid_price, bid_size), bid_timestamp);
       if(m_configuration.m_is_logging_messages) {
         std::cout << boost::posix_time::microsec_clock::universal_time() <<
-          " Add: " << SecurityBookQuote(bid, security) << std::endl;
+          " Add: " << TickerBookQuote(bid, ticker) << std::endl;
       }
-      m_feed_client->publish(SecurityBookQuote(bid, security));
+      m_feed_client->publish(TickerBookQuote(bid, ticker));
     }
     auto ask_price = parse_money(data + 18);
     auto ask = BookQuote();
@@ -335,12 +333,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         make_ask(ask_price, ask_size), ask_timestamp);
       if(m_configuration.m_is_logging_messages) {
         std::cout << boost::posix_time::microsec_clock::universal_time() <<
-          " Add: " << SecurityBookQuote(ask, security) << std::endl;
+          " Add: " << TickerBookQuote(ask, ticker) << std::endl;
       }
-      m_feed_client->publish(SecurityBookQuote(ask, security));
+      m_feed_client->publish(TickerBookQuote(ask, ticker));
     }
-    m_book_quotes.insert_or_assign(
-      quote_id, BookQuoteEntry(security, bid, ask));
+    m_book_quotes.insert_or_assign(quote_id, BookQuoteEntry(ticker, bid, ask));
   }
 
   template<typename M, typename O, typename R, typename S>
@@ -384,11 +381,10 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         remove_quote.m_timestamp = parse_timestamp(data + 22);
         if(m_configuration.m_is_logging_messages) {
           std::cout << boost::posix_time::microsec_clock::universal_time() <<
-            " Delete: " << SecurityBookQuote(remove_quote, stored.m_security) <<
+            " Delete: " << TickerBookQuote(remove_quote, stored.m_ticker) <<
             std::endl;
         }
-        m_feed_client->publish(
-          SecurityBookQuote(remove_quote, stored.m_security));
+        m_feed_client->publish(TickerBookQuote(remove_quote, stored.m_ticker));
         quote = BookQuote();
       }
       return;
@@ -404,20 +400,19 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       remove_quote.m_timestamp = timestamp;
       if(m_configuration.m_is_logging_messages) {
         std::cout << boost::posix_time::microsec_clock::universal_time() <<
-          " Delete: " << SecurityBookQuote(remove_quote, stored.m_security) <<
+          " Delete: " << TickerBookQuote(remove_quote, stored.m_ticker) <<
           std::endl;
       }
-      m_feed_client->publish(
-        SecurityBookQuote(remove_quote, stored.m_security));
+      m_feed_client->publish(TickerBookQuote(remove_quote, stored.m_ticker));
     }
     quote.m_quote.m_price = price;
     quote.m_quote.m_size = size;
     quote.m_timestamp = timestamp;
     if(m_configuration.m_is_logging_messages) {
       std::cout << boost::posix_time::microsec_clock::universal_time() <<
-        " Update: " << SecurityBookQuote(quote, stored.m_security) << std::endl;
+        " Update: " << TickerBookQuote(quote, stored.m_ticker) << std::endl;
     }
-    m_feed_client->publish(SecurityBookQuote(quote, stored.m_security));
+    m_feed_client->publish(TickerBookQuote(quote, stored.m_ticker));
   }
 
   template<typename M, typename O, typename R, typename S>
@@ -434,11 +429,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       return;
     }
     auto security_id = parse_uint32(data + 10);
-    auto& security = find_security(security_id);
-    if(!security) {
+    auto& ticker = find_ticker(security_id);
+    if(!ticker) {
       if(m_configuration.m_is_logging_messages) {
         std::cout << boost::posix_time::microsec_clock::universal_time() <<
-          " Security not found: " << security_id << std::endl;
+          " Ticker not found: " << security_id << std::endl;
       }
       return;
     }
@@ -452,15 +447,15 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     auto bid = make_bid(bid_price, bid_size);
     auto ask = make_ask(ask_price, ask_size);
     auto bbo = BboQuote(bid, ask, timestamp);
-    m_bbo_quotes.insert_or_assign(inside_id, BboQuoteEntry(security, bbo));
+    m_bbo_quotes.insert_or_assign(inside_id, BboQuoteEntry(ticker, bbo));
     if(bid_price == Money::ZERO && ask_price == Money::ZERO) {
       return;
     }
     if(m_configuration.m_is_logging_messages) {
       std::cout << boost::posix_time::microsec_clock::universal_time() <<
-        " Inside add: " << SecurityBboQuote(bbo, security) << std::endl;
+        " Inside add: " << TickerBboQuote(bbo, ticker) << std::endl;
     }
-    m_feed_client->publish(SecurityBboQuote(bbo, security));
+    m_feed_client->publish(TickerBboQuote(bbo, ticker));
   }
 
   template<typename M, typename O, typename R, typename S>
@@ -504,10 +499,10 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     }
     if(m_configuration.m_is_logging_messages) {
       std::cout << boost::posix_time::microsec_clock::universal_time() <<
-        " Inside update: " <<
-        SecurityBboQuote(stored.m_bbo, stored.m_security) << std::endl;
+        " Inside update: " << TickerBboQuote(stored.m_bbo, stored.m_ticker) <<
+        std::endl;
     }
-    m_feed_client->publish(SecurityBboQuote(stored.m_bbo, stored.m_security));
+    m_feed_client->publish(TickerBboQuote(stored.m_bbo, stored.m_ticker));
   }
 
   template<typename M, typename O, typename R, typename S>
@@ -519,11 +514,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     auto price = parse_money(data + 23);
     auto size = parse_quantity(data + 31);
     auto timestamp = parse_timestamp(data + 35);
-    auto& security = find_security(security_id);
-    if(!security) {
+    auto& ticker = find_ticker(security_id);
+    if(!ticker) {
       if(m_configuration.m_is_logging_messages) {
         std::cout << boost::posix_time::microsec_clock::universal_time() <<
-          " Security not found: " << security_id << std::endl;
+          " Ticker not found: " << security_id << std::endl;
       }
       return;
     }
@@ -533,9 +528,9 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       timestamp, price, size, condition, venue, std::string(), std::string());
     if(m_configuration.m_is_logging_messages) {
       std::cout << boost::posix_time::microsec_clock::universal_time() <<
-        " Trade: " << SecurityTimeAndSale(time_and_sale, security) << std::endl;
+        " Trade: " << TickerTimeAndSale(time_and_sale, ticker) << std::endl;
     }
-    m_feed_client->publish(SecurityTimeAndSale(time_and_sale, security));
+    m_feed_client->publish(TickerTimeAndSale(time_and_sale, ticker));
   }
 
   template<typename M, typename O, typename R, typename S>
@@ -561,7 +556,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename M, typename O, typename R, typename S>
-  void OtcLinkMarketDataFeedClient<M, O, R, S>::load_securities() {
+  void OtcLinkMarketDataFeedClient<M, O, R, S>::load_tickers() {
     auto symbol_table = std::ifstream(m_symbol_table);
     if(!symbol_table.good()) {
       std::cerr << "Unable to open ticker symbol mappings.\n";
@@ -577,8 +572,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       for(const auto& node : symbols_node) {
         auto id = node["id"].as<int>();
         auto symbol = node["symbol"].as<std::string>();
-        m_securities.insert(
-          std::pair(id, Security(std::move(symbol), m_configuration.m_venue)));
+        m_tickers.insert(
+          std::pair(id, Ticker(std::move(symbol), m_configuration.m_venue)));
       }
     } catch(const YAML::ParserException& e) {
       std::cerr << "Invalid YAML in file \"" << m_symbol_table <<
@@ -588,14 +583,14 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename M, typename O, typename R, typename S>
-  void OtcLinkMarketDataFeedClient<M, O, R, S>::save_securities() {
+  void OtcLinkMarketDataFeedClient<M, O, R, S>::save_tickers() {
     auto node = YAML::Node();
     auto symbols = node["symbols"];
     symbols = YAML::Node(YAML::NodeType::Sequence);
-    for(auto& [id, security] : m_securities) {
+    for(auto& [id, ticker] : m_tickers) {
       auto entry = YAML::Node();
       entry["id"] = id;
-      entry["symbol"] = security.get_symbol();
+      entry["symbol"] = ticker.get_symbol();
       symbols.push_back(entry);
     }
     auto symbol_table = std::ofstream(m_symbol_table, std::ios::trunc);
@@ -608,7 +603,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
   template<typename M, typename O, typename R, typename S>
   std::uint32_t OtcLinkMarketDataFeedClient<M, O, R, S>::initialize_snapshot() {
-    load_securities();
+    load_tickers();
     if(m_configuration.m_recovery_channel !=
         OtcLinkChannelId::QUOTE_INSIDE_REAL_TIME &&
           m_configuration.m_recovery_channel !=
@@ -664,7 +659,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     }
     if(m_configuration.m_recovery_channel ==
         OtcLinkChannelId::QUOTE_INSIDE_REAL_TIME) {
-      save_securities();
+      save_tickers();
     }
     return last_sequence_number;
   }
