@@ -53,6 +53,7 @@ export class AccountProfitAndLossItem extends
         currencies={this.props.currencies}/>);
     return (
       <Disclosure open={this.state.isOpen}
+        disabled={this.props.currencies.length === 0}
         header={header} details={details} onToggle={this.onToggle}/>);
   }
 

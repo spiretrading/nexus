@@ -14,6 +14,9 @@ interface Properties {
   /** The transition duration in milliseconds. Defaults to 600. */
   transition?: number;
 
+  /** Disables toggling and sets cursor to default. */
+  disabled?: boolean;
+
   /** Called when the header is clicked to toggle the open state. */
   onToggle?: (open: boolean) => void;
 }
@@ -31,7 +34,8 @@ export class Disclosure extends React.Component<Properties> {
     const duration = this.props.transition ?? 600;
     return (
       <div>
-        <div onClick={this.onHeaderClick} style={{cursor: 'pointer'}}>
+        <div onClick={this.onHeaderClick}
+            style={{cursor: this.props.disabled ? 'default' : 'pointer'}}>
           {this.props.header}
         </div>
         <div ref={this.contentRef} style={{
@@ -99,6 +103,9 @@ export class Disclosure extends React.Component<Properties> {
   }
 
   private onHeaderClick = () => {
+    if(this.props.disabled) {
+      return;
+    }
     const isOpen = this.props.open ?? false;
     this.props.onToggle?.(!isOpen);
   };

@@ -453,7 +453,9 @@ function DateInputs(props: {
       <StartLabel/>
       <StartDate value={props.startDate} onChange={props.onStartDateChange}/>
       <EndLabel/>
-      <EndDate value={props.endDate} onChange={props.onEndDateChange}/>
+      <EndDate value={props.endDate}
+        error={props.endDate.compare(props.startDate) < 0}
+        onChange={props.onEndDateChange}/>
       <ValidityCheckSection
         startDate={props.startDate} endDate={props.endDate}/>
     </div>);
@@ -484,11 +486,12 @@ function StartDate(props: {
 
 function EndDate(props: {
       value: Beam.Date;
+      error?: boolean;
       onChange?: (date: Beam.Date) => void;
     }): JSX.Element {
   return (
     <div className={css(STYLES.endDate)}>
-      <DateInput id='end-date' value={props.value}
+      <DateInput id='end-date' value={props.value} error={props.error}
         style={{width: '100%'}} onChange={props.onChange}/>
     </div>);
 }
@@ -1029,6 +1032,10 @@ const STYLES = StyleSheet.create({
   },
   statusFeedback: {
     paddingTop: '18px',
+    '@media (max-width: 767px)': {
+      display: 'flex',
+      justifyContent: 'center'
+    },
     '@media (min-width: 768px)': {
       display: 'none'
     }
@@ -1056,6 +1063,7 @@ const STYLES = StyleSheet.create({
   actionSheet: {
     position: 'fixed',
     inset: 'auto 0 0',
+    zIndex: 1,
     backgroundColor: '#FFFFFF',
     padding: '18px 18px 30px',
     boxShadow: '0 0 6px rgb(0 0 0 / 25%)',
