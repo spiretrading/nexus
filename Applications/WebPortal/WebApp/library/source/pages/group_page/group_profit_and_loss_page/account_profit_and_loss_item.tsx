@@ -13,6 +13,9 @@ interface Properties {
   /** The account currency symbol. */
   symbol: string;
 
+  /** The account currency code. */
+  code: string;
+
   /** The total profit and loss in account currency. */
   totalPnl: string;
 
@@ -34,10 +37,11 @@ export class AccountProfitAndLossItem extends
 
   public render(): JSX.Element {
     const pnlText = (() => {
-      if(this.props.totalPnl.startsWith('-')) {
-        return `-${this.props.symbol}${this.props.totalPnl.substring(1)}`;
+      const {symbol, totalPnl, code} = this.props;
+      if(totalPnl.startsWith('-')) {
+        return `-${symbol}${totalPnl.substring(1)} ${code}`;
       }
-      return `${this.props.symbol}${this.props.totalPnl}`;
+      return `${symbol}${totalPnl} ${code}`;
     })();
     const header = (
       <AccountHeader
@@ -71,7 +75,7 @@ function AccountHeader(props: {
         {props.username}
       </h3>
       <span className={css(STYLES.totalPnl)}
-          style={props.isOpen ? {fontWeight: 500} : undefined}>
+          style={{color: '#36BB55', ...(props.isOpen && {fontWeight: 500})}}>
         {props.pnlText}
       </span>
     </div>);
@@ -122,6 +126,7 @@ const STYLES = StyleSheet.create({
     whiteSpace: 'nowrap'
   },
   currencyList: {
+    borderTop: '1px solid #E6E6E6',
     padding: '0 8px',
     listStyle: 'none',
     containerType: 'inline-size',

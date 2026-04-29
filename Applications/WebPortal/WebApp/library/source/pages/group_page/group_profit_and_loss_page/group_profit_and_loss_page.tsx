@@ -789,6 +789,7 @@ function ProfitAndLossContent(props: {
       <div className={css(STYLES.listSpacing)}/>
       <ProfitAndLossList
         symbol={props.symbol}
+        code={props.code}
         status={props.status}
         previousStatus={props.previousStatus}
         accounts={props.accounts}/>
@@ -797,6 +798,7 @@ function ProfitAndLossContent(props: {
 
 function ProfitAndLossList(props: {
     symbol: string;
+    code: string;
     status: GroupProfitAndLossPage.Status;
     previousStatus: GroupProfitAndLossPage.Status;
     accounts: GroupProfitAndLossPage.AccountEntry[];
@@ -817,6 +819,7 @@ function ProfitAndLossList(props: {
           <AccountProfitAndLossItem
             username={account.username}
             symbol={props.symbol}
+            code={props.code}
             totalPnl={account.totalPnl}
             currencies={account.currencies}/>
         </li>)}
