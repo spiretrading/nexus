@@ -98,7 +98,7 @@ function FlatTableRow(props: FlatTableRowProperties) {
   if(props.isWide) {
     return (
       <tr className={css(STYLES.rowWide)}>
-        <FlatTablePropertyCell name={change.name} isWide={true}/>
+        <FlatTablePropertyCell name={change.name} isWide/>
         <td className={css(STYLES.td)}>
           <FlatTableValue change={change} column='current'/>
         </td>

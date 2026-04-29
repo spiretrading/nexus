@@ -23,10 +23,10 @@ namespace Nexus::Python {
   void export_queries(pybind11::module& module);
 
   /**
-   * Exports the SecurityAccessor class.
+   * Exports the TickerAccessor class.
    * @param module The module to export to.
    */
-  void export_security_accessor(pybind11::module& module);
+  void export_ticker_accessor(pybind11::module& module);
 
   /**
    * Exports the TimeAndSaleAccessor class.

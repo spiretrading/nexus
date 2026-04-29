@@ -8,9 +8,9 @@
 #include "Nexus/Compliance/OpposingCancelComplianceRule.hpp"
 #include "Nexus/Compliance/OpposingSubmissionComplianceRule.hpp"
 #include "Nexus/Compliance/OrderCountLimitComplianceRule.hpp"
-#include "Nexus/Compliance/RegionFilterComplianceRule.hpp"
 #include "Nexus/Compliance/RejectCancelsComplianceRule.hpp"
 #include "Nexus/Compliance/RejectSubmissionsComplianceRule.hpp"
+#include "Nexus/Compliance/ScopeFilterComplianceRule.hpp"
 #include "Nexus/Compliance/TimeFilterComplianceRule.hpp"
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
@@ -51,8 +51,8 @@ namespace Nexus {
           return make_compliance_rule(schema, market_data_client,
             definitions_client, time_client);
         });
-    } else if(schema.get_name() == PER_SECURITY_RULE_NAME) {
-      return make_per_security_compliance_rule(
+    } else if(schema.get_name() == PER_TICKER_RULE_NAME) {
+      return make_per_ticker_compliance_rule(
         unwrap(schema), [&] (const auto& schema) {
           return make_compliance_rule(schema, market_data_client,
             definitions_client, time_client);
@@ -63,11 +63,11 @@ namespace Nexus {
           return make_compliance_rule(schema, market_data_client,
             definitions_client, time_client);
         });
-    } else if(schema.get_name() == REGION_FILTER_RULE_NAME) {
+    } else if(schema.get_name() == SCOPE_FILTER_RULE_NAME) {
       auto sub_schema = unwrap(schema);
       auto sub_rule = make_compliance_rule(
         sub_schema, market_data_client, definitions_client, time_client);
-      return make_region_filter_compliance_rule(
+      return make_scope_filter_compliance_rule(
         schema.get_parameters(), std::move(sub_rule));
     } else if(schema.get_name() == REJECT_CANCELS_RULE_NAME) {
       return std::make_unique<RejectCancelsComplianceRule>();

@@ -119,7 +119,7 @@ export class VenueDatabase {
   private _entries: VenueDatabase.Entry[];
 }
 
-export module VenueDatabase {
+export namespace VenueDatabase {
 
   /** Stores a single venue database entry. */
   export class Entry {

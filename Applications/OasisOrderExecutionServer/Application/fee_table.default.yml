@@ -62,7 +62,7 @@ ca_equities:
     # ETF                    X         X            X               X
     # Sub-dollar             X         X            X               X
     # Sub-dime               X         X            X               X
-    security_table:
+    ticker_table:
       [[0.00260, -0.00220, 0.00260, -0.00150],
        [0.00140, -0.00100, 0.00140, -0.00050],
        [0.00170, -0.00130, 0.00170, -0.00050],

@@ -196,7 +196,7 @@ namespace Nexus {
       const StampMessage& message) {
     auto symbol = message.get_business_field<std::string>(55);
     if(!symbol ||
-        m_config.m_securities.find(*symbol) == m_config.m_securities.end()) {
+        m_config.m_tickers.find(*symbol) == m_config.m_tickers.end()) {
       return;
     }
     auto bid_price = message.get_business_field<Money>(196, 0);
@@ -215,11 +215,11 @@ namespace Nexus {
     if(!ask_volume) {
       return;
     }
-    auto security = Security(std::move(*symbol), m_config.m_venue);
+    auto ticker = Ticker(std::move(*symbol), m_config.m_venue);
     auto bid = make_bid(*bid_price, *bid_volume);
     auto ask = make_ask(*ask_price, *ask_volume);
     auto bbo = BboQuote(bid, ask, m_time_client->get_time());
-    m_feed_client->publish(SecurityBboQuote(bbo, std::move(security)));
+    m_feed_client->publish(TickerBboQuote(bbo, std::move(ticker)));
   }
 
   template<typename M, typename S, typename T>
@@ -238,7 +238,7 @@ namespace Nexus {
     }
     auto symbol = message.get_business_field<std::string>(55);
     if(!symbol ||
-        m_config.m_securities.find(*symbol) == m_config.m_securities.end()) {
+        m_config.m_tickers.find(*symbol) == m_config.m_tickers.end()) {
       return;
     }
     auto price = message.get_business_field<Money>(41);
@@ -257,14 +257,13 @@ namespace Nexus {
       get_mpid(message.get_business_field<std::string>(70, 0).value_or(""));
     auto seller_mpid =
       get_mpid(message.get_business_field<std::string>(70, 1).value_or(""));
-    auto security = Security(std::move(*symbol), m_config.m_venue);
+    auto ticker = Ticker(std::move(*symbol), m_config.m_venue);
     auto condition = TimeAndSale::Condition();
     condition.m_code = "@";
     auto time_and_sale = TimeAndSale(*timestamp, *price, *volume,
       std::move(condition), *exchange_id, std::move(buyer_mpid),
       std::move(seller_mpid));
-    m_feed_client->publish(SecurityTimeAndSale(
-      time_and_sale, std::move(security)));
+    m_feed_client->publish(TickerTimeAndSale(time_and_sale, std::move(ticker)));
   }
 
   template<typename M, typename S, typename T>
@@ -286,7 +285,7 @@ namespace Nexus {
     }
     auto symbol = message.get_business_field<std::string>(55);
     if(!symbol ||
-        m_config.m_securities.find(*symbol) == m_config.m_securities.end()) {
+        m_config.m_tickers.find(*symbol) == m_config.m_tickers.end()) {
       return;
     }
     auto order_number = message.get_business_field<std::string>(40);
@@ -320,9 +319,9 @@ namespace Nexus {
     }
     auto broker_number = message.get_business_field<std::string>(70);
     auto order_id = get_order_id(symbol, broker_number, *order_number);
-    auto security = Security(std::move(*symbol), m_config.m_venue);
+    auto ticker = Ticker(std::move(*symbol), m_config.m_venue);
     *quantity = get_board_lot_portion(*quantity, *price);
-    m_feed_client->add_order(security, m_config.m_venue, mpid, false, order_id,
+    m_feed_client->add_order(ticker, m_config.m_venue, mpid, false, order_id,
       *side, *price, *quantity, *timestamp);
   }
 
@@ -335,7 +334,7 @@ namespace Nexus {
     }
     auto symbol = message.get_business_field<std::string>(55);
     if(!symbol ||
-        m_config.m_securities.find(*symbol) == m_config.m_securities.end()) {
+        m_config.m_tickers.find(*symbol) == m_config.m_tickers.end()) {
       return;
     }
     auto broker_number = message.get_business_field<std::string>(70);
@@ -360,7 +359,7 @@ namespace Nexus {
     }
     auto symbol = message.get_business_field<std::string>(55);
     if(!symbol ||
-        m_config.m_securities.find(*symbol) == m_config.m_securities.end()) {
+        m_config.m_tickers.find(*symbol) == m_config.m_tickers.end()) {
       return;
     }
     auto broker_number = message.get_business_field<std::string>(70);
@@ -405,7 +404,7 @@ namespace Nexus {
     }
     auto symbol = message.get_business_field<std::string>(55);
     if(!symbol ||
-        m_config.m_securities.find(*symbol) == m_config.m_securities.end()) {
+        m_config.m_tickers.find(*symbol) == m_config.m_tickers.end()) {
       return;
     }
     auto bid_broker_number = message.get_business_field<std::string>(70, 0);

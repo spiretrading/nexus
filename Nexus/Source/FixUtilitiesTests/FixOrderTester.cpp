@@ -1,4 +1,5 @@
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/FixUtilities/FixOrder.hpp"
 
 using namespace boost;
@@ -9,7 +10,7 @@ using namespace Nexus::DefaultVenues;
 namespace {
   auto make_order_info() {
     auto fields = make_limit_order_fields(
-      Security("TST", TSX), Side::BID, "TSX", 100, Money::ONE);
+      parse_ticker("TST.TSX"), Side::BID, "TSX", 100, Money::ONE);
     return OrderInfo(fields, 123, time_from_string("2024-05-21 00:00:10.000"));
   }
 
@@ -28,7 +29,7 @@ TEST_SUITE("FixOrder") {
     auto order = FixOrder(info, fix_side);
     REQUIRE(order.get_info() == info);
     REQUIRE(order.get_side() == fix_side);
-    REQUIRE(order.get_symbol() == info.m_fields.m_security.get_symbol());
+    REQUIRE(order.get_symbol() == info.m_fields.m_ticker.get_symbol());
   }
 
   TEST_CASE("construct_from_order_record") {
@@ -37,8 +38,7 @@ TEST_SUITE("FixOrder") {
     auto order = FixOrder(record, fix_side);
     REQUIRE(order.get_info() == record.m_info);
     REQUIRE(order.get_side() == fix_side);
-    REQUIRE(order.get_symbol() ==
-      record.m_info.m_fields.m_security.get_symbol());
+    REQUIRE(order.get_symbol() == record.m_info.m_fields.m_ticker.get_symbol());
   }
 
   TEST_CASE("cancel_id_increments") {

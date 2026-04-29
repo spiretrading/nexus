@@ -136,7 +136,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
   }
 
   public componentDidUpdate(prevProps: Properties): void {
-    if(this.props.suggestions === [] && this.state.currentIndex !== -1) {
+    if(this.props.suggestions.length === 0 && this.state.currentIndex !== -1) {
       this.setState({
         currentIndex: -1
       });
@@ -160,7 +160,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
   }
 
   private onAddGroup() {
-    if(this.props.suggestions !== [] && this.state.currentIndex >= 0) {
+    if(this.props.suggestions.length > 0 && this.state.currentIndex >= 0) {
       const newGroup = this.props.suggestions[this.state.currentIndex];
       if(newGroup) {
         this.props.onAddGroup(newGroup);

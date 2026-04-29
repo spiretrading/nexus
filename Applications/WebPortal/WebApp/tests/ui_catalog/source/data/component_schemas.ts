@@ -7,7 +7,7 @@ import { AccountRolesInput, ArrayInput, BeamAccountInput, BeamDateInput,
   BeamDateTimeInput, BeamDurationInput, BeamTimeOfDayInput, BooleanInput,
   ColorInput, CountryInput, CurrencyInput, CSSInput, DateInput, EnumInput,
   NumberInput, NumberSliderInput, OptionalInput, MoneyInput, ReadonlyInput,
-  SecurityInput, StyleDeclarationValueInput,
+  TickerInput, StyleDeclarationValueInput,
   TextInput } from '../viewer/propertyInput';
 import {ComponentSchema, ComponentSection, PropertySchema,
   SignalSchema} from './schemas';
@@ -28,6 +28,8 @@ const button =
     [new PropertySchema('label', 'Submit', TextInput),
       new PropertySchema('theme', WebPortal.Button.Theme.LIGHT,
         EnumInput(WebPortal.Button.Theme)),
+      new PropertySchema('variant', WebPortal.Button.Variant.PRIMARY,
+        EnumInput(WebPortal.Button.Variant)),
       new PropertySchema('disabled', false, BooleanInput),
       new PropertySchema('style', {}, CSSInput)],
     [new SignalSchema('onClick', '')],
@@ -47,9 +49,25 @@ const burgerButton =
 const checkbox =
   new ComponentSchema('Checkbox',
     [new PropertySchema('checked', true, BooleanInput),
+      new PropertySchema('indeterminate', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onClick', 'checked')],
-    WebPortal.Checkbox);
+    (props: any) => {
+      const ref = React.useCallback((node: HTMLDivElement) => {
+        if(node) {
+          const input = node.querySelector('input');
+          if(input) {
+            input.indeterminate = props.indeterminate;
+          }
+        }
+      }, [props.indeterminate]);
+      return React.createElement('div', {ref: ref},
+        React.createElement(WebPortal.Checkbox, {
+          checked: props.checked,
+          disabled: props.disabled,
+          onClick: props.onClick
+        }));
+    });
 
 const countrySelect =
   new ComponentSchema('CountrySelect',
@@ -223,6 +241,13 @@ const labeledCheckbox =
     [new SignalSchema('onChange', 'isChecked')],
     WebPortal.LabeledCheckbox);
 
+const link =
+  new ComponentSchema('Link',
+    [new PropertySchema('label', 'Learn more', TextInput),
+      new PropertySchema('href', '#', TextInput)],
+    [new SignalSchema('onClick', '')],
+    WebPortal.Link);
+
 const modal =
   new ComponentSchema('Modal',
     [new PropertySchema('isOpen', false, BooleanInput),
@@ -298,6 +323,125 @@ const navigationHeader =
       React.createElement(WebPortal.NavigationHeader, props,
         ...NAVIGATION_TABS));
 
+const notificationsFilterModal =
+  new ComponentSchema('NotificationsFilterModal',
+    [new PropertySchema('isOpen', false, BooleanInput)],
+    [new SignalSchema('onSubmit', ''),
+      new SignalSchema('onClose', 'isOpen')],
+    (props: any) => {
+      if(!props.isOpen) {
+        return React.createElement('div', null, 'Modal is closed.');
+      }
+      return React.createElement(WebPortal.NotificationsFilterModal, {
+        filter: {
+          query: '',
+          categories: new Set<Nexus.Notification.Category>(),
+          startDate: Beam.Date.today(),
+          endDate: Beam.Date.today()
+        },
+        onSubmit: props.onSubmit,
+        onClose: () => props.onClose(false)
+      });
+    });
+
+const notificationItem =
+  new ComponentSchema('NotificationItem',
+    [new PropertySchema('description',
+        'Your request to update risk controls for achen01 has been approved.',
+        TextInput),
+      new PropertySchema('timestamp', (() => {
+        const d = new Date();
+        d.setHours(d.getHours() - 2);
+        return d;
+      })(), DateInput),
+      new PropertySchema('url', '#', TextInput),
+      new PropertySchema('isUnread', true, BooleanInput),
+      new PropertySchema('isSelected', false, BooleanInput),
+      new PropertySchema('hideIndicator', false, BooleanInput)],
+    [new SignalSchema('onSelect', 'isSelected')],
+    WebPortal.NotificationItem, -1);
+
+const notificationItemPlaceholder =
+  new ComponentSchema('NotificationItemPlaceholder',
+    [],
+    [],
+    WebPortal.NotificationItemPlaceholder, -1);
+
+const SAMPLE_NOTIFICATIONS: Nexus.Notification[] = [
+  new Nexus.Notification('1', Beam.DirectoryEntry.INVALID,
+    'Your request to update risk controls for achen01 has been approved.', '',
+    Nexus.Notification.Category.ACCOUNT_MODIFICATION,
+    Beam.DateTime.fromDate((() => {
+      const d = new Date(); d.setHours(d.getHours() - 2); return d;
+    })()), false),
+  new Nexus.Notification('2', Beam.DirectoryEntry.INVALID,
+    'New entitlements request from jberrios01 requires your review.', '',
+    Nexus.Notification.Category.ACCOUNT_MODIFICATION,
+    Beam.DateTime.fromDate((() => {
+      const d = new Date(); d.setDate(d.getDate() - 1); return d;
+    })()), false),
+  new Nexus.Notification('3', Beam.DirectoryEntry.INVALID,
+    'Risk parameters for trodriguez have been updated.', '',
+    Nexus.Notification.Category.REPORT,
+    Beam.DateTime.fromDate((() => {
+      const d = new Date(); d.setDate(d.getDate() - 3); return d;
+    })()), true)
+];
+
+const SAMPLE_NOTIFICATIONS_ALL_READ: Nexus.Notification[] = [
+  new Nexus.Notification('1', Beam.DirectoryEntry.INVALID,
+    'Your request to update risk controls for achen01 has been approved.', '',
+    Nexus.Notification.Category.ACCOUNT_MODIFICATION,
+    Beam.DateTime.fromDate((() => {
+      const d = new Date(); d.setHours(d.getHours() - 2); return d;
+    })()), true),
+  new Nexus.Notification('3', Beam.DirectoryEntry.INVALID,
+    'Risk parameters for trodriguez have been updated.', '',
+    Nexus.Notification.Category.REPORT,
+    Beam.DateTime.fromDate((() => {
+      const d = new Date(); d.setDate(d.getDate() - 3); return d;
+    })()), true)
+];
+
+enum PopoverMode {
+  HAS_UNREAD,
+  NO_UNREAD,
+  EMPTY
+}
+
+const POPOVER_NOTIFICATIONS: Record<PopoverMode, Nexus.Notification[]> = {
+  [PopoverMode.HAS_UNREAD]: SAMPLE_NOTIFICATIONS,
+  [PopoverMode.NO_UNREAD]: SAMPLE_NOTIFICATIONS_ALL_READ,
+  [PopoverMode.EMPTY]: []
+};
+
+const notificationsPopover =
+  new ComponentSchema('NotificationsPopover',
+    [new PropertySchema('mode', PopoverMode.HAS_UNREAD,
+        EnumInput(PopoverMode))],
+    [new SignalSchema('onDismissAll', ''),
+      new SignalSchema('onOpen', ''),
+      new SignalSchema('onClose', '')],
+    (props: any) => React.createElement('div', null,
+      React.createElement('button',
+        {popovertarget: 'catalog-notifications-popover'},
+        'Toggle Popover'),
+      React.createElement(WebPortal.NotificationsPopover, {
+        id: 'catalog-notifications-popover',
+        notifications: POPOVER_NOTIFICATIONS[props.mode as PopoverMode],
+        onDismissAll: props.onDismissAll,
+        onOpen: props.onOpen,
+        onClose: props.onClose
+      })));
+
+const notificationsButton =
+  new ComponentSchema('NotificationsButton',
+    [new PropertySchema('isCurrent', false, BooleanInput),
+      new PropertySchema('hasUnread', true, BooleanInput),
+      new PropertySchema('isOpen', false, BooleanInput)],
+    [new SignalSchema('onClick', '')],
+    WebPortal.NotificationsButton);
+
 const navigationTab =
   new ComponentSchema('NavigationTab',
     [new PropertySchema('icon', 'resources/requests_page/your-requests.svg',
@@ -320,23 +464,23 @@ const pagination =
     [new SignalSchema('onNavigate', 'pageIndex')],
     WebPortal.Pagination, 732);
 
-const regionInput =
-  new ComponentSchema('RegionInput',
+const scopeInput =
+  new ComponentSchema('ScopeInput',
     [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
         EnumInput(WebPortal.DisplaySize)),
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
-    WebPortal.RegionInput);
+    WebPortal.ScopeInput);
 
-const regionItemInput =
-  new ComponentSchema('RegionItemInput',
+const scopeItemInput =
+  new ComponentSchema('ScopeItemInput',
     [new PropertySchema('value', '', TextInput),
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value'),
       new SignalSchema('onEnter', 'value')],
-    (props: any) => React.createElement(WebPortal.RegionItemInput,
+    (props: any) => React.createElement(WebPortal.ScopeItemInput,
       {...props, style: {width: '100%', ...props.style}}));
 
 const relativeDate =
@@ -370,23 +514,23 @@ const skeleton =
     [],
     WebPortal.Skeleton);
 
-const securitiesInput =
-  new ComponentSchema('SecuritiesInput',
+const tickersInput =
+  new ComponentSchema('TickersInput',
     [new PropertySchema('displaySize', WebPortal.DisplaySize.LARGE,
         EnumInput(WebPortal.DisplaySize)),
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
-    WebPortal.SecuritiesInput);
+    WebPortal.TickersInput);
 
-const securityInput =
-  new ComponentSchema('SecurityInput',
+const tickerInput =
+  new ComponentSchema('TickerInput',
     [new PropertySchema('value', '', TextInput),
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value'),
       new SignalSchema('onEnter', 'value')],
-    (props: any) => React.createElement(WebPortal.SecurityInput,
+    (props: any) => React.createElement(WebPortal.TickerInput,
       {...props, style: {width: '100%', ...props.style}}));
 
 const segmentButton =
@@ -860,36 +1004,49 @@ const profitAndLossHeader =
       foreignCurrencies: PNL_HEADER_SAMPLE_RATES
     }), 800);
 
-const PNL_TABLE_SAMPLE_SECURITIES: WebPortal.ProfitAndLossTable.Security[] = [
-  {symbol: 'AAPL', volume: '1,250', fees: '12.50', pnl: '345.67'},
-  {symbol: 'MSFT', volume: '800', fees: '8.00', pnl: '-123.45'},
-  {symbol: 'GOOG', volume: '500', fees: '5.00', pnl: '678.90'},
-  {symbol: 'AMZN', volume: '300', fees: '3.00', pnl: '-45.20'}
+const PNL_TABLE_SAMPLE_TICKERS: WebPortal.ProfitAndLossTable.Ticker[] = [
+  {ticker: new Nexus.Ticker('AAPL', new Nexus.Venue('NASDAQ')),
+    volume: Nexus.Quantity.parse('1250'),
+    fees: Nexus.Money.parse('12.50'),
+    profitAndLoss: Nexus.Money.parse('345.67')},
+  {ticker: new Nexus.Ticker('MSFT', new Nexus.Venue('NASDAQ')),
+    volume: Nexus.Quantity.parse('800'),
+    fees: Nexus.Money.parse('8.00'),
+    profitAndLoss: Nexus.Money.parse('-123.45')},
+  {ticker: new Nexus.Ticker('GOOG', new Nexus.Venue('NASDAQ')),
+    volume: Nexus.Quantity.parse('500'),
+    fees: Nexus.Money.parse('5.00'),
+    profitAndLoss: Nexus.Money.parse('678.90')},
+  {ticker: new Nexus.Ticker('AMZN', new Nexus.Venue('NASDAQ')),
+    volume: Nexus.Quantity.parse('300'),
+    fees: Nexus.Money.parse('3.00'),
+    profitAndLoss: Nexus.Money.parse('-45.20')}
 ];
 
 const profitAndLossTable =
   new ComponentSchema('ProfitAndLossTable',
-    [new PropertySchema('symbol', '$', TextInput),
-      new PropertySchema('totalPnl', '855.92', TextInput),
-      new PropertySchema('totalVolume', '2,850', TextInput),
-      new PropertySchema('totalFees', '28.50', TextInput)],
+    [new PropertySchema('symbol', '$', TextInput)],
     [],
     (props: any) => React.createElement(WebPortal.ProfitAndLossTable, {
-      ...props,
-      securities: PNL_TABLE_SAMPLE_SECURITIES
+      symbol: props.symbol,
+      totalProfitAndLoss: Nexus.Money.parse('855.92'),
+      totalVolume: Nexus.Quantity.parse('2850'),
+      totalFees: Nexus.Money.parse('28.50'),
+      tickers: PNL_TABLE_SAMPLE_TICKERS
     }), 600);
 
 const profitAndLossItem =
   new ComponentSchema('ProfitAndLossItem',
     [new PropertySchema('symbol', '$', TextInput),
-      new PropertySchema('code', 'USD', TextInput),
-      new PropertySchema('totalPnl', '855.92', TextInput),
-      new PropertySchema('totalVolume', '2,850', TextInput),
-      new PropertySchema('totalFees', '28.50', TextInput)],
+      new PropertySchema('code', 'USD', TextInput)],
     [],
     (props: any) => React.createElement(WebPortal.ProfitAndLossItem, {
-      ...props,
-      securities: PNL_TABLE_SAMPLE_SECURITIES
+      symbol: props.symbol,
+      code: props.code,
+      totalProfitAndLoss: Nexus.Money.parse('855.92'),
+      totalVolume: Nexus.Quantity.parse('2850'),
+      totalFees: Nexus.Money.parse('28.50'),
+      tickers: PNL_TABLE_SAMPLE_TICKERS
     }), 800);
 
 const profitAndLossItemPlaceholder =
@@ -907,16 +1064,38 @@ const reportStatusIndicator =
     [],
     WebPortal.ReportStatusIndicator);
 
+const tableHeaderCell =
+  new ComponentSchema('TableHeaderCell',
+    [new PropertySchema('sortOrder',
+        WebPortal.TableHeaderCell.SortOrder.NONE,
+        EnumInput(WebPortal.TableHeaderCell.SortOrder)),
+      new PropertySchema('textAlign', 'start', TextInput)],
+    [],
+    (props: any) => {
+      const [sortOrder, setSortOrder] = React.useState(props.sortOrder);
+      React.useEffect(() => setSortOrder(props.sortOrder), [props.sortOrder]);
+      return React.createElement('table', {
+          style: {borderCollapse: 'collapse', width: '100%'}},
+        React.createElement('thead', null,
+          React.createElement('tr', null,
+            React.createElement(WebPortal.TableHeaderCell, {
+              sortOrder: sortOrder,
+              style: {textAlign: props.textAlign},
+              onSort: setSortOrder
+            }, 'Column'))));
+    }, 132);
+
 export const componentSections = [
   new ComponentSection('UI Kit', [button, burgerButton, checkbox,
     countrySelect, currencySelect, dateInput, disclosure,
     dateTimeInput, decimalInput, dropDownButton, durationInput, emptyMessage,
     errorMessage,
     filterChip, filterInput, hLine,
-    iconLabelButton, input, integerField, labeledCheckbox, modal, moneyInput,
+    iconLabelButton, input, integerField, labeledCheckbox, link, modal,
+    moneyInput,
     navigationHeader, navigationTab, pageLayout,
-    pagination, regionInput, regionItemInput, relativeDate, roleIcon, rolePanel,
-    securitiesInput, securityInput, segmentedSpinner, select, skeleton,
+    pagination, scopeInput, scopeItemInput, relativeDate, roleIcon, rolePanel,
+    tickersInput, tickerInput, segmentedSpinner, select, skeleton,
     segmentButton,
     segmentedControl,
     timeOfDayInput]),
@@ -926,6 +1105,9 @@ export const componentSections = [
     requestDetailPage, requestDirectoryPage, requestEffectiveDate,
     requestFilterModal, requestItem, requestItemPlaceholder,
     requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
+  new ComponentSection('Notifications', [notificationsFilterModal,
+    notificationItem, notificationItemPlaceholder, notificationsButton,
+    notificationsPopover]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
-    profitAndLossTable, reportStatusIndicator])];
+    profitAndLossTable, reportStatusIndicator, tableHeaderCell])];

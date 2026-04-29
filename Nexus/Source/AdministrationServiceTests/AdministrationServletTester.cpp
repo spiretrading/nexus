@@ -378,37 +378,6 @@ TEST_SUITE("AdministrationServlet") {
     test_json_equality(result, fixture.m_entitlements);
   }
 
-  TEST_CASE("store_and_load_account_entitlements") {
-    auto fixture = Fixture();
-    auto entitlements = std::vector<DirectoryEntry>();
-    for(auto& entry : fixture.m_entitlements.get_entries()) {
-      entitlements.push_back(entry.m_group_entry);
-    }
-    SUBCASE("admin") {
-      REQUIRE_NOTHROW(
-        fixture.m_admin_client->send_request<StoreEntitlementsService>(
-          fixture.m_trader_account, entitlements));
-      auto result = fixture.m_admin_client->send_request<
-        LoadAccountEntitlementsService>(fixture.m_trader_account);
-      REQUIRE(result.size() == entitlements.size());
-      for(auto& entitlement : entitlements) {
-        REQUIRE(
-          std::find(result.begin(), result.end(), entitlement) != result.end());
-      }
-      REQUIRE_NOTHROW(
-        fixture.m_admin_client->send_request<StoreEntitlementsService>(
-          fixture.m_trader_account, std::vector<DirectoryEntry>()));
-      result = fixture.m_admin_client->send_request<
-        LoadAccountEntitlementsService>(fixture.m_trader_account);
-      REQUIRE(result.empty());
-    }
-    SUBCASE("trader") {
-      REQUIRE_THROWS_AS(
-        fixture.m_trader_client->send_request<StoreEntitlementsService>(
-          fixture.m_trader_account, entitlements), ServiceRequestException);
-    }
-  }
-
   TEST_CASE("load_managed_trading_groups") {
     auto fixture = Fixture();
     auto trading_group1 = fixture.make_trading_group("group1");
@@ -543,6 +512,72 @@ TEST_SUITE("AdministrationServlet") {
         REQUIRE(entitlements.empty());
       }
     }
+  }
+
+  TEST_CASE("entitlement_modification_granted_notification") {
+    auto fixture = Fixture();
+    auto entitlements = std::vector<DirectoryEntry>();
+    for(auto& entry : fixture.m_entitlements.get_entries()) {
+      entitlements.push_back(entry.m_group_entry);
+    }
+    auto modification = EntitlementModification(entitlements);
+    auto comment = Nexus::Message(
+      0, fixture.m_trader_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test")});
+    auto request = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        DirectoryEntry(), modification, ptime(), comment);
+    auto review_comment = Nexus::Message(
+      0, fixture.m_manager_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("reviewed")});
+    fixture.m_manager_client->send_request<
+      ApproveAccountModificationRequestService>(
+        request.get_id(), ptime(), review_comment);
+    auto approve_comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("approved")});
+    fixture.m_admin_client->send_request<
+      ApproveAccountModificationRequestService>(
+        request.get_id(), ptime(), approve_comment);
+    auto notifications = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::from_tail(1), Notification::ReadState::ALL);
+    REQUIRE(notifications.size() == 1);
+    REQUIRE(notifications[0].m_account == fixture.m_trader_account);
+    REQUIRE(notifications[0].m_description ==
+      "Entitlements have been updated.");
+    REQUIRE(notifications[0].m_category ==
+      Notification::Category::ACCOUNT_MODIFICATION);
+  }
+
+  TEST_CASE("entitlement_modification_rejected_notification") {
+    auto fixture = Fixture();
+    auto entitlements = std::vector<DirectoryEntry>();
+    for(auto& entry : fixture.m_entitlements.get_entries()) {
+      entitlements.push_back(entry.m_group_entry);
+    }
+    auto modification = EntitlementModification(entitlements);
+    auto comment = Nexus::Message(
+      0, fixture.m_trader_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test")});
+    auto request = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        DirectoryEntry(), modification, ptime(), comment);
+    auto reject_comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("rejected")});
+    fixture.m_admin_client->send_request<
+      RejectAccountModificationRequestService>(
+        request.get_id(), reject_comment);
+    auto notifications = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::from_tail(1), Notification::ReadState::ALL);
+    REQUIRE(notifications.size() == 1);
+    REQUIRE(notifications[0].m_account == fixture.m_trader_account);
+    REQUIRE(notifications[0].m_description ==
+      "Entitlement modification request has been rejected.");
+    REQUIRE(notifications[0].m_category ==
+      Notification::Category::ACCOUNT_MODIFICATION);
   }
 
   TEST_CASE("approve_entitlements_with_future_effective_date") {
@@ -845,6 +880,68 @@ TEST_SUITE("AdministrationServlet") {
     }
   }
 
+  TEST_CASE("risk_modification_granted_notification") {
+    auto fixture = Fixture();
+    auto parameters = RiskParameters(
+      AUD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, seconds(1));
+    auto modification = RiskModification(parameters);
+    auto comment = Nexus::Message(
+      0, fixture.m_trader_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test")});
+    auto request = fixture.m_trader_client->send_request<
+      SubmitRiskModificationRequestService>(
+        DirectoryEntry(), modification, ptime(), comment);
+    auto review_comment = Nexus::Message(
+      0, fixture.m_manager_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("reviewed")});
+    fixture.m_manager_client->send_request<
+      ApproveAccountModificationRequestService>(
+        request.get_id(), ptime(), review_comment);
+    auto approve_comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("approved")});
+    fixture.m_admin_client->send_request<
+      ApproveAccountModificationRequestService>(
+        request.get_id(), ptime(), approve_comment);
+    auto notifications = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::from_tail(1), Notification::ReadState::ALL);
+    REQUIRE(notifications.size() == 1);
+    REQUIRE(notifications[0].m_account == fixture.m_trader_account);
+    REQUIRE(notifications[0].m_description ==
+      "Risk parameters have been updated.");
+    REQUIRE(notifications[0].m_category ==
+      Notification::Category::ACCOUNT_MODIFICATION);
+  }
+
+  TEST_CASE("risk_modification_rejected_notification") {
+    auto fixture = Fixture();
+    auto parameters = RiskParameters(
+      AUD, Money::ONE, RiskState::Type::ACTIVE, Money::CENT, seconds(1));
+    auto modification = RiskModification(parameters);
+    auto comment = Nexus::Message(
+      0, fixture.m_trader_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test")});
+    auto request = fixture.m_trader_client->send_request<
+      SubmitRiskModificationRequestService>(
+        DirectoryEntry(), modification, ptime(), comment);
+    auto reject_comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("rejected")});
+    fixture.m_admin_client->send_request<
+      RejectAccountModificationRequestService>(
+        request.get_id(), reject_comment);
+    auto notifications = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::from_tail(1), Notification::ReadState::ALL);
+    REQUIRE(notifications.size() == 1);
+    REQUIRE(notifications[0].m_account == fixture.m_trader_account);
+    REQUIRE(notifications[0].m_description ==
+      "Risk modification request has been rejected.");
+    REQUIRE(notifications[0].m_category ==
+      Notification::Category::ACCOUNT_MODIFICATION);
+  }
+
   TEST_CASE("admin_submit_entitlements_with_future_effective_date") {
     auto fixture = Fixture();
     auto entitlements = std::vector<DirectoryEntry>();
@@ -962,6 +1059,207 @@ TEST_SUITE("AdministrationServlet") {
     auto status = fixture.m_admin_client->send_request<
       LoadAccountModificationRequestStatusService>(request.get_id());
     REQUIRE(status.m_status == AccountModificationRequest::Status::GRANTED);
+  }
+
+  TEST_CASE("send_notification") {
+    auto fixture = Fixture();
+    auto notification = fixture.m_admin_client->send_request<
+      SendNotificationService>(fixture.m_trader_account,
+        "Your request has been approved.", "{\"request_id\":42}",
+        Notification::Category::ACCOUNT_MODIFICATION);
+    REQUIRE(!notification.m_id.empty());
+    REQUIRE(notification.m_account == fixture.m_trader_account);
+    REQUIRE(notification.m_description == "Your request has been approved.");
+    REQUIRE(notification.m_data == "{\"request_id\":42}");
+    REQUIRE(notification.m_category ==
+      Notification::Category::ACCOUNT_MODIFICATION);
+    REQUIRE(notification.m_timestamp == fixture.m_time_client.get_time());
+    REQUIRE(!notification.m_is_read);
+  }
+
+  TEST_CASE("send_notification_insufficient_permissions") {
+    auto fixture = Fixture();
+    REQUIRE_THROWS_AS(fixture.m_trader_client->send_request<
+      SendNotificationService>(fixture.m_trader_account, "test", "",
+        Notification::Category::REPORT), ServiceRequestException);
+  }
+
+  TEST_CASE("send_notification_stored_in_data_store") {
+    auto fixture = Fixture();
+    auto notification = fixture.m_admin_client->send_request<
+      SendNotificationService>(fixture.m_trader_account, "Stored notification.",
+        "", Notification::Category::REPORT);
+    auto loaded = fixture.m_data_store.with_transaction([&] {
+      return fixture.m_data_store.load_notifications(
+        fixture.m_trader_account, "", SnapshotLimit::UNLIMITED,
+        Notification::ReadState::ALL);
+    });
+    REQUIRE(loaded.size() == 1);
+    REQUIRE(loaded[0].m_id == notification.m_id);
+    REQUIRE(loaded[0].m_description == "Stored notification.");
+  }
+
+  TEST_CASE("monitor_notifications_returns_last_id") {
+    auto fixture = Fixture();
+    auto notification =
+      fixture.m_admin_client->send_request<SendNotificationService>(
+        fixture.m_trader_account, "First.", "", Notification::Category::REPORT);
+    auto last_id = fixture.m_trader_client->send_request<
+      MonitorNotificationsService>(fixture.m_trader_account);
+    REQUIRE(last_id == notification.m_id);
+  }
+
+  TEST_CASE("monitor_notifications_empty") {
+    auto fixture = Fixture();
+    auto last_id = fixture.m_trader_client->send_request<
+      MonitorNotificationsService>(fixture.m_trader_account);
+    REQUIRE(last_id.empty());
+  }
+
+  TEST_CASE("load_notifications") {
+    auto fixture = Fixture();
+    fixture.m_admin_client->send_request<SendNotificationService>(
+      fixture.m_trader_account, "First.", "",
+      Notification::Category::ACCOUNT_MODIFICATION);
+    fixture.m_admin_client->send_request<SendNotificationService>(
+      fixture.m_trader_account, "Second.", "", Notification::Category::REPORT);
+    auto notifications = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::UNLIMITED, Notification::ReadState::ALL);
+    REQUIRE(notifications.size() == 2);
+    REQUIRE(notifications[0].m_description == "First.");
+    REQUIRE(notifications[1].m_description == "Second.");
+  }
+
+  TEST_CASE("load_notifications_unread_filter") {
+    auto fixture = Fixture();
+    auto notification =
+      fixture.m_admin_client->send_request<SendNotificationService>(
+        fixture.m_trader_account, "Unread.", "",
+        Notification::Category::REPORT);
+    fixture.m_admin_client->send_request<SendNotificationService>(
+      fixture.m_trader_account, "Also unread.", "",
+      Notification::Category::REPORT);
+    auto unread =
+      fixture.m_trader_client->send_request<LoadNotificationsService>(
+        fixture.m_trader_account, "", SnapshotLimit::UNLIMITED,
+        Notification::ReadState::UNREAD);
+    REQUIRE(unread.size() == 2);
+  }
+
+  TEST_CASE("load_notifications_tail_limit") {
+    auto fixture = Fixture();
+    fixture.m_admin_client->send_request<SendNotificationService>(
+      fixture.m_trader_account, "First.", "", Notification::Category::REPORT);
+    fixture.m_admin_client->send_request<SendNotificationService>(
+      fixture.m_trader_account, "Second.", "", Notification::Category::REPORT);
+    fixture.m_admin_client->send_request<SendNotificationService>(
+      fixture.m_trader_account, "Third.", "", Notification::Category::REPORT);
+    auto tail = fixture.m_trader_client->send_request<LoadNotificationsService>(
+      fixture.m_trader_account, "", SnapshotLimit::from_tail(2),
+      Notification::ReadState::ALL);
+    REQUIRE(tail.size() == 2);
+    REQUIRE(tail[0].m_description == "Second.");
+    REQUIRE(tail[1].m_description == "Third.");
+  }
+
+  TEST_CASE("load_notifications_insufficient_permissions") {
+    auto fixture = Fixture();
+    REQUIRE_THROWS_AS(fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_admin_account, "",
+        SnapshotLimit::UNLIMITED, Notification::ReadState::ALL),
+      ServiceRequestException);
+  }
+
+  TEST_CASE("mark_notification_as_read_own") {
+    auto fixture = Fixture();
+    auto notification =
+      fixture.m_admin_client->send_request<SendNotificationService>(
+        fixture.m_trader_account, "To be read.", "",
+        Notification::Category::REPORT);
+    REQUIRE_NOTHROW(fixture.m_trader_client->send_request<
+      MarkNotificationAsReadService>(notification.m_id));
+    auto loaded = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::UNLIMITED, Notification::ReadState::READ);
+    REQUIRE(loaded.size() == 1);
+    REQUIRE(loaded[0].m_id == notification.m_id);
+    REQUIRE(loaded[0].m_is_read);
+  }
+
+  TEST_CASE("mark_notification_as_read_admin") {
+    auto fixture = Fixture();
+    auto notification = fixture.m_admin_client->send_request<
+      SendNotificationService>(fixture.m_trader_account, "Admin marks.", "",
+        Notification::Category::REPORT);
+    REQUIRE_NOTHROW(fixture.m_admin_client->send_request<
+      MarkNotificationAsReadService>(notification.m_id));
+    auto loaded = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::UNLIMITED, Notification::ReadState::READ);
+    REQUIRE(loaded.size() == 1);
+    REQUIRE(loaded[0].m_is_read);
+  }
+
+  TEST_CASE("mark_notification_as_read_insufficient_permissions") {
+    auto fixture = Fixture();
+    auto notification = fixture.m_admin_client->send_request<
+      SendNotificationService>(fixture.m_admin_account, "Admin only.", "",
+        Notification::Category::REPORT);
+    REQUIRE_THROWS_AS(fixture.m_trader_client->send_request<
+      MarkNotificationAsReadService>(notification.m_id),
+      ServiceRequestException);
+  }
+
+  TEST_CASE("mark_notification_as_unread_own") {
+    auto fixture = Fixture();
+    auto notification =
+      fixture.m_admin_client->send_request<SendNotificationService>(
+        fixture.m_trader_account, "To be unread.", "",
+        Notification::Category::REPORT);
+    fixture.m_trader_client->send_request<
+      MarkNotificationAsReadService>(notification.m_id);
+    REQUIRE_NOTHROW(fixture.m_trader_client->send_request<
+      MarkNotificationAsUnreadService>(notification.m_id));
+    auto loaded = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::UNLIMITED, Notification::ReadState::UNREAD);
+    REQUIRE(loaded.size() == 1);
+    REQUIRE(loaded[0].m_id == notification.m_id);
+    REQUIRE(!loaded[0].m_is_read);
+  }
+
+  TEST_CASE("mark_notification_as_unread_admin") {
+    auto fixture = Fixture();
+    auto notification = fixture.m_admin_client->send_request<
+      SendNotificationService>(fixture.m_trader_account, "Admin unmarks.", "",
+        Notification::Category::REPORT);
+    fixture.m_trader_client->send_request<
+      MarkNotificationAsReadService>(notification.m_id);
+    REQUIRE_NOTHROW(fixture.m_admin_client->send_request<
+      MarkNotificationAsUnreadService>(notification.m_id));
+    auto loaded = fixture.m_trader_client->send_request<
+      LoadNotificationsService>(fixture.m_trader_account, "",
+        SnapshotLimit::UNLIMITED, Notification::ReadState::UNREAD);
+    REQUIRE(loaded.size() == 1);
+    REQUIRE(!loaded[0].m_is_read);
+  }
+
+  TEST_CASE("mark_notification_as_unread_insufficient_permissions") {
+    auto fixture = Fixture();
+    auto notification = fixture.m_admin_client->send_request<
+      SendNotificationService>(fixture.m_admin_account, "Admin only.", "",
+        Notification::Category::REPORT);
+    REQUIRE_THROWS_AS(fixture.m_trader_client->send_request<
+      MarkNotificationAsUnreadService>(notification.m_id),
+      ServiceRequestException);
+  }
+
+  TEST_CASE("monitor_notifications_insufficient_permissions") {
+    auto fixture = Fixture();
+    REQUIRE_THROWS_AS(fixture.m_trader_client->send_request<
+      MonitorNotificationsService>(fixture.m_admin_account),
+      ServiceRequestException);
   }
 
   TEST_CASE("grant_scheduled_entitlements_on_timer") {

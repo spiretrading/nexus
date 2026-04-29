@@ -18,7 +18,7 @@ def execute_report(start_date, end_date, currencies, venues, time_zones,
     trading_group = administration_client.load_trading_group(
       trading_group_entry)
     for trader in trading_group.traders:
-      account_portfolio = nexus.TrueAveragePortfolio(venues)
+      account_portfolio = nexus.TrueAveragePortfolio()
       account_volumes = Counter()
       order_queue = beam.Queue()
       nexus.query_daily_order_submissions(trader, start_date, end_date, venues,

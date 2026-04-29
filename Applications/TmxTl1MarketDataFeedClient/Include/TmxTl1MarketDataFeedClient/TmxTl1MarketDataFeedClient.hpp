@@ -209,11 +209,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     if(!timestamp) {
       return;
     }
-    auto security = Security(std::move(symbol), m_config.m_venue);
+    auto ticker = Ticker(std::move(symbol), m_config.m_venue);
     auto bid = make_bid(*bid_price, *bid_volume);
     auto ask = make_ask(*ask_price, *ask_volume);
     auto bbo = BboQuote(bid, ask, *timestamp);
-    m_feed_client->publish(SecurityBboQuote(bbo, security));
+    m_feed_client->publish(TickerBboQuote(bbo, ticker));
   }
 
   template<typename M, typename S>

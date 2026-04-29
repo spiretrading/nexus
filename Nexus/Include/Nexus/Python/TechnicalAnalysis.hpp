@@ -23,15 +23,17 @@ namespace Nexus::Python {
     auto candlestick = Beam::Python::export_default_methods(
         pybind11::class_<C>(module, name.data())).
       def(pybind11::init<DomainType, DomainType>()).
-      def(pybind11::init<
-        DomainType, DomainType, RangeType, RangeType, RangeType, RangeType>()).
+      def(pybind11::init<DomainType, DomainType, RangeType, RangeType,
+        RangeType, RangeType, Quantity>()).
       def_property("start", &C::get_start, &C::set_start).
       def_property("end", &C::get_end, &C::set_end).
       def_property_readonly("open", &C::get_open).
       def_property_readonly("close", &C::get_close).
       def_property_readonly("high", &C::get_high).
       def_property_readonly("low", &C::get_low).
-      def("update", &C::update);
+      def_property_readonly("volume", &C::get_volume).
+      def("update", pybind11::overload_cast<RangeType>(&C::update)).
+      def("update", pybind11::overload_cast<RangeType, Quantity>(&C::update));
     return candlestick;
   }
 
@@ -42,10 +44,10 @@ namespace Nexus::Python {
   void export_technical_analysis(pybind11::module& module);
 
   /**
-   * Exports the standard security queries.
+   * Exports the standard ticker queries.
    * @param module The module to export to.
    */
-  void export_standard_security_queries(pybind11::module& module);
+  void export_standard_ticker_queries(pybind11::module& module);
 }
 
 #endif

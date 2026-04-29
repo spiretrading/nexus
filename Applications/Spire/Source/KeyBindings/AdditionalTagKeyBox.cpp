@@ -13,13 +13,13 @@ AdditionalTagKeyBox::AdditionalTagKeyBox(
     std::shared_ptr<ListModel<int>> available_tags,
     AdditionalTagDatabase additional_tags,
     std::shared_ptr<DestinationModel> destination,
-    std::shared_ptr<RegionModel> region, QWidget* parent)
+    std::shared_ptr<ScopeModel> scope, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)),
       m_available_tags(std::move(available_tags)),
       m_additional_tags(std::move(additional_tags)),
       m_destination(std::move(destination)),
-      m_region(std::move(region)) {
+      m_scope(std::move(scope)) {
   m_connection = m_current->connect_update_signal(
     std::bind_front(&AdditionalTagKeyBox::on_current, this));
   m_drop_down_box = new DropDownBox(m_available_tags,
@@ -55,7 +55,7 @@ connection AdditionalTagKeyBox::connect_submit_signal(
 void AdditionalTagKeyBox::update_info_tip() {
   m_info_tip = nullptr;
   auto schema = Spire::find(m_additional_tags, m_destination->get(),
-    m_region->get(), m_current->get());
+    m_scope->get(), m_current->get());
   if(!schema) {
     return;
   }
@@ -66,7 +66,7 @@ void AdditionalTagKeyBox::update_info_tip() {
 QWidget* AdditionalTagKeyBox::make_key_item(
     const std::shared_ptr<ListModel<int>>& available_tags, int index) const {
   auto schema = Spire::find(m_additional_tags, m_destination->get(),
-    m_region->get(), available_tags->get(index));
+    m_scope->get(), available_tags->get(index));
   if(!schema) {
     throw std::runtime_error("Schema not found.");
   }
@@ -75,7 +75,7 @@ QWidget* AdditionalTagKeyBox::make_key_item(
 
 QString AdditionalTagKeyBox::key_to_text(int key) const {
   auto schema = Spire::find(
-    m_additional_tags, m_destination->get(), m_region->get(), key);
+    m_additional_tags, m_destination->get(), m_scope->get(), key);
   if(!schema) {
     throw std::runtime_error("Schema not found.");
   }

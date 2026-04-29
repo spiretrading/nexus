@@ -13,6 +13,7 @@
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
+#include "Nexus/AdministrationService/Notification.hpp"
 #include "Nexus/AdministrationService/SqlAdministrationDataStore.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Python/ToPythonAdministrationClient.hpp"
@@ -111,6 +112,31 @@ void Nexus::Python::export_account_roles(module& module) {
   export_enum_set<AccountRoles>(module, "AccountRoles");
 }
 
+void Nexus::Python::export_notification(module& module) {
+  auto notification =
+    export_default_methods(
+      class_<Notification>(module, "Notification")).
+        def_readwrite("id", &Notification::m_id).
+        def_readwrite("account", &Notification::m_account).
+        def_readwrite("description", &Notification::m_description).
+        def_readwrite("data", &Notification::m_data).
+        def_readwrite("category", &Notification::m_category).
+        def_readwrite("timestamp", &Notification::m_timestamp).
+        def_readwrite("is_read", &Notification::m_is_read);
+  enum_<Notification::Category>(notification, "Category").
+    value("ACCOUNT_MODIFICATION",
+      Notification::Category::ACCOUNT_MODIFICATION).
+    value("REPORT", Notification::Category::REPORT);
+  enum_<Notification::ReadState>(notification, "ReadState").
+    value("UNREAD", Notification::ReadState::UNREAD).
+    value("READ", Notification::ReadState::READ).
+    value("ALL", Notification::ReadState::ALL);
+  module.def("make_entitlement_modification_notification",
+    &make_entitlement_modification_notification);
+  module.def("make_risk_modification_notification",
+    &make_risk_modification_notification);
+}
+
 void Nexus::Python::export_administration_data_store_exception(module& module) {
   register_exception<AdministrationDataStoreException>(
     module, "AdministrationDataStoreException", get_io_exception());
@@ -131,6 +157,16 @@ void Nexus::Python::export_administration_service(module& module) {
     [] (AdministrationClient& client, const DirectoryEntry& account) {
       return load_risk_parameters(client, account);
     }, call_guard<GilRelease>());
+  module.def("load_notification",
+    [] (AdministrationClient& client, const DirectoryEntry& account,
+        const Notification::Id& id) {
+      return load_notification(client, account, id);
+    }, call_guard<GilRelease>());
+  module.def("load_notification",
+    [] (AdministrationDataStore& data_store, const DirectoryEntry& account,
+        const Notification::Id& id) {
+      return load_notification(data_store, account, id);
+    }, call_guard<GilRelease>());
   export_administration_data_store_exception(module);
   export_cached_administration_data_store(module);
   export_entitlement_modification(module);
@@ -139,6 +175,7 @@ void Nexus::Python::export_administration_service(module& module) {
   export_indexed_risk_state(module);
   export_local_administration_data_store(module);
   export_message(module);
+  export_notification(module);
   export_mysql_administration_data_store(module);
   export_risk_modification(module);
   export_sqlite_administration_data_store(module);
@@ -177,6 +214,8 @@ void Nexus::Python::export_administration_service_test_environment(
     }).
     def("make_administrator", &TestEnvironment::make_administrator,
       call_guard<GilRelease>()).
+    def("grant_all_entitlements",
+      &TestEnvironment::grant_all_entitlements, call_guard<GilRelease>()).
     def("make_client",
       [] (TestEnvironment& self, ServiceLocatorClient& client) {
         return ToPythonAdministrationClient(self.make_client(Ref(client)));
@@ -187,7 +226,6 @@ void Nexus::Python::export_administration_service_test_environment(
     call_guard<GilRelease>());
   module.def("make_administration_service_test_environment",
     &make_administration_service_test_environment, call_guard<GilRelease>());
-  module.def("grant_all_entitlements", &grant_all_entitlements);
 }
 
 void Nexus::Python::export_cached_administration_data_store(module& module) {

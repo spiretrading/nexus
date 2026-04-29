@@ -6,7 +6,7 @@
 namespace Spire {
 
   /*! \class VolumeDashboardCellBuilder
-      \brief Constructs a DashboardCell emitting a Security's volume.
+      \brief Constructs a DashboardCell emitting a Ticker's volume.
    */
   class VolumeDashboardCellBuilder : public DashboardCellBuilder {
     public:

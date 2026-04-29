@@ -85,22 +85,22 @@ std::shared_ptr<Order> SerenityFixApplication::submit(const OrderInfo& info) {
       modified_info->m_fields.m_type = OrderType::LIMIT;
       modified_info->m_fields.m_price = Money::ZERO;
     }
-    auto bboQuote = load_bbo_quote(modified_info->m_fields.m_security);
+    auto bbo_quote = load_bbo_quote(modified_info->m_fields.m_ticker);
     if(modified_info->m_fields.m_price == Money::ZERO) {
       if(info.m_fields.m_side == Side::BID) {
         modified_info->m_fields.m_price =
-          std::max(bboQuote.m_ask.m_price + 2 * Money::CENT,
-            floor_to(1.02 * bboQuote.m_ask.m_price, Money::CENT));
+          std::max(bbo_quote.m_ask.m_price + 2 * Money::CENT,
+            floor_to(1.02 * bbo_quote.m_ask.m_price, Money::CENT));
       } else {
         modified_info->m_fields.m_price =
-          std::max(std::min(bboQuote.m_bid.m_price - 2 * Money::CENT,
-            floor_to(0.98 * bboQuote.m_bid.m_price, Money::CENT)),
+          std::max(std::min(bbo_quote.m_bid.m_price - 2 * Money::CENT,
+            floor_to(0.98 * bbo_quote.m_bid.m_price, Money::CENT)),
             Money::CENT / 2);
       }
     }
     return &*modified_info;
   }();
-  if(submission_info->m_fields.m_security.get_venue() == DefaultVenues::OTCM) {
+  if(submission_info->m_fields.m_ticker.get_venue() == DefaultVenues::OTCM) {
     return submit_to_us(*submission_info);
   } else {
     return submit_to_ca(*submission_info);
@@ -148,16 +148,16 @@ void SerenityFixApplication::onMessage(
   m_order_log.update(message, session_id, m_time_client->get_time(),
     [=, this] (
         const std::shared_ptr<Order>& order, Out<ExecutionReport> update) {
-      auto venue = order->get_info().m_fields.m_security.get_venue();
+      auto venue = order->get_info().m_fields.m_ticker.get_venue();
       if(venue == DefaultVenues::OTCM) {
-        on_us_message(order, message, out(update));
+        on_us_message(*order, message, out(update));
       } else {
-        on_ca_message(order, message, out(update));
+        on_ca_message(*order, message, out(update));
       }
   });
 }
 
-void SerenityFixApplication::on_ca_message(const std::shared_ptr<Order>& order,
+void SerenityFixApplication::on_ca_message(const Order& order,
     const FIX42::ExecutionReport& message, Out<ExecutionReport> update) {
   auto liquidity_flag = std::string();
   if(message.isSetField(UNIFORM_LIQUIDITY_TAG)) {
@@ -189,7 +189,7 @@ void SerenityFixApplication::on_ca_message(const std::shared_ptr<Order>& order,
     } else if(last_mkt == "MATN") {
       update->m_last_market = DefaultVenues::MATN.get_code().get_data();
     } else if(last_mkt == "XCNQ") {
-      if(order->get_info().m_fields.m_security.get_venue() ==
+      if(order.get_info().m_fields.m_ticker.get_venue() ==
           DefaultVenues::CSE) {
         update->m_last_market = DefaultVenues::CSE.get_code().get_data();
       } else {
@@ -229,7 +229,7 @@ void SerenityFixApplication::on_ca_message(const std::shared_ptr<Order>& order,
   }
 }
 
-void SerenityFixApplication::on_us_message(const std::shared_ptr<Order>& order,
+void SerenityFixApplication::on_us_message(const Order& order,
     const FIX42::ExecutionReport& message, Out<ExecutionReport> update) {
   auto last_mkt = FIX::LastMkt();
   if(message.isSet(last_mkt)) {
@@ -249,16 +249,16 @@ void SerenityFixApplication::onMessage(
 void SerenityFixApplication::onMessage(
   const FIX42::OrderCancelReject&, const FIX::SessionID&) {}
 
-BboQuote SerenityFixApplication::load_bbo_quote(const Security& security) {
-  auto bbo = m_bbo_quotes.get_or_insert(security, [&] {
+BboQuote SerenityFixApplication::load_bbo_quote(const Ticker& ticker) {
+  auto bbo = m_bbo_quotes.get_or_insert(ticker, [&] {
     auto bbo = std::make_shared<StateQueue<BboQuote>>();
-    query_real_time_with_snapshot(*m_market_data_client, security, bbo);
+    query_real_time_with_snapshot(*m_market_data_client, ticker, bbo);
     return bbo;
   });
   try {
     return bbo->peek();
   } catch(const Beam::PipeBrokenException&) {
-    m_bbo_quotes.erase(security);
+    m_bbo_quotes.erase(ticker);
     throw_with_location(FixOrderRejectedException("No BBO quote available."));
   }
 }
@@ -364,12 +364,6 @@ std::shared_ptr<Order> SerenityFixApplication::submit_to_us(
           FixOrderRejectedException("Invalid destination."));
       }();
       new_order_single->set(ex_destination);
-      if(new_order_single->isSetField(FIX::FIELD::ExecInst)) {
-        auto existing = new_order_single->getField(FIX::FIELD::ExecInst);
-        new_order_single->setField(FIX::ExecInst(existing + " a"));
-      } else {
-        new_order_single->set(FIX::ExecInst("a"));
-      }
     });
 }
 
@@ -592,7 +586,7 @@ void SerenityFixApplication::route_to_tsx(
   }
   if(!has_destination) {
     auto destination = [&] {
-      if(info.m_fields.m_security.get_venue() == DefaultVenues::TSXV) {
+      if(info.m_fields.m_ticker.get_venue() == DefaultVenues::TSXV) {
         return FIX::ExDestination("TSXV");
       }
       return FIX::ExDestination("XTSX");

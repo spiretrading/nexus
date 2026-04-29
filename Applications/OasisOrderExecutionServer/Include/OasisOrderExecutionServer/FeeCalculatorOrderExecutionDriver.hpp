@@ -180,7 +180,7 @@ namespace Nexus {
     if(report.m_status == OrderStatus::PENDING_NEW) {
       return;
     }
-    auto venue = order->get_info().m_fields.m_security.get_venue();
+    auto venue = order->get_info().m_fields.m_ticker.get_venue();
     if(venue == DefaultVenues::ASX || venue == DefaultVenues::CXA) {
       handle_australian_market_fees(*order, report);
     } else if(venue == DefaultVenues::OTCM) {

@@ -49,25 +49,25 @@ namespace Spire {
       //! Handles a key event sent to the parent widget.
       /*!
         \param event The event sent to the parent widget to handle.
-        \param security The Security represented by the widget.
+        \param ticker The Ticker represented by the widget.
         \param askPrice The price to use as an ask.
         \param bidPrice The price to use as a bid.
         \return <code>true</code> iff the event was handled by this view.
       */
       bool HandleKeyPressEvent(const QKeyEvent& event,
-        const Nexus::Security& security, Nexus::Money askPrice,
+        const Nexus::Ticker& ticker, Nexus::Money askPrice,
         Nexus::Money bidPrice);
 
     private:
       struct State {
-        const Nexus::Security* m_security;
+        const Nexus::Ticker* m_ticker;
         const Nexus::Money* m_askPrice;
         const Nexus::Money* m_bidPrice;
       };
       QWidget* m_parent;
       UserProfile* m_userProfile;
       bool m_isTaskEntryWidgetForInteractionsProperties;
-      std::unordered_map<Nexus::Security, std::vector<std::shared_ptr<Task>>>
+      std::unordered_map<Nexus::Ticker, std::vector<std::shared_ptr<Task>>>
         m_tasksExecuted;
       State* m_state;
       CondensedCanvasWidget* m_taskEntryWidget;
@@ -85,7 +85,7 @@ namespace Spire {
       bool HandleCancelBindingEvent(
         const KeyBindings::CancelBinding& keyBinding);
       void OnTaskState(const std::shared_ptr<Task>& task,
-        const Nexus::Security& security, const Task::StateEntry& update);
+        const Nexus::Ticker& ticker, const Task::StateEntry& update);
   };
 }
 

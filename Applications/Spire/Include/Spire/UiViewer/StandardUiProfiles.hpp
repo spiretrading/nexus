@@ -56,6 +56,12 @@ namespace Spire {
   /** Returns a UiProfile for the DestinationBox. */
   UiProfile make_destination_box_profile();
 
+  /** Returns a UiProfile for the DestinationFilterPanel. */
+  UiProfile make_destination_filter_panel_profile();
+
+  /** Returns a UiProfile for the DestinationListBox. */
+  UiProfile make_destination_list_box_profile();
+
   /** Returns a UiProfile for the DestinationListItem. */
   UiProfile make_destination_list_item_profile();
 
@@ -176,6 +182,12 @@ namespace Spire {
   /** Returns a UiProfile for the OrderFieldInfoTip. */
   UiProfile make_order_field_info_tip_profile();
 
+  /** Returns a UiProfile for the OrderStatusBox. */
+  UiProfile make_order_status_box_profile();
+
+  /** Returns a UiProfile for the OrderStatusListBox. */
+  UiProfile make_order_status_list_box_profile();
+
   /** Returns a UiProfile for the OrderTypeBox. */
   UiProfile make_order_type_box_profile();
 
@@ -191,6 +203,9 @@ namespace Spire {
   /** Returns a UiProfile for the PopupBox. */
   UiProfile make_popup_box_profile();
 
+  /** Returns a UiProfile for the PositionSideBox. */
+  UiProfile make_position_side_box_profile();
+
   /** Returns a UiProfile for the ProgressBar. */
   UiProfile make_progress_bar_profile();
 
@@ -203,20 +218,20 @@ namespace Spire {
   /** Returns a UiProfile for the RadioButton. */
   UiProfile make_radio_button_profile();
 
-  /** Returns a UiProfile for the RegionBox. */
-  UiProfile make_region_box_profile();
-
-  /** Returns a UiProfile for the RegionDropDownBox. */
-  UiProfile make_region_drop_down_box_profile();
-
-  /** Returns a UiProfile for the RegionFilterPanel. */
-  UiProfile make_region_filter_panel_profile();
-
-  /** Returns a UiProfile for the RegionListItem. */
-  UiProfile make_region_list_item_profile();
-
   /** Returns a UiProfile for the ResponsiveLabel. */
   UiProfile make_responsive_label_profile();
+
+  /** Returns a UiProfile for the ScopeBox. */
+  UiProfile make_scope_box_profile();
+
+  /** Returns a UiProfile for the ScopeDropDownBox. */
+  UiProfile make_scope_drop_down_box_profile();
+
+  /** Returns a UiProfile for the ScopeFilterPanel. */
+  UiProfile make_scope_filter_panel_profile();
+
+  /** Returns a UiProfile for the ScopeListItem. */
+  UiProfile make_scope_list_item_profile();
 
   /** Returns a UiProfile for the ScrollBar. */
   UiProfile make_scroll_bar_profile();
@@ -229,15 +244,6 @@ namespace Spire {
 
   /** Returns a UiProfile for the SearchBox. */
   UiProfile make_search_box_profile();
-
-  /** Returns a UiProfile for the SecurityBox. */
-  UiProfile make_security_box_profile();
-
-  /** Returns a UiProfile for the SecurityListItem. */
-  UiProfile make_security_list_item_profile();
-
-  /** Returns a UiProfile for the SecurityView. */
-  UiProfile make_security_view_profile();
 
   /** Returns a UiProfile for the SideBox. */
   UiProfile make_side_box_profile();
@@ -253,6 +259,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the SplitView. */
   UiProfile make_split_view_profile();
+
+  /** Returns a UiProfile for the SwitchButton. */
+  UiProfile make_switch_button_profile();
 
   /** Returns a UiProfile for the TabView. */
   UiProfile make_tab_view_profile();
@@ -275,6 +284,9 @@ namespace Spire {
   /** Returns a UiProfile for the TagComboBox. */
   UiProfile make_tag_combo_box_profile();
 
+  /** Returns a UiProfile for the TaskStateBox. */
+  UiProfile make_task_state_box_profile();
+
   /** Returns a UiProfile for the TextAreaBox. */
   UiProfile make_text_area_box_profile();
 
@@ -283,6 +295,21 @@ namespace Spire {
 
   /** Returns a UiProfile for the TextBox. */
   UiProfile make_text_box_profile();
+
+  /** Returns a UiProfile for the TickerBox. */
+  UiProfile make_ticker_box_profile();
+
+  /** Returns a UiProfile for the TickerFilterPanel. */
+  UiProfile make_ticker_filter_panel_profile();
+
+  /** Returns a UiProfile for the TickerListBox. */
+  UiProfile make_ticker_list_box_profile();
+
+  /** Returns a UiProfile for the TickerListItem. */
+  UiProfile make_ticker_list_item_profile();
+
+  /** Returns a UiProfile for the TickerView. */
+  UiProfile make_ticker_view_profile();
 
   /** Returns a UiProfile for the TimeBox. */
   UiProfile make_time_box_profile();
@@ -304,6 +331,12 @@ namespace Spire {
 
   /** Returns a UiProfile for the VenueBox. */
   UiProfile make_venue_box_profile();
+
+  /** Returns a UiProfile for the VenueFilterPanel. */
+  UiProfile make_venue_filter_panel_profile();
+
+  /** Returns a UiProfile for the VenueListBox. */
+  UiProfile make_venue_list_box_profile();
 
   /** Returns a UiProfile for the WindowHighlight. */
   UiProfile make_window_highlight_profile();

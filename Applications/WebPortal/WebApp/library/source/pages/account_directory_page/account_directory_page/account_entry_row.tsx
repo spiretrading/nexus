@@ -120,7 +120,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
     })();
     return (
       <Transition in={this.state.isOpen}
-          appear={true}
+          appear
           key={id}
           timeout={AccountEntryRow.TIMEOUTS}>
         {(state) =>

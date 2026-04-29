@@ -37,7 +37,7 @@ namespace Nexus {
         Beam::DirectoryEntry m_group_entry;
 
         /**
-         * Stores the entitlement's applicability.  Each market this entitlement
+         * Stores the entitlement's applicability.  Each venue this entitlement
          * applies to is mapped to the message types the entitlement grants.
          */
         std::unordered_map<EntitlementKey, MarketDataTypeSet> m_applicability;

@@ -11,8 +11,8 @@ namespace {
     auto column = static_cast<OrderTaskColumns>(index);
     if(column == OrderTaskColumns::NAME) {
       return arguments.m_name;
-    } else if(column == OrderTaskColumns::REGION) {
-      return arguments.m_region;
+    } else if(column == OrderTaskColumns::SCOPE) {
+      return arguments.m_scope;
     } else if(column == OrderTaskColumns::DESTINATION) {
       return arguments.m_destination;
     } else if(column == OrderTaskColumns::ORDER_TYPE) {

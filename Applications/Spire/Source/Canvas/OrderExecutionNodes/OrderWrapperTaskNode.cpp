@@ -10,8 +10,8 @@
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/Canvas/ValueNodes/TimeInForceNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
@@ -55,21 +55,21 @@ void OrderWrapperTaskNode::Initialize(string text,
     const UserProfile& userProfile) {
   SetText(std::move(text));
   SetType(OrderReferenceType::GetInstance());
-  AddChild(SingleOrderTaskNode::SECURITY_PROPERTY,
-    std::make_unique<SecurityNode>(m_order->get_info().m_fields.m_security));
+  AddChild(SingleOrderTaskNode::TICKER_PROPERTY,
+    std::make_unique<TickerNode>(m_order->get_info().m_fields.m_ticker));
   AddChild(SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
     make_unique<OrderTypeNode>(m_order->get_info().m_fields.m_type));
   AddChild(SingleOrderTaskNode::SIDE_PROPERTY,
     make_unique<SideNode>(m_order->get_info().m_fields.m_side));
   unique_ptr<DestinationNode> destinationNode = LinkedNode::SetReferent(
-    DestinationNode(m_order->get_info().m_fields.m_destination), "security");
+    DestinationNode(m_order->get_info().m_fields.m_destination), "ticker");
   AddChild(SingleOrderTaskNode::DESTINATION_PROPERTY,
     std::move(destinationNode));
   auto priceNode = LinkedNode::SetReferent(
-    MoneyNode(m_order->get_info().m_fields.m_price), "security");
+    MoneyNode(m_order->get_info().m_fields.m_price), "ticker");
   AddChild(SingleOrderTaskNode::PRICE_PROPERTY, std::move(priceNode));
   auto quantityNode = LinkedNode::SetReferent(
-    IntegerNode(m_order->get_info().m_fields.m_quantity), "security");
+    IntegerNode(m_order->get_info().m_fields.m_quantity), "ticker");
   AddChild(SingleOrderTaskNode::QUANTITY_PROPERTY, std::move(quantityNode));
   AddChild(SingleOrderTaskNode::CURRENCY_PROPERTY,
     std::make_unique<CurrencyNode>(m_order->get_info().m_fields.m_currency,

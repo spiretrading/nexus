@@ -6,7 +6,7 @@
 namespace Spire {
 
   /*! \class OrderImbalanceQueryNode
-      \brief Query's a market's OrderImbalances.
+      \brief Query's a venue's OrderImbalances.
    */
   class OrderImbalanceQueryNode : public CanvasNode {
     public:

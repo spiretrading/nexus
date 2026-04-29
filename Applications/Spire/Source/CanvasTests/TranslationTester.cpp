@@ -14,8 +14,8 @@
 #include "Spire/Canvas/ValueNodes/IntegerNode.hpp"
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/OrderTypeNode.hpp"
-#include "Spire/Canvas/ValueNodes/SecurityNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
 using namespace Beam;
@@ -34,7 +34,7 @@ namespace {
           get_default_additional_tag_database(), m_clients) {}
   };
 
-  const auto TEST_SECURITY = parse_security("TST.TSX");
+  const auto TEST_TICKER = parse_ticker("TST.TSX");
 }
 
 TEST_SUITE("Translation") {
@@ -103,8 +103,8 @@ TEST_SUITE("Translation") {
     auto environment = Environment();
     auto orderNode = std::unique_ptr<CanvasNode>(
       std::make_unique<SingleOrderTaskNode>());
-    orderNode = orderNode->Replace(SingleOrderTaskNode::SECURITY_PROPERTY,
-      std::make_unique<SecurityNode>(TEST_SECURITY));
+    orderNode = orderNode->Replace(SingleOrderTaskNode::TICKER_PROPERTY,
+      std::make_unique<TickerNode>(TEST_TICKER));
     orderNode = orderNode->Replace(SingleOrderTaskNode::QUANTITY_PROPERTY,
       std::make_unique<IntegerNode>(100));
     orderNode = orderNode->Replace(SingleOrderTaskNode::SIDE_PROPERTY,
@@ -120,7 +120,7 @@ TEST_SUITE("Translation") {
     auto result = translation.Extract<Aspen::Box<const Order*>>();
     REQUIRE(result.commit(0) == Aspen::State::EVALUATED);
     auto order1 = result.eval();
-    REQUIRE(order1->get_info().m_fields.m_security == TEST_SECURITY);
+    REQUIRE(order1->get_info().m_fields.m_ticker == TEST_TICKER);
     REQUIRE(order1->get_info().m_fields.m_quantity == 100);
     REQUIRE(order1->get_info().m_fields.m_side == Side::BID);
     REQUIRE(order1->get_info().m_fields.m_price == Money::ONE);
@@ -131,8 +131,8 @@ TEST_SUITE("Translation") {
     auto environment = Environment();
     auto orderNode = std::unique_ptr<CanvasNode>(
       std::make_unique<SingleOrderTaskNode>());
-    orderNode = orderNode->Replace(SingleOrderTaskNode::SECURITY_PROPERTY,
-      std::make_unique<SecurityNode>(TEST_SECURITY));
+    orderNode = orderNode->Replace(SingleOrderTaskNode::TICKER_PROPERTY,
+      std::make_unique<TickerNode>(TEST_TICKER));
     orderNode = orderNode->Replace(SingleOrderTaskNode::QUANTITY_PROPERTY,
       std::make_unique<IntegerNode>(100));
     orderNode = orderNode->Replace(SingleOrderTaskNode::SIDE_PROPERTY,
@@ -151,8 +151,8 @@ TEST_SUITE("Translation") {
     REQUIRE(taskState->pop().m_state == Task::State::INITIALIZING);
     auto submittedOrder1 = submittedOrders->pop();
     REQUIRE(taskState->pop().m_state == Task::State::ACTIVE);
-    REQUIRE(submittedOrder1->get_info().m_fields.m_security ==
-      TEST_SECURITY);
+    REQUIRE(submittedOrder1->get_info().m_fields.m_ticker ==
+      TEST_TICKER);
     REQUIRE(submittedOrder1->get_info().m_fields.m_quantity == 100);
     REQUIRE(submittedOrder1->get_info().m_fields.m_side == Side::BID);
     REQUIRE(submittedOrder1->get_info().m_fields.m_price == Money::ONE);

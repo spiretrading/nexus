@@ -51,18 +51,18 @@ namespace Nexus {
       Beam::LiveNtpTimeClient* m_time_client;
       ApplicationMarketDataClient* m_market_data_client;
       Beam::SynchronizedUnorderedMap<
-        Security, std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bbo_quotes;
+        Ticker, std::shared_ptr<Beam::StateQueue<BboQuote>>> m_bbo_quotes;
       mutable boost::optional<boost::optional<std::string>> m_anonymous_tag;
       Beam::SynchronizedUnorderedSet<OrderId> m_cancellations;
       FixOrderLog m_order_log;
 
-      void on_ca_message(const std::shared_ptr<Order>& order,
+      void on_ca_message(const Order& order,
         const FIX42::ExecutionReport& message,
         Beam::Out<ExecutionReport> update);
-      void on_us_message(const std::shared_ptr<Order>& order,
+      void on_us_message(const Order& order,
         const FIX42::ExecutionReport& message,
         Beam::Out<ExecutionReport> update);
-      BboQuote load_bbo_quote(const Security& security);
+      BboQuote load_bbo_quote(const Ticker& ticker);
       std::shared_ptr<Order> submit_to_ca(const OrderInfo& info);
       std::shared_ptr<Order> submit_to_us(const OrderInfo& info);
       void route_to_chix(const OrderInfo& info,

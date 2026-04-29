@@ -14,16 +14,16 @@ namespace Nexus {
     /** Enumerates the types of listings. */
     enum class CseListing {
 
-      /** Used for general securities. */
+      /** Used for general tickers. */
       DEFAULT,
 
-      /** Used for interlisted securities. */
+      /** Used for interlisted tickers. */
       INTERLISTED,
 
-      /** Used for ETF listed securities. */
+      /** Used for ETF listed tickers. */
       ETF,
 
-      /** Used for CSE listed securities. */
+      /** Used for CSE listed tickers. */
       CSE_LISTED
     };
 
@@ -179,7 +179,7 @@ namespace Nexus {
   }
 
   /**
-   * Retrieves the fee for a default security based on trade type, price class,
+   * Retrieves the fee for a default ticker based on trade type, price class,
    * and liquidity flag.
    * @param table The CseFeeTable containing the fee data.
    * @param type The trade type.
@@ -196,7 +196,7 @@ namespace Nexus {
   }
 
   /**
-   * Retrieves the fee for an interlisted security based on trade type, price
+   * Retrieves the fee for an interlisted ticker based on trade type, price
    * class, and liquidity flag.
    * @param table The CseFeeTable containing the fee data.
    * @param type The trade type.
@@ -213,7 +213,7 @@ namespace Nexus {
   }
 
   /**
-   * Retrieves the fee for an ETF security based on trade type, price class, and
+   * Retrieves the fee for an ETF ticker based on trade type, price class, and
    * liquidity flag.
    * @param table The CseFeeTable containing the fee data.
    * @param type The trade type.
@@ -230,7 +230,7 @@ namespace Nexus {
   }
 
   /**
-   * Retrieves the fee for a CSE listed security based on price class and
+   * Retrieves the fee for a CSE listed ticker based on price class and
    * liquidity flag.
    * @param table The CseFeeTable containing the fee data.
    * @param price_class The price class of the trade.
@@ -244,7 +244,7 @@ namespace Nexus {
   }
 
   /**
-   * Retrieves the fee for a CSE listed security in the opening auction based on
+   * Retrieves the fee for a CSE listed ticker in the opening auction based on
    * price class and liquidity flag.
    * @param table The CseFeeTable containing the fee data.
    * @param price_class The price class of the trade.
@@ -258,7 +258,7 @@ namespace Nexus {
   }
 
   /**
-   * Retrieves the fee for a CSE listed security in the closing auction based on
+   * Retrieves the fee for a CSE listed ticker in the closing auction based on
    * price class and liquidity flag.
    * @param table The CseFeeTable containing the fee data.
    * @param price_class The price class of the trade.
@@ -274,7 +274,7 @@ namespace Nexus {
   /**
    * Calculates the fee for a trade executed on the CSE.
    * @param table The CseFeeTable containing the fee data.
-   * @param listing The CseListing type of the security.
+   * @param listing The CseListing type of the ticker.
    * @param report The ExecutionReport for the trade.
    * @return The calculated fee for the trade.
    */

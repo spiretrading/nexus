@@ -1,6 +1,7 @@
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
+#include "Nexus/Definitions/FixTags.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/KeyBindings/BasicAdditionalTagSchema.hpp"
 #include "Spire/KeyBindings/EnumAdditionalTagSchema.hpp"
@@ -25,7 +26,7 @@ namespace {
     model.m_tag.m_description =
       "Amount (signed) added to the price of the peg for a pegged order.";
     auto schema  = std::make_shared<BasicAdditionalTagSchema>(
-      std::move(model), 211, MoneyType::GetInstance());
+      std::move(model), PEG_DIFFERENCE_KEY, MoneyType::GetInstance());
     return schema;
   }
 
@@ -41,8 +42,8 @@ namespace {
       "R", "Primary peg (primary market - buy at bid/sell at offer)");
     model.m_tag.m_arguments.emplace_back("P", "Market peg");
     sort(model.m_tag.m_arguments);
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
     return schema;
   }
 
@@ -113,8 +114,8 @@ namespace {
       "Ping CHI-X Dark/CX2/CHIC, MATN, TSX mid-point, split residual between "
       "CHI-X Dark and MATN.");
     sort(model.m_tag.m_arguments);
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 100);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EX_DESTINATION_KEY);
     return schema;
   }
 
@@ -131,8 +132,8 @@ namespace {
     model.m_tag.m_arguments.emplace_back(
       "x", "Minimum Price Improvement (CXD Only)");
     model.m_tag.m_arguments.emplace_back("f", "CSO (Not supported on CXD)");
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
     return schema;
   }
 
@@ -151,8 +152,8 @@ namespace {
       "Ping CHI-X Dark/CX2/CHIC & MATN mid-point. Spray all protected markets. "
       "Post on TSX. Dynamic re-spray.");
     sort(model.m_tag.m_arguments);
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 100);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EX_DESTINATION_KEY);
     return schema;
   }
 
@@ -187,8 +188,8 @@ namespace {
     model.m_tag.m_arguments.emplace_back("P", "Market peg");
     model.m_tag.m_arguments.emplace_back("9", "Post on bid");
     model.m_tag.m_arguments.emplace_back("0", "Post on offer");
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
     return schema;
   }
 
@@ -209,8 +210,8 @@ namespace {
       "PNBBO midpoint or minimum improvement from the PNBBO.");
     model.m_tag.m_arguments.emplace_back(
       "B", "Trade at any eligible price within the PNBBO.");
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
     return schema;
   }
 
@@ -232,8 +233,8 @@ namespace {
     model.m_tag.m_description = "Specifies the NEO book to route to.";
     model.m_tag.m_arguments.emplace_back("L", "Route to the lit book.");
     model.m_tag.m_arguments.emplace_back("N", "Route to the NEOE book.");
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 100);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EX_DESTINATION_KEY);
     return schema;
   }
 
@@ -248,8 +249,8 @@ namespace {
     model.m_tag.m_arguments.emplace_back(
       "100", "Re-price (resting orders only).");
     model.m_tag.m_arguments.emplace_back("x", "Minimum price improvement");
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
     return schema;
   }
 
@@ -271,19 +272,19 @@ namespace {
     model.m_tag.m_arguments.emplace_back(
       "SMRTXOPG-X2", "Ping CX2 and CHIC before posting to TSX.");
     sort(model.m_tag.m_arguments);
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 100);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EX_DESTINATION_KEY);
     return schema;
   }
 
   const auto& ASX() {
-    static const auto REGION = [&] {
-      auto region = Region();
-      region += DefaultVenues::ASX;
-      region += DefaultVenues::CXA;
-      return region;
+    static const auto SCOPE = [&] {
+      auto scope = Scope();
+      scope += DefaultVenues::ASX;
+      scope += DefaultVenues::CXA;
+      return scope;
     }();
-    return REGION;
+    return SCOPE;
   }
 }
 
@@ -296,14 +297,14 @@ void AdditionalTagDatabase::add(const Destination& destination,
   m_destination_schemas[destination][schema->get_key()] = schema;
 }
 
-void AdditionalTagDatabase::add(const Region& region,
-    const std::shared_ptr<AdditionalTagSchema>& schema) {
-  auto i = m_schemas.find(region);
-  if(std::get<0>(*i) == region) {
+void AdditionalTagDatabase::add(
+    const Scope& scope, const std::shared_ptr<AdditionalTagSchema>& schema) {
+  auto i = m_schemas.find(scope);
+  if(std::get<0>(*i) == scope) {
     std::get<1>(*i)[schema->get_key()] = schema;
   } else {
-    m_schemas.set(region, {});
-    add(region, schema);
+    m_schemas.set(scope, {});
+    add(scope, schema);
   }
 }
 
@@ -316,18 +317,18 @@ const std::shared_ptr<AdditionalTagSchema>&
       return j->second;
     }
   }
-  auto region = Region();
+  auto scope = Scope();
   for(auto& venue : DEFAULT_DESTINATIONS.from(destination).m_venues) {
-    region += venue;
+    scope += venue;
   }
-  return find(region, key);
+  return find(scope, key);
 }
 
 const std::shared_ptr<AdditionalTagSchema>&
-    AdditionalTagDatabase::find(const Region& region, int key) const {
+    AdditionalTagDatabase::find(const Scope& scope, int key) const {
   auto match = &NONE;
   for(auto i = m_schemas.begin(); i != m_schemas.end(); ++i) {
-    if(region <= std::get<0>(*i)) {
+    if(scope <= std::get<0>(*i)) {
       auto j = std::get<1>(*i).find(key);
       if(j != std::get<1>(*i).end()) {
         match = &j->second;
@@ -354,11 +355,11 @@ std::vector<std::shared_ptr<AdditionalTagSchema>>
       }
     }
   }
-  auto region = Region();
+  auto scope = Scope();
   for(auto& venue : DEFAULT_DESTINATIONS.from(destination).m_venues) {
-    region += venue;
+    scope += venue;
   }
-  auto parent_matches = find(region);
+  auto parent_matches = find(scope);
   for(auto& match : parent_matches) {
     matches.push_back(match);
   }
@@ -366,10 +367,10 @@ std::vector<std::shared_ptr<AdditionalTagSchema>>
 }
 
 std::vector<std::shared_ptr<AdditionalTagSchema>>
-    AdditionalTagDatabase::find(const Region& region) const {
+    AdditionalTagDatabase::find(const Scope& scope) const {
   auto matches = std::vector<std::shared_ptr<AdditionalTagSchema>>();
   for(auto i = m_schemas.begin(); i != m_schemas.end(); ++i) {
-    if(region <= std::get<0>(*i)) {
+    if(scope <= std::get<0>(*i)) {
       for(auto& schema : std::get<1>(*i)) {
         auto j = std::find_if(matches.begin(), matches.end(),
           [&] (const auto& match) {
@@ -387,8 +388,8 @@ std::vector<std::shared_ptr<AdditionalTagSchema>>
 const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
   static auto database = [] {
     auto database = AdditionalTagDatabase();
-    database.add(Region::GLOBAL, MaxFloorSchema::get_instance());
-    database.add(Region::GLOBAL, make_peg_difference_schema());
+    database.add(Scope::GLOBAL, MaxFloorSchema::get_instance());
+    database.add(Scope::GLOBAL, make_peg_difference_schema());
     database.add(DefaultVenues::ASX, make_asx_exec_inst_schema());
     database.add(DefaultDestinations::CHIX, make_chix_ex_destination_schema());
     database.add(DefaultDestinations::CHIX, make_chix_exec_inst_schema());
@@ -414,20 +415,20 @@ const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
 
 const std::shared_ptr<AdditionalTagSchema>& Spire::find(
     const AdditionalTagDatabase& database, const Destination& destination,
-    const Region& region, int key) {
+    const Scope& scope, int key) {
   if(!destination.empty()) {
     if(auto& schema = database.find(destination, key)) {
       return schema;
     }
   }
-  return database.find(region, key);
+  return database.find(scope, key);
 }
 
 std::vector<std::shared_ptr<AdditionalTagSchema>> Spire::find(
     const AdditionalTagDatabase& database, const Destination& destination,
-    const Region& region) {
+    const Scope& scope) {
   if(destination.empty()) {
-    return database.find(region);
+    return database.find(scope);
   }
   return database.find(destination);
 }

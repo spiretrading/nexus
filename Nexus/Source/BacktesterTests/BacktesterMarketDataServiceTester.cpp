@@ -1,6 +1,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterMarketDataService.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 
 using namespace Beam;
@@ -12,7 +13,7 @@ using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
 namespace {
-  const auto TD = Security("TD", TSX);
+  const auto TD = parse_ticker("TD.TSX");
 
   MarketDataClient make_market_data_client(TestEnvironment& environment) {
     environment.get_service_locator_environment().get_root().
@@ -20,7 +21,7 @@ namespace {
     auto service_locator =
       environment.get_service_locator_environment().make_client(
         "backtester", "");
-    grant_all_entitlements(environment.get_administration_environment(),
+    environment.get_administration_environment().grant_all_entitlements(
       service_locator.get_account());
     return environment.get_market_data_environment().make_registry_client(
       Ref(service_locator));
