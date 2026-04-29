@@ -1,7 +1,8 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Beam from 'beam';
 import * as React from 'react';
-import { Button, DateInput, PageLayout, Select } from '../../..';
+import { Button, DateInput, EmptyMessage, ErrorMessage, PageLayout,
+  Select } from '../../..';
 import { ReportStatusIndicator } from
   '../../../pages/account_page/profit_and_loss_page';
 
@@ -86,7 +87,19 @@ export class GroupProfitAndLossPage extends React.Component<Properties> {
             onSubmit={this.props.onSubmit}
             onCancel={this.props.onCancel}/>
           <div className={css(STYLES.contentSpacing)}/>
-          <ProfitAndLossContent/>
+          <ProfitAndLossContent
+            symbol={this.props.symbol}
+            code={this.props.code}
+            status={this.props.status}
+            previousStatus={this.props.previousStatus}
+            totalPnl={this.props.totalPnl}
+            totalFees={this.props.totalFees}
+            totalVolume={this.props.totalVolume}
+            accounts={this.props.accounts}
+            foreignCurrencies={this.props.foreignCurrencies}
+            startDate={this.props.startDate}
+            endDate={this.props.endDate}
+            onSubmit={this.props.onSubmit}/>
         </main>
       </PageLayout>);
   }
@@ -643,11 +656,58 @@ function toReportStatus(
 const BUTTON_STYLE: React.CSSProperties = {width: '140px'};
 const ACTION_SHEET_GAP: React.CSSProperties = {height: '10px'};
 
-function ProfitAndLossContent(): JSX.Element {
+function ProfitAndLossContent(props: {
+      symbol: string;
+      code: string;
+      status: GroupProfitAndLossPage.Status;
+      previousStatus: GroupProfitAndLossPage.Status;
+      totalPnl: string;
+      totalFees: string;
+      totalVolume: string;
+      accounts: GroupProfitAndLossPage.AccountEntry[];
+      foreignCurrencies: GroupProfitAndLossPage.ExchangeRate[];
+      startDate: Beam.Date;
+      endDate: Beam.Date;
+      onSubmit?: (start: Beam.Date, end: Beam.Date) => void;
+    }): JSX.Element {
+  const isLoading = props.status === GroupProfitAndLossPage.Status.IN_PROGRESS;
+  const isEmpty = props.status === GroupProfitAndLossPage.Status.EMPTY;
+  const isNoResults = props.status === GroupProfitAndLossPage.Status.NO_RESULTS;
+  const isError = props.status === GroupProfitAndLossPage.Status.ERROR;
+  if(isEmpty) {
+    return (
+      <section aria-label='Profit and Loss Report' aria-live='polite'>
+        <EmptyMessage
+          message='Click Apply to generate a report for the selected period.'/>
+      </section>);
+  }
+  if(isNoResults) {
+    return (
+      <section aria-label='Profit and Loss Report' aria-live='polite'>
+        <EmptyMessage message='There is no activity for the selected period.'/>
+      </section>);
+  }
+  if(isError) {
+    return (
+      <section aria-label='Profit and Loss Report' aria-live='polite'>
+        <ErrorMessage message='There was an error generating the report.'/>
+      </section>);
+  }
   return (
     <section aria-label='Profit and Loss Report' aria-live='polite'
-        aria-busy='false'>
+        aria-busy={isLoading ? 'true' : 'false'}>
+      <ProfitAndLossHeader/>
+      <div className={css(STYLES.listSpacing)}/>
+      <ProfitAndLossList/>
     </section>);
+}
+
+function ProfitAndLossHeader(): JSX.Element {
+  return <div/>;
+}
+
+function ProfitAndLossList(): JSX.Element {
+  return <div/>;
 }
 
 const STYLES = StyleSheet.create({
@@ -675,6 +735,9 @@ const STYLES = StyleSheet.create({
   contentSpacing: {
     height: '30px',
     flexShrink: 0
+  },
+  listSpacing: {
+    height: '30px'
   },
   form: {
     '@media (max-width: 767px)': {
