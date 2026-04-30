@@ -571,9 +571,12 @@ void ListView::move_item(int source, int destination) {
     }
     std::rotate(std::next(m_items.begin(), source), std::next(m_items.begin(),
       source + 1), std::next(m_items.begin(), destination + 1));
-    if(m_focus_index &&
-        (*m_focus_index >= source || *m_focus_index <= destination)) {
-      --*m_focus_index;
+    if(m_focus_index) {
+      if(*m_focus_index == source) {
+        *m_focus_index = destination;
+      } else if(*m_focus_index > source && *m_focus_index <= destination) {
+        --*m_focus_index;
+      }
     }
   } else {
     for(auto& i : std::ranges::subrange(std::next(m_items.begin(), destination),
@@ -583,9 +586,12 @@ void ListView::move_item(int source, int destination) {
     std::rotate(std::next(m_items.rbegin(), m_items.size() - source - 1),
       std::next(m_items.rbegin(), m_items.size() - source),
       std::next(m_items.rbegin(), m_items.size() - destination));
-    if(m_focus_index &&
-        (*m_focus_index >= source || *m_focus_index <= destination)) {
-      ++*m_focus_index;
+    if(m_focus_index) {
+      if(*m_focus_index == source) {
+        *m_focus_index = destination;
+      } else if(*m_focus_index >= destination && *m_focus_index < source) {
+        ++*m_focus_index;
+      }
     }
   }
   m_items[destination]->m_index = destination;

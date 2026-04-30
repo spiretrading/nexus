@@ -56,12 +56,6 @@ namespace Spire {
   /** Returns a UiProfile for the DestinationBox. */
   UiProfile make_destination_box_profile();
 
-  /** Returns a UiProfile for the DestinationFilterPanel. */
-  UiProfile make_destination_filter_panel_profile();
-
-  /** Returns a UiProfile for the DestinationListBox. */
-  UiProfile make_destination_list_box_profile();
-
   /** Returns a UiProfile for the DestinationListItem. */
   UiProfile make_destination_list_item_profile();
 
@@ -182,12 +176,6 @@ namespace Spire {
   /** Returns a UiProfile for the OrderFieldInfoTip. */
   UiProfile make_order_field_info_tip_profile();
 
-  /** Returns a UiProfile for the OrderStatusBox. */
-  UiProfile make_order_status_box_profile();
-
-  /** Returns a UiProfile for the OrderStatusListBox. */
-  UiProfile make_order_status_list_box_profile();
-
   /** Returns a UiProfile for the OrderTypeBox. */
   UiProfile make_order_type_box_profile();
 
@@ -202,9 +190,6 @@ namespace Spire {
 
   /** Returns a UiProfile for the PopupBox. */
   UiProfile make_popup_box_profile();
-
-  /** Returns a UiProfile for the PositionSideBox. */
-  UiProfile make_position_side_box_profile();
 
   /** Returns a UiProfile for the ProgressBar. */
   UiProfile make_progress_bar_profile();
@@ -260,9 +245,6 @@ namespace Spire {
   /** Returns a UiProfile for the SplitView. */
   UiProfile make_split_view_profile();
 
-  /** Returns a UiProfile for the SwitchButton. */
-  UiProfile make_switch_button_profile();
-
   /** Returns a UiProfile for the TabView. */
   UiProfile make_tab_view_profile();
 
@@ -283,9 +265,6 @@ namespace Spire {
 
   /** Returns a UiProfile for the TagComboBox. */
   UiProfile make_tag_combo_box_profile();
-
-  /** Returns a UiProfile for the TaskStateBox. */
-  UiProfile make_task_state_box_profile();
 
   /** Returns a UiProfile for the TextAreaBox. */
   UiProfile make_text_area_box_profile();
