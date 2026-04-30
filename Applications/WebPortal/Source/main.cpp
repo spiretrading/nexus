@@ -56,8 +56,13 @@ int main(int argc, const char** argv) {
         return Clients(std::in_place_type<ServiceClients>, username, password,
           service_locator_client_config.m_address);
       };
-    auto server = WebPortalServletContainer(
-      init(std::move(clients_builder), Clients(&clients)),
+    auto session_clients_builder =
+      [&] (const std::string& session_id, unsigned int key) {
+        return Clients(std::in_place_type<ServiceClients>, session_id, key,
+          service_locator_client_config.m_address);
+      };
+    auto server = WebPortalServletContainer(init(std::move(clients_builder),
+      std::move(session_clients_builder), Clients(&clients)),
       init(service_config.m_interface));
     wait_for_kill_event();
     clients.close();
