@@ -17,11 +17,13 @@ using namespace Spire::LegacyUI;
 UserProfile::UserProfile(const std::string& username, bool isAdministrator,
     bool isManager, const std::vector<ExchangeRate>& exchangeRates,
     const EntitlementDatabase& entitlementDatabase,
-    const AdditionalTagDatabase& additionalTagDatabase, Clients clients)
+    const AdditionalTagDatabase& additionalTagDatabase, Uri web_portal_uri,
+    Clients clients)
     : m_username(username),
       m_isAdministrator(isAdministrator),
       m_isManager(isManager),
       m_entitlementDatabase(entitlementDatabase),
+      m_web_portal_uri(std::move(web_portal_uri)),
       m_clients(std::move(clients)),
       m_profilePath(std::filesystem::path(QStandardPaths::writableLocation(
         QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
@@ -58,6 +60,10 @@ const ExchangeRateTable& UserProfile::GetExchangeRates() const {
 
 const EntitlementDatabase& UserProfile::GetEntitlementDatabase() const {
   return m_entitlementDatabase;
+}
+
+const Uri& UserProfile::GetWebPortalUri() const {
+  return m_web_portal_uri;
 }
 
 Clients& UserProfile::GetClients() const {
