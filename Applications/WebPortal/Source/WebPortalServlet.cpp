@@ -32,14 +32,6 @@ WebPortalServlet::~WebPortalServlet() {
 
 std::vector<HttpRequestSlot> WebPortalServlet::get_slots() {
   auto slots = std::vector<HttpRequestSlot>();
-  slots.emplace_back(matches_path(HttpMethod::GET, "/"),
-    std::bind_front(&WebPortalServlet::on_index, this));
-  slots.emplace_back(matches_path(HttpMethod::GET, ""),
-    std::bind_front(&WebPortalServlet::on_index, this));
-  slots.emplace_back(matches_path(HttpMethod::GET, "/index.html"),
-    std::bind_front(&WebPortalServlet::on_index, this));
-  slots.emplace_back(match_any(HttpMethod::GET),
-    std::bind_front(&WebPortalServlet::on_serve_file, this));
   auto service_locator_slots = m_service_locator_servlet.get_slots();
   slots.insert(
     slots.end(), service_locator_slots.begin(), service_locator_slots.end());
@@ -56,6 +48,14 @@ std::vector<HttpRequestSlot> WebPortalServlet::get_slots() {
   slots.insert(slots.end(), reporting_slots.begin(), reporting_slots.end());
   auto risk_slots = m_risk_servlet.get_slots();
   slots.insert(slots.end(), risk_slots.begin(), risk_slots.end());
+  slots.emplace_back(matches_path(HttpMethod::GET, "/"),
+    std::bind_front(&WebPortalServlet::on_index, this));
+  slots.emplace_back(matches_path(HttpMethod::GET, ""),
+    std::bind_front(&WebPortalServlet::on_index, this));
+  slots.emplace_back(matches_path(HttpMethod::GET, "/index.html"),
+    std::bind_front(&WebPortalServlet::on_index, this));
+  slots.emplace_back(match_any(HttpMethod::GET),
+    std::bind_front(&WebPortalServlet::on_serve_file, this));
   return slots;
 }
 
