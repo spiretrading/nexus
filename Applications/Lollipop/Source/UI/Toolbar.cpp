@@ -302,7 +302,9 @@ void Toolbar::OnNewCanvasAction() {
   canvas->show();
 }
 
-void Toolbar::OnProfileAction() {}
+void Toolbar::OnProfileAction() {
+  open_web_portal(*m_userProfile, "/account/profile");
+}
 
 void Toolbar::OnKeyBindingsAction() {
   auto dialog = new SimplifiedKeyBindingsDialog(Ref(*m_userProfile));
@@ -385,7 +387,9 @@ void Toolbar::OnNewBlotterAction() {
   window.activateWindow();
 }
 
-void Toolbar::OnAccountViewAction() {}
+void Toolbar::OnAccountViewAction() {
+  open_web_portal(*m_userProfile, "/account_directory");
+}
 
 void Toolbar::OnOpenPortfolioViewerAction() {
   auto settings = m_userProfile->GetInitialPortfolioViewerWindowSettings();

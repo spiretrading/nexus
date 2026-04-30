@@ -186,7 +186,13 @@ void PortfolioViewerWindow::OnContextMenu(const QPoint& position) {
     blotterAction->setText(blotterText);
     contextMenu->addAction(blotterAction);
     auto profileAction = new FunctionalAction(contextMenu.get());
-    profileAction->SetFunction([&] {});
+    profileAction->SetFunction(
+      [&] {
+        for(auto& account : selectedAccounts) {
+          open_web_portal(*m_userProfile,
+            "/account/" + std::to_string(account.m_id) + "/profile");
+        }
+      });
     QString profileText;
     if(selectedAccounts.size() == 1) {
       profileText = tr("View Profile");

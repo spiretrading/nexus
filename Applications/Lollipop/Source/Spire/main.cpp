@@ -2,6 +2,7 @@
 #include <fstream>
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
+#include <Beam/WebServices/Uri.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
 #include <QApplication>
@@ -280,6 +281,17 @@ int main(int argc, char* argv[]) {
   auto isManager = isAdministrator ||
     !serviceClients->get_administration_client().load_managed_trading_groups(
       serviceClients->get_service_locator_client().get_account()).empty();
+  auto web_portal_uri = [&] {
+    try {
+      auto services =
+        serviceClients->get_service_locator_client().locate("web_portal");
+      if(!services.empty()) {
+        return Uri(boost::get<std::string>(
+          services.front().get_properties().at("url")));
+      }
+    } catch(const std::exception&) {}
+    return Uri();
+  }();
   auto userProfile = UserProfile(
     serviceClients->get_service_locator_client().get_account().m_name,
     isAdministrator, isManager,
@@ -290,7 +302,7 @@ int main(int argc, char* argv[]) {
     serviceClients->get_definitions_client().load_venue_database(),
     serviceClients->get_definitions_client().load_destination_database(),
     serviceClients->get_administration_client().load_entitlements(),
-    *serviceClients);
+    std::move(web_portal_uri), *serviceClients);
   auto loginData = JsonObject();
   loginData["version"] = std::string(SPIRE_VERSION);
   try {

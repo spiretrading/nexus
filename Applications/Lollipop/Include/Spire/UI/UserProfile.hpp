@@ -4,6 +4,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <Beam/WebServices/Uri.hpp>
 #include <boost/date_time/local_time/tz_database.hpp>
 #include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Definitions/Country.hpp"
@@ -48,6 +49,7 @@ namespace Spire {
        * @param destinationDatabase Stores the database of all destinations.
        * @param entitlementDatabase Stores the database of market data
        *        entitlements.
+       * @param web_portal_uri The URI of the web portal.
        * @param clients The set of clients connected to Spire services.
        */
       UserProfile(const std::string& username, bool isAdministrator,
@@ -58,7 +60,7 @@ namespace Spire {
         const Nexus::VenueDatabase& venueDatabase,
         const Nexus::DestinationDatabase& destinationDatabase,
         const Nexus::EntitlementDatabase& entitlementDatabase,
-        Nexus::Clients clients);
+        Beam::Uri web_portal_uri, Nexus::Clients clients);
 
       ~UserProfile();
 
@@ -94,6 +96,9 @@ namespace Spire {
 
       /** Returns the EntitlementDatabase. */
       const Nexus::EntitlementDatabase& GetEntitlementDatabase() const;
+
+      /** Returns the URI of the web portal. */
+      const Beam::Uri& GetWebPortalUri() const;
 
       /** Returns the set of clients connected to Spire services. */
       Nexus::Clients& GetClients() const;
@@ -247,6 +252,7 @@ namespace Spire {
       Nexus::VenueDatabase m_venueDatabase;
       Nexus::DestinationDatabase m_destinationDatabase;
       Nexus::EntitlementDatabase m_entitlementDatabase;
+      Beam::Uri m_web_portal_uri;
       mutable Nexus::Clients m_clients;
       std::filesystem::path m_profilePath;
       std::vector<std::unique_ptr<UI::WindowSettings>> m_recentlyClosedWindows;
@@ -267,6 +273,14 @@ namespace Spire {
       boost::optional<PortfolioViewerWindowSettings>
         m_initialPortfolioViewerWindowSettings;
   };
+
+  /**
+   * Opens a page on the web portal in the default browser, authenticating via
+   * the user's current session.
+   * @param user_profile The user's profile.
+   * @param path The path to redirect to after authentication.
+   */
+  void open_web_portal(UserProfile& user_profile, const std::string& path);
 }
 
 #endif
