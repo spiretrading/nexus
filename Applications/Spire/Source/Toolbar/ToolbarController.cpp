@@ -5,8 +5,6 @@
 #include <QScreen>
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/Venue.hpp"
-#include "Spire/AccountViewer/AccountViewWindow.hpp"
-#include "Spire/AccountViewer/TraderProfileWindow.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
@@ -240,11 +238,7 @@ void ToolbarController::open_order_imbalance_indicator_window() {
   }
 }
 
-void ToolbarController::open_account_directory_window() {
-  auto window = new AccountViewWindow(Ref(*m_user_profile));
-  window->setAttribute(Qt::WA_DeleteOnClose);
-  window->show();
-}
+void ToolbarController::open_account_directory_window() {}
 
 void ToolbarController::open_portfolio_window() {
   if(auto settings =
@@ -271,13 +265,7 @@ void ToolbarController::open_key_bindings_window() {
   m_key_bindings_window->show();
 }
 
-void ToolbarController::open_profile_window() {
-  auto window = new TraderProfileWindow(Ref(*m_user_profile));
-  window->setAttribute(Qt::WA_DeleteOnClose);
-  window->Load(
-    m_user_profile->GetClients().get_service_locator_client().get_account());
-  window->show();
-}
+void ToolbarController::open_profile_window() {}
 
 void ToolbarController::on_open(ToolbarWindow::WindowType window) {
   if(window == ToolbarWindow::WindowType::CHART) {
