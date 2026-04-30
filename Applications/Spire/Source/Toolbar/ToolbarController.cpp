@@ -1,12 +1,8 @@
 #include "Spire/Toolbar/ToolbarController.hpp"
 #include <vector>
-#include <Beam/ServiceLocator/SessionEncryption.hpp>
-#include <Beam/Utilities/ToString.hpp>
 #include <QApplication>
-#include <QDesktopServices>
 #include <QGuiApplication>
 #include <QScreen>
-#include <QUrl>
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
@@ -87,19 +83,6 @@ namespace {
         (global_blotter.frameSize().height() - global_blotter.size().height()));
     windows.push_back(&global_blotter);
     return windows;
-  }
-
-  void open_web_portal(UserProfile& user_profile, const std::string& path) {
-    if(user_profile.GetWebPortalUri().get_hostname().empty()) {
-      return;
-    }
-    auto key = generate_encryption_key();
-    auto session_id = user_profile.GetClients().get_service_locator_client().
-      get_encrypted_session_id(key);
-    auto url = to_string(user_profile.GetWebPortalUri()) +
-      "/api/service_locator/login_from_session?session=" + session_id +
-      "&key=" + std::to_string(key) + "&redirect=" + path;
-    QDesktopServices::openUrl(QUrl(QString::fromStdString(url)));
   }
 }
 

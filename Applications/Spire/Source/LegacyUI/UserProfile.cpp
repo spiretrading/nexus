@@ -1,5 +1,9 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include <Beam/ServiceLocator/SessionEncryption.hpp>
+#include <Beam/Utilities/ToString.hpp>
+#include <QDesktopServices>
 #include <QStandardPaths>
+#include <QUrl>
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/OpenPositionsModel.hpp"
@@ -214,4 +218,18 @@ Quantity Spire::get_default_order_quantity(const UserProfile& userProfile,
   return get_default_order_quantity(
     *userProfile.GetKeyBindings()->get_interactions_key_bindings(ticker),
     ticker, position, side);
+}
+
+void Spire::open_web_portal(
+    UserProfile& user_profile, const std::string& path) {
+  if(user_profile.GetWebPortalUri().get_hostname().empty()) {
+    return;
+  }
+  auto key = generate_encryption_key();
+  auto session_id = user_profile.GetClients().get_service_locator_client().
+    get_encrypted_session_id(key);
+  auto url = to_string(user_profile.GetWebPortalUri()) +
+    "/api/service_locator/login_from_session?session=" + session_id +
+    "&key=" + std::to_string(key) + "&redirect=" + path;
+  QDesktopServices::openUrl(QUrl(QString::fromStdString(url)));
 }

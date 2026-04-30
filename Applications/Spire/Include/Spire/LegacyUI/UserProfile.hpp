@@ -226,6 +226,14 @@ namespace Spire {
    */
   Nexus::Quantity get_default_order_quantity(const UserProfile& userProfile,
     const Nexus::Ticker& ticker, Nexus::Side side);
+
+  /**
+   * Opens a page on the web portal in the default browser, authenticating via
+   * the user's current session.
+   * @param user_profile The user's profile.
+   * @param path The path to redirect to after authentication.
+   */
+  void open_web_portal(UserProfile& user_profile, const std::string& path);
 }
 
 #endif
