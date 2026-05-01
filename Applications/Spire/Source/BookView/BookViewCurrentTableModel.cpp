@@ -32,6 +32,9 @@ QValidator::State BookViewCurrentTableModel::test(const Type& value) const {
 QValidator::State BookViewCurrentTableModel::set(const Type& value) {
   auto state = test(value);
   if(state == QValidator::State::Invalid) {
+    if(value) {
+      m_current.set(none);
+    }
     return state;
   }
   return m_current.set(value);
