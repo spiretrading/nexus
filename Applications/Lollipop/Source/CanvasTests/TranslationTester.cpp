@@ -31,7 +31,7 @@ namespace {
       : m_clients(std::in_place_type<TestClients>, Ref(m_environment)),
         m_userProfile("", false, false, DEFAULT_COUNTRIES,
           get_default_time_zone_database(), DEFAULT_CURRENCIES, {},
-          DEFAULT_VENUES, DEFAULT_DESTINATIONS, EntitlementDatabase(),
+          DEFAULT_VENUES, DEFAULT_DESTINATIONS, EntitlementDatabase(), {},
           m_clients) {}
   };
 

@@ -179,9 +179,9 @@ const STYLES = StyleSheet.create({
   },
   table: {
     width: '100%',
-    borderCollapse: 'separate' as 'separate',
+    borderCollapse: 'separate',
     borderSpacing: 0,
-    tableLayout: 'fixed' as 'fixed',
+    tableLayout: 'fixed',
     color: '#333333',
     fontSize: '0.875rem'
   },
@@ -190,23 +190,23 @@ const STYLES = StyleSheet.create({
     border: '1px solid #E6E6E6'
   },
   tableNarrow: {
-    display: 'block' as 'block'
+    display: 'block'
   },
   tbodyNarrow: {
-    display: 'block' as 'block'
+    display: 'block'
   },
   th: {
     padding: '8px 19px',
     color: '#5D5E6D',
     fontWeight: 500,
     backgroundColor: '#F8F8F8',
-    textAlign: 'left' as 'left'
+    textAlign: 'left'
   },
   td: {
     padding: '8px 19px'
   },
   tdNarrow: {
-    display: 'block' as 'block',
+    display: 'block',
     padding: '8px 19px'
   },
   rowWide: {
@@ -216,7 +216,7 @@ const STYLES = StyleSheet.create({
     }
   },
   rowNarrow: {
-    display: 'block' as 'block',
+    display: 'block',
     backgroundColor: '#FFFFFF',
     border: '1px solid #E6E6E6',
     borderRadius: '1px',
@@ -231,7 +231,7 @@ const STYLES = StyleSheet.create({
     color: '#333333'
   },
   propertyCellNarrow: {
-    display: 'block' as 'block',
+    display: 'block',
     padding: '8px 19px',
     fontWeight: 500,
     color: '#5D5E6D',

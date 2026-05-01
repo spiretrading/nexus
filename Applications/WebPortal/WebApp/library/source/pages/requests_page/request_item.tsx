@@ -202,7 +202,7 @@ const STYLES = StyleSheet.create({
   },
   header: {
     display: 'flex',
-    alignItems: 'center' as 'center',
+    alignItems: 'center',
     gap: '6px'
   },
   id: {
@@ -210,11 +210,11 @@ const STYLES = StyleSheet.create({
     fontWeight: 500,
     color: '#333333',
     margin: 0,
-    whiteSpace: 'nowrap' as 'nowrap'
+    whiteSpace: 'nowrap'
   },
   updateTime: {
     display: 'flex',
-    alignItems: 'center' as 'center',
+    alignItems: 'center',
     marginLeft: 'auto',
     flexShrink: 0
   },
@@ -224,18 +224,18 @@ const STYLES = StyleSheet.create({
   prefix: {
     fontSize: '0.875rem',
     color: '#7D7E90',
-    textAlign: 'end' as 'end'
+    textAlign: 'end'
   },
   relativeDate: {
-    textTransform: 'capitalize' as 'capitalize',
-    textAlign: 'end' as 'end'
+    textTransform: 'capitalize',
+    textAlign: 'end'
   },
   relativeDateWide: {
-    textTransform: 'none' as 'none'
+    textTransform: 'none'
   },
   metadata: {
     display: 'flex',
-    alignItems: 'center' as 'center',
+    alignItems: 'center',
     marginTop: '4px'
   },
   account: {
@@ -248,7 +248,7 @@ const STYLES = StyleSheet.create({
   },
   decisionBlock: {
     display: 'flex',
-    alignItems: 'center' as 'center',
+    alignItems: 'center',
     marginLeft: '18px',
     flexShrink: 0
   },
@@ -262,7 +262,7 @@ const STYLES = StyleSheet.create({
   },
   content: {
     display: 'flex',
-    alignItems: 'flex-start' as 'flex-start',
+    alignItems: 'flex-start',
     marginTop: '10px'
   },
   changes: {
@@ -276,7 +276,7 @@ const STYLES = StyleSheet.create({
   },
   commentBlock: {
     display: 'flex',
-    alignItems: 'center' as 'center',
+    alignItems: 'center',
     marginLeft: '18px',
     flexShrink: 0
   },

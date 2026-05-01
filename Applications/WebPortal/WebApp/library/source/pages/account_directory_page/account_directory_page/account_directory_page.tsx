@@ -191,13 +191,13 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
     this.setState({isCreateGroupModalOpen: false});
   }
 
-  private static readonly STYLE = {
+  private static readonly STYLE: Record<string, React.CSSProperties> = {
     page: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '100%',
       width: '100%',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
+      display: 'flex',
+      flexDirection: 'row',
       justifyContent: 'center',
       padding: '18px',
       paddingBottom: '40px'
@@ -213,50 +213,50 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       width: '1000px'
     },
     verticalHeaderBox: {
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
-      flexWrap: 'nowrap' as 'nowrap',
-      justifyContent: 'flex-end' as 'flex-end'
+      display: 'flex',
+      flexDirection: 'column',
+      flexWrap: 'nowrap',
+      justifyContent: 'flex-end'
     },
     horizontalHeaderBox: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '100%',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap'
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap'
     },
     buttonBoxSmall: {
       width: '100%',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap'
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap'
     },
     buttonBox: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       flexBasis: '298px',
       flexGrow: 0,
       flexShrink: 0,
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      justifyContent: 'flex-end' as 'flex-end'
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      justifyContent: 'flex-end'
     },
     spacing: {
       width: '18px',
       height: '18px',
-      flexBias: '18px',
+      flexBasis: '18px',
       flexGrow: 0,
       flexShrink: 0
     },
     hidden: {
       opacity: 0,
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none'
+      visibility: 'hidden',
+      display: 'none'
     }
   };
   private static DYNAMIC_STYLE = StyleSheet.create({
     button: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '140px',
       flexBasis: '140px',
       flexGrow: 0,
@@ -268,11 +268,11 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       border: 'none',
       outline: 0,
       borderRadius: 1,
-      cursor: 'pointer' as 'pointer',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center',
+      cursor: 'pointer',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
       ':active' : {
         backgroundColor: '#4B23A0'
       },
@@ -284,7 +284,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       }
     },
     buttonSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '140px',
       flexBasis: '140px',
       flexGrow: 1,
@@ -294,7 +294,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
       color: '#FFFFFF',
       border: 'none',
       outline: 0,
-      cursor: 'pointer' as 'pointer',
+      cursor: 'pointer',
       borderRadius: 1,
       ':active' : {
         backgroundColor: '#4B23A0'

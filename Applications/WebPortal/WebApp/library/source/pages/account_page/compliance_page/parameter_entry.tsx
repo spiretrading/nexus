@@ -170,7 +170,7 @@ export class ParameterEntry extends React.Component<Properties> {
         Nexus.ComplianceValue.Type.LIST, newParameterList)));
   }
 
-  private static readonly STYLE = {
+  private static readonly STYLE: Record<string, React.CSSProperties> = {
     inputSmall: {
       minWidth: '184px',
       flexBasis: '184px',
@@ -187,8 +187,8 @@ export class ParameterEntry extends React.Component<Properties> {
       flexShrink: 0
     },
     rowSmall: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
+      display: 'flex',
+      flexDirection: 'row',
       flexBasis: '284px',
       flexGrow: 1,
       flexShrink: 1,
@@ -196,38 +196,38 @@ export class ParameterEntry extends React.Component<Properties> {
       width: '100%',
       height: '34px',
       font: '400 14px Roboto',
-      alignItems: 'center' as 'center'
+      alignItems: 'center'
     },
     rowLarge: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
+      display: 'flex',
+      flexDirection: 'row',
       width: '100%',
       height: '34px',
       font: '400 14px Roboto',
-      alignItems: 'center' as 'center'
+      alignItems: 'center'
     },
     dateTimeRow: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'row',
       width: '100%',
       height: '78px',
       font: '400 14px Roboto',
-      alignItems: 'center' as 'center'
+      alignItems: 'center'
     },
     label: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '100px',
       font: '400 14px Roboto',
       flexGrow: 0,
       flexShrink: 0,
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
       height: '34px',
-      alignSelf: 'flex-start' as 'flex-start',
+      alignSelf: 'flex-start',
       color: '#333333',
-      cursor: 'default' as 'default'
+      cursor: 'default'
     },
   };
 }

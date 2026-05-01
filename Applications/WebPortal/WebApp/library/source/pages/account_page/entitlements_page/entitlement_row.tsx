@@ -46,23 +46,23 @@ function computeTransitionStyles(
   return StyleSheet.create({
     entering: {
       maxHeight,
-      overflow: 'hidden' as 'hidden',
+      overflow: 'hidden',
       transitionProperty: 'max-height',
       transitionDuration: `${TRANSITION_LENGTH_MS}ms`
     },
     entered: {
       maxHeight,
-      overflow: 'hidden' as 'hidden'
+      overflow: 'hidden'
     },
     exiting: {
       maxHeight: '0',
-      overflow: 'hidden' as 'hidden',
+      overflow: 'hidden',
       transitionProperty: 'max-height',
       transitionDuration: `${TRANSITION_LENGTH_MS}ms`
     },
     exited: {
       maxHeight: '0',
-      overflow: 'hidden' as 'hidden'
+      overflow: 'hidden'
     }
   });
 }

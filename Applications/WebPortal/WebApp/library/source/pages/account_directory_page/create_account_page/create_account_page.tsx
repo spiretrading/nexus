@@ -518,23 +518,23 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     }
   }
 
-  private static readonly STYLE = {
+  private static readonly STYLE: Record<string, React.CSSProperties> = {
     page: {
       height: '100%',
       width: '100%',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      justifyContent: 'space-between' as 'space-between',
-      overflowY: 'auto' as 'auto'
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'space-between',
+      overflowY: 'auto'
     },
     headerStyler: {
       color: '#333333',
       font: '400 18px Roboto',
       width: '100%',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center'
+      display: 'flex',
+      flexDirection: 'row',
+      justifyContent: 'center',
+      alignItems: 'center'
     },
     contentSmall: {
       minWidth: '284px',
@@ -553,8 +553,8 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     },
     rolesWrapper: {
       marginLeft: '11px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
+      display: 'flex',
+      flexDirection: 'row',
       height: '34px',
       justifyContent: 'flex-start',
       alignItems: 'center'
@@ -571,14 +571,14 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       height: '30px'
     },
     buttonBox: {
-      display: 'flex' as 'flex',
-      justifyContent: 'center' as 'center',
-      textAlign: 'center' as 'center'
+      display: 'flex',
+      justifyContent: 'center',
+      textAlign: 'center'
     },
     errorStatus: {
-      display: 'flex' as 'flex',
-      justifyContent: 'center' as 'center',
-      textAlign: 'center' as 'center',
+      display: 'flex',
+      justifyContent: 'center',
+      textAlign: 'center',
       color: '#E63F44',
       font: '400 14px Roboto'
     },
@@ -589,7 +589,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   };
   private static DYNAMIC_STYLE = StyleSheet.create({
     buttonSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '100%',
       height: '34px',
       backgroundColor: '#684BC7',
@@ -598,7 +598,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       border: 'none',
       outline: 0,
       borderRadius: 1,
-      cursor: 'pointer' as 'pointer',
+      cursor: 'pointer',
       ':active': {
         backgroundColor: '#4B23A0'
       },
@@ -611,13 +611,13 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       ':disabled': {
         backgroundColor: '#F8F8F8',
         color: '#8C8C8C',
-        cursor: 'default' as 'default'
+        cursor: 'default'
       }
     },
     buttonLarge: {
       margin: 0,
       padding: 0,
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '200px',
       height: '34px',
       backgroundColor: '#684BC7',
@@ -626,7 +626,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       border: 'none',
       outline: 0,
       borderRadius: 1,
-      cursor: 'pointer' as 'pointer',
+      cursor: 'pointer',
       ':active': {
         backgroundColor: '#4B23A0'
       },
@@ -639,7 +639,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       ':disabled': {
         backgroundColor: '#F8F8F8',
         color: '#8C8C8C',
-        cursor: 'default' as 'default'
+        cursor: 'default'
       }
     }
   });
