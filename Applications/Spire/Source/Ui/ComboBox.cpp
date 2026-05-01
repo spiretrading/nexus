@@ -72,6 +72,7 @@ AnyComboBox::DeferredData::DeferredData(AnyComboBox& box)
     m_empty_state(nullptr),
     m_completion_tag(0),
     m_has_autocomplete_selection(false),
+    m_is_deleting(false),
     m_is_querying(false),
     m_current_connection(box.m_current->connect_update_signal(
       std::bind_front(&AnyComboBox::on_current, &box))) {}
@@ -291,10 +292,16 @@ void AnyComboBox::initialize_deferred_data() const {
 }
 
 void AnyComboBox::update_completion() {
+  auto& highlight = *m_input_box->get_highlight();
+  auto query = trim_leading_whitespaces(
+    any_cast<QString>(m_input_box->get_current()->get()));
+  if(highlight.get().m_start != highlight.get().m_end ||
+      highlight.get().m_end != query.size() || m_data->m_is_deleting) {
+    m_data->m_prefix = query;
+    m_data->m_completion.clear();
+    return;
+  }
   if(m_data->m_matches->get_size() != 0) {
-    auto& highlight = *m_input_box->get_highlight();
-    auto query = trim_leading_whitespaces(
-      any_cast<QString>(m_input_box->get_current()->get()));
     auto top_match = to_text(m_data->m_matches->get(0));
     if(!top_match.toLower().startsWith(query.toLower())) {
       m_data->m_prefix = query;
@@ -548,7 +555,13 @@ void AnyComboBox::on_focus(FocusObserver::State state) {
 bool AnyComboBox::on_input_key_press(QWidget& target, QKeyEvent& event) {
   if(is_read_only()) {
     return false;
-  } else if(event.key() == Qt::Key_Escape) {
+  }
+  if(event.key() == Qt::Key_Backspace || event.key() == Qt::Key_Delete) {
+    m_data->m_is_deleting = true;
+  } else if(!event.text().isEmpty()) {
+    m_data->m_is_deleting = false;
+  }
+  if(event.key() == Qt::Key_Escape) {
     if(m_data->m_drop_down_list->isVisible()) {
       m_data->m_drop_down_list->hide();
       revert_current();
