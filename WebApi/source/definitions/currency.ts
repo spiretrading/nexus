@@ -122,7 +122,7 @@ export class CurrencyDatabase {
   private _entries: CurrencyDatabase.Entry[];
 }
 
-export module CurrencyDatabase {
+export namespace CurrencyDatabase {
 
   /** Stores a single currency database entry. */
   export class Entry {

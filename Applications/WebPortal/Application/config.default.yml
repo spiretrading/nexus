@@ -7,4 +7,6 @@ service_locator:
   address: $service_locator_address
   username: web_portal_service
   password: $admin_password
+
+url: "http://127.0.0.1:8080"
 ...

@@ -89,7 +89,6 @@ macro(find_cpp_qobject output)
   endforeach()
 endmacro()
 
-add_subdirectory(Config/AccountViewer)
 add_subdirectory(Config/Async)
 add_subdirectory(Config/Blotter)
 add_subdirectory(Config/BookView)

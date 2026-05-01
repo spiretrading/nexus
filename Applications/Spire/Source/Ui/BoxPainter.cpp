@@ -347,6 +347,7 @@ void BoxPainter::paint(QPainter& painter) const {
     auto path = QPainterPath();
     painter.setPen(m_background_color);
     painter.setBrush(m_background_color);
+    painter.setRenderHint(QPainter::Antialiasing);
     draw_borders(painter, path, m_borders, size);
     draw_corner(painter, path, m_borders.m_left, m_borders.m_top,
       m_borders.m_top_left_radius, QPoint(0, 0), 0);
@@ -357,6 +358,7 @@ void BoxPainter::paint(QPainter& painter) const {
       QPoint(size.width(), size.height()), 180);
     draw_corner(painter, path, m_borders.m_bottom, m_borders.m_left,
       m_borders.m_bottom_left_radius, QPoint(0, size.height()), 270);
+    painter.setRenderHint(QPainter::Antialiasing, false);
     draw_border(painter, m_borders.m_left, m_borders.m_top_left_radius,
       m_borders.m_top, m_borders.m_bottom_left_radius, m_borders.m_bottom,
       QPoint(0, 0), 0);

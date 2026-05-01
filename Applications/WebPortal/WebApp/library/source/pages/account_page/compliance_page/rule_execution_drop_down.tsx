@@ -158,9 +158,9 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
     }
   }
 
-  private static readonly STYLE = {
+  private static readonly STYLE: Record<string, React.CSSProperties> = {
     selectionBoxSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       paddingLeft: '7px',
       color: '#333333',
       border: '1px solid #C8C8C8',
@@ -171,10 +171,10 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
-      MozAppearance: 'none' as 'none',
-      WebkitAppearance: 'none' as 'none',
-      appearance: 'none' as 'none',
-      cursor: 'pointer' as 'pointer',
+      MozAppearance: 'none',
+      WebkitAppearance: 'none',
+      appearance: 'none',
+      cursor: 'pointer',
       height: '34px',
       font: '400 14px Roboto',
       width: '100%',
@@ -182,7 +182,7 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
       maxWidth: '386px'
     },
     selectionBoxLarge: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       paddingLeft: '7px',
       color: '#333333',
       border: '1px solid #C8C8C8',
@@ -193,16 +193,16 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
-      MozAppearance: 'none' as 'none',
-      WebkitAppearance: 'none' as 'none',
-      appearance: 'none' as 'none',
-      cursor: 'pointer' as 'pointer',
+      MozAppearance: 'none',
+      WebkitAppearance: 'none',
+      appearance: 'none',
+      cursor: 'pointer',
       width: '200px',
       height: '34px',
       font: '400 14px Roboto'
     },
     selectionBoxReadonlySmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       paddingLeft: '7px',
       color: '#333333',
       border: '1px solid #C8C8C8',
@@ -213,10 +213,10 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
-      MozAppearance: 'none' as 'none',
-      WebkitAppearance: 'none' as 'none',
-      appearance: 'none' as 'none',
-      cursor: 'default' as 'default',
+      MozAppearance: 'none',
+      WebkitAppearance: 'none',
+      appearance: 'none',
+      cursor: 'default',
       height: '34px',
       font: '400 14px Roboto',
       width: '100%',
@@ -224,7 +224,7 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
       maxWidth: '386px'
     },
     selectionBoxReadonlyLarge: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       paddingLeft: '7px',
       color: '#333333',
       border: '1px solid #C8C8C8',
@@ -235,10 +235,10 @@ export class RuleExecutionDropDown extends React.Component<Properties> {
       backgroundRepeat: 'no-repeat',
       backgroundPosition: 'right 10px top 50%',
       backgroundSize: '8px 6px',
-      MozAppearance: 'none' as 'none',
-      WebkitAppearance: 'none' as 'none',
-      appearance: 'none' as 'none',
-      cursor: 'default' as 'default',
+      MozAppearance: 'none',
+      WebkitAppearance: 'none',
+      appearance: 'none',
+      cursor: 'default',
       width: '200px',
       height: '34px',
       font: '400 14px Roboto'

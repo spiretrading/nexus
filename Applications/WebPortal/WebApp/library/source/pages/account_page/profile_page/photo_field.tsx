@@ -558,13 +558,13 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
   };
   private static readonly DYNAMIC_STYLE = StyleSheet.create({
     buttonSmall: {
-      boxSizing: 'border-box' as 'border-box',
-      cursor: 'pointer' as 'pointer',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'wrap' as 'wrap',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center',
+      boxSizing: 'border-box',
+      cursor: 'pointer',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      alignItems: 'center',
       width: '246px',
       height: '34px',
       backgroundColor: '#684BC7',
@@ -581,13 +581,13 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
       }
     },
     buttonLarge: {
-      boxSizing: 'border-box' as 'border-box',
-      cursor: 'pointer' as 'pointer',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'wrap' as 'wrap',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center',
+      boxSizing: 'border-box',
+      cursor: 'pointer',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      alignItems: 'center',
       width: '153px',
       height: '34px',
       backgroundColor: '#684BC7',
@@ -606,7 +606,7 @@ export class ChangePictureModal extends React.Component<ModalProperties> {
     closeIcon: {
       width: '20px',
       height: '20px',
-      cursor: 'pointer' as 'pointer',
+      cursor: 'pointer',
       ':focus': {
         outline: 0
       },
@@ -704,7 +704,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
       },
       '::-webkit-slider-thumb': {
         '-webkit-appearance': 'none',
-        boxSizing: 'border-box' as 'border-box',
+        boxSizing: 'border-box',
         height: '20px',
         width: '20px',
         backgroundColor: '#FFFFFF',
@@ -714,7 +714,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
         marginTop: '-8px'
       },
       '::-moz-range-thumb': {
-        boxSizing: 'border-box' as 'border-box',
+        boxSizing: 'border-box',
         height: '20px',
         width: '20px',
         backgroundColor: '#FFFFFF',
@@ -722,7 +722,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
         borderRadius: '20px'
       },
       '::-ms-thumb': {
-        boxSizing: 'border-box' as 'border-box',
+        boxSizing: 'border-box',
         height: '20px',
         width: '20px',
         backgroundColor: '#FFFFFF',
@@ -732,7 +732,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
       },
       '::-webkit-slider-runnable-track': {
         '-webkit-appearance': 'none',
-        boxShadow: 'none' as 'none',
+        boxShadow: 'none',
         backgroundColor: '#E6E6E6',
         height: '4px'
       },
@@ -760,7 +760,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
       },
       '::-webkit-slider-thumb': {
         '-webkit-appearance': 'none',
-        boxSizing: 'border-box' as 'border-box',
+        boxSizing: 'border-box',
         height: '24px',
         width: '24px',
         backgroundColor: '#FFFFFF',
@@ -770,7 +770,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
         marginTop: '-8px'
       },
       '::-moz-range-thumb': {
-        boxSizing: 'border-box' as 'border-box',
+        boxSizing: 'border-box',
         height: '24px',
         width: '24px',
         backgroundColor: '#FFFFFF',
@@ -778,7 +778,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
         borderRadius: '24px'
       },
       '::-ms-thumb': {
-        boxSizing: 'border-box' as 'border-box',
+        boxSizing: 'border-box',
         height: '24px',
         width: '24px',
         backgroundColor: '#FFFFFF',
@@ -788,7 +788,7 @@ export class Slider extends React.Component<SliderProperties, {}> {
       },
       '::-webkit-slider-runnable-track': {
         '-webkit-appearance': 'none',
-        boxShadow: 'none' as 'none',
+        boxShadow: 'none',
         backgroundColor: '#E6E6E6',
         height: '4px'
       },
@@ -808,24 +808,24 @@ export class Slider extends React.Component<SliderProperties, {}> {
     },
     enabled:{
       '::-webkit-slider-thumb': {
-        cursor: 'pointer' as 'pointer'
+        cursor: 'pointer'
       },
       '::-moz-range-thumb': {
-        cursor: 'pointer' as 'pointer'
+        cursor: 'pointer'
       },
       '::-ms-thumb': {
-        cursor: 'pointer' as 'pointer'
+        cursor: 'pointer'
       }
     },
     disabled: {
       '::-webkit-slider-thumb': {
-        cursor: 'default' as 'default'
+        cursor: 'default'
       },
       '::-moz-range-thumb': {
-        cursor: 'default' as 'default'
+        cursor: 'default'
       },
       '::-ms-thumb': {
-        cursor: 'default' as 'default'
+        cursor: 'default'
       }
     }
   });

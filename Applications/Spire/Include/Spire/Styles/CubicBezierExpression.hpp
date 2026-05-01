@@ -148,7 +148,24 @@ namespace Spire::Styles {
         auto y = compute_bezier(m_y1, m_y2, u);
         auto s = m_start(frame).m_value;
         auto e = m_end(frame).m_value;
-        auto value = Type(s + (e - s) * y);
+        auto value = [&] {
+          if constexpr(std::is_same_v<Type, QColor>) {
+            auto transition = [&] (const auto& initial, const auto& end) {
+              return initial +
+                static_cast<decltype(end)>((end - initial) * y);
+            };
+            if(e.alpha() == 0) {
+              return QColor(s.red(), s.green(), s.blue(),
+                transition(s.alpha(), e.alpha()));
+            }
+            return QColor(transition(s.red(), e.red()),
+              transition(s.green(), e.green()),
+              transition(s.blue(), e.blue()),
+              transition(s.alpha(), e.alpha()));
+          } else {
+            return Type(s + (e - s) * y);
+          }
+        }();
         auto next_frame = [&] () -> boost::posix_time::time_duration {
           if(frame >= m_duration) {
             return boost::posix_time::pos_infin;

@@ -85,6 +85,12 @@ namespace Nexus {
       Message load_message(Message::Id id);
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
+      void store(const Notification& notification);
+      void mark_notification_as_read(const Notification::Id& id);
+      void mark_notification_as_unread(const Notification::Id& id);
+      std::vector<Notification> load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state);
       template<typename F>
       decltype(auto) with_transaction(F&& transaction);
       void close();
@@ -128,6 +134,8 @@ namespace Nexus {
       m_connection->execute(Viper::create_if_not_exists(
         get_account_modification_request_message_index_row(),
         "account_modification_request_messages"));
+      m_connection->execute(Viper::create_if_not_exists(
+        get_notification_row(), "notifications"));
     } catch(const std::exception&) {
       close();
       throw;
@@ -540,6 +548,80 @@ namespace Nexus {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }
     return ids;
+  }
+
+  template<typename C>
+  std::vector<Notification> SqlAdministrationDataStore<C>::load_notifications(
+      const Beam::DirectoryEntry& account, const Notification::Id& id,
+      Beam::SnapshotLimit limit, Notification::ReadState read_state) {
+    auto notifications = std::vector<Notification>();
+    try {
+      auto condition = Viper::sym("account") == account.m_id;
+      if(read_state == Notification::ReadState::UNREAD) {
+        condition = condition && Viper::sym("is_read") == false;
+      } else if(read_state == Notification::ReadState::READ) {
+        condition = condition && Viper::sym("is_read") == true;
+      }
+      if(!id.empty()) {
+        if(limit.get_type() == Beam::SnapshotLimit::Type::TAIL) {
+          condition = condition && Viper::sym("id") <= id;
+        } else {
+          condition = condition && Viper::sym("id") >= id;
+        }
+      }
+      auto order = [&] {
+        if(limit.get_type() == Beam::SnapshotLimit::Type::TAIL) {
+          return Viper::Order::DESC;
+        }
+        return Viper::Order::ASC;
+      }();
+      m_connection->execute(Viper::select(get_notification_row(),
+        "notifications", std::move(condition),
+        Viper::order_by("timestamp", order), Viper::limit(limit.get_size()),
+        std::back_inserter(notifications)));
+      for(auto& notification : notifications) {
+        notification.m_account =
+          m_directory_entries.load(notification.m_account.m_id);
+      }
+      if(limit.get_type() == Beam::SnapshotLimit::Type::TAIL) {
+        std::ranges::reverse(notifications);
+      }
+    } catch(const std::exception& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
+    return notifications;
+  }
+
+  template<typename C>
+  void SqlAdministrationDataStore<C>::mark_notification_as_read(
+      const Notification::Id& id) {
+    try {
+      m_connection->execute(Viper::update("notifications",
+        Viper::SetClause("is_read", true), Viper::sym("id") == id));
+    } catch(const Viper::ExecuteException& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
+  }
+
+  template<typename C>
+  void SqlAdministrationDataStore<C>::mark_notification_as_unread(
+      const Notification::Id& id) {
+    try {
+      m_connection->execute(Viper::update("notifications",
+        Viper::SetClause("is_read", false), Viper::sym("id") == id));
+    } catch(const Viper::ExecuteException& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
+  }
+
+  template<typename C>
+  void SqlAdministrationDataStore<C>::store(const Notification& notification) {
+    try {
+      m_connection->execute(Viper::insert(
+        get_notification_row(), "notifications", &notification));
+    } catch(const Viper::ExecuteException& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
   }
 
   template<typename C>

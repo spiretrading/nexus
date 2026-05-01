@@ -58,7 +58,7 @@ export class CreateAccountController extends
       });
       await this.props.createAccountModel.createAccount(
         username, groups, identity, roles);
-    } catch(e) {
+    } catch(e: any) {
       this.setState({
         errorStatus: e.toString()
       });

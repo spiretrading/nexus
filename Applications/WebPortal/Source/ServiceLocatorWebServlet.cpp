@@ -2,6 +2,7 @@
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
+#include <Beam/WebServices/Uri.hpp>
 #include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/trim.hpp>
@@ -13,9 +14,11 @@ using namespace Nexus;
 
 ServiceLocatorWebServlet::ServiceLocatorWebServlet(
   Ref<WebSessionStore<WebPortalSession>> sessions,
-  ClientsBuilder clients_builder)
+  ClientsBuilder clients_builder,
+  SessionClientsBuilder session_clients_builder)
   : m_sessions(sessions.get()),
-    m_clients_builder(std::move(clients_builder)) {}
+    m_clients_builder(std::move(clients_builder)),
+    m_session_clients_builder(std::move(session_clients_builder)) {}
 
 ServiceLocatorWebServlet::~ServiceLocatorWebServlet() {
   close();
@@ -49,6 +52,10 @@ std::vector<HttpRequestSlot> ServiceLocatorWebServlet::get_slots() {
   slots.emplace_back(
     matches_path(HttpMethod::POST, "/api/service_locator/create_group"),
     std::bind_front(&ServiceLocatorWebServlet::on_create_group, this));
+  slots.emplace_back(
+    matches_path(HttpMethod::GET, "/api/service_locator/login_from_session"),
+    std::bind_front(
+      &ServiceLocatorWebServlet::on_login_from_session, this));
   return slots;
 }
 
@@ -347,5 +354,52 @@ HttpResponse ServiceLocatorWebServlet::on_create_group(
   auto traders_group =
     clients.get_service_locator_client().make_directory("traders", new_group);
   session->shuttle_response(new_group, out(response));
+  return response;
+}
+
+HttpResponse ServiceLocatorWebServlet::on_login_from_session(
+    const HttpRequest& request) {
+  auto response = HttpResponse();
+  auto parameters = parse_query(request.get_uri());
+  auto session_iterator = parameters.find("session");
+  if(session_iterator == parameters.end()) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
+  auto& session_id = session_iterator->second;
+  auto key = [&] {
+    auto key_iterator = parameters.find("key");
+    if(key_iterator == parameters.end()) {
+      return 0U;
+    }
+    try {
+      return static_cast<unsigned int>(std::stoul(key_iterator->second));
+    } catch(const std::exception&) {
+      return 0U;
+    }
+  }();
+  auto redirect = [&] {
+    auto redirect_iterator = parameters.find("redirect");
+    if(redirect_iterator != parameters.end()) {
+      return redirect_iterator->second;
+    }
+    return std::string("/");
+  }();
+  auto session = m_sessions->get(request, out(response));
+  if(session->is_logged_in()) {
+    response.set_status_code(HttpStatusCode::FOUND);
+    response.set_header({"Location", redirect});
+    return response;
+  }
+  try {
+    auto clients = m_session_clients_builder(session_id, key);
+    auto account = clients.get_service_locator_client().get_account();
+    session->set_clients(std::move(clients));
+    session->set_account(account);
+    response.set_status_code(HttpStatusCode::FOUND);
+    response.set_header({"Location", redirect});
+  } catch(const std::exception&) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+  }
   return response;
 }

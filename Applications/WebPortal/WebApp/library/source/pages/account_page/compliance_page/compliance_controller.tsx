@@ -61,7 +61,7 @@ export class ComplianceController extends React.Component<Properties, State> {
           model
         };
       });
-    } catch(error) {
+    } catch(error: any) {
       this.setState(state => {
         return {
           loadingState: state.loadingState.fail(error.toString())
@@ -106,7 +106,7 @@ export class ComplianceController extends React.Component<Properties, State> {
           status: 'Saved.',
           model
         });
-    } catch(error) {
+    } catch(error: any) {
       this.setState(
         {
           hasError: true,

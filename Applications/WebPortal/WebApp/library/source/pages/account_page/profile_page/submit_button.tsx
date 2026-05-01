@@ -36,7 +36,7 @@ export class SubmitButton extends React.Component<Properties> {
   }
   private static DYNAMIC_STYLE = StyleSheet.create({
     buttonSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '100%',
       height: '34px',
       backgroundColor: '#684BC7',
@@ -45,7 +45,7 @@ export class SubmitButton extends React.Component<Properties> {
       border: 'none',
       outline: 0,
       borderRadius: 1,
-      cursor: 'pointer' as 'pointer',
+      cursor: 'pointer',
       ':active': {
         backgroundColor: '#4B23A0'
       },
@@ -58,13 +58,13 @@ export class SubmitButton extends React.Component<Properties> {
       ':disabled': {
         backgroundColor: '#F8F8F8',
         color: '#8C8C8C',
-        cursor: 'default' as 'default'
+        cursor: 'default'
       }
     },
     buttonLarge: {
       margin: 0,
       padding: 0,
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '200px',
       height: '34px',
       backgroundColor: '#684BC7',
@@ -73,7 +73,7 @@ export class SubmitButton extends React.Component<Properties> {
       border: 'none',
       outline: 0,
       borderRadius: 1,
-      cursor: 'pointer' as 'pointer',
+      cursor: 'pointer',
       ':active': {
         backgroundColor: '#4B23A0'
       },
@@ -86,7 +86,7 @@ export class SubmitButton extends React.Component<Properties> {
       ':disabled': {
         backgroundColor: '#F8F8F8',
         color: '#8C8C8C',
-        cursor: 'default' as 'default'
+        cursor: 'default'
       }
     }
   });
