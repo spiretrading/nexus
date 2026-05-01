@@ -1,5 +1,6 @@
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 
+using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
 
@@ -10,6 +11,14 @@ KeyBindingsModel::KeyBindingsModel()
   m_interactions.insert(std::pair(
     Scope::make_global(QObject::tr("Global").toStdString()),
     std::make_shared<InteractionsKeyBindingsModel>()));
+  for(auto i = 0; i < CancelKeyBindingsModel::OPERATION_COUNT; ++i) {
+    auto operation = static_cast<CancelKeyBindingsModel::Operation>(i);
+    m_connections.add(
+      m_cancel_key_bindings->get_binding(operation)->connect_update_signal(
+        std::bind_front(&KeyBindingsModel::on_cancel_binding_update, this)));
+  }
+  m_connections.add(m_order_task_arguments->connect_operation_signal(
+    std::bind_front(&KeyBindingsModel::on_order_task_operation, this)));
 }
 
 const std::shared_ptr<OrderTaskArgumentsListModel>&
@@ -67,4 +76,33 @@ std::vector<Scope>
     }
   }
   return scopes;
+}
+
+void KeyBindingsModel::on_cancel_binding_update(const QKeySequence& sequence) {
+  if(sequence.isEmpty()) {
+    return;
+  }
+  for(auto i = 0; i < m_order_task_arguments->get_size(); ++i) {
+    auto& arguments = m_order_task_arguments->get(i);
+    if(arguments.m_key == sequence) {
+      auto updated = arguments;
+      updated.m_key = QKeySequence();
+      m_order_task_arguments->set(i, updated);
+    }
+  }
+}
+
+void KeyBindingsModel::on_order_task_operation(
+    const OrderTaskArgumentsListModel::Operation& operation) {
+  visit(operation,
+    [&] (const OrderTaskArgumentsListModel::UpdateOperation& update) {
+      auto& arguments = m_order_task_arguments->get(update.m_index);
+      if(!arguments.m_key.isEmpty()) {
+        if(auto conflict =
+            m_cancel_key_bindings->find_operation(arguments.m_key)) {
+          m_cancel_key_bindings->get_binding(*conflict)->set(QKeySequence());
+        }
+      }
+    },
+    [] (const auto&) {});
 }
