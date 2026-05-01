@@ -188,24 +188,24 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
     }
   }
 
-  private static STYLE = {
+  private static STYLE: Record<string, React.CSSProperties> = {
     box : {
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
-      justifyContent: 'flex-start' as 'flex-start',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'column',
+      justifyContent: 'flex-start',
+      alignItems: 'center',
       width: '100%'
     },
     imageWrapper: {
       paddingLeft:'10px',
       paddingRight: '5px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      justifyContent: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      justifyContent: 'center',
       height: '34px',
-      alignItems: 'center' as 'center',
-      cursor: 'pointer' as 'pointer'
+      alignItems: 'center',
+      cursor: 'pointer'
     },
     image: {
       width: '12px',
@@ -228,20 +228,20 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       height: '4px'
     },
     suggestionWrapper: {
-      position: 'relative' as 'relative',
+      position: 'relative',
       height: '1px',
       width: '100%',
       tabIndex: -1
     },
     hidden :{
       height: '1px',
-      visibility: 'hidden' as 'hidden'
+      visibility: 'hidden'
     }
   };
 
   private static DYNAMIC_STYLE = StyleSheet.create({
     inputSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       paddingLeft: '10px',
       height: '34px',
       flexGrow: 0,
@@ -265,7 +265,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       }
     },
     inputMedium: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       paddingLeft: '10px',
       height: '34px',
       flexGrow: 0,
@@ -289,7 +289,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       }
     },
     inputLarge: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       paddingLeft: '10px',
       height: '34px',
       width: '350px',
@@ -313,7 +313,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       }
     },
     groupEntry : {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       paddingLeft: '10px',
       display: 'flex',
       flexDirection: 'row',
@@ -453,14 +453,14 @@ class SuggestionBox extends React.Component<SuggestionBoxProps> {
 
   private static DYNAMIC_STYLE = StyleSheet.create({
     box: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       zIndex: 1,
       maxHeight: '136px',
-      overflow: 'auto' as 'auto',
+      overflow: 'auto',
       backgroundColor: '#FFFFFF',
       boxShadow: '0px 2px 6px #C8C8C8',
       width: '100%',
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       padding: '0px',
       margin: '0px',
       tabFocus: -1,

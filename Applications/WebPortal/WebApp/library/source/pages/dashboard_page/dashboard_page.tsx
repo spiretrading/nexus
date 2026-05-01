@@ -171,13 +171,13 @@ export class DashboardPage extends React.Component<Properties, State> {
       width: '100%',
       height: '1px',
       backgroundColor: '#E6E6E6',
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       top: 60,
       left: 0,
       zIndex: -1
     },
     overlay: {
-      position: 'fixed' as 'fixed',
+      position: 'fixed',
       top: 0,
       left: 0,
       width: '100%',
@@ -187,7 +187,7 @@ export class DashboardPage extends React.Component<Properties, State> {
     dropShaddow: {
       width: '1px',
       height: '100%',
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       top: 0,
       zIndex: -1,
       left: '198px',
@@ -199,21 +199,21 @@ export class DashboardPage extends React.Component<Properties, State> {
       minWidth: '320px'
     },
     sideBarWrapper: {
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       left: 0,
       top: 60,
       backgroundColor: '#684BC7',
       zIndex: 1
     },
     notificationButtonWrapper: {
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       top: '15px',
       right: '18px'
     },
   });
   private static readonly HEADER_STYLE = StyleSheet.create({
     base: {
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       top: 0,
       left: 0,
       backgroundColor: '#FFFFFF'
@@ -236,7 +236,7 @@ export class DashboardPage extends React.Component<Properties, State> {
       opacity: 1
     },
     exited: {
-      visibility: 'hidden' as 'hidden'
+      visibility: 'hidden'
     }
   });
 }

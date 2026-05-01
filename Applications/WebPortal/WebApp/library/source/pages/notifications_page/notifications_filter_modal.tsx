@@ -136,7 +136,7 @@ const STYLES = StyleSheet.create({
     width: '282px',
     flex: '1 1 auto',
     overflowY: 'auto',
-    position: 'relative' as 'relative'
+    position: 'relative'
   },
   filters: {
     padding: '30px 18px 100px'
@@ -191,7 +191,7 @@ const STYLES = StyleSheet.create({
     color: '#E63F44'
   },
   actions: {
-    position: 'absolute' as 'absolute',
+    position: 'absolute',
     inset: 'auto 0 0',
     backgroundColor: '#FFFFFF',
     padding: '18px 18px 30px',

@@ -120,11 +120,11 @@ const STYLES = StyleSheet.create({
   },
   div: {
     display: 'flex',
-    alignItems: 'flex-start' as 'flex-start'
+    alignItems: 'flex-start'
   },
   divWide: {
     display: 'flex',
-    alignItems: 'flex-start' as 'flex-start'
+    alignItems: 'flex-start'
   },
   action: {
     fontSize: '0.875rem',

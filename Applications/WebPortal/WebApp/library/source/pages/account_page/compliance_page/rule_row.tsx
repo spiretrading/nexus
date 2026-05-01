@@ -156,58 +156,58 @@ export class RuleRow extends React.Component<Properties, State> {
     this.props.onChange(rule);
   }
 
-  private static readonly STYLE = {
+  private static readonly STYLE: Record<string, React.CSSProperties> = {
     wrapper : {
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
+      display: 'flex',
+      flexDirection: 'column',
       width: '100%'
     },
     closedText: {
       font: '400 14px Roboto',
       color: '#333333',
-      cursor: 'default' as 'default'
+      cursor: 'default'
     },
     openText: {
       font: '500 14px Roboto',
       color: '#4B23A0',
-      cursor: 'default' as 'default'
+      cursor: 'default'
     },
     headerSmall: {
       minWidth: '284px',
       maxWidth: '424px',
       width: '100%',
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column',
+      display: 'flex',
+      flexDirection: 'column',
       height: '84px',
       font: '400 14px Roboto'
     },
     headerMedium: {
       width: '732px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
+      display: 'flex',
+      flexDirection: 'row',
       height: '54px',
-      alignItems: 'center' as 'center',
-      justifyContent: 'space-between' as 'space-between',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       font: '400 14px Roboto',
     },
     headerLarge: {
       width: '1000px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
+      display: 'flex',
+      flexDirection: 'row',
       height: '54px',
-      alignItems: 'center' as 'center',
-      justifyContent: 'space-between' as 'space-between',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       font: '400 14px Roboto',
     },
     prefix: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center'
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center'
     },
     paddingLeft: {
       paddingLeft: '38px',
       height: '34px',
-      boxSizing: 'border-box' as 'border-box'
+      boxSizing: 'border-box'
     },
     prefixPadding: {
       height: '20px',
@@ -221,23 +221,23 @@ export class RuleRow extends React.Component<Properties, State> {
   private applicabilityStyleDefinition = {
     entering: {
       maxHeight: '0',
-      overflow: 'hidden' as 'hidden',
+      overflow: 'hidden',
       transitionProperty: 'max-height',
       transitionDuration: `${RuleRow.TRANSITION_LENGTH_MS}ms`
     },
     entered: {
       maxHeight: '0',
-      overflow: 'hidden' as 'hidden'
+      overflow: 'hidden'
     },
     exiting: {
       maxHeight: '0',
-      overflow: 'hidden' as 'hidden',
+      overflow: 'hidden',
       transitionProperty: 'max-height',
       transitionDuration: `${RuleRow.TRANSITION_LENGTH_MS}ms`
     },
     exited: {
       maxHeight: '0',
-      overflow: 'hidden' as 'hidden'
+      overflow: 'hidden'
     }
   };
   private ruleParameters: HTMLDivElement;

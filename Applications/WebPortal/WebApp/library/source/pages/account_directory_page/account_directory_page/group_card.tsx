@@ -176,62 +176,62 @@ export class GroupCard extends React.Component<Properties, State> {
     this.setState({isHeaderHovered: false});
   }
 
-  private static readonly STYLE = {
+  private static readonly STYLE: Record<string, React.CSSProperties> = {
     headerTextOpen: {
       marginLeft: '18px',
       font: '500 14px Roboto',
       color: '#4B23A0',
-      cursor: 'pointer' as 'pointer',
+      cursor: 'pointer',
       flexGrow: 1,
       height: '34px',
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      justifyContent: 'flex-start' as 'flex-start'
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
+      justifyContent: 'flex-start'
     },
     headerText: {
       marginLeft: '18px',
       font: '400 14px Roboto',
       color: '#000000',
-      cursor: 'pointer' as 'pointer',
+      cursor: 'pointer',
       flexGrow: 1,
       height: '34px',
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      justifyContent: 'flex-start' as 'flex-start'
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
+      justifyContent: 'flex-start'
     },
     entryListWrapper: {
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'column' as 'column'
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'column'
     },
     dropDownButtonWrapper: {
       width: '20px',
       height: '20px',
       flexGrow: 0,
       flexShrink: 0,
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      justifyContent: 'center' as 'center'
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
+      justifyContent: 'center'
     },
     mouseOverStyle: {
       backgroundColor: '#F8F8F8'
     },
     header: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '40px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
       paddingLeft: '10px',
       paddingRight: '10px'
     },
@@ -240,7 +240,7 @@ export class GroupCard extends React.Component<Properties, State> {
       color: 'inherit'
     }
   };
-  private static readonly animationStyle = {
+  private static readonly animationStyle: Record<string, React.CSSProperties> = {
     entering: {
       maxHeight: 0,
       transform: 'scaleY(1)'
@@ -250,22 +250,22 @@ export class GroupCard extends React.Component<Properties, State> {
       transform: 'scaleY(1)',
       transitionProperty: 'max-height, transform',
       transitionDuration: `200ms`,
-      overflow: 'hidden' as 'hidden',
-      transformOrigin: 'top' as 'top'
+      overflow: 'hidden',
+      transformOrigin: 'top'
     },
     exiting: {
       maxHeight: 0,
       transform: 'scaleY(0)',
       transitionProperty: 'max-height, transform',
       transitionDuration: `200ms`,
-      overflow: 'hidden' as 'hidden',
-      transformOrigin: 'top' as 'top'
+      overflow: 'hidden',
+      transformOrigin: 'top'
     },
     exited: {
       maxHeight: 0,
       transform: 'scaleY(0)',
-      overflow: 'hidden' as 'hidden',
-      transformOrigin: 'top' as 'top'
+      overflow: 'hidden',
+      transformOrigin: 'top'
     }
   };
   private static readonly TIMEOUTS = {

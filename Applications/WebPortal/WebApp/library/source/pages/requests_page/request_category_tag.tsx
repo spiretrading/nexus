@@ -51,6 +51,6 @@ const STYLES = StyleSheet.create({
     borderRadius: '4px',
     fontSize: '0.75rem',
     fontFamily: 'Roboto',
-    whiteSpace: 'nowrap' as 'nowrap'
+    whiteSpace: 'nowrap'
   }
 });
