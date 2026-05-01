@@ -13,9 +13,12 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 WebPortalServlet::WebPortalServlet(
-  ServiceLocatorWebServlet::ClientsBuilder clients_builder, Clients clients)
+  ServiceLocatorWebServlet::ClientsBuilder clients_builder,
+  ServiceLocatorWebServlet::SessionClientsBuilder session_clients_builder,
+  Clients clients)
   : m_file_store("web_app"),
-    m_service_locator_servlet(Ref(m_sessions), std::move(clients_builder)),
+    m_service_locator_servlet(Ref(m_sessions), std::move(clients_builder),
+      std::move(session_clients_builder)),
     m_definitions_servlet(Ref(m_sessions)),
     m_administration_servlet(Ref(m_sessions)),
     m_market_data_servlet(Ref(m_sessions)),
@@ -29,14 +32,6 @@ WebPortalServlet::~WebPortalServlet() {
 
 std::vector<HttpRequestSlot> WebPortalServlet::get_slots() {
   auto slots = std::vector<HttpRequestSlot>();
-  slots.emplace_back(matches_path(HttpMethod::GET, "/"),
-    std::bind_front(&WebPortalServlet::on_index, this));
-  slots.emplace_back(matches_path(HttpMethod::GET, ""),
-    std::bind_front(&WebPortalServlet::on_index, this));
-  slots.emplace_back(matches_path(HttpMethod::GET, "/index.html"),
-    std::bind_front(&WebPortalServlet::on_index, this));
-  slots.emplace_back(match_any(HttpMethod::GET),
-    std::bind_front(&WebPortalServlet::on_serve_file, this));
   auto service_locator_slots = m_service_locator_servlet.get_slots();
   slots.insert(
     slots.end(), service_locator_slots.begin(), service_locator_slots.end());
@@ -53,6 +48,14 @@ std::vector<HttpRequestSlot> WebPortalServlet::get_slots() {
   slots.insert(slots.end(), reporting_slots.begin(), reporting_slots.end());
   auto risk_slots = m_risk_servlet.get_slots();
   slots.insert(slots.end(), risk_slots.begin(), risk_slots.end());
+  slots.emplace_back(matches_path(HttpMethod::GET, "/"),
+    std::bind_front(&WebPortalServlet::on_index, this));
+  slots.emplace_back(matches_path(HttpMethod::GET, ""),
+    std::bind_front(&WebPortalServlet::on_index, this));
+  slots.emplace_back(matches_path(HttpMethod::GET, "/index.html"),
+    std::bind_front(&WebPortalServlet::on_index, this));
+  slots.emplace_back(match_any(HttpMethod::GET),
+    std::bind_front(&WebPortalServlet::on_serve_file, this));
   return slots;
 }
 

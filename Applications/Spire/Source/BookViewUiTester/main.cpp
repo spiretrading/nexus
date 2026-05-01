@@ -360,7 +360,7 @@ struct BookViewTester : QWidget {
       : QWidget(parent),
         m_clients(std::in_place_type<TestClients>, Ref(m_environment)),
         m_user_profile("", false, false, {}, {},
-          get_default_additional_tag_database(), {}, {}, m_clients),
+          get_default_additional_tag_database(), {}, {}, {}, m_clients),
         m_model(std::move(model)),
         m_technicals_model(Ticker()),
         m_key_bindings_window(&key_bindings_window),

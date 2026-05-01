@@ -4,7 +4,6 @@
 #include <QMessageBox>
 #include <QStandardPaths>
 #include <QStatusBar>
-#include "Spire/AccountViewer/TraderProfileWindow.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
@@ -192,10 +191,8 @@ void PortfolioViewerWindow::OnContextMenu(const QPoint& position) {
     profileAction->SetFunction(
       [&] {
         for(auto& account : selectedAccounts) {
-          auto profileWindow = new TraderProfileWindow(Ref(*m_userProfile));
-          profileWindow->setAttribute(Qt::WA_DeleteOnClose);
-          profileWindow->Load(account);
-          profileWindow->show();
+          open_web_portal(*m_userProfile,
+            "/account/" + std::to_string(account.m_id) + "/profile");
         }
       });
     QString profileText;

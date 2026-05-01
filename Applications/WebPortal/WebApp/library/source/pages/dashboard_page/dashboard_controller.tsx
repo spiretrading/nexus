@@ -151,6 +151,7 @@ export class DashboardController extends React.Component<Properties, State> {
     const group = Beam.DirectoryEntry.makeDirectory(parseInt(match[1]), '');
     const model = this.props.model.makeGroupModel(group);
     return <GroupController {...props} roles={this.props.model.roles}
+      currencyDatabase={this.props.model.currencyDatabase}
       model={model} displaySize={this.props.displaySize}/>;
   }
   

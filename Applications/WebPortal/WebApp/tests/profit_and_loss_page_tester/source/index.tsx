@@ -5,14 +5,10 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
-const CAD = new Nexus.Currency(124);
-const USD = new Nexus.Currency(840);
-const AUD = new Nexus.Currency(36);
-
-const currencyDatabase = new Nexus.CurrencyDatabase();
-currencyDatabase.add(new Nexus.CurrencyDatabase.Entry(CAD, 'CAD', '$'));
-currencyDatabase.add(new Nexus.CurrencyDatabase.Entry(USD, 'USD', '$'));
-currencyDatabase.add(new Nexus.CurrencyDatabase.Entry(AUD, 'AUD', '$'));
+const currencyDatabase = Nexus.buildDefaultCurrencyDatabase();
+const CAD = Nexus.DefaultCurrencies.CAD;
+const USD = Nexus.DefaultCurrencies.USD;
+const AUD = Nexus.DefaultCurrencies.AUD;
 
 const TSX = Nexus.DefaultVenues.TSX;
 const NASDAQ = Nexus.DefaultVenues.NASDAQ;
@@ -29,19 +25,24 @@ const REPORT: WebPortal.ProfitAndLossModel.Report = {
       totalVolume: Nexus.Quantity.parse('31800'),
       totalFees: Nexus.Money.parse('318.00'),
       tickers: [
-        {ticker: new Nexus.Ticker('RY', TSX), volume: Nexus.Quantity.parse('12450'),
+        {ticker: new Nexus.Ticker('RY', TSX),
+          volume: Nexus.Quantity.parse('12450'),
           fees: Nexus.Money.parse('124.50'),
           profitAndLoss: Nexus.Money.parse('3287.15')},
-        {ticker: new Nexus.Ticker('TD', TSX), volume: Nexus.Quantity.parse('8300'),
+        {ticker: new Nexus.Ticker('TD', TSX),
+          volume: Nexus.Quantity.parse('8300'),
           fees: Nexus.Money.parse('83.00'),
           profitAndLoss: Nexus.Money.parse('-1542.80')},
-        {ticker: new Nexus.Ticker('BNS', TSX), volume: Nexus.Quantity.parse('5200'),
+        {ticker: new Nexus.Ticker('BNS', TSX),
+          volume: Nexus.Quantity.parse('5200'),
           fees: Nexus.Money.parse('52.00'),
           profitAndLoss: Nexus.Money.parse('891.33')},
-        {ticker: new Nexus.Ticker('ENB', TSX), volume: Nexus.Quantity.parse('3100'),
+        {ticker: new Nexus.Ticker('ENB', TSX),
+          volume: Nexus.Quantity.parse('3100'),
           fees: Nexus.Money.parse('31.00'),
           profitAndLoss: Nexus.Money.parse('445.67')},
-        {ticker: new Nexus.Ticker('CNR', TSX), volume: Nexus.Quantity.parse('2750'),
+        {ticker: new Nexus.Ticker('CNR', TSX),
+          volume: Nexus.Quantity.parse('2750'),
           fees: Nexus.Money.parse('27.50'),
           profitAndLoss: Nexus.Money.parse('-312.40')}
       ]
@@ -52,13 +53,16 @@ const REPORT: WebPortal.ProfitAndLossModel.Report = {
       totalVolume: Nexus.Quantity.parse('12500'),
       totalFees: Nexus.Money.parse('125.00'),
       tickers: [
-        {ticker: new Nexus.Ticker('AAPL', NASDAQ), volume: Nexus.Quantity.parse('6800'),
+        {ticker: new Nexus.Ticker('AAPL', NASDAQ),
+          volume: Nexus.Quantity.parse('6800'),
           fees: Nexus.Money.parse('68.00'),
           profitAndLoss: Nexus.Money.parse('2145.90')},
-        {ticker: new Nexus.Ticker('MSFT', NASDAQ), volume: Nexus.Quantity.parse('4500'),
+        {ticker: new Nexus.Ticker('MSFT', NASDAQ),
+          volume: Nexus.Quantity.parse('4500'),
           fees: Nexus.Money.parse('45.00'),
           profitAndLoss: Nexus.Money.parse('1823.44')},
-        {ticker: new Nexus.Ticker('GOOGL', NASDAQ), volume: Nexus.Quantity.parse('1200'),
+        {ticker: new Nexus.Ticker('GOOGL', NASDAQ),
+          volume: Nexus.Quantity.parse('1200'),
           fees: Nexus.Money.parse('12.00'),
           profitAndLoss: Nexus.Money.parse('-567.20')}
       ]
@@ -69,10 +73,12 @@ const REPORT: WebPortal.ProfitAndLossModel.Report = {
       totalVolume: Nexus.Quantity.parse('5500'),
       totalFees: Nexus.Money.parse('55.00'),
       tickers: [
-        {ticker: new Nexus.Ticker('BHP', ASX), volume: Nexus.Quantity.parse('3400'),
+        {ticker: new Nexus.Ticker('BHP', ASX),
+          volume: Nexus.Quantity.parse('3400'),
           fees: Nexus.Money.parse('34.00'),
           profitAndLoss: Nexus.Money.parse('912.55')},
-        {ticker: new Nexus.Ticker('CBA', ASX), volume: Nexus.Quantity.parse('2100'),
+        {ticker: new Nexus.Ticker('CBA', ASX),
+          volume: Nexus.Quantity.parse('2100'),
           fees: Nexus.Money.parse('21.00'),
           profitAndLoss: Nexus.Money.parse('478.30')}
       ]
@@ -93,30 +99,33 @@ enum TestBehavior {
 }
 
 class TestModel extends WebPortal.ProfitAndLossModel {
-  public behavior = TestBehavior.SUCCEED;
-
   constructor(report: WebPortal.ProfitAndLossModel.Report, delay: number) {
     super();
-    this._report = report;
-    this._delay = delay;
-    this._nextId = 1;
-    this._pending = new Map();
+    this.report = report;
+    this.delay = delay;
+    this.nextId = 1;
+    this.pending = new Map();
+    this.behavior = TestBehavior.SUCCEED;
+  }
+
+  public setBehavior(behavior: TestBehavior): void {
+    this.behavior = behavior;
   }
 
   public async load(): Promise<void> {
     return;
   }
 
-  public async startReport(
-      start: Beam.Date, end: Beam.Date): Promise<number> {
-    const id = this._nextId++;
-    this._pending.set(id, {reject: null});
+  public async startReport(_start: Beam.Date, _end: Beam.Date):
+      Promise<number> {
+    const id = this.nextId++;
+    this.pending.set(id, {reject: null});
     return id;
   }
 
-  public async awaitReport(
-      id: number): Promise<WebPortal.ProfitAndLossModel.Report> {
-    const entry = this._pending.get(id);
+  public async awaitReport(id: number):
+      Promise<WebPortal.ProfitAndLossModel.Report> {
+    const entry = this.pending.get(id);
     if(!entry) {
       throw new Error(`Unknown report id: ${id}`);
     }
@@ -134,34 +143,32 @@ class TestModel extends WebPortal.ProfitAndLossModel {
         } else {
           resolve();
         }
-      }, this._delay);
+      }, this.delay);
       entry.reject = () => {
         clearTimeout(timer);
         reject(new Error('Report cancelled.'));
       };
     });
-    this._pending.delete(id);
-    return this._report;
+    this.pending.delete(id);
+    return this.report;
   }
 
   public async cancelReport(id: number): Promise<void> {
-    const entry = this._pending.get(id);
+    const entry = this.pending.get(id);
     if(entry) {
       entry.reject?.();
-      this._pending.delete(id);
+      this.pending.delete(id);
     }
   }
 
-  private _report: WebPortal.ProfitAndLossModel.Report;
-  private _delay: number;
-  private _nextId: number;
-  private _pending: Map<number, {reject: () => void}>;
+  private report: WebPortal.ProfitAndLossModel.Report;
+  private delay: number;
+  private nextId: number;
+  private pending: Map<number, {reject: () => void}>;
+  private behavior: TestBehavior;
 }
 
 const model = new TestModel(REPORT, 2000);
-
-const Status = WebPortal.ProfitAndLossPage.Status;
-type Status = WebPortal.ProfitAndLossPage.Status;
 
 interface State {
   behavior: TestBehavior;
@@ -173,7 +180,6 @@ class TestApp extends React.Component<{}, State> {
     this.state = {
       behavior: TestBehavior.SUCCEED
     };
-    this._controllerRef = React.createRef();
   }
 
   public render(): JSX.Element {
@@ -184,15 +190,8 @@ class TestApp extends React.Component<{}, State> {
           {this.renderBehaviorButton('Succeed', TestBehavior.SUCCEED)}
           {this.renderBehaviorButton('Fail', TestBehavior.FAIL)}
           {this.renderBehaviorButton('Hang', TestBehavior.HANG)}
-          <span style={STYLE.toolbarSeparator}>|</span>
-          <span style={STYLE.toolbarLabel}>Force:</span>
-          {this.renderForceButton('NONE', Status.NONE)}
-          {this.renderForceButton('READY', Status.READY)}
-          {this.renderForceButton('STALE', Status.STALE)}
-          {this.renderForceButton('ERROR', Status.ERROR)}
         </div>
         <WebPortal.ProfitAndLossController
-          ref={this._controllerRef}
           currency={CAD}
           currencyDatabase={currencyDatabase}
           model={model}/>
@@ -206,28 +205,12 @@ class TestApp extends React.Component<{}, State> {
       <button key={label}
         style={{...STYLE.button, ...(isActive && STYLE.buttonActive)}}
         onClick={() => {
-          model.behavior = behavior;
+          model.setBehavior(behavior);
           this.setState({behavior});
         }}>
         {label}
       </button>);
   }
-
-  private renderForceButton(label: string, status: Status): JSX.Element {
-    return (
-      <button key={label} style={STYLE.button}
-        onClick={() => {
-          this._controllerRef.current?.setState({
-            status,
-            report: status === Status.NONE ? null : REPORT
-          } as any);
-        }}>
-        {label}
-      </button>);
-  }
-
-  private _controllerRef:
-    React.RefObject<WebPortal.ProfitAndLossController>;
 }
 
 const STYLE: Record<string, React.CSSProperties> = {

@@ -50,9 +50,9 @@ if(UNIX)
     optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
 target_link_libraries(TimeAndSalesUiTester Async Dashboard Charting
-  PortfolioViewer Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog
-  BookView Styles Library Resources TimeAndSales OrderImbalanceIndicator
-  InputWidgets CanvasView Canvas LegacyResources LegacyUI Toolbar
+  PortfolioViewer Utilities RiskTimer KeyBindings Blotter Catalog BookView
+  Styles Library Resources TimeAndSales OrderImbalanceIndicator InputWidgets
+  CanvasView Canvas LegacyResources LegacyUI Toolbar
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${LUA_LIBRARY_DEBUG_PATH}
@@ -163,9 +163,9 @@ if(UNIX)
     optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
 target_link_libraries(TimeAndSalesTester Async Dashboard Charting
-  PortfolioViewer Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog
-  BookView Library Resources Styles TimeAndSales OrderImbalanceIndicator
-  InputWidgets CanvasView Canvas LegacyResources LegacyUI Toolbar
+  PortfolioViewer Utilities RiskTimer KeyBindings Blotter Catalog BookView
+  Library Resources Styles TimeAndSales OrderImbalanceIndicator InputWidgets
+  CanvasView Canvas LegacyResources LegacyUI Toolbar
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${LUA_LIBRARY_DEBUG_PATH}
