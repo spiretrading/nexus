@@ -1,5 +1,6 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
+import * as ReactDOM from 'react-dom';
 import { Transition } from 'react-transition-group';
 import { DisplaySize } from '../display_size';
 
@@ -32,6 +33,7 @@ interface Properties {
 
 interface State {
   isMouseTooltipShown: boolean;
+  tooltipPosition: { top: number, left: number };
 }
 
 /** Displays a panel of icons highlighting an account's roles. */
@@ -39,8 +41,10 @@ export class RoleIcon extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      isMouseTooltipShown: false
+      isMouseTooltipShown: false,
+      tooltipPosition: { top: 0, left: 0 }
     };
+    this.iconRef = React.createRef();
   }
 
   public render(): JSX.Element {
@@ -73,8 +77,11 @@ export class RoleIcon extends React.Component<Properties, State> {
         return RoleIcon.STYLE.iconWrapperLarge;
       }
     })();
+    const isTooltipVisible = this.props.isTouchTooltipShown ||
+      (this.state.isMouseTooltipShown && !this.props.isTouchTooltipShown);
     return (
-      <div style={{...iconWrapper, ...iconStyle}}
+      <div ref={this.iconRef}
+          style={{...iconWrapper, ...iconStyle}}
           onClick={this.onClick}
           onTouchStart={this.onTouch}
           onMouseEnter={this.showTooltipMouse}
@@ -83,32 +90,39 @@ export class RoleIcon extends React.Component<Properties, State> {
           style={iconStyle}
           width={iconSize}
           height={iconSize}/>
-        <div style={RoleIcon.STYLE.tooltipAnchor}>
-          <Transition timeout={RoleIcon.TIMEOUT_MOBILE_TOOLTIP}
-              in={this.props.isTouchTooltipShown}>
-            {(state) => (
-              <div style={{...RoleIcon.STYLE.animationBase,
-                  ...RoleIcon.STYLE.imageTooltip,
-                  ...RoleIcon.ANIMATION_STYLE[state]}}>
-                {this.getText(this.props.role)}
-              </div>)}
-          </Transition>
-          <Transition timeout={RoleIcon.TIMEOUT_TOOLTIP}
-              in={this.state.isMouseTooltipShown &&
-                !this.props.isTouchTooltipShown}>
-            {(state) => (
-              <div style={{...RoleIcon.STYLE.animationBase,
-                  ...RoleIcon.STYLE.imageTooltip,
-                  ...RoleIcon.ANIMATION_STYLE[state]}}>
-                {this.getText(this.props.role)}
-              </div>)}
-          </Transition>
-        </div>
+        {this.renderTooltip(isTooltipVisible)}
       </div>);
+  }
+
+  private renderTooltip(isVisible: boolean): React.ReactPortal {
+    return ReactDOM.createPortal(
+      <Transition timeout={RoleIcon.TIMEOUT_TOOLTIP} in={isVisible}>
+        {(state) => (
+          <div style={{...RoleIcon.STYLE.imageTooltip,
+              ...RoleIcon.ANIMATION_STYLE[state],
+              top: this.state.tooltipPosition.top,
+              left: this.state.tooltipPosition.left}}>
+            {this.getText(this.props.role)}
+          </div>)}
+      </Transition>,
+      document.body);
+  }
+
+  private updateTooltipPosition() {
+    if(this.iconRef.current) {
+      var rect = this.iconRef.current.getBoundingClientRect();
+      this.setState({
+        tooltipPosition: {
+          top: rect.bottom + 2,
+          left: rect.left
+        }
+      });
+    }
   }
 
   private showTooltipMouse = () => {
     if(!this.state.isMouseTooltipShown && !this.props.isTouchTooltipShown) {
+      this.updateTooltipPosition();
       this.setState({isMouseTooltipShown: true});
     }
   }
@@ -127,6 +141,7 @@ export class RoleIcon extends React.Component<Properties, State> {
     if(!this.props.readOnly) {
       this.props.onClick?.();
     }
+    this.updateTooltipPosition();
     this.props.onTouch?.();
   }
 
@@ -156,6 +171,7 @@ export class RoleIcon extends React.Component<Properties, State> {
     }
   }
 
+  private iconRef: React.RefObject<HTMLDivElement>;
   private static readonly ANIMATION_STYLE: Record<string, React.CSSProperties> = {
     entering: {
       opacity: 0
@@ -163,8 +179,12 @@ export class RoleIcon extends React.Component<Properties, State> {
     entered: {
       opacity: 1
     },
+    exiting: {
+      opacity: 0
+    },
     exited: {
-      display: 'none'
+      opacity: 0,
+      pointerEvents: 'none'
     }
   };
   private static readonly STYLE: Record<string, React.CSSProperties> = {
@@ -204,15 +224,6 @@ export class RoleIcon extends React.Component<Properties, State> {
     readonly: {
       cursor: 'inherit'
     },
-    tooltipAnchor: {
-      position: 'relative',
-      height: 0,
-      width: 0
-    },
-    animationBase: {
-      opacity: 0,
-      transition: 'opacity 200ms ease-in-out'
-    },
     imageTooltip: {
       display: 'flex',
       justifyContent: 'center',
@@ -223,24 +234,19 @@ export class RoleIcon extends React.Component<Properties, State> {
       height: '22px',
       backgroundColor: '#4B23A0',
       color: '#FFFFFF',
-      position: 'absolute',
-      top: '16px',
-      left: '-20px',
+      position: 'fixed',
       border: '1px solid #4B23A0',
       borderRadius: '1px',
       boxShadow: '0px 0px 2px #00000064',
-      zIndex: 100,
-      whiteSpace: 'nowrap'
+      zIndex: 10000,
+      whiteSpace: 'nowrap',
+      opacity: 0,
+      transition: 'opacity 200ms ease-in-out',
+      pointerEvents: 'none'
     }
   };
   private static readonly TIMEOUT_TOOLTIP = {
     enter: 100,
-    entered: 200,
-    exit: 200,
-    exited: 1
-  };
-  private static readonly TIMEOUT_MOBILE_TOOLTIP = {
-    enter: 1,
     entered: 200,
     exit: 200,
     exited: 1
