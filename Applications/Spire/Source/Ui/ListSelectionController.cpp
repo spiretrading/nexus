@@ -96,16 +96,30 @@ void ListSelectionController::remove(int index) {
 }
 
 void ListSelectionController::move(int source, int destination) {
-  auto direction = get_direction(destination, source);
   auto blocker = shared_connection_block(m_connection);
   m_selection->transact([&] {
     for(auto i = 0; i != m_selection->get_size(); ++i) {
       auto selection = m_selection->get(i);
-      if(selection >= source || selection <= destination) {
-        m_selection->set(i, selection + direction);
+      if(selection == source) {
+        m_selection->set(i, destination);
+      } else if(source < destination &&
+          selection > source && selection <= destination) {
+        m_selection->set(i, selection - 1);
+      } else if(source > destination &&
+          selection >= destination && selection < source) {
+        m_selection->set(i, selection + 1);
       }
     }
   });
+  if(m_current == source) {
+    m_current = destination;
+  } else if(source < destination &&
+      m_current > source && m_current <= destination) {
+    --*m_current;
+  } else if(source > destination &&
+      m_current >= destination && m_current < source) {
+    ++*m_current;
+  }
 }
 
 void ListSelectionController::select_all() {
