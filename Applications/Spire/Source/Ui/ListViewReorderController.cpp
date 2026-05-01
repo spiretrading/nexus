@@ -251,14 +251,6 @@ void ListViewReorderController::start_drag(int index,
   m_is_dragging = true;
   m_current_index = index;
   m_drag_index = index;
-  m_list_view->get_current()->set(index);
-  auto& selection = m_list_view->get_selection();
-  selection->transact([&] {
-    while(selection->get_size() > 0) {
-      selection->remove(0);
-    }
-    selection->insert(index, 0);
-  });
   QApplication::setOverrideCursor(Qt::ClosedHandCursor);
   m_list_view->grabMouse();
   m_drop_item = new DropItem(m_direction, m_list_view);
@@ -268,6 +260,14 @@ void ListViewReorderController::start_drag(int index,
   m_item_preview->raise();
   m_item_preview->show();
   m_preview_offset = event.globalPos() - item->mapToGlobal(QPoint(0, 0));
+  m_list_view->get_current()->set(index);
+  auto& selection = m_list_view->get_selection();
+  selection->transact([&] {
+    while(selection->get_size() > 0) {
+      selection->remove(0);
+    }
+    selection->insert(index, 0);
+  });
   update_drop_item(index);
 }
 
