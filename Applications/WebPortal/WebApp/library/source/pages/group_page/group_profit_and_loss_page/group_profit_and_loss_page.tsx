@@ -642,7 +642,8 @@ function ActionsAndStatus(props: {
       props.onSubmit?.(props.startDate, props.endDate);
     }
   };
-  const showStatus = !isEmpty && !isNoResults && !(isStale && !hasData);
+  const showStatus =
+    !isEmpty && !isNoResults && !isError && !(isStale && !hasData);
   return (
     <div className={css(STYLES.actionsAndStatus)}>
       <div className={css(STYLES.buttonRow)}>
