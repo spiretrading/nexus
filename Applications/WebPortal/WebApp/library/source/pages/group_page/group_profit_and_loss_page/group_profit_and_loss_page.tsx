@@ -598,16 +598,20 @@ function StatusFeedback(props: {
       status: GroupProfitAndLossPage.Status;
       accounts: GroupProfitAndLossPage.AccountEntry[];
     }): JSX.Element {
+  const reportStatus = toReportStatus(props.status);
+  if(reportStatus === ReportStatusIndicator.Status.NONE) {
+    return null;
+  }
   const isEmpty = props.status === GroupProfitAndLossPage.Status.EMPTY;
   const isNoResults = props.status === GroupProfitAndLossPage.Status.NO_RESULTS;
   const isStale = props.status === GroupProfitAndLossPage.Status.STALE;
   const hasData = props.accounts.length > 0;
-  const hidden = isEmpty || isNoResults || (isStale && !hasData);
+  if(isEmpty || isNoResults || (isStale && !hasData)) {
+    return null;
+  }
   return (
-    <div className={
-        css(STYLES.statusFeedback, hidden && STYLES.statusFeedbackHidden)}>
-      <ReportStatusIndicator id='report-status'
-        status={toReportStatus(props.status)}/>
+    <div className={css(STYLES.statusFeedback)}>
+      <ReportStatusIndicator id='report-status' status={reportStatus}/>
     </div>);
 }
 
@@ -1039,9 +1043,6 @@ const STYLES = StyleSheet.create({
     '@media (min-width: 768px)': {
       display: 'none'
     }
-  },
-  statusFeedbackHidden: {
-    display: 'none'
   },
   actionsAndStatus: {
     '@media (max-width: 767px)': {
