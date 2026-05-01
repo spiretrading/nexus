@@ -299,6 +299,7 @@ void AnyComboBox::update_completion() {
       highlight.get().m_end != query.size() || m_data->m_is_deleting) {
     m_data->m_prefix = query;
     m_data->m_completion.clear();
+    m_data->m_last_completion.clear();
     return;
   }
   if(m_data->m_matches->get_size() != 0) {
@@ -453,10 +454,18 @@ void AnyComboBox::on_query(
       return std::vector<std::any>();
     }
   }();
-  {
-    if(m_data->m_matches->get_size() > 0) {
-      m_data->m_drop_down_list->hide();
+  auto is_unchanged = [&] {
+    if(static_cast<int>(selection.size()) != m_data->m_matches->get_size()) {
+      return false;
     }
+    for(auto i = 0; i != static_cast<int>(selection.size()); ++i) {
+      if(!is_equal(selection[i], m_data->m_matches->get(i))) {
+        return false;
+      }
+    }
+    return true;
+  }();
+  if(!is_unchanged) {
     auto& list_view = m_data->m_drop_down_list->get_list_view();
     for(auto i = 0; i < list_view.get_list()->get_size(); ++i) {
       list_view.get_list_item(i)->hide();
@@ -556,7 +565,8 @@ bool AnyComboBox::on_input_key_press(QWidget& target, QKeyEvent& event) {
   if(is_read_only()) {
     return false;
   }
-  if(event.key() == Qt::Key_Backspace || event.key() == Qt::Key_Delete) {
+  if(event.key() == Qt::Key_Backspace || event.key() == Qt::Key_Delete ||
+      event.matches(QKeySequence::Cut)) {
     m_data->m_is_deleting = true;
   } else if(!event.text().isEmpty()) {
     m_data->m_is_deleting = false;
