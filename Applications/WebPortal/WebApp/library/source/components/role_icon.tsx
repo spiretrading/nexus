@@ -228,7 +228,9 @@ export class RoleIcon extends React.Component<Properties, State> {
       left: '-20px',
       border: '1px solid #4B23A0',
       borderRadius: '1px',
-      boxShadow: '0px 0px 2px #00000064'
+      boxShadow: '0px 0px 2px #00000064',
+      zIndex: 100,
+      whiteSpace: 'nowrap'
     }
   };
   private static readonly TIMEOUT_TOOLTIP = {
