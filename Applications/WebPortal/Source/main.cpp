@@ -2,6 +2,7 @@
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
+#include <Beam/Utilities/ToString.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <Beam/WebServices/HttpServletContainer.hpp>
 #include "Nexus/Clients/ServiceClients.hpp"
@@ -51,13 +52,25 @@ int main(int argc, const char** argv) {
     auto service_config = try_or_nest([&] {
       return Configuration::parse(get_node(config, "server"));
     }, std::runtime_error("Error parsing section 'server'."));
+    try_or_nest([&] {
+      auto url = extract<std::string>(
+        config, "url", "http://" + to_string(service_config.m_interface));
+      auto properties = JsonObject();
+      properties.set("url", url);
+      clients.get_service_locator_client().add("web_portal", properties);
+    }, std::runtime_error("Error registering web portal service."));
     auto clients_builder =
       [&] (const std::string& username, const std::string& password) {
         return Clients(std::in_place_type<ServiceClients>, username, password,
           service_locator_client_config.m_address);
       };
-    auto server = WebPortalServletContainer(
-      init(std::move(clients_builder), Clients(&clients)),
+    auto session_clients_builder =
+      [&] (const std::string& session_id, unsigned int key) {
+        return Clients(std::in_place_type<ServiceClients>, session_id, key,
+          service_locator_client_config.m_address);
+      };
+    auto server = WebPortalServletContainer(init(std::move(clients_builder),
+      std::move(session_clients_builder), Clients(&clients)),
       init(service_config.m_interface));
     wait_for_kill_event();
     clients.close();

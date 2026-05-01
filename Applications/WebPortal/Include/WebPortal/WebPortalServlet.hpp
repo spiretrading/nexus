@@ -27,8 +27,8 @@ namespace Nexus {
     public:
 
       /** The type of WebSocketChannel used. */
-      using WebSocketChannel = Beam::WebSocketChannel<
-        std::shared_ptr<Beam::TcpSocketChannel>>;
+      using WebSocketChannel =
+        Beam::WebSocketChannel<std::shared_ptr<Beam::TcpSocketChannel>>;
 
       /**
        * Constructs a WebPortalServlet.
@@ -36,6 +36,7 @@ namespace Nexus {
        * @param clients The clients used to access Spire services.
        */
       WebPortalServlet(ServiceLocatorWebServlet::ClientsBuilder clients_builder,
+        ServiceLocatorWebServlet::SessionClientsBuilder session_clients_builder,
         Clients clients);
 
       ~WebPortalServlet();

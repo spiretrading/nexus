@@ -1,5 +1,9 @@
 #include "Spire/UI/UserProfile.hpp"
+#include <Beam/ServiceLocator/SessionEncryption.hpp>
+#include <Beam/Utilities/ToString.hpp>
+#include <QDesktopServices>
 #include <QStandardPaths>
+#include <QUrl>
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/OpenPositionsModel.hpp"
@@ -19,7 +23,8 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
     const std::vector<ExchangeRate>& exchangeRates,
     const VenueDatabase& venueDatabase,
     const DestinationDatabase& destinationDatabase,
-    const EntitlementDatabase& entitlementDatabase, Clients clients)
+    const EntitlementDatabase& entitlementDatabase, Uri web_portal_uri,
+    Clients clients)
     : m_username(username),
       m_isAdministrator(isAdministrator),
       m_isManager(isManager),
@@ -29,6 +34,7 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
       m_venueDatabase(venueDatabase),
       m_destinationDatabase(destinationDatabase),
       m_entitlementDatabase(entitlementDatabase),
+      m_web_portal_uri(std::move(web_portal_uri)),
       m_clients(std::move(clients)),
       m_profilePath(std::filesystem::path(QStandardPaths::writableLocation(
         QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
@@ -80,6 +86,10 @@ const DestinationDatabase& UserProfile::GetDestinationDatabase() const {
 
 const EntitlementDatabase& UserProfile::GetEntitlementDatabase() const {
   return m_entitlementDatabase;
+}
+
+const Uri& UserProfile::GetWebPortalUri() const {
+  return m_web_portal_uri;
 }
 
 Clients& UserProfile::GetClients() const {
@@ -262,4 +272,18 @@ const optional<PortfolioViewerWindowSettings>&
 void UserProfile::SetInitialPortfolioViewerWindowSettings(
     const PortfolioViewerWindowSettings& settings) {
   m_initialPortfolioViewerWindowSettings = settings;
+}
+
+void Spire::open_web_portal(
+    UserProfile& user_profile, const std::string& path) {
+  if(user_profile.GetWebPortalUri().get_hostname().empty()) {
+    return;
+  }
+  auto key = generate_encryption_key();
+  auto session_id = user_profile.GetClients().get_service_locator_client().
+    get_encrypted_session_id(key);
+  auto url = to_string(user_profile.GetWebPortalUri()) +
+    "/api/service_locator/login_from_session?session=" + session_id +
+    "&key=" + std::to_string(key) + "&redirect=" + path;
+  QDesktopServices::openUrl(QUrl(QString::fromStdString(url)));
 }

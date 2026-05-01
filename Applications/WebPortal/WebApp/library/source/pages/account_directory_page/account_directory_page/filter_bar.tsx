@@ -44,14 +44,14 @@ export class FilterBar extends React.Component<Properties> {
   };
   private static readonly DYNAMIC_STYLE = StyleSheet.create({
     box: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '100%',
       height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      justifyContent: 'space-between' as 'space-between',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      justifyContent: 'space-between',
+      alignItems: 'center',
       borderRadius: '1px',
       border: '1px solid #C8C8C8',
       ':focus-within': {
@@ -59,7 +59,7 @@ export class FilterBar extends React.Component<Properties> {
       }
     },
     input: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       font: '400 14px Roboto',
       color: '#000000',
       flexGrow: 1,
@@ -71,7 +71,7 @@ export class FilterBar extends React.Component<Properties> {
       border: 0,
       '-webkit-appearance': 'none',
       '::-ms-clear': {
-        display: 'none' as 'none'
+        display: 'none'
       }
     },
     '::placeholder': {
@@ -88,7 +88,7 @@ export class FilterBar extends React.Component<Properties> {
       border: 0
     },
     '::-ms-clear': {
-      display: 'none' as 'none'
+      display: 'none'
     }
   });
 }

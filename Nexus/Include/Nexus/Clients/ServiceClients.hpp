@@ -38,6 +38,15 @@ namespace Nexus {
       ServiceClients(const std::string& username, const std::string& password,
         const Beam::IpAddress& address);
 
+      /**
+       * Constructs a ServiceClients from an existing session.
+       * @param session_id The encrypted session id.
+       * @param key The encryption key used to encode the session id.
+       * @param address The IpAddress to connect to.
+       */
+      ServiceClients(const std::string& session_id, unsigned int key,
+        const Beam::IpAddress& address);
+
       ~ServiceClients();
 
       ServiceLocatorClient& get_service_locator_client();
@@ -70,8 +79,21 @@ namespace Nexus {
   };
 
   inline ServiceClients::ServiceClients(const std::string& username,
-      const std::string& password, const Beam::IpAddress& address)
+    const std::string& password, const Beam::IpAddress& address)
     : m_service_locator_client(username, password, address),
+      m_administration_client(Beam::Ref(m_service_locator_client)),
+      m_definitions_client(Beam::Ref(m_service_locator_client)),
+      m_market_data_client(Beam::Ref(m_service_locator_client)),
+      m_charting_client(Beam::Ref(m_service_locator_client)),
+      m_compliance_client(Beam::Ref(m_service_locator_client)),
+      m_order_execution_client(Beam::Ref(m_service_locator_client)),
+      m_risk_client(Beam::Ref(m_service_locator_client)),
+      m_time_client(
+        Beam::make_live_ntp_time_client(m_service_locator_client)) {}
+
+  inline ServiceClients::ServiceClients(const std::string& session_id,
+    unsigned int key, const Beam::IpAddress& address)
+    : m_service_locator_client(session_id, key, address),
       m_administration_client(Beam::Ref(m_service_locator_client)),
       m_definitions_client(Beam::Ref(m_service_locator_client)),
       m_market_data_client(Beam::Ref(m_service_locator_client)),
