@@ -244,7 +244,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
     spacing: {
       width: '18px',
       height: '18px',
-      flexBias: '18px',
+      flexBasis: '18px',
       flexGrow: 0,
       flexShrink: 0
     },

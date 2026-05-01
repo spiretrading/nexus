@@ -221,23 +221,23 @@ export class RuleRow extends React.Component<Properties, State> {
   private applicabilityStyleDefinition = {
     entering: {
       maxHeight: '0',
-      overflow: 'hidden',
+      overflow: 'hidden' as const,
       transitionProperty: 'max-height',
       transitionDuration: `${RuleRow.TRANSITION_LENGTH_MS}ms`
     },
     entered: {
       maxHeight: '0',
-      overflow: 'hidden'
+      overflow: 'hidden' as const
     },
     exiting: {
       maxHeight: '0',
-      overflow: 'hidden',
+      overflow: 'hidden' as const,
       transitionProperty: 'max-height',
       transitionDuration: `${RuleRow.TRANSITION_LENGTH_MS}ms`
     },
     exited: {
       maxHeight: '0',
-      overflow: 'hidden'
+      overflow: 'hidden' as const
     }
   };
   private ruleParameters: HTMLDivElement;

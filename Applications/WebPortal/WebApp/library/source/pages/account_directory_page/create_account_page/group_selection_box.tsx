@@ -123,7 +123,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
         onChange={this.onValueChange}
         className={css(inputStyle, textStyle, errorBoxStyle)}/>
       <div style={GroupSelectionBox.STYLE.filler}/>
-      <div style={suggestionBox}>
+      <div style={suggestionBox} tabIndex={-1}>
         <SuggestionBox
           currentIndex={this.state.currentIndex}
           suggestedGroups={this.props.suggestions}
@@ -230,8 +230,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
     suggestionWrapper: {
       position: 'relative',
       height: '1px',
-      width: '100%',
-      tabIndex: -1
+      width: '100%'
     },
     hidden :{
       height: '1px',
