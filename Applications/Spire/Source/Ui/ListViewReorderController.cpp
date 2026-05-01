@@ -264,7 +264,7 @@ void ListViewReorderController::start_drag(int index,
   m_drop_item = new DropItem(m_direction, m_list_view);
   m_drop_item->setFixedSize(item->size());
   m_drop_item->show();
-  m_item_preview = make_item_preview(*item, m_list_view);
+  m_item_preview = make_item_preview(*item, m_list_view->window());
   m_item_preview->raise();
   m_item_preview->show();
   m_preview_offset = event.globalPos() - item->mapToGlobal(QPoint(0, 0));
@@ -296,7 +296,7 @@ void ListViewReorderController::drag_move(const QMouseEvent& event) {
     return;
   }
   auto global_pos = event.globalPos();
-  auto preview_pos = m_list_view->mapFromGlobal(
+  auto preview_pos = m_list_view->window()->mapFromGlobal(
     global_pos - m_preview_offset);
   m_item_preview->move(preview_pos);
   auto center = global_pos - m_preview_offset +
