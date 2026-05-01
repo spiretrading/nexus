@@ -137,6 +137,10 @@ void CurrentUserOrderModel::update_side(
     m_undo_navigation_connection.disconnect();
     auto& user_order = extract_user_order(*other_side.m_table, *current);
     m_current.set(CurrentUserOrder(user_order, get_opposite(side)));
+  } else {
+    m_undo_navigation = none;
+    m_undo_navigation_connection.disconnect();
+    m_current.set(none);
   }
 }
 

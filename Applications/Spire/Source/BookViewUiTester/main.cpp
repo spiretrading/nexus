@@ -593,19 +593,10 @@ int main(int argc, char** argv) {
     std::bind_front(&BookViewTester::on_cancel_order, &tester));
   book_view_window.installEventFilter(&tester);
   book_view_window.show();
-  auto book_view_window1 = BookViewWindow(Ref(tester.m_user_profile),
-    populate_ticker_query_model(), key_bindings, factory,
-    [] (const Ticker&) {
-      return make_local_aggregate_book_view_model();
-    });
-  book_view_window1.installEventFilter(&tester);
-  book_view_window1.show();
   const auto WINDOW_GAP = scale_width(10);
   auto y = book_view_window.y();
   book_view_window.move(book_view_window.x() - scale_width(500), y);
-  book_view_window1.move(
-    book_view_window.frameGeometry().right() + WINDOW_GAP, y);
-  tester.move(book_view_window1.frameGeometry().right() + WINDOW_GAP, y);
+  tester.move(book_view_window.frameGeometry().right() + WINDOW_GAP, y);
   order_tester.move(tester.frameGeometry().right() + WINDOW_GAP, y);
   tester.show();
   order_tester.show();

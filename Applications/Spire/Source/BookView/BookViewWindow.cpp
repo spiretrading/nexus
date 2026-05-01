@@ -285,9 +285,9 @@ void BookViewWindow::on_context_menu(const QPoint& pos) {
   auto menu = new ContextMenu(*m_ticker_view);
   if(m_book_depth) {
     if(auto current = m_book_depth->get_current()->get()) {
-      menu->add_action(tr("Cancel Most Recent"),
+      menu->add_action(tr("Cancel Single Selected"),
         std::bind_front(&BookViewWindow::on_cancel_most_recent, this, *current));
-      menu->add_action(tr("Cancel All"),
+      menu->add_action(tr("Cancel All Selected"),
         std::bind_front(&BookViewWindow::on_cancel_all, this, *current));
       menu->add_separator();
     }
