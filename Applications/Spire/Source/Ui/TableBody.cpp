@@ -923,6 +923,9 @@ void TableBody::paintEvent(QPaintEvent* event) {
 }
 
 void TableBody::resizeEvent(QResizeEvent* event) {
+  if(event->size().height() == event->oldSize().height()) {
+    return;
+  }
   ++m_resize_guard;
   if(m_resize_guard == 1) {
     update_visible_region();
