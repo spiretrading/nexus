@@ -18,7 +18,7 @@ namespace {
   }
 
   auto TSX() {
-    return Scope(DefaultVenues::TSX);
+    return Scope(Venues::TSX);
   }
 }
 

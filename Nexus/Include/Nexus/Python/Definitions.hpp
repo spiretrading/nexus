@@ -59,12 +59,6 @@ namespace Nexus::Python {
   void export_destinations(pybind11::module& module);
 
   /**
-   * Exports the DefaultVenues namespace.
-   * @param module The module to export to.
-   */
-  void export_default_venues(pybind11::module& module);
-
-  /**
    * Exports the Definitions classes.
    * @param module The module to export to.
    */
@@ -183,6 +177,12 @@ namespace Nexus::Python {
    * @param module The module to export to.
    */
   void export_venue(pybind11::module& module);
+
+  /**
+   * Exports the Venues namespace.
+   * @param module The module to export to.
+   */
+  void export_venues(pybind11::module& module);
 }
 
 #endif

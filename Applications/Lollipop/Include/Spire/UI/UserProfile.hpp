@@ -42,7 +42,6 @@ namespace Spire {
        *        group.
        * @param timeZoneDatabase Stores the database of all time zones.
        * @param exchangeRates The list of ExchangeRates to use.
-       * @param venueDatabase Stores the database of all venues.
        * @param entitlementDatabase Stores the database of market data
        *        entitlements.
        * @param web_portal_uri The URI of the web portal.
@@ -51,7 +50,6 @@ namespace Spire {
       UserProfile(const std::string& username, bool isAdministrator,
         bool isManager, const boost::local_time::tz_database& timeZoneDatabase,
         const std::vector<Nexus::ExchangeRate>& exchangeRates,
-        const Nexus::VenueDatabase& venueDatabase,
         const Nexus::EntitlementDatabase& entitlementDatabase,
         Beam::Uri web_portal_uri, Nexus::Clients clients);
 
@@ -74,9 +72,6 @@ namespace Spire {
 
       /** Returns the ExchangeRates. */
       const Nexus::ExchangeRateTable& GetExchangeRates() const;
-
-      /** Returns the VenueDatabase. */
-      const Nexus::VenueDatabase& GetVenueDatabase() const;
 
       /** Returns the EntitlementDatabase. */
       const Nexus::EntitlementDatabase& GetEntitlementDatabase() const;
@@ -231,7 +226,6 @@ namespace Spire {
       bool m_isManager;
       boost::local_time::tz_database m_timeZoneDatabase;
       Nexus::ExchangeRateTable m_exchangeRates;
-      Nexus::VenueDatabase m_venueDatabase;
       Nexus::EntitlementDatabase m_entitlementDatabase;
       Beam::Uri m_web_portal_uri;
       mutable Nexus::Clients m_clients;

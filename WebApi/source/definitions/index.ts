@@ -9,4 +9,4 @@ export * from './ticker';
 export * from './venue';
 export * from './standard_countries';
 export * from './standard_currencies';
-export * from './default_venue_database';
+export * from './standard_venues';

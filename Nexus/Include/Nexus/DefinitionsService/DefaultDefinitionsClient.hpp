@@ -49,7 +49,7 @@ namespace Nexus {
   }
 
   inline VenueDatabase DefaultDefinitionsClient::load_venue_database() {
-    return DEFAULT_VENUES;
+    return VENUES;
   }
 
   inline std::vector<ExchangeRate>

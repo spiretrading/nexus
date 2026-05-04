@@ -17,7 +17,7 @@ namespace Nexus::Tests {
     using namespace boost::posix_time;
     using namespace Nexus;
     using namespace Nexus::Currencies;
-    using namespace Nexus::DefaultVenues;
+    using namespace Nexus::Venues;
 
     auto data_store = T()();
     auto account_a = DirectoryEntry::make_account(123, "user_a");

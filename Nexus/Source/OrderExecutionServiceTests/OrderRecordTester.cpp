@@ -9,7 +9,7 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Currencies;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 namespace {
   auto make_test_order_info() {

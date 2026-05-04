@@ -20,7 +20,7 @@ std::unique_ptr<DashboardCell> CloseDashboardCellBuilder::Make(
   spawn([=] {
     auto& serviceClients = selfUserProfile->GetClients();
     auto close = load_previous_close(serviceClients.get_market_data_client(),
-      ticker, serviceClients.get_time_client().get_time(), DEFAULT_VENUES,
+      ticker, serviceClients.get_time_client().get_time(),
       get_default_time_zone_database());
     if(close) {
       queue->push(close->m_price);

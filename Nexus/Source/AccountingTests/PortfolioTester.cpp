@@ -6,7 +6,7 @@
 
 using namespace Nexus;
 using namespace Nexus::Currencies;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 namespace {
   using TestPortfolio = Portfolio<TrueAverageBookkeeper>;

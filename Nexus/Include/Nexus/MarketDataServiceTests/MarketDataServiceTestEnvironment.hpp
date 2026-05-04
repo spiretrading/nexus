@@ -204,7 +204,7 @@ namespace Nexus::Tests {
     AdministrationClient administration_client, HistoricalDataStore data_store)
     : m_service_locator_client(std::move(service_locator_client)),
       m_administration_client(std::move(administration_client)),
-      m_registry(DEFAULT_VENUES, get_default_time_zone_database()),
+      m_registry(get_default_time_zone_database()),
       m_data_store(std::move(data_store)),
       m_registry_servlet(m_administration_client, &m_registry, m_data_store),
       m_container(Beam::init(m_service_locator_client, &m_registry_servlet),

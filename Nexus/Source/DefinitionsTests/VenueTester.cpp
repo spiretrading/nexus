@@ -133,7 +133,7 @@ TEST_SUITE("Venue") {
       description: "New York Stock Exchange"
       display_name: "NYSE")";
     auto node = YAML::Load(yaml_text);
-    auto entry = parse_venue_database_entry(node, COUNTRIES, CURRENCIES);
+    auto entry = parse_venue_database_entry(node);
     REQUIRE(entry.m_venue == Venue("NYC1"));
     REQUIRE(entry.m_country_code == Countries::US);
     REQUIRE(entry.m_market_center == "NNN");
@@ -153,8 +153,7 @@ TEST_SUITE("Venue") {
       description: "London Stock Exchange"
       display_name: "LSE")";
     auto node = YAML::Load(yaml_text);
-    REQUIRE_THROWS_AS(parse_venue_database_entry(
-      node, COUNTRIES, CURRENCIES), std::runtime_error);
+    REQUIRE_THROWS_AS(parse_venue_database_entry(node), std::runtime_error);
   }
 
   TEST_CASE("parse_venue_database_entry_invalid_currency") {
@@ -167,8 +166,7 @@ TEST_SUITE("Venue") {
       description: "Tokyo Stock Exchange"
       display_name: "TSE")";
     auto node = YAML::Load(yaml_text);
-    REQUIRE_THROWS_AS(parse_venue_database_entry(
-      node, COUNTRIES, CURRENCIES), std::runtime_error);
+    REQUIRE_THROWS_AS(parse_venue_database_entry(node), std::runtime_error);
   }
 
 
@@ -189,7 +187,7 @@ TEST_SUITE("Venue") {
         description: "Desc2"
         display_name: "Beta")";
     auto node = YAML::Load(yaml_text);
-    auto database = parse_venue_database(node, COUNTRIES, CURRENCIES);
+    auto database = parse_venue_database(node);
     auto entry_alpha = parse_venue_entry("Alpha", database);
     REQUIRE(entry_alpha.m_venue.get_code() == "ABC");
     REQUIRE(entry_alpha.m_display_name == "Alpha");
@@ -236,8 +234,8 @@ TEST_SUITE("Venue") {
   }
 
   TEST_CASE("shuttle") {
-    test_round_trip_shuttle(DEFAULT_VENUES, [] (const auto& venues) {
-      auto expected_entries = DEFAULT_VENUES.get_entries();
+    test_round_trip_shuttle(VENUES, [] (const auto& venues) {
+      auto expected_entries = VENUES.get_entries();
       auto entries = venues.get_entries();
       REQUIRE(expected_entries.size() == entries.size());
       for(auto i = std::size_t(0); i != entries.size(); ++i) {

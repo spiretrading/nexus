@@ -55,7 +55,7 @@ TickerListItem::TickerListItem(TickerInfo ticker_info, QWidget* parent)
   auto value_container_layout = make_hbox_layout();
   value_container_layout->addWidget(value_label);
   auto& country_entry = COUNTRIES.from(
-    DEFAULT_VENUES.from(m_ticker_info.m_ticker.get_venue()).m_country_code);
+    VENUES.from(m_ticker_info.m_ticker.get_venue()).m_country_code);
   auto country_code =
     QString(country_entry.m_three_letter_code.get_data()).toLower();
   auto flag_icon = new Icon(image_from_svg(QString(":/Icons/flag_icons/%1.svg").

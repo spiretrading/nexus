@@ -3,7 +3,7 @@ import { Currencies } from './standard_currencies';
 import { Venue, VenueDatabase } from './venue';
 
 /** Builds a VenueDatabase containing a set of common venues. */
-export function buildDefaultVenueDatabase(): VenueDatabase {
+export function buildVenueDatabase(): VenueDatabase {
   const database = new VenueDatabase();
   database.add(new VenueDatabase.Entry(new Venue('XASX'), Countries.AU, '',
     'Australian_Eastern_Standard_Time', Currencies.AUD,
@@ -67,9 +67,9 @@ export function buildDefaultVenueDatabase(): VenueDatabase {
   return database;
 }
 
-export const defaultVenueDatabase = buildDefaultVenueDatabase();
+export const venueDatabase = buildVenueDatabase();
 
-export namespace DefaultVenues {
+export namespace Venues {
   export const ASX = new Venue('XASX');
   export const CXA = new Venue('CHIA');
   export const ASEX = new Venue('XASE');

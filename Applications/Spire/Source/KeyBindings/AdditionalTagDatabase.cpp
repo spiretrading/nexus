@@ -1,5 +1,4 @@
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/FixTags.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/KeyBindings/BasicAdditionalTagSchema.hpp"
@@ -279,8 +278,8 @@ namespace {
   const auto& ASX() {
     static const auto SCOPE = [&] {
       auto scope = Scope();
-      scope += DefaultVenues::ASX;
-      scope += DefaultVenues::CXA;
+      scope += Venues::ASX;
+      scope += Venues::CXA;
       return scope;
     }();
     return SCOPE;
@@ -389,7 +388,7 @@ const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
     auto database = AdditionalTagDatabase();
     database.add(Scope::GLOBAL, MaxFloorSchema::get_instance());
     database.add(Scope::GLOBAL, make_peg_difference_schema());
-    database.add(DefaultVenues::ASX, make_asx_exec_inst_schema());
+    database.add(Venues::ASX, make_asx_exec_inst_schema());
     database.add(Destinations::CHIX, make_chix_ex_destination_schema());
     database.add(Destinations::CHIX, make_chix_exec_inst_schema());
     database.add(Destinations::CHIX, make_tsx_long_life_schema());

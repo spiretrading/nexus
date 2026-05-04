@@ -579,8 +579,8 @@ function decomposeScope(scope: Nexus.Scope): ScopeItem[] {
     venues.push(venue);
   }
   venues.sort((a: Nexus.Venue, b: Nexus.Venue) => {
-    const aName = Nexus.defaultVenueDatabase.fromVenue(a).displayName;
-    const bName = Nexus.defaultVenueDatabase.fromVenue(b).displayName;
+    const aName = Nexus.venueDatabase.fromVenue(a).displayName;
+    const bName = Nexus.venueDatabase.fromVenue(b).displayName;
     return aName.localeCompare(bName);
   });
   const tickers = [];
@@ -609,7 +609,7 @@ function makeScopeItemText(item: ScopeItem): string {
   if(isCountryCode(item)) {
     return Nexus.countryDatabase.fromCode(item).twoLetterCode;
   } else if(isVenue(item)) {
-    return Nexus.defaultVenueDatabase.fromVenue(item).displayName;
+    return Nexus.venueDatabase.fromVenue(item).displayName;
   } else if(isTicker(item)) {
     return item.toString();
   } else {

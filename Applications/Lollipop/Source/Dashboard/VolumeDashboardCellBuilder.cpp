@@ -16,7 +16,6 @@ std::unique_ptr<DashboardCell> VolumeDashboardCellBuilder::Make(
   auto& serviceClients = userProfile.get()->GetClients();
   auto query = make_daily_volume_query(ticker,
     serviceClients.get_time_client().get_time(), pos_infin,
-    userProfile.get()->GetVenueDatabase(),
     userProfile.get()->GetTimeZoneDatabase());
   auto baseQueue = std::make_shared<Queue<Nexus::QueryVariant>>();
   auto queue = std::static_pointer_cast<QueueReader<Quantity>>(

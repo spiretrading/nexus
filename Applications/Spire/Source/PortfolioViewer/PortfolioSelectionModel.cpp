@@ -37,7 +37,7 @@ PortfolioSelectionModel::PortfolioSelectionModel(Ref<UserProfile> userProfile,
     m_selectedCurrencies = properties.GetSelectedCurrencies();
   }
   if(properties.IsSelectingAllVenues()) {
-    for(auto venue : DEFAULT_VENUES.get_entries()) {
+    for(auto venue : VENUES.get_entries()) {
       m_selectedVenues.insert(venue.m_venue);
     }
   } else {
@@ -63,7 +63,7 @@ void PortfolioSelectionModel::UpdateProperties(
     properties->SetSelectingAllCurrencies(false);
   }
   properties->GetSelectedVenues() = m_selectedVenues;
-  if(m_selectedVenues.size() == DEFAULT_VENUES.get_entries().size()) {
+  if(m_selectedVenues.size() == VENUES.get_entries().size()) {
     properties->SetSelectingAllVenues(true);
   } else {
     properties->SetSelectingAllVenues(false);
@@ -118,7 +118,7 @@ QModelIndex PortfolioSelectionModel::index(int row, int column,
     }
   } else if(parent == m_roots[VENUE_SELECTION]) {
     if(column == 0 && row >= 0 &&
-        row <= static_cast<int>(DEFAULT_VENUES.get_entries().size())) {
+        row <= static_cast<int>(VENUES.get_entries().size())) {
       return createIndex(row, 0, VENUE_SELECTION);
     }
   } else if(parent == m_roots[SIDE_SELECTION]) {
@@ -145,7 +145,7 @@ int PortfolioSelectionModel::rowCount(const QModelIndex& parent) const {
   } else if(parent == m_roots[CURRENCY_SELECTION]) {
     return static_cast<int>(CURRENCIES.get_entries().size());
   } else if(parent == m_roots[VENUE_SELECTION]) {
-    return static_cast<int>(DEFAULT_VENUES.get_entries().size());
+    return static_cast<int>(VENUES.get_entries().size());
   } else if(parent == m_roots[SIDE_SELECTION]) {
     return Side::COUNT + 1;
   }
@@ -178,7 +178,7 @@ QVariant PortfolioSelectionModel::data(const QModelIndex& index,
         return Qt::Unchecked;
       }
     } else if(index == m_roots[VENUE_SELECTION]) {
-      if(m_selectedVenues.size() == DEFAULT_VENUES.get_entries().size()) {
+      if(m_selectedVenues.size() == VENUES.get_entries().size()) {
         return Qt::Checked;
       } else {
         return Qt::Unchecked;
@@ -283,7 +283,7 @@ bool PortfolioSelectionModel::setData(const QModelIndex& index,
         currencies.size() - 1, 0, m_roots[CURRENCY_SELECTION]));
       return true;
     } else if(index == m_roots[VENUE_SELECTION]) {
-      auto venues = DEFAULT_VENUES.get_entries();
+      auto venues = VENUES.get_entries();
       if(state == Qt::Checked) {
         for(auto i = venues.begin(); i != venues.end(); ++i) {
           m_selectedVenues.insert(i->m_venue);
@@ -368,7 +368,7 @@ boost::optional<PortfolioSelectionModel::SelectionVariant>
       return SelectionVariant{currencies[index.row()]};
     }
   } else if(index.parent() == m_roots[VENUE_SELECTION]) {
-    auto venues = DEFAULT_VENUES.get_entries();
+    auto venues = VENUES.get_entries();
     if(index.column() == 0 && index.row() >= 0 && index.row() <
         static_cast<int>(venues.size())) {
       return SelectionVariant{venues[index.row()]};

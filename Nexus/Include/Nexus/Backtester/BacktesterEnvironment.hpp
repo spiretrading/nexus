@@ -153,8 +153,7 @@ namespace Nexus {
     try {
       auto definitions_client = m_definitions_environment.make_client(
         Beam::Ref(m_service_locator_client));
-      m_order_execution_environment.emplace(
-        definitions_client.load_venue_database(), m_service_locator_client,
+      m_order_execution_environment.emplace(m_service_locator_client,
         m_uid_client, m_administration_client, m_time_client,
         OrderExecutionDriver(std::in_place_type<
           SimulationOrderExecutionDriver<MarketDataClient, Beam::TimeClient>>,

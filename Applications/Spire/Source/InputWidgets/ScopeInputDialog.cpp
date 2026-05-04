@@ -74,8 +74,8 @@ ScopeInputDialog::ScopeInputDialog(
     auto venues =
       std::vector(m_scope.get_venues().begin(), m_scope.get_venues().end());
     std::sort(venues.begin(), venues.end(), [&] (auto left, auto right) {
-      auto& left_name = DEFAULT_VENUES.from(left).m_display_name;
-      auto& right_name = DEFAULT_VENUES.from(right).m_display_name;
+      auto& left_name = VENUES.from(left).m_display_name;
+      auto& right_name = VENUES.from(right).m_display_name;
       return left_name < right_name;
     });
     for(auto& venue : venues) {

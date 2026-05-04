@@ -10,15 +10,15 @@ using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 TEST_SUITE("TickerEntry") {
   TEST_CASE("publish_bbo_quote") {
     auto initial_sequences = TickerEntry::InitialSequences();
     initial_sequences.m_next_bbo_quote_sequence = Beam::Sequence(20);
     auto ticker = parse_ticker("TST.TSX");
-    auto entry = TickerEntry(ticker, DEFAULT_VENUES,
-      get_default_time_zone_database(), Money::ONE, initial_sequences);
+    auto entry = TickerEntry(
+      ticker, get_default_time_zone_database(), Money::ONE, initial_sequences);
     auto bbo_quote =
       BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
         time_from_string("2024-07-11 13:00:00"));
@@ -45,8 +45,8 @@ TEST_SUITE("TickerEntry") {
     auto initial_sequences = TickerEntry::InitialSequences();
     initial_sequences.m_next_book_quote_sequence = Beam::Sequence(50);
     auto ticker = parse_ticker("TST.TSX");
-    auto entry = TickerEntry(ticker, DEFAULT_VENUES,
-      get_default_time_zone_database(), Money::ONE, initial_sequences);
+    auto entry = TickerEntry(
+      ticker, get_default_time_zone_database(), Money::ONE, initial_sequences);
     auto bid1 = BookQuote("MP1", false, TSX, make_bid(Money::CENT, 100),
       time_from_string("2024-07-11 13:00:00"));
     auto result_bid1 = entry.publish(bid1, 1);
@@ -73,8 +73,8 @@ TEST_SUITE("TickerEntry") {
     auto initial_sequences = TickerEntry::InitialSequences();
     initial_sequences.m_next_time_and_sale_sequence = Beam::Sequence(100);
     auto ticker = parse_ticker("TST.TSX");
-    auto entry = TickerEntry(ticker, DEFAULT_VENUES,
-      get_default_time_zone_database(), Money::ONE, initial_sequences);
+    auto entry = TickerEntry(
+      ticker, get_default_time_zone_database(), Money::ONE, initial_sequences);
     auto time_and_sale1 = TimeAndSale(
       time_from_string("2024-07-11 14:00:00"), Money::ONE, 100,
       TimeAndSale::Condition(), "TSX", "", "");
@@ -99,8 +99,8 @@ TEST_SUITE("TickerEntry") {
     initial_sequences.m_next_book_quote_sequence = Beam::Sequence(20);
     initial_sequences.m_next_time_and_sale_sequence = Beam::Sequence(30);
     auto ticker = parse_ticker("TST.TSX");
-    auto entry = TickerEntry(ticker, DEFAULT_VENUES,
-      get_default_time_zone_database(), Money::ONE, initial_sequences);
+    auto entry = TickerEntry(
+      ticker, get_default_time_zone_database(), Money::ONE, initial_sequences);
     auto expected_snapshot = TickerSnapshot(ticker);
     auto bbo1 = BboQuote(make_bid(10 * Money::CENT, 100),
       make_ask(11 * Money::CENT, 200), time_from_string("2024-07-11 13:00:00"));
@@ -147,8 +147,8 @@ TEST_SUITE("TickerEntry") {
   TEST_CASE("session_candlestick") {
     auto initial_sequences = TickerEntry::InitialSequences();
     auto ticker = parse_ticker("TST.TSX");
-    auto entry = TickerEntry(ticker, DEFAULT_VENUES,
-      get_default_time_zone_database(), Money::ONE, initial_sequences);
+    auto entry = TickerEntry(
+      ticker, get_default_time_zone_database(), Money::ONE, initial_sequences);
     auto& candlestick1 = entry.get_session_candlestick();
     REQUIRE(candlestick1.get_close() == Money::ONE);
     REQUIRE(candlestick1.get_open() == Money::ONE);

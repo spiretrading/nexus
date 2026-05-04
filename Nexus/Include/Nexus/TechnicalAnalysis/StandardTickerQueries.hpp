@@ -30,22 +30,20 @@ namespace Nexus {
    * Returns a query to retrieve a Ticker's opening trade.
    * @param ticker The Ticker to query.
    * @param date The date to retrieve the opening trade for.
-   * @param venues The database containing venue time zones.
    * @param time_zones The database of timezones.
    * @return A TickerQuery that can be used to retrieve the <i>ticker</i>'s
    *         opening trade.
    */
   inline TickerQuery make_open_query(
       const Ticker& ticker, boost::posix_time::ptime date,
-      const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones) {
     auto start_of_day =
-      utc_start_of_day(ticker.get_venue(), date, venues, time_zones);
+      utc_start_of_day(ticker.get_venue(), date, time_zones);
     auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(start_of_day, Beam::decrement(Beam::Sequence::LAST));
     query.set_snapshot_limit(Beam::SnapshotLimit::from_head(1));
-    query.set_filter(venues.from(ticker.get_venue()).m_market_center ==
+    query.set_filter(VENUES.from(ticker.get_venue()).m_market_center ==
       TimeAndSaleAccessor::from_parameter(0).get_market_center());
     return query;
   }
@@ -55,15 +53,13 @@ namespace Nexus {
    * @param client The MarketDataClient to query.
    * @param ticker The Ticker to query.
    * @param date The date to retrieve the opening trade for.
-   * @param venues The database containing venue time zones.
    * @param time_zones The database of timezones.
    * @return The opening trade for the specified <i>ticker</i>.
    */
   boost::optional<TimeAndSale> load_open(IsMarketDataClient auto& client,
       const Ticker& ticker, boost::posix_time::ptime date,
-      const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones) {
-    auto query = make_open_query(ticker, date, venues, time_zones);
+    auto query = make_open_query(ticker, date, time_zones);
     auto queue = std::make_shared<Beam::Queue<TimeAndSale>>();
     client.query(query, queue);
     auto open = boost::optional<TimeAndSale>();
@@ -78,21 +74,19 @@ namespace Nexus {
    * @param client The MarketDataClient to query.
    * @param ticker The Ticker to query.
    * @param date The date to retrieve the opening trade for.
-   * @param venues The database containing venue time zones.
    * @param time_zones The database of timezones.
    * @param queue The Queue to store the opening trade in.
    */
   Beam::Routine::Id query_open(IsMarketDataClient auto& client,
       const Ticker& ticker, boost::posix_time::ptime date,
-      const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<TimeAndSale> queue) {
     return Beam::spawn([=, &client, queue = std::move(queue)] () mutable {
-      if(auto open = load_open(client, ticker, date, venues, time_zones)) {
+      if(auto open = load_open(client, ticker, date, time_zones)) {
         queue.push(*open);
         return;
       }
-      auto query = make_open_query(ticker, date, venues, time_zones);
+      auto query = make_open_query(ticker, date, time_zones);
       query.set_range(query.get_range().get_start(), Beam::Sequence::LAST);
       query.set_snapshot_limit(Beam::SnapshotLimit::from_head(1));
       auto local_queue = std::make_shared<Beam::Queue<TimeAndSale>>();
@@ -110,23 +104,20 @@ namespace Nexus {
    * @param ticker The Ticker to query.
    * @param date The date for which the previous trading session's closing trade
    *        will be retrieved.
-   * @param venues The database containing venue time zones.
    * @param time_zones The database of timezones.
    * @return A TickerQuery that can be used to retrieve the <i>ticker</i>'s
    *         previous session's closing trade.
    */
   inline TickerQuery make_previous_close_query(
       const Ticker& ticker, boost::posix_time::ptime date,
-      const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones) {
-    auto start_of_day =
-      utc_start_of_day(ticker.get_venue(), date, venues, time_zones);
+    auto start_of_day = utc_start_of_day(ticker.get_venue(), date, time_zones);
     auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(Beam::Sequence::FIRST, start_of_day);
     query.set_snapshot_limit(Beam::SnapshotLimit::from_tail(1));
-    auto market_center = venues.from(ticker.get_venue()).m_market_center;
-    query.set_filter(venues.from(ticker.get_venue()).m_market_center ==
+    auto market_center = VENUES.from(ticker.get_venue()).m_market_center;
+    query.set_filter(VENUES.from(ticker.get_venue()).m_market_center ==
       TimeAndSaleAccessor::from_parameter(0).get_market_center());
     return query;
   }
@@ -137,16 +128,15 @@ namespace Nexus {
    * @param ticker The Ticker to query.
    * @param date The date for which the previous trading session's closing trade
    *        will be retrieved.
-   * @param venues The database containing venue time zones.
    * @param time_zones The database of timezones.
    * @return The previous session's closing trade for the specified
    *         <i>ticker</i>.
    */
   boost::optional<TimeAndSale> load_previous_close(
       IsMarketDataClient auto& client, const Ticker& ticker,
-      boost::posix_time::ptime date, const VenueDatabase& venues,
+      boost::posix_time::ptime date,
       const boost::local_time::tz_database& time_zones) {
-    auto query = make_previous_close_query(ticker, date, venues, time_zones);
+    auto query = make_previous_close_query(ticker, date, time_zones);
     auto queue = std::make_shared<Beam::Queue<TimeAndSale>>();
     client.query(query, queue);
     auto previous_close = boost::optional<TimeAndSale>();
@@ -161,21 +151,19 @@ namespace Nexus {
    * @param ticker The Ticker to query.
    * @param start The day to begin the query.
    * @param end The day to end the query.
-   * @param venues The database containing venue time zones.
    * @param time_zones The database of timezones.
    * @return A Range object for the daily query.
    */
   inline Beam::Range make_daily_query_range(
       const Ticker& ticker, boost::posix_time::ptime start,
-      boost::posix_time::ptime end, const VenueDatabase& venues,
+      boost::posix_time::ptime end,
       const boost::local_time::tz_database& time_zones) {
-    auto start_of_day =
-      utc_start_of_day(ticker.get_venue(), start, venues, time_zones);
+    auto start_of_day = utc_start_of_day(ticker.get_venue(), start, time_zones);
     auto end_of_day = [&] () -> boost::posix_time::ptime {
       if(end == boost::posix_time::pos_infin) {
         return boost::posix_time::pos_infin;
       }
-      return utc_end_of_day(ticker.get_venue(), end, venues, time_zones);
+      return utc_end_of_day(ticker.get_venue(), end, time_zones);
     }();
     return Beam::Range(start_of_day, end_of_day);
   }
@@ -185,14 +173,12 @@ namespace Nexus {
    * @param ticker The Ticker to query.
    * @param start The day to begin the query.
    * @param end The day to end the query.
-   * @param venues The database containing venue time zones.
    * @param time_zones The database of timezones.
    * @param expression The expression to apply to the data.
    * @return A TickerChartingQuery configured with the specified parameters.
    */
-  inline TickerChartingQuery make_query(
-      const Ticker& ticker, boost::posix_time::ptime start,
-      boost::posix_time::ptime end, const VenueDatabase& venues,
+  inline TickerChartingQuery make_query(const Ticker& ticker,
+      boost::posix_time::ptime start, boost::posix_time::ptime end,
       const boost::local_time::tz_database& time_zones,
       const Beam::Expression& expression) {
     auto query = TickerChartingQuery();
@@ -226,8 +212,8 @@ namespace Nexus {
       return visitor.get_type();
     }();
     query.set_market_data_type(type);
-    query.set_range(make_daily_query_range(
-      query.get_index(), start, end, venues, time_zones));
+    query.set_range(
+      make_daily_query_range(query.get_index(), start, end, time_zones));
     query.set_snapshot_limit(Beam::SnapshotLimit::from_tail(1));
     query.set_update_policy(Beam::ExpressionQuery::UpdatePolicy::CHANGE);
     query.set_expression(expression);
@@ -239,20 +225,18 @@ namespace Nexus {
    * @param ticker The Ticker to query.
    * @param start The day to begin the high query.
    * @param end The day to end the high query.
-   * @param venues The database containing venue time zones.
    * @param time_zones The database of timezones.
    * @return A TickerChartingQuery that can be used to retrieve the
    *         <i>ticker</i>'s high price.
    */
-  inline TickerChartingQuery make_daily_high_query(
-      const Ticker& ticker, boost::posix_time::ptime start,
-      boost::posix_time::ptime end, const VenueDatabase& venues,
+  inline TickerChartingQuery make_daily_high_query(const Ticker& ticker,
+      boost::posix_time::ptime start, boost::posix_time::ptime end,
       const boost::local_time::tz_database& time_zones) {
     auto max = Beam::max(Beam::ParameterExpression(0, typeid(Money)),
       Beam::ParameterExpression(1, typeid(Money)));
     auto high = Beam::ReduceExpression(
       max, TimeAndSaleAccessor::from_parameter(0).get_price(), Money::ZERO);
-    return make_query(ticker, start, end, venues, time_zones, high);
+    return make_query(ticker, start, end, time_zones, high);
   }
 
   /**
@@ -261,17 +245,14 @@ namespace Nexus {
    * @param ticker The Ticker to query.
    * @param start The day to begin the high query.
    * @param end The day to end the high query.
-   * @param venues The database containing venue time zones.
    * @param time_zones The database of timezones.
    * @param queue The Queue to store the high price in.
    */
-  void query_daily_high(IsChartingClient auto& client,
-      const Ticker& ticker, boost::posix_time::ptime start,
-      boost::posix_time::ptime end, const VenueDatabase& venues,
+  void query_daily_high(IsChartingClient auto& client, const Ticker& ticker,
+      boost::posix_time::ptime start, boost::posix_time::ptime end,
       const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<Money> queue) {
-    client.query(
-      make_daily_high_query(ticker, start, end, venues, time_zones),
+    client.query(make_daily_high_query(ticker, start, end, time_zones),
       Beam::convert<QueryVariant>(std::move(queue),
         [] (const QueryVariant& value) {
           return boost::get<Money>(value);
@@ -283,21 +264,19 @@ namespace Nexus {
    * @param ticker The Ticker to query.
    * @param start The day to begin the low query.
    * @param end The day to end the low query.
-   * @param venues The database containing venue time zones.
    * @param time_zones The database of timezones.
    * @return A TickerChartingQuery that can be used to retrieve the
    *         <i>ticker</i>'s low price.
    */
-  inline TickerChartingQuery make_daily_low_query(
-      const Ticker& ticker, boost::posix_time::ptime start,
-      boost::posix_time::ptime end, const VenueDatabase& venues,
+  inline TickerChartingQuery make_daily_low_query(const Ticker& ticker,
+      boost::posix_time::ptime start, boost::posix_time::ptime end,
       const boost::local_time::tz_database& time_zones) {
     auto min = Beam::min(Beam::ParameterExpression(0, typeid(Money)),
       Beam::ParameterExpression(1, typeid(Money)));
     auto low = Beam::ReduceExpression(
       min, TimeAndSaleAccessor::from_parameter(0).get_price(),
       99999999 * Money::ONE);
-    return make_query(ticker, start, end, venues, time_zones, low);
+    return make_query(ticker, start, end, time_zones, low);
   }
 
   /**
@@ -306,16 +285,14 @@ namespace Nexus {
    * @param ticker The Ticker to query.
    * @param start The day to begin the low query.
    * @param end The day to end the low query.
-   * @param venues The database containing venue time zones.
    * @param time_zones The database of timezones.
    * @param queue The Queue to store the low price in.
    */
-  void query_daily_low(IsChartingClient auto& client,
-      const Ticker& ticker, boost::posix_time::ptime start,
-      boost::posix_time::ptime end, const VenueDatabase& venues,
+  void query_daily_low(IsChartingClient auto& client, const Ticker& ticker,
+      boost::posix_time::ptime start, boost::posix_time::ptime end,
       const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<Money> queue) {
-    client.query(make_daily_low_query(ticker, start, end, venues, time_zones),
+    client.query(make_daily_low_query(ticker, start, end, time_zones),
       Beam::convert<QueryVariant>(std::move(queue),
         [] (const QueryVariant& value) {
           return boost::get<Money>(value);
@@ -327,20 +304,18 @@ namespace Nexus {
    * @param ticker The Ticker to query.
    * @param start The day to begin the volume query.
    * @param end The day to end the volume query.
-   * @param venues The database containing venue time zones.
    * @param time_zones The database of timezones.
    * @return A TickerChartingQuery that can be used to retrieve the
    *         <i>ticker</i>'s volume.
    */
-  inline TickerChartingQuery make_daily_volume_query(
-      const Ticker& ticker, boost::posix_time::ptime start,
-      boost::posix_time::ptime end, const VenueDatabase& venues,
+  inline TickerChartingQuery make_daily_volume_query(const Ticker& ticker,
+      boost::posix_time::ptime start, boost::posix_time::ptime end,
       const boost::local_time::tz_database& time_zones) {
     auto sum = Beam::ParameterExpression(0, typeid(Quantity)) +
       Beam::ParameterExpression(1, typeid(Quantity));
     auto volume = Beam::ReduceExpression(
       sum, TimeAndSaleAccessor::from_parameter(0).get_size(), Quantity(0));
-    return make_query(ticker, start, end, venues, time_zones, volume);
+    return make_query(ticker, start, end, time_zones, volume);
   }
 
   /**
@@ -349,17 +324,14 @@ namespace Nexus {
    * @param ticker The Ticker to query.
    * @param start The day to begin the volume query.
    * @param end The day to end the volume query.
-   * @param venues The database containing venue time zones.
    * @param time_zones The database of timezones.
    * @param queue The Queue to store the volume in.
    */
   void query_daily_volume(IsChartingClient auto& client, Ticker ticker,
       boost::posix_time::ptime start, boost::posix_time::ptime end,
-      const VenueDatabase& venues,
       const boost::local_time::tz_database& time_zones,
       Beam::ScopedQueueWriter<Quantity> queue) {
-    client.query(
-      make_daily_volume_query(ticker, start, end, venues, time_zones),
+    client.query(make_daily_volume_query(ticker, start, end, time_zones),
       Beam::convert<QueryVariant>(std::move(queue),
         [] (const QueryVariant& value) {
           return boost::get<Quantity>(value);

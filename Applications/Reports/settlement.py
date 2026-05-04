@@ -21,7 +21,7 @@ def execute_report(start_date, end_date, currencies, venues, time_zones,
       account_portfolio = nexus.TrueAveragePortfolio()
       account_volumes = Counter()
       order_queue = beam.Queue()
-      nexus.query_daily_order_submissions(trader, start_date, end_date, venues,
+      nexus.query_daily_order_submissions(trader, start_date, end_date,
         time_zones, order_execution_client, order_queue)
       orders = []
       beam.flush(order_queue, orders)

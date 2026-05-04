@@ -29,7 +29,7 @@ namespace {
     Environment()
       : m_clients(std::in_place_type<TestClients>, Ref(m_environment)),
         m_userProfile("", false, false, get_default_time_zone_database(), {},
-          DEFAULT_VENUES, EntitlementDatabase(), {}, m_clients) {}
+          EntitlementDatabase(), {}, m_clients) {}
   };
 
   const auto TEST_TICKER = parse_ticker("TST.TSX");
@@ -102,8 +102,7 @@ TEST_SUITE("Translation") {
     auto orderNode =
       std::unique_ptr<CanvasNode>(std::make_unique<SingleOrderTaskNode>());
     orderNode = orderNode->Replace(SingleOrderTaskNode::TICKER_PROPERTY,
-      std::make_unique<TickerNode>(TEST_TICKER,
-      environment.m_userProfile.GetVenueDatabase()));
+      std::make_unique<TickerNode>(TEST_TICKER));
     orderNode = orderNode->Replace(SingleOrderTaskNode::QUANTITY_PROPERTY,
       std::make_unique<IntegerNode>(100));
     orderNode = orderNode->Replace(SingleOrderTaskNode::SIDE_PROPERTY,
@@ -131,8 +130,7 @@ TEST_SUITE("Translation") {
     auto orderNode =
       std::unique_ptr<CanvasNode>(std::make_unique<SingleOrderTaskNode>());
     orderNode = orderNode->Replace(SingleOrderTaskNode::TICKER_PROPERTY,
-      std::make_unique<TickerNode>(
-        TEST_TICKER, environment.m_userProfile.GetVenueDatabase()));
+      std::make_unique<TickerNode>(TEST_TICKER));
     orderNode = orderNode->Replace(SingleOrderTaskNode::QUANTITY_PROPERTY,
       std::make_unique<IntegerNode>(100));
     orderNode = orderNode->Replace(SingleOrderTaskNode::SIDE_PROPERTY,

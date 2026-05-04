@@ -93,7 +93,7 @@ namespace {
       scope += country.m_code;
       scopes->push(scope);
     }
-    for(auto& venue : DEFAULT_VENUES.get_entries()) {
+    for(auto& venue : VENUES.get_entries()) {
       auto scope = Scope(venue.m_description);
       scope += venue.m_venue;
       scopes->push(scope);

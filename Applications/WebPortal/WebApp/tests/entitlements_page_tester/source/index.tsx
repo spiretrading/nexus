@@ -130,7 +130,7 @@ class TestApp extends React.Component<{}, State> {
   })();
 
   private currencyDB = Nexus.buildCurrencyDatabase();
-  private venueDB = Nexus.buildDefaultVenueDatabase();
+  private venueDB = Nexus.buildVenueDatabase();
 }
 
 const STYLE: Record<string, React.CSSProperties> = {

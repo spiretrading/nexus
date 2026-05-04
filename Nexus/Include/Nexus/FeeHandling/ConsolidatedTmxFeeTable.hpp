@@ -114,69 +114,65 @@ namespace Nexus {
   /**
    * Parses the set of TMX interlisted tickers.
    * @param path The path to the YAML file to parse.
-   * @param venues The VenueDatabase used to parse the tickers.
    * @return The set of interlisted tickers.
    */
   inline std::unordered_set<Ticker> parse_tmx_interlisted_tickers(
-      const std::string& path, const VenueDatabase& venues) {
+      const std::string& path) {
     auto config = Beam::load_file(path);
     auto symbols = config["symbols"];
     if(!symbols) {
       boost::throw_with_location(
         std::runtime_error("Interlisted symbols not found."));
     }
-    return parse_ticker_set(symbols, venues);
+    return parse_ticker_set(symbols);
   }
 
   /**
    * Parses the set of TMX ETF tickers.
    * @param path The path to the YAML file to parse.
-   * @param venues The VenueDatabase used to parse the tickers.
    * @return The set of ETF tickers.
    */
   inline std::unordered_set<Ticker> parse_tmx_etf_tickers(
-      const std::string& path, const VenueDatabase& venues) {
+      const std::string& path) {
     auto config = Beam::load_file(path);
     auto symbols = config["symbols"];
     if(!symbols) {
       boost::throw_with_location(std::runtime_error("ETF symbols not found."));
     }
-    return parse_ticker_set(symbols, venues);
+    return parse_ticker_set(symbols);
   }
 
   /**
    * Parses the set of NEX listed tickers.
    * @param path The path to the YAML file to parse.
-   * @param venues The VenueDatabase used to parse the tickers.
    * @return The set of NEX listed tickers.
    */
   inline std::unordered_set<Ticker> parse_nex_listed_tickers(
-      const std::string& path, const VenueDatabase& venues) {
+      const std::string& path) {
     auto config = Beam::load_file(path);
     auto symbols = config["symbols"];
     if(!symbols) {
       boost::throw_with_location(std::runtime_error("NEX symbols not found."));
     }
-    return parse_ticker_set(symbols, venues);
+    return parse_ticker_set(symbols);
   }
 
   /**
    * Parses a ConsolidatedTmxFeeTable from a YAML configuration.
    * @param config The configuration to parse the ConsolidatedTmxFeeTable from.
-   * @param venues The VenueDatabase used to parse Tickers.
    * @return The ConsolidatedTmxFeeTable represented by the <i>config</i>.
    */
   inline ConsolidatedTmxFeeTable parse_consolidated_tmx_fee_table(
-      const YAML::Node& config, const VenueDatabase& venues) {
+      const YAML::Node& config) {
     auto table = ConsolidatedTmxFeeTable();
     auto etf_path = Beam::extract<std::string>(config, "etf_path");
-    table.m_etfs = parse_tmx_etf_tickers(etf_path, venues);
+    table.m_etfs = parse_tmx_etf_tickers(etf_path);
     auto interlisted_path =
       Beam::extract<std::string>(config, "interlisted_path");
     table.m_interlisted =
-      parse_tmx_interlisted_tickers(interlisted_path, venues);
+      parse_tmx_interlisted_tickers(interlisted_path);
     auto nex_path = Beam::extract<std::string>(config, "nex_path");
-    table.m_nex_listed = parse_nex_listed_tickers(nex_path, venues);
+    table.m_nex_listed = parse_nex_listed_tickers(nex_path);
     table.m_spire_fee = Beam::extract<Money>(config, "spire_fee");
     table.m_iiroc_fee = Beam::extract<Money>(config, "iiroc_fee");
     table.m_cds_fee = Beam::extract<Money>(config, "cds_fee");
@@ -311,60 +307,60 @@ namespace Nexus {
         } else {
           auto& destination = order.get_info().m_fields.m_destination;
           if(destination == Destinations::ALPHA) {
-            return DefaultVenues::XATS;
+            return Venues::XATS;
           } else if(destination == Destinations::CHIX) {
-            return DefaultVenues::CHIC;
+            return Venues::CHIC;
           } else if(destination == Destinations::CSE) {
-            return DefaultVenues::CSE;
+            return Venues::CSE;
           } else if(destination == Destinations::CSE2) {
-            return DefaultVenues::CSE2;
+            return Venues::CSE2;
           } else if(destination == Destinations::CX2) {
-            return DefaultVenues::XCX2;
+            return Venues::XCX2;
           } else if(destination == Destinations::LYNX) {
-            return DefaultVenues::LYNX;
+            return Venues::LYNX;
           } else if(destination == Destinations::MATNLP) {
-            return DefaultVenues::MATN;
+            return Venues::MATN;
           } else if(destination == Destinations::MATNMF) {
-            return DefaultVenues::MATN;
+            return Venues::MATN;
           } else if(destination == Destinations::NEOE) {
-            return DefaultVenues::NEOE;
+            return Venues::NEOE;
           } else if(destination == Destinations::OMEGA) {
-            return DefaultVenues::OMGA;
+            return Venues::OMGA;
           } else if(destination == Destinations::PURE) {
-            return DefaultVenues::PURE;
+            return Venues::PURE;
           } else if(destination == Destinations::TSX) {
-            return DefaultVenues::TSX;
+            return Venues::TSX;
           } else {
             return Venue();
           }
         }
       }();
-      if(last_market == DefaultVenues::XATS) {
+      if(last_market == Venues::XATS) {
         auto is_etf = table.m_etfs.contains(order.get_info().m_fields.m_ticker);
         return calculate_fee(table.m_xats_fee_table, is_etf, report);
-      } else if(last_market == DefaultVenues::CHIC) {
+      } else if(last_market == Venues::CHIC) {
         return calculate_fee(
           table.m_chic_fee_table, order.get_info().m_fields, report);
-      } else if(last_market == DefaultVenues::CSE) {
+      } else if(last_market == Venues::CSE) {
         auto& ticker = order.get_info().m_fields.m_ticker;
         auto listing = [&] {
           if(table.m_etfs.contains(ticker)) {
             return CseFeeTable::CseListing::ETF;
           } else if(table.m_interlisted.contains(ticker)) {
             return CseFeeTable::CseListing::INTERLISTED;
-          } else if(ticker.get_venue() == DefaultVenues::CSE) {
+          } else if(ticker.get_venue() == Venues::CSE) {
             return CseFeeTable::CseListing::CSE_LISTED;
           }
           return CseFeeTable::CseListing::DEFAULT;
         }();
         return calculate_fee(table.m_cse_fee_table, listing, report);
-      } else if(last_market == DefaultVenues::CSE2) {
+      } else if(last_market == Venues::CSE2) {
         return calculate_fee(
           table.m_cse2_fee_table, order.get_info().m_fields, report);
-      } else if(last_market == DefaultVenues::XCX2) {
+      } else if(last_market == Venues::XCX2) {
         return calculate_fee(
           table.m_xcx2_fee_table, order.get_info().m_fields, report);
-      } else if(last_market == DefaultVenues::CXD) {
+      } else if(last_market == Venues::CXD) {
         auto ticker_class = [&] {
           if(table.m_etfs.contains(order.get_info().m_fields.m_ticker)) {
             return CxdFeeTable::TickerClass::ETF;
@@ -373,10 +369,10 @@ namespace Nexus {
           }
         }();
         return calculate_fee(table.m_cxd_fee_table, ticker_class, report);
-      } else if(last_market == DefaultVenues::LYNX) {
+      } else if(last_market == Venues::LYNX) {
         return calculate_fee(
           table.m_lynx_fee_table, order.get_info().m_fields, report);
-      } else if(last_market == DefaultVenues::MATN) {
+      } else if(last_market == Venues::MATN) {
         auto classification = [&] {
           if(table.m_etfs.contains(order.get_info().m_fields.m_ticker)) {
             return MatnFeeTable::Classification::ETF;
@@ -385,7 +381,7 @@ namespace Nexus {
           }
         }();
         return calculate_fee(table.m_matn_fee_table, classification, report);
-      } else if(last_market == DefaultVenues::NEOE) {
+      } else if(last_market == Venues::NEOE) {
         auto classification = [&] {
           if(table.m_interlisted.contains(
               order.get_info().m_fields.m_ticker)) {
@@ -399,11 +395,11 @@ namespace Nexus {
         }();
         return calculate_fee(table.m_neoe_fee_table, classification,
           order.get_info().m_fields, report);
-      } else if(last_market == DefaultVenues::OMGA) {
+      } else if(last_market == Venues::OMGA) {
         auto is_etf = table.m_etfs.contains(order.get_info().m_fields.m_ticker);
         return calculate_fee(
           table.m_omga_fee_table, is_etf, order.get_info().m_fields, report);
-      } else if(last_market == DefaultVenues::PURE) {
+      } else if(last_market == Venues::PURE) {
         auto section = [&] {
           if(table.m_etfs.contains(order.get_info().m_fields.m_ticker)) {
             return PureFeeTable::Section::ETF;
@@ -415,9 +411,8 @@ namespace Nexus {
           }
         }();
         return calculate_fee(table.m_pure_fee_table, section, report);
-      } else if(last_market == DefaultVenues::TSX ||
-          last_market == DefaultVenues::TSXV) {
-        if(last_market == DefaultVenues::TSXV &&
+      } else if(last_market == Venues::TSX || last_market == Venues::TSXV) {
+        if(last_market == Venues::TSXV &&
             table.m_nex_listed.contains(order.get_info().m_fields.m_ticker)) {
           return calculate_fee(table.m_nex_fee_table, report);
         }
@@ -431,12 +426,11 @@ namespace Nexus {
             return TsxFeeTable::Classification::DEFAULT;
           }
         }();
-        if(order.get_info().m_fields.m_ticker.get_venue() ==
-            DefaultVenues::TSX) {
+        if(order.get_info().m_fields.m_ticker.get_venue() == Venues::TSX) {
           return calculate_fee(table.m_tsx_fee_table, classification,
             order.get_info().m_fields, report);
-        } else if(order.get_info().m_fields.m_ticker.get_venue() ==
-            DefaultVenues::TSXV) {
+        } else if(
+            order.get_info().m_fields.m_ticker.get_venue() == Venues::TSXV) {
           return calculate_fee(table.m_tsxv_fee_table, classification,
             order.get_info().m_fields, report);
         } else {

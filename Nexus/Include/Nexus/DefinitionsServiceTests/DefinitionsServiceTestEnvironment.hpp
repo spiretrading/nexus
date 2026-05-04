@@ -70,7 +70,7 @@ namespace Nexus::Tests {
     : m_container(Beam::init(std::move(service_locator_client),
         Beam::init("1", "Spire Trading Inc.",
           Nexus::Details::get_base_time_zone_table(), COUNTRIES, CURRENCIES,
-          DESTINATIONS, DEFAULT_VENUES, std::vector<ExchangeRate>(),
+          DESTINATIONS, VENUES, std::vector<ExchangeRate>(),
           std::vector<ComplianceRuleSchema>(), TradingSchedule())),
         &m_server_connection,
         boost::factory<std::shared_ptr<Beam::TriggerTimer>>()) {}

@@ -14,8 +14,8 @@ using namespace Nexus;
 using namespace Nexus::Countries;
 using namespace Nexus::Currencies;
 using namespace Nexus::Destinations;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   template<typename O, typename F, typename R, typename E>
@@ -113,7 +113,7 @@ TEST_SUITE("DefinitionsClient") {
 
   TEST_CASE("load_venue_database") {
     auto venues = VenueDatabase();
-    auto entry = DEFAULT_VENUES.from(ASX);
+    auto entry = VENUES.from(ASX);
     venues.add(entry);
     require_operation<TestDefinitionsClient::LoadVenueDatabaseOperation>(
       [] (auto& client) {

@@ -493,7 +493,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const TickerNode& node) {
         return;
       }
       m_editVariant = new ReplaceNodeCommand(Ref(*m_model), coordinate,
-        *node.SetValue(newValue, m_userProfile->GetVenueDatabase()));
+        *node.SetValue(newValue));
     });
   dialog.show();
   while(dialog.isVisible()) {
@@ -543,7 +543,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const TimeRangeParameterNode& node) {
 
 void OpenEditorCanvasNodeVisitor::Visit(const VenueNode& node) {
   auto editor = new QComboBox();
-  auto entries = m_userProfile->GetVenueDatabase().get_entries();
+  auto entries = VENUES.get_entries();
   for(auto i = std::size_t(0); i != entries.size(); ++i) {
     auto& entry = entries[i];
     editor->addItem(

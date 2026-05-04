@@ -82,7 +82,7 @@ namespace {
     auto nextHeight = 0;
     auto resolution = QGuiApplication::primaryScreen()->availableGeometry();
     auto defaultTickers = std::vector<Ticker>();
-    auto& venueEntry = userProfile.GetVenueDatabase().from("XTSE");
+    auto& venueEntry = VENUES.from("XTSE");
     defaultTickers.push_back(Ticker("RY", venueEntry.m_venue));
     defaultTickers.push_back(Ticker("XIU", venueEntry.m_venue));
     defaultTickers.push_back(Ticker("ABX", venueEntry.m_venue));
@@ -297,7 +297,6 @@ int main(int argc, char* argv[]) {
     isAdministrator, isManager,
     serviceClients->get_definitions_client().load_time_zone_database(),
     serviceClients->get_definitions_client().load_exchange_rates(),
-    serviceClients->get_definitions_client().load_venue_database(),
     serviceClients->get_administration_client().load_entitlements(),
     std::move(web_portal_uri), *serviceClients);
   auto loginData = JsonObject();

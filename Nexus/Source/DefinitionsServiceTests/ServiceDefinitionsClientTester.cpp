@@ -15,7 +15,7 @@ using namespace Nexus;
 using namespace Nexus::Countries;
 using namespace Nexus::Currencies;
 using namespace Nexus::Destinations;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 namespace {
   struct Fixture : ServiceClientFixture {
@@ -96,9 +96,9 @@ TEST_SUITE("ServiceDefinitionsClient") {
   TEST_CASE("load_venue_database") {
     auto fixture = Fixture();
     fixture.on_request<LoadVenueDatabaseService>([&] (auto& request) {
-      request.set(DEFAULT_VENUES);
+      request.set(VENUES);
     });
-    test_json_equality(fixture.m_client->load_venue_database(), DEFAULT_VENUES);
+    test_json_equality(fixture.m_client->load_venue_database(), VENUES);
   }
 
   TEST_CASE("load_exchange_rates") {

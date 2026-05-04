@@ -37,13 +37,12 @@ namespace {
   using ApplicationMarketDataFeedClient = SimulationMarketDataFeedClient<
     BaseMarketDataFeedClient, LiveNtpTimeClient*, LiveTimer, LiveTimer>;
 
-  std::vector<Ticker> parse_tickers(
-      const YAML::Node& config, const VenueDatabase& venues) {
+  std::vector<Ticker> parse_tickers(const YAML::Node& config) {
     return try_or_nest([&] {
       auto tickers = std::vector<Ticker>();
       for(auto& item : config) {
         auto symbol = item.as<std::string>();
-        auto ticker = parse_ticker(symbol, venues);
+        auto ticker = parse_ticker(symbol);
         if(!ticker) {
           throw_with_location(std::runtime_error("Invalid ticker: " + symbol));
         }
@@ -54,8 +53,7 @@ namespace {
   }
 
   std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>
-      build_mock_feed_clients(
-        const YAML::Node& config, const VenueDatabase& venues,
+      build_mock_feed_clients(const YAML::Node& config,
         const std::vector<IpAddress>& addresses,
         ApplicationMarketDataClient& market_data_client,
         ApplicationServiceLocatorClient& service_locator_client,
@@ -63,7 +61,7 @@ namespace {
     return try_or_nest([&] {
       auto feed_clients =
         std::vector<std::unique_ptr<ApplicationMarketDataFeedClient>>();
-      auto tickers = parse_tickers(get_node(config, "symbols"), venues);
+      auto tickers = parse_tickers(get_node(config, "symbols"));
       auto feed_count =
         std::min<int>(extract<int>(config, "feeds"), tickers.size());
       auto tickers_per_feed = tickers.size() / feed_count;
@@ -82,7 +80,7 @@ namespace {
         }
         auto application_market_data_feed =
           std::make_unique<ApplicationMarketDataFeedClient>(feed_tickers,
-            venues, market_data_client, init(init(addresses),
+            market_data_client, init(init(addresses),
               SessionAuthenticator(Ref(service_locator_client)),
               init(sampling), init(seconds(10))), &time_client,
             init(bbo_period), init(time_and_sales_period));
@@ -114,10 +112,9 @@ int main(int argc, const char** argv) {
       get<std::string>(market_data_service.get_properties().at("addresses")));
     auto market_data_client =
       ApplicationMarketDataClient(Ref(service_locator_client));
-    auto feed_clients =
-      build_mock_feed_clients(config, definitions_client.load_venue_database(),
-        market_data_addresses, market_data_client, service_locator_client,
-        *time_client);
+    auto feed_clients = build_mock_feed_clients(config,
+      market_data_addresses, market_data_client, service_locator_client,
+      *time_client);
     wait_for_kill_event();
     service_locator_client.close();
   } catch(...) {

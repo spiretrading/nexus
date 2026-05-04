@@ -10,9 +10,9 @@ const CAD = Nexus.Currencies.CAD;
 const USD = Nexus.Currencies.USD;
 const AUD = Nexus.Currencies.AUD;
 
-const TSX = Nexus.DefaultVenues.TSX;
-const NASDAQ = Nexus.DefaultVenues.NASDAQ;
-const ASX = Nexus.DefaultVenues.ASX;
+const TSX = Nexus.Venues.TSX;
+const NASDAQ = Nexus.Venues.NASDAQ;
+const ASX = Nexus.Venues.ASX;
 
 const REPORT: WebPortal.GroupProfitAndLossModel.Report = {
   totalProfitAndLoss: Nexus.Money.parse('7562.94'),

@@ -56,8 +56,7 @@ void OrderWrapperTaskNode::Initialize(string text,
   SetText(std::move(text));
   SetType(OrderReferenceType::GetInstance());
   AddChild(SingleOrderTaskNode::TICKER_PROPERTY,
-    make_unique<TickerNode>(m_order->get_info().m_fields.m_ticker,
-    userProfile.GetVenueDatabase()));
+    make_unique<TickerNode>(m_order->get_info().m_fields.m_ticker));
   AddChild(SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
     make_unique<OrderTypeNode>(m_order->get_info().m_fields.m_type));
   AddChild(SingleOrderTaskNode::SIDE_PROPERTY,

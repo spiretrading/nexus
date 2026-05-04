@@ -31,14 +31,12 @@ namespace Nexus {
       /**
        * Constructs a TickerEntry.
        * @param ticker The Ticker represented.
-       * @param venues The venues publishing market data.
        * @param time_zones The database of time zones.
        * @param close The closing price.
        * @param initial_sequences The initial Sequences to use.
        */
-      TickerEntry(Ticker ticker, VenueDatabase venues,
-        boost::local_time::tz_database time_zones, Money close,
-        const InitialSequences& initial_sequences);
+      TickerEntry(Ticker ticker, boost::local_time::tz_database time_zones,
+        Money close, const InitialSequences& initial_sequences);
 
       /** Returns the Ticker. */
       const Ticker& get_ticker() const;
@@ -99,7 +97,6 @@ namespace Nexus {
         BookQuoteEntry(const SequencedTickerBookQuote& quote, int source_id);
       };
       Ticker m_ticker;
-      VenueDatabase m_venues;
       boost::local_time::tz_database m_time_zones;
       Beam::Sequencer m_bbo_sequencer;
       Beam::Sequencer m_book_quote_sequencer;
@@ -166,17 +163,16 @@ namespace Nexus {
     : m_quote(quote),
       m_source_id(source_id) {}
 
-  inline TickerEntry::TickerEntry(Ticker ticker, VenueDatabase venues,
+  inline TickerEntry::TickerEntry(Ticker ticker,
       boost::local_time::tz_database time_zones, Money close,
       const InitialSequences& initial_sequences)
       : m_ticker(std::move(ticker)),
-        m_venues(std::move(venues)),
         m_time_zones(std::move(time_zones)),
         m_bbo_sequencer(initial_sequences.m_next_bbo_quote_sequence),
         m_book_quote_sequencer(initial_sequences.m_next_book_quote_sequence),
         m_time_and_sale_sequencer(
           initial_sequences.m_next_time_and_sale_sequence) {
-    m_market_center = m_venues.from(m_ticker.get_venue()).m_market_center;
+    m_market_center = VENUES.from(m_ticker.get_venue()).m_market_center;
     if(m_market_center.empty()) {
       m_market_center = m_ticker.get_venue().get_code().get_data();
     }
@@ -222,7 +218,7 @@ namespace Nexus {
   inline boost::optional<SequencedTickerBboQuote> TickerEntry::publish(
       const BboQuote& bbo_quote, int source_id) {
     if(m_session_reset_time == boost::posix_time::not_a_date_time) {
-      auto& venue_entry = m_venues.from(m_ticker.get_venue());
+      auto& venue_entry = VENUES.from(m_ticker.get_venue());
       if(venue_entry.m_venue) {
         auto time_zone =
           m_time_zones.time_zone_from_region(venue_entry.m_time_zone);

@@ -66,7 +66,7 @@ function parseCountry(text: string): Nexus.CountryCode {
 }
 
 function parseVenue(text: string): Nexus.Venue {
-  for(const venue of Nexus.defaultVenueDatabase) {
+  for(const venue of Nexus.venueDatabase) {
     if(text === venue.displayName.toUpperCase() ||
         text === venue.venue.toString()) {
       return venue.venue;

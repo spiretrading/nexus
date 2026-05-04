@@ -328,10 +328,8 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
     return Compare(leftVariant.value<PositionSideToken>().ToString(),
       rightVariant.value<PositionSideToken>().ToString(), left, right);
   } else if(leftVariant.canConvert<Venue>()) {
-    const VenueDatabase::Entry& leftEntry =
-      m_userProfile->GetVenueDatabase().from(leftVariant.value<Venue>());
-    const VenueDatabase::Entry& rightEntry =
-      m_userProfile->GetVenueDatabase().from(rightVariant.value<Venue>());
+    auto& leftEntry = VENUES.from(leftVariant.value<Venue>());
+    auto& rightEntry = VENUES.from(rightVariant.value<Venue>());
     return leftEntry.m_display_name < rightEntry.m_display_name;
   }
   if(leftVariant == rightVariant) {

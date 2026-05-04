@@ -38,7 +38,6 @@ namespace Nexus {
    * @param account The account to query.
    * @param start The first day to retrieve order submissions for.
    * @param end The last day to retrieve order submissions for.
-   * @param venues The database containing available venues.
    * @param time_zones The database of timezones.
    * @return An AccountQuery that can be used to retrieve the daily Order
    *         submissions for the specified <i>account</i> on the specified
@@ -46,14 +45,14 @@ namespace Nexus {
    */
   inline AccountQuery make_daily_order_submission_query(Venue venue,
       const Beam::DirectoryEntry& account, boost::posix_time::ptime start,
-      boost::posix_time::ptime end, const VenueDatabase& venues,
+      boost::posix_time::ptime end,
       const boost::local_time::tz_database& time_zones) {
-    auto venue_start = utc_start_of_day(venue, start, venues, time_zones);
+    auto venue_start = utc_start_of_day(venue, start, time_zones);
     auto venue_end = [&] {
       if(end == boost::posix_time::pos_infin) {
         return boost::posix_time::ptime(boost::posix_time::pos_infin);
       } else {
-        return utc_start_of_day(venue, end, venues, time_zones) +
+        return utc_start_of_day(venue, end, time_zones) +
           boost::gregorian::days(1);
       }
     }();
@@ -71,29 +70,28 @@ namespace Nexus {
    * @param account The account to query.
    * @param start The first day to retrieve order submissions for.
    * @param end The last day to retrieve order submissions for.
-   * @param venues The database containing available venues.
    * @param time_zones The database of timezones.
    * @param client The OrderExecutionClient to query.
    * @param queue The Queue to write to.
    */
   Beam::Routine::Id query_daily_order_submissions(
       const Beam::DirectoryEntry& account, boost::posix_time::ptime start,
-      boost::posix_time::ptime end, const VenueDatabase& venues,
+      boost::posix_time::ptime end,
       const boost::local_time::tz_database& time_zones,
       IsOrderExecutionClient auto& client,
       Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) {
     auto venue_time_zones =
       std::unordered_map<std::string, std::vector<Venue>>();
-    for(auto& venue : venues.get_entries()) {
+    for(auto& venue : VENUES.get_entries()) {
       venue_time_zones[venue.m_time_zone].push_back(venue.m_venue);
     }
     auto snapshots =
       std::vector<std::shared_ptr<Beam::Queue<SequencedOrder>>>();
     for(auto& venue_time_zone : venue_time_zones) {
       auto venue_start = utc_start_of_day(
-        venue_time_zone.second.front(), start, venues, time_zones);
-      auto venue_end = utc_start_of_day(venue_time_zone.second.front(),
-        end, venues, time_zones) + boost::gregorian::days(1);
+        venue_time_zone.second.front(), start, time_zones);
+      auto venue_end = utc_start_of_day(venue_time_zone.second.front(), end,
+        time_zones) + boost::gregorian::days(1);
       auto venue_expressions = std::vector<Beam::Expression>();
       for(auto& venue : venue_time_zone.second) {
         venue_expressions.push_back(make_venue_filter(venue));

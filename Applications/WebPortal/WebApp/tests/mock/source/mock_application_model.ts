@@ -21,7 +21,7 @@ export class MockApplicationModel extends WebPortal.ApplicationModel {
     this._dashboardModel = new WebPortal.LocalDashboardModel(
       this._loginModel.account, new Nexus.AccountRoles(0),
       new Nexus.EntitlementDatabase(), Nexus.buildCountryDatabase(),
-      Nexus.buildCurrencyDatabase(), Nexus.buildDefaultVenueDatabase(),
+      Nexus.buildCurrencyDatabase(), Nexus.buildVenueDatabase(),
       new WebPortal.LocalAccountDirectoryModel(
         new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>()),
       new WebPortal.LocalRequestsModel(
@@ -39,7 +39,7 @@ export class MockApplicationModel extends WebPortal.ApplicationModel {
     this._dashboardModel = new WebPortal.LocalDashboardModel(
       Beam.DirectoryEntry.INVALID, new Nexus.AccountRoles(0),
       new Nexus.EntitlementDatabase(), Nexus.buildCountryDatabase(),
-      Nexus.buildCurrencyDatabase(), Nexus.buildDefaultVenueDatabase(),
+      Nexus.buildCurrencyDatabase(), Nexus.buildVenueDatabase(),
       new WebPortal.LocalAccountDirectoryModel(
         new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>()),
       new WebPortal.LocalRequestsModel(

@@ -309,8 +309,7 @@ void CommitEditorCanvasNodeVisitor::Visit(const TimeInForceNode& node) {
 void CommitEditorCanvasNodeVisitor::Visit(const VenueNode& node) {
   auto previousValue = node.GetValue();
   auto comboEditor = qobject_cast<const QComboBox*>(m_editor);
-  auto& newValue = DEFAULT_VENUES.from(
-    comboEditor->currentText().toStdString());
+  auto& newValue = VENUES.from(comboEditor->currentText().toStdString());
   if(previousValue == newValue.m_venue) {
     return;
   }

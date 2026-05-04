@@ -59,7 +59,7 @@ def backup_ticker_info(source, destination):
 
 def backup(index, start, end, loader, destination):
   if isinstance(index, nexus.Ticker):
-    country = nexus.DEFAULT_VENUES.select(index.venue).country_code
+    country = nexus.VENUES.select(index.venue).country_code
     if country == nexus.countries.CA or country == nexus.countries.US:
       timezone = pytz.timezone('US/Eastern')
     elif country == nexus.countries.AU:

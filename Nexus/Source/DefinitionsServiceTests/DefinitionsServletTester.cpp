@@ -15,7 +15,7 @@ using namespace Nexus;
 using namespace Nexus::Countries;
 using namespace Nexus::Currencies;
 using namespace Nexus::Destinations;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 namespace {
   using TestServletContainer = TestServiceProtocolServletContainer<
@@ -40,8 +40,8 @@ namespace {
       m_trading_schedule = TradingSchedule(rules);
       m_servlet.emplace("1234", "Spire",
         Nexus::Details::get_base_time_zone_table(), COUNTRIES, CURRENCIES,
-        DESTINATIONS, DEFAULT_VENUES, m_exchange_rates,
-        m_compliance_rule_schemas, m_trading_schedule);
+        DESTINATIONS, VENUES, m_exchange_rates, m_compliance_rule_schemas,
+        m_trading_schedule);
       auto server_connection = std::make_shared<LocalServerConnection>();
       m_container.emplace(&*m_servlet, server_connection,
         factory<std::unique_ptr<TriggerTimer>>());
@@ -81,7 +81,7 @@ TEST_SUITE("DefinitionsServlet") {
     }
     SUBCASE("load_venue_database") {
       auto result = m_client->send_request<LoadVenueDatabaseService>();
-      REQUIRE(result.from(ASX) == DEFAULT_VENUES.from(ASX));
+      REQUIRE(result.from(ASX) == VENUES.from(ASX));
     }
     SUBCASE("load_exchange_rates") {
       auto result = m_client->send_request<LoadExchangeRatesService>();

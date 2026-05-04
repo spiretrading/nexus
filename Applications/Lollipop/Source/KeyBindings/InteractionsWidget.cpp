@@ -56,7 +56,7 @@ void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
     scope.m_scope += i->m_code;
     AddScope(scope);
   }
-  auto venues = m_userProfile->GetVenueDatabase().get_entries();
+  auto venues = VENUES.get_entries();
   for(auto i = venues.begin(); i != venues.end(); ++i) {
     ScopeEntry scope;
     scope.m_scope = Scope(i->m_display_name);

@@ -5,8 +5,8 @@
 using namespace Beam;
 using namespace Nexus;
 using namespace Nexus::Currencies;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   auto TST = parse_ticker("TST.TSXV");

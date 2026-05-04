@@ -99,15 +99,14 @@ TEST_SUITE("Currency") {
   }
 
   TEST_CASE("shuttle") {
-    test_round_trip_shuttle(CURRENCIES,
-      [] (const auto& currencies) {
-        auto expected_entries = CURRENCIES.get_entries();
-        auto entries = currencies.get_entries();
-        REQUIRE(expected_entries.size() == entries.size());
-        for(auto i = std::size_t(0); i != entries.size(); ++i) {
-          REQUIRE(expected_entries[i] == entries[i]);
-        }
-      });
+    test_round_trip_shuttle(CURRENCIES, [] (const auto& currencies) {
+      auto expected_entries = CURRENCIES.get_entries();
+      auto entries = currencies.get_entries();
+      REQUIRE(expected_entries.size() == entries.size());
+      for(auto i = std::size_t(0); i != entries.size(); ++i) {
+        REQUIRE(expected_entries[i] == entries[i]);
+      }
+    });
   }
 
   TEST_CASE("parse_currency") {

@@ -1,5 +1,4 @@
 #include "Spire/Ui/DestinationBox.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/FilteredListModel.hpp"
 #include "Spire/Spire/TransformListModel.hpp"
@@ -26,7 +25,7 @@ namespace {
       for(auto& country : scope.get_countries()) {
         auto i = std::find_if(entry.m_venues.begin(), entry.m_venues.end(),
           [&] (const auto& venue) {
-            return DEFAULT_VENUES.from(venue).m_country_code == country;
+            return VENUES.from(venue).m_country_code == country;
           });
         if(i == entry.m_venues.end()) {
           return true;

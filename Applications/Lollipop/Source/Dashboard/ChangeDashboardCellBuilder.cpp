@@ -25,7 +25,6 @@ std::unique_ptr<DashboardCell> ChangeDashboardCellBuilder::Make(
     auto& serviceClients = selfUserProfile->GetClients();
     auto close = load_previous_close(serviceClients.get_market_data_client(),
       ticker, serviceClients.get_time_client().get_time(),
-      selfUserProfile->GetVenueDatabase(),
       selfUserProfile->GetTimeZoneDatabase());
     if(!close) {
       baseQueue->close();
@@ -34,8 +33,7 @@ std::unique_ptr<DashboardCell> ChangeDashboardCellBuilder::Make(
     *closePrice = close->m_price;
     auto& marketDataClient = serviceClients.get_market_data_client();
     auto venueStartOfDay = utc_start_of_day(ticker.get_venue(),
-      serviceClients.get_time_client().get_time(),
-      selfUserProfile->GetVenueDatabase(),
+      serviceClients.get_time_client().get_time(), VENUES,
       selfUserProfile->GetTimeZoneDatabase());
     auto query = make_current_query(ticker);
     marketDataClient.query(query, baseQueue);

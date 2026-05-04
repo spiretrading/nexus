@@ -11,7 +11,7 @@ def execute_report(start_date, end_date, ticker, venue, account,
   activity_log = []
   if account is not None:
     order_queue = beam.Queue()
-    nexus.query_daily_order_submissions(account, start_date, end_date, venues,
+    nexus.query_daily_order_submissions(account, start_date, end_date,
       time_zones, order_execution_client, order_queue)
     account_orders = []
     beam.flush(order_queue, account_orders)

@@ -148,12 +148,10 @@ void Nexus::Python::export_currency(module& module) {
 }
 
 void Nexus::Python::export_currencies(module& module) {
-  module.attr("CURRENCIES") =
-    cast(CURRENCIES, return_value_policy::reference);
-  module.def("set_currencies",
-    [] (const CurrencyDatabase& database) {
-      set_currencies(database);
-    });
+  module.attr("CURRENCIES") = cast(CURRENCIES, return_value_policy::reference);
+  module.def("set_currencies", [] (const CurrencyDatabase& database) {
+    set_currencies(database);
+  });
   auto submodule = module.def_submodule("currencies");
   submodule.add_object("AUD", cast(Currencies::AUD));
   submodule.add_object("CAD", cast(Currencies::CAD));
@@ -218,8 +216,12 @@ void Nexus::Python::export_destination(module& module) {
   module.def("parse_destination_database_entry",
     overload_cast<const YAML::Node&, const VenueDatabase&>(
       &parse_destination_database_entry));
+  module.def("parse_destination_database_entry",
+    overload_cast<const YAML::Node&>(&parse_destination_database_entry));
   module.def("parse_destination_database", overload_cast<const YAML::Node&,
     const VenueDatabase&>(&parse_destination_database));
+  module.def("parse_destination_database",
+    overload_cast<const YAML::Node&>(&parse_destination_database));
 }
 
 void Nexus::Python::export_destinations(module& module) {
@@ -246,28 +248,6 @@ void Nexus::Python::export_destinations(module& module) {
   submodule.add_object("TSX", cast(Destinations::TSX));
 }
 
-void Nexus::Python::export_default_venues(module& module) {
-  module.attr("DEFAULT_VENUES") =
-    cast(DEFAULT_VENUES, return_value_policy::reference);
-  module.def("set_default_venues", &set_default_venues);
-  auto submodule = module.def_submodule("default_venues");
-  submodule.add_object("ASX", cast(DefaultVenues::ASX));
-  submodule.add_object("CXA", cast(DefaultVenues::CXA));
-  submodule.add_object("CSE", cast(DefaultVenues::CSE));
-  submodule.add_object("CSE2", cast(DefaultVenues::CSE2));
-  submodule.add_object("CHIC", cast(DefaultVenues::CHIC));
-  submodule.add_object("CXD", cast(DefaultVenues::CXD));
-  submodule.add_object("LYNX", cast(DefaultVenues::LYNX));
-  submodule.add_object("MATN", cast(DefaultVenues::MATN));
-  submodule.add_object("NEOE", cast(DefaultVenues::NEOE));
-  submodule.add_object("OMGA", cast(DefaultVenues::OMGA));
-  submodule.add_object("PURE", cast(DefaultVenues::PURE));
-  submodule.add_object("TSX", cast(DefaultVenues::TSX));
-  submodule.add_object("TSXV", cast(DefaultVenues::TSXV));
-  submodule.add_object("XATS", cast(DefaultVenues::XATS));
-  submodule.add_object("XCX2", cast(DefaultVenues::XCX2));
-}
-
 void Nexus::Python::export_definitions(module& module) {
   export_bbo_quote(module);
   export_book_quote(module);
@@ -279,7 +259,7 @@ void Nexus::Python::export_definitions(module& module) {
   export_venue(module);
   export_currencies(module);
   export_destinations(module);
-  export_default_venues(module);
+  export_venues(module);
   export_exchange_rate(module);
   export_exchange_rate_table(module);
   export_money(module);
@@ -640,7 +620,10 @@ void Nexus::Python::export_trading_schedule(module& module) {
     def_readwrite("years", &TradingSchedule::Rule::m_years).
     def_readwrite("events", &TradingSchedule::Rule::m_events);
   module.def("is_match", &is_match);
-  module.def("parse_trading_schedule", &parse_trading_schedule);
+  module.def("parse_trading_schedule", overload_cast<
+    const YAML::Node&, const VenueDatabase&>(&parse_trading_schedule));
+  module.def("parse_trading_schedule",
+    overload_cast<const YAML::Node&>(&parse_trading_schedule));
 }
 
 void Nexus::Python::export_venue(module& module) {
@@ -684,8 +667,49 @@ void Nexus::Python::export_venue(module& module) {
     const CountryDatabase&, const CurrencyDatabase&>(&parse_venue_database));
   module.def("parse_venue_database",
     overload_cast<const YAML::Node&>(&parse_venue_database));
-  module.def("utc_to_venue", &utc_to_venue);
-  module.def("venue_to_utc", &venue_to_utc);
-  module.def("utc_start_of_day", &utc_start_of_day);
-  module.def("utc_end_of_day", &utc_end_of_day);
+  module.def("utc_to_venue", overload_cast<Venue, boost::posix_time::ptime,
+    const VenueDatabase&, const boost::local_time::tz_database&>(
+      &utc_to_venue));
+  module.def("utc_to_venue", overload_cast<Venue, boost::posix_time::ptime,
+    const boost::local_time::tz_database&>(&utc_to_venue));
+  module.def("venue_to_utc", overload_cast<Venue, boost::posix_time::ptime,
+    const VenueDatabase&, const boost::local_time::tz_database&>(
+      &venue_to_utc));
+  module.def("venue_to_utc", overload_cast<Venue, boost::posix_time::ptime,
+    const boost::local_time::tz_database&>(&venue_to_utc));
+  module.def("utc_start_of_day", overload_cast<Venue,
+    boost::posix_time::ptime, const VenueDatabase&,
+    const boost::local_time::tz_database&>(&utc_start_of_day));
+  module.def("utc_start_of_day", overload_cast<Venue,
+    boost::posix_time::ptime, const boost::local_time::tz_database&>(
+      &utc_start_of_day));
+  module.def("utc_end_of_day", overload_cast<Venue,
+    boost::posix_time::ptime, const VenueDatabase&,
+    const boost::local_time::tz_database&>(&utc_end_of_day));
+  module.def("utc_end_of_day", overload_cast<Venue,
+    boost::posix_time::ptime, const boost::local_time::tz_database&>(
+      &utc_end_of_day));
+}
+
+void Nexus::Python::export_venues(module& module) {
+  module.attr("VENUES") = cast(VENUES, return_value_policy::reference);
+  module.def("set_venues", [] (const VenueDatabase& database) {
+    set_venues(database);
+  });
+  auto submodule = module.def_submodule("venues");
+  submodule.add_object("ASX", cast(Venues::ASX));
+  submodule.add_object("CXA", cast(Venues::CXA));
+  submodule.add_object("CSE", cast(Venues::CSE));
+  submodule.add_object("CSE2", cast(Venues::CSE2));
+  submodule.add_object("CHIC", cast(Venues::CHIC));
+  submodule.add_object("CXD", cast(Venues::CXD));
+  submodule.add_object("LYNX", cast(Venues::LYNX));
+  submodule.add_object("MATN", cast(Venues::MATN));
+  submodule.add_object("NEOE", cast(Venues::NEOE));
+  submodule.add_object("OMGA", cast(Venues::OMGA));
+  submodule.add_object("PURE", cast(Venues::PURE));
+  submodule.add_object("TSX", cast(Venues::TSX));
+  submodule.add_object("TSXV", cast(Venues::TSXV));
+  submodule.add_object("XATS", cast(Venues::XATS));
+  submodule.add_object("XCX2", cast(Venues::XCX2));
 }

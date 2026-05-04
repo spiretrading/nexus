@@ -461,7 +461,7 @@ QString Spire::to_text(const Ticker& ticker, const QLocale& locale) {
 }
 
 QString Spire::to_text(Venue venue, const QLocale& locale) {
-  auto& entry = DEFAULT_VENUES.from(venue);
+  auto& entry = VENUES.from(venue);
   if(entry.m_venue) {
     return QString::fromStdString(entry.m_display_name);
   }

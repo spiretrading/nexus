@@ -29,10 +29,9 @@ namespace {
         userProfile.GetClients().get_time_client().get_time();
       auto lastSequence = Beam::Sequence::FIRST;
       auto timeOfDay = userProfile.GetClients().get_time_client().get_time();
-      for(auto& venue : userProfile.GetVenueDatabase().get_entries()) {
+      for(auto& venue : VENUES.get_entries()) {
         auto snapshotQuery = make_daily_order_submission_query(venue.m_venue,
-          account, timeOfDay, timeOfDay, userProfile.GetVenueDatabase(),
-          userProfile.GetTimeZoneDatabase());
+          account, timeOfDay, timeOfDay, userProfile.GetTimeZoneDatabase());
         auto snapshotQueue = std::make_shared<Queue<SequencedOrder>>();
         userProfile.GetClients().get_order_execution_client().query(
           snapshotQuery, snapshotQueue);

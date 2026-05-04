@@ -43,7 +43,7 @@ const std::shared_ptr<InteractionsKeyBindingsModel>&
     }
     return i->second;
   } else if(scope.get_venues().size() == 1) {
-    auto& venue = DEFAULT_VENUES.from(*scope.get_venues().begin());
+    auto& venue = VENUES.from(*scope.get_venues().begin());
     auto i = m_interactions.find(venue.m_venue);
     if(i == m_interactions.end()) {
       auto interactions = std::make_shared<InteractionsKeyBindingsModel>(

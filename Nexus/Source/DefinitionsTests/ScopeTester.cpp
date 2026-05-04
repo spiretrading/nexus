@@ -6,7 +6,7 @@ using namespace Beam;
 using namespace Beam::Tests;
 using namespace Nexus;
 using namespace Nexus::Countries;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 namespace {
   void require_proper_subset(const Scope& subset, const Scope& superset) {

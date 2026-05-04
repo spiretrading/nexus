@@ -169,7 +169,7 @@ unique_ptr<SingleOrderTaskNode> Spire::MakeOrderTaskNodeFromOrderFields(
     const OrderFields& orderFields, const UserProfile& userProfile) {
   auto node = SingleOrderTaskNode().Replace(
     SingleOrderTaskNode::TICKER_PROPERTY, make_unique<TickerNode>(
-      orderFields.m_ticker, userProfile.GetVenueDatabase()))->Replace(
+      orderFields.m_ticker))->Replace(
       SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
       std::make_unique<OrderTypeNode>(orderFields.m_type))->Replace(
       SingleOrderTaskNode::SIDE_PROPERTY,

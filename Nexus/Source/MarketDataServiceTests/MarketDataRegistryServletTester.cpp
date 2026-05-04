@@ -19,8 +19,8 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   struct Fixture {
@@ -67,7 +67,7 @@ namespace {
           m_administration_environment(
             make_administration_service_test_environment(
               m_service_locator_environment)),
-          m_registry(DEFAULT_VENUES, get_default_time_zone_database()) {
+          m_registry(get_default_time_zone_database()) {
       auto servlet_account = make_account(
         "market_data_service", DirectoryEntry::STAR_DIRECTORY);
       m_administration_environment.make_administrator(servlet_account);

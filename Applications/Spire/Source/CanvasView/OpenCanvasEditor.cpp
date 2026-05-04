@@ -542,7 +542,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const TimeRangeParameterNode& node) {
 
 void OpenEditorCanvasNodeVisitor::Visit(const VenueNode& node) {
   auto editor = new QComboBox();
-  auto venues = DEFAULT_VENUES.get_entries();
+  auto venues = VENUES.get_entries();
   for(auto i = std::size_t(0); i != venues.size(); ++i) {
     auto& entry = venues[i];
     editor->addItem(

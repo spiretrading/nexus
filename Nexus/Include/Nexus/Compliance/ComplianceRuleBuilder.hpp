@@ -78,8 +78,7 @@ namespace Nexus {
       auto sub_rule = make_compliance_rule(
         sub_schema, market_data_client, definitions_client, time_client);
       return make_time_filter_compliance_rule(schema.get_parameters(),
-        definitions_client.load_time_zone_database(),
-        definitions_client.load_venue_database(), time_client,
+        definitions_client.load_time_zone_database(), time_client,
         std::move(sub_rule));
     }
     return nullptr;

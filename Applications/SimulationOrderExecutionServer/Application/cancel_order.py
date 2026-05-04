@@ -68,13 +68,11 @@ def cancel_order_by_id(service_clients, order_id, message):
   cancel_order(service_clients, order, message)
 
 def cancel_account(service_clients, account, scope, begin, end, message):
-  venue_database = \
-    service_clients.definitions_client.load_venue_database()
   time_zone_database = \
     service_clients.definitions_client.load_time_zone_database()
   queue = beam.Queue()
-  nexus.query_daily_order_submissions(account, begin, end, venue_database,
-    time_zone_database, service_clients.order_execution_client, queue)
+  nexus.query_daily_order_submissions(account, begin, end, time_zone_database,
+    service_clients.order_execution_client, queue)
   orders = []
   beam.flush(queue, orders)
   for order in orders:

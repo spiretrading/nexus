@@ -15,8 +15,8 @@ std::unique_ptr<DashboardCell> HighDashboardCellBuilder::Make(
     const DashboardCell::Value& index, Ref<UserProfile> userProfile) const {
   auto& ticker = boost::get<Ticker>(index);
   auto& serviceClients = userProfile.get()->GetClients();
-  auto query = make_daily_high_query(ticker,
-    serviceClients.get_time_client().get_time(), pos_infin, DEFAULT_VENUES,
+  auto query = make_daily_high_query(
+    ticker, serviceClients.get_time_client().get_time(), pos_infin,
     get_default_time_zone_database());
   auto baseQueue = std::make_shared<Queue<Nexus::QueryVariant>>();
   auto queue = std::static_pointer_cast<QueueReader<Money>>(

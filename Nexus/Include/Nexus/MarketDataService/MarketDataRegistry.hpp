@@ -65,10 +65,9 @@ namespace Nexus {
 
       /**
        * Constructs an empty MarketDataRegistry.
-       * @param venues The venues used to resolve primary listings.
        * @param time_zones The database of time zones.
        */
-      MarketDataRegistry(VenueDatabase venues,
+      explicit MarketDataRegistry(
         boost::local_time::tz_database time_zones) noexcept;
 
       /**
@@ -163,7 +162,6 @@ namespace Nexus {
       template<typename> friend struct std::hash;
       using SyncVenueEntry = Beam::Sync<VenueEntry, Beam::Mutex>;
       using SyncTickerEntry = Beam::Sync<TickerEntry, Beam::Mutex>;
-      VenueDatabase m_venues;
       boost::local_time::tz_database m_time_zones;
       Beam::Sync<tsl::htrie_map<char, TickerInfo>> m_ticker_database;
       Beam::SynchronizedUnorderedMap<PrimaryListingKey, Ticker>
@@ -182,9 +180,8 @@ namespace Nexus {
   };
 
   inline MarketDataRegistry::MarketDataRegistry(
-    VenueDatabase venues, boost::local_time::tz_database time_zones) noexcept
-    : m_venues(std::move(venues)),
-      m_time_zones(std::move(time_zones)) {}
+    boost::local_time::tz_database time_zones) noexcept
+    : m_time_zones(std::move(time_zones)) {}
 
   inline std::vector<TickerInfo> MarketDataRegistry::search_ticker_info(
       const std::string& prefix) const {
@@ -229,7 +226,7 @@ namespace Nexus {
     if(auto verified_ticker = m_primary_listings.try_load(venue_key)) {
       return *verified_ticker;
     }
-    auto& venue_entry = m_venues.from(ticker.get_venue());
+    auto& venue_entry = VENUES.from(ticker.get_venue());
     if(!venue_entry.m_venue) {
       return ticker;
     }
@@ -272,7 +269,7 @@ namespace Nexus {
       database[key] = info;
       database[name] = info;
     });
-    auto& venue_entry = m_venues.from(info.m_ticker.get_venue());
+    auto& venue_entry = VENUES.from(info.m_ticker.get_venue());
     if(!venue_entry.m_venue) {
       return;
     }
@@ -405,11 +402,11 @@ namespace Nexus {
           auto initial_sequences =
             load_initial_sequences(data_store, sanitized_ticker);
           auto& market_center =
-            m_venues.from(sanitized_ticker.get_venue()).m_market_center;
+            VENUES.from(sanitized_ticker.get_venue()).m_market_center;
           auto close = Details::load_close_price(
             sanitized_ticker, market_center, data_store);
-          entry.emplace(sanitized_ticker, m_venues, m_time_zones, close,
-            initial_sequences);
+          entry.emplace(
+            sanitized_ticker, m_time_zones, close, initial_sequences);
         });
     });
     return **entry;

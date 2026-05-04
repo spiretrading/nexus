@@ -6,12 +6,12 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 TEST_SUITE("VenueParser") {
   TEST_CASE("all_venues") {
     auto parser = venue_parser();
-    for(auto& entry : DEFAULT_VENUES.get_entries()) {
+    for(auto& entry : VENUES.get_entries()) {
       auto stream = to_parser_stream(entry.m_display_name);
       auto venue = Venue();
       REQUIRE(parser.read(stream, venue));
@@ -28,7 +28,7 @@ TEST_SUITE("VenueParser") {
 
   TEST_CASE("lowercase_venue") {
     auto parser = venue_parser();
-    for(auto& entry : DEFAULT_VENUES.get_entries()) {
+    for(auto& entry : VENUES.get_entries()) {
       auto display_name = entry.m_display_name;
       auto lower_display_name = std::string();
       lower_display_name.reserve(display_name.size());

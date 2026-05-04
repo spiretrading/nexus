@@ -2599,10 +2599,10 @@ namespace {
       SetupOrderTypes() {
     std::unordered_map<Venue, vector<unique_ptr<const CanvasNode>>>
       orderTypes;
-    auto& asxOrderTypes = orderTypes[DefaultVenues::ASX];
+    auto& asxOrderTypes = orderTypes[Venues::ASX];
     PopulateAsxOrders(asxOrderTypes);
     PopulateCxaOrders(asxOrderTypes);
-    auto& cseOrderTypes = orderTypes[DefaultVenues::CSE];
+    auto& cseOrderTypes = orderTypes[Venues::CSE];
     PopulateChixOrders(cseOrderTypes);
     PopulateCseOrders(cseOrderTypes);
     PopulateCse2Orders(cseOrderTypes);
@@ -2613,11 +2613,11 @@ namespace {
     PopulateNeoeOrders(cseOrderTypes);
     PopulateOmegaOrders(cseOrderTypes);
     PopulatePureOrders(cseOrderTypes);
-    auto& neoeOrderTypes = orderTypes[DefaultVenues::NEOE];
+    auto& neoeOrderTypes = orderTypes[Venues::NEOE];
     PopulateMatchNowLpOrders(neoeOrderTypes);
     PopulateMatchNowMfOrders(neoeOrderTypes);
     PopulateNeoeOrders(neoeOrderTypes);
-    auto& tsxOrderTypes = orderTypes[DefaultVenues::TSX];
+    auto& tsxOrderTypes = orderTypes[Venues::TSX];
     PopulateAlphaOrders(tsxOrderTypes);
     PopulateChixOrders(tsxOrderTypes);
     PopulateCse2Orders(tsxOrderTypes);
@@ -2629,7 +2629,7 @@ namespace {
     PopulateOmegaOrders(tsxOrderTypes);
     PopulatePureOrders(tsxOrderTypes);
     PopulateTsxOrders(tsxOrderTypes);
-    auto& tsxvOrderTypes = orderTypes[DefaultVenues::TSXV];
+    auto& tsxvOrderTypes = orderTypes[Venues::TSXV];
     PopulateAlphaOrders(tsxvOrderTypes);
     PopulateChixOrders(tsxvOrderTypes);
     PopulateCse2Orders(tsxvOrderTypes);
@@ -2654,7 +2654,7 @@ SimplifiedKeyBindingsDialog::SimplifiedKeyBindingsDialog(
   m_ui->setupUi(this);
   m_ui->m_interactionsWidget->Initialize(Ref(*m_userProfile));
   m_orderTypes = SetupOrderTypes();
-  auto entries_view = m_userProfile->GetVenueDatabase().get_entries();
+  auto entries_view = VENUES.get_entries();
   auto entries = std::vector(entries_view.begin(), entries_view.end());
   std::sort(entries.begin(), entries.end(),
     [&] (const auto& left, const auto& right) {
@@ -2917,7 +2917,7 @@ void SimplifiedKeyBindingsDialog::OnApplyButton() {
 }
 
 void SimplifiedKeyBindingsDialog::OnVenueChanged(int index) {
-  m_currentVenue = m_userProfile->GetVenueDatabase().from_display_name(
+  m_currentVenue = VENUES.from_display_name(
     m_ui->m_taskVenueComboBox->itemText(index).toStdString()).m_venue;
   PopulateTaskTable();
   PopulateCancelTable();

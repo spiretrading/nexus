@@ -17,7 +17,7 @@ ScopeQueryModel::ScopeQueryModel(Ref<UserProfile> userProfile)
   for(auto& country : COUNTRIES.get_entries()) {
     items.push_back(country.m_code);
   }
-  for(auto& venue : DEFAULT_VENUES.get_entries()) {
+  for(auto& venue : VENUES.get_entries()) {
     items.push_back(venue.m_venue);
   }
   Add(std::move(items));
@@ -66,8 +66,7 @@ QVariant ScopeQueryModel::data(const QModelIndex& index, int role) const {
         return QString::fromStdString(
           COUNTRIES.from(*country).m_three_letter_code.get_data());
       } else if(auto venue = get<Venue>(&item)) {
-        return QString::fromStdString(
-          DEFAULT_VENUES.from(*venue).m_display_name);
+        return QString::fromStdString(VENUES.from(*venue).m_display_name);
       } else if(auto info = get<TickerInfo>(&item)) {
         return displayText(info->m_ticker);
       } else if(auto scope = get<Scope>(&item)) {
@@ -78,8 +77,7 @@ QVariant ScopeQueryModel::data(const QModelIndex& index, int role) const {
       if(auto country = get<CountryCode>(&item)) {
         return QString::fromStdString(COUNTRIES.from(*country).m_name);
       } else if(auto venue = get<Venue>(&item)) {
-        return QString::fromStdString(
-          DEFAULT_VENUES.from(*venue).m_display_name);
+        return QString::fromStdString(VENUES.from(*venue).m_display_name);
       } else if(auto info = get<TickerInfo>(&item)) {
         return QString::fromStdString(info->m_name);
       } else if(auto scope = get<Scope>(&item)) {
@@ -93,8 +91,7 @@ QVariant ScopeQueryModel::data(const QModelIndex& index, int role) const {
       if(auto country = get<CountryCode>(&item)) {
         return QString();
       } else if(auto venue = get<Venue>(&item)) {
-        return QString::fromStdString(
-          DEFAULT_VENUES.from(*venue).m_description);
+        return QString::fromStdString(VENUES.from(*venue).m_description);
       } else if(auto info = get<TickerInfo>(&item)) {
         return QString::fromStdString(info->m_sector);
       } else if(auto scope = get<Scope>(&item)) {

@@ -28,22 +28,18 @@ namespace Spire {
 
       //! Constructs an OrderImbalanceIndicatorVenueSelectionWidget.
       /*!
-        \param venueDatabase The database of venues to display.
         \param model The model to update.
         \param parent The parent widget.
       */
       OrderImbalanceIndicatorVenueSelectionWidget(
-        const Nexus::VenueDatabase& venueDatabase,
         Beam::Ref<OrderImbalanceIndicatorModel> model,
         QWidget* parent = nullptr);
 
       //! Initializes this widget.
       /*!
-        \param venueDatabase The database of venues to display.
         \param model The model to update.
       */
-      void Initialize(const Nexus::VenueDatabase& venueDatabase,
-        Beam::Ref<OrderImbalanceIndicatorModel> model);
+      void Initialize(Beam::Ref<OrderImbalanceIndicatorModel> model);
 
       virtual std::unique_ptr<UI::WindowSettings> GetWindowSettings() const;
 

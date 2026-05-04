@@ -10,7 +10,7 @@ namespace Nexus::Tests {
     using namespace Beam;
     using namespace Nexus;
     using namespace Nexus::Currencies;
-    using namespace Nexus::DefaultVenues;
+    using namespace Nexus::Venues;
     auto data_store = T()();
 
     SUBCASE("load_empty_inventories") {
