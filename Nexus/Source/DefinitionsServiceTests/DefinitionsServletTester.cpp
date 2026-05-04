@@ -12,7 +12,7 @@ using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCountries;
+using namespace Nexus::Countries;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultDestinations;
 using namespace Nexus::DefaultVenues;
@@ -39,7 +39,7 @@ namespace {
         {{ASX}, {Tuesday}, {1}, {7}, {2025}, events}};
       m_trading_schedule = TradingSchedule(rules);
       m_servlet.emplace("1234", "Spire",
-        Nexus::Details::get_base_time_zone_table(), DEFAULT_COUNTRIES,
+        Nexus::Details::get_base_time_zone_table(), COUNTRIES,
         DEFAULT_CURRENCIES, DEFAULT_DESTINATIONS, DEFAULT_VENUES,
         m_exchange_rates, m_compliance_rule_schemas, m_trading_schedule);
       auto server_connection = std::make_shared<LocalServerConnection>();
@@ -65,7 +65,7 @@ TEST_SUITE("DefinitionsServlet") {
     }
     SUBCASE("load_country_database") {
       auto result = m_client->send_request<LoadCountryDatabaseService>();
-      REQUIRE(result.from(CA) == DEFAULT_COUNTRIES.from(CA));
+      REQUIRE(result.from(CA) == COUNTRIES.from(CA));
     }
     SUBCASE("load_time_zone_database") {
       auto result = m_client->send_request<LoadTimeZoneDatabaseService>();

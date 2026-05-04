@@ -31,7 +31,7 @@ namespace Nexus {
   }
 
   inline CountryDatabase DefaultDefinitionsClient::load_country_database() {
-    return DEFAULT_COUNTRIES;
+    return COUNTRIES;
   }
 
   inline boost::local_time::tz_database

@@ -890,8 +890,8 @@ namespace {
       {"TSO.ASX", "Tesoro Resources Limited"}};
     auto venues = std::vector{DefaultVenues::ASX, DefaultVenues::CXD,
       DefaultVenues::CSE, DefaultVenues::TSX, DefaultVenues::TSXV};
-    auto countries = std::vector{DefaultCountries::US, DefaultCountries::CA,
-      DefaultCountries::AU, DefaultCountries::JP, DefaultCountries::CN};
+    auto countries = std::vector{Countries::US, Countries::CA, Countries::AU,
+      Countries::JP, Countries::CN};
     auto model = std::make_shared<LocalQueryModel<Scope>>();
     for(auto& ticker_info : tickers) {
       auto ticker = parse_ticker(ticker_info.first);
@@ -911,7 +911,7 @@ namespace {
       model->add(QString::fromStdString(scope.get_name()).toLower(), scope);
     }
     for(auto& country : countries) {
-      auto scope = Scope(DEFAULT_COUNTRIES.from(country).m_name);
+      auto scope = Scope(COUNTRIES.from(country).m_name);
       scope += country;
       model->add(to_text(country).toLower(), scope);
       model->add(QString::fromStdString(scope.get_name()).toLower(), scope);
@@ -1090,8 +1090,7 @@ namespace {
     auto result = QString();
     result += "Scope{Countries{";
     for(auto& country : scope.get_countries()) {
-      result +=
-        DEFAULT_COUNTRIES.from(country).m_three_letter_code.get_data();
+      result += COUNTRIES.from(country).m_three_letter_code.get_data();
       result += " ";
     }
     result += "} Venues{";
@@ -3818,14 +3817,14 @@ UiProfile Spire::make_scope_drop_down_box_profile() {
   populate_widget_properties(properties);
   auto current_scope = define_enum<Scope>(
     {{"ASX", DefaultVenues::ASX}, {"CXD", DefaultVenues::CXD},
-     {"TSX", DefaultVenues::TSX}, {"USA", Scope(DefaultCountries::US)},
-     {"CAN", Scope(DefaultCountries::CA)}});
+     {"TSX", DefaultVenues::TSX}, {"USA", Scope(Countries::US)},
+     {"CAN", Scope(Countries::CA)}});
   properties.push_back(make_standard_enum_property("current", current_scope));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("ScopeDropDownBox", properties, [] (auto& profile) {
     auto venues = std::vector{DefaultVenues::ASX, DefaultVenues::CXD,
       DefaultVenues::TSX};
-    auto countries = std::vector{DefaultCountries::US, DefaultCountries::CA};
+    auto countries = std::vector{Countries::US, Countries::CA};
     auto scopes = std::make_shared<ArrayListModel<Scope>>();
     for(auto& venue : venues) {
       auto scope = Scope(DEFAULT_VENUES.from(venue).m_display_name);
@@ -3833,7 +3832,7 @@ UiProfile Spire::make_scope_drop_down_box_profile() {
       scopes->push(scope);
     }
     for(auto& country : countries) {
-      auto scope = Scope(DEFAULT_COUNTRIES.from(country).m_name);
+      auto scope = Scope(COUNTRIES.from(country).m_name);
       scope += country;
       scopes->push(scope);
     }
@@ -3893,8 +3892,8 @@ UiProfile Spire::make_scope_list_item_profile() {
         scope += venue.m_venue;
         return scope;
       } else {
-        auto country = DefaultCountries::US;
-        auto scope = Scope(DEFAULT_COUNTRIES.from(country).m_name);
+        auto country = Countries::US;
+        auto scope = Scope(COUNTRIES.from(country).m_name);
         scope += country;
         return scope;
       }

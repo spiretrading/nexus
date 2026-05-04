@@ -64,8 +64,8 @@ ScopeInputDialog::ScopeInputDialog(
     auto countries = std::vector(
       m_scope.get_countries().begin(), m_scope.get_countries().end());
     std::sort(countries.begin(), countries.end(), [&] (auto left, auto right) {
-      auto left_code = DEFAULT_COUNTRIES.from(left).m_two_letter_code;
-      auto right_code = DEFAULT_COUNTRIES.from(right).m_two_letter_code;
+      auto left_code = COUNTRIES.from(left).m_two_letter_code;
+      auto right_code = COUNTRIES.from(right).m_two_letter_code;
       return left_code < right_code;
     });
     for(auto& country : countries) {

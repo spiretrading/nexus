@@ -7,7 +7,6 @@
 #include <Beam/WebServices/Uri.hpp>
 #include <boost/date_time/local_time/tz_database.hpp>
 #include "Nexus/Clients/Clients.hpp"
-#include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
@@ -41,7 +40,6 @@ namespace Spire {
        * @param isAdministrator Whether the account is a system administrator.
        * @param isManager Whether the account manages at least one trading
        *        group.
-       * @param countryDatabase Stores the database of all countries.
        * @param timeZoneDatabase Stores the database of all time zones.
        * @param currencyDatabase Stores the database of all currencies.
        * @param exchangeRates The list of ExchangeRates to use.
@@ -53,8 +51,7 @@ namespace Spire {
        * @param clients The set of clients connected to Spire services.
        */
       UserProfile(const std::string& username, bool isAdministrator,
-        bool isManager, const Nexus::CountryDatabase& countryDatabase,
-        const boost::local_time::tz_database& timeZoneDatabase,
+        bool isManager, const boost::local_time::tz_database& timeZoneDatabase,
         const Nexus::CurrencyDatabase& currencyDatabase,
         const std::vector<Nexus::ExchangeRate>& exchangeRates,
         const Nexus::VenueDatabase& venueDatabase,
@@ -75,9 +72,6 @@ namespace Spire {
        * group.
        */
       bool IsManager() const;
-
-      /** Returns the CountryDatabase. */
-      const Nexus::CountryDatabase& GetCountryDatabase() const;
 
       /** Returns the time zone database. */
       const boost::local_time::tz_database& GetTimeZoneDatabase() const;
@@ -245,7 +239,6 @@ namespace Spire {
       std::string m_username;
       bool m_isAdministrator;
       bool m_isManager;
-      Nexus::CountryDatabase m_countryDatabase;
       boost::local_time::tz_database m_timeZoneDatabase;
       Nexus::CurrencyDatabase m_currencyDatabase;
       Nexus::ExchangeRateTable m_exchangeRates;

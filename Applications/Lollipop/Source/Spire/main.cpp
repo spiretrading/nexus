@@ -295,7 +295,6 @@ int main(int argc, char* argv[]) {
   auto userProfile = UserProfile(
     serviceClients->get_service_locator_client().get_account().m_name,
     isAdministrator, isManager,
-    serviceClients->get_definitions_client().load_country_database(),
     serviceClients->get_definitions_client().load_time_zone_database(),
     serviceClients->get_definitions_client().load_currency_database(),
     serviceClients->get_definitions_client().load_exchange_rates(),

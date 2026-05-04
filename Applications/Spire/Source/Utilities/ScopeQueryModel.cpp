@@ -14,7 +14,7 @@ ScopeQueryModel::ScopeQueryModel(Ref<UserProfile> userProfile)
     : m_userProfile(userProfile.get()) {
   auto items = std::vector<Item>();
   items.push_back(Scope::GLOBAL);
-  for(auto& country : DEFAULT_COUNTRIES.get_entries()) {
+  for(auto& country : COUNTRIES.get_entries()) {
     items.push_back(country.m_code);
   }
   for(auto& venue : DEFAULT_VENUES.get_entries()) {
@@ -63,8 +63,8 @@ QVariant ScopeQueryModel::data(const QModelIndex& index, int role) const {
   if(role == Qt::DisplayRole) {
     if(column == Column::SCOPE) {
       if(auto country = get<CountryCode>(&item)) {
-        return QString::fromStdString(DEFAULT_COUNTRIES.from(
-          *country).m_three_letter_code.get_data());
+        return QString::fromStdString(
+          COUNTRIES.from(*country).m_three_letter_code.get_data());
       } else if(auto venue = get<Venue>(&item)) {
         return QString::fromStdString(
           DEFAULT_VENUES.from(*venue).m_display_name);
@@ -76,8 +76,7 @@ QVariant ScopeQueryModel::data(const QModelIndex& index, int role) const {
       return QVariant();
     } else if(column == Column::NAME) {
       if(auto country = get<CountryCode>(&item)) {
-        return QString::fromStdString(
-          DEFAULT_COUNTRIES.from(*country).m_name);
+        return QString::fromStdString(COUNTRIES.from(*country).m_name);
       } else if(auto venue = get<Venue>(&item)) {
         return QString::fromStdString(
           DEFAULT_VENUES.from(*venue).m_display_name);

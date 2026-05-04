@@ -16,8 +16,7 @@ using namespace Spire::UI;
 
 namespace {
   QVariant Parse(const std::string& line, UserProfile& userProfile) {
-    if(auto country =
-        parse_country_code(line, userProfile.GetCountryDatabase())) {
+    if(auto country = parse_country_code(line)) {
       return QVariant::fromValue(country);
     } else if(auto venue = parse_venue(line, userProfile.GetVenueDatabase())) {
       return QVariant::fromValue(venue);

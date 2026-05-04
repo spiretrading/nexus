@@ -234,6 +234,18 @@ namespace Nexus {
   }
 
   /**
+   * Parses an Entry from a YAML node using the default databases.
+   * @param node The node to parse the VenueDatabase Entry from.
+   * @return The Entry represented by the <i>node</i>.
+   */
+  inline VenueDatabase::Entry parse_venue_database_entry(
+      const YAML::Node& node) {
+    extern const CountryDatabase& COUNTRIES;
+    extern const CurrencyDatabase& DEFAULT_CURRENCIES;
+    return parse_venue_database_entry(node, COUNTRIES, DEFAULT_CURRENCIES);
+  }
+
+  /**
    * Parses a VenueDatabase from a YAML node.
    * @param node The node to parse the VenueDatabase from.
    * @param country_database The CountryDatabase used to parse country codes.
@@ -251,6 +263,17 @@ namespace Nexus {
       }
       return database;
     }, std::runtime_error("Failed to parse venue database."));
+  }
+
+  /**
+   * Parses a VenueDatabase from a YAML node using the default databases.
+   * @param node The node to parse the VenueDatabase from.
+   * @return The VenueDatabase represented by the <i>node</i>.
+   */
+  inline VenueDatabase parse_venue_database(const YAML::Node& node) {
+    extern const CountryDatabase& COUNTRIES;
+    extern const CurrencyDatabase& DEFAULT_CURRENCIES;
+    return parse_venue_database(node, COUNTRIES, DEFAULT_CURRENCIES);
   }
 
   inline auto operator <<(std::ostream& out, const VenueDatabase& database) {
@@ -271,8 +294,8 @@ namespace Nexus {
     return out << venue.get_code();
   }
 
-  inline std::ostream& operator <<(std::ostream& out,
-      const VenueDatabase::Entry& entry) {
+  inline std::ostream& operator <<(
+      std::ostream& out, const VenueDatabase::Entry& entry) {
     return out << '(' << entry.m_venue << ' ' << entry.m_country_code << ' ' <<
       entry.m_market_center << ' ' << entry.m_time_zone << ' ' <<
       entry.m_currency << ' ' << entry.m_description << ' ' <<

@@ -10,7 +10,7 @@ namespace Nexus::Tests {
     using namespace Beam;
     using namespace boost;
     using namespace boost::posix_time;
-    using namespace Nexus::DefaultCountries;
+    using namespace Nexus::Countries;
     using namespace Nexus::DefaultVenues;
     auto data_store = T()();
 

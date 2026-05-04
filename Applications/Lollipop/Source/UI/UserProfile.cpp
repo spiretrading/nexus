@@ -17,8 +17,7 @@ using namespace Spire;
 using namespace Spire::UI;
 
 UserProfile::UserProfile(const std::string& username, bool isAdministrator,
-    bool isManager, const CountryDatabase& countryDatabase,
-    const tz_database& timeZoneDatabase,
+    bool isManager, const tz_database& timeZoneDatabase,
     const CurrencyDatabase& currencyDatabase,
     const std::vector<ExchangeRate>& exchangeRates,
     const VenueDatabase& venueDatabase,
@@ -28,7 +27,6 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
     : m_username(username),
       m_isAdministrator(isAdministrator),
       m_isManager(isManager),
-      m_countryDatabase(countryDatabase),
       m_timeZoneDatabase(timeZoneDatabase),
       m_currencyDatabase(currencyDatabase),
       m_venueDatabase(venueDatabase),
@@ -58,10 +56,6 @@ bool UserProfile::IsAdministrator() const {
 
 bool UserProfile::IsManager() const {
   return m_isAdministrator || m_isManager;
-}
-
-const CountryDatabase& UserProfile::GetCountryDatabase() const {
-  return m_countryDatabase;
 }
 
 const tz_database& UserProfile::GetTimeZoneDatabase() const {

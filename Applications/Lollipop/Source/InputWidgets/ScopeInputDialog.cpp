@@ -15,8 +15,7 @@ using namespace Spire::UI;
 
 namespace {
   QVariant Parse(const std::string& line, UserProfile& userProfile) {
-    if(auto country =
-        parse_country_code(line, userProfile.GetCountryDatabase())) {
+    if(auto country = parse_country_code(line)) {
       return QVariant::fromValue(country);
     } else if(auto venue = parse_venue(line, userProfile.GetVenueDatabase())) {
       return QVariant::fromValue(venue);
@@ -66,10 +65,8 @@ ScopeInputDialog::ScopeInputDialog(
     auto countries = std::vector(
       m_scope.get_countries().begin(), m_scope.get_countries().end());
     std::sort(countries.begin(), countries.end(), [&] (auto left, auto right) {
-      auto left_code =
-        m_userProfile->GetCountryDatabase().from(left).m_two_letter_code;
-      auto right_code =
-        m_userProfile->GetCountryDatabase().from(right).m_two_letter_code;
+      auto left_code = COUNTRIES.from(left).m_two_letter_code;
+      auto right_code = COUNTRIES.from(right).m_two_letter_code;
       return left_code < right_code;
     });
     for(auto& country : countries) {

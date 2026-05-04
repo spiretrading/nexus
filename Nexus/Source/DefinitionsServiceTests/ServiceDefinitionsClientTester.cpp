@@ -12,7 +12,7 @@ using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCountries;
+using namespace Nexus::Countries;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultDestinations;
 using namespace Nexus::DefaultVenues;
@@ -53,10 +53,9 @@ TEST_SUITE("ServiceDefinitionsClient") {
   TEST_CASE("load_country_database") {
     auto fixture = Fixture();
     fixture.on_request<LoadCountryDatabaseService>([&] (auto& request) {
-      request.set(DEFAULT_COUNTRIES);
+      request.set(COUNTRIES);
     });
-    test_json_equality(
-      fixture.m_client->load_country_database(), DEFAULT_COUNTRIES);
+    test_json_equality(fixture.m_client->load_country_database(), COUNTRIES);
   }
 
   TEST_CASE("load_time_zone_database") {

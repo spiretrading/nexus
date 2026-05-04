@@ -11,7 +11,7 @@ using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCountries;
+using namespace Nexus::Countries;
 using namespace Nexus::DefaultCurrencies;
 using namespace Nexus::DefaultDestinations;
 using namespace Nexus::DefaultVenues;
@@ -60,7 +60,7 @@ TEST_SUITE("DefinitionsClient") {
 
   TEST_CASE("load_country_database") {
     auto countries = CountryDatabase();
-    auto entry = DEFAULT_COUNTRIES.from(CA);
+    auto entry = COUNTRIES.from(CA);
     countries.add(entry);
     require_operation<TestDefinitionsClient::LoadCountryDatabaseOperation>(
       [] (auto& client) {

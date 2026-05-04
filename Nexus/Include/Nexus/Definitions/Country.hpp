@@ -163,8 +163,8 @@ namespace Nexus {
    * @return The CountryCode represented by the <i>source</i>.
    */
   inline CountryCode parse_country_code(std::string_view source) {
-    extern const CountryDatabase& DEFAULT_COUNTRIES;
-    return parse_country_code(source, DEFAULT_COUNTRIES);
+    extern const CountryDatabase& COUNTRIES;
+    return parse_country_code(source, COUNTRIES);
   }
 
   /**
@@ -206,11 +206,11 @@ namespace Nexus {
   }
 
   inline std::ostream& operator <<(std::ostream& out, CountryCode code) {
-    extern const CountryDatabase& DEFAULT_COUNTRIES;
+    extern const CountryDatabase& COUNTRIES;
     auto database = static_cast<const CountryDatabase*>(
       out.pword(Beam::ScopedStreamManipulator<CountryDatabase>::ID));
     if(!database) {
-      database = &DEFAULT_COUNTRIES;
+      database = &COUNTRIES;
     }
     auto& entry = database->from(code);
     if(entry.m_code) {
@@ -449,6 +449,6 @@ namespace std {
   };
 }
 
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
+#include "Nexus/Definitions/StandardCountries.hpp"
 
 #endif

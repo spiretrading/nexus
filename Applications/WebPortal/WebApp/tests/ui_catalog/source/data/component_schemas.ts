@@ -71,14 +71,14 @@ const checkbox =
 
 const countrySelect =
   new ComponentSchema('CountrySelect',
-    [new PropertySchema('value', Nexus.DefaultCountries.US,
+    [new PropertySchema('value', Nexus.Countries.US,
         CountryInput),
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     (props: any) => React.createElement(WebPortal.CountrySelect, {
       ...props,
-      countryDatabase: Nexus.defaultCountryDatabase,
+      countryDatabase: Nexus.countryDatabase,
       style: {width: '100%'}
     }));
 

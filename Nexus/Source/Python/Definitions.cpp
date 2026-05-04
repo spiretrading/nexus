@@ -93,11 +93,28 @@ void Nexus::Python::export_country(module& module) {
       "three_letter_code", &CountryDatabase::Entry::m_three_letter_code);
   export_view<const CountryDatabase::Entry>(module, "CountryDatabaseEntryView");
   module.def("parse_country_code",
-    overload_cast<std::string_view, const CountryDatabase&>(parse_country_code));
+    overload_cast<std::string_view, const CountryDatabase&>(
+      parse_country_code));
   module.def("parse_country_code",
     overload_cast<std::string_view>(parse_country_code));
   module.def("parse_country_database_entry", &parse_country_database_entry);
   module.def("parse_country_database", &parse_country_database);
+}
+
+void Nexus::Python::export_countries(module& module) {
+  module.attr("COUNTRIES") = cast(COUNTRIES, return_value_policy::reference);
+  module.def("set_countries", [] (const CountryDatabase& database) {
+    set_countries(database);
+  });
+  auto submodule = module.def_submodule("countries");
+  submodule.add_object("AU", cast(Countries::AU));
+  submodule.add_object("BR", cast(Countries::BR));
+  submodule.add_object("CA", cast(Countries::CA));
+  submodule.add_object("CN", cast(Countries::CN));
+  submodule.add_object("GB", cast(Countries::GB));
+  submodule.add_object("HK", cast(Countries::HK));
+  submodule.add_object("JP", cast(Countries::JP));
+  submodule.add_object("US", cast(Countries::US));
 }
 
 void Nexus::Python::export_currency(module& module) {
@@ -106,8 +123,7 @@ void Nexus::Python::export_currency(module& module) {
     def_property_readonly_static("NONE", [] (const object&) {
       return CurrencyId::NONE;
     });
-  auto currency_database =
-    class_<CurrencyDatabase>(module, "CurrencyDatabase").
+  auto currency_database = class_<CurrencyDatabase>(module, "CurrencyDatabase").
     def(init()).
     def(init<const CurrencyDatabase&>()).
     def_property_readonly("entries", &CurrencyDatabase::get_entries).
@@ -141,24 +157,6 @@ void Nexus::Python::export_currency_pair(module& module) {
   module.def("parse_currency_pair",
     overload_cast<std::string_view>(parse_currency_pair));
   module.def("invert", overload_cast<CurrencyPair>(invert));
-}
-
-void Nexus::Python::export_default_countries(module& module) {
-  module.attr("DEFAULT_COUNTRIES") =
-    cast(DEFAULT_COUNTRIES, return_value_policy::reference);
-  module.def("set_default_country_database",
-    [] (const CountryDatabase& database) {
-      set_default_countries(database);
-    });
-  auto submodule = module.def_submodule("default_countries");
-  submodule.add_object("AU", cast(DefaultCountries::AU));
-  submodule.add_object("BR", cast(DefaultCountries::BR));
-  submodule.add_object("CA", cast(DefaultCountries::CA));
-  submodule.add_object("CN", cast(DefaultCountries::CN));
-  submodule.add_object("GB", cast(DefaultCountries::GB));
-  submodule.add_object("HK", cast(DefaultCountries::HK));
-  submodule.add_object("JP", cast(DefaultCountries::JP));
-  submodule.add_object("US", cast(DefaultCountries::US));
 }
 
 void Nexus::Python::export_default_currencies(module& module) {
@@ -224,11 +222,11 @@ void Nexus::Python::export_definitions(module& module) {
   export_bbo_quote(module);
   export_book_quote(module);
   export_country(module);
+  export_countries(module);
   export_currency(module);
   export_currency_pair(module);
   export_destination(module);
   export_venue(module);
-  export_default_countries(module);
   export_default_currencies(module);
   export_default_destinations(module);
   export_default_venues(module);
@@ -290,8 +288,9 @@ void Nexus::Python::export_destination(module& module) {
     def_readwrite("description", &DestinationDatabase::Entry::m_description);
   export_view<const DestinationDatabase::Entry>(
     module, "DestinationDatabaseEntryView");
-  module.def("parse_destination_database_entry", overload_cast<
-    const YAML::Node&, const VenueDatabase&>(&parse_destination_database_entry));
+  module.def("parse_destination_database_entry",
+    overload_cast<const YAML::Node&, const VenueDatabase&>(
+      &parse_destination_database_entry));
   module.def("parse_destination_database", overload_cast<const YAML::Node&,
     const VenueDatabase&>(&parse_destination_database));
 }
@@ -363,7 +362,8 @@ void Nexus::Python::export_order_imbalance(module& module) {
     def_readwrite("reference_price", &OrderImbalance::m_reference_price).
     def_readwrite("timestamp", &OrderImbalance::m_timestamp);
   export_queue_suite<OrderImbalance>(module, "OrderImbalance");
-  export_queue_suite<SequencedOrderImbalance>(module, "SequencedOrderImbalance");
+  export_queue_suite<SequencedOrderImbalance>(
+    module, "SequencedOrderImbalance");
 }
 
 void Nexus::Python::export_order_status(module& module) {
@@ -670,8 +670,15 @@ void Nexus::Python::export_venue(module& module) {
   module.def("parse_venue",
     overload_cast<std::string_view, const VenueDatabase&>(&parse_venue));
   module.def("parse_venue", overload_cast<std::string_view>(&parse_venue));
-  module.def("parse_venue_database_entry", &parse_venue_database_entry);
-  module.def("parse_venue_database", &parse_venue_database);
+  module.def("parse_venue_database_entry", overload_cast<const YAML::Node&,
+    const CountryDatabase&, const CurrencyDatabase&>(
+      &parse_venue_database_entry));
+  module.def("parse_venue_database_entry",
+    overload_cast<const YAML::Node&>(&parse_venue_database_entry));
+  module.def("parse_venue_database", overload_cast<const YAML::Node&,
+    const CountryDatabase&, const CurrencyDatabase&>(&parse_venue_database));
+  module.def("parse_venue_database",
+    overload_cast<const YAML::Node&>(&parse_venue_database));
   module.def("utc_to_venue", &utc_to_venue);
   module.def("venue_to_utc", &venue_to_utc);
   module.def("utc_start_of_day", &utc_start_of_day);

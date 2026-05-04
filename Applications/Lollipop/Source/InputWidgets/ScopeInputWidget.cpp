@@ -45,15 +45,12 @@ void ScopeInputWidget::SetScope(const Scope& scope) {
     auto countries = std::vector(
       m_scope.get_countries().begin(), m_scope.get_countries().end());
     std::sort(countries.begin(), countries.end(), [&] (auto left, auto right) {
-      auto left_code =
-        m_userProfile->GetCountryDatabase().from(left).m_two_letter_code;
-      auto right_code =
-        m_userProfile->GetCountryDatabase().from(right).m_two_letter_code;
+      auto left_code = COUNTRIES.from(left).m_two_letter_code;
+      auto right_code = COUNTRIES.from(right).m_two_letter_code;
       return left_code < right_code;
     });
     for(auto& country : countries) {
-      auto code =
-        m_userProfile->GetCountryDatabase().from(country).m_two_letter_code;
+      auto code = COUNTRIES.from(country).m_two_letter_code;
       if(!text.isEmpty()) {
         text += ", ";
       }

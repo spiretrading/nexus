@@ -60,18 +60,17 @@ def backup_ticker_info(source, destination):
 def backup(index, start, end, loader, destination):
   if isinstance(index, nexus.Ticker):
     country = nexus.DEFAULT_VENUES.select(index.venue).country_code
-    if country == nexus.default_countries.CA or \
-        country == nexus.default_countries.US:
+    if country == nexus.countries.CA or country == nexus.countries.US:
       timezone = pytz.timezone('US/Eastern')
-    elif country == nexus.default_countries.AU:
+    elif country == nexus.countries.AU:
       timezone = pytz.timezone('Australia/Sydney')
-    elif country == nexus.default_countries.BR:
+    elif country == nexus.countries.BR:
       timezone = pytz.timezone('America/Sao_Paulo')
-    elif country == nexus.default_countries.CN:
+    elif country == nexus.countries.CN:
       timezone = pytz.timezone('Asia/Shanghai')
-    elif country == nexus.default_countries.HK:
+    elif country == nexus.countries.HK:
       timezone = pytz.timezone('Asia/Hong_Kong')
-    elif country == nexus.default_countries.JP:
+    elif country == nexus.countries.JP:
       timezone = pytz.timezone('Asia/Tokyo')
   else:
     timezone = pytz.timezone('US/Eastern')

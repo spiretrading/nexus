@@ -49,7 +49,7 @@ void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
   ScopeEntry globalScope;
   globalScope.m_scope = Scope::make_global("Global");
   AddScope(globalScope);
-  auto countries = m_userProfile->GetCountryDatabase().get_entries();
+  auto countries = COUNTRIES.get_entries();
   for(auto i = countries.begin(); i != countries.end(); ++i) {
     ScopeEntry scope;
     scope.m_scope = Scope(i->m_name);

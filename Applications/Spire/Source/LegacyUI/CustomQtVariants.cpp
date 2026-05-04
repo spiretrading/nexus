@@ -107,7 +107,7 @@ posix_time::ptime Spire::LegacyUI::ToPosixTime(const QDateTime& time) {
 void Spire::LegacyUI::RegisterCustomQtVariants() {}
 
 QString Spire::LegacyUI::displayText(CountryCode country) {
-  auto& entry = DEFAULT_COUNTRIES.from(country);
+  auto& entry = COUNTRIES.from(country);
   return QString::fromStdString(entry.m_three_letter_code.get_data());
 }
 

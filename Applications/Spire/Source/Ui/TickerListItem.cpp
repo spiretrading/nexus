@@ -1,5 +1,4 @@
 #include "Spire/Ui/TickerListItem.hpp"
-#include "Nexus/Definitions/DefaultCountryDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -55,7 +54,7 @@ TickerListItem::TickerListItem(TickerInfo ticker_info, QWidget* parent)
   });
   auto value_container_layout = make_hbox_layout();
   value_container_layout->addWidget(value_label);
-  auto& country_entry = DEFAULT_COUNTRIES.from(
+  auto& country_entry = COUNTRIES.from(
     DEFAULT_VENUES.from(m_ticker_info.m_ticker.get_venue()).m_country_code);
   auto country_code =
     QString(country_entry.m_three_letter_code.get_data()).toLower();

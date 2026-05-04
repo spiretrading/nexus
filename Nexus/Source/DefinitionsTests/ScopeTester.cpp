@@ -5,7 +5,7 @@
 using namespace Beam;
 using namespace Beam::Tests;
 using namespace Nexus;
-using namespace Nexus::DefaultCountries;
+using namespace Nexus::Countries;
 using namespace Nexus::DefaultVenues;
 
 namespace {

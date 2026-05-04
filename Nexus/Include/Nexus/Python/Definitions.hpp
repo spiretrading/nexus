@@ -23,6 +23,12 @@ namespace Nexus::Python {
   void export_country(pybind11::module& module);
 
   /**
+   * Exports the Countries namespace.
+   * @param module The module to export to.
+   */
+  void export_countries(pybind11::module& module);
+
+  /**
    * Exports the CurrencyDatabase class.
    * @param module The module to export to.
    */
@@ -33,12 +39,6 @@ namespace Nexus::Python {
    * @param module The module to export to.
    */
   void export_currency_pair(pybind11::module& module);
-
-  /**
-   * Exports the DefaultCountries namespace.
-   * @param module The module to export to.
-   */
-  void export_default_countries(pybind11::module& module);
 
   /**
    * Exports the DefaultCurrencies namespace.

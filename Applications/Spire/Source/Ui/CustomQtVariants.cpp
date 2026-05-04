@@ -277,7 +277,7 @@ QString Spire::to_text(posix_time::time_duration time, const QLocale& locale) {
 }
 
 QString Spire::to_text(CountryCode code, const QLocale& locale) {
-  auto& entry = DEFAULT_COUNTRIES.from(code);
+  auto& entry = COUNTRIES.from(code);
   return QString::fromStdString(entry.m_three_letter_code.get_data());
 }
 

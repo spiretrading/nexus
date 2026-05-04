@@ -60,7 +60,7 @@ namespace {
 
   auto populate_scope_query_model() {
     auto scopes = std::make_shared<LocalQueryModel<Scope>>();
-    for(auto& country : DEFAULT_COUNTRIES.get_entries()) {
+    for(auto& country : COUNTRIES.get_entries()) {
       auto scope = Scope(country.m_name);
       scope += country.m_code;
       scopes->add(to_text(country.m_code).toLower(), scope);

@@ -62,7 +62,7 @@ void InteractionsWidget::Initialize(Ref<UserProfile> userProfile) {
   auto globalScope = ScopeEntry();
   globalScope.m_scope = Scope::make_global("Global");
   Add(globalScope);
-  for(auto& country : DEFAULT_COUNTRIES.get_entries()) {
+  for(auto& country : COUNTRIES.get_entries()) {
     auto scope = ScopeEntry();
     scope.m_scope = Scope(country.m_name);
     scope.m_scope += country.m_code;

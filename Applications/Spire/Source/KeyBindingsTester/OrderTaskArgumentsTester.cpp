@@ -37,16 +37,14 @@ TEST_SUITE("OrderTaskArguments") {
     REQUIRE((!find_order_task_arguments(arguments, TD(), Qt::Key_F2)));
     REQUIRE((!find_order_task_arguments(arguments, ABX(), Qt::Key_F3)));
     REQUIRE((!find_order_task_arguments(arguments, TSX(), Qt::Key_F2)));
-    REQUIRE((!find_order_task_arguments(
-      arguments, DefaultCountries::CA, Qt::Key_F2)));
+    REQUIRE((!find_order_task_arguments(arguments, Countries::CA, Qt::Key_F2)));
     auto match_test_2 = find_order_task_arguments(arguments, TD(), Qt::Key_F3);
     REQUIRE(match_test_2.is_initialized());
     REQUIRE(match_test_2->m_key == Qt::Key_F3);
     REQUIRE((!find_order_task_arguments(arguments, ABX(), Qt::Key_F3)));
     REQUIRE((!find_order_task_arguments(arguments, TD(), Qt::Key_F2)));
     REQUIRE((!find_order_task_arguments(arguments, TSX(), Qt::Key_F3)));
-    REQUIRE((!find_order_task_arguments(
-      arguments, DefaultCountries::CA, Qt::Key_F3)));
+    REQUIRE((!find_order_task_arguments(arguments, Countries::CA, Qt::Key_F3)));
     REQUIRE((!find_order_task_arguments(arguments, ABX(), Qt::Key_F4)));
   }
 
