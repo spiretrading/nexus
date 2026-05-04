@@ -1,5 +1,4 @@
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Spire/BookView/LocalBookViewModel.hpp"
 
@@ -11,7 +10,7 @@ using namespace Spire;
 namespace {
   auto make_book_quote(std::string mpid, Money price, Quantity size,
       Side side) {
-    return BookQuote(std::move(mpid), true, DefaultVenues::TSX,
+    return BookQuote(std::move(mpid), true, Venues::TSX,
       Quote(price, size, side), time_from_string("2025-08-14 09:00:00"));
   }
 

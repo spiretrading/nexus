@@ -5,9 +5,6 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QRandomGenerator>
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
@@ -123,7 +120,7 @@ std::shared_ptr<TickerInfoQueryModel> populate_ticker_query_model() {
 BookQuote make_random_venue_quote(Side side) {
   auto random_generator =
     QRandomGenerator(to_time_t_milliseconds(microsec_clock::universal_time()));
-  auto venues = DEFAULT_VENUES.get_entries();
+  auto venues = VENUES.get_entries();
   auto venue_index = random_generator.bounded(
     static_cast<int>(venues.size()));
   auto venue_code = venues[venue_index].m_venue;
