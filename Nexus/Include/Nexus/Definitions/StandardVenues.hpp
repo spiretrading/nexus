@@ -174,10 +174,10 @@ namespace Details {
       {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("OTCM");
-        entry.m_country_code = DefaultCountries::US;
+        entry.m_country_code = Countries::US;
         entry.m_market_center = "OTCM";
         entry.m_time_zone = "America/New_York";
-        entry.m_currency = DefaultCurrencies::USD;
+        entry.m_currency = Currencies::USD;
         entry.m_description = "OTC Markets Group Inc.";
         entry.m_display_name = "OTCM";
         database.add(entry);
