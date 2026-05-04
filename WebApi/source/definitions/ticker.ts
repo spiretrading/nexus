@@ -1,5 +1,5 @@
 import * as Beam from 'beam';
-import { defaultVenueDatabase } from './default_venue_database';
+import { venueDatabase as standardVenues } from './standard_venues';
 import { Venue, VenueDatabase } from './venue';
 
 /** Identifies a financial ticker. */
@@ -21,7 +21,7 @@ export class Ticker {
     }
     const symbol = source.substring(0, seperator);
     const venueSource = new Venue(source.substring(seperator + 1));
-    const database = venueDatabase || defaultVenueDatabase;
+    const database = venueDatabase || standardVenues;
     let venue = database.fromDisplayName(venueSource.toString());
     if(venue.venue.equals(Venue.NONE)) {
       venue = database.fromVenue(venueSource);
@@ -74,7 +74,7 @@ export class Ticker {
     if(this._venue.equals(Venue.NONE) || this._symbol === '') {
       return this._symbol;
     }
-    const database = venueDatabase || defaultVenueDatabase;
+    const database = venueDatabase || standardVenues;
     const venue = database.fromVenue(this._venue);
     if(venue.venue.equals(Venue.NONE)) {
       return `${this._symbol}.${this._venue.toString()}`;

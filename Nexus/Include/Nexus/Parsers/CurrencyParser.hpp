@@ -26,7 +26,7 @@ namespace Nexus {
 
   /** Parses a CurrencyCode using the default CurrencyDatabase. */
   inline const auto& currency_parser() {
-    static const auto& parser = currency_parser(DEFAULT_CURRENCIES);
+    static const auto& parser = currency_parser(CURRENCIES);
     return parser;
   }
 }

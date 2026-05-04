@@ -24,7 +24,7 @@ function makeSchemas() {
       new Nexus.ComplianceParameter(
         'Money',
         new Nexus.ComplianceValue(
-          Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+          Nexus.ComplianceValue.Type.CURRENCY, Nexus.Currencies.CAD))
     ]));
   schemas.push(
     new Nexus.ComplianceRuleSchema('Max Payout', [
@@ -35,7 +35,7 @@ function makeSchemas() {
       new Nexus.ComplianceParameter(
         'Money',
         new Nexus.ComplianceValue(
-          Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+          Nexus.ComplianceValue.Type.CURRENCY, Nexus.Currencies.CAD))
     ]));
   schemas.push(
     new Nexus.ComplianceRuleSchema('Payout Range', [
@@ -57,7 +57,7 @@ function makeSchemas() {
       new Nexus.ComplianceParameter(
         'Money',
         new Nexus.ComplianceValue(
-          Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+          Nexus.ComplianceValue.Type.CURRENCY, Nexus.Currencies.CAD))
     ]));
   schemas.push(
     new Nexus.ComplianceRuleSchema('Some Rule', [
@@ -68,7 +68,7 @@ function makeSchemas() {
       new Nexus.ComplianceParameter(
         'Money',
         new Nexus.ComplianceValue(
-          Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD))
+          Nexus.ComplianceValue.Type.CURRENCY, Nexus.Currencies.CAD))
     ]));
   schemas.push(
     new Nexus.ComplianceRuleSchema('Timeout Period', [
@@ -86,7 +86,7 @@ function makeSchemas() {
       new Nexus.ComplianceParameter(
         'Money',
         new Nexus.ComplianceValue(
-          Nexus.ComplianceValue.Type.CURRENCY, Nexus.DefaultCurrencies.CAD)),
+          Nexus.ComplianceValue.Type.CURRENCY, Nexus.Currencies.CAD)),
       new Nexus.ComplianceParameter(
         'Some Number',
         new Nexus.ComplianceValue(
@@ -114,7 +114,7 @@ function makeEntries() {
         new Nexus.ComplianceParameter(
           'Currency',
           new Nexus.ComplianceValue(Nexus.ComplianceValue.Type.CURRENCY,
-            Nexus.DefaultCurrencies.CAD)),
+            Nexus.Currencies.CAD)),
         new Nexus.ComplianceParameter(
           'Note',
           new Nexus.ComplianceValue(
@@ -184,7 +184,7 @@ class TestApp extends React.Component<Properties, State> {
     super(props);
     const account = Beam.DirectoryEntry.makeAccount(2201, 'trader');
     const model = new WebPortal.ComplianceModel(account, makeSchemas(),
-      makeEntries(), Nexus.buildDefaultCurrencyDatabase());
+      makeEntries(), Nexus.buildCurrencyDatabase());
     this.state = {
       model,
       readonly: false

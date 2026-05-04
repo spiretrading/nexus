@@ -10,8 +10,8 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Currencies;
+using namespace Nexus::Venues;
 
 TEST_SUITE("OrderFields") {
   TEST_CASE("default_constructor") {
@@ -34,7 +34,7 @@ TEST_SUITE("OrderFields") {
     auto currency = USD;
     auto type = OrderType::LIMIT;
     auto side = Side::BID;
-    auto destination = DefaultDestinations::TSX;
+    auto destination = Destinations::TSX;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     auto time_in_force = TimeInForce::Type::FOK;
@@ -58,7 +58,7 @@ TEST_SUITE("OrderFields") {
     auto ticker = parse_ticker("TST.TSX");
     auto currency = USD;
     auto side = Side::BID;
-    auto destination = DefaultDestinations::TSX;
+    auto destination = Destinations::TSX;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     auto fields = make_limit_order_fields(
@@ -79,7 +79,7 @@ TEST_SUITE("OrderFields") {
     auto ticker = parse_ticker("TST.TSX");
     auto currency = USD;
     auto side = Side::BID;
-    auto destination = DefaultDestinations::TSX;
+    auto destination = Destinations::TSX;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     auto fields = make_limit_order_fields(
@@ -100,7 +100,7 @@ TEST_SUITE("OrderFields") {
     auto account = DirectoryEntry::make_account(123, "test");
     auto ticker = parse_ticker("TST.TSX");
     auto side = Side::BID;
-    auto destination = DefaultDestinations::TSX;
+    auto destination = Destinations::TSX;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     auto fields = make_limit_order_fields(
@@ -120,7 +120,7 @@ TEST_SUITE("OrderFields") {
   TEST_CASE("make_limit_order_fields_no_account_or_currency") {
     auto ticker = parse_ticker("TST.TSX");
     auto side = Side::BID;
-    auto destination = DefaultDestinations::TSX;
+    auto destination = Destinations::TSX;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     auto fields =
@@ -200,7 +200,7 @@ TEST_SUITE("OrderFields") {
     auto ticker = parse_ticker("TST.TSX");
     auto currency = USD;
     auto side = Side::BID;
-    auto destination = DefaultDestinations::TSX;
+    auto destination = Destinations::TSX;
     auto quantity = Quantity(100);
     auto fields = make_market_order_fields(
       account, ticker, currency, side, destination, quantity);
@@ -220,7 +220,7 @@ TEST_SUITE("OrderFields") {
     auto ticker = parse_ticker("TST.TSX");
     auto currency = USD;
     auto side = Side::BID;
-    auto destination = DefaultDestinations::TSX;
+    auto destination = Destinations::TSX;
     auto quantity = Quantity(100);
     auto fields =
       make_market_order_fields(ticker, currency, side, destination, quantity);
@@ -240,7 +240,7 @@ TEST_SUITE("OrderFields") {
     auto account = DirectoryEntry::make_account(123, "test");
     auto ticker = parse_ticker("TST.TSX");
     auto side = Side::BID;
-    auto destination = DefaultDestinations::TSX;
+    auto destination = Destinations::TSX;
     auto quantity = Quantity(100);
     auto fields =
       make_market_order_fields(account, ticker, side, destination, quantity);
@@ -259,7 +259,7 @@ TEST_SUITE("OrderFields") {
   TEST_CASE("make_market_order_fields_no_account_or_currency") {
     auto ticker = parse_ticker("TST.TSX");
     auto side = Side::BID;
-    auto destination = DefaultDestinations::TSX;
+    auto destination = Destinations::TSX;
     auto quantity = Quantity(100);
     auto fields =
       make_market_order_fields(ticker, side, destination, quantity);
@@ -333,7 +333,7 @@ TEST_SUITE("OrderFields") {
     auto ticker = parse_ticker("TST.TSX");
     auto currency = USD;
     auto side = Side::BID;
-    auto destination = DefaultDestinations::TSX;
+    auto destination = Destinations::TSX;
     auto quantity = Quantity(100);
     auto limit_price = parse_money("10.05");
     auto peg_difference = parse_money("0.03");
@@ -375,7 +375,7 @@ TEST_SUITE("OrderFields") {
     auto ticker = parse_ticker("TST.TSX");
     auto currency = USD;
     auto side = Side::ASK;
-    auto destination = DefaultDestinations::TSX;
+    auto destination = Destinations::TSX;
     auto quantity = Quantity(100);
     auto limit_price = parse_money("9.95");
     auto peg_difference = parse_money("0.03");
@@ -471,7 +471,7 @@ TEST_SUITE("OrderFields") {
     auto currency = USD;
     auto type = OrderType::LIMIT;
     auto side = Side::BID;
-    auto destination = DefaultDestinations::TSX;
+    auto destination = Destinations::TSX;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     auto time_in_force = TimeInForce::Type::FOK;

@@ -18,12 +18,9 @@ namespace Spire {
       //! Constructs an InteractionsNode.
       /*!
         \param ticker The Ticker whose interactions are represented.
-        \param venueDatabase The VenueDatabase containing the
-               <i>ticker</i>'s venue.
         \param properties The InteractionsProperties to represent.
       */
       InteractionsNode(Nexus::Ticker ticker,
-        const Nexus::VenueDatabase& venueDatabase,
         const InteractionsProperties& properties);
 
       //! Returns the InteractionsProperties represented.
@@ -43,7 +40,6 @@ namespace Spire {
       InteractionsProperties m_properties;
 
       void Setup(Nexus::Ticker ticker,
-        const Nexus::VenueDatabase& venueDatabase,
         const InteractionsProperties& properties);
       template<Beam::IsShuttle S>
       void shuttle(S& shuttle, unsigned int version);

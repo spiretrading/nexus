@@ -8,7 +8,7 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 namespace {
   auto make_order_fields() {

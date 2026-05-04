@@ -14,7 +14,7 @@
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/throw_exception.hpp>
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "TmxIpMarketDataFeedClient/TmxIpMarketDataFeedClient.hpp"
@@ -72,12 +72,11 @@ namespace {
       auto tmx_ip_config = TmxIpConfiguration();
       tmx_ip_config.m_is_logging_messages =
         extract<bool>(config, "enable_logging", false);
-      tmx_ip_config.m_time_offset =
-        -get_utc_offset(get_default_time_zone_database(), time_zone);
+      tmx_ip_config.m_time_offset = -get_utc_offset(TIME_ZONES, time_zone);
       tmx_ip_config.m_is_time_and_sale_feed =
         extract<bool>(config, "is_time_and_sale", false);
-      auto& venue = DEFAULT_VENUES.from(
-        parse_venue(extract<std::string>(config, "venue")));
+      auto& venue =
+        VENUES.from(parse_venue(extract<std::string>(config, "venue")));
       tmx_ip_config.m_venue = venue.m_venue;
       tmx_ip_config.m_country = venue.m_country_code;
       tmx_ip_config.m_use_broker_number_as_key =
@@ -88,7 +87,7 @@ namespace {
       if(auto mpidMappings = config["mpid_mappings"]) {
         tmx_ip_config.m_mpid_mappings = load_mpid_mappings(mpidMappings);
       }
-      tmx_ip_config.m_is_neo_book = venue.m_venue == DefaultVenues::NEOE;
+      tmx_ip_config.m_is_neo_book = venue.m_venue == Venues::NEOE;
       return tmx_ip_config;
     }, std::runtime_error("Failed to parse TMX IP configuration."));
   }
@@ -103,10 +102,11 @@ int main(int argc, const char** argv) {
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
       ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
     auto time_client = make_live_ntp_time_client(service_locator_client);
     auto sampling_time = extract<time_duration>(config, "sampling");
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
-      Ref(service_locator_client), sampling_time, DefaultCountries::CA);
+      Ref(service_locator_client), sampling_time, Countries::CA);
     auto host = extract<IpAddress>(config, "host");
     auto interface = extract<IpAddress>(config, "interface");
     auto options = MulticastSocketOptions();

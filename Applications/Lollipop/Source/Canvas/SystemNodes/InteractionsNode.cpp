@@ -24,14 +24,12 @@ namespace {
 }
 
 InteractionsNode::InteractionsNode() {
-  Setup(Ticker(), DEFAULT_VENUES,
-    InteractionsProperties::GetDefaultProperties());
+  Setup(Ticker(), InteractionsProperties::GetDefaultProperties());
 }
 
 InteractionsNode::InteractionsNode(Ticker ticker,
-    const VenueDatabase& venueDatabase,
     const InteractionsProperties& properties) {
-  Setup(std::move(ticker), venueDatabase, properties);
+  Setup(std::move(ticker), properties);
 }
 
 const InteractionsProperties& InteractionsNode::GetProperties() const {
@@ -80,13 +78,12 @@ unique_ptr<CanvasNode> InteractionsNode::Clone() const {
 }
 
 void InteractionsNode::Setup(Ticker ticker,
-    const VenueDatabase& venueDatabase,
     const InteractionsProperties& properties) {
   m_properties = properties;
   SetText("");
   SetType(IntegerType::GetInstance());
   unique_ptr<CanvasNode> tickerNode = std::make_unique<TickerNode>(
-    std::move(ticker), venueDatabase);
+    std::move(ticker));
   tickerNode = tickerNode->SetVisible(false);
   AddChild("ticker", std::move(tickerNode));
   auto defaultQuantityNode = LinkedNode::SetReferent(

@@ -245,7 +245,7 @@ namespace Nexus {
       if(scope.m_venues.contains(ticker.get_venue())) {
         continue;
       }
-      auto country = DEFAULT_VENUES.from(ticker.get_venue()).m_country_code;
+      auto country = VENUES.from(ticker.get_venue()).m_country_code;
       if(country && scope.m_countries.contains(country)) {
         continue;
       }
@@ -255,7 +255,7 @@ namespace Nexus {
       if(scope.m_venues.contains(venue)) {
         continue;
       }
-      auto country = DEFAULT_VENUES.from(venue).m_country_code;
+      auto country = VENUES.from(venue).m_country_code;
       if(country && scope.m_countries.contains(country)) {
         continue;
       }

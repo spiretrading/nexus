@@ -135,7 +135,7 @@ void OrderImbalanceIndicatorModel::InitializePublishers() {
   m_eventHandler.emplace();
   auto timeRange = m_properties.GetTimeRange(
     m_userProfile->GetClients().get_time_client());
-  for(auto& venue : DEFAULT_VENUES.get_entries()) {
+  for(auto& venue : VENUES.get_entries()) {
     auto orderImbalanceQuery = VenueQuery();
     orderImbalanceQuery.set_index(venue.m_venue);
     orderImbalanceQuery.set_range(timeRange);

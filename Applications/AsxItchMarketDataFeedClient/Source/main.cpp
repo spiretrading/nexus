@@ -42,8 +42,8 @@ namespace {
         extract<bool>(config, "enable_logging", false);
       asx_config.m_is_time_and_sale_feed =
         extract<bool>(config, "is_time_and_sale", false);
-      asx_config.m_venue = DEFAULT_VENUES.from_display_name(
-        extract<std::string>(config, "venue"));
+      asx_config.m_venue =
+        VENUES.from_display_name(extract<std::string>(config, "venue"));
       asx_config.m_default_mpid = extract<std::string>(config, "mpid", "");
       asx_config.m_consolidate_mpids =
         extract<bool>(config, "consolidate_mpids", false);
@@ -61,9 +61,10 @@ int main(int argc, const char** argv) {
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
       ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
     auto sampling_time = extract<time_duration>(config, "sampling");
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
-      Ref(service_locator_client), sampling_time, DefaultCountries::AU);
+      Ref(service_locator_client), sampling_time, Countries::AU);
     auto host = extract<IpAddress>(config, "host");
     auto interface = extract<IpAddress>(config, "interface");
     auto options = MulticastSocketOptions();

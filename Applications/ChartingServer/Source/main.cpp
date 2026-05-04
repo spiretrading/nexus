@@ -15,6 +15,7 @@
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/functional/factory.hpp>
 #include "Nexus/ChartingService/ChartingServlet.hpp"
+#include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Version.hpp"
 
@@ -42,6 +43,9 @@ int main(int argc, const char** argv) {
     }, std::runtime_error("Error parsing section 'server'."));
     auto service_locator_client = ApplicationServiceLocatorClient(
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
+    auto definitions_client =
+      ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
     auto market_data_client =
       ApplicationMarketDataClient(Ref(service_locator_client));
     auto charting_server = ChartingServletContainer(

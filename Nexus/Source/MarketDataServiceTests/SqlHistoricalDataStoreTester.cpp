@@ -15,7 +15,7 @@ namespace {
 
   struct Builder {
     auto operator ()() const {
-      return TestSqlHistoricalDataStore(DEFAULT_VENUES, [] {
+      return TestSqlHistoricalDataStore([] {
         return Viper::Sqlite3::Connection("file::memory:?cache=shared");
       });
     }

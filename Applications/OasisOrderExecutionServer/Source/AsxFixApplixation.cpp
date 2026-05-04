@@ -35,7 +35,7 @@ std::shared_ptr<Order> AsxFixApplication::submit(const OrderInfo& info) {
       if(info.m_fields.m_type == OrderType::STOP) {
         throw_with_location(FixOrderRejectedException("Invalid order type."));
       }
-      if(info.m_fields.m_currency != DefaultCurrencies::AUD) {
+      if(info.m_fields.m_currency != Currencies::AUD) {
         throw_with_location(FixOrderRejectedException("Invalid currency."));
       }
       new_order_single->set(FIX::Account(get_account()));
@@ -44,14 +44,14 @@ std::shared_ptr<Order> AsxFixApplication::submit(const OrderInfo& info) {
         new_order_single->getHeader().setField(
           FIX::DeliverToCompID(*deliver_to_comp_id));
       }
-      if(info.m_fields.m_ticker.get_venue() == DefaultVenues::ASX) {
+      if(info.m_fields.m_ticker.get_venue() == Venues::ASX) {
         new_order_single->set(FIX::SecurityExchange("ASX"));
       } else {
         throw_with_location(FixOrderRejectedException("Invalid venue."));
       }
-      if(info.m_fields.m_destination == DefaultDestinations::ASXT) {
+      if(info.m_fields.m_destination == Destinations::ASXT) {
         new_order_single->set(FIX::ExDestination("BESTMKT"));
-      } else if(info.m_fields.m_destination == DefaultDestinations::CXA) {
+      } else if(info.m_fields.m_destination == Destinations::CXA) {
         if(info.m_fields.m_type == OrderType::PEGGED) {
           new_order_single->set(FIX::ExDestination("CXA"));
         } else {
@@ -79,7 +79,7 @@ void AsxFixApplication::cancel(
           FIX::DeliverToCompID(*deliver_to_comp_id));
       }
       auto& fields = order->get_info().m_fields;
-      if(fields.m_ticker.get_venue() == DefaultVenues::ASX) {
+      if(fields.m_ticker.get_venue() == Venues::ASX) {
         request->set(FIX::SecurityExchange("ASX"));
       } else {
         throw_with_location(FixOrderRejectedException("Invalid venue."));
@@ -121,9 +121,9 @@ void AsxFixApplication::onMessage(
           message.get(last_mkt);
         }
         if(last_mkt == "CXA" || last_mkt == "CXAP" || last_mkt == "CXAC") {
-          update->m_last_market = DefaultDestinations::CXA;
+          update->m_last_market = Destinations::CXA;
         } else if(last_mkt == "TM") {
-          update->m_last_market = DefaultDestinations::ASXT;
+          update->m_last_market = Destinations::ASXT;
         } else {
           update->m_last_market = order->get_info().m_fields.m_destination;
         }

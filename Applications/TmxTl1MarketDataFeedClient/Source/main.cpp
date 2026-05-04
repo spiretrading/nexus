@@ -11,7 +11,7 @@
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "TmxTl1MarketDataFeedClient/TmxTl1MarketDataFeedClient.hpp"
@@ -67,12 +67,12 @@ namespace {
       auto tmx_tl1_config = TmxTl1Configuration();
       tmx_tl1_config.m_is_logging_messages =
         extract<bool>(config, "enable_logging", false);
-      auto& venue = DEFAULT_VENUES.from(
+      auto& venue = VENUES.from(
         parse_venue(extract<std::string>(config, "venue")));
       tmx_tl1_config.m_venue = venue.m_venue;
       tmx_tl1_config.m_country = venue.m_country_code;
       tmx_tl1_config.m_time_offset =
-        -get_utc_offset(get_default_time_zone_database(), time_zone);
+        -get_utc_offset(TIME_ZONES, time_zone);
       return tmx_tl1_config;
     }, std::runtime_error("Failed to parse TMX TL1 configuration."));
   }
@@ -87,10 +87,11 @@ int main(int argc, const char** argv) {
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
       ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
     auto time_client = make_live_ntp_time_client(service_locator_client);
     auto sampling_time = extract<time_duration>(config, "sampling");
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
-      Ref(service_locator_client), sampling_time, DefaultCountries::CA);
+      Ref(service_locator_client), sampling_time, Countries::CA);
     auto host = extract<IpAddress>(config, "host");
     auto interface = extract<IpAddress>(config, "interface");
     auto options = MulticastSocketOptions();

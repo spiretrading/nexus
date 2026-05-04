@@ -10,8 +10,8 @@ namespace Nexus::Tests {
     using namespace Beam;
     using namespace boost;
     using namespace boost::posix_time;
-    using namespace Nexus::DefaultCountries;
-    using namespace Nexus::DefaultVenues;
+    using namespace Nexus::Countries;
+    using namespace Nexus::Venues;
     auto data_store = T()();
 
     SUBCASE("ticker_info") {

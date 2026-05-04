@@ -570,8 +570,8 @@ function decomposeScope(scope: Nexus.Scope): ScopeItem[] {
     countries.push(country);
   }
   countries.sort((a: Nexus.CountryCode, b: Nexus.CountryCode) => {
-    const aCode = Nexus.defaultCountryDatabase.fromCode(a).twoLetterCode;
-    const bCode = Nexus.defaultCountryDatabase.fromCode(b).twoLetterCode;
+    const aCode = Nexus.countryDatabase.fromCode(a).twoLetterCode;
+    const bCode = Nexus.countryDatabase.fromCode(b).twoLetterCode;
     return aCode.localeCompare(bCode);
   });
   const venues = [];
@@ -579,8 +579,8 @@ function decomposeScope(scope: Nexus.Scope): ScopeItem[] {
     venues.push(venue);
   }
   venues.sort((a: Nexus.Venue, b: Nexus.Venue) => {
-    const aName = Nexus.defaultVenueDatabase.fromVenue(a).displayName;
-    const bName = Nexus.defaultVenueDatabase.fromVenue(b).displayName;
+    const aName = Nexus.venueDatabase.fromVenue(a).displayName;
+    const bName = Nexus.venueDatabase.fromVenue(b).displayName;
     return aName.localeCompare(bName);
   });
   const tickers = [];
@@ -607,9 +607,9 @@ function recomposeScope(members: ScopeItem[]): Nexus.Scope {
 
 function makeScopeItemText(item: ScopeItem): string {
   if(isCountryCode(item)) {
-    return Nexus.defaultCountryDatabase.fromCode(item).twoLetterCode;
+    return Nexus.countryDatabase.fromCode(item).twoLetterCode;
   } else if(isVenue(item)) {
-    return Nexus.defaultVenueDatabase.fromVenue(item).displayName;
+    return Nexus.venueDatabase.fromVenue(item).displayName;
   } else if(isTicker(item)) {
     return item.toString();
   } else {

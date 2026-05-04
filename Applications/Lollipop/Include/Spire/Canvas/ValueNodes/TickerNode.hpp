@@ -18,19 +18,15 @@ namespace Spire {
       //! Constructs a TickerNode with an initial value.
       /*!
         \param value The node's initial value.
-        \param venueDatabase The database of all available venues.
       */
-      TickerNode(const Nexus::Ticker& value,
-        const Nexus::VenueDatabase& venueDatabase);
+      TickerNode(const Nexus::Ticker& value);
 
       //! Clones this CanvasNode with a new value.
       /*!
         \param value The new value.
-        \param venueDatabase The database of all available venues.
         \return A clone of this CanvasNode with the specified <i>value</i>.
       */
-      std::unique_ptr<TickerNode> SetValue(const Nexus::Ticker& value,
-        const Nexus::VenueDatabase& venueDatabase) const;
+      std::unique_ptr<TickerNode> SetValue(const Nexus::Ticker& value) const;
 
       virtual void Apply(CanvasNodeVisitor& visitor) const;
 

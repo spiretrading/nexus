@@ -76,7 +76,6 @@ ProfitAndLossReport ReportingWebServlet::build_account_report(
     const DirectoryEntry& account, date start, date end,
     const std::atomic_bool& is_cancelled, WebPortalSession& session) {
   auto& clients = session.get_clients();
-  auto venues = clients.get_definitions_client().load_venue_database();
   auto time_zones = clients.get_definitions_client().load_time_zone_database();
   auto portfolio = Portfolio(TrueAverageBookkeeper());
   for(auto day = start; day <= end; day += days(1)) {
@@ -85,7 +84,7 @@ ProfitAndLossReport ReportingWebServlet::build_account_report(
     }
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto noon = ptime(day, hours(12));
-    query_daily_order_submissions(account, noon, noon, venues, time_zones,
+    query_daily_order_submissions(account, noon, noon, time_zones,
       clients.get_order_execution_client(), order_queue);
     auto orders = std::vector<std::shared_ptr<Order>>();
     flush(order_queue, std::back_inserter(orders));

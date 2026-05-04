@@ -230,7 +230,7 @@ namespace Nexus::Tests {
     global_entitlement.m_name = "global";
     global_entitlement.m_group_entry = global_entitlement_group;
     auto venues = std::vector<Venue>();
-    for(auto& entry : DEFAULT_VENUES.get_entries()) {
+    for(auto& entry : VENUES.get_entries()) {
       venues.push_back(entry.m_venue);
     }
     for(auto& venue : venues) {

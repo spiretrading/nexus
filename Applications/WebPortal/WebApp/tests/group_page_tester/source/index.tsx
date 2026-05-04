@@ -24,7 +24,7 @@ class GroupPageTester extends React.Component<Properties, State> {
     const group = Beam.DirectoryEntry.makeAccount(124, 'Group_name_goes_here');
     this.groupModel = new LocalGroupModel(
       group, [],
-      new ComplianceModel(group, [], [], Nexus.buildDefaultCurrencyDatabase()));
+      new ComplianceModel(group, [], [], Nexus.buildCurrencyDatabase()));
   }
 
   public async componentDidMount(): Promise<void> {

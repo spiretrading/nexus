@@ -87,6 +87,7 @@ int main(int argc, const char** argv) {
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
       ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
     auto administration_client =
       ApplicationAdministrationClient(Ref(service_locator_client));
     auto countries = definitions_client.load_country_database();
@@ -112,16 +113,14 @@ int main(int argc, const char** argv) {
     auto mysql_config = try_or_nest([&] {
       return MySqlConfig::parse(get_node(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
-    auto venues = definitions_client.load_venue_database();
-    auto historical_data_store = DataStore(venues, [=] {
+    auto historical_data_store = DataStore([=] {
       return SqlConnection(MySql::Connection(mysql_config.m_address.get_host(),
         mysql_config.m_address.get_port(), mysql_config.m_username,
         mysql_config.m_password, mysql_config.m_schema));
     });
     auto async_data_store = AsyncHistoricalDataStore(&historical_data_store);
     auto cache_block_size = extract<int>(config, "cache_block_size", 1000);
-    auto time_zone_database = definitions_client.load_time_zone_database();
-    auto market_data_registry = MarketDataRegistry(venues, time_zone_database);
+    auto market_data_registry = MarketDataRegistry();
     auto base_registry_servlet = BaseRegistryServlet(&administration_client,
       &market_data_registry, init(&async_data_store, cache_block_size));
     auto registry_server = RegistryServletContainer(

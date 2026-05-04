@@ -49,7 +49,7 @@ namespace {
   }
 
   auto to_three_letter_code(CountryCode code) {
-    auto& entry = DEFAULT_COUNTRIES.from(code);
+    auto& entry = COUNTRIES.from(code);
     return entry.m_three_letter_code.get_data();
   }
 }

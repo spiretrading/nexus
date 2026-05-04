@@ -1,6 +1,5 @@
 #include "OasisOrderExecutionServer/SerenityFixApplication.hpp"
 #include <quickfix/Session.h>
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 
 using namespace boost;
 using namespace boost::posix_time;
@@ -100,7 +99,7 @@ std::shared_ptr<Order> SerenityFixApplication::submit(const OrderInfo& info) {
     }
     return &*modified_info;
   }();
-  if(submission_info->m_fields.m_ticker.get_venue() == DefaultVenues::OTCM) {
+  if(submission_info->m_fields.m_ticker.get_venue() == Venues::OTCM) {
     return submit_to_us(*submission_info);
   } else {
     return submit_to_ca(*submission_info);
@@ -149,7 +148,7 @@ void SerenityFixApplication::onMessage(
     [=, this] (
         const std::shared_ptr<Order>& order, Out<ExecutionReport> update) {
       auto venue = order->get_info().m_fields.m_ticker.get_venue();
-      if(venue == DefaultVenues::OTCM) {
+      if(venue == Venues::OTCM) {
         on_us_message(*order, message, out(update));
       } else {
         on_ca_message(*order, message, out(update));
@@ -450,9 +449,9 @@ void SerenityFixApplication::route_to_chix(
   if(!has_destination) {
     if(info.m_fields.m_type == OrderType::PEGGED) {
       auto destination = [&] {
-        if(info.m_fields.m_destination == DefaultDestinations::CHIX) {
+        if(info.m_fields.m_destination == Destinations::CHIX) {
           return FIX::ExDestination("CHIX");
-        } else if(info.m_fields.m_destination == DefaultDestinations::CX2) {
+        } else if(info.m_fields.m_destination == Destinations::CX2) {
           return FIX::ExDestination("XCX2");
         } else {
           throw_with_location(
@@ -462,9 +461,9 @@ void SerenityFixApplication::route_to_chix(
       new_order_single->getHeader().setField(destination);
     } else {
       auto destination = [&] {
-        if(info.m_fields.m_destination == DefaultDestinations::CHIX) {
+        if(info.m_fields.m_destination == Destinations::CHIX) {
           return FIX::ExDestination("CX01");
-        } else if(info.m_fields.m_destination == DefaultDestinations::CX2) {
+        } else if(info.m_fields.m_destination == Destinations::CX2) {
           return FIX::ExDestination("CX05");
         } else {
           throw_with_location(
@@ -586,7 +585,7 @@ void SerenityFixApplication::route_to_tsx(
   }
   if(!has_destination) {
     auto destination = [&] {
-      if(info.m_fields.m_ticker.get_venue() == DefaultVenues::TSXV) {
+      if(info.m_fields.m_ticker.get_venue() == Venues::TSXV) {
         return FIX::ExDestination("TSXV");
       }
       return FIX::ExDestination("XTSX");

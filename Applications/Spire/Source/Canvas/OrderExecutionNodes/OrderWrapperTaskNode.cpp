@@ -73,7 +73,7 @@ void OrderWrapperTaskNode::Initialize(string text,
   AddChild(SingleOrderTaskNode::QUANTITY_PROPERTY, std::move(quantityNode));
   AddChild(SingleOrderTaskNode::CURRENCY_PROPERTY,
     std::make_unique<CurrencyNode>(m_order->get_info().m_fields.m_currency,
-    DEFAULT_CURRENCIES.from(
+    CURRENCIES.from(
       m_order->get_info().m_fields.m_currency).m_code.get_data()));
   AddChild(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
     std::make_unique<TimeInForceNode>(

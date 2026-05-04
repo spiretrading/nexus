@@ -36,8 +36,8 @@ namespace {
       entry.m_inventory.m_position.m_ticker,
       entry.m_inventory.m_position.m_currency,
       get_opposite(get_side(entry.m_inventory.m_position)),
-      DEFAULT_DESTINATIONS.get_preferred_destination(
-      entry.m_inventory.m_position.m_ticker.get_venue()).m_id,
+      DESTINATIONS.get_preferred_destination(
+        entry.m_inventory.m_position.m_ticker.get_venue()).m_id,
       abs(entry.m_inventory.m_position.m_quantity));
     auto orderNode = MakeOrderTaskNodeFromOrderFields(orderFields, userProfile);
     auto& taskEntry = blotter.GetTasksModel().Add(*orderNode);

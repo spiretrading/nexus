@@ -105,8 +105,8 @@ TEST_SUITE("Country") {
   }
 
   TEST_CASE("shuttle") {
-    test_round_trip_shuttle(DEFAULT_COUNTRIES, [] (const auto& countries) {
-      auto expected_entries = DEFAULT_COUNTRIES.get_entries();
+    test_round_trip_shuttle(COUNTRIES, [] (const auto& countries) {
+      auto expected_entries = COUNTRIES.get_entries();
       auto entries = countries.get_entries();
       REQUIRE(expected_entries.size() == entries.size());
       for(auto i = std::size_t(0); i != entries.size(); ++i) {

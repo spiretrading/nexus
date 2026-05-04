@@ -38,10 +38,10 @@ namespace {
       chia_config.m_is_logging_messages =
         extract<bool>(config, "enable_logging", false);
       auto primary_venue_entry =
-        DEFAULT_VENUES.from_display_name(extract<std::string>(config, "venue"));
+        VENUES.from_display_name(extract<std::string>(config, "venue"));
       chia_config.m_country = primary_venue_entry.m_country_code;
       chia_config.m_primary_venue = primary_venue_entry.m_venue;
-      auto disseminating_venue_entry = DEFAULT_VENUES.from_display_name(
+      auto disseminating_venue_entry = VENUES.from_display_name(
         extract<std::string>(config, "disseminating_venue"));
       chia_config.m_disseminating_venue = disseminating_venue_entry.m_venue;
       chia_config.m_mpid = extract<std::string>(
@@ -62,9 +62,10 @@ int main(int argc, const char** argv) {
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
       ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
     auto sampling_time = extract<time_duration>(config, "sampling");
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
-      Ref(service_locator_client), sampling_time, DefaultCountries::AU);
+      Ref(service_locator_client), sampling_time, Countries::AU);
     auto host = extract<IpAddress>(config, "host");
     auto interface = extract<IpAddress>(config, "interface");
     auto options = MulticastSocketOptions();

@@ -10,8 +10,7 @@ using namespace Nexus;
 TEST_SUITE("CurrencyPair") {
   TEST_CASE("parse_currency_pair") {
     auto pair = parse_currency_pair("JPY/AUD");
-    REQUIRE(
-      pair == CurrencyPair(DefaultCurrencies::JPY, DefaultCurrencies::AUD));
+    REQUIRE(pair == CurrencyPair(Currencies::JPY, Currencies::AUD));
   }
 
   TEST_CASE("parse_currency_pair_no_separator") {
@@ -33,7 +32,7 @@ TEST_SUITE("CurrencyPair") {
   }
 
   TEST_CASE("stream") {
-    auto pair = CurrencyPair(DefaultCurrencies::CAD, DefaultCurrencies::USD);
+    auto pair = CurrencyPair(Currencies::CAD, Currencies::USD);
     REQUIRE(to_string(pair) == "CAD/USD");
     test_round_trip_shuttle(pair);
   }

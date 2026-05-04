@@ -56,8 +56,7 @@ void OrderWrapperTaskNode::Initialize(string text,
   SetText(std::move(text));
   SetType(OrderReferenceType::GetInstance());
   AddChild(SingleOrderTaskNode::TICKER_PROPERTY,
-    make_unique<TickerNode>(m_order->get_info().m_fields.m_ticker,
-    userProfile.GetVenueDatabase()));
+    make_unique<TickerNode>(m_order->get_info().m_fields.m_ticker));
   AddChild(SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
     make_unique<OrderTypeNode>(m_order->get_info().m_fields.m_type));
   AddChild(SingleOrderTaskNode::SIDE_PROPERTY,
@@ -74,8 +73,8 @@ void OrderWrapperTaskNode::Initialize(string text,
   AddChild(SingleOrderTaskNode::QUANTITY_PROPERTY, std::move(quantityNode));
   AddChild(SingleOrderTaskNode::CURRENCY_PROPERTY,
     make_unique<CurrencyNode>(m_order->get_info().m_fields.m_currency,
-    userProfile.GetCurrencyDatabase().from(
-    m_order->get_info().m_fields.m_currency).m_code.get_data()));
+    CURRENCIES.from(
+      m_order->get_info().m_fields.m_currency).m_code.get_data()));
   AddChild(SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
     make_unique<TimeInForceNode>(m_order->get_info().m_fields.m_time_in_force));
 }

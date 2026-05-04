@@ -33,8 +33,8 @@ const std::vector<QString>& OrderTaskArgumentsContentCache::get(int index) {
   for(auto& scope : ::to_text(arguments.m_scope)) {
     row_words.push_back(scope);
   }
-  row_words.push_back(QString::fromStdString(
-    DEFAULT_DESTINATIONS.from(arguments.m_destination).m_id));
+  row_words.push_back(
+    QString::fromStdString(DESTINATIONS.from(arguments.m_destination).m_id));
   row_words.push_back(to_text(arguments.m_order_type));
   row_words.push_back(to_text(arguments.m_side));
   row_words.push_back(to_text(arguments.m_quantity));

@@ -30,6 +30,9 @@ void Nexus::Python::export_definitions_service(module& module) {
     export_definitions_client<DefinitionsClient>(module, "DefinitionsClient"));
   export_default_definitions_client(module);
   export_definitions_service_application_definitions(module);
+  module.def("load_definitions", [] (DefinitionsClient& client) {
+    load_definitions(client);
+  });
   auto test_module = module.def_submodule("tests");
   export_definitions_service_test_environment(test_module);
 }

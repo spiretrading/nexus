@@ -1,12 +1,12 @@
-#ifndef NEXUS_DEFAULT_CURRENCY_DATABASE_HPP
-#define NEXUS_DEFAULT_CURRENCY_DATABASE_HPP
+#ifndef NEXUS_STANDARD_CURRENCIES_HPP
+#define NEXUS_STANDARD_CURRENCIES_HPP
 #include <atomic>
 #include <memory>
 #include "Nexus/Definitions/Currency.hpp"
 
 namespace Nexus {
 namespace Details {
-  inline const CurrencyDatabase& get_base_currency_database() {
+  inline const CurrencyDatabase& get_base_currencies() {
     static auto database = [] {
       auto database = CurrencyDatabase();
       {
@@ -70,27 +70,26 @@ namespace Details {
     return database;
   }
 
-  inline auto default_currencies = get_base_currency_database();
+  inline auto currencies = get_base_currencies();
 }
 
-  /** Returns the default CurrencyDatabase. */
-  inline const CurrencyDatabase& DEFAULT_CURRENCIES =
-    Details::default_currencies;
+  /** Returns the CurrencyDatabase. */
+  inline const CurrencyDatabase& CURRENCIES = Details::currencies;
 
-  /** Updates the default CurrencyDatabase. */
-  inline void set_default_currencies(CurrencyDatabase database) {
-    Details::default_currencies = database;
+  /** Updates the CurrencyDatabase. */
+  inline void set_currencies(CurrencyDatabase database) {
+    Details::currencies = database;
   }
 
-  namespace DefaultCurrencies {
-    inline const auto AUD = DEFAULT_CURRENCIES.from("AUD").m_id;
-    inline const auto CAD = DEFAULT_CURRENCIES.from("CAD").m_id;
-    inline const auto EUR = DEFAULT_CURRENCIES.from("EUR").m_id;
-    inline const auto GBP = DEFAULT_CURRENCIES.from("GBP").m_id;
-    inline const auto HKD = DEFAULT_CURRENCIES.from("HKD").m_id;
-    inline const auto JPY = DEFAULT_CURRENCIES.from("JPY").m_id;
-    inline const auto USD = DEFAULT_CURRENCIES.from("USD").m_id;
-    inline const auto XBT = DEFAULT_CURRENCIES.from("XBT").m_id;
+  namespace Currencies {
+    inline const auto AUD = CURRENCIES.from("AUD").m_id;
+    inline const auto CAD = CURRENCIES.from("CAD").m_id;
+    inline const auto EUR = CURRENCIES.from("EUR").m_id;
+    inline const auto GBP = CURRENCIES.from("GBP").m_id;
+    inline const auto HKD = CURRENCIES.from("HKD").m_id;
+    inline const auto JPY = CURRENCIES.from("JPY").m_id;
+    inline const auto USD = CURRENCIES.from("USD").m_id;
+    inline const auto XBT = CURRENCIES.from("XBT").m_id;
   }
 }
 
