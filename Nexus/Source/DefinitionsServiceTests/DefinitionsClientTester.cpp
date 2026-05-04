@@ -12,7 +12,7 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Countries;
-using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::Currencies;
 using namespace Nexus::DefaultDestinations;
 using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
@@ -85,7 +85,7 @@ TEST_SUITE("DefinitionsClient") {
 
   TEST_CASE("load_currency_database") {
     auto currencies = CurrencyDatabase();
-    auto entry = DEFAULT_CURRENCIES.from(USD);
+    auto entry = CURRENCIES.from(USD);
     currencies.add(entry);
     require_operation<TestDefinitionsClient::LoadCurrencyDatabaseOperation>(
       [] (auto& client) {

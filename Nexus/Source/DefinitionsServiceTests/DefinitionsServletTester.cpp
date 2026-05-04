@@ -13,7 +13,7 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Countries;
-using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::Currencies;
 using namespace Nexus::DefaultDestinations;
 using namespace Nexus::DefaultVenues;
 
@@ -39,9 +39,9 @@ namespace {
         {{ASX}, {Tuesday}, {1}, {7}, {2025}, events}};
       m_trading_schedule = TradingSchedule(rules);
       m_servlet.emplace("1234", "Spire",
-        Nexus::Details::get_base_time_zone_table(), COUNTRIES,
-        DEFAULT_CURRENCIES, DEFAULT_DESTINATIONS, DEFAULT_VENUES,
-        m_exchange_rates, m_compliance_rule_schemas, m_trading_schedule);
+        Nexus::Details::get_base_time_zone_table(), COUNTRIES, CURRENCIES,
+        DEFAULT_DESTINATIONS, DEFAULT_VENUES, m_exchange_rates,
+        m_compliance_rule_schemas, m_trading_schedule);
       auto server_connection = std::make_shared<LocalServerConnection>();
       m_container.emplace(&*m_servlet, server_connection,
         factory<std::unique_ptr<TriggerTimer>>());
@@ -73,7 +73,7 @@ TEST_SUITE("DefinitionsServlet") {
     }
     SUBCASE("load_currency_database") {
       auto result = m_client->send_request<LoadCurrencyDatabaseService>();
-      REQUIRE(result.from(CAD) == DEFAULT_CURRENCIES.from(CAD));
+      REQUIRE(result.from(CAD) == CURRENCIES.from(CAD));
     }
     SUBCASE("load_destination_database") {
       auto result = m_client->send_request<LoadDestinationDatabaseService>();

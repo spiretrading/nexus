@@ -4,8 +4,8 @@
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
 using namespace Nexus;
+using namespace Nexus::Currencies;
 using namespace Nexus::DefaultVenues;
-using namespace Nexus::DefaultCurrencies;
 
 TEST_SUITE("ShortingModel") {
   TEST_CASE("submit_bid_order_not_short") {

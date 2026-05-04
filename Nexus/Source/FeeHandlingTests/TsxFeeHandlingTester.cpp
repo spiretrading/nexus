@@ -29,7 +29,7 @@ namespace {
 
   auto make_order_fields(Money price) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
-      parse_ticker("TST.TSX"), DefaultCurrencies::CAD, Side::BID,
+      parse_ticker("TST.TSX"), Currencies::CAD, Side::BID,
       DefaultDestinations::TSX, 100, price);
   }
 

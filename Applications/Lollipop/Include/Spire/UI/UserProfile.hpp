@@ -41,7 +41,6 @@ namespace Spire {
        * @param isManager Whether the account manages at least one trading
        *        group.
        * @param timeZoneDatabase Stores the database of all time zones.
-       * @param currencyDatabase Stores the database of all currencies.
        * @param exchangeRates The list of ExchangeRates to use.
        * @param venueDatabase Stores the database of all venues.
        * @param destinationDatabase Stores the database of all destinations.
@@ -52,7 +51,6 @@ namespace Spire {
        */
       UserProfile(const std::string& username, bool isAdministrator,
         bool isManager, const boost::local_time::tz_database& timeZoneDatabase,
-        const Nexus::CurrencyDatabase& currencyDatabase,
         const std::vector<Nexus::ExchangeRate>& exchangeRates,
         const Nexus::VenueDatabase& venueDatabase,
         const Nexus::DestinationDatabase& destinationDatabase,
@@ -75,9 +73,6 @@ namespace Spire {
 
       /** Returns the time zone database. */
       const boost::local_time::tz_database& GetTimeZoneDatabase() const;
-
-      /** Returns the CurrencyDatabase. */
-      const Nexus::CurrencyDatabase& GetCurrencyDatabase() const;
 
       /** Returns the ExchangeRates. */
       const Nexus::ExchangeRateTable& GetExchangeRates() const;
@@ -240,7 +235,6 @@ namespace Spire {
       bool m_isAdministrator;
       bool m_isManager;
       boost::local_time::tz_database m_timeZoneDatabase;
-      Nexus::CurrencyDatabase m_currencyDatabase;
       Nexus::ExchangeRateTable m_exchangeRates;
       Nexus::VenueDatabase m_venueDatabase;
       Nexus::DestinationDatabase m_destinationDatabase;

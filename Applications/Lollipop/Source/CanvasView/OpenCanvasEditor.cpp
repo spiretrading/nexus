@@ -142,7 +142,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const BooleanNode& node) {
 
 void OpenEditorCanvasNodeVisitor::Visit(const CurrencyNode& node) {
   auto editor = new QComboBox();
-  auto currencies = m_userProfile->GetCurrencyDatabase().get_entries();
+  auto currencies = CURRENCIES.get_entries();
   for(auto i = std::size_t(0); i != currencies.size(); ++i) {
     auto& entry = currencies[i];
     editor->addItem(QString::fromStdString(entry.m_code.get_data()));

@@ -147,6 +147,24 @@ void Nexus::Python::export_currency(module& module) {
   module.def("parse_currency_database", &parse_currency_database);
 }
 
+void Nexus::Python::export_currencies(module& module) {
+  module.attr("CURRENCIES") =
+    cast(CURRENCIES, return_value_policy::reference);
+  module.def("set_currencies",
+    [] (const CurrencyDatabase& database) {
+      set_currencies(database);
+    });
+  auto submodule = module.def_submodule("currencies");
+  submodule.add_object("AUD", cast(Currencies::AUD));
+  submodule.add_object("CAD", cast(Currencies::CAD));
+  submodule.add_object("EUR", cast(Currencies::EUR));
+  submodule.add_object("GBP", cast(Currencies::GBP));
+  submodule.add_object("HKD", cast(Currencies::HKD));
+  submodule.add_object("JPY", cast(Currencies::JPY));
+  submodule.add_object("USD", cast(Currencies::USD));
+  submodule.add_object("XBT", cast(Currencies::XBT));
+}
+
 void Nexus::Python::export_currency_pair(module& module) {
   export_default_methods(class_<CurrencyPair>(module, "CurrencyPair")).
     def(init<CurrencyId, CurrencyId>()).
@@ -157,21 +175,6 @@ void Nexus::Python::export_currency_pair(module& module) {
   module.def("parse_currency_pair",
     overload_cast<std::string_view>(parse_currency_pair));
   module.def("invert", overload_cast<CurrencyPair>(invert));
-}
-
-void Nexus::Python::export_default_currencies(module& module) {
-  module.attr("DEFAULT_CURRENCIES") =
-    cast(DEFAULT_CURRENCIES, return_value_policy::reference);
-  module.def("set_default_currencies", &set_default_currencies);
-  auto submodule = module.def_submodule("default_currencies");
-  submodule.add_object("AUD", cast(DefaultCurrencies::AUD));
-  submodule.add_object("CAD", cast(DefaultCurrencies::CAD));
-  submodule.add_object("EUR", cast(DefaultCurrencies::EUR));
-  submodule.add_object("GBP", cast(DefaultCurrencies::GBP));
-  submodule.add_object("HKD", cast(DefaultCurrencies::HKD));
-  submodule.add_object("JPY", cast(DefaultCurrencies::JPY));
-  submodule.add_object("USD", cast(DefaultCurrencies::USD));
-  submodule.add_object("XBT", cast(DefaultCurrencies::XBT));
 }
 
 void Nexus::Python::export_default_destinations(module& module) {
@@ -227,7 +230,7 @@ void Nexus::Python::export_definitions(module& module) {
   export_currency_pair(module);
   export_destination(module);
   export_venue(module);
-  export_default_currencies(module);
+  export_currencies(module);
   export_default_destinations(module);
   export_default_venues(module);
   export_exchange_rate(module);

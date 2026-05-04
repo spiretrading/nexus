@@ -115,21 +115,21 @@ class TestApp extends React.Component<{}, State> {
     app2.set(ekey2, dataset2);
     const db = new Nexus.EntitlementDatabase();
     db.add(new Nexus.EntitlementDatabase.Entry('ASX Total',
-      Nexus.Money.parse('68'), Nexus.DefaultCurrencies.USD, group1, app1));
+      Nexus.Money.parse('68'), Nexus.Currencies.USD, group1, app1));
     db.add(new Nexus.EntitlementDatabase.Entry('TSX CDG',
-      Nexus.Money.parse('45'), Nexus.DefaultCurrencies.EUR, group3, app2));
+      Nexus.Money.parse('45'), Nexus.Currencies.EUR, group3, app2));
     db.add(new Nexus.EntitlementDatabase.Entry('TSX Venture',
-      Nexus.Money.parse('200'), Nexus.DefaultCurrencies.EUR, group2, app2));
+      Nexus.Money.parse('200'), Nexus.Currencies.EUR, group2, app2));
     db.add(new Nexus.EntitlementDatabase.Entry('TSX TL1',
-      Nexus.Money.parse('68'), Nexus.DefaultCurrencies.USD, group4, app1));
+      Nexus.Money.parse('68'), Nexus.Currencies.USD, group4, app1));
     db.add(new Nexus.EntitlementDatabase.Entry('CSE',
-      Nexus.Money.parse('175'), Nexus.DefaultCurrencies.USD, group5, app1));
+      Nexus.Money.parse('175'), Nexus.Currencies.USD, group5, app1));
     db.add(new Nexus.EntitlementDatabase.Entry('Alpha APD',
-      Nexus.Money.parse('0'), Nexus.DefaultCurrencies.USD, group6, app1));
+      Nexus.Money.parse('0'), Nexus.Currencies.USD, group6, app1));
     return db;
   })();
 
-  private currencyDB = Nexus.buildDefaultCurrencyDatabase();
+  private currencyDB = Nexus.buildCurrencyDatabase();
   private venueDB = Nexus.buildDefaultVenueDatabase();
 }
 

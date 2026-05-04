@@ -511,7 +511,7 @@ namespace {
     Translation operator ()<CurrencyId>(const NativeType& nativeType,
         Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const std::string& path) const {
-      auto parser = MakeParser(currency_parser(DEFAULT_CURRENCIES));
+      auto parser = MakeParser(currency_parser(CURRENCIES));
       using Parser = decltype(parser);
       auto publisher = std::make_shared<ParserPublisher<BasicIStreamReader<
         std::ifstream>, Parser>>(path, parser, errorPolicy);

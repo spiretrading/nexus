@@ -113,8 +113,7 @@ void CommitEditorCanvasNodeVisitor::Visit(const BooleanNode& node) {
 void CommitEditorCanvasNodeVisitor::Visit(const CurrencyNode& node) {
   auto previousValue = node.GetValue();
   auto comboEditor = qobject_cast<const QComboBox*>(m_editor);
-  auto& newValue = m_userProfile->GetCurrencyDatabase().from(
-    comboEditor->currentText().toStdString());
+  auto& newValue = CURRENCIES.from(comboEditor->currentText().toStdString());
   if(previousValue == newValue.m_id) {
     return;
   }

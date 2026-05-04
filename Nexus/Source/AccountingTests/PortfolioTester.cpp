@@ -5,7 +5,7 @@
 #include "Nexus/Definitions/Ticker.hpp"
 
 using namespace Nexus;
-using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::Currencies;
 using namespace Nexus::DefaultVenues;
 
 namespace {

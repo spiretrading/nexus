@@ -230,7 +230,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
     return ::displayText(value.value<CountryCode>());
   } else if(value.canConvert<CurrencyId>()) {
     const CurrencyDatabase::Entry& entry =
-      m_userProfile->GetCurrencyDatabase().from(value.value<CurrencyId>());
+      CURRENCIES.from(value.value<CurrencyId>());
     return QString::fromStdString(entry.m_code.get_data());
   } else if(value.canConvert<Money>()) {
     return QString::fromStdString(lexical_cast<string>(value.value<Money>()));
@@ -323,11 +323,9 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
       right);
   } else if(leftVariant.canConvert<CurrencyId>()) {
     const CurrencyDatabase::Entry& leftEntry =
-      m_userProfile->GetCurrencyDatabase().from(
-      leftVariant.value<CurrencyId>());
+      CURRENCIES.from(leftVariant.value<CurrencyId>());
     const CurrencyDatabase::Entry& rightEntry =
-      m_userProfile->GetCurrencyDatabase().from(
-      rightVariant.value<CurrencyId>());
+      CURRENCIES.from(rightVariant.value<CurrencyId>());
     return leftEntry.m_code < rightEntry.m_code;
   } else if(leftVariant.canConvert<PositionSideToken>()) {
     return Compare(leftVariant.value<PositionSideToken>().ToString(),

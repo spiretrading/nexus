@@ -30,8 +30,8 @@ namespace {
     Environment()
       : m_clients(std::in_place_type<TestClients>, Ref(m_environment)),
         m_userProfile("", false, false, get_default_time_zone_database(),
-          DEFAULT_CURRENCIES, {}, DEFAULT_VENUES, DEFAULT_DESTINATIONS,
-          EntitlementDatabase(), {}, m_clients) {}
+          {}, DEFAULT_VENUES, DEFAULT_DESTINATIONS, EntitlementDatabase(), {},
+          m_clients) {}
   };
 
   const auto TEST_TICKER = parse_ticker("TST.TSX");

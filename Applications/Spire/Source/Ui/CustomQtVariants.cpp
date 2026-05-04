@@ -282,7 +282,7 @@ QString Spire::to_text(CountryCode code, const QLocale& locale) {
 }
 
 QString Spire::to_text(CurrencyId currency, const QLocale& locale) {
-  auto& entry = DEFAULT_CURRENCIES.from(currency);
+  auto& entry = CURRENCIES.from(currency);
   return QString::fromStdString(entry.m_code.get_data());
 }
 

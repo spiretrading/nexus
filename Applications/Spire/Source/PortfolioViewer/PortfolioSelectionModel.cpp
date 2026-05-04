@@ -30,7 +30,7 @@ PortfolioSelectionModel::PortfolioSelectionModel(Ref<UserProfile> userProfile,
     m_selectedGroups = properties.GetSelectedGroups();
   }
   if(properties.IsSelectingAllCurrencies()) {
-    for(auto& currency : DEFAULT_CURRENCIES.get_entries()) {
+    for(auto& currency : CURRENCIES.get_entries()) {
       m_selectedCurrencies.insert(currency.m_id);
     }
   } else {
@@ -57,7 +57,7 @@ void PortfolioSelectionModel::UpdateProperties(
     properties->SetSelectingAllGroups(false);
   }
   properties->GetSelectedCurrencies() = m_selectedCurrencies;
-  if(m_selectedCurrencies.size() == DEFAULT_CURRENCIES.get_entries().size()) {
+  if(m_selectedCurrencies.size() == CURRENCIES.get_entries().size()) {
     properties->SetSelectingAllCurrencies(true);
   } else {
     properties->SetSelectingAllCurrencies(false);
@@ -113,7 +113,7 @@ QModelIndex PortfolioSelectionModel::index(int row, int column,
     }
   } else if(parent == m_roots[CURRENCY_SELECTION]) {
     if(column == 0 && row >= 0 &&
-        row <= static_cast<int>(DEFAULT_CURRENCIES.get_entries().size())) {
+        row <= static_cast<int>(CURRENCIES.get_entries().size())) {
       return createIndex(row, 0, CURRENCY_SELECTION);
     }
   } else if(parent == m_roots[VENUE_SELECTION]) {
@@ -143,7 +143,7 @@ int PortfolioSelectionModel::rowCount(const QModelIndex& parent) const {
   if(parent == m_roots[GROUP_SELECTION]) {
     return static_cast<int>(m_groups.size());
   } else if(parent == m_roots[CURRENCY_SELECTION]) {
-    return static_cast<int>(DEFAULT_CURRENCIES.get_entries().size());
+    return static_cast<int>(CURRENCIES.get_entries().size());
   } else if(parent == m_roots[VENUE_SELECTION]) {
     return static_cast<int>(DEFAULT_VENUES.get_entries().size());
   } else if(parent == m_roots[SIDE_SELECTION]) {
@@ -172,8 +172,7 @@ QVariant PortfolioSelectionModel::data(const QModelIndex& index,
         return Qt::Unchecked;
       }
     } else if(index == m_roots[CURRENCY_SELECTION]) {
-      if(m_selectedCurrencies.size() ==
-          DEFAULT_CURRENCIES.get_entries().size()) {
+      if(m_selectedCurrencies.size() == CURRENCIES.get_entries().size()) {
         return Qt::Checked;
       } else {
         return Qt::Unchecked;
@@ -272,7 +271,7 @@ bool PortfolioSelectionModel::setData(const QModelIndex& index,
         m_groups.size() - 1, 0, m_roots[GROUP_SELECTION]));
       return true;
     } else if(index == m_roots[CURRENCY_SELECTION]) {
-      auto currencies = DEFAULT_CURRENCIES.get_entries();
+      auto currencies = CURRENCIES.get_entries();
       if(state == Qt::Checked) {
         for(auto i = currencies.begin(); i != currencies.end(); ++i) {
           m_selectedCurrencies.insert(i->m_id);
@@ -363,7 +362,7 @@ boost::optional<PortfolioSelectionModel::SelectionVariant>
       return SelectionVariant{m_groups[index.row()]};
     }
   } else if(index.parent() == m_roots[CURRENCY_SELECTION]) {
-    auto currencies = DEFAULT_CURRENCIES.get_entries();
+    auto currencies = CURRENCIES.get_entries();
     if(index.column() == 0 && index.row() >= 0 && index.row() <
         static_cast<int>(currencies.size())) {
       return SelectionVariant{currencies[index.row()]};

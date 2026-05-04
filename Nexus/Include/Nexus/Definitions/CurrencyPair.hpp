@@ -56,8 +56,8 @@ namespace Nexus {
    * @return The CurrencyPair represented by the <i>symbol</i>.
    */
   inline CurrencyPair parse_currency_pair(std::string_view symbol) {
-    extern const CurrencyDatabase& DEFAULT_CURRENCIES;
-    return parse_currency_pair(symbol, DEFAULT_CURRENCIES);
+    extern const CurrencyDatabase& CURRENCIES;
+    return parse_currency_pair(symbol, CURRENCIES);
   }
 
   /**

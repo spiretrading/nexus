@@ -10,7 +10,6 @@
 #include <QScreen>
 #include <QSpinBox>
 #include <QStringBuilder>
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"

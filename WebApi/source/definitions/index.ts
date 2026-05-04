@@ -8,5 +8,5 @@ export * from './scope';
 export * from './ticker';
 export * from './venue';
 export * from './standard_countries';
-export * from './default_currency_database';
+export * from './standard_currencies';
 export * from './default_venue_database';

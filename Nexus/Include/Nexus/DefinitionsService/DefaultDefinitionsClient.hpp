@@ -40,7 +40,7 @@ namespace Nexus {
   }
 
   inline CurrencyDatabase DefaultDefinitionsClient::load_currency_database() {
-    return DEFAULT_CURRENCIES;
+    return CURRENCIES;
   }
 
   inline DestinationDatabase

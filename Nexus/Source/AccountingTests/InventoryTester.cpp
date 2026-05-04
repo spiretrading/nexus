@@ -7,7 +7,7 @@
 using namespace Beam;
 using namespace Beam::Tests;
 using namespace Nexus;
-using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::Currencies;
 using namespace Nexus::DefaultVenues;
 
 namespace {

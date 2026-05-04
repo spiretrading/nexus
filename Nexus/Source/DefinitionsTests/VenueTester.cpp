@@ -133,13 +133,12 @@ TEST_SUITE("Venue") {
       description: "New York Stock Exchange"
       display_name: "NYSE")";
     auto node = YAML::Load(yaml_text);
-    auto entry =
-      parse_venue_database_entry(node, COUNTRIES, DEFAULT_CURRENCIES);
+    auto entry = parse_venue_database_entry(node, COUNTRIES, CURRENCIES);
     REQUIRE(entry.m_venue == Venue("NYC1"));
     REQUIRE(entry.m_country_code == Countries::US);
     REQUIRE(entry.m_market_center == "NNN");
     REQUIRE(entry.m_time_zone == "America/New_York");
-    REQUIRE(entry.m_currency == DefaultCurrencies::USD);
+    REQUIRE(entry.m_currency == Currencies::USD);
     REQUIRE(entry.m_description == "New York Stock Exchange");
     REQUIRE(entry.m_display_name == "NYSE");
   }
@@ -155,7 +154,7 @@ TEST_SUITE("Venue") {
       display_name: "LSE")";
     auto node = YAML::Load(yaml_text);
     REQUIRE_THROWS_AS(parse_venue_database_entry(
-      node, COUNTRIES, DEFAULT_CURRENCIES), std::runtime_error);
+      node, COUNTRIES, CURRENCIES), std::runtime_error);
   }
 
   TEST_CASE("parse_venue_database_entry_invalid_currency") {
@@ -169,7 +168,7 @@ TEST_SUITE("Venue") {
       display_name: "TSE")";
     auto node = YAML::Load(yaml_text);
     REQUIRE_THROWS_AS(parse_venue_database_entry(
-      node, COUNTRIES, DEFAULT_CURRENCIES), std::runtime_error);
+      node, COUNTRIES, CURRENCIES), std::runtime_error);
   }
 
 
@@ -190,8 +189,7 @@ TEST_SUITE("Venue") {
         description: "Desc2"
         display_name: "Beta")";
     auto node = YAML::Load(yaml_text);
-    auto database =
-      parse_venue_database(node, COUNTRIES, DEFAULT_CURRENCIES);
+    auto database = parse_venue_database(node, COUNTRIES, CURRENCIES);
     auto entry_alpha = parse_venue_entry("Alpha", database);
     REQUIRE(entry_alpha.m_venue.get_code() == "ABC");
     REQUIRE(entry_alpha.m_display_name == "Alpha");
@@ -208,7 +206,7 @@ TEST_SUITE("Venue") {
     entry.m_country_code = Countries::US;
     entry.m_market_center = "AABBCC";
     entry.m_time_zone = "America/New_York";
-    entry.m_currency = DefaultCurrencies::USD;
+    entry.m_currency = Currencies::USD;
     entry.m_description = "Desc1";
     entry.m_display_name = "Alpha";
     auto database = VenueDatabase();
@@ -225,7 +223,7 @@ TEST_SUITE("Venue") {
     entry.m_country_code = Countries::CA;
     entry.m_market_center = "LMN";
     entry.m_time_zone = "America/Toronto";
-    entry.m_currency = DefaultCurrencies::CAD;
+    entry.m_currency = Currencies::CAD;
     entry.m_description = "Desc3";
     entry.m_display_name = "LmnVenue";
     auto database = VenueDatabase();

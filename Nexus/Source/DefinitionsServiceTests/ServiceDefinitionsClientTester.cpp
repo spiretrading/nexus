@@ -13,7 +13,7 @@ using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Countries;
-using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::Currencies;
 using namespace Nexus::DefaultDestinations;
 using namespace Nexus::DefaultVenues;
 
@@ -72,10 +72,9 @@ TEST_SUITE("ServiceDefinitionsClient") {
   TEST_CASE("load_currency_database") {
     auto fixture = Fixture();
     fixture.on_request<LoadCurrencyDatabaseService>([&] (auto& request) {
-      request.set(DEFAULT_CURRENCIES);
+      request.set(CURRENCIES);
     });
-    test_json_equality(
-      fixture.m_client->load_currency_database(), DEFAULT_CURRENCIES);
+    test_json_equality(fixture.m_client->load_currency_database(), CURRENCIES);
   }
 
   TEST_CASE("load_destination_database") {

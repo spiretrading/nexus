@@ -82,11 +82,11 @@ const countrySelect =
       style: {width: '100%'}
     }));
 
-const currencyDatabase = Nexus.buildDefaultCurrencyDatabase();
+const currencyDatabase = Nexus.buildCurrencyDatabase();
 
 const currencySelect =
   new ComponentSchema('CurrencySelect',
-    [new PropertySchema('value', Nexus.DefaultCurrencies.USD,
+    [new PropertySchema('value', Nexus.Currencies.USD,
         CurrencyInput),
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],

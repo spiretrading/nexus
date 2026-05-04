@@ -1,70 +1,69 @@
 import { Countries } from './standard_countries';
-import { DefaultCurrencies } from './default_currency_database';
+import { Currencies } from './standard_currencies';
 import { Venue, VenueDatabase } from './venue';
 
 /** Builds a VenueDatabase containing a set of common venues. */
 export function buildDefaultVenueDatabase(): VenueDatabase {
   const database = new VenueDatabase();
   database.add(new VenueDatabase.Entry(new Venue('XASX'), Countries.AU, '',
-    'Australian_Eastern_Standard_Time', DefaultCurrencies.AUD,
+    'Australian_Eastern_Standard_Time', Currencies.AUD,
     'Australian Stock Market', 'ASX'));
   database.add(new VenueDatabase.Entry(new Venue('CHIA'), Countries.AU, '',
-    'Australian_Eastern_Standard_Time', DefaultCurrencies.AUD,
-    'CHI-X Australia', 'CXA'));
+    'Australian_Eastern_Standard_Time', Currencies.AUD, 'CHI-X Australia',
+    'CXA'));
   database.add(new VenueDatabase.Entry(new Venue('XASE'), Countries.US, '',
-    'Eastern_Time', DefaultCurrencies.USD, 'NYSE MKT LLC', 'ASEX'));
+    'Eastern_Time', Currencies.USD, 'NYSE MKT LLC', 'ASEX'));
   database.add(new VenueDatabase.Entry(new Venue('ARCX'), Countries.US, '',
-    'Eastern_Time', DefaultCurrencies.USD, 'NYSE ARCA', 'ARCX'));
+    'Eastern_Time', Currencies.USD, 'NYSE ARCA', 'ARCX'));
   database.add(new VenueDatabase.Entry(new Venue('BATS'), Countries.US, '',
-    'Eastern_Time', DefaultCurrencies.USD, 'BATS Exchange', 'BATS'));
+    'Eastern_Time', Currencies.USD, 'BATS Exchange', 'BATS'));
   database.add(new VenueDatabase.Entry(new Venue('BATY'), Countries.US, '',
-    'Eastern_Time', DefaultCurrencies.USD, 'BATS-Y Exchange', 'BATY'));
+    'Eastern_Time', Currencies.USD, 'BATS-Y Exchange', 'BATY'));
   database.add(new VenueDatabase.Entry(new Venue('XBOS'), Countries.US, '',
-    'Eastern_Time', DefaultCurrencies.USD, 'NASDAQ OMX BX', 'BOSX'));
+    'Eastern_Time', Currencies.USD, 'NASDAQ OMX BX', 'BOSX'));
   database.add(new VenueDatabase.Entry(new Venue('XCBO'), Countries.US, '',
-    'Eastern_Time', DefaultCurrencies.USD, 'Chicago Board of Options Exchange',
+    'Eastern_Time', Currencies.USD, 'Chicago Board of Options Exchange',
     'CBOE'));
   database.add(new VenueDatabase.Entry(new Venue('XCIS'), Countries.US, '',
-    'Eastern_Time', DefaultCurrencies.USD, 'National Stock Exchange', 'NSEX'));
+    'Eastern_Time', Currencies.USD, 'National Stock Exchange', 'NSEX'));
   database.add(new VenueDatabase.Entry(new Venue('XADF'), Countries.US, '',
-    'Eastern_Time', DefaultCurrencies.USD, 'FINRA Alternative Display Facility',
+    'Eastern_Time', Currencies.USD, 'FINRA Alternative Display Facility',
     'ADFX'));
   database.add(new VenueDatabase.Entry(new Venue('XISX'), Countries.US, '',
-    'Eastern_Time', DefaultCurrencies.USD, 'International Securities Exchange',
+    'Eastern_Time', Currencies.USD, 'International Securities Exchange',
     'ISE'));
   database.add(new VenueDatabase.Entry(new Venue('EDGA'), Countries.US, '',
-    'Eastern_Time', DefaultCurrencies.USD, 'EDGA Exchange', 'EDGA'));
+    'Eastern_Time', Currencies.USD, 'EDGA Exchange', 'EDGA'));
   database.add(new VenueDatabase.Entry(new Venue('EDGX'), Countries.US, '',
-    'Eastern_Time', DefaultCurrencies.USD, 'EDGX Exchange', 'EDGX'));
+    'Eastern_Time', Currencies.USD, 'EDGX Exchange', 'EDGX'));
   database.add(new VenueDatabase.Entry(new Venue('XNYS'), Countries.US, '',
-    'Eastern_Time', DefaultCurrencies.USD, 'NYSE', 'NYSE'));
+    'Eastern_Time', Currencies.USD, 'NYSE', 'NYSE'));
   database.add(new VenueDatabase.Entry(new Venue('XNAS'), Countries.US, '',
-    'Eastern_Time', DefaultCurrencies.USD, 'NASDAQ', 'NSDQ'));
+    'Eastern_Time', Currencies.USD, 'NASDAQ', 'NSDQ'));
   database.add(new VenueDatabase.Entry(new Venue('XPHL'), Countries.US, '',
-    'Eastern_Time', DefaultCurrencies.USD, 'NASDAQ OMX PHLX', 'PHLX'));
+    'Eastern_Time', Currencies.USD, 'NASDAQ OMX PHLX', 'PHLX'));
   database.add(new VenueDatabase.Entry(new Venue('XATS'), Countries.CA, '',
-    'Eastern_Time', DefaultCurrencies.CAD, 'Alpha Exchange', 'XATS'));
+    'Eastern_Time', Currencies.CAD, 'Alpha Exchange', 'XATS'));
   database.add(new VenueDatabase.Entry(new Venue('CHIC'), Countries.CA, '',
-    'Eastern_Time', DefaultCurrencies.CAD, 'CHI-X Canada', 'CHIC'));
+    'Eastern_Time', Currencies.CAD, 'CHI-X Canada', 'CHIC'));
   database.add(new VenueDatabase.Entry(new Venue('XCNQ'), Countries.CA, '',
-    'Eastern_Time', DefaultCurrencies.CAD, 'Canadian Securities Exchange',
-    'CSE'));
+    'Eastern_Time', Currencies.CAD, 'Canadian Securities Exchange', 'CSE'));
   database.add(new VenueDatabase.Entry(new Venue('XCX2'), Countries.CA, '',
-    'Eastern_Time', DefaultCurrencies.CAD, 'CX2', 'CX2'));
+    'Eastern_Time', Currencies.CAD, 'CX2', 'CX2'));
   database.add(new VenueDatabase.Entry(new Venue('LYNX'), Countries.CA, '',
-    'Eastern_Time', DefaultCurrencies.CAD, 'LYNX', 'LYNX'));
+    'Eastern_Time', Currencies.CAD, 'LYNX', 'LYNX'));
   database.add(new VenueDatabase.Entry(new Venue('MATN'), Countries.CA, '',
-    'Eastern_Time', DefaultCurrencies.CAD, 'MATCH Now', 'MATN'));
+    'Eastern_Time', Currencies.CAD, 'MATCH Now', 'MATN'));
   database.add(new VenueDatabase.Entry(new Venue('NEOE'), Countries.CA, '',
-    'Eastern_Time', DefaultCurrencies.CAD, 'Aequitas NEO Exchange', 'NEOE'));
+    'Eastern_Time', Currencies.CAD, 'Aequitas NEO Exchange', 'NEOE'));
   database.add(new VenueDatabase.Entry(new Venue('OMGA'), Countries.CA, '',
-    'Eastern_Time', DefaultCurrencies.CAD, 'Omega', 'OMGA'));
+    'Eastern_Time', Currencies.CAD, 'Omega', 'OMGA'));
   database.add(new VenueDatabase.Entry(new Venue('PURE'), Countries.CA, '',
-    'Eastern_Time', DefaultCurrencies.CAD, 'Pure Trading', 'PURE'));
+    'Eastern_Time', Currencies.CAD, 'Pure Trading', 'PURE'));
   database.add(new VenueDatabase.Entry(new Venue('XTSE'), Countries.CA, '',
-    'Eastern_Time', DefaultCurrencies.CAD, 'Toronto Stock Exchange', 'TSX'));
+    'Eastern_Time', Currencies.CAD, 'Toronto Stock Exchange', 'TSX'));
   database.add(new VenueDatabase.Entry(new Venue('XTSX'), Countries.CA, '',
-    'Eastern_Time', DefaultCurrencies.CAD, 'TSX Venture Exchange', 'TSXV'));
+    'Eastern_Time', Currencies.CAD, 'TSX Venture Exchange', 'TSXV'));
   return database;
 }
 

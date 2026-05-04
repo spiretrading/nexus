@@ -241,8 +241,8 @@ namespace Nexus {
   inline VenueDatabase::Entry parse_venue_database_entry(
       const YAML::Node& node) {
     extern const CountryDatabase& COUNTRIES;
-    extern const CurrencyDatabase& DEFAULT_CURRENCIES;
-    return parse_venue_database_entry(node, COUNTRIES, DEFAULT_CURRENCIES);
+    extern const CurrencyDatabase& CURRENCIES;
+    return parse_venue_database_entry(node, COUNTRIES, CURRENCIES);
   }
 
   /**
@@ -272,8 +272,8 @@ namespace Nexus {
    */
   inline VenueDatabase parse_venue_database(const YAML::Node& node) {
     extern const CountryDatabase& COUNTRIES;
-    extern const CurrencyDatabase& DEFAULT_CURRENCIES;
-    return parse_venue_database(node, COUNTRIES, DEFAULT_CURRENCIES);
+    extern const CurrencyDatabase& CURRENCIES;
+    return parse_venue_database(node, COUNTRIES, CURRENCIES);
   }
 
   inline auto operator <<(std::ostream& out, const VenueDatabase& database) {

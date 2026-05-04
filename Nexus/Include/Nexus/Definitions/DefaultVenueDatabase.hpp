@@ -13,7 +13,7 @@ namespace Details {
         entry.m_country_code = Countries::AU;
         entry.m_market_center = "ASX";
         entry.m_time_zone = "Australia/Sydney";
-        entry.m_currency = DefaultCurrencies::AUD;
+        entry.m_currency = Currencies::AUD;
         entry.m_description = "Australian Stock Market";
         entry.m_display_name = "ASX";
         database.add(entry);
@@ -24,7 +24,7 @@ namespace Details {
         entry.m_country_code = Countries::AU;
         entry.m_market_center = "CXA";
         entry.m_time_zone = "Australia/Sydney";
-        entry.m_currency = DefaultCurrencies::AUD;
+        entry.m_currency = Currencies::AUD;
         entry.m_description = "CHI-X Australia";
         entry.m_display_name = "CXA";
         database.add(entry);
@@ -35,7 +35,7 @@ namespace Details {
         entry.m_country_code = Countries::CA;
         entry.m_market_center = "ALP";
         entry.m_time_zone = "America/Toronto";
-        entry.m_currency = DefaultCurrencies::CAD;
+        entry.m_currency = Currencies::CAD;
         entry.m_description = "Alpha Exchange";
         entry.m_display_name = "XATS";
         database.add(entry);
@@ -46,7 +46,7 @@ namespace Details {
         entry.m_country_code = Countries::CA;
         entry.m_market_center = "CHI";
         entry.m_time_zone = "America/Toronto";
-        entry.m_currency = DefaultCurrencies::CAD;
+        entry.m_currency = Currencies::CAD;
         entry.m_description = "CHI-X Canada ATS";
         entry.m_display_name = "CHIC";
         database.add(entry);
@@ -57,7 +57,7 @@ namespace Details {
         entry.m_country_code = Countries::CA;
         entry.m_market_center = "CNQ";
         entry.m_time_zone = "America/Toronto";
-        entry.m_currency = DefaultCurrencies::CAD;
+        entry.m_currency = Currencies::CAD;
         entry.m_description = "Canadian Securities Exchange";
         entry.m_display_name = "CSE";
         database.add(entry);
@@ -68,7 +68,7 @@ namespace Details {
         entry.m_country_code = Countries::CA;
         entry.m_market_center = "CS2";
         entry.m_time_zone = "America/Toronto";
-        entry.m_currency = DefaultCurrencies::CAD;
+        entry.m_currency = Currencies::CAD;
         entry.m_description = "Canadian Securities Exchange - CSE2";
         entry.m_display_name = "CSE2";
         database.add(entry);
@@ -78,7 +78,7 @@ namespace Details {
         entry.m_venue = Venue("XCXD");
         entry.m_country_code = Countries::CA;
         entry.m_time_zone = "America/Toronto";
-        entry.m_currency = DefaultCurrencies::CAD;
+        entry.m_currency = Currencies::CAD;
         entry.m_description = "NASDAQ CXD";
         entry.m_display_name = "CXD";
         database.add(entry);
@@ -89,7 +89,7 @@ namespace Details {
         entry.m_country_code = Countries::CA;
         entry.m_market_center = "CHT";
         entry.m_time_zone = "America/Toronto";
-        entry.m_currency = DefaultCurrencies::CAD;
+        entry.m_currency = Currencies::CAD;
         entry.m_description = "CX2";
         entry.m_display_name = "CX2";
         database.add(entry);
@@ -100,7 +100,7 @@ namespace Details {
         entry.m_country_code = Countries::CA;
         entry.m_market_center = "LYX";
         entry.m_time_zone = "America/Toronto";
-        entry.m_currency = DefaultCurrencies::CAD;
+        entry.m_currency = Currencies::CAD;
         entry.m_description = "Lynx ATS";
         entry.m_display_name = "LYNX";
         database.add(entry);
@@ -111,7 +111,7 @@ namespace Details {
         entry.m_country_code = Countries::CA;
         entry.m_market_center = "TCM";
         entry.m_time_zone = "America/Toronto";
-        entry.m_currency = DefaultCurrencies::CAD;
+        entry.m_currency = Currencies::CAD;
         entry.m_description = "MATCH Now";
         entry.m_display_name = "MATN";
         database.add(entry);
@@ -122,7 +122,7 @@ namespace Details {
         entry.m_country_code = Countries::CA;
         entry.m_market_center = "AQL";
         entry.m_time_zone = "America/Toronto";
-        entry.m_currency = DefaultCurrencies::CAD;
+        entry.m_currency = Currencies::CAD;
         entry.m_description = "Aequitas NEO Exchange";
         entry.m_display_name = "NEOE";
         database.add(entry);
@@ -133,7 +133,7 @@ namespace Details {
         entry.m_country_code = Countries::CA;
         entry.m_market_center = "OMG";
         entry.m_time_zone = "America/Toronto";
-        entry.m_currency = DefaultCurrencies::CAD;
+        entry.m_currency = Currencies::CAD;
         entry.m_description = "Omega ATS";
         entry.m_display_name = "OMGA";
         database.add(entry);
@@ -144,7 +144,7 @@ namespace Details {
         entry.m_country_code = Countries::CA;
         entry.m_market_center = "PUR";
         entry.m_time_zone = "America/Toronto";
-        entry.m_currency = DefaultCurrencies::CAD;
+        entry.m_currency = Currencies::CAD;
         entry.m_description = "Pure Trading";
         entry.m_display_name = "PURE";
         database.add(entry);
@@ -155,7 +155,7 @@ namespace Details {
         entry.m_country_code = Countries::CA;
         entry.m_market_center = "TSE";
         entry.m_time_zone = "America/Toronto";
-        entry.m_currency = DefaultCurrencies::CAD;
+        entry.m_currency = Currencies::CAD;
         entry.m_description = "Toronto Stock Exchange";
         entry.m_display_name = "TSX";
         database.add(entry);
@@ -166,7 +166,7 @@ namespace Details {
         entry.m_country_code = Countries::CA;
         entry.m_market_center = "CDX";
         entry.m_time_zone = "America/Toronto";
-        entry.m_currency = DefaultCurrencies::CAD;
+        entry.m_currency = Currencies::CAD;
         entry.m_description = "TSX Venture Exchange";
         entry.m_display_name = "TSXV";
         database.add(entry);
