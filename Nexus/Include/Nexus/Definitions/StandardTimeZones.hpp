@@ -1,5 +1,5 @@
-#ifndef NEXUS_DEFAULT_TIME_ZONE_DATABASE_HPP
-#define NEXUS_DEFAULT_TIME_ZONE_DATABASE_HPP
+#ifndef NEXUS_STANDARD_TIME_ZONES_HPP
+#define NEXUS_STANDARD_TIME_ZONES_HPP
 #include <sstream>
 #include <string>
 #include <boost/date_time/local_time/tz_database.hpp>
@@ -531,18 +531,21 @@ namespace Details {
   }
 }
 
-  /**
-   * Returns the default time zone database, typically used for testing
-   * purposes.
-   */
-  inline boost::local_time::tz_database get_default_time_zone_database() {
-    static auto database = [] {
-      auto database = boost::local_time::tz_database();
-      auto stream = std::stringstream(Details::get_base_time_zone_table());
-      database.load_from_stream(stream);
-      return database;
-    }();
+namespace Details {
+  inline auto time_zones = [] {
+    auto database = boost::local_time::tz_database();
+    auto stream = std::stringstream(get_base_time_zone_table());
+    database.load_from_stream(stream);
     return database;
+  }();
+}
+
+  /** Returns the time zone database. */
+  inline const boost::local_time::tz_database& TIME_ZONES = Details::time_zones;
+
+  /** Updates the time zone database. */
+  inline void set_time_zones(boost::local_time::tz_database database) {
+    Details::time_zones = std::move(database);
   }
 }
 

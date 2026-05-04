@@ -40,7 +40,7 @@ TaskKeyBindingsDialog::TaskKeyBindingsDialog(Ref<UserProfile> userProfile,
   keyComboBoxView->setModel(m_ui->m_keyComboBox->model());
   m_ui->m_keyComboBox->setView(keyComboBoxView);
   m_ui->m_venueComboBox->addItem(tr("All"));
-  for(const auto& venue : m_userProfile->GetVenueDatabase().get_entries()) {
+  for(const auto& venue : VENUES.get_entries()) {
     m_venues.push_back(venue.m_venue);
     m_ui->m_venueComboBox->addItem(QString::fromStdString(
       venue.m_display_name));

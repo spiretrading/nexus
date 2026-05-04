@@ -135,8 +135,8 @@ namespace Nexus {
    * @return The CurrencyId represented by the <i>source</i>.
    */
   inline CurrencyId parse_currency(std::string_view source) {
-    extern const CurrencyDatabase& DEFAULT_CURRENCIES;
-    return parse_currency(source, DEFAULT_CURRENCIES);
+    extern const CurrencyDatabase& CURRENCIES;
+    return parse_currency(source, CURRENCIES);
   }
 
   /**
@@ -175,11 +175,11 @@ namespace Nexus {
   }
 
   inline std::ostream& operator <<(std::ostream& out, CurrencyId value) {
-    extern const CurrencyDatabase& DEFAULT_CURRENCIES;
+    extern const CurrencyDatabase& CURRENCIES;
     auto database = static_cast<const CurrencyDatabase*>(
       out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID));
     if(!database) {
-      database = &DEFAULT_CURRENCIES;
+      database = &CURRENCIES;
     }
     auto& entry = database->from(value);
     if(entry.m_id) {
@@ -373,6 +373,6 @@ namespace std {
   };
 }
 
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Nexus/Definitions/StandardCurrencies.hpp"
 
 #endif

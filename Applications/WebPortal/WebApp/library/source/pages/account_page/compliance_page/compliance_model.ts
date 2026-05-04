@@ -27,7 +27,7 @@ export class ComplianceModel {
     if(currencyDatabase) {
       this._currencyDatabase = currencyDatabase;
     } else {
-      this._currencyDatabase = Nexus.buildDefaultCurrencyDatabase();
+      this._currencyDatabase = Nexus.buildCurrencyDatabase();
     }
   }
 

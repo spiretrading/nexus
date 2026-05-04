@@ -1,12 +1,12 @@
-#ifndef NEXUS_DEFAULT_DESTINATION_DATABASE_HPP
-#define NEXUS_DEFAULT_DESTINATION_DATABASE_HPP
+#ifndef NEXUS_STANDARD_DESTINATIONS_HPP
+#define NEXUS_STANDARD_DESTINATIONS_HPP
 #include <atomic>
 #include <memory>
 #include "Nexus/Definitions/Destination.hpp"
 
 namespace Nexus {
 namespace Details {
-  inline const DestinationDatabase& get_base_destination_database() {
+  inline const DestinationDatabase& get_base_destinations() {
     static auto database = [] {
       auto database = DestinationDatabase();
       {
@@ -155,18 +155,18 @@ namespace Details {
     return database;
   }
 
-  inline auto default_destinations = get_base_destination_database();
+  inline auto destinations = get_base_destinations();
 }
 
-  /** Returns the default DestinationDatabase. */
-  inline const auto& DEFAULT_DESTINATIONS = Details::default_destinations;
+  /** Returns the DestinationDatabase. */
+  inline const auto& DESTINATIONS = Details::destinations;
 
-  /** Updates the default DestinationDatabase. */
-  inline void set_default_destinations(DestinationDatabase database) {
-    Details::default_destinations = database;
+  /** Updates the DestinationDatabase. */
+  inline void set_destinations(DestinationDatabase database) {
+    Details::destinations = database;
   }
 
-  namespace DefaultDestinations {
+  namespace Destinations {
     inline const auto MOE = std::string("MOE");
     inline const auto ASXT = std::string("ASXT");
     inline const auto CXA = std::string("CXA");

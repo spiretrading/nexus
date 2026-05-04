@@ -511,7 +511,7 @@ namespace {
     Translation operator ()<CurrencyId>(const NativeType& nativeType,
         Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const std::string& path) const {
-      auto parser = MakeParser(currency_parser(DEFAULT_CURRENCIES));
+      auto parser = MakeParser(currency_parser());
       using Parser = decltype(parser);
       auto publisher = std::make_shared<ParserPublisher<BasicIStreamReader<
         std::ifstream>, Parser>>(path, parser, errorPolicy);
@@ -534,7 +534,7 @@ namespace {
     Translation operator ()<Ticker>(const NativeType& nativeType,
         Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const std::string& path) const {
-      auto parser = MakeParser(TickerParser(DEFAULT_VENUES));
+      auto parser = MakeParser(TickerParser());
       using Parser = decltype(parser);
       auto publisher = std::make_shared<ParserPublisher<BasicIStreamReader<
         std::ifstream>, Parser>>(path, parser, errorPolicy);
@@ -545,7 +545,7 @@ namespace {
     Translation operator ()<Venue>(const NativeType& nativeType,
         Ref<UserProfile> userProfile, ParserErrorPolicy errorPolicy,
         const std::string& path) const {
-      auto parser = MakeParser(venue_parser(DEFAULT_VENUES));
+      auto parser = MakeParser(venue_parser());
       using Parser = decltype(parser);
       auto publisher = std::make_shared<ParserPublisher<BasicIStreamReader<
         std::ifstream>, Parser>>(path, parser, errorPolicy);
@@ -1264,7 +1264,7 @@ void CanvasNodeTranslationVisitor::Visit(const DefaultCurrencyNode& node) {
     node.GetChildren().front()).Extract<Aspen::Box<Ticker>>();
   m_translation = Aspen::lift(
     [userProfile = &m_context->GetUserProfile()] (const Ticker& ticker) {
-      return DEFAULT_VENUES.from(ticker.get_venue()).m_currency;
+      return VENUES.from(ticker.get_venue()).m_currency;
     }, std::move(source));
 }
 

@@ -12,14 +12,12 @@ TickerNode::TickerNode() {
   SetText("");
 }
 
-TickerNode::TickerNode(const Ticker& value,
-    const VenueDatabase& venueDatabase)
+TickerNode::TickerNode(const Ticker& value)
     : ValueNode(value) {
   SetText(displayText(value).toStdString());
 }
 
-unique_ptr<TickerNode> TickerNode::SetValue(const Ticker& value,
-    const VenueDatabase& venueDatabase) const {
+unique_ptr<TickerNode> TickerNode::SetValue(const Ticker& value) const {
   auto clone = CanvasNode::Clone(*this);
   clone->SetInternalValue(value);
   clone->SetText(displayText(clone->GetValue()).toStdString());

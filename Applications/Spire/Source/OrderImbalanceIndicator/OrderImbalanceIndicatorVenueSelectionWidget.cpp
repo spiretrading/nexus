@@ -31,7 +31,7 @@ void OrderImbalanceIndicatorVenueSelectionWidget::Initialize(
   QGridLayout* layout = new QGridLayout();
   setLayout(layout);
   int count = 0;
-  for(auto& venue : DEFAULT_VENUES.get_entries()) {
+  for(auto& venue : VENUES.get_entries()) {
     int column = count / VENUES_PER_COLUMN;
     int row = count % VENUES_PER_COLUMN;
     std::unique_ptr<QCheckBox> checkBox = std::make_unique<QCheckBox>(

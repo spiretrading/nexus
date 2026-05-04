@@ -285,15 +285,11 @@ void Nexus::Python::export_consolidated_tmx_fee_table(module& module) {
     def_readonly("per_order_charges",
       &ConsolidatedTmxFeeTable::State::m_per_order_charges).
     def_readonly("fill_count", &ConsolidatedTmxFeeTable::State::m_fill_count);
-  module.def("parse_tmx_interlisted_tickers", overload_cast<
-    const std::string&, const VenueDatabase&>(&parse_tmx_interlisted_tickers));
-  module.def("parse_tmx_etf_tickers", overload_cast<
-    const std::string&, const VenueDatabase&>(&parse_tmx_etf_tickers));
-  module.def("parse_nex_listed_tickers", overload_cast<
-    const std::string&, const VenueDatabase&>(&parse_nex_listed_tickers));
-  module.def("parse_consolidated_tmx_fee_table",
-    overload_cast<const YAML::Node&, const VenueDatabase&>(
-      &parse_consolidated_tmx_fee_table));
+  module.def("parse_tmx_interlisted_tickers", &parse_tmx_interlisted_tickers);
+  module.def("parse_tmx_etf_tickers", &parse_tmx_etf_tickers);
+  module.def("parse_nex_listed_tickers", &parse_nex_listed_tickers);
+  module.def(
+    "parse_consolidated_tmx_fee_table", &parse_consolidated_tmx_fee_table);
   module.def("calculate_fee", overload_cast<const ConsolidatedTmxFeeTable&,
     ConsolidatedTmxFeeTable::State&, const Order&, const ExecutionReport&>(
       &calculate_fee));

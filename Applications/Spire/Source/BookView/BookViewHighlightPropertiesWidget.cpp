@@ -49,8 +49,8 @@ void BookViewHighlightPropertiesWidget::Initialize(
     Ref<UserProfile> userProfile, Ref<BookViewProperties> properties) {
   m_userProfile = userProfile.get();
   m_properties = properties.get();
-  auto venues = std::ranges::to<std::vector<VenueDatabase::Entry>>(
-    DEFAULT_VENUES.get_entries());
+  auto venues =
+    std::ranges::to<std::vector<VenueDatabase::Entry>>(VENUES.get_entries());
   sort(venues.begin(), venues.end(), [] (const auto& lhs, const auto& rhs) {
     return lhs.m_display_name < rhs.m_display_name;
   });
@@ -75,8 +75,7 @@ void BookViewHighlightPropertiesWidget::Initialize(
 void BookViewHighlightPropertiesWidget::Redisplay() {
   for(int i = 0; i < m_ui->m_venueList->count(); ++i) {
     auto item = m_ui->m_venueList->item(i);
-    auto venue =
-      DEFAULT_VENUES.from_display_name(item->text().toStdString()).m_venue;
+    auto venue = VENUES.from_display_name(item->text().toStdString()).m_venue;
     QColor backgroundColor;
     auto highlight = m_properties->GetVenueHighlight(venue);
     if(highlight.is_initialized()) {
@@ -95,7 +94,7 @@ void BookViewHighlightPropertiesWidget::Redisplay() {
 
 const VenueDatabase::Entry& BookViewHighlightPropertiesWidget::
     GetCurrentVenueHighlightEntry() const {
-  return DEFAULT_VENUES.from_display_name(
+  return VENUES.from_display_name(
     m_ui->m_venueList->currentItem()->text().toStdString());
 }
 

@@ -1,6 +1,4 @@
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/Definitions/FixTags.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/KeyBindings/BasicAdditionalTagSchema.hpp"
@@ -280,8 +278,8 @@ namespace {
   const auto& ASX() {
     static const auto SCOPE = [&] {
       auto scope = Scope();
-      scope += DefaultVenues::ASX;
-      scope += DefaultVenues::CXA;
+      scope += Venues::ASX;
+      scope += Venues::CXA;
       return scope;
     }();
     return SCOPE;
@@ -318,7 +316,7 @@ const std::shared_ptr<AdditionalTagSchema>&
     }
   }
   auto scope = Scope();
-  for(auto& venue : DEFAULT_DESTINATIONS.from(destination).m_venues) {
+  for(auto& venue : DESTINATIONS.from(destination).m_venues) {
     scope += venue;
   }
   return find(scope, key);
@@ -356,7 +354,7 @@ std::vector<std::shared_ptr<AdditionalTagSchema>>
     }
   }
   auto scope = Scope();
-  for(auto& venue : DEFAULT_DESTINATIONS.from(destination).m_venues) {
+  for(auto& venue : DESTINATIONS.from(destination).m_venues) {
     scope += venue;
   }
   auto parent_matches = find(scope);
@@ -390,24 +388,24 @@ const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
     auto database = AdditionalTagDatabase();
     database.add(Scope::GLOBAL, MaxFloorSchema::get_instance());
     database.add(Scope::GLOBAL, make_peg_difference_schema());
-    database.add(DefaultVenues::ASX, make_asx_exec_inst_schema());
-    database.add(DefaultDestinations::CHIX, make_chix_ex_destination_schema());
-    database.add(DefaultDestinations::CHIX, make_chix_exec_inst_schema());
-    database.add(DefaultDestinations::CHIX, make_tsx_long_life_schema());
-    database.add(DefaultDestinations::CSE, make_cse_exec_inst_schema());
-    database.add(DefaultDestinations::CSE2, make_cse_exec_inst_schema());
-    database.add(DefaultDestinations::CX2, make_cx2_ex_destination_schema());
-    database.add(DefaultDestinations::CX2, make_cx2_exec_inst_schema());
-    database.add(DefaultDestinations::CX2, make_tsx_long_life_schema());
-    database.add(DefaultDestinations::MATNLP, make_matn_anonymous_schema());
-    database.add(DefaultDestinations::MATNLP, make_matn_exec_inst_schema());
-    database.add(DefaultDestinations::MATNMF, make_matn_anonymous_schema());
-    database.add(DefaultDestinations::MATNMF, make_matn_exec_inst_schema());
-    database.add(DefaultDestinations::NEOE, make_neoe_ex_destination_schema());
-    database.add(DefaultDestinations::NEOE, make_neoe_exec_inst_schema());
-    database.add(DefaultDestinations::NEOE, make_neoe_handl_inst_schema());
-    database.add(DefaultDestinations::TSX, make_tsx_ex_destination_schema());
-    database.add(DefaultDestinations::TSX, make_tsx_long_life_schema());
+    database.add(Venues::ASX, make_asx_exec_inst_schema());
+    database.add(Destinations::CHIX, make_chix_ex_destination_schema());
+    database.add(Destinations::CHIX, make_chix_exec_inst_schema());
+    database.add(Destinations::CHIX, make_tsx_long_life_schema());
+    database.add(Destinations::CSE, make_cse_exec_inst_schema());
+    database.add(Destinations::CSE2, make_cse_exec_inst_schema());
+    database.add(Destinations::CX2, make_cx2_ex_destination_schema());
+    database.add(Destinations::CX2, make_cx2_exec_inst_schema());
+    database.add(Destinations::CX2, make_tsx_long_life_schema());
+    database.add(Destinations::MATNLP, make_matn_anonymous_schema());
+    database.add(Destinations::MATNLP, make_matn_exec_inst_schema());
+    database.add(Destinations::MATNMF, make_matn_anonymous_schema());
+    database.add(Destinations::MATNMF, make_matn_exec_inst_schema());
+    database.add(Destinations::NEOE, make_neoe_ex_destination_schema());
+    database.add(Destinations::NEOE, make_neoe_exec_inst_schema());
+    database.add(Destinations::NEOE, make_neoe_handl_inst_schema());
+    database.add(Destinations::TSX, make_tsx_ex_destination_schema());
+    database.add(Destinations::TSX, make_tsx_long_life_schema());
     return database;
   }();
   return database;

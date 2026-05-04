@@ -36,11 +36,11 @@ namespace {
     auto next_height = 0;
     auto resolution = QGuiApplication::primaryScreen()->availableGeometry();
     auto tickers = std::vector<Ticker>();
-    tickers.push_back(Ticker("RY", DefaultVenues::TSX));
-    tickers.push_back(Ticker("XIU", DefaultVenues::TSX));
-    tickers.push_back(Ticker("ABX", DefaultVenues::TSX));
-    tickers.push_back(Ticker("SU", DefaultVenues::TSX));
-    tickers.push_back(Ticker("BCE", DefaultVenues::TSX));
+    tickers.push_back(parse_ticker("RY.TSX"));
+    tickers.push_back(parse_ticker("XIU.TSX"));
+    tickers.push_back(parse_ticker("ABX.TSX"));
+    tickers.push_back(parse_ticker("SU.TSX"));
+    tickers.push_back(parse_ticker("BCE.TSX"));
     auto index = std::size_t(0);
     auto windows = std::vector<QWidget*>();
     while(instantiate_ticker_windows && index < tickers.size()) {

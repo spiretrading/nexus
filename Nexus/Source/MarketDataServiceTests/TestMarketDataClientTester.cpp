@@ -6,8 +6,8 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 TEST_SUITE("TestMarketDataClient") {
   TEST_CASE("query") {

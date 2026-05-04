@@ -41,14 +41,14 @@ namespace {
   using ApplicationMarketDataFeedClient = ReplayMarketDataFeedClient<
     BaseMarketDataFeedClient, DataStore*, LiveNtpTimeClient*, LiveTimer>;
 
-  auto parse_tickers(const std::string& path, const VenueDatabase& venues) {
+  auto parse_tickers(const std::string& path) {
     return try_or_nest([&] {
       auto config = load_file(path);
       auto tickers_node = get_node(config, "tickers");
       auto tickers = std::vector<Ticker>();
       for(auto item : tickers_node) {
         auto symbol = get_node(item, "symbol").as<std::string>();
-        auto ticker = parse_ticker(symbol, venues);
+        auto ticker = parse_ticker(symbol);
         if(!ticker) {
           throw_with_location(std::runtime_error("Invalid ticker: " + symbol));
         }
@@ -102,14 +102,14 @@ int main(int argc, const char** argv) {
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
       ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
     auto time_client = make_live_ntp_time_client(service_locator_client);
     auto data_store_path = extract<std::string>(config, "data_store");
-    auto venues = definitions_client.load_venue_database();
-    auto historical_data_store = DataStore(venues, [=] {
+    auto historical_data_store = DataStore([=] {
       return SqlConnection(Sqlite3::Connection(data_store_path));
     });
     auto tickers = parse_tickers(extract<std::string>(
-      config, "tickers_path", "tickers.yml"), venues);
+      config, "tickers_path", "tickers.yml"));
     auto market_data_services =
       service_locator_client.locate(MARKET_DATA_FEED_SERVICE_NAME);
     if(market_data_services.empty()) {

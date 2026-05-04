@@ -9,7 +9,7 @@ using namespace Beam;
 using namespace Beam::Tests;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 TEST_SUITE("ComplianceRuleSchema") {
   TEST_CASE("constructor") {

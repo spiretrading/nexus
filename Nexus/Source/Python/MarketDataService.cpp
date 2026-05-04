@@ -318,18 +318,9 @@ void Nexus::Python::export_mysql_historical_data_store(module& module) {
   using DataStore = ToPythonHistoricalDataStore<
     SqlHistoricalDataStore<SqlConnection<Viper::MySql::Connection>>>;
   export_historical_data_store<DataStore>(module, "MySqlHistoricalDataStore").
-    def(init([] (const VenueDatabase& venues, std::string host,
-        unsigned int port, std::string username, std::string password,
-        std::string database) {
-      return std::make_unique<DataStore>(venues, [=] {
-        auto release = Beam::Python::GilRelease();
-        return SqlConnection(
-          Viper::MySql::Connection(host, port, username, password, database));
-      });
-    })).
     def(init([] (std::string host, unsigned int port, std::string username,
         std::string password, std::string database) {
-      return std::make_unique<DataStore>(DEFAULT_VENUES, [=] {
+      return std::make_unique<DataStore>([=] {
         auto release = Beam::Python::GilRelease();
         return SqlConnection(
           Viper::MySql::Connection(host, port, username, password, database));
@@ -351,14 +342,8 @@ void Nexus::Python::export_sqlite_historical_data_store(module& module) {
   using DataStore = ToPythonHistoricalDataStore<
     SqlHistoricalDataStore<SqlConnection<Viper::Sqlite3::Connection>>>;
   export_historical_data_store<DataStore>(module, "SqliteHistoricalDataStore").
-    def(init([] (const VenueDatabase& venues, std::string path) {
-      return std::make_unique<DataStore>(venues, [=] {
-        auto release = Beam::Python::GilRelease();
-        return SqlConnection(Viper::Sqlite3::Connection(path));
-      });
-    })).
     def(init([] (std::string path) {
-      return std::make_unique<DataStore>(DEFAULT_VENUES, [=] {
+      return std::make_unique<DataStore>([=] {
         auto release = Beam::Python::GilRelease();
         return SqlConnection(Viper::Sqlite3::Connection(path));
       });
