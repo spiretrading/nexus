@@ -34,6 +34,7 @@ using namespace Beam;
 using namespace Beam::Python;
 using namespace boost;
 using namespace boost::gregorian;
+using namespace boost::local_time;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Python;
@@ -667,28 +668,30 @@ void Nexus::Python::export_venue(module& module) {
     const CountryDatabase&, const CurrencyDatabase&>(&parse_venue_database));
   module.def("parse_venue_database",
     overload_cast<const YAML::Node&>(&parse_venue_database));
-  module.def("utc_to_venue", overload_cast<Venue, boost::posix_time::ptime,
-    const VenueDatabase&, const boost::local_time::tz_database&>(
+  module.def("utc_to_venue",
+    overload_cast<Venue, ptime, const VenueDatabase&, const tz_database&>(
       &utc_to_venue));
-  module.def("utc_to_venue", overload_cast<Venue, boost::posix_time::ptime,
-    const boost::local_time::tz_database&>(&utc_to_venue));
-  module.def("venue_to_utc", overload_cast<Venue, boost::posix_time::ptime,
-    const VenueDatabase&, const boost::local_time::tz_database&>(
+  module.def("utc_to_venue", overload_cast<Venue, ptime, const tz_database&>(
+    &utc_to_venue));
+  module.def("utc_to_venue", overload_cast<Venue, ptime>(&utc_to_venue));
+  module.def("venue_to_utc",
+    overload_cast<Venue, ptime, const VenueDatabase&, const tz_database&>(
       &venue_to_utc));
-  module.def("venue_to_utc", overload_cast<Venue, boost::posix_time::ptime,
-    const boost::local_time::tz_database&>(&venue_to_utc));
-  module.def("utc_start_of_day", overload_cast<Venue,
-    boost::posix_time::ptime, const VenueDatabase&,
-    const boost::local_time::tz_database&>(&utc_start_of_day));
-  module.def("utc_start_of_day", overload_cast<Venue,
-    boost::posix_time::ptime, const boost::local_time::tz_database&>(
+  module.def("venue_to_utc",
+    overload_cast<Venue, ptime, const tz_database&>(&venue_to_utc));
+  module.def("venue_to_utc", overload_cast<Venue, ptime>(&venue_to_utc));
+  module.def("utc_start_of_day",
+    overload_cast<Venue, ptime, const VenueDatabase&, const tz_database&>(
       &utc_start_of_day));
-  module.def("utc_end_of_day", overload_cast<Venue,
-    boost::posix_time::ptime, const VenueDatabase&,
-    const boost::local_time::tz_database&>(&utc_end_of_day));
-  module.def("utc_end_of_day", overload_cast<Venue,
-    boost::posix_time::ptime, const boost::local_time::tz_database&>(
-      &utc_end_of_day));
+  module.def("utc_start_of_day",
+    overload_cast<Venue, ptime, const tz_database&>(&utc_start_of_day));
+  module.def(
+    "utc_start_of_day", overload_cast<Venue, ptime>(&utc_start_of_day));
+  module.def("utc_end_of_day", overload_cast<
+    Venue, ptime, const VenueDatabase&, const tz_database&>(&utc_end_of_day));
+  module.def("utc_end_of_day", overload_cast<Venue, ptime, const tz_database&>(
+    &utc_end_of_day));
+  module.def("utc_end_of_day", overload_cast<Venue, ptime>(&utc_end_of_day));
 }
 
 void Nexus::Python::export_venues(module& module) {

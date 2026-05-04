@@ -14,7 +14,7 @@
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServlet.hpp"
 #include "Nexus/DefinitionsService/ServiceDefinitionsClient.hpp"
 

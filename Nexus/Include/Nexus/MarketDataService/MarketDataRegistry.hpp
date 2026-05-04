@@ -63,12 +63,8 @@ namespace Nexus {
   class MarketDataRegistry {
     public:
 
-      /**
-       * Constructs an empty MarketDataRegistry.
-       * @param time_zones The database of time zones.
-       */
-      explicit MarketDataRegistry(
-        boost::local_time::tz_database time_zones) noexcept;
+      /** Constructs an empty MarketDataRegistry. */
+      MarketDataRegistry() = default;
 
       /**
        * Returns a list of TickerInfo's matching a prefix.
@@ -162,7 +158,6 @@ namespace Nexus {
       template<typename> friend struct std::hash;
       using SyncVenueEntry = Beam::Sync<VenueEntry, Beam::Mutex>;
       using SyncTickerEntry = Beam::Sync<TickerEntry, Beam::Mutex>;
-      boost::local_time::tz_database m_time_zones;
       Beam::Sync<tsl::htrie_map<char, TickerInfo>> m_ticker_database;
       Beam::SynchronizedUnorderedMap<PrimaryListingKey, Ticker>
         m_primary_listings;
@@ -178,10 +173,6 @@ namespace Nexus {
       boost::optional<SyncTickerEntry&> load(
         const Ticker& ticker, IsHistoricalDataStore auto & data_store);
   };
-
-  inline MarketDataRegistry::MarketDataRegistry(
-    boost::local_time::tz_database time_zones) noexcept
-    : m_time_zones(std::move(time_zones)) {}
 
   inline std::vector<TickerInfo> MarketDataRegistry::search_ticker_info(
       const std::string& prefix) const {
@@ -405,8 +396,7 @@ namespace Nexus {
             VENUES.from(sanitized_ticker.get_venue()).m_market_center;
           auto close = Details::load_close_price(
             sanitized_ticker, market_center, data_store);
-          entry.emplace(
-            sanitized_ticker, m_time_zones, close, initial_sequences);
+          entry.emplace(sanitized_ticker, close, initial_sequences);
         });
     });
     return **entry;

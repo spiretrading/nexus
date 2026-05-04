@@ -1,5 +1,5 @@
 #include "Spire/Dashboard/CloseDashboardCellBuilder.hpp"
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/TechnicalAnalysis/StandardTickerQueries.hpp"
 #include "Spire/Dashboard/QueueDashboardCell.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -20,8 +20,7 @@ std::unique_ptr<DashboardCell> CloseDashboardCellBuilder::Make(
   spawn([=] {
     auto& serviceClients = selfUserProfile->GetClients();
     auto close = load_previous_close(serviceClients.get_market_data_client(),
-      ticker, serviceClients.get_time_client().get_time(),
-      get_default_time_zone_database());
+      ticker, serviceClients.get_time_client().get_time());
     if(close) {
       queue->push(close->m_price);
     }

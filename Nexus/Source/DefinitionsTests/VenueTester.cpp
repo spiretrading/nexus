@@ -1,7 +1,7 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
 using namespace Beam;
@@ -85,7 +85,7 @@ TEST_SUITE("Venue") {
   }
 
   TEST_CASE("utc_start_of_day") {
-    auto tz_database = get_default_time_zone_database();
+    auto tz_database = TIME_ZONES;
     auto venue_database = load_test_venue_database();
     auto date_time = ptime(date(2025, 6, 26), hours(0));
     auto result =
@@ -94,7 +94,7 @@ TEST_SUITE("Venue") {
   }
 
   TEST_CASE("aest_start") {
-    auto tz_database = get_default_time_zone_database();
+    auto tz_database = TIME_ZONES;
     auto venue_database = load_test_venue_database();
     auto date_time = ptime(date(2025, 6, 26), hours(0));
     auto expected = ptime(date(2025, 6, 25), hours(14));
@@ -104,7 +104,7 @@ TEST_SUITE("Venue") {
   }
 
   TEST_CASE("est_in_dst_start") {
-    auto tz_database = get_default_time_zone_database();
+    auto tz_database = TIME_ZONES;
     auto venue_database = load_test_venue_database();
     auto date_time = ptime(date(2025, 6, 26), hours(0));
     auto expected = ptime(date(2025, 6, 25), hours(4));
@@ -114,7 +114,7 @@ TEST_SUITE("Venue") {
   }
 
   TEST_CASE("est_in_standard_start") {
-    auto tz_database = get_default_time_zone_database();
+    auto tz_database = TIME_ZONES;
     auto venue_database = load_test_venue_database();
     auto date_time = ptime(date(2025, 1, 15), hours(0));
     auto expected = ptime(date(2025, 1, 14), hours(5));

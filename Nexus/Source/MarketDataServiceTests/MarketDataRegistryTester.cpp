@@ -1,5 +1,5 @@
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
@@ -13,7 +13,7 @@ using namespace Nexus::Venues;
 TEST_SUITE("MarketDataRegistry") {
   TEST_CASE("search_ticker_info") {
     auto data_store = LocalHistoricalDataStore();
-    auto registry = MarketDataRegistry(get_default_time_zone_database());
+    auto registry = MarketDataRegistry();
     auto ticker_a = parse_ticker("A.TSX");
     auto info_a = TickerInfo(ticker_a, "TICKER A", "", 100);
     registry.add(info_a);
@@ -39,7 +39,7 @@ TEST_SUITE("MarketDataRegistry") {
   }
 
   TEST_CASE("get_primary_listing") {
-    auto registry = MarketDataRegistry(get_default_time_zone_database());
+    auto registry = MarketDataRegistry();
     auto ticker_ry_tsx = parse_ticker("RY.TSX");
     auto info_ry_tsx =
       TickerInfo(ticker_ry_tsx, "Royal Bank", "Financial", 100);
@@ -69,7 +69,7 @@ TEST_SUITE("MarketDataRegistry") {
 
   TEST_CASE("publish_bbo_quote") {
     auto data_store = LocalHistoricalDataStore();
-    auto registry = MarketDataRegistry(get_default_time_zone_database());
+    auto registry = MarketDataRegistry();
     auto ticker = parse_ticker("TST.TSX");
     auto bbo_quote = TickerBboQuote(
       BboQuote(make_bid(Money::CENT, 100), make_ask(2 * Money::CENT, 200),
@@ -85,7 +85,7 @@ TEST_SUITE("MarketDataRegistry") {
 
   TEST_CASE("publish_book_quote") {
     auto data_store = LocalHistoricalDataStore();
-    auto registry = MarketDataRegistry(get_default_time_zone_database());
+    auto registry = MarketDataRegistry();
     auto ticker = parse_ticker("TST.TSX");
     auto book_quote = TickerBookQuote(
       BookQuote("MP1", false, TSX, make_bid(Money::CENT, 100),
@@ -101,7 +101,7 @@ TEST_SUITE("MarketDataRegistry") {
 
   TEST_CASE("publish_time_and_sale") {
     auto data_store = LocalHistoricalDataStore();
-    auto registry = MarketDataRegistry(get_default_time_zone_database());
+    auto registry = MarketDataRegistry();
     auto ticker = parse_ticker("TST.TSX");
     auto time_and_sale = TickerTimeAndSale(
       TimeAndSale(time_from_string("2024-07-12 14:00:00"), Money::ONE, 100,

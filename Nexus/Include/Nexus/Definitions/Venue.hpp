@@ -20,6 +20,7 @@
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Quantity.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 
 namespace Nexus {
 
@@ -336,11 +337,26 @@ namespace Nexus {
    * @return The local date/time at the specified venue corresponding to the
    *         specified UTC <i>date_time</i>.
    */
-  inline boost::posix_time::ptime utc_to_venue(Venue venue,
-      boost::posix_time::ptime date_time,
+  inline boost::posix_time::ptime utc_to_venue(
+      Venue venue, boost::posix_time::ptime date_time,
       const boost::local_time::tz_database& time_zone_database) {
     extern const VenueDatabase& VENUES;
     return utc_to_venue(venue, date_time, VENUES, time_zone_database);
+  }
+
+  /**
+   * Converts a UTC date/time into a venue's local date/time using the default
+   * VenueDatabase and time zones.
+   * @param venue The venue whose local date/time is to be returned.
+   * @param date_time The date/time, in UTC, to convert into the venue's local
+   *        date/time.
+   * @return The local date/time at the specified venue corresponding to the
+   *         specified UTC <i>date_time</i>.
+   */
+  inline boost::posix_time::ptime utc_to_venue(
+      Venue venue, boost::posix_time::ptime date_time) {
+    extern const VenueDatabase& VENUES;
+    return utc_to_venue(venue, date_time, VENUES, TIME_ZONES);
   }
 
   /**
@@ -382,11 +398,26 @@ namespace Nexus {
    * @return The UTC date/time corresponding to the specified venue local
    *         <i>date_time</i>.
    */
-  inline boost::posix_time::ptime venue_to_utc(Venue venue,
-      boost::posix_time::ptime date_time,
+  inline boost::posix_time::ptime venue_to_utc(
+      Venue venue, boost::posix_time::ptime date_time,
       const boost::local_time::tz_database& time_zone_database) {
     extern const VenueDatabase& VENUES;
     return venue_to_utc(venue, date_time, VENUES, time_zone_database);
+  }
+
+  /**
+   * Converts a venue's local date/time into UTC using the default VenueDatabase
+   * and time zones.
+   * @param venue The venue whose local date/time is to be converted.
+   * @param date_time The date/time, in the venue's local time, to convert
+   *        into UTC.
+   * @return The UTC date/time corresponding to the specified venue local
+   *         <i>date_time</i>.
+   */
+  inline boost::posix_time::ptime venue_to_utc(
+      Venue venue, boost::posix_time::ptime date_time) {
+    extern const VenueDatabase& VENUES;
+    return venue_to_utc(venue, date_time, VENUES, TIME_ZONES);
   }
 
   /**
@@ -425,11 +456,25 @@ namespace Nexus {
    * @param time_zone_database The time zone database to use for time zone
    *        conversions.
    */
-  inline boost::posix_time::ptime utc_start_of_day(Venue venue,
-      boost::posix_time::ptime date_time,
+  inline boost::posix_time::ptime utc_start_of_day(
+      Venue venue, boost::posix_time::ptime date_time,
       const boost::local_time::tz_database& time_zone_database) {
     extern const VenueDatabase& VENUES;
     return utc_start_of_day(venue, date_time, VENUES, time_zone_database);
+  }
+
+  /**
+   * Returns the time of the start of day relative to a specified venue in UTC
+   * using the default VenueDatabase and time zones.
+   * @param venue The venue whose start of day in UTC is to be returned.
+   * @param date_time The date/time, in UTC, to convert into the venue's start
+   *        of day, in UTC.
+   * @return The UTC start of day at the specified venue.
+   */
+  inline boost::posix_time::ptime utc_start_of_day(
+      Venue venue, boost::posix_time::ptime date_time) {
+    extern const VenueDatabase& VENUES;
+    return utc_start_of_day(venue, date_time, VENUES, TIME_ZONES);
   }
 
   /**
@@ -463,11 +508,25 @@ namespace Nexus {
    * @param time_zone_database The time zone database to use for time zone
    *        conversions.
    */
-  inline boost::posix_time::ptime utc_end_of_day(Venue venue,
-      boost::posix_time::ptime date_time,
+  inline boost::posix_time::ptime utc_end_of_day(
+      Venue venue, boost::posix_time::ptime date_time,
       const boost::local_time::tz_database& time_zone_database) {
     extern const VenueDatabase& VENUES;
     return utc_end_of_day(venue, date_time, VENUES, time_zone_database);
+  }
+
+  /**
+   * Returns the time of the end of day relative to a specified venue in UTC
+   * using the default VenueDatabase and time zones.
+   * @param venue The venue whose end of day in UTC is to be returned.
+   * @param date_time The date/time, in UTC, to convert into the venue's end of
+   *        day, in UTC.
+   * @return The UTC end of day at the specified venue.
+   */
+  inline boost::posix_time::ptime utc_end_of_day(
+      Venue venue, boost::posix_time::ptime date_time) {
+    extern const VenueDatabase& VENUES;
+    return utc_end_of_day(venue, date_time, VENUES, TIME_ZONES);
   }
 
   inline Venue::Venue(Code mic) noexcept

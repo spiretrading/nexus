@@ -1,5 +1,5 @@
 #include "Spire/Dashboard/HighDashboardCellBuilder.hpp"
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/TechnicalAnalysis/StandardTickerQueries.hpp"
 #include "Spire/Dashboard/QueueDashboardCell.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -16,8 +16,7 @@ std::unique_ptr<DashboardCell> HighDashboardCellBuilder::Make(
   auto& ticker = boost::get<Ticker>(index);
   auto& serviceClients = userProfile.get()->GetClients();
   auto query = make_daily_high_query(
-    ticker, serviceClients.get_time_client().get_time(), pos_infin,
-    get_default_time_zone_database());
+    ticker, serviceClients.get_time_client().get_time(), pos_infin);
   auto baseQueue = std::make_shared<Queue<Nexus::QueryVariant>>();
   auto queue = std::static_pointer_cast<QueueReader<Money>>(
     convert(baseQueue, [] (const Nexus::QueryVariant& value) {

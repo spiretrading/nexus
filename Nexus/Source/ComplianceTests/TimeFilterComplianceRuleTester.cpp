@@ -3,7 +3,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/Compliance/TimeFilterComplianceRule.hpp"
 #include "Nexus/ComplianceTests/TestComplianceRule.hpp"
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
@@ -78,8 +78,7 @@ TEST_SUITE("TimeFilterComplianceRule") {
   TEST_CASE("same_day") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-25 16:00:00"));
     auto operations = std::make_shared<TestComplianceRule::Queue>();
-    auto rule = TimeFilterComplianceRule(
-      hours(10), hours(14), get_default_time_zone_database(), &time_client,
+    auto rule = TimeFilterComplianceRule(hours(10), hours(14), &time_client,
       std::make_unique<TestComplianceRule>(operations));
     SUBCASE("inside") {
       require_check(rule, time_client, operations);
@@ -93,8 +92,7 @@ TEST_SUITE("TimeFilterComplianceRule") {
   TEST_CASE("overnight_period") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-25 03:00:00"));
     auto operations = std::make_shared<TestComplianceRule::Queue>();
-    auto rule = TimeFilterComplianceRule(
-      hours(22), hours(2), get_default_time_zone_database(), &time_client,
+    auto rule = TimeFilterComplianceRule(hours(22), hours(2), &time_client,
       std::make_unique<TestComplianceRule>(operations));
     SUBCASE("inside") {
       require_check(rule, time_client, operations);
@@ -108,8 +106,7 @@ TEST_SUITE("TimeFilterComplianceRule") {
   TEST_CASE("convert_time_zones") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-25 15:00:00"));
     auto operations = std::make_shared<TestComplianceRule::Queue>();
-    auto rule = TimeFilterComplianceRule(
-      hours(10), hours(14), get_default_time_zone_database(), &time_client,
+    auto rule = TimeFilterComplianceRule(hours(10), hours(14), &time_client,
       std::make_unique<TestComplianceRule>(operations));
     require_check(rule, time_client, operations);
     time_client.set(time_from_string("2024-07-25 13:00:00"));
@@ -119,8 +116,7 @@ TEST_SUITE("TimeFilterComplianceRule") {
   TEST_CASE("edge_case_start_equals_end") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-25 14:00:00"));
     auto operations = std::make_shared<TestComplianceRule::Queue>();
-    auto rule = TimeFilterComplianceRule(
-      hours(10), hours(10), get_default_time_zone_database(), &time_client,
+    auto rule = TimeFilterComplianceRule(hours(10), hours(10), &time_client,
       std::make_unique<TestComplianceRule>(operations));
     require_check(rule, time_client, operations);
     time_client.set(time_from_string("2024-07-25 14:01:00"));
@@ -130,8 +126,7 @@ TEST_SUITE("TimeFilterComplianceRule") {
   TEST_CASE("throws_if_venue_not_in_database") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-25 16:00:00"));
     auto operations = std::make_shared<TestComplianceRule::Queue>();
-    auto rule = TimeFilterComplianceRule(
-      hours(10), hours(10), get_default_time_zone_database(), &time_client,
+    auto rule = TimeFilterComplianceRule(hours(10), hours(10), &time_client,
       std::make_unique<TestComplianceRule>(operations));
     auto ticker = Ticker("TST", Venue("XXXX"));
     auto order_info = OrderInfo();

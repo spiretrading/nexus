@@ -87,8 +87,7 @@ int main(int argc, const char** argv) {
       &market_data_client, time_client.get());
     auto checks = std::vector<std::unique_ptr<OrderSubmissionCheck>>();
     try_or_nest([&] {
-      checks.emplace_back(make_board_lot_check(&market_data_client,
-        definitions_client.load_time_zone_database()));
+      checks.emplace_back(make_board_lot_check(&market_data_client));
       checks.emplace_back(
         std::make_unique<BuyingPowerCheck<ApplicationAdministrationClient*,
           ApplicationMarketDataClient*>>(

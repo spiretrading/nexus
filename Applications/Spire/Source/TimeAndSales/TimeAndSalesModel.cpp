@@ -1,6 +1,6 @@
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
 #include <QCoreApplication>
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
@@ -19,8 +19,7 @@ TimeAndSalesModel::TimeAndSalesModel(Ref<UserProfile> userProfile,
     return;
   }
   auto venueStartOfDay = utc_start_of_day(ticker.get_venue(),
-    m_userProfile->GetClients().get_time_client().get_time(),
-    get_default_time_zone_database());
+    m_userProfile->GetClients().get_time_client().get_time());
   auto query = TickerQuery();
   query.set_index(ticker);
   query.set_range(venueStartOfDay, Beam::Sequence::LAST);

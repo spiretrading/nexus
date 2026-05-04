@@ -6,7 +6,7 @@ import beam
 import nexus
 import yaml
 
-def report_positions(service_clients, account, venues, currencies, writer):
+def report_positions(service_clients, account, writer):
   snapshot = service_clients.risk_client.load_inventory_snapshot(account)
   portfolio, sequence, excluded_orders = nexus.make_portfolio(
     snapshot, account, service_clients.order_execution_client)
@@ -16,7 +16,7 @@ def report_positions(service_clients, account, venues, currencies, writer):
       for execution_report in execution_reports:
         portfolio.update(order.info.fields, execution_report)
   for ticker in portfolio.entries:
-    currency = venues.select(ticker.venue).currency
+    currency = nexus.VENUES.select(ticker.venue).currency
     inventory = portfolio.bookkeeper.get_inventory(ticker, currency)
     position = inventory.position
     if nexus.side(position) == nexus.Side.BID:
@@ -24,7 +24,7 @@ def report_positions(service_clients, account, venues, currencies, writer):
     else:
       side_code = 'Short'
     writer.writerow([account.name, str(ticker),
-      currencies.from_id(currency).code, side_code, position.quantity,
+      nexus.CURRENCIES.from_id(currency).code, side_code, position.quantity,
       position.cost_basis])
 
 def report_yaml_error(error):
@@ -62,21 +62,18 @@ def main():
   password = section['password']
   service_clients = nexus.ServiceClients(username, password, address)
   csv_writer = csv.writer(sys.stdout, quoting=csv.QUOTE_NONNUMERIC)
-  csv_writer.writerow(["Account", "Ticker", "Currency", "Side",
-    "Open Quantity", "Cost Basis"])
-  venues = service_clients.definitions_client.load_venue_database()
-  currencies = service_clients.definitions_client.load_currency_database()
+  csv_writer.writerow(
+    ["Account", "Ticker", "Currency", "Side", "Open Quantity", "Cost Basis"])
   if args.account:
     account = service_clients.service_locator_client.find_account(
       args.account)
     if not account:
       print(f'Account {args.account} not found.')
       return
-    report_positions(service_clients, account, venues, currencies, csv_writer)
+    report_positions(service_clients, account, csv_writer)
   else:
     for account in service_clients.service_locator_client.load_all_accounts():
-      report_positions(service_clients, account, venues, currencies,
-        csv_writer)
+      report_positions(service_clients, account, csv_writer)
 
 if __name__ == '__main__':
   main()

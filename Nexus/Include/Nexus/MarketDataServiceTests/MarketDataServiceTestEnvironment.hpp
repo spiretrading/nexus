@@ -18,7 +18,7 @@
 #include <boost/functional/factory.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedServlet.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
@@ -204,7 +204,6 @@ namespace Nexus::Tests {
     AdministrationClient administration_client, HistoricalDataStore data_store)
     : m_service_locator_client(std::move(service_locator_client)),
       m_administration_client(std::move(administration_client)),
-      m_registry(get_default_time_zone_database()),
       m_data_store(std::move(data_store)),
       m_registry_servlet(m_administration_client, &m_registry, m_data_store),
       m_container(Beam::init(m_service_locator_client, &m_registry_servlet),

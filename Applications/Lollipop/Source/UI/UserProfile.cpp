@@ -11,20 +11,17 @@
 
 using namespace Beam;
 using namespace boost;
-using namespace boost::local_time;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
 
 UserProfile::UserProfile(const std::string& username, bool isAdministrator,
-    bool isManager, const tz_database& timeZoneDatabase,
-    const std::vector<ExchangeRate>& exchangeRates,
+    bool isManager, const std::vector<ExchangeRate>& exchangeRates,
     const EntitlementDatabase& entitlementDatabase, Uri web_portal_uri,
     Clients clients)
     : m_username(username),
       m_isAdministrator(isAdministrator),
       m_isManager(isManager),
-      m_timeZoneDatabase(timeZoneDatabase),
       m_entitlementDatabase(entitlementDatabase),
       m_web_portal_uri(std::move(web_portal_uri)),
       m_clients(std::move(clients)),
@@ -51,11 +48,6 @@ bool UserProfile::IsAdministrator() const {
 bool UserProfile::IsManager() const {
   return m_isAdministrator || m_isManager;
 }
-
-const tz_database& UserProfile::GetTimeZoneDatabase() const {
-  return m_timeZoneDatabase;
-}
-
 
 const ExchangeRateTable& UserProfile::GetExchangeRates() const {
   return m_exchangeRates;

@@ -8,7 +8,7 @@
 #include <boost/functional/factory.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
@@ -66,10 +66,9 @@ namespace {
           m_server_connection(std::make_shared<LocalServerConnection>()),
           m_administration_environment(
             make_administration_service_test_environment(
-              m_service_locator_environment)),
-          m_registry(get_default_time_zone_database()) {
-      auto servlet_account = make_account(
-        "market_data_service", DirectoryEntry::STAR_DIRECTORY);
+              m_service_locator_environment)) {
+      auto servlet_account =
+        make_account("market_data_service", DirectoryEntry::STAR_DIRECTORY);
       m_administration_environment.make_administrator(servlet_account);
       m_service_locator_environment.get_root().store(
         servlet_account, DirectoryEntry::STAR_DIRECTORY, Permissions(~0));

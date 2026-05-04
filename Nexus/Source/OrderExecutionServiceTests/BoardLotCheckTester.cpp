@@ -47,8 +47,7 @@ TEST_SUITE("BoardLotCheck") {
     auto fixture = Fixture();
     auto& feed_client = fixture.m_market_data_environment.get_feed_client();
     auto check = make_board_lot_check(
-      fixture.m_market_data_environment.get_registry_client(),
-      get_default_time_zone_database());
+      fixture.m_market_data_environment.get_registry_client());
 
     SUBCASE("price_over_one_dollar") {
       auto fields = make_test_order_fields();

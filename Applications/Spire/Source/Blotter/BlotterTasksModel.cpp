@@ -3,7 +3,7 @@
 #include <Beam/Queues/FilteredQueueReader.hpp>
 #include <Beam/Queues/QueueReaderPublisher.hpp>
 #include <Beam/Queues/StateQueue.hpp>
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 #include "Spire/Blotter/BlotterModelUtilities.hpp"
 #include "Spire/Blotter/BlotterTaskMonitor.hpp"
@@ -29,8 +29,8 @@ namespace {
       auto currentTime = userProfile.GetClients().get_time_client().get_time();
       auto lastSequence = Beam::Sequence::FIRST;
       for(auto& venue : VENUES.get_entries()) {
-        auto snapshotQuery = make_daily_order_submission_query(venue.m_venue,
-          account, currentTime, currentTime, get_default_time_zone_database());
+        auto snapshotQuery = make_daily_order_submission_query(
+          venue.m_venue, account, currentTime, currentTime);
         auto snapshotQueue = std::make_shared<Queue<SequencedOrder>>();
         userProfile.GetClients().get_order_execution_client().query(
           snapshotQuery, snapshotQueue);

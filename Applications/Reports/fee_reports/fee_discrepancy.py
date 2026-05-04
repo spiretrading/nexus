@@ -27,12 +27,10 @@ def parse_ip_address(source):
     int(source[separator + 1 :]))
 
 def execute_report(account, start_date, end_date, fee_table, service_clients):
-  definitions_client = service_clients.get_definitions_client()
-  time_zones = definitions_client.load_time_zones()
   order_execution_client = service_clients.get_order_execution_client()
   order_queue = beam.Queue()
-  nexus.query_daily_order_submissions(account, start_date, end_date,
-    time_zones, order_execution_client, order_queue)
+  nexus.query_daily_order_submissions(
+    account, start_date, end_date, order_execution_client, order_queue)
   orders = []
   beam.flush(order_queue, orders)
   fee_state = nexus.ConsolidatedTmxFeeTable.State()

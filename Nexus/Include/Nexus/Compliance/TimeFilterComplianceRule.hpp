@@ -10,6 +10,7 @@
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
 #include "Nexus/Compliance/ComplianceRule.hpp"
 #include "Nexus/Compliance/ComplianceRuleSchema.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
 namespace Nexus {
@@ -34,15 +35,12 @@ namespace Nexus {
        * Constructs a TimeFilterComplianceRule.
        * @param start The beginning of the period to apply the rule.
        * @param end The end of the period to apply the rule.
-       * @param time_zones The available time zones.
-       * @param venues The venues available.
        * @param time_client Initializes the TimeClient used to test the period.
        * @param rule The rule to apply within the time period.
        */
       template<Beam::Initializes<C> CF>
       TimeFilterComplianceRule(boost::posix_time::time_duration start,
-        boost::posix_time::time_duration end,
-        boost::local_time::tz_database time_zones, CF&& time_client,
+        boost::posix_time::time_duration end, CF&& time_client,
         std::unique_ptr<ComplianceRule> rule);
 
       void submit(const std::shared_ptr<Order>& order) override;
@@ -52,7 +50,6 @@ namespace Nexus {
     private:
       boost::posix_time::time_duration m_start;
       boost::posix_time::time_duration m_end;
-      boost::local_time::tz_database m_time_zones;
       Beam::local_ptr_t<C> m_time_client;
       Beam::SynchronizedUnorderedMap<Venue, boost::local_time::time_zone_ptr>
         m_venue_time_zones;
@@ -63,8 +60,7 @@ namespace Nexus {
 
   template<typename C>
   TimeFilterComplianceRule(boost::posix_time::time_duration,
-    boost::posix_time::time_duration, boost::local_time::tz_database, C&&,
-    std::unique_ptr<ComplianceRule>) ->
+    boost::posix_time::time_duration, C&&, std::unique_ptr<ComplianceRule>) ->
       TimeFilterComplianceRule<std::remove_cvref_t<C>>;
 
   /** The standard name used to identify the TimeFilterComplianceRule. */
@@ -87,14 +83,12 @@ namespace Nexus {
   /**
    * Makes a new TimeFilterComplianceRule.
    * @param parameters The parameters used to construct the rule.
-   * @param time_zones The available time zones.
    * @param time_client The TimeClient used to test the period.
    * @param rule The rule to apply within the time period.
    */
   inline auto make_time_filter_compliance_rule(
       const std::vector<ComplianceParameter>& parameters,
-      boost::local_time::tz_database time_zones, auto& time_client,
-      std::unique_ptr<ComplianceRule> rule) {
+      auto& time_client, std::unique_ptr<ComplianceRule> rule) {
     auto start =
       boost::posix_time::time_duration(boost::posix_time::seconds(0));
     auto end = boost::posix_time::time_duration(boost::posix_time::seconds(0));
@@ -107,20 +101,17 @@ namespace Nexus {
     }
     using Rule =
       TimeFilterComplianceRule< std::remove_cvref_t<decltype(time_client)>*>;
-    return std::make_unique<Rule>(
-      start, end, std::move(time_zones), &time_client, std::move(rule));
+    return std::make_unique<Rule>(start, end, &time_client, std::move(rule));
   }
 
   template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
   template<Beam::Initializes<C> CF>
   TimeFilterComplianceRule<C>::TimeFilterComplianceRule(
     boost::posix_time::time_duration start,
-    boost::posix_time::time_duration end,
-    boost::local_time::tz_database time_zones, CF&& time_client,
+    boost::posix_time::time_duration end, CF&& time_client,
     std::unique_ptr<ComplianceRule> rule)
     : m_start(start),
       m_end(end),
-      m_time_zones(std::move(time_zones)),
       m_time_client(std::forward<CF>(time_client)),
       m_rule(std::move(rule)) {}
 
@@ -152,7 +143,7 @@ namespace Nexus {
     auto time_zone = m_venue_time_zones.get_or_insert(venue, [&] {
       auto& venue_entry = VENUES.from(venue);
       auto time_zone =
-        m_time_zones.time_zone_from_region(venue_entry.m_time_zone);
+        TIME_ZONES.time_zone_from_region(venue_entry.m_time_zone);
       if(!time_zone) {
         boost::throw_with_location(
           ComplianceCheckException("Time zone not found."));

@@ -12,6 +12,7 @@
 #include <Beam/Routines/Routine.hpp>
 #include <boost/date_time/local_time/tz_database.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
@@ -63,6 +64,14 @@ namespace Nexus {
     query.set_filter(venue_filter);
     query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
     return query;
+  }
+
+  /** Makes a daily order submission query using the default time zones. */
+  inline AccountQuery make_daily_order_submission_query(Venue venue,
+      const Beam::DirectoryEntry& account, boost::posix_time::ptime start,
+      boost::posix_time::ptime end) {
+    return make_daily_order_submission_query(
+      venue, account, start, end, TIME_ZONES);
   }
 
   /**
@@ -117,6 +126,15 @@ namespace Nexus {
           } catch(const std::exception&) {}
         }
       });
+  }
+
+  /** Queries for daily order submissions using the default time zones. */
+  Beam::Routine::Id query_daily_order_submissions(
+      const Beam::DirectoryEntry& account, boost::posix_time::ptime start,
+      boost::posix_time::ptime end, IsOrderExecutionClient auto& client,
+      Beam::ScopedQueueWriter<std::shared_ptr<Order>> queue) {
+    return query_daily_order_submissions(
+      account, start, end, TIME_ZONES, client, std::move(queue));
   }
 
   /** Returns a Query Expression to filter an account's live Orders. */

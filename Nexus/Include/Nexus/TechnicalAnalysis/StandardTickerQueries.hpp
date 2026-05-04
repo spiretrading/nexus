@@ -15,6 +15,7 @@
 #include <boost/date_time/local_time/tz_database.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/optional/optional.hpp>
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/ChartingService/ChartingClient.hpp"
 #include "Nexus/ChartingService/TickerChartingQuery.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
@@ -49,6 +50,19 @@ namespace Nexus {
   }
 
   /**
+   * Returns a query to retrieve a Ticker's opening trade using the default
+   * time zones.
+   * @param ticker The Ticker to query.
+   * @param date The date to retrieve the opening trade for.
+   * @return A TickerQuery that can be used to retrieve the <i>ticker</i>'s
+   *         opening trade.
+   */
+  inline TickerQuery make_open_query(
+      const Ticker& ticker, boost::posix_time::ptime date) {
+    return make_open_query(ticker, date, TIME_ZONES);
+  }
+
+  /**
    * Queries for a Ticker's opening trade.
    * @param client The MarketDataClient to query.
    * @param ticker The Ticker to query.
@@ -67,6 +81,18 @@ namespace Nexus {
       open = queue->pop();
     } catch(const std::exception&) {}
     return open;
+  }
+
+  /**
+   * Queries for a Ticker's opening trade using the default time zones.
+   * @param client The MarketDataClient to query.
+   * @param ticker The Ticker to query.
+   * @param date The date to retrieve the opening trade for.
+   * @return The opening trade for the specified <i>ticker</i>.
+   */
+  boost::optional<TimeAndSale> load_open(IsMarketDataClient auto& client,
+      const Ticker& ticker, boost::posix_time::ptime date) {
+    return load_open(client, ticker, date, TIME_ZONES);
   }
 
   /**
@@ -100,6 +126,20 @@ namespace Nexus {
   }
 
   /**
+   * Queries for a Ticker's opening trade using the default time zones.
+   * @param client The MarketDataClient to query.
+   * @param ticker The Ticker to query.
+   * @param date The date to retrieve the opening trade for.
+   * @param queue The Queue to store the opening trade in.
+   * @return The Id of the Routine performing the query.
+   */
+  Beam::Routine::Id query_open(IsMarketDataClient auto& client,
+      const Ticker& ticker, boost::posix_time::ptime date,
+      Beam::ScopedQueueWriter<TimeAndSale> queue) {
+    return query_open(client, ticker, date, TIME_ZONES, std::move(queue));
+  }
+
+  /**
    * Returns a query to retrieve a Ticker's previous session's closing trade.
    * @param ticker The Ticker to query.
    * @param date The date for which the previous trading session's closing trade
@@ -120,6 +160,20 @@ namespace Nexus {
     query.set_filter(VENUES.from(ticker.get_venue()).m_market_center ==
       TimeAndSaleAccessor::from_parameter(0).get_market_center());
     return query;
+  }
+
+  /**
+   * Returns a query to retrieve a Ticker's previous session's closing trade
+   * using the default time zones.
+   * @param ticker The Ticker to query.
+   * @param date The date for which the previous trading session's closing trade
+   *        will be retrieved.
+   * @return A TickerQuery that can be used to retrieve the <i>ticker</i>'s
+   *         previous session's closing trade.
+   */
+  inline TickerQuery make_previous_close_query(
+      const Ticker& ticker, boost::posix_time::ptime date) {
+    return make_previous_close_query(ticker, date, TIME_ZONES);
   }
 
   /**
@@ -147,6 +201,22 @@ namespace Nexus {
   }
 
   /**
+   * Queries for a Ticker's previous session's closing trade using the default
+   * time zones.
+   * @param client The MarketDataClient to query.
+   * @param ticker The Ticker to query.
+   * @param date The date for which the previous trading session's closing trade
+   *        will be retrieved.
+   * @return The previous session's closing trade for the specified
+   *         <i>ticker</i>.
+   */
+  boost::optional<TimeAndSale> load_previous_close(
+      IsMarketDataClient auto& client, const Ticker& ticker,
+      boost::posix_time::ptime date) {
+    return load_previous_close(client, ticker, date, TIME_ZONES);
+  }
+
+  /**
    * Makes a range suitable for a query covering a range of days.
    * @param ticker The Ticker to query.
    * @param start The day to begin the query.
@@ -166,6 +236,19 @@ namespace Nexus {
       return utc_end_of_day(ticker.get_venue(), end, time_zones);
     }();
     return Beam::Range(start_of_day, end_of_day);
+  }
+
+  /**
+   * Makes a range suitable for a query covering a range of days using the
+   * default time zones.
+   * @param ticker The Ticker to query.
+   * @param start The day to begin the query.
+   * @param end The day to end the query.
+   * @return A Range object for the daily query.
+   */
+  inline Beam::Range make_daily_query_range(const Ticker& ticker,
+      boost::posix_time::ptime start, boost::posix_time::ptime end) {
+    return make_daily_query_range(ticker, start, end, TIME_ZONES);
   }
 
   /**
@@ -221,6 +304,20 @@ namespace Nexus {
   }
 
   /**
+   * Makes a charting query for a Ticker using the default time zones.
+   * @param ticker The Ticker to query.
+   * @param start The day to begin the query.
+   * @param end The day to end the query.
+   * @param expression The expression to apply to the data.
+   * @return A TickerChartingQuery configured with the specified parameters.
+   */
+  inline TickerChartingQuery make_query(const Ticker& ticker,
+      boost::posix_time::ptime start, boost::posix_time::ptime end,
+      const Beam::Expression& expression) {
+    return make_query(ticker, start, end, TIME_ZONES, expression);
+  }
+
+  /**
    * Returns a query for a Ticker's high price.
    * @param ticker The Ticker to query.
    * @param start The day to begin the high query.
@@ -237,6 +334,19 @@ namespace Nexus {
     auto high = Beam::ReduceExpression(
       max, TimeAndSaleAccessor::from_parameter(0).get_price(), Money::ZERO);
     return make_query(ticker, start, end, time_zones, high);
+  }
+
+  /**
+   * Returns a query for a Ticker's high price using the default time zones.
+   * @param ticker The Ticker to query.
+   * @param start The day to begin the high query.
+   * @param end The day to end the high query.
+   * @return A TickerChartingQuery that can be used to retrieve the
+   *         <i>ticker</i>'s high price.
+   */
+  inline TickerChartingQuery make_daily_high_query(const Ticker& ticker,
+      boost::posix_time::ptime start, boost::posix_time::ptime end) {
+    return make_daily_high_query(ticker, start, end, TIME_ZONES);
   }
 
   /**
@@ -260,6 +370,20 @@ namespace Nexus {
   }
 
   /**
+   * Submits a query for a Ticker's high price using the default time zones.
+   * @param client The ChartingClient to submit the query to.
+   * @param ticker The Ticker to query.
+   * @param start The day to begin the high query.
+   * @param end The day to end the high query.
+   * @param queue The Queue to store the high price in.
+   */
+  void query_daily_high(IsChartingClient auto& client, const Ticker& ticker,
+      boost::posix_time::ptime start, boost::posix_time::ptime end,
+      Beam::ScopedQueueWriter<Money> queue) {
+    query_daily_high(client, ticker, start, end, TIME_ZONES, std::move(queue));
+  }
+
+  /**
    * Returns a query for a Ticker's low price.
    * @param ticker The Ticker to query.
    * @param start The day to begin the low query.
@@ -277,6 +401,19 @@ namespace Nexus {
       min, TimeAndSaleAccessor::from_parameter(0).get_price(),
       99999999 * Money::ONE);
     return make_query(ticker, start, end, time_zones, low);
+  }
+
+  /**
+   * Returns a query for a Ticker's low price using the default time zones.
+   * @param ticker The Ticker to query.
+   * @param start The day to begin the low query.
+   * @param end The day to end the low query.
+   * @return A TickerChartingQuery that can be used to retrieve the
+   *         <i>ticker</i>'s low price.
+   */
+  inline TickerChartingQuery make_daily_low_query(const Ticker& ticker,
+      boost::posix_time::ptime start, boost::posix_time::ptime end) {
+    return make_daily_low_query(ticker, start, end, TIME_ZONES);
   }
 
   /**
@@ -300,6 +437,20 @@ namespace Nexus {
   }
 
   /**
+   * Submits a query for a Ticker's low price using the default time zones.
+   * @param client The ChartingClient to submit the query to.
+   * @param ticker The Ticker to query.
+   * @param start The day to begin the low query.
+   * @param end The day to end the low query.
+   * @param queue The Queue to store the low price in.
+   */
+  void query_daily_low(IsChartingClient auto& client, const Ticker& ticker,
+      boost::posix_time::ptime start, boost::posix_time::ptime end,
+      Beam::ScopedQueueWriter<Money> queue) {
+    query_daily_low(client, ticker, start, end, TIME_ZONES, std::move(queue));
+  }
+
+  /**
    * Returns a query over a Ticker's volume.
    * @param ticker The Ticker to query.
    * @param start The day to begin the volume query.
@@ -316,6 +467,19 @@ namespace Nexus {
     auto volume = Beam::ReduceExpression(
       sum, TimeAndSaleAccessor::from_parameter(0).get_size(), Quantity(0));
     return make_query(ticker, start, end, time_zones, volume);
+  }
+
+  /**
+   * Returns a query over a Ticker's volume using the default time zones.
+   * @param ticker The Ticker to query.
+   * @param start The day to begin the volume query.
+   * @param end The day to end the volume query.
+   * @return A TickerChartingQuery that can be used to retrieve the
+   *         <i>ticker</i>'s volume.
+   */
+  inline TickerChartingQuery make_daily_volume_query(const Ticker& ticker,
+      boost::posix_time::ptime start, boost::posix_time::ptime end) {
+    return make_daily_volume_query(ticker, start, end, TIME_ZONES);
   }
 
   /**
@@ -336,6 +500,21 @@ namespace Nexus {
         [] (const QueryVariant& value) {
           return boost::get<Quantity>(value);
         }));
+  }
+
+  /**
+   * Submits a query for a Ticker's daily volume using the default time zones.
+   * @param client The ChartingClient to submit the query to.
+   * @param ticker The Ticker to query.
+   * @param start The day to begin the volume query.
+   * @param end The day to end the volume query.
+   * @param queue The Queue to store the volume in.
+   */
+  void query_daily_volume(IsChartingClient auto& client, Ticker ticker,
+      boost::posix_time::ptime start, boost::posix_time::ptime end,
+      Beam::ScopedQueueWriter<Quantity> queue) {
+    query_daily_volume(
+      client, ticker, start, end, TIME_ZONES, std::move(queue));
   }
 }
 

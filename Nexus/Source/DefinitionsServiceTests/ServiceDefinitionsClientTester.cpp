@@ -3,7 +3,7 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/ServicesTests/ServiceClientFixture.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/DefinitionsService/ServiceDefinitionsClient.hpp"
 
 using namespace Beam;
@@ -65,8 +65,7 @@ TEST_SUITE("ServiceDefinitionsClient") {
     });
     auto time_zone_database =
       REQUIRE_NO_THROW(fixture.m_client->load_time_zone_database());
-    REQUIRE(get_default_time_zone_database().region_list() ==
-      time_zone_database.region_list());
+    REQUIRE(TIME_ZONES.region_list() == time_zone_database.region_list());
   }
 
   TEST_CASE("load_currency_database") {

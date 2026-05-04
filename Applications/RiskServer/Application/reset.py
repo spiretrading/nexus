@@ -42,15 +42,13 @@ def main():
   username = section['username']
   password = section['password']
   service_clients = nexus.ServiceClients(username, password, address)
-  countries = service_clients.definitions_client.load_country_database()
-  venues = service_clients.definitions_client.load_venue_database()
-  scope = nexus.parse_country_code(args.scope, countries)
+  scope = nexus.parse_country_code(args.scope)
   if scope == nexus.CountryCode.NONE:
-    scope = nexus.parse_venue(args.scope, venues)
+    scope = nexus.parse_venue(args.scope)
     if scope:
-      scope = venues.select(scope).venue
+      scope = nexus.VENUES.select(scope).venue
     else:
-      scope = nexus.parse_ticker(args.scope, venues)
+      scope = nexus.parse_ticker(args.scope)
   service_clients.risk_client.reset(nexus.Scope(scope))
 
 if __name__ == '__main__':

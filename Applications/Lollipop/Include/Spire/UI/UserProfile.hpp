@@ -5,7 +5,6 @@
 #include <string>
 #include <vector>
 #include <Beam/WebServices/Uri.hpp>
-#include <boost/date_time/local_time/tz_database.hpp>
 #include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Destination.hpp"
@@ -40,7 +39,6 @@ namespace Spire {
        * @param isAdministrator Whether the account is a system administrator.
        * @param isManager Whether the account manages at least one trading
        *        group.
-       * @param timeZoneDatabase Stores the database of all time zones.
        * @param exchangeRates The list of ExchangeRates to use.
        * @param entitlementDatabase Stores the database of market data
        *        entitlements.
@@ -48,8 +46,7 @@ namespace Spire {
        * @param clients The set of clients connected to Spire services.
        */
       UserProfile(const std::string& username, bool isAdministrator,
-        bool isManager, const boost::local_time::tz_database& timeZoneDatabase,
-        const std::vector<Nexus::ExchangeRate>& exchangeRates,
+        bool isManager, const std::vector<Nexus::ExchangeRate>& exchangeRates,
         const Nexus::EntitlementDatabase& entitlementDatabase,
         Beam::Uri web_portal_uri, Nexus::Clients clients);
 
@@ -66,9 +63,6 @@ namespace Spire {
        * group.
        */
       bool IsManager() const;
-
-      /** Returns the time zone database. */
-      const boost::local_time::tz_database& GetTimeZoneDatabase() const;
 
       /** Returns the ExchangeRates. */
       const Nexus::ExchangeRateTable& GetExchangeRates() const;
@@ -224,7 +218,6 @@ namespace Spire {
       std::string m_username;
       bool m_isAdministrator;
       bool m_isManager;
-      boost::local_time::tz_database m_timeZoneDatabase;
       Nexus::ExchangeRateTable m_exchangeRates;
       Nexus::EntitlementDatabase m_entitlementDatabase;
       Beam::Uri m_web_portal_uri;

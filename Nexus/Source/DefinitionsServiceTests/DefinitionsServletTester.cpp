@@ -3,7 +3,7 @@
 #include <boost/optional/optional.hpp>
 #include <boost/functional/factory.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServlet.hpp"
 
 using namespace Beam;

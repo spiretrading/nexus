@@ -119,8 +119,7 @@ int main(int argc, const char** argv) {
     });
     auto async_data_store = AsyncHistoricalDataStore(&historical_data_store);
     auto cache_block_size = extract<int>(config, "cache_block_size", 1000);
-    auto time_zone_database = definitions_client.load_time_zone_database();
-    auto market_data_registry = MarketDataRegistry(time_zone_database);
+    auto market_data_registry = MarketDataRegistry();
     auto base_registry_servlet = BaseRegistryServlet(&administration_client,
       &market_data_registry, init(&async_data_store, cache_block_size));
     auto registry_server = RegistryServletContainer(

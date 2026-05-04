@@ -2,7 +2,7 @@
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 #include "Nexus/DefinitionsServiceTests/TestDefinitionsClient.hpp"
 
@@ -76,10 +76,9 @@ TEST_SUITE("DefinitionsClient") {
     require_operation<TestDefinitionsClient::LoadTimeZoneDatabaseOperation>(
       [] (auto& client) {
         return client.load_time_zone_database();
-      }, get_default_time_zone_database(),
+      }, TIME_ZONES,
       [&] (const auto& result) {
-        REQUIRE(result.region_list() ==
-          get_default_time_zone_database().region_list());
+        REQUIRE(result.region_list() == TIME_ZONES.region_list());
       });
   }
 

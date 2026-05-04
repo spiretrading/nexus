@@ -35,14 +35,11 @@ def parse_ip_address(source):
 def parse_scope(service_clients, scope):
   if scope == '*':
     return nexus.Scope.GLOBAL
-  venue_database = \
-    service_clients.definitions_client.load_venue_database()
-  countries = service_clients.definitions_client.load_country_database()
-  scope = nexus.parse_country_code(scope, countries)
+  scope = nexus.parse_country_code(scope)
   if scope == nexus.CountryCode.NONE:
     scope = nexus.parse_venue(scope)
     if scope:
-      scope = venue_database.from_code(scope)
+      scope = nexus.VENUES.from_code(scope)
     else:
       scope = nexus.parse_ticker(scope)
   return nexus.Scope(scope)
@@ -68,11 +65,9 @@ def cancel_order_by_id(service_clients, order_id, message):
   cancel_order(service_clients, order, message)
 
 def cancel_account(service_clients, account, scope, begin, end, message):
-  time_zone_database = \
-    service_clients.definitions_client.load_time_zone_database()
   queue = beam.Queue()
-  nexus.query_daily_order_submissions(account, begin, end, time_zone_database,
-    service_clients.order_execution_client, queue)
+  nexus.query_daily_order_submissions(
+    account, begin, end, service_clients.order_execution_client, queue)
   orders = []
   beam.flush(queue, orders)
   for order in orders:
