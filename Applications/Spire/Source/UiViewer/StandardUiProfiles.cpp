@@ -43,6 +43,8 @@
 #include "Spire/Ui/DecimalBox.hpp"
 #include "Spire/Ui/DeletableListItem.hpp"
 #include "Spire/Ui/DestinationBox.hpp"
+#include "Spire/Ui/DestinationFilterPanel.hpp"
+#include "Spire/Ui/DestinationListBox.hpp"
 #include "Spire/Ui/DestinationListItem.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/DropDownList.hpp"
@@ -76,11 +78,14 @@
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OpenFilterPanel.hpp"
+#include "Spire/Ui/OrderStatusBox.hpp"
+#include "Spire/Ui/OrderStatusListBox.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OrderTypeFilterPanel.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
 #include "Spire/Ui/PercentBox.hpp"
 #include "Spire/Ui/PopupBox.hpp"
+#include "Spire/Ui/PositionSideBox.hpp"
 #include "Spire/Ui/ProgressBar.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/ScopeBox.hpp"
@@ -100,6 +105,7 @@
 #include "Spire/Ui/SplitView.hpp"
 #include "Spire/Ui/StandardTableFilter.hpp"
 #include "Spire/Ui/SubmenuItem.hpp"
+#include "Spire/Ui/SwitchButton.hpp"
 #include "Spire/Ui/TabView.hpp"
 #include "Spire/Ui/TableHeader.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
@@ -107,6 +113,7 @@
 #include "Spire/Ui/Tag.hpp"
 #include "Spire/Ui/TagBox.hpp"
 #include "Spire/Ui/TagComboBox.hpp"
+#include "Spire/Ui/TaskStateBox.hpp"
 #include "Spire/Ui/TextAreaBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 #include "Spire/Ui/TickerBox.hpp"
@@ -533,8 +540,9 @@ namespace {
     return panel;
   }
 
-  template<typename B, typename B* (*F)(QWidget*)>
-  auto setup_enum_box_profile(UiProfile& profile) {
+  template<typename B, typename B* (*F)(QWidget*), typename... Converters>
+  auto setup_enum_box_profile(UiProfile& profile,
+      const Converters&... converters) {
     using Type = B::Type;
     auto box = F(nullptr);
     box->setFixedWidth(scale_width(150));
@@ -547,7 +555,8 @@ namespace {
     read_only.connect_changed_signal([=] (auto is_read_only) {
       box->set_read_only(is_read_only);
     });
-    box->connect_submit_signal(profile.make_event_slot<std::any>("Submit"));
+    box->connect_submit_signal(
+      profile.make_event_slot<std::any>("Submit", converters...));
     return box;
   }
 
@@ -695,7 +704,7 @@ namespace {
       auto print_current = [=] {
         auto result = QString();
         for(auto i = 0; i < box->get_current()->get_size(); ++i) {
-          result += to_text(box->get_current()->get(i)) + " ";
+          result += QString("[%1] ").arg(to_text(box->get_current()->get(i)));
         }
         current_filter_slot(result);
       };
@@ -714,7 +723,7 @@ namespace {
       box->connect_submit_signal([=] (const auto& submission) {
         auto result = QString();
         for(auto i = 0; i < submission->get_size(); ++i) {
-          result += to_text(submission->get(i)) + " ";
+          result += QString("[%1] ").arg(to_text(submission->get(i)));
         }
         submit_filter_slot(result);
       });
@@ -1944,6 +1953,16 @@ UiProfile Spire::make_destination_box_profile() {
     return box;
   });
   return profile;
+}
+
+UiProfile Spire::make_destination_filter_panel_profile() {
+  return setup_open_filter_panel_profile("DestinationFilterPanel",
+    [] { return make_destination_filter_panel(); });
+}
+
+UiProfile Spire::make_destination_list_box_profile() {
+  return setup_tag_combo_box_profile("DestinationListBox",
+    [] { return make_destination_list_box(); });
 }
 
 UiProfile Spire::make_destination_list_item_profile() {
@@ -3494,6 +3513,35 @@ UiProfile Spire::make_order_field_info_tip_profile() {
   return profile;
 }
 
+UiProfile Spire::make_order_status_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_property = define_enum<OrderStatus>(
+    {{"Pending New", OrderStatus::PENDING_NEW},
+     {"Rejected", OrderStatus::REJECTED},
+     {"New", OrderStatus::NEW},
+     {"Partially Filled", OrderStatus::PARTIALLY_FILLED},
+     {"Expired", OrderStatus::EXPIRED},
+     {"Canceled", OrderStatus::CANCELED},
+     {"Suspended", OrderStatus::SUSPENDED},
+     {"Stopped", OrderStatus::STOPPED},
+     {"Filled", OrderStatus::FILLED},
+     {"Done For Day", OrderStatus::DONE_FOR_DAY},
+     {"Pending Cancel", OrderStatus::PENDING_CANCEL},
+     {"Cancel Reject", OrderStatus::CANCEL_REJECT}});
+  populate_enum_properties(properties, "current", current_property);
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("OrderStatusBox", properties,
+    std::bind_front(
+      setup_enum_box_profile<OrderStatusBox, make_order_status_box>));
+  return profile;
+}
+
+UiProfile Spire::make_order_status_list_box_profile() {
+  return setup_tag_combo_box_profile("OrderStatusListBox",
+    [] { return make_order_status_list_box(); });
+}
+
 UiProfile Spire::make_order_type_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3638,6 +3686,23 @@ UiProfile Spire::make_popup_box_profile() {
     });
     return parent;
   });
+  return profile;
+}
+
+UiProfile Spire::make_position_side_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_property = define_enum<Side>(
+    {{"Long", Side::BID}, {"Short", Side::ASK}, {"Flat", Side::NONE}});
+  populate_enum_properties(properties, "current", current_property);
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("PositionSideBox", properties,
+    [] (auto& profile) {
+      return setup_enum_box_profile<SideBox, make_position_side_box>(
+        profile, [] (const std::any& value) {
+          return PositionSideToken(std::any_cast<Side>(value));
+        });
+    });
   return profile;
 }
 
@@ -4443,6 +4508,23 @@ UiProfile Spire::make_split_view_profile() {
   return profile;
 }
 
+UiProfile Spire::make_switch_button_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<bool>("checked"));
+  auto profile = UiProfile("SwitchButton", properties, [] (auto& profile) {
+    auto button = new SwitchButton();
+    apply_widget_properties(button, profile.get_properties());
+    link(button->get_current(), get<bool>("checked", profile.get_properties()));
+    button->get_current()->connect_update_signal(
+      profile.make_event_slot<bool>("CurrentSignal"));
+    button->connect_submit_signal(
+      profile.make_event_slot<bool>("SubmitSignal"));
+    return button;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_tab_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -4791,6 +4873,24 @@ UiProfile Spire::make_tag_box_profile() {
 UiProfile Spire::make_tag_combo_box_profile() {
   return setup_tag_combo_box_profile("TagComboBox",
     [] { return new TagComboBox(populate_tag_combo_box_model()); });
+}
+
+UiProfile Spire::make_task_state_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto current_property = define_enum<Task::State>(
+    {{"Ready", Task::State::READY},
+     {"Initializing", Task::State::INITIALIZING},
+     {"Active", Task::State::ACTIVE},
+     {"Pending Cancel", Task::State::PENDING_CANCEL},
+     {"Canceled", Task::State::CANCELED},
+     {"Complete", Task::State::COMPLETE},
+     {"Failed", Task::State::FAILED}});
+  populate_enum_properties(properties, "current", current_property);
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("TaskStateBox", properties,
+    std::bind_front(setup_enum_box_profile<TaskStateBox, make_task_state_box>));
+  return profile;
 }
 
 UiProfile Spire::make_text_area_box_profile() {
