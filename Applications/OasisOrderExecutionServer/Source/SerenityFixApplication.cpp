@@ -1,6 +1,5 @@
 #include "OasisOrderExecutionServer/SerenityFixApplication.hpp"
 #include <quickfix/Session.h>
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 
 using namespace boost;
 using namespace boost::posix_time;
@@ -105,7 +104,7 @@ std::shared_ptr<Order> SerenityFixApplication::submit(const OrderInfo& info) {
   return m_order_log.submit(*submission_info,
     get_session_id().getSenderCompID(), get_session_id().getTargetCompID(),
     [&] (Out<FIX42::NewOrderSingle> new_order_single) {
-      if(submission_info->m_fields.m_currency != DefaultCurrencies::CAD) {
+      if(submission_info->m_fields.m_currency != Currencies::CAD) {
         throw_with_location(FixOrderRejectedException("Invalid currency."));
       }
       if(submission_info->m_fields.m_time_in_force.get_type() ==
@@ -140,37 +139,32 @@ std::shared_ptr<Order> SerenityFixApplication::submit(const OrderInfo& info) {
           }
         }
       }
-      if(submission_info->m_fields.m_destination == DefaultDestinations::CHIX ||
-          submission_info->m_fields.m_destination == DefaultDestinations::CX2) {
+      if(submission_info->m_fields.m_destination == Destinations::CHIX ||
+          submission_info->m_fields.m_destination == Destinations::CX2) {
         route_to_chix(*submission_info, out(new_order_single));
-      } else if(submission_info->m_fields.m_destination ==
-          DefaultDestinations::CSE || submission_info->m_fields.m_destination ==
-            DefaultDestinations::PURE) {
+      } else if(submission_info->m_fields.m_destination == Destinations::CSE ||
+          submission_info->m_fields.m_destination == Destinations::PURE) {
         route_to_cse(*submission_info, out(new_order_single));
       } else if(submission_info->m_fields.m_destination ==
-          DefaultDestinations::MATNLP ||
-          submission_info->m_fields.m_destination ==
-            DefaultDestinations::MATNMF) {
+          Destinations::MATNLP || submission_info->m_fields.m_destination ==
+            Destinations::MATNMF) {
         route_to_matn(*submission_info, out(new_order_single));
-      } else if(submission_info->m_fields.m_destination ==
-          DefaultDestinations::NEOE) {
+      } else if(submission_info->m_fields.m_destination == Destinations::NEOE) {
         route_to_neo(*submission_info, out(new_order_single));
-      } else if(submission_info->m_fields.m_destination ==
-          DefaultDestinations::TSX) {
+      } else if(submission_info->m_fields.m_destination == Destinations::TSX) {
         route_to_tsx(*submission_info, out(new_order_single));
       } else {
         auto ex_destination = [&] {
-          if(submission_info->m_fields.m_destination ==
-              DefaultDestinations::CSE2) {
+          if(submission_info->m_fields.m_destination == Destinations::CSE2) {
             return FIX::ExDestination("CSE2");
           } else if(submission_info->m_fields.m_destination ==
-              DefaultDestinations::ALPHA) {
+              Destinations::ALPHA) {
             return FIX::ExDestination("XATS");
           } else if(submission_info->m_fields.m_destination ==
-              DefaultDestinations::OMEGA) {
+              Destinations::OMEGA) {
             return FIX::ExDestination("OMGA");
           } else if(submission_info->m_fields.m_destination ==
-              DefaultDestinations::LYNX) {
+              Destinations::LYNX) {
             return FIX::ExDestination("LYNX");
           }
           BOOST_THROW_EXCEPTION(
@@ -239,42 +233,41 @@ void SerenityFixApplication::onMessage(
       if(message.isSet(last_mkt)) {
         message.get(last_mkt);
         if(last_mkt == "XTSX") {
-          update->m_last_market = DefaultVenues::TSX.get_code().get_data();
+          update->m_last_market = Venues::TSX.get_code().get_data();
         } else if(last_mkt == "CHIX") {
-          update->m_last_market = DefaultVenues::CHIC.get_code().get_data();
+          update->m_last_market = Venues::CHIC.get_code().get_data();
         } else if(last_mkt == "XCXD") {
           if(!original_liquidity_flag.empty()) {
             update->m_liquidity_flag = original_liquidity_flag;
           }
-          update->m_last_market = DefaultVenues::CHIC.get_code().get_data();
+          update->m_last_market = Venues::CHIC.get_code().get_data();
         } else if(last_mkt == "XCX2") {
-          update->m_last_market = DefaultVenues::XCX2.get_code().get_data();
+          update->m_last_market = Venues::XCX2.get_code().get_data();
         } else if(last_mkt == "MATN") {
-          update->m_last_market = DefaultVenues::MATN.get_code().get_data();
+          update->m_last_market = Venues::MATN.get_code().get_data();
         } else if(last_mkt == "XCNQ") {
-          if(order->get_info().m_fields.m_ticker.get_venue() ==
-              DefaultVenues::CSE) {
-            update->m_last_market = DefaultVenues::CSE.get_code().get_data();
+          if(order->get_info().m_fields.m_ticker.get_venue() == Venues::CSE) {
+            update->m_last_market = Venues::CSE.get_code().get_data();
           } else {
-            update->m_last_market = DefaultVenues::PURE.get_code().get_data();
+            update->m_last_market = Venues::PURE.get_code().get_data();
           }
         } else if(last_mkt == "CSE2") {
-          update->m_last_market = DefaultVenues::CSE2.get_code().get_data();
+          update->m_last_market = Venues::CSE2.get_code().get_data();
         } else if(last_mkt == "XATS") {
-          update->m_last_market = DefaultVenues::XATS.get_code().get_data();
+          update->m_last_market = Venues::XATS.get_code().get_data();
         } else if(last_mkt == "OMGA") {
-          update->m_last_market = DefaultVenues::OMGA.get_code().get_data();
+          update->m_last_market = Venues::OMGA.get_code().get_data();
         } else if(last_mkt == "LYNX") {
-          update->m_last_market = DefaultVenues::LYNX.get_code().get_data();
+          update->m_last_market = Venues::LYNX.get_code().get_data();
         } else if(
             last_mkt == "NEON" || last_mkt == "NEOL" || last_mkt == "NEOD") {
-          update->m_last_market = DefaultVenues::NEOE.get_code().get_data();
+          update->m_last_market = Venues::NEOE.get_code().get_data();
         } else if(last_mkt == "TSXV") {
-          update->m_last_market = DefaultVenues::TSXV.get_code().get_data();
+          update->m_last_market = Venues::TSXV.get_code().get_data();
         }
       }
-      if(update->m_last_market == DefaultVenues::TSXV.get_code() ||
-          update->m_last_market == DefaultVenues::TSX.get_code()) {
+      if(update->m_last_market == Venues::TSXV.get_code() ||
+          update->m_last_market == Venues::TSX.get_code()) {
         if(original_liquidity_flag == "O") {
           update->m_liquidity_flag = "O";
         } else if(original_liquidity_flag.size() >= 3) {
@@ -283,9 +276,9 @@ void SerenityFixApplication::onMessage(
             update->m_liquidity_flag = subflag;
           }
         }
-      } else if(update->m_last_market == DefaultVenues::PURE.get_code() ||
-          update->m_last_market == DefaultVenues::CSE.get_code() ||
-          update->m_last_market == DefaultVenues::CSE2.get_code()) {
+      } else if(update->m_last_market == Venues::PURE.get_code() ||
+          update->m_last_market == Venues::CSE.get_code() ||
+          update->m_last_market == Venues::CSE2.get_code()) {
         if(original_liquidity_flag == "TC") {
           update->m_liquidity_flag = "TC";
         }
@@ -396,9 +389,9 @@ void SerenityFixApplication::route_to_chix(
   if(!has_destination) {
     if(info.m_fields.m_type == OrderType::PEGGED) {
       auto destination = [&] {
-        if(info.m_fields.m_destination == DefaultDestinations::CHIX) {
+        if(info.m_fields.m_destination == Destinations::CHIX) {
           return FIX::ExDestination("CHIX");
-        } else if(info.m_fields.m_destination == DefaultDestinations::CX2) {
+        } else if(info.m_fields.m_destination == Destinations::CX2) {
           return FIX::ExDestination("XCX2");
         } else {
           throw_with_location(
@@ -408,9 +401,9 @@ void SerenityFixApplication::route_to_chix(
       new_order_single->getHeader().setField(destination);
     } else {
       auto destination = [&] {
-        if(info.m_fields.m_destination == DefaultDestinations::CHIX) {
+        if(info.m_fields.m_destination == Destinations::CHIX) {
           return FIX::ExDestination("CX01");
-        } else if(info.m_fields.m_destination == DefaultDestinations::CX2) {
+        } else if(info.m_fields.m_destination == Destinations::CX2) {
           return FIX::ExDestination("CX05");
         } else {
           throw_with_location(
@@ -532,7 +525,7 @@ void SerenityFixApplication::route_to_tsx(
   }
   if(!has_destination) {
     auto destination = [&] {
-      if(info.m_fields.m_ticker.get_venue() == DefaultVenues::TSXV) {
+      if(info.m_fields.m_ticker.get_venue() == Venues::TSXV) {
         return FIX::ExDestination("TSXV");
       }
       return FIX::ExDestination("XTSX");
