@@ -118,6 +118,7 @@ def main():
   service_clients = []
   for i in range(args.connections):
     service_clients.append(nexus.ServiceClients(username, password, address))
+  nexus.load_definitions(service_clients[0].get_definitions_client())
   if args.order:
     cancel_order_by_id(service_clients[0], args.order, args.message)
   elif args.account:

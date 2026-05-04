@@ -275,6 +275,7 @@ int main(int argc, char* argv[]) {
       return -1;
     }
   }
+  load_definitions(serviceClients->get_definitions_client());
   auto isAdministrator =
     serviceClients->get_administration_client().check_administrator(
       serviceClients->get_service_locator_client().get_account());

@@ -90,6 +90,7 @@ def main():
   username = section['username']
   password = section['password']
   service_clients = nexus.ServiceClients(username, password, address)
+  nexus.load_definitions(service_clients.get_definitions_client())
   if args.scope is None:
     scope = nexus.Scope.GLOBAL
   else:

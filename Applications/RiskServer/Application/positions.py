@@ -61,6 +61,7 @@ def main():
   username = section['username']
   password = section['password']
   service_clients = nexus.ServiceClients(username, password, address)
+  nexus.load_definitions(service_clients.get_definitions_client())
   csv_writer = csv.writer(sys.stdout, quoting=csv.QUOTE_NONNUMERIC)
   csv_writer.writerow(
     ["Account", "Ticker", "Currency", "Side", "Open Quantity", "Cost Basis"])

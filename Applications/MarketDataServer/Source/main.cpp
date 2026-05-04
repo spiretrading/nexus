@@ -87,6 +87,7 @@ int main(int argc, const char** argv) {
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
       ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
     auto administration_client =
       ApplicationAdministrationClient(Ref(service_locator_client));
     auto countries = definitions_client.load_country_database();

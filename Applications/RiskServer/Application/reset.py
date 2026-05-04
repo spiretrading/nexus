@@ -42,6 +42,7 @@ def main():
   username = section['username']
   password = section['password']
   service_clients = nexus.ServiceClients(username, password, address)
+  nexus.load_definitions(service_clients.get_definitions_client())
   scope = nexus.parse_country_code(args.scope)
   if scope == nexus.CountryCode.NONE:
     scope = nexus.parse_venue(args.scope)

@@ -104,6 +104,7 @@ def main():
     username, password, address)
   definitions_client = nexus.ApplicationDefinitionsClient(
     service_locator_client)
+  nexus.load_definitions(definitions_client)
   order_execution_client = nexus.ApplicationOrderExecutionClient(
     service_locator_client)
   if args.venue is not None:

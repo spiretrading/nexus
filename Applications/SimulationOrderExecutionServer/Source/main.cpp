@@ -81,6 +81,7 @@ int main(int argc, const char** argv) {
       ApplicationMarketDataClient(Ref(service_locator_client));
     auto definitions_client =
       ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
     auto compliance_client =
       ApplicationComplianceClient(Ref(service_locator_client));
     auto simulation_driver = ApplicationSimulationOrderExecutionDriver(

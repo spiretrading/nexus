@@ -100,6 +100,7 @@ int main(int argc, const char** argv) {
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
       ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
     auto time_client = make_live_ntp_time_client(service_locator_client);
     auto market_data_services =
       service_locator_client.locate(MARKET_DATA_FEED_SERVICE_NAME);

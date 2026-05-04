@@ -101,6 +101,7 @@ def main():
     service_locator_client)
   definitions_client = nexus.ApplicationDefinitionsClient(
     service_locator_client)
+  nexus.load_definitions(definitions_client)
   order_execution_client = nexus.ApplicationOrderExecutionClient(
     service_locator_client)
   execute_report(start_date, end_date, service_locator_client,

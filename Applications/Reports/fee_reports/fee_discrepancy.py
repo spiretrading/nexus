@@ -91,6 +91,7 @@ def main():
   start_date = beam.to_utc_time(args.start)
   end_date = beam.to_utc_time(args.end)
   service_clients = nexus.ServiceClients(username, password, address)
+  nexus.load_definitions(service_clients.get_definitions_client())
   fee_table = load_fee_table(config)
   for account in \
       service_clients.get_service_locator_client().load_all_accounts():
