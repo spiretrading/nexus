@@ -3123,6 +3123,10 @@ UiProfile Spire::make_list_view_profile() {
         [&] (const ListView::SelectionModel::PreRemoveOperation& operation) {
           selection_slot(QString("Remove:%1").arg(
             list_view->get_selection()->get(operation.m_index)));
+        },
+        [&] (const ListView::SelectionModel::UpdateOperation& operation) {
+          selection_slot(QString("Update:%1 to %2").
+            arg(operation.get_previous()).arg(operation.get_value()));
         });
     });
     if(get<bool>("delete_submission", profile.get_properties()).get()) {
