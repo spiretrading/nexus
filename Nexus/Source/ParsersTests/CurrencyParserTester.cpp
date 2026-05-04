@@ -6,7 +6,7 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::Currencies;
 
 TEST_SUITE("CurrencyParser") {
   TEST_CASE("valid_currency") {

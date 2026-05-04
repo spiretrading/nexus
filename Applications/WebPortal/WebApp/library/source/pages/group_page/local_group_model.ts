@@ -19,7 +19,7 @@ export class LocalGroupModel extends GroupModel {
    */
   constructor(group: Beam.DirectoryEntry, accounts: AccountEntry[],
       complianceModel: ComplianceModel,
-      currency: Nexus.Currency = Nexus.DefaultCurrencies.USD) {
+      currency: Nexus.Currency = Nexus.Currencies.USD) {
     super();
     this._isLoaded = false;
     this._group = group;

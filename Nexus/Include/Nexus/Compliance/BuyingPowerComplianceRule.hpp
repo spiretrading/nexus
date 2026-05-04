@@ -82,7 +82,7 @@ namespace Nexus {
   inline ComplianceRuleSchema make_buying_power_compliance_rule_schema() {
     auto parameters = std::vector<ComplianceParameter>();
     parameters.emplace_back("buying_power", Money::ZERO);
-    parameters.emplace_back("currency", DefaultCurrencies::USD);
+    parameters.emplace_back("currency", Currencies::USD);
     return ComplianceRuleSchema(
       BUYING_POWER_COMPLIANCE_RULE_NAME, std::move(parameters));
   }
@@ -99,7 +99,7 @@ namespace Nexus {
       const ExchangeRateTable& exchange_rates,
       IsMarketDataClient auto& market_data_client) {
     auto buying_power = Money::ZERO;
-    auto currency = DefaultCurrencies::USD;
+    auto currency = Currencies::USD;
     for(auto& parameter : parameters) {
       if(parameter.m_name == "buying_power") {
         buying_power = boost::get<Money>(parameter.m_value);

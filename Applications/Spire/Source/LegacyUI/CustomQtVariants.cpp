@@ -107,7 +107,7 @@ posix_time::ptime Spire::LegacyUI::ToPosixTime(const QDateTime& time) {
 void Spire::LegacyUI::RegisterCustomQtVariants() {}
 
 QString Spire::LegacyUI::displayText(CountryCode country) {
-  auto& entry = DEFAULT_COUNTRIES.from(country);
+  auto& entry = COUNTRIES.from(country);
   return QString::fromStdString(entry.m_three_letter_code.get_data());
 }
 
@@ -224,8 +224,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
   } else if(value.canConvert<CountryCode>()) {
     return ::displayText(value.value<CountryCode>());
   } else if(value.canConvert<CurrencyId>()) {
-    const CurrencyDatabase::Entry& entry =
-      DEFAULT_CURRENCIES.from(value.value<CurrencyId>());
+    auto& entry = CURRENCIES.from(value.value<CurrencyId>());
     return QString::fromStdString(entry.m_code.get_data());
   } else if(value.canConvert<Money>()) {
     return QString::fromStdString(
@@ -319,19 +318,15 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
       lexical_cast<std::string>(rightVariant.value<TimeInForce>().get_type()),
       left, right);
   } else if(leftVariant.canConvert<CurrencyId>()) {
-    const CurrencyDatabase::Entry& leftEntry =
-      DEFAULT_CURRENCIES.from(leftVariant.value<CurrencyId>());
-    const CurrencyDatabase::Entry& rightEntry =
-      DEFAULT_CURRENCIES.from(rightVariant.value<CurrencyId>());
+    auto& leftEntry = CURRENCIES.from(leftVariant.value<CurrencyId>());
+    auto& rightEntry = CURRENCIES.from(rightVariant.value<CurrencyId>());
     return leftEntry.m_code < rightEntry.m_code;
   } else if(leftVariant.canConvert<PositionSideToken>()) {
     return Compare(leftVariant.value<PositionSideToken>().ToString(),
       rightVariant.value<PositionSideToken>().ToString(), left, right);
   } else if(leftVariant.canConvert<Venue>()) {
-    const VenueDatabase::Entry& leftEntry =
-      DEFAULT_VENUES.from(leftVariant.value<Venue>());
-    const VenueDatabase::Entry& rightEntry =
-      DEFAULT_VENUES.from(rightVariant.value<Venue>());
+    auto& leftEntry = VENUES.from(leftVariant.value<Venue>());
+    auto& rightEntry = VENUES.from(rightVariant.value<Venue>());
     return leftEntry.m_display_name < rightEntry.m_display_name;
   }
   if(leftVariant == rightVariant) {

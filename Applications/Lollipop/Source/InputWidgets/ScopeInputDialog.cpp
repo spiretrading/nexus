@@ -15,13 +15,11 @@ using namespace Spire::UI;
 
 namespace {
   QVariant Parse(const std::string& line, UserProfile& userProfile) {
-    if(auto country =
-        parse_country_code(line, userProfile.GetCountryDatabase())) {
+    if(auto country = parse_country_code(line)) {
       return QVariant::fromValue(country);
-    } else if(auto venue = parse_venue(line, userProfile.GetVenueDatabase())) {
+    } else if(auto venue = parse_venue(line)) {
       return QVariant::fromValue(venue);
-    } else if(auto ticker =
-        parse_ticker(line, userProfile.GetVenueDatabase())) {
+    } else if(auto ticker = parse_ticker(line)) {
       return QVariant::fromValue(ticker);
     } else if(line == "*") {
       return QVariant::fromValue(Scope::GLOBAL);
@@ -66,10 +64,8 @@ ScopeInputDialog::ScopeInputDialog(
     auto countries = std::vector(
       m_scope.get_countries().begin(), m_scope.get_countries().end());
     std::sort(countries.begin(), countries.end(), [&] (auto left, auto right) {
-      auto left_code =
-        m_userProfile->GetCountryDatabase().from(left).m_two_letter_code;
-      auto right_code =
-        m_userProfile->GetCountryDatabase().from(right).m_two_letter_code;
+      auto left_code = COUNTRIES.from(left).m_two_letter_code;
+      auto right_code = COUNTRIES.from(right).m_two_letter_code;
       return left_code < right_code;
     });
     for(auto& country : countries) {
@@ -78,10 +74,8 @@ ScopeInputDialog::ScopeInputDialog(
     auto venues =
       std::vector(m_scope.get_venues().begin(), m_scope.get_venues().end());
     std::sort(venues.begin(), venues.end(), [&] (auto left, auto right) {
-      auto& left_name =
-        m_userProfile->GetVenueDatabase().from(left).m_display_name;
-      auto& right_name =
-        m_userProfile->GetVenueDatabase().from(right).m_display_name;
+      auto& left_name = VENUES.from(left).m_display_name;
+      auto& right_name = VENUES.from(right).m_display_name;
       return left_name < right_name;
     });
     for(auto& venue : venues) {

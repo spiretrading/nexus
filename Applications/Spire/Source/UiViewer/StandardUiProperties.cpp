@@ -8,7 +8,6 @@
 #include <QResizeEvent>
 #include <QSpinBox>
 #include <QTextEdit>
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/StyleParser/DataTypes/PropertyParser.hpp"
 #include "Spire/StyleParser/DataTypes/SelectorParser.hpp"
@@ -231,11 +230,11 @@ std::shared_ptr<TypedUiProperty<CurrencyId>>
     [] (QWidget* parent, StandardUiProperty<CurrencyId>& property) {
       auto setter = new QLineEdit(parent);
       property.connect_changed_signal([=] (auto value) {
-        auto code = DEFAULT_CURRENCIES.from(value).m_code;
+        auto code = CURRENCIES.from(value).m_code;
         setter->setText(QString::fromStdString(code.get_data()));
       });
       QObject::connect(setter, &QLineEdit::textChanged, [&] (const auto& text) {
-        auto id = DEFAULT_CURRENCIES.from(text.toUpper().toStdString()).m_id;
+        auto id = CURRENCIES.from(text.toUpper().toStdString()).m_id;
         if(id != CurrencyId::NONE) {
           property.set(id);
         }

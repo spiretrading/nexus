@@ -12,9 +12,9 @@ using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Currencies;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   auto make_test_order_fields() {
@@ -22,7 +22,7 @@ namespace {
     auto ticker = parse_ticker("TST.TSX");
     auto currency = CAD;
     auto side = Side::BID;
-    auto destination = DefaultDestinations::TSX;
+    auto destination = Destinations::TSX;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     return make_limit_order_fields(
@@ -35,12 +35,10 @@ namespace {
     MarketDataServiceTestEnvironment m_market_data_environment;
 
     Fixture()
-      : m_administration_environment(
-          make_administration_service_test_environment(
-            m_service_locator_environment)),
-        m_market_data_environment(
-          make_market_data_service_test_environment(
-            m_service_locator_environment, m_administration_environment)) {}
+      : m_administration_environment(make_administration_service_test_environment(
+          m_service_locator_environment)),
+        m_market_data_environment(make_market_data_service_test_environment(
+          m_service_locator_environment, m_administration_environment)) {}
   };
 }
 
@@ -49,8 +47,7 @@ TEST_SUITE("BoardLotCheck") {
     auto fixture = Fixture();
     auto& feed_client = fixture.m_market_data_environment.get_feed_client();
     auto check = make_board_lot_check(
-      fixture.m_market_data_environment.get_registry_client(), DEFAULT_VENUES,
-      get_default_time_zone_database());
+      fixture.m_market_data_environment.get_registry_client());
 
     SUBCASE("price_over_one_dollar") {
       auto fields = make_test_order_fields();
@@ -119,7 +116,7 @@ TEST_SUITE("BoardLotCheck") {
       auto ticker = fields.m_ticker;
       auto previous_close = TimeAndSale(
         time_from_string("2024-07-17 16:00:00"), Money::ONE, 100, {},
-        DEFAULT_VENUES.from(TSX).m_market_center);
+        VENUES.from(TSX).m_market_center);
       fixture.m_market_data_environment.get_data_store().store(
         SequencedTickerTimeAndSale(
           TickerTimeAndSale(previous_close, ticker), Beam::Sequence(1)));
@@ -134,7 +131,7 @@ TEST_SUITE("BoardLotCheck") {
         check->submit(order_info_invalid), OrderSubmissionCheckException);
       auto new_close_timestamp = order_info_invalid.m_timestamp + hours(24);
       auto new_close = TimeAndSale(new_close_timestamp, 10 * Money::CENT, 100,
-        {}, DEFAULT_VENUES.from(TSX).m_market_center);
+        {}, VENUES.from(TSX).m_market_center);
       fixture.m_market_data_environment.get_data_store().store(
         SequencedTickerTimeAndSale(TickerTimeAndSale(new_close, ticker),
         Beam::Sequence(2)));

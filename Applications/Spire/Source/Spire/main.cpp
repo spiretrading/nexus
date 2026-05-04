@@ -194,6 +194,7 @@ int main(int argc, char* argv[]) {
   auto sign_in_handler = [&] (auto clients) {
     loaded_settings.clear();
     try {
+      load_definitions(clients.get_definitions_client());
       auto username = clients.get_service_locator_client().get_account().m_name;
       auto is_administrator = [&] {
         try {

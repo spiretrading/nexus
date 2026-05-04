@@ -1,6 +1,4 @@
 #include "Spire/Ui/DestinationBox.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/FilteredListModel.hpp"
 #include "Spire/Spire/TransformListModel.hpp"
@@ -27,7 +25,7 @@ namespace {
       for(auto& country : scope.get_countries()) {
         auto i = std::find_if(entry.m_venues.begin(), entry.m_venues.end(),
           [&] (const auto& venue) {
-            return DEFAULT_VENUES.from(venue).m_country_code == country;
+            return VENUES.from(venue).m_country_code == country;
           });
         if(i == entry.m_venues.end()) {
           return true;
@@ -59,8 +57,7 @@ namespace {
 std::shared_ptr<ListModel<DestinationDatabase::Entry>>
     Spire::make_scope_filtered_destination_list(
       std::shared_ptr<ScopeModel> scope) {
-  auto selection =
-    DEFAULT_DESTINATIONS.select_all([] (const auto&) { return true; });
+  auto selection = DESTINATIONS.select_all([] (const auto&) { return true; });
   auto full_list =
     std::make_shared<ArrayListModel<DestinationDatabase::Entry>>(selection);
   return std::make_shared<ScopeFilteredList>(

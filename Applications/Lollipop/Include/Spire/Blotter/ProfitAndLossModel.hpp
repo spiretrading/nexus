@@ -50,11 +50,9 @@ namespace Spire {
 
       /**
        * Constructs a ProfitAndLossModel.
-       * @param currencyDatabase Stores the database of all currencies.
        * @param exchangeRates The list of exchange rates.
        */
       ProfitAndLossModel(
-        Beam::Ref<const Nexus::CurrencyDatabase> currencyDatabase,
         Beam::Ref<const Nexus::ExchangeRateTable> exchangeRates,
         bool showUnrealized);
 
@@ -92,7 +90,6 @@ namespace Spire {
         const ProfitAndLossEntryModelRemovedSignal::slot_type& slot) const;
 
     private:
-      const Nexus::CurrencyDatabase* m_currencyDatabase;
       const Nexus::ExchangeRateTable* m_exchangeRates;
       bool m_showUnrealized;
       PortfolioController* m_portfolioController;

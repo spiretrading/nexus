@@ -13,14 +13,14 @@ class Entry:
   account: str
   position: nexus.Position
 
-def parse_positions(file_path, currencies):
+def parse_positions(file_path):
   positions = []
   with open(file_path, newline='') as csvfile:
     reader = csv.DictReader(csvfile)
     for row in reader:
       position = nexus.Position()
       position.ticker = nexus.parse_ticker(row['Ticker'])
-      position.currency = currencies.from_code(row['Currency']).id
+      position.currency = nexus.CURRENCIES.from_code(row['Currency']).id
       position.quantity = nexus.Quantity.parse(row['Open Quantity'])
       position.cost_basis = nexus.Money.parse(row['Cost Basis'])
       if row['Side'] == 'Short':
@@ -90,24 +90,20 @@ def main():
   username = section['username']
   password = section['password']
   service_clients = nexus.ServiceClients(username, password, address)
-  countries = service_clients.definitions_client.load_country_database()
-  venues = service_clients.definitions_client.load_venue_database()
+  nexus.load_definitions(service_clients.get_definitions_client())
   if args.scope is None:
     scope = nexus.Scope.GLOBAL
   else:
-    scope = nexus.parse_country_code(args.scope, countries)
+    scope = nexus.parse_country_code(args.scope)
     if scope == nexus.CountryCode.NONE:
-      scope = nexus.parse_venue(args.scope, venues)
+      scope = nexus.parse_venue(args.scope)
       if scope:
-        scope = venues.select(scope).venue
+        scope = nexus.VENUES.select(scope).venue
       else:
-        scope = nexus.parse_ticker(args.scope, venues)
+        scope = nexus.parse_ticker(args.scope)
     scope = nexus.Scope(scope)
-  positions = parse_positions(args.positions,
-    service_clients.definitions_client.load_currency_database())
-  destinations = \
-    service_clients.definitions_client.load_destination_database()
-  destination = destinations.manual_order_entry_destination.id
+  positions = parse_positions(args.positions)
+  destination = nexus.DESTINATIONS.manual_order_entry_destination.id
   for position in positions:
     if scope.contains(position.position.ticker):
       if args.account:

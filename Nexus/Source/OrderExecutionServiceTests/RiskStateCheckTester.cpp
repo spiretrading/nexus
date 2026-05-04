@@ -11,9 +11,9 @@ using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Currencies;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   auto make_test_order_fields() {
@@ -21,7 +21,7 @@ namespace {
     auto ticker = parse_ticker("TST.TSX");
     auto currency = CAD;
     auto side = Side::BID;
-    auto destination = DefaultDestinations::TSX;
+    auto destination = Destinations::TSX;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     return make_limit_order_fields(

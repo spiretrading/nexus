@@ -6,13 +6,13 @@ import sys
 import yaml
 
 def execute_report(start_date, end_date, ticker, venue, account,
-    venues, time_zones, service_locator_client, order_execution_client):
+    service_locator_client, order_execution_client):
   orders = []
   activity_log = []
   if account is not None:
     order_queue = beam.Queue()
-    nexus.query_daily_order_submissions(account, start_date, end_date, venues,
-      time_zones, order_execution_client, order_queue)
+    nexus.query_daily_order_submissions(
+      account, start_date, end_date, order_execution_client, order_queue)
     account_orders = []
     beam.flush(order_queue, account_orders)
     for order in account_orders:
@@ -27,8 +27,8 @@ def execute_report(start_date, end_date, ticker, venue, account,
   else:
     accounts = service_locator_client.load_all_accounts()
     for account in accounts:
-      (account_orders, account_log) = execute_report(start_date, end_date,
-        ticker, venue, account, venues, time_zones, service_locator_client,
+      (account_orders, account_log) = execute_report(
+        start_date, end_date, ticker, venue, account, service_locator_client,
         order_execution_client)
       orders += account_orders
       activity_log += account_log
@@ -104,25 +104,23 @@ def main():
     username, password, address)
   definitions_client = nexus.ApplicationDefinitionsClient(
     service_locator_client)
+  nexus.load_definitions(definitions_client)
   order_execution_client = nexus.ApplicationOrderExecutionClient(
     service_locator_client)
-  venues = definitions_client.load_venue_database()
-  time_zones = definitions_client.load_time_zones()
   if args.venue is not None:
-    venue = nexus.parse_venue(args.venue, venues)
+    venue = nexus.parse_venue(args.venue)
   else:
     venue = None
   if args.symbol is not None:
-    ticker = nexus.parse_ticker(args.symbol, venues)
+    ticker = nexus.parse_ticker(args.symbol)
   else:
     ticker = None
   if args.account is not None:
     account = service_locator_client.find_account(args.account)
   else:
     account = None
-  (orders, activity_log) = execute_report(start_date, end_date, ticker,
-    venue, account, venues, time_zones, service_locator_client,
-    order_execution_client)
+  (orders, activity_log) = execute_report(start_date, end_date, ticker, venue,
+    account, service_locator_client, order_execution_client)
   output_order_log(orders)
   output_activity_log(activity_log)
 

@@ -82,16 +82,14 @@ namespace Nexus {
        * @param time_client Initializes the TimeClient.
        * @param data_store Initializes the RiskDataStore.
        * @param exchange_rates The exchange rates.
-       * @param destinations The destination database used to flatten positions.
        */
       template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
         Beam::Initializes<O> OF, Beam::Initializes<R> RF,
         Beam::Initializes<T> TF, Beam::Initializes<D> DF>
-      RiskController(Beam::DirectoryEntry account,
-        AF&& administration_client, MF&& market_data_client,
-        OF&& order_execution_client, RF&& transition_timer, TF&& time_client,
-        DF&& data_store, const ExchangeRateTable& exchange_rates,
-        DestinationDatabase destinations);
+      RiskController(Beam::DirectoryEntry account, AF&& administration_client,
+        MF&& market_data_client, OF&& order_execution_client,
+        RF&& transition_timer, TF&& time_client, DF&& data_store,
+        const ExchangeRateTable& exchange_rates);
 
       /** Returns a Publisher for the account's RiskState. */
       const Beam::Publisher<RiskState>& get_risk_state_publisher() const;
@@ -135,8 +133,8 @@ namespace Nexus {
 
   template<typename A, typename M, typename O, typename R, typename T,
     typename D>
-  RiskController(const Beam::DirectoryEntry&, A&&, M&&, O&&,
-    R&&, T&&, D&&, const ExchangeRateTable&, DestinationDatabase) ->
+  RiskController(const Beam::DirectoryEntry&, A&&, M&&, O&&, R&&, T&&, D&&,
+    const ExchangeRateTable&) ->
       RiskController<std::remove_reference_t<A>, std::remove_reference_t<M>,
         std::remove_reference_t<O>, std::remove_reference_t<R>,
         std::remove_reference_t<T>, std::remove_reference_t<D>>;
@@ -154,8 +152,7 @@ namespace Nexus {
   RiskController<A, M, O, R, T, D>::RiskController(Beam::DirectoryEntry account,
       AF&& administration_client, MF&& market_data_client,
       OF&& order_execution_client, RF&& transition_timer, TF&& time_client,
-      DF&& data_store, const ExchangeRateTable& exchange_rates,
-      DestinationDatabase destinations)
+      DF&& data_store, const ExchangeRateTable& exchange_rates)
       : m_account(std::move(account)),
         m_administration_client(std::forward<AF>(administration_client)),
         m_order_execution_client(std::forward<OF>(order_execution_client)),
@@ -185,8 +182,7 @@ namespace Nexus {
     m_portfolio_controller.emplace(&m_state_model->get_portfolio(),
       std::forward<MF>(market_data_client), real_time_queue);
     m_transition_model.emplace(m_account, std::move(inventories),
-      m_state_model->get_risk_state(), &*m_order_execution_client,
-      std::move(destinations));
+      m_state_model->get_risk_state(), &*m_order_execution_client);
     m_order_execution_client->query(real_time_query,
       m_tasks.get_slot<SequencedOrder>(
         std::bind_front(&RiskController::on_order_submission, this)));

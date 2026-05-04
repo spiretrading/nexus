@@ -9,7 +9,7 @@ using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 TEST_SUITE("VenueEntry") {
   TEST_CASE("publish_order_imbalance") {
