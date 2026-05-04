@@ -143,6 +143,90 @@ TEST_SUITE("DefinitionsClient") {
         }, schemas);
   }
 
+  TEST_CASE("load_definitions") {
+    auto saved_countries = COUNTRIES;
+    auto saved_time_zones = TIME_ZONES;
+    auto saved_currencies = CURRENCIES;
+    auto saved_destinations = DESTINATIONS;
+    auto saved_venues = VENUES;
+    auto test_country = CountryDatabase::Entry();
+    test_country.m_code = CountryCode(999);
+    test_country.m_name = "Testland";
+    test_country.m_two_letter_code = "TL";
+    test_country.m_three_letter_code = "TLD";
+    auto test_countries = CountryDatabase();
+    test_countries.add(test_country);
+    auto test_currency = CurrencyDatabase::Entry();
+    test_currency.m_id = CurrencyId(999);
+    test_currency.m_code = "TST";
+    test_currency.m_sign = "T";
+    auto test_currencies = CurrencyDatabase();
+    test_currencies.add(test_currency);
+    auto test_destination = DestinationDatabase::Entry();
+    test_destination.m_id = "TEST_DEST";
+    test_destination.m_description = "Test Destination";
+    auto test_destinations = DestinationDatabase();
+    test_destinations.add(test_destination);
+    auto test_venue = VenueDatabase::Entry();
+    test_venue.m_venue = Venue("XTST");
+    test_venue.m_country_code = test_country.m_code;
+    test_venue.m_currency = test_currency.m_id;
+    test_venue.m_time_zone = "America/New_York";
+    test_venue.m_description = "Test Exchange";
+    test_venue.m_display_name = "TST";
+    auto test_venues = VenueDatabase();
+    test_venues.add(test_venue);
+    auto test_time_zones = [&] {
+      auto database = boost::local_time::tz_database();
+      auto stream = std::stringstream(
+        "\"Testland/Nowhere\",\"TST\",\"TST\",\"\",\"\","
+        "\"+05:30:00\",\"+00:00:00\",\"\",\"\",\"\",\"+00:00:00\"");
+      database.load_from_stream(stream);
+      return database;
+    }();
+    auto operations = std::make_shared<TestDefinitionsClient::Queue>();
+    auto client = DefinitionsClient(
+      std::in_place_type<TestDefinitionsClient>, operations);
+    auto future = std::async(std::launch::async, [&] {
+      load_definitions(client);
+    });
+    for(auto i = 0; i < 5; ++i) {
+      auto operation = operations->pop();
+      std::visit([&] (auto& op) {
+        using Operation = std::decay_t<decltype(op)>;
+        if constexpr(std::is_same_v<Operation,
+            TestDefinitionsClient::LoadCountryDatabaseOperation>) {
+          op.m_result.set(test_countries);
+        } else if constexpr(std::is_same_v<Operation,
+            TestDefinitionsClient::LoadTimeZoneDatabaseOperation>) {
+          op.m_result.set(test_time_zones);
+        } else if constexpr(std::is_same_v<Operation,
+            TestDefinitionsClient::LoadCurrencyDatabaseOperation>) {
+          op.m_result.set(test_currencies);
+        } else if constexpr(std::is_same_v<Operation,
+            TestDefinitionsClient::LoadDestinationDatabaseOperation>) {
+          op.m_result.set(test_destinations);
+        } else if constexpr(std::is_same_v<Operation,
+            TestDefinitionsClient::LoadVenueDatabaseOperation>) {
+          op.m_result.set(test_venues);
+        } else {
+          FAIL("Unexpected operation.");
+        }
+      }, *operation);
+    }
+    future.get();
+    REQUIRE(COUNTRIES.from(CountryCode(999)).m_name == "Testland");
+    REQUIRE(TIME_ZONES.time_zone_from_region("Testland/Nowhere"));
+    REQUIRE(CURRENCIES.from("TST").m_id == CurrencyId(999));
+    REQUIRE(DESTINATIONS.from("TEST_DEST").m_id == "TEST_DEST");
+    REQUIRE(VENUES.from("XTST").m_display_name == "TST");
+    set_countries(saved_countries);
+    set_time_zones(saved_time_zones);
+    set_currencies(saved_currencies);
+    set_destinations(saved_destinations);
+    set_venues(saved_venues);
+  }
+
   TEST_CASE("load_trading_schedule") {
     auto events = std::vector<TradingSchedule::Event>();
     events.push_back(
