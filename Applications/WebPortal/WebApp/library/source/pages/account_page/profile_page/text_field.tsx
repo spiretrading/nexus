@@ -147,12 +147,12 @@ export class TextField extends React.Component<Properties, State> {
 
   private static STYLE = StyleSheet.create({
     box: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
       justifyContent: 'space-between',
       border: '1px solid #FFFFFF',
       borderRadius: '1px',
@@ -167,48 +167,48 @@ export class TextField extends React.Component<Properties, State> {
       }
     },
     hoveredBox: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
       justifyContent: 'space-between',
       border: '1px solid #C8C8C8',
       borderRadius: '1px'
     },
     focusedBox: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '100%',
       height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
       justifyContent: 'space-between',
       border: '1px solid #684BC7',
       borderRadius: '1px'
     },
     errorBox: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '100%',
       height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
       justifyContent: 'space-between',
       border: '1px solid #E63F44',
       borderRadius: '1px'
     },
     readonlyBox: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '100%',
       height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
       justifyContent: 'space-between',
       border: '1px solid #FFFFFF',
       borderRadius: '1px'
@@ -217,7 +217,7 @@ export class TextField extends React.Component<Properties, State> {
       flexGrow: 1
     },
     image: {
-      visibility: 'visible' as 'visible',
+      visibility: 'visible',
       height: '14px',
       width: '14px',
       paddingRight: '10px',
@@ -246,7 +246,7 @@ export class TextField extends React.Component<Properties, State> {
         border: 0
       },
       '::-ms-clear': {
-        display: 'none' as 'none'
+        display: 'none'
       },
       ':-moz-read-only': {
         color: 'transparent',
@@ -274,7 +274,7 @@ export class TextField extends React.Component<Properties, State> {
         border: 0
       },
       '::-ms-clear': {
-        display: 'none' as 'none'
+        display: 'none'
       },
       ':-moz-read-only': {
         color: 'transparent',

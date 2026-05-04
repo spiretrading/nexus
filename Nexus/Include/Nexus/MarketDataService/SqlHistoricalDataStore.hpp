@@ -29,11 +29,9 @@ namespace Nexus {
 
       /**
        * Constructs an SqlHistoricalDataStore.
-       * @param venues The available venues.
        * @param connection_builder The callable used to build SQL connections.
        */
-      explicit SqlHistoricalDataStore(
-        VenueDatabase venues, ConnectionBuilder connection_builder);
+      explicit SqlHistoricalDataStore(ConnectionBuilder connection_builder);
 
       ~SqlHistoricalDataStore();
 
@@ -59,7 +57,6 @@ namespace Nexus {
     private:
       template<typename V, typename I>
       using DataStore = Beam::SqlDataStore<Connection, V, I, SqlTranslator>;
-      VenueDatabase m_venues;
       Beam::DatabaseConnectionPool<Connection> m_reader_pool;
       Beam::DatabaseConnectionPool<Connection> m_writer_pool;
       DataStore<Viper::Row<OrderImbalance>, Viper::Row<Venue>>
@@ -79,9 +76,8 @@ namespace Nexus {
 
   template<typename C>
   SqlHistoricalDataStore<C>::SqlHistoricalDataStore(
-      VenueDatabase venues, ConnectionBuilder connection_builder)
-      : m_venues(std::move(venues)),
-        m_reader_pool(std::thread::hardware_concurrency(), [&] {
+      ConnectionBuilder connection_builder)
+      : m_reader_pool(std::thread::hardware_concurrency(), [&] {
           auto connection = std::make_unique<Connection>(connection_builder());
           connection->open();
           return connection;
@@ -150,7 +146,7 @@ namespace Nexus {
     }();
     auto scope_filter = Viper::literal(query.get_index().is_global());
     for(auto country : query.get_index().get_countries()) {
-      for(auto entry : m_venues.get_entries()) {
+      for(auto entry : VENUES.get_entries()) {
         if(entry.m_country_code == country) {
           scope_filter = scope_filter || Viper::sym("venue") ==
             Viper::literal(std::string(entry.m_venue.get_code().get_data()));

@@ -4,16 +4,16 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Currencies;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   auto TST = parse_ticker("TST.TSXV");
 
   auto make_order_fields(Money price) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT, TST, CAD,
-      Side::BID, DefaultDestinations::TSX, 100, price);
+      Side::BID, Destinations::TSX, 100, price);
   }
 
   auto make_fee_table() {

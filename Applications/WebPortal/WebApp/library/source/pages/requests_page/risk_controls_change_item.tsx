@@ -100,22 +100,22 @@ const STYLES = StyleSheet.create({
   },
   div: {
     display: 'flex',
-    alignItems: 'flex-start' as 'flex-start'
+    alignItems: 'flex-start'
   },
   divWide: {
     display: 'inline-flex',
-    alignItems: 'flex-start' as 'flex-start'
+    alignItems: 'flex-start'
   },
   header: {
     display: 'flex',
-    alignItems: 'flex-start' as 'flex-start',
+    alignItems: 'flex-start',
     padding: '4px 0',
     flex: '1 1 auto',
     minWidth: 0
   },
   headerWide: {
     display: 'flex',
-    alignItems: 'flex-start' as 'flex-start',
+    alignItems: 'flex-start',
     padding: '4px 0',
     flex: '0 1 auto',
     minWidth: '128px',

@@ -61,7 +61,7 @@ export class ComplianceRuleEntry {
   private _schema: ComplianceRuleSchema;
 }
 
-export module ComplianceRuleEntry {
+export namespace ComplianceRuleEntry {
 
   /** Enumerates the states of a ComplianceRuleEntry. */
   export enum State {

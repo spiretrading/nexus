@@ -8,8 +8,8 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 TEST_SUITE("ComplianceRuleBuilder") {
   TEST_CASE("expected_types") {

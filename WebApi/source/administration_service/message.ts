@@ -87,7 +87,7 @@ export class Message {
   private _bodies: Array<Message.Body>;
 }
 
-export module Message {
+export namespace Message {
 
   /** Stores the body of a message. */
   export class Body {

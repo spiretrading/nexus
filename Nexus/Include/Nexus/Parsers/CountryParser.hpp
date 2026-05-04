@@ -27,7 +27,7 @@ namespace Nexus {
 
   /** Parses a CountryCode using the default CountryDatabase. */
   inline const auto& country_parser() {
-    static const auto& parser = country_parser(DEFAULT_COUNTRIES);
+    static const auto& parser = country_parser(COUNTRIES);
     return parser;
   }
 }

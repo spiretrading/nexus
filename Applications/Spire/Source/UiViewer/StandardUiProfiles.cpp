@@ -10,8 +10,6 @@
 #include <QScreen>
 #include <QSpinBox>
 #include <QStringBuilder>
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
@@ -880,10 +878,10 @@ namespace {
       {"MFC.TSX", "Manulife Financial Corporation"},
       {"MX.TSX", "Methanex Corporation"},
       {"TSO.ASX", "Tesoro Resources Limited"}};
-    auto venues = std::vector{DefaultVenues::ASX, DefaultVenues::CXD,
-      DefaultVenues::CSE, DefaultVenues::TSX, DefaultVenues::TSXV};
-    auto countries = std::vector{DefaultCountries::US, DefaultCountries::CA,
-      DefaultCountries::AU, DefaultCountries::JP, DefaultCountries::CN};
+    auto venues = std::vector{
+      Venues::ASX, Venues::CXD, Venues::CSE, Venues::TSX, Venues::TSXV};
+    auto countries = std::vector{Countries::US, Countries::CA, Countries::AU,
+      Countries::JP, Countries::CN};
     auto model = std::make_shared<LocalQueryModel<Scope>>();
     for(auto& ticker_info : tickers) {
       auto ticker = parse_ticker(ticker_info.first);
@@ -896,14 +894,14 @@ namespace {
       model->add(QString::fromStdString(scope.get_name()).toLower(), scope);
     }
     for(auto& venue : venues) {
-      auto entry = DEFAULT_VENUES.from(venue);
+      auto entry = VENUES.from(venue);
       auto scope = Scope(entry.m_description);
       scope += venue;
       model->add(to_text(venue).toLower(), scope);
       model->add(QString::fromStdString(scope.get_name()).toLower(), scope);
     }
     for(auto& country : countries) {
-      auto scope = Scope(DEFAULT_COUNTRIES.from(country).m_name);
+      auto scope = Scope(COUNTRIES.from(country).m_name);
       scope += country;
       model->add(to_text(country).toLower(), scope);
       model->add(QString::fromStdString(scope.get_name()).toLower(), scope);
@@ -1082,8 +1080,7 @@ namespace {
     auto result = QString();
     result += "Scope{Countries{";
     for(auto& country : scope.get_countries()) {
-      result +=
-        DEFAULT_COUNTRIES.from(country).m_three_letter_code.get_data();
+      result += COUNTRIES.from(country).m_three_letter_code.get_data();
       result += " ";
     }
     result += "} Venues{";
@@ -1923,8 +1920,7 @@ UiProfile Spire::make_destination_box_profile() {
   properties.push_back(make_standard_property<QString>("current", "TSX"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("DestinationBox", properties, [] (auto& profile) {
-    auto selection =
-      DEFAULT_DESTINATIONS.select_all([] (auto& value) { return true; });
+    auto selection = DESTINATIONS.select_all([] (auto& value) { return true; });
     auto destinations =
       std::make_shared<ArrayListModel<DestinationDatabase::Entry>>();
     for(auto& destination : selection) {
@@ -1955,8 +1951,7 @@ UiProfile Spire::make_destination_list_item_profile() {
   populate_widget_properties(properties);
   auto profile = UiProfile("DestinationListItem", properties,
     [] (auto& profile) {
-      auto item = new DestinationListItem(
-        DEFAULT_DESTINATIONS.from(DefaultDestinations::TSX));
+      auto item = new DestinationListItem(DESTINATIONS.from(Destinations::TSX));
       apply_widget_properties(item, profile.get_properties());
       return item;
     });
@@ -3767,23 +3762,21 @@ UiProfile Spire::make_scope_drop_down_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
   auto current_scope = define_enum<Scope>(
-    {{"ASX", DefaultVenues::ASX}, {"CXD", DefaultVenues::CXD},
-     {"TSX", DefaultVenues::TSX}, {"USA", Scope(DefaultCountries::US)},
-     {"CAN", Scope(DefaultCountries::CA)}});
+    {{"ASX", Venues::ASX}, {"CXD", Venues::CXD}, {"TSX", Venues::TSX},
+     {"USA", Scope(Countries::US)}, {"CAN", Scope(Countries::CA)}});
   properties.push_back(make_standard_enum_property("current", current_scope));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("ScopeDropDownBox", properties, [] (auto& profile) {
-    auto venues = std::vector{DefaultVenues::ASX, DefaultVenues::CXD,
-      DefaultVenues::TSX};
-    auto countries = std::vector{DefaultCountries::US, DefaultCountries::CA};
+    auto venues = std::vector{Venues::ASX, Venues::CXD, Venues::TSX};
+    auto countries = std::vector{Countries::US, Countries::CA};
     auto scopes = std::make_shared<ArrayListModel<Scope>>();
     for(auto& venue : venues) {
-      auto scope = Scope(DEFAULT_VENUES.from(venue).m_display_name);
+      auto scope = Scope(VENUES.from(venue).m_display_name);
       scope += venue;
       scopes->push(scope);
     }
     for(auto& country : countries) {
-      auto scope = Scope(DEFAULT_COUNTRIES.from(country).m_name);
+      auto scope = Scope(COUNTRIES.from(country).m_name);
       scope += country;
       scopes->push(scope);
     }
@@ -3838,13 +3831,13 @@ UiProfile Spire::make_scope_list_item_profile() {
         scope += ticker;
         return scope;
       } else if(type.get() == 1) {
-        auto venue = DEFAULT_VENUES.from(DefaultVenues::ASX);
+        auto venue = VENUES.from(Venues::ASX);
         auto scope = Scope(venue.m_description);
         scope += venue.m_venue;
         return scope;
       } else {
-        auto country = DefaultCountries::US;
-        auto scope = Scope(DEFAULT_COUNTRIES.from(country).m_name);
+        auto country = Countries::US;
+        auto scope = Scope(COUNTRIES.from(country).m_name);
         scope += country;
         return scope;
       }
@@ -5267,8 +5260,8 @@ UiProfile Spire::make_venue_box_profile() {
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     current.connect_changed_signal([=] (const auto& current) {
-      if(auto venue = DEFAULT_VENUES.from_display_name(
-          current.toUpper().toStdString()).m_venue) {
+      if(auto venue =
+          VENUES.from_display_name(current.toUpper().toStdString()).m_venue) {
         box->get_current()->set(venue);
       }
     });

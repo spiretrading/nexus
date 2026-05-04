@@ -8,7 +8,7 @@
 #include <boost/functional/factory.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
@@ -19,8 +19,8 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   struct Fixture {
@@ -66,10 +66,9 @@ namespace {
           m_server_connection(std::make_shared<LocalServerConnection>()),
           m_administration_environment(
             make_administration_service_test_environment(
-              m_service_locator_environment)),
-          m_registry(DEFAULT_VENUES, get_default_time_zone_database()) {
-      auto servlet_account = make_account(
-        "market_data_service", DirectoryEntry::STAR_DIRECTORY);
+              m_service_locator_environment)) {
+      auto servlet_account =
+        make_account("market_data_service", DirectoryEntry::STAR_DIRECTORY);
       m_administration_environment.make_administrator(servlet_account);
       m_service_locator_environment.get_root().store(
         servlet_account, DirectoryEntry::STAR_DIRECTORY, Permissions(~0));
@@ -84,11 +83,7 @@ namespace {
         *m_servlet_service_locator_client, &*m_servlet), m_server_connection,
         factory<std::unique_ptr<TriggerTimer>>());
       m_client_account = make_account("client", DirectoryEntry::STAR_DIRECTORY);
-      auto global_entitlement =
-        m_servlet_administration_client->load_entitlements().
-          get_entries().front().m_group_entry;
-      m_servlet_administration_client->store_entitlements(
-        m_client_account, {global_entitlement});
+      m_administration_environment.grant_all_entitlements(m_client_account);
       std::tie(m_client_account, m_client) = make_client("client");
     }
   };

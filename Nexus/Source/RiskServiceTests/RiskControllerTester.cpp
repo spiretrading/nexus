@@ -16,9 +16,9 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Currencies;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   auto S32 = parse_ticker("S32.ASX");
@@ -59,14 +59,14 @@ namespace {
       m_administration_environment.make_administrator(servlet_account);
       m_service_locator.emplace(
         m_service_locator_environment.make_client("risk_service", ""));
-      grant_all_entitlements(
-        m_administration_environment, m_service_locator->get_account());
+      m_administration_environment.grant_all_entitlements(
+        m_service_locator->get_account());
       m_administration_client.emplace(
         m_administration_environment.make_client(Ref(*m_service_locator)));
       m_trader_account =
         m_service_locator_environment.get_root().make_account("trader", "",
           DirectoryEntry::STAR_DIRECTORY);
-      m_administration_environment.get_client().store(m_trader_account,
+      m_administration_environment.store(m_trader_account,
         RiskParameters(AUD, 100000 * Money::ONE, RiskState::Type::ACTIVE,
           2 * Money::ONE, minutes(10)));
       m_administration_environment.get_client().store(
@@ -97,8 +97,7 @@ TEST_SUITE("RiskController") {
     auto controller = RiskController(fixture.m_trader_account,
       *fixture.m_administration_client, *fixture.m_market_data_client,
       *fixture.m_service_order_execution_client, &fixture.m_timer,
-      &fixture.m_time_client, &fixture.m_data_store, fixture.m_exchange_rates,
-      DEFAULT_DESTINATIONS);
+      &fixture.m_time_client, &fixture.m_data_store, fixture.m_exchange_rates);
     auto state = std::make_shared<Queue<RiskState>>();
     controller.get_risk_state_publisher().monitor(state);
     REQUIRE(state->pop() == RiskState::Type::ACTIVE);
@@ -119,7 +118,7 @@ TEST_SUITE("RiskController") {
     REQUIRE((state->pop().m_type == RiskState::Type::CLOSE_ORDERS));
     auto new_parameters = RiskParameters(AUD, 100000 * Money::ONE,
       RiskState::Type::ACTIVE, 1000 * Money::ONE, minutes(10));
-    fixture.m_administration_client->store(
+    fixture.m_administration_environment.store(
       fixture.m_trader_account, new_parameters);
     REQUIRE(state->pop().m_type == RiskState::Type::ACTIVE);
   }
@@ -133,8 +132,7 @@ TEST_SUITE("RiskController") {
     auto controller = RiskController(fixture.m_trader_account,
       *fixture.m_administration_client, *fixture.m_market_data_client,
       *fixture.m_service_order_execution_client, &fixture.m_timer,
-      &fixture.m_time_client, &fixture.m_data_store, fixture.m_exchange_rates,
-      DEFAULT_DESTINATIONS);
+      &fixture.m_time_client, &fixture.m_data_store, fixture.m_exchange_rates);
     auto state = std::make_shared<Queue<RiskState>>();
     controller.get_risk_state_publisher().monitor(state);
     REQUIRE(state->pop() == RiskState::Type::ACTIVE);

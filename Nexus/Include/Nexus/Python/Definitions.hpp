@@ -23,10 +23,22 @@ namespace Nexus::Python {
   void export_country(pybind11::module& module);
 
   /**
+   * Exports the Countries namespace.
+   * @param module The module to export to.
+   */
+  void export_countries(pybind11::module& module);
+
+  /**
    * Exports the CurrencyDatabase class.
    * @param module The module to export to.
    */
   void export_currency(pybind11::module& module);
+
+  /**
+   * Exports the Currencies namespace.
+   * @param module The module to export to.
+   */
+  void export_currencies(pybind11::module& module);
 
   /**
    * Exports the CurrencyPair class.
@@ -35,40 +47,22 @@ namespace Nexus::Python {
   void export_currency_pair(pybind11::module& module);
 
   /**
-   * Exports the DefaultCountries namespace.
+   * Exports the DestinationDatabase class.
    * @param module The module to export to.
    */
-  void export_default_countries(pybind11::module& module);
+  void export_destination(pybind11::module& module);
 
   /**
-   * Exports the DefaultCurrencies namespace.
+   * Exports the Destinations namespace.
    * @param module The module to export to.
    */
-  void export_default_currencies(pybind11::module& module);
-
-  /**
-   * Exports the DefaultDestinations namespace.
-   * @param module The module to export to.
-   */
-  void export_default_destinations(pybind11::module& module);
-
-  /**
-   * Exports the DefaultVenues namespace.
-   * @param module The module to export to.
-   */
-  void export_default_venues(pybind11::module& module);
+  void export_destinations(pybind11::module& module);
 
   /**
    * Exports the Definitions classes.
    * @param module The module to export to.
    */
   void export_definitions(pybind11::module& module);
-
-  /**
-   * Exports the DestinationDatabase class.
-   * @param module The module to export to.
-   */
-  void export_destination(pybind11::module& module);
 
   /**
    * Exports the ExchangeRate class.
@@ -183,6 +177,12 @@ namespace Nexus::Python {
    * @param module The module to export to.
    */
   void export_venue(pybind11::module& module);
+
+  /**
+   * Exports the Venues namespace.
+   * @param module The module to export to.
+   */
+  void export_venues(pybind11::module& module);
 }
 
 #endif

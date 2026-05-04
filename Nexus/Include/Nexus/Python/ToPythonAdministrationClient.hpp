@@ -55,12 +55,8 @@ namespace Nexus {
       EntitlementDatabase load_entitlements();
       std::vector<Beam::DirectoryEntry> load_entitlements(
         const Beam::DirectoryEntry& account);
-      void store_entitlements(const Beam::DirectoryEntry& account,
-        const std::vector<Beam::DirectoryEntry>& entitlements);
       const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
         const Beam::DirectoryEntry& account);
-      void store(
-        const Beam::DirectoryEntry& account, const RiskParameters& parameters);
       const Beam::Publisher<RiskState>& get_risk_state_publisher(
         const Beam::DirectoryEntry& account);
       void store(const Beam::DirectoryEntry& account, const RiskState& state);
@@ -100,6 +96,17 @@ namespace Nexus {
         AccountModificationRequest::Id id);
       Message send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message);
+      Notification send_notification(const Beam::DirectoryEntry& account,
+        const std::string& description, const std::string& data,
+        Notification::Category category);
+      Notification::Id monitor_notifications(
+        const Beam::DirectoryEntry& account,
+        Beam::ScopedQueueWriter<Notification> queue);
+      std::vector<Notification> load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state);
+      void mark_notification_as_read(const Notification::Id& id);
+      void mark_notification_as_unread(const Notification::Id& id);
       void close();
 
     private:
@@ -255,26 +262,11 @@ namespace Nexus {
   }
 
   template<IsAdministrationClient C>
-  void ToPythonAdministrationClient<C>::store_entitlements(
-      const Beam::DirectoryEntry& account,
-      const std::vector<Beam::DirectoryEntry>& entitlements) {
-    auto release = Beam::Python::GilRelease();
-    m_client->store_entitlements(account, entitlements);
-  }
-
-  template<IsAdministrationClient C>
   const Beam::Publisher<RiskParameters>&
       ToPythonAdministrationClient<C>::get_risk_parameters_publisher(
         const Beam::DirectoryEntry& account) {
     auto release = Beam::Python::GilRelease();
     return m_client->get_risk_parameters_publisher(account);
-  }
-
-  template<IsAdministrationClient C>
-  void ToPythonAdministrationClient<C>::store(
-      const Beam::DirectoryEntry& account, const RiskParameters& parameters) {
-    auto release = Beam::Python::GilRelease();
-    m_client->store(account, parameters);
   }
 
   template<IsAdministrationClient C>
@@ -407,6 +399,44 @@ namespace Nexus {
         AccountModificationRequest::Id id, const Message& message) {
     auto release = Beam::Python::GilRelease();
     return m_client->send_account_modification_request_message(id, message);
+  }
+
+  template<IsAdministrationClient C>
+  Notification ToPythonAdministrationClient<C>::send_notification(
+      const Beam::DirectoryEntry& account, const std::string& description,
+      const std::string& data, Notification::Category category) {
+    auto release = Beam::Python::GilRelease();
+    return m_client->send_notification(account, description, data, category);
+  }
+
+  template<IsAdministrationClient C>
+  Notification::Id ToPythonAdministrationClient<C>::monitor_notifications(
+      const Beam::DirectoryEntry& account,
+      Beam::ScopedQueueWriter<Notification> queue) {
+    auto release = Beam::Python::GilRelease();
+    return m_client->monitor_notifications(account, std::move(queue));
+  }
+
+  template<IsAdministrationClient C>
+  std::vector<Notification> ToPythonAdministrationClient<C>::load_notifications(
+      const Beam::DirectoryEntry& account, const Notification::Id& id,
+      Beam::SnapshotLimit limit, Notification::ReadState read_state) {
+    auto release = Beam::Python::GilRelease();
+    return m_client->load_notifications(account, id, limit, read_state);
+  }
+
+  template<IsAdministrationClient C>
+  void ToPythonAdministrationClient<C>::mark_notification_as_read(
+      const Notification::Id& id) {
+    auto release = Beam::Python::GilRelease();
+    m_client->mark_notification_as_read(id);
+  }
+
+  template<IsAdministrationClient C>
+  void ToPythonAdministrationClient<C>::mark_notification_as_unread(
+      const Notification::Id& id) {
+    auto release = Beam::Python::GilRelease();
+    m_client->mark_notification_as_unread(id);
   }
 
   template<IsAdministrationClient C>

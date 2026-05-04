@@ -10,17 +10,17 @@ export class PageWrapper extends React.Component {
       </div>);
   }
 
-  private static readonly STYLE = {
+  private static readonly STYLE: Record<string, React.CSSProperties> = {
     page: {
       backgroundColor: '#ffffff',
       width: '100%',
       height: '100%',
-      display: 'flex' as 'flex',
-      overflowX: 'hidden' as 'hidden',
-      overflowY: 'auto' as 'auto',
-      scrollbarGutter: 'stable' as 'stable',
-      justifyContent: 'center' as 'center',
-      alignItems: 'flex-start' as 'flex-start',
+      display: 'flex',
+      overflowX: 'hidden',
+      overflowY: 'auto',
+      scrollbarGutter: 'stable',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
       margin: 0,
       padding: 0,
       minWidth: '320px'

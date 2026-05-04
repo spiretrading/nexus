@@ -80,29 +80,29 @@ export class ParametersList extends React.Component<Properties> {
     this.props.onChange(newSchema);
   }
 
-  private static readonly STYLE = {
+  private static readonly STYLE: Record<string, React.CSSProperties> = {
     largeWrapper: {
       paddingLeft: '38px'
     },
     rowSmall: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
+      display: 'flex',
+      flexDirection: 'row',
       minWidth: '284px',
       maxWidth: '424px',
       width: '100%',
       height: '34px',
       font: '400 16px Roboto',
-      alignItems: 'center' as 'center'
+      alignItems: 'center'
     },
     rowLarge: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
+      display: 'flex',
+      flexDirection: 'row',
       width: '246px',
       minWidth: '246px',
       maxWidth: '246px',
       height: '34px',
       font: '400 14px Roboto',
-      alignItems: 'center' as 'center'
+      alignItems: 'center'
     },
     fillerBetweenRows : {
       height: '10px',
@@ -116,7 +116,7 @@ export class ParametersList extends React.Component<Properties> {
       font: '500 14px Roboto',
       marginTop: '10px',
       marginBottom: '18px',
-      cursor: 'default' as 'default'
+      cursor: 'default'
     }
   };
 }

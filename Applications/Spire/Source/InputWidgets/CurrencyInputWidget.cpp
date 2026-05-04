@@ -32,9 +32,9 @@ CurrencyInputWidget::~CurrencyInputWidget() {}
 
 void CurrencyInputWidget::Initialize(Ref<UserProfile> userProfile) {
   m_userProfile = userProfile.get();
-  for(auto& currency : DEFAULT_CURRENCIES.get_entries()) {
-    m_currencyComboBox->addItem(QString::fromStdString(
-      currency.m_code.get_data()));
+  for(auto& currency : CURRENCIES.get_entries()) {
+    m_currencyComboBox->addItem(
+      QString::fromStdString(currency.m_code.get_data()));
   }
 }
 
@@ -42,13 +42,12 @@ CurrencyId CurrencyInputWidget::GetCurrency() const {
   if(m_currencyComboBox->count() == 0) {
     return CurrencyId::NONE;
   }
-  return DEFAULT_CURRENCIES.get_entries()[
-    m_currencyComboBox->currentIndex()].m_id;
+  return CURRENCIES.get_entries()[m_currencyComboBox->currentIndex()].m_id;
 }
 
 void CurrencyInputWidget::SetCurrency(CurrencyId currency) {
-  for(auto i = size_t{0}; i < DEFAULT_CURRENCIES.get_entries().size(); ++i) {
-    if(DEFAULT_CURRENCIES.get_entries()[i].m_id == currency) {
+  for(auto i = size_t{0}; i < CURRENCIES.get_entries().size(); ++i) {
+    if(CURRENCIES.get_entries()[i].m_id == currency) {
       m_currencyComboBox->setCurrentIndex(i);
       break;
     }
@@ -66,6 +65,6 @@ connection CurrencyInputWidget::ConnectCurrencyUpdatedSignal(
 }
 
 void CurrencyInputWidget::OnCurrencyActivated(int index) {
-  auto currency = DEFAULT_CURRENCIES.get_entries()[index].m_id;
+  auto currency = CURRENCIES.get_entries()[index].m_id;
   m_currencyUpdatedSignal(currency);
 }
