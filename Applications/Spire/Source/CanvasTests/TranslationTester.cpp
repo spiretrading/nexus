@@ -1,5 +1,4 @@
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"

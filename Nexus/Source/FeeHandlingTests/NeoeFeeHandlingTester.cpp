@@ -15,7 +15,7 @@ namespace {
 
   auto make_order_fields(Money price) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT, TST, CAD,
-      Side::BID, DefaultDestinations::NEOE, 100, price);
+      Side::BID, Destinations::NEOE, 100, price);
   }
 
   auto make_fee_table() {

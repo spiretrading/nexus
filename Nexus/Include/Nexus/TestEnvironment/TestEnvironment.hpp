@@ -227,9 +227,8 @@ namespace Nexus {
       auto definitions_client = m_definitions_environment.make_client(
         Beam::Ref(m_service_locator_client));
       m_order_execution_environment.emplace(
-        definitions_client.load_venue_database(),
-        definitions_client.load_destination_database(),
-        m_service_locator_client, m_uid_client, m_administration_client);
+        definitions_client.load_venue_database(), m_service_locator_client,
+        m_uid_client, m_administration_client);
       m_order_execution_client.emplace(
         m_order_execution_environment->make_client(
           Beam::Ref(m_service_locator_client)));
@@ -241,8 +240,7 @@ namespace Nexus {
       m_risk_environment.emplace(m_service_locator_client,
         m_administration_client, *m_market_data_client,
         *m_order_execution_client, transition_timer_factory, m_time_client,
-        ExchangeRateTable(definitions_client.load_exchange_rates()),
-        definitions_client.load_destination_database());
+        ExchangeRateTable(definitions_client.load_exchange_rates()));
     } catch(const std::exception&) {
       close();
       throw;

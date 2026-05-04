@@ -310,29 +310,29 @@ namespace Nexus {
           return Venue(report.m_last_market);
         } else {
           auto& destination = order.get_info().m_fields.m_destination;
-          if(destination == DefaultDestinations::ALPHA) {
+          if(destination == Destinations::ALPHA) {
             return DefaultVenues::XATS;
-          } else if(destination == DefaultDestinations::CHIX) {
+          } else if(destination == Destinations::CHIX) {
             return DefaultVenues::CHIC;
-          } else if(destination == DefaultDestinations::CSE) {
+          } else if(destination == Destinations::CSE) {
             return DefaultVenues::CSE;
-          } else if(destination == DefaultDestinations::CSE2) {
+          } else if(destination == Destinations::CSE2) {
             return DefaultVenues::CSE2;
-          } else if(destination == DefaultDestinations::CX2) {
+          } else if(destination == Destinations::CX2) {
             return DefaultVenues::XCX2;
-          } else if(destination == DefaultDestinations::LYNX) {
+          } else if(destination == Destinations::LYNX) {
             return DefaultVenues::LYNX;
-          } else if(destination == DefaultDestinations::MATNLP) {
+          } else if(destination == Destinations::MATNLP) {
             return DefaultVenues::MATN;
-          } else if(destination == DefaultDestinations::MATNMF) {
+          } else if(destination == Destinations::MATNMF) {
             return DefaultVenues::MATN;
-          } else if(destination == DefaultDestinations::NEOE) {
+          } else if(destination == Destinations::NEOE) {
             return DefaultVenues::NEOE;
-          } else if(destination == DefaultDestinations::OMEGA) {
+          } else if(destination == Destinations::OMEGA) {
             return DefaultVenues::OMGA;
-          } else if(destination == DefaultDestinations::PURE) {
+          } else if(destination == Destinations::PURE) {
             return DefaultVenues::PURE;
-          } else if(destination == DefaultDestinations::TSX) {
+          } else if(destination == Destinations::TSX) {
             return DefaultVenues::TSX;
           } else {
             return Venue();

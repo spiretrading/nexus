@@ -40,7 +40,7 @@ def execute_report(account, start_date, end_date, fee_table, service_clients):
   for order in orders:
     if order.info.fields.ticker.country != nexus.countries.CA:
       continue
-    if order.info.fields.destination == nexus.default_destinations.MOE:
+    if order.info.fields.destination == nexus.destinations.MOE:
       continue
     execution_reports = order.publisher.get_snapshot()
     for execution_report in execution_reports:

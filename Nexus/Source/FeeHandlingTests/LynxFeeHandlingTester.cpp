@@ -30,8 +30,7 @@ namespace {
 
   auto make_order_fields(Ticker ticker, Money price, Quantity quantity) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
-      std::move(ticker), CAD, Side::BID, DefaultDestinations::LYNX, quantity,
-      price);
+      std::move(ticker), CAD, Side::BID, Destinations::LYNX, quantity, price);
   }
 
   auto make_order_fields(Money price, Quantity quantity) {

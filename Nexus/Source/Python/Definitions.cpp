@@ -177,82 +177,6 @@ void Nexus::Python::export_currency_pair(module& module) {
   module.def("invert", overload_cast<CurrencyPair>(invert));
 }
 
-void Nexus::Python::export_default_destinations(module& module) {
-  module.attr("DEFAULT_DESTINATIONS") =
-    cast(DEFAULT_DESTINATIONS, return_value_policy::reference);
-  module.def("set_default_destinations", &set_default_destinations);
-  auto submodule = module.def_submodule("default_destinations");
-  submodule.add_object("MOE", cast(DefaultDestinations::MOE));
-  submodule.add_object("ASXT", cast(DefaultDestinations::ASXT));
-  submodule.add_object("CXA", cast(DefaultDestinations::CXA));
-  submodule.add_object("ALPHA", cast(DefaultDestinations::ALPHA));
-  submodule.add_object("CHIX", cast(DefaultDestinations::CHIX));
-  submodule.add_object("CSE", cast(DefaultDestinations::CSE));
-  submodule.add_object("CSE2", cast(DefaultDestinations::CSE2));
-  submodule.add_object("CX2", cast(DefaultDestinations::CX2));
-  submodule.add_object("LYNX", cast(DefaultDestinations::LYNX));
-  submodule.add_object("MATNLP", cast(DefaultDestinations::MATNLP));
-  submodule.add_object("MATNMF", cast(DefaultDestinations::MATNMF));
-  submodule.add_object("NEOE", cast(DefaultDestinations::NEOE));
-  submodule.add_object("OMEGA", cast(DefaultDestinations::OMEGA));
-  submodule.add_object("PURE", cast(DefaultDestinations::PURE));
-  submodule.add_object("TSX", cast(DefaultDestinations::TSX));
-}
-
-void Nexus::Python::export_default_venues(module& module) {
-  module.attr("DEFAULT_VENUES") =
-    cast(DEFAULT_VENUES, return_value_policy::reference);
-  module.def("set_default_venues", &set_default_venues);
-  auto submodule = module.def_submodule("default_venues");
-  submodule.add_object("ASX", cast(DefaultVenues::ASX));
-  submodule.add_object("CXA", cast(DefaultVenues::CXA));
-  submodule.add_object("CSE", cast(DefaultVenues::CSE));
-  submodule.add_object("CSE2", cast(DefaultVenues::CSE2));
-  submodule.add_object("CHIC", cast(DefaultVenues::CHIC));
-  submodule.add_object("CXD", cast(DefaultVenues::CXD));
-  submodule.add_object("LYNX", cast(DefaultVenues::LYNX));
-  submodule.add_object("MATN", cast(DefaultVenues::MATN));
-  submodule.add_object("NEOE", cast(DefaultVenues::NEOE));
-  submodule.add_object("OMGA", cast(DefaultVenues::OMGA));
-  submodule.add_object("PURE", cast(DefaultVenues::PURE));
-  submodule.add_object("TSX", cast(DefaultVenues::TSX));
-  submodule.add_object("TSXV", cast(DefaultVenues::TSXV));
-  submodule.add_object("XATS", cast(DefaultVenues::XATS));
-  submodule.add_object("XCX2", cast(DefaultVenues::XCX2));
-}
-
-void Nexus::Python::export_definitions(module& module) {
-  export_bbo_quote(module);
-  export_book_quote(module);
-  export_country(module);
-  export_countries(module);
-  export_currency(module);
-  export_currency_pair(module);
-  export_destination(module);
-  export_venue(module);
-  export_currencies(module);
-  export_default_destinations(module);
-  export_default_venues(module);
-  export_exchange_rate(module);
-  export_exchange_rate_table(module);
-  export_money(module);
-  export_order_imbalance(module);
-  export_order_status(module);
-  export_order_type(module);
-  export_quantity(module);
-  export_quote(module);
-  export_scope(module);
-  export_scope_map(module);
-  export_ticker(module);
-  export_ticker_info(module);
-  export_side(module);
-  export_tag(module);
-  export_fix_tags(module);
-  export_time_and_sale(module);
-  export_time_in_force(module);
-  export_trading_schedule(module);
-}
-
 void Nexus::Python::export_destination(module& module) {
   auto destination_database =
     class_<DestinationDatabase>(module, "DestinationDatabase").
@@ -296,6 +220,84 @@ void Nexus::Python::export_destination(module& module) {
       &parse_destination_database_entry));
   module.def("parse_destination_database", overload_cast<const YAML::Node&,
     const VenueDatabase&>(&parse_destination_database));
+}
+
+void Nexus::Python::export_destinations(module& module) {
+  module.attr("DESTINATIONS") =
+    cast(DESTINATIONS, return_value_policy::reference);
+  module.def("set_destinations", [] (const DestinationDatabase& database) {
+    set_destinations(database);
+  });
+  auto submodule = module.def_submodule("destinations");
+  submodule.add_object("MOE", cast(Destinations::MOE));
+  submodule.add_object("ASXT", cast(Destinations::ASXT));
+  submodule.add_object("CXA", cast(Destinations::CXA));
+  submodule.add_object("ALPHA", cast(Destinations::ALPHA));
+  submodule.add_object("CHIX", cast(Destinations::CHIX));
+  submodule.add_object("CSE", cast(Destinations::CSE));
+  submodule.add_object("CSE2", cast(Destinations::CSE2));
+  submodule.add_object("CX2", cast(Destinations::CX2));
+  submodule.add_object("LYNX", cast(Destinations::LYNX));
+  submodule.add_object("MATNLP", cast(Destinations::MATNLP));
+  submodule.add_object("MATNMF", cast(Destinations::MATNMF));
+  submodule.add_object("NEOE", cast(Destinations::NEOE));
+  submodule.add_object("OMEGA", cast(Destinations::OMEGA));
+  submodule.add_object("PURE", cast(Destinations::PURE));
+  submodule.add_object("TSX", cast(Destinations::TSX));
+}
+
+void Nexus::Python::export_default_venues(module& module) {
+  module.attr("DEFAULT_VENUES") =
+    cast(DEFAULT_VENUES, return_value_policy::reference);
+  module.def("set_default_venues", &set_default_venues);
+  auto submodule = module.def_submodule("default_venues");
+  submodule.add_object("ASX", cast(DefaultVenues::ASX));
+  submodule.add_object("CXA", cast(DefaultVenues::CXA));
+  submodule.add_object("CSE", cast(DefaultVenues::CSE));
+  submodule.add_object("CSE2", cast(DefaultVenues::CSE2));
+  submodule.add_object("CHIC", cast(DefaultVenues::CHIC));
+  submodule.add_object("CXD", cast(DefaultVenues::CXD));
+  submodule.add_object("LYNX", cast(DefaultVenues::LYNX));
+  submodule.add_object("MATN", cast(DefaultVenues::MATN));
+  submodule.add_object("NEOE", cast(DefaultVenues::NEOE));
+  submodule.add_object("OMGA", cast(DefaultVenues::OMGA));
+  submodule.add_object("PURE", cast(DefaultVenues::PURE));
+  submodule.add_object("TSX", cast(DefaultVenues::TSX));
+  submodule.add_object("TSXV", cast(DefaultVenues::TSXV));
+  submodule.add_object("XATS", cast(DefaultVenues::XATS));
+  submodule.add_object("XCX2", cast(DefaultVenues::XCX2));
+}
+
+void Nexus::Python::export_definitions(module& module) {
+  export_bbo_quote(module);
+  export_book_quote(module);
+  export_country(module);
+  export_countries(module);
+  export_currency(module);
+  export_currency_pair(module);
+  export_destination(module);
+  export_venue(module);
+  export_currencies(module);
+  export_destinations(module);
+  export_default_venues(module);
+  export_exchange_rate(module);
+  export_exchange_rate_table(module);
+  export_money(module);
+  export_order_imbalance(module);
+  export_order_status(module);
+  export_order_type(module);
+  export_quantity(module);
+  export_quote(module);
+  export_scope(module);
+  export_scope_map(module);
+  export_ticker(module);
+  export_ticker_info(module);
+  export_side(module);
+  export_tag(module);
+  export_fix_tags(module);
+  export_time_and_sale(module);
+  export_time_in_force(module);
+  export_trading_schedule(module);
 }
 
 void Nexus::Python::export_exchange_rate(module& module) {

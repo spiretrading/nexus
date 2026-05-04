@@ -16,7 +16,7 @@ namespace {
     auto ticker = parse_ticker("TST.TSX");
     auto currency = CAD;
     auto side = Side::BID;
-    auto destination = DefaultDestinations::TSX;
+    auto destination = Destinations::TSX;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     return make_limit_order_fields(

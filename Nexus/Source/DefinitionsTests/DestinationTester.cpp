@@ -121,18 +121,18 @@ TEST_SUITE("Destination") {
 
   TEST_CASE("shuttle") {
     test_round_trip_shuttle(
-      DEFAULT_DESTINATIONS, [] (const auto& destinations) {
-        auto expected_entries = DEFAULT_DESTINATIONS.get_entries();
+      DESTINATIONS, [] (const auto& destinations) {
+        auto expected_entries = DESTINATIONS.get_entries();
         auto entries = destinations.get_entries();
         REQUIRE(expected_entries.size() == entries.size());
         for(auto i = std::size_t(0); i != entries.size(); ++i) {
           REQUIRE(expected_entries[i] == entries[i]);
         }
         REQUIRE((destinations.get_manual_order_entry_destination() ==
-          DEFAULT_DESTINATIONS.get_manual_order_entry_destination()));
+          DESTINATIONS.get_manual_order_entry_destination()));
         for(auto& venue : DEFAULT_VENUES.get_entries()) {
           REQUIRE(destinations.get_preferred_destination(venue.m_venue) ==
-            DEFAULT_DESTINATIONS.get_preferred_destination(venue.m_venue));
+            DESTINATIONS.get_preferred_destination(venue.m_venue));
         }
       });
   }

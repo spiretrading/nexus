@@ -13,7 +13,7 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Countries;
 using namespace Nexus::Currencies;
-using namespace Nexus::DefaultDestinations;
+using namespace Nexus::Destinations;
 using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
@@ -99,7 +99,7 @@ TEST_SUITE("DefinitionsClient") {
 
   TEST_CASE("load_destination_database") {
     auto destinations = DestinationDatabase();
-    auto entry = DEFAULT_DESTINATIONS.from(CHIX);
+    auto entry = DESTINATIONS.from(CHIX);
     destinations.add(entry);
     require_operation<TestDefinitionsClient::LoadDestinationDatabaseOperation>(
       [] (auto& client) {

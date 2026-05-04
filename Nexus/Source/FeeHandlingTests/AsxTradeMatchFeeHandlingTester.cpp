@@ -13,8 +13,7 @@ using namespace Nexus::Tests;
 namespace {
   auto make_order_fields(Money price) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
-      parse_ticker("TST.ASX"), AUD, Side::BID, DefaultDestinations::ASXT, 100,
-      price);
+      parse_ticker("TST.ASX"), AUD, Side::BID, Destinations::ASXT, 100, price);
   }
 
   auto make_pegged_order_fields(Money price) {

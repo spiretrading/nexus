@@ -204,7 +204,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const DecimalNode& node) {
 void OpenEditorCanvasNodeVisitor::Visit(const DestinationNode& node) {
   auto editor = new QComboBox();
   auto venue = node.GetVenue();
-  auto destinations = DEFAULT_DESTINATIONS.select_all([=] (const auto& entry) {
+  auto destinations = DESTINATIONS.select_all([=] (const auto& entry) {
     if(!venue) {
       return true;
     }
@@ -212,9 +212,8 @@ void OpenEditorCanvasNodeVisitor::Visit(const DestinationNode& node) {
       entry.m_venues.end();
   });
   if(m_userProfile->IsAdministrator() &&
-      DEFAULT_DESTINATIONS.get_manual_order_entry_destination()) {
-    destinations.push_back(
-      *DEFAULT_DESTINATIONS.get_manual_order_entry_destination());
+      DESTINATIONS.get_manual_order_entry_destination()) {
+    destinations.push_back(*DESTINATIONS.get_manual_order_entry_destination());
   }
   for(auto i = destinations.begin(); i != destinations.end(); ++i) {
     editor->addItem(QString::fromStdString(i->m_id));

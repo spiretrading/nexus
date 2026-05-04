@@ -298,7 +298,6 @@ int main(int argc, char* argv[]) {
     serviceClients->get_definitions_client().load_time_zone_database(),
     serviceClients->get_definitions_client().load_exchange_rates(),
     serviceClients->get_definitions_client().load_venue_database(),
-    serviceClients->get_definitions_client().load_destination_database(),
     serviceClients->get_administration_client().load_entitlements(),
     std::move(web_portal_uri), *serviceClients);
   auto loginData = JsonObject();

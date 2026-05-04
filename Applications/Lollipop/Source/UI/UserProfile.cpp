@@ -20,7 +20,6 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
     bool isManager, const tz_database& timeZoneDatabase,
     const std::vector<ExchangeRate>& exchangeRates,
     const VenueDatabase& venueDatabase,
-    const DestinationDatabase& destinationDatabase,
     const EntitlementDatabase& entitlementDatabase, Uri web_portal_uri,
     Clients clients)
     : m_username(username),
@@ -28,7 +27,6 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
       m_isManager(isManager),
       m_timeZoneDatabase(timeZoneDatabase),
       m_venueDatabase(venueDatabase),
-      m_destinationDatabase(destinationDatabase),
       m_entitlementDatabase(entitlementDatabase),
       m_web_portal_uri(std::move(web_portal_uri)),
       m_clients(std::move(clients)),
@@ -67,10 +65,6 @@ const ExchangeRateTable& UserProfile::GetExchangeRates() const {
 
 const VenueDatabase& UserProfile::GetVenueDatabase() const {
   return m_venueDatabase;
-}
-
-const DestinationDatabase& UserProfile::GetDestinationDatabase() const {
-  return m_destinationDatabase;
 }
 
 const EntitlementDatabase& UserProfile::GetEntitlementDatabase() const {

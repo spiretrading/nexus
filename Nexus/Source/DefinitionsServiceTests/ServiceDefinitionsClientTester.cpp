@@ -14,7 +14,7 @@ using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Countries;
 using namespace Nexus::Currencies;
-using namespace Nexus::DefaultDestinations;
+using namespace Nexus::Destinations;
 using namespace Nexus::DefaultVenues;
 
 namespace {
@@ -80,11 +80,11 @@ TEST_SUITE("ServiceDefinitionsClient") {
   TEST_CASE("load_destination_database") {
     auto fixture = Fixture();
     fixture.on_request<LoadDestinationDatabaseService>([&] (auto& request) {
-      request.set(DEFAULT_DESTINATIONS);
+      request.set(DESTINATIONS);
     });
     auto entries =
       fixture.m_client->load_destination_database().get_entries();
-    auto expected_entries = DEFAULT_DESTINATIONS.get_entries();
+    auto expected_entries = DESTINATIONS.get_entries();
     REQUIRE(entries.size() == expected_entries.size());
     for(auto& entry : entries) {
       REQUIRE(

@@ -1,5 +1,4 @@
 #include "Spire/Ui/DestinationBox.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/FilteredListModel.hpp"
@@ -59,8 +58,7 @@ namespace {
 std::shared_ptr<ListModel<DestinationDatabase::Entry>>
     Spire::make_scope_filtered_destination_list(
       std::shared_ptr<ScopeModel> scope) {
-  auto selection =
-    DEFAULT_DESTINATIONS.select_all([] (const auto&) { return true; });
+  auto selection = DESTINATIONS.select_all([] (const auto&) { return true; });
   auto full_list =
     std::make_shared<ArrayListModel<DestinationDatabase::Entry>>(selection);
   return std::make_shared<ScopeFilteredList>(

@@ -178,7 +178,7 @@ QVariant PortfolioSelectionModel::data(const QModelIndex& index,
         return Qt::Unchecked;
       }
     } else if(index == m_roots[CURRENCY_SELECTION]) {
-      const CurrencyDatabase& currencies = CURRENCIES;
+      auto& currencies = CURRENCIES;
       if(m_selectedCurrencies.size() == currencies.get_entries().size()) {
         return Qt::Checked;
       } else {
@@ -371,7 +371,7 @@ boost::optional<PortfolioSelectionModel::SelectionVariant>
       return SelectionVariant{m_groups[index.row()]};
     }
   } else if(index.parent() == m_roots[CURRENCY_SELECTION]) {
-    const CurrencyDatabase& currencies = CURRENCIES;
+    auto& currencies = CURRENCIES;
     if(index.column() == 0 && index.row() >= 0 && index.row() <
         static_cast<int>(currencies.get_entries().size())) {
       return SelectionVariant{currencies.get_entries()[index.row()]};

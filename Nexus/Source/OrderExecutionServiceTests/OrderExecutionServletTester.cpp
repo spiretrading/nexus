@@ -16,7 +16,7 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultDestinations;
+using namespace Nexus::Destinations;
 using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
 
@@ -62,9 +62,9 @@ namespace {
           Ref(*m_servlet_service_locator_client)));
       m_container.emplace(init(
         *m_servlet_service_locator_client, init(pos_infin, DEFAULT_VENUES,
-          DEFAULT_DESTINATIONS, &m_time_client,
-          *m_servlet_service_locator_client, m_uid_environment.make_client(),
-          *m_servlet_administration_client, &m_driver, &m_data_store)),
+          &m_time_client, *m_servlet_service_locator_client,
+          m_uid_environment.make_client(), *m_servlet_administration_client,
+          &m_driver, &m_data_store)),
         m_server_connection, factory<std::unique_ptr<TriggerTimer>>());
     }
   };

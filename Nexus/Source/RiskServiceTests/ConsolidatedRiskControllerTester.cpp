@@ -76,8 +76,7 @@ TEST_SUITE("ConsolidatedRiskController") {
       fixture.m_accounts_queue, &*fixture.m_administration_client,
       &*fixture.m_market_data_client,
       &*fixture.m_service_order_execution_client, timer_factory,
-      &fixture.m_time_client, &fixture.m_data_store, fixture.m_exchange_rates,
-      DEFAULT_DESTINATIONS);
+      &fixture.m_time_client, &fixture.m_data_store, fixture.m_exchange_rates);
     auto state_updates = std::make_shared<Queue<RiskStateEntry>>();
     consolidated_controller.get_risk_state_publisher().monitor(state_updates);
     auto account1 = fixture.m_service_locator_environment.get_root().

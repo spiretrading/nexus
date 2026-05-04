@@ -47,10 +47,16 @@ namespace Nexus::Python {
   void export_currency_pair(pybind11::module& module);
 
   /**
-   * Exports the DefaultDestinations namespace.
+   * Exports the DestinationDatabase class.
    * @param module The module to export to.
    */
-  void export_default_destinations(pybind11::module& module);
+  void export_destination(pybind11::module& module);
+
+  /**
+   * Exports the Destinations namespace.
+   * @param module The module to export to.
+   */
+  void export_destinations(pybind11::module& module);
 
   /**
    * Exports the DefaultVenues namespace.
@@ -63,12 +69,6 @@ namespace Nexus::Python {
    * @param module The module to export to.
    */
   void export_definitions(pybind11::module& module);
-
-  /**
-   * Exports the DestinationDatabase class.
-   * @param module The module to export to.
-   */
-  void export_destination(pybind11::module& module);
 
   /**
    * Exports the ExchangeRate class.

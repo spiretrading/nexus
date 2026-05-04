@@ -15,7 +15,7 @@ namespace {
 
   auto make_order_fields(Money price) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT, TST, CAD,
-      Side::BID, DefaultDestinations::CHIX, 100, price);
+      Side::BID, Destinations::CHIX, 100, price);
   }
 }
 

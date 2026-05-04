@@ -26,7 +26,7 @@ TEST_SUITE("RiskTransitionModel") {
     auto operations = std::make_shared<TestOrderExecutionClient::Queue>();
     auto client = TestOrderExecutionClient(operations);
     auto model = RiskTransitionModel(
-      ACCOUNT, {}, RiskState::Type::ACTIVE, &client, DEFAULT_DESTINATIONS);
+      ACCOUNT, {}, RiskState::Type::ACTIVE, &client);
     auto bid_order = std::make_shared<PrimitiveOrder>(
       OrderInfo(make_limit_order_fields(S32, AUD, Side::BID, 100, Money::ONE),
         112, time_from_string("2020-11-17 12:22:06")));
@@ -73,7 +73,7 @@ TEST_SUITE("RiskTransitionModel") {
     auto operations = std::make_shared<TestOrderExecutionClient::Queue>();
     auto client = TestOrderExecutionClient(operations);
     auto model = RiskTransitionModel(
-      ACCOUNT, {}, RiskState::Type::ACTIVE, &client, DEFAULT_DESTINATIONS);
+      ACCOUNT, {}, RiskState::Type::ACTIVE, &client);
     auto bid_order = std::make_shared<PrimitiveOrder>(
       OrderInfo(make_limit_order_fields(S32, AUD, Side::BID, 100, Money::ONE),
         112, time_from_string("2020-11-17 12:22:06")));
@@ -158,8 +158,8 @@ TEST_SUITE("RiskTransitionModel") {
       Money::ONE, Money::ZERO, 300, 1));
     auto operations = std::make_shared<TestOrderExecutionClient::Queue>();
     auto client = TestOrderExecutionClient(operations);
-    auto model = RiskTransitionModel(ACCOUNT, inventory,
-      RiskState::Type::ACTIVE, &client, DEFAULT_DESTINATIONS);
+    auto model = RiskTransitionModel(
+      ACCOUNT, inventory, RiskState::Type::ACTIVE, &client);
     auto bid_order = std::make_shared<PrimitiveOrder>(
       OrderInfo(make_limit_order_fields(XIU, CAD, Side::BID, 300, Money::ONE),
         113, time_from_string("2020-11-17 12:22:06")));

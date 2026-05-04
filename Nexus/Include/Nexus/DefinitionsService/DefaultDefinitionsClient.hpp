@@ -45,7 +45,7 @@ namespace Nexus {
 
   inline DestinationDatabase
       DefaultDefinitionsClient::load_destination_database() {
-    return DEFAULT_DESTINATIONS;
+    return DESTINATIONS;
   }
 
   inline VenueDatabase DefaultDefinitionsClient::load_venue_database() {

@@ -10,7 +10,6 @@
 #include <QScreen>
 #include <QSpinBox>
 #include <QStringBuilder>
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Spire/KeyBindings/OrderFieldInfoTip.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayTableModel.hpp"
@@ -1929,8 +1928,7 @@ UiProfile Spire::make_destination_box_profile() {
   properties.push_back(make_standard_property<QString>("current", "TSX"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("DestinationBox", properties, [] (auto& profile) {
-    auto selection =
-      DEFAULT_DESTINATIONS.select_all([] (auto& value) { return true; });
+    auto selection = DESTINATIONS.select_all([] (auto& value) { return true; });
     auto destinations =
       std::make_shared<ArrayListModel<DestinationDatabase::Entry>>();
     for(auto& destination : selection) {
@@ -1971,8 +1969,7 @@ UiProfile Spire::make_destination_list_item_profile() {
   populate_widget_properties(properties);
   auto profile = UiProfile("DestinationListItem", properties,
     [] (auto& profile) {
-      auto item = new DestinationListItem(
-        DEFAULT_DESTINATIONS.from(DefaultDestinations::TSX));
+      auto item = new DestinationListItem(DESTINATIONS.from(Destinations::TSX));
       apply_widget_properties(item, profile.get_properties());
       return item;
     });

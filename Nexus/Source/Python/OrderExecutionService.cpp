@@ -243,8 +243,8 @@ void Nexus::Python::export_order_execution_service_test_environment(
       ServiceLocatorClient&, UidClient&, AdministrationClient&>),
       keep_alive<1, 2>(), keep_alive<1, 3>(), keep_alive<1, 4>()).
     def(init(&make_python_shared<OrderExecutionServiceTestEnvironment,
-      const VenueDatabase&, const DestinationDatabase&, ServiceLocatorClient&,
-      UidClient&, AdministrationClient&>), keep_alive<1, 4>(), keep_alive<1, 5>(),
+      const VenueDatabase&, ServiceLocatorClient&, UidClient&,
+      AdministrationClient&>), keep_alive<1, 4>(), keep_alive<1, 5>(),
       keep_alive<1, 6>()).
     def_property_readonly("data_store",
       overload_cast<>(&OrderExecutionServiceTestEnvironment::get_data_store),

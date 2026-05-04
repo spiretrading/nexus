@@ -26,7 +26,7 @@ namespace {
 
   auto make_order_fields(Ticker ticker, Money price) {
     auto fields = make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
-      std::move(ticker), CAD, Side::BID, DefaultDestinations::CX2, 100, price);
+      std::move(ticker), CAD, Side::BID, Destinations::CX2, 100, price);
     return fields;
   }
 

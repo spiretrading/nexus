@@ -26,8 +26,8 @@ namespace {
   auto make_order_fields(
       std::string symbol, Money price, Quantity quantity, Venue venue) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
-      Ticker(symbol, venue), CAD, Side::BID, DefaultDestinations::CSE2,
-      quantity, price);
+      Ticker(symbol, venue), CAD, Side::BID, Destinations::CSE2, quantity,
+      price);
   }
 
   auto make_order_fields(std::string symbol, Money price, Venue venue) {

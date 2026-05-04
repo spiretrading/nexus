@@ -25,12 +25,12 @@ namespace {
 TEST_SUITE("OrderTaskArguments") {
   TEST_CASE("find_exact_ticker_argument_match") {
     auto arguments = ArrayListModel<OrderTaskArguments>();
-    arguments.push({"Test1", ABX(), DefaultDestinations::TSX,
-      OrderType::LIMIT, Side::BID, QuantitySetting::ADJUSTABLE,
-      TimeInForce::Type::DAY, {}, Qt::Key_F2});
-    arguments.push({"Test2", TD(), DefaultDestinations::CHIX,
-      OrderType::MARKET, Side::ASK, QuantitySetting::ADJUSTABLE,
-      TimeInForce::Type::DAY, {}, Qt::Key_F3});
+    arguments.push({"Test1", ABX(), Destinations::TSX, OrderType::LIMIT,
+      Side::BID, QuantitySetting::ADJUSTABLE, TimeInForce::Type::DAY, {},
+      Qt::Key_F2});
+    arguments.push({"Test2", TD(), Destinations::CHIX, OrderType::MARKET,
+      Side::ASK, QuantitySetting::ADJUSTABLE, TimeInForce::Type::DAY, {},
+      Qt::Key_F3});
     auto match_test_1 = find_order_task_arguments(arguments, ABX(), Qt::Key_F2);
     REQUIRE(match_test_1.is_initialized());
     REQUIRE(match_test_1->m_key == Qt::Key_F2);
@@ -50,26 +50,26 @@ TEST_SUITE("OrderTaskArguments") {
 
   TEST_CASE("find_venue_scope_argument_match") {
     auto arguments = ArrayListModel<OrderTaskArguments>();
-    arguments.push({"Test1", TSX(), DefaultDestinations::TSX,
-      OrderType::LIMIT, Side::BID, QuantitySetting::ADJUSTABLE,
-      TimeInForce::Type::DAY, {}, Qt::Key_F2});
-    arguments.push({"Test2", TD(), DefaultDestinations::CHIX,
-      OrderType::MARKET, Side::ASK, QuantitySetting::ADJUSTABLE,
-      TimeInForce::Type::DAY, {}, Qt::Key_F2});
+    arguments.push({"Test1", TSX(), Destinations::TSX, OrderType::LIMIT,
+      Side::BID, QuantitySetting::ADJUSTABLE, TimeInForce::Type::DAY, {},
+      Qt::Key_F2});
+    arguments.push({"Test2", TD(), Destinations::CHIX, OrderType::MARKET,
+      Side::ASK, QuantitySetting::ADJUSTABLE, TimeInForce::Type::DAY, {},
+      Qt::Key_F2});
     auto match_test_1_ticker =
       find_order_task_arguments(arguments, ABX(), Qt::Key_F2);
     REQUIRE(match_test_1_ticker.is_initialized());
     REQUIRE(match_test_1_ticker->m_key == Qt::Key_F2);
-    REQUIRE(match_test_1_ticker->m_destination == DefaultDestinations::TSX);
+    REQUIRE(match_test_1_ticker->m_destination == Destinations::TSX);
     auto match_test_1_venue =
       find_order_task_arguments(arguments, TSX(), Qt::Key_F2);
     REQUIRE(match_test_1_venue.is_initialized());
     REQUIRE(match_test_1_venue->m_key == Qt::Key_F2);
-    REQUIRE(match_test_1_venue->m_destination == DefaultDestinations::TSX);
+    REQUIRE(match_test_1_venue->m_destination == Destinations::TSX);
     auto match_test_2_ticker =
       find_order_task_arguments(arguments, TD(), Qt::Key_F2);
     REQUIRE(match_test_2_ticker.is_initialized());
     REQUIRE(match_test_2_ticker->m_key == Qt::Key_F2);
-    REQUIRE(match_test_2_ticker->m_destination == DefaultDestinations::CHIX);
+    REQUIRE(match_test_2_ticker->m_destination == Destinations::CHIX);
   }
 }

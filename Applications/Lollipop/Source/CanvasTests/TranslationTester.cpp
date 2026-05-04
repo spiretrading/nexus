@@ -1,5 +1,4 @@
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
 #include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Spire/Canvas/ControlNodes/ChainNode.hpp"
@@ -29,9 +28,8 @@ namespace {
 
     Environment()
       : m_clients(std::in_place_type<TestClients>, Ref(m_environment)),
-        m_userProfile("", false, false, get_default_time_zone_database(),
-          {}, DEFAULT_VENUES, DEFAULT_DESTINATIONS, EntitlementDatabase(), {},
-          m_clients) {}
+        m_userProfile("", false, false, get_default_time_zone_database(), {},
+          DEFAULT_VENUES, EntitlementDatabase(), {}, m_clients) {}
   };
 
   const auto TEST_TICKER = parse_ticker("TST.TSX");

@@ -426,6 +426,6 @@ namespace Beam {
   };
 }
 
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
+#include "Nexus/Definitions/StandardDestinations.hpp"
 
 #endif

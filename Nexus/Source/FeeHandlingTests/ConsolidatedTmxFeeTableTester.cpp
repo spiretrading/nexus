@@ -18,7 +18,7 @@ namespace {
 
   auto make_order_fields(Ticker ticker, Money price, Quantity quantity = 100) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT, ticker, CAD,
-      Side::BID, DefaultDestinations::TSX, quantity, price);
+      Side::BID, Destinations::TSX, quantity, price);
   }
 
   auto make_order(Ticker ticker, Money price, Quantity quantity = 100) {
