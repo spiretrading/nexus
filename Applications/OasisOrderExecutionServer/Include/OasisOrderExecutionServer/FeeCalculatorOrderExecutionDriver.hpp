@@ -183,7 +183,7 @@ namespace Nexus {
     auto venue = order->get_info().m_fields.m_ticker.get_venue();
     if(venue == Venues::ASX || venue == Venues::CXA) {
       handle_australian_market_fees(*order, report);
-    } else if(venue == DefaultVenues::OTCM) {
+    } else if(venue == Venues::OTCM) {
       handle_us_market_fees(*order, report);
     } else {
       handle_canadian_market_fees(*order, report);

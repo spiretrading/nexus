@@ -70,14 +70,14 @@ namespace Nexus {
           return Venue(report.m_last_market);
         } else {
           auto& destination = order.get_info().m_fields.m_destination;
-          if(destination == DefaultDestinations::OTCM) {
-            return DefaultVenues::OTCM;
+          if(destination == Destinations::OTCM) {
+            return Venues::OTCM;
           } else {
             return Venue();
           }
         }
       }();
-      if(last_market == DefaultVenues::OTCM) {
+      if(last_market == Venues::OTCM) {
         return calculate_fee(
           table.m_otcm_fee_table, order.get_info().m_fields, report);
       } else {
