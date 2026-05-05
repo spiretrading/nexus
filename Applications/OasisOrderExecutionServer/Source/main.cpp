@@ -193,12 +193,10 @@ int main(int argc, const char** argv) {
     }
     auto data_store = make_replicated_sql_order_execution_data_store(
       connection_builders, account_source);
-    auto server = OrderExecutionServletContainer(init(
-      &service_locator_client, init(session_start_time, venues, destinations,
-        time_client.get(), &service_locator_client, &uid_client,
-        &administration_client, &manual_order_execution_driver,
-        data_store.get())),
-      init(service_config.m_interface),
+    auto server = OrderExecutionServletContainer(init(&service_locator_client,
+      init(session_start_time, time_client.get(), &service_locator_client,
+        &uid_client, &administration_client, &manual_order_execution_driver,
+        data_store.get())), init(service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     add(service_locator_client, service_config);
     wait_for_kill_event();
