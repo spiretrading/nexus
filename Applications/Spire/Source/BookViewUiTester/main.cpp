@@ -5,9 +5,6 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QRandomGenerator>
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
@@ -123,7 +120,7 @@ std::shared_ptr<TickerInfoQueryModel> populate_ticker_query_model() {
 BookQuote make_random_venue_quote(Side side) {
   auto random_generator =
     QRandomGenerator(to_time_t_milliseconds(microsec_clock::universal_time()));
-  auto venues = DEFAULT_VENUES.get_entries();
+  auto venues = VENUES.get_entries();
   auto venue_index = random_generator.bounded(
     static_cast<int>(venues.size()));
   auto venue_code = venues[venue_index].m_venue;
@@ -593,19 +590,10 @@ int main(int argc, char** argv) {
     std::bind_front(&BookViewTester::on_cancel_order, &tester));
   book_view_window.installEventFilter(&tester);
   book_view_window.show();
-  auto book_view_window1 = BookViewWindow(Ref(tester.m_user_profile),
-    populate_ticker_query_model(), key_bindings, factory,
-    [] (const Ticker&) {
-      return make_local_aggregate_book_view_model();
-    });
-  book_view_window1.installEventFilter(&tester);
-  book_view_window1.show();
   const auto WINDOW_GAP = scale_width(10);
   auto y = book_view_window.y();
   book_view_window.move(book_view_window.x() - scale_width(500), y);
-  book_view_window1.move(
-    book_view_window.frameGeometry().right() + WINDOW_GAP, y);
-  tester.move(book_view_window1.frameGeometry().right() + WINDOW_GAP, y);
+  tester.move(book_view_window.frameGeometry().right() + WINDOW_GAP, y);
   order_tester.move(tester.frameGeometry().right() + WINDOW_GAP, y);
   tester.show();
   order_tester.show();

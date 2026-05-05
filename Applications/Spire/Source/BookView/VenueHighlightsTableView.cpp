@@ -110,10 +110,10 @@ namespace {
       std::shared_ptr<ListModel<Venue>> available_venues,
       QWidget* parent = nullptr) {
     auto settings = VenueBox::Settings([=] (const auto& venue) {
-      return QString::fromStdString(DEFAULT_VENUES.from(venue).m_display_name);
+      return QString::fromStdString(VENUES.from(venue).m_display_name);
     },
     [=] (const auto& venue) {
-      auto& entry = DEFAULT_VENUES.from(venue);
+      auto& entry = VENUES.from(venue);
       auto destination_entry = DestinationDatabase::Entry();
       destination_entry.m_id = entry.m_display_name;
       destination_entry.m_description = entry.m_description;
@@ -148,7 +148,7 @@ namespace {
     ExpandableTableModel(std::shared_ptr<VenueHighlightListToTableModel> source)
         : m_source(std::move(source)),
           m_venue_list(std::make_shared<ArrayListModel<Venue>>()) {
-      for(auto& venue : DEFAULT_VENUES.get_entries()) {
+      for(auto& venue : VENUES.get_entries()) {
         m_venue_list->push(venue.m_venue);
       }
       for(auto i = 0; i < get_row_size(); ++i) {
@@ -227,8 +227,8 @@ namespace {
       auto available_venues = std::make_shared<SortedListModel<Venue>>(
         std::make_shared<ArrayListModel<Venue>>(),
         [=] (auto left, auto right) {
-          return DEFAULT_VENUES.from(left).m_display_name <
-            DEFAULT_VENUES.from(right).m_display_name;
+          return VENUES.from(left).m_display_name <
+            VENUES.from(right).m_display_name;
         });
       for(auto i = 0; i < m_venue_list->get_size(); ++i) {
         available_venues->push(m_venue_list->get(i));
@@ -474,8 +474,8 @@ TableView* Spire::make_venue_highlights_table_view(
     if(left_row == table->get_row_size() - 1) {
       return false;
     }
-    return DEFAULT_VENUES.from(any_cast<Venue>(left)).m_display_name <
-      DEFAULT_VENUES.from(any_cast<Venue>(right)).m_display_name;
+    return VENUES.from(any_cast<Venue>(left)).m_display_name <
+      VENUES.from(any_cast<Venue>(right)).m_display_name;
   });
   auto table_view = table_builder.make();
   table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
