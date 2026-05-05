@@ -166,7 +166,7 @@ namespace Nexus {
       return;
     }
     auto venue = order->get_info().m_fields.m_ticker.get_venue();
-    if(venue == DefaultVenues::ASX || venue == DefaultVenues::CXA) {
+    if(venue == Venues::ASX || venue == Venues::CXA) {
       handle_australian_market_fees(*order, report);
     } else {
       handle_canadian_market_fees(*order, report);

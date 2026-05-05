@@ -215,7 +215,7 @@ namespace Nexus {
     if(!ask_volume) {
       return;
     }
-    auto ticker = Ticker(std::move(*symbol), DefaultVenues::NEOE);
+    auto ticker = Ticker(std::move(*symbol), Venues::NEOE);
     auto bid = make_bid(*bid_price, *bid_volume);
     auto ask = make_ask(*ask_price, *ask_volume);
     auto bbo = BboQuote(bid, ask, m_time_client->get_time());
@@ -257,7 +257,7 @@ namespace Nexus {
       get_mpid(message.get_business_field<std::string>(70, 0).value_or(""));
     auto seller_mpid =
       get_mpid(message.get_business_field<std::string>(70, 1).value_or(""));
-    auto ticker = Ticker(std::move(*symbol), DefaultVenues::NEOE);
+    auto ticker = Ticker(std::move(*symbol), Venues::NEOE);
     auto condition = TimeAndSale::Condition();
     condition.m_code = "@";
     auto time_and_sale = TimeAndSale(*timestamp, *price, *volume,
@@ -319,10 +319,10 @@ namespace Nexus {
     }
     auto broker_number = message.get_business_field<std::string>(70);
     auto order_id = get_order_id(symbol, broker_number, *order_number);
-    auto ticker = Ticker(std::move(*symbol), DefaultVenues::NEOE);
+    auto ticker = Ticker(std::move(*symbol), Venues::NEOE);
     *quantity = get_board_lot_portion(*quantity, *price);
-    m_feed_client->add_order(ticker, DefaultVenues::NEOE, mpid, false, order_id,
-      *side, *price, *quantity, *timestamp);
+    m_feed_client->add_order(ticker, Venues::NEOE, mpid, false, order_id, *side,
+      *price, *quantity, *timestamp);
   }
 
   template<typename M, typename S, typename T>
