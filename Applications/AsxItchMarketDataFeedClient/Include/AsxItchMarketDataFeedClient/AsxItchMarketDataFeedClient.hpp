@@ -633,7 +633,7 @@ namespace Nexus {
       directory.m_product_type = ProductType::EQUITY;
     }
     directory.m_currency =
-      DEFAULT_CURRENCIES.from(parse_alpha(3, Beam::out(cursor))).m_id;
+      CURRENCIES.from(parse_alpha(3, Beam::out(cursor))).m_id;
     directory.m_price_decimal_places = parse_int16(Beam::out(cursor));
     directory.m_value_decimal_places = parse_int16(Beam::out(cursor));
     directory.m_odd_lot_size = parse_int32(Beam::out(cursor));

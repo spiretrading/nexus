@@ -227,7 +227,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     if(!ask_volume) {
       return;
     }
-    if(m_config.m_venue == DefaultVenues::CSE) {
+    if(m_config.m_venue == Venues::CSE) {
       auto bid_exchange_id = message.get_business_field<std::string>(247, 0);
       if(!bid_exchange_id || *bid_exchange_id != "CNQ") {
         return;
@@ -371,8 +371,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     }
     auto broker_number = message.get_business_field<std::string>(70);
     auto order_id = get_order_id(symbol, broker_number, *order_number);
-    if(m_config.m_venue == DefaultVenues::OMGA ||
-        m_config.m_venue == DefaultVenues::LYNX) {
+    if(m_config.m_venue == Venues::OMGA || m_config.m_venue == Venues::LYNX) {
       if(auto modification_id = message.get_business_field<std::string>(11)) {
         auto previous_id =
           get_order_id(symbol, broker_number, *modification_id);
@@ -587,15 +586,15 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     }
     auto venue = [&] {
       if(*listing_market == "T") {
-        return DefaultVenues::TSX;
+        return Venues::TSX;
       } else if(*listing_market == "V") {
-        return DefaultVenues::TSXV;
+        return Venues::TSXV;
       } else if(*listing_market == "N") {
-        return DefaultVenues::CSE;
+        return Venues::CSE;
       } else if(*listing_market == "O") {
-        return DefaultVenues::OMGA;
+        return Venues::OMGA;
       } else if(*listing_market == "E") {
-        return DefaultVenues::NEOE;
+        return Venues::NEOE;
       }
       return Venue();
     }();

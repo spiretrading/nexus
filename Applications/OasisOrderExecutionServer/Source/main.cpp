@@ -105,12 +105,10 @@ namespace {
       load_order_submission_checks(
         ApplicationMarketDataClient& market_data_client,
         ApplicationAdministrationClient& administration_client,
-        const VenueDatabase& venues, const tz_database& time_zones,
         const ExchangeRateTable& exchange_rates) {
     return try_or_nest([&] {
       auto checks = std::vector<std::unique_ptr<OrderSubmissionCheck>>();
-      checks.emplace_back(
-        make_board_lot_check(&market_data_client, venues, time_zones));
+      checks.emplace_back(make_board_lot_check(&market_data_client));
       checks.emplace_back(std::make_unique<
         BuyingPowerCheck<ApplicationAdministrationClient*,
           ApplicationMarketDataClient*>>(exchange_rates,
@@ -154,12 +152,9 @@ int main(int argc, const char** argv) {
       return parse_asx_trade_match_fee_table(
         get_node(fee_table_config, "au_equities"));
     }, std::runtime_error("Failed to parse section 'au_equities'."));
-    auto venues = definitions_client.load_venue_database();
-    auto time_zones = definitions_client.load_time_zone_database();
-    auto destinations = definitions_client.load_destination_database();
     auto tmx_fee_table = try_or_nest([&] {
       return parse_consolidated_tmx_fee_table(
-        get_node(fee_table_config, "ca_equities"), venues);
+        get_node(fee_table_config, "ca_equities"));
     }, std::runtime_error("Failed to parse section 'ca_equities'."));
     auto us_fee_table = try_or_nest([&] {
       return parse_us_fee_table(get_node(fee_table_config, "us_equities"));
@@ -170,7 +165,7 @@ int main(int argc, const char** argv) {
     auto exchange_rates =
       ExchangeRateTable(definitions_client.load_exchange_rates());
     auto checks = load_order_submission_checks(market_data_client,
-      administration_client, venues, time_zones, exchange_rates);
+      administration_client, exchange_rates);
     auto order_submission_check_driver = ApplicationOrderSubmissionCheckDriver(
       &fees_calculator, std::move(checks));
     auto compliance_rule_set = ComplianceRuleSet(&compliance_client,
@@ -204,12 +199,10 @@ int main(int argc, const char** argv) {
     }
     auto data_store = make_replicated_sql_order_execution_data_store(
       connection_builders, account_source);
-    auto server = OrderExecutionServletContainer(init(
-      &service_locator_client, init(session_start_time, venues, destinations,
-        time_client.get(), &service_locator_client, &uid_client,
-        &administration_client, &manual_order_execution_driver,
-        data_store.get())),
-      init(service_config.m_interface),
+    auto server = OrderExecutionServletContainer(init(&service_locator_client,
+      init(session_start_time, time_client.get(), &service_locator_client,
+        &uid_client, &administration_client, &manual_order_execution_driver,
+        data_store.get())), init(service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     add(service_locator_client, service_config);
     wait_for_kill_event();
