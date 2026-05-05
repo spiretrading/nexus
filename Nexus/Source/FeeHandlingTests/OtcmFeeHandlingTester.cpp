@@ -6,9 +6,9 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Currencies;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   const auto TIMESTAMP = time_from_string("2025-02-11 12:00:00");
@@ -31,7 +31,7 @@ namespace {
 
   auto make_order_fields(Money price, Quantity quantity) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
-      Ticker("TST", OTCM), USD, Side::BID, DefaultDestinations::OTCM,
+      parse_ticker("TST.OTCM"), USD, Side::BID, Destinations::OTCM,
       quantity, price);
   }
 

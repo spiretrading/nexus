@@ -5,6 +5,7 @@
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
+#include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkMarketDataFeedClient.hpp"
 #include "Version.hpp"
@@ -36,7 +37,7 @@ namespace {
       auto otc_link_config = OtcLinkConfiguration();
       otc_link_config.m_is_logging_messages =
         extract<bool>(config, "enable_logging", false);
-      otc_link_config.m_venue = DEFAULT_VENUES.from_display_name(
+      otc_link_config.m_venue = VENUES.from_display_name(
         extract<std::string>(config, "venue")).m_venue;
       auto snapshot_type = extract<std::string>(config, "snapshot_type");
       if(snapshot_type == "bbo") {
@@ -107,9 +108,12 @@ int main(int argc, const char** argv) {
       "\nCopyright (C) 2026 Spire Trading Inc.");
     auto service_locator_client = ApplicationServiceLocatorClient(
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
+    auto definitions_client =
+      ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
     auto sampling_time = extract<time_duration>(config, "sampling");
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
-      Ref(service_locator_client), sampling_time, DefaultCountries::US);
+      Ref(service_locator_client), sampling_time, Countries::US);
     auto multicast_socket_channel = make_multicast_channel(config);
     auto feed_channel = ApplicationFeedChannel(
       &multicast_socket_channel, &multicast_socket_channel.get_reader());

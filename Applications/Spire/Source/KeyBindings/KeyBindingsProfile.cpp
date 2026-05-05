@@ -741,27 +741,26 @@ std::vector<std::unique_ptr<CanvasNode>> Spire::make_tsx_order_task_nodes() {
 
 std::vector<std::unique_ptr<CanvasNode>> Spire::make_otcm_order_task_nodes() {
   auto order_types = std::vector<std::unique_ptr<CanvasNode>>();
-  populate_basic_order_task_nodes(
-    DefaultDestinations::OTCM, "OTCM", order_types);
+  populate_basic_order_task_nodes(Destinations::OTCM, "OTCM", order_types);
   auto primary_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(false)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("R"))->AddField(
       "peg_difference", 211, std::make_unique<MoneyNode>(Money::ZERO)));
   primary_peg.SetReadOnly("exec_inst", true);
   primary_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(primary_peg, "OTCM Primary Peg", DefaultDestinations::OTCM,
+  populate_bid_ask(primary_peg, "OTCM Primary Peg", Destinations::OTCM,
     TimeInForce::Type::DAY, order_types);
   auto mid_peg = CanvasNodeBuilder(*GetPeggedOrderTaskNode(true)->AddField(
     "exec_inst", 18, std::make_unique<TextNode>("M")));
   mid_peg.SetReadOnly("exec_inst", true);
   mid_peg.SetVisible("exec_inst", false);
-  populate_bid_ask(mid_peg, "OTCM Mid Peg", DefaultDestinations::OTCM,
+  populate_bid_ask(mid_peg, "OTCM Mid Peg", Destinations::OTCM,
     TimeInForce::Type::DAY, order_types);
   auto limit_on_close = CanvasNodeBuilder(*GetLimitOrderTaskNode());
-  populate_bid_ask(limit_on_close, "OTCM Limit On Close",
-    DefaultDestinations::OTCM, TimeInForce::Type::MOC, order_types);
+  populate_bid_ask(limit_on_close, "OTCM Limit On Close", Destinations::OTCM,
+    TimeInForce::Type::MOC, order_types);
   auto market_on_close = CanvasNodeBuilder(*GetMarketOrderTaskNode());
-  populate_bid_ask(limit_on_close, "OTCM Market On Close",
-    DefaultDestinations::OTCM, TimeInForce::Type::MOC, order_types);
+  populate_bid_ask(limit_on_close, "OTCM Market On Close", Destinations::OTCM,
+    TimeInForce::Type::MOC, order_types);
   return order_types;
 }
 
