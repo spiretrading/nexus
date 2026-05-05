@@ -45,8 +45,8 @@ export class CountryDatabase {
   /** Parses a database from a JSON object. */
   public static fromJson(value: any): CountryDatabase {
     const database = new CountryDatabase();
-    database._entries = Beam.arrayFromJson(CountryDatabase.Entry,
-      value.entries);
+    database._entries =
+      Beam.arrayFromJson(CountryDatabase.Entry, value.entries);
     return database;
   }
 
