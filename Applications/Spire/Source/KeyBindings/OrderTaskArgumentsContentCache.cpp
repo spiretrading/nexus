@@ -40,9 +40,10 @@ const std::vector<QString>& OrderTaskArgumentsContentCache::get(int index) {
   row_words.push_back(to_text(arguments.m_quantity));
   row_words.push_back(to_text(arguments.m_time_in_force));
   for(auto& tag : arguments.m_additional_tags) {
-    auto schema = find(m_additional_tags, arguments.m_destination,
-      arguments.m_scope, tag.m_key);
-    row_words.push_back(QString::fromStdString(schema->get_name()));
+    if(auto schema = find(m_additional_tags, arguments.m_destination,
+        arguments.m_scope, tag.m_key)) {
+      row_words.push_back(QString::fromStdString(schema->get_name()));
+    }
   }
   for(auto& name : split(arguments.m_key.toString().replace('+', ' '))) {
     row_words.push_back(name);
