@@ -28,17 +28,25 @@ namespace {
     return schema;
   }
 
-  auto make_asx_exec_inst_schema() {
+  auto make_exec_inst_schema() {
     auto model = OrderFieldInfoTip::Model();
     model.m_tag.m_name = "ExecInst";
     model.m_tag.m_description =
       "Instructions for order handling on exchange trading floor.";
-    model.m_tag.m_arguments.emplace_back("A", "No cross (cross is forbidden)");
     model.m_tag.m_arguments.emplace_back(
       "M", "Mid-price peg (midprice of inside quote)");
     model.m_tag.m_arguments.emplace_back(
       "R", "Primary peg (primary market - buy at bid/sell at offer)");
     model.m_tag.m_arguments.emplace_back("P", "Market peg");
+    sort(model.m_tag.m_arguments);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
+    return schema;
+  }
+
+  auto make_asx_exec_inst_schema() {
+    auto model = make_exec_inst_schema()->get_order_field_model();
+    model.m_tag.m_arguments.emplace_back("A", "No cross (cross is forbidden)");
     sort(model.m_tag.m_arguments);
     auto schema = std::make_shared<EnumAdditionalTagSchema>(
       std::move(model), EXEC_INST_KEY);
@@ -118,18 +126,11 @@ namespace {
   }
 
   auto make_chix_exec_inst_schema() {
-    auto model = OrderFieldInfoTip::Model();
-    model.m_tag.m_name = "ExecInst";
-    model.m_tag.m_description =
-      "Instructions for order handling on exchange trading floor.";
-    model.m_tag.m_arguments.emplace_back(
-      "M", "Mid-price peg (midprice of inside quote)");
-    model.m_tag.m_arguments.emplace_back(
-      "R", "Primary peg (primary market - buy at bid/sell at offer)");
-    model.m_tag.m_arguments.emplace_back("P", "Market peg");
+    auto model = make_exec_inst_schema()->get_order_field_model();
     model.m_tag.m_arguments.emplace_back(
       "x", "Minimum Price Improvement (CXD Only)");
     model.m_tag.m_arguments.emplace_back("f", "CSO (Not supported on CXD)");
+    sort(model.m_tag.m_arguments);
     auto schema = std::make_shared<EnumAdditionalTagSchema>(
       std::move(model), EXEC_INST_KEY);
     return schema;
@@ -175,15 +176,7 @@ namespace {
   }
 
   auto make_cse_exec_inst_schema() {
-    auto model = OrderFieldInfoTip::Model();
-    model.m_tag.m_name = "ExecInst";
-    model.m_tag.m_description =
-      "Instructions for order handling on exchange trading floor.";
-    model.m_tag.m_arguments.emplace_back(
-      "M", "Mid-price peg (midprice of inside quote)");
-    model.m_tag.m_arguments.emplace_back(
-      "R", "Primary peg (primary market - buy at bid/sell at offer)");
-    model.m_tag.m_arguments.emplace_back("P", "Market peg");
+    auto model = make_exec_inst_schema()->get_order_field_model();
     model.m_tag.m_arguments.emplace_back("9", "Post on bid");
     model.m_tag.m_arguments.emplace_back("0", "Post on offer");
     auto schema = std::make_shared<EnumAdditionalTagSchema>(
