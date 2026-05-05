@@ -5,8 +5,8 @@
 using namespace Beam;
 using namespace Beam::Tests;
 using namespace Nexus;
-using namespace Nexus::DefaultCountries;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Countries;
+using namespace Nexus::Venues;
 
 TEST_SUITE("ScopeMap") {
   TEST_CASE("venue_scope_subset_of_country_scope") {

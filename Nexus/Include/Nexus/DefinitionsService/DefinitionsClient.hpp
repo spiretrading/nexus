@@ -134,6 +134,20 @@ namespace Nexus {
       Beam::VirtualPtr<VirtualDefinitionsClient> m_client;
   };
 
+  /**
+   * Loads all definitions from a DefinitionsClient and initializes the default
+   * databases.
+   * @param client The DefinitionsClient to load from.
+   */
+  template<typename C> requires IsDefinitionsClient<Beam::dereference_t<C>>
+  void load_definitions(C&& client) {
+    set_time_zones(client.load_time_zone_database());
+    set_countries(client.load_country_database());
+    set_currencies(client.load_currency_database());
+    set_destinations(client.load_destination_database());
+    set_venues(client.load_venue_database());
+  }
+
   template<IsDefinitionsClient T, typename... Args>
   DefinitionsClient::DefinitionsClient(std::in_place_type_t<T>, Args&&... args)
     : m_client(Beam::make_virtual_ptr<WrappedDefinitionsClient<T>>(

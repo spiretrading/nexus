@@ -1,6 +1,5 @@
 #include "Spire/PortfolioViewer/PortfolioViewerModel.hpp"
 #include <QCoreApplication>
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Spire/PortfolioViewer/PortfolioSelectionModel.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
@@ -23,7 +22,7 @@ PortfolioViewerModel::TotalEntry::TotalEntry()
 PortfolioViewerModel::PortfolioViewerModel(Ref<UserProfile> userProfile,
     Ref<PortfolioSelectionModel> selectionModel)
     : m_userProfile(userProfile.get()),
-      m_totalCurrency(DefaultCurrencies::CAD),
+      m_totalCurrency(Currencies::CAD),
       m_exchangeRates(&m_userProfile->GetExchangeRates()),
       m_selectionModel(selectionModel.get()),
       m_displayCount(0) {

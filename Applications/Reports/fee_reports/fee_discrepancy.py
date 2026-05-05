@@ -27,20 +27,17 @@ def parse_ip_address(source):
     int(source[separator + 1 :]))
 
 def execute_report(account, start_date, end_date, fee_table, service_clients):
-  definitions_client = service_clients.get_definitions_client()
-  venues = definitions_client.load_venue_database()
-  time_zones = definitions_client.load_time_zones()
   order_execution_client = service_clients.get_order_execution_client()
   order_queue = beam.Queue()
-  nexus.query_daily_order_submissions(account, start_date, end_date, venues,
-    time_zones, order_execution_client, order_queue)
+  nexus.query_daily_order_submissions(
+    account, start_date, end_date, order_execution_client, order_queue)
   orders = []
   beam.flush(order_queue, orders)
   fee_state = nexus.ConsolidatedTmxFeeTable.State()
   for order in orders:
-    if order.info.fields.ticker.country != nexus.default_countries.CA:
+    if order.info.fields.ticker.country != nexus.countries.CA:
       continue
-    if order.info.fields.destination == nexus.default_destinations.MOE:
+    if order.info.fields.destination == nexus.destinations.MOE:
       continue
     execution_reports = order.publisher.get_snapshot()
     for execution_report in execution_reports:
@@ -65,9 +62,9 @@ def execute_report(account, start_date, end_date, fee_table, service_clients):
           calculated_fee.commission))
         sys.stdout.flush()
 
-def load_fee_table(config, venues):
+def load_fee_table(config):
   fee_config = beam.load_yaml(config['fee_table'])
-  return nexus.parse_consolidated_tmx_fee_table(fee_config, venues)
+  return nexus.parse_consolidated_tmx_fee_table(fee_config)
 
 def main():
   parser = argparse.ArgumentParser(
@@ -94,8 +91,8 @@ def main():
   start_date = beam.to_utc_time(args.start)
   end_date = beam.to_utc_time(args.end)
   service_clients = nexus.ServiceClients(username, password, address)
-  venues = service_clients.get_definitions_client().load_venue_database()
-  fee_table = load_fee_table(config, venues)
+  nexus.load_definitions(service_clients.get_definitions_client())
+  fee_table = load_fee_table(config)
   for account in \
       service_clients.get_service_locator_client().load_all_accounts():
     execute_report(account, start_date, end_date, fee_table, service_clients)

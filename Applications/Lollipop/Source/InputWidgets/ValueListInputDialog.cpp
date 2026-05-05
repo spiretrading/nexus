@@ -50,7 +50,7 @@ namespace {
     template<>
     ValueListInputDialog::Value operator ()<Ticker>(
         const std::string& line, const UserProfile& userProfile) const {
-      auto ticker = parse_ticker(line, userProfile.GetVenueDatabase());
+      auto ticker = parse_ticker(line);
       if(!ticker) {
         BOOST_THROW_EXCEPTION(std::runtime_error("Invalid symbol specified."));
       }

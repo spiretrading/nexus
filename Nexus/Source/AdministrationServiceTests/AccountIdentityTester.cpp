@@ -8,7 +8,7 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCountries;
+using namespace Nexus::Countries;
 
 TEST_SUITE("AccountIdentity") {
   TEST_CASE("stream") {

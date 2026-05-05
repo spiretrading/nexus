@@ -49,6 +49,7 @@ int main(int argc, const char** argv) {
     auto clients = ServiceClients(service_locator_client_config.m_username,
       service_locator_client_config.m_password,
       service_locator_client_config.m_address);
+    load_definitions(clients.get_definitions_client());
     auto service_config = try_or_nest([&] {
       return Configuration::parse(get_node(config, "server"));
     }, std::runtime_error("Error parsing section 'server'."));

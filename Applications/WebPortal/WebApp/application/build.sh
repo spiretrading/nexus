@@ -85,6 +85,10 @@ clean_build() {
   rm -rf application
   rm -f mod_time.txt
   rm -f .build_hash.txt
+  rm -rf Dependencies/library
+  rm -rf Dependencies/WebApi
+  rm -f Dependencies/cache_files/nexus_webapi.txt
+  rm -f Dependencies/cache_files/nexus_webapp.txt
   if [[ "$mode" == "reset" ]]; then
     rm -rf Dependencies
     rm -rf node_modules

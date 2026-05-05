@@ -56,6 +56,7 @@ int main(int argc, const char** argv) {
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
       ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
     auto administration_client =
       ApplicationAdministrationClient(Ref(service_locator_client));
     auto market_data_client =
@@ -73,23 +74,20 @@ int main(int argc, const char** argv) {
         mysql_config.m_schema)));
     auto exchange_rates =
       ExchangeRateTable(definitions_client.load_exchange_rates());
-    auto destinations = definitions_client.load_destination_database();
     auto accounts = std::make_shared<Queue<AccountUpdate>>();
     service_locator_client.monitor(accounts);
-    auto risk_server =
-      RiskServletContainer(init(&service_locator_client, init(
-        convert(filter(std::move(accounts),
-          [] (const auto& update) {
-            return update.m_type == AccountUpdate::Type::ADDED;
-          }),
-          [] (const auto& update) {
-            return update.m_account;
-          }), &administration_client, &market_data_client,
-          &order_execution_client,
-          [] {
-            return std::make_unique<LiveTimer>(seconds(1));
-          }, std::move(time_client), &data_store, std::move(exchange_rates),
-        std::move(destinations))),
+    auto risk_server = RiskServletContainer(
+      init(&service_locator_client, init(convert(filter(std::move(accounts),
+        [] (const auto& update) {
+          return update.m_type == AccountUpdate::Type::ADDED;
+        }),
+        [] (const auto& update) {
+          return update.m_account;
+        }), &administration_client, &market_data_client,
+        &order_execution_client,
+        [] {
+          return std::make_unique<LiveTimer>(seconds(1));
+        }, std::move(time_client), &data_store, std::move(exchange_rates))),
       init(service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
     add(service_locator_client, service_config);

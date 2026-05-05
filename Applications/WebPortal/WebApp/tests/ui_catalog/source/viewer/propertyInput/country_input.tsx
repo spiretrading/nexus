@@ -40,21 +40,21 @@ export class CountryInput extends React.Component<Properties, State> {
     const entry = (() => {
       const upper = trimmed.toUpperCase();
       const byLetterCode =
-        Nexus.defaultCountryDatabase.fromLetterCode(upper);
+        Nexus.countryDatabase.fromLetterCode(upper);
       if(!byLetterCode.equals(Nexus.CountryDatabase.Entry.NONE)) {
         return byLetterCode;
       }
       const numeric = parseInt(trimmed, 10);
       if(!isNaN(numeric)) {
         const byNumeric =
-          Nexus.defaultCountryDatabase.fromCode(
+          Nexus.countryDatabase.fromCode(
             new Nexus.CountryCode(numeric));
         if(!byNumeric.equals(Nexus.CountryDatabase.Entry.NONE)) {
           return byNumeric;
         }
       }
       const lower = trimmed.toLowerCase();
-      for(const entry of Nexus.defaultCountryDatabase) {
+      for(const entry of Nexus.countryDatabase) {
         if(entry.name.toLowerCase() === lower) {
           return entry;
         }
@@ -67,7 +67,7 @@ export class CountryInput extends React.Component<Properties, State> {
   }
 
   private static toDisplayText(value: Nexus.CountryCode): string {
-    const entry = Nexus.defaultCountryDatabase.fromCode(
+    const entry = Nexus.countryDatabase.fromCode(
       value ?? Nexus.CountryCode.NONE);
     if(entry.equals(Nexus.CountryDatabase.Entry.NONE)) {
       return '';

@@ -14,7 +14,7 @@
 #include <Beam/Services/ServiceProtocolServletContainer.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServlet.hpp"
 #include "Nexus/DefinitionsService/ServiceDefinitionsClient.hpp"
 
@@ -69,10 +69,10 @@ namespace Nexus::Tests {
     Beam::ServiceLocatorClient service_locator_client)
     : m_container(Beam::init(std::move(service_locator_client),
         Beam::init("1", "Spire Trading Inc.",
-          Nexus::Details::get_base_time_zone_table(), DEFAULT_COUNTRIES,
-          DEFAULT_CURRENCIES, DEFAULT_DESTINATIONS, DEFAULT_VENUES,
-          std::vector<ExchangeRate>(), std::vector<ComplianceRuleSchema>(),
-          TradingSchedule())), &m_server_connection,
+          Nexus::Details::get_base_time_zone_table(), COUNTRIES, CURRENCIES,
+          DESTINATIONS, VENUES, std::vector<ExchangeRate>(),
+          std::vector<ComplianceRuleSchema>(), TradingSchedule())),
+        &m_server_connection,
         boost::factory<std::shared_ptr<Beam::TriggerTimer>>()) {}
 
   inline DefinitionsServiceTestEnvironment::

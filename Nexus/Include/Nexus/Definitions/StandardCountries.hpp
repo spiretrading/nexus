@@ -1,12 +1,12 @@
-#ifndef NEXUS_DEFAULT_COUNTRY_DATABASE_HPP
-#define NEXUS_DEFAULT_COUNTRY_DATABASE_HPP
+#ifndef NEXUS_STANDARD_COUNTRIES_HPP
+#define NEXUS_STANDARD_COUNTRIES_HPP
 #include <atomic>
 #include <memory>
 #include "Nexus/Definitions/Country.hpp"
 
 namespace Nexus {
 namespace Details {
-  inline const CountryDatabase& get_base_country_database() {
+  inline const CountryDatabase& get_base_countries() {
     static auto database = [] {
       auto database = CountryDatabase();
       {
@@ -78,26 +78,26 @@ namespace Details {
     return database;
   }
 
-  inline auto default_countries = get_base_country_database();
+  inline auto countries = get_base_countries();
 }
 
-  /** Returns the default CountryDatabase. */
-  inline const CountryDatabase& DEFAULT_COUNTRIES = Details::default_countries;
+  /** Returns the CountryDatabase. */
+  inline const CountryDatabase& COUNTRIES = Details::countries;
 
-  /** Updates the default CountryDatabase. */
-  inline void set_default_countries(CountryDatabase database) {
-    Details::default_countries = database;
+  /** Updates the CountryDatabase. */
+  inline void set_countries(CountryDatabase database) {
+    Details::countries = database;
   }
 
-  namespace DefaultCountries {
-    inline const auto AU = DEFAULT_COUNTRIES.from("AU").m_code;
-    inline const auto BR = DEFAULT_COUNTRIES.from("BR").m_code;
-    inline const auto CA = DEFAULT_COUNTRIES.from("CA").m_code;
-    inline const auto CN = DEFAULT_COUNTRIES.from("CN").m_code;
-    inline const auto GB = DEFAULT_COUNTRIES.from("GB").m_code;
-    inline const auto HK = DEFAULT_COUNTRIES.from("HK").m_code;
-    inline const auto JP = DEFAULT_COUNTRIES.from("JP").m_code;
-    inline const auto US = DEFAULT_COUNTRIES.from("US").m_code;
+  namespace Countries {
+    inline const auto AU = COUNTRIES.from("AU").m_code;
+    inline const auto BR = COUNTRIES.from("BR").m_code;
+    inline const auto CA = COUNTRIES.from("CA").m_code;
+    inline const auto CN = COUNTRIES.from("CN").m_code;
+    inline const auto GB = COUNTRIES.from("GB").m_code;
+    inline const auto HK = COUNTRIES.from("HK").m_code;
+    inline const auto JP = COUNTRIES.from("JP").m_code;
+    inline const auto US = COUNTRIES.from("US").m_code;
   }
 }
 

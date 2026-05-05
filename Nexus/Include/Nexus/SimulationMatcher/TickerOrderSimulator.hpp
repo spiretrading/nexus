@@ -10,8 +10,8 @@
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
 #include "Nexus/Definitions/FixTags.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
@@ -202,12 +202,11 @@ namespace Nexus {
   void TickerOrderSimulator<T>::set_session_timestamps(
       boost::posix_time::ptime timestamp) {
     m_date = timestamp.date();
-    auto eastern_timestamp = Beam::to_timezone(timestamp, "Etc/UTC",
-      "America/New_York", get_default_time_zone_database());
-    m_venue_close_time = Beam::to_timezone(
-      boost::posix_time::ptime(eastern_timestamp.date(),
-        boost::posix_time::hours(16)), "America/New_York", "Etc/UTC",
-      get_default_time_zone_database());
+    auto eastern_timestamp =
+      Beam::to_timezone(timestamp, "Etc/UTC", "America/New_York", TIME_ZONES);
+    m_venue_close_time = Beam::to_timezone(boost::posix_time::ptime(
+      eastern_timestamp.date(), boost::posix_time::hours(16)),
+      "America/New_York", "Etc/UTC", TIME_ZONES);
     m_is_moc_pending = timestamp < m_venue_close_time;
   }
 

@@ -17,8 +17,8 @@ interface Properties extends
 }
 
 /** Renders an input field for a single scope item. */
-export function ScopeItemInput({onChange, onEnter, ...rest}:
-    Properties): JSX.Element {
+export function ScopeItemInput({onChange, onEnter, ...rest}: Properties):
+    JSX.Element {
   const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange?.(event.target.value);
   };
@@ -56,7 +56,7 @@ export function ScopeItemInput({onChange, onEnter, ...rest}:
 
 
 function parseCountry(text: string): Nexus.CountryCode {
-  for(const country of Nexus.defaultCountryDatabase) {
+  for(const country of Nexus.countryDatabase) {
     if(text === country.twoLetterCode || text === country.threeLetterCode ||
         text === country.name.toUpperCase()) {
       return country.code;
@@ -66,7 +66,7 @@ function parseCountry(text: string): Nexus.CountryCode {
 }
 
 function parseVenue(text: string): Nexus.Venue {
-  for(const venue of Nexus.defaultVenueDatabase) {
+  for(const venue of Nexus.venueDatabase) {
     if(text === venue.displayName.toUpperCase() ||
         text === venue.venue.toString()) {
       return venue.venue;

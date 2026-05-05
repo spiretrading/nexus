@@ -16,7 +16,7 @@
 #include <boost/throw_exception.hpp>
 #include "NeoeMarketDataFeedClient/NeoeMarketDataFeedClient.hpp"
 #include "NeoeMarketDataFeedClient/NeoeServiceAccessClient.hpp"
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Version.hpp"
@@ -50,7 +50,7 @@ namespace {
         auto board_lot = extract<Quantity>(node, "board_lot");
         auto info = TickerInfo();
         info.m_name = name;
-        info.m_ticker = Ticker(symbol, DefaultVenues::NEOE);
+        info.m_ticker = Ticker(symbol, Venues::NEOE);
         info.m_board_lot = board_lot;
         tickers.push_back(std::move(info));
       }
@@ -92,8 +92,7 @@ namespace {
         extract<bool>(config, "enable_logging", false);
       neoe_config.m_is_time_and_sale_feed =
         extract<bool>(config, "is_time_and_sale", false);
-      neoe_config.m_time_offset = -get_utc_offset(
-        get_default_time_zone_database(), time_zone);
+      neoe_config.m_time_offset = -get_utc_offset(TIME_ZONES, time_zone);
       if(auto mpid_mappings = config["mpid_mappings"]) {
         neoe_config.m_mpid_mappings = load_mpid_mappings(mpid_mappings);
       }
@@ -111,10 +110,11 @@ int main(int argc, const char** argv) {
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
     auto definitions_client =
       ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
     auto time_client = make_live_ntp_time_client(service_locator_client);
     auto sampling_time = extract<time_duration>(config, "sampling");
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
-      Ref(service_locator_client), sampling_time, DefaultCountries::CA);
+      Ref(service_locator_client), sampling_time, Countries::CA);
     auto host = extract<IpAddress>(config, "host");
     auto interface = extract<IpAddress>(config, "interface");
     auto options = MulticastSocketOptions();

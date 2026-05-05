@@ -132,7 +132,7 @@ OrderTaskArguments Spire::to_order_task_arguments(const CanvasNode& node) {
   if(arguments.m_destination.empty()) {
     arguments.m_scope = Scope::make_global("Global");
   } else {
-    auto& destination = DEFAULT_DESTINATIONS.from(arguments.m_destination);
+    auto& destination = DESTINATIONS.from(arguments.m_destination);
     for(auto& venue : destination.m_venues) {
       arguments.m_scope += venue;
     }

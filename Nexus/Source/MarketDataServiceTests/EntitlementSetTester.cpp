@@ -6,7 +6,7 @@
 using namespace Beam;
 using namespace Beam::Tests;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 TEST_SUITE("EntitlementSet") {
   TEST_CASE("construct_from_venue") {

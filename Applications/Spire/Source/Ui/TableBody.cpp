@@ -456,6 +456,12 @@ struct TableBody::Layout : QLayout {
     }
   }
 
+  void clear_pending_layouts() {
+    for(auto& item : m_items) {
+      static_cast<RowCover*>(item->widget())->m_is_pending_layout = false;
+    }
+  }
+
   QLayoutItem* itemAt(int index) const override {
     if(index >= 0 && index < count()) {
       return m_items[index].get();
@@ -932,6 +938,9 @@ void TableBody::paintEvent(QPaintEvent* event) {
 }
 
 void TableBody::resizeEvent(QResizeEvent* event) {
+  if(event->size().height() == event->oldSize().height()) {
+    return;
+  }
   ++m_resize_guard;
   if(m_resize_guard == 1) {
     update_visible_region();
@@ -1278,7 +1287,7 @@ void TableBody::update_visible_region() {
     reset_visible_region();
   }
   mount_visible_rows();
-  get_layout().setGeometry(get_layout().geometry());
+  get_layout().clear_pending_layouts();
   setUpdatesEnabled(are_updates_enabled);
   --m_resize_guard;
 }

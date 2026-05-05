@@ -1,7 +1,7 @@
 import { Currency, CurrencyDatabase } from './currency';
 
 /** Builds a CurrencyDatabase containing a set of common currencies. */
-export function buildDefaultCurrencyDatabase(): CurrencyDatabase {
+export function buildCurrencyDatabase(): CurrencyDatabase {
   const database = new CurrencyDatabase();
   database.add(new CurrencyDatabase.Entry(new Currency(36), 'AUD', '$'));
   database.add(new CurrencyDatabase.Entry(new Currency(124), 'CAD', '$'));
@@ -10,7 +10,7 @@ export function buildDefaultCurrencyDatabase(): CurrencyDatabase {
   return database;
 }
 
-export namespace DefaultCurrencies {
+export namespace Currencies {
   export const AUD = new Currency(36);
   export const CAD = new Currency(124);
   export const EUR = new Currency(978);

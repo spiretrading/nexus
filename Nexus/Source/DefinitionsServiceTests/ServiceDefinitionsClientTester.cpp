@@ -3,7 +3,7 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/ServicesTests/ServiceClientFixture.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/DefinitionsService/ServiceDefinitionsClient.hpp"
 
 using namespace Beam;
@@ -12,10 +12,10 @@ using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCountries;
-using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultDestinations;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Countries;
+using namespace Nexus::Currencies;
+using namespace Nexus::Destinations;
+using namespace Nexus::Venues;
 
 namespace {
   struct Fixture : ServiceClientFixture {
@@ -53,10 +53,9 @@ TEST_SUITE("ServiceDefinitionsClient") {
   TEST_CASE("load_country_database") {
     auto fixture = Fixture();
     fixture.on_request<LoadCountryDatabaseService>([&] (auto& request) {
-      request.set(DEFAULT_COUNTRIES);
+      request.set(COUNTRIES);
     });
-    test_json_equality(
-      fixture.m_client->load_country_database(), DEFAULT_COUNTRIES);
+    test_json_equality(fixture.m_client->load_country_database(), COUNTRIES);
   }
 
   TEST_CASE("load_time_zone_database") {
@@ -66,27 +65,25 @@ TEST_SUITE("ServiceDefinitionsClient") {
     });
     auto time_zone_database =
       REQUIRE_NO_THROW(fixture.m_client->load_time_zone_database());
-    REQUIRE(get_default_time_zone_database().region_list() ==
-      time_zone_database.region_list());
+    REQUIRE(TIME_ZONES.region_list() == time_zone_database.region_list());
   }
 
   TEST_CASE("load_currency_database") {
     auto fixture = Fixture();
     fixture.on_request<LoadCurrencyDatabaseService>([&] (auto& request) {
-      request.set(DEFAULT_CURRENCIES);
+      request.set(CURRENCIES);
     });
-    test_json_equality(
-      fixture.m_client->load_currency_database(), DEFAULT_CURRENCIES);
+    test_json_equality(fixture.m_client->load_currency_database(), CURRENCIES);
   }
 
   TEST_CASE("load_destination_database") {
     auto fixture = Fixture();
     fixture.on_request<LoadDestinationDatabaseService>([&] (auto& request) {
-      request.set(DEFAULT_DESTINATIONS);
+      request.set(DESTINATIONS);
     });
     auto entries =
       fixture.m_client->load_destination_database().get_entries();
-    auto expected_entries = DEFAULT_DESTINATIONS.get_entries();
+    auto expected_entries = DESTINATIONS.get_entries();
     REQUIRE(entries.size() == expected_entries.size());
     for(auto& entry : entries) {
       REQUIRE(
@@ -98,9 +95,9 @@ TEST_SUITE("ServiceDefinitionsClient") {
   TEST_CASE("load_venue_database") {
     auto fixture = Fixture();
     fixture.on_request<LoadVenueDatabaseService>([&] (auto& request) {
-      request.set(DEFAULT_VENUES);
+      request.set(VENUES);
     });
-    test_json_equality(fixture.m_client->load_venue_database(), DEFAULT_VENUES);
+    test_json_equality(fixture.m_client->load_venue_database(), VENUES);
   }
 
   TEST_CASE("load_exchange_rates") {

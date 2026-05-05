@@ -34,6 +34,7 @@ using namespace Beam;
 using namespace Beam::Python;
 using namespace boost;
 using namespace boost::gregorian;
+using namespace boost::local_time;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Python;
@@ -93,11 +94,28 @@ void Nexus::Python::export_country(module& module) {
       "three_letter_code", &CountryDatabase::Entry::m_three_letter_code);
   export_view<const CountryDatabase::Entry>(module, "CountryDatabaseEntryView");
   module.def("parse_country_code",
-    overload_cast<std::string_view, const CountryDatabase&>(parse_country_code));
+    overload_cast<std::string_view, const CountryDatabase&>(
+      parse_country_code));
   module.def("parse_country_code",
     overload_cast<std::string_view>(parse_country_code));
   module.def("parse_country_database_entry", &parse_country_database_entry);
   module.def("parse_country_database", &parse_country_database);
+}
+
+void Nexus::Python::export_countries(module& module) {
+  module.attr("COUNTRIES") = cast(COUNTRIES, return_value_policy::reference);
+  module.def("set_countries", [] (const CountryDatabase& database) {
+    set_countries(database);
+  });
+  auto submodule = module.def_submodule("countries");
+  submodule.add_object("AU", cast(Countries::AU));
+  submodule.add_object("BR", cast(Countries::BR));
+  submodule.add_object("CA", cast(Countries::CA));
+  submodule.add_object("CN", cast(Countries::CN));
+  submodule.add_object("GB", cast(Countries::GB));
+  submodule.add_object("HK", cast(Countries::HK));
+  submodule.add_object("JP", cast(Countries::JP));
+  submodule.add_object("US", cast(Countries::US));
 }
 
 void Nexus::Python::export_currency(module& module) {
@@ -106,8 +124,7 @@ void Nexus::Python::export_currency(module& module) {
     def_property_readonly_static("NONE", [] (const object&) {
       return CurrencyId::NONE;
     });
-  auto currency_database =
-    class_<CurrencyDatabase>(module, "CurrencyDatabase").
+  auto currency_database = class_<CurrencyDatabase>(module, "CurrencyDatabase").
     def(init()).
     def(init<const CurrencyDatabase&>()).
     def_property_readonly("entries", &CurrencyDatabase::get_entries).
@@ -131,6 +148,22 @@ void Nexus::Python::export_currency(module& module) {
   module.def("parse_currency_database", &parse_currency_database);
 }
 
+void Nexus::Python::export_currencies(module& module) {
+  module.attr("CURRENCIES") = cast(CURRENCIES, return_value_policy::reference);
+  module.def("set_currencies", [] (const CurrencyDatabase& database) {
+    set_currencies(database);
+  });
+  auto submodule = module.def_submodule("currencies");
+  submodule.add_object("AUD", cast(Currencies::AUD));
+  submodule.add_object("CAD", cast(Currencies::CAD));
+  submodule.add_object("EUR", cast(Currencies::EUR));
+  submodule.add_object("GBP", cast(Currencies::GBP));
+  submodule.add_object("HKD", cast(Currencies::HKD));
+  submodule.add_object("JPY", cast(Currencies::JPY));
+  submodule.add_object("USD", cast(Currencies::USD));
+  submodule.add_object("XBT", cast(Currencies::XBT));
+}
+
 void Nexus::Python::export_currency_pair(module& module) {
   export_default_methods(class_<CurrencyPair>(module, "CurrencyPair")).
     def(init<CurrencyId, CurrencyId>()).
@@ -141,115 +174,6 @@ void Nexus::Python::export_currency_pair(module& module) {
   module.def("parse_currency_pair",
     overload_cast<std::string_view>(parse_currency_pair));
   module.def("invert", overload_cast<CurrencyPair>(invert));
-}
-
-void Nexus::Python::export_default_countries(module& module) {
-  module.attr("DEFAULT_COUNTRIES") =
-    cast(DEFAULT_COUNTRIES, return_value_policy::reference);
-  module.def("set_default_country_database",
-    [] (const CountryDatabase& database) {
-      set_default_countries(database);
-    });
-  auto submodule = module.def_submodule("default_countries");
-  submodule.add_object("AU", cast(DefaultCountries::AU));
-  submodule.add_object("BR", cast(DefaultCountries::BR));
-  submodule.add_object("CA", cast(DefaultCountries::CA));
-  submodule.add_object("CN", cast(DefaultCountries::CN));
-  submodule.add_object("GB", cast(DefaultCountries::GB));
-  submodule.add_object("HK", cast(DefaultCountries::HK));
-  submodule.add_object("JP", cast(DefaultCountries::JP));
-  submodule.add_object("US", cast(DefaultCountries::US));
-}
-
-void Nexus::Python::export_default_currencies(module& module) {
-  module.attr("DEFAULT_CURRENCIES") =
-    cast(DEFAULT_CURRENCIES, return_value_policy::reference);
-  module.def("set_default_currencies", &set_default_currencies);
-  auto submodule = module.def_submodule("default_currencies");
-  submodule.add_object("AUD", cast(DefaultCurrencies::AUD));
-  submodule.add_object("CAD", cast(DefaultCurrencies::CAD));
-  submodule.add_object("EUR", cast(DefaultCurrencies::EUR));
-  submodule.add_object("GBP", cast(DefaultCurrencies::GBP));
-  submodule.add_object("HKD", cast(DefaultCurrencies::HKD));
-  submodule.add_object("JPY", cast(DefaultCurrencies::JPY));
-  submodule.add_object("USD", cast(DefaultCurrencies::USD));
-  submodule.add_object("XBT", cast(DefaultCurrencies::XBT));
-}
-
-void Nexus::Python::export_default_destinations(module& module) {
-  module.attr("DEFAULT_DESTINATIONS") =
-    cast(DEFAULT_DESTINATIONS, return_value_policy::reference);
-  module.def("set_default_destinations", &set_default_destinations);
-  auto submodule = module.def_submodule("default_destinations");
-  submodule.add_object("MOE", cast(DefaultDestinations::MOE));
-  submodule.add_object("ASXT", cast(DefaultDestinations::ASXT));
-  submodule.add_object("CXA", cast(DefaultDestinations::CXA));
-  submodule.add_object("ALPHA", cast(DefaultDestinations::ALPHA));
-  submodule.add_object("CHIX", cast(DefaultDestinations::CHIX));
-  submodule.add_object("CSE", cast(DefaultDestinations::CSE));
-  submodule.add_object("CSE2", cast(DefaultDestinations::CSE2));
-  submodule.add_object("CX2", cast(DefaultDestinations::CX2));
-  submodule.add_object("LYNX", cast(DefaultDestinations::LYNX));
-  submodule.add_object("MATNLP", cast(DefaultDestinations::MATNLP));
-  submodule.add_object("MATNMF", cast(DefaultDestinations::MATNMF));
-  submodule.add_object("NEOE", cast(DefaultDestinations::NEOE));
-  submodule.add_object("OMEGA", cast(DefaultDestinations::OMEGA));
-  submodule.add_object("PURE", cast(DefaultDestinations::PURE));
-  submodule.add_object("TSX", cast(DefaultDestinations::TSX));
-}
-
-void Nexus::Python::export_default_venues(module& module) {
-  module.attr("DEFAULT_VENUES") =
-    cast(DEFAULT_VENUES, return_value_policy::reference);
-  module.def("set_default_venues", &set_default_venues);
-  auto submodule = module.def_submodule("default_venues");
-  submodule.add_object("ASX", cast(DefaultVenues::ASX));
-  submodule.add_object("CXA", cast(DefaultVenues::CXA));
-  submodule.add_object("CSE", cast(DefaultVenues::CSE));
-  submodule.add_object("CSE2", cast(DefaultVenues::CSE2));
-  submodule.add_object("CHIC", cast(DefaultVenues::CHIC));
-  submodule.add_object("CXD", cast(DefaultVenues::CXD));
-  submodule.add_object("LYNX", cast(DefaultVenues::LYNX));
-  submodule.add_object("MATN", cast(DefaultVenues::MATN));
-  submodule.add_object("NEOE", cast(DefaultVenues::NEOE));
-  submodule.add_object("OMGA", cast(DefaultVenues::OMGA));
-  submodule.add_object("PURE", cast(DefaultVenues::PURE));
-  submodule.add_object("TSX", cast(DefaultVenues::TSX));
-  submodule.add_object("TSXV", cast(DefaultVenues::TSXV));
-  submodule.add_object("XATS", cast(DefaultVenues::XATS));
-  submodule.add_object("XCX2", cast(DefaultVenues::XCX2));
-}
-
-void Nexus::Python::export_definitions(module& module) {
-  export_bbo_quote(module);
-  export_book_quote(module);
-  export_country(module);
-  export_currency(module);
-  export_currency_pair(module);
-  export_destination(module);
-  export_venue(module);
-  export_default_countries(module);
-  export_default_currencies(module);
-  export_default_destinations(module);
-  export_default_venues(module);
-  export_exchange_rate(module);
-  export_exchange_rate_table(module);
-  export_money(module);
-  export_order_imbalance(module);
-  export_order_status(module);
-  export_order_type(module);
-  export_quantity(module);
-  export_quote(module);
-  export_scope(module);
-  export_scope_map(module);
-  export_ticker(module);
-  export_ticker_info(module);
-  export_side(module);
-  export_tag(module);
-  export_fix_tags(module);
-  export_time_and_sale(module);
-  export_time_in_force(module);
-  export_trading_schedule(module);
 }
 
 void Nexus::Python::export_destination(module& module) {
@@ -290,10 +214,71 @@ void Nexus::Python::export_destination(module& module) {
     def_readwrite("description", &DestinationDatabase::Entry::m_description);
   export_view<const DestinationDatabase::Entry>(
     module, "DestinationDatabaseEntryView");
-  module.def("parse_destination_database_entry", overload_cast<
-    const YAML::Node&, const VenueDatabase&>(&parse_destination_database_entry));
+  module.def("parse_destination_database_entry",
+    overload_cast<const YAML::Node&, const VenueDatabase&>(
+      &parse_destination_database_entry));
+  module.def("parse_destination_database_entry",
+    overload_cast<const YAML::Node&>(&parse_destination_database_entry));
   module.def("parse_destination_database", overload_cast<const YAML::Node&,
     const VenueDatabase&>(&parse_destination_database));
+  module.def("parse_destination_database",
+    overload_cast<const YAML::Node&>(&parse_destination_database));
+}
+
+void Nexus::Python::export_destinations(module& module) {
+  module.attr("DESTINATIONS") =
+    cast(DESTINATIONS, return_value_policy::reference);
+  module.def("set_destinations", [] (const DestinationDatabase& database) {
+    set_destinations(database);
+  });
+  auto submodule = module.def_submodule("destinations");
+  submodule.add_object("MOE", cast(Destinations::MOE));
+  submodule.add_object("ASXT", cast(Destinations::ASXT));
+  submodule.add_object("CXA", cast(Destinations::CXA));
+  submodule.add_object("ALPHA", cast(Destinations::ALPHA));
+  submodule.add_object("CHIX", cast(Destinations::CHIX));
+  submodule.add_object("CSE", cast(Destinations::CSE));
+  submodule.add_object("CSE2", cast(Destinations::CSE2));
+  submodule.add_object("CX2", cast(Destinations::CX2));
+  submodule.add_object("LYNX", cast(Destinations::LYNX));
+  submodule.add_object("MATNLP", cast(Destinations::MATNLP));
+  submodule.add_object("MATNMF", cast(Destinations::MATNMF));
+  submodule.add_object("NEOE", cast(Destinations::NEOE));
+  submodule.add_object("OMEGA", cast(Destinations::OMEGA));
+  submodule.add_object("PURE", cast(Destinations::PURE));
+  submodule.add_object("TSX", cast(Destinations::TSX));
+}
+
+void Nexus::Python::export_definitions(module& module) {
+  export_bbo_quote(module);
+  export_book_quote(module);
+  export_country(module);
+  export_countries(module);
+  export_currency(module);
+  export_currency_pair(module);
+  export_destination(module);
+  export_venue(module);
+  export_currencies(module);
+  export_destinations(module);
+  export_venues(module);
+  export_exchange_rate(module);
+  export_exchange_rate_table(module);
+  export_money(module);
+  export_order_imbalance(module);
+  export_order_status(module);
+  export_order_type(module);
+  export_quantity(module);
+  export_quote(module);
+  export_scope(module);
+  export_scope_map(module);
+  export_ticker(module);
+  export_ticker_info(module);
+  export_side(module);
+  export_tag(module);
+  export_fix_tags(module);
+  export_time_and_sale(module);
+  export_time_in_force(module);
+  export_trading_schedule(module);
 }
 
 void Nexus::Python::export_exchange_rate(module& module) {
@@ -363,7 +348,8 @@ void Nexus::Python::export_order_imbalance(module& module) {
     def_readwrite("reference_price", &OrderImbalance::m_reference_price).
     def_readwrite("timestamp", &OrderImbalance::m_timestamp);
   export_queue_suite<OrderImbalance>(module, "OrderImbalance");
-  export_queue_suite<SequencedOrderImbalance>(module, "SequencedOrderImbalance");
+  export_queue_suite<SequencedOrderImbalance>(
+    module, "SequencedOrderImbalance");
 }
 
 void Nexus::Python::export_order_status(module& module) {
@@ -635,7 +621,10 @@ void Nexus::Python::export_trading_schedule(module& module) {
     def_readwrite("years", &TradingSchedule::Rule::m_years).
     def_readwrite("events", &TradingSchedule::Rule::m_events);
   module.def("is_match", &is_match);
-  module.def("parse_trading_schedule", &parse_trading_schedule);
+  module.def("parse_trading_schedule", overload_cast<
+    const YAML::Node&, const VenueDatabase&>(&parse_trading_schedule));
+  module.def("parse_trading_schedule",
+    overload_cast<const YAML::Node&>(&parse_trading_schedule));
 }
 
 void Nexus::Python::export_venue(module& module) {
@@ -670,10 +659,60 @@ void Nexus::Python::export_venue(module& module) {
   module.def("parse_venue",
     overload_cast<std::string_view, const VenueDatabase&>(&parse_venue));
   module.def("parse_venue", overload_cast<std::string_view>(&parse_venue));
-  module.def("parse_venue_database_entry", &parse_venue_database_entry);
-  module.def("parse_venue_database", &parse_venue_database);
-  module.def("utc_to_venue", &utc_to_venue);
-  module.def("venue_to_utc", &venue_to_utc);
-  module.def("utc_start_of_day", &utc_start_of_day);
-  module.def("utc_end_of_day", &utc_end_of_day);
+  module.def("parse_venue_database_entry", overload_cast<const YAML::Node&,
+    const CountryDatabase&, const CurrencyDatabase&>(
+      &parse_venue_database_entry));
+  module.def("parse_venue_database_entry",
+    overload_cast<const YAML::Node&>(&parse_venue_database_entry));
+  module.def("parse_venue_database", overload_cast<const YAML::Node&,
+    const CountryDatabase&, const CurrencyDatabase&>(&parse_venue_database));
+  module.def("parse_venue_database",
+    overload_cast<const YAML::Node&>(&parse_venue_database));
+  module.def("utc_to_venue",
+    overload_cast<Venue, ptime, const VenueDatabase&, const tz_database&>(
+      &utc_to_venue));
+  module.def("utc_to_venue", overload_cast<Venue, ptime, const tz_database&>(
+    &utc_to_venue));
+  module.def("utc_to_venue", overload_cast<Venue, ptime>(&utc_to_venue));
+  module.def("venue_to_utc",
+    overload_cast<Venue, ptime, const VenueDatabase&, const tz_database&>(
+      &venue_to_utc));
+  module.def("venue_to_utc",
+    overload_cast<Venue, ptime, const tz_database&>(&venue_to_utc));
+  module.def("venue_to_utc", overload_cast<Venue, ptime>(&venue_to_utc));
+  module.def("utc_start_of_day",
+    overload_cast<Venue, ptime, const VenueDatabase&, const tz_database&>(
+      &utc_start_of_day));
+  module.def("utc_start_of_day",
+    overload_cast<Venue, ptime, const tz_database&>(&utc_start_of_day));
+  module.def(
+    "utc_start_of_day", overload_cast<Venue, ptime>(&utc_start_of_day));
+  module.def("utc_end_of_day", overload_cast<
+    Venue, ptime, const VenueDatabase&, const tz_database&>(&utc_end_of_day));
+  module.def("utc_end_of_day", overload_cast<Venue, ptime, const tz_database&>(
+    &utc_end_of_day));
+  module.def("utc_end_of_day", overload_cast<Venue, ptime>(&utc_end_of_day));
+}
+
+void Nexus::Python::export_venues(module& module) {
+  module.attr("VENUES") = cast(VENUES, return_value_policy::reference);
+  module.def("set_venues", [] (const VenueDatabase& database) {
+    set_venues(database);
+  });
+  auto submodule = module.def_submodule("venues");
+  submodule.add_object("ASX", cast(Venues::ASX));
+  submodule.add_object("CXA", cast(Venues::CXA));
+  submodule.add_object("CSE", cast(Venues::CSE));
+  submodule.add_object("CSE2", cast(Venues::CSE2));
+  submodule.add_object("CHIC", cast(Venues::CHIC));
+  submodule.add_object("CXD", cast(Venues::CXD));
+  submodule.add_object("LYNX", cast(Venues::LYNX));
+  submodule.add_object("MATN", cast(Venues::MATN));
+  submodule.add_object("NEOE", cast(Venues::NEOE));
+  submodule.add_object("OMGA", cast(Venues::OMGA));
+  submodule.add_object("PURE", cast(Venues::PURE));
+  submodule.add_object("TSX", cast(Venues::TSX));
+  submodule.add_object("TSXV", cast(Venues::TSXV));
+  submodule.add_object("XATS", cast(Venues::XATS));
+  submodule.add_object("XCX2", cast(Venues::XCX2));
 }
