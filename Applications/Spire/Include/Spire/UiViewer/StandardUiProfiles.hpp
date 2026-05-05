@@ -5,6 +5,9 @@
 
 namespace Spire {
 
+  /** Returns a UiProfile for the AccountListItem. */
+  UiProfile make_account_list_item_profile();
+
   /** Returns a UiProfile for the AdaptiveBox. */
   UiProfile make_adaptive_box_profile();
 

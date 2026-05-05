@@ -28,6 +28,7 @@
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
+#include "Spire/Ui/AccountListItem.hpp"
 #include "Spire/Ui/AdaptiveBox.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -1167,6 +1168,39 @@ namespace {
         std::make_unique<WindowHighlight>(m_groups[*current]);
     }
   };
+}
+
+UiProfile Spire::make_account_list_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(
+    make_standard_property<QString>("id", "meixiangk20"));
+  properties.push_back(
+    make_standard_property<QString>("name", "Kong Meixiang"));
+  auto profile = UiProfile("AccountListItem", properties,
+    [] (auto& profile) {
+      auto size = scale(8, 8);
+      auto identicon = QImage(size, QImage::Format_ARGB32);
+      identicon.fill(Qt::transparent);
+      auto painter = QPainter(&identicon);
+      painter.setPen(Qt::NoPen);
+      auto width = size.width() / 5.0;
+      auto height = size.height() / 5.0;
+      auto cells = std::vector<std::pair<int, int>>{
+        {0, 0}, {0, 2}, {0, 4}, {1, 1}, {1, 2}, {1, 3}, {2, 2}, {3, 1},
+        {3, 2}, {3, 3}, {4, 2}};
+      for(auto& [row, col] : cells) {
+        painter.fillRect(QRectF(col * width, row * height, width, height),
+          QColor(0xB565BC));
+      }
+      auto& id = get<QString>("id", profile.get_properties());
+      auto& name = get<QString>("name", profile.get_properties());
+      auto item = new AccountListItem(
+        AccountListItem::Account{identicon, id.get(), name.get()});
+      apply_widget_properties(item, profile.get_properties());
+      return item;
+    });
+  return profile;
 }
 
 UiProfile Spire::make_adaptive_box_profile() {
