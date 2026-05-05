@@ -65,7 +65,7 @@ void Nexus::Python::export_asx_trade_match_fee_table(module& module) {
 void Nexus::Python::export_chic_fee_table(module& module) {
   auto fee_table = export_default_methods(
     class_<ChicFeeTable>(module, "ChicFeeTable")).
-    def_readwrite("ticker_table", &ChicFeeTable::m_ticker_table).
+    def_readwrite("fee_table", &ChicFeeTable::m_fee_table).
     def_readwrite("interlisted", &ChicFeeTable::m_interlisted).
     def_readwrite("etfs", &ChicFeeTable::m_etfs);
   enum_<ChicFeeTable::Classification>(fee_table, "Classification").
