@@ -75,7 +75,8 @@ function AccountHeader(props: {
         {props.username}
       </h3>
       <span className={css(STYLES.totalPnl)}
-          style={{color: '#36BB55', ...(props.isOpen && {fontWeight: 500})}}>
+          style={{color: props.pnlText.startsWith('-') ? '#E63F44' : '#36BB55',
+            ...(props.isOpen && {fontWeight: 500})}}>
         {props.pnlText}
       </span>
     </div>);
