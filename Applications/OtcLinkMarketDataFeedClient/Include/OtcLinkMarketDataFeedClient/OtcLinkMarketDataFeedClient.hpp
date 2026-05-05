@@ -73,6 +73,7 @@ namespace Nexus {
     private:
       struct BookQuoteEntry {
         Ticker m_ticker;
+        std::string m_mpid;
         BookQuote m_bid;
         BookQuote m_ask;
       };
@@ -337,7 +338,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       }
       m_feed_client->publish(TickerBookQuote(ask, ticker));
     }
-    m_book_quotes.insert_or_assign(quote_id, BookQuoteEntry(ticker, bid, ask));
+    m_book_quotes.insert_or_assign(
+      quote_id, BookQuoteEntry(ticker, mpid, bid, ask));
   }
 
   template<typename M, typename O, typename R, typename S>
@@ -404,6 +406,12 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
           std::endl;
       }
       m_feed_client->publish(TickerBookQuote(remove_quote, stored.m_ticker));
+    }
+    if(!quote.m_venue) {
+      quote.m_mpid = stored.m_mpid;
+      quote.m_is_primary_mpid = true;
+      quote.m_venue = m_configuration.m_venue;
+      quote.m_quote.m_side = side;
     }
     quote.m_quote.m_price = price;
     quote.m_quote.m_size = size;
