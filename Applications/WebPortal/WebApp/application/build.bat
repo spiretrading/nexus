@@ -80,6 +80,10 @@ EXIT /B 0
 :CleanBuild
 RD /S /Q application 2>NUL
 DEL mod_time.txt >NUL 2>&1
+RD /S /Q Dependencies\library 2>NUL
+RD /S /Q Dependencies\WebApi 2>NUL
+DEL Dependencies\cache_files\nexus_webapi.txt >NUL 2>&1
+DEL Dependencies\cache_files\nexus_webapp.txt >NUL 2>&1
 IF "%~1"=="reset" (
   RD /S /Q Dependencies 2>NUL
   RD /S /Q node_modules 2>NUL
