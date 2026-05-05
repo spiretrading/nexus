@@ -58,7 +58,7 @@ namespace {
     table.m_xats_fee_table.m_intraspread_dark_to_dark_max_fee = Money(10);
     table.m_xats_fee_table.m_intraspread_dark_to_dark_subdollar_max_fee =
       Money(20);
-    populate_fee_table(out(table.m_chic_fee_table.m_ticker_table));
+    populate_fee_table(out(table.m_chic_fee_table.m_fee_table));
     populate_fee_table(out(table.m_cse_fee_table.m_fee_table));
     populate_fee_table(out(table.m_cse2_fee_table.m_regular_table));
     populate_fee_table(out(table.m_cse2_fee_table.m_dark_table));
