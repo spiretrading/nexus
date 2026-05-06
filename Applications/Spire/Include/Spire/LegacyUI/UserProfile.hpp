@@ -190,6 +190,9 @@ namespace Spire {
       void SetInitialPortfolioViewerWindowSettings(
         const PortfolioViewerWindowSettings& settings);
 
+      /** Pre-constructs heavyweight UI components to avoid first-use lag. */
+      void initialize_ui();
+
     private:
       std::string m_username;
       bool m_isAdministrator;

@@ -242,6 +242,10 @@ void UserProfile::SetInitialPortfolioViewerWindowSettings(
   m_initialPortfolioViewerWindowSettings = settings;
 }
 
+void UserProfile::initialize_ui() {
+  m_book_view_properties_window_factory->make(m_keyBindings);
+}
+
 std::filesystem::path Spire::get_profile_path() {
   return std::filesystem::weakly_canonical(QStandardPaths::writableLocation(
     QStandardPaths::DataLocation).toStdString()) / "Profiles";

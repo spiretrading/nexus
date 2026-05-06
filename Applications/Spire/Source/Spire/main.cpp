@@ -276,6 +276,7 @@ int main(int argc, char* argv[]) {
       toolbar_controller->open();
       risk_timer_monitor.emplace(Ref(*user_profile));
       risk_timer_monitor->Load();
+      user_profile->initialize_ui();
       sign_in_controller = nullptr;
     } catch(const std::exception& e) {
       QMessageBox::critical(nullptr, QObject::tr("Error"),
