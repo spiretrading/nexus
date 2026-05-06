@@ -27,7 +27,7 @@ def parse_ip_address(source):
     int(source[separator + 1 :]))
 
 def execute_report(account, start_date, end_date, fee_table, service_clients):
-  order_execution_client = service_clients.get_order_execution_client()
+  order_execution_client = service_clients.order_execution_client
   order_queue = beam.Queue()
   nexus.query_daily_order_submissions(
     account, start_date, end_date, order_execution_client, order_queue)
@@ -91,10 +91,10 @@ def main():
   start_date = beam.to_utc_time(args.start)
   end_date = beam.to_utc_time(args.end)
   service_clients = nexus.ServiceClients(username, password, address)
-  nexus.load_definitions(service_clients.get_definitions_client())
+  nexus.load_definitions(service_clients.definitions_client)
   fee_table = load_fee_table(config)
   for account in \
-      service_clients.get_service_locator_client().load_all_accounts():
+      service_clients.service_locator_client.load_all_accounts():
     execute_report(account, start_date, end_date, fee_table, service_clients)
 
 if __name__ == '__main__':
