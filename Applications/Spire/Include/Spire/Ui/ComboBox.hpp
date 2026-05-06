@@ -114,7 +114,7 @@ namespace Spire {
       void revert_to(const QString& query, bool autocomplete);
       void revert_current();
       void submit(const QString& query, bool is_passive = false);
-      void on_current(const std::any& current);
+      void on_current(const AnyRef& current);
       void on_input(const AnyRef& current);
       void on_highlight(const Highlight& highlight);
       void on_submit(const AnyRef& query);
