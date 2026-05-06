@@ -210,6 +210,53 @@ TEST_SUITE("LocalBookViewModel") {
     REQUIRE(model.get_ask_orders()->get_size() == 0);
   }
 
+  TEST_CASE("add_order_with_quantity_and_status") {
+    auto model = LocalBookViewModel();
+    auto order = make_order(make_limit_order_fields(
+      parse_ticker("ABX.TSX"), Side::BID, 500, parse_money("10.00")));
+    model.add(make_entry(order), 300, OrderStatus::NEW);
+    REQUIRE(model.get_bid_orders()->get_size() == 1);
+    auto& user_order = model.get_bid_orders()->get(0);
+    REQUIRE(user_order.m_size == 300);
+    REQUIRE(user_order.m_status == OrderStatus::NEW);
+    REQUIRE(user_order.m_price == parse_money("10.00"));
+  }
+
+  TEST_CASE("add_order_with_zero_remaining") {
+    auto model = LocalBookViewModel();
+    auto order = make_order(make_limit_order_fields(
+      parse_ticker("ABX.TSX"), Side::ASK, 100, parse_money("10.05")));
+    model.add(make_entry(order), 0, OrderStatus::NEW);
+    REQUIRE(model.get_ask_orders()->get_size() == 1);
+    auto& user_order = model.get_ask_orders()->get(0);
+    REQUIRE(user_order.m_size == 0);
+    REQUIRE(user_order.m_status == OrderStatus::NEW);
+  }
+
+  TEST_CASE("add_order_with_pending_new_status") {
+    auto model = LocalBookViewModel();
+    auto order = make_order(make_limit_order_fields(
+      parse_ticker("ABX.TSX"), Side::BID, 200, parse_money("10.00")));
+    model.add(make_entry(order), 200, OrderStatus::PENDING_NEW);
+    REQUIRE(model.get_bid_orders()->get_size() == 1);
+    auto& user_order = model.get_bid_orders()->get(0);
+    REQUIRE(user_order.m_size == 200);
+    REQUIRE(user_order.m_status == OrderStatus::PENDING_NEW);
+  }
+
+  TEST_CASE("add_pegged_order_with_quantity_and_status") {
+    auto model = LocalBookViewModel();
+    model.update(make_bbo(parse_money("10.00"), parse_money("10.01")));
+    auto order = make_order(make_pegged_order_fields(
+      parse_ticker("ABX.TSX"), Side::BID, 500, Money::ZERO, Money::ZERO));
+    model.add(make_entry(order), 300, OrderStatus::NEW);
+    REQUIRE(model.get_bid_orders()->get_size() == 1);
+    auto& user_order = model.get_bid_orders()->get(0);
+    REQUIRE(user_order.m_size == 300);
+    REQUIRE(user_order.m_status == OrderStatus::NEW);
+    REQUIRE(user_order.m_price == parse_money("10.00"));
+  }
+
   TEST_CASE("clear_book_quotes") {
     auto model = LocalBookViewModel();
     model.update(make_book_quote("TSX", parse_money("10.00"), 100, Side::BID));

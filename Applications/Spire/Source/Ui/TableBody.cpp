@@ -152,8 +152,13 @@ struct TableBody::RowCover : Cover {
           item->setFixedWidth(0);
         }
       } else if(column == body.m_table->get_column_size() - 1) {
-        item->setSizePolicy(
-          QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
+        auto last_width = body.m_column_covers[column]->width();
+        if(last_width > 0) {
+          item->setFixedWidth(last_width);
+        } else {
+          item->setSizePolicy(
+            QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
+        }
       } else {
         item->setFixedWidth(0);
       }
