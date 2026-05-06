@@ -38,7 +38,7 @@ namespace {
     ApplicationMarketDataFeedClient*, ApplicationTmxIpServiceAccessClient*,
     LiveNtpTimeClient*>;
 
-  static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(16777216);
+  static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(134217728);
 
   std::unordered_map<std::string, std::string> load_mpid_mappings(
       const YAML::Node& config) {
