@@ -335,7 +335,8 @@ void ToolbarWindow::on_recently_closed_window_operation(
 
 void ToolbarWindow::on_import() {
   auto path = QFileDialog::getOpenFileName(this,
-    tr("Select the settings file."), make_settings_path(m_account),
+    tr("Select the settings file."),
+    QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
     tr("Settings (*.json)"));
   if(path.isNull()) {
     return;
