@@ -26,6 +26,7 @@
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
+#include "Spire/Ui/AccountListItem.hpp"
 #include "Spire/Ui/AdaptiveBox.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -73,6 +74,7 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListSelectionModel.hpp"
 #include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/ListViewReorderController.hpp"
 #include "Spire/Ui/MenuButton.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
@@ -1164,6 +1166,39 @@ namespace {
         std::make_unique<WindowHighlight>(m_groups[*current]);
     }
   };
+}
+
+UiProfile Spire::make_account_list_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(
+    make_standard_property<QString>("id", "meixiangk20"));
+  properties.push_back(
+    make_standard_property<QString>("name", "Kong Meixiang"));
+  auto profile = UiProfile("AccountListItem", properties,
+    [] (auto& profile) {
+      auto size = scale(8, 8);
+      auto identicon = QImage(size, QImage::Format_ARGB32);
+      identicon.fill(Qt::transparent);
+      auto painter = QPainter(&identicon);
+      painter.setPen(Qt::NoPen);
+      auto width = size.width() / 5.0;
+      auto height = size.height() / 5.0;
+      auto cells = std::vector<std::pair<int, int>>{
+        {0, 0}, {0, 2}, {0, 4}, {1, 1}, {1, 2}, {1, 3}, {2, 2}, {3, 1},
+        {3, 2}, {3, 3}, {4, 2}};
+      for(auto& [row, col] : cells) {
+        painter.fillRect(QRectF(col * width, row * height, width, height),
+          QColor(0xB565BC));
+      }
+      auto& id = get<QString>("id", profile.get_properties());
+      auto& name = get<QString>("name", profile.get_properties());
+      auto item = new AccountListItem(
+        AccountListItem::Account{identicon, id.get(), name.get()});
+      apply_widget_properties(item, profile.get_properties());
+      return item;
+    });
+  return profile;
 }
 
 UiProfile Spire::make_adaptive_box_profile() {
@@ -2988,6 +3023,7 @@ UiProfile Spire::make_list_view_profile() {
   properties.push_back(make_standard_property("enable_item", -1));
   properties.push_back(make_standard_property("auto_set_current_null", false));
   properties.push_back(make_standard_property("delete_submission", false));
+  properties.push_back(make_standard_property("reorderable", true));
   auto profile = UiProfile("ListView", properties, [=] (auto& profile) {
     auto& random_height_seed =
       get<int>("random_height_seed", profile.get_properties());
@@ -2996,7 +3032,6 @@ UiProfile Spire::make_list_view_profile() {
     auto& change_item = get<int>("change_item", profile.get_properties());
     auto& change_item_index =
       get<int>("change_item_index", profile.get_properties());
-    auto random_generator = QRandomGenerator(random_height_seed.get());
     auto list_model = std::make_shared<ArrayListModel<QString>>();
     for(auto i = 0; i < 66; ++i) {
       if(i == 1) {
@@ -3030,24 +3065,26 @@ UiProfile Spire::make_list_view_profile() {
           list_model->insert(QString("newItem%1").arg(index++), value);
         }
       });
-    auto selection_model = std::make_shared<ListSelectionModel>();
-    auto list_view =
-      new ListView(list_model, selection_model,
-        [&] (const std::shared_ptr<ListModel<QString>>& model, auto index) {
-          auto label = make_label(model->get(index));
-          if(random_height_seed.get() == 0) {
-            auto random_size = random_generator.bounded(30, 70);
-            if(direction.get() == Qt::Vertical) {
-              label->setFixedHeight(scale_height(random_size));
-            } else {
-              label->setFixedWidth(scale_height(random_size));
-            }
+    auto item_builder =
+      [&, random_generator = QRandomGenerator(random_height_seed.get())]
+          (const std::shared_ptr<ListModel<QString>>& model, auto index)
+            mutable {
+        auto label = make_label(model->get(index));
+        if(random_height_seed.get() == 0) {
+          auto random_size = random_generator.bounded(30, 70);
+          if(direction.get() == Qt::Vertical) {
+            label->setFixedHeight(scale_height(random_size));
+          } else {
+            label->setFixedWidth(scale_height(random_size));
           }
-          update_style(*label, [&] (auto& style) {
-            style.get(+Any() << Disabled()).set(TextColor(QColor(0xFF0000)));
-          });
-          return label;
+        }
+        update_style(*label, [&] (auto& style) {
+          style.get(+Any() << Disabled()).set(TextColor(QColor(0xFF0000)));
         });
+        return label;
+    };
+    auto selection_model = std::make_shared<ListSelectionModel>();
+    auto list_view = new ListView(list_model, selection_model, item_builder);
     apply_widget_properties(list_view, profile.get_properties());
     auto& gap = get<int>("gap", profile.get_properties());
     gap.connect_changed_signal([=] (auto value) {
@@ -3134,6 +3171,10 @@ UiProfile Spire::make_list_view_profile() {
         [&] (const ListView::SelectionModel::PreRemoveOperation& operation) {
           selection_slot(QString("Remove:%1").arg(
             list_view->get_selection()->get(operation.m_index)));
+        },
+        [&] (const ListView::SelectionModel::UpdateOperation& operation) {
+          selection_slot(QString("Update:%1 to %2").
+            arg(operation.get_previous()).arg(operation.get_value()));
         });
     });
     if(get<bool>("delete_submission", profile.get_properties()).get()) {
@@ -3143,6 +3184,14 @@ UiProfile Spire::make_list_view_profile() {
         }
       });
     }
+    auto& reorderable = get<bool>("reorderable", profile.get_properties());
+    auto reorder_controller = QPointer<ListViewReorderController>();
+    reorderable.connect_changed_signal([=] (auto value) mutable {
+      delete reorder_controller;
+      if(value) {
+        reorder_controller = new ListViewReorderController(*list_view);
+      }
+    });
     return list_view;
   });
   return profile;

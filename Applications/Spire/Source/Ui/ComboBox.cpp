@@ -217,7 +217,8 @@ void AnyComboBox::keyPressEvent(QKeyEvent* event) {
     event->accept();
     return;
   } else if(event->key() == Qt::Key_Escape) {
-    if(m_data->m_drop_down_list->get_list_view().get_selection().get() == 0) {
+    if(m_data->m_drop_down_list->isVisible() &&
+        m_data->m_drop_down_list->get_list_view().get_selection().get() == 0) {
       m_data->m_drop_down_list->hide();
       return;
     }
@@ -574,7 +575,6 @@ bool AnyComboBox::on_input_key_press(QWidget& target, QKeyEvent& event) {
   if(event.key() == Qt::Key_Escape) {
     if(m_data->m_drop_down_list->isVisible()) {
       m_data->m_drop_down_list->hide();
-      revert_current();
     } else if(any_cast<QString>(m_input_box->get_current()->get()) !=
         m_data->m_submission_text &&
         m_query_model->parse(m_data->m_submission_text).has_value()) {
