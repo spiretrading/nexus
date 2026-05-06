@@ -38,7 +38,7 @@ namespace {
     ApplicationMarketDataFeedClient*, ApplicationCseServiceAccessClient*,
     LiveNtpTimeClient*>;
 
-  static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(16777216);
+  static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(134217728);
 
   std::vector<TickerInfo> parse_ticker_info_list(const std::string& path) {
     return try_or_nest([&] {
