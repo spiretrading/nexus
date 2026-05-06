@@ -26,19 +26,18 @@ namespace {
 }
 
 struct OrderStatusFilterPanel::PresetButtonContainer : QWidget {
-  std::shared_ptr<AssociativeValueModel<Preset>> m_preset;
+  AssociativeValueModel<Preset> m_preset;
   std::unordered_map<Preset, Button*> m_buttons;
 
   explicit PresetButtonContainer(QWidget* parent = nullptr)
-      : QWidget(parent),
-        m_preset(std::make_shared<AssociativeValueModel<Preset>>()) {
+      : QWidget(parent) {
     auto layout = make_hbox_layout(this);
     layout->setSpacing(scale_width(4));
     add_button(layout, Preset::ALL);
     add_button(layout, Preset::LIVE);
     add_button(layout, Preset::TERMINAL);
     add_button(layout, Preset::CUSTOM);
-    on_preset(m_preset->get(), true);
+    on_preset(m_preset.get(), true);
   }
 
   static const QString& display_text(Preset preset) {
@@ -69,7 +68,7 @@ struct OrderStatusFilterPanel::PresetButtonContainer : QWidget {
         set(TextColor(QColor(0xFFFFFF)));
     });
     button->connect_click_signal([=] {
-      m_preset->set(preset);
+      m_preset.set(preset);
     });
     return button;
   }
@@ -78,7 +77,7 @@ struct OrderStatusFilterPanel::PresetButtonContainer : QWidget {
     auto button = make_preset_button(preset);
     m_buttons.emplace(preset, button);
     layout->addWidget(button, 0, Qt::AlignTop);
-    m_preset->get_association(preset)->connect_update_signal(
+    m_preset.get_association(preset)->connect_update_signal(
       std::bind_front(&PresetButtonContainer::on_preset, this, preset));
   }
 
@@ -118,12 +117,12 @@ OrderStatusFilterPanel::OrderStatusFilterPanel(
   panel->connect_reset_signal(
     std::bind_front(&OrderStatusFilterPanel::on_reset, this));
   if(m_current->get_size() == 0) {
-    m_button_container->m_preset->set(Preset::ALL);
+    m_button_container->m_preset.set(Preset::ALL);
   } else {
-    m_button_container->m_preset->set(Preset::CUSTOM);
+    m_button_container->m_preset.set(Preset::CUSTOM);
   }
-  m_list_box->setEnabled(m_button_container->m_preset->get() == Preset::CUSTOM);
-  m_button_container->m_preset->connect_update_signal(
+  m_list_box->setEnabled(m_button_container->m_preset.get() == Preset::CUSTOM);
+  m_button_container->m_preset.connect_update_signal(
     std::bind_front(&OrderStatusFilterPanel::on_preset, this));
   m_connection = m_current->connect_operation_signal(
     std::bind_front(&OrderStatusFilterPanel::on_operation, this));
@@ -190,12 +189,12 @@ void OrderStatusFilterPanel::on_preset(Preset preset) {
 }
 
 void OrderStatusFilterPanel::on_reset() {
-  m_button_container->m_preset->set(Preset::ALL);
+  m_button_container->m_preset.set(Preset::ALL);
 }
 
 void OrderStatusFilterPanel::on_operation(
     const OrderStatusListModel::Operation& operation) {
-  if(m_button_container->m_preset->get() != Preset::CUSTOM) {
+  if(m_button_container->m_preset.get() != Preset::CUSTOM) {
     return;
   }
   visit(operation,
