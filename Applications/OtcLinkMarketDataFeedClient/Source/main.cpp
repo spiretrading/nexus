@@ -30,7 +30,7 @@ namespace {
     ApplicationMarketDataFeedClient*, ApplicationOtcLinkClient*,
     ApplicationOtcLinkRecoveryClient*,
     std::unique_ptr<ApplicationRecoveryOtcLinkClient>>;
-  static const auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(16777216);
+  static const auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(134217728);
 
   OtcLinkConfiguration parse_configuration(const YAML::Node& config) {
     return try_or_nest([&] {
