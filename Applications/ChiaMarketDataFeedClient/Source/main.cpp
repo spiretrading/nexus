@@ -30,7 +30,7 @@ namespace {
   using ApplicationChiaMarketDataFeedClient = ChiaMarketDataFeedClient<
     ApplicationMarketDataFeedClient*, ApplicationProtocolClient*>;
 
-  static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(16777216);
+  static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(134217728);
 
   ChiaConfiguration parse_configuration(const YAML::Node& config) {
     return try_or_nest([&] {
