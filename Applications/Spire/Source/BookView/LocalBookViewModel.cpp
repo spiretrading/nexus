@@ -96,6 +96,12 @@ void LocalBookViewModel::update(const TimeAndSale& time_and_sale) {
 }
 
 void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order) {
+  add(order, order.m_order->get_info().m_fields.m_quantity,
+    OrderStatus::PENDING_NEW);
+}
+
+void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order,
+    Quantity quantity, OrderStatus status) {
   auto& fields = order.m_order->get_info().m_fields;
   if(fields.m_type != OrderType::LIMIT && fields.m_type != OrderType::PEGGED) {
     return;
@@ -104,8 +110,6 @@ void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order) {
   orders.push_back(order.m_order);
   auto& user_orders =
     *pick(fields.m_side, m_model.get_ask_orders(), m_model.get_bid_orders());
-  auto remaining_quantity = fields.m_quantity;
-  auto status = OrderStatus::PENDING_NEW;
   auto display_price = fields.m_price;
   if(fields.m_type == OrderType::PEGGED) {
     submit_pegged(*order.m_order);
@@ -113,7 +117,7 @@ void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order) {
       m_pegged_entries[order.m_order->get_info().m_id].m_effective_price;
   }
   user_orders.push(
-    UserOrder(fields.m_destination, display_price, remaining_quantity, status));
+    UserOrder(fields.m_destination, display_price, quantity, status));
 }
 
 void LocalBookViewModel::remove(const OrderLogModel::OrderEntry& order) {

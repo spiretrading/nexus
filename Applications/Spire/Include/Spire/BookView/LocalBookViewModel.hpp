@@ -31,6 +31,15 @@ namespace Spire {
       /** Adds an order. */
       void add(const OrderLogModel::OrderEntry& order);
 
+      /**
+       * Adds an order with a specified quantity and status.
+       * @param order The order to add.
+       * @param quantity The remaining quantity.
+       * @param status The order's status.
+       */
+      void add(const OrderLogModel::OrderEntry& order, Nexus::Quantity quantity,
+        Nexus::OrderStatus status);
+
       /** Removes an order. */
       void remove(const OrderLogModel::OrderEntry& order);
 
