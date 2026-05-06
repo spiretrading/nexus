@@ -24,6 +24,14 @@ namespace Spire {
       /** Returns the properties displayed. */
       const std::shared_ptr<BookViewPropertiesModel>& get_properties() const;
 
+      /**
+       * Returns the singleton instance of the BookViewPropertiesWindow.
+       * @param key_bindings The KeyBindingsModel storing all of the user's
+       *        interactions.
+       */
+      BookViewPropertiesWindow* make(
+        std::shared_ptr<KeyBindingsModel> key_bindings);
+
       /*
        * Returns the singleton instance of the BookViewPropertiesWindow.
        * @param key_bindings The KeyBindingsModel storing all of the user's
