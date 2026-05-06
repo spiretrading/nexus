@@ -1,6 +1,5 @@
 #ifndef SPIRE_ACCOUNT_BOX_HPP
 #define SPIRE_ACCOUNT_BOX_HPP
-#include <QWidget>
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/QueryModel.hpp"
 #include "Spire/Ui/AccountListItem.hpp"
@@ -60,7 +59,7 @@ namespace Spire {
       /** Sets the placeholder value. */
       void set_placeholder(const QString& placeholder);
 
-      /** Returns true iff this AccountBox is read-only. */
+      /** Returns <code>true</code> iff this AccountBox is read-only. */
       bool is_read_only() const;
 
       /**

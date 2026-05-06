@@ -1,7 +1,7 @@
 #include "Spire/Ui/AccountBox.hpp"
 #include <unordered_set>
-#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
+#include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/Layouts.hpp"
 
@@ -57,19 +57,21 @@ AccountBox::AccountBox(std::shared_ptr<AccountQueryModel> accounts,
     [] (const AccountListItem::Account& account) {
       return account.m_id;
     },
-    [this] (const QString& id) {
+    [=] (const QString& id) {
       if(auto account = m_accounts->m_source->parse(id)) {
         return *account;
       }
       throw std::invalid_argument("Invalid account id.");
     });
   m_combo_box = new ComboBox<QString>(m_accounts, id_model,
-    [this] (const auto& list, auto index) {
-      return new AccountListItem(
-        *m_accounts->m_source->parse(list->get(index)));
+    [=] (const auto& list, auto index) {
+      if(auto account = m_accounts->m_source->parse(list->get(index))) {
+        return new AccountListItem(*account);
+      }
+      return new AccountListItem(AccountListItem::Account());
     });
   m_submit_connection = m_combo_box->connect_submit_signal(
-    [this] (const auto& id) {
+    [=] (const auto& id) {
       if(auto account = m_accounts->m_source->parse(id)) {
         m_submission = *account;
         m_submit_signal(m_submission);
