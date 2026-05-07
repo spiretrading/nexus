@@ -11,13 +11,13 @@ services=(
   "SimulationOrderExecutionServer"
   "RiskServer"
   "WebPortal"
-  "SimulationMarketDataFeedClient"
   "AsxItchMarketDataFeedClient"
   "ChiaMarketDataFeedClient"
   "CseMarketDataFeedClient"
   "NeoeMarketDataFeedClient"
   "TmxTl1MarketDataFeedClient"
   "TmxIpMarketDataFeedClient"
+  "OtcLinkMarketDataFeedClient"
 )
 
 for directory in "${services[@]}"; do
