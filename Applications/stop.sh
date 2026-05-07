@@ -1,18 +1,20 @@
 #!/bin/bash
-services=" SimulationMarketDataFeedClient"
-services+=" WebPortal"
-services+=" RiskServer"
-services+=" SimulationOrderExecutionServer"
-services+=" ComplianceServer"
-services+=" ChartingServer"
-services+=" MarketDataRelayServer"
-services+=" MarketDataServer"
-services+=" AdministrationServer"
-services+=" DefinitionsServer"
-services+=" UidServer"
-services+=" ServiceLocator"
+services=(
+  "SimulationMarketDataFeedClient"
+  "WebPortal"
+  "RiskServer"
+  "SimulationOrderExecutionServer"
+  "ComplianceServer"
+  "ChartingServer"
+  "MarketDataRelayServer"
+  "MarketDataServer"
+  "AdministrationServer"
+  "DefinitionsServer"
+  "UidServer"
+  "ServiceLocator"
+)
 
-for directory in $services; do
+for directory in "${services[@]}"; do
   pushd $directory/Application > /dev/null
   ./stop.sh
   popd > /dev/null
