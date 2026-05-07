@@ -1,5 +1,6 @@
 #!/bin/bash
-NODE_VERSION="22.11.0"
+set -e
+NODE_VERSION="24.15.0"
 ARCH="$(uname -m)"
 
 function print_usage() {
@@ -13,19 +14,20 @@ function print_usage() {
 }
 
 function install_node() {
-  if [ "$ARCH" == "x86_64" ]; then
-    ARCH="x64"
-  elif [[ "$ARCH" == "aarch64" || "$ARCH" == "arm64" ]]; then
-    ARCH="arm64"
+  local node_arch="$ARCH"
+  if [ "$node_arch" == "x86_64" ]; then
+    node_arch="x64"
+  elif [[ "$node_arch" == "aarch64" || "$node_arch" == "arm64" ]]; then
+    node_arch="arm64"
   else
-    echo "Unsupported architecture: $ARCH"
+    echo "Unsupported architecture: $node_arch"
     exit 1
   fi
-  NODE_URL="https://nodejs.org/dist/v$NODE_VERSION/node-v$NODE_VERSION-linux-$ARCH.tar.xz"
-  curl -O $NODE_URL
-  tar -xf node-v$NODE_VERSION-linux-$ARCH.tar.xz
-  sudo cp -r node-v$NODE_VERSION-linux-$ARCH/{bin,include,lib,share} /usr/local/
-  rm -rf node-v$NODE_VERSION-linux-$ARCH node-v$NODE_VERSION-linux-$ARCH.tar.xz
+  local node_dir="node-v$NODE_VERSION-linux-$node_arch"
+  curl -O "https://nodejs.org/dist/v$NODE_VERSION/$node_dir.tar.xz"
+  tar -xf "$node_dir.tar.xz"
+  sudo cp -r "$node_dir"/{bin,include,lib,share} /usr/local/
+  rm -rf "$node_dir" "$node_dir.tar.xz"
 }
 
 function check_and_install_node() {
@@ -41,10 +43,19 @@ function check_and_install_node() {
 function install_dependencies() {
   if [ $is_root -eq 1 ]; then
     apt-get update
-    apt-get install -y automake build-essential cmake curl g++ gcc gdb git \
-      libncurses5-dev libreadline6-dev libtool libxml2 libxml2-dev m4 make \
+    apt-get install -y automake build-essential cmake curl gdb git \
+      libncurses5-dev libreadline6-dev libtool libxml2 libxml2-dev m4 \
       mysql-server parallel python3 python3-dev python3-pip ruby zip
-    snap install yq --channel=v4/stable
+    if ! command -v yq &> /dev/null; then
+      local yq_arch="$ARCH"
+      if [ "$yq_arch" == "x86_64" ]; then
+        yq_arch="amd64"
+      elif [[ "$yq_arch" == "aarch64" || "$yq_arch" == "arm64" ]]; then
+        yq_arch="arm64"
+      fi
+      curl -L "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_$yq_arch" \
+        -o /usr/local/bin/yq && chmod +x /usr/local/bin/yq
+    fi
     check_and_install_node
   fi
 }
@@ -54,7 +65,7 @@ if [ "$EUID" == "0" ]; then
 else
   is_root=0
 fi
-username=$(echo ${SUDO_USER:-${USER}})
+username="${SUDO_USER:-$USER}"
 local_interface=$(echo -n `ip addr | \
   egrep -o "inet ([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}).*global" | \
   egrep -o "([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})" | \
@@ -101,26 +112,17 @@ if [ "$global_interface" == "" ]; then
   global_interface="$local_interface"
 fi
 install_dependencies
-sudo -u $username ./build.sh
+sudo -u $username ./build.sh || { echo "Build failed."; exit 1; }
 mysql_input="
-CREATE USER '$mysql_username'@'localhost' IDENTIFIED WITH mysql_native_password BY '$mysql_password';
+CREATE DATABASE IF NOT EXISTS spire;
+CREATE USER IF NOT EXISTS '$mysql_username'@'localhost' IDENTIFIED WITH mysql_native_password BY '$mysql_password';
+ALTER USER '$mysql_username'@'localhost' IDENTIFIED WITH mysql_native_password BY '$mysql_password';
 GRANT ALL ON spire.* TO '$mysql_username'@'localhost';
-exit
 "
 if [ $is_root -eq 1 ]; then
-  mysql -uroot -e "use spire"
-  if [ "$?" != "0" ]; then
-    mysql -uroot -e "CREATE DATABASE spire;"
-  fi
   mysql -uroot <<< "$mysql_input"
 else
-  sudo -u $username mysql -u$mysql_username -p$mysql_password -e "use spire"
-  if [ "$?" != "0" ]; then
-    sudo -u $username mysql -u$mysql_username -p$mysql_password -e \
-      "CREATE DATABASE spire;"
-  fi
-  sudo -u $username mysql -u$mysql_username -p$mysql_password \
-    <<< "$mysql_input"
+  sudo -u $username mysql -u$mysql_username -p$mysql_password <<< "$mysql_input"
 fi
 pushd Applications
 sudo -u $username python3 setup.py -l "$local_interface" \
