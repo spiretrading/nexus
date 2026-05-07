@@ -17,6 +17,7 @@ services=(
   "NeoeMarketDataFeedClient"
   "TmxTl1MarketDataFeedClient"
   "TmxIpMarketDataFeedClient"
+  "OtcLinkMarketDataFeedClient"
 )
 
 for directory in "${services[@]}"; do
