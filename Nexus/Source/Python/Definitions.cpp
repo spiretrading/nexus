@@ -247,6 +247,7 @@ void Nexus::Python::export_destinations(module& module) {
   submodule.add_object("OMEGA", cast(Destinations::OMEGA));
   submodule.add_object("PURE", cast(Destinations::PURE));
   submodule.add_object("TSX", cast(Destinations::TSX));
+  submodule.add_object("OTCM", cast(Destinations::OTCM));
 }
 
 void Nexus::Python::export_definitions(module& module) {
@@ -715,4 +716,5 @@ void Nexus::Python::export_venues(module& module) {
   submodule.add_object("TSXV", cast(Venues::TSXV));
   submodule.add_object("XATS", cast(Venues::XATS));
   submodule.add_object("XCX2", cast(Venues::XCX2));
+  submodule.add_object("OTCM", cast(Venues::OTCM));
 }

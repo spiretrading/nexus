@@ -33,6 +33,7 @@
 #include "OasisOrderExecutionServer/AsxFixApplication.hpp"
 #include "OasisOrderExecutionServer/FeeCalculatorOrderExecutionDriver.hpp"
 #include "OasisOrderExecutionServer/SerenityFixApplication.hpp"
+#include "OasisOrderExecutionServer/UsFeeTable.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
@@ -94,6 +95,7 @@ namespace {
       serenity_entry.m_destinations.push_back(Destinations::OMEGA);
       serenity_entry.m_destinations.push_back(Destinations::PURE);
       serenity_entry.m_destinations.push_back(Destinations::TSX);
+      serenity_entry.m_destinations.push_back(Destinations::OTCM);
       entries.push_back(serenity_entry);
       return entries;
     }, std::runtime_error("Unable to initialize FIX application."));
@@ -149,13 +151,17 @@ int main(int argc, const char** argv) {
     auto asx_trade_match_fee_table = try_or_nest([&] {
       return parse_asx_trade_match_fee_table(
         get_node(fee_table_config, "au_equities"));
-    }, std::runtime_error("Failed parse section 'au_equities'."));
+    }, std::runtime_error("Failed to parse section 'au_equities'."));
     auto tmx_fee_table = try_or_nest([&] {
       return parse_consolidated_tmx_fee_table(
         get_node(fee_table_config, "ca_equities"));
-    }, std::runtime_error("Failed parse section 'ca_equities'."));
+    }, std::runtime_error("Failed to parse section 'ca_equities'."));
+    auto us_fee_table = try_or_nest([&] {
+      return parse_us_fee_table(get_node(fee_table_config, "us_equities"));
+    }, std::runtime_error("Failed to parse section 'us_equities'."));
     auto fees_calculator = ApplicationFeesCalculatorOrderExecutionDriver(
-      &fix_order_execution_driver, asx_trade_match_fee_table, tmx_fee_table);
+      &fix_order_execution_driver, asx_trade_match_fee_table, tmx_fee_table,
+      us_fee_table);
     auto exchange_rates =
       ExchangeRateTable(definitions_client.load_exchange_rates());
     auto checks = load_order_submission_checks(market_data_client,

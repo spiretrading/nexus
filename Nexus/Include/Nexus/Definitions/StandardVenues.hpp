@@ -171,6 +171,17 @@ namespace Details {
         entry.m_display_name = "TSXV";
         database.add(entry);
       }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("OTCM");
+        entry.m_country_code = Countries::US;
+        entry.m_market_center = "OTCM";
+        entry.m_time_zone = "America/New_York";
+        entry.m_currency = Currencies::USD;
+        entry.m_description = "OTC Markets Group Inc.";
+        entry.m_display_name = "OTCM";
+        database.add(entry);
+      }
       return database;
     }();
     return database;
@@ -198,6 +209,7 @@ namespace Details {
     inline const auto MATN = VENUES.from("MATN").m_venue;
     inline const auto NEOE = VENUES.from("NEOE").m_venue;
     inline const auto OMGA = VENUES.from("OMGA").m_venue;
+    inline const auto OTCM = VENUES.from("OTCM").m_venue;
     inline const auto PURE = VENUES.from("PURE").m_venue;
     inline const auto TSX = VENUES.from("XTSE").m_venue;
     inline const auto TSXV = VENUES.from("XTSX").m_venue;

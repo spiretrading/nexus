@@ -8,5 +8,5 @@ service_locator:
   username: web_portal_service
   password: $admin_password
 
-url: "http://127.0.0.1:8080"
+url: "http://$global_interface:8080"
 ...

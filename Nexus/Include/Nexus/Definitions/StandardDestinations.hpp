@@ -18,6 +18,7 @@ namespace Details {
         entry.m_venues.push_back(Venue("XCNQ"));
         entry.m_venues.push_back(Venue("XTSE"));
         entry.m_venues.push_back(Venue("XTSX"));
+        entry.m_venues.push_back(Venue("OTCM"));
         database.set_manual_order_entry_destination(entry);
       }
       {
@@ -144,12 +145,20 @@ namespace Details {
         entry.m_venues.push_back(Venue("XTSX"));
         database.add(entry);
       }
+      {
+        auto entry = DestinationDatabase::Entry();
+        entry.m_id = "OTCM";
+        entry.m_description = "OTC Markets Group Inc.";
+        entry.m_venues.push_back(Venue("OTCM"));
+        database.add(entry);
+      }
       database.set_preferred_destination(Venue("CSE2"), "CSE");
       database.set_preferred_destination(Venue("NEOE"), "NEOE");
       database.set_preferred_destination(Venue("XASX"), "ASXT");
       database.set_preferred_destination(Venue("XCNQ"), "CSE");
       database.set_preferred_destination(Venue("XTSE"), "TSX");
       database.set_preferred_destination(Venue("XTSX"), "TSX");
+      database.set_preferred_destination(Venue("OTCM"), "OTCM");
       return database;
     }();
     return database;
@@ -182,6 +191,7 @@ namespace Details {
     inline const auto OMEGA = std::string("OMEGA");
     inline const auto PURE = std::string("PURE");
     inline const auto TSX = std::string("TSX");
+    inline const auto OTCM = std::string("OTCM");
   }
 }
 

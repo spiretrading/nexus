@@ -399,6 +399,7 @@ const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
     database.add(Destinations::NEOE, make_neoe_handl_inst_schema());
     database.add(Destinations::TSX, make_tsx_ex_destination_schema());
     database.add(Destinations::TSX, make_tsx_long_life_schema());
+    database.add(Venues::OTCM, make_exec_inst_schema());
     return database;
   }();
   return database;

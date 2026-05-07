@@ -14,7 +14,7 @@ namespace {
   const auto NO_TRADE_FEAT_TAG = 7713;
   const auto NO_TRADE_KEY_TAG = 7714;
   const auto LONG_LIFE_TAG = 7735;
-  const auto UNIFORM_LIQUDITY_TAG = 9730;
+  const auto UNIFORM_LIQUIDITY_TAG = 9730;
   const auto ORIGINAL_LIQUIDITY_TAG = 9731;
   const auto NEO_VISIBILITY_TYPE_TAG = 20000;
 
@@ -75,10 +75,8 @@ std::shared_ptr<Order> SerenityFixApplication::submit(const OrderInfo& info) {
       return &info;
     }
     if(info.m_fields.m_type == OrderType::MARKET &&
-        (info.m_fields.m_time_in_force.get_type() ==
-          TimeInForce::Type::OPG ||
-            info.m_fields.m_time_in_force.get_type() ==
-              TimeInForce::Type::MOC)) {
+        (info.m_fields.m_time_in_force.get_type() == TimeInForce::Type::OPG ||
+        info.m_fields.m_time_in_force.get_type() == TimeInForce::Type::MOC)) {
       return &info;
     }
     modified_info.emplace(info);
@@ -86,94 +84,26 @@ std::shared_ptr<Order> SerenityFixApplication::submit(const OrderInfo& info) {
       modified_info->m_fields.m_type = OrderType::LIMIT;
       modified_info->m_fields.m_price = Money::ZERO;
     }
-    auto bboQuote = load_bbo_quote(modified_info->m_fields.m_ticker);
+    auto bbo_quote = load_bbo_quote(modified_info->m_fields.m_ticker);
     if(modified_info->m_fields.m_price == Money::ZERO) {
       if(info.m_fields.m_side == Side::BID) {
         modified_info->m_fields.m_price =
-          std::max(bboQuote.m_ask.m_price + 2 * Money::CENT,
-            floor_to(1.02 * bboQuote.m_ask.m_price, Money::CENT));
+          std::max(bbo_quote.m_ask.m_price + 2 * Money::CENT,
+            floor_to(1.02 * bbo_quote.m_ask.m_price, Money::CENT));
       } else {
         modified_info->m_fields.m_price =
-          std::max(std::min(bboQuote.m_bid.m_price - 2 * Money::CENT,
-            floor_to(0.98 * bboQuote.m_bid.m_price, Money::CENT)),
+          std::max(std::min(bbo_quote.m_bid.m_price - 2 * Money::CENT,
+            floor_to(0.98 * bbo_quote.m_bid.m_price, Money::CENT)),
             Money::CENT / 2);
       }
     }
     return &*modified_info;
   }();
-  return m_order_log.submit(*submission_info,
-    get_session_id().getSenderCompID(), get_session_id().getTargetCompID(),
-    [&] (Out<FIX42::NewOrderSingle> new_order_single) {
-      if(submission_info->m_fields.m_currency != Currencies::CAD) {
-        throw_with_location(FixOrderRejectedException("Invalid currency."));
-      }
-      if(submission_info->m_fields.m_time_in_force.get_type() ==
-          TimeInForce::Type::GTC ||
-            submission_info->m_fields.m_time_in_force.get_type() ==
-              TimeInForce::Type::GTD) {
-        throw_with_location(
-          FixOrderRejectedException("Invalid time in force."));
-      }
-      if(submission_info->m_fields.m_type == OrderType::STOP) {
-        throw_with_location(FixOrderRejectedException("Invalid order type."));
-      }
-      new_order_single->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");
-      new_order_single->setField(UMIR_USER_ID_TAG, get_umir_user_id());
-      auto no_trade_feat = get_no_trade_feat();
-      auto no_trade_key = get_no_trade_key();
-      if(!no_trade_feat.empty() && !no_trade_key.empty()) {
-        new_order_single->setField(NO_TRADE_FEAT_TAG, no_trade_feat);
-        new_order_single->setField(NO_TRADE_KEY_TAG, no_trade_key);
-      }
-      new_order_single->set(
-        FIX::Account(submission_info->m_submission_account.m_name));
-      if(auto& anonymousTag = get_anonymous_tag()) {
-        new_order_single->setField(ANONYMOUS_TAG, *anonymousTag);
-      }
-      for(auto& tag : submission_info->m_fields.m_additional_fields) {
-        if(tag.get_key() == LONG_LIFE_TAG) {
-          if(auto value = get<std::string>(&tag.get_value())) {
-            if(*value == "Y" || *value == "N") {
-              new_order_single->setField(LONG_LIFE_TAG, *value);
-            }
-          }
-        }
-      }
-      if(submission_info->m_fields.m_destination == Destinations::CHIX ||
-          submission_info->m_fields.m_destination == Destinations::CX2) {
-        route_to_chix(*submission_info, out(new_order_single));
-      } else if(submission_info->m_fields.m_destination == Destinations::CSE ||
-          submission_info->m_fields.m_destination == Destinations::PURE) {
-        route_to_cse(*submission_info, out(new_order_single));
-      } else if(submission_info->m_fields.m_destination ==
-          Destinations::MATNLP || submission_info->m_fields.m_destination ==
-            Destinations::MATNMF) {
-        route_to_matn(*submission_info, out(new_order_single));
-      } else if(submission_info->m_fields.m_destination == Destinations::NEOE) {
-        route_to_neo(*submission_info, out(new_order_single));
-      } else if(submission_info->m_fields.m_destination == Destinations::TSX) {
-        route_to_tsx(*submission_info, out(new_order_single));
-      } else {
-        auto ex_destination = [&] {
-          if(submission_info->m_fields.m_destination == Destinations::CSE2) {
-            return FIX::ExDestination("CSE2");
-          } else if(submission_info->m_fields.m_destination ==
-              Destinations::ALPHA) {
-            return FIX::ExDestination("XATS");
-          } else if(submission_info->m_fields.m_destination ==
-              Destinations::OMEGA) {
-            return FIX::ExDestination("OMGA");
-          } else if(submission_info->m_fields.m_destination ==
-              Destinations::LYNX) {
-            return FIX::ExDestination("LYNX");
-          }
-          BOOST_THROW_EXCEPTION(
-            FixOrderRejectedException("Invalid destination."));
-        }();
-        new_order_single->set(FIX::HandlInst('6'));
-        new_order_single->set(ex_destination);
-      }
-    });
+  if(submission_info->m_fields.m_ticker.get_venue() == Venues::OTCM) {
+    return submit_to_us(*submission_info);
+  } else {
+    return submit_to_ca(*submission_info);
+  }
 }
 
 void SerenityFixApplication::cancel(
@@ -215,75 +145,101 @@ void SerenityFixApplication::fromApp(
 void SerenityFixApplication::onMessage(
     const FIX42::ExecutionReport& message, const FIX::SessionID& session_id) {
   m_order_log.update(message, session_id, m_time_client->get_time(),
-    [=] (const std::shared_ptr<Order>& order, Out<ExecutionReport> update) {
-      auto liquidity_flag = std::string();
-      if(message.isSetField(UNIFORM_LIQUDITY_TAG)) {
-        liquidity_flag = message.getField(UNIFORM_LIQUDITY_TAG);
-      }
-      if(liquidity_flag == "A") {
-        update->m_liquidity_flag = "P";
-      } else if(liquidity_flag == "R") {
-        update->m_liquidity_flag = "A";
-      }
-      auto original_liquidity_flag = std::string();
-      if(message.isSetField(ORIGINAL_LIQUIDITY_TAG)) {
-        original_liquidity_flag = message.getField(ORIGINAL_LIQUIDITY_TAG);
-      }
-      auto last_mkt = FIX::LastMkt();
-      if(message.isSet(last_mkt)) {
-        message.get(last_mkt);
-        if(last_mkt == "XTSX") {
-          update->m_last_market = Venues::TSX.get_code().get_data();
-        } else if(last_mkt == "CHIX") {
-          update->m_last_market = Venues::CHIC.get_code().get_data();
-        } else if(last_mkt == "XCXD") {
-          if(!original_liquidity_flag.empty()) {
-            update->m_liquidity_flag = original_liquidity_flag;
-          }
-          update->m_last_market = Venues::CHIC.get_code().get_data();
-        } else if(last_mkt == "XCX2") {
-          update->m_last_market = Venues::XCX2.get_code().get_data();
-        } else if(last_mkt == "MATN") {
-          update->m_last_market = Venues::MATN.get_code().get_data();
-        } else if(last_mkt == "XCNQ") {
-          if(order->get_info().m_fields.m_ticker.get_venue() == Venues::CSE) {
-            update->m_last_market = Venues::CSE.get_code().get_data();
-          } else {
-            update->m_last_market = Venues::PURE.get_code().get_data();
-          }
-        } else if(last_mkt == "CSE2") {
-          update->m_last_market = Venues::CSE2.get_code().get_data();
-        } else if(last_mkt == "XATS") {
-          update->m_last_market = Venues::XATS.get_code().get_data();
-        } else if(last_mkt == "OMGA") {
-          update->m_last_market = Venues::OMGA.get_code().get_data();
-        } else if(last_mkt == "LYNX") {
-          update->m_last_market = Venues::LYNX.get_code().get_data();
-        } else if(
-            last_mkt == "NEON" || last_mkt == "NEOL" || last_mkt == "NEOD") {
-          update->m_last_market = Venues::NEOE.get_code().get_data();
-        } else if(last_mkt == "TSXV") {
-          update->m_last_market = Venues::TSXV.get_code().get_data();
-        }
-      }
-      if(update->m_last_market == Venues::TSXV.get_code() ||
-          update->m_last_market == Venues::TSX.get_code()) {
-        if(original_liquidity_flag == "O") {
-          update->m_liquidity_flag = "O";
-        } else if(original_liquidity_flag.size() >= 3) {
-          auto subflag = original_liquidity_flag.substr(1, 2);
-          if(subflag == "AO" || subflag == "AE") {
-            update->m_liquidity_flag = subflag;
-          }
-        }
-      } else if(update->m_last_market == Venues::PURE.get_code() ||
-          update->m_last_market == Venues::CSE.get_code() ||
-          update->m_last_market == Venues::CSE2.get_code()) {
-        if(original_liquidity_flag == "TC") {
-          update->m_liquidity_flag = "TC";
-        }
+    [=, this] (
+        const std::shared_ptr<Order>& order, Out<ExecutionReport> update) {
+      auto venue = order->get_info().m_fields.m_ticker.get_venue();
+      if(venue == Venues::OTCM) {
+        on_us_message(*order, message, out(update));
+      } else {
+        on_ca_message(*order, message, out(update));
       }
   });
+}
+
+void SerenityFixApplication::on_ca_message(const Order& order,
+    const FIX42::ExecutionReport& message, Out<ExecutionReport> update) {
+  auto liquidity_flag = std::string();
+  if(message.isSetField(UNIFORM_LIQUIDITY_TAG)) {
+    liquidity_flag = message.getField(UNIFORM_LIQUIDITY_TAG);
+  }
+  if(liquidity_flag == "A") {
+    update->m_liquidity_flag = "P";
+  } else if(liquidity_flag == "R") {
+    update->m_liquidity_flag = "A";
+  }
+  auto original_liquidity_flag = std::string();
+  if(message.isSetField(ORIGINAL_LIQUIDITY_TAG)) {
+    original_liquidity_flag = message.getField(ORIGINAL_LIQUIDITY_TAG);
+  }
+  auto last_mkt = FIX::LastMkt();
+  if(message.isSet(last_mkt)) {
+    message.get(last_mkt);
+    if(last_mkt == "XTSX") {
+      update->m_last_market = Venues::TSX.get_code().get_data();
+    } else if(last_mkt == "CHIX") {
+      update->m_last_market = Venues::CHIC.get_code().get_data();
+    } else if(last_mkt == "XCXD") {
+      if(!original_liquidity_flag.empty()) {
+        update->m_liquidity_flag = original_liquidity_flag;
+      }
+      update->m_last_market = Venues::CHIC.get_code().get_data();
+    } else if(last_mkt == "XCX2") {
+      update->m_last_market = Venues::XCX2.get_code().get_data();
+    } else if(last_mkt == "MATN") {
+      update->m_last_market = Venues::MATN.get_code().get_data();
+    } else if(last_mkt == "XCNQ") {
+      if(order.get_info().m_fields.m_ticker.get_venue() ==
+          Venues::CSE) {
+        update->m_last_market = Venues::CSE.get_code().get_data();
+      } else {
+        update->m_last_market = Venues::PURE.get_code().get_data();
+      }
+    } else if(last_mkt == "CSE2") {
+      update->m_last_market = Venues::CSE2.get_code().get_data();
+    } else if(last_mkt == "XATS") {
+      update->m_last_market = Venues::XATS.get_code().get_data();
+    } else if(last_mkt == "OMGA") {
+      update->m_last_market = Venues::OMGA.get_code().get_data();
+    } else if(last_mkt == "LYNX") {
+      update->m_last_market = Venues::LYNX.get_code().get_data();
+    } else if(
+        last_mkt == "NEON" || last_mkt == "NEOL" || last_mkt == "NEOD") {
+      update->m_last_market = Venues::NEOE.get_code().get_data();
+    } else if(last_mkt == "TSXV") {
+      update->m_last_market = Venues::TSXV.get_code().get_data();
+    }
+  }
+  if(update->m_last_market == Venues::TSXV.get_code() ||
+      update->m_last_market == Venues::TSX.get_code()) {
+    if(original_liquidity_flag == "O") {
+      update->m_liquidity_flag = "O";
+    } else if(original_liquidity_flag.size() >= 3) {
+      auto subflag = original_liquidity_flag.substr(1, 2);
+      if(subflag == "AO" || subflag == "AE") {
+        update->m_liquidity_flag = subflag;
+      }
+    }
+  } else if(update->m_last_market == Venues::PURE.get_code() ||
+      update->m_last_market == Venues::CSE.get_code() ||
+      update->m_last_market == Venues::CSE2.get_code()) {
+    if(original_liquidity_flag == "TC") {
+      update->m_liquidity_flag = "TC";
+    }
+  }
+}
+
+void SerenityFixApplication::on_us_message(const Order& order,
+    const FIX42::ExecutionReport& message, Out<ExecutionReport> update) {
+  auto last_mkt = FIX::LastMkt();
+  if(message.isSet(last_mkt)) {
+    message.get(last_mkt);
+    if(last_mkt == "US01") {
+      update->m_last_market = Venues::OTCM.get_code().get_data();
+      if(message.isSetField(ORIGINAL_LIQUIDITY_TAG)) {
+        update->m_liquidity_flag = message.getField(ORIGINAL_LIQUIDITY_TAG);
+      }
+    }
+  }
 }
 
 void SerenityFixApplication::onMessage(
@@ -304,6 +260,110 @@ BboQuote SerenityFixApplication::load_bbo_quote(const Ticker& ticker) {
     m_bbo_quotes.erase(ticker);
     throw_with_location(FixOrderRejectedException("No BBO quote available."));
   }
+}
+
+std::shared_ptr<Order> SerenityFixApplication::submit_to_ca(
+    const OrderInfo& info) {
+  return m_order_log.submit(info,
+    get_session_id().getSenderCompID(), get_session_id().getTargetCompID(),
+    [&] (Out<FIX42::NewOrderSingle> new_order_single) {
+      if(info.m_fields.m_currency != Currencies::CAD) {
+        throw_with_location(FixOrderRejectedException("Invalid currency."));
+      }
+      if(info.m_fields.m_time_in_force.get_type() == TimeInForce::Type::GTC ||
+          info.m_fields.m_time_in_force.get_type() == TimeInForce::Type::GTD) {
+        throw_with_location(
+          FixOrderRejectedException("Invalid time in force."));
+      }
+      if(info.m_fields.m_type == OrderType::STOP) {
+        throw_with_location(FixOrderRejectedException("Invalid order type."));
+      }
+      new_order_single->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");
+      new_order_single->setField(UMIR_USER_ID_TAG, get_umir_user_id());
+      auto no_trade_feat = get_no_trade_feat();
+      auto no_trade_key = get_no_trade_key();
+      if(!no_trade_feat.empty() && !no_trade_key.empty()) {
+        new_order_single->setField(NO_TRADE_FEAT_TAG, no_trade_feat);
+        new_order_single->setField(NO_TRADE_KEY_TAG, no_trade_key);
+      }
+      new_order_single->set(FIX::Account(info.m_submission_account.m_name));
+      if(auto& anonymousTag = get_anonymous_tag()) {
+        new_order_single->setField(ANONYMOUS_TAG, *anonymousTag);
+      }
+      for(auto& tag : info.m_fields.m_additional_fields) {
+        if(tag.get_key() == LONG_LIFE_TAG) {
+          if(auto value = get<std::string>(&tag.get_value())) {
+            if(*value == "Y" || *value == "N") {
+              new_order_single->setField(LONG_LIFE_TAG, *value);
+            }
+          }
+        }
+      }
+      if(info.m_fields.m_destination == Destinations::CHIX ||
+          info.m_fields.m_destination == Destinations::CX2) {
+        route_to_chix(info, out(new_order_single));
+      } else if(info.m_fields.m_destination == Destinations::CSE ||
+          info.m_fields.m_destination == Destinations::PURE) {
+        route_to_cse(info, out(new_order_single));
+      } else if(info.m_fields.m_destination == Destinations::MATNLP ||
+          info.m_fields.m_destination == Destinations::MATNMF) {
+        route_to_matn(info, out(new_order_single));
+      } else if(info.m_fields.m_destination == Destinations::NEOE) {
+        route_to_neo(info, out(new_order_single));
+      } else if(info.m_fields.m_destination == Destinations::TSX) {
+        route_to_tsx(info, out(new_order_single));
+      } else {
+        auto ex_destination = [&] {
+          if(info.m_fields.m_destination == Destinations::CSE2) {
+            return FIX::ExDestination("CSE2");
+          } else if(info.m_fields.m_destination == Destinations::ALPHA) {
+            return FIX::ExDestination("XATS");
+          } else if(info.m_fields.m_destination == Destinations::OMEGA) {
+            return FIX::ExDestination("OMGA");
+          } else if(info.m_fields.m_destination == Destinations::LYNX) {
+            return FIX::ExDestination("LYNX");
+          }
+          BOOST_THROW_EXCEPTION(
+            FixOrderRejectedException("Invalid destination."));
+        }();
+        new_order_single->set(FIX::HandlInst('6'));
+        new_order_single->set(ex_destination);
+      }
+    });
+}
+
+std::shared_ptr<Order> SerenityFixApplication::submit_to_us(
+    const OrderInfo& info) {
+  return m_order_log.submit(info, get_session_id().getSenderCompID(),
+    get_session_id().getTargetCompID(),
+    [&] (Out<FIX42::NewOrderSingle> new_order_single) {
+      if(info.m_shorting_flag) {
+        throw_with_location(
+          FixOrderRejectedException("Short sale not allowed."));
+      }
+      if(info.m_fields.m_currency != Currencies::USD) {
+        throw_with_location(FixOrderRejectedException("Invalid currency."));
+      }
+      if(info.m_fields.m_time_in_force.get_type() == TimeInForce::Type::GTC ||
+          info.m_fields.m_time_in_force.get_type() == TimeInForce::Type::GTD) {
+        throw_with_location(
+          FixOrderRejectedException("Invalid time in force."));
+      }
+      if(info.m_fields.m_type == OrderType::STOP) {
+        throw_with_location(FixOrderRejectedException("Invalid order type."));
+      }
+      new_order_single->setField(UMIR_ACCOUNT_TYPE_TAG, "CL");
+      new_order_single->setField(UMIR_USER_ID_TAG, get_umir_user_id());
+      new_order_single->set(FIX::Account(info.m_submission_account.m_name));
+      auto ex_destination = [&] {
+        if(info.m_fields.m_destination == Destinations::OTCM) {
+          return FIX::ExDestination("US01");
+        }
+        BOOST_THROW_EXCEPTION(
+          FixOrderRejectedException("Invalid destination."));
+      }();
+      new_order_single->set(ex_destination);
+    });
 }
 
 void SerenityFixApplication::route_to_chix(
@@ -560,7 +620,8 @@ std::string SerenityFixApplication::get_umir_user_id() const {
 
 std::string SerenityFixApplication::get_no_trade_feat() const {
   if(get_session_settings().get(get_session_id()).has("NoTradeFeat")) {
-    return get_session_settings().get(get_session_id()).getString("NoTradeFeat");
+    return get_session_settings().get(
+      get_session_id()).getString("NoTradeFeat");
   }
   return {};
 }
