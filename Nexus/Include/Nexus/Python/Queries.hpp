@@ -5,6 +5,18 @@
 namespace Nexus::Python {
 
   /**
+   * Exports the BboQuoteAccessor class.
+   * @param module The module to export to.
+   */
+  void export_bbo_quote_accessor(pybind11::module& module);
+
+  /**
+   * Exports the QuoteAccessor class.
+   * @param module The module to export to.
+   */
+  void export_quote_accessor(pybind11::module& module);
+
+  /**
    * Exports the OrderFieldsAccessor class.
    * @param module The module to export to.
    */

@@ -7,6 +7,8 @@
 namespace Nexus {
   BEAM_REGISTER_TYPES(register_value_types,
     (QuantityValue, "Nexus.Queries.QuantityValue"),
+    (SideValue, "Nexus.Queries.SideValue"),
+    (QuoteValue, "Nexus.Queries.QuoteValue"),
     (TickerValue, "Nexus.Queries.TickerValue"),
     (TickerInfoValue, "Nexus.Queries.TickerInfoValue"),
     (MoneyValue, "Nexus.Queries.MoneyValue"),
@@ -23,6 +25,8 @@ namespace Nexus {
     Beam::register_query_types(out(registry));
     registry->add(typeid(Money), "Nexus.Money");
     registry->add(typeid(Quantity), "Nexus.Quantity");
+    registry->add(typeid(Side), "Nexus.Side");
+    registry->add(typeid(Quote), "Nexus.Quote");
     registry->add(typeid(Ticker), "Nexus.Ticker");
     registry->add(typeid(TickerInfo), "Nexus.TickerInfo");
     registry->add(typeid(OrderImbalance), "Nexus.OrderImbalance");

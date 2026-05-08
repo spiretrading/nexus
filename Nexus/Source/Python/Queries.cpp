@@ -1,5 +1,7 @@
 #include "Nexus/Python/Queries.hpp"
 #include <Beam/Python/Beam.hpp>
+#include "Nexus/Queries/BboQuoteAccessor.hpp"
+#include "Nexus/Queries/QuoteAccessor.hpp"
 #include "Nexus/Queries/OrderFieldsAccessor.hpp"
 #include "Nexus/Queries/OrderInfoAccessor.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
@@ -42,7 +44,27 @@ void Nexus::Python::export_order_info_accessor(module& module) {
     def_property_readonly("is_live", &OrderInfoAccessor::is_live);
 }
 
+void Nexus::Python::export_bbo_quote_accessor(module& module) {
+  class_<BboQuoteAccessor>(module, "BboQuoteAccessor").
+    def(init<Expression>()).
+    def_static("from_parameter", &BboQuoteAccessor::from_parameter).
+    def_property_readonly("bid", &BboQuoteAccessor::get_bid).
+    def_property_readonly("ask", &BboQuoteAccessor::get_ask).
+    def_property_readonly("timestamp", &BboQuoteAccessor::get_timestamp);
+}
+
+void Nexus::Python::export_quote_accessor(module& module) {
+  class_<QuoteAccessor>(module, "QuoteAccessor").
+    def(init<Expression>()).
+    def_static("from_parameter", &QuoteAccessor::from_parameter).
+    def_property_readonly("price", &QuoteAccessor::get_price).
+    def_property_readonly("size", &QuoteAccessor::get_size).
+    def_property_readonly("side", &QuoteAccessor::get_side);
+}
+
 void Nexus::Python::export_queries(module& module) {
+  export_bbo_quote_accessor(module);
+  export_quote_accessor(module);
   export_order_fields_accessor(module);
   export_order_info_accessor(module);
   export_ticker_accessor(module);
