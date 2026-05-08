@@ -38,6 +38,10 @@ namespace Nexus {
       void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<BookQuote> queue);
       void query(const TickerQuery& query,
+        Beam::ScopedQueueWriter<SequencedTickerStatus> queue);
+      void query(const TickerQuery& query,
+        Beam::ScopedQueueWriter<TickerStatus> queue);
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
       void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<TimeAndSale> queue);
@@ -112,6 +116,24 @@ namespace Nexus {
 
   inline void DistributedMarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<BookQuote> queue) {
+    if(auto client = m_market_data_clients.get(query.get_index())) {
+      client->query(query, std::move(queue));
+    } else {
+      queue.close();
+    }
+  }
+
+  inline void DistributedMarketDataClient::query(const TickerQuery& query,
+      Beam::ScopedQueueWriter<SequencedTickerStatus> queue) {
+    if(auto client = m_market_data_clients.get(query.get_index())) {
+      client->query(query, std::move(queue));
+    } else {
+      queue.close();
+    }
+  }
+
+  inline void DistributedMarketDataClient::query(const TickerQuery& query,
+      Beam::ScopedQueueWriter<TickerStatus> queue) {
     if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
     } else {
