@@ -1,9 +1,9 @@
 #ifndef NEXUS_QUERY_STANDARD_DATA_TYPES_HPP
 #define NEXUS_QUERY_STANDARD_DATA_TYPES_HPP
+#include <variant>
 #include <Beam/Queries/EvaluatorTranslator.hpp>
 #include <Beam/Queries/SequencedValue.hpp>
 #include <boost/mp11/list.hpp>
-#include <boost/variant/variant.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/Money.hpp"
@@ -16,7 +16,7 @@
 #include "Nexus/Queries/TimeAndSaleAccessor.hpp"
 
 namespace Nexus {
-  using QueryVariant = boost::variant<bool, char, int, double, std::uint64_t,
+  using QueryVariant = std::variant<bool, char, int, double, std::uint64_t,
     std::string, boost::posix_time::ptime, boost::posix_time::time_duration,
     Quantity, Money, Side, Quote, Ticker, TickerInfo, OrderImbalance, BboQuote,
     BookQuote, TickerStatus, TimeAndSale, OrderFields, OrderInfo>;

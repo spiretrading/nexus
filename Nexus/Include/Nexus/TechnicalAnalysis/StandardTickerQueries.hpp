@@ -365,7 +365,7 @@ namespace Nexus {
     client.query(make_daily_high_query(ticker, start, end, time_zones),
       Beam::convert<QueryVariant>(std::move(queue),
         [] (const QueryVariant& value) {
-          return boost::get<Money>(value);
+          return std::get<Money>(value);
         }));
   }
 
@@ -432,7 +432,7 @@ namespace Nexus {
     client.query(make_daily_low_query(ticker, start, end, time_zones),
       Beam::convert<QueryVariant>(std::move(queue),
         [] (const QueryVariant& value) {
-          return boost::get<Money>(value);
+          return std::get<Money>(value);
         }));
   }
 
@@ -498,7 +498,7 @@ namespace Nexus {
     client.query(make_daily_volume_query(ticker, start, end, time_zones),
       Beam::convert<QueryVariant>(std::move(queue),
         [] (const QueryVariant& value) {
-          return boost::get<Quantity>(value);
+          return std::get<Quantity>(value);
         }));
   }
 

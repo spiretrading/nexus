@@ -14,6 +14,15 @@ using namespace Beam::Python;
 using namespace Nexus;
 using namespace pybind11;
 
+void Nexus::Python::export_bbo_quote_accessor(module& module) {
+  class_<BboQuoteAccessor>(module, "BboQuoteAccessor").
+    def(init<Expression>()).
+    def_static("from_parameter", &BboQuoteAccessor::from_parameter).
+    def_property_readonly("bid", &BboQuoteAccessor::get_bid).
+    def_property_readonly("ask", &BboQuoteAccessor::get_ask).
+    def_property_readonly("timestamp", &BboQuoteAccessor::get_timestamp);
+}
+
 void Nexus::Python::export_order_fields_accessor(module& module) {
   class_<OrderFieldsAccessor>(module, "OrderFieldsAccessor").
     def(init<Expression>()).
@@ -44,15 +53,6 @@ void Nexus::Python::export_order_info_accessor(module& module) {
     def_property_readonly("is_live", &OrderInfoAccessor::is_live);
 }
 
-void Nexus::Python::export_bbo_quote_accessor(module& module) {
-  class_<BboQuoteAccessor>(module, "BboQuoteAccessor").
-    def(init<Expression>()).
-    def_static("from_parameter", &BboQuoteAccessor::from_parameter).
-    def_property_readonly("bid", &BboQuoteAccessor::get_bid).
-    def_property_readonly("ask", &BboQuoteAccessor::get_ask).
-    def_property_readonly("timestamp", &BboQuoteAccessor::get_timestamp);
-}
-
 void Nexus::Python::export_quote_accessor(module& module) {
   class_<QuoteAccessor>(module, "QuoteAccessor").
     def(init<Expression>()).
@@ -79,6 +79,7 @@ void Nexus::Python::export_queries(module& module) {
   export_queue_suite<Ticker>(module, "Ticker");
   export_queue_suite<Venue>(module, "Venue");
   export_queue_suite<TickerInfo>(module, "TickerInfo");
+  export_queue_suite<TickerStatus>(module, "TickerStatus");
 }
 
 void Nexus::Python::export_ticker_accessor(module& module) {
@@ -105,11 +106,14 @@ void Nexus::Python::export_time_and_sale_accessor(module& module) {
 void Nexus::Python::export_value(module& module) {
   export_native_value<QuantityValue>(module, "QuantityValue");
   export_native_value<MoneyValue>(module, "MoneyValue");
+  export_native_value<SideValue>(module, "SideValue");
+  export_native_value<QuoteValue>(module, "QuoteValue");
   export_native_value<TickerValue>(module, "TickerValue");
   export_native_value<TickerInfoValue>(module, "TickerInfoValue");
   export_native_value<OrderImbalanceValue>(module, "OrderImbalanceValue");
   export_native_value<BboQuoteValue>(module, "BboQuoteValue");
   export_native_value<BookQuoteValue>(module, "BookQuoteValue");
+  export_native_value<TickerStatusValue>(module, "TickerStatusValue");
   export_native_value<TimeAndSaleValue>(module, "TimeAndSaleValue");
   export_native_value<OrderFieldsValue>(module, "OrderFieldsValue");
   export_native_value<OrderInfoValue>(module, "OrderInfoValue");
