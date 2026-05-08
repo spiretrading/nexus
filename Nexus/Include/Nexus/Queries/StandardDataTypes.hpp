@@ -18,13 +18,13 @@
 namespace Nexus {
   using QueryVariant = std::variant<bool, char, int, double, std::uint64_t,
     std::string, boost::posix_time::ptime, boost::posix_time::time_duration,
-    Quantity, Money, Side, Quote, Ticker, TickerInfo, OrderImbalance, BboQuote,
-    BookQuote, TickerStatus, TimeAndSale, OrderFields, OrderInfo>;
+    Quantity, Money, Side, Quote, Venue, Ticker, TickerInfo, OrderImbalance,
+    BboQuote, BookQuote, TickerStatus, TimeAndSale, OrderFields, OrderInfo>;
   using SequencedQueryVariant = Beam::SequencedValue<QueryVariant>;
 
   struct QueryTypes {
     using ExtendedNativeTypes = boost::mp11::mp_list<Quantity, Money, Side,
-      Quote, Ticker, TickerInfo, OrderImbalance, BboQuote, BookQuote,
+      Quote, Venue, Ticker, TickerInfo, OrderImbalance, BboQuote, BookQuote,
       TickerStatus, TimeAndSale, OrderFields, OrderInfo>;
     using NativeTypes = boost::mp11::mp_append<
       Beam::QueryTypes::NativeTypes, ExtendedNativeTypes>;

@@ -3,7 +3,9 @@
 #include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Queries/BboQuoteAccessor.hpp"
+#include "Nexus/Queries/BookQuoteAccessor.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
+#include "Nexus/Queries/OrderImbalanceAccessor.hpp"
 #include "Nexus/Queries/QuoteAccessor.hpp"
 
 using namespace Beam;
@@ -112,10 +114,118 @@ TEST_SUITE("EvaluatorTranslator") {
     auto bbo_above =
       BboQuote(make_bid(2 * Money::ONE, 100), make_ask(3 * Money::ONE, 200),
         time_from_string("2026-05-08 09:30:00"));
-    REQUIRE(evaluator->eval<bool>(bbo_above) == true);
+    REQUIRE(evaluator->eval<bool>(bbo_above));
     auto bbo_below =
       BboQuote(make_bid(Money::CENT, 100), make_ask(Money::ONE, 200),
         time_from_string("2026-05-08 09:30:01"));
-    REQUIRE(evaluator->eval<bool>(bbo_below) == false);
+    REQUIRE(!evaluator->eval<bool>(bbo_below));
+  }
+
+  TEST_CASE("book_quote_mpid") {
+    auto accessor = BookQuoteAccessor::from_parameter(0);
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(accessor.get_mpid());
+    auto quote = BookQuote("MM01", true, Venues::TSX, make_bid(Money::ONE, 100),
+      time_from_string("2026-05-08 09:30:00"));
+    REQUIRE(evaluator->eval<std::string>(quote) == "MM01");
+  }
+
+  TEST_CASE("book_quote_is_primary_mpid") {
+    auto accessor = BookQuoteAccessor::from_parameter(0);
+    auto evaluator =
+      translate<Nexus::EvaluatorTranslator>(accessor.is_primary_mpid());
+    auto quote = BookQuote("MM01", true, Venues::TSX, make_bid(Money::ONE, 100),
+      time_from_string("2026-05-08 09:30:00"));
+    REQUIRE(evaluator->eval<bool>(quote));
+  }
+
+  TEST_CASE("book_quote_venue") {
+    auto accessor = BookQuoteAccessor::from_parameter(0);
+    auto evaluator =
+      translate<Nexus::EvaluatorTranslator>(accessor.get_venue());
+    auto quote = BookQuote("MM01", true, Venues::TSX, make_bid(Money::ONE, 100),
+      time_from_string("2026-05-08 09:30:00"));
+    REQUIRE(evaluator->eval<Venue>(quote) == Venues::TSX);
+  }
+
+  TEST_CASE("book_quote_timestamp") {
+    auto accessor = BookQuoteAccessor::from_parameter(0);
+    auto evaluator =
+      translate<Nexus::EvaluatorTranslator>(accessor.get_timestamp());
+    auto timestamp = time_from_string("2026-05-08 09:30:00");
+    auto quote = BookQuote(
+      "MM01", true, Venues::TSX, make_bid(Money::ONE, 100), timestamp);
+    REQUIRE(evaluator->eval<ptime>(quote) == timestamp);
+  }
+
+  TEST_CASE("book_quote_quote_price") {
+    auto book_accessor = BookQuoteAccessor::from_parameter(0);
+    auto quote_accessor = QuoteAccessor(book_accessor.get_quote());
+    auto evaluator =
+      translate<Nexus::EvaluatorTranslator>(quote_accessor.get_price());
+    auto quote = BookQuote("MM01", true, Venues::TSX,
+      make_bid(5 * Money::ONE, 500), time_from_string("2026-05-08 09:30:00"));
+    REQUIRE(evaluator->eval<Money>(quote) == 5 * Money::ONE);
+  }
+
+  TEST_CASE("book_quote_mpid_filter") {
+    auto accessor = BookQuoteAccessor::from_parameter(0);
+    auto filter = accessor.get_mpid() ==
+      ConstantExpression(std::string("MM01"));
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(filter);
+    auto match = BookQuote("MM01", true, Venues::TSX, make_bid(Money::ONE, 100),
+      time_from_string("2026-05-08 09:30:00"));
+    REQUIRE(evaluator->eval<bool>(match));
+    auto no_match = BookQuote("MM02", false, Venues::TSX,
+      make_bid(Money::ONE, 100), time_from_string("2026-05-08 09:30:01"));
+    REQUIRE(!evaluator->eval<bool>(no_match));
+  }
+
+  TEST_CASE("order_imbalance_side") {
+    auto accessor = OrderImbalanceAccessor::from_parameter(0);
+    auto evaluator =
+      translate<Nexus::EvaluatorTranslator>(accessor.get_side());
+    auto imbalance = OrderImbalance(parse_ticker("A.TSX"), Side::BID, 1000,
+      Money::ONE, time_from_string("2026-05-08 15:50:00"));
+    REQUIRE(evaluator->eval<Side>(imbalance) == Side::BID);
+  }
+
+  TEST_CASE("order_imbalance_size") {
+    auto accessor = OrderImbalanceAccessor::from_parameter(0);
+    auto evaluator =
+      translate<Nexus::EvaluatorTranslator>(accessor.get_size());
+    auto imbalance = OrderImbalance(parse_ticker("A.TSX"), Side::ASK, 500,
+      2 * Money::ONE, time_from_string("2026-05-08 15:50:00"));
+    REQUIRE(evaluator->eval<Quantity>(imbalance) == Quantity(500));
+  }
+
+  TEST_CASE("order_imbalance_reference_price") {
+    auto accessor = OrderImbalanceAccessor::from_parameter(0);
+    auto evaluator =
+      translate<Nexus::EvaluatorTranslator>(accessor.get_reference_price());
+    auto imbalance = OrderImbalance(parse_ticker("A.TSX"), Side::BID, 1000,
+      5 * Money::ONE, time_from_string("2026-05-08 15:50:00"));
+    REQUIRE(evaluator->eval<Money>(imbalance) == 5 * Money::ONE);
+  }
+
+  TEST_CASE("order_imbalance_timestamp") {
+    auto accessor = OrderImbalanceAccessor::from_parameter(0);
+    auto evaluator =
+      translate<Nexus::EvaluatorTranslator>(accessor.get_timestamp());
+    auto timestamp = time_from_string("2026-05-08 15:50:00");
+    auto imbalance = OrderImbalance(
+      parse_ticker("A.TSX"), Side::BID, 1000, Money::ONE, timestamp);
+    REQUIRE(evaluator->eval<ptime>(imbalance) == timestamp);
+  }
+
+  TEST_CASE("order_imbalance_size_filter") {
+    auto accessor = OrderImbalanceAccessor::from_parameter(0);
+    auto filter = accessor.get_size() > ConstantExpression(Quantity(500));
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(filter);
+    auto large = OrderImbalance(parse_ticker("A.TSX"), Side::BID, 1000,
+      Money::ONE, time_from_string("2026-05-08 15:50:00"));
+    REQUIRE(evaluator->eval<bool>(large));
+    auto small = OrderImbalance(parse_ticker("A.TSX"), Side::ASK, 100,
+      Money::ONE, time_from_string("2026-05-08 15:50:01"));
+    REQUIRE(!evaluator->eval<bool>(small));
   }
 }
