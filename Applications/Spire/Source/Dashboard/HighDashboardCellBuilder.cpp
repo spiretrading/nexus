@@ -20,7 +20,7 @@ std::unique_ptr<DashboardCell> HighDashboardCellBuilder::Make(
   auto baseQueue = std::make_shared<Queue<Nexus::QueryVariant>>();
   auto queue = std::static_pointer_cast<QueueReader<Money>>(
     convert(baseQueue, [] (const Nexus::QueryVariant& value) {
-      return boost::get<Money>(value);
+      return std::get<Money>(value);
     }));
   serviceClients.get_charting_client().query(query, baseQueue);
   return std::make_unique<QueueDashboardCell>(queue);
