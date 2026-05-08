@@ -46,6 +46,10 @@ namespace Nexus {
       void query(
         const TickerQuery& query, Beam::ScopedQueueWriter<BookQuote> queue);
       void query(const TickerQuery& query,
+        Beam::ScopedQueueWriter<SequencedTickerStatus> queue);
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue);
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
       void query(
         const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue);
@@ -130,6 +134,20 @@ namespace Nexus {
   template<IsMarketDataClient C>
   void ToPythonMarketDataClient<C>::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<BookQuote> queue) {
+    auto release = Beam::Python::GilRelease();
+    m_client->query(query, std::move(queue));
+  }
+
+  template<IsMarketDataClient C>
+  void ToPythonMarketDataClient<C>::query(const TickerQuery& query,
+      Beam::ScopedQueueWriter<SequencedTickerStatus> queue) {
+    auto release = Beam::Python::GilRelease();
+    m_client->query(query, std::move(queue));
+  }
+
+  template<IsMarketDataClient C>
+  void ToPythonMarketDataClient<C>::query(const TickerQuery& query,
+      Beam::ScopedQueueWriter<TickerStatus> queue) {
     auto release = Beam::Python::GilRelease();
     m_client->query(query, std::move(queue));
   }

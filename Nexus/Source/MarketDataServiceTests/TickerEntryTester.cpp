@@ -67,6 +67,29 @@ TEST_SUITE("TickerEntry") {
     REQUIRE(result_ask2->get_sequence() == Beam::Sequence(53));
   }
 
+  TEST_CASE("publish_ticker_status") {
+    auto initial_sequences = TickerEntry::InitialSequences();
+    initial_sequences.m_next_ticker_status_sequence = Beam::Sequence(30);
+    auto ticker = parse_ticker("TST.TSX");
+    auto entry = TickerEntry(ticker, Money::ONE, initial_sequences);
+    auto status1 =
+      TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        time_from_string("2024-07-11 09:30:00"));
+    auto result1 = entry.publish(status1, 1);
+    REQUIRE(result1);
+    REQUIRE(***result1 == status1);
+    REQUIRE((*result1)->get_index() == ticker);
+    REQUIRE(result1->get_sequence() == Beam::Sequence(30));
+    auto status2 = TickerStatus(
+      TSX, "AuthorizedHalted", TickerStatus::Flag::IS_ACCEPTING_CANCELS,
+      time_from_string("2024-07-11 10:00:00"));
+    auto result2 = entry.publish(status2, 1);
+    REQUIRE(result2);
+    REQUIRE(***result2 == status2);
+    REQUIRE((*result2)->get_index() == ticker);
+    REQUIRE(result2->get_sequence() == Beam::Sequence(31));
+  }
+
   TEST_CASE("publish_time_and_sale") {
     auto initial_sequences = TickerEntry::InitialSequences();
     initial_sequences.m_next_time_and_sale_sequence = Beam::Sequence(100);
@@ -211,25 +234,32 @@ TEST_SUITE("TickerEntry") {
       TickerBookQuote(BookQuote(), ticker1), Beam::Sequence(12)));
     data_store.store(SequencedTickerBookQuote(
       TickerBookQuote(BookQuote(), ticker1), Beam::Sequence(18)));
+    data_store.store(SequencedIndexedTickerStatus(
+      IndexedTickerStatus(TickerStatus(), ticker1), Beam::Sequence(20)));
     data_store.store(SequencedTickerTimeAndSale(
       TickerTimeAndSale(TimeAndSale(), ticker1), Beam::Sequence(22)));
     data_store.store(SequencedTickerBboQuote(
       TickerBboQuote(BboQuote(), ticker2), Beam::Sequence(1)));
     data_store.store(SequencedTickerBookQuote(
       TickerBookQuote(BookQuote(), ticker2), Beam::Sequence(2)));
+    data_store.store(SequencedIndexedTickerStatus(
+      IndexedTickerStatus(TickerStatus(), ticker2), Beam::Sequence(3)));
     data_store.store(SequencedTickerTimeAndSale(
       TickerTimeAndSale(TimeAndSale(), ticker2), Beam::Sequence(3)));
     auto sequences1 = load_initial_sequences(data_store, ticker1);
     REQUIRE(sequences1.m_next_bbo_quote_sequence == Beam::Sequence(8));
     REQUIRE(sequences1.m_next_book_quote_sequence == Beam::Sequence(19));
+    REQUIRE(sequences1.m_next_ticker_status_sequence == Beam::Sequence(21));
     REQUIRE(sequences1.m_next_time_and_sale_sequence == Beam::Sequence(23));
     auto sequences2 = load_initial_sequences(data_store, ticker2);
     REQUIRE(sequences2.m_next_bbo_quote_sequence == Beam::Sequence(2));
     REQUIRE(sequences2.m_next_book_quote_sequence == Beam::Sequence(3));
+    REQUIRE(sequences2.m_next_ticker_status_sequence == Beam::Sequence(4));
     REQUIRE(sequences2.m_next_time_and_sale_sequence == Beam::Sequence(4));
     auto sequences3 = load_initial_sequences(data_store, ticker3);
     REQUIRE(sequences3.m_next_bbo_quote_sequence == Beam::Sequence::FIRST);
     REQUIRE(sequences3.m_next_book_quote_sequence == Beam::Sequence::FIRST);
+    REQUIRE(sequences3.m_next_ticker_status_sequence == Beam::Sequence::FIRST);
     REQUIRE(sequences3.m_next_time_and_sale_sequence == Beam::Sequence::FIRST);
   }
 }

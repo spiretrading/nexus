@@ -59,6 +59,7 @@ namespace Nexus {
       void publish(const VenueOrderImbalance& imbalance, int source_id);
       void publish(const TickerBboQuote& quote, int source_id);
       void publish(const TickerBookQuote& delta, int source_id);
+      void publish(const IndexedTickerStatus& status, int source_id);
       void publish(const TickerTimeAndSale& time_and_sale, int source_id);
       void clear(int source_id);
       void register_services(
@@ -81,6 +82,7 @@ namespace Nexus {
       VenueSubscriptions<OrderImbalance> m_order_imbalance_subscriptions;
       TickerSubscriptions<BboQuote> m_bbo_quote_subscriptions;
       TickerSubscriptions<BookQuote> m_book_quote_subscriptions;
+      TickerSubscriptions<TickerStatus> m_ticker_status_subscriptions;
       TickerSubscriptions<TimeAndSale> m_time_and_sale_subscriptions;
       Beam::OpenState m_open_state;
 
@@ -107,6 +109,11 @@ namespace Nexus {
         ServiceProtocolClient, QueryBookQuotesService>& request,
         const TickerQuery& query);
       void on_end_book_quote_query(
+        ServiceProtocolClient& client, const Ticker& ticker, int id);
+      void on_query_ticker_status(
+        Beam::RequestToken<ServiceProtocolClient, QueryTickerStatusService>&
+          request, const TickerQuery& query);
+      void on_end_ticker_status_query(
         ServiceProtocolClient& client, const Ticker& ticker, int id);
       void on_query_time_and_sales(Beam::RequestToken<
         ServiceProtocolClient, QueryTimeAndSalesService>& request,
@@ -201,6 +208,22 @@ namespace Nexus {
     IsHistoricalDataStore<Beam::dereference_t<D>> &&
       IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::publish(
+      const IndexedTickerStatus& status, int source_id) {
+    m_registry->publish(status, source_id, *m_data_store,
+      [&] (const auto& status) {
+        m_data_store->store(status);
+        m_ticker_status_subscriptions.publish(
+          status, [&] (const auto& clients) {
+            Beam::broadcast_record_message<TickerStatusMessage>(
+              clients, status);
+          });
+      });
+  }
+
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::publish(
       const TickerBookQuote& delta, int source_id) {
     auto ticker = m_registry->get_primary_listing(delta.get_index());
     auto key = EntitlementKey(ticker.get_venue(), delta.get_value().m_venue);
@@ -266,6 +289,11 @@ namespace Nexus {
     Beam::add_message_slot<EndBookQuoteQueryMessage>(
       out(slots), std::bind_front(
         &MarketDataRegistryServlet::on_end_book_quote_query, this));
+    QueryTickerStatusService::add_request_slot(out(slots), std::bind_front(
+      &MarketDataRegistryServlet::on_query_ticker_status, this));
+    Beam::add_message_slot<EndTickerStatusQueryMessage>(
+      out(slots), std::bind_front(
+        &MarketDataRegistryServlet::on_end_ticker_status_query, this));
     QueryTimeAndSalesService::add_request_slot(out(slots),
       std::bind_front(&MarketDataRegistryServlet::on_query_time_and_sales,
         this));
@@ -312,6 +340,7 @@ namespace Nexus {
     m_order_imbalance_subscriptions.remove_all(client);
     m_bbo_quote_subscriptions.remove_all(client);
     m_book_quote_subscriptions.remove_all(client);
+    m_ticker_status_subscriptions.remove_all(client);
     m_time_and_sale_subscriptions.remove_all(client);
   }
 
@@ -430,6 +459,23 @@ namespace Nexus {
   void MarketDataRegistryServlet<C, R, D, A>::on_end_book_quote_query(
       ServiceProtocolClient& client, const Ticker& ticker, int id) {
     m_book_quote_subscriptions.end(ticker, id);
+  }
+
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::on_query_ticker_status(
+      Beam::RequestToken<ServiceProtocolClient, QueryTickerStatusService>&
+        request, const TickerQuery& query) {
+    on_query<TickerStatus>(request, query, m_ticker_status_subscriptions);
+  }
+
+  template<typename C, typename R, typename D, typename A> requires
+    IsHistoricalDataStore<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void MarketDataRegistryServlet<C, R, D, A>::on_end_ticker_status_query(
+      ServiceProtocolClient& client, const Ticker& ticker, int id) {
+    m_ticker_status_subscriptions.end(ticker, id);
   }
 
   template<typename C, typename R, typename D, typename A> requires

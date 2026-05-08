@@ -44,6 +44,10 @@ namespace Nexus {
         const TickerQuery& query);
       void store(const SequencedTickerBookQuote& quote);
       void store(const std::vector<SequencedTickerBookQuote>& quotes);
+      std::vector<SequencedTickerStatus> load_ticker_statuses(
+        const TickerQuery& query);
+      void store(const SequencedIndexedTickerStatus& status);
+      void store(const std::vector<SequencedIndexedTickerStatus>& statuses);
       std::vector<SequencedTimeAndSale> load_time_and_sales(
         const TickerQuery& query);
       void store(const SequencedTickerTimeAndSale& time_and_sale);
@@ -59,6 +63,7 @@ namespace Nexus {
       DataStore<OrderImbalance> m_order_imbalance_data_store;
       DataStore<BboQuote> m_bbo_quote_data_store;
       DataStore<BookQuote> m_book_quote_data_store;
+      DataStore<TickerStatus> m_ticker_status_data_store;
       DataStore<TimeAndSale> m_time_and_sale_data_store;
       Beam::OpenState m_open_state;
 
@@ -75,6 +80,7 @@ namespace Nexus {
       m_order_imbalance_data_store(&*m_data_store, block_size),
       m_bbo_quote_data_store(&*m_data_store, block_size),
       m_book_quote_data_store(&*m_data_store, block_size),
+      m_ticker_status_data_store(&*m_data_store, block_size),
       m_time_and_sale_data_store(&*m_data_store, block_size) {}
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
@@ -149,6 +155,25 @@ namespace Nexus {
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  std::vector<SequencedTickerStatus>
+      CachedHistoricalDataStore<D>::load_ticker_statuses(
+        const TickerQuery& query) {
+    return m_ticker_status_data_store.load(query);
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void CachedHistoricalDataStore<D>::store(
+      const SequencedIndexedTickerStatus& status) {
+    m_ticker_status_data_store.store(status);
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void CachedHistoricalDataStore<D>::store(
+      const std::vector<SequencedIndexedTickerStatus>& statuses) {
+    m_ticker_status_data_store.store(statuses);
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   std::vector<SequencedTimeAndSale>
       CachedHistoricalDataStore<D>::load_time_and_sales(
         const TickerQuery& query) {
@@ -173,6 +198,7 @@ namespace Nexus {
       return;
     }
     m_time_and_sale_data_store.close();
+    m_ticker_status_data_store.close();
     m_book_quote_data_store.close();
     m_bbo_quote_data_store.close();
     m_order_imbalance_data_store.close();

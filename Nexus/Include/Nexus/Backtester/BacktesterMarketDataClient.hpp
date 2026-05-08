@@ -33,6 +33,10 @@ namespace Nexus {
       void query(
         const TickerQuery& query, Beam::ScopedQueueWriter<BookQuote> queue);
       void query(const TickerQuery& query,
+        Beam::ScopedQueueWriter<SequencedTickerStatus> queue);
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue);
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
       void query(
         const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue);
@@ -96,6 +100,16 @@ namespace Nexus {
   inline void BacktesterMarketDataClient::query(
       const TickerQuery& query, Beam::ScopedQueueWriter<BookQuote> queue) {
     m_service->query_book_quotes(query);
+    m_market_data_client.query(query, std::move(queue));
+  }
+
+  inline void BacktesterMarketDataClient::query(const TickerQuery& query,
+      Beam::ScopedQueueWriter<SequencedTickerStatus> queue) {
+    m_market_data_client.query(query, std::move(queue));
+  }
+
+  inline void BacktesterMarketDataClient::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue) {
     m_market_data_client.query(query, std::move(queue));
   }
 

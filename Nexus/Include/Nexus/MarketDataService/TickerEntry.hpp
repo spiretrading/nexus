@@ -24,6 +24,9 @@ namespace Nexus {
         /** The next Sequence to use for a BookQuote. */
         Beam::Sequence m_next_book_quote_sequence;
 
+        /** The next Sequence to use for a TickerStatus. */
+        Beam::Sequence m_next_ticker_status_sequence;
+
         /** The next Sequence to use for a TimeAndSale. */
         Beam::Sequence m_next_time_and_sale_sequence;
       };
@@ -74,6 +77,15 @@ namespace Nexus {
         const BookQuote& quote, int source_id);
 
       /**
+       * Publishes a TickerStatus.
+       * @param status The TickerStatus to publish.
+       * @param source_id The id of the source setting the value.
+       * @return The TickerStatus to publish.
+       */
+      boost::optional<SequencedIndexedTickerStatus> publish(
+        const TickerStatus& status, int source_id);
+
+      /**
        * Publishes a TimeAndSale.
        * @param time_and_sale The TimeAndSale to publish.
        * @param source_id The id of the source setting the value.
@@ -98,6 +110,7 @@ namespace Nexus {
       Ticker m_ticker;
       Beam::Sequencer m_bbo_sequencer;
       Beam::Sequencer m_book_quote_sequencer;
+      Beam::Sequencer m_ticker_status_sequencer;
       Beam::Sequencer m_time_and_sale_sequencer;
       PriceCandlestick m_session_candlestick;
       std::string m_market_center;
@@ -144,6 +157,15 @@ namespace Nexus {
       }
     }
     {
+      auto results = data_store.load_ticker_statuses(query);
+      if(results.empty()) {
+        initial_sequences.m_next_ticker_status_sequence = Beam::Sequence::FIRST;
+      } else {
+        initial_sequences.m_next_ticker_status_sequence =
+          Beam::increment(results.back().get_sequence());
+      }
+    }
+    {
       auto results = data_store.load_time_and_sales(query);
       if(results.empty()) {
         initial_sequences.m_next_time_and_sale_sequence =
@@ -166,6 +188,8 @@ namespace Nexus {
       : m_ticker(std::move(ticker)),
         m_bbo_sequencer(initial_sequences.m_next_bbo_quote_sequence),
         m_book_quote_sequencer(initial_sequences.m_next_book_quote_sequence),
+        m_ticker_status_sequencer(
+          initial_sequences.m_next_ticker_status_sequence),
         m_time_and_sale_sequencer(
           initial_sequences.m_next_time_and_sale_sequence) {
     m_market_center = VENUES.from(m_ticker.get_venue()).m_market_center;
@@ -282,6 +306,11 @@ namespace Nexus {
       }
     }
     return i->m_quote;
+  }
+
+  inline boost::optional<SequencedIndexedTickerStatus>
+      TickerEntry::publish(const TickerStatus& status, int source_id) {
+    return m_ticker_status_sequencer.make_sequenced_value(status, m_ticker);
   }
 
   inline boost::optional<SequencedTickerTimeAndSale>

@@ -15,6 +15,7 @@ namespace Nexus {
   using OrderImbalanceQueryResult = Beam::QueryResult<SequencedOrderImbalance>;
   using BboQuoteQueryResult = Beam::QueryResult<SequencedBboQuote>;
   using BookQuoteQueryResult = Beam::QueryResult<SequencedBookQuote>;
+  using TickerStatusQueryResult = Beam::QueryResult<SequencedTickerStatus>;
   using TimeAndSaleQueryResult = Beam::QueryResult<SequencedTimeAndSale>;
 
   /** Standard name for the market data registry service. */
@@ -51,6 +52,15 @@ namespace Nexus {
      */
     (QueryBookQuotesService, "Nexus.MarketDataService.QueryBookQuotesService",
       BookQuoteQueryResult, (TickerQuery, query)),
+
+    /**
+     * Queries a Ticker's TickerStatuses.
+     * @param query The query to run.
+     * @return The list of TickerStatuses satisfying the query.
+     */
+    (QueryTickerStatusService,
+      "Nexus.MarketDataService.QueryTickerStatusService",
+      TickerStatusQueryResult, (TickerQuery, query)),
 
     /**
      * Queries a Ticker's TimeAndSales.
@@ -120,6 +130,13 @@ namespace Nexus {
       (SequencedTickerBookQuote, book_quote)),
 
     /**
+     * Sends a query's SequencedIndexedTickerStatus.
+     * @param status The query's SequencedIndexedTickerStatus.
+     */
+    (TickerStatusMessage, "Nexus.MarketDataService.TickerStatusMessage",
+      (SequencedIndexedTickerStatus, status)),
+
+    /**
      * Sends a query's SequencedTickerTimeAndSale.
      * @param time_and_sale The query's SequencedTickerTimeAndSale.
      */
@@ -150,6 +167,15 @@ namespace Nexus {
      */
     (EndBookQuoteQueryMessage,
       "Nexus.MarketDataService.EndBookQuoteQueryMessage", (Ticker, ticker),
+      (int, id)),
+
+    /**
+     * Terminates a previous TickerStatus query.
+     * @param ticker The Ticker that was queried.
+     * @param id The id of query to end.
+     */
+    (EndTickerStatusQueryMessage,
+      "Nexus.MarketDataService.EndTickerStatusQueryMessage", (Ticker, ticker),
       (int, id)),
 
     /**
@@ -185,6 +211,11 @@ namespace Nexus {
   template<>
   struct market_data_message_type<BookQuote> {
     using type = BookQuoteMessage;
+  };
+
+  template<>
+  struct market_data_message_type<TickerStatus> {
+    using type = TickerStatusMessage;
   };
 
   template<>

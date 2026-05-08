@@ -20,6 +20,7 @@ namespace {
       m_order_imbalance_slot;
     std::function<void (const TickerBboQuote&, int)> m_bbo_quote_slot;
     std::function<void (const TickerBookQuote&, int)> m_book_quote_slot;
+    std::function<void (const IndexedTickerStatus&, int)> m_ticker_status_slot;
     std::function<void (const TickerTimeAndSale&, int)> m_time_and_sale_slot;
     std::function<void (int)> m_clear_slot;
 
@@ -41,6 +42,10 @@ namespace {
 
     void publish(const TickerBookQuote& quote, int source_id) {
       m_book_quote_slot(quote, source_id);
+    }
+
+    void publish(const IndexedTickerStatus& status, int source_id) {
+      m_ticker_status_slot(status, source_id);
     }
 
     void publish(const TickerTimeAndSale& time_and_sale, int source_id) {
@@ -136,6 +141,23 @@ TEST_SUITE("MarketDataFeedServlet") {
     completion_token.get();
   }
 
+  TEST_CASE("send_ticker_status") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("A.TSX");
+    auto status = IndexedTickerStatus(
+      TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        time_from_string("2024-07-14 09:30:00")), ticker);
+    auto completion_token = Async<void>();
+    fixture.m_registry.m_ticker_status_slot =
+      [&] (const auto& received_status, auto source_id) {
+        REQUIRE(received_status == status);
+        completion_token.get_eval().set();
+      };
+    send_record_message<SendMarketDataFeedMessages>(
+      *fixture.m_client, std::vector<MarketDataFeedMessage>{status});
+    completion_token.get();
+  }
+
   TEST_CASE("send_time_and_sale") {
     auto fixture = Fixture();
     auto ticker = parse_ticker("A.TSX");
@@ -165,12 +187,16 @@ TEST_SUITE("MarketDataFeedServlet") {
     auto order_imbalance = VenueOrderImbalance(
       OrderImbalance(ticker, Side::ASK, 100, Money::ONE,
         time_from_string("2024-07-14 12:00:00")), TSX);
+    auto status = IndexedTickerStatus(
+      TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        time_from_string("2024-07-14 09:30:00")), ticker);
     auto time_and_sale = TickerTimeAndSale(
       TimeAndSale(time_from_string("2024-07-14 12:00:00"),
         Money::ONE, 100, TimeAndSale::Condition(), "TSX", "", ""), ticker);
     auto bbo_quote_completion = Async<void>();
     auto book_quote_completion = Async<void>();
     auto order_imbalance_completion = Async<void>();
+    auto ticker_status_completion = Async<void>();
     auto time_and_sale_completion = Async<void>();
     fixture.m_registry.m_bbo_quote_slot =
       [&] (const auto& received_quote, auto source_id) {
@@ -187,18 +213,24 @@ TEST_SUITE("MarketDataFeedServlet") {
         REQUIRE(received_imbalance == order_imbalance);
         order_imbalance_completion.get_eval().set();
       };
+    fixture.m_registry.m_ticker_status_slot =
+      [&] (const auto& received_status, auto source_id) {
+        REQUIRE(received_status == status);
+        ticker_status_completion.get_eval().set();
+      };
     fixture.m_registry.m_time_and_sale_slot =
       [&] (const auto& received_time_and_sale, auto source_id) {
         REQUIRE(received_time_and_sale == time_and_sale);
         time_and_sale_completion.get_eval().set();
       };
     auto messages = std::vector<MarketDataFeedMessage>{
-      bbo_quote, book_quote, order_imbalance, time_and_sale};
+      bbo_quote, book_quote, status, order_imbalance, time_and_sale};
     send_record_message<SendMarketDataFeedMessages>(
       *fixture.m_client, messages);
     bbo_quote_completion.get();
     book_quote_completion.get();
     order_imbalance_completion.get();
+    ticker_status_completion.get();
     time_and_sale_completion.get();
   }
 

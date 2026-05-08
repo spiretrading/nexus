@@ -45,6 +45,10 @@ namespace Nexus {
         const TickerQuery& query);
       void store(const SequencedTickerBookQuote& quote);
       void store(const std::vector<SequencedTickerBookQuote>& quotes);
+      std::vector<SequencedTickerStatus> load_ticker_statuses(
+        const TickerQuery& query);
+      void store(const SequencedIndexedTickerStatus& status);
+      void store(const std::vector<SequencedIndexedTickerStatus>& statuses);
       std::vector<SequencedTimeAndSale> load_time_and_sales(
         const TickerQuery& query);
       void store(const SequencedTickerTimeAndSale& time_and_sale);
@@ -58,6 +62,7 @@ namespace Nexus {
       std::unordered_map<Venue, Beam::Sequence> m_order_imbalance_cutoffs;
       std::unordered_map<Ticker, Beam::Sequence> m_bbo_cutoffs;
       std::unordered_map<Ticker, Beam::Sequence> m_book_quote_cutoffs;
+      std::unordered_map<Ticker, Beam::Sequence> m_ticker_status_cutoffs;
       std::unordered_map<Ticker, Beam::Sequence> m_time_and_sales_cutoffs;
       Beam::OpenState m_open_state;
 
@@ -152,6 +157,27 @@ namespace Nexus {
   void CutoffHistoricalDataStore<D>::store(
       const std::vector<SequencedTickerBookQuote>& quotes) {
     m_data_store->store(quotes);
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  std::vector<SequencedTickerStatus>
+      CutoffHistoricalDataStore<D>::load_ticker_statuses(
+        const TickerQuery& query) {
+    return load(query, m_ticker_status_cutoffs, [&] (const auto& query) {
+      return m_data_store->load_ticker_statuses(query);
+    });
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void CutoffHistoricalDataStore<D>::store(
+      const SequencedIndexedTickerStatus& status) {
+    m_data_store->store(status);
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void CutoffHistoricalDataStore<D>::store(
+      const std::vector<SequencedIndexedTickerStatus>& statuses) {
+    m_data_store->store(statuses);
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>

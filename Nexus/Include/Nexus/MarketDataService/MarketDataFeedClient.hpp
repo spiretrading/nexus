@@ -23,6 +23,7 @@ namespace Nexus {
       client.publish(std::declval<const VenueOrderImbalance&>());
       client.publish(std::declval<const TickerBboQuote&>());
       client.publish(std::declval<const TickerBookQuote&>());
+      client.publish(std::declval<const IndexedTickerStatus&>());
       client.publish(std::declval<const TickerTimeAndSale&>());
       client.add_order(std::declval<const Ticker&>(), std::declval<Venue>(),
         std::declval<const std::string&>(), std::declval<bool>(),
@@ -88,6 +89,12 @@ namespace Nexus {
        * @param quote The BookQuote to set.
        */
       void publish(const TickerBookQuote& quote);
+
+      /**
+       * Publishes a TickerStatus.
+       * @param status The TickerStatus to publish.
+       */
+      void publish(const IndexedTickerStatus& status);
 
       /**
        * Publishes a TimeAndSale.
@@ -157,6 +164,7 @@ namespace Nexus {
         virtual void publish(const VenueOrderImbalance& imbalance) = 0;
         virtual void publish(const TickerBboQuote& quote) = 0;
         virtual void publish(const TickerBookQuote& quote) = 0;
+        virtual void publish(const IndexedTickerStatus& status) = 0;
         virtual void publish(const TickerTimeAndSale& time_and_sale) = 0;
         virtual void add_order(const Ticker& ticker, Venue venue,
           const std::string& mpid, bool is_primary_mpid, const std::string& id,
@@ -184,6 +192,7 @@ namespace Nexus {
         void publish(const VenueOrderImbalance& imbalance) override;
         void publish(const TickerBboQuote& quote) override;
         void publish(const TickerBookQuote& quote) override;
+        void publish(const IndexedTickerStatus& status) override;
         void publish(const TickerTimeAndSale& time_and_sale) override;
         void add_order(const Ticker& ticker, Venue venue,
           const std::string& mpid, bool is_primary_mpid, const std::string& id,
@@ -229,6 +238,10 @@ namespace Nexus {
 
   inline void MarketDataFeedClient::publish(const TickerBookQuote& quote) {
     m_client->publish(quote);
+  }
+
+  inline void MarketDataFeedClient::publish(const IndexedTickerStatus& status) {
+    m_client->publish(status);
   }
 
   inline void MarketDataFeedClient::publish(
@@ -296,6 +309,12 @@ namespace Nexus {
   void MarketDataFeedClient::WrappedMarketDataFeedClient<C>::publish(
       const TickerBookQuote& quote) {
     m_client->publish(quote);
+  }
+
+  template<typename C>
+  void MarketDataFeedClient::WrappedMarketDataFeedClient<C>::publish(
+      const IndexedTickerStatus& status) {
+    m_client->publish(status);
   }
 
   template<typename C>

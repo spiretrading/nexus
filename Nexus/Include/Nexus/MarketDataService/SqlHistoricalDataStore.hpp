@@ -48,6 +48,10 @@ namespace Nexus {
         const TickerQuery& query);
       void store(const SequencedTickerBookQuote& quote);
       void store(const std::vector<SequencedTickerBookQuote>& quotes);
+      std::vector<SequencedTickerStatus> load_ticker_statuses(
+        const TickerQuery& query);
+      void store(const SequencedIndexedTickerStatus& status);
+      void store(const std::vector<SequencedIndexedTickerStatus>& statuses);
       std::vector<SequencedTimeAndSale> load_time_and_sales(
         const TickerQuery& query);
       void store(const SequencedTickerTimeAndSale& time_and_sale);
@@ -65,6 +69,8 @@ namespace Nexus {
         m_bbo_quote_data_store;
       DataStore<Viper::Row<BookQuote>, Viper::Row<Ticker>>
         m_book_quote_data_store;
+      DataStore<Viper::Row<TickerStatus>, Viper::Row<Ticker>>
+        m_ticker_status_data_store;
       DataStore<Viper::Row<TimeAndSale>, Viper::Row<Ticker>>
         m_time_and_sale_data_store;
       Beam::OpenState m_open_state;
@@ -93,6 +99,8 @@ namespace Nexus {
         m_bbo_quote_data_store("bbo_quotes", get_bbo_quote_row(),
           get_ticker_row(), Beam::Ref(m_reader_pool), Beam::Ref(m_writer_pool)),
         m_book_quote_data_store("book_quotes", get_book_quote_row(),
+          get_ticker_row(), Beam::Ref(m_reader_pool), Beam::Ref(m_writer_pool)),
+        m_ticker_status_data_store("ticker_statuses", get_ticker_status_row(),
           get_ticker_row(), Beam::Ref(m_reader_pool), Beam::Ref(m_writer_pool)),
         m_time_and_sale_data_store("time_and_sales", get_time_and_sale_row(),
           get_ticker_row(), Beam::Ref(m_reader_pool),
@@ -237,6 +245,24 @@ namespace Nexus {
   }
 
   template<typename C>
+  std::vector<SequencedTickerStatus> SqlHistoricalDataStore<C>::
+      load_ticker_statuses(const TickerQuery& query) {
+    return m_ticker_status_data_store.load(query);
+  }
+
+  template<typename C>
+  void SqlHistoricalDataStore<C>::store(
+      const SequencedIndexedTickerStatus& status) {
+    m_ticker_status_data_store.store(status);
+  }
+
+  template<typename C>
+  void SqlHistoricalDataStore<C>::store(
+      const std::vector<SequencedIndexedTickerStatus>& statuses) {
+    m_ticker_status_data_store.store(statuses);
+  }
+
+  template<typename C>
   std::vector<SequencedTimeAndSale> SqlHistoricalDataStore<C>::
       load_time_and_sales(const TickerQuery& query) {
     return m_time_and_sale_data_store.load(query);
@@ -260,6 +286,7 @@ namespace Nexus {
       return;
     }
     m_time_and_sale_data_store.close();
+    m_ticker_status_data_store.close();
     m_book_quote_data_store.close();
     m_bbo_quote_data_store.close();
     m_order_imbalance_data_store.close();

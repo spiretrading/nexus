@@ -37,6 +37,10 @@ namespace Nexus {
     client.query(std::declval<const TickerQuery&>(),
       std::declval<Beam::ScopedQueueWriter<BookQuote>>());
     client.query(std::declval<const TickerQuery&>(),
+      std::declval<Beam::ScopedQueueWriter<SequencedTickerStatus>>());
+    client.query(std::declval<const TickerQuery&>(),
+      std::declval<Beam::ScopedQueueWriter<TickerStatus>>());
+    client.query(std::declval<const TickerQuery&>(),
       std::declval<Beam::ScopedQueueWriter<SequencedTimeAndSale>>());
     client.query(std::declval<const TickerQuery&>(),
       std::declval<Beam::ScopedQueueWriter<TimeAndSale>>());
@@ -124,6 +128,22 @@ namespace Nexus {
         const TickerQuery& query, Beam::ScopedQueueWriter<BookQuote> queue);
 
       /**
+       * Submits a query for a Ticker's TickerStatuses.
+       * @param query The query to submit.
+       * @param queue The queue that will store the result of the query.
+       */
+      void query(const TickerQuery& query,
+        Beam::ScopedQueueWriter<SequencedTickerStatus> queue);
+
+      /**
+       * Submits a query for a Ticker's TickerStatuses.
+       * @param query The query to submit.
+       * @param queue The queue that will store the result of the query.
+       */
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue);
+
+      /**
        * Submits a query for a Ticker's TimeAndSales.
        * @param query The query to submit.
        * @param queue The queue that will store the result of the query.
@@ -187,6 +207,10 @@ namespace Nexus {
         virtual void query(const TickerQuery& query,
           Beam::ScopedQueueWriter<BookQuote> queue) = 0;
         virtual void query(const TickerQuery& query,
+          Beam::ScopedQueueWriter<SequencedTickerStatus> queue) = 0;
+        virtual void query(const TickerQuery& query,
+          Beam::ScopedQueueWriter<TickerStatus> queue) = 0;
+        virtual void query(const TickerQuery& query,
           Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) = 0;
         virtual void query(const TickerQuery& query,
           Beam::ScopedQueueWriter<TimeAndSale> queue) = 0;
@@ -218,6 +242,10 @@ namespace Nexus {
           Beam::ScopedQueueWriter<SequencedBookQuote> queue) override;
         void query(const TickerQuery& query,
           Beam::ScopedQueueWriter<BookQuote> queue) override;
+        void query(const TickerQuery& query,
+          Beam::ScopedQueueWriter<SequencedTickerStatus> queue) override;
+        void query(const TickerQuery& query,
+          Beam::ScopedQueueWriter<TickerStatus> queue) override;
         void query(const TickerQuery& query,
           Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) override;
         void query(const TickerQuery& query,
@@ -373,6 +401,16 @@ namespace Nexus {
   }
 
   inline void MarketDataClient::query(const TickerQuery& query,
+      Beam::ScopedQueueWriter<SequencedTickerStatus> queue) {
+    m_client->query(query, std::move(queue));
+  }
+
+  inline void MarketDataClient::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue) {
+    m_client->query(query, std::move(queue));
+  }
+
+  inline void MarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
     m_client->query(query, std::move(queue));
   }
@@ -447,6 +485,19 @@ namespace Nexus {
   template<typename C>
   void MarketDataClient::WrappedMarketDataClient<C>::query(
       const TickerQuery& query, Beam::ScopedQueueWriter<BookQuote> queue) {
+    m_client->query(query, std::move(queue));
+  }
+
+  template<typename C>
+  void MarketDataClient::WrappedMarketDataClient<C>::query(
+      const TickerQuery& query,
+      Beam::ScopedQueueWriter<SequencedTickerStatus> queue) {
+    m_client->query(query, std::move(queue));
+  }
+
+  template<typename C>
+  void MarketDataClient::WrappedMarketDataClient<C>::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue) {
     m_client->query(query, std::move(queue));
   }
 

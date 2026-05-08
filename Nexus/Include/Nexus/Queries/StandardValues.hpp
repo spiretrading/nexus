@@ -11,6 +11,7 @@ namespace Nexus {
   using OrderImbalanceValue = Beam::NativeValue<OrderImbalance>;
   using BboQuoteValue = Beam::NativeValue<BboQuote>;
   using BookQuoteValue = Beam::NativeValue<BookQuote>;
+  using TickerStatusValue = Beam::NativeValue<TickerStatus>;
   using TimeAndSaleValue = Beam::NativeValue<TimeAndSale>;
   using OrderFieldsValue = Beam::NativeValue<OrderFields>;
   using OrderInfoValue = Beam::NativeValue<OrderInfo>;

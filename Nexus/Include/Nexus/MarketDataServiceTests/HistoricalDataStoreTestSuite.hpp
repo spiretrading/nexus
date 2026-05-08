@@ -189,6 +189,54 @@ namespace Nexus::Tests {
       REQUIRE(results_all[2] == sequenced_book_quote_c);
     }
 
+    SUBCASE("ticker_status") {
+      auto ticker = parse_ticker("TST.ASX");
+      auto status_a =
+        TickerStatus(ASX, "PreOpen", TickerStatus::Flag::IS_ACCEPTING_ORDERS |
+          TickerStatus::Flag::IS_ACCEPTING_CANCELS,
+          time_from_string("2024-07-09 07:00:00"));
+      auto sequenced_status_a = SequencedValue(status_a, Beam::Sequence(1));
+      data_store.store(SequencedIndexedTickerStatus(
+        IndexedTickerStatus(status_a, ticker), Beam::Sequence(1)));
+      auto status_b =
+        TickerStatus(ASX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+          time_from_string("2024-07-09 09:30:00"));
+      auto sequenced_status_b =
+        SequencedValue(status_b, Beam::Sequence(2));
+      auto status_c = TickerStatus(
+        ASX, "AuthorizedHalted", TickerStatus::Flag::IS_ACCEPTING_CANCELS,
+        time_from_string("2024-07-09 10:00:00"));
+      auto sequenced_status_c = SequencedValue(status_c, Beam::Sequence(3));
+      auto statuses = std::vector<SequencedIndexedTickerStatus>();
+      statuses.push_back(SequencedIndexedTickerStatus(
+        IndexedTickerStatus(status_b, ticker), Beam::Sequence(2)));
+      statuses.push_back(SequencedIndexedTickerStatus(
+        IndexedTickerStatus(status_c, ticker), Beam::Sequence(3)));
+      data_store.store(statuses);
+      auto other_ticker = parse_ticker("ABC.TSX");
+      auto other_status =
+        TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+          time_from_string("2024-07-09 09:30:00"));
+      data_store.store(SequencedIndexedTickerStatus(
+        IndexedTickerStatus(other_status, other_ticker), Beam::Sequence(4)));
+      auto query_one = TickerQuery();
+      query_one.set_index(ticker);
+      query_one.set_range(Beam::Sequence(2), Beam::Sequence(2));
+      query_one.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+      auto results_one = data_store.load_ticker_statuses(query_one);
+      REQUIRE(results_one.size() == 1);
+      REQUIRE(results_one[0] == sequenced_status_b);
+      auto query_all = TickerQuery();
+      query_all.set_index(ticker);
+      query_all.set_range(Range::TOTAL);
+      query_all.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+      auto results_all = data_store.load_ticker_statuses(query_all);
+      REQUIRE(results_all.size() == 3);
+      REQUIRE(results_all[0] == sequenced_status_a);
+      REQUIRE(results_all[1] == sequenced_status_b);
+      REQUIRE(results_all[2] == sequenced_status_c);
+    }
+
     SUBCASE("time_and_sale") {
       auto ticker = parse_ticker("TST.ASX");
       auto time_and_sale_a =

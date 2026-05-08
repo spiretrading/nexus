@@ -50,6 +50,10 @@ namespace Nexus {
       void query(
         const TickerQuery& query, Beam::ScopedQueueWriter<BookQuote> queue);
       void query(const TickerQuery& query,
+        Beam::ScopedQueueWriter<SequencedTickerStatus> queue);
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue);
+      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
       void query(
         const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue);
@@ -77,6 +81,8 @@ namespace Nexus {
       QueryClientPublisher<BookQuote, TickerQuery,
         QueryBookQuotesService, EndBookQuoteQueryMessage>
           m_book_quote_publisher;
+      QueryClientPublisher<TickerStatus, TickerQuery, QueryTickerStatusService,
+        EndTickerStatusQueryMessage> m_ticker_status_publisher;
       QueryClientPublisher<TimeAndSale, TickerQuery,
         QueryTimeAndSalesService, EndTimeAndSaleQueryMessage>
           m_time_and_sale_publisher;
@@ -97,6 +103,7 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
             m_order_imbalance_publisher(Beam::Ref(m_client_handler)),
             m_bbo_quote_publisher(Beam::Ref(m_client_handler)),
             m_book_quote_publisher(Beam::Ref(m_client_handler)),
+            m_ticker_status_publisher(Beam::Ref(m_client_handler)),
             m_time_and_sale_publisher(Beam::Ref(m_client_handler)) {
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
     Nexus::register_query_types(
@@ -109,6 +116,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       template add_message_handler<OrderImbalanceMessage>();
     m_bbo_quote_publisher.template add_message_handler<BboQuoteMessage>();
     m_book_quote_publisher.template add_message_handler<BookQuoteMessage>();
+    m_ticker_status_publisher.
+      template add_message_handler<TickerStatusMessage>();
     m_time_and_sale_publisher.
       template add_message_handler<TimeAndSaleMessage>();
   } catch(const std::exception&) {
@@ -155,6 +164,18 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   void ServiceMarketDataClient<B>::query(
       const TickerQuery& query, Beam::ScopedQueueWriter<BookQuote> queue) {
     m_book_quote_publisher.submit(query, std::move(queue));
+  }
+
+  template<typename B>
+  void ServiceMarketDataClient<B>::query(const TickerQuery& query,
+      Beam::ScopedQueueWriter<SequencedTickerStatus> queue) {
+    m_ticker_status_publisher.submit(query, std::move(queue));
+  }
+
+  template<typename B>
+  void ServiceMarketDataClient<B>::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue) {
+    m_ticker_status_publisher.submit(query, std::move(queue));
   }
 
   template<typename B>
@@ -221,6 +242,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_order_imbalance_publisher.close();
     m_bbo_quote_publisher.close();
     m_book_quote_publisher.close();
+    m_ticker_status_publisher.close();
     m_time_and_sale_publisher.close();
     m_open_state.close();
   }
@@ -231,6 +253,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_order_imbalance_publisher.recover(*client);
     m_bbo_quote_publisher.recover(*client);
     m_book_quote_publisher.recover(*client);
+    m_ticker_status_publisher.recover(*client);
     m_time_and_sale_publisher.recover(*client);
   }
 }

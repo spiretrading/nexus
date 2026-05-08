@@ -243,6 +243,23 @@ TEST_SUITE("MarketDataRegistryServlet") {
       });
   }
 
+  TEST_CASE("query_publish_ticker_status") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("A.TSX");
+    auto info = TickerInfo(ticker, "TICKER A", "", 100);
+    fixture.m_registry.add(info);
+    test_query_publish<QueryTickerStatusService, TickerStatusMessage>(
+      fixture, ticker, [&] {
+        return IndexedTickerStatus(
+          TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+            fixture.m_time_client.get_time()), ticker);
+      }, [&] (const auto& query) {
+        return fixture.m_data_store.load_ticker_statuses(query);
+      }, [] (const auto& record) {
+        return record.status;
+      });
+  }
+
   TEST_CASE("query_publish_time_and_sale") {
     auto fixture = Fixture();
     auto ticker = parse_ticker("A.TSX");

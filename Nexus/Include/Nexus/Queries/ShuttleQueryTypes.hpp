@@ -13,6 +13,7 @@ namespace Nexus {
     (OrderImbalanceValue, "Nexus.Queries.OrderImbalanceValue"),
     (BboQuoteValue, "Nexus.Queries.BboQuoteValue"),
     (BookQuoteValue, "Nexus.Queries.BookQuoteValue"),
+    (TickerStatusValue, "Nexus.Queries.TickerStatusValue"),
     (TimeAndSaleValue, "Nexus.Queries.TimeAndSaleValue"),
     (OrderFieldsValue, "Nexus.Queries.OrderFieldsValue"),
     (OrderInfoValue, "Nexus.Queries.OrderInfoValue"));
@@ -27,6 +28,7 @@ namespace Nexus {
     registry->add(typeid(OrderImbalance), "Nexus.OrderImbalance");
     registry->add(typeid(BboQuote), "Nexus.BboQuote");
     registry->add(typeid(BookQuote), "Nexus.BookQuote");
+    registry->add(typeid(TickerStatus), "Nexus.TickerStatus");
     registry->add(typeid(TimeAndSale), "Nexus.TimeAndSale");
     registry->add(typeid(OrderFields), "Nexus.OrderFields");
     registry->add(typeid(OrderInfo), "Nexus.OrderInfo");

@@ -33,6 +33,11 @@ namespace Nexus {
         std::same_as<std::vector<SequencedBookQuote>>;
     store.store(std::declval<const SequencedTickerBookQuote&>());
     store.store(std::declval<const std::vector<SequencedTickerBookQuote>&>());
+    { store.load_ticker_statuses(std::declval<const TickerQuery&>()) } ->
+        std::same_as<std::vector<SequencedTickerStatus>>;
+    store.store(std::declval<const SequencedIndexedTickerStatus&>());
+    store.store(
+      std::declval<const std::vector<SequencedIndexedTickerStatus>&>());
     { store.load_time_and_sales(std::declval<const TickerQuery&>()) } ->
         std::same_as<std::vector<SequencedTimeAndSale>>;
     store.store(std::declval<const SequencedTickerTimeAndSale&>());
@@ -139,6 +144,27 @@ namespace Nexus {
       void store(const std::vector<SequencedTickerBookQuote>& quotes);
 
       /**
+       * Executes a search query over a Ticker's TickerStatuses.
+       * @param query The search query to execute.
+       * @return The list of TickerStatuses that satisfy the search
+       *         <i>query</i>.
+       */
+      std::vector<SequencedTickerStatus> load_ticker_statuses(
+        const TickerQuery& query);
+
+      /**
+       * Stores a SequencedIndexedTickerStatus.
+       * @param status The SequencedIndexedTickerStatus to store.
+       */
+      void store(const SequencedIndexedTickerStatus& status);
+
+      /**
+       * Stores a list of SequencedIndexedTickerStatuses.
+       * @param statuses The list of SequencedIndexedTickerStatuses to store.
+       */
+      void store(const std::vector<SequencedIndexedTickerStatus>& statuses);
+
+      /**
        * Executes a search query over a Ticker's TimeAndSales.
        * @param query The search query to execute.
        * @return The list of TimeAndSales that satisfy the search <i>query</i>.
@@ -184,6 +210,11 @@ namespace Nexus {
         virtual void store(const SequencedTickerBookQuote& quote) = 0;
         virtual void store(
           const std::vector<SequencedTickerBookQuote>& quotes) = 0;
+        virtual std::vector<SequencedTickerStatus> load_ticker_statuses(
+          const TickerQuery& query) = 0;
+        virtual void store(const SequencedIndexedTickerStatus& status) = 0;
+        virtual void store(
+          const std::vector<SequencedIndexedTickerStatus>& statuses) = 0;
         virtual std::vector<SequencedTimeAndSale> load_time_and_sales(
           const TickerQuery& query) = 0;
         virtual void store(const SequencedTickerTimeAndSale& time_and_sale) = 0;
@@ -216,6 +247,11 @@ namespace Nexus {
         void store(const SequencedTickerBookQuote& quote) override;
         void store(
           const std::vector<SequencedTickerBookQuote>& quotes) override;
+        std::vector<SequencedTickerStatus> load_ticker_statuses(
+          const TickerQuery& query) override;
+        void store(const SequencedIndexedTickerStatus& status) override;
+        void store(
+          const std::vector<SequencedIndexedTickerStatus>& statuses) override;
         std::vector<SequencedTimeAndSale> load_time_and_sales(
           const TickerQuery& query) override;
         void store(const SequencedTickerTimeAndSale& time_and_sale) override;
@@ -258,6 +294,9 @@ namespace Nexus {
     } else if constexpr(
         std::is_same_v<T, BookQuote> || std::is_same_v<T, SequencedBookQuote>) {
       return data_store.load_book_quotes(query);
+    } else if constexpr(std::is_same_v<T, TickerStatus> ||
+        std::is_same_v<T, SequencedTickerStatus>) {
+      return data_store.load_ticker_statuses(query);
     } else if constexpr(std::is_same_v<T, TimeAndSale> ||
         std::is_same_v<T, SequencedTimeAndSale>) {
       return data_store.load_time_and_sales(query);
@@ -329,6 +368,21 @@ namespace Nexus {
   inline void HistoricalDataStore::store(
       const std::vector<SequencedTickerBookQuote>& quotes) {
     m_data_store->store(quotes);
+  }
+
+  inline std::vector<SequencedTickerStatus>
+      HistoricalDataStore::load_ticker_statuses(const TickerQuery& query) {
+    return m_data_store->load_ticker_statuses(query);
+  }
+
+  inline void HistoricalDataStore::store(
+      const SequencedIndexedTickerStatus& status) {
+    m_data_store->store(status);
+  }
+
+  inline void HistoricalDataStore::store(
+      const std::vector<SequencedIndexedTickerStatus>& statuses) {
+    m_data_store->store(statuses);
   }
 
   inline std::vector<SequencedTimeAndSale>
@@ -423,6 +477,25 @@ namespace Nexus {
   void HistoricalDataStore::WrappedHistoricalDataStore<D>::store(
       const std::vector<SequencedTickerBookQuote>& quotes) {
     m_data_store->store(quotes);
+  }
+
+  template<typename D>
+  std::vector<SequencedTickerStatus> HistoricalDataStore::
+      WrappedHistoricalDataStore<D>::load_ticker_statuses(
+        const TickerQuery& query) {
+    return m_data_store->load_ticker_statuses(query);
+  }
+
+  template<typename D>
+  void HistoricalDataStore::WrappedHistoricalDataStore<D>::store(
+      const SequencedIndexedTickerStatus& status) {
+    m_data_store->store(status);
+  }
+
+  template<typename D>
+  void HistoricalDataStore::WrappedHistoricalDataStore<D>::store(
+      const std::vector<SequencedIndexedTickerStatus>& statuses) {
+    m_data_store->store(statuses);
   }
 
   template<typename D>

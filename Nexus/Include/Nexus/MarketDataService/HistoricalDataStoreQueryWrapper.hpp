@@ -80,6 +80,17 @@ namespace Nexus {
   };
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  class HistoricalDataStoreQueryWrapper<TickerStatus, D> final :
+      public BaseHistoricalDataStoreQueryWrapper<
+        TickerQuery, TickerStatus, Ticker, D> {
+    public:
+      template<Beam::Initializes<D> DF>
+      explicit HistoricalDataStoreQueryWrapper(DF&& data_store);
+
+      std::vector<SequencedTickerStatus> load(const TickerQuery& query);
+  };
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   class HistoricalDataStoreQueryWrapper<TimeAndSale, D> final :
       public BaseHistoricalDataStoreQueryWrapper<
         TickerQuery, TimeAndSale, Ticker, D> {
@@ -164,6 +175,20 @@ namespace Nexus {
       HistoricalDataStoreQueryWrapper<BookQuote, D>::load(
         const TickerQuery& query) {
     return this->m_data_store->load_book_quotes(query);
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  template<Beam::Initializes<D> DF>
+  HistoricalDataStoreQueryWrapper<TickerStatus, D>::
+    HistoricalDataStoreQueryWrapper(DF&& data_store)
+    : BaseHistoricalDataStoreQueryWrapper<TickerQuery, TickerStatus, Ticker, D>(
+        std::forward<DF>(data_store)) {}
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  std::vector<SequencedTickerStatus>
+      HistoricalDataStoreQueryWrapper<TickerStatus, D>::load(
+        const TickerQuery& query) {
+    return this->m_data_store->load_ticker_statuses(query);
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>

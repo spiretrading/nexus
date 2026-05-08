@@ -137,6 +137,17 @@ namespace Nexus {
         IsHistoricalDataStore auto& data_store, const F& f);
 
       /**
+       * Publishes a TickerStatus.
+       * @param status The TickerStatus to publish.
+       * @param source_id The id of the source setting the value.
+       * @param data_store Used to initialize the Ticker's data.
+       * @param f Receives synchronized access to the updated data.
+       */
+      template<typename F>
+      void publish(const IndexedTickerStatus& status, int source_id,
+        IsHistoricalDataStore auto& data_store, const F& f);
+
+      /**
        * Publishes a TimeAndSale.
        * @param time_and_sale The TimeAndSale to publish.
        * @param source_id The id of the source setting the value.
@@ -330,6 +341,20 @@ namespace Nexus {
     Beam::with(*entry, [&] (auto& entry) {
       if(auto sequenced_quote = entry.publish(delta, source_id)) {
         f(*sequenced_quote);
+      }
+    });
+  }
+
+  template<typename F>
+  void MarketDataRegistry::publish(const IndexedTickerStatus& status,
+      int source_id, IsHistoricalDataStore auto& data_store, const F& f) {
+    auto entry = load(status.get_index(), data_store);
+    if(!entry) {
+      return;
+    }
+    Beam::with(*entry, [&] (auto& entry) {
+      if(auto sequenced_status = entry.publish(status, source_id)) {
+        f(*sequenced_status);
       }
     });
   }

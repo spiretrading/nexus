@@ -67,6 +67,7 @@ namespace Nexus {
       void publish(const VenueOrderImbalance& imbalance);
       void publish(const TickerBboQuote& quote);
       void publish(const TickerBookQuote& quote);
+      void publish(const IndexedTickerStatus& status);
       void publish(const TickerTimeAndSale& time_and_sale);
       void add_order(const Ticker& ticker, Venue venue, const std::string& mpid,
         bool is_primary_mpid, const OrderId& id, Side side, Money price,
@@ -94,6 +95,7 @@ namespace Nexus {
         boost::optional<TickerBboQuote> m_bbo_quote;
         std::vector<TickerBookQuote> m_asks;
         std::vector<TickerBookQuote> m_bids;
+        std::vector<IndexedTickerStatus> m_ticker_statuses;
         std::vector<TickerTimeAndSale> m_time_and_sales;
       };
       mutable boost::mutex m_mutex;
@@ -240,6 +242,16 @@ namespace Nexus {
           quote->m_quote.m_price, quote->m_quote.m_size, quote->m_timestamp);
       }
     }
+  }
+
+  template<typename O, typename S, typename P, typename H> requires
+    Beam::IsTimer<Beam::dereference_t<S>> &&
+      Beam::IsTimer<Beam::dereference_t<H>>
+  void ServiceMarketDataFeedClient<O, S, P, H>::publish(
+      const IndexedTickerStatus& status) {
+    auto lock = boost::lock_guard(m_mutex);
+    auto& updates = m_quote_updates[status.get_index()];
+    updates.m_ticker_statuses.push_back(status);
   }
 
   template<typename O, typename S, typename P, typename H> requires
@@ -427,6 +439,8 @@ namespace Nexus {
         std::back_inserter(messages), [] (const auto& quote) {
           return quote->m_quote.m_size != 0;
         });
+      std::move(updates.m_ticker_statuses.begin(),
+        updates.m_ticker_statuses.end(), std::back_inserter(messages));
       std::move(updates.m_time_and_sales.begin(),
         updates.m_time_and_sales.end(), std::back_inserter(messages));
     }
