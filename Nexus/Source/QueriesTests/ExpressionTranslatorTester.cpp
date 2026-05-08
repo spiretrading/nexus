@@ -7,6 +7,7 @@
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/OrderImbalanceAccessor.hpp"
 #include "Nexus/Queries/QuoteAccessor.hpp"
+#include "Nexus/Queries/TickerStatusAccessor.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -227,5 +228,61 @@ TEST_SUITE("EvaluatorTranslator") {
     auto small = OrderImbalance(parse_ticker("A.TSX"), Side::ASK, 100,
       Money::ONE, time_from_string("2026-05-08 15:50:01"));
     REQUIRE(!evaluator->eval<bool>(small));
+  }
+
+  TEST_CASE("ticker_status_state") {
+    auto accessor = TickerStatusAccessor::from_parameter(0);
+    auto evaluator =
+      translate<Nexus::EvaluatorTranslator>(accessor.get_state());
+    auto status =
+      TickerStatus(Venues::TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        time_from_string("2026-05-08 09:30:00"));
+    REQUIRE(evaluator->eval<std::string>(status) == "Authorized");
+  }
+
+  TEST_CASE("ticker_status_venue") {
+    auto accessor = TickerStatusAccessor::from_parameter(0);
+    auto evaluator =
+      translate<Nexus::EvaluatorTranslator>(accessor.get_venue());
+    auto status =
+      TickerStatus(Venues::TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        time_from_string("2026-05-08 09:30:00"));
+    REQUIRE(evaluator->eval<Venue>(status) == Venues::TSX);
+  }
+
+  TEST_CASE("ticker_status_flags") {
+    auto accessor = TickerStatusAccessor::from_parameter(0);
+    auto evaluator =
+      translate<Nexus::EvaluatorTranslator>(accessor.get_flags());
+    auto status =
+      TickerStatus(Venues::TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        time_from_string("2026-05-08 09:30:00"));
+    REQUIRE(evaluator->eval<int>(status) ==
+      static_cast<int>(TickerStatus::Flag::IS_CONTINUOUS));
+  }
+
+  TEST_CASE("ticker_status_timestamp") {
+    auto accessor = TickerStatusAccessor::from_parameter(0);
+    auto evaluator =
+      translate<Nexus::EvaluatorTranslator>(accessor.get_timestamp());
+    auto timestamp = time_from_string("2026-05-08 09:30:00");
+    auto status = TickerStatus(
+      Venues::TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS, timestamp);
+    REQUIRE(evaluator->eval<ptime>(status) == timestamp);
+  }
+
+  TEST_CASE("ticker_status_state_filter") {
+    auto accessor = TickerStatusAccessor::from_parameter(0);
+    auto filter =
+      accessor.get_state() == ConstantExpression(std::string("Authorized"));
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(filter);
+    auto match =
+      TickerStatus(Venues::TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        time_from_string("2026-05-08 09:30:00"));
+    REQUIRE(evaluator->eval<bool>(match));
+    auto no_match = TickerStatus(
+      Venues::TSX, "AuthorizedHalted", TickerStatus::Flag::IS_ACCEPTING_CANCELS,
+      time_from_string("2026-05-08 10:00:00"));
+    REQUIRE(!evaluator->eval<bool>(no_match));
   }
 }

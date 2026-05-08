@@ -49,6 +49,8 @@ namespace Nexus {
         const Beam::MemberAccessExpression& expression);
       void translate_order_imbalance_member_access_expression(
         const Beam::MemberAccessExpression& expression);
+      void translate_ticker_status_member_access_expression(
+        const Beam::MemberAccessExpression& expression);
       void translate_time_and_sale_member_access_expression(
         const Beam::MemberAccessExpression& expression);
       void translate_order_fields_member_access_expression(
@@ -88,6 +90,8 @@ namespace Nexus {
     } else if(
         expression.get_expression().get_type() == typeid(OrderImbalance)) {
       translate_order_imbalance_member_access_expression(expression);
+    } else if(expression.get_expression().get_type() == typeid(TickerStatus)) {
+      translate_ticker_status_member_access_expression(expression);
     } else if(expression.get_expression().get_type() == typeid(TimeAndSale)) {
       translate_time_and_sale_member_access_expression(expression);
     } else if(expression.get_expression().get_type() == typeid(OrderFields)) {
@@ -249,6 +253,34 @@ namespace Nexus {
         std::make_unique<Beam::MemberAccessEvaluatorNode<OrderImbalance,
           boost::posix_time::ptime>>(
             std::move(imbalance_expression), &OrderImbalance::m_timestamp));
+    } else {
+      Beam::EvaluatorTranslator<QueryTypes>::visit(expression);
+    }
+  }
+
+  inline void EvaluatorTranslator::
+      translate_ticker_status_member_access_expression(
+        const Beam::MemberAccessExpression& expression) {
+    expression.get_expression().apply(*this);
+    auto status_expression = Beam::static_pointer_cast<
+      Beam::EvaluatorNode<TickerStatus>>(get_evaluator());
+    if(expression.get_name() == "venue") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<TickerStatus, Venue>>(
+          std::move(status_expression), &TickerStatus::m_venue));
+    } else if(expression.get_name() == "state") {
+      set_evaluator(std::make_unique<
+        Beam::MemberAccessEvaluatorNode<TickerStatus, std::string>>(
+          std::move(status_expression), &TickerStatus::m_state));
+    } else if(expression.get_name() == "flags") {
+      set_evaluator(
+        Beam::make_function_evaluator_node([] (const TickerStatus& status) {
+          return static_cast<int>(status.m_flags);
+        }, std::move(status_expression)));
+    } else if(expression.get_name() == "timestamp") {
+      set_evaluator(std::make_unique<Beam::MemberAccessEvaluatorNode<
+        TickerStatus, boost::posix_time::ptime>>(
+          std::move(status_expression), &TickerStatus::m_timestamp));
     } else {
       Beam::EvaluatorTranslator<QueryTypes>::visit(expression);
     }

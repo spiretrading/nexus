@@ -8,6 +8,7 @@
 #include "Nexus/Queries/OrderInfoAccessor.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 #include "Nexus/Queries/StandardValues.hpp"
+#include "Nexus/Queries/TickerStatusAccessor.hpp"
 #include "Nexus/Queries/TickerAccessor.hpp"
 #include "Nexus/Queries/TimeAndSaleAccessor.hpp"
 
@@ -96,6 +97,7 @@ void Nexus::Python::export_queries(module& module) {
   export_order_imbalance_accessor(module);
   export_order_info_accessor(module);
   export_ticker_accessor(module);
+  export_ticker_status_accessor(module);
   export_time_and_sale_accessor(module);
   export_indexed_query<Ticker>(module, "TickerIndexedQuery");
   export_basic_query<Ticker>(module, "TickerQuery");
@@ -116,6 +118,16 @@ void Nexus::Python::export_ticker_accessor(module& module) {
     def_static("from_parameter", &TickerAccessor::from_parameter).
     def_property_readonly("symbol", &TickerAccessor::get_symbol).
     def_property_readonly("venue", &TickerAccessor::get_venue);
+}
+
+void Nexus::Python::export_ticker_status_accessor(module& module) {
+  class_<TickerStatusAccessor>(module, "TickerStatusAccessor").
+    def(init<Expression>()).
+    def_static("from_parameter", &TickerStatusAccessor::from_parameter).
+    def_property_readonly("venue", &TickerStatusAccessor::get_venue).
+    def_property_readonly("state", &TickerStatusAccessor::get_state).
+    def_property_readonly("flags", &TickerStatusAccessor::get_flags).
+    def_property_readonly("timestamp", &TickerStatusAccessor::get_timestamp);
 }
 
 void Nexus::Python::export_time_and_sale_accessor(module& module) {

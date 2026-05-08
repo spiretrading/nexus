@@ -53,6 +53,12 @@ namespace Nexus::Python {
   void export_ticker_accessor(pybind11::module& module);
 
   /**
+   * Exports the TickerStatusAccessor class.
+   * @param module The module to export to.
+   */
+  void export_ticker_status_accessor(pybind11::module& module);
+
+  /**
    * Exports the TimeAndSaleAccessor class.
    * @param module The module to export to.
    */
