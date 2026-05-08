@@ -118,7 +118,8 @@ TEST_SUITE("SqlTranslator") {
 
   TEST_CASE("constant_side") {
     auto accessor = OrderImbalanceAccessor::from_parameter(0);
-    auto expression = accessor.get_side() == ConstantExpression(Side(Side::BID));
+    auto expression =
+      accessor.get_side() == ConstantExpression(Side(Side::BID));
     REQUIRE(translate("order_imbalances", expression) ==
       "(order_imbalances.side = 1)");
   }
