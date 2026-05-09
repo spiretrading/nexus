@@ -105,11 +105,13 @@ namespace Nexus {
 
   inline void BacktesterMarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedTickerStatus> queue) {
+    m_service->query_ticker_statuses(query);
     m_market_data_client.query(query, std::move(queue));
   }
 
   inline void BacktesterMarketDataClient::query(
       const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue) {
+    m_service->query_ticker_statuses(query);
     m_market_data_client.query(query, std::move(queue));
   }
 

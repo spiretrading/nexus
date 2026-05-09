@@ -52,6 +52,12 @@ namespace Nexus {
       void query_book_quotes(const TickerQuery& query);
 
       /**
+       * Submits a query for TickerStatuses.
+       * @param query The ticker query to submit.
+       */
+      void query_ticker_statuses(const TickerQuery& query);
+
+      /**
        * Submits a query for TimeAndSales.
        * @param query The ticker query to submit.
        */
@@ -196,6 +202,13 @@ namespace Nexus {
   inline void BacktesterMarketDataService::query_book_quotes(
       const TickerQuery& query) {
     auto event = std::make_shared<MarketDataQueryEvent<BookQuote>>(
+      query, Beam::Ref(*this));
+    m_event_handler->add(event);
+  }
+
+  inline void BacktesterMarketDataService::query_ticker_statuses(
+      const TickerQuery& query) {
+    auto event = std::make_shared<MarketDataQueryEvent<TickerStatus>>(
       query, Beam::Ref(*this));
     m_event_handler->add(event);
   }
