@@ -126,7 +126,7 @@ TEST_SUITE("MarketDataRegistryServlet") {
     auto ticker = parse_ticker("TST.TSX");
     auto query = TickerQuery();
     query.set_index(ticker);
-    query.set_range(Range::TOTAL);
+    query.set_range(Beam::Sequence::FIRST, Beam::Sequence::PRESENT);
     query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
     auto query_thread = std::async(std::launch::async, [&] {
       return fixture.m_client->send_request<QueryTickerStatusService>(query);

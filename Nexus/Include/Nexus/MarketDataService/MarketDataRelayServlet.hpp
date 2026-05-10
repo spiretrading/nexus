@@ -97,13 +97,13 @@ namespace Nexus {
       VenueSubscriptions<OrderImbalance> m_order_imbalance_subscriptions;
       TickerSubscriptions<BboQuote> m_bbo_quote_subscriptions;
       TickerSubscriptions<BookQuote> m_book_quote_subscriptions;
-      TickerSubscriptions<TickerStatus> m_ticker_status_subscriptions;
       TickerSubscriptions<TimeAndSale> m_time_and_sale_subscriptions;
+      TickerSubscriptions<TickerStatus> m_ticker_status_subscriptions;
       RealTimeVenueSubscriptionSet m_order_imbalance_real_time_subscriptions;
       RealTimeTickerSubscriptionSet m_bbo_quote_real_time_subscriptions;
       RealTimeTickerSubscriptionSet m_book_quote_real_time_subscriptions;
-      RealTimeTickerSubscriptionSet m_ticker_status_real_time_subscriptions;
       RealTimeTickerSubscriptionSet m_time_and_sale_real_time_subscriptions;
+      RealTimeTickerSubscriptionSet m_ticker_status_real_time_subscriptions;
       Beam::SynchronizedUnorderedSet<Ticker> m_tickers;
       Beam::ResourcePool<MarketDataClient, MarketDataClientBuilder>
         m_market_data_clients;
@@ -219,15 +219,6 @@ namespace Nexus {
       [=, this] (auto& client, const auto& index, auto id) {
         on_end_query(client, index, id, m_book_quote_subscriptions);
       });
-    QueryTickerStatusService::add_request_slot(out(slots),
-      [=, this] (auto& request, const auto& query) {
-        handle_query_request(request, query, m_ticker_status_subscriptions,
-          m_ticker_status_real_time_subscriptions);
-      });
-    Beam::add_message_slot<EndTickerStatusQueryMessage>(out(slots),
-      [=, this] (auto& client, const auto& index, auto id) {
-        on_end_query(client, index, id, m_ticker_status_subscriptions);
-      });
     QueryTimeAndSalesService::add_request_slot(out(slots),
       [=, this] (auto& request, const auto& query) {
         handle_query_request(request, query, m_time_and_sale_subscriptions,
@@ -236,6 +227,15 @@ namespace Nexus {
     Beam::add_message_slot<EndTimeAndSaleQueryMessage>(out(slots),
       [=, this] (auto& client, const auto& index, auto id) {
         on_end_query(client, index, id, m_time_and_sale_subscriptions);
+      });
+    QueryTickerStatusService::add_request_slot(out(slots),
+      [=, this] (auto& request, const auto& query) {
+        handle_query_request(request, query, m_ticker_status_subscriptions,
+          m_ticker_status_real_time_subscriptions);
+      });
+    Beam::add_message_slot<EndTickerStatusQueryMessage>(out(slots),
+      [=, this] (auto& client, const auto& index, auto id) {
+        on_end_query(client, index, id, m_ticker_status_subscriptions);
       });
     LoadTickerSnapshotService::add_slot(out(slots), std::bind_front(
       &MarketDataRelayServlet::on_load_ticker_snapshot, this));
@@ -277,8 +277,8 @@ namespace Nexus {
     m_order_imbalance_subscriptions.remove_all(client);
     m_bbo_quote_subscriptions.remove_all(client);
     m_book_quote_subscriptions.remove_all(client);
-    m_ticker_status_subscriptions.remove_all(client);
     m_time_and_sale_subscriptions.remove_all(client);
+    m_ticker_status_subscriptions.remove_all(client);
   }
 
   template<typename C, typename M, typename A> requires

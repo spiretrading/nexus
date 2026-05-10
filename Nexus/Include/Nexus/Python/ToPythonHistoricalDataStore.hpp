@@ -46,14 +46,14 @@ namespace Nexus {
         const TickerQuery& query);
       void store(const SequencedTickerBookQuote& quote);
       void store(const std::vector<SequencedTickerBookQuote>& quotes);
-      std::vector<SequencedTickerStatus> load_ticker_statuses(
-        const TickerQuery& query);
-      void store(const SequencedIndexedTickerStatus& status);
-      void store(const std::vector<SequencedIndexedTickerStatus>& statuses);
       std::vector<SequencedTimeAndSale> load_time_and_sales(
         const TickerQuery& query);
       void store(const SequencedTickerTimeAndSale& time_and_sale);
       void store(const std::vector<SequencedTickerTimeAndSale>& time_and_sales);
+      std::vector<SequencedTickerStatus> load_ticker_statuses(
+        const TickerQuery& query);
+      void store(const SequencedIndexedTickerStatus& status);
+      void store(const std::vector<SequencedIndexedTickerStatus>& statuses);
       void close();
 
     private:
@@ -172,28 +172,6 @@ namespace Nexus {
   }
 
   template<IsHistoricalDataStore D>
-  std::vector<SequencedTickerStatus>
-      ToPythonHistoricalDataStore<D>::load_ticker_statuses(
-        const TickerQuery& query) {
-    auto release = Beam::Python::GilRelease();
-    return m_data_store->load_ticker_statuses(query);
-  }
-
-  template<IsHistoricalDataStore D>
-  void ToPythonHistoricalDataStore<D>::store(
-      const SequencedIndexedTickerStatus& status) {
-    auto release = Beam::Python::GilRelease();
-    m_data_store->store(status);
-  }
-
-  template<IsHistoricalDataStore D>
-  void ToPythonHistoricalDataStore<D>::store(
-      const std::vector<SequencedIndexedTickerStatus>& statuses) {
-    auto release = Beam::Python::GilRelease();
-    m_data_store->store(statuses);
-  }
-
-  template<IsHistoricalDataStore D>
   std::vector<SequencedTimeAndSale>
       ToPythonHistoricalDataStore<D>::load_time_and_sales(
         const TickerQuery& query) {
@@ -213,6 +191,28 @@ namespace Nexus {
       const std::vector<SequencedTickerTimeAndSale>& time_and_sales) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(time_and_sales);
+  }
+
+  template<IsHistoricalDataStore D>
+  std::vector<SequencedTickerStatus>
+      ToPythonHistoricalDataStore<D>::load_ticker_statuses(
+        const TickerQuery& query) {
+    auto release = Beam::Python::GilRelease();
+    return m_data_store->load_ticker_statuses(query);
+  }
+
+  template<IsHistoricalDataStore D>
+  void ToPythonHistoricalDataStore<D>::store(
+      const SequencedIndexedTickerStatus& status) {
+    auto release = Beam::Python::GilRelease();
+    m_data_store->store(status);
+  }
+
+  template<IsHistoricalDataStore D>
+  void ToPythonHistoricalDataStore<D>::store(
+      const std::vector<SequencedIndexedTickerStatus>& statuses) {
+    auto release = Beam::Python::GilRelease();
+    m_data_store->store(statuses);
   }
 
   template<IsHistoricalDataStore D>

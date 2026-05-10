@@ -115,21 +115,6 @@ namespace Nexus {
     return ROW;
   }
 
-  /** Returns a row representing a ticker status. */
-  inline const auto& get_ticker_status_row() {
-    static auto ROW = Viper::Row<TickerStatus>().
-      add_column("status_venue", Viper::varchar(16), &TickerStatus::m_venue).
-      add_column("state", Viper::varchar(64), &TickerStatus::m_state).
-      add_column("flags",
-        [] (const auto& row) {
-          return static_cast<int>(row.m_flags);
-        },
-        [] (auto& row, auto value) {
-          row.m_flags = static_cast<TickerStatus::Flag>(value);
-        });
-    return ROW;
-  }
-
   /** Returns a row representing a time and sale. */
   inline const auto& get_time_and_sale_row() {
     static auto ROW = Viper::Row<TimeAndSale>().
@@ -144,6 +129,21 @@ namespace Nexus {
       add_column("buyer_mpid", Viper::varchar(16), &TimeAndSale::m_buyer_mpid).
       add_column(
         "seller_mpid", Viper::varchar(16), &TimeAndSale::m_seller_mpid);
+    return ROW;
+  }
+
+  /** Returns a row representing a ticker status. */
+  inline const auto& get_ticker_status_row() {
+    static auto ROW = Viper::Row<TickerStatus>().
+      add_column("status_venue", Viper::varchar(16), &TickerStatus::m_venue).
+      add_column("state", Viper::varchar(64), &TickerStatus::m_state).
+      add_column("flags",
+        [] (const auto& row) {
+          return static_cast<int>(row.m_flags);
+        },
+        [] (auto& row, auto value) {
+          row.m_flags = static_cast<TickerStatus::Flag>(value);
+        });
     return ROW;
   }
 }

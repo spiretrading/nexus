@@ -44,14 +44,14 @@ namespace Nexus {
         const TickerQuery& query);
       void store(const SequencedTickerBookQuote& quote);
       void store(const std::vector<SequencedTickerBookQuote>& quotes);
-      std::vector<SequencedTickerStatus> load_ticker_statuses(
-        const TickerQuery& query);
-      void store(const SequencedIndexedTickerStatus& status);
-      void store(const std::vector<SequencedIndexedTickerStatus>& statuses);
       std::vector<SequencedTimeAndSale> load_time_and_sales(
         const TickerQuery& query);
       void store(const SequencedTickerTimeAndSale& time_and_sale);
       void store(const std::vector<SequencedTickerTimeAndSale>& time_and_sales);
+      std::vector<SequencedTickerStatus> load_ticker_statuses(
+        const TickerQuery& query);
+      void store(const SequencedIndexedTickerStatus& status);
+      void store(const std::vector<SequencedIndexedTickerStatus>& statuses);
       void close();
 
     private:
@@ -62,8 +62,8 @@ namespace Nexus {
       Beam::local_ptr_t<D> m_data_store;
       DataStore<BboQuote> m_bbo_quote_data_store;
       DataStore<BookQuote> m_book_quote_data_store;
-      DataStore<TickerStatus> m_ticker_status_data_store;
       DataStore<TimeAndSale> m_time_and_sale_data_store;
+      DataStore<TickerStatus> m_ticker_status_data_store;
       Beam::OpenState m_open_state;
 
       SessionCachedHistoricalDataStore(
@@ -79,8 +79,8 @@ namespace Nexus {
     : m_data_store(std::forward<DF>(data_store)),
       m_bbo_quote_data_store(&*m_data_store, block_size / 10),
       m_book_quote_data_store(&*m_data_store, block_size / 10),
-      m_ticker_status_data_store(&*m_data_store, block_size),
-      m_time_and_sale_data_store(&*m_data_store, block_size) {}
+      m_time_and_sale_data_store(&*m_data_store, block_size),
+      m_ticker_status_data_store(&*m_data_store, block_size) {}
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   SessionCachedHistoricalDataStore<D>::~SessionCachedHistoricalDataStore() {
@@ -153,24 +153,6 @@ namespace Nexus {
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
-  std::vector<SequencedTickerStatus> SessionCachedHistoricalDataStore<D>::
-      load_ticker_statuses(const TickerQuery& query) {
-    return m_ticker_status_data_store.load(query);
-  }
-
-  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
-  void SessionCachedHistoricalDataStore<D>::store(
-      const SequencedIndexedTickerStatus& status) {
-    m_ticker_status_data_store.store(status);
-  }
-
-  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
-  void SessionCachedHistoricalDataStore<D>::store(
-      const std::vector<SequencedIndexedTickerStatus>& statuses) {
-    m_ticker_status_data_store.store(statuses);
-  }
-
-  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   std::vector<SequencedTimeAndSale> SessionCachedHistoricalDataStore<D>::
       load_time_and_sales(const TickerQuery& query) {
     return m_time_and_sale_data_store.load(query);
@@ -189,12 +171,30 @@ namespace Nexus {
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  std::vector<SequencedTickerStatus> SessionCachedHistoricalDataStore<D>::
+      load_ticker_statuses(const TickerQuery& query) {
+    return m_ticker_status_data_store.load(query);
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void SessionCachedHistoricalDataStore<D>::store(
+      const SequencedIndexedTickerStatus& status) {
+    m_ticker_status_data_store.store(status);
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void SessionCachedHistoricalDataStore<D>::store(
+      const std::vector<SequencedIndexedTickerStatus>& statuses) {
+    m_ticker_status_data_store.store(statuses);
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void SessionCachedHistoricalDataStore<D>::close() {
     if(m_open_state.set_closing()) {
       return;
     }
-    m_time_and_sale_data_store.close();
     m_ticker_status_data_store.close();
+    m_time_and_sale_data_store.close();
     m_book_quote_data_store.close();
     m_bbo_quote_data_store.close();
     m_data_store->close();

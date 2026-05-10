@@ -23,8 +23,8 @@ namespace Nexus {
       client.publish(std::declval<const VenueOrderImbalance&>());
       client.publish(std::declval<const TickerBboQuote&>());
       client.publish(std::declval<const TickerBookQuote&>());
-      client.publish(std::declval<const IndexedTickerStatus&>());
       client.publish(std::declval<const TickerTimeAndSale&>());
+      client.publish(std::declval<const IndexedTickerStatus&>());
       client.add_order(std::declval<const Ticker&>(), std::declval<Venue>(),
         std::declval<const std::string&>(), std::declval<bool>(),
         std::declval<const std::string&>(), std::declval<Side>(),
@@ -91,16 +91,16 @@ namespace Nexus {
       void publish(const TickerBookQuote& quote);
 
       /**
-       * Publishes a TickerStatus.
-       * @param status The TickerStatus to publish.
-       */
-      void publish(const IndexedTickerStatus& status);
-
-      /**
        * Publishes a TimeAndSale.
        * @param time_and_sale The TimeAndSale to publish.
        */
       void publish(const TickerTimeAndSale& time_and_sale);
+
+      /**
+       * Publishes a TickerStatus.
+       * @param status The TickerStatus to publish.
+       */
+      void publish(const IndexedTickerStatus& status);
 
       /**
        * Adds an order.
@@ -164,8 +164,8 @@ namespace Nexus {
         virtual void publish(const VenueOrderImbalance& imbalance) = 0;
         virtual void publish(const TickerBboQuote& quote) = 0;
         virtual void publish(const TickerBookQuote& quote) = 0;
-        virtual void publish(const IndexedTickerStatus& status) = 0;
         virtual void publish(const TickerTimeAndSale& time_and_sale) = 0;
+        virtual void publish(const IndexedTickerStatus& status) = 0;
         virtual void add_order(const Ticker& ticker, Venue venue,
           const std::string& mpid, bool is_primary_mpid, const std::string& id,
           Side side, Money price, Quantity size,
@@ -192,8 +192,8 @@ namespace Nexus {
         void publish(const VenueOrderImbalance& imbalance) override;
         void publish(const TickerBboQuote& quote) override;
         void publish(const TickerBookQuote& quote) override;
-        void publish(const IndexedTickerStatus& status) override;
         void publish(const TickerTimeAndSale& time_and_sale) override;
+        void publish(const IndexedTickerStatus& status) override;
         void add_order(const Ticker& ticker, Venue venue,
           const std::string& mpid, bool is_primary_mpid, const std::string& id,
           Side side, Money price, Quantity size,
@@ -240,13 +240,13 @@ namespace Nexus {
     m_client->publish(quote);
   }
 
-  inline void MarketDataFeedClient::publish(const IndexedTickerStatus& status) {
-    m_client->publish(status);
-  }
-
   inline void MarketDataFeedClient::publish(
       const TickerTimeAndSale& time_and_sale) {
     m_client->publish(time_and_sale);
+  }
+
+  inline void MarketDataFeedClient::publish(const IndexedTickerStatus& status) {
+    m_client->publish(status);
   }
 
   inline void MarketDataFeedClient::add_order(const Ticker& ticker,
@@ -313,14 +313,14 @@ namespace Nexus {
 
   template<typename C>
   void MarketDataFeedClient::WrappedMarketDataFeedClient<C>::publish(
-      const IndexedTickerStatus& status) {
-    m_client->publish(status);
+      const TickerTimeAndSale& time_and_sale) {
+    m_client->publish(time_and_sale);
   }
 
   template<typename C>
   void MarketDataFeedClient::WrappedMarketDataFeedClient<C>::publish(
-      const TickerTimeAndSale& time_and_sale) {
-    m_client->publish(time_and_sale);
+      const IndexedTickerStatus& status) {
+    m_client->publish(status);
   }
 
   template<typename C>

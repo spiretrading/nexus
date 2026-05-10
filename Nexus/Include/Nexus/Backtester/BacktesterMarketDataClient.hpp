@@ -33,13 +33,13 @@ namespace Nexus {
       void query(
         const TickerQuery& query, Beam::ScopedQueueWriter<BookQuote> queue);
       void query(const TickerQuery& query,
-        Beam::ScopedQueueWriter<SequencedTickerStatus> queue);
-      void query(
-        const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue);
-      void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
       void query(
         const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue);
+      void query(const TickerQuery& query,
+        Beam::ScopedQueueWriter<SequencedTickerStatus> queue);
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue);
       std::vector<TickerInfo> query(const TickerInfoQuery& query);
       TickerSnapshot load_snapshot(const Ticker& ticker);
       PriceCandlestick load_session_candlestick(const Ticker& ticker);
@@ -104,18 +104,6 @@ namespace Nexus {
   }
 
   inline void BacktesterMarketDataClient::query(const TickerQuery& query,
-      Beam::ScopedQueueWriter<SequencedTickerStatus> queue) {
-    m_service->query_ticker_statuses(query);
-    m_market_data_client.query(query, std::move(queue));
-  }
-
-  inline void BacktesterMarketDataClient::query(
-      const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue) {
-    m_service->query_ticker_statuses(query);
-    m_market_data_client.query(query, std::move(queue));
-  }
-
-  inline void BacktesterMarketDataClient::query(const TickerQuery& query,
       Beam::ScopedQueueWriter<SequencedTimeAndSale> queue) {
     m_service->query_time_and_sales(query);
     m_market_data_client.query(query, std::move(queue));
@@ -124,6 +112,18 @@ namespace Nexus {
   inline void BacktesterMarketDataClient::query(
       const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue) {
     m_service->query_time_and_sales(query);
+    m_market_data_client.query(query, std::move(queue));
+  }
+
+  inline void BacktesterMarketDataClient::query(const TickerQuery& query,
+      Beam::ScopedQueueWriter<SequencedTickerStatus> queue) {
+    m_service->query_ticker_statuses(query);
+    m_market_data_client.query(query, std::move(queue));
+  }
+
+  inline void BacktesterMarketDataClient::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue) {
+    m_service->query_ticker_statuses(query);
     m_market_data_client.query(query, std::move(queue));
   }
 

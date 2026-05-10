@@ -86,16 +86,16 @@ namespace Nexus::Python {
         pybind11::overload_cast<const SequencedTickerBookQuote&>(&D::store)).
       def("store", pybind11::overload_cast<
         const std::vector<SequencedTickerBookQuote>&>(&D::store)).
-      def("load_ticker_statuses", &D::load_ticker_statuses).
-      def("store", pybind11::overload_cast<
-        const SequencedIndexedTickerStatus&>(&D::store)).
-      def("store", pybind11::overload_cast<
-        const std::vector<SequencedIndexedTickerStatus>&>(&D::store)).
       def("load_time_and_sales", &D::load_time_and_sales).
       def("store", pybind11::overload_cast<
         const SequencedTickerTimeAndSale&>(&D::store)).
       def("store", pybind11::overload_cast<
         const std::vector<SequencedTickerTimeAndSale>&>(&D::store)).
+      def("load_ticker_statuses", &D::load_ticker_statuses).
+      def("store", pybind11::overload_cast<
+        const SequencedIndexedTickerStatus&>(&D::store)).
+      def("store", pybind11::overload_cast<
+        const std::vector<SequencedIndexedTickerStatus>&>(&D::store)).
       def("close", &D::close);
     if constexpr(!std::is_same_v<D, HistoricalDataStore>) {
       pybind11::implicitly_convertible<D, HistoricalDataStore>();
@@ -146,17 +146,17 @@ namespace Nexus::Python {
       def("query_book_quotes",
         pybind11::overload_cast<const TickerQuery&,
           Beam::ScopedQueueWriter<BookQuote>>(&C::query)).
-      def("query_sequenced_ticker_statuses",
-        pybind11::overload_cast<const TickerQuery&,
-          Beam::ScopedQueueWriter<SequencedTickerStatus>>(&C::query)).
-      def("query_ticker_statuses", pybind11::overload_cast<const TickerQuery&,
-        Beam::ScopedQueueWriter<TickerStatus>>(&C::query)).
       def("query_sequenced_time_and_sales",
         pybind11::overload_cast<const TickerQuery&,
           Beam::ScopedQueueWriter<SequencedTimeAndSale>>(&C::query)).
       def("query_time_and_sales",
         pybind11::overload_cast<const TickerQuery&,
           Beam::ScopedQueueWriter<TimeAndSale>>(&C::query)).
+      def("query_sequenced_ticker_statuses",
+        pybind11::overload_cast<const TickerQuery&,
+          Beam::ScopedQueueWriter<SequencedTickerStatus>>(&C::query)).
+      def("query_ticker_statuses", pybind11::overload_cast<const TickerQuery&,
+        Beam::ScopedQueueWriter<TickerStatus>>(&C::query)).
       def("query_ticker_info",
         pybind11::overload_cast<const TickerInfoQuery&>(&C::query)).
       def("load_snapshot", &C::load_snapshot).
@@ -190,9 +190,9 @@ namespace Nexus::Python {
       def("publish",
         pybind11::overload_cast<const TickerBookQuote&>(&C::publish)).
       def("publish",
-        pybind11::overload_cast<const IndexedTickerStatus&>(&C::publish)).
-      def("publish",
         pybind11::overload_cast<const TickerTimeAndSale&>(&C::publish)).
+      def("publish",
+        pybind11::overload_cast<const IndexedTickerStatus&>(&C::publish)).
       def("add_order", &C::add_order).
       def("modify_order_size", &C::modify_order_size).
       def("offset_order_size", &C::offset_order_size).

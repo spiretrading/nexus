@@ -24,11 +24,11 @@ namespace Nexus {
         /** The next Sequence to use for a BookQuote. */
         Beam::Sequence m_next_book_quote_sequence;
 
-        /** The next Sequence to use for a TickerStatus. */
-        Beam::Sequence m_next_ticker_status_sequence;
-
         /** The next Sequence to use for a TimeAndSale. */
         Beam::Sequence m_next_time_and_sale_sequence;
+
+        /** The next Sequence to use for a TickerStatus. */
+        Beam::Sequence m_next_ticker_status_sequence;
       };
 
       /**
@@ -82,17 +82,17 @@ namespace Nexus {
        * @param source_id The id of the source setting the value.
        * @return The TickerStatus to publish.
        */
-      boost::optional<SequencedIndexedTickerStatus> publish(
-        const TickerStatus& status, int source_id);
-
-      /**
-       * Publishes a TimeAndSale.
-       * @param time_and_sale The TimeAndSale to publish.
-       * @param source_id The id of the source setting the value.
-       * @return The TimeAndSale to publish.
-       */
       boost::optional<SequencedTickerTimeAndSale> publish(
         const TimeAndSale& time_and_sale, int source_id);
+
+      /**
+       * Publishes a TickerStatus.
+       * @param status The TickerStatus to publish.
+       * @param source_id The id of the source setting the value.
+       * @return The TickerStatus to publish.
+       */
+      boost::optional<SequencedIndexedTickerStatus> publish(
+        const TickerStatus& status, int source_id);
 
       /**
        * Clears market data that originated from a specified source.
@@ -110,8 +110,8 @@ namespace Nexus {
       Ticker m_ticker;
       Beam::Sequencer m_bbo_sequencer;
       Beam::Sequencer m_book_quote_sequencer;
-      Beam::Sequencer m_ticker_status_sequencer;
       Beam::Sequencer m_time_and_sale_sequencer;
+      Beam::Sequencer m_ticker_status_sequencer;
       PriceCandlestick m_session_candlestick;
       std::string m_market_center;
       Money m_next_close;
@@ -157,21 +157,21 @@ namespace Nexus {
       }
     }
     {
-      auto results = data_store.load_ticker_statuses(query);
-      if(results.empty()) {
-        initial_sequences.m_next_ticker_status_sequence = Beam::Sequence::FIRST;
-      } else {
-        initial_sequences.m_next_ticker_status_sequence =
-          Beam::increment(results.back().get_sequence());
-      }
-    }
-    {
       auto results = data_store.load_time_and_sales(query);
       if(results.empty()) {
         initial_sequences.m_next_time_and_sale_sequence =
           Beam::Sequence::FIRST;
       } else {
         initial_sequences.m_next_time_and_sale_sequence =
+          Beam::increment(results.back().get_sequence());
+      }
+    }
+    {
+      auto results = data_store.load_ticker_statuses(query);
+      if(results.empty()) {
+        initial_sequences.m_next_ticker_status_sequence = Beam::Sequence::FIRST;
+      } else {
+        initial_sequences.m_next_ticker_status_sequence =
           Beam::increment(results.back().get_sequence());
       }
     }
@@ -188,10 +188,10 @@ namespace Nexus {
       : m_ticker(std::move(ticker)),
         m_bbo_sequencer(initial_sequences.m_next_bbo_quote_sequence),
         m_book_quote_sequencer(initial_sequences.m_next_book_quote_sequence),
-        m_ticker_status_sequencer(
-          initial_sequences.m_next_ticker_status_sequence),
         m_time_and_sale_sequencer(
-          initial_sequences.m_next_time_and_sale_sequence) {
+          initial_sequences.m_next_time_and_sale_sequence),
+        m_ticker_status_sequencer(
+          initial_sequences.m_next_ticker_status_sequence) {
     m_market_center = VENUES.from(m_ticker.get_venue()).m_market_center;
     if(m_market_center.empty()) {
       m_market_center = m_ticker.get_venue().get_code().get_data();
@@ -308,11 +308,6 @@ namespace Nexus {
     return i->m_quote;
   }
 
-  inline boost::optional<SequencedIndexedTickerStatus>
-      TickerEntry::publish(const TickerStatus& status, int source_id) {
-    return m_ticker_status_sequencer.make_sequenced_value(status, m_ticker);
-  }
-
   inline boost::optional<SequencedTickerTimeAndSale>
       TickerEntry::publish(const TimeAndSale& time_and_sale, int source_id) {
     m_session_candlestick.update(time_and_sale.m_price, time_and_sale.m_size);
@@ -323,6 +318,11 @@ namespace Nexus {
       m_time_and_sale_sequencer.make_sequenced_value(time_and_sale, m_ticker);
     m_time_and_sale = value;
     return value;
+  }
+
+  inline boost::optional<SequencedIndexedTickerStatus>
+      TickerEntry::publish(const TickerStatus& status, int source_id) {
+    return m_ticker_status_sequencer.make_sequenced_value(status, m_ticker);
   }
 
   inline void TickerEntry::clear(int source_id) {

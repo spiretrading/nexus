@@ -24,11 +24,11 @@ namespace Nexus {
       /** Returns all the BookQuotes stored. */
       std::vector<SequencedTickerBookQuote> load_book_quotes();
 
-      /** Returns all the TickerStatuses stored. */
-      std::vector<SequencedIndexedTickerStatus> load_ticker_statuses();
-
       /** Returns all the TimeAndSales stored. */
       std::vector<SequencedTickerTimeAndSale> load_time_and_sales();
+
+      /** Returns all the TickerStatuses stored. */
+      std::vector<SequencedIndexedTickerStatus> load_ticker_statuses();
 
       std::vector<TickerInfo> load_ticker_info(const TickerInfoQuery& query);
       void store(const TickerInfo& info);
@@ -43,14 +43,14 @@ namespace Nexus {
         const TickerQuery& query);
       void store(const SequencedTickerBookQuote& quote);
       void store(const std::vector<SequencedTickerBookQuote>& quotes);
-      std::vector<SequencedTickerStatus> load_ticker_statuses(
-        const TickerQuery& query);
-      void store(const SequencedIndexedTickerStatus& status);
-      void store(const std::vector<SequencedIndexedTickerStatus>& statuses);
       std::vector<SequencedTimeAndSale> load_time_and_sales(
         const TickerQuery& query);
       void store(const SequencedTickerTimeAndSale& time_and_sale);
       void store(const std::vector<SequencedTickerTimeAndSale>& time_and_sales);
+      std::vector<SequencedTickerStatus> load_ticker_statuses(
+        const TickerQuery& query);
+      void store(const SequencedIndexedTickerStatus& status);
+      void store(const std::vector<SequencedIndexedTickerStatus>& statuses);
       void close();
 
     private:
@@ -60,8 +60,8 @@ namespace Nexus {
       DataStore<OrderImbalance, VenueQuery> m_order_imbalance_data_store;
       DataStore<BboQuote, TickerQuery> m_bbo_quote_data_store;
       DataStore<BookQuote, TickerQuery> m_book_quote_data_store;
-      DataStore<TickerStatus, TickerQuery> m_ticker_status_data_store;
       DataStore<TimeAndSale, TickerQuery> m_time_and_sale_data_store;
+      DataStore<TickerStatus, TickerQuery> m_ticker_status_data_store;
 
       LocalHistoricalDataStore(const LocalHistoricalDataStore&) = delete;
       LocalHistoricalDataStore& operator =(
@@ -83,14 +83,14 @@ namespace Nexus {
     return m_book_quote_data_store.load_all();
   }
 
-  inline std::vector<SequencedIndexedTickerStatus>
-      LocalHistoricalDataStore::load_ticker_statuses() {
-    return m_ticker_status_data_store.load_all();
-  }
-
   inline std::vector<SequencedTickerTimeAndSale>
       LocalHistoricalDataStore::load_time_and_sales() {
     return m_time_and_sale_data_store.load_all();
+  }
+
+  inline std::vector<SequencedIndexedTickerStatus>
+      LocalHistoricalDataStore::load_ticker_statuses() {
+    return m_ticker_status_data_store.load_all();
   }
 
   inline std::vector<TickerInfo> LocalHistoricalDataStore::load_ticker_info(
@@ -191,21 +191,6 @@ namespace Nexus {
     m_book_quote_data_store.store(quotes);
   }
 
-  inline std::vector<SequencedTickerStatus>
-      LocalHistoricalDataStore::load_ticker_statuses(const TickerQuery& query) {
-    return m_ticker_status_data_store.load(query);
-  }
-
-  inline void LocalHistoricalDataStore::store(
-      const SequencedIndexedTickerStatus& status) {
-    m_ticker_status_data_store.store(status);
-  }
-
-  inline void LocalHistoricalDataStore::store(
-      const std::vector<SequencedIndexedTickerStatus>& statuses) {
-    m_ticker_status_data_store.store(statuses);
-  }
-
   inline std::vector<SequencedTimeAndSale>
       LocalHistoricalDataStore::load_time_and_sales(const TickerQuery& query) {
     return m_time_and_sale_data_store.load(query);
@@ -219,6 +204,21 @@ namespace Nexus {
   inline void LocalHistoricalDataStore::store(
       const std::vector<SequencedTickerTimeAndSale>& time_and_sales) {
     m_time_and_sale_data_store.store(time_and_sales);
+  }
+
+  inline std::vector<SequencedTickerStatus>
+      LocalHistoricalDataStore::load_ticker_statuses(const TickerQuery& query) {
+    return m_ticker_status_data_store.load(query);
+  }
+
+  inline void LocalHistoricalDataStore::store(
+      const SequencedIndexedTickerStatus& status) {
+    m_ticker_status_data_store.store(status);
+  }
+
+  inline void LocalHistoricalDataStore::store(
+      const std::vector<SequencedIndexedTickerStatus>& statuses) {
+    m_ticker_status_data_store.store(statuses);
   }
 
   inline void LocalHistoricalDataStore::close() {}

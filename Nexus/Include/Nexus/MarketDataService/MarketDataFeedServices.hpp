@@ -12,7 +12,7 @@
 
 namespace Nexus {
   using MarketDataFeedMessage = boost::variant<TickerBboQuote, TickerBookQuote,
-    IndexedTickerStatus, TickerTimeAndSale, VenueOrderImbalance>;
+    TickerTimeAndSale, IndexedTickerStatus, VenueOrderImbalance>;
 
   /** Standard name for the market data feed service. */
   inline const auto MARKET_DATA_FEED_SERVICE_NAME =

@@ -45,14 +45,14 @@ namespace Nexus {
         const TickerQuery& query);
       void store(const SequencedTickerBookQuote& quote);
       void store(const std::vector<SequencedTickerBookQuote>& quotes);
-      std::vector<SequencedTickerStatus> load_ticker_statuses(
-        const TickerQuery& query);
-      void store(const SequencedIndexedTickerStatus& status);
-      void store(const std::vector<SequencedIndexedTickerStatus>& statuses);
       std::vector<SequencedTimeAndSale> load_time_and_sales(
         const TickerQuery& query);
       void store(const SequencedTickerTimeAndSale& time_and_sale);
       void store(const std::vector<SequencedTickerTimeAndSale>& time_and_sales);
+      std::vector<SequencedTickerStatus> load_ticker_statuses(
+        const TickerQuery& query);
+      void store(const SequencedIndexedTickerStatus& status);
+      void store(const std::vector<SequencedIndexedTickerStatus>& statuses);
       void close();
 
     private:
@@ -62,8 +62,8 @@ namespace Nexus {
       std::unordered_map<Venue, Beam::Sequence> m_order_imbalance_cutoffs;
       std::unordered_map<Ticker, Beam::Sequence> m_bbo_cutoffs;
       std::unordered_map<Ticker, Beam::Sequence> m_book_quote_cutoffs;
-      std::unordered_map<Ticker, Beam::Sequence> m_ticker_status_cutoffs;
       std::unordered_map<Ticker, Beam::Sequence> m_time_and_sales_cutoffs;
+      std::unordered_map<Ticker, Beam::Sequence> m_ticker_status_cutoffs;
       Beam::OpenState m_open_state;
 
       CutoffHistoricalDataStore(const CutoffHistoricalDataStore&) = delete;
@@ -160,27 +160,6 @@ namespace Nexus {
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
-  std::vector<SequencedTickerStatus>
-      CutoffHistoricalDataStore<D>::load_ticker_statuses(
-        const TickerQuery& query) {
-    return load(query, m_ticker_status_cutoffs, [&] (const auto& query) {
-      return m_data_store->load_ticker_statuses(query);
-    });
-  }
-
-  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
-  void CutoffHistoricalDataStore<D>::store(
-      const SequencedIndexedTickerStatus& status) {
-    m_data_store->store(status);
-  }
-
-  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
-  void CutoffHistoricalDataStore<D>::store(
-      const std::vector<SequencedIndexedTickerStatus>& statuses) {
-    m_data_store->store(statuses);
-  }
-
-  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   std::vector<SequencedTimeAndSale>
       CutoffHistoricalDataStore<D>::load_time_and_sales(
         const TickerQuery& query) {
@@ -199,6 +178,27 @@ namespace Nexus {
   void CutoffHistoricalDataStore<D>::store(
       const std::vector<SequencedTickerTimeAndSale>& time_and_sales) {
     m_data_store->store(time_and_sales);
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  std::vector<SequencedTickerStatus>
+      CutoffHistoricalDataStore<D>::load_ticker_statuses(
+        const TickerQuery& query) {
+    return load(query, m_ticker_status_cutoffs, [&] (const auto& query) {
+      return m_data_store->load_ticker_statuses(query);
+    });
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void CutoffHistoricalDataStore<D>::store(
+      const SequencedIndexedTickerStatus& status) {
+    m_data_store->store(status);
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void CutoffHistoricalDataStore<D>::store(
+      const std::vector<SequencedIndexedTickerStatus>& statuses) {
+    m_data_store->store(statuses);
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
