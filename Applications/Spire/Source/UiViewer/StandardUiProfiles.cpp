@@ -26,6 +26,7 @@
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
+#include "Spire/Ui/AccountBox.hpp"
 #include "Spire/Ui/AccountListItem.hpp"
 #include "Spire/Ui/AdaptiveBox.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -225,6 +226,57 @@ namespace {
         }
       }
     });
+  }
+
+  auto make_identicon(QColor color, std::vector<std::pair<int, int>> cells) {
+    auto size = scale(8, 8);
+    auto identicon = QImage(size, QImage::Format_ARGB32);
+    identicon.fill(Qt::transparent);
+    auto painter = QPainter(&identicon);
+    painter.setPen(Qt::NoPen);
+    auto width = size.width() / 5.0;
+    auto height = size.height() / 5.0;
+    for(auto& [row, col] : cells) {
+      painter.fillRect(QRectF(col * width, row * height, width, height), color);
+    }
+    return identicon;
+  }
+
+  std::shared_ptr<AccountQueryModel> populate_account_query_model() {
+    auto accounts = std::vector<AccountListItem::Account>();
+    accounts.push_back({make_identicon(QColor(0xB565BC),
+      {{0, 0}, {0, 2}, {0, 4}, {1, 1}, {1, 2}, {1, 3}, {2, 2}, {3, 1},
+       {3, 2}, {3, 3}, {4, 2}}),
+      "meixiangk20", "Kong Meixiang"});
+    accounts.push_back({make_identicon(QColor(0x40BF6A),
+      {{0, 0}, {0, 2}, {0, 4}, {1, 0}, {1, 1}, {1, 2}, {1, 3}, {1, 4},
+       {2, 0}, {2, 2}, {2, 4}, {3, 0}, {3, 1}, {3, 2}, {3, 3}, {3, 4}}),
+      "mingzhuca11", "Cao Mingzhu"});
+    accounts.push_back({make_identicon(QColor(0x4B8BBE),
+      {{0, 1}, {0, 3}, {1, 0}, {1, 2}, {1, 4}, {2, 1}, {2, 3},
+       {3, 0}, {3, 2}, {3, 4}, {4, 1}, {4, 3}}),
+      "hengshen08", "Shen Heng"});
+    accounts.push_back({make_identicon(QColor(0xE8A838),
+      {{0, 2}, {1, 1}, {1, 2}, {1, 3}, {2, 0}, {2, 1}, {2, 2}, {2, 3},
+       {2, 4}, {3, 1}, {3, 2}, {3, 3}, {4, 2}}),
+      "guozhido02", "Dong Guozhi"});
+    accounts.push_back({make_identicon(QColor(0x56A85C),
+      {{0, 0}, {0, 4}, {1, 1}, {1, 3}, {2, 2}, {3, 1}, {3, 3},
+       {4, 0}, {4, 4}}),
+      "huanxg34", "Xu Guanghuan"});
+    accounts.push_back({make_identicon(QColor(0xCC5555),
+      {{0, 0}, {0, 2}, {0, 4}, {1, 0}, {1, 4}, {2, 1}, {2, 3},
+       {3, 0}, {3, 4}, {4, 0}, {4, 2}, {4, 4}}),
+      "fengjg15", "Jiang Feng"});
+    auto model = std::make_shared<LocalQueryModel<AccountListItem::Account>>();
+    for(auto& account : accounts) {
+      model->add(account.m_id.toLower(), account);
+      auto terms = account.m_name.split(' ');
+      for(auto& term : terms) {
+        model->add(term.toLower(), account);
+      }
+    }
+    return model;
   }
 
   template<typename T>
@@ -1168,6 +1220,53 @@ namespace {
   };
 }
 
+UiProfile Spire::make_account_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(
+    make_standard_property<QString>("current", "meixiangk20"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("AccountBox", properties, [] (auto& profile) {
+    auto to_id = [] (const AccountListItem::Account& account) {
+      return account.m_id;
+    };
+    auto model = populate_account_query_model();
+    auto& current = get<QString>("current", profile.get_properties());
+    auto current_account = [&] {
+      if(auto value = model->parse(current.get())) {
+        return *value;
+      }
+      return AccountListItem::Account();
+    }();
+    auto current_model = std::make_shared<LocalAccountModel>(current_account);
+    auto box = new AccountBox(model, current_model);
+    box->setFixedWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    auto current_connection = box->get_current()->connect_update_signal(
+      profile.make_event_slot<AccountListItem::Account>("Current", to_id));
+    current.connect_changed_signal([=] (const auto& current) {
+      if(auto value = model->parse(current)) {
+        box->get_current()->set(*value);
+      } else {
+        auto current_blocker = shared_connection_block(current_connection);
+        box->get_current()->set(AccountListItem::Account());
+      }
+    });
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal([=] (const auto& placeholder) {
+      box->set_placeholder(placeholder);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&AccountBox::set_read_only, box));
+    box->connect_submit_signal(
+      profile.make_event_slot<AccountListItem::Account>("Submit", to_id));
+    return box;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_account_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -1177,20 +1276,9 @@ UiProfile Spire::make_account_list_item_profile() {
     make_standard_property<QString>("name", "Kong Meixiang"));
   auto profile = UiProfile("AccountListItem", properties,
     [] (auto& profile) {
-      auto size = scale(8, 8);
-      auto identicon = QImage(size, QImage::Format_ARGB32);
-      identicon.fill(Qt::transparent);
-      auto painter = QPainter(&identicon);
-      painter.setPen(Qt::NoPen);
-      auto width = size.width() / 5.0;
-      auto height = size.height() / 5.0;
-      auto cells = std::vector<std::pair<int, int>>{
-        {0, 0}, {0, 2}, {0, 4}, {1, 1}, {1, 2}, {1, 3}, {2, 2}, {3, 1},
-        {3, 2}, {3, 3}, {4, 2}};
-      for(auto& [row, col] : cells) {
-        painter.fillRect(QRectF(col * width, row * height, width, height),
-          QColor(0xB565BC));
-      }
+      auto identicon = make_identicon(QColor(0xB565BC),
+        {{0, 0}, {0, 2}, {0, 4}, {1, 1}, {1, 2}, {1, 3}, {2, 2}, {3, 1},
+         {3, 2}, {3, 3}, {4, 2}});
       auto& id = get<QString>("id", profile.get_properties());
       auto& name = get<QString>("name", profile.get_properties());
       auto item = new AccountListItem(
