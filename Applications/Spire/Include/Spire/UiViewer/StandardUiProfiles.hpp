@@ -209,6 +209,9 @@ namespace Spire {
   /** Returns a UiProfile for the PositionSideBox. */
   UiProfile make_position_side_box_profile();
 
+  /** Returns a UiProfile for the PositionSideFilterPanel. */
+  UiProfile make_position_side_filter_panel_profile();
+
   /** Returns a UiProfile for the ProgressBar. */
   UiProfile make_progress_bar_profile();
 

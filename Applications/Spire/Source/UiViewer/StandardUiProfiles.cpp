@@ -87,6 +87,7 @@
 #include "Spire/Ui/PercentBox.hpp"
 #include "Spire/Ui/PopupBox.hpp"
 #include "Spire/Ui/PositionSideBox.hpp"
+#include "Spire/Ui/PositionSideFilterPanel.hpp"
 #include "Spire/Ui/ProgressBar.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/ScopeBox.hpp"
@@ -493,8 +494,10 @@ namespace {
   }
 
   template<typename T,
-    typename ClosedFilterPanel* (*f)(std::shared_ptr<ListModel<T>>, QWidget*)>
-  auto setup_closed_filter_panel_profile(UiProfile& profile) {
+    typename ClosedFilterPanel* (*f)(std::shared_ptr<ListModel<T>>, QWidget*),
+    typename Resolver>
+  auto setup_closed_filter_panel_profile_impl(UiProfile& profile,
+      Resolver resolve) {
     auto& properties = profile.get_properties();
     auto checked_properties = std::vector<std::shared_ptr<UiProperty>>();
     auto model = std::make_shared<ArrayListModel<T>>();
@@ -502,7 +505,7 @@ namespace {
       if(property->get_name() != "enabled" && property->get_name() != "width" &&
           property->get_name() != "height") {
         checked_properties.push_back(property);
-        model->push(*from_text<T>(property->get_name()));
+        model->push(resolve(property->get_name()));
       }
     }
     auto panel = f(model, nullptr);
@@ -539,6 +542,24 @@ namespace {
         submit_filter_slot(result);
       });
     return panel;
+  }
+
+  template<typename T,
+    typename ClosedFilterPanel* (*f)(std::shared_ptr<ListModel<T>>, QWidget*)>
+  auto setup_closed_filter_panel_profile(UiProfile& profile) {
+    return setup_closed_filter_panel_profile_impl<T, f>(profile,
+      [] (const QString& name) { return *from_text<T>(name); });
+  }
+
+  template<typename T,
+    typename ClosedFilterPanel* (*f)(std::shared_ptr<ListModel<T>>, QWidget*)>
+  auto setup_named_closed_filter_panel_profile(UiProfile& profile,
+      const std::vector<std::pair<QString, T>>& values) {
+    return setup_closed_filter_panel_profile_impl<T, f>(profile,
+      [&] (const QString& name) -> T {
+        return std::find_if(values.begin(), values.end(),
+          [&] (const auto& value) { return value.first == name; })->second;
+      });
   }
 
   template<typename B, typename B* (*F)(QWidget*), typename... Converters>
@@ -3736,6 +3757,21 @@ UiProfile Spire::make_position_side_box_profile() {
         profile, [] (const std::any& value) {
           return PositionSideToken(std::any_cast<Side>(value));
         });
+    });
+  return profile;
+}
+
+UiProfile Spire::make_position_side_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<bool>("Long"));
+  properties.push_back(make_standard_property<bool>("Short"));
+  properties.push_back(make_standard_property<bool>("Flat"));
+  auto profile = UiProfile("PositionSideFilterPanel", properties,
+    [] (auto& profile) {
+      return setup_named_closed_filter_panel_profile<
+        Side, make_position_side_filter_panel>(profile, define_enum<Side>(
+          {{"Long", Side::BID}, {"Short", Side::ASK}, {"Flat", Side::NONE}}));
     });
   return profile;
 }
