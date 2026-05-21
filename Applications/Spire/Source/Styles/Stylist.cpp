@@ -7,6 +7,7 @@
 #include "Spire/Styles/Selectors.hpp"
 
 using namespace boost;
+using namespace boost::container;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
@@ -108,8 +109,8 @@ Stylist::~Stylist() {
   for(auto& rule : m_rules) {
     auto selection = std::move(rule->m_selection);
     if(!selection.empty()) {
-      on_selection_update(
-        *rule, {}, std::unordered_set(selection.begin(), selection.end()));
+      on_selection_update(*rule, {},
+        std::unordered_set(selection.begin(), selection.end()));
     }
   }
   while(!m_sources.empty()) {
@@ -164,8 +165,8 @@ void Stylist::set_style(StyleSheet style) {
   for(auto& rule : rules) {
     auto selection = std::move(rule->m_selection);
     if(!selection.empty()) {
-      on_selection_update(
-        *rule, {}, std::unordered_set(selection.begin(), selection.end()));
+      on_selection_update(*rule, {},
+        std::unordered_set(selection.begin(), selection.end()));
     }
   }
   m_style = load_styles(std::move(style));
@@ -296,12 +297,14 @@ void Stylist::match(const Selector& selector) {
 void Stylist::unmatch(const Selector& selector) {
   auto i = std::ranges::find(m_matches, selector);
   if(i != m_matches.end()) {
-    m_matches.erase(i);
     if(m_match_signals) {
       auto signal = m_match_signals->find(selector);
+      m_matches.erase(i);
       if(signal != m_match_signals->end()) {
         signal->second(false);
       }
+    } else {
+      m_matches.erase(i);
     }
   }
 }
@@ -533,18 +536,18 @@ void Stylist::on_animation() {
 void Stylist::on_selection_update(
     RuleEntry& rule, std::unordered_set<const Stylist*>&& additions,
     std::unordered_set<const Stylist*>&& removals) {
-  auto changed_stylists = std::vector<Stylist*>();
+  auto changed_stylists = flat_set<Stylist*>();
   for(auto removal : removals) {
-    std::erase(rule.m_selection, removal);
+    rule.m_selection.erase(removal);
     auto& stylist = const_cast<Stylist&>(*removal);
     stylist.unapply(rule);
-    changed_stylists.push_back(&stylist);
+    changed_stylists.insert(&stylist);
   }
   for(auto addition : additions) {
-    rule.m_selection.push_back(addition);
+    rule.m_selection.insert(addition);
     auto& stylist = const_cast<Stylist&>(*addition);
     stylist.apply(*this, rule);
-    changed_stylists.push_back(&stylist);
+    changed_stylists.insert(&stylist);
   }
   for(auto stylist : changed_stylists) {
     stylist->apply_proxies();

@@ -5,6 +5,7 @@
 #include <type_traits>
 #include <unordered_set>
 #include <vector>
+#include <boost/container/flat_set.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/connection.hpp>
 #include <QWidget>
@@ -173,7 +174,7 @@ namespace Spire::Styles {
       struct RuleEntry {
         const Block* m_block;
         int m_priority;
-        std::vector<const Stylist*> m_selection;
+        boost::container::flat_set<const Stylist*> m_selection;
         SelectConnection m_connection;
       };
       struct Source {
