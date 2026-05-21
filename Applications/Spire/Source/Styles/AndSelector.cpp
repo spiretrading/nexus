@@ -108,11 +108,11 @@ SelectConnection Spire::Styles::select(const AndSelector& selector,
         selection &= ~flag;
         return selection == 0;
       });
-      test_connection(m_left, m_right, LEFT_FLAG);
-      test_connection(m_right, m_left, RIGHT_FLAG);
       if(!additions.empty() || !removals.empty()) {
         m_on_update(std::move(additions), std::move(removals));
       }
+      test_connection(m_left, m_right, LEFT_FLAG);
+      test_connection(m_right, m_left, RIGHT_FLAG);
     }
   };
   return SelectConnection(
