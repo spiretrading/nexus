@@ -77,14 +77,14 @@ SelectConnection Spire::Styles::select(const OrSelector& selector,
         --selection;
         return selection != 0;
       });
+      if(!additions.empty() || !removals.empty()) {
+        m_on_update(std::move(additions), std::move(removals));
+      }
       if(!m_left.is_connected()) {
         m_left.disconnect();
       }
       if(!m_right.is_connected()) {
         m_right.disconnect();
-      }
-      if(!additions.empty() || !removals.empty()) {
-        m_on_update(std::move(additions), std::move(removals));
       }
     }
   };
