@@ -3658,6 +3658,16 @@ UiProfile Spire::make_percent_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_percent_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property("min", Decimal(0)));
+  properties.push_back(make_standard_property("max", Decimal(1)));
+  auto profile = UiProfile("PercentFilterPanel", properties,
+    setup_scalar_filter_panel_profile<PercentBox>);
+  return profile;
+}
+
 UiProfile Spire::make_popup_box_profile() {
     auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
