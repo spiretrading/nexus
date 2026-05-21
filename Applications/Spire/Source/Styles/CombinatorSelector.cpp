@@ -1,11 +1,13 @@
 #include "Spire/Styles/CombinatorSelector.hpp"
 #include <algorithm>
 #include <deque>
+#include <boost/container/flat_set.hpp>
 #include <boost/functional/hash.hpp>
 #include "Spire/Styles/FlipSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace boost;
+using namespace boost::container;
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
@@ -44,7 +46,7 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
     struct MatchEntry {
       const Stylist* m_stylist;
       int m_count;
-      std::unordered_set<const Stylist*> m_selection;
+      flat_set<const Stylist*> m_selection;
       SelectConnection m_select_connection;
 
       MatchEntry(const Stylist& stylist)
@@ -61,7 +63,7 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
     };
     struct SelectionEntry {
       const Stylist* m_stylist;
-      std::unordered_set<const Stylist*> m_selection;
+      flat_set<const Stylist*> m_selection;
 
       SelectionEntry(const Stylist& stylist)
         : m_stylist(&stylist) {}
@@ -165,7 +167,9 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
           std::ranges::find(m_selection, removal, &SelectionEntry::m_stylist);
         auto selection = std::unordered_set<const Stylist*>();
         if(selection_entry != m_selection.end()) {
-          selection = std::move(selection_entry->m_selection);
+          selection.insert(
+            selection_entry->m_selection.begin(),
+            selection_entry->m_selection.end());
           m_selection.erase(selection_entry);
         }
         on_selection(*removal, {}, std::move(selection));
@@ -225,7 +229,9 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
         }
         --match_entry->m_count;
         if(match_entry->m_count == 0) {
-          auto match_removals = std::move(match_entry->m_selection);
+          auto match_removals = std::unordered_set<const Stylist*>(
+            match_entry->m_selection.begin(), match_entry->m_selection.end());
+          match_entry->m_selection.clear();
           if(match_entry->m_select_connection.is_connected()) {
             --m_match_connections;
           }
