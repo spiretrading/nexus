@@ -171,9 +171,9 @@ namespace Spire::Styles {
     private:
       struct StyleEventFilter;
       struct RuleEntry {
-        Block m_block;
+        const Block* m_block;
         int m_priority;
-        std::unordered_set<const Stylist*> m_selection;
+        std::vector<const Stylist*> m_selection;
         SelectConnection m_connection;
       };
       struct Source {
@@ -208,10 +208,18 @@ namespace Spire::Styles {
       template<typename T>
       friend Evaluator<T> make_evaluator(
         RevertExpression<T> expression, const Stylist& stylist);
+      struct AuxiliarySignals {
+        LinkSignal m_link_signal;
+        BacklinkSignal m_backlink_signal;
+        DeleteSignal m_delete_signal;
+      };
+      using MatchSignalMap = std::unordered_map<Selector, MatchSignal>;
+      using EvaluatorMap = std::unordered_map<
+        std::type_index, std::unique_ptr<BaseEvaluatorEntry>>;
+      AuxiliarySignals& get_auxiliary_signals() const;
+      EvaluatorMap& get_evaluators();
       mutable StyleSignal m_style_signal;
-      mutable LinkSignal m_link_signal;
-      mutable BacklinkSignal m_backlink_signal;
-      mutable DeleteSignal m_delete_signal;
+      mutable std::unique_ptr<AuxiliarySignals> m_auxiliary_signals;
       QWidget* m_widget;
       boost::optional<PseudoElement> m_pseudo_element;
       std::shared_ptr<StyleSheet> m_style;
@@ -221,12 +229,11 @@ namespace Spire::Styles {
       mutable boost::optional<Block> m_computed_block;
       std::vector<Stylist*> m_proxies;
       std::vector<Stylist*> m_principals;
-      std::unordered_set<Selector> m_matches;
-      mutable std::unordered_map<Selector, MatchSignal> m_match_signals;
-      std::vector<Stylist*> m_links;
-      std::vector<Stylist*> m_backlinks;
-      std::unordered_map<
-        std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
+      std::vector<Selector> m_matches;
+      mutable std::unique_ptr<MatchSignalMap> m_match_signals;
+      std::unique_ptr<std::vector<Stylist*>> m_links;
+      std::unique_ptr<std::vector<Stylist*>> m_backlinks;
+      std::unique_ptr<EvaluatorMap> m_evaluators;
       std::type_index m_evaluated_property;
       std::chrono::time_point<std::chrono::steady_clock> m_last_frame;
       QMetaObject::Connection m_animation_connection;
@@ -412,8 +419,9 @@ namespace Spire::Styles {
   template<typename Property, typename F>
   void Stylist::evaluate(const Property& property, F&& receiver) {
     m_evaluated_property = typeid(Property);
-    auto i = m_evaluators.find(m_evaluated_property);
-    if(i == m_evaluators.end()) {
+    auto& evaluators = get_evaluators();
+    auto i = evaluators.find(m_evaluated_property);
+    if(i == evaluators.end()) {
       auto evaluator = make_evaluator(property.get_expression(), *this);
       auto evaluation = evaluator(boost::posix_time::seconds(0));
       if(evaluation.m_next_frame != boost::posix_time::pos_infin) {
@@ -421,8 +429,8 @@ namespace Spire::Styles {
           property, std::move(evaluator));
         entry->m_receivers.push_back(std::forward<F>(receiver));
         auto& receiver = entry->m_receivers.back();
-        m_evaluators.emplace(m_evaluated_property, std::move(entry));
-        if(m_evaluators.size() == 1) {
+        evaluators.emplace(m_evaluated_property, std::move(entry));
+        if(evaluators.size() == 1) {
           connect_animation();
         }
         m_evaluated_block->set(

@@ -1,6 +1,5 @@
 #include "Spire/Styles/AndSelector.hpp"
 #include <ranges>
-#include <unordered_map>
 #include <boost/functional/hash.hpp>
 
 using namespace boost;
@@ -32,7 +31,15 @@ AndSelector Spire::Styles::operator &&(Selector left, Selector right) {
 SelectConnection Spire::Styles::select(const AndSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
   struct Executor {
-    std::unordered_map<const Stylist*, int> m_selection;
+    struct Entry {
+      const Stylist* m_stylist;
+      int m_flags;
+
+      Entry(const Stylist& stylist)
+        : m_stylist(&stylist),
+          m_flags(0) {}
+    };
+    std::vector<Entry> m_selection;
     SelectionUpdateSignal m_on_update;
     SelectConnection m_left;
     SelectConnection m_right;
@@ -63,8 +70,17 @@ SelectConnection Spire::Styles::select(const AndSelector& selector,
       return m_left.is_connected() || m_right.is_connected();
     }
 
-    void test_connection(SelectConnection& base,
-        SelectConnection& connection, int flag) {
+    int& find_or_add(const Stylist& stylist) {
+      auto i = std::ranges::find(
+        m_selection, &stylist, &Entry::m_stylist);
+      if(i != m_selection.end()) {
+        return i->m_flags;
+      }
+      return m_selection.emplace_back(stylist).m_flags;
+    }
+
+    void test_connection(
+        SelectConnection& base, SelectConnection& connection, int flag) {
       if(base.is_connected()) {
         return;
       }
@@ -72,12 +88,10 @@ SelectConnection Spire::Styles::select(const AndSelector& selector,
       if(!m_is_initialized) {
         return;
       }
-      auto values = m_selection | std::views::values;
-      auto i = std::ranges::find_if(values, [&] (auto count) {
-        return count & flag;
-      });
-      if(i == values.end()) {
-        m_selection = {};
+      auto i = std::ranges::find_if(
+        m_selection, [&] (const auto& entry) { return entry.m_flags & flag; });
+      if(i == m_selection.end()) {
+        m_selection.clear();
         connection.disconnect();
       }
     }
@@ -85,12 +99,12 @@ SelectConnection Spire::Styles::select(const AndSelector& selector,
     void on_update(int flag, std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
       std::erase_if(additions, [&] (const auto& addition) {
-        auto& selection = m_selection[addition];
+        auto& selection = find_or_add(*addition);
         selection |= flag;
         return selection != SELECTED_FLAG;
       });
       std::erase_if(removals, [&] (const auto& removal) {
-        auto& selection = m_selection[removal];
+        auto& selection = find_or_add(*removal);
         selection &= ~flag;
         return selection == 0;
       });

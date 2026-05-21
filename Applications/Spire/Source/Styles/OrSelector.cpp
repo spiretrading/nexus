@@ -24,7 +24,15 @@ OrSelector Spire::Styles::operator ||(Selector left, Selector right) {
 SelectConnection Spire::Styles::select(const OrSelector& selector,
     const Stylist& base, const SelectionUpdateSignal& on_update) {
   struct Executor {
-    std::unordered_map<const Stylist*, int> m_selection;
+    struct Entry {
+      const Stylist* m_stylist;
+      int m_count;
+
+      Entry(const Stylist& stylist)
+        : m_stylist(&stylist),
+          m_count(0) {}
+    };
+    std::vector<Entry> m_selection;
     SelectionUpdateSignal m_on_update;
     SelectConnection m_left;
     SelectConnection m_right;
@@ -49,15 +57,23 @@ SelectConnection Spire::Styles::select(const OrSelector& selector,
       return m_left.is_connected() || m_right.is_connected();
     }
 
+    int& find_or_add(const Stylist& stylist) {
+      auto i = std::ranges::find(m_selection, &stylist, &Entry::m_stylist);
+      if(i != m_selection.end()) {
+        return i->m_count;
+      }
+      return m_selection.emplace_back(stylist).m_count;
+    }
+
     void on_update(std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
       std::erase_if(additions, [&] (const auto& addition) {
-        auto& selection = m_selection[addition];
+        auto& selection = find_or_add(*addition);
         ++selection;
         return selection != 1;
       });
       std::erase_if(removals, [&] (const auto& removal) {
-        auto& selection = m_selection[removal];
+        auto& selection = find_or_add(*removal);
         --selection;
         return selection != 0;
       });

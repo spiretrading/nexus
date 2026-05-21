@@ -1,4 +1,5 @@
 #include "Spire/Styles/ParentSelector.hpp"
+#include <algorithm>
 #include <ranges>
 #include <boost/functional/hash.hpp>
 #include <QEvent>
@@ -21,9 +22,17 @@ namespace {
   }
 
   struct ParentObserver : QObject {
+    struct ParentEntry {
+      QObject* m_widget;
+      const Stylist* m_stylist;
+
+      ParentEntry(QObject& widget, const Stylist& stylist)
+        : m_widget(&widget),
+          m_stylist(&stylist) {}
+    };
     const Stylist* m_stylist;
     SelectionUpdateSignal m_on_update;
-    std::unordered_map<QObject*, const Stylist*> m_parent_stylists;
+    std::vector<ParentEntry> m_parent_stylists;
     scoped_connection m_backlink_connection;
 
     ParentObserver(
@@ -32,8 +41,7 @@ namespace {
           m_on_update(on_update) {
       auto parents = std::unordered_set<const Stylist*>();
       for(auto& link : m_stylist->get_backlinks()) {
-        if(m_parent_stylists.insert(
-            std::pair(&link->get_widget(), link)).second) {
+        if(add_parent(link->get_widget(), *link)) {
           parents.insert(link);
         }
       }
@@ -47,12 +55,21 @@ namespace {
       return true;
     }
 
+    bool add_parent(QObject& widget, const Stylist& stylist) {
+      auto i =
+        std::ranges::find(m_parent_stylists, &widget, &ParentEntry::m_widget);
+      if(i != m_parent_stylists.end()) {
+        return false;
+      }
+      m_parent_stylists.emplace_back(widget, stylist);
+      return true;
+    }
+
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(event->type() == QEvent::ParentChange) {
-        auto& widget = static_cast<QWidget&>(*watched);
         auto parents = std::unordered_set<const Stylist*>();
-        for(auto& parent : m_parent_stylists | std::views::values) {
-          parents.insert(parent);
+        for(auto& entry : m_parent_stylists) {
+          parents.insert(entry.m_stylist);
         }
         m_parent_stylists.clear();
         update_parent({}, std::move(parents));
@@ -63,7 +80,7 @@ namespace {
     void update_parent(std::unordered_set<const Stylist*>&& parents,
         std::unordered_set<const Stylist*>&& old_parents) {
       if(auto parent = find_parent(*m_stylist)) {
-        m_parent_stylists.insert(std::pair(&parent->get_widget(), parent));
+        add_parent(parent->get_widget(), *parent);
         parents.insert(parent);
       }
       insert_principals(*m_stylist, parents);
@@ -73,8 +90,7 @@ namespace {
     }
 
     void on_backlink(const Stylist& link) {
-      if(m_parent_stylists.insert(
-          std::pair(&link.get_widget(), &link)).second) {
+      if(add_parent(link.get_widget(), link)) {
         m_on_update({&link}, {});
       }
     }
