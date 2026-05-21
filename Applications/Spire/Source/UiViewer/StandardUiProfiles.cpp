@@ -1185,7 +1185,7 @@ UiProfile Spire::make_account_list_item_profile() {
       auto identicon = make_identicon(
         DirectoryEntry::make_account(qHash(id.get())), scale(8, 8));
       auto item = new AccountListItem(
-        AccountListItem::Account{identicon, id.get(), name.get()});
+        AccountListItem::Account(identicon, id.get(), name.get()));
       apply_widget_properties(item, profile.get_properties());
       return item;
     });
