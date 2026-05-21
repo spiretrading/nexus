@@ -141,9 +141,6 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
 
     void on_base(std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
-      if(!m_base_connection.is_connected()) {
-        m_base_connection.disconnect();
-      }
       for(auto addition : additions) {
         auto connection = m_selection_builder(*addition,
           std::bind_front(&Executor::on_selection, this, std::ref(*addition)));
@@ -166,17 +163,14 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
           return entry.m_stylist == removal;
         });
       }
+      if(!m_base_connection.is_connected()) {
+        m_base_connection.disconnect();
+      }
     }
 
     void on_selection(const Stylist& base,
         std::unordered_set<const Stylist*>&& additions,
         std::unordered_set<const Stylist*>&& removals) {
-      auto base_connection = find_base_connection(base);
-      if(base_connection && !base_connection->m_connection.is_connected()) {
-        std::erase_if(m_base_connections, [&] (const auto& entry) {
-          return entry.m_stylist == &base;
-        });
-      }
       if(!additions.empty()) {
         auto& selection = find_or_add_selection(base);
         selection.m_selection.insert(additions.begin(), additions.end());
@@ -232,6 +226,12 @@ SelectConnection Spire::Styles::select(const CombinatorSelector& selector,
       if(!consolidated_additions.empty() || !consolidated_removals.empty()) {
         m_on_update(
           std::move(consolidated_additions), std::move(consolidated_removals));
+      }
+      auto base_connection = find_base_connection(base);
+      if(base_connection && !base_connection->m_connection.is_connected()) {
+        std::erase_if(m_base_connections, [&] (const auto& entry) {
+          return entry.m_stylist == &base;
+        });
       }
     }
 
