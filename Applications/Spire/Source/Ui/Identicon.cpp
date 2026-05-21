@@ -8,11 +8,9 @@ using namespace Beam;
 using namespace Spire;
 
 namespace {
-  constexpr auto GRID_SIZE = 5;
-  constexpr auto CENTER = GRID_SIZE / 2;
-  constexpr auto DISTANCE_MASKS =
-    std::array<unsigned char, 3>{0x07, 0x03, 0x01};
-
+  const auto GRID_SIZE = 5;
+  const auto CENTER = GRID_SIZE / 2;
+  const auto DISTANCE_MASKS = std::array<unsigned char, 3>{0x07, 0x03, 0x01};
   const auto COLORS = std::array{
     QColor(0xBF4040), QColor(0xBF406A), QColor(0xBF40BF), QColor(0x9540BF),
     QColor(0x6A40BF), QColor(0x4040BF), QColor(0x406ABF), QColor(0x4095BF),
@@ -23,8 +21,7 @@ namespace {
 QImage Spire::make_identicon(const DirectoryEntry& account, QSize size) {
   auto hash = QCryptographicHash::hash(
     QByteArray::number(account.m_id), QCryptographicHash::Md5);
-  auto color =
-    COLORS[static_cast<unsigned char>(hash.back()) % COLORS.size()];
+  auto color = COLORS[hash.back() % COLORS.size()];
   auto image = QImage(size, QImage::Format_ARGB32);
   image.fill(Qt::transparent);
   auto painter = QPainter(&image);
