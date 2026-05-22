@@ -1,34 +1,33 @@
 #include "Spire/Ui/Tag.hpp"
+#include <QMouseEvent>
+#include <QPainter>
+#include <QPainterPath>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Styles/Stylist.hpp"
-#include "Spire/Ui/Box.hpp"
-#include "Spire/Ui/Button.hpp"
-#include "Spire/Ui/Icon.hpp"
-#include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost::signals2;
 using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
+  const auto& get_delete_icon() {
+    static auto icon = image_from_svg(":/Icons/delete.svg", scale(16, 16));
+    return icon;
+  }
+
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
+    auto font = QFont("Roboto");
+    font.setWeight(QFont::Normal);
+    font.setPixelSize(scale_width(12));
     style.get(Any()).
       set(BackgroundColor(QColor(0xEBEBEB))).
       set(border_radius(scale_width(3))).
-      set(border_size(0));
-    style.get(Any() > is_a<TextBox>()).
-      set(border_size(0)).
+      set(Font(font)).
+      set(TextColor(QColor(Qt::black))).
       set(horizontal_padding(scale_width(5))).
       set(vertical_padding(scale_height(2)));
-    style.get(ReadOnly() > is_a<Button>()).
-      set(Visibility::NONE);
-    return style;
-  }
-
-  auto DELETE_BUTTON_STYLE(StyleSheet style) {
-    style.get((Hover() || Press()) > is_a<Icon>()).
-      set(BackgroundColor(QColor(Qt::transparent)));
     return style;
   }
 }
@@ -38,32 +37,27 @@ Tag::Tag(QString label, QWidget* parent)
 
 Tag::Tag(std::shared_ptr<TextModel> label, QWidget* parent)
     : QWidget(parent),
-      m_is_read_only(false) {
-  auto container = new QWidget();
-  auto container_layout = make_hbox_layout(container);
-  auto label_box = make_label(std::move(label));
-  label_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  container_layout->addWidget(label_box);
-  m_delete_button = make_delete_icon_button();
-  m_delete_button->setFixedSize(scale(16, 16));
-  m_delete_button->setFocusPolicy(Qt::NoFocus);
-  update_style(*m_delete_button, [&] (auto& style) {
-    style = DELETE_BUTTON_STYLE(style);
-  });
-  container_layout->addWidget(m_delete_button);
-  auto box = new Box(container);
-  enclose(*this, *box);
-  link(*this, *label_box);
-  link(*this, *m_delete_button);
-  proxy_style(*this, *box);
+      m_label(std::move(label)),
+      m_is_read_only(false),
+      m_is_delete_hovered(false),
+      m_is_delete_pressed(false),
+      m_background_color(0xEBEBEB),
+      m_border_radius(scale_width(3)),
+      m_horizontal_padding(scale_width(5)),
+      m_vertical_padding(scale_height(2)),
+      m_text_color(Qt::black),
+      m_delete_fill(0xA0A0A0),
+      m_delete_icon(get_delete_icon()) {
+  setMouseTracking(true);
+  m_label_connection = m_label->connect_update_signal(
+    [this] (const auto&) { update(); });
+  m_style_connection =
+    connect_style_signal(*this, std::bind_front(&Tag::on_style, this));
   set_style(*this, DEFAULT_STYLE());
 }
 
 const std::shared_ptr<TextModel>& Tag::get_label() const {
-  auto box = static_cast<Box*>(layout()->itemAt(0)->widget());
-  auto label_box =
-    static_cast<TextBox*>(box->get_body()->layout()->itemAt(0)->widget());
-  return label_box->get_current();
+  return m_label;
 }
 
 bool Tag::is_read_only() const {
@@ -77,9 +71,162 @@ void Tag::set_read_only(bool is_read_only) {
   } else {
     unmatch(*this, ReadOnly());
   }
+  updateGeometry();
+  update();
 }
 
 connection Tag::connect_delete_signal(
     const DeleteSignal::slot_type& slot) const {
-  return m_delete_button->connect_click_signal(slot);
+  return m_delete_signal.connect(slot);
+}
+
+QSize Tag::sizeHint() const {
+  auto metrics = QFontMetrics(m_font);
+  auto width = m_horizontal_padding + metrics.horizontalAdvance(m_label->get());
+  auto height = m_vertical_padding * 2 + metrics.height();
+  if(is_delete_visible()) {
+    width += m_delete_icon.width();
+  }
+  width += m_horizontal_padding;
+  return QSize(width, height);
+}
+
+void Tag::mouseMoveEvent(QMouseEvent* event) {
+  if(!is_delete_visible()) {
+    return;
+  }
+  auto was_hovered = m_is_delete_hovered;
+  m_is_delete_hovered = get_delete_rect().contains(event->pos());
+  if(was_hovered != m_is_delete_hovered) {
+    update();
+  }
+}
+
+void Tag::mousePressEvent(QMouseEvent* event) {
+  if(is_delete_visible() && get_delete_rect().contains(event->pos())) {
+    m_is_delete_pressed = true;
+    update();
+  }
+}
+
+void Tag::mouseReleaseEvent(QMouseEvent* event) {
+  if(m_is_delete_pressed) {
+    m_is_delete_pressed = false;
+    if(get_delete_rect().contains(event->pos())) {
+      m_delete_signal();
+    }
+    update();
+  }
+}
+
+void Tag::leaveEvent(QEvent* event) {
+  if(m_is_delete_hovered) {
+    m_is_delete_hovered = false;
+    update();
+  }
+}
+
+void Tag::paintEvent(QPaintEvent* event) {
+  auto painter = QPainter(this);
+  painter.setRenderHint(QPainter::Antialiasing);
+  auto path = QPainterPath();
+  path.addRoundedRect(QRectF(rect()), m_border_radius, m_border_radius);
+  painter.fillPath(path, m_background_color);
+  auto metrics = QFontMetrics(m_font);
+  auto text_x = m_horizontal_padding;
+  auto text_y = m_vertical_padding + metrics.ascent();
+  painter.setPen(m_text_color);
+  painter.setFont(m_font);
+  auto available_width = width() - m_horizontal_padding * 2;
+  if(is_delete_visible()) {
+    available_width -= m_delete_icon.width();
+  }
+  auto elided = metrics.elidedText(
+    m_label->get(), Qt::ElideRight, available_width);
+  painter.drawText(text_x, text_y, elided);
+  if(is_delete_visible()) {
+    auto delete_rect = get_delete_rect();
+    auto fill = m_delete_fill;
+    if(m_is_delete_pressed || m_is_delete_hovered) {
+      fill = QColor(0x4B23A0);
+    }
+    auto icon = QPixmap::fromImage(m_delete_icon);
+    auto icon_painter = QPainter(&icon);
+    icon_painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+    icon_painter.fillRect(icon.rect(), fill);
+    icon_painter.end();
+    painter.drawPixmap(delete_rect.topLeft(), icon);
+  }
+}
+
+void Tag::resizeEvent(QResizeEvent* event) {
+  QWidget::resizeEvent(event);
+}
+
+QRect Tag::get_delete_rect() const {
+  auto icon_size = m_delete_icon.size();
+  auto x = width() - m_horizontal_padding - icon_size.width();
+  auto y = (height() - icon_size.height()) / 2;
+  return QRect(QPoint(x, y), icon_size);
+}
+
+bool Tag::is_delete_visible() const {
+  return !m_is_read_only;
+}
+
+void Tag::on_style() {
+  auto& stylist = find_stylist(*this);
+  auto font_size = std::make_shared<std::optional<int>>();
+  for(auto& property : stylist.get_computed_block()) {
+    property.visit(
+      [&] (const BackgroundColor& color) {
+        stylist.evaluate(color, [this] (auto color) {
+          m_background_color = color;
+          update();
+        });
+      },
+      [&] (const BorderTopLeftRadius& radius) {
+        stylist.evaluate(radius, [this] (auto radius) {
+          m_border_radius = radius;
+          update();
+        });
+      },
+      [&] (const TextColor& color) {
+        stylist.evaluate(color, [this] (auto color) {
+          m_text_color = color;
+          update();
+        });
+      },
+      [&] (const PaddingLeft& padding) {
+        stylist.evaluate(padding, [this] (auto padding) {
+          m_horizontal_padding = padding;
+          updateGeometry();
+          update();
+        });
+      },
+      [&] (const PaddingTop& padding) {
+        stylist.evaluate(padding, [this] (auto padding) {
+          m_vertical_padding = padding;
+          updateGeometry();
+          update();
+        });
+      },
+      [&] (const Font& font) {
+        stylist.evaluate(font, [this] (const auto& font) {
+          m_font = font;
+          updateGeometry();
+          update();
+        });
+      },
+      [&] (const FontSize& size) {
+        stylist.evaluate(size, [=] (auto size) {
+          *font_size = size;
+        });
+      });
+  }
+  if(*font_size) {
+    m_font.setPixelSize(**font_size);
+    updateGeometry();
+    update();
+  }
 }
