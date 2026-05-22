@@ -125,6 +125,9 @@ namespace Spire {
   /** Returns a UiProfile for the IconToggleButton. */
   UiProfile make_icon_toggle_button_profile();
 
+  /** Returns a UiProfile for the Identicon. */
+  UiProfile make_identicon_profile();
+
   /** Returns a UiProfile for the IntoPanel. */
   UiProfile make_info_panel_profile();
 
@@ -211,6 +214,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the PositionSideBox. */
   UiProfile make_position_side_box_profile();
+
+  /** Returns a UiProfile for the PositionSideFilterPanel. */
+  UiProfile make_position_side_filter_panel_profile();
 
   /** Returns a UiProfile for the ProgressBar. */
   UiProfile make_progress_bar_profile();
