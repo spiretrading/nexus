@@ -243,6 +243,52 @@ TEST_SUITE("MarketDataRegistryServlet") {
       });
   }
 
+  TEST_CASE("query_publish_ticker_status") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("A.TSX");
+    auto info = TickerInfo(ticker, "TICKER A", "", 100);
+    fixture.m_registry.add(info);
+    auto query = TickerQuery();
+    query.set_index(ticker);
+    query.set_range(Range::REAL_TIME);
+    query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    auto result =
+      fixture.m_client->send_request<QueryTickerStatusService>(query);
+    REQUIRE(result.m_id != -1);
+    REQUIRE(result.m_snapshot.empty());
+    auto data = IndexedTickerStatus(
+      TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        fixture.m_time_client.get_time()), ticker);
+    fixture.m_servlet->publish(data, 1);
+    auto message = fixture.m_client->read_message();
+    auto received_message = std::dynamic_pointer_cast<
+      RecordMessage<TickerStatusMessage, TestServiceProtocolClient>>(message);
+    auto received_data = received_message->get_record().status;
+    REQUIRE(*received_data == *data);
+    auto data_store_query = TickerQuery();
+    data_store_query.set_index(ticker);
+    data_store_query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    data_store_query.set_range(
+      received_data.get_sequence(), increment(received_data.get_sequence()));
+    auto stored_data = fixture.m_data_store.load_ticker_statuses(data_store_query);
+    REQUIRE(stored_data.size() == 1);
+    REQUIRE(stored_data.front() == to_sequenced_value(received_data));
+    SUBCASE("query_no_entitlement") {
+      auto client_account =
+        fixture.make_account("client2", DirectoryEntry::STAR_DIRECTORY);
+      auto client = std::unique_ptr<TestServiceProtocolClient>();
+      std::tie(client_account, client) = fixture.make_client("client2");
+      auto no_entitlement_query = TickerQuery();
+      no_entitlement_query.set_index(ticker);
+      no_entitlement_query.set_range(Range::TOTAL);
+      no_entitlement_query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+      auto no_entitlement_result =
+        client->send_request<QueryTickerStatusService>(no_entitlement_query);
+      REQUIRE(no_entitlement_result.m_id != -1);
+      REQUIRE(no_entitlement_result.m_snapshot.size() == 1);
+    }
+  }
+
   TEST_CASE("query_publish_time_and_sale") {
     auto fixture = Fixture();
     auto ticker = parse_ticker("A.TSX");

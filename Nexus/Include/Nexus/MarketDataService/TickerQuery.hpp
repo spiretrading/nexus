@@ -8,6 +8,7 @@
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/Scope.hpp"
 #include "Nexus/Definitions/TickerInfo.hpp"
+#include "Nexus/Definitions/TickerStatus.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
@@ -15,12 +16,16 @@ namespace Nexus {
   using SequencedBboQuote = Beam::SequencedValue<BboQuote>;
   using SequencedBookQuote = Beam::SequencedValue<BookQuote>;
   using SequencedTimeAndSale = Beam::SequencedValue<TimeAndSale>;
+  using SequencedTickerStatus = Beam::SequencedValue<TickerStatus>;
   using TickerBboQuote = Beam::IndexedValue<BboQuote, Ticker>;
   using TickerBookQuote = Beam::IndexedValue<BookQuote, Ticker>;
   using TickerTimeAndSale = Beam::IndexedValue<TimeAndSale, Ticker>;
+  using IndexedTickerStatus = Beam::IndexedValue<TickerStatus, Ticker>;
   using SequencedTickerBboQuote = Beam::SequencedValue<TickerBboQuote>;
   using SequencedTickerBookQuote = Beam::SequencedValue<TickerBookQuote>;
   using SequencedTickerTimeAndSale = Beam::SequencedValue<TickerTimeAndSale>;
+  using SequencedIndexedTickerStatus =
+    Beam::SequencedValue<IndexedTickerStatus>;
 
   /** Defines the type of query used to receive a Ticker's market data. */
   using TickerQuery = Beam::BasicQuery<Ticker>;

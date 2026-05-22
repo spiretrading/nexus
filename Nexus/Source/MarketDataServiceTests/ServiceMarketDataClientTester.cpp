@@ -52,4 +52,28 @@ TEST_SUITE("ServiceMarketDataClient") {
     auto updated_bbo = bbo_quotes->pop();
     REQUIRE(updated_bbo == bbo);
   }
+
+  TEST_CASE("real_time_ticker_status_query") {
+    auto fixture = Fixture();
+    auto query = TickerQuery();
+    query.set_index(TICKER_A);
+    query.set_range(Range::REAL_TIME);
+    auto statuses = std::make_shared<Queue<TickerStatus>>();
+    auto status =
+      TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        time_from_string("2024-07-11 09:30:00"));
+    fixture.on_request<QueryTickerStatusService>(
+      [&] (auto& request, const auto& query) {
+        REQUIRE(query.get_index() == TICKER_A);
+        REQUIRE(query.get_range() == Range::REAL_TIME);
+        auto response = TickerStatusQueryResult();
+        response.m_id = 456;
+        request.set(response);
+        send_record_message<TickerStatusMessage>(request.get_client(),
+          SequencedValue(IndexedValue(status, TICKER_A), Beam::Sequence(1)));
+      });
+    fixture.m_client->query(query, statuses);
+    auto updated_status = statuses->pop();
+    REQUIRE(updated_status == status);
+  }
 }

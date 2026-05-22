@@ -36,6 +36,11 @@ namespace Nexus {
     using type = TickerQuery;
   };
 
+  template<>
+  struct market_data_query_type<TickerStatus> {
+    using type = TickerQuery;
+  };
+
   template<typename T>
   struct market_data_query_type<Beam::SequencedValue<T>> {
     using type = market_data_query_type_t<T>;

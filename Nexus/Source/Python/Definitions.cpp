@@ -23,6 +23,7 @@
 #include "Nexus/Definitions/Tag.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/TickerInfo.hpp"
+#include "Nexus/Definitions/TickerStatus.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Nexus/Definitions/TradingSchedule.hpp"
@@ -273,6 +274,7 @@ void Nexus::Python::export_definitions(module& module) {
   export_scope_map(module);
   export_ticker(module);
   export_ticker_info(module);
+  export_ticker_status(module);
   export_side(module);
   export_tag(module);
   export_fix_tags(module);
@@ -518,6 +520,24 @@ void Nexus::Python::export_ticker_info(module& module) {
     def_readwrite("name", &TickerInfo::m_name).
     def_readwrite("sector", &TickerInfo::m_sector).
     def_readwrite("board_lot", &TickerInfo::m_board_lot);
+}
+
+void Nexus::Python::export_ticker_status(module& module) {
+  auto outer = export_default_methods(
+    class_<TickerStatus>(module, "TickerStatus")).
+      def(init()).
+      def_readwrite("venue", &TickerStatus::m_venue).
+      def_readwrite("state", &TickerStatus::m_state).
+      def_readwrite("flags", &TickerStatus::m_flags).
+      def_readwrite("timestamp", &TickerStatus::m_timestamp);
+  enum_<TickerStatus::Flag>(outer, "Flag").
+    value("NONE", TickerStatus::Flag::NONE).
+    value("IS_MATCHING", TickerStatus::Flag::IS_MATCHING).
+    value("IS_ACCEPTING_ORDERS", TickerStatus::Flag::IS_ACCEPTING_ORDERS).
+    value("IS_ACCEPTING_CANCELS", TickerStatus::Flag::IS_ACCEPTING_CANCELS).
+    value("IS_AUCTION", TickerStatus::Flag::IS_AUCTION).
+    value("IS_CONTINUOUS", TickerStatus::Flag::IS_CONTINUOUS);
+  module.def("has", &has);
 }
 
 void Nexus::Python::export_side(module& module) {

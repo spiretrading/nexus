@@ -120,4 +120,35 @@ TEST_SUITE("MarketDataRegistryServlet") {
     REQUIRE(result.size() == 1);
     REQUIRE(result.front() == ticker_info);
   }
+
+  TEST_CASE("query_ticker_status") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("TST.TSX");
+    auto query = TickerQuery();
+    query.set_index(ticker);
+    query.set_range(Beam::Sequence::FIRST, Beam::Sequence::PRESENT);
+    query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    auto query_thread = std::async(std::launch::async, [&] {
+      return fixture.m_client->send_request<QueryTickerStatusService>(query);
+    });
+    auto info_operation_ptr = fixture.m_operations->pop();
+    auto& info_operation =
+      std::get<TestMarketDataClient::TickerInfoQueryOperation>(
+        *info_operation_ptr);
+    auto ticker_info = TickerInfo(ticker, "Test", "Tech", 100);
+    info_operation.m_result.set({ticker_info});
+    auto query_operation_ptr = fixture.m_operations->pop();
+    auto& query_operation =
+      std::get<TestMarketDataClient::QuerySequencedTickerStatusOperation>(
+        *query_operation_ptr);
+    REQUIRE(query_operation.m_query.get_index() == ticker);
+    auto status = SequencedTickerStatus(
+      TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        time_from_string("2024-07-04 09:30:00")), Beam::Sequence(1));
+    query_operation.m_queue.push(status);
+    query_operation.m_queue.close();
+    auto result = query_thread.get();
+    REQUIRE(result.m_snapshot.size() == 1);
+    REQUIRE(result.m_snapshot.front() == status);
+  }
 }

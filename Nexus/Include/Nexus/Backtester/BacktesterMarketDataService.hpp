@@ -57,6 +57,12 @@ namespace Nexus {
        */
       void query_time_and_sales(const TickerQuery& query);
 
+      /**
+       * Submits a query for TickerStatuses.
+       * @param query The ticker query to submit.
+       */
+      void query_ticker_statuses(const TickerQuery& query);
+
     private:
       template<typename, typename> friend class MarketDataEvent;
       template<typename> friend class MarketDataLoadEvent;
@@ -203,6 +209,13 @@ namespace Nexus {
   inline void BacktesterMarketDataService::query_time_and_sales(
       const TickerQuery& query) {
     auto event = std::make_shared<MarketDataQueryEvent<TimeAndSale>>(
+      query, Beam::Ref(*this));
+    m_event_handler->add(event);
+  }
+
+  inline void BacktesterMarketDataService::query_ticker_statuses(
+      const TickerQuery& query) {
+    auto event = std::make_shared<MarketDataQueryEvent<TickerStatus>>(
       query, Beam::Ref(*this));
     m_event_handler->add(event);
   }
