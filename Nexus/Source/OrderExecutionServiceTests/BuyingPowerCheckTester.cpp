@@ -12,9 +12,9 @@ using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Currencies;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   auto make_test_order_fields() {
@@ -22,7 +22,7 @@ namespace {
     auto ticker = parse_ticker("TST.TSX");
     auto currency = CAD;
     auto side = Side::BID;
-    auto destination = DefaultDestinations::TSX;
+    auto destination = Destinations::TSX;
     auto quantity = Quantity(100);
     auto price = Money::ONE;
     return make_limit_order_fields(
@@ -60,7 +60,8 @@ TEST_SUITE("BuyingPowerCheck") {
     auto risk_parameters = RiskParameters();
     risk_parameters.m_currency = CAD;
     risk_parameters.m_buying_power = 1000 * Money::ONE;
-    administration_client.store(fields.m_account, risk_parameters);
+    fixture.m_administration_environment.get_data_store().store(
+      fields.m_account, risk_parameters);
     auto& feed_client = fixture.m_market_data_environment.get_feed_client();
     auto bbo = BboQuote(
       make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 100),

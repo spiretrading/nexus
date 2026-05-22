@@ -168,6 +168,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_hover_observer_profile());
   add(make_icon_button_profile());
   add(make_icon_toggle_button_profile());
+  add(make_identicon_profile());
   add(make_info_panel_profile());
   add(make_info_tip_profile());
   add(make_input_box_profile());
@@ -194,8 +195,10 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_order_type_filter_panel_profile());
   add(make_overlay_panel_profile());
   add(make_percent_box_profile());
+  add(make_percent_filter_panel_profile());
   add(make_popup_box_profile());
   add(make_position_side_box_profile());
+  add(make_position_side_filter_panel_profile());
   add(make_progress_bar_profile());
   add(make_quantity_box_profile());
   add(make_quantity_filter_panel_profile());

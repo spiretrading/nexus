@@ -48,8 +48,8 @@ export class CurrencyDatabase {
   /** Parses a database from a JSON object. */
   public static fromJson(value: any): CurrencyDatabase {
     const database = new CurrencyDatabase();
-    database._entries = Beam.arrayFromJson(CurrencyDatabase.Entry,
-      value.entries);
+    database._entries =
+      Beam.arrayFromJson(CurrencyDatabase.Entry, value.entries);
     return database;
   }
 
@@ -122,7 +122,7 @@ export class CurrencyDatabase {
   private _entries: CurrencyDatabase.Entry[];
 }
 
-export module CurrencyDatabase {
+export namespace CurrencyDatabase {
 
   /** Stores a single currency database entry. */
   export class Entry {

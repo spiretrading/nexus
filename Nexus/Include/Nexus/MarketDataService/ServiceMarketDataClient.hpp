@@ -53,6 +53,10 @@ namespace Nexus {
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
       void query(
         const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue);
+      void query(const TickerQuery& query,
+        Beam::ScopedQueueWriter<SequencedTickerStatus> queue);
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue);
       std::vector<TickerInfo> query(const TickerInfoQuery& query);
       TickerSnapshot load_snapshot(const Ticker& ticker);
       PriceCandlestick load_session_candlestick(const Ticker& ticker);
@@ -80,6 +84,8 @@ namespace Nexus {
       QueryClientPublisher<TimeAndSale, TickerQuery,
         QueryTimeAndSalesService, EndTimeAndSaleQueryMessage>
           m_time_and_sale_publisher;
+      QueryClientPublisher<TickerStatus, TickerQuery, QueryTickerStatusService,
+        EndTickerStatusQueryMessage> m_ticker_status_publisher;
       Beam::OpenState m_open_state;
 
       ServiceMarketDataClient(const ServiceMarketDataClient&) = delete;
@@ -97,7 +103,8 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
             m_order_imbalance_publisher(Beam::Ref(m_client_handler)),
             m_bbo_quote_publisher(Beam::Ref(m_client_handler)),
             m_book_quote_publisher(Beam::Ref(m_client_handler)),
-            m_time_and_sale_publisher(Beam::Ref(m_client_handler)) {
+            m_time_and_sale_publisher(Beam::Ref(m_client_handler)),
+            m_ticker_status_publisher(Beam::Ref(m_client_handler)) {
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
     Nexus::register_query_types(
       Beam::out(m_client_handler.get_slots().get_registry()));
@@ -111,6 +118,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_book_quote_publisher.template add_message_handler<BookQuoteMessage>();
     m_time_and_sale_publisher.
       template add_message_handler<TimeAndSaleMessage>();
+    m_ticker_status_publisher.
+      template add_message_handler<TickerStatusMessage>();
   } catch(const std::exception&) {
     std::throw_with_nested(Beam::ConnectException(
       "Failed to connect to the market data server."));
@@ -170,6 +179,18 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
+  void ServiceMarketDataClient<B>::query(const TickerQuery& query,
+      Beam::ScopedQueueWriter<SequencedTickerStatus> queue) {
+    m_ticker_status_publisher.submit(query, std::move(queue));
+  }
+
+  template<typename B>
+  void ServiceMarketDataClient<B>::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue) {
+    m_ticker_status_publisher.submit(query, std::move(queue));
+  }
+
+  template<typename B>
   std::vector<TickerInfo> ServiceMarketDataClient<B>::query(
       const TickerInfoQuery& query) {
     return Beam::service_or_throw_with_nested([&] {
@@ -222,6 +243,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_bbo_quote_publisher.close();
     m_book_quote_publisher.close();
     m_time_and_sale_publisher.close();
+    m_ticker_status_publisher.close();
     m_open_state.close();
   }
 
@@ -232,6 +254,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_bbo_quote_publisher.recover(*client);
     m_book_quote_publisher.recover(*client);
     m_time_and_sale_publisher.recover(*client);
+    m_ticker_status_publisher.recover(*client);
   }
 }
 

@@ -237,6 +237,15 @@ namespace Nexus {
     return TradingSchedule(std::move(rules));
   }
 
+  /**
+   * Parses a TradingSchedule from a YAML node using the default VenueDatabase.
+   * @param node The node to parse the TradingSchedule from.
+   * @return The TradingSchedule represented by the <i>node</i>.
+   */
+  inline TradingSchedule parse_trading_schedule(const YAML::Node& node) {
+    return parse_trading_schedule(node, VENUES);
+  }
+
   inline std::ostream& operator <<(
       std::ostream& out, const TradingSchedule::Event& event) {
     return out << '(' << event.m_code << ' ' << event.m_timestamp << ')';

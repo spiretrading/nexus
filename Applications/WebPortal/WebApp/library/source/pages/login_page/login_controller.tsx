@@ -44,7 +44,7 @@ export class LoginController extends React.Component<Properties, State> {
         errorMessage: null
       });
       this.props.onLogin(account);
-    } catch(error) {
+    } catch(error: any) {
       this.setState({
         status: LoginPage.Status.NONE,
         errorMessage: error.toString()

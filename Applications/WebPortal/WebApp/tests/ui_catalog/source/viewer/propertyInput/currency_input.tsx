@@ -1,7 +1,7 @@
 import * as Nexus from 'nexus';
 import * as React from 'react';
 
-const database = Nexus.buildDefaultCurrencyDatabase();
+const database = Nexus.buildCurrencyDatabase();
 
 interface Properties {
 

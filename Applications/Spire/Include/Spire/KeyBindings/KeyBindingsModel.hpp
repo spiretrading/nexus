@@ -4,6 +4,7 @@
 #include <unordered_map>
 #include <Beam/Serialization/Receiver.hpp>
 #include <Beam/Serialization/Sender.hpp>
+#include <Beam/SignalHandling/ConnectionGroup.hpp>
 #include "Nexus/Definitions/Scope.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
@@ -43,9 +44,13 @@ namespace Spire {
       std::shared_ptr<CancelKeyBindingsModel> m_cancel_key_bindings;
       mutable std::unordered_map<Nexus::Scope,
         std::shared_ptr<InteractionsKeyBindingsModel>> m_interactions;
+      Beam::ConnectionGroup m_connections;
 
       KeyBindingsModel(const KeyBindingsModel&) = delete;
       KeyBindingsModel& operator =(const KeyBindingsModel&) = delete;
+      void on_cancel_binding_update(const QKeySequence& sequence);
+      void on_order_task_operation(
+        const OrderTaskArgumentsListModel::Operation& operation);
   };
 }
 

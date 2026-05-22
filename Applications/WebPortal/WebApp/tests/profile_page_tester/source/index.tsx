@@ -42,7 +42,7 @@ class TestApp extends React.Component<Properties, State> {
       account: new Beam.DirectoryEntry(
         Beam.DirectoryEntry.Type.ACCOUNT, 9123, 'frodo_of_the_nine_fingers'),
       groups: [],
-      countryDatabase: Nexus.buildDefaultCountryDatabase(),
+      countryDatabase: Nexus.buildCountryDatabase(),
       hasPassword: true,
       readOnly: false,
       isPasswordSubmitEnabled: false,
@@ -116,7 +116,7 @@ class TestApp extends React.Component<Properties, State> {
       Beam.Duration.HOUR.multiply(5).add(Beam.Duration.MINUTE.multiply(30)).add(
       Beam.Duration.SECOND.multiply(15)));
     this.state.identity.province = 'Westfarthing';
-    this.state.identity.country = Nexus.DefaultCountries.AU;
+    this.state.identity.country = Nexus.Countries.AU;
     this.state.identity.city = 'Hobbiton';
     this.state.identity.addressLineOne = '56 Bag Ennd';
     this.state.identity.addressLineTwo = '';

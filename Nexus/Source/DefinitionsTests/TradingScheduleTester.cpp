@@ -9,7 +9,7 @@ using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 TEST_SUITE("TradingSchedule") {
   TEST_CASE("is_match_empty") {
@@ -137,7 +137,7 @@ TEST_SUITE("TradingSchedule") {
           "    - code: OPEN\n"
           "      time: 9:30:00";
     auto node = YAML::Load(ss);
-    auto schedule = parse_trading_schedule(node, DEFAULT_VENUES);
+    auto schedule = parse_trading_schedule(node);
     auto empty_events = schedule.find(date(2020, 1, 15), TSXV);
     REQUIRE(empty_events.empty());
     auto event = schedule.find(date(2020, 7, 18), TSXV);

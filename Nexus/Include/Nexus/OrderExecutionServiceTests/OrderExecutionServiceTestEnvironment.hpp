@@ -44,25 +44,7 @@ namespace Nexus::Tests {
         Beam::UidClient uid_client, AdministrationClient administration_client);
 
       /**
-       * Constructs an OrderExecutionServiceTestEnvironment using a
-       * MockOrderExecutionDriver.
-       * @param venues The available venues to trade.
-       * @param destinations The available destinations to submit orders to.
-       * @param service_locator_client The ServiceLocatorClient used by the
-       *        servlet.
-       * @param uid_client The UidClient used by the servlet.
-       * @param administration_client The AdministrationClient used by the
-       *        servlet.
-       */
-      OrderExecutionServiceTestEnvironment(VenueDatabase venues,
-        DestinationDatabase destinations,
-        Beam::ServiceLocatorClient service_locator_client,
-        Beam::UidClient uid_client, AdministrationClient administration_client);
-
-      /**
        * Constructs an OrderExecutionServiceTestEnvironment.
-       * @param venues The available venues to trade.
-       * @param destinations The available destinations to submit orders to.
        * @param service_locator_client The ServiceLocatorClient used by the
        *        servlet.
        * @param uid_client The UidClient used by the servlet.
@@ -71,8 +53,7 @@ namespace Nexus::Tests {
        * @param time_client The TimeClient to use.
        * @param driver The OrderExecutionDriver to use.
        */
-      OrderExecutionServiceTestEnvironment(VenueDatabase venues,
-        DestinationDatabase destinations,
+      OrderExecutionServiceTestEnvironment(
         Beam::ServiceLocatorClient service_locator_client,
         Beam::UidClient uid_client, AdministrationClient administration_client,
         Beam::TimeClient time_client, OrderExecutionDriver driver);
@@ -161,36 +142,23 @@ namespace Nexus::Tests {
   inline OrderExecutionServiceTestEnvironment::
     OrderExecutionServiceTestEnvironment(
       Beam::ServiceLocatorClient service_locator_client,
-      Beam::UidClient uid_client,
-      AdministrationClient administration_client)
-    : OrderExecutionServiceTestEnvironment(DEFAULT_VENUES, DEFAULT_DESTINATIONS,
-        std::move(service_locator_client), std::move(uid_client),
-        std::move(administration_client)) {}
-
-  inline OrderExecutionServiceTestEnvironment::
-    OrderExecutionServiceTestEnvironment(VenueDatabase venues,
-      DestinationDatabase destinations,
-      Beam::ServiceLocatorClient service_locator_client,
-      Beam::UidClient uid_client,
-      AdministrationClient administration_client)
-    : OrderExecutionServiceTestEnvironment(std::move(venues),
-        std::move(destinations), std::move(service_locator_client),
+      Beam::UidClient uid_client, AdministrationClient administration_client)
+    : OrderExecutionServiceTestEnvironment(std::move(service_locator_client),
         std::move(uid_client), std::move(administration_client),
         Beam::TimeClient(std::in_place_type<Beam::LocalTimeClient>),
         OrderExecutionDriver(std::in_place_type<MockOrderExecutionDriver>)) {}
 
   inline OrderExecutionServiceTestEnvironment::
-    OrderExecutionServiceTestEnvironment(VenueDatabase venues,
-      DestinationDatabase destinations,
+    OrderExecutionServiceTestEnvironment(
       Beam::ServiceLocatorClient service_locator_client,
       Beam::UidClient uid_client, AdministrationClient administration_client,
       Beam::TimeClient time_client, OrderExecutionDriver driver)
     : m_driver(std::move(driver)),
       m_container(Beam::init(service_locator_client, Beam::init(
-        boost::posix_time::pos_infin, std::move(venues),
-        std::move(destinations), std::move(time_client), service_locator_client,
-        std::move(uid_client), std::move(administration_client), &m_driver,
-        &m_data_store)), &m_server_connection,
+        boost::posix_time::pos_infin, std::move(time_client),
+        service_locator_client, std::move(uid_client),
+        std::move(administration_client), &m_driver, &m_data_store)),
+        &m_server_connection,
         boost::factory<std::shared_ptr<Beam::TriggerTimer>>()) {}
 
   inline OrderExecutionServiceTestEnvironment::

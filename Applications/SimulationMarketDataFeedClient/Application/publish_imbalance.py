@@ -62,10 +62,11 @@ def main():
   username = section['username']
   password = section['password']
   service_clients = nexus.ServiceClients(username, password, address)
-  markets = service_clients.get_definitions_client().load_market_database()
+  nexus.load_definitions(service_clients.definitions_client)
+  markets = service_clients.definitions_client.load_market_database()
   market = nexus.parse_market_code(args.market, markets)
   feed_client = nexus.ApplicationMarketDataFeedClient(
-    service_clients.get_service_locator_client())
+    service_clients.service_locator_client)
   timestamp = args.timestamp if args.timestamp is not None else \
     datetime.datetime.utcnow()
   order_imbalance = beam.IndexedValue(nexus.OrderImbalance(

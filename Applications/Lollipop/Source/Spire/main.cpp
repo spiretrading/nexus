@@ -2,6 +2,7 @@
 #include <fstream>
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
+#include <Beam/WebServices/Uri.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/functional/value_factory.hpp>
 #include <QApplication>
@@ -81,7 +82,7 @@ namespace {
     auto nextHeight = 0;
     auto resolution = QGuiApplication::primaryScreen()->availableGeometry();
     auto defaultTickers = std::vector<Ticker>();
-    auto& venueEntry = userProfile.GetVenueDatabase().from("XTSE");
+    auto& venueEntry = VENUES.from("XTSE");
     defaultTickers.push_back(Ticker("RY", venueEntry.m_venue));
     defaultTickers.push_back(Ticker("XIU", venueEntry.m_venue));
     defaultTickers.push_back(Ticker("ABX", venueEntry.m_venue));
@@ -274,23 +275,30 @@ int main(int argc, char* argv[]) {
       return -1;
     }
   }
+  load_definitions(serviceClients->get_definitions_client());
   auto isAdministrator =
     serviceClients->get_administration_client().check_administrator(
       serviceClients->get_service_locator_client().get_account());
   auto isManager = isAdministrator ||
     !serviceClients->get_administration_client().load_managed_trading_groups(
       serviceClients->get_service_locator_client().get_account()).empty();
+  auto web_portal_uri = [&] {
+    try {
+      auto services =
+        serviceClients->get_service_locator_client().locate("web_portal");
+      if(!services.empty()) {
+        return Uri(boost::get<std::string>(
+          services.front().get_properties().at("url")));
+      }
+    } catch(const std::exception&) {}
+    return Uri();
+  }();
   auto userProfile = UserProfile(
     serviceClients->get_service_locator_client().get_account().m_name,
     isAdministrator, isManager,
-    serviceClients->get_definitions_client().load_country_database(),
-    serviceClients->get_definitions_client().load_time_zone_database(),
-    serviceClients->get_definitions_client().load_currency_database(),
     serviceClients->get_definitions_client().load_exchange_rates(),
-    serviceClients->get_definitions_client().load_venue_database(),
-    serviceClients->get_definitions_client().load_destination_database(),
     serviceClients->get_administration_client().load_entitlements(),
-    *serviceClients);
+    std::move(web_portal_uri), *serviceClients);
   auto loginData = JsonObject();
   loginData["version"] = std::string(SPIRE_VERSION);
   try {

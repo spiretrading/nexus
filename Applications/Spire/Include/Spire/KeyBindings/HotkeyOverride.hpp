@@ -1,6 +1,9 @@
 #ifndef SPIRE_HOTKEY_OVERRIDE_HPP
 #define SPIRE_HOTKEY_OVERRIDE_HPP
 #include <QAbstractNativeEventFilter>
+#ifdef Q_OS_WIN
+  #include <windows.h>
+#endif
 
 namespace Spire {
 
@@ -13,10 +16,17 @@ namespace Spire {
     public:
 
       /** Constructs a HotkeyOverride. */
-      HotkeyOverride() = default;
+      HotkeyOverride();
+
+      ~HotkeyOverride();
 
       bool nativeEventFilter(
         const QByteArray& event_type, void* message, long* result) override;
+
+    private:
+#ifdef Q_OS_WIN
+      HHOOK m_hook;
+#endif
   };
 }
 

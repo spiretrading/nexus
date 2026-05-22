@@ -71,22 +71,22 @@ const checkbox =
 
 const countrySelect =
   new ComponentSchema('CountrySelect',
-    [new PropertySchema('value', Nexus.DefaultCountries.US,
+    [new PropertySchema('value', Nexus.Countries.US,
         CountryInput),
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
     [new SignalSchema('onChange', 'value')],
     (props: any) => React.createElement(WebPortal.CountrySelect, {
       ...props,
-      countryDatabase: Nexus.defaultCountryDatabase,
+      countryDatabase: Nexus.countryDatabase,
       style: {width: '100%'}
     }));
 
-const currencyDatabase = Nexus.buildDefaultCurrencyDatabase();
+const currencyDatabase = Nexus.buildCurrencyDatabase();
 
 const currencySelect =
   new ComponentSchema('CurrencySelect',
-    [new PropertySchema('value', Nexus.DefaultCurrencies.USD,
+    [new PropertySchema('value', Nexus.Currencies.USD,
         CurrencyInput),
       new PropertySchema('readOnly', false, BooleanInput),
       new PropertySchema('disabled', false, BooleanInput)],
@@ -120,7 +120,7 @@ const disclosure =
             height: '40px', fontSize: '0.875rem'
           }
         },
-          React.createElement(WebPortal.DropDownButton, {
+          React.createElement(WebPortal.ExpandButton, {
             isExpanded: props.open, size: '20'
           }),
           'Section Title'),
@@ -138,12 +138,12 @@ const dateTimeInput =
     [new SignalSchema('onChange', 'value')],
     WebPortal.DateTimeInput);
 
-const dropDownButton =
-  new ComponentSchema('DropDownButton',
+const expandButton =
+  new ComponentSchema('ExpandButton',
     [new PropertySchema('size', 16, NumberSliderInput),
       new PropertySchema('isExpanded', false, BooleanInput)],
     [new SignalSchema('onClick', 'isExpanded')],
-    (props: any) => React.createElement(WebPortal.DropDownButton, {
+    (props: any) => React.createElement(WebPortal.ExpandButton, {
       ...props,
       onClick: () => props.onClick(!props.isExpanded)
     }));
@@ -322,6 +322,125 @@ const navigationHeader =
     (props: any) =>
       React.createElement(WebPortal.NavigationHeader, props,
         ...NAVIGATION_TABS));
+
+const notificationsFilterModal =
+  new ComponentSchema('NotificationsFilterModal',
+    [new PropertySchema('isOpen', false, BooleanInput)],
+    [new SignalSchema('onSubmit', ''),
+      new SignalSchema('onClose', 'isOpen')],
+    (props: any) => {
+      if(!props.isOpen) {
+        return React.createElement('div', null, 'Modal is closed.');
+      }
+      return React.createElement(WebPortal.NotificationsFilterModal, {
+        filter: {
+          query: '',
+          categories: new Set<Nexus.Notification.Category>(),
+          startDate: Beam.Date.today(),
+          endDate: Beam.Date.today()
+        },
+        onSubmit: props.onSubmit,
+        onClose: () => props.onClose(false)
+      });
+    });
+
+const notificationItem =
+  new ComponentSchema('NotificationItem',
+    [new PropertySchema('description',
+        'Your request to update risk controls for achen01 has been approved.',
+        TextInput),
+      new PropertySchema('timestamp', (() => {
+        const d = new Date();
+        d.setHours(d.getHours() - 2);
+        return d;
+      })(), DateInput),
+      new PropertySchema('url', '#', TextInput),
+      new PropertySchema('isUnread', true, BooleanInput),
+      new PropertySchema('isSelected', false, BooleanInput),
+      new PropertySchema('hideIndicator', false, BooleanInput)],
+    [new SignalSchema('onSelect', 'isSelected')],
+    WebPortal.NotificationItem, -1);
+
+const notificationItemPlaceholder =
+  new ComponentSchema('NotificationItemPlaceholder',
+    [],
+    [],
+    WebPortal.NotificationItemPlaceholder, -1);
+
+const SAMPLE_NOTIFICATIONS: Nexus.Notification[] = [
+  new Nexus.Notification('1', Beam.DirectoryEntry.INVALID,
+    'Your request to update risk controls for achen01 has been approved.', '',
+    Nexus.Notification.Category.ACCOUNT_MODIFICATION,
+    Beam.DateTime.fromDate((() => {
+      const d = new Date(); d.setHours(d.getHours() - 2); return d;
+    })()), false),
+  new Nexus.Notification('2', Beam.DirectoryEntry.INVALID,
+    'New entitlements request from jberrios01 requires your review.', '',
+    Nexus.Notification.Category.ACCOUNT_MODIFICATION,
+    Beam.DateTime.fromDate((() => {
+      const d = new Date(); d.setDate(d.getDate() - 1); return d;
+    })()), false),
+  new Nexus.Notification('3', Beam.DirectoryEntry.INVALID,
+    'Risk parameters for trodriguez have been updated.', '',
+    Nexus.Notification.Category.REPORT,
+    Beam.DateTime.fromDate((() => {
+      const d = new Date(); d.setDate(d.getDate() - 3); return d;
+    })()), true)
+];
+
+const SAMPLE_NOTIFICATIONS_ALL_READ: Nexus.Notification[] = [
+  new Nexus.Notification('1', Beam.DirectoryEntry.INVALID,
+    'Your request to update risk controls for achen01 has been approved.', '',
+    Nexus.Notification.Category.ACCOUNT_MODIFICATION,
+    Beam.DateTime.fromDate((() => {
+      const d = new Date(); d.setHours(d.getHours() - 2); return d;
+    })()), true),
+  new Nexus.Notification('3', Beam.DirectoryEntry.INVALID,
+    'Risk parameters for trodriguez have been updated.', '',
+    Nexus.Notification.Category.REPORT,
+    Beam.DateTime.fromDate((() => {
+      const d = new Date(); d.setDate(d.getDate() - 3); return d;
+    })()), true)
+];
+
+enum PopoverMode {
+  HAS_UNREAD,
+  NO_UNREAD,
+  EMPTY
+}
+
+const POPOVER_NOTIFICATIONS: Record<PopoverMode, Nexus.Notification[]> = {
+  [PopoverMode.HAS_UNREAD]: SAMPLE_NOTIFICATIONS,
+  [PopoverMode.NO_UNREAD]: SAMPLE_NOTIFICATIONS_ALL_READ,
+  [PopoverMode.EMPTY]: []
+};
+
+const notificationsPopover =
+  new ComponentSchema('NotificationsPopover',
+    [new PropertySchema('mode', PopoverMode.HAS_UNREAD,
+        EnumInput(PopoverMode))],
+    [new SignalSchema('onDismissAll', ''),
+      new SignalSchema('onOpen', ''),
+      new SignalSchema('onClose', '')],
+    (props: any) => React.createElement('div', null,
+      React.createElement('button',
+        {popovertarget: 'catalog-notifications-popover'},
+        'Toggle Popover'),
+      React.createElement(WebPortal.NotificationsPopover, {
+        id: 'catalog-notifications-popover',
+        notifications: POPOVER_NOTIFICATIONS[props.mode as PopoverMode],
+        onDismissAll: props.onDismissAll,
+        onOpen: props.onOpen,
+        onClose: props.onClose
+      })));
+
+const notificationsButton =
+  new ComponentSchema('NotificationsButton',
+    [new PropertySchema('isCurrent', false, BooleanInput),
+      new PropertySchema('hasUnread', true, BooleanInput),
+      new PropertySchema('isOpen', false, BooleanInput)],
+    [new SignalSchema('onClick', '')],
+    WebPortal.NotificationsButton);
 
 const navigationTab =
   new ComponentSchema('NavigationTab',
@@ -967,25 +1086,23 @@ const tableHeaderCell =
     }, 132);
 
 export const componentSections = [
-  new ComponentSection('UI Kit', [button, burgerButton, checkbox,
-    countrySelect, currencySelect, dateInput, disclosure,
-    dateTimeInput, decimalInput, dropDownButton, durationInput, emptyMessage,
-    errorMessage,
-    filterChip, filterInput, hLine,
-    iconLabelButton, input, integerField, labeledCheckbox, link, modal,
-    moneyInput,
-    navigationHeader, navigationTab, pageLayout,
+  new ComponentSection('UI Kit', [button, burgerButton, checkbox, countrySelect,
+    currencySelect, dateInput, disclosure, dateTimeInput, decimalInput,
+    durationInput, emptyMessage, errorMessage, expandButton, filterChip,
+    filterInput, hLine, iconLabelButton, input, integerField, labeledCheckbox,
+    link, modal, moneyInput, navigationHeader, navigationTab, pageLayout,
     pagination, scopeInput, scopeItemInput, relativeDate, roleIcon, rolePanel,
     tickersInput, tickerInput, segmentedSpinner, select, skeleton,
-    segmentButton,
-    segmentedControl,
-    timeOfDayInput]),
+    segmentButton, segmentedControl, timeOfDayInput]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,
     entitlementsStatusTag, requestActivityItem, requestCategoryTag,
     requestDetailPage, requestDirectoryPage, requestEffectiveDate,
-    requestFilterModal, requestItem, requestItemPlaceholder,
-    requestSortSelect, requestStateIndicator, riskControlsChangeItem]),
+    requestFilterModal, requestItem, requestItemPlaceholder, requestSortSelect,
+    requestStateIndicator, riskControlsChangeItem]),
+  new ComponentSection('Notifications', [notificationsFilterModal,
+    notificationItem, notificationItemPlaceholder, notificationsButton,
+    notificationsPopover]),
   new ComponentSection('Profit and Loss Page', [currencyTooltip, metric,
     profitAndLossHeader, profitAndLossItem, profitAndLossItemPlaceholder,
     profitAndLossTable, reportStatusIndicator, tableHeaderCell])];

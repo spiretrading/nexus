@@ -80,6 +80,12 @@ namespace Nexus {
       Message load_message(Message::Id id);
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
+      void store(const Notification& notification);
+      std::vector<Notification> load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state);
+      void mark_notification_as_read(const Notification::Id& id);
+      void mark_notification_as_unread(const Notification::Id& id);
       void with_transaction(const std::function<void ()>& transaction);
       void close();
 
@@ -300,6 +306,36 @@ namespace Nexus {
       AccountModificationRequest::Id id) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_message_ids(id);
+  }
+
+  template<IsAdministrationDataStore D>
+  void ToPythonAdministrationDataStore<D>::store(
+      const Notification& notification) {
+    auto release = Beam::Python::GilRelease();
+    m_data_store->store(notification);
+  }
+
+  template<IsAdministrationDataStore D>
+  std::vector<Notification> ToPythonAdministrationDataStore<D>::
+      load_notifications(const Beam::DirectoryEntry& account,
+        const Notification::Id& id, Beam::SnapshotLimit limit,
+        Notification::ReadState read_state) {
+    auto release = Beam::Python::GilRelease();
+    return m_data_store->load_notifications(account, id, limit, read_state);
+  }
+
+  template<IsAdministrationDataStore D>
+  void ToPythonAdministrationDataStore<D>::mark_notification_as_read(
+      const Notification::Id& id) {
+    auto release = Beam::Python::GilRelease();
+    m_data_store->mark_notification_as_read(id);
+  }
+
+  template<IsAdministrationDataStore D>
+  void ToPythonAdministrationDataStore<D>::mark_notification_as_unread(
+      const Notification::Id& id) {
+    auto release = Beam::Python::GilRelease();
+    m_data_store->mark_notification_as_unread(id);
   }
 
   template<IsAdministrationDataStore D>

@@ -175,7 +175,7 @@ export class LoginPage extends React.Component<Properties> {
         backgroundColor:  'none'
       },
       '::-webkit-credentials-auto-fill-button': {
-        visibility: 'hidden' as 'hidden',
+        visibility: 'hidden',
         display: 'none !important',
         pointerEvents: 'none',
         height: 0,

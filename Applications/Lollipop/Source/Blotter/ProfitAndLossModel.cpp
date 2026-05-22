@@ -10,10 +10,8 @@ using namespace Nexus;
 using namespace Spire;
 
 ProfitAndLossModel::ProfitAndLossModel(
-    Ref<const CurrencyDatabase> currencyDatabase,
     Ref<const ExchangeRateTable> exchangeRates, bool showUnrealized)
-    : m_currencyDatabase(currencyDatabase.get()),
-      m_exchangeRates(exchangeRates.get()),
+    : m_exchangeRates(exchangeRates.get()),
       m_showUnrealized{showUnrealized},
       m_portfolioController(nullptr) {
   m_eventHandler.emplace();
@@ -75,7 +73,7 @@ void ProfitAndLossModel::OnPortfolioUpdate(const PortfolioUpdateEntry& update) {
   auto& model = m_currencyToModel[currency];
   if(!model) {
     model = std::make_unique<ProfitAndLossEntryModel>(
-      m_currencyDatabase->from(currency), m_showUnrealized);
+      CURRENCIES.from(currency), m_showUnrealized);
     m_profitAndLossEntryModelAddedSignal(*model);
     m_currencyToPortfolio.insert(std::pair(currency, update));
   } else {

@@ -182,9 +182,8 @@ unique_ptr<SingleOrderTaskNode> Spire::MakeOrderTaskNodeFromOrderFields(
       std::make_unique<MoneyNode>(orderFields.m_price))->Replace(
       SingleOrderTaskNode::CURRENCY_PROPERTY,
       std::make_unique<CurrencyNode>(orderFields.m_currency,
-      DEFAULT_CURRENCIES.from(
-        orderFields.m_currency).m_code.get_data()))->Replace(
-          SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
-            std::make_unique<TimeInForceNode>(orderFields.m_time_in_force));
+      CURRENCIES.from(orderFields.m_currency).m_code.get_data()))->Replace(
+        SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
+          std::make_unique<TimeInForceNode>(orderFields.m_time_in_force));
   return static_pointer_cast<SingleOrderTaskNode>(std::move(node));
 }

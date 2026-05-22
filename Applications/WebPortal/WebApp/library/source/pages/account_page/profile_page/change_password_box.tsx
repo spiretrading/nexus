@@ -207,7 +207,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
   };
   private static DYNAMIC_STYLE = StyleSheet.create({
     inputBoxSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '100%',
       padding: 0,
       height: '34px',
@@ -218,7 +218,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
       outline: 0,
       borderRadius: 1,
       paddingLeft: '10px',
-      textAlign: 'start' as 'start',
+      textAlign: 'start',
       ':active': {
         border: '1px solid #684BC7'
       },
@@ -246,7 +246,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
         backgroundColor: 'none'
       },
       '::-webkit-credentials-auto-fill-button': {
-        visibility: 'hidden' as 'hidden',
+        visibility: 'hidden',
         display: 'none !important',
         pointerEvents: 'none',
         height: 0,
@@ -255,7 +255,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
       }
     },
     inputBoxLarge: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       width: '240px',
       padding: 0,
       height: '34px',
@@ -265,7 +265,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
       font: '400 14px Roboto',
       outline: 0,
       paddingLeft: '10px',
-      textAlign: 'start' as 'start',
+      textAlign: 'start',
       borderRadius: 1,
       ':active': {
         border: '1px solid #684BC7'
@@ -294,7 +294,7 @@ export class ChangePasswordBox extends React.Component<Properties> {
         backgroundColor: 'none'
       },
       '::-webkit-credentials-auto-fill-button': {
-        visibility: 'hidden' as 'hidden',
+        visibility: 'hidden',
         display: 'none !important',
         pointerEvents: 'none',
         height: 0,

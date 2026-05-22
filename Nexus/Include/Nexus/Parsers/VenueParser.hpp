@@ -8,25 +8,19 @@
 
 namespace Nexus {
 
-  /**
-   * Parses a Venue.
-   * @param venues The database of available venues to parse.
-   */
-  inline auto venue_parser(const VenueDatabase& venues) {
-    auto code = [] (const auto& entry) {
-      return entry.m_venue;
-    };
-    return Beam::EnumeratorParser(
-      boost::make_transform_iterator(venues.get_entries().cbegin(), code),
-      boost::make_transform_iterator(venues.get_entries().cend(), code),
-      [=] (auto code) {
-        return venues.from(code).m_display_name;
-      });
-  }
-
-  /** Parses a MarketCode using the default MarketDatabase. */
+  /** Parses a Venue. */
   inline const auto& venue_parser() {
-    static const auto& parser = venue_parser(DEFAULT_VENUES);
+    static const auto parser = [&] {
+      auto code = [] (const auto& entry) {
+        return entry.m_venue;
+      };
+      return Beam::EnumeratorParser(
+        boost::make_transform_iterator(VENUES.get_entries().cbegin(), code),
+        boost::make_transform_iterator(VENUES.get_entries().cend(), code),
+        [] (auto code) {
+          return VENUES.from(code).m_display_name;
+        });
+    }();
     return parser;
   }
 }

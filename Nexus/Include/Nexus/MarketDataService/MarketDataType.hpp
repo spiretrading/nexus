@@ -7,6 +7,7 @@
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/OrderImbalance.hpp"
+#include "Nexus/Definitions/TickerStatus.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 
 namespace Nexus {
@@ -24,7 +25,10 @@ namespace Nexus {
     BBO_QUOTE,
 
     /** An OrderImbalance. */
-    ORDER_IMBALANCE);
+    ORDER_IMBALANCE,
+
+    /** A TickerStatus. */
+    TICKER_STATUS);
 
   /** Stores a set of MarketDataTypes. */
   using MarketDataTypeSet = Beam::EnumSet<MarketDataType>;
@@ -40,6 +44,8 @@ namespace Nexus {
       return MarketDataType::BBO_QUOTE;
     } else if constexpr(std::is_same_v<T, OrderImbalance>) {
       return MarketDataType::ORDER_IMBALANCE;
+    } else if constexpr(std::is_same_v<T, TickerStatus>) {
+      return MarketDataType::TICKER_STATUS;
     }
     return MarketDataType::NONE;
   }

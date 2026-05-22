@@ -6,7 +6,7 @@
 using namespace Beam;
 using namespace Beam::Tests;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 TEST_SUITE("Ticker") {
   TEST_CASE("default") {
@@ -34,12 +34,12 @@ TEST_SUITE("Ticker") {
   }
 
   TEST_CASE("parse") {
-    auto invalid = parse_ticker("XYZ", DEFAULT_VENUES);
+    auto invalid = parse_ticker("XYZ");
     REQUIRE(!invalid);
-    auto valid = parse_ticker("TD.TSX", DEFAULT_VENUES);
+    auto valid = parse_ticker("TD.TSX");
     REQUIRE(valid.get_symbol() == "TD");
     REQUIRE(valid.get_venue() == TSX);
-    auto compound = parse_ticker("A.B.C.TSX", DEFAULT_VENUES);
+    auto compound = parse_ticker("A.B.C.TSX");
     REQUIRE(compound.get_symbol() == "A.B.C");
     REQUIRE(compound.get_venue() == TSX);
   }

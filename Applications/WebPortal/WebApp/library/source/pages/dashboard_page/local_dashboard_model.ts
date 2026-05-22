@@ -1,6 +1,10 @@
 import * as Beam from 'beam';
 import * as Nexus from 'nexus';
-import { AccountDirectoryModel, ComplianceModel, LocalAccountModel, LocalGroupModel } from '..';
+import { AccountDirectoryModel, ComplianceModel, LocalAccountModel,
+  LocalGroupModel } from '..';
+import { LocalNotificationsModel } from
+  '../notifications_page/local_notifications_model';
+import { NotificationsModel } from '../notifications_page/notifications_model';
 import { RequestsModel } from '../requests_page/requests_model';
 import { DashboardModel } from './dashboard_model';
 
@@ -24,7 +28,7 @@ export class LocalDashboardModel extends DashboardModel {
       currencyDatabase: Nexus.CurrencyDatabase,
       venueDatabase: Nexus.VenueDatabase,
       accountDirectoryModel: AccountDirectoryModel,
-      requestsModel: RequestsModel) {
+      requestsModel: RequestsModel, notifications: Nexus.Notification[] = []) {
     super();
     this._isLoaded = false;
     this._entitlementDatabase = entitlementDatabase;
@@ -35,6 +39,7 @@ export class LocalDashboardModel extends DashboardModel {
     this._roles = roles;
     this._accountDirectoryModel = accountDirectoryModel;
     this._requestsModel = requestsModel;
+    this._notificationsModel = new LocalNotificationsModel(notifications);
     this.accountModels = new Beam.Map<Beam.DirectoryEntry, LocalAccountModel>();
   }
 
@@ -83,6 +88,11 @@ export class LocalDashboardModel extends DashboardModel {
     return this._requestsModel;
   }
 
+  public get notificationsModel(): NotificationsModel {
+    this.ensureLoaded();
+    return this._notificationsModel;
+  }
+
   public makeAccountModel(account: Beam.DirectoryEntry): LocalAccountModel {
     this.ensureLoaded();
     let model = this.accountModels.get(account);
@@ -108,6 +118,7 @@ export class LocalDashboardModel extends DashboardModel {
 
   public async load(): Promise<void> {
     this._isLoaded = true;
+    await this._notificationsModel.load();
   }
 
   public async logout(): Promise<void> {
@@ -129,5 +140,6 @@ export class LocalDashboardModel extends DashboardModel {
   private _roles: Nexus.AccountRoles;
   private _accountDirectoryModel: AccountDirectoryModel;
   private _requestsModel: RequestsModel;
+  private _notificationsModel: NotificationsModel;
   private accountModels: Beam.Map<Beam.DirectoryEntry, LocalAccountModel>;
 }

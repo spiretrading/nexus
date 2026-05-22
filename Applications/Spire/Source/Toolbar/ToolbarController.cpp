@@ -5,8 +5,6 @@
 #include <QScreen>
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/Venue.hpp"
-#include "Spire/AccountViewer/AccountViewWindow.hpp"
-#include "Spire/AccountViewer/TraderProfileWindow.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
@@ -38,11 +36,11 @@ namespace {
     auto next_height = 0;
     auto resolution = QGuiApplication::primaryScreen()->availableGeometry();
     auto tickers = std::vector<Ticker>();
-    tickers.push_back(Ticker("RY", DefaultVenues::TSX));
-    tickers.push_back(Ticker("XIU", DefaultVenues::TSX));
-    tickers.push_back(Ticker("ABX", DefaultVenues::TSX));
-    tickers.push_back(Ticker("SU", DefaultVenues::TSX));
-    tickers.push_back(Ticker("BCE", DefaultVenues::TSX));
+    tickers.push_back(parse_ticker("RY.TSX"));
+    tickers.push_back(parse_ticker("XIU.TSX"));
+    tickers.push_back(parse_ticker("ABX.TSX"));
+    tickers.push_back(parse_ticker("SU.TSX"));
+    tickers.push_back(parse_ticker("BCE.TSX"));
     auto index = std::size_t(0);
     auto windows = std::vector<QWidget*>();
     while(instantiate_ticker_windows && index < tickers.size()) {
@@ -241,9 +239,7 @@ void ToolbarController::open_order_imbalance_indicator_window() {
 }
 
 void ToolbarController::open_account_directory_window() {
-  auto window = new AccountViewWindow(Ref(*m_user_profile));
-  window->setAttribute(Qt::WA_DeleteOnClose);
-  window->show();
+  open_web_portal(*m_user_profile, "/account_directory");
 }
 
 void ToolbarController::open_portfolio_window() {
@@ -272,11 +268,7 @@ void ToolbarController::open_key_bindings_window() {
 }
 
 void ToolbarController::open_profile_window() {
-  auto window = new TraderProfileWindow(Ref(*m_user_profile));
-  window->setAttribute(Qt::WA_DeleteOnClose);
-  window->Load(
-    m_user_profile->GetClients().get_service_locator_client().get_account());
-  window->show();
+  open_web_portal(*m_user_profile, "/account/profile");
 }
 
 void ToolbarController::on_open(ToolbarWindow::WindowType window) {
