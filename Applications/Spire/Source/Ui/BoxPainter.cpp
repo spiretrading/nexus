@@ -258,6 +258,7 @@ QColor BoxPainter::get_background_color() const {
 void BoxPainter::set_background_color(QColor color) {
   m_background_color = color;
   m_classification = evaluate_classification();
+  invalidate_cache();
 }
 
 const BoxPainter::Borders& BoxPainter::get_borders() const {
@@ -267,66 +268,79 @@ const BoxPainter::Borders& BoxPainter::get_borders() const {
 void BoxPainter::set_borders(const Borders& borders) {
   m_borders = borders;
   m_classification = evaluate_classification();
+  invalidate_cache();
 }
 
 void BoxPainter::set_border_top_size(int size) {
   m_borders.m_top.m_size = size;
   m_classification = evaluate_classification();
+  invalidate_cache();
 }
 
 void BoxPainter::set_border_top_color(QColor color) {
   m_borders.m_top.m_color = color;
   m_classification = evaluate_classification();
+  invalidate_cache();
 }
 
 void BoxPainter::set_border_right_size(int size) {
   m_borders.m_right.m_size = size;
   m_classification = evaluate_classification();
+  invalidate_cache();
 }
 
 void BoxPainter::set_border_right_color(QColor color) {
   m_borders.m_right.m_color = color;
   m_classification = evaluate_classification();
+  invalidate_cache();
 }
 
 void BoxPainter::set_border_bottom_size(int size) {
   m_borders.m_bottom.m_size = size;
   m_classification = evaluate_classification();
+  invalidate_cache();
 }
 
 void BoxPainter::set_border_bottom_color(QColor color) {
   m_borders.m_bottom.m_color = color;
   m_classification = evaluate_classification();
+  invalidate_cache();
 }
 
 void BoxPainter::set_border_left_size(int size) {
   m_borders.m_left.m_size = size;
   m_classification = evaluate_classification();
+  invalidate_cache();
 }
 
 void BoxPainter::set_border_left_color(QColor color) {
   m_borders.m_left.m_color = color;
   m_classification = evaluate_classification();
+  invalidate_cache();
 }
 
 void BoxPainter::set_top_right_radius(int radius) {
   m_borders.m_top_right_radius = radius;
   m_classification = evaluate_classification();
+  invalidate_cache();
 }
 
 void BoxPainter::set_bottom_right_radius(int radius) {
   m_borders.m_bottom_right_radius = radius;
   m_classification = evaluate_classification();
+  invalidate_cache();
 }
 
 void BoxPainter::set_bottom_left_radius(int radius) {
   m_borders.m_bottom_left_radius = radius;
   m_classification = evaluate_classification();
+  invalidate_cache();
 }
 
 void BoxPainter::set_top_left_radius(int radius) {
   m_borders.m_top_left_radius = radius;
   m_classification = evaluate_classification();
+  invalidate_cache();
 }
 
 void BoxPainter::paint(QPainter& painter) const {
@@ -343,6 +357,15 @@ void BoxPainter::paint(QPainter& painter) const {
         QRect(QPoint(m_borders.m_top.m_size / 2, m_borders.m_top.m_size / 2),
           size - QSize(m_borders.m_top.m_size, m_borders.m_top.m_size)));
     }
+  } else if(m_classification == Classification::ROUNDED) {
+    if(!m_cache || m_cache->m_size != size) {
+      m_cache = std::make_unique<Cache>();
+      m_cache->m_path.addRoundedRect(QRectF(QRect(QPoint(0, 0), size)),
+        m_borders.m_top_left_radius, m_borders.m_top_left_radius);
+      m_cache->m_size = size;
+    }
+    painter.setRenderHint(QPainter::Antialiasing);
+    painter.fillPath(m_cache->m_path, m_background_color);
   } else {
     auto path = QPainterPath();
     painter.setPen(m_background_color);
@@ -386,7 +409,14 @@ BoxPainter::Classification BoxPainter::evaluate_classification() const {
         }
         return Classification::REGULAR;
       }
+      if(m_borders.m_top.m_size == 0) {
+        return Classification::ROUNDED;
+      }
     }
   }
   return Classification::OTHER;
+}
+
+void BoxPainter::invalidate_cache() {
+  m_cache.reset();
 }
