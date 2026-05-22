@@ -56,8 +56,8 @@ AccountListBox::AccountListBox(std::shared_ptr<AccountQueryModel> accounts,
   auto to_id = [] (const AccountListItem::Account& account) {
     return account.m_id;
   };
-  auto from_id = [accounts = m_accounts] (const QString& id) {
-    if(auto account = accounts->m_source->parse(id)) {
+  auto from_id = [=] (const QString& id) {
+    if(auto account = m_accounts->m_source->parse(id)) {
       return *account;
     }
     throw std::invalid_argument("Invalid account id.");
@@ -65,8 +65,8 @@ AccountListBox::AccountListBox(std::shared_ptr<AccountQueryModel> accounts,
   using IdListModel = decltype(TransformListModel(m_current, to_id, from_id));
   auto id_list = std::make_shared<IdListModel>(m_current, to_id, from_id);
   m_tag_combo_box = new TagComboBox<QString>(m_accounts, std::move(id_list),
-    [accounts = m_accounts] (const auto& list, auto index) {
-      if(auto account = accounts->m_source->parse(list->get(index))) {
+    [=] (const auto& list, auto index) {
+      if(auto account = m_accounts->m_source->parse(list->get(index))) {
         return new AccountListItem(*account);
       }
       return new AccountListItem(AccountListItem::Account());
@@ -87,13 +87,11 @@ AccountListBox::AccountListBox(std::shared_ptr<AccountQueryModel> accounts,
   setFocusProxy(m_tag_combo_box);
 }
 
-const std::shared_ptr<AccountQueryModel>&
-    AccountListBox::get_accounts() const {
+const std::shared_ptr<AccountQueryModel>& AccountListBox::get_accounts() const {
   return m_accounts->m_source;
 }
 
-const std::shared_ptr<AccountListModel>&
-    AccountListBox::get_current() const {
+const std::shared_ptr<AccountListModel>& AccountListBox::get_current() const {
   return m_current;
 }
 
