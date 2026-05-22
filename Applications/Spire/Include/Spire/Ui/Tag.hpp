@@ -66,13 +66,17 @@ namespace Spire {
       BoxPainter m_painter;
       QColor m_text_color;
       QFont m_font;
-      QColor m_delete_fill;
-      QImage m_delete_icon;
+      QFontMetrics m_font_metrics;
+      QString m_elided_label;
+      int m_elided_width;
       boost::signals2::scoped_connection m_label_connection;
       boost::signals2::scoped_connection m_style_connection;
 
       QRect get_delete_rect() const;
       bool is_delete_visible() const;
+      void invalidate_layout();
+      void update_elided_label();
+      void on_label(const QString& label);
       void on_style();
   };
 }

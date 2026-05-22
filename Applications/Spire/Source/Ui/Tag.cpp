@@ -10,24 +10,50 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto& get_delete_icon() {
-    static auto icon = image_from_svg(":/Icons/delete.svg", scale(16, 16));
-    return icon;
+  const auto& DELETE_ICON() {
+    static const auto ICON =
+      image_from_svg(":/Icons/delete.svg", scale(16, 16));
+    return ICON;
   }
 
-  auto DEFAULT_STYLE() {
-    auto style = StyleSheet();
-    auto font = QFont("Roboto");
-    font.setWeight(QFont::Normal);
-    font.setPixelSize(scale_width(12));
-    style.get(Any()).
-      set(BackgroundColor(QColor(0xEBEBEB))).
-      set(border_radius(scale_width(3))).
-      set(Font(font)).
-      set(TextColor(QColor(Qt::black))).
-      set(horizontal_padding(scale_width(5))).
-      set(vertical_padding(scale_height(2)));
-    return style;
+  const auto& DELETE_PIXMAP() {
+    static const auto PIXMAP = [] {
+      auto pixmap = QPixmap::fromImage(DELETE_ICON());
+      auto painter = QPainter(&pixmap);
+      painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+      painter.fillRect(pixmap.rect(), QColor(0xA0A0A0));
+      return pixmap;
+    }();
+    return PIXMAP;
+  }
+
+  const auto& DELETE_HOVER_PIXMAP() {
+    static const auto PIXMAP = [] {
+      auto pixmap = QPixmap::fromImage(DELETE_ICON());
+      auto painter = QPainter(&pixmap);
+      painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+      painter.fillRect(pixmap.rect(), QColor(0x4B23A0));
+      return pixmap;
+    }();
+    return PIXMAP;
+  }
+
+  const auto& DEFAULT_STYLE() {
+    static const auto STYLE = [] {
+      auto style = StyleSheet();
+      auto font = QFont("Roboto");
+      font.setWeight(QFont::Normal);
+      font.setPixelSize(scale_width(12));
+      style.get(Any()).
+        set(BackgroundColor(QColor(0xEBEBEB))).
+        set(border_radius(scale_width(3))).
+        set(Font(font)).
+        set(TextColor(QColor(Qt::black))).
+        set(horizontal_padding(scale_width(5))).
+        set(vertical_padding(scale_height(2)));
+      return style;
+    }();
+    return STYLE;
   }
 }
 
@@ -41,11 +67,11 @@ Tag::Tag(std::shared_ptr<TextModel> label, QWidget* parent)
       m_is_delete_hovered(false),
       m_is_delete_pressed(false),
       m_text_color(Qt::black),
-      m_delete_fill(0xA0A0A0),
-      m_delete_icon(get_delete_icon()) {
+      m_font_metrics(m_font),
+      m_elided_width(-1) {
   setMouseTracking(true);
   m_label_connection =
-    m_label->connect_update_signal([this] (const auto&) { update(); });
+    m_label->connect_update_signal(std::bind_front(&Tag::on_label, this));
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&Tag::on_style, this));
   set_style(*this, DEFAULT_STYLE());
@@ -60,14 +86,16 @@ bool Tag::is_read_only() const {
 }
 
 void Tag::set_read_only(bool is_read_only) {
+  if(m_is_read_only == is_read_only) {
+    return;
+  }
   m_is_read_only = is_read_only;
   if(m_is_read_only) {
     match(*this, ReadOnly());
   } else {
     unmatch(*this, ReadOnly());
   }
-  updateGeometry();
-  update();
+  invalidate_layout();
 }
 
 connection Tag::connect_delete_signal(
@@ -76,12 +104,11 @@ connection Tag::connect_delete_signal(
 }
 
 QSize Tag::sizeHint() const {
-  auto metrics = QFontMetrics(m_font);
-  auto content_width = metrics.horizontalAdvance(m_label->get());
+  auto content_width = m_font_metrics.horizontalAdvance(m_label->get());
   if(is_delete_visible()) {
-    content_width += m_delete_icon.width();
+    content_width += DELETE_ICON().width();
   }
-  auto content_height = metrics.height();
+  auto content_height = m_font_metrics.height();
   return QSize(content_width, content_height) +
     m_geometry.get_geometry().size() - m_geometry.get_content_area().size();
 }
@@ -125,40 +152,28 @@ void Tag::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
   m_painter.paint(painter);
   auto& content_area = m_geometry.get_content_area();
-  auto metrics = QFontMetrics(m_font);
-  auto available_width = content_area.width();
-  if(is_delete_visible()) {
-    available_width -= m_delete_icon.width();
-  }
-  auto elided =
-    metrics.elidedText(m_label->get(), Qt::ElideRight, available_width);
   painter.setPen(m_text_color);
   painter.setFont(m_font);
-  painter.drawText(content_area.left(), content_area.top() + metrics.ascent(),
-    elided);
+  painter.drawText(content_area.left(),
+    content_area.top() + m_font_metrics.ascent(), m_elided_label);
   if(is_delete_visible()) {
-    auto delete_rect = get_delete_rect();
-    auto fill = m_delete_fill;
     if(m_is_delete_pressed || m_is_delete_hovered) {
-      fill = QColor(0x4B23A0);
+      painter.drawPixmap(get_delete_rect().topLeft(), DELETE_HOVER_PIXMAP());
+    } else {
+      painter.drawPixmap(get_delete_rect().topLeft(), DELETE_PIXMAP());
     }
-    auto icon = QPixmap::fromImage(m_delete_icon);
-    auto icon_painter = QPainter(&icon);
-    icon_painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
-    icon_painter.fillRect(icon.rect(), fill);
-    icon_painter.end();
-    painter.drawPixmap(delete_rect.topLeft(), icon);
   }
 }
 
 void Tag::resizeEvent(QResizeEvent* event) {
   m_geometry.set_size(size());
+  update_elided_label();
   QWidget::resizeEvent(event);
 }
 
 QRect Tag::get_delete_rect() const {
   auto& content_area = m_geometry.get_content_area();
-  auto icon_size = m_delete_icon.size();
+  auto icon_size = DELETE_ICON().size();
   auto x = content_area.right() + 1 - icon_size.width();
   auto y =
     content_area.top() + (content_area.height() - icon_size.height()) / 2;
@@ -167,6 +182,31 @@ QRect Tag::get_delete_rect() const {
 
 bool Tag::is_delete_visible() const {
   return !m_is_read_only;
+}
+
+void Tag::invalidate_layout() {
+  update_elided_label();
+  updateGeometry();
+  update();
+}
+
+void Tag::update_elided_label() {
+  auto& content_area = m_geometry.get_content_area();
+  auto available_width = content_area.width();
+  if(is_delete_visible()) {
+    available_width -= DELETE_ICON().width();
+  }
+  if(available_width == m_elided_width) {
+    return;
+  }
+  m_elided_width = available_width;
+  m_elided_label =
+    m_font_metrics.elidedText(m_label->get(), Qt::ElideRight, m_elided_width);
+}
+
+void Tag::on_label(const QString& label) {
+  m_elided_width = -1;
+  invalidate_layout();
 }
 
 void Tag::on_style() {
@@ -185,8 +225,9 @@ void Tag::on_style() {
       [&] (const Font& font) {
         stylist.evaluate(font, [this] (const auto& font) {
           m_font = font;
-          updateGeometry();
-          update();
+          m_font_metrics = QFontMetrics(m_font);
+          m_elided_width = -1;
+          invalidate_layout();
         });
       },
       [&] (const FontSize& size) {
@@ -197,7 +238,8 @@ void Tag::on_style() {
   }
   if(*font_size) {
     m_font.setPixelSize(**font_size);
-    updateGeometry();
-    update();
+    m_font_metrics = QFontMetrics(m_font);
+    m_elided_width = -1;
+    invalidate_layout();
   }
 }
