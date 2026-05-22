@@ -1,5 +1,6 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
 #include <stack>
+#include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <QFontDatabase>
 #include <QImageReader>
 #include <QLabel>
@@ -66,6 +67,7 @@
 #include "Spire/Ui/HighlightSwatch.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/Identicon.hpp"
 #include "Spire/Ui/InfoPanel.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
@@ -137,6 +139,7 @@
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
+using namespace Beam;
 using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -1198,24 +1201,12 @@ UiProfile Spire::make_account_list_item_profile() {
     make_standard_property<QString>("name", "Kong Meixiang"));
   auto profile = UiProfile("AccountListItem", properties,
     [] (auto& profile) {
-      auto size = scale(8, 8);
-      auto identicon = QImage(size, QImage::Format_ARGB32);
-      identicon.fill(Qt::transparent);
-      auto painter = QPainter(&identicon);
-      painter.setPen(Qt::NoPen);
-      auto width = size.width() / 5.0;
-      auto height = size.height() / 5.0;
-      auto cells = std::vector<std::pair<int, int>>{
-        {0, 0}, {0, 2}, {0, 4}, {1, 1}, {1, 2}, {1, 3}, {2, 2}, {3, 1},
-        {3, 2}, {3, 3}, {4, 2}};
-      for(auto& [row, col] : cells) {
-        painter.fillRect(QRectF(col * width, row * height, width, height),
-          QColor(0xB565BC));
-      }
       auto& id = get<QString>("id", profile.get_properties());
       auto& name = get<QString>("name", profile.get_properties());
+      auto identicon = make_identicon(
+        DirectoryEntry::make_account(qHash(id.get())), scale(8, 8));
       auto item = new AccountListItem(
-        AccountListItem::Account{identicon, id.get(), name.get()});
+        AccountListItem::Account(identicon, id.get(), name.get()));
       apply_widget_properties(item, profile.get_properties());
       return item;
     });
@@ -2762,6 +2753,35 @@ UiProfile Spire::make_icon_toggle_button_profile() {
       image_from_svg(":/Icons/demo.svg", scale(26, 26)), tooltip.get());
     apply_widget_properties(button, profile.get_properties());
     return button;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_identicon_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<int>("id", 12345));
+  auto profile = UiProfile("Identicon", properties, [] (auto& profile) {
+    auto& id = get<int>("id", profile.get_properties());
+    auto size = scale(40, 40);
+    auto icon = new Icon(make_identicon(
+      DirectoryEntry::make_account(static_cast<unsigned int>(id.get())), size));
+    icon->setFixedSize(size);
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(Fill(none));
+    set_style(*icon, style);
+    id.connect_changed_signal([=] (auto value) {
+      update_style(*icon, [&] (auto& style) {
+        style.get(Any()).
+          set(IconImage(make_identicon(
+            DirectoryEntry::make_account(static_cast<unsigned int>(value)),
+            size)));
+      });
+    });
+    apply_widget_properties(icon, profile.get_properties());
+    return icon;
   });
   return profile;
 }
