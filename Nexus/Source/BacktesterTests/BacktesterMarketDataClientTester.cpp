@@ -9,8 +9,8 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   const auto TD = parse_ticker("TD.TSX");
@@ -60,6 +60,29 @@ TEST_SUITE("BacktesterMarketDataClient") {
     REQUIRE(bbo.m_bid.m_price == 100 * Money::ONE);
     bbo = queue->pop();
     REQUIRE(bbo.m_bid.m_price == 101 * Money::ONE);
+  }
+
+  TEST_CASE("query_ticker_status") {
+    auto fixture = Fixture();
+    auto start_time =
+      fixture.m_event_handler_environment.get_time_environment().get_time();
+    auto& data_store = fixture.m_source_environment.
+      get_market_data_environment().get_data_store();
+    data_store.store(SequencedValue(IndexedValue(
+      TickerStatus(TSX, "PreOpen", TickerStatus::Flag::IS_ACCEPTING_ORDERS,
+        start_time), TD), Beam::Sequence(10)));
+    data_store.store(SequencedValue(IndexedValue(
+      TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        start_time + seconds(1)), TD), Beam::Sequence(11)));
+    auto client = BacktesterMarketDataClient(Ref(fixture.m_market_data_service),
+      make_market_data_client(fixture.m_event_handler_environment, "client1"));
+    auto query = make_real_time_query(TD);
+    auto queue = std::make_shared<Queue<TickerStatus>>();
+    client.query(query, queue);
+    auto status = queue->pop();
+    REQUIRE(status.m_state == "PreOpen");
+    status = queue->pop();
+    REQUIRE(status.m_state == "Authorized");
   }
 
   TEST_CASE("historical_query") {

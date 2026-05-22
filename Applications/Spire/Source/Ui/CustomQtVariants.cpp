@@ -277,12 +277,12 @@ QString Spire::to_text(posix_time::time_duration time, const QLocale& locale) {
 }
 
 QString Spire::to_text(CountryCode code, const QLocale& locale) {
-  auto& entry = DEFAULT_COUNTRIES.from(code);
+  auto& entry = COUNTRIES.from(code);
   return QString::fromStdString(entry.m_three_letter_code.get_data());
 }
 
 QString Spire::to_text(CurrencyId currency, const QLocale& locale) {
-  auto& entry = DEFAULT_CURRENCIES.from(currency);
+  auto& entry = CURRENCIES.from(currency);
   return QString::fromStdString(entry.m_code.get_data());
 }
 
@@ -461,7 +461,7 @@ QString Spire::to_text(const Ticker& ticker, const QLocale& locale) {
 }
 
 QString Spire::to_text(Venue venue, const QLocale& locale) {
-  auto& entry = DEFAULT_VENUES.from(venue);
+  auto& entry = VENUES.from(venue);
   if(entry.m_venue) {
     return QString::fromStdString(entry.m_display_name);
   }

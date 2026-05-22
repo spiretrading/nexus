@@ -80,7 +80,6 @@ namespace Nexus {
        * @param time_client Initializes the TimeClient.
        * @param data_store Initializes the RiskDataStore.
        * @param exchange_rates The exchange rates used by portfolios.
-       * @param destinations The destination database used to flatten positions.
        */
       template<Beam::Initializes<A> AF, Beam::Initializes<M> MF,
         Beam::Initializes<O> OF, Beam::Initializes<T> TF,
@@ -90,8 +89,7 @@ namespace Nexus {
         AF&& administration_client, MF&& market_data_client,
         OF&& order_execution_client,
         TransitionTimerFactory transition_timer_factory, TF&& time_client,
-        DF&& data_store, ExchangeRateTable exchange_rates,
-        DestinationDatabase destinations);
+        DF&& data_store, ExchangeRateTable exchange_rates);
 
       /** Returns a Publisher for all accounts RiskStates. */
       const Beam::Publisher<RiskStateEntry>& get_risk_state_publisher() const;
@@ -111,7 +109,6 @@ namespace Nexus {
       Beam::local_ptr_t<T> m_time_client;
       Beam::local_ptr_t<D> m_data_store;
       ExchangeRateTable m_exchange_rates;
-      DestinationDatabase m_destinations;
       Beam::TablePublisher<Beam::DirectoryEntry, RiskState> m_state_publisher;
       Beam::TablePublisher<RiskPortfolioKey, Inventory> m_portfolio_publisher;
       std::vector<std::unique_ptr<RiskController>> m_controllers;
@@ -131,11 +128,10 @@ namespace Nexus {
   template<typename A, typename M, typename O, typename R, typename T,
     typename D>
   ConsolidatedRiskController(Beam::ScopedQueueReader<Beam::DirectoryEntry>, A&&,
-    M&&, O&&, R&&, T&&, D&&, ExchangeRateTable,
-    DestinationDatabase) -> ConsolidatedRiskController<std::remove_cvref_t<A>,
-      std::remove_cvref_t<M>, std::remove_cvref_t<O>,
-      typename std::invoke_result_t<R>::element_type, std::remove_cvref_t<T>,
-      std::remove_cvref_t<D>>;
+    M&&, O&&, R&&, T&&, D&&, ExchangeRateTable) ->
+      ConsolidatedRiskController<std::remove_cvref_t<A>, std::remove_cvref_t<M>,
+      std::remove_cvref_t<O>, typename std::invoke_result_t<R>::element_type,
+      std::remove_cvref_t<T>, std::remove_cvref_t<D>>;
 
   template<typename A, typename M, typename O, Beam::IsTimer R, typename T,
     typename D> requires IsAdministrationClient<Beam::dereference_t<A>> &&
@@ -150,8 +146,7 @@ namespace Nexus {
     AF&& administration_client, MF&& market_data_client,
     OF&& order_execution_client,
     TransitionTimerFactory transition_timer_factory, TF&& time_client,
-    DF&& data_store, ExchangeRateTable exchange_rates,
-    DestinationDatabase destinations)
+    DF&& data_store, ExchangeRateTable exchange_rates)
   BEAM_SUPPRESS_THIS_INITIALIZER()
     : m_administration_client(std::forward<AF>(administration_client)),
       m_market_data_client(std::forward<MF>(market_data_client)),
@@ -160,7 +155,6 @@ namespace Nexus {
       m_time_client(std::forward<TF>(time_client)),
       m_data_store(std::forward<DF>(data_store)),
       m_exchange_rates(std::move(exchange_rates)),
-      m_destinations(std::move(destinations)),
       m_accounts_pipe(std::move(accounts),
         m_tasks.get_slot<Beam::DirectoryEntry>(
           std::bind_front(&ConsolidatedRiskController::on_account, this))) {}
@@ -201,7 +195,7 @@ namespace Nexus {
         return std::make_unique<RiskController>(
           account, &*m_administration_client, &*m_market_data_client,
           &*m_order_execution_client, m_transition_timer_factory(),
-          &*m_time_client, &*m_data_store, m_exchange_rates, m_destinations);
+          &*m_time_client, &*m_data_store, m_exchange_rates);
       } catch(const std::exception&) {
         std::cerr << "Unable to load risk controller:\n\t" <<
           "Account: " << account << "\n\t" <<

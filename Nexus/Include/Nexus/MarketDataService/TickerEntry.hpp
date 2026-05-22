@@ -1,8 +1,8 @@
 #ifndef NEXUS_MARKET_DATA_TICKER_ENTRY_HPP
 #define NEXUS_MARKET_DATA_TICKER_ENTRY_HPP
 #include <Beam/Queries/Sequencer.hpp>
-#include <boost/date_time/local_time/tz_database.hpp>
 #include <boost/optional/optional.hpp>
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Nexus/MarketDataService/TickerSnapshot.hpp"
@@ -26,19 +26,19 @@ namespace Nexus {
 
         /** The next Sequence to use for a TimeAndSale. */
         Beam::Sequence m_next_time_and_sale_sequence;
+
+        /** The next Sequence to use for a TickerStatus. */
+        Beam::Sequence m_next_ticker_status_sequence;
       };
 
       /**
        * Constructs a TickerEntry.
        * @param ticker The Ticker represented.
-       * @param venues The venues publishing market data.
-       * @param time_zones The database of time zones.
        * @param close The closing price.
        * @param initial_sequences The initial Sequences to use.
        */
-      TickerEntry(Ticker ticker, VenueDatabase venues,
-        boost::local_time::tz_database time_zones, Money close,
-        const InitialSequences& initial_sequences);
+      TickerEntry(
+        Ticker ticker, Money close, const InitialSequences& initial_sequences);
 
       /** Returns the Ticker. */
       const Ticker& get_ticker() const;
@@ -77,13 +77,22 @@ namespace Nexus {
         const BookQuote& quote, int source_id);
 
       /**
-       * Publishes a TimeAndSale.
-       * @param time_and_sale The TimeAndSale to publish.
+       * Publishes a TickerStatus.
+       * @param status The TickerStatus to publish.
        * @param source_id The id of the source setting the value.
-       * @return The TimeAndSale to publish.
+       * @return The TickerStatus to publish.
        */
       boost::optional<SequencedTickerTimeAndSale> publish(
         const TimeAndSale& time_and_sale, int source_id);
+
+      /**
+       * Publishes a TickerStatus.
+       * @param status The TickerStatus to publish.
+       * @param source_id The id of the source setting the value.
+       * @return The TickerStatus to publish.
+       */
+      boost::optional<SequencedIndexedTickerStatus> publish(
+        const TickerStatus& status, int source_id);
 
       /**
        * Clears market data that originated from a specified source.
@@ -99,11 +108,10 @@ namespace Nexus {
         BookQuoteEntry(const SequencedTickerBookQuote& quote, int source_id);
       };
       Ticker m_ticker;
-      VenueDatabase m_venues;
-      boost::local_time::tz_database m_time_zones;
       Beam::Sequencer m_bbo_sequencer;
       Beam::Sequencer m_book_quote_sequencer;
       Beam::Sequencer m_time_and_sale_sequencer;
+      Beam::Sequencer m_ticker_status_sequencer;
       PriceCandlestick m_session_candlestick;
       std::string m_market_center;
       Money m_next_close;
@@ -158,6 +166,15 @@ namespace Nexus {
           Beam::increment(results.back().get_sequence());
       }
     }
+    {
+      auto results = data_store.load_ticker_statuses(query);
+      if(results.empty()) {
+        initial_sequences.m_next_ticker_status_sequence = Beam::Sequence::FIRST;
+      } else {
+        initial_sequences.m_next_ticker_status_sequence =
+          Beam::increment(results.back().get_sequence());
+      }
+    }
     return initial_sequences;
   }
 
@@ -166,17 +183,16 @@ namespace Nexus {
     : m_quote(quote),
       m_source_id(source_id) {}
 
-  inline TickerEntry::TickerEntry(Ticker ticker, VenueDatabase venues,
-      boost::local_time::tz_database time_zones, Money close,
-      const InitialSequences& initial_sequences)
+  inline TickerEntry::TickerEntry(
+      Ticker ticker, Money close, const InitialSequences& initial_sequences)
       : m_ticker(std::move(ticker)),
-        m_venues(std::move(venues)),
-        m_time_zones(std::move(time_zones)),
         m_bbo_sequencer(initial_sequences.m_next_bbo_quote_sequence),
         m_book_quote_sequencer(initial_sequences.m_next_book_quote_sequence),
         m_time_and_sale_sequencer(
-          initial_sequences.m_next_time_and_sale_sequence) {
-    m_market_center = m_venues.from(m_ticker.get_venue()).m_market_center;
+          initial_sequences.m_next_time_and_sale_sequence),
+        m_ticker_status_sequencer(
+          initial_sequences.m_next_ticker_status_sequence) {
+    m_market_center = VENUES.from(m_ticker.get_venue()).m_market_center;
     if(m_market_center.empty()) {
       m_market_center = m_ticker.get_venue().get_code().get_data();
     }
@@ -222,10 +238,10 @@ namespace Nexus {
   inline boost::optional<SequencedTickerBboQuote> TickerEntry::publish(
       const BboQuote& bbo_quote, int source_id) {
     if(m_session_reset_time == boost::posix_time::not_a_date_time) {
-      auto& venue_entry = m_venues.from(m_ticker.get_venue());
+      auto& venue_entry = VENUES.from(m_ticker.get_venue());
       if(venue_entry.m_venue) {
         auto time_zone =
-          m_time_zones.time_zone_from_region(venue_entry.m_time_zone);
+          TIME_ZONES.time_zone_from_region(venue_entry.m_time_zone);
         auto reset_time = boost::local_time::local_date_time(
           bbo_quote.m_timestamp, time_zone) + boost::gregorian::days(1);
         reset_time -= reset_time.local_time().time_of_day();
@@ -302,6 +318,11 @@ namespace Nexus {
       m_time_and_sale_sequencer.make_sequenced_value(time_and_sale, m_ticker);
     m_time_and_sale = value;
     return value;
+  }
+
+  inline boost::optional<SequencedIndexedTickerStatus>
+      TickerEntry::publish(const TickerStatus& status, int source_id) {
+    return m_ticker_status_sequencer.make_sequenced_value(status, m_ticker);
   }
 
   inline void TickerEntry::clear(int source_id) {

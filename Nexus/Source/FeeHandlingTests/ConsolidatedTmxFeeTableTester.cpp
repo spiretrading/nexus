@@ -7,9 +7,9 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Currencies;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   auto make_ticker(std::string symbol, Venue venue) {
@@ -18,7 +18,7 @@ namespace {
 
   auto make_order_fields(Ticker ticker, Money price, Quantity quantity = 100) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT, ticker, CAD,
-      Side::BID, DefaultDestinations::TSX, quantity, price);
+      Side::BID, Destinations::TSX, quantity, price);
   }
 
   auto make_order(Ticker ticker, Money price, Quantity quantity = 100) {
@@ -58,7 +58,7 @@ namespace {
     table.m_xats_fee_table.m_intraspread_dark_to_dark_max_fee = Money(10);
     table.m_xats_fee_table.m_intraspread_dark_to_dark_subdollar_max_fee =
       Money(20);
-    populate_fee_table(out(table.m_chic_fee_table.m_ticker_table));
+    populate_fee_table(out(table.m_chic_fee_table.m_fee_table));
     populate_fee_table(out(table.m_cse_fee_table.m_fee_table));
     populate_fee_table(out(table.m_cse2_fee_table.m_regular_table));
     populate_fee_table(out(table.m_cse2_fee_table.m_dark_table));

@@ -94,7 +94,7 @@ export class ProfileController extends React.Component<Properties, State> {
       this.setState({
         passwordStatus: 'Saved.'
       });
-    } catch(e) {
+    } catch(e: any) {
       this.setState({
         hasPasswordError: true,
         passwordStatus: e.toString()
@@ -113,7 +113,7 @@ export class ProfileController extends React.Component<Properties, State> {
       this.setState({
         identityStatus: 'Saved.'
       });
-    } catch(e) {
+    } catch(e: any) {
       this.setState({
         hasIdentityError: true,
         identityStatus: e.toString()

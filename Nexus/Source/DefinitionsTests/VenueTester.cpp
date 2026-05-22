@@ -1,7 +1,7 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
 using namespace Beam;
@@ -85,7 +85,7 @@ TEST_SUITE("Venue") {
   }
 
   TEST_CASE("utc_start_of_day") {
-    auto tz_database = get_default_time_zone_database();
+    auto tz_database = TIME_ZONES;
     auto venue_database = load_test_venue_database();
     auto date_time = ptime(date(2025, 6, 26), hours(0));
     auto result =
@@ -94,7 +94,7 @@ TEST_SUITE("Venue") {
   }
 
   TEST_CASE("aest_start") {
-    auto tz_database = get_default_time_zone_database();
+    auto tz_database = TIME_ZONES;
     auto venue_database = load_test_venue_database();
     auto date_time = ptime(date(2025, 6, 26), hours(0));
     auto expected = ptime(date(2025, 6, 25), hours(14));
@@ -104,7 +104,7 @@ TEST_SUITE("Venue") {
   }
 
   TEST_CASE("est_in_dst_start") {
-    auto tz_database = get_default_time_zone_database();
+    auto tz_database = TIME_ZONES;
     auto venue_database = load_test_venue_database();
     auto date_time = ptime(date(2025, 6, 26), hours(0));
     auto expected = ptime(date(2025, 6, 25), hours(4));
@@ -114,7 +114,7 @@ TEST_SUITE("Venue") {
   }
 
   TEST_CASE("est_in_standard_start") {
-    auto tz_database = get_default_time_zone_database();
+    auto tz_database = TIME_ZONES;
     auto venue_database = load_test_venue_database();
     auto date_time = ptime(date(2025, 1, 15), hours(0));
     auto expected = ptime(date(2025, 1, 14), hours(5));
@@ -133,13 +133,12 @@ TEST_SUITE("Venue") {
       description: "New York Stock Exchange"
       display_name: "NYSE")";
     auto node = YAML::Load(yaml_text);
-    auto entry =
-      parse_venue_database_entry(node, DEFAULT_COUNTRIES, DEFAULT_CURRENCIES);
+    auto entry = parse_venue_database_entry(node);
     REQUIRE(entry.m_venue == Venue("NYC1"));
-    REQUIRE(entry.m_country_code == DefaultCountries::US);
+    REQUIRE(entry.m_country_code == Countries::US);
     REQUIRE(entry.m_market_center == "NNN");
     REQUIRE(entry.m_time_zone == "America/New_York");
-    REQUIRE(entry.m_currency == DefaultCurrencies::USD);
+    REQUIRE(entry.m_currency == Currencies::USD);
     REQUIRE(entry.m_description == "New York Stock Exchange");
     REQUIRE(entry.m_display_name == "NYSE");
   }
@@ -154,8 +153,7 @@ TEST_SUITE("Venue") {
       description: "London Stock Exchange"
       display_name: "LSE")";
     auto node = YAML::Load(yaml_text);
-    REQUIRE_THROWS_AS(parse_venue_database_entry(
-      node, DEFAULT_COUNTRIES, DEFAULT_CURRENCIES), std::runtime_error);
+    REQUIRE_THROWS_AS(parse_venue_database_entry(node), std::runtime_error);
   }
 
   TEST_CASE("parse_venue_database_entry_invalid_currency") {
@@ -168,8 +166,7 @@ TEST_SUITE("Venue") {
       description: "Tokyo Stock Exchange"
       display_name: "TSE")";
     auto node = YAML::Load(yaml_text);
-    REQUIRE_THROWS_AS(parse_venue_database_entry(
-      node, DEFAULT_COUNTRIES, DEFAULT_CURRENCIES), std::runtime_error);
+    REQUIRE_THROWS_AS(parse_venue_database_entry(node), std::runtime_error);
   }
 
 
@@ -190,8 +187,7 @@ TEST_SUITE("Venue") {
         description: "Desc2"
         display_name: "Beta")";
     auto node = YAML::Load(yaml_text);
-    auto database =
-      parse_venue_database(node, DEFAULT_COUNTRIES, DEFAULT_CURRENCIES);
+    auto database = parse_venue_database(node);
     auto entry_alpha = parse_venue_entry("Alpha", database);
     REQUIRE(entry_alpha.m_venue.get_code() == "ABC");
     REQUIRE(entry_alpha.m_display_name == "Alpha");
@@ -205,10 +201,10 @@ TEST_SUITE("Venue") {
   TEST_CASE("parse_venue") {
     auto entry = VenueDatabase::Entry();
     entry.m_venue = Venue("ABC");
-    entry.m_country_code = DefaultCountries::US;
+    entry.m_country_code = Countries::US;
     entry.m_market_center = "AABBCC";
     entry.m_time_zone = "America/New_York";
-    entry.m_currency = DefaultCurrencies::USD;
+    entry.m_currency = Currencies::USD;
     entry.m_description = "Desc1";
     entry.m_display_name = "Alpha";
     auto database = VenueDatabase();
@@ -222,10 +218,10 @@ TEST_SUITE("Venue") {
   TEST_CASE("stream") {
     auto entry = VenueDatabase::Entry();
     entry.m_venue = Venue("LMN");
-    entry.m_country_code = DefaultCountries::CA;
+    entry.m_country_code = Countries::CA;
     entry.m_market_center = "LMN";
     entry.m_time_zone = "America/Toronto";
-    entry.m_currency = DefaultCurrencies::CAD;
+    entry.m_currency = Currencies::CAD;
     entry.m_description = "Desc3";
     entry.m_display_name = "LmnVenue";
     auto database = VenueDatabase();
@@ -238,8 +234,8 @@ TEST_SUITE("Venue") {
   }
 
   TEST_CASE("shuttle") {
-    test_round_trip_shuttle(DEFAULT_VENUES, [] (const auto& venues) {
-      auto expected_entries = DEFAULT_VENUES.get_entries();
+    test_round_trip_shuttle(VENUES, [] (const auto& venues) {
+      auto expected_entries = VENUES.get_entries();
       auto entries = venues.get_entries();
       REQUIRE(expected_entries.size() == entries.size());
       for(auto i = std::size_t(0); i != entries.size(); ++i) {

@@ -28,8 +28,8 @@ namespace {
       position.m_inventory.m_position.m_ticker,
       position.m_inventory.m_position.m_currency,
       get_opposite(get_side(position.m_inventory.m_position)),
-      userProfile.GetDestinationDatabase().get_preferred_destination(
-      position.m_inventory.m_position.m_ticker.get_venue()).m_id,
+      DESTINATIONS.get_preferred_destination(
+        position.m_inventory.m_position.m_ticker.get_venue()).m_id,
       abs(position.m_inventory.m_position.m_quantity));
     auto orderNode = MakeOrderTaskNodeFromOrderFields(orderFields, userProfile);
     auto& entry = blotterModel.GetTasksModel().Add(*orderNode);

@@ -130,7 +130,7 @@ export class EntitlementsController extends React.Component<Properties, State> {
       this.setState({
         status: 'Saved'
       });
-    } catch(e) {
+    } catch(e: any) {
       this.setState({
         canSubmit: true,
         isError: true,

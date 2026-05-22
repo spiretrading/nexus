@@ -62,8 +62,7 @@ namespace Nexus {
        */
       template<Beam::Initializes<F> FF, Beam::Initializes<T> TF,
         Beam::Initializes<B> BF, Beam::Initializes<S> SF>
-      SimulationMarketDataFeedClient(
-        const std::vector<Ticker>& tickers, const VenueDatabase& venues,
+      SimulationMarketDataFeedClient(const std::vector<Ticker>& tickers,
         IsMarketDataClient auto& market_data_client,
         FF&& market_data_feed_client, TF&& time_client, BF&& bbo_timer,
         SF&& time_and_sale_timer);
@@ -74,7 +73,6 @@ namespace Nexus {
 
     private:
       std::vector<TickerSnapshot> m_tickers;
-      VenueDatabase m_venues;
       Beam::local_ptr_t<F> m_feed_client;
       Beam::local_ptr_t<T> m_time_client;
       Beam::local_ptr_t<B> m_bbo_timer;
@@ -94,11 +92,10 @@ namespace Nexus {
   template<Beam::Initializes<F> FF, Beam::Initializes<T> TF,
     Beam::Initializes<B> BF, Beam::Initializes<S> SF>
   SimulationMarketDataFeedClient<F, T, B, S>::SimulationMarketDataFeedClient(
-      const std::vector<Ticker>& tickers, const VenueDatabase& venues,
+      const std::vector<Ticker>& tickers,
       IsMarketDataClient auto& market_data_client, FF&& market_data_feed_client,
       TF&& time_client, BF&& bbo_timer, SF&& time_and_sale_timer)
-      : m_venues(venues),
-        m_feed_client(std::forward<FF>(market_data_feed_client)),
+      : m_feed_client(std::forward<FF>(market_data_feed_client)),
         m_time_client(std::forward<TF>(time_client)),
         m_bbo_timer(std::forward<BF>(bbo_timer)),
         m_time_and_sale_timer(std::forward<SF>(time_and_sale_timer)) {
@@ -122,8 +119,8 @@ namespace Nexus {
           snapshot.m_bbo_quote->m_bid.m_price + Money::CENT;
         snapshot.m_bbo_quote->m_timestamp = m_time_client->get_time();
         auto country =
-          m_venues.from(snapshot.m_ticker.get_venue()).m_country_code;
-        auto venues = m_venues.select_all([&] (const auto& entry) {
+          VENUES.from(snapshot.m_ticker.get_venue()).m_country_code;
+        auto venues = VENUES.select_all([&] (const auto& entry) {
           return entry.m_country_code == country;
         });
         for(auto& venue : venues) {

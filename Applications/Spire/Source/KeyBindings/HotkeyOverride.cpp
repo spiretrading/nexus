@@ -5,9 +5,6 @@
 #include <QKeyEvent>
 #include <QWidget>
 #include <QWindow>
-#ifdef Q_OS_WIN
-  #include <windows.h>
-#endif
 
 using namespace Spire;
 
@@ -52,11 +49,49 @@ namespace {
     auto release = QKeyEvent(QEvent::KeyRelease, qt_key, modifiers);
     QCoreApplication::sendEvent(target, &release);
   }
+
+  bool is_application_foreground() {
+    auto foreground = GetForegroundWindow();
+    if(!foreground) {
+      return false;
+    }
+    auto foreground_pid = DWORD(0);
+    GetWindowThreadProcessId(foreground, &foreground_pid);
+    return foreground_pid == GetCurrentProcessId();
+  }
+
+  LRESULT CALLBACK low_level_keyboard_hook(
+      int code, WPARAM wparam, LPARAM lparam) {
+    if(code == HC_ACTION && (wparam == WM_KEYDOWN || wparam == WM_SYSKEYDOWN)) {
+      auto info = reinterpret_cast<KBDLLHOOKSTRUCT*>(lparam);
+      if(info->vkCode == VK_ESCAPE && (is_down(VK_CONTROL) ||
+          is_down(VK_MENU)) && is_application_foreground()) {
+        send_synthetic_key(Qt::Key_Escape, get_qt_modifiers());
+        return 1;
+      }
+    }
+    return CallNextHookEx(nullptr, code, wparam, lparam);
+  }
+#endif
+}
+
+HotkeyOverride::HotkeyOverride()
+#ifdef Q_OS_WIN
+  : m_hook(
+      SetWindowsHookEx(WH_KEYBOARD_LL, low_level_keyboard_hook, nullptr, 0))
+#endif
+  {}
+
+HotkeyOverride::~HotkeyOverride() {
+#ifdef Q_OS_WIN
+  if(m_hook) {
+    UnhookWindowsHookEx(m_hook);
+  }
 #endif
 }
 
 bool HotkeyOverride::nativeEventFilter(
-  const QByteArray&, void* message, long* result) {
+    const QByteArray&, void* message, long* result) {
 #ifndef Q_OS_WIN
   Q_UNUSED(message);
   Q_UNUSED(result);
@@ -87,10 +122,6 @@ bool HotkeyOverride::nativeEventFilter(
     qt_key = Qt::Key_F12;
   } else if(is_ctrl && !is_shift && !is_alt && vk == VK_F12) {
     qt_key = Qt::Key_F12;
-  } else if(is_alt && !is_ctrl && !is_shift && vk == VK_ESCAPE) {
-    qt_key = Qt::Key_Escape;
-  } else if(is_ctrl && !is_alt && !is_shift && vk == VK_ESCAPE) {
-    qt_key = Qt::Key_Escape;
   } else {
     return false;
   }

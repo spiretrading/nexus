@@ -84,7 +84,7 @@ export class AccountDirectoryController extends
           sortedKeys: this.props.model.groups.sort(this.groupComparator)
         };
       });
-    } catch(error) {
+    } catch(error: any) {
       this.setState(state => {
         return {
           loadingState: state.loadingState.fail(error.toString())
@@ -116,7 +116,7 @@ export class AccountDirectoryController extends
       this.setState({
         sortedKeys: this.props.model.groups.sort(this.groupComparator)
       });
-    } catch(e) {
+    } catch(e: any) {
       this.setState({createGroupStatus: e.toString()});
     }
   }

@@ -39,7 +39,7 @@ namespace Nexus {
     /** The number of classifications enumerated. */
     static constexpr auto CLASSIFICATION_COUNT = std::size_t(5);
 
-    /** Lists the index into a ticker fee table. */
+    /** Lists the index into the fee table. */
     enum class Index {
 
       /** Unknown. */
@@ -61,9 +61,9 @@ namespace Nexus {
     /** The number of indexes enumerated. */
     static constexpr auto INDEX_COUNT = std::size_t(4);
 
-    /** The fee table used for tickers. */
+    /** The fee table. */
     std::array<std::array<Money, INDEX_COUNT>, CLASSIFICATION_COUNT>
-      m_ticker_table;
+      m_fee_table;
 
     /** The set of interlisted tickers. */
     std::unordered_set<Ticker> m_interlisted;
@@ -84,7 +84,7 @@ namespace Nexus {
     auto table = ChicFeeTable();
     table.m_etfs = std::move(etfs);
     table.m_interlisted = std::move(interlisted);
-    parse_fee_table(config, "ticker_table", Beam::out(table.m_ticker_table));
+    parse_fee_table(config, "fee_table", Beam::out(table.m_fee_table));
     return table;
   }
 
@@ -98,7 +98,7 @@ namespace Nexus {
    */
   inline Money lookup_fee(const ChicFeeTable& table, ChicFeeTable::Index index,
       ChicFeeTable::Classification classification) {
-    return table.m_ticker_table[static_cast<int>(classification)][
+    return table.m_fee_table[static_cast<int>(classification)][
       static_cast<int>(index)];
   }
 

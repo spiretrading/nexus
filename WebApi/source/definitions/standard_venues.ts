@@ -1,0 +1,100 @@
+import { Countries } from './standard_countries';
+import { Currencies } from './standard_currencies';
+import { Venue, VenueDatabase } from './venue';
+
+/** Builds a VenueDatabase containing a set of common venues. */
+export function buildVenueDatabase(): VenueDatabase {
+  const database = new VenueDatabase();
+  database.add(new VenueDatabase.Entry(new Venue('XASX'), Countries.AU, '',
+    'Australian_Eastern_Standard_Time', Currencies.AUD,
+    'Australian Stock Market', 'ASX'));
+  database.add(new VenueDatabase.Entry(new Venue('CHIA'), Countries.AU, '',
+    'Australian_Eastern_Standard_Time', Currencies.AUD, 'CHI-X Australia',
+    'CXA'));
+  database.add(new VenueDatabase.Entry(new Venue('XASE'), Countries.US, '',
+    'Eastern_Time', Currencies.USD, 'NYSE MKT LLC', 'ASEX'));
+  database.add(new VenueDatabase.Entry(new Venue('ARCX'), Countries.US, '',
+    'Eastern_Time', Currencies.USD, 'NYSE ARCA', 'ARCX'));
+  database.add(new VenueDatabase.Entry(new Venue('BATS'), Countries.US, '',
+    'Eastern_Time', Currencies.USD, 'BATS Exchange', 'BATS'));
+  database.add(new VenueDatabase.Entry(new Venue('BATY'), Countries.US, '',
+    'Eastern_Time', Currencies.USD, 'BATS-Y Exchange', 'BATY'));
+  database.add(new VenueDatabase.Entry(new Venue('XBOS'), Countries.US, '',
+    'Eastern_Time', Currencies.USD, 'NASDAQ OMX BX', 'BOSX'));
+  database.add(new VenueDatabase.Entry(new Venue('XCBO'), Countries.US, '',
+    'Eastern_Time', Currencies.USD, 'Chicago Board of Options Exchange',
+    'CBOE'));
+  database.add(new VenueDatabase.Entry(new Venue('XCIS'), Countries.US, '',
+    'Eastern_Time', Currencies.USD, 'National Stock Exchange', 'NSEX'));
+  database.add(new VenueDatabase.Entry(new Venue('XADF'), Countries.US, '',
+    'Eastern_Time', Currencies.USD, 'FINRA Alternative Display Facility',
+    'ADFX'));
+  database.add(new VenueDatabase.Entry(new Venue('XISX'), Countries.US, '',
+    'Eastern_Time', Currencies.USD, 'International Securities Exchange',
+    'ISE'));
+  database.add(new VenueDatabase.Entry(new Venue('EDGA'), Countries.US, '',
+    'Eastern_Time', Currencies.USD, 'EDGA Exchange', 'EDGA'));
+  database.add(new VenueDatabase.Entry(new Venue('EDGX'), Countries.US, '',
+    'Eastern_Time', Currencies.USD, 'EDGX Exchange', 'EDGX'));
+  database.add(new VenueDatabase.Entry(new Venue('XNYS'), Countries.US, '',
+    'Eastern_Time', Currencies.USD, 'NYSE', 'NYSE'));
+  database.add(new VenueDatabase.Entry(new Venue('XNAS'), Countries.US, '',
+    'Eastern_Time', Currencies.USD, 'NASDAQ', 'NSDQ'));
+  database.add(new VenueDatabase.Entry(new Venue('XPHL'), Countries.US, '',
+    'Eastern_Time', Currencies.USD, 'NASDAQ OMX PHLX', 'PHLX'));
+  database.add(new VenueDatabase.Entry(new Venue('XATS'), Countries.CA, '',
+    'Eastern_Time', Currencies.CAD, 'Alpha Exchange', 'XATS'));
+  database.add(new VenueDatabase.Entry(new Venue('CHIC'), Countries.CA, '',
+    'Eastern_Time', Currencies.CAD, 'CHI-X Canada', 'CHIC'));
+  database.add(new VenueDatabase.Entry(new Venue('XCNQ'), Countries.CA, '',
+    'Eastern_Time', Currencies.CAD, 'Canadian Securities Exchange', 'CSE'));
+  database.add(new VenueDatabase.Entry(new Venue('XCX2'), Countries.CA, '',
+    'Eastern_Time', Currencies.CAD, 'CX2', 'CX2'));
+  database.add(new VenueDatabase.Entry(new Venue('LYNX'), Countries.CA, '',
+    'Eastern_Time', Currencies.CAD, 'LYNX', 'LYNX'));
+  database.add(new VenueDatabase.Entry(new Venue('MATN'), Countries.CA, '',
+    'Eastern_Time', Currencies.CAD, 'MATCH Now', 'MATN'));
+  database.add(new VenueDatabase.Entry(new Venue('NEOE'), Countries.CA, '',
+    'Eastern_Time', Currencies.CAD, 'Aequitas NEO Exchange', 'NEOE'));
+  database.add(new VenueDatabase.Entry(new Venue('OMGA'), Countries.CA, '',
+    'Eastern_Time', Currencies.CAD, 'Omega', 'OMGA'));
+  database.add(new VenueDatabase.Entry(new Venue('PURE'), Countries.CA, '',
+    'Eastern_Time', Currencies.CAD, 'Pure Trading', 'PURE'));
+  database.add(new VenueDatabase.Entry(new Venue('XTSE'), Countries.CA, '',
+    'Eastern_Time', Currencies.CAD, 'Toronto Stock Exchange', 'TSX'));
+  database.add(new VenueDatabase.Entry(new Venue('XTSX'), Countries.CA, '',
+    'Eastern_Time', Currencies.CAD, 'TSX Venture Exchange', 'TSXV'));
+  return database;
+}
+
+export const venueDatabase = buildVenueDatabase();
+
+export namespace Venues {
+  export const ASX = new Venue('XASX');
+  export const CXA = new Venue('CHIA');
+  export const ASEX = new Venue('XASE');
+  export const ARCX = new Venue('ARCX');
+  export const BATS = new Venue('BATS');
+  export const BATY = new Venue('BATY');
+  export const BOSX = new Venue('BOSX');
+  export const CBOE = new Venue('XCBO');
+  export const CSE = new Venue('XCNQ');
+  export const NSEX = new Venue('XCIS');
+  export const ADFX = new Venue('XADF');
+  export const ISE = new Venue('XISX');
+  export const EDGA = new Venue('EDGA');
+  export const EDGX = new Venue('EDGX');
+  export const PHLX = new Venue('XPHL');
+  export const CHIC = new Venue('CHIC');
+  export const LYNX = new Venue('LYNX');
+  export const NASDAQ = new Venue('XNAS');
+  export const NYSE = new Venue('XNYS');
+  export const MATN = new Venue('MATN');
+  export const NEOE = new Venue('NEOE');
+  export const OMGA = new Venue('OMGA');
+  export const PURE = new Venue('PURE');
+  export const TSX = new Venue('XTSE');
+  export const TSXV = new Venue('XTSX');
+  export const XATS = new Venue('XATS');
+  export const XCX2 = new Venue('XCX2');
+}

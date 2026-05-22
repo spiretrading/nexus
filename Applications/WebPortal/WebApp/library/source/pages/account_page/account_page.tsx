@@ -46,8 +46,8 @@ export class AccountPage extends React.Component<Properties> {
     return (
       <VBoxLayout height='100%' width='100%'
           style={{
-            overflowX: 'hidden' as 'hidden',
-            overflowY: 'auto' as 'auto'}}>
+            overflowX: 'hidden',
+            overflowY: 'auto'}}>
         <Header name={this.props.account.name} roles={this.props.roles}>
           <MenuBar displaySize={this.props.displaySize}
             selected={this.props.subPage} onClick={this.props.onMenuClick}/>
@@ -95,7 +95,7 @@ class LargeHeader extends React.Component<HeaderProps> {
       </VBoxLayout>);
   }
 
-  private static readonly STYLES = {
+  private static readonly STYLES: Record<string, React.CSSProperties> = {
     usernameAndRoleWrapper: {
       height: '40px',
       width: 'auto',
@@ -104,7 +104,7 @@ class LargeHeader extends React.Component<HeaderProps> {
     usernameAndRoleContainer: {
       height: '40px',
       display: 'flex',
-      flexWrap: 'wrap' as 'wrap'
+      flexWrap: 'wrap'
     },
     roleWrapper: {
       width: '68px',
@@ -236,11 +236,11 @@ class UsernameLabel extends React.Component<UsernameProps>  {
       </VBoxLayout>);
   }
 
-  private static readonly STYLES = {
+  private static readonly STYLES: Record<string, React.CSSProperties> = {
     username: {
       font: '500 14px Roboto',
       color: '#4B23A0',
-      whiteSpace: 'nowrap' as 'nowrap'
+      whiteSpace: 'nowrap'
     }
   };
 }

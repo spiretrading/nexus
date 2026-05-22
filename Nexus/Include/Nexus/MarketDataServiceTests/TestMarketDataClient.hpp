@@ -95,6 +95,26 @@ namespace Nexus::Tests {
         Beam::ScopedQueueWriter<TimeAndSale> m_queue;
       };
 
+      /** Records a call to query(...) for SequencedTickerStatus. */
+      struct QuerySequencedTickerStatusOperation {
+
+        /** The TickerQuery passed. */
+        TickerQuery m_query;
+
+        /** The queue writer for SequencedTickerStatus. */
+        Beam::ScopedQueueWriter<SequencedTickerStatus> m_queue;
+      };
+
+      /** Records a call to query(...) for TickerStatus. */
+      struct QueryTickerStatusOperation {
+
+        /** The TickerQuery passed. */
+        TickerQuery m_query;
+
+        /** The queue writer for TickerStatus. */
+        Beam::ScopedQueueWriter<TickerStatus> m_queue;
+      };
+
       /** Records a call to query(...) for TickerInfoQuery. */
       struct TickerInfoQueryOperation {
 
@@ -140,7 +160,8 @@ namespace Nexus::Tests {
         QueryOrderImbalanceOperation, QuerySequencedBboQuoteOperation,
         QueryBboQuoteOperation, QuerySequencedBookQuoteOperation,
         QueryBookQuoteOperation, QuerySequencedTimeAndSaleOperation,
-        QueryTimeAndSaleOperation, TickerInfoQueryOperation,
+        QueryTimeAndSaleOperation, QuerySequencedTickerStatusOperation,
+        QueryTickerStatusOperation, TickerInfoQueryOperation,
         LoadTickerSnapshotOperation, LoadSessionCandlestickOperation,
         LoadTickerInfoFromPrefixOperation>;
 
@@ -172,6 +193,10 @@ namespace Nexus::Tests {
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
       void query(
         const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue);
+      void query(const TickerQuery& query,
+        Beam::ScopedQueueWriter<SequencedTickerStatus> queue);
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue);
       std::vector<TickerInfo> query(const TickerInfoQuery& query);
       TickerSnapshot load_snapshot(const Ticker& ticker);
       PriceCandlestick load_session_candlestick(const Ticker& ticker);
@@ -253,6 +278,21 @@ namespace Nexus::Tests {
     auto operation = std::make_shared<Operation>(
       std::in_place_type<QueryTimeAndSaleOperation>, query, std::move(queue));
     m_queue.append_queue<QueryTimeAndSaleOperation>(operation);
+  }
+
+  inline void TestMarketDataClient::query(const TickerQuery& query,
+      Beam::ScopedQueueWriter<SequencedTickerStatus> queue) {
+    auto operation = std::make_shared<Operation>(
+      std::in_place_type<QuerySequencedTickerStatusOperation>, query,
+      std::move(queue));
+    m_queue.append_queue<QuerySequencedTickerStatusOperation>(operation);
+  }
+
+  inline void TestMarketDataClient::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue) {
+    auto operation = std::make_shared<Operation>(
+      std::in_place_type<QueryTickerStatusOperation>, query, std::move(queue));
+    m_queue.append_queue<QueryTickerStatusOperation>(operation);
   }
 
   inline std::vector<TickerInfo> TestMarketDataClient::query(

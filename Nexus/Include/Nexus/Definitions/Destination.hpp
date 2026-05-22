@@ -155,6 +155,17 @@ namespace Nexus {
   }
 
   /**
+   * Parses a DestinationDatabase Entry from a YAML node using the default
+   * VenueDatabase.
+   * @param node The node to parse the DestinationDatabase Entry from.
+   * @return The DestinationDatabase Entry represented by the <i>node</i>.
+   */
+  inline DestinationDatabase::Entry parse_destination_database_entry(
+      const YAML::Node& node) {
+    return parse_destination_database_entry(node, VENUES);
+  }
+
+  /**
    * Parses a DestinationDatabase from a YAML node.
    * @param node The node to parse the DestinationDatabase from.
    * @param database The VenueDatabase used to parse Venues.
@@ -188,6 +199,17 @@ namespace Nexus {
         manual_order_entry);
       return destination_database;
     }, std::runtime_error("Failed to parse destination database."));
+  }
+
+  /**
+   * Parses a DestinationDatabase from a YAML node using the default
+   * VenueDatabase.
+   * @param node The node to parse the DestinationDatabase from.
+   * @return The DestinationDatabase represented by the <i>node</i>.
+   */
+  inline DestinationDatabase parse_destination_database(
+      const YAML::Node& node) {
+    return parse_destination_database(node, VENUES);
   }
 
   inline DestinationDatabase::DestinationDatabase(
@@ -426,6 +448,6 @@ namespace Beam {
   };
 }
 
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
+#include "Nexus/Definitions/StandardDestinations.hpp"
 
 #endif

@@ -41,6 +41,16 @@ namespace Nexus {
         const Beam::MemberAccessExpression& expression);
       void translate_ticker_info_member_access_expression(
         const Beam::MemberAccessExpression& expression);
+      void translate_quote_member_access_expression(
+        const Beam::MemberAccessExpression& expression);
+      void translate_bbo_quote_member_access_expression(
+        const Beam::MemberAccessExpression& expression);
+      void translate_book_quote_member_access_expression(
+        const Beam::MemberAccessExpression& expression);
+      void translate_order_imbalance_member_access_expression(
+        const Beam::MemberAccessExpression& expression);
+      void translate_ticker_status_member_access_expression(
+        const Beam::MemberAccessExpression& expression);
       void translate_time_and_sale_member_access_expression(
         const Beam::MemberAccessExpression& expression);
       void translate_order_fields_member_access_expression(
@@ -67,10 +77,21 @@ namespace Nexus {
 
   inline void EvaluatorTranslator::visit(
       const Beam::MemberAccessExpression& expression) {
-    if(expression.get_expression().get_type() == typeid(Ticker)) {
+    if(expression.get_expression().get_type() == typeid(Quote)) {
+      translate_quote_member_access_expression(expression);
+    } else if(expression.get_expression().get_type() == typeid(BboQuote)) {
+      translate_bbo_quote_member_access_expression(expression);
+    } else if(expression.get_expression().get_type() == typeid(BookQuote)) {
+      translate_book_quote_member_access_expression(expression);
+    } else if(expression.get_expression().get_type() == typeid(Ticker)) {
       translate_ticker_member_access_expression(expression);
     } else if(expression.get_expression().get_type() == typeid(TickerInfo)) {
       translate_ticker_info_member_access_expression(expression);
+    } else if(
+        expression.get_expression().get_type() == typeid(OrderImbalance)) {
+      translate_order_imbalance_member_access_expression(expression);
+    } else if(expression.get_expression().get_type() == typeid(TickerStatus)) {
+      translate_ticker_status_member_access_expression(expression);
     } else if(expression.get_expression().get_type() == typeid(TimeAndSale)) {
       translate_time_and_sale_member_access_expression(expression);
     } else if(expression.get_expression().get_type() == typeid(OrderFields)) {
@@ -125,6 +146,141 @@ namespace Nexus {
       set_evaluator(std::make_unique<
         Beam::MemberAccessEvaluatorNode<TickerInfo, Quantity>>(
           std::move(ticker_info_expression), &TickerInfo::m_board_lot));
+    } else {
+      Beam::EvaluatorTranslator<QueryTypes>::visit(expression);
+    }
+  }
+
+  inline void EvaluatorTranslator::translate_quote_member_access_expression(
+      const Beam::MemberAccessExpression& expression) {
+    expression.get_expression().apply(*this);
+    auto quote_expression =
+      Beam::static_pointer_cast<Beam::EvaluatorNode<Quote>>(get_evaluator());
+    if(expression.get_name() == "price") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<Quote, Money>>(
+          std::move(quote_expression), &Quote::m_price));
+    } else if(expression.get_name() == "size") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<Quote, Quantity>>(
+          std::move(quote_expression), &Quote::m_size));
+    } else if(expression.get_name() == "side") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<Quote, Side>>(
+          std::move(quote_expression), &Quote::m_side));
+    } else {
+      Beam::EvaluatorTranslator<QueryTypes>::visit(expression);
+    }
+  }
+
+  inline void EvaluatorTranslator::translate_bbo_quote_member_access_expression(
+      const Beam::MemberAccessExpression& expression) {
+    expression.get_expression().apply(*this);
+    auto bbo_quote_expression =
+      Beam::static_pointer_cast<Beam::EvaluatorNode<BboQuote>>(get_evaluator());
+    if(expression.get_name() == "bid") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<BboQuote, Quote>>(
+          std::move(bbo_quote_expression), &BboQuote::m_bid));
+    } else if(expression.get_name() == "ask") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<BboQuote, Quote>>(
+          std::move(bbo_quote_expression), &BboQuote::m_ask));
+    } else if(expression.get_name() == "timestamp") {
+      set_evaluator(std::make_unique<
+        Beam::MemberAccessEvaluatorNode<BboQuote, boost::posix_time::ptime>>(
+          std::move(bbo_quote_expression), &BboQuote::m_timestamp));
+    } else {
+      Beam::EvaluatorTranslator<QueryTypes>::visit(expression);
+    }
+  }
+
+  inline void EvaluatorTranslator::
+      translate_book_quote_member_access_expression(
+        const Beam::MemberAccessExpression& expression) {
+    expression.get_expression().apply(*this);
+    auto book_quote_expression = Beam::static_pointer_cast<
+      Beam::EvaluatorNode<BookQuote>>(get_evaluator());
+    if(expression.get_name() == "mpid") {
+      set_evaluator(std::make_unique<
+        Beam::MemberAccessEvaluatorNode<BookQuote, std::string>>(
+          std::move(book_quote_expression), &BookQuote::m_mpid));
+    } else if(expression.get_name() == "is_primary_mpid") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<BookQuote, bool>>(
+          std::move(book_quote_expression), &BookQuote::m_is_primary_mpid));
+    } else if(expression.get_name() == "venue") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<BookQuote, Venue>>(
+          std::move(book_quote_expression), &BookQuote::m_venue));
+    } else if(expression.get_name() == "quote") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<BookQuote, Quote>>(
+          std::move(book_quote_expression), &BookQuote::m_quote));
+    } else if(expression.get_name() == "timestamp") {
+      set_evaluator(std::make_unique<
+        Beam::MemberAccessEvaluatorNode<BookQuote, boost::posix_time::ptime>>(
+          std::move(book_quote_expression), &BookQuote::m_timestamp));
+    } else {
+      Beam::EvaluatorTranslator<QueryTypes>::visit(expression);
+    }
+  }
+
+  inline void EvaluatorTranslator::
+      translate_order_imbalance_member_access_expression(
+        const Beam::MemberAccessExpression& expression) {
+    expression.get_expression().apply(*this);
+    auto imbalance_expression = Beam::static_pointer_cast<
+      Beam::EvaluatorNode<OrderImbalance>>(get_evaluator());
+    if(expression.get_name() == "ticker") {
+      set_evaluator(std::make_unique<
+        Beam::MemberAccessEvaluatorNode<OrderImbalance, Ticker>>(
+          std::move(imbalance_expression), &OrderImbalance::m_ticker));
+    } else if(expression.get_name() == "side") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<OrderImbalance, Side>>(
+          std::move(imbalance_expression), &OrderImbalance::m_side));
+    } else if(expression.get_name() == "size") {
+      set_evaluator(std::make_unique<
+        Beam::MemberAccessEvaluatorNode<OrderImbalance, Quantity>>(
+          std::move(imbalance_expression), &OrderImbalance::m_size));
+    } else if(expression.get_name() == "reference_price") {
+      set_evaluator(std::make_unique<
+        Beam::MemberAccessEvaluatorNode<OrderImbalance, Money>>(
+          std::move(imbalance_expression), &OrderImbalance::m_reference_price));
+    } else if(expression.get_name() == "timestamp") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<OrderImbalance,
+          boost::posix_time::ptime>>(
+            std::move(imbalance_expression), &OrderImbalance::m_timestamp));
+    } else {
+      Beam::EvaluatorTranslator<QueryTypes>::visit(expression);
+    }
+  }
+
+  inline void EvaluatorTranslator::
+      translate_ticker_status_member_access_expression(
+        const Beam::MemberAccessExpression& expression) {
+    expression.get_expression().apply(*this);
+    auto status_expression = Beam::static_pointer_cast<
+      Beam::EvaluatorNode<TickerStatus>>(get_evaluator());
+    if(expression.get_name() == "venue") {
+      set_evaluator(
+        std::make_unique<Beam::MemberAccessEvaluatorNode<TickerStatus, Venue>>(
+          std::move(status_expression), &TickerStatus::m_venue));
+    } else if(expression.get_name() == "state") {
+      set_evaluator(std::make_unique<
+        Beam::MemberAccessEvaluatorNode<TickerStatus, std::string>>(
+          std::move(status_expression), &TickerStatus::m_state));
+    } else if(expression.get_name() == "flags") {
+      set_evaluator(
+        Beam::make_function_evaluator_node([] (const TickerStatus& status) {
+          return static_cast<int>(status.m_flags);
+        }, std::move(status_expression)));
+    } else if(expression.get_name() == "timestamp") {
+      set_evaluator(std::make_unique<Beam::MemberAccessEvaluatorNode<
+        TickerStatus, boost::posix_time::ptime>>(
+          std::move(status_expression), &TickerStatus::m_timestamp));
     } else {
       Beam::EvaluatorTranslator<QueryTypes>::visit(expression);
     }

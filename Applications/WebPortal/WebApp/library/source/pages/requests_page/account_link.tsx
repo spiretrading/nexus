@@ -67,7 +67,7 @@ export namespace AccountLink {
 const STYLES = StyleSheet.create({
   link: {
     display: 'inline-flex',
-    alignItems: 'center' as 'center',
+    alignItems: 'center',
     gap: '6px',
     padding: '8px 0',
     textDecoration: 'none',
@@ -88,15 +88,15 @@ const STYLES = StyleSheet.create({
   },
   avatar: {
     display: 'inline-flex',
-    alignItems: 'center' as 'center',
-    justifyContent: 'center' as 'center',
+    alignItems: 'center',
+    justifyContent: 'center',
     width: '20px',
     height: '20px',
     borderRadius: '50%',
     fontSize: '0.6875rem',
     fontWeight: 500,
-    textAlign: 'center' as 'center',
-    textTransform: 'uppercase' as 'uppercase',
+    textAlign: 'center',
+    textTransform: 'uppercase',
     lineHeight: '20px'
   }
 });

@@ -1,6 +1,7 @@
 #ifndef NEXUS_ADMINISTRATION_SERVICES_HPP
 #define NEXUS_ADMINISTRATION_SERVICES_HPP
 #include <string>
+#include <Beam/Queries/SnapshotLimit.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Services/RecordMessage.hpp>
@@ -10,6 +11,7 @@
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
+#include "Nexus/AdministrationService/Notification.hpp"
 #include "Nexus/AdministrationService/RiskModification.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
@@ -156,16 +158,6 @@ namespace Nexus {
       std::vector<Beam::DirectoryEntry>, (Beam::DirectoryEntry, account)),
 
     /**
-     * Sets the entitlements granted to an account.
-     * @param account The account to set the entitlements for.
-     * @param entitlements The entitlements to grant to the <i>account</i>.
-     */
-    (StoreEntitlementsService,
-      "Nexus.AdministrationServices.StoreEntitlementsService", void,
-      (Beam::DirectoryEntry, account),
-      (std::vector<Beam::DirectoryEntry>, entitlements)),
-
-    /**
      * Monitors an account's RiskParameters.
      * @param account The account to monitor.
      * @return The <i>account</i>'s RiskParameters.
@@ -173,15 +165,6 @@ namespace Nexus {
     (MonitorRiskParametersService,
       "Nexus.AdministrationServices.MonitorRiskParametersService",
       RiskParameters, (Beam::DirectoryEntry, account)),
-
-    /**
-     * Sets an account's RiskParameters.
-     * @param account The account to set the RiskParameters for.
-     * @param riskParameters The RiskParameters to assign to the <i>account</i>.
-     */
-    (StoreRiskParametersService,
-      "Nexus.AdministrationServices.StoreRiskParametersService", void,
-      (Beam::DirectoryEntry, account), (RiskParameters, risk_parameters)),
 
     /**
      * Monitors an account's RiskState.
@@ -362,7 +345,59 @@ namespace Nexus {
      */
     (SendAccountModificationRequestMessageService,
       "Nexus.AdministrationServices.SendAccountModificationRequestMessageService",
-      Message, (AccountModificationRequest::Id, id), (Message, message)));
+      Message, (AccountModificationRequest::Id, id), (Message, message)),
+
+    /**
+     * Sends a notification to an account.
+     * @param account The account to send the notification to.
+     * @param description The description of the notification.
+     * @param data Arbitrary data associated with the notification.
+     * @param category The category of the notification.
+     * @return The fully constructed notification.
+     */
+    (SendNotificationService,
+      "Nexus.AdministrationServices.SendNotificationService", Notification,
+      (Beam::DirectoryEntry, account), (std::string, description),
+      (std::string, data), (Notification::Category, category)),
+
+    /**
+     * Monitors notifications for an account.
+     * @param account The account to monitor.
+     * @return The id of the most recent notification.
+     */
+    (MonitorNotificationsService,
+      "Nexus.AdministrationServices.MonitorNotificationsService",
+      Notification::Id, (Beam::DirectoryEntry, account)),
+
+    /**
+     * Loads notifications for an account.
+     * @param account The account whose notifications are to be loaded.
+     * @param id The id of the notification to start loading from.
+     * @param limit The maximum number of notifications to load.
+     * @param read_state Filters notifications by read state.
+     * @return The list of notifications matching the criteria.
+     */
+    (LoadNotificationsService,
+      "Nexus.AdministrationServices.LoadNotificationsService",
+      std::vector<Notification>, (Beam::DirectoryEntry, account),
+      (Notification::Id, id), (Beam::SnapshotLimit, limit),
+      (Notification::ReadState, read_state)),
+
+    /**
+     * Marks a notification as read.
+     * @param id The id of the notification to mark as read.
+     */
+    (MarkNotificationAsReadService,
+      "Nexus.AdministrationServices.MarkNotificationAsReadService",
+      void, (Notification::Id, id)),
+
+    /**
+     * Marks a notification as unread.
+     * @param id The id of the notification to mark as unread.
+     */
+    (MarkNotificationAsUnreadService,
+      "Nexus.AdministrationServices.MarkNotificationAsUnreadService",
+      void, (Notification::Id, id)));
 
   BEAM_DEFINE_MESSAGES(administration_messages,
 
@@ -381,7 +416,14 @@ namespace Nexus {
      * @param risk_state The <i>account</i>'s current RiskState.
      */
     (RiskStateMessage, "Nexus.AdministrationService.RiskStateMessage",
-      (Beam::DirectoryEntry, account), (RiskState, risk_state)));
+      (Beam::DirectoryEntry, account), (RiskState, risk_state)),
+
+    /**
+     * Indicates a new notification for an account.
+     * @param notification The new notification.
+     */
+    (NotificationMessage, "Nexus.AdministrationService.NotificationMessage",
+      (Notification, notification)));
 }
 
 #endif

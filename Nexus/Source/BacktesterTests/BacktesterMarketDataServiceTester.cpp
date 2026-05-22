@@ -9,8 +9,8 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   const auto TD = parse_ticker("TD.TSX");
@@ -21,7 +21,7 @@ namespace {
     auto service_locator =
       environment.get_service_locator_environment().make_client(
         "backtester", "");
-    grant_all_entitlements(environment.get_administration_environment(),
+    environment.get_administration_environment().grant_all_entitlements(
       service_locator.get_account());
     return environment.get_market_data_environment().make_registry_client(
       Ref(service_locator));

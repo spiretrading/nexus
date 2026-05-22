@@ -1,22 +1,38 @@
 #include "WebPortal/AdministrationWebServlet.hpp"
+#include <Beam/Queues/Queue.hpp>
+#include <Beam/Queues/ScopedQueueWriter.hpp>
+#include <Beam/Services/RecordMessage.hpp>
+#include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
+#include "Nexus/AdministrationService/AdministrationServices.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
 using namespace Beam;
 using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
 
 AdministrationWebServlet::AdministrationWebServlet(
   Ref<WebSessionStore<WebPortalSession>> sessions)
-  : m_sessions(sessions.get()) {}
+  : m_sessions(sessions.get()),
+    m_protocol_server(&m_websocket_server,
+      [] { return std::make_unique<LiveTimer>(seconds(30)); },
+      std::bind_front(&AdministrationWebServlet::on_client_accepted, this),
+      std::bind_front(&AdministrationWebServlet::on_client_closed, this)) {
+  register_administration_services(out(m_protocol_server.get_slots()));
+  register_administration_messages(out(m_protocol_server.get_slots()));
+  MonitorNotificationsService::add_slot(out(m_protocol_server.get_slots()),
+    std::bind_front(
+      &AdministrationWebServlet::on_monitor_notifications, this));
+}
 
 AdministrationWebServlet::~AdministrationWebServlet() {
   close();
 }
 
-auto AdministrationWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
+std::vector<HttpRequestSlot> AdministrationWebServlet::get_slots() {
   auto slots = std::vector<HttpRequestSlot>();
   slots.emplace_back(matches_path(HttpMethod::POST,
     "/api/administration_service/load_accounts_by_roles"), std::bind_front(
@@ -64,15 +80,8 @@ auto AdministrationWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
     std::bind_front(
       &AdministrationWebServlet::on_load_account_entitlements, this));
   slots.emplace_back(matches_path(
-    HttpMethod::POST, "/api/administration_service/store_account_entitlements"),
-    std::bind_front(
-      &AdministrationWebServlet::on_store_account_entitlements, this));
-  slots.emplace_back(matches_path(
     HttpMethod::POST, "/api/administration_service/load_risk_parameters"),
     std::bind_front(&AdministrationWebServlet::on_load_risk_parameters, this));
-  slots.emplace_back(matches_path(
-    HttpMethod::POST, "/api/administration_service/store_risk_parameters"),
-    std::bind_front(&AdministrationWebServlet::on_store_risk_parameters, this));
   slots.emplace_back(matches_path(HttpMethod::POST,
     "/api/administration_service/load_account_modification_request"),
     std::bind_front(
@@ -134,11 +143,73 @@ auto AdministrationWebServlet::get_slots() -> std::vector<HttpRequestSlot> {
     std::bind_front(
       &AdministrationWebServlet::on_send_account_modification_request_message,
       this));
+  slots.emplace_back(matches_path(
+    HttpMethod::POST, "/api/administration_service/send_notification"),
+    std::bind_front(&AdministrationWebServlet::on_send_notification, this));
+  slots.emplace_back(matches_path(
+    HttpMethod::POST, "/api/administration_service/load_notifications"),
+    std::bind_front(&AdministrationWebServlet::on_load_notifications, this));
+  slots.emplace_back(matches_path(HttpMethod::POST,
+    "/api/administration_service/mark_notification_as_read"), std::bind_front(
+      &AdministrationWebServlet::on_mark_notification_as_read, this));
+  slots.emplace_back(matches_path(HttpMethod::POST,
+    "/api/administration_service/mark_notification_as_unread"), std::bind_front(
+      &AdministrationWebServlet::on_mark_notification_as_unread, this));
+  return slots;
+}
+
+std::vector<HttpUpgradeSlot<AdministrationWebServlet::WebSocketChannel>>
+    AdministrationWebServlet::get_web_socket_slots() {
+  auto slots = std::vector<HttpUpgradeSlot<WebSocketChannel>>();
+  slots.emplace_back(
+    matches_path(HttpMethod::GET, "/api/administration_service/websocket"),
+    std::bind_front(&AdministrationWebServlet::on_websocket_upgrade, this));
   return slots;
 }
 
 void AdministrationWebServlet::close() {
+  if(m_open_state.set_closing()) {
+    return;
+  }
+  m_tasks.close();
+  m_websocket_server.close();
+  m_protocol_server.close();
+  {
+    auto lock = std::lock_guard(m_websocket_session_mutex);
+    m_pending_websocket_session.reset();
+    m_websocket_session_condition.notify_one();
+  }
   m_open_state.close();
+}
+
+void AdministrationWebServlet::on_websocket_upgrade(
+    const HttpRequest& request, std::unique_ptr<WebSocketChannel> channel) {
+  auto session = m_sessions->find(request);
+  if(!session) {
+    channel->get_connection().close();
+    return;
+  }
+  channel->get_socket().set_binary_mode();
+  auto lock = std::unique_lock(m_websocket_session_mutex);
+  m_pending_websocket_session = session;
+  m_websocket_server.push(std::move(channel));
+  while(m_pending_websocket_session) {
+    m_websocket_session_condition.wait(lock);
+  }
+}
+
+void AdministrationWebServlet::on_client_accepted(
+    WebServiceProtocolServer::ServiceProtocolClient& client) {
+  auto lock = std::lock_guard(m_websocket_session_mutex);
+  client.get_session().m_session = std::move(m_pending_websocket_session);
+  m_websocket_session_condition.notify_one();
+}
+
+void AdministrationWebServlet::on_client_closed(
+    WebServiceProtocolServer::ServiceProtocolClient& client) {
+  if(client.get_session().m_notification_queue) {
+    client.get_session().m_notification_queue->close();
+  }
 }
 
 HttpResponse AdministrationWebServlet::on_load_accounts_by_roles(
@@ -457,30 +528,6 @@ HttpResponse AdministrationWebServlet::on_load_account_entitlements(
   return response;
 }
 
-HttpResponse AdministrationWebServlet::on_store_account_entitlements(
-    const HttpRequest& request) {
-  struct Parameters {
-    DirectoryEntry m_account;
-    std::vector<DirectoryEntry> m_entitlements;
-
-    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("account", m_account);
-      shuttle.shuttle("entitlements", m_entitlements);
-    }
-  };
-  auto response = HttpResponse();
-  auto session = m_sessions->find(request);
-  if(!session) {
-    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto params = session->shuttle_parameters<Parameters>(request);
-  auto& clients = session->get_clients();
-  clients.get_administration_client().store_entitlements(
-    params.m_account, params.m_entitlements);
-  return response;
-}
-
 HttpResponse AdministrationWebServlet::on_load_risk_parameters(
     const HttpRequest& request) {
   struct Parameters {
@@ -506,29 +553,6 @@ HttpResponse AdministrationWebServlet::on_load_risk_parameters(
   return response;
 }
 
-HttpResponse AdministrationWebServlet::on_store_risk_parameters(
-    const HttpRequest& request) {
-  struct Parameters {
-    DirectoryEntry m_account;
-    RiskParameters m_risk_parameters;
-
-    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("account", m_account);
-      shuttle.shuttle("risk_parameters", m_risk_parameters);
-    }
-  };
-  auto response = HttpResponse();
-  auto session = m_sessions->find(request);
-  if(!session) {
-    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto params = session->shuttle_parameters<Parameters>(request);
-  auto& clients = session->get_clients();
-  clients.get_administration_client().store(
-    params.m_account, params.m_risk_parameters);
-  return response;
-}
 
 HttpResponse AdministrationWebServlet::on_load_account_modification_request(
     const HttpRequest& request) {
@@ -886,4 +910,123 @@ HttpResponse AdministrationWebServlet::
     send_account_modification_request_message(params.m_id, params.m_message);
   session->shuttle_response(message, out(response));
   return response;
+}
+
+HttpResponse AdministrationWebServlet::on_send_notification(
+    const HttpRequest& request) {
+  struct Parameters {
+    DirectoryEntry m_account;
+    std::string m_description;
+    std::string m_data;
+    Notification::Category m_category;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("account", m_account);
+      shuttle.shuttle("description", m_description);
+      shuttle.shuttle("data", m_data);
+      shuttle.shuttle("category", m_category);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto params = session->shuttle_parameters<Parameters>(request);
+  auto& clients = session->get_clients();
+  auto notification = clients.get_administration_client().send_notification(
+    params.m_account, params.m_description, params.m_data, params.m_category);
+  session->shuttle_response(notification, out(response));
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::on_load_notifications(
+    const HttpRequest& request) {
+  struct Parameters {
+    DirectoryEntry m_account;
+    Notification::Id m_id;
+    SnapshotLimit m_limit;
+    Notification::ReadState m_read_state;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("account", m_account);
+      shuttle.shuttle("id", m_id);
+      shuttle.shuttle("limit", m_limit);
+      shuttle.shuttle("read_state", m_read_state);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto params = session->shuttle_parameters<Parameters>(request);
+  auto& clients = session->get_clients();
+  auto notifications = clients.get_administration_client().load_notifications(
+    params.m_account, params.m_id, params.m_limit, params.m_read_state);
+  session->shuttle_response(notifications, out(response));
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::on_mark_notification_as_read(
+    const HttpRequest& request) {
+  struct Parameters {
+    Notification::Id m_id;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("id", m_id);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto params = session->shuttle_parameters<Parameters>(request);
+  auto& clients = session->get_clients();
+  clients.get_administration_client().mark_notification_as_read(params.m_id);
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::on_mark_notification_as_unread(
+    const HttpRequest& request) {
+  struct Parameters {
+    Notification::Id m_id;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("id", m_id);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto params = session->shuttle_parameters<Parameters>(request);
+  auto& clients = session->get_clients();
+  clients.get_administration_client().mark_notification_as_unread(params.m_id);
+  return response;
+}
+
+Notification::Id AdministrationWebServlet::on_monitor_notifications(
+    WebServiceProtocolServer::ServiceProtocolClient& client,
+    const DirectoryEntry& account) {
+  auto& session = client.get_session();
+  auto& clients = session.m_session->get_clients();
+  session.m_notification_queue = std::make_shared<
+    ScopedQueueWriter<Notification>>(
+    m_tasks.get_slot<Notification>(std::bind_front(
+      &AdministrationWebServlet::on_notification, this, std::ref(client))));
+  return clients.get_administration_client().monitor_notifications(
+    account, session.m_notification_queue);
+}
+
+void AdministrationWebServlet::on_notification(
+    WebServiceProtocolServer::ServiceProtocolClient& client,
+    const Notification& notification) {
+  send_record_message<NotificationMessage>(client, notification);
 }

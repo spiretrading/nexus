@@ -4,6 +4,9 @@ import * as React from 'react';
 interface Properties extends
     Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onClick'> {
 
+  /** Whether the checkbox is in an indeterminate state. */
+  indeterminate?: boolean;
+
   /** Called when the check mark is clicked on.
    * @param isChecked - The updated value.
    */
@@ -12,11 +15,18 @@ interface Properties extends
 
 /** A checkbox component. */
 export function Checkbox(props: Properties): JSX.Element {
+  const ref = React.useRef<HTMLInputElement>(null);
+  React.useEffect(() => {
+    if(ref.current) {
+      ref.current.indeterminate = props.indeterminate ?? false;
+    }
+  }, [props.indeterminate]);
   const onChange = () => {
     props.onClick?.(!props.checked);
   };
   return (
     <input type='checkbox'
+        ref={ref}
         checked={props.checked}
         disabled={props.disabled}
         className={[css(STYLES.checkbox), props.className].join(' ')}

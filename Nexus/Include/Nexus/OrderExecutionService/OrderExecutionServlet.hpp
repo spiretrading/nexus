@@ -81,8 +81,6 @@ namespace Nexus {
        * Constructs an OrderExecutionServlet.
        * @param session_start_time The time when the current trading session
        *        started.
-       * @param venues The VenueDatabase to use.
-       * @param destinations The DestinationDatabase to use.
        * @param time_client Initializes the TimeClient.
        * @param service_locator_client Initializes the ServiceLocatorClient.
        * @param uid_client Initializes the UidClient.
@@ -94,7 +92,6 @@ namespace Nexus {
         Beam::Initializes<U> UF, Beam::Initializes<A> AF,
         Beam::Initializes<O> OF, Beam::Initializes<D> DF>
       OrderExecutionServlet(boost::posix_time::ptime session_start_time,
-        VenueDatabase venues, DestinationDatabase destinations,
         TF&& time_client, SF&& service_locator_client, UF&& uid_client,
         AF&& administration_client, OF&& driver, DF&& data_store);
 
@@ -107,8 +104,6 @@ namespace Nexus {
     private:
       using SyncShortingModel = Beam::Sync<ShortingModel>;
       boost::posix_time::ptime m_session_start_time;
-      VenueDatabase m_venues;
-      DestinationDatabase m_destinations;
       Beam::local_ptr_t<T> m_time_client;
       Beam::local_ptr_t<S> m_service_locator_client;
       Beam::local_ptr_t<U> m_uid_client;
@@ -174,13 +169,10 @@ namespace Nexus {
     Beam::Initializes<U> UF, Beam::Initializes<A> AF, Beam::Initializes<O> OF,
     Beam::Initializes<D> DF>
   OrderExecutionServlet<C, T, S, U, A, O, D>::OrderExecutionServlet(
-      boost::posix_time::ptime session_start_time, VenueDatabase venues,
-      DestinationDatabase destinations, TF&& time_client,
+      boost::posix_time::ptime session_start_time, TF&& time_client,
       SF&& service_locator_client, UF&& uid_client, AF&& administration_client,
       OF&& driver, DF&& data_store)
     : m_session_start_time(session_start_time),
-      m_venues(std::move(venues)),
-      m_destinations(std::move(destinations)),
       m_time_client(std::forward<TF>(time_client)),
       m_service_locator_client(std::forward<SF>(service_locator_client)),
       m_uid_client(std::forward<UF>(uid_client)),
@@ -594,7 +586,7 @@ namespace Nexus {
         revised_fields.emplace(*order_fields);
         order_fields = revised_fields.get_ptr();
       }
-      revised_fields->m_destination = m_destinations.get_preferred_destination(
+      revised_fields->m_destination = DESTINATIONS.get_preferred_destination(
         order_fields->m_ticker.get_venue()).m_id;
     }
     if(!order_fields->m_currency) {
@@ -603,7 +595,7 @@ namespace Nexus {
         order_fields = revised_fields.get_ptr();
       }
       revised_fields->m_currency =
-        m_venues.from(order_fields->m_ticker.get_venue()).m_currency;
+        VENUES.from(order_fields->m_ticker.get_venue()).m_currency;
     }
     auto order_id = m_uid_client->load_next_uid();
     auto shorting_model =

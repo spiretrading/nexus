@@ -73,7 +73,7 @@ void ProfitAndLossModel::OnPortfolioUpdate(const PortfolioUpdateEntry& update) {
   auto& model = m_currencyToModel[currency];
   if(!model) {
     model = std::make_unique<ProfitAndLossEntryModel>(
-      DEFAULT_CURRENCIES.from(currency), m_showUnrealized);
+      CURRENCIES.from(currency), m_showUnrealized);
     m_profitAndLossEntryModelAddedSignal(*model);
     m_currencyToPortfolio.insert(std::pair(currency, update));
   } else {

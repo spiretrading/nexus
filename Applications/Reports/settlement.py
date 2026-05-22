@@ -8,8 +8,8 @@ import yaml
 from collections import Counter
 from collections import defaultdict
 
-def execute_report(start_date, end_date, currencies, venues, time_zones,
-    service_locator_client, administration_client, order_execution_client):
+def execute_report(start_date, end_date, service_locator_client,
+    administration_client, order_execution_client):
   trading_group_entries = administration_client.load_managed_trading_groups(
     service_locator_client.account)
   for trading_group_entry in trading_group_entries:
@@ -21,8 +21,8 @@ def execute_report(start_date, end_date, currencies, venues, time_zones,
       account_portfolio = nexus.TrueAveragePortfolio()
       account_volumes = Counter()
       order_queue = beam.Queue()
-      nexus.query_daily_order_submissions(trader, start_date, end_date, venues,
-        time_zones, order_execution_client, order_queue)
+      nexus.query_daily_order_submissions(
+        trader, start_date, end_date, order_execution_client, order_queue)
       orders = []
       beam.flush(order_queue, orders)
       for order in orders:
@@ -39,14 +39,14 @@ def execute_report(start_date, end_date, currencies, venues, time_zones,
           net_profit_and_loss = nexus.get_realized_profit_and_loss(
             account_totals)
           group_profit_and_loss[currency.value] += net_profit_and_loss
-          print('\t\tCurrency: %s' % currencies.from_id(currency).code)
+          print('\t\tCurrency: %s' % nexus.CURRENCIES.from_id(currency).code)
           print('\t\t\tVolume: %s' % account_volumes[currency.value])
           print('\t\t\tP/L: %s\n' % net_profit_and_loss)
     if len(group_profit_and_loss) > 0:
       print('\tTotals')
       for currency_value in group_profit_and_loss.iterkeys():
         currency = nexus.CurrencyId(currency_value)
-        print('\t\t%s: %s' % (currencies.from_id(currency).code,
+        print('\t\t%s: %s' % (nexus.CURRENCIES.from_id(currency).code,
           group_profit_and_loss[currency.value]))
       print('')
 
@@ -101,13 +101,11 @@ def main():
     service_locator_client)
   definitions_client = nexus.ApplicationDefinitionsClient(
     service_locator_client)
+  nexus.load_definitions(definitions_client)
   order_execution_client = nexus.ApplicationOrderExecutionClient(
     service_locator_client)
-  currencies = definitions_client.load_currencies()
-  venues = definitions_client.load_venues()
-  time_zones = definitions_client.load_time_zones()
-  execute_report(start_date, end_date, currencies, venues, time_zones,
-    service_locator_client, administration_client, order_execution_client)
+  execute_report(start_date, end_date, service_locator_client,
+    administration_client, order_execution_client)
 
 if __name__ == '__main__':
   main()

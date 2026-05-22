@@ -4,9 +4,8 @@
 #include <optional>
 #include <string>
 #include <vector>
-#include <boost/date_time/local_time/tz_database.hpp>
+#include <Beam/WebServices/Uri.hpp>
 #include "Nexus/Clients/Clients.hpp"
-#include "Nexus/Definitions/Country.hpp"
 #include "Nexus/Definitions/Currency.hpp"
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
@@ -40,25 +39,16 @@ namespace Spire {
        * @param isAdministrator Whether the account is a system administrator.
        * @param isManager Whether the account manages at least one trading
        *        group.
-       * @param countryDatabase Stores the database of all countries.
-       * @param timeZoneDatabase Stores the database of all time zones.
-       * @param currencyDatabase Stores the database of all currencies.
        * @param exchangeRates The list of ExchangeRates to use.
-       * @param venueDatabase Stores the database of all venues.
-       * @param destinationDatabase Stores the database of all destinations.
        * @param entitlementDatabase Stores the database of market data
        *        entitlements.
+       * @param web_portal_uri The URI of the web portal.
        * @param clients The set of clients connected to Spire services.
        */
       UserProfile(const std::string& username, bool isAdministrator,
-        bool isManager, const Nexus::CountryDatabase& countryDatabase,
-        const boost::local_time::tz_database& timeZoneDatabase,
-        const Nexus::CurrencyDatabase& currencyDatabase,
-        const std::vector<Nexus::ExchangeRate>& exchangeRates,
-        const Nexus::VenueDatabase& venueDatabase,
-        const Nexus::DestinationDatabase& destinationDatabase,
+        bool isManager, const std::vector<Nexus::ExchangeRate>& exchangeRates,
         const Nexus::EntitlementDatabase& entitlementDatabase,
-        Nexus::Clients clients);
+        Beam::Uri web_portal_uri, Nexus::Clients clients);
 
       ~UserProfile();
 
@@ -74,26 +64,14 @@ namespace Spire {
        */
       bool IsManager() const;
 
-      /** Returns the CountryDatabase. */
-      const Nexus::CountryDatabase& GetCountryDatabase() const;
-
-      /** Returns the time zone database. */
-      const boost::local_time::tz_database& GetTimeZoneDatabase() const;
-
-      /** Returns the CurrencyDatabase. */
-      const Nexus::CurrencyDatabase& GetCurrencyDatabase() const;
-
       /** Returns the ExchangeRates. */
       const Nexus::ExchangeRateTable& GetExchangeRates() const;
 
-      /** Returns the VenueDatabase. */
-      const Nexus::VenueDatabase& GetVenueDatabase() const;
-
-      /** Returns the DestinationDatabase. */
-      const Nexus::DestinationDatabase& GetDestinationDatabase() const;
-
       /** Returns the EntitlementDatabase. */
       const Nexus::EntitlementDatabase& GetEntitlementDatabase() const;
+
+      /** Returns the URI of the web portal. */
+      const Beam::Uri& GetWebPortalUri() const;
 
       /** Returns the set of clients connected to Spire services. */
       Nexus::Clients& GetClients() const;
@@ -240,13 +218,9 @@ namespace Spire {
       std::string m_username;
       bool m_isAdministrator;
       bool m_isManager;
-      Nexus::CountryDatabase m_countryDatabase;
-      boost::local_time::tz_database m_timeZoneDatabase;
-      Nexus::CurrencyDatabase m_currencyDatabase;
       Nexus::ExchangeRateTable m_exchangeRates;
-      Nexus::VenueDatabase m_venueDatabase;
-      Nexus::DestinationDatabase m_destinationDatabase;
       Nexus::EntitlementDatabase m_entitlementDatabase;
+      Beam::Uri m_web_portal_uri;
       mutable Nexus::Clients m_clients;
       std::filesystem::path m_profilePath;
       std::vector<std::unique_ptr<UI::WindowSettings>> m_recentlyClosedWindows;
@@ -267,6 +241,14 @@ namespace Spire {
       boost::optional<PortfolioViewerWindowSettings>
         m_initialPortfolioViewerWindowSettings;
   };
+
+  /**
+   * Opens a page on the web portal in the default browser, authenticating via
+   * the user's current session.
+   * @param user_profile The user's profile.
+   * @param path The path to redirect to after authentication.
+   */
+  void open_web_portal(UserProfile& user_profile, const std::string& path);
 }
 
 #endif
