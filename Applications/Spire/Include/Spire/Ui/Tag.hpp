@@ -1,8 +1,9 @@
 #ifndef SPIRE_TAG_HPP
 #define SPIRE_TAG_HPP
 #include <QWidget>
-#include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/BoxGeometry.hpp"
 #include "Spire/Ui/BoxPainter.hpp"
+#include "Spire/Ui/TextBox.hpp"
 
 namespace Spire {
 
@@ -61,10 +62,8 @@ namespace Spire {
       bool m_is_read_only;
       bool m_is_delete_hovered;
       bool m_is_delete_pressed;
-      QColor m_background_color;
-      int m_border_radius;
-      int m_horizontal_padding;
-      int m_vertical_padding;
+      BoxGeometry m_geometry;
+      BoxPainter m_painter;
       QColor m_text_color;
       QFont m_font;
       QColor m_delete_fill;

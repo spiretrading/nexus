@@ -1,7 +1,6 @@
 #include "Spire/Ui/Tag.hpp"
 #include <QMouseEvent>
 #include <QPainter>
-#include <QPainterPath>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Styles/Stylist.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -41,16 +40,12 @@ Tag::Tag(std::shared_ptr<TextModel> label, QWidget* parent)
       m_is_read_only(false),
       m_is_delete_hovered(false),
       m_is_delete_pressed(false),
-      m_background_color(0xEBEBEB),
-      m_border_radius(scale_width(3)),
-      m_horizontal_padding(scale_width(5)),
-      m_vertical_padding(scale_height(2)),
       m_text_color(Qt::black),
       m_delete_fill(0xA0A0A0),
       m_delete_icon(get_delete_icon()) {
   setMouseTracking(true);
-  m_label_connection = m_label->connect_update_signal(
-    [this] (const auto&) { update(); });
+  m_label_connection =
+    m_label->connect_update_signal([this] (const auto&) { update(); });
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&Tag::on_style, this));
   set_style(*this, DEFAULT_STYLE());
@@ -82,13 +77,13 @@ connection Tag::connect_delete_signal(
 
 QSize Tag::sizeHint() const {
   auto metrics = QFontMetrics(m_font);
-  auto width = m_horizontal_padding + metrics.horizontalAdvance(m_label->get());
-  auto height = m_vertical_padding * 2 + metrics.height();
+  auto content_width = metrics.horizontalAdvance(m_label->get());
   if(is_delete_visible()) {
-    width += m_delete_icon.width();
+    content_width += m_delete_icon.width();
   }
-  width += m_horizontal_padding;
-  return QSize(width, height);
+  auto content_height = metrics.height();
+  return QSize(content_width, content_height) +
+    m_geometry.get_geometry().size() - m_geometry.get_content_area().size();
 }
 
 void Tag::mouseMoveEvent(QMouseEvent* event) {
@@ -128,22 +123,19 @@ void Tag::leaveEvent(QEvent* event) {
 
 void Tag::paintEvent(QPaintEvent* event) {
   auto painter = QPainter(this);
-  painter.setRenderHint(QPainter::Antialiasing);
-  auto path = QPainterPath();
-  path.addRoundedRect(QRectF(rect()), m_border_radius, m_border_radius);
-  painter.fillPath(path, m_background_color);
+  m_painter.paint(painter);
+  auto& content_area = m_geometry.get_content_area();
   auto metrics = QFontMetrics(m_font);
-  auto text_x = m_horizontal_padding;
-  auto text_y = m_vertical_padding + metrics.ascent();
-  painter.setPen(m_text_color);
-  painter.setFont(m_font);
-  auto available_width = width() - m_horizontal_padding * 2;
+  auto available_width = content_area.width();
   if(is_delete_visible()) {
     available_width -= m_delete_icon.width();
   }
-  auto elided = metrics.elidedText(
-    m_label->get(), Qt::ElideRight, available_width);
-  painter.drawText(text_x, text_y, elided);
+  auto elided =
+    metrics.elidedText(m_label->get(), Qt::ElideRight, available_width);
+  painter.setPen(m_text_color);
+  painter.setFont(m_font);
+  painter.drawText(content_area.left(), content_area.top() + metrics.ascent(),
+    elided);
   if(is_delete_visible()) {
     auto delete_rect = get_delete_rect();
     auto fill = m_delete_fill;
@@ -160,13 +152,16 @@ void Tag::paintEvent(QPaintEvent* event) {
 }
 
 void Tag::resizeEvent(QResizeEvent* event) {
+  m_geometry.set_size(size());
   QWidget::resizeEvent(event);
 }
 
 QRect Tag::get_delete_rect() const {
+  auto& content_area = m_geometry.get_content_area();
   auto icon_size = m_delete_icon.size();
-  auto x = width() - m_horizontal_padding - icon_size.width();
-  auto y = (height() - icon_size.height()) / 2;
+  auto x = content_area.right() + 1 - icon_size.width();
+  auto y =
+    content_area.top() + (content_area.height() - icon_size.height()) / 2;
   return QRect(QPoint(x, y), icon_size);
 }
 
@@ -178,36 +173,12 @@ void Tag::on_style() {
   auto& stylist = find_stylist(*this);
   auto font_size = std::make_shared<std::optional<int>>();
   for(auto& property : stylist.get_computed_block()) {
+    apply(property, m_geometry, stylist);
+    apply(property, m_painter, stylist);
     property.visit(
-      [&] (const BackgroundColor& color) {
-        stylist.evaluate(color, [this] (auto color) {
-          m_background_color = color;
-          update();
-        });
-      },
-      [&] (const BorderTopLeftRadius& radius) {
-        stylist.evaluate(radius, [this] (auto radius) {
-          m_border_radius = radius;
-          update();
-        });
-      },
       [&] (const TextColor& color) {
         stylist.evaluate(color, [this] (auto color) {
           m_text_color = color;
-          update();
-        });
-      },
-      [&] (const PaddingLeft& padding) {
-        stylist.evaluate(padding, [this] (auto padding) {
-          m_horizontal_padding = padding;
-          updateGeometry();
-          update();
-        });
-      },
-      [&] (const PaddingTop& padding) {
-        stylist.evaluate(padding, [this] (auto padding) {
-          m_vertical_padding = padding;
-          updateGeometry();
           update();
         });
       },
