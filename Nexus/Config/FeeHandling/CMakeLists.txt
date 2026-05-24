@@ -2,6 +2,7 @@ file(GLOB_RECURSE
   header_files ${NEXUS_INCLUDE_PATH}/Nexus/FeeHandlingTests/*.hpp)
 file(GLOB_RECURSE source_files ${NEXUS_SOURCE_PATH}/FeeHandlingTests/*.cpp)
 add_executable(FeeHandlingTests ${header_files} ${source_files})
+target_compile_definitions(FeeHandlingTests PRIVATE YAML_CPP_STATIC_DEFINE)
 target_link_libraries(FeeHandlingTests
   debug ${YAML_LIBRARY_DEBUG_PATH}
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH})

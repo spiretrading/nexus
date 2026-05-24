@@ -3,6 +3,7 @@ file(GLOB_RECURSE header_files ../../Include/Spire/SpireTester/*.hpp)
 file(GLOB_RECURSE source_files ../../Source/SpireTester/*.cpp)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_executable(SpireTester ${header_files} ${source_files})
+target_compile_definitions(SpireTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
   target_link_libraries(SpireTester
