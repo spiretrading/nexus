@@ -7,7 +7,6 @@
 #include "Spire/Styles/Selectors.hpp"
 
 using namespace boost;
-using namespace boost::container;
 using namespace boost::posix_time;
 using namespace boost::signals2;
 using namespace Spire;
@@ -105,7 +104,9 @@ Stylist::~Stylist() {
   if(m_auxiliary_signals) {
     m_auxiliary_signals->m_delete_signal();
   }
-  get_animation_timer().disconnect(m_animation_connection);
+  if(m_animations) {
+    get_animation_timer().disconnect(m_animations->m_animation_connection);
+  }
   for(auto& rule : m_rules) {
     auto selection = std::move(rule->m_selection);
     if(!selection.empty()) {
@@ -350,11 +351,14 @@ Stylist::AuxiliarySignals& Stylist::get_auxiliary_signals() const {
   return *m_auxiliary_signals;
 }
 
-Stylist::EvaluatorMap& Stylist::get_evaluators() {
-  if(!m_evaluators) {
-    m_evaluators = std::make_unique<EvaluatorMap>();
+Stylist::Animations::Animations()
+  : m_evaluated_property(typeid(void)) {}
+
+Stylist::Animations& Stylist::get_animations() {
+  if(!m_animations) {
+    m_animations = std::make_unique<Animations>();
   }
-  return *m_evaluators;
+  return *m_animations;
 }
 
 Stylist::Stylist(QWidget& widget, optional<PseudoElement> pseudo_element)
@@ -362,8 +366,7 @@ Stylist::Stylist(QWidget& widget, optional<PseudoElement> pseudo_element)
       m_pseudo_element(std::move(pseudo_element)),
       m_style(load_styles(StyleSheet())),
       m_has_visibility(false),
-      m_evaluated_block(in_place_init),
-      m_evaluated_property(typeid(void)) {
+      m_evaluated_block(in_place_init) {
   if(!m_pseudo_element) {
     m_style_event_filter = std::make_unique<StyleEventFilter>(*this);
   }
@@ -455,18 +458,19 @@ void Stylist::apply() {
   m_computed_block = none;
   m_evaluated_block.emplace();
   auto& block = get_computed_block();
-  if(m_evaluators && !m_evaluators->empty()) {
-    for(auto i = m_evaluators->begin(); i != m_evaluators->end();) {
+  if(m_animations && !m_animations->m_evaluators.empty()) {
+    for(auto i = m_animations->m_evaluators.begin();
+        i != m_animations->m_evaluators.end();) {
       auto property = find(block, i->first);
       if(!property || *property != i->second->m_property) {
-        i = m_evaluators->erase(i);
+        i = m_animations->m_evaluators.erase(i);
       } else {
         ++i;
       }
     }
-    if(m_evaluators->empty()) {
-      m_evaluators.reset();
-      get_animation_timer().disconnect(m_animation_connection);
+    if(m_animations->m_evaluators.empty()) {
+      get_animation_timer().disconnect(m_animations->m_animation_connection);
+      m_animations.reset();
     }
   }
   m_style_signal();
@@ -512,16 +516,17 @@ optional<Property> Stylist::find_reverted_property(std::type_index type) const {
 }
 
 void Stylist::connect_animation() {
-  m_animation_connection = QObject::connect(
+  m_animations->m_animation_connection = QObject::connect(
     &get_animation_timer(), &QTimer::timeout, [=] { on_animation(); });
-  m_last_frame = std::chrono::steady_clock::now();
+  m_animations->m_last_frame = std::chrono::steady_clock::now();
 }
 
 void Stylist::on_animation() {
-  for(auto& evaluator_pair : *m_evaluators) {
+  for(auto& evaluator_pair : m_animations->m_evaluators) {
     auto delta = time_duration(
       microseconds(std::chrono::duration_cast<std::chrono::microseconds>(
-        std::chrono::steady_clock::now() - m_last_frame).count()));
+        std::chrono::steady_clock::now() -
+          m_animations->m_last_frame).count()));
     auto& evaluator = *evaluator_pair.second;
     evaluator.m_next_frame -= delta;
     if(evaluator.m_next_frame <= seconds(0)) {
@@ -530,13 +535,13 @@ void Stylist::on_animation() {
       m_widget->update();
     }
   }
-  m_last_frame = std::chrono::steady_clock::now();
+  m_animations->m_last_frame = std::chrono::steady_clock::now();
 }
 
 void Stylist::on_selection_update(
     RuleEntry& rule, std::unordered_set<const Stylist*>&& additions,
     std::unordered_set<const Stylist*>&& removals) {
-  auto changed_stylists = flat_set<Stylist*>();
+  auto changed_stylists = std::flat_set<Stylist*>();
   for(auto removal : removals) {
     rule.m_selection.erase(removal);
     auto& stylist = const_cast<Stylist&>(*removal);

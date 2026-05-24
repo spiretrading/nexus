@@ -5,7 +5,7 @@
 #include <type_traits>
 #include <unordered_set>
 #include <vector>
-#include <boost/container/flat_set.hpp>
+#include <flat_set>
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/connection.hpp>
 #include <QWidget>
@@ -174,7 +174,7 @@ namespace Spire::Styles {
       struct RuleEntry {
         const Block* m_block;
         int m_priority;
-        boost::container::flat_set<const Stylist*> m_selection;
+        std::flat_set<const Stylist*> m_selection;
         SelectConnection m_connection;
       };
       struct Source {
@@ -200,6 +200,22 @@ namespace Spire::Styles {
         EvaluatorEntry(Property property, Evaluator<Type> evaluator);
         void animate() override;
       };
+      struct AuxiliarySignals {
+        LinkSignal m_link_signal;
+        BacklinkSignal m_backlink_signal;
+        DeleteSignal m_delete_signal;
+      };
+      using MatchSignalMap = std::unordered_map<Selector, MatchSignal>;
+      using EvaluatorMap = std::unordered_map<
+        std::type_index, std::unique_ptr<BaseEvaluatorEntry>>;
+      struct Animations {
+        EvaluatorMap m_evaluators;
+        std::type_index m_evaluated_property;
+        std::chrono::time_point<std::chrono::steady_clock> m_last_frame;
+        QMetaObject::Connection m_animation_connection;
+
+        Animations();
+      };
       friend Stylist& find_stylist(QWidget& widget);
       friend void add_pseudo_element(
         QWidget& source, const PseudoElement& pseudo_element);
@@ -209,16 +225,8 @@ namespace Spire::Styles {
       template<typename T>
       friend Evaluator<T> make_evaluator(
         RevertExpression<T> expression, const Stylist& stylist);
-      struct AuxiliarySignals {
-        LinkSignal m_link_signal;
-        BacklinkSignal m_backlink_signal;
-        DeleteSignal m_delete_signal;
-      };
-      using MatchSignalMap = std::unordered_map<Selector, MatchSignal>;
-      using EvaluatorMap = std::unordered_map<
-        std::type_index, std::unique_ptr<BaseEvaluatorEntry>>;
       AuxiliarySignals& get_auxiliary_signals() const;
-      EvaluatorMap& get_evaluators();
+      Animations& get_animations();
       mutable StyleSignal m_style_signal;
       mutable std::unique_ptr<AuxiliarySignals> m_auxiliary_signals;
       QWidget* m_widget;
@@ -234,10 +242,7 @@ namespace Spire::Styles {
       mutable std::unique_ptr<MatchSignalMap> m_match_signals;
       std::unique_ptr<std::vector<Stylist*>> m_links;
       std::unique_ptr<std::vector<Stylist*>> m_backlinks;
-      std::unique_ptr<EvaluatorMap> m_evaluators;
-      std::type_index m_evaluated_property;
-      std::chrono::time_point<std::chrono::steady_clock> m_last_frame;
-      QMetaObject::Connection m_animation_connection;
+      std::unique_ptr<Animations> m_animations;
       bool m_has_visibility;
       std::unique_ptr<StyleEventFilter> m_style_event_filter;
 
@@ -419,10 +424,10 @@ namespace Spire::Styles {
 
   template<typename Property, typename F>
   void Stylist::evaluate(const Property& property, F&& receiver) {
-    m_evaluated_property = typeid(Property);
-    auto& evaluators = get_evaluators();
-    auto i = evaluators.find(m_evaluated_property);
-    if(i == evaluators.end()) {
+    auto& animations = get_animations();
+    animations.m_evaluated_property = typeid(Property);
+    auto i = animations.m_evaluators.find(animations.m_evaluated_property);
+    if(i == animations.m_evaluators.end()) {
       auto evaluator = make_evaluator(property.get_expression(), *this);
       auto evaluation = evaluator(boost::posix_time::seconds(0));
       if(evaluation.m_next_frame != boost::posix_time::pos_infin) {
@@ -430,8 +435,9 @@ namespace Spire::Styles {
           property, std::move(evaluator));
         entry->m_receivers.push_back(std::forward<F>(receiver));
         auto& receiver = entry->m_receivers.back();
-        evaluators.emplace(m_evaluated_property, std::move(entry));
-        if(evaluators.size() == 1) {
+        animations.m_evaluators.emplace(
+          animations.m_evaluated_property, std::move(entry));
+        if(animations.m_evaluators.size() == 1) {
           connect_animation();
         }
         m_evaluated_block->set(
