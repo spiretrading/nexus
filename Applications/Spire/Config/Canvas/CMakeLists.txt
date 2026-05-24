@@ -120,6 +120,7 @@ install(TARGETS Canvas CONFIGURATIONS Release
   DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
 file(GLOB test_source_files ${SPIRE_SOURCE_PATH}/CanvasTests/*.cpp)
 add_executable(CanvasTests ${test_source_files})
+target_compile_definitions(CanvasTests PRIVATE YAML_CPP_STATIC_DEFINE)
 target_link_libraries(CanvasTests Async Dashboard Charting PortfolioViewer
   Utilities RiskTimer Blotter Catalog BookView TimeAndSales
   OrderImbalanceIndicator InputWidgets CanvasView Canvas KeyBindings Styles

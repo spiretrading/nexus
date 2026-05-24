@@ -127,6 +127,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   connect(m_rebuild_button, &QPushButton::pressed, [this] { on_rebuild(); });
   register_selectors();
   register_property_converters();
+  add(make_account_box_profile());
   add(make_account_list_item_profile());
   add(make_adaptive_box_profile());
   add(make_box_profile());
