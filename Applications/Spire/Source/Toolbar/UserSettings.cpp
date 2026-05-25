@@ -24,7 +24,9 @@ void Spire::export_settings(UserSettings::Categories categories,
     const std::filesystem::path& path, const UserProfile& user_profile) {
   auto settings = UserSettings();
   if(categories.test(UserSettings::Category::BOOK_VIEW)) {
-    /** TODO */
+    settings.m_book_view_properties =
+      user_profile.GetBookViewPropertiesWindowFactory()->
+        get_properties()->get();
   }
   if(categories.test(UserSettings::Category::WATCHLIST)) {
     settings.m_dashboards = user_profile.GetSavedDashboards();
@@ -110,7 +112,11 @@ std::vector<QWidget*> Spire::import_settings(
       windows.push_back(window);
     }
   }
-  /** TODO: Book view. */
+  if(categories.test(UserSettings::Category::BOOK_VIEW) &&
+      settings.m_book_view_properties) {
+    user_profile->GetBookViewPropertiesWindowFactory()->get_properties()->set(
+      *settings.m_book_view_properties);
+  }
   if(categories.test(UserSettings::Category::WATCHLIST) &&
       settings.m_dashboards) {
     user_profile->GetSavedDashboards() = *settings.m_dashboards;

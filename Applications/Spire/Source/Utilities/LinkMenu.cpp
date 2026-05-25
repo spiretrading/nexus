@@ -74,6 +74,9 @@ void Spire::add_link_menu(ContextMenu& parent, TickerContext& context) {
     });
   for(auto& item : items) {
     link_menu->add_check_box(item.m_title, item.m_is_linked);
+    item.m_is_linked->connect_update_signal([&] (auto value) {
+      parent.hide();
+    });
   }
   parent.add_menu(QObject::tr("Link to"), *link_menu);
 }
