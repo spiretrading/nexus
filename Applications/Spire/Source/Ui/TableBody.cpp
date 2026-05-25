@@ -1281,6 +1281,7 @@ void TableBody::update_visible_region() {
   mount_visible_rows();
   get_layout().clear_pending_layouts();
   setUpdatesEnabled(are_updates_enabled);
+  layout()->invalidate();
   --m_resize_guard;
 }
 
