@@ -9,6 +9,15 @@ using namespace Spire::Styles;
 std::unordered_map<std::type_index, PseudoElement::Operations>
   PseudoElement::m_operations;
 
+PseudoElement::Operations::Operations(
+  bool (*is_equal)(const PseudoElement&, const PseudoElement&),
+  SelectConnection (*select)(
+    const PseudoElement&, const Stylist&, const SelectionUpdateSignal&),
+  std::size_t (*hash)(const PseudoElement&)) noexcept
+  : m_is_equal(is_equal),
+    m_select(select),
+    m_hash(hash) {}
+
 SelectConnection Spire::Styles::Details::select_pseudo_element(
     const PseudoElement& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update) {
@@ -19,11 +28,11 @@ SelectConnection Spire::Styles::Details::select_pseudo_element(
 }
 
 std::type_index PseudoElement::get_type() const {
-  return m_pseudo_element.type();
+  return m_holder->get_type();
 }
 
 bool PseudoElement::operator ==(const PseudoElement& element) const {
-  auto& operations = m_operations.at(m_pseudo_element.type());
+  auto& operations = m_operations.at(m_holder->get_type());
   return operations.m_is_equal(*this, element);
 }
 

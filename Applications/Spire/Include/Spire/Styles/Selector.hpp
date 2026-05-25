@@ -3,6 +3,7 @@
 #include <any>
 #include <concepts>
 #include <functional>
+#include <memory>
 #include <typeindex>
 #include <type_traits>
 #include <unordered_map>
@@ -56,15 +57,32 @@ namespace Spire::Styles {
       friend struct std::hash<Selector>;
       friend SelectConnection select(
         const Selector&, const Stylist&, const SelectionUpdateSignal&);
+      struct BaseHolder {
+        virtual ~BaseHolder() = default;
+
+        virtual std::type_index get_type() const = 0;
+      };
+      template<typename T>
+      struct Holder final : BaseHolder {
+        T m_value;
+
+        Holder(T value);
+
+        std::type_index get_type() const override;
+      };
       struct Operations {
-        std::function<bool (const Selector&, const Selector&)> m_is_equal;
-        std::function<SelectConnection (
-          const Selector&, const Stylist&, const SelectionUpdateSignal&)>
-          m_select;
-        std::function<std::size_t (const Selector&)> m_hash;
+        bool (*m_is_equal)(const Selector&, const Selector&);
+        SelectConnection (*m_select)(
+          const Selector&, const Stylist&, const SelectionUpdateSignal&);
+        std::size_t (*m_hash)(const Selector&);
+
+        Operations(bool (*is_equal)(const Selector&, const Selector&),
+          SelectConnection (*select)(
+            const Selector&, const Stylist&, const SelectionUpdateSignal&),
+          std::size_t (*hash)(const Selector&)) noexcept;
       };
       static std::unordered_map<std::type_index, Operations> m_operations;
-      std::any m_selector;
+      std::shared_ptr<const BaseHolder> m_holder;
   };
 
   /**
@@ -78,21 +96,30 @@ namespace Spire::Styles {
   SelectConnection select(const Selector& selector, const Stylist& base,
     const SelectionUpdateSignal& on_update);
 
+  template<typename T>
+  Selector::Holder<T>::Holder(T value)
+    : m_value(std::move(value)) {}
+
+  template<typename T>
+  std::type_index Selector::Holder<T>::get_type() const {
+    return typeid(T);
+  }
+
   template<IsSelector T>
   Selector::Selector(T selector)
-      : m_selector(std::move(selector)) {
+      : m_holder(std::make_shared<Holder<T>>(std::move(selector))) {
     auto operations = m_operations.find(typeid(T));
     if(operations == m_operations.end()) {
       m_operations.emplace_hint(operations, typeid(T), Operations(
-        [] (const Selector& self, const Selector& selector) {
+        +[] (const Selector& self, const Selector& selector) {
           return selector.get_type() == typeid(T) &&
             self.as<T>() == selector.as<T>();
         },
-        [] (const Selector& self, const Stylist& base,
+        +[] (const Selector& self, const Stylist& base,
             const SelectionUpdateSignal& on_update) {
           return select(self.as<T>(), base, on_update);
         },
-        [] (const Selector& self) {
+        +[] (const Selector& self) {
           return std::hash<T>()(self.as<T>());
         }));
     }
@@ -100,7 +127,7 @@ namespace Spire::Styles {
 
   template<typename U>
   const U& Selector::as() const {
-    return std::any_cast<const U&>(m_selector);
+    return static_cast<const Holder<U>&>(*m_holder).m_value;
   }
 
   template<typename F>
@@ -111,8 +138,9 @@ namespace Spire::Styles {
       using Args = boost::callable_traits::args_t<std::remove_cvref_t<F>>;
       using Parameter = std::remove_cvref_t<
         std::tuple_element_t<std::tuple_size_v<Args> - 1, Args>>;
-      if(m_selector.type() == typeid(Parameter)) {
-        return std::forward<F>(f)(std::any_cast<const Parameter&>(m_selector));
+      if(m_holder->get_type() == typeid(Parameter)) {
+        return std::forward<F>(f)(
+          static_cast<const Holder<Parameter>&>(*m_holder).m_value);
       }
       throw std::bad_any_cast();
     }
@@ -123,8 +151,9 @@ namespace Spire::Styles {
     using Args = boost::callable_traits::args_t<std::remove_cvref_t<F>>;
     using Parameter = std::remove_cvref_t<
       std::tuple_element_t<std::tuple_size_v<Args> - 1, Args>>;
-    if(m_selector.type() == typeid(Parameter)) {
-      return std::forward<F>(f)(std::any_cast<const Parameter&>(m_selector));
+    if(m_holder->get_type() == typeid(Parameter)) {
+      return std::forward<F>(f)(
+        static_cast<const Holder<Parameter>&>(*m_holder).m_value);
     }
     return visit(std::forward<G>(g)...);
   }

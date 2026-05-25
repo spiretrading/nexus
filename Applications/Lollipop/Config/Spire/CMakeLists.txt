@@ -17,6 +17,7 @@ endif(WIN32)
 include_directories(${PROJECT_BINARY_DIR})
 add_executable(Spire.classic ${app_type} ${header_files} ${source_files}
   ${resource_files} ${manifest_files})
+target_compile_definitions(Spire.classic PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(Spire.classic Async Dashboard Charting PortfolioViewer
   Utilities RiskTimer KeyBindings Blotter Catalog BookView

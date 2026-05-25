@@ -8,12 +8,21 @@ using namespace Spire::Styles;
 std::unordered_map<std::type_index, Selector::Operations>
   Selector::m_operations;
 
+Selector::Operations::Operations(
+  bool (*is_equal)(const Selector&, const Selector&),
+  SelectConnection (*select)(
+    const Selector&, const Stylist&, const SelectionUpdateSignal&),
+  std::size_t (*hash)(const Selector&)) noexcept
+  : m_is_equal(is_equal),
+    m_select(select),
+    m_hash(hash) {}
+
 std::type_index Selector::get_type() const {
-  return m_selector.type();
+  return m_holder->get_type();
 }
 
 bool Selector::operator ==(const Selector& selector) const {
-  auto& operations = m_operations.at(m_selector.type());
+  auto& operations = m_operations.at(m_holder->get_type());
   return operations.m_is_equal(*this, selector);
 }
 

@@ -26,6 +26,9 @@ namespace Nexus {
 
         /** The next Sequence to use for a TimeAndSale. */
         Beam::Sequence m_next_time_and_sale_sequence;
+
+        /** The next Sequence to use for a TickerStatus. */
+        Beam::Sequence m_next_ticker_status_sequence;
       };
 
       /**
@@ -74,13 +77,22 @@ namespace Nexus {
         const BookQuote& quote, int source_id);
 
       /**
-       * Publishes a TimeAndSale.
-       * @param time_and_sale The TimeAndSale to publish.
+       * Publishes a TickerStatus.
+       * @param status The TickerStatus to publish.
        * @param source_id The id of the source setting the value.
-       * @return The TimeAndSale to publish.
+       * @return The TickerStatus to publish.
        */
       boost::optional<SequencedTickerTimeAndSale> publish(
         const TimeAndSale& time_and_sale, int source_id);
+
+      /**
+       * Publishes a TickerStatus.
+       * @param status The TickerStatus to publish.
+       * @param source_id The id of the source setting the value.
+       * @return The TickerStatus to publish.
+       */
+      boost::optional<SequencedIndexedTickerStatus> publish(
+        const TickerStatus& status, int source_id);
 
       /**
        * Clears market data that originated from a specified source.
@@ -99,6 +111,7 @@ namespace Nexus {
       Beam::Sequencer m_bbo_sequencer;
       Beam::Sequencer m_book_quote_sequencer;
       Beam::Sequencer m_time_and_sale_sequencer;
+      Beam::Sequencer m_ticker_status_sequencer;
       PriceCandlestick m_session_candlestick;
       std::string m_market_center;
       Money m_next_close;
@@ -153,6 +166,15 @@ namespace Nexus {
           Beam::increment(results.back().get_sequence());
       }
     }
+    {
+      auto results = data_store.load_ticker_statuses(query);
+      if(results.empty()) {
+        initial_sequences.m_next_ticker_status_sequence = Beam::Sequence::FIRST;
+      } else {
+        initial_sequences.m_next_ticker_status_sequence =
+          Beam::increment(results.back().get_sequence());
+      }
+    }
     return initial_sequences;
   }
 
@@ -167,7 +189,9 @@ namespace Nexus {
         m_bbo_sequencer(initial_sequences.m_next_bbo_quote_sequence),
         m_book_quote_sequencer(initial_sequences.m_next_book_quote_sequence),
         m_time_and_sale_sequencer(
-          initial_sequences.m_next_time_and_sale_sequence) {
+          initial_sequences.m_next_time_and_sale_sequence),
+        m_ticker_status_sequencer(
+          initial_sequences.m_next_ticker_status_sequence) {
     m_market_center = VENUES.from(m_ticker.get_venue()).m_market_center;
     if(m_market_center.empty()) {
       m_market_center = m_ticker.get_venue().get_code().get_data();
@@ -294,6 +318,11 @@ namespace Nexus {
       m_time_and_sale_sequencer.make_sequenced_value(time_and_sale, m_ticker);
     m_time_and_sale = value;
     return value;
+  }
+
+  inline boost::optional<SequencedIndexedTickerStatus>
+      TickerEntry::publish(const TickerStatus& status, int source_id) {
+    return m_ticker_status_sequencer.make_sequenced_value(status, m_ticker);
   }
 
   inline void TickerEntry::clear(int source_id) {

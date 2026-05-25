@@ -41,6 +41,10 @@ namespace Nexus {
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
       void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<TimeAndSale> queue);
+      void query(const TickerQuery& query,
+        Beam::ScopedQueueWriter<SequencedTickerStatus> queue);
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue);
       std::vector<TickerInfo> query(const TickerInfoQuery& query);
       TickerSnapshot load_snapshot(const Ticker& ticker);
       PriceCandlestick load_session_candlestick(const Ticker& ticker);
@@ -128,8 +132,26 @@ namespace Nexus {
     }
   }
 
+  inline void DistributedMarketDataClient::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue) {
+    if(auto client = m_market_data_clients.get(query.get_index())) {
+      client->query(query, std::move(queue));
+    } else {
+      queue.close();
+    }
+  }
+
   inline void DistributedMarketDataClient::query(const TickerQuery& query,
-      Beam::ScopedQueueWriter<TimeAndSale> queue) {
+      Beam::ScopedQueueWriter<SequencedTickerStatus> queue) {
+    if(auto client = m_market_data_clients.get(query.get_index())) {
+      client->query(query, std::move(queue));
+    } else {
+      queue.close();
+    }
+  }
+
+  inline void DistributedMarketDataClient::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue) {
     if(auto client = m_market_data_clients.get(query.get_index())) {
       client->query(query, std::move(queue));
     } else {

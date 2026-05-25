@@ -28,6 +28,7 @@ elseif(APPLE)
   set(app_type MACOSX_BUNDLE)
 endif()
 add_executable(KeyBindingsUiTester ${app_type} ${header_files} ${source_files})
+target_compile_definitions(KeyBindingsUiTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
   target_link_libraries(KeyBindingsUiTester
@@ -138,6 +139,7 @@ install(
   TARGETS KeyBindingsUiTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
 file(GLOB_RECURSE source_files ../../Source/KeyBindingsTester/*.cpp)
 add_executable(KeyBindingsTester ${source_files})
+target_compile_definitions(KeyBindingsTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
   target_link_libraries(KeyBindingsTester

@@ -1,5 +1,5 @@
 #include "Spire/Styles/ChildSelector.hpp"
-#include <unordered_map>
+#include <algorithm>
 #include <Beam/SignalHandling/ConnectionGroup.hpp>
 #include <boost/functional/hash.hpp>
 #include <QChildEvent>
@@ -23,8 +23,16 @@ namespace {
   }
 
   struct ChildObserver : QObject {
+    struct ChildEntry {
+      const QObject* m_child;
+      const Stylist* m_stylist;
+
+      ChildEntry(const QObject& child, const Stylist& stylist)
+        : m_child(&child),
+          m_stylist(&stylist) {}
+    };
     SelectionUpdateSignal m_on_update;
-    std::unordered_map<const QObject*, const Stylist*> m_children_stylists;
+    std::vector<ChildEntry> m_children_stylists;
     scoped_connection m_link_connection;
     ConnectionGroup m_delete_connections;
 
@@ -80,24 +88,26 @@ namespace {
 
     bool add(const Stylist& stylist) {
       auto& child = stylist.get_widget();
-      auto i = m_children_stylists.find(&child);
+      auto i =
+        std::ranges::find(m_children_stylists, &child, &ChildEntry::m_child);
       if(i != m_children_stylists.end()) {
         return false;
       }
       auto connection = stylist.connect_delete_signal(
         std::bind_front(&ChildObserver::remove, this, std::ref(child)));
       m_delete_connections.add(&child, connection);
-      m_children_stylists.insert(i, std::pair(&child, &stylist));
+      m_children_stylists.emplace_back(child, stylist);
       return true;
     }
 
     void remove(const QObject& child) {
-      auto i = m_children_stylists.find(&child);
+      auto i =
+        std::ranges::find(m_children_stylists, &child, &ChildEntry::m_child);
       if(i == m_children_stylists.end()) {
         return;
       }
       m_delete_connections.disconnect(&child);
-      auto stylist = i->second;
+      auto stylist = i->m_stylist;
       m_children_stylists.erase(i);
       m_on_update({}, {stylist});
     }

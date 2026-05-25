@@ -30,6 +30,7 @@ namespace Nexus {
       void publish(const TickerBboQuote& quote);
       void publish(const TickerBookQuote& quote);
       void publish(const TickerTimeAndSale& time_and_sale);
+      void publish(const IndexedTickerStatus& status);
       void add_order(const Ticker& ticker, Venue venue, const std::string& mpid,
         bool is_primary_mpid, const std::string& id, Side side, Money price,
         Quantity size, boost::posix_time::ptime timestamp);
@@ -98,6 +99,14 @@ namespace Nexus {
   inline void TestEnvironmentMarketDataFeedClient::publish(
       const TickerTimeAndSale& time_and_sale) {
     m_client.publish(time_and_sale);
+    Beam::flush_pending_routines();
+    m_sampling_timer->trigger();
+    Beam::flush_pending_routines();
+  }
+
+  inline void TestEnvironmentMarketDataFeedClient::publish(
+      const IndexedTickerStatus& status) {
+    m_client.publish(status);
     Beam::flush_pending_routines();
     m_sampling_timer->trigger();
     Beam::flush_pending_routines();

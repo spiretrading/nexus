@@ -99,6 +99,21 @@ TEST_SUITE("MarketDataRegistry") {
     REQUIRE(published);
   }
 
+  TEST_CASE("publish_ticker_status") {
+    auto data_store = LocalHistoricalDataStore();
+    auto registry = MarketDataRegistry();
+    auto ticker = parse_ticker("TST.TSX");
+    auto status = IndexedTickerStatus(
+      TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        time_from_string("2024-07-12 13:30:00")), ticker);
+    auto published = false;
+    registry.publish(status, 1, data_store, [&] (const auto& sequenced_status) {
+      REQUIRE(*sequenced_status == status);
+      published = true;
+    });
+    REQUIRE(published);
+  }
+
   TEST_CASE("publish_time_and_sale") {
     auto data_store = LocalHistoricalDataStore();
     auto registry = MarketDataRegistry();

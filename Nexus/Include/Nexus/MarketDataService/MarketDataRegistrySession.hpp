@@ -58,6 +58,12 @@ namespace Nexus {
       session.m_roles.test(AccountRole::ADMINISTRATOR) ||
         contains<T>(session.m_entitlements, query);
   }
+
+  template<>
+  inline bool has_entitlement<TickerStatus>(
+      const MarketDataRegistrySession&, const TickerQuery&) {
+    return true;
+  }
 }
 
 #endif

@@ -1,5 +1,6 @@
 #include "Spire/UiViewer/StandardUiProfiles.hpp"
 #include <stack>
+#include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <QFontDatabase>
 #include <QImageReader>
 #include <QLabel>
@@ -26,6 +27,7 @@
 #include "Spire/Styles/LinearExpression.hpp"
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
+#include "Spire/Ui/AccountBox.hpp"
 #include "Spire/Ui/AccountListItem.hpp"
 #include "Spire/Ui/AdaptiveBox.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -66,6 +68,7 @@
 #include "Spire/Ui/HighlightSwatch.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/Icon.hpp"
+#include "Spire/Ui/Identicon.hpp"
 #include "Spire/Ui/InfoPanel.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
@@ -87,6 +90,7 @@
 #include "Spire/Ui/PercentBox.hpp"
 #include "Spire/Ui/PopupBox.hpp"
 #include "Spire/Ui/PositionSideBox.hpp"
+#include "Spire/Ui/PositionSideFilterPanel.hpp"
 #include "Spire/Ui/ProgressBar.hpp"
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/ScopeBox.hpp"
@@ -136,6 +140,7 @@
 #include "Spire/UiViewer/StandardUiProperties.hpp"
 #include "Spire/UiViewer/UiProfile.hpp"
 
+using namespace Beam;
 using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -225,6 +230,23 @@ namespace {
         }
       }
     });
+  }
+
+  std::shared_ptr<AccountQueryModel> populate_account_query_model() {
+    auto accounts = std::vector<std::pair<QString, QString>>{
+      {"meixiangk20", "Kong Meixiang"}, {"mingzhuca11", "Cao Mingzhu"},
+      {"hengshen08", "Shen Heng"}, {"guozhido02", "Dong Guozhi"},
+      {"huanxg34", "Xu Guanghuan"}, {"fengjg15", "Jiang Feng"}};
+    auto model = std::make_shared<LocalQueryModel<AccountListItem::Account>>();
+    for(auto& [id, name] : accounts) {
+      auto account = AccountListItem::Account(make_identicon(
+        DirectoryEntry::make_account(qHash(id)), scale(8, 8)), id, name);
+      model->add(id.toLower(), account);
+      for(auto& term : name.split(' ')) {
+        model->add(term.toLower(), account);
+      }
+    }
+    return model;
   }
 
   template<typename T>
@@ -493,8 +515,10 @@ namespace {
   }
 
   template<typename T,
-    typename ClosedFilterPanel* (*f)(std::shared_ptr<ListModel<T>>, QWidget*)>
-  auto setup_closed_filter_panel_profile(UiProfile& profile) {
+    typename ClosedFilterPanel* (*f)(std::shared_ptr<ListModel<T>>, QWidget*),
+    typename Resolver>
+  auto setup_closed_filter_panel_profile_impl(UiProfile& profile,
+      Resolver resolve) {
     auto& properties = profile.get_properties();
     auto checked_properties = std::vector<std::shared_ptr<UiProperty>>();
     auto model = std::make_shared<ArrayListModel<T>>();
@@ -502,7 +526,7 @@ namespace {
       if(property->get_name() != "enabled" && property->get_name() != "width" &&
           property->get_name() != "height") {
         checked_properties.push_back(property);
-        model->push(*from_text<T>(property->get_name()));
+        model->push(resolve(property->get_name()));
       }
     }
     auto panel = f(model, nullptr);
@@ -539,6 +563,24 @@ namespace {
         submit_filter_slot(result);
       });
     return panel;
+  }
+
+  template<typename T,
+    typename ClosedFilterPanel* (*f)(std::shared_ptr<ListModel<T>>, QWidget*)>
+  auto setup_closed_filter_panel_profile(UiProfile& profile) {
+    return setup_closed_filter_panel_profile_impl<T, f>(profile,
+      [] (const QString& name) { return *from_text<T>(name); });
+  }
+
+  template<typename T,
+    typename ClosedFilterPanel* (*f)(std::shared_ptr<ListModel<T>>, QWidget*)>
+  auto setup_named_closed_filter_panel_profile(UiProfile& profile,
+      const std::vector<std::pair<QString, T>>& values) {
+    return setup_closed_filter_panel_profile_impl<T, f>(profile,
+      [&] (const QString& name) -> T {
+        return std::find_if(values.begin(), values.end(),
+          [&] (const auto& value) { return value.first == name; })->second;
+      });
   }
 
   template<typename B, typename B* (*F)(QWidget*), typename... Converters>
@@ -1168,6 +1210,53 @@ namespace {
   };
 }
 
+UiProfile Spire::make_account_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(
+    make_standard_property<QString>("current", "meixiangk20"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("AccountBox", properties, [] (auto& profile) {
+    auto to_id = [] (const AccountListItem::Account& account) {
+      return account.m_id;
+    };
+    auto model = populate_account_query_model();
+    auto& current = get<QString>("current", profile.get_properties());
+    auto current_account = [&] {
+      if(auto value = model->parse(current.get())) {
+        return *value;
+      }
+      return AccountListItem::Account();
+    }();
+    auto current_model = std::make_shared<LocalAccountModel>(current_account);
+    auto box = new AccountBox(model, current_model);
+    box->setFixedWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    auto current_connection = box->get_current()->connect_update_signal(
+      profile.make_event_slot<AccountListItem::Account>("Current", to_id));
+    current.connect_changed_signal([=] (const auto& current) {
+      if(auto value = model->parse(current)) {
+        box->get_current()->set(*value);
+      } else {
+        auto current_blocker = shared_connection_block(current_connection);
+        box->get_current()->set(AccountListItem::Account());
+      }
+    });
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal([=] (const auto& placeholder) {
+      box->set_placeholder(placeholder);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&AccountBox::set_read_only, box));
+    box->connect_submit_signal(
+      profile.make_event_slot<AccountListItem::Account>("Submit", to_id));
+    return box;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_account_list_item_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -1177,24 +1266,12 @@ UiProfile Spire::make_account_list_item_profile() {
     make_standard_property<QString>("name", "Kong Meixiang"));
   auto profile = UiProfile("AccountListItem", properties,
     [] (auto& profile) {
-      auto size = scale(8, 8);
-      auto identicon = QImage(size, QImage::Format_ARGB32);
-      identicon.fill(Qt::transparent);
-      auto painter = QPainter(&identicon);
-      painter.setPen(Qt::NoPen);
-      auto width = size.width() / 5.0;
-      auto height = size.height() / 5.0;
-      auto cells = std::vector<std::pair<int, int>>{
-        {0, 0}, {0, 2}, {0, 4}, {1, 1}, {1, 2}, {1, 3}, {2, 2}, {3, 1},
-        {3, 2}, {3, 3}, {4, 2}};
-      for(auto& [row, col] : cells) {
-        painter.fillRect(QRectF(col * width, row * height, width, height),
-          QColor(0xB565BC));
-      }
       auto& id = get<QString>("id", profile.get_properties());
       auto& name = get<QString>("name", profile.get_properties());
+      auto identicon = make_identicon(
+        DirectoryEntry::make_account(qHash(id.get())), scale(8, 8));
       auto item = new AccountListItem(
-        AccountListItem::Account{identicon, id.get(), name.get()});
+        AccountListItem::Account(identicon, id.get(), name.get()));
       apply_widget_properties(item, profile.get_properties());
       return item;
     });
@@ -2745,6 +2822,35 @@ UiProfile Spire::make_icon_toggle_button_profile() {
   return profile;
 }
 
+UiProfile Spire::make_identicon_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<int>("id", 12345));
+  auto profile = UiProfile("Identicon", properties, [] (auto& profile) {
+    auto& id = get<int>("id", profile.get_properties());
+    auto size = scale(40, 40);
+    auto icon = new Icon(make_identicon(
+      DirectoryEntry::make_account(static_cast<unsigned int>(id.get())), size));
+    icon->setFixedSize(size);
+    auto style = StyleSheet();
+    style.get(Any()).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(Fill(none));
+    set_style(*icon, style);
+    id.connect_changed_signal([=] (auto value) {
+      update_style(*icon, [&] (auto& style) {
+        style.get(Any()).
+          set(IconImage(make_identicon(
+            DirectoryEntry::make_account(static_cast<unsigned int>(value)),
+            size)));
+      });
+    });
+    apply_widget_properties(icon, profile.get_properties());
+    return icon;
+  });
+  return profile;
+}
+
 UiProfile Spire::make_info_panel_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3658,6 +3764,16 @@ UiProfile Spire::make_percent_box_profile() {
   return profile;
 }
 
+UiProfile Spire::make_percent_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property("min", Decimal(0)));
+  properties.push_back(make_standard_property("max", Decimal(1)));
+  auto profile = UiProfile("PercentFilterPanel", properties,
+    setup_scalar_filter_panel_profile<PercentBox>);
+  return profile;
+}
+
 UiProfile Spire::make_popup_box_profile() {
     auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);
@@ -3736,6 +3852,21 @@ UiProfile Spire::make_position_side_box_profile() {
         profile, [] (const std::any& value) {
           return PositionSideToken(std::any_cast<Side>(value));
         });
+    });
+  return profile;
+}
+
+UiProfile Spire::make_position_side_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<bool>("Long"));
+  properties.push_back(make_standard_property<bool>("Short"));
+  properties.push_back(make_standard_property<bool>("Flat"));
+  auto profile = UiProfile("PositionSideFilterPanel", properties,
+    [] (auto& profile) {
+      return setup_named_closed_filter_panel_profile<
+        Side, make_position_side_filter_panel>(profile, define_enum<Side>(
+          {{"Long", Side::BID}, {"Short", Side::ASK}, {"Flat", Side::NONE}}));
     });
   return profile;
 }

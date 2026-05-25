@@ -143,12 +143,12 @@ int Spire::get_size(const Highlight& highlight) {
 }
 
 struct TextBox::TextValidator : QValidator {
-  std::shared_ptr<TextModel> m_model;
+  TextModel* m_model;
   bool m_is_text_elided;
 
-  TextValidator(std::shared_ptr<TextModel> model, QObject* parent = nullptr)
+  TextValidator(TextModel& model, QObject* parent = nullptr)
     : QValidator(parent),
-      m_model(std::move(model)),
+      m_model(&model),
       m_is_text_elided(false) {}
 
   QValidator::State validate(QString& input, int& pos) const override {
@@ -164,13 +164,12 @@ struct TextBox::TextValidator : QValidator {
 
 class TextBox::LineEdit : public QLineEdit {
   public:
-    LineEdit(std::shared_ptr<TextModel> current, TextBox* text_box)
-        : QLineEdit(current->get(), text_box),
-          m_text_box(text_box),
-          m_current(std::move(current)),
-          m_submission(m_current->get()),
-          m_highlight(std::make_shared<TextBoxHighlightModel>(*text_box)),
-          m_text_validator(new TextValidator(m_current, this)),
+    LineEdit(TextBox& text_box)
+        : QLineEdit(text_box.m_current->get(), &text_box),
+          m_text_box(&text_box),
+          m_submission(m_text_box->m_current->get()),
+          m_highlight(std::make_shared<TextBoxHighlightModel>(*m_text_box)),
+          m_text_validator(new TextValidator(*m_text_box->m_current, this)),
           m_is_rejected(false),
           m_has_update(false) {
       setObjectName(QString("0x%1").arg(reinterpret_cast<std::intptr_t>(this)));
@@ -185,7 +184,7 @@ class TextBox::LineEdit : public QLineEdit {
         &LineEdit::on_editing_finished);
       connect(
         this, &QLineEdit::textEdited, this, &LineEdit::on_text_edited);
-      m_current_connection = m_current->connect_update_signal(
+      m_current_connection = m_text_box->m_current->connect_update_signal(
         std::bind_front(&LineEdit::on_current, this));
       connect(this, &QLineEdit::cursorPositionChanged, this,
         std::bind_front(&LineEdit::on_cursor_position, this));
@@ -212,7 +211,7 @@ class TextBox::LineEdit : public QLineEdit {
     }
 
     void set_display_text(const QString& text) {
-      m_text_validator->m_is_text_elided = text != m_current->get();
+      m_text_validator->m_is_text_elided = text != m_text_box->m_current->get();
       setText(text);
       if(m_text_validator->m_is_text_elided) {
         setCursorPosition(0);
@@ -276,11 +275,11 @@ class TextBox::LineEdit : public QLineEdit {
       if(event->reason() != Qt::ActiveWindowFocusReason &&
           event->reason() != Qt::PopupFocusReason) {
         m_text_validator->m_is_text_elided = false;
-        if(text() != m_current->get()) {
-          setText(m_current->get());
+        if(text() != m_text_box->m_current->get()) {
+          setText(m_text_box->m_current->get());
         }
       }
-      m_submission = m_current->get();
+      m_submission = m_text_box->m_current->get();
       m_has_update = false;
       QLineEdit::focusInEvent(event);
     }
@@ -303,8 +302,8 @@ class TextBox::LineEdit : public QLineEdit {
         }
       }
       if(event->key() == Qt::Key_Escape) {
-        if(m_submission != m_current->get()) {
-          m_current->set(m_submission);
+        if(m_submission != m_text_box->m_current->get()) {
+          m_text_box->m_current->set(m_submission);
           return;
         }
       } else if(event->key() == Qt::Key_Enter ||
@@ -344,7 +343,6 @@ class TextBox::LineEdit : public QLineEdit {
     mutable SubmitSignal m_submit_signal;
     mutable RejectSignal m_reject_signal;
     TextBox* m_text_box;
-    std::shared_ptr<TextModel> m_current;
     QString m_submission;
     std::shared_ptr<HighlightModel> m_highlight;
     TextValidator* m_text_validator;
@@ -354,7 +352,6 @@ class TextBox::LineEdit : public QLineEdit {
     bool m_is_rejected;
     bool m_has_update;
     scoped_connection m_current_connection;
-    scoped_connection m_read_only_connection;
     scoped_connection m_highlight_connection;
     scoped_connection m_placeholder_style_connection;
 
@@ -365,7 +362,7 @@ class TextBox::LineEdit : public QLineEdit {
 
     bool is_placeholder_visible() const {
       return !isReadOnly() &&
-        !m_placeholder.isEmpty() && m_current->get().isEmpty();
+        !m_placeholder.isEmpty() && m_text_box->m_current->get().isEmpty();
     }
 
     void on_current(const QString& current) {
@@ -386,13 +383,13 @@ class TextBox::LineEdit : public QLineEdit {
 
     void on_editing_finished() {
       if(!isReadOnly() && m_has_update) {
-        if(m_current->get_state() == QValidator::Acceptable) {
-          m_submission = m_current->get();
+        if(m_text_box->m_current->get_state() == QValidator::Acceptable) {
+          m_submission = m_text_box->m_current->get();
           m_has_update = false;
           m_submit_signal(m_submission);
         } else {
-          m_reject_signal(m_current->get());
-          m_current->set(m_submission);
+          m_reject_signal(m_text_box->m_current->get());
+          m_text_box->m_current->set(m_submission);
           if(!m_is_rejected) {
             m_is_rejected = true;
             match(*m_text_box, Rejected());
@@ -458,7 +455,7 @@ class TextBox::LineEdit : public QLineEdit {
     }
 
     void on_text_edited(const QString& text) {
-      m_current->set(text);
+      m_text_box->m_current->set(text);
     }
 };
 
@@ -543,8 +540,8 @@ connection TextBox::connect_reject_signal(
 }
 
 QSize TextBox::sizeHint() const {
-  if(m_size_hint) {
-    return *m_size_hint;
+  if(m_size_hint.isValid()) {
+    return m_size_hint;
   }
   auto cursor_width = [&] {
     if(is_read_only()) {
@@ -553,12 +550,12 @@ QSize TextBox::sizeHint() const {
     return 1;
   }();
   auto metrics = QFontMetrics(m_text_style.m_font);
-  m_size_hint.emplace(
+  m_size_hint = QSize(
     metrics.horizontalAdvance(m_current->get()) +
       cursor_width, metrics.height());
-  *m_size_hint += m_geometry.get_geometry().size() -
+  m_size_hint += m_geometry.get_geometry().size() -
     m_geometry.get_content_area().size();
-  return *m_size_hint;
+  return m_size_hint;
 }
 
 void TextBox::changeEvent(QEvent* event) {
@@ -607,9 +604,15 @@ void TextBox::elide_text() {
   if(m_geometry.get_geometry().isEmpty()) {
     return;
   }
+  auto& current = m_current->get();
   auto font_metrics = QFontMetrics(m_text_style.m_font);
-  m_display_text = font_metrics.elidedText(
-    m_current->get(), Qt::ElideRight, m_geometry.get_content_area().width());
+  auto elided = font_metrics.elidedText(
+    current, Qt::ElideRight, m_geometry.get_content_area().width());
+  if(elided == current) {
+    m_display_text = current;
+  } else {
+    m_display_text = std::move(elided);
+  }
   if(m_line_edit && m_display_text != m_line_edit->text()) {
     m_line_edit->set_display_text(m_display_text);
   }
@@ -621,7 +624,7 @@ void TextBox::initialize_line_edit() const {
   }
   auto self = const_cast<TextBox*>(this);
   add_pseudo_element(*self, Placeholder());
-  self->m_line_edit = new LineEdit(m_current, self);
+  self->m_line_edit = new LineEdit(*self);
   self->m_line_edit->setReadOnly(m_is_read_only);
   self->on_style();
 }
@@ -634,7 +637,7 @@ void TextBox::update_display_text() {
     m_display_text = m_current->get();
     m_line_edit->set_display_text(m_display_text);
   }
-  m_size_hint = none;
+  m_size_hint = QSize();
   updateGeometry();
   update();
 }

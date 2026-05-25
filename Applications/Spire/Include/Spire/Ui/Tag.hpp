@@ -1,10 +1,11 @@
 #ifndef SPIRE_TAG_HPP
 #define SPIRE_TAG_HPP
 #include <QWidget>
+#include "Spire/Ui/BoxGeometry.hpp"
+#include "Spire/Ui/BoxPainter.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 namespace Spire {
-  class Button;
 
   /** Represents a Tag in a TagBox. */
   class Tag : public QWidget {
@@ -45,9 +46,38 @@ namespace Spire {
       boost::signals2::connection connect_delete_signal(
         const DeleteSignal::slot_type& slot) const;
 
+      QSize sizeHint() const override;
+
+    protected:
+      void mouseMoveEvent(QMouseEvent* event) override;
+      void mousePressEvent(QMouseEvent* event) override;
+      void mouseReleaseEvent(QMouseEvent* event) override;
+      void leaveEvent(QEvent* event) override;
+      void paintEvent(QPaintEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
+
     private:
+      mutable DeleteSignal m_delete_signal;
+      std::shared_ptr<TextModel> m_label;
       bool m_is_read_only;
-      Button* m_delete_button;
+      bool m_is_delete_hovered;
+      bool m_is_delete_pressed;
+      BoxGeometry m_geometry;
+      BoxPainter m_painter;
+      QColor m_text_color;
+      QFont m_font;
+      QFontMetrics m_font_metrics;
+      QString m_elided_label;
+      int m_elided_width;
+      boost::signals2::scoped_connection m_label_connection;
+      boost::signals2::scoped_connection m_style_connection;
+
+      QRect get_delete_rect() const;
+      bool is_delete_visible() const;
+      void invalidate_layout();
+      void update_elided_label();
+      void on_label(const QString& label);
+      void on_style();
   };
 }
 

@@ -1,6 +1,8 @@
 #ifndef SPIRE_BOX_PAINTER_HPP
 #define SPIRE_BOX_PAINTER_HPP
+#include <memory>
 #include <QColor>
+#include <QPainterPath>
 #include "Spire/Styles/Selectors.hpp"
 
 namespace Spire {
@@ -243,16 +245,23 @@ namespace Styles {
       void paint(QPainter& painter) const;
 
     private:
+      struct Cache {
+        QPainterPath m_path;
+        QSize m_size;
+      };
       enum class Classification {
         NONE,
         REGULAR,
+        ROUNDED,
         OTHER
       };
       QColor m_background_color;
       Borders m_borders;
       Classification m_classification;
+      mutable std::unique_ptr<Cache> m_cache;
 
       Classification evaluate_classification() const;
+      void invalidate_cache();
   };
 
   /**

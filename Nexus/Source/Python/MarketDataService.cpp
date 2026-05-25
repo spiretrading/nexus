@@ -128,6 +128,9 @@ void Nexus::Python::export_local_historical_data_store(module& module) {
     def("load_all_book_quotes", [] (DataStore& self) {
       return self.get().load_book_quotes();
     }, call_guard<GilRelease>()).
+    def("load_all_ticker_statuses", [] (DataStore& self) {
+      return self.get().load_ticker_statuses();
+    }, call_guard<GilRelease>()).
     def("load_all_time_and_sales", [] (DataStore& self) {
       return self.get().load_time_and_sales();
     }, call_guard<GilRelease>());
