@@ -69,6 +69,7 @@ target_include_directories(Library INTERFACE
   ${PROJECT_BINARY_DIR})
 file(GLOB application_source_files Source/main.cpp)
 add_executable(Application ${application_source_files} Version.hpp)
+target_compile_definitions(Application PRIVATE YAML_CPP_STATIC_DEFINE)
 set_target_properties(
   Application PROPERTIES OUTPUT_NAME OtcLinkMarketDataFeedClient)
 target_link_libraries(Application Library
@@ -100,6 +101,7 @@ endif()
 install(TARGETS Application DESTINATION ${PROJECT_BINARY_DIR}/Application)
 file(GLOB test_source_files Source/Tests/*.cpp)
 add_executable(Tests ${test_source_files})
+target_compile_definitions(Tests PRIVATE YAML_CPP_STATIC_DEFINE)
 set_target_properties(
   Tests PROPERTIES OUTPUT_NAME OtcLinkMarketDataFeedClientTester)
 target_link_libraries(Tests Library
