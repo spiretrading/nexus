@@ -1279,6 +1279,7 @@ void TableBody::reset_visible_region() {
 void TableBody::update_visible_region() {
   if(get_layout().get_top_index() == -1) {
     initialize_visible_region();
+    update();
     return;
   }
   if(!parentWidget() || !isVisible()) {
@@ -1652,6 +1653,7 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
       m_operation_counter = 0;
     }
     update_visible_region();
+    layout()->invalidate();
   }
 }
 
