@@ -184,7 +184,7 @@ void Stylist::set_style(StyleSheet style) {
 }
 
 bool Stylist::is_match(const Selector& selector) const {
-  return std::ranges::find(m_matches, selector) != m_matches.end();
+  return m_matches.contains(selector);
 }
 
 const Block& Stylist::get_computed_block() const {
@@ -283,9 +283,7 @@ void Stylist::link(Stylist& target) {
 }
 
 void Stylist::match(const Selector& selector) {
-  auto i = std::ranges::find(m_matches, selector);
-  if(i == m_matches.end()) {
-    m_matches.push_back(selector);
+  if(m_matches.insert(selector).second) {
     if(m_match_signals) {
       auto signal = m_match_signals->find(selector);
       if(signal != m_match_signals->end()) {
@@ -296,17 +294,13 @@ void Stylist::match(const Selector& selector) {
 }
 
 void Stylist::unmatch(const Selector& selector) {
-  auto i = std::ranges::find(m_matches, selector);
-  if(i != m_matches.end()) {
-    if(m_match_signals) {
-      auto signal = m_match_signals->find(selector);
-      m_matches.erase(i);
-      if(signal != m_match_signals->end()) {
-        signal->second(false);
-      }
-    } else {
-      m_matches.erase(i);
+  if(m_match_signals) {
+    auto signal = m_match_signals->find(selector);
+    if(m_matches.erase(selector) > 0 && signal != m_match_signals->end()) {
+      signal->second(false);
     }
+  } else {
+    m_matches.erase(selector);
   }
 }
 

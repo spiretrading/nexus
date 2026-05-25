@@ -238,7 +238,7 @@ namespace Spire::Styles {
       mutable boost::optional<Block> m_computed_block;
       std::vector<Stylist*> m_proxies;
       std::vector<Stylist*> m_principals;
-      std::vector<Selector> m_matches;
+      std::unordered_set<Selector> m_matches;
       mutable std::unique_ptr<MatchSignalMap> m_match_signals;
       std::unique_ptr<std::vector<Stylist*>> m_links;
       std::unique_ptr<std::vector<Stylist*>> m_backlinks;
