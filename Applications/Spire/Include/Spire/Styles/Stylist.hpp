@@ -1,11 +1,11 @@
 #ifndef SPIRE_STYLES_STYLIST_HPP
 #define SPIRE_STYLES_STYLIST_HPP
 #include <chrono>
+#include <flat_set>
 #include <memory>
 #include <type_traits>
 #include <unordered_set>
 #include <vector>
-#include <flat_set>
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/connection.hpp>
 #include <QWidget>
@@ -175,7 +175,7 @@ namespace Spire::Styles {
     private:
       struct StyleEventFilter;
       struct RuleEntry {
-        const Block* m_block;
+        std::shared_ptr<const Block> m_block;
         int m_priority;
         std::flat_set<const Stylist*> m_selection;
         SelectConnection m_connection;
@@ -260,7 +260,7 @@ namespace Spire::Styles {
       void for_each_proxy(F&& f);
       template<typename F>
       void for_each_proxy(F&& f) const;
-      void apply(const StyleSheet& style);
+      void apply(std::shared_ptr<StyleSheet> style);
       void apply(Stylist& source, const RuleEntry& rule);
       void unapply(const RuleEntry& rule);
       void apply();
