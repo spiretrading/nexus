@@ -21,7 +21,7 @@ namespace Spire {
         Signal<void (const std::shared_ptr<AccountListModel>& submission)>;
 
       /**
-       * Constructs an AccountListBox using a default local model.
+       * Constructs an AccountListBox using a default current.
        * @param accounts The set of accounts that can be queried.
        * @param parent The parent widget.
        */
