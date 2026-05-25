@@ -171,7 +171,7 @@ void Stylist::set_style(StyleSheet style) {
     }
   }
   m_style = load_styles(std::move(style));
-  apply(*m_style);
+  apply(m_style);
   for(auto& rule : rules) {
     auto i =
       std::ranges::find(m_rules, rule.get(), &std::unique_ptr<RuleEntry>::get);
@@ -219,7 +219,7 @@ void Stylist::add_proxy(QWidget& widget) {
   if(i == m_proxies.end()) {
     m_proxies.push_back(&stylist);
     stylist.m_principals.push_back(this);
-    stylist.apply(*m_style);
+    stylist.apply(m_style);
   }
 }
 
@@ -402,13 +402,13 @@ void Stylist::for_each_proxy(F&& f) const {
   const_cast<Stylist*>(this)->for_each_proxy(std::forward<F>(f));
 }
 
-void Stylist::apply(const StyleSheet& style) {
+void Stylist::apply(std::shared_ptr<StyleSheet> style) {
   static auto priority = 0;
-  for(auto& rule : style.get_rules()) {
+  for(auto& rule : style->get_rules()) {
     auto entry = std::make_unique<RuleEntry>();
     entry->m_priority = priority;
     ++priority;
-    entry->m_block = &rule.get_block();
+    entry->m_block = std::shared_ptr<const Block>(style, &rule.get_block());
     entry->m_connection = select(rule.get_selector(), *this,
       std::bind_front(&Stylist::on_selection_update, this, std::ref(*entry)));
     m_rules.push_back(std::move(entry));
