@@ -6,7 +6,7 @@ IF ERRORLEVEL 1 EXIT /B 0
 CALL :SetupVSEnvironment
 CALL :AddRepo "Beam" ^
   "https://www.github.com/spiretrading/beam" ^
-  "3feeb52055a9fd9e3ae736c2765a38b8d9ceb0b3" ^
+  "47dd209a58609cdc59f404c5d779bb5377e9137e" ^
   ":BuildBeam"
 CALL :InstallRepos || EXIT /B 1
 SET "PATH=!PATH!;!ROOT!\Strawberry\perl\site\bin;!ROOT!\Strawberry\perl\bin;!ROOT!\Strawberry\c\bin"
@@ -42,6 +42,12 @@ IF ERRORLEVEL 1 (
 )
 PUSHD qt-5.15.13
 perl init-repository --module-subset=qtbase,qtsvg,qttools,qttranslations
+powershell -NoProfile -ExecutionPolicy Bypass -Command "& {" ^
+  "$f = 'qtbase/src/corelib/global/qcompilerdetection.h';" ^
+  "(Get-Content $f) -replace " ^
+  "  '.*stdext::make_(unchecked|checked)_array_iterator.*', " ^
+  "  '' | Set-Content $f" ^
+"}"
 CALL configure -prefix !cd!\qtbase -opensource -static -mp -make libs ^
   -make tools -nomake examples -nomake tests -opengl desktop ^
   -no-feature-vulkan -no-icu -qt-freetype -qt-harfbuzz -qt-libpng ^
@@ -80,7 +86,7 @@ powershell -NoProfile -ExecutionPolicy Bypass -Command "& {" ^
   "  'new Group(*pGroup)' | Set-Content 'Message.cpp';" ^
 "}"
 POPD
-cmake . || EXIT /B 1
+cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 . || EXIT /B 1
 cmake --build . --target quickfix --config Debug
 cmake --build . --target quickfix --config Release
 MD "include\quickfix"
