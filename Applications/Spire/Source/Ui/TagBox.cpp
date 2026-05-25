@@ -5,6 +5,7 @@
 #include "Spire/Spire/AnyListValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
+#include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
@@ -12,6 +13,7 @@
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/RecycledListViewItemBuilder.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -153,6 +155,68 @@ struct TagBox::PartialListModel : public AnyListModel {
   }
 };
 
+struct TagBox::TagItemBuilder {
+  TagBox* m_tag_box;
+  std::unordered_map<QWidget*, std::shared_ptr<ProxyValueModel<QString>>>
+    m_proxies;
+
+  explicit TagItemBuilder(TagBox* tag_box)
+    : m_tag_box(tag_box) {}
+
+  QWidget* mount(const std::shared_ptr<AnyListModel>& list, int index) {
+    if(index == list->get_size() - 1) {
+      auto box = new QWidget();
+      enclose(*box, *m_tag_box->m_text_box);
+      connect(box, &QObject::destroyed, m_tag_box, [=] {
+        m_tag_box->m_text_box->setParent(m_tag_box);
+      });
+      return box;
+    }
+    auto source = make_read_only_to_text_model(
+      std::make_shared<AnyListValueModel>(list, index));
+    auto proxy =
+      std::make_shared<ProxyValueModel<QString>>(std::move(source));
+    auto tag = new Tag(proxy, m_tag_box);
+    tag->set_read_only(m_tag_box->m_is_read_only || !m_tag_box->isEnabled());
+    auto tag_box = m_tag_box;
+    tag->connect_delete_signal([=] {
+      QTimer::singleShot(0, tag_box, [=] {
+        auto tag_index = [&] {
+          for(auto i = 0; i < tag_box->get_tags()->get_size(); ++i) {
+            if(proxy->get() == to_text(tag_box->m_model->get(i))) {
+              return i;
+            }
+          }
+          return -1;
+        }();
+        tag_box->setFocus();
+        if(tag_index >= 0) {
+          tag_box->get_tags()->remove(tag_index);
+        }
+      });
+    });
+    m_proxies[tag] = proxy;
+    return tag;
+  }
+
+  void reset(
+      QWidget& widget, const std::shared_ptr<AnyListModel>& list, int index) {
+    auto i = m_proxies.find(&widget);
+    if(i == m_proxies.end()) {
+      return;
+    }
+    i->second->set_source(make_read_only_to_text_model(
+      std::make_shared<AnyListValueModel>(list, index)));
+    static_cast<Tag&>(widget).set_read_only(
+      m_tag_box->m_is_read_only || !m_tag_box->isEnabled());
+  }
+
+  void unmount(QWidget* widget) {
+    m_proxies.erase(widget);
+    delete widget;
+  }
+};
+
 TagBox::TagBox(std::shared_ptr<AnyListModel> list,
     std::shared_ptr<TextModel> current, QWidget* parent)
     : QWidget(parent),
@@ -172,7 +236,8 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   });
   m_text_box->get_current()->connect_update_signal(
     std::bind_front(&TagBox::on_text_box_current, this));
-  m_list_view = new ListView(m_model, std::bind_front(&TagBox::make_tag, this));
+  m_list_view = new ListView(
+    m_model, RecycledListViewItemBuilder(TagItemBuilder(this)));
   m_list_view->get_current()->set(m_model->get_size() - 1);
   update_style(*m_list_view, [] (auto& style) {
     style = LIST_VIEW_STYLE(style);
@@ -357,47 +422,6 @@ void TagBox::resizeEvent(QResizeEvent* event) {
 void TagBox::showEvent(QShowEvent* event) {
   install_text_proxy_event_filter();
   QWidget::showEvent(event);
-}
-
-QWidget* TagBox::make_tag(
-    const std::shared_ptr<AnyListModel>& model, int index) {
-  if(index == model->get_size() - 1) {
-    auto box = new QWidget();
-    enclose(*box, *m_text_box);
-    connect(box, &QObject::destroyed, this, [=] {
-      m_text_box->setParent(this);
-    });
-    return box;
-  }
-  auto label = make_read_only_to_text_model(
-    std::make_shared<AnyListValueModel>(model, index));
-  auto tag = new Tag(label, this);
-  tag->set_read_only(m_is_read_only || !isEnabled());
-  tag->connect_delete_signal([=] {
-    QTimer::singleShot(0, this, [=] {
-      auto tag_index = [&] {
-        for(auto i = 0; i < get_tags()->get_size(); ++i) {
-          if(label->get() == to_text(m_model->get(i))) {
-            return i;
-          }
-        }
-        return -1;
-      }();
-      setFocus();
-      if(tag_index >= 0) {
-        get_tags()->remove(tag_index);
-      }
-    });
-  });
-  label->connect_update_signal([=] (const auto& current) {
-    if(auto parent = tag->parentWidget()) {
-      if(auto box = parent->parentWidget()) {
-        box->resize(0, 0);
-        tag->adjustSize();
-      }
-    }
-  });
-  return tag;
 }
 
 int TagBox::get_available_width() const {

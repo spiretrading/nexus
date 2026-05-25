@@ -557,6 +557,12 @@ void ListView::pre_remove_item(int index) {
 }
 
 void ListView::remove_item(int index) {
+  auto& entry = *m_pending_removals.back();
+  if(entry.m_item->is_mounted()) {
+    if(auto widget = entry.m_item->unmount()) {
+      m_item_builder.unmount(widget, entry.m_index);
+    }
+  }
   m_pending_removals.pop_back();
   m_current_controller.remove(index);
   auto blocker = shared_connection_block(m_selection_connection);
