@@ -160,8 +160,8 @@ struct TagBox::TagItemBuilder {
   std::unordered_map<QWidget*, std::shared_ptr<ProxyValueModel<QString>>>
     m_proxies;
 
-  explicit TagItemBuilder(TagBox* tag_box)
-    : m_tag_box(tag_box) {}
+  explicit TagItemBuilder(TagBox& tag_box)
+    : m_tag_box(&tag_box) {}
 
   QWidget* mount(const std::shared_ptr<AnyListModel>& list, int index) {
     if(index == list->get_size() - 1) {
@@ -237,7 +237,7 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   m_text_box->get_current()->connect_update_signal(
     std::bind_front(&TagBox::on_text_box_current, this));
   m_list_view = new ListView(
-    m_model, RecycledListViewItemBuilder(TagItemBuilder(this)));
+    m_model, RecycledListViewItemBuilder(TagItemBuilder(*this)));
   m_list_view->get_current()->set(m_model->get_size() - 1);
   update_style(*m_list_view, [] (auto& style) {
     style = LIST_VIEW_STYLE(style);
