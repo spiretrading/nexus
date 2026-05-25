@@ -23,6 +23,7 @@ elseif(APPLE)
 endif()
 add_executable(
   SignInUiTester ${app_type} ${test_header_files} ${test_source_files})
+target_compile_definitions(SignInUiTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(
   ${test_header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)

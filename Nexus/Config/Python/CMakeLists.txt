@@ -6,7 +6,7 @@ add_library(Python SHARED ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Python PROPERTIES OUTPUT_NAME nexus)
 target_compile_definitions(Python
-  PRIVATE ASPEN_USE_DLL BEAM_USE_DLL NEXUS_BUILD_DLL)
+  PRIVATE ASPEN_USE_DLL BEAM_USE_DLL NEXUS_BUILD_DLL YAML_CPP_STATIC_DEFINE)
 set_target_properties(Python PROPERTIES CXX_VISIBILITY_PRESET default
   VISIBILITY_INLINES_HIDDEN 0)
 if(MSVC)

@@ -63,6 +63,8 @@ include_directories(${PROJECT_BINARY_DIR})
 file(GLOB_RECURSE header_files ${PROJECT_BINARY_DIR}/*.hpp)
 file(GLOB_RECURSE source_files Source/*.cpp)
 add_executable(SimulationOrderExecutionServer ${header_files} ${source_files})
+target_compile_definitions(
+  SimulationOrderExecutionServer PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(SimulationOrderExecutionServer
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}

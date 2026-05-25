@@ -1,8 +1,8 @@
 #ifndef SPIRE_STYLES_EXPRESSION_HPP
 #define SPIRE_STYLES_EXPRESSION_HPP
-#include <any>
 #include <concepts>
 #include <functional>
+#include <memory>
 #include <typeindex>
 #include <type_traits>
 #include <unordered_map>
@@ -76,7 +76,7 @@ namespace Details {
       Expression(Expression&&) = default;
 
       /** Returns the type of the underlying expression. */
-      const std::type_info& get_type() const;
+      std::type_index get_type() const;
 
       /** Casts the underlying expression to a specified type. */
       template<typename U>
@@ -89,15 +89,31 @@ namespace Details {
       friend Evaluator<typename Expression<U>::Type>
         make_evaluator(const Expression<U>& expression, const Stylist& stylist);
       friend struct std::hash<Expression>;
+      struct BaseHolder {
+        virtual ~BaseHolder() = default;
+
+        virtual std::type_index get_type() const = 0;
+      };
+      template<typename E>
+      struct Holder final : BaseHolder {
+        E m_value;
+
+        Holder(E value);
+
+        std::type_index get_type() const override;
+      };
       struct Operations {
-        std::function<bool (const Expression&, const Expression&)> m_is_equal;
-        std::function<Evaluator<Type> (const Expression&, const Stylist&)>
-          m_make_evaluator;
-        std::function<std::size_t (const Expression&)> m_hash;
+        bool (*m_is_equal)(const Expression&, const Expression&);
+        Evaluator<Type> (*m_make_evaluator)(const Expression&, const Stylist&);
+        std::size_t (*m_hash)(const Expression&);
+
+        Operations(bool (*is_equal)(const Expression&, const Expression&),
+          Evaluator<Type> (*make_evaluator)(const Expression&, const Stylist&),
+          std::size_t (*hash)(const Expression&)) noexcept;
       };
       static inline std::unordered_map<std::type_index, Operations>
         m_operations;
-      std::any m_expression;
+      std::shared_ptr<const BaseHolder> m_holder;
 
       Evaluator<Type> make_evaluator(const Stylist& stylist) const;
       Expression& operator =(const Expression&) = delete;
@@ -123,50 +139,71 @@ namespace Details {
   }
 
   template<typename T>
+  Expression<T>::Operations::Operations(
+    bool (*is_equal)(const Expression&, const Expression&),
+    Evaluator<Type> (*make_evaluator)(const Expression&, const Stylist&),
+    std::size_t (*hash)(const Expression&)) noexcept
+    : m_is_equal(is_equal),
+      m_make_evaluator(make_evaluator),
+      m_hash(hash) {}
+
+  template<typename T>
+  template<typename E>
+  Expression<T>::Holder<E>::Holder(E value)
+    : m_value(std::move(value)) {}
+
+  template<typename T>
+  template<typename E>
+  std::type_index Expression<T>::Holder<E>::get_type() const {
+    return typeid(E);
+  }
+
+  template<typename T>
   Expression<T>::Expression(Type value)
     : Expression(ConstantExpression(std::move(value))) {}
 
   template<typename T>
   template<typename E, typename>
   Expression<T>::Expression(E expression)
-      : m_expression(std::move(expression)) {
+      : m_holder(std::make_shared<Holder<E>>(std::move(expression))) {
     auto operations = m_operations.find(typeid(E));
     if(operations == m_operations.end()) {
       m_operations.emplace_hint(operations, typeid(E), Operations(
-        [] (const Expression& left, const Expression& right) {
-          return left.m_expression.type() == right.m_expression.type() &&
+        +[] (const Expression& left, const Expression& right) {
+          return left.get_type() == right.get_type() &&
             left.as<E>() == right.as<E>();
         },
-        [] (const Expression& expression, const Stylist& stylist) {
+        +[] (const Expression& expression, const Stylist& stylist) ->
+            Evaluator<Type> {
           return Spire::Styles::make_evaluator(expression.as<E>(), stylist);
         },
-        [] (const Expression& expression) {
+        +[] (const Expression& expression) {
           return std::hash<E>()(expression.as<E>());
         }));
     }
   }
 
   template<typename T>
-  const std::type_info& Expression<T>::get_type() const {
-    return m_expression.type();
+  std::type_index Expression<T>::get_type() const {
+    return m_holder->get_type();
   }
 
   template<typename T>
   template<typename U>
   const U& Expression<T>::as() const {
-    return std::any_cast<const U&>(m_expression);
+    return static_cast<const Holder<U>&>(*m_holder).m_value;
   }
 
   template<typename T>
   bool Expression<T>::operator ==(const Expression& expression) const {
-    auto& operations = m_operations.at(m_expression.type());
+    auto& operations = m_operations.at(m_holder->get_type());
     return operations.m_is_equal(*this, expression);
   }
 
   template<typename T>
   Evaluator<typename Expression<T>::Type>
       Expression<T>::make_evaluator(const Stylist& stylist) const {
-    auto& operations = m_operations.at(m_expression.type());
+    auto& operations = m_operations.at(m_holder->get_type());
     return operations.m_make_evaluator(*this, stylist);
   }
 }
