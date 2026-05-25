@@ -37,6 +37,11 @@ namespace Nexus {
         std::same_as<std::vector<SequencedTimeAndSale>>;
     store.store(std::declval<const SequencedTickerTimeAndSale&>());
     store.store(std::declval<const std::vector<SequencedTickerTimeAndSale>&>());
+    { store.load_ticker_statuses(std::declval<const TickerQuery&>()) } ->
+        std::same_as<std::vector<SequencedTickerStatus>>;
+    store.store(std::declval<const SequencedIndexedTickerStatus&>());
+    store.store(
+      std::declval<const std::vector<SequencedIndexedTickerStatus>&>());
   };
 
   /** Provides a generic interface over an arbitrary HistoricalDataStore. */
@@ -159,6 +164,27 @@ namespace Nexus {
        */
       void store(const std::vector<SequencedTickerTimeAndSale>& time_and_sales);
 
+      /**
+       * Executes a search query over a Ticker's TickerStatuses.
+       * @param query The search query to execute.
+       * @return The list of TickerStatuses that satisfy the search
+       *         <i>query</i>.
+       */
+      std::vector<SequencedTickerStatus> load_ticker_statuses(
+        const TickerQuery& query);
+
+      /**
+       * Stores a SequencedIndexedTickerStatus.
+       * @param status The SequencedIndexedTickerStatus to store.
+       */
+      void store(const SequencedIndexedTickerStatus& status);
+
+      /**
+       * Stores a list of SequencedIndexedTickerStatuses.
+       * @param statuses The list of SequencedIndexedTickerStatuses to store.
+       */
+      void store(const std::vector<SequencedIndexedTickerStatus>& statuses);
+
       /** Closes the data store. */
       void close();
 
@@ -189,6 +215,11 @@ namespace Nexus {
         virtual void store(const SequencedTickerTimeAndSale& time_and_sale) = 0;
         virtual void store(
           const std::vector<SequencedTickerTimeAndSale>& time_and_sales) = 0;
+        virtual std::vector<SequencedTickerStatus> load_ticker_statuses(
+          const TickerQuery& query) = 0;
+        virtual void store(const SequencedIndexedTickerStatus& status) = 0;
+        virtual void store(
+          const std::vector<SequencedIndexedTickerStatus>& statuses) = 0;
         virtual void close() = 0;
       };
       template<typename D>
@@ -221,6 +252,11 @@ namespace Nexus {
         void store(const SequencedTickerTimeAndSale& time_and_sale) override;
         void store(const std::vector<SequencedTickerTimeAndSale>&
           time_and_sales) override;
+        std::vector<SequencedTickerStatus> load_ticker_statuses(
+          const TickerQuery& query) override;
+        void store(const SequencedIndexedTickerStatus& status) override;
+        void store(
+          const std::vector<SequencedIndexedTickerStatus>& statuses) override;
         void close() override;
       };
       Beam::VirtualPtr<VirtualHistoricalDataStore> m_data_store;
@@ -261,6 +297,9 @@ namespace Nexus {
     } else if constexpr(std::is_same_v<T, TimeAndSale> ||
         std::is_same_v<T, SequencedTimeAndSale>) {
       return data_store.load_time_and_sales(query);
+    } else if constexpr(std::is_same_v<T, TickerStatus> ||
+        std::is_same_v<T, SequencedTickerStatus>) {
+      return data_store.load_ticker_statuses(query);
     } else {
       static_assert("Invalid market data type.");
     }
@@ -344,6 +383,21 @@ namespace Nexus {
   inline void HistoricalDataStore::store(
       const std::vector<SequencedTickerTimeAndSale>& time_and_sales) {
     m_data_store->store(time_and_sales);
+  }
+
+  inline std::vector<SequencedTickerStatus>
+      HistoricalDataStore::load_ticker_statuses(const TickerQuery& query) {
+    return m_data_store->load_ticker_statuses(query);
+  }
+
+  inline void HistoricalDataStore::store(
+      const SequencedIndexedTickerStatus& status) {
+    m_data_store->store(status);
+  }
+
+  inline void HistoricalDataStore::store(
+      const std::vector<SequencedIndexedTickerStatus>& statuses) {
+    m_data_store->store(statuses);
   }
 
   inline void HistoricalDataStore::close() {
@@ -442,6 +496,25 @@ namespace Nexus {
   void HistoricalDataStore::WrappedHistoricalDataStore<D>::store(
       const std::vector<SequencedTickerTimeAndSale>& time_and_sales) {
     m_data_store->store(time_and_sales);
+  }
+
+  template<typename D>
+  std::vector<SequencedTickerStatus> HistoricalDataStore::
+      WrappedHistoricalDataStore<D>::load_ticker_statuses(
+        const TickerQuery& query) {
+    return m_data_store->load_ticker_statuses(query);
+  }
+
+  template<typename D>
+  void HistoricalDataStore::WrappedHistoricalDataStore<D>::store(
+      const SequencedIndexedTickerStatus& status) {
+    m_data_store->store(status);
+  }
+
+  template<typename D>
+  void HistoricalDataStore::WrappedHistoricalDataStore<D>::store(
+      const std::vector<SequencedIndexedTickerStatus>& statuses) {
+    m_data_store->store(statuses);
   }
 
   template<typename D>

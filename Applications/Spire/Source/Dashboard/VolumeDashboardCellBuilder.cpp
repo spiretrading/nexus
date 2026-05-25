@@ -20,7 +20,7 @@ std::unique_ptr<DashboardCell> VolumeDashboardCellBuilder::Make(
   auto baseQueue = std::make_shared<Queue<Nexus::QueryVariant>>();
   auto queue = std::static_pointer_cast<QueueReader<Quantity>>(
     convert(baseQueue, [] (const Nexus::QueryVariant& value) {
-      return boost::get<Quantity>(value);
+      return std::get<Quantity>(value);
     }));
   serviceClients.get_charting_client().query(query, baseQueue);
   return std::make_unique<QueueDashboardCell>(queue);

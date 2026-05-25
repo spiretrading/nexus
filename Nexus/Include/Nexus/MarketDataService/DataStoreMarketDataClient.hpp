@@ -46,6 +46,10 @@ namespace Nexus {
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
       void query(const TickerQuery& query,
         Beam::ScopedQueueWriter<TimeAndSale> queue);
+      void query(const TickerQuery& query,
+        Beam::ScopedQueueWriter<SequencedTickerStatus> queue);
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue);
       std::vector<TickerInfo> query(const TickerInfoQuery& query);
       TickerSnapshot load_snapshot(const Ticker& ticker);
       PriceCandlestick load_session_candlestick(const Ticker& ticker);
@@ -136,9 +140,27 @@ namespace Nexus {
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
-  void DataStoreMarketDataClient<D>::query(const TickerQuery& query,
-      Beam::ScopedQueueWriter<TimeAndSale> queue) {
+  void DataStoreMarketDataClient<D>::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue) {
     auto values = m_data_store->load_time_and_sales(query);
+    for(auto& value : values) {
+      queue.push(std::move(*value));
+    }
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void DataStoreMarketDataClient<D>::query(const TickerQuery& query,
+      Beam::ScopedQueueWriter<SequencedTickerStatus> queue) {
+    auto values = m_data_store->load_ticker_statuses(query);
+    for(auto& value : values) {
+      queue.push(std::move(value));
+    }
+  }
+
+  template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
+  void DataStoreMarketDataClient<D>::query(const TickerQuery& query,
+      Beam::ScopedQueueWriter<TickerStatus> queue) {
+    auto values = m_data_store->load_ticker_statuses(query);
     for(auto& value : values) {
       queue.push(std::move(*value));
     }

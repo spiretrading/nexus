@@ -143,6 +143,12 @@ namespace Nexus::Python {
   void export_ticker_info(pybind11::module& module);
 
   /**
+   * Exports the TickerStatus struct.
+   * @param module The module to export to.
+   */
+  void export_ticker_status(pybind11::module& module);
+
+  /**
    * Exports the Side enum.
    * @param module The module to export to.
    */

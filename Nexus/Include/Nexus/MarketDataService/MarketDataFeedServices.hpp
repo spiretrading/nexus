@@ -11,8 +11,8 @@
 #include "Nexus/MarketDataService/VenueQuery.hpp"
 
 namespace Nexus {
-  using MarketDataFeedMessage = boost::variant<
-    TickerBboQuote, TickerBookQuote, TickerTimeAndSale, VenueOrderImbalance>;
+  using MarketDataFeedMessage = boost::variant<TickerBboQuote, TickerBookQuote,
+    TickerTimeAndSale, IndexedTickerStatus, VenueOrderImbalance>;
 
   /** Standard name for the market data feed service. */
   inline const auto MARKET_DATA_FEED_SERVICE_NAME =

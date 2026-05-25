@@ -67,6 +67,7 @@ namespace Spire {
 
     private:
       struct PartialListModel;
+      struct TagItemBuilder;
       std::shared_ptr<PartialListModel> m_model;
       TextBox* m_text_box;
       ListView* m_list_view;
@@ -95,7 +96,6 @@ namespace Spire {
       boost::signals2::scoped_connection m_text_area_box_style_connection;
       mutable boost::optional<QSize> m_size_hint;
 
-      QWidget* make_tag(const std::shared_ptr<AnyListModel>& model, int index);
       int get_available_width() const;
       int get_height_for_width(int width) const;
       void set_overflow(Styles::Overflow overflow);

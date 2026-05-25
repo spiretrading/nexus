@@ -382,7 +382,7 @@ void AnyComboBox::submit(const QString& query, bool is_passive) {
   m_data->m_submit_signal(value);
 }
 
-void AnyComboBox::on_current(const std::any& current) {
+void AnyComboBox::on_current(const AnyRef& current) {
   auto input = any_cast<QString>(m_input_box->get_current()->get());
   if(!is_equal(current, m_query_model->parse(input))) {
     auto text = to_text(current);
