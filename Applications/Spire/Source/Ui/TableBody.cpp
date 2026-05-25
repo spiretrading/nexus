@@ -1281,7 +1281,6 @@ void TableBody::update_visible_region() {
   mount_visible_rows();
   get_layout().clear_pending_layouts();
   setUpdatesEnabled(are_updates_enabled);
-  layout()->invalidate();
   --m_resize_guard;
 }
 
@@ -1640,6 +1639,7 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
       m_operation_counter = 0;
     }
     update_visible_region();
+    layout()->invalidate();
   }
 }
 
