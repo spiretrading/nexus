@@ -53,17 +53,18 @@ AccountListBox::AccountListBox(std::shared_ptr<AccountQueryModel> accounts,
       m_accounts(std::make_shared<AccountToAccountIdQueryModel>(
         std::move(accounts))),
       m_current(std::move(current)) {
-  auto id_list = make_transform_list_model(m_current,
-    [] (const AccountListItem::Account& account) {
-      return account.m_id;
-    },
-    [=] (const QString& id) {
-      if(auto account = m_accounts->m_source->parse(id)) {
-        return *account;
-      }
-      throw std::invalid_argument("Invalid account id.");
-    });
-  m_tag_combo_box = new TagComboBox<QString>(m_accounts, std::move(id_list),
+  auto to_id = [] (const AccountListItem::Account& account) {
+    return account.m_id;
+  };
+  auto from_id = [=] (const QString& id) {
+    if(auto account = m_accounts->m_source->parse(id)) {
+      return *account;
+    }
+    throw std::invalid_argument("Invalid account id.");
+  };
+  using IdListModel = decltype(TransformListModel(m_current, to_id, from_id));
+  m_tag_combo_box = new TagComboBox<QString>(m_accounts,
+    std::make_shared<IdListModel>(m_current, to_id, from_id),
     [=] (const auto& list, auto index) {
       if(auto account = m_accounts->m_source->parse(list->get(index))) {
         return new AccountListItem(*account);
