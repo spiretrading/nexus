@@ -131,6 +131,7 @@
 #include "Spire/Ui/TimeInForceFilterPanel.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
+#include "Spire/Ui/TradingGroupListBox.hpp"
 #include "Spire/Ui/TransitionView.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/VenueBox.hpp"
@@ -869,6 +870,24 @@ namespace {
     panel->set_is_draggable(draggable);
     panel->set_positioning(positioning);
     panel->show();
+  }
+
+  std::shared_ptr<TradingGroupQueryModel> populate_trading_group_query_model() {
+    auto model = std::make_shared<LocalQueryModel<DirectoryEntry>>();
+    auto add = [&] (unsigned int id, const std::string& name) {
+      model->add(QString::fromStdString(name),
+        DirectoryEntry::make_directory(id, name));
+    };
+    add(1, "G01");
+    add(2, "G11");
+    add(3, "G15");
+    add(4, "M13");
+    add(5, "M15");
+    add(6, "M20");
+    add(7, "O26");
+    add(8, "O34");
+    add(9, "O88");
+    return model;
   }
 
   std::shared_ptr<TickerInfoQueryModel> populate_ticker_query_model() {
@@ -5504,6 +5523,12 @@ UiProfile Spire::make_tooltip_profile() {
     return label;
   });
   return profile;
+}
+
+UiProfile Spire::make_trading_group_list_box_profile() {
+  return setup_tag_combo_box_profile("TradingGroupListBox", [] {
+    return make_trading_group_list_box(populate_trading_group_query_model());
+  });
 }
 
 UiProfile Spire::make_transition_view_profile() {
