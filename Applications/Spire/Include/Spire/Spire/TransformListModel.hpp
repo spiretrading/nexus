@@ -207,6 +207,9 @@ namespace Spire {
   QValidator::State TransformListModel<T, U, F, G>::insert(
       const Type& value, int index) {
     try {
+      if(index == m_source->get_size()) {
+        return m_source->insert(m_g(Source(), value), index);
+      }
       return m_source->insert(m_g(m_source->get(index), value), index);
     } catch(const std::invalid_argument&) {
       return QValidator::State::Invalid;
