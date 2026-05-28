@@ -167,8 +167,8 @@ struct TagBox::TagItemBuilder {
     if(index == list->get_size() - 1) {
       auto box = new QWidget();
       enclose(*box, *m_tag_box->m_text_box);
-      connect(box, &QObject::destroyed, m_tag_box, [=] {
-        m_tag_box->m_text_box->setParent(m_tag_box);
+      connect(box, &QObject::destroyed, m_tag_box, [tag_box = m_tag_box] {
+        tag_box->m_text_box->setParent(tag_box);
       });
       return box;
     }
