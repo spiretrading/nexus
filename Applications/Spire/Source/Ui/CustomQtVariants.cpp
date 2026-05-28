@@ -591,9 +591,9 @@ bool Spire::is_equal(const std::any& left, const std::any& right) {
   }
   return is_equal_any<bool, int, std::int64_t, std::uint64_t, Quantity, double,
     gregorian::date, ptime, posix_time::time_duration, std::string, CountryCode,
-    CurrencyId, CurrencyId, DirectoryEntry, Money, Scope, OrderStatus,
-    OrderType, PositionSideToken, Side, Ticker, TimeInForce, Venue, QColor,
-    QKeySequence, QString>(left, right);
+    CurrencyId, DirectoryEntry, Money, Scope, OrderStatus, OrderType,
+    PositionSideToken, Side, Ticker, TimeInForce, Venue, QColor, QKeySequence,
+    QString>(left, right);
 }
 
 template<>
