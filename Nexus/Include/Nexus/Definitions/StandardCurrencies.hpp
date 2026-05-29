@@ -13,6 +13,7 @@ namespace Details {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(36);
         entry.m_code = "AUD";
+        entry.m_name = "Australian Dollar";
         entry.m_sign = "$";
         database.add(entry);
       }
@@ -20,6 +21,7 @@ namespace Details {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(124);
         entry.m_code = "CAD";
+        entry.m_name = "Canadian Dollar";
         entry.m_sign = "$";
         database.add(entry);
       }
@@ -27,6 +29,7 @@ namespace Details {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(978);
         entry.m_code = "EUR";
+        entry.m_name = "Euro";
         entry.m_sign = "\xE2\x82\xAC";
         database.add(entry);
       }
@@ -34,6 +37,7 @@ namespace Details {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(826);
         entry.m_code = "GBP";
+        entry.m_name = "Pound Sterling";
         entry.m_sign = "\xC2\xA3";
         database.add(entry);
       }
@@ -41,6 +45,7 @@ namespace Details {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(344);
         entry.m_code = "HKD";
+        entry.m_name = "Hong Kong Dollar";
         entry.m_sign = "$";
         database.add(entry);
       }
@@ -48,6 +53,7 @@ namespace Details {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(392);
         entry.m_code = "JPY";
+        entry.m_name = "Yen";
         entry.m_sign = "\xC2\xA5";
         database.add(entry);
       }
@@ -55,14 +61,8 @@ namespace Details {
         auto entry = CurrencyDatabase::Entry();
         entry.m_id = CurrencyId(840);
         entry.m_code = "USD";
+        entry.m_name = "US Dollar";
         entry.m_sign = "$";
-        database.add(entry);
-      }
-      {
-        auto entry = CurrencyDatabase::Entry();
-        entry.m_id = CurrencyId(1001);
-        entry.m_code = "XBT";
-        entry.m_sign = "\xE2\x82\xBF";
         database.add(entry);
       }
       return database;
@@ -89,7 +89,6 @@ namespace Details {
     inline const auto HKD = CURRENCIES.from("HKD").m_id;
     inline const auto JPY = CURRENCIES.from("JPY").m_id;
     inline const auto USD = CURRENCIES.from("USD").m_id;
-    inline const auto XBT = CURRENCIES.from("XBT").m_id;
   }
 }
 

@@ -128,22 +128,26 @@ export namespace CurrencyDatabase {
   export class Entry {
 
     /** Represents an invalid entry. */
-    public static readonly NONE = new Entry(new Currency(), '?', '????');
+    public static readonly NONE =
+      new Entry(new Currency(), '?', 'Unknown', '????');
 
     /** Constructs an entry from a JSON object. */
     public static fromJson(value: any) {
-      return new Entry(Currency.fromJson(value.id), value.code, value.sign);
+      return new Entry(
+        Currency.fromJson(value.id), value.code, value.name, value.sign);
     }
 
     /**
      * Constructs an entry.
      * @param currency - The currency to represent.
      * @param code - The currency's code ie. (USD)
+     * @param name - The currency's full name ie. (US Dollar)
      * @param sign - The currency's sign ie. ($)
      */
-    constructor(currency: Currency, code: string, sign: string) {
+    constructor(currency: Currency, code: string, name: string, sign: string) {
       this._currency = currency;
       this._code = code;
+      this._name = name;
       this._sign = sign;
     }
 
@@ -157,6 +161,11 @@ export namespace CurrencyDatabase {
       return this._code;
     }
 
+    /** Returns the currency's full name. */
+    public get name(): string {
+      return this._name;
+    }
+
     /** Returns the currency sign. */
     public get sign(): string {
       return this._sign;
@@ -165,7 +174,8 @@ export namespace CurrencyDatabase {
     /** Tests two entries for equality. */
     public equals(other: Entry): boolean {
       return other && this._currency.equals(other._currency) &&
-        this._code === other._code && this._sign === other._sign;
+        this._code === other._code && this._name === other._name &&
+        this._sign === other._sign;
     }
 
     /** Converts this object to JSON. */
@@ -173,12 +183,14 @@ export namespace CurrencyDatabase {
       return {
         id: this._currency.code,
         code: this._code,
+        name: this._name,
         sign: this._sign
       };
     }
 
     private _currency: Currency;
     private _code: string;
+    private _name: string;
     private _sign: string;
   }
 }
