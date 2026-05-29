@@ -491,11 +491,17 @@ namespace Details {
       }
     }();
     order->with([&] (auto status, const auto& reports) {
-      if(is_terminal(status) || reports.empty()) {
+      if(reports.empty() && report.m_status != OrderStatus::PENDING_NEW ||
+          !reports.empty() && is_terminal(status)) {
         return;
       }
       auto updated_report = report;
-      updated_report.m_sequence = reports.back().m_sequence + 1;
+      updated_report.m_sequence = [&] {
+        if(reports.empty()) {
+          return 0;
+        }
+        return reports.back().m_sequence + 1;
+      }();
       updated_report.m_timestamp = updated_timestamp;
       if(report.m_last_quantity != 0) {
         auto filled_quantity = Quantity(0);

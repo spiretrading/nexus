@@ -2,6 +2,7 @@
 #define SPIRE_CUSTOM_VARIANTS_HPP
 #include <any>
 #include <boost/any.hpp>
+#include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <boost/date_time/gregorian/greg_date.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/optional/optional.hpp>
@@ -44,6 +45,7 @@ namespace Spire {
 #define SPIRE_METATYPES
 Q_DECLARE_METATYPE(std::any);
 Q_DECLARE_METATYPE(boost::any);
+Q_DECLARE_METATYPE(Beam::DirectoryEntry);
 Q_DECLARE_METATYPE(boost::gregorian::date);
 Q_DECLARE_METATYPE(boost::posix_time::ptime);
 Q_DECLARE_METATYPE(boost::posix_time::time_duration);
@@ -118,6 +120,10 @@ namespace Spire {
   /** Returns the text representation of a time_duration. */
   QString to_text(
     boost::posix_time::time_duration time, const QLocale& locale = QLocale());
+
+  /** Returns the text representation of a DirectoryEntry. */
+  QString to_text(
+    const Beam::DirectoryEntry& entry, const QLocale& locale = QLocale());
 
   /** Returns the text representation of a CountryCode. */
   QString to_text(Nexus::CountryCode code, const QLocale& locale = QLocale());
