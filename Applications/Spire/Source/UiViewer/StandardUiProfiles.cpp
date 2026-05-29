@@ -28,6 +28,7 @@
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/AccountBox.hpp"
+#include "Spire/Ui/AccountListBox.hpp"
 #include "Spire/Ui/AccountListItem.hpp"
 #include "Spire/Ui/AdaptiveBox.hpp"
 #include "Spire/Ui/Box.hpp"
@@ -130,6 +131,7 @@
 #include "Spire/Ui/TimeInForceFilterPanel.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
+#include "Spire/Ui/TradingGroupListBox.hpp"
 #include "Spire/Ui/TransitionView.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/VenueBox.hpp"
@@ -870,6 +872,24 @@ namespace {
     panel->show();
   }
 
+  std::shared_ptr<TradingGroupQueryModel> populate_trading_group_query_model() {
+    auto model = std::make_shared<LocalQueryModel<DirectoryEntry>>();
+    auto add = [&] (unsigned int id, const std::string& name) {
+      model->add(QString::fromStdString(name),
+        DirectoryEntry::make_directory(id, name));
+    };
+    add(1, "G01");
+    add(2, "G11");
+    add(3, "G15");
+    add(4, "M13");
+    add(5, "M15");
+    add(6, "M20");
+    add(7, "O26");
+    add(8, "O34");
+    add(9, "O88");
+    return model;
+  }
+
   std::shared_ptr<TickerInfoQueryModel> populate_ticker_query_model() {
     auto ticker_infos = std::vector<TickerInfo>();
     auto add_ticker = [&] (const Ticker& ticker,
@@ -1255,6 +1275,52 @@ UiProfile Spire::make_account_box_profile() {
     return box;
   });
   return profile;
+}
+
+UiProfile Spire::make_account_list_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("read_only", false));
+  return UiProfile("AccountListBox", properties, [] (auto& profile) {
+    auto box = new AccountListBox(populate_account_query_model());
+    box->setMinimumWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal([=] (const auto& placeholder) {
+      box->set_placeholder(placeholder);
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&AccountListBox::set_read_only, box));
+    auto current_slot = profile.make_event_slot<QString>("Current");
+    auto print_current = [=] {
+      auto result = QString();
+      for(auto i = 0; i < box->get_current()->get_size(); ++i) {
+        result += QString("[%1] ").arg(box->get_current()->get(i).m_id);
+      }
+      current_slot(result);
+    };
+    box->get_current()->connect_operation_signal(
+      [=] (const auto& operation) {
+        visit(operation,
+          [=] (const AccountListModel::AddOperation&) {
+            print_current();
+          },
+          [=] (const AccountListModel::RemoveOperation&) {
+            print_current();
+          });
+      });
+    auto submit_slot = profile.make_event_slot<QString>("Submit");
+    box->connect_submit_signal([=] (const auto& submission) {
+      auto result = QString();
+      for(auto i = 0; i < submission->get_size(); ++i) {
+        result += QString("[%1] ").arg(submission->get(i).m_id);
+      }
+      submit_slot(result);
+    });
+    return box;
+  });
 }
 
 UiProfile Spire::make_account_list_item_profile() {
@@ -5454,6 +5520,12 @@ UiProfile Spire::make_tooltip_profile() {
     return label;
   });
   return profile;
+}
+
+UiProfile Spire::make_trading_group_list_box_profile() {
+  return setup_tag_combo_box_profile("TradingGroupListBox", [] {
+    return make_trading_group_list_box(populate_trading_group_query_model());
+  });
 }
 
 UiProfile Spire::make_transition_view_profile() {

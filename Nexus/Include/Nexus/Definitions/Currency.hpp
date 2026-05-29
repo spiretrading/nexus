@@ -63,6 +63,9 @@ namespace Nexus {
         /** The currency's three letter code. */
         Beam::FixedString<3> m_code;
 
+        /** The currency's full name (e.g. "US Dollar"). */
+        std::string m_name;
+
         /** The currency's sign. */
         std::string m_sign;
 
@@ -73,6 +76,7 @@ namespace Nexus {
       inline static const auto NONE = [] {
         auto none = Entry();
         none.m_code = "???";
+        none.m_name = "Unknown";
         none.m_sign = "?";
         return none;
       }();
@@ -150,6 +154,7 @@ namespace Nexus {
       auto entry = CurrencyDatabase::Entry();
       entry.m_id = CurrencyId(Beam::extract<std::uint16_t>(node, "id"));
       entry.m_code = Beam::extract<std::string>(node, "code");
+      entry.m_name = Beam::extract<std::string>(node, "name");
       entry.m_sign = Beam::extract<std::string>(node, "sign");
       return entry;
     }, std::runtime_error("Failed to parse currency database entry."));
@@ -341,6 +346,7 @@ namespace Beam {
         unsigned int version) const {
       shuttle.shuttle("id", value.m_id);
       shuttle.shuttle("code", value.m_code);
+      shuttle.shuttle("name", value.m_name);
       shuttle.shuttle("sign", value.m_sign);
     }
   };

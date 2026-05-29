@@ -197,8 +197,9 @@ class TextBox::LineEdit : public QLineEdit {
       QWidget::setTabOrder(m_text_box, this);
       m_text_box->setFocusProxy(this);
       enclose(*m_text_box, *this);
-      m_placeholder_style_connection = connect_style_signal(*m_text_box,
-        Placeholder(), std::bind_front(&LineEdit::on_placeholder_style, this));
+      m_text_box->m_placeholder_style_connection = connect_style_signal(
+        *m_text_box, Placeholder(),
+        std::bind_front(&LineEdit::on_placeholder_style, this));
       on_placeholder_style();
     }
 
@@ -353,7 +354,6 @@ class TextBox::LineEdit : public QLineEdit {
     bool m_has_update;
     scoped_connection m_current_connection;
     scoped_connection m_highlight_connection;
-    scoped_connection m_placeholder_style_connection;
 
     void elide_placeholder_text() {
       m_elided_placeholder =
