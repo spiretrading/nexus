@@ -8,6 +8,9 @@ namespace Spire {
   /** Returns a UiProfile for the AccountBox. */
   UiProfile make_account_box_profile();
 
+  /** Returns a UiProfile for the AccountListBox. */
+  UiProfile make_account_list_box_profile();
+
   /** Returns a UiProfile for the AccountListItem. */
   UiProfile make_account_list_item_profile();
 
@@ -340,6 +343,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the Tooltip. */
   UiProfile make_tooltip_profile();
+
+  /** Returns a UiProfile for the TradingGroupListBox. */
+  UiProfile make_trading_group_list_box_profile();
 
   /** Returns a UiProfile for the TransitionView. */
   UiProfile make_transition_view_profile();

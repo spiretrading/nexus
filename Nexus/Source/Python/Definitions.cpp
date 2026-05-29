@@ -139,6 +139,7 @@ void Nexus::Python::export_currency(module& module) {
     class_<CurrencyDatabase::Entry>(currency_database, "Entry")).
     def_readwrite("id", &CurrencyDatabase::Entry::m_id).
     def_readwrite("code", &CurrencyDatabase::Entry::m_code).
+    def_readwrite("name", &CurrencyDatabase::Entry::m_name).
     def_readwrite("sign", &CurrencyDatabase::Entry::m_sign);
   export_view<const CurrencyDatabase::Entry>(
     module, "CurrencyDatabaseEntryView");
@@ -162,7 +163,6 @@ void Nexus::Python::export_currencies(module& module) {
   submodule.add_object("HKD", cast(Currencies::HKD));
   submodule.add_object("JPY", cast(Currencies::JPY));
   submodule.add_object("USD", cast(Currencies::USD));
-  submodule.add_object("XBT", cast(Currencies::XBT));
 }
 
 void Nexus::Python::export_currency_pair(module& module) {

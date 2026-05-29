@@ -19,48 +19,40 @@ namespace {
     void fromAdmin(const FIX::Message&, const FIX::SessionID&) override {}
     void fromApp(const FIX::Message&, const FIX::SessionID&) override {}
   };
+
+  struct Fixture {
+    TestApplication m_application;
+    FIX::MemoryStoreFactory m_store_factory;
+    FIX::DataDictionaryProvider m_dictionary_provider;
+    FIX::Session m_session;
+    FixOrderLog m_log;
+    FIX::SenderCompID m_sender_comp_id;
+    FIX::TargetCompID m_target_comp_id;
+
+    Fixture()
+      : m_session(m_application, m_store_factory,
+          FIX::SessionID("FIX.4.2", "SENDER", "TARGET"),
+          m_dictionary_provider,
+          FIX::TimeRange(
+            FIX::UtcTimeOnly(0, 0, 0), FIX::UtcTimeOnly(23, 59, 59)),
+          30, static_cast<FIX::LogFactory*>(nullptr)),
+        m_sender_comp_id("SENDER"),
+        m_target_comp_id("TARGET") {}
+  };
 }
 
 TEST_SUITE("FixOrderLog") {
   TEST_CASE("submit_and_find") {
-    auto settings_stream = std::stringstream();
-    settings_stream <<
-      "[DEFAULT]\n"
-      "ConnectionType=initiator\n"
-      "StartTime=00:00:00\n"
-      "EndTime=23:59:59\n"
-      "heartbeat_interval=30\n"
-      "FileStorePath=.\n"
-      "SenderCompID=SENDER\n"
-      "TargetCompID=TARGET\n"
-      "[SESSION]\n"
-      "BeginString=FIX.4.2\n"
-      "SenderCompID=SENDER\n"
-      "TargetCompID=TARGET\n";
-    auto settings = FIX::SessionSettings(settings_stream);
-    auto application = TestApplication();
-    auto store_factory = FIX::MemoryStoreFactory();
-    auto dictionary_provider = FIX::DataDictionaryProvider();
-    auto start = FIX::UtcTimeOnly(0, 0, 0);
-    auto end = FIX::UtcTimeOnly(23, 59, 59);
-    auto session_time = FIX::TimeRange(start, end);
-    int heartbeat_interval = 30;
-    auto log_factory = static_cast<FIX::LogFactory*>(nullptr);
-    auto session_id = FIX::SessionID("FIX.4.2", "SENDER", "TARGET");
-    auto session = FIX::Session(
-      application, store_factory, session_id, dictionary_provider, session_time,
-      heartbeat_interval, log_factory);
-    auto log = FixOrderLog();
-    auto sender_comp_id = FIX::SenderCompID("SENDER");
-    auto target_comp_id = FIX::TargetCompID("TARGET");
-    bool called = false;
+    auto fixture = Fixture();
+    auto is_called = false;
     auto fields = make_limit_order_fields(
       parse_ticker("TST.TSX"), Side::BID, "TSX", 100, Money::ONE);
     auto info =
       OrderInfo(fields, 123, time_from_string("2024-05-21 00:00:10.000"));
-    auto order = log.submit(info, sender_comp_id, target_comp_id,
+    auto order = fixture.m_log.submit(info, fixture.m_sender_comp_id,
+      fixture.m_target_comp_id,
       [&] (Out<FIX42::NewOrderSingle> new_order_single) {
-        called = true;
+        is_called = true;
         auto cl_ord_id = FIX::ClOrdID();
         REQUIRE_NOTHROW(new_order_single->get(cl_ord_id));
         REQUIRE(cl_ord_id.getString() == "123");
@@ -86,8 +78,8 @@ TEST_SUITE("FixOrderLog") {
         REQUIRE(utc_transact_time.getYear() == expected_time.date().year());
         REQUIRE(utc_transact_time.getMonth() == expected_time.date().month());
         REQUIRE(utc_transact_time.getDay() == expected_time.date().day());
-        REQUIRE(utc_transact_time.getHour() ==
-          expected_time.time_of_day().hours());
+        REQUIRE(
+          utc_transact_time.getHour() == expected_time.time_of_day().hours());
         REQUIRE(utc_transact_time.getMinute() ==
           expected_time.time_of_day().minutes());
         REQUIRE(utc_transact_time.getSecond() ==
@@ -99,9 +91,44 @@ TEST_SUITE("FixOrderLog") {
         REQUIRE(tif == FIX::TimeInForce_DAY);
       });
     REQUIRE(order);
-    REQUIRE(called);
-    auto found = log.find(info.m_id);
+    REQUIRE(is_called);
+    auto found = fixture.m_log.find(info.m_id);
     REQUIRE(found);
     REQUIRE(found->get_info() == info);
+  }
+
+  TEST_CASE("update_with_empty_reports") {
+    auto fixture = Fixture();
+    auto fields = make_limit_order_fields(
+      parse_ticker("TST.TSX"), Side::BID, "TSX", 100, Money::ONE);
+    auto info =
+      OrderInfo(fields, 456, time_from_string("2024-05-21 00:00:10.000"));
+    auto order = fixture.m_log.submit(info, fixture.m_sender_comp_id,
+      fixture.m_target_comp_id, [&] (Out<FIX42::NewOrderSingle>) {});
+    REQUIRE(order);
+    auto found = fixture.m_log.find(info.m_id);
+    REQUIRE(found);
+    found->with([&] (auto status, const auto& reports) {
+      const_cast<std::vector<ExecutionReport>&>(reports).clear();
+    });
+    auto execution_session = OrderExecutionSession();
+    auto timestamp = time_from_string("2024-05-21 00:00:11.000");
+    auto report = ExecutionReport();
+    report.m_id = info.m_id;
+    SUBCASE("pending_new") {
+      report.m_status = OrderStatus::PENDING_NEW;
+      fixture.m_log.update(execution_session, info.m_id, report, timestamp);
+      found->with([&] (auto status, const auto& reports) {
+        REQUIRE(reports.size() == 1);
+        REQUIRE(reports.back().m_status == OrderStatus::PENDING_NEW);
+      });
+    }
+    SUBCASE("non_pending_new") {
+      report.m_status = OrderStatus::NEW;
+      fixture.m_log.update(execution_session, info.m_id, report, timestamp);
+      found->with([&] (auto status, const auto& reports) {
+        REQUIRE(reports.empty());
+      });
+    }
   }
 }

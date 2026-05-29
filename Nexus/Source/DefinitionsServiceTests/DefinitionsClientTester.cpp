@@ -159,6 +159,7 @@ TEST_SUITE("DefinitionsClient") {
     auto test_currency = CurrencyDatabase::Entry();
     test_currency.m_id = CurrencyId(999);
     test_currency.m_code = "TST";
+    test_currency.m_name = "Test";
     test_currency.m_sign = "T";
     auto test_currencies = CurrencyDatabase();
     test_currencies.add(test_currency);

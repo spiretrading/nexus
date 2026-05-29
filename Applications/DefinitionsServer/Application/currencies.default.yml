@@ -1,18 +1,31 @@
 ---
 currencies:
   - code: AUD
+    name: Australian Dollar
     sign: $
     id: 36
   - code: CAD
+    name: Canadian Dollar
     sign: $
     id: 124
+  - code: EUR
+    name: Euro
+    sign: €
+    id: 978
+  - code: GBP
+    name: Pound Sterling
+    sign: £
+    id: 826
   - code: HKD
+    name: Hong Kong Dollar
     sign: $
     id: 344
   - code: JPY
+    name: Yen
     sign: ¥
     id: 392
   - code: USD
+    name: US Dollar
     sign: $
     id: 840
 ...
