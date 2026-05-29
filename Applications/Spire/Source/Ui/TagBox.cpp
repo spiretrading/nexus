@@ -319,11 +319,11 @@ const AnyRef& AnyTagBox::get_submission() const {
   return m_input_box->get_submission();
 }
 
-AnyInputBox& AnyTagBox::get_input_box() {
+const AnyInputBox& AnyTagBox::get_input_box() const {
   return *m_input_box;
 }
 
-const AnyInputBox& AnyTagBox::get_input_box() const {
+AnyInputBox& AnyTagBox::get_input_box() {
   return *m_input_box;
 }
 

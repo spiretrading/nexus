@@ -42,10 +42,10 @@ namespace Spire {
       const AnyRef& get_submission() const;
 
       /** Returns the input box. */
-      AnyInputBox& get_input_box();
+      const AnyInputBox& get_input_box() const;
 
       /** Returns the input box. */
-      const AnyInputBox& get_input_box() const;
+      AnyInputBox& get_input_box();
 
       /** Sets the placeholder text. */
       void set_placeholder(const QString& placeholder);
