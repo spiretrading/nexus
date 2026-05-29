@@ -9,6 +9,9 @@
 #include <QMessageBox>
 #include <QScreen>
 #include <QWindow>
+#include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
+#include "Spire/Canvas/Types/TickerType.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -20,6 +23,36 @@ using namespace boost;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 
+namespace {
+  bool TryLoad(SharedBuffer& buffer,
+      Out<std::vector<std::unique_ptr<WindowSettings>>> windowSettings) {
+    auto attempt =
+      [&] (TypeRegistry<BinarySender<SharedBuffer>>& typeRegistry) {
+        try {
+          auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
+          receiver.set(Ref(buffer));
+          auto loaded = std::vector<std::unique_ptr<WindowSettings>>();
+          receiver.shuttle(loaded);
+          *windowSettings = std::move(loaded);
+          return true;
+        } catch(const std::exception&) {
+          return false;
+        }
+      };
+    auto currentRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
+    RegisterSpireTypes(out(currentRegistry));
+    if(attempt(currentRegistry)) {
+      return true;
+    }
+    auto legacyRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
+    legacyRegistry.add<TickerNode>("Spire.SecurityNode");
+    legacyRegistry.add<TickerType>("Spire.SecurityType");
+    legacyRegistry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
+    RegisterSpireTypes(out(legacyRegistry));
+    return attempt(legacyRegistry);
+  }
+}
+
 std::vector<std::unique_ptr<WindowSettings>>
     WindowSettings::Load(const UserProfile& userProfile) {
   auto windowSettingsPath = userProfile.GetProfilePath() / "layout.dat";
@@ -27,17 +60,18 @@ std::vector<std::unique_ptr<WindowSettings>>
   if(!exists(windowSettingsPath)) {
     return windowSettings;
   }
-  try {
-    auto reader = BasicIStreamReader<std::ifstream>(
-      init(windowSettingsPath, std::ios::binary));
-    auto buffer = SharedBuffer();
-    reader.read(out(buffer));
-    auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-    RegisterSpireTypes(out(typeRegistry));
-    auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-    receiver.set(Ref(buffer));
-    receiver.shuttle(windowSettings);
-  } catch(const std::exception&) {
+  auto isLoaded = [&] {
+    try {
+      auto reader = BasicIStreamReader<std::ifstream>(
+        init(windowSettingsPath, std::ios::binary));
+      auto buffer = SharedBuffer();
+      reader.read(out(buffer));
+      return TryLoad(buffer, out(windowSettings));
+    } catch(const std::exception&) {
+      return false;
+    }
+  }();
+  if(!isLoaded) {
     QMessageBox::warning(
       nullptr, QObject::tr("Warning"), QObject::tr("Unable to load layout."));
     windowSettings.clear();
