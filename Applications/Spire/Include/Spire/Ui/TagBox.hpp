@@ -17,6 +17,9 @@ namespace Spire {
   class AnyTagBox : public QWidget {
     public:
 
+      /** The type of signal emitted when the input is submitted. */
+      using SubmitSignal = AnyInputBox::SubmitSignal;
+
       /**
        * Constructs an AnyTagBox.
        * @param tags The list model which holds a list of tags.
@@ -28,6 +31,15 @@ namespace Spire {
 
       /** Returns the list of tags. */
       const std::shared_ptr<AnyListModel>& get_tags() const;
+
+      /** Returns the current value model. */
+      const std::shared_ptr<AnyValueModel>& get_current() const;
+
+      /** Returns the highlight model. */
+      const std::shared_ptr<HighlightModel>& get_highlight() const;
+
+      /** Returns the last submission. */
+      const AnyRef& get_submission() const;
 
       /** Returns the input box. */
       AnyInputBox& get_input_box();
@@ -47,6 +59,10 @@ namespace Spire {
        *        read-only.
        */
       void set_read_only(bool is_read_only);
+
+      /** Connects a slot to the SubmitSignal. */
+      boost::signals2::connection connect_submit_signal(
+        const SubmitSignal::slot_type& slot) const;
 
       QSize minimumSizeHint() const override;
       QSize sizeHint() const override;
@@ -142,6 +158,9 @@ namespace Spire {
 
       /** Returns the highlight model. */
       const std::shared_ptr<HighlightModel>& get_highlight() const;
+
+      /** Returns the last submission. */
+      const QString& get_submission() const;
 
       /** Connects a slot to the SubmitSignal. */
       boost::signals2::connection connect_submit_signal(

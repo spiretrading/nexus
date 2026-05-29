@@ -307,6 +307,18 @@ const std::shared_ptr<AnyListModel>& AnyTagBox::get_tags() const {
   return m_model->m_source;
 }
 
+const std::shared_ptr<AnyValueModel>& AnyTagBox::get_current() const {
+  return m_input_box->get_current();
+}
+
+const std::shared_ptr<HighlightModel>& AnyTagBox::get_highlight() const {
+  return m_input_box->get_highlight();
+}
+
+const AnyRef& AnyTagBox::get_submission() const {
+  return m_input_box->get_submission();
+}
+
 AnyInputBox& AnyTagBox::get_input_box() {
   return *m_input_box;
 }
@@ -338,6 +350,11 @@ void AnyTagBox::set_read_only(bool is_read_only) {
     install_input_proxy_event_filter();
     unmatch(*this, ReadOnly());
   }
+}
+
+connection AnyTagBox::connect_submit_signal(
+    const SubmitSignal::slot_type& slot) const {
+  return m_input_box->connect_submit_signal(slot);
 }
 
 QSize AnyTagBox::minimumSizeHint() const {
@@ -884,6 +901,10 @@ const std::shared_ptr<TextModel>& TagBox::get_current() const {
 
 const std::shared_ptr<HighlightModel>& TagBox::get_highlight() const {
   return m_text_box->get_highlight();
+}
+
+const QString& TagBox::get_submission() const {
+  return m_text_box->get_submission();
 }
 
 connection TagBox::connect_submit_signal(
