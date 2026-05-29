@@ -1,7 +1,6 @@
 #include "Spire/Ui/TradingGroupBox.hpp"
 #include "Spire/Ui/ListView.hpp"
 
-using namespace Beam;
 using namespace Spire;
 
 TradingGroupBox* Spire::make_trading_group_box(
