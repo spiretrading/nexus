@@ -12,6 +12,9 @@
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterTaskProperties.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
+#include "Spire/Canvas/Types/TickerType.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/UI/UISerialization.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
@@ -81,6 +84,39 @@ namespace {
     shuttle.shuttle("task_properties", m_taskProperties);
     shuttle.shuttle("order_log_properties", m_orderLogProperties);
   }
+
+  bool TryLoad(SharedBuffer& buffer, Out<BlotterSettingsData> data) {
+    auto attempt =
+      [&] (TypeRegistry<BinarySender<SharedBuffer>>& typeRegistry) {
+        try {
+          auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
+          receiver.set(Ref(buffer));
+          auto loaded = BlotterSettingsData();
+          receiver.shuttle(loaded);
+          *data = std::move(loaded);
+          return true;
+        } catch(const std::exception&) {
+          return false;
+        }
+      };
+    auto currentRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
+    RegisterSpireTypes(out(currentRegistry));
+    if(attempt(currentRegistry)) {
+      return true;
+    }
+
+    // Fall back to blotters written before the Security to Ticker rename
+    // (releases up to 2026-01-13). Registering the renamed canvas types under
+    // their legacy names first leaves RegisterSpireTypes' registration of the
+    // current names as a no-op, since TypeRegistry::add only records the first
+    // name applied to a type.
+    auto legacyRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
+    legacyRegistry.add<TickerNode>("Spire.SecurityNode");
+    legacyRegistry.add<TickerType>("Spire.SecurityType");
+    legacyRegistry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
+    RegisterSpireTypes(out(legacyRegistry));
+    return attempt(legacyRegistry);
+  }
 }
 
 void BlotterSettings::Load(Out<UserProfile> userProfile) {
@@ -90,17 +126,18 @@ void BlotterSettings::Load(Out<UserProfile> userProfile) {
     return;
   }
   auto data = BlotterSettingsData();
-  try {
-    auto reader = BasicIStreamReader<std::ifstream>(
-      init(blottersFilePath, std::ios::binary));
-    auto buffer = SharedBuffer();
-    reader.read(out(buffer));
-    auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-    RegisterSpireTypes(out(typeRegistry));
-    auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-    receiver.set(Ref(buffer));
-    receiver.shuttle(data);
-  } catch(const std::exception&) {
+  auto isLoaded = [&] {
+    try {
+      auto reader = BasicIStreamReader<std::ifstream>(
+        init(blottersFilePath, std::ios::binary));
+      auto buffer = SharedBuffer();
+      reader.read(out(buffer));
+      return TryLoad(buffer, out(data));
+    } catch(const std::exception&) {
+      return false;
+    }
+  }();
+  if(!isLoaded) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load blotters, using defaults."));
     LoadDefaultBlotter(out(userProfile));
