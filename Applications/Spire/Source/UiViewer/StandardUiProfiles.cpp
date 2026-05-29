@@ -131,6 +131,7 @@
 #include "Spire/Ui/TimeInForceFilterPanel.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
+#include "Spire/Ui/TradingGroupFilterPanel.hpp"
 #include "Spire/Ui/TradingGroupListBox.hpp"
 #include "Spire/Ui/TransitionView.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -5523,6 +5524,13 @@ UiProfile Spire::make_tooltip_profile() {
     return label;
   });
   return profile;
+}
+
+UiProfile Spire::make_trading_group_filter_panel_profile() {
+  return setup_open_filter_panel_profile("TradingGroupFilterPanel", [] {
+    return make_trading_group_filter_panel(
+      populate_trading_group_query_model());
+  });
 }
 
 UiProfile Spire::make_trading_group_list_box_profile() {

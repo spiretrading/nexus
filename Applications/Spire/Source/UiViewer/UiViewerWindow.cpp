@@ -240,6 +240,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_time_in_force_filter_panel_profile());
   add(make_title_bar_profile());
   add(make_tooltip_profile());
+  add(make_trading_group_filter_panel_profile());
   add(make_trading_group_list_box_profile());
   add(make_transition_view_profile());
   add(make_venue_box_profile());
