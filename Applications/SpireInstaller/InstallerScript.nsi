@@ -3,8 +3,7 @@ ManifestDPIAware true
 !define PRODUCT_PUBLISHER "Eidolon Systems Ltd."
 !define PRODUCT_WEB_SITE "https://www.spiretrading.com"
 !define PRODUCT_DIR_REGKEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}"
-!define PRODUCT_UNINST_KEY "Software\Microsoft\Windows\CurrentVersion\Uninstall\${PRODUCT_NAME}_Uninstall"
-!define PRODUCT_UNINST_ROOT_KEY "HKLM"
+!define PRODUCT_UNINST_ROOT_KEY "HKCU"
 
 ; Get the product version from the command line argument BUILD
 !ifndef BUILD
@@ -14,17 +13,12 @@ ManifestDPIAware true
 
 Name "${PRODUCT_NAME} ${PRODUCT_VERSION}"
 Outfile "install.exe"
-InstallDir "$PROGRAMFILES64\${PRODUCT_NAME}"
+InstallDir "$LOCALAPPDATA\${PRODUCT_NAME}"
+InstallDirRegKey HKCU "${PRODUCT_DIR_REGKEY}" "InstallLocation"
 
-RequestExecutionLevel admin
+RequestExecutionLevel user
 
 !include "MUI2.nsh"
-!include "FileFunc.nsh"
-!include "LogicLib.nsh"
-
-!insertmacro GetParameters
-!insertmacro GetOptions
-
 ; Use the product's icon
 !define MUI_ICON "spire.ico"
 !define MUI_UNICON "spire.ico"
@@ -49,24 +43,25 @@ Section "Spire" SEC01
   File "Spire.exe"
 
   ; Install Visual C++ Redistributable silently
-  SetOutPath "$INSTDIR"
+  SetOutPath "$TEMP"
   File "VC_redist.x64.exe"
-  ExecWait '"$INSTDIR\VC_redist.x64.exe" /quiet /norestart'
+  ExecWait '"$TEMP\VC_redist.x64.exe" /quiet /norestart'
+  Delete "$TEMP\VC_redist.x64.exe"
 
   ; Write uninstaller
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
   ; Write registry keys for Add/Remove Programs
-  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "DisplayName" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
-  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "UninstallString" "$INSTDIR\\uninstall.exe"
-  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "DisplayIcon" "$INSTDIR\\uninstall.exe"
-  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "Publisher" "${PRODUCT_PUBLISHER}"
-  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
-  WriteRegStr HKLM "${PRODUCT_DIR_REGKEY}" "DisplayVersion" "${PRODUCT_VERSION}"
-  WriteRegDWORD HKLM "${PRODUCT_DIR_REGKEY}" "NoModify" 1
-  WriteRegDWORD HKLM "${PRODUCT_DIR_REGKEY}" "NoRepair" 1
-
-  nsExec::ExecToLog 'icacls "$INSTDIR" /grant Users:(OI)(CI)F /T'
+  WriteRegStr HKCU "${PRODUCT_DIR_REGKEY}" "DisplayName" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
+  WriteRegStr HKCU "${PRODUCT_DIR_REGKEY}" "UninstallString" "$INSTDIR\\uninstall.exe"
+  WriteRegStr HKCU "${PRODUCT_DIR_REGKEY}" "DisplayIcon" "$INSTDIR\\Spire.exe"
+  WriteRegStr HKCU "${PRODUCT_DIR_REGKEY}" "Publisher" "${PRODUCT_PUBLISHER}"
+  WriteRegStr HKCU "${PRODUCT_DIR_REGKEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
+  WriteRegStr HKCU "${PRODUCT_DIR_REGKEY}" "DisplayVersion" "${PRODUCT_VERSION}"
+  WriteRegStr HKCU "${PRODUCT_DIR_REGKEY}" "InstallLocation" "$INSTDIR"
+  WriteRegDWORD HKCU "${PRODUCT_DIR_REGKEY}" "EstimatedSize" 61440
+  WriteRegDWORD HKCU "${PRODUCT_DIR_REGKEY}" "NoModify" 1
+  WriteRegDWORD HKCU "${PRODUCT_DIR_REGKEY}" "NoRepair" 1
 SectionEnd
 
 Section "Start Menu Shortcuts" SEC02
@@ -81,8 +76,6 @@ SectionEnd
 
 ; Uninstaller
 Section "Uninstall" SEC04
-  SetShellVarContext all
-
   ; Remove desktop and start menu shortcuts
   Delete "$DESKTOP\Spire.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk"
@@ -90,13 +83,11 @@ Section "Uninstall" SEC04
   RmDir /r "$SMPROGRAMS\${PRODUCT_NAME}"
 
   Delete "$INSTDIR\Spire.exe"
-  Delete "$INSTDIR\VC_redist.x64.exe"
 
   RmDir /r "$INSTDIR"
 
-  SetShellVarContext current
-  RmDir /r "$LOCALAPPDATA\Eidolon Systems"
-  DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_UNINST_KEY}"
+  RmDir /r "$LOCALAPPDATA\Eidolon Systems\${PRODUCT_NAME}"
+  RmDir "$LOCALAPPDATA\Eidolon Systems"
   DeleteRegKey ${PRODUCT_UNINST_ROOT_KEY} "${PRODUCT_DIR_REGKEY}"
 SectionEnd
 
@@ -115,5 +106,5 @@ LangString DESC_SEC04 ${LANG_ENGLISH} "Removes application files and shortcuts f
 !insertmacro MUI_FUNCTION_DESCRIPTION_END
 
 Function .onInit
-  SetShellVarContext all
+  SetShellVarContext current
 FunctionEnd
