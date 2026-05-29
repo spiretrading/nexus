@@ -104,12 +104,6 @@ namespace {
     if(attempt(currentRegistry)) {
       return true;
     }
-
-    // Fall back to blotters written before the Security to Ticker rename
-    // (releases up to 2026-01-13). Registering the renamed canvas types under
-    // their legacy names first leaves RegisterSpireTypes' registration of the
-    // current names as a no-op, since TypeRegistry::add only records the first
-    // name applied to a type.
     auto legacyRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
     legacyRegistry.add<TickerNode>("Spire.SecurityNode");
     legacyRegistry.add<TickerType>("Spire.SecurityType");
