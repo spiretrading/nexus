@@ -11,6 +11,7 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <QMessageBox>
 #include "Nexus/Definitions/ScopeMap.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
@@ -18,6 +19,9 @@
 #include "Spire/Canvas/OrderExecutionNodes/MaxFloorNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
+#include "Spire/Canvas/Types/TickerType.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 
 using namespace Beam;
@@ -303,21 +307,36 @@ namespace {
   }
 
   auto load_legacy_key_bindings(const std::filesystem::path& path) {
-    auto key_bindings = LegacyKeyBindings();
+    auto buffer = SharedBuffer();
     try {
       auto reader =
         BasicIStreamReader<std::ifstream>(init(path, std::ios::binary));
-      auto buffer = SharedBuffer();
       reader.read(out(buffer));
-      auto registry = TypeRegistry<BinarySender<SharedBuffer>>();
-      RegisterSpireTypes(out(registry));
-      auto receiver = BinaryReceiver<SharedBuffer>(Ref(registry));
-      receiver.set(Ref(buffer));
-      receiver.shuttle(key_bindings);
     } catch(const std::exception&) {
       throw std::runtime_error("Unable to load key bindings.");
     }
-    return key_bindings;
+    auto load = [&] (TypeRegistry<BinarySender<SharedBuffer>>& registry) {
+      auto key_bindings = LegacyKeyBindings();
+      auto receiver = BinaryReceiver<SharedBuffer>(Ref(registry));
+      receiver.set(Ref(buffer));
+      receiver.shuttle(key_bindings);
+      return key_bindings;
+    };
+    auto current_registry = TypeRegistry<BinarySender<SharedBuffer>>();
+    RegisterSpireTypes(out(current_registry));
+    try {
+      return load(current_registry);
+    } catch(const std::exception&) {}
+    auto legacy_registry = TypeRegistry<BinarySender<SharedBuffer>>();
+    legacy_registry.add<TickerNode>("Spire.SecurityNode");
+    legacy_registry.add<TickerType>("Spire.SecurityType");
+    legacy_registry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
+    RegisterSpireTypes(out(legacy_registry));
+    try {
+      return load(legacy_registry);
+    } catch(const std::exception&) {
+      throw std::runtime_error("Unable to load key bindings.");
+    }
   }
 
   auto convert_legacy_key_bindings(const std::filesystem::path& path) {
@@ -776,23 +795,38 @@ std::shared_ptr<KeyBindingsModel> Spire::load_key_bindings_profile(
     }
     return load_default_key_bindings();
   }
-  auto key_bindings = std::make_shared<KeyBindingsModel>();
-  try {
-    auto reader = BasicIStreamReader<std::ifstream>(init(file_path));
-    auto buffer = SharedBuffer();
-    reader.read(out(buffer));
+  auto load = [] (const SharedBuffer& buffer) {
+    auto key_bindings = std::make_shared<KeyBindingsModel>();
     auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
     RegisterSpireTypes(out(registry));
     auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
     receiver.set(Ref(buffer));
     auto profile = KeyBindingsProfile(KEY_BINDINGS_VERSION, &*key_bindings);
     receiver.shuttle(profile);
+    return key_bindings;
+  };
+  auto buffer = SharedBuffer();
+  try {
+    auto reader = BasicIStreamReader<std::ifstream>(init(file_path));
+    reader.read(out(buffer));
   } catch(const std::exception&) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load key bindings, using defaults."));
     return load_default_key_bindings();
   }
-  return key_bindings;
+  try {
+    return load(buffer);
+  } catch(const std::exception&) {}
+  try {
+    auto text = std::string(buffer.get_data(), buffer.get_size());
+    boost::replace_all(text, "\"region\":", "\"scope\":");
+    boost::replace_all(text, "\"securities\":", "\"tickers\":");
+    return load(SharedBuffer(text.data(), text.size()));
+  } catch(const std::exception&) {
+    QMessageBox::warning(nullptr, QObject::tr("Warning"),
+      QObject::tr("Unable to load key bindings, using defaults."));
+    return load_default_key_bindings();
+  }
 }
 
 void Spire::save_key_bindings_profile(
