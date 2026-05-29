@@ -5533,9 +5533,6 @@ UiProfile Spire::make_trading_group_box_profile() {
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   return UiProfile("TradingGroupBox", properties, [] (auto& profile) {
-    auto to_name = [] (const DirectoryEntry& entry) {
-      return QString::fromStdString(entry.m_name);
-    };
     auto model = populate_trading_group_query_model();
     auto& current = get<QString>("current", profile.get_properties());
     auto current_entry = [&] {
@@ -5550,7 +5547,7 @@ UiProfile Spire::make_trading_group_box_profile() {
     box->setMinimumWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto current_connection = box->get_current()->connect_update_signal(
-      profile.make_event_slot<DirectoryEntry>("Current", to_name));
+      profile.make_event_slot<DirectoryEntry>("Current"));
     current.connect_changed_signal([=] (const auto& current) {
       if(auto value = model->parse(current)) {
         box->get_current()->set(*value);
@@ -5566,7 +5563,7 @@ UiProfile Spire::make_trading_group_box_profile() {
     link(&TradingGroupBox::is_read_only, &TradingGroupBox::set_read_only,
       *box, get<bool>("read_only", profile.get_properties()));
     box->connect_submit_signal(
-      profile.make_event_slot<DirectoryEntry>("Submit", to_name));
+      profile.make_event_slot<DirectoryEntry>("Submit"));
     return box;
   });
 }
