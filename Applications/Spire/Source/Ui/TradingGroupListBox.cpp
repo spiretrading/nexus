@@ -14,6 +14,6 @@ TradingGroupListBox* Spire::make_trading_group_list_box(
 TradingGroupListBox* Spire::make_trading_group_list_box(
     std::shared_ptr<TradingGroupQueryModel> groups,
     std::shared_ptr<TradingGroupListModel> current, QWidget* parent) {
-  return new TagComboBox<DirectoryEntry>(std::move(groups), std::move(current),
+  return new TradingGroupListBox(std::move(groups), std::move(current),
     &ListView::default_item_builder, parent);
 }
