@@ -79,6 +79,14 @@ namespace Spire {
       void shuttle(S& shuttle, unsigned int version);
   };
 
+  /**
+   * Converts legacy time and sales properties to the current format.
+   * @param properties The legacy time and sales properties to convert.
+   * @return The equivalent current time and sales properties.
+   */
+  TimeAndSalesProperties to_time_and_sales_properties(
+    const LegacyTimeAndSalesWindowSettings::Properties& properties);
+
   template<Beam::IsShuttle S>
   void LegacyTimeAndSalesWindowSettings::shuttle(
       S& shuttle, unsigned int version) {

@@ -6,6 +6,7 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QScreen>
@@ -88,19 +89,42 @@ std::vector<std::unique_ptr<WindowSettings>>
     }
     return settings;
   }
+  auto buffer = SharedBuffer();
   try {
     auto reader = BasicIStreamReader<std::ifstream>(init(file_path));
-    auto buffer = SharedBuffer();
     reader.read(out(buffer));
-    auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
-    RegisterSpireTypes(out(registry));
-    auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
-    receiver.set(Ref(buffer));
-    receiver.shuttle(settings);
   } catch(const std::exception&) {
-    settings.clear();
+    return settings;
   }
-  return settings;
+  auto load = [&] (const SharedBuffer& source,
+      TypeRegistry<JsonSender<SharedBuffer>>& registry) {
+    auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
+    receiver.set(Ref(source));
+    auto loaded = std::vector<std::unique_ptr<WindowSettings>>();
+    receiver.shuttle(loaded);
+    return loaded;
+  };
+  auto currentRegistry = TypeRegistry<JsonSender<SharedBuffer>>();
+  RegisterSpireTypes(out(currentRegistry));
+  try {
+    return load(buffer, currentRegistry);
+  } catch(const std::exception&) {}
+  try {
+    auto legacyRegistry = TypeRegistry<JsonSender<SharedBuffer>>();
+    legacyRegistry.add<TickerNode>("Spire.SecurityNode");
+    legacyRegistry.add<TickerType>("Spire.SecurityType");
+    legacyRegistry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
+    RegisterSpireTypes(out(legacyRegistry));
+    auto text = std::string(buffer.get_data(), buffer.get_size());
+    replace_all(text, "\"region\":", "\"scope\":");
+    replace_all(text, "\"securities\":", "\"tickers\":");
+    replace_all(text, "\"security_view_stack\":", "\"ticker_view_stack\":");
+    replace_all(text, "\"security_view\":", "\"ticker_view\":");
+    replace_all(text, "\"security\":", "\"ticker\":");
+    return load(SharedBuffer(text.data(), text.size()), legacyRegistry);
+  } catch(const std::exception&) {
+    return std::vector<std::unique_ptr<WindowSettings>>();
+  }
 }
 
 void WindowSettings::Save(const UserProfile& userProfile) {
