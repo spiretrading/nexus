@@ -344,6 +344,9 @@ namespace Spire {
   /** Returns a UiProfile for the Tooltip. */
   UiProfile make_tooltip_profile();
 
+  /** Returns a UiProfile for the TradingGroupBox. */
+  UiProfile make_trading_group_box_profile();
+
   /** Returns a UiProfile for the TradingGroupListBox. */
   UiProfile make_trading_group_list_box_profile();
 
