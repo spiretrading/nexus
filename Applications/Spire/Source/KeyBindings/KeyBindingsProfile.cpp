@@ -22,6 +22,7 @@
 #include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
 #include "Spire/Canvas/Types/TickerType.hpp"
 #include "Spire/Canvas/ValueNodes/TickerNode.hpp"
+#include "Spire/KeyBindings/LegacyKeyBindings.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 
 using namespace Beam;
@@ -30,50 +31,6 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  BEAM_ENUM(ModifierDefinitions,
-    PLAIN,
-    SHIFT,
-    ALT,
-    CONTROL);
-  BEAM_ENUM(CancelTypeDefinitions,
-    MOST_RECENT,
-    MOST_RECENT_ASK,
-    MOST_RECENT_BID,
-    OLDEST,
-    OLDEST_ASK,
-    OLDEST_BID,
-    ALL,
-    ALL_ASKS,
-    ALL_BIDS,
-    CLOSEST_ASK,
-    CLOSEST_BID,
-    FURTHEST_ASK,
-    FURTHEST_BID);
-  struct LegacyInteractionsProperties {
-    using Modifier = ModifierDefinitions;
-    static const auto MODIFIER_COUNT = 4;
-    Quantity m_default_quantity;
-    std::array<Quantity, MODIFIER_COUNT> m_quantity_increments;
-    std::array<Money, MODIFIER_COUNT> m_price_increments;
-    bool m_cancel_on_fill;
-  };
-
-  struct LegacyKeyBindings {
-    struct TaskBinding {
-      std::string m_name;
-      std::shared_ptr<CanvasNode> m_node;
-    };
-    struct CancelBinding {
-      using Type = CancelTypeDefinitions;
-      std::string m_description;
-      Type m_type;
-    };
-    std::unordered_map<Venue,
-      std::unordered_map<QKeySequence, TaskBinding>> m_task_bindings;
-    std::unordered_map<QKeySequence, CancelBinding> m_cancel_bindings;
-    std::unordered_map<Venue, Quantity> m_default_quantities;
-  };
-
   auto from_legacy(LegacyKeyBindings::CancelBinding::Type binding) {
     if(binding == LegacyKeyBindings::CancelBinding::Type::MOST_RECENT) {
       return CancelKeyBindingsModel::Operation::MOST_RECENT;
@@ -106,64 +63,6 @@ namespace {
     }
     throw std::runtime_error("Invalid cancel binding.");
   }
-}
-
-namespace Beam {
-  template<>
-  struct Shuttle<LegacyInteractionsProperties> {
-    template<IsShuttle S>
-    void operator ()(S& shuttle, LegacyInteractionsProperties& value,
-        unsigned int version) const {
-      auto default_quantity = std::int64_t();
-      shuttle.shuttle("default_quantity", default_quantity);
-      value.m_default_quantity = default_quantity;
-      auto quantity_increments = std::array<
-        std::int64_t, LegacyInteractionsProperties::MODIFIER_COUNT>();
-      shuttle.shuttle("quantity_increments", quantity_increments);
-      for(auto i = 0; i < LegacyInteractionsProperties::MODIFIER_COUNT; ++i) {
-        value.m_quantity_increments[i] = quantity_increments[i];
-      }
-      auto price_increments = std::array<
-        std::int64_t, LegacyInteractionsProperties::MODIFIER_COUNT>();
-      shuttle.shuttle("price_increments", price_increments);
-      for(auto i = 0; i < LegacyInteractionsProperties::MODIFIER_COUNT; ++i) {
-        value.m_price_increments[i] = Nexus::Money(
-          Nexus::Quantity(price_increments[i]) / Nexus::Quantity::MULTIPLIER);
-      }
-      shuttle.shuttle("cancel_on_fill", value.m_cancel_on_fill);
-    }
-  };
-
-  template<>
-  struct Shuttle<LegacyKeyBindings::TaskBinding> {
-    template<IsShuttle S>
-    void operator ()(S& shuttle, LegacyKeyBindings::TaskBinding& value,
-        unsigned int version) const {
-      shuttle.shuttle("name", value.m_name);
-      shuttle.shuttle("node", value.m_node);
-    }
-  };
-
-  template<>
-  struct Shuttle<LegacyKeyBindings::CancelBinding> {
-    template<IsShuttle S>
-    void operator ()(S& shuttle, LegacyKeyBindings::CancelBinding& value,
-        unsigned int version) const {
-      shuttle.shuttle("description", value.m_description);
-      shuttle.shuttle("type", value.m_type);
-    }
-  };
-
-  template<>
-  struct Shuttle<LegacyKeyBindings> {
-    template<IsShuttle S>
-    void operator ()(
-        S& shuttle, LegacyKeyBindings& value, unsigned int version) const {
-      shuttle.shuttle("task_bindings", value.m_task_bindings);
-      shuttle.shuttle("cancel_bindings", value.m_cancel_bindings);
-      shuttle.shuttle("default_quantities", value.m_default_quantities);
-    }
-  };
 }
 
 namespace {
@@ -352,61 +251,8 @@ namespace {
     auto legacy_interactions_properties =
       load_legacy_interactions_properties(interactions_properties_path);
     auto key_bindings = std::make_shared<KeyBindingsModel>();
-    for(auto& task : make_default_order_task_nodes()) {
-      key_bindings->get_order_task_arguments()->push(
-        to_order_task_arguments(*task));
-    }
-    auto& arguments = *key_bindings->get_order_task_arguments();
-    for(auto& tasks :
-        legacy_key_bindings.m_task_bindings | std::views::values) {
-      for(auto& task : tasks) {
-        auto& key = task.first;
-        auto& legacy_binding = task.second;
-        for(auto i = 0; i != arguments.get_size(); ++i) {
-          auto binding = arguments.get(i);
-          if(binding.m_name == QString::fromStdString(legacy_binding.m_name)) {
-            binding.m_key = key;
-            arguments.set(i, binding);
-          }
-        }
-      }
-    }
-    for(auto& cancel_binding : legacy_key_bindings.m_cancel_bindings) {
-      key_bindings->get_cancel_key_bindings()->get_binding(
-        from_legacy(cancel_binding.second.m_type))->set(cancel_binding.first);
-    }
-    for(auto i = legacy_interactions_properties.begin();
-        i != legacy_interactions_properties.end(); ++i) {
-      auto& properties = std::get<1>(*i);
-      auto interactions =
-        key_bindings->get_interactions_key_bindings(std::get<0>(*i));
-      interactions->get_default_quantity()->set(properties.m_default_quantity);
-      interactions->get_quantity_increment(Qt::NoModifier)->set(
-        properties.m_quantity_increments[
-          LegacyInteractionsProperties::Modifier::PLAIN]);
-      interactions->get_quantity_increment(Qt::ShiftModifier)->set(
-        properties.m_quantity_increments[
-          LegacyInteractionsProperties::Modifier::SHIFT]);
-      interactions->get_quantity_increment(Qt::AltModifier)->set(
-        properties.m_quantity_increments[
-          LegacyInteractionsProperties::Modifier::ALT]);
-      interactions->get_quantity_increment(Qt::ControlModifier)->set(
-        properties.m_quantity_increments[
-          LegacyInteractionsProperties::Modifier::CONTROL]);
-      interactions->get_price_increment(Qt::NoModifier)->set(
-        properties.m_price_increments[
-          LegacyInteractionsProperties::Modifier::PLAIN]);
-      interactions->get_price_increment(Qt::ShiftModifier)->set(
-        properties.m_price_increments[
-          LegacyInteractionsProperties::Modifier::SHIFT]);
-      interactions->get_price_increment(Qt::AltModifier)->set(
-        properties.m_price_increments[
-          LegacyInteractionsProperties::Modifier::ALT]);
-      interactions->get_price_increment(Qt::ControlModifier)->set(
-        properties.m_price_increments[
-          LegacyInteractionsProperties::Modifier::CONTROL]);
-      interactions->is_cancel_on_fill()->set(properties.m_cancel_on_fill);
-    }
+    apply_legacy_key_bindings(
+      legacy_key_bindings, legacy_interactions_properties, *key_bindings);
     return key_bindings;
   }
 
@@ -420,6 +266,63 @@ namespace {
       CancelKeyBindingsModel::Operation::ALL)->set(
         QKeySequence(Qt::SHIFT | Qt::Key_Escape));
     return key_bindings;
+  }
+}
+
+void Spire::apply_legacy_key_bindings(const LegacyKeyBindings& key_bindings,
+    const ScopeMap<LegacyInteractionsProperties>& interactions,
+    KeyBindingsModel& model) {
+  reset_order_task_arguments(*model.get_order_task_arguments());
+  auto& arguments = *model.get_order_task_arguments();
+  for(auto& tasks : key_bindings.m_task_bindings | std::views::values) {
+    for(auto& task : tasks) {
+      auto& key = task.first;
+      auto& legacy_binding = task.second;
+      for(auto i = 0; i != arguments.get_size(); ++i) {
+        auto binding = arguments.get(i);
+        if(binding.m_name == QString::fromStdString(legacy_binding.m_name)) {
+          binding.m_key = key;
+          arguments.set(i, binding);
+        }
+      }
+    }
+  }
+  for(auto& cancel_binding : key_bindings.m_cancel_bindings) {
+    model.get_cancel_key_bindings()->get_binding(
+      from_legacy(cancel_binding.second.m_type))->set(cancel_binding.first);
+  }
+  for(auto i = interactions.begin(); i != interactions.end(); ++i) {
+    auto& properties = std::get<1>(*i);
+    auto interactions_bindings =
+      model.get_interactions_key_bindings(std::get<0>(*i));
+    interactions_bindings->get_default_quantity()->set(
+      properties.m_default_quantity);
+    interactions_bindings->get_quantity_increment(Qt::NoModifier)->set(
+      properties.m_quantity_increments[
+        LegacyInteractionsProperties::Modifier::PLAIN]);
+    interactions_bindings->get_quantity_increment(Qt::ShiftModifier)->set(
+      properties.m_quantity_increments[
+        LegacyInteractionsProperties::Modifier::SHIFT]);
+    interactions_bindings->get_quantity_increment(Qt::AltModifier)->set(
+      properties.m_quantity_increments[
+        LegacyInteractionsProperties::Modifier::ALT]);
+    interactions_bindings->get_quantity_increment(Qt::ControlModifier)->set(
+      properties.m_quantity_increments[
+        LegacyInteractionsProperties::Modifier::CONTROL]);
+    interactions_bindings->get_price_increment(Qt::NoModifier)->set(
+      properties.m_price_increments[
+        LegacyInteractionsProperties::Modifier::PLAIN]);
+    interactions_bindings->get_price_increment(Qt::ShiftModifier)->set(
+      properties.m_price_increments[
+        LegacyInteractionsProperties::Modifier::SHIFT]);
+    interactions_bindings->get_price_increment(Qt::AltModifier)->set(
+      properties.m_price_increments[
+        LegacyInteractionsProperties::Modifier::ALT]);
+    interactions_bindings->get_price_increment(Qt::ControlModifier)->set(
+      properties.m_price_increments[
+        LegacyInteractionsProperties::Modifier::CONTROL]);
+    interactions_bindings->is_cancel_on_fill()->set(
+      properties.m_cancel_on_fill);
   }
 }
 
