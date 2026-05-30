@@ -2,6 +2,7 @@
 #include <vector>
 #include <QApplication>
 #include <QGuiApplication>
+#include <QMessageBox>
 #include <QScreen>
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/Venue.hpp"
@@ -371,28 +372,38 @@ void ToolbarController::on_restore_all() {
 
 void ToolbarController::on_import(
     UserSettings::Categories categories, const std::filesystem::path& path) {
-  auto windows = import_settings(categories, path, out(*m_user_profile));
-  for(auto& window : windows) {
-    if(auto book_view = dynamic_cast<BookViewWindow*>(window)) {
-      auto controller =
-        std::make_unique<BookViewController>(Ref(*m_user_profile), *book_view);
-      controller->open();
-      m_book_view_controllers.push_back(std::move(controller));
-    } else if(auto time_and_sales_window =
-        dynamic_cast<TimeAndSalesWindow*>(window)) {
-      auto controller = std::make_unique<TimeAndSalesController>(
-        Ref(*m_user_profile), *time_and_sales_window);
-      controller->open();
-      m_time_and_sales_controllers.push_back(std::move(controller));
-    } else {
-      window->show();
+  try {
+    auto windows = import_settings(categories, path, out(*m_user_profile));
+    for(auto& window : windows) {
+      if(auto book_view = dynamic_cast<BookViewWindow*>(window)) {
+        auto controller = std::make_unique<BookViewController>(
+          Ref(*m_user_profile), *book_view);
+        controller->open();
+        m_book_view_controllers.push_back(std::move(controller));
+      } else if(auto time_and_sales_window =
+          dynamic_cast<TimeAndSalesWindow*>(window)) {
+        auto controller = std::make_unique<TimeAndSalesController>(
+          Ref(*m_user_profile), *time_and_sales_window);
+        controller->open();
+        m_time_and_sales_controllers.push_back(std::move(controller));
+      } else {
+        window->show();
+      }
     }
+  } catch(const std::exception& e) {
+    QMessageBox::warning(
+      nullptr, QObject::tr("Error"), QString::fromStdString(e.what()));
   }
 }
 
 void ToolbarController::on_export(
     UserSettings::Categories categories, const std::filesystem::path& path) {
-  export_settings(categories, path, *m_user_profile);
+  try {
+    export_settings(categories, path, *m_user_profile);
+  } catch(const std::exception& e) {
+    QMessageBox::warning(
+      nullptr, QObject::tr("Error"), QString::fromStdString(e.what()));
+  }
 }
 
 void ToolbarController::on_new_blotter(const QString& name) {

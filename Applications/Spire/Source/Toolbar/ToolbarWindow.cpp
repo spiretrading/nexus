@@ -337,7 +337,7 @@ void ToolbarWindow::on_import() {
   auto path = QFileDialog::getOpenFileName(this,
     tr("Select the settings file."),
     QStandardPaths::writableLocation(QStandardPaths::DocumentsLocation),
-    tr("Settings (*.json)"));
+    tr("Settings (*.json *.sps)"));
   if(path.isNull()) {
     return;
   }
