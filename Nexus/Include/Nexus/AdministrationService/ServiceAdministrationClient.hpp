@@ -39,6 +39,7 @@ namespace Nexus {
 
       std::vector<Beam::DirectoryEntry>
         load_accounts_by_roles(AccountRoles roles);
+      std::vector<AccountQueryResult> query_accounts(const std::string& query);
       Beam::DirectoryEntry load_administrators_root_entry();
       Beam::DirectoryEntry load_services_root_entry();
       Beam::DirectoryEntry load_trading_groups_root_entry();
@@ -186,6 +187,16 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       return client->template send_request<LoadAccountsByRolesService>(roles);
     }, "Failed to load accounts by roles: " +
       boost::lexical_cast<std::string>(roles));
+  }
+
+  template<typename B>
+  std::vector<AccountQueryResult>
+      ServiceAdministrationClient<B>::query_accounts(
+        const std::string& query) {
+    return Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      return client->template send_request<QueryAccountsService>(query);
+    }, "Failed to query accounts: " + query);
   }
 
   template<typename B>

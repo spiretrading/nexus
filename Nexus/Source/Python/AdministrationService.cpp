@@ -6,6 +6,7 @@
 #include <Viper/Sqlite3/Connection.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
+#include "Nexus/AdministrationService/AccountQueryResult.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
 #include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
@@ -103,6 +104,13 @@ void Nexus::Python::export_account_modification_request(module& module) {
   });
 }
 
+void Nexus::Python::export_account_query_result(module& module) {
+  export_default_methods(
+    class_<AccountQueryResult>(module, "AccountQueryResult")).
+    def_readwrite("account", &AccountQueryResult::m_account).
+    def_readwrite("name", &AccountQueryResult::m_name);
+}
+
 void Nexus::Python::export_account_roles(module& module) {
   enum_<AccountRole::Type>(module, "AccountRole").
     value("TRADER", AccountRole::TRADER).
@@ -152,6 +160,7 @@ void Nexus::Python::export_administration_service(module& module) {
   export_administration_service_application_definitions(module);
   export_account_identity(module);
   export_account_modification_request(module);
+  export_account_query_result(module);
   export_account_roles(module);
   module.def("load_risk_parameters",
     [] (AdministrationClient& client, const DirectoryEntry& account) {
