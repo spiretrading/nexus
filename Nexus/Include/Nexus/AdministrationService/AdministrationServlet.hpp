@@ -123,8 +123,6 @@ namespace Nexus {
         const Beam::DirectoryEntry& parent, const Beam::DirectoryEntry& child);
       std::vector<Beam::DirectoryEntry> load_managed_trading_groups(
         const Beam::DirectoryEntry& account);
-      std::vector<Beam::DirectoryEntry> load_managed_accounts(
-        const Beam::DirectoryEntry& account);
       TradingGroup load_trading_group(const Beam::DirectoryEntry& directory);
       std::vector<Beam::DirectoryEntry> load_entitlements(
         const Beam::DirectoryEntry& account);
@@ -605,87 +603,6 @@ namespace Nexus {
       IsAdministrationDataStore<Beam::dereference_t<D>> &&
         Beam::IsTimeClient<Beam::dereference_t<R>> &&
           Beam::IsTimer<Beam::dereference_t<T>>
-  std::vector<Beam::DirectoryEntry>
-      AdministrationServlet<C, S, D, R, T>::load_managed_accounts(
-        const Beam::DirectoryEntry& account) {
-    auto accounts = std::vector<Beam::DirectoryEntry>();
-    if(check_administrator(account) || check_service(account)) {
-      auto trading_groups =
-        m_service_locator_client->load_children(m_trading_groups_root);
-      for(auto& trading_group : trading_groups) {
-        auto managers_directory =
-          m_service_locator_client->load_directory_entry(
-            trading_group, "managers");
-        auto managers =
-          m_service_locator_client->load_children(managers_directory);
-        for(auto& manager : managers) {
-          if(manager.m_type == Beam::DirectoryEntry::Type::ACCOUNT &&
-              !std::ranges::contains(accounts, manager)) {
-            accounts.push_back(std::move(manager));
-          }
-        }
-        auto traders_directory =
-          m_service_locator_client->load_directory_entry(
-            trading_group, "traders");
-        auto traders =
-          m_service_locator_client->load_children(traders_directory);
-        for(auto& trader : traders) {
-          if(trader.m_type == Beam::DirectoryEntry::Type::ACCOUNT &&
-              !std::ranges::contains(accounts, trader)) {
-            accounts.push_back(std::move(trader));
-          }
-        }
-      }
-      auto administrators =
-        m_service_locator_client->load_children(m_administrators_root);
-      for(auto& administrator : administrators) {
-        if(administrator.m_type == Beam::DirectoryEntry::Type::ACCOUNT &&
-            !std::ranges::contains(accounts, administrator)) {
-          accounts.push_back(std::move(administrator));
-        }
-      }
-      auto services = m_service_locator_client->load_children(m_services_root);
-      for(auto& service : services) {
-        if(service.m_type == Beam::DirectoryEntry::Type::ACCOUNT &&
-            !std::ranges::contains(accounts, service)) {
-          accounts.push_back(std::move(service));
-        }
-      }
-    } else {
-      accounts.push_back(account);
-      auto managed_groups = load_managed_trading_groups(account);
-      for(auto& trading_group : managed_groups) {
-        auto managers_directory =
-          m_service_locator_client->load_directory_entry(
-            trading_group, "managers");
-        auto managers =
-          m_service_locator_client->load_children(managers_directory);
-        for(auto& manager : managers) {
-          if(manager.m_type == Beam::DirectoryEntry::Type::ACCOUNT &&
-              !std::ranges::contains(accounts, manager)) {
-            accounts.push_back(std::move(manager));
-          }
-        }
-        auto traders_directory = m_service_locator_client->load_directory_entry(
-          trading_group, "traders");
-        auto traders =
-          m_service_locator_client->load_children(traders_directory);
-        for(auto& trader : traders) {
-          if(trader.m_type == Beam::DirectoryEntry::Type::ACCOUNT &&
-              !std::ranges::contains(accounts, trader)) {
-            accounts.push_back(std::move(trader));
-          }
-        }
-      }
-    }
-    return accounts;
-  }
-
-  template<typename C, typename S, typename D, typename R, typename T> requires
-    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
-      IsAdministrationDataStore<Beam::dereference_t<D>> &&
-        Beam::IsTimeClient<Beam::dereference_t<R>> &&
-          Beam::IsTimer<Beam::dereference_t<T>>
   TradingGroup AdministrationServlet<C, S, D, R, T>::load_trading_group(
       const Beam::DirectoryEntry& directory) {
     auto managers_directory =
@@ -1062,31 +979,26 @@ namespace Nexus {
   std::vector<AccountQueryResult>
       AdministrationServlet<C, S, D, R, T>::on_query_accounts(
         ServiceProtocolClient& client, std::string query) {
+    static const auto MAX_RESULTS = 10;
     auto& session = client.get_session();
-    auto candidates = load_managed_accounts(session.get_account());
-    auto all_identities = m_data_store->with_transaction([&] {
-      return m_data_store->load_all_account_identities();
-    });
-    auto identity_map =
-      std::unordered_map<unsigned int, const AccountIdentity*>();
-    for(auto& entry : all_identities) {
-      identity_map[entry.m_index.m_id] = &entry.m_identity;
-    }
     auto results = std::vector<AccountQueryResult>();
-    for(auto& candidate : candidates) {
-      auto name = std::string();
-      auto i = identity_map.find(candidate.m_id);
-      if(i != identity_map.end()) {
-        auto& identity = *i->second;
-        name = identity.m_first_name;
-        if(!name.empty() && !identity.m_last_name.empty()) {
-          name += ' ';
-        }
-        name += identity.m_last_name;
+    auto seen = std::unordered_set<unsigned int>();
+    auto try_match = [&] (const auto& account) {
+      if(account.m_type != Beam::DirectoryEntry::Type::ACCOUNT ||
+          !seen.insert(account.m_id).second) {
+        return false;
       }
-      if(boost::algorithm::istarts_with(candidate.m_name, query)) {
-        results.push_back({std::move(candidate), std::move(name)});
-        continue;
+      auto identity = m_data_store->with_transaction([&] {
+        return m_data_store->load_identity(account);
+      });
+      auto name = identity.m_first_name;
+      if(!name.empty() && !identity.m_last_name.empty()) {
+        name += ' ';
+      }
+      name += identity.m_last_name;
+      if(boost::algorithm::istarts_with(account.m_name, query)) {
+        results.push_back({std::move(account), std::move(name)});
+        return static_cast<int>(results.size()) >= MAX_RESULTS;
       }
       auto tokens = std::vector<std::string>();
       boost::algorithm::split(
@@ -1095,7 +1007,38 @@ namespace Nexus {
         return boost::algorithm::istarts_with(token, query);
       });
       if(matched) {
-        results.push_back({std::move(candidate), std::move(name)});
+        results.push_back({std::move(account), std::move(name)});
+      }
+      return static_cast<int>(results.size()) >= MAX_RESULTS;
+    };
+    auto is_administrator = check_administrator(session.get_account());
+    auto is_service = check_service(session.get_account());
+    if(!is_administrator && !is_service) {
+      if(try_match(session.get_account())) {
+        return results;
+      }
+    }
+    auto trading_groups = [&] {
+      if(is_service) {
+        return m_service_locator_client->load_children(m_trading_groups_root);
+      }
+      return load_managed_trading_groups(session.get_account());
+    }();
+    for(auto& trading_group_entry : trading_groups) {
+      auto trading_group = load_trading_group(trading_group_entry);
+      if(std::ranges::any_of(trading_group.get_managers(), try_match) ||
+          std::ranges::any_of(trading_group.get_traders(), try_match)) {
+        return results;
+      }
+    }
+    if(is_administrator || is_service) {
+      auto administrators =
+        m_service_locator_client->load_children(m_administrators_root);
+      auto services =
+        m_service_locator_client->load_children(m_services_root);
+      if(std::ranges::any_of(administrators, try_match) ||
+          std::ranges::any_of(services, try_match)) {
+        return results;
       }
     }
     return results;
