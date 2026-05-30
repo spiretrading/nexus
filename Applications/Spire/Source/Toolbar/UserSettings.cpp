@@ -7,6 +7,7 @@
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
 #include <Beam/Utilities/AssertionException.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <QApplication>
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
@@ -99,6 +100,37 @@ namespace {
         *legacy.m_key_bindings, interactions, *settings->m_key_bindings);
     }
   }
+
+  void read_json_settings(
+      const std::filesystem::path& path, Out<UserSettings> settings) {
+    auto reader = BasicIStreamReader<std::ifstream>(init(path));
+    auto buffer = SharedBuffer();
+    reader.read(out(buffer));
+    auto load = [&] (const SharedBuffer& source,
+        TypeRegistry<JsonSender<SharedBuffer>>& registry) {
+      auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
+      receiver.set(Ref(source));
+      receiver.shuttle(*settings);
+    };
+    auto current_registry = TypeRegistry<JsonSender<SharedBuffer>>();
+    RegisterSpireTypes(out(current_registry));
+    try {
+      load(buffer, current_registry);
+      return;
+    } catch(const std::exception&) {}
+    auto legacy_registry = TypeRegistry<JsonSender<SharedBuffer>>();
+    legacy_registry.add<TickerNode>("Spire.SecurityNode");
+    legacy_registry.add<TickerType>("Spire.SecurityType");
+    legacy_registry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
+    RegisterSpireTypes(out(legacy_registry));
+    auto text = std::string(buffer.get_data(), buffer.get_size());
+    boost::replace_all(text, "\"region\":", "\"scope\":");
+    boost::replace_all(text, "\"securities\":", "\"tickers\":");
+    boost::replace_all(
+      text, "\"security_view_stack\":", "\"ticker_view_stack\":");
+    boost::replace_all(text, "\"security\":", "\"ticker\":");
+    load(SharedBuffer(text.data(), text.size()), legacy_registry);
+  }
 }
 
 void Spire::export_settings(UserSettings::Categories categories,
@@ -163,14 +195,7 @@ void Spire::import_settings(UserSettings::Categories categories,
     if(path.extension() == ".sps") {
       read_legacy_settings(path, categories, out(settings));
     } else {
-      auto reader = BasicIStreamReader<std::ifstream>(init(path));
-      auto buffer = SharedBuffer();
-      reader.read(out(buffer));
-      auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
-      RegisterSpireTypes(out(registry));
-      auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
-      receiver.set(Ref(buffer));
-      receiver.shuttle(settings);
+      read_json_settings(path, out(settings));
     }
   } catch(const std::exception&) {
     throw std::runtime_error(
