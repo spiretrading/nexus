@@ -9,6 +9,7 @@
 #include <Beam/Serialization/JsonSender.hpp>
 #include <QFontDatabase>
 #include <QMessageBox>
+#include "Spire/BookView/LegacyBookViewWindowSettings.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 
@@ -41,46 +42,50 @@ namespace {
     if(!std::filesystem::exists(properties_path)) {
       throw std::runtime_error("book_view.dat not found.");
     }
-    auto legacy_properties = load_legacy_properties(properties_path);
-    auto properties = BookViewProperties::get_default();
-    properties.m_level_properties.m_font = legacy_properties.m_book_quote_font;
-    properties.m_level_properties.m_is_grid_enabled =
-      legacy_properties.m_show_grid;
-    properties.m_level_properties.m_fill_type =
-      BookViewLevelProperties::FillType::SOLID;
-    if(!legacy_properties.m_book_quote_background_colors.empty()) {
-      properties.m_level_properties.m_color_scheme =
-        legacy_properties.m_book_quote_background_colors;
-    }
-    properties.m_highlight_properties.m_order_visibility = [&] {
-      using LegacyProperties = LegacyBookViewWindowSettings::Properties;
-      if(legacy_properties.m_order_highlight ==
-          LegacyProperties::OrderHighlight::HIDE_ORDERS) {
-        return BookViewHighlightProperties::OrderVisibility::HIDDEN;
-      } else if(legacy_properties.m_order_highlight ==
-          LegacyProperties::OrderHighlight::DISPLAY_ORDERS) {
-        return BookViewHighlightProperties::OrderVisibility::VISIBLE;
-      }
-      return BookViewHighlightProperties::OrderVisibility::HIGHLIGHTED;
-    }();
-    if(!legacy_properties.m_venue_highlights.empty()) {
-      properties.m_highlight_properties.m_venue_highlights.clear();
-      for(auto& highlight : legacy_properties.m_venue_highlights) {
-        auto level = [&] {
-          if(highlight.second.m_highlight_all_levels) {
-            return BookViewHighlightProperties::VenueHighlightLevel::ALL;
-          }
-          return BookViewHighlightProperties::VenueHighlightLevel::TOP;
-        }();
-        auto color = HighlightColor(highlight.second.m_color,
-          legacy_properties.m_book_quote_foreground_color);
-        properties.m_highlight_properties.m_venue_highlights.push_back(
-          BookViewHighlightProperties::VenueHighlight(
-            highlight.first, color, level));
-      }
-    }
-    return properties;
+    return to_book_view_properties(load_legacy_properties(properties_path));
   }
+}
+
+BookViewProperties Spire::to_book_view_properties(
+    const LegacyBookViewWindowSettings::Properties& legacy_properties) {
+  auto properties = BookViewProperties::get_default();
+  properties.m_level_properties.m_font = legacy_properties.m_book_quote_font;
+  properties.m_level_properties.m_is_grid_enabled =
+    legacy_properties.m_show_grid;
+  properties.m_level_properties.m_fill_type =
+    BookViewLevelProperties::FillType::SOLID;
+  if(!legacy_properties.m_book_quote_background_colors.empty()) {
+    properties.m_level_properties.m_color_scheme =
+      legacy_properties.m_book_quote_background_colors;
+  }
+  properties.m_highlight_properties.m_order_visibility = [&] {
+    using LegacyProperties = LegacyBookViewWindowSettings::Properties;
+    if(legacy_properties.m_order_highlight ==
+        LegacyProperties::OrderHighlight::HIDE_ORDERS) {
+      return BookViewHighlightProperties::OrderVisibility::HIDDEN;
+    } else if(legacy_properties.m_order_highlight ==
+        LegacyProperties::OrderHighlight::DISPLAY_ORDERS) {
+      return BookViewHighlightProperties::OrderVisibility::VISIBLE;
+    }
+    return BookViewHighlightProperties::OrderVisibility::HIGHLIGHTED;
+  }();
+  if(!legacy_properties.m_venue_highlights.empty()) {
+    properties.m_highlight_properties.m_venue_highlights.clear();
+    for(auto& highlight : legacy_properties.m_venue_highlights) {
+      auto level = [&] {
+        if(highlight.second.m_highlight_all_levels) {
+          return BookViewHighlightProperties::VenueHighlightLevel::ALL;
+        }
+        return BookViewHighlightProperties::VenueHighlightLevel::TOP;
+      }();
+      auto color = HighlightColor(highlight.second.m_color,
+        legacy_properties.m_book_quote_foreground_color);
+      properties.m_highlight_properties.m_venue_highlights.push_back(
+        BookViewHighlightProperties::VenueHighlight(
+          highlight.first, color, level));
+    }
+  }
+  return properties;
 }
 
 const BookViewLevelProperties& BookViewLevelProperties::get_default() {

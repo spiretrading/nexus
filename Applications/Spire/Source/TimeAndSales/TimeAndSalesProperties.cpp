@@ -37,47 +37,51 @@ namespace {
 
   auto convert_legacy_time_and_sales_properties(
       const std::filesystem::path& path) {
-    enum LegacyColumns {
-      TIME_COLUMN = 0,
-      PRICE_COLUMN,
-      SIZE_COLUMN,
-      MARKET_COLUMN,
-      CONDITION_COLUMN
-    };
-    static const auto LEGACY_COLUMN_COUNT = 5;
     auto properties_path = path / "time_and_sales.dat";
     if(!std::filesystem::exists(properties_path)) {
       throw std::runtime_error("time_and_sales.dat not found.");
     }
-    auto legacy_properties = load_legacy_properties(properties_path);
-    auto properties = TimeAndSalesProperties(); 
-    for(auto i = 0; i != BBO_INDICATOR_COUNT; ++i) {
-      auto color = HighlightColor(
-        legacy_properties.m_price_range_background_color[i],
-        legacy_properties.m_price_range_foreground_color[i]);
-      properties.set_highlight_color(static_cast<BboIndicator>(i), color);
-    }
-    properties.set_font(legacy_properties.m_font);
-    if(legacy_properties.m_visible_columns[TIME_COLUMN]) {
-      properties.set_visible(TimeAndSalesTableModel::Column::TIME, true);
-    }
-    if(legacy_properties.m_visible_columns[PRICE_COLUMN]) {
-      properties.set_visible(TimeAndSalesTableModel::Column::PRICE, true);
-    }
-    if(legacy_properties.m_visible_columns[SIZE_COLUMN]) {
-      properties.set_visible(TimeAndSalesTableModel::Column::SIZE, true);
-    }
-    if(legacy_properties.m_visible_columns[MARKET_COLUMN]) {
-      properties.set_visible(TimeAndSalesTableModel::Column::MARKET, true);
-    }
-    if(legacy_properties.m_visible_columns[CONDITION_COLUMN]) {
-      properties.set_visible(TimeAndSalesTableModel::Column::CONDITION, true);
-    }
-    properties.set_visible(TimeAndSalesTableModel::Column::BUYER, true);
-    properties.set_visible(TimeAndSalesTableModel::Column::SELLER, true);
-    properties.set_grid_enabled(legacy_properties.m_show_grid_lines);
-    return properties;
+    return to_time_and_sales_properties(
+      load_legacy_properties(properties_path));
   }
+}
+
+TimeAndSalesProperties Spire::to_time_and_sales_properties(
+    const LegacyTimeAndSalesWindowSettings::Properties& legacy_properties) {
+  enum LegacyColumns {
+    TIME_COLUMN = 0,
+    PRICE_COLUMN,
+    SIZE_COLUMN,
+    MARKET_COLUMN,
+    CONDITION_COLUMN
+  };
+  auto properties = TimeAndSalesProperties();
+  for(auto i = 0; i != BBO_INDICATOR_COUNT; ++i) {
+    auto color = HighlightColor(
+      legacy_properties.m_price_range_background_color[i],
+      legacy_properties.m_price_range_foreground_color[i]);
+    properties.set_highlight_color(static_cast<BboIndicator>(i), color);
+  }
+  properties.set_font(legacy_properties.m_font);
+  if(legacy_properties.m_visible_columns[TIME_COLUMN]) {
+    properties.set_visible(TimeAndSalesTableModel::Column::TIME, true);
+  }
+  if(legacy_properties.m_visible_columns[PRICE_COLUMN]) {
+    properties.set_visible(TimeAndSalesTableModel::Column::PRICE, true);
+  }
+  if(legacy_properties.m_visible_columns[SIZE_COLUMN]) {
+    properties.set_visible(TimeAndSalesTableModel::Column::SIZE, true);
+  }
+  if(legacy_properties.m_visible_columns[MARKET_COLUMN]) {
+    properties.set_visible(TimeAndSalesTableModel::Column::MARKET, true);
+  }
+  if(legacy_properties.m_visible_columns[CONDITION_COLUMN]) {
+    properties.set_visible(TimeAndSalesTableModel::Column::CONDITION, true);
+  }
+  properties.set_visible(TimeAndSalesTableModel::Column::BUYER, true);
+  properties.set_visible(TimeAndSalesTableModel::Column::SELLER, true);
+  properties.set_grid_enabled(legacy_properties.m_show_grid_lines);
+  return properties;
 }
 
 const TimeAndSalesProperties& TimeAndSalesProperties::get_default() {
