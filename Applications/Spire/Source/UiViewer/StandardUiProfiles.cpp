@@ -131,6 +131,7 @@
 #include "Spire/Ui/TimeInForceFilterPanel.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
+#include "Spire/Ui/TradingGroupBox.hpp"
 #include "Spire/Ui/TradingGroupListBox.hpp"
 #include "Spire/Ui/TransitionView.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -5520,6 +5521,48 @@ UiProfile Spire::make_tooltip_profile() {
     return label;
   });
   return profile;
+}
+
+UiProfile Spire::make_trading_group_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current", "G01"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("read_only", false));
+  return UiProfile("TradingGroupBox", properties, [] (auto& profile) {
+    auto model = populate_trading_group_query_model();
+    auto& current = get<QString>("current", profile.get_properties());
+    auto current_entry = [&] {
+      if(auto value = model->parse(current.get())) {
+        return *value;
+      }
+      return DirectoryEntry();
+    }();
+    auto current_model =
+      std::make_shared<LocalTradingGroupModel>(current_entry);
+    auto box = make_trading_group_box(model, current_model);
+    box->setMinimumWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    auto current_connection = box->get_current()->connect_update_signal(
+      profile.make_event_slot<DirectoryEntry>("Current"));
+    current.connect_changed_signal([=] (const auto& current) {
+      if(auto value = model->parse(current)) {
+        box->get_current()->set(*value);
+      } else {
+        auto current_blocker = shared_connection_block(current_connection);
+        box->get_current()->set(DirectoryEntry());
+      }
+    });
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal([=] (const auto& placeholder) {
+      box->set_placeholder(placeholder);
+    });
+    link(&TradingGroupBox::is_read_only, &TradingGroupBox::set_read_only,
+      *box, get<bool>("read_only", profile.get_properties()));
+    box->connect_submit_signal(
+      profile.make_event_slot<DirectoryEntry>("Submit"));
+    return box;
+  });
 }
 
 UiProfile Spire::make_trading_group_list_box_profile() {

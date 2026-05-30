@@ -1,12 +1,9 @@
 #ifndef SPIRE_TRADING_GROUP_LIST_BOX_HPP
 #define SPIRE_TRADING_GROUP_LIST_BOX_HPP
-#include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Spire/Ui/TagComboBox.hpp"
+#include "Spire/Ui/TradingGroupBox.hpp"
 
 namespace Spire {
-
-  /** Represents a QueryModel for trading groups. */
-  using TradingGroupQueryModel = QueryModel<Beam::DirectoryEntry>;
 
   /** Represents a ListModel for a list of trading groups. */
   using TradingGroupListModel = ListModel<Beam::DirectoryEntry>;
