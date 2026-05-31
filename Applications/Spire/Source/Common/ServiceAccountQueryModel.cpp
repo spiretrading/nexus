@@ -13,6 +13,11 @@ ServiceAccountQueryModel::ServiceAccountQueryModel(
 
 optional<AccountListItem::Account>
     ServiceAccountQueryModel::parse(const QString& query) {
+  auto lock = std::lock_guard(m_mutex);
+  auto i = m_cache.find(query);
+  if(i != m_cache.end()) {
+    return i->second;
+  }
   return none;
 }
 
@@ -25,9 +30,15 @@ QtPromise<std::vector<AccountListItem::Account>>
     auto results = client.query_accounts(query.toStdString());
     auto accounts = std::vector<AccountListItem::Account>();
     for(auto& result : results) {
-      accounts.push_back({make_identicon(result.m_account, scale(8, 8)),
-        QString::fromStdString(result.m_account.m_name),
-        QString::fromStdString(result.m_name)});
+      auto account = AccountListItem::Account(
+        make_identicon(result.m_account, scale(8, 8)), result.m_account,
+        QString::fromStdString(result.m_name));
+      auto key = QString::fromStdString(result.m_account.m_name);
+      {
+        auto lock = std::lock_guard(m_mutex);
+        m_cache.insert_or_assign(key, account);
+      }
+      accounts.push_back(std::move(account));
     }
     return accounts;
   }, LaunchPolicy::ASYNC);

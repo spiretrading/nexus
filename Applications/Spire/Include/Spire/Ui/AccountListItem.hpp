@@ -1,5 +1,6 @@
 #ifndef SPIRE_ACCOUNT_LIST_ITEM_HPP
 #define SPIRE_ACCOUNT_LIST_ITEM_HPP
+#include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <QImage>
 #include <QString>
 #include <QWidget>
@@ -16,8 +17,8 @@ namespace Spire {
         /** The identicon image. */
         QImage m_identicon;
 
-        /** The unique account identifier. */
-        QString m_id;
+        /** The account's DirectoryEntry. */
+        Beam::DirectoryEntry m_account;
 
         /** The full name associated with the account. */
         QString m_name;

@@ -28,7 +28,7 @@ namespace {
       auto entry = DirectoryEntry::make_account(
         static_cast<unsigned int>(std::hash<std::string>{}(id)), id);
       auto account = AccountListItem::Account(
-        make_identicon(entry, scale(8, 8)), QString::fromStdString(id),
+        make_identicon(entry, scale(8, 8)), entry,
         QString::fromStdString(name));
       model->add(QString::fromStdString(id), account);
       auto tokens = QString::fromStdString(name).split(' ');

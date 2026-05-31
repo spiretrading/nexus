@@ -92,8 +92,7 @@ NewBlotterForm::NewBlotterForm(DirectoryEntry account,
   if(is_account_selectable) {
     auto account_label = make_label(tr("Account"));
     auto current = std::make_shared<LocalAccountModel>(
-      AccountListItem::Account({}, QString::fromStdString(m_account.m_name),
-        {}));
+      AccountListItem::Account({}, m_account, {}));
     m_account_box = new AccountBox(std::move(accounts), std::move(current));
     body_layout->addWidget(account_label);
     body_layout->addWidget(m_account_box);
@@ -191,10 +190,8 @@ void NewBlotterForm::on_create() {
   auto account = [&] {
     if(m_account_box) {
       auto& selected = m_account_box->get_current()->get();
-      if(!selected.m_id.isEmpty()) {
-        return DirectoryEntry::make_account(
-          m_account_box->get_current()->get().m_id.toUInt(),
-          m_account_box->get_current()->get().m_id.toStdString());
+      if(selected.m_account.m_type != DirectoryEntry::Type::NONE) {
+        return selected.m_account;
       }
     }
     return m_account;
