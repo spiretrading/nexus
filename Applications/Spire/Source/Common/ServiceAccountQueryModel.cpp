@@ -1,4 +1,5 @@
 #include "Spire/Spire/ServiceAccountQueryModel.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Identicon.hpp"
 
 using namespace Beam;
