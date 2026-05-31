@@ -131,7 +131,7 @@ NewBlotterForm::NewBlotterForm(DirectoryEntry account,
   m_panel->setWindowModality(Qt::WindowModal);
   m_panel->set_positioning(OverlayPanel::Positioning::NONE);
   m_panel->set_closed_on_focus_out(false);
-  m_panel->set_is_draggable(true);
+  m_panel->set_is_draggable(false);
   m_panel->installEventFilter(this);
   setFocusProxy(m_name_input);
 }
@@ -178,7 +178,7 @@ bool NewBlotterForm::event(QEvent* event) {
 }
 
 void NewBlotterForm::on_cancel() {
-  m_panel->close();
+  close();
 }
 
 void NewBlotterForm::on_create() {
@@ -191,8 +191,8 @@ void NewBlotterForm::on_create() {
     }
     return m_account;
   }();
-  m_panel->close();
   m_submit_signal(m_name_input->get_current()->get(), account);
+  close();
 }
 
 void NewBlotterForm::on_name_current(const QString& value) {}
