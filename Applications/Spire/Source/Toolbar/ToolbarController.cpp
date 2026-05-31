@@ -406,9 +406,9 @@ void ToolbarController::on_export(
   }
 }
 
-void ToolbarController::on_new_blotter(const QString& name) {
-  auto blotter = std::make_unique<BlotterModel>(name.toStdString(),
-    m_user_profile->GetClients().get_service_locator_client().get_account(),
+void ToolbarController::on_new_blotter(
+    const QString& name, const DirectoryEntry& account) {
+  auto blotter = std::make_unique<BlotterModel>(name.toStdString(), account,
     false, Ref(*m_user_profile),
     m_user_profile->GetBlotterSettings().GetDefaultBlotterTaskProperties(),
     m_user_profile->GetBlotterSettings().GetDefaultOrderLogProperties());
@@ -420,7 +420,9 @@ void ToolbarController::on_new_blotter(const QString& name) {
 }
 
 void ToolbarController::on_blotter_added(BlotterModel& blotter) {
-  m_pinned_blotters->push(&blotter);
+  if(!blotter.IsConsolidated()) {
+    m_pinned_blotters->push(&blotter);
+  }
 }
 
 void ToolbarController::on_blotter_removed(BlotterModel& blotter) {

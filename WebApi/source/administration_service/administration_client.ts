@@ -2,6 +2,7 @@ import * as Beam from 'beam';
 import { Message, RiskParameters } from '..';
 import { AccountIdentity } from './account_identity';
 import { AccountModificationRequest } from './account_modification_request';
+import { AccountQueryResult } from './account_query_result';
 import { AccountRoles } from './account_roles';
 import { EntitlementModification } from './entitlement_modification';
 import { Notification } from './notification';
@@ -19,6 +20,14 @@ export abstract class AdministrationClient {
    */
   public abstract loadAccountsByRoles(roles: AccountRoles):
     Promise<Beam.DirectoryEntry[]>;
+
+  /**
+   * Queries accounts by name prefix.
+   * @param query The prefix to match against account names.
+   * @return The list of matching accounts with their display names.
+   */
+  public abstract queryAccounts(query: string):
+    Promise<AccountQueryResult[]>;
 
   /** Loads the DirectoryEntry containing all administrators. */
   public abstract loadAdministratorsRootEntry(): Promise<Beam.DirectoryEntry>;

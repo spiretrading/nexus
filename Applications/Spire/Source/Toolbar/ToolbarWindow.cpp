@@ -3,6 +3,7 @@
 #include <QIcon>
 #include <QStandardPaths>
 #include "Spire/Blotter/BlotterModel.hpp"
+#include "Spire/Toolbar/NewBlotterForm.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Toolbar/SettingsPanel.hpp"
 #include "Spire/Toolbar/ToolbarWindowSettings.hpp"
@@ -11,7 +12,6 @@
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/Layouts.hpp"
-#include "Spire/Ui/LineInputForm.hpp"
 #include "Spire/Ui/MenuButton.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -97,10 +97,13 @@ namespace {
 }
 
 ToolbarWindow::ToolbarWindow(DirectoryEntry account, AccountRoles roles,
+    std::shared_ptr<AccountQueryModel> account_query_model,
     std::shared_ptr<RecentlyClosedWindowListModel> recently_closed_windows,
     std::shared_ptr<ListModel<BlotterModel*>> pinned_blotters, QWidget* parent)
     : Window(parent),
       m_account(std::move(account)),
+      m_roles(roles),
+      m_account_query_model(std::move(account_query_model)),
       m_recently_closed_windows(std::move(recently_closed_windows)),
       m_pinned_blotters(std::move(pinned_blotters)) {
   setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
@@ -365,16 +368,26 @@ void ToolbarWindow::on_export() {
 }
 
 void ToolbarWindow::on_new_blotter_action() {
-  m_new_blotter_form = new LineInputForm(tr("New Blotter"), *this);
+  auto is_account_selectable = m_roles.test(AccountRole::ADMINISTRATOR) ||
+    m_roles.test(AccountRole::MANAGER) || m_roles.test(AccountRole::SERVICE);
+  m_new_blotter_form = new NewBlotterForm(
+    m_account, m_account_query_model, is_account_selectable, *this);
   m_new_blotter_form->connect_submit_signal(
     std::bind_front(&ToolbarWindow::on_new_blotter_submission, this));
   m_new_blotter_form->show();
 }
 
-void ToolbarWindow::on_new_blotter_submission(const QString& name) {
-  auto unique_name = make_unique_blotter_name(name, *m_pinned_blotters);
+void ToolbarWindow::on_new_blotter_submission(
+    const QString& name, const DirectoryEntry& account) {
+  auto base_name = [&] {
+    if(name.trimmed().isEmpty()) {
+      return QString("Blotter");
+    }
+    return name;
+  }();
+  auto unique_name = make_unique_blotter_name(base_name, *m_pinned_blotters);
   m_new_blotter_form->deleteLater();
-  m_new_blotter_signal(unique_name);
+  m_new_blotter_signal(unique_name, account);
 }
 
 void ToolbarWindow::on_blotter_operation(
