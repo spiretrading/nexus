@@ -10,6 +10,7 @@
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/ServiceAccountQueryModel.hpp"
 #include "Spire/Spire/ServiceTickerQueryModel.hpp"
 
 using namespace Beam;
@@ -33,6 +34,8 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
         QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
       m_recentlyClosedWindows(
         std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>()),
+      m_account_query_model(std::make_shared<ServiceAccountQueryModel>(
+        m_clients.get_administration_client())),
       m_ticker_info_query_model(std::make_shared<ServiceTickerQueryModel>(
         m_clients.get_market_data_client())),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
@@ -91,6 +94,11 @@ const std::filesystem::path& UserProfile::GetProfilePath() const {
 const std::shared_ptr<RecentlyClosedWindowListModel>&
     UserProfile::GetRecentlyClosedWindows() const {
   return m_recentlyClosedWindows;
+}
+
+const std::shared_ptr<AccountQueryModel>&
+    UserProfile::GetAccountQueryModel() const {
+  return m_account_query_model;
 }
 
 const std::shared_ptr<TickerInfoQueryModel>&
