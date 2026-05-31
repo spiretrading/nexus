@@ -759,11 +759,11 @@ const entitlementsChangeItem =
     (props: any) => React.createElement(WebPortal.EntitlementsChangeItem, {
       ...props,
       currency: new Nexus.CurrencyDatabase.Entry(
-        new Nexus.Currency(840), 'USD', '$')
+        new Nexus.Currency(840), 'USD', 'US Dollar', '$')
     }));
 
 const USD_CURRENCY = new Nexus.CurrencyDatabase.Entry(
-  new Nexus.Currency(840), 'USD', '$');
+  new Nexus.Currency(840), 'USD', 'US Dollar', '$');
 
 const REQUEST_ITEM_SAMPLES: WebPortal.RequestsModel.ListChange[] = [
   {type: 'entitlements', name: 'NYSE Arca Equities',
