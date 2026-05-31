@@ -16,6 +16,9 @@
 #include <Beam/TimeService/Timer.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
+#include <boost/algorithm/string/classification.hpp>
+#include <boost/algorithm/string/predicate.hpp>
+#include <boost/algorithm/string/split.hpp>
 #include <boost/throw_exception.hpp>
 #include <boost/uuid/time_generator_v7.hpp>
 #include <boost/uuid/uuid_io.hpp>
@@ -148,6 +151,8 @@ namespace Nexus {
         const Message& comment, AccountRoles roles);
       std::vector<Beam::DirectoryEntry> on_load_accounts_by_roles(
         ServiceProtocolClient& client, AccountRoles roles);
+      std::vector<AccountQueryResult> on_query_accounts(
+        ServiceProtocolClient& client, std::string query);
       Beam::DirectoryEntry on_load_administrators_root_entry(
         ServiceProtocolClient& client);
       Beam::DirectoryEntry on_load_services_root_entry(
@@ -305,6 +310,8 @@ namespace Nexus {
     register_administration_messages(out(slots));
     LoadAccountsByRolesService::add_slot(out(slots),
       std::bind_front(&AdministrationServlet::on_load_accounts_by_roles, this));
+    QueryAccountsService::add_slot(out(slots),
+      std::bind_front(&AdministrationServlet::on_query_accounts, this));
     LoadAdministratorsRootEntryService::add_slot(out(slots), std::bind_front(
       &AdministrationServlet::on_load_administrators_root_entry, this));
     LoadServicesRootEntryService::add_slot(out(slots), std::bind_front(
@@ -962,6 +969,79 @@ namespace Nexus {
       }
     }
     return accounts;
+  }
+
+  template<typename C, typename S, typename D, typename R, typename T> requires
+    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+      IsAdministrationDataStore<Beam::dereference_t<D>> &&
+        Beam::IsTimeClient<Beam::dereference_t<R>> &&
+          Beam::IsTimer<Beam::dereference_t<T>>
+  std::vector<AccountQueryResult>
+      AdministrationServlet<C, S, D, R, T>::on_query_accounts(
+        ServiceProtocolClient& client, std::string query) {
+    static const auto MAX_RESULTS = 10;
+    auto& session = client.get_session();
+    auto results = std::vector<AccountQueryResult>();
+    auto seen = std::unordered_set<unsigned int>();
+    auto try_match = [&] (const auto& account) {
+      if(account.m_type != Beam::DirectoryEntry::Type::ACCOUNT ||
+          !seen.insert(account.m_id).second) {
+        return false;
+      }
+      auto identity = m_data_store->with_transaction([&] {
+        return m_data_store->load_identity(account);
+      });
+      auto name = identity.m_first_name;
+      if(!name.empty() && !identity.m_last_name.empty()) {
+        name += ' ';
+      }
+      name += identity.m_last_name;
+      if(boost::algorithm::istarts_with(account.m_name, query)) {
+        results.push_back({std::move(account), std::move(name)});
+        return static_cast<int>(results.size()) >= MAX_RESULTS;
+      }
+      auto tokens = std::vector<std::string>();
+      boost::algorithm::split(
+        tokens, name, boost::is_any_of(" "), boost::token_compress_on);
+      auto matched = std::ranges::any_of(tokens, [&] (const auto& token) {
+        return boost::algorithm::istarts_with(token, query);
+      });
+      if(matched) {
+        results.push_back({std::move(account), std::move(name)});
+      }
+      return static_cast<int>(results.size()) >= MAX_RESULTS;
+    };
+    auto is_administrator = check_administrator(session.get_account());
+    auto is_service = check_service(session.get_account());
+    if(!is_administrator && !is_service) {
+      if(try_match(session.get_account())) {
+        return results;
+      }
+    }
+    auto trading_groups = [&] {
+      if(is_service) {
+        return m_service_locator_client->load_children(m_trading_groups_root);
+      }
+      return load_managed_trading_groups(session.get_account());
+    }();
+    for(auto& trading_group_entry : trading_groups) {
+      auto trading_group = load_trading_group(trading_group_entry);
+      if(std::ranges::any_of(trading_group.get_managers(), try_match) ||
+          std::ranges::any_of(trading_group.get_traders(), try_match)) {
+        return results;
+      }
+    }
+    if(is_administrator || is_service) {
+      auto administrators =
+        m_service_locator_client->load_children(m_administrators_root);
+      auto services =
+        m_service_locator_client->load_children(m_services_root);
+      if(std::ranges::any_of(administrators, try_match) ||
+          std::ranges::any_of(services, try_match)) {
+        return results;
+      }
+    }
+    return results;
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires

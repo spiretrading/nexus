@@ -23,6 +23,7 @@
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Spire/Ui/AccountBox.hpp"
 #include "Spire/Ui/TickerBox.hpp"
 
 namespace Spire {
@@ -89,6 +90,10 @@ namespace Spire {
       /** Returns the list of recently closed windows. */
       const std::shared_ptr<RecentlyClosedWindowListModel>&
         GetRecentlyClosedWindows() const;
+
+      /** Returns the model used to query accounts. */
+      const std::shared_ptr<AccountQueryModel>&
+        GetAccountQueryModel() const;
 
       /** Returns the model used to query tickers. */
       const std::shared_ptr<TickerInfoQueryModel>&
@@ -198,6 +203,7 @@ namespace Spire {
       mutable Nexus::Clients m_clients;
       std::filesystem::path m_profilePath;
       std::shared_ptr<RecentlyClosedWindowListModel> m_recentlyClosedWindows;
+      std::shared_ptr<AccountQueryModel> m_account_query_model;
       std::shared_ptr<TickerInfoQueryModel> m_ticker_info_query_model;
       BookViewProperties m_defaultBookViewProperties;
       SavedDashboards m_savedDashboards;

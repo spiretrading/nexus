@@ -8,6 +8,7 @@
 #include <Beam/Services/Service.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
+#include "Nexus/AdministrationService/AccountQueryResult.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
@@ -34,6 +35,14 @@ namespace Nexus {
     (LoadAccountsByRolesService,
       "Nexus.AdministrationServices.LoadAccountsByRolesService",
       std::vector<Beam::DirectoryEntry>, (AccountRoles, roles)),
+
+    /**
+     * Queries accounts by name prefix.
+     * @param query The prefix to match against account names.
+     * @return The list of matching accounts with their display names.
+     */
+    (QueryAccountsService, "Nexus.AdministrationServices.QueryAccountsService",
+      std::vector<AccountQueryResult>, (std::string, query)),
 
     /**
      * Loads the DirectoryEntry containing all administrators.

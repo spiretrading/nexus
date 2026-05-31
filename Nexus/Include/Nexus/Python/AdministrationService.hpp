@@ -29,6 +29,12 @@ namespace Nexus::Python {
   void export_account_modification_request(pybind11::module& module);
 
   /**
+   * Exports the AccountQueryResult struct.
+   * @param module The module to export to.
+   */
+  void export_account_query_result(pybind11::module& module);
+
+  /**
    * Exports the AccountRoles enum.
    * @param module The module to export to.
    */
@@ -46,6 +52,7 @@ namespace Nexus::Python {
       pybind11::module& module, std::string_view name) {
     auto client = pybind11::class_<C>(module, name.data()).
       def("load_accounts_by_roles", &C::load_accounts_by_roles).
+      def("query_accounts", &C::query_accounts).
       def("load_administrators_root_entry", &C::load_administrators_root_entry).
       def("load_services_root_entry", &C::load_services_root_entry).
       def("load_trading_groups_root_entry", &C::load_trading_groups_root_entry).

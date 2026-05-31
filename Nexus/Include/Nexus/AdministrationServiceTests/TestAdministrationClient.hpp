@@ -22,6 +22,12 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<std::vector<Beam::DirectoryEntry>> m_result;
       };
 
+      /** Records a call to query_accounts(). */
+      struct QueryAccountsOperation {
+        std::string m_query;
+        Beam::Tests::ServiceResult<std::vector<AccountQueryResult>> m_result;
+      };
+
       /** Records a call to load_administrators_root_entry(). */
       struct LoadAdministratorsRootEntryOperation {
         Beam::Tests::ServiceResult<Beam::DirectoryEntry> m_result;
@@ -272,14 +278,14 @@ namespace Nexus::Tests {
        * A variant covering all possible TestAdministrationClient operations.
        */
       using Operation = std::variant<LoadAccountsByRolesOperation,
-        LoadAdministratorsRootEntryOperation, LoadServicesRootEntryOperation,
-        LoadTradingGroupsRootEntryOperation, CheckAdministratorOperation,
-        LoadAccountRolesOperation, LoadParentChildAccountRolesOperation,
-        LoadParentTradingGroupOperation, LoadIdentityOperation,
-        StoreIdentityOperation, LoadTradingGroupOperation,
-        LoadManagedTradingGroupsOperation, LoadAdministratorsOperation,
-        LoadServicesOperation, LoadEntitlementsOperation,
-        LoadAccountEntitlementsOperation,
+        QueryAccountsOperation, LoadAdministratorsRootEntryOperation,
+        LoadServicesRootEntryOperation, LoadTradingGroupsRootEntryOperation,
+        CheckAdministratorOperation, LoadAccountRolesOperation,
+        LoadParentChildAccountRolesOperation, LoadParentTradingGroupOperation,
+        LoadIdentityOperation, StoreIdentityOperation,
+        LoadTradingGroupOperation, LoadManagedTradingGroupsOperation,
+        LoadAdministratorsOperation, LoadServicesOperation,
+        LoadEntitlementsOperation, LoadAccountEntitlementsOperation,
         MonitorRiskParametersOperation,
         MonitorRiskStateOperation, StoreRiskStateOperation,
         LoadAccountModificationRequestOperation,
@@ -313,6 +319,7 @@ namespace Nexus::Tests {
 
       std::vector<Beam::DirectoryEntry> load_accounts_by_roles(
         AccountRoles roles);
+      std::vector<AccountQueryResult> query_accounts(const std::string& query);
       Beam::DirectoryEntry load_administrators_root_entry();
       Beam::DirectoryEntry load_services_root_entry();
       Beam::DirectoryEntry load_trading_groups_root_entry();
@@ -407,6 +414,12 @@ namespace Nexus::Tests {
       TestAdministrationClient::load_accounts_by_roles(AccountRoles roles) {
     return m_queue.append_result<LoadAccountsByRolesOperation,
       std::vector<Beam::DirectoryEntry>>(std::move(roles));
+  }
+
+  inline std::vector<AccountQueryResult>
+      TestAdministrationClient::query_accounts(const std::string& query) {
+    return m_queue.append_result<QueryAccountsOperation,
+      std::vector<AccountQueryResult>>(query);
   }
 
   inline Beam::DirectoryEntry

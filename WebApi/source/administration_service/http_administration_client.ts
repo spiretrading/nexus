@@ -2,6 +2,7 @@ import * as Beam from 'beam';
 import { RiskParameters } from '..';
 import { AccountIdentity } from './account_identity';
 import { AccountModificationRequest } from './account_modification_request';
+import { AccountQueryResult } from './account_query_result';
 import { AccountRoles } from './account_roles';
 import { AdministrationClient } from './administration_client';
 import { EntitlementModification } from './entitlement_modification';
@@ -39,6 +40,15 @@ export class HttpAdministrationClient extends AdministrationClient {
         roles: roles.toJson()
       });
     return Beam.arrayFromJson(Beam.DirectoryEntry, response);
+  }
+
+  public async queryAccounts(query: string): Promise<AccountQueryResult[]> {
+    const response = await Beam.post(
+      '/api/administration_service/query_accounts',
+      {
+        query: query
+      });
+    return response.map(AccountQueryResult.fromJson);
   }
 
   public async loadAdministratorsRootEntry(): Promise<Beam.DirectoryEntry> {

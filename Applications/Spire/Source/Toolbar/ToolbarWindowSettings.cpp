@@ -25,10 +25,13 @@ QWidget* ToolbarWindowSettings::Reopen(Ref<UserProfile> profile) const {
       account);
   auto pinned_blotters = std::make_shared<ArrayListModel<BlotterModel*>>();
   for(auto& blotter : profile->GetBlotterSettings().GetAllBlotters()) {
-    pinned_blotters->push(&*blotter);
+    if(!blotter->IsConsolidated()) {
+      pinned_blotters->push(&*blotter);
+    }
   }
-  auto window = new ToolbarWindow(
-    account, roles, profile->GetRecentlyClosedWindows(), pinned_blotters);
+  auto window = new ToolbarWindow(account, roles,
+    profile->GetAccountQueryModel(), profile->GetRecentlyClosedWindows(),
+    pinned_blotters);
   Apply(Ref(profile), out(*window));
   return window;
 }

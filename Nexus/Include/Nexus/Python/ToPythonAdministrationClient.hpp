@@ -35,6 +35,7 @@ namespace Nexus {
 
       std::vector<Beam::DirectoryEntry>
         load_accounts_by_roles(AccountRoles roles);
+      std::vector<AccountQueryResult> query_accounts(const std::string& query);
       Beam::DirectoryEntry load_administrators_root_entry();
       Beam::DirectoryEntry load_services_root_entry();
       Beam::DirectoryEntry load_trading_groups_root_entry();
@@ -152,6 +153,14 @@ namespace Nexus {
         AccountRoles roles) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_accounts_by_roles(roles);
+  }
+
+  template<IsAdministrationClient C>
+  std::vector<AccountQueryResult>
+      ToPythonAdministrationClient<C>::query_accounts(
+        const std::string& query) {
+    auto release = Beam::Python::GilRelease();
+    return m_client->query_accounts(query);
   }
 
   template<IsAdministrationClient C>

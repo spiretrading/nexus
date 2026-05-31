@@ -75,6 +75,24 @@ TEST_SUITE("AdministrationClient") {
       }, accounts);
   }
 
+  TEST_CASE("query_accounts") {
+    auto expected = std::vector<AccountQueryResult>();
+    expected.push_back(
+      {DirectoryEntry::make_account(1, "jsmith"), "John Smith"});
+    expected.push_back({DirectoryEntry::make_account(2, "jdoe"), "Jane Doe"});
+    require_operation<TestAdministrationClient::QueryAccountsOperation>(
+      [&] (auto& client) {
+        return client.query_accounts("j");
+      }, expected,
+      [&] (const auto& received) {
+        REQUIRE(received.size() == 2);
+        REQUIRE(received[0].m_account == expected[0].m_account);
+        REQUIRE(received[0].m_name == expected[0].m_name);
+        REQUIRE(received[1].m_account == expected[1].m_account);
+        REQUIRE(received[1].m_name == expected[1].m_name);
+      });
+  }
+
   TEST_CASE("load_administrators_root_entry") {
     auto entry = DirectoryEntry::make_account(1, "admin_root");
     require_operation<

@@ -37,6 +37,9 @@ std::vector<HttpRequestSlot> AdministrationWebServlet::get_slots() {
   slots.emplace_back(matches_path(HttpMethod::POST,
     "/api/administration_service/load_accounts_by_roles"), std::bind_front(
       &AdministrationWebServlet::on_load_accounts_by_roles, this));
+  slots.emplace_back(matches_path(
+    HttpMethod::POST, "/api/administration_service/query_accounts"),
+    std::bind_front(&AdministrationWebServlet::on_query_accounts, this));
   slots.emplace_back(matches_path(HttpMethod::POST,
     "/api/administration_service/load_administrators_root_entry"),
     std::bind_front(
@@ -232,6 +235,29 @@ HttpResponse AdministrationWebServlet::on_load_accounts_by_roles(
   auto accounts =
     clients.get_administration_client().load_accounts_by_roles(params.m_roles);
   session->shuttle_response(accounts, out(response));
+  return response;
+}
+
+HttpResponse AdministrationWebServlet::on_query_accounts(
+    const HttpRequest& request) {
+  struct Parameters {
+    std::string m_query;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("query", m_query);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto params = session->shuttle_parameters<Parameters>(request);
+  auto& clients = session->get_clients();
+  auto results =
+    clients.get_administration_client().query_accounts(params.m_query);
+  session->shuttle_response(results, out(response));
   return response;
 }
 
