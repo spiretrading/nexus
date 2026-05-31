@@ -13,9 +13,9 @@ const Direction = WebPortal.RequestsModel.Direction;
 const EntitlementAction = WebPortal.RequestsModel.EntitlementAction;
 
 const USD = new Nexus.CurrencyDatabase.Entry(
-  new Nexus.Currency(840), 'USD', '$');
+  new Nexus.Currency(840), 'USD', 'US Dollar', '$');
 const CAD = new Nexus.CurrencyDatabase.Entry(
-  new Nexus.Currency(124), 'CAD', '$');
+  new Nexus.Currency(124), 'CAD', 'Canadian Dollar', '$');
 
 const ACCOUNT_NAMES = [
   'achen01', 'bsmith02', 'cgreen01', 'djones04', 'ewilson05',
