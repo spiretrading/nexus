@@ -85,7 +85,14 @@ BlotterWindow::BlotterWindow(UserProfile* userProfile, BlotterModel* model,
       m_userProfile(userProfile),
       m_model(model) {
   m_ui->setupUi(this);
-  setWindowTitle(QString::fromStdString(m_model->GetName()) + tr(" - Blotter"));
+  auto title = QString::fromStdString(m_model->GetName()) + tr(" - Blotter");
+  auto logged_in_account =
+    m_userProfile->GetClients().get_service_locator_client().get_account();
+  if(m_model->GetExecutingAccount() != logged_in_account) {
+    title += QString(" (%1)").arg(
+      QString::fromStdString(m_model->GetExecutingAccount().m_name));
+  }
+  setWindowTitle(title);
   m_ui->m_openPositionsTab->SetModel(Ref(*m_userProfile), Ref(*m_model));
   connect(&m_model->GetOpenPositionsModel(), &OpenPositionsModel::rowsInserted,
     this, &BlotterWindow::OnPositionsAdded);

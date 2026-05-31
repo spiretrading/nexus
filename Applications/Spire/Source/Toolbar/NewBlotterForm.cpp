@@ -81,8 +81,7 @@ NewBlotterForm::NewBlotterForm(DirectoryEntry account,
   auto body_layout = make_vbox_layout(body);
   body_layout->setSpacing(scale_height(8));
   auto name_label = make_label(tr("Name"));
-  m_name_model =
-    std::make_shared<NonEmptyTextModel>(std::make_shared<LocalTextModel>());
+  m_name_model = std::make_shared<LocalTextModel>();
   m_name_input = new TextBox(m_name_model);
   m_name_input->installEventFilter(this);
   m_name_connection = m_name_model->connect_update_signal(
@@ -109,7 +108,6 @@ NewBlotterForm::NewBlotterForm(DirectoryEntry account,
     std::bind_front(&NewBlotterForm::on_cancel, this));
   m_create_button = make_label_button(tr("Create"));
   m_create_button->setFixedSize(scale(100, 26));
-  m_create_button->setEnabled(false);
   m_create_button->connect_click_signal(
     std::bind_front(&NewBlotterForm::on_create, this));
   auto actions_body = new QWidget();
@@ -159,11 +157,8 @@ bool NewBlotterForm::eventFilter(QObject* watched, QEvent* event) {
   } else if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
     if(key_event.key() == Qt::Key_Enter || key_event.key() == Qt::Key_Return) {
-      if(auto name = m_name_input->get_current()->get();
-          !name.trimmed().isEmpty()) {
-        on_create();
-        return true;
-      }
+      on_create();
+      return true;
     }
   }
   return QWidget::eventFilter(watched, event);
@@ -196,10 +191,8 @@ void NewBlotterForm::on_create() {
     }
     return m_account;
   }();
-  m_submit_signal(m_name_input->get_current()->get(), account);
   m_panel->close();
+  m_submit_signal(m_name_input->get_current()->get(), account);
 }
 
-void NewBlotterForm::on_name_current(const QString& value) {
-  m_create_button->setEnabled(!value.trimmed().isEmpty());
-}
+void NewBlotterForm::on_name_current(const QString& value) {}

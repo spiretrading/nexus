@@ -361,7 +361,9 @@ void ToolbarController::on_new_blotter(
 }
 
 void ToolbarController::on_blotter_added(BlotterModel& blotter) {
-  m_pinned_blotters->push(&blotter);
+  if(!blotter.IsConsolidated()) {
+    m_pinned_blotters->push(&blotter);
+  }
 }
 
 void ToolbarController::on_blotter_removed(BlotterModel& blotter) {

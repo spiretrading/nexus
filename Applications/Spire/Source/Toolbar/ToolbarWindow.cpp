@@ -379,7 +379,13 @@ void ToolbarWindow::on_new_blotter_action() {
 
 void ToolbarWindow::on_new_blotter_submission(
     const QString& name, const DirectoryEntry& account) {
-  auto unique_name = make_unique_blotter_name(name, *m_pinned_blotters);
+  auto base_name = [&] {
+    if(name.trimmed().isEmpty()) {
+      return QString("Blotter");
+    }
+    return name;
+  }();
+  auto unique_name = make_unique_blotter_name(base_name, *m_pinned_blotters);
   m_new_blotter_form->deleteLater();
   m_new_blotter_signal(unique_name, account);
 }
