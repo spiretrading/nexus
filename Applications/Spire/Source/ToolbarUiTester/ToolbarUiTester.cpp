@@ -4,14 +4,41 @@
 #include "Spire/Toolbar/ToolbarWindow.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalQueryModel.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/Button.hpp"
+#include "Spire/Ui/Identicon.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::LegacyUI;
+
+namespace {
+  auto make_test_account_query_model() {
+    auto model = std::make_shared<LocalQueryModel<AccountListItem::Account>>();
+    auto accounts = std::vector<std::pair<std::string, std::string>>({
+      {"jsmith", "John Smith"}, {"jdoe", "Jane Doe"},
+      {"bwilson", "Bob Wilson"}, {"agarcia", "Alice Garcia"},
+      {"mchen", "Michael Chen"}, {"spatel", "Sarah Patel"},
+      {"dkim", "David Kim"}, {"ljohnson", "Linda Johnson"},
+      {"rthompson", "Robert Thompson"}, {"klee", "Karen Lee"}});
+    for(auto& [id, name] : accounts) {
+      auto entry = DirectoryEntry::make_account(
+        static_cast<unsigned int>(std::hash<std::string>{}(id)), id);
+      auto account = AccountListItem::Account(
+        make_identicon(entry, scale(8, 8)), QString::fromStdString(id),
+        QString::fromStdString(name));
+      model->add(QString::fromStdString(id), account);
+      auto tokens = QString::fromStdString(name).split(' ');
+      for(auto& token : tokens) {
+        model->add(token.toLower(), account);
+      }
+    }
+    return model;
+  }
+}
 
 ToolbarUiTester::ToolbarUiTester(QWidget* parent)
     : QWidget(parent) {
@@ -61,8 +88,9 @@ void ToolbarUiTester::on_toolbar_click() {
   auto recently_closed_windows =
     std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>();
   auto pinned_blotters = std::make_shared<ArrayListModel<BlotterModel*>>();
-  m_toolbar_window =
-    new ToolbarWindow(account, roles, recently_closed_windows, pinned_blotters);
+  auto account_query_model = make_test_account_query_model();
+  m_toolbar_window = new ToolbarWindow(account, roles, account_query_model,
+    recently_closed_windows, pinned_blotters);
   m_toolbar_window->connect_open_signal(
     std::bind_front(&ToolbarUiTester::on_open, this));
   m_toolbar_window->connect_minimize_all_signal(
@@ -73,6 +101,8 @@ void ToolbarUiTester::on_toolbar_click() {
     &ToolbarUiTester::on_settings, this, SettingsPanel::Mode::IMPORT));
   m_toolbar_window->connect_export_signal(std::bind_front(
     &ToolbarUiTester::on_settings, this, SettingsPanel::Mode::EXPORT));
+  m_toolbar_window->connect_new_blotter_signal(
+    std::bind_front(&ToolbarUiTester::on_new_blotter, this));
   m_toolbar_window->connect_sign_out_signal(
     std::bind_front(&ToolbarUiTester::on_sign_out, this));
   m_toolbar_window->show();
@@ -81,6 +111,12 @@ void ToolbarUiTester::on_toolbar_click() {
 
 void ToolbarUiTester::on_open(ToolbarWindow::WindowType window) {
   m_output->append(QString("Open: %1").arg(to_text(window)));
+}
+
+void ToolbarUiTester::on_new_blotter(
+    const QString& name, const DirectoryEntry& account) {
+  m_output->append(QString("New Blotter: %1 (account: %2)").
+    arg(name).arg(QString::fromStdString(account.m_name)));
 }
 
 void ToolbarUiTester::on_minimize_all() {
