@@ -14,8 +14,8 @@
 namespace Spire {
   class Button;
   class ContextMenu;
-  class LineInputForm;
   class MenuButton;
+  class NewBlotterForm;
   class SettingsPanel;
 
   /** Displays the toolbar window. */
@@ -103,21 +103,25 @@ namespace Spire {
       /**
        * Signals a new blotter was created.
        * @param name The name of the new blotter.
+       * @param account The account the blotter is for.
        */
-      using NewBlotterSignal = Signal<void (const QString& name)>;
+      using NewBlotterSignal =
+        Signal<void (const QString& name, const Beam::DirectoryEntry& account)>;
 
       /** Signals that the user has signed out of the account. */
       using SignOutSignal = Signal<void ()>;
 
       /**
        * Constructs a ToolbarWindow.
-       * @param user_name The user's name.
-       * @param is_manager Whether the user is a manager.
-       * @param recent_windows The list of the recently closed windows.
+       * @param account The logged in account.
+       * @param roles The account's roles.
+       * @param account_query_model The model used to query accounts.
+       * @param recently_closed_windows The list of recently closed windows.
        * @param pinned_blotters The list of the user's pinned blotters.
        * @param parent The parent widget.
        */
       ToolbarWindow(Beam::DirectoryEntry account, Nexus::AccountRoles roles,
+        std::shared_ptr<AccountQueryModel> account_query_model,
         std::shared_ptr<RecentlyClosedWindowListModel> recently_closed_windows,
         std::shared_ptr<ListModel<BlotterModel*>> pinned_blotters,
         QWidget* parent = nullptr);
@@ -183,9 +187,11 @@ namespace Spire {
       mutable SignOutSignal m_sign_out_signal;
       mutable NewBlotterSignal m_new_blotter_signal;
       Beam::DirectoryEntry m_account;
+      Nexus::AccountRoles m_roles;
+      std::shared_ptr<AccountQueryModel> m_account_query_model;
       ContextMenu* m_recently_closed_menu;
       ContextMenu* m_blotter_menu;
-      LineInputForm* m_new_blotter_form;
+      NewBlotterForm* m_new_blotter_form;
       SettingsPanel* m_settings_panel;
       std::shared_ptr<RecentlyClosedWindowListModel> m_recently_closed_windows;
       std::shared_ptr<ListModel<BlotterModel*>> m_pinned_blotters;
@@ -205,7 +211,8 @@ namespace Spire {
       void on_import();
       void on_export();
       void on_new_blotter_action();
-      void on_new_blotter_submission(const QString& name);
+      void on_new_blotter_submission(
+        const QString& name, const Beam::DirectoryEntry& account);
       void on_blotter_operation(
         const ListModel<BlotterModel*>::Operation& operation);
   };

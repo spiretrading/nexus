@@ -33,7 +33,8 @@ AccountListItem::AccountListItem(Account account, QWidget* parent)
       set(PaddingRight(scale_width(6))).
       set(vertical_padding(scale_height(3)));
   });
-  auto id_label = make_label(m_account.m_id);
+  auto id_label =
+    make_label(QString::fromStdString(m_account.m_account.m_name));
   id_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   auto name_label = make_label(m_account.m_name);
   name_label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);

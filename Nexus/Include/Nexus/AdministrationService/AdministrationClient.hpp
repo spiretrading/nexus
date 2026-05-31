@@ -15,6 +15,7 @@
 #include <Beam/Queues/StateQueue.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
+#include "Nexus/AdministrationService/AccountQueryResult.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
@@ -39,6 +40,8 @@ namespace Nexus {
     Beam::IsConnection<T> && requires(T& client) {
       { client.load_accounts_by_roles(std::declval<AccountRoles>()) } ->
           std::same_as<std::vector<Beam::DirectoryEntry>>;
+      { client.query_accounts(std::declval<const std::string&>()) } ->
+          std::same_as<std::vector<AccountQueryResult>>;
       { client.load_administrators_root_entry() } ->
           std::same_as<Beam::DirectoryEntry>;
       { client.load_services_root_entry() } ->
@@ -184,6 +187,13 @@ namespace Nexus {
        */
       std::vector<Beam::DirectoryEntry> load_accounts_by_roles(
         AccountRoles roles);
+
+      /**
+       * Queries accounts by name prefix.
+       * @param query The prefix to match against account names.
+       * @return The list of matching accounts with their display names.
+       */
+      std::vector<AccountQueryResult> query_accounts(const std::string& query);
 
       /** Loads the DirectoryEntry containing all administrators. */
       Beam::DirectoryEntry load_administrators_root_entry();
@@ -494,6 +504,8 @@ namespace Nexus {
 
         virtual std::vector<Beam::DirectoryEntry> load_accounts_by_roles(
           AccountRoles roles) = 0;
+        virtual std::vector<AccountQueryResult> query_accounts(
+          const std::string& query) = 0;
         virtual Beam::DirectoryEntry load_administrators_root_entry() = 0;
         virtual Beam::DirectoryEntry load_services_root_entry() = 0;
         virtual Beam::DirectoryEntry load_trading_groups_root_entry() = 0;
@@ -593,6 +605,8 @@ namespace Nexus {
 
         std::vector<Beam::DirectoryEntry> load_accounts_by_roles(
           AccountRoles roles) override;
+        std::vector<AccountQueryResult> query_accounts(
+          const std::string& query) override;
         Beam::DirectoryEntry load_administrators_root_entry() override;
         Beam::DirectoryEntry load_services_root_entry() override;
         Beam::DirectoryEntry load_trading_groups_root_entry() override;
@@ -726,6 +740,11 @@ namespace Nexus {
   inline std::vector<Beam::DirectoryEntry>
       AdministrationClient::load_accounts_by_roles(AccountRoles roles) {
     return m_client->load_accounts_by_roles(roles);
+  }
+
+  inline std::vector<AccountQueryResult>
+      AdministrationClient::query_accounts(const std::string& query) {
+    return m_client->query_accounts(query);
   }
 
   inline Beam::DirectoryEntry
@@ -949,6 +968,13 @@ namespace Nexus {
       AdministrationClient::WrappedAdministrationClient<C>::
         load_accounts_by_roles(AccountRoles roles) {
     return m_client->load_accounts_by_roles(roles);
+  }
+
+  template<typename C>
+  std::vector<AccountQueryResult>
+      AdministrationClient::WrappedAdministrationClient<C>::query_accounts(
+        const std::string& query) {
+    return m_client->query_accounts(query);
   }
 
   template<typename C>

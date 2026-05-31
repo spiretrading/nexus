@@ -242,8 +242,10 @@ namespace {
       {"huanxg34", "Xu Guanghuan"}, {"fengjg15", "Jiang Feng"}};
     auto model = std::make_shared<LocalQueryModel<AccountListItem::Account>>();
     for(auto& [id, name] : accounts) {
-      auto account = AccountListItem::Account(make_identicon(
-        DirectoryEntry::make_account(qHash(id)), scale(8, 8)), id, name);
+      auto entry = DirectoryEntry::make_account(
+        qHash(id), id.toStdString());
+      auto account = AccountListItem::Account(
+        make_identicon(entry, scale(8, 8)), entry, name);
       model->add(id.toLower(), account);
       for(auto& term : name.split(' ')) {
         model->add(term.toLower(), account);
@@ -1240,7 +1242,7 @@ UiProfile Spire::make_account_box_profile() {
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("AccountBox", properties, [] (auto& profile) {
     auto to_id = [] (const AccountListItem::Account& account) {
-      return account.m_id;
+      return QString::fromStdString(account.m_account.m_name);
     };
     auto model = populate_account_query_model();
     auto& current = get<QString>("current", profile.get_properties());
@@ -1298,7 +1300,8 @@ UiProfile Spire::make_account_list_box_profile() {
     auto print_current = [=] {
       auto result = QString();
       for(auto i = 0; i < box->get_current()->get_size(); ++i) {
-        result += QString("[%1] ").arg(box->get_current()->get(i).m_id);
+        result += QString("[%1] ").arg(
+          QString::fromStdString(box->get_current()->get(i).m_account.m_name));
       }
       current_slot(result);
     };
@@ -1316,7 +1319,8 @@ UiProfile Spire::make_account_list_box_profile() {
     box->connect_submit_signal([=] (const auto& submission) {
       auto result = QString();
       for(auto i = 0; i < submission->get_size(); ++i) {
-        result += QString("[%1] ").arg(submission->get(i).m_id);
+        result += QString("[%1] ").arg(
+          QString::fromStdString(submission->get(i).m_account.m_name));
       }
       submit_slot(result);
     });
@@ -1335,10 +1339,11 @@ UiProfile Spire::make_account_list_item_profile() {
     [] (auto& profile) {
       auto& id = get<QString>("id", profile.get_properties());
       auto& name = get<QString>("name", profile.get_properties());
-      auto identicon = make_identicon(
-        DirectoryEntry::make_account(qHash(id.get())), scale(8, 8));
+      auto entry = DirectoryEntry::make_account(
+        qHash(id.get()), id.get().toStdString());
+      auto identicon = make_identicon(entry, scale(8, 8));
       auto item = new AccountListItem(
-        AccountListItem::Account(identicon, id.get(), name.get()));
+        AccountListItem::Account(identicon, entry, name.get()));
       apply_widget_properties(item, profile.get_properties());
       return item;
     });

@@ -78,6 +78,7 @@ namespace Nexus {
         WebServiceProtocolServer::ServiceProtocolClient& client);
       Beam::HttpResponse on_load_accounts_by_roles(
         const Beam::HttpRequest& request);
+      Beam::HttpResponse on_query_accounts(const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_administrators_root_entry(
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_services_root_entry(

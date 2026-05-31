@@ -18,9 +18,10 @@ struct AccountBox::AccountToAccountIdQueryModel : QueryModel<QString> {
     : m_source(std::move(source)) {}
 
   optional<QString> parse(const QString& query) override {
-    if(auto account = m_source->parse(query);
-        account && account->m_id.toLower() == query.toLower()) {
-      return account->m_id;
+    auto account = m_source->parse(query);
+    if(account && QString::fromStdString(account->m_account.m_name).toLower() ==
+        query.toLower()) {
+      return QString::fromStdString(account->m_account.m_name);
     }
     return none;
   }
@@ -32,8 +33,9 @@ struct AccountBox::AccountToAccountIdQueryModel : QueryModel<QString> {
         auto ids = std::vector<QString>();
         ids.reserve(matches.size());
         for(auto& match : matches) {
-          if(seen.insert(match.m_id).second) {
-            ids.push_back(match.m_id);
+          auto id = QString::fromStdString(match.m_account.m_name);
+          if(seen.insert(id).second) {
+            ids.push_back(id);
           }
         }
         return ids;
@@ -55,7 +57,7 @@ AccountBox::AccountBox(std::shared_ptr<AccountQueryModel> accounts,
       m_submission(m_current->get()) {
   auto id_model = make_transform_value_model(m_current,
     [] (const AccountListItem::Account& account) {
-      return account.m_id;
+      return QString::fromStdString(account.m_account.m_name);
     },
     [=] (const QString& id) {
       if(auto account = m_accounts->m_source->parse(id)) {
