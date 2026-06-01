@@ -3047,6 +3047,15 @@ UiProfile Spire::make_integer_filter_panel_profile() {
   return profile;
 }
 
+UiProfile Spire::make_key_filter_panel_profile() {
+  return setup_open_filter_panel_profile("KeyFilterPanel",
+    [] {
+      return new KeyFilterPanel(
+        *new KeyListBox(std::make_shared<ArrayListModel<QKeySequence>>(),
+          populate_key_input_box_model(QKeySequence())));
+    });
+}
+
 UiProfile Spire::make_key_input_box_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
   populate_widget_properties(properties);

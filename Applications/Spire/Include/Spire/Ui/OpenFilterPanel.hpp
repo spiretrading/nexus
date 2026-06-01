@@ -7,6 +7,7 @@
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScopeBox.hpp"
+#include "Spire/Ui/TagBox.hpp"
 #include "Spire/Ui/TagComboBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -67,6 +68,37 @@ namespace Details {
       return combo_box.get_current()->connect_update_signal([=] (const auto&) {
         slot();
       });
+    }
+  };
+
+  template<>
+  struct TagComboBoxTraits<AnyTagBox> {
+    using SubmissionType = std::shared_ptr<AnyListModel>;
+
+    static bool is_empty(AnyTagBox& box) {
+      return box.get_tags()->get_size() == 0;
+    }
+
+    static void clear(AnyTagBox& box) {
+      Spire::clear(*box.get_tags());
+    }
+
+    static SubmissionType get_current(AnyTagBox& box) {
+      return box.get_tags();
+    }
+
+    static boost::signals2::connection connect_current(
+        AnyTagBox& box, const std::function<void()>& slot) {
+      return box.get_tags()->connect_operation_signal(
+        [=] (const auto& operation) {
+          visit(operation,
+            [&] (const AnyListModel::AddOperation&) {
+              slot();
+            },
+            [&] (const AnyListModel::RemoveOperation&) {
+              slot();
+            });
+        });
     }
   };
 }
@@ -304,6 +336,7 @@ namespace Details {
     submit();
   }
 
+  using KeyFilterPanel = OpenFilterPanel<AnyTagBox>;
   using ScopeFilterPanel = OpenFilterPanel<ScopeBox>;
 }
 
