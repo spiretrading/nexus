@@ -151,7 +151,10 @@ bool AnyComboBox::eventFilter(QObject* watched, QEvent* event) {
     if(event->type() == QEvent::KeyPress) {
       auto key = static_cast<QKeyEvent*>(event)->key();
       if((key >= Qt::Key_0 && key <= Qt::Key_9) ||
-          (key >= Qt::Key_A && key <= Qt::Key_Z) || key == Qt::Key_Underscore) {
+          (key >= Qt::Key_A && key <= Qt::Key_Z) || key == Qt::Key_Underscore ||
+          key == Qt::Key_Left || key == Qt::Key_Right ||
+          key == Qt::Key_Home || key == Qt::Key_End ||
+          key == Qt::Key_Backspace || key == Qt::Key_Delete) {
         return QCoreApplication::sendEvent(m_data->m_input_focus_proxy, event);
       }
     }
