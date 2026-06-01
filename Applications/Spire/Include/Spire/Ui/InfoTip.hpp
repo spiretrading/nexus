@@ -67,6 +67,7 @@ namespace Spire {
       bool is_hovered() const;
       void fade_in();
       void fade_out();
+      void hide_immediately();
       QPainterPath get_arrow_path() const;
       BodyOrientation get_body_orientation() const;
       QScreen* get_current_screen(const QPoint& point) const;

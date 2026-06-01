@@ -6,6 +6,7 @@
 #include <QMouseEvent>
 #include <QPainter>
 #include <QPainterPath>
+#include <QPointer>
 #include <QPropertyAnimation>
 #include <QScreen>
 #include "Spire/Spire/Dimensions.hpp"
@@ -21,6 +22,8 @@ using namespace Spire::Styles;
 namespace {
   const auto DROP_SHADOW_SIZE = 5;
   const auto FADE_IN_MS = 100;
+
+  auto visible_info_tip = QPointer<InfoTip>();
 
   auto ARROW_SIZE() {
     static auto size = scale(14, 7);
@@ -128,7 +131,7 @@ QRect InfoTip::get_interactive_region() const {
 
 bool InfoTip::is_hovered() const {
   return isEnabled() && (m_hover_observer.get_state() !=
-    HoverObserver::State::NONE || m_is_interactive &&
+    HoverObserver::State::NONE || m_is_interactive && isVisible() &&
       get_interactive_region().contains(QCursor::pos()));
 }
 
@@ -160,6 +163,18 @@ void InfoTip::fade_out() {
   m_animation = fade_window(this, true, milliseconds(FADE_IN_MS));
   connect(m_animation, &QPropertyAnimation::finished, this,
     &InfoTip::on_fade_out_finished);
+}
+
+void InfoTip::hide_immediately() {
+  m_show_timer.stop();
+  m_interactive_timer.stop();
+  if(m_animation) {
+    m_animation->stop();
+    delete_later(m_animation);
+    m_animation = nullptr;
+  }
+  m_fade_state = FadeState::NONE;
+  hide();
 }
 
 QPainterPath InfoTip::get_arrow_path() const {
@@ -293,6 +308,9 @@ void InfoTip::on_fade_out_finished() {
   delete_later(m_animation);
   m_show_timer.stop();
   hide();
+  if(visible_info_tip == this) {
+    visible_info_tip = nullptr;
+  }
   if(is_hovered()) {
     m_show_timer.start();
   }
@@ -308,6 +326,10 @@ void InfoTip::on_hover(HoverObserver::State state) {
 
 void InfoTip::on_show_timeout() {
   if(is_hovered()) {
+    if(visible_info_tip && visible_info_tip != this) {
+      visible_info_tip->hide_immediately();
+    }
+    visible_info_tip = this;
     layout()->setContentsMargins(get_margins());
     move(get_position());
     fade_in();
