@@ -176,6 +176,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_integer_box_profile());
   add(make_integer_filter_panel_profile());
   add(make_key_input_box_profile());
+  add(make_key_list_box_profile());
   add(make_key_tag_profile());
   add(make_label_button_profile());
   add(make_label_profile());
@@ -240,6 +241,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_time_in_force_filter_panel_profile());
   add(make_title_bar_profile());
   add(make_tooltip_profile());
+  add(make_trading_group_box_profile());
   add(make_trading_group_filter_panel_profile());
   add(make_trading_group_list_box_profile());
   add(make_transition_view_profile());

@@ -74,6 +74,7 @@
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
+#include "Spire/Ui/KeyListBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListSelectionModel.hpp"
@@ -131,6 +132,7 @@
 #include "Spire/Ui/TimeInForceFilterPanel.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
+#include "Spire/Ui/TradingGroupBox.hpp"
 #include "Spire/Ui/TradingGroupFilterPanel.hpp"
 #include "Spire/Ui/TradingGroupListBox.hpp"
 #include "Spire/Ui/TransitionView.hpp"
@@ -242,8 +244,10 @@ namespace {
       {"huanxg34", "Xu Guanghuan"}, {"fengjg15", "Jiang Feng"}};
     auto model = std::make_shared<LocalQueryModel<AccountListItem::Account>>();
     for(auto& [id, name] : accounts) {
-      auto account = AccountListItem::Account(make_identicon(
-        DirectoryEntry::make_account(qHash(id)), scale(8, 8)), id, name);
+      auto entry = DirectoryEntry::make_account(
+        qHash(id), id.toStdString());
+      auto account = AccountListItem::Account(
+        make_identicon(entry, scale(8, 8)), entry, name);
       model->add(id.toLower(), account);
       for(auto& term : name.split(' ')) {
         model->add(term.toLower(), account);
@@ -1007,6 +1011,14 @@ namespace {
     return model;
   }
 
+  auto populate_key_sequence_list() {
+    auto model = std::make_shared<ArrayListModel<QKeySequence>>();
+    model->push(QKeySequence(Qt::Key_F1));
+    model->push(QKeySequence(Qt::SHIFT | Qt::Key_F1));
+    model->push(QKeySequence(Qt::CTRL | Qt::Key_F2));
+    return model;
+  }
+
   struct HoverBox {
     Box* m_box;
     HoverObserver m_observer;
@@ -1240,7 +1252,7 @@ UiProfile Spire::make_account_box_profile() {
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("AccountBox", properties, [] (auto& profile) {
     auto to_id = [] (const AccountListItem::Account& account) {
-      return account.m_id;
+      return QString::fromStdString(account.m_account.m_name);
     };
     auto model = populate_account_query_model();
     auto& current = get<QString>("current", profile.get_properties());
@@ -1298,7 +1310,8 @@ UiProfile Spire::make_account_list_box_profile() {
     auto print_current = [=] {
       auto result = QString();
       for(auto i = 0; i < box->get_current()->get_size(); ++i) {
-        result += QString("[%1] ").arg(box->get_current()->get(i).m_id);
+        result += QString("[%1] ").arg(
+          QString::fromStdString(box->get_current()->get(i).m_account.m_name));
       }
       current_slot(result);
     };
@@ -1316,7 +1329,8 @@ UiProfile Spire::make_account_list_box_profile() {
     box->connect_submit_signal([=] (const auto& submission) {
       auto result = QString();
       for(auto i = 0; i < submission->get_size(); ++i) {
-        result += QString("[%1] ").arg(submission->get(i).m_id);
+        result += QString("[%1] ").arg(
+          QString::fromStdString(submission->get(i).m_account.m_name));
       }
       submit_slot(result);
     });
@@ -1335,10 +1349,11 @@ UiProfile Spire::make_account_list_item_profile() {
     [] (auto& profile) {
       auto& id = get<QString>("id", profile.get_properties());
       auto& name = get<QString>("name", profile.get_properties());
-      auto identicon = make_identicon(
-        DirectoryEntry::make_account(qHash(id.get())), scale(8, 8));
+      auto entry = DirectoryEntry::make_account(
+        qHash(id.get()), id.get().toStdString());
+      auto identicon = make_identicon(entry, scale(8, 8));
       auto item = new AccountListItem(
-        AccountListItem::Account(identicon, id.get(), name.get()));
+        AccountListItem::Account(identicon, entry, name.get()));
       apply_widget_properties(item, profile.get_properties());
       return item;
     });
@@ -3065,6 +3080,61 @@ UiProfile Spire::make_key_input_box_profile() {
       current.set(value.toString());
     });
     box->connect_submit_signal(profile.make_event_slot<QKeySequence>("Submit"));
+    return box;
+  });
+  return profile;
+}
+
+UiProfile Spire::make_key_list_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current", ""));
+  properties.push_back(make_standard_property("read_only", false));
+  auto profile = UiProfile("KeyListBox", properties, [] (auto& profile) {
+    auto& current = get<QString>("current", profile.get_properties());
+    auto box = new KeyListBox(populate_key_sequence_list(),
+      populate_key_input_box_model(QKeySequence(current.get())));
+    box->setMinimumWidth(scale_width(200));
+    apply_widget_properties(box, profile.get_properties());
+    current.connect_changed_signal([=] (auto value) {
+      if(value.isEmpty()) {
+        if(box->get_current()->get() != QKeySequence()) {
+          box->get_current()->set(QKeySequence());
+        }
+      } else {
+        auto sequence = QKeySequence(value);
+        if(sequence.count() != 0 && sequence[0] != Qt::Key::Key_unknown &&
+            box->get_current()->get() != sequence) {
+          box->get_current()->set(sequence);
+        }
+      }
+    });
+    box->get_current()->connect_update_signal(
+      profile.make_event_slot<QKeySequence>("Current"));
+    box->get_current()->connect_update_signal([&current] (const auto& value) {
+      current.set(value.toString());
+    });
+    auto& read_only = get<bool>("read_only", profile.get_properties());
+    read_only.connect_changed_signal(
+      std::bind_front(&KeyListBox::set_read_only, box));
+    auto keys_slot = profile.make_event_slot<QString>("Keys");
+    auto print_keys = [=] {
+      auto result = QString();
+      auto keys = box->get_keys();
+      for(auto i = 0; i < keys->get_size(); ++i) {
+        result += QString("[%1] ").arg(to_text(keys->get(i)));
+      }
+      keys_slot(result);
+    };
+    box->get_keys()->connect_operation_signal([=] (const auto& operation) {
+      visit(operation,
+        [&] (const KeySequenceListModel::AddOperation&) {
+          print_keys();
+        },
+        [&] (const KeySequenceListModel::RemoveOperation&) {
+          print_keys();
+        });
+    });
     return box;
   });
   return profile;
@@ -5524,6 +5594,48 @@ UiProfile Spire::make_tooltip_profile() {
     return label;
   });
   return profile;
+}
+
+UiProfile Spire::make_trading_group_box_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<QString>("current", "G01"));
+  properties.push_back(make_standard_property<QString>("placeholder"));
+  properties.push_back(make_standard_property("read_only", false));
+  return UiProfile("TradingGroupBox", properties, [] (auto& profile) {
+    auto model = populate_trading_group_query_model();
+    auto& current = get<QString>("current", profile.get_properties());
+    auto current_entry = [&] {
+      if(auto value = model->parse(current.get())) {
+        return *value;
+      }
+      return DirectoryEntry();
+    }();
+    auto current_model =
+      std::make_shared<LocalTradingGroupModel>(current_entry);
+    auto box = make_trading_group_box(model, current_model);
+    box->setMinimumWidth(scale_width(112));
+    apply_widget_properties(box, profile.get_properties());
+    auto current_connection = box->get_current()->connect_update_signal(
+      profile.make_event_slot<DirectoryEntry>("Current"));
+    current.connect_changed_signal([=] (const auto& current) {
+      if(auto value = model->parse(current)) {
+        box->get_current()->set(*value);
+      } else {
+        auto current_blocker = shared_connection_block(current_connection);
+        box->get_current()->set(DirectoryEntry());
+      }
+    });
+    auto& placeholder = get<QString>("placeholder", profile.get_properties());
+    placeholder.connect_changed_signal([=] (const auto& placeholder) {
+      box->set_placeholder(placeholder);
+    });
+    link(&TradingGroupBox::is_read_only, &TradingGroupBox::set_read_only,
+      *box, get<bool>("read_only", profile.get_properties()));
+    box->connect_submit_signal(
+      profile.make_event_slot<DirectoryEntry>("Submit"));
+    return box;
+  });
 }
 
 UiProfile Spire::make_trading_group_filter_panel_profile() {

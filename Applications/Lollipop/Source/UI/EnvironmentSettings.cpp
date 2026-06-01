@@ -8,6 +8,9 @@
 #include <QApplication>
 #include <QMessageBox>
 #include "Spire/BookView/BookViewWindow.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
+#include "Spire/Canvas/Types/TickerType.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindow.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindow.hpp"
@@ -23,6 +26,35 @@ using namespace Spire;
 using namespace Spire::UI;
 using namespace std;
 using namespace std::filesystem;
+
+namespace {
+  bool TryImport(SharedBuffer& buffer, Out<EnvironmentSettings> settings) {
+    auto attempt =
+      [&] (TypeRegistry<BinarySender<SharedBuffer>>& typeRegistry) {
+        try {
+          auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
+          receiver.set(Ref(buffer));
+          auto loaded = EnvironmentSettings();
+          receiver.shuttle(loaded);
+          *settings = std::move(loaded);
+          return true;
+        } catch(std::exception&) {
+          return false;
+        }
+      };
+    auto currentRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
+    RegisterSpireTypes(out(currentRegistry));
+    if(attempt(currentRegistry)) {
+      return true;
+    }
+    auto legacyRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
+    legacyRegistry.add<TickerNode>("Spire.SecurityNode");
+    legacyRegistry.add<TickerType>("Spire.SecurityType");
+    legacyRegistry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
+    RegisterSpireTypes(out(legacyRegistry));
+    return attempt(legacyRegistry);
+  }
+}
 
 bool Spire::UI::Export(const EnvironmentSettings& environmentSettings,
     const path& environmentPath) {
@@ -61,16 +93,17 @@ bool Spire::UI::Import(const path& environmentPath,
     return false;
   }
   EnvironmentSettings environmentSettings;
-  try {
-    BasicIStreamReader<ifstream*> reader(&readerStream);
-    SharedBuffer buffer;
-    reader.read(out(buffer));
-    TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(out(typeRegistry));
-    auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-    receiver.set(Ref(buffer));
-    receiver.shuttle(environmentSettings);
-  } catch(std::exception&) {
+  auto isImported = [&] {
+    try {
+      BasicIStreamReader<ifstream*> reader(&readerStream);
+      SharedBuffer buffer;
+      reader.read(out(buffer));
+      return TryImport(buffer, out(environmentSettings));
+    } catch(std::exception&) {
+      return false;
+    }
+  }();
+  if(!isImported) {
     QMessageBox::warning(nullptr, QObject::tr("Error"),
       QObject::tr("Unable to read from the specified path."));
     return false;

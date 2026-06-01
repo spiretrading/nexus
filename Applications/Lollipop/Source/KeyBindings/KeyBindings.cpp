@@ -10,6 +10,9 @@
 #include <QKeyEvent>
 #include "Spire/Canvas/OrderExecutionNodes/OrderTaskNodes.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
+#include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
+#include "Spire/Canvas/Types/TickerType.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/UI/UISerialization.hpp"
 #include "Spire/UI/UserProfile.hpp"
 
@@ -116,6 +119,33 @@ namespace {
     keyBindings.push_back(QKeySequence((Qt::CTRL | Qt::ALT | Qt::SHIFT) +
       Qt::Key_Escape));
     return keyBindings;
+  }
+
+  bool TryLoad(SharedBuffer& buffer, Out<KeyBindings> keyBindings) {
+    auto attempt =
+      [&] (TypeRegistry<BinarySender<SharedBuffer>>& typeRegistry) {
+        try {
+          auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
+          receiver.set(Ref(buffer));
+          auto loaded = KeyBindings();
+          receiver.shuttle(loaded);
+          *keyBindings = std::move(loaded);
+          return true;
+        } catch(std::exception&) {
+          return false;
+        }
+      };
+    auto currentRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
+    RegisterSpireTypes(out(currentRegistry));
+    if(attempt(currentRegistry)) {
+      return true;
+    }
+    auto legacyRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
+    legacyRegistry.add<TickerNode>("Spire.SecurityNode");
+    legacyRegistry.add<TickerType>("Spire.SecurityType");
+    legacyRegistry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
+    RegisterSpireTypes(out(legacyRegistry));
+    return attempt(legacyRegistry);
   }
 }
 
@@ -525,17 +555,18 @@ void KeyBindings::Load(Out<UserProfile> userProfile) {
     return;
   }
   KeyBindings keyBindings;
-  try {
-    BasicIStreamReader<ifstream> reader(
-      init(keyBindingsFilePath, ios::binary));
-    SharedBuffer buffer;
-    reader.read(out(buffer));
-    TypeRegistry<BinarySender<SharedBuffer>> typeRegistry;
-    RegisterSpireTypes(out(typeRegistry));
-    auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-    receiver.set(Ref(buffer));
-    receiver.shuttle(keyBindings);
-  } catch(std::exception&) {
+  auto isLoaded = [&] {
+    try {
+      BasicIStreamReader<ifstream> reader(
+        init(keyBindingsFilePath, ios::binary));
+      SharedBuffer buffer;
+      reader.read(out(buffer));
+      return TryLoad(buffer, out(keyBindings));
+    } catch(std::exception&) {
+      return false;
+    }
+  }();
+  if(!isLoaded) {
     QMessageBox::warning(nullptr, QObject::tr("Warning"),
       QObject::tr("Unable to load key bindings, using defaults."));
     keyBindings = LoadDefaultKeyBindings();
