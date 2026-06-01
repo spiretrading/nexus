@@ -30,8 +30,14 @@ const std::vector<QString>& OrderTaskArgumentsContentCache::get(int index) {
   for(auto& name : split(arguments.m_name)) {
     row_words.push_back(name);
   }
-  for(auto& scope : ::to_text(arguments.m_scope)) {
-    row_words.push_back(scope);
+  for(auto& country : arguments.m_scope.get_countries()) {
+    row_words.push_back(to_text(country));
+  }
+  for(auto& venue : arguments.m_scope.get_venues()) {
+    row_words.push_back(to_text(venue));
+  }
+  for(auto& ticker : arguments.m_scope.get_tickers()) {
+    row_words.push_back(to_text(ticker));
   }
   row_words.push_back(
     QString::fromStdString(DESTINATIONS.from(arguments.m_destination).m_id));

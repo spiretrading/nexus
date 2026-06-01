@@ -1,4 +1,5 @@
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/StandardVenues.hpp"
 #include "Spire/KeyBindings/SearchBarOrderTaskArgumentsListModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 
@@ -28,5 +29,26 @@ TEST_SUITE("SearchBarOrderTaskArgumentsListModel") {
     REQUIRE(search_list.get_size() == 0);
     keywords->set("");
     REQUIRE(search_list.get_size() == 3);
+  }
+
+  TEST_CASE("scope_venue_filter") {
+    auto source = std::make_shared<ArrayListModel<OrderTaskArguments>>();
+    auto task1 = OrderTaskArguments();
+    task1.m_name = "Alpha Limit Bid";
+    task1.m_scope = Scope(Venues::TSX);
+    source->push(task1);
+    auto task2 = OrderTaskArguments();
+    task2.m_name = "Beta Limit Bid";
+    task2.m_scope = Scope(Venues::ASX);
+    source->push(task2);
+    auto keywords = std::make_shared<LocalTextModel>();
+    auto search_list = SearchBarOrderTaskArgumentsListModel(
+      source, keywords, get_default_additional_tag_database());
+    REQUIRE(search_list.get_size() == 2);
+    keywords->set("tsx");
+    REQUIRE(search_list.get_size() == 1);
+    REQUIRE(search_list.get(0).m_name == "Alpha Limit Bid");
+    keywords->set("");
+    REQUIRE(search_list.get_size() == 2);
   }
 }
