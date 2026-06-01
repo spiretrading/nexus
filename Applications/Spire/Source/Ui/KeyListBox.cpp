@@ -75,9 +75,13 @@ void KeyListBox::on_keys_operation(
 }
 
 void KeyListBox::update_prompt_visibility() {
-  auto visibility = get_keys()->get_size() == 0 ?
-    Visibility::VISIBLE : Visibility::INVISIBLE;
-  update_style(get_input_box(), [visibility] (auto& style) {
+  auto visibility = [&] {
+    if(get_keys()->get_size() == 0) {
+      return Visibility::VISIBLE;
+    }
+    return Visibility::INVISIBLE;
+  }();
+  update_style(get_input_box(), [=] (auto& style) {
     style.get(Any() > is_a<KeyInputBox>() > Prompt()).set(visibility);
   });
 }
