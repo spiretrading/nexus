@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/OrderTaskArgumentsContentCache.hpp"
+#include <unordered_map>
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
@@ -59,7 +60,15 @@ const std::vector<QString>& OrderTaskArgumentsContentCache::get(int index) {
 
 void OrderTaskArgumentsContentCache::on_operation(
     const OrderTaskArgumentsListModel::Operation& operation) {
+  auto invalidate_from = [&] (int index) {
+    std::erase_if(m_cache, [&] (const auto& entry) {
+      return entry.first >= index;
+    });
+  };
   visit(operation,
+    [&] (const OrderTaskArgumentsListModel::AddOperation& operation) {
+      invalidate_from(operation.m_index);
+    },
     [&] (const OrderTaskArgumentsListModel::MoveOperation& operation) {
       auto [min, max] =
         std::minmax(operation.m_source, operation.m_destination);
@@ -70,9 +79,7 @@ void OrderTaskArgumentsContentCache::on_operation(
       }
     },
     [&] (const OrderTaskArgumentsListModel::PreRemoveOperation& operation) {
-      if(m_cache.find(operation.m_index) != m_cache.end()) {
-        m_cache.erase(operation.m_index);
-      }
+      invalidate_from(operation.m_index);
     },
     [&] (const OrderTaskArgumentsListModel::UpdateOperation& operation) {
       if(m_cache.find(operation.m_index) != m_cache.end()) {
