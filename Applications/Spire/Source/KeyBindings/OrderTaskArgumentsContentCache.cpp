@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/OrderTaskArgumentsContentCache.hpp"
+#include <unordered_map>
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
@@ -30,8 +31,14 @@ const std::vector<QString>& OrderTaskArgumentsContentCache::get(int index) {
   for(auto& name : split(arguments.m_name)) {
     row_words.push_back(name);
   }
-  for(auto& scope : ::to_text(arguments.m_scope)) {
-    row_words.push_back(scope);
+  for(auto& country : arguments.m_scope.get_countries()) {
+    row_words.push_back(to_text(country));
+  }
+  for(auto& venue : arguments.m_scope.get_venues()) {
+    row_words.push_back(to_text(venue));
+  }
+  for(auto& ticker : arguments.m_scope.get_tickers()) {
+    row_words.push_back(to_text(ticker));
   }
   row_words.push_back(
     QString::fromStdString(DESTINATIONS.from(arguments.m_destination).m_id));
@@ -53,7 +60,15 @@ const std::vector<QString>& OrderTaskArgumentsContentCache::get(int index) {
 
 void OrderTaskArgumentsContentCache::on_operation(
     const OrderTaskArgumentsListModel::Operation& operation) {
+  auto invalidate_from = [&] (int index) {
+    std::erase_if(m_cache, [&] (const auto& entry) {
+      return entry.first >= index;
+    });
+  };
   visit(operation,
+    [&] (const OrderTaskArgumentsListModel::AddOperation& operation) {
+      invalidate_from(operation.m_index);
+    },
     [&] (const OrderTaskArgumentsListModel::MoveOperation& operation) {
       auto [min, max] =
         std::minmax(operation.m_source, operation.m_destination);
@@ -64,9 +79,7 @@ void OrderTaskArgumentsContentCache::on_operation(
       }
     },
     [&] (const OrderTaskArgumentsListModel::PreRemoveOperation& operation) {
-      if(m_cache.find(operation.m_index) != m_cache.end()) {
-        m_cache.erase(operation.m_index);
-      }
+      invalidate_from(operation.m_index);
     },
     [&] (const OrderTaskArgumentsListModel::UpdateOperation& operation) {
       if(m_cache.find(operation.m_index) != m_cache.end()) {

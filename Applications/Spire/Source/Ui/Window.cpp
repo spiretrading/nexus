@@ -283,7 +283,7 @@ bool Window::nativeEvent(const QByteArray& eventType, void* message,
     auto x = GET_X_LPARAM(msg->lParam);
     auto y = GET_Y_LPARAM(msg->lParam);
     auto resize_area = RESIZE_AREA();
-    if(m_is_resizable) {
+    if(m_is_resizable && minimumSize() != maximumSize()) {
       if(x >= window_rect.left &&
           x < window_rect.left + resize_area.width() &&
           y < window_rect.bottom &&

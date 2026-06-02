@@ -63,11 +63,13 @@ void SearchBarOrderTaskArgumentsListModel::transact(
 
 FilteredListModel<OrderTaskArguments>::Filter
     SearchBarOrderTaskArgumentsListModel::make_filter(const QString& keywords) {
-  return [=] (const auto& list, auto index) {
-    if(keywords.isEmpty()) {
+  auto query_words = keywords.toLower().split(' ', Qt::SkipEmptyParts);
+  return [this, query_words = std::move(query_words)] (
+      const auto& list, auto index) {
+    if(query_words.isEmpty()) {
       return false;
     }
-    return !matches(keywords, m_cache.get(index));
+    return !matches(query_words, m_cache.get(index));
   };
 }
 
