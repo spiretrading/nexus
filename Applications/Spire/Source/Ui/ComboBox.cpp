@@ -169,6 +169,11 @@ bool AnyComboBox::eventFilter(QObject* watched, QEvent* event) {
       } else if(!(key_event.key() == Qt::Key_Space &&
           m_data->m_drop_down_list->isVisible() &&
           m_data->m_drop_down_list->get_list_view().get_current()->get())) {
+        if((key_event.key() == Qt::Key_Left ||
+            key_event.key() == Qt::Key_Right) &&
+            on_input_key_press(*m_data->m_input_focus_proxy, key_event)) {
+          return true;
+        }
         return QCoreApplication::sendEvent(m_data->m_input_focus_proxy, event);
       }
     } else if(event->type() == QEvent::ContextMenu) {
