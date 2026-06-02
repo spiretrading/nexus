@@ -88,8 +88,8 @@ namespace {
           try {
             return source_result.get();
           } catch(const std::exception&) {
-            static auto empty_matches = std::vector<std::any>();
-            return empty_matches;
+            static auto NONE = std::vector<std::any>();
+            return NONE;
           }
         }();
         std::erase_if(matches, [=] (auto& value) {
@@ -197,8 +197,7 @@ bool AnyTagComboBox::eventFilter(QObject* watched, QEvent* event) {
       event->ignore();
       return true;
     } else if(key_event.key() == Qt::Key_Down ||
-        key_event.key() == Qt::Key_Up ||
-        key_event.key() == Qt::Key_PageDown ||
+        key_event.key() == Qt::Key_Up || key_event.key() == Qt::Key_PageDown ||
         key_event.key() == Qt::Key_PageUp) {
       auto drop_down_window = find_drop_down_window();
       if(drop_down_window && drop_down_window->isVisible()) {
