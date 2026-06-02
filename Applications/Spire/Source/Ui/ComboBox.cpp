@@ -145,7 +145,7 @@ bool AnyComboBox::eventFilter(QObject* watched, QEvent* event) {
   } else if(watched == m_data->m_input_focus_proxy) {
     if(event->type() == QEvent::FocusOut &&
         (m_data->m_drop_down_list->isVisible() ||
-          m_data->m_empty_state->isVisible())) {
+        m_data->m_empty_state->isVisible())) {
       return true;
     }
   } else if(watched == &m_data->m_drop_down_list->get_list_view()) {
@@ -270,8 +270,7 @@ void AnyComboBox::initialize_deferred_data() const {
   m_data->m_highlight_connection =
     m_input_box->get_highlight()->connect_update_signal(
       std::bind_front(&AnyComboBox::on_highlight, self));
-  auto list_view =
-    new ListView(m_data->m_matches, std::move(m_item_builder));
+  auto list_view = new ListView(m_data->m_matches, std::move(m_item_builder));
   list_view->setFocusPolicy(Qt::NoFocus);
   m_data->m_drop_down_list = new DropDownList(*list_view, *self);
   m_data->m_drop_down_list->setFocusPolicy(Qt::NoFocus);
@@ -378,9 +377,8 @@ void AnyComboBox::submit(const QString& query, bool is_passive) {
   m_data->m_submission_text = query;
   m_input_box->get_highlight()->set(Highlight(query.size()));
   m_data->m_drop_down_list->hide();
-  m_data->m_query_result = m_query_model->submit(query).then(
-    std::bind_front(
-      &AnyComboBox::on_query, this, ++m_data->m_completion_tag, false));
+  m_data->m_query_result = m_query_model->submit(query).then(std::bind_front(
+    &AnyComboBox::on_query, this, ++m_data->m_completion_tag, false));
   m_data->m_submit_signal(value);
 }
 
@@ -489,8 +487,8 @@ void AnyComboBox::on_query(
       }
       for(auto& item : selection) {
         m_data->m_matches->push(item);
-        auto list_item = list_view.get_list_item(
-          list_view.get_list()->get_size() - 1);
+        auto list_item =
+          list_view.get_list_item(list_view.get_list()->get_size() - 1);
         list_item->setFocusPolicy(Qt::NoFocus);
         if(list_item->is_mounted()) {
           list_item->layout()->itemAt(0)->widget()->setFocusPolicy(Qt::NoFocus);
@@ -516,22 +514,23 @@ void AnyComboBox::on_query(
 }
 
 void AnyComboBox::on_drop_down_current(optional<int> index) {
-  if(index) {
-    auto value =
-      m_data->m_drop_down_list->get_list_view().get_list()->get(*index);
-    auto text = to_text(value);
-    {
-      auto input_blocker = shared_connection_block(m_data->m_input_connection);
-      auto highlight_blocker =
-        shared_connection_block(m_data->m_highlight_connection);
-      m_input_box->get_current()->set(text);
-    }
-    m_data->m_last_completion = text;
-    m_data->m_completion.clear();
-    m_data->m_prefix.clear();
-    m_data->m_has_autocomplete_selection = false;
-    update_current(value);
+  if(!index) {
+    return;
   }
+  auto value =
+    m_data->m_drop_down_list->get_list_view().get_list()->get(*index);
+  auto text = to_text(value);
+  {
+    auto input_blocker = shared_connection_block(m_data->m_input_connection);
+    auto highlight_blocker =
+      shared_connection_block(m_data->m_highlight_connection);
+    m_input_box->get_current()->set(text);
+  }
+  m_data->m_last_completion = text;
+  m_data->m_completion.clear();
+  m_data->m_prefix.clear();
+  m_data->m_has_autocomplete_selection = false;
+  update_current(value);
 }
 
 void AnyComboBox::on_drop_down_submit(const std::any& submission) {
@@ -580,14 +579,22 @@ bool AnyComboBox::on_input_key_press(QWidget& target, QKeyEvent& event) {
   } else if(!event.text().isEmpty()) {
     m_data->m_is_deleting = false;
   }
-  if(event.key() == Qt::Key_Left &&
-      (event.modifiers() & Qt::ShiftModifier) &&
+  if(event.key() == Qt::Key_Left && (event.modifiers() & Qt::ShiftModifier) &&
       m_data->m_has_autocomplete_selection) {
     auto& highlight = *m_input_box->get_highlight();
     auto anchor = std::max(highlight.get().m_start, highlight.get().m_end);
     auto cursor = std::min(highlight.get().m_start, highlight.get().m_end);
     accept_autocomplete_selection();
     highlight.set(Highlight(anchor, std::max(0, cursor - 1)));
+    return true;
+  }
+  if(event.key() == Qt::Key_Right && (event.modifiers() & Qt::ShiftModifier) &&
+      m_data->m_has_autocomplete_selection) {
+    auto& highlight = *m_input_box->get_highlight();
+    auto anchor = std::max(highlight.get().m_start, highlight.get().m_end);
+    auto cursor = std::min(highlight.get().m_start, highlight.get().m_end);
+    accept_autocomplete_selection();
+    highlight.set(Highlight(anchor, std::min(anchor, cursor + 1)));
     return true;
   }
   if(event.key() == Qt::Key_Escape) {
