@@ -394,7 +394,7 @@ void AnyComboBox::update_current(const AnyRef& value) {
 
 void AnyComboBox::on_current(const AnyRef& current) {
   auto input = any_cast<QString>(m_input_box->get_current()->get());
-  if(!is_equal(current, AnyRef(m_query_model->parse(input)))) {
+  if(!is_equal(current, m_query_model->parse(input))) {
     auto text = to_text(current);
     if(input != text) {
       m_input_box->get_current()->set(text);

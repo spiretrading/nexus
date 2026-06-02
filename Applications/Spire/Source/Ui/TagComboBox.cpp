@@ -259,7 +259,7 @@ void AnyTagComboBox::push_combo_box() {
   auto value =
     m_combo_box->get_query_model()->parse(m_tag_box->get_current()->get());
   if(value.has_value()) {
-    if(!is_equal(m_combo_box->get_current()->get(), AnyRef(value))) {
+    if(!is_equal(m_combo_box->get_current()->get(), value)) {
       m_combo_box->get_current()->set(value);
     }
     get_current()->push(value);
