@@ -81,13 +81,12 @@ namespace {
   };
 }
 
-bool Spire::matches(const QString& query, const std::vector<QString>& words) {
-  auto query_words =
-    query.toLower().split(QRegularExpression("\\s+"), Qt::SkipEmptyParts);
+bool Spire::matches(
+    const QStringList& query_words, const std::vector<QString>& words) {
   auto query_size = query_words.size();
   auto word_size = words.size();
   if(query_size > word_size) {
-    return true;
+    return false;
   }
   auto hopcroft_karp = HopcroftKarp(query_size, word_size);
   for(auto i = 0; i < query_size; ++i) {
@@ -101,4 +100,8 @@ bool Spire::matches(const QString& query, const std::vector<QString>& words) {
     }
   }
   return hopcroft_karp.get_max_matching() == query_size;
+}
+
+bool Spire::matches(const QString& query, const std::vector<QString>& words) {
+  return matches(query.toLower().split(' ', Qt::SkipEmptyParts), words);
 }

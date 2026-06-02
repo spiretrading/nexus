@@ -107,7 +107,7 @@ namespace {
   }
 
   template<typename... T>
-  bool is_equal_any(const std::any& left, const std::any& right) {
+  bool is_equal_any(const AnyRef& left, const AnyRef& right) {
     return apply_any<T...>()(left, right,
       [&] (const auto& left, const auto& right) {
         return left == right;
@@ -585,8 +585,8 @@ bool Spire::compare(const AnyRef& left, const AnyRef& right) {
     QString>(left, right);
 }
 
-bool Spire::is_equal(const std::any& left, const std::any& right) {
-  if(left.type() != right.type()) {
+bool Spire::is_equal(const AnyRef& left, const AnyRef& right) {
+  if(left.get_type() != right.get_type()) {
     return false;
   }
   return is_equal_any<bool, int, std::int64_t, std::uint64_t, Quantity, double,
@@ -594,6 +594,18 @@ bool Spire::is_equal(const std::any& left, const std::any& right) {
     CurrencyId, DirectoryEntry, Money, Scope, OrderStatus, OrderType,
     PositionSideToken, Side, Ticker, TimeInForce, Venue, QColor, QKeySequence,
     QString>(left, right);
+}
+
+bool Spire::is_equal(const std::any& left, const std::any& right) {
+  return is_equal(AnyRef(left), AnyRef(right));
+}
+
+bool Spire::is_equal(const std::any& left, const AnyRef& right) {
+  return is_equal(AnyRef(left), right);
+}
+
+bool Spire::is_equal(const AnyRef& left, const std::any& right) {
+  return is_equal(left, AnyRef(right));
 }
 
 template<>
