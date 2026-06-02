@@ -579,6 +579,15 @@ bool AnyComboBox::on_input_key_press(QWidget& target, QKeyEvent& event) {
   } else if(!event.text().isEmpty()) {
     m_data->m_is_deleting = false;
   }
+  if(event.key() == Qt::Key_Left && !(event.modifiers() & Qt::ShiftModifier) &&
+      m_data->m_has_autocomplete_selection) {
+    auto& highlight = *m_input_box->get_highlight();
+    auto suggestion_start =
+      std::min(highlight.get().m_start, highlight.get().m_end);
+    accept_autocomplete_selection();
+    highlight.set(Highlight(suggestion_start));
+    return true;
+  }
   if(event.key() == Qt::Key_Left && (event.modifiers() & Qt::ShiftModifier) &&
       m_data->m_has_autocomplete_selection) {
     auto& highlight = *m_input_box->get_highlight();
