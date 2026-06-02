@@ -133,6 +133,7 @@
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
 #include "Spire/Ui/TradingGroupBox.hpp"
+#include "Spire/Ui/TradingGroupFilterPanel.hpp"
 #include "Spire/Ui/TradingGroupListBox.hpp"
 #include "Spire/Ui/TransitionView.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -5634,6 +5635,13 @@ UiProfile Spire::make_trading_group_box_profile() {
     box->connect_submit_signal(
       profile.make_event_slot<DirectoryEntry>("Submit"));
     return box;
+  });
+}
+
+UiProfile Spire::make_trading_group_filter_panel_profile() {
+  return setup_open_filter_panel_profile("TradingGroupFilterPanel", [] {
+    return make_trading_group_filter_panel(
+      populate_trading_group_query_model());
   });
 }
 
