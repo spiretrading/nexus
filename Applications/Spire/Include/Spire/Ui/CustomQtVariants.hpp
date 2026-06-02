@@ -193,6 +193,9 @@ namespace Spire {
   /** Tests if two <code>std::any</code> have equal types and values. */
   bool is_equal(const std::any& left, const std::any& right);
 
+  /** Tests if two <code>AnyRef</code> have equal types and values. */
+  bool is_equal(const AnyRef& left, const AnyRef& right);
+
   /**
    * Constructs an instance of the given type from its text representation.
    * @param T The type to construct.

@@ -115,6 +115,7 @@ namespace Spire {
       void revert_to(const QString& query, bool autocomplete);
       void revert_current();
       void accept_autocomplete_selection();
+      void update_current(const AnyRef& value);
       void submit(const QString& query, bool is_passive = false);
       void on_current(const AnyRef& current);
       void on_input(const AnyRef& current);

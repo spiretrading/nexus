@@ -369,9 +369,7 @@ void AnyComboBox::submit(const QString& query, bool is_passive) {
     auto blocker = shared_connection_block(m_data->m_input_connection);
     m_input_box->get_current()->set(query);
     m_data->m_has_autocomplete_selection = false;
-    auto current_blocker =
-      shared_connection_block(m_data->m_current_connection);
-    m_current->set(value);
+    update_current(value);
   }
   m_data->m_last_completion.clear();
   m_data->m_prefix = query;
@@ -386,9 +384,17 @@ void AnyComboBox::submit(const QString& query, bool is_passive) {
   m_data->m_submit_signal(value);
 }
 
+void AnyComboBox::update_current(const AnyRef& value) {
+  if(is_equal(value, m_current->get())) {
+    return;
+  }
+  auto blocker = shared_connection_block(m_data->m_current_connection);
+  m_current->set(value);
+}
+
 void AnyComboBox::on_current(const AnyRef& current) {
   auto input = any_cast<QString>(m_input_box->get_current()->get());
-  if(!is_equal(current, m_query_model->parse(input))) {
+  if(!is_equal(current, AnyRef(m_query_model->parse(input)))) {
     auto text = to_text(current);
     if(input != text) {
       m_input_box->get_current()->set(text);
@@ -413,10 +419,8 @@ void AnyComboBox::on_input(const AnyRef& current) {
       &AnyComboBox::on_query, this, ++m_data->m_completion_tag, true));
     auto value = m_query_model->parse(query);
     if(value.has_value()) {
-      auto blocker = std::array{
-        shared_connection_block(m_data->m_input_connection),
-        shared_connection_block(m_data->m_current_connection)};
-      m_current->set(value);
+      auto blocker = shared_connection_block(m_data->m_input_connection);
+      update_current(value);
     }
   }
 }
@@ -429,9 +433,7 @@ void AnyComboBox::accept_autocomplete_selection() {
   if(value.has_value()) {
     m_data->m_prefix = query;
     m_data->m_completion.clear();
-    auto current_blocker =
-      shared_connection_block(m_data->m_current_connection);
-    m_current->set(value);
+    update_current(value);
   }
 }
 
@@ -528,9 +530,7 @@ void AnyComboBox::on_drop_down_current(optional<int> index) {
     m_data->m_completion.clear();
     m_data->m_prefix.clear();
     m_data->m_has_autocomplete_selection = false;
-    auto current_blocker =
-      shared_connection_block(m_data->m_current_connection);
-    m_current->set(value);
+    update_current(value);
   }
 }
 

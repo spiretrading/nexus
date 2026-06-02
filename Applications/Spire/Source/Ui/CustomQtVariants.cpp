@@ -596,6 +596,10 @@ bool Spire::is_equal(const std::any& left, const std::any& right) {
     QString>(left, right);
 }
 
+bool Spire::is_equal(const AnyRef& left, const AnyRef& right) {
+  return is_equal(to_any(left), to_any(right));
+}
+
 template<>
 optional<QString> Spire::from_text(const QString& text) {
   return text;
