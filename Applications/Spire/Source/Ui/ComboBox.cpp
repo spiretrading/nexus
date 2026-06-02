@@ -1,4 +1,5 @@
 #include "Spire/Ui/ComboBox.hpp"
+#include <algorithm>
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QContextMenuEvent>
 #include <QKeyEvent>
@@ -420,10 +421,7 @@ void AnyComboBox::on_input(const AnyRef& current) {
   }
 }
 
-void AnyComboBox::on_highlight(const Highlight& highlight) {
-  if(!m_data->m_has_autocomplete_selection) {
-    return;
-  }
+void AnyComboBox::accept_autocomplete_selection() {
   m_data->m_has_autocomplete_selection = false;
   auto query = trim_leading_whitespaces(
     any_cast<QString>(m_input_box->get_current()->get()));
@@ -435,6 +433,13 @@ void AnyComboBox::on_highlight(const Highlight& highlight) {
       shared_connection_block(m_data->m_current_connection);
     m_current->set(value);
   }
+}
+
+void AnyComboBox::on_highlight(const Highlight& highlight) {
+  if(!m_data->m_has_autocomplete_selection) {
+    return;
+  }
+  accept_autocomplete_selection();
 }
 
 void AnyComboBox::on_submit(const AnyRef& query) {
@@ -574,6 +579,16 @@ bool AnyComboBox::on_input_key_press(QWidget& target, QKeyEvent& event) {
     m_data->m_is_deleting = true;
   } else if(!event.text().isEmpty()) {
     m_data->m_is_deleting = false;
+  }
+  if(event.key() == Qt::Key_Left &&
+      !(event.modifiers() & Qt::ShiftModifier) &&
+      m_data->m_has_autocomplete_selection) {
+    auto& highlight = *m_input_box->get_highlight();
+    auto suggestion_start =
+      std::min(highlight.get().m_start, highlight.get().m_end);
+    accept_autocomplete_selection();
+    highlight.set(Highlight(suggestion_start));
+    return true;
   }
   if(event.key() == Qt::Key_Escape) {
     if(m_data->m_drop_down_list->isVisible()) {
