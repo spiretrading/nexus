@@ -25,10 +25,13 @@ QtPromise<std::vector<Ticker>>
     TickerInfoToTickerQueryModel::submit(const QString& query) {
   return m_source->submit(query.toUpper()).then(
     [] (const std::vector<TickerInfo>& matches) {
-      auto tickers = std::unordered_set<Ticker>();
+      auto seen = std::unordered_set<Ticker>();
+      auto tickers = std::vector<Ticker>();
       for(auto& match : matches) {
-        tickers.insert(match.m_ticker);
+        if(seen.insert(match.m_ticker).second) {
+          tickers.push_back(match.m_ticker);
+        }
       }
-      return std::vector(tickers.begin(), tickers.end());
+      return tickers;
     });
 }
