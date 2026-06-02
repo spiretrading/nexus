@@ -18,15 +18,70 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  void copy(const KeyBindingsModel& source, KeyBindingsModel& destination) {
+    auto& destination_tasks = *destination.get_order_task_arguments();
+    auto& source_tasks = *source.get_order_task_arguments();
+    auto source_size = source_tasks.get_size();
+    destination_tasks.transact([&] {
+      while(destination_tasks.get_size() > source_size) {
+        destination_tasks.remove(destination_tasks.get_size() - 1);
+      }
+      auto common = std::min(destination_tasks.get_size(), source_size);
+      for(auto i = 0; i < common; ++i) {
+        if(destination_tasks.get(i) != source_tasks.get(i)) {
+          destination_tasks.set(i, source_tasks.get(i));
+        }
+      }
+      for(auto i = destination_tasks.get_size(); i < source_size; ++i) {
+        destination_tasks.push(source_tasks.get(i));
+      }
+    });
+    auto& destination_cancel = *destination.get_cancel_key_bindings();
+    auto& source_cancel = *source.get_cancel_key_bindings();
+    for(auto i = 0; i < CancelKeyBindingsModel::OPERATION_COUNT; ++i) {
+      auto operation = static_cast<CancelKeyBindingsModel::Operation>(i);
+      destination_cancel.get_binding(operation)->set(
+        source_cancel.get_binding(operation)->get());
+    }
+    auto source_scopes = source.make_interactions_key_bindings_scopes();
+    for(auto& scope : destination.make_interactions_key_bindings_scopes()) {
+      if(std::find(source_scopes.begin(), source_scopes.end(), scope) ==
+          source_scopes.end()) {
+        destination.get_interactions_key_bindings(scope)->reset();
+      }
+    }
+    for(auto& scope : source_scopes) {
+      auto& destination_interactions =
+        *destination.get_interactions_key_bindings(scope);
+      auto& source_interactions = *source.get_interactions_key_bindings(scope);
+      destination_interactions.get_default_quantity()->set(
+        source_interactions.get_default_quantity()->get());
+      destination_interactions.is_cancel_on_fill()->set(
+        source_interactions.is_cancel_on_fill()->get());
+      for(auto i = 0; i < InteractionsKeyBindingsModel::MODIFIER_COUNT; ++i) {
+        auto modifier = to_modifier(i);
+        destination_interactions.get_quantity_increment(modifier)->set(
+          source_interactions.get_quantity_increment(modifier)->get());
+        destination_interactions.get_price_increment(modifier)->set(
+          source_interactions.get_price_increment(modifier)->get());
+      }
+    }
+  }
+}
+
 KeyBindingsWindow::KeyBindingsWindow(
     std::shared_ptr<KeyBindingsModel> key_bindings,
     std::shared_ptr<TickerInfoQueryModel> tickers,
     const AdditionalTagDatabase& additional_tags, QWidget* parent)
     : Window(parent),
-      m_key_bindings(std::move(key_bindings)) {
+      m_key_bindings(std::move(key_bindings)),
+      m_snapshot(std::make_shared<KeyBindingsModel>()),
+      m_is_committed(false) {
   setWindowTitle(tr("Key Bindings"));
   set_svg_icon(":/Icons/key-bindings.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/key-bindings.png"));
+  copy(*m_key_bindings, *m_snapshot);
   auto navigation_view = new NavigationView();
   navigation_view->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -74,10 +129,18 @@ KeyBindingsWindow::KeyBindingsWindow(
   resize(scale(928, 640));
 }
 
+void KeyBindingsWindow::closeEvent(QCloseEvent* event) {
+  if(!m_is_committed) {
+    copy(*m_snapshot, *m_key_bindings);
+  }
+  Window::closeEvent(event);
+}
+
 void KeyBindingsWindow::on_cancel() {
   close();
 }
 
 void KeyBindingsWindow::on_done() {
+  m_is_committed = true;
   close();
 }
