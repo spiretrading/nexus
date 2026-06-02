@@ -581,13 +581,13 @@ bool AnyComboBox::on_input_key_press(QWidget& target, QKeyEvent& event) {
     m_data->m_is_deleting = false;
   }
   if(event.key() == Qt::Key_Left &&
-      !(event.modifiers() & Qt::ShiftModifier) &&
+      (event.modifiers() & Qt::ShiftModifier) &&
       m_data->m_has_autocomplete_selection) {
     auto& highlight = *m_input_box->get_highlight();
-    auto suggestion_start =
-      std::min(highlight.get().m_start, highlight.get().m_end);
+    auto anchor = std::max(highlight.get().m_start, highlight.get().m_end);
+    auto cursor = std::min(highlight.get().m_start, highlight.get().m_end);
     accept_autocomplete_selection();
-    highlight.set(Highlight(suggestion_start));
+    highlight.set(Highlight(anchor, std::max(0, cursor - 1)));
     return true;
   }
   if(event.key() == Qt::Key_Escape) {
