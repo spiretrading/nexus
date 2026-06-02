@@ -1,10 +1,12 @@
 #ifndef SPIRE_KEY_INPUT_BOX_HPP
 #define SPIRE_KEY_INPUT_BOX_HPP
+#include <boost/optional/optional.hpp>
 #include <QKeySequence>
 #include <QWidget>
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Styles/StateSelector.hpp"
 #include "Spire/Styles/Stylist.hpp"
+#include "Spire/Ui/BoxGeometry.hpp"
 
 namespace Spire {
   class Box;
@@ -70,6 +72,7 @@ namespace Styles {
       QSize sizeHint() const override;
 
     protected:
+      bool event(QEvent* event) override;
       void focusInEvent(QFocusEvent* event) override;
       void focusOutEvent(QFocusEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
@@ -87,15 +90,19 @@ namespace Styles {
       QWidget* m_body;
       QWidget* m_caret;
       Box* m_input_box;
+      BoxGeometry m_geometry;
+      mutable boost::optional<QSize> m_size_hint;
       bool m_is_read_only;
       bool m_is_modified;
       boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_style_connection;
 
       void layout_key_sequence();
       void transition_status();
       void transition_submission();
       void set_status(Status status);
       void on_current(const QKeySequence& current);
+      void on_style();
   };
 }
 

@@ -106,6 +106,9 @@ KeyInputBox::KeyInputBox(
   set_status(Status::NONE);
   m_current_connection = m_current->connect_update_signal(
     [=] (const auto& current) { on_current(current); });
+  m_style_connection = connect_style_signal(*m_input_box,
+    std::bind_front(&KeyInputBox::on_style, this));
+  on_style();
 }
 
 KeyInputBox::KeyInputBox(QWidget* parent)
@@ -137,13 +140,28 @@ connection KeyInputBox::connect_submit_signal(
 }
 
 QSize KeyInputBox::sizeHint() const {
-  static auto size = QSize(0, scale_height(26));
-  auto base_size_hint = QWidget::sizeHint();
-  if(base_size_hint.isValid()) {
-    base_size_hint.setHeight(std::max(base_size_hint.height(), size.height()));
-    return base_size_hint;
+  if(m_size_hint) {
+    return *m_size_hint;
   }
-  return size;
+  auto size_hint = QWidget::sizeHint();
+  if(m_current->get().count() == 0 || size_hint.isNull()) {
+    auto content_margins = get_content_margins(m_geometry);
+    auto width = m_caret->minimumWidth() +
+      content_margins.left() + content_margins.right();
+    auto height = KeyTag().sizeHint().height() +
+      content_margins.top() + content_margins.bottom();
+    size_hint.setWidth(width);
+    size_hint.setHeight(std::max(size_hint.height(), height));
+  }
+  m_size_hint.emplace(size_hint);
+  return *m_size_hint;
+}
+
+bool KeyInputBox::event(QEvent* event) {
+  if(event->type() == QEvent::LayoutRequest) {
+    m_size_hint = none;
+  }
+  return QWidget::event(event);
 }
 
 void KeyInputBox::focusInEvent(QFocusEvent* event) {
@@ -230,6 +248,7 @@ void KeyInputBox::set_status(Status status) {
     return;
   }
   m_status = status;
+  m_size_hint = none;
   if(m_status == Status::NONE) {
     layout_key_sequence();
   } else if(m_status == Status::PROMPT) {
@@ -241,10 +260,13 @@ void KeyInputBox::set_status(Status status) {
     prompt->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     prompt->set_read_only(true);
     prompt->setDisabled(true);
-    update_style(*prompt, [&] (auto& style) {
-      style.get(Disabled() && ReadOnly()).set(TextColor(QColor(0xA0A0A0)));
+    update_style(*prompt, [] (auto& style) {
+      style.get(Disabled() && ReadOnly()).
+        set(TextColor(QColor(0xA0A0A0))).
+        set(vertical_padding(scale_height(2)));
     });
     layout.addWidget(prompt);
+    link(*this, *prompt);
   }
 }
 
@@ -255,4 +277,13 @@ void KeyInputBox::on_current(const QKeySequence& current) {
   if(current.count() == 0) {
     transition_submission();
   }
+}
+
+void KeyInputBox::on_style() {
+  auto& stylist = find_stylist(*m_input_box);
+  for(auto& property : stylist.get_computed_block()) {
+    apply(property, m_geometry, stylist);
+  }
+  m_size_hint = none;
+  updateGeometry();
 }

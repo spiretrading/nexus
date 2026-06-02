@@ -26,8 +26,13 @@ TickerBox::TickerBox(std::shared_ptr<TickerInfoQueryModel> tickers,
       m_current(std::move(current)) {
   m_combo_box = new ComboBox(m_tickers, m_current,
     [=] (const auto& list, auto index) {
-      return new TickerListItem(
-        *m_tickers->get_source()->parse(to_text(list->get(index))));
+      auto& ticker = list->get(index);
+      if(auto info = m_tickers->get_source()->parse(to_text(ticker))) {
+        return new TickerListItem(*info);
+      }
+      auto info = TickerInfo();
+      info.m_ticker = ticker;
+      return new TickerListItem(info);
     });
   enclose(*this, *m_combo_box);
   proxy_style(*this, *m_combo_box);
