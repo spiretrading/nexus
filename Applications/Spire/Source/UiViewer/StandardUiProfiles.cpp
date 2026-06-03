@@ -84,7 +84,6 @@
 #include "Spire/Ui/MenuButton.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
-#include "Spire/Ui/OpenFilterPanel.hpp"
 #include "Spire/Ui/OrderStatusBox.hpp"
 #include "Spire/Ui/OrderStatusListBox.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
