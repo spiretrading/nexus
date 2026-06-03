@@ -12,7 +12,7 @@ void OpenFilterPanelAdaptor<AnyTagBox>::clear(AnyTagBox& tag_box) {
   Spire::clear(*tag_box.get_tags());
 }
 
-OpenFilterPanelAdaptor<AnyTagBox>::SubmissionType
+OpenFilterPanelAdaptor<AnyTagBox>::Type
     OpenFilterPanelAdaptor<AnyTagBox>::get_current(AnyTagBox& tag_box) {
   return tag_box.get_tags();
 }

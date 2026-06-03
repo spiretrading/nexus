@@ -10,38 +10,30 @@
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+
+  /** Provides the operations an OpenFilterPanel needs from its input widget. */
   template<typename T>
   struct OpenFilterPanelAdaptor;
 
+  /** An OpenFilterPanelAdaptor specialized for a TagComboBox. */
   template<typename T>
   struct OpenFilterPanelAdaptor<TagComboBox<T>> {
-    using SubmissionType = std::shared_ptr<ListModel<T>>;
 
-    static bool is_empty(TagComboBox<T>& combo_box) {
-      return combo_box.get_current()->get_size() == 0;
-    }
+    /** The type of the input's current value. */
+    using Type = std::shared_ptr<ListModel<T>>;
 
-    static void clear(TagComboBox<T>& combo_box) {
-      Spire::clear(*combo_box.get_current());
-    }
+    /** Returns whether the input contains no values. */
+    static bool is_empty(TagComboBox<T>& combo_box);
 
-    static SubmissionType get_current(TagComboBox<T>& combo_box) {
-      return combo_box.get_current();
-    }
+    /** Removes all values from the input. */
+    static void clear(TagComboBox<T>& combo_box);
 
+    /** Returns the current value of the input. */
+    static Type get_current(TagComboBox<T>& combo_box);
+
+    /** Connects a slot called when the input's current value changes. */
     static boost::signals2::connection connect_current(
-        TagComboBox<T>& combo_box, const std::function<void()>& slot) {
-      return combo_box.get_current()->connect_operation_signal(
-        [=] (const auto& operation) {
-          visit(operation,
-            [&] (const ListModel<T>::AddOperation& operation) {
-              slot();
-            },
-            [&] (const ListModel<T>::RemoveOperation& operation) {
-              slot();
-            });
-        });
-    }
+      TagComboBox<T>& combo_box, const std::function<void()>& slot);
   };
 
   /** Displays a FilterPanel over an open list of values. */
@@ -52,9 +44,8 @@ namespace Spire {
       /** The type of the TagComboBox-like component. */
       using TagComboBox = T;
 
-      /** The type of the submission produced by the TagComboBox. */
-      using SubmissionType =
-        typename OpenFilterPanelAdaptor<T>::SubmissionType;
+      /** The type of the submission produced by the input. */
+      using SubmissionType = typename OpenFilterPanelAdaptor<T>::Type;
 
       /** Specifies whether the filtered values are included or excluded. */
       enum class Mode {
@@ -115,7 +106,42 @@ namespace Spire {
       void on_mode(Mode mode);
       void on_reset();
   };
-  
+
+  template<typename T>
+  bool OpenFilterPanelAdaptor<TagComboBox<T>>::is_empty(
+      TagComboBox<T>& combo_box) {
+    return combo_box.get_current()->get_size() == 0;
+  }
+
+  template<typename T>
+  void OpenFilterPanelAdaptor<TagComboBox<T>>::clear(
+      TagComboBox<T>& combo_box) {
+    Spire::clear(*combo_box.get_current());
+  }
+
+  template<typename T>
+  typename OpenFilterPanelAdaptor<TagComboBox<T>>::Type
+      OpenFilterPanelAdaptor<TagComboBox<T>>::get_current(
+        TagComboBox<T>& combo_box) {
+    return combo_box.get_current();
+  }
+
+  template<typename T>
+  boost::signals2::connection
+      OpenFilterPanelAdaptor<TagComboBox<T>>::connect_current(
+        TagComboBox<T>& combo_box, const std::function<void()>& slot) {
+    return combo_box.get_current()->connect_operation_signal(
+      [=] (const auto& operation) {
+        visit(operation,
+          [&] (const ListModel<T>::AddOperation&) {
+            slot();
+          },
+          [&] (const ListModel<T>::RemoveOperation&) {
+            slot();
+          });
+      });
+  }
+
   template<typename T>
   OpenFilterPanel<T>::OpenFilterPanel(TagComboBox& tag_combo_box,
       QWidget* parent)
