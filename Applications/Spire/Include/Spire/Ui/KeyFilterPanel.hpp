@@ -10,11 +10,8 @@ namespace Details {
     using SubmissionType = std::shared_ptr<AnyListModel>;
 
     static bool is_empty(AnyTagBox& box);
-
     static void clear(AnyTagBox& box);
-
     static SubmissionType get_current(AnyTagBox& box);
-
     static boost::signals2::connection connect_current(
       AnyTagBox& box, const std::function<void()>& slot);
   };
