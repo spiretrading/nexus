@@ -1,25 +1,25 @@
 #ifndef SPIRE_KEY_FILTER_PANEL_HPP
 #define SPIRE_KEY_FILTER_PANEL_HPP
+#include "Spire/Ui/KeyListBox.hpp"
 #include "Spire/Ui/OpenFilterPanel.hpp"
-#include "Spire/Ui/TagBox.hpp"
 
 namespace Spire {
 
   template<>
-  struct OpenFilterPanelAdaptor<AnyTagBox> {
-    using Type = std::shared_ptr<AnyListModel>;
+  struct OpenFilterPanelAdaptor<KeyListBox> {
+    using Type = std::shared_ptr<KeySequenceListModel>;
 
-    static bool is_empty(AnyTagBox& tag_box);
-    static void clear(AnyTagBox& tag_box);
-    static Type get_current(AnyTagBox& tag_box);
+    static bool is_empty(KeyListBox& key_list_box);
+    static void clear(KeyListBox& key_list_box);
+    static Type get_current(KeyListBox& key_list_box);
     static boost::signals2::connection connect_current(
-      AnyTagBox& tag_box, const std::function<void()>& slot);
+      KeyListBox& key_list_box, const std::function<void()>& slot);
   };
 
-  extern template class OpenFilterPanel<AnyTagBox>;
+  extern template class OpenFilterPanel<KeyListBox>;
 
-  /** An OpenFilterPanel specialized for an AnyTagBox. */
-  using KeyFilterPanel = OpenFilterPanel<AnyTagBox>;
+  /** An OpenFilterPanel specialized for a KeyListBox. */
+  using KeyFilterPanel = OpenFilterPanel<KeyListBox>;
 }
 
 #endif

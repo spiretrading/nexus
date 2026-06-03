@@ -4,31 +4,31 @@
 using namespace boost::signals2;
 using namespace Spire;
 
-bool OpenFilterPanelAdaptor<AnyTagBox>::is_empty(AnyTagBox& tag_box) {
-  return tag_box.get_tags()->get_size() == 0;
+bool OpenFilterPanelAdaptor<KeyListBox>::is_empty(KeyListBox& key_list_box) {
+  return key_list_box.get_keys()->get_size() == 0;
 }
 
-void OpenFilterPanelAdaptor<AnyTagBox>::clear(AnyTagBox& tag_box) {
-  Spire::clear(*tag_box.get_tags());
+void OpenFilterPanelAdaptor<KeyListBox>::clear(KeyListBox& key_list_box) {
+  Spire::clear(*key_list_box.get_keys());
 }
 
-OpenFilterPanelAdaptor<AnyTagBox>::Type
-    OpenFilterPanelAdaptor<AnyTagBox>::get_current(AnyTagBox& tag_box) {
-  return tag_box.get_tags();
+OpenFilterPanelAdaptor<KeyListBox>::Type
+    OpenFilterPanelAdaptor<KeyListBox>::get_current(KeyListBox& key_list_box) {
+  return key_list_box.get_keys();
 }
 
-connection OpenFilterPanelAdaptor<AnyTagBox>::connect_current(
-    AnyTagBox& tag_box, const std::function<void()>& slot) {
-  return tag_box.get_tags()->connect_operation_signal(
+connection OpenFilterPanelAdaptor<KeyListBox>::connect_current(
+    KeyListBox& key_list_box, const std::function<void()>& slot) {
+  return key_list_box.get_keys()->connect_operation_signal(
     [=] (const auto& operation) {
       visit(operation,
-        [&] (const AnyListModel::AddOperation&) {
+        [&] (const KeySequenceListModel::AddOperation&) {
           slot();
         },
-        [&] (const AnyListModel::RemoveOperation&) {
+        [&] (const KeySequenceListModel::RemoveOperation&) {
           slot();
         });
     });
 }
 
-template class OpenFilterPanel<AnyTagBox>;
+template class OpenFilterPanel<KeyListBox>;
