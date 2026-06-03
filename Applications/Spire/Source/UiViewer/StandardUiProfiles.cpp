@@ -98,6 +98,7 @@
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/ScopeBox.hpp"
 #include "Spire/Ui/ScopeDropDownBox.hpp"
+#include "Spire/Ui/ScopeFilterPanel.hpp"
 #include "Spire/Ui/ScopeListItem.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"

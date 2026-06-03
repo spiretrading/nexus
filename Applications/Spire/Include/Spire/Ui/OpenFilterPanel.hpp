@@ -6,7 +6,6 @@
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/FilterPanel.hpp"
 #include "Spire/Ui/Layouts.hpp"
-#include "Spire/Ui/ScopeBox.hpp"
 #include "Spire/Ui/TagComboBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -42,30 +41,6 @@ namespace Spire {
               slot();
             });
         });
-    }
-  };
-
-  template<>
-  struct OpenFilterPanelAdaptor<ScopeBox> {
-    using SubmissionType = Nexus::Scope;
-
-    static bool is_empty(ScopeBox& combo_box) {
-      return combo_box.get_current()->get().is_empty();
-    }
-
-    static void clear(ScopeBox& combo_box) {
-      combo_box.get_current()->set(Nexus::Scope());
-    }
-
-    static SubmissionType get_current(ScopeBox& combo_box) {
-      return combo_box.get_current()->get();
-    }
-
-    static boost::signals2::connection connect_current(
-        ScopeBox& combo_box, const std::function<void()>& slot) {
-      return combo_box.get_current()->connect_update_signal([=] (const auto&) {
-        slot();
-      });
     }
   };
 
@@ -301,8 +276,6 @@ namespace Spire {
     m_mode->set(Mode::INCLUDE);
     submit();
   }
-
-  using ScopeFilterPanel = OpenFilterPanel<ScopeBox>;
 }
 
 #endif
