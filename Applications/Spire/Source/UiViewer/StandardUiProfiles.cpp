@@ -73,6 +73,7 @@
 #include "Spire/Ui/InfoPanel.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
+#include "Spire/Ui/KeyFilterPanel.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
 #include "Spire/Ui/KeyListBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
