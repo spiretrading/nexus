@@ -11,12 +11,11 @@
 #include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
-namespace Details {
   template<typename T>
-  struct TagComboBoxTraits;
+  struct OpenFilterPanelAdaptor;
 
   template<typename T>
-  struct TagComboBoxTraits<TagComboBox<T>> {
+  struct OpenFilterPanelAdaptor<TagComboBox<T>> {
     using SubmissionType = std::shared_ptr<ListModel<T>>;
 
     static bool is_empty(TagComboBox<T>& combo_box) {
@@ -47,7 +46,7 @@ namespace Details {
   };
 
   template<>
-  struct TagComboBoxTraits<ScopeBox> {
+  struct OpenFilterPanelAdaptor<ScopeBox> {
     using SubmissionType = Nexus::Scope;
 
     static bool is_empty(ScopeBox& combo_box) {
@@ -69,7 +68,6 @@ namespace Details {
       });
     }
   };
-}
 
   /** Displays a FilterPanel over an open list of values. */
   template<typename T>
@@ -81,7 +79,7 @@ namespace Details {
 
       /** The type of the submission produced by the TagComboBox. */
       using SubmissionType =
-        typename Details::TagComboBoxTraits<T>::SubmissionType;
+        typename OpenFilterPanelAdaptor<T>::SubmissionType;
 
       /** Specifies whether the filtered values are included or excluded. */
       enum class Mode {
@@ -173,7 +171,7 @@ namespace Details {
     panel->connect_reset_signal(
       std::bind_front(&OpenFilterPanel<TagComboBox>::on_reset, this));
     m_current_connection =
-      Details::TagComboBoxTraits<TagComboBox>::connect_current(
+      OpenFilterPanelAdaptor<TagComboBox>::connect_current(
         *m_tag_combo_box,
         std::bind_front(&OpenFilterPanel<TagComboBox>::on_current, this));
     m_mode_connection = m_mode->connect_update_signal(
@@ -273,13 +271,13 @@ namespace Details {
   template<typename T>
   void OpenFilterPanel<T>::submit() {
     auto mode = [&] {
-      if(Details::TagComboBoxTraits<TagComboBox>::is_empty(*m_tag_combo_box)) {
+      if(OpenFilterPanelAdaptor<TagComboBox>::is_empty(*m_tag_combo_box)) {
         return Mode::EXCLUDE;
       }
       return m_mode->get();
     }();
     m_submit_signal(
-      Details::TagComboBoxTraits<TagComboBox>::get_current(*m_tag_combo_box),
+      OpenFilterPanelAdaptor<TagComboBox>::get_current(*m_tag_combo_box),
       mode);
   }
 
@@ -297,7 +295,7 @@ namespace Details {
   void OpenFilterPanel<T>::on_reset() {
     auto current_blocker =
       boost::signals2::shared_connection_block(m_current_connection);
-    Details::TagComboBoxTraits<TagComboBox>::clear(*m_tag_combo_box);
+    OpenFilterPanelAdaptor<TagComboBox>::clear(*m_tag_combo_box);
     auto mode_blocker =
       boost::signals2::shared_connection_block(m_mode_connection);
     m_mode->set(Mode::INCLUDE);

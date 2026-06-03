@@ -4,18 +4,16 @@
 #include "Spire/Ui/TagBox.hpp"
 
 namespace Spire {
-namespace Details {
   template<>
-  struct TagComboBoxTraits<AnyTagBox> {
+  struct OpenFilterPanelAdaptor<AnyTagBox> {
     using SubmissionType = std::shared_ptr<AnyListModel>;
 
-    static bool is_empty(AnyTagBox& box);
-    static void clear(AnyTagBox& box);
-    static SubmissionType get_current(AnyTagBox& box);
+    static bool is_empty(AnyTagBox& tag_box);
+    static void clear(AnyTagBox& tag_box);
+    static SubmissionType get_current(AnyTagBox& tag_box);
     static boost::signals2::connection connect_current(
-      AnyTagBox& box, const std::function<void()>& slot);
+      AnyTagBox& tag_box, const std::function<void()>& slot);
   };
-}
 
   extern template class OpenFilterPanel<AnyTagBox>;
 
