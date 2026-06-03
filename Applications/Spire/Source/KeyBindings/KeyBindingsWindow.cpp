@@ -22,19 +22,34 @@ namespace {
   void copy(const KeyBindingsModel& source, KeyBindingsModel& destination) {
     auto& destination_tasks = *destination.get_order_task_arguments();
     auto& source_tasks = *source.get_order_task_arguments();
+    auto destination_size = destination_tasks.get_size();
     auto source_size = source_tasks.get_size();
+    auto min_size = std::min(destination_size, source_size);
+    auto front = 0;
+    while(front < min_size &&
+        destination_tasks.get(front) == source_tasks.get(front)) {
+      ++front;
+    }
+    auto back = 0;
+    while(back < min_size - front &&
+        destination_tasks.get(destination_size - 1 - back) ==
+          source_tasks.get(source_size - 1 - back)) {
+      ++back;
+    }
+    auto destination_div = destination_size - front - back;
+    auto source_div = source_size - front - back;
     destination_tasks.transact([&] {
-      while(destination_tasks.get_size() > source_size) {
-        destination_tasks.remove(destination_tasks.get_size() - 1);
-      }
-      auto common = std::min(destination_tasks.get_size(), source_size);
-      for(auto i = 0; i < common; ++i) {
-        if(destination_tasks.get(i) != source_tasks.get(i)) {
-          destination_tasks.set(i, source_tasks.get(i));
+      auto min_div = std::min(destination_div, source_div);
+      for(auto i = 0; i < min_div; ++i) {
+        if(destination_tasks.get(front + i) != source_tasks.get(front + i)) {
+          destination_tasks.set(front + i, source_tasks.get(front + i));
         }
       }
-      for(auto i = destination_tasks.get_size(); i < source_size; ++i) {
-        destination_tasks.push(source_tasks.get(i));
+      for(auto i = destination_div; i > source_div; --i) {
+        destination_tasks.remove(front + i - 1);
+      }
+      for(auto i = destination_div; i < source_div; ++i) {
+        destination_tasks.insert(source_tasks.get(front + i), front + i);
       }
     });
     auto& destination_cancel = *destination.get_cancel_key_bindings();
