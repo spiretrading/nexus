@@ -788,8 +788,8 @@ namespace {
     populate_widget_properties(properties);
     return UiProfile(name, properties, [=] (auto& profile) {
       auto filter_panel = make_panel();
-      using TagComboBox =
-        std::decay_t<decltype(filter_panel->get_tag_combo_box())>;
+      using TagListBox =
+        std::decay_t<decltype(filter_panel->get_tag_list_box())>;
       apply_widget_properties(filter_panel, profile.get_properties());
       auto submit_slot = profile.make_event_slot<QString>("Submit");
       filter_panel->connect_submit_signal(
@@ -799,7 +799,7 @@ namespace {
             items += to_text(submission->get(i)) + " ";
           }
           submit_slot(QString("Mode:%1 [%2]").
-            arg(to_string<TagComboBox>(mode)).arg(items));
+            arg(to_string<TagListBox>(mode)).arg(items));
         });
       return filter_panel;
     });

@@ -41,10 +41,10 @@ namespace Spire {
   class OpenFilterPanel : public QWidget {
     public:
 
-      /** The type of the TagComboBox-like component. */
-      using TagComboBox = T;
+      /** The type of the tag list box. */
+      using TagListBox = T;
 
-      /** The type of the submission produced by the input. */
+      /** The type of the submission produced by the tag list box. */
       using SubmissionType = typename OpenFilterPanelAdaptor<T>::Type;
 
       /** Specifies whether the filtered values are included or excluded. */
@@ -67,17 +67,17 @@ namespace Spire {
 
       /**
        * Constructs a OpenFilterPanel.
-       * @param tag_combo_box The TagComboBox-like component used as the input.
+       * @param tag_list_box The widget that displays the list of tags.
        * @param parent The parent widget.
        */
-      explicit OpenFilterPanel(TagComboBox& tag_combo_box,
+      explicit OpenFilterPanel(TagListBox& tag_list_box,
         QWidget* parent = nullptr);
 
-      /** Returns the TagComboBox-like component. */
-      const TagComboBox& get_tag_combo_box() const;
+      /** Returns the tag list box. */
+      const TagListBox& get_tag_list_box() const;
 
-      /** Returns the TagComboBox-like component. */
-      TagComboBox& get_tag_combo_box();
+      /** Returns the tag list box. */
+      TagListBox& get_tag_list_box();
 
       /** Connects a slot to the submit signal. */
       boost::signals2::connection connect_submit_signal(
@@ -89,7 +89,7 @@ namespace Spire {
 
     private:
       mutable SubmitSignal m_submit_signal;
-      TagComboBox* m_tag_combo_box;
+      TagListBox* m_tag_list_box;
       std::shared_ptr<AssociativeValueModel<Mode>> m_mode;
       QWidget* m_body;
       QWidget* m_button_container;
@@ -143,15 +143,15 @@ namespace Spire {
   }
 
   template<typename T>
-  OpenFilterPanel<T>::OpenFilterPanel(TagComboBox& tag_combo_box,
+  OpenFilterPanel<T>::OpenFilterPanel(TagListBox& tag_list_box,
       QWidget* parent)
       : QWidget(parent),
-        m_tag_combo_box(&tag_combo_box),
+        m_tag_list_box(&tag_list_box),
         m_mode(std::make_shared<AssociativeValueModel<Mode>>(Mode::INCLUDE)),
         m_is_first_show(true) {
-    m_tag_combo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    m_tag_combo_box->setMinimumSize(scale(160, 26));
-    m_tag_combo_box->setMaximumHeight(scale_height(63));
+    m_tag_list_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+    m_tag_list_box->setMinimumSize(scale(160, 26));
+    m_tag_list_box->setMaximumHeight(scale_height(63));
     m_button_container = new QWidget();
     m_button_container->setSizePolicy(QSizePolicy::Fixed,
       QSizePolicy::Expanding);
@@ -164,30 +164,30 @@ namespace Spire {
     auto body_layout = make_hbox_layout(m_body);
     body_layout->setSpacing(scale_width(18));
     body_layout->addWidget(m_button_container);
-    body_layout->addWidget(m_tag_combo_box);
+    body_layout->addWidget(m_tag_list_box);
     auto panel = new FilterPanel(*m_body);
     enclose(*this, *panel);
     Styles::proxy_style(*this, *panel);
-    setFocusProxy(m_tag_combo_box);
+    setFocusProxy(m_tag_list_box);
     panel->connect_reset_signal(
-      std::bind_front(&OpenFilterPanel<TagComboBox>::on_reset, this));
+      std::bind_front(&OpenFilterPanel<TagListBox>::on_reset, this));
     m_current_connection =
-      OpenFilterPanelAdaptor<TagComboBox>::connect_current(
-        *m_tag_combo_box,
-        std::bind_front(&OpenFilterPanel<TagComboBox>::on_current, this));
+      OpenFilterPanelAdaptor<TagListBox>::connect_current(
+        *m_tag_list_box,
+        std::bind_front(&OpenFilterPanel<TagListBox>::on_current, this));
     m_mode_connection = m_mode->connect_update_signal(
-      std::bind_front(&OpenFilterPanel<TagComboBox>::on_mode, this));
+      std::bind_front(&OpenFilterPanel<TagListBox>::on_mode, this));
   }
 
   template<typename T>
-  const OpenFilterPanel<T>::TagComboBox&
-      OpenFilterPanel<T>::get_tag_combo_box() const {
-    return *m_tag_combo_box;
+  const OpenFilterPanel<T>::TagListBox&
+      OpenFilterPanel<T>::get_tag_list_box() const {
+    return *m_tag_list_box;
   }
 
   template<typename T>
-  OpenFilterPanel<T>::TagComboBox& OpenFilterPanel<T>::get_tag_combo_box() {
-    return *m_tag_combo_box;
+  OpenFilterPanel<T>::TagListBox& OpenFilterPanel<T>::get_tag_list_box() {
+    return *m_tag_list_box;
   }
 
   template<typename T>
@@ -201,8 +201,8 @@ namespace Spire {
     if(watched == m_body && event->type() == QEvent::Resize) {
       auto available_width =
         m_body->width() - m_button_container->width() - scale_width(18);
-      m_tag_combo_box->setMaximumWidth(std::max(0,
-        std::max(m_tag_combo_box->minimumWidth(), available_width)));
+      m_tag_list_box->setMaximumWidth(std::max(0,
+        std::max(m_tag_list_box->minimumWidth(), available_width)));
     }
     return QWidget::eventFilter(watched, event);
   }
@@ -211,7 +211,7 @@ namespace Spire {
   void OpenFilterPanel<T>::showEvent(QShowEvent* event) {
     if(m_is_first_show) {
       if(auto next = find_next_focusable_widget()) {
-        setTabOrder(find_focus_proxy(*m_tag_combo_box), next);
+        setTabOrder(find_focus_proxy(*m_tag_list_box), next);
       }
       m_is_first_show = false;
     }
@@ -259,8 +259,8 @@ namespace Spire {
 
   template<typename T>
   QWidget* OpenFilterPanel<T>::find_next_focusable_widget() const {
-    auto next = m_tag_combo_box->nextInFocusChain();
-    while(next != m_tag_combo_box && isAncestorOf(next)) {
+    auto next = m_tag_list_box->nextInFocusChain();
+    while(next != m_tag_list_box && isAncestorOf(next)) {
       if(!m_body->isAncestorOf(next) && next->focusPolicy() & Qt::TabFocus) {
         return next;
       }
@@ -272,13 +272,13 @@ namespace Spire {
   template<typename T>
   void OpenFilterPanel<T>::submit() {
     auto mode = [&] {
-      if(OpenFilterPanelAdaptor<TagComboBox>::is_empty(*m_tag_combo_box)) {
+      if(OpenFilterPanelAdaptor<TagListBox>::is_empty(*m_tag_list_box)) {
         return Mode::EXCLUDE;
       }
       return m_mode->get();
     }();
     m_submit_signal(
-      OpenFilterPanelAdaptor<TagComboBox>::get_current(*m_tag_combo_box),
+      OpenFilterPanelAdaptor<TagListBox>::get_current(*m_tag_list_box),
       mode);
   }
 
@@ -296,7 +296,7 @@ namespace Spire {
   void OpenFilterPanel<T>::on_reset() {
     auto current_blocker =
       boost::signals2::shared_connection_block(m_current_connection);
-    OpenFilterPanelAdaptor<TagComboBox>::clear(*m_tag_combo_box);
+    OpenFilterPanelAdaptor<TagListBox>::clear(*m_tag_list_box);
     auto mode_blocker =
       boost::signals2::shared_connection_block(m_mode_connection);
     m_mode->set(Mode::INCLUDE);
