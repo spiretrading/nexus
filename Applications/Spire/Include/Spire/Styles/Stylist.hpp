@@ -125,6 +125,12 @@ namespace Spire::Styles {
       void link(Stylist& target);
 
       /**
+       * Removes a link previously added.
+       * @param target The stylist to unlink from this.
+       */
+      void unlink(Stylist& target);
+
+      /**
        * Directs this Stylist to match a Selector.
        * @param selector The selector to match.
        */
@@ -367,6 +373,13 @@ namespace Spire::Styles {
    * @param target The QWidget to link from the root.
    */
   void link(QWidget& root, QWidget& target);
+
+  /**
+   * Removes a link previously added.
+   * @param root The root of the link.
+   * @param target The QWidget to unlink from the root.
+   */
+  void unlink(QWidget& root, QWidget& target);
 
   /**
    * Returns <code>true</code> iff a widget matches a selector.

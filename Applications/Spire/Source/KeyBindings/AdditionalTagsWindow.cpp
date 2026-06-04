@@ -326,6 +326,7 @@ namespace {
         set(TextColor(QColor(0xE63F44))).
         set(TextAlign(Qt::AlignLeft));
     });
+    outer_layout->addWidget(error_message_box);
     auto box = new Box(body);
     update_style(*box, [] (auto& style) {
       style.get(Any()).
