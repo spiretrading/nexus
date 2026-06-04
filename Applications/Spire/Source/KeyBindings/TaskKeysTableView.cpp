@@ -474,6 +474,7 @@ namespace {
     }
 
     void unmount(QWidget* widget) {
+      m_item_states.erase(widget);
       delete widget;
     }
   };
