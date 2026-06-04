@@ -1,4 +1,5 @@
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
+#include <QCloseEvent>
 #include <QIcon>
 #include "Spire/KeyBindings/CancelKeyBindingsForm.hpp"
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
@@ -91,12 +92,11 @@ KeyBindingsWindow::KeyBindingsWindow(
     const AdditionalTagDatabase& additional_tags, QWidget* parent)
     : Window(parent),
       m_key_bindings(std::move(key_bindings)),
-      m_snapshot(std::make_shared<KeyBindingsModel>()),
       m_is_committed(false) {
   setWindowTitle(tr("Key Bindings"));
   set_svg_icon(":/Icons/key-bindings.svg");
   setWindowIcon(QIcon(":/Icons/taskbar_icons/key-bindings.png"));
-  copy(*m_key_bindings, *m_snapshot);
+  copy(*m_key_bindings, m_snapshot);
   auto navigation_view = new NavigationView();
   navigation_view->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -146,7 +146,7 @@ KeyBindingsWindow::KeyBindingsWindow(
 
 void KeyBindingsWindow::closeEvent(QCloseEvent* event) {
   if(!m_is_committed) {
-    copy(*m_snapshot, *m_key_bindings);
+    copy(m_snapshot, *m_key_bindings);
   }
   Window::closeEvent(event);
 }

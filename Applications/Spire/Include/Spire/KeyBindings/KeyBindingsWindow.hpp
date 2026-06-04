@@ -27,7 +27,7 @@ namespace Spire {
 
     private:
       std::shared_ptr<KeyBindingsModel> m_key_bindings;
-      std::shared_ptr<KeyBindingsModel> m_snapshot;
+      KeyBindingsModel m_snapshot;
       bool m_is_committed;
 
       void on_cancel();
