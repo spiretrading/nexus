@@ -37,10 +37,9 @@ TableItem::TableItem(QWidget* parent)
 }
 
 TableItem::~TableItem() {
+  setFocusProxy(nullptr);
   if(auto item = layout()->takeAt(0)) {
-    auto body = item->widget();
-    body->setAttribute(Qt::WA_DontShowOnScreen);
-    body->setParent(nullptr);
+    delete item->widget();
     delete item;
   }
 }
@@ -75,7 +74,7 @@ QSize TableItem::sizeHint() const {
 
 void TableItem::mount(QWidget& body) {
   setFocusProxy(&body);
-  setFocusPolicy(focusPolicy());
+  setFocusPolicy(body.focusPolicy());
   layout()->addWidget(&body);
   updateGeometry();
   body.setAttribute(Qt::WA_DontShowOnScreen, false);
@@ -83,6 +82,7 @@ void TableItem::mount(QWidget& body) {
 
 QWidget* TableItem::unmount() {
   setFocusProxy(nullptr);
+  setFocusPolicy(Qt::NoFocus);
   auto item = layout()->takeAt(0);
   auto body = item->widget();
   body->setAttribute(Qt::WA_DontShowOnScreen);

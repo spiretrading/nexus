@@ -73,6 +73,7 @@
 #include "Spire/Ui/InfoPanel.hpp"
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
+#include "Spire/Ui/KeyFilterPanel.hpp"
 #include "Spire/Ui/KeyInputBox.hpp"
 #include "Spire/Ui/KeyListBox.hpp"
 #include "Spire/Ui/KeyTag.hpp"
@@ -83,7 +84,6 @@
 #include "Spire/Ui/MenuButton.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
-#include "Spire/Ui/OpenFilterPanel.hpp"
 #include "Spire/Ui/OrderStatusBox.hpp"
 #include "Spire/Ui/OrderStatusListBox.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
@@ -97,6 +97,7 @@
 #include "Spire/Ui/QuantityBox.hpp"
 #include "Spire/Ui/ScopeBox.hpp"
 #include "Spire/Ui/ScopeDropDownBox.hpp"
+#include "Spire/Ui/ScopeFilterPanel.hpp"
 #include "Spire/Ui/ScopeListItem.hpp"
 #include "Spire/Ui/ResponsiveLabel.hpp"
 #include "Spire/Ui/ScalarFilterPanel.hpp"
@@ -787,8 +788,8 @@ namespace {
     populate_widget_properties(properties);
     return UiProfile(name, properties, [=] (auto& profile) {
       auto filter_panel = make_panel();
-      using TagComboBox =
-        std::decay_t<decltype(filter_panel->get_tag_combo_box())>;
+      using TagListBox =
+        std::decay_t<decltype(filter_panel->get_tag_list_box())>;
       apply_widget_properties(filter_panel, profile.get_properties());
       auto submit_slot = profile.make_event_slot<QString>("Submit");
       filter_panel->connect_submit_signal(
@@ -798,7 +799,7 @@ namespace {
             items += to_text(submission->get(i)) + " ";
           }
           submit_slot(QString("Mode:%1 [%2]").
-            arg(to_string<TagComboBox>(mode)).arg(items));
+            arg(to_string<TagListBox>(mode)).arg(items));
         });
       return filter_panel;
     });
@@ -3046,6 +3047,15 @@ UiProfile Spire::make_integer_filter_panel_profile() {
   auto profile = UiProfile("IntegerFilterPanel", properties,
     setup_scalar_filter_panel_profile<IntegerBox>);
   return profile;
+}
+
+UiProfile Spire::make_key_filter_panel_profile() {
+  return setup_open_filter_panel_profile("KeyFilterPanel",
+    [] {
+      return new KeyFilterPanel(
+        *new KeyListBox(std::make_shared<ArrayListModel<QKeySequence>>(),
+          populate_key_input_box_model(QKeySequence())));
+    });
 }
 
 UiProfile Spire::make_key_input_box_profile() {

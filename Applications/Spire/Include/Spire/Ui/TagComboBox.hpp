@@ -8,6 +8,7 @@
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/ListViewItemBuilder.hpp"
+#include "Spire/Ui/OpenFilterPanel.hpp"
 
 namespace Spire {
   class AnyComboBox;
@@ -157,6 +158,27 @@ namespace Spire {
         const SubmitSignal::slot_type& slot) const;
   };
 
+  /** An OpenFilterPanelAdaptor specialized for a TagComboBox. */
+  template<typename T>
+  struct OpenFilterPanelAdaptor<TagComboBox<T>> {
+
+    /** The type of the current value. */
+    using Type = std::shared_ptr<ListModel<T>>;
+
+    /** Returns whether the input contains no values. */
+    static bool is_empty(TagComboBox<T>& combo_box);
+
+    /** Removes all values from the input. */
+    static void clear(TagComboBox<T>& combo_box);
+
+    /** Returns the current value of the input. */
+    static Type get_current(TagComboBox<T>& combo_box);
+
+    /** Connects a slot called when the input's current value changes. */
+    static boost::signals2::connection connect_current(
+      TagComboBox<T>& combo_box, const std::function<void()>& slot);
+  };
+
   template<std::derived_from<AnyQueryModel> QueryModel>
   TagComboBox(std::shared_ptr<QueryModel>) ->
     TagComboBox<typename QueryModel::Type>;
@@ -208,6 +230,41 @@ namespace Spire {
     return AnyTagComboBox::connect_submit_signal([=] (const auto& submission) {
       slot(std::static_pointer_cast<ListModel<Type>>(submission));
     });
+  }
+
+  template<typename T>
+  bool OpenFilterPanelAdaptor<TagComboBox<T>>::is_empty(
+      TagComboBox<T>& combo_box) {
+    return combo_box.get_current()->get_size() == 0;
+  }
+
+  template<typename T>
+  void OpenFilterPanelAdaptor<TagComboBox<T>>::clear(
+      TagComboBox<T>& combo_box) {
+    Spire::clear(*combo_box.get_current());
+  }
+
+  template<typename T>
+  typename OpenFilterPanelAdaptor<TagComboBox<T>>::Type
+      OpenFilterPanelAdaptor<TagComboBox<T>>::get_current(
+        TagComboBox<T>& combo_box) {
+    return combo_box.get_current();
+  }
+
+  template<typename T>
+  boost::signals2::connection
+      OpenFilterPanelAdaptor<TagComboBox<T>>::connect_current(
+        TagComboBox<T>& combo_box, const std::function<void()>& slot) {
+    return combo_box.get_current()->connect_operation_signal(
+      [=] (const auto& operation) {
+        visit(operation,
+          [&] (const ListModel<T>::AddOperation&) {
+            slot();
+          },
+          [&] (const ListModel<T>::RemoveOperation&) {
+            slot();
+          });
+      });
   }
 }
 

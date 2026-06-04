@@ -282,6 +282,21 @@ void Stylist::link(Stylist& target) {
   }
 }
 
+void Stylist::unlink(Stylist& target) {
+  if(m_links) {
+    auto i = std::ranges::find(*m_links, &target);
+    if(i != m_links->end()) {
+      m_links->erase(i);
+    }
+  }
+  if(target.m_backlinks) {
+    auto i = std::ranges::find(*target.m_backlinks, this);
+    if(i != target.m_backlinks->end()) {
+      target.m_backlinks->erase(i);
+    }
+  }
+}
+
 const std::unordered_set<Selector>& Stylist::get_matches() const {
   return m_matches;
 }
@@ -707,6 +722,10 @@ void Spire::Styles::proxy_style(QWidget& source, QWidget& destination) {
 
 void Spire::Styles::link(QWidget& root, QWidget& target) {
   find_stylist(root).link(find_stylist(target));
+}
+
+void Spire::Styles::unlink(QWidget& root, QWidget& target) {
+  find_stylist(root).unlink(find_stylist(target));
 }
 
 bool Spire::Styles::is_match(QWidget& widget, const Selector& selector) {

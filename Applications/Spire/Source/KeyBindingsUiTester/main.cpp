@@ -1,9 +1,12 @@
 #include <QApplication>
+#include <QVBoxLayout>
+#include <QWidget>
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/KeyBindings/KeyBindingsWindow.hpp"
 #include "Spire/Spire/LocalQueryModel.hpp"
 #include "Spire/Spire/Resources.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace boost;
@@ -46,9 +49,22 @@ int main(int argc, char** argv) {
     key_bindings->get_order_task_arguments()->push(
       to_order_task_arguments(*task));
   }
-  auto window = KeyBindingsWindow(key_bindings, populate_ticker_query_model(),
-    get_default_additional_tag_database());
-  window.show();
+  auto tickers = populate_ticker_query_model();
+  auto launcher = QWidget();
+  launcher.setWindowTitle(QObject::tr("KeyBindings Tester"));
+  launcher.setAttribute(Qt::WA_QuitOnClose);
+  auto layout = new QVBoxLayout(&launcher);
+  auto open_button = Spire::make_label_button(QObject::tr("Open Key Bindings"));
+  layout->addWidget(open_button);
+  open_button->connect_click_signal([&] {
+    auto window = new KeyBindingsWindow(
+      key_bindings, tickers, get_default_additional_tag_database());
+    window->setAttribute(Qt::WA_DeleteOnClose);
+    window->setAttribute(Qt::WA_QuitOnClose, false);
+    window->show();
+  });
+  launcher.setFixedSize(scale(200, 60));
+  launcher.show();
   auto hotkey_override = HotkeyOverride();
   application.installNativeEventFilter(&hotkey_override);
   application.exec();
