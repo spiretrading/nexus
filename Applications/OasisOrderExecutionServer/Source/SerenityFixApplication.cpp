@@ -42,6 +42,21 @@ namespace {
       FixOrderRejectedException("Invalid value for tag 7735 (TsxLongLife)."));
   }
 
+  Quantity get_otcm_minimum_quantity(Money price) {
+    if(price < Money::CENT) {
+      return 10000;
+    } else if(price < 20 * Money::CENT) {
+      return 5000;
+    } else if(price < 51 * Money::CENT) {
+      return 2500;
+    } else if(price < Money::ONE) {
+      return 1000;
+    } else if(price < 175 * Money::ONE) {
+      return 100;
+    }
+    return 1;
+  }
+
   void populate_exec_inst(
       const Tag& tag, FIX42::NewOrderSingle& new_order_single,
       std::initializer_list<const char*> cases) {
@@ -348,6 +363,13 @@ std::shared_ptr<Order> SerenityFixApplication::submit_to_us(
           info.m_fields.m_time_in_force.get_type() == TimeInForce::Type::GTD) {
         throw_with_location(
           FixOrderRejectedException("Invalid time in force."));
+      }
+      if(info.m_fields.m_destination == Destinations::OTCM) {
+        if(info.m_fields.m_quantity <
+            get_otcm_minimum_quantity(info.m_fields.m_price)) {
+          throw_with_location(FixOrderRejectedException(
+            "Order does not meet minimum quantity."));
+        }
       }
       if(info.m_fields.m_type == OrderType::STOP) {
         throw_with_location(FixOrderRejectedException("Invalid order type."));

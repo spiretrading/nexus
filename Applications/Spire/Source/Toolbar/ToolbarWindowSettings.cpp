@@ -24,6 +24,8 @@ QWidget* ToolbarWindowSettings::Reopen(Ref<UserProfile> profile) const {
     profile->GetClients().get_administration_client().load_account_roles(
       account);
   auto pinned_blotters = std::make_shared<ArrayListModel<BlotterModel*>>();
+  pinned_blotters->push(
+    &profile->GetBlotterSettings().GetConsolidatedBlotter());
   for(auto& blotter : profile->GetBlotterSettings().GetAllBlotters()) {
     if(!blotter->IsConsolidated()) {
       pinned_blotters->push(&*blotter);

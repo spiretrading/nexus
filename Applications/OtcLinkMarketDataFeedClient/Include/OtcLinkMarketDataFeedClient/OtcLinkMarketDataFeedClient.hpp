@@ -518,7 +518,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       const OtcLinkMessage& message) {
     auto data = message.m_payload;
     auto security_id = parse_uint32(data + 10);
-    auto venue = std::string(data + 15, 3);
+    auto venue = std::string(m_configuration.m_venue.get_code().get_data());
     auto price = parse_money(data + 23);
     auto size = parse_quantity(data + 31);
     auto timestamp = parse_timestamp(data + 35);

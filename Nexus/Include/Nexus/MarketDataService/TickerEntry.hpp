@@ -196,7 +196,9 @@ namespace Nexus {
     if(m_market_center.empty()) {
       m_market_center = m_ticker.get_venue().get_code().get_data();
     }
-    m_session_candlestick.update(close);
+    if(close != Money::ZERO) {
+      m_session_candlestick.update(close);
+    }
   }
 
   inline const Ticker& TickerEntry::get_ticker() const {
@@ -253,7 +255,9 @@ namespace Nexus {
     if(bbo_quote.m_timestamp >= m_session_reset_time) {
       auto close = m_next_close;
       m_session_candlestick = PriceCandlestick();
-      m_session_candlestick.update(close);
+      if(close != Money::ZERO) {
+        m_session_candlestick.update(close);
+      }
       auto delta = bbo_quote.m_timestamp.date() - m_session_reset_time.date();
       m_session_reset_time += delta;
       if(m_session_reset_time <= bbo_quote.m_timestamp) {
