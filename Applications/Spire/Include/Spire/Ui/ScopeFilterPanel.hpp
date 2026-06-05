@@ -11,7 +11,7 @@ namespace Spire {
 
     static bool is_empty(ScopeBox& scope_box);
     static void clear(ScopeBox& scope_box);
-    static Type get_current(ScopeBox& scope_box);
+    static const Type& get_current(ScopeBox& scope_box);
     static boost::signals2::connection connect_current(
       ScopeBox& scope_box, const std::function<void()>& slot);
   };
