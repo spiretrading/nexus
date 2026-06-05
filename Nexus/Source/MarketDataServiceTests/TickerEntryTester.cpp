@@ -219,6 +219,59 @@ TEST_SUITE("TickerEntry") {
     REQUIRE(candlestick6.get_volume() == 0);
   }
 
+  TEST_CASE("session_candlestick_with_zero_close") {
+    auto initial_sequences = TickerEntry::InitialSequences();
+    auto ticker = parse_ticker("TST.TSX");
+    auto entry = TickerEntry(ticker, Money::ZERO, initial_sequences);
+    auto& candlestick1 = entry.get_session_candlestick();
+    REQUIRE(candlestick1.get_volume() == 0);
+    entry.publish(BboQuote(make_bid(5 * Money::ONE, 100),
+      make_ask(5 * Money::ONE + Money::CENT, 100),
+      time_from_string("2024-07-11 09:30:00")), 1);
+    auto ts1 = TimeAndSale(time_from_string("2024-07-11 09:30:01"),
+      5 * Money::ONE, 100, TimeAndSale::Condition(), "TSE", "", "");
+    entry.publish(ts1, 1);
+    auto& candlestick2 = entry.get_session_candlestick();
+    REQUIRE(candlestick2.get_open() == 5 * Money::ONE);
+    REQUIRE(candlestick2.get_close() == 5 * Money::ONE);
+    REQUIRE(candlestick2.get_high() == 5 * Money::ONE);
+    REQUIRE(candlestick2.get_low() == 5 * Money::ONE);
+    REQUIRE(candlestick2.get_volume() == 100);
+    auto ts2 = TimeAndSale(time_from_string("2024-07-11 09:30:02"),
+      4 * Money::ONE, 200, TimeAndSale::Condition(), "TSE", "", "");
+    entry.publish(ts2, 1);
+    auto& candlestick3 = entry.get_session_candlestick();
+    REQUIRE(candlestick3.get_open() == 5 * Money::ONE);
+    REQUIRE(candlestick3.get_close() == 4 * Money::ONE);
+    REQUIRE(candlestick3.get_high() == 5 * Money::ONE);
+    REQUIRE(candlestick3.get_low() == 4 * Money::ONE);
+    REQUIRE(candlestick3.get_volume() == 300);
+  }
+
+  TEST_CASE("session_candlestick_reset_with_zero_close") {
+    auto initial_sequences = TickerEntry::InitialSequences();
+    auto ticker = parse_ticker("TST.TSX");
+    auto entry = TickerEntry(ticker, Money::ONE, initial_sequences);
+    entry.publish(BboQuote(make_bid(Money::ONE, 100),
+      make_ask(Money::ONE + Money::CENT, 100),
+      time_from_string("2024-07-11 09:30:00")), 1);
+    auto ts1 = TimeAndSale(time_from_string("2024-07-11 09:30:01"),
+      2 * Money::ONE, 100, TimeAndSale::Condition(), "WRONG", "", "");
+    entry.publish(ts1, 1);
+    entry.publish(BboQuote(make_bid(Money::ONE, 100),
+      make_ask(Money::ONE + Money::CENT, 100),
+      time_from_string("2024-07-12 09:30:00")), 1);
+    auto& candlestick = entry.get_session_candlestick();
+    auto ts2 = TimeAndSale(time_from_string("2024-07-12 09:30:01"),
+      3 * Money::ONE, 200, TimeAndSale::Condition(), "TSE", "", "");
+    entry.publish(ts2, 1);
+    REQUIRE(candlestick.get_open() == 3 * Money::ONE);
+    REQUIRE(candlestick.get_close() == 3 * Money::ONE);
+    REQUIRE(candlestick.get_high() == 3 * Money::ONE);
+    REQUIRE(candlestick.get_low() == 3 * Money::ONE);
+    REQUIRE(candlestick.get_volume() == 200);
+  }
+
   TEST_CASE("load_initial_sequences") {
     auto data_store = LocalHistoricalDataStore();
     auto ticker1 = parse_ticker("TST.TSX");
