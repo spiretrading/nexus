@@ -26,13 +26,15 @@
   font-weight: 300;
 }
 
-#main {
-  background-color: #ffffff;
+html, body {
   margin: 0;
   padding: 0;
-  position: fixed;
-  top: 0;
-  left: 0;
-  width: 100vw;
   height: 100dvh;
+  overflow: hidden;
+}
+
+#main {
+  background-color: #ffffff;
+  height: 100%;
+  overflow: hidden;
 }
