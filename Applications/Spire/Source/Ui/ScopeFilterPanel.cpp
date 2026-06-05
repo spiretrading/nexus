@@ -12,7 +12,7 @@ void OpenFilterPanelAdaptor<ScopeBox>::clear(ScopeBox& scope_box) {
   scope_box.get_current()->set(Scope());
 }
 
-OpenFilterPanelAdaptor<ScopeBox>::Type
+const OpenFilterPanelAdaptor<ScopeBox>::Type&
     OpenFilterPanelAdaptor<ScopeBox>::get_current(ScopeBox& scope_box) {
   return scope_box.get_current()->get();
 }

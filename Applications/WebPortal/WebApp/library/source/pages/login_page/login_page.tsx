@@ -56,6 +56,7 @@ export class LoginPage extends React.Component<Properties> {
             </HBoxLayout>
             <Padding size='60px'/>
             <input type='text' placeholder='Username' autoComplete='off'
+              autoCapitalize='none'
               className={css(LoginPage.DYNAMIC_STYLES.inputBox)}
               disabled={isDisabled}
               onFocus={() => this.usernameInputField.placeholder = ''}
