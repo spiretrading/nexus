@@ -83,13 +83,7 @@ export class ComplianceRuleSchema {
       return this;
     } else if(
         applicability === ComplianceRuleSchema.Applicability.CONSOLIDATED) {
-      const parameters = this._parameters.slice();
-      const nameIndex =
-        parameters.findIndex(parameter => parameter.name === 'name');
-      if(nameIndex !== -1) {
-        parameters.splice(nameIndex);
-      }
-      return new ComplianceRuleSchema(this.name, parameters);
+      return new ComplianceRuleSchema(this.name, this._parameters);
     }
     const name = new ComplianceParameter('name',
       new ComplianceValue(ComplianceValue.Type.STRING, this.name));
