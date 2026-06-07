@@ -554,7 +554,7 @@ function isTicker(x: any): x is Nexus.Ticker {
 }
 
 function isVenue(x: any): x is Nexus.Venue {
-  return !isTicker(x) && typeof x?.toString === 'string';
+  return !isTicker(x) && typeof x?.code === 'string';
 }
 
 function isScope(x: any): x is Nexus.Scope {
