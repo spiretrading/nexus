@@ -207,5 +207,5 @@ function isTicker(x: any): x is Ticker {
 }
 
 function isVenue(x: any): x is Venue {
-  return !isTicker(x) && typeof x?.toString === 'string';
+  return !isTicker(x) && typeof x?.code === 'string';
 }
