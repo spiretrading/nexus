@@ -39,13 +39,22 @@ export class ComplianceRuleSchema {
       return ComplianceRuleSchema.Applicability.CONSOLIDATED;
     })();
     if(this._applicability === ComplianceRuleSchema.Applicability.PER_ACCOUNT) {
-      this._parameters = [];
+      let unwrappedName = '';
+      let argumentList: ComplianceValue[] = [];
       for(const parameter of this._rawParameters) {
         if(parameter.name === 'name') {
-          this._name = parameter.value.value as string;
-        } else if(parameter.name.startsWith('\\')) {
+          unwrappedName = parameter.value.value as string;
+        } else if(parameter.name === 'arguments') {
+          argumentList = parameter.value.value as ComplianceValue[];
+        }
+      }
+      this._name = unwrappedName;
+      this._parameters = [];
+      for(const argument of argumentList) {
+        const argumentValue = argument.value as ComplianceValue[];
+        if(argumentValue.length === 2) {
           this._parameters.push(new ComplianceParameter(
-            parameter.name.substring(1), parameter.value));
+            argumentValue[0].value as string, argumentValue[1]));
         }
       }
     } else {
@@ -85,16 +94,7 @@ export class ComplianceRuleSchema {
         applicability === ComplianceRuleSchema.Applicability.CONSOLIDATED) {
       return new ComplianceRuleSchema(this.name, this._parameters);
     }
-    const name = new ComplianceParameter('name',
-      new ComplianceValue(ComplianceValue.Type.STRING, this.name));
-    const parameters = [];
-    parameters.push(name);
-    for(const parameter of this._rawParameters) {
-      parameters.push(
-        new ComplianceParameter('\\' + parameter.name, parameter.value));
-    }
-    return new ComplianceRuleSchema(
-      ComplianceRuleSchema.PER_ACCOUNT_NAME, parameters);
+    return wrap(ComplianceRuleSchema.PER_ACCOUNT_NAME, this);
   }
 
   /** Converts this object to JSON. */
