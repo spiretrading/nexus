@@ -152,7 +152,8 @@ export class RuleRow extends React.Component<Properties, State> {
     const rule = new Nexus.ComplianceRuleEntry(
       this.props.complianceRule.id, this.props.complianceRule.directoryEntry,
       this.props.complianceRule.state,
-      renest(schema, this.props.complianceRule.schema));
+      renest(schema, this.props.complianceRule.schema).toApplicability(
+        this.props.complianceRule.schema.applicability));
     this.props.onChange(rule);
   }
 
