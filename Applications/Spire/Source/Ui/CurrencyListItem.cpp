@@ -1,6 +1,5 @@
 #include "Spire/Ui/CurrencyListItem.hpp"
 #include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -21,7 +20,7 @@ CurrencyListItem::CurrencyListItem(
     auto font = QFont("Roboto");
     font.setWeight(QFont::Normal);
     font.setPixelSize(scale_width(10));
-    style.get(ReadOnly() && Disabled()).
+    style.get(Any()).
       set(text_style(font, QColor(0x808080))).
       set(PaddingTop(scale_height(2)));
   });
