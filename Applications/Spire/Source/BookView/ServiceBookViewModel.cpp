@@ -29,21 +29,26 @@ ServiceBookViewModel::ServiceBookViewModel(Ticker ticker,
   bbo_query.set_interruption_policy(InterruptionPolicy::IGNORE_CONTINUE);
   m_market_data_client.query(bbo_query, m_event_handler.get_slot<BboQuote>(
     std::bind_front(&ServiceBookViewModel::on_bbo, this)));
-  query_real_time_with_snapshot(
-    m_market_data_client, m_ticker, m_event_handler.get_slot<BookQuote>(
-      std::bind_front(&ServiceBookViewModel::buffer_book_quote, this),
-      std::bind_front(&ServiceBookViewModel::on_book_quote_interruption, this)),
-    InterruptionPolicy::BREAK_QUERY);
+  spawn([client = m_market_data_client, ticker = m_ticker, slot =
+      m_event_handler.get_slot<BookQuote>(
+        std::bind_front(&ServiceBookViewModel::buffer_book_quote, this),
+        std::bind_front(
+          &ServiceBookViewModel::on_book_quote_interruption, this))] () mutable {
+    auto id = query_real_time_with_snapshot(
+      client, ticker, std::move(slot), InterruptionPolicy::BREAK_QUERY);
+    Beam::wait(id);
+  });
   auto time_and_sale_query = make_real_time_query(m_ticker);
   time_and_sale_query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_market_data_client.query(
     time_and_sale_query, m_event_handler.get_slot<TimeAndSale>(
       std::bind_front(&ServiceBookViewModel::on_time_and_sales, this)));
-  m_load_promise = std::make_shared<QtPromise<void>>(QtPromise([this] {
-    return m_market_data_client.load_session_candlestick(m_ticker);
-  }, LaunchPolicy::ASYNC).then([this] (const auto& candlestick) {
-    m_model.get_session_candlestick()->set(candlestick);
-  }));
+  m_load_promise = std::make_shared<QtPromise<void>>(QtPromise(
+    [client = m_market_data_client, ticker = m_ticker] () mutable {
+      return client.load_session_candlestick(ticker);
+    }, LaunchPolicy::ASYNC).then([this] (const auto& candlestick) {
+      m_model.get_session_candlestick()->set(candlestick);
+    }));
   on_active_blotter(m_blotter->GetActiveBlotter());
   m_active_blotter_connection = m_blotter->ConnectActiveBlotterChangedSignal(
     std::bind_front(&ServiceBookViewModel::on_active_blotter, this));
@@ -136,11 +141,15 @@ void ServiceBookViewModel::on_end_book_quote_buffer() {
 void ServiceBookViewModel::on_book_quote_interruption(
     const std::exception_ptr&) {
   m_model.clear_book_quotes();
-  query_real_time_with_snapshot(
-    m_market_data_client, m_ticker, m_event_handler.get_slot<BookQuote>(
-      std::bind_front(&ServiceBookViewModel::buffer_book_quote, this),
-      std::bind_front(&ServiceBookViewModel::on_book_quote_interruption, this)),
-    InterruptionPolicy::BREAK_QUERY);
+  spawn([client = m_market_data_client, ticker = m_ticker, slot =
+      m_event_handler.get_slot<BookQuote>(
+        std::bind_front(&ServiceBookViewModel::buffer_book_quote, this),
+        std::bind_front(
+          &ServiceBookViewModel::on_book_quote_interruption, this))] () mutable {
+    auto id = query_real_time_with_snapshot(
+      client, ticker, std::move(slot), InterruptionPolicy::BREAK_QUERY);
+    Beam::wait(id);
+  });
 }
 
 void ServiceBookViewModel::on_time_and_sales(const TimeAndSale& time_and_sale) {

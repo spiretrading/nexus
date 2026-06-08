@@ -124,9 +124,10 @@ TickerTechnicalsModel::TickerTechnicalsModel(
   m_userProfile->GetClients().get_market_data_client().query(
     timeAndSaleQuery, m_eventHandler.get_slot<TimeAndSale>(
       std::bind_front(&TickerTechnicalsModel::OnTimeAndSale, this)));
-  m_loadPromise = std::make_shared<QtPromise<void>>(QtPromise([=] {
-    return userProfile->GetClients().get_market_data_client().
-      load_session_candlestick(ticker);
+  m_loadPromise = std::make_shared<QtPromise<void>>(
+    QtPromise([=, userProfile = userProfile.get()] {
+      return userProfile->GetClients().get_market_data_client().
+        load_session_candlestick(ticker);
   }, LaunchPolicy::ASYNC).then([=] (const PriceCandlestick& candlestick) {
     if(candlestick.get_open() != Money::ZERO) {
       m_open = candlestick.get_open();
