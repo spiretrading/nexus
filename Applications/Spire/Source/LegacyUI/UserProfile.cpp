@@ -13,6 +13,7 @@
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ServiceAccountQueryModel.hpp"
 #include "Spire/Spire/ServiceTickerInfoQueryModel.hpp"
+#include "Spire/TimeAndSales/CachedTimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/ServiceTimeAndSalesModel.hpp"
 
 using namespace Beam;
@@ -24,7 +25,8 @@ using namespace Spire::LegacyUI;
 namespace {
   std::unique_ptr<TimeAndSalesModel> time_and_sales_model_builder(
       const Ticker& ticker, MarketDataClient client) {
-    return std::make_unique<ServiceTimeAndSalesModel>(ticker, client);
+    return std::make_unique<CachedTimeAndSalesModel>(
+      std::make_shared<ServiceTimeAndSalesModel>(ticker, client));
   }
 
   std::unique_ptr<BookViewModel> book_view_model_builder(const Ticker& ticker,
