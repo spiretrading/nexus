@@ -1,3 +1,4 @@
+#include <deque>
 #include <doctest/doctest.h>
 #include "Spire/Async/QtFuture.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
@@ -146,6 +147,56 @@ TEST_SUITE("TimeAndSalesTableModel") {
       time_and_sales->update();
       REQUIRE(model->get_row_size() == load_count + 2);
       REQUIRE(model->get<ptime>(0, 0) == CURRENT_TIME + seconds(2));
+    });
+  }
+
+  TEST_CASE("set_model") {
+    run_test([] () {
+      auto first = std::make_shared<TestTimeAndSalesModel>();
+      auto model = std::make_shared<TimeAndSalesTableModel>(first);
+      auto load_count = 5;
+      {
+        auto [future, promise] = make_future<void>();
+        auto connection = model->connect_end_loading_signal(
+          [f = std::make_shared<QtFuture<void>>(std::move(future))] {
+            f->resolve();
+          });
+        model->load_history(load_count);
+        wait(std::move(promise));
+      }
+      REQUIRE(model->get_row_size() == load_count);
+      auto operations = std::deque<TableModel::Operation>();
+      auto operation_connection = scoped_connection(
+        model->connect_operation_signal([&] (const auto& operation) {
+          operations.push_back(operation);
+        }));
+      auto second = std::make_shared<TestTimeAndSalesModel>();
+      model->set_model(second);
+      REQUIRE(model->get_row_size() == 0);
+      REQUIRE(model->get_model() == second);
+      auto removed = 0;
+      for(auto& operation : operations) {
+        if(get<TableModel::RemoveOperation>(&operation) != nullptr) {
+          ++removed;
+        }
+      }
+      REQUIRE(removed == load_count);
+      operation_connection.disconnect();
+      first->update();
+      REQUIRE(model->get_row_size() == 0);
+      second->update();
+      REQUIRE(model->get_row_size() == 1);
+      REQUIRE(model->get<ptime>(0, 0) == CURRENT_TIME + seconds(1));
+      {
+        auto [future, promise] = make_future<void>();
+        auto connection = model->connect_end_loading_signal(
+          [f = std::make_shared<QtFuture<void>>(std::move(future))] {
+            f->resolve();
+          });
+        model->load_history(load_count);
+        wait(std::move(promise));
+      }
+      REQUIRE(model->get_row_size() == load_count + 1);
     });
   }
 

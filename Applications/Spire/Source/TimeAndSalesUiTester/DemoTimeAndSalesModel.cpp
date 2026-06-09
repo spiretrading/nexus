@@ -12,11 +12,11 @@ namespace {
   const auto markets = std::vector<std::string>{"XNYS", "TSE", "CHD", "CHI"};
 
   ptime from_time_t_milliseconds(std::time_t t) {
-    return ptime(gregorian::date(1970, 1, 1)) + milliseconds(t);
+    return time_from_string("1970-01-01 00:00:00") + milliseconds(t);
   }
 
   std::time_t to_time_t_milliseconds(ptime pt) {
-    return (pt - ptime(gregorian::date(1970, 1, 1))).total_milliseconds();
+    return (pt - time_from_string("1970-01-01 00:00:00")).total_milliseconds();
   }
 
   auto make_time_and_sale(ptime timestamp, Money price, Quantity size,
@@ -31,6 +31,7 @@ DemoTimeAndSalesModel::DemoTimeAndSalesModel()
       m_indicator(BboIndicator::UNKNOWN),
       m_period(seconds(1)),
       m_query_duration(millisec(100)),
+      m_resume_update_time(neg_infin),
       m_is_data_random(false) {
   QObject::connect(&m_timer, &QTimer::timeout,
     std::bind_front(&DemoTimeAndSalesModel::on_timeout, this));
@@ -88,6 +89,9 @@ void DemoTimeAndSalesModel::set_data_random(bool is_random) {
 
 QtPromise<std::vector<TimeAndSalesModel::Entry>>
 DemoTimeAndSalesModel::query_until(Beam::Sequence sequence, int max_count) {
+  if(m_query_duration != pos_infin) {
+    m_resume_update_time = microsec_clock::universal_time() + m_query_duration;
+  }
   auto timer = std::make_shared<LiveTimer>(m_query_duration);
   m_query_duration_timers.push_back(timer);
   return QtPromise([=, query_duration = m_query_duration, period = m_period] {
@@ -138,5 +142,8 @@ DemoTimeAndSalesModel::Entry DemoTimeAndSalesModel::make_entry(
 }
 
 void DemoTimeAndSalesModel::on_timeout() {
+  if(microsec_clock::universal_time() < m_resume_update_time) {
+    return;
+  }
   m_update_signal(make_entry(microsec_clock::universal_time()));
 }
