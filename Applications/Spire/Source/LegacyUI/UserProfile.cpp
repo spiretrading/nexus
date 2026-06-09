@@ -22,15 +22,15 @@ using namespace Spire;
 using namespace Spire::LegacyUI;
 
 namespace {
-  std::shared_ptr<TimeAndSalesModel> time_and_sales_model_builder(
+  std::unique_ptr<TimeAndSalesModel> time_and_sales_model_builder(
       const Ticker& ticker, MarketDataClient client) {
-    return std::make_shared<ServiceTimeAndSalesModel>(ticker, client);
+    return std::make_unique<ServiceTimeAndSalesModel>(ticker, client);
   }
 
-  std::shared_ptr<BookViewModel> book_view_model_builder(const Ticker& ticker,
+  std::unique_ptr<BookViewModel> book_view_model_builder(const Ticker& ticker,
       BlotterSettings& blotter, MarketDataClient market_data_client,
       TimeClient time_client) {
-    return std::make_shared<ServiceBookViewModel>(
+    return std::make_unique<ServiceBookViewModel>(
       ticker, blotter, std::move(market_data_client), std::move(time_client));
   }
 }
@@ -61,17 +61,23 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
         std::make_shared<BookViewPropertiesWindowFactory>(
           std::make_shared<LocalBookViewPropertiesModel>(
             std::move(book_view_properties)))),
-      m_book_view_model_builder([=] (const auto& ticker) {
+      m_book_view_models([this] (const auto& ticker) {
         return book_view_model_builder(ticker, *m_blotterSettings,
           m_clients.get_market_data_client(), m_clients.get_time_client());
+      }),
+      m_book_view_model_builder([this] (const auto& ticker) {
+        return m_book_view_models.load(ticker);
       }),
       m_time_and_sales_properties_window_factory(
         std::make_shared<TimeAndSalesPropertiesWindowFactory>(
           std::make_shared<LocalTimeAndSalesPropertiesModel>(
             std::move(time_and_sales_properties)))),
-      m_time_and_sales_model_builder([=] (const auto& ticker) {
+      m_time_and_sales_models([this] (const auto& ticker) {
         return time_and_sales_model_builder(
           ticker, m_clients.get_market_data_client());
+      }),
+      m_time_and_sales_model_builder([this] (const auto& ticker) {
+        return m_time_and_sales_models.load(ticker);
       }),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_additionalTagDatabase(additionalTagDatabase) {

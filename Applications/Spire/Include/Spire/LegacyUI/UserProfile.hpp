@@ -21,6 +21,7 @@
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
+#include "Spire/Spire/CachedModelBuilder.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/Ui/AccountBox.hpp"
@@ -215,10 +216,13 @@ namespace Spire {
         m_defaultOrderImbalanceIndicatorProperties;
       std::shared_ptr<BookViewPropertiesWindowFactory>
         m_book_view_properties_window_factory;
+      CachedModelBuilder<Nexus::Ticker, BookViewModel> m_book_view_models;
       BookViewWindow::ModelBuilder m_book_view_model_builder;
       RiskTimerProperties m_riskTimerProperties;
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory>
         m_time_and_sales_properties_window_factory;
+      CachedModelBuilder<Nexus::Ticker, TimeAndSalesModel>
+        m_time_and_sales_models;
       TimeAndSalesWindow::ModelBuilder m_time_and_sales_model_builder;
       PortfolioViewerProperties m_defaultPortfolioViewerProperties;
       CatalogSettings m_catalogSettings;
