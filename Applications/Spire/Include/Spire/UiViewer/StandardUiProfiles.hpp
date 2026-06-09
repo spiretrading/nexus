@@ -47,6 +47,9 @@ namespace Spire {
   /** Returns a UiProfile for the CurrencyBox. */
   UiProfile make_currency_box_profile();
 
+  /** Returns a UiProfile for the CurrencyListBox. */
+  UiProfile make_currency_list_box_profile();
+
   /** Returns a UiProfile for the CurrencyListItem. */
   UiProfile make_currency_list_item_profile();
 
