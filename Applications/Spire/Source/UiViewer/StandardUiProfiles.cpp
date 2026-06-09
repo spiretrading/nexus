@@ -41,6 +41,7 @@
 #include "Spire/Ui/ColorPicker.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
+#include "Spire/Ui/CurrencyListItem.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DateBox.hpp"
 #include "Spire/Ui/DateFilterPanel.hpp"
@@ -1912,6 +1913,18 @@ UiProfile Spire::make_context_menu_profile() {
         show_under_cursor(*menu);
       });
       return button;
+    });
+  return profile;
+}
+
+UiProfile Spire::make_currency_list_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  auto profile = UiProfile("CurrencyListItem", properties,
+    [] (auto& profile) {
+      auto item = new CurrencyListItem(CURRENCIES.from("USD"));
+      apply_widget_properties(item, profile.get_properties());
+      return item;
     });
   return profile;
 }
