@@ -27,7 +27,6 @@ namespace Spire {
       const std::shared_ptr<CurrencyEntryQueryModel>& get_source() const;
 
       boost::optional<Nexus::CurrencyId> parse(const QString& query) override;
-
       QtPromise<std::vector<Nexus::CurrencyId>>
         submit(const QString& query) override;
 
