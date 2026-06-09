@@ -141,6 +141,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   add(make_combo_box_profile());
   add(make_context_menu_profile());
   add(make_currency_box_profile());
+  add(make_currency_list_box_profile());
   add(make_currency_list_item_profile());
   add(make_date_box_profile());
   add(make_date_filter_panel_profile());

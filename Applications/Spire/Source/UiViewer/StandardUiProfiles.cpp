@@ -42,6 +42,7 @@
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CurrencyBox.hpp"
+#include "Spire/Ui/CurrencyListBox.hpp"
 #include "Spire/Ui/CurrencyListItem.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DateBox.hpp"
@@ -1983,6 +1984,11 @@ UiProfile Spire::make_currency_box_profile() {
     [] (auto source, auto current) {
       return make_currency_box(source, current);
     });
+}
+
+UiProfile Spire::make_currency_list_box_profile() {
+  return setup_tag_combo_box_profile("CurrencyListBox",
+    [] { return make_currency_list_box(populate_currency_query_model()); });
 }
 
 UiProfile Spire::make_currency_list_item_profile() {
