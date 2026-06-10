@@ -3,6 +3,7 @@
 #include "Nexus/ChartingService/ChartingClient.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
+#include "Nexus/TechnicalAnalysis/SessionTechnicals.hpp"
 #include "Nexus/TechnicalAnalysis/StandardTickerQueries.hpp"
 
 using namespace Beam;
@@ -17,7 +18,24 @@ using namespace pybind11;
 void Nexus::Python::export_technical_analysis(module& module) {
   export_candlestick<Candlestick<object, object>>(module, "Candlestick");
   export_candlestick<PriceCandlestick>(module, "PriceCandlestick");
+  export_session_technicals(module);
   export_standard_ticker_queries(module);
+}
+
+void Nexus::Python::export_session_technicals(module& module) {
+  export_default_methods(
+      class_<SessionTechnicals>(module, "SessionTechnicals")).
+    def(init<optional<Money>, optional<Money>, optional<Money>, optional<Money>,
+      Quantity>()).
+    def_readwrite("open", &SessionTechnicals::m_open).
+    def_readwrite("previous_close", &SessionTechnicals::m_previous_close).
+    def_readwrite("high", &SessionTechnicals::m_high).
+    def_readwrite("low", &SessionTechnicals::m_low).
+    def_readwrite("volume", &SessionTechnicals::m_volume);
+  module.def("update", [] (SessionTechnicals& technicals,
+      const TimeAndSale& time_and_sale, std::string_view market_center) {
+    update(technicals, time_and_sale, market_center);
+  });
 }
 
 void Nexus::Python::export_standard_ticker_queries(module& module) {
