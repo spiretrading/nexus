@@ -1,5 +1,6 @@
 #ifndef SPIRE_SERVICE_TIME_AND_SALES_MODEL_HPP
 #define SPIRE_SERVICE_TIME_AND_SALES_MODEL_HPP
+#include <Beam/TimeService/TimeClient.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesModel.hpp"
@@ -11,12 +12,13 @@ namespace Spire {
     public:
 
       /**
-       * Constructs a ServiceTimeAndSalesModel with 50 entries initially loaded.
+       * Constructs a ServiceTimeAndSalesModel.
        * @param ticker The ticker whose time and sales are queried.
        * @param client The market data client used to query for time and sales.
+       * @param time_client The time client used for queries.
        */
-      ServiceTimeAndSalesModel(
-        Nexus::Ticker ticker, Nexus::MarketDataClient client);
+      ServiceTimeAndSalesModel(Nexus::Ticker ticker,
+        Nexus::MarketDataClient client, Beam::TimeClient time_client);
 
       QtPromise<std::vector<Entry>> query_until(
         Beam::Sequence sequence, int max_count) override;
@@ -27,6 +29,7 @@ namespace Spire {
       mutable UpdateSignal m_update_signal;
       Nexus::Ticker m_ticker;
       Nexus::MarketDataClient m_client;
+      Beam::TimeClient m_time_client;
       Nexus::SequencedBboQuote m_bbo;
       EventHandler m_event_handler;
 
