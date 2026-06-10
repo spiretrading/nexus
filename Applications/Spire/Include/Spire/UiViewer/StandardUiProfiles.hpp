@@ -47,6 +47,18 @@ namespace Spire {
   /** Returns a UiProfile for the ComboBox. */
   UiProfile make_context_menu_profile();
 
+  /** Returns a UiProfile for the CurrencyBox. */
+  UiProfile make_currency_box_profile();
+
+  /** Returns a UiProfile for the CurrencyFilterPanel. */
+  UiProfile make_currency_filter_panel_profile();
+
+  /** Returns a UiProfile for the CurrencyListBox. */
+  UiProfile make_currency_list_box_profile();
+
+  /** Returns a UiProfile for the CurrencyListItem. */
+  UiProfile make_currency_list_item_profile();
+
   /** Returns a UiProfile for the DateBox. */
   UiProfile make_date_box_profile();
 
