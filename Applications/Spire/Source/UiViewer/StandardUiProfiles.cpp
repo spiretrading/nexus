@@ -41,6 +41,9 @@
 #include "Spire/Ui/ColorPicker.hpp"
 #include "Spire/Ui/ComboBox.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
+#include "Spire/Ui/CurrencyBox.hpp"
+#include "Spire/Ui/CurrencyFilterPanel.hpp"
+#include "Spire/Ui/CurrencyListBox.hpp"
 #include "Spire/Ui/CurrencyListItem.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DateBox.hpp"
@@ -806,6 +809,53 @@ namespace {
     });
   }
 
+  template<typename Source, typename Extract, typename MakeBox>
+  UiProfile setup_combo_box_profile(const QString& name,
+      const QString& default_current, std::shared_ptr<Source> source,
+      Extract extract, MakeBox make_box) {
+    using Type = std::invoke_result_t<Extract, typename Source::Type>;
+    auto properties = std::vector<std::shared_ptr<UiProperty>>();
+    populate_widget_properties(properties);
+    properties.push_back(
+      make_standard_property<QString>("current", default_current));
+    properties.push_back(make_standard_property<QString>("placeholder"));
+    properties.push_back(make_standard_property("read_only", false));
+    return UiProfile(name, properties, [=] (auto& profile) {
+      auto& current = get<QString>("current", profile.get_properties());
+      auto current_value = [&] {
+        if(auto value = source->parse(current.get())) {
+          return extract(*value);
+        }
+        return Type();
+      }();
+      auto current_model =
+        std::make_shared<LocalValueModel<Type>>(current_value);
+      auto box = make_box(source, current_model);
+      using Box = std::decay_t<decltype(*box)>;
+      box->setMinimumWidth(scale_width(112));
+      apply_widget_properties(box, profile.get_properties());
+      auto current_connection = box->get_current()->connect_update_signal(
+        profile.make_event_slot<Type>("Current"));
+      current.connect_changed_signal([=] (const auto& current) {
+        if(auto value = source->parse(current)) {
+          box->get_current()->set(extract(*value));
+        } else {
+          auto current_blocker = shared_connection_block(current_connection);
+          box->get_current()->set(Type());
+        }
+      });
+      auto& placeholder =
+        get<QString>("placeholder", profile.get_properties());
+      placeholder.connect_changed_signal([=] (const auto& placeholder) {
+        box->set_placeholder(placeholder);
+      });
+      link(&Box::is_read_only, &Box::set_read_only,
+        *box, get<bool>("read_only", profile.get_properties()));
+      box->connect_submit_signal(profile.make_event_slot<Type>("Submit"));
+      return box;
+    });
+  }
+
   auto make_grid_image(const QSize& cell_size, int column_count,
       int row_count) {
     auto image = QImage(QSize(cell_size.width() * column_count,
@@ -877,6 +927,17 @@ namespace {
     panel->set_is_draggable(draggable);
     panel->set_positioning(positioning);
     panel->show();
+  }
+
+  std::shared_ptr<CurrencyEntryQueryModel> populate_currency_query_model() {
+    auto model = std::make_shared<LocalQueryModel<CurrencyDatabase::Entry>>();
+    for(auto& currency : CURRENCIES.get_entries()) {
+      model->add(to_text(currency.m_id), currency);
+      for(auto& term : QString::fromStdString(currency.m_name).split(' ')) {
+        model->add(term, currency);
+      }
+    }
+    return model;
   }
 
   std::shared_ptr<TradingGroupQueryModel> populate_trading_group_query_model() {
@@ -1915,6 +1976,25 @@ UiProfile Spire::make_context_menu_profile() {
       return button;
     });
   return profile;
+}
+
+UiProfile Spire::make_currency_box_profile() {
+  return setup_combo_box_profile("CurrencyBox", "USD",
+    populate_currency_query_model(),
+    [] (const CurrencyDatabase::Entry& entry) { return entry.m_id; },
+    [] (auto source, auto current) {
+      return make_currency_box(source, current);
+    });
+}
+
+UiProfile Spire::make_currency_filter_panel_profile() {
+  return setup_open_filter_panel_profile("CurrencyFilterPanel",
+    [] { return make_currency_filter_panel(populate_currency_query_model()); });
+}
+
+UiProfile Spire::make_currency_list_box_profile() {
+  return setup_tag_combo_box_profile("CurrencyListBox",
+    [] { return make_currency_list_box(populate_currency_query_model()); });
 }
 
 UiProfile Spire::make_currency_list_item_profile() {
@@ -5617,45 +5697,12 @@ UiProfile Spire::make_tooltip_profile() {
 }
 
 UiProfile Spire::make_trading_group_box_profile() {
-  auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
-  properties.push_back(make_standard_property<QString>("current", "G01"));
-  properties.push_back(make_standard_property<QString>("placeholder"));
-  properties.push_back(make_standard_property("read_only", false));
-  return UiProfile("TradingGroupBox", properties, [] (auto& profile) {
-    auto model = populate_trading_group_query_model();
-    auto& current = get<QString>("current", profile.get_properties());
-    auto current_entry = [&] {
-      if(auto value = model->parse(current.get())) {
-        return *value;
-      }
-      return DirectoryEntry();
-    }();
-    auto current_model =
-      std::make_shared<LocalTradingGroupModel>(current_entry);
-    auto box = make_trading_group_box(model, current_model);
-    box->setMinimumWidth(scale_width(112));
-    apply_widget_properties(box, profile.get_properties());
-    auto current_connection = box->get_current()->connect_update_signal(
-      profile.make_event_slot<DirectoryEntry>("Current"));
-    current.connect_changed_signal([=] (const auto& current) {
-      if(auto value = model->parse(current)) {
-        box->get_current()->set(*value);
-      } else {
-        auto current_blocker = shared_connection_block(current_connection);
-        box->get_current()->set(DirectoryEntry());
-      }
+  return setup_combo_box_profile("TradingGroupBox", "G01",
+    populate_trading_group_query_model(),
+    [] (const DirectoryEntry& entry) { return entry; },
+    [] (auto source, auto current) {
+      return make_trading_group_box(source, current);
     });
-    auto& placeholder = get<QString>("placeholder", profile.get_properties());
-    placeholder.connect_changed_signal([=] (const auto& placeholder) {
-      box->set_placeholder(placeholder);
-    });
-    link(&TradingGroupBox::is_read_only, &TradingGroupBox::set_read_only,
-      *box, get<bool>("read_only", profile.get_properties()));
-    box->connect_submit_signal(
-      profile.make_event_slot<DirectoryEntry>("Submit"));
-    return box;
-  });
 }
 
 UiProfile Spire::make_trading_group_filter_panel_profile() {
