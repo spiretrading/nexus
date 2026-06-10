@@ -83,12 +83,12 @@ namespace Nexus {
       Ticker get_primary_listing(const Ticker& ticker) const;
 
       /**
-       * Returns a Ticker's session candlestick.
-       * @param ticker The Ticker whose session candlestick is to be returned.
-       * @return A snapshot of the <i>ticker</i>'s PriceCandlestick.
+       * Returns a Ticker's session technicals.
+       * @param ticker The Ticker whose session technicals are to be returned.
+       * @return A snapshot of the <i>ticker</i>'s SessionTechnicals.
        */
-      boost::optional<PriceCandlestick>
-        find_session_candlestick(const Ticker& ticker) const;
+      boost::optional<SessionTechnicals>
+        find_session_technicals(const Ticker& ticker) const;
 
       /**
        * Returns a Ticker's real time snapshot.
@@ -200,8 +200,9 @@ namespace Nexus {
       activity_result.push_back(std::pair(Money::ZERO, match));
     }
     for(auto& entry : activity_result) {
-      if(auto candlestick = find_session_candlestick(entry.second.m_ticker)) {
-        entry.first = abs(candlestick->get_volume() * candlestick->get_open());
+      if(auto technicals = find_session_technicals(entry.second.m_ticker)) {
+        entry.first =
+          abs(technicals->m_volume * technicals->m_open.value_or(Money::ZERO));
       }
     }
     std::sort(activity_result.begin(), activity_result.end(),
@@ -242,14 +243,14 @@ namespace Nexus {
     return ticker;
   }
 
-  inline boost::optional<PriceCandlestick>
-      MarketDataRegistry::find_session_candlestick(const Ticker& ticker) const {
+  inline boost::optional<SessionTechnicals>
+      MarketDataRegistry::find_session_technicals(const Ticker& ticker) const {
     auto entry = m_ticker_entries.find(get_primary_listing(ticker));
     if(!entry || !(*entry)->is_available()) {
       return boost::none;
     }
     return Beam::with(***entry, [&] (const auto& entry) {
-      return entry.get_session_candlestick();
+      return entry.get_session_technicals();
     });
   }
 
