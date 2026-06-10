@@ -72,7 +72,7 @@ void CachedTimeAndSalesModel::resolve_pending(PendingQuery query) {
   if(query.m_max_count <= static_cast<int>(m_recent.size())) {
     query.m_result.resolve(get_recent(query.m_max_count));
   } else if(m_recent.empty()) {
-    query.m_result.resolve({});
+    query.m_result.resolve(std::vector<Entry>());
   } else {
     auto remaining = query.m_max_count - static_cast<int>(m_recent.size());
     auto end = m_recent.front().m_time_and_sale.get_sequence();
