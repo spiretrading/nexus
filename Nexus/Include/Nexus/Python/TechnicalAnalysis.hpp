@@ -48,6 +48,12 @@ namespace Nexus::Python {
    * @param module The module to export to.
    */
   void export_standard_ticker_queries(pybind11::module& module);
+
+  /**
+   * Exports the SessionTechnicals struct and its related functions.
+   * @param module The module to export to.
+   */
+  void export_session_technicals(pybind11::module& module);
 }
 
 #endif

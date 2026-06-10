@@ -131,7 +131,7 @@ namespace Nexus {
         Subscriptions& subscriptions);
       TickerSnapshot on_load_ticker_snapshot(
         ServiceProtocolClient& client, const Ticker& ticker);
-      PriceCandlestick on_load_session_candlestick(
+      SessionTechnicals on_load_session_technicals(
         ServiceProtocolClient& client, const Ticker& ticker);
       std::vector<TickerInfo> on_query_ticker_info(
         ServiceProtocolClient& client, const TickerInfoQuery& query);
@@ -240,8 +240,8 @@ namespace Nexus {
       });
     LoadTickerSnapshotService::add_slot(out(slots), std::bind_front(
       &MarketDataRelayServlet::on_load_ticker_snapshot, this));
-    LoadSessionCandlestickService::add_slot(out(slots), std::bind_front(
-      &MarketDataRelayServlet::on_load_session_candlestick, this));
+    LoadSessionTechnicalsService::add_slot(out(slots), std::bind_front(
+      &MarketDataRelayServlet::on_load_session_technicals, this));
     QueryTickerInfoService::add_slot(out(slots),
       std::bind_front(&MarketDataRelayServlet::on_query_ticker_info, this));
     LoadTickerInfoFromPrefixService::add_slot(out(slots), std::bind_front(
@@ -455,10 +455,10 @@ namespace Nexus {
   template<typename C, typename M, typename A> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       IsAdministrationClient<Beam::dereference_t<A>>
-  PriceCandlestick MarketDataRelayServlet<C, M, A>::on_load_session_candlestick(
+  SessionTechnicals MarketDataRelayServlet<C, M, A>::on_load_session_technicals(
       ServiceProtocolClient& client, const Ticker& ticker) {
     auto market_data_client = m_market_data_clients.load();
-    return market_data_client->load_session_candlestick(ticker);
+    return market_data_client->load_session_technicals(ticker);
   }
 
   template<typename C, typename M, typename A> requires
