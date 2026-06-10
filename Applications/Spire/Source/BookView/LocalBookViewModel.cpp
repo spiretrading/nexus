@@ -2,6 +2,8 @@
 #include <ranges>
 #include <sstream>
 #include "Nexus/Definitions/FixTags.hpp"
+#include "Nexus/Definitions/StandardVenues.hpp"
+#include "Nexus/TechnicalAnalysis/SessionTechnicals.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ReversedListModel.hpp"
 
@@ -9,10 +11,10 @@ using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 
-LocalBookViewModel::LocalBookViewModel()
-  : LocalBookViewModel(std::numeric_limits<int>::max()) {}
+LocalBookViewModel::LocalBookViewModel(Ticker ticker)
+  : LocalBookViewModel(std::move(ticker), std::numeric_limits<int>::max()) {}
 
-LocalBookViewModel::LocalBookViewModel(int depth_limit)
+LocalBookViewModel::LocalBookViewModel(Ticker ticker, int depth_limit)
   : m_depth_limit(depth_limit),
     m_model(std::make_shared<ReversedListModel<BookQuote>>(
       std::make_shared<ArrayListModel<BookQuote>>()),
@@ -22,7 +24,14 @@ LocalBookViewModel::LocalBookViewModel(int depth_limit)
       std::make_shared<ArrayListModel<UserOrder>>(),
       std::make_shared<LocalValueModel<optional<OrderFields>>>(),
       std::make_shared<LocalBboQuoteModel>(),
-      std::make_shared<LocalSessionCandlestickModel>()) {}
+      std::make_shared<LocalSessionTechnicalsModel>()) {
+  if(ticker) {
+    m_market_center = VENUES.from(ticker.get_venue()).m_market_center;
+    if(m_market_center.empty()) {
+      m_market_center = ticker.get_venue().get_code().get_data();
+    }
+  }
+}
 
 void LocalBookViewModel::update(const BboQuote& bbo) {
   m_model.get_bbo_quote()->set(bbo);
@@ -98,9 +107,9 @@ void LocalBookViewModel::update(const BookQuote& quote) {
 }
 
 void LocalBookViewModel::update(const TimeAndSale& time_and_sale) {
-  auto candlestick = m_model.get_session_candlestick()->get();
-  candlestick.update(time_and_sale.m_price, time_and_sale.m_size);
-  m_model.get_session_candlestick()->set(candlestick);
+  auto technicals = m_model.get_session_technicals()->get();
+  Nexus::update(technicals, time_and_sale, m_market_center);
+  m_model.get_session_technicals()->set(technicals);
 }
 
 void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order) {
@@ -319,7 +328,7 @@ const std::shared_ptr<BboQuoteModel>&
   return m_model.get_bbo_quote();
 }
 
-const std::shared_ptr<SessionCandlestickModel>&
-    LocalBookViewModel::get_session_candlestick() const {
-  return m_model.get_session_candlestick();
+const std::shared_ptr<SessionTechnicalsModel>&
+    LocalBookViewModel::get_session_technicals() const {
+  return m_model.get_session_technicals();
 }

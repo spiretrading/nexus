@@ -4,7 +4,7 @@
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
-#include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
+#include "Nexus/TechnicalAnalysis/SessionTechnicals.hpp"
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 
@@ -19,12 +19,12 @@ namespace Spire {
   /** Models a list of BookQuotes. */
   using BookQuoteListModel = ListModel<Nexus::BookQuote>;
 
-  /** A ValueModel over a PriceCandlestick. */
-  using SessionCandlestickModel = ValueModel<Nexus::PriceCandlestick>;
+  /** A ValueModel over a SessionTechnicals. */
+  using SessionTechnicalsModel = ValueModel<Nexus::SessionTechnicals>;
 
-  /** A LocalValueModel over a PriceCandlestick. */
-  using LocalSessionCandlestickModel =
-    LocalValueModel<Nexus::PriceCandlestick>;
+  /** A LocalValueModel over a SessionTechnicals. */
+  using LocalSessionTechnicalsModel =
+    LocalValueModel<Nexus::SessionTechnicals>;
 
   /** The model for the book view. */
   class BookViewModel {
@@ -78,8 +78,8 @@ namespace Spire {
       virtual const std::shared_ptr<BboQuoteModel>& get_bbo_quote() const = 0;
 
       /** Returns the session candlestick for the Ticker. */
-      virtual const std::shared_ptr<SessionCandlestickModel>&
-        get_session_candlestick() const = 0;
+      virtual const std::shared_ptr<SessionTechnicalsModel>&
+        get_session_technicals() const = 0;
 
     protected:
 
