@@ -122,7 +122,7 @@ namespace Nexus {
         ServiceProtocolClient& client, const Ticker& ticker, int id);
       TickerSnapshot on_load_ticker_snapshot(
         ServiceProtocolClient& client, Ticker ticker);
-      PriceCandlestick on_load_session_candlestick(
+      SessionTechnicals on_load_session_technicals(
         ServiceProtocolClient& client, Ticker ticker);
       std::vector<TickerInfo> on_query_ticker_info(
         ServiceProtocolClient& client, const TickerInfoQuery& query);
@@ -302,8 +302,8 @@ namespace Nexus {
         &MarketDataRegistryServlet::on_end_ticker_status_query, this));
     LoadTickerSnapshotService::add_slot(out(slots), std::bind_front(
       &MarketDataRegistryServlet::on_load_ticker_snapshot, this));
-    LoadSessionCandlestickService::add_slot(out(slots), std::bind_front(
-      &MarketDataRegistryServlet::on_load_session_candlestick, this));
+    LoadSessionTechnicalsService::add_slot(out(slots), std::bind_front(
+      &MarketDataRegistryServlet::on_load_session_technicals, this));
     QueryTickerInfoService::add_slot(out(slots), std::bind_front(
       &MarketDataRegistryServlet::on_query_ticker_info, this));
     LoadTickerInfoFromPrefixService::add_slot(out(slots), std::bind_front(
@@ -537,12 +537,11 @@ namespace Nexus {
   template<typename C, typename R, typename D, typename A> requires
     IsHistoricalDataStore<Beam::dereference_t<D>> &&
       IsAdministrationClient<Beam::dereference_t<A>>
-  PriceCandlestick MarketDataRegistryServlet<C, R, D, A>::
-      on_load_session_candlestick(
-        ServiceProtocolClient& client, Ticker ticker) {
+  SessionTechnicals MarketDataRegistryServlet<C, R, D, A>::
+      on_load_session_technicals(ServiceProtocolClient& client, Ticker ticker) {
     ticker = normalize(ticker);
-    if(auto candlestick = m_registry->find_session_candlestick(ticker)) {
-      return *candlestick;
+    if(auto technicals = m_registry->find_session_technicals(ticker)) {
+      return *technicals;
     }
     return {};
   }
