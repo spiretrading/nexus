@@ -7,9 +7,10 @@ using namespace Nexus;
 using namespace Spire;
 
 ServiceTimeAndSalesModel::ServiceTimeAndSalesModel(
-    Ticker ticker, MarketDataClient client)
+    Ticker ticker, MarketDataClient client, TimeClient time_client)
     : m_ticker(std::move(ticker)),
-      m_client(std::move(client)) {
+      m_client(std::move(client)),
+      m_time_client(std::move(time_client)) {
   auto query = make_real_time_query(m_ticker);
   query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_client.query(query, m_event_handler.get_slot<SequencedBboQuote>(
@@ -21,11 +22,14 @@ ServiceTimeAndSalesModel::ServiceTimeAndSalesModel(
 QtPromise<std::vector<TimeAndSalesModel::Entry>>
     ServiceTimeAndSalesModel::query_until(
       Beam::Sequence sequence, int max_count) {
+  auto start_of_day =
+    utc_start_of_day(m_ticker.get_venue(), m_time_client.get_time());
   return QtPromise(
-    [sequence, max_count, ticker = m_ticker, client = m_client] () mutable {
+    [sequence, max_count, ticker = m_ticker, client = m_client, start_of_day] ()
+        mutable {
       auto query = TickerQuery();
       query.set_index(ticker);
-      query.set_range(Beam::Sequence::FIRST, sequence);
+      query.set_range(start_of_day, sequence);
       query.set_snapshot_limit(SnapshotLimit::from_tail(max_count));
       auto queue = std::make_shared<Queue<SequencedTimeAndSale>>();
       client.query(query, queue);

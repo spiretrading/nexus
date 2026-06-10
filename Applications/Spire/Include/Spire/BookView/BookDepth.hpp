@@ -40,6 +40,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_ask_position_connection;
       boost::signals2::scoped_connection m_font_property_connection;
 
+      void apply_font(const QFont& font);
       void on_bid_position(int position);
       void on_ask_position(int position);
       void on_font_property_update(const QFont& font);

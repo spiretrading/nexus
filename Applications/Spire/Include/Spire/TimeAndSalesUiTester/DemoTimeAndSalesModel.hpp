@@ -62,6 +62,7 @@ namespace Spire {
       BboIndicator m_indicator;
       boost::posix_time::time_duration m_period;
       boost::posix_time::time_duration m_query_duration;
+      boost::posix_time::ptime m_resume_update_time;
       bool m_is_data_random;
       QTimer m_timer;
       std::vector<std::shared_ptr<Beam::LiveTimer>> m_query_duration_timers;

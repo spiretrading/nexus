@@ -80,7 +80,6 @@ namespace Spire {
       void on_context_menu(QWidget* parent, const QPoint& pos);
       void on_export_menu();
       void on_properties_menu();
-      void on_begin_loading();
       void on_end_loading();
       void on_current(const Nexus::Ticker& ticker);
   };
