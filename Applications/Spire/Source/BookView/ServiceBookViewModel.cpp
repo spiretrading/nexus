@@ -21,7 +21,8 @@ ServiceBookViewModel::ServiceBookViewModel(Ticker ticker,
     : m_ticker(std::move(ticker)),
       m_blotter(&blotter),
       m_market_data_client(std::move(market_data_client)),
-      m_time_client(std::move(time_client)) {
+      m_time_client(std::move(time_client)),
+      m_model(m_ticker) {
   if(!m_ticker) {
     return;
   }
@@ -45,9 +46,9 @@ ServiceBookViewModel::ServiceBookViewModel(Ticker ticker,
       std::bind_front(&ServiceBookViewModel::on_time_and_sales, this)));
   m_load_promise = std::make_shared<QtPromise<void>>(QtPromise(
     [client = m_market_data_client, ticker = m_ticker] () mutable {
-      return client.load_session_candlestick(ticker);
-    }, LaunchPolicy::ASYNC).then([this] (const auto& candlestick) {
-      m_model.get_session_candlestick()->set(candlestick);
+      return client.load_session_technicals(ticker);
+    }, LaunchPolicy::ASYNC).then([this] (const auto& technicals) {
+      m_model.get_session_technicals()->set(technicals);
     }));
   on_active_blotter(m_blotter->GetActiveBlotter());
   m_active_blotter_connection = m_blotter->ConnectActiveBlotterChangedSignal(
@@ -84,9 +85,9 @@ const std::shared_ptr<BboQuoteModel>&
   return m_model.get_bbo_quote();
 }
 
-const std::shared_ptr<SessionCandlestickModel>&
-    ServiceBookViewModel::get_session_candlestick() const {
-  return m_model.get_session_candlestick();
+const std::shared_ptr<SessionTechnicalsModel>&
+    ServiceBookViewModel::get_session_technicals() const {
+  return m_model.get_session_technicals();
 }
 
 void ServiceBookViewModel::initialize_order(

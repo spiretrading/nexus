@@ -16,8 +16,11 @@ namespace Spire {
   class LocalBookViewModel : public BookViewModel {
     public:
 
-      /** Constructs a LocalBookViewModel. */
-      LocalBookViewModel();
+      /**
+       * Constructs a LocalBookViewModel.
+       * @param ticker The ticker used to resolve the venue's market center.
+       */
+      explicit LocalBookViewModel(Nexus::Ticker ticker);
 
       /** Updates the BBO quote. */
       void update(const Nexus::BboQuote& bbo);
@@ -64,8 +67,8 @@ namespace Spire {
       const std::shared_ptr<PreviewOrderModel>&
         get_preview_order() const override;
       const std::shared_ptr<BboQuoteModel>& get_bbo_quote() const override;
-      const std::shared_ptr<SessionCandlestickModel>&
-        get_session_candlestick() const override;
+      const std::shared_ptr<SessionTechnicalsModel>&
+        get_session_technicals() const override;
 
     private:
       struct PeggedOrderEntry {
@@ -74,6 +77,7 @@ namespace Spire {
         Nexus::Money m_effective_price;
       };
       AggregateBookViewModel m_model;
+      std::string m_market_center;
       std::vector<std::shared_ptr<Nexus::Order>> m_bid_orders;
       std::vector<std::shared_ptr<Nexus::Order>> m_ask_orders;
       std::unordered_map<Nexus::OrderId, PeggedOrderEntry> m_pegged_entries;
