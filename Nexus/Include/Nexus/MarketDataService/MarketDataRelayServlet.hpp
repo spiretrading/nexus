@@ -4,6 +4,7 @@
 #include <functional>
 #include <type_traits>
 #include <vector>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
@@ -12,6 +13,7 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Services/ServiceProtocolServlet.hpp>
+#include <Beam/Threading/CallOnce.hpp>
 #include <Beam/Utilities/ResourcePool.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
@@ -90,20 +92,19 @@ namespace Nexus {
       template<typename T>
       using TickerSubscriptions =
         Beam::IndexedSubscriptions<T, Ticker, ServiceProtocolClient>;
-      using RealTimeVenueSubscriptionSet =
-        Beam::SynchronizedUnorderedSet<Venue, Beam::Mutex>;
-      using RealTimeTickerSubscriptionSet =
-        Beam::SynchronizedUnorderedSet<Ticker, Beam::Mutex>;
+      template<typename Index>
+      using RealTimeSubscriptionMap = Beam::SynchronizedUnorderedMap<
+        Index, Beam::CallOnce<Beam::Mutex>>;
       VenueSubscriptions<OrderImbalance> m_order_imbalance_subscriptions;
       TickerSubscriptions<BboQuote> m_bbo_quote_subscriptions;
       TickerSubscriptions<BookQuote> m_book_quote_subscriptions;
       TickerSubscriptions<TimeAndSale> m_time_and_sale_subscriptions;
       TickerSubscriptions<TickerStatus> m_ticker_status_subscriptions;
-      RealTimeVenueSubscriptionSet m_order_imbalance_real_time_subscriptions;
-      RealTimeTickerSubscriptionSet m_bbo_quote_real_time_subscriptions;
-      RealTimeTickerSubscriptionSet m_book_quote_real_time_subscriptions;
-      RealTimeTickerSubscriptionSet m_time_and_sale_real_time_subscriptions;
-      RealTimeTickerSubscriptionSet m_ticker_status_real_time_subscriptions;
+      RealTimeSubscriptionMap<Venue> m_order_imbalance_real_time_subscriptions;
+      RealTimeSubscriptionMap<Ticker> m_bbo_quote_real_time_subscriptions;
+      RealTimeSubscriptionMap<Ticker> m_book_quote_real_time_subscriptions;
+      RealTimeSubscriptionMap<Ticker> m_time_and_sale_real_time_subscriptions;
+      RealTimeSubscriptionMap<Ticker> m_ticker_status_real_time_subscriptions;
       Beam::SynchronizedUnorderedSet<Ticker> m_tickers;
       Beam::ResourcePool<MarketDataClient, MarketDataClientBuilder>
         m_market_data_clients;
@@ -361,7 +362,8 @@ namespace Nexus {
         Beam::translate<EvaluatorTranslator>(query.get_filter());
       result.m_id = subscriptions.init(query.get_index(), request.get_client(),
         Beam::Range::TOTAL, std::move(filter));
-      real_time_subscriptions.test_and_set(query.get_index(), [&] {
+      auto& subscription = real_time_subscriptions.get(query.get_index());
+      subscription.call([&] {
         auto& query_entry = get_real_time_query_entry(query.get_index());
         auto initial_value_queue =
           std::make_shared<Beam::Queue<MarketDataType>>();
