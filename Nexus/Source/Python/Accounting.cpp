@@ -3,6 +3,7 @@
 #include <Beam/Python/Beam.hpp>
 #include "Nexus/Accounting/BookkeeperReactor.hpp"
 #include "Nexus/Accounting/BuyingPowerModel.hpp"
+#include "Nexus/Accounting/InventorySnapshot.hpp"
 #include "Nexus/Accounting/PortfolioController.hpp"
 #include "Nexus/Accounting/Position.hpp"
 #include "Nexus/Accounting/PositionOrderBook.hpp"
@@ -38,6 +39,7 @@ void Nexus::Python::export_accounting(module& module) {
   export_bookkeeper_reactor(module);
   export_buying_power_model(module);
   export_inventory(module);
+  export_inventory_snapshot(module);
   export_portfolio<TrueAverageBookkeeper>(module, "TrueAveragePortfolio");
   export_portfolio_update_entry(module);
   export_portfolio_controller(module);
@@ -83,6 +85,22 @@ void Nexus::Python::export_inventory(module& module) {
     def_readwrite("volume", &Inventory::m_volume).
     def_readwrite("transaction_count", &Inventory::m_transaction_count);
   module.def("is_empty", &is_empty);
+}
+
+void Nexus::Python::export_inventory_snapshot(module& module) {
+  export_default_methods(
+      class_<InventorySnapshot>(module, "InventorySnapshot")).
+    def(init<const std::vector<Inventory>&, Beam::Sequence,
+      const std::vector<OrderId>&>()).
+    def_readwrite("inventories", &InventorySnapshot::m_inventories).
+    def_readwrite("sequence", &InventorySnapshot::m_sequence).
+    def_readwrite("excluded_orders", &InventorySnapshot::m_excluded_orders);
+  module.def("strip", &strip);
+  module.def("make_portfolio",
+    [] (const InventorySnapshot& snapshot, const DirectoryEntry& account,
+        OrderExecutionClient& client) {
+      return make_portfolio(snapshot, account, client);
+    }, call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_portfolio_controller(module& module) {

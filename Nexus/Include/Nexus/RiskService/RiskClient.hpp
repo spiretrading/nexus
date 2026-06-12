@@ -7,8 +7,8 @@
 #include <Beam/Pointers/VirtualPtr.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
+#include "Nexus/Accounting/InventorySnapshot.hpp"
 #include "Nexus/Definitions/Scope.hpp"
-#include "Nexus/RiskService/InventorySnapshot.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 
 namespace Nexus {
