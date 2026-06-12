@@ -22,6 +22,8 @@ namespace Spire {
 
         /** The full name associated with the account. */
         QString m_name;
+
+        bool operator ==(const Account& other) const = default;
       };
 
       /**

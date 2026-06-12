@@ -21,6 +21,7 @@
 #include "Nexus/Definitions/Venue.hpp"
 #include "Spire/Canvas/Tasks/Task.hpp"
 #include "Spire/Spire/AnyRef.hpp"
+#include "Spire/Ui/AccountListItem.hpp"
 
 namespace Spire {
 
@@ -114,6 +115,10 @@ namespace Spire {
   /** Returns the text representation of a time_duration. */
   QString to_text(
     boost::posix_time::time_duration time, const QLocale& locale = QLocale());
+
+  /** Returns the text representation of an Account. */
+  QString to_text(const AccountListItem::Account& account,
+    const QLocale& locale = QLocale());
 
   /** Returns the text representation of a DirectoryEntry. */
   QString to_text(
