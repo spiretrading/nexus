@@ -1,6 +1,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <QStyledItemDelegate>
+#include "Spire/Ui/AccountListItem.hpp"
 
 using namespace Beam;
 using namespace boost;

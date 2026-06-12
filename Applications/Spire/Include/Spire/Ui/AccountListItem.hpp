@@ -2,6 +2,7 @@
 #define SPIRE_ACCOUNT_LIST_ITEM_HPP
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <QImage>
+#include <QLocale>
 #include <QString>
 #include <QWidget>
 
@@ -39,6 +40,10 @@ namespace Spire {
     private:
       Account m_account;
   };
+
+  /** Returns the text representation of an Account. */
+  QString to_text(const AccountListItem::Account& account,
+    const QLocale& locale = QLocale());
 }
 
 #endif
