@@ -50,6 +50,9 @@ namespace Nexus {
         const ExchangeRateTable& exchange_rates, CF&& market_data_client);
 
       void submit(const std::shared_ptr<Order>& order) override;
+      void restore(const Beam::DirectoryEntry& account,
+        const InventorySnapshot& snapshot,
+        const std::vector<std::shared_ptr<Order>>& orders) override;
       void add(const std::shared_ptr<Order>& order) override;
 
     private:
@@ -166,6 +169,29 @@ namespace Nexus {
         order->get_publisher().monitor(m_execution_report_queue.get_writer());
       }
     });
+  }
+
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  void BuyingPowerComplianceRule<C>::restore(
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+      const std::vector<std::shared_ptr<Order>>& orders) {
+    Beam::with(m_buying_power_model, [&] (auto& buying_power_model) {
+      for(auto& inventory : snapshot.m_inventories) {
+        auto expenditure = Money();
+        try {
+          expenditure = m_exchange_rates.convert(
+            inventory.m_position.m_cost_basis, inventory.m_position.m_currency,
+            m_currency);
+        } catch(const CurrencyPairNotFoundException&) {
+          continue;
+        }
+        buying_power_model.update(inventory.m_position.m_ticker, m_currency,
+          inventory.m_position.m_quantity, expenditure);
+      }
+    });
+    for(auto& order : orders) {
+      add(order);
+    }
   }
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>

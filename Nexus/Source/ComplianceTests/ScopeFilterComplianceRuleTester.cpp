@@ -111,4 +111,33 @@ TEST_SUITE("ScopeFilterComplianceRule") {
     async_add2.get();
     REQUIRE(!rule_queue->try_pop());
   }
+
+  TEST_CASE("restore") {
+    auto ticker = parse_ticker("FOO.TSX");
+    auto scope = Scope(ticker);
+    auto rule_queue = std::make_shared<TestComplianceRule::Queue>();
+    auto scope_rule = ScopeFilterComplianceRule(
+      scope, std::make_unique<TestComplianceRule>(rule_queue));
+    auto account = Beam::DirectoryEntry::make_account(123, "test");
+    auto info = OrderInfo();
+    info.m_id = 7;
+    info.m_fields.m_ticker = ticker;
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    auto snapshot = InventorySnapshot();
+    snapshot.m_sequence = Beam::Sequence(5);
+    auto async_restore = std::async(std::launch::async, [&] {
+      scope_rule.restore(account, snapshot,
+        std::vector<std::shared_ptr<Order>>{order});
+    });
+    auto operation = rule_queue->pop();
+    auto restore_operation =
+      std::get_if<TestComplianceRule::RestoreOperation>(&*operation);
+    REQUIRE(restore_operation);
+    REQUIRE(restore_operation->m_account == account);
+    REQUIRE(restore_operation->m_snapshot == snapshot);
+    REQUIRE(restore_operation->m_orders.size() == 1);
+    REQUIRE(restore_operation->m_orders[0] == order);
+    restore_operation->m_result.set();
+    async_restore.get();
+  }
 }

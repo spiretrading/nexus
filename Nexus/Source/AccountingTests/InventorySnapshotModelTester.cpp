@@ -86,7 +86,7 @@ TEST_SUITE("InventorySnapshotModel") {
         Money::ZERO, 100, 1));
   }
 
-  TEST_CASE("seeding") {
+  TEST_CASE("startup") {
     auto seed = InventorySnapshot();
     seed.m_inventories.push_back(Inventory(
       Position(TST, CAD, 100, 100 * Money::ONE), 10 * Money::ONE, Money::ONE,

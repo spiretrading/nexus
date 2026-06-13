@@ -72,7 +72,7 @@ TEST_SUITE("BuyingPowerCheck") {
     REQUIRE_NOTHROW(check->submit(order_info));
   }
 
-  TEST_CASE("restore_seeds_positions") {
+  TEST_CASE("restore") {
     auto fixture = Fixture();
     auto account = DirectoryEntry::make_account(123, "test");
     auto ticker = parse_ticker("TST.TSX");
