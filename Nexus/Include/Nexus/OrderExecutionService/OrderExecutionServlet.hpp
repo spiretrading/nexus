@@ -80,8 +80,6 @@ namespace Nexus {
 
       /**
        * Constructs an OrderExecutionServlet.
-       * @param session_start_time The time when the current trading session
-       *        started.
        * @param time_client Initializes the TimeClient.
        * @param service_locator_client Initializes the ServiceLocatorClient.
        * @param uid_client Initializes the UidClient.
@@ -92,9 +90,9 @@ namespace Nexus {
       template<Beam::Initializes<T> TF, Beam::Initializes<S> SF,
         Beam::Initializes<U> UF, Beam::Initializes<A> AF,
         Beam::Initializes<O> OF, Beam::Initializes<D> DF>
-      OrderExecutionServlet(boost::posix_time::ptime session_start_time,
-        TF&& time_client, SF&& service_locator_client, UF&& uid_client,
-        AF&& administration_client, OF&& driver, DF&& data_store);
+      OrderExecutionServlet(TF&& time_client, SF&& service_locator_client,
+        UF&& uid_client, AF&& administration_client, OF&& driver,
+        DF&& data_store);
 
       void register_services(
         Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots);
@@ -105,7 +103,6 @@ namespace Nexus {
     private:
       using SyncInventorySnapshotModel = Beam::Sync<InventorySnapshotModel>;
       using SyncShortingModel = Beam::Sync<ShortingModel>;
-      boost::posix_time::ptime m_session_start_time;
       Beam::local_ptr_t<T> m_time_client;
       Beam::local_ptr_t<S> m_service_locator_client;
       Beam::local_ptr_t<U> m_uid_client;
@@ -175,11 +172,9 @@ namespace Nexus {
     Beam::Initializes<U> UF, Beam::Initializes<A> AF, Beam::Initializes<O> OF,
     Beam::Initializes<D> DF>
   OrderExecutionServlet<C, T, S, U, A, O, D>::OrderExecutionServlet(
-      boost::posix_time::ptime session_start_time, TF&& time_client,
-      SF&& service_locator_client, UF&& uid_client, AF&& administration_client,
-      OF&& driver, DF&& data_store)
-    : m_session_start_time(session_start_time),
-      m_time_client(std::forward<TF>(time_client)),
+      TF&& time_client, SF&& service_locator_client, UF&& uid_client,
+      AF&& administration_client, OF&& driver, DF&& data_store)
+    : m_time_client(std::forward<TF>(time_client)),
       m_service_locator_client(std::forward<SF>(service_locator_client)),
       m_uid_client(std::forward<UF>(uid_client)),
       m_administration_client(std::forward<AF>(administration_client)),
@@ -320,13 +315,14 @@ namespace Nexus {
     });
     auto recovery_query = AccountQuery();
     recovery_query.set_index(account);
-    recovery_query.set_range(m_session_start_time, Beam::Sequence::LAST);
+    recovery_query.set_range(
+      Beam::increment(snapshot.m_sequence), Beam::Sequence::LAST);
     recovery_query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
-    auto session_orders = m_data_store->load_order_records(recovery_query);
+    auto trailing_orders = m_data_store->load_order_records(recovery_query);
     auto live_orders =
       m_data_store->load_order_records(make_live_orders_query(account));
     auto records = std::vector<SequencedOrderRecord>();
-    std::set_union(session_orders.begin(), session_orders.end(),
+    std::set_union(trailing_orders.begin(), trailing_orders.end(),
       live_orders.begin(), live_orders.end(), std::back_inserter(records),
       Beam::SequenceComparator());
     auto& shorting_model = *m_shorting_models.get_or_insert(
