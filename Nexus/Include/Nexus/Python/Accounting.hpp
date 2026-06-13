@@ -72,6 +72,12 @@ namespace Nexus::Python {
   void export_inventory_snapshot(pybind11::module& module);
 
   /**
+   * Exports the InventorySnapshotModel class.
+   * @param module The module to export to.
+   */
+  void export_inventory_snapshot_model(pybind11::module& module);
+
+  /**
    * Exports the Portfolio class.
    * @param <B> The type of Bookkeeper.
    * @param module The module to export to.

@@ -4,6 +4,7 @@
 #include "Nexus/Accounting/BookkeeperReactor.hpp"
 #include "Nexus/Accounting/BuyingPowerModel.hpp"
 #include "Nexus/Accounting/InventorySnapshot.hpp"
+#include "Nexus/Accounting/InventorySnapshotModel.hpp"
 #include "Nexus/Accounting/PortfolioController.hpp"
 #include "Nexus/Accounting/Position.hpp"
 #include "Nexus/Accounting/PositionOrderBook.hpp"
@@ -40,6 +41,7 @@ void Nexus::Python::export_accounting(module& module) {
   export_buying_power_model(module);
   export_inventory(module);
   export_inventory_snapshot(module);
+  export_inventory_snapshot_model(module);
   export_portfolio<TrueAverageBookkeeper>(module, "TrueAveragePortfolio");
   export_portfolio_update_entry(module);
   export_portfolio_controller(module);
@@ -101,6 +103,15 @@ void Nexus::Python::export_inventory_snapshot(module& module) {
         OrderExecutionClient& client) {
       return make_portfolio(snapshot, account, client);
     }, call_guard<GilRelease>());
+}
+
+void Nexus::Python::export_inventory_snapshot_model(module& module) {
+  class_<InventorySnapshotModel>(module, "InventorySnapshotModel").
+    def(init()).
+    def(init<const InventorySnapshot&>()).
+    def("add", &InventorySnapshotModel::add, arg("sequence"), arg("order")).
+    def("update", &InventorySnapshotModel::update, arg("report")).
+    def("make_snapshot", &InventorySnapshotModel::make_snapshot);
 }
 
 void Nexus::Python::export_portfolio_controller(module& module) {
