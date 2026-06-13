@@ -8,7 +8,6 @@
 #include "Nexus/Python/ToPythonRiskClient.hpp"
 #include "Nexus/Python/ToPythonRiskDataStore.hpp"
 #include "Nexus/RiskService/ApplicationDefinitions.hpp"
-#include "Nexus/RiskService/InventorySnapshot.hpp"
 #include "Nexus/RiskService/LocalRiskDataStore.hpp"
 #include "Nexus/RiskService/SqlRiskDataStore.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
@@ -35,22 +34,6 @@ class_<RiskClient>& Nexus::Python::get_exported_risk_client() {
 
 class_<RiskDataStore>& Nexus::Python::get_exported_risk_data_store() {
   return *risk_data_store;
-}
-
-void Nexus::Python::export_inventory_snapshot(module& module) {
-  export_default_methods(
-      class_<InventorySnapshot>(module, "InventorySnapshot")).
-    def(init<const std::vector<Inventory>&, Beam::Sequence,
-      const std::vector<OrderId>&>()).
-    def_readwrite("inventories", &InventorySnapshot::m_inventories).
-    def_readwrite("sequence", &InventorySnapshot::m_sequence).
-    def_readwrite("excluded_orders", &InventorySnapshot::m_excluded_orders);
-  module.def("strip", &strip);
-  module.def("make_portfolio",
-    [] (const InventorySnapshot& snapshot, const DirectoryEntry& account,
-        OrderExecutionClient& client) {
-      return make_portfolio(snapshot, account, client);
-    }, call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_local_risk_data_store(module& module) {
@@ -85,7 +68,6 @@ void Nexus::Python::export_risk_service(module& module) {
     export_risk_client<RiskClient>(module, "RiskClient"));
   risk_data_store = std::make_unique<class_<RiskDataStore>>(
     export_risk_data_store<RiskDataStore>(module, "RiskDataStore"));
-  export_inventory_snapshot(module);
   export_local_risk_data_store(module);
   export_mysql_risk_data_store(module);
   export_risk_parameters(module);

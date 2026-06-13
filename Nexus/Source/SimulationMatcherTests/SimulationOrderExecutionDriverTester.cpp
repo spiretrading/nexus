@@ -62,4 +62,39 @@ TEST_SUITE("SimulationOrderExecutionDriver") {
     report2 = reports2->pop();
     REQUIRE(report2.m_status == OrderStatus::NEW);
   }
+
+  TEST_CASE("restore") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(SHOP, Money::ONE, 2 * Money::ONE);
+    fixture.m_environment.update_bbo_price(
+      TD, 10 * Money::ONE, 20 * Money::ONE);
+    auto driver = SimulationOrderExecutionDriver(fixture.m_market_data_client,
+      std::make_unique<TestTimeClient>(
+        Ref(fixture.m_environment.get_time_environment())));
+    auto timestamp = fixture.m_environment.get_time_environment().get_time();
+    auto live_info = OrderInfo();
+    live_info.m_fields =
+      make_limit_order_fields(SHOP, Side::BID, 100, Money::ONE);
+    live_info.m_id = 1;
+    live_info.m_timestamp = timestamp;
+    auto live_report = ExecutionReport(1, timestamp);
+    live_report.m_status = OrderStatus::PENDING_NEW;
+    auto terminal_info = OrderInfo();
+    terminal_info.m_fields =
+      make_limit_order_fields(TD, Side::ASK, 200, 30 * Money::ONE);
+    terminal_info.m_id = 2;
+    terminal_info.m_timestamp = timestamp;
+    auto terminal_report = ExecutionReport(2, timestamp);
+    terminal_report.m_status = OrderStatus::CANCELED;
+    auto records = std::vector<SequencedOrderRecord>();
+    records.push_back(
+      SequencedValue(OrderRecord(live_info, {live_report}), Beam::Sequence(1)));
+    records.push_back(SequencedValue(
+      OrderRecord(terminal_info, {terminal_report}), Beam::Sequence(2)));
+    auto orders = driver.restore(
+      DirectoryEntry::make_account(123, "test"), InventorySnapshot(), records);
+    REQUIRE(orders.size() == 2);
+    REQUIRE(orders[0]->get_info() == live_info);
+    REQUIRE(orders[1]->get_info() == terminal_info);
+  }
 }

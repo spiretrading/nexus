@@ -154,4 +154,50 @@ TEST_SUITE("ComplianceCheckOrderExecutionDriver") {
       }
     }
   }
+
+  TEST_CASE("restore") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("TST.TSX");
+    auto info = OrderInfo(make_limit_order_fields(
+      fixture.m_account, ticker, CAD, Side::BID, "TSX", 100, Money::ONE), 123,
+      time_from_string("2025-03-22 15:12:22:00"));
+    auto snapshot = InventorySnapshot();
+    snapshot.m_sequence = Beam::Sequence(5);
+    auto records = std::vector<SequencedOrderRecord>();
+    records.push_back(SequencedValue(OrderRecord(info, {}), Beam::Sequence(1)));
+    auto async_orders = std::async(std::launch::async, [&] {
+      return fixture.m_compliance_driver->restore(
+        fixture.m_account, snapshot, records);
+    });
+    auto driver_operation = fixture.m_driver_operations->pop();
+    auto driver_restore_operation =
+      std::get_if<TestOrderExecutionDriver::RestoreOperation>(
+        &*driver_operation);
+    REQUIRE(driver_restore_operation);
+    REQUIRE(driver_restore_operation->m_account == fixture.m_account);
+    REQUIRE(driver_restore_operation->m_snapshot == snapshot);
+    REQUIRE(driver_restore_operation->m_records == records);
+    auto driver_order = std::make_shared<PrimitiveOrder>(info);
+    driver_restore_operation->m_result.set(
+      std::vector<std::shared_ptr<Order>>{driver_order});
+    auto client_operation = fixture.m_client_operations->pop();
+    auto monitor_operation =
+      std::get_if<TestComplianceClient::MonitorComplianceRuleEntriesOperation>(
+        &*client_operation);
+    REQUIRE(monitor_operation);
+    auto entry = ComplianceRuleEntry(1, fixture.m_account,
+      ComplianceRuleEntry::State::ACTIVE, ComplianceRuleSchema("test_rule", {}));
+    monitor_operation->m_result.set(std::vector{entry});
+    auto rule_queue = fixture.m_rule_operations->pop();
+    auto rule_operation = rule_queue->pop();
+    auto rule_restore_operation =
+      std::get_if<TestComplianceRule::RestoreOperation>(&*rule_operation);
+    REQUIRE(rule_restore_operation);
+    REQUIRE(rule_restore_operation->m_orders.size() == 1);
+    REQUIRE(rule_restore_operation->m_orders[0] == driver_order);
+    rule_restore_operation->m_result.set();
+    auto orders = async_orders.get();
+    REQUIRE(orders.size() == 1);
+    REQUIRE(orders[0] == driver_order);
+  }
 }

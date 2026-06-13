@@ -16,12 +16,6 @@ namespace Nexus::Python {
     get_exported_risk_data_store();
 
   /**
-   * Exports the InventorySnapshot class.
-   * @param module The module to export to.
-   */
-  void export_inventory_snapshot(pybind11::module& module);
-
-  /**
    * Exports the LocalRiskDataStore class.
    * @param module The module to export to.
    */

@@ -124,6 +124,9 @@ namespace Nexus::Python {
           &D::store)).
       def("store", pybind11::overload_cast<
         const std::vector<SequencedAccountExecutionReport>&>(&D::store)).
+      def("load_inventory_snapshot", &D::load_inventory_snapshot).
+      def("store", pybind11::overload_cast<const Beam::DirectoryEntry&,
+        const InventorySnapshot&>(&D::store)).
       def("close", &D::close);
     if constexpr(!std::is_same_v<D, OrderExecutionDataStore>) {
       pybind11::implicitly_convertible<D, OrderExecutionDataStore>();

@@ -3,10 +3,10 @@
 #include <Beam/UidServiceTests/UidServiceTestEnvironment.hpp>
 #include <boost/optional/optional.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/Accounting/InventorySnapshot.hpp"
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
-#include "Nexus/RiskService/InventorySnapshot.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;

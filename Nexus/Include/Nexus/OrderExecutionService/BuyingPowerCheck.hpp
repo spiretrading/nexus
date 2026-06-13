@@ -55,6 +55,9 @@ namespace Nexus {
         AF&& administration_client, MF&& market_data_client);
 
       void submit(const OrderInfo& info) override;
+      void restore(const Beam::DirectoryEntry& account,
+        const InventorySnapshot& snapshot,
+        const std::vector<std::shared_ptr<Order>>& orders) override;
       void add(const std::shared_ptr<Order>& order) override;
       void reject(const OrderInfo& info) override;
 
@@ -165,6 +168,36 @@ namespace Nexus {
             "Order exceeds available buying power."));
         }
       });
+  }
+
+  template<typename A, typename M> requires
+    IsAdministrationClient<Beam::dereference_t<A>> &&
+      IsMarketDataClient<Beam::dereference_t<M>>
+  void BuyingPowerCheck<A, M>::restore(const Beam::DirectoryEntry& account,
+      const InventorySnapshot& snapshot,
+      const std::vector<std::shared_ptr<Order>>& orders) {
+    auto& buying_power_entry = load_buying_power_entry(account);
+    Beam::with(buying_power_entry.m_buying_power_model,
+      [&] (auto& buying_power_model) {
+        auto risk_parameters =
+          buying_power_entry.m_risk_parameters_queue->peek();
+        for(auto& inventory : snapshot.m_inventories) {
+          auto expenditure = Money();
+          try {
+            expenditure = m_exchange_rates.convert(
+              inventory.m_position.m_cost_basis,
+              inventory.m_position.m_currency, risk_parameters.m_currency);
+          } catch(const CurrencyPairNotFoundException&) {
+            continue;
+          }
+          buying_power_model.update(inventory.m_position.m_ticker,
+            risk_parameters.m_currency, inventory.m_position.m_quantity,
+            expenditure);
+        }
+      });
+    for(auto& order : orders) {
+      add(order);
+    }
   }
 
   template<typename A, typename M> requires
