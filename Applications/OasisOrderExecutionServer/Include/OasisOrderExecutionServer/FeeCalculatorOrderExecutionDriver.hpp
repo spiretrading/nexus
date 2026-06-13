@@ -7,9 +7,11 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
+#include "Nexus/Accounting/InventorySnapshot.hpp"
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/FeeHandling/AsxTradeMatchFeeTable.hpp"
 #include "Nexus/FeeHandling/ConsolidatedTmxFeeTable.hpp"
+#include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "OasisOrderExecutionServer/UsFeeTable.hpp"
 
@@ -41,7 +43,9 @@ namespace Nexus {
 
       ~FeesCalculatorOrderExecutionDriver();
 
-      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      std::vector<std::shared_ptr<Order>> restore(
+        const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+        const std::vector<SequencedOrderRecord>& records);
       void add(const std::shared_ptr<Order>& order);
       std::shared_ptr<Order> submit(const OrderInfo& info);
       void cancel(const OrderExecutionSession& session, OrderId id);
@@ -85,27 +89,36 @@ namespace Nexus {
   }
 
   template<typename O>
-  std::shared_ptr<Order> FeesCalculatorOrderExecutionDriver<O>::recover(
-      const SequencedAccountOrderRecord& record) {
-    auto driver_order = m_driver->recover(record);
-    auto order = std::make_shared<PrimitiveOrder>(**record);
-    m_orders.insert(order);
-    driver_order->get_publisher().with([&] {
-      auto existing_reports = boost::optional<std::vector<ExecutionReport>>();
-      driver_order->get_publisher().monitor(m_tasks.get_slot<ExecutionReport>(
-        std::bind(&FeesCalculatorOrderExecutionDriver::on_execution_report,
-          this, order, std::placeholders::_1)), Beam::out(existing_reports));
-      if(existing_reports) {
-        existing_reports->erase(existing_reports->begin(),
-          existing_reports->begin() + (*record)->m_execution_reports.size());
-        for(auto& report : *existing_reports) {
-          m_tasks.push(
-            std::bind(&FeesCalculatorOrderExecutionDriver::on_execution_report,
-              this, order, report));
+  std::vector<std::shared_ptr<Order>>
+      FeesCalculatorOrderExecutionDriver<O>::restore(
+        const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+        const std::vector<SequencedOrderRecord>& records) {
+    auto driver_orders = m_driver->restore(account, snapshot, records);
+    auto orders = std::vector<std::shared_ptr<Order>>();
+    for(auto i = std::size_t(0); i != records.size(); ++i) {
+      auto& record = records[i];
+      auto& driver_order = driver_orders[i];
+      auto order = std::make_shared<PrimitiveOrder>(*record);
+      m_orders.insert(order);
+      driver_order->get_publisher().with([&] {
+        auto existing_reports = boost::optional<std::vector<ExecutionReport>>();
+        driver_order->get_publisher().monitor(m_tasks.get_slot<ExecutionReport>(
+          std::bind_front(
+            &FeesCalculatorOrderExecutionDriver::on_execution_report, this,
+            order)), Beam::out(existing_reports));
+        if(existing_reports) {
+          existing_reports->erase(existing_reports->begin(),
+            existing_reports->begin() + record->m_execution_reports.size());
+          for(auto& report : *existing_reports) {
+            m_tasks.push(std::bind_front(
+              &FeesCalculatorOrderExecutionDriver::on_execution_report, this,
+              order, report));
+          }
         }
-      }
-    });
-    return order;
+      });
+      orders.push_back(order);
+    }
+    return orders;
   }
 
   template<typename O>

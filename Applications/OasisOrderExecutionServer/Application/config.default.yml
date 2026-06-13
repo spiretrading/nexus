@@ -13,6 +13,4 @@ data_store:
 server:
   interface: local_interface:20700
   addresses: [global_address:20700, local_interface:20700]
-
-#session_start_time: 2013-10-31 00:00:00
 ...

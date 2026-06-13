@@ -180,8 +180,6 @@ int main(int argc, const char** argv) {
     auto manual_order_execution_driver = ApplicationManualOrderEntryDriver(
       Destinations::MOE, &compliance_check_order_execution_driver,
       &administration_client);
-    auto session_start_time =
-      to_utc_time(extract<ptime>(config, "session_start_time", pos_infin));
     auto mysql_configs = try_or_nest([&] {
       return MySqlConfig::parse_replication(get_node(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
@@ -200,7 +198,7 @@ int main(int argc, const char** argv) {
     auto data_store = make_replicated_sql_order_execution_data_store(
       connection_builders, account_source);
     auto server = OrderExecutionServletContainer(init(&service_locator_client,
-      init(session_start_time, time_client.get(), &service_locator_client,
+      init(time_client.get(), &service_locator_client,
         &uid_client, &administration_client, &manual_order_execution_driver,
         data_store.get())), init(service_config.m_interface),
       std::bind(factory<std::shared_ptr<LiveTimer>>(), seconds(10)));
