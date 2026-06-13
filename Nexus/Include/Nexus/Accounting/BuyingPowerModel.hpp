@@ -44,6 +44,16 @@ namespace Nexus {
        */
       void update(const ExecutionReport& report);
 
+      /**
+       * Updates a position.
+       * @param ticker The Ticker the position is held in.
+       * @param currency The Currency the position is held in.
+       * @param quantity The change in the position's quantity.
+       * @param expenditure The change in the position's expenditure.
+       */
+      void update(const Ticker& ticker, CurrencyId currency, Quantity quantity,
+        Money expenditure);
+
     private:
       struct OrderEntry {
         OrderId m_id;
@@ -155,6 +165,16 @@ namespace Nexus {
     buying_power_entry.m_expenditure +=
       get_direction(order_fields.m_side) * last_quantity * report.m_last_price;
     buying_power += compute_buying_power(buying_power_entry);
+  }
+
+  inline void BuyingPowerModel::update(const Ticker& ticker,
+      CurrencyId currency, Quantity quantity, Money expenditure) {
+    auto& entry = m_buying_power_entries[ticker];
+    auto& buying_power = m_buying_power[currency];
+    buying_power -= compute_buying_power(entry);
+    entry.m_quantity += quantity;
+    entry.m_expenditure += expenditure;
+    buying_power += compute_buying_power(entry);
   }
 
   inline Money BuyingPowerModel::compute_buying_power(

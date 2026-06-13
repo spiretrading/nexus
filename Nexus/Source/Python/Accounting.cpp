@@ -72,7 +72,11 @@ void Nexus::Python::export_buying_power_model(module& module) {
       "get_buying_power", &BuyingPowerModel::get_buying_power, arg("currency")).
     def("submit", &BuyingPowerModel::submit, arg("id"), arg("fields"),
       arg("expected_price")).
-    def("update", &BuyingPowerModel::update, arg("report"));
+    def("update", overload_cast<const ExecutionReport&>(
+      &BuyingPowerModel::update), arg("report")).
+    def("update", overload_cast<const Ticker&, CurrencyId, Quantity, Money>(
+      &BuyingPowerModel::update), arg("ticker"), arg("currency"),
+      arg("quantity"), arg("expenditure"));
 }
 
 void Nexus::Python::export_inventory(module& module) {

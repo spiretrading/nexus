@@ -325,14 +325,13 @@ namespace Nexus {
     auto session_orders = m_data_store->load_order_records(recovery_query);
     auto live_orders =
       m_data_store->load_order_records(make_live_orders_query(account));
-    auto orders = std::vector<SequencedOrderRecord>();
+    auto records = std::vector<SequencedOrderRecord>();
     std::set_union(session_orders.begin(), session_orders.end(),
-      live_orders.begin(), live_orders.end(), std::back_inserter(orders),
+      live_orders.begin(), live_orders.end(), std::back_inserter(records),
       Beam::SequenceComparator());
-    for(auto& order_record : orders) {
-      auto& shorting_model = *m_shorting_models.get_or_insert(
-        order_record->m_info.m_fields.m_account,
-        boost::factory<std::shared_ptr<SyncShortingModel>>());
+    auto& shorting_model = *m_shorting_models.get_or_insert(
+      account, boost::factory<std::shared_ptr<SyncShortingModel>>());
+    for(auto& order_record : records) {
       shorting_model.with([&] (auto& shorting_model) {
         shorting_model.submit(
           order_record->m_info.m_id, order_record->m_info.m_fields);
@@ -341,20 +340,11 @@ namespace Nexus {
         }
       });
       m_live_orders.insert(order_record->m_info.m_id);
-      auto order = std::shared_ptr<Order>();
-      try {
-        order = m_driver->recover(Beam::SequencedValue(Beam::IndexedValue(
-          *order_record, account), order_record.get_sequence()));
-      } catch(const std::exception&) {
-        try {
-          std::throw_with_nested(
-            std::runtime_error("Unable to recover order: " +
-              boost::lexical_cast<std::string>(order_record->m_info.m_id)));
-        } catch(const std::exception&) {
-          std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
-          continue;
-        }
-      }
+    }
+    auto orders = m_driver->restore(account, snapshot, records);
+    for(auto i = std::size_t(0); i != orders.size(); ++i) {
+      auto& order = orders[i];
+      auto& order_record = records[i];
       Beam::with(*snapshot_model, [&] (auto& snapshot_model) {
         snapshot_model.add(order_record.get_sequence(), order);
       });
@@ -362,9 +352,8 @@ namespace Nexus {
         auto existing_reports = boost::optional<std::vector<ExecutionReport>>();
         order->get_publisher().monitor(m_tasks.get_slot<ExecutionReport>(
           std::bind(&OrderExecutionServlet::on_execution_report, this,
-            std::placeholders::_1, order->get_info().m_fields.m_account,
-            std::ref(shorting_model), std::ref(*snapshot_model))),
-          Beam::out(existing_reports));
+            std::placeholders::_1, account, std::ref(shorting_model),
+            std::ref(*snapshot_model))), Beam::out(existing_reports));
         if(existing_reports) {
           existing_reports->erase(
             existing_reports->begin(), existing_reports->begin() +
@@ -372,8 +361,7 @@ namespace Nexus {
           for(auto& report : *existing_reports) {
             m_tasks.push(std::bind_front(
               &OrderExecutionServlet::on_execution_report, this, report,
-              order->get_info().m_fields.m_account, std::ref(shorting_model),
-              std::ref(*snapshot_model)));
+              account, std::ref(shorting_model), std::ref(*snapshot_model)));
           }
         }
       });
