@@ -41,7 +41,9 @@ namespace Nexus {
 
       ~SimulationOrderExecutionDriver();
 
-      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      std::vector<std::shared_ptr<Order>> restore(
+        const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+        const std::vector<SequencedOrderRecord>& records);
       void add(const std::shared_ptr<Order>& order);
       std::shared_ptr<Order> submit(const OrderInfo& info);
       void cancel(const OrderExecutionSession& session, OrderId id);
@@ -91,13 +93,19 @@ namespace Nexus {
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  std::shared_ptr<Order> SimulationOrderExecutionDriver<M, T>::recover(
-      const SequencedAccountOrderRecord& record) {
-    auto order = std::make_shared<PrimitiveOrder>(**record);
-    m_orders.insert((*record)->m_info.m_id, order);
-    auto& simulator = load((*record)->m_info.m_fields.m_ticker);
-    simulator.recover(order);
-    return order;
+  std::vector<std::shared_ptr<Order>>
+      SimulationOrderExecutionDriver<M, T>::restore(
+        const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+        const std::vector<SequencedOrderRecord>& records) {
+    auto orders = std::vector<std::shared_ptr<Order>>();
+    for(auto& record : records) {
+      auto order = std::make_shared<PrimitiveOrder>(*record);
+      m_orders.insert(record->m_info.m_id, order);
+      auto& simulator = load(record->m_info.m_fields.m_ticker);
+      simulator.recover(order);
+      orders.push_back(order);
+    }
+    return orders;
   }
 
   template<typename M, typename T> requires
