@@ -67,7 +67,7 @@ namespace Nexus {
        * @param account The account to restore.
        * @param snapshot The snapshot used to restore the account.
        * @param records The OrderRecords to restore.
-       * @return The Orders reconstructed from from the snapshot.
+       * @return The Orders reconstructed from the snapshot.
        */
       std::vector<std::shared_ptr<Order>> restore(
         const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
