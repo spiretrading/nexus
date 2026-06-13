@@ -94,4 +94,41 @@ TEST_SUITE("MapComplianceRule") {
     REQUIRE(add_operation2->m_order == order2);
     add_operation2->m_result.set();
   }
+
+  TEST_CASE("restore") {
+    auto rule_operations =
+      std::make_shared<Queue<std::shared_ptr<TestComplianceRule::Queue>>>();
+    auto rule_builder = [&] (const ComplianceRuleSchema&) {
+      auto queue = std::make_shared<TestComplianceRule::Queue>();
+      rule_operations->push(queue);
+      return std::make_unique<TestComplianceRule>(queue);
+    };
+    auto key_builder = [] (const Order& order) {
+      return order.get_info().m_fields.m_ticker;
+    };
+    auto schema = ComplianceRuleSchema("test_rule", {});
+    auto rule = MapComplianceRule(schema, rule_builder, key_builder);
+    auto account = DirectoryEntry::make_account(1, "test");
+    auto info = OrderInfo();
+    info.m_id = 200;
+    info.m_fields.m_ticker = parse_ticker("FOO.TSX");
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    auto snapshot = InventorySnapshot();
+    snapshot.m_sequence = Beam::Sequence(5);
+    auto async_restore = std::async(std::launch::async, [&] {
+      rule.restore(account, snapshot,
+        std::vector<std::shared_ptr<Order>>{order});
+    });
+    auto operations = rule_operations->pop();
+    auto operation = operations->pop();
+    auto restore_operation =
+      std::get_if<TestComplianceRule::RestoreOperation>(&*operation);
+    REQUIRE(restore_operation);
+    REQUIRE(restore_operation->m_account == account);
+    REQUIRE(restore_operation->m_snapshot == snapshot);
+    REQUIRE(restore_operation->m_orders.size() == 1);
+    REQUIRE(restore_operation->m_orders[0] == order);
+    restore_operation->m_result.set();
+    async_restore.get();
+  }
 }

@@ -54,7 +54,9 @@ namespace Nexus {
 
       ~ComplianceCheckOrderExecutionDriver();
 
-      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      std::vector<std::shared_ptr<Order>> restore(
+        const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+        const std::vector<SequencedOrderRecord>& records);
       void add(const std::shared_ptr<Order>& order);
       std::shared_ptr<Order> submit(const OrderInfo& info);
       void cancel(const OrderExecutionSession& session, OrderId id);
@@ -102,11 +104,13 @@ namespace Nexus {
   template<typename D, typename C, typename S> requires
     IsOrderExecutionDriver<Beam::dereference_t<D>> &&
       Beam::IsTimeClient<Beam::dereference_t<C>>
-  std::shared_ptr<Order> ComplianceCheckOrderExecutionDriver<D, C, S>::recover(
-      const SequencedAccountOrderRecord& record) {
-    auto order = m_driver->recover(record);
-    m_compliance_rule_set->add(order);
-    return order;
+  std::vector<std::shared_ptr<Order>>
+      ComplianceCheckOrderExecutionDriver<D, C, S>::restore(
+        const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+        const std::vector<SequencedOrderRecord>& records) {
+    auto orders = m_driver->restore(account, snapshot, records);
+    m_compliance_rule_set->restore(account, snapshot, orders);
+    return orders;
   }
 
   template<typename D, typename C, typename S> requires

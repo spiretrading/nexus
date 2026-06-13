@@ -155,8 +155,7 @@ namespace Nexus::Tests {
       Beam::TimeClient time_client, OrderExecutionDriver driver)
     : m_driver(std::move(driver)),
       m_container(Beam::init(service_locator_client, Beam::init(
-        boost::posix_time::pos_infin, std::move(time_client),
-        service_locator_client, std::move(uid_client),
+        std::move(time_client), service_locator_client, std::move(uid_client),
         std::move(administration_client), &m_driver, &m_data_store)),
         &m_server_connection,
         boost::factory<std::shared_ptr<Beam::TriggerTimer>>()) {}

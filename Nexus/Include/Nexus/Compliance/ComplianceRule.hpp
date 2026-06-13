@@ -1,6 +1,8 @@
 #ifndef NEXUS_COMPLIANCE_RULE_HPP
 #define NEXUS_COMPLIANCE_RULE_HPP
 #include <memory>
+#include <vector>
+#include "Nexus/Accounting/InventorySnapshot.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
 namespace Nexus {
@@ -15,6 +17,16 @@ namespace Nexus {
        * @param order The Order being submitted.
        */
       virtual void submit(const std::shared_ptr<Order>& order);
+
+      /**
+       * Restores an account's state from a snapshot.
+       * @param account The account to restore.
+       * @param snapshot The snapshot used to restore the account.
+       * @param orders The account's recovered Orders.
+       */
+      virtual void restore(const Beam::DirectoryEntry& account,
+        const InventorySnapshot& snapshot,
+        const std::vector<std::shared_ptr<Order>>& orders);
 
       /**
        * Cancels a previously submitted Order.
@@ -36,6 +48,14 @@ namespace Nexus {
 
   inline void ComplianceRule::submit(const std::shared_ptr<Order>& order) {
     add(order);
+  }
+
+  inline void ComplianceRule::restore(const Beam::DirectoryEntry& account,
+      const InventorySnapshot& snapshot,
+      const std::vector<std::shared_ptr<Order>>& orders) {
+    for(auto& order : orders) {
+      add(order);
+    }
   }
 
   inline void ComplianceRule::cancel(const std::shared_ptr<Order>& order) {}

@@ -43,6 +43,10 @@ namespace Nexus {
         load_execution_reports(const AccountQuery& query);
       void store(const SequencedAccountExecutionReport& report);
       void store(const std::vector<SequencedAccountExecutionReport>& reports);
+      InventorySnapshot load_inventory_snapshot(
+        const Beam::DirectoryEntry& account);
+      void store(const Beam::DirectoryEntry& account,
+        const InventorySnapshot& snapshot);
       void close();
 
     private:
@@ -132,6 +136,21 @@ namespace Nexus {
       const std::vector<SequencedAccountExecutionReport>& reports) {
     auto release = Beam::Python::GilRelease();
     m_data_store->store(reports);
+  }
+
+  template<IsOrderExecutionDataStore D>
+  InventorySnapshot
+      ToPythonOrderExecutionDataStore<D>::load_inventory_snapshot(
+        const Beam::DirectoryEntry& account) {
+    auto release = Beam::Python::GilRelease();
+    return m_data_store->load_inventory_snapshot(account);
+  }
+
+  template<IsOrderExecutionDataStore D>
+  void ToPythonOrderExecutionDataStore<D>::store(
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot) {
+    auto release = Beam::Python::GilRelease();
+    m_data_store->store(account, snapshot);
   }
 
   template<IsOrderExecutionDataStore D>

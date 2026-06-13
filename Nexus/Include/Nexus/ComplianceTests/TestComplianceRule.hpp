@@ -48,9 +48,25 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<void> m_result;
       };
 
+      /** Records a call to restore(). */
+      struct RestoreOperation {
+
+        /** The account being restored. */
+        Beam::DirectoryEntry m_account;
+
+        /** The snapshot passed. */
+        InventorySnapshot m_snapshot;
+
+        /** The Orders passed. */
+        std::vector<std::shared_ptr<Order>> m_orders;
+
+        /** The value to return to the caller. */
+        Beam::Tests::ServiceResult<void> m_result;
+      };
+
       /** A variant covering all possible TestComplianceRule operations. */
-      using Operation =
-        std::variant<SubmitOperation, CancelOperation, AddOperation>;
+      using Operation = std::variant<
+        SubmitOperation, CancelOperation, AddOperation, RestoreOperation>;
 
       /** The type of Queue used to send and receive operations. */
       using Queue = Beam::Queue<std::shared_ptr<Operation>>;
@@ -64,6 +80,9 @@ namespace Nexus::Tests {
           noexcept;
 
       void submit(const std::shared_ptr<Order>& order) override;
+      void restore(const Beam::DirectoryEntry& account,
+        const InventorySnapshot& snapshot,
+        const std::vector<std::shared_ptr<Order>>& orders) override;
       void cancel(const std::shared_ptr<Order>& order) override;
       void add(const std::shared_ptr<Order>& order) override;
 
@@ -77,6 +96,12 @@ namespace Nexus::Tests {
 
   inline void TestComplianceRule::submit(const std::shared_ptr<Order>& order) {
     m_queue.append_result<SubmitOperation, void>(order);
+  }
+
+  inline void TestComplianceRule::restore(const Beam::DirectoryEntry& account,
+      const InventorySnapshot& snapshot,
+      const std::vector<std::shared_ptr<Order>>& orders) {
+    m_queue.append_result<RestoreOperation, void>(account, snapshot, orders);
   }
 
   inline void TestComplianceRule::cancel(const std::shared_ptr<Order>& order) {

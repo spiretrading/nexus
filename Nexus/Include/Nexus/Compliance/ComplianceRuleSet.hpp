@@ -80,6 +80,16 @@ namespace Nexus {
        */
       void add(const std::shared_ptr<Order>& order);
 
+      /**
+       * Restores an account's state from a snapshot.
+       * @param account The account to restore.
+       * @param snapshot The snapshot used to restore the account.
+       * @param orders The account's recovered Orders.
+       */
+      void restore(const Beam::DirectoryEntry& account,
+        const InventorySnapshot& snapshot,
+        const std::vector<std::shared_ptr<Order>>& orders);
+
     private:
       struct Rule {
         Beam::Active<ComplianceRuleEntry> m_entry;
@@ -245,6 +255,32 @@ namespace Nexus {
       parent_entry->m_orders.push_back(order);
       for(auto& rule : parent_entry->m_rules) {
         rule->m_rule->add(order);
+      }
+    }
+  }
+
+  template<typename C, typename S> requires
+    IsComplianceClient<Beam::dereference_t<C>> &&
+      Beam::IsServiceLocatorClient<Beam::dereference_t<S>>
+  void ComplianceRuleSet<C, S>::restore(const Beam::DirectoryEntry& account,
+      const InventorySnapshot& snapshot,
+      const std::vector<std::shared_ptr<Order>>& orders) {
+    auto entry = load(account);
+    {
+      auto lock = boost::lock_guard(entry->m_mutex);
+      entry->m_orders.insert(
+        entry->m_orders.end(), orders.begin(), orders.end());
+      for(auto& rule : entry->m_rules) {
+        rule->m_rule->restore(account, snapshot, orders);
+      }
+    }
+    for(const auto& parent : entry->m_parents) {
+      auto parent_entry = load(parent);
+      auto lock = boost::lock_guard(parent_entry->m_mutex);
+      parent_entry->m_orders.insert(
+        parent_entry->m_orders.end(), orders.begin(), orders.end());
+      for(auto& rule : parent_entry->m_rules) {
+        rule->m_rule->restore(account, snapshot, orders);
       }
     }
   }

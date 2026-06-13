@@ -44,6 +44,9 @@ namespace Nexus {
         std::unique_ptr<ComplianceRule> rule);
 
       void submit(const std::shared_ptr<Order>& order) override;
+      void restore(const Beam::DirectoryEntry& account,
+        const InventorySnapshot& snapshot,
+        const std::vector<std::shared_ptr<Order>>& orders) override;
       void cancel(const std::shared_ptr<Order>& order) override;
       void add(const std::shared_ptr<Order>& order) override;
 
@@ -123,6 +126,13 @@ namespace Nexus {
     } else {
       add(order);
     }
+  }
+
+  template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>
+  void TimeFilterComplianceRule<C>::restore(
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+      const std::vector<std::shared_ptr<Order>>& orders) {
+    m_rule->restore(account, snapshot, orders);
   }
 
   template<typename C> requires Beam::IsTimeClient<Beam::dereference_t<C>>

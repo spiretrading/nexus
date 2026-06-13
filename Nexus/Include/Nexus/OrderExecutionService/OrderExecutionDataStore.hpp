@@ -10,6 +10,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Pointers/VirtualPtr.hpp>
 #include <boost/optional/optional.hpp>
+#include "Nexus/Accounting/InventorySnapshot.hpp"
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 
 namespace Nexus {
@@ -31,6 +32,11 @@ namespace Nexus {
       data_store.store(std::declval<const SequencedAccountExecutionReport&>());
       data_store.store(
         std::declval<const std::vector<SequencedAccountExecutionReport>&>());
+      { data_store.load_inventory_snapshot(
+          std::declval<const Beam::DirectoryEntry&>()) } ->
+            std::same_as<InventorySnapshot>;
+      data_store.store(std::declval<const Beam::DirectoryEntry&>(),
+        std::declval<const InventorySnapshot&>());
     };
 
   /** Provides a generic interface over an arbitrary OrderExecutionDataStore. */
@@ -107,6 +113,22 @@ namespace Nexus {
        */
       void store(const std::vector<SequencedAccountExecutionReport>& reports);
 
+      /**
+       * Loads an account's InventorySnapshot.
+       * @param account The account whose snapshot is to be loaded.
+       * @return The account's InventorySnapshot.
+       */
+      InventorySnapshot load_inventory_snapshot(
+        const Beam::DirectoryEntry& account);
+
+      /**
+       * Stores an account's InventorySnapshot.
+       * @param account The account whose snapshot is being stored.
+       * @param snapshot The snapshot to store.
+       */
+      void store(const Beam::DirectoryEntry& account,
+        const InventorySnapshot& snapshot);
+
       void close();
 
     private:
@@ -124,6 +146,10 @@ namespace Nexus {
         virtual void store(const SequencedAccountExecutionReport&) = 0;
         virtual void store(
           const std::vector<SequencedAccountExecutionReport>&) = 0;
+        virtual InventorySnapshot load_inventory_snapshot(
+          const Beam::DirectoryEntry&) = 0;
+        virtual void store(
+          const Beam::DirectoryEntry&, const InventorySnapshot&) = 0;
         virtual void close() = 0;
       };
       template<typename D>
@@ -146,6 +172,10 @@ namespace Nexus {
         void store(const SequencedAccountExecutionReport&) override;
         void store(
           const std::vector<SequencedAccountExecutionReport>&) override;
+        InventorySnapshot load_inventory_snapshot(
+          const Beam::DirectoryEntry&) override;
+        void store(
+          const Beam::DirectoryEntry&, const InventorySnapshot&) override;
         void close() override;
       };
       Beam::VirtualPtr<VirtualOrderExecutionDataStore> m_data_store;
@@ -197,6 +227,16 @@ namespace Nexus {
   inline void OrderExecutionDataStore::store(
       const std::vector<SequencedAccountExecutionReport>& reports) {
     m_data_store->store(reports);
+  }
+
+  inline InventorySnapshot OrderExecutionDataStore::load_inventory_snapshot(
+      const Beam::DirectoryEntry& account) {
+    return m_data_store->load_inventory_snapshot(account);
+  }
+
+  inline void OrderExecutionDataStore::store(
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot) {
+    m_data_store->store(account, snapshot);
   }
 
   inline void OrderExecutionDataStore::close() {
@@ -252,6 +292,18 @@ namespace Nexus {
   void OrderExecutionDataStore::WrappedOrderExecutionDataStore<D>::store(
       const std::vector<SequencedAccountExecutionReport>& reports) {
     m_data_store->store(reports);
+  }
+
+  template<typename D>
+  InventorySnapshot OrderExecutionDataStore::WrappedOrderExecutionDataStore<
+      D>::load_inventory_snapshot(const Beam::DirectoryEntry& account) {
+    return m_data_store->load_inventory_snapshot(account);
+  }
+
+  template<typename D>
+  void OrderExecutionDataStore::WrappedOrderExecutionDataStore<D>::store(
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot) {
+    m_data_store->store(account, snapshot);
   }
 
   template<typename D>

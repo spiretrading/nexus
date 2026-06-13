@@ -5,10 +5,12 @@
 #include <Beam/Queries/Sequence.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
+#include "Nexus/Accounting/Inventory.hpp"
+#include "Nexus/Accounting/Portfolio.hpp"
+#include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
-#include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 
 namespace Nexus {
 
@@ -29,7 +31,7 @@ namespace Nexus {
 
   /**
    * Strips a snapshot of empty Inventory objects, used to avoid storing empty
-   * inventories in a RiskDataStore.
+   * inventories in a data store.
    * @param snapshot The snapshot to trim.
    * @return A copy of the <i>snapshot</i> with all empty Inventory objects
    *         removed.
@@ -43,7 +45,7 @@ namespace Nexus {
   }
 
   /**
-   * Returns a RiskPortfolio from an InventorySnapshot.
+   * Returns a Portfolio from an InventorySnapshot.
    * @param snapshot The InventorySnapshot used to build the portfolio.
    * @param account The account the portfolio represents.
    * @param client The OrderExecutionClient to query.
@@ -51,7 +53,7 @@ namespace Nexus {
    *         query sequence that the portfolio is valid up to for the specified
    *         <i>account</i>, and the list of Orders excluded from the portfolio.
    */
-  std::tuple<RiskPortfolio, Beam::Sequence,
+  std::tuple<Portfolio<TrueAverageBookkeeper>, Beam::Sequence,
       std::vector<std::shared_ptr<Order>>> make_portfolio(
         const InventorySnapshot& snapshot, const Beam::DirectoryEntry& account,
         IsOrderExecutionClient auto& client) {
@@ -70,8 +72,8 @@ namespace Nexus {
       excluded_orders.push_back(order.get_value());
       sequence = std::max(sequence, order.get_sequence());
     });
-    auto portfolio =
-      RiskPortfolio(RiskPortfolio::Bookkeeper(snapshot.m_inventories));
+    auto portfolio = Portfolio<TrueAverageBookkeeper>(
+      Portfolio<TrueAverageBookkeeper>::Bookkeeper(snapshot.m_inventories));
     return {std::move(portfolio), sequence, std::move(excluded_orders)};
   }
 }

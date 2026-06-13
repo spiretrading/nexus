@@ -1,10 +1,10 @@
-#ifndef NEXUS_RISK_SERVICE_SQL_DEFINITIONS_HPP
-#define NEXUS_RISK_SERVICE_SQL_DEFINITIONS_HPP
+#ifndef NEXUS_ACCOUNTING_SQL_DEFINITIONS_HPP
+#define NEXUS_ACCOUNTING_SQL_DEFINITIONS_HPP
 #include <cstdint>
 #include <Beam/Sql/Conversions.hpp>
 #include <Viper/Row.hpp>
+#include "Nexus/Accounting/InventorySnapshot.hpp"
 #include "Nexus/Definitions/SqlDefinitions.hpp"
-#include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 
 namespace Nexus {
 

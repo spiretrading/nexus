@@ -216,4 +216,39 @@ TEST_SUITE("BuyingPowerModel") {
     model.update(fill_report2);
     REQUIRE(model.get_buying_power(CAD) == 450 * Money::ONE);
   }
+
+  TEST_CASE("update_long_position") {
+    auto model = BuyingPowerModel();
+    model.update(TST, CAD, 100, 1000 * Money::ONE);
+    REQUIRE(model.get_buying_power(CAD) == 1000 * Money::ONE);
+    auto sell_fields =
+      make_order_fields(TST, CAD, Side::ASK, 50, 11 * Money::ONE);
+    model.submit(2, sell_fields, 11 * Money::ONE);
+    REQUIRE(model.get_buying_power(CAD) == 1000 * Money::ONE);
+    auto sell_fill_report =
+      make_execution_report(2, OrderStatus::FILLED, 50, 11 * Money::ONE);
+    model.update(sell_fill_report);
+    REQUIRE(model.get_buying_power(CAD) == 500 * Money::ONE);
+  }
+
+  TEST_CASE("update_short_position") {
+    auto model = BuyingPowerModel();
+    model.update(TST, CAD, -100, -1000 * Money::ONE);
+    REQUIRE(model.get_buying_power(CAD) == 1000 * Money::ONE);
+    auto buy_fields =
+      make_order_fields(TST, CAD, Side::BID, 50, 9 * Money::ONE);
+    model.submit(2, buy_fields, 9 * Money::ONE);
+    REQUIRE(model.get_buying_power(CAD) == 1000 * Money::ONE);
+    auto buy_fill_report =
+      make_execution_report(2, OrderStatus::FILLED, 50, 9 * Money::ONE);
+    model.update(buy_fill_report);
+    REQUIRE(model.get_buying_power(CAD) == 500 * Money::ONE);
+  }
+
+  TEST_CASE("update_accumulates_position") {
+    auto model = BuyingPowerModel();
+    model.update(TST, CAD, 100, 1000 * Money::ONE);
+    model.update(TST, CAD, 50, 500 * Money::ONE);
+    REQUIRE(model.get_buying_power(CAD) == 1500 * Money::ONE);
+  }
 }

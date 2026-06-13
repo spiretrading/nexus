@@ -145,6 +145,36 @@ namespace Nexus::Tests {
       REQUIRE((**loaded_record)->m_execution_reports[0] == report1);
       REQUIRE((**loaded_record)->m_execution_reports[1] == report2);
     }
+
+    SUBCASE("load_non_existent_inventory_snapshot") {
+      auto snapshot = data_store.load_inventory_snapshot(account_a);
+      REQUIRE(snapshot == InventorySnapshot());
+    }
+
+    SUBCASE("store_and_load_inventory_snapshot") {
+      auto snapshot = InventorySnapshot();
+      snapshot.m_inventories.push_back(Inventory(
+        Position(parse_ticker("TST.TSX"), CAD, 100, 100 * Money::ONE),
+        10 * Money::ONE, Money::ONE, 200, 5));
+      snapshot.m_inventories.push_back(
+        Inventory(parse_ticker("ABC.TSX"), CAD));
+      snapshot.m_sequence = Beam::Sequence(7);
+      snapshot.m_excluded_orders = {1, 3};
+      data_store.store(account_a, snapshot);
+      auto loaded_snapshot = data_store.load_inventory_snapshot(account_a);
+      REQUIRE(loaded_snapshot.m_sequence == Beam::Sequence(7));
+      REQUIRE(loaded_snapshot.m_excluded_orders == std::vector<OrderId>{1, 3});
+      REQUIRE(loaded_snapshot.m_inventories.size() == 1);
+      REQUIRE(loaded_snapshot.m_inventories[0] == snapshot.m_inventories[0]);
+      REQUIRE(
+        data_store.load_inventory_snapshot(account_b) == InventorySnapshot());
+      auto updated_snapshot = InventorySnapshot();
+      updated_snapshot.m_sequence = Beam::Sequence(9);
+      data_store.store(account_a, updated_snapshot);
+      auto loaded_updated_snapshot =
+        data_store.load_inventory_snapshot(account_a);
+      REQUIRE(loaded_updated_snapshot == updated_snapshot);
+    }
   }
 }
 

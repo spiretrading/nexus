@@ -12,6 +12,7 @@
 #include <quickfix/Session.h>
 #include <quickfix/SessionSettings.h>
 #include <quickfix/SocketInitiator.h>
+#include "Nexus/Accounting/InventorySnapshot.hpp"
 #include "Nexus/FixUtilities/FixApplication.hpp"
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderUnrecoverableException.hpp"
@@ -49,7 +50,9 @@ namespace Nexus {
 
       ~FixOrderExecutionDriver();
 
-      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      std::vector<std::shared_ptr<Order>> restore(
+        const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+        const std::vector<SequencedOrderRecord>& records);
       void add(const std::shared_ptr<Order>& order);
       std::shared_ptr<Order> submit(const OrderInfo& info);
       void cancel(const OrderExecutionSession& session, OrderId id);
@@ -154,19 +157,25 @@ namespace Nexus {
     close();
   }
 
-  inline std::shared_ptr<Order> FixOrderExecutionDriver::recover(
-      const SequencedAccountOrderRecord& record) {
-    auto i = m_applications.find((*record)->m_info.m_fields.m_destination);
-    if(i == m_applications.end()) {
-      boost::throw_with_location(OrderUnrecoverableException(
-        "FIX application for given destination not found: [" +
-        (*record)->m_info.m_fields.m_destination + "], " +
-        boost::lexical_cast<std::string>((*record)->m_info.m_id)));
+  inline std::vector<std::shared_ptr<Order>> FixOrderExecutionDriver::restore(
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+      const std::vector<SequencedOrderRecord>& records) {
+    auto orders = std::vector<std::shared_ptr<Order>>();
+    for(auto& record : records) {
+      auto i = m_applications.find(record->m_info.m_fields.m_destination);
+      if(i == m_applications.end()) {
+        boost::throw_with_location(OrderUnrecoverableException(
+          "FIX application for given destination not found: [" +
+          record->m_info.m_fields.m_destination + "], " +
+          boost::lexical_cast<std::string>(record->m_info.m_id)));
+      }
+      auto entry = i->second;
+      auto order = entry->m_application->recover(Beam::SequencedValue(
+        Beam::IndexedValue(*record, account), record.get_sequence()));
+      m_id_to_application.insert(record->m_info.m_id, entry);
+      orders.push_back(order);
     }
-    auto entry = i->second;
-    auto order = entry->m_application->recover(record);
-    m_id_to_application.insert((*record)->m_info.m_id, entry);
-    return order;
+    return orders;
   }
 
   inline void FixOrderExecutionDriver::add(

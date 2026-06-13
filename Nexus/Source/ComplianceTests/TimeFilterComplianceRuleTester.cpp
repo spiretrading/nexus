@@ -123,6 +123,34 @@ TEST_SUITE("TimeFilterComplianceRule") {
     require_passthrough(rule, time_client, operations);
   }
 
+  TEST_CASE("restore") {
+    auto time_client = FixedTimeClient(time_from_string("2024-07-25 16:00:00"));
+    auto operations = std::make_shared<TestComplianceRule::Queue>();
+    auto rule = TimeFilterComplianceRule(hours(10), hours(14), &time_client,
+      std::make_unique<TestComplianceRule>(operations));
+    auto account = DirectoryEntry::make_account(1, "alice");
+    auto info = OrderInfo();
+    info.m_id = 7;
+    info.m_fields.m_ticker = parse_ticker("TST.TSX");
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    auto snapshot = InventorySnapshot();
+    snapshot.m_sequence = Beam::Sequence(5);
+    auto async_restore = std::async(std::launch::async, [&] {
+      rule.restore(account, snapshot,
+        std::vector<std::shared_ptr<Order>>{order});
+    });
+    auto operation = operations->pop();
+    auto restore_operation =
+      std::get_if<TestComplianceRule::RestoreOperation>(&*operation);
+    REQUIRE(restore_operation);
+    REQUIRE(restore_operation->m_account == account);
+    REQUIRE(restore_operation->m_snapshot == snapshot);
+    REQUIRE(restore_operation->m_orders.size() == 1);
+    REQUIRE(restore_operation->m_orders[0] == order);
+    restore_operation->m_result.set();
+    async_restore.get();
+  }
+
   TEST_CASE("throws_if_venue_not_in_database") {
     auto time_client = FixedTimeClient(time_from_string("2024-07-25 16:00:00"));
     auto operations = std::make_shared<TestComplianceRule::Queue>();

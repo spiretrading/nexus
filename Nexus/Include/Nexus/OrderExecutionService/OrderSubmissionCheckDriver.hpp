@@ -40,7 +40,9 @@ namespace Nexus {
 
       ~OrderSubmissionCheckDriver();
 
-      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      std::vector<std::shared_ptr<Order>> restore(
+        const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+        const std::vector<SequencedOrderRecord>& records);
       void add(const std::shared_ptr<Order>& order);
       std::shared_ptr<Order> submit(const OrderInfo& info);
       void cancel(const OrderExecutionSession& session, OrderId id);
@@ -76,13 +78,14 @@ namespace Nexus {
   }
 
   template<typename D> requires IsOrderExecutionDriver<Beam::dereference_t<D>>
-  std::shared_ptr<Order> OrderSubmissionCheckDriver<D>::recover(
-      const SequencedAccountOrderRecord& record) {
-    auto order = m_driver->recover(record);
+  std::vector<std::shared_ptr<Order>> OrderSubmissionCheckDriver<D>::restore(
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+      const std::vector<SequencedOrderRecord>& records) {
+    auto orders = m_driver->restore(account, snapshot, records);
     for(auto& check : m_checks) {
-      check->add(order);
+      check->restore(account, snapshot, orders);
     }
-    return order;
+    return orders;
   }
 
   template<typename D> requires IsOrderExecutionDriver<Beam::dereference_t<D>>

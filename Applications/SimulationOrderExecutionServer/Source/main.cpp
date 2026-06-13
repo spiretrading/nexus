@@ -111,8 +111,6 @@ int main(int argc, const char** argv) {
     auto mysql_configs = try_or_nest([&] {
       return MySqlConfig::parse_replication(get_node(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
-    auto session_start_time =
-      extract<ptime>(config, "session_start_time", pos_infin);
     auto account_source = [&] (unsigned int id) {
       return service_locator_client.load_directory_entry(id);
     };
@@ -128,7 +126,7 @@ int main(int argc, const char** argv) {
     auto data_store = make_replicated_sql_order_execution_data_store(
       connection_builders, account_source);
     auto order_execution_server = OrderExecutionServletContainer(
-      init(&service_locator_client, init(session_start_time, time_client.get(),
+      init(&service_locator_client, init(time_client.get(),
         &service_locator_client, &uid_client, &administration_client,
         &compliance_check_driver, data_store.get())),
       init(service_config.m_interface),

@@ -16,13 +16,34 @@ namespace Nexus {
       /** Returns the session settings. */
       const FIX::SessionSettings& get_session_settings() const;
 
+      /**
+       * Recovers a previously submitted Order.
+       * @param record The OrderRecord to recover.
+       * @return The recovered Order.
+       */
       virtual std::shared_ptr<Order> recover(
         const SequencedAccountOrderRecord& record) = 0;
 
+      /**
+       * Submits an Order.
+       * @param info The OrderInfo containing the details of the submission.
+       * @return The Order that was submitted.
+       */
       virtual std::shared_ptr<Order> submit(const OrderInfo& info) = 0;
 
+      /**
+       * Cancels an Order.
+       * @param session The session requesting the cancel.
+       * @param id The id of the Order to cancel.
+       */
       virtual void cancel(const OrderExecutionSession& session, OrderId id) = 0;
 
+      /**
+       * Updates an Order with an ExecutionReport.
+       * @param session The session requesting the update.
+       * @param id The id of the Order to update.
+       * @param report The ExecutionReport containing the update.
+       */
       virtual void update(const OrderExecutionSession& session, OrderId id,
         const ExecutionReport& report) = 0;
 

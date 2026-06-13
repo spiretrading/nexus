@@ -65,4 +65,27 @@ TEST_SUITE("BuyingPowerComplianceRule") {
     auto order = std::make_shared<PrimitiveOrder>(order_info);
     REQUIRE_THROWS_AS(rule.submit(order), ComplianceCheckException);
   }
+
+  TEST_CASE("restore") {
+    auto fixture = Fixture();
+    auto exchange_rates = ExchangeRateTable();
+    auto rule = BuyingPowerComplianceRule(100 * Money::ONE, AUD, exchange_rates,
+      fixture.m_market_data_environment.get_registry_client());
+    auto ticker = parse_ticker("TST.ASX");
+    fixture.m_market_data_environment.update_bbo(ticker, Money::ONE);
+    auto account = DirectoryEntry::make_account(1, "test");
+    auto snapshot = InventorySnapshot();
+    snapshot.m_inventories.push_back(Inventory(
+      Position(ticker, AUD, 100, 100 * Money::ONE), Money::ZERO, Money::ZERO,
+      100, 1));
+    rule.restore(account, snapshot, {});
+    auto buy_order = std::make_shared<PrimitiveOrder>(OrderInfo(
+      make_limit_order_fields(account, ticker, AUD, Side::BID, "ASX", 100,
+        Money::ONE), 1, time_from_string("2024-07-25 10:00:00")));
+    REQUIRE_THROWS_AS(rule.submit(buy_order), ComplianceCheckException);
+    auto sell_order = std::make_shared<PrimitiveOrder>(OrderInfo(
+      make_limit_order_fields(account, ticker, AUD, Side::ASK, "ASX", 100,
+        Money::ONE), 2, time_from_string("2024-07-25 10:00:00")));
+    REQUIRE_NOTHROW(rule.submit(sell_order));
+  }
 }
