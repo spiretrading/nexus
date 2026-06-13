@@ -112,4 +112,42 @@ TEST_SUITE("OrderSubmissionCheckDriver") {
     auto submitted_order = future_order.get();
     REQUIRE(submitted_order == order);
   }
+
+  TEST_CASE("restore") {
+    auto driver_operations = std::make_shared<
+      Queue<std::shared_ptr<TestOrderExecutionDriver::Operation>>>();
+    auto test_driver = TestOrderExecutionDriver(driver_operations);
+    auto check_operations = std::make_shared<
+      Queue<std::shared_ptr<TestOrderSubmissionCheck::Operation>>>();
+    auto checks = std::vector<std::unique_ptr<OrderSubmissionCheck>>();
+    checks.push_back(
+      std::make_unique<TestOrderSubmissionCheck>(check_operations));
+    auto driver = OrderSubmissionCheckDriver(&test_driver, std::move(checks));
+    auto account = DirectoryEntry::make_account(123);
+    auto snapshot = InventorySnapshot();
+    snapshot.m_sequence = Beam::Sequence(3);
+    auto records = std::vector<SequencedOrderRecord>();
+    records.push_back(SequencedValue(
+      OrderRecord(make_order_info(account), {}), Beam::Sequence(4)));
+    auto future_orders = std::async(std::launch::async, [&] {
+      return driver.restore(account, snapshot, records);
+    });
+    auto driver_operation = driver_operations->pop();
+    auto& restore_operation =
+      std::get<TestOrderExecutionDriver::RestoreOperation>(*driver_operation);
+    REQUIRE(restore_operation.m_account == account);
+    REQUIRE(restore_operation.m_snapshot == snapshot);
+    REQUIRE(restore_operation.m_records == records);
+    auto order = std::make_shared<PrimitiveOrder>(make_order_info(account));
+    restore_operation.m_result.set(
+      std::vector<std::shared_ptr<Order>>{order});
+    auto check_operation = check_operations->pop();
+    auto& check_add_operation =
+      std::get<TestOrderSubmissionCheck::AddOperation>(*check_operation);
+    REQUIRE(check_add_operation.m_order == order);
+    check_add_operation.m_result.set();
+    auto orders = future_orders.get();
+    REQUIRE(orders.size() == 1);
+    REQUIRE(orders[0] == order);
+  }
 }
