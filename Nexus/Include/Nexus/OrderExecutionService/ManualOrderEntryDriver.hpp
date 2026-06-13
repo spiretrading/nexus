@@ -1,7 +1,6 @@
 #ifndef NEXUS_MANUAL_ORDER_ENTRY_DRIVER_HPP
 #define NEXUS_MANUAL_ORDER_ENTRY_DRIVER_HPP
 #include <utility>
-#include <Beam/Collections/SynchronizedList.hpp>
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -49,7 +48,9 @@ namespace Nexus {
 
       ~ManualOrderEntryDriver();
 
-      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      std::vector<std::shared_ptr<Order>> restore(
+        const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+        const std::vector<SequencedOrderRecord>& records);
       void add(const std::shared_ptr<Order>& order);
       std::shared_ptr<Order> submit(const OrderInfo& info);
       void cancel(const OrderExecutionSession& session, OrderId id);
@@ -93,15 +94,15 @@ namespace Nexus {
   template<typename D, typename A> requires
     IsOrderExecutionDriver<Beam::dereference_t<D>> &&
       IsAdministrationClient<Beam::dereference_t<A>>
-  std::shared_ptr<Order> ManualOrderEntryDriver<D, A>::recover(
-      const SequencedAccountOrderRecord& record) {
-    if((*record)->m_info.m_fields.m_destination == m_destination) {
-      auto order = std::make_shared<PrimitiveOrder>(**record);
-      m_ids.insert(order->get_info().m_id);
-      return order;
-    } else {
-      return m_driver->recover(record);
+  std::vector<std::shared_ptr<Order>> ManualOrderEntryDriver<D, A>::restore(
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+      const std::vector<SequencedOrderRecord>& records) {
+    for(auto& record : records) {
+      if(record->m_info.m_fields.m_destination == m_destination) {
+        m_ids.insert(record->m_info.m_id);
+      }
     }
+    return m_driver->restore(account, snapshot, records);
   }
 
   template<typename D, typename A> requires
