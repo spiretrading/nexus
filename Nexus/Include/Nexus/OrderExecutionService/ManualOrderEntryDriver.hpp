@@ -1,6 +1,8 @@
 #ifndef NEXUS_MANUAL_ORDER_ENTRY_DRIVER_HPP
 #define NEXUS_MANUAL_ORDER_ENTRY_DRIVER_HPP
+#include <cstddef>
 #include <utility>
+#include <vector>
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
@@ -65,6 +67,7 @@ namespace Nexus {
       Beam::SynchronizedUnorderedSet<OrderId> m_ids;
       Beam::OpenState m_open_state;
 
+      void fill(const std::shared_ptr<PrimitiveOrder>& order);
       ManualOrderEntryDriver(const ManualOrderEntryDriver&) = delete;
       ManualOrderEntryDriver& operator =(
         const ManualOrderEntryDriver&) = delete;
@@ -97,12 +100,32 @@ namespace Nexus {
   std::vector<std::shared_ptr<Order>> ManualOrderEntryDriver<D, A>::restore(
       const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
       const std::vector<SequencedOrderRecord>& records) {
-    for(auto& record : records) {
-      if(record->m_info.m_fields.m_destination == m_destination) {
-        m_ids.insert(record->m_info.m_id);
+    auto orders = std::vector<std::shared_ptr<Order>>(records.size());
+    auto forwarded_records = std::vector<SequencedOrderRecord>();
+    auto forwarded_indices = std::vector<std::size_t>();
+    for(auto i = std::size_t(0); i != records.size(); ++i) {
+      auto& record = records[i];
+      if(record->m_info.m_fields.m_destination != m_destination) {
+        forwarded_records.push_back(record);
+        forwarded_indices.push_back(i);
+        continue;
       }
+      auto order = [&] {
+        if(record->m_execution_reports.empty()) {
+          return std::make_shared<PrimitiveOrder>(record->m_info);
+        }
+        return std::make_shared<PrimitiveOrder>(*record);
+      }();
+      fill(order);
+      m_ids.insert(record->m_info.m_id);
+      orders[i] = std::move(order);
     }
-    return m_driver->restore(account, snapshot, records);
+    auto forwarded_orders =
+      m_driver->restore(account, snapshot, forwarded_records);
+    for(auto i = std::size_t(0); i != forwarded_orders.size(); ++i) {
+      orders[forwarded_indices[i]] = std::move(forwarded_orders[i]);
+    }
+    return orders;
   }
 
   template<typename D, typename A> requires
@@ -129,24 +152,37 @@ namespace Nexus {
       return order;
     }
     auto order = std::make_shared<PrimitiveOrder>(info);
-    order->with([&] (auto status, const auto& reports) {
-      auto& last_report = reports.back();
-      auto updated_report =
-        make_update(last_report, OrderStatus::NEW, info.m_timestamp);
-      order->update(updated_report);
-    });
-    order->with([&] (auto status, const auto& reports) {
-      auto& last_report = reports.back();
-      auto updated_report =
-        make_update(last_report, OrderStatus::FILLED, info.m_timestamp);
-      updated_report.m_last_quantity = order->get_info().m_fields.m_quantity;
-      updated_report.m_last_price = order->get_info().m_fields.m_price;
-      updated_report.m_last_market = m_destination;
-      order->update(updated_report);
-    });
+    fill(order);
     m_ids.insert(order->get_info().m_id);
     m_driver->add(order);
     return order;
+  }
+
+  template<typename D, typename A> requires
+    IsOrderExecutionDriver<Beam::dereference_t<D>> &&
+      IsAdministrationClient<Beam::dereference_t<A>>
+  void ManualOrderEntryDriver<D, A>::fill(
+      const std::shared_ptr<PrimitiveOrder>& order) {
+    order->with([&] (auto status, const auto& reports) {
+      if(is_terminal(status)) {
+        return;
+      }
+      if(status == OrderStatus::PENDING_NEW) {
+        order->update(make_update(
+          reports.back(), OrderStatus::NEW, order->get_info().m_timestamp));
+      }
+    });
+    order->with([&] (auto status, const auto& reports) {
+      if(is_terminal(status)) {
+        return;
+      }
+      auto report = make_update(
+        reports.back(), OrderStatus::FILLED, order->get_info().m_timestamp);
+      report.m_last_quantity = order->get_info().m_fields.m_quantity;
+      report.m_last_price = order->get_info().m_fields.m_price;
+      report.m_last_market = m_destination;
+      order->update(report);
+    });
   }
 
   template<typename D, typename A> requires
