@@ -329,4 +329,22 @@ TEST_SUITE("OrderExecutionServlet") {
     auto excess_order = fixture.m_submissions->pop();
     REQUIRE(excess_order->get_info().m_shorting_flag);
   }
+
+  TEST_CASE("recover_seeds_shorting_position") {
+    auto fixture = Fixture();
+    auto seed = InventorySnapshot();
+    seed.m_inventories.push_back(Inventory(
+      Position(TST, CAD, 100, 100 * Money::ONE), Money::ZERO, Money::ZERO,
+      100, 1));
+    fixture.m_data_store.store(fixture.m_client_account, seed);
+    fixture.start();
+    fixture.m_client->submit(
+      make_limit_order_fields(TST, CAD, Side::ASK, "TSX", 100, Money::ONE));
+    auto ask_order = fixture.m_submissions->pop();
+    REQUIRE(!ask_order->get_info().m_shorting_flag);
+    fixture.m_client->submit(
+      make_limit_order_fields(TST, CAD, Side::ASK, "TSX", 1, Money::ONE));
+    auto excess_order = fixture.m_submissions->pop();
+    REQUIRE(excess_order->get_info().m_shorting_flag);
+  }
 }

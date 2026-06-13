@@ -331,6 +331,12 @@ namespace Nexus {
       Beam::SequenceComparator());
     auto& shorting_model = *m_shorting_models.get_or_insert(
       account, boost::factory<std::shared_ptr<SyncShortingModel>>());
+    shorting_model.with([&] (auto& shorting_model) {
+      for(auto& inventory : snapshot.m_inventories) {
+        shorting_model.update(
+          inventory.m_position.m_ticker, inventory.m_position.m_quantity);
+      }
+    });
     for(auto& order_record : records) {
       shorting_model.with([&] (auto& shorting_model) {
         shorting_model.submit(

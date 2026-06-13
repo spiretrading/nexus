@@ -177,7 +177,10 @@ void Nexus::Python::export_shorting_model(module& module) {
   class_<ShortingModel>(module, "ShortingModel").
     def(init()).
     def("submit", &ShortingModel::submit, arg("id"), arg("fields")).
-    def("update", &ShortingModel::update, arg("report"));
+    def("update", overload_cast<const ExecutionReport&>(&ShortingModel::update),
+      arg("report")).
+    def("update", overload_cast<const Ticker&, Quantity>(
+      &ShortingModel::update), arg("ticker"), arg("quantity"));
 }
 
 void Nexus::Python::export_valuation(module& module) {
