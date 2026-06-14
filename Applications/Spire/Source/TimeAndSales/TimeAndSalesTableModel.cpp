@@ -25,21 +25,6 @@ namespace {
   }
 }
 
-namespace Beam {
-  template<>
-  struct TimestampAccessor<Spire::TimeAndSalesModel::Entry> {
-    const boost::posix_time::ptime& operator ()(
-        const Spire::TimeAndSalesModel::Entry& value) const noexcept {
-      return get_timestamp(value.m_time_and_sale);
-    }
-
-    boost::posix_time::ptime& operator ()(
-        Spire::TimeAndSalesModel::Entry& value) const noexcept {
-      return value.m_time_and_sale->m_timestamp;
-    }
-  };
-}
-
 TimeAndSalesTableModel::TimeAndSalesTableModel(
   std::shared_ptr<TimeAndSalesModel> model)
   : m_model(std::move(model)),
@@ -122,8 +107,9 @@ void TimeAndSalesTableModel::load_snapshot(Sequence last, int count) {
       try {
         auto& snapshot = result.get();
         if(!snapshot.empty()) {
-          if(m_entries.empty() || get_timestamp(snapshot.back()) <
-              get_timestamp(m_entries.front())) {
+          if(m_entries.empty() ||
+              snapshot.back().m_time_and_sale.get_sequence() <
+                m_entries.front().m_time_and_sale.get_sequence()) {
             auto size = get_row_size();
             m_entries.insert(m_entries.begin(),
               std::make_move_iterator(snapshot.begin()),
@@ -133,13 +119,13 @@ void TimeAndSalesTableModel::load_snapshot(Sequence last, int count) {
                 m_transaction.push(TableModel::AddOperation(size + i));
               }
             });
-          } else if(get_timestamp(snapshot.front()) <
-              get_timestamp(m_entries.front())) {
+          } else if(snapshot.front().m_time_and_sale.get_sequence() <
+              m_entries.front().m_time_and_sale.get_sequence()) {
             auto size = get_row_size();
+            auto sequence = m_entries.front().m_time_and_sale.get_sequence();
             auto iter = std::lower_bound(snapshot.begin(), snapshot.end(),
-              get_timestamp(m_entries.front()),
-              [] (const auto& entry, const auto timestamp) {
-                return get_timestamp(entry) < timestamp;
+              sequence, [] (const auto& entry, const auto& bound) {
+                return entry.m_time_and_sale.get_sequence() < bound;
               });
             m_entries.insert(m_entries.begin(),
               std::make_move_iterator(snapshot.begin()),
