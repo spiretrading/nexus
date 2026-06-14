@@ -1953,6 +1953,13 @@ UiProfile Spire::make_context_menu_profile() {
           profile.make_event_slot<>(QString("Action:Side")));
         sort_menu->add_menu("Type", *type_menu);
         menu->add_menu("Sort by", *sort_menu);
+        auto overflow_menu = new ContextMenu(*static_cast<QWidget*>(menu));
+        for(auto i = 1; i <= 100; ++i) {
+          auto name = QString("Item %1").arg(i);
+          overflow_menu->add_action(name,
+            profile.make_event_slot<>(QString("Action:%1").arg(name)));
+        }
+        menu->add_menu("Overflow", *overflow_menu);
         menu->add_separator();
         menu->add_action("Refresh",
           profile.make_event_slot<>(QString("Action:Refresh")));
