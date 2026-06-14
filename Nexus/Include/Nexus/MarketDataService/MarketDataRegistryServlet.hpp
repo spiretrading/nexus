@@ -89,8 +89,6 @@ namespace Nexus {
       MarketDataRegistryServlet(const MarketDataRegistryServlet&) = delete;
       MarketDataRegistryServlet& operator =(
         const MarketDataRegistryServlet&) = delete;
-      Ticker normalize(const Ticker& ticker);
-      Venue normalize(Venue venue);
       template<typename Type, typename Service, typename Query,
         typename Subscriptions>
       void on_query(Beam::RequestToken<ServiceProtocolClient, Service>& request,
@@ -358,32 +356,6 @@ namespace Nexus {
   template<typename C, typename R, typename D, typename A> requires
     IsHistoricalDataStore<Beam::dereference_t<D>> &&
       IsAdministrationClient<Beam::dereference_t<A>>
-  Ticker MarketDataRegistryServlet<C, R, D, A>::normalize(
-      const Ticker& ticker) {
-    if(!ticker.get_venue()) {
-      return ticker;
-    }
-    auto result =
-      m_data_store->load_ticker_info(make_ticker_info_query(ticker));
-    if(result.empty()) {
-      return ticker;
-    }
-    if(result.front().m_ticker.get_venue() == ticker.get_venue()) {
-      return result.front().m_ticker;
-    }
-    return {};
-  }
-
-  template<typename C, typename R, typename D, typename A> requires
-    IsHistoricalDataStore<Beam::dereference_t<D>> &&
-      IsAdministrationClient<Beam::dereference_t<A>>
-  Venue MarketDataRegistryServlet<C, R, D, A>::normalize(Venue venue) {
-    return venue;
-  }
-
-  template<typename C, typename R, typename D, typename A> requires
-    IsHistoricalDataStore<Beam::dereference_t<D>> &&
-      IsAdministrationClient<Beam::dereference_t<A>>
   template<typename Type, typename Service, typename Query,
     typename Subscriptions>
   void MarketDataRegistryServlet<C, R, D, A>::on_query(
@@ -395,7 +367,7 @@ namespace Nexus {
       request.set(Result());
       return;
     }
-    auto index = normalize(query.get_index());
+    auto& index = query.get_index();
     if(index == typename Query::Index()) {
       request.set(Result());
       return;
@@ -501,7 +473,6 @@ namespace Nexus {
   TickerSnapshot MarketDataRegistryServlet<C, R, D, A>::on_load_ticker_snapshot(
       ServiceProtocolClient& client, Ticker ticker) {
     auto& session = client.get_session();
-    ticker = normalize(ticker);
     if(!ticker) {
       return {};
     }
@@ -539,7 +510,6 @@ namespace Nexus {
       IsAdministrationClient<Beam::dereference_t<A>>
   SessionTechnicals MarketDataRegistryServlet<C, R, D, A>::
       on_load_session_technicals(ServiceProtocolClient& client, Ticker ticker) {
-    ticker = normalize(ticker);
     if(auto technicals = m_registry->find_session_technicals(ticker)) {
       return *technicals;
     }
