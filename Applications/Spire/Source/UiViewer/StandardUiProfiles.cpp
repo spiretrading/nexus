@@ -1359,7 +1359,7 @@ UiProfile Spire::make_account_list_box_profile() {
   properties.push_back(make_standard_property<QString>("placeholder"));
   properties.push_back(make_standard_property("read_only", false));
   return UiProfile("AccountListBox", properties, [] (auto& profile) {
-    auto box = new AccountListBox(populate_account_query_model());
+    auto box = make_account_list_box(populate_account_query_model());
     box->setMinimumWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
     auto& placeholder = get<QString>("placeholder", profile.get_properties());
