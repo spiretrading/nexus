@@ -48,6 +48,7 @@ namespace Spire {
       mutable UpdateSignal m_update_signal;
       std::shared_ptr<TimeAndSalesModel> m_source;
       boost::circular_buffer<Entry> m_recent;
+      std::vector<Entry> m_pending_updates;
       bool m_is_loading;
       std::vector<PendingQuery> m_pending;
       QtPromise<void> m_load;

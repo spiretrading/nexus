@@ -176,6 +176,49 @@ TEST_SUITE("CachedTimeAndSalesModel") {
     });
   }
 
+  TEST_CASE("query_present_with_concurrent_update") {
+    run_test([] {
+      auto count = 10;
+      auto source = std::make_shared<TestTimeAndSalesModel>();
+      auto cache = CachedTimeAndSalesModel(source, count);
+      auto snapshot = std::vector<TimeAndSalesModel::Entry>();
+      for(auto i = 0; i < 3; ++i) {
+        snapshot.push_back(make_entry(CURRENT_TIME + seconds(i)));
+      }
+      auto live = make_entry(CURRENT_TIME + seconds(3));
+      auto query = cache.query_until(Beam::Sequence::PRESENT, 4);
+      REQUIRE(source->get_query_requests().size() == 1);
+      source->publish(live);
+      resolve(source->pop_query_request(), snapshot);
+      auto result = wait(std::move(query));
+      auto expected = snapshot;
+      expected.push_back(live);
+      REQUIRE(result == expected);
+    });
+  }
+
+  TEST_CASE("query_present_with_overlapping_update") {
+    run_test([] {
+      auto count = 10;
+      auto source = std::make_shared<TestTimeAndSalesModel>();
+      auto cache = CachedTimeAndSalesModel(source, count);
+      auto snapshot = std::vector<TimeAndSalesModel::Entry>();
+      for(auto i = 0; i < 3; ++i) {
+        snapshot.push_back(make_entry(CURRENT_TIME + seconds(i)));
+      }
+      auto query = cache.query_until(Beam::Sequence::PRESENT, count);
+      auto recent = cache.query_until(Beam::Sequence::PRESENT, 1);
+      REQUIRE(source->get_query_requests().size() == 1);
+      source->publish(snapshot.back());
+      resolve(source->pop_query_request(), snapshot);
+      REQUIRE(wait(std::move(recent)).size() == 1);
+      REQUIRE(source->get_query_requests().size() == 1);
+      resolve(source->pop_query_request(), snapshot);
+      auto result = wait(std::move(query));
+      REQUIRE(result == snapshot);
+    });
+  }
+
   TEST_CASE("query_history") {
     run_test([] {
       auto count = 10;

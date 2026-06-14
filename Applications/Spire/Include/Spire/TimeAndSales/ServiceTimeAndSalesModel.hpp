@@ -11,7 +11,7 @@ namespace Spire {
     public:
 
       /**
-       * Constructs a ServiceTimeAndSalesModel with 50 entries initially loaded.
+       * Constructs a ServiceTimeAndSalesModel.
        * @param ticker The ticker whose time and sales are queried.
        * @param client The market data client used to query for time and sales.
        */

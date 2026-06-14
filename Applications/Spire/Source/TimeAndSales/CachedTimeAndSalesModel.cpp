@@ -52,7 +52,11 @@ std::vector<TimeAndSalesModel::Entry>
 }
 
 void CachedTimeAndSalesModel::on_update(const Entry& entry) {
-  m_recent.push_back(entry);
+  if(m_is_loading) {
+    m_pending_updates.push_back(entry);
+  } else {
+    m_recent.push_back(entry);
+  }
   m_update_signal(entry);
 }
 
@@ -61,6 +65,13 @@ void CachedTimeAndSalesModel::on_snapshot(std::vector<Entry> snapshot) {
   for(auto& entry : snapshot) {
     m_recent.push_back(entry);
   }
+  for(auto& entry : m_pending_updates) {
+    if(m_recent.empty() || entry.m_time_and_sale.get_sequence() >
+        m_recent.back().m_time_and_sale.get_sequence()) {
+      m_recent.push_back(entry);
+    }
+  }
+  m_pending_updates.clear();
   auto pending = std::move(m_pending);
   m_pending.clear();
   for(auto& query : pending) {
@@ -75,9 +86,6 @@ void CachedTimeAndSalesModel::resolve_pending(PendingQuery query) {
     query.m_result.resolve(std::vector<Entry>());
   } else {
     auto remaining = query.m_max_count - static_cast<int>(m_recent.size());
-    // Backfill the entries strictly older than the cache. query_until is
-    // inclusive of its end sequence, so passing the oldest cached sequence
-    // would return that entry and duplicate it when the cache is appended.
     auto end = decrement(m_recent.front().m_time_and_sale.get_sequence());
     m_backfills.push_back(m_source->query_until(end, remaining).then(
       [this, result = std::move(query.m_result)] (auto&& older) mutable {
