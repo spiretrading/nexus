@@ -167,11 +167,12 @@ namespace Nexus {
       writer_connection->execute(
         Viper::create_if_not_exists(m_live_orders_row, "live_orders"));
       writer_connection->execute(Viper::create_if_not_exists(
-        get_inventory_entries_row(), "inventory_entries"));
+        get_inventory_entries_row(), "order_execution_inventory_entries"));
       writer_connection->execute(Viper::create_if_not_exists(
-        get_inventory_sequences_row(), "inventory_sequences"));
+        get_inventory_sequences_row(), "order_execution_inventory_sequences"));
       writer_connection->execute(Viper::create_if_not_exists(
-        get_inventory_excluded_orders_row(), "inventory_excluded_orders"));
+        get_inventory_excluded_orders_row(),
+        "order_execution_inventory_excluded_orders"));
       if(!writer_connection->has_table("live_submissions")) {
         writer_connection->execute("CREATE VIEW live_submissions AS "
           "SELECT * FROM submissions WHERE order_id IN ("
@@ -320,15 +321,15 @@ namespace Nexus {
     auto connection = m_reader_pool.load();
     Viper::transaction(*connection, [&] {
       connection->execute(Viper::select(get_inventory_entries_row(),
-        "inventory_entries", Viper::sym("account") == account.m_id,
+        "order_execution_inventory_entries", Viper::sym("account") == account.m_id,
         boost::make_function_output_iterator([&] (const auto& row) {
           snapshot.m_inventories.push_back(std::move(row.m_inventory));
         })));
       connection->execute(Viper::select(
-        Viper::Row<Beam::Sequence>("sequence"), "inventory_sequences",
+        Viper::Row<Beam::Sequence>("sequence"), "order_execution_inventory_sequences",
         Viper::sym("account") == account.m_id, &snapshot.m_sequence));
       connection->execute(Viper::select(get_inventory_excluded_orders_row(),
-        "inventory_excluded_orders", Viper::sym("account") == account.m_id,
+        "order_execution_inventory_excluded_orders", Viper::sym("account") == account.m_id,
         boost::make_function_output_iterator([&] (const auto& row) {
           snapshot.m_excluded_orders.push_back(row.m_id);
         })));
@@ -342,14 +343,16 @@ namespace Nexus {
     auto stripped_snapshot = strip(snapshot);
     auto connection = m_writer_pool.load();
     Viper::transaction(*connection, [&] {
+      connection->execute(Viper::erase("order_execution_inventory_entries",
+        Viper::sym("account") == account.m_id));
+      connection->execute(Viper::erase("order_execution_inventory_sequences",
+        Viper::sym("account") == account.m_id));
       connection->execute(Viper::erase(
-        "inventory_entries", Viper::sym("account") == account.m_id));
-      connection->execute(Viper::erase(
-        "inventory_sequences", Viper::sym("account") == account.m_id));
-      connection->execute(Viper::erase(
-        "inventory_excluded_orders", Viper::sym("account") == account.m_id));
+        "order_execution_inventory_excluded_orders",
+        Viper::sym("account") == account.m_id));
       connection->execute(Viper::insert(get_inventory_entries_row(),
-        "inventory_entries", boost::iterators::make_transform_iterator(
+        "order_execution_inventory_entries",
+        boost::iterators::make_transform_iterator(
           stripped_snapshot.m_inventories.begin(),
           convert_inventory_snapshot_inventories(account)),
         boost::iterators::make_transform_iterator(
@@ -357,10 +360,11 @@ namespace Nexus {
           convert_inventory_snapshot_inventories(account))));
       auto sequence =
         InventorySequence(account.m_id, stripped_snapshot.m_sequence);
-      connection->execute(Viper::insert(
-        get_inventory_sequences_row(), "inventory_sequences", &sequence));
+      connection->execute(Viper::insert(get_inventory_sequences_row(),
+        "order_execution_inventory_sequences", &sequence));
       connection->execute(Viper::insert(get_inventory_excluded_orders_row(),
-        "inventory_excluded_orders", boost::iterators::make_transform_iterator(
+        "order_execution_inventory_excluded_orders",
+        boost::iterators::make_transform_iterator(
           stripped_snapshot.m_excluded_orders.begin(),
           convert_inventory_excluded_orders(account)),
         boost::iterators::make_transform_iterator(
