@@ -1,4 +1,6 @@
 #include "Spire/BookView/BookViewWindow.hpp"
+#include <limits>
+#include <tuple>
 #include <QApplication>
 #include <QIcon>
 #include <QKeyEvent>
@@ -43,6 +45,62 @@ namespace {
 
   template struct SendEvent<&QWidget::event>;
   void send_event(QWidget& widget, const QEvent& event);
+
+  BookViewWindow* find_next_window(const BookViewWindow& origin) {
+    auto widgets = QApplication::topLevelWidgets();
+    auto right_closest_position = std::numeric_limits<int>::max();
+    auto right_closest_window = static_cast<BookViewWindow*>(nullptr);
+    auto bottom_left_position = QPoint(
+      std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+    auto bottom_left_window = static_cast<BookViewWindow*>(nullptr);
+    auto top_left_position = QPoint(
+      std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+    auto top_left_window = static_cast<BookViewWindow*>(nullptr);
+    for(auto widget : widgets) {
+      auto candidate = dynamic_cast<BookViewWindow*>(widget);
+      if(widget != &origin && candidate) {
+        auto position = widget->pos();
+        if(position.y() >= origin.pos().y() - 20 &&
+            position.y() <= origin.pos().y() + 20 &&
+            position.x() >= origin.pos().x() &&
+            position.x() <= right_closest_position) {
+          right_closest_window = candidate;
+          right_closest_position = right_closest_window->pos().x();
+        }
+        if(position.y() > origin.pos().y() &&
+            position.x() <= bottom_left_position.x() &&
+            position.y() <= bottom_left_position.y()) {
+          bottom_left_window = candidate;
+          bottom_left_position = bottom_left_window->pos();
+        }
+        if(std::tuple(position.y(), position.x()) <=
+            std::tuple(top_left_position.y(), top_left_position.x())) {
+          top_left_window = candidate;
+          top_left_position = top_left_window->pos();
+        }
+      }
+    }
+    if(right_closest_window) {
+      return right_closest_window;
+    }
+    if(bottom_left_window) {
+      return bottom_left_window;
+    }
+    if(top_left_window) {
+      return top_left_window;
+    }
+    return nullptr;
+  }
+
+  BookViewWindow* find_previous_window(const BookViewWindow& origin) {
+    auto previous = static_cast<BookViewWindow*>(nullptr);
+    auto next = find_next_window(origin);
+    while(next && next != &origin) {
+      previous = next;
+      next = find_next_window(*next);
+    }
+    return previous;
+  }
 }
 
 BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
@@ -86,6 +144,9 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
   connect(m_ticker_view, &QWidget::customContextMenuRequested,
     std::bind_front(&BookViewWindow::on_context_menu, this));
   resize(scale(266, 361));
+  m_page_key_observer.emplace(*this);
+  m_page_key_observer->connect_filtered_key_press_signal(
+    std::bind_front(&BookViewWindow::on_key_press, this));
 }
 
 const std::shared_ptr<TickerModel>& BookViewWindow::get_current() const {
@@ -280,7 +341,17 @@ void BookViewWindow::remove_task_entry_panel() {
 }
 
 bool BookViewWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
-  if(&target != m_ticker_view &&
+  if(!m_task_entry_panel && event.key() == Qt::Key_Tab) {
+    if(auto window = find_next_window(*this)) {
+      window->activateWindow();
+    }
+    return true;
+  } else if(!m_task_entry_panel && event.key() == Qt::Key_Backtab) {
+    if(auto window = find_previous_window(*this)) {
+      window->activateWindow();
+    }
+    return true;
+  } else if(m_book_depth && &target != m_ticker_view &&
       (event.key() == Qt::Key_PageUp || event.key() == Qt::Key_PageDown) &&
         !(event.modifiers() &
           (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier))) {
