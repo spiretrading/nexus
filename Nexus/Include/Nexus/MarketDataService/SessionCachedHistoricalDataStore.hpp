@@ -5,8 +5,8 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/SessionCachedDataStore.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
+#include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/HistoricalDataStoreQueryWrapper.hpp"
-#include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 
 namespace Nexus {
@@ -61,7 +61,6 @@ namespace Nexus {
         HistoricalDataStoreQueryWrapper<T, HistoricalDataStore*>,
         EvaluatorTranslator>;
       Beam::local_ptr_t<D> m_data_store;
-      LocalHistoricalDataStore m_ticker_info_store;
       DataStore<BboQuote> m_bbo_quote_data_store;
       DataStore<BookQuote> m_book_quote_data_store;
       DataStore<TimeAndSale> m_time_and_sale_data_store;
@@ -82,14 +81,7 @@ namespace Nexus {
       m_bbo_quote_data_store(&*m_data_store, block_size / 10),
       m_book_quote_data_store(&*m_data_store, block_size / 10),
       m_time_and_sale_data_store(&*m_data_store, block_size),
-      m_ticker_status_data_store(&*m_data_store, block_size) {
-    auto query = TickerInfoQuery();
-    query.set_index(Scope::GLOBAL);
-    query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
-    for(auto& info : m_data_store->load_ticker_info(query)) {
-      m_ticker_info_store.store(info);
-    }
-  }
+      m_ticker_status_data_store(&*m_data_store, block_size) {}
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   SessionCachedHistoricalDataStore<D>::~SessionCachedHistoricalDataStore() {
@@ -99,13 +91,12 @@ namespace Nexus {
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   std::vector<TickerInfo> SessionCachedHistoricalDataStore<D>::load_ticker_info(
       const TickerInfoQuery& query) {
-    return m_ticker_info_store.load_ticker_info(query);
+    return m_data_store->load_ticker_info(query);
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   void SessionCachedHistoricalDataStore<D>::store(const TickerInfo& info) {
     m_data_store->store(info);
-    m_ticker_info_store.store(info);
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
