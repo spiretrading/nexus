@@ -24,10 +24,9 @@ using namespace Spire::LegacyUI;
 
 namespace {
   std::unique_ptr<TimeAndSalesModel> time_and_sales_model_builder(
-      const Ticker& ticker, MarketDataClient client, TimeClient time_client) {
+      const Ticker& ticker, MarketDataClient client) {
     return std::make_unique<CachedTimeAndSalesModel>(
-      std::make_shared<ServiceTimeAndSalesModel>(
-        ticker, std::move(client), std::move(time_client)));
+      std::make_shared<ServiceTimeAndSalesModel>(ticker, std::move(client)));
   }
 
   std::unique_ptr<BookViewModel> book_view_model_builder(const Ticker& ticker,
@@ -76,8 +75,8 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
           std::make_shared<LocalTimeAndSalesPropertiesModel>(
             std::move(time_and_sales_properties)))),
       m_time_and_sales_models([this] (const auto& ticker) {
-        return time_and_sales_model_builder(ticker,
-          m_clients.get_market_data_client(), m_clients.get_time_client());
+        return time_and_sales_model_builder(
+          ticker, m_clients.get_market_data_client());
       }),
       m_time_and_sales_model_builder([this] (const auto& ticker) {
         return m_time_and_sales_models.load(ticker);
