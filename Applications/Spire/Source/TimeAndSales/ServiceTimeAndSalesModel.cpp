@@ -21,24 +21,23 @@ ServiceTimeAndSalesModel::ServiceTimeAndSalesModel(
 QtPromise<std::vector<TimeAndSalesModel::Entry>>
     ServiceTimeAndSalesModel::query_until(
       Beam::Sequence sequence, int max_count) {
-  return QtPromise(
-    [sequence, max_count, ticker = m_ticker, client = m_client] () mutable {
-      auto query = TickerQuery();
-      query.set_index(ticker);
-      query.set_range(Beam::Sequence::FIRST, sequence);
-      query.set_snapshot_limit(SnapshotLimit::from_tail(max_count));
-      auto queue = std::make_shared<Queue<SequencedTimeAndSale>>();
-      client.query(query, queue);
-      auto result = std::vector<TimeAndSalesModel::Entry>();
-      try {
-        while(true) {
-          auto time_and_sale = queue->pop();
-          result.push_back(
-            Entry(std::move(time_and_sale), BboIndicator::UNKNOWN));
-        }
-      } catch(const PipeBrokenException&) {}
-      return result;
-    }, LaunchPolicy::ASYNC);
+  return QtPromise([=, ticker = m_ticker, client = m_client] () mutable {
+    auto query = TickerQuery();
+    query.set_index(ticker);
+    query.set_range(Beam::Sequence::FIRST, sequence);
+    query.set_snapshot_limit(SnapshotLimit::from_tail(max_count));
+    auto queue = std::make_shared<Queue<SequencedTimeAndSale>>();
+    client.query(query, queue);
+    auto result = std::vector<TimeAndSalesModel::Entry>();
+    try {
+      while(true) {
+        auto time_and_sale = queue->pop();
+        result.push_back(
+          Entry(std::move(time_and_sale), BboIndicator::UNKNOWN));
+      }
+    } catch(const PipeBrokenException&) {}
+    return result;
+  }, LaunchPolicy::ASYNC);
 }
 
 connection ServiceTimeAndSalesModel::connect_update_signal(
