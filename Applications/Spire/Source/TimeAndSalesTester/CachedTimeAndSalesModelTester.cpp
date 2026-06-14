@@ -155,9 +155,31 @@ TEST_SUITE("CachedTimeAndSalesModel") {
       resolve(source->pop_query_request(), available);
       REQUIRE(wait(std::move(first)) == available);
       auto second = cache.query_until(Beam::Sequence::PRESENT, 5);
+      REQUIRE(source->get_query_requests().empty());
+      REQUIRE(wait(std::move(second)) == available);
+    });
+  }
+
+  TEST_CASE("query_present_backfill_after_load") {
+    run_test([] {
+      auto count = 10;
+      auto source = std::make_shared<TestTimeAndSalesModel>();
+      auto cache = CachedTimeAndSalesModel(source, count);
+      auto available = std::vector<TimeAndSalesModel::Entry>();
+      for(auto i = 0; i < 15; ++i) {
+        available.push_back(make_entry(CURRENT_TIME + seconds(i)));
+      }
+      auto first = cache.query_until(Beam::Sequence::PRESENT, count);
       REQUIRE(source->get_query_requests().size() == 1);
       resolve(source->pop_query_request(), available);
-      REQUIRE(wait(std::move(second)) == available);
+      auto recent = std::vector(available.end() - count, available.end());
+      REQUIRE(wait(std::move(first)) == recent);
+      auto second = cache.query_until(Beam::Sequence::PRESENT, count + 2);
+      REQUIRE(source->get_query_requests().size() == 1);
+      resolve(source->pop_query_request(), available);
+      auto result = wait(std::move(second));
+      auto expected = std::vector(available.end() - (count + 2), available.end());
+      REQUIRE(result == expected);
     });
   }
 

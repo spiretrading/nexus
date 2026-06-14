@@ -14,7 +14,7 @@ CachedTimeAndSalesModel::CachedTimeAndSalesModel(
   std::shared_ptr<TimeAndSalesModel> source, int count)
   : m_source(std::move(source)),
     m_recent(count),
-    m_is_loading(false),
+    m_state(State::UNLOADED),
     m_source_connection(m_source->connect_update_signal(
       std::bind_front(&CachedTimeAndSalesModel::on_update, this))) {}
 
@@ -24,13 +24,18 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
   if(sequence != Beam::Sequence::PRESENT) {
     return m_source->query_until(sequence, max_count);
   }
-  if(!m_is_loading && static_cast<int>(m_recent.size()) >= max_count) {
+  if(m_state != State::LOADING &&
+      static_cast<int>(m_recent.size()) >= max_count) {
     return get_recent(max_count);
   }
   auto [future, promise] = make_future<std::vector<Entry>>();
+  if(m_state == State::LOADED) {
+    resolve_pending(PendingQuery(max_count, std::move(future)));
+    return std::move(promise);
+  }
   m_pending.push_back(PendingQuery(max_count, std::move(future)));
-  if(!m_is_loading) {
-    m_is_loading = true;
+  if(m_state == State::UNLOADED) {
+    m_state = State::LOADING;
     m_backfills.clear();
     m_load = m_source->query_until(
       Beam::Sequence::PRESENT, static_cast<int>(m_recent.capacity())).then(
@@ -52,7 +57,7 @@ std::vector<TimeAndSalesModel::Entry>
 }
 
 void CachedTimeAndSalesModel::on_update(const Entry& entry) {
-  if(m_is_loading) {
+  if(m_state == State::LOADING) {
     m_pending_updates.push_back(entry);
   } else {
     m_recent.push_back(entry);
@@ -61,10 +66,10 @@ void CachedTimeAndSalesModel::on_update(const Entry& entry) {
 }
 
 void CachedTimeAndSalesModel::on_snapshot(std::vector<Entry> snapshot) {
-  m_is_loading = false;
+  m_state = State::LOADED;
   m_recent.clear();
   for(auto& entry : snapshot) {
-    m_recent.push_back(entry);
+    m_recent.push_back(std::move(entry));
   }
   for(auto& entry : m_pending_updates) {
     if(m_recent.empty() || entry.m_time_and_sale.get_sequence() >

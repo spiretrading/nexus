@@ -41,6 +41,11 @@ namespace Spire {
         const UpdateSignal::slot_type& slot) const override;
 
     private:
+      enum class State {
+        UNLOADED,
+        LOADING,
+        LOADED
+      };
       struct PendingQuery {
         int m_max_count;
         QtFuture<std::vector<Entry>> m_result;
@@ -49,7 +54,7 @@ namespace Spire {
       std::shared_ptr<TimeAndSalesModel> m_source;
       boost::circular_buffer<Entry> m_recent;
       std::vector<Entry> m_pending_updates;
-      bool m_is_loading;
+      State m_state;
       std::vector<PendingQuery> m_pending;
       QtPromise<void> m_load;
       std::vector<QtPromise<void>> m_backfills;
