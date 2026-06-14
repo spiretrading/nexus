@@ -61,6 +61,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_source_connection;
 
       std::vector<Entry> get_recent(int max_count) const;
+      QtPromise<std::vector<Entry>> load_older(int max_count);
       void on_update(const Entry& entry);
       void on_snapshot(std::vector<Entry> snapshot);
       void resolve_pending(PendingQuery query);

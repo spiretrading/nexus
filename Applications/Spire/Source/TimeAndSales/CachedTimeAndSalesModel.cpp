@@ -28,11 +28,13 @@ QtPromise<std::vector<TimeAndSalesModel::Entry>>
       static_cast<int>(m_recent.size()) >= max_count) {
     return get_recent(max_count);
   }
-  auto [future, promise] = make_future<std::vector<Entry>>();
   if(m_state == State::LOADED) {
-    resolve_pending(PendingQuery(max_count, std::move(future)));
-    return std::move(promise);
+    if(m_recent.empty() || !m_recent.full()) {
+      return get_recent(static_cast<int>(m_recent.size()));
+    }
+    return load_older(max_count);
   }
+  auto [future, promise] = make_future<std::vector<Entry>>();
   m_pending.push_back(PendingQuery(max_count, std::move(future)));
   if(m_state == State::UNLOADED) {
     m_state = State::LOADING;
@@ -54,6 +56,21 @@ connection CachedTimeAndSalesModel::connect_update_signal(
 std::vector<TimeAndSalesModel::Entry>
     CachedTimeAndSalesModel::get_recent(int max_count) const {
   return std::vector<Entry>(m_recent.end() - max_count, m_recent.end());
+}
+
+QtPromise<std::vector<TimeAndSalesModel::Entry>>
+    CachedTimeAndSalesModel::load_older(int max_count) {
+  auto remaining = max_count - static_cast<int>(m_recent.size());
+  auto end = decrement(m_recent.front().m_time_and_sale.get_sequence());
+  auto recent = std::vector<Entry>(m_recent.begin(), m_recent.end());
+  return m_source->query_until(end, remaining).then(
+    [recent = std::move(recent)] (auto&& older) mutable {
+      auto entries = std::move(older).get();
+      for(auto& entry : recent) {
+        entries.push_back(std::move(entry));
+      }
+      return entries;
+    });
 }
 
 void CachedTimeAndSalesModel::on_update(const Entry& entry) {
@@ -91,15 +108,9 @@ void CachedTimeAndSalesModel::resolve_pending(PendingQuery query) {
   } else if(m_recent.empty() || !m_recent.full()) {
     query.m_result.resolve(get_recent(static_cast<int>(m_recent.size())));
   } else {
-    auto remaining = query.m_max_count - static_cast<int>(m_recent.size());
-    auto end = decrement(m_recent.front().m_time_and_sale.get_sequence());
-    m_backfills.push_back(m_source->query_until(end, remaining).then(
-      [this, result = std::move(query.m_result)] (auto&& older) mutable {
-        auto entries = std::move(older).get();
-        for(auto& entry : m_recent) {
-          entries.push_back(entry);
-        }
-        result.resolve(std::move(entries));
+    m_backfills.push_back(load_older(query.m_max_count).then(
+      [result = std::move(query.m_result)] (auto&& entries) mutable {
+        result.resolve(std::move(entries).get());
       }));
   }
 }
