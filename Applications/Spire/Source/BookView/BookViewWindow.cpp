@@ -1,4 +1,5 @@
 #include "Spire/BookView/BookViewWindow.hpp"
+#include <QApplication>
 #include <QIcon>
 #include <QKeyEvent>
 #include <QScreen>
@@ -230,6 +231,7 @@ void BookViewWindow::display_interactions_panel() {
   m_task_entry_panel->Add(coordinate, interactions_node);
   m_task_entry_panel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
   m_transition_view->layout()->addWidget(m_task_entry_panel);
+  m_previous_focus = QApplication::focusWidget();
   m_task_entry_panel->Focus();
 }
 
@@ -252,6 +254,7 @@ void BookViewWindow::display_task_entry_panel(
     m_task_entry_panel->setSizePolicy(
       QSizePolicy::Preferred, QSizePolicy::Fixed);
     m_transition_view->layout()->addWidget(m_task_entry_panel);
+    m_previous_focus = QApplication::focusWidget();
     m_task_entry_panel->Focus();
   } else {
     m_task_entry_panel->deleteLater();
@@ -267,6 +270,12 @@ void BookViewWindow::remove_task_entry_panel() {
   m_task_entry_panel->deleteLater();
   m_task_entry_panel = nullptr;
   m_is_task_entry_panel_for_interactions = false;
+  if(m_previous_focus) {
+    m_previous_focus->setFocus();
+  } else if(m_book_depth) {
+    m_book_depth->setFocus();
+  }
+  m_previous_focus = nullptr;
   setUpdatesEnabled(true);
 }
 
