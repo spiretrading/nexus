@@ -62,6 +62,7 @@ void CachedTimeAndSalesModel::on_update(const Entry& entry) {
 
 void CachedTimeAndSalesModel::on_snapshot(std::vector<Entry> snapshot) {
   m_is_loading = false;
+  m_recent.clear();
   for(auto& entry : snapshot) {
     m_recent.push_back(entry);
   }
@@ -82,8 +83,8 @@ void CachedTimeAndSalesModel::on_snapshot(std::vector<Entry> snapshot) {
 void CachedTimeAndSalesModel::resolve_pending(PendingQuery query) {
   if(query.m_max_count <= static_cast<int>(m_recent.size())) {
     query.m_result.resolve(get_recent(query.m_max_count));
-  } else if(m_recent.empty()) {
-    query.m_result.resolve(std::vector<Entry>());
+  } else if(m_recent.empty() || !m_recent.full()) {
+    query.m_result.resolve(get_recent(static_cast<int>(m_recent.size())));
   } else {
     auto remaining = query.m_max_count - static_cast<int>(m_recent.size());
     auto end = decrement(m_recent.front().m_time_and_sale.get_sequence());

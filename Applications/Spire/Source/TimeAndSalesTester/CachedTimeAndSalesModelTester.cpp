@@ -108,14 +108,10 @@ TEST_SUITE("CachedTimeAndSalesModel") {
       auto available = std::vector<TimeAndSalesModel::Entry>();
       available.push_back(make_entry(CURRENT_TIME));
       auto query = cache.query_until(Beam::Sequence::PRESENT, count);
-      auto recent = cache.query_until(Beam::Sequence::PRESENT, 1);
-      REQUIRE(source->get_query_requests().size() == 1);
-      resolve(source->pop_query_request(), available);
-      REQUIRE(wait(std::move(recent)) == available);
       REQUIRE(source->get_query_requests().size() == 1);
       resolve(source->pop_query_request(), available);
       auto result = wait(std::move(query));
-      REQUIRE(result.size() == 1);
+      REQUIRE(source->get_query_requests().empty());
       REQUIRE(result == available);
     });
   }
@@ -142,6 +138,26 @@ TEST_SUITE("CachedTimeAndSalesModel") {
         std::vector(available.end() - request_count, available.end());
       REQUIRE(result.size() == request_count);
       REQUIRE(result == expected);
+    });
+  }
+
+  TEST_CASE("query_present_reload") {
+    run_test([] {
+      auto count = 10;
+      auto source = std::make_shared<TestTimeAndSalesModel>();
+      auto cache = CachedTimeAndSalesModel(source, count);
+      auto available = std::vector<TimeAndSalesModel::Entry>();
+      for(auto i = 0; i < 3; ++i) {
+        available.push_back(make_entry(CURRENT_TIME + seconds(i)));
+      }
+      auto first = cache.query_until(Beam::Sequence::PRESENT, 3);
+      REQUIRE(source->get_query_requests().size() == 1);
+      resolve(source->pop_query_request(), available);
+      REQUIRE(wait(std::move(first)) == available);
+      auto second = cache.query_until(Beam::Sequence::PRESENT, 5);
+      REQUIRE(source->get_query_requests().size() == 1);
+      resolve(source->pop_query_request(), available);
+      REQUIRE(wait(std::move(second)) == available);
     });
   }
 
@@ -207,14 +223,11 @@ TEST_SUITE("CachedTimeAndSalesModel") {
         snapshot.push_back(make_entry(CURRENT_TIME + seconds(i)));
       }
       auto query = cache.query_until(Beam::Sequence::PRESENT, count);
-      auto recent = cache.query_until(Beam::Sequence::PRESENT, 1);
       REQUIRE(source->get_query_requests().size() == 1);
       source->publish(snapshot.back());
       resolve(source->pop_query_request(), snapshot);
-      REQUIRE(wait(std::move(recent)).size() == 1);
-      REQUIRE(source->get_query_requests().size() == 1);
-      resolve(source->pop_query_request(), snapshot);
       auto result = wait(std::move(query));
+      REQUIRE(source->get_query_requests().empty());
       REQUIRE(result == snapshot);
     });
   }
