@@ -1,4 +1,4 @@
-#include "Spire/LegacyUI/CanvasWindow.hpp"
+#include "Spire/CanvasView/CanvasWindow.hpp"
 #include <QClipboard>
 #include <QEvent>
 #include <QKeyEvent>
@@ -23,12 +23,12 @@
 #include "Spire/CanvasView/ReplaceNodeCommand.hpp"
 #include "Spire/CanvasView/CanvasNodeProtectionDialog.hpp"
 #include "Spire/CanvasView/CanvasTableWidget.hpp"
+#include "Spire/CanvasView/CanvasWindowSettings.hpp"
 #include "Spire/CanvasView/ValueCell.hpp"
 #include "Spire/Catalog/CatalogEntry.hpp"
 #include "Spire/Catalog/CatalogWindow.hpp"
 #include "Spire/Catalog/CatalogTabModel.hpp"
 #include "Spire/Catalog/UserCatalogEntry.hpp"
-#include "Spire/LegacyUI/CanvasWindowSettings.hpp"
 #include "Spire/LegacyUI/IgnoreCommandException.hpp"
 #include "Spire/LegacyUI/MacroUndoCommand.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"

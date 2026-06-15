@@ -1,6 +1,6 @@
-#include "Spire/LegacyUI/CanvasWindowSettings.hpp"
+#include "Spire/CanvasView/CanvasWindowSettings.hpp"
 #include "Spire/Canvas/Common/CanvasNode.hpp"
-#include "Spire/LegacyUI/CanvasWindow.hpp"
+#include "Spire/CanvasView/CanvasWindow.hpp"
 #include "ui_CanvasWindow.h"
 
 using namespace Beam;
