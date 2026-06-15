@@ -126,6 +126,7 @@ namespace Spire {
       TextBox* m_password_text_box;
       boost::optional<KeyObserver> m_password_key_observer;
       DropDownBox* m_server_box;
+      boost::optional<KeyObserver> m_server_key_observer;
       Button* m_sign_in_button;
       SignInUpdateBox* m_update_box;
       QWidget* m_last_focus;

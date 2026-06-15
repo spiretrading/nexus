@@ -13,6 +13,7 @@
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardCell.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
+#include "Spire/Ui/TickerDialog.hpp"
 
 namespace Spire {
   class UserProfile;
@@ -92,6 +93,8 @@ namespace Spire {
       struct RendererComparator;
       UserProfile* m_userProfile;
       DashboardModel* m_model;
+      TickerDialog* m_tickerDialog;
+      int m_activateRowIndex;
       std::unique_ptr<DashboardRowBuilder> m_rowBuilder;
       std::unique_ptr<DashboardRenderer> m_renderer;
       std::unique_ptr<DashboardSelectionModel> m_selectionModel;
@@ -111,7 +114,7 @@ namespace Spire {
 
       void ModifyColumnSortOrder(int index);
       void SortRows();
-      void ActivateRow(int index, const std::string& prefix);
+      void ActivateRow(int index);
       void DeleteSelectedRows();
       void TestHoveringColumnExpansion(const QMouseEvent& event);
       int GetColumnAt(const QPoint& point);
@@ -124,6 +127,7 @@ namespace Spire {
       void OnActiveRowUpdatedSignal(boost::optional<int> activeRow);
       void OnDrawSignal();
       void OnRepaintTimer();
+      void OnTickerSubmit(const Nexus::Ticker& ticker);
   };
 }
 

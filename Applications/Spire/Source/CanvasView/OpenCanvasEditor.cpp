@@ -44,7 +44,6 @@
 #include "Spire/Catalog/CatalogEntry.hpp"
 #include "Spire/Catalog/CatalogWindow.hpp"
 #include "Spire/InputWidgets/DateTimeInputDialog.hpp"
-#include "Spire/InputWidgets/TickerInputDialog.hpp"
 #include "Spire/InputWidgets/TimeInputDialog.hpp"
 #include "Spire/InputWidgets/TimeRangeInputDialog.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
@@ -53,6 +52,8 @@
 #include "Spire/LegacyUI/OptionalPriceSpinBox.hpp"
 #include "Spire/LegacyUI/QuantitySpinBox.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Ui/TickerDialog.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -471,33 +472,29 @@ void OpenEditorCanvasNodeVisitor::Visit(const TextNode& node) {
 
 void OpenEditorCanvasNodeVisitor::Visit(const TickerNode& node) {
   auto widget = dynamic_cast<QWidget*>(m_model);
-  auto dialog = TickerInputDialog(Ref(*m_userProfile), node.GetValue(), widget);
-  if(m_event && m_event->type() == QEvent::KeyPress) {
-    dialog.GetSymbolInput().selectAll();
-    QApplication::sendEvent(
-      &dialog.GetSymbolInput(), static_cast<QKeyEvent*>(m_event));
+  auto isKeyPress = m_event && m_event->type() == QEvent::KeyPress;
+  auto current = std::make_shared<LocalTickerModel>();
+  if(!isKeyPress) {
+    current->set(node.GetValue());
   }
+  auto dialog = new TickerDialog(
+    m_userProfile->GetTickerInfoQueryModel(), current, widget);
   auto coordinate = m_model->GetCoordinate(node);
-  QObject::connect(&dialog, &TickerInputDialog::finished, widget,
-    [&] (auto result) {
-      if(result == QDialog::Rejected) {
-        return;
-      }
-      auto newValue = dialog.GetTicker();
-      if(!newValue) {
-        return;
-      }
-      auto previousValue = node.GetValue();
-      if(previousValue == newValue) {
-        return;
-      }
+  dialog->connect_submit_signal([&] (const Ticker& newValue) {
+    if(newValue && newValue != node.GetValue()) {
       m_editVariant = new ReplaceNodeCommand(Ref(*m_model), coordinate,
         *node.SetValue(newValue));
-    });
-  dialog.show();
-  while(dialog.isVisible()) {
+    }
+    dialog->hide();
+  });
+  dialog->show();
+  if(isKeyPress) {
+    QApplication::sendEvent(find_focus_proxy(*dialog), m_event);
+  }
+  while(dialog->isVisible()) {
     QCoreApplication::instance()->processEvents(QEventLoop::WaitForMoreEvents);
   }
+  dialog->window()->deleteLater();
 }
 
 void OpenEditorCanvasNodeVisitor::Visit(const TimeInForceNode& node) {

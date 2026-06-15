@@ -1,7 +1,6 @@
 #ifndef SPIRE_BOOK_VIEW_WINDOW_HPP
 #define SPIRE_BOOK_VIEW_WINDOW_HPP
 #include <boost/optional/optional.hpp>
-#include <QPointer>
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/BookView/BookViewPropertiesWindowFactory.hpp"
 #include "Spire/Canvas/Canvas.hpp"
@@ -135,7 +134,6 @@ namespace Spire {
       boost::signals2::scoped_connection m_link_connection;
       TickerView* m_ticker_view;
       CondensedCanvasWidget* m_task_entry_panel;
-      QPointer<QWidget> m_previous_focus;
       bool m_is_task_entry_panel_for_interactions;
       boost::signals2::scoped_connection m_bid_order_connection;
       boost::signals2::scoped_connection m_ask_order_connection;
