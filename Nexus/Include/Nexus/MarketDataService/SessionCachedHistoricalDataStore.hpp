@@ -5,6 +5,7 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queries/SessionCachedDataStore.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
+#include "Nexus/MarketDataService/HistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/HistoricalDataStoreQueryWrapper.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 

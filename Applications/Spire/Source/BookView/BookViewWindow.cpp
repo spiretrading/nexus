@@ -1,24 +1,15 @@
 #include "Spire/BookView/BookViewWindow.hpp"
+#include <limits>
 #include <tuple>
-#include <Beam/Utilities/Algorithm.hpp>
-#include <boost/lexical_cast.hpp>
 #include <QApplication>
-#include <QHeaderView>
+#include <QIcon>
 #include <QKeyEvent>
-#include <QLineEdit>
-#include <QMenu>
-#include <QMessageBox>
-#include <QStatusBar>
-#include <QTableView>
-#include "Spire/Blotter/BlotterModel.hpp"
-#include "Spire/Blotter/BlotterSettings.hpp"
-#include "Spire/Blotter/BlotterWindow.hpp"
-#include "Spire/BookView/BookViewPanel.hpp"
-#include "Spire/BookView/BookViewPropertiesDialog.hpp"
+#include <QScreen>
 #include "Spire/BookView/BookViewWindowSettings.hpp"
+#include "Spire/BookView/DefaultQuantityModel.hpp"
+#include "Spire/BookView/BookDepth.hpp"
+#include "Spire/BookView/TechnicalsPanel.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeBuilder.hpp"
-#include "Spire/Canvas/Operations/CanvasNodeValidationError.hpp"
-#include "Spire/Canvas/Operations/CanvasNodeValidator.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/OptionalPriceNode.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
 #include "Spire/Canvas/SystemNodes/InteractionsNode.hpp"
@@ -26,508 +17,473 @@
 #include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/SideNode.hpp"
 #include "Spire/Canvas/ValueNodes/TickerNode.hpp"
-#include "Spire/CanvasView/CondensedCanvasWidget.hpp"
 #include "Spire/CanvasView/CanvasNodeNotVisibleException.hpp"
-#include "Spire/InputWidgets/TickerInputDialog.hpp"
-#include "Spire/LegacyUI/LinkTickerContextAction.hpp"
+#include "Spire/CanvasView/CondensedCanvasWidget.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
-#include "Spire/LegacyUI/ValueLabel.hpp"
-#include "Spire/Spire/Dimensions.hpp"
-#include "Spire/Spire/ListModel.hpp"
-#include "Spire/Utilities/TickerTechnicalsModel.hpp"
-#include "ui_BookViewWindow.h"
+#include "Spire/Ui/ContextMenu.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/TickerView.hpp"
+#include "Spire/Ui/TransitionView.hpp"
+#include "Spire/Utilities/LinkMenu.hpp"
 
 using namespace Beam;
 using namespace boost;
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
-using namespace Spire::LegacyUI;
+using namespace Spire::Styles;
 
 namespace {
-  const auto UPDATE_INTERVAL = 100;
+  const auto TITLE_NAME = QObject::tr("Book View");
 
-  BookViewWindow* FindNextWindow(const BookViewWindow& origin) {
+  template<bool (QWidget::* method)(QEvent*)>
+  struct SendEvent {
+    friend void send_event(QWidget& widget, const QEvent& event) {
+      (widget.*method)(const_cast<QEvent*>(&event));
+    }
+  };
+
+  template struct SendEvent<&QWidget::event>;
+  void send_event(QWidget& widget, const QEvent& event);
+
+  BookViewWindow* find_next_window(const BookViewWindow& origin) {
     auto widgets = QApplication::topLevelWidgets();
-    auto rightClosestPosition = std::numeric_limits<int>::max();
-    auto rightClosestWindow = static_cast<BookViewWindow*>(nullptr);
-    auto bottomLeftPosition =
-      QPoint(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
-    auto bottomLeftWindow = static_cast<BookViewWindow*>(nullptr);
-    auto topLeftPosition =
-      QPoint(std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
-    auto topLeftWindow = static_cast<BookViewWindow*>(nullptr);
-    for(auto& widget : widgets) {
+    auto right_closest_position = std::numeric_limits<int>::max();
+    auto right_closest_window = static_cast<BookViewWindow*>(nullptr);
+    auto bottom_left_position = QPoint(
+      std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+    auto bottom_left_window = static_cast<BookViewWindow*>(nullptr);
+    auto top_left_position = QPoint(
+      std::numeric_limits<int>::max(), std::numeric_limits<int>::max());
+    auto top_left_window = static_cast<BookViewWindow*>(nullptr);
+    for(auto widget : widgets) {
       auto candidate = dynamic_cast<BookViewWindow*>(widget);
       if(widget != &origin && candidate) {
         auto position = widget->pos();
         if(position.y() >= origin.pos().y() - 20 &&
             position.y() <= origin.pos().y() + 20 &&
             position.x() >= origin.pos().x() &&
-            position.x() <= rightClosestPosition) {
-          rightClosestWindow = candidate;
-          rightClosestPosition = rightClosestWindow->pos().x();
+            position.x() <= right_closest_position) {
+          right_closest_window = candidate;
+          right_closest_position = right_closest_window->pos().x();
         }
         if(position.y() > origin.pos().y() &&
-            position.x() <= bottomLeftPosition.x() &&
-            position.y() <= bottomLeftPosition.y()) {
-          bottomLeftWindow = candidate;
-          bottomLeftPosition = bottomLeftWindow->pos();
+            position.x() <= bottom_left_position.x() &&
+            position.y() <= bottom_left_position.y()) {
+          bottom_left_window = candidate;
+          bottom_left_position = bottom_left_window->pos();
         }
-        if(std::make_tuple(position.y(), position.x()) <=
-            std::make_tuple(topLeftPosition.y(), topLeftPosition.x())) {
-          topLeftWindow = candidate;
-          topLeftPosition = topLeftWindow->pos();
+        if(std::tuple(position.y(), position.x()) <=
+            std::tuple(top_left_position.y(), top_left_position.x())) {
+          top_left_window = candidate;
+          top_left_position = top_left_window->pos();
         }
       }
     }
-    if(rightClosestWindow) {
-      return rightClosestWindow;
+    if(right_closest_window) {
+      return right_closest_window;
     }
-    if(bottomLeftWindow) {
-      return bottomLeftWindow;
+    if(bottom_left_window) {
+      return bottom_left_window;
     }
-    if(topLeftWindow) {
-      return topLeftWindow;
+    if(top_left_window) {
+      return top_left_window;
     }
     return nullptr;
   }
 
-  BookViewWindow* FindPreviousWindow(const BookViewWindow& origin) {
+  BookViewWindow* find_previous_window(const BookViewWindow& origin) {
     auto previous = static_cast<BookViewWindow*>(nullptr);
-    auto next = FindNextWindow(origin);
-    while(next != nullptr && next != &origin) {
+    auto next = find_next_window(origin);
+    while(next && next != &origin) {
       previous = next;
-      next = FindNextWindow(*next);
+      next = find_next_window(*next);
     }
     return previous;
   }
 }
 
-BookViewWindow::BookViewWindow(Ref<UserProfile> userProfile,
-    const BookViewProperties& properties, const std::string& identifier,
-    QWidget* parent, Qt::WindowFlags flags)
-    : QFrame(parent, flags),
-      TickerContext(identifier),
-      m_ui(std::make_unique<Ui_BookViewWindow>()),
-      m_userProfile(userProfile.get()),
-      m_properties(properties),
-      m_taskEntryWidget(nullptr),
-      m_isTaskEntryWidgetForInteractionsProperties(false),
-      m_bidPanelGuard(false),
-      m_askPanelGuard(false) {
-  m_ui->setupUi(this);
-  resize(scale(size()));
-  m_ui->m_highValue->Initialize("", Ref(*m_userProfile));
-  m_ui->m_lowValue->Initialize("", Ref(*m_userProfile));
-  m_ui->m_defaultQuantityValue->Initialize("", Ref(*m_userProfile));
-  m_ui->m_volumeValue->Initialize("", Ref(*m_userProfile));
-  m_ui->m_openValue->Initialize("", Ref(*m_userProfile));
-  m_ui->m_closeValue->Initialize("", Ref(*m_userProfile));
-  m_ui->m_bidPanel->Initialize(Ref(*m_userProfile), m_properties, Side::BID);
-  m_ui->m_askPanel->Initialize(Ref(*m_userProfile), m_properties, Side::ASK);
-  m_ui->m_askPanel->GetQuoteList().setContextMenuPolicy(Qt::CustomContextMenu);
-  connect(&m_ui->m_askPanel->GetQuoteList(),
-    &QTableView::customContextMenuRequested, this,
-    &BookViewWindow::OnContextMenu);
-  m_ui->m_bidPanel->GetQuoteList().setContextMenuPolicy(Qt::CustomContextMenu);
-  connect(&m_ui->m_bidPanel->GetQuoteList(),
-    &QTableView::customContextMenuRequested, this,
-    &BookViewWindow::OnContextMenu);
-  connect(
-    &m_updateTimer, &QTimer::timeout, this, &BookViewWindow::OnUpdateTimer);
-  m_updateTimer.start(UPDATE_INTERVAL);
-  SetupTickerTechnicalsModel();
+BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
+  std::shared_ptr<TickerInfoQueryModel> tickers,
+  std::shared_ptr<KeyBindingsModel> key_bindings,
+  std::shared_ptr<BookViewPropertiesWindowFactory> factory,
+  ModelBuilder model_builder, QWidget* parent)
+  : BookViewWindow(Ref(user_profile), std::move(tickers),
+      std::move(key_bindings), std::move(factory), std::move(model_builder), "",
+      parent)  {}
+
+BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
+    std::shared_ptr<TickerInfoQueryModel> tickers,
+    std::shared_ptr<KeyBindingsModel> key_bindings,
+    std::shared_ptr<BookViewPropertiesWindowFactory> factory,
+    ModelBuilder model_builder, std::string identifier, QWidget* parent)
+    : Window(parent),
+      TickerContext(std::move(identifier)),
+      m_user_profile(user_profile.get()),
+      m_key_bindings(std::move(key_bindings)),
+      m_factory(std::move(factory)),
+      m_model_builder(std::move(model_builder)),
+      m_book_depth(nullptr),
+      m_task_entry_panel(nullptr),
+      m_is_task_entry_panel_for_interactions(false) {
+  set_svg_icon(":/Icons/bookview.svg");
+  setWindowFlags(windowFlags() & ~Qt::WindowMaximizeButtonHint);
+  setWindowIcon(QIcon(":/Icons/taskbar_icons/bookview.png"));
+  setWindowTitle(TITLE_NAME);
+  m_transition_view = new TransitionView(new QWidget());
+  m_ticker_view = new TickerView(std::move(tickers), *m_transition_view);
+  m_ticker_view->get_current()->connect_update_signal(
+    std::bind_front(&BookViewWindow::on_current, this));
+  m_ticker_view->setSizePolicy(
+    QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_ticker_view->setContextMenuPolicy(Qt::CustomContextMenu);
+  set_body(m_ticker_view);
+  update_style(*this, [] (auto& style) {
+    style.get(Any()).set(BackgroundColor(QColor(0xFFFFFF)));
+  });
+  connect(m_ticker_view, &QWidget::customContextMenuRequested,
+    std::bind_front(&BookViewWindow::on_context_menu, this));
+  resize(scale(266, 361));
+  m_page_key_observer.emplace(*this);
+  m_page_key_observer->connect_filtered_key_press_signal(
+    std::bind_front(&BookViewWindow::on_key_press, this));
 }
 
-const BookViewProperties& BookViewWindow::GetBookViewProperties() const {
-  return m_properties;
+const std::shared_ptr<TickerModel>& BookViewWindow::get_current() const {
+  return m_ticker_view->get_current();
 }
 
-void BookViewWindow::SetProperties(const BookViewProperties& properties) {
-  m_properties = properties;
-  m_ui->m_askPanel->SetProperties(m_properties);
-  m_ui->m_bidPanel->SetProperties(m_properties);
+connection BookViewWindow::connect_submit_task_signal(
+    const SubmitTaskSignal::slot_type& slot) const {
+  return m_submit_task_signal.connect(slot);
 }
 
-void BookViewWindow::DisplayTicker(const Ticker& ticker) {
-  m_ticker = ticker;
-  setWindowTitle(QString::fromStdString(to_string(ticker)) +
-    tr(" - Book View"));
-  m_ui->m_askPanel->DisplayTicker(m_ticker);
-  m_ui->m_bidPanel->DisplayTicker(m_ticker);
-  SetupTickerTechnicalsModel();
-  SetDisplayedTicker(m_ticker);
+connection BookViewWindow::connect_cancel_operation_signal(
+    const CancelOperationSignal::slot_type& slot) const {
+  return m_cancel_operation_signal.connect(slot);
 }
 
-std::unique_ptr<WindowSettings> BookViewWindow::GetWindowSettings() const {
-  return std::make_unique<BookViewWindowSettings>(*this, Ref(*m_userProfile));
-}
-
-void BookViewWindow::showEvent(QShowEvent* event) {
-  if(auto context = TickerContext::FindTickerContext(m_linkIdentifier)) {
-    Link(*context);
-  } else {
-    m_linkConnection.disconnect();
-    m_linkIdentifier.clear();
-  }
-  QFrame::showEvent(event);
-  m_ui->m_askPanel->GetQuoteList().horizontalHeader()->setStretchLastSection(
-    true);
-  m_ui->m_bidPanel->GetQuoteList().horizontalHeader()->setStretchLastSection(
-    true);
-}
-
-void BookViewWindow::closeEvent(QCloseEvent* event) {
-  if(m_ticker != Ticker()) {
-    auto settings =
-      std::make_unique<BookViewWindowSettings>(*this, Ref(*m_userProfile));
-    m_userProfile->GetRecentlyClosedWindows()->push(std::move(settings));
-  }
-  QFrame::closeEvent(event);
+std::unique_ptr<LegacyUI::WindowSettings>
+    BookViewWindow::GetWindowSettings() const {
+  return std::make_unique<BookViewWindowSettings>(*this);
 }
 
 void BookViewWindow::keyPressEvent(QKeyEvent* event) {
-  if(m_taskEntryWidget) {
-    HandleTaskInputEvent(event);
-  } else if(event->key() == Qt::Key_Tab) {
-    if(auto window = FindNextWindow(*this)) {
-      window->activateWindow();
+  auto sequence = QKeySequence(event->modifiers() | event->key());
+  if(m_task_entry_panel) {
+    on_task_entry_key_press(*event);
+  } else if(sequence == QKeySequence(Qt::CTRL + Qt::Key_K)) {
+    if(auto current = m_book_depth->get_current()->get()) {
+      on_cancel_most_recent(*current);
     }
-    return;
-  } else if(event->key() == Qt::Key_Backtab) {
-    if(auto window = FindPreviousWindow(*this)) {
-      window->activateWindow();
+  } else if(sequence == QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_K)) {
+    if(auto current = m_book_depth->get_current()->get()) {
+      on_cancel_all(*current);
     }
-    return;
-  } else if(m_ticker != Ticker()) {
-    auto key =
-      QKeySequence(static_cast<int>(event->modifiers() + event->key()));
-    if(key.matches(Qt::Key_QuoteLeft) == QKeySequence::ExactMatch) {
-      HandleInteractionsPropertiesEvent();
-    } else {
-      auto taskBinding = find_order_task_arguments(
-        *m_userProfile->GetKeyBindings()->get_order_task_arguments(),
-        m_ticker, key);
-      if(taskBinding) {
-        HandleKeyBindingEvent(*taskBinding);
-        return;
-      }
-      auto cancelBinding = m_userProfile->GetKeyBindings()->
-        get_cancel_key_bindings()->find_operation(key);
-      if(cancelBinding) {
-        HandleCancelBindingEvent(*cancelBinding);
-        return;
-      }
-    }
+  } else if(sequence.matches(Qt::Key_QuoteLeft) == QKeySequence::ExactMatch) {
+    display_interactions_panel();
+  } else if(auto operation =
+      m_key_bindings->get_cancel_key_bindings()->find_operation(sequence)) {
+    m_cancel_operation_signal(
+      *operation, m_ticker_view->get_current()->get(), none);
+  } else if(auto arguments = find_order_task_arguments(
+      *m_key_bindings->get_order_task_arguments(),
+      m_ticker_view->get_current()->get(), sequence)) {
+    display_task_entry_panel(*arguments);
   }
-  HandleTickerInputEvent(event);
+}
+
+void BookViewWindow::showEvent(QShowEvent* event) {
+  if(auto context = TickerContext::FindTickerContext(m_link_identifier)) {
+    Link(*context);
+  } else {
+    HandleUnlink();
+  }
+  Window::showEvent(event);
 }
 
 void BookViewWindow::HandleLink(TickerContext& context) {
-  m_linkIdentifier = context.GetIdentifier();
-  m_linkConnection = context.ConnectTickerDisplaySignal(
-    std::bind_front(&BookViewWindow::DisplayTicker, this));
-  DisplayTicker(context.GetDisplayedTicker());
+  m_link_identifier = context.GetIdentifier();
+  m_link_connection = context.ConnectTickerDisplaySignal(
+    [=] (const auto& ticker) {
+      if(m_ticker_view->get_current()->get() != ticker) {
+         m_ticker_view->get_current()->set(ticker);
+      }
+    });
+  m_ticker_view->get_current()->set(context.GetDisplayedTicker());
 }
 
 void BookViewWindow::HandleUnlink() {
-  m_linkConnection.disconnect();
-  m_linkIdentifier.clear();
-}
-
-void BookViewWindow::SetupTickerTechnicalsModel() {
-  m_tickerTechnicalsConnections.disconnect();
-  m_ui->m_openValue->Reset();
-  m_ui->m_closeValue->Reset();
-  m_ui->m_highValue->Reset();
-  m_ui->m_lowValue->Reset();
-  m_ui->m_volumeValue->Reset();
-  m_tickerTechnicalsModel =
-    TickerTechnicalsModel::GetModel(Ref(*m_userProfile), m_ticker);
-  m_tickerTechnicalsConnections.add(
-    m_tickerTechnicalsModel->ConnectOpenSignal(
-      std::bind_front(&BookViewWindow::OnOpenUpdate, this)));
-  m_tickerTechnicalsConnections.add(
-    m_tickerTechnicalsModel->ConnectCloseSignal(
-      std::bind_front(&BookViewWindow::OnCloseUpdate, this)));
-  m_tickerTechnicalsConnections.add(
-    m_tickerTechnicalsModel->ConnectHighSignal(
-      std::bind_front(&BookViewWindow::OnHighUpdate, this)));
-  m_tickerTechnicalsConnections.add(
-    m_tickerTechnicalsModel->ConnectLowSignal(
-      std::bind_front(&BookViewWindow::OnLowUpdate, this)));
-  m_tickerTechnicalsConnections.add(
-    m_tickerTechnicalsModel->ConnectVolumeSignal(
-      std::bind_front(&BookViewWindow::OnVolumeUpdate, this)));
+  m_link_connection.disconnect();
+  m_link_identifier.clear();
 }
 
 std::unique_ptr<CanvasNode>
-    BookViewWindow::PrepareTaskNode(const CanvasNode& node) {
-  auto taskNode = CanvasNode::Clone(node);
-  auto tickerNode =
-    taskNode->FindNode(SingleOrderTaskNode::TICKER_PROPERTY);
-  if(tickerNode && !tickerNode->IsReadOnly()) {
-    if(auto tickerValueNode =
-        dynamic_cast<const TickerNode*>(&*tickerNode)) {
-      auto builder = CanvasNodeBuilder(*taskNode);
-      builder.Replace(*tickerNode, tickerValueNode->SetValue(m_ticker));
-      builder.SetReadOnly(*tickerNode, true);
-      auto price = [&] {
-        if(auto sideNode =
-            taskNode->FindNode(SingleOrderTaskNode::SIDE_PROPERTY)) {
-          if(auto sideValueNode = dynamic_cast<const SideNode*>(&*sideNode)) {
-            if(sideValueNode->GetValue() == Side::ASK) {
-              return m_ui->m_askPanel->GetBestQuote().m_price;
+    BookViewWindow::make_task_node(const CanvasNode& node) {
+  auto task_node = CanvasNode::Clone(node);
+  auto ticker_node =
+    task_node->FindNode(SingleOrderTaskNode::TICKER_PROPERTY);
+  if(ticker_node && !ticker_node->IsReadOnly()) {
+    auto ticker = m_ticker_view->get_current()->get();
+    if(auto ticker_value_node =
+        dynamic_cast<const TickerNode*>(&*ticker_node)) {
+      auto builder = CanvasNodeBuilder(*task_node);
+      builder.Replace(*ticker_node, ticker_value_node->SetValue(ticker));
+      builder.SetReadOnly(*ticker_node, true);
+      auto price_node =
+        task_node->FindNode(SingleOrderTaskNode::PRICE_PROPERTY);
+      if(price_node && !price_node->IsReadOnly()) {
+        auto price = [&] {
+          if(auto side_node =
+              task_node->FindNode(SingleOrderTaskNode::SIDE_PROPERTY)) {
+            if(auto side_value_node =
+                dynamic_cast<const SideNode*>(&*side_node)) {
+              if(side_value_node->GetValue() == Side::ASK) {
+                return m_model->get_bbo_quote()->get().m_ask.m_price;
+              }
             }
           }
-        }
-        return m_ui->m_bidPanel->GetBestQuote().m_price;
-      }();
-      auto priceNode = taskNode->FindNode(SingleOrderTaskNode::PRICE_PROPERTY);
-      if(priceNode && !priceNode->IsReadOnly()) {
-        if(auto moneyNode = dynamic_cast<const MoneyNode*>(&*priceNode)) {
-          builder.Replace(*priceNode, moneyNode->SetValue(price));
-        } else if(auto moneyNode =
-            dynamic_cast<const OptionalPriceNode*>(&*priceNode)) {
-          builder.Replace(*priceNode, moneyNode->SetReferencePrice(price));
+          return m_model->get_bbo_quote()->get().m_bid.m_price;
+        }();
+        if(auto money_node = dynamic_cast<const MoneyNode*>(&*price_node)) {
+          builder.Replace(*price_node, money_node->SetValue(price));
+        } else if(auto money_node =
+            dynamic_cast<const OptionalPriceNode*>(&*price_node)) {
+          builder.Replace(*price_node, money_node->SetReferencePrice(price));
         }
       }
-      auto quantityNode =
-        taskNode->FindNode(SingleOrderTaskNode::QUANTITY_PROPERTY);
-      if(quantityNode && !quantityNode->IsReadOnly()) {
-        if(auto quantityValueNode =
-            dynamic_cast<const IntegerNode*>(&*quantityNode)) {
+      auto quantity_node =
+        task_node->FindNode(SingleOrderTaskNode::QUANTITY_PROPERTY);
+      if(quantity_node && !quantity_node->IsReadOnly()) {
+        if(auto quantity_value_node =
+            dynamic_cast<const IntegerNode*>(&*quantity_node)) {
           auto quantity = [&] {
-            auto sideNode =
-              taskNode->FindNode(SingleOrderTaskNode::SIDE_PROPERTY);
+            auto side_node =
+              task_node->FindNode(SingleOrderTaskNode::SIDE_PROPERTY);
             auto& interactions =
-              *m_userProfile->GetKeyBindings()->get_interactions_key_bindings(
-                m_ticker);
-            if(sideNode) {
-              if(auto sideValueNode =
-                  dynamic_cast<const SideNode*>(&*sideNode)) {
+              *m_key_bindings->get_interactions_key_bindings(ticker);
+            if(side_node) {
+              if(auto side_value_node =
+                  dynamic_cast<const SideNode*>(&*side_node)) {
                 return get_default_order_quantity(
-                  *m_userProfile, m_ticker, sideValueNode->GetValue());
+                  *m_user_profile, ticker, side_value_node->GetValue());
               }
             }
             return interactions.get_default_quantity()->get();
           }();
-          builder.Replace(*quantityNode,
-            quantityValueNode->SetValue(static_cast<int>(quantity)));
+          builder.Replace(*quantity_node,
+            quantity_value_node->SetValue(static_cast<int>(quantity)));
         }
       }
-      taskNode = builder.Make();
+      task_node = builder.Make();
     }
   }
-  return taskNode;
+  return task_node;
 }
 
-void BookViewWindow::RemoveTaskEntry() {
-  setUpdatesEnabled(false);
-  m_ui->verticalLayout->removeWidget(m_taskEntryWidget);
-  m_taskEntryWidget->deleteLater();
-  m_taskEntryWidget = nullptr;
-  m_isTaskEntryWidgetForInteractionsProperties = false;
-  setUpdatesEnabled(true);
+void BookViewWindow::display_interactions_panel() {
+  auto ticker = m_ticker_view->get_current()->get();
+  auto& interactions = *m_key_bindings->get_interactions_key_bindings(ticker);
+  auto interactions_node = InteractionsNode(ticker, interactions);
+  m_task_entry_panel =
+    new CondensedCanvasWidget("Interactions", Ref(*m_user_profile), this);
+  m_is_task_entry_panel_for_interactions = true;
+  auto coordinate = CanvasNodeModel::Coordinate(0, 0);
+  m_task_entry_panel->Add(coordinate, interactions_node);
+  m_task_entry_panel->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
+  m_transition_view->layout()->addWidget(m_task_entry_panel);
+  m_task_entry_panel->Focus();
 }
 
-void BookViewWindow::ExecuteTask(const CanvasNode& node) {
-  auto errors = Validate(node);
-  if(!errors.empty()) {
-    QMessageBox::warning(this, QObject::tr("Error"),
-      QString::fromStdString(errors.front().GetErrorMessage()));
-    return;
-  }
-  auto& activeBlotter = m_userProfile->GetBlotterSettings().GetActiveBlotter();
-  auto& blotterWindow =
-    BlotterWindow::GetBlotterWindow(Ref(*m_userProfile), Ref(activeBlotter));
-  if(!blotterWindow.isVisible()) {
-    blotterWindow.setAttribute(Qt::WA_ShowWithoutActivating);
-    blotterWindow.show();
-    raise();
-  }
-  auto& entry = activeBlotter.GetTasksModel().Add(node);
-  m_tasksExecuted[m_ticker].push_back(entry.m_task);
-  entry.m_task->GetPublisher().monitor(
-    m_eventHandler.get_slot<Task::StateEntry>(
-      [=, task = entry.m_task] (const auto& update) {
-        OnTaskState(task, update);
-      }));
-  entry.m_task->Execute();
-}
-
-void BookViewWindow::HandleTickerInputEvent(QKeyEvent* event) {
-  auto key = event->key();
-  if(key == Qt::Key_PageUp) {
-    m_tickerViewStack.PushUp(m_ticker, [&] (const auto& ticker) {
-      DisplayTicker(ticker);
-    });
-    return;
-  } else if(key == Qt::Key_PageDown) {
-    m_tickerViewStack.PushDown(m_ticker, [&] (const auto& ticker) {
-      DisplayTicker(ticker);
-    });
-    return;
-  }
-  auto text = event->text();
-  if(text.isEmpty() || !text[0].isLetterOrNumber()) {
-    return;
-  }
-  ShowTickerInputDialog(Ref(*m_userProfile), text.toStdString(), this,
-    [=] (auto ticker) {
-      if(!ticker || ticker == Ticker() || ticker == m_ticker) {
-        return;
-      }
-      m_tickerViewStack.Push(m_ticker);
-      DisplayTicker(*ticker);
-    });
-}
-
-void BookViewWindow::HandleKeyBindingEvent(
+void BookViewWindow::display_task_entry_panel(
     const OrderTaskArguments& arguments) {
-  auto taskNode = PrepareTaskNode(
-    *make_canvas_node(arguments, m_userProfile->GetAdditionalTagDatabase()));
-  m_taskEntryWidget = new CondensedCanvasWidget(
-    arguments.m_name.toStdString(), Ref(*m_userProfile), this);
+  auto task_node = make_task_node(
+    *make_canvas_node(arguments, m_user_profile->GetAdditionalTagDatabase()));
+  m_task_entry_panel = new CondensedCanvasWidget(
+    arguments.m_name.toStdString(), Ref(*m_user_profile), this);
   auto coordinate = CanvasNodeModel::Coordinate(0, 0);
   auto isVisible = [&] {
     try {
-      m_taskEntryWidget->Add(coordinate, *taskNode);
+      m_task_entry_panel->Add(coordinate, *task_node);
       return true;
     } catch(const CanvasNodeNotVisibleException&) {
       return false;
     }
   }();
   if(isVisible) {
-    m_taskEntryWidget->setSizePolicy(
+    m_task_entry_panel->setSizePolicy(
       QSizePolicy::Preferred, QSizePolicy::Fixed);
-    m_ui->verticalLayout->insertWidget(2, m_taskEntryWidget);
-    m_taskEntryWidget->Focus();
+    m_transition_view->layout()->addWidget(m_task_entry_panel);
+    m_task_entry_panel->Focus();
   } else {
-    m_taskEntryWidget->deleteLater();
-    m_taskEntryWidget = nullptr;
-    ExecuteTask(*taskNode);
+    m_task_entry_panel->deleteLater();
+    m_task_entry_panel = nullptr;
+    auto signaled_task = std::shared_ptr(std::move(task_node));
+    m_submit_task_signal(signaled_task);
   }
 }
 
-void BookViewWindow::HandleInteractionsPropertiesEvent() {
-  auto& interactions =
-    *m_userProfile->GetKeyBindings()->get_interactions_key_bindings(m_ticker);
-  auto interactionsNode = std::make_unique<InteractionsNode>(
-    m_ticker, interactions);
-  m_taskEntryWidget =
-    new CondensedCanvasWidget("Interactions", Ref(*m_userProfile), this);
-  m_isTaskEntryWidgetForInteractionsProperties = true;
-  auto coordinate = CanvasNodeModel::Coordinate(0, 0);
-  m_taskEntryWidget->Add(coordinate, *interactionsNode);
-  m_taskEntryWidget->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
-  m_ui->verticalLayout->insertWidget(2, m_taskEntryWidget);
-  m_taskEntryWidget->Focus();
+void BookViewWindow::remove_task_entry_panel() {
+  setUpdatesEnabled(false);
+  m_transition_view->layout()->removeWidget(m_task_entry_panel);
+  m_task_entry_panel->deleteLater();
+  m_task_entry_panel = nullptr;
+  m_is_task_entry_panel_for_interactions = false;
+  if(m_book_depth) {
+    m_book_depth->setFocus();
+  }
+  setUpdatesEnabled(true);
 }
 
-void BookViewWindow::HandleCancelBindingEvent(
-    const CancelKeyBindingsModel::Operation& operation) {
-  execute(operation, out(m_tasksExecuted[m_ticker]));
+bool BookViewWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
+  if(!m_task_entry_panel && event.key() == Qt::Key_Tab) {
+    if(auto window = find_next_window(*this)) {
+      window->activateWindow();
+    }
+    return true;
+  } else if(!m_task_entry_panel && event.key() == Qt::Key_Backtab) {
+    if(auto window = find_previous_window(*this)) {
+      window->activateWindow();
+    }
+    return true;
+  } else if(m_book_depth && &target != m_ticker_view &&
+      (event.key() == Qt::Key_PageUp || event.key() == Qt::Key_PageDown) &&
+        !(event.modifiers() &
+          (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier))) {
+    send_event(*m_ticker_view, event);
+    return true;
+  }
+  return false;
 }
 
-void BookViewWindow::HandleTaskInputEvent(QKeyEvent* event) {
-  auto baseKey = event->key();
-  if(baseKey == Qt::Key_Escape) {
-    RemoveTaskEntry();
-  } else if(baseKey == Qt::Key_Enter || baseKey == Qt::Key_Return) {
-    if(m_isTaskEntryWidgetForInteractionsProperties) {
+void BookViewWindow::on_context_menu(const QPoint& pos) {
+  auto menu = new ContextMenu(*m_ticker_view);
+  if(m_book_depth) {
+    if(auto current = m_book_depth->get_current()->get()) {
+      menu->add_action(tr("Cancel Single Selected"),
+        std::bind_front(&BookViewWindow::on_cancel_most_recent, this, *current));
+      menu->add_action(tr("Cancel All Selected"),
+        std::bind_front(&BookViewWindow::on_cancel_all, this, *current));
+      menu->add_separator();
+    }
+  }
+  menu->add_action(tr("Properties"),
+    std::bind_front(&BookViewWindow::on_properties_menu, this));
+  add_link_menu(*menu, *this);
+  menu->window()->setAttribute(Qt::WA_DeleteOnClose);
+  menu->window()->move(m_ticker_view->mapToGlobal(pos));
+  menu->window()->show();
+}
+
+void BookViewWindow::on_task_entry_key_press(const QKeyEvent& event) {
+  auto base_key = event.key();
+  if(base_key == Qt::Key_Escape) {
+    remove_task_entry_panel();
+  } else if(base_key == Qt::Key_Enter || base_key == Qt::Key_Return) {
+    if(m_is_task_entry_panel_for_interactions) {
       auto& node = static_cast<const InteractionsNode&>(
-        *m_taskEntryWidget->GetRoots().front());
-      apply(node, *m_userProfile->GetKeyBindings());
-      RemoveTaskEntry();
+        *m_task_entry_panel->GetRoots().front());
+      apply(node, *m_key_bindings);
+      remove_task_entry_panel();
     } else {
-      auto taskNode = CanvasNode::Clone(*m_taskEntryWidget->GetRoots().front());
-      RemoveTaskEntry();
-      ExecuteTask(*taskNode);
+      auto task_node = std::shared_ptr(
+        CanvasNode::Clone(*m_task_entry_panel->GetRoots().front()));
+      remove_task_entry_panel();
+      m_submit_task_signal(task_node);
     }
-  } else if(baseKey == Qt::Key_QuoteLeft) {
-    RemoveTaskEntry();
-    HandleInteractionsPropertiesEvent();
+  } else if(base_key == Qt::Key_QuoteLeft) {
+    remove_task_entry_panel();
+    display_interactions_panel();
   } else {
-    auto key =
-      QKeySequence(static_cast<int>(event->modifiers() + event->key()));
-    auto taskBinding = find_order_task_arguments(
-      *m_userProfile->GetKeyBindings()->get_order_task_arguments(), m_ticker,
-      key);
-    if(taskBinding) {
-      RemoveTaskEntry();
-      HandleKeyBindingEvent(*taskBinding);
+    auto sequence =
+      QKeySequence(static_cast<int>(event.modifiers() + event.key()));
+    if(auto arguments = find_order_task_arguments(
+        *m_key_bindings->get_order_task_arguments(),
+        m_ticker_view->get_current()->get(), sequence)) {
+      remove_task_entry_panel();
+      display_task_entry_panel(*arguments);
     }
   }
 }
 
-void BookViewWindow::UpdateDefaultQuantity() {
-  auto defaultBidQuantity =
-    get_default_order_quantity(*m_userProfile, m_ticker, Side::BID);
-  auto defaultAskQuantity =
-    get_default_order_quantity(*m_userProfile, m_ticker, Side::ASK);
-  m_ui->m_defaultQuantityValue->SetValue(QString::fromStdString(
-    lexical_cast<std::string>(defaultBidQuantity) + "x" +
-    lexical_cast<std::string>(defaultAskQuantity)));
+void BookViewWindow::on_cancel_most_recent(const CurrentUserOrder& user_order) {
+  auto operation = pick(user_order.m_side,
+    CancelKeyBindingsModel::Operation::MOST_RECENT_ASK,
+    CancelKeyBindingsModel::Operation::MOST_RECENT_BID);
+  m_cancel_operation_signal(
+    operation, m_ticker_view->get_current()->get(), CancelCriteria(
+      user_order.m_user_order.m_destination, user_order.m_user_order.m_price));
 }
 
-void BookViewWindow::OnOpenUpdate(Money open) {
-  m_ui->m_openValue->SetValue(QVariant::fromValue(open));
+void BookViewWindow::on_cancel_all(const CurrentUserOrder& user_order) {
+  auto operation = pick(user_order.m_side,
+    CancelKeyBindingsModel::Operation::ALL_ASKS,
+    CancelKeyBindingsModel::Operation::ALL_BIDS);
+  m_cancel_operation_signal(
+    operation, m_ticker_view->get_current()->get(), CancelCriteria(
+      user_order.m_user_order.m_destination, user_order.m_user_order.m_price));
 }
 
-void BookViewWindow::OnCloseUpdate(Money close) {
-  m_ui->m_closeValue->SetValue(QVariant::fromValue(close));
-}
-
-void BookViewWindow::OnHighUpdate(Money high) {
-  m_ui->m_highValue->SetValue(QVariant::fromValue(high));
-}
-
-void BookViewWindow::OnLowUpdate(Money low) {
-  m_ui->m_lowValue->SetValue(QVariant::fromValue(low));
-}
-
-void BookViewWindow::OnVolumeUpdate(Quantity volume) {
-  m_ui->m_volumeValue->SetValue(static_cast<int>(volume));
-}
-
-void BookViewWindow::OnTaskState(const std::shared_ptr<Task>& task,
-    const Task::StateEntry& update) {
-  if(IsTerminal(update.m_state)) {
-    remove_first(m_tasksExecuted[m_ticker], task);
-  }
-}
-
-void BookViewWindow::OnContextMenu(const QPoint& position) {
-  auto contextMenu = QMenu();
-  auto propertiesAction = QAction(&contextMenu);
-  propertiesAction.setText(tr("Properties"));
-  propertiesAction.setToolTip(tr("Opens the Book View properties."));
-  contextMenu.addAction(&propertiesAction);
-  auto linkMenu = QMenu("Links");
-  auto linkActions = LinkTickerContextAction::MakeActions(
-    this, m_linkIdentifier, &linkMenu, *m_userProfile);
-  for(auto& action : linkActions) {
-    linkMenu.addAction(action.get());
-  }
-  if(!linkMenu.isEmpty()) {
-    contextMenu.addMenu(&linkMenu);
-  }
-  auto selectedAction =
-    contextMenu.exec(static_cast<QWidget*>(sender())->mapToGlobal(position));
-  if(selectedAction == &propertiesAction) {
-    auto propertiesWidget = BookViewPropertiesDialog(
-      Ref(*m_userProfile), m_ticker, m_properties, this);
-    if(propertiesWidget.exec() == QDialog::Rejected) {
-      return;
+void BookViewWindow::on_properties_menu() {
+  auto properties_window = m_factory->make(
+    m_key_bindings, m_ticker_view->get_current()->get());
+  if(!properties_window->isVisible()) {
+    properties_window->show();
+    if(screen()->geometry().right() - frameGeometry().right() >=
+        properties_window->frameGeometry().width()) {
+      properties_window->move(frameGeometry().right(), y());
+    } else {
+      properties_window->move(
+        x() - properties_window->frameGeometry().width(), y());
     }
-    SetProperties(propertiesWidget.GetProperties());
-  } else if(auto linkAction =
-      dynamic_cast<LinkTickerContextAction*>(selectedAction)) {
-    linkAction->Execute(out(*this));
   }
+  properties_window->activateWindow();
 }
 
-void BookViewWindow::OnUpdateTimer() {
-  UpdateDefaultQuantity();
+void BookViewWindow::on_current(const Ticker& ticker) {
+  if(!ticker) {
+    return;
+  }
+  setWindowTitle(to_text(ticker) + " " + QString(0x2013) + " " + TITLE_NAME);
+  m_transition_view->set_status(TransitionView::Status::NONE);
+  m_interactions = m_key_bindings->get_interactions_key_bindings(ticker);
+  m_model = m_model_builder(ticker);
+  auto body = new QWidget();
+  auto layout = make_vbox_layout(body);
+  auto panel = new TechnicalsPanel(m_model->get_session_technicals(),
+    std::make_shared<DefaultQuantityModel>(
+      Ref(*m_user_profile), ticker, Side::BID),
+    std::make_shared<DefaultQuantityModel>(
+      Ref(*m_user_profile), ticker, Side::ASK));
+  panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  layout->addWidget(panel);
+  m_book_depth = new BookDepth(m_model, m_factory->get_properties());
+  layout->addWidget(m_book_depth);
+  body->setFocusProxy(m_book_depth);
+  m_transition_view->set_body(*body);
+  m_transition_view->set_status(TransitionView::Status::READY);
+  m_bid_order_connection = m_model->get_bid_orders()->connect_operation_signal(
+    std::bind_front(&BookViewWindow::on_order_operation, this, Side::BID));
+  m_ask_order_connection = m_model->get_ask_orders()->connect_operation_signal(
+    std::bind_front(&BookViewWindow::on_order_operation, this, Side::ASK));
+  SetDisplayedTicker(ticker);
+  m_page_key_observer.emplace(*this);
+  m_page_key_observer->connect_filtered_key_press_signal(
+    std::bind_front(&BookViewWindow::on_key_press, this));
+}
+
+void BookViewWindow::on_order_operation(Side side,
+    const ListModel<BookViewModel::UserOrder>::Operation& operation) {
+  visit(operation,
+    [&] (const ListModel<BookViewModel::UserOrder>::UpdateOperation&
+        operation) {
+      auto cancel_operation = pick(side,
+        CancelKeyBindingsModel::Operation::ALL_ASKS,
+        CancelKeyBindingsModel::Operation::ALL_BIDS);
+      if(operation.get_value().m_status == OrderStatus::FILLED &&
+          m_interactions->is_cancel_on_fill()->get()) {
+        m_cancel_operation_signal(
+          cancel_operation, m_ticker_view->get_current()->get(), none);
+      }
+    });
 }

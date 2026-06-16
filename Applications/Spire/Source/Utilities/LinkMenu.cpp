@@ -52,7 +52,6 @@ void Spire::add_link_menu(ContextMenu& parent, TickerContext& context) {
     QString m_title;
     std::shared_ptr<BooleanModel> m_is_linked;
   };
-  auto link_menu = new ContextMenu(static_cast<QWidget&>(parent));
   auto windows = QApplication::topLevelWidgets();
   auto items = std::vector<Item>();
   for(auto& window : windows) {
@@ -65,12 +64,19 @@ void Spire::add_link_menu(ContextMenu& parent, TickerContext& context) {
       items.push_back(std::move(item));
     }
   }
+  if(items.empty()) {
+    return;
+  }
+  auto link_menu = new ContextMenu(static_cast<QWidget&>(parent));
   std::sort(items.begin(), items.end(),
     [&] (const auto& left, const auto& right) {
       return to_text(left.m_ticker) < to_text(right.m_ticker);
     });
   for(auto& item : items) {
     link_menu->add_check_box(item.m_title, item.m_is_linked);
+    item.m_is_linked->connect_update_signal([&] (auto value) {
+      parent.hide();
+    });
   }
   parent.add_menu(QObject::tr("Link to"), *link_menu);
 }

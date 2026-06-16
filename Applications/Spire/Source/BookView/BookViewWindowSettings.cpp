@@ -2,59 +2,43 @@
 #include <Beam/Utilities/ToString.hpp>
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
-#include "ui_BookViewPanel.h"
-#include "ui_BookViewWindow.h"
+#include "Spire/Ui/CustomQtVariants.hpp"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
-using namespace std;
 
-BookViewWindowSettings::BookViewWindowSettings() {}
-
-BookViewWindowSettings::BookViewWindowSettings(const BookViewWindow& window,
-    Ref<UserProfile> userProfile)
-    : m_properties(window.GetBookViewProperties()),
-      m_ticker(window.m_ticker),
-      m_tickerViewStack(window.m_tickerViewStack),
+BookViewWindowSettings::BookViewWindowSettings(const BookViewWindow& window)
+    : m_ticker_view(window.m_ticker_view->save_state()),
       m_identifier(window.GetIdentifier()),
-      m_linkIdentifier(window.m_linkIdentifier),
-      m_geometry(window.saveGeometry()),
-      m_bidPanelHeader(window.m_ui->m_bidPanel->m_ui->m_bookView->
-        horizontalHeader()->saveState()),
-      m_askPanelHeader(window.m_ui->m_askPanel->m_ui->m_bookView->
-        horizontalHeader()->saveState()) {
-  if(m_ticker != Ticker()) {
-    m_name = "Book View - " + to_string(m_ticker);
+      m_link_identifier(window.m_link_identifier),
+      m_geometry(window.saveGeometry()) {
+  auto& ticker = window.GetDisplayedTicker();
+  if(ticker) {
+    m_name = "Book View - " + to_string(ticker);
   } else {
     m_name = "Book View";
   }
 }
 
-string BookViewWindowSettings::GetName() const {
+std::string BookViewWindowSettings::GetName() const {
   return m_name;
 }
 
-QWidget* BookViewWindowSettings::Reopen(
-    Ref<UserProfile> userProfile) const {
-  BookViewWindow* window = new BookViewWindow(Ref(userProfile), m_properties,
-    m_identifier);
-  window->setAttribute(Qt::WA_DeleteOnClose);
-  Apply(Ref(userProfile), out(*window));
+QWidget* BookViewWindowSettings::Reopen(Ref<UserProfile> user_profile) const {
+  auto window = new BookViewWindow(Ref(user_profile),
+    user_profile->GetTickerInfoQueryModel(),
+    user_profile->GetKeyBindings(),
+    user_profile->GetBookViewPropertiesWindowFactory(),
+    user_profile->GetBookViewModelBuilder(), m_identifier);
+  Apply(Ref(user_profile), out(*window));
   return window;
 }
 
-void BookViewWindowSettings::Apply(Ref<UserProfile> userProfile,
-    Out<QWidget> widget) const {
-  BookViewWindow& window = dynamic_cast<BookViewWindow&>(*widget);
+void BookViewWindowSettings::Apply(
+    Ref<UserProfile> user_profile, Out<QWidget> widget) const {
+  auto& window = dynamic_cast<BookViewWindow&>(*widget);
   restore_geometry(window, m_geometry);
-  window.m_ui->m_bidPanel->m_ui->m_bookView->horizontalHeader()->
-    restoreState(m_bidPanelHeader);
-  window.m_ui->m_askPanel->m_ui->m_bookView->horizontalHeader()->
-    restoreState(m_askPanelHeader);
-  window.m_tickerViewStack = m_tickerViewStack;
-  if(m_ticker != Ticker()) {
-    window.DisplayTicker(m_ticker);
-  }
-  window.m_linkIdentifier = m_linkIdentifier;
+  window.m_link_identifier = m_link_identifier;
+  window.m_ticker_view->restore(m_ticker_view);
 }

@@ -3,6 +3,11 @@
 #include "Spire/Ui/TableView.hpp"
 
 namespace Spire {
+namespace Styles {
+
+  /** Selects the delete button. */
+  using DeleteButton = StateSelector<void, struct DeleteButtonSeletorTag>;
+}
 
   /**
    * Implements a TableView that supports deleting rows and editing table cells.

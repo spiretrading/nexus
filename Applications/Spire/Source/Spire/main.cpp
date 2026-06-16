@@ -9,7 +9,7 @@
 #include <QStandardPaths>
 #include <tclap/CmdLine.h>
 #include "Spire/Blotter/BlotterSettings.hpp"
-#include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/BookView/BookViewPropertiesWindowFactory.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
 #include "Spire/KeyBindings/HotkeyOverride.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
@@ -194,7 +194,12 @@ int main(int argc, char* argv[]) {
   auto sign_in_handler = [&] (auto clients) {
     loaded_settings.clear();
     try {
-      load_definitions(clients.get_definitions_client());
+      try {
+        load_definitions(clients.get_definitions_client());
+      } catch(const std::exception&) {
+        throw std::runtime_error("Unable to load definitions.");
+      }
+      auto username = clients.get_service_locator_client().get_account().m_name;
       auto is_administrator = [&] {
         try {
           return clients.get_administration_client().check_administrator(
@@ -237,11 +242,17 @@ int main(int argc, char* argv[]) {
         } catch(const std::exception&) {}
         return Uri();
       }();
-      user_profile.emplace(
-        clients.get_service_locator_client().get_account().m_name,
-        is_administrator, is_manager, std::move(exchange_rates),
-        std::move(entitlements), get_default_additional_tag_database(),
-        std::move(web_portal_uri), std::move(clients));
+      auto book_view_properties =
+        load_book_view_properties(get_profile_path(username));
+      loaded_settings.insert("BookView");
+      auto time_and_sales_properties =
+        load_time_and_sales_properties(get_profile_path(username));
+      loaded_settings.insert("TimeAndSales");
+      user_profile.emplace(username, is_administrator, is_manager,
+        std::move(exchange_rates), std::move(entitlements),
+        get_default_additional_tag_database(), std::move(book_view_properties),
+        std::move(time_and_sales_properties), std::move(web_portal_uri),
+        std::move(clients));
       auto sign_in_data = JsonObject();
       sign_in_data["version"] = std::string(SPIRE_VERSION);
       try {
@@ -253,12 +264,8 @@ int main(int argc, char* argv[]) {
       loaded_settings.insert("BlotterSettings");
       CatalogSettings::Load(out(*user_profile));
       loaded_settings.insert("CatalogSettings");
-      BookViewProperties::Load(out(*user_profile));
-      loaded_settings.insert("BookViewProperties");
       RiskTimerProperties::Load(out(*user_profile));
       loaded_settings.insert("RiskTimerProperties");
-      TimeAndSalesProperties::Load(out(*user_profile));
-      loaded_settings.insert("TimeAndSalesProperties");
       PortfolioViewerProperties::Load(out(*user_profile));
       loaded_settings.insert("PortfolioViewerProperties");
       OrderImbalanceIndicatorProperties::Load(out(*user_profile));
@@ -269,6 +276,7 @@ int main(int argc, char* argv[]) {
       toolbar_controller->open();
       risk_timer_monitor.emplace(Ref(*user_profile));
       risk_timer_monitor->Load();
+      user_profile->initialize_ui();
       sign_in_controller = nullptr;
     } catch(const std::exception& e) {
       QMessageBox::critical(nullptr, QObject::tr("Error"),
@@ -313,17 +321,21 @@ int main(int argc, char* argv[]) {
   }
   save_key_bindings_profile(
     *user_profile->GetKeyBindings(), user_profile->GetProfilePath());
+  if(loaded_settings.contains("BookView")) {
+    save_book_view_properties(user_profile->
+      GetBookViewPropertiesWindowFactory()->get_properties()->get(),
+      user_profile->GetProfilePath());
+  }
+  if(loaded_settings.contains("TimeAndSales")) {
+    save_time_and_sales_properties(user_profile->
+      GetTimeAndSalesPropertiesWindowFactory()->get_properties()->get(),
+      user_profile->GetProfilePath());
+  }
   if(loaded_settings.contains("PortfolioViewerProperties")) {
     PortfolioViewerProperties::Save(*user_profile);
   }
-  if(loaded_settings.contains("TimeAndSalesProperties")) {
-    TimeAndSalesProperties::Save(*user_profile);
-  }
   if(loaded_settings.contains("RiskTimerProperties")) {
     RiskTimerProperties::Save(*user_profile);
-  }
-  if(loaded_settings.contains("BookViewProperties")) {
-    BookViewProperties::Save(*user_profile);
   }
   if(loaded_settings.contains("CatalogSettings")) {
     CatalogSettings::Save(*user_profile);

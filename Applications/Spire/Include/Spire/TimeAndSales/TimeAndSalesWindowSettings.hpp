@@ -1,14 +1,16 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_SETTINGS_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_SETTINGS_HPP
+#include <vector>
 #include <QByteArray>
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/LegacyUI/TickerViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Spire/Ui/TickerView.hpp"
 
 namespace Spire {
+  class TimeAndSalesWindow;
 
   /** Stores the window settings for a TimeAndSalesWindow. */
   class TimeAndSalesWindowSettings : public LegacyUI::WindowSettings {
@@ -20,10 +22,8 @@ namespace Spire {
       /**
        * Constructs a TimeAndSalesWindowSettings.
        * @param window The TimeAndSalesWindow to represent.
-       * @param userProfile The user's profile.
        */
-      TimeAndSalesWindowSettings(const TimeAndSalesWindow& window,
-        Beam::Ref<UserProfile> userProfile);
+      explicit TimeAndSalesWindowSettings(const TimeAndSalesWindow& window);
 
       std::string GetName() const override;
       QWidget* Reopen(Beam::Ref<UserProfile> userProfile) const override;
@@ -32,16 +32,12 @@ namespace Spire {
 
     private:
       friend struct Beam::DataShuttle;
-      TimeAndSalesProperties m_properties;
-      Nexus::Ticker m_ticker;
       std::string m_name;
-      LegacyUI::TickerViewStack m_tickerViewStack;
+      TickerView::State m_ticker_view;
+      std::vector<int> m_column_widths;
       std::string m_identifier;
-      std::string m_linkIdentifier;
+      std::string m_link_identifier;
       QByteArray m_geometry;
-      QByteArray m_splitterState;
-      QByteArray m_viewHeaderState;
-      QByteArray m_snapshotHeaderState;
 
       template<Beam::IsShuttle S>
       void shuttle(S& shuttle, unsigned int version);
@@ -49,16 +45,12 @@ namespace Spire {
 
   template<Beam::IsShuttle S>
   void TimeAndSalesWindowSettings::shuttle(S& shuttle, unsigned int version) {
-    shuttle.shuttle("properties", m_properties);
-    shuttle.shuttle("ticker", m_ticker);
     shuttle.shuttle("name", m_name);
-    shuttle.shuttle("ticker_view_stack", m_tickerViewStack);
+    shuttle.shuttle("ticker_view", m_ticker_view);
+    shuttle.shuttle("column_widths", m_column_widths);
     shuttle.shuttle("identifier", m_identifier);
-    shuttle.shuttle("link_identifier", m_linkIdentifier);
+    shuttle.shuttle("link_identifier", m_link_identifier);
     shuttle.shuttle("geometry", m_geometry);
-    shuttle.shuttle("splitter_state", m_splitterState);
-    shuttle.shuttle("view_header_state", m_viewHeaderState);
-    shuttle.shuttle("snapshot_header_state", m_snapshotHeaderState);
   }
 }
 

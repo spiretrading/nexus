@@ -124,6 +124,9 @@ namespace Spire::Styles {
        */
       void link(Stylist& target);
 
+      /** Returns the set of matched Selectors. */
+      const std::unordered_set<Selector>& get_matches() const;
+
       /**
        * Removes a link previously added.
        * @param target The stylist to unlink from this.

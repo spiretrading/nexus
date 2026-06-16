@@ -1,6 +1,7 @@
 #ifndef SPIRE_CUSTOM_VARIANTS_HPP
 #define SPIRE_CUSTOM_VARIANTS_HPP
 #include <any>
+#include <boost/any.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <boost/date_time/gregorian/greg_date.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -40,6 +41,10 @@ namespace Spire {
   };
 }
 
+#ifndef SPIRE_METATYPES
+#define SPIRE_METATYPES
+Q_DECLARE_METATYPE(std::any);
+Q_DECLARE_METATYPE(boost::any);
 Q_DECLARE_METATYPE(Beam::DirectoryEntry);
 Q_DECLARE_METATYPE(boost::gregorian::date);
 Q_DECLARE_METATYPE(boost::posix_time::ptime);
@@ -57,7 +62,8 @@ Q_DECLARE_METATYPE(Nexus::TimeAndSale::Condition);
 Q_DECLARE_METATYPE(Nexus::TimeInForce);
 Q_DECLARE_METATYPE(Nexus::Venue);
 Q_DECLARE_METATYPE(Spire::PositionSideToken);
-Q_DECLARE_METATYPE(std::any);
+Q_DECLARE_METATYPE(Spire::Task::State);
+#endif
 
 namespace Spire {
 

@@ -102,4 +102,18 @@ TEST_SUITE("ColorConversion") {
     require_apca(apca(QColor(0x112233), QColor(0x444444)), 8.32326);
     require_apca(apca(QColor(0x444444), QColor(0x112233)), -7.52688);
   }
+
+  TEST_CASE("oklch_scale") {
+    // These expected result were gathered from
+    // https://codepen.io/meat-circuit/pen/MWzemOL
+    auto expected_scaled_colors = std::vector<QColor>{
+      QColor(0xFFFFFF), QColor(0xE4E8FF), QColor(0xCAD1FF), QColor(0xB1BAFF),
+      QColor(0x99A2FF), QColor(0x8289FF), QColor(0x6E6EFF)};
+    auto scaled_colors = scale_oklch(QColor(0xFFFFFF), QColor(0x6E6EFF),
+      expected_scaled_colors.size());
+    REQUIRE(scaled_colors.size() == expected_scaled_colors.size());
+    for(auto i = 0; i < std::ssize(scaled_colors); ++i) {
+      require_rgb(scaled_colors[i], expected_scaled_colors[i]);
+    }
+  }
 }

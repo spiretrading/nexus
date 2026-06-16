@@ -17,6 +17,20 @@ namespace {
     }
     return "@" + referent;
   }
+
+  string NormalizeReferent(string referent) {
+    auto name = referent.find_first_not_of('<');
+    if(name == string::npos) {
+      return referent;
+    }
+    static const auto SECURITY = string("security");
+    if(referent.compare(name, SECURITY.size(), SECURITY) == 0 &&
+        (name + SECURITY.size() == referent.size() ||
+          referent[name + SECURITY.size()] == '.')) {
+      referent.replace(name, SECURITY.size(), "ticker");
+    }
+    return referent;
+  }
 }
 
 ReferenceNode::ReferenceNode() {
@@ -25,13 +39,13 @@ ReferenceNode::ReferenceNode() {
 }
 
 ReferenceNode::ReferenceNode(const string& referent)
-    : m_referent(referent) {
+    : m_referent(NormalizeReferent(referent)) {
   SetType(UnionType::GetAnyType());
   SetText(GetReferentText(m_referent));
 }
 
 ReferenceNode::ReferenceNode(const string& referent, const CanvasType& type)
-    : m_referent(referent) {
+    : m_referent(NormalizeReferent(referent)) {
   SetType(type);
   SetText(GetReferentText(m_referent));
 }
@@ -43,9 +57,17 @@ const string& ReferenceNode::GetReferent() const {
 unique_ptr<CanvasNode> ReferenceNode::SetReferent(
     const string& referent) const {
   auto clone = CanvasNode::Clone(*this);
-  clone->m_referent = referent;
-  clone->SetText(GetReferentText(referent));
+  clone->m_referent = NormalizeReferent(referent);
+  clone->SetText(GetReferentText(clone->m_referent));
   return std::move(clone);
+}
+
+void ReferenceNode::MigrateReferent() {
+  auto normalized = NormalizeReferent(m_referent);
+  if(normalized != m_referent) {
+    m_referent = std::move(normalized);
+    SetText(GetReferentText(m_referent));
+  }
 }
 
 unique_ptr<CanvasNode> ReferenceNode::Convert(const CanvasType& type) const {

@@ -2,58 +2,55 @@
 #include <Beam/Utilities/ToString.hpp>
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
-#include "ui_TimeAndSalesWindow.h"
+#include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/TableView.hpp"
+#include "Spire/Ui/TickerView.hpp"
 
 using namespace Beam;
 using namespace Nexus;
 using namespace Spire;
-using namespace std;
 
 TimeAndSalesWindowSettings::TimeAndSalesWindowSettings(
-    const TimeAndSalesWindow& window, Ref<UserProfile> userProfile)
-    : m_properties(window.GetProperties()),
-      m_ticker(window.m_ticker),
-      m_tickerViewStack(window.m_tickerViewStack),
+    const TimeAndSalesWindow& window)
+    : m_ticker_view(window.m_ticker_view->save_state()),
       m_identifier(window.GetIdentifier()),
-      m_linkIdentifier(window.m_linkIdentifier),
-      m_geometry(window.saveGeometry()),
-      m_splitterState(window.m_ui->m_splitter->saveState()),
-      m_viewHeaderState(
-        window.m_ui->m_timeAndSalesView->horizontalHeader()->saveState()),
-      m_snapshotHeaderState(
-        window.m_ui->m_snapshotView->horizontalHeader()->saveState()) {
-  if(!m_ticker) {
-    m_name = "Time And Sales";
+      m_link_identifier(window.m_link_identifier),
+      m_geometry(window.saveGeometry()) {
+  if(window.m_table_view) {
+    auto& widths = *window.m_table_view->get_header().get_widths();
+    m_column_widths.insert(m_column_widths.end(), widths.begin(), widths.end());
+  }
+  if(auto& ticker = window.GetDisplayedTicker()) {
+    m_name = "Time And Sales - " + to_string(ticker);
   } else {
-    m_name = "Time And Sales - " + to_string(m_ticker);
+    m_name = "Time And Sales";
   }
 }
 
-string TimeAndSalesWindowSettings::GetName() const {
+std::string TimeAndSalesWindowSettings::GetName() const {
   return m_name;
 }
 
 QWidget* TimeAndSalesWindowSettings::Reopen(
-    Ref<UserProfile> userProfile) const {
-  TimeAndSalesWindow* window = new TimeAndSalesWindow(Ref(userProfile),
-    m_properties, m_identifier);
+    Ref<UserProfile> user_profile) const {
+  auto window = new TimeAndSalesWindow(user_profile->GetTickerInfoQueryModel(),
+    user_profile->GetTimeAndSalesPropertiesWindowFactory(),
+    user_profile->GetTimeAndSalesModelBuilder(), m_identifier);
   window->setAttribute(Qt::WA_DeleteOnClose);
-  Apply(Ref(userProfile), out(*window));
+  Apply(Ref(user_profile), out(*window));
   return window;
 }
 
-void TimeAndSalesWindowSettings::Apply(Ref<UserProfile> userProfile,
-    Out<QWidget> widget) const {
-  TimeAndSalesWindow& window = dynamic_cast<TimeAndSalesWindow&>(*widget);
+void TimeAndSalesWindowSettings::Apply(
+    Ref<UserProfile> user_profile, Out<QWidget> widget) const {
+  auto& window = dynamic_cast<TimeAndSalesWindow&>(*widget);
   restore_geometry(window, m_geometry);
-  window.m_ui->m_splitter->restoreState(m_splitterState);
-  window.m_ui->m_timeAndSalesView->horizontalHeader()->restoreState(
-    m_viewHeaderState);
-  window.m_ui->m_snapshotView->horizontalHeader()->restoreState(
-    m_snapshotHeaderState);
-  window.m_tickerViewStack = m_tickerViewStack;
-  if(m_ticker) {
-    window.DisplayTicker(m_ticker);
+  window.m_link_identifier = m_link_identifier;
+  window.m_ticker_view->restore(m_ticker_view);
+  if(window.m_table_view) {
+    auto& widths = *window.m_table_view->get_header().get_widths();
+    for(auto i = 0; i != m_column_widths.size(); ++i) {
+      widths.set(i, m_column_widths[i]);
+    }
   }
-  window.m_linkIdentifier = m_linkIdentifier;
 }

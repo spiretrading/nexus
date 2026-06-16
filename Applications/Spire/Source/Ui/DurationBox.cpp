@@ -1,4 +1,5 @@
 #include "Spire/Ui/DurationBox.hpp"
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QKeyEvent>
 #include "Spire/Spire/Dimensions.hpp"
@@ -116,8 +117,10 @@ namespace {
     HourModel(std::shared_ptr<OptionalDurationModel> source)
         : m_source(std::move(source)),
           m_state(m_source->get_state()),
+BEAM_SUPPRESS_THIS_INITIALIZER()
           m_source_connection(m_source->connect_update_signal(
             [=] (const auto& current) { on_current(current); })) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
       on_current(m_source->get());
     }
 
@@ -177,8 +180,10 @@ namespace {
     MinuteModel(std::shared_ptr<OptionalDurationModel> source)
         : m_source(std::move(source)),
           m_state(m_source->get_state()),
+BEAM_SUPPRESS_THIS_INITIALIZER()
           m_source_connection(m_source->connect_update_signal(
             [=] (const auto& current) { on_current(current); })) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
       on_current(m_source->get());
     }
 
@@ -240,8 +245,10 @@ namespace {
     SecondModel(std::shared_ptr<OptionalDurationModel> source)
         : m_source(std::move(source)),
           m_state(m_source->get_state()),
+BEAM_SUPPRESS_THIS_INITIALIZER()
           m_source_connection(m_source->connect_update_signal(
             [=] (const auto& current) { on_current(current); })) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
       on_current(m_source->get());
     }
 

@@ -30,7 +30,8 @@ namespace {
     Environment()
       : m_clients(std::in_place_type<TestClients>, Ref(m_environment)),
         m_userProfile("", false, false, {}, {},
-          get_default_additional_tag_database(), {}, m_clients) {}
+          get_default_additional_tag_database(), BookViewProperties(),
+          TimeAndSalesProperties(), {}, m_clients) {}
   };
 
   const auto TEST_TICKER = parse_ticker("TST.TSX");

@@ -139,34 +139,34 @@ const QString& Spire::LegacyUI::displayText(OrderStatus status) {
   if(status == OrderStatus::PENDING_NEW) {
     static const auto value = QObject::tr("Pending New");
     return value;
-  } else if(status ==  OrderStatus::REJECTED) {
+  } else if(status == OrderStatus::REJECTED) {
     static const auto value = QObject::tr("Rejected");
     return value;
-  } else if(status ==  OrderStatus::NEW) {
+  } else if(status == OrderStatus::NEW) {
     static const auto value = QObject::tr("New");
     return value;
-  } else if(status ==  OrderStatus::PARTIALLY_FILLED) {
+  } else if(status == OrderStatus::PARTIALLY_FILLED) {
     static const auto value = QObject::tr("Partially Filled");
     return value;
-  } else if(status ==  OrderStatus::EXPIRED) {
+  } else if(status == OrderStatus::EXPIRED) {
     static const auto value = QObject::tr("Expired");
     return value;
-  } else if(status ==  OrderStatus::CANCELED) {
+  } else if(status == OrderStatus::CANCELED) {
     static const auto value = QObject::tr("Canceled");
     return value;
-  } else if(status ==  OrderStatus::SUSPENDED) {
+  } else if(status == OrderStatus::SUSPENDED) {
     static const auto value = QObject::tr("Suspended");
     return value;
-  } else if(status ==  OrderStatus::STOPPED) {
+  } else if(status == OrderStatus::STOPPED) {
     static const auto value = QObject::tr("Stopped");
     return value;
-  } else if(status ==  OrderStatus::FILLED) {
+  } else if(status == OrderStatus::FILLED) {
     static const auto value = QObject::tr("Filled");
     return value;
-  } else if(status ==  OrderStatus::DONE_FOR_DAY) {
+  } else if(status == OrderStatus::DONE_FOR_DAY) {
     static const auto value = QObject::tr("Done For Day");
     return value;
-  } else if(status ==  OrderStatus::PENDING_CANCEL) {
+  } else if(status == OrderStatus::PENDING_CANCEL) {
     static const auto value = QObject::tr("Pending Cancel");
     return value;
   } else if(status == OrderStatus::CANCEL_REJECT) {

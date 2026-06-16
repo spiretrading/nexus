@@ -1,5 +1,7 @@
 #ifndef NEXUS_ORDER_SUBMISSION_CHECK_HPP
 #define NEXUS_ORDER_SUBMISSION_CHECK_HPP
+#include <vector>
+#include "Nexus/Accounting/InventorySnapshot.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 
 namespace Nexus {
@@ -14,6 +16,16 @@ namespace Nexus {
        * @param info The OrderInfo being submitted.
        */
       virtual void submit(const OrderInfo& info) = 0;
+
+      /**
+       * Restores an account's state from a snapshot.
+       * @param account The account to restore.
+       * @param snapshot The snapshot used to restore the account.
+       * @param orders The account's recovered Orders.
+       */
+      virtual void restore(const Beam::DirectoryEntry& account,
+        const InventorySnapshot& snapshot,
+        const std::vector<std::shared_ptr<Order>>& orders);
 
       /**
        * Adds an Order that successfully passed all submission checks.
@@ -36,6 +48,14 @@ namespace Nexus {
       OrderSubmissionCheck(const OrderSubmissionCheck&) = delete;
       OrderSubmissionCheck& operator =(const OrderSubmissionCheck&) = delete;
   };
+
+  inline void OrderSubmissionCheck::restore(const Beam::DirectoryEntry& account,
+      const InventorySnapshot& snapshot,
+      const std::vector<std::shared_ptr<Order>>& orders) {
+    for(auto& order : orders) {
+      add(order);
+    }
+  }
 
   inline void OrderSubmissionCheck::add(const std::shared_ptr<Order>& order) {}
 
