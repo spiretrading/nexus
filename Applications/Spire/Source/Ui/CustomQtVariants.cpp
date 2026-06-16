@@ -279,11 +279,6 @@ QString Spire::to_text(posix_time::time_duration time, const QLocale& locale) {
   return QString::fromStdString(to_simple_string(time));
 }
 
-QString Spire::to_text(
-    const AccountListItem::Account& account, const QLocale& locale) {
-  return QString::fromStdString(account.m_account.m_name);
-}
-
 QString Spire::to_text(const DirectoryEntry& entry, const QLocale& locale) {
   return QString::fromStdString(entry.m_name);
 }
