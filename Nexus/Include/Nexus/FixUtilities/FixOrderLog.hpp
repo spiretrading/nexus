@@ -266,18 +266,18 @@ namespace Details {
     if(auto recovered_reports =
         m_recovered_reports.find((*record)->m_info.m_id)) {
       recovered_reports->for_each([&] (const auto& recovered_report) {
-        auto fix_timestamp = FIX::UtcTimeStamp();
         std::visit([&] (auto& message) {
-          if(message.isSetField(FIX::FIELD::TransactTime)) {
-            auto transaction_time = FIX::TransactTime();
-            message.get(transaction_time);
-            fix_timestamp = static_cast<FIX::UtcTimeStamp>(transaction_time);
-          } else {
-            auto sending_time = FIX::SendingTime();
-            message.getHeader().get(sending_time);
-            fix_timestamp = static_cast<FIX::UtcTimeStamp>(sending_time);
-          }
-          auto timestamp = get_timestamp(fix_timestamp);
+          auto timestamp = get_timestamp([&] {
+            if(message.isSetField(FIX::FIELD::TransactTime)) {
+              auto transaction_time = FIX::TransactTime();
+              message.get(transaction_time);
+              return static_cast<FIX::UtcTimeStamp>(transaction_time);
+            } else {
+              auto sending_time = FIX::SendingTime();
+              message.getHeader().get(sending_time);
+              return static_cast<FIX::UtcTimeStamp>(sending_time);
+            }
+          }());
           update(message, timestamp, order, recovered_report.m_callback);
         }, recovered_report.m_message);
       });
