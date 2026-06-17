@@ -30,7 +30,8 @@ namespace {
     FIX::TargetCompID m_target_comp_id;
 
     Fixture()
-      : m_session(m_application, m_store_factory,
+      : m_session([] { return FIX::UtcTimeStamp::now(); },
+          m_application, m_store_factory,
           FIX::SessionID("FIX.4.2", "SENDER", "TARGET"),
           m_dictionary_provider,
           FIX::TimeRange(

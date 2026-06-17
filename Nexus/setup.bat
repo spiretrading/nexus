@@ -15,9 +15,9 @@ CALL :AddDependency "lua-5.5.0" ^
   "https://www.lua.org/ftp/lua-5.5.0.tar.gz" ^
   "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d" ^
   ":BuildLua"
-CALL :AddDependency "quickfix-v.1.15.1" ^
-  "https://github.com/quickfix/quickfix/archive/49b3508e48f0bbafbab13b68be72250bdd971ac2.zip" ^
-  "0bed2ae8359fc807f351fd2d08cec13b472d27943460f1d8f0869ed8cc8c2735" ^
+CALL :AddDependency "quickfix-v.1.16.0" ^
+  "https://github.com/quickfix/quickfix/archive/2ce8a60667d95a55cdc57a210f165e19cb757126.zip" ^
+  "b6fcea5402b443e71c751132938b8ef83efcd0167e005f5bbab103b1875614d1" ^
   ":BuildQuickfix"
 CALL :AddDependency "hat-trie-0.7.0" ^
   "https://github.com/Tessil/hat-trie/archive/refs/tags/v0.7.0.zip" ^
@@ -67,30 +67,10 @@ POPD
 EXIT /B 0
 
 :BuildQuickfix
-PUSHD src\C++
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& {" ^
-  "$i = 0;" ^
-  "(Get-Content 'Utility.h') | ForEach-Object {" ^
-  "  $i++;" ^
-  "  if($i -eq 105 -or $i -eq 108) {" ^
-  "    'template<typename T> using SmartPtr = std::shared_ptr<T>;'" ^
-  "  } else {" ^
-  "    $_" ^
-  "  }" ^
-  "} | Set-Content 'Utility.h';" ^
-  "@('DOMDocument.h', 'Message.h', 'Message.cpp') | ForEach-Object {" ^
-  "  (Get-Content $_) -replace 'std::auto_ptr', 'std::shared_ptr' | " ^
-  "    Set-Content $_" ^
-  "};" ^
-  "(Get-Content 'Message.cpp') -replace 'pGroup\.release\(\)', " ^
-  "  'new Group(*pGroup)' | Set-Content 'Message.cpp';" ^
-"}"
-POPD
-cmake -DCMAKE_POLICY_VERSION_MINIMUM=3.5 . || EXIT /B 1
+cmake -DCMAKE_INSTALL_PREFIX="!cd!" . || EXIT /B 1
 cmake --build . --target quickfix --config Debug
 cmake --build . --target quickfix --config Release
-MD "include\quickfix"
-xcopy /s src\C++\* include\quickfix >NUL
+cmake --install . --config Release
 EXIT /B 0
 
 :CheckCache
