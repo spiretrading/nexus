@@ -9,6 +9,8 @@ namespace Spire {
   class CanvasNotVisibleException;
   class CanvasNodeProtectionDialog;
   class CanvasTableWidget;
+  class CanvasWindow;
+  class CanvasWindowSettings;
   class CondensedCanvasCell;
   class CondensedCanvasWidget;
   class CopyNodeCommand;

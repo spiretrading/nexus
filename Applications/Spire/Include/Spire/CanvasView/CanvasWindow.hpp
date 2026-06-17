@@ -17,9 +17,8 @@ class QToolBar;
 class Ui_CanvasWindow;
 
 namespace Spire {
-namespace LegacyUI {
 
-  class CanvasWindow : public QFrame, public PersistentWindow {
+  class CanvasWindow : public QFrame, public LegacyUI::PersistentWindow {
     public:
 
       //! Constructs a CanvasWindow.
@@ -37,7 +36,7 @@ namespace LegacyUI {
       //! Returns the CanvasNodeModel being displayed.
       CanvasNodeModel& GetCanvasNodeModel();
 
-      virtual std::unique_ptr<WindowSettings> GetWindowSettings() const;
+      virtual std::unique_ptr<LegacyUI::WindowSettings> GetWindowSettings() const;
 
     protected:
       virtual void closeEvent(QCloseEvent* event);
@@ -109,7 +108,6 @@ namespace LegacyUI {
       void OnCatalogEntryDeleted(CatalogEntry& entry);
       void OnClipboardDataChanged();
   };
-}
 }
 
 #endif

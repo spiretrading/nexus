@@ -2,8 +2,6 @@
 #define SPIRE_LEGACY_UI_HPP
 
 namespace Spire::LegacyUI {
-  class CanvasWindow;
-  class CanvasWindowSettings;
   class CollapsibleWidget;
   class CollapsibleWidgetWindowSettings;
   class CommandAction;

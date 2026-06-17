@@ -9,12 +9,12 @@
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
 
-namespace Spire::LegacyUI {
+namespace Spire {
 
   /*! \class CanvasWindowSettings
       \brief Stores the window settings for a CanvasWindow.
    */
-  class CanvasWindowSettings : public WindowSettings {
+  class CanvasWindowSettings : public LegacyUI::WindowSettings {
     public:
 
       //! Constructs a CanvasWindowSettings with default values.

@@ -56,3 +56,8 @@ AccountListItem::AccountListItem(Account account, QWidget* parent)
 const AccountListItem::Account& AccountListItem::get_account() const {
   return m_account;
 }
+
+QString Spire::to_text(
+    const AccountListItem::Account& account, const QLocale& locale) {
+  return QString::fromStdString(account.m_account.m_name);
+}

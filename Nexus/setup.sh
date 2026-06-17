@@ -19,9 +19,9 @@ main() {
     "https://www.lua.org/ftp/lua-5.5.0.tar.gz" \
     "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d" \
     "build_lua"
-  add_dependency "quickfix-v.1.15.1" \
-    "https://github.com/quickfix/quickfix/archive/49b3508e48f0bbafbab13b68be72250bdd971ac2.zip" \
-    "0bed2ae8359fc807f351fd2d08cec13b472d27943460f1d8f0869ed8cc8c2735" \
+  add_dependency "quickfix-v.1.16.0" \
+    "https://github.com/quickfix/quickfix/archive/2ce8a60667d95a55cdc57a210f165e19cb757126.zip" \
+    "b6fcea5402b443e71c751132938b8ef83efcd0167e005f5bbab103b1875614d1" \
     "build_quickfix"
   add_dependency "hat-trie-0.7.0" \
     "https://github.com/Tessil/hat-trie/archive/refs/tags/v0.7.0.zip" \
@@ -45,12 +45,6 @@ build_lua() {
 }
 
 build_quickfix() {
-  pushd src/C++ > /dev/null
-  sed -i '105s/.*/template<typename T> using SmartPtr = std::shared_ptr<T>;/' \
-    Utility.h
-  sed -i '108s/.*/template<typename T> using SmartPtr = std::shared_ptr<T>;/' \
-    Utility.h
-  popd > /dev/null
   ./bootstrap || return 1
   ./configure --enable-shared=no --enable-static=yes || return 1
   local cores
