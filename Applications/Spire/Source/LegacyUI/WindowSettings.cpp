@@ -4,9 +4,11 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
+#include <Beam/Serialization/JsonReceiver.hpp>
+#include <Beam/Serialization/JsonSender.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <QApplication>
 #include <QDesktopWidget>
-#include <QMessageBox>
 #include <QScreen>
 #include <QWindow>
 #include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
@@ -51,61 +53,104 @@ namespace {
     RegisterSpireTypes(out(legacyRegistry));
     return attempt(legacyRegistry);
   }
+
+  auto load_legacy_settings(const UserProfile& userProfile) {
+    auto windowSettingsPath = userProfile.GetProfilePath() / "layout.dat";
+    auto windowSettings = std::vector<std::unique_ptr<WindowSettings>>();
+    if(!exists(windowSettingsPath)) {
+      return windowSettings;
+    }
+    auto isLoaded = [&] {
+      try {
+        auto reader = BasicIStreamReader<std::ifstream>(
+          init(windowSettingsPath, std::ios::binary));
+        auto buffer = SharedBuffer();
+        reader.read(out(buffer));
+        return TryLoad(buffer, out(windowSettings));
+      } catch(const std::exception&) {
+        return false;
+      }
+    }();
+    if(!isLoaded) {
+      windowSettings.clear();
+    }
+    return windowSettings;
+  }
 }
 
 std::vector<std::unique_ptr<WindowSettings>>
     WindowSettings::Load(const UserProfile& userProfile) {
-  auto windowSettingsPath = userProfile.GetProfilePath() / "layout.dat";
-  auto windowSettings = std::vector<std::unique_ptr<WindowSettings>>();
-  if(!exists(windowSettingsPath)) {
-    return windowSettings;
-  }
-  auto isLoaded = [&] {
-    try {
-      auto reader = BasicIStreamReader<std::ifstream>(
-        init(windowSettingsPath, std::ios::binary));
-      auto buffer = SharedBuffer();
-      reader.read(out(buffer));
-      return TryLoad(buffer, out(windowSettings));
-    } catch(const std::exception&) {
-      return false;
+  auto settings = std::vector<std::unique_ptr<WindowSettings>>();
+  auto file_path = userProfile.GetProfilePath() / "layout.json";
+  if(!std::filesystem::exists(file_path)) {
+    auto legacy_path = userProfile.GetProfilePath() / "layout.dat";
+    if(std::filesystem::exists(legacy_path)) {
+      return load_legacy_settings(userProfile);
     }
-  }();
-  if(!isLoaded) {
-    QMessageBox::warning(
-      nullptr, QObject::tr("Warning"), QObject::tr("Unable to load layout."));
-    windowSettings.clear();
+    return settings;
   }
-  return windowSettings;
+  auto buffer = SharedBuffer();
+  try {
+    auto reader = BasicIStreamReader<std::ifstream>(init(file_path));
+    reader.read(out(buffer));
+  } catch(const std::exception&) {
+    return settings;
+  }
+  auto load = [&] (const SharedBuffer& source,
+      TypeRegistry<JsonSender<SharedBuffer>>& registry) {
+    auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
+    receiver.set(Ref(source));
+    auto loaded = std::vector<std::unique_ptr<WindowSettings>>();
+    receiver.shuttle(loaded);
+    return loaded;
+  };
+  auto currentRegistry = TypeRegistry<JsonSender<SharedBuffer>>();
+  RegisterSpireTypes(out(currentRegistry));
+  try {
+    return load(buffer, currentRegistry);
+  } catch(const std::exception&) {}
+  try {
+    auto legacyRegistry = TypeRegistry<JsonSender<SharedBuffer>>();
+    legacyRegistry.add<TickerNode>("Spire.SecurityNode");
+    legacyRegistry.add<TickerType>("Spire.SecurityType");
+    legacyRegistry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
+    RegisterSpireTypes(out(legacyRegistry));
+    auto text = std::string(buffer.get_data(), buffer.get_size());
+    replace_all(text, "\"region\":", "\"scope\":");
+    replace_all(text, "\"securities\":", "\"tickers\":");
+    replace_all(text, "\"security_view_stack\":", "\"ticker_view_stack\":");
+    replace_all(text, "\"security_view\":", "\"ticker_view\":");
+    replace_all(text, "\"security\":", "\"ticker\":");
+    return load(SharedBuffer(text.data(), text.size()), legacyRegistry);
+  } catch(const std::exception&) {
+    return std::vector<std::unique_ptr<WindowSettings>>();
+  }
 }
 
 void WindowSettings::Save(const UserProfile& userProfile) {
-  auto windowSettingsPath = userProfile.GetProfilePath() / "layout.dat";
-  auto windowSettings = std::vector<std::unique_ptr<WindowSettings>>();
+  auto settings_path = userProfile.GetProfilePath() / "layout.json";
+  auto settings = std::vector<std::unique_ptr<WindowSettings>>();
   auto widgets = QApplication::topLevelWidgets();
   for(auto& widget : widgets) {
     if(auto window = dynamic_cast<PersistentWindow*>(widget)) {
       if(dynamic_cast<ToolbarWindow*>(window)) {
-        windowSettings.insert(
-          windowSettings.begin(), window->GetWindowSettings());
+        settings.insert(settings.begin(), window->GetWindowSettings());
       } else if(widget->isVisible()) {
-        windowSettings.push_back(window->GetWindowSettings());
+        settings.push_back(window->GetWindowSettings());
       }
     }
   }
   try {
-    auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-    RegisterSpireTypes(out(typeRegistry));
-    auto sender = BinarySender<SharedBuffer>(Ref(typeRegistry));
+    auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
+    RegisterSpireTypes(out(registry));
+    auto sender = JsonSender<SharedBuffer>(Ref(registry));
     auto buffer = SharedBuffer();
     sender.set(Ref(buffer));
-    sender.shuttle(windowSettings);
-    auto writer = BasicOStreamWriter<std::ofstream>(
-      init(windowSettingsPath, std::ios::binary));
+    sender.shuttle(settings);
+    auto writer = BasicOStreamWriter<std::ofstream>(init(settings_path));
     writer.write(buffer);
   } catch(const std::exception&) {
-    QMessageBox::warning(
-      nullptr, QObject::tr("Warning"), QObject::tr("Unable to save layout."));
+    throw std::runtime_error("Unable to save layout.");
   }
 }
 

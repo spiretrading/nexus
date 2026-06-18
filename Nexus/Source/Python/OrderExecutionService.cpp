@@ -111,7 +111,7 @@ void Nexus::Python::export_mock_order_execution_driver(module& module) {
     def("add_recovery", &MockOrderExecutionDriver::add_recovery).
     def("get_publisher", &MockOrderExecutionDriver::get_publisher,
       return_value_policy::reference_internal).
-    def("recover", &MockOrderExecutionDriver::recover).
+    def("restore", &MockOrderExecutionDriver::restore).
     def("add", &MockOrderExecutionDriver::add).
     def("submit", &MockOrderExecutionDriver::submit, call_guard<GilRelease>()).
     def("cancel", &MockOrderExecutionDriver::cancel, call_guard<GilRelease>()).

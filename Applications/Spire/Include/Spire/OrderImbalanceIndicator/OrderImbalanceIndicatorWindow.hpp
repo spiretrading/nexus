@@ -7,7 +7,6 @@
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicator.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/Utilities/Utilities.hpp"
 
 class Ui_OrderImbalanceIndicatorWindow;
 

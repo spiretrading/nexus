@@ -33,6 +33,10 @@ namespace Nexus {
         load_execution_reports(const AccountQuery& query);
       void store(const SequencedAccountExecutionReport& report);
       void store(const std::vector<SequencedAccountExecutionReport>& reports);
+      InventorySnapshot load_inventory_snapshot(
+        const Beam::DirectoryEntry& account);
+      void store(const Beam::DirectoryEntry& account,
+        const InventorySnapshot& snapshot);
       void close();
 
     private:
@@ -46,6 +50,8 @@ namespace Nexus {
         m_orders;
       mutable Beam::SynchronizedUnorderedMap<
         OrderId, Beam::SynchronizedVector<ExecutionReport>> m_execution_reports;
+      Beam::SynchronizedUnorderedMap<Beam::DirectoryEntry, InventorySnapshot>
+        m_inventory_snapshots;
   };
 
   inline LocalOrderExecutionDataStore::LocalOrderExecutionDataStore()
@@ -143,6 +149,19 @@ namespace Nexus {
     for(auto& report : reports) {
       store(report);
     }
+  }
+
+  inline InventorySnapshot
+      LocalOrderExecutionDataStore::load_inventory_snapshot(
+        const Beam::DirectoryEntry& account) {
+    return m_inventory_snapshots.try_load(account).value_or_eval([] {
+      return InventorySnapshot();
+    });
+  }
+
+  inline void LocalOrderExecutionDataStore::store(
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot) {
+    m_inventory_snapshots.update(account, strip(snapshot));
   }
 
   inline void LocalOrderExecutionDataStore::close() {}

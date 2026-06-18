@@ -2,7 +2,6 @@
 #define SPIRE_LINK_MENU_HPP
 #include "Spire/LegacyUI/TickerContext.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
-#include "Spire/Utilities/Utilities.hpp"
 
 namespace Spire {
 

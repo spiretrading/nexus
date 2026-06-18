@@ -3,6 +3,8 @@
 #include <Beam/Python/Beam.hpp>
 #include "Nexus/Accounting/BookkeeperReactor.hpp"
 #include "Nexus/Accounting/BuyingPowerModel.hpp"
+#include "Nexus/Accounting/InventorySnapshot.hpp"
+#include "Nexus/Accounting/InventorySnapshotModel.hpp"
 #include "Nexus/Accounting/PortfolioController.hpp"
 #include "Nexus/Accounting/Position.hpp"
 #include "Nexus/Accounting/PositionOrderBook.hpp"
@@ -38,6 +40,8 @@ void Nexus::Python::export_accounting(module& module) {
   export_bookkeeper_reactor(module);
   export_buying_power_model(module);
   export_inventory(module);
+  export_inventory_snapshot(module);
+  export_inventory_snapshot_model(module);
   export_portfolio<TrueAverageBookkeeper>(module, "TrueAveragePortfolio");
   export_portfolio_update_entry(module);
   export_portfolio_controller(module);
@@ -68,7 +72,11 @@ void Nexus::Python::export_buying_power_model(module& module) {
       "get_buying_power", &BuyingPowerModel::get_buying_power, arg("currency")).
     def("submit", &BuyingPowerModel::submit, arg("id"), arg("fields"),
       arg("expected_price")).
-    def("update", &BuyingPowerModel::update, arg("report"));
+    def("update", overload_cast<const ExecutionReport&>(
+      &BuyingPowerModel::update), arg("report")).
+    def("update", overload_cast<const Ticker&, CurrencyId, Quantity, Money>(
+      &BuyingPowerModel::update), arg("ticker"), arg("currency"),
+      arg("quantity"), arg("expenditure"));
 }
 
 void Nexus::Python::export_inventory(module& module) {
@@ -83,6 +91,31 @@ void Nexus::Python::export_inventory(module& module) {
     def_readwrite("volume", &Inventory::m_volume).
     def_readwrite("transaction_count", &Inventory::m_transaction_count);
   module.def("is_empty", &is_empty);
+}
+
+void Nexus::Python::export_inventory_snapshot(module& module) {
+  export_default_methods(
+      class_<InventorySnapshot>(module, "InventorySnapshot")).
+    def(init<const std::vector<Inventory>&, Beam::Sequence,
+      const std::vector<OrderId>&>()).
+    def_readwrite("inventories", &InventorySnapshot::m_inventories).
+    def_readwrite("sequence", &InventorySnapshot::m_sequence).
+    def_readwrite("excluded_orders", &InventorySnapshot::m_excluded_orders);
+  module.def("strip", &strip);
+  module.def("make_portfolio",
+    [] (const InventorySnapshot& snapshot, const DirectoryEntry& account,
+        OrderExecutionClient& client) {
+      return make_portfolio(snapshot, account, client);
+    }, call_guard<GilRelease>());
+}
+
+void Nexus::Python::export_inventory_snapshot_model(module& module) {
+  class_<InventorySnapshotModel>(module, "InventorySnapshotModel").
+    def(init()).
+    def(init<const InventorySnapshot&>()).
+    def("add", &InventorySnapshotModel::add, arg("sequence"), arg("order")).
+    def("update", &InventorySnapshotModel::update, arg("report")).
+    def("make_snapshot", &InventorySnapshotModel::make_snapshot);
 }
 
 void Nexus::Python::export_portfolio_controller(module& module) {
@@ -144,7 +177,10 @@ void Nexus::Python::export_shorting_model(module& module) {
   class_<ShortingModel>(module, "ShortingModel").
     def(init()).
     def("submit", &ShortingModel::submit, arg("id"), arg("fields")).
-    def("update", &ShortingModel::update, arg("report"));
+    def("update", overload_cast<const ExecutionReport&>(&ShortingModel::update),
+      arg("report")).
+    def("update", overload_cast<const Ticker&, Quantity>(
+      &ShortingModel::update), arg("ticker"), arg("quantity"));
 }
 
 void Nexus::Python::export_valuation(module& module) {

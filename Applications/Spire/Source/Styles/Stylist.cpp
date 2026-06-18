@@ -297,6 +297,10 @@ void Stylist::unlink(Stylist& target) {
   }
 }
 
+const std::unordered_set<Selector>& Stylist::get_matches() const {
+  return m_matches;
+}
+
 void Stylist::match(const Selector& selector) {
   if(m_matches.insert(selector).second) {
     if(m_match_signals) {

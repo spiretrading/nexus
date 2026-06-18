@@ -1,82 +1,87 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
-#include <QFrame>
-#include "Nexus/Definitions/Quote.hpp"
-#include "Nexus/Definitions/Ticker.hpp"
+#include <boost/signals2/connection.hpp>
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/TickerContext.hpp"
-#include "Spire/LegacyUI/TickerViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
-#include "Spire/Spire/Spire.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
-#include "Spire/Utilities/Utilities.hpp"
-
-class QStatusBar;
-class Ui_TimeAndSalesWindow;
+#include "Spire/TimeAndSales/TimeAndSalesPropertiesWindowFactory.hpp"
+#include "Spire/Ui/TickerBox.hpp"
+#include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/Window.hpp"
 
 namespace Spire {
+  class TableView;
+  class TickerView;
+  class TransitionView;
 
-  /** Displays TimeAndSale prints. */
-  class TimeAndSalesWindow : public QFrame, public LegacyUI::PersistentWindow,
+  /** Display the time and sales window for a ticker. */
+  class TimeAndSalesWindow : public Window, public LegacyUI::PersistentWindow,
       public LegacyUI::TickerContext {
     public:
 
       /**
-       * Constructs a TimeAndSalesWindow.
-       * @param userProfile The user's profile.
-       * @param properties The properties used to display this window.
-       * @param identifier The TickerContext's identifier.
-       * @param parent The parent widget.
-       * @param flags Qt flags passed to the parent widget.
+       * The type of function used to build a TimeAndSalesModel based on
+       * the ticker.
+       * @param ticker The ticker that the window is representing.
+       * @return A TimeAndSalesModel.
        */
-      TimeAndSalesWindow(Beam::Ref<UserProfile> userProfile,
-        const TimeAndSalesProperties& properties,
-        const std::string& identifier = "", QWidget* parent = nullptr,
-        Qt::WindowFlags flags = Qt::WindowFlags());
-
-      /** Returns the properties used to display this window. */
-      const TimeAndSalesProperties& GetProperties() const;
-
-      /** Sets the properties used to display this window. */
-      void SetProperties(const TimeAndSalesProperties& properties);
+      using ModelBuilder = std::function<
+        std::shared_ptr<TimeAndSalesModel>(const Nexus::Ticker& ticker)>;
 
       /**
-       * Sets the Ticker to display.
-       * @param ticker The Ticker to display.
+       * Constructs a TimeAndSalesWindow.
+       * @param tickers The set of tickers to use.
+       * @param factory The factory used to create a
+       *        TimeAndSalesPropertiesWindow.
+       * @param model_builder The ModelBuilder to use.
+       * @param parent The parent widget.
        */
-      void DisplayTicker(const Nexus::Ticker& ticker);
+      TimeAndSalesWindow(std::shared_ptr<TickerInfoQueryModel> tickers,
+        std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
+        ModelBuilder model_builder, QWidget* parent = nullptr);
+
+      /**
+       * Constructs a TimeAndSalesWindow.
+       * @param tickers The set of tickers to use.
+       * @param factory The factory used to create a
+       *        TimeAndSalesPropertiesWindow.
+       * @param model_builder The ModelBuilder to use.
+       * @param identifier The TickerContext identifier.
+       * @param parent The parent widget.
+       */
+      TimeAndSalesWindow(std::shared_ptr<TickerInfoQueryModel> tickers,
+        std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
+        ModelBuilder model_builder, std::string identifier,
+        QWidget* parent = nullptr);
+
+      /** Returns the currently displayed ticker. */
+      const std::shared_ptr<TickerModel>& get_current() const;
 
       std::unique_ptr<LegacyUI::WindowSettings>
         GetWindowSettings() const override;
 
     protected:
       void showEvent(QShowEvent* event) override;
-      void closeEvent(QCloseEvent* event) override;
-      void keyPressEvent(QKeyEvent* event) override;
-      void HandleLink(TickerContext& context) override;
+      void HandleLink(LegacyUI::TickerContext& context) override;
       void HandleUnlink() override;
 
     private:
+      friend class LegacyTimeAndSalesWindowSettings;
       friend class TimeAndSalesWindowSettings;
-      std::unique_ptr<Ui_TimeAndSalesWindow> m_ui;
-      UserProfile* m_userProfile;
-      TimeAndSalesProperties m_properties;
-      Nexus::Ticker m_ticker;
-      LegacyUI::TickerViewStack m_tickerViewStack;
-      QStatusBar* m_statusBar;
-      LegacyUI::ValueLabel* m_volumeLabel;
-      std::unique_ptr<TimeAndSalesModel> m_model;
-      std::shared_ptr<TickerTechnicalsModel> m_tickerTechnicalsModel;
-      boost::signals2::scoped_connection m_volumeConnection;
-      boost::signals2::scoped_connection m_linkConnection;
-      std::string m_linkIdentifier;
+      std::shared_ptr<TimeAndSalesPropertiesWindowFactory> m_factory;
+      ModelBuilder m_model_builder;
+      std::shared_ptr<TimeAndSalesTableModel> m_table_model;
+      TableView* m_table_view;
+      TransitionView* m_transition_view;
+      std::string m_link_identifier;
+      boost::signals2::scoped_connection m_link_connection;
+      TickerView* m_ticker_view;
 
-      void SetupTickerTechnicals();
-      void OnVolumeUpdate(Nexus::Quantity volume);
-      void OnContextMenu(const QPoint& position);
-      void OnSectionMoved(
-        int logicalIndex, int oldVisualIndex, int newVisualIndex);
-      void OnSectionResized(int logicalIndex, int oldSize, int newSize);
+      void on_context_menu(QWidget* parent, const QPoint& pos);
+      void on_export_menu();
+      void on_properties_menu();
+      void on_end_loading();
+      void on_current(const Nexus::Ticker& ticker);
   };
 }
 

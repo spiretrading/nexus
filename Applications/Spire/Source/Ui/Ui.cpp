@@ -61,3 +61,7 @@ void Spire::invalidate_descendant_layouts(QWidget& widget) {
     }
   }
 }
+
+int Spire::get_character_width(const QFont& font) {
+  return QFontMetrics(font).horizontalAdvance('0');
+}

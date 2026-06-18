@@ -1,6 +1,9 @@
 #include "Spire/Ui/ColorConversion.hpp"
 #include <numbers>
+#include <unordered_map>
+#include <boost/optional.hpp>
 
+using namespace boost;
 using namespace Spire;
 
 namespace SA98G {
@@ -169,6 +172,73 @@ QColor Spire::to_rgb(const OklchColor& color) {
   return to_rgb(lab);
 }
 
+OklchColor Spire::interpolate(const OklchColor& start, const OklchColor& end,
+    double ratio) {
+  auto h = 0.0;
+  auto c = optional<double>();
+  if(start.m_h != 0 && end.m_h != 0) {
+    auto h_step = [&] {
+      if(end.m_h > start.m_h && end.m_h - start.m_h > 180) {
+        return end.m_h - (start.m_h + 360);
+      } else if(end.m_h < start.m_h && start.m_h - end.m_h > 180) {
+        return end.m_h + 360 - start.m_h;
+      } else {
+        return end.m_h - start.m_h;
+      }
+    }();
+    h = start.m_h + ratio * h_step;
+  } else if(start.m_h != 0) {
+    h = start.m_h;
+    if(end.m_l == 1 || end.m_l == 0) {
+      c = start.m_c;
+    }
+  } else if(end.m_h != 0) {
+    h = end.m_h;
+    if(start.m_l == 1 || start.m_l == 0) {
+      c = end.m_c;
+    }
+  }
+  if(!c) {
+    c = start.m_c + ratio * (end.m_c - start.m_c);
+  }
+  return OklchColor(start.m_l + ratio * (end.m_l - start.m_l), *c, h);
+}
+
+std::vector<QColor> Spire::scale_oklch(const QColor& start, const QColor& end,
+    int steps) {
+  if(steps <= 0) {
+    return {};
+  }
+  auto colors = std::vector<QColor>(steps);
+  if(steps == 1) {
+    colors[0] = start;
+    return colors;
+  }
+  auto start_oklch = to_oklch(start);
+  auto stop_oklch = to_oklch(end);
+  for(auto i = 0; i < steps; ++i) {
+    auto t = static_cast<double>(i) / (steps - 1);
+    colors[i] = to_rgb(interpolate(start_oklch, stop_oklch, t));
+  }
+  return colors;
+}
+
+std::vector<int> Spire::scale_alpha(int start, int end, int steps) {
+  if(steps <= 0) {
+    return {};
+  }
+  auto alphas = std::vector<int>(steps);
+  if(steps == 1) {
+    alphas[0] = start;
+    return alphas;
+  }
+  auto range = end - start;
+  for(auto i = 0; i < steps; ++i) {
+    alphas[i] = start + static_cast<double>(i) / (steps - 1) * range;
+  }
+  return alphas;
+}
+
 double Spire::apca(double text_luminance, double background_luminance) {
   if(std::min(text_luminance, background_luminance) < 0.0 ||
     std::max(text_luminance, background_luminance) > 1.1) {
@@ -213,9 +283,33 @@ double Spire::apca(const QColor& text_color, const QColor& background_color) {
 }
 
 QColor Spire::apca_text_color(const QColor& background_color) {
-  if(std::abs(apca(Qt::black, background_color)) >
-      std::abs(apca(Qt::white, background_color))) {
-    return Qt::black;
+  static auto cache = std::unordered_map<QRgb, QColor>();
+  static const auto MAX_CACHE_SIZE = 512;
+  static const auto APCA_CONTRAST_THRESHOLD = 60.0;
+  auto key = background_color.rgb();
+  if(auto it = cache.find(key); it != cache.end()) {
+    return it->second;
   }
-  return Qt::white;
+  auto max_contrast = 0.0;
+  auto max_contrast_color = QColor();
+  for(auto i = 0; i < 256; ++i) {
+    auto text_color = QColor(i, i, i);
+    auto contrast = std::abs(apca(text_color, background_color));
+    if(contrast > max_contrast) {
+      max_contrast = contrast;
+      max_contrast_color = text_color;
+    }
+    if(contrast >= APCA_CONTRAST_THRESHOLD) {
+      if(cache.size() >= MAX_CACHE_SIZE) {
+        cache.clear();
+      }
+      cache.emplace(key, text_color);
+      return text_color;
+    }
+  }
+  if(cache.size() >= MAX_CACHE_SIZE) {
+    cache.clear();
+  }
+  cache.emplace(key, max_contrast_color);
+  return max_contrast_color;
 }

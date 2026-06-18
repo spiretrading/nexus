@@ -49,6 +49,8 @@ TableHeader::TableHeader(
     : QWidget(parent),
       m_items(std::move(items)),
       m_filter(std::move(filter)),
+      m_translation(std::make_shared<ArrayListModel<int>>()),
+      m_resize_index(-1),
       m_filter_panel(nullptr),
       m_closing_filter_panel(nullptr),
       m_is_closing_filters(false) {
@@ -72,6 +74,7 @@ TableHeader::TableHeader(
       std::bind_front(&TableHeader::on_filter_open, this, i));
     layout->addWidget(item);
     m_item_views.push_back(item);
+    m_translation.push(i);
     link(*this, *item);
     item->installEventFilter(this);
   }
@@ -111,6 +114,8 @@ TableHeader::TableHeader(
   });
   enclose(*this, *outer_box);
   proxy_style(*this, *outer_box);
+  m_items_connection = m_items->connect_operation_signal(
+    std::bind_front(&TableHeader::on_items_operation, this));
   m_filter_connection = m_filter->connect_filter_signal(
     std::bind_front(&TableHeader::on_filter, this));
   m_widths_connection = m_widths->connect_operation_signal(
@@ -237,6 +242,23 @@ void TableHeader::on_filter(int column, TableFilter::Filter filter) {
   }
 }
 
+void TableHeader::on_items_operation(
+    const ListModel<TableHeaderItem::Model>::Operation& operation) {
+  visit(operation,
+    [&] (const ListModel<TableHeaderItem::Model>::MoveOperation& operation) {
+      if(operation.m_source == operation.m_destination) {
+        return;
+      }
+      auto header_box = static_cast<Box*>(&m_scroll_box->get_body());
+      auto header_layout = static_cast<FixedHorizontalLayout*>(
+        header_box->get_body()->layout());
+      header_layout->move(operation.m_source, operation.m_destination);
+      move_element(m_item_views, operation.m_source, operation.m_destination);
+      m_widths->move(operation.m_source, operation.m_destination);
+      m_translation.move(operation.m_source, operation.m_destination);
+    });
+}
+
 void TableHeader::on_widths_operation(
     const ListModel<int>::Operation& operation) {
   visit(operation,
@@ -246,8 +268,16 @@ void TableHeader::on_widths_operation(
     });
 }
 
+void TableHeader::on_start_resize(int index) {
+  m_resize_index = m_translation.index_from_source(index);
+}
+
+void TableHeader::on_end_resize(int index) {
+  m_resize_index = -1;
+}
+
 void TableHeader::on_sort(int index, TableHeaderItem::Order order) {
-  m_sort_signal(index, order);
+  m_sort_signal(m_translation.index_from_source(index), order);
 }
 
 void TableHeader::on_filter_open(int index, bool is_open) {

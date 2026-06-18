@@ -3,6 +3,7 @@
 #include <doctest/doctest.h>
 #include "Nexus/Compliance/ComplianceRuleSet.hpp"
 #include "Nexus/ComplianceTests/TestComplianceClient.hpp"
+#include "Nexus/ComplianceTests/TestComplianceRule.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
@@ -62,5 +63,46 @@ TEST_SUITE("ComplianceRuleSet") {
     REQUIRE(monitor_operation->m_directory_entry == account);
     monitor_operation->m_result.set(std::vector<ComplianceRuleEntry>());
     submission.get();
+  }
+
+  TEST_CASE("restore") {
+    auto fixture = Fixture();
+    auto account =
+      fixture.m_service_locator_environment.get_root().make_account(
+        "user", "pw", DirectoryEntry::STAR_DIRECTORY);
+    auto rule_operations = std::make_shared<TestComplianceRule::Queue>();
+    auto rule_set = TestComplianceRuleSet(&fixture.m_client,
+      fixture.m_service_locator_environment.make_client("user", "pw"),
+      [&] (const ComplianceRuleEntry&) {
+        return std::make_unique<TestComplianceRule>(rule_operations);
+      });
+    auto ticker = parse_ticker("TST.TSX");
+    auto order = std::make_shared<PrimitiveOrder>(OrderInfo(
+      make_limit_order_fields(account, ticker, CAD, Side::BID, "TSX", 100,
+        Money::ONE), 123, time_from_string("2024-03-12 13:12:00:00")));
+    auto snapshot = InventorySnapshot();
+    snapshot.m_sequence = Beam::Sequence(5);
+    auto restoration = std::async(std::launch::async, [&] {
+      rule_set.restore(account, snapshot,
+        std::vector<std::shared_ptr<Order>>{order});
+    });
+    auto operation = fixture.m_operations->pop();
+    auto monitor_operation =
+      std::get_if<TestComplianceClient::MonitorComplianceRuleEntriesOperation>(
+        &*operation);
+    REQUIRE(monitor_operation);
+    auto entry = ComplianceRuleEntry(1, account,
+      ComplianceRuleEntry::State::ACTIVE, ComplianceRuleSchema("test_rule", {}));
+    monitor_operation->m_result.set(std::vector{entry});
+    auto rule_operation = rule_operations->pop();
+    auto restore_operation =
+      std::get_if<TestComplianceRule::RestoreOperation>(&*rule_operation);
+    REQUIRE(restore_operation);
+    REQUIRE(restore_operation->m_account == account);
+    REQUIRE(restore_operation->m_snapshot == snapshot);
+    REQUIRE(restore_operation->m_orders.size() == 1);
+    REQUIRE(restore_operation->m_orders[0] == order);
+    restore_operation->m_result.set();
+    restoration.get();
   }
 }

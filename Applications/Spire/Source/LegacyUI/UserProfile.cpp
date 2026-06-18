@@ -7,11 +7,14 @@
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/OpenPositionsModel.hpp"
+#include "Spire/BookView/ServiceBookViewModel.hpp"
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ServiceAccountQueryModel.hpp"
-#include "Spire/Spire/ServiceTickerQueryModel.hpp"
+#include "Spire/Spire/ServiceTickerInfoQueryModel.hpp"
+#include "Spire/TimeAndSales/CachedTimeAndSalesModel.hpp"
+#include "Spire/TimeAndSales/ServiceTimeAndSalesModel.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -19,11 +22,29 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 
+namespace {
+  std::unique_ptr<TimeAndSalesModel> time_and_sales_model_builder(
+      const Ticker& ticker, MarketDataClient client) {
+    return std::make_unique<CachedTimeAndSalesModel>(
+      std::make_shared<ServiceTimeAndSalesModel>(ticker, std::move(client)));
+  }
+
+  std::unique_ptr<BookViewModel> book_view_model_builder(const Ticker& ticker,
+      BlotterSettings& blotter, MarketDataClient market_data_client,
+      TimeClient time_client) {
+    return std::make_unique<ServiceBookViewModel>(
+      ticker, blotter, std::move(market_data_client), std::move(time_client));
+  }
+}
+
 UserProfile::UserProfile(const std::string& username, bool isAdministrator,
     bool isManager, const std::vector<ExchangeRate>& exchangeRates,
     const EntitlementDatabase& entitlementDatabase,
-    const AdditionalTagDatabase& additionalTagDatabase, Uri web_portal_uri,
+    const AdditionalTagDatabase& additionalTagDatabase,
+    BookViewProperties book_view_properties,
+    TimeAndSalesProperties time_and_sales_properties, Uri web_portal_uri,
     Clients clients)
+BEAM_SUPPRESS_THIS_INITIALIZER()
     : m_username(username),
       m_isAdministrator(isAdministrator),
       m_isManager(isManager),
@@ -36,10 +57,33 @@ UserProfile::UserProfile(const std::string& username, bool isAdministrator,
         std::make_shared<ArrayListModel<std::shared_ptr<WindowSettings>>>()),
       m_account_query_model(std::make_shared<ServiceAccountQueryModel>(
         m_clients.get_administration_client())),
-      m_ticker_info_query_model(std::make_shared<ServiceTickerQueryModel>(
+      m_ticker_info_query_model(std::make_shared<ServiceTickerInfoQueryModel>(
         m_clients.get_market_data_client())),
+      m_book_view_properties_window_factory(
+        std::make_shared<BookViewPropertiesWindowFactory>(
+          std::make_shared<LocalBookViewPropertiesModel>(
+            std::move(book_view_properties)))),
+      m_book_view_models([this] (const auto& ticker) {
+        return book_view_model_builder(ticker, *m_blotterSettings,
+          m_clients.get_market_data_client(), m_clients.get_time_client());
+      }),
+      m_book_view_model_builder([this] (const auto& ticker) {
+        return m_book_view_models.load(ticker);
+      }),
+      m_time_and_sales_properties_window_factory(
+        std::make_shared<TimeAndSalesPropertiesWindowFactory>(
+          std::make_shared<LocalTimeAndSalesPropertiesModel>(
+            std::move(time_and_sales_properties)))),
+      m_time_and_sales_models([this] (const auto& ticker) {
+        return time_and_sales_model_builder(
+          ticker, m_clients.get_market_data_client());
+      }),
+      m_time_and_sales_model_builder([this] (const auto& ticker) {
+        return m_time_and_sales_models.load(ticker);
+      }),
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_additionalTagDatabase(additionalTagDatabase) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
   m_keyBindings = load_key_bindings_profile(m_profilePath);
   for(auto& exchangeRate : exchangeRates) {
     m_exchangeRates.add(exchangeRate);
@@ -146,15 +190,6 @@ CanvasTypeRegistry& UserProfile::GetCanvasTypeRegistry() {
   return m_typeRegistry;
 }
 
-const BookViewProperties& UserProfile::GetDefaultBookViewProperties() const {
-  return m_defaultBookViewProperties;
-}
-
-void UserProfile::SetDefaultBookViewProperties(
-    const BookViewProperties& properties) {
-  m_defaultBookViewProperties = properties;
-}
-
 const OrderImbalanceIndicatorProperties&
     UserProfile::GetDefaultOrderImbalanceIndicatorProperties() const {
   return m_defaultOrderImbalanceIndicatorProperties;
@@ -175,6 +210,16 @@ void UserProfile::SetInitialOrderImbalanceIndicatorWindowSettings(
   m_initialOrderImbalanceIndicatorWindowSettings = settings;
 }
 
+const std::shared_ptr<BookViewPropertiesWindowFactory>&
+    UserProfile::GetBookViewPropertiesWindowFactory() const {
+  return m_book_view_properties_window_factory;
+}
+
+const BookViewWindow::ModelBuilder&
+    UserProfile::GetBookViewModelBuilder() const {
+  return m_book_view_model_builder;
+}
+
 const RiskTimerProperties& UserProfile::GetRiskTimerProperties() const {
   return m_riskTimerProperties;
 }
@@ -183,14 +228,14 @@ RiskTimerProperties& UserProfile::GetRiskTimerProperties() {
   return m_riskTimerProperties;
 }
 
-const TimeAndSalesProperties&
-    UserProfile::GetDefaultTimeAndSalesProperties() const {
-  return m_defaultTimeAndSalesProperties;
+const std::shared_ptr<TimeAndSalesPropertiesWindowFactory>&
+    UserProfile::GetTimeAndSalesPropertiesWindowFactory() const {
+  return m_time_and_sales_properties_window_factory;
 }
 
-void UserProfile::SetDefaultTimeAndSalesProperties(
-    const TimeAndSalesProperties& properties) {
-  m_defaultTimeAndSalesProperties = properties;
+const TimeAndSalesWindow::ModelBuilder&
+    UserProfile::GetTimeAndSalesModelBuilder() const {
+  return m_time_and_sales_model_builder;
 }
 
 const PortfolioViewerProperties&
@@ -211,6 +256,19 @@ const optional<PortfolioViewerWindowSettings>&
 void UserProfile::SetInitialPortfolioViewerWindowSettings(
     const PortfolioViewerWindowSettings& settings) {
   m_initialPortfolioViewerWindowSettings = settings;
+}
+
+void UserProfile::initialize_ui() {
+  m_book_view_properties_window_factory->make(m_keyBindings);
+}
+
+std::filesystem::path Spire::get_profile_path() {
+  return std::filesystem::weakly_canonical(QStandardPaths::writableLocation(
+    QStandardPaths::DataLocation).toStdString()) / "Profiles";
+}
+
+std::filesystem::path Spire::get_profile_path(const std::string& username) {
+  return get_profile_path() / username;
 }
 
 Quantity Spire::get_default_order_quantity(const UserProfile& userProfile,

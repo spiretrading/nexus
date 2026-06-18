@@ -144,16 +144,23 @@ struct TableBody::RowCover : Cover {
         std::forward_as_tuple(item), std::forward_as_tuple(*item));
       body.m_hover_observers.at(item).connect_state_signal(
         std::bind_front(&TableBody::on_hover, &body, std::ref(*item)));
-      if(column != body.get_column_size() - 1) {
+      if(column < body.m_table->get_column_size() - 1) {
         if(body.m_column_covers[column]->isVisible()) {
           item->setFixedWidth(
             body.m_widths->get(column) - body.get_left_spacing(column));
         } else {
           item->setFixedWidth(0);
         }
+      } else if(column == body.m_table->get_column_size() - 1) {
+        auto last_width = body.m_column_covers[column]->width();
+        if(last_width > 0) {
+          item->setFixedWidth(last_width);
+        } else {
+          item->setSizePolicy(
+            QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
+        }
       } else {
-        item->setSizePolicy(
-          QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
+        item->setFixedWidth(0);
       }
       layout->addWidget(item);
       item->connect_active_signal(std::bind_front(
@@ -175,7 +182,8 @@ struct TableBody::RowCover : Cover {
   void mount(int index) {
     auto& body = *static_cast<TableBody*>(parentWidget());
     for(auto i = 0; i != body.m_table->get_column_size(); ++i) {
-      get_item(i)->mount(*body.m_item_builder.mount(body.m_table, index, i));
+      get_item(i)->mount(*body.m_item_builder.mount(
+        body.m_table, index, body.m_visual_to_logical_columns[i]));
     }
   }
 
@@ -192,6 +200,11 @@ struct TableBody::RowCover : Cover {
     if(!testAttribute(Qt::WA_WState_Hidden)) {
       setAttribute(Qt::WA_WState_Hidden);
     }
+  }
+
+  void move_column(int source, int destination) {
+    static_cast<FixedHorizontalLayout*>(this->layout())->move(
+      source, destination);
   }
 
   QSize sizeHint() const override {
@@ -678,6 +691,7 @@ TableBody::TableBody(
     }();
     add_column_cover(column, QRect(QPoint(left, 0), QSize(width, height())));
     left += width;
+    m_visual_to_logical_columns.push_back(column);
   }
   if(auto current = m_current_controller.get_column()) {
     match(*m_column_covers[*current], CurrentColumn());
@@ -1667,6 +1681,23 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
             }
           }
         }
+      }
+    },
+    [&] (const ListModel<int>::MoveOperation& operation) {
+      if(operation.m_source == operation.m_destination) {
+        return;
+      }
+      move_element(m_visual_to_logical_columns, operation.m_source,
+        operation.m_destination);
+      move_element(
+        m_column_covers, operation.m_source, operation.m_destination);
+      auto& layout = get_layout();
+      for(auto i = 0; i < layout.count(); ++i) {
+        layout.get_row(i).move_column(
+          operation.m_source, operation.m_destination);
+      }
+      for(auto& row_cover : m_recycled_rows) {
+        row_cover->move_column(operation.m_source, operation.m_destination);
       }
     });
 }

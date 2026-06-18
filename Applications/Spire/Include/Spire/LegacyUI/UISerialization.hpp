@@ -3,6 +3,7 @@
 #include <Beam/Serialization/TypeRegistry.hpp>
 #include "Spire/Blotter/BlotterWindowSettings.hpp"
 #include "Spire/BookView/BookViewWindowSettings.hpp"
+#include "Spire/BookView/LegacyBookViewWindowSettings.hpp"
 #include "Spire/Canvas/Common/CustomNode.hpp"
 #include "Spire/Canvas/Common/NoneNode.hpp"
 #include "Spire/Canvas/ControlNodes/AggregateNode.hpp"
@@ -99,6 +100,7 @@
 #include "Spire/Canvas/ValueNodes/TimeRangeNode.hpp"
 #include "Spire/Canvas/ValueNodes/ValueNode.hpp"
 #include "Spire/Canvas/ValueNodes/VenueNode.hpp"
+#include "Spire/CanvasView/CanvasWindowSettings.hpp"
 #include "Spire/Charting/ChartIntervalComboBoxWindowSettings.hpp"
 #include "Spire/Charting/ChartPlotViewWindowSettings.hpp"
 #include "Spire/Charting/ChartWindowSettings.hpp"
@@ -115,11 +117,11 @@
 #include "Spire/Dashboard/ValueDashboardCellBuilder.hpp"
 #include "Spire/Dashboard/VolumeDashboardCellBuilder.hpp"
 #include "Spire/InputWidgets/TimeRangeInputWidgetWindowSettings.hpp"
-#include "Spire/LegacyUI/CanvasWindowSettings.hpp"
 #include "Spire/LegacyUI/CollapsibleWidgetWindowSettings.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
+#include "Spire/TimeAndSales/LegacyTimeAndSalesWindowSettings.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
 #include "Spire/Toolbar/ToolbarWindowSettings.hpp"
 
@@ -257,8 +259,9 @@ namespace Spire {
 
   BEAM_REGISTER_TYPES(RegisterWindowSettingsTypes,
     (BlotterWindowSettings, "Spire.BlotterWindowSettings"),
-    (BookViewWindowSettings, "Spire.BookViewWindowSettings"),
-    (LegacyUI::CanvasWindowSettings, "Spire.UI.CanvasWindowSettings"),
+    (BookViewWindowSettings, "Spire.Current.BookViewWindowSettings"),
+    (LegacyBookViewWindowSettings, "Spire.BookViewWindowSettings"),
+    (CanvasWindowSettings, "Spire.UI.CanvasWindowSettings"),
     (ChartIntervalComboBoxWindowSettings,
       "Spire.ChartIntervalComboBoxWindowSettings"),
     (ChartPlotViewWindowSettings, "Spire.ChartPlotViewWindowSettings"),
@@ -272,7 +275,8 @@ namespace Spire {
     (OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings,
       "Spire.OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings"),
     (PortfolioViewerWindowSettings, "Spire.PortfolioViewerWindowSettings"),
-    (TimeAndSalesWindowSettings, "Spire.TimeAndSalesWindowSettings"),
+    (TimeAndSalesWindowSettings, "Spire.Current.TimeAndSalesWindowSettings"),
+    (LegacyTimeAndSalesWindowSettings, "Spire.TimeAndSalesWindowSettings"),
     (TimeRangeInputWidgetWindowSettings,
       "Spire.TimeRangeInputWidgetWindowSettings"),
     (ToolbarWindowSettings, "Spire.UI.ToolbarWindowSettings"));

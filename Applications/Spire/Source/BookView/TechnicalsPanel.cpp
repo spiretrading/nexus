@@ -1,4 +1,6 @@
 #include "Spire/BookView/TechnicalsPanel.hpp"
+#include <type_traits>
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <QEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
@@ -7,6 +9,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/TextBox.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace Nexus;
@@ -25,32 +28,29 @@ namespace {
   }
 
   auto get_value_field_minimum_width() {
-    return QFontMetrics(LABEL_FONT()).averageCharWidth() * 8;
-  }
-
-  auto to_text(Money value) {
-    return Spire::to_text(value, QLocale::system());
-  }
-
-  auto to_text(Quantity value) {
-    auto text = QLocale::system().toString(static_cast<double>(value), 'f', 6);
-    text = text.remove(QRegExp("\\.?0+$"));
-    return text;
+    return get_character_width(LABEL_FONT()) * 8;
   }
 
   auto to_default_quantity(Quantity bid_quantity, Quantity ask_quantity) {
     return to_text(bid_quantity) + "x" + to_text(ask_quantity);
   }
 
-  template<typename T, typename F>
-  auto make_candlestick_value_field(
-      std::shared_ptr<SessionCandlestickModel> candlestick, F accessor) {
-    auto label = make_label(
-      make_to_text_model(
-        make_transform_value_model(std::move(candlestick), std::move(accessor)),
-        [] (const auto& value) {
+  template<typename F>
+  auto make_technicals_value_field(
+      std::shared_ptr<SessionTechnicalsModel> technicals, F accessor) {
+    auto label = make_label(make_read_only_to_text_model(
+      make_transform_value_model(std::move(technicals), std::move(accessor)),
+      [] (const auto& value) {
+        if constexpr(
+            std::is_same_v<std::decay_t<decltype(value)>, optional<Money>>) {
+          if(value) {
+            return to_text(*value);
+          }
+          return QObject::tr("N/A");
+        } else {
           return to_text(value);
-        }));
+        }
+      }));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     label->setMinimumWidth(get_value_field_minimum_width());
     return label;
@@ -102,17 +102,19 @@ namespace {
 }
 
 TechnicalsPanel::TechnicalsPanel(
-    std::shared_ptr<SessionCandlestickModel> candlestick,
+    std::shared_ptr<SessionTechnicalsModel> technicals,
     std::shared_ptr<QuantityModel> default_bid_quantity,
     std::shared_ptr<QuantityModel> default_ask_quantity, QWidget* parent)
     : QWidget(parent),
-      m_candlestick(std::move(candlestick)),
+      m_technicals(std::move(technicals)),
       m_bid_quantity(std::move(default_bid_quantity)),
       m_ask_quantity(std::move(default_ask_quantity)),
+BEAM_SUPPRESS_THIS_INITIALIZER()
       m_bid_quantity_connection(m_bid_quantity->connect_update_signal(
         std::bind_front(&TechnicalsPanel::on_bid_quantity_update, this))),
       m_ask_quantity_connection(m_ask_quantity->connect_update_signal(
         std::bind_front(&TechnicalsPanel::on_ask_quantity_update, this))) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
   m_default_field = make_label("");
   m_default_field->setMinimumWidth(get_value_field_minimum_width());
   on_ask_quantity_update(m_ask_quantity->get());
@@ -125,16 +127,20 @@ TechnicalsPanel::TechnicalsPanel(
     make_indicator_label(tr("O")), make_indicator_label(tr("C")),
     make_indicator_label(tr("V")), make_indicator_label(tr("D"))};
   auto fields = std::vector<TextBox*>{
-    make_candlestick_value_field<Money>(
-      m_candlestick, &PriceCandlestick::get_high),
-    make_candlestick_value_field<Money>(
-      m_candlestick, &PriceCandlestick::get_low),
-    make_candlestick_value_field<Money>(
-      m_candlestick, &PriceCandlestick::get_open),
-    make_candlestick_value_field<Money>(
-      m_candlestick, &PriceCandlestick::get_close),
-    make_candlestick_value_field<Quantity>(
-      m_candlestick, &PriceCandlestick::get_volume), m_default_field};
+    make_technicals_value_field(m_technicals,
+      [] (const SessionTechnicals& technicals) { return technicals.m_high; }),
+    make_technicals_value_field(m_technicals,
+      [] (const SessionTechnicals& technicals) { return technicals.m_low; }),
+    make_technicals_value_field(m_technicals,
+      [] (const SessionTechnicals& technicals) { return technicals.m_open; }),
+    make_technicals_value_field(m_technicals,
+      [] (const SessionTechnicals& technicals) {
+        return technicals.m_previous_close;
+      }),
+    make_technicals_value_field(m_technicals,
+      [] (const SessionTechnicals& technicals) {
+        return technicals.m_volume;
+      }), m_default_field};
   for(auto i = 0; i < std::ssize(fields); ++i) {
     link(*this, *name_indicators[i]);
     link(*this, *short_name_indicators[i]);
@@ -165,9 +171,9 @@ TechnicalsPanel::TechnicalsPanel(
   });
 }
 
-const std::shared_ptr<SessionCandlestickModel>&
-    TechnicalsPanel::get_session_candlestick() const {
-  return m_candlestick;
+const std::shared_ptr<SessionTechnicalsModel>&
+    TechnicalsPanel::get_session_technicals() const {
+  return m_technicals;
 }
 
 const std::shared_ptr<QuantityModel>&

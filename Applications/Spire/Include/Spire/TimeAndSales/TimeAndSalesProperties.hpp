@@ -1,117 +1,121 @@
-#ifndef SPIRE_TIMEANDSALESPROPERTIES_HPP
-#define SPIRE_TIMEANDSALESPROPERTIES_HPP
+#ifndef SPIRE_TIME_AND_SALES_PROPERTIES_HPP
+#define SPIRE_TIME_AND_SALES_PROPERTIES_HPP
 #include <array>
-#include <Beam/Pointers/Out.hpp>
+#include <bitset>
+#include <filesystem>
 #include <Beam/Serialization/ShuttleArray.hpp>
-#include <QColor>
+#include <Beam/Serialization/ShuttleBitset.hpp>
 #include <QFont>
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
-#include "Spire/Spire/Spire.hpp"
-#include "Spire/TimeAndSales/TimeAndSales.hpp"
+#include "Spire/TimeAndSales/BboIndicator.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesTableModel.hpp"
+#include "Spire/Ui/HighlightBox.hpp"
 
 namespace Spire {
-  class UserProfile;
 
-  /*! \class TimeAndSalesProperties
-      \brief Stores the properties used by a TimeAndSalesWindow.
-    */
+  /** Represents the properties used in the time and sales window. */
   class TimeAndSalesProperties {
     public:
 
-      //! The number of enumerated price ranges.
-      static const unsigned int PRICE_RANGE_COUNT = 6;
+      /** Returns the default properties. */
+      static const TimeAndSalesProperties& get_default();
 
-      //! The number of enumerated columns.
-      static const unsigned int COLUMN_COUNT = 5;
-
-      //! Returns the default TimeAndSalesProperties.
-      static TimeAndSalesProperties GetDefault();
-
-      //! Loads the TimeAndSalesProperties from a UserProfile.
-      /*!
-        \param userProfile The UserProfile storing the properties.
-      */
-      static void Load(Beam::Out<UserProfile> userProfile);
-
-      //! Saves a UserProfile's TimeAndSalesProperties.
-      /*!
-        \param userProfile The UserProfile's properties to save.
-      */
-      static void Save(const UserProfile& userProfile);
-
-      //! Constructs an uninitialized TimeAndSalesProperties.
+       /* Constructs an empty set of properties. */
       TimeAndSalesProperties();
 
-      //! Returns the foreground colors used for the price ranges.
-      const std::array<QColor, PRICE_RANGE_COUNT>&
-        GetPriceRangeForegroundColor() const;
+      /**
+       * Returns the highlight color of a specific BBO indicator.
+       * @param indicator The highlighted indicator.
+       */
+      const HighlightColor& get_highlight_color(BboIndicator indicator) const;
 
-      //! Returns the foreground colors used for the price ranges.
-      std::array<QColor, PRICE_RANGE_COUNT>& GetPriceRangeForegroundColor();
+      /**
+       * Sets the highlight color to a specific BBO indicator.
+       * @param indicator The indicator to be highlighted.
+       * @param highlight_color The highlight color of the indicator.
+       */
+      void set_highlight_color(
+        BboIndicator indicator, const HighlightColor& highlight_color);
 
-      //! Returns the background colors used for the price ranges.
-      const std::array<QColor, PRICE_RANGE_COUNT>&
-        GetPriceRangeBackgroundColor() const;
+      /* Returns the font. */
+      const QFont& get_font() const;
 
-      //! Returns the background colors used for the price ranges.
-      std::array<QColor, PRICE_RANGE_COUNT>& GetPriceRangeBackgroundColor();
+      /**
+       * Sets the font used in the time and sales window.
+       * @param font The font to be used.
+       */
+      void set_font(const QFont& font);
 
-      //! Returns the visible columns.
-      const std::array<bool, COLUMN_COUNT>& GetVisibleColumns() const;
+      /** Returns <code>true</code> iff a column is visible. */
+      bool is_visible(TimeAndSalesTableModel::Column column) const;
 
-      //! Returns the visible columns.
-      std::array<bool, COLUMN_COUNT>& GetVisibleColumns();
+      /** Sets whether a column is visible. */
+      void set_visible(TimeAndSalesTableModel::Column column, bool is_visible);
 
-      //! Returns whether the grid lines are visible.
-      bool GetShowGridLines() const;
+      /** Returns <code>true</code> iff the grid is shown. */
+      bool is_grid_enabled() const;
 
-      //! Sets whether to show the grid lines.
-      void SetShowGridLines(bool value);
+      /**
+       * Sets whether to enable display grid.
+       * @param is_enabled True iff the grid is shown.
+       */
+      void set_grid_enabled(bool is_enabled);
 
-      //! Returns whether the vertical scrollbar is visible.
-      bool IsVerticalScrollBarVisible() const;
+      /* Returns the column order. */
+      const std::array<int, TimeAndSalesTableModel::COLUMN_SIZE>&
+        get_column_order() const;
 
-      //! Sets whether the vertical scrollbar is visible.
-      void SetVerticalScrollBarVisible(bool isVisible);
-
-      //! Returns whether the horizontal scrollbar is visible.
-      bool IsHorizontalScrollBarVisible() const;
-
-      //! Sets whether the horizontal scrollbar is visible.
-      void SetHorizontalScrollBarVisible(bool isVisible);
-
-      //! Returns the display font.
-      const QFont& GetFont() const;
-
-      //! Sets the display font.
-      void SetFont(const QFont& font);
+      /**
+       * Moves a column from source to destination.
+       * @param source The index of the column to move.
+       * @param destination The index to move the column to.
+       */
+      void move_column(TimeAndSalesTableModel::Column source,
+        TimeAndSalesTableModel::Column destination);
 
     private:
       friend struct Beam::DataShuttle;
-      std::array<QColor, PRICE_RANGE_COUNT> m_priceRangeForegroundColor;
-      std::array<QColor, PRICE_RANGE_COUNT> m_priceRangeBackgroundColor;
-      std::array<bool, COLUMN_COUNT> m_visibleColumns;
-      bool m_showGridLines;
-      bool m_verticalScrollBarVisible;
-      bool m_horizontalScrollBarVisible;
+      std::array<HighlightColor, BBO_INDICATOR_COUNT> m_highlight_colors;
       QFont m_font;
+      std::array<int, TimeAndSalesTableModel::COLUMN_SIZE> m_column_order;
+      std::bitset<TimeAndSalesTableModel::COLUMN_SIZE> m_visible_columns;
+      bool m_is_grid_enabled;
 
       template<Beam::IsShuttle S>
       void shuttle(S& shuttle, unsigned int version);
   };
 
+  /** A ValueModel over a TimeAndSalesProperties. */
+  using TimeAndSalesPropertiesModel = ValueModel<TimeAndSalesProperties>;
+
+  /** A LocalValueModel over a TimeAndSalesProperties. */
+  using LocalTimeAndSalesPropertiesModel =
+    LocalValueModel<TimeAndSalesProperties>;
+
+  /**
+   * Loads TimeAndSalesProperties from a file.
+   * @param path The path to the file to load.
+   * @return The properties loaded from the given <i>path</i>.
+   */
+  TimeAndSalesProperties load_time_and_sales_properties(
+    const std::filesystem::path& path);
+
+  /**
+   * Saves TimeAndSalesProperties to a file.
+   * @param properties The properties to save.
+   * @param path The path to the save the properties to.
+   */
+  void save_time_and_sales_properties(const TimeAndSalesProperties& properties,
+    const std::filesystem::path& path);
+
   template<Beam::IsShuttle S>
   void TimeAndSalesProperties::shuttle(S& shuttle, unsigned int version) {
-    shuttle.shuttle("price_range_foreground_color",
-      m_priceRangeForegroundColor);
-    shuttle.shuttle("price_range_background_color",
-      m_priceRangeBackgroundColor);
-    shuttle.shuttle("visible_columns", m_visibleColumns);
-    shuttle.shuttle("show_grid_lines", m_showGridLines);
-    shuttle.shuttle("vertical_scroll_bar_visible", m_verticalScrollBarVisible);
-    shuttle.shuttle("horizontal_scroll_bar_visible",
-      m_horizontalScrollBarVisible);
+    shuttle.shuttle("highlight_colors", m_highlight_colors);
     shuttle.shuttle("font", m_font);
+    shuttle.shuttle("visible_columns", m_visible_columns);
+    shuttle.shuttle("is_grid_enabled", m_is_grid_enabled);
+    shuttle.shuttle("column_order", m_column_order);
   }
 }
 

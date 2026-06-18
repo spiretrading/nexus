@@ -543,6 +543,28 @@ namespace Spire {
     }
   }
 
+  /**
+   * Moves an element in a list from source to destination.
+   * @param source The index of the element to move.
+   * @param destination The index to move the element to.
+   */
+  template<typename List>
+  void move_element(List& list, int source, int destination) {
+    if(source < 0 || source >= list.size() ||
+        destination < 0 || destination >= list.size()) {
+      throw std::out_of_range("The index is out of range.");
+    }
+    if(source == destination) {
+      return;
+    }
+    auto begin = list.begin();
+    if(source < destination) {
+      std::rotate(begin + source, begin + source + 1, begin + destination + 1);
+    } else {
+      std::rotate(begin + destination, begin + source, begin + source + 1);
+    }
+  }
+
   /** Removes all values from a ListModel. */
   void clear(AnyListModel& model);
 

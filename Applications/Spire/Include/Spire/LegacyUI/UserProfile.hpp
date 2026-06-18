@@ -9,7 +9,7 @@
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
 #include "Spire/Blotter/Blotter.hpp"
-#include "Spire/BookView/BookViewProperties.hpp"
+#include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/Canvas/Types/CanvasTypeRegistry.hpp"
 #include "Spire/Catalog/CatalogSettings.hpp"
 #include "Spire/Dashboard/SavedDashboards.hpp"
@@ -21,8 +21,9 @@
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
+#include "Spire/Spire/CachedModelBuilder.hpp"
 #include "Spire/Spire/Spire.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesProperties.hpp"
+#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/Ui/AccountBox.hpp"
 #include "Spire/Ui/TickerBox.hpp"
 
@@ -46,6 +47,10 @@ namespace Spire {
        * @param entitlementDatabase Stores the database of market data
        *        entitlements.
        * @param additionalTagDatabase Stores the database of additional tags.
+       * @param book_view_properties Initializes the display properties of the
+       *        BookViewWindow.
+       * @param time_and_sales_properties Initializes the time and sales
+       *        properties.
        * @param web_portal_uri The URI of the web portal.
        * @param clients The set of clients connected to Spire services.
        */
@@ -53,6 +58,8 @@ namespace Spire {
         bool isManager, const std::vector<Nexus::ExchangeRate>& exchangeRates,
         const Nexus::EntitlementDatabase& entitlementDatabase,
         const AdditionalTagDatabase& additionalTagDatabase,
+        BookViewProperties book_view_properties,
+        TimeAndSalesProperties time_and_sales_properties,
         Beam::Uri web_portal_uri, Nexus::Clients clients);
 
       ~UserProfile();
@@ -129,15 +136,6 @@ namespace Spire {
       /** Returns the CanvasTypeRegistry. */
       CanvasTypeRegistry& GetCanvasTypeRegistry();
 
-      /** Returns the default BookViewProperties. */
-      const BookViewProperties& GetDefaultBookViewProperties() const;
-
-      /**
-       * Sets the default BookViewProperties.
-       * @param properties The BookViewProperties to use as the defaults.
-       */
-      void SetDefaultBookViewProperties(const BookViewProperties& properties);
-
       /** Returns the default OrderImbalanceIndicatorProperties. */
       const OrderImbalanceIndicatorProperties&
         GetDefaultOrderImbalanceIndicatorProperties() const;
@@ -158,21 +156,26 @@ namespace Spire {
       void SetInitialOrderImbalanceIndicatorWindowSettings(
         const OrderImbalanceIndicatorWindowSettings& settings);
 
+      /** Returns the BookViewPropertiesWindowFactory. */
+      const std::shared_ptr<BookViewPropertiesWindowFactory>&
+        GetBookViewPropertiesWindowFactory() const;
+
+      /** Returns the BookViewModelBuilder. */
+      const BookViewWindow::ModelBuilder& GetBookViewModelBuilder() const;
+
       /** Returns the RiskTimerProperties. */
       const RiskTimerProperties& GetRiskTimerProperties() const;
 
       /** Returns the RiskTimerProperties. */
       RiskTimerProperties& GetRiskTimerProperties();
 
-      /** Returns the default TimeAndSalesProperties. */
-      const TimeAndSalesProperties& GetDefaultTimeAndSalesProperties() const;
+      /** Returns the TimeAndSalesPropertiesWindowFactory. */
+      const std::shared_ptr<TimeAndSalesPropertiesWindowFactory>&
+        GetTimeAndSalesPropertiesWindowFactory() const;
 
-      /**
-       * Sets the default TimeAndSalesProperties.
-       * @param properties The TimeAndSalesProperties to use as defaults.
-       */
-      void SetDefaultTimeAndSalesProperties(
-        const TimeAndSalesProperties& properties);
+      /** Returns the TimeAndSalesModelBuilder. */
+      const TimeAndSalesWindow::ModelBuilder&
+        GetTimeAndSalesModelBuilder() const;
 
       /** Returns the default PortfolioViewerProperties. */
       const PortfolioViewerProperties&
@@ -193,6 +196,9 @@ namespace Spire {
       void SetInitialPortfolioViewerWindowSettings(
         const PortfolioViewerWindowSettings& settings);
 
+      /** Pre-constructs heavyweight UI components to avoid first-use lag. */
+      void initialize_ui();
+
     private:
       std::string m_username;
       bool m_isAdministrator;
@@ -205,12 +211,19 @@ namespace Spire {
       std::shared_ptr<RecentlyClosedWindowListModel> m_recentlyClosedWindows;
       std::shared_ptr<AccountQueryModel> m_account_query_model;
       std::shared_ptr<TickerInfoQueryModel> m_ticker_info_query_model;
-      BookViewProperties m_defaultBookViewProperties;
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties
         m_defaultOrderImbalanceIndicatorProperties;
+      std::shared_ptr<BookViewPropertiesWindowFactory>
+        m_book_view_properties_window_factory;
+      CachedModelBuilder<Nexus::Ticker, BookViewModel> m_book_view_models;
+      BookViewWindow::ModelBuilder m_book_view_model_builder;
       RiskTimerProperties m_riskTimerProperties;
-      TimeAndSalesProperties m_defaultTimeAndSalesProperties;
+      std::shared_ptr<TimeAndSalesPropertiesWindowFactory>
+        m_time_and_sales_properties_window_factory;
+      CachedModelBuilder<Nexus::Ticker, TimeAndSalesModel>
+        m_time_and_sales_models;
+      TimeAndSalesWindow::ModelBuilder m_time_and_sales_model_builder;
       PortfolioViewerProperties m_defaultPortfolioViewerProperties;
       CatalogSettings m_catalogSettings;
       AdditionalTagDatabase m_additionalTagDatabase;
@@ -222,6 +235,15 @@ namespace Spire {
       boost::optional<PortfolioViewerWindowSettings>
         m_initialPortfolioViewerWindowSettings;
   };
+
+  /** Returns the path to the folder containing all user profiles. */
+  std::filesystem::path get_profile_path();
+
+  /**
+   * Returns the path to the user's profile folder.
+   * @param username The username to get the profile path for.
+   */
+  std::filesystem::path get_profile_path(const std::string& username);
 
   /**
    * Returns the default order quantity to display to a user.

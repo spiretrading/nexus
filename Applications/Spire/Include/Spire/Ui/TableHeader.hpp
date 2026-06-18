@@ -4,6 +4,7 @@
 #include <QVariantAnimation>
 #include <QWidget>
 #include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/TranslatedListModel.hpp"
 #include "Spire/Ui/TableHeaderItem.hpp"
 
 namespace Spire {
@@ -67,15 +68,22 @@ namespace Spire {
       std::shared_ptr<TableFilter> m_filter;
       std::shared_ptr<ListModel<int>> m_widths;
       std::vector<TableHeaderItem*> m_item_views;
+      TranslatedListModel<int> m_translation;
+      int m_resize_index;
       ScrollBox* m_scroll_box;
       QBoxLayout* m_body_layout;
       PopupBox* m_filter_panel;
       QWidget* m_closing_filter_panel;
       QPointer<QVariantAnimation> m_filter_animation;
       bool m_is_closing_filters;
+      boost::signals2::scoped_connection m_items_connection;
       boost::signals2::scoped_connection m_filter_connection;
       boost::signals2::scoped_connection m_widths_connection;
 
+      void on_items_operation(
+        const ListModel<TableHeaderItem::Model>::Operation& operation);
+      void on_start_resize(int index);
+      void on_end_resize(int index);
       void close_filter_panel();
       void open_filter_panel(int index);
       void swap_filter_panel(int index);

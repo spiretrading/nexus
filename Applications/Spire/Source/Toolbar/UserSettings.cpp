@@ -10,6 +10,7 @@
 #include <boost/algorithm/string/replace.hpp>
 #include <QApplication>
 #include "Spire/BookView/BookViewWindow.hpp"
+#include "Spire/BookView/LegacyBookViewWindowSettings.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
 #include "Spire/Canvas/Types/TickerType.hpp"
 #include "Spire/Canvas/ValueNodes/TickerNode.hpp"
@@ -21,7 +22,7 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindow.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindow.hpp"
-#include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include "Spire/TimeAndSales/LegacyTimeAndSalesWindowSettings.hpp"
 #include "Spire/Toolbar/ToolbarWindow.hpp"
 
 using namespace Beam;
@@ -31,16 +32,17 @@ using namespace Spire::LegacyUI;
 
 namespace {
   struct LegacyEnvironmentSettings {
-    boost::optional<BookViewProperties> m_book_view_properties;
-    boost::optional<SavedDashboards> m_dashboards;
-    boost::optional<OrderImbalanceIndicatorProperties>
+    optional<LegacyBookViewWindowSettings::Properties> m_book_view_properties;
+    optional<SavedDashboards> m_dashboards;
+    optional<OrderImbalanceIndicatorProperties>
       m_order_imbalance_indicator_properties;
-    boost::optional<Nexus::ScopeMap<LegacyInteractionsProperties>>
+    optional<Nexus::ScopeMap<LegacyInteractionsProperties>>
       m_interactions_properties;
-    boost::optional<LegacyKeyBindings> m_key_bindings;
-    boost::optional<PortfolioViewerProperties> m_portfolio_viewer_properties;
-    boost::optional<TimeAndSalesProperties> m_time_and_sales_properties;
-    boost::optional<std::vector<std::shared_ptr<WindowSettings>>>
+    optional<LegacyKeyBindings> m_key_bindings;
+    optional<PortfolioViewerProperties> m_portfolio_viewer_properties;
+    optional<LegacyTimeAndSalesWindowSettings::Properties>
+      m_time_and_sales_properties;
+    optional<std::vector<std::shared_ptr<WindowSettings>>>
       m_window_layouts;
 
     template<IsShuttle S>
@@ -84,12 +86,18 @@ namespace {
       RegisterSpireTypes(out(legacy_registry));
       load(legacy_registry);
     }
-    settings->m_book_view_properties = legacy.m_book_view_properties;
+    if(legacy.m_book_view_properties) {
+      settings->m_book_view_properties =
+        to_book_view_properties(*legacy.m_book_view_properties);
+    }
     settings->m_dashboards = legacy.m_dashboards;
     settings->m_order_imbalance_indicator_properties =
       legacy.m_order_imbalance_indicator_properties;
     settings->m_portfolio_properties = legacy.m_portfolio_viewer_properties;
-    settings->m_time_and_sales_properties = legacy.m_time_and_sales_properties;
+    if(legacy.m_time_and_sales_properties) {
+      settings->m_time_and_sales_properties =
+        to_time_and_sales_properties(*legacy.m_time_and_sales_properties);
+    }
     settings->m_layouts = legacy.m_window_layouts;
     if(categories.test(UserSettings::Category::KEY_BINDINGS) &&
         legacy.m_key_bindings) {
@@ -101,21 +109,41 @@ namespace {
     }
   }
 
+  struct LegacyUserSettings {
+    optional<LegacyBookViewWindowSettings::Properties> m_book_view_properties;
+    optional<SavedDashboards> m_dashboards;
+    optional<OrderImbalanceIndicatorProperties>
+      m_order_imbalance_indicator_properties;
+    std::shared_ptr<KeyBindingsModel> m_key_bindings;
+    optional<PortfolioViewerProperties> m_portfolio_properties;
+    optional<LegacyTimeAndSalesWindowSettings::Properties>
+      m_time_and_sales_properties;
+    optional<std::vector<std::shared_ptr<WindowSettings>>> m_layouts;
+
+    template<IsShuttle S>
+    void shuttle(S& shuttle, unsigned int version) {
+      shuttle.shuttle("book_view_properties", m_book_view_properties);
+      shuttle.shuttle("dashboards", m_dashboards);
+      shuttle.shuttle("order_imbalance_indicator_properties",
+        m_order_imbalance_indicator_properties);
+      shuttle.shuttle("key_bindings", *m_key_bindings);
+      shuttle.shuttle("portfolio_viewer_properties", m_portfolio_properties);
+      shuttle.shuttle("time_and_sales_properties", m_time_and_sales_properties);
+      shuttle.shuttle("window_layouts", m_layouts);
+    }
+  };
+
   void read_json_settings(
       const std::filesystem::path& path, Out<UserSettings> settings) {
     auto reader = BasicIStreamReader<std::ifstream>(init(path));
     auto buffer = SharedBuffer();
     reader.read(out(buffer));
-    auto load = [&] (const SharedBuffer& source,
-        TypeRegistry<JsonSender<SharedBuffer>>& registry) {
-      auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
-      receiver.set(Ref(source));
-      receiver.shuttle(*settings);
-    };
     auto current_registry = TypeRegistry<JsonSender<SharedBuffer>>();
     RegisterSpireTypes(out(current_registry));
     try {
-      load(buffer, current_registry);
+      auto receiver = JsonReceiver<SharedBuffer>(Ref(current_registry));
+      receiver.set(Ref(buffer));
+      receiver.shuttle(*settings);
       return;
     } catch(const std::exception&) {}
     auto legacy_registry = TypeRegistry<JsonSender<SharedBuffer>>();
@@ -124,12 +152,30 @@ namespace {
     legacy_registry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
     RegisterSpireTypes(out(legacy_registry));
     auto text = std::string(buffer.get_data(), buffer.get_size());
-    boost::replace_all(text, "\"region\":", "\"scope\":");
-    boost::replace_all(text, "\"securities\":", "\"tickers\":");
-    boost::replace_all(
-      text, "\"security_view_stack\":", "\"ticker_view_stack\":");
-    boost::replace_all(text, "\"security\":", "\"ticker\":");
-    load(SharedBuffer(text.data(), text.size()), legacy_registry);
+    replace_all(text, "\"region\":", "\"scope\":");
+    replace_all(text, "\"securities\":", "\"tickers\":");
+    replace_all(text, "\"security_view_stack\":", "\"ticker_view_stack\":");
+    replace_all(text, "\"security_view\":", "\"ticker_view\":");
+    replace_all(text, "\"security\":", "\"ticker\":");
+    auto legacy = LegacyUserSettings();
+    legacy.m_key_bindings = settings->m_key_bindings;
+    auto legacy_buffer = SharedBuffer(text.data(), text.size());
+    auto receiver = JsonReceiver<SharedBuffer>(Ref(legacy_registry));
+    receiver.set(Ref(legacy_buffer));
+    receiver.shuttle(legacy);
+    if(legacy.m_book_view_properties) {
+      settings->m_book_view_properties =
+        to_book_view_properties(*legacy.m_book_view_properties);
+    }
+    settings->m_dashboards = legacy.m_dashboards;
+    settings->m_order_imbalance_indicator_properties =
+      legacy.m_order_imbalance_indicator_properties;
+    settings->m_portfolio_properties = legacy.m_portfolio_properties;
+    if(legacy.m_time_and_sales_properties) {
+      settings->m_time_and_sales_properties =
+        to_time_and_sales_properties(*legacy.m_time_and_sales_properties);
+    }
+    settings->m_layouts = legacy.m_layouts;
   }
 }
 
@@ -138,7 +184,8 @@ void Spire::export_settings(UserSettings::Categories categories,
   auto settings = UserSettings();
   if(categories.test(UserSettings::Category::BOOK_VIEW)) {
     settings.m_book_view_properties =
-      user_profile.GetDefaultBookViewProperties();
+      user_profile.GetBookViewPropertiesWindowFactory()->
+        get_properties()->get();
   }
   if(categories.test(UserSettings::Category::WATCHLIST)) {
     settings.m_dashboards = user_profile.GetSavedDashboards();
@@ -156,7 +203,8 @@ void Spire::export_settings(UserSettings::Categories categories,
   }
   if(categories.test(UserSettings::Category::TIME_AND_SALES)) {
     settings.m_time_and_sales_properties =
-      user_profile.GetDefaultTimeAndSalesProperties();
+      user_profile.GetTimeAndSalesPropertiesWindowFactory()->
+        get_properties()->get();
   }
   if(categories.test(UserSettings::Category::LAYOUT)) {
     auto layouts = std::vector<std::shared_ptr<WindowSettings>>();
@@ -183,8 +231,9 @@ void Spire::export_settings(UserSettings::Categories categories,
   }
 }
 
-void Spire::import_settings(UserSettings::Categories categories,
-    const std::filesystem::path& path, Out<UserProfile> user_profile) {
+std::vector<QWidget*> Spire::import_settings(
+    UserSettings::Categories categories, const std::filesystem::path& path,
+    Out<UserProfile> user_profile) {
   auto settings = UserSettings();
   if(categories.test(UserSettings::Category::KEY_BINDINGS)) {
     settings.m_key_bindings = user_profile->GetKeyBindings();
@@ -201,6 +250,7 @@ void Spire::import_settings(UserSettings::Categories categories,
     throw std::runtime_error(
       QObject::tr("Unable to read from the specified path.").toStdString());
   }
+  auto windows = std::vector<QWidget*>();
   if(categories.test(UserSettings::Category::LAYOUT) && settings.m_layouts) {
     for(auto& widget : QApplication::topLevelWidgets()) {
       if(dynamic_cast<PersistentWindow*>(widget) &&
@@ -214,12 +264,12 @@ void Spire::import_settings(UserSettings::Categories categories,
           !user_profile->IsManager()) {
         continue;
       }
-      window->show();
+      windows.push_back(window);
     }
   }
   if(categories.test(UserSettings::Category::BOOK_VIEW) &&
       settings.m_book_view_properties) {
-    user_profile->SetDefaultBookViewProperties(
+    user_profile->GetBookViewPropertiesWindowFactory()->get_properties()->set(
       *settings.m_book_view_properties);
   }
   if(categories.test(UserSettings::Category::WATCHLIST) &&
@@ -238,15 +288,18 @@ void Spire::import_settings(UserSettings::Categories categories,
   }
   if(categories.test(UserSettings::Category::TIME_AND_SALES) &&
       settings.m_time_and_sales_properties) {
-    user_profile->SetDefaultTimeAndSalesProperties(
-      *settings.m_time_and_sales_properties);
+    user_profile->GetTimeAndSalesPropertiesWindowFactory()->
+      get_properties()->set(*settings.m_time_and_sales_properties);
   }
-  for(auto widget : QApplication::topLevelWidgets()) {
-    if(auto book_view = dynamic_cast<BookViewWindow*>(widget)) {
-      if(settings.m_book_view_properties) {
-        book_view->SetProperties(*settings.m_book_view_properties);
-      }
-    } else if(auto order_imbalance_indicator =
+  auto top_level_widgets = windows;
+  for(auto& widget : QApplication::topLevelWidgets()) {
+    if(std::find(top_level_widgets.begin(), top_level_widgets.end(), widget) ==
+        top_level_widgets.end()) {
+      top_level_widgets.push_back(widget);
+    }
+  }
+  for(auto widget : top_level_widgets) {
+    if(auto order_imbalance_indicator =
         dynamic_cast<OrderImbalanceIndicatorWindow*>(widget)) {
       if(settings.m_order_imbalance_indicator_properties) {
         auto model = std::make_shared<OrderImbalanceIndicatorModel>(
@@ -257,12 +310,9 @@ void Spire::import_settings(UserSettings::Categories categories,
       if(settings.m_portfolio_properties) {
         portfolio->SetProperties(*settings.m_portfolio_properties);
       }
-    } else if(auto time_and_sales = dynamic_cast<TimeAndSalesWindow*>(widget)) {
-      if(settings.m_time_and_sales_properties) {
-        time_and_sales->SetProperties(*settings.m_time_and_sales_properties);
-      }
     }
   }
+  return windows;
 }
 
 const QString& Spire::to_text(UserSettings::Category category) {

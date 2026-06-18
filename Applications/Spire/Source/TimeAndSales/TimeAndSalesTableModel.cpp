@@ -1,0 +1,148 @@
+#include "Spire/TimeAndSales/TimeAndSalesTableModel.hpp"
+
+using namespace Beam;
+using namespace boost::signals2;
+using namespace Nexus;
+using namespace Spire;
+
+namespace {
+  AnyRef extract_field(const TimeAndSale& time_and_sale,
+      TimeAndSalesTableModel::Column column) {
+    if(column == TimeAndSalesTableModel::Column::TIME) {
+      return time_and_sale.m_timestamp;
+    } else if(column == TimeAndSalesTableModel::Column::PRICE) {
+      return time_and_sale.m_price;
+    } else if(column == TimeAndSalesTableModel::Column::SIZE) {
+      return time_and_sale.m_size;
+    } else if(column == TimeAndSalesTableModel::Column::MARKET) {
+      return time_and_sale.m_market_center;
+    } else if(column == TimeAndSalesTableModel::Column::CONDITION) {
+      return time_and_sale.m_condition;
+    } else if(column == TimeAndSalesTableModel::Column::BUYER) {
+      return time_and_sale.m_buyer_mpid;
+    }
+    return time_and_sale.m_seller_mpid;
+  }
+}
+
+TimeAndSalesTableModel::TimeAndSalesTableModel(
+  std::shared_ptr<TimeAndSalesModel> model)
+  : m_model(std::move(model)),
+    m_connection(m_model->connect_update_signal(
+      std::bind_front(&TimeAndSalesTableModel::on_update, this))) {}
+
+const std::shared_ptr<TimeAndSalesModel>&
+    TimeAndSalesTableModel::get_model() const {
+  return m_model;
+}
+
+void TimeAndSalesTableModel::set_model(
+    std::shared_ptr<TimeAndSalesModel> model) {
+  m_connection.disconnect();
+  m_promise.disconnect();
+  m_transaction.transact([&] {
+    while(!m_entries.empty()) {
+      m_transaction.push(TableModel::PreRemoveOperation(0));
+      m_entries.pop_back();
+      m_transaction.push(TableModel::RemoveOperation(0));
+    }
+  });
+  m_model = std::move(model);
+  m_connection = m_model->connect_update_signal(
+    std::bind_front(&TimeAndSalesTableModel::on_update, this));
+}
+
+void TimeAndSalesTableModel::load_history(int max_count) {
+  if(m_entries.empty()) {
+    load_snapshot(Sequence::PRESENT, max_count);
+  } else {
+    load_snapshot(m_entries.front().m_time_and_sale.get_sequence(), max_count);
+  }
+}
+
+BboIndicator TimeAndSalesTableModel::get_bbo_indicator(int row) const {
+  if(row < 0 || row >= get_row_size()) {
+    throw std::out_of_range("The row is out of range.");
+  }
+  return m_entries[m_entries.size() - 1 - row].m_indicator;
+}
+
+int TimeAndSalesTableModel::get_row_size() const {
+  return static_cast<int>(m_entries.size());
+}
+
+int TimeAndSalesTableModel::get_column_size() const {
+  return COLUMN_SIZE;
+}
+
+AnyRef TimeAndSalesTableModel::at(int row, int column) const {
+  if(row < 0 || row >= get_row_size() || column < 0 ||
+      column >= get_column_size()) {
+    throw std::out_of_range("The row or column is out of range.");
+  }
+  return extract_field(
+    *m_entries[m_entries.size() - 1 - row].m_time_and_sale,
+    static_cast<Column>(column));
+}
+
+connection TimeAndSalesTableModel::connect_begin_loading_signal(
+    const BeginLoadingSignal::slot_type& slot) const {
+  return m_begin_loading_signal.connect(slot);
+}
+
+connection TimeAndSalesTableModel::connect_end_loading_signal(
+    const EndLoadingSignal::slot_type& slot) const {
+  return m_end_loading_signal.connect(slot);
+}
+
+connection TimeAndSalesTableModel::connect_operation_signal(
+    const OperationSignal::slot_type& slot) const {
+  return m_transaction.connect_operation_signal(slot);
+}
+
+void TimeAndSalesTableModel::load_snapshot(Sequence last, int count) {
+  m_begin_loading_signal();
+  m_promise = m_model->query_until(last, count).then(
+    [=] (auto&& result) {
+      try {
+        auto& snapshot = result.get();
+        if(!snapshot.empty()) {
+          if(m_entries.empty() ||
+              snapshot.back().m_time_and_sale.get_sequence() <
+                m_entries.front().m_time_and_sale.get_sequence()) {
+            auto size = get_row_size();
+            m_entries.insert(m_entries.begin(),
+              std::make_move_iterator(snapshot.begin()),
+              std::make_move_iterator(snapshot.end()));
+            m_transaction.transact([&] {
+              for(auto i = 0; i < std::ssize(snapshot); ++i) {
+                m_transaction.push(TableModel::AddOperation(size + i));
+              }
+            });
+          } else if(snapshot.front().m_time_and_sale.get_sequence() <
+              m_entries.front().m_time_and_sale.get_sequence()) {
+            auto size = get_row_size();
+            auto sequence = m_entries.front().m_time_and_sale.get_sequence();
+            auto iter = std::lower_bound(snapshot.begin(), snapshot.end(),
+              sequence, [] (const auto& entry, const auto& bound) {
+                return entry.m_time_and_sale.get_sequence() < bound;
+              });
+            m_entries.insert(m_entries.begin(),
+              std::make_move_iterator(snapshot.begin()),
+              std::make_move_iterator(iter));
+            m_transaction.transact([&] {
+              for(auto i = 0; i < std::distance(snapshot.begin(), iter); ++i) {
+                m_transaction.push(TableModel::AddOperation(size + i));
+              }
+            });
+          }
+        }
+      } catch(const std::exception&) {}
+      m_end_loading_signal();
+    });
+}
+
+void TimeAndSalesTableModel::on_update(const TimeAndSalesModel::Entry& entry) {
+  m_entries.push_back(entry);
+  m_transaction.push(TableModel::AddOperation(0));
+}

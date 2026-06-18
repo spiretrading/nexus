@@ -48,6 +48,8 @@ namespace Spire {
     private:
       friend struct Beam::DataShuttle;
       std::string m_referent;
+
+      void MigrateReferent();
   };
 
   //! Returns the result of repeatedly getting a ReferenceNode's referent.
@@ -61,6 +63,9 @@ namespace Spire {
   void ReferenceNode::shuttle(S& shuttle, unsigned int version) {
     CanvasNode::shuttle(shuttle, version);
     shuttle.shuttle("referent", m_referent);
+    if constexpr(Beam::IsReceiver<S>) {
+      MigrateReferent();
+    }
   }
 }
 

@@ -259,6 +259,7 @@ struct DateFilterPanel::DateRangeComposerModel :
       m_offset_value(std::make_shared<LocalOptionalIntegerModel>()),
       m_date_unit(std::make_shared<AssociativeValueModel<DateUnit>>()),
       m_mode(std::make_shared<AssociativeValueModel<Mode>>()),
+BEAM_SUPPRESS_THIS_INITIALIZER()
       m_source_connection(m_source->connect_update_signal(
         std::bind_front(&DateRangeComposerModel::on_current, this))),
       m_start_connection(m_start->connect_update_signal(
@@ -272,6 +273,7 @@ struct DateFilterPanel::DateRangeComposerModel :
         std::bind_front(&DateRangeComposerModel::on_date_unit_update, this))),
       m_mode_connection(m_mode->connect_update_signal(
         std::bind_front(&DateRangeComposerModel::on_mode_update, this))) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_offset_value->set_minimum(1);
     for(auto unit : DateUnits) {
       m_date_unit->get_association(unit);

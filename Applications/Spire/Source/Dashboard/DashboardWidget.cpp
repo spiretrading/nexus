@@ -1,4 +1,5 @@
 #include "Spire/Dashboard/DashboardWidget.hpp"
+#include <QApplication>
 #include <QKeyEvent>
 #include <QMouseEvent>
 #include <QPainter>
@@ -13,8 +14,8 @@
 #include "Spire/Dashboard/PercentageDashboardCellRenderer.hpp"
 #include "Spire/Dashboard/TextDashboardCellRenderer.hpp"
 #include "Spire/Dashboard/ValueDashboardCell.hpp"
-#include "Spire/InputWidgets/TickerInputDialog.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -85,6 +86,8 @@ DashboardWidget::DashboardWidget(QWidget* parent, Qt::WindowFlags flags)
     : QWidget(parent, flags),
       m_model(nullptr),
       m_userProfile(nullptr),
+      m_tickerDialog(nullptr),
+      m_activateRowIndex(0),
       m_selectionModel(std::make_unique<DashboardSelectionModel>()),
       m_selectionController(
         std::make_unique<DashboardSelectionController>(Ref(*m_selectionModel))),
@@ -161,6 +164,10 @@ void DashboardWidget::Initialize(Ref<DashboardModel> model,
   for(auto i = 0; i < m_model->GetRowCount(); ++i) {
     OnRowAddedSignal(m_model->GetRow(i));
   }
+  m_tickerDialog =
+    new TickerDialog(m_userProfile->GetTickerInfoQueryModel(), this);
+  m_tickerDialog->connect_submit_signal(
+    std::bind_front(&DashboardWidget::OnTickerSubmit, this));
 }
 
 const DashboardSelectionModel& DashboardWidget::GetSelectionModel() const {
@@ -205,7 +212,8 @@ void DashboardWidget::keyPressEvent(QKeyEvent* event) {
     if(text.isEmpty() || !text[0].isLetterOrNumber()) {
       return QWidget::keyPressEvent(event);
     }
-    ActivateRow(*activeRow, text.toStdString());
+    ActivateRow(*activeRow);
+    QApplication::sendEvent(find_focus_proxy(*m_tickerDialog), event);
   }
 }
 
@@ -276,7 +284,7 @@ void DashboardWidget::mouseDoubleClickEvent(QMouseEvent* event) {
   if(m_selectionController->HandleMouseEvent(*event, *rowIndex)) {
     return;
   }
-  ActivateRow(*rowIndex, {});
+  ActivateRow(*rowIndex);
 }
 
 void DashboardWidget::paintEvent(QPaintEvent* event) {
@@ -343,25 +351,29 @@ void DashboardWidget::SortRows() {
   m_renderer->ReorderRows(indicies);
 }
 
-void DashboardWidget::ActivateRow(int index, const std::string& prefix) {
-  ShowTickerInputDialog(Ref(*m_userProfile), prefix, this,
-    [=] (auto ticker) {
-      if(!ticker || ticker == Ticker()) {
-        return;
-      }
-      for(auto i = m_renderer->GetSize(); i < index; ++i) {
-        m_renderer->InsertEmptyRow(i);
-      }
-      setUpdatesEnabled(false);
-      if(auto existingRow = m_renderer->GetRow(index)) {
-        m_model->Remove(*existingRow);
-      }
-      auto row = m_rowBuilder->Make(*ticker, Ref(*m_userProfile));
-      m_model->Add(std::move(row));
-      auto insertIndex = m_renderer->GetSize() - 1;
-      m_renderer->MoveRow(insertIndex, index);
-      setUpdatesEnabled(true);
-    });
+void DashboardWidget::ActivateRow(int index) {
+  m_activateRowIndex = index;
+  m_tickerDialog->show();
+}
+
+void DashboardWidget::OnTickerSubmit(const Ticker& ticker) {
+  m_tickerDialog->hide();
+  if(!ticker) {
+    return;
+  }
+  auto index = m_activateRowIndex;
+  for(auto i = m_renderer->GetSize(); i < index; ++i) {
+    m_renderer->InsertEmptyRow(i);
+  }
+  setUpdatesEnabled(false);
+  if(auto existingRow = m_renderer->GetRow(index)) {
+    m_model->Remove(*existingRow);
+  }
+  auto row = m_rowBuilder->Make(ticker, Ref(*m_userProfile));
+  m_model->Add(std::move(row));
+  auto insertIndex = m_renderer->GetSize() - 1;
+  m_renderer->MoveRow(insertIndex, index);
+  setUpdatesEnabled(true);
 }
 
 void DashboardWidget::DeleteSelectedRows() {

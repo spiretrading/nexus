@@ -1,5 +1,6 @@
-#ifndef SPIRE_CUSTOMVARIANTS_HPP
-#define SPIRE_CUSTOMVARIANTS_HPP
+#ifndef SPIRE_LEGACY_UI_CUSTOM_VARIANTS_HPP
+#define SPIRE_LEGACY_UI_CUSTOM_VARIANTS_HPP
+#include <any>
 #include <boost/any.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <QSortFilterProxyModel>
@@ -14,6 +15,7 @@
 #include "Nexus/Definitions/Scope.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
+#include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/Definitions/TimeInForce.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 #include "Spire/Canvas/Tasks/Task.hpp"
@@ -35,8 +37,11 @@ namespace Spire::LegacyUI {
   };
 }
 
-Q_DECLARE_METATYPE(Spire::Task::State);
+#ifndef SPIRE_METATYPES
+#define SPIRE_METATYPES
+Q_DECLARE_METATYPE(std::any);
 Q_DECLARE_METATYPE(boost::any);
+Q_DECLARE_METATYPE(boost::gregorian::date);
 Q_DECLARE_METATYPE(boost::posix_time::ptime);
 Q_DECLARE_METATYPE(boost::posix_time::time_duration);
 Q_DECLARE_METATYPE(Nexus::CountryCode);
@@ -48,9 +53,12 @@ Q_DECLARE_METATYPE(Nexus::Quantity);
 Q_DECLARE_METATYPE(Nexus::Scope);
 Q_DECLARE_METATYPE(Nexus::Side);
 Q_DECLARE_METATYPE(Nexus::Ticker);
+Q_DECLARE_METATYPE(Nexus::TimeAndSale::Condition);
 Q_DECLARE_METATYPE(Nexus::TimeInForce);
 Q_DECLARE_METATYPE(Nexus::Venue);
 Q_DECLARE_METATYPE(Spire::LegacyUI::PositionSideToken);
+Q_DECLARE_METATYPE(Spire::Task::State);
+#endif
 
 namespace Spire::LegacyUI {
 

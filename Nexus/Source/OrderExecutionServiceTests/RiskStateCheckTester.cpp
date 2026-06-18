@@ -51,4 +51,30 @@ TEST_SUITE("RiskStateCheck") {
     auto info = OrderInfo(fields, 1, time_from_string("2024-07-18 10:01:00"));
     REQUIRE_THROWS_AS(check->submit(info), OrderSubmissionCheckException);
   }
+
+  TEST_CASE("restore_seeds_positions") {
+    auto fixture = Fixture();
+    auto& administration_client =
+      fixture.m_administration_environment.get_client();
+    auto check = make_risk_state_check(administration_client);
+    auto account = DirectoryEntry::make_account(123);
+    administration_client.store(account, RiskState::Type::DISABLED);
+    auto ticker = parse_ticker("TST.TSX");
+    auto snapshot = InventorySnapshot();
+    snapshot.m_inventories.push_back(Inventory(
+      Position(ticker, CAD, 100, 100 * Money::ONE), Money::ZERO, Money::ZERO,
+      100, 1));
+    check->restore(account, snapshot, {});
+    auto closing_fields = make_limit_order_fields(
+      account, ticker, CAD, Side::ASK, Destinations::TSX, 100, Money::ONE);
+    auto closing_info =
+      OrderInfo(closing_fields, 1, time_from_string("2024-07-18 10:01:00"));
+    REQUIRE_NOTHROW(check->submit(closing_info));
+    auto opening_fields = make_limit_order_fields(
+      account, ticker, CAD, Side::BID, Destinations::TSX, 100, Money::ONE);
+    auto opening_info =
+      OrderInfo(opening_fields, 2, time_from_string("2024-07-18 10:02:00"));
+    REQUIRE_THROWS_AS(
+      check->submit(opening_info), OrderSubmissionCheckException);
+  }
 }

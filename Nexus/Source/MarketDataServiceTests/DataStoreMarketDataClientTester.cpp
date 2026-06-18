@@ -224,11 +224,11 @@ TEST_SUITE("DataStoreMarketDataClient") {
     REQUIRE(snapshot == TickerSnapshot());
   }
 
-  TEST_CASE("load_session_candlestick") {
+  TEST_CASE("load_session_technicals") {
     auto fixture = Fixture();
-    auto candlestick =
-      fixture.m_client.load_session_candlestick(parse_ticker("TST.TSX"));
-    test_json_equality(candlestick, PriceCandlestick());
+    auto technicals =
+      fixture.m_client.load_session_technicals(parse_ticker("TST.TSX"));
+    test_json_equality(technicals, SessionTechnicals());
   }
 
   TEST_CASE("load_ticker_info_from_prefix") {

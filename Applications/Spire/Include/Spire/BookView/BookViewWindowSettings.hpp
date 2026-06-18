@@ -1,48 +1,39 @@
-#ifndef SPIRE_BOOKVIEWWINDOWSETTINGS_HPP
-#define SPIRE_BOOKVIEWWINDOWSETTINGS_HPP
-#include <QByteArray>
-#include "Nexus/Definitions/Ticker.hpp"
-#include "Spire/BookView/BookViewProperties.hpp"
+#ifndef SPIRE_BOOK_VIEW_WINDOW_SETTINGS_HPP
+#define SPIRE_BOOK_VIEW_WINDOW_SETTINGS_HPP
 #include "Spire/LegacyUI/TickerViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"
+#include "Spire/Ui/TickerView.hpp"
 
 namespace Spire {
+  class BookViewWindow;
 
-  /*! \class BookViewWindowSettings
-      \brief Stores the window settings for a BookViewWindow.
-   */
+  /** Stores the window settings for a BookViewWindow. */
   class BookViewWindowSettings : public LegacyUI::WindowSettings {
     public:
 
-      //! Constructs a BookViewWindowSettings with default values.
-      BookViewWindowSettings();
+      /** Constructs a BookViewWindowSettings with default values. */
+      BookViewWindowSettings() = default;
 
-      //! Constructs a BookViewWindowSettings.
-      /*!
-        \param window The BookViewWindow to represent.
-        \param userProfile The user's profile.
-      */
-      BookViewWindowSettings(const BookViewWindow& window,
-        Beam::Ref<UserProfile> userProfile);
+      /**
+       * Constructs a BookViewWindowSettings.
+       * @param window The BookViewWindow to represent.
+       */
+      explicit BookViewWindowSettings(const BookViewWindow& window);
 
-      virtual std::string GetName() const;
-      virtual QWidget* Reopen(Beam::Ref<UserProfile> userProfile) const;
-      virtual void Apply(Beam::Ref<UserProfile> userProfile,
-        Beam::Out<QWidget> widget) const;
+      std::string GetName() const override;
+      QWidget* Reopen(Beam::Ref<UserProfile> userProfile) const override;
+      void Apply(Beam::Ref<UserProfile> userProfile,
+        Beam::Out<QWidget> widget) const override;
 
     private:
       friend struct Beam::DataShuttle;
-      BookViewProperties m_properties;
-      Nexus::Ticker m_ticker;
       std::string m_name;
-      LegacyUI::TickerViewStack m_tickerViewStack;
+      TickerView::State m_ticker_view;
       std::string m_identifier;
-      std::string m_linkIdentifier;
+      std::string m_link_identifier;
       QByteArray m_geometry;
-      QByteArray m_bidPanelHeader;
-      QByteArray m_askPanelHeader;
 
       template<Beam::IsShuttle S>
       void shuttle(S& shuttle, unsigned int version);
@@ -50,15 +41,11 @@ namespace Spire {
 
   template<Beam::IsShuttle S>
   void BookViewWindowSettings::shuttle(S& shuttle, unsigned int version) {
-    shuttle.shuttle("properties", m_properties);
-    shuttle.shuttle("ticker", m_ticker);
     shuttle.shuttle("name", m_name);
-    shuttle.shuttle("ticker_view_stack", m_tickerViewStack);
+    shuttle.shuttle("ticker_view", m_ticker_view);
     shuttle.shuttle("identifier", m_identifier);
-    shuttle.shuttle("link_identifier", m_linkIdentifier);
+    shuttle.shuttle("link_identifier", m_link_identifier);
     shuttle.shuttle("geometry", m_geometry);
-    shuttle.shuttle("bid_panel_header", m_bidPanelHeader);
-    shuttle.shuttle("ask_panel_header", m_askPanelHeader);
   }
 }
 
