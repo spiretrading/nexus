@@ -28,6 +28,7 @@
 #include "Spire/Styles/RevertExpression.hpp"
 #include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/AccountBox.hpp"
+#include "Spire/Ui/AccountFilterPanel.hpp"
 #include "Spire/Ui/AccountListBox.hpp"
 #include "Spire/Ui/AccountListItem.hpp"
 #include "Spire/Ui/AdaptiveBox.hpp"
@@ -1351,6 +1352,11 @@ UiProfile Spire::make_account_box_profile() {
     return box;
   });
   return profile;
+}
+
+UiProfile Spire::make_account_filter_panel_profile() {
+  return setup_open_filter_panel_profile("AccountFilterPanel",
+    [] { return make_account_filter_panel(populate_account_query_model()); });
 }
 
 UiProfile Spire::make_account_list_box_profile() {
