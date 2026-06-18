@@ -5,17 +5,6 @@
 
 namespace Spire {
 
-  template<>
-  struct OpenFilterPanelAdaptor<AccountListBox> {
-    using Type = std::shared_ptr<AccountListModel>;
-
-    static bool is_empty(AccountListBox& account_list_box);
-    static void clear(AccountListBox& account_list_box);
-    static const Type& get_current(AccountListBox& account_list_box);
-    static boost::signals2::connection connect_current(
-      AccountListBox& account_list_box, const std::function<void()>& slot);
-  };
-
   extern template class OpenFilterPanel<AccountListBox>;
 
   /** An OpenFilterPanel specialized for an AccountListBox. */

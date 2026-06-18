@@ -801,15 +801,7 @@ namespace {
         [=] (const auto& submission, auto mode) {
           auto items = QString();
           for(auto i = 0; i < submission->get_size(); ++i) {
-            auto text = [&] {
-              if constexpr(std::is_same_v<TagListBox, AccountListBox>) {
-                return QString::fromStdString(
-                  submission->get(i).m_account.m_name);
-              } else {
-                return to_text(submission->get(i));
-              }
-            }();
-            items += text + " ";
+            items += to_text(submission->get(i)) + " ";
           }
           submit_slot(QString("Mode:%1 [%2]").
             arg(to_string<TagListBox>(mode)).arg(items));
