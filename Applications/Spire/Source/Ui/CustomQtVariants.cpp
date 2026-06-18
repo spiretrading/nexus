@@ -1,6 +1,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <QStyledItemDelegate>
+#include "Spire/Ui/AccountListItem.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -509,6 +510,8 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return to_text(std::any_cast<ptime>(value), locale);
   } else if(value.type() == typeid(posix_time::time_duration)) {
     return to_text(std::any_cast<posix_time::time_duration>(value), locale);
+  } else if(value.type() == typeid(AccountListItem::Account)) {
+    return to_text(std::any_cast<AccountListItem::Account>(value), locale);
   } else if(value.type() == typeid(CountryCode)) {
     return to_text(std::any_cast<CountryCode>(value), locale);
   } else if(value.type() == typeid(CurrencyId)) {
