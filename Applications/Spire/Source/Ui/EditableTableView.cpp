@@ -113,15 +113,13 @@ namespace {
   struct EditableTableCurrentModel : EditableTableView::CurrentModel {
     mutable UpdateSignal m_update_signal;
     std::shared_ptr<EditableTableView::CurrentModel> m_current;
-    int m_columns;
     bool m_is_updating;
     optional<TableIndex> m_value;
     scoped_connection m_current_connection;
 
     EditableTableCurrentModel(
-        std::shared_ptr<EditableTableView::CurrentModel> current, int columns)
+        std::shared_ptr<EditableTableView::CurrentModel> current)
         : m_current(std::move(current)),
-          m_columns(columns),
           m_is_updating(false),
           m_current_connection(m_current->connect_update_signal(
             std::bind_front(&EditableTableCurrentModel::on_update, this))) {
@@ -140,9 +138,6 @@ namespace {
     }
 
     QValidator::State test(const Type& value) const override {
-      if(value && value->m_column == m_columns - 1) {
-        return QValidator::State::Invalid;
-      }
       return m_current->test(value);
     }
 
@@ -191,7 +186,7 @@ namespace {
     }
 
     int get_column_size() const override {
-      return m_header->get_size() + 2;
+      return m_header->get_size() + 1;
     }
 
     AnyRef at(int row, int column) const override {
@@ -390,8 +385,6 @@ struct EditableTableView::ItemBuilder {
       const std::shared_ptr<TableModel>& table, int row, int column) {
     if(column == 0) {
       return m_editable_builder.mount(table, row, 0);
-    } else if(column == table->get_column_size() - 1) {
-      return m_editable_builder.mount(table, row, 1);
     } else {
       auto item = static_cast<EditableBox*>(m_builder.mount(
         std::static_pointer_cast<EditableTableModel>(
@@ -443,7 +436,7 @@ EditableTableView::EditableTableView(
   auto current_proxy =
     std::static_pointer_cast<ProxyValueModel<optional<Index>>>(get_current());
   current_proxy->set_source(std::make_shared<EditableTableCurrentModel>(
-    std::move(current), header->get_size() + 2));
+    std::move(current)));
   get_header().get_item(0)->set_is_resizeable(false);
   get_header().get_item(0)->setFocusPolicy(Qt::NoFocus);
   get_header().get_widths()->set(0, scale_width(26));
@@ -454,8 +447,7 @@ EditableTableView::EditableTableView(
 bool EditableTableView::eventFilter(QObject* watched, QEvent* event) {
   if(watched == &get_scroll_box() && event->type() == QEvent::Wheel) {
     if(auto current = get_body().get_current()->get()) {
-      if(current->m_column != 0 &&
-          current->m_column != get_table()->get_column_size() - 1) {
+      if(current->m_column != 0) {
         if(auto item = get_body().find_item(*current)) {
           if(!static_cast<EditableBox*>(&item->get_body())->is_read_only()) {
             return true;

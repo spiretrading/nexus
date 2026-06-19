@@ -128,6 +128,7 @@ UiViewerWindow::UiViewerWindow(QWidget* parent)
   register_selectors();
   register_property_converters();
   add(make_account_box_profile());
+  add(make_account_filter_panel_profile());
   add(make_account_list_box_profile());
   add(make_account_list_item_profile());
   add(make_adaptive_box_profile());

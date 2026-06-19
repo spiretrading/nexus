@@ -113,6 +113,7 @@ void ListItem::mount(QWidget& body) {
   size_policy.setRetainSizeWhenHidden(true);
   m_box->setSizePolicy(size_policy);
   body.setAttribute(Qt::WA_DontShowOnScreen, false);
+  body.setFocusPolicy(focusPolicy());
   setFocusProxy(&*m_box);
   if(auto item = layout()->takeAt(0)) {
     delete item;
