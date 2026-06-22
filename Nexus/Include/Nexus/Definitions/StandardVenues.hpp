@@ -193,7 +193,7 @@ namespace Details {
     inline const auto CSE = VENUES.from("XCNQ").m_venue;
     inline const auto CSE2 = VENUES.from("CSE2").m_venue;
     inline const auto CHIC = VENUES.from("CHIC").m_venue;
-    inline const auto CXD = VENUES.from("CXD").m_venue;
+    inline const auto CXD = VENUES.from("XCXD").m_venue;
     inline const auto LYNX = VENUES.from("LYNX").m_venue;
     inline const auto MATN = VENUES.from("MATN").m_venue;
     inline const auto NEOE = VENUES.from("NEOE").m_venue;
