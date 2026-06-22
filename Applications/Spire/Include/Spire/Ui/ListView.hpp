@@ -22,8 +22,6 @@
 #include "Spire/Ui/ListViewItemBuilder.hpp"
 
 namespace Spire {
-  class ListLayout;
-
 namespace Styles {
 
   /** Sets the spacing between list items. */
