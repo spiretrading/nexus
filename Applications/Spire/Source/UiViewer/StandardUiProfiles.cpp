@@ -90,6 +90,7 @@
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/NavigationView.hpp"
 #include "Spire/Ui/OrderStatusBox.hpp"
+#include "Spire/Ui/OrderStatusFilterPanel.hpp"
 #include "Spire/Ui/OrderStatusListBox.hpp"
 #include "Spire/Ui/OrderTypeBox.hpp"
 #include "Spire/Ui/OrderTypeFilterPanel.hpp"
@@ -3927,6 +3928,62 @@ UiProfile Spire::make_order_status_box_profile() {
   auto profile = UiProfile("OrderStatusBox", properties,
     std::bind_front(
       setup_enum_box_profile<OrderStatusBox, make_order_status_box>));
+  return profile;
+}
+
+UiProfile Spire::make_order_status_filter_panel_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<bool>("Pending New"));
+  properties.push_back(make_standard_property<bool>("New"));
+  properties.push_back(make_standard_property<bool>("Partially Filled"));
+  properties.push_back(make_standard_property<bool>("Rejected"));
+  properties.push_back(make_standard_property<bool>("Expired"));
+  properties.push_back(make_standard_property<bool>("Canceled"));
+  properties.push_back(make_standard_property<bool>("Suspended"));
+  properties.push_back(make_standard_property<bool>("Stopped"));
+  properties.push_back(make_standard_property<bool>("Filled"));
+  properties.push_back(make_standard_property<bool>("Done For Day"));
+  properties.push_back(make_standard_property<bool>("Pending Cancel"));
+  properties.push_back(make_standard_property<bool>("Cancel Reject"));
+  auto profile = UiProfile("OrderStatusFilterPanel", properties,
+    [] (auto& profile) {
+      auto statuses = std::array{
+        std::pair{OrderStatus::PENDING_NEW, "Pending New"},
+        std::pair{OrderStatus::NEW, "New"},
+        std::pair{OrderStatus::PARTIALLY_FILLED, "Partially Filled"},
+        std::pair{OrderStatus::REJECTED, "Rejected"},
+        std::pair{OrderStatus::EXPIRED, "Expired"},
+        std::pair{OrderStatus::CANCELED, "Canceled"},
+        std::pair{OrderStatus::SUSPENDED, "Suspended"},
+        std::pair{OrderStatus::STOPPED, "Stopped"},
+        std::pair{OrderStatus::FILLED, "Filled"},
+        std::pair{OrderStatus::DONE_FOR_DAY, "Done For Day"},
+        std::pair{OrderStatus::PENDING_CANCEL, "Pending Cancel"},
+        std::pair{OrderStatus::CANCEL_REJECT, "Cancel Reject"}};
+      auto current = std::make_shared<ArrayListModel<OrderStatus>>();
+      for(auto& [status, name] : statuses) {
+        auto& checked = get<bool>(name, profile.get_properties());
+        if(checked.get()) {
+          current->push(status);
+        }
+      }
+      auto panel = new OrderStatusFilterPanel(std::move(current));
+      apply_widget_properties(panel, profile.get_properties());
+      auto submit_slot = profile.make_event_slot<QString>("Submit");
+      panel->connect_submit_signal(
+        [=] (const auto& submission) {
+          auto items = QString();
+          for(auto i = 0; i < submission->get_size(); ++i) {
+            if(!items.isEmpty()) {
+              items += ", ";
+            }
+            items += to_text(submission->get(i));
+          }
+          submit_slot(items);
+        });
+      return panel;
+    });
   return profile;
 }
 
