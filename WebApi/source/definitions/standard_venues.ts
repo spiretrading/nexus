@@ -36,6 +36,8 @@ export function buildVenueDatabase(): VenueDatabase {
     'America/Toronto', Currencies.CAD, 'Toronto Stock Exchange', 'TSX'));
   database.add(new VenueDatabase.Entry(new Venue('XTSX'), Countries.CA, 'CDX',
     'America/Toronto', Currencies.CAD, 'TSX Venture Exchange', 'TSXV'));
+  database.add(new VenueDatabase.Entry(new Venue('OTCM'), Countries.US, 'OTCM',
+    'America/New_York', Currencies.USD, 'OTC Markets Group Inc.', 'OTCM'));
   return database;
 }
 
@@ -52,6 +54,7 @@ export namespace Venues {
   export const MATN = new Venue('MATN');
   export const NEOE = new Venue('NEOE');
   export const OMGA = new Venue('OMGA');
+  export const OTCM = new Venue('OTCM');
   export const PURE = new Venue('PURE');
   export const TSX = new Venue('XTSE');
   export const TSXV = new Venue('XTSX');
