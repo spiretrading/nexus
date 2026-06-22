@@ -11,7 +11,6 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/Layouts.hpp"
-#include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/SingleSelectionModel.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -24,13 +23,6 @@ namespace {
   const auto DEFAULT_GAP = 0;
   const auto DEFAULT_OVERFLOW_GAP = DEFAULT_GAP;
   const auto SCROLL_BUFFER = 200;
-
-  auto reverse(QBoxLayout::Direction direction) {
-    if(direction == QBoxLayout::TopToBottom) {
-      return QBoxLayout::LeftToRight;
-    }
-    return QBoxLayout::TopToBottom;
-  }
 
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
@@ -196,17 +188,18 @@ ListView::ListView(
       m_item_builder(std::move(item_builder)),
       m_to_text(std::move(to_text)),
       m_current_entry(nullptr),
-      m_direction(Qt::Vertical),
-      m_overflow(Overflow::NONE),
       m_visible_count(0),
       m_top_index(-1),
       m_direction_policy(QSizePolicy::Fixed),
       m_perpendicular_policy(QSizePolicy::Expanding),
-      m_item_gap(DEFAULT_GAP),
-      m_overflow_gap(DEFAULT_OVERFLOW_GAP),
       m_query_timer(this),
       m_is_transaction(false),
       m_is_tab_focus_in(false) {
+  auto body = new QWidget();
+  new ListLayout(body);
+  m_box = new Box(body);
+  enclose(*this, *m_box);
+  update_body_size_policy();
   for(auto i : std::ranges::views::iota(0, m_list->get_size())) {
     auto& entry = make_item_entry(i);
     m_current_controller.add(
@@ -219,12 +212,6 @@ ListView::ListView(
   }
   setFocusPolicy(Qt::StrongFocus);
   update_focus(none);
-  auto body = new QWidget();
-  auto body_layout = new QBoxLayout(QBoxLayout::LeftToRight, body);
-  body_layout->setContentsMargins({});
-  body->installEventFilter(this);
-  m_box = new Box(body);
-  enclose(*this, *m_box);
   proxy_style(*this, *m_box);
   m_style_connection =
     connect_style_signal(*this, std::bind_front(&ListView::on_style, this));
@@ -280,7 +267,8 @@ void ListView::set_item_size_policy(QSizePolicy::Policy direction_policy,
   }
   m_direction_policy = direction_policy;
   m_perpendicular_policy = perpendicular_policy;
-  update_layout();
+  apply_item_size_policies();
+  get_list_layout().invalidate();
 }
 
 connection ListView::connect_submit_signal(
@@ -290,7 +278,7 @@ connection ListView::connect_submit_signal(
 
 bool ListView::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::Resize) {
-    update_layout();
+    update_visible_region();
   }
   return QWidget::eventFilter(watched, event);
 }
@@ -352,38 +340,38 @@ void ListView::keyPressEvent(QKeyEvent* event) {
       select_current();
       break;
     case Qt::Key_Up:
-      if(m_direction == Qt::Orientation::Vertical) {
+      if(get_list_layout().get_direction() == Qt::Orientation::Vertical) {
         m_current_controller.navigate_previous();
         select_current();
-      } else if(m_overflow == Overflow::WRAP) {
-        m_current_controller.cross_previous(m_direction);
+      } else if(get_list_layout().get_overflow() == Overflow::WRAP) {
+        m_current_controller.cross_previous(get_list_layout().get_direction());
         select_current();
       }
       break;
     case Qt::Key_Down:
-      if(m_direction == Qt::Orientation::Vertical) {
+      if(get_list_layout().get_direction() == Qt::Orientation::Vertical) {
         m_current_controller.navigate_next();
         select_current();
-      } else if(m_overflow == Overflow::WRAP) {
-        m_current_controller.cross_next(m_direction);
+      } else if(get_list_layout().get_overflow() == Overflow::WRAP) {
+        m_current_controller.cross_next(get_list_layout().get_direction());
         select_current();
       }
       break;
     case Qt::Key_Left:
-      if(m_direction == Qt::Orientation::Horizontal) {
+      if(get_list_layout().get_direction() == Qt::Orientation::Horizontal) {
         m_current_controller.navigate_previous();
         select_current();
-      } else if(m_overflow == Overflow::WRAP) {
-        m_current_controller.cross_previous(m_direction);
+      } else if(get_list_layout().get_overflow() == Overflow::WRAP) {
+        m_current_controller.cross_previous(get_list_layout().get_direction());
         select_current();
       }
       break;
     case Qt::Key_Right:
-      if(m_direction == Qt::Orientation::Horizontal) {
+      if(get_list_layout().get_direction() == Qt::Orientation::Horizontal) {
         m_current_controller.navigate_next();
         select_current();
-      } else if(m_overflow == Overflow::WRAP) {
-        m_current_controller.cross_next(m_direction);
+      } else if(get_list_layout().get_overflow() == Overflow::WRAP) {
+        m_current_controller.cross_next(get_list_layout().get_direction());
         select_current();
       }
       break;
@@ -449,8 +437,45 @@ void ListView::moveEvent(QMoveEvent* event) {
   update_visible_region();
 }
 
+void ListView::resizeEvent(QResizeEvent* event) {
+  QWidget::resizeEvent(event);
+  auto& layout = get_list_layout();
+  if(layout.get_overflow() == Overflow::WRAP) {
+    layout.invalidate();
+    m_box->get_body()->update();
+  }
+}
+
 void ListView::showEvent(QShowEvent* event) {
-  update_parent();
+  QTimer::singleShot(0, this, [=] { update_parent(); });
+}
+
+ListLayout& ListView::get_list_layout() const {
+  return *static_cast<ListLayout*>(m_box->get_body()->layout());
+}
+
+void ListView::apply_item_size_policies() {
+  auto direction = get_list_layout().get_direction();
+  for(auto& entry : m_items) {
+    if(direction == Qt::Orientation::Horizontal) {
+      entry->m_item->setSizePolicy(m_direction_policy, m_perpendicular_policy);
+    } else {
+      entry->m_item->setSizePolicy(m_perpendicular_policy, m_direction_policy);
+    }
+  }
+}
+
+void ListView::update_body_size_policy() {
+  auto& body = *m_box->get_body();
+  auto& body_layout = get_list_layout();
+  auto direction = body_layout.get_direction();
+  auto overflow = body_layout.get_overflow();
+  if(direction == Qt::Orientation::Horizontal && overflow == Overflow::NONE ||
+      direction == Qt::Orientation::Vertical && overflow == Overflow::WRAP) {
+    body.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+  } else {
+    body.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
+  }
 }
 
 void ListView::append_query(const QString& query) {
@@ -512,10 +537,18 @@ void ListView::update_focus(optional<int> current) {
 
 ListView::ItemEntry& ListView::make_item_entry(int index) {
   auto entry = new ItemEntry(index);
-  if(m_overflow != Overflow::NONE) {
+  auto& body_layout = get_list_layout();
+  if(body_layout.get_overflow() != Overflow::NONE) {
     entry->m_item->mount(*m_item_builder.mount(m_list, entry->m_index));
   }
   m_items.emplace(m_items.begin() + index, entry);
+  if(body_layout.get_direction() == Qt::Orientation::Horizontal) {
+    entry->m_item->setSizePolicy(m_direction_policy, m_perpendicular_policy);
+  } else {
+    entry->m_item->setSizePolicy(m_perpendicular_policy, m_direction_policy);
+  }
+  body_layout.insert_widget(index, *entry->m_item);
+  link(*this, *entry->m_item);
   entry->m_click_observer->connect_click_signal(
     std::bind_front(&ListView::on_item_click, this, std::ref(*m_items[index])));
   entry->m_item->connect_submit_signal(std::bind_front(
@@ -538,6 +571,7 @@ void ListView::add_item(int index) {
 
 void ListView::pre_remove_item(int index) {
   auto item = std::move(m_items[index]);
+  m_box->get_body()->layout()->removeWidget(item->m_item.get());
   m_items.erase(m_items.begin() + index);
   if(item.get() == m_current_entry) {
     m_current_entry = nullptr;
@@ -570,6 +604,8 @@ void ListView::remove_item(int index) {
 }
 
 void ListView::move_item(int source, int destination) {
+  auto& body_layout = get_list_layout();
+  body_layout.insert_item(destination, *body_layout.takeAt(source));
   if(source < destination) {
     for(auto& i : std::ranges::subrange(std::next(m_items.begin(), source + 1),
         std::next(m_items.begin(), destination + 1))) {
@@ -612,73 +648,6 @@ void ListView::select_current() {
   }
 }
 
-void ListView::update_layout() {
-  auto& body = *m_box->get_body();
-  if(m_direction == Qt::Orientation::Horizontal && m_overflow ==
-      Overflow::NONE || m_direction == Qt::Orientation::Vertical &&
-      m_overflow == Overflow::WRAP) {
-    if(body.sizePolicy().horizontalPolicy() != QSizePolicy::Preferred ||
-        body.sizePolicy().verticalPolicy() != QSizePolicy::Expanding) {
-      body.setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
-      body.updateGeometry();
-    }
-  } else if(body.sizePolicy().horizontalPolicy() != QSizePolicy::Expanding ||
-      body.sizePolicy().verticalPolicy() != QSizePolicy::Preferred) {
-    body.setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
-    body.updateGeometry();
-  }
-  auto& body_layout = *static_cast<QBoxLayout*>(body.layout());
-  while(auto item = body_layout.takeAt(body_layout.count() - 1)) {
-    delete item;
-  }
-  auto [direction, alignment] = [&] {
-    if(m_direction == Qt::Orientation::Horizontal) {
-      return std::tuple(QBoxLayout::TopToBottom, Qt::AlignLeft);
-    }
-    return std::tuple(QBoxLayout::LeftToRight, Qt::AlignTop);
-  }();
-  body_layout.setDirection(direction);
-  body_layout.setSpacing(m_overflow_gap);
-  auto max_size = [&] {
-    if(m_overflow == Overflow::NONE) {
-      return QWIDGETSIZE_MAX;
-    } else if(m_direction == Qt::Orientation::Horizontal) {
-      return body.width();
-    }
-    return body.height();
-  }();
-  auto i = m_items.begin();
-  while(i != m_items.end()) {
-    auto remaining_size = max_size;
-    auto inner_layout = new QBoxLayout(reverse(direction));
-    inner_layout->setContentsMargins({});
-    inner_layout->setSpacing(m_item_gap);
-    inner_layout->setAlignment(alignment);
-    body_layout.addLayout(inner_layout);
-    while(i != m_items.end()) {
-      auto item_size = get_directed_size((*i)->m_item->sizeHint(), m_direction);
-      remaining_size -= item_size;
-      if(remaining_size < 0 && remaining_size + item_size != max_size) {
-        break;
-      }
-      remaining_size -= inner_layout->spacing();
-      if(m_direction == Qt::Orientation::Horizontal) {
-        (*i)->m_item->setSizePolicy(m_direction_policy, m_perpendicular_policy);
-      } else {
-        (*i)->m_item->setSizePolicy(m_perpendicular_policy, m_direction_policy);
-      }
-      auto is_linked = (*i)->m_item->parentWidget() != nullptr;
-      inner_layout->addWidget((*i)->m_item.get());
-      if(!is_linked) {
-        link(*this, *(*i)->m_item);
-      }
-      ++i;
-    }
-  }
-  body_layout.activate();
-  update_visible_region();
-}
-
 void ListView::update_parent() {
   if(auto parent = parentWidget()) {
     parent->installEventFilter(this);
@@ -687,7 +656,10 @@ void ListView::update_parent() {
 }
 
 void ListView::initialize_visible_region() {
-  if(m_overflow != Overflow::NONE) {
+  auto& body_layout = get_list_layout();
+  auto direction = body_layout.get_direction();
+  auto item_gap = body_layout.get_item_gap();
+  if(body_layout.get_overflow() != Overflow::NONE) {
     for(auto& item : m_items) {
       if(!item->m_item->is_mounted()) {
         item->m_item->mount(*m_item_builder.mount(m_list, item->m_index));
@@ -710,22 +682,22 @@ void ListView::initialize_visible_region() {
   }
   auto top_geometry =
     QRect(QPoint(0, 0), front_item.m_item->sizeHint());
-  if(test_visibility(*this, top_geometry, m_direction)) {
+  if(test_visibility(*this, top_geometry, direction)) {
     m_top_index = 0;
     m_visible_count = 1;
   }
   auto position =
-    get_directed_size(top_geometry.size(), m_direction) + m_item_gap;
+    get_directed_size(top_geometry.size(), direction) + item_gap;
   for(auto& item : m_items | std::views::drop(1)) {
     auto geometry = [&] {
       if(item->m_item->is_mounted()) {
-        return QRect(make_directed_point(position, m_direction),
+        return QRect(make_directed_point(position, direction),
           item->m_item->sizeHint());
       }
-      return QRect(make_directed_point(position, m_direction),
+      return QRect(make_directed_point(position, direction),
         front_item.m_item->sizeHint());
     }();
-    auto is_visible = test_visibility(*this, geometry, m_direction);
+    auto is_visible = test_visibility(*this, geometry, direction);
     if(is_visible || item->m_item->is_current()) {
       if(!item->m_item->is_mounted()) {
         item->m_item->mount(*m_item_builder.mount(m_list, item->m_index));
@@ -744,7 +716,7 @@ void ListView::initialize_visible_region() {
       item->m_item->mount(*new QSpacerItem(size.width(), size.height(),
         size_policy.horizontalPolicy(), size_policy.verticalPolicy()));
     }
-    position += get_directed_size(geometry.size(), m_direction) + m_item_gap;
+    position += get_directed_size(geometry.size(), direction) + item_gap;
   }
 }
 
@@ -753,8 +725,11 @@ void ListView::update_visible_region() {
     initialize_visible_region();
     return;
   }
-  if(!parentWidget() ||
-      !isVisible() || m_overflow != Overflow::NONE || m_items.empty()) {
+  auto& body_layout = get_list_layout();
+  auto direction = body_layout.get_direction();
+  auto item_gap = body_layout.get_item_gap();
+  if(!parentWidget() || !isVisible() ||
+      body_layout.get_overflow() != Overflow::NONE || m_items.empty()) {
     return;
   }
   auto top_item = [&] {
@@ -765,7 +740,7 @@ void ListView::update_visible_region() {
       auto middle = low + (high - low) / 2;
       auto& item = m_items[middle];
       auto item_geometry = item->m_item->frameGeometry();
-      if(test_visibility(*this, item_geometry, m_direction)) {
+      if(test_visibility(*this, item_geometry, direction)) {
         last_visible = &*item;
         if(middle == 0) {
           break;
@@ -773,7 +748,7 @@ void ListView::update_visible_region() {
         high = middle - 1;
       } else {
         auto widget_geometry = mapToParent(item_geometry.topLeft());
-        if(get_directed_point(widget_geometry, m_direction) < 0) {
+        if(get_directed_point(widget_geometry, direction) < 0) {
           low = middle + 1;
         } else {
           if(middle == 0) {
@@ -789,7 +764,7 @@ void ListView::update_visible_region() {
     for(auto& item : m_items |
           std::views::drop(m_top_index) | std::views::take(m_visible_count)) {
       if(item->m_item->is_mounted() && !item->m_item->is_current() &&
-          !test_visibility(*this, item->m_item->frameGeometry(), m_direction)) {
+          !test_visibility(*this, item->m_item->frameGeometry(), direction)) {
         if(auto widget = item->m_item->unmount()) {
           m_item_builder.unmount(widget, item->m_index);
         }
@@ -797,11 +772,11 @@ void ListView::update_visible_region() {
     }
     m_top_index = top_item->m_index;
     m_visible_count = 0;
-    auto position = get_directed_point(top_item->m_item->pos(), m_direction);
+    auto position = get_directed_point(top_item->m_item->pos(), direction);
     for(auto& item : m_items | std::views::drop(m_top_index)) {
       auto geometry =
-        QRect(make_directed_point(position, m_direction), item->m_item->size());
-      if(test_visibility(*this, geometry, m_direction)) {
+        QRect(make_directed_point(position, direction), item->m_item->size());
+      if(test_visibility(*this, geometry, direction)) {
         if(!item->m_item->is_mounted()) {
           item->m_item->mount(*m_item_builder.mount(m_list, item->m_index));
         }
@@ -809,8 +784,7 @@ void ListView::update_visible_region() {
       } else {
         break;
       }
-      position +=
-        get_directed_size(item->m_item->size(), m_direction) + m_item_gap;
+      position += get_directed_size(item->m_item->size(), direction) + item_gap;
     }
   }
 }
@@ -842,7 +816,7 @@ void ListView::on_list_operation(const AnyListModel::Operation& operation) {
       });
     if(!m_is_transaction) {
       m_top_index = -1;
-      update_layout();
+      update_visible_region();
     }
   });
 }
@@ -889,31 +863,23 @@ void ListView::on_item_submitted(ItemEntry& item) {
 
 void ListView::on_style() {
   auto& stylist = find_stylist(*this);
-  auto has_update = std::make_shared<bool>(false);
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const ListItemGap& gap) {
         stylist.evaluate(gap, [=] (auto gap) {
-          if(m_item_gap != gap) {
-            m_item_gap = gap;
-            *has_update = true;
-          }
+          get_list_layout().set_item_gap(gap);
         });
       },
       [&] (const ListOverflowGap& gap) {
         stylist.evaluate(gap, [=] (auto gap) {
-          if(m_overflow_gap != gap) {
-            m_overflow_gap = gap;
-            *has_update = true;
-          }
+          get_list_layout().set_overflow_gap(gap);
         });
       },
       [&] (EnumProperty<Qt::Orientation> direction) {
         stylist.evaluate(direction, [=] (auto direction) {
-          if(m_direction != direction) {
-            m_direction = direction;
-            *has_update = true;
-          }
+          get_list_layout().set_direction(direction);
+          update_body_size_policy();
+          apply_item_size_policies();
         });
       },
       [&] (EnumProperty<EdgeNavigation> edge_navigation) {
@@ -923,18 +889,13 @@ void ListView::on_style() {
       },
       [&] (EnumProperty<Overflow> overflow) {
         stylist.evaluate(overflow, [=] (auto overflow) {
-          if(m_overflow != overflow) {
-            m_overflow = overflow;
-            if(isVisible()) {
-              initialize_visible_region();
-            }
-            *has_update = true;
+          get_list_layout().set_overflow(overflow);
+          update_body_size_policy();
+          if(isVisible()) {
+            initialize_visible_region();
           }
         });
       });
-  }
-  if(*has_update) {
-    update_layout();
   }
 }
 

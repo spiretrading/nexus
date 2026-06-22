@@ -17,6 +17,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/ListCurrentController.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/ListLayout.hpp"
 #include "Spire/Ui/ListSelectionController.hpp"
 #include "Spire/Ui/ListViewItemBuilder.hpp"
 
@@ -31,16 +32,6 @@ namespace Styles {
    * to list direction.
    */
   using ListOverflowGap = BasicProperty<int, struct ListOverflowGapTag>;
-
-  /** Specifies how to layout items on overflow. */
-  enum class Overflow {
-
-    /** The list extends indefinitely. */
-    NONE,
-
-    /** List items wrap to fill the perpendicular space. */
-    WRAP
-  };
 
   using EdgeNavigation = ListCurrentController::EdgeNavigation;
 }
@@ -253,6 +244,7 @@ namespace Details {
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
       void moveEvent(QMoveEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
 
     private:
@@ -279,10 +271,6 @@ namespace Details {
       int m_visible_count;
       QSizePolicy::Policy m_direction_policy;
       QSizePolicy::Policy m_perpendicular_policy;
-      int m_item_gap;
-      int m_overflow_gap;
-      Qt::Orientation m_direction;
-      Styles::Overflow m_overflow;
       QString m_query;
       QTimer m_query_timer;
       bool m_is_transaction;
@@ -293,6 +281,9 @@ namespace Details {
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_selection_connection;
 
+      ListLayout& get_list_layout() const;
+      void apply_item_size_policies();
+      void update_body_size_policy();
       void append_query(const QString& query);
       void update_focus(boost::optional<int> current);
       ItemEntry& make_item_entry(int index);
@@ -301,7 +292,6 @@ namespace Details {
       void remove_item(int index);
       void move_item(int source, int destination);
       void select_current();
-      void update_layout();
       void update_parent();
       void initialize_visible_region();
       void update_visible_region();
