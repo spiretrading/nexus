@@ -446,6 +446,19 @@ void ListView::resizeEvent(QResizeEvent* event) {
   }
 }
 
+int ListView::heightForWidth(int width) const {
+  auto& layout = get_list_layout();
+  if(!layout.hasHeightForWidth()) {
+    return -1;
+  }
+  auto styling = get_styling_size(m_box_geometry);
+  auto body_height = layout.heightForWidth(width - styling.width());
+  if(body_height < 0) {
+    return -1;
+  }
+  return body_height + styling.height();
+}
+
 void ListView::showEvent(QShowEvent* event) {
   QTimer::singleShot(0, this, [=] { update_parent(); });
 }
@@ -864,6 +877,7 @@ void ListView::on_item_submitted(ItemEntry& item) {
 void ListView::on_style() {
   auto& stylist = find_stylist(*this);
   for(auto& property : stylist.get_computed_block()) {
+    apply(property, m_box_geometry, stylist);
     property.visit(
       [&] (const ListItemGap& gap) {
         stylist.evaluate(gap, [=] (auto gap) {

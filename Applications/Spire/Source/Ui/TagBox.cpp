@@ -466,28 +466,14 @@ int AnyTagBox::get_height_for_width(int width) const {
     }
     return 0;
   }();
-  auto horizontal_space = horizontal_length(m_list_view_padding) +
-    horizontal_length(m_input_box_padding) +
+  auto horizontal_space = horizontal_length(m_input_box_padding) +
     horizontal_length(m_input_box_border) + horizontal_scroll_space;
-  auto content_width = width - horizontal_space;
-  auto remaining_width = content_width;
-  auto line_height = 0;
-  auto total_height = 0;
-  for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
-    auto item_size = m_list_view->get_list_item(i)->sizeHint();
-    if(item_size.width() > remaining_width) {
-      total_height += line_height + m_list_overflow_gap;
-      remaining_width = content_width;
-      line_height = 0;
-    }
-    auto item_space = item_size.width() + m_list_item_gap;
-    remaining_width -= item_space;
-    line_height = std::max(line_height, item_size.height());
+  auto list_view_height = m_list_view->heightForWidth(width - horizontal_space);
+  if(list_view_height < 0) {
+    return m_min_scroll_height;
   }
-  auto vertical_space = vertical_length(m_list_view_padding) +
-    vertical_length(m_input_box_border) + vertical_length(m_input_box_padding);
-  total_height += line_height + vertical_space;
-  return total_height;
+  return list_view_height + vertical_length(m_input_box_border) +
+    vertical_length(m_input_box_padding);
 }
 
 void AnyTagBox::set_overflow(Overflow overflow) {
