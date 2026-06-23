@@ -236,6 +236,8 @@ namespace Details {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
+      int heightForWidth(int width) const override;
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
@@ -271,6 +273,7 @@ namespace Details {
       int m_visible_count;
       QSizePolicy::Policy m_direction_policy;
       QSizePolicy::Policy m_perpendicular_policy;
+      BoxGeometry m_box_geometry;
       QString m_query;
       QTimer m_query_timer;
       bool m_is_transaction;
