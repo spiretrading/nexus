@@ -13,12 +13,12 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  constexpr auto LIVE_STATUSES = std::array{
+  const auto BODY_SPACING = 18;
+  const auto LIVE_STATUSES = std::array{
     OrderStatus::PENDING_NEW, OrderStatus::NEW, OrderStatus::PARTIALLY_FILLED,
     OrderStatus::SUSPENDED, OrderStatus::STOPPED, OrderStatus::PENDING_CANCEL,
     OrderStatus::CANCEL_REJECT};
-
-  constexpr auto TERMINAL_STATUSES = std::array{
+  const auto TERMINAL_STATUSES = std::array{
     OrderStatus::REJECTED, OrderStatus::EXPIRED, OrderStatus::CANCELED,
     OrderStatus::FILLED, OrderStatus::DONE_FOR_DAY};
 }
@@ -32,10 +32,10 @@ struct OrderStatusFilterPanel::PresetButtonContainer : QWidget {
         m_preset(std::make_shared<AssociativeValueModel<Preset>>()) {
     auto layout = make_hbox_layout(this);
     layout->setSpacing(scale_width(4));
-    add_button(layout, Preset::ALL);
-    add_button(layout, Preset::LIVE);
-    add_button(layout, Preset::TERMINAL);
-    add_button(layout, Preset::CUSTOM);
+    add_button(*layout, Preset::ALL);
+    add_button(*layout, Preset::LIVE);
+    add_button(*layout, Preset::TERMINAL);
+    add_button(*layout, Preset::CUSTOM);
     on_preset(m_preset->get(), true);
   }
 
@@ -72,10 +72,10 @@ struct OrderStatusFilterPanel::PresetButtonContainer : QWidget {
     return button;
   }
 
-  void add_button(QHBoxLayout* layout, Preset preset) {
+  void add_button(QHBoxLayout& layout, Preset preset) {
     auto button = make_preset_button(preset);
     m_buttons.emplace(preset, button);
-    layout->addWidget(button, 0, Qt::AlignTop);
+    layout.addWidget(button, 0, Qt::AlignTop);
     m_preset->get_association(preset)->connect_update_signal(
       std::bind_front(&PresetButtonContainer::on_preset, this, preset));
   }
@@ -97,8 +97,10 @@ OrderStatusFilterPanel::OrderStatusFilterPanel(
     std::shared_ptr<OrderStatusListModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)) {
+  m_button_container = new PresetButtonContainer();
+  m_button_container->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
   m_list_box = make_order_status_list_box(m_current);
-  m_list_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
+  m_list_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
   m_list_box->set_placeholder(QObject::tr("Enter order status"));
   m_list_box->setMinimumSize(scale(160, 26));
   m_list_box->setMaximumHeight(scale_height(80));
@@ -109,12 +111,10 @@ OrderStatusFilterPanel::OrderStatusFilterPanel(
       set(PaddingLeft(scale_width(8))).
       set(PaddingRight(0));
   });
-  m_button_container = new PresetButtonContainer();
-  m_button_container->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
   m_body = new QWidget();
   m_body->installEventFilter(this);
   auto body_layout = make_hbox_layout(m_body);
-  body_layout->setSpacing(scale_width(18));
+  body_layout->setSpacing(scale_width(BODY_SPACING));
   body_layout->addWidget(m_button_container);
   body_layout->addWidget(m_list_box);
   auto panel = new FilterPanel(*m_body);
@@ -148,7 +148,7 @@ connection OrderStatusFilterPanel::connect_submit_signal(
 bool OrderStatusFilterPanel::eventFilter(QObject* watched, QEvent* event) {
   if(watched == m_body && event->type() == QEvent::Resize) {
     auto available_width =
-      m_body->width() - m_button_container->width() - scale_width(18);
+      m_body->width() - m_button_container->width() - scale_width(BODY_SPACING);
     m_list_box->setMaximumWidth(std::max(0,
       std::max(m_list_box->minimumWidth(), available_width)));
   }
@@ -156,19 +156,31 @@ bool OrderStatusFilterPanel::eventFilter(QObject* watched, QEvent* event) {
 }
 
 bool OrderStatusFilterPanel::focusNextPrevChild(bool next) {
-  if(next) {
-    auto focused = focusWidget();
-    if(focused && m_list_box->isAncestorOf(focused)) {
-      auto candidate = focused->nextInFocusChain();
+  auto focused = focusWidget();
+  if(focused && isAncestorOf(focused)) {
+    auto focus_reset = [&] (auto advance, Qt::FocusReason reason) {
+      auto candidate = advance(focused);
       while(candidate != focused) {
         if(candidate->isVisible() && candidate->isEnabled() &&
             (candidate->focusPolicy() & Qt::TabFocus) &&
             !m_body->isAncestorOf(candidate) && isAncestorOf(candidate)) {
-          candidate->setFocus(Qt::TabFocusReason);
-          return true;
+          candidate->setFocus(reason);
+          return;
         }
-        candidate = candidate->nextInFocusChain();
+        candidate = advance(candidate);
       }
+    };
+    if(next && m_list_box->isAncestorOf(focused)) {
+      focus_reset([] (QWidget* w) { return w->nextInFocusChain(); },
+        Qt::TabFocusReason);
+      return true;
+    } else if(next && !m_body->isAncestorOf(focused)) {
+      m_button_container->m_buttons[Preset::ALL]->setFocus(Qt::TabFocusReason);
+      return true;
+    } else if(!next && focused == m_button_container->m_buttons[Preset::ALL]) {
+      focus_reset([] (QWidget* w) { return w->previousInFocusChain(); },
+        Qt::BacktabFocusReason);
+      return true;
     }
   }
   return QWidget::focusNextPrevChild(next);
