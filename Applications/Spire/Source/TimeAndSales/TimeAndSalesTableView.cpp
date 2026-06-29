@@ -249,7 +249,7 @@ namespace {
           for(auto i = 0; i < changed_count; ++i) {
             auto indicator = changed_indicators[i];
             auto selector = IndicatorRow(indicator);
-            auto highlight = properties.get_highlight_color(indicator);
+            auto& highlight = properties.get_highlight_color(indicator);
             style.get(Any() > Row() > is_a<TableItem>() > selector).
               set(TextColor(highlight.m_text_color));
             style.get(Any() > (+Row() > (is_a<TableItem>() > selector))).
