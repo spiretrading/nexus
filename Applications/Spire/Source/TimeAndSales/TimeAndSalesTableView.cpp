@@ -144,6 +144,7 @@ namespace {
   struct TableViewStylist : QObject {
     std::shared_ptr<TimeAndSalesPropertiesModel> m_properties;
     std::vector<int> m_last_column_order;
+    std::bitset<TimeAndSalesTableModel::COLUMN_SIZE> m_last_visible_columns;
     optional<TimeAndSalesProperties> m_last_styles;
     QTimer m_timer;
     bool m_is_moving;
@@ -159,6 +160,7 @@ namespace {
       m_timer.setInterval(DEBOUNCE_TIME_MS);
       connect(&m_timer, &QTimer::timeout, this,
         std::bind_front(&TableViewStylist::on_timeout, this));
+      m_last_visible_columns.set();
       m_last_column_order.resize(m_properties->get().get_column_order().size());
       std::iota(m_last_column_order.begin(), m_last_column_order.end(), 0);
       reorder_column_order(m_properties->get());
@@ -204,8 +206,13 @@ namespace {
     void apply_column_visibility(const TimeAndSalesProperties& properties) {
       auto& table_view = *static_cast<TableView*>(parent());
       for(auto i = 0; i != TimeAndSalesTableModel::COLUMN_SIZE; ++i) {
-        if(properties.is_visible(
-            static_cast<TimeAndSalesTableModel::Column>(i))) {
+        auto is_visible = properties.is_visible(
+          static_cast<TimeAndSalesTableModel::Column>(i));
+        if(is_visible == m_last_visible_columns[i]) {
+          continue;
+        }
+        m_last_visible_columns[i] = is_visible;
+        if(is_visible) {
           table_view.show_column(i);
         } else {
           table_view.hide_column(i);
