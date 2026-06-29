@@ -1,4 +1,5 @@
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
+#include <QTimer>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ConstantValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -21,6 +22,7 @@ using namespace Spire::Styles;
 namespace {
   using IndicatorRow = StateSelector<BboIndicator, struct IndicatorRowTag>;
   using ShowGrid = StateSelector<void, struct ShowGridTag>;
+  const auto DEBOUNCE_TIME_MS = 100;
 
   auto make_header_model() {
     auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
@@ -142,6 +144,7 @@ namespace {
   struct TableViewStylist : QObject {
     std::shared_ptr<TimeAndSalesPropertiesModel> m_properties;
     std::vector<int> m_last_column_order;
+    QTimer m_timer;
     bool m_is_moving;
     scoped_connection m_connection;
 
@@ -149,7 +152,12 @@ namespace {
         std::shared_ptr<TimeAndSalesPropertiesModel> properties)
         : QObject(&table_view),
           m_properties(std::move(properties)),
+          m_timer(this),
           m_is_moving(false) {
+      m_timer.setSingleShot(true);
+      m_timer.setInterval(DEBOUNCE_TIME_MS);
+      connect(&m_timer, &QTimer::timeout, this,
+        std::bind_front(&TableViewStylist::on_timeout, this));
       m_last_column_order.resize(m_properties->get().get_column_order().size());
       std::iota(m_last_column_order.begin(), m_last_column_order.end(), 0);
       reorder_column_order(m_properties->get());
@@ -257,10 +265,13 @@ namespace {
         reorder_column_order(properties);
       }
       apply_column_visibility(properties);
-      const auto DEBOUNCE_TIME_MS = 100;
-      QTimer::singleShot(DEBOUNCE_TIME_MS, this, [=] {
-        apply_styles(properties);
-      });
+      if(!m_timer.isActive()) {
+        m_timer.start();
+      }
+    }
+
+    void on_timeout() {
+      apply_styles(m_properties->get());
     }
   };
 }
