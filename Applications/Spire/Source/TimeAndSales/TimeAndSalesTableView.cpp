@@ -144,6 +144,7 @@ namespace {
   struct TableViewStylist : QObject {
     std::shared_ptr<TimeAndSalesPropertiesModel> m_properties;
     std::vector<int> m_last_column_order;
+    optional<TimeAndSalesProperties> m_last_styles;
     QTimer m_timer;
     bool m_is_moving;
     scoped_connection m_connection;
@@ -214,28 +215,50 @@ namespace {
 
     void apply_styles(const TimeAndSalesProperties& properties) {
       auto& table_view = *static_cast<TableView*>(parent());
-      update_style(table_view.get_header(), [&] (auto& style) {
-        style.get(Any() > is_a<TableHeaderItem>() > TableHeaderItem::Label()).
-          set(Font(properties.get_font()));
-      });
-      update_style(table_view.get_body(), [&] (auto& style) {
-        style.get(Any() > Row() > is_a<TableItem>() > is_a<TextBox>()).
-          set(Font(properties.get_font()));
-        for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
-          auto indicator = static_cast<BboIndicator>(i);
-          auto selector = IndicatorRow(indicator);
-          auto highlight = properties.get_highlight_color(indicator);
-          style.get(Any() > Row() > is_a<TableItem>() > selector).
-            set(TextColor(highlight.m_text_color));
-          style.get(Any() > (+Row() > (is_a<TableItem>() > selector))).
-            set(BackgroundColor(highlight.m_background_color));
+      auto font_changed = !m_last_styles ||
+        properties.get_font() != m_last_styles->get_font();
+      auto changed_indicators = std::array<BboIndicator, BBO_INDICATOR_COUNT>();
+      auto changed_count = 0;
+      for(auto i = 0; i < BBO_INDICATOR_COUNT; ++i) {
+        auto indicator = static_cast<BboIndicator>(i);
+        if(!m_last_styles ||
+            properties.get_highlight_color(indicator) !=
+              m_last_styles->get_highlight_color(indicator)) {
+          changed_indicators[changed_count++] = indicator;
         }
-      });
-      if(properties.is_grid_enabled()) {
-        match(table_view, ShowGrid());
-      } else {
-        unmatch(table_view, ShowGrid());
       }
+      if(font_changed) {
+        update_style(table_view.get_header(), [&] (auto& style) {
+          style.get(Any() > is_a<TableHeaderItem>() > TableHeaderItem::Label()).
+            set(Font(properties.get_font()));
+        });
+      }
+      if(font_changed || changed_count > 0) {
+        update_style(table_view.get_body(), [&] (auto& style) {
+          if(font_changed) {
+            style.get(Any() > Row() > is_a<TableItem>() > is_a<TextBox>()).
+              set(Font(properties.get_font()));
+          }
+          for(auto i = 0; i < changed_count; ++i) {
+            auto indicator = changed_indicators[i];
+            auto selector = IndicatorRow(indicator);
+            auto highlight = properties.get_highlight_color(indicator);
+            style.get(Any() > Row() > is_a<TableItem>() > selector).
+              set(TextColor(highlight.m_text_color));
+            style.get(Any() > (+Row() > (is_a<TableItem>() > selector))).
+              set(BackgroundColor(highlight.m_background_color));
+          }
+        });
+      }
+      if(!m_last_styles ||
+          properties.is_grid_enabled() != m_last_styles->is_grid_enabled()) {
+        if(properties.is_grid_enabled()) {
+          match(table_view, ShowGrid());
+        } else {
+          unmatch(table_view, ShowGrid());
+        }
+      }
+      m_last_styles = properties;
     }
 
     void reorder_column_order(const TimeAndSalesProperties& properties) {
