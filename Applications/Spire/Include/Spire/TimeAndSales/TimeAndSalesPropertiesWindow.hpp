@@ -11,8 +11,8 @@ namespace Spire {
   class TimeAndSalesPropertiesWindow : public Window {
     public:
 
-      /** Signals that the user accepted the current edits. */
-      using CommitSignal = Signal<void ()>;
+      /** Signals that the user submitted the current edits. */
+      using SubmitSignal = Signal<void ()>;
 
       /** Signals that the user discarded the current edits. */
       using CancelSignal = Signal<void ()>;
@@ -30,9 +30,9 @@ namespace Spire {
       const std::shared_ptr<TimeAndSalesPropertiesModel>&
         get_current() const;
 
-      /** Connects a slot to the CommitSignal. */
-      boost::signals2::connection connect_commit_signal(
-        const CommitSignal::slot_type& slot) const;
+      /** Connects a slot to the SubmitSignal. */
+      boost::signals2::connection connect_submit_signal(
+        const SubmitSignal::slot_type& slot) const;
 
       /** Connects a slot to the CancelSignal. */
       boost::signals2::connection connect_cancel_signal(
@@ -44,12 +44,12 @@ namespace Spire {
 
     private:
       struct PropertiesWindowModel;
-      mutable CommitSignal m_commit_signal;
+      mutable SubmitSignal m_submit_signal;
       mutable CancelSignal m_cancel_signal;
       std::unique_ptr<PropertiesWindowModel> m_model;
       FontBox* m_font_box;
       bool m_is_first_show;
-      bool m_is_committed;
+      bool m_is_submitted;
 
       void on_font(const QFont& font);
       void on_cancel();

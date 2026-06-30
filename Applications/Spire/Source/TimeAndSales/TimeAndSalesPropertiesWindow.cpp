@@ -138,7 +138,7 @@ TimeAndSalesPropertiesWindow::TimeAndSalesPropertiesWindow(
     : Window(parent),
       m_model(std::make_unique<PropertiesWindowModel>(std::move(current))),
       m_is_first_show(true),
-      m_is_committed(false) {
+      m_is_submitted(false) {
   set_svg_icon(":/Icons/time-sales.svg");
   setWindowTitle(tr("Time and Sales Properties"));
   setWindowFlags(windowFlags() & ~Qt::WindowMinimizeButtonHint);
@@ -205,9 +205,9 @@ const std::shared_ptr<TimeAndSalesPropertiesModel>&
   return m_model->m_properties;
 }
 
-connection TimeAndSalesPropertiesWindow::connect_commit_signal(
-    const CommitSignal::slot_type& slot) const {
-  return m_commit_signal.connect(slot);
+connection TimeAndSalesPropertiesWindow::connect_submit_signal(
+    const SubmitSignal::slot_type& slot) const {
+  return m_submit_signal.connect(slot);
 }
 
 connection TimeAndSalesPropertiesWindow::connect_cancel_signal(
@@ -232,12 +232,12 @@ void TimeAndSalesPropertiesWindow::showEvent(QShowEvent* event) {
 }
 
 void TimeAndSalesPropertiesWindow::closeEvent(QCloseEvent*) {
-  if(m_is_committed) {
-    m_commit_signal();
+  if(m_is_submitted) {
+    m_submit_signal();
   } else {
     m_cancel_signal();
   }
-  m_is_committed = false;
+  m_is_submitted = false;
 }
 
 void TimeAndSalesPropertiesWindow::on_font(const QFont& font) {
@@ -252,6 +252,6 @@ void Spire::TimeAndSalesPropertiesWindow::on_cancel() {
 }
 
 void Spire::TimeAndSalesPropertiesWindow::on_done() {
-  m_is_committed = true;
+  m_is_submitted = true;
   close();
 }

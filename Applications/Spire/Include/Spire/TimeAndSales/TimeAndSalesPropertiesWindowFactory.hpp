@@ -39,10 +39,10 @@ namespace Spire {
       std::unique_ptr<TimeAndSalesPropertiesWindow> m_properties_window;
       std::shared_ptr<LocalTimeAndSalesPropertiesModel> m_preview;
       std::shared_ptr<ProxyValueModel<TimeAndSalesProperties>> m_live_preview;
-      boost::signals2::scoped_connection m_commit_connection;
+      boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_cancel_connection;
 
-      void on_commit();
+      void on_submit();
       void on_cancel();
   };
 }

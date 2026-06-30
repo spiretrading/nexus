@@ -30,14 +30,14 @@ TimeAndSalesPropertiesWindow* TimeAndSalesPropertiesWindowFactory::make(
   m_live_preview->set_source(m_preview);
   m_properties_window =
     std::make_unique<TimeAndSalesPropertiesWindow>(m_preview);
-  m_commit_connection = m_properties_window->connect_commit_signal(
-    std::bind_front(&TimeAndSalesPropertiesWindowFactory::on_commit, this));
+  m_submit_connection = m_properties_window->connect_submit_signal(
+    std::bind_front(&TimeAndSalesPropertiesWindowFactory::on_submit, this));
   m_cancel_connection = m_properties_window->connect_cancel_signal(
     std::bind_front(&TimeAndSalesPropertiesWindowFactory::on_cancel, this));
   return m_properties_window.get();
 }
 
-void TimeAndSalesPropertiesWindowFactory::on_commit() {
+void TimeAndSalesPropertiesWindowFactory::on_submit() {
   if(!m_live_preview) {
     return;
   }
