@@ -182,7 +182,7 @@ namespace Spire::Styles {
       struct StyleEventFilter;
       struct RuleEntry {
         std::shared_ptr<const Block> m_block;
-        int m_priority;
+        std::uint64_t m_priority;
         std::flat_set<const Stylist*> m_selection;
         SelectConnection m_connection;
       };
@@ -266,6 +266,7 @@ namespace Spire::Styles {
       void for_each_proxy(F&& f);
       template<typename F>
       void for_each_proxy(F&& f) const;
+      bool try_apply_diff(const std::shared_ptr<StyleSheet>& new_style);
       void apply(std::shared_ptr<StyleSheet> style);
       void apply(Stylist& source, const RuleEntry& rule);
       void unapply(const RuleEntry& rule);

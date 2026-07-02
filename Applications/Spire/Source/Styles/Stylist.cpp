@@ -14,6 +14,7 @@ using namespace Spire::Styles;
 
 namespace {
   const auto FRAME_DURATION = time_duration(seconds(1)) / 60;
+  auto next_priority = std::uint64_t(0);
 
   QTimer& get_animation_timer() {
     static auto timer = [] {
@@ -162,6 +163,10 @@ const StyleSheet& Stylist::get_style() const {
 }
 
 void Stylist::set_style(StyleSheet style) {
+  auto new_style = load_styles(std::move(style));
+  if(try_apply_diff(new_style)) {
+    return;
+  }
   auto rules = std::exchange(m_rules, {});
   for(auto& rule : rules) {
     auto selection = std::move(rule->m_selection);
@@ -170,7 +175,7 @@ void Stylist::set_style(StyleSheet style) {
         std::unordered_set(selection.begin(), selection.end()));
     }
   }
-  m_style = load_styles(std::move(style));
+  m_style = std::move(new_style);
   apply(m_style);
   for(auto& rule : rules) {
     auto i =
@@ -421,12 +426,97 @@ void Stylist::for_each_proxy(F&& f) const {
   const_cast<Stylist*>(this)->for_each_proxy(std::forward<F>(f));
 }
 
+bool Stylist::try_apply_diff(const std::shared_ptr<StyleSheet>& new_style) {
+  auto old_style = m_style;
+  if(!old_style || old_style == new_style ||
+      m_rules.size() != old_style->get_rules().size()) {
+    return false;
+  }
+  auto& old_rules = old_style->get_rules();
+  auto& new_rules = new_style->get_rules();
+  enum class Tier {
+    SAME,
+    BLOCK_CHANGED,
+    NEW
+  };
+  struct Resolution {
+    Tier m_tier;
+    std::size_t m_old_index;
+  };
+  auto resolutions =
+    std::vector<Resolution>(new_rules.size(), {Tier::NEW, 0});
+  auto kept_old = std::vector<bool>(old_rules.size(), false);
+  auto next_old = std::size_t(0);
+  auto has_seen_new = false;
+  for(auto i = std::size_t(0); i < new_rules.size(); ++i) {
+    auto matched = false;
+    for(auto j = next_old; j < old_rules.size(); ++j) {
+      if(old_rules[j].get_selector() == new_rules[i].get_selector()) {
+        if(has_seen_new) {
+          return false;
+        }
+        kept_old[j] = true;
+        if(old_rules[j].get_block() == new_rules[i].get_block()) {
+          resolutions[i] = {Tier::SAME, j};
+        } else {
+          resolutions[i] = {Tier::BLOCK_CHANGED, j};
+        }
+        next_old = j + 1;
+        matched = true;
+        break;
+      }
+    }
+    if(!matched) {
+      has_seen_new = true;
+    }
+  }
+  auto previous_entries = std::exchange(m_rules, {});
+  for(auto j = std::size_t(0); j < previous_entries.size(); ++j) {
+    if(!kept_old[j]) {
+      auto& rule = previous_entries[j];
+      auto selection = std::move(rule->m_selection);
+      if(!selection.empty()) {
+        on_selection_update(*rule, {},
+          std::unordered_set(selection.begin(), selection.end()));
+      }
+    }
+  }
+  m_style = new_style;
+  m_rules.reserve(new_rules.size());
+  auto block_change_targets = std::flat_set<Stylist*>();
+  for(auto i = std::size_t(0); i < new_rules.size(); ++i) {
+    auto& resolution = resolutions[i];
+    if(resolution.m_tier == Tier::NEW) {
+      auto entry = std::make_unique<RuleEntry>();
+      entry->m_priority = next_priority++;
+      entry->m_block = std::shared_ptr<const Block>(
+        m_style, &new_rules[i].get_block());
+      entry->m_connection = select(new_rules[i].get_selector(), *this,
+        std::bind_front(&Stylist::on_selection_update, this,
+          std::ref(*entry)));
+      m_rules.push_back(std::move(entry));
+    } else {
+      auto& kept = previous_entries[resolution.m_old_index];
+      kept->m_block = std::shared_ptr<const Block>(
+        m_style, &new_rules[i].get_block());
+      if(resolution.m_tier == Tier::BLOCK_CHANGED) {
+        for(auto* descendant : kept->m_selection) {
+          block_change_targets.insert(const_cast<Stylist*>(descendant));
+        }
+      }
+      m_rules.push_back(std::move(kept));
+    }
+  }
+  for(auto* target : block_change_targets) {
+    target->apply_proxies();
+  }
+  return true;
+}
+
 void Stylist::apply(std::shared_ptr<StyleSheet> style) {
-  static auto priority = 0;
   for(auto& rule : style->get_rules()) {
     auto entry = std::make_unique<RuleEntry>();
-    entry->m_priority = priority;
-    ++priority;
+    entry->m_priority = next_priority++;
     entry->m_block = std::shared_ptr<const Block>(style, &rule.get_block());
     entry->m_connection = select(rule.get_selector(), *this,
       std::bind_front(&Stylist::on_selection_update, this, std::ref(*entry)));
