@@ -29,6 +29,9 @@ namespace Spire {
   /** Returns a UiProfile for the CheckBox. */
   UiProfile make_check_box_profile();
 
+  /** Returns a UiProfile for the CheckButtonMenuItem. */
+  UiProfile make_check_button_menu_item_profile();
+
   /** Returns a UiProfile for the ClosedFilterPanel. */
   UiProfile make_closed_filter_panel_profile();
 

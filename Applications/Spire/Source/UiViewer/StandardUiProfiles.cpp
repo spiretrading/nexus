@@ -36,6 +36,7 @@
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CalendarDatePicker.hpp"
 #include "Spire/Ui/Checkbox.hpp"
+#include "Spire/Ui/CheckButtonMenuItem.hpp"
 #include "Spire/Ui/ClosedFilterPanel.hpp"
 #include "Spire/Ui/ColorBox.hpp"
 #include "Spire/Ui/ColorCodePanel.hpp"
@@ -1682,6 +1683,30 @@ UiProfile Spire::make_check_box_profile() {
   populate_check_box_properties(properties);
   return UiProfile("CheckBox", properties, [] (auto& profile) {
     return setup_checkable_profile(profile, new CheckBox());
+  });
+}
+
+UiProfile Spire::make_check_button_menu_item_profile() {
+  auto properties = std::vector<std::shared_ptr<UiProperty>>();
+  populate_widget_properties(properties);
+  properties.push_back(make_standard_property<bool>("checked"));
+  properties.push_back(make_standard_property("label", QString("Click me")));
+  return UiProfile("CheckButtonMenuItem", properties, [] (auto& profile) {
+    auto& label = get<QString>("label", profile.get_properties());
+    auto item = new CheckButtonMenuItem(label.get());
+    apply_widget_properties(item, profile.get_properties());
+    auto& checked = get<bool>("checked", profile.get_properties());
+    checked.connect_changed_signal([=] (auto value) {
+      if(item->get_current()->get() != value) {
+        item->get_current()->set(value);
+      }
+    });
+    item->get_current()->connect_update_signal([&checked] (auto is_checked) {
+      checked.set(is_checked);
+    });
+    item->get_current()->connect_update_signal(
+      profile.make_event_slot<bool>("CheckedSignal"));
+    return item;
   });
 }
 
