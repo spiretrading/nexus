@@ -185,6 +185,9 @@ namespace Spire {
   /** Returns a UiProfile for the Label. */
   UiProfile make_label_profile();
 
+  /** Returns a UiProfile for the LinkMenuItem. */
+  UiProfile make_link_menu_item_profile();
+
   /** Returns a UiProfile for the ListItem. */
   UiProfile make_list_item_profile();
 
