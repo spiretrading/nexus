@@ -6,7 +6,7 @@ IF ERRORLEVEL 1 EXIT /B 0
 CALL :SetupVSEnvironment
 CALL :AddRepo "Beam" ^
   "https://www.github.com/spiretrading/beam" ^
-  "224a2ae5ec1ceb76fdd15aef493b3f1c6d3f14cc" ^
+  "bf971509e1bf407847c5fb300a66c3a17d9f5eef" ^
   ":BuildBeam"
 CALL :InstallRepos || EXIT /B 1
 SET "PATH=!PATH!;!ROOT!\Strawberry\perl\site\bin;!ROOT!\Strawberry\perl\bin;!ROOT!\Strawberry\c\bin"
