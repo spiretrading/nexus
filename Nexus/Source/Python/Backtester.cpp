@@ -43,6 +43,10 @@ void Nexus::Python::export_backtester_clients(module& module) {
         return std::make_unique<ToPythonClients<BacktesterClients>>(
           Ref(environment));
       }), call_guard<GilRelease>(), keep_alive<1, 2>());
+  module.def("make_portfolio",
+    [] (ToPythonClients<BacktesterClients>& clients) {
+      return make_portfolio(clients.get());
+    }, call_guard<GilRelease>());
 }
 
 void Nexus::Python::export_backtester_environment(module& module) {

@@ -59,12 +59,38 @@ TEST_SUITE("BacktesterEnvironment") {
       Clients(std::in_place_type<TestClients>, Ref(test_environment)));
     auto clients = BacktesterClients(Ref(backtester));
     auto& order_execution_client = clients.get_order_execution_client();
-    // Submitting an order starts the market-data replay, so an active event
-    // gets processed; wait() must then drive the clock to the end time rather
-    // than parking at the last quote.
     order_execution_client.submit(
       make_limit_order_fields(ticker, Side::BID, 100, 99 * Money::CENT));
     backtester.wait();
     REQUIRE(backtester.get_event_handler().get_time() >= end_time);
+  }
+
+  TEST_CASE("make_portfolio") {
+    auto start_time = time_from_string("2020-12-11 00:00:10");
+    auto data_store = LocalHistoricalDataStore();
+    auto ticker = parse_ticker("TST.TSXV");
+    auto timestamp = start_time - seconds(1);
+    auto bbo = SequencedValue(IndexedValue(BboQuote(
+      make_bid(99 * Money::CENT, 100), make_ask(Money::ONE, 100), timestamp),
+      ticker), encode(timestamp, Beam::Sequence(1)));
+    data_store.store(bbo);
+    timestamp = start_time + seconds(1);
+    bbo = SequencedValue(IndexedValue(BboQuote(make_bid(98 * Money::CENT, 100),
+      make_ask(99 * Money::CENT, 100), timestamp), ticker),
+      encode(timestamp, Beam::Sequence(2)));
+    data_store.store(bbo);
+    auto test_environment = TestEnvironment(HistoricalDataStore(&data_store));
+    auto backtester = BacktesterEnvironment(start_time, start_time + hours(8),
+      Clients(std::in_place_type<TestClients>, Ref(test_environment)));
+    auto clients = BacktesterClients(Ref(backtester));
+    clients.get_order_execution_client().submit(
+      make_limit_order_fields(ticker, Side::BID, 100, 99 * Money::CENT));
+    backtester.wait();
+    auto portfolio = make_portfolio(clients);
+    auto& inventory = portfolio.get_bookkeeper().get_inventory(ticker);
+    REQUIRE(inventory.m_position.m_quantity == 100);
+    auto entry = portfolio.get_entries().find(ticker);
+    REQUIRE(entry != portfolio.get_entries().end());
+    REQUIRE(entry->second.m_unrealized == -Money::ONE);
   }
 }

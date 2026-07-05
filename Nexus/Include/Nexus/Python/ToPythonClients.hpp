@@ -141,6 +141,17 @@ namespace Nexus {
   }
 
   template<IsClients C>
+  typename ToPythonClients<C>::Clients& ToPythonClients<C>::get() {
+    return *m_clients;
+  }
+
+  template<IsClients C>
+  const typename ToPythonClients<C>::Clients&
+      ToPythonClients<C>::get() const {
+    return *m_clients;
+  }
+
+  template<IsClients C>
   typename ToPythonClients<C>::ServiceLocatorClient&
       ToPythonClients<C>::get_service_locator_client() {
     return *m_service_locator_client;
