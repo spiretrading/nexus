@@ -48,8 +48,6 @@ void Nexus::Python::export_backtester_clients(module& module) {
 void Nexus::Python::export_backtester_environment(module& module) {
   class_<BacktesterEnvironment, std::shared_ptr<BacktesterEnvironment>>(
       module, "BacktesterEnvironment").
-    def(init(&make_python_shared<BacktesterEnvironment, ptime, Clients&>),
-      keep_alive<1, 3>()).
     def(
       init(&make_python_shared<BacktesterEnvironment, ptime, ptime, Clients&>),
       keep_alive<1, 4>()).
@@ -84,6 +82,7 @@ void Nexus::Python::export_backtester_environment(module& module) {
       return_value_policy::reference_internal).
     def("get_risk_environment", &BacktesterEnvironment::get_risk_environment,
       return_value_policy::reference_internal).
+    def("wait", &BacktesterEnvironment::wait, call_guard<GilRelease>()).
     def("close", &BacktesterEnvironment::close, call_guard<GilRelease>());
 }
 
@@ -108,7 +107,6 @@ void Nexus::Python::export_backtester_event(module& module) {
 void Nexus::Python::export_backtester_event_handler(module& module) {
   class_<BacktesterEventHandler, std::shared_ptr<BacktesterEventHandler>>(
     module, "BacktesterEventHandler").
-      def(init(&make_python_shared<BacktesterEventHandler, ptime>)).
       def(init(&make_python_shared<BacktesterEventHandler, ptime, ptime>)).
       def_property_readonly(
         "start_time", &BacktesterEventHandler::get_start_time).
@@ -123,5 +121,6 @@ void Nexus::Python::export_backtester_event_handler(module& module) {
         }
         self.add(std::move(e));
       }).
+      def("wait", &BacktesterEventHandler::wait, call_guard<GilRelease>()).
       def("close", &BacktesterEventHandler::close, call_guard<GilRelease>());
 }

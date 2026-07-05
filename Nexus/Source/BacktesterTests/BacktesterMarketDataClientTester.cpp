@@ -25,7 +25,8 @@ namespace {
       : m_source_environment(time_from_string("2025-08-12 09:00:00.000")),
         m_event_handler_environment(
           time_from_string("2025-08-12 09:00:00.000")),
-        m_event_handler(time_from_string("2025-08-12 09:00:00.000")),
+        m_event_handler(time_from_string("2025-08-12 09:00:00.000"),
+          time_from_string("2025-08-12 09:00:00.000") + hours(8)),
         m_market_data_service(Ref(m_event_handler),
           Ref(m_event_handler_environment.get_market_data_environment()),
           make_market_data_client(m_source_environment, "back_tester")) {

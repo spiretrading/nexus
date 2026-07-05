@@ -28,7 +28,7 @@ TEST_SUITE("BacktesterEnvironment") {
       encode(timestamp, Beam::Sequence(2)));
     data_store.store(bbo);
     auto test_environment = TestEnvironment(HistoricalDataStore(&data_store));
-    auto backtester = BacktesterEnvironment(start_time,
+    auto backtester = BacktesterEnvironment(start_time, start_time + hours(8),
       Clients(std::in_place_type<TestClients>, Ref(test_environment)));
     auto clients = BacktesterClients(Ref(backtester));
     auto& order_execution_client = clients.get_order_execution_client();
@@ -42,5 +42,29 @@ TEST_SUITE("BacktesterEnvironment") {
     REQUIRE(fill.m_status == OrderStatus::FILLED);
     REQUIRE(fill.m_last_price == 99 * Money::CENT);
     REQUIRE(fill.m_last_quantity == 100);
+  }
+
+  TEST_CASE("wait") {
+    auto start_time = time_from_string("2020-12-11 00:00:10");
+    auto end_time = start_time + hours(1);
+    auto data_store = LocalHistoricalDataStore();
+    auto ticker = parse_ticker("TST.TSXV");
+    auto timestamp = start_time + seconds(1);
+    auto bbo = SequencedValue(IndexedValue(BboQuote(
+      make_bid(99 * Money::CENT, 100), make_ask(Money::ONE, 100), timestamp),
+      ticker), encode(timestamp, Beam::Sequence(1)));
+    data_store.store(bbo);
+    auto test_environment = TestEnvironment(HistoricalDataStore(&data_store));
+    auto backtester = BacktesterEnvironment(start_time, end_time,
+      Clients(std::in_place_type<TestClients>, Ref(test_environment)));
+    auto clients = BacktesterClients(Ref(backtester));
+    auto& order_execution_client = clients.get_order_execution_client();
+    // Submitting an order starts the market-data replay, so an active event
+    // gets processed; wait() must then drive the clock to the end time rather
+    // than parking at the last quote.
+    order_execution_client.submit(
+      make_limit_order_fields(ticker, Side::BID, 100, 99 * Money::CENT));
+    backtester.wait();
+    REQUIRE(backtester.get_event_handler().get_time() >= end_time);
   }
 }
