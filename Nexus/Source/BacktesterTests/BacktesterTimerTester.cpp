@@ -14,7 +14,7 @@ using namespace Nexus;
 TEST_SUITE("BacktesterTimer") {
   TEST_CASE("expiry") {
     auto start_time = time_from_string("2016-05-06 00:00:00");
-    auto event_handler = BacktesterEventHandler(start_time);
+    auto event_handler = BacktesterEventHandler(start_time, start_time + hours(48));
     auto timer = BacktesterTimer(seconds(1), Ref(event_handler));
     auto routines = RoutineTaskQueue();
     auto expected_timestamp = start_time + seconds(1);
@@ -41,7 +41,7 @@ TEST_SUITE("BacktesterTimer") {
 
   TEST_CASE("cancel") {
     auto start_time = time_from_string("2016-05-06 00:00:00");
-    auto event_handler = BacktesterEventHandler(start_time);
+    auto event_handler = BacktesterEventHandler(start_time, start_time + hours(48));
     auto timer_a = BacktesterTimer(seconds(1), Ref(event_handler));
     auto timer_b = BacktesterTimer(seconds(2), Ref(event_handler));
     auto routines = RoutineTaskQueue();

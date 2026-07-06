@@ -31,13 +31,6 @@ namespace Nexus {
       /**
        * Constructs a BacktesterEnvironment.
        * @param start The backtester's starting time.
-       * @param clients The Clients connected to the historical data source.
-       */
-      BacktesterEnvironment(boost::posix_time::ptime start, Clients clients);
-
-      /**
-       * Constructs a BacktesterEnvironment.
-       * @param start The backtester's starting time.
        * @param end The backtester's ending time.
        * @param clients The Clients connected to the historical data source.
        */
@@ -88,6 +81,9 @@ namespace Nexus {
       /** Returns the RiskServiceTestEnvironment. */
       Tests::RiskServiceTestEnvironment& get_risk_environment();
 
+      /** Blocks until the backtester has run to its end time. */
+      void wait();
+
       void close();
 
     private:
@@ -115,11 +111,6 @@ namespace Nexus {
       BacktesterEnvironment(const BacktesterEnvironment&) = delete;
       BacktesterEnvironment& operator =(const BacktesterEnvironment&) = delete;
   };
-
-  inline BacktesterEnvironment::BacktesterEnvironment(
-    boost::posix_time::ptime start, Clients clients)
-    : BacktesterEnvironment(
-        start, boost::posix_time::pos_infin, std::move(clients)) {}
 
   inline BacktesterEnvironment::BacktesterEnvironment(
       boost::posix_time::ptime start, boost::posix_time::ptime end,
@@ -245,6 +236,10 @@ namespace Nexus {
   inline Tests::RiskServiceTestEnvironment&
       BacktesterEnvironment::get_risk_environment() {
     return *m_risk_environment;
+  }
+
+  inline void BacktesterEnvironment::wait() {
+    m_event_handler.wait();
   }
 
   inline void BacktesterEnvironment::close() {

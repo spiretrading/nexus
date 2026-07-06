@@ -2,6 +2,7 @@
 #define NEXUS_BACKTESTER_EVENT_HANDLER_HPP
 #include <algorithm>
 #include <deque>
+#include <memory>
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
@@ -12,19 +13,13 @@
 #include <Beam/TimeServiceTests/TimeServiceTestEnvironment.hpp>
 #include <Beam/TimeServiceTests/TestTimer.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
-#include "Nexus/Backtester/BacktesterEvent.hpp"
+#include "Nexus/Backtester/ActiveBacktesterEvent.hpp"
 
 namespace Nexus {
 
   /** Implements an event loop to handle BacktesterEvents. */
   class BacktesterEventHandler {
     public:
-
-      /**
-       * Constructs a BacktesterEventHandler.
-       * @param start The starting point of the backtester.
-       */
-      explicit BacktesterEventHandler(boost::posix_time::ptime start);
 
       /**
        * Constructs a BacktesterEventHandler.
@@ -57,6 +52,9 @@ namespace Nexus {
        */
       void add(const std::vector<std::shared_ptr<BacktesterEvent>>& events);
 
+      /** Blocks until the backtester has run to its end time. */
+      void wait();
+
       void close();
 
     private:
@@ -66,7 +64,9 @@ namespace Nexus {
       Beam::Tests::TimeServiceTestEnvironment m_time_environment;
       std::deque<std::shared_ptr<BacktesterEvent>> m_events;
       std::size_t m_active_count;
+      bool m_has_processed_active_event;
       Beam::ConditionVariable m_event_available_condition;
+      Beam::ConditionVariable m_active_processed_condition;
       Beam::RoutineHandler m_event_loop_routine;
       Beam::OpenState m_open_state;
 
@@ -77,14 +77,11 @@ namespace Nexus {
   };
 
   inline BacktesterEventHandler::BacktesterEventHandler(
-    boost::posix_time::ptime start)
-    : BacktesterEventHandler(start, boost::posix_time::pos_infin) {}
-
-  inline BacktesterEventHandler::BacktesterEventHandler(
       boost::posix_time::ptime start, boost::posix_time::ptime end)
       : m_start_time(start),
         m_end_time(end),
         m_active_count(0),
+        m_has_processed_active_event(false),
         m_time_environment(m_start_time) {
     try {
       m_event_loop_routine = Beam::spawn(
@@ -156,11 +153,28 @@ namespace Nexus {
     }
   }
 
+  inline void BacktesterEventHandler::wait() {
+    {
+      auto lock = std::unique_lock(m_mutex);
+      while(m_open_state.is_open() && !m_has_processed_active_event) {
+        m_active_processed_condition.wait(lock);
+      }
+      if(!m_open_state.is_open()) {
+        return;
+      }
+    }
+    auto sentinel = std::make_shared<ActiveBacktesterEvent>(
+      m_end_time + boost::posix_time::microseconds(1));
+    add(sentinel);
+    sentinel->wait();
+  }
+
   inline void BacktesterEventHandler::close() {
     if(m_open_state.set_closing()) {
       return;
     }
     m_event_available_condition.notify_one();
+    m_active_processed_condition.notify_all();
     m_event_loop_routine.wait();
     m_time_environment.close();
     m_open_state.close();
@@ -189,6 +203,13 @@ namespace Nexus {
       }
       event->execute();
       event->complete();
+      if(!event->is_passive()) {
+        auto lock = std::lock_guard(m_mutex);
+        if(!m_has_processed_active_event) {
+          m_has_processed_active_event = true;
+          m_active_processed_condition.notify_all();
+        }
+      }
       Beam::flush_pending_routines();
     }
   }

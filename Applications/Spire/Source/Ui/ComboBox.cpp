@@ -364,6 +364,9 @@ void AnyComboBox::revert_current() {
 }
 
 void AnyComboBox::submit(const QString& query, bool is_passive) {
+  if(query.isEmpty()) {
+    return;
+  }
   auto value = m_query_model->parse(query);
   if(!value.has_value() ||
       is_passive && to_text(value) == to_text(m_data->m_submission)) {

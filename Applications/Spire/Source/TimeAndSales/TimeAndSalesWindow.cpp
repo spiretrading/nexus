@@ -44,6 +44,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(
       TickerContext(std::move(identifier)),
       m_factory(std::move(factory)),
       m_model_builder(std::move(model_builder)),
+      m_properties_proxy(make_proxy_value_model(m_factory->get_properties())),
       m_table_model(std::make_shared<TimeAndSalesTableModel>(
         std::make_shared<NoneTimeAndSalesModel>())),
       m_table_view(nullptr) {
@@ -136,7 +137,7 @@ void TimeAndSalesWindow::on_export_menu() {
 }
 
 void TimeAndSalesWindow::on_properties_menu() {
-  auto properties_window = m_factory->make();
+  auto properties_window = m_factory->make(m_properties_proxy);
   if(!properties_window->isVisible()) {
     properties_window->show();
     if(screen()->geometry().right() - frameGeometry().right() >=
@@ -160,14 +161,14 @@ void TimeAndSalesWindow::on_current(const Ticker& ticker) {
   }
   setWindowTitle(to_text(ticker) + " " + QString(0x2013) + " " + TITLE_NAME);
   m_table_model->set_model(m_model_builder(ticker));
-  auto properties = m_factory->get_properties();
   if(!m_table_view) {
-    m_table_view = make_time_and_sales_table_view(m_table_model, properties);
+    m_table_view =
+      make_time_and_sales_table_view(m_table_model, m_properties_proxy);
     m_table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     m_transition_view->set_body(*m_table_view);
     m_transition_view->set_status(TransitionView::Status::LOADING);
   }
   m_table_model->load_history(m_ticker_view->height() /
-    estimate_row_height(properties->get().get_font()));
+    estimate_row_height(m_properties_proxy->get().get_font()));
   SetDisplayedTicker(ticker);
 }

@@ -165,7 +165,10 @@ bool AnyTagComboBox::is_read_only() const {
 
 void AnyTagComboBox::set_read_only(bool is_read_only) {
   m_combo_box->set_read_only(is_read_only);
-  if(!is_read_only) {
+  if(is_read_only) {
+    match(*this, ReadOnly());
+  } else {
+    unmatch(*this, ReadOnly());
     install_text_proxy_event_filter();
   }
 }

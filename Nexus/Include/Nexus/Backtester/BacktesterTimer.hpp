@@ -72,7 +72,15 @@ namespace Nexus {
       m_event_handler(event_handler.get()) {}
 
   inline BacktesterTimer::~BacktesterTimer() {
-    cancel();
+    auto lock = std::lock_guard(m_mutex);
+    if(m_expire_event) {
+      m_expire_event->cancel();
+      m_expire_event = nullptr;
+    }
+    if(m_cancel_event) {
+      m_cancel_event->cancel();
+      m_cancel_event = nullptr;
+    }
   }
 
   inline void BacktesterTimer::start() {
