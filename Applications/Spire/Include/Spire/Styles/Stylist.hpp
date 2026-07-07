@@ -1,6 +1,7 @@
 #ifndef SPIRE_STYLES_STYLIST_HPP
 #define SPIRE_STYLES_STYLIST_HPP
 #include <chrono>
+#include <cstdint>
 #include <flat_set>
 #include <memory>
 #include <type_traits>

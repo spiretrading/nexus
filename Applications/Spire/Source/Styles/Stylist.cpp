@@ -444,8 +444,8 @@ bool Stylist::try_apply_diff(const std::shared_ptr<StyleSheet>& new_style) {
     std::size_t m_old_index;
   };
   auto resolutions =
-    std::vector<Resolution>(new_rules.size(), {Tier::NEW, 0});
-  auto kept_old = std::vector<bool>(old_rules.size(), false);
+    std::vector(new_rules.size(), Resolution(Tier::NEW, 0));
+  auto kept_old = std::vector(old_rules.size(), false);
   auto next_old = std::size_t(0);
   auto has_seen_new = false;
   for(auto i = std::size_t(0); i < new_rules.size(); ++i) {
@@ -457,9 +457,9 @@ bool Stylist::try_apply_diff(const std::shared_ptr<StyleSheet>& new_style) {
         }
         kept_old[j] = true;
         if(old_rules[j].get_block() == new_rules[i].get_block()) {
-          resolutions[i] = {Tier::SAME, j};
+          resolutions[i] = Resolution(Tier::SAME, j);
         } else {
-          resolutions[i] = {Tier::BLOCK_CHANGED, j};
+          resolutions[i] = Resolution(Tier::BLOCK_CHANGED, j);
         }
         next_old = j + 1;
         matched = true;
@@ -483,7 +483,7 @@ bool Stylist::try_apply_diff(const std::shared_ptr<StyleSheet>& new_style) {
   }
   m_style = new_style;
   m_rules.reserve(new_rules.size());
-  auto block_change_targets = std::flat_set<Stylist*>();
+  auto changed_stylists = std::flat_set<Stylist*>();
   for(auto i = std::size_t(0); i < new_rules.size(); ++i) {
     auto& resolution = resolutions[i];
     if(resolution.m_tier == Tier::NEW) {
@@ -500,15 +500,15 @@ bool Stylist::try_apply_diff(const std::shared_ptr<StyleSheet>& new_style) {
       kept->m_block = std::shared_ptr<const Block>(
         m_style, &new_rules[i].get_block());
       if(resolution.m_tier == Tier::BLOCK_CHANGED) {
-        for(auto* descendant : kept->m_selection) {
-          block_change_targets.insert(const_cast<Stylist*>(descendant));
+        for(auto selection : kept->m_selection) {
+          changed_stylists.insert(const_cast<Stylist*>(selection));
         }
       }
       m_rules.push_back(std::move(kept));
     }
   }
-  for(auto* target : block_change_targets) {
-    target->apply_proxies();
+  for(auto stylist : changed_stylists) {
+    stylist->apply_proxies();
   }
   for(auto& rule : previous_entries) {
     if(rule) {
