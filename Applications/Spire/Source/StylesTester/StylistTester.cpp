@@ -78,4 +78,29 @@ TEST_SUITE("Stylist") {
       REQUIRE(*color == QColor(0x00FF00));
     });
   }
+
+  TEST_CASE("reselection_during_rule_removal") {
+    run_test([] {
+      auto widget = QWidget();
+      match(widget, Foo());
+      auto style = StyleSheet();
+      style.get(Foo()).set(IntProperty(42));
+      set_style(widget, std::move(style));
+      auto is_triggered = false;
+      connect_style_signal(widget, [&] {
+        if(!is_triggered) {
+          is_triggered = true;
+          unmatch(widget, Foo());
+          match(widget, Foo());
+        }
+      });
+      set_style(widget, {});
+      auto update = StyleSheet();
+      update.get(Any()).set(ColorProperty(QColor(0xFF0000)));
+      set_style(widget, std::move(update));
+      auto block = find_stylist(widget).get_computed_block();
+      REQUIRE(find<ColorProperty>(block).is_initialized());
+      REQUIRE(!find<IntProperty>(block).is_initialized());
+    });
+  }
 }
