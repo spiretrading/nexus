@@ -1696,15 +1696,7 @@ UiProfile Spire::make_check_button_menu_item_profile() {
     auto& label = get<QString>("label", profile.get_properties());
     auto item = new CheckButtonMenuItem(label.get());
     apply_widget_properties(item, profile.get_properties());
-    auto& checked = get<bool>("checked", profile.get_properties());
-    checked.connect_changed_signal([=] (auto value) {
-      if(item->get_current()->get() != value) {
-        item->get_current()->set(value);
-      }
-    });
-    item->get_current()->connect_update_signal([&checked] (auto is_checked) {
-      checked.set(is_checked);
-    });
+    link(item->get_current(), get<bool>("checked", profile.get_properties()));
     item->get_current()->connect_update_signal(
       profile.make_event_slot<bool>("CheckedSignal"));
     return item;
@@ -3366,15 +3358,7 @@ UiProfile Spire::make_link_menu_item_profile() {
     auto& symbol = get<QString>("symbol", profile.get_properties());
     auto item = new LinkMenuItem(type.get(), symbol.get());
     apply_widget_properties(item, profile.get_properties());
-    auto& checked = get<bool>("checked", profile.get_properties());
-    checked.connect_changed_signal([=] (auto value) {
-      if(item->get_current()->get() != value) {
-        item->get_current()->set(value);
-      }
-    });
-    item->get_current()->connect_update_signal([&checked] (auto is_checked) {
-      checked.set(is_checked);
-    });
+    link(item->get_current(), get<bool>("checked", profile.get_properties()));
     item->get_current()->connect_update_signal(
       profile.make_event_slot<bool>("CheckedSignal"));
     return item;
