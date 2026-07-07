@@ -4,9 +4,7 @@
 
 namespace Spire {
 
-  /**
-   * Displays a check-button menu item.
-   */
+  /** Displays a check-button menu item. */
   class CheckButtonMenuItem : public QWidget {
     public:
 
