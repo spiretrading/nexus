@@ -1,3 +1,5 @@
+#include <future>
+#include <type_traits>
 #include <Beam/IO/LocalClientChannel.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/ServiceLocator/SessionAuthenticator.hpp>
@@ -17,6 +19,7 @@
 #include "Nexus/OrderExecutionService/ServiceOrderExecutionClient.hpp"
 #include "Nexus/OrderExecutionServiceTests/MockOrderExecutionDriver.hpp"
 #include "Nexus/OrderExecutionServiceTests/PrimitiveOrderUtilities.hpp"
+#include "Nexus/OrderExecutionServiceTests/TestOrderExecutionDataStore.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
@@ -31,11 +34,13 @@ using namespace Nexus::Venues;
 namespace {
   const auto TST = parse_ticker("TST.TSX");
 
+  template<typename D = LocalOrderExecutionDataStore>
   struct Fixture {
+    using DataStore = D;
     using ServletContainer = TestAuthenticatedServiceProtocolServletContainer<
       MetaOrderExecutionServlet<FixedTimeClient*, ServiceLocatorClient,
         UidClient, AdministrationClient, MockOrderExecutionDriver*,
-        LocalOrderExecutionDataStore*>>;
+        DataStore*>>;
     using ClientBuilder = AuthenticatedServiceProtocolClientBuilder<
       ServiceLocatorClient, MessageProtocol<std::unique_ptr<LocalClientChannel>,
         BinarySender<SharedBuffer>, NullEncoder>, TriggerTimer>;
@@ -45,7 +50,7 @@ namespace {
     AdministrationServiceTestEnvironment m_administration_environment;
     MockOrderExecutionDriver m_driver;
     std::shared_ptr<Queue<std::shared_ptr<PrimitiveOrder>>> m_submissions;
-    LocalOrderExecutionDataStore m_data_store;
+    DataStore m_data_store;
     DirectoryEntry m_client_account;
     optional<ServiceLocatorClient> m_servlet_service_locator;
     optional<AdministrationClient> m_servlet_administration_client;
@@ -54,13 +59,15 @@ namespace {
     optional<ServiceLocatorClient> m_client_service_locator;
     optional<OrderExecutionClient> m_client;
 
-    Fixture()
+    template<typename... Args>
+    explicit Fixture(Args&&... args)
         : m_time_client(time_from_string("2025-04-12 13:33:12:55")),
           m_administration_environment(
             make_administration_service_test_environment(
               m_service_locator_environment)),
           m_submissions(
             std::make_shared<Queue<std::shared_ptr<PrimitiveOrder>>>()),
+          m_data_store(std::forward<Args>(args)...),
           m_server_connection(std::make_shared<LocalServerConnection>()) {
       m_driver.set_order_status_new_on_submission(true);
       m_driver.get_publisher().monitor(m_submissions);
@@ -111,8 +118,9 @@ namespace {
     }
   };
 
+  template<typename D>
   std::shared_ptr<Order> submit_and_fill(
-      Fixture& fixture, const OrderFields& fields) {
+      Fixture<D>& fixture, const OrderFields& fields) {
     auto order = fixture.m_client->submit(fields);
     auto reports = std::make_shared<Queue<ExecutionReport>>();
     order->get_publisher().monitor(reports);
@@ -122,8 +130,9 @@ namespace {
     return order;
   }
 
+  template<typename D>
   Beam::Sequence load_last_sequence(
-      Fixture& fixture, const DirectoryEntry& account) {
+      Fixture<D>& fixture, const DirectoryEntry& account) {
     auto query = AccountQuery();
     query.set_index(account);
     query.set_range(Range::TOTAL);
@@ -131,6 +140,49 @@ namespace {
     auto records = fixture.m_data_store.load_order_records(query);
     REQUIRE(!records.empty());
     return records.back().get_sequence();
+  }
+
+  void service(TestOrderExecutionDataStore::Operation& operation,
+      LocalOrderExecutionDataStore& data_store) {
+    std::visit([&] (auto& operation) {
+      using Operation = std::remove_cvref_t<decltype(operation)>;
+      if constexpr(std::is_same_v<
+          Operation, TestOrderExecutionDataStore::LoadOrderRecordOperation>) {
+        operation.m_result.set(data_store.load_order_record(operation.m_id));
+      } else if constexpr(std::is_same_v<
+          Operation, TestOrderExecutionDataStore::LoadOrderRecordsOperation>) {
+        operation.m_result.set(
+          data_store.load_order_records(operation.m_query));
+      } else if constexpr(std::is_same_v<
+          Operation, TestOrderExecutionDataStore::StoreOrderInfoOperation>) {
+        data_store.store(operation.m_info);
+        operation.m_result.set();
+      } else if constexpr(std::is_same_v<Operation,
+          TestOrderExecutionDataStore::StoreOrderInfoListOperation>) {
+        data_store.store(operation.m_info);
+        operation.m_result.set();
+      } else if constexpr(std::is_same_v<Operation,
+          TestOrderExecutionDataStore::LoadExecutionReportsOperation>) {
+        operation.m_result.set(
+          data_store.load_execution_reports(operation.m_query));
+      } else if constexpr(std::is_same_v<Operation,
+          TestOrderExecutionDataStore::StoreExecutionReportOperation>) {
+        data_store.store(operation.m_report);
+        operation.m_result.set();
+      } else if constexpr(std::is_same_v<Operation,
+          TestOrderExecutionDataStore::StoreExecutionReportListOperation>) {
+        data_store.store(operation.m_reports);
+        operation.m_result.set();
+      } else if constexpr(std::is_same_v<Operation,
+          TestOrderExecutionDataStore::LoadInventorySnapshotOperation>) {
+        operation.m_result.set(
+          data_store.load_inventory_snapshot(operation.m_account));
+      } else if constexpr(std::is_same_v<Operation,
+          TestOrderExecutionDataStore::StoreInventorySnapshotOperation>) {
+        data_store.store(operation.m_account, operation.m_snapshot);
+        operation.m_result.set();
+      }
+    }, operation);
   }
 }
 
@@ -346,5 +398,48 @@ TEST_SUITE("OrderExecutionServlet") {
       make_limit_order_fields(TST, CAD, Side::ASK, "TSX", 1, Money::ONE));
     auto excess_order = fixture.m_submissions->pop();
     REQUIRE(excess_order->get_info().m_shorting_flag);
+  }
+
+  TEST_CASE("store_reports_after_client_disconnect") {
+    auto operations = std::make_shared<TestOrderExecutionDataStore::Queue>();
+    auto data_store = LocalOrderExecutionDataStore();
+    auto client = std::unique_ptr<TestServiceProtocolClient>();
+    auto servicer = std::async(std::launch::async, [&] {
+      try {
+        while(true) {
+          auto operation = operations->pop();
+          if(auto store_operation = std::get_if<
+              TestOrderExecutionDataStore::StoreOrderInfoOperation>(
+                &*operation)) {
+            data_store.store(store_operation->m_info);
+            if(client) {
+              client->close();
+            }
+            store_operation->m_result.set();
+          } else {
+            service(*operation, data_store);
+          }
+        }
+      } catch(const std::exception&) {}
+    });
+    auto fixture = Fixture<TestOrderExecutionDataStore>(operations);
+    fixture.start();
+    client = fixture.make_client("client", "1234");
+    auto parameters = NewOrderSingleService::Parameters();
+    parameters.fields =
+      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 100, Money::ONE);
+    client->send(NewOrderSingleService::Request<TestServiceProtocolClient>(
+      1, parameters));
+    auto driver_order = fixture.m_submissions->pop();
+    fill(*driver_order, 100);
+    submit_and_fill(fixture,
+      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 200, Money::ONE));
+    auto record = data_store.load_order_record(driver_order->get_info().m_id);
+    REQUIRE(record);
+    auto& reports = (**record)->m_execution_reports;
+    REQUIRE(reports.size() == 3);
+    REQUIRE(reports[0].m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(reports[1].m_status == OrderStatus::NEW);
+    REQUIRE(reports[2].m_status == OrderStatus::FILLED);
   }
 }

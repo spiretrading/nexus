@@ -652,29 +652,39 @@ namespace Nexus {
       }
       return m_driver->submit(order_info);
     }();
-    m_registry.publish(order_info,
-      [&] {
-        return load_initial_sequences(
-          *m_data_store, order_info.m_fields.m_account);
-      },
-      [&] (const auto& info) {
-        m_live_orders.insert((*info)->m_id);
-        Beam::with(*snapshot_model, [&] (auto& snapshot_model) {
-          snapshot_model.add(info.get_sequence(), order);
-        });
-        m_data_store->store(info);
-        request.set(info);
-        auto order_record = Beam::SequencedValue(Beam::IndexedValue(
-          OrderRecord(**info, {}), info->get_index()), info.get_sequence());
-        m_submission_subscriptions.publish(order_record,
-          [&] (const auto& client) {
-            return &client != &request.get_client();
-          },
-          [&] (const auto& clients) {
-            Beam::broadcast_record_message<OrderSubmissionMessage>(
-              clients, order_record);
+    try {
+      m_registry.publish(order_info,
+        [&] {
+          return load_initial_sequences(
+            *m_data_store, order_info.m_fields.m_account);
+        },
+        [&] (const auto& info) {
+          m_live_orders.insert((*info)->m_id);
+          Beam::with(*snapshot_model, [&] (auto& snapshot_model) {
+            snapshot_model.add(info.get_sequence(), order);
           });
-      });
+          m_data_store->store(info);
+          try {
+            request.set(info);
+          } catch(const std::exception&) {}
+          auto order_record = Beam::SequencedValue(Beam::IndexedValue(
+            OrderRecord(**info, {}), info->get_index()), info.get_sequence());
+          m_submission_subscriptions.publish(order_record,
+            [&] (const auto& client) {
+              return &client != &request.get_client();
+            },
+            [&] (const auto& clients) {
+              Beam::broadcast_record_message<OrderSubmissionMessage>(
+                clients, order_record);
+            });
+        });
+    } catch(...) {
+      order->get_publisher().monitor(m_tasks.get_slot<ExecutionReport>(
+        std::bind(&OrderExecutionServlet::on_execution_report, this,
+          std::placeholders::_1, order_info.m_fields.m_account,
+          std::ref(*shorting_model), std::ref(*snapshot_model))));
+      throw;
+    }
     order->get_publisher().monitor(m_tasks.get_slot<ExecutionReport>(
       std::bind(&OrderExecutionServlet::on_execution_report, this,
         std::placeholders::_1, order_info.m_fields.m_account,
