@@ -35,7 +35,7 @@
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CalendarDatePicker.hpp"
-#include "Spire/Ui/Checkbox.hpp"
+#include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/CheckButtonMenuItem.hpp"
 #include "Spire/Ui/ClosedFilterPanel.hpp"
 #include "Spire/Ui/ColorBox.hpp"
