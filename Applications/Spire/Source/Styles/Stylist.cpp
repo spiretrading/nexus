@@ -510,6 +510,13 @@ bool Stylist::try_apply_diff(const std::shared_ptr<StyleSheet>& new_style) {
   for(auto* target : block_change_targets) {
     target->apply_proxies();
   }
+  for(auto& rule : previous_entries) {
+    if(rule) {
+      for(auto selection : rule->m_selection) {
+        const_cast<Stylist&>(*selection).unapply(*rule);
+      }
+    }
+  }
   return true;
 }
 
