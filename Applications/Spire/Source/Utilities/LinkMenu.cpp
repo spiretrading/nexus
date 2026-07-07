@@ -1,7 +1,10 @@
 #include "Spire/Utilities/LinkMenu.hpp"
 #include <QApplication>
-#include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Ui/CheckButtonMenuItem.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
+#include "Spire/Ui/CustomQtVariants.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -10,6 +13,39 @@ using namespace Spire;
 using namespace Spire::LegacyUI;
 
 namespace {
+  const QString& to_text(LinkableWindowType type) {
+    if(type == LinkableWindowType::BOOK_VIEW) {
+      static const auto value = QObject::tr("Book View");
+      return value;
+    } else if(type == LinkableWindowType::CHART) {
+      static const auto value = QObject::tr("Chart");
+      return value;
+    } else if(type == LinkableWindowType::TIME_AND_SALES) {
+      static const auto value = QObject::tr("Time and Sales");
+      return value;
+    }
+    static const auto value = QString();
+    return value;
+  }
+
+  const QImage& load_icon(LinkableWindowType type) {
+    if(type == LinkableWindowType::BOOK_VIEW) {
+      static const auto icon =
+        image_from_svg(":/Icons/bookview.svg", scale(10, 10));
+      return icon;
+    } else if(type == LinkableWindowType::CHART) {
+      static const auto icon =
+        image_from_svg(":/Icons/chart.svg", scale(10, 10));
+      return icon;
+    } else if(type == LinkableWindowType::TIME_AND_SALES) {
+      static const auto icon =
+        image_from_svg(":/Icons/time-sales.svg", scale(10, 10));
+      return icon;
+    }
+    static const auto icon = QImage();
+    return icon;
+  }
+
   struct LinkModel : BooleanModel {
     TickerContext* m_source;
     TickerContext* m_target;
@@ -79,4 +115,23 @@ void Spire::add_link_menu(ContextMenu& parent, TickerContext& context) {
     });
   }
   parent.add_menu(QObject::tr("Link to"), *link_menu);
+}
+
+CheckButtonMenuItem* Spire::make_link_menu_item(LinkableWindowType type,
+    const Ticker& ticker, QWidget* parent) {
+  return make_link_menu_item(type, ticker,
+    std::make_shared<LocalBooleanModel>(), parent);
+}
+
+CheckButtonMenuItem* Spire::make_link_menu_item(LinkableWindowType type,
+    const Ticker& ticker, std::shared_ptr<BooleanModel> current,
+    QWidget* parent) {
+  auto label = [&] {
+    if(ticker) {
+      return to_text(ticker) + " " + QChar(0x2013) + " " + ::to_text(type);
+    }
+    return ::to_text(type);
+  }();
+  return new CheckButtonMenuItem(load_icon(type), std::move(label),
+    std::move(current), parent);
 }
