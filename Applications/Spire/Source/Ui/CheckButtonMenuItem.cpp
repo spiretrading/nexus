@@ -13,7 +13,6 @@ CheckButtonMenuItem::CheckButtonMenuItem(QString label,
     std::shared_ptr<BooleanModel> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)) {
-  setAttribute(Qt::WA_NoMousePropagation);
   auto check_box = new CheckBox(m_current);
   check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   check_box->setLayoutDirection(Qt::RightToLeft);
