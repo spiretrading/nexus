@@ -45,10 +45,6 @@ TEST_SUITE("BacktesterEventHandler") {
   TEST_CASE("constructor") {
     auto start = time_from_string("2025-08-12 09:00:00.000");
     auto end = time_from_string("2025-08-12 16:00:00.000");
-    auto handler_single = BacktesterEventHandler(start);
-    REQUIRE(handler_single.get_start_time() == start);
-    REQUIRE(handler_single.get_end_time() == pos_infin);
-    REQUIRE(handler_single.get_time() == start);
     auto handler_range = BacktesterEventHandler(start, end);
     REQUIRE(handler_range.get_start_time() == start);
     REQUIRE(handler_range.get_end_time() == end);
@@ -57,7 +53,8 @@ TEST_SUITE("BacktesterEventHandler") {
 
   TEST_CASE("add") {
     auto handler =
-      BacktesterEventHandler(time_from_string("2025-08-12 09:00:00.000"));
+      BacktesterEventHandler(time_from_string("2025-08-12 09:00:00.000"),
+        time_from_string("2025-08-12 16:00:00.000"));
     auto active_count = std::atomic<int>(0);
     auto passive_event = std::make_shared<PassiveEvent>(
       time_from_string("2025-08-12 09:30:00.000"));
@@ -78,7 +75,8 @@ TEST_SUITE("BacktesterEventHandler") {
 
   TEST_CASE("add_events") {
     auto handler =
-      BacktesterEventHandler(time_from_string("2025-08-12 09:00:00.000"));
+      BacktesterEventHandler(time_from_string("2025-08-12 09:00:00.000"),
+        time_from_string("2025-08-12 16:00:00.000"));
     auto active_count = std::atomic<int>(0);
     auto passive_event1 = std::make_shared<PassiveEvent>(
       time_from_string("2025-08-12 09:15:00.000"));
@@ -100,5 +98,50 @@ TEST_SUITE("BacktesterEventHandler") {
     REQUIRE(passive_event2->was_executed());
     REQUIRE(active_count == 2);
     REQUIRE(handler.get_time() == time_from_string("2025-08-12 10:00:00.000"));
+  }
+
+  TEST_CASE("wait") {
+    auto start = time_from_string("2025-08-12 09:00:00.000");
+    auto end = time_from_string("2025-08-12 16:00:00.000");
+    auto handler = BacktesterEventHandler(start, end);
+    auto active_count = std::atomic<int>(0);
+    handler.add(std::make_shared<ActiveEvent>(
+      time_from_string("2025-08-12 10:00:00.000"), active_count));
+    handler.wait();
+    REQUIRE(active_count == 1);
+    REQUIRE(handler.get_time() >= end);
+  }
+
+  TEST_CASE("wait_fires_stranded_passive_event") {
+    auto start = time_from_string("2025-08-12 09:00:00.000");
+    auto end = time_from_string("2025-08-12 16:00:00.000");
+    auto handler = BacktesterEventHandler(start, end);
+    auto active_count = std::atomic<int>(0);
+    // The last active event is at 09:30, so the loop would park there; a passive
+    // event at 12:00 (before the end) would strand without wait()'s sentinel.
+    handler.add(std::make_shared<ActiveEvent>(
+      time_from_string("2025-08-12 09:30:00.000"), active_count));
+    auto passive_event = std::make_shared<PassiveEvent>(
+      time_from_string("2025-08-12 12:00:00.000"));
+    handler.add(passive_event);
+    handler.wait();
+    REQUIRE(passive_event->was_executed());
+    REQUIRE(handler.get_time() >= end);
+  }
+
+  TEST_CASE("wait_when_active_event_already_processed") {
+    auto start = time_from_string("2025-08-12 09:00:00.000");
+    auto end = time_from_string("2025-08-12 16:00:00.000");
+    auto handler = BacktesterEventHandler(start, end);
+    auto active_count = std::atomic<int>(0);
+    auto event = std::make_shared<ActiveEvent>(
+      time_from_string("2025-08-12 10:00:00.000"), active_count);
+    handler.add(event);
+    // The active event is fully processed before wait() is called, so its
+    // phase-1 latch is already set and it proceeds straight to driving the end.
+    event->wait();
+    REQUIRE(active_count == 1);
+    handler.wait();
+    REQUIRE(handler.get_time() >= end);
   }
 }

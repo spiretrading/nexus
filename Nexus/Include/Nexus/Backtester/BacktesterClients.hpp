@@ -1,8 +1,14 @@
 #ifndef NEXUS_BACKTESTER_CLIENTS_HPP
 #define NEXUS_BACKTESTER_CLIENTS_HPP
+#include <memory>
+#include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Ref.hpp>
+#include <Beam/Queues/Queue.hpp>
+#include <Beam/Queues/StateQueue.hpp>
 #include <Beam/TimeServiceTests/TestTimer.hpp>
+#include "Nexus/Accounting/Portfolio.hpp"
+#include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
 #include "Nexus/Backtester/BacktesterEnvironment.hpp"
 #include "Nexus/Backtester/BacktesterMarketDataClient.hpp"
 #include "Nexus/Backtester/BacktesterTimeClient.hpp"
@@ -60,6 +66,38 @@ namespace Nexus {
       BacktesterClients(const BacktesterClients&) = delete;
       BacktesterClients& operator =(const BacktesterClients&) = delete;
   };
+
+  /**
+   * Reconstructs the marked portfolio of a completed backtest.
+   * @param clients The clients used to run the backtest.
+   * @return The account's portfolio, marked as of the end of the backtest.
+   */
+  inline Portfolio<TrueAverageBookkeeper> make_portfolio(
+      BacktesterClients& clients) {
+    auto query = AccountQuery();
+    query.set_index(clients.get_service_locator_client().get_account());
+    query.set_range(Beam::Range::HISTORICAL);
+    query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
+    auto records = std::make_shared<Beam::Queue<OrderRecord>>();
+    clients.get_order_execution_client().query(query, records);
+    auto flushed = std::vector<OrderRecord>();
+    Beam::flush(records, std::back_inserter(flushed));
+    auto portfolio = Portfolio<TrueAverageBookkeeper>();
+    for(auto& record : flushed) {
+      for(auto& report : record.m_execution_reports) {
+        portfolio.update(record.m_info.m_fields, report);
+      }
+    }
+    for(auto& inventory : portfolio.get_bookkeeper().get_inventory_range()) {
+      auto& ticker = inventory.m_position.m_ticker;
+      auto snapshot = clients.get_market_data_client().load_snapshot(ticker);
+      auto& bbo = snapshot.m_bbo_quote.get_value();
+      if(bbo.m_bid.m_price != Money::ZERO || bbo.m_ask.m_price != Money::ZERO) {
+        portfolio.update(ticker, bbo.m_ask.m_price, bbo.m_bid.m_price);
+      }
+    }
+    return portfolio;
+  }
 
   inline BacktesterClients::BacktesterClients(
     Beam::Ref<BacktesterEnvironment> environment)

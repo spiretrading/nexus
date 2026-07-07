@@ -50,8 +50,7 @@ TEST_SUITE("BacktesterMarketDataService") {
     auto fixture = Fixture();
     auto timestamp =
       fixture.m_event_handler_environment.get_time_environment().get_time();
-    auto event_handler = BacktesterEventHandler(
-      fixture.m_event_handler_environment.get_time_environment().get_time());
+    auto event_handler = BacktesterEventHandler(timestamp, timestamp + hours(8));
     auto service = BacktesterMarketDataService(Ref(event_handler),
       Ref(fixture.m_event_handler_environment.get_market_data_environment()),
       *fixture.m_source_market_data_client);
@@ -85,7 +84,7 @@ TEST_SUITE("BacktesterMarketDataService") {
       100), start_time + minutes(10));
     data_store.store(
       SequencedValue(IndexedValue(bbo_after, TD), Beam::Sequence(12)));
-    auto event_handler = BacktesterEventHandler(start_time);
+    auto event_handler = BacktesterEventHandler(start_time, start_time + hours(8));
     auto service = BacktesterMarketDataService(Ref(event_handler),
       Ref(fixture.m_event_handler_environment.get_market_data_environment()),
       *fixture.m_source_market_data_client);

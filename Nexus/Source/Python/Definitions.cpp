@@ -332,7 +332,8 @@ void Nexus::Python::export_money(module& module) {
     def(int() * self).
     def(self / Quantity()).
     def(self / double()).
-    def(self / int());
+    def(self / int()).
+    def(self / self);
   module.def("abs", overload_cast<Money>(&abs));
   module.def("floor_to", overload_cast<Money, Money>(&floor_to));
   module.def("ceil_to", overload_cast<Money, Money>(&ceil_to));
