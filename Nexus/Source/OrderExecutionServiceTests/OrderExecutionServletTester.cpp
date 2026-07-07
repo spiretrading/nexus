@@ -119,13 +119,17 @@ namespace {
   };
 
   template<typename D>
-  std::shared_ptr<Order> submit_and_fill(
-      Fixture<D>& fixture, const OrderFields& fields) {
+  std::shared_ptr<Order> submit_and_fill(Fixture<D>& fixture,
+      const OrderFields& fields, optional<ptime> timestamp = none) {
     auto order = fixture.m_client->submit(fields);
     auto reports = std::make_shared<Queue<ExecutionReport>>();
     order->get_publisher().monitor(reports);
     auto driver_order = fixture.m_submissions->pop();
-    fill(*driver_order, fields.m_quantity);
+    if(timestamp) {
+      fill(*driver_order, fields.m_quantity, *timestamp);
+    } else {
+      fill(*driver_order, fields.m_quantity);
+    }
     while(reports->pop().m_status != OrderStatus::FILLED) {}
     return order;
   }
@@ -187,25 +191,14 @@ namespace {
 }
 
 TEST_SUITE("OrderExecutionServlet") {
-  TEST_CASE("store_snapshot_on_close") {
+  TEST_CASE("no_store_on_close") {
     auto fixture = Fixture();
     fixture.start();
     submit_and_fill(fixture,
       make_limit_order_fields(TST, CAD, Side::BID, "TSX", 200, Money::ONE));
-    auto live_order = fixture.m_client->submit(
-      make_limit_order_fields(TST, CAD, Side::ASK, "TSX", 50, 2 * Money::ONE));
-    fixture.m_submissions->pop();
     fixture.m_container->close();
-    auto snapshot =
-      fixture.m_data_store.load_inventory_snapshot(fixture.m_client_account);
-    REQUIRE(snapshot.m_excluded_orders ==
-      std::vector{live_order->get_info().m_id});
-    REQUIRE(snapshot.m_sequence ==
-      load_last_sequence(fixture, fixture.m_client_account));
-    REQUIRE(snapshot.m_inventories.size() == 1);
-    REQUIRE(snapshot.m_inventories.front() ==
-      Inventory(Position(TST, CAD, 200, 200 * Money::ONE), Money::ZERO,
-        Money::ZERO, 200, 1));
+    REQUIRE(fixture.m_data_store.load_inventory_snapshot(
+      fixture.m_client_account) == InventorySnapshot());
   }
 
   TEST_CASE("load_snapshot_on_start") {
@@ -218,7 +211,8 @@ TEST_SUITE("OrderExecutionServlet") {
     fixture.m_data_store.store(fixture.m_client_account, seed);
     fixture.start();
     submit_and_fill(fixture,
-      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 50, 2 * Money::ONE));
+      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 50, 2 * Money::ONE),
+      fixture.m_time_client.get_time() + hours(6));
     fixture.m_container->close();
     auto snapshot =
       fixture.m_data_store.load_inventory_snapshot(fixture.m_client_account);
@@ -229,6 +223,33 @@ TEST_SUITE("OrderExecutionServlet") {
     REQUIRE(snapshot.m_inventories.front() ==
       Inventory(Position(TST, CAD, 150, 200 * Money::ONE), 10 * Money::ONE,
         Money::ONE, 350, 4));
+  }
+
+  TEST_CASE("store_snapshot_after_interval") {
+    auto fixture = Fixture();
+    fixture.start();
+    auto base = fixture.m_time_client.get_time();
+    submit_and_fill(fixture,
+      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 200, Money::ONE));
+    auto live_order = fixture.m_client->submit(
+      make_limit_order_fields(TST, CAD, Side::ASK, "TSX", 50, 2 * Money::ONE));
+    fixture.m_submissions->pop();
+    submit_and_fill(fixture,
+      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 100, Money::ONE),
+      base + hours(6));
+    submit_and_fill(fixture,
+      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 50, Money::ONE),
+      base + hours(7));
+    fixture.m_container->close();
+    auto snapshot =
+      fixture.m_data_store.load_inventory_snapshot(fixture.m_client_account);
+    REQUIRE(snapshot.m_excluded_orders ==
+      std::vector{live_order->get_info().m_id});
+    REQUIRE(snapshot.m_sequence == Beam::Sequence(3));
+    REQUIRE(snapshot.m_inventories.size() == 1);
+    REQUIRE(snapshot.m_inventories.front() ==
+      Inventory(Position(TST, CAD, 300, 300 * Money::ONE), Money::ZERO,
+        Money::ZERO, 300, 2));
   }
 
   TEST_CASE("load_non_existent_order") {
