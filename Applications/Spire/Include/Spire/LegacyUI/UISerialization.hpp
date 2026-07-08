@@ -192,7 +192,7 @@ namespace Spire {
     (MinNode, "Spire.MinNode"),
     (MultiplicationNode, "Spire.MultiplicationNode"),
     (NotNode, "Spire.NotNode"),
-    (NotNode, "Spire.PreviousNode"),
+    (PreviousNode, "Spire.PreviousNode"),
     (RangeNode, "Spire.RangeNode"),
     (RoundNode, "Spire.RoundNode"),
     (SubtractionNode, "Spire.SubtractionNode"),

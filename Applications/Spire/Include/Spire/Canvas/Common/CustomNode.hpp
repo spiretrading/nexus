@@ -83,7 +83,7 @@ namespace Spire {
   template<Beam::IsShuttle S>
   void CustomNode::shuttle(S& shuttle, unsigned int version) {
     CanvasNode::shuttle(shuttle, version);
-    shuttle.shuttle("children", m_children);
+    shuttle.shuttle("children_details", m_children);
   }
 }
 

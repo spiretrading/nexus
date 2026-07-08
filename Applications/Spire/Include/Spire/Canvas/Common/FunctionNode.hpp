@@ -31,14 +31,12 @@ namespace Spire {
       using SignatureNode::Replace;
     private:
       friend struct Beam::DataShuttle;
-      std::string m_name;
       std::vector<Signature> m_signatures;
   };
 
   template<Beam::IsShuttle S>
   void FunctionNode::shuttle(S& shuttle, unsigned int version) {
     SignatureNode::shuttle(shuttle, version);
-    shuttle.shuttle("name", m_name);
     shuttle.shuttle("signatures", m_signatures);
   }
 }

@@ -88,7 +88,7 @@ namespace Spire {
   template<Beam::IsShuttle S>
   void LuaScriptNode::shuttle(S& shuttle, unsigned int version) {
     CanvasNode::shuttle(shuttle, version);
-    shuttle.shuttle("name", m_name);
+    shuttle.shuttle("script_name", m_name);
     shuttle.shuttle("path", m_path);
     shuttle.shuttle("parameters", m_parameters);
   }

@@ -65,7 +65,7 @@ namespace Details {
     protected:
 
       /** Constructs an empty SignatureNode. */
-      SignatureNode();
+      SignatureNode() = default;
 
       /** Copies a SignatureNode. */
       SignatureNode(const SignatureNode& node) = default;
@@ -75,9 +75,6 @@ namespace Details {
 
       template<Beam::IsShuttle S>
       void shuttle(S& shuttle, unsigned int version);
-
-    private:
-      std::shared_ptr<CanvasType> m_type;
   };
 
   /** Returns a list of signatures from a compile time list of types. */
@@ -92,7 +89,6 @@ namespace Details {
   template<Beam::IsShuttle S>
   void SignatureNode::shuttle(S& shuttle, unsigned int version) {
     CanvasNode::shuttle(shuttle, version);
-    shuttle.shuttle("type", m_type);
   }
 }
 
