@@ -665,7 +665,9 @@ void ContextMenu::on_list_operation(
 void ContextMenu::on_submit(const std::any& submission) {
   auto& menu_item = m_list->get(*m_list_view->get_current()->get());
   if(menu_item.m_type == MenuItemType::ACTION) {
-    std::get<Action>(menu_item.m_data)();
+    if(auto& action = std::get<Action>(menu_item.m_data)) {
+      action();
+    }
     m_window->hide();
     m_submit_signal(*this, menu_item.m_name);
   }

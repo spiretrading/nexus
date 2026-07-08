@@ -149,8 +149,13 @@ void ToolbarController::open() {
   auto windows = std::vector<QWidget*>();
   if(!window_settings.empty()) {
     for(auto& settings : window_settings) {
-      if(auto window = settings->Reopen(Ref(*m_user_profile))) {
-        windows.push_back(window);
+      try {
+        if(auto window = settings->Reopen(Ref(*m_user_profile))) {
+          windows.push_back(window);
+        }
+      } catch(const std::exception& e) {
+        QMessageBox::warning(
+          nullptr, QObject::tr("Error"), QString::fromStdString(e.what()));
       }
     }
   } else {
