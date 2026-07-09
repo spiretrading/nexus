@@ -55,12 +55,12 @@ void Nexus::Python::export_test_environment(module& module) {
       def(init(&make_python_shared<PythonTestEnvironment, ptime>)).
       def(init([] (std::shared_ptr<HistoricalDataStore> data_store) {
         return make_python_shared<PythonTestEnvironment>(std::move(data_store));
-      })).
+      }), keep_alive<1, 2>()).
       def(init(
         [] (std::shared_ptr<HistoricalDataStore> data_store, ptime start_time) {
           return make_python_shared<PythonTestEnvironment>(
             std::move(data_store), start_time);
-        })).
+        }), keep_alive<1, 2>()).
       def("set_time", &TestEnvironment::set, call_guard<GilRelease>()).
       def("advance_time", &TestEnvironment::advance, call_guard<GilRelease>()).
       def("publish", overload_cast<Venue, const OrderImbalance&>(
