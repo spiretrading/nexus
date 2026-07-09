@@ -323,6 +323,12 @@ void Nexus::Python::export_money(module& module) {
     def_static("try_parse", &try_parse_money).
     def_static("parse", &parse_money).
     def("__abs__", overload_cast<Money>(&abs)).
+    def("__bool__", [] (Money self) {
+      return self != Money::ZERO;
+    }).
+    def("__int__", [] (Money self) {
+      return static_cast<int>(static_cast<Quantity>(self));
+    }).
     def("__floor__", overload_cast<Money>(&floor)).
     def("__ceil__", overload_cast<Money>(&ceil)).
     def("__trunc__", overload_cast<Money>(&truncate)).
@@ -389,6 +395,9 @@ void Nexus::Python::export_quantity(module& module) {
     def_static("try_parse", &try_parse_quantity).
     def_static("parse", &parse_quantity).
     def("__abs__", overload_cast<Quantity>(&abs)).
+    def("__bool__", [] (Quantity self) {
+      return self != 0;
+    }).
     def("__floor__", overload_cast<Quantity>(&floor)).
     def("__ceil__", overload_cast<Quantity>(&ceil)).
     def("__trunc__", overload_cast<Quantity>(&truncate)).
