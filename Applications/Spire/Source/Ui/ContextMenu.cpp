@@ -90,6 +90,9 @@ namespace {
       check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
       check_box->setLayoutDirection(Qt::RightToLeft);
       check_box->set_label(name);
+      check_box->setAttribute(Qt::WA_TransparentForMouseEvents);
+      check_box->setFocusPolicy(Qt::NoFocus);
+      check_box->setFocusProxy(nullptr);
       return check_box;
     } else if(type == ContextMenu::MenuItemType::SEPARATOR) {
       auto separator = new Box();
@@ -630,20 +633,6 @@ void ContextMenu::on_list_operation(
             });
             break;
           case MenuItemType::CHECK:
-            m_check_item_press_observers.emplace(
-              std::piecewise_construct,
-              std::forward_as_tuple(operation.m_index),
-              std::forward_as_tuple(*item));
-            m_check_item_press_observers.at(operation.m_index).
-              connect_press_end_signal([=] (auto reason) {
-                auto& check_box = static_cast<CheckBox&>(item->get_body());
-                if(reason == PressObserver::Reason::MOUSE &&
-                    !check_box.rect().contains(check_box.mapFromGlobal(
-                      QCursor::pos()))) {
-                  check_box.get_current()->set(!check_box.get_current()->get());
-                  check_box.setFocus();
-                }
-              });
             update_style(*item, [] (auto& style) {
               style.get(Any()).set(vertical_padding(scale_height(4)));
               style.get(Hover() > Body() > is_a<Box>()).
@@ -653,11 +642,6 @@ void ContextMenu::on_list_operation(
           default:
             break;
         }
-      }
-    },
-    [&] (const ListModel<MenuItem>::PreRemoveOperation& operation) {
-      if(m_list->get(operation.m_index).m_type == MenuItemType::CHECK) {
-        m_check_item_press_observers.erase(operation.m_index);
       }
     });
 }
@@ -669,6 +653,10 @@ void ContextMenu::on_submit(const std::any& submission) {
       action();
     }
     m_window->hide();
+    m_submit_signal(*this, menu_item.m_name);
+  } else if(menu_item.m_type == MenuItemType::CHECK) {
+    auto& model = std::get<std::shared_ptr<BooleanModel>>(menu_item.m_data);
+    model->set(!model->get());
     m_submit_signal(*this, menu_item.m_name);
   }
 }
