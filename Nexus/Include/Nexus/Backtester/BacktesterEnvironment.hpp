@@ -81,6 +81,22 @@ namespace Nexus {
       /** Returns the RiskServiceTestEnvironment. */
       Tests::RiskServiceTestEnvironment& get_risk_environment();
 
+      /**
+       * Suspends the processing of events, blocking until the event being
+       * processed completes.
+       */
+      void suspend();
+
+      /** Resumes the processing of events. */
+      void resume();
+
+      /**
+       * Processes the next event while suspended, blocking until it completes.
+       * @return The event that was processed, or <code>nullptr</code> if the
+       *         backtester is not suspended or has no event to process.
+       */
+      std::shared_ptr<const BacktesterEvent> advance();
+
       /** Blocks until the backtester has run to its end time. */
       void wait();
 
@@ -236,6 +252,19 @@ namespace Nexus {
   inline Tests::RiskServiceTestEnvironment&
       BacktesterEnvironment::get_risk_environment() {
     return *m_risk_environment;
+  }
+
+  inline void BacktesterEnvironment::suspend() {
+    m_event_handler.suspend();
+  }
+
+  inline void BacktesterEnvironment::resume() {
+    m_event_handler.resume();
+  }
+
+  inline std::shared_ptr<const BacktesterEvent>
+      BacktesterEnvironment::advance() {
+    return m_event_handler.advance();
   }
 
   inline void BacktesterEnvironment::wait() {

@@ -6,12 +6,12 @@ add_library(Python SHARED ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Python PROPERTIES OUTPUT_NAME nexus)
 target_compile_definitions(Python
-  PRIVATE ASPEN_USE_DLL BEAM_USE_DLL NEXUS_BUILD_DLL YAML_CPP_STATIC_DEFINE)
+  PRIVATE ASPEN_USE_DLL BEAM_ENABLE_STACK_PRINT BEAM_USE_DLL NEXUS_BUILD_DLL
+  YAML_CPP_STATIC_DEFINE)
 set_target_properties(Python PROPERTIES CXX_VISIBILITY_PRESET default
   VISIBILITY_INLINES_HIDDEN 0)
 if(MSVC)
-  target_compile_definitions(
-    Python PRIVATE HAVE_SNPRINTF BEAM_ENABLE_STACK_PRINT)
+  target_compile_definitions(Python PRIVATE HAVE_SNPRINTF)
   set_target_properties(Python PROPERTIES SUFFIX ".pyd")
 endif()
 target_compile_options(Python PRIVATE
@@ -51,6 +51,9 @@ if(UNIX)
     debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     dl)
+  if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
+    target_link_libraries(Python debug stdc++exp)
+  endif()
 endif()
 if(WIN32)
   target_link_libraries(Python bcrypt crypt32 Secur32 shlwapi Ws2_32)

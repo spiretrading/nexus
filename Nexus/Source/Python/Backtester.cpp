@@ -86,6 +86,11 @@ void Nexus::Python::export_backtester_environment(module& module) {
       return_value_policy::reference_internal).
     def("get_risk_environment", &BacktesterEnvironment::get_risk_environment,
       return_value_policy::reference_internal).
+    def("suspend", &BacktesterEnvironment::suspend, call_guard<GilRelease>()).
+    def("resume", &BacktesterEnvironment::resume, call_guard<GilRelease>()).
+    def("advance", [] (BacktesterEnvironment& self) {
+      return std::const_pointer_cast<BacktesterEvent>(self.advance());
+    }, call_guard<GilRelease>()).
     def("wait", &BacktesterEnvironment::wait, call_guard<GilRelease>()).
     def("close", &BacktesterEnvironment::close, call_guard<GilRelease>());
 }
@@ -125,6 +130,12 @@ void Nexus::Python::export_backtester_event_handler(module& module) {
         }
         self.add(std::move(e));
       }).
+      def(
+        "suspend", &BacktesterEventHandler::suspend, call_guard<GilRelease>()).
+      def("resume", &BacktesterEventHandler::resume, call_guard<GilRelease>()).
+      def("advance", [] (BacktesterEventHandler& self) {
+        return std::const_pointer_cast<BacktesterEvent>(self.advance());
+      }, call_guard<GilRelease>()).
       def("wait", &BacktesterEventHandler::wait, call_guard<GilRelease>()).
       def("close", &BacktesterEventHandler::close, call_guard<GilRelease>());
 }
