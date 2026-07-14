@@ -129,6 +129,94 @@ TEST_SUITE("BacktesterEventHandler") {
     REQUIRE(handler.get_time() >= end);
   }
 
+  TEST_CASE("suspend_holds_events_until_resume") {
+    auto handler =
+      BacktesterEventHandler(time_from_string("2025-08-12 09:00:00.000"),
+        time_from_string("2025-08-12 16:00:00.000"));
+    auto active_count = std::atomic<int>(0);
+    handler.suspend();
+    auto event = std::make_shared<ActiveEvent>(
+      time_from_string("2025-08-12 10:00:00.000"), active_count);
+    handler.add(event);
+    REQUIRE(active_count == 0);
+    REQUIRE(handler.get_time() ==
+      time_from_string("2025-08-12 09:00:00.000"));
+    handler.resume();
+    event->wait();
+    REQUIRE(active_count == 1);
+    REQUIRE(handler.get_time() == time_from_string("2025-08-12 10:00:00.000"));
+  }
+
+  TEST_CASE("advance_processes_one_event_and_returns_it") {
+    auto handler =
+      BacktesterEventHandler(time_from_string("2025-08-12 09:00:00.000"),
+        time_from_string("2025-08-12 16:00:00.000"));
+    auto active_count = std::atomic<int>(0);
+    handler.suspend();
+    auto event1 = std::make_shared<ActiveEvent>(
+      time_from_string("2025-08-12 10:00:00.000"), active_count);
+    auto event2 = std::make_shared<ActiveEvent>(
+      time_from_string("2025-08-12 11:00:00.000"), active_count);
+    handler.add(event2);
+    handler.add(event1);
+    auto stepped = handler.advance();
+    REQUIRE(stepped == event1);
+    REQUIRE(active_count == 1);
+    REQUIRE(handler.get_time() == time_from_string("2025-08-12 10:00:00.000"));
+    stepped = handler.advance();
+    REQUIRE(stepped == event2);
+    REQUIRE(active_count == 2);
+    REQUIRE(handler.get_time() == time_from_string("2025-08-12 11:00:00.000"));
+    REQUIRE(handler.advance() == nullptr);
+    handler.resume();
+  }
+
+  TEST_CASE("advance_steps_passive_events") {
+    auto handler =
+      BacktesterEventHandler(time_from_string("2025-08-12 09:00:00.000"),
+        time_from_string("2025-08-12 16:00:00.000"));
+    handler.suspend();
+    auto event = std::make_shared<PassiveEvent>(
+      time_from_string("2025-08-12 09:30:00.000"));
+    handler.add(event);
+    auto stepped = handler.advance();
+    REQUIRE(stepped == event);
+    REQUIRE(event->was_executed());
+    handler.resume();
+  }
+
+  TEST_CASE("advance_when_not_suspended") {
+    auto handler =
+      BacktesterEventHandler(time_from_string("2025-08-12 09:00:00.000"),
+        time_from_string("2025-08-12 16:00:00.000"));
+    auto active_count = std::atomic<int>(0);
+    auto event = std::make_shared<ActiveEvent>(
+      time_from_string("2025-08-12 10:00:00.000"), active_count);
+    handler.add(event);
+    event->wait();
+    REQUIRE(handler.advance() == nullptr);
+  }
+
+  TEST_CASE("suspend_mid_run_holds_subsequent_events") {
+    auto handler =
+      BacktesterEventHandler(time_from_string("2025-08-12 09:00:00.000"),
+        time_from_string("2025-08-12 16:00:00.000"));
+    auto active_count = std::atomic<int>(0);
+    auto event = std::make_shared<ActiveEvent>(
+      time_from_string("2025-08-12 10:00:00.000"), active_count);
+    handler.add(event);
+    event->wait();
+    handler.suspend();
+    auto held = std::make_shared<ActiveEvent>(
+      time_from_string("2025-08-12 11:00:00.000"), active_count);
+    handler.add(held);
+    REQUIRE(active_count == 1);
+    REQUIRE(handler.get_time() == time_from_string("2025-08-12 10:00:00.000"));
+    handler.resume();
+    held->wait();
+    REQUIRE(active_count == 2);
+  }
+
   TEST_CASE("wait_when_active_event_already_processed") {
     auto start = time_from_string("2025-08-12 09:00:00.000");
     auto end = time_from_string("2025-08-12 16:00:00.000");
@@ -137,8 +225,6 @@ TEST_SUITE("BacktesterEventHandler") {
     auto event = std::make_shared<ActiveEvent>(
       time_from_string("2025-08-12 10:00:00.000"), active_count);
     handler.add(event);
-    // The active event is fully processed before wait() is called, so its
-    // phase-1 latch is already set and it proceeds straight to driving the end.
     event->wait();
     REQUIRE(active_count == 1);
     handler.wait();

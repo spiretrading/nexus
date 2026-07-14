@@ -52,6 +52,22 @@ namespace Nexus {
        */
       void add(const std::vector<std::shared_ptr<BacktesterEvent>>& events);
 
+      /**
+       * Suspends the processing of events, blocking until the event being
+       * processed.
+       */
+      void suspend();
+
+      /** Resumes the processing of events. */
+      void resume();
+
+      /**
+       * Processes the next event while suspended, blocking until it completes.
+       * @return The event that was processed, or <code>nullptr</code> if this
+       *         event handler is not suspended or has no event to process.
+       */
+      std::shared_ptr<const BacktesterEvent> advance();
+
       /** Blocks until the backtester has run to its end time. */
       void wait();
 
@@ -65,8 +81,13 @@ namespace Nexus {
       std::deque<std::shared_ptr<BacktesterEvent>> m_events;
       std::size_t m_active_count;
       bool m_has_processed_active_event;
+      bool m_is_suspended;
+      bool m_is_dispatching;
+      std::size_t m_step_count;
+      std::shared_ptr<BacktesterEvent> m_stepped_event;
       Beam::ConditionVariable m_event_available_condition;
       Beam::ConditionVariable m_active_processed_condition;
+      Beam::ConditionVariable m_suspend_condition;
       Beam::RoutineHandler m_event_loop_routine;
       Beam::OpenState m_open_state;
 
@@ -82,6 +103,9 @@ namespace Nexus {
         m_end_time(end),
         m_active_count(0),
         m_has_processed_active_event(false),
+        m_is_suspended(false),
+        m_is_dispatching(false),
+        m_step_count(0),
         m_time_environment(m_start_time) {
     try {
       m_event_loop_routine = Beam::spawn(
@@ -153,6 +177,36 @@ namespace Nexus {
     }
   }
 
+  inline void BacktesterEventHandler::suspend() {
+    auto lock = std::unique_lock(m_mutex);
+    m_is_suspended = true;
+    while(m_open_state.is_open() && m_is_dispatching) {
+      m_suspend_condition.wait(lock);
+    }
+  }
+
+  inline void BacktesterEventHandler::resume() {
+    {
+      auto lock = std::lock_guard(m_mutex);
+      m_is_suspended = false;
+    }
+    m_event_available_condition.notify_one();
+  }
+
+  inline std::shared_ptr<const BacktesterEvent>
+      BacktesterEventHandler::advance() {
+    auto lock = std::unique_lock(m_mutex);
+    if(!m_is_suspended || m_events.empty()) {
+      return nullptr;
+    }
+    ++m_step_count;
+    m_event_available_condition.notify_one();
+    while(m_open_state.is_open() && (m_step_count != 0 || m_is_dispatching)) {
+      m_suspend_condition.wait(lock);
+    }
+    return std::move(m_stepped_event);
+  }
+
   inline void BacktesterEventHandler::wait() {
     {
       auto lock = std::unique_lock(m_mutex);
@@ -175,6 +229,7 @@ namespace Nexus {
     }
     m_event_available_condition.notify_one();
     m_active_processed_condition.notify_all();
+    m_suspend_condition.notify_all();
     m_event_loop_routine.wait();
     m_time_environment.close();
     m_open_state.close();
@@ -186,16 +241,29 @@ namespace Nexus {
       auto event = std::shared_ptr<BacktesterEvent>();
       {
         auto lock = std::unique_lock(m_mutex);
-        while(m_open_state.is_open() && m_active_count == 0) {
+        m_is_dispatching = false;
+        if(m_is_suspended) {
+          m_suspend_condition.notify_all();
+        }
+        while(m_open_state.is_open() &&
+            (m_active_count == 0 || m_is_suspended) && m_step_count == 0) {
           m_event_available_condition.wait(lock);
         }
         if(!m_open_state.is_open()) {
           return;
         }
+        m_is_dispatching = true;
+        auto is_step = m_step_count != 0;
+        if(is_step) {
+          --m_step_count;
+        }
         event = std::move(m_events.front());
         m_events.pop_front();
         if(!event->is_passive()) {
           --m_active_count;
+        }
+        if(is_step) {
+          m_stepped_event = event;
         }
       }
       if(event->get_timestamp() != boost::posix_time::neg_infin) {
