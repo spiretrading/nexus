@@ -326,9 +326,6 @@ void Nexus::Python::export_money(module& module) {
     def("__bool__", [] (Money self) {
       return self != Money::ZERO;
     }).
-    def("__int__", [] (Money self) {
-      return static_cast<int>(static_cast<Quantity>(self));
-    }).
     def("__floor__", overload_cast<Money>(&floor)).
     def("__ceil__", overload_cast<Money>(&ceil)).
     def("__trunc__", overload_cast<Money>(&truncate)).
