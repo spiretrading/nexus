@@ -13,7 +13,6 @@
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Ui.hpp"
-#include "Spire/Ui/Window.hpp"
 #include "Spire/Ui/WindowHighlight.hpp"
 
 using namespace boost;
