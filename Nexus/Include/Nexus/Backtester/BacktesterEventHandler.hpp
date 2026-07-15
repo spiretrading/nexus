@@ -227,9 +227,12 @@ namespace Nexus {
     if(m_open_state.set_closing()) {
       return;
     }
-    m_event_available_condition.notify_one();
-    m_active_processed_condition.notify_all();
-    m_suspend_condition.notify_all();
+    {
+      auto lock = std::lock_guard(m_mutex);
+      m_event_available_condition.notify_one();
+      m_active_processed_condition.notify_all();
+      m_suspend_condition.notify_all();
+    }
     m_event_loop_routine.wait();
     m_time_environment.close();
     m_open_state.close();
