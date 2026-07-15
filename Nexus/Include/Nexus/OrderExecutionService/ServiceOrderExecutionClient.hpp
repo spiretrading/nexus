@@ -88,6 +88,7 @@ namespace Nexus {
       ServiceOrderExecutionClient& operator =(
         const ServiceOrderExecutionClient&) = delete;
       std::shared_ptr<PrimitiveOrder> load(const OrderRecord& record);
+      void flush_execution_report_log(PrimitiveOrder& order);
       void on_reconnect(const std::shared_ptr<ServiceProtocolClient>& client);
       void recover_orders(ServiceProtocolClient& client);
       void on_order_update(
@@ -242,7 +243,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   template<typename B>
   std::shared_ptr<PrimitiveOrder> ServiceOrderExecutionClient<B>::load(
       const OrderRecord& record) {
-    return m_orders.get_or_insert(record.m_info.m_id, [&] {
+    auto& order = m_orders.get_or_insert(record.m_info.m_id, [&] {
       auto complete_record = record;
       m_execution_report_log.with([&] (auto& log) {
         auto i = std::remove_if(log.begin(), log.end(), [&] (auto& report) {
@@ -259,6 +260,43 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       });
       return std::make_shared<PrimitiveOrder>(std::move(complete_record));
     });
+    flush_execution_report_log(*order);
+    return order;
+  }
+
+  template<typename B>
+  void ServiceOrderExecutionClient<B>::flush_execution_report_log(
+      PrimitiveOrder& order) {
+    auto id = order.get_info().m_id;
+    while(true) {
+      auto next_sequence = [&] {
+        auto sequence = 0;
+        order.with([&] (auto status, const auto& reports) {
+          if(!reports.empty()) {
+            sequence = reports.back().m_sequence + 1;
+          }
+        });
+        return sequence;
+      }();
+      auto pending = std::vector<ExecutionReport>();
+      m_execution_report_log.with([&] (auto& log) {
+        auto expected = next_sequence;
+        std::erase_if(log, [&] (auto& report) {
+          if(report.m_id == id && report.m_sequence == expected) {
+            pending.push_back(std::move(report));
+            ++expected;
+            return true;
+          }
+          return false;
+        });
+      });
+      if(pending.empty()) {
+        return;
+      }
+      for(auto& pending_report : pending) {
+        order.update(pending_report);
+      }
+    }
   }
 
   template<typename B>
@@ -316,18 +354,25 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   template<typename B>
   void ServiceOrderExecutionClient<B>::on_order_update(
       ServiceProtocolClient& sender, const ExecutionReport& report) {
-    if(auto order = m_orders.try_load(report.m_id)) {
-      (*order)->update(report);
-    } else {
-      m_execution_report_log.with([&] (auto& log) {
-        auto i = std::lower_bound(log.begin(), log.end(), report,
-          [] (const auto& lhs, const auto& rhs) {
-            return lhs.m_sequence < rhs.m_sequence;
-          });
-        if(i == log.end() || i->m_sequence != report.m_sequence) {
-          log.insert(i, report);
+    m_execution_report_log.with([&] (auto& log) {
+      auto i = std::lower_bound(log.begin(), log.end(), report,
+        [] (const auto& lhs, const auto& rhs) {
+          return lhs.m_sequence < rhs.m_sequence;
+        });
+      auto is_duplicate = false;
+      for(auto j = i; j != log.end() && j->m_sequence == report.m_sequence;
+          ++j) {
+        if(j->m_id == report.m_id) {
+          is_duplicate = true;
+          break;
         }
-      });
+      }
+      if(!is_duplicate) {
+        log.insert(i, report);
+      }
+    });
+    if(auto order = m_orders.try_load(report.m_id)) {
+      flush_execution_report_log(**order);
     }
   }
 }
