@@ -50,8 +50,8 @@ namespace {
   auto to_wid_set(const ListModel<Window*>& targets) {
     auto wids = std::unordered_set<WId>();
     wids.reserve(targets.get_size());
-    for(auto i = 0; i < targets.get_size(); ++i) {
-      wids.insert(targets.get(i)->winId());
+    for(auto target : targets) {
+      wids.insert(target->winId());
     }
     return wids;
   }
@@ -206,8 +206,7 @@ WindowHighlight::WindowHighlight(std::shared_ptr<ListModel<Window*>> current)
     : m_current(std::move(current)),
       m_z_order_windows(get_z_order_windows()),
       m_transaction_depth(0) {
-  for(auto i = 0; i < m_current->get_size(); ++i) {
-    auto window = m_current->get(i);
+  for(auto window : std::as_const(*m_current)) {
     match(*window, Highlighted());
     auto wid = window->winId();
     if(IsIconic(reinterpret_cast<HWND>(wid))) {
@@ -220,8 +219,7 @@ WindowHighlight::WindowHighlight(std::shared_ptr<ListModel<Window*>> current)
 }
 
 WindowHighlight::~WindowHighlight() {
-  for(auto i = 0; i < m_current->get_size(); ++i) {
-    auto window = m_current->get(i);
+  for(auto window : std::as_const(*m_current)) {
     unmatch(*window, Highlighted());
     if(m_minimized_windows.contains(window->winId())) {
       window->repaint();
@@ -248,8 +246,7 @@ QPainterPath WindowHighlight::make_overlay_path(const QScreen& screen,
 std::unordered_map<QScreen*, std::vector<QRect>>
     WindowHighlight::get_window_rectangles() const{
   auto rectangles = std::unordered_map<QScreen*, std::vector<QRect>>();
-  for(auto i = 0; i < m_current->get_size(); ++i) {
-    auto window = m_current->get(i);
+  for(auto window : std::as_const(*m_current)) {
     if(!window || window->isHidden()) {
       continue;
     }

@@ -110,15 +110,14 @@ namespace {
           if(auto target = TickerContext::FindTickerContext(
               (*windows)[*current_index].m_id.toStdString())) {
             group = get_link_group(*target);
-            if(std::ranges::find(group, source.data()) == group.end()) {
+            if(!std::ranges::contains(group, source.data())) {
               group.push_back(source.data());
             }
           }
         }
         auto& current = *highlight->get_current();
         current.transact([&] {
-          auto missing =
-            std::unordered_set<Window*>(group.begin(), group.end());
+          auto missing = std::unordered_set(group.begin(), group.end());
           for(auto i = current.get_size() - 1; i >= 0; --i) {
             if(missing.erase(current.get(i)) == 0) {
               current.remove(i);
