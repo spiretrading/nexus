@@ -5,6 +5,7 @@
 #include <QPointer>
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/Charting/ChartWindow.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/AssociativeValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
@@ -99,27 +100,37 @@ namespace {
     if(!source) {
       return;
     }
-    auto highlight = std::make_shared<std::unique_ptr<WindowHighlight>>();
-    QObject::connect(source, &QObject::destroyed, &submenu,
-      [highlight] { highlight->reset(); });
+    auto highlight = std::make_shared<WindowHighlight>(
+      std::make_shared<ArrayListModel<Window*>>());
     submenu.connect_current_signal(
       [windows = std::move(windows), source = QPointer<Window>(source),
           highlight] (const auto& current_index) {
-        highlight->reset();
-        if(!source || !current_index ||
-            *current_index >= static_cast<int>(windows->size())) {
-          return;
+        auto group = std::vector<Window*>();
+        if(source && current_index && *current_index >= 0 &&
+            *current_index < static_cast<int>(windows->size())) {
+          if(auto target = TickerContext::FindTickerContext(
+              (*windows)[*current_index].m_id.toStdString())) {
+            group = get_link_group(*target);
+            if(std::ranges::find(group, source.data()) == group.end()) {
+              group.push_back(source.data());
+            }
+          }
         }
-        auto target = TickerContext::FindTickerContext(
-          (*windows)[*current_index].m_id.toStdString());
-        if(!target) {
-          return;
-        }
-        auto group = get_link_group(*target);
-        if(std::ranges::find(group, source.data()) == group.end()) {
-          group.push_back(source.data());
-        }
-        *highlight = std::make_unique<WindowHighlight>(std::move(group));
+        auto& current = *highlight->get_current();
+        current.transact([&] {
+          auto missing =
+            std::unordered_set<Window*>(group.begin(), group.end());
+          for(auto i = current.get_size() - 1; i >= 0; --i) {
+            if(missing.erase(current.get(i)) == 0) {
+              current.remove(i);
+            }
+          }
+          for(auto window : group) {
+            if(missing.contains(window)) {
+              current.push(window);
+            }
+          }
+        });
       });
   }
 }
