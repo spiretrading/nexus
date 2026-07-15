@@ -415,6 +415,7 @@ namespace {
         auto input_box = new InputBox(m_model);
         input_box->set_read_only(true);
         layout()->addWidget(input_box);
+        proxy_style(*this, *input_box);
         setFocusProxy(input_box);
         setFocusPolicy(Qt::NoFocus);
       }
