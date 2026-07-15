@@ -1,9 +1,11 @@
 #include "Spire/Utilities/LinkMenu.hpp"
 #include <tuple>
-#include <unordered_map>
+#include <unordered_set>
 #include <QApplication>
+#include <QPointer>
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/Charting/ChartWindow.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/AssociativeValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
@@ -11,6 +13,7 @@
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/Ui.hpp"
+#include "Spire/Ui/WindowHighlight.hpp"
 
 using namespace boost;
 using namespace Nexus;
@@ -60,6 +63,73 @@ namespace {
       return LinkableWindowType::CHART;
     }
     return none;
+  }
+
+  Window* find_ancestor_window(QWidget& widget) {
+    for(auto candidate = &widget; candidate;
+        candidate = candidate->parentWidget()) {
+      if(auto window = dynamic_cast<Window*>(candidate)) {
+        return window;
+      }
+    }
+    return nullptr;
+  }
+
+  auto get_link_group(TickerContext& target) {
+    auto visited = std::unordered_set<std::string>();
+    auto group = std::vector<Window*>();
+    auto context = optional<TickerContext&>(target);
+    while(context && visited.insert(context->GetIdentifier()).second) {
+      if(auto window = dynamic_cast<Window*>(&*context);
+          window && window->isVisible()) {
+        group.push_back(window);
+      }
+      auto& next_id = context->GetLinkedIdentifier();
+      if(next_id.empty()) {
+        break;
+      }
+      context = TickerContext::FindTickerContext(next_id);
+    }
+    return group;
+  }
+
+  void install_hover_highlight(ContextMenu& submenu,
+      std::shared_ptr<std::vector<LinkableWindowInfo>> windows) {
+    auto source = find_ancestor_window(submenu);
+    if(!source) {
+      return;
+    }
+    auto highlight = std::make_shared<WindowHighlight>(
+      std::make_shared<ArrayListModel<Window*>>());
+    submenu.connect_current_signal(
+      [windows = std::move(windows), source = QPointer<Window>(source),
+          highlight] (const auto& current_index) {
+        auto group = std::vector<Window*>();
+        if(source && current_index && *current_index >= 0 &&
+            *current_index < static_cast<int>(windows->size())) {
+          if(auto target = TickerContext::FindTickerContext(
+              (*windows)[*current_index].m_id.toStdString())) {
+            group = get_link_group(*target);
+            if(!std::ranges::contains(group, source.data())) {
+              group.push_back(source.data());
+            }
+          }
+        }
+        auto& current = *highlight->get_current();
+        current.transact([&] {
+          auto missing = std::unordered_set(group.begin(), group.end());
+          for(auto i = current.get_size() - 1; i >= 0; --i) {
+            if(missing.erase(current.get(i)) == 0) {
+              current.remove(i);
+            }
+          }
+          for(auto window : group) {
+            if(missing.contains(window)) {
+              current.push(window);
+            }
+          }
+        });
+      });
   }
 }
 
@@ -139,9 +209,9 @@ void Spire::add_link_sub_menu_item(ContextMenu& parent,
         std::tie(right.m_ticker, right.m_type);
     });
   auto current_id = std::make_shared<AssociativeValueModel<QString>>();
-  auto lookup =
-    std::make_shared<std::unordered_map<QString, LinkableWindowInfo>>();
-  for(auto& window : windows) {
+  auto sorted_windows =
+    std::make_shared<std::vector<LinkableWindowInfo>>(std::move(windows));
+  for(auto& window : *sorted_windows) {
     auto item = make_link_menu_item(window.m_type, window.m_ticker,
       current_id->get_association(window.m_id));
     item->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -149,20 +219,21 @@ void Spire::add_link_sub_menu_item(ContextMenu& parent,
       [item] {
         item->get_current()->set(!item->get_current()->get());
       }, item);
-    lookup->emplace(window.m_id, window);
   }
   if(auto initial = current->get()) {
     current_id->set(initial->m_id);
   }
   current_id->connect_update_signal(
-    [current, lookup, &parent] (const auto& id) {
+    [current, sorted_windows, &parent] (const auto& id) {
       if(id.isEmpty()) {
         current->set(none);
-      } else if(auto i = lookup->find(id); i != lookup->end()) {
-        current->set(i->second);
+      } else if(auto i = std::ranges::find(*sorted_windows, id,
+          &LinkableWindowInfo::m_id); i != sorted_windows->end()) {
+        current->set(*i);
       }
       parent.hide();
     });
   QObject::connect(submenu, &QObject::destroyed, [current_id] {});
   parent.add_menu(QObject::tr("Link To"), *submenu);
+  install_hover_highlight(*submenu, std::move(sorted_windows));
 }

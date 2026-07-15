@@ -1257,7 +1257,9 @@ namespace {
     explicit WindowHighlightTester(ContextMenu& menu)
         : QObject(&menu),
           m_main_window(QApplication::activeWindow()),
-          m_windows(populate_windows(8)) {
+          m_windows(populate_windows(8)),
+          m_window_highlight(std::make_unique<WindowHighlight>(
+            std::make_shared<ArrayListModel<Window*>>())) {
       m_main_window->installEventFilter(this);
       for(auto window : m_windows) {
         window->installEventFilter(this);
@@ -1274,6 +1276,7 @@ namespace {
     }
 
     ~WindowHighlightTester() {
+      clear(*m_window_highlight->get_current());
       for(auto window : m_windows) {
         delete window;
       }
@@ -1282,8 +1285,6 @@ namespace {
     bool eventFilter(QObject* watched, QEvent* event) override {
       if(watched == m_main_window && event->type() == QEvent::Close) {
         deleteLater();
-      } else if(event->type() == QEvent::Hide) {
-        m_window_highlight.reset();
       } else if(event->type() == QEvent::Close) {
         for(auto i = m_groups.begin(); i != m_groups.end(); ++i) {
           if(auto j = std::find(i->begin(), i->end(), watched); j != i->end()) {
@@ -1298,13 +1299,16 @@ namespace {
     }
 
     void on_current(optional<int> current) {
-      m_window_highlight.reset();
-      if(!current || *current < 0 ||
-          *current >= static_cast<int>(m_groups.size())) {
-        return;
-      }
-      m_window_highlight =
-        std::make_unique<WindowHighlight>(m_groups[*current]);
+      auto& current_model = *m_window_highlight->get_current();
+      current_model.transact([&] {
+        clear(current_model);
+        if(current && *current >= 0 &&
+            *current < static_cast<int>(m_groups.size())) {
+          for(auto window : m_groups[*current]) {
+            current_model.push(window);
+          }
+        }
+      });
     }
   };
 }
