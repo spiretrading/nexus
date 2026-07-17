@@ -151,13 +151,11 @@ namespace {
   struct BandColorListModel : ListModel<QColor> {
     std::shared_ptr<ListModel<QColor>> m_color_scheme;
     ArrayListModel<QColor> m_colors;
-    bool m_is_blocked;
     scoped_connection m_color_scheme_connection;
     scoped_connection m_connection;
 
     explicit BandColorListModel(std::shared_ptr<ListModel<QColor>> color_scheme)
-        : m_color_scheme(std::move(color_scheme)),
-          m_is_blocked(false) {
+        : m_color_scheme(std::move(color_scheme)) {
       m_colors.transact([&] {
         for(auto i = 0; i < m_color_scheme->get_size(); ++i) {
           m_colors.push(m_color_scheme->get(i));
@@ -169,15 +167,6 @@ namespace {
         std::bind_front(&BandColorListModel::on_operation, this));
     }
 
-    void submit() {
-      m_color_scheme->transact([&] {
-        auto blocker = shared_connection_block(m_color_scheme_connection);
-        for(auto i = 0; i < m_colors.get_size(); ++i) {
-          m_color_scheme->set(i, m_colors.get(i));
-        }
-      });
-    }
-
     int get_size() const override {
       return m_colors.get_size();
     }
@@ -187,22 +176,18 @@ namespace {
     }
 
     QValidator::State set(int index, const QColor& value) override {
-      auto blocker = shared_connection_block(m_connection, m_is_blocked);
       return m_colors.set(index, value);
     }
 
     QValidator::State insert(const QColor& value, int index) override {
-      auto blocker = shared_connection_block(m_connection, m_is_blocked);
       return m_colors.insert(value, index);
     }
 
     QValidator::State move(int source, int destination) override {
-      auto blocker = shared_connection_block(m_connection, m_is_blocked);
       return m_colors.move(source, destination);
     }
 
     QValidator::State remove(int index) override {
-      auto blocker = shared_connection_block(m_connection, m_is_blocked);
       return m_colors.remove(index);
     }
 
@@ -212,16 +197,11 @@ namespace {
     }
 
     void transact(const std::function<void()>& transaction) override {
-      auto do_transaction = [&] {
+      m_color_scheme->transact([&] {
         m_colors.transact([&] {
           transaction();
         });
-      };
-      if(m_is_blocked) {
-        do_transaction();
-      } else {
-        m_color_scheme->transact(do_transaction);
-      }
+      });
     }
 
     void on_color_scheme_operation(
@@ -376,9 +356,7 @@ namespace {
     }
 
     void on_timeout() {
-      m_band_colors->m_is_blocked = true;
       update_gradient_colors(m_band_colors->get_size());
-      m_band_colors->m_is_blocked = false;
     }
 
     void on_band_colors_operation(
@@ -423,7 +401,6 @@ namespace {
     void on_colors_operation(const ListModel<QColor>::Operation& operation) {
       visit(operation,
         [&] (const ListModel<QColor>::UpdateOperation& operation) {
-          m_band_colors->m_is_blocked = true;
           if(m_fill_type->get() == FillType::GRADIENT) {
             if(operation.m_index == 0) {
               m_band_colors->set(operation.m_index, operation.get_value());
@@ -435,7 +412,6 @@ namespace {
           } else {
             m_band_colors->set(operation.m_index, operation.get_value());
           }
-          m_band_colors->m_is_blocked = false;
         });
     }
   };
@@ -589,9 +565,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       std::make_shared<ListValueModel<QColor>>(m_model->m_colors, index));
     color_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     color_box->setFixedHeight(scale_height(COLOR_BOX_HEIGHT));
-    color_box->connect_submit_signal([=] (auto value) {
-      m_model->m_band_colors->submit();
-    });
     return color_box;
   }
 
