@@ -347,6 +347,7 @@ struct BookViewTester : QWidget {
   LocalTechnicalsModel m_technicals_model;
   std::shared_ptr<OptionalIntegerModel> m_update_period;
   KeyBindingsWindow* m_key_bindings_window;
+  std::function<void ()> m_open_new_window;
   QTextEdit* m_logs;
   QTimer m_quote_timer;
   int m_line_number;
@@ -463,6 +464,13 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       m_key_bindings_window->show();
     });
     left_layout->addWidget(key_bindings_button);
+    auto new_window_button = make_label_button(tr("Open New BookView Window"));
+    new_window_button->connect_click_signal([=] {
+      if(m_open_new_window) {
+        m_open_new_window();
+      }
+    });
+    left_layout->addWidget(new_window_button);
     left_layout->addStretch(1);
     auto right_layout = new QVBoxLayout();
     m_logs = new QTextEdit();
@@ -588,13 +596,25 @@ int main(int argc, char** argv) {
     std::bind_front(&model_builder, book_views, &tester));
   book_view_window.connect_cancel_operation_signal(
     std::bind_front(&BookViewTester::on_cancel_order, &tester));
-  book_view_window.installEventFilter(&tester);
+  tester.installEventFilter(&tester);
   book_view_window.show();
   const auto WINDOW_GAP = scale_width(10);
   auto y = book_view_window.y();
   book_view_window.move(book_view_window.x() - scale_width(500), y);
   tester.move(book_view_window.frameGeometry().right() + WINDOW_GAP, y);
   order_tester.move(tester.frameGeometry().right() + WINDOW_GAP, y);
+  auto new_window_count = 0;
+  tester.m_open_new_window = [&] {
+    auto window = new BookViewWindow(Ref(tester.m_user_profile),
+      populate_ticker_query_model(), key_bindings, factory,
+      std::bind_front(&model_builder, book_views, &tester));
+    window->setAttribute(Qt::WA_DeleteOnClose);
+    ++new_window_count;
+    auto offset = scale(30 * new_window_count, 30 * new_window_count);
+    window->move(book_view_window.pos() + QPoint(offset.width(),
+      offset.height()));
+    window->show();
+  };
   tester.show();
   order_tester.show();
   application.exec();
