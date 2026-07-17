@@ -45,6 +45,7 @@ TEST_SUITE("SimulationOrderExecutionDriver") {
     info2.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order1 = driver.submit(info1);
     auto order2 = driver.submit(info2);
+    driver.flush_execution_reports();
     REQUIRE(order1);
     REQUIRE(order2);
     REQUIRE(order1->get_info().m_fields.m_ticker == SHOP);

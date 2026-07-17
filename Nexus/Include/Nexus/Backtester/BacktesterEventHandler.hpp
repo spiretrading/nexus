@@ -2,6 +2,7 @@
 #define NEXUS_BACKTESTER_EVENT_HANDLER_HPP
 #include <algorithm>
 #include <deque>
+#include <functional>
 #include <memory>
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
@@ -53,6 +54,18 @@ namespace Nexus {
       void add(const std::vector<std::shared_ptr<BacktesterEvent>>& events);
 
       /**
+       * Sets a task to run after every event's pending Routines are flushed.
+       * @param task The task to run, returning <code>true</code> iff it 
+       *        performed any work. It is called repeatedly, flushing all
+       *        pending Routines after each call, until it returns
+       *        <code>false</code>.
+       */
+      void set_idle_task(std::function<bool ()> task);
+
+      /*** Notifies the event loop to run an idle task. */
+      void notify_idle_task();
+
+      /**
        * Suspends the processing of events, blocking until the event being
        * processed.
        */
@@ -85,6 +98,8 @@ namespace Nexus {
       bool m_is_dispatching;
       std::size_t m_step_count;
       std::shared_ptr<BacktesterEvent> m_stepped_event;
+      std::function<bool ()> m_idle_task;
+      bool m_is_idle_task_pending;
       Beam::ConditionVariable m_event_available_condition;
       Beam::ConditionVariable m_active_processed_condition;
       Beam::ConditionVariable m_suspend_condition;
@@ -106,6 +121,7 @@ namespace Nexus {
         m_is_suspended(false),
         m_is_dispatching(false),
         m_step_count(0),
+        m_is_idle_task_pending(false),
         m_time_environment(m_start_time) {
     try {
       m_event_loop_routine = Beam::spawn(
@@ -138,7 +154,7 @@ namespace Nexus {
     auto is_active = !event->is_passive();
     {
       auto lock = std::lock_guard(m_mutex);
-      auto insert_iterator = std::lower_bound(m_events.begin(), m_events.end(),
+      auto insert_iterator = std::upper_bound(m_events.begin(), m_events.end(),
         event, [] (const auto& lhs, const auto& rhs) {
           return lhs->get_timestamp() < rhs->get_timestamp();
         });
@@ -162,7 +178,7 @@ namespace Nexus {
       auto lock = std::lock_guard(m_mutex);
       for(auto& event : events) {
         is_active |= !event->is_passive();
-        auto insert_iterator = std::lower_bound(m_events.begin(),
+        auto insert_iterator = std::upper_bound(m_events.begin(),
           m_events.end(), event, [] (const auto& lhs, const auto& rhs) {
             return lhs->get_timestamp() < rhs->get_timestamp();
           });
@@ -175,6 +191,20 @@ namespace Nexus {
     if(is_active) {
       m_event_available_condition.notify_one();
     }
+  }
+
+  inline void BacktesterEventHandler::set_idle_task(
+      std::function<bool ()> task) {
+    auto lock = std::lock_guard(m_mutex);
+    m_idle_task = std::move(task);
+  }
+
+  inline void BacktesterEventHandler::notify_idle_task() {
+    {
+      auto lock = std::lock_guard(m_mutex);
+      m_is_idle_task_pending = true;
+    }
+    m_event_available_condition.notify_one();
   }
 
   inline void BacktesterEventHandler::suspend() {
@@ -250,6 +280,20 @@ namespace Nexus {
         }
         while(m_open_state.is_open() &&
             (m_active_count == 0 || m_is_suspended) && m_step_count == 0) {
+          if(m_is_idle_task_pending && !m_is_suspended) {
+            m_is_idle_task_pending = false;
+            if(m_idle_task) {
+              m_is_dispatching = true;
+              auto idle_task = m_idle_task;
+              lock.unlock();
+              while(idle_task()) {}
+              Beam::flush_pending_routines();
+              lock.lock();
+              m_is_dispatching = false;
+              m_suspend_condition.notify_all();
+            }
+            continue;
+          }
           m_event_available_condition.wait(lock);
         }
         if(!m_open_state.is_open()) {
@@ -282,6 +326,15 @@ namespace Nexus {
         }
       }
       Beam::flush_pending_routines();
+      auto idle_task = [&] {
+        auto lock = std::lock_guard(m_mutex);
+        return m_idle_task;
+      }();
+      if(idle_task) {
+        while(idle_task()) {
+          Beam::flush_pending_routines();
+        }
+      }
     }
   }
 }

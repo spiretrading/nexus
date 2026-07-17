@@ -15,13 +15,23 @@ namespace {
   struct Fixture {
     TestEnvironment m_environment;
     MarketDataClient m_market_data_client;
+    std::shared_ptr<SimulationExecutionReportQueue> m_reports;
 
     Fixture()
       : m_environment(time_from_string("2025-08-14 09:00:00.000")),
         m_market_data_client(
-          make_market_data_client(m_environment, "simulator")) {
+          make_market_data_client(m_environment, "simulator")),
+        m_reports(std::make_shared<SimulationExecutionReportQueue>()) {
     }
   };
+
+  void update_bbo_price(
+      Fixture& fixture, auto& simulator, Money bid_price, Money ask_price) {
+    fixture.m_environment.update_bbo_price(ABX, bid_price, ask_price);
+    simulator.update(
+      BboQuote(make_bid(bid_price, 100), make_ask(ask_price, 100),
+        fixture.m_environment.get_time_environment().get_time()));
+  }
 }
 
 TEST_SUITE("TickerOrderSimulator") {
@@ -31,13 +41,15 @@ TEST_SUITE("TickerOrderSimulator") {
       ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = TickerOrderSimulator(
       fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())));
+        Ref(fixture.m_environment.get_time_environment())),
+      fixture.m_reports);
     auto info = OrderInfo();
     info.m_fields =
       make_limit_order_fields(ABX, Side::BID, 100, parse_money("0.99"));
     info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);
+    fixture.m_reports->flush();
     auto reports = std::make_shared<Queue<ExecutionReport>>();
     order->get_publisher().monitor(reports);
     auto report = reports->pop();
@@ -49,8 +61,8 @@ TEST_SUITE("TickerOrderSimulator") {
     fixture.m_environment.advance(minutes(1));
 
     SUBCASE("fill") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("0.98"), parse_money("0.99"));
+      update_bbo_price(
+        fixture, simulator, parse_money("0.98"), parse_money("0.99"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_timestamp ==
@@ -59,6 +71,7 @@ TEST_SUITE("TickerOrderSimulator") {
 
     SUBCASE("cancel") {
       simulator.cancel(order);
+      fixture.m_reports->flush();
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::PENDING_CANCEL);
       REQUIRE(report.m_timestamp ==
@@ -76,13 +89,14 @@ TEST_SUITE("TickerOrderSimulator") {
       ABX, parse_money("10.00"), parse_money("10.01"));
     auto simulator = TickerOrderSimulator(
       fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())));
+        Ref(fixture.m_environment.get_time_environment())), fixture.m_reports);
     auto info = OrderInfo();
     info.m_fields =
       make_pegged_order_fields(ABX, Side::BID, 100, Money::ZERO, Money::ZERO);
     info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);
+    fixture.m_reports->flush();
     auto reports = std::make_shared<Queue<ExecutionReport>>();
     order->get_publisher().monitor(reports);
     auto report = reports->pop();
@@ -96,8 +110,8 @@ TEST_SUITE("TickerOrderSimulator") {
     }
 
     SUBCASE("fill_on_crossed_market") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.00"), parse_money("10.00"));
+      update_bbo_price(
+        fixture, simulator, parse_money("10.00"), parse_money("10.00"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_price == parse_money("10.00"));
@@ -105,27 +119,27 @@ TEST_SUITE("TickerOrderSimulator") {
     }
 
     SUBCASE("fill_when_ask_drops_below_bid") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.00"), parse_money("9.99"));
+      update_bbo_price(
+        fixture, simulator, parse_money("10.00"), parse_money("9.99"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_price == parse_money("9.99"));
     }
 
     SUBCASE("effective_holds_when_bid_drops") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("9.50"), parse_money("9.60"));
+      update_bbo_price(
+        fixture, simulator, parse_money("9.50"), parse_money("9.60"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_price == parse_money("9.60"));
     }
 
     SUBCASE("follows_bid_up") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.50"), parse_money("10.60"));
+      update_bbo_price(
+        fixture, simulator, parse_money("10.50"), parse_money("10.60"));
       REQUIRE(!reports->try_pop());
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.50"), parse_money("10.50"));
+      update_bbo_price(
+        fixture, simulator, parse_money("10.50"), parse_money("10.50"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_price == parse_money("10.50"));
@@ -133,6 +147,7 @@ TEST_SUITE("TickerOrderSimulator") {
 
     SUBCASE("cancel") {
       simulator.cancel(order);
+      fixture.m_reports->flush();
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::PENDING_CANCEL);
       report = reports->pop();
@@ -146,13 +161,15 @@ TEST_SUITE("TickerOrderSimulator") {
       ABX, parse_money("9.99"), parse_money("10.00"));
     auto simulator = TickerOrderSimulator(
       fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())));
+        Ref(fixture.m_environment.get_time_environment())),
+      fixture.m_reports);
     auto info = OrderInfo();
     info.m_fields = make_pegged_order_fields(
       ABX, Side::ASK, 100, parse_money("9.95"), Money::ZERO);
     info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);
+    fixture.m_reports->flush();
     auto reports = std::make_shared<Queue<ExecutionReport>>();
     order->get_publisher().monitor(reports);
     auto report = reports->pop();
@@ -162,19 +179,19 @@ TEST_SUITE("TickerOrderSimulator") {
     fixture.m_environment.advance(minutes(1));
 
     SUBCASE("limit_prevents_fill") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("9.78"), parse_money("9.80"));
+      update_bbo_price(
+        fixture, simulator, parse_money("9.78"), parse_money("9.80"));
       REQUIRE(!reports->try_pop());
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("9.95"), parse_money("9.95"));
+      update_bbo_price(
+        fixture, simulator, parse_money("9.95"), parse_money("9.95"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_price == parse_money("9.95"));
     }
 
     SUBCASE("ask_above_limit_uses_ask") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.00"), parse_money("10.00"));
+      update_bbo_price(
+        fixture, simulator, parse_money("10.00"), parse_money("10.00"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_price == parse_money("10.00"));
@@ -187,13 +204,15 @@ TEST_SUITE("TickerOrderSimulator") {
       ABX, parse_money("10.00"), parse_money("10.01"));
     auto simulator = TickerOrderSimulator(
       fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())));
+        Ref(fixture.m_environment.get_time_environment())),
+      fixture.m_reports);
     auto info = OrderInfo();
     info.m_fields = make_pegged_order_fields(
       ABX, Side::BID, 100, Money::ZERO, parse_money("0.03"));
     info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);
+    fixture.m_reports->flush();
     auto reports = std::make_shared<Queue<ExecutionReport>>();
     order->get_publisher().monitor(reports);
     auto report = reports->pop();
@@ -203,34 +222,34 @@ TEST_SUITE("TickerOrderSimulator") {
     fixture.m_environment.advance(minutes(1));
 
     SUBCASE("no_fill_above_effective_price") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("9.97"), parse_money("9.98"));
+      update_bbo_price(
+        fixture, simulator, parse_money("9.97"), parse_money("9.98"));
       REQUIRE(!reports->try_pop());
     }
 
     SUBCASE("fill_at_effective_price") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("9.96"), parse_money("9.97"));
+      update_bbo_price(
+        fixture, simulator, parse_money("9.96"), parse_money("9.97"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_price == parse_money("9.97"));
     }
 
     SUBCASE("follows_bid_up_with_offset") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.20"), parse_money("10.30"));
+      update_bbo_price(
+        fixture, simulator, parse_money("10.20"), parse_money("10.30"));
       REQUIRE(!reports->try_pop());
       fixture.m_environment.advance(minutes(1));
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.16"), parse_money("10.17"));
+      update_bbo_price(
+        fixture, simulator, parse_money("10.16"), parse_money("10.17"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_price == parse_money("10.17"));
     }
 
     SUBCASE("effective_holds_when_bid_drops_with_offset") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("9.80"), parse_money("9.90"));
+      update_bbo_price(
+        fixture, simulator, parse_money("9.80"), parse_money("9.90"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_price == parse_money("9.90"));
@@ -243,13 +262,15 @@ TEST_SUITE("TickerOrderSimulator") {
       ABX, parse_money("9.99"), parse_money("10.00"));
     auto simulator = TickerOrderSimulator(
       fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())));
+        Ref(fixture.m_environment.get_time_environment())),
+      fixture.m_reports);
     auto info = OrderInfo();
     info.m_fields = make_pegged_order_fields(
       ABX, Side::ASK, 100, Money::ZERO, Money::ZERO, PegType::MARKET);
     info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);
+    fixture.m_reports->flush();
     auto reports = std::make_shared<Queue<ExecutionReport>>();
     order->get_publisher().monitor(reports);
     auto report = reports->pop();
@@ -270,7 +291,8 @@ TEST_SUITE("TickerOrderSimulator") {
       ABX, parse_money("10.00"), parse_money("10.05"));
     auto simulator = TickerOrderSimulator(
       fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())));
+        Ref(fixture.m_environment.get_time_environment())),
+      fixture.m_reports);
     auto info = OrderInfo();
     info.m_fields = make_pegged_order_fields(
       ABX, Side::BID, 100, Money::ZERO, parse_money("0.03"),
@@ -278,6 +300,7 @@ TEST_SUITE("TickerOrderSimulator") {
     info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);
+    fixture.m_reports->flush();
     auto reports = std::make_shared<Queue<ExecutionReport>>();
     order->get_publisher().monitor(reports);
     auto report = reports->pop();
@@ -287,14 +310,14 @@ TEST_SUITE("TickerOrderSimulator") {
     fixture.m_environment.advance(minutes(1));
 
     SUBCASE("no_fill_with_offset") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.00"), parse_money("10.03"));
+      update_bbo_price(
+        fixture, simulator, parse_money("10.00"), parse_money("10.03"));
       REQUIRE(!reports->try_pop());
     }
 
     SUBCASE("fill_when_ask_drops") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.00"), parse_money("10.02"));
+      update_bbo_price(
+        fixture, simulator, parse_money("10.00"), parse_money("10.02"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_price == parse_money("10.02"));
@@ -307,7 +330,8 @@ TEST_SUITE("TickerOrderSimulator") {
       ABX, parse_money("9.90"), parse_money("10.10"));
     auto simulator = TickerOrderSimulator(
       fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())));
+        Ref(fixture.m_environment.get_time_environment())),
+      fixture.m_reports);
     auto info = OrderInfo();
     info.m_fields = OrderFields(
       {}, ABX, CurrencyId::NONE, OrderType::PEGGED, Side::ASK, {}, 100,
@@ -316,6 +340,7 @@ TEST_SUITE("TickerOrderSimulator") {
     info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);
+    fixture.m_reports->flush();
     auto reports = std::make_shared<Queue<ExecutionReport>>();
     order->get_publisher().monitor(reports);
     auto report = reports->pop();
@@ -325,34 +350,34 @@ TEST_SUITE("TickerOrderSimulator") {
     fixture.m_environment.advance(minutes(1));
 
     SUBCASE("no_fill_below_midpoint") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("9.99"), parse_money("10.10"));
+      update_bbo_price(
+        fixture, simulator, parse_money("9.99"), parse_money("10.10"));
       REQUIRE(!reports->try_pop());
     }
 
     SUBCASE("fill_at_midpoint") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.00"), parse_money("10.10"));
+      update_bbo_price(
+        fixture, simulator, parse_money("10.00"), parse_money("10.10"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_price == parse_money("10.00"));
     }
 
     SUBCASE("follows_midpoint_down") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("9.70"), parse_money("9.90"));
+      update_bbo_price(
+        fixture, simulator, parse_money("9.70"), parse_money("9.90"));
       REQUIRE(!reports->try_pop());
       fixture.m_environment.advance(minutes(1));
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("9.80"), parse_money("9.90"));
+      update_bbo_price(
+        fixture, simulator, parse_money("9.80"), parse_money("9.90"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_price == parse_money("9.80"));
     }
 
     SUBCASE("effective_holds_when_midpoint_rises") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.10"), parse_money("10.30"));
+      update_bbo_price(
+        fixture, simulator, parse_money("10.10"), parse_money("10.30"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_price == parse_money("10.10"));
@@ -365,7 +390,8 @@ TEST_SUITE("TickerOrderSimulator") {
       ABX, parse_money("10.00"), parse_money("10.10"));
     auto simulator = TickerOrderSimulator(
       fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())));
+        Ref(fixture.m_environment.get_time_environment())),
+      fixture.m_reports);
     auto info = OrderInfo();
     info.m_fields = OrderFields(
       {}, ABX, CurrencyId::NONE, OrderType::PEGGED, Side::BID, {}, 100,
@@ -375,6 +401,7 @@ TEST_SUITE("TickerOrderSimulator") {
     info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
     auto order = std::make_shared<PrimitiveOrder>(info);
     simulator.submit(order);
+    fixture.m_reports->flush();
     auto reports = std::make_shared<Queue<ExecutionReport>>();
     order->get_publisher().monitor(reports);
     auto report = reports->pop();
@@ -384,14 +411,14 @@ TEST_SUITE("TickerOrderSimulator") {
     fixture.m_environment.advance(minutes(1));
 
     SUBCASE("no_fill_above_effective") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.00"), parse_money("10.10"));
+      update_bbo_price(
+        fixture, simulator, parse_money("10.00"), parse_money("10.10"));
       REQUIRE(!reports->try_pop());
     }
 
     SUBCASE("fill_at_effective") {
-      fixture.m_environment.update_bbo_price(
-        ABX, parse_money("10.02"), parse_money("10.03"));
+      update_bbo_price(
+        fixture, simulator, parse_money("10.02"), parse_money("10.03"));
       report = reports->pop();
       REQUIRE(report.m_status == OrderStatus::FILLED);
       REQUIRE(report.m_last_price == parse_money("10.03"));
