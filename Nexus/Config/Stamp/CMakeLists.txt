@@ -1,5 +1,16 @@
 file(GLOB_RECURSE source_files ${NEXUS_SOURCE_PATH}/StampTests/*.cpp)
 add_executable(StampTests ${source_files})
+if(MSVC)
+  target_precompile_headers(StampTests PRIVATE <doctest/doctest.h>
+    <Nexus/Stamp/Stamp.hpp>)
+  set_source_files_properties(${NEXUS_SOURCE_PATH}/StampTests/main.cpp
+    PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+  target_link_libraries(StampTests
+    debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
+    optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
+    debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
+    optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH} crypt32)
+endif()
 target_link_libraries(StampTests
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH})

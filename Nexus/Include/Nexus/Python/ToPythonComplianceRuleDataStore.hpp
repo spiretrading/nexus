@@ -2,6 +2,7 @@
 #define NEXUS_TO_PYTHON_COMPLIANCE_RULE_DATA_STORE_HPP
 #include <type_traits>
 #include <utility>
+#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Compliance/ComplianceRuleDataStore.hpp"
 

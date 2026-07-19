@@ -11,6 +11,12 @@ using namespace Nexus::Tests;
 using namespace Nexus::Venues;
 
 namespace {
+  constexpr auto fee_calculator = [] (const auto&... args) {
+    return calculate_fee(args...);
+  };
+}
+
+namespace {
   const auto TST = parse_ticker("TST.TSX");
   const auto ETF = parse_ticker("ETF.TSX");
   const auto USA = parse_ticker("USA.TSX");
@@ -80,7 +86,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto table = make_fee_table();
     auto fields = make_order_fields(Money::ONE);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::NONE, 0, Money::ZERO, calculate_fee);
+      table, fields, LiquidityFlag::NONE, 0, Money::ZERO, fee_calculator);
   }
 
   TEST_CASE("active") {
@@ -89,7 +95,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expected_fee = lookup_fee(
       table, LiquidityFlag::ACTIVE, LynxFeeTable::Classification::DEFAULT);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("active_etf") {
@@ -98,7 +104,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expected_fee = lookup_fee(
       table, LiquidityFlag::ACTIVE, LynxFeeTable::Classification::ETF);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("active_interlisted") {
@@ -107,7 +113,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expected_fee = lookup_fee(table, LiquidityFlag::ACTIVE,
       LynxFeeTable::Classification::INTERLISTED);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("active_midpoint") {
@@ -116,7 +122,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expected_fee = lookup_fee(table, LiquidityFlag::ACTIVE,
       LynxFeeTable::Classification::MIDPOINT);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("passive") {
@@ -125,7 +131,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expected_fee = lookup_fee(
       table, LiquidityFlag::PASSIVE, LynxFeeTable::Classification::DEFAULT);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("passive_etf") {
@@ -134,7 +140,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expected_fee = lookup_fee(
       table, LiquidityFlag::PASSIVE, LynxFeeTable::Classification::ETF);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("passive_interlisted") {
@@ -143,7 +149,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expected_fee = lookup_fee(
       table, LiquidityFlag::PASSIVE, LynxFeeTable::Classification::INTERLISTED);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("passive_midpoint") {
@@ -152,7 +158,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expected_fee = lookup_fee(
       table, LiquidityFlag::PASSIVE, LynxFeeTable::Classification::MIDPOINT);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdollar_active") {
@@ -161,7 +167,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expected_fee = lookup_fee(
       table, LiquidityFlag::ACTIVE, LynxFeeTable::Classification::SUBDOLLAR);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdollar_etf") {
@@ -170,7 +176,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expected_fee = lookup_fee(
       table, LiquidityFlag::ACTIVE, LynxFeeTable::Classification::SUBDOLLAR);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdollar_interlisted") {
@@ -179,7 +185,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expected_fee = lookup_fee(
       table, LiquidityFlag::ACTIVE, LynxFeeTable::Classification::SUBDOLLAR);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdollar_midpoint") {
@@ -188,7 +194,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expected_fee = lookup_fee(
       table, LiquidityFlag::ACTIVE, LynxFeeTable::Classification::MIDPOINT);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdollar_passive") {
@@ -197,7 +203,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expected_fee = lookup_fee(
       table, LiquidityFlag::PASSIVE, LynxFeeTable::Classification::SUBDOLLAR);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdollar_passive_etf") {
@@ -206,7 +212,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expected_fee = lookup_fee(
       table, LiquidityFlag::PASSIVE, LynxFeeTable::Classification::SUBDOLLAR);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdollar_passive_interlisted") {
@@ -215,7 +221,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expected_fee = lookup_fee(
       table, LiquidityFlag::PASSIVE, LynxFeeTable::Classification::SUBDOLLAR);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdollar_passive_midpoint") {
@@ -224,7 +230,7 @@ TEST_SUITE("LynxFeeHandling") {
     auto expected_fee = lookup_fee(
       table, LiquidityFlag::PASSIVE, LynxFeeTable::Classification::MIDPOINT);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("unknown_liquidity_flag") {
@@ -258,7 +264,7 @@ TEST_SUITE("LynxFeeHandling") {
       auto expected_fee = lookup_fee(
         table, LiquidityFlag::ACTIVE, LynxFeeTable::Classification::DEFAULT);
       test_per_share_fee_calculation(
-        table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+        table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
     }
   }
 
@@ -283,7 +289,7 @@ TEST_SUITE("LynxFeeHandling") {
       auto expected_fee = lookup_fee(
         table, LiquidityFlag::ACTIVE, LynxFeeTable::Classification::DEFAULT);
       test_per_share_fee_calculation(
-        table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+        table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
     }
   }
 }

@@ -3,6 +3,33 @@ file(GLOB_RECURSE
 file(GLOB_RECURSE source_files ${NEXUS_SOURCE_PATH}/RiskServiceTests/*.cpp)
 add_executable(RiskServiceTests ${header_files} ${source_files})
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
+if(MSVC)
+  target_precompile_headers(RiskServiceTests PRIVATE <doctest/doctest.h>
+    <Beam/IO/IO.hpp> <Beam/Queues/Queues.hpp>
+    <Beam/Serialization/Serialization.hpp>
+    <Beam/SerializationTests/SerializationTests.hpp>
+    <Beam/ServiceLocator/ServiceLocator.hpp>
+    <Beam/ServiceLocatorTests/ServiceLocatorTests.hpp>
+    <Beam/Services/Services.hpp> <Beam/ServicesTests/ServicesTests.hpp>
+    <Beam/TimeService/TimeService.hpp>
+    <Beam/UidServiceTests/UidServiceTests.hpp> <Beam/Utilities/Utilities.hpp>
+    <Nexus/AdministrationService/AdministrationService.hpp>
+    <Nexus/AdministrationServiceTests/AdministrationServiceTests.hpp>
+    <Nexus/Definitions/Definitions.hpp>
+    <Nexus/MarketDataService/MarketDataService.hpp>
+    <Nexus/MarketDataServiceTests/MarketDataServiceTests.hpp>
+    <Nexus/OrderExecutionService/OrderExecutionService.hpp>
+    <Nexus/OrderExecutionServiceTests/OrderExecutionServiceTests.hpp>
+    <Nexus/RiskService/RiskService.hpp>
+    <Nexus/RiskServiceTests/RiskServiceTests.hpp>)
+  set_source_files_properties(${NEXUS_SOURCE_PATH}/RiskServiceTests/main.cpp
+    PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+  target_link_libraries(RiskServiceTests
+    debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
+    optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
+    debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
+    optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH} crypt32)
+endif()
 target_link_libraries(RiskServiceTests
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}

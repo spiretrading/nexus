@@ -1,5 +1,22 @@
 file(GLOB_RECURSE source_files ${NEXUS_SOURCE_PATH}/BacktesterTests/*.cpp)
 add_executable(BacktesterTests ${source_files})
+if(MSVC)
+  target_precompile_headers(BacktesterTests PRIVATE <doctest/doctest.h>
+    <Beam/Queues/Queues.hpp> <Beam/Threading/Threading.hpp>
+    <Nexus/AdministrationServiceTests/AdministrationServiceTests.hpp>
+    <Nexus/Backtester/Backtester.hpp> <Nexus/Definitions/Definitions.hpp>
+    <Nexus/MarketDataService/MarketDataService.hpp>
+    <Nexus/MarketDataServiceTests/MarketDataServiceTests.hpp>
+    <Nexus/TestEnvironment/TestClients.hpp>
+    <Nexus/TestEnvironment/TestEnvironment.hpp>)
+  set_source_files_properties(${NEXUS_SOURCE_PATH}/BacktesterTests/main.cpp
+    PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+  target_link_libraries(BacktesterTests
+    debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
+    optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
+    debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
+    optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH} crypt32)
+endif()
 target_link_libraries(BacktesterTests
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH})

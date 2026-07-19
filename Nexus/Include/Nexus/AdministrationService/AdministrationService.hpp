@@ -1,0 +1,25 @@
+#ifndef NEXUS_ADMINISTRATION_SERVICE_HPP
+#define NEXUS_ADMINISTRATION_SERVICE_HPP
+#include "Nexus/AdministrationService/AccountIdentity.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequest.hpp"
+#include "Nexus/AdministrationService/AccountQueryResult.hpp"
+#include "Nexus/AdministrationService/AccountRoles.hpp"
+#include "Nexus/AdministrationService/AdministrationClient.hpp"
+#include "Nexus/AdministrationService/AdministrationDataStore.hpp"
+#include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
+#include "Nexus/AdministrationService/AdministrationServices.hpp"
+#include "Nexus/AdministrationService/AdministrationServlet.hpp"
+#include "Nexus/AdministrationService/AdministrationSession.hpp"
+#include "Nexus/AdministrationService/ApplicationDefinitions.hpp"
+#include "Nexus/AdministrationService/CachedAdministrationDataStore.hpp"
+#include "Nexus/AdministrationService/EntitlementModification.hpp"
+#include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
+#include "Nexus/AdministrationService/Message.hpp"
+#include "Nexus/AdministrationService/Notification.hpp"
+#include "Nexus/AdministrationService/RiskModification.hpp"
+#include "Nexus/AdministrationService/ServiceAdministrationClient.hpp"
+#include "Nexus/AdministrationService/SqlAdministrationDataStore.hpp"
+#include "Nexus/AdministrationService/SqlDefinitions.hpp"
+#include "Nexus/AdministrationService/TradingGroup.hpp"
+
+#endif

@@ -2,6 +2,7 @@
 #define NEXUS_PYTHON_COMPLIANCE_CLIENT_HPP
 #include <type_traits>
 #include <utility>
+#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Compliance/ComplianceClient.hpp"
 

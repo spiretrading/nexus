@@ -374,7 +374,7 @@ void Nexus::Python::export_order_status(module& module) {
     value("DONE_FOR_DAY", OrderStatus::DONE_FOR_DAY).
     value("PENDING_CANCEL", OrderStatus::PENDING_CANCEL).
     value("CANCEL_REJECT", OrderStatus::CANCEL_REJECT);
-  module.def("is_terminal", &is_terminal);
+  module.def("is_terminal", overload_cast<OrderStatus>(&is_terminal));
 }
 
 void Nexus::Python::export_order_type(module& module) {
@@ -556,7 +556,7 @@ void Nexus::Python::export_side(module& module) {
   module.def(
     "pick", overload_cast<Side, const object&, const object&>(&pick<object>));
   module.def("direction", &get_direction);
-  module.def("side", &get_side);
+  module.def("side", overload_cast<Quantity>(&get_side));
   module.def("opposite", &get_opposite);
   module.def("to_char", overload_cast<Side>(&to_char));
 }

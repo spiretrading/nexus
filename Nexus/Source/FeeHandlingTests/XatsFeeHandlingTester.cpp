@@ -7,6 +7,16 @@ using namespace Nexus;
 using namespace Nexus::Tests;
 
 namespace {
+  Money general_lookup(const XatsFeeTable& table, XatsFeeTable::Type type,
+      XatsFeeTable::PriceClass price_class) {
+    return lookup_general_fee(table, type, price_class);
+  }
+
+  Money etf_lookup(const XatsFeeTable& table, XatsFeeTable::Type type,
+      XatsFeeTable::PriceClass price_class) {
+    return lookup_etf_fee(table, type, price_class);
+  }
+
   auto make_fee_table() {
     auto table = XatsFeeTable();
     populate_fee_table(out(table.m_general_fee_table));
@@ -20,9 +30,9 @@ namespace {
 TEST_SUITE("XatsFeeHandling") {
   TEST_CASE("fee_table_calculations") {
     auto table = make_fee_table();
-    test_fee_table_index(table, table.m_general_fee_table, lookup_general_fee,
+    test_fee_table_index(table, table.m_general_fee_table, general_lookup,
       XatsFeeTable::TYPE_COUNT, XatsFeeTable::PRICE_CLASS_COUNT);
-    test_fee_table_index(table, table.m_etf_fee_table, lookup_etf_fee,
+    test_fee_table_index(table, table.m_etf_fee_table, etf_lookup,
       XatsFeeTable::TYPE_COUNT, XatsFeeTable::PRICE_CLASS_COUNT);
   }
 

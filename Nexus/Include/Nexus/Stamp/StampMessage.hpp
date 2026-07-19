@@ -58,7 +58,7 @@ namespace Details {
     int index, int order, const char* source, std::size_t source_size);
 
   template<>
-  boost::optional<std::string> get_business_field_helper<std::string>(
+  inline boost::optional<std::string> get_business_field_helper<std::string>(
       int index, int order, const char* source, std::size_t source_size) {
     auto value_start = static_cast<const char*>(nullptr);
     auto value_end = static_cast<const char*>(nullptr);
@@ -70,7 +70,7 @@ namespace Details {
   }
 
   template<>
-  boost::optional<Money> get_business_field_helper<Money>(
+  inline boost::optional<Money> get_business_field_helper<Money>(
       int index, int order, const char* source, std::size_t source_size) {
     auto value =
       get_business_field_helper<std::string>(index, order, source, source_size);
@@ -81,7 +81,7 @@ namespace Details {
   }
 
   template<>
-  boost::optional<Side> get_business_field_helper<Side>(
+  inline boost::optional<Side> get_business_field_helper<Side>(
       int index, int order, const char* source, std::size_t source_size) {
     auto value =
       get_business_field_helper<std::string>(index, order, source, source_size);
@@ -103,7 +103,7 @@ namespace Details {
   }
 
   template<>
-  boost::optional<boost::posix_time::ptime>
+  inline boost::optional<boost::posix_time::ptime>
       get_business_field_helper<boost::posix_time::ptime>(
         int index, int order, const char* source, std::size_t source_size) {
     auto value =

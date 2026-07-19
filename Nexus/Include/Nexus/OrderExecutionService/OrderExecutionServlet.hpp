@@ -9,8 +9,11 @@
 #include <Beam/Queries/IndexedSubscriptions.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
+#include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
+#include <Beam/TimeService/TimeClient.hpp>
+#include <Beam/UidService/UidClient.hpp>
 #include <Beam/Utilities/ReportException.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/lexical_cast.hpp>

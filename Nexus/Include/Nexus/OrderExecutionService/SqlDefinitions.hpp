@@ -4,6 +4,7 @@
 #include <Beam/Serialization/BinaryReceiver.hpp>
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Sql/Conversions.hpp>
+#include <Beam/Sql/PosixTimeToSqlDateTime.hpp>
 #include <boost/throw_exception.hpp>
 #include <Viper/Row.hpp>
 #include "Nexus/Definitions/SqlDefinitions.hpp"

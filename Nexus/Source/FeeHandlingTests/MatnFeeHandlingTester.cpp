@@ -20,7 +20,7 @@ namespace {
     return table;
   }
 
-  auto lookup_general_fee(const MatnFeeTable& table,
+  auto general_lookup(const MatnFeeTable& table,
       MatnFeeTable::GeneralIndex index, MatnFeeTable::PriceClass price_class) {
     return lookup_fee(table, index, price_class);
   }
@@ -34,7 +34,7 @@ namespace {
 TEST_SUITE("MatnFeeHandling") {
   TEST_CASE("fee_table_calculations") {
     auto table = make_fee_table();
-    test_fee_table_index(table, table.m_general_fee_table, lookup_general_fee,
+    test_fee_table_index(table, table.m_general_fee_table, general_lookup,
       MatnFeeTable::GENERAL_INDEX_COUNT, MatnFeeTable::PRICE_CLASS_COUNT);
     test_fee_table_index(table, table.m_alternative_fee_table,
       lookup_alternative_fee, LIQUIDITY_FLAG_COUNT,

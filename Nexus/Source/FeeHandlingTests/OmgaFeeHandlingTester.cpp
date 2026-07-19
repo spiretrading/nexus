@@ -11,6 +11,11 @@ using namespace Nexus::Tests;
 using namespace Nexus::Venues;
 
 namespace {
+  Money fee_lookup(const OmgaFeeTable& table, OmgaFeeTable::Type type,
+      OmgaFeeTable::PriceClass price_class) {
+    return lookup_fee(table, type, price_class);
+  }
+
   auto make_order_fields(Money price, Quantity quantity) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
       parse_ticker("TST.TSX"), CAD, Side::BID, Destinations::OMEGA, quantity,
@@ -37,7 +42,7 @@ TEST_SUITE("OmgaFeeHandling") {
   TEST_CASE("fee_table_calculations") {
     auto table = OmgaFeeTable();
     populate_fee_table(out(table.m_fee_table));
-    test_fee_table_index(table, table.m_fee_table, lookup_fee,
+    test_fee_table_index(table, table.m_fee_table, fee_lookup,
       OmgaFeeTable::TYPE_COUNT, OmgaFeeTable::PRICE_CLASS_COUNT);
   }
 

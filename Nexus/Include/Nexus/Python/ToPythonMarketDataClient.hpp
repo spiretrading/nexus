@@ -2,6 +2,7 @@
 #define NEXUS_PYTHON_MARKET_DATA_CLIENT_HPP
 #include <type_traits>
 #include <utility>
+#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 

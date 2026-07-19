@@ -1,5 +1,17 @@
 file(GLOB_RECURSE source_files ${NEXUS_SOURCE_PATH}/SoupBinTcpTests/*.cpp)
 add_executable(SoupBinTcpTests ${source_files})
+if(MSVC)
+  target_precompile_headers(SoupBinTcpTests PRIVATE <doctest/doctest.h>
+    <Beam/IO/IO.hpp> <Beam/TimeService/TimeService.hpp>
+    <Nexus/SoupBinTcp/SoupBinTcp.hpp>)
+  set_source_files_properties(${NEXUS_SOURCE_PATH}/SoupBinTcpTests/main.cpp
+    PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+  target_link_libraries(SoupBinTcpTests
+    debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
+    optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
+    debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
+    optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH} crypt32)
+endif()
 target_link_libraries(SoupBinTcpTests
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH})

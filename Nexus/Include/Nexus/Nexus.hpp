@@ -1,0 +1,25 @@
+#ifndef NEXUS_HPP
+#define NEXUS_HPP
+#include "Nexus/Accounting/Accounting.hpp"
+#include "Nexus/AdministrationService/AdministrationService.hpp"
+#include "Nexus/Backtester/Backtester.hpp"
+#include "Nexus/ChartingService/ChartingService.hpp"
+#include "Nexus/Clients/Clients.hpp"
+#include "Nexus/Clients/ServiceClients.hpp"
+#include "Nexus/Compliance/Compliance.hpp"
+#include "Nexus/Definitions/Definitions.hpp"
+#include "Nexus/DefinitionsService/DefinitionsService.hpp"
+#include "Nexus/FeeHandling/FeeHandling.hpp"
+#include "Nexus/FixUtilities/FixUtilities.hpp"
+#include "Nexus/MarketDataService/MarketDataService.hpp"
+#include "Nexus/MoldUdp64/MoldUdp64.hpp"
+#include "Nexus/OrderExecutionService/OrderExecutionService.hpp"
+#include "Nexus/Parsers/Parsers.hpp"
+#include "Nexus/Queries/Queries.hpp"
+#include "Nexus/RiskService/RiskService.hpp"
+#include "Nexus/SimulationMatcher/SimulationMatcher.hpp"
+#include "Nexus/SoupBinTcp/SoupBinTcp.hpp"
+#include "Nexus/Stamp/Stamp.hpp"
+#include "Nexus/TechnicalAnalysis/TechnicalAnalysis.hpp"
+
+#endif

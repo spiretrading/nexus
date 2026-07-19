@@ -11,6 +11,12 @@ using namespace Nexus::Tests;
 using namespace Nexus::Venues;
 
 namespace {
+  constexpr auto fee_calculator = [] (const auto&... args) {
+    return calculate_fee(args...);
+  };
+}
+
+namespace {
   const auto TST = parse_ticker("TST.TSX");
   const auto TST2 = parse_ticker("TST2.TSXV");
   const auto ETF = parse_ticker("TST3.TSX");
@@ -50,7 +56,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     fields.m_quantity = 0;
     auto expected_fee = Money::ZERO;
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::NONE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::NONE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("active_default") {
@@ -59,7 +65,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields, Xcx2FeeTable::Type::ACTIVE,
       Xcx2FeeTable::PriceClass::DEFAULT);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("passive_default") {
@@ -68,7 +74,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields, Xcx2FeeTable::Type::PASSIVE,
       Xcx2FeeTable::PriceClass::DEFAULT);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("large_active_default") {
@@ -78,7 +84,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields,
       Xcx2FeeTable::Type::LARGE_ACTIVE, Xcx2FeeTable::PriceClass::DEFAULT);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("large_passive_default") {
@@ -88,7 +94,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields,
       Xcx2FeeTable::Type::LARGE_PASSIVE, Xcx2FeeTable::PriceClass::DEFAULT);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("hidden_active_default") {
@@ -97,7 +103,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields,
       Xcx2FeeTable::Type::HIDDEN_ACTIVE, Xcx2FeeTable::PriceClass::DEFAULT);
     test_per_share_fee_calculation(
-      table, fields, "r", expected_fee, calculate_fee);
+      table, fields, "r", expected_fee, fee_calculator);
   }
 
   TEST_CASE("hidden_passive_default") {
@@ -106,7 +112,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields,
       Xcx2FeeTable::Type::HIDDEN_PASSIVE, Xcx2FeeTable::PriceClass::DEFAULT);
     test_per_share_fee_calculation(
-      table, fields, "a", expected_fee, calculate_fee);
+      table, fields, "a", expected_fee, fee_calculator);
   }
 
   TEST_CASE("active_odd_lot_default") {
@@ -116,7 +122,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields, Xcx2FeeTable::Type::ODD_LOT,
       Xcx2FeeTable::PriceClass::DEFAULT);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("passive_odd_lot_default") {
@@ -126,7 +132,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields, Xcx2FeeTable::Type::ODD_LOT,
       Xcx2FeeTable::PriceClass::DEFAULT);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("active_etf") {
@@ -135,7 +141,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(
       table, fields, Xcx2FeeTable::Type::ACTIVE, Xcx2FeeTable::PriceClass::ETF);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("passive_etf") {
@@ -144,7 +150,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields, Xcx2FeeTable::Type::PASSIVE,
       Xcx2FeeTable::PriceClass::ETF);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("active_sub_five_dollar") {
@@ -153,7 +159,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields, Xcx2FeeTable::Type::ACTIVE,
       Xcx2FeeTable::PriceClass::SUB_FIVE_DOLLAR);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("passive_sub_five_dollar") {
@@ -162,7 +168,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields, Xcx2FeeTable::Type::PASSIVE,
       Xcx2FeeTable::PriceClass::SUB_FIVE_DOLLAR);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("active_subdollar") {
@@ -171,7 +177,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields, Xcx2FeeTable::Type::ACTIVE,
       Xcx2FeeTable::PriceClass::SUBDOLLAR);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("passive_subdollar") {
@@ -180,7 +186,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields, Xcx2FeeTable::Type::PASSIVE,
       Xcx2FeeTable::PriceClass::SUBDOLLAR);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("active_subdime") {
@@ -189,7 +195,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields, Xcx2FeeTable::Type::ACTIVE,
       Xcx2FeeTable::PriceClass::SUBDIME);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("passive_subdime") {
@@ -198,7 +204,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields, Xcx2FeeTable::Type::PASSIVE,
       Xcx2FeeTable::PriceClass::SUBDIME);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("large_active_etf") {
@@ -208,7 +214,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       Xcx2FeeTable::Type::LARGE_ACTIVE, Xcx2FeeTable::PriceClass::ETF);
     fields.m_quantity = table.m_large_trade_size;
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("large_passive_etf") {
@@ -218,7 +224,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       Xcx2FeeTable::Type::LARGE_PASSIVE, Xcx2FeeTable::PriceClass::ETF);
     fields.m_quantity = table.m_large_trade_size;
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("large_active_sub_five_dollar") {
@@ -229,7 +235,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       Xcx2FeeTable::PriceClass::SUB_FIVE_DOLLAR);
     fields.m_quantity = table.m_large_trade_size;
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("large_passive_sub_five_dollar") {
@@ -240,7 +246,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       Xcx2FeeTable::PriceClass::SUB_FIVE_DOLLAR);
     fields.m_quantity = table.m_large_trade_size;
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("large_active_subdollar") {
@@ -250,7 +256,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       Xcx2FeeTable::Type::LARGE_ACTIVE, Xcx2FeeTable::PriceClass::SUBDOLLAR);
     fields.m_quantity = table.m_large_trade_size;
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("large_passive_subdollar") {
@@ -260,7 +266,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       Xcx2FeeTable::Type::LARGE_PASSIVE, Xcx2FeeTable::PriceClass::SUBDOLLAR);
     fields.m_quantity = table.m_large_trade_size;
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("large_active_subdime") {
@@ -270,7 +276,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields,
       Xcx2FeeTable::Type::LARGE_ACTIVE, Xcx2FeeTable::PriceClass::SUBDIME);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("large_passive_subdime") {
@@ -280,7 +286,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields,
       Xcx2FeeTable::Type::LARGE_PASSIVE, Xcx2FeeTable::PriceClass::SUBDIME);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("hidden_active_etf") {
@@ -289,7 +295,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields,
       Xcx2FeeTable::Type::HIDDEN_ACTIVE, Xcx2FeeTable::PriceClass::ETF);
     test_per_share_fee_calculation(
-      table, fields, "r", expected_fee, calculate_fee);
+      table, fields, "r", expected_fee, fee_calculator);
   }
 
   TEST_CASE("hidden_passive_etf") {
@@ -298,7 +304,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields,
       Xcx2FeeTable::Type::HIDDEN_PASSIVE, Xcx2FeeTable::PriceClass::ETF);
     test_per_share_fee_calculation(
-      table, fields, "a", expected_fee, calculate_fee);
+      table, fields, "a", expected_fee, fee_calculator);
   }
 
   TEST_CASE("hidden_active_sub_five_dollar") {
@@ -308,7 +314,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       table, fields, Xcx2FeeTable::Type::HIDDEN_ACTIVE,
       Xcx2FeeTable::PriceClass::SUB_FIVE_DOLLAR);
     test_per_share_fee_calculation(
-      table, fields, "r", expected_fee, calculate_fee);
+      table, fields, "r", expected_fee, fee_calculator);
   }
 
   TEST_CASE("hidden_passive_sub_five_dollar") {
@@ -318,7 +324,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       table, fields, Xcx2FeeTable::Type::HIDDEN_PASSIVE,
       Xcx2FeeTable::PriceClass::SUB_FIVE_DOLLAR);
     test_per_share_fee_calculation(
-      table, fields, "a", expected_fee, calculate_fee);
+      table, fields, "a", expected_fee, fee_calculator);
   }
 
   TEST_CASE("hidden_active_subdollar") {
@@ -327,7 +333,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields,
       Xcx2FeeTable::Type::HIDDEN_ACTIVE, Xcx2FeeTable::PriceClass::SUBDOLLAR);
     test_per_share_fee_calculation(
-      table, fields, "r", expected_fee, calculate_fee);
+      table, fields, "r", expected_fee, fee_calculator);
   }
 
   TEST_CASE("hidden_passive_subdollar") {
@@ -336,7 +342,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields,
       Xcx2FeeTable::Type::HIDDEN_PASSIVE, Xcx2FeeTable::PriceClass::SUBDOLLAR);
     test_per_share_fee_calculation(
-      table, fields, "a", expected_fee, calculate_fee);
+      table, fields, "a", expected_fee, fee_calculator);
   }
 
   TEST_CASE("hidden_active_subdime") {
@@ -345,7 +351,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields,
       Xcx2FeeTable::Type::HIDDEN_ACTIVE, Xcx2FeeTable::PriceClass::SUBDIME);
     test_per_share_fee_calculation(
-      table, fields, "r", expected_fee, calculate_fee);
+      table, fields, "r", expected_fee, fee_calculator);
   }
 
   TEST_CASE("hidden_passive_subdime") {
@@ -354,7 +360,7 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields,
       Xcx2FeeTable::Type::HIDDEN_PASSIVE, Xcx2FeeTable::PriceClass::SUBDIME);
     test_per_share_fee_calculation(
-      table, fields, "a", expected_fee, calculate_fee);
+      table, fields, "a", expected_fee, fee_calculator);
   }
 
   TEST_CASE("active_odd_lot_etf") {
@@ -364,7 +370,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       Xcx2FeeTable::PriceClass::ETF);
     fields.m_quantity = 50;
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("passive_odd_lot_etf") {
@@ -374,7 +380,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       Xcx2FeeTable::PriceClass::ETF);
     fields.m_quantity = 50;
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("active_odd_lot_sub_five_dollar") {
@@ -384,7 +390,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       Xcx2FeeTable::PriceClass::SUB_FIVE_DOLLAR);
     fields.m_quantity = 50;
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("passive_odd_lot_sub_five_dollar") {
@@ -394,7 +400,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       Xcx2FeeTable::PriceClass::SUB_FIVE_DOLLAR);
     fields.m_quantity = 50;
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("active_odd_lot_subdollar") {
@@ -404,7 +410,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       Xcx2FeeTable::PriceClass::SUBDOLLAR);
     fields.m_quantity = 50;
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("passive_odd_lot_subdollar") {
@@ -414,7 +420,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       Xcx2FeeTable::PriceClass::SUBDOLLAR);
     fields.m_quantity = 50;
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("active_odd_lot_subdime") {
@@ -424,7 +430,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       Xcx2FeeTable::PriceClass::SUBDIME);
     fields.m_quantity = 50;
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("passive_odd_lot_subdime") {
@@ -434,7 +440,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       Xcx2FeeTable::PriceClass::SUBDIME);
     fields.m_quantity = 50;
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("hidden_odd_lot") {
@@ -444,7 +450,7 @@ TEST_SUITE("Xcx2FeeHandling") {
       Xcx2FeeTable::PriceClass::SUBDOLLAR);
     fields.m_quantity = 50;
     test_per_share_fee_calculation(
-      table, fields, "r", expected_fee, calculate_fee);
+      table, fields, "r", expected_fee, fee_calculator);
   }
 
   TEST_CASE("unknown_liquidity_flag") {
@@ -491,6 +497,6 @@ TEST_SUITE("Xcx2FeeHandling") {
     auto expected_fee = lookup_fee(table, fields, Xcx2FeeTable::Type::PASSIVE,
       Xcx2FeeTable::PriceClass::DEFAULT);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::NONE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::NONE, expected_fee, fee_calculator);
   }
 }

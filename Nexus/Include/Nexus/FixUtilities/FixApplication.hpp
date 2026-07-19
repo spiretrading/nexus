@@ -1,6 +1,7 @@
 #ifndef NEXUS_FIX_APPLICATION_HPP
 #define NEXUS_FIX_APPLICATION_HPP
 #include <quickfix/Application.h>
+#include <quickfix/SessionSettings.h>
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
 

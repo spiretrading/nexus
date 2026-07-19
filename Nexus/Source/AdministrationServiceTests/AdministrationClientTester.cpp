@@ -238,7 +238,7 @@ TEST_SUITE("AdministrationClient") {
     auto account =
       DirectoryEntry::make_account(16, "submit_entitlement_account");
     auto modification = EntitlementModification();
-    auto comment = Message(Message::Id(1), account, ptime(), {});
+    auto comment = Nexus::Message(Nexus::Message::Id(1), account, ptime(), {});
     auto request = AccountModificationRequest(AccountModificationRequest::Id(3),
       AccountModificationRequest::Type::ENTITLEMENTS, account, account,
       ptime(), ptime());
@@ -267,7 +267,7 @@ TEST_SUITE("AdministrationClient") {
   TEST_CASE("submit_account_modification_request_risk") {
     auto account = DirectoryEntry::make_account(17, "submit_risk_account");
     auto modification = RiskModification(get_test_risk_parameters());
-    auto comment = Message(Message::Id(2), account, ptime(), {});
+    auto comment = Nexus::Message(Nexus::Message::Id(2), account, ptime(), {});
     auto request = AccountModificationRequest(AccountModificationRequest::Id(5),
       AccountModificationRequest::Type::RISK, account, account, ptime(),
       ptime());
@@ -295,7 +295,7 @@ TEST_SUITE("AdministrationClient") {
 
   TEST_CASE("approve_account_modification_request") {
     auto id = AccountModificationRequest::Id(7);
-    auto comment = Message(Message::Id(3),
+    auto comment = Nexus::Message(Nexus::Message::Id(3),
       DirectoryEntry::make_account(19, "approver_account"), ptime(), {});
     auto update = AccountModificationRequest::Update(
       AccountModificationRequest::Status::GRANTED,
@@ -310,7 +310,7 @@ TEST_SUITE("AdministrationClient") {
 
   TEST_CASE("reject_account_modification_request") {
     auto id = AccountModificationRequest::Id(8);
-    auto comment = Message(Message::Id(4),
+    auto comment = Nexus::Message(Nexus::Message::Id(4),
       DirectoryEntry::make_account(20, "rejector_account"), ptime(), {});
     auto update = AccountModificationRequest::Update(
       AccountModificationRequest::Status::REJECTED,
@@ -323,8 +323,8 @@ TEST_SUITE("AdministrationClient") {
   }
 
   TEST_CASE("load_message") {
-    auto id = Message::Id(5);
-    auto message = Message(
+    auto id = Nexus::Message::Id(5);
+    auto message = Nexus::Message(
       id, DirectoryEntry::make_account(21, "message_account"), ptime(), {});
     require_operation<TestAdministrationClient::LoadMessageOperation>(
       [&] (auto& client) {
@@ -334,7 +334,7 @@ TEST_SUITE("AdministrationClient") {
 
   TEST_CASE("load_message_ids") {
     auto id = AccountModificationRequest::Id(9);
-    auto message_ids = std::vector<Message::Id>{6, 7, 8};
+    auto message_ids = std::vector<Nexus::Message::Id>{6, 7, 8};
     require_operation<TestAdministrationClient::LoadMessageIdsOperation>(
       [&] (auto& client) {
         return client.load_message_ids(id);
@@ -343,7 +343,7 @@ TEST_SUITE("AdministrationClient") {
 
   TEST_CASE("send_account_modification_request_message") {
     auto id = AccountModificationRequest::Id(10);
-    auto message = Message(Message::Id(9),
+    auto message = Nexus::Message(Nexus::Message::Id(9),
       DirectoryEntry::make_account(22, "sender_account"), ptime(), {});
     require_operation<
       TestAdministrationClient::SendAccountModificationRequestMessageOperation>(

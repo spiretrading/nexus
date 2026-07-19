@@ -9,6 +9,12 @@ using namespace Nexus::Tests;
 using namespace Nexus::Venues;
 
 namespace {
+  constexpr auto fee_calculator = [] (const auto&... args) {
+    return calculate_fee(args...);
+  };
+}
+
+namespace {
   auto TST = parse_ticker("TST.TSXV");
 
   auto make_order_fields(Money price) {
@@ -28,7 +34,7 @@ TEST_SUITE("NexFeeHandling") {
     auto table = make_fee_table();
     auto fields = make_order_fields(Money::ONE);
     test_per_share_fee_calculation(table, fields.m_price, 0,
-      LiquidityFlag::NONE, Money::ZERO, calculate_fee);
+      LiquidityFlag::NONE, Money::ZERO, fee_calculator);
   }
 
   TEST_CASE("execution") {
@@ -36,6 +42,6 @@ TEST_SUITE("NexFeeHandling") {
     auto fields = make_order_fields(Money::ONE);
     auto expected_fee = Money::ONE;
     test_per_share_fee_calculation(table, Money::ONE, 100,
-      LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 }

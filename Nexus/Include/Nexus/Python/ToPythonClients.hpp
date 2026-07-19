@@ -4,6 +4,7 @@
 #include <type_traits>
 #include <utility>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Python/GilRelease.hpp>
 #include <Beam/Python/ToPythonServiceLocatorClient.hpp>
 #include <Beam/Python/ToPythonTimeClient.hpp>
 #include <Beam/Python/ToPythonTimer.hpp>

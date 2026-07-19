@@ -96,7 +96,9 @@ namespace Nexus::Tests {
     auto accounts = std::make_shared<Beam::Queue<Beam::AccountUpdate>>();
     service_locator_client.monitor(accounts);
     m_container.emplace(Beam::init(service_locator_client,
-      Beam::init(Beam::convert(Beam::filter(std::move(accounts),
+      Beam::init(Beam::convert(Beam::filter(
+        std::static_pointer_cast<Beam::QueueReader<Beam::AccountUpdate>>(
+          std::move(accounts)),
         [] (const auto& update) {
           return update.m_type == Beam::AccountUpdate::Type::ADDED;
         }),

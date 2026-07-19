@@ -26,7 +26,10 @@ namespace {
     return table;
   }
 
-  auto get_fee_lookup(NeoeFeeTable::Classification classification) {
+  using FeeLookup = Money (*)(
+    const NeoeFeeTable&, LiquidityFlag, NeoeFeeTable::PriceClass);
+
+  FeeLookup get_fee_lookup(NeoeFeeTable::Classification classification) {
     if(classification == NeoeFeeTable::Classification::GENERAL) {
       return &lookup_general_fee;
     } else if(classification == NeoeFeeTable::Classification::INTERLISTED) {
@@ -39,12 +42,14 @@ namespace {
 TEST_SUITE("NeoeFeeHandling") {
   TEST_CASE("fee_table_calculations") {
     auto table = make_fee_table();
-    test_fee_table_index(table, table.m_general_fee_table, lookup_general_fee,
+    test_fee_table_index(table, table.m_general_fee_table,
+      *get_fee_lookup(NeoeFeeTable::Classification::GENERAL),
       LIQUIDITY_FLAG_COUNT, NeoeFeeTable::PRICE_CLASS_COUNT);
     test_fee_table_index(table, table.m_interlisted_fee_table,
       lookup_interlisted_fee, LIQUIDITY_FLAG_COUNT,
       NeoeFeeTable::PRICE_CLASS_COUNT);
-    test_fee_table_index(table, table.m_etf_table_fee, lookup_etf_fee,
+    test_fee_table_index(table, table.m_etf_table_fee,
+      *get_fee_lookup(NeoeFeeTable::Classification::ETF),
       LIQUIDITY_FLAG_COUNT, NeoeFeeTable::PRICE_CLASS_COUNT);
   }
 
@@ -151,6 +156,8 @@ TEST_SUITE("NeoeFeeHandling") {
         auto expected_fee = report.m_last_quantity *
           get_fee_lookup(classification)(
             table, LiquidityFlag::ACTIVE, NeoeFeeTable::PriceClass::DEFAULT);
+        static_assert(std::is_same_v<decltype(calculated_fee), Money>);
+        static_assert(std::is_same_v<decltype(expected_fee), Money>);
         REQUIRE(calculated_fee == expected_fee);
       }
     }

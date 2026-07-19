@@ -2,6 +2,7 @@
 #define NEXUS_PYTHON_ORDER_EXECUTION_DATA_STORE_HPP
 #include <type_traits>
 #include <utility>
+#include <Beam/Python/GilRelease.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 

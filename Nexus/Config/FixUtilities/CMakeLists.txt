@@ -1,5 +1,17 @@
 file(GLOB_RECURSE source_files ${NEXUS_SOURCE_PATH}/FixUtilitiesTests/*.cpp)
 add_executable(FixUtilitiesTests ${source_files})
+if(MSVC)
+  target_precompile_headers(FixUtilitiesTests PRIVATE <doctest/doctest.h>
+    <Beam/Queues/Queues.hpp> <Nexus/Definitions/Definitions.hpp>
+    <Nexus/FixUtilities/FixUtilities.hpp>)
+  set_source_files_properties(${NEXUS_SOURCE_PATH}/FixUtilitiesTests/main.cpp
+    PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+  target_link_libraries(FixUtilitiesTests
+    debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
+    optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
+    debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
+    optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH} crypt32)
+endif()
 target_link_libraries(FixUtilitiesTests
   debug ${QUICK_FIX_LIBRARY_DEBUG_PATH}
   optimized ${QUICK_FIX_LIBRARY_OPTIMIZED_PATH})

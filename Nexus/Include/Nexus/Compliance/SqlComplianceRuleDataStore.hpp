@@ -83,8 +83,8 @@ namespace Nexus {
       }
     }
     auto entries = std::vector<ComplianceRuleEntry>();
-    std::transform(
-      rows.begin(), rows.end(), std::back_inserter(entries), &convert);
+    std::transform(rows.begin(), rows.end(), std::back_inserter(entries),
+      [] (const auto& row) { return convert(row); });
     return entries;
   }
 
@@ -143,8 +143,8 @@ namespace Nexus {
       }
     }
     auto entries = std::vector<ComplianceRuleEntry>();
-    std::transform(
-      rows.begin(), rows.end(), std::back_inserter(entries), &convert);
+    std::transform(rows.begin(), rows.end(), std::back_inserter(entries),
+      [] (const auto& row) { return convert(row); });
     return entries;
   }
 

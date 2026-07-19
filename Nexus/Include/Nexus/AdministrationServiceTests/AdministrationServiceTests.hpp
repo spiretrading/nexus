@@ -1,0 +1,7 @@
+#ifndef NEXUS_ADMINISTRATION_SERVICE_TESTS_HPP
+#define NEXUS_ADMINISTRATION_SERVICE_TESTS_HPP
+#include "Nexus/AdministrationServiceTests/AdministrationDataStoreTestSuite.hpp"
+#include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
+#include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
+
+#endif

@@ -1,5 +1,16 @@
 file(GLOB_RECURSE source_files ${NEXUS_SOURCE_PATH}/MoldUdp64Tests/*.cpp)
 add_executable(MoldUdp64Tests ${source_files})
+if(MSVC)
+  target_precompile_headers(MoldUdp64Tests PRIVATE <doctest/doctest.h>
+    <Beam/IO/IO.hpp> <Nexus/MoldUdp64/MoldUdp64.hpp>)
+  set_source_files_properties(${NEXUS_SOURCE_PATH}/MoldUdp64Tests/main.cpp
+    PROPERTIES SKIP_PRECOMPILE_HEADERS ON)
+  target_link_libraries(MoldUdp64Tests
+    debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
+    optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
+    debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
+    optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH} crypt32)
+endif()
 target_link_libraries(MoldUdp64Tests
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH})

@@ -11,6 +11,17 @@ using namespace Nexus::Tests;
 using namespace Nexus::Venues;
 
 namespace {
+  Money fee_lookup(const ChicFeeTable& table, ChicFeeTable::Index index,
+      ChicFeeTable::Classification classification) {
+    return lookup_fee(table, index, classification);
+  }
+
+  constexpr auto fee_calculator = [] (const auto&... args) {
+    return calculate_fee(args...);
+  };
+}
+
+namespace {
   const auto TST = parse_ticker("TST.TSX");
 
   auto make_order_fields(Money price) {
@@ -23,7 +34,7 @@ TEST_SUITE("ChicFeeHandling") {
   TEST_CASE("fee_table_calculations") {
     auto table = ChicFeeTable();
     populate_fee_table(out(table.m_fee_table));
-    test_fee_table_index(table, table.m_fee_table, lookup_fee,
+    test_fee_table_index(table, table.m_fee_table, fee_lookup,
       ChicFeeTable::INDEX_COUNT, ChicFeeTable::CLASSIFICATION_COUNT);
   }
 
@@ -34,7 +45,7 @@ TEST_SUITE("ChicFeeHandling") {
     fields.m_quantity = 0;
     auto expected_fee = Money::ZERO;
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::NONE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::NONE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("default_active") {
@@ -44,7 +55,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::NON_INTERLISTED);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("default_passive") {
@@ -54,7 +65,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::PASSIVE,
       ChicFeeTable::Classification::NON_INTERLISTED);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("default_hidden_passive") {
@@ -64,7 +75,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_PASSIVE,
       ChicFeeTable::Classification::NON_INTERLISTED);
     test_per_share_fee_calculation(
-      table, fields, "a", expected_fee, calculate_fee);
+      table, fields, "a", expected_fee, fee_calculator);
   }
 
   TEST_CASE("default_hidden_active") {
@@ -74,7 +85,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_ACTIVE,
       ChicFeeTable::Classification::NON_INTERLISTED);
     test_per_share_fee_calculation(
-      table, fields, "r", expected_fee, calculate_fee);
+      table, fields, "r", expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdollar_active") {
@@ -84,7 +95,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdollar_passive") {
@@ -94,7 +105,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::PASSIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdime_active") {
@@ -104,7 +115,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDIME);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdime_passive") {
@@ -114,7 +125,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::PASSIVE,
       ChicFeeTable::Classification::SUBDIME);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdollar_hidden_active") {
@@ -124,7 +135,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_ACTIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
     test_per_share_fee_calculation(
-      table, fields, "r", expected_fee, calculate_fee);
+      table, fields, "r", expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdollar_hidden_passive") {
@@ -134,7 +145,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_PASSIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
     test_per_share_fee_calculation(
-      table, fields, "a", expected_fee, calculate_fee);
+      table, fields, "a", expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdime_hidden_active") {
@@ -144,7 +155,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_ACTIVE,
       ChicFeeTable::Classification::SUBDIME);
     test_per_share_fee_calculation(
-      table, fields, "r", expected_fee, calculate_fee);
+      table, fields, "r", expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdime_hidden_passive") {
@@ -154,7 +165,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_PASSIVE,
       ChicFeeTable::Classification::SUBDIME);
     test_per_share_fee_calculation(
-      table, fields, "a", expected_fee, calculate_fee);
+      table, fields, "a", expected_fee, fee_calculator);
   }
 
   TEST_CASE("interlisted_active") {
@@ -165,7 +176,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::INTERLISTED);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("interlisted_passive") {
@@ -176,7 +187,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::PASSIVE,
       ChicFeeTable::Classification::INTERLISTED);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("interlisted_hidden_passive") {
@@ -187,7 +198,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_PASSIVE,
       ChicFeeTable::Classification::INTERLISTED);
     test_per_share_fee_calculation(
-      table, fields, "a", expected_fee, calculate_fee);
+      table, fields, "a", expected_fee, fee_calculator);
   }
 
   TEST_CASE("interlisted_hidden_active") {
@@ -198,7 +209,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_ACTIVE,
       ChicFeeTable::Classification::INTERLISTED);
     test_per_share_fee_calculation(
-      table, fields, "r", expected_fee, calculate_fee);
+      table, fields, "r", expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdollar_interlisted_active") {
@@ -209,7 +220,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdime_interlisted_active") {
@@ -220,7 +231,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDIME);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("etf_active") {
@@ -231,7 +242,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(
       table, ChicFeeTable::Index::ACTIVE, ChicFeeTable::Classification::ETF);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("etf_passive") {
@@ -242,7 +253,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(
       table, ChicFeeTable::Index::PASSIVE, ChicFeeTable::Classification::ETF);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::PASSIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::PASSIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("etf_hidden_passive") {
@@ -253,7 +264,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_PASSIVE,
       ChicFeeTable::Classification::ETF);
     test_per_share_fee_calculation(
-      table, fields, "a", expected_fee, calculate_fee);
+      table, fields, "a", expected_fee, fee_calculator);
   }
 
   TEST_CASE("etf_hidden_active") {
@@ -264,7 +275,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::HIDDEN_ACTIVE,
       ChicFeeTable::Classification::ETF);
     test_per_share_fee_calculation(
-      table, fields, "r", expected_fee, calculate_fee);
+      table, fields, "r", expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdollar_etf_active") {
@@ -275,7 +286,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDOLLAR);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("subdime_etf_active") {
@@ -286,7 +297,7 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::SUBDIME);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::ACTIVE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::ACTIVE, expected_fee, fee_calculator);
   }
 
   TEST_CASE("unknown_liquidity_flag") {
@@ -335,6 +346,6 @@ TEST_SUITE("ChicFeeHandling") {
     auto expected_fee = lookup_fee(table, ChicFeeTable::Index::ACTIVE,
       ChicFeeTable::Classification::NON_INTERLISTED);
     test_per_share_fee_calculation(
-      table, fields, LiquidityFlag::NONE, expected_fee, calculate_fee);
+      table, fields, LiquidityFlag::NONE, expected_fee, fee_calculator);
   }
 }

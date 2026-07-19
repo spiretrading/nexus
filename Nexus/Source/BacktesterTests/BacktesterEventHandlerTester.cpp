@@ -69,7 +69,7 @@ TEST_SUITE("BacktesterEventHandler") {
     active_event2->wait();
     passive_event->wait();
     REQUIRE(passive_event->was_executed());
-    REQUIRE(active_count == 2);
+    REQUIRE(active_count.load() == 2);
     REQUIRE(handler.get_time() == time_from_string("2025-08-12 11:00:00.000"));
   }
 
@@ -96,7 +96,7 @@ TEST_SUITE("BacktesterEventHandler") {
     passive_event2->wait();
     REQUIRE(passive_event1->was_executed());
     REQUIRE(passive_event2->was_executed());
-    REQUIRE(active_count == 2);
+    REQUIRE(active_count.load() == 2);
     REQUIRE(handler.get_time() == time_from_string("2025-08-12 10:00:00.000"));
   }
 
@@ -108,7 +108,7 @@ TEST_SUITE("BacktesterEventHandler") {
     handler.add(std::make_shared<ActiveEvent>(
       time_from_string("2025-08-12 10:00:00.000"), active_count));
     handler.wait();
-    REQUIRE(active_count == 1);
+    REQUIRE(active_count.load() == 1);
     REQUIRE(handler.get_time() >= end);
   }
 
@@ -136,12 +136,12 @@ TEST_SUITE("BacktesterEventHandler") {
     auto event = std::make_shared<ActiveEvent>(
       time_from_string("2025-08-12 10:00:00.000"), active_count);
     handler.add(event);
-    REQUIRE(active_count == 0);
+    REQUIRE(active_count.load() == 0);
     REQUIRE(handler.get_time() ==
       time_from_string("2025-08-12 09:00:00.000"));
     handler.resume();
     event->wait();
-    REQUIRE(active_count == 1);
+    REQUIRE(active_count.load() == 1);
     REQUIRE(handler.get_time() == time_from_string("2025-08-12 10:00:00.000"));
   }
 
@@ -159,11 +159,11 @@ TEST_SUITE("BacktesterEventHandler") {
     handler.add(event1);
     auto stepped = handler.advance();
     REQUIRE(stepped == event1);
-    REQUIRE(active_count == 1);
+    REQUIRE(active_count.load() == 1);
     REQUIRE(handler.get_time() == time_from_string("2025-08-12 10:00:00.000"));
     stepped = handler.advance();
     REQUIRE(stepped == event2);
-    REQUIRE(active_count == 2);
+    REQUIRE(active_count.load() == 2);
     REQUIRE(handler.get_time() == time_from_string("2025-08-12 11:00:00.000"));
     REQUIRE(handler.advance() == nullptr);
     handler.resume();
@@ -208,11 +208,11 @@ TEST_SUITE("BacktesterEventHandler") {
     auto held = std::make_shared<ActiveEvent>(
       time_from_string("2025-08-12 11:00:00.000"), active_count);
     handler.add(held);
-    REQUIRE(active_count == 1);
+    REQUIRE(active_count.load() == 1);
     REQUIRE(handler.get_time() == time_from_string("2025-08-12 10:00:00.000"));
     handler.resume();
     held->wait();
-    REQUIRE(active_count == 2);
+    REQUIRE(active_count.load() == 2);
   }
 
   TEST_CASE("wait_when_active_event_already_processed") {
@@ -224,7 +224,7 @@ TEST_SUITE("BacktesterEventHandler") {
       time_from_string("2025-08-12 10:00:00.000"), active_count);
     handler.add(event);
     event->wait();
-    REQUIRE(active_count == 1);
+    REQUIRE(active_count.load() == 1);
     handler.wait();
     REQUIRE(handler.get_time() >= end);
   }
