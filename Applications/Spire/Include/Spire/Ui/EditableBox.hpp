@@ -122,7 +122,7 @@ namespace Details {
       MouseObserver m_mouse_observer;
       QWidget* m_focus_proxy;
       boost::optional<std::chrono::steady_clock::time_point> m_focus_time;
-      bool m_is_submit_connected;
+      boost::signals2::scoped_connection m_submit_connection;
 
       bool is_input_box_enabled() const;
       void select_all_text();
