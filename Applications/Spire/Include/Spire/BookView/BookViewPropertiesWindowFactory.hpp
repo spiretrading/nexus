@@ -26,8 +26,7 @@ namespace Spire {
       const std::shared_ptr<BookViewPropertiesModel>& get_properties() const;
 
       /**
-       * Pre-constructs the singleton BookViewPropertiesWindow without wiring
-       * a preview. Used at login to eliminate first-use lag.
+       * Returns the singleton instance of the BookViewPropertiesWindow.
        * @param key_bindings The KeyBindingsModel storing all of the user's
        *        interactions.
        */
