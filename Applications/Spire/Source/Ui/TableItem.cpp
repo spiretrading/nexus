@@ -1,4 +1,5 @@
 #include "Spire/Ui/TableItem.hpp"
+#include <QApplication>
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
@@ -91,7 +92,8 @@ QWidget* TableItem::unmount() {
 }
 
 void TableItem::on_focus(FocusObserver::State state) {
-  if(state == FocusObserver::State::FOCUS_IN) {
+  if(state == FocusObserver::State::FOCUS_IN &&
+      QApplication::mouseButtons() != Qt::NoButton) {
     m_active_signal();
   }
 }
@@ -101,7 +103,6 @@ void TableItem::on_mouse(QWidget& target, const QMouseEvent& event) {
       event.button() == Qt::MouseButton::LeftButton &&
       m_focus_observer.get_state() == FocusObserver::State::NONE) {
     setFocus(Qt::FocusReason::MouseFocusReason);
-    m_active_signal();
   }
 }
 
