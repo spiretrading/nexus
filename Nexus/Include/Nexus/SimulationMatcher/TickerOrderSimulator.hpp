@@ -242,7 +242,12 @@ namespace Nexus {
       if(bbo.m_timestamp.date() != m_date) {
         set_session_timestamps(bbo.m_timestamp);
       }
+      auto is_price_unchanged = bbo.m_bid.m_price == m_bbo.m_bid.m_price &&
+        bbo.m_ask.m_price == m_bbo.m_ask.m_price;
       m_bbo = bbo;
+      if(is_price_unchanged) {
+        return;
+      }
     }
     auto index = std::size_t(0);
     while(true) {
