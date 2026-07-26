@@ -118,6 +118,8 @@ namespace Nexus {
       MarketDataClient m_market_data_client;
       Tests::ChartingServiceTestEnvironment m_charting_environment;
       Tests::ComplianceTestEnvironment m_compliance_environment;
+      boost::optional<SimulationOrderExecutionDriver<
+        MarketDataClient, Beam::TimeClient>> m_simulation_driver;
       boost::optional<Tests::OrderExecutionServiceTestEnvironment>
         m_order_execution_environment;
       boost::optional<OrderExecutionClient> m_order_execution_client;
@@ -160,11 +162,30 @@ namespace Nexus {
     try {
       auto definitions_client = m_definitions_environment.make_client(
         Beam::Ref(m_service_locator_client));
+      m_simulation_driver.emplace(m_market_data_client, m_time_client);
+      m_simulation_driver->set_ticker_slot([this] (const auto& ticker) {
+        m_market_data_service.query_bbo_quotes(
+          Beam::make_current_query(ticker));
+        m_market_data_service.query_time_and_sales(
+          Beam::make_current_query(ticker));
+      });
+      m_market_data_service.set_bbo_slot(
+        [this] (const auto& ticker, const auto& bbo) {
+          m_simulation_driver->update(ticker, bbo);
+        });
+      m_market_data_service.set_time_and_sale_slot(
+        [this] (const auto& ticker, const auto& time_and_sale) {
+          m_simulation_driver->update(ticker, time_and_sale);
+        });
+      m_event_handler.set_idle_task([this] {
+        return m_simulation_driver->flush_next_execution_report();
+      });
+      m_simulation_driver->set_execution_report_slot([this] {
+        m_event_handler.notify_idle_task();
+      });
       m_order_execution_environment.emplace(m_service_locator_client,
         m_uid_client, m_administration_client, m_time_client,
-        OrderExecutionDriver(std::in_place_type<
-          SimulationOrderExecutionDriver<MarketDataClient, Beam::TimeClient>>,
-          m_market_data_client, m_time_client));
+        OrderExecutionDriver(&*m_simulation_driver));
       m_order_execution_client.emplace(
         m_order_execution_environment->make_client(
           Beam::Ref(m_service_locator_client)));
@@ -278,6 +299,7 @@ namespace Nexus {
     m_risk_environment->close();
     m_order_execution_client->close();
     m_order_execution_environment->close();
+    m_simulation_driver->close();
     m_compliance_environment.close();
     m_charting_environment.close();
     m_market_data_client.close();

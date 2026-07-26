@@ -34,7 +34,8 @@ BookViewPropertiesWindow::BookViewPropertiesWindow(
       m_properties(std::move(properties)),
       m_key_bindings(std::move(key_bindings)),
       m_ticker(std::move(ticker)),
-      m_initial_properties(m_properties->get()) {
+      m_initial_properties(m_properties->get()),
+      m_is_submitted(false) {
   set_svg_icon(":/Icons/bookview.svg");
   setWindowTitle(tr("Book View Properties"));
   setWindowFlags(windowFlags() & ~Qt::WindowMinMaxButtonsHint);
@@ -90,27 +91,36 @@ BookViewPropertiesWindow::BookViewPropertiesWindow(
   on_ticker_update(m_ticker->get());
 }
 
-void BookViewPropertiesWindow::on_cancel_button_click() {
-  m_properties->set(m_initial_properties);
-  auto& current_interactions =
-    m_key_bindings->get_interactions_key_bindings(m_ticker->get());
-  if(current_interactions && current_interactions->is_detached()) {
-    if(m_are_interactions_detached) {
-      copy_interactions(m_initial_interactions, *current_interactions);
-    } else {
-      current_interactions->reset();
+void BookViewPropertiesWindow::closeEvent(QCloseEvent* event) {
+  if(m_is_submitted) {
+    m_initial_properties = m_properties->get();
+    if(auto& current_interactions =
+        m_key_bindings->get_interactions_key_bindings(m_ticker->get())) {
+      copy_interactions(*current_interactions, m_initial_interactions);
+      m_are_interactions_detached = current_interactions->is_detached();
+    }
+  } else {
+    m_properties->set(m_initial_properties);
+    auto& current_interactions =
+      m_key_bindings->get_interactions_key_bindings(m_ticker->get());
+    if(current_interactions && current_interactions->is_detached()) {
+      if(m_are_interactions_detached) {
+        copy_interactions(m_initial_interactions, *current_interactions);
+      } else {
+        current_interactions->reset();
+      }
     }
   }
+  m_is_submitted = false;
+  Window::closeEvent(event);
+}
+
+void BookViewPropertiesWindow::on_cancel_button_click() {
   close();
 }
 
 void BookViewPropertiesWindow::on_done_button_click() {
-  m_initial_properties = m_properties->get();
-  if(auto& current_interactions =
-      m_key_bindings->get_interactions_key_bindings(m_ticker->get())) {
-    copy_interactions(*current_interactions, m_initial_interactions);
-    m_are_interactions_detached = current_interactions->is_detached();
-  }
+  m_is_submitted = true;
   close();
 }
 

@@ -24,6 +24,9 @@ namespace Spire {
         std::shared_ptr<KeyBindingsModel> key_bindings,
         std::shared_ptr<TickerModel> ticker, QWidget* parent = nullptr);
 
+    protected:
+      void closeEvent(QCloseEvent* event) override;
+
     private:
       std::shared_ptr<BookViewPropertiesModel> m_properties;
       std::shared_ptr<KeyBindingsModel> m_key_bindings;
@@ -31,6 +34,7 @@ namespace Spire {
       BookViewProperties m_initial_properties;
       InteractionsKeyBindingsModel m_initial_interactions;
       bool m_are_interactions_detached;
+      bool m_is_submitted;
       NavigationView* m_navigation_view;
       QWidget* m_highlights_page;
       boost::signals2::scoped_connection m_level_connection;

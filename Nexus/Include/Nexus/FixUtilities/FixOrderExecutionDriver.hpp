@@ -106,7 +106,10 @@ namespace Nexus {
           continue;
         }
         try {
-          auto& entry = *(application.second);
+          auto& entry = *application.second;
+          if(entry.m_settings.getSessions().empty()) {
+            continue;
+          }
           if(entry.m_settings.getSessions().size() != 1) {
             boost::throw_with_location(std::runtime_error(
               "Only one session per application is permitted."));
@@ -164,6 +167,11 @@ namespace Nexus {
     for(auto& record : records) {
       auto i = m_applications.find(record->m_info.m_fields.m_destination);
       if(i == m_applications.end()) {
+        if(!record->m_execution_reports.empty() &&
+            is_terminal(record->m_execution_reports.back().m_status)) {
+          orders.push_back(std::make_shared<PrimitiveOrder>(*record));
+          continue;
+        }
         boost::throw_with_location(OrderUnrecoverableException(
           "FIX application for given destination not found: [" +
           record->m_info.m_fields.m_destination + "], " +
@@ -214,9 +222,11 @@ namespace Nexus {
       return;
     }
     for(auto& application : m_applications) {
-      auto& entry = *(application.second);
-      entry.m_initiator->stop();
-      entry.m_is_connected = false;
+      auto& entry = *application.second;
+      if(entry.m_initiator) {
+        entry.m_initiator->stop();
+        entry.m_is_connected = false;
+      }
     }
     m_open_state.close();
   }

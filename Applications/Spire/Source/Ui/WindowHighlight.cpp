@@ -47,10 +47,13 @@ namespace {
     return threshold;
   }
 
-  auto contains(const std::vector<Window*>& windows, WId wid) {
-    return std::ranges::any_of(windows, [&] (auto window) {
-      return window->winId() == wid;
-    });
+  auto to_wid_set(const ListModel<Window*>& targets) {
+    auto wids = std::unordered_set<WId>();
+    wids.reserve(targets.get_size());
+    for(auto target : targets) {
+      wids.insert(target->winId());
+    }
+    return wids;
   }
 
   auto get_z_order_windows() {
@@ -65,39 +68,37 @@ namespace {
     return windows;
   }
 
-  auto get_minimized_windows(const std::vector<Window*>& windows) {
-    auto minimized_windows = std::unordered_set<WId>();
-    for(auto window : windows) {
-      auto wid = window->winId();
-      if(IsIconic(reinterpret_cast<HWND>(wid))) {
-        minimized_windows.insert(wid);
-      }
-    }
-    return minimized_windows;
-  }
-
   void reorder_window(HWND hwnd, HWND insert_after) {
     SetWindowPos(hwnd, insert_after, 0, 0, 0, 0,
       SWP_NOMOVE | SWP_NOSIZE | SWP_NOACTIVATE);
   }
 
-  void raise_window(WId hwnd) {
-    auto insert_after_window = [&] {
-      if(auto activated_window = QApplication::activeWindow()) {
-        return reinterpret_cast<HWND>(activated_window->winId());
+  bool is_topmost(HWND hwnd) {
+    return (GetWindowLongPtr(hwnd, GWL_EXSTYLE) & WS_EX_TOPMOST) != 0;
+  }
+
+  HWND get_below_active_anchor() {
+    if(auto active = QApplication::activeWindow()) {
+      auto active_hwnd = reinterpret_cast<HWND>(active->winId());
+      if(!is_topmost(active_hwnd) && !IsIconic(active_hwnd)) {
+        return active_hwnd;
       }
-      return HWND_TOP;
-    }();
-    reorder_window(reinterpret_cast<HWND>(hwnd), insert_after_window);
+    }
+    return HWND_TOP;
+  }
+
+  void raise_window(WId hwnd) {
+    reorder_window(reinterpret_cast<HWND>(hwnd), get_below_active_anchor());
   }
 
   void raise(const std::vector<WId>& z_order_windows,
-      const std::vector<Window*>& targets) {
-    if(targets.empty()) {
+      const ListModel<Window*>& targets) {
+    if(targets.get_size() == 0) {
       return;
     }
+    auto target_wids = to_wid_set(targets);
     for(auto i = z_order_windows.rbegin(); i != z_order_windows.rend(); ++i) {
-      if(contains(targets, *i)) {
+      if(target_wids.contains(*i)) {
         auto hwnd = reinterpret_cast<HWND>(*i);
         if(IsIconic(hwnd)) {
           ShowWindow(hwnd, SW_SHOWNOACTIVATE);
@@ -107,22 +108,47 @@ namespace {
     }
   }
 
-  void restore(const std::vector<WId>& z_order_windows,
-      const std::vector<Window*>& targets,
+  void restore_target(WId wid, HWND anchor,
       const std::unordered_set<WId>& minimized_windows) {
-    for(auto i = z_order_windows.begin(); i != z_order_windows.end(); ++i) {
-      if(contains(targets, *i)) {
-        if(minimized_windows.contains(*i)) {
-          ShowWindow(reinterpret_cast<HWND>(*i), SW_SHOWMINNOACTIVE);
-        } else {
-          auto after_window = [&] {
-            if(i == z_order_windows.begin()) {
-              return HWND_TOP;
-            }
-            return reinterpret_cast<HWND>(*(i - 1));
-          }();
-          reorder_window(reinterpret_cast<HWND>(*i), after_window);
-        }
+    if(minimized_windows.contains(wid)) {
+      ShowWindow(reinterpret_cast<HWND>(wid), SW_SHOWMINNOACTIVE);
+      return;
+    }
+    auto hwnd = reinterpret_cast<HWND>(wid);
+    if(is_topmost(hwnd)) {
+      reorder_window(hwnd, HWND_NOTOPMOST);
+    }
+    reorder_window(hwnd, anchor);
+  }
+
+  void restore(const std::vector<WId>& z_order_windows,
+      const ListModel<Window*>& targets,
+      const std::unordered_set<WId>& minimized_windows) {
+    auto target_wids = to_wid_set(targets);
+    auto anchor = get_below_active_anchor();
+    for(auto wid : z_order_windows) {
+      auto hwnd = reinterpret_cast<HWND>(wid);
+      if(target_wids.contains(wid)) {
+        restore_target(wid, anchor, minimized_windows);
+      }
+      if(IsWindow(hwnd) && !is_topmost(hwnd) && !IsIconic(hwnd)) {
+        anchor = hwnd;
+      }
+    }
+  }
+
+  void restore(const std::vector<WId>& z_order_windows, Window& target,
+      const std::unordered_set<WId>& minimized_windows) {
+    auto anchor = get_below_active_anchor();
+    auto target_wid = target.winId();
+    for(auto wid : z_order_windows) {
+      if(wid == target_wid) {
+        restore_target(wid, anchor, minimized_windows);
+        return;
+      }
+      auto hwnd = reinterpret_cast<HWND>(wid);
+      if(IsWindow(hwnd) && !is_topmost(hwnd) && !IsIconic(hwnd)) {
+        anchor = hwnd;
       }
     }
   }
@@ -176,26 +202,35 @@ struct WindowHighlight::Overlay : QWidget {
   }
 };
 
-WindowHighlight::WindowHighlight(std::vector<Window*> windows)
-    : m_windows(std::move(windows)),
+WindowHighlight::WindowHighlight(std::shared_ptr<ListModel<Window*>> current)
+    : m_current(std::move(current)),
       m_z_order_windows(get_z_order_windows()),
-      m_minimized_windows(get_minimized_windows(m_windows)) {
-  for(auto window : m_windows) {
+      m_transaction_depth(0) {
+  for(auto window : std::as_const(*m_current)) {
     match(*window, Highlighted());
+    auto wid = window->winId();
+    if(IsIconic(reinterpret_cast<HWND>(wid))) {
+      m_minimized_windows.insert(wid);
+    }
   }
-  raise(m_z_order_windows, m_windows);
-  update_geometry();
-  for(auto& [_, overlay] : m_overlays) {
-    raise_window(overlay->winId());
-  }
+  refresh();
+  m_operation_connection = m_current->connect_operation_signal(
+    std::bind_front(&WindowHighlight::on_operation, this));
 }
 
 WindowHighlight::~WindowHighlight() {
-  for(auto window : m_windows) {
+  for(auto window : std::as_const(*m_current)) {
     unmatch(*window, Highlighted());
-    window->repaint();
+    if(m_minimized_windows.contains(window->winId())) {
+      window->repaint();
+    }
   }
-  restore(m_z_order_windows, m_windows, m_minimized_windows);
+  restore(m_z_order_windows, *m_current, m_minimized_windows);
+}
+
+const std::shared_ptr<ListModel<Window*>>&
+    WindowHighlight::get_current() const {
+  return m_current;
 }
 
 QPainterPath WindowHighlight::make_overlay_path(const QScreen& screen,
@@ -211,7 +246,7 @@ QPainterPath WindowHighlight::make_overlay_path(const QScreen& screen,
 std::unordered_map<QScreen*, std::vector<QRect>>
     WindowHighlight::get_window_rectangles() const{
   auto rectangles = std::unordered_map<QScreen*, std::vector<QRect>>();
-  for(auto window : m_windows) {
+  for(auto window : std::as_const(*m_current)) {
     if(!window || window->isHidden()) {
       continue;
     }
@@ -288,18 +323,86 @@ QRegion WindowHighlight::snap_region(const std::vector<QRect>& rectangles) {
 
 void WindowHighlight::update_geometry() {
   auto window_rectangles = get_window_rectangles();
+  for(auto& [screen, overlay] : m_overlays) {
+    if(!window_rectangles.contains(screen)) {
+      if(!overlay->m_path.isEmpty()) {
+        overlay->m_path = QPainterPath();
+        overlay->repaint();
+      }
+      m_overlay_bounds.erase(screen);
+    }
+  }
   for(auto& [screen, rectangles] : window_rectangles) {
     auto region = snap_region(rectangles);
     auto overlay_path = make_overlay_path(*screen, rectangles, region);
-    auto rect = region.boundingRect().adjusted(
+    auto required_bounds = region.boundingRect().adjusted(
       -HALF_HIGHLIGHT_WIDTH(), -HALF_HIGHLIGHT_HEIGHT(), HALF_HIGHLIGHT_WIDTH(),
-      HALF_HIGHLIGHT_HEIGHT());
-    rect = rect.intersected(screen->geometry());
-    auto& overlay = m_overlays.try_emplace(screen,
-      std::make_unique<Overlay>(*screen)).first->second;
-    overlay->m_path = overlay_path.translated(-rect.topLeft());
-    overlay->setGeometry(rect);
+      HALF_HIGHLIGHT_HEIGHT()).intersected(screen->geometry());
+    auto& bounds = m_overlay_bounds[screen];
+    if(bounds.isEmpty()) {
+      bounds = required_bounds;
+    } else if(!bounds.contains(required_bounds)) {
+      bounds = bounds.united(required_bounds).intersected(screen->geometry());
+    }
+    auto i = m_overlays.find(screen);
+    if(i == m_overlays.end()) {
+      i = m_overlays.emplace(screen, std::make_unique<Overlay>(*screen)).first;
+    }
+    auto& overlay = i->second;
+    if(overlay->geometry() != bounds) {
+      overlay->m_path = QPainterPath();
+      overlay->repaint();
+      overlay->setGeometry(bounds);
+    }
+    overlay->m_path = overlay_path.translated(-bounds.topLeft());
     overlay->show();
-    overlay->update();
+    overlay->repaint();
   }
+}
+
+void WindowHighlight::refresh() {
+  m_z_order_windows = get_z_order_windows();
+  raise(m_z_order_windows, *m_current);
+  update_geometry();
+  for(auto& [_, overlay] : m_overlays) {
+    raise_window(overlay->winId());
+  }
+}
+
+void WindowHighlight::on_operation(
+    const ListModel<Window*>::Operation& operation) {
+  visit(operation,
+    [&] (const ListModel<Window*>::StartTransaction&) {
+      ++m_transaction_depth;
+    },
+    [&] (const ListModel<Window*>::EndTransaction&) {
+      if(--m_transaction_depth == 0) {
+        refresh();
+      }
+    },
+    [&] (const ListModel<Window*>::AddOperation& operation) {
+      auto window = m_current->get(operation.m_index);
+      match(*window, Highlighted());
+      auto wid = window->winId();
+      if(IsIconic(reinterpret_cast<HWND>(wid))) {
+        m_minimized_windows.insert(wid);
+      }
+      if(m_transaction_depth == 0) {
+        refresh();
+      }
+    },
+    [&] (const ListModel<Window*>::PreRemoveOperation& operation) {
+      auto window = m_current->get(operation.m_index);
+      unmatch(*window, Highlighted());
+      if(m_minimized_windows.contains(window->winId())) {
+        window->repaint();
+      }
+      restore(m_z_order_windows, *window, m_minimized_windows);
+      m_minimized_windows.erase(window->winId());
+    },
+    [&] (const ListModel<Window*>::RemoveOperation&) {
+      if(m_transaction_depth == 0) {
+        refresh();
+      }
+    });
 }

@@ -28,9 +28,9 @@ namespace {
   };
 
   struct ActiveEvent : BacktesterEvent {
-    std::atomic<int>* m_counter;
+    std::atomic_int* m_counter;
 
-    ActiveEvent(ptime timestamp, std::atomic<int>& counter)
+    ActiveEvent(ptime timestamp, std::atomic_int& counter)
       : BacktesterEvent(timestamp),
         m_counter(&counter) {}
 
@@ -55,7 +55,7 @@ TEST_SUITE("BacktesterEventHandler") {
     auto handler =
       BacktesterEventHandler(time_from_string("2025-08-12 09:00:00.000"),
         time_from_string("2025-08-12 16:00:00.000"));
-    auto active_count = std::atomic<int>(0);
+    auto active_count = std::atomic_int(0);
     auto passive_event = std::make_shared<PassiveEvent>(
       time_from_string("2025-08-12 09:30:00.000"));
     handler.add(passive_event);
@@ -77,7 +77,7 @@ TEST_SUITE("BacktesterEventHandler") {
     auto handler =
       BacktesterEventHandler(time_from_string("2025-08-12 09:00:00.000"),
         time_from_string("2025-08-12 16:00:00.000"));
-    auto active_count = std::atomic<int>(0);
+    auto active_count = std::atomic_int(0);
     auto passive_event1 = std::make_shared<PassiveEvent>(
       time_from_string("2025-08-12 09:15:00.000"));
     auto active_event1 = std::make_shared<ActiveEvent>(
@@ -104,7 +104,7 @@ TEST_SUITE("BacktesterEventHandler") {
     auto start = time_from_string("2025-08-12 09:00:00.000");
     auto end = time_from_string("2025-08-12 16:00:00.000");
     auto handler = BacktesterEventHandler(start, end);
-    auto active_count = std::atomic<int>(0);
+    auto active_count = std::atomic_int(0);
     handler.add(std::make_shared<ActiveEvent>(
       time_from_string("2025-08-12 10:00:00.000"), active_count));
     handler.wait();
@@ -116,9 +116,7 @@ TEST_SUITE("BacktesterEventHandler") {
     auto start = time_from_string("2025-08-12 09:00:00.000");
     auto end = time_from_string("2025-08-12 16:00:00.000");
     auto handler = BacktesterEventHandler(start, end);
-    auto active_count = std::atomic<int>(0);
-    // The last active event is at 09:30, so the loop would park there; a passive
-    // event at 12:00 (before the end) would strand without wait()'s sentinel.
+    auto active_count = std::atomic_int(0);
     handler.add(std::make_shared<ActiveEvent>(
       time_from_string("2025-08-12 09:30:00.000"), active_count));
     auto passive_event = std::make_shared<PassiveEvent>(
@@ -133,7 +131,7 @@ TEST_SUITE("BacktesterEventHandler") {
     auto handler =
       BacktesterEventHandler(time_from_string("2025-08-12 09:00:00.000"),
         time_from_string("2025-08-12 16:00:00.000"));
-    auto active_count = std::atomic<int>(0);
+    auto active_count = std::atomic_int(0);
     handler.suspend();
     auto event = std::make_shared<ActiveEvent>(
       time_from_string("2025-08-12 10:00:00.000"), active_count);
@@ -151,7 +149,7 @@ TEST_SUITE("BacktesterEventHandler") {
     auto handler =
       BacktesterEventHandler(time_from_string("2025-08-12 09:00:00.000"),
         time_from_string("2025-08-12 16:00:00.000"));
-    auto active_count = std::atomic<int>(0);
+    auto active_count = std::atomic_int(0);
     handler.suspend();
     auto event1 = std::make_shared<ActiveEvent>(
       time_from_string("2025-08-12 10:00:00.000"), active_count);
@@ -189,7 +187,7 @@ TEST_SUITE("BacktesterEventHandler") {
     auto handler =
       BacktesterEventHandler(time_from_string("2025-08-12 09:00:00.000"),
         time_from_string("2025-08-12 16:00:00.000"));
-    auto active_count = std::atomic<int>(0);
+    auto active_count = std::atomic_int(0);
     auto event = std::make_shared<ActiveEvent>(
       time_from_string("2025-08-12 10:00:00.000"), active_count);
     handler.add(event);
@@ -201,7 +199,7 @@ TEST_SUITE("BacktesterEventHandler") {
     auto handler =
       BacktesterEventHandler(time_from_string("2025-08-12 09:00:00.000"),
         time_from_string("2025-08-12 16:00:00.000"));
-    auto active_count = std::atomic<int>(0);
+    auto active_count = std::atomic_int(0);
     auto event = std::make_shared<ActiveEvent>(
       time_from_string("2025-08-12 10:00:00.000"), active_count);
     handler.add(event);
@@ -221,7 +219,7 @@ TEST_SUITE("BacktesterEventHandler") {
     auto start = time_from_string("2025-08-12 09:00:00.000");
     auto end = time_from_string("2025-08-12 16:00:00.000");
     auto handler = BacktesterEventHandler(start, end);
-    auto active_count = std::atomic<int>(0);
+    auto active_count = std::atomic_int(0);
     auto event = std::make_shared<ActiveEvent>(
       time_from_string("2025-08-12 10:00:00.000"), active_count);
     handler.add(event);

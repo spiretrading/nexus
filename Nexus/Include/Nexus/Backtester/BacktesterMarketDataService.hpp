@@ -1,7 +1,9 @@
 #ifndef NEXUS_BACKTESTER_MARKET_DATA_SERVICE_HPP
 #define NEXUS_BACKTESTER_MARKET_DATA_SERVICE_HPP
+#include <functional>
 #include <memory>
 #include <tuple>
+#include <type_traits>
 #include <unordered_set>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/Queue.hpp>
@@ -63,6 +65,21 @@ namespace Nexus {
        */
       void query_ticker_statuses(const TickerQuery& query);
 
+      /**
+       * Sets the callback invoked with every BboQuote before it is published.
+       * @param slot The callback to invoke.
+       */
+      void set_bbo_slot(
+        std::function<void (const Ticker&, const BboQuote&)> slot);
+
+      /**
+       * Sets the callback invoked with every TimeAndSale before it is
+       * published.
+       * @param slot The callback to invoke.
+       */
+      void set_time_and_sale_slot(
+        std::function<void (const Ticker&, const TimeAndSale&)> slot);
+
     private:
       template<typename, typename> friend class MarketDataEvent;
       template<typename> friend class MarketDataLoadEvent;
@@ -70,6 +87,9 @@ namespace Nexus {
       BacktesterEventHandler* m_event_handler;
       Tests::MarketDataServiceTestEnvironment* m_market_data_environment;
       MarketDataClient m_market_data_client;
+      std::function<void (const Ticker&, const BboQuote&)> m_bbo_slot;
+      std::function<void (const Ticker&, const TimeAndSale&)>
+        m_time_and_sale_slot;
       std::unordered_set<
         std::tuple<boost::variant<Ticker, Venue>, MarketDataType>> m_queries;
 
@@ -220,6 +240,16 @@ namespace Nexus {
     m_event_handler->add(event);
   }
 
+  inline void BacktesterMarketDataService::set_bbo_slot(
+      std::function<void (const Ticker&, const BboQuote&)> slot) {
+    m_bbo_slot = std::move(slot);
+  }
+
+  inline void BacktesterMarketDataService::set_time_and_sale_slot(
+      std::function<void (const Ticker&, const TimeAndSale&)> slot) {
+    m_time_and_sale_slot = std::move(slot);
+  }
+
   template<typename T>
   MarketDataQueryEvent<T>::MarketDataQueryEvent(QueryType query,
     Beam::Ref<BacktesterMarketDataService> service) noexcept
@@ -299,6 +329,17 @@ namespace Nexus {
 
   template<typename I, typename T>
   void MarketDataEvent<I, T>::execute() {
+    if constexpr(std::is_same_v<Index, Ticker> &&
+        std::is_same_v<MarketDataType, BboQuote>) {
+      if(m_service->m_bbo_slot) {
+        m_service->m_bbo_slot(m_index, m_value);
+      }
+    } else if constexpr(std::is_same_v<Index, Ticker> &&
+        std::is_same_v<MarketDataType, TimeAndSale>) {
+      if(m_service->m_time_and_sale_slot) {
+        m_service->m_time_and_sale_slot(m_index, m_value);
+      }
+    }
     m_service->m_market_data_environment->get_feed_client().publish(
       Beam::IndexedValue(m_value, m_index));
   }

@@ -52,7 +52,7 @@ if(UNIX)
     optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     dl)
   if(CMAKE_CXX_COMPILER_ID STREQUAL "GNU")
-    target_link_libraries(Python debug stdc++exp)
+    target_link_libraries(Python stdc++exp)
   endif()
 endif()
 if(WIN32)
