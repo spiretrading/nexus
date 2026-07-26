@@ -1,5 +1,5 @@
-#ifndef NEXUS_SIMULATION_ORDER_EXECUTION_DRIVER_HPP
-#define NEXUS_SIMULATION_ORDER_EXECUTION_DRIVER_HPP
+#ifndef NEXUS_PASSIVE_SIMULATION_ORDER_EXECUTION_DRIVER_HPP
+#define NEXUS_PASSIVE_SIMULATION_ORDER_EXECUTION_DRIVER_HPP
 #include <functional>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -24,7 +24,7 @@ namespace Nexus {
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  class SimulationOrderExecutionDriver {
+  class PassiveSimulationOrderExecutionDriver {
     public:
 
       /** The type of MarketDataClient to use. */
@@ -34,14 +34,15 @@ namespace Nexus {
       using TimeClient = Beam::dereference_t<T>;
 
       /**
-       * Constructs a SimulationOrderExecutionDriver.
+       * Constructs a PassiveSimulationOrderExecutionDriver.
        * @param market_data_client Initializes the MarketDataClient.
        * @param time_client Initializes the TimeClient.
        */
       template<Beam::Initializes<M> MF, Beam::Initializes<T> TF>
-      SimulationOrderExecutionDriver(MF&& market_data_client, TF&& time_client);
+      PassiveSimulationOrderExecutionDriver(
+        MF&& market_data_client, TF&& time_client);
 
-      ~SimulationOrderExecutionDriver();
+      ~PassiveSimulationOrderExecutionDriver();
 
       /**
        * Sets the callback invoked the first time a Ticker is simulated.
@@ -106,24 +107,26 @@ namespace Nexus {
         std::unique_ptr<TickerOrderSimulator>, Beam::Mutex> m_simulators;
       Beam::OpenState m_open_state;
 
-      SimulationOrderExecutionDriver(
-        const SimulationOrderExecutionDriver&) = delete;
-      SimulationOrderExecutionDriver& operator =(
-        const SimulationOrderExecutionDriver&) = delete;
+      PassiveSimulationOrderExecutionDriver(
+        const PassiveSimulationOrderExecutionDriver&) = delete;
+      PassiveSimulationOrderExecutionDriver& operator =(
+        const PassiveSimulationOrderExecutionDriver&) = delete;
       TickerOrderSimulator* find(const Ticker& ticker);
       TickerOrderSimulator& load(const Ticker& ticker);
   };
 
   template<typename M, typename T>
-  SimulationOrderExecutionDriver(M&&, T&&) -> SimulationOrderExecutionDriver<
-    std::remove_cvref_t<M>, std::remove_cvref_t<T>>;
+  PassiveSimulationOrderExecutionDriver(M&&, T&&) ->
+    PassiveSimulationOrderExecutionDriver<
+      std::remove_cvref_t<M>, std::remove_cvref_t<T>>;
 
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
   template<Beam::Initializes<M> MF, Beam::Initializes<T> TF>
-  SimulationOrderExecutionDriver<M, T>::SimulationOrderExecutionDriver(
-    MF&& market_data_client, TF&& time_client)
+  PassiveSimulationOrderExecutionDriver<M, T>::
+      PassiveSimulationOrderExecutionDriver(
+        MF&& market_data_client, TF&& time_client)
     : m_market_data_client(std::forward<MF>(market_data_client)),
       m_time_client(std::forward<TF>(time_client)),
       m_reports(std::make_shared<SimulationExecutionReportQueue>()),
@@ -132,14 +135,15 @@ namespace Nexus {
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  SimulationOrderExecutionDriver<M, T>::~SimulationOrderExecutionDriver() {
+  PassiveSimulationOrderExecutionDriver<M, T>::
+      ~PassiveSimulationOrderExecutionDriver() {
     close();
   }
 
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  void SimulationOrderExecutionDriver<M, T>::set_ticker_slot(
+  void PassiveSimulationOrderExecutionDriver<M, T>::set_ticker_slot(
       std::function<void (const Ticker&)> slot) {
     m_ticker_slot = std::move(slot);
   }
@@ -147,7 +151,7 @@ namespace Nexus {
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  void SimulationOrderExecutionDriver<M, T>::update(
+  void PassiveSimulationOrderExecutionDriver<M, T>::update(
       const Ticker& ticker, const BboQuote& bbo) {
     if(auto simulator = find(ticker)) {
       simulator->update(bbo);
@@ -157,7 +161,7 @@ namespace Nexus {
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  void SimulationOrderExecutionDriver<M, T>::update(
+  void PassiveSimulationOrderExecutionDriver<M, T>::update(
       const Ticker& ticker, const TimeAndSale& time_and_sale) {
     if(auto simulator = find(ticker)) {
       simulator->update(time_and_sale);
@@ -167,7 +171,7 @@ namespace Nexus {
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  void SimulationOrderExecutionDriver<M, T>::set_execution_report_slot(
+  void PassiveSimulationOrderExecutionDriver<M, T>::set_execution_report_slot(
       std::function<void()> slot) {
     m_reports->set_slot(std::move(slot));
   }
@@ -175,14 +179,15 @@ namespace Nexus {
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  bool SimulationOrderExecutionDriver<M, T>::flush_next_execution_report() {
+  bool PassiveSimulationOrderExecutionDriver<M, T>::
+      flush_next_execution_report() {
     return m_reports->flush_next();
   }
 
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  void SimulationOrderExecutionDriver<M, T>::flush_execution_reports() {
+  void PassiveSimulationOrderExecutionDriver<M, T>::flush_execution_reports() {
     m_reports->flush();
   }
 
@@ -190,7 +195,7 @@ namespace Nexus {
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
   std::vector<std::shared_ptr<Order>>
-      SimulationOrderExecutionDriver<M, T>::restore(
+      PassiveSimulationOrderExecutionDriver<M, T>::restore(
         const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
         const std::vector<SequencedOrderRecord>& records) {
     auto orders = std::vector<std::shared_ptr<Order>>();
@@ -207,13 +212,13 @@ namespace Nexus {
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  void SimulationOrderExecutionDriver<M, T>::add(
+  void PassiveSimulationOrderExecutionDriver<M, T>::add(
     const std::shared_ptr<Order>& order) {}
 
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  std::shared_ptr<Order> SimulationOrderExecutionDriver<M, T>::submit(
+  std::shared_ptr<Order> PassiveSimulationOrderExecutionDriver<M, T>::submit(
       const OrderInfo& info) {
     auto order = std::make_shared<PrimitiveOrder>(info);
     m_orders.insert(info.m_id, order);
@@ -225,7 +230,7 @@ namespace Nexus {
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  void SimulationOrderExecutionDriver<M, T>::cancel(
+  void PassiveSimulationOrderExecutionDriver<M, T>::cancel(
       const OrderExecutionSession& session, OrderId id) {
     if(auto order = m_orders.find(id)) {
       auto& simulator = load((*order)->get_info().m_fields.m_ticker);
@@ -236,7 +241,7 @@ namespace Nexus {
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  void SimulationOrderExecutionDriver<M, T>::update(
+  void PassiveSimulationOrderExecutionDriver<M, T>::update(
       const OrderExecutionSession& session, OrderId id,
       const ExecutionReport& report) {
     if(auto order = m_orders.find(id)) {
@@ -248,7 +253,7 @@ namespace Nexus {
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  void SimulationOrderExecutionDriver<M, T>::close() {
+  void PassiveSimulationOrderExecutionDriver<M, T>::close() {
     if(m_open_state.set_closing()) {
       return;
     }
@@ -259,8 +264,8 @@ namespace Nexus {
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  typename SimulationOrderExecutionDriver<M, T>::TickerOrderSimulator*
-      SimulationOrderExecutionDriver<M, T>::find(const Ticker& ticker) {
+  typename PassiveSimulationOrderExecutionDriver<M, T>::TickerOrderSimulator*
+      PassiveSimulationOrderExecutionDriver<M, T>::find(const Ticker& ticker) {
     return m_simulators.with([&] (auto& simulators) -> TickerOrderSimulator* {
       auto i = simulators.find(ticker);
       if(i == simulators.end()) {
@@ -273,8 +278,8 @@ namespace Nexus {
   template<typename M, typename T> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>>
-  typename SimulationOrderExecutionDriver<M, T>::TickerOrderSimulator&
-      SimulationOrderExecutionDriver<M, T>::load(const Ticker& ticker) {
+  typename PassiveSimulationOrderExecutionDriver<M, T>::TickerOrderSimulator&
+      PassiveSimulationOrderExecutionDriver<M, T>::load(const Ticker& ticker) {
     auto [simulator, is_new] = m_simulators.with(
       [&] (auto& simulators) -> std::pair<TickerOrderSimulator*, bool> {
         auto i = simulators.find(ticker);

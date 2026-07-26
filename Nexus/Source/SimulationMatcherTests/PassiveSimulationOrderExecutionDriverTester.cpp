@@ -1,6 +1,6 @@
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Ticker.hpp"
-#include "Nexus/SimulationMatcher/SimulationOrderExecutionDriver.hpp"
+#include "Nexus/SimulationMatcher/PassiveSimulationOrderExecutionDriver.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 
 using namespace Beam;
@@ -25,14 +25,14 @@ namespace {
   };
 }
 
-TEST_SUITE("SimulationOrderExecutionDriver") {
+TEST_SUITE("PassiveSimulationOrderExecutionDriver") {
   TEST_CASE("submit") {
     auto fixture = Fixture();
     fixture.m_environment.update_bbo_price(SHOP, Money::ONE, 2 * Money::ONE);
     fixture.m_environment.update_bbo_price(
       TD, 10 * Money::ONE, 20 * Money::ONE);
-    auto driver = SimulationOrderExecutionDriver(fixture.m_market_data_client,
-      std::make_unique<TestTimeClient>(
+    auto driver = PassiveSimulationOrderExecutionDriver(
+      fixture.m_market_data_client, std::make_unique<TestTimeClient>(
         Ref(fixture.m_environment.get_time_environment())));
     auto info1 = OrderInfo();
     info1.m_fields = make_limit_order_fields(SHOP, Side::BID, 100, Money::ONE);
@@ -69,8 +69,8 @@ TEST_SUITE("SimulationOrderExecutionDriver") {
     fixture.m_environment.update_bbo_price(SHOP, Money::ONE, 2 * Money::ONE);
     fixture.m_environment.update_bbo_price(
       TD, 10 * Money::ONE, 20 * Money::ONE);
-    auto driver = SimulationOrderExecutionDriver(fixture.m_market_data_client,
-      std::make_unique<TestTimeClient>(
+    auto driver = PassiveSimulationOrderExecutionDriver(
+      fixture.m_market_data_client, std::make_unique<TestTimeClient>(
         Ref(fixture.m_environment.get_time_environment())));
     auto timestamp = fixture.m_environment.get_time_environment().get_time();
     auto live_info = OrderInfo();

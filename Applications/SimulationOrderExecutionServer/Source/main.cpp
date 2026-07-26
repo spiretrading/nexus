@@ -30,7 +30,7 @@
 #include "Nexus/OrderExecutionService/ReplicatedOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/RiskStateCheck.hpp"
 #include "Nexus/OrderExecutionService/SqlOrderExecutionDataStore.hpp"
-#include "Nexus/SimulationMatcher/SimulationOrderExecutionDriver.hpp"
+#include "Nexus/SimulationMatcher/PassiveSimulationOrderExecutionDriver.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
@@ -43,7 +43,7 @@ namespace {
   using DataStore =
     SqlOrderExecutionDataStore<SqlConnection<MySql::Connection>>;
   using ApplicationSimulationOrderExecutionDriver =
-    SimulationOrderExecutionDriver<
+    PassiveSimulationOrderExecutionDriver<
       ApplicationMarketDataClient*, LiveNtpTimeClient*>;
   using ApplicationOrderSubmissionCheckDriver =
     OrderSubmissionCheckDriver<ApplicationSimulationOrderExecutionDriver*>;

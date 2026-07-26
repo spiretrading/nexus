@@ -20,7 +20,7 @@
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/RiskServiceTests/RiskServiceTestEnvironment.hpp"
-#include "Nexus/SimulationMatcher/SimulationOrderExecutionDriver.hpp"
+#include "Nexus/SimulationMatcher/PassiveSimulationOrderExecutionDriver.hpp"
 
 namespace Nexus {
 
@@ -118,7 +118,7 @@ namespace Nexus {
       MarketDataClient m_market_data_client;
       Tests::ChartingServiceTestEnvironment m_charting_environment;
       Tests::ComplianceTestEnvironment m_compliance_environment;
-      boost::optional<SimulationOrderExecutionDriver<
+      boost::optional<PassiveSimulationOrderExecutionDriver<
         MarketDataClient, Beam::TimeClient>> m_simulation_driver;
       boost::optional<Tests::OrderExecutionServiceTestEnvironment>
         m_order_execution_environment;
