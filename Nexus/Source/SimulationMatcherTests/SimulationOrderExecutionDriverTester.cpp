@@ -23,7 +23,8 @@ namespace {
 
     SimulationOrderExecutionDriver make_driver() {
       return SimulationOrderExecutionDriver(
-        m_market_data_client, std::make_unique<TestTimeClient>(
+        MarketDataClient(&m_market_data_client),
+        std::make_unique<TestTimeClient>(
           Ref(m_environment.get_time_environment())));
     }
 
