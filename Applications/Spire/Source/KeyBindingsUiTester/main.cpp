@@ -56,15 +56,31 @@ int main(int argc, char** argv) {
   auto layout = new QVBoxLayout(&launcher);
   auto open_button = Spire::make_label_button(QObject::tr("Open Key Bindings"));
   layout->addWidget(open_button);
-  open_button->connect_click_signal([&] {
+  auto cascade_position = QPoint();
+  auto open_key_bindings_window = [&] {
     auto window = new KeyBindingsWindow(
       key_bindings, tickers, get_default_additional_tag_database());
     window->setAttribute(Qt::WA_DeleteOnClose);
     window->setAttribute(Qt::WA_QuitOnClose, false);
+    if(!cascade_position.isNull()) {
+      window->move(cascade_position);
+      cascade_position += QPoint(scale_width(30), scale_height(30));
+    }
     window->show();
-  });
+    return window;
+  };
+  open_button->connect_click_signal([&] { open_key_bindings_window(); });
   launcher.setFixedSize(scale(200, 60));
+  auto initial_window = open_key_bindings_window();
+  const auto WINDOW_GAP = scale_width(10);
+  auto y = initial_window->y();
+  initial_window->move(
+    initial_window->x() + (launcher.width() + WINDOW_GAP) / 2, y);
+  launcher.move(
+    initial_window->frameGeometry().left() - WINDOW_GAP - launcher.width(), y);
   launcher.show();
+  cascade_position =
+    initial_window->pos() + QPoint(scale_width(30), scale_height(30));
   auto hotkey_override = HotkeyOverride();
   application.installNativeEventFilter(&hotkey_override);
   application.exec();
