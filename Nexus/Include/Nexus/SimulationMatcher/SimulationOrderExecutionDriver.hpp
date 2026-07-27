@@ -39,7 +39,7 @@ namespace Nexus {
 
     private:
       MarketDataClient m_market_data_client;
-      PassiveSimulationOrderExecutionDriver<MarketDataClient, Beam::TimeClient>
+      PassiveSimulationOrderExecutionDriver<MarketDataClient*, Beam::TimeClient>
         m_driver;
       Beam::RoutineHandlerGroup m_query_routines;
       Beam::RoutineTaskQueue m_tasks;
@@ -54,8 +54,8 @@ namespace Nexus {
 
   inline SimulationOrderExecutionDriver::SimulationOrderExecutionDriver(
       MarketDataClient market_data_client, Beam::TimeClient time_client)
-      : m_market_data_client(market_data_client),
-        m_driver(std::move(market_data_client), std::move(time_client)) {
+      : m_market_data_client(std::move(market_data_client)),
+        m_driver(&m_market_data_client, std::move(time_client)) {
     m_driver.set_ticker_slot([this] (const auto& ticker) {
       subscribe(ticker);
     });
