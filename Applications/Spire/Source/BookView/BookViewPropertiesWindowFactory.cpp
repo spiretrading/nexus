@@ -58,7 +58,9 @@ BookViewPropertiesWindow* BookViewPropertiesWindowFactory::make(
   make(std::move(key_bindings));
   if(m_live_preview == live_preview) {
     if(m_ticker->get() != ticker) {
+      revert_interactions();
       m_ticker->set(ticker);
+      snapshot_interactions();
     }
     return m_properties_window.get();
   }
