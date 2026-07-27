@@ -319,7 +319,7 @@ namespace Nexus {
 
 namespace Beam {
   template<>
-  constexpr auto is_structure<Nexus::CurrencyId> = false;
+  inline constexpr auto is_structure<Nexus::CurrencyId> = false;
 
   template<>
   struct Send<Nexus::CurrencyId> {

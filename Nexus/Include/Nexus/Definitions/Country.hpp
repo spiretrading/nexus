@@ -389,7 +389,7 @@ namespace Nexus {
 
 namespace Beam {
   template<>
-  constexpr auto is_structure<Nexus::CountryCode> = false;
+  inline constexpr auto is_structure<Nexus::CountryCode> = false;
 
   template<>
   struct Send<Nexus::CountryCode> {
