@@ -24,7 +24,7 @@ function install_node() {
     exit 1
   fi
   local node_dir="node-v$NODE_VERSION-linux-$node_arch"
-  curl -O "https://nodejs.org/dist/v$NODE_VERSION/$node_dir.tar.xz"
+  curl -fLO "https://nodejs.org/dist/v$NODE_VERSION/$node_dir.tar.xz"
   tar -xf "$node_dir.tar.xz"
   sudo cp -r "$node_dir"/{bin,include,lib,share} /usr/local/
   rm -rf "$node_dir" "$node_dir.tar.xz"
@@ -44,8 +44,8 @@ function install_dependencies() {
   if [ $is_root -eq 1 ]; then
     apt-get update
     apt-get install -y automake build-essential cmake curl gdb git \
-      libncurses5-dev libreadline6-dev libtool libxml2 libxml2-dev m4 \
-      mysql-server parallel python3 python3-dev python3-pip ruby zip
+      libncurses-dev libreadline-dev libtool libxml2-dev m4 mysql-server \
+      parallel python3 python3-dev python3-pip ruby zip
     if ! command -v yq &> /dev/null; then
       local yq_arch="$ARCH"
       if [ "$yq_arch" == "x86_64" ]; then
@@ -53,11 +53,23 @@ function install_dependencies() {
       elif [[ "$yq_arch" == "aarch64" || "$yq_arch" == "arm64" ]]; then
         yq_arch="arm64"
       fi
-      curl -L "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_$yq_arch" \
+      curl -fL "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_$yq_arch" \
         -o /usr/local/bin/yq && chmod +x /usr/local/bin/yq
     fi
     check_and_install_node
   fi
+}
+
+function wait_for_service_locator() {
+  local elapsed=0
+  while ! (exec 3<> "/dev/tcp/$local_interface/20000") 2> /dev/null; do
+    if [ $elapsed -ge 60 ]; then
+      echo "Timed out waiting for the ServiceLocator to accept connections."
+      exit 1
+    fi
+    sleep 1
+    elapsed=$((elapsed + 1))
+  done
 }
 
 if [ "$EUID" == "0" ]; then
@@ -67,8 +79,8 @@ else
 fi
 username="${SUDO_USER:-$USER}"
 local_interface=$(echo -n `ip addr | \
-  egrep -o "inet ([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}).*global" | \
-  egrep -o "([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})" | \
+  grep -E -o "inet ([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}).*global" | \
+  grep -E -o "([0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3})" | \
   head -1`)
 while getopts "u:m:p:i:h" opt; do
   case ${opt} in
@@ -115,14 +127,17 @@ install_dependencies
 sudo -u $username ./build.sh || { echo "Build failed."; exit 1; }
 mysql_input="
 CREATE DATABASE IF NOT EXISTS spire;
-CREATE USER IF NOT EXISTS '$mysql_username'@'localhost' IDENTIFIED WITH mysql_native_password BY '$mysql_password';
-ALTER USER '$mysql_username'@'localhost' IDENTIFIED WITH mysql_native_password BY '$mysql_password';
+CREATE USER IF NOT EXISTS '$mysql_username'@'localhost' IDENTIFIED BY '$mysql_password';
+ALTER USER '$mysql_username'@'localhost' IDENTIFIED BY '$mysql_password';
 GRANT ALL ON spire.* TO '$mysql_username'@'localhost';
 "
 if [ $is_root -eq 1 ]; then
   mysql -uroot <<< "$mysql_input"
 else
-  sudo -u $username mysql -u$mysql_username -p$mysql_password <<< "$mysql_input"
+  export MYSQL_PWD="$mysql_password"
+  sudo -u $username --preserve-env=MYSQL_PWD mysql -u$mysql_username \
+    <<< "$mysql_input"
+  unset MYSQL_PWD
 fi
 pushd Applications
 sudo -u $username python3 setup.py -l "$local_interface" \
@@ -131,7 +146,7 @@ sudo -u $username python3 setup.py -l "$local_interface" \
 sudo -u $username ./install_python.sh
 pushd ServiceLocator/Application
 sudo -u $username ./start.sh
-sleep 10
+wait_for_service_locator
 popd
 admin_input="
 mkdir administrators
