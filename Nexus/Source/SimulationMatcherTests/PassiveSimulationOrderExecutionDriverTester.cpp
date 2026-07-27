@@ -20,8 +20,7 @@ namespace {
     Fixture()
       : m_environment(time_from_string("2025-08-14 09:00:00.000")),
         m_market_data_client(
-          make_market_data_client(m_environment, "simulator")) {
-    }
+          make_market_data_client(m_environment, "simulator")) {}
   };
 }
 

@@ -30,7 +30,7 @@
 #include "Nexus/OrderExecutionService/ReplicatedOrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/RiskStateCheck.hpp"
 #include "Nexus/OrderExecutionService/SqlOrderExecutionDataStore.hpp"
-#include "Nexus/SimulationMatcher/PassiveSimulationOrderExecutionDriver.hpp"
+#include "Nexus/SimulationMatcher/SimulationOrderExecutionDriver.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
@@ -42,11 +42,8 @@ using namespace Viper;
 namespace {
   using DataStore =
     SqlOrderExecutionDataStore<SqlConnection<MySql::Connection>>;
-  using ApplicationSimulationOrderExecutionDriver =
-    PassiveSimulationOrderExecutionDriver<
-      ApplicationMarketDataClient*, LiveNtpTimeClient*>;
   using ApplicationOrderSubmissionCheckDriver =
-    OrderSubmissionCheckDriver<ApplicationSimulationOrderExecutionDriver*>;
+    OrderSubmissionCheckDriver<SimulationOrderExecutionDriver*>;
   using ApplicationComplianceCheckOrderExecutionDriver =
     ComplianceCheckOrderExecutionDriver<ApplicationOrderSubmissionCheckDriver*,
       LiveNtpTimeClient*, ComplianceRuleSet<
@@ -84,8 +81,8 @@ int main(int argc, const char** argv) {
     load_definitions(definitions_client);
     auto compliance_client =
       ApplicationComplianceClient(Ref(service_locator_client));
-    auto simulation_driver = ApplicationSimulationOrderExecutionDriver(
-      &market_data_client, time_client.get());
+    auto simulation_driver = SimulationOrderExecutionDriver(
+      MarketDataClient(&market_data_client), TimeClient(time_client.get()));
     auto checks = std::vector<std::unique_ptr<OrderSubmissionCheck>>();
     try_or_nest([&] {
       checks.emplace_back(make_board_lot_check(&market_data_client));
