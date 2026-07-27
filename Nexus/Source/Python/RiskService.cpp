@@ -43,14 +43,15 @@ void Nexus::Python::export_local_risk_data_store(module& module) {
 
 void Nexus::Python::export_mysql_risk_data_store(module& module) {
   using DataStore = SqlRiskDataStore<SqlConnection<Viper::MySql::Connection>>;
-  class_<ToPythonRiskDataStore<DataStore>>(module, "MySqlRiskDataStore").
-    def(init([] (std::string host, unsigned int port, std::string username,
-        std::string password, std::string database) {
-      return std::make_unique<ToPythonRiskDataStore<DataStore>>(
-        std::make_unique<SqlConnection<Viper::MySql::Connection>>(
-          Viper::MySql::Connection(std::move(host), port, std::move(username),
-            std::move(password), std::move(database))));
-    }));
+  export_risk_data_store<ToPythonRiskDataStore<DataStore>>(
+    module, "MySqlRiskDataStore").
+      def(init([] (std::string host, unsigned int port, std::string username,
+          std::string password, std::string database) {
+        return std::make_unique<ToPythonRiskDataStore<DataStore>>(
+          std::make_unique<SqlConnection<Viper::MySql::Connection>>(
+            Viper::MySql::Connection(std::move(host), port, std::move(username),
+              std::move(password), std::move(database))));
+      }));
 }
 
 void Nexus::Python::export_risk_parameters(module& module) {
@@ -133,10 +134,11 @@ void Nexus::Python::export_risk_state(module& module) {
 
 void Nexus::Python::export_sqlite_risk_data_store(module& module) {
   using DataStore = SqlRiskDataStore<SqlConnection<Viper::Sqlite3::Connection>>;
-  class_<ToPythonRiskDataStore<DataStore>>(module, "SqliteRiskDataStore").
-    def(init([] (std::string path) {
-      return std::make_unique<ToPythonRiskDataStore<DataStore>>(
-        std::make_unique<SqlConnection<Viper::Sqlite3::Connection>>(
-          Viper::Sqlite3::Connection(std::move(path))));
-    }));
+  export_risk_data_store<ToPythonRiskDataStore<DataStore>>(
+    module, "SqliteRiskDataStore").
+      def(init([] (std::string path) {
+        return std::make_unique<ToPythonRiskDataStore<DataStore>>(
+          std::make_unique<SqlConnection<Viper::Sqlite3::Connection>>(
+            Viper::Sqlite3::Connection(std::move(path))));
+      }));
 }
