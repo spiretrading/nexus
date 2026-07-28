@@ -582,7 +582,7 @@ namespace Nexus {
 
 namespace Beam {
   template<>
-  constexpr auto is_structure<Nexus::Quantity> = false;
+  inline constexpr auto is_structure<Nexus::Quantity> = false;
 
   template<>
   struct Send<Nexus::Quantity> {

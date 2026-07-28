@@ -1,6 +1,7 @@
 #include "Spire/Toolbar/NewBlotterForm.hpp"
 #include <boost/signals2/shared_connection_block.hpp>
 #include <QKeyEvent>
+#include <QScreen>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/Button.hpp"
@@ -168,6 +169,19 @@ bool NewBlotterForm::event(QEvent* event) {
   if(event->type() == QEvent::ShowToParent) {
     m_name_model->set("");
     m_panel->show();
+    auto& parent = *m_panel->parentWidget();
+    auto parent_size = parent.size();
+    auto x = (parent_size.width() - m_panel->width()) / 2;
+    auto y = (parent_size.height() - m_panel->height()) / 2;
+    auto position = parent.mapToGlobal({x, y});
+    auto screen_geometry = parent.screen()->availableGeometry();
+    position.setX(std::clamp(position.x(), screen_geometry.left(),
+      std::max(screen_geometry.left(),
+        screen_geometry.right() - m_panel->width() + 1)));
+    position.setY(std::clamp(position.y(), screen_geometry.top(),
+      std::max(screen_geometry.top(),
+        screen_geometry.bottom() - m_panel->height() + 1)));
+    m_panel->move(position);
     m_panel->activateWindow();
   } else if(event->type() == QEvent::HideToParent) {
     auto current_blocker = shared_connection_block(m_name_connection);

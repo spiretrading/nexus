@@ -50,8 +50,8 @@ namespace {
       auto& service_locator = m_service_locator_environment.get_root();
       auto trading_groups_root = service_locator.load_directory_entry(
         DirectoryEntry::STAR_DIRECTORY, "trading_groups");
-      auto trading_group = service_locator.make_directory(
-        "test_trading_group", trading_groups_root);
+      auto trading_group =
+        service_locator.make_directory(name, trading_groups_root);
       auto managers_group =
         service_locator.make_directory("managers", trading_group);
       auto traders_group =

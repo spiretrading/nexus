@@ -3,6 +3,9 @@
   "version": "0.1.0",
   "description": "Tests the risk page.",
   "license": "GPL-3.0",
+  "allowScripts": {
+    "esbuild": false
+  },
   "devDependencies": {
     "@types/react": "17.0.80",
     "@types/react-dom": "17.0.11",

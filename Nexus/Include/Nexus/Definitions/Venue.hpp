@@ -686,7 +686,7 @@ namespace Nexus {
 
 namespace Beam {
   template<>
-  constexpr auto is_structure<Nexus::Venue> = false;
+  inline constexpr auto is_structure<Nexus::Venue> = false;
 
   template<>
   struct Send<Nexus::Venue> {

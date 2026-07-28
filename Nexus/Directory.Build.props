@@ -1,0 +1,7 @@
+<Project>
+  <PropertyGroup>
+    <UseMultiToolTask>true</UseMultiToolTask>
+    <EnforceProcessCountAcrossBuilds>true</EnforceProcessCountAcrossBuilds>
+    <CL_MPCount>$([System.Environment]::ProcessorCount)</CL_MPCount>
+  </PropertyGroup>
+</Project>
