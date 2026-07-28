@@ -44,6 +44,10 @@ namespace {
         make_bid(101 * Money::ONE, 100), make_ask(102 * Money::ONE, 100),
         start_time + seconds(2)), TD), Beam::Sequence(12)));
     }
+
+    ~Fixture() {
+      m_event_handler.close();
+    }
   };
 }
 
