@@ -48,18 +48,18 @@ namespace {
 
 TEST_SUITE("InventorySnapshot") {
   TEST_CASE("is_empty") {
-    REQUIRE(is_empty(InventorySnapshot()));
+    REQUIRE(Nexus::is_empty(InventorySnapshot()));
     auto snapshot = InventorySnapshot();
     snapshot.m_inventories.push_back(Inventory(
       Position(parse_ticker("ABC.TSX"), CAD, 1, Money::ONE), Money::ZERO,
       Money::ZERO, 1, 1));
-    REQUIRE(!is_empty(snapshot));
+    REQUIRE(!Nexus::is_empty(snapshot));
     snapshot = InventorySnapshot();
     snapshot.m_sequence = Beam::Sequence(100);
-    REQUIRE(!is_empty(snapshot));
+    REQUIRE(!Nexus::is_empty(snapshot));
     snapshot = InventorySnapshot();
     snapshot.m_excluded_orders.push_back(1);
-    REQUIRE(!is_empty(snapshot));
+    REQUIRE(!Nexus::is_empty(snapshot));
   }
 
   TEST_CASE("strip") {
