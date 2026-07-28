@@ -5,6 +5,7 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QRandomGenerator>
+#include <QScreen>
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
@@ -606,10 +607,16 @@ int main(int argc, char** argv) {
     std::bind_front(&BookViewTester::on_cancel_order, &tester));
   tester.installEventFilter(&tester);
   book_view_window.show();
-  const auto WINDOW_GAP = scale_width(10);
-  auto y = book_view_window.y();
-  book_view_window.move(book_view_window.x() - scale_width(500), y);
-  tester.move(book_view_window.frameGeometry().right() + WINDOW_GAP, y);
+  tester.show();
+  const auto WINDOW_GAP = scale_height(10);
+  const auto BOTTOM_MARGIN = scale_height(40);
+  auto screen_geometry = application.primaryScreen()->availableGeometry();
+  auto center_x = screen_geometry.center().x();
+  auto controller_y =
+    screen_geometry.bottom() - tester.frameGeometry().height() - BOTTOM_MARGIN;
+  tester.move(center_x - tester.frameGeometry().width() / 2, controller_y);
+  book_view_window.move(center_x - book_view_window.frameGeometry().width() / 2,
+    controller_y - book_view_window.frameGeometry().height() - WINDOW_GAP);
   auto new_window_count = 0;
   tester.m_open_new_window = [&] {
     auto window = new BookViewWindow(Ref(tester.m_user_profile),
@@ -622,6 +629,5 @@ int main(int argc, char** argv) {
       offset.height()));
     window->show();
   };
-  tester.show();
   application.exec();
 }
