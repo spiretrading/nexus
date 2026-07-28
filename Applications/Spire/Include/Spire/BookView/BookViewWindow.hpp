@@ -125,6 +125,7 @@ namespace Spire {
       std::shared_ptr<KeyBindingsModel> m_key_bindings;
       std::shared_ptr<BookViewPropertiesWindowFactory> m_factory;
       ModelBuilder m_model_builder;
+      std::shared_ptr<ProxyValueModel<BookViewProperties>> m_properties_proxy;
       std::shared_ptr<InteractionsKeyBindingsModel> m_interactions;
       std::shared_ptr<BookViewModel> m_model;
       BookDepth* m_book_depth;

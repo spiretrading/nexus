@@ -123,6 +123,7 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
       m_key_bindings(std::move(key_bindings)),
       m_factory(std::move(factory)),
       m_model_builder(std::move(model_builder)),
+      m_properties_proxy(make_proxy_value_model(m_factory->get_properties())),
       m_book_depth(nullptr),
       m_task_entry_panel(nullptr),
       m_is_task_entry_panel_for_interactions(false) {
@@ -426,7 +427,7 @@ void BookViewWindow::on_cancel_all(const CurrentUserOrder& user_order) {
 
 void BookViewWindow::on_properties_menu() {
   auto properties_window = m_factory->make(
-    m_key_bindings, m_ticker_view->get_current()->get());
+    m_key_bindings, m_ticker_view->get_current()->get(), m_properties_proxy);
   if(!properties_window->isVisible()) {
     properties_window->show();
     if(screen()->geometry().right() - frameGeometry().right() >=
@@ -457,7 +458,7 @@ void BookViewWindow::on_current(const Ticker& ticker) {
       Ref(*m_user_profile), ticker, Side::ASK));
   panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   layout->addWidget(panel);
-  m_book_depth = new BookDepth(m_model, m_factory->get_properties());
+  m_book_depth = new BookDepth(m_model, m_properties_proxy);
   layout->addWidget(m_book_depth);
   body->setFocusProxy(m_book_depth);
   m_transition_view->set_body(*body);
