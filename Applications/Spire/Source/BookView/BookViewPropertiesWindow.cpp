@@ -1,30 +1,14 @@
 #include "Spire/BookView/BookViewPropertiesWindow.hpp"
-#include <ranges>
 #include "Spire/BookView/BookViewHighlightPropertiesPage.hpp"
 #include "Spire/BookView/BookViewInteractionPropertiesPage.hpp"
 #include "Spire/BookView/BookViewLevelPropertiesPage.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Ui/Button.hpp"
 
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
-
-namespace {
-  void copy_interactions(const InteractionsKeyBindingsModel& from,
-      InteractionsKeyBindingsModel& to) {
-    to.get_default_quantity()->set(from.get_default_quantity()->get());
-    for(auto i :
-        std::views::iota(0, InteractionsKeyBindingsModel::MODIFIER_COUNT)) {
-      auto modifier = to_modifier(i);
-      to.get_quantity_increment(modifier)->set(
-        from.get_quantity_increment(modifier)->get());
-      to.get_price_increment(modifier)->set(
-        from.get_price_increment(modifier)->get());
-    }
-    to.is_cancel_on_fill()->set(from.is_cancel_on_fill()->get());
-  }
-}
 
 BookViewPropertiesWindow::BookViewPropertiesWindow(
     std::shared_ptr<BookViewPropertiesModel> properties,
@@ -32,9 +16,7 @@ BookViewPropertiesWindow::BookViewPropertiesWindow(
     std::shared_ptr<TickerModel> ticker, QWidget* parent)
     : Window(parent),
       m_properties(std::move(properties)),
-      m_key_bindings(std::move(key_bindings)),
       m_ticker(std::move(ticker)),
-      m_initial_properties(m_properties->get()),
       m_is_submitted(false) {
   set_svg_icon(":/Icons/bookview.svg");
   setWindowTitle(tr("Book View Properties"));
@@ -55,7 +37,7 @@ BookViewPropertiesWindow::BookViewPropertiesWindow(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_navigation_view->add_tab(*m_highlights_page, tr("Highlights"));
   auto interactions_page =
-    new BookViewInteractionPropertiesPage(m_key_bindings, m_ticker);
+    new BookViewInteractionPropertiesPage(std::move(key_bindings), m_ticker);
   interactions_page->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_navigation_view->add_tab(*interactions_page, tr("Interactions"));
@@ -91,25 +73,21 @@ BookViewPropertiesWindow::BookViewPropertiesWindow(
   on_ticker_update(m_ticker->get());
 }
 
+connection BookViewPropertiesWindow::connect_submit_signal(
+    const SubmitSignal::slot_type& slot) const {
+  return m_submit_signal.connect(slot);
+}
+
+connection BookViewPropertiesWindow::connect_cancel_signal(
+    const CancelSignal::slot_type& slot) const {
+  return m_cancel_signal.connect(slot);
+}
+
 void BookViewPropertiesWindow::closeEvent(QCloseEvent* event) {
   if(m_is_submitted) {
-    m_initial_properties = m_properties->get();
-    if(auto& current_interactions =
-        m_key_bindings->get_interactions_key_bindings(m_ticker->get())) {
-      copy_interactions(*current_interactions, m_initial_interactions);
-      m_are_interactions_detached = current_interactions->is_detached();
-    }
+    m_submit_signal();
   } else {
-    m_properties->set(m_initial_properties);
-    auto& current_interactions =
-      m_key_bindings->get_interactions_key_bindings(m_ticker->get());
-    if(current_interactions && current_interactions->is_detached()) {
-      if(m_are_interactions_detached) {
-        copy_interactions(m_initial_interactions, *current_interactions);
-      } else {
-        current_interactions->reset();
-      }
-    }
+    m_cancel_signal();
   }
   m_is_submitted = false;
   Window::closeEvent(event);
@@ -133,15 +111,6 @@ void BookViewPropertiesWindow::on_level_update(
 }
 
 void BookViewPropertiesWindow::on_ticker_update(const Ticker& ticker) {
-  m_navigation_view->set_enabled(m_navigation_view->get_count() - 1,
-    static_cast<bool>(ticker));
-  if(ticker) {
-    if(auto& current_interactions =
-        m_key_bindings->get_interactions_key_bindings(ticker)) {
-      m_are_interactions_detached = current_interactions->is_detached();
-      copy_interactions(*current_interactions, m_initial_interactions);
-    } else {
-      m_are_interactions_detached = true;
-    }
-  }
+  m_navigation_view->set_enabled(
+    m_navigation_view->get_count() - 1, static_cast<bool>(ticker));
 }

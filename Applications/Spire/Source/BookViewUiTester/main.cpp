@@ -5,6 +5,7 @@
 #include <QFormLayout>
 #include <QGroupBox>
 #include <QRandomGenerator>
+#include <QScreen>
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
@@ -28,6 +29,7 @@
 #include "Spire/Ui/IntegerBox.hpp"
 #include "Spire/Ui/MoneyBox.hpp"
 #include "Spire/Ui/SideBox.hpp"
+#include "Spire/Ui/TabView.hpp"
 #include "Spire/Ui/TableView.hpp"
 #include "Spire/Ui/VenueBox.hpp"
 
@@ -205,13 +207,15 @@ struct BookViewOrderTester : QWidget {
   OrderStatusBox* m_status_box;
   TableView* m_bid_table_view;
   TableView* m_ask_table_view;
+  scoped_connection m_bid_current_connection;
+  scoped_connection m_ask_current_connection;
 
   BookViewOrderTester(std::shared_ptr<BookViewModel> model,
       QWidget* parent = nullptr)
       : QWidget(parent),
         m_model(std::move(model)) {
     auto order_group_box = new QGroupBox(tr("Order"));
-    order_group_box->setFixedWidth(scale_width(200));
+    order_group_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     auto order_group_layout = new QVBoxLayout(order_group_box);
     auto fields_layout = new QFormLayout();
     m_destination_box = new TextBox();
@@ -227,35 +231,35 @@ struct BookViewOrderTester : QWidget {
     m_status_box = make_order_status_box();
     fields_layout->addRow(tr("Order Status:"), m_status_box);
     order_group_layout->addLayout(fields_layout);
-    auto left_layout = new QVBoxLayout();
-    left_layout->addWidget(order_group_box);
-    left_layout->addStretch(1);
     m_bid_table_view = TableViewBuilder(
       std::make_shared<ListToTableModel<BookViewModel::UserOrder>>(
         m_model->get_bid_orders(), ORDER_COLUMN_COUNT, &extract_column)).
       set_header(make_table_header()).make();
-    m_bid_table_view->get_body().get_current()->connect_update_signal(
-      std::bind_front(&BookViewOrderTester::on_current, this, Side::BID));
+    m_bid_current_connection =
+      m_bid_table_view->get_body().get_current()->connect_update_signal(
+        std::bind_front(&BookViewOrderTester::on_current, this, Side::BID));
     auto bid_group_box = new QGroupBox(tr("Bid"));
-    bid_group_box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    bid_group_box->setSizePolicy(
+      QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto bid_layout = new QVBoxLayout(bid_group_box);
     bid_layout->addWidget(m_bid_table_view);
     m_ask_table_view = TableViewBuilder(
       std::make_shared<ListToTableModel<BookViewModel::UserOrder>>(
         m_model->get_ask_orders(), ORDER_COLUMN_COUNT, &extract_column)).
       set_header(make_table_header()).make();
-    m_ask_table_view->get_body().get_current()->connect_update_signal(
-      std::bind_front(&BookViewOrderTester::on_current, this, Side::ASK));
+    m_ask_current_connection =
+      m_ask_table_view->get_body().get_current()->connect_update_signal(
+        std::bind_front(&BookViewOrderTester::on_current, this, Side::ASK));
     auto ask_group_box = new QGroupBox(tr("Ask"));
-    ask_group_box->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
+    ask_group_box->setSizePolicy(
+      QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto ask_layout = new QVBoxLayout(ask_group_box);
     ask_layout->addWidget(m_ask_table_view);
-    auto right_layout = new QVBoxLayout();
-    right_layout->addWidget(bid_group_box);
-    right_layout->addWidget(ask_group_box);
     auto top_layout = new QHBoxLayout();
-    top_layout->addLayout(left_layout);
-    top_layout->addLayout(right_layout);
+    top_layout->setSpacing(scale_width(2));
+    top_layout->addWidget(order_group_box, 0, Qt::AlignTop);
+    top_layout->addWidget(bid_group_box);
+    top_layout->addWidget(ask_group_box);
     auto add_order_button = make_label_button(tr("Add"));
     add_order_button->connect_click_signal(
       std::bind_front(&BookViewOrderTester::on_add_order_click, this));
@@ -272,7 +276,6 @@ struct BookViewOrderTester : QWidget {
     auto layout = new QVBoxLayout(this);
     layout->addLayout(top_layout);
     layout->addLayout(bottom_layout);
-    resize(scale(420, 500));
   }
 
   void on_add_order_click() {
@@ -347,6 +350,7 @@ struct BookViewTester : QWidget {
   LocalTechnicalsModel m_technicals_model;
   std::shared_ptr<OptionalIntegerModel> m_update_period;
   KeyBindingsWindow* m_key_bindings_window;
+  std::function<void ()> m_open_new_window;
   QTextEdit* m_logs;
   QTimer m_quote_timer;
   int m_line_number;
@@ -371,10 +375,12 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     settings.SetDefaultBlotterTaskProperties(
       BlotterTaskProperties::GetDefault());
     settings.SetDefaultOrderLogProperties(OrderLogProperties::GetDefault());
-    auto left_layout = new QVBoxLayout();
+    auto venue_quote_panel = new QWidget();
+    auto venue_quote_layout = new QHBoxLayout(venue_quote_panel);
+    venue_quote_layout->setContentsMargins(0, 0, 0, 0);
     auto book_quote_group_box = new QGroupBox(tr("Venue Quote"));
-    book_quote_group_box->setSizePolicy(QSizePolicy::Preferred,
-      QSizePolicy::Fixed);
+    book_quote_group_box->setSizePolicy(
+      QSizePolicy::Preferred, QSizePolicy::Fixed);
     auto book_quote_layout = new QVBoxLayout(book_quote_group_box);
     auto book_quote_fields_layout = new QFormLayout();
     auto book_quote_venue_box =
@@ -400,10 +406,10 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     book_quote_period_layout->addRow(tr("Update Period (ms):"),
       quote_update_period_box);
     book_quote_layout->addLayout(book_quote_period_layout);
-    left_layout->addWidget(book_quote_group_box);
+    venue_quote_layout->addWidget(book_quote_group_box);
     auto preview_order_group_box = new QGroupBox(tr("Preview Order"));
-    preview_order_group_box->setSizePolicy(QSizePolicy::Preferred,
-      QSizePolicy::Fixed);
+    preview_order_group_box->setSizePolicy(
+      QSizePolicy::Preferred, QSizePolicy::Fixed);
     auto preview_order_layout = new QVBoxLayout(preview_order_group_box);
     auto preview_order_fields_layout = new QFormLayout();
     auto preview_order_destination_box = new TextBox();
@@ -457,20 +463,32 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     buttons_layout->addWidget(create_preview_order_button);
     buttons_layout->addWidget(submit_preview_order_button);
     preview_order_layout->addLayout(buttons_layout);
-    left_layout->addWidget(preview_order_group_box);
+    venue_quote_layout->addWidget(preview_order_group_box);
+    auto order_tester = new BookViewOrderTester(m_model.get_model());
+    auto tab_view = new TabView();
+    tab_view->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Preferred);
+    tab_view->add(tr("Venue Quotes"), *venue_quote_panel);
+    tab_view->add(tr("Orders"), *order_tester);
+    auto button_layout = new QHBoxLayout();
     auto key_bindings_button = make_label_button(tr("Key Bindings"));
     key_bindings_button->connect_click_signal([=] {
       m_key_bindings_window->show();
     });
-    left_layout->addWidget(key_bindings_button);
-    left_layout->addStretch(1);
-    auto right_layout = new QVBoxLayout();
+    button_layout->addWidget(key_bindings_button);
+    auto new_window_button = make_label_button(tr("Open New BookView Window"));
+    new_window_button->connect_click_signal([=] {
+      if(m_open_new_window) {
+        m_open_new_window();
+      }
+    });
+    button_layout->addWidget(new_window_button);
     m_logs = new QTextEdit();
-    right_layout->addWidget(m_logs);
-    auto layout = new QHBoxLayout(this);
-    layout->addLayout(left_layout);
-    layout->addLayout(right_layout);
-    setFixedWidth(scale_width(550));
+    m_logs->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+    auto layout = new QVBoxLayout(this);
+    layout->addWidget(tab_view);
+    layout->addWidget(m_logs, 1);
+    layout->addLayout(button_layout);
+    resize(scale(720, 580));
     connect(&m_quote_timer, &QTimer::timeout,
       std::bind_front(&BookViewTester::on_quote_timeout, this));
     m_update_period->connect_update_signal([=] (auto& period) {
@@ -580,7 +598,6 @@ int main(int argc, char** argv) {
     populate_ticker_query_model(), get_default_additional_tag_database());
   auto book_views = make_local_aggregate_book_view_model();
   auto factory = std::make_shared<BookViewPropertiesWindowFactory>();
-  auto order_tester = BookViewOrderTester(book_views);
   auto tester = BookViewTester(
     book_views->get_session_technicals(), book_views, key_bindings_window);
   auto book_view_window = BookViewWindow(Ref(tester.m_user_profile),
@@ -588,14 +605,29 @@ int main(int argc, char** argv) {
     std::bind_front(&model_builder, book_views, &tester));
   book_view_window.connect_cancel_operation_signal(
     std::bind_front(&BookViewTester::on_cancel_order, &tester));
-  book_view_window.installEventFilter(&tester);
+  tester.installEventFilter(&tester);
   book_view_window.show();
-  const auto WINDOW_GAP = scale_width(10);
-  auto y = book_view_window.y();
-  book_view_window.move(book_view_window.x() - scale_width(500), y);
-  tester.move(book_view_window.frameGeometry().right() + WINDOW_GAP, y);
-  order_tester.move(tester.frameGeometry().right() + WINDOW_GAP, y);
   tester.show();
-  order_tester.show();
+  const auto WINDOW_GAP = scale_height(10);
+  const auto BOTTOM_MARGIN = scale_height(40);
+  auto screen_geometry = application.primaryScreen()->availableGeometry();
+  auto center_x = screen_geometry.center().x();
+  auto controller_y =
+    screen_geometry.bottom() - tester.frameGeometry().height() - BOTTOM_MARGIN;
+  tester.move(center_x - tester.frameGeometry().width() / 2, controller_y);
+  book_view_window.move(center_x - book_view_window.frameGeometry().width() / 2,
+    controller_y - book_view_window.frameGeometry().height() - WINDOW_GAP);
+  auto new_window_count = 0;
+  tester.m_open_new_window = [&] {
+    auto window = new BookViewWindow(Ref(tester.m_user_profile),
+      populate_ticker_query_model(), key_bindings, factory,
+      std::bind_front(&model_builder, book_views, &tester));
+    window->setAttribute(Qt::WA_DeleteOnClose);
+    ++new_window_count;
+    auto offset = scale(30 * new_window_count, 30 * new_window_count);
+    window->move(book_view_window.pos() + QPoint(offset.width(),
+      offset.height()));
+    window->show();
+  };
   application.exec();
 }

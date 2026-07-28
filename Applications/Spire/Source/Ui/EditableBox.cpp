@@ -36,8 +36,7 @@ EditableBox::EditableBox(
       m_edit_trigger(std::move(trigger)),
       m_focus_observer(*this),
       m_mouse_observer(*m_input_box),
-      m_focus_proxy(nullptr),
-      m_is_submit_connected(false) {
+      m_focus_proxy(nullptr) {
   setFocusProxy(m_input_box);
   enclose(*this, *m_input_box);
   proxy_style(*this, *m_input_box);
@@ -72,9 +71,8 @@ void EditableBox::set_read_only(bool read_only) {
     m_input_box->clearFocus();
   } else {
     unmatch(*this, ReadOnly());
-    if(!m_is_submit_connected) {
-      m_is_submit_connected = true;
-      m_input_box->connect_submit_signal(
+    if(!m_submit_connection.connected()) {
+      m_submit_connection = m_input_box->connect_submit_signal(
         std::bind_front(&EditableBox::on_submit, this));
     }
     m_input_box->get_highlight()->set(Highlight(-1));

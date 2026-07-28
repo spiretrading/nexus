@@ -12,6 +12,12 @@ namespace Spire {
   class BookViewPropertiesWindow : public Window {
     public:
 
+      /** Signals that the user submitted the current edits. */
+      using SubmitSignal = Signal<void ()>;
+
+      /** Signals that the user discarded the current edits. */
+      using CancelSignal = Signal<void ()>;
+
       /**
        * Constructs a BookViewPropertiesWindow.
        * @param properties The initial properties.
@@ -24,16 +30,22 @@ namespace Spire {
         std::shared_ptr<KeyBindingsModel> key_bindings,
         std::shared_ptr<TickerModel> ticker, QWidget* parent = nullptr);
 
+      /** Connects a slot to the SubmitSignal. */
+      boost::signals2::connection connect_submit_signal(
+        const SubmitSignal::slot_type& slot) const;
+
+      /** Connects a slot to the CancelSignal. */
+      boost::signals2::connection connect_cancel_signal(
+        const CancelSignal::slot_type& slot) const;
+
     protected:
       void closeEvent(QCloseEvent* event) override;
 
     private:
+      mutable SubmitSignal m_submit_signal;
+      mutable CancelSignal m_cancel_signal;
       std::shared_ptr<BookViewPropertiesModel> m_properties;
-      std::shared_ptr<KeyBindingsModel> m_key_bindings;
       std::shared_ptr<TickerModel> m_ticker;
-      BookViewProperties m_initial_properties;
-      InteractionsKeyBindingsModel m_initial_interactions;
-      bool m_are_interactions_detached;
       bool m_is_submitted;
       NavigationView* m_navigation_view;
       QWidget* m_highlights_page;
