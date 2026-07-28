@@ -381,7 +381,7 @@ namespace Nexus {
 
 namespace Beam {
   template<>
-  constexpr auto is_structure<Nexus::Money> = false;
+  inline constexpr auto is_structure<Nexus::Money> = false;
 
   template<>
   struct Send<Nexus::Money> {

@@ -30,6 +30,16 @@ namespace Nexus {
   };
 
   /**
+   * Tests if an InventorySnapshot is empty, ie. has no inventories, excluded
+   * orders, or sequence.
+   * @param snapshot The snapshot to test.
+   * @return <code>true</code> iff the <i>snapshot</i> is empty.
+   */
+  inline bool is_empty(const InventorySnapshot& snapshot) {
+    return snapshot == InventorySnapshot();
+  }
+
+  /**
    * Strips a snapshot of empty Inventory objects, used to avoid storing empty
    * inventories in a data store.
    * @param snapshot The snapshot to trim.

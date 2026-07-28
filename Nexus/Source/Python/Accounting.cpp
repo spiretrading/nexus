@@ -90,7 +90,7 @@ void Nexus::Python::export_inventory(module& module) {
     def_readwrite("fees", &Inventory::m_fees).
     def_readwrite("volume", &Inventory::m_volume).
     def_readwrite("transaction_count", &Inventory::m_transaction_count);
-  module.def("is_empty", &is_empty);
+  module.def("is_empty", overload_cast<const Inventory&>(&is_empty));
 }
 
 void Nexus::Python::export_inventory_snapshot(module& module) {
@@ -101,6 +101,7 @@ void Nexus::Python::export_inventory_snapshot(module& module) {
     def_readwrite("inventories", &InventorySnapshot::m_inventories).
     def_readwrite("sequence", &InventorySnapshot::m_sequence).
     def_readwrite("excluded_orders", &InventorySnapshot::m_excluded_orders);
+  module.def("is_empty", overload_cast<const InventorySnapshot&>(&is_empty));
   module.def("strip", &strip);
   module.def("make_portfolio",
     [] (const InventorySnapshot& snapshot, const DirectoryEntry& account,

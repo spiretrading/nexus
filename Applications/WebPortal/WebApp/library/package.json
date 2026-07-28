@@ -9,6 +9,9 @@
     "compile": "node node_modules/typescript/bin/tsc -p .",
     "build": "npm run compile"
   },
+  "allowScripts": {
+    "esbuild": false
+  },
   "devDependencies": {
     "@types/node": "22.19.17",
     "@types/react": "17.0.80",
