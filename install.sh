@@ -197,14 +197,14 @@ password order_execution_service $spire_password
 password risk_service $spire_password
 password uid_service $spire_password
 password web_portal_service $spire_password
-chmod administration_service @0 7
-chmod charting_service @0 1
-chmod compliance_service @0 7
-chmod market_data_relay_service @0 1
-chmod market_data_service @0 1
-chmod order_execution_service @0 7
-chmod risk_service @0 7
-chmod web_portal_service @0 7
+chmod administration_service @0 +RMA
+chmod charting_service @0 +R
+chmod compliance_service @0 +RMA
+chmod market_data_relay_service @0 +R
+chmod market_data_service @0 +R
+chmod order_execution_service @0 +RMA
+chmod risk_service @0 +RMA
+chmod web_portal_service @0 +RMA
 cd @0
 cd administrators
 associate administration_service
