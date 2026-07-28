@@ -38,6 +38,13 @@ def update_snapshot(account, source, order_execution_data_store,
     f'inventories, {len(snapshot.excluded_orders)} excluded orders, sequence '
     f'{snapshot.sequence.ordinal}')
 
+def restore_snapshot(account, source, destination):
+  snapshot = source.load_inventory_snapshot(account)
+  if nexus.is_empty(snapshot):
+    return False
+  destination.store(account, snapshot)
+  return True
+
 def report_yaml_error(error):
   if hasattr(error, 'problem_mark'):
     sys.stderr.write('Invalid YAML at line %s, column %s: %s\n' %
@@ -56,13 +63,16 @@ def main():
     description='v1.0 Copyright (C) 2026 Spire Trading Inc.')
   parser.add_argument('-c', '--config', type=str, help='Configuration file',
     default='config.yml')
-  parser.add_argument('-o', '--output', type=str, help='SQLite output file',
-    default='inventory_snapshots.db')
+  direction = parser.add_mutually_exclusive_group(required=True)
+  direction.add_argument('-o', '--output', type=str,
+    help='SQLite file to store the recalculated snapshots in.')
+  direction.add_argument('-i', '--input', type=str,
+    help='SQLite file whose snapshots are stored into MySQL.')
   selection = parser.add_mutually_exclusive_group(required=True)
   selection.add_argument('-a', '--account', type=str,
-    help='Account to recalculate.')
+    help='Account to process.')
   selection.add_argument('--all', action='store_true',
-    help='Recalculate every account.')
+    help='Process every account.')
   args = parser.parse_args()
   try:
     stream = open(args.config, 'r').read()
@@ -89,16 +99,37 @@ def main():
     accounts = [account]
   section = config['data_store']
   address = parse_ip_address(section['address'])
-  source = nexus.MySqlOrderExecutionDataStore(address.host, address.port,
-    section['username'], section['password'], section['schema'])
-  order_execution_data_store = nexus.SqliteOrderExecutionDataStore(args.output)
-  risk_data_store = nexus.SqliteRiskDataStore(args.output)
-  for account in accounts:
-    update_snapshot(
-      account, source, order_execution_data_store, risk_data_store)
-  risk_data_store.close()
-  order_execution_data_store.close()
-  source.close()
+  if args.output:
+    source = nexus.MySqlOrderExecutionDataStore(address.host, address.port,
+      section['username'], section['password'], section['schema'])
+    order_execution_data_store = nexus.SqliteOrderExecutionDataStore(
+      args.output)
+    risk_data_store = nexus.SqliteRiskDataStore(args.output)
+    for account in accounts:
+      update_snapshot(
+        account, source, order_execution_data_store, risk_data_store)
+    risk_data_store.close()
+    order_execution_data_store.close()
+    source.close()
+  else:
+    order_execution_source = nexus.SqliteOrderExecutionDataStore(args.input)
+    risk_source = nexus.SqliteRiskDataStore(args.input)
+    order_execution_destination = nexus.MySqlOrderExecutionDataStore(
+      address.host, address.port, section['username'], section['password'],
+      section['schema'])
+    risk_destination = nexus.MySqlRiskDataStore(address.host, address.port,
+      section['username'], section['password'], section['schema'])
+    for account in accounts:
+      is_order_execution_restored = restore_snapshot(
+        account, order_execution_source, order_execution_destination)
+      is_risk_restored = restore_snapshot(
+        account, risk_source, risk_destination)
+      if is_order_execution_restored or is_risk_restored:
+        print(f'{account.name}: restored')
+    risk_destination.close()
+    order_execution_destination.close()
+    risk_source.close()
+    order_execution_source.close()
 
 if __name__ == '__main__':
   main()
