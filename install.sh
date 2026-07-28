@@ -152,8 +152,8 @@ install_dependencies
 sudo -u "$username" ./build.sh || { echo "Build failed."; exit 1; }
 mysql_input="
 CREATE DATABASE IF NOT EXISTS spire;
-CREATE USER IF NOT EXISTS '$mysql_username'@'localhost' IDENTIFIED BY '$mysql_password';
-ALTER USER '$mysql_username'@'localhost' IDENTIFIED BY '$mysql_password';
+CREATE USER IF NOT EXISTS '$mysql_username'@'localhost' IDENTIFIED WITH caching_sha2_password BY '$mysql_password';
+ALTER USER '$mysql_username'@'localhost' IDENTIFIED WITH caching_sha2_password BY '$mysql_password';
 GRANT ALL ON spire.* TO '$mysql_username'@'localhost';
 "
 if [ "$is_root" -eq 1 ]; then
