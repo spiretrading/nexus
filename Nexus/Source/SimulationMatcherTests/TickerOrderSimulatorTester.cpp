@@ -424,4 +424,50 @@ TEST_SUITE("TickerOrderSimulator") {
       REQUIRE(report.m_last_price == parse_money("10.03"));
     }
   }
+
+  TEST_CASE("submit_zero_quantity") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(
+      ABX, parse_money("1.00"), parse_money("1.01"));
+    auto simulator = TickerOrderSimulator(
+      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
+        Ref(fixture.m_environment.get_time_environment())),
+      fixture.m_reports);
+    auto info = OrderInfo();
+    info.m_fields =
+      make_limit_order_fields(ABX, Side::BID, 0, parse_money("0.99"));
+    info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    simulator.submit(order);
+    fixture.m_reports->flush();
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    order->get_publisher().monitor(reports);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::PENDING_NEW);
+    report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::REJECTED);
+  }
+
+  TEST_CASE("submit_negative_quantity") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(
+      ABX, parse_money("1.00"), parse_money("1.01"));
+    auto simulator = TickerOrderSimulator(
+      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
+        Ref(fixture.m_environment.get_time_environment())),
+      fixture.m_reports);
+    auto info = OrderInfo();
+    info.m_fields =
+      make_limit_order_fields(ABX, Side::BID, -100, parse_money("0.99"));
+    info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    simulator.submit(order);
+    fixture.m_reports->flush();
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    order->get_publisher().monitor(reports);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::PENDING_NEW);
+    report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::REJECTED);
+  }
 }
