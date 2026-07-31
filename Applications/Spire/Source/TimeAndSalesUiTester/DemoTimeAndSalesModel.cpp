@@ -10,6 +10,7 @@ using namespace Spire;
 
 namespace {
   const auto markets = std::vector<std::string>{"XNYS", "TSE", "CHD", "CHI"};
+  const auto mpids = std::vector<std::string>{"NBFI", "CIBC", "PFSS", "RBCD"};
 
   ptime from_time_t_milliseconds(std::time_t t) {
     return time_from_string("1970-01-01 00:00:00") + milliseconds(t);
@@ -20,9 +21,10 @@ namespace {
   }
 
   auto make_time_and_sale(ptime timestamp, Money price, Quantity size,
-      const std::string& market) {
+      const std::string& market, const std::string& buyer,
+      const std::string& seller) {
     return TimeAndSale(timestamp, price, size, TimeAndSale::Condition(
-      TimeAndSale::Condition::Type::REGULAR, "@"), market);
+      TimeAndSale::Condition::Type::REGULAR, "@"), market, buyer, seller);
   }
 }
 
@@ -132,12 +134,14 @@ DemoTimeAndSalesModel::Entry DemoTimeAndSalesModel::make_entry(
       make_time_and_sale(timestamp,
         truncate_to(Money(random_generator.bounded(2000.0)), Money::CENT),
         random_generator.bounded(1, 10000),
-        markets[random_generator.bounded(static_cast<int>(markets.size()))]),
+        markets[random_generator.bounded(static_cast<int>(markets.size()))],
+        mpids[random_generator.bounded(static_cast<int>(mpids.size()))],
+        mpids[random_generator.bounded(static_cast<int>(mpids.size()))]),
       Beam::Sequence(to_time_t_milliseconds(timestamp))),
       static_cast<BboIndicator>(random_generator.bounded(6))};
   }
-  return {SequencedValue(
-    make_time_and_sale(timestamp, m_price, 100, markets.front()),
+  return {SequencedValue(make_time_and_sale(
+    timestamp, m_price, 100, markets.front(), mpids.front(), mpids.back()),
       Beam::Sequence(to_time_t_milliseconds(timestamp))), m_indicator};
 }
 
