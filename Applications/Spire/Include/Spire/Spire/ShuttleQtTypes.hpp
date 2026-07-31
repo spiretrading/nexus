@@ -6,6 +6,7 @@
 #include <QByteArray>
 #include <QColor>
 #include <QFont>
+#include <QFontDatabase>
 #include <QKeySequence>
 #include <QPoint>
 #include <QString>
@@ -114,6 +115,10 @@ namespace Beam {
         return -1;
       }();
       value = QFont(family, point_size, weight, italic);
+      auto database = QFontDatabase();
+      if(database.hasFamily(family)) {
+        value = database.font(family, database.styleString(value), point_size);
+      }
       if(version >= 2) {
         if(point_size == -1) {
           value.setPixelSize(pixel_size);

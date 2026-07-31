@@ -80,37 +80,29 @@ QWidget* Box::get_body() {
 }
 
 QSize Box::minimumSizeHint() const {
-  if(m_minimum_size_hint) {
-    return *m_minimum_size_hint;
-  } else if(m_container) {
-    m_minimum_size_hint.emplace(m_body->minimumSizeHint());
-    if(m_minimum_size_hint->isValid()) {
-      *m_minimum_size_hint += get_styling_size(m_geometry);
-    }
-  } else {
-    m_minimum_size_hint.emplace(QWidget::minimumSizeHint());
+  if(!m_container) {
+    return QWidget::minimumSizeHint();
   }
-  return *m_minimum_size_hint;
+  auto size = m_body->minimumSizeHint();
+  if(size.isValid()) {
+    size += get_styling_size(m_geometry);
+  }
+  return size;
 }
 
 QSize Box::sizeHint() const {
-  if(m_size_hint) {
-    return *m_size_hint;
-  } else if(m_container) {
-    m_size_hint.emplace(m_container->sizeHint());
-    if(m_size_hint->isValid()) {
-      *m_size_hint += get_styling_size(m_geometry);
-    }
-  } else {
-    m_size_hint.emplace(QWidget::sizeHint());
+  if(!m_container) {
+    return QWidget::sizeHint();
   }
-  return *m_size_hint;
+  auto size = m_container->sizeHint();
+  if(size.isValid()) {
+    size += get_styling_size(m_geometry);
+  }
+  return size;
 }
 
 bool Box::event(QEvent* event) {
   if(event->type() == QEvent::LayoutRequest) {
-    m_minimum_size_hint = none;
-    m_size_hint = none;
     if(m_fit == Fit::NONE) {
       updateGeometry();
     } else {
@@ -128,8 +120,6 @@ void Box::paintEvent(QPaintEvent* event) {
 void Box::resizeEvent(QResizeEvent* event) {
   if(m_body) {
     m_geometry.set_size(size());
-    m_minimum_size_hint = none;
-    m_size_hint = none;
     updateGeometry();
     m_container->setGeometry(m_geometry.get_content_area());
   }
@@ -172,8 +162,6 @@ void Box::on_style() {
             if(current_alignment != alignment) {
               m_container->layout()->setAlignment(alignment);
               m_container->layout()->update();
-              m_minimum_size_hint = none;
-              m_size_hint = none;
               updateGeometry();
             }
           }
@@ -181,8 +169,6 @@ void Box::on_style() {
       });
   }
   if(m_body) {
-    m_minimum_size_hint = none;
-    m_size_hint = none;
     updateGeometry();
     m_container->setGeometry(m_geometry.get_content_area());
     update_fit();

@@ -161,7 +161,8 @@ namespace Nexus {
   void TickerOrderSimulator<T>::submit(
       const std::shared_ptr<PrimitiveOrder>& order) {
     auto lock = std::lock_guard(m_mutex);
-    if(m_bbo.m_bid.m_price == Money::ZERO ||
+    if(order->get_info().m_fields.m_quantity <= 0 ||
+        m_bbo.m_bid.m_price == Money::ZERO ||
         m_bbo.m_ask.m_price == Money::ZERO) {
       enqueue(order, OrderStatus::REJECTED, order->get_info().m_timestamp, 0,
         Money::ZERO);
