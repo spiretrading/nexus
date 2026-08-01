@@ -144,23 +144,18 @@ struct TableBody::RowCover : Cover {
         std::forward_as_tuple(item), std::forward_as_tuple(*item));
       body.m_hover_observers.at(item).connect_state_signal(
         std::bind_front(&TableBody::on_hover, &body, std::ref(*item)));
-      if(column < body.m_table->get_column_size() - 1) {
-        if(body.m_column_covers[column]->isVisible()) {
-          item->setFixedWidth(
-            body.m_widths->get(column) - body.get_left_spacing(column));
-        } else {
-          item->setFixedWidth(0);
-        }
-      } else if(column == body.m_table->get_column_size() - 1) {
-        auto last_width = body.m_column_covers[column]->width();
-        if(last_width > 0) {
-          item->setFixedWidth(last_width);
-        } else {
-          item->setSizePolicy(
-            QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
-        }
-      } else {
+      if(column == body.m_widths->get_size() ||
+          !body.m_column_covers[column]->isVisible()) {
         item->setFixedWidth(0);
+      } else if(column < body.m_widths->get_size() - 1) {
+        item->setFixedWidth(
+          body.m_widths->get(column) - body.get_left_spacing(column));
+      } else if(auto last_width = body.m_column_covers[column]->width();
+          last_width > 0) {
+        item->setFixedWidth(last_width);
+      } else {
+        item->setSizePolicy(
+          QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
       }
       layout->addWidget(item);
       item->connect_active_signal(std::bind_front(
