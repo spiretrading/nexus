@@ -313,9 +313,22 @@ namespace Nexus {
     auto trailing_orders = m_data_store->load_order_records(recovery_query);
     auto live_orders =
       m_data_store->load_order_records(make_live_orders_query(account));
+    auto excluded_orders = std::vector<SequencedOrderRecord>();
+    for(auto id : snapshot.m_excluded_orders) {
+      if(auto record = m_data_store->load_order_record(id)) {
+        excluded_orders.push_back(
+          Beam::SequencedValue(*(**record), record->get_sequence()));
+      }
+    }
+    std::sort(excluded_orders.begin(), excluded_orders.end(),
+      Beam::SequenceComparator());
+    auto open_orders = std::vector<SequencedOrderRecord>();
+    std::set_union(live_orders.begin(), live_orders.end(),
+      excluded_orders.begin(), excluded_orders.end(),
+      std::back_inserter(open_orders), Beam::SequenceComparator());
     auto records = std::vector<SequencedOrderRecord>();
     std::set_union(trailing_orders.begin(), trailing_orders.end(),
-      live_orders.begin(), live_orders.end(), std::back_inserter(records),
+      open_orders.begin(), open_orders.end(), std::back_inserter(records),
       Beam::SequenceComparator());
     auto& shorting_model = *m_shorting_models.get_or_insert(
       account, boost::factory<std::shared_ptr<SyncShortingModel>>());
