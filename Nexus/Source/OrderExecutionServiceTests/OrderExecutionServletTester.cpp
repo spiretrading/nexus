@@ -252,6 +252,44 @@ TEST_SUITE("OrderExecutionServlet") {
         Money::ZERO, 300, 2));
   }
 
+  TEST_CASE("recover_terminated_excluded_order") {
+    auto fixture = Fixture();
+    fixture.start();
+    auto base = fixture.m_time_client.get_time();
+    auto excluded_order = fixture.m_client->submit(
+      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 200, Money::ONE));
+    auto driver_order = fixture.m_submissions->pop();
+    submit_and_fill(fixture,
+      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 100, Money::ONE),
+      base + hours(6));
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    excluded_order->get_publisher().monitor(reports);
+    fill(*driver_order, 200, base + hours(6) + minutes(1));
+    while(reports->pop().m_status != OrderStatus::FILLED) {}
+    fixture.m_container->close();
+    auto stored =
+      fixture.m_data_store.load_inventory_snapshot(fixture.m_client_account);
+    REQUIRE(stored.m_excluded_orders ==
+      std::vector{excluded_order->get_info().m_id});
+    REQUIRE(stored.m_inventories.size() == 1);
+    REQUIRE(stored.m_inventories.front() ==
+      Inventory(Position(TST, CAD, 100, 100 * Money::ONE), Money::ZERO,
+        Money::ZERO, 100, 1));
+    fixture.m_server_connection = std::make_shared<LocalServerConnection>();
+    fixture.start();
+    submit_and_fill(fixture,
+      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 50, Money::ONE),
+      base + hours(7));
+    fixture.m_container->close();
+    auto snapshot =
+      fixture.m_data_store.load_inventory_snapshot(fixture.m_client_account);
+    REQUIRE(snapshot.m_excluded_orders.empty());
+    REQUIRE(snapshot.m_inventories.size() == 1);
+    REQUIRE(snapshot.m_inventories.front() ==
+      Inventory(Position(TST, CAD, 350, 350 * Money::ONE), Money::ZERO,
+        Money::ZERO, 350, 3));
+  }
+
   TEST_CASE("load_non_existent_order") {
     auto fixture = Fixture();
     fixture.start();
