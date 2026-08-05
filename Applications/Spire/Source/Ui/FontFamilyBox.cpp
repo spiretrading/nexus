@@ -64,7 +64,7 @@ FontFamilyBox* Spire::make_font_family_box(
   auto settings = FontFamilyBox::Settings();
   settings.m_cases = std::move(font_families);
   settings.m_current = std::move(current);
-  settings.m_view_builder = [width] (auto& value) {
+  settings.m_view_builder = [=] (const auto& value) {
     auto label = make_label(value);
     update_style(*label, [&] (auto& style) {
       style.get(Any()).set(Font(get_family_metrics(value).m_font));
