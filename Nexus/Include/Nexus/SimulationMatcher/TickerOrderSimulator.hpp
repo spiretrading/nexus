@@ -1,8 +1,10 @@
 #ifndef NEXUS_TICKER_ORDER_SIMULATOR_HPP
 #define NEXUS_TICKER_ORDER_SIMULATOR_HPP
+#include <algorithm>
 #include <memory>
 #include <mutex>
 #include <sstream>
+#include <string_view>
 #include <unordered_map>
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
@@ -83,18 +85,23 @@ namespace Nexus {
       void update(const TimeAndSale& time_and_sale);
 
     private:
+      struct OrderEntry {
+        OrderStatus m_status;
+        Quantity m_remaining_quantity;
+      };
       struct PeggedOrderEntry {
         std::string m_exec_inst;
         Money m_peg_difference;
         Money m_effective_price;
       };
+      static constexpr auto REGULAR_SALE = std::string_view("@");
       Beam::local_ptr_t<T> m_time_client;
       std::shared_ptr<SimulationExecutionReportQueue> m_reports;
       boost::gregorian::date m_date;
       boost::posix_time::ptime m_venue_close_time;
       bool m_is_moc_pending;
       std::vector<std::shared_ptr<PrimitiveOrder>> m_orders;
-      std::unordered_map<OrderId, OrderStatus> m_statuses;
+      std::unordered_map<OrderId, OrderEntry> m_entries;
       std::unordered_map<OrderId, PeggedOrderEntry> m_pegged_entries;
       BboQuote m_bbo;
       Beam::Mutex m_mutex;
@@ -106,12 +113,16 @@ namespace Nexus {
       void enqueue(const std::shared_ptr<PrimitiveOrder>& order,
         OrderStatus status, boost::posix_time::ptime timestamp,
         Quantity last_quantity, Money last_price);
+      OrderStatus fill(const std::shared_ptr<PrimitiveOrder>& order,
+        Money price, Quantity quantity);
       OrderStatus fill(
         const std::shared_ptr<PrimitiveOrder>& order, Money price);
       OrderStatus evaluate(
         const std::shared_ptr<PrimitiveOrder>& order, OrderStatus status);
       OrderStatus update_pegged(
         const std::shared_ptr<PrimitiveOrder>& order, OrderStatus status);
+      bool match(const TimeAndSale& time_and_sale, Side side);
+      void match(const TimeAndSale& time_and_sale);
       void erase(const std::shared_ptr<PrimitiveOrder>& order);
   };
 
@@ -139,22 +150,29 @@ namespace Nexus {
   void TickerOrderSimulator<T>::recover(
       const std::shared_ptr<PrimitiveOrder>& order) {
     auto lock = std::lock_guard(m_mutex);
-    auto status = order->with([] (auto status, const auto&) {
-      return status;
-    });
+    auto [status, remaining] = order->with(
+      [&] (auto status, const auto& reports) {
+        auto remaining = order->get_info().m_fields.m_quantity;
+        for(auto& report : reports) {
+          remaining -= report.m_last_quantity;
+        }
+        return std::pair(status, remaining);
+      });
     if(is_terminal(status)) {
       return;
     }
+    m_entries[order->get_info().m_id] = OrderEntry(status, remaining);
     if(order->get_info().m_fields.m_type == OrderType::PEGGED) {
       submit_pegged(*order);
     }
     auto next_status = evaluate(order, status);
     if(is_terminal(next_status)) {
       m_pegged_entries.erase(order->get_info().m_id);
+      m_entries.erase(order->get_info().m_id);
       return;
     }
     m_orders.push_back(order);
-    m_statuses[order->get_info().m_id] = next_status;
+    m_entries[order->get_info().m_id].m_status = next_status;
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
@@ -170,30 +188,33 @@ namespace Nexus {
     }
     enqueue(
       order, OrderStatus::NEW, order->get_info().m_timestamp, 0, Money::ZERO);
+    m_entries[order->get_info().m_id] =
+      OrderEntry(OrderStatus::NEW, order->get_info().m_fields.m_quantity);
     if(order->get_info().m_fields.m_type == OrderType::PEGGED) {
       submit_pegged(*order);
     }
     auto next_status = evaluate(order, OrderStatus::NEW);
     if(is_terminal(next_status)) {
       m_pegged_entries.erase(order->get_info().m_id);
+      m_entries.erase(order->get_info().m_id);
       return;
     }
     m_orders.push_back(order);
-    m_statuses[order->get_info().m_id] = next_status;
+    m_entries[order->get_info().m_id].m_status = next_status;
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   void TickerOrderSimulator<T>::cancel(
       const std::shared_ptr<PrimitiveOrder>& order) {
     auto lock = std::lock_guard(m_mutex);
-    auto i = m_statuses.find(order->get_info().m_id);
-    if(i == m_statuses.end() || is_terminal(i->second)) {
+    auto i = m_entries.find(order->get_info().m_id);
+    if(i == m_entries.end() || is_terminal(i->second.m_status)) {
       return;
     }
     auto timestamp = m_time_client->get_time();
     enqueue(order, OrderStatus::PENDING_CANCEL, timestamp, 0, Money::ZERO);
     enqueue(order, OrderStatus::CANCELED, timestamp, 0, Money::ZERO);
-    i->second = OrderStatus::CANCELED;
+    i->second.m_status = OrderStatus::CANCELED;
     erase(order);
   }
 
@@ -202,12 +223,12 @@ namespace Nexus {
       const std::shared_ptr<PrimitiveOrder>& order,
       const ExecutionReport& report) {
     auto lock = std::lock_guard(m_mutex);
-    auto i = m_statuses.find(order->get_info().m_id);
-    if(i != m_statuses.end()) {
-      if(is_terminal(i->second)) {
+    auto i = m_entries.find(order->get_info().m_id);
+    if(i != m_entries.end()) {
+      if(is_terminal(i->second.m_status)) {
         return;
       }
-      i->second = report.m_status;
+      i->second.m_status = report.m_status;
       if(is_terminal(report.m_status)) {
         erase(order);
       }
@@ -259,10 +280,10 @@ namespace Nexus {
           break;
         }
         auto order = m_orders[index];
-        auto& status = m_statuses[order->get_info().m_id];
-        auto next_status = evaluate(order, status);
+        auto& entry = m_entries[order->get_info().m_id];
+        auto next_status = evaluate(order, entry.m_status);
         if(is_terminal(next_status)) {
-          status = next_status;
+          entry.m_status = next_status;
           erase(order);
           has_update = true;
         }
@@ -291,37 +312,37 @@ namespace Nexus {
         closing_price = time_and_sale.m_price;
       }
     }
-    if(!is_triggered) {
-      return;
-    }
-    auto index = std::size_t(0);
-    while(true) {
-      auto has_update = false;
-      auto is_moc = false;
-      {
-        auto lock = std::lock_guard(m_mutex);
-        if(index >= m_orders.size()) {
-          break;
-        }
-        auto order = m_orders[index];
-        is_moc = order->get_info().m_fields.m_time_in_force.get_type() ==
-          TimeInForce::Type::MOC;
-        if(is_moc) {
-          auto& status = m_statuses[order->get_info().m_id];
-          if(!is_terminal(status)) {
-            status = fill(order, closing_price);
-            has_update = true;
+    if(is_triggered) {
+      auto index = std::size_t(0);
+      while(true) {
+        auto has_update = false;
+        auto is_moc = false;
+        {
+          auto lock = std::lock_guard(m_mutex);
+          if(index >= m_orders.size()) {
+            break;
           }
-          erase(order);
+          auto order = m_orders[index];
+          is_moc = order->get_info().m_fields.m_time_in_force.get_type() ==
+            TimeInForce::Type::MOC;
+          if(is_moc) {
+            auto& entry = m_entries[order->get_info().m_id];
+            if(!is_terminal(entry.m_status)) {
+              entry.m_status = fill(order, closing_price);
+              has_update = true;
+            }
+            erase(order);
+          }
+        }
+        if(has_update) {
+          m_reports->flush();
+        }
+        if(!is_moc) {
+          ++index;
         }
       }
-      if(has_update) {
-        m_reports->flush();
-      }
-      if(!is_moc) {
-        ++index;
-      }
     }
+    match(time_and_sale);
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
@@ -399,10 +420,25 @@ namespace Nexus {
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   OrderStatus TickerOrderSimulator<T>::fill(
+      const std::shared_ptr<PrimitiveOrder>& order, Money price,
+      Quantity quantity) {
+    auto& remaining = m_entries[order->get_info().m_id].m_remaining_quantity;
+    remaining -= quantity;
+    auto status = [&] {
+      if(remaining <= 0) {
+        return OrderStatus::FILLED;
+      }
+      return OrderStatus::PARTIALLY_FILLED;
+    }();
+    enqueue(order, status, m_time_client->get_time(), quantity, price);
+    return status;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  OrderStatus TickerOrderSimulator<T>::fill(
       const std::shared_ptr<PrimitiveOrder>& order, Money price) {
-    enqueue(order, OrderStatus::FILLED, m_time_client->get_time(),
-      order->get_info().m_fields.m_quantity, price);
-    return OrderStatus::FILLED;
+    return fill(
+      order, price, m_entries[order->get_info().m_id].m_remaining_quantity);
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
@@ -467,10 +503,75 @@ namespace Nexus {
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  bool TickerOrderSimulator<T>::match(
+      const TimeAndSale& time_and_sale, Side side) {
+    auto direction = get_direction(side);
+    auto available = time_and_sale.m_size;
+    auto has_update = false;
+    while(available > 0) {
+      auto selection = std::shared_ptr<PrimitiveOrder>();
+      for(auto& order : m_orders) {
+        auto& fields = order->get_info().m_fields;
+        if(fields.m_side != side || fields.m_type != OrderType::LIMIT ||
+            fields.m_time_in_force.get_type() == TimeInForce::Type::MOC ||
+            direction * time_and_sale.m_price >= direction * fields.m_price) {
+          continue;
+        }
+        auto i = m_entries.find(order->get_info().m_id);
+        if(i == m_entries.end() ||
+            i->second.m_status == OrderStatus::PENDING_NEW ||
+            is_terminal(i->second.m_status)) {
+          continue;
+        }
+        if(selection && direction * selection->get_info().m_fields.m_price >=
+            direction * fields.m_price) {
+          continue;
+        }
+        selection = order;
+      }
+      if(!selection) {
+        break;
+      }
+      auto& entry = m_entries[selection->get_info().m_id];
+      auto quantity = std::min(entry.m_remaining_quantity, available);
+      auto status =
+        fill(selection, selection->get_info().m_fields.m_price, quantity);
+      entry.m_status = status;
+      available -= quantity;
+      has_update = true;
+      if(is_terminal(status)) {
+        erase(selection);
+      }
+    }
+    return has_update;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void TickerOrderSimulator<T>::match(const TimeAndSale& time_and_sale) {
+    if(time_and_sale.m_condition.m_code != REGULAR_SALE ||
+        time_and_sale.m_size <= 0) {
+      return;
+    }
+    auto has_update = false;
+    {
+      auto lock = std::lock_guard(m_mutex);
+      if(match(time_and_sale, Side::ASK)) {
+        has_update = true;
+      }
+      if(match(time_and_sale, Side::BID)) {
+        has_update = true;
+      }
+    }
+    if(has_update) {
+      m_reports->flush();
+    }
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   void TickerOrderSimulator<T>::erase(
       const std::shared_ptr<PrimitiveOrder>& order) {
     m_pegged_entries.erase(order->get_info().m_id);
-    m_statuses.erase(order->get_info().m_id);
+    m_entries.erase(order->get_info().m_id);
     std::erase(m_orders, order);
   }
 }
