@@ -229,6 +229,7 @@ namespace Nexus {
         return;
       }
       i->second.m_status = report.m_status;
+      i->second.m_remaining_quantity -= report.m_last_quantity;
       if(is_terminal(report.m_status)) {
         erase(order);
       }
