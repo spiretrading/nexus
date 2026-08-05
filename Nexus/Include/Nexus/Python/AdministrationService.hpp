@@ -2,6 +2,7 @@
 #define NEXUS_PYTHON_ADMINISTRATION_SERVICE_HPP
 #include <string_view>
 #include <pybind11/pybind11.h>
+#include "Beam/Python/DateTime.hpp"
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 #include "Nexus/Python/DllExport.hpp"
