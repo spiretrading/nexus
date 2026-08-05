@@ -2,6 +2,7 @@
 #define NEXUS_PYTHON_CLIENTS_HPP
 #include <string_view>
 #include <pybind11/pybind11.h>
+#include "Beam/Python/DateTime.hpp"
 #include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Python/DllExport.hpp"
 
