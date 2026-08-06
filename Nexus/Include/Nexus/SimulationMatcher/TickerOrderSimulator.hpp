@@ -407,7 +407,8 @@ namespace Details {
         set_session_timestamps(time_and_sale.m_timestamp);
       }
       if(m_is_moc_pending && time_and_sale.m_timestamp >= m_venue_close_time &&
-          time_and_sale.m_market_center == "TSE") {
+          from_market_center(time_and_sale.m_market_center).m_venue ==
+            m_ticker.get_venue()) {
         m_is_moc_pending = false;
         is_triggered = true;
         closing_price = time_and_sale.m_price;
@@ -772,12 +773,7 @@ namespace Details {
         time_and_sale.m_size <= 0) {
       return;
     }
-    auto venue = [&] {
-      if(time_and_sale.m_market_center.empty()) {
-        return Venue();
-      }
-      return from_market_center(time_and_sale.m_market_center).m_venue;
-    }();
+    auto venue = from_market_center(time_and_sale.m_market_center).m_venue;
     auto has_update = false;
     {
       auto lock = std::lock_guard(m_mutex);
