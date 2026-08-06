@@ -177,6 +177,7 @@ namespace Details {
         Money m_effective_price;
       };
       static constexpr auto REGULAR_SALE = std::string_view("@");
+      static constexpr auto BOARD_LOT = 100;
       Beam::local_ptr_t<T> m_time_client;
       std::shared_ptr<SimulationExecutionReportQueue> m_reports;
       Ticker m_ticker;
@@ -212,7 +213,8 @@ namespace Details {
       void advance(const Level& level, Quantity delta);
       Quantity allocate(
         const std::shared_ptr<PrimitiveOrder>& order, Quantity available);
-      bool match(const TimeAndSale& time_and_sale, Side side, Venue venue);
+      bool match(const TimeAndSale& time_and_sale, Side side, Venue venue,
+        Quantity size);
       void match(const TimeAndSale& time_and_sale);
       void erase(const std::shared_ptr<PrimitiveOrder>& order);
   };
@@ -704,10 +706,10 @@ namespace Details {
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
-  bool TickerOrderSimulator<T>::match(
-      const TimeAndSale& time_and_sale, Side side, Venue venue) {
+  bool TickerOrderSimulator<T>::match(const TimeAndSale& time_and_sale,
+      Side side, Venue venue, Quantity size) {
     auto direction = get_direction(side);
-    auto available = time_and_sale.m_size;
+    auto available = size;
     auto has_update = false;
     while(available > 0) {
       auto selection = std::shared_ptr<PrimitiveOrder>();
@@ -769,18 +771,18 @@ namespace Details {
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   void TickerOrderSimulator<T>::match(const TimeAndSale& time_and_sale) {
-    if(time_and_sale.m_condition.m_code != REGULAR_SALE ||
-        time_and_sale.m_size <= 0) {
+    auto size = time_and_sale.m_size - time_and_sale.m_size % BOARD_LOT;
+    if(time_and_sale.m_condition.m_code != REGULAR_SALE || size <= 0) {
       return;
     }
     auto venue = from_market_center(time_and_sale.m_market_center).m_venue;
     auto has_update = false;
     {
       auto lock = std::lock_guard(m_mutex);
-      if(match(time_and_sale, Side::ASK, venue)) {
+      if(match(time_and_sale, Side::ASK, venue, size)) {
         has_update = true;
       }
-      if(match(time_and_sale, Side::BID, venue)) {
+      if(match(time_and_sale, Side::BID, venue, size)) {
         has_update = true;
       }
     }
