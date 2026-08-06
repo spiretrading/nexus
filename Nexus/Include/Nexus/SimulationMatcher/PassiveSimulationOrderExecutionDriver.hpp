@@ -234,32 +234,21 @@ namespace Nexus {
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   typename PassiveSimulationOrderExecutionDriver<T>::TickerOrderSimulator*
       PassiveSimulationOrderExecutionDriver<T>::find(const Ticker& ticker) {
-    return m_simulators.with([&] (auto& simulators) -> TickerOrderSimulator* {
-      auto i = simulators.find(ticker);
-      if(i == simulators.end()) {
-        return nullptr;
-      }
-      return i->second.get();
-    });
+    if(auto simulator = m_simulators.find(ticker)) {
+      return simulator->get();
+    }
+    return nullptr;
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   typename PassiveSimulationOrderExecutionDriver<T>::TickerOrderSimulator&
       PassiveSimulationOrderExecutionDriver<T>::load(const Ticker& ticker) {
-    auto [simulator, is_new] = m_simulators.with(
-      [&] (auto& simulators) -> std::pair<TickerOrderSimulator*, bool> {
-        auto i = simulators.find(ticker);
-        if(i != simulators.end()) {
-          return {i->second.get(), false};
-        }
-        i = simulators.emplace(ticker, std::make_unique<TickerOrderSimulator>(
-          ticker, &*m_time_client, m_reports)).first;
-        return {i->second.get(), true};
-      });
-    if(is_new) {
+    return *m_simulators.test_and_set(ticker, [&] (auto& simulators) {
+      auto simulator = std::make_unique<TickerOrderSimulator>(
+        ticker, &*m_time_client, m_reports);
       simulator->initialize(m_ticker_slot(ticker));
-    }
-    return *simulator;
+      simulators.emplace(ticker, std::move(simulator));
+    });
   }
 }
 
