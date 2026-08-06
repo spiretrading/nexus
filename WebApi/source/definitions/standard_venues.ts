@@ -18,7 +18,7 @@ export function buildVenueDatabase(): VenueDatabase {
   database.add(new VenueDatabase.Entry(new Venue('CSE2'), Countries.CA, 'CS2',
     'America/Toronto', Currencies.CAD, 'Canadian Securities Exchange - CSE2',
     'CSE2'));
-  database.add(new VenueDatabase.Entry(new Venue('XCXD'), Countries.CA, '',
+  database.add(new VenueDatabase.Entry(new Venue('XCXD'), Countries.CA, 'CHD',
     'America/Toronto', Currencies.CAD, 'NASDAQ CXD', 'CXD'));
   database.add(new VenueDatabase.Entry(new Venue('XCX2'), Countries.CA, 'CHT',
     'America/Toronto', Currencies.CAD, 'CX2', 'CX2'));

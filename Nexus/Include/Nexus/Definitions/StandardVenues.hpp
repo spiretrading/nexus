@@ -77,6 +77,7 @@ namespace Details {
         auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("XCXD");
         entry.m_country_code = Countries::CA;
+        entry.m_market_center = "CHD";
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = Currencies::CAD;
         entry.m_description = "NASDAQ CXD";

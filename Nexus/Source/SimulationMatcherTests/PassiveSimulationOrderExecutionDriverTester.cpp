@@ -1,4 +1,6 @@
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/BookQuote.hpp"
+#include "Nexus/Definitions/StandardVenues.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/SimulationMatcher/PassiveSimulationOrderExecutionDriver.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
@@ -31,8 +33,11 @@ TEST_SUITE("PassiveSimulationOrderExecutionDriver") {
     fixture.m_environment.update_bbo_price(
       TD, 10 * Money::ONE, 20 * Money::ONE);
     auto driver = PassiveSimulationOrderExecutionDriver(
-      fixture.m_market_data_client, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())));
+      std::make_unique<TestTimeClient>(
+        Ref(fixture.m_environment.get_time_environment())),
+      [&] (const auto& ticker) {
+        return fixture.m_market_data_client.load_snapshot(ticker);
+      });
     auto info1 = OrderInfo();
     info1.m_fields = make_limit_order_fields(SHOP, Side::BID, 100, Money::ONE);
     info1.m_id = 1;
@@ -69,8 +74,11 @@ TEST_SUITE("PassiveSimulationOrderExecutionDriver") {
     fixture.m_environment.update_bbo_price(
       TD, 10 * Money::ONE, 20 * Money::ONE);
     auto driver = PassiveSimulationOrderExecutionDriver(
-      fixture.m_market_data_client, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())));
+      std::make_unique<TestTimeClient>(
+        Ref(fixture.m_environment.get_time_environment())),
+      [&] (const auto& ticker) {
+        return fixture.m_market_data_client.load_snapshot(ticker);
+      });
     auto timestamp = fixture.m_environment.get_time_environment().get_time();
     auto live_info = OrderInfo();
     live_info.m_fields =
@@ -96,5 +104,93 @@ TEST_SUITE("PassiveSimulationOrderExecutionDriver") {
     REQUIRE(orders.size() == 2);
     REQUIRE(orders[0]->get_info() == live_info);
     REQUIRE(orders[1]->get_info() == terminal_info);
+  }
+
+  TEST_CASE("submit_while_initializing") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(SHOP, Money::ONE, 2 * Money::ONE);
+    auto entered = std::make_shared<Queue<bool>>();
+    auto proceed = std::make_shared<Queue<bool>>();
+    auto driver = PassiveSimulationOrderExecutionDriver(
+      std::make_unique<TestTimeClient>(
+        Ref(fixture.m_environment.get_time_environment())),
+      [&] (const auto& ticker) {
+        entered->push(true);
+        proceed->pop();
+        return fixture.m_market_data_client.load_snapshot(ticker);
+      });
+    auto timestamp = fixture.m_environment.get_time_environment().get_time();
+    auto info1 = OrderInfo();
+    info1.m_fields = make_limit_order_fields(SHOP, Side::BID, 100, Money::ONE);
+    info1.m_id = 1;
+    info1.m_timestamp = timestamp;
+    auto info2 = OrderInfo();
+    info2.m_fields = make_limit_order_fields(SHOP, Side::BID, 100, Money::ONE);
+    info2.m_id = 2;
+    info2.m_timestamp = timestamp;
+    auto order2 = std::shared_ptr<Order>();
+    auto first = RoutineHandler(spawn([&] {
+      driver.submit(info1);
+    }));
+    entered->pop();
+    auto second = RoutineHandler(spawn([&] {
+      order2 = driver.submit(info2);
+    }));
+    proceed->push(true);
+    first.wait();
+    second.wait();
+    driver.flush_execution_reports();
+    REQUIRE(order2);
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    order2->get_publisher().monitor(reports);
+    REQUIRE(reports->pop().m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(reports->pop().m_status == OrderStatus::NEW);
+  }
+
+  TEST_CASE("update_while_initializing") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(SHOP, Money::ONE, 2 * Money::ONE);
+    auto entered = std::make_shared<Queue<bool>>();
+    auto proceed = std::make_shared<Queue<bool>>();
+    auto driver = PassiveSimulationOrderExecutionDriver(
+      std::make_unique<TestTimeClient>(
+        Ref(fixture.m_environment.get_time_environment())),
+      [&] (const auto& ticker) {
+        entered->push(true);
+        proceed->pop();
+        return fixture.m_market_data_client.load_snapshot(ticker);
+      });
+    auto timestamp = fixture.m_environment.get_time_environment().get_time();
+    auto info1 = OrderInfo();
+    info1.m_fields =
+      make_limit_order_fields(SHOP, Side::BID, 100, Money::ONE / 2);
+    info1.m_id = 1;
+    info1.m_timestamp = timestamp;
+    auto first = RoutineHandler(spawn([&] {
+      driver.submit(info1);
+    }));
+    entered->pop();
+    auto update = RoutineHandler(spawn([&] {
+      driver.update(SHOP, BookQuote("A", false, Venues::TSX,
+        Quote(Money::ONE, 500, Side::BID), timestamp));
+    }));
+    proceed->push(true);
+    first.wait();
+    update.wait();
+    auto info2 = OrderInfo();
+    info2.m_fields = make_limit_order_fields(
+      SHOP, CurrencyId::NONE, Side::BID, "TSX", 100, Money::ONE);
+    info2.m_id = 2;
+    info2.m_timestamp = timestamp;
+    auto order2 = driver.submit(info2);
+    driver.flush_execution_reports();
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    order2->get_publisher().monitor(reports);
+    REQUIRE(reports->pop().m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(reports->pop().m_status == OrderStatus::NEW);
+    driver.update(SHOP, TimeAndSale(timestamp, Money::ONE, 100,
+      TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
+      "TSE"));
+    REQUIRE(!reports->try_pop());
   }
 }

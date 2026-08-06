@@ -42,6 +42,13 @@ venues:
     description: Canadian Securities Exchange - CSE2
     display_name: CSE2
     market_center: CS2
+  - venue: XCXD
+    country_code: CA
+    time_zone: America/Toronto
+    currency: CAD
+    description: NASDAQ CXD
+    display_name: CXD
+    market_center: CHD
   - venue: XCX2
     country_code: CA
     time_zone: America/Toronto
