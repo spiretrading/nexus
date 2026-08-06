@@ -156,10 +156,10 @@ namespace Nexus {
   };
 
   /**
-   * Parses an Entry from a string.
-   * @param source The string to parse.
+   * Returns the Entry with a specified market center.
+   * @param market_center The market center to lookup.
    * @param database The VenueDatabase containing the available Entry.
-   * @return The Entry represented by the <i>source</i>.
+   * @return The Entry with the specified <i>market_center</i>.
    */
   inline const VenueDatabase::Entry& from_market_center(
       std::string_view market_center, const VenueDatabase& database) {

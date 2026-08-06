@@ -310,6 +310,9 @@ namespace Nexus {
       return snapshot;
     }
     auto session = utc_start_of_day(ticker.get_venue(), time);
+    if(session.is_special()) {
+      return snapshot;
+    }
     auto& client = m_clients.get_market_data_client();
     auto bbo_query = TickerQuery();
     bbo_query.set_index(ticker);

@@ -112,7 +112,8 @@ namespace Details {
         std::shared_ptr<SimulationExecutionReportQueue> reports);
 
       /**
-       * Initializes the simulation with a snapshot of the Ticker's market data.
+       * Initializes the simulation with a snapshot of the Ticker's market data,
+       * discarding the book and quote it held.
        * @param snapshot The snapshot to initialize the simulation with.
        */
       void initialize(const TickerSnapshot& snapshot);
@@ -464,10 +465,13 @@ namespace Details {
   void TickerOrderSimulator<T>::set_session_timestamps(
       boost::posix_time::ptime timestamp) {
     m_date = timestamp.date();
+    m_listings.clear();
+    m_levels.clear();
     auto venue = m_ticker.get_venue();
     m_venue_close_time = venue_to_utc(venue, boost::posix_time::ptime(
       utc_to_venue(venue, timestamp).date(), boost::posix_time::hours(16)));
-    m_is_moc_pending = timestamp < m_venue_close_time;
+    m_is_moc_pending =
+      !m_venue_close_time.is_special() && timestamp < m_venue_close_time;
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
@@ -776,10 +780,13 @@ namespace Details {
     if(time_and_sale.m_condition.m_code != REGULAR_SALE || size <= 0) {
       return;
     }
-    auto venue = from_market_center(time_and_sale.m_market_center).m_venue;
     auto has_update = false;
     {
       auto lock = std::lock_guard(m_mutex);
+      if(m_orders.empty()) {
+        return;
+      }
+      auto venue = from_market_center(time_and_sale.m_market_center).m_venue;
       if(match(time_and_sale, Side::ASK, venue, size)) {
         has_update = true;
       }
