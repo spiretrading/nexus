@@ -44,6 +44,43 @@ TEST_SUITE("BacktesterEnvironment") {
     REQUIRE(fill.m_last_quantity == 100);
   }
 
+  TEST_CASE("snapshot_separates_listings_by_venue") {
+    auto start_time = time_from_string("2020-12-11 00:00:10");
+    auto data_store = LocalHistoricalDataStore();
+    auto ticker = parse_ticker("TST.TSXV");
+    auto timestamp = start_time - seconds(1);
+    auto bbo = SequencedValue(IndexedValue(BboQuote(
+      make_bid(99 * Money::CENT, 100), make_ask(Money::ONE, 100), timestamp),
+      ticker), encode(timestamp, Beam::Sequence(1)));
+    data_store.store(bbo);
+    auto listing = SequencedValue(IndexedValue(BookQuote("A", false, TSXV,
+      Quote(99 * Money::CENT, 500, Side::BID), timestamp), ticker),
+      encode(timestamp, Beam::Sequence(2)));
+    data_store.store(listing);
+    listing = SequencedValue(IndexedValue(BookQuote("A", false, XATS,
+      Quote(99 * Money::CENT, 500, Side::BID), timestamp), ticker),
+      encode(timestamp, Beam::Sequence(3)));
+    data_store.store(listing);
+    auto sale = SequencedValue(IndexedValue(
+      TimeAndSale(start_time + seconds(1), 99 * Money::CENT, 100,
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
+        "CDX"), ticker), encode(start_time + seconds(1), Beam::Sequence(4)));
+    data_store.store(sale);
+    auto test_environment = TestEnvironment(HistoricalDataStore(&data_store));
+    auto backtester = BacktesterEnvironment(start_time, start_time + hours(1),
+      Clients(std::in_place_type<TestClients>, Ref(test_environment)));
+    auto clients = BacktesterClients(Ref(backtester));
+    auto& order_execution_client = clients.get_order_execution_client();
+    auto order = order_execution_client.submit(make_limit_order_fields(
+      ticker, CurrencyId::NONE, Side::BID, "TSX", 100, 99 * Money::CENT));
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    order->get_publisher().monitor(reports);
+    REQUIRE(reports->pop().m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(reports->pop().m_status == OrderStatus::NEW);
+    backtester.wait();
+    REQUIRE(!reports->try_pop());
+  }
+
   TEST_CASE("wait") {
     auto start_time = time_from_string("2020-12-11 00:00:10");
     auto end_time = start_time + hours(1);

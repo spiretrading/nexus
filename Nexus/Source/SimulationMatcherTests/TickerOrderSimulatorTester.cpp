@@ -915,6 +915,27 @@ TEST_SUITE("TickerOrderSimulator") {
     REQUIRE(report.m_last_quantity == 100);
   }
 
+  TEST_CASE("book_quote_negative_size") {
+    auto fixture = Fixture();
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
+    publish_book_quote(fixture, simulator, "A", Venues::TSX, Side::BID,
+      parse_money("0.99"), 500);
+    publish_book_quote(fixture, simulator, "B", Venues::TSX, Side::BID,
+      parse_money("0.99"), 500);
+    publish_book_quote(fixture, simulator, "A", Venues::TSX, Side::BID,
+      parse_money("0.99"), -100);
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("0.99"), "TSX");
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_book_quote(fixture, simulator, "B", Venues::TSX, Side::BID,
+      parse_money("0.99"), 100);
+    publish_time_and_sale(fixture, simulator, parse_money("0.99"), 100);
+    REQUIRE(!reports->try_pop());
+  }
+
   TEST_CASE("at_price_requires_matching_market_center") {
     auto fixture = Fixture();
     auto simulator = make_simulator(fixture);
