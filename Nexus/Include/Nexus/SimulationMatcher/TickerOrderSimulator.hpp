@@ -199,6 +199,9 @@ namespace Details {
       void submit_pegged(const PrimitiveOrder& order);
       void enqueue(const std::shared_ptr<PrimitiveOrder>& order,
         OrderStatus status, boost::posix_time::ptime timestamp,
+        Quantity last_quantity, Money last_price, std::string text);
+      void enqueue(const std::shared_ptr<PrimitiveOrder>& order,
+        OrderStatus status, boost::posix_time::ptime timestamp,
         Quantity last_quantity, Money last_price);
       OrderStatus fill(const std::shared_ptr<PrimitiveOrder>& order,
         Money price, Quantity quantity);
@@ -282,11 +285,14 @@ namespace Details {
   void TickerOrderSimulator<T>::submit(
       const std::shared_ptr<PrimitiveOrder>& order) {
     auto lock = std::lock_guard(m_mutex);
-    if(order->get_info().m_fields.m_quantity <= 0 ||
-        m_bbo.m_bid.m_price == Money::ZERO ||
+    if(order->get_info().m_fields.m_quantity <= 0) {
+      enqueue(order, OrderStatus::REJECTED, order->get_info().m_timestamp, 0,
+        Money::ZERO, "Invalid quantity.");
+      return;
+    } else if(m_bbo.m_bid.m_price == Money::ZERO ||
         m_bbo.m_ask.m_price == Money::ZERO) {
       enqueue(order, OrderStatus::REJECTED, order->get_info().m_timestamp, 0,
-        Money::ZERO);
+        Money::ZERO, "No BBO quote available.");
       return;
     }
     enqueue(
@@ -521,7 +527,7 @@ namespace Details {
   void TickerOrderSimulator<T>::enqueue(
       const std::shared_ptr<PrimitiveOrder>& order, OrderStatus status,
       boost::posix_time::ptime timestamp, Quantity last_quantity,
-      Money last_price) {
+      Money last_price, std::string text) {
     m_reports->push([=] {
       order->with([&] (auto current_status, const auto& reports) {
         if(reports.empty() || is_terminal(current_status)) {
@@ -530,9 +536,18 @@ namespace Details {
         auto updated_report = make_update(reports.back(), status, timestamp);
         updated_report.m_last_quantity = last_quantity;
         updated_report.m_last_price = last_price;
+        updated_report.m_text = text;
         order->update(updated_report);
       });
     });
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void TickerOrderSimulator<T>::enqueue(
+      const std::shared_ptr<PrimitiveOrder>& order, OrderStatus status,
+      boost::posix_time::ptime timestamp, Quantity last_quantity,
+      Money last_price) {
+    enqueue(order, status, timestamp, last_quantity, last_price, "");
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>

@@ -484,6 +484,7 @@ TEST_SUITE("TickerOrderSimulator") {
     REQUIRE(report.m_status == OrderStatus::PENDING_NEW);
     report = reports->pop();
     REQUIRE(report.m_status == OrderStatus::REJECTED);
+    REQUIRE(report.m_text == "Invalid quantity.");
   }
 
   TEST_CASE("submit_negative_quantity") {
@@ -504,6 +505,22 @@ TEST_SUITE("TickerOrderSimulator") {
     REQUIRE(report.m_status == OrderStatus::PENDING_NEW);
     report = reports->pop();
     REQUIRE(report.m_status == OrderStatus::REJECTED);
+    REQUIRE(report.m_text == "Invalid quantity.");
+  }
+
+  TEST_CASE("submit_without_bbo_quote") {
+    auto fixture = Fixture();
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(TickerSnapshot(ABX));
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("0.99"));
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    order->get_publisher().monitor(reports);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::PENDING_NEW);
+    report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::REJECTED);
+    REQUIRE(report.m_text == "No BBO quote available.");
   }
 
   TEST_CASE("time_and_sale_bid_fill") {
