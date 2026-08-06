@@ -13,17 +13,15 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
-#include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/FixTags.hpp"
 #include "Nexus/Definitions/StandardDestinations.hpp"
-#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/Definitions/StandardVenues.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
-#include "Nexus/MarketDataService/MarketDataClient.hpp"
+#include "Nexus/MarketDataService/TickerSnapshot.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/SimulationMatcher/SimulationExecutionReportQueue.hpp"
 
@@ -105,15 +103,19 @@ namespace Details {
 
       /**
        * Constructs a TickerOrderSimulator.
-       * @param market_data_client The MarketDataClient to query.
        * @param ticker The Ticker to simulate Order executions for.
        * @param time_client The TimeClient used for Order timestamps.
        * @param reports The queue to publish ExecutionReports through.
        */
       template<Beam::Initializes<T> TF>
-      TickerOrderSimulator(IsMarketDataClient auto& market_data_client,
-        const Ticker& ticker, TF&& time_client,
+      TickerOrderSimulator(const Ticker& ticker, TF&& time_client,
         std::shared_ptr<SimulationExecutionReportQueue> reports);
+
+      /**
+       * Initializes the simulation with a snapshot of the Ticker's market data.
+       * @param snapshot The snapshot to initialize the simulation with.
+       */
+      void initialize(const TickerSnapshot& snapshot);
 
       /**
        * Recovers a previously submitted Order.
@@ -206,6 +208,7 @@ namespace Details {
         const std::shared_ptr<PrimitiveOrder>& order, OrderStatus status);
       OrderEntry make_entry(const PrimitiveOrder& order, OrderStatus status,
         Quantity remaining_quantity);
+      Quantity apply(const BookQuote& book_quote);
       void advance(const Level& level, Quantity delta);
       Quantity allocate(
         const std::shared_ptr<PrimitiveOrder>& order, Quantity available);
@@ -215,33 +218,32 @@ namespace Details {
   };
 
   template<typename T>
-  TickerOrderSimulator(IsMarketDataClient auto&, const Ticker&, T&&,
-    std::shared_ptr<SimulationExecutionReportQueue>) ->
+  TickerOrderSimulator(
+    const Ticker&, T&&, std::shared_ptr<SimulationExecutionReportQueue>) ->
       TickerOrderSimulator<std::remove_cvref_t<T>>;
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   template<Beam::Initializes<T> TF>
-  TickerOrderSimulator<T>::TickerOrderSimulator(
-      IsMarketDataClient auto& market_data_client, const Ticker& ticker,
+  TickerOrderSimulator<T>::TickerOrderSimulator(const Ticker& ticker,
       TF&& time_client, std::shared_ptr<SimulationExecutionReportQueue> reports)
       : m_time_client(std::forward<TF>(time_client)),
         m_reports(std::move(reports)),
         m_ticker(ticker) {
     set_session_timestamps(m_time_client->get_time());
-    auto snapshot = std::make_shared<Beam::Queue<BboQuote>>();
-    market_data_client.query(Beam::make_latest_query(ticker), snapshot);
-    try {
-      m_bbo = snapshot->pop();
-    } catch(const std::exception&) {}
-    try {
-      auto book = market_data_client.load_snapshot(ticker);
-      for(auto& quote : book.m_bids) {
-        update(*quote);
-      }
-      for(auto& quote : book.m_asks) {
-        update(*quote);
-      }
-    } catch(const std::exception&) {}
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void TickerOrderSimulator<T>::initialize(const TickerSnapshot& snapshot) {
+    auto lock = std::lock_guard(m_mutex);
+    m_listings.clear();
+    m_levels.clear();
+    for(auto& quote : snapshot.m_bids) {
+      apply(*quote);
+    }
+    for(auto& quote : snapshot.m_asks) {
+      apply(*quote);
+    }
+    m_bbo = *snapshot.m_bbo_quote;
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
@@ -447,44 +449,21 @@ namespace Details {
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   void TickerOrderSimulator<T>::update(const BookQuote& book_quote) {
     auto lock = std::lock_guard(m_mutex);
-    auto listing = Listing(book_quote.m_venue, book_quote.m_quote.m_side,
-      book_quote.m_quote.m_price, book_quote.m_mpid);
-    auto previous = [&] {
-      auto i = m_listings.find(listing);
-      if(i == m_listings.end()) {
-        return Quantity(0);
-      }
-      return i->second;
-    }();
-    auto delta = book_quote.m_quote.m_size - previous;
+    auto delta = apply(book_quote);
     if(delta == 0) {
       return;
     }
-    if(book_quote.m_quote.m_size <= 0) {
-      m_listings.erase(listing);
-    } else {
-      m_listings[listing] = book_quote.m_quote.m_size;
-    }
-    auto level = Level(book_quote.m_venue, book_quote.m_quote.m_side,
-      book_quote.m_quote.m_price);
-    auto size = m_levels[level] + delta;
-    if(size <= 0) {
-      m_levels.erase(level);
-    } else {
-      m_levels[level] = size;
-    }
-    advance(level, delta);
+    advance(Level(book_quote.m_venue, book_quote.m_quote.m_side,
+      book_quote.m_quote.m_price), delta);
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   void TickerOrderSimulator<T>::set_session_timestamps(
       boost::posix_time::ptime timestamp) {
     m_date = timestamp.date();
-    auto eastern_timestamp =
-      Beam::to_timezone(timestamp, "Etc/UTC", "America/New_York", TIME_ZONES);
-    m_venue_close_time = Beam::to_timezone(boost::posix_time::ptime(
-      eastern_timestamp.date(), boost::posix_time::hours(16)),
-      "America/New_York", "Etc/UTC", TIME_ZONES);
+    auto venue = m_ticker.get_venue();
+    m_venue_close_time = venue_to_utc(venue, boost::posix_time::ptime(
+      utc_to_venue(venue, timestamp).date(), boost::posix_time::hours(16)));
     m_is_moc_pending = timestamp < m_venue_close_time;
   }
 
@@ -653,6 +632,37 @@ namespace Details {
       }
     }
     return entry;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  Quantity TickerOrderSimulator<T>::apply(const BookQuote& book_quote) {
+    auto listing = Listing(book_quote.m_venue, book_quote.m_quote.m_side,
+      book_quote.m_quote.m_price, book_quote.m_mpid);
+    auto previous = [&] {
+      auto i = m_listings.find(listing);
+      if(i == m_listings.end()) {
+        return Quantity(0);
+      }
+      return i->second;
+    }();
+    auto delta = book_quote.m_quote.m_size - previous;
+    if(delta == 0) {
+      return 0;
+    }
+    if(book_quote.m_quote.m_size <= 0) {
+      m_listings.erase(listing);
+    } else {
+      m_listings[listing] = book_quote.m_quote.m_size;
+    }
+    auto level = Level(book_quote.m_venue, book_quote.m_quote.m_side,
+      book_quote.m_quote.m_price);
+    auto size = m_levels[level] + delta;
+    if(size <= 0) {
+      m_levels.erase(level);
+    } else {
+      m_levels[level] = size;
+    }
+    return delta;
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>

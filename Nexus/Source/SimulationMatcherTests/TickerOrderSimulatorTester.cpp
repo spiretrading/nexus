@@ -16,16 +16,21 @@ namespace {
 
   struct Fixture {
     TestEnvironment m_environment;
-    MarketDataClient m_market_data_client;
     std::shared_ptr<SimulationExecutionReportQueue> m_reports;
 
     Fixture()
       : m_environment(time_from_string("2025-08-14 09:00:00.000")),
-        m_market_data_client(
-          make_market_data_client(m_environment, "simulator")),
         m_reports(std::make_shared<SimulationExecutionReportQueue>()) {
     }
   };
+
+  TickerSnapshot make_snapshot(Money bid_price, Money ask_price) {
+    auto snapshot = TickerSnapshot(ABX);
+    snapshot.m_bbo_quote = SequencedBboQuote(
+      BboQuote(make_bid(bid_price, 100), make_ask(ask_price, 100),
+        time_from_string("2025-08-14 09:00:00.000")), Beam::Sequence(1));
+    return snapshot;
+  }
 
   void update_bbo_price(
       Fixture& fixture, auto& simulator, Money bid_price, Money ask_price) {
@@ -36,9 +41,8 @@ namespace {
   }
 
   auto make_simulator(Fixture& fixture) {
-    return TickerOrderSimulator(fixture.m_market_data_client, ABX,
-      std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())), fixture.m_reports);
+    return TickerOrderSimulator(ABX, std::make_unique<TestTimeClient>(
+      Ref(fixture.m_environment.get_time_environment())), fixture.m_reports);
   }
 
   std::shared_ptr<PrimitiveOrder> submit_order(Fixture& fixture,
@@ -97,12 +101,9 @@ namespace {
 TEST_SUITE("TickerOrderSimulator") {
   TEST_CASE("submit") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
-    auto simulator = TickerOrderSimulator(
-      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())),
-      fixture.m_reports);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto info = OrderInfo();
     info.m_fields =
       make_limit_order_fields(ABX, Side::BID, 100, parse_money("0.99"));
@@ -145,11 +146,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("pegged") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("10.00"), parse_money("10.01"));
-    auto simulator = TickerOrderSimulator(
-      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())), fixture.m_reports);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("10.00"), parse_money("10.01")));
     auto info = OrderInfo();
     info.m_fields =
       make_pegged_order_fields(ABX, Side::BID, 100, Money::ZERO, Money::ZERO);
@@ -217,12 +216,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("pegged_with_limit") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("9.99"), parse_money("10.00"));
-    auto simulator = TickerOrderSimulator(
-      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())),
-      fixture.m_reports);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("9.99"), parse_money("10.00")));
     auto info = OrderInfo();
     info.m_fields = make_pegged_order_fields(
       ABX, Side::ASK, 100, parse_money("9.95"), Money::ZERO);
@@ -260,12 +256,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("pegged_with_peg_difference") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("10.00"), parse_money("10.01"));
-    auto simulator = TickerOrderSimulator(
-      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())),
-      fixture.m_reports);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("10.00"), parse_money("10.01")));
     auto info = OrderInfo();
     info.m_fields = make_pegged_order_fields(
       ABX, Side::BID, 100, Money::ZERO, parse_money("0.03"));
@@ -318,12 +311,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("market_peg") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("9.99"), parse_money("10.00"));
-    auto simulator = TickerOrderSimulator(
-      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())),
-      fixture.m_reports);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("9.99"), parse_money("10.00")));
     auto info = OrderInfo();
     info.m_fields = make_pegged_order_fields(
       ABX, Side::ASK, 100, Money::ZERO, Money::ZERO, PegType::MARKET);
@@ -347,12 +337,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("market_peg_with_peg_difference") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("10.00"), parse_money("10.05"));
-    auto simulator = TickerOrderSimulator(
-      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())),
-      fixture.m_reports);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("10.00"), parse_money("10.05")));
     auto info = OrderInfo();
     info.m_fields = make_pegged_order_fields(
       ABX, Side::BID, 100, Money::ZERO, parse_money("0.03"),
@@ -386,12 +373,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("midpoint_peg") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("9.90"), parse_money("10.10"));
-    auto simulator = TickerOrderSimulator(
-      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())),
-      fixture.m_reports);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("9.90"), parse_money("10.10")));
     auto info = OrderInfo();
     info.m_fields = OrderFields(
       {}, ABX, CurrencyId::NONE, OrderType::PEGGED, Side::ASK, {}, 100,
@@ -446,12 +430,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("midpoint_peg_with_peg_difference") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("10.00"), parse_money("10.10"));
-    auto simulator = TickerOrderSimulator(
-      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())),
-      fixture.m_reports);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("10.00"), parse_money("10.10")));
     auto info = OrderInfo();
     info.m_fields = OrderFields(
       {}, ABX, CurrencyId::NONE, OrderType::PEGGED, Side::BID, {}, 100,
@@ -487,12 +468,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("submit_zero_quantity") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
-    auto simulator = TickerOrderSimulator(
-      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())),
-      fixture.m_reports);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto info = OrderInfo();
     info.m_fields =
       make_limit_order_fields(ABX, Side::BID, 0, parse_money("0.99"));
@@ -510,12 +488,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("submit_negative_quantity") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
-    auto simulator = TickerOrderSimulator(
-      fixture.m_market_data_client, ABX, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())),
-      fixture.m_reports);
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto info = OrderInfo();
     info.m_fields =
       make_limit_order_fields(ABX, Side::BID, -100, parse_money("0.99"));
@@ -533,9 +508,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("time_and_sale_bid_fill") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto order = submit_limit_order(
       fixture, simulator, 1, Side::BID, 100, parse_money("0.99"));
     auto reports = monitor_reports(order);
@@ -569,9 +544,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("time_and_sale_ask_fill") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto order = submit_limit_order(
       fixture, simulator, 1, Side::ASK, 100, parse_money("1.02"));
     auto reports = monitor_reports(order);
@@ -611,9 +586,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("time_and_sale_partial_fill") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto order = submit_limit_order(
       fixture, simulator, 1, Side::BID, 1000, parse_money("0.99"));
     auto reports = monitor_reports(order);
@@ -636,9 +611,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("bbo_fill_after_partial_time_and_sale_fill") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto order = submit_limit_order(
       fixture, simulator, 1, Side::BID, 1000, parse_money("0.99"));
     auto reports = monitor_reports(order);
@@ -657,9 +632,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("time_and_sale_fills_orders_by_price_then_time") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto first = submit_limit_order(
       fixture, simulator, 1, Side::BID, 100, parse_money("0.99"));
     auto second = submit_limit_order(
@@ -691,9 +666,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("time_and_sale_fills_ask_orders_by_price_then_time") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto first = submit_limit_order(
       fixture, simulator, 1, Side::ASK, 100, parse_money("1.02"));
     auto second = submit_limit_order(
@@ -725,9 +700,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("update_reduces_remaining_quantity") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto order = submit_limit_order(
       fixture, simulator, 1, Side::BID, 1000, parse_money("0.99"));
     auto reports = monitor_reports(order);
@@ -751,9 +726,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("time_and_sale_condition") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto order = submit_limit_order(
       fixture, simulator, 1, Side::BID, 100, parse_money("0.99"));
     auto reports = monitor_reports(order);
@@ -779,9 +754,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("time_and_sale_ignores_market_on_close_order") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto order = submit_order(fixture, simulator, 1,
       OrderFields({}, ABX, CurrencyId::NONE, OrderType::LIMIT, Side::BID, {},
         100, parse_money("0.99"), TimeInForce(TimeInForce::Type::MOC), {}));
@@ -793,9 +768,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("time_and_sale_ignores_pegged_order") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("10.00"), parse_money("10.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("10.00"), parse_money("10.01")));
     auto order = submit_order(fixture, simulator, 1,
       make_pegged_order_fields(ABX, Side::ASK, 100, Money::ZERO, Money::ZERO));
     auto reports = monitor_reports(order);
@@ -806,9 +781,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("recover_partially_filled_order") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto info = OrderInfo();
     info.m_fields =
       make_limit_order_fields(ABX, Side::BID, 1000, parse_money("0.99"));
@@ -842,9 +817,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("at_price_fill_at_front_of_queue") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto order = submit_limit_order(
       fixture, simulator, 1, Side::BID, 100, parse_money("0.99"), "TSX");
     auto reports = monitor_reports(order);
@@ -858,9 +833,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("at_price_no_fill_behind_queue") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     publish_book_quote(fixture, simulator, "A", Venues::TSX, Side::BID,
       parse_money("0.99"), 500);
     auto order = submit_limit_order(
@@ -873,9 +848,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("book_quote_decrease_advances_queue") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     publish_book_quote(fixture, simulator, "A", Venues::TSX, Side::BID,
       parse_money("0.99"), 500);
     auto order = submit_limit_order(
@@ -897,9 +872,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("book_quote_increase_does_not_advance_queue") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     publish_book_quote(fixture, simulator, "A", Venues::TSX, Side::BID,
       parse_money("0.99"), 500);
     auto order = submit_limit_order(
@@ -922,9 +897,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("at_price_requires_matching_market_center") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto order = submit_limit_order(
       fixture, simulator, 1, Side::BID, 100, parse_money("0.99"), "TSX");
     auto reports = monitor_reports(order);
@@ -941,9 +916,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("queue_counts_only_the_destination_venue") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     publish_book_quote(fixture, simulator, "A", Venues::TSX, Side::BID,
       parse_money("0.99"), 500);
     auto order = submit_limit_order(
@@ -959,9 +934,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("queue_ignores_other_prices_and_sides") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     publish_book_quote(fixture, simulator, "A", Venues::TSX, Side::BID,
       parse_money("0.98"), 500);
     publish_book_quote(fixture, simulator, "B", Venues::TSX, Side::ASK,
@@ -978,9 +953,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("at_price_ignores_unmapped_destination") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto order = submit_limit_order(
       fixture, simulator, 1, Side::BID, 100, parse_money("0.99"), "MOE");
     auto reports = monitor_reports(order);
@@ -991,9 +966,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("at_price_partial_fill") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto order = submit_limit_order(
       fixture, simulator, 1, Side::BID, 1000, parse_money("0.99"), "TSX");
     auto reports = monitor_reports(order);
@@ -1011,9 +986,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("at_price_ask_fill") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     publish_book_quote(fixture, simulator, "A", Venues::TSX, Side::ASK,
       parse_money("1.02"), 500);
     auto order = submit_limit_order(
@@ -1033,9 +1008,9 @@ TEST_SUITE("TickerOrderSimulator") {
 
   TEST_CASE("through_orders_allocate_before_at_price_orders") {
     auto fixture = Fixture();
-    fixture.m_environment.update_bbo_price(
-      ABX, parse_money("1.00"), parse_money("1.01"));
     auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
     auto through = submit_limit_order(
       fixture, simulator, 1, Side::BID, 100, parse_money("1.00"), "TSX");
     auto resting = submit_limit_order(
@@ -1057,11 +1032,16 @@ TEST_SUITE("TickerOrderSimulator") {
   TEST_CASE("destination_venue_follows_listing_venue") {
     auto fixture = Fixture();
     auto ticker = parse_ticker("XYZ.TSXV");
-    fixture.m_environment.update_bbo_price(
-      ticker, parse_money("1.00"), parse_money("1.01"));
-    auto simulator = TickerOrderSimulator(fixture.m_market_data_client, ticker,
+    auto simulator = TickerOrderSimulator(ticker,
       std::make_unique<TestTimeClient>(
         Ref(fixture.m_environment.get_time_environment())), fixture.m_reports);
+    auto snapshot = TickerSnapshot(ticker);
+    snapshot.m_bbo_quote = SequencedBboQuote(
+      BboQuote(make_bid(parse_money("1.00"), 100),
+        make_ask(parse_money("1.01"), 100),
+        fixture.m_environment.get_time_environment().get_time()),
+      Beam::Sequence(1));
+    simulator.initialize(snapshot);
     auto info = OrderInfo();
     info.m_fields = make_limit_order_fields(
       ticker, CurrencyId::NONE, Side::BID, "TSX", 100, parse_money("0.99"));

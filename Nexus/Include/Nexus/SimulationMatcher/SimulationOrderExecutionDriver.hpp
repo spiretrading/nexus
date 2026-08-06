@@ -1,11 +1,13 @@
 #ifndef NEXUS_SIMULATION_ORDER_EXECUTION_DRIVER_HPP
 #define NEXUS_SIMULATION_ORDER_EXECUTION_DRIVER_HPP
+#include <functional>
 #include <memory>
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
@@ -40,8 +42,7 @@ namespace Nexus {
 
     private:
       MarketDataClient m_market_data_client;
-      PassiveSimulationOrderExecutionDriver<MarketDataClient*, Beam::TimeClient>
-        m_driver;
+      PassiveSimulationOrderExecutionDriver<Beam::TimeClient> m_driver;
       Beam::RoutineHandlerGroup m_query_routines;
       Beam::RoutineTaskQueue m_tasks;
       Beam::OpenState m_open_state;
@@ -50,17 +51,16 @@ namespace Nexus {
         const SimulationOrderExecutionDriver&) = delete;
       SimulationOrderExecutionDriver& operator =(
         const SimulationOrderExecutionDriver&) = delete;
-      void subscribe(const Ticker& ticker);
+      TickerSnapshot subscribe(const Ticker& ticker);
   };
 
   inline SimulationOrderExecutionDriver::SimulationOrderExecutionDriver(
       MarketDataClient market_data_client, Beam::TimeClient time_client)
+BEAM_SUPPRESS_THIS_INITIALIZER()
       : m_market_data_client(std::move(market_data_client)),
-        m_driver(&m_market_data_client, std::move(time_client)) {
-    m_driver.set_ticker_slot([this] (const auto& ticker) {
-      subscribe(ticker);
-    });
-  }
+        m_driver(std::move(time_client), std::bind_front(
+          &SimulationOrderExecutionDriver::subscribe, this)) {}
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
   inline SimulationOrderExecutionDriver::~SimulationOrderExecutionDriver() {
     close();
@@ -119,24 +119,32 @@ namespace Nexus {
     m_open_state.close();
   }
 
-  inline void SimulationOrderExecutionDriver::subscribe(const Ticker& ticker) {
+  inline TickerSnapshot SimulationOrderExecutionDriver::subscribe(
+      const Ticker& ticker) {
+    auto snapshot = [&] {
+      try {
+        return m_market_data_client.load_snapshot(ticker);
+      } catch(const std::exception&) {
+        return TickerSnapshot(ticker);
+      }
+    }();
     m_query_routines.add(query_real_time_with_snapshot(m_market_data_client,
-      ticker, m_tasks.get_slot<BboQuote>([this, ticker] (const auto& bbo) {
+      ticker, m_tasks.get_slot<BboQuote>([=, this] (const auto& bbo) {
         m_driver.update(ticker, bbo);
       })));
     m_query_routines.add(query_real_time_with_snapshot(m_market_data_client,
-      ticker, m_tasks.get_slot<BookQuote>(
-        [=, this] (const auto& book_quote) {
-          m_driver.update(ticker, book_quote);
-        })));
+      ticker, m_tasks.get_slot<BookQuote>([=, this] (const auto& book_quote) {
+        m_driver.update(ticker, book_quote);
+      })));
     auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(Beam::Range::REAL_TIME);
     query.set_interruption_policy(Beam::InterruptionPolicy::RECOVER_DATA);
     m_market_data_client.query(query, m_tasks.get_slot<TimeAndSale>(
-      [this, ticker] (const auto& time_and_sale) {
+      [=, this] (const auto& time_and_sale) {
         m_driver.update(ticker, time_and_sale);
       }));
+    return snapshot;
   }
 }
 

@@ -31,8 +31,11 @@ TEST_SUITE("PassiveSimulationOrderExecutionDriver") {
     fixture.m_environment.update_bbo_price(
       TD, 10 * Money::ONE, 20 * Money::ONE);
     auto driver = PassiveSimulationOrderExecutionDriver(
-      fixture.m_market_data_client, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())));
+      std::make_unique<TestTimeClient>(
+        Ref(fixture.m_environment.get_time_environment())),
+      [&] (const auto& ticker) {
+        return fixture.m_market_data_client.load_snapshot(ticker);
+      });
     auto info1 = OrderInfo();
     info1.m_fields = make_limit_order_fields(SHOP, Side::BID, 100, Money::ONE);
     info1.m_id = 1;
@@ -69,8 +72,11 @@ TEST_SUITE("PassiveSimulationOrderExecutionDriver") {
     fixture.m_environment.update_bbo_price(
       TD, 10 * Money::ONE, 20 * Money::ONE);
     auto driver = PassiveSimulationOrderExecutionDriver(
-      fixture.m_market_data_client, std::make_unique<TestTimeClient>(
-        Ref(fixture.m_environment.get_time_environment())));
+      std::make_unique<TestTimeClient>(
+        Ref(fixture.m_environment.get_time_environment())),
+      [&] (const auto& ticker) {
+        return fixture.m_market_data_client.load_snapshot(ticker);
+      });
     auto timestamp = fixture.m_environment.get_time_environment().get_time();
     auto live_info = OrderInfo();
     live_info.m_fields =

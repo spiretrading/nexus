@@ -17,6 +17,7 @@
 #include "Nexus/ComplianceTests/ComplianceTestEnvironment.hpp"
 #include "Nexus/DefinitionsServiceTests/DefinitionsServiceTestEnvironment.hpp"
 #include "Nexus/MarketDataService/ClientHistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/TickerSnapshot.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/RiskServiceTests/RiskServiceTestEnvironment.hpp"
@@ -118,8 +119,8 @@ namespace Nexus {
       MarketDataClient m_market_data_client;
       Tests::ChartingServiceTestEnvironment m_charting_environment;
       Tests::ComplianceTestEnvironment m_compliance_environment;
-      boost::optional<PassiveSimulationOrderExecutionDriver<
-        MarketDataClient, Beam::TimeClient>> m_simulation_driver;
+      boost::optional<PassiveSimulationOrderExecutionDriver<Beam::TimeClient>>
+        m_simulation_driver;
       boost::optional<Tests::OrderExecutionServiceTestEnvironment>
         m_order_execution_environment;
       boost::optional<OrderExecutionClient> m_order_execution_client;
@@ -128,6 +129,7 @@ namespace Nexus {
 
       BacktesterEnvironment(const BacktesterEnvironment&) = delete;
       BacktesterEnvironment& operator =(const BacktesterEnvironment&) = delete;
+      TickerSnapshot load_snapshot(const Ticker& ticker);
   };
 
   inline BacktesterEnvironment::BacktesterEnvironment(
@@ -162,15 +164,17 @@ namespace Nexus {
     try {
       auto definitions_client = m_definitions_environment.make_client(
         Beam::Ref(m_service_locator_client));
-      m_simulation_driver.emplace(m_market_data_client, m_time_client);
-      m_simulation_driver->set_ticker_slot([this] (const auto& ticker) {
-        m_market_data_service.query_bbo_quotes(
-          Beam::make_current_query(ticker));
-        m_market_data_service.query_time_and_sales(
-          Beam::make_current_query(ticker));
-        m_market_data_service.query_book_quotes(
-          Beam::make_current_query(ticker));
-      });
+      m_simulation_driver.emplace(
+        m_time_client, [=, this] (const auto& ticker) {
+          auto snapshot = load_snapshot(ticker);
+          m_market_data_service.query_bbo_quotes(
+            Beam::make_current_query(ticker));
+          m_market_data_service.query_time_and_sales(
+            Beam::make_current_query(ticker));
+          m_market_data_service.query_book_quotes(
+            Beam::make_current_query(ticker));
+          return snapshot;
+        });
       m_market_data_service.set_bbo_slot(
         [this] (const auto& ticker, const auto& bbo) {
           m_simulation_driver->update(ticker, bbo);
@@ -296,6 +300,52 @@ namespace Nexus {
 
   inline void BacktesterEnvironment::wait() {
     m_event_handler.wait();
+  }
+
+  inline TickerSnapshot BacktesterEnvironment::load_snapshot(
+      const Ticker& ticker) {
+    auto snapshot = TickerSnapshot(ticker);
+    auto time = m_event_handler.get_time();
+    if(time.is_special()) {
+      return snapshot;
+    }
+    auto session = utc_start_of_day(ticker.get_venue(), time);
+    auto& client = m_clients.get_market_data_client();
+    auto bbo_query = TickerQuery();
+    bbo_query.set_index(ticker);
+    bbo_query.set_range(Beam::Sequence::FIRST, time);
+    bbo_query.set_snapshot_limit(Beam::SnapshotLimit::from_tail(1));
+    auto bbos = std::make_shared<Beam::Queue<SequencedBboQuote>>();
+    client.query(bbo_query, bbos);
+    auto bbo = std::vector<SequencedBboQuote>();
+    Beam::flush(bbos, std::back_inserter(bbo));
+    if(!bbo.empty()) {
+      snapshot.m_bbo_quote = bbo.back();
+    }
+    auto book_query = TickerQuery();
+    book_query.set_index(ticker);
+    book_query.set_range(session, time);
+    book_query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
+    auto quotes = std::make_shared<Beam::Queue<SequencedBookQuote>>();
+    client.query(book_query, quotes);
+    auto listings =
+      std::map<std::tuple<std::string, Side, Money>, SequencedBookQuote>();
+    Beam::for_each(quotes, [&] (const auto& quote) {
+      listings[std::tuple(
+        quote->m_mpid, quote->m_quote.m_side, quote->m_quote.m_price)] = quote;
+    });
+    for(auto& listing : listings) {
+      if(listing.second->m_quote.m_size <= 0) {
+        continue;
+      }
+      auto& side = std::get<1>(listing.first);
+      if(side == Side::BID) {
+        snapshot.m_bids.push_back(listing.second);
+      } else if(side == Side::ASK) {
+        snapshot.m_asks.push_back(listing.second);
+      }
+    }
+    return snapshot;
   }
 
   inline void BacktesterEnvironment::close() {
