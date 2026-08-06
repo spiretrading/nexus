@@ -81,6 +81,33 @@ TEST_SUITE("BacktesterEnvironment") {
     REQUIRE(!reports->try_pop());
   }
 
+  TEST_CASE("replayed_book_quote_sizes_are_absolute") {
+    auto start_time = time_from_string("2020-12-11 00:00:10");
+    auto data_store = LocalHistoricalDataStore();
+    auto ticker = parse_ticker("TST.TSXV");
+    auto timestamp = start_time + seconds(1);
+    auto listing = SequencedValue(IndexedValue(BookQuote("A", false, TSXV,
+      Quote(99 * Money::CENT, 500, Side::BID), timestamp), ticker),
+      encode(timestamp, Beam::Sequence(1)));
+    data_store.store(listing);
+    timestamp = start_time + seconds(2);
+    listing = SequencedValue(IndexedValue(BookQuote("A", false, TSXV,
+      Quote(99 * Money::CENT, 200, Side::BID), timestamp), ticker),
+      encode(timestamp, Beam::Sequence(2)));
+    data_store.store(listing);
+    auto test_environment = TestEnvironment(HistoricalDataStore(&data_store));
+    auto backtester = BacktesterEnvironment(start_time, start_time + hours(1),
+      Clients(std::in_place_type<TestClients>, Ref(test_environment)));
+    auto clients = BacktesterClients(Ref(backtester));
+    auto& market_data_client = clients.get_market_data_client();
+    auto quotes = std::make_shared<Queue<BookQuote>>();
+    market_data_client.query(Beam::make_current_query(ticker), quotes);
+    backtester.wait();
+    auto snapshot = market_data_client.load_snapshot(ticker);
+    REQUIRE(snapshot.m_bids.size() == 1);
+    REQUIRE(snapshot.m_bids[0]->m_quote.m_size == 200);
+  }
+
   TEST_CASE("wait") {
     auto start_time = time_from_string("2020-12-11 00:00:10");
     auto end_time = start_time + hours(1);
