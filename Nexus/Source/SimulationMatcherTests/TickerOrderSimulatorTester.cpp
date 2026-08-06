@@ -1,4 +1,6 @@
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/BookQuote.hpp"
+#include "Nexus/Definitions/StandardVenues.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/SimulationMatcher/TickerOrderSimulator.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
@@ -68,12 +70,27 @@ namespace {
     return reports;
   }
 
+  std::shared_ptr<PrimitiveOrder> submit_limit_order(Fixture& fixture,
+      auto& simulator, OrderId id, Side side, Quantity quantity, Money price,
+      Destination destination) {
+    return submit_order(fixture, simulator, id, make_limit_order_fields(
+      ABX, CurrencyId::NONE, side, std::move(destination), quantity, price));
+  }
+
   void publish_time_and_sale(Fixture& fixture, auto& simulator, Money price,
-      Quantity size, const std::string& code = "@") {
+      Quantity size, const std::string& code = "@",
+      const std::string& market_center = "TSE") {
     simulator.update(TimeAndSale(
       fixture.m_environment.get_time_environment().get_time(), price, size,
       TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, code),
-      "TSE"));
+      market_center));
+  }
+
+  void publish_book_quote(Fixture& fixture, auto& simulator,
+      const std::string& mpid, Venue venue, Side side, Money price,
+      Quantity size) {
+    simulator.update(BookQuote(mpid, false, venue, Quote(price, size, side),
+      fixture.m_environment.get_time_environment().get_time()));
   }
 }
 
@@ -821,5 +838,247 @@ TEST_SUITE("TickerOrderSimulator") {
     REQUIRE(report.m_status == OrderStatus::FILLED);
     REQUIRE(report.m_last_price == parse_money("0.99"));
     REQUIRE(report.m_last_quantity == 600);
+  }
+
+  TEST_CASE("at_price_fill_at_front_of_queue") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(
+      ABX, parse_money("1.00"), parse_money("1.01"));
+    auto simulator = make_simulator(fixture);
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("0.99"), "TSX");
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(fixture, simulator, parse_money("0.99"), 100);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("0.99"));
+    REQUIRE(report.m_last_quantity == 100);
+  }
+
+  TEST_CASE("at_price_no_fill_behind_queue") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(
+      ABX, parse_money("1.00"), parse_money("1.01"));
+    auto simulator = make_simulator(fixture);
+    publish_book_quote(fixture, simulator, "A", Venues::TSX, Side::BID,
+      parse_money("0.99"), 500);
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("0.99"), "TSX");
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(fixture, simulator, parse_money("0.99"), 100);
+    REQUIRE(!reports->try_pop());
+  }
+
+  TEST_CASE("book_quote_decrease_advances_queue") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(
+      ABX, parse_money("1.00"), parse_money("1.01"));
+    auto simulator = make_simulator(fixture);
+    publish_book_quote(fixture, simulator, "A", Venues::TSX, Side::BID,
+      parse_money("0.99"), 500);
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("0.99"), "TSX");
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_book_quote(fixture, simulator, "A", Venues::TSX, Side::BID,
+      parse_money("0.99"), 200);
+    publish_time_and_sale(fixture, simulator, parse_money("0.99"), 100);
+    REQUIRE(!reports->try_pop());
+    publish_book_quote(
+      fixture, simulator, "A", Venues::TSX, Side::BID, parse_money("0.99"), 0);
+    publish_time_and_sale(fixture, simulator, parse_money("0.99"), 100);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("0.99"));
+    REQUIRE(report.m_last_quantity == 100);
+  }
+
+  TEST_CASE("book_quote_increase_does_not_advance_queue") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(
+      ABX, parse_money("1.00"), parse_money("1.01"));
+    auto simulator = make_simulator(fixture);
+    publish_book_quote(fixture, simulator, "A", Venues::TSX, Side::BID,
+      parse_money("0.99"), 500);
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("0.99"), "TSX");
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_book_quote(fixture, simulator, "B", Venues::TSX, Side::BID,
+      parse_money("0.99"), 200);
+    publish_book_quote(
+      fixture, simulator, "B", Venues::TSX, Side::BID, parse_money("0.99"), 0);
+    publish_time_and_sale(fixture, simulator, parse_money("0.99"), 100);
+    REQUIRE(!reports->try_pop());
+    publish_book_quote(
+      fixture, simulator, "A", Venues::TSX, Side::BID, parse_money("0.99"), 0);
+    publish_time_and_sale(fixture, simulator, parse_money("0.99"), 100);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_quantity == 100);
+  }
+
+  TEST_CASE("at_price_requires_matching_market_center") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(
+      ABX, parse_money("1.00"), parse_money("1.01"));
+    auto simulator = make_simulator(fixture);
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("0.99"), "TSX");
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(
+      fixture, simulator, parse_money("0.99"), 100, "@", "ALP");
+    REQUIRE(!reports->try_pop());
+    publish_time_and_sale(
+      fixture, simulator, parse_money("0.99"), 100, "@", "TSE");
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_quantity == 100);
+  }
+
+  TEST_CASE("queue_counts_only_the_destination_venue") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(
+      ABX, parse_money("1.00"), parse_money("1.01"));
+    auto simulator = make_simulator(fixture);
+    publish_book_quote(fixture, simulator, "A", Venues::TSX, Side::BID,
+      parse_money("0.99"), 500);
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("0.99"), "ALPHA");
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(
+      fixture, simulator, parse_money("0.99"), 100, "@", "ALP");
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_quantity == 100);
+  }
+
+  TEST_CASE("queue_ignores_other_prices_and_sides") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(
+      ABX, parse_money("1.00"), parse_money("1.01"));
+    auto simulator = make_simulator(fixture);
+    publish_book_quote(fixture, simulator, "A", Venues::TSX, Side::BID,
+      parse_money("0.98"), 500);
+    publish_book_quote(fixture, simulator, "B", Venues::TSX, Side::ASK,
+      parse_money("0.99"), 500);
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("0.99"), "TSX");
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(fixture, simulator, parse_money("0.99"), 100);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_quantity == 100);
+  }
+
+  TEST_CASE("at_price_ignores_unmapped_destination") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(
+      ABX, parse_money("1.00"), parse_money("1.01"));
+    auto simulator = make_simulator(fixture);
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("0.99"), "MOE");
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(fixture, simulator, parse_money("0.99"), 100);
+    REQUIRE(!reports->try_pop());
+  }
+
+  TEST_CASE("at_price_partial_fill") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(
+      ABX, parse_money("1.00"), parse_money("1.01"));
+    auto simulator = make_simulator(fixture);
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 1000, parse_money("0.99"), "TSX");
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(fixture, simulator, parse_money("0.99"), 300);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::PARTIALLY_FILLED);
+    REQUIRE(report.m_last_price == parse_money("0.99"));
+    REQUIRE(report.m_last_quantity == 300);
+    publish_time_and_sale(fixture, simulator, parse_money("0.99"), 800);
+    report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_quantity == 700);
+  }
+
+  TEST_CASE("at_price_ask_fill") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(
+      ABX, parse_money("1.00"), parse_money("1.01"));
+    auto simulator = make_simulator(fixture);
+    publish_book_quote(fixture, simulator, "A", Venues::TSX, Side::ASK,
+      parse_money("1.02"), 500);
+    auto order = submit_limit_order(
+      fixture, simulator, 1, Side::ASK, 100, parse_money("1.02"), "TSX");
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(fixture, simulator, parse_money("1.02"), 100);
+    REQUIRE(!reports->try_pop());
+    publish_book_quote(
+      fixture, simulator, "A", Venues::TSX, Side::ASK, parse_money("1.02"), 0);
+    publish_time_and_sale(fixture, simulator, parse_money("1.02"), 100);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.02"));
+    REQUIRE(report.m_last_quantity == 100);
+  }
+
+  TEST_CASE("through_orders_allocate_before_at_price_orders") {
+    auto fixture = Fixture();
+    fixture.m_environment.update_bbo_price(
+      ABX, parse_money("1.00"), parse_money("1.01"));
+    auto simulator = make_simulator(fixture);
+    auto through = submit_limit_order(
+      fixture, simulator, 1, Side::BID, 100, parse_money("1.00"), "TSX");
+    auto resting = submit_limit_order(
+      fixture, simulator, 2, Side::BID, 100, parse_money("0.99"), "TSX");
+    auto through_reports = monitor_reports(through);
+    auto resting_reports = monitor_reports(resting);
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(fixture, simulator, parse_money("0.99"), 150);
+    auto report = through_reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.00"));
+    REQUIRE(report.m_last_quantity == 100);
+    report = resting_reports->pop();
+    REQUIRE(report.m_status == OrderStatus::PARTIALLY_FILLED);
+    REQUIRE(report.m_last_price == parse_money("0.99"));
+    REQUIRE(report.m_last_quantity == 50);
+  }
+
+  TEST_CASE("destination_venue_follows_listing_venue") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("XYZ.TSXV");
+    fixture.m_environment.update_bbo_price(
+      ticker, parse_money("1.00"), parse_money("1.01"));
+    auto simulator = TickerOrderSimulator(fixture.m_market_data_client, ticker,
+      std::make_unique<TestTimeClient>(
+        Ref(fixture.m_environment.get_time_environment())), fixture.m_reports);
+    auto info = OrderInfo();
+    info.m_fields = make_limit_order_fields(
+      ticker, CurrencyId::NONE, Side::BID, "TSX", 100, parse_money("0.99"));
+    info.m_id = 1;
+    info.m_timestamp = fixture.m_environment.get_time_environment().get_time();
+    auto order = std::make_shared<PrimitiveOrder>(info);
+    simulator.submit(order);
+    fixture.m_reports->flush();
+    auto reports = monitor_reports(order);
+    fixture.m_environment.advance(minutes(1));
+    publish_time_and_sale(
+      fixture, simulator, parse_money("0.99"), 100, "@", "TSE");
+    REQUIRE(!reports->try_pop());
+    publish_time_and_sale(
+      fixture, simulator, parse_money("0.99"), 100, "@", "CDX");
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_quantity == 100);
   }
 }
