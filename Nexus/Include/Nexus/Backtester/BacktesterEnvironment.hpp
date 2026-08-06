@@ -328,11 +328,11 @@ namespace Nexus {
     book_query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
     auto quotes = std::make_shared<Beam::Queue<SequencedBookQuote>>();
     client.query(book_query, quotes);
-    auto listings =
-      std::map<std::tuple<std::string, Side, Money>, SequencedBookQuote>();
+    auto listings = std::map<
+      std::tuple<Venue, Side, Money, std::string>, SequencedBookQuote>();
     Beam::for_each(quotes, [&] (const auto& quote) {
-      listings[std::tuple(
-        quote->m_mpid, quote->m_quote.m_side, quote->m_quote.m_price)] = quote;
+      listings[std::tuple(quote->m_venue, quote->m_quote.m_side,
+        quote->m_quote.m_price, quote->m_mpid)] = quote;
     });
     for(auto& listing : listings) {
       if(listing.second->m_quote.m_size <= 0) {

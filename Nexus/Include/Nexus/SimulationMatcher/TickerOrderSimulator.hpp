@@ -648,14 +648,15 @@ namespace Details {
       }
       return i->second;
     }();
-    auto delta = book_quote.m_quote.m_size - previous;
+    auto quantity = std::max(Quantity(0), book_quote.m_quote.m_size);
+    auto delta = quantity - previous;
     if(delta == 0) {
       return 0;
     }
-    if(book_quote.m_quote.m_size <= 0) {
+    if(quantity <= 0) {
       m_listings.erase(listing);
     } else {
-      m_listings[listing] = book_quote.m_quote.m_size;
+      m_listings[listing] = quantity;
     }
     auto level = Level(book_quote.m_venue, book_quote.m_quote.m_side,
       book_quote.m_quote.m_price);
