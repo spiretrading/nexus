@@ -1,10 +1,12 @@
 #ifndef NEXUS_TICKER_ORDER_SIMULATOR_HPP
 #define NEXUS_TICKER_ORDER_SIMULATOR_HPP
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <mutex>
 #include <sstream>
 #include <string_view>
+#include <tuple>
 #include <unordered_map>
 #include <vector>
 #include <Beam/Pointers/Dereference.hpp>
@@ -14,14 +16,81 @@
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
+#include "Nexus/Definitions/BookQuote.hpp"
+#include "Nexus/Definitions/Destination.hpp"
 #include "Nexus/Definitions/FixTags.hpp"
+#include "Nexus/Definitions/StandardDestinations.hpp"
 #include "Nexus/Definitions/StandardTimeZones.hpp"
+#include "Nexus/Definitions/StandardVenues.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Nexus/SimulationMatcher/SimulationExecutionReportQueue.hpp"
 
 namespace Nexus {
+namespace Details {
+  struct PostingVenue {
+    Destination m_destination;
+    Venue m_listing_venue;
+    Venue m_venue;
+  };
+
+  inline const std::vector<PostingVenue>& get_posting_venues() {
+    static const auto venues = std::vector<PostingVenue>({
+      {Destinations::ALPHA, Venues::TSX, Venues::XATS},
+      {Destinations::ALPHA, Venues::TSXV, Venues::XATS},
+      {Destinations::ASXT, Venues::ASX, Venues::ASX},
+      {Destinations::CHIX, Venues::NEOE, Venues::CHIC},
+      {Destinations::CHIX, Venues::CSE, Venues::CHIC},
+      {Destinations::CHIX, Venues::TSX, Venues::CHIC},
+      {Destinations::CHIX, Venues::TSXV, Venues::CHIC},
+      {Destinations::CSE, Venues::CSE, Venues::CSE},
+      {Destinations::CSE2, Venues::CSE, Venues::CSE2},
+      {Destinations::CSE2, Venues::TSX, Venues::CSE2},
+      {Destinations::CSE2, Venues::TSXV, Venues::CSE2},
+      {Destinations::CX2, Venues::NEOE, Venues::XCX2},
+      {Destinations::CX2, Venues::CSE, Venues::XCX2},
+      {Destinations::CX2, Venues::TSX, Venues::XCX2},
+      {Destinations::CX2, Venues::TSXV, Venues::XCX2},
+      {Destinations::CXA, Venues::ASX, Venues::CXA},
+      {Destinations::LYNX, Venues::NEOE, Venues::LYNX},
+      {Destinations::LYNX, Venues::CSE, Venues::LYNX},
+      {Destinations::LYNX, Venues::TSX, Venues::LYNX},
+      {Destinations::LYNX, Venues::TSXV, Venues::LYNX},
+      {Destinations::MATNLP, Venues::NEOE, Venues::MATN},
+      {Destinations::MATNLP, Venues::CSE, Venues::MATN},
+      {Destinations::MATNLP, Venues::TSX, Venues::MATN},
+      {Destinations::MATNLP, Venues::TSXV, Venues::MATN},
+      {Destinations::MATNMF, Venues::NEOE, Venues::MATN},
+      {Destinations::MATNMF, Venues::CSE, Venues::MATN},
+      {Destinations::MATNMF, Venues::TSX, Venues::MATN},
+      {Destinations::MATNMF, Venues::TSXV, Venues::MATN},
+      {Destinations::NEOE, Venues::NEOE, Venues::NEOE},
+      {Destinations::NEOE, Venues::CSE, Venues::NEOE},
+      {Destinations::NEOE, Venues::TSX, Venues::NEOE},
+      {Destinations::NEOE, Venues::TSXV, Venues::NEOE},
+      {Destinations::OMEGA, Venues::NEOE, Venues::OMGA},
+      {Destinations::OMEGA, Venues::CSE, Venues::OMGA},
+      {Destinations::OMEGA, Venues::TSX, Venues::OMGA},
+      {Destinations::OMEGA, Venues::TSXV, Venues::OMGA},
+      {Destinations::PURE, Venues::TSX, Venues::PURE},
+      {Destinations::PURE, Venues::TSXV, Venues::PURE},
+      {Destinations::TSX, Venues::TSX, Venues::TSX},
+      {Destinations::TSX, Venues::TSXV, Venues::TSXV}});
+    return venues;
+  }
+
+  inline Venue get_posting_venue(
+      const Destination& destination, Venue listing_venue) {
+    for(auto& entry : get_posting_venues()) {
+      if(entry.m_destination == destination &&
+          entry.m_listing_venue == listing_venue) {
+        return entry.m_venue;
+      }
+    }
+    return Venue();
+  }
+}
 
   /**
    * Handles simulating Orders submitted for a specific Ticker.
@@ -84,10 +153,21 @@ namespace Nexus {
        */
       void update(const TimeAndSale& time_and_sale);
 
+      /**
+       * Updates the simulation with a BookQuote.
+       * @param book_quote The BookQuote to update the simulation with.
+       */
+      void update(const BookQuote& book_quote);
+
     private:
+      using Level = std::tuple<Venue, Side, Money>;
+      using Listing = std::tuple<Venue, Side, Money, std::string>;
       struct OrderEntry {
         OrderStatus m_status;
         Quantity m_remaining_quantity;
+        Venue m_venue;
+        Quantity m_queue_quantity;
+        Quantity m_trailing_quantity;
       };
       struct PeggedOrderEntry {
         std::string m_exec_inst;
@@ -97,12 +177,15 @@ namespace Nexus {
       static constexpr auto REGULAR_SALE = std::string_view("@");
       Beam::local_ptr_t<T> m_time_client;
       std::shared_ptr<SimulationExecutionReportQueue> m_reports;
+      Ticker m_ticker;
       boost::gregorian::date m_date;
       boost::posix_time::ptime m_venue_close_time;
       bool m_is_moc_pending;
       std::vector<std::shared_ptr<PrimitiveOrder>> m_orders;
       std::unordered_map<OrderId, OrderEntry> m_entries;
       std::unordered_map<OrderId, PeggedOrderEntry> m_pegged_entries;
+      std::map<Listing, Quantity> m_listings;
+      std::map<Level, Quantity> m_levels;
       BboQuote m_bbo;
       Beam::Mutex m_mutex;
 
@@ -121,7 +204,12 @@ namespace Nexus {
         const std::shared_ptr<PrimitiveOrder>& order, OrderStatus status);
       OrderStatus update_pegged(
         const std::shared_ptr<PrimitiveOrder>& order, OrderStatus status);
-      bool match(const TimeAndSale& time_and_sale, Side side);
+      OrderEntry make_entry(const PrimitiveOrder& order, OrderStatus status,
+        Quantity remaining_quantity);
+      void advance(const Level& level, Quantity delta);
+      Quantity allocate(
+        const std::shared_ptr<PrimitiveOrder>& order, Quantity available);
+      bool match(const TimeAndSale& time_and_sale, Side side, Venue venue);
       void match(const TimeAndSale& time_and_sale);
       void erase(const std::shared_ptr<PrimitiveOrder>& order);
   };
@@ -137,12 +225,22 @@ namespace Nexus {
       IsMarketDataClient auto& market_data_client, const Ticker& ticker,
       TF&& time_client, std::shared_ptr<SimulationExecutionReportQueue> reports)
       : m_time_client(std::forward<TF>(time_client)),
-        m_reports(std::move(reports)) {
+        m_reports(std::move(reports)),
+        m_ticker(ticker) {
     set_session_timestamps(m_time_client->get_time());
     auto snapshot = std::make_shared<Beam::Queue<BboQuote>>();
     market_data_client.query(Beam::make_latest_query(ticker), snapshot);
     try {
       m_bbo = snapshot->pop();
+    } catch(const std::exception&) {}
+    try {
+      auto book = market_data_client.load_snapshot(ticker);
+      for(auto& quote : book.m_bids) {
+        update(*quote);
+      }
+      for(auto& quote : book.m_asks) {
+        update(*quote);
+      }
     } catch(const std::exception&) {}
   }
 
@@ -161,7 +259,7 @@ namespace Nexus {
     if(is_terminal(status)) {
       return;
     }
-    m_entries[order->get_info().m_id] = OrderEntry(status, remaining);
+    m_entries[order->get_info().m_id] = make_entry(*order, status, remaining);
     if(order->get_info().m_fields.m_type == OrderType::PEGGED) {
       submit_pegged(*order);
     }
@@ -188,8 +286,8 @@ namespace Nexus {
     }
     enqueue(
       order, OrderStatus::NEW, order->get_info().m_timestamp, 0, Money::ZERO);
-    m_entries[order->get_info().m_id] =
-      OrderEntry(OrderStatus::NEW, order->get_info().m_fields.m_quantity);
+    m_entries[order->get_info().m_id] = make_entry(
+      *order, OrderStatus::NEW, order->get_info().m_fields.m_quantity);
     if(order->get_info().m_fields.m_type == OrderType::PEGGED) {
       submit_pegged(*order);
     }
@@ -344,6 +442,38 @@ namespace Nexus {
       }
     }
     match(time_and_sale);
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void TickerOrderSimulator<T>::update(const BookQuote& book_quote) {
+    auto lock = std::lock_guard(m_mutex);
+    auto listing = Listing(book_quote.m_venue, book_quote.m_quote.m_side,
+      book_quote.m_quote.m_price, book_quote.m_mpid);
+    auto previous = [&] {
+      auto i = m_listings.find(listing);
+      if(i == m_listings.end()) {
+        return Quantity(0);
+      }
+      return i->second;
+    }();
+    auto delta = book_quote.m_quote.m_size - previous;
+    if(delta == 0) {
+      return;
+    }
+    if(book_quote.m_quote.m_size <= 0) {
+      m_listings.erase(listing);
+    } else {
+      m_listings[listing] = book_quote.m_quote.m_size;
+    }
+    auto level = Level(book_quote.m_venue, book_quote.m_quote.m_side,
+      book_quote.m_quote.m_price);
+    auto size = m_levels[level] + delta;
+    if(size <= 0) {
+      m_levels.erase(level);
+    } else {
+      m_levels[level] = size;
+    }
+    advance(level, delta);
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
@@ -504,8 +634,67 @@ namespace Nexus {
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  typename TickerOrderSimulator<T>::OrderEntry
+      TickerOrderSimulator<T>::make_entry(const PrimitiveOrder& order,
+        OrderStatus status, Quantity remaining_quantity) {
+    auto entry = OrderEntry(status, remaining_quantity, Venue(), 0, 0);
+    auto& fields = order.get_info().m_fields;
+    if(fields.m_type != OrderType::LIMIT ||
+        fields.m_time_in_force.get_type() == TimeInForce::Type::MOC) {
+      return entry;
+    }
+    entry.m_venue =
+      Details::get_posting_venue(fields.m_destination, m_ticker.get_venue());
+    if(entry.m_venue) {
+      auto i =
+        m_levels.find(Level(entry.m_venue, fields.m_side, fields.m_price));
+      if(i != m_levels.end()) {
+        entry.m_queue_quantity = i->second;
+      }
+    }
+    return entry;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void TickerOrderSimulator<T>::advance(const Level& level, Quantity delta) {
+    for(auto& order : m_orders) {
+      auto i = m_entries.find(order->get_info().m_id);
+      if(i == m_entries.end() || !i->second.m_venue) {
+        continue;
+      }
+      auto& fields = order->get_info().m_fields;
+      if(Level(i->second.m_venue, fields.m_side, fields.m_price) != level) {
+        continue;
+      }
+      auto& entry = i->second;
+      if(delta > 0) {
+        entry.m_trailing_quantity += delta;
+      } else {
+        auto remainder = -delta;
+        auto consumed = std::min(entry.m_trailing_quantity, remainder);
+        entry.m_trailing_quantity -= consumed;
+        remainder -= consumed;
+        entry.m_queue_quantity -= std::min(entry.m_queue_quantity, remainder);
+      }
+    }
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  Quantity TickerOrderSimulator<T>::allocate(
+      const std::shared_ptr<PrimitiveOrder>& order, Quantity available) {
+    auto& entry = m_entries[order->get_info().m_id];
+    auto quantity = std::min(entry.m_remaining_quantity, available);
+    auto status = fill(order, order->get_info().m_fields.m_price, quantity);
+    entry.m_status = status;
+    if(is_terminal(status)) {
+      erase(order);
+    }
+    return quantity;
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
   bool TickerOrderSimulator<T>::match(
-      const TimeAndSale& time_and_sale, Side side) {
+      const TimeAndSale& time_and_sale, Side side, Venue venue) {
     auto direction = get_direction(side);
     auto available = time_and_sale.m_size;
     auto has_update = false;
@@ -533,16 +722,36 @@ namespace Nexus {
       if(!selection) {
         break;
       }
-      auto& entry = m_entries[selection->get_info().m_id];
-      auto quantity = std::min(entry.m_remaining_quantity, available);
-      auto status =
-        fill(selection, selection->get_info().m_fields.m_price, quantity);
-      entry.m_status = status;
-      available -= quantity;
+      available -= allocate(selection, available);
       has_update = true;
-      if(is_terminal(status)) {
-        erase(selection);
+    }
+    if(!venue) {
+      return has_update;
+    }
+    while(available > 0) {
+      auto selection = std::shared_ptr<PrimitiveOrder>();
+      for(auto& order : m_orders) {
+        auto& fields = order->get_info().m_fields;
+        if(fields.m_side != side || fields.m_type != OrderType::LIMIT ||
+            fields.m_time_in_force.get_type() == TimeInForce::Type::MOC ||
+            time_and_sale.m_price != fields.m_price) {
+          continue;
+        }
+        auto i = m_entries.find(order->get_info().m_id);
+        if(i == m_entries.end() ||
+            i->second.m_status == OrderStatus::PENDING_NEW ||
+            is_terminal(i->second.m_status) || i->second.m_venue != venue ||
+            i->second.m_queue_quantity > 0) {
+          continue;
+        }
+        selection = order;
+        break;
       }
+      if(!selection) {
+        break;
+      }
+      available -= allocate(selection, available);
+      has_update = true;
     }
     return has_update;
   }
@@ -553,13 +762,19 @@ namespace Nexus {
         time_and_sale.m_size <= 0) {
       return;
     }
+    auto venue = [&] {
+      if(time_and_sale.m_market_center.empty()) {
+        return Venue();
+      }
+      return from_market_center(time_and_sale.m_market_center).m_venue;
+    }();
     auto has_update = false;
     {
       auto lock = std::lock_guard(m_mutex);
-      if(match(time_and_sale, Side::ASK)) {
+      if(match(time_and_sale, Side::ASK, venue)) {
         has_update = true;
       }
-      if(match(time_and_sale, Side::BID)) {
+      if(match(time_and_sale, Side::BID, venue)) {
         has_update = true;
       }
     }

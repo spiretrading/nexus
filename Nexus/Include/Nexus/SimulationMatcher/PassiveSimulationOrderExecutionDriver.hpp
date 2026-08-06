@@ -65,6 +65,13 @@ namespace Nexus {
       void update(const Ticker& ticker, const TimeAndSale& time_and_sale);
 
       /**
+       * Updates a Ticker's simulation with a BookQuote.
+       * @param ticker The Ticker to update.
+       * @param book_quote The BookQuote to update the simulation with.
+       */
+      void update(const Ticker& ticker, const BookQuote& book_quote);
+
+      /**
        * Sets the callback invoked whenever an ExecutionReport is queued, used
        * to wake up whoever flushes the queue.
        * @param slot The callback to invoke.
@@ -165,6 +172,16 @@ namespace Nexus {
       const Ticker& ticker, const TimeAndSale& time_and_sale) {
     if(auto simulator = find(ticker)) {
       simulator->update(time_and_sale);
+    }
+  }
+
+  template<typename M, typename T> requires
+    IsMarketDataClient<Beam::dereference_t<M>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  void PassiveSimulationOrderExecutionDriver<M, T>::update(
+      const Ticker& ticker, const BookQuote& book_quote) {
+    if(auto simulator = find(ticker)) {
+      simulator->update(book_quote);
     }
   }
 

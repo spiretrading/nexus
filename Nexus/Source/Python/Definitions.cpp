@@ -680,6 +680,10 @@ void Nexus::Python::export_venue(module& module) {
     def_readwrite("description", &VenueDatabase::Entry::m_description).
     def_readwrite("display_name", &VenueDatabase::Entry::m_display_name);
   export_view<const VenueDatabase::Entry>(module, "VenueDatabaseEntryView");
+  module.def("from_market_center", overload_cast<std::string_view,
+    const VenueDatabase&>(&from_market_center));
+  module.def("from_market_center",
+    overload_cast<std::string_view>(&from_market_center));
   module.def("parse_venue_entry",
     overload_cast<std::string_view, const VenueDatabase&>(&parse_venue_entry));
   module.def(

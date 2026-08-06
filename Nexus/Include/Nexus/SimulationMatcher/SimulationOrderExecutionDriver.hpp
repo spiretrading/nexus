@@ -7,6 +7,7 @@
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include "Nexus/Definitions/BboQuote.hpp"
+#include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/SimulationMatcher/PassiveSimulationOrderExecutionDriver.hpp"
@@ -123,6 +124,11 @@ namespace Nexus {
       ticker, m_tasks.get_slot<BboQuote>([this, ticker] (const auto& bbo) {
         m_driver.update(ticker, bbo);
       })));
+    m_query_routines.add(query_real_time_with_snapshot(m_market_data_client,
+      ticker, m_tasks.get_slot<BookQuote>(
+        [=, this] (const auto& book_quote) {
+          m_driver.update(ticker, book_quote);
+        })));
     auto query = TickerQuery();
     query.set_index(ticker);
     query.set_range(Beam::Range::REAL_TIME);

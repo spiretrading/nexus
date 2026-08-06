@@ -168,6 +168,8 @@ namespace Nexus {
           Beam::make_current_query(ticker));
         m_market_data_service.query_time_and_sales(
           Beam::make_current_query(ticker));
+        m_market_data_service.query_book_quotes(
+          Beam::make_current_query(ticker));
       });
       m_market_data_service.set_bbo_slot(
         [this] (const auto& ticker, const auto& bbo) {
@@ -176,6 +178,10 @@ namespace Nexus {
       m_market_data_service.set_time_and_sale_slot(
         [this] (const auto& ticker, const auto& time_and_sale) {
           m_simulation_driver->update(ticker, time_and_sale);
+        });
+      m_market_data_service.set_book_quote_slot(
+        [this] (const auto& ticker, const auto& book_quote) {
+          m_simulation_driver->update(ticker, book_quote);
         });
       m_event_handler.set_idle_task([this] {
         return m_simulation_driver->flush_next_execution_report();

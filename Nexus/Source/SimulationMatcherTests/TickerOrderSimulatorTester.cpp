@@ -907,7 +907,7 @@ TEST_SUITE("TickerOrderSimulator") {
     auto reports = monitor_reports(order);
     fixture.m_environment.advance(minutes(1));
     publish_book_quote(fixture, simulator, "B", Venues::TSX, Side::BID,
-      parse_money("0.99"), 200);
+      parse_money("0.99"), 500);
     publish_book_quote(
       fixture, simulator, "B", Venues::TSX, Side::BID, parse_money("0.99"), 0);
     publish_time_and_sale(fixture, simulator, parse_money("0.99"), 100);

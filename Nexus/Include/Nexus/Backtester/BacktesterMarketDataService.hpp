@@ -80,6 +80,13 @@ namespace Nexus {
       void set_time_and_sale_slot(
         std::function<void (const Ticker&, const TimeAndSale&)> slot);
 
+      /**
+       * Sets the callback invoked with every BookQuote before it is published.
+       * @param slot The callback to invoke.
+       */
+      void set_book_quote_slot(
+        std::function<void (const Ticker&, const BookQuote&)> slot);
+
     private:
       template<typename, typename> friend class MarketDataEvent;
       template<typename> friend class MarketDataLoadEvent;
@@ -90,6 +97,7 @@ namespace Nexus {
       std::function<void (const Ticker&, const BboQuote&)> m_bbo_slot;
       std::function<void (const Ticker&, const TimeAndSale&)>
         m_time_and_sale_slot;
+      std::function<void (const Ticker&, const BookQuote&)> m_book_quote_slot;
       std::unordered_set<
         std::tuple<boost::variant<Ticker, Venue>, MarketDataType>> m_queries;
 
@@ -250,6 +258,11 @@ namespace Nexus {
     m_time_and_sale_slot = std::move(slot);
   }
 
+  inline void BacktesterMarketDataService::set_book_quote_slot(
+      std::function<void (const Ticker&, const BookQuote&)> slot) {
+    m_book_quote_slot = std::move(slot);
+  }
+
   template<typename T>
   MarketDataQueryEvent<T>::MarketDataQueryEvent(QueryType query,
     Beam::Ref<BacktesterMarketDataService> service) noexcept
@@ -338,6 +351,11 @@ namespace Nexus {
         std::is_same_v<MarketDataType, TimeAndSale>) {
       if(m_service->m_time_and_sale_slot) {
         m_service->m_time_and_sale_slot(m_index, m_value);
+      }
+    } else if constexpr(std::is_same_v<Index, Ticker> &&
+        std::is_same_v<MarketDataType, BookQuote>) {
+      if(m_service->m_book_quote_slot) {
+        m_service->m_book_quote_slot(m_index, m_value);
       }
     }
     m_service->m_market_data_environment->get_feed_client().publish(
