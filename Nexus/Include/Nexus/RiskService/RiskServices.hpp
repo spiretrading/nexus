@@ -4,9 +4,9 @@
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/Services/RecordMessage.hpp>
 #include <Beam/Services/Service.hpp>
+#include "Nexus/Accounting/InventorySnapshot.hpp"
 #include "Nexus/Accounting/Portfolio.hpp"
 #include "Nexus/Definitions/Scope.hpp"
-#include "Nexus/RiskService/InventorySnapshot.hpp"
 #include "Nexus/RiskService/RiskPortfolioTypes.hpp"
 #include "Nexus/RiskService/RiskState.hpp"
 

@@ -87,7 +87,7 @@ namespace Nexus {
    *         book.
    */
   inline bool is_neo_book_order(const OrderFields& fields) {
-    return has_field(fields, Tag(100, "N"));
+    return has_field(fields, make_ex_destination("N"));
   }
 
   /**

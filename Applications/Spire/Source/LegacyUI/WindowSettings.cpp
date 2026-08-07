@@ -6,11 +6,14 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
+#include <boost/algorithm/string/replace.hpp>
 #include <QApplication>
 #include <QDesktopWidget>
-#include <QMessageBox>
 #include <QScreen>
 #include <QWindow>
+#include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
+#include "Spire/Canvas/Types/TickerType.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -23,23 +26,52 @@ using namespace Spire;
 using namespace Spire::LegacyUI;
 
 namespace {
+  bool TryLoad(SharedBuffer& buffer,
+      Out<std::vector<std::unique_ptr<WindowSettings>>> windowSettings) {
+    auto attempt =
+      [&] (TypeRegistry<BinarySender<SharedBuffer>>& typeRegistry) {
+        try {
+          auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
+          receiver.set(Ref(buffer));
+          auto loaded = std::vector<std::unique_ptr<WindowSettings>>();
+          receiver.shuttle(loaded);
+          *windowSettings = std::move(loaded);
+          return true;
+        } catch(const std::exception&) {
+          return false;
+        }
+      };
+    auto currentRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
+    RegisterSpireTypes(out(currentRegistry));
+    if(attempt(currentRegistry)) {
+      return true;
+    }
+    auto legacyRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
+    legacyRegistry.add<TickerNode>("Spire.SecurityNode");
+    legacyRegistry.add<TickerType>("Spire.SecurityType");
+    legacyRegistry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
+    RegisterSpireTypes(out(legacyRegistry));
+    return attempt(legacyRegistry);
+  }
+
   auto load_legacy_settings(const UserProfile& userProfile) {
     auto windowSettingsPath = userProfile.GetProfilePath() / "layout.dat";
     auto windowSettings = std::vector<std::unique_ptr<WindowSettings>>();
     if(!exists(windowSettingsPath)) {
       return windowSettings;
     }
-    try {
-      auto reader = BasicIStreamReader<std::ifstream>(
-        init(windowSettingsPath, std::ios::binary));
-      auto buffer = SharedBuffer();
-      reader.read(out(buffer));
-      auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-      RegisterSpireTypes(out(typeRegistry));
-      auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-      receiver.set(Ref(buffer));
-      receiver.shuttle(windowSettings);
-    } catch(const std::exception&) {
+    auto isLoaded = [&] {
+      try {
+        auto reader = BasicIStreamReader<std::ifstream>(
+          init(windowSettingsPath, std::ios::binary));
+        auto buffer = SharedBuffer();
+        reader.read(out(buffer));
+        return TryLoad(buffer, out(windowSettings));
+      } catch(const std::exception&) {
+        return false;
+      }
+    }();
+    if(!isLoaded) {
       windowSettings.clear();
     }
     return windowSettings;
@@ -57,19 +89,42 @@ std::vector<std::unique_ptr<WindowSettings>>
     }
     return settings;
   }
+  auto buffer = SharedBuffer();
   try {
     auto reader = BasicIStreamReader<std::ifstream>(init(file_path));
-    auto buffer = SharedBuffer();
     reader.read(out(buffer));
-    auto registry = TypeRegistry<JsonSender<SharedBuffer>>();
-    RegisterSpireTypes(out(registry));
-    auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
-    receiver.set(Ref(buffer));
-    receiver.shuttle(settings);
   } catch(const std::exception&) {
-    settings.clear();
+    return settings;
   }
-  return settings;
+  auto load = [&] (const SharedBuffer& source,
+      TypeRegistry<JsonSender<SharedBuffer>>& registry) {
+    auto receiver = JsonReceiver<SharedBuffer>(Ref(registry));
+    receiver.set(Ref(source));
+    auto loaded = std::vector<std::unique_ptr<WindowSettings>>();
+    receiver.shuttle(loaded);
+    return loaded;
+  };
+  auto currentRegistry = TypeRegistry<JsonSender<SharedBuffer>>();
+  RegisterSpireTypes(out(currentRegistry));
+  try {
+    return load(buffer, currentRegistry);
+  } catch(const std::exception&) {}
+  try {
+    auto legacyRegistry = TypeRegistry<JsonSender<SharedBuffer>>();
+    legacyRegistry.add<TickerNode>("Spire.SecurityNode");
+    legacyRegistry.add<TickerType>("Spire.SecurityType");
+    legacyRegistry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
+    RegisterSpireTypes(out(legacyRegistry));
+    auto text = std::string(buffer.get_data(), buffer.get_size());
+    replace_all(text, "\"region\":", "\"scope\":");
+    replace_all(text, "\"securities\":", "\"tickers\":");
+    replace_all(text, "\"security_view_stack\":", "\"ticker_view_stack\":");
+    replace_all(text, "\"security_view\":", "\"ticker_view\":");
+    replace_all(text, "\"security\":", "\"ticker\":");
+    return load(SharedBuffer(text.data(), text.size()), legacyRegistry);
+  } catch(const std::exception&) {
+    return std::vector<std::unique_ptr<WindowSettings>>();
+  }
 }
 
 void WindowSettings::Save(const UserProfile& userProfile) {

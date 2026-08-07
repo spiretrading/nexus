@@ -1,7 +1,7 @@
 #ifndef SPIRE_PSEUDO_ELEMENT_HPP
 #define SPIRE_PSEUDO_ELEMENT_HPP
-#include <any>
 #include <functional>
+#include <memory>
 #include <typeindex>
 #include <unordered_map>
 #include <utility>
@@ -37,16 +37,32 @@ namespace Details {
       friend SelectConnection select(
         const PseudoElement&, const Stylist&, const SelectionUpdateSignal&);
       friend struct std::hash<PseudoElement>;
+      struct BaseHolder {
+        virtual ~BaseHolder() = default;
+
+        virtual std::type_index get_type() const = 0;
+      };
+      template<typename T>
+      struct Holder final : BaseHolder {
+        T m_value;
+
+        Holder(T value);
+
+        std::type_index get_type() const override;
+      };
       struct Operations {
-        std::function<bool (const PseudoElement&, const PseudoElement&)>
-          m_is_equal;
-        std::function<SelectConnection (
-          const PseudoElement&, const Stylist&, const SelectionUpdateSignal&)>
-          m_select;
-        std::function<std::size_t (const PseudoElement&)> m_hash;
+        bool (*m_is_equal)(const PseudoElement&, const PseudoElement&);
+        SelectConnection (*m_select)(
+          const PseudoElement&, const Stylist&, const SelectionUpdateSignal&);
+        std::size_t (*m_hash)(const PseudoElement&);
+
+        Operations(bool (*is_equal)(const PseudoElement&, const PseudoElement&),
+          SelectConnection (*select)(const PseudoElement&, const Stylist&,
+            const SelectionUpdateSignal&),
+          std::size_t (*hash)(const PseudoElement&)) noexcept;
       };
       static std::unordered_map<std::type_index, Operations> m_operations;
-      std::any m_pseudo_element;
+      std::shared_ptr<const BaseHolder> m_holder;
   };
 
   /**
@@ -97,24 +113,34 @@ namespace Details {
       PseudoElement(selector), base, on_update);
   }
 
+  template<typename T>
+  PseudoElement::Holder<T>::Holder(T value)
+    : m_value(std::move(value)) {}
+
+  template<typename T>
+  std::type_index PseudoElement::Holder<T>::get_type() const {
+    return typeid(T);
+  }
+
   template<typename T, typename G>
   PseudoElement::PseudoElement(PseudoElementSelector<T, G> element)
-      : m_pseudo_element(std::move(element)) {
+      : m_holder(std::make_shared<Holder<PseudoElementSelector<T, G>>>(
+          std::move(element))) {
     auto operations = m_operations.find(typeid(PseudoElementSelector<T, G>));
     if(operations == m_operations.end()) {
       m_operations.emplace_hint(operations, typeid(PseudoElementSelector<T, G>),
         Operations(
-          [] (const PseudoElement& left, const PseudoElement& right) {
+          +[] (const PseudoElement& left, const PseudoElement& right) {
             return left.get_type() == right.get_type() &&
               left.as<PseudoElementSelector<T, G>>() ==
                 right.as<PseudoElementSelector<T, G>>();
           },
-          [] (const PseudoElement& element, const Stylist& base,
+          +[] (const PseudoElement& element, const Stylist& base,
               const SelectionUpdateSignal& on_update) {
             return select(
               element.as<PseudoElementSelector<T, G>>(), base, on_update);
           },
-          [] (const PseudoElement& element) {
+          +[] (const PseudoElement& element) {
             return std::hash<PseudoElementSelector<T, G>>()(
               element.as<PseudoElementSelector<T, G>>());
           }));
@@ -123,7 +149,7 @@ namespace Details {
 
   template<typename U>
   const U& PseudoElement::as() const {
-    return std::any_cast<const U&>(m_pseudo_element);
+    return static_cast<const Holder<U>&>(*m_holder).m_value;
   }
 
   template<typename T, typename G>

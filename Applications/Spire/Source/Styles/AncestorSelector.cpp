@@ -1,4 +1,5 @@
 #include "Spire/Styles/AncestorSelector.hpp"
+#include <algorithm>
 #include <boost/functional/hash.hpp>
 #include <QEvent>
 #include <QWidget>
@@ -20,8 +21,16 @@ namespace {
   }
 
   struct AncestorObserver : public QObject {
+    struct ParentEntry {
+      const Stylist* m_stylist;
+      const Stylist* m_parent;
+
+      ParentEntry(const Stylist& stylist, const Stylist& parent)
+        : m_stylist(&stylist),
+          m_parent(&parent) {}
+    };
     SelectionUpdateSignal m_on_update;
-    std::unordered_map<const Stylist*, const Stylist*> m_parents;
+    std::vector<ParentEntry> m_parents;
 
     AncestorObserver(
         const Stylist& stylist, const SelectionUpdateSignal& on_update)
@@ -29,13 +38,13 @@ namespace {
       auto ancestors = build_ancestors(stylist.get_widget());
       for(auto& ancestor : ancestors) {
         if(auto parent = find_parent(*ancestor)) {
-          m_parents[ancestor] = parent;
+          m_parents.emplace_back(*ancestor, *parent);
         }
         ancestor->get_widget().installEventFilter(this);
       }
       m_on_update(std::move(ancestors), {});
       if(auto parent = find_parent(stylist)) {
-        m_parents[&stylist] = parent;
+        m_parents.emplace_back(stylist, *parent);
       }
       stylist.get_widget().installEventFilter(this);
     }
@@ -48,16 +57,17 @@ namespace {
       if(event->type() == QEvent::ParentChange) {
         auto& widget = static_cast<const QWidget&>(*watched);
         auto& stylist = find_stylist(widget);
-        auto parent = m_parents.find(&stylist);
+        auto parent =
+          std::ranges::find(m_parents, &stylist, &ParentEntry::m_stylist);
         if(parent == m_parents.end()) {
           return QObject::eventFilter(watched, event);
         }
-        auto removals = build_ancestors(parent->second->get_widget());
-        removals.insert(parent->second);
-        if(auto parent = find_parent(find_stylist(widget))) {
-          m_parents[&stylist] = parent;
+        auto removals = build_ancestors(parent->m_parent->get_widget());
+        removals.insert(parent->m_parent);
+        if(auto new_parent = find_parent(find_stylist(widget))) {
+          parent->m_parent = new_parent;
         } else {
-          m_parents.erase(&stylist);
+          m_parents.erase(parent);
         }
         auto ancestors = build_ancestors(widget);
         auto [base, complement] = [&] {

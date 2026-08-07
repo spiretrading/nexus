@@ -84,8 +84,7 @@ namespace Nexus {
         AF&& administration_client, MF&& market_data_client,
         OF&& order_execution_client,
         TransitionTimerFactory transition_timer_factory, TF&& time_client,
-        DF&& data_store, ExchangeRateTable exchange_rates,
-        DestinationDatabase destinations);
+        DF&& data_store, ExchangeRateTable exchange_rates);
 
       void register_services(
         Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots);
@@ -105,7 +104,6 @@ namespace Nexus {
       Beam::local_ptr_t<T> m_time_client;
       Beam::local_ptr_t<D> m_data_store;
       ExchangeRateTable m_exchange_rates;
-      DestinationDatabase m_destinations;
       std::shared_ptr<Beam::SnapshotPublisher<Beam::DirectoryEntry,
         std::vector<Beam::DirectoryEntry>>> m_account_publisher;
       std::unordered_map<RiskPortfolioKey, Quantity> m_volumes;
@@ -157,8 +155,7 @@ namespace Nexus {
       AF&& administration_client, MF&& market_data_client,
       OF&& order_execution_client,
       TransitionTimerFactory transition_timer_factory, TF&& time_client,
-      DF&& data_store, ExchangeRateTable exchange_rates,
-      DestinationDatabase destinations)
+      DF&& data_store, ExchangeRateTable exchange_rates)
     : m_administration_client(std::forward<AF>(administration_client)),
       m_market_data_client(std::forward<MF>(market_data_client)),
       m_order_execution_client(std::forward<OF>(order_execution_client)),
@@ -166,7 +163,6 @@ namespace Nexus {
       m_time_client(std::forward<TF>(time_client)),
       m_data_store(std::forward<DF>(data_store)),
       m_exchange_rates(std::move(exchange_rates)),
-      m_destinations(std::move(destinations)),
       m_account_publisher(Beam::make_sequence_publisher_adaptor(
         std::make_unique<Beam::QueueReaderPublisher<Beam::DirectoryEntry>>(
           std::move(accounts)))) {
@@ -261,7 +257,7 @@ namespace Nexus {
     m_controller.emplace(std::move(accounts), &*m_administration_client,
       &*m_market_data_client, &*m_order_execution_client,
       m_transition_timer_factory, &*m_time_client, &*m_data_store,
-      m_exchange_rates, m_destinations);
+      m_exchange_rates);
     m_controller->get_risk_state_publisher().monitor(
       m_tasks.get_slot<RiskStateEntry>(
         std::bind_front(&RiskServlet::on_risk_state, this)));

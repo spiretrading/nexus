@@ -19,6 +19,8 @@ namespace Spire {
 
         /** The BBO indicator that the entry belongs to. */
         BboIndicator m_indicator;
+
+        bool operator ==(const Entry&) const = default;
       };
 
       /**

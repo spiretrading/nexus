@@ -169,7 +169,7 @@ unique_ptr<SingleOrderTaskNode> Spire::MakeOrderTaskNodeFromOrderFields(
     const OrderFields& orderFields, const UserProfile& userProfile) {
   auto node = SingleOrderTaskNode().Replace(
     SingleOrderTaskNode::TICKER_PROPERTY, make_unique<TickerNode>(
-      orderFields.m_ticker, userProfile.GetVenueDatabase()))->Replace(
+      orderFields.m_ticker))->Replace(
       SingleOrderTaskNode::ORDER_TYPE_PROPERTY,
       std::make_unique<OrderTypeNode>(orderFields.m_type))->Replace(
       SingleOrderTaskNode::SIDE_PROPERTY,
@@ -182,8 +182,7 @@ unique_ptr<SingleOrderTaskNode> Spire::MakeOrderTaskNodeFromOrderFields(
       std::make_unique<MoneyNode>(orderFields.m_price))->Replace(
       SingleOrderTaskNode::CURRENCY_PROPERTY,
       std::make_unique<CurrencyNode>(orderFields.m_currency,
-      userProfile.GetCurrencyDatabase().from(
-      orderFields.m_currency).m_code.get_data()))->Replace(
+      CURRENCIES.from(orderFields.m_currency).m_code.get_data()))->Replace(
       SingleOrderTaskNode::TIME_IN_FORCE_PROPERTY,
       std::make_unique<TimeInForceNode>(orderFields.m_time_in_force));
   return static_pointer_cast<SingleOrderTaskNode>(std::move(node));

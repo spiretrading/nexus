@@ -1,6 +1,5 @@
 #include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
+#include "Nexus/Definitions/FixTags.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
 #include "Spire/KeyBindings/BasicAdditionalTagSchema.hpp"
 #include "Spire/KeyBindings/EnumAdditionalTagSchema.hpp"
@@ -25,24 +24,32 @@ namespace {
     model.m_tag.m_description =
       "Amount (signed) added to the price of the peg for a pegged order.";
     auto schema  = std::make_shared<BasicAdditionalTagSchema>(
-      std::move(model), 211, MoneyType::GetInstance());
+      std::move(model), PEG_DIFFERENCE_KEY, MoneyType::GetInstance());
     return schema;
   }
 
-  auto make_asx_exec_inst_schema() {
+  auto make_exec_inst_schema() {
     auto model = OrderFieldInfoTip::Model();
     model.m_tag.m_name = "ExecInst";
     model.m_tag.m_description =
       "Instructions for order handling on exchange trading floor.";
-    model.m_tag.m_arguments.emplace_back("A", "No cross (cross is forbidden)");
     model.m_tag.m_arguments.emplace_back(
       "M", "Mid-price peg (midprice of inside quote)");
     model.m_tag.m_arguments.emplace_back(
       "R", "Primary peg (primary market - buy at bid/sell at offer)");
     model.m_tag.m_arguments.emplace_back("P", "Market peg");
     sort(model.m_tag.m_arguments);
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
+    return schema;
+  }
+
+  auto make_asx_exec_inst_schema() {
+    auto model = make_exec_inst_schema()->get_order_field_model();
+    model.m_tag.m_arguments.emplace_back("A", "No cross (cross is forbidden)");
+    sort(model.m_tag.m_arguments);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
     return schema;
   }
 
@@ -113,26 +120,19 @@ namespace {
       "Ping CHI-X Dark/CX2/CHIC, MATN, TSX mid-point, split residual between "
       "CHI-X Dark and MATN.");
     sort(model.m_tag.m_arguments);
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 100);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EX_DESTINATION_KEY);
     return schema;
   }
 
   auto make_chix_exec_inst_schema() {
-    auto model = OrderFieldInfoTip::Model();
-    model.m_tag.m_name = "ExecInst";
-    model.m_tag.m_description =
-      "Instructions for order handling on exchange trading floor.";
-    model.m_tag.m_arguments.emplace_back(
-      "M", "Mid-price peg (midprice of inside quote)");
-    model.m_tag.m_arguments.emplace_back(
-      "R", "Primary peg (primary market - buy at bid/sell at offer)");
-    model.m_tag.m_arguments.emplace_back("P", "Market peg");
+    auto model = make_exec_inst_schema()->get_order_field_model();
     model.m_tag.m_arguments.emplace_back(
       "x", "Minimum Price Improvement (CXD Only)");
     model.m_tag.m_arguments.emplace_back("f", "CSO (Not supported on CXD)");
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
+    sort(model.m_tag.m_arguments);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
     return schema;
   }
 
@@ -151,8 +151,8 @@ namespace {
       "Ping CHI-X Dark/CX2/CHIC & MATN mid-point. Spray all protected markets. "
       "Post on TSX. Dynamic re-spray.");
     sort(model.m_tag.m_arguments);
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 100);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EX_DESTINATION_KEY);
     return schema;
   }
 
@@ -176,19 +176,11 @@ namespace {
   }
 
   auto make_cse_exec_inst_schema() {
-    auto model = OrderFieldInfoTip::Model();
-    model.m_tag.m_name = "ExecInst";
-    model.m_tag.m_description =
-      "Instructions for order handling on exchange trading floor.";
-    model.m_tag.m_arguments.emplace_back(
-      "M", "Mid-price peg (midprice of inside quote)");
-    model.m_tag.m_arguments.emplace_back(
-      "R", "Primary peg (primary market - buy at bid/sell at offer)");
-    model.m_tag.m_arguments.emplace_back("P", "Market peg");
+    auto model = make_exec_inst_schema()->get_order_field_model();
     model.m_tag.m_arguments.emplace_back("9", "Post on bid");
     model.m_tag.m_arguments.emplace_back("0", "Post on offer");
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
     return schema;
   }
 
@@ -209,8 +201,8 @@ namespace {
       "PNBBO midpoint or minimum improvement from the PNBBO.");
     model.m_tag.m_arguments.emplace_back(
       "B", "Trade at any eligible price within the PNBBO.");
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
     return schema;
   }
 
@@ -232,8 +224,8 @@ namespace {
     model.m_tag.m_description = "Specifies the NEO book to route to.";
     model.m_tag.m_arguments.emplace_back("L", "Route to the lit book.");
     model.m_tag.m_arguments.emplace_back("N", "Route to the NEOE book.");
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 100);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EX_DESTINATION_KEY);
     return schema;
   }
 
@@ -248,8 +240,8 @@ namespace {
     model.m_tag.m_arguments.emplace_back(
       "100", "Re-price (resting orders only).");
     model.m_tag.m_arguments.emplace_back("x", "Minimum price improvement");
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 18);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EXEC_INST_KEY);
     return schema;
   }
 
@@ -271,16 +263,16 @@ namespace {
     model.m_tag.m_arguments.emplace_back(
       "SMRTXOPG-X2", "Ping CX2 and CHIC before posting to TSX.");
     sort(model.m_tag.m_arguments);
-    auto schema =
-      std::make_shared<EnumAdditionalTagSchema>(std::move(model), 100);
+    auto schema = std::make_shared<EnumAdditionalTagSchema>(
+      std::move(model), EX_DESTINATION_KEY);
     return schema;
   }
 
   const auto& ASX() {
     static const auto SCOPE = [&] {
       auto scope = Scope();
-      scope += DefaultVenues::ASX;
-      scope += DefaultVenues::CXA;
+      scope += Venues::ASX;
+      scope += Venues::CXA;
       return scope;
     }();
     return SCOPE;
@@ -317,7 +309,7 @@ const std::shared_ptr<AdditionalTagSchema>&
     }
   }
   auto scope = Scope();
-  for(auto& venue : DEFAULT_DESTINATIONS.from(destination).m_venues) {
+  for(auto& venue : DESTINATIONS.from(destination).m_venues) {
     scope += venue;
   }
   return find(scope, key);
@@ -355,7 +347,7 @@ std::vector<std::shared_ptr<AdditionalTagSchema>>
     }
   }
   auto scope = Scope();
-  for(auto& venue : DEFAULT_DESTINATIONS.from(destination).m_venues) {
+  for(auto& venue : DESTINATIONS.from(destination).m_venues) {
     scope += venue;
   }
   auto parent_matches = find(scope);
@@ -389,24 +381,24 @@ const AdditionalTagDatabase& Spire::get_default_additional_tag_database() {
     auto database = AdditionalTagDatabase();
     database.add(Scope::GLOBAL, MaxFloorSchema::get_instance());
     database.add(Scope::GLOBAL, make_peg_difference_schema());
-    database.add(DefaultVenues::ASX, make_asx_exec_inst_schema());
-    database.add(DefaultDestinations::CHIX, make_chix_ex_destination_schema());
-    database.add(DefaultDestinations::CHIX, make_chix_exec_inst_schema());
-    database.add(DefaultDestinations::CHIX, make_tsx_long_life_schema());
-    database.add(DefaultDestinations::CSE, make_cse_exec_inst_schema());
-    database.add(DefaultDestinations::CSE2, make_cse_exec_inst_schema());
-    database.add(DefaultDestinations::CX2, make_cx2_ex_destination_schema());
-    database.add(DefaultDestinations::CX2, make_cx2_exec_inst_schema());
-    database.add(DefaultDestinations::CX2, make_tsx_long_life_schema());
-    database.add(DefaultDestinations::MATNLP, make_matn_anonymous_schema());
-    database.add(DefaultDestinations::MATNLP, make_matn_exec_inst_schema());
-    database.add(DefaultDestinations::MATNMF, make_matn_anonymous_schema());
-    database.add(DefaultDestinations::MATNMF, make_matn_exec_inst_schema());
-    database.add(DefaultDestinations::NEOE, make_neoe_ex_destination_schema());
-    database.add(DefaultDestinations::NEOE, make_neoe_exec_inst_schema());
-    database.add(DefaultDestinations::NEOE, make_neoe_handl_inst_schema());
-    database.add(DefaultDestinations::TSX, make_tsx_ex_destination_schema());
-    database.add(DefaultDestinations::TSX, make_tsx_long_life_schema());
+    database.add(Venues::ASX, make_asx_exec_inst_schema());
+    database.add(Destinations::CHIX, make_chix_ex_destination_schema());
+    database.add(Destinations::CHIX, make_chix_exec_inst_schema());
+    database.add(Destinations::CHIX, make_tsx_long_life_schema());
+    database.add(Destinations::CSE, make_cse_exec_inst_schema());
+    database.add(Destinations::CSE2, make_cse_exec_inst_schema());
+    database.add(Destinations::CX2, make_cx2_ex_destination_schema());
+    database.add(Destinations::CX2, make_cx2_exec_inst_schema());
+    database.add(Destinations::CX2, make_tsx_long_life_schema());
+    database.add(Destinations::MATNLP, make_matn_anonymous_schema());
+    database.add(Destinations::MATNLP, make_matn_exec_inst_schema());
+    database.add(Destinations::MATNMF, make_matn_anonymous_schema());
+    database.add(Destinations::MATNMF, make_matn_exec_inst_schema());
+    database.add(Destinations::NEOE, make_neoe_ex_destination_schema());
+    database.add(Destinations::NEOE, make_neoe_exec_inst_schema());
+    database.add(Destinations::NEOE, make_neoe_handl_inst_schema());
+    database.add(Destinations::TSX, make_tsx_ex_destination_schema());
+    database.add(Destinations::TSX, make_tsx_long_life_schema());
     return database;
   }();
   return database;

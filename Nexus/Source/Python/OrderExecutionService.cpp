@@ -111,7 +111,7 @@ void Nexus::Python::export_mock_order_execution_driver(module& module) {
     def("add_recovery", &MockOrderExecutionDriver::add_recovery).
     def("get_publisher", &MockOrderExecutionDriver::get_publisher,
       return_value_policy::reference_internal).
-    def("recover", &MockOrderExecutionDriver::recover).
+    def("restore", &MockOrderExecutionDriver::restore).
     def("add", &MockOrderExecutionDriver::add).
     def("submit", &MockOrderExecutionDriver::submit, call_guard<GilRelease>()).
     def("cancel", &MockOrderExecutionDriver::cancel, call_guard<GilRelease>()).
@@ -242,10 +242,6 @@ void Nexus::Python::export_order_execution_service_test_environment(
     def(init(&make_python_shared<OrderExecutionServiceTestEnvironment,
       ServiceLocatorClient&, UidClient&, AdministrationClient&>),
       keep_alive<1, 2>(), keep_alive<1, 3>(), keep_alive<1, 4>()).
-    def(init(&make_python_shared<OrderExecutionServiceTestEnvironment,
-      const VenueDatabase&, const DestinationDatabase&, ServiceLocatorClient&,
-      UidClient&, AdministrationClient&>), keep_alive<1, 4>(), keep_alive<1, 5>(),
-      keep_alive<1, 6>()).
     def_property_readonly("data_store",
       overload_cast<>(&OrderExecutionServiceTestEnvironment::get_data_store),
       return_value_policy::reference_internal).
@@ -277,6 +273,10 @@ void Nexus::Python::export_order_fields(module& module) {
     def_readwrite("price", &OrderFields::m_price).
     def_readwrite("time_in_force", &OrderFields::m_time_in_force).
     def_readwrite("additional_fields", &OrderFields::m_additional_fields);
+  enum_<PegType>(module, "PegType").
+    value("PRIMARY", PegType::PRIMARY).
+    value("MARKET", PegType::MARKET).
+    value("MID_POINT", PegType::MID_POINT);
   module.def("make_limit_order_fields",
     overload_cast<DirectoryEntry, Ticker, CurrencyId, Side, Destination,
       Quantity, Money>(&make_limit_order_fields));
@@ -319,28 +319,32 @@ void Nexus::Python::export_order_fields(module& module) {
     overload_cast<Ticker, Side, Quantity>(&make_market_order_fields));
   module.def("make_pegged_order_fields",
     overload_cast<DirectoryEntry, Ticker, CurrencyId, Side, Destination,
-      Quantity, Money, Money>(&make_pegged_order_fields));
+      Quantity, Money, Money, PegType>(&make_pegged_order_fields),
+    pybind11::arg("account"), pybind11::arg("ticker"),
+    pybind11::arg("currency"), pybind11::arg("side"),
+    pybind11::arg("destination"), pybind11::arg("quantity"),
+    pybind11::arg("limit_price"), pybind11::arg("peg_difference"),
+    pybind11::arg("peg_type") = PegType::PRIMARY);
   module.def("make_pegged_order_fields",
     overload_cast<Ticker, CurrencyId, Side, Destination, Quantity, Money,
-      Money>(&make_pegged_order_fields));
+      Money, PegType>(&make_pegged_order_fields), pybind11::arg("ticker"),
+    pybind11::arg("currency"), pybind11::arg("side"),
+    pybind11::arg("destination"), pybind11::arg("quantity"),
+    pybind11::arg("limit_price"), pybind11::arg("peg_difference"),
+    pybind11::arg("peg_type") = PegType::PRIMARY);
   module.def("make_pegged_order_fields",
-    overload_cast<Ticker, Side, Destination, Quantity, Money, Money>(
-      &make_pegged_order_fields));
+    overload_cast<Ticker, Side, Destination, Quantity, Money, Money, PegType>(
+      &make_pegged_order_fields), pybind11::arg("ticker"),
+    pybind11::arg("side"), pybind11::arg("destination"),
+    pybind11::arg("quantity"), pybind11::arg("limit_price"),
+    pybind11::arg("peg_difference"),
+    pybind11::arg("peg_type") = PegType::PRIMARY);
   module.def("make_pegged_order_fields",
-    overload_cast<Ticker, Side, Quantity, Money, Money>(
-      &make_pegged_order_fields));
-  module.def("make_market_pegged_order_fields",
-    overload_cast<DirectoryEntry, Ticker, CurrencyId, Side, Destination,
-      Quantity, Money, Money>(&make_market_pegged_order_fields));
-  module.def("make_market_pegged_order_fields",
-    overload_cast<Ticker, CurrencyId, Side, Destination, Quantity, Money,
-      Money>(&make_market_pegged_order_fields));
-  module.def("make_market_pegged_order_fields",
-    overload_cast<Ticker, Side, Destination, Quantity, Money, Money>(
-      &make_market_pegged_order_fields));
-  module.def("make_market_pegged_order_fields",
-    overload_cast<Ticker, Side, Quantity, Money, Money>(
-      &make_market_pegged_order_fields));
+    overload_cast<Ticker, Side, Quantity, Money, Money, PegType>(
+      &make_pegged_order_fields), pybind11::arg("ticker"),
+    pybind11::arg("side"), pybind11::arg("quantity"),
+    pybind11::arg("limit_price"), pybind11::arg("peg_difference"),
+    pybind11::arg("peg_type") = PegType::PRIMARY);
   module.def("find_field", &find_field);
   module.def("has_field", &has_field);
 }
@@ -461,15 +465,25 @@ void Nexus::Python::export_replicated_order_execution_data_store(
 
 void Nexus::Python::export_standard_queries(module& module) {
   module.def("make_venue_filter", &make_venue_filter);
-  module.def(
-    "make_daily_order_submission_query", &make_daily_order_submission_query);
+  module.def("make_daily_order_submission_query",
+    overload_cast<Venue, const DirectoryEntry&, ptime, ptime,
+      const local_time::tz_database&>(&make_daily_order_submission_query));
+  module.def("make_daily_order_submission_query",
+    overload_cast<Venue, const DirectoryEntry&, ptime, ptime>(
+      &make_daily_order_submission_query));
   module.def("query_daily_order_submissions",
     [] (const DirectoryEntry& account, ptime start, ptime end,
-        const VenueDatabase& venues, const local_time::tz_database& time_zones,
+        const local_time::tz_database& time_zones, OrderExecutionClient& client,
+        ScopedQueueWriter<std::shared_ptr<Order>> queue) {
+      return query_daily_order_submissions(
+        account, start, end, time_zones, client, std::move(queue));
+    });
+  module.def("query_daily_order_submissions",
+    [] (const DirectoryEntry& account, ptime start, ptime end,
         OrderExecutionClient& client,
         ScopedQueueWriter<std::shared_ptr<Order>> queue) {
       return query_daily_order_submissions(
-        account, start, end, venues, time_zones, client, std::move(queue));
+        account, start, end, client, std::move(queue));
     });
   module.def("make_live_orders_filter", &make_live_orders_filter);
   module.def("make_live_orders_query", &make_live_orders_query);

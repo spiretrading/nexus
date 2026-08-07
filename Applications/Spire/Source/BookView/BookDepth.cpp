@@ -77,6 +77,7 @@ BookDepth::BookDepth(std::shared_ptr<BookViewModel> model,
     std::bind_front(&BookDepth::on_ask_position, this));
   m_font_property_connection = m_font_property->connect_update_signal(
     std::bind_front(&BookDepth::on_font_property_update, this));
+  apply_font(m_font);
 }
 
 const std::shared_ptr<CurrentUserOrderModel>& BookDepth::get_current() const {
@@ -101,6 +102,12 @@ bool BookDepth::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
+void BookDepth::apply_font(const QFont& font) {
+  update_style(*this, [&] (auto& style) {
+    style.get(Any() > is_a<BboBox>() > is_a<TextBox>()).set(Font(font));
+  });
+}
+
 void BookDepth::on_bid_position(int position) {
   auto blocker = shared_connection_block(m_ask_position_connection);
   m_ask_table_view->get_scroll_box().get_vertical_scroll_bar().set_position(
@@ -115,9 +122,7 @@ void BookDepth::on_ask_position(int position) {
 
 void BookDepth::on_font_property_update(const QFont& font) {
   if(m_font != font) {
-    update_style(*this, [&] (auto& style) {
-      style.get(Any() > is_a<BboBox>() > is_a<TextBox>()).set(Font(font));
-    });
+    apply_font(font);
     m_font = font;
   }
 }

@@ -265,8 +265,7 @@ std::unique_ptr<CanvasNode>
     if(auto tickerValueNode =
         dynamic_cast<const TickerNode*>(&*tickerNode)) {
       auto builder = CanvasNodeBuilder(*taskNode);
-      builder.Replace(*tickerNode, tickerValueNode->SetValue(m_ticker,
-        m_userProfile->GetVenueDatabase()));
+      builder.Replace(*tickerNode, tickerValueNode->SetValue(m_ticker));
       builder.SetReadOnly(*tickerNode, true);
       auto price = [&] {
         if(auto sideNode =
@@ -412,8 +411,8 @@ void BookViewWindow::HandleKeyBindingEvent(
 void BookViewWindow::HandleInteractionsPropertiesEvent() {
   auto& interactionsProperties =
     m_userProfile->GetInteractionProperties().get(m_ticker);
-  auto interactionsNode = std::make_unique<InteractionsNode>(
-    m_ticker, m_userProfile->GetVenueDatabase(), interactionsProperties);
+  auto interactionsNode =
+    std::make_unique<InteractionsNode>(m_ticker, interactionsProperties);
   m_taskEntryWidget =
     new CondensedCanvasWidget("Interactions", Ref(*m_userProfile), this);
   m_isTaskEntryWidgetForInteractionsProperties = true;

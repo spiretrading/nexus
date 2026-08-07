@@ -4,6 +4,7 @@
 #include <optional>
 #include <string>
 #include <vector>
+#include <Beam/WebServices/Uri.hpp>
 #include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
@@ -20,8 +21,10 @@
 #include "Spire/PortfolioViewer/PortfolioViewerProperties.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
+#include "Spire/Spire/CachedModelBuilder.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
+#include "Spire/Ui/AccountBox.hpp"
 #include "Spire/Ui/TickerBox.hpp"
 
 namespace Spire {
@@ -48,6 +51,7 @@ namespace Spire {
        *        BookViewWindow.
        * @param time_and_sales_properties Initializes the time and sales
        *        properties.
+       * @param web_portal_uri The URI of the web portal.
        * @param clients The set of clients connected to Spire services.
        */
       UserProfile(const std::string& username, bool isAdministrator,
@@ -56,7 +60,7 @@ namespace Spire {
         const AdditionalTagDatabase& additionalTagDatabase,
         BookViewProperties book_view_properties,
         TimeAndSalesProperties time_and_sales_properties,
-        Nexus::Clients clients);
+        Beam::Uri web_portal_uri, Nexus::Clients clients);
 
       ~UserProfile();
 
@@ -78,6 +82,9 @@ namespace Spire {
       /** Returns the EntitlementDatabase. */
       const Nexus::EntitlementDatabase& GetEntitlementDatabase() const;
 
+      /** Returns the URI of the web portal. */
+      const Beam::Uri& GetWebPortalUri() const;
+
       /** Returns the set of clients connected to Spire services. */
       Nexus::Clients& GetClients() const;
 
@@ -90,6 +97,10 @@ namespace Spire {
       /** Returns the list of recently closed windows. */
       const std::shared_ptr<RecentlyClosedWindowListModel>&
         GetRecentlyClosedWindows() const;
+
+      /** Returns the model used to query accounts. */
+      const std::shared_ptr<AccountQueryModel>&
+        GetAccountQueryModel() const;
 
       /** Returns the model used to query tickers. */
       const std::shared_ptr<TickerInfoQueryModel>&
@@ -185,25 +196,33 @@ namespace Spire {
       void SetInitialPortfolioViewerWindowSettings(
         const PortfolioViewerWindowSettings& settings);
 
+      /** Pre-constructs heavyweight UI components to avoid first-use lag. */
+      void initialize_ui();
+
     private:
       std::string m_username;
       bool m_isAdministrator;
       bool m_isManager;
       Nexus::ExchangeRateTable m_exchangeRates;
       Nexus::EntitlementDatabase m_entitlementDatabase;
+      Beam::Uri m_web_portal_uri;
       mutable Nexus::Clients m_clients;
       std::filesystem::path m_profilePath;
       std::shared_ptr<RecentlyClosedWindowListModel> m_recentlyClosedWindows;
+      std::shared_ptr<AccountQueryModel> m_account_query_model;
       std::shared_ptr<TickerInfoQueryModel> m_ticker_info_query_model;
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties
         m_defaultOrderImbalanceIndicatorProperties;
       std::shared_ptr<BookViewPropertiesWindowFactory>
         m_book_view_properties_window_factory;
+      CachedModelBuilder<Nexus::Ticker, BookViewModel> m_book_view_models;
       BookViewWindow::ModelBuilder m_book_view_model_builder;
       RiskTimerProperties m_riskTimerProperties;
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory>
         m_time_and_sales_properties_window_factory;
+      CachedModelBuilder<Nexus::Ticker, TimeAndSalesModel>
+        m_time_and_sales_models;
       TimeAndSalesWindow::ModelBuilder m_time_and_sales_model_builder;
       PortfolioViewerProperties m_defaultPortfolioViewerProperties;
       CatalogSettings m_catalogSettings;
@@ -235,6 +254,14 @@ namespace Spire {
    */
   Nexus::Quantity get_default_order_quantity(const UserProfile& userProfile,
     const Nexus::Ticker& ticker, Nexus::Side side);
+
+  /**
+   * Opens a page on the web portal in the default browser, authenticating via
+   * the user's current session.
+   * @param user_profile The user's profile.
+   * @param path The path to redirect to after authentication.
+   */
+  void open_web_portal(UserProfile& user_profile, const std::string& path);
 }
 
 #endif

@@ -6,7 +6,7 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::DefaultCountries;
+using namespace Nexus::Countries;
 
 TEST_SUITE("CountryParser") {
   TEST_CASE("valid_country") {

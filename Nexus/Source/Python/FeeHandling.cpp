@@ -65,7 +65,7 @@ void Nexus::Python::export_asx_trade_match_fee_table(module& module) {
 void Nexus::Python::export_chic_fee_table(module& module) {
   auto fee_table = export_default_methods(
     class_<ChicFeeTable>(module, "ChicFeeTable")).
-    def_readwrite("ticker_table", &ChicFeeTable::m_ticker_table).
+    def_readwrite("fee_table", &ChicFeeTable::m_fee_table).
     def_readwrite("interlisted", &ChicFeeTable::m_interlisted).
     def_readwrite("etfs", &ChicFeeTable::m_etfs);
   enum_<ChicFeeTable::Classification>(fee_table, "Classification").
@@ -285,15 +285,11 @@ void Nexus::Python::export_consolidated_tmx_fee_table(module& module) {
     def_readonly("per_order_charges",
       &ConsolidatedTmxFeeTable::State::m_per_order_charges).
     def_readonly("fill_count", &ConsolidatedTmxFeeTable::State::m_fill_count);
-  module.def("parse_tmx_interlisted_tickers", overload_cast<
-    const std::string&, const VenueDatabase&>(&parse_tmx_interlisted_tickers));
-  module.def("parse_tmx_etf_tickers", overload_cast<
-    const std::string&, const VenueDatabase&>(&parse_tmx_etf_tickers));
-  module.def("parse_nex_listed_tickers", overload_cast<
-    const std::string&, const VenueDatabase&>(&parse_nex_listed_tickers));
-  module.def("parse_consolidated_tmx_fee_table",
-    overload_cast<const YAML::Node&, const VenueDatabase&>(
-      &parse_consolidated_tmx_fee_table));
+  module.def("parse_tmx_interlisted_tickers", &parse_tmx_interlisted_tickers);
+  module.def("parse_tmx_etf_tickers", &parse_tmx_etf_tickers);
+  module.def("parse_nex_listed_tickers", &parse_nex_listed_tickers);
+  module.def(
+    "parse_consolidated_tmx_fee_table", &parse_consolidated_tmx_fee_table);
   module.def("calculate_fee", overload_cast<const ConsolidatedTmxFeeTable&,
     ConsolidatedTmxFeeTable::State&, const Order&, const ExecutionReport&>(
       &calculate_fee));

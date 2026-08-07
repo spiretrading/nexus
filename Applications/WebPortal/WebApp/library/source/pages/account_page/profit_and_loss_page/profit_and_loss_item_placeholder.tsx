@@ -1,12 +1,12 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as React from 'react';
-import { DropDownButton, Skeleton } from '../../..';
+import { ExpandButton, Skeleton } from '../../..';
 
 /** Displays a loading placeholder for a profit and loss item. */
 export function ProfitAndLossItemPlaceholder() {
   return (
     <div className={css(STYLES.container)}>
-      <DropDownButton size='20' isExpanded={false}/>
+      <ExpandButton size='20' isExpanded={false} disabled/>
       <Skeleton style={CODE_SKELETON}/>
       <div className={css(STYLES.filler)}/>
       <Skeleton style={PNL_SKELETON}/>

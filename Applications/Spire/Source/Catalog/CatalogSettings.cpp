@@ -8,6 +8,9 @@
 #include <Beam/Serialization/BinarySender.hpp>
 #include <Beam/Serialization/ShuttleUuid.hpp>
 #include <QMessageBox>
+#include "Spire/Canvas/OrderExecutionNodes/TickerPortfolioNode.hpp"
+#include "Spire/Canvas/Types/TickerType.hpp"
+#include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/Catalog/BuiltInCatalogEntry.hpp"
 #include "Spire/Catalog/CatalogEntry.hpp"
 #include "Spire/Catalog/CatalogTabModel.hpp"
@@ -58,6 +61,33 @@ namespace {
     settings.Add(std::move(tab));
   }
 
+  std::unique_ptr<UserCatalogEntry> TryLoadCatalogEntry(SharedBuffer& buffer,
+      const std::filesystem::path& settingsPath) {
+    auto attempt =
+      [&] (TypeRegistry<BinarySender<SharedBuffer>>& typeRegistry) {
+        try {
+          auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
+          receiver.set(Ref(buffer));
+          auto entry = std::make_unique<UserCatalogEntry>(settingsPath);
+          receiver.shuttle(*entry);
+          return entry;
+        } catch(const std::exception&) {
+          return std::unique_ptr<UserCatalogEntry>();
+        }
+      };
+    auto currentRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
+    RegisterSpireTypes(out(currentRegistry));
+    if(auto entry = attempt(currentRegistry)) {
+      return entry;
+    }
+    auto legacyRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
+    legacyRegistry.add<TickerNode>("Spire.SecurityNode");
+    legacyRegistry.add<TickerType>("Spire.SecurityType");
+    legacyRegistry.add<TickerPortfolioNode>("Spire.SecurityPortfolioNode");
+    RegisterSpireTypes(out(legacyRegistry));
+    return attempt(legacyRegistry);
+  }
+
   void LoadCatalogEntries(const std::filesystem::path& catalogDirectoryPath,
       CatalogSettings& settings) {
     auto warnings = QString();
@@ -67,20 +97,20 @@ namespace {
           i->path().extension() != ".cat") {
         continue;
       }
-      try {
-        auto reader = BasicIStreamReader<std::ifstream>(
-          init(i->path(), std::ios::binary));
-        auto buffer = SharedBuffer();
-        reader.read(out(buffer));
-        auto typeRegistry = TypeRegistry<BinarySender<SharedBuffer>>();
-        RegisterSpireTypes(out(typeRegistry));
-        auto receiver = BinaryReceiver<SharedBuffer>(Ref(typeRegistry));
-        receiver.set(Ref(buffer));
-        auto entry =
-          std::make_unique<UserCatalogEntry>(settings.GetSettingsPath());
-        receiver.shuttle(*entry);
+      auto entry = [&] {
+        try {
+          auto reader = BasicIStreamReader<std::ifstream>(
+            init(i->path(), std::ios::binary));
+          auto buffer = SharedBuffer();
+          reader.read(out(buffer));
+          return TryLoadCatalogEntry(buffer, settings.GetSettingsPath());
+        } catch(const std::exception&) {
+          return std::unique_ptr<UserCatalogEntry>();
+        }
+      }();
+      if(entry) {
         settings.Add(static_pointer_cast<CatalogEntry>(std::move(entry)));
-      } catch(const std::exception&) {
+      } else {
         warnings += QObject::tr("Failed to load: ") +
           QString::fromStdString(std::filesystem::path(*i).string()) + "\n";
       }

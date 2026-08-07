@@ -22,6 +22,7 @@ elseif(APPLE)
   set(app_type MACOSX_BUNDLE)
 endif()
 add_executable(ToolbarUiTester ${app_type} ${header_files} ${source_files})
+target_compile_definitions(ToolbarUiTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
   target_link_libraries(ToolbarUiTester
@@ -47,7 +48,7 @@ if(UNIX)
     optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
 target_link_libraries(ToolbarUiTester Async Dashboard Charting PortfolioViewer
-  Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog BookView Library
+  Utilities RiskTimer KeyBindings Blotter Catalog BookView Library
   Resources Styles TimeAndSales OrderImbalanceIndicator InputWidgets
   CanvasView Canvas LegacyResources LegacyUI Toolbar
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}

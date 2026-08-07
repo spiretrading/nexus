@@ -5,6 +5,18 @@
 
 namespace Spire {
 
+  /** Returns a UiProfile for the AccountBox. */
+  UiProfile make_account_box_profile();
+
+  /** Returns a UiProfile for the AccountFilterPanel. */
+  UiProfile make_account_filter_panel_profile();
+
+  /** Returns a UiProfile for the AccountListBox. */
+  UiProfile make_account_list_box_profile();
+
+  /** Returns a UiProfile for the AccountListItem. */
+  UiProfile make_account_list_item_profile();
+
   /** Returns a UiProfile for the AdaptiveBox. */
   UiProfile make_adaptive_box_profile();
 
@@ -16,6 +28,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the CheckBox. */
   UiProfile make_check_box_profile();
+
+  /** Returns a UiProfile for the CheckButtonMenuItem. */
+  UiProfile make_check_button_menu_item_profile();
 
   /** Returns a UiProfile for the ClosedFilterPanel. */
   UiProfile make_closed_filter_panel_profile();
@@ -34,6 +49,18 @@ namespace Spire {
 
   /** Returns a UiProfile for the ComboBox. */
   UiProfile make_context_menu_profile();
+
+  /** Returns a UiProfile for the CurrencyBox. */
+  UiProfile make_currency_box_profile();
+
+  /** Returns a UiProfile for the CurrencyFilterPanel. */
+  UiProfile make_currency_filter_panel_profile();
+
+  /** Returns a UiProfile for the CurrencyListBox. */
+  UiProfile make_currency_list_box_profile();
+
+  /** Returns a UiProfile for the CurrencyListItem. */
+  UiProfile make_currency_list_item_profile();
 
   /** Returns a UiProfile for the DateBox. */
   UiProfile make_date_box_profile();
@@ -55,6 +82,12 @@ namespace Spire {
 
   /** Returns a UiProfile for the DestinationBox. */
   UiProfile make_destination_box_profile();
+
+  /** Returns a UiProfile for the DestinationFilterPanel. */
+  UiProfile make_destination_filter_panel_profile();
+
+  /** Returns a UiProfile for the DestinationListBox. */
+  UiProfile make_destination_list_box_profile();
 
   /** Returns a UiProfile for the DestinationListItem. */
   UiProfile make_destination_list_item_profile();
@@ -116,6 +149,9 @@ namespace Spire {
   /** Returns a UiProfile for the IconToggleButton. */
   UiProfile make_icon_toggle_button_profile();
 
+  /** Returns a UiProfile for the Identicon. */
+  UiProfile make_identicon_profile();
+
   /** Returns a UiProfile for the IntoPanel. */
   UiProfile make_info_panel_profile();
 
@@ -131,8 +167,14 @@ namespace Spire {
   /** Returns a UiProfile for the IntegerFilterPanel. */
   UiProfile make_integer_filter_panel_profile();
 
+  /** Returns a UiProfile for the KeyFilterPanel. */
+  UiProfile make_key_filter_panel_profile();
+
   /** Returns a UiProfile for the KeyInputBox. */
   UiProfile make_key_input_box_profile();
+
+  /** Returns a UiProfile for the KeyListBox. */
+  UiProfile make_key_list_box_profile();
 
   /** Returns a UiProfile for the KeyTag. */
   UiProfile make_key_tag_profile();
@@ -176,6 +218,15 @@ namespace Spire {
   /** Returns a UiProfile for the OrderFieldInfoTip. */
   UiProfile make_order_field_info_tip_profile();
 
+  /** Returns a UiProfile for the OrderStatusBox. */
+  UiProfile make_order_status_box_profile();
+
+  /** Returns a UiProfile for the OrderStatusFilterPanel. */
+  UiProfile make_order_status_filter_panel_profile();
+
+  /** Returns a UiProfile for the OrderStatusListBox. */
+  UiProfile make_order_status_list_box_profile();
+
   /** Returns a UiProfile for the OrderTypeBox. */
   UiProfile make_order_type_box_profile();
 
@@ -188,8 +239,17 @@ namespace Spire {
   /** Returns a UiProfile for the PercentBox. */
   UiProfile make_percent_box_profile();
 
+  /** Returns a UiProfile for the PercentFilterPanel. */
+  UiProfile make_percent_filter_panel_profile();
+
   /** Returns a UiProfile for the PopupBox. */
   UiProfile make_popup_box_profile();
+
+  /** Returns a UiProfile for the PositionSideBox. */
+  UiProfile make_position_side_box_profile();
+
+  /** Returns a UiProfile for the PositionSideFilterPanel. */
+  UiProfile make_position_side_filter_panel_profile();
 
   /** Returns a UiProfile for the ProgressBar. */
   UiProfile make_progress_bar_profile();
@@ -245,6 +305,9 @@ namespace Spire {
   /** Returns a UiProfile for the SplitView. */
   UiProfile make_split_view_profile();
 
+  /** Returns a UiProfile for the SwitchButton. */
+  UiProfile make_switch_button_profile();
+
   /** Returns a UiProfile for the TabView. */
   UiProfile make_tab_view_profile();
 
@@ -266,6 +329,9 @@ namespace Spire {
   /** Returns a UiProfile for the TagComboBox. */
   UiProfile make_tag_combo_box_profile();
 
+  /** Returns a UiProfile for the TaskStateBox. */
+  UiProfile make_task_state_box_profile();
+
   /** Returns a UiProfile for the TextAreaBox. */
   UiProfile make_text_area_box_profile();
 
@@ -277,6 +343,9 @@ namespace Spire {
 
   /** Returns a UiProfile for the TickerBox. */
   UiProfile make_ticker_box_profile();
+
+  /** Returns a UiProfile for the TickerFilterPanel. */
+  UiProfile make_ticker_filter_panel_profile();
 
   /** Returns a UiProfile for the TickerListBox. */
   UiProfile make_ticker_list_box_profile();
@@ -302,11 +371,26 @@ namespace Spire {
   /** Returns a UiProfile for the Tooltip. */
   UiProfile make_tooltip_profile();
 
+  /** Returns a UiProfile for the TradingGroupBox. */
+  UiProfile make_trading_group_box_profile();
+
+  /** Returns a UiProfile for the TradingGroupFilterPanel. */
+  UiProfile make_trading_group_filter_panel_profile();
+
+  /** Returns a UiProfile for the TradingGroupListBox. */
+  UiProfile make_trading_group_list_box_profile();
+
   /** Returns a UiProfile for the TransitionView. */
   UiProfile make_transition_view_profile();
 
   /** Returns a UiProfile for the VenueBox. */
   UiProfile make_venue_box_profile();
+
+  /** Returns a UiProfile for the VenueFilterPanel. */
+  UiProfile make_venue_filter_panel_profile();
+
+  /** Returns a UiProfile for the VenueListBox. */
+  UiProfile make_venue_list_box_profile();
 
   /** Returns a UiProfile for the WindowHighlight. */
   UiProfile make_window_highlight_profile();

@@ -1,8 +1,9 @@
 #include "Spire/BookView/LocalBookViewModel.hpp"
 #include <ranges>
 #include <sstream>
-#include <quickfix/FixFields.h>
-#include <quickfix/FixValues.h>
+#include "Nexus/Definitions/FixTags.hpp"
+#include "Nexus/Definitions/StandardVenues.hpp"
+#include "Nexus/TechnicalAnalysis/SessionTechnicals.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ReversedListModel.hpp"
 
@@ -10,7 +11,7 @@ using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 
-LocalBookViewModel::LocalBookViewModel()
+LocalBookViewModel::LocalBookViewModel(Ticker ticker)
   : m_model(std::make_shared<ReversedListModel<BookQuote>>(
       std::make_shared<ArrayListModel<BookQuote>>()),
       std::make_shared<ReversedListModel<BookQuote>>(
@@ -19,7 +20,14 @@ LocalBookViewModel::LocalBookViewModel()
       std::make_shared<ArrayListModel<UserOrder>>(),
       std::make_shared<LocalValueModel<optional<OrderFields>>>(),
       std::make_shared<LocalBboQuoteModel>(),
-      std::make_shared<LocalSessionCandlestickModel>()) {}
+      std::make_shared<LocalSessionTechnicalsModel>()) {
+  if(ticker) {
+    m_market_center = VENUES.from(ticker.get_venue()).m_market_center;
+    if(m_market_center.empty()) {
+      m_market_center = ticker.get_venue().get_code().get_data();
+    }
+  }
+}
 
 void LocalBookViewModel::update(const BboQuote& bbo) {
   m_model.get_bbo_quote()->set(bbo);
@@ -91,12 +99,18 @@ void LocalBookViewModel::update(const BookQuote& quote) {
 }
 
 void LocalBookViewModel::update(const TimeAndSale& time_and_sale) {
-  auto candlestick = m_model.get_session_candlestick()->get();
-  candlestick.update(time_and_sale.m_price, time_and_sale.m_size);
-  m_model.get_session_candlestick()->set(candlestick);
+  auto technicals = m_model.get_session_technicals()->get();
+  Nexus::update(technicals, time_and_sale, m_market_center);
+  m_model.get_session_technicals()->set(technicals);
 }
 
 void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order) {
+  add(order, order.m_order->get_info().m_fields.m_quantity,
+    OrderStatus::PENDING_NEW);
+}
+
+void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order,
+    Quantity quantity, OrderStatus status) {
   auto& fields = order.m_order->get_info().m_fields;
   if(fields.m_type != OrderType::LIMIT && fields.m_type != OrderType::PEGGED) {
     return;
@@ -105,8 +119,6 @@ void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order) {
   orders.push_back(order.m_order);
   auto& user_orders =
     *pick(fields.m_side, m_model.get_ask_orders(), m_model.get_bid_orders());
-  auto remaining_quantity = fields.m_quantity;
-  auto status = OrderStatus::PENDING_NEW;
   auto display_price = fields.m_price;
   if(fields.m_type == OrderType::PEGGED) {
     submit_pegged(*order.m_order);
@@ -114,7 +126,7 @@ void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order) {
       m_pegged_entries[order.m_order->get_info().m_id].m_effective_price;
   }
   user_orders.push(
-    UserOrder(fields.m_destination, display_price, remaining_quantity, status));
+    UserOrder(fields.m_destination, display_price, quantity, status));
 }
 
 void LocalBookViewModel::remove(const OrderLogModel::OrderEntry& order) {
@@ -194,24 +206,22 @@ void LocalBookViewModel::transact(const std::function<void ()>& f) {
 void LocalBookViewModel::submit_pegged(const Order& order) {
   auto& fields = order.get_info().m_fields;
   auto entry = PeggedOrderEntry();
-  entry.m_exec_inst = FIX::ExecInst_PRIMARY_PEG;
-  if(auto tag = find_field(fields, FIX::FIELD::ExecInst)) {
+  entry.m_exec_inst = PRIMARY_PEG;
+  if(auto tag = find_field(fields, EXEC_INST_KEY)) {
     if(auto* value = boost::get<std::string>(&tag->get_value())) {
       auto stream = std::istringstream(*value);
       auto token = std::string();
       while(stream >> token) {
-        if(token.size() == 1 &&
-            (token[0] == FIX::ExecInst_PRIMARY_PEG ||
-              token[0] == FIX::ExecInst_MARKET_PEG ||
-              token[0] == FIX::ExecInst_MID_PRICE_PEG)) {
-          entry.m_exec_inst = token[0];
+        if(token == PRIMARY_PEG || token == MARKET_PEG ||
+            token == MID_PRICE_PEG) {
+          entry.m_exec_inst = token;
           break;
         }
       }
     }
   }
   entry.m_peg_difference = Money::ZERO;
-  if(auto tag = find_field(fields, FIX::FIELD::PegDifference)) {
+  if(auto tag = find_field(fields, PEG_DIFFERENCE_KEY)) {
     if(auto* money = boost::get<Money>(&tag->get_value())) {
       entry.m_peg_difference = *money;
     }
@@ -222,9 +232,9 @@ void LocalBookViewModel::submit_pegged(const Order& order) {
     std::pair(bbo.m_ask.m_price, bbo.m_bid.m_price),
     std::pair(bbo.m_bid.m_price, bbo.m_ask.m_price));
   entry.m_effective_price = [&] {
-    if(entry.m_exec_inst == FIX::ExecInst_MARKET_PEG) {
+    if(entry.m_exec_inst == MARKET_PEG) {
       return opposite_price;
-    } else if(entry.m_exec_inst == FIX::ExecInst_MID_PRICE_PEG) {
+    } else if(entry.m_exec_inst == MID_PRICE_PEG) {
       return (same_price + opposite_price) / 2;
     }
     return same_price;
@@ -253,9 +263,9 @@ void LocalBookViewModel::update_pegged_orders() {
         std::pair(bbo.m_ask.m_price, bbo.m_bid.m_price),
         std::pair(bbo.m_bid.m_price, bbo.m_ask.m_price));
       auto candidate = [&] {
-        if(entry.m_exec_inst == FIX::ExecInst_MARKET_PEG) {
+        if(entry.m_exec_inst == MARKET_PEG) {
           return opposite_price;
-        } else if(entry.m_exec_inst == FIX::ExecInst_MID_PRICE_PEG) {
+        } else if(entry.m_exec_inst == MID_PRICE_PEG) {
           return (same_price + opposite_price) / 2;
         }
         return same_price;
@@ -310,7 +320,7 @@ const std::shared_ptr<BboQuoteModel>&
   return m_model.get_bbo_quote();
 }
 
-const std::shared_ptr<SessionCandlestickModel>&
-    LocalBookViewModel::get_session_candlestick() const {
-  return m_model.get_session_candlestick();
+const std::shared_ptr<SessionTechnicalsModel>&
+    LocalBookViewModel::get_session_technicals() const {
+  return m_model.get_session_technicals();
 }

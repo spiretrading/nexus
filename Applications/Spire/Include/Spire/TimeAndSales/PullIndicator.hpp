@@ -28,11 +28,15 @@ namespace Spire {
     private:
       TableView* m_table_view;
       QMovie* m_spinner;
+      QWidget* m_loading_panel;
+      QMovie* m_loading_spinner;
       QTimer m_timer;
       bool m_is_loading;
+      bool m_is_full_reload;
       int m_last_position;
 
       void update_position(const QSize& size);
+      void update_loading_panel();
       void display();
       void on_position(int position);
       void on_begin_loading();

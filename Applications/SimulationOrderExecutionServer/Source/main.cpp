@@ -42,11 +42,8 @@ using namespace Viper;
 namespace {
   using DataStore =
     SqlOrderExecutionDataStore<SqlConnection<MySql::Connection>>;
-  using ApplicationSimulationOrderExecutionDriver =
-    SimulationOrderExecutionDriver<
-      ApplicationMarketDataClient*, LiveNtpTimeClient*>;
   using ApplicationOrderSubmissionCheckDriver =
-    OrderSubmissionCheckDriver<ApplicationSimulationOrderExecutionDriver*>;
+    OrderSubmissionCheckDriver<SimulationOrderExecutionDriver*>;
   using ApplicationComplianceCheckOrderExecutionDriver =
     ComplianceCheckOrderExecutionDriver<ApplicationOrderSubmissionCheckDriver*,
       LiveNtpTimeClient*, ComplianceRuleSet<
@@ -81,15 +78,14 @@ int main(int argc, const char** argv) {
       ApplicationMarketDataClient(Ref(service_locator_client));
     auto definitions_client =
       ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
     auto compliance_client =
       ApplicationComplianceClient(Ref(service_locator_client));
-    auto simulation_driver = ApplicationSimulationOrderExecutionDriver(
-      &market_data_client, time_client.get());
+    auto simulation_driver = SimulationOrderExecutionDriver(
+      MarketDataClient(&market_data_client), TimeClient(time_client.get()));
     auto checks = std::vector<std::unique_ptr<OrderSubmissionCheck>>();
     try_or_nest([&] {
-      checks.emplace_back(make_board_lot_check(&market_data_client,
-        definitions_client.load_venue_database(),
-        definitions_client.load_time_zone_database()));
+      checks.emplace_back(make_board_lot_check(&market_data_client));
       checks.emplace_back(
         std::make_unique<BuyingPowerCheck<ApplicationAdministrationClient*,
           ApplicationMarketDataClient*>>(
@@ -112,8 +108,6 @@ int main(int argc, const char** argv) {
     auto mysql_configs = try_or_nest([&] {
       return MySqlConfig::parse_replication(get_node(config, "data_store"));
     }, std::runtime_error("Error parsing section 'data_store'."));
-    auto session_start_time =
-      extract<ptime>(config, "session_start_time", pos_infin);
     auto account_source = [&] (unsigned int id) {
       return service_locator_client.load_directory_entry(id);
     };
@@ -129,9 +123,7 @@ int main(int argc, const char** argv) {
     auto data_store = make_replicated_sql_order_execution_data_store(
       connection_builders, account_source);
     auto order_execution_server = OrderExecutionServletContainer(
-      init(&service_locator_client, init(
-        session_start_time , definitions_client.load_venue_database(),
-        definitions_client.load_destination_database(), time_client.get(),
+      init(&service_locator_client, init(time_client.get(),
         &service_locator_client, &uid_client, &administration_client,
         &compliance_check_driver, data_store.get())),
       init(service_config.m_interface),

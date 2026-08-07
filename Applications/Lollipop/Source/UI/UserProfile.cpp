@@ -1,5 +1,9 @@
 #include "Spire/UI/UserProfile.hpp"
+#include <Beam/ServiceLocator/SessionEncryption.hpp>
+#include <Beam/Utilities/ToString.hpp>
+#include <QDesktopServices>
 #include <QStandardPaths>
+#include <QUrl>
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/OpenPositionsModel.hpp"
@@ -7,28 +11,19 @@
 
 using namespace Beam;
 using namespace boost;
-using namespace boost::local_time;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::UI;
 
 UserProfile::UserProfile(const std::string& username, bool isAdministrator,
-    bool isManager, const CountryDatabase& countryDatabase,
-    const tz_database& timeZoneDatabase,
-    const CurrencyDatabase& currencyDatabase,
-    const std::vector<ExchangeRate>& exchangeRates,
-    const VenueDatabase& venueDatabase,
-    const DestinationDatabase& destinationDatabase,
-    const EntitlementDatabase& entitlementDatabase, Clients clients)
+    bool isManager, const std::vector<ExchangeRate>& exchangeRates,
+    const EntitlementDatabase& entitlementDatabase, Uri web_portal_uri,
+    Clients clients)
     : m_username(username),
       m_isAdministrator(isAdministrator),
       m_isManager(isManager),
-      m_countryDatabase(countryDatabase),
-      m_timeZoneDatabase(timeZoneDatabase),
-      m_currencyDatabase(currencyDatabase),
-      m_venueDatabase(venueDatabase),
-      m_destinationDatabase(destinationDatabase),
       m_entitlementDatabase(entitlementDatabase),
+      m_web_portal_uri(std::move(web_portal_uri)),
       m_clients(std::move(clients)),
       m_profilePath(std::filesystem::path(QStandardPaths::writableLocation(
         QStandardPaths::DataLocation).toStdString()) / "Profiles" / m_username),
@@ -54,32 +49,16 @@ bool UserProfile::IsManager() const {
   return m_isAdministrator || m_isManager;
 }
 
-const CountryDatabase& UserProfile::GetCountryDatabase() const {
-  return m_countryDatabase;
-}
-
-const tz_database& UserProfile::GetTimeZoneDatabase() const {
-  return m_timeZoneDatabase;
-}
-
-const CurrencyDatabase& UserProfile::GetCurrencyDatabase() const {
-  return m_currencyDatabase;
-}
-
 const ExchangeRateTable& UserProfile::GetExchangeRates() const {
   return m_exchangeRates;
 }
 
-const VenueDatabase& UserProfile::GetVenueDatabase() const {
-  return m_venueDatabase;
-}
-
-const DestinationDatabase& UserProfile::GetDestinationDatabase() const {
-  return m_destinationDatabase;
-}
-
 const EntitlementDatabase& UserProfile::GetEntitlementDatabase() const {
   return m_entitlementDatabase;
+}
+
+const Uri& UserProfile::GetWebPortalUri() const {
+  return m_web_portal_uri;
 }
 
 Clients& UserProfile::GetClients() const {
@@ -262,4 +241,18 @@ const optional<PortfolioViewerWindowSettings>&
 void UserProfile::SetInitialPortfolioViewerWindowSettings(
     const PortfolioViewerWindowSettings& settings) {
   m_initialPortfolioViewerWindowSettings = settings;
+}
+
+void Spire::open_web_portal(
+    UserProfile& user_profile, const std::string& path) {
+  if(user_profile.GetWebPortalUri().get_hostname().empty()) {
+    return;
+  }
+  auto key = generate_encryption_key();
+  auto session_id = user_profile.GetClients().get_service_locator_client().
+    get_encrypted_session_id(key);
+  auto url = to_string(user_profile.GetWebPortalUri()) +
+    "/api/service_locator/login_from_session?session=" + session_id +
+    "&key=" + std::to_string(key) + "&redirect=" + path;
+  QDesktopServices::openUrl(QUrl(QString::fromStdString(url)));
 }

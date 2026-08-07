@@ -1,6 +1,8 @@
 #ifndef SPIRE_STYLES_STYLIST_HPP
 #define SPIRE_STYLES_STYLIST_HPP
 #include <chrono>
+#include <cstdint>
+#include <flat_set>
 #include <memory>
 #include <type_traits>
 #include <unordered_set>
@@ -127,6 +129,12 @@ namespace Spire::Styles {
       const std::unordered_set<Selector>& get_matches() const;
 
       /**
+       * Removes a link previously added.
+       * @param target The stylist to unlink from this.
+       */
+      void unlink(Stylist& target);
+
+      /**
        * Directs this Stylist to match a Selector.
        * @param selector The selector to match.
        */
@@ -174,9 +182,9 @@ namespace Spire::Styles {
     private:
       struct StyleEventFilter;
       struct RuleEntry {
-        Block m_block;
-        int m_priority;
-        std::unordered_set<const Stylist*> m_selection;
+        std::shared_ptr<const Block> m_block;
+        std::uint64_t m_priority;
+        std::flat_set<const Stylist*> m_selection;
         SelectConnection m_connection;
       };
       struct Source {
@@ -202,6 +210,22 @@ namespace Spire::Styles {
         EvaluatorEntry(Property property, Evaluator<Type> evaluator);
         void animate() override;
       };
+      struct AuxiliarySignals {
+        LinkSignal m_link_signal;
+        BacklinkSignal m_backlink_signal;
+        DeleteSignal m_delete_signal;
+      };
+      using MatchSignalMap = std::unordered_map<Selector, MatchSignal>;
+      using EvaluatorMap = std::unordered_map<
+        std::type_index, std::unique_ptr<BaseEvaluatorEntry>>;
+      struct Animations {
+        EvaluatorMap m_evaluators;
+        std::type_index m_evaluated_property;
+        std::chrono::time_point<std::chrono::steady_clock> m_last_frame;
+        QMetaObject::Connection m_animation_connection;
+
+        Animations();
+      };
       friend Stylist& find_stylist(QWidget& widget);
       friend void add_pseudo_element(
         QWidget& source, const PseudoElement& pseudo_element);
@@ -211,10 +235,10 @@ namespace Spire::Styles {
       template<typename T>
       friend Evaluator<T> make_evaluator(
         RevertExpression<T> expression, const Stylist& stylist);
+      AuxiliarySignals& get_auxiliary_signals() const;
+      Animations& get_animations();
       mutable StyleSignal m_style_signal;
-      mutable LinkSignal m_link_signal;
-      mutable BacklinkSignal m_backlink_signal;
-      mutable DeleteSignal m_delete_signal;
+      mutable std::unique_ptr<AuxiliarySignals> m_auxiliary_signals;
       QWidget* m_widget;
       boost::optional<PseudoElement> m_pseudo_element;
       std::shared_ptr<StyleSheet> m_style;
@@ -225,14 +249,10 @@ namespace Spire::Styles {
       std::vector<Stylist*> m_proxies;
       std::vector<Stylist*> m_principals;
       std::unordered_set<Selector> m_matches;
-      mutable std::unordered_map<Selector, MatchSignal> m_match_signals;
-      std::vector<Stylist*> m_links;
-      std::vector<Stylist*> m_backlinks;
-      std::unordered_map<
-        std::type_index, std::unique_ptr<BaseEvaluatorEntry>> m_evaluators;
-      std::type_index m_evaluated_property;
-      std::chrono::time_point<std::chrono::steady_clock> m_last_frame;
-      QMetaObject::Connection m_animation_connection;
+      mutable std::unique_ptr<MatchSignalMap> m_match_signals;
+      std::unique_ptr<std::vector<Stylist*>> m_links;
+      std::unique_ptr<std::vector<Stylist*>> m_backlinks;
+      std::unique_ptr<Animations> m_animations;
       bool m_has_visibility;
       std::unique_ptr<StyleEventFilter> m_style_event_filter;
 
@@ -247,7 +267,8 @@ namespace Spire::Styles {
       void for_each_proxy(F&& f);
       template<typename F>
       void for_each_proxy(F&& f) const;
-      void apply(const StyleSheet& style);
+      bool try_apply_diff(const std::shared_ptr<StyleSheet>& new_style);
+      void apply(std::shared_ptr<StyleSheet> style);
       void apply(Stylist& source, const RuleEntry& rule);
       void unapply(const RuleEntry& rule);
       void apply();
@@ -359,6 +380,13 @@ namespace Spire::Styles {
   void link(QWidget& root, QWidget& target);
 
   /**
+   * Removes a link previously added.
+   * @param root The root of the link.
+   * @param target The QWidget to unlink from the root.
+   */
+  void unlink(QWidget& root, QWidget& target);
+
+  /**
    * Returns <code>true</code> iff a widget matches a selector.
    * @param widget The widget to test.
    * @param selector The selector to check for a match.
@@ -414,9 +442,10 @@ namespace Spire::Styles {
 
   template<typename Property, typename F>
   void Stylist::evaluate(const Property& property, F&& receiver) {
-    m_evaluated_property = typeid(Property);
-    auto i = m_evaluators.find(m_evaluated_property);
-    if(i == m_evaluators.end()) {
+    auto& animations = get_animations();
+    animations.m_evaluated_property = typeid(Property);
+    auto i = animations.m_evaluators.find(animations.m_evaluated_property);
+    if(i == animations.m_evaluators.end()) {
       auto evaluator = make_evaluator(property.get_expression(), *this);
       auto evaluation = evaluator(boost::posix_time::seconds(0));
       if(evaluation.m_next_frame != boost::posix_time::pos_infin) {
@@ -424,8 +453,9 @@ namespace Spire::Styles {
           property, std::move(evaluator));
         entry->m_receivers.push_back(std::forward<F>(receiver));
         auto& receiver = entry->m_receivers.back();
-        m_evaluators.emplace(m_evaluated_property, std::move(entry));
-        if(m_evaluators.size() == 1) {
+        animations.m_evaluators.emplace(
+          animations.m_evaluated_property, std::move(entry));
+        if(animations.m_evaluators.size() == 1) {
           connect_animation();
         }
         m_evaluated_block->set(

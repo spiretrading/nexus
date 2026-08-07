@@ -35,7 +35,7 @@ namespace {
     template<>
     Parser<Record::Field> operator ()<Ticker>(const NativeType& type,
         Ref<UserProfile> userProfile) const {
-      return cast<Record::Field>(TickerParser(DEFAULT_VENUES));
+      return cast<Record::Field>(TickerParser());
     }
 
     template<>

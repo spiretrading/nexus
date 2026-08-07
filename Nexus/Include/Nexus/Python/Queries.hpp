@@ -5,10 +5,28 @@
 namespace Nexus::Python {
 
   /**
+   * Exports the BboQuoteAccessor class.
+   * @param module The module to export to.
+   */
+  void export_bbo_quote_accessor(pybind11::module& module);
+
+  /**
+   * Exports the BookQuoteAccessor class.
+   * @param module The module to export to.
+   */
+  void export_book_quote_accessor(pybind11::module& module);
+
+  /**
    * Exports the OrderFieldsAccessor class.
    * @param module The module to export to.
    */
   void export_order_fields_accessor(pybind11::module& module);
+
+  /**
+   * Exports the OrderImbalanceAccessor class.
+   * @param module The module to export to.
+   */
+  void export_order_imbalance_accessor(pybind11::module& module);
 
   /**
    * Exports the OrderInfoAccessor class.
@@ -23,10 +41,22 @@ namespace Nexus::Python {
   void export_queries(pybind11::module& module);
 
   /**
+   * Exports the QuoteAccessor class.
+   * @param module The module to export to.
+   */
+  void export_quote_accessor(pybind11::module& module);
+
+  /**
    * Exports the TickerAccessor class.
    * @param module The module to export to.
    */
   void export_ticker_accessor(pybind11::module& module);
+
+  /**
+   * Exports the TickerStatusAccessor class.
+   * @param module The module to export to.
+   */
+  void export_ticker_status_accessor(pybind11::module& module);
 
   /**
    * Exports the TimeAndSaleAccessor class.

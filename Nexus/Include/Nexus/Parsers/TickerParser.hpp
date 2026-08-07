@@ -13,29 +13,11 @@ namespace Nexus {
     public:
       using Result = Ticker;
 
-      /** Constructs a TickerParser using the default venues. */
-      TickerParser() noexcept;
-
-      /**
-       * Constructs a TickerParser.
-       * @param venues The venues to parse.
-       */
-      explicit TickerParser(const VenueDatabase& venues) noexcept;
-
       template<Beam::IsParserStream S>
       bool read(S& source, Result& value) const;
       template<Beam::IsParserStream S>
       bool read(S& source) const;
-
-    private:
-      VenueDatabase m_venues;
   };
-
-  inline TickerParser::TickerParser() noexcept
-    : TickerParser(DEFAULT_VENUES) {}
-
-  inline TickerParser::TickerParser(const VenueDatabase& venues) noexcept
-    : m_venues(venues) {}
 
   template<Beam::IsParserStream S>
   bool TickerParser::read(S& source, Result& value) const {
@@ -49,7 +31,7 @@ namespace Nexus {
         break;
       }
     }
-    value = parse_ticker(symbol, m_venues);
+    value = parse_ticker(symbol);
     if(!value.get_venue()) {
       return false;
     }

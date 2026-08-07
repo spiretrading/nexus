@@ -4,7 +4,7 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 TEST_SUITE("TickerChartingQuery") {
   TEST_CASE("get_set_market_data_type") {

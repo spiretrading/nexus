@@ -26,6 +26,13 @@ namespace Nexus {
        */
       void update(const ExecutionReport& report);
 
+      /**
+       * Updates a position.
+       * @param ticker The Ticker the position is held in.
+       * @param quantity The change in the position's quantity.
+       */
+      void update(const Ticker& ticker, Quantity quantity);
+
     private:
       struct PositionEntry {
         Quantity m_ask_quantity_pending;
@@ -83,6 +90,10 @@ namespace Nexus {
     if(is_terminal(report.m_status)) {
       m_order_entries.erase(report.m_id);
     }
+  }
+
+  inline void ShortingModel::update(const Ticker& ticker, Quantity quantity) {
+    get_position(ticker).m_position += quantity;
   }
 
   inline ShortingModel::PositionEntry&

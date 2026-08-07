@@ -1,4 +1,5 @@
 #include "Spire/Toolbar/SettingsPanel.hpp"
+#include <bitset>
 #include <QEvent>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/EnumSetTestModel.hpp"
@@ -20,8 +21,10 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 SettingsPanel::SettingsPanel(Mode mode, QWidget& parent)
-  : SettingsPanel(
-      mode, std::make_shared<UserSettings::LocalCategoriesModel>(), parent) {}
+  : SettingsPanel(mode, std::make_shared<UserSettings::LocalCategoriesModel>(
+      UserSettings::Categories(
+        std::bitset<UserSettings::Category::COUNT>().set())),
+      parent) {}
 
 SettingsPanel::SettingsPanel(Mode mode,
     std::shared_ptr<UserSettings::CategoriesModel> categories, QWidget& parent)

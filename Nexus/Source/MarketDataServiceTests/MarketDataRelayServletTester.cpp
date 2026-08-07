@@ -20,8 +20,8 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   struct Fixture {
@@ -90,11 +90,7 @@ namespace {
             Ref(*m_servlet_service_locator_client)))),
         m_server_connection, factory<std::unique_ptr<TriggerTimer>>());
       m_client_account = make_account("client", DirectoryEntry::STAR_DIRECTORY);
-      auto global_entitlement =
-        m_servlet_administration_client->load_entitlements().
-          get_entries().front().m_group_entry;
-      m_servlet_administration_client->store_entitlements(
-        m_client_account, {global_entitlement});
+      m_administration_environment.grant_all_entitlements(m_client_account);
       std::tie(m_client_account, m_client) = make_client("client");
     }
   };
@@ -123,5 +119,36 @@ TEST_SUITE("MarketDataRegistryServlet") {
     auto result = query_thread.get();
     REQUIRE(result.size() == 1);
     REQUIRE(result.front() == ticker_info);
+  }
+
+  TEST_CASE("query_ticker_status") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("TST.TSX");
+    auto query = TickerQuery();
+    query.set_index(ticker);
+    query.set_range(Beam::Sequence::FIRST, Beam::Sequence::PRESENT);
+    query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    auto query_thread = std::async(std::launch::async, [&] {
+      return fixture.m_client->send_request<QueryTickerStatusService>(query);
+    });
+    auto info_operation_ptr = fixture.m_operations->pop();
+    auto& info_operation =
+      std::get<TestMarketDataClient::TickerInfoQueryOperation>(
+        *info_operation_ptr);
+    auto ticker_info = TickerInfo(ticker, "Test", "Tech", 100);
+    info_operation.m_result.set({ticker_info});
+    auto query_operation_ptr = fixture.m_operations->pop();
+    auto& query_operation =
+      std::get<TestMarketDataClient::QuerySequencedTickerStatusOperation>(
+        *query_operation_ptr);
+    REQUIRE(query_operation.m_query.get_index() == ticker);
+    auto status = SequencedTickerStatus(
+      TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        time_from_string("2024-07-04 09:30:00")), Beam::Sequence(1));
+    query_operation.m_queue.push(status);
+    query_operation.m_queue.close();
+    auto result = query_thread.get();
+    REQUIRE(result.m_snapshot.size() == 1);
+    REQUIRE(result.m_snapshot.front() == status);
   }
 }

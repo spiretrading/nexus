@@ -14,6 +14,8 @@ namespace Spire {
 
     /** The tag's value. */
     boost::optional<Nexus::Tag::Type> m_value;
+
+    bool operator ==(const AdditionalTag& tag) const = default;
   };
 }
 

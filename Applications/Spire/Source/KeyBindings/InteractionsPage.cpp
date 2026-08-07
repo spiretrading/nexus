@@ -88,12 +88,12 @@ namespace {
 
   auto make_available_scope_list(const KeyBindingsModel& key_bindings) {
     auto scopes = std::make_shared<ArrayListModel<Scope>>();
-    for(auto& country : DEFAULT_COUNTRIES.get_entries()) {
+    for(auto& country : COUNTRIES.get_entries()) {
       auto scope = Scope(country.m_name);
       scope += country.m_code;
       scopes->push(scope);
     }
-    for(auto& venue : DEFAULT_VENUES.get_entries()) {
+    for(auto& venue : VENUES.get_entries()) {
       auto scope = Scope(venue.m_description);
       scope += venue.m_venue;
       scopes->push(scope);

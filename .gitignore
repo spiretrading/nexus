@@ -1,6 +1,9 @@
 # Compiled Object files
 *.obj
 
+# Visual Studio solution files
+*.slnx
+
 # Compiled Dynamic libraries
 *.so
 *.dylib

@@ -7,13 +7,13 @@
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/MouseMoveObserver.hpp"
-#include "Spire/Ui/PressObserver.hpp"
 
 namespace Spire {
   template<typename> class ArrayListModel;
   class ListItem;
   class ListView;
   class OverlayPanel;
+  class ScrollableListBox;
 
   /** Represents a pop-up context menu. */
   class ContextMenu : public QWidget {
@@ -148,6 +148,8 @@ namespace Spire {
       boost::signals2::connection connect_submit_signal(
         const SubmitSignal::slot_type& slot) const;
 
+      QSize sizeHint() const override;
+
     protected:
       bool eventFilter(QObject* watched, QEvent* event) override;
       bool event(QEvent* event) override;
@@ -168,6 +170,7 @@ namespace Spire {
       std::unordered_map<int, QWidget*> m_custom_views;
       std::shared_ptr<ArrayListModel<MenuItem>> m_list;
       ListView* m_list_view;
+      ScrollableListBox* m_scrollable_list_box;
       OverlayPanel* m_window;
       OverlayPanel* m_visible_submenu;
       int m_last_show_items;
@@ -178,10 +181,9 @@ namespace Spire {
       QTimer m_show_timer;
       QTimer m_hide_timer;
       bool m_is_hovered;
-      boost::optional<QSize> m_window_size;
+      boost::optional<int> m_max_height;
       boost::optional<QPoint> m_menu_position;
       std::unordered_map<int, OverlayPanel*> m_submenus;
-      std::unordered_map<int, PressObserver> m_check_item_press_observers;
       boost::signals2::scoped_connection m_window_style_connection;
 
       QWidget* build_item(const std::shared_ptr<AnyListModel>& list, int index);

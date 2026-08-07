@@ -375,7 +375,7 @@ function ControlsSection(props: {
           onSelectState={onSelectState}/>
       </div>
       <div className={css(STYLES.wideSegment)}>
-        <RequestStateSegment name='request-state' showBadge={true}
+        <RequestStateSegment name='request-state' showBadge
           requestState={props.requestState}
           response={props.response}
           onSelectState={onSelectState}/>

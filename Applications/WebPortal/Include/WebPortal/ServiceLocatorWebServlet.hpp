@@ -17,17 +17,28 @@ namespace Nexus {
        * @param username The username to login with.
        * @param password The username's password.
        */
-      using ClientsBuilder = std::function<Clients (
-        const std::string& username, const std::string& password)>;
+      using ClientsBuilder = std::function<
+        Clients (const std::string& username, const std::string& password)>;
+
+      /**
+       * Type of function used to build session Clients from a session.
+       * @param session_id The encrypted session id.
+       * @param key The encryption key used to encode the session id.
+       */
+      using SessionClientsBuilder = std::function<
+        Clients (const std::string& session_id, unsigned int key)>;
 
       /**
        * Constructs a ServiceLocatorWebServlet.
        * @param sessions The available web sessions.
        * @param clients_builder The function used to build session Clients.
+       * @param session_clients_builder The function used to build session
+       *        Clients from an existing session.
        */
       ServiceLocatorWebServlet(
         Beam::Ref<Beam::WebSessionStore<WebPortalSession>> sessions,
-        ClientsBuilder clients_builder);
+        ClientsBuilder clients_builder,
+        SessionClientsBuilder session_clients_builder);
 
       ~ServiceLocatorWebServlet();
 
@@ -37,6 +48,7 @@ namespace Nexus {
     private:
       Beam::WebSessionStore<WebPortalSession>* m_sessions;
       ClientsBuilder m_clients_builder;
+      SessionClientsBuilder m_session_clients_builder;
       Beam::OpenState m_open_state;
 
       ServiceLocatorWebServlet(const ServiceLocatorWebServlet&) = delete;
@@ -53,6 +65,8 @@ namespace Nexus {
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_create_account(const Beam::HttpRequest& request);
       Beam::HttpResponse on_create_group(const Beam::HttpRequest& request);
+      Beam::HttpResponse on_login_from_session(
+        const Beam::HttpRequest& request);
   };
 }
 

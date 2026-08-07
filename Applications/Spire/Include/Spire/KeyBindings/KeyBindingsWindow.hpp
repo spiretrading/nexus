@@ -22,8 +22,13 @@ namespace Spire {
         const AdditionalTagDatabase& additional_tags,
         QWidget* parent = nullptr);
 
+    protected:
+      void closeEvent(QCloseEvent* event) override;
+
     private:
       std::shared_ptr<KeyBindingsModel> m_key_bindings;
+      KeyBindingsModel m_snapshot;
+      bool m_is_committed;
 
       void on_cancel();
       void on_done();

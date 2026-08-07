@@ -18,9 +18,11 @@ CALL:configure dashboard_page_tester %*
 CALL:configure entitlements_page_tester %*
 CALL:configure group_info_page_tester %*
 CALL:configure group_page_tester %*
+CALL:configure group_profit_and_loss_page_tester %*
 CALL:configure loading_page_tester %*
 CALL:configure login_page_tester %*
 CALL:configure mock %*
+CALL:configure notifications_page_tester %*
 CALL:configure page_not_found_page_tester %*
 CALL:configure profile_page_tester %*
 CALL:configure profit_and_loss_page_tester %*

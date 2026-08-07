@@ -1,6 +1,6 @@
 #include "Spire/Charting/ChartWindow.hpp"
+#include <QApplication>
 #include <QKeyEvent>
-#include <QLineEdit>
 #include <QToolButton>
 #include "Spire/Canvas/Types/DateTimeType.hpp"
 #include "Spire/Canvas/Types/DurationType.hpp"
@@ -9,10 +9,10 @@
 #include "Spire/Charting/ChartValue.hpp"
 #include "Spire/Charting/ChartWindowSettings.hpp"
 #include "Spire/Charting/TickerPriceChartPlotSeries.hpp"
-#include "Spire/InputWidgets/TickerInputDialog.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
 #include "Spire/LegacyUI/LinkTickerContextAction.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Ui/Ui.hpp"
 #include "ui_ChartWindow.h"
 
 using namespace Beam;
@@ -89,6 +89,10 @@ ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
       std::bind_front(&ChartWindow::OnIntervalChanged, this));
   OnIntervalChanged(
     m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());
+  m_tickerDialog =
+    new TickerDialog(m_userProfile->GetTickerInfoQueryModel(), this);
+  m_tickerDialog->connect_submit_signal(
+    std::bind_front(&ChartWindow::OnTickerSubmit, this));
   SetInteractionMode(ChartInteractionMode::PAN);
   SetAutoScale(true);
   SetLockGrid(true);
@@ -179,14 +183,17 @@ void ChartWindow::keyPressEvent(QKeyEvent* event) {
   if(text.isEmpty() || !text[0].isLetterOrNumber()) {
     return;
   }
-  ShowTickerInputDialog(Ref(*m_userProfile), text.toStdString(), this,
-    [=] (auto ticker) {
-      if(!ticker || ticker == m_ticker) {
-        return;
-      }
-      m_tickerViewStack.Push(m_ticker);
-      DisplayTicker(*ticker);
-    });
+  m_tickerDialog->show();
+  QApplication::sendEvent(find_focus_proxy(*m_tickerDialog), event);
+}
+
+void ChartWindow::OnTickerSubmit(const Ticker& ticker) {
+  m_tickerDialog->hide();
+  if(!ticker || ticker == m_ticker) {
+    return;
+  }
+  m_tickerViewStack.Push(m_ticker);
+  DisplayTicker(ticker);
 }
 
 void ChartWindow::HandleLink(TickerContext& context) {

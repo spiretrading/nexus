@@ -356,7 +356,7 @@ const STYLES = StyleSheet.create({
   dateLabel: {
     fontSize: '0.875rem',
     color: '#333333',
-    whiteSpace: 'nowrap' as 'nowrap'
+    whiteSpace: 'nowrap'
   },
   effectiveDateText: {
     fontSize: '0.875rem',
@@ -365,7 +365,7 @@ const STYLES = StyleSheet.create({
   },
   activityList: {
     display: 'flex',
-    flexDirection: 'column' as 'column',
+    flexDirection: 'column',
     gap: '20px',
     listStyle: 'none',
     padding: 0,
@@ -381,15 +381,15 @@ const STYLES = StyleSheet.create({
     fontFamily: '"Roboto", system-ui, sans-serif',
     fontSize: '0.875rem',
     color: '#333333',
-    resize: 'vertical' as 'vertical',
-    boxSizing: 'border-box' as 'border-box',
+    resize: 'vertical',
+    boxSizing: 'border-box',
     '::placeholder': {
       color: '#8C8C8C'
     }
   },
   actions: {
     display: 'flex',
-    flexDirection: 'column' as 'column',
+    flexDirection: 'column',
     gap: '10px',
     '@container (min-width: 732px)': {
       flexDirection: 'row',

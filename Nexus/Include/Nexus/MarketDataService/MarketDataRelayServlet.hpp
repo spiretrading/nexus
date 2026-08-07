@@ -4,6 +4,7 @@
 #include <functional>
 #include <type_traits>
 #include <vector>
+#include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
@@ -12,6 +13,7 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Services/ServiceProtocolServlet.hpp>
+#include <Beam/Threading/CallOnce.hpp>
 #include <Beam/Utilities/ResourcePool.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
@@ -90,18 +92,19 @@ namespace Nexus {
       template<typename T>
       using TickerSubscriptions =
         Beam::IndexedSubscriptions<T, Ticker, ServiceProtocolClient>;
-      using RealTimeVenueSubscriptionSet =
-        Beam::SynchronizedUnorderedSet<Venue, Beam::Mutex>;
-      using RealTimeTickerSubscriptionSet =
-        Beam::SynchronizedUnorderedSet<Ticker, Beam::Mutex>;
+      template<typename Index>
+      using RealTimeSubscriptionMap = Beam::SynchronizedUnorderedMap<
+        Index, Beam::CallOnce<Beam::Mutex>>;
       VenueSubscriptions<OrderImbalance> m_order_imbalance_subscriptions;
       TickerSubscriptions<BboQuote> m_bbo_quote_subscriptions;
       TickerSubscriptions<BookQuote> m_book_quote_subscriptions;
       TickerSubscriptions<TimeAndSale> m_time_and_sale_subscriptions;
-      RealTimeVenueSubscriptionSet m_order_imbalance_real_time_subscriptions;
-      RealTimeTickerSubscriptionSet m_bbo_quote_real_time_subscriptions;
-      RealTimeTickerSubscriptionSet m_book_quote_real_time_subscriptions;
-      RealTimeTickerSubscriptionSet m_time_and_sale_real_time_subscriptions;
+      TickerSubscriptions<TickerStatus> m_ticker_status_subscriptions;
+      RealTimeSubscriptionMap<Venue> m_order_imbalance_real_time_subscriptions;
+      RealTimeSubscriptionMap<Ticker> m_bbo_quote_real_time_subscriptions;
+      RealTimeSubscriptionMap<Ticker> m_book_quote_real_time_subscriptions;
+      RealTimeSubscriptionMap<Ticker> m_time_and_sale_real_time_subscriptions;
+      RealTimeSubscriptionMap<Ticker> m_ticker_status_real_time_subscriptions;
       Beam::SynchronizedUnorderedSet<Ticker> m_tickers;
       Beam::ResourcePool<MarketDataClient, MarketDataClientBuilder>
         m_market_data_clients;
@@ -128,7 +131,7 @@ namespace Nexus {
         Subscriptions& subscriptions);
       TickerSnapshot on_load_ticker_snapshot(
         ServiceProtocolClient& client, const Ticker& ticker);
-      PriceCandlestick on_load_session_candlestick(
+      SessionTechnicals on_load_session_technicals(
         ServiceProtocolClient& client, const Ticker& ticker);
       std::vector<TickerInfo> on_query_ticker_info(
         ServiceProtocolClient& client, const TickerInfoQuery& query);
@@ -226,10 +229,19 @@ namespace Nexus {
       [=, this] (auto& client, const auto& index, auto id) {
         on_end_query(client, index, id, m_time_and_sale_subscriptions);
       });
+    QueryTickerStatusService::add_request_slot(out(slots),
+      [=, this] (auto& request, const auto& query) {
+        handle_query_request(request, query, m_ticker_status_subscriptions,
+          m_ticker_status_real_time_subscriptions);
+      });
+    Beam::add_message_slot<EndTickerStatusQueryMessage>(out(slots),
+      [=, this] (auto& client, const auto& index, auto id) {
+        on_end_query(client, index, id, m_ticker_status_subscriptions);
+      });
     LoadTickerSnapshotService::add_slot(out(slots), std::bind_front(
       &MarketDataRelayServlet::on_load_ticker_snapshot, this));
-    LoadSessionCandlestickService::add_slot(out(slots), std::bind_front(
-      &MarketDataRelayServlet::on_load_session_candlestick, this));
+    LoadSessionTechnicalsService::add_slot(out(slots), std::bind_front(
+      &MarketDataRelayServlet::on_load_session_technicals, this));
     QueryTickerInfoService::add_slot(out(slots),
       std::bind_front(&MarketDataRelayServlet::on_query_ticker_info, this));
     LoadTickerInfoFromPrefixService::add_slot(out(slots), std::bind_front(
@@ -267,6 +279,7 @@ namespace Nexus {
     m_bbo_quote_subscriptions.remove_all(client);
     m_book_quote_subscriptions.remove_all(client);
     m_time_and_sale_subscriptions.remove_all(client);
+    m_ticker_status_subscriptions.remove_all(client);
   }
 
   template<typename C, typename M, typename A> requires
@@ -349,7 +362,8 @@ namespace Nexus {
         Beam::translate<EvaluatorTranslator>(query.get_filter());
       result.m_id = subscriptions.init(query.get_index(), request.get_client(),
         Beam::Range::TOTAL, std::move(filter));
-      real_time_subscriptions.test_and_set(query.get_index(), [&] {
+      auto& subscription = real_time_subscriptions.get(query.get_index());
+      subscription.call([&] {
         auto& query_entry = get_real_time_query_entry(query.get_index());
         auto initial_value_queue =
           std::make_shared<Beam::Queue<MarketDataType>>();
@@ -441,10 +455,10 @@ namespace Nexus {
   template<typename C, typename M, typename A> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       IsAdministrationClient<Beam::dereference_t<A>>
-  PriceCandlestick MarketDataRelayServlet<C, M, A>::on_load_session_candlestick(
+  SessionTechnicals MarketDataRelayServlet<C, M, A>::on_load_session_technicals(
       ServiceProtocolClient& client, const Ticker& ticker) {
     auto market_data_client = m_market_data_clients.load();
-    return market_data_client->load_session_candlestick(ticker);
+    return market_data_client->load_session_technicals(ticker);
   }
 
   template<typename C, typename M, typename A> requires

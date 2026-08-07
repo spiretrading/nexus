@@ -68,7 +68,7 @@ export class EntitlementDatabase {
   private _entries: EntitlementDatabase.Entry[];
 }
 
-export module EntitlementDatabase {
+export namespace EntitlementDatabase {
 
   /** Stores a single entitlement entry. */
   export class Entry {

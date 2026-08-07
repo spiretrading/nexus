@@ -1,6 +1,5 @@
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultDestinationDatabase.hpp"
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/TestEnvironment/TestClients.hpp"
 #include "Spire/Canvas/ControlNodes/ChainNode.hpp"
 #include "Spire/Canvas/ControlNodes/SpawnNode.hpp"
@@ -29,9 +28,7 @@ namespace {
 
     Environment()
       : m_clients(std::in_place_type<TestClients>, Ref(m_environment)),
-        m_userProfile("", false, false, DEFAULT_COUNTRIES,
-          get_default_time_zone_database(), DEFAULT_CURRENCIES, {},
-          DEFAULT_VENUES, DEFAULT_DESTINATIONS, EntitlementDatabase(),
+        m_userProfile("", false, false, {}, EntitlementDatabase(), {},
           m_clients) {}
   };
 
@@ -105,8 +102,7 @@ TEST_SUITE("Translation") {
     auto orderNode =
       std::unique_ptr<CanvasNode>(std::make_unique<SingleOrderTaskNode>());
     orderNode = orderNode->Replace(SingleOrderTaskNode::TICKER_PROPERTY,
-      std::make_unique<TickerNode>(TEST_TICKER,
-      environment.m_userProfile.GetVenueDatabase()));
+      std::make_unique<TickerNode>(TEST_TICKER));
     orderNode = orderNode->Replace(SingleOrderTaskNode::QUANTITY_PROPERTY,
       std::make_unique<IntegerNode>(100));
     orderNode = orderNode->Replace(SingleOrderTaskNode::SIDE_PROPERTY,
@@ -134,8 +130,7 @@ TEST_SUITE("Translation") {
     auto orderNode =
       std::unique_ptr<CanvasNode>(std::make_unique<SingleOrderTaskNode>());
     orderNode = orderNode->Replace(SingleOrderTaskNode::TICKER_PROPERTY,
-      std::make_unique<TickerNode>(
-        TEST_TICKER, environment.m_userProfile.GetVenueDatabase()));
+      std::make_unique<TickerNode>(TEST_TICKER));
     orderNode = orderNode->Replace(SingleOrderTaskNode::QUANTITY_PROPERTY,
       std::make_unique<IntegerNode>(100));
     orderNode = orderNode->Replace(SingleOrderTaskNode::SIDE_PROPERTY,

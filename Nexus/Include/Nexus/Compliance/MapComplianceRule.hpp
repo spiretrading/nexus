@@ -1,6 +1,8 @@
 #ifndef NEXUS_MAP_COMPLIANCE_RULE_HPP
 #define NEXUS_MAP_COMPLIANCE_RULE_HPP
 #include <functional>
+#include <unordered_map>
+#include <vector>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/Compliance/ComplianceCheckException.hpp"
@@ -41,6 +43,9 @@ namespace Nexus {
         ComplianceRuleBuilder rule_builder, KeyBuilder key_builder);
 
       void submit(const std::shared_ptr<Order>& order) override;
+      void restore(const Beam::DirectoryEntry& account,
+        const InventorySnapshot& snapshot,
+        const std::vector<std::shared_ptr<Order>>& orders) override;
       void cancel(const std::shared_ptr<Order>& order) override;
       void add(const std::shared_ptr<Order>& order) override;
 
@@ -159,6 +164,23 @@ namespace Nexus {
       return m_rule_builder(m_schema);
     });
     rule.submit(order);
+  }
+
+  template<typename K>
+  void MapComplianceRule<K>::restore(const Beam::DirectoryEntry& account,
+      const InventorySnapshot& snapshot,
+      const std::vector<std::shared_ptr<Order>>& orders) {
+    auto grouped_orders =
+      std::unordered_map<Key, std::vector<std::shared_ptr<Order>>>();
+    for(auto& order : orders) {
+      grouped_orders[m_key_builder(*order)].push_back(order);
+    }
+    for(auto& [key, key_orders] : grouped_orders) {
+      auto& rule = *m_rules.get_or_insert(key, [&] {
+        return m_rule_builder(m_schema);
+      });
+      rule.restore(account, snapshot, key_orders);
+    }
   }
 
   template<typename K>

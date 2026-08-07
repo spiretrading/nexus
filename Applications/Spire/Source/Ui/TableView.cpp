@@ -164,8 +164,6 @@ TableView::TableView(
   m_header_view = new TableHeader(m_header, m_filter);
   m_header_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
   link(*this, *m_header_view);
-  auto box = new Box(m_header_view);
-  box->setSizePolicy(QSizePolicy::MinimumExpanding, QSizePolicy::Fixed);
   m_filtered_table = std::make_shared<FilteredTableModel>(
     m_table, std::bind_front(&TableView::is_filtered, this));
   if(comparator) {

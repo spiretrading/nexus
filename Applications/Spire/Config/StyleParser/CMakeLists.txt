@@ -21,6 +21,7 @@ file(GLOB_RECURSE
   test_header_files ${SPIRE_INCLUDE_PATH}/Spire/StyleParserTests/*.hpp)
 file(GLOB_RECURSE test_source_files ${SPIRE_SOURCE_PATH}/StyleParserTests/*.cpp)
 add_executable(StyleParserTests ${test_header_files} ${test_source_files})
+target_compile_definitions(StyleParserTests PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(
   ${test_header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(StyleParserTests Styles StyleParser Library

@@ -9,8 +9,8 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 TEST_SUITE("MarketDataClient") {
   TEST_CASE("query_real_time_with_snapshot_book_quotes_empty") {

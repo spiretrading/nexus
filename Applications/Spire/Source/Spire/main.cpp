@@ -194,6 +194,11 @@ int main(int argc, char* argv[]) {
   auto sign_in_handler = [&] (auto clients) {
     loaded_settings.clear();
     try {
+      try {
+        load_definitions(clients.get_definitions_client());
+      } catch(const std::exception&) {
+        throw std::runtime_error("Unable to load definitions.");
+      }
       auto username = clients.get_service_locator_client().get_account().m_name;
       auto is_administrator = [&] {
         try {
@@ -226,6 +231,17 @@ int main(int argc, char* argv[]) {
           throw std::runtime_error("Unable to load entitlements.");
         }
       }();
+      auto web_portal_uri = [&] {
+        try {
+          auto services =
+            clients.get_service_locator_client().locate("web_portal");
+          if(!services.empty()) {
+            return Uri(
+              get<std::string>(services.front().get_properties().at("url")));
+          }
+        } catch(const std::exception&) {}
+        return Uri();
+      }();
       auto book_view_properties =
         load_book_view_properties(get_profile_path(username));
       loaded_settings.insert("BookView");
@@ -235,7 +251,8 @@ int main(int argc, char* argv[]) {
       user_profile.emplace(username, is_administrator, is_manager,
         std::move(exchange_rates), std::move(entitlements),
         get_default_additional_tag_database(), std::move(book_view_properties),
-        std::move(time_and_sales_properties), std::move(clients));
+        std::move(time_and_sales_properties), std::move(web_portal_uri),
+        std::move(clients));
       auto sign_in_data = JsonObject();
       sign_in_data["version"] = std::string(SPIRE_VERSION);
       try {
@@ -259,6 +276,7 @@ int main(int argc, char* argv[]) {
       toolbar_controller->open();
       risk_timer_monitor.emplace(Ref(*user_profile));
       risk_timer_monitor->Load();
+      user_profile->initialize_ui();
       sign_in_controller = nullptr;
     } catch(const std::exception& e) {
       QMessageBox::critical(nullptr, QObject::tr("Error"),

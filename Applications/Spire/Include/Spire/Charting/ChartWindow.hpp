@@ -14,6 +14,7 @@
 #include "Spire/LegacyUI/TickerContext.hpp"
 #include "Spire/LegacyUI/TickerViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Ui/TickerDialog.hpp"
 
 class QMenu;
 class Ui_ChartWindow;
@@ -76,6 +77,7 @@ namespace Spire {
       QMenu* m_linkMenu;
       ChartIntervalComboBox* m_intervalComboBox;
       UserProfile* m_userProfile;
+      TickerDialog* m_tickerDialog;
       ChartInteractionMode m_interactionMode;
       std::optional<ChartPlotController> m_controller;
       Nexus::Ticker m_ticker;
@@ -108,6 +110,7 @@ namespace Spire {
       void OnLockGridActionToggled(bool toggled);
       void OnLinkMenuActionTriggered(bool triggered);
       void OnLinkActionTriggered(QAction* action);
+      void OnTickerSubmit(const Nexus::Ticker& ticker);
   };
 }
 

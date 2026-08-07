@@ -61,6 +61,8 @@ namespace Spire {
 
     /** The order task's key binding. */
     QKeySequence m_key;
+
+    bool operator ==(const OrderTaskArguments& arguments) const = default;
   };
 
   /** The type of model used for a list of OrderTaskArguments. */

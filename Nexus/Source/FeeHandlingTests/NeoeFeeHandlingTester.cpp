@@ -6,16 +6,16 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Currencies;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   auto TST = parse_ticker("TST.TSX");
 
   auto make_order_fields(Money price) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT, TST, CAD,
-      Side::BID, DefaultDestinations::NEOE, 100, price);
+      Side::BID, Destinations::NEOE, 100, price);
   }
 
   auto make_fee_table() {

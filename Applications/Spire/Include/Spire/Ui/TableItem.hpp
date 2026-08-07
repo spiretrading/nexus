@@ -5,8 +5,6 @@
 #include "Spire/Ui/FocusObserver.hpp"
 #include "Spire/Ui/MouseObserver.hpp"
 
-class QSpacerItem;
-
 namespace Spire {
 
   /** Represents an item in a table. */

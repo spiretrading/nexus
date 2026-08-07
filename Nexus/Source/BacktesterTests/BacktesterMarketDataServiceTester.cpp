@@ -9,8 +9,8 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   const auto TD = parse_ticker("TD.TSX");
@@ -21,7 +21,7 @@ namespace {
     auto service_locator =
       environment.get_service_locator_environment().make_client(
         "backtester", "");
-    grant_all_entitlements(environment.get_administration_environment(),
+    environment.get_administration_environment().grant_all_entitlements(
       service_locator.get_account());
     return environment.get_market_data_environment().make_registry_client(
       Ref(service_locator));
@@ -50,8 +50,7 @@ TEST_SUITE("BacktesterMarketDataService") {
     auto fixture = Fixture();
     auto timestamp =
       fixture.m_event_handler_environment.get_time_environment().get_time();
-    auto event_handler = BacktesterEventHandler(
-      fixture.m_event_handler_environment.get_time_environment().get_time());
+    auto event_handler = BacktesterEventHandler(timestamp, timestamp + hours(8));
     auto service = BacktesterMarketDataService(Ref(event_handler),
       Ref(fixture.m_event_handler_environment.get_market_data_environment()),
       *fixture.m_source_market_data_client);
@@ -85,7 +84,8 @@ TEST_SUITE("BacktesterMarketDataService") {
       100), start_time + minutes(10));
     data_store.store(
       SequencedValue(IndexedValue(bbo_after, TD), Beam::Sequence(12)));
-    auto event_handler = BacktesterEventHandler(start_time);
+    auto event_handler =
+      BacktesterEventHandler(start_time, start_time + hours(8));
     auto service = BacktesterMarketDataService(Ref(event_handler),
       Ref(fixture.m_event_handler_environment.get_market_data_environment()),
       *fixture.m_source_market_data_client);
@@ -97,5 +97,6 @@ TEST_SUITE("BacktesterMarketDataService") {
     REQUIRE(received_bbo1 == bbo_at_start);
     auto received_bbo2 = bbo_queue->pop();
     REQUIRE(received_bbo2 == bbo_after);
+    event_handler.close();
   }
 }

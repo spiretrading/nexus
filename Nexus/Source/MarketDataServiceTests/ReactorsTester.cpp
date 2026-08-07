@@ -7,8 +7,8 @@
 using namespace Aspen;
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 TEST_SUITE("Reactors") {
   TEST_CASE("make_bbo_quote_reactor") {

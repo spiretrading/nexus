@@ -48,6 +48,10 @@ namespace Nexus {
         const TickerQuery& query);
       void store(const SequencedTickerTimeAndSale& time_and_sale);
       void store(const std::vector<SequencedTickerTimeAndSale>& time_and_sales);
+      std::vector<SequencedTickerStatus> load_ticker_statuses(
+        const TickerQuery& query);
+      void store(const SequencedIndexedTickerStatus& status);
+      void store(const std::vector<SequencedIndexedTickerStatus>& statuses);
       void close();
 
     private:
@@ -141,6 +145,21 @@ namespace Nexus {
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   void ClientHistoricalDataStore<C>::store(
     const std::vector<SequencedTickerTimeAndSale>& time_and_sales) {}
+
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  std::vector<SequencedTickerStatus>
+      ClientHistoricalDataStore<C>::load_ticker_statuses(
+        const TickerQuery& query) {
+    return submit<SequencedTickerStatus>(query);
+  }
+
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  void ClientHistoricalDataStore<C>::store(
+    const SequencedIndexedTickerStatus& status) {}
+
+  template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
+  void ClientHistoricalDataStore<C>::store(
+    const std::vector<SequencedIndexedTickerStatus>& statuses) {}
 
   template<typename C> requires IsMarketDataClient<Beam::dereference_t<C>>
   void ClientHistoricalDataStore<C>::close() {

@@ -38,13 +38,11 @@ namespace Nexus {
        * @param risk_state The account's initial RiskState.
        * @param order_execution_client The OrderExecutionClient used to cancel
        *        Orders and flatten Positions.
-       * @param destinations The database of destinations used to flatten
-       *        Orders.
        */
       template<Beam::Initializes<C> CF>
       RiskTransitionModel(Beam::DirectoryEntry account,
         const std::vector<Inventory>& inventory, RiskState risk_state,
-        CF&& order_execution_client, DestinationDatabase destinations) noexcept;
+        CF&& order_execution_client) noexcept;
 
       /**
        * Adds an Order.
@@ -68,7 +66,6 @@ namespace Nexus {
       Beam::DirectoryEntry m_account;
       RiskState m_risk_state;
       Beam::local_ptr_t<C> m_order_execution_client;
-      DestinationDatabase m_destinations;
       PositionOrderBook m_book;
       std::unordered_set<OrderId> m_live_orders;
       int m_state;
@@ -87,20 +84,17 @@ namespace Nexus {
   };
 
   template<typename C>
-  RiskTransitionModel(Beam::DirectoryEntry,
-    const std::vector<Inventory>&, RiskState, C&&, DestinationDatabase) ->
-      RiskTransitionModel<std::remove_cvref_t<C>>;
+  RiskTransitionModel(Beam::DirectoryEntry, const std::vector<Inventory>&,
+    RiskState, C&&) -> RiskTransitionModel<std::remove_cvref_t<C>>;
 
   template<typename C> requires IsOrderExecutionClient<Beam::dereference_t<C>>
   template<Beam::Initializes<C> CF>
-  RiskTransitionModel<C>::RiskTransitionModel(
-    Beam::DirectoryEntry account,
+  RiskTransitionModel<C>::RiskTransitionModel(Beam::DirectoryEntry account,
     const std::vector<Inventory>& inventory, RiskState risk_state,
-    CF&& order_execution_client, DestinationDatabase destinations) noexcept
+    CF&& order_execution_client) noexcept
     : m_account(std::move(account)),
       m_risk_state(std::move(risk_state)),
       m_order_execution_client(std::forward<CF>(order_execution_client)),
-      m_destinations(std::move(destinations)),
       m_book(inventory),
       m_state(0) {}
 
@@ -207,7 +201,7 @@ namespace Nexus {
   void RiskTransitionModel<C>::s5() {
     m_state = 5;
     for(auto& position : m_book.get_positions()) {
-      auto destination = m_destinations.get_preferred_destination(
+      auto destination = DESTINATIONS.get_preferred_destination(
         position.m_ticker.get_venue()).m_id;
       auto fields = make_market_order_fields(m_account, position.m_ticker,
         get_opposite(get_side(position.m_quantity)), destination,

@@ -1,7 +1,8 @@
 import { css, StyleSheet } from 'aphrodite/no-important';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { Button, DisplaySize, HLine, Input, Modal, ScopeItemInput } from '..';
+import { Button, DisplaySize, HLine, Input, Modal, parseScopeItem,
+  ScopeItemInput } from '..';
 
 interface Properties {
 
@@ -42,6 +43,7 @@ export class ScopeInput extends React.Component<Properties, State> {
       scopeItems: decomposeScope(this.props.value ?? new Nexus.Scope()),
       selection: -1
     };
+    this.fileInputRef = React.createRef<HTMLInputElement>();
   }
 
   public render() {
@@ -105,16 +107,18 @@ export class ScopeInput extends React.Component<Properties, State> {
     const uploadButton = (() => {
       if(this.props.displaySize === DisplaySize.SMALL) {
         return (
-          <div style={iconWrapperStyle}>
+          <div style={iconWrapperStyle} onClick={this.onUploadClick}>
             <img height={imageSize} width={imageSize}
-              src={ScopeInput.PATH + 'upload-grey.svg'}/>
+              style={ScopeInput.STYLE.iconClickableStyle}
+              src={ScopeInput.PATH + 'upload-purple.svg'}/>
           </div>);
       } else {
         return (
-          <div style={iconWrapperStyle}>
+          <div style={iconWrapperStyle} onClick={this.onUploadClick}>
             <img height={imageSize} width={imageSize}
-              src={ScopeInput.PATH + 'upload-grey.svg'}/>
-            <div style={ScopeInput.STYLE.iconLabelReadonly}>
+              style={ScopeInput.STYLE.iconClickableStyle}
+              src={ScopeInput.PATH + 'upload-purple.svg'}/>
+            <div style={ScopeInput.STYLE.iconLabel}>
               {ScopeInput.UPLOAD_TEXT}
             </div>
           </div>);
@@ -177,6 +181,9 @@ export class ScopeInput extends React.Component<Properties, State> {
     const displayText = makeDisplayText(this.props.value ?? new Nexus.Scope());
     return (
       <div>
+        <input type='file' accept='.txt,.csv' ref={this.fileInputRef}
+          style={ScopeInput.STYLE.hidden}
+          onChange={this.onFileSelected}/>
         <Input
           readOnly
           disabled={this.props.disabled}
@@ -209,6 +216,38 @@ export class ScopeInput extends React.Component<Properties, State> {
           </Modal>
         </div>
       </div>);
+  }
+
+  private readonly fileInputRef: React.RefObject<HTMLInputElement>;
+
+  private onUploadClick = () => {
+    this.fileInputRef.current?.click();
+  }
+
+  private onFileSelected = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if(!file) {
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = () => {
+      const text = reader.result as string;
+      const lines = text.split(/\r?\n/);
+      const parsed: Nexus.Scope[] = [];
+      for(const line of lines) {
+        const scope = parseScopeItem(line);
+        if(scope) {
+          parsed.push(scope);
+        }
+      }
+      if(parsed.length > 0) {
+        this.setState({
+          scopeItems: this.state.scopeItems.concat(parsed)
+        });
+      }
+    };
+    reader.readAsText(file);
+    event.target.value = '';
   }
 
   private addEntry = (parameter: Nexus.Scope) => {
@@ -554,7 +593,7 @@ function isTicker(x: any): x is Nexus.Ticker {
 }
 
 function isVenue(x: any): x is Nexus.Venue {
-  return !isTicker(x) && typeof x?.toString === 'string';
+  return !isTicker(x) && typeof x?.code === 'string';
 }
 
 function isScope(x: any): x is Nexus.Scope {
@@ -570,8 +609,8 @@ function decomposeScope(scope: Nexus.Scope): ScopeItem[] {
     countries.push(country);
   }
   countries.sort((a: Nexus.CountryCode, b: Nexus.CountryCode) => {
-    const aCode = Nexus.defaultCountryDatabase.fromCode(a).twoLetterCode;
-    const bCode = Nexus.defaultCountryDatabase.fromCode(b).twoLetterCode;
+    const aCode = Nexus.countryDatabase.fromCode(a).twoLetterCode;
+    const bCode = Nexus.countryDatabase.fromCode(b).twoLetterCode;
     return aCode.localeCompare(bCode);
   });
   const venues = [];
@@ -579,8 +618,8 @@ function decomposeScope(scope: Nexus.Scope): ScopeItem[] {
     venues.push(venue);
   }
   venues.sort((a: Nexus.Venue, b: Nexus.Venue) => {
-    const aName = Nexus.defaultVenueDatabase.fromVenue(a).displayName;
-    const bName = Nexus.defaultVenueDatabase.fromVenue(b).displayName;
+    const aName = Nexus.venueDatabase.fromVenue(a).displayName;
+    const bName = Nexus.venueDatabase.fromVenue(b).displayName;
     return aName.localeCompare(bName);
   });
   const tickers = [];
@@ -607,9 +646,9 @@ function recomposeScope(members: ScopeItem[]): Nexus.Scope {
 
 function makeScopeItemText(item: ScopeItem): string {
   if(isCountryCode(item)) {
-    return Nexus.defaultCountryDatabase.fromCode(item).twoLetterCode;
+    return Nexus.countryDatabase.fromCode(item).twoLetterCode;
   } else if(isVenue(item)) {
-    return Nexus.defaultVenueDatabase.fromVenue(item).displayName;
+    return Nexus.venueDatabase.fromVenue(item).displayName;
   } else if(isTicker(item)) {
     return item.toString();
   } else {

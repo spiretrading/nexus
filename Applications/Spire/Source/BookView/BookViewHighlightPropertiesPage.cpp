@@ -202,6 +202,7 @@ BookViewHighlightPropertiesPage::BookViewHighlightPropertiesPage(
     : QWidget(parent),
       m_current(std::move(current)) {
   auto body = new QWidget();
+  body->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
   auto layout = make_vbox_layout(body);
   layout->addWidget(make_venues_title());
   auto table_view = make_venue_highlights_table_view(

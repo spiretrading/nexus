@@ -7,7 +7,7 @@ using namespace Beam;
 using namespace Beam::Tests;
 using namespace boost;
 using namespace Nexus;
-using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::Currencies;
 
 TEST_SUITE("ExchangeRate") {
   TEST_CASE("default_constructor") {

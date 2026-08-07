@@ -91,6 +91,7 @@ namespace Spire {
         QString m_completion;
         QString m_last_completion;
         bool m_has_autocomplete_selection;
+        bool m_is_deleting;
         bool m_is_querying;
         boost::signals2::scoped_connection m_current_connection;
         boost::signals2::scoped_connection m_input_connection;
@@ -113,8 +114,10 @@ namespace Spire {
       void update_completion();
       void revert_to(const QString& query, bool autocomplete);
       void revert_current();
+      void accept_autocomplete_selection();
+      void update_current(const AnyRef& value);
       void submit(const QString& query, bool is_passive = false);
-      void on_current(const std::any& current);
+      void on_current(const AnyRef& current);
       void on_input(const AnyRef& current);
       void on_highlight(const Highlight& highlight);
       void on_submit(const AnyRef& query);

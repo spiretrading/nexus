@@ -120,21 +120,20 @@ TEST_SUITE("Destination") {
   }
 
   TEST_CASE("shuttle") {
-    test_round_trip_shuttle(
-      DEFAULT_DESTINATIONS, [] (const auto& destinations) {
-        auto expected_entries = DEFAULT_DESTINATIONS.get_entries();
-        auto entries = destinations.get_entries();
-        REQUIRE(expected_entries.size() == entries.size());
-        for(auto i = std::size_t(0); i != entries.size(); ++i) {
-          REQUIRE(expected_entries[i] == entries[i]);
-        }
-        REQUIRE((destinations.get_manual_order_entry_destination() ==
-          DEFAULT_DESTINATIONS.get_manual_order_entry_destination()));
-        for(auto& venue : DEFAULT_VENUES.get_entries()) {
-          REQUIRE(destinations.get_preferred_destination(venue.m_venue) ==
-            DEFAULT_DESTINATIONS.get_preferred_destination(venue.m_venue));
-        }
-      });
+    test_round_trip_shuttle(DESTINATIONS, [] (const auto& destinations) {
+      auto expected_entries = DESTINATIONS.get_entries();
+      auto entries = destinations.get_entries();
+      REQUIRE(expected_entries.size() == entries.size());
+      for(auto i = std::size_t(0); i != entries.size(); ++i) {
+        REQUIRE(expected_entries[i] == entries[i]);
+      }
+      REQUIRE((destinations.get_manual_order_entry_destination() ==
+        DESTINATIONS.get_manual_order_entry_destination()));
+      for(auto& venue : VENUES.get_entries()) {
+        REQUIRE(destinations.get_preferred_destination(venue.m_venue) ==
+          DESTINATIONS.get_preferred_destination(venue.m_venue));
+      }
+    });
   }
 
   TEST_CASE("parse_destination_database_entry") {
@@ -142,7 +141,7 @@ TEST_SUITE("Destination") {
       id: "X1"
       venues: ['ASX','TSX']
       description: "one")");
-    auto entry = parse_destination_database_entry(node, DEFAULT_VENUES);
+    auto entry = parse_destination_database_entry(node);
     REQUIRE(entry.m_id == "X1");
     REQUIRE(entry.m_venues.size() == 2);
     REQUIRE(entry.m_venues[0] == Venue("XASX"));
@@ -168,7 +167,7 @@ TEST_SUITE("Destination") {
         description: 'manual'
       )";
     auto node = YAML::Load(yaml);
-    auto database = parse_destination_database(node, DEFAULT_VENUES);
+    auto database = parse_destination_database(node);
     auto ids = std::vector<std::string>();
     for(auto& entry : database.get_entries()) {
       ids.push_back(entry.m_id);

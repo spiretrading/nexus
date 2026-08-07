@@ -71,4 +71,10 @@ TEST_SUITE("OrderTaskArgumentsMatch") {
     query = "li li lit b e";
     REQUIRE(!matches(query, words));
   }
+
+  TEST_CASE("match_more_query_words_than_words") {
+    auto words = std::vector<QString>{"ASX", "Limit"};
+    auto query = "asx limit bid";
+    REQUIRE(!matches(query, words));
+  }
 }

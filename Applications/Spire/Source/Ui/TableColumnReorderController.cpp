@@ -172,7 +172,9 @@ TableColumnReorderController::TableColumnReorderController(
   auto& header = m_table_view->get_header();
   header.setMouseTracking(true);
   header.installEventFilter(this);
-  header.setCursor(Qt::OpenHandCursor);
+  for(auto i = 0; i != header.get_items()->get_size(); ++i) {
+    header.get_item(i)->setCursor(Qt::OpenHandCursor);
+  }
   m_connection = header.get_items()->connect_operation_signal(
     std::bind_front(&TableColumnReorderController::on_operation, this));
 }

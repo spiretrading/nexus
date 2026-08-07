@@ -8,7 +8,6 @@
 #include "Nexus/Python/ToPythonRiskClient.hpp"
 #include "Nexus/Python/ToPythonRiskDataStore.hpp"
 #include "Nexus/RiskService/ApplicationDefinitions.hpp"
-#include "Nexus/RiskService/InventorySnapshot.hpp"
 #include "Nexus/RiskService/LocalRiskDataStore.hpp"
 #include "Nexus/RiskService/SqlRiskDataStore.hpp"
 #include "Nexus/RiskService/RiskParameters.hpp"
@@ -37,22 +36,6 @@ class_<RiskDataStore>& Nexus::Python::get_exported_risk_data_store() {
   return *risk_data_store;
 }
 
-void Nexus::Python::export_inventory_snapshot(module& module) {
-  export_default_methods(
-      class_<InventorySnapshot>(module, "InventorySnapshot")).
-    def(init<const std::vector<Inventory>&, Beam::Sequence,
-      const std::vector<OrderId>&>()).
-    def_readwrite("inventories", &InventorySnapshot::m_inventories).
-    def_readwrite("sequence", &InventorySnapshot::m_sequence).
-    def_readwrite("excluded_orders", &InventorySnapshot::m_excluded_orders);
-  module.def("strip", &strip);
-  module.def("make_portfolio",
-    [] (const InventorySnapshot& snapshot, const DirectoryEntry& account,
-        OrderExecutionClient& client) {
-      return make_portfolio(snapshot, account, client);
-    }, call_guard<GilRelease>());
-}
-
 void Nexus::Python::export_local_risk_data_store(module& module) {
   export_risk_data_store<LocalRiskDataStore>(module, "LocalRiskDataStore").
     def(init());
@@ -60,14 +43,15 @@ void Nexus::Python::export_local_risk_data_store(module& module) {
 
 void Nexus::Python::export_mysql_risk_data_store(module& module) {
   using DataStore = SqlRiskDataStore<SqlConnection<Viper::MySql::Connection>>;
-  class_<ToPythonRiskDataStore<DataStore>>(module, "MySqlRiskDataStore").
-    def(init([] (std::string host, unsigned int port, std::string username,
-        std::string password, std::string database) {
-      return std::make_unique<ToPythonRiskDataStore<DataStore>>(
-        std::make_unique<SqlConnection<Viper::MySql::Connection>>(
-          Viper::MySql::Connection(std::move(host), port, std::move(username),
-            std::move(password), std::move(database))));
-    }));
+  export_risk_data_store<ToPythonRiskDataStore<DataStore>>(
+    module, "MySqlRiskDataStore").
+      def(init([] (std::string host, unsigned int port, std::string username,
+          std::string password, std::string database) {
+        return std::make_unique<ToPythonRiskDataStore<DataStore>>(
+          std::make_unique<SqlConnection<Viper::MySql::Connection>>(
+            Viper::MySql::Connection(std::move(host), port, std::move(username),
+              std::move(password), std::move(database))));
+      }));
 }
 
 void Nexus::Python::export_risk_parameters(module& module) {
@@ -85,7 +69,6 @@ void Nexus::Python::export_risk_service(module& module) {
     export_risk_client<RiskClient>(module, "RiskClient"));
   risk_data_store = std::make_unique<class_<RiskDataStore>>(
     export_risk_data_store<RiskDataStore>(module, "RiskDataStore"));
-  export_inventory_snapshot(module);
   export_local_risk_data_store(module);
   export_mysql_risk_data_store(module);
   export_risk_parameters(module);
@@ -118,15 +101,14 @@ void Nexus::Python::export_risk_service_test_environment(module& module) {
           MarketDataClient& market_data_client,
           OrderExecutionClient& order_execution_client,
           std::function<std::shared_ptr<Timer> ()> timer_builder,
-          TimeClient& time_client, const ExchangeRateTable& exchange_rates,
-          const DestinationDatabase& destination_database) {
+          TimeClient& time_client, const ExchangeRateTable& exchange_rates) {
         auto timer_adaptor = [timer_builder = std::move(timer_builder)] {
           return std::make_unique<Timer>(timer_builder());
         };
         return make_python_shared<RiskServiceTestEnvironment>(
           service_locator_client, administration_client, market_data_client,
           order_execution_client, std::move(timer_adaptor), time_client,
-          exchange_rates, destination_database);
+          exchange_rates);
       }), keep_alive<1, 2>(), keep_alive<1, 3>(),
       keep_alive<1, 4>(), keep_alive<1, 5>(), keep_alive<1, 7>()).
     def("make_client",
@@ -152,10 +134,11 @@ void Nexus::Python::export_risk_state(module& module) {
 
 void Nexus::Python::export_sqlite_risk_data_store(module& module) {
   using DataStore = SqlRiskDataStore<SqlConnection<Viper::Sqlite3::Connection>>;
-  class_<ToPythonRiskDataStore<DataStore>>(module, "SqliteRiskDataStore").
-    def(init([] (std::string path) {
-      return std::make_unique<ToPythonRiskDataStore<DataStore>>(
-        std::make_unique<SqlConnection<Viper::Sqlite3::Connection>>(
-          Viper::Sqlite3::Connection(std::move(path))));
-    }));
+  export_risk_data_store<ToPythonRiskDataStore<DataStore>>(
+    module, "SqliteRiskDataStore").
+      def(init([] (std::string path) {
+        return std::make_unique<ToPythonRiskDataStore<DataStore>>(
+          std::make_unique<SqlConnection<Viper::Sqlite3::Connection>>(
+            Viper::Sqlite3::Connection(std::move(path))));
+      }));
 }

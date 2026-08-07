@@ -47,7 +47,7 @@ namespace Spire {
   void QueryNode::shuttle(S& shuttle, unsigned int version) {
     CanvasNode::shuttle(shuttle, version);
     shuttle.shuttle("field", m_field);
-    shuttle.shuttle("type", m_type);
+    shuttle.shuttle("query_type", m_type);
   }
 }
 

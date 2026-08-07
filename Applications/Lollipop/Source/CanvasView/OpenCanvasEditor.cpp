@@ -142,7 +142,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const BooleanNode& node) {
 
 void OpenEditorCanvasNodeVisitor::Visit(const CurrencyNode& node) {
   auto editor = new QComboBox();
-  auto currencies = m_userProfile->GetCurrencyDatabase().get_entries();
+  auto currencies = CURRENCIES.get_entries();
   for(auto i = std::size_t(0); i != currencies.size(); ++i) {
     auto& entry = currencies[i];
     editor->addItem(QString::fromStdString(entry.m_code.get_data()));
@@ -204,19 +204,16 @@ void OpenEditorCanvasNodeVisitor::Visit(const DecimalNode& node) {
 void OpenEditorCanvasNodeVisitor::Visit(const DestinationNode& node) {
   auto editor = new QComboBox();
   auto venue = node.GetVenue();
-  auto& destinationDatabase = m_userProfile->GetDestinationDatabase();
-  auto destinations = destinationDatabase.select_all(
-    [=] (const auto& entry) {
-      if(!venue) {
-        return true;
-      }
-      return find(entry.m_venues.begin(), entry.m_venues.end(), venue) !=
-        entry.m_venues.end();
-    });
+  auto destinations = DESTINATIONS.select_all([=] (const auto& entry) {
+    if(!venue) {
+      return true;
+    }
+    return find(entry.m_venues.begin(), entry.m_venues.end(), venue) !=
+      entry.m_venues.end();
+  });
   if(m_userProfile->IsAdministrator() &&
-      destinationDatabase.get_manual_order_entry_destination()) {
-    destinations.push_back(
-      *destinationDatabase.get_manual_order_entry_destination());
+      DESTINATIONS.get_manual_order_entry_destination()) {
+    destinations.push_back(*DESTINATIONS.get_manual_order_entry_destination());
   }
   for(auto i = destinations.begin(); i != destinations.end(); ++i) {
     editor->addItem(QString::fromStdString(i->m_id));
@@ -496,7 +493,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const TickerNode& node) {
         return;
       }
       m_editVariant = new ReplaceNodeCommand(Ref(*m_model), coordinate,
-        *node.SetValue(newValue, m_userProfile->GetVenueDatabase()));
+        *node.SetValue(newValue));
     });
   dialog.show();
   while(dialog.isVisible()) {
@@ -546,7 +543,7 @@ void OpenEditorCanvasNodeVisitor::Visit(const TimeRangeParameterNode& node) {
 
 void OpenEditorCanvasNodeVisitor::Visit(const VenueNode& node) {
   auto editor = new QComboBox();
-  auto entries = m_userProfile->GetVenueDatabase().get_entries();
+  auto entries = VENUES.get_entries();
   for(auto i = std::size_t(0); i != entries.size(); ++i) {
     auto& entry = entries[i];
     editor->addItem(

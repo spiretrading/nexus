@@ -9,8 +9,8 @@ namespace Nexus::Tests {
   TEST_CASE_TEMPLATE_DEFINE("RiskDataStore", T, RiskDataStoreTestSuite) {
     using namespace Beam;
     using namespace Nexus;
-    using namespace Nexus::DefaultCurrencies;
-    using namespace Nexus::DefaultVenues;
+    using namespace Nexus::Currencies;
+    using namespace Nexus::Venues;
     auto data_store = T()();
 
     SUBCASE("load_empty_inventories") {

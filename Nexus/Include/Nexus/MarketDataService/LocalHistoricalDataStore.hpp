@@ -27,6 +27,9 @@ namespace Nexus {
       /** Returns all the TimeAndSales stored. */
       std::vector<SequencedTickerTimeAndSale> load_time_and_sales();
 
+      /** Returns all the TickerStatuses stored. */
+      std::vector<SequencedIndexedTickerStatus> load_ticker_statuses();
+
       std::vector<TickerInfo> load_ticker_info(const TickerInfoQuery& query);
       void store(const TickerInfo& info);
       std::vector<SequencedOrderImbalance> load_order_imbalances(
@@ -44,6 +47,10 @@ namespace Nexus {
         const TickerQuery& query);
       void store(const SequencedTickerTimeAndSale& time_and_sale);
       void store(const std::vector<SequencedTickerTimeAndSale>& time_and_sales);
+      std::vector<SequencedTickerStatus> load_ticker_statuses(
+        const TickerQuery& query);
+      void store(const SequencedIndexedTickerStatus& status);
+      void store(const std::vector<SequencedIndexedTickerStatus>& statuses);
       void close();
 
     private:
@@ -54,6 +61,7 @@ namespace Nexus {
       DataStore<BboQuote, TickerQuery> m_bbo_quote_data_store;
       DataStore<BookQuote, TickerQuery> m_book_quote_data_store;
       DataStore<TimeAndSale, TickerQuery> m_time_and_sale_data_store;
+      DataStore<TickerStatus, TickerQuery> m_ticker_status_data_store;
 
       LocalHistoricalDataStore(const LocalHistoricalDataStore&) = delete;
       LocalHistoricalDataStore& operator =(
@@ -80,43 +88,77 @@ namespace Nexus {
     return m_time_and_sale_data_store.load_all();
   }
 
+  inline std::vector<SequencedIndexedTickerStatus>
+      LocalHistoricalDataStore::load_ticker_statuses() {
+    return m_ticker_status_data_store.load_all();
+  }
+
   inline std::vector<TickerInfo> LocalHistoricalDataStore::load_ticker_info(
       const TickerInfoQuery& query) {
     auto evaluator = Beam::translate<EvaluatorTranslator>(query.get_filter());
-    return m_ticker_info.with([&] (auto& ticker_info) {
-      auto matches = std::vector<TickerInfo>();
+    auto& anchor = query.get_anchor();
+    auto& scope = query.get_index();
+    auto compare_ticker = [] (const auto& info, const auto& ticker) {
+      return info.m_ticker < ticker;
+    };
+    auto matches = std::vector<TickerInfo>();
+    if(!anchor && !scope.is_global() && scope.get_countries().empty() &&
+        scope.get_venues().empty() && scope.get_tickers().size() == 1 &&
+        query.get_snapshot_limit().get_size() >= 1) {
+      auto& ticker = *scope.get_tickers().begin();
+      m_ticker_info.with([&] (auto& ticker_info) {
+        auto i = std::lower_bound(
+          ticker_info.begin(), ticker_info.end(), ticker, compare_ticker);
+        if(i != ticker_info.end() && i->m_ticker == ticker &&
+            Beam::test_filter(*evaluator, *i)) {
+          matches.push_back(*i);
+        }
+      });
+      return matches;
+    }
+    m_ticker_info.with([&] (auto& ticker_info) {
       auto [begin, end] = [&] {
         if(query.get_snapshot_limit().get_type() ==
             Beam::SnapshotLimit::Type::HEAD) {
-          return std::tuple(Beam::AnyIterator(ticker_info.begin()),
+          auto first = [&] {
+            if(!anchor) {
+              return ticker_info.begin();
+            }
+            auto i = std::lower_bound(
+              ticker_info.begin(), ticker_info.end(), *anchor, compare_ticker);
+            if(i != ticker_info.end() && i->m_ticker == *anchor) {
+              return i + 1;
+            }
+            return i;
+          }();
+          return std::tuple(Beam::AnyIterator(first),
             Beam::AnyIterator(ticker_info.end()));
         }
-        return std::tuple(Beam::AnyIterator(ticker_info.rbegin()),
+        auto first = [&] {
+          if(!anchor) {
+            return ticker_info.rbegin();
+          }
+          auto i = std::lower_bound(
+            ticker_info.begin(), ticker_info.end(), *anchor, compare_ticker);
+          return ticker_info.rbegin() + (ticker_info.end() - i);
+        }();
+        return std::tuple(Beam::AnyIterator(first),
           Beam::AnyIterator(ticker_info.rend()));
       }();
-      if(auto anchor = query.get_anchor()) {
-        while(begin != end && begin->m_ticker != *anchor) {
-          ++begin;
-        }
-        if(begin != end) {
-          ++begin;
-        }
-      }
       while(begin != end && static_cast<int>(matches.size()) <
           query.get_snapshot_limit().get_size()) {
         auto& info = *begin;
-        if(info.m_ticker <= query.get_index() &&
-            Beam::test_filter(*evaluator, info)) {
+        if(info.m_ticker <= scope && Beam::test_filter(*evaluator, info)) {
           matches.push_back(info);
         }
         ++begin;
       }
-      if(query.get_snapshot_limit().get_type() ==
-          Beam::SnapshotLimit::Type::TAIL) {
-        std::reverse(matches.begin(), matches.end());
-      }
-      return matches;
     });
+    if(query.get_snapshot_limit().get_type() ==
+        Beam::SnapshotLimit::Type::TAIL) {
+      std::reverse(matches.begin(), matches.end());
+    }
+    return matches;
   }
 
   inline void LocalHistoricalDataStore::store(const TickerInfo& info) {
@@ -191,6 +233,21 @@ namespace Nexus {
   inline void LocalHistoricalDataStore::store(
       const std::vector<SequencedTickerTimeAndSale>& time_and_sales) {
     m_time_and_sale_data_store.store(time_and_sales);
+  }
+
+  inline std::vector<SequencedTickerStatus>
+      LocalHistoricalDataStore::load_ticker_statuses(const TickerQuery& query) {
+    return m_ticker_status_data_store.load(query);
+  }
+
+  inline void LocalHistoricalDataStore::store(
+      const SequencedIndexedTickerStatus& status) {
+    m_ticker_status_data_store.store(status);
+  }
+
+  inline void LocalHistoricalDataStore::store(
+      const std::vector<SequencedIndexedTickerStatus>& statuses) {
+    m_ticker_status_data_store.store(statuses);
   }
 
   inline void LocalHistoricalDataStore::close() {}

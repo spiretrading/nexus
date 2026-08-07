@@ -8,8 +8,6 @@
 #include <QKeyEvent>
 #include <QMenu>
 #include <QMessageBox>
-#include "Spire/AccountViewer/AccountViewWindow.hpp"
-#include "Spire/AccountViewer/TraderProfileWindow.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
@@ -305,11 +303,7 @@ void Toolbar::OnNewCanvasAction() {
 }
 
 void Toolbar::OnProfileAction() {
-  auto profileWindow = new TraderProfileWindow(Ref(*m_userProfile));
-  profileWindow->setAttribute(Qt::WA_DeleteOnClose);
-  profileWindow->Load(
-    m_userProfile->GetClients().get_service_locator_client().get_account());
-  profileWindow->show();
+  open_web_portal(*m_userProfile, "/account/profile");
 }
 
 void Toolbar::OnKeyBindingsAction() {
@@ -394,9 +388,7 @@ void Toolbar::OnNewBlotterAction() {
 }
 
 void Toolbar::OnAccountViewAction() {
-  auto accountViewWindow = new AccountViewWindow(Ref(*m_userProfile));
-  accountViewWindow->setAttribute(Qt::WA_DeleteOnClose);
-  accountViewWindow->show();
+  open_web_portal(*m_userProfile, "/account_directory");
 }
 
 void Toolbar::OnOpenPortfolioViewerAction() {

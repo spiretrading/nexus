@@ -17,9 +17,11 @@ CALL:build dashboard_page_tester %*
 CALL:build entitlements_page_tester %*
 CALL:build group_info_page_tester %*
 CALL:build group_page_tester %*
+CALL:build group_profit_and_loss_page_tester %*
 CALL:build loading_page_tester %*
 CALL:build login_page_tester %*
 CALL:build mock %*
+CALL:build notifications_page_tester %*
 CALL:build page_not_found_page_tester %*
 CALL:build profile_page_tester %*
 CALL:build profit_and_loss_page_tester %*

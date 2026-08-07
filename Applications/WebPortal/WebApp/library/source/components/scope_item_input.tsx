@@ -17,32 +17,16 @@ interface Properties extends
 }
 
 /** Renders an input field for a single scope item. */
-export function ScopeItemInput({onChange, onEnter, ...rest}:
-    Properties): JSX.Element {
+export function ScopeItemInput({onChange, onEnter, ...rest}: Properties):
+    JSX.Element {
   const onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
     onChange?.(event.target.value);
   };
   const onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
     if(event.key === 'Enter') {
-      const name = String(rest.value ?? '').trim().toUpperCase();
-      if(name === '*') {
-        onEnter?.(Nexus.Scope.makeGlobal('*'));
-        return;
-      }
-      const country = parseCountry(name);
-      if(!country.equals(Nexus.CountryCode.NONE)) {
-        onEnter?.(new Nexus.Scope(country));
-        return;
-      }
-      const venue = parseVenue(name);
-      if(!venue.equals(Nexus.Venue.NONE)) {
-        onEnter?.(new Nexus.Scope(venue));
-        return;
-      }
-      const ticker = Nexus.Ticker.parse(name);
-      if(!ticker.equals(Nexus.Ticker.NONE)) {
-        onEnter?.(new Nexus.Scope(ticker));
-        return;
+      const scope = parseScopeItem(String(rest.value ?? ''));
+      if(scope) {
+        onEnter?.(scope);
       }
     }
   };
@@ -54,9 +38,32 @@ export function ScopeItemInput({onChange, onEnter, ...rest}:
       onKeyDown={onKeyDown}/>);
 }
 
+/** Parses a single line of text into a scope item.
+ * @param text - The text to parse.
+ * @return The parsed Scope, or null if the text could not be parsed.
+ */
+export function parseScopeItem(text: string): Nexus.Scope {
+  const name = text.trim().toUpperCase();
+  if(name === '*') {
+    return Nexus.Scope.makeGlobal('*');
+  }
+  const country = parseCountry(name);
+  if(!country.equals(Nexus.CountryCode.NONE)) {
+    return new Nexus.Scope(country);
+  }
+  const venue = parseVenue(name);
+  if(!venue.equals(Nexus.Venue.NONE)) {
+    return new Nexus.Scope(venue);
+  }
+  const ticker = Nexus.Ticker.parse(name);
+  if(!ticker.equals(Nexus.Ticker.NONE)) {
+    return new Nexus.Scope(ticker);
+  }
+  return null;
+}
 
 function parseCountry(text: string): Nexus.CountryCode {
-  for(const country of Nexus.defaultCountryDatabase) {
+  for(const country of Nexus.countryDatabase) {
     if(text === country.twoLetterCode || text === country.threeLetterCode ||
         text === country.name.toUpperCase()) {
       return country.code;
@@ -66,7 +73,7 @@ function parseCountry(text: string): Nexus.CountryCode {
 }
 
 function parseVenue(text: string): Nexus.Venue {
-  for(const venue of Nexus.defaultVenueDatabase) {
+  for(const venue of Nexus.venueDatabase) {
     if(text === venue.displayName.toUpperCase() ||
         text === venue.venue.toString()) {
       return venue.venue;

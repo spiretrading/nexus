@@ -4,6 +4,9 @@ import * as React from 'react';
 interface Properties extends
     Omit<React.InputHTMLAttributes<HTMLInputElement>, 'onClick'> {
 
+  /** Whether the checkbox is in an indeterminate state. */
+  indeterminate?: boolean;
+
   /** Called when the check mark is clicked on.
    * @param isChecked - The updated value.
    */
@@ -11,24 +14,30 @@ interface Properties extends
 }
 
 /** A checkbox component. */
-export function Checkbox(
-    {checked, onClick, className, ...rest}: Properties): JSX.Element {
+export function Checkbox(props: Properties): JSX.Element {
+  const ref = React.useRef<HTMLInputElement>(null);
+  React.useEffect(() => {
+    if(ref.current) {
+      ref.current.indeterminate = props.indeterminate ?? false;
+    }
+  }, [props.indeterminate]);
   const onChange = () => {
-    onClick?.(!checked);
+    props.onClick?.(!props.checked);
   };
   return (
     <input type='checkbox'
-      {...rest}
-      checked={checked}
-      className={[css(STYLES.checkbox), className].join(' ')}
-      onChange={onChange}/>);
+        ref={ref}
+        checked={props.checked}
+        disabled={props.disabled}
+        className={[css(STYLES.checkbox), props.className].join(' ')}
+        onChange={onChange}/>);
 }
 
 const STYLES = StyleSheet.create({
   checkbox: {
     appearance: 'none',
     WebkitAppearance: 'none',
-    backgroundImage: 'url("resources/components/check-grey.svg")',
+    backgroundImage: 'url("resources/components/none.svg")',
     backgroundRepeat: 'no-repeat',
     backgroundPosition: 'center',
     backgroundSize: 'contain',
@@ -41,11 +50,13 @@ const STYLES = StyleSheet.create({
     width: '20px',
     height: '20px',
     ':checked': {
-      backgroundImage: 'url("resources/components/check-green.svg")'
+      backgroundImage: 'url("resources/components/check.svg")'
+    },
+    ':indeterminate': {
+      backgroundImage: 'url("resources/components/check-indeterminate.svg")'
     },
     ':disabled': {
       cursor: 'not-allowed',
-      filter: 'saturate(0.3)',
       opacity: 0.4
     },
     '@media (768px <= width)': {

@@ -27,7 +27,8 @@ namespace {
 
   auto DEFAULT_STYLE() {
     auto style = StyleSheet();
-    auto hover_selector = Any() > (Sash() && !Hover()) < Hover();
+    auto hover_selector =
+      Any() > (Sash() && !Hover() && !Drag()) < Hover();
     auto highlight_selector = (hover_selector && TableHeaderItem::Sortable()) ||
       Any() > (TableHeaderItem::FilterButton() && Hover()) < Any() ||
       FilterActive();

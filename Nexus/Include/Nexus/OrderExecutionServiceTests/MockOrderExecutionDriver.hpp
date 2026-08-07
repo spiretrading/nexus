@@ -37,7 +37,9 @@ namespace Nexus::Tests {
       const Beam::Publisher<std::shared_ptr<PrimitiveOrder>>&
         get_publisher() const;
 
-      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      std::vector<std::shared_ptr<Order>> restore(
+        const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+        const std::vector<SequencedOrderRecord>& records);
       void add(const std::shared_ptr<Order>& order);
       std::shared_ptr<Order> submit(const OrderInfo& info);
       void cancel(const OrderExecutionSession& session, OrderId id);
@@ -79,23 +81,27 @@ namespace Nexus::Tests {
     return m_publisher;
   }
 
-  inline std::shared_ptr<Order> MockOrderExecutionDriver::recover(
-      const SequencedAccountOrderRecord& record) {
-    {
-      auto i = m_orders.find((*record)->m_info.m_id);
-      if(i != m_orders.end()) {
-        return i->second;
+  inline std::vector<std::shared_ptr<Order>> MockOrderExecutionDriver::restore(
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+      const std::vector<SequencedOrderRecord>& records) {
+    auto orders = std::vector<std::shared_ptr<Order>>();
+    for(auto& record : records) {
+      auto existing_order = m_orders.find(record->m_info.m_id);
+      if(existing_order != m_orders.end()) {
+        orders.push_back(existing_order->second);
+        continue;
       }
+      auto reports = record->m_execution_reports;
+      auto recovery = m_recoveries.find(record->m_info.m_id);
+      if(recovery != m_recoveries.end()) {
+        reports.insert(
+          reports.end(), recovery->second.begin(), recovery->second.end());
+      }
+      orders.push_back(m_orders.insert(
+        std::pair(record->m_info.m_id, std::make_shared<PrimitiveOrder>(
+          OrderRecord(record->m_info, std::move(reports))))).first->second);
     }
-    auto reports = (*record)->m_execution_reports;
-    auto i = m_recoveries.find((*record)->m_info.m_id);
-    if(i != m_recoveries.end()) {
-      reports.insert(reports.end(), i->second.begin(), i->second.end());
-    }
-    auto order = m_orders.insert(
-      std::pair((*record)->m_info.m_id, std::make_shared<PrimitiveOrder>(
-        OrderRecord((*record)->m_info, std::move(reports))))).first->second;
-    return order;
+    return orders;
   }
 
   inline void MockOrderExecutionDriver::add(

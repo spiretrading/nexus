@@ -2,8 +2,10 @@ import * as Beam from 'beam';
 import { Message, RiskParameters } from '..';
 import { AccountIdentity } from './account_identity';
 import { AccountModificationRequest } from './account_modification_request';
+import { AccountQueryResult } from './account_query_result';
 import { AccountRoles } from './account_roles';
 import { EntitlementModification } from './entitlement_modification';
+import { Notification } from './notification';
 import { RiskModification } from './risk_modification';
 import { TradingGroup } from './trading_group';
 
@@ -18,6 +20,14 @@ export abstract class AdministrationClient {
    */
   public abstract loadAccountsByRoles(roles: AccountRoles):
     Promise<Beam.DirectoryEntry[]>;
+
+  /**
+   * Queries accounts by name prefix.
+   * @param query The prefix to match against account names.
+   * @return The list of matching accounts with their display names.
+   */
+  public abstract queryAccounts(query: string):
+    Promise<AccountQueryResult[]>;
 
   /** Loads the DirectoryEntry containing all administrators. */
   public abstract loadAdministratorsRootEntry(): Promise<Beam.DirectoryEntry>;
@@ -243,6 +253,51 @@ export abstract class AdministrationClient {
    */
   public abstract sendAccountModificationRequestMessage(id: number,
     message: Message): Promise<Message>;
+
+  /**
+   * Monitors notifications for an account.
+   * @param account - The account to monitor.
+   * @param queue - The queue to push notifications onto.
+   * @return The id of the most recent notification.
+   */
+  public abstract monitorNotifications(account: Beam.DirectoryEntry,
+    queue: Beam.QueueWriter<Notification>): Promise<Notification.Id>;
+
+  /**
+   * Sends a notification to an account.
+   * @param account - The account to send the notification to.
+   * @param description - The description of the notification.
+   * @param data - Arbitrary data associated with the notification.
+   * @param category - The category of the notification.
+   * @return The fully constructed notification.
+   */
+  public abstract sendNotification(account: Beam.DirectoryEntry,
+    description: string, data: string, category: Notification.Category):
+      Promise<Notification>;
+
+  /**
+   * Loads notifications for an account.
+   * @param account - The account whose notifications are to be loaded.
+   * @param id - The id of the notification to start loading from.
+   * @param limit - The maximum number of notifications to load.
+   * @param readState - Filters notifications by read state.
+   * @return The list of notifications matching the criteria.
+   */
+  public abstract loadNotifications(account: Beam.DirectoryEntry,
+    id: string, limit: Beam.SnapshotLimit, readState: Notification.ReadState):
+      Promise<Notification[]>;
+
+  /**
+   * Marks a notification as read.
+   * @param id - The id of the notification to mark as read.
+   */
+  public abstract markNotificationAsRead(id: string): Promise<void>;
+
+  /**
+   * Marks a notification as unread.
+   * @param id - The id of the notification to mark as unread.
+   */
+  public abstract markNotificationAsUnread(id: string): Promise<void>;
 
   /**
    * Creates a new trading group.

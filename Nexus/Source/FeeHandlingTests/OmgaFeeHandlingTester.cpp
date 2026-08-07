@@ -6,15 +6,15 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Currencies;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   auto make_order_fields(Money price, Quantity quantity) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
-      parse_ticker("TST.TSX"), CAD, Side::BID, DefaultDestinations::OMEGA,
-      quantity, price);
+      parse_ticker("TST.TSX"), CAD, Side::BID, Destinations::OMEGA, quantity,
+      price);
   }
 
   auto make_order_fields(Money price) {
@@ -24,7 +24,7 @@ namespace {
   auto make_hidden_order_fields(Money price, Quantity quantity) {
     auto fields = make_order_fields(price, quantity);
     fields.m_type = OrderType::PEGGED;
-    fields.m_additional_fields.emplace_back(18, "M");
+    fields.m_additional_fields.push_back(make_exec_inst(MID_PRICE_PEG));
     return fields;
   }
 

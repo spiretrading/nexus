@@ -45,15 +45,12 @@ void ScopeInputWidget::SetScope(const Scope& scope) {
     auto countries = std::vector(
       m_scope.get_countries().begin(), m_scope.get_countries().end());
     std::sort(countries.begin(), countries.end(), [&] (auto left, auto right) {
-      auto left_code =
-        m_userProfile->GetCountryDatabase().from(left).m_two_letter_code;
-      auto right_code =
-        m_userProfile->GetCountryDatabase().from(right).m_two_letter_code;
+      auto left_code = COUNTRIES.from(left).m_two_letter_code;
+      auto right_code = COUNTRIES.from(right).m_two_letter_code;
       return left_code < right_code;
     });
     for(auto& country : countries) {
-      auto code =
-        m_userProfile->GetCountryDatabase().from(country).m_two_letter_code;
+      auto code = COUNTRIES.from(country).m_two_letter_code;
       if(!text.isEmpty()) {
         text += ", ";
       }
@@ -62,14 +59,12 @@ void ScopeInputWidget::SetScope(const Scope& scope) {
     auto venues =
       std::vector(m_scope.get_venues().begin(), m_scope.get_venues().end());
     std::sort(venues.begin(), venues.end(), [&] (auto left, auto right) {
-      auto& left_name =
-        m_userProfile->GetVenueDatabase().from(left).m_display_name;
-      auto& right_name =
-        m_userProfile->GetVenueDatabase().from(right).m_display_name;
+      auto& left_name = VENUES.from(left).m_display_name;
+      auto& right_name = VENUES.from(right).m_display_name;
       return left_name < right_name;
     });
     for(auto& venue : venues) {
-      auto& name = m_userProfile->GetVenueDatabase().from(venue).m_display_name;
+      auto& name = VENUES.from(venue).m_display_name;
       if(!text.isEmpty()) {
         text += ", ";
       }

@@ -9,7 +9,7 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 namespace {
   struct Fixture : ServiceClientFixture {
@@ -407,6 +407,33 @@ TEST_SUITE("ServiceMarketDataFeedClient") {
     fixture.m_client->remove_order("B", timestamp4);
     fixture.m_client->add_order(
       ticker, TSX, mpid, true, "C", Side::BID, price2, 75, timestamp5);
+    fixture.m_sampling_timer.trigger();
+    completion_token.get();
+  }
+
+  TEST_CASE("publish_ticker_status") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("TD.TSX");
+    auto status1 = IndexedTickerStatus(
+      TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        time_from_string("2024-07-15 09:30:00")), ticker);
+    auto status2 = IndexedTickerStatus(TickerStatus(
+      TSX, "AuthorizedHalted", TickerStatus::Flag::IS_ACCEPTING_CANCELS,
+      time_from_string("2024-07-15 10:00:00")), ticker);
+    auto completion_token = Async<void>();
+    fixture.on_message<SendMarketDataFeedMessages>(
+      [&] (auto& client, const auto& messages) {
+        REQUIRE(messages.size() == 2);
+        auto received_status1 = get<IndexedTickerStatus>(&messages[0]);
+        REQUIRE(received_status1);
+        REQUIRE(*received_status1 == status1);
+        auto received_status2 = get<IndexedTickerStatus>(&messages[1]);
+        REQUIRE(received_status2);
+        REQUIRE(*received_status2 == status2);
+        completion_token.get_eval().set();
+      });
+    fixture.m_client->publish(status1);
+    fixture.m_client->publish(status2);
     fixture.m_sampling_timer.trigger();
     completion_token.get();
   }

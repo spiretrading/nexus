@@ -76,8 +76,7 @@ void OrderImbalanceIndicatorWindow::SetModel(
     }
   }();
   m_ui->m_venueSelectionWidget->Initialize(
-    "Venues", new OrderImbalanceIndicatorVenueSelectionWidget(
-      m_userProfile->GetVenueDatabase(), Ref(*m_model)),
+    "Venues", new OrderImbalanceIndicatorVenueSelectionWidget(Ref(*m_model)),
     isVenueSelectionExpanded);
 }
 

@@ -187,8 +187,8 @@ export class CreateGroupModal extends React.Component<Properties, State> {
   private static readonly STYLE = {
     hidden: {
       opacity: 0,
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none'
+      visibility: 'hidden',
+      display: 'none'
     } as React.CSSProperties,
     wrapper: {
       boxSizing: 'border-box',
@@ -197,7 +197,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
       flexDirection: 'column'
     } as React.CSSProperties,
     headerWrapper: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '20px',
       display: 'flex',
       flexDirection: 'row',
@@ -213,7 +213,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
       width: '100%'
     } as React.CSSProperties,
     errorMessageSmall: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       display: 'flex',
       justifyContent: 'center',
       width: '100%',
@@ -223,7 +223,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
       marginTop: '18px'
     } as React.CSSProperties,
     errorMessage: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       display: 'flex',
       justifyContent: 'flex-start',
       width: '100%',
@@ -252,7 +252,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
       width: '140px'
     }as React.CSSProperties,
     clickable: {
-      cursor: 'pointer' as 'pointer'
+      cursor: 'pointer'
     } as React.CSSProperties
   }
   private static readonly ERROR_STYLE: React.CSSProperties = {
@@ -330,11 +330,11 @@ class Modal extends React.Component<ModalProperties> {
     }
   }
 
-  private static readonly STYLE = {
+  private static readonly STYLE: Record<string, React.CSSProperties> = {
     wrapper: {
       height: '100%',
       width: '100%',
-      position: 'fixed' as 'fixed',
+      position: 'fixed',
       zIndex: 9998000
     },
     topFiller: {
@@ -352,7 +352,7 @@ class Modal extends React.Component<ModalProperties> {
       width: '100%',
       backgroundColor: '#FFFFFF',
       opacity: '0.9',
-      position: 'fixed' as 'fixed',
+      position: 'fixed',
       margin: 0,
       padding: 0,
       top: 0,
@@ -362,28 +362,28 @@ class Modal extends React.Component<ModalProperties> {
       zIndex: 9998000
     },
     modalWrapper: {
-      overflowY: 'auto' as 'auto',
-      overflowX: 'hidden' as 'hidden',
+      overflowY: 'auto',
+      overflowX: 'hidden',
       height: '100%',
       maxHeight: '100%',
       width: '100%',
-      position: 'fixed' as 'fixed',
+      position: 'fixed',
       top: 0,
       bottom: 0,
       left: 0,
       right: 0,
       margin: 0,
       padding: 0,
-      display: 'flex' as 'flex',
-      flexWrap: 'nowrap' as 'nowrap',
-      flexDirection: 'column' as 'column',
+      display: 'flex',
+      flexWrap: 'nowrap',
+      flexDirection: 'column',
       zIndex: 100000000
     },
     modal: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       backgroundColor: '#FFFFFF',
       boxShadow: '0px 0px 6px #00000066',
-      alignSelf: 'center' as 'center',
+      alignSelf: 'center',
       flexGrow: 0,
       flexShrink: 0
     }
@@ -410,7 +410,7 @@ class Modal extends React.Component<ModalProperties> {
         `opacity ${Modal.MENU_TRANSITION_LENGTH_MS}ms ease-out`
     },
     exited: {
-      visibility: 'hidden' as 'hidden'
+      visibility: 'hidden'
     }
   });
 }

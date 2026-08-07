@@ -28,6 +28,7 @@ elseif(APPLE)
   set(app_type MACOSX_BUNDLE)
 endif()
 add_executable(KeyBindingsUiTester ${app_type} ${header_files} ${source_files})
+target_compile_definitions(KeyBindingsUiTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
   target_link_libraries(KeyBindingsUiTester
@@ -53,7 +54,7 @@ if(UNIX)
     optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
 target_link_libraries(KeyBindingsUiTester Async Dashboard Charting
-  PortfolioViewer Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog
+  PortfolioViewer Utilities RiskTimer KeyBindings Blotter Catalog
   BookView Styles Library Resources TimeAndSales OrderImbalanceIndicator
   InputWidgets CanvasView Canvas LegacyResources LegacyUI Toolbar
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
@@ -138,6 +139,7 @@ install(
   TARGETS KeyBindingsUiTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
 file(GLOB_RECURSE source_files ../../Source/KeyBindingsTester/*.cpp)
 add_executable(KeyBindingsTester ${source_files})
+target_compile_definitions(KeyBindingsTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
   target_link_libraries(KeyBindingsTester
@@ -163,9 +165,9 @@ if(UNIX)
     optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
 target_link_libraries(KeyBindingsTester Async Dashboard Charting
-  PortfolioViewer Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog
-  BookView Library Resources Styles TimeAndSales OrderImbalanceIndicator
-  InputWidgets CanvasView Canvas LegacyResources LegacyUI Toolbar
+  PortfolioViewer Utilities RiskTimer KeyBindings Blotter Catalog BookView
+  Library Resources Styles TimeAndSales OrderImbalanceIndicator InputWidgets
+  CanvasView Canvas LegacyResources LegacyUI Toolbar
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
   optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
   debug ${LUA_LIBRARY_DEBUG_PATH}

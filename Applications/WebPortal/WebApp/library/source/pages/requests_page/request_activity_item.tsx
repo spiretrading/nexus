@@ -85,11 +85,11 @@ function getActionText(status: Status): string {
 const STYLES = StyleSheet.create({
   article: {
     display: 'flex',
-    flexDirection: 'column' as 'column'
+    flexDirection: 'column'
   },
   header: {
     display: 'flex',
-    alignItems: 'center' as 'center',
+    alignItems: 'center',
     gap: '6px',
     padding: '4px 0'
   },

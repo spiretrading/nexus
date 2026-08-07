@@ -65,7 +65,7 @@ TickerInputDialog::~TickerInputDialog() = default;
 
 Ticker TickerInputDialog::GetTicker() const {
   auto source = m_ui->m_input->text().toUpper().toStdString();
-  return parse_ticker(source, m_userProfile->GetVenueDatabase());
+  return parse_ticker(source);
 }
 
 QLineEdit& TickerInputDialog::GetSymbolInput() {

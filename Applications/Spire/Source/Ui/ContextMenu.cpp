@@ -12,6 +12,7 @@
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
 #include "Spire/Ui/OverlayPanel.hpp"
+#include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/SubmenuItem.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -89,6 +90,9 @@ namespace {
       check_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
       check_box->setLayoutDirection(Qt::RightToLeft);
       check_box->set_label(name);
+      check_box->setAttribute(Qt::WA_TransparentForMouseEvents);
+      check_box->setFocusPolicy(Qt::NoFocus);
+      check_box->setFocusProxy(nullptr);
       return check_box;
     } else if(type == ContextMenu::MenuItemType::SEPARATOR) {
       auto separator = new Box();
@@ -123,15 +127,24 @@ ContextMenu::ContextMenu(QWidget& parent, ItemViewBuilder item_view_builder)
   m_list_view = new ListView(
     m_list, std::make_shared<ListEmptySelectionModel>(),
     std::bind_front(&ContextMenu::build_item, this));
-  m_list_view->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Expanding);
+  m_list_view->setSizePolicy(
+    QSizePolicy::Preferred, QSizePolicy::MinimumExpanding);
   update_style(*m_list_view, [&] (auto& style) {
     style = LIST_VIEW_STYLE(style);
   });
   m_list_view->connect_submit_signal(
     std::bind_front(&ContextMenu::on_submit, this));
   m_list_view->installEventFilter(this);
-  setFocusProxy(m_list_view);
-  enclose(*this, *m_list_view);
+  m_scrollable_list_box = new ScrollableListBox(*m_list_view);
+  m_scrollable_list_box->get_scroll_box().set_horizontal(
+    ScrollBox::DisplayPolicy::NEVER);
+  update_style(*m_scrollable_list_box, [] (auto& style) {
+    style.get(Any()).
+      set(BackgroundColor(QColor(Qt::transparent))).
+      set(border_size(0));
+  });
+  setFocusProxy(m_scrollable_list_box);
+  enclose(*this, *m_scrollable_list_box);
   m_window = new OverlayPanel(*this, parent);
   m_window->setUpdatesEnabled(false);
   m_window->setWindowFlags(Qt::Popup | (m_window->windowFlags() & ~Qt::Tool));
@@ -218,6 +231,14 @@ connection ContextMenu::connect_submit_signal(
   return m_submit_signal.connect(slot);
 }
 
+QSize ContextMenu::sizeHint() const {
+  auto hint = QWidget::sizeHint();
+  if(m_max_height) {
+    hint.setHeight(std::min(hint.height(), *m_max_height));
+  }
+  return hint;
+}
+
 bool ContextMenu::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
@@ -262,9 +283,11 @@ bool ContextMenu::eventFilter(QObject* watched, QEvent* event) {
       if(auto screen = QGuiApplication::screenAt(QCursor::pos())) {
         auto geometry = screen->availableGeometry();
         auto x = std::clamp(m_menu_position->x(), geometry.x(),
-          geometry.x() + geometry.width() - m_window->width());
+          std::max(geometry.x(),
+            geometry.x() + geometry.width() - m_window->width()));
         auto y = std::clamp(m_menu_position->y(), geometry.y(),
-          geometry.y() + geometry.height() - m_window->height());
+          std::max(geometry.y(),
+            geometry.y() + geometry.height() - m_window->height()));
         m_window->move(x, y);
       }
     } else if(event->type() == QEvent::Move && !m_menu_position) {
@@ -293,6 +316,11 @@ bool ContextMenu::event(QEvent* event) {
     if(m_last_show_items != m_list_view->get_list()->get_size()) {
       m_window->setWindowOpacity(0.0);
     }
+    auto shadow_margins = m_window->layout()->contentsMargins();
+    m_max_height = screen()->availableGeometry().height() -
+      m_window_margins.top() - m_window_margins.bottom() -
+      shadow_margins.top() - shadow_margins.bottom();
+    updateGeometry();
     m_window->show();
     m_last_show_items = m_list_view->get_list()->get_size();
     m_list_view->setFocusProxy(nullptr);
@@ -453,29 +481,28 @@ void ContextMenu::position_submenu() {
     body_size.height() - active_menu_margins.top() - m_window_margins.top();
   auto candidate_left = m_active_item_geometry.left() + OVERLAP_WIDTH() -
     body_size.width() - active_menu_margins.right() - m_window_margins.left();
-  auto candidate_geometry =
-    QRect(QPoint(candidate_right, candidate_top), menu_size);
-  if(!screen_geometry.contains(candidate_geometry)) {
-    candidate_geometry = QRect();
-  }
-  if(candidate_geometry.isNull()) {
-    candidate_geometry =
-      QRect(QPoint(candidate_right, candidate_bottom), menu_size);
-    if(!screen_geometry.contains(candidate_geometry)) {
-      candidate_geometry = QRect();
+  auto candidate_x = [&] {
+    if(candidate_right + menu_size.width() <=
+        screen_geometry.x() + screen_geometry.width()) {
+      return candidate_right;
     }
-  }
-  if(candidate_geometry.isNull()) {
-    candidate_geometry =
-      QRect(QPoint(candidate_left, candidate_top), menu_size);
-    if(!screen_geometry.contains(candidate_geometry)) {
-      candidate_geometry = QRect();
+    return candidate_left;
+  }();
+  auto candidate_y = [&] {
+    if(candidate_top + menu_size.height() <=
+        screen_geometry.y() + screen_geometry.height()) {
+      return candidate_top;
     }
-  }
-  if(candidate_geometry.isNull()) {
-    candidate_geometry =
-      QRect(QPoint(candidate_left, candidate_bottom), menu_size);
-  }
+    return candidate_bottom;
+  }();
+  auto candidate_geometry = QRect(QPoint(candidate_x, candidate_y), menu_size);
+  auto x = std::clamp(candidate_geometry.x(), screen_geometry.x(),
+    std::max(screen_geometry.x(),
+      screen_geometry.x() + screen_geometry.width() - menu_size.width()));
+  auto y = std::clamp(candidate_geometry.y(), screen_geometry.y(),
+    std::max(screen_geometry.y(),
+      screen_geometry.y() + screen_geometry.height() - menu_size.height()));
+  candidate_geometry.moveTo(x, y);
   if(m_visible_submenu->pos() != candidate_geometry.topLeft()) {
     ++m_block_move;
     m_visible_submenu->move(candidate_geometry.topLeft());
@@ -606,20 +633,6 @@ void ContextMenu::on_list_operation(
             });
             break;
           case MenuItemType::CHECK:
-            m_check_item_press_observers.emplace(
-              std::piecewise_construct,
-              std::forward_as_tuple(operation.m_index),
-              std::forward_as_tuple(*item));
-            m_check_item_press_observers.at(operation.m_index).
-              connect_press_end_signal([=] (auto reason) {
-                auto& check_box = static_cast<CheckBox&>(item->get_body());
-                if(reason == PressObserver::Reason::MOUSE &&
-                    !check_box.rect().contains(check_box.mapFromGlobal(
-                      QCursor::pos()))) {
-                  check_box.get_current()->set(!check_box.get_current()->get());
-                  check_box.setFocus();
-                }
-              });
             update_style(*item, [] (auto& style) {
               style.get(Any()).set(vertical_padding(scale_height(4)));
               style.get(Hover() > Body() > is_a<Box>()).
@@ -630,19 +643,20 @@ void ContextMenu::on_list_operation(
             break;
         }
       }
-    },
-    [&] (const ListModel<MenuItem>::PreRemoveOperation& operation) {
-      if(m_list->get(operation.m_index).m_type == MenuItemType::CHECK) {
-        m_check_item_press_observers.erase(operation.m_index);
-      }
     });
 }
 
 void ContextMenu::on_submit(const std::any& submission) {
   auto& menu_item = m_list->get(*m_list_view->get_current()->get());
   if(menu_item.m_type == MenuItemType::ACTION) {
-    std::get<Action>(menu_item.m_data)();
+    if(auto& action = std::get<Action>(menu_item.m_data)) {
+      action();
+    }
     m_window->hide();
+    m_submit_signal(*this, menu_item.m_name);
+  } else if(menu_item.m_type == MenuItemType::CHECK) {
+    auto& model = std::get<std::shared_ptr<BooleanModel>>(menu_item.m_data);
+    model->set(!model->get());
     m_submit_signal(*this, menu_item.m_name);
   }
 }

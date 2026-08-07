@@ -184,7 +184,8 @@ namespace Styles {
       BoxPainter m_box_painter;
       boost::signals2::scoped_connection m_style_connection;
       boost::signals2::scoped_connection m_current_connection;
-      mutable boost::optional<QSize> m_size_hint;
+      boost::signals2::scoped_connection m_placeholder_style_connection;
+      mutable QSize m_size_hint;
 
       void elide_text();
       void initialize_line_edit() const;

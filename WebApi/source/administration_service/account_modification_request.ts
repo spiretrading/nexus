@@ -82,7 +82,7 @@ export class AccountModificationRequest {
   private _effectiveDate: Beam.Date;
 }
 
-export module AccountModificationRequest {
+export namespace AccountModificationRequest {
 
   /** Lists the modifications that can be made to an account. */
   export enum Type {

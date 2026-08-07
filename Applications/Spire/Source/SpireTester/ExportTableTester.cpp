@@ -37,7 +37,7 @@ TEST_SUITE("ExportTable") {
     auto table = ArrayTableModel();
     auto venue = Venue("XNYS");
     auto ticker = parse_ticker("MRU.TSX");
-    auto country = DefaultCountries::CA;
+    auto country = Countries::CA;
     auto condition =
       TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@");
     table.push({time1, date1, time_duration1, 100, 1234.56, Money(1000.55),

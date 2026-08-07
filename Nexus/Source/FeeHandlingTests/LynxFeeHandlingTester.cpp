@@ -6,9 +6,9 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Currencies;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   const auto TST = parse_ticker("TST.TSX");
@@ -30,8 +30,7 @@ namespace {
 
   auto make_order_fields(Ticker ticker, Money price, Quantity quantity) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
-      std::move(ticker), CAD, Side::BID, DefaultDestinations::LYNX, quantity,
-      price);
+      std::move(ticker), CAD, Side::BID, Destinations::LYNX, quantity, price);
   }
 
   auto make_order_fields(Money price, Quantity quantity) {
@@ -61,7 +60,7 @@ namespace {
   auto make_midpoint_order_fields(Money price, Quantity quantity) {
     auto fields = make_order_fields(TST, price, quantity);
     fields.m_type = OrderType::PEGGED;
-    fields.m_additional_fields.emplace_back(18, "M");
+    fields.m_additional_fields.push_back(make_exec_inst(MID_PRICE_PEG));
     return fields;
   }
 

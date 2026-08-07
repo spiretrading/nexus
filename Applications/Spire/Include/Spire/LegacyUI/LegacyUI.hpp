@@ -2,8 +2,6 @@
 #define SPIRE_LEGACY_UI_HPP
 
 namespace Spire::LegacyUI {
-  class CanvasWindow;
-  class CanvasWindowSettings;
   class CollapsibleWidget;
   class CollapsibleWidgetWindowSettings;
   class CommandAction;
@@ -11,7 +9,6 @@ namespace Spire::LegacyUI {
   class CustomVariantSortFilterProxyModel;
   class ExpandButton;
   class FilePathInputWidget;
-  class FontSelectionWidget;
   class FunctionalAction;
   class IgnoreCommandException;
   class LinkTickerContextAction;
@@ -21,7 +18,6 @@ namespace Spire::LegacyUI {
   class OptionalPriceSpinBox;
   class PersistentWindow;
   class QuantitySpinBox;
-  class ReadOnlyCheckBox;
   class ScalableScrollBar;
   class TickerContext;
   class TickerViewStack;

@@ -75,7 +75,7 @@ namespace Nexus {
    * @return The Ticker represented by the <i>source</i>.
    */
   inline Ticker parse_ticker(std::string_view source) {
-    return parse_ticker(source, DEFAULT_VENUES);
+    return parse_ticker(source, VENUES);
   }
 
   inline std::ostream& operator <<(std::ostream& out, const Ticker& value) {
@@ -162,7 +162,7 @@ namespace Nexus {
    * @return The set of parsed tickers.
    */
   inline std::unordered_set<Ticker> parse_ticker_set(const YAML::Node& config) {
-    return parse_ticker_set(config, DEFAULT_VENUES);
+    return parse_ticker_set(config, VENUES);
   }
 }
 

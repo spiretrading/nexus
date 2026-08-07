@@ -9,6 +9,9 @@
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
 #include <Beam/Utilities/KeyValueCache.hpp>
+#include <boost/iterator/function_output_iterator.hpp>
+#include <boost/iterator/transform_iterator.hpp>
+#include "Nexus/Accounting/SqlDefinitions.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionDataStore.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionDataStoreException.hpp"
 #include "Nexus/OrderExecutionService/ReplicatedOrderExecutionDataStore.hpp"
@@ -62,6 +65,10 @@ namespace Nexus {
         load_execution_reports(const AccountQuery& query);
       void store(const SequencedAccountExecutionReport& report);
       void store(const std::vector<SequencedAccountExecutionReport>& reports);
+      InventorySnapshot load_inventory_snapshot(
+        const Beam::DirectoryEntry& account);
+      void store(const Beam::DirectoryEntry& account,
+        const InventorySnapshot& snapshot);
       void close();
 
     private:
@@ -159,6 +166,13 @@ namespace Nexus {
       auto writer_connection = m_writer_pool.load();
       writer_connection->execute(
         Viper::create_if_not_exists(m_live_orders_row, "live_orders"));
+      writer_connection->execute(Viper::create_if_not_exists(
+        get_inventory_entries_row(), "order_execution_inventory_entries"));
+      writer_connection->execute(Viper::create_if_not_exists(
+        get_inventory_sequences_row(), "order_execution_inventory_sequences"));
+      writer_connection->execute(Viper::create_if_not_exists(
+        get_inventory_excluded_orders_row(),
+        "order_execution_inventory_excluded_orders"));
       if(!writer_connection->has_table("live_submissions")) {
         writer_connection->execute("CREATE VIEW live_submissions AS "
           "SELECT * FROM submissions WHERE order_id IN ("
@@ -298,6 +312,65 @@ namespace Nexus {
       auto connection = m_writer_pool.load();
       connection->execute(Viper::erase("live_orders", erase_condition));
     }
+  }
+
+  template<typename C>
+  InventorySnapshot SqlOrderExecutionDataStore<C>::load_inventory_snapshot(
+      const Beam::DirectoryEntry& account) {
+    auto snapshot = InventorySnapshot();
+    auto connection = m_reader_pool.load();
+    Viper::transaction(*connection, [&] {
+      connection->execute(Viper::select(get_inventory_entries_row(),
+        "order_execution_inventory_entries", Viper::sym("account") == account.m_id,
+        boost::make_function_output_iterator([&] (const auto& row) {
+          snapshot.m_inventories.push_back(std::move(row.m_inventory));
+        })));
+      connection->execute(Viper::select(
+        Viper::Row<Beam::Sequence>("sequence"), "order_execution_inventory_sequences",
+        Viper::sym("account") == account.m_id, &snapshot.m_sequence));
+      connection->execute(Viper::select(get_inventory_excluded_orders_row(),
+        "order_execution_inventory_excluded_orders", Viper::sym("account") == account.m_id,
+        boost::make_function_output_iterator([&] (const auto& row) {
+          snapshot.m_excluded_orders.push_back(row.m_id);
+        })));
+    });
+    return snapshot;
+  }
+
+  template<typename C>
+  void SqlOrderExecutionDataStore<C>::store(
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot) {
+    auto stripped_snapshot = strip(snapshot);
+    auto connection = m_writer_pool.load();
+    Viper::transaction(*connection, [&] {
+      connection->execute(Viper::erase("order_execution_inventory_entries",
+        Viper::sym("account") == account.m_id));
+      connection->execute(Viper::erase("order_execution_inventory_sequences",
+        Viper::sym("account") == account.m_id));
+      connection->execute(Viper::erase(
+        "order_execution_inventory_excluded_orders",
+        Viper::sym("account") == account.m_id));
+      connection->execute(Viper::insert(get_inventory_entries_row(),
+        "order_execution_inventory_entries",
+        boost::iterators::make_transform_iterator(
+          stripped_snapshot.m_inventories.begin(),
+          convert_inventory_snapshot_inventories(account)),
+        boost::iterators::make_transform_iterator(
+          stripped_snapshot.m_inventories.end(),
+          convert_inventory_snapshot_inventories(account))));
+      auto sequence =
+        InventorySequence(account.m_id, stripped_snapshot.m_sequence);
+      connection->execute(Viper::insert(get_inventory_sequences_row(),
+        "order_execution_inventory_sequences", &sequence));
+      connection->execute(Viper::insert(get_inventory_excluded_orders_row(),
+        "order_execution_inventory_excluded_orders",
+        boost::iterators::make_transform_iterator(
+          stripped_snapshot.m_excluded_orders.begin(),
+          convert_inventory_excluded_orders(account)),
+        boost::iterators::make_transform_iterator(
+          stripped_snapshot.m_excluded_orders.end(),
+          convert_inventory_excluded_orders(account))));
+    });
   }
 
   template<typename C>

@@ -38,6 +38,7 @@ namespace Nexus {
       void publish(const TickerBboQuote& quote);
       void publish(const TickerBookQuote& quote);
       void publish(const TickerTimeAndSale& time_and_sale);
+      void publish(const IndexedTickerStatus& status);
       void add_order(const Ticker& ticker, Venue venue, const std::string& mpid,
         bool is_primary_mpid, const std::string& id, Side side, Money price,
         Quantity size, boost::posix_time::ptime timestamp);
@@ -118,6 +119,13 @@ namespace Nexus {
       const TickerTimeAndSale& time_and_sale) {
     auto release = Beam::Python::GilRelease();
     m_client->publish(time_and_sale);
+  }
+
+  template<IsMarketDataFeedClient C>
+  void ToPythonMarketDataFeedClient<C>::publish(
+      const IndexedTickerStatus& status) {
+    auto release = Beam::Python::GilRelease();
+    m_client->publish(status);
   }
 
   template<IsMarketDataFeedClient C>

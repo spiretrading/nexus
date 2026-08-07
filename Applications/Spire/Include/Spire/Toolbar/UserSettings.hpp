@@ -57,6 +57,9 @@ namespace Details {
     /** Defines a local value model over the Categories. */
     using LocalCategoriesModel = LocalValueModel<Categories>;
 
+    /** The book view properties. */
+    boost::optional<BookViewProperties> m_book_view_properties;
+
     /** The dashboards. */
     boost::optional<SavedDashboards> m_dashboards;
 
@@ -108,6 +111,7 @@ namespace Beam {
     template<IsShuttle S>
     void operator ()(
         S& shuttle, Spire::UserSettings& value, unsigned int version) const {
+      shuttle.shuttle("book_view_properties", value.m_book_view_properties);
       shuttle.shuttle("dashboards", value.m_dashboards);
       shuttle.shuttle("order_imbalance_indicator_properties",
         value.m_order_imbalance_indicator_properties);

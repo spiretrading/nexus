@@ -34,6 +34,7 @@ include_directories(SYSTEM ${BOOST_INCLUDE_PATH})
 include_directories(SYSTEM ${CRYPTOPP_INCLUDE_PATH})
 include_directories(SYSTEM ${MYSQL_INCLUDE_PATH})
 include_directories(SYSTEM ${OPEN_SSL_INCLUDE_PATH})
+include_directories(SYSTEM ${QUICK_FIX_INCLUDE_PATH})
 include_directories(SYSTEM ${TCLAP_INCLUDE_PATH})
 include_directories(SYSTEM ${VIPER_INCLUDE_PATH})
 include_directories(SYSTEM ${YAML_INCLUDE_PATH})
@@ -62,6 +63,8 @@ include_directories(${PROJECT_BINARY_DIR})
 file(GLOB_RECURSE header_files ${PROJECT_BINARY_DIR}/*.hpp)
 file(GLOB_RECURSE source_files Source/*.cpp)
 add_executable(SimulationOrderExecutionServer ${header_files} ${source_files})
+target_compile_definitions(
+  SimulationOrderExecutionServer PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(SimulationOrderExecutionServer
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}

@@ -75,17 +75,22 @@ bool ScrollableListBox::eventFilter(QObject* watched, QEvent* event) {
 }
 
 void ScrollableListBox::keyPressEvent(QKeyEvent* event) {
-  if(event->modifiers() & Qt::AltModifier) {
-    auto& horizontal_scroll_bar = m_scroll_box->get_horizontal_scroll_bar();
-    if(has_range(horizontal_scroll_bar.get_range())) {
+  if(event->key() == Qt::Key_PageUp || event->key() == Qt::Key_PageDown) {
+    auto& scroll_bar = [&] () -> auto& {
+      if(event->modifiers() & Qt::AltModifier) {
+        return m_scroll_box->get_horizontal_scroll_bar();
+      }
+      return m_scroll_box->get_vertical_scroll_bar();
+    }();
+    if(has_range(scroll_bar.get_range())) {
       if(event->key() == Qt::Key_PageUp) {
-        scroll_page_up(horizontal_scroll_bar);
-        event->accept();
-      } else if(event->key() == Qt::Key_PageDown) {
-        scroll_page_down(horizontal_scroll_bar);
-        event->accept();
+        scroll_page_up(scroll_bar);
+      } else {
+        scroll_page_down(scroll_bar);
       }
     }
+    event->accept();
+    return;
   }
   QWidget::keyPressEvent(event);
 }

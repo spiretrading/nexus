@@ -12,9 +12,9 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCountries;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Countries;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   template<typename T>
@@ -320,6 +320,94 @@ TEST_SUITE("DistributedMarketDataClient") {
     }
   }
 
+  TEST_CASE("query_sequenced_ticker_statuses") {
+    auto fixture = Fixture();
+    auto ticker_statuses = std::make_shared<Queue<SequencedTickerStatus>>();
+    auto query = TickerQuery();
+
+    SUBCASE("exact") {
+      query.set_index(parse_ticker("ABC.TSX"));
+      query.set_range(Range::REAL_TIME);
+      fixture.m_client.query(query, ticker_statuses);
+      auto operations = fixture.m_operations.get(TSX);
+      auto received_query = require_operation<
+        TestMarketDataClient::QuerySequencedTickerStatusOperation>(
+          operations->pop());
+      auto test_status = SequencedValue(
+        TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+          time_from_string("2024-07-09 09:30:00")), Beam::Sequence(100));
+      received_query->m_queue.push(test_status);
+      auto received_status = ticker_statuses->pop();
+      REQUIRE(received_status == test_status);
+    }
+
+    SUBCASE("parent") {
+      query.set_index(parse_ticker("S32.ASX"));
+      query.set_range(Range::REAL_TIME);
+      fixture.m_client.query(query, ticker_statuses);
+      auto operations = fixture.m_operations.get(ASX);
+      auto received_query = require_operation<
+        TestMarketDataClient::QuerySequencedTickerStatusOperation>(
+          operations->pop());
+      auto test_status = SequencedValue(
+        TickerStatus(ASX, "PreOpen", TickerStatus::Flag::IS_ACCEPTING_ORDERS,
+          time_from_string("2025-02-18 07:00:00")), Beam::Sequence(200));
+      received_query->m_queue.push(test_status);
+      auto received_status = ticker_statuses->pop();
+      REQUIRE(received_status == test_status);
+    }
+
+    SUBCASE("unavailable") {
+      query.set_index(parse_ticker("BHP.TSXV"));
+      query.set_range(Range::REAL_TIME);
+      fixture.m_client.query(query, ticker_statuses);
+      REQUIRE_THROWS_AS(ticker_statuses->pop(), PipeBrokenException);
+    }
+  }
+
+  TEST_CASE("query_ticker_statuses") {
+    auto fixture = Fixture();
+    auto ticker_statuses = std::make_shared<Queue<TickerStatus>>();
+    auto query = TickerQuery();
+
+    SUBCASE("exact") {
+      query.set_index(parse_ticker("ABC.TSX"));
+      query.set_range(Range::REAL_TIME);
+      fixture.m_client.query(query, ticker_statuses);
+      auto operations = fixture.m_operations.get(TSX);
+      auto received_query = require_operation<
+        TestMarketDataClient::QueryTickerStatusOperation>(operations->pop());
+      auto test_status =
+        TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+          time_from_string("2024-07-09 09:30:00"));
+      received_query->m_queue.push(test_status);
+      auto received_status = ticker_statuses->pop();
+      REQUIRE(received_status == test_status);
+    }
+
+    SUBCASE("parent") {
+      query.set_index(parse_ticker("S32.ASX"));
+      query.set_range(Range::REAL_TIME);
+      fixture.m_client.query(query, ticker_statuses);
+      auto operations = fixture.m_operations.get(ASX);
+      auto received_query = require_operation<
+        TestMarketDataClient::QueryTickerStatusOperation>(operations->pop());
+      auto test_status =
+        TickerStatus(ASX, "PreOpen", TickerStatus::Flag::IS_ACCEPTING_ORDERS,
+          time_from_string("2025-02-18 07:00:00"));
+      received_query->m_queue.push(test_status);
+      auto received_status = ticker_statuses->pop();
+      REQUIRE(received_status == test_status);
+    }
+
+    SUBCASE("unavailable") {
+      query.set_index(parse_ticker("BHP.TSXV"));
+      query.set_range(Range::REAL_TIME);
+      fixture.m_client.query(query, ticker_statuses);
+      REQUIRE_THROWS_AS(ticker_statuses->pop(), PipeBrokenException);
+    }
+  }
+
   TEST_CASE("query_sequenced_time_and_sales") {
     auto fixture = Fixture();
     auto time_and_sales = std::make_shared<Queue<SequencedTimeAndSale>>();
@@ -482,53 +570,55 @@ TEST_SUITE("DistributedMarketDataClient") {
     }
   }
 
-  TEST_CASE("load_session_candlestick") {
+  TEST_CASE("load_session_technicals") {
     auto fixture = Fixture();
 
     SUBCASE("exact") {
       auto ticker = parse_ticker("ABC.TSX");
       auto operations = fixture.m_operations.get(TSX);
       auto result = std::async(std::launch::async, [&] {
-        return fixture.m_client.load_session_candlestick(ticker);
+        return fixture.m_client.load_session_technicals(ticker);
       });
       auto received_operation = require_operation<
-        TestMarketDataClient::LoadSessionCandlestickOperation>(
+        TestMarketDataClient::LoadSessionTechnicalsOperation>(
           operations->pop());
       REQUIRE(received_operation->m_ticker == ticker);
-      auto test_candlestick = PriceCandlestick();
-      test_candlestick.update(Money::ONE + Money::CENT);
-      test_candlestick.update(2 * Money::ONE, 100);
-      test_candlestick.update(Money::CENT);
-      test_candlestick.update(Money::ONE);
-      received_operation->m_result.set(test_candlestick);
-      auto received_candlestick = result.get();
-      test_json_equality(received_candlestick, test_candlestick);
+      auto test_technicals = SessionTechnicals();
+      test_technicals.m_open = 2 * Money::ONE;
+      test_technicals.m_previous_close = Money::ONE + Money::CENT;
+      test_technicals.m_high = 2 * Money::ONE;
+      test_technicals.m_low = Money::CENT;
+      test_technicals.m_volume = Quantity(100);
+      received_operation->m_result.set(test_technicals);
+      auto received_technicals = result.get();
+      test_json_equality(received_technicals, test_technicals);
     }
 
     SUBCASE("parent") {
       auto ticker = parse_ticker("S32.ASX");
       auto operations = fixture.m_operations.get(ASX);
       auto result = std::async(std::launch::async, [&] {
-        return fixture.m_client.load_session_candlestick(ticker);
+        return fixture.m_client.load_session_technicals(ticker);
       });
       auto received_operation = require_operation<
-        TestMarketDataClient::LoadSessionCandlestickOperation>(
+        TestMarketDataClient::LoadSessionTechnicalsOperation>(
           operations->pop());
       REQUIRE(received_operation->m_ticker == ticker);
-      auto test_candlestick = PriceCandlestick();
-      test_candlestick.update(151 * Money::ONE);
-      test_candlestick.update(152 * Money::ONE, 10000);
-      test_candlestick.update(148 * Money::ONE);
-      test_candlestick.update(150 * Money::ONE);
-      received_operation->m_result.set(test_candlestick);
-      auto received_candlestick = result.get();
-      test_json_equality(received_candlestick, test_candlestick);
+      auto test_technicals = SessionTechnicals();
+      test_technicals.m_open = 152 * Money::ONE;
+      test_technicals.m_previous_close = 151 * Money::ONE;
+      test_technicals.m_high = 152 * Money::ONE;
+      test_technicals.m_low = 148 * Money::ONE;
+      test_technicals.m_volume = Quantity(10000);
+      received_operation->m_result.set(test_technicals);
+      auto received_technicals = result.get();
+      test_json_equality(received_technicals, test_technicals);
     }
 
     SUBCASE("unavailable") {
       auto ticker = parse_ticker("BHP.TSXV");
-      auto candlestick = fixture.m_client.load_session_candlestick(ticker);
-      test_json_equality(candlestick, PriceCandlestick());
+      auto technicals = fixture.m_client.load_session_technicals(ticker);
+      test_json_equality(technicals, SessionTechnicals());
     }
   }
 

@@ -50,7 +50,8 @@ namespace Spire::Styles {
         return m_stylist->revert<Type>(m_type)(frame);
       }
     };
-    return RevertEvaluator{&stylist, stylist.m_evaluated_property};
+    return RevertEvaluator(
+      &stylist, stylist.m_animations->m_evaluated_property);
   }
 
   template<typename T>

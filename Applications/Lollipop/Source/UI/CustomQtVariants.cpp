@@ -112,7 +112,7 @@ posix_time::ptime Spire::UI::ToPosixTime(const QDateTime& time) {
 void Spire::UI::RegisterCustomQtVariants() {}
 
 QString Spire::UI::displayText(CountryCode country) {
-  auto& entry = DEFAULT_COUNTRIES.from(country);
+  auto& entry = COUNTRIES.from(country);
   return QString::fromStdString(entry.m_three_letter_code.get_data());
 }
 
@@ -229,8 +229,7 @@ QString CustomVariantItemDelegate::displayText(const QVariant& value,
   } else if(value.canConvert<CountryCode>()) {
     return ::displayText(value.value<CountryCode>());
   } else if(value.canConvert<CurrencyId>()) {
-    const CurrencyDatabase::Entry& entry =
-      m_userProfile->GetCurrencyDatabase().from(value.value<CurrencyId>());
+    auto& entry = CURRENCIES.from(value.value<CurrencyId>());
     return QString::fromStdString(entry.m_code.get_data());
   } else if(value.canConvert<Money>()) {
     return QString::fromStdString(lexical_cast<string>(value.value<Money>()));
@@ -322,21 +321,15 @@ bool CustomVariantSortFilterProxyModel::lessThan(const QModelIndex& left,
       lexical_cast<string>(rightVariant.value<TimeInForce>().get_type()), left,
       right);
   } else if(leftVariant.canConvert<CurrencyId>()) {
-    const CurrencyDatabase::Entry& leftEntry =
-      m_userProfile->GetCurrencyDatabase().from(
-      leftVariant.value<CurrencyId>());
-    const CurrencyDatabase::Entry& rightEntry =
-      m_userProfile->GetCurrencyDatabase().from(
-      rightVariant.value<CurrencyId>());
+    auto& leftEntry = CURRENCIES.from(leftVariant.value<CurrencyId>());
+    auto& rightEntry = CURRENCIES.from(rightVariant.value<CurrencyId>());
     return leftEntry.m_code < rightEntry.m_code;
   } else if(leftVariant.canConvert<PositionSideToken>()) {
     return Compare(leftVariant.value<PositionSideToken>().ToString(),
       rightVariant.value<PositionSideToken>().ToString(), left, right);
   } else if(leftVariant.canConvert<Venue>()) {
-    const VenueDatabase::Entry& leftEntry =
-      m_userProfile->GetVenueDatabase().from(leftVariant.value<Venue>());
-    const VenueDatabase::Entry& rightEntry =
-      m_userProfile->GetVenueDatabase().from(rightVariant.value<Venue>());
+    auto& leftEntry = VENUES.from(leftVariant.value<Venue>());
+    auto& rightEntry = VENUES.from(rightVariant.value<Venue>());
     return leftEntry.m_display_name < rightEntry.m_display_name;
   }
   if(leftVariant == rightVariant) {

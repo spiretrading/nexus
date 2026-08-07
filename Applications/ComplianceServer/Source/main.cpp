@@ -19,6 +19,7 @@
 #include "Nexus/Compliance/CachedComplianceRuleDataStore.hpp"
 #include "Nexus/Compliance/ComplianceServlet.hpp"
 #include "Nexus/Compliance/SqlComplianceRuleDataStore.hpp"
+#include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
@@ -47,6 +48,9 @@ int main(int argc, const char** argv) {
     }, std::runtime_error("Error parsing section 'server'."));
     auto service_locator_client = ApplicationServiceLocatorClient(
       ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
+    auto definitions_client =
+      ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
     auto administration_client =
       ApplicationAdministrationClient(Ref(service_locator_client));
     auto time_client = make_live_ntp_time_client(service_locator_client);

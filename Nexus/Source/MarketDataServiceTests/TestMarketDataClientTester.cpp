@@ -6,8 +6,8 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 TEST_SUITE("TestMarketDataClient") {
   TEST_CASE("query") {
@@ -48,6 +48,21 @@ TEST_SUITE("TestMarketDataClient") {
         &*op2);
     REQUIRE(seq_op);
     REQUIRE(seq_op->m_query.get_index() == TSXV);
+  }
+
+  TEST_CASE("query_ticker_status") {
+    auto operations = std::make_shared<TestMarketDataClient::Queue>();
+    auto client = TestMarketDataClient(operations);
+    auto statuses = std::make_shared<Queue<TickerStatus>>();
+    auto query = TickerQuery();
+    query.set_index(parse_ticker("TST.TSX"));
+    client.query(query, statuses);
+    auto operation = operations->pop();
+    auto received_query =
+      std::get_if<TestMarketDataClient::QueryTickerStatusOperation>(
+        &*operation);
+    REQUIRE(received_query);
+    REQUIRE(received_query->m_query.get_index() == parse_ticker("TST.TSX"));
   }
 
   TEST_CASE("streaming_query_after_close") {

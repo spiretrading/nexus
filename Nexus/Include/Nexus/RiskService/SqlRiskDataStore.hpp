@@ -6,8 +6,8 @@
 #include <boost/iterator/function_output_iterator.hpp>
 #include <boost/iterator/transform_iterator.hpp>
 #include <Viper/Viper.hpp>
+#include "Nexus/Accounting/SqlDefinitions.hpp"
 #include "Nexus/RiskService/RiskDataStore.hpp"
-#include "Nexus/RiskService/SqlDefinitions.hpp"
 
 namespace Nexus {
 

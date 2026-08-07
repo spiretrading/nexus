@@ -19,9 +19,9 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultCurrencies;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Currencies;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   auto S32 = parse_ticker("S32.ASX");
@@ -70,8 +70,8 @@ namespace {
       m_administration_environment.make_administrator(servlet_account);
       m_service_locator.emplace(
         m_service_locator_environment.make_client("risk_service", ""));
-      grant_all_entitlements(
-        m_administration_environment, m_service_locator->get_account());
+      m_administration_environment.grant_all_entitlements(
+        m_service_locator->get_account());
       m_administration_client.emplace(
         m_administration_environment.make_client(Ref(*m_service_locator)));
       m_market_data_client.emplace(
@@ -83,7 +83,7 @@ namespace {
         init(m_accounts_queue, *m_administration_client, *m_market_data_client,
           *m_service_order_execution_client,
           factory<std::unique_ptr<TriggerTimer>>(), &m_time_client,
-          &m_data_store, m_exchange_rates, DEFAULT_DESTINATIONS)),
+          &m_data_store, m_exchange_rates)),
         m_server_connection, factory<std::unique_ptr<TriggerTimer>>());
       m_order_execution_environment.get_driver().as<
         MockOrderExecutionDriver>().get_publisher().monitor(

@@ -2,20 +2,19 @@
 #include <vector>
 #include <QApplication>
 #include <QGuiApplication>
+#include <QMessageBox>
 #include <QScreen>
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/Definitions/Venue.hpp"
-#include "Spire/AccountViewer/AccountViewWindow.hpp"
-#include "Spire/AccountViewer/TraderProfileWindow.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/BookView/BookViewController.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
+#include "Spire/CanvasView/CanvasWindow.hpp"
 #include "Spire/Charting/ChartWindow.hpp"
 #include "Spire/Dashboard/DashboardWindow.hpp"
 #include "Spire/Dashboard/DashboardModelSchema.hpp"
-#include "Spire/LegacyUI/CanvasWindow.hpp"
 #include "Spire/LegacyUI/UISerialization.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorModel.hpp"
@@ -150,8 +149,13 @@ void ToolbarController::open() {
   auto windows = std::vector<QWidget*>();
   if(!window_settings.empty()) {
     for(auto& settings : window_settings) {
-      if(auto window = settings->Reopen(Ref(*m_user_profile))) {
-        windows.push_back(window);
+      try {
+        if(auto window = settings->Reopen(Ref(*m_user_profile))) {
+          windows.push_back(window);
+        }
+      } catch(const std::exception& e) {
+        QMessageBox::warning(
+          nullptr, QObject::tr("Error"), QString::fromStdString(e.what()));
       }
     }
   } else {
@@ -271,9 +275,7 @@ void ToolbarController::open_order_imbalance_indicator_window() {
 }
 
 void ToolbarController::open_account_directory_window() {
-  auto window = new AccountViewWindow(Ref(*m_user_profile));
-  window->setAttribute(Qt::WA_DeleteOnClose);
-  window->show();
+  open_web_portal(*m_user_profile, "/account_directory");
 }
 
 void ToolbarController::open_portfolio_window() {
@@ -302,11 +304,7 @@ void ToolbarController::open_key_bindings_window() {
 }
 
 void ToolbarController::open_profile_window() {
-  auto window = new TraderProfileWindow(Ref(*m_user_profile));
-  window->setAttribute(Qt::WA_DeleteOnClose);
-  window->Load(
-    m_user_profile->GetClients().get_service_locator_client().get_account());
-  window->show();
+  open_web_portal(*m_user_profile, "/account/profile");
 }
 
 void ToolbarController::on_open(ToolbarWindow::WindowType window) {
@@ -379,33 +377,43 @@ void ToolbarController::on_restore_all() {
 
 void ToolbarController::on_import(
     UserSettings::Categories categories, const std::filesystem::path& path) {
-  auto windows = import_settings(categories, path, out(*m_user_profile));
-  for(auto& window : windows) {
-    if(auto book_view = dynamic_cast<BookViewWindow*>(window)) {
-      auto controller =
-        std::make_unique<BookViewController>(Ref(*m_user_profile), *book_view);
-      controller->open();
-      m_book_view_controllers.push_back(std::move(controller));
-    } else if(auto time_and_sales_window =
-        dynamic_cast<TimeAndSalesWindow*>(window)) {
-      auto controller = std::make_unique<TimeAndSalesController>(
-        Ref(*m_user_profile), *time_and_sales_window);
-      controller->open();
-      m_time_and_sales_controllers.push_back(std::move(controller));
-    } else {
-      window->show();
+  try {
+    auto windows = import_settings(categories, path, out(*m_user_profile));
+    for(auto& window : windows) {
+      if(auto book_view = dynamic_cast<BookViewWindow*>(window)) {
+        auto controller = std::make_unique<BookViewController>(
+          Ref(*m_user_profile), *book_view);
+        controller->open();
+        m_book_view_controllers.push_back(std::move(controller));
+      } else if(auto time_and_sales_window =
+          dynamic_cast<TimeAndSalesWindow*>(window)) {
+        auto controller = std::make_unique<TimeAndSalesController>(
+          Ref(*m_user_profile), *time_and_sales_window);
+        controller->open();
+        m_time_and_sales_controllers.push_back(std::move(controller));
+      } else {
+        window->show();
+      }
     }
+  } catch(const std::exception& e) {
+    QMessageBox::warning(
+      nullptr, QObject::tr("Error"), QString::fromStdString(e.what()));
   }
 }
 
 void ToolbarController::on_export(
     UserSettings::Categories categories, const std::filesystem::path& path) {
-  export_settings(categories, path, *m_user_profile);
+  try {
+    export_settings(categories, path, *m_user_profile);
+  } catch(const std::exception& e) {
+    QMessageBox::warning(
+      nullptr, QObject::tr("Error"), QString::fromStdString(e.what()));
+  }
 }
 
-void ToolbarController::on_new_blotter(const QString& name) {
-  auto blotter = std::make_unique<BlotterModel>(name.toStdString(),
-    m_user_profile->GetClients().get_service_locator_client().get_account(),
+void ToolbarController::on_new_blotter(
+    const QString& name, const DirectoryEntry& account) {
+  auto blotter = std::make_unique<BlotterModel>(name.toStdString(), account,
     false, Ref(*m_user_profile),
     m_user_profile->GetBlotterSettings().GetDefaultBlotterTaskProperties(),
     m_user_profile->GetBlotterSettings().GetDefaultOrderLogProperties());
@@ -417,7 +425,9 @@ void ToolbarController::on_new_blotter(const QString& name) {
 }
 
 void ToolbarController::on_blotter_added(BlotterModel& blotter) {
-  m_pinned_blotters->push(&blotter);
+  if(!blotter.IsConsolidated()) {
+    m_pinned_blotters->push(&blotter);
+  }
 }
 
 void ToolbarController::on_blotter_removed(BlotterModel& blotter) {

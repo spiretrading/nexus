@@ -3,6 +3,9 @@ import * as Nexus from 'nexus';
 import { AccountDirectoryModel, AccountEntry, HttpAccountDirectoryModel,
   HttpAccountModel, HttpGroupModel, HttpRequestsModel,
   LocalAccountDirectoryModel, LocalRequestsModel, RequestsModel } from '..';
+import { HttpNotificationsModel } from
+  '../notifications_page/http_notifications_model';
+import { NotificationsModel } from '../notifications_page/notifications_model';
 import { DashboardModel } from './dashboard_model';
 import { LocalDashboardModel } from './local_dashboard_model';
 
@@ -58,6 +61,10 @@ export class HttpDashboardModel extends DashboardModel {
     return this._requestsModel;
   }
 
+  public get notificationsModel(): NotificationsModel {
+    return this._notificationsModel;
+  }
+
   public makeAccountModel(account: Beam.DirectoryEntry): HttpAccountModel {
     let model = this.accountModels.get(account);
     if(model === undefined) {
@@ -86,6 +93,8 @@ export class HttpDashboardModel extends DashboardModel {
     const roles = await
       this.serviceClients.administrationClient.loadAccountRoles(account);
     this._requestsModel = new HttpRequestsModel(account, this.serviceClients);
+    this._notificationsModel = new HttpNotificationsModel(
+      account, this.serviceClients.administrationClient);
     this.model = new LocalDashboardModel(account, roles,
       this.serviceClients.definitionsClient.entitlementDatabase,
       this.serviceClients.definitionsClient.countryDatabase,
@@ -93,7 +102,8 @@ export class HttpDashboardModel extends DashboardModel {
       this.serviceClients.definitionsClient.venueDatabase,
       new HttpAccountDirectoryModel(account, this.serviceClients),
       this._requestsModel);
-    return this.model.load();
+    await this.model.load();
+    await this._notificationsModel.load();
   }
 
   public async logout(): Promise<void> {
@@ -105,4 +115,5 @@ export class HttpDashboardModel extends DashboardModel {
   private groupModels: Beam.Map<Beam.DirectoryEntry, HttpGroupModel>;
   private model: LocalDashboardModel;
   private _requestsModel: RequestsModel;
+  private _notificationsModel: NotificationsModel;
 }

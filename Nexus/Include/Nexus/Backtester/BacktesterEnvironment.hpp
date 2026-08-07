@@ -17,23 +17,17 @@
 #include "Nexus/ComplianceTests/ComplianceTestEnvironment.hpp"
 #include "Nexus/DefinitionsServiceTests/DefinitionsServiceTestEnvironment.hpp"
 #include "Nexus/MarketDataService/ClientHistoricalDataStore.hpp"
+#include "Nexus/MarketDataService/TickerSnapshot.hpp"
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 #include "Nexus/OrderExecutionServiceTests/OrderExecutionServiceTestEnvironment.hpp"
 #include "Nexus/RiskServiceTests/RiskServiceTestEnvironment.hpp"
-#include "Nexus/SimulationMatcher/SimulationOrderExecutionDriver.hpp"
+#include "Nexus/SimulationMatcher/PassiveSimulationOrderExecutionDriver.hpp"
 
 namespace Nexus {
 
   /** Maintains the state needed to run the historical backtester. */
   class BacktesterEnvironment {
     public:
-
-      /**
-       * Constructs a BacktesterEnvironment.
-       * @param start The backtester's starting time.
-       * @param clients The Clients connected to the historical data source.
-       */
-      BacktesterEnvironment(boost::posix_time::ptime start, Clients clients);
 
       /**
        * Constructs a BacktesterEnvironment.
@@ -88,6 +82,25 @@ namespace Nexus {
       /** Returns the RiskServiceTestEnvironment. */
       Tests::RiskServiceTestEnvironment& get_risk_environment();
 
+      /**
+       * Suspends the processing of events, blocking until the event being
+       * processed completes.
+       */
+      void suspend();
+
+      /** Resumes the processing of events. */
+      void resume();
+
+      /**
+       * Processes the next event while suspended, blocking until it completes.
+       * @return The event that was processed, or <code>nullptr</code> if the
+       *         backtester is not suspended or has no event to process.
+       */
+      std::shared_ptr<const BacktesterEvent> advance();
+
+      /** Blocks until the backtester has run to its end time. */
+      void wait();
+
       void close();
 
     private:
@@ -106,6 +119,8 @@ namespace Nexus {
       MarketDataClient m_market_data_client;
       Tests::ChartingServiceTestEnvironment m_charting_environment;
       Tests::ComplianceTestEnvironment m_compliance_environment;
+      boost::optional<PassiveSimulationOrderExecutionDriver<Beam::TimeClient>>
+        m_simulation_driver;
       boost::optional<Tests::OrderExecutionServiceTestEnvironment>
         m_order_execution_environment;
       boost::optional<OrderExecutionClient> m_order_execution_client;
@@ -114,12 +129,8 @@ namespace Nexus {
 
       BacktesterEnvironment(const BacktesterEnvironment&) = delete;
       BacktesterEnvironment& operator =(const BacktesterEnvironment&) = delete;
+      TickerSnapshot load_snapshot(const Ticker& ticker);
   };
-
-  inline BacktesterEnvironment::BacktesterEnvironment(
-    boost::posix_time::ptime start, Clients clients)
-    : BacktesterEnvironment(
-        start, boost::posix_time::pos_infin, std::move(clients)) {}
 
   inline BacktesterEnvironment::BacktesterEnvironment(
       boost::posix_time::ptime start, boost::posix_time::ptime end,
@@ -153,14 +164,38 @@ namespace Nexus {
     try {
       auto definitions_client = m_definitions_environment.make_client(
         Beam::Ref(m_service_locator_client));
-      m_order_execution_environment.emplace(
-        definitions_client.load_venue_database(),
-        definitions_client.load_destination_database(),
-        m_service_locator_client, m_uid_client, m_administration_client,
-        m_time_client, OrderExecutionDriver(
-          std::in_place_type<SimulationOrderExecutionDriver<
-            MarketDataClient, Beam::TimeClient>>,
-          m_market_data_client, m_time_client));
+      m_simulation_driver.emplace(
+        m_time_client, [=, this] (const auto& ticker) {
+          auto snapshot = load_snapshot(ticker);
+          m_market_data_service.query_bbo_quotes(
+            Beam::make_current_query(ticker));
+          m_market_data_service.query_time_and_sales(
+            Beam::make_current_query(ticker));
+          m_market_data_service.query_book_quotes(
+            Beam::make_current_query(ticker));
+          return snapshot;
+        });
+      m_market_data_service.set_bbo_slot(
+        [this] (const auto& ticker, const auto& bbo) {
+          m_simulation_driver->update(ticker, bbo);
+        });
+      m_market_data_service.set_time_and_sale_slot(
+        [this] (const auto& ticker, const auto& time_and_sale) {
+          m_simulation_driver->update(ticker, time_and_sale);
+        });
+      m_market_data_service.set_book_quote_slot(
+        [this] (const auto& ticker, const auto& book_quote) {
+          m_simulation_driver->update(ticker, book_quote);
+        });
+      m_event_handler.set_idle_task([this] {
+        return m_simulation_driver->flush_next_execution_report();
+      });
+      m_simulation_driver->set_execution_report_slot([this] {
+        m_event_handler.notify_idle_task();
+      });
+      m_order_execution_environment.emplace(m_service_locator_client,
+        m_uid_client, m_administration_client, m_time_client,
+        OrderExecutionDriver(&*m_simulation_driver));
       m_order_execution_client.emplace(
         m_order_execution_environment->make_client(
           Beam::Ref(m_service_locator_client)));
@@ -170,8 +205,7 @@ namespace Nexus {
       m_risk_environment.emplace(m_service_locator_client,
         m_administration_client, m_market_data_client,
         *m_order_execution_client, transition_timer_factory, m_time_client,
-        ExchangeRateTable(definitions_client.load_exchange_rates()),
-        definitions_client.load_destination_database());
+        ExchangeRateTable(definitions_client.load_exchange_rates()));
       auto root_account = m_service_locator_client.get_account();
       m_service_locator_client.associate(root_account,
         m_administration_client.load_administrators_root_entry());
@@ -251,6 +285,72 @@ namespace Nexus {
     return *m_risk_environment;
   }
 
+  inline void BacktesterEnvironment::suspend() {
+    m_event_handler.suspend();
+  }
+
+  inline void BacktesterEnvironment::resume() {
+    m_event_handler.resume();
+  }
+
+  inline std::shared_ptr<const BacktesterEvent>
+      BacktesterEnvironment::advance() {
+    return m_event_handler.advance();
+  }
+
+  inline void BacktesterEnvironment::wait() {
+    m_event_handler.wait();
+  }
+
+  inline TickerSnapshot BacktesterEnvironment::load_snapshot(
+      const Ticker& ticker) {
+    auto snapshot = TickerSnapshot(ticker);
+    auto time = m_event_handler.get_time();
+    if(time.is_special()) {
+      return snapshot;
+    }
+    auto& client = m_clients.get_market_data_client();
+    auto bbo_query = TickerQuery();
+    bbo_query.set_index(ticker);
+    bbo_query.set_range(Beam::Sequence::FIRST, time);
+    bbo_query.set_snapshot_limit(Beam::SnapshotLimit::from_tail(1));
+    auto bbos = std::make_shared<Beam::Queue<SequencedBboQuote>>();
+    client.query(bbo_query, bbos);
+    auto bbo = std::vector<SequencedBboQuote>();
+    Beam::flush(bbos, std::back_inserter(bbo));
+    if(!bbo.empty()) {
+      snapshot.m_bbo_quote = bbo.back();
+    }
+    auto session = utc_start_of_day(ticker.get_venue(), time);
+    if(session.is_special()) {
+      return snapshot;
+    }
+    auto book_query = TickerQuery();
+    book_query.set_index(ticker);
+    book_query.set_range(session, time);
+    book_query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
+    auto quotes = std::make_shared<Beam::Queue<SequencedBookQuote>>();
+    client.query(book_query, quotes);
+    auto listings = std::map<
+      std::tuple<Venue, Side, Money, std::string>, SequencedBookQuote>();
+    Beam::for_each(quotes, [&] (const auto& quote) {
+      listings[std::tuple(quote->m_venue, quote->m_quote.m_side,
+        quote->m_quote.m_price, quote->m_mpid)] = quote;
+    });
+    for(auto& listing : listings) {
+      if(listing.second->m_quote.m_size <= 0) {
+        continue;
+      }
+      auto& side = std::get<1>(listing.first);
+      if(side == Side::BID) {
+        snapshot.m_bids.push_back(listing.second);
+      } else if(side == Side::ASK) {
+        snapshot.m_asks.push_back(listing.second);
+      }
+    }
+    return snapshot;
+  }
+
   inline void BacktesterEnvironment::close() {
     if(m_open_state.set_closing()) {
       return;
@@ -258,6 +358,7 @@ namespace Nexus {
     m_risk_environment->close();
     m_order_execution_client->close();
     m_order_execution_environment->close();
+    m_simulation_driver->close();
     m_compliance_environment.close();
     m_charting_environment.close();
     m_market_data_client.close();

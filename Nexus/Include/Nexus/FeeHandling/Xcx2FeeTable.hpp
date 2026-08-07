@@ -111,7 +111,7 @@ namespace Nexus {
    */
   inline Money lookup_fee(const Xcx2FeeTable& table, const OrderFields& fields,
       Xcx2FeeTable::Type type, Xcx2FeeTable::PriceClass price_class) {
-    if(fields.m_ticker.get_venue() == DefaultVenues::TSX) {
+    if(fields.m_ticker.get_venue() == Venues::TSX) {
       return table.m_tsx_table[static_cast<int>(price_class)][
         static_cast<int>(type)];
     } else {

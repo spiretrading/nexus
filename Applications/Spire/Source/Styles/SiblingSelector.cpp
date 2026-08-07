@@ -1,4 +1,5 @@
 #include "Spire/Styles/SiblingSelector.hpp"
+#include <boost/container/flat_set.hpp>
 #include <boost/functional/hash.hpp>
 #include <QEvent>
 #include <QWidget>
@@ -8,6 +9,7 @@
 #include "Spire/Styles/Stylist.hpp"
 
 using namespace boost;
+using namespace boost::container;
 using namespace Spire;
 using namespace Spire::Styles;
 
@@ -16,7 +18,7 @@ namespace {
     const Stylist* m_stylist;
     SelectionUpdateSignal m_on_update;
     SelectConnection m_parent_connection;
-    std::unordered_set<const Stylist*> m_selection;
+    flat_set<const Stylist*> m_selection;
 
     SiblingObserver(
         const Stylist& stylist, const SelectionUpdateSignal& on_update)
@@ -40,11 +42,11 @@ namespace {
 
     void connect_parent() {
       if(auto parent = find_parent(*m_stylist)) {
-        m_parent_connection =
-          select(ChildSelector(Any(), Any()), *parent,
-            std::bind_front(&SiblingObserver::on_selection, this));
+        m_parent_connection = select(ChildSelector(Any(), Any()), *parent,
+          std::bind_front(&SiblingObserver::on_selection, this));
       } else {
-        auto selection = std::move(m_selection);
+        auto selection =
+          std::unordered_set(m_selection.begin(), m_selection.end());
         m_selection.clear();
         m_on_update({}, std::move(selection));
       }
@@ -59,12 +61,15 @@ namespace {
         return;
       }
       if(!m_parent_connection.is_connected()) {
-        auto selection = std::move(m_selection);
+        auto selection =
+          std::unordered_set(m_selection.begin(), m_selection.end());
         m_selection.clear();
         m_selection.insert(additions.begin(), additions.end());
         m_on_update(std::move(additions), std::move(selection));
       } else {
-        m_selection.erase(removals.begin(), removals.end());
+        for(auto removal : removals) {
+          m_selection.erase(removal);
+        }
         m_selection.insert(additions.begin(), additions.end());
         m_on_update(std::move(additions), std::move(removals));
       }

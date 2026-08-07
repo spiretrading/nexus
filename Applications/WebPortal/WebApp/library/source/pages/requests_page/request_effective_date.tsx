@@ -71,7 +71,7 @@ function formatLabel(date: Date): string {
 const STYLES = StyleSheet.create({
   container: {
     display: 'inline-flex',
-    alignItems: 'center' as 'center',
+    alignItems: 'center',
     gap: '4px'
   },
   calendar: {
@@ -90,6 +90,6 @@ const STYLES = StyleSheet.create({
     fontSize: '0.875rem',
     fontFamily: 'Roboto',
     color: '#5D5E6D',
-    whiteSpace: 'nowrap' as 'nowrap'
+    whiteSpace: 'nowrap'
   }
 });

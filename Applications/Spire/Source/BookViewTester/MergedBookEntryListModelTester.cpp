@@ -1,5 +1,4 @@
 #include <doctest/doctest.h>
-#include "Nexus/Definitions/DefaultVenueDatabase.hpp"
 #include "Spire/BookView/MergedBookEntryListModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -19,10 +18,10 @@ TEST_SUITE("MergedBookEntryListModel") {
   }
   TEST_CASE("constructor_book_quotes") {
     auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
-    quotes->push(BookQuote("TSX", false, DefaultVenues::TSX,
+    quotes->push(BookQuote("TSX", false, Venues::TSX,
       Quote(Money::ONE, 100, Side::BID),
       time_from_string("2016-07-31 19:00:00")));
-    quotes->push(BookQuote("TSX", false, DefaultVenues::TSX,
+    quotes->push(BookQuote("TSX", false, Venues::TSX,
       Quote(2 * Money::ONE, 200, Side::BID),
       time_from_string("2016-07-31 19:01:00")));
     auto list = MergedBookEntryListModel(quotes,
@@ -60,10 +59,10 @@ TEST_SUITE("MergedBookEntryListModel") {
   }
   TEST_CASE("constructor_full") {
     auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
-    quotes->push(BookQuote("TSX", false, DefaultVenues::TSX,
+    quotes->push(BookQuote("TSX", false, Venues::TSX,
       Quote(Money::ONE, 100, Side::BID),
       time_from_string("2016-07-31 19:00:00")));
-    quotes->push(BookQuote("TSX", false, DefaultVenues::TSX,
+    quotes->push(BookQuote("TSX", false, Venues::TSX,
       Quote(2 * Money::ONE, 200, Side::BID),
       time_from_string("2016-07-31 19:01:00")));
     auto orders = std::make_shared<ArrayListModel<BookViewModel::UserOrder>>();
@@ -90,7 +89,7 @@ TEST_SUITE("MergedBookEntryListModel") {
     auto list = MergedBookEntryListModel(quotes,
       std::make_shared<ArrayListModel<BookViewModel::UserOrder>>(),
       std::make_shared<LocalValueModel<optional<OrderFields>>>());
-    auto quote = BookQuote("TSX", false, DefaultVenues::TSX,
+    auto quote = BookQuote("TSX", false, Venues::TSX,
       Quote(Money::ONE, 100, Side::BID),
       time_from_string("2016-07-31 19:00:00"));
     quotes->push(quote);
@@ -135,7 +134,7 @@ TEST_SUITE("MergedBookEntryListModel") {
     auto orders = std::make_shared<ArrayListModel<BookViewModel::UserOrder>>();
     auto preview = std::make_shared<LocalValueModel<optional<OrderFields>>>();
     auto list = MergedBookEntryListModel(quotes, orders, preview);
-    auto quote = BookQuote("TSX", false, DefaultVenues::TSX,
+    auto quote = BookQuote("TSX", false, Venues::TSX,
       Quote(Money::ONE, 100, Side::BID),
       time_from_string("2016-07-31 19:00:00"));
     quotes->push(quote);

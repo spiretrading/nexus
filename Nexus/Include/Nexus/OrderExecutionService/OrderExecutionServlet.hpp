@@ -9,12 +9,14 @@
 #include <Beam/Queries/IndexedSubscriptions.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
+#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/ReportException.hpp>
 #include <boost/functional/factory.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/throw_exception.hpp>
+#include "Nexus/Accounting/InventorySnapshotModel.hpp"
 #include "Nexus/Accounting/ShortingModel.hpp"
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/AdministrationService/TradingGroup.hpp"
@@ -79,10 +81,6 @@ namespace Nexus {
 
       /**
        * Constructs an OrderExecutionServlet.
-       * @param session_start_time The time when the current trading session
-       *        started.
-       * @param venues The VenueDatabase to use.
-       * @param destinations The DestinationDatabase to use.
        * @param time_client Initializes the TimeClient.
        * @param service_locator_client Initializes the ServiceLocatorClient.
        * @param uid_client Initializes the UidClient.
@@ -93,10 +91,9 @@ namespace Nexus {
       template<Beam::Initializes<T> TF, Beam::Initializes<S> SF,
         Beam::Initializes<U> UF, Beam::Initializes<A> AF,
         Beam::Initializes<O> OF, Beam::Initializes<D> DF>
-      OrderExecutionServlet(boost::posix_time::ptime session_start_time,
-        VenueDatabase venues, DestinationDatabase destinations,
-        TF&& time_client, SF&& service_locator_client, UF&& uid_client,
-        AF&& administration_client, OF&& driver, DF&& data_store);
+      OrderExecutionServlet(TF&& time_client, SF&& service_locator_client,
+        UF&& uid_client, AF&& administration_client, OF&& driver,
+        DF&& data_store);
 
       void register_services(
         Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots);
@@ -105,10 +102,14 @@ namespace Nexus {
       void close();
 
     private:
+      struct SnapshotCheckpoint {
+        InventorySnapshotModel m_model;
+        boost::posix_time::ptime m_timestamp;
+      };
+      using SyncSnapshotCheckpoint =
+        Beam::Sync<SnapshotCheckpoint, Beam::Mutex>;
       using SyncShortingModel = Beam::Sync<ShortingModel>;
-      boost::posix_time::ptime m_session_start_time;
-      VenueDatabase m_venues;
-      DestinationDatabase m_destinations;
+      static inline const auto SNAPSHOT_INTERVAL = boost::posix_time::hours(5);
       Beam::local_ptr_t<T> m_time_client;
       Beam::local_ptr_t<S> m_service_locator_client;
       Beam::local_ptr_t<U> m_uid_client;
@@ -125,6 +126,8 @@ namespace Nexus {
       std::vector<std::shared_ptr<PrimitiveOrder>> m_rejected_orders;
       Beam::SynchronizedUnorderedMap<Beam::DirectoryEntry,
         std::shared_ptr<SyncShortingModel>> m_shorting_models;
+      Beam::SynchronizedUnorderedMap<Beam::DirectoryEntry,
+        std::shared_ptr<SyncSnapshotCheckpoint>> m_checkpoints;
       Beam::SynchronizedUnorderedSet<OrderId> m_live_orders;
       Beam::OpenState m_open_state;
       Beam::RoutineTaskQueue m_tasks;
@@ -134,7 +137,8 @@ namespace Nexus {
       void recover(const Beam::DirectoryEntry& account);
       void recover_trading_session();
       void on_execution_report(const ExecutionReport& report,
-        const Beam::DirectoryEntry& account, SyncShortingModel& shorting_model);
+        const Beam::DirectoryEntry& account, SyncShortingModel& shorting_model,
+        SyncSnapshotCheckpoint& checkpoint);
       void on_load_order_by_id_request(Beam::RequestToken<
         ServiceProtocolClient, LoadOrderByIdService>& request, OrderId id);
       void on_query_order_submissions_request(Beam::RequestToken<
@@ -174,14 +178,9 @@ namespace Nexus {
     Beam::Initializes<U> UF, Beam::Initializes<A> AF, Beam::Initializes<O> OF,
     Beam::Initializes<D> DF>
   OrderExecutionServlet<C, T, S, U, A, O, D>::OrderExecutionServlet(
-      boost::posix_time::ptime session_start_time, VenueDatabase venues,
-      DestinationDatabase destinations, TF&& time_client,
-      SF&& service_locator_client, UF&& uid_client, AF&& administration_client,
-      OF&& driver, DF&& data_store)
-    : m_session_start_time(session_start_time),
-      m_venues(std::move(venues)),
-      m_destinations(std::move(destinations)),
-      m_time_client(std::forward<TF>(time_client)),
+      TF&& time_client, SF&& service_locator_client, UF&& uid_client,
+      AF&& administration_client, OF&& driver, DF&& data_store)
+    : m_time_client(std::forward<TF>(time_client)),
       m_service_locator_client(std::forward<SF>(service_locator_client)),
       m_uid_client(std::forward<UF>(uid_client)),
       m_administration_client(std::forward<AF>(administration_client)),
@@ -287,6 +286,7 @@ namespace Nexus {
     m_data_store->close();
     m_driver->close();
     m_shorting_models.clear();
+    m_checkpoints.clear();
     m_open_state.close();
   }
 
@@ -300,21 +300,45 @@ namespace Nexus {
                 IsOrderExecutionDataStore<Beam::dereference_t<D>>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::recover(
       const Beam::DirectoryEntry& account) {
+    auto snapshot = m_data_store->load_inventory_snapshot(account);
+    auto checkpoint = m_checkpoints.get_or_insert(account, [&] {
+      return std::make_shared<SyncSnapshotCheckpoint>(
+        InventorySnapshotModel(snapshot), m_time_client->get_time());
+    });
     auto recovery_query = AccountQuery();
     recovery_query.set_index(account);
-    recovery_query.set_range(m_session_start_time, Beam::Sequence::LAST);
+    recovery_query.set_range(
+      Beam::increment(snapshot.m_sequence), Beam::Sequence::LAST);
     recovery_query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
-    auto session_orders = m_data_store->load_order_records(recovery_query);
+    auto trailing_orders = m_data_store->load_order_records(recovery_query);
     auto live_orders =
       m_data_store->load_order_records(make_live_orders_query(account));
-    auto orders = std::vector<SequencedOrderRecord>();
-    std::set_union(session_orders.begin(), session_orders.end(),
-      live_orders.begin(), live_orders.end(), std::back_inserter(orders),
+    auto excluded_orders = std::vector<SequencedOrderRecord>();
+    for(auto id : snapshot.m_excluded_orders) {
+      if(auto record = m_data_store->load_order_record(id)) {
+        excluded_orders.push_back(
+          Beam::SequencedValue(*(**record), record->get_sequence()));
+      }
+    }
+    std::sort(excluded_orders.begin(), excluded_orders.end(),
       Beam::SequenceComparator());
-    for(auto& order_record : orders) {
-      auto& shorting_model = *m_shorting_models.get_or_insert(
-        order_record->m_info.m_fields.m_account,
-        boost::factory<std::shared_ptr<SyncShortingModel>>());
+    auto open_orders = std::vector<SequencedOrderRecord>();
+    std::set_union(live_orders.begin(), live_orders.end(),
+      excluded_orders.begin(), excluded_orders.end(),
+      std::back_inserter(open_orders), Beam::SequenceComparator());
+    auto records = std::vector<SequencedOrderRecord>();
+    std::set_union(trailing_orders.begin(), trailing_orders.end(),
+      open_orders.begin(), open_orders.end(), std::back_inserter(records),
+      Beam::SequenceComparator());
+    auto& shorting_model = *m_shorting_models.get_or_insert(
+      account, boost::factory<std::shared_ptr<SyncShortingModel>>());
+    shorting_model.with([&] (auto& shorting_model) {
+      for(auto& inventory : snapshot.m_inventories) {
+        shorting_model.update(
+          inventory.m_position.m_ticker, inventory.m_position.m_quantity);
+      }
+    });
+    for(auto& order_record : records) {
       shorting_model.with([&] (auto& shorting_model) {
         shorting_model.submit(
           order_record->m_info.m_id, order_record->m_info.m_fields);
@@ -323,26 +347,20 @@ namespace Nexus {
         }
       });
       m_live_orders.insert(order_record->m_info.m_id);
-      auto order = std::shared_ptr<Order>();
-      try {
-        order = m_driver->recover(Beam::SequencedValue(Beam::IndexedValue(
-          *order_record, account), order_record.get_sequence()));
-      } catch(const std::exception&) {
-        try {
-          std::throw_with_nested(
-            std::runtime_error("Unable to recover order: " +
-              boost::lexical_cast<std::string>(order_record->m_info.m_id)));
-        } catch(const std::exception&) {
-          std::cout << BEAM_REPORT_CURRENT_EXCEPTION() << std::flush;
-          continue;
-        }
-      }
+    }
+    auto orders = m_driver->restore(account, snapshot, records);
+    for(auto i = std::size_t(0); i != orders.size(); ++i) {
+      auto& order = orders[i];
+      auto& order_record = records[i];
+      Beam::with(*checkpoint, [&] (auto& checkpoint) {
+        checkpoint.m_model.add(order_record.get_sequence(), order);
+      });
       order->get_publisher().with([&] {
         auto existing_reports = boost::optional<std::vector<ExecutionReport>>();
         order->get_publisher().monitor(m_tasks.get_slot<ExecutionReport>(
           std::bind(&OrderExecutionServlet::on_execution_report, this,
-            std::placeholders::_1, order->get_info().m_fields.m_account,
-            std::ref(shorting_model))), Beam::out(existing_reports));
+            std::placeholders::_1, account, std::ref(shorting_model),
+            std::ref(*checkpoint))), Beam::out(existing_reports));
         if(existing_reports) {
           existing_reports->erase(
             existing_reports->begin(), existing_reports->begin() +
@@ -350,7 +368,7 @@ namespace Nexus {
           for(auto& report : *existing_reports) {
             m_tasks.push(std::bind_front(
               &OrderExecutionServlet::on_execution_report, this, report,
-              order->get_info().m_fields.m_account, std::ref(shorting_model)));
+              account, std::ref(shorting_model), std::ref(*checkpoint)));
           }
         }
       });
@@ -386,7 +404,7 @@ namespace Nexus {
                 IsOrderExecutionDataStore<Beam::dereference_t<D>>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::on_execution_report(
       const ExecutionReport& report, const Beam::DirectoryEntry& account,
-      SyncShortingModel& shorting_model) {
+      SyncShortingModel& shorting_model, SyncSnapshotCheckpoint& checkpoint) {
     Beam::with(shorting_model, [&] (auto& model) {
       model.update(report);
     });
@@ -408,6 +426,13 @@ namespace Nexus {
                 clients, sequenced_report);
             });
         });
+      Beam::with(checkpoint, [&] (auto& checkpoint) {
+        checkpoint.m_model.update(report);
+        if(report.m_timestamp - checkpoint.m_timestamp > SNAPSHOT_INTERVAL) {
+          m_data_store->store(account, checkpoint.m_model.make_snapshot());
+          checkpoint.m_timestamp = report.m_timestamp;
+        }
+      });
       if(is_terminal(report.m_status)) {
         m_live_orders.erase(report.m_id);
       }
@@ -594,7 +619,7 @@ namespace Nexus {
         revised_fields.emplace(*order_fields);
         order_fields = revised_fields.get_ptr();
       }
-      revised_fields->m_destination = m_destinations.get_preferred_destination(
+      revised_fields->m_destination = DESTINATIONS.get_preferred_destination(
         order_fields->m_ticker.get_venue()).m_id;
     }
     if(!order_fields->m_currency) {
@@ -603,12 +628,17 @@ namespace Nexus {
         order_fields = revised_fields.get_ptr();
       }
       revised_fields->m_currency =
-        m_venues.from(order_fields->m_ticker.get_venue()).m_currency;
+        VENUES.from(order_fields->m_ticker.get_venue()).m_currency;
     }
     auto order_id = m_uid_client->load_next_uid();
     auto shorting_model =
       m_shorting_models.get_or_insert(order_fields->m_account,
         boost::factory<std::shared_ptr<SyncShortingModel>>());
+    auto checkpoint = m_checkpoints.get_or_insert(order_fields->m_account,
+      [&] {
+        return std::make_shared<SyncSnapshotCheckpoint>(
+          InventorySnapshotModel(), m_time_client->get_time());
+      });
     auto shorting_flag = Beam::with(*shorting_model, [&] (auto& model) {
       return model.submit(order_id, *order_fields);
     });
@@ -632,30 +662,43 @@ namespace Nexus {
       }
       return m_driver->submit(order_info);
     }();
-    m_registry.publish(order_info,
-      [&] {
-        return load_initial_sequences(
-          *m_data_store, order_info.m_fields.m_account);
-      },
-      [&] (const auto& info) {
-        m_live_orders.insert((*info)->m_id);
-        m_data_store->store(info);
-        request.set(info);
-        auto order_record = Beam::SequencedValue(Beam::IndexedValue(
-          OrderRecord(**info, {}), info->get_index()), info.get_sequence());
-        m_submission_subscriptions.publish(order_record,
-          [&] (const auto& client) {
-            return &client != &request.get_client();
-          },
-          [&] (const auto& clients) {
-            Beam::broadcast_record_message<OrderSubmissionMessage>(
-              clients, order_record);
+    try {
+      m_registry.publish(order_info,
+        [&] {
+          return load_initial_sequences(
+            *m_data_store, order_info.m_fields.m_account);
+        },
+        [&] (const auto& info) {
+          m_live_orders.insert((*info)->m_id);
+          Beam::with(*checkpoint, [&] (auto& checkpoint) {
+            checkpoint.m_model.add(info.get_sequence(), order);
           });
-      });
+          m_data_store->store(info);
+          try {
+            request.set(info);
+          } catch(const std::exception&) {}
+          auto order_record = Beam::SequencedValue(Beam::IndexedValue(
+            OrderRecord(**info, {}), info->get_index()), info.get_sequence());
+          m_submission_subscriptions.publish(order_record,
+            [&] (const auto& client) {
+              return &client != &request.get_client();
+            },
+            [&] (const auto& clients) {
+              Beam::broadcast_record_message<OrderSubmissionMessage>(
+                clients, order_record);
+            });
+        });
+    } catch(...) {
+      order->get_publisher().monitor(m_tasks.get_slot<ExecutionReport>(
+        std::bind(&OrderExecutionServlet::on_execution_report, this,
+          std::placeholders::_1, order_info.m_fields.m_account,
+          std::ref(*shorting_model), std::ref(*checkpoint))));
+      throw;
+    }
     order->get_publisher().monitor(m_tasks.get_slot<ExecutionReport>(
       std::bind(&OrderExecutionServlet::on_execution_report, this,
         std::placeholders::_1, order_info.m_fields.m_account,
-        std::ref(*shorting_model))));
+        std::ref(*shorting_model), std::ref(*checkpoint))));
   }
 
   template<typename C, typename T, typename S, typename U, typename A,

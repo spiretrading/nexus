@@ -124,39 +124,39 @@ export class NewRuleModal extends React.Component<Properties, State> {
     this.setState({selection: -1});
   }
 
-  private static readonly STYLE = {
+  private static readonly STYLE: Record<string, React.CSSProperties> = {
     modalButtonWrapper: {
       height: '20px',
       width: '130px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      alignItems: 'center' as 'center',
-      cursor: 'pointer' as 'pointer'
+      display: 'flex',
+      flexDirection: 'row',
+      alignItems: 'center',
+      cursor: 'pointer'
     },
     newRuleText: {
       font: '400 14px Roboto',
       paddingLeft: '18px',
       color: '#333333',
-      cursor: 'pointer' as 'pointer'
+      cursor: 'pointer'
     },
     imageWrapper: {
-      display: 'flex' as 'flex',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'center',
       width: '20px',
       height: '20px',
-      cursor: 'pointer' as 'pointer'
+      cursor: 'pointer'
     },
     hidden: {
-      visibility: 'hidden' as 'hidden',
-      display: 'none' as 'none'
+      visibility: 'hidden',
+      display: 'none'
     },
     contentWrapper: {
       width: '300px',
-      boxSizing: 'border-box' as 'border-box'
+      boxSizing: 'border-box'
     },
     footerWrapper: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       paddingLeft: '18px',
       paddingRight: '18px'
     },
@@ -165,20 +165,20 @@ export class NewRuleModal extends React.Component<Properties, State> {
       paddingBottom: '30px'
     },
     buttonWrapperSmall: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'wrap' as 'wrap',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      alignItems: 'center',
       paddingTop: '30px',
       paddingBottom: '40px'
     },
     buttonWrapper: {
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'wrap' as 'wrap',
-      justifyContent: 'center' as 'center',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'center',
+      alignItems: 'center',
       paddingTop: '30px',
       paddingBottom: '18px'
     }
@@ -186,28 +186,28 @@ export class NewRuleModal extends React.Component<Properties, State> {
 
   private static readonly EXTRA_STYLE = StyleSheet.create({
     optionRow: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '40px',
       width: '100%',
       font: '400 14px Roboto',
       color: '#333333',
-      display: 'flex' as 'flex',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      alignItems: 'center',
       paddingLeft: '18px',
-      cursor: 'pointer' as 'pointer',
+      cursor: 'pointer',
       ':hover': {
         backgroundColor: '#F8F8F8'
       }
     },
     selectedRow: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '40px',
       width: '100%',
       font: '400 14px Roboto',
       color: '#FFFFFF',
       backgroundColor: '#684BC7',
-      display: 'flex' as 'flex',
-      alignItems: 'center' as 'center',
+      display: 'flex',
+      alignItems: 'center',
       paddingLeft: '18px'
     }
   });

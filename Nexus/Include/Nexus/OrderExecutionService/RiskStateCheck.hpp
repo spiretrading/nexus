@@ -36,6 +36,9 @@ namespace Nexus {
       explicit RiskStateCheck(CF&& administration_client);
 
       void submit(const OrderInfo& info) override;
+      void restore(const Beam::DirectoryEntry& account,
+        const InventorySnapshot& snapshot,
+        const std::vector<std::shared_ptr<Order>>& orders) override;
       void add(const std::shared_ptr<Order>& order) override;
 
     private:
@@ -45,6 +48,7 @@ namespace Nexus {
         Beam::MultiQueueWriter<ExecutionReport> m_execution_report_queue;
 
         AccountEntry();
+        AccountEntry(Beam::View<const Inventory> positions);
       };
       Beam::local_ptr_t<C> m_administration_client;
       Beam::SynchronizedUnorderedMap<
@@ -68,6 +72,12 @@ namespace Nexus {
     : m_risk_state_queue(std::make_shared<Beam::StateQueue<RiskState>>()) {}
 
   template<typename C> requires IsAdministrationClient<Beam::dereference_t<C>>
+  RiskStateCheck<C>::AccountEntry::AccountEntry(
+    Beam::View<const Inventory> positions)
+    : m_position_order_book(positions),
+      m_risk_state_queue(std::make_shared<Beam::StateQueue<RiskState>>()) {}
+
+  template<typename C> requires IsAdministrationClient<Beam::dereference_t<C>>
   template<Beam::Initializes<C> CF>
   RiskStateCheck<C>::RiskStateCheck(CF&& administration_client)
     : m_administration_client(std::forward<CF>(administration_client)) {}
@@ -88,6 +98,21 @@ namespace Nexus {
           }
         }
       });
+  }
+
+  template<typename C> requires IsAdministrationClient<Beam::dereference_t<C>>
+  void RiskStateCheck<C>::restore(const Beam::DirectoryEntry& account,
+      const InventorySnapshot& snapshot,
+      const std::vector<std::shared_ptr<Order>>& orders) {
+    m_account_entries.get_or_insert(account, [&] {
+      auto entry = std::make_shared<AccountEntry>(snapshot.m_inventories);
+      m_administration_client->get_risk_state_publisher(account).monitor(
+        entry->m_risk_state_queue);
+      return entry;
+    });
+    for(auto& order : orders) {
+      add(order);
+    }
   }
 
   template<typename C> requires IsAdministrationClient<Beam::dereference_t<C>>

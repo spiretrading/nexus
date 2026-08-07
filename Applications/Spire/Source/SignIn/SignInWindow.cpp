@@ -316,6 +316,9 @@ void SignInWindow::layout_sign_in() {
     m_server_box = new DropDownBox(server_list);
     m_server_box->setFixedSize(scale(280, 30));
     m_server_box->get_current()->set(0);
+    m_server_key_observer.emplace(*m_server_box);
+    m_server_key_observer->connect_key_press_signal(
+      std::bind_front(&SignInWindow::on_key_press, this));
     update_style(*m_server_box, [] (auto& style) {
       style = SERVER_BOX_STYLE(style);
     });
@@ -366,6 +369,7 @@ void SignInWindow::clear_sign_in() {
   m_password_key_observer = none;
   m_chroma_hash_widget = nullptr;
   m_server_box = nullptr;
+  m_server_key_observer = none;
   m_last_focus = nullptr;
 }
 
@@ -444,6 +448,10 @@ void SignInWindow::try_sign_in() {
 
 void SignInWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
   if(event.key() == Qt::Key_Enter || event.key() == Qt::Key_Return) {
+    auto is_from_drop_down = target.window() != window();
+    if(is_from_drop_down) {
+      return;
+    }
     if(m_state == State::NONE || m_state == State::ERROR) {
       m_last_focus = &target;
       try_sign_in();

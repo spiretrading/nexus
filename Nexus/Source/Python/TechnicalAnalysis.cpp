@@ -3,6 +3,7 @@
 #include "Nexus/ChartingService/ChartingClient.hpp"
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
+#include "Nexus/TechnicalAnalysis/SessionTechnicals.hpp"
 #include "Nexus/TechnicalAnalysis/StandardTickerQueries.hpp"
 
 using namespace Beam;
@@ -17,58 +18,133 @@ using namespace pybind11;
 void Nexus::Python::export_technical_analysis(module& module) {
   export_candlestick<Candlestick<object, object>>(module, "Candlestick");
   export_candlestick<PriceCandlestick>(module, "PriceCandlestick");
+  export_session_technicals(module);
   export_standard_ticker_queries(module);
 }
 
+void Nexus::Python::export_session_technicals(module& module) {
+  export_default_methods(
+      class_<SessionTechnicals>(module, "SessionTechnicals")).
+    def(init<optional<Money>, optional<Money>, optional<Money>, optional<Money>,
+      Quantity>()).
+    def_readwrite("open", &SessionTechnicals::m_open).
+    def_readwrite("previous_close", &SessionTechnicals::m_previous_close).
+    def_readwrite("high", &SessionTechnicals::m_high).
+    def_readwrite("low", &SessionTechnicals::m_low).
+    def_readwrite("volume", &SessionTechnicals::m_volume);
+  module.def("update", [] (SessionTechnicals& technicals,
+      const TimeAndSale& time_and_sale, std::string_view market_center) {
+    update(technicals, time_and_sale, market_center);
+  });
+}
+
 void Nexus::Python::export_standard_ticker_queries(module& module) {
-  module.def("make_open_query", &make_open_query);
+  module.def("make_open_query",
+    overload_cast<const Ticker&, ptime, const tz_database&>(&make_open_query));
+  module.def(
+    "make_open_query", overload_cast<const Ticker&, ptime>(&make_open_query));
   module.def("load_open",
     [] (MarketDataClient& client, const Ticker& ticker, ptime date,
-        const VenueDatabase& venues, const tz_database& time_zones) {
-      return load_open(client, ticker, date, venues, time_zones);
+        const tz_database& time_zones) {
+      return load_open(client, ticker, date, time_zones);
+    }, call_guard<GilRelease>());
+  module.def("load_open",
+    [] (MarketDataClient& client, const Ticker& ticker, ptime date) {
+      return load_open(client, ticker, date);
     }, call_guard<GilRelease>());
   module.def("query_open",
-    [] (SharedObject shared_client, const Ticker& ticker,
-        ptime date, const VenueDatabase& venues, const tz_database& time_zones,
+    [] (SharedObject shared_client, const Ticker& ticker, ptime date,
+        const tz_database& time_zones, ScopedQueueWriter<TimeAndSale> queue) {
+      auto& client = shared_client->cast<MarketDataClient&>();
+      return spawn([=, &client, shared_client = std::move(shared_client),
+          queue = std::move(queue)] mutable {
+        auto query = RoutineHandler(
+          query_open(client, ticker, date, time_zones, std::move(queue)));
+        query.wait();
+      });
+    });
+  module.def("query_open",
+    [] (SharedObject shared_client, const Ticker& ticker, ptime date,
         ScopedQueueWriter<TimeAndSale> queue) {
       auto& client = shared_client->cast<MarketDataClient&>();
       return spawn([=, &client, shared_client = std::move(shared_client),
           queue = std::move(queue)] mutable {
-        auto query = RoutineHandler(query_open(
-          client, ticker, date, venues, time_zones, std::move(queue)));
+        auto query = RoutineHandler(
+          query_open(client, ticker, date, std::move(queue)));
         query.wait();
       });
     });
-  module.def("make_previous_close_query", &make_previous_close_query);
+  module.def("make_previous_close_query",
+    overload_cast<const Ticker&, ptime, const tz_database&>(
+      &make_previous_close_query));
+  module.def("make_previous_close_query",
+    overload_cast<const Ticker&, ptime>(&make_previous_close_query));
   module.def("load_previous_close",
     [] (MarketDataClient& client, const Ticker& ticker, ptime date,
-        const VenueDatabase& venues, const tz_database& time_zones) {
-      return load_previous_close(client, ticker, date, venues, time_zones);
+        const tz_database& time_zones) {
+      return load_previous_close(client, ticker, date, time_zones);
     }, call_guard<GilRelease>());
-  module.def("make_daily_query_range", &make_daily_query_range);
-  module.def("make_query", &make_query);
-  module.def("make_daily_high_query", &make_daily_high_query);
+  module.def("load_previous_close",
+    [] (MarketDataClient& client, const Ticker& ticker, ptime date) {
+      return load_previous_close(client, ticker, date);
+    }, call_guard<GilRelease>());
+  module.def("make_daily_query_range",
+    overload_cast<const Ticker&, ptime, ptime, const tz_database&>(
+      &make_daily_query_range));
+  module.def("make_daily_query_range",
+    overload_cast<const Ticker&, ptime, ptime>(&make_daily_query_range));
+  module.def("make_query",
+    overload_cast<const Ticker&, ptime, ptime, const tz_database&,
+      const Expression&>(&make_query));
+  module.def("make_query",
+    overload_cast<const Ticker&, ptime, ptime, const Expression&>(
+      &make_query));
+  module.def("make_daily_high_query",
+    overload_cast<const Ticker&, ptime, ptime, const tz_database&>(
+      &make_daily_high_query));
+  module.def("make_daily_high_query",
+    overload_cast<const Ticker&, ptime, ptime>(&make_daily_high_query));
   module.def("query_daily_high",
-    [] (ChartingClient& client, const Ticker& ticker, ptime start,
-        ptime end, const VenueDatabase& venues, const tz_database& time_zones,
-        ScopedQueueWriter<Money> queue) {
+    [] (ChartingClient& client, const Ticker& ticker, ptime start, ptime end,
+        const tz_database& time_zones, ScopedQueueWriter<Money> queue) {
       query_daily_high(
-        client, ticker, start, end, venues, time_zones, std::move(queue));
+        client, ticker, start, end, time_zones, std::move(queue));
     });
-  module.def("make_daily_low_query", &make_daily_low_query);
-  module.def("query_daily_low",
-    [] (ChartingClient& client, const Ticker& ticker, ptime start,
-        ptime end, const VenueDatabase& venues, const tz_database& time_zones,
+  module.def("query_daily_high",
+    [] (ChartingClient& client, const Ticker& ticker, ptime start, ptime end,
         ScopedQueueWriter<Money> queue) {
-      query_daily_low(
-        client, ticker, start, end, venues, time_zones, std::move(queue));
+      query_daily_high(client, ticker, start, end, std::move(queue));
     });
-  module.def("make_daily_volume_query", &make_daily_volume_query);
+  module.def("make_daily_low_query",
+    overload_cast<const Ticker&, ptime, ptime, const tz_database&>(
+      &make_daily_low_query));
+  module.def("make_daily_low_query",
+    overload_cast<const Ticker&, ptime, ptime>(&make_daily_low_query));
+  module.def("query_daily_low",
+    [] (ChartingClient& client, const Ticker& ticker, ptime start, ptime end,
+        const tz_database& time_zones, ScopedQueueWriter<Money> queue) {
+      query_daily_low(
+        client, ticker, start, end, time_zones, std::move(queue));
+    });
+  module.def("query_daily_low",
+    [] (ChartingClient& client, const Ticker& ticker, ptime start, ptime end,
+        ScopedQueueWriter<Money> queue) {
+      query_daily_low(client, ticker, start, end, std::move(queue));
+    });
+  module.def("make_daily_volume_query",
+    overload_cast<const Ticker&, ptime, ptime, const tz_database&>(
+      &make_daily_volume_query));
+  module.def("make_daily_volume_query",
+    overload_cast<const Ticker&, ptime, ptime>(&make_daily_volume_query));
   module.def("query_daily_volume",
     [] (ChartingClient& client, Ticker ticker, ptime start, ptime end,
-        const VenueDatabase& venues, const tz_database& time_zones,
-        ScopedQueueWriter<Quantity> queue) {
+        const tz_database& time_zones, ScopedQueueWriter<Quantity> queue) {
       query_daily_volume(
-        client, ticker, start, end, venues, time_zones, std::move(queue));
+        client, ticker, start, end, time_zones, std::move(queue));
+    });
+  module.def("query_daily_volume",
+    [] (ChartingClient& client, Ticker ticker, ptime start, ptime end,
+        ScopedQueueWriter<Quantity> queue) {
+      query_daily_volume(client, ticker, start, end, std::move(queue));
     });
 }

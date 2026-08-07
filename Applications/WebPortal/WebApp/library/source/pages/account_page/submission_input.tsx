@@ -74,11 +74,11 @@ export class SubmissionInput extends React.Component<Properties> {
       </VBoxLayout>);
   }
 
-  private static readonly STYLES = {
+  private static readonly STYLES: Record<string, React.CSSProperties> = {
     base: {
       font: '400 14px Roboto',
       width: '100%',
-      textAlign: 'center' as 'center'
+      textAlign: 'center'
     },
     valid: {
       color: '#36BB55'

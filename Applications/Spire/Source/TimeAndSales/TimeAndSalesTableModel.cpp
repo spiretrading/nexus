@@ -25,21 +25,6 @@ namespace {
   }
 }
 
-namespace Beam {
-  template<>
-  struct TimestampAccessor<Spire::TimeAndSalesModel::Entry> {
-    const boost::posix_time::ptime& operator ()(
-        const Spire::TimeAndSalesModel::Entry& value) const noexcept {
-      return get_timestamp(value.m_time_and_sale);
-    }
-
-    boost::posix_time::ptime& operator ()(
-        Spire::TimeAndSalesModel::Entry& value) const noexcept {
-      return value.m_time_and_sale->m_timestamp;
-    }
-  };
-}
-
 TimeAndSalesTableModel::TimeAndSalesTableModel(
   std::shared_ptr<TimeAndSalesModel> model)
   : m_model(std::move(model)),
@@ -49,6 +34,22 @@ TimeAndSalesTableModel::TimeAndSalesTableModel(
 const std::shared_ptr<TimeAndSalesModel>&
     TimeAndSalesTableModel::get_model() const {
   return m_model;
+}
+
+void TimeAndSalesTableModel::set_model(
+    std::shared_ptr<TimeAndSalesModel> model) {
+  m_connection.disconnect();
+  m_promise.disconnect();
+  m_transaction.transact([&] {
+    while(!m_entries.empty()) {
+      m_transaction.push(TableModel::PreRemoveOperation(0));
+      m_entries.pop_back();
+      m_transaction.push(TableModel::RemoveOperation(0));
+    }
+  });
+  m_model = std::move(model);
+  m_connection = m_model->connect_update_signal(
+    std::bind_front(&TimeAndSalesTableModel::on_update, this));
 }
 
 void TimeAndSalesTableModel::load_history(int max_count) {
@@ -103,37 +104,40 @@ void TimeAndSalesTableModel::load_snapshot(Sequence last, int count) {
   m_begin_loading_signal();
   m_promise = m_model->query_until(last, count).then(
     [=] (auto&& result) {
-      auto& snapshot = result.get();
-      if(!snapshot.empty()) {
-        if(m_entries.empty() ||
-            get_timestamp(snapshot.back()) < get_timestamp(m_entries.front())) {
-          auto size = get_row_size();
-          m_entries.insert(m_entries.begin(),
-            std::make_move_iterator(snapshot.begin()),
-            std::make_move_iterator(snapshot.end()));
-          m_transaction.transact([&] {
-            for(auto i = 0; i < std::ssize(snapshot); ++i) {
-              m_transaction.push(TableModel::AddOperation(size + i));
-            }
-          });
-        } else if(get_timestamp(snapshot.front()) <
-            get_timestamp(m_entries.front())) {
-          auto size = get_row_size();
-          auto iter = std::lower_bound(snapshot.begin(), snapshot.end(),
-            get_timestamp(m_entries.front()),
-            [] (const auto& entry, const auto timestamp) {
-              return get_timestamp(entry) < timestamp;
+      try {
+        auto& snapshot = result.get();
+        if(!snapshot.empty()) {
+          if(m_entries.empty() ||
+              snapshot.back().m_time_and_sale.get_sequence() <
+                m_entries.front().m_time_and_sale.get_sequence()) {
+            auto size = get_row_size();
+            m_entries.insert(m_entries.begin(),
+              std::make_move_iterator(snapshot.begin()),
+              std::make_move_iterator(snapshot.end()));
+            m_transaction.transact([&] {
+              for(auto i = 0; i < std::ssize(snapshot); ++i) {
+                m_transaction.push(TableModel::AddOperation(size + i));
+              }
             });
-          m_entries.insert(m_entries.begin(),
-            std::make_move_iterator(snapshot.begin()),
-            std::make_move_iterator(iter));
-          m_transaction.transact([&] {
-            for(auto i = 0; i < std::distance(snapshot.begin(), iter); ++i) {
-              m_transaction.push(TableModel::AddOperation(size + i));
-            }
-          });
+          } else if(snapshot.front().m_time_and_sale.get_sequence() <
+              m_entries.front().m_time_and_sale.get_sequence()) {
+            auto size = get_row_size();
+            auto sequence = m_entries.front().m_time_and_sale.get_sequence();
+            auto iter = std::lower_bound(snapshot.begin(), snapshot.end(),
+              sequence, [] (const auto& entry, const auto& bound) {
+                return entry.m_time_and_sale.get_sequence() < bound;
+              });
+            m_entries.insert(m_entries.begin(),
+              std::make_move_iterator(snapshot.begin()),
+              std::make_move_iterator(iter));
+            m_transaction.transact([&] {
+              for(auto i = 0; i < std::distance(snapshot.begin(), iter); ++i) {
+                m_transaction.push(TableModel::AddOperation(size + i));
+              }
+            });
+          }
         }
-      }
+      } catch(const std::exception&) {}
       m_end_loading_signal();
     });
 }

@@ -29,14 +29,14 @@ namespace {
 
   auto make_order_fields(Money price) {
     return make_limit_order_fields(DirectoryEntry::ROOT_ACCOUNT,
-      parse_ticker("TST.TSX"), DefaultCurrencies::CAD, Side::BID,
-      DefaultDestinations::TSX, 100, price);
+      parse_ticker("TST.TSX"), Currencies::CAD, Side::BID, Destinations::TSX,
+      100, price);
   }
 
   auto make_hidden_order_fields(Money price) {
     auto fields = make_order_fields(price);
     fields.m_type = OrderType::PEGGED;
-    fields.m_additional_fields.emplace_back(18, "M");
+    fields.m_additional_fields.push_back(make_exec_inst(MID_PRICE_PEG));
     return fields;
   }
 }

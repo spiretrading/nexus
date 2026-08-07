@@ -16,13 +16,11 @@ using namespace Spire::UI;
 
 namespace {
   QVariant Parse(const std::string& line, UserProfile& userProfile) {
-    if(auto country =
-        parse_country_code(line, userProfile.GetCountryDatabase())) {
+    if(auto country = parse_country_code(line)) {
       return QVariant::fromValue(country);
-    } else if(auto venue = parse_venue(line, userProfile.GetVenueDatabase())) {
+    } else if(auto venue = parse_venue(line)) {
       return QVariant::fromValue(venue);
-    } else if(auto ticker =
-        parse_ticker(line, userProfile.GetVenueDatabase())) {
+    } else if(auto ticker = parse_ticker(line)) {
       return QVariant::fromValue(ticker);
     } else if(line == "*") {
       return QVariant::fromValue(Scope::GLOBAL);

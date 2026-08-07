@@ -70,6 +70,8 @@ namespace Spire {
       friend class TimeAndSalesWindowSettings;
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory> m_factory;
       ModelBuilder m_model_builder;
+      std::shared_ptr<ProxyValueModel<TimeAndSalesProperties>>
+        m_properties_proxy;
       std::shared_ptr<TimeAndSalesTableModel> m_table_model;
       TableView* m_table_view;
       TransitionView* m_transition_view;
@@ -80,7 +82,6 @@ namespace Spire {
       void on_context_menu(QWidget* parent, const QPoint& pos);
       void on_export_menu();
       void on_properties_menu();
-      void on_begin_loading();
       void on_end_loading();
       void on_current(const Nexus::Ticker& ticker);
   };

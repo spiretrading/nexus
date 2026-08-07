@@ -155,7 +155,7 @@ export class RequestsPage extends React.Component<Properties, State> {
     container: {
       height: '100%',
       display: 'flex',
-      flexDirection: 'column' as 'column',
+      flexDirection: 'column',
       overflow: 'hidden',
       backgroundColor: '#FFFFFF',
       fontFamily: "'Roboto', system-ui, sans-serif",

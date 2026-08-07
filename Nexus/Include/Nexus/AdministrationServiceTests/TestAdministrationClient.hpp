@@ -22,6 +22,12 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<std::vector<Beam::DirectoryEntry>> m_result;
       };
 
+      /** Records a call to query_accounts(). */
+      struct QueryAccountsOperation {
+        std::string m_query;
+        Beam::Tests::ServiceResult<std::vector<AccountQueryResult>> m_result;
+      };
+
       /** Records a call to load_administrators_root_entry(). */
       struct LoadAdministratorsRootEntryOperation {
         Beam::Tests::ServiceResult<Beam::DirectoryEntry> m_result;
@@ -108,24 +114,10 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<std::vector<Beam::DirectoryEntry>> m_result;
       };
 
-      /** Records a call to store_entitlements(). */
-      struct StoreEntitlementsOperation {
-        Beam::DirectoryEntry m_account;
-        std::vector<Beam::DirectoryEntry> m_entitlements;
-        Beam::Tests::ServiceResult<void> m_result;
-      };
-
       /** Records a call to get_risk_parameters_publisher(). */
       struct MonitorRiskParametersOperation {
         Beam::DirectoryEntry m_account;
         Beam::QueueWriterPublisher<RiskParameters> m_queue;
-      };
-
-      /** Records a call to store_risk_parameters(). */
-      struct StoreRiskParametersOperation {
-        Beam::DirectoryEntry m_account;
-        RiskParameters m_parameters;
-        Beam::Tests::ServiceResult<void> m_result;
       };
 
       /** Records a call to get_risk_state_publisher(). */
@@ -245,19 +237,56 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<Message> m_result;
       };
 
+      /** Records a call to send_notification(). */
+      struct SendNotificationOperation {
+        Beam::DirectoryEntry m_account;
+        std::string m_description;
+        std::string m_data;
+        Notification::Category m_category;
+        Beam::Tests::ServiceResult<Notification> m_result;
+      };
+
+      /** Records a call to mark_notification_as_read(). */
+      struct MarkNotificationAsReadOperation {
+        Notification::Id m_id;
+        Beam::Tests::ServiceResult<void> m_result;
+      };
+
+      /** Records a call to mark_notification_as_unread(). */
+      struct MarkNotificationAsUnreadOperation {
+        Notification::Id m_id;
+        Beam::Tests::ServiceResult<void> m_result;
+      };
+
+      /** Records a call to load_notifications(). */
+      struct LoadNotificationsOperation {
+        Beam::DirectoryEntry m_account;
+        Notification::Id m_id;
+        Beam::SnapshotLimit m_limit;
+        Notification::ReadState m_read_state;
+        Beam::Tests::ServiceResult<std::vector<Notification>> m_result;
+      };
+
+      /** Records a call to monitor_notifications(). */
+      struct MonitorNotificationsOperation {
+        Beam::DirectoryEntry m_account;
+        Beam::ScopedQueueWriter<Notification> m_queue;
+        Beam::Tests::ServiceResult<Notification::Id> m_result;
+      };
+
       /**
        * A variant covering all possible TestAdministrationClient operations.
        */
       using Operation = std::variant<LoadAccountsByRolesOperation,
-        LoadAdministratorsRootEntryOperation, LoadServicesRootEntryOperation,
-        LoadTradingGroupsRootEntryOperation, CheckAdministratorOperation,
-        LoadAccountRolesOperation, LoadParentChildAccountRolesOperation,
-        LoadParentTradingGroupOperation, LoadIdentityOperation,
-        StoreIdentityOperation, LoadTradingGroupOperation,
-        LoadManagedTradingGroupsOperation, LoadAdministratorsOperation,
-        LoadServicesOperation, LoadEntitlementsOperation,
-        LoadAccountEntitlementsOperation, StoreEntitlementsOperation,
-        MonitorRiskParametersOperation, StoreRiskParametersOperation,
+        QueryAccountsOperation, LoadAdministratorsRootEntryOperation,
+        LoadServicesRootEntryOperation, LoadTradingGroupsRootEntryOperation,
+        CheckAdministratorOperation, LoadAccountRolesOperation,
+        LoadParentChildAccountRolesOperation, LoadParentTradingGroupOperation,
+        LoadIdentityOperation, StoreIdentityOperation,
+        LoadTradingGroupOperation, LoadManagedTradingGroupsOperation,
+        LoadAdministratorsOperation, LoadServicesOperation,
+        LoadEntitlementsOperation, LoadAccountEntitlementsOperation,
+        MonitorRiskParametersOperation,
         MonitorRiskStateOperation, StoreRiskStateOperation,
         LoadAccountModificationRequestOperation,
         LoadAccountModificationRequestIdsOperation,
@@ -271,7 +300,10 @@ namespace Nexus::Tests {
         ApproveAccountModificationRequestOperation,
         RejectAccountModificationRequestOperation, LoadMessageOperation,
         LoadMessageIdsOperation,
-        SendAccountModificationRequestMessageOperation>;
+        SendAccountModificationRequestMessageOperation,
+        SendNotificationOperation, MonitorNotificationsOperation,
+        LoadNotificationsOperation, MarkNotificationAsReadOperation,
+        MarkNotificationAsUnreadOperation>;
 
       /** The type of Queue used to send and receive operations. */
       using Queue = Beam::Queue<std::shared_ptr<Operation>>;
@@ -287,6 +319,7 @@ namespace Nexus::Tests {
 
       std::vector<Beam::DirectoryEntry> load_accounts_by_roles(
         AccountRoles roles);
+      std::vector<AccountQueryResult> query_accounts(const std::string& query);
       Beam::DirectoryEntry load_administrators_root_entry();
       Beam::DirectoryEntry load_services_root_entry();
       Beam::DirectoryEntry load_trading_groups_root_entry();
@@ -307,12 +340,8 @@ namespace Nexus::Tests {
       EntitlementDatabase load_entitlements();
       std::vector<Beam::DirectoryEntry> load_entitlements(
         const Beam::DirectoryEntry& account);
-      void store_entitlements(const Beam::DirectoryEntry& account,
-        const std::vector<Beam::DirectoryEntry>& entitlements);
       const Beam::Publisher<RiskParameters>& get_risk_parameters_publisher(
         const Beam::DirectoryEntry& account);
-      void store(
-        const Beam::DirectoryEntry& account, const RiskParameters& parameters);
       const Beam::Publisher<RiskState>& get_risk_state_publisher(
         const Beam::DirectoryEntry& account);
       void store(const Beam::DirectoryEntry& account, const RiskState& state);
@@ -352,6 +381,17 @@ namespace Nexus::Tests {
         AccountModificationRequest::Id id);
       Message send_account_modification_request_message(
         AccountModificationRequest::Id id, const Message& message);
+      Notification send_notification(const Beam::DirectoryEntry& account,
+        const std::string& description, const std::string& data,
+        Notification::Category category);
+      Notification::Id monitor_notifications(
+        const Beam::DirectoryEntry& account,
+        Beam::ScopedQueueWriter<Notification> queue);
+      std::vector<Notification> load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state);
+      void mark_notification_as_read(const Notification::Id& id);
+      void mark_notification_as_unread(const Notification::Id& id);
       void close();
 
     private:
@@ -374,6 +414,12 @@ namespace Nexus::Tests {
       TestAdministrationClient::load_accounts_by_roles(AccountRoles roles) {
     return m_queue.append_result<LoadAccountsByRolesOperation,
       std::vector<Beam::DirectoryEntry>>(std::move(roles));
+  }
+
+  inline std::vector<AccountQueryResult>
+      TestAdministrationClient::query_accounts(const std::string& query) {
+    return m_queue.append_result<QueryAccountsOperation,
+      std::vector<AccountQueryResult>>(query);
   }
 
   inline Beam::DirectoryEntry
@@ -467,13 +513,6 @@ namespace Nexus::Tests {
       std::vector<Beam::DirectoryEntry>>(account);
   }
 
-  inline void TestAdministrationClient::store_entitlements(
-      const Beam::DirectoryEntry& account,
-      const std::vector<Beam::DirectoryEntry>& entitlements) {
-    return m_queue.append_result<StoreEntitlementsOperation, void>(
-      account, entitlements);
-  }
-
   inline const Beam::Publisher<RiskParameters>&
       TestAdministrationClient::get_risk_parameters_publisher(
         const Beam::DirectoryEntry& account) {
@@ -481,12 +520,6 @@ namespace Nexus::Tests {
       std::in_place_type<MonitorRiskParametersOperation>, account);
     m_queue.append_queue<MonitorRiskParametersOperation>(operation);
     return std::get<MonitorRiskParametersOperation>(*operation).m_queue;
-  }
-
-  inline void TestAdministrationClient::store(
-      const Beam::DirectoryEntry& account, const RiskParameters& parameters) {
-    return m_queue.append_result<StoreRiskParametersOperation, void>(
-      account, parameters);
   }
 
   inline const Beam::Publisher<RiskState>&
@@ -605,6 +638,38 @@ namespace Nexus::Tests {
         AccountModificationRequest::Id id, const Message& message) {
     return m_queue.append_result<
       SendAccountModificationRequestMessageOperation, Message>(id, message);
+  }
+
+  inline Notification TestAdministrationClient::send_notification(
+      const Beam::DirectoryEntry& account, const std::string& description,
+      const std::string& data, Notification::Category category) {
+    return m_queue.append_result<SendNotificationOperation, Notification>(
+      account, description, data, category);
+  }
+
+  inline Notification::Id TestAdministrationClient::monitor_notifications(
+      const Beam::DirectoryEntry& account,
+      Beam::ScopedQueueWriter<Notification> queue) {
+    return m_queue.append_result<MonitorNotificationsOperation,
+      Notification::Id>(account, std::move(queue));
+  }
+
+  inline std::vector<Notification>
+      TestAdministrationClient::load_notifications(
+        const Beam::DirectoryEntry& account, const Notification::Id& id,
+        Beam::SnapshotLimit limit, Notification::ReadState read_state) {
+    return m_queue.append_result<LoadNotificationsOperation,
+      std::vector<Notification>>(account, id, limit, read_state);
+  }
+
+  inline void TestAdministrationClient::mark_notification_as_read(
+      const Notification::Id& id) {
+    m_queue.append_result<MarkNotificationAsReadOperation, void>(id);
+  }
+
+  inline void TestAdministrationClient::mark_notification_as_unread(
+      const Notification::Id& id) {
+    m_queue.append_result<MarkNotificationAsUnreadOperation, void>(id);
   }
 
   inline void TestAdministrationClient::close() {

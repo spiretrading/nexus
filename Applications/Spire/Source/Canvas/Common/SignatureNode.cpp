@@ -132,6 +132,3 @@ std::unique_ptr<CanvasNode> SignatureNode::Replace(
   clone->SetType(*returnType);
   return clone;
 }
-
-SignatureNode::SignatureNode()
-  : m_type(UnionType::GetAnyType()) {}

@@ -113,14 +113,13 @@ void ListItem::mount(QWidget& body) {
   size_policy.setRetainSizeWhenHidden(true);
   m_box->setSizePolicy(size_policy);
   body.setAttribute(Qt::WA_DontShowOnScreen, false);
+  body.setFocusPolicy(focusPolicy());
   setFocusProxy(&*m_box);
-  setFocusPolicy(focusPolicy());
   if(auto item = layout()->takeAt(0)) {
     delete item;
   }
   layout()->addWidget(&*m_box);
   link(*this, body);
-  match(body, Body());
   proxy_style(*this, *m_box);
   updateGeometry();
 }
@@ -136,6 +135,7 @@ QWidget* ListItem::unmount() {
       return nullptr;
     }
     auto body = m_box->get_body();
+    unlink(*this, *body);
     body->setAttribute(Qt::WA_DontShowOnScreen);
     body->setParent(parentWidget());
     return body;

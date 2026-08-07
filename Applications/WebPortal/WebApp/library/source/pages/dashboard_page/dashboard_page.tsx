@@ -4,7 +4,8 @@ import * as Nexus from 'nexus';
 import * as React from 'react';
 import { Transition } from 'react-transition-group';
 import { BurgerButton } from '../..';
-import { NotificationButton } from './notification_button';
+import { NotificationsButton } from '../notifications_page/notifications_button';
+import { NotificationsPopover } from '../notifications_page/notifications_popover';
 import { SideMenu } from './side_menu';
 
 interface Properties {
@@ -12,15 +13,25 @@ interface Properties {
   /** The account's roles. */
   roles: Nexus.AccountRoles;
 
+  /** The list of notifications. */
+  notifications: Nexus.Notification[];
+
   /**
    * Indicates a side menu item was clicked.
    * @param item - The item that was clicked.
    */
   onSideMenuClick?: (item: SideMenu.Item) => void;
+
+  /** Called when the dismiss all button is clicked. */
+  onDismissAll?: () => void;
+
+  /** Called when a notification is clicked. */
+  onNotificationClick?: (notification: Nexus.Notification) => void;
 }
 
 interface State {
   isSideMenuOpen: boolean;
+  isPopoverOpen: boolean;
 }
 
 /** Displays the main dashboard. */
@@ -29,6 +40,7 @@ export class DashboardPage extends React.Component<Properties, State> {
     super(props);
     this.state = {
       isSideMenuOpen: false,
+      isPopoverOpen: false
     };
   }
 
@@ -82,13 +94,21 @@ export class DashboardPage extends React.Component<Properties, State> {
             </VBoxLayout>
           </HBoxLayout>
           <Padding/>
-          <VBoxLayout height='60px' width='45px' className={
+          <div className={
               css(DashboardPage.STYLE.notificationButtonWrapper)}>
-            <Padding size='20px'/>
-            <NotificationButton items={0} isOpen={false}/>
-            <Padding size='20px'/>
-            <Padding/>
-          </VBoxLayout>
+            <NotificationsButton
+              hasUnread={this.props.notifications.some(
+                (n) => !n.isRead)}
+              isOpen={this.state.isPopoverOpen}
+              popoverTarget='notifications-popover'/>
+            <NotificationsPopover
+              id='notifications-popover'
+              notifications={this.props.notifications}
+              onDismissAll={this.props.onDismissAll}
+              onNotificationClick={this.props.onNotificationClick}
+              onOpen={this.onOpenPopover}
+              onClose={this.onClosePopover}/>
+          </div>
         </HBoxLayout>
         <div className={css(DashboardPage.STYLE.separator)}/>
         <Transition in={this.state.isSideMenuOpen}
@@ -110,9 +130,15 @@ export class DashboardPage extends React.Component<Properties, State> {
             component={null}>
           {(status: string) => {
             return (
-              <div className={css([DashboardPage.STYLE.dropShaddow,
-                DashboardPage.FADE_TRANSITION_STYLE.base,
-                DashboardPage.FADE_TRANSITION_STYLE[status]])}/>);
+              <>
+                <div className={css([DashboardPage.STYLE.overlay,
+                  DashboardPage.FADE_TRANSITION_STYLE.base,
+                  DashboardPage.FADE_TRANSITION_STYLE[status]])}
+                  onClick={this.onToggleSideMenu}/>
+                <div className={css([DashboardPage.STYLE.dropShaddow,
+                  DashboardPage.FADE_TRANSITION_STYLE.base,
+                  DashboardPage.FADE_TRANSITION_STYLE[status]])}/>
+              </>);
           }}
         </Transition>
         {this.props.children}
@@ -128,6 +154,14 @@ export class DashboardPage extends React.Component<Properties, State> {
     this.setState({isSideMenuOpen: !this.state.isSideMenuOpen});
   }
 
+  private onOpenPopover = () => {
+    this.setState({isPopoverOpen: true});
+  }
+
+  private onClosePopover = () => {
+    this.setState({isPopoverOpen: false});
+  }
+
   private static readonly defaultProps = {
     onSideMenuClick: () => {}
   }
@@ -137,15 +171,23 @@ export class DashboardPage extends React.Component<Properties, State> {
       width: '100%',
       height: '1px',
       backgroundColor: '#E6E6E6',
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       top: 60,
       left: 0,
       zIndex: -1
     },
+    overlay: {
+      position: 'fixed',
+      top: 0,
+      left: 0,
+      width: '100%',
+      height: '100%',
+      zIndex: 0
+    },
     dropShaddow: {
       width: '1px',
       height: '100%',
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       top: 0,
       zIndex: -1,
       left: '198px',
@@ -157,21 +199,21 @@ export class DashboardPage extends React.Component<Properties, State> {
       minWidth: '320px'
     },
     sideBarWrapper: {
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       left: 0,
       top: 60,
       backgroundColor: '#684BC7',
       zIndex: 1
     },
     notificationButtonWrapper: {
-      position: 'absolute' as 'absolute',
-      top: 0,
-      left: 'calc(100% - 45px)'
-    }
+      position: 'absolute',
+      top: '15px',
+      right: '18px'
+    },
   });
   private static readonly HEADER_STYLE = StyleSheet.create({
     base: {
-      position: 'absolute' as 'absolute',
+      position: 'absolute',
       top: 0,
       left: 0,
       backgroundColor: '#FFFFFF'
@@ -194,7 +236,7 @@ export class DashboardPage extends React.Component<Properties, State> {
       opacity: 1
     },
     exited: {
-      visibility: 'hidden' as 'hidden'
+      visibility: 'hidden'
     }
   });
 }

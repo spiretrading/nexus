@@ -146,7 +146,7 @@ class TestApp extends React.Component<Properties, State> {
       zIndex: 1
     }
   };
-  private someDB = Nexus.buildDefaultCountryDatabase();
+  private someDB = Nexus.buildCountryDatabase();
 }
 
 const ResponsivePage =

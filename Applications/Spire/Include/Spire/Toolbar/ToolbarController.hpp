@@ -62,7 +62,8 @@ namespace Spire {
         UserSettings::Categories categories, const std::filesystem::path& path);
       void on_export(
         UserSettings::Categories categories, const std::filesystem::path& path);
-      void on_new_blotter(const QString& name);
+      void on_new_blotter(
+        const QString& name, const Beam::DirectoryEntry& account);
       void on_blotter_added(BlotterModel& blotter);
       void on_blotter_removed(BlotterModel& blotter);
       void on_book_view_closed(BookViewController& controller);

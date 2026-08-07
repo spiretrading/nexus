@@ -49,9 +49,13 @@ namespace Nexus {
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
       void query(
         const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue);
+      void query(const TickerQuery& query,
+        Beam::ScopedQueueWriter<SequencedTickerStatus> queue);
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue);
       std::vector<TickerInfo> query(const TickerInfoQuery& query);
       TickerSnapshot load_snapshot(const Ticker& ticker);
-      PriceCandlestick load_session_candlestick(const Ticker& ticker);
+      SessionTechnicals load_session_technicals(const Ticker& ticker);
       std::vector<TickerInfo> load_ticker_info_from_prefix(
         const std::string& prefix);
       void close();
@@ -149,6 +153,20 @@ namespace Nexus {
   }
 
   template<IsMarketDataClient C>
+  void ToPythonMarketDataClient<C>::query(const TickerQuery& query,
+      Beam::ScopedQueueWriter<SequencedTickerStatus> queue) {
+    auto release = Beam::Python::GilRelease();
+    m_client->query(query, std::move(queue));
+  }
+
+  template<IsMarketDataClient C>
+  void ToPythonMarketDataClient<C>::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue) {
+    auto release = Beam::Python::GilRelease();
+    m_client->query(query, std::move(queue));
+  }
+
+  template<IsMarketDataClient C>
   std::vector<TickerInfo>
       ToPythonMarketDataClient<C>::query(const TickerInfoQuery& query) {
     auto release = Beam::Python::GilRelease();
@@ -163,10 +181,10 @@ namespace Nexus {
   }
 
   template<IsMarketDataClient C>
-  PriceCandlestick ToPythonMarketDataClient<C>::load_session_candlestick(
+  SessionTechnicals ToPythonMarketDataClient<C>::load_session_technicals(
       const Ticker& ticker) {
     auto release = Beam::Python::GilRelease();
-    return m_client->load_session_candlestick(ticker);
+    return m_client->load_session_technicals(ticker);
   }
 
   template<IsMarketDataClient C>

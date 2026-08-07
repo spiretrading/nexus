@@ -9,13 +9,14 @@
 #include "Nexus/MarketDataService/TickerQuery.hpp"
 #include "Nexus/MarketDataService/TickerSnapshot.hpp"
 #include "Nexus/MarketDataService/VenueQuery.hpp"
-#include "Nexus/TechnicalAnalysis/CandlestickTypes.hpp"
+#include "Nexus/TechnicalAnalysis/SessionTechnicals.hpp"
 
 namespace Nexus {
   using OrderImbalanceQueryResult = Beam::QueryResult<SequencedOrderImbalance>;
   using BboQuoteQueryResult = Beam::QueryResult<SequencedBboQuote>;
   using BookQuoteQueryResult = Beam::QueryResult<SequencedBookQuote>;
   using TimeAndSaleQueryResult = Beam::QueryResult<SequencedTimeAndSale>;
+  using TickerStatusQueryResult = Beam::QueryResult<SequencedTickerStatus>;
 
   /** Standard name for the market data registry service. */
   inline const auto MARKET_DATA_REGISTRY_SERVICE_NAME =
@@ -62,6 +63,15 @@ namespace Nexus {
       TimeAndSaleQueryResult, (TickerQuery, query)),
 
     /**
+     * Queries a Ticker's TickerStatuses.
+     * @param query The query to run.
+     * @return The list of TickerStatuses satisfying the query.
+     */
+    (QueryTickerStatusService,
+      "Nexus.MarketDataService.QueryTickerStatusService",
+      TickerStatusQueryResult, (TickerQuery, query)),
+
+    /**
      * Loads a Ticker's real-time snapshot.
      * @param ticker The Ticker whose snapshot is to be loaded.
      * @return The TickerSnapshot for the specified <i>ticker</i>.
@@ -71,12 +81,12 @@ namespace Nexus {
       (Ticker, ticker)),
 
     /**
-     * Loads the session candlestick for a specified Ticker.
-     * @param ticker The Ticker whose session candlestick is to be loaded.
-     * @return The PriceCandlestick for the specified <i>ticker</i>.
+     * Loads the session technicals for a specified Ticker.
+     * @param ticker The Ticker whose session technicals are to be loaded.
+     * @return The SessionTechnicals for the specified <i>ticker</i>.
      */
-    (LoadSessionCandlestickService,
-      "Nexus.MarketDataService.LoadSessionCandlestickService", PriceCandlestick,
+    (LoadSessionTechnicalsService,
+      "Nexus.MarketDataService.LoadSessionTechnicalsService", SessionTechnicals,
       (Ticker, ticker)),
 
     /**
@@ -120,11 +130,18 @@ namespace Nexus {
       (SequencedTickerBookQuote, book_quote)),
 
     /**
-     * Sends a query's SequencedTickerTimeAndSale.
-     * @param time_and_sale The query's SequencedTickerTimeAndSale.
+     * Sends a query's SequencedIndexedTickerStatus.
+     * @param status The query's SequencedIndexedTickerStatus.
      */
     (TimeAndSaleMessage,  "Nexus.MarketDataService.TimeAndSaleMessage",
       (SequencedTickerTimeAndSale, time_and_sale)),
+
+    /**
+     * Sends a query's SequencedIndexedTickerStatus.
+     * @param status The query's SequencedIndexedTickerStatus.
+     */
+    (TickerStatusMessage, "Nexus.MarketDataService.TickerStatusMessage",
+      (SequencedIndexedTickerStatus, status)),
 
     /**
      * Terminates a previous OrderImbalance query.
@@ -158,8 +175,17 @@ namespace Nexus {
      * @param id The id of query to end.
      */
     (EndTimeAndSaleQueryMessage,
-      "Nexus.MarketDataService.EndTimeAndSaleQueryMessage",
-      (Ticker, ticker), (int, id)));
+      "Nexus.MarketDataService.EndTimeAndSaleQueryMessage", (Ticker, ticker),
+      (int, id)),
+
+    /**
+     * Terminates a previous TickerStatus query.
+     * @param ticker The Ticker that was queried.
+     * @param id The id of query to end.
+     */
+    (EndTickerStatusQueryMessage,
+      "Nexus.MarketDataService.EndTickerStatusQueryMessage", (Ticker, ticker),
+      (int, id)));
 
   /**
    * Returns the type of Service Message used to publish an update to a market
@@ -190,6 +216,11 @@ namespace Nexus {
   template<>
   struct market_data_message_type<TimeAndSale> {
     using type = TimeAndSaleMessage;
+  };
+
+  template<>
+  struct market_data_message_type<TickerStatus> {
+    using type = TickerStatusMessage;
   };
 }
 

@@ -4,8 +4,8 @@
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
-using namespace Nexus::DefaultCurrencies;
+using namespace Nexus::Currencies;
+using namespace Nexus::Venues;
 
 TEST_SUITE("ShortingModel") {
   TEST_CASE("submit_bid_order_not_short") {
@@ -172,6 +172,18 @@ TEST_SUITE("ShortingModel") {
     unknown_report.m_last_quantity = 100;
     unknown_report.m_status = OrderStatus::FILLED;
     model.update(unknown_report);
+    auto ask_fields2 =
+      make_limit_order_fields(ticker, CAD, Side::ASK, "TSX", 1, Money::ONE);
+    REQUIRE(model.submit(2, ask_fields2));
+  }
+
+  TEST_CASE("update_position") {
+    auto model = ShortingModel();
+    auto ticker = parse_ticker("TST.TSX");
+    model.update(ticker, 100);
+    auto ask_fields =
+      make_limit_order_fields(ticker, CAD, Side::ASK, "TSX", 100, Money::ONE);
+    REQUIRE(!model.submit(1, ask_fields));
     auto ask_fields2 =
       make_limit_order_fields(ticker, CAD, Side::ASK, "TSX", 1, Money::ONE);
     REQUIRE(model.submit(2, ask_fields2));

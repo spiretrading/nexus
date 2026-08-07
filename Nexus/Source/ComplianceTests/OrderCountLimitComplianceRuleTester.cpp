@@ -5,7 +5,7 @@
 
 using namespace Beam;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 TEST_SUITE("OrderCountLimitComplianceRule") {
   TEST_CASE("submit") {

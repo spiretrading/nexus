@@ -31,6 +31,10 @@ namespace Nexus {
         load_execution_reports(const AccountQuery& query);
       void store(const SequencedAccountExecutionReport& report);
       void store(const std::vector<SequencedAccountExecutionReport>& reports);
+      InventorySnapshot load_inventory_snapshot(
+        const Beam::DirectoryEntry& account);
+      void store(const Beam::DirectoryEntry& account,
+        const InventorySnapshot& snapshot);
       void close();
 
     private:
@@ -117,6 +121,20 @@ namespace Nexus {
     m_primary_data_store.store(reports);
     for(auto& data_store : m_duplicate_data_stores) {
       data_store.store(reports);
+    }
+  }
+
+  inline InventorySnapshot
+      ReplicatedOrderExecutionDataStore::load_inventory_snapshot(
+        const Beam::DirectoryEntry& account) {
+    return m_primary_data_store.load_inventory_snapshot(account);
+  }
+
+  inline void ReplicatedOrderExecutionDataStore::store(
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot) {
+    m_primary_data_store.store(account, snapshot);
+    for(auto& data_store : m_duplicate_data_stores) {
+      data_store.store(account, snapshot);
     }
   }
 

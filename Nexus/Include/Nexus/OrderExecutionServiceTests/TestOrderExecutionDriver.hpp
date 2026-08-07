@@ -2,11 +2,13 @@
 #define NEXUS_TEST_ORDER_EXECUTION_DRIVER_HPP
 #include <memory>
 #include <variant>
+#include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
 #include <Beam/Routines/Async.hpp>
 #include <Beam/ServicesTests/TestServiceClientOperationQueue.hpp>
+#include "Nexus/Accounting/InventorySnapshot.hpp"
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Nexus/OrderExecutionService/OrderExecutionSession.hpp"
@@ -19,14 +21,21 @@ namespace Nexus::Tests {
   class TestOrderExecutionDriver {
     public:
 
-      /** Records a call to recover. */
-      struct RecoverOperation {
+      /** Records a call to restore. */
+      struct RestoreOperation {
 
-        /** The SequencedAccountOrderRecord passed. */
-        SequencedAccountOrderRecord m_order_record;
+        /** The account being restored. */
+        Beam::DirectoryEntry m_account;
+
+        /** The snapshot passed. */
+        InventorySnapshot m_snapshot;
+
+        /** The OrderRecords passed. */
+        std::vector<SequencedOrderRecord> m_records;
 
         /** The value to return. */
-        Beam::Tests::ServiceResult<std::shared_ptr<Order>> m_result;
+        Beam::Tests::ServiceResult<std::vector<std::shared_ptr<Order>>>
+          m_result;
       };
 
       /** Records a call to add. */
@@ -76,9 +85,8 @@ namespace Nexus::Tests {
       };
 
       /** A variant covering all possible operations. */
-      using Operation = std::variant<
-        RecoverOperation, AddOperation, SubmitOperation, CancelOperation,
-        UpdateOperation>;
+      using Operation = std::variant<RestoreOperation, AddOperation,
+        SubmitOperation, CancelOperation, UpdateOperation>;
 
       /** The type of Queue used to send and receive operations. */
       using Queue = Beam::Queue<std::shared_ptr<Operation>>;
@@ -92,7 +100,9 @@ namespace Nexus::Tests {
 
       ~TestOrderExecutionDriver();
 
-      std::shared_ptr<Order> recover(const SequencedAccountOrderRecord& record);
+      std::vector<std::shared_ptr<Order>> restore(
+        const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+        const std::vector<SequencedOrderRecord>& records);
       void add(const std::shared_ptr<Order>& order);
       std::shared_ptr<Order> submit(const OrderInfo& info);
       void cancel(const OrderExecutionSession& session, OrderId id);
@@ -112,10 +122,12 @@ namespace Nexus::Tests {
     close();
   }
 
-  inline std::shared_ptr<Order> TestOrderExecutionDriver::recover(
-      const SequencedAccountOrderRecord& order_record) {
-    return m_operations.append_result<RecoverOperation, std::shared_ptr<Order>>(
-      order_record);
+  inline std::vector<std::shared_ptr<Order>> TestOrderExecutionDriver::restore(
+      const Beam::DirectoryEntry& account, const InventorySnapshot& snapshot,
+      const std::vector<SequencedOrderRecord>& records) {
+    return m_operations.append_result<
+      RestoreOperation, std::vector<std::shared_ptr<Order>>>(
+        account, snapshot, records);
   }
 
   inline void TestOrderExecutionDriver::add(

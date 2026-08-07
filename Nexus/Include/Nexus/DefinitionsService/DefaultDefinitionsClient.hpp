@@ -1,6 +1,6 @@
 #ifndef NEXUS_DEFAULT_DEFINITIONS_CLIENT_HPP
 #define NEXUS_DEFAULT_DEFINITIONS_CLIENT_HPP
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 
 namespace Nexus {
@@ -31,25 +31,25 @@ namespace Nexus {
   }
 
   inline CountryDatabase DefaultDefinitionsClient::load_country_database() {
-    return DEFAULT_COUNTRIES;
+    return COUNTRIES;
   }
 
   inline boost::local_time::tz_database
       DefaultDefinitionsClient::load_time_zone_database() {
-    return get_default_time_zone_database();
+    return TIME_ZONES;
   }
 
   inline CurrencyDatabase DefaultDefinitionsClient::load_currency_database() {
-    return DEFAULT_CURRENCIES;
+    return CURRENCIES;
   }
 
   inline DestinationDatabase
       DefaultDefinitionsClient::load_destination_database() {
-    return DEFAULT_DESTINATIONS;
+    return DESTINATIONS;
   }
 
   inline VenueDatabase DefaultDefinitionsClient::load_venue_database() {
-    return DEFAULT_VENUES;
+    return VENUES;
   }
 
   inline std::vector<ExchangeRate>

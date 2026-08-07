@@ -10,7 +10,7 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
+using namespace Nexus::Venues;
 
 namespace {
   struct Fixture {
@@ -145,6 +145,42 @@ TEST_SUITE("DataStoreMarketDataClient") {
     REQUIRE(result == *quote);
   }
 
+  TEST_CASE("query_sequenced_ticker_statuses") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("TST.TSX");
+    auto status = SequencedValue(
+      TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        time_from_string("2024-07-10 09:30:00")), Beam::Sequence(1));
+    fixture.m_data_store.store(SequencedIndexedTickerStatus(
+      IndexedTickerStatus(*status, ticker), status.get_sequence()));
+    auto query = TickerQuery();
+    query.set_index(ticker);
+    query.set_range(Range::TOTAL);
+    query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    auto queue = std::make_shared<Queue<SequencedTickerStatus>>();
+    fixture.m_client.query(query, queue);
+    auto result = queue->pop();
+    REQUIRE(result == status);
+  }
+
+  TEST_CASE("query_ticker_statuses") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("TST.TSX");
+    auto status = SequencedValue(
+      TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        time_from_string("2024-07-10 09:30:00")), Beam::Sequence(1));
+    fixture.m_data_store.store(SequencedIndexedTickerStatus(
+      IndexedTickerStatus(*status, ticker), status.get_sequence()));
+    auto query = TickerQuery();
+    query.set_index(ticker);
+    query.set_range(Range::TOTAL);
+    query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    auto queue = std::make_shared<Queue<TickerStatus>>();
+    fixture.m_client.query(query, queue);
+    auto result = queue->pop();
+    REQUIRE(result == *status);
+  }
+
   TEST_CASE("query_sequenced_time_and_sales") {
     auto fixture = Fixture();
     auto ticker = parse_ticker("TST.TSX");
@@ -188,11 +224,11 @@ TEST_SUITE("DataStoreMarketDataClient") {
     REQUIRE(snapshot == TickerSnapshot());
   }
 
-  TEST_CASE("load_session_candlestick") {
+  TEST_CASE("load_session_technicals") {
     auto fixture = Fixture();
-    auto candlestick =
-      fixture.m_client.load_session_candlestick(parse_ticker("TST.TSX"));
-    test_json_equality(candlestick, PriceCandlestick());
+    auto technicals =
+      fixture.m_client.load_session_technicals(parse_ticker("TST.TSX"));
+    test_json_equality(technicals, SessionTechnicals());
   }
 
   TEST_CASE("load_ticker_info_from_prefix") {

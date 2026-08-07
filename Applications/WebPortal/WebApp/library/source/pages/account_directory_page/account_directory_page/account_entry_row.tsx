@@ -120,7 +120,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
     })();
     return (
       <Transition in={this.state.isOpen}
-          appear={true}
+          appear
           key={id}
           timeout={AccountEntryRow.TIMEOUTS}>
         {(state) =>
@@ -138,7 +138,7 @@ export class AccountEntryRow extends React.Component<Properties, State> {
     account: null as AccountEntry,
     filter: ''
   };
-  private static readonly STYLE = {
+  private static readonly STYLE: Record<string, React.CSSProperties> = {
     contentMedium: {
       marginLeft: '38px'
     },
@@ -150,17 +150,17 @@ export class AccountEntryRow extends React.Component<Properties, State> {
       color: '#000000',
       flexGrow: 0,
       flexShrink: 0,
-      boxSizing: 'border-box' as 'border-box',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap'
+      boxSizing: 'border-box',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap'
     },
     emptyText: {
       font: '400 14px Roboto',
       color: '#8C8C8C',
       paddingLeft: '10px',
       textDecoration: 'none',
-      cursor: 'default' as 'default'
+      cursor: 'default'
     },
     highlightedText: {
       font: '400 14px Roboto',
@@ -177,17 +177,17 @@ export class AccountEntryRow extends React.Component<Properties, State> {
   };
   private static readonly DYNAMIC_STYLE = StyleSheet.create({
     entry: {
-      boxSizing: 'border-box' as 'border-box',
+      boxSizing: 'border-box',
       height: '34px',
-      display: 'flex' as 'flex',
-      flexDirection: 'row' as 'row',
-      flexWrap: 'nowrap' as 'nowrap',
-      alignItems: 'center' as 'center',
-      justifyContent: 'space-between' as 'space-between',
+      display: 'flex',
+      flexDirection: 'row',
+      flexWrap: 'nowrap',
+      alignItems: 'center',
+      justifyContent: 'space-between',
       paddingLeft: '10px',
       paddingRight: '10px',
       textDecoration: 'none',
-      cursor: 'pointer' as 'pointer',
+      cursor: 'pointer',
       ':hover' : {
         backgroundColor: '#F8F8F8'
       },
@@ -202,26 +202,21 @@ export class AccountEntryRow extends React.Component<Properties, State> {
       transform: 'scaleY(0)'
     },
     entered: {
-      maxHeight: '34px',
-      transform: 'scaleY(1)',
-      transitionProperty: 'max-height, transform',
-      transitionDuration: '200ms',
-      transformOrigin: 'top' as 'top',
-      overflow: 'hidden' as 'hidden'
+      maxHeight: '34px'
     },
     exiting: {
       maxHeight: 0,
       transform: 'scaleY(0)',
       transitionProperty: 'max-height, transform',
-      transitionDuration: `200ms`,
-      transformOrigin: 'top' as 'top',
-      overflow: 'hidden' as 'hidden'
+      transitionDuration: '200ms',
+      transformOrigin: 'top',
+      overflow: 'hidden'
     },
     exited: {
       maxHeight: 0,
       transform: 'scaleY(0)',
-      transformOrigin: 'top' as 'top',
-      overflow: 'hidden' as 'hidden'
+      transformOrigin: 'top',
+      overflow: 'hidden'
     }
   };
   private static readonly TIMEOUTS = {

@@ -20,20 +20,18 @@ OrderImbalanceIndicatorVenueSelectionWidget::
 
 OrderImbalanceIndicatorVenueSelectionWidget::
     OrderImbalanceIndicatorVenueSelectionWidget(
-    const VenueDatabase& venueDatabase,
     Ref<OrderImbalanceIndicatorModel> model, QWidget* parent)
     : QWidget(parent) {
-  Initialize(venueDatabase, Ref(model));
+  Initialize(Ref(model));
 }
 
 void OrderImbalanceIndicatorVenueSelectionWidget::Initialize(
-    const VenueDatabase& venueDatabase,
     Ref<OrderImbalanceIndicatorModel> model) {
   m_model = model.get();
   QGridLayout* layout = new QGridLayout();
   setLayout(layout);
   int count = 0;
-  for(auto& venue : venueDatabase.get_entries()) {
+  for(auto& venue : VENUES.get_entries()) {
     int column = count / VENUES_PER_COLUMN;
     int row = count % VENUES_PER_COLUMN;
     std::unique_ptr<QCheckBox> checkBox = std::make_unique<QCheckBox>(

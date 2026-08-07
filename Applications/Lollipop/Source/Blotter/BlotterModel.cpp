@@ -19,8 +19,7 @@ BlotterModel::BlotterModel(const std::string& name,
       m_tasksModel(Ref(*m_userProfile), executingAccount, m_isConsolidated,
         taskProperties),
       m_orderLogModel(orderLogProperties),
-      m_profitAndLossModel(Ref(m_userProfile->GetCurrencyDatabase()),
-        Ref(userProfile->GetExchangeRates()), true) {
+      m_profitAndLossModel(Ref(userProfile->GetExchangeRates()), true) {
   m_userProfile->GetClients().get_administration_client().
     get_risk_parameters_publisher(m_executingAccount).monitor(
       m_eventHandler.get_slot<RiskParameters>(

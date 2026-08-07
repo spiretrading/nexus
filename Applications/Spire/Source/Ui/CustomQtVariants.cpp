@@ -1,6 +1,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include <Beam/TimeService/ToLocalTime.hpp>
 #include <QStyledItemDelegate>
+#include "Spire/Ui/AccountListItem.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -107,7 +108,7 @@ namespace {
   }
 
   template<typename... T>
-  bool is_equal_any(const std::any& left, const std::any& right) {
+  bool is_equal_any(const AnyRef& left, const AnyRef& right) {
     return apply_any<T...>()(left, right,
       [&] (const auto& left, const auto& right) {
         return left == right;
@@ -190,6 +191,8 @@ QVariant Spire::to_qvariant(const std::any& value) {
     return QVariant::fromValue(std::any_cast<CountryCode>(value));
   } else if(value.type() == typeid(CurrencyId)) {
     return QVariant::fromValue(std::any_cast<CurrencyId>(value));
+  } else if(value.type() == typeid(DirectoryEntry)) {
+    return QVariant::fromValue(std::any_cast<DirectoryEntry>(value));
   } else if(value.type() == typeid(Money)) {
     return QVariant::fromValue(std::any_cast<Money>(value));
   } else if(value.type() == typeid(Quantity)) {
@@ -276,13 +279,17 @@ QString Spire::to_text(posix_time::time_duration time, const QLocale& locale) {
   return QString::fromStdString(to_simple_string(time));
 }
 
+QString Spire::to_text(const DirectoryEntry& entry, const QLocale& locale) {
+  return QString::fromStdString(entry.m_name);
+}
+
 QString Spire::to_text(CountryCode code, const QLocale& locale) {
-  auto& entry = DEFAULT_COUNTRIES.from(code);
+  auto& entry = COUNTRIES.from(code);
   return QString::fromStdString(entry.m_three_letter_code.get_data());
 }
 
 QString Spire::to_text(CurrencyId currency, const QLocale& locale) {
-  auto& entry = DEFAULT_CURRENCIES.from(currency);
+  auto& entry = CURRENCIES.from(currency);
   return QString::fromStdString(entry.m_code.get_data());
 }
 
@@ -428,12 +435,40 @@ QString Spire::to_text(const Scope& scope, const QLocale& locale) {
   return QString::fromStdString(scope.get_name());
 }
 
+const QString& Spire::to_text(Task::State state, const QLocale& locale) {
+  if(state == Task::State::READY) {
+    static const auto value = QObject::tr("Ready");
+    return value;
+  } else if(state == Task::State::INITIALIZING) {
+    static const auto value = QObject::tr("Initializing");
+    return value;
+  } else if(state == Task::State::ACTIVE) {
+    static const auto value = QObject::tr("Active");
+    return value;
+  } else if(state == Task::State::PENDING_CANCEL) {
+    static const auto value = QObject::tr("Pending Cancel");
+    return value;
+  } else if(state == Task::State::CANCELED) {
+    static const auto value = QObject::tr("Canceled");
+    return value;
+  } else if(state == Task::State::FAILED) {
+    static const auto value = QObject::tr("Failed");
+    return value;
+  } else if(state == Task::State::COMPLETE) {
+    static const auto value = QObject::tr("Complete");
+    return value;
+  } else {
+    static const auto value = QObject::tr("");
+    return value;
+  }
+}
+
 QString Spire::to_text(const Ticker& ticker, const QLocale& locale) {
   return QString::fromStdString(to_string(ticker));
 }
 
 QString Spire::to_text(Venue venue, const QLocale& locale) {
-  auto& entry = DEFAULT_VENUES.from(venue);
+  auto& entry = VENUES.from(venue);
   if(entry.m_venue) {
     return QString::fromStdString(entry.m_display_name);
   }
@@ -475,10 +510,14 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return to_text(std::any_cast<ptime>(value), locale);
   } else if(value.type() == typeid(posix_time::time_duration)) {
     return to_text(std::any_cast<posix_time::time_duration>(value), locale);
+  } else if(value.type() == typeid(AccountListItem::Account)) {
+    return to_text(std::any_cast<AccountListItem::Account>(value), locale);
   } else if(value.type() == typeid(CountryCode)) {
     return to_text(std::any_cast<CountryCode>(value), locale);
   } else if(value.type() == typeid(CurrencyId)) {
     return to_text(std::any_cast<CurrencyId>(value), locale);
+  } else if(value.type() == typeid(DirectoryEntry)) {
+    return to_text(std::any_cast<DirectoryEntry>(value), locale);
   } else if(value.type() == typeid(Money)) {
     return to_text(std::any_cast<Money>(value), locale);
   } else if(value.type() == typeid(Quantity)) {
@@ -493,6 +532,8 @@ QString Spire::to_text(const std::any& value, const QLocale& locale) {
     return to_text(std::any_cast<Scope>(value), locale);
   } else if(value.type() == typeid(Side)) {
     return to_text(std::any_cast<Side>(value), locale);
+  } else if(value.type() == typeid(Task::State)) {
+    return to_text(std::any_cast<Task::State>(value), locale);
   } else if(value.type() == typeid(Ticker)) {
     return to_text(std::any_cast<Ticker>(value), locale);
   } else if(value.type() == typeid(TimeAndSale::Condition)) {
@@ -535,6 +576,9 @@ bool Spire::compare(const AnyRef& left, const AnyRef& right) {
     return compare_text<TimeInForce>(left, right);
   } else if(left.get_type() == typeid(Scope)) {
     return compare_text<Scope>(left, right);
+  } else if(left.get_type() == typeid(DirectoryEntry)) {
+    return DirectoryEntry::name_comparator(
+      any_cast<DirectoryEntry>(left), any_cast<DirectoryEntry>(right));
   }
   return compare_any<bool, int, optional<int>, std::int64_t,
     optional<std::int64_t>, std::uint64_t, optional<std::uint64_t>, Quantity,
@@ -544,15 +588,27 @@ bool Spire::compare(const AnyRef& left, const AnyRef& right) {
     QString>(left, right);
 }
 
-bool Spire::is_equal(const std::any& left, const std::any& right) {
-  if(left.type() != right.type()) {
+bool Spire::is_equal(const AnyRef& left, const AnyRef& right) {
+  if(left.get_type() != right.get_type()) {
     return false;
   }
   return is_equal_any<bool, int, std::int64_t, std::uint64_t, Quantity, double,
     gregorian::date, ptime, posix_time::time_duration, std::string, CountryCode,
-    CurrencyId, CurrencyId, Money, Scope, OrderStatus, OrderType,
+    CurrencyId, DirectoryEntry, Money, Scope, OrderStatus, OrderType,
     PositionSideToken, Side, Ticker, TimeInForce, Venue, QColor, QKeySequence,
     QString>(left, right);
+}
+
+bool Spire::is_equal(const std::any& left, const std::any& right) {
+  return is_equal(AnyRef(left), AnyRef(right));
+}
+
+bool Spire::is_equal(const std::any& left, const AnyRef& right) {
+  return is_equal(AnyRef(left), right);
+}
+
+bool Spire::is_equal(const AnyRef& left, const std::any& right) {
+  return is_equal(left, AnyRef(right));
 }
 
 template<>

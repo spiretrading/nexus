@@ -5,6 +5,7 @@
 #include <vector>
 #include <QPainterPath>
 #include <QWidget>
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Ui/Window.hpp"
 
 namespace Spire {
@@ -15,18 +16,24 @@ namespace Spire {
 
       /**
        * Constructs a WindowHighlight.
-       * @param windows A list of tracked windows.
+       * @param current The list of tracked windows.
        */
-      explicit WindowHighlight(std::vector<Window*> windows);
+      explicit WindowHighlight(std::shared_ptr<ListModel<Window*>> current);
 
       ~WindowHighlight();
 
+      /** Returns the list of tracked windows. */
+      const std::shared_ptr<ListModel<Window*>>& get_current() const;
+
     private:
       struct Overlay;
-      std::vector<Window*> m_windows;
+      std::shared_ptr<ListModel<Window*>> m_current;
       std::vector<WId> m_z_order_windows;
       std::unordered_set<WId> m_minimized_windows;
       std::unordered_map<QScreen*, std::unique_ptr<Overlay>> m_overlays;
+      std::unordered_map<QScreen*, QRect> m_overlay_bounds;
+      int m_transaction_depth;
+      boost::signals2::scoped_connection m_operation_connection;
 
       QPainterPath make_overlay_path(const QScreen& screen,
         const std::vector<QRect>& rectangles, const QRegion& region) const;
@@ -34,6 +41,8 @@ namespace Spire {
         get_window_rectangles() const;
       QRegion snap_region(const std::vector<QRect>& rectangles);
       void update_geometry();
+      void refresh();
+      void on_operation(const ListModel<Window*>::Operation& operation);
   };
 }
 

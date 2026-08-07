@@ -1,10 +1,13 @@
 #include <QApplication>
+#include <QPointer>
+#include <QScreen>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalQueryModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/TimeAndSalesUiTester/DemoTimeAndSalesModel.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/DropDownBox.hpp"
 #include "Spire/Ui/IntegerBox.hpp"
@@ -15,6 +18,10 @@
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
+
+namespace {
+  const auto WINDOW_GAP = 30;
+}
 
 std::shared_ptr<TickerInfoQueryModel> populate_tickers() {
   auto ticker_infos = std::vector<TickerInfo>();
@@ -53,14 +60,16 @@ auto make_bbo_indicator_list() {
 
 struct TimeAndSalesTestWindow : QWidget {
   std::shared_ptr<DemoTimeAndSalesModel> m_time_and_sales;
+  std::function<void ()> m_open_window;
   MoneyBox* m_money_box;
   DropDownBox* m_indicator_box;
   IntegerBox* m_loading_time_box;
 
   explicit TimeAndSalesTestWindow(
       std::shared_ptr<DemoTimeAndSalesModel> time_and_sales,
-      QWidget* parent = nullptr)
-      : m_time_and_sales(std::move(time_and_sales)) {
+      std::function<void ()> open_window, QWidget* parent = nullptr)
+      : m_time_and_sales(std::move(time_and_sales)),
+        m_open_window(std::move(open_window)) {
     auto layout = make_grid_layout(this);
     layout->setContentsMargins({scale_width(15), 0, scale_width(15), 0});
     layout->setHorizontalSpacing(scale_width(30));
@@ -79,14 +88,17 @@ struct TimeAndSalesTestWindow : QWidget {
     layout->addWidget(make_load_all_data_check_box(), 4, 1);
     layout->addWidget(make_label(tr("Random data")), 5, 0);
     layout->addWidget(make_random_check_box(), 5, 1);
-    setFixedSize(scale(350, 250));
+    auto open_button = make_label_button(tr("Open New TimeAndSales Window"));
+    open_button->connect_click_signal([=] {
+      m_open_window();
+    });
+    layout->addWidget(open_button, 6, 0, 1, 2);
+    setFixedSize(scale(350, 290));
   }
 
-  bool eventFilter(QObject* object, QEvent* event) override {
-    if(event->type() == QEvent::Close) {
-      QApplication::quit();
-    }
-    return QWidget::eventFilter(object, event);
+  void closeEvent(QCloseEvent* event) override {
+    QApplication::quit();
+    QWidget::closeEvent(event);
   }
 
   MoneyBox* make_money_box() {
@@ -176,35 +188,50 @@ struct TimeAndSalesTestWindow : QWidget {
 
 struct TimeAndSalesWindowController {
   std::shared_ptr<TimeAndSalesPropertiesWindowFactory> m_factory;
-  std::array<TimeAndSalesWindow*, 3> m_time_and_sales_windows;
+  QPointer<TimeAndSalesWindow> m_last_window;
   TimeAndSalesTestWindow m_time_and_sales_test_window;
 
   explicit TimeAndSalesWindowController(
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory)
-BEAM_SUPPRESS_THIS_INITIALIZER()
       : m_factory(std::move(factory)),
-BEAM_UNSUPPRESS_THIS_INITIALIZER()
+BEAM_SUPPRESS_THIS_INITIALIZER()
         m_time_and_sales_test_window(
-          std::make_shared<DemoTimeAndSalesModel>()) {
-    auto last_window = static_cast<TimeAndSalesWindow*>(nullptr);
-    for(auto window : m_time_and_sales_windows) {
-      window = new TimeAndSalesWindow(populate_tickers(), m_factory,
-        std::bind_front(&TimeAndSalesWindowController::model_builder, this));
-      window->setAttribute(Qt::WA_DeleteOnClose);
-      window->show();
-      window->installEventFilter(&m_time_and_sales_test_window);
-      if(last_window != nullptr) {
-        window->move(last_window->pos().x() +
-          last_window->frameGeometry().width() + scale_width(50),
-          last_window->pos().y());
-      }
-      last_window = window;
-    }
+          std::make_shared<DemoTimeAndSalesModel>(),
+          std::bind_front(
+            &TimeAndSalesWindowController::open_window, this)) {
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
+    open_window();
     m_time_and_sales_test_window.setAttribute(Qt::WA_ShowWithoutActivating);
     m_time_and_sales_test_window.show();
-    m_time_and_sales_test_window.move(last_window->pos().x() +
-      last_window->frameGeometry().width() + scale_width(50),
-      last_window->pos().y());
+    if(m_last_window) {
+      m_time_and_sales_test_window.move(m_last_window->pos().x(),
+        m_last_window->pos().y() +
+        m_last_window->frameGeometry().height() + scale_height(WINDOW_GAP));
+    }
+  }
+
+  void open_window() {
+    auto window = new TimeAndSalesWindow(populate_tickers(), m_factory,
+      std::bind_front(&TimeAndSalesWindowController::model_builder, this));
+    window->setAttribute(Qt::WA_DeleteOnClose);
+    window->show();
+    if(m_last_window) {
+      auto screen = QApplication::primaryScreen()->availableGeometry();
+      auto x = m_last_window->pos().x() +
+        m_last_window->frameGeometry().width() + scale_width(WINDOW_GAP);
+      auto y = m_last_window->pos().y();
+      if(x + window->frameGeometry().width() > screen.right()) {
+        x = screen.left() + scale_width(WINDOW_GAP);
+        y = m_last_window->pos().y() +
+          m_last_window->frameGeometry().height() + scale_height(WINDOW_GAP);
+      }
+      if(y + window->frameGeometry().height() > screen.bottom()) {
+        x = screen.left() + scale_width(WINDOW_GAP);
+        y = screen.top() + scale_height(WINDOW_GAP);
+      }
+      window->move(x, y);
+    }
+    m_last_window = window;
   }
 
   std::shared_ptr<TimeAndSalesModel> model_builder(const Ticker&) {

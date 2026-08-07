@@ -1,0 +1,19 @@
+<svg id="checkbox" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="20" height="20" viewBox="0 0 20 20">
+  <defs>
+    <clipPath id="clip-path">
+      <rect id="Rectangle_48" data-name="Rectangle 48" width="20" height="20" fill="#fff"/>
+    </clipPath>
+  </defs>
+  <rect id="container" width="20" height="20" fill="none"/>
+  <g id="Box" fill="#fff" stroke="#8c8c8c" stroke-width="1">
+    <rect width="20" height="20" rx="1" stroke="none"/>
+    <rect x="0.5" y="0.5" width="19" height="19" rx="0.5" fill="none"/>
+  </g>
+  <g id="Icon" transform="translate(-2 -2)">
+    <g id="check" transform="translate(2 2)">
+      <g id="check-2" data-name="check" clip-path="url(#clip-path)">
+        <path id="Path_141" data-name="Path 141" d="M18.778,0H1.241A1.247,1.247,0,0,0,0,1.241V18.758A1.235,1.235,0,0,0,1.241,20H18.758A1.235,1.235,0,0,0,20,18.758V1.241A1.218,1.218,0,0,0,18.778,0ZM10.891,12.673,9.129,14.434,7.367,12.673,3.824,9.129,5.585,7.367l3.543,3.543,5.305-5.305L16.2,7.367Z" transform="translate(0 0)" fill="#684bc7"/>
+      </g>
+    </g>
+  </g>
+</svg>

@@ -144,13 +144,15 @@ struct TableBody::RowCover : Cover {
         std::forward_as_tuple(item), std::forward_as_tuple(*item));
       body.m_hover_observers.at(item).connect_state_signal(
         std::bind_front(&TableBody::on_hover, &body, std::ref(*item)));
-      if(column != body.get_column_size() - 1) {
-        if(body.m_column_covers[column]->isVisible()) {
-          item->setFixedWidth(
-            body.m_widths->get(column) - body.get_left_spacing(column));
-        } else {
-          item->setFixedWidth(0);
-        }
+      if(column == body.m_widths->get_size() ||
+          !body.m_column_covers[column]->isVisible()) {
+        item->setFixedWidth(0);
+      } else if(column < body.m_widths->get_size() - 1) {
+        item->setFixedWidth(
+          body.m_widths->get(column) - body.get_left_spacing(column));
+      } else if(auto last_width = body.m_column_covers[column]->width();
+          last_width > 0) {
+        item->setFixedWidth(last_width);
       } else {
         item->setSizePolicy(
           QSizePolicy::Expanding, item->sizePolicy().verticalPolicy());
@@ -450,6 +452,12 @@ struct TableBody::Layout : QLayout {
         item->setGeometry(geometry);
       }
       y += row_height + styles.m_vertical_spacing;
+      static_cast<RowCover*>(item->widget())->m_is_pending_layout = false;
+    }
+  }
+
+  void clear_pending_layouts() {
+    for(auto& item : m_items) {
       static_cast<RowCover*>(item->widget())->m_is_pending_layout = false;
     }
   }
@@ -930,6 +938,9 @@ void TableBody::paintEvent(QPaintEvent* event) {
 }
 
 void TableBody::resizeEvent(QResizeEvent* event) {
+  if(event->size().height() == event->oldSize().height()) {
+    return;
+  }
   ++m_resize_guard;
   if(m_resize_guard == 1) {
     update_visible_region();
@@ -1263,6 +1274,7 @@ void TableBody::reset_visible_region() {
 void TableBody::update_visible_region() {
   if(get_layout().get_top_index() == -1) {
     initialize_visible_region();
+    update();
     return;
   }
   if(!parentWidget() || !isVisible()) {
@@ -1276,7 +1288,7 @@ void TableBody::update_visible_region() {
     reset_visible_region();
   }
   mount_visible_rows();
-  get_layout().setGeometry(get_layout().geometry());
+  get_layout().clear_pending_layouts();
   setUpdatesEnabled(are_updates_enabled);
   --m_resize_guard;
 }
@@ -1636,6 +1648,7 @@ void TableBody::on_table_operation(const TableModel::Operation& operation) {
       m_operation_counter = 0;
     }
     update_visible_region();
+    layout()->invalidate();
   }
 }
 
@@ -1671,12 +1684,12 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
       }
       move_element(m_visual_to_logical_columns, operation.m_source,
         operation.m_destination);
-      move_element(m_column_covers, operation.m_source,
-        operation.m_destination);
+      move_element(
+        m_column_covers, operation.m_source, operation.m_destination);
       auto& layout = get_layout();
       for(auto i = 0; i < layout.count(); ++i) {
-        layout.get_row(i).move_column(operation.m_source,
-          operation.m_destination);
+        layout.get_row(i).move_column(
+          operation.m_source, operation.m_destination);
       }
       for(auto& row_cover : m_recycled_rows) {
         row_cover->move_column(operation.m_source, operation.m_destination);

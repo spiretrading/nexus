@@ -25,7 +25,8 @@ def main():
     description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
   parser.add_argument('-c', '--config', type=str, help='Configuration file.',
     default='config.yml')
-  parser.add_argument('-r', '--scope', type=str, help='The scope to reset.')
+  parser.add_argument('-r', '--scope', type=str, help='The scope to reset.',
+    required=True)
   args = parser.parse_args()
   try:
     stream = open(args.config, 'r').read()
@@ -41,15 +42,14 @@ def main():
   username = section['username']
   password = section['password']
   service_clients = nexus.ServiceClients(username, password, address)
-  countries = service_clients.definitions_client.load_country_database()
-  venues = service_clients.definitions_client.load_venue_database()
-  scope = nexus.parse_country_code(args.scope, countries)
+  nexus.load_definitions(service_clients.definitions_client)
+  scope = nexus.parse_country_code(args.scope)
   if scope == nexus.CountryCode.NONE:
-    scope = nexus.parse_venue(args.scope, venues)
+    scope = nexus.parse_venue(args.scope)
     if scope:
-      scope = venues.select(scope).venue
+      scope = nexus.VENUES.select(scope).venue
     else:
-      scope = nexus.parse_ticker(args.scope, venues)
+      scope = nexus.parse_ticker(args.scope)
   service_clients.risk_client.reset(nexus.Scope(scope))
 
 if __name__ == '__main__':

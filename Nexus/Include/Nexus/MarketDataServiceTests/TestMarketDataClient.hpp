@@ -95,6 +95,26 @@ namespace Nexus::Tests {
         Beam::ScopedQueueWriter<TimeAndSale> m_queue;
       };
 
+      /** Records a call to query(...) for SequencedTickerStatus. */
+      struct QuerySequencedTickerStatusOperation {
+
+        /** The TickerQuery passed. */
+        TickerQuery m_query;
+
+        /** The queue writer for SequencedTickerStatus. */
+        Beam::ScopedQueueWriter<SequencedTickerStatus> m_queue;
+      };
+
+      /** Records a call to query(...) for TickerStatus. */
+      struct QueryTickerStatusOperation {
+
+        /** The TickerQuery passed. */
+        TickerQuery m_query;
+
+        /** The queue writer for TickerStatus. */
+        Beam::ScopedQueueWriter<TickerStatus> m_queue;
+      };
+
       /** Records a call to query(...) for TickerInfoQuery. */
       struct TickerInfoQueryOperation {
 
@@ -115,14 +135,14 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<TickerSnapshot> m_result;
       };
 
-      /** Records a call to load_session_candlestick(...). */
-      struct LoadSessionCandlestickOperation {
+      /** Records a call to load_session_technicals(...). */
+      struct LoadSessionTechnicalsOperation {
 
         /** The Ticker passed. */
         Ticker m_ticker;
 
         /** Used to return a value to the caller. */
-        Beam::Tests::ServiceResult<PriceCandlestick> m_result;
+        Beam::Tests::ServiceResult<SessionTechnicals> m_result;
       };
 
       /** Records a call to load_ticker_info_from_prefix(...). */
@@ -140,8 +160,9 @@ namespace Nexus::Tests {
         QueryOrderImbalanceOperation, QuerySequencedBboQuoteOperation,
         QueryBboQuoteOperation, QuerySequencedBookQuoteOperation,
         QueryBookQuoteOperation, QuerySequencedTimeAndSaleOperation,
-        QueryTimeAndSaleOperation, TickerInfoQueryOperation,
-        LoadTickerSnapshotOperation, LoadSessionCandlestickOperation,
+        QueryTimeAndSaleOperation, QuerySequencedTickerStatusOperation,
+        QueryTickerStatusOperation, TickerInfoQueryOperation,
+        LoadTickerSnapshotOperation, LoadSessionTechnicalsOperation,
         LoadTickerInfoFromPrefixOperation>;
 
       /** The type of Queue used to send and receive operations. */
@@ -172,9 +193,13 @@ namespace Nexus::Tests {
         Beam::ScopedQueueWriter<SequencedTimeAndSale> queue);
       void query(
         const TickerQuery& query, Beam::ScopedQueueWriter<TimeAndSale> queue);
+      void query(const TickerQuery& query,
+        Beam::ScopedQueueWriter<SequencedTickerStatus> queue);
+      void query(
+        const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue);
       std::vector<TickerInfo> query(const TickerInfoQuery& query);
       TickerSnapshot load_snapshot(const Ticker& ticker);
-      PriceCandlestick load_session_candlestick(const Ticker& ticker);
+      SessionTechnicals load_session_technicals(const Ticker& ticker);
       std::vector<TickerInfo> load_ticker_info_from_prefix(
         const std::string& prefix);
       void close();
@@ -255,6 +280,21 @@ namespace Nexus::Tests {
     m_queue.append_queue<QueryTimeAndSaleOperation>(operation);
   }
 
+  inline void TestMarketDataClient::query(const TickerQuery& query,
+      Beam::ScopedQueueWriter<SequencedTickerStatus> queue) {
+    auto operation = std::make_shared<Operation>(
+      std::in_place_type<QuerySequencedTickerStatusOperation>, query,
+      std::move(queue));
+    m_queue.append_queue<QuerySequencedTickerStatusOperation>(operation);
+  }
+
+  inline void TestMarketDataClient::query(
+      const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue) {
+    auto operation = std::make_shared<Operation>(
+      std::in_place_type<QueryTickerStatusOperation>, query, std::move(queue));
+    m_queue.append_queue<QueryTickerStatusOperation>(operation);
+  }
+
   inline std::vector<TickerInfo> TestMarketDataClient::query(
       const TickerInfoQuery& query) {
     return m_queue.append_result<
@@ -267,10 +307,10 @@ namespace Nexus::Tests {
       ticker);
   }
 
-  inline PriceCandlestick TestMarketDataClient::load_session_candlestick(
+  inline SessionTechnicals TestMarketDataClient::load_session_technicals(
       const Ticker& ticker) {
     return m_queue.append_result<
-      LoadSessionCandlestickOperation, PriceCandlestick>(ticker);
+      LoadSessionTechnicalsOperation, SessionTechnicals>(ticker);
   }
 
   inline std::vector<TickerInfo> TestMarketDataClient::

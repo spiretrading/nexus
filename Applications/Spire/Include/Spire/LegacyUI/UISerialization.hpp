@@ -100,6 +100,7 @@
 #include "Spire/Canvas/ValueNodes/TimeRangeNode.hpp"
 #include "Spire/Canvas/ValueNodes/ValueNode.hpp"
 #include "Spire/Canvas/ValueNodes/VenueNode.hpp"
+#include "Spire/CanvasView/CanvasWindowSettings.hpp"
 #include "Spire/Charting/ChartIntervalComboBoxWindowSettings.hpp"
 #include "Spire/Charting/ChartPlotViewWindowSettings.hpp"
 #include "Spire/Charting/ChartWindowSettings.hpp"
@@ -116,7 +117,6 @@
 #include "Spire/Dashboard/ValueDashboardCellBuilder.hpp"
 #include "Spire/Dashboard/VolumeDashboardCellBuilder.hpp"
 #include "Spire/InputWidgets/TimeRangeInputWidgetWindowSettings.hpp"
-#include "Spire/LegacyUI/CanvasWindowSettings.hpp"
 #include "Spire/LegacyUI/CollapsibleWidgetWindowSettings.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
@@ -192,7 +192,7 @@ namespace Spire {
     (MinNode, "Spire.MinNode"),
     (MultiplicationNode, "Spire.MultiplicationNode"),
     (NotNode, "Spire.NotNode"),
-    (NotNode, "Spire.PreviousNode"),
+    (PreviousNode, "Spire.PreviousNode"),
     (RangeNode, "Spire.RangeNode"),
     (RoundNode, "Spire.RoundNode"),
     (SubtractionNode, "Spire.SubtractionNode"),
@@ -261,7 +261,7 @@ namespace Spire {
     (BlotterWindowSettings, "Spire.BlotterWindowSettings"),
     (BookViewWindowSettings, "Spire.Current.BookViewWindowSettings"),
     (LegacyBookViewWindowSettings, "Spire.BookViewWindowSettings"),
-    (LegacyUI::CanvasWindowSettings, "Spire.UI.CanvasWindowSettings"),
+    (CanvasWindowSettings, "Spire.UI.CanvasWindowSettings"),
     (ChartIntervalComboBoxWindowSettings,
       "Spire.ChartIntervalComboBoxWindowSettings"),
     (ChartPlotViewWindowSettings, "Spire.ChartPlotViewWindowSettings"),

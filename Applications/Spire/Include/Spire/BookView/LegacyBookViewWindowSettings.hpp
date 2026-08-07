@@ -6,6 +6,7 @@
 #include <QColor>
 #include <QFont>
 #include "Nexus/Definitions/Ticker.hpp"
+#include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/LegacyUI/TickerViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
@@ -105,6 +106,14 @@ namespace Spire {
       template<Beam::IsShuttle S>
       void shuttle(S& shuttle, unsigned int version);
   };
+
+  /**
+   * Converts legacy book view properties to the current format.
+   * @param properties The legacy book view properties to convert.
+   * @return The equivalent current book view properties.
+   */
+  BookViewProperties to_book_view_properties(
+    const LegacyBookViewWindowSettings::Properties& properties);
 
   template<Beam::IsShuttle S>
   void LegacyBookViewWindowSettings::Properties::VenueHighlight::shuttle(

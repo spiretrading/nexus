@@ -13,10 +13,10 @@ ScopeQueryModel::ScopeQueryModel(Ref<UserProfile> userProfile)
     : m_userProfile(userProfile.get()) {
   auto items = std::vector<Item>();
   items.push_back(Scope::GLOBAL);
-  for(auto& country : m_userProfile->GetCountryDatabase().get_entries()) {
+  for(auto& country : COUNTRIES.get_entries()) {
     items.push_back(country.m_code);
   }
-  for(auto& venue : m_userProfile->GetVenueDatabase().get_entries()) {
+  for(auto& venue : VENUES.get_entries()) {
     items.push_back(venue.m_venue);
   }
   Add(std::move(items));
@@ -62,11 +62,10 @@ QVariant ScopeQueryModel::data(const QModelIndex& index, int role) const {
   if(role == Qt::DisplayRole) {
     if(column == Column::SCOPE) {
       if(auto country = get<CountryCode>(&item)) {
-        return QString::fromStdString(m_userProfile->GetCountryDatabase().from(
-          *country).m_three_letter_code.get_data());
-      } else if(auto venue = get<Venue>(&item)) {
         return QString::fromStdString(
-          m_userProfile->GetVenueDatabase().from(*venue).m_display_name);
+          COUNTRIES.from(*country).m_three_letter_code.get_data());
+      } else if(auto venue = get<Venue>(&item)) {
+        return QString::fromStdString(VENUES.from(*venue).m_display_name);
       } else if(auto info = get<TickerInfo>(&item)) {
         return displayText(info->m_ticker);
       } else if(auto scope = get<Scope>(&item)) {
@@ -75,11 +74,9 @@ QVariant ScopeQueryModel::data(const QModelIndex& index, int role) const {
       return QVariant();
     } else if(column == Column::NAME) {
       if(auto country = get<CountryCode>(&item)) {
-        return QString::fromStdString(
-          m_userProfile->GetCountryDatabase().from(*country).m_name);
+        return QString::fromStdString(COUNTRIES.from(*country).m_name);
       } else if(auto venue = get<Venue>(&item)) {
-        return QString::fromStdString(
-          m_userProfile->GetVenueDatabase().from(*venue).m_display_name);
+        return QString::fromStdString(VENUES.from(*venue).m_display_name);
       } else if(auto info = get<TickerInfo>(&item)) {
         return QString::fromStdString(info->m_name);
       } else if(auto scope = get<Scope>(&item)) {
@@ -93,8 +90,7 @@ QVariant ScopeQueryModel::data(const QModelIndex& index, int role) const {
       if(auto country = get<CountryCode>(&item)) {
         return QString();
       } else if(auto venue = get<Venue>(&item)) {
-        return QString::fromStdString(
-          m_userProfile->GetVenueDatabase().from(*venue).m_description);
+        return QString::fromStdString(VENUES.from(*venue).m_description);
       } else if(auto info = get<TickerInfo>(&item)) {
         return QString::fromStdString(info->m_sector);
       } else if(auto scope = get<Scope>(&item)) {

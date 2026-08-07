@@ -93,7 +93,11 @@ bool DropDownBox::DropDownPanelWrapper::is_visible() const {
 
 void DropDownBox::DropDownPanelWrapper::destroy() {
   std::visit([] (auto*& widget) {
-    delete_later(widget);
+    if(widget) {
+      auto window = widget->window();
+      widget = nullptr;
+      window->deleteLater();
+    }
   }, m_panel);
 }
 

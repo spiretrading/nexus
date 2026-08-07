@@ -106,7 +106,7 @@ unique_ptr<CanvasNode> OrderTaskView::InitializeTaskNode(
         dynamic_cast<const TickerNode*>(&*tickerNode)) {
       CanvasNodeBuilder builder{*taskNode};
       builder.Replace(*tickerNode, tickerValueNode->SetValue(
-        *m_state->m_ticker, m_userProfile->GetVenueDatabase()));
+        *m_state->m_ticker));
       builder.SetReadOnly(*tickerNode, true);
       auto sideNode = taskNode->FindNode(SingleOrderTaskNode::SIDE_PROPERTY);
       auto price = [&] {
@@ -231,8 +231,7 @@ void OrderTaskView::HandleInteractionsPropertiesEvent() {
   auto& interactionsProperties =
     m_userProfile->GetInteractionProperties().get(*m_state->m_ticker);
   auto interactionsNode = std::make_unique<InteractionsNode>(
-    *m_state->m_ticker, m_userProfile->GetVenueDatabase(),
-    interactionsProperties);
+    *m_state->m_ticker, interactionsProperties);
   m_taskEntryWidget = new CondensedCanvasWidget{"Interactions",
     Ref(*m_userProfile), m_parent};
   m_isTaskEntryWidgetForInteractionsProperties = true;

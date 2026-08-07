@@ -14,6 +14,7 @@ file(GLOB_RECURSE test_header_files ../../Include/Spire/StylesTester/*.hpp)
 file(GLOB_RECURSE test_source_files ../../Source/StylesTester/*.cpp)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_executable(StylesTester ${test_header_files} ${test_source_files})
+target_compile_definitions(StylesTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(
   ${test_header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)

@@ -63,6 +63,9 @@ namespace Nexus {
         /** The currency's three letter code. */
         Beam::FixedString<3> m_code;
 
+        /** The currency's full name (e.g. "US Dollar"). */
+        std::string m_name;
+
         /** The currency's sign. */
         std::string m_sign;
 
@@ -73,6 +76,7 @@ namespace Nexus {
       inline static const auto NONE = [] {
         auto none = Entry();
         none.m_code = "???";
+        none.m_name = "Unknown";
         none.m_sign = "?";
         return none;
       }();
@@ -135,8 +139,8 @@ namespace Nexus {
    * @return The CurrencyId represented by the <i>source</i>.
    */
   inline CurrencyId parse_currency(std::string_view source) {
-    extern const CurrencyDatabase& DEFAULT_CURRENCIES;
-    return parse_currency(source, DEFAULT_CURRENCIES);
+    extern const CurrencyDatabase& CURRENCIES;
+    return parse_currency(source, CURRENCIES);
   }
 
   /**
@@ -150,6 +154,7 @@ namespace Nexus {
       auto entry = CurrencyDatabase::Entry();
       entry.m_id = CurrencyId(Beam::extract<std::uint16_t>(node, "id"));
       entry.m_code = Beam::extract<std::string>(node, "code");
+      entry.m_name = Beam::extract<std::string>(node, "name");
       entry.m_sign = Beam::extract<std::string>(node, "sign");
       return entry;
     }, std::runtime_error("Failed to parse currency database entry."));
@@ -175,11 +180,11 @@ namespace Nexus {
   }
 
   inline std::ostream& operator <<(std::ostream& out, CurrencyId value) {
-    extern const CurrencyDatabase& DEFAULT_CURRENCIES;
+    extern const CurrencyDatabase& CURRENCIES;
     auto database = static_cast<const CurrencyDatabase*>(
       out.pword(Beam::ScopedStreamManipulator<CurrencyDatabase>::ID));
     if(!database) {
-      database = &DEFAULT_CURRENCIES;
+      database = &CURRENCIES;
     }
     auto& entry = database->from(value);
     if(entry.m_id) {
@@ -314,7 +319,7 @@ namespace Nexus {
 
 namespace Beam {
   template<>
-  constexpr auto is_structure<Nexus::CurrencyId> = false;
+  inline constexpr auto is_structure<Nexus::CurrencyId> = false;
 
   template<>
   struct Send<Nexus::CurrencyId> {
@@ -341,6 +346,7 @@ namespace Beam {
         unsigned int version) const {
       shuttle.shuttle("id", value.m_id);
       shuttle.shuttle("code", value.m_code);
+      shuttle.shuttle("name", value.m_name);
       shuttle.shuttle("sign", value.m_sign);
     }
   };
@@ -373,6 +379,6 @@ namespace std {
   };
 }
 
-#include "Nexus/Definitions/DefaultCurrencyDatabase.hpp"
+#include "Nexus/Definitions/StandardCurrencies.hpp"
 
 #endif

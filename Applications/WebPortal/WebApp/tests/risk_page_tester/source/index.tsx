@@ -4,7 +4,7 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as WebPortal from 'web_portal';
 
-const currencyDatabase = Nexus.buildDefaultCurrencyDatabase();
+const currencyDatabase = Nexus.buildCurrencyDatabase();
 
 class TestRiskModel extends WebPortal.LocalRiskModel {
   public shouldFail = false;
@@ -84,7 +84,7 @@ class TestApp extends React.Component<{}, State> {
 
   private model = new TestRiskModel(
     new Beam.DirectoryEntry(Beam.DirectoryEntry.Type.ACCOUNT, 123, 'test'),
-    new Nexus.RiskParameters(Nexus.DefaultCurrencies.CAD,
+    new Nexus.RiskParameters(Nexus.Currencies.CAD,
       Nexus.Money.ONE.multiply(100000),
       new Nexus.RiskState(Nexus.RiskState.Type.ACTIVE),
       Nexus.Money.ONE.multiply(1000),

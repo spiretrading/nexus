@@ -5,6 +5,7 @@
 #include "Spire/Spire/AnyListValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
+#include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/FocusObserver.hpp"
@@ -12,6 +13,7 @@
 #include "Spire/Ui/InfoTip.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ListItem.hpp"
+#include "Spire/Ui/RecycledListViewItemBuilder.hpp"
 #include "Spire/Ui/ScrollableListBox.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -93,9 +95,17 @@ namespace {
     }
     return QWIDGETSIZE_MAX;
   }
+
+  TextBox* make_text_box(std::shared_ptr<TextModel> current) {
+    auto text_box = new TextBox(std::move(current));
+    update_style(*text_box, [] (auto& style) {
+      style = TEXT_BOX_STYLE(style);
+    });
+    return text_box;
+  }
 }
 
-struct TagBox::PartialListModel : public AnyListModel {
+struct AnyTagBox::PartialListModel : public AnyListModel {
   std::shared_ptr<AnyListModel> m_source;
   ListModelTransactionLog<std::any> m_transaction;
   scoped_connection m_source_connection;
@@ -153,12 +163,76 @@ struct TagBox::PartialListModel : public AnyListModel {
   }
 };
 
-TagBox::TagBox(std::shared_ptr<AnyListModel> list,
-    std::shared_ptr<TextModel> current, QWidget* parent)
+struct AnyTagBox::TagItemBuilder {
+  AnyTagBox* m_tag_box;
+  std::unordered_map<QWidget*, std::shared_ptr<ProxyValueModel<QString>>>
+    m_proxies;
+
+  explicit TagItemBuilder(AnyTagBox& tag_box)
+    : m_tag_box(&tag_box) {}
+
+  QWidget* mount(const std::shared_ptr<AnyListModel>& list, int index) {
+    if(index == list->get_size() - 1) {
+      auto box = new QWidget();
+      enclose(*box, *m_tag_box->m_input_box);
+      connect(box, &QObject::destroyed, m_tag_box, [tag_box = m_tag_box] {
+        tag_box->m_input_box->setParent(tag_box);
+      });
+      return box;
+    }
+    auto source = make_read_only_to_text_model(
+      std::make_shared<AnyListValueModel>(list, index));
+    auto proxy =
+      std::make_shared<ProxyValueModel<QString>>(std::move(source));
+    auto tag = new Tag(proxy, m_tag_box);
+    tag->set_read_only(m_tag_box->m_is_read_only || !m_tag_box->isEnabled());
+    auto tag_box = m_tag_box;
+    tag->connect_delete_signal([=] {
+      QTimer::singleShot(0, tag_box, [=] {
+        auto tag_index = [&] {
+          for(auto i = 0; i < tag_box->get_tags()->get_size(); ++i) {
+            if(proxy->get() == to_text(tag_box->m_model->get(i))) {
+              return i;
+            }
+          }
+          return -1;
+        }();
+        tag_box->setFocus();
+        if(tag_index >= 0) {
+          tag_box->get_tags()->remove(tag_index);
+        }
+      });
+    });
+    m_proxies[tag] = proxy;
+    return tag;
+  }
+
+  void reset(
+      QWidget& widget, const std::shared_ptr<AnyListModel>& list, int index) {
+    auto i = m_proxies.find(&widget);
+    if(i == m_proxies.end()) {
+      return;
+    }
+    i->second->set_source(make_read_only_to_text_model(
+      std::make_shared<AnyListValueModel>(list, index)));
+    static_cast<Tag&>(widget).set_read_only(
+      m_tag_box->m_is_read_only || !m_tag_box->isEnabled());
+  }
+
+  void unmount(QWidget* widget) {
+    m_proxies.erase(widget);
+    delete widget;
+  }
+};
+
+AnyTagBox::AnyTagBox(std::shared_ptr<AnyListModel> tags,
+    AnyInputBox* input_box, QWidget* parent)
     : QWidget(parent),
-      m_model(std::make_shared<PartialListModel>(std::move(list))),
-      m_text_focus_proxy(nullptr),
+      m_model(std::make_shared<PartialListModel>(std::move(tags))),
+      m_input_box(input_box),
+      m_input_focus_proxy(nullptr),
       m_focus_observer(*this),
+      m_input_box_position_observer(*input_box),
       m_is_read_only(false),
       m_list_item_gap(0),
       m_list_overflow_gap(0),
@@ -166,25 +240,22 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
       m_horizontal_scroll_bar_end_range(0),
       m_vertical_scroll_bar_end_range(0),
       m_is_transaction(false) {
-  m_text_box = new TextBox(std::move(current));
-  update_style(*m_text_box, [] (auto& style) {
-    style = TEXT_BOX_STYLE(style);
-  });
-  m_text_box->get_current()->connect_update_signal(
-    std::bind_front(&TagBox::on_text_box_current, this));
-  m_list_view = new ListView(m_model, std::bind_front(&TagBox::make_tag, this));
+  m_input_box->get_current()->connect_update_signal(
+    std::bind_front(&AnyTagBox::on_input_current, this));
+  m_list_view = new ListView(
+    m_model, RecycledListViewItemBuilder(TagItemBuilder(*this)));
   m_list_view->get_current()->set(m_model->get_size() - 1);
   update_style(*m_list_view, [] (auto& style) {
     style = LIST_VIEW_STYLE(style);
   });
   m_list_view_style_connection = connect_style_signal(
-    *m_list_view, std::bind_front(&TagBox::on_list_view_style, this));
+    *m_list_view, std::bind_front(&AnyTagBox::on_list_view_style, this));
   m_list_view->get_list()->connect_operation_signal(
-    std::bind_front(&TagBox::on_operation, this));
+    std::bind_front(&AnyTagBox::on_operation, this));
   m_list_view->connect_submit_signal(
-    std::bind_front(&TagBox::on_list_view_submit, this));
+    std::bind_front(&AnyTagBox::on_list_view_submit, this));
   m_list_view->get_current()->connect_update_signal(
-    std::bind_front(&TagBox::on_list_view_current, this));
+    std::bind_front(&AnyTagBox::on_list_view_current, this));
   m_list_view->setFocusPolicy(Qt::NoFocus);
   m_list_view->installEventFilter(this);
   m_scrollable_list_box = new ScrollableListBox(*m_list_view);
@@ -199,17 +270,17 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   m_vertical_scroll_bar =
     &m_scrollable_list_box->get_scroll_box().get_vertical_scroll_bar();
   m_scrollable_list_box->installEventFilter(this);
-  auto input_box = make_input_box(m_scrollable_list_box);
-  enclose(*this, *input_box);
+  auto input_outline = make_input_box(m_scrollable_list_box);
+  enclose(*this, *input_outline);
   link(*this, *m_list_view);
-  proxy_style(*this, *input_box);
-  set_style(*this, INPUT_BOX_STYLE(get_style(*input_box)));
+  proxy_style(*this, *input_outline);
+  set_style(*this, INPUT_BOX_STYLE(get_style(*input_outline)));
   m_style_connection = connect_style_signal(*this,
-    std::bind_front(&TagBox::on_style, this));
+    std::bind_front(&AnyTagBox::on_style, this));
   m_text_area_box = new TextAreaBox("");
   m_text_area_box->set_read_only(true);
   m_text_area_box_style_connection = connect_style_signal(*m_text_area_box,
-    std::bind_front(&TagBox::on_text_area_style, this));
+    std::bind_front(&AnyTagBox::on_text_area_style, this));
   update_style(*m_text_area_box, [] (auto& style) {
     style = TEXT_AREA_BOX_STYLE(style);
   });
@@ -219,14 +290,12 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   on_list_view_style();
   m_min_scroll_height = vertical_length(m_list_view_padding) +
     vertical_length(m_input_box_border) + vertical_length(m_input_box_padding) +
-      m_text_box->sizeHint().height();
-  setFocusProxy(m_text_box);
+      m_input_box->sizeHint().height();
+  setFocusProxy(m_input_box);
   setFocusPolicy(Qt::StrongFocus);
   m_focus_observer.connect_state_signal(
-    std::bind_front(&TagBox::on_focus, this));
-  m_text_box_position_observer =
-    std::make_unique<GlobalPositionObserver>(*m_text_box);
-  m_text_box_position_observer->connect_position_signal([=] (auto pos) {
+    std::bind_front(&AnyTagBox::on_focus, this));
+  m_input_box_position_observer.connect_position_signal([=] (auto pos) {
     if(m_list_view_overflow == Styles::Overflow::NONE) {
       update_tooltip();
     }
@@ -234,53 +303,65 @@ TagBox::TagBox(std::shared_ptr<AnyListModel> list,
   set_overflow(Overflow::NONE);
 }
 
-const std::shared_ptr<AnyListModel>& TagBox::get_tags() const {
+const std::shared_ptr<AnyListModel>& AnyTagBox::get_tags() const {
   return m_model->m_source;
 }
 
-const std::shared_ptr<TextModel>& TagBox::get_current() const {
-  return m_text_box->get_current();
+const std::shared_ptr<AnyValueModel>& AnyTagBox::get_current() const {
+  return m_input_box->get_current();
 }
 
-const std::shared_ptr<HighlightModel>& TagBox::get_highlight() const {
-  return m_text_box->get_highlight();
+const std::shared_ptr<HighlightModel>& AnyTagBox::get_highlight() const {
+  return m_input_box->get_highlight();
 }
 
-void TagBox::set_placeholder(const QString& placeholder) {
+const AnyRef& AnyTagBox::get_submission() const {
+  return m_input_box->get_submission();
+}
+
+const AnyInputBox& AnyTagBox::get_input_box() const {
+  return *m_input_box;
+}
+
+AnyInputBox& AnyTagBox::get_input_box() {
+  return *m_input_box;
+}
+
+void AnyTagBox::set_placeholder(const QString& placeholder) {
   m_placeholder = placeholder;
   update_placeholder();
 }
 
-bool TagBox::is_read_only() const {
+bool AnyTagBox::is_read_only() const {
   return m_is_read_only;
 }
 
-void TagBox::set_read_only(bool is_read_only) {
+void AnyTagBox::set_read_only(bool is_read_only) {
   if(m_is_read_only == is_read_only) {
     return;
   }
   m_is_read_only = is_read_only;
-  m_text_box->set_read_only(m_is_read_only);
+  m_input_box->set_read_only(m_is_read_only);
   update_tags_read_only();
   if(m_is_read_only) {
     match(*this, ReadOnly());
   } else {
     m_list_view->setMinimumWidth(0);
-    install_text_proxy_event_filter();
+    install_input_proxy_event_filter();
     unmatch(*this, ReadOnly());
   }
 }
 
-connection TagBox::connect_submit_signal(
+connection AnyTagBox::connect_submit_signal(
     const SubmitSignal::slot_type& slot) const {
-  return m_text_box->connect_submit_signal(slot);
+  return m_input_box->connect_submit_signal(slot);
 }
 
-QSize TagBox::minimumSizeHint() const {
-  return {QWidget::minimumSizeHint().width(), m_min_scroll_height};
+QSize AnyTagBox::minimumSizeHint() const {
+  return QSize(QWidget::minimumSizeHint().width(), m_min_scroll_height);
 }
 
-QSize TagBox::sizeHint() const {
+QSize AnyTagBox::sizeHint() const {
   if(m_size_hint) {
     return *m_size_hint;
   }
@@ -290,14 +371,16 @@ QSize TagBox::sizeHint() const {
   return *m_size_hint;
 }
 
-bool TagBox::eventFilter(QObject* watched, QEvent* event) {
+bool AnyTagBox::is_input_empty() const {
+  return false;
+}
+
+bool AnyTagBox::eventFilter(QObject* watched, QEvent* event) {
   if(event->type() == QEvent::KeyPress) {
     auto& key_event = *static_cast<QKeyEvent*>(event);
-    if(watched == m_text_focus_proxy && !is_read_only() &&
+    if(watched == m_input_focus_proxy && !is_read_only() &&
         key_event.key() == Qt::Key_Backspace && get_tags()->get_size() > 0 &&
-          (m_text_box->get_highlight()->get().m_start == 0 &&
-            m_text_box->get_highlight()->get().m_end == 0 ||
-              m_text_box->get_current()->get().isEmpty())) {
+          is_input_empty()) {
       get_tags()->remove(get_tags()->get_size() - 1);
       return true;
     } else if(watched == m_list_view) {
@@ -323,14 +406,14 @@ bool TagBox::eventFilter(QObject* watched, QEvent* event) {
   return QWidget::eventFilter(watched, event);
 }
 
-bool TagBox::event(QEvent* event) {
+bool AnyTagBox::event(QEvent* event) {
   if(event->type() == QEvent::LayoutRequest) {
     m_size_hint = none;
   }
   return QWidget::event(event);
 }
 
-void TagBox::changeEvent(QEvent* event) {
+void AnyTagBox::changeEvent(QEvent* event) {
   if(event->type() == QEvent::EnabledChange) {
     update_tags_read_only();
     update_tooltip();
@@ -339,14 +422,14 @@ void TagBox::changeEvent(QEvent* event) {
   QWidget::changeEvent(event);
 }
 
-bool TagBox::focusNextPrevChild(bool next) {
+bool AnyTagBox::focusNextPrevChild(bool next) {
   if(next) {
-    m_text_box->setFocus(Qt::TabFocusReason);
+    m_input_box->setFocus(Qt::TabFocusReason);
   }
   return QWidget::focusNextPrevChild(next);
 }
 
-void TagBox::resizeEvent(QResizeEvent* event) {
+void AnyTagBox::resizeEvent(QResizeEvent* event) {
   update_overflow();
   update_placeholder();
   update_tooltip();
@@ -354,53 +437,12 @@ void TagBox::resizeEvent(QResizeEvent* event) {
   QWidget::resizeEvent(event);
 }
 
-void TagBox::showEvent(QShowEvent* event) {
-  install_text_proxy_event_filter();
+void AnyTagBox::showEvent(QShowEvent* event) {
+  install_input_proxy_event_filter();
   QWidget::showEvent(event);
 }
 
-QWidget* TagBox::make_tag(
-    const std::shared_ptr<AnyListModel>& model, int index) {
-  if(index == model->get_size() - 1) {
-    auto box = new QWidget();
-    enclose(*box, *m_text_box);
-    connect(box, &QObject::destroyed, this, [=] {
-      m_text_box->setParent(this);
-    });
-    return box;
-  }
-  auto label = make_read_only_to_text_model(
-    std::make_shared<AnyListValueModel>(model, index));
-  auto tag = new Tag(label, this);
-  tag->set_read_only(m_is_read_only || !isEnabled());
-  tag->connect_delete_signal([=] {
-    QTimer::singleShot(0, this, [=] {
-      auto tag_index = [&] {
-        for(auto i = 0; i < get_tags()->get_size(); ++i) {
-          if(label->get() == to_text(m_model->get(i))) {
-            return i;
-          }
-        }
-        return -1;
-      }();
-      setFocus();
-      if(tag_index >= 0) {
-        get_tags()->remove(tag_index);
-      }
-    });
-  });
-  label->connect_update_signal([=] (const auto& current) {
-    if(auto parent = tag->parentWidget()) {
-      if(auto box = parent->parentWidget()) {
-        box->resize(0, 0);
-        tag->adjustSize();
-      }
-    }
-  });
-  return tag;
-}
-
-int TagBox::get_available_width() const {
+int AnyTagBox::get_available_width() const {
   auto width = 0;
   for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
     auto item_size = m_list_view->get_list_item(i)->sizeHint();
@@ -413,7 +455,7 @@ int TagBox::get_available_width() const {
   return width;
 }
 
-int TagBox::get_height_for_width(int width) const {
+int AnyTagBox::get_height_for_width(int width) const {
   if(width <= 0 || m_list_view_overflow == Overflow::NONE ||
       m_list_view->get_list()->get_size() == 0) {
     return m_min_scroll_height;
@@ -424,31 +466,17 @@ int TagBox::get_height_for_width(int width) const {
     }
     return 0;
   }();
-  auto horizontal_space = horizontal_length(m_list_view_padding) +
-    horizontal_length(m_input_box_padding) +
+  auto horizontal_space = horizontal_length(m_input_box_padding) +
     horizontal_length(m_input_box_border) + horizontal_scroll_space;
-  auto content_width = width - horizontal_space;
-  auto remaining_width = content_width;
-  auto line_height = 0;
-  auto total_height = 0;
-  for(auto i = 0; i < m_list_view->get_list()->get_size(); ++i) {
-    auto item_size = m_list_view->get_list_item(i)->sizeHint();
-    if(item_size.width() > remaining_width) {
-      total_height += line_height + m_list_overflow_gap;
-      remaining_width = content_width;
-      line_height = 0;
-    }
-    auto item_space = item_size.width() + m_list_item_gap;
-    remaining_width -= item_space;
-    line_height = std::max(line_height, item_size.height());
+  auto list_view_height = m_list_view->heightForWidth(width - horizontal_space);
+  if(list_view_height < 0) {
+    return m_min_scroll_height;
   }
-  auto vertical_space = vertical_length(m_list_view_padding) +
-    vertical_length(m_input_box_border) + vertical_length(m_input_box_padding);
-  total_height += line_height + vertical_space;
-  return total_height;
+  return list_view_height + vertical_length(m_input_box_border) +
+    vertical_length(m_input_box_padding);
 }
 
-void TagBox::set_overflow(Overflow overflow) {
+void AnyTagBox::set_overflow(Overflow overflow) {
   if(overflow == m_list_view_overflow) {
     return;
   }
@@ -478,34 +506,34 @@ void TagBox::set_overflow(Overflow overflow) {
   m_list_view->updateGeometry();
 }
 
-void TagBox::install_text_proxy_event_filter() {
-  if(!m_text_focus_proxy) {
-    m_text_focus_proxy = m_text_box->focusProxy();
-    if(m_text_focus_proxy) {
-      m_text_focus_proxy->installEventFilter(this);
+void AnyTagBox::install_input_proxy_event_filter() {
+  if(!m_input_focus_proxy) {
+    m_input_focus_proxy = find_focus_proxy(*m_input_box);
+    if(m_input_focus_proxy) {
+      m_input_focus_proxy->installEventFilter(this);
     }
   }
 }
 
-void TagBox::scroll_to_text_box() {
+void AnyTagBox::scroll_to_input_box() {
   scroll_to_end(*m_horizontal_scroll_bar);
   scroll_to_end(*m_vertical_scroll_bar);
 }
 
-void TagBox::update_placeholder() {
+void AnyTagBox::update_placeholder() {
   if(m_model->m_source->get_size() == 0) {
-    m_text_box->set_placeholder(m_placeholder);
+    m_input_box->set_placeholder(m_placeholder);
     auto content_width = width() - horizontal_length(m_input_box_padding) -
       horizontal_length(m_input_box_border) -
       horizontal_length(m_list_view_padding);
-    m_text_box->setMinimumWidth(std::max(0, content_width));
+    m_input_box->setMinimumWidth(std::max(0, content_width));
   } else {
-    m_text_box->set_placeholder("");
-    m_text_box->setMinimumWidth(0);
+    m_input_box->set_placeholder("");
+    m_input_box->setMinimumWidth(0);
   }
 }
 
-void TagBox::update_scroll_bar_end_range(ScrollBar& scroll_bar,
+void AnyTagBox::update_scroll_bar_end_range(ScrollBar& scroll_bar,
     int& end_range) {
   if(scroll_bar.get_range().m_end != end_range) {
     scroll_to_end(scroll_bar);
@@ -513,7 +541,7 @@ void TagBox::update_scroll_bar_end_range(ScrollBar& scroll_bar,
   }
 }
 
-void TagBox::update_tags_read_only() {
+void AnyTagBox::update_tags_read_only() {
   auto is_read_only = m_is_read_only || !isEnabled();
   for(auto i = 0; i < m_model->m_source->get_size(); ++i) {
     auto& item = *m_list_view->get_list_item(i);
@@ -523,7 +551,7 @@ void TagBox::update_tags_read_only() {
   }
 }
 
-void TagBox::update_tip() {
+void AnyTagBox::update_tip() {
   static auto split_string = QString(" ") + QChar(0x2022) + " ";
   auto tip = QString();
   for(auto i = 0; i < get_tags()->get_size(); ++i) {
@@ -533,7 +561,7 @@ void TagBox::update_tip() {
   m_text_area_box->get_current()->set(tip);
 }
 
-void TagBox::update_tooltip() {
+void AnyTagBox::update_tooltip() {
   auto is_tag_overflow = [&] {
     if(m_list_view_overflow == Styles::Overflow::NONE) {
       auto scroll_bar_width = [&] {
@@ -576,7 +604,7 @@ void TagBox::update_tooltip() {
   }
 }
 
-void TagBox::update_overflow() {
+void AnyTagBox::update_overflow() {
   auto list_view_overflow = [&] {
     if(get_maximum_dimension<&QWidget::maximumHeight>(*this) <=
         m_min_scroll_height) {
@@ -587,7 +615,7 @@ void TagBox::update_overflow() {
   set_overflow(list_view_overflow);
 }
 
-void TagBox::update_vertical_scroll_bar_visible() {
+void AnyTagBox::update_vertical_scroll_bar_visible() {
   if(m_list_view_overflow == Overflow::WRAP &&
       m_list_view->sizeHint().height() + vertical_length(m_input_box_padding) +
       vertical_length(m_input_box_border) >
@@ -600,11 +628,11 @@ void TagBox::update_vertical_scroll_bar_visible() {
   }
 }
 
-void TagBox::on_focus(FocusObserver::State state) {
+void AnyTagBox::on_focus(FocusObserver::State state) {
   if(state == FocusObserver::State::NONE) {
     scroll_to_start(*m_horizontal_scroll_bar);
   } else {
-    m_text_box->setFocusPolicy(focusPolicy());
+    m_input_box->setFocusPolicy(focusPolicy());
     setFocus();
     if(!is_read_only()) {
       QTimer::singleShot(0, this, [=] {
@@ -614,7 +642,7 @@ void TagBox::on_focus(FocusObserver::State state) {
   }
 }
 
-void TagBox::on_operation(const AnyListModel::Operation& operation) {
+void AnyTagBox::on_operation(const AnyListModel::Operation& operation) {
   visit(operation,
     [&] (AnyListModel::StartTransaction) {
       m_is_transaction = true;
@@ -626,7 +654,7 @@ void TagBox::on_operation(const AnyListModel::Operation& operation) {
     m_list_view->setUpdatesEnabled(false);
   } else {
     m_list_view->setFocusPolicy(Qt::NoFocus);
-    m_text_box->setFocusPolicy(focusPolicy());
+    m_input_box->setFocusPolicy(focusPolicy());
     if(m_list_view_overflow == Overflow::NONE && is_read_only()) {
       m_list_view->setMinimumWidth(get_available_width() -
         horizontal_length(m_input_box_padding) -
@@ -648,28 +676,28 @@ void TagBox::on_operation(const AnyListModel::Operation& operation) {
   }
 }
 
-void TagBox::on_text_box_current(const QString& current) {
+void AnyTagBox::on_input_current(const AnyRef& current) {
   m_list_view->updateGeometry();
-  scroll_to_text_box();
+  scroll_to_input_box();
 }
 
-void TagBox::on_list_view_current(const optional<int>& current) {
+void AnyTagBox::on_list_view_current(const optional<int>& current) {
   if(current != m_model->get_size() - 1) {
     m_list_view->get_current()->set(m_model->get_size() - 1);
   }
 }
 
-void TagBox::on_list_view_submit(const std::any& submission) {
+void AnyTagBox::on_list_view_submit(const std::any& submission) {
   m_list_view->setFocusPolicy(Qt::NoFocus);
   setFocus();
   if(!m_is_read_only) {
-    scroll_to_text_box();
+    scroll_to_input_box();
   } else {
     scroll_to_start(*m_horizontal_scroll_bar);
   }
 }
 
-void TagBox::on_style() {
+void AnyTagBox::on_style() {
   auto has_update = std::make_shared<bool>(false);
   auto& stylist = find_stylist(*this);
   for(auto& property : stylist.get_computed_block()) {
@@ -744,7 +772,7 @@ void TagBox::on_style() {
   }
 }
 
-void TagBox::on_list_view_style() {
+void AnyTagBox::on_list_view_style() {
   auto has_update = std::make_shared<bool>(false);
   auto& stylist = find_stylist(*m_list_view);
   for(auto& property : stylist.get_computed_block()) {
@@ -803,7 +831,7 @@ void TagBox::on_list_view_style() {
   }
 }
 
-void TagBox::on_text_area_style() {
+void AnyTagBox::on_text_area_style() {
   auto text_font = std::make_shared<QFont>();
   auto horizontal_padding = std::make_shared<int>();
   auto& stylist = find_stylist(*m_text_area_box);
@@ -842,4 +870,38 @@ void TagBox::on_text_area_style() {
   }
   m_text_area_box->setMaximumWidth(
     50 * get_character_width(*text_font) + *horizontal_padding);
+}
+
+TagBox::TagBox(std::shared_ptr<AnyListModel> tags,
+  std::shared_ptr<TextModel> current, QWidget* parent)
+  : TagBox(std::move(tags), make_text_box(std::move(current)), parent) {}
+
+TagBox::TagBox(std::shared_ptr<AnyListModel> tags, TextBox* text_box,
+  QWidget* parent)
+  : AnyTagBox(std::move(tags), new AnyInputBox(*text_box), parent),
+    m_text_box(text_box) {}
+
+const std::shared_ptr<TextModel>& TagBox::get_current() const {
+  return m_text_box->get_current();
+}
+
+const std::shared_ptr<HighlightModel>& TagBox::get_highlight() const {
+  return m_text_box->get_highlight();
+}
+
+const QString& TagBox::get_submission() const {
+  return m_text_box->get_submission();
+}
+
+connection TagBox::connect_submit_signal(
+    const SubmitSignal::slot_type& slot) const {
+  return m_text_box->connect_submit_signal(slot);
+}
+
+bool TagBox::is_input_empty() const {
+  auto& highlight = m_text_box->get_highlight()->get();
+  if(highlight.m_start == 0 && highlight.m_end == 0) {
+    return true;
+  }
+  return m_text_box->get_current()->get().isEmpty();
 }

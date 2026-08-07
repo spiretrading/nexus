@@ -8,7 +8,7 @@
 #include <boost/functional/factory.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/AdministrationServiceTestEnvironment.hpp"
-#include "Nexus/Definitions/DefaultTimeZoneDatabase.hpp"
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Nexus/MarketDataService/LocalHistoricalDataStore.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistry.hpp"
@@ -19,8 +19,8 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-using namespace Nexus::DefaultVenues;
 using namespace Nexus::Tests;
+using namespace Nexus::Venues;
 
 namespace {
   struct Fixture {
@@ -66,10 +66,9 @@ namespace {
           m_server_connection(std::make_shared<LocalServerConnection>()),
           m_administration_environment(
             make_administration_service_test_environment(
-              m_service_locator_environment)),
-          m_registry(DEFAULT_VENUES, get_default_time_zone_database()) {
-      auto servlet_account = make_account(
-        "market_data_service", DirectoryEntry::STAR_DIRECTORY);
+              m_service_locator_environment)) {
+      auto servlet_account =
+        make_account("market_data_service", DirectoryEntry::STAR_DIRECTORY);
       m_administration_environment.make_administrator(servlet_account);
       m_service_locator_environment.get_root().store(
         servlet_account, DirectoryEntry::STAR_DIRECTORY, Permissions(~0));
@@ -84,11 +83,7 @@ namespace {
         *m_servlet_service_locator_client, &*m_servlet), m_server_connection,
         factory<std::unique_ptr<TriggerTimer>>());
       m_client_account = make_account("client", DirectoryEntry::STAR_DIRECTORY);
-      auto global_entitlement =
-        m_servlet_administration_client->load_entitlements().
-          get_entries().front().m_group_entry;
-      m_servlet_administration_client->store_entitlements(
-        m_client_account, {global_entitlement});
+      m_administration_environment.grant_all_entitlements(m_client_account);
       std::tie(m_client_account, m_client) = make_client("client");
     }
   };
@@ -246,6 +241,52 @@ TEST_SUITE("MarketDataRegistryServlet") {
       }, [] (const auto& record) {
         return record.book_quote;
       });
+  }
+
+  TEST_CASE("query_publish_ticker_status") {
+    auto fixture = Fixture();
+    auto ticker = parse_ticker("A.TSX");
+    auto info = TickerInfo(ticker, "TICKER A", "", 100);
+    fixture.m_registry.add(info);
+    auto query = TickerQuery();
+    query.set_index(ticker);
+    query.set_range(Range::REAL_TIME);
+    query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    auto result =
+      fixture.m_client->send_request<QueryTickerStatusService>(query);
+    REQUIRE(result.m_id != -1);
+    REQUIRE(result.m_snapshot.empty());
+    auto data = IndexedTickerStatus(
+      TickerStatus(TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
+        fixture.m_time_client.get_time()), ticker);
+    fixture.m_servlet->publish(data, 1);
+    auto message = fixture.m_client->read_message();
+    auto received_message = std::dynamic_pointer_cast<
+      RecordMessage<TickerStatusMessage, TestServiceProtocolClient>>(message);
+    auto received_data = received_message->get_record().status;
+    REQUIRE(*received_data == *data);
+    auto data_store_query = TickerQuery();
+    data_store_query.set_index(ticker);
+    data_store_query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    data_store_query.set_range(
+      received_data.get_sequence(), increment(received_data.get_sequence()));
+    auto stored_data = fixture.m_data_store.load_ticker_statuses(data_store_query);
+    REQUIRE(stored_data.size() == 1);
+    REQUIRE(stored_data.front() == to_sequenced_value(received_data));
+    SUBCASE("query_no_entitlement") {
+      auto client_account =
+        fixture.make_account("client2", DirectoryEntry::STAR_DIRECTORY);
+      auto client = std::unique_ptr<TestServiceProtocolClient>();
+      std::tie(client_account, client) = fixture.make_client("client2");
+      auto no_entitlement_query = TickerQuery();
+      no_entitlement_query.set_index(ticker);
+      no_entitlement_query.set_range(Range::TOTAL);
+      no_entitlement_query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+      auto no_entitlement_result =
+        client->send_request<QueryTickerStatusService>(no_entitlement_query);
+      REQUIRE(no_entitlement_result.m_id != -1);
+      REQUIRE(no_entitlement_result.m_snapshot.size() == 1);
+    }
   }
 
   TEST_CASE("query_publish_time_and_sale") {

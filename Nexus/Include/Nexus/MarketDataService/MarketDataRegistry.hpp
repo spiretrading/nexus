@@ -63,13 +63,8 @@ namespace Nexus {
   class MarketDataRegistry {
     public:
 
-      /**
-       * Constructs an empty MarketDataRegistry.
-       * @param venues The venues used to resolve primary listings.
-       * @param time_zones The database of time zones.
-       */
-      MarketDataRegistry(VenueDatabase venues,
-        boost::local_time::tz_database time_zones) noexcept;
+      /** Constructs an empty MarketDataRegistry. */
+      MarketDataRegistry() = default;
 
       /**
        * Returns a list of TickerInfo's matching a prefix.
@@ -88,12 +83,12 @@ namespace Nexus {
       Ticker get_primary_listing(const Ticker& ticker) const;
 
       /**
-       * Returns a Ticker's session candlestick.
-       * @param ticker The Ticker whose session candlestick is to be returned.
-       * @return A snapshot of the <i>ticker</i>'s PriceCandlestick.
+       * Returns a Ticker's session technicals.
+       * @param ticker The Ticker whose session technicals are to be returned.
+       * @return A snapshot of the <i>ticker</i>'s SessionTechnicals.
        */
-      boost::optional<PriceCandlestick>
-        find_session_candlestick(const Ticker& ticker) const;
+      boost::optional<SessionTechnicals>
+        find_session_technicals(const Ticker& ticker) const;
 
       /**
        * Returns a Ticker's real time snapshot.
@@ -142,14 +137,25 @@ namespace Nexus {
         IsHistoricalDataStore auto& data_store, const F& f);
 
       /**
-       * Publishes a TimeAndSale.
-       * @param time_and_sale The TimeAndSale to publish.
+       * Publishes a TickerStatus.
+       * @param status The TickerStatus to publish.
        * @param source_id The id of the source setting the value.
        * @param data_store Used to initialize the Ticker's data.
        * @param f Receives synchronized access to the updated data.
        */
       template<typename F>
       void publish(const TickerTimeAndSale& time_and_sale, int source_id,
+        IsHistoricalDataStore auto& data_store, const F& f);
+
+      /**
+       * Publishes a TickerStatus.
+       * @param status The TickerStatus to publish.
+       * @param source_id The id of the source setting the value.
+       * @param data_store Used to initialize the Ticker's data.
+       * @param f Receives synchronized access to the updated data.
+       */
+      template<typename F>
+      void publish(const IndexedTickerStatus& status, int source_id,
         IsHistoricalDataStore auto& data_store, const F& f);
 
       /**
@@ -163,8 +169,6 @@ namespace Nexus {
       template<typename> friend struct std::hash;
       using SyncVenueEntry = Beam::Sync<VenueEntry, Beam::Mutex>;
       using SyncTickerEntry = Beam::Sync<TickerEntry, Beam::Mutex>;
-      VenueDatabase m_venues;
-      boost::local_time::tz_database m_time_zones;
       Beam::Sync<tsl::htrie_map<char, TickerInfo>> m_ticker_database;
       Beam::SynchronizedUnorderedMap<PrimaryListingKey, Ticker>
         m_primary_listings;
@@ -181,11 +185,6 @@ namespace Nexus {
         const Ticker& ticker, IsHistoricalDataStore auto & data_store);
   };
 
-  inline MarketDataRegistry::MarketDataRegistry(
-    VenueDatabase venues, boost::local_time::tz_database time_zones) noexcept
-    : m_venues(std::move(venues)),
-      m_time_zones(std::move(time_zones)) {}
-
   inline std::vector<TickerInfo> MarketDataRegistry::search_ticker_info(
       const std::string& prefix) const {
     auto matches = std::unordered_set<TickerInfo>();
@@ -201,8 +200,9 @@ namespace Nexus {
       activity_result.push_back(std::pair(Money::ZERO, match));
     }
     for(auto& entry : activity_result) {
-      if(auto candlestick = find_session_candlestick(entry.second.m_ticker)) {
-        entry.first = abs(candlestick->get_volume() * candlestick->get_open());
+      if(auto technicals = find_session_technicals(entry.second.m_ticker)) {
+        entry.first =
+          abs(technicals->m_volume * technicals->m_open.value_or(Money::ZERO));
       }
     }
     std::sort(activity_result.begin(), activity_result.end(),
@@ -229,7 +229,7 @@ namespace Nexus {
     if(auto verified_ticker = m_primary_listings.try_load(venue_key)) {
       return *verified_ticker;
     }
-    auto& venue_entry = m_venues.from(ticker.get_venue());
+    auto& venue_entry = VENUES.from(ticker.get_venue());
     if(!venue_entry.m_venue) {
       return ticker;
     }
@@ -243,14 +243,14 @@ namespace Nexus {
     return ticker;
   }
 
-  inline boost::optional<PriceCandlestick>
-      MarketDataRegistry::find_session_candlestick(const Ticker& ticker) const {
+  inline boost::optional<SessionTechnicals>
+      MarketDataRegistry::find_session_technicals(const Ticker& ticker) const {
     auto entry = m_ticker_entries.find(get_primary_listing(ticker));
     if(!entry || !(*entry)->is_available()) {
       return boost::none;
     }
     return Beam::with(***entry, [&] (const auto& entry) {
-      return entry.get_session_candlestick();
+      return entry.get_session_technicals();
     });
   }
 
@@ -272,7 +272,7 @@ namespace Nexus {
       database[key] = info;
       database[name] = info;
     });
-    auto& venue_entry = m_venues.from(info.m_ticker.get_venue());
+    auto& venue_entry = VENUES.from(info.m_ticker.get_venue());
     if(!venue_entry.m_venue) {
       return;
     }
@@ -361,6 +361,20 @@ namespace Nexus {
     });
   }
 
+  template<typename F>
+  void MarketDataRegistry::publish(const IndexedTickerStatus& status,
+      int source_id, IsHistoricalDataStore auto& data_store, const F& f) {
+    auto entry = load(status.get_index(), data_store);
+    if(!entry) {
+      return;
+    }
+    Beam::with(*entry, [&] (auto& entry) {
+      if(auto sequenced_status = entry.publish(status, source_id)) {
+        f(*sequenced_status);
+      }
+    });
+  }
+
   inline void MarketDataRegistry::clear(int source_id) {
     auto entries = std::vector<
       std::shared_ptr<Beam::Remote<SyncTickerEntry, Beam::Mutex>>>();
@@ -405,11 +419,10 @@ namespace Nexus {
           auto initial_sequences =
             load_initial_sequences(data_store, sanitized_ticker);
           auto& market_center =
-            m_venues.from(sanitized_ticker.get_venue()).m_market_center;
+            VENUES.from(sanitized_ticker.get_venue()).m_market_center;
           auto close = Details::load_close_price(
             sanitized_ticker, market_center, data_store);
-          entry.emplace(sanitized_ticker, m_venues, m_time_zones, close,
-            initial_sequences);
+          entry.emplace(sanitized_ticker, close, initial_sequences);
         });
     });
     return **entry;

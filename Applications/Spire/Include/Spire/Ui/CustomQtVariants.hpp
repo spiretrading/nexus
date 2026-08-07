@@ -2,6 +2,7 @@
 #define SPIRE_CUSTOM_VARIANTS_HPP
 #include <any>
 #include <boost/any.hpp>
+#include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include <boost/date_time/gregorian/greg_date.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/optional/optional.hpp>
@@ -44,6 +45,7 @@ namespace Spire {
 #define SPIRE_METATYPES
 Q_DECLARE_METATYPE(std::any);
 Q_DECLARE_METATYPE(boost::any);
+Q_DECLARE_METATYPE(Beam::DirectoryEntry);
 Q_DECLARE_METATYPE(boost::gregorian::date);
 Q_DECLARE_METATYPE(boost::posix_time::ptime);
 Q_DECLARE_METATYPE(boost::posix_time::time_duration);
@@ -119,6 +121,10 @@ namespace Spire {
   QString to_text(
     boost::posix_time::time_duration time, const QLocale& locale = QLocale());
 
+  /** Returns the text representation of a DirectoryEntry. */
+  QString to_text(
+    const Beam::DirectoryEntry& entry, const QLocale& locale = QLocale());
+
   /** Returns the text representation of a CountryCode. */
   QString to_text(Nexus::CountryCode code, const QLocale& locale = QLocale());
 
@@ -158,6 +164,9 @@ namespace Spire {
   QString to_text(
     const Nexus::Scope& scope, const QLocale& locale = QLocale());
 
+  /** Returns the text representation of a Task::State. */
+  const QString& to_text(Task::State state, const QLocale& locale = QLocale());
+
   /** Returns the text representation of a Ticker. */
   QString to_text(
     const Nexus::Ticker& ticker, const QLocale& locale = QLocale());
@@ -189,6 +198,15 @@ namespace Spire {
 
   /** Tests if two <code>std::any</code> have equal types and values. */
   bool is_equal(const std::any& left, const std::any& right);
+
+  /** Tests if two <code>AnyRef</code> have equal types and values. */
+  bool is_equal(const AnyRef& left, const AnyRef& right);
+
+  /** Tests if an <code>std::any</code> and an <code>AnyRef</code> are equal. */
+  bool is_equal(const std::any& left, const AnyRef& right);
+
+  /** Tests if an <code>AnyRef</code> and an <code>std::any</code> are equal. */
+  bool is_equal(const AnyRef& left, const std::any& right);
 
   /**
    * Constructs an instance of the given type from its text representation.
