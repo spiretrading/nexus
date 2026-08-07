@@ -199,6 +199,9 @@ namespace Details {
       void submit_pegged(const PrimitiveOrder& order);
       void enqueue(const std::shared_ptr<PrimitiveOrder>& order,
         OrderStatus status, boost::posix_time::ptime timestamp,
+        Quantity last_quantity, Money last_price, std::string text);
+      void enqueue(const std::shared_ptr<PrimitiveOrder>& order,
+        OrderStatus status, boost::posix_time::ptime timestamp,
         Quantity last_quantity, Money last_price);
       OrderStatus fill(const std::shared_ptr<PrimitiveOrder>& order,
         Money price, Quantity quantity);
@@ -265,9 +268,6 @@ namespace Details {
       return;
     }
     m_entries[order->get_info().m_id] = make_entry(*order, status, remaining);
-    if(order->get_info().m_fields.m_type == OrderType::PEGGED) {
-      submit_pegged(*order);
-    }
     auto next_status = evaluate(order, status);
     if(is_terminal(next_status)) {
       m_pegged_entries.erase(order->get_info().m_id);
@@ -282,20 +282,21 @@ namespace Details {
   void TickerOrderSimulator<T>::submit(
       const std::shared_ptr<PrimitiveOrder>& order) {
     auto lock = std::lock_guard(m_mutex);
-    if(order->get_info().m_fields.m_quantity <= 0 ||
-        m_bbo.m_bid.m_price == Money::ZERO ||
-        m_bbo.m_ask.m_price == Money::ZERO) {
+    if(order->get_info().m_fields.m_quantity <= 0) {
       enqueue(order, OrderStatus::REJECTED, order->get_info().m_timestamp, 0,
-        Money::ZERO);
+        Money::ZERO, "Invalid quantity.");
+      return;
+    } else if(order->get_info().m_fields.m_type == OrderType::MARKET &&
+        (m_bbo.m_bid.m_price == Money::ZERO ||
+          m_bbo.m_ask.m_price == Money::ZERO)) {
+      enqueue(order, OrderStatus::REJECTED, order->get_info().m_timestamp, 0,
+        Money::ZERO, "No BBO quote available.");
       return;
     }
     enqueue(
       order, OrderStatus::NEW, order->get_info().m_timestamp, 0, Money::ZERO);
     m_entries[order->get_info().m_id] = make_entry(
       *order, OrderStatus::NEW, order->get_info().m_fields.m_quantity);
-    if(order->get_info().m_fields.m_type == OrderType::PEGGED) {
-      submit_pegged(*order);
-    }
     auto next_status = evaluate(order, OrderStatus::NEW);
     if(is_terminal(next_status)) {
       m_pegged_entries.erase(order->get_info().m_id);
@@ -521,7 +522,7 @@ namespace Details {
   void TickerOrderSimulator<T>::enqueue(
       const std::shared_ptr<PrimitiveOrder>& order, OrderStatus status,
       boost::posix_time::ptime timestamp, Quantity last_quantity,
-      Money last_price) {
+      Money last_price, std::string text) {
     m_reports->push([=] {
       order->with([&] (auto current_status, const auto& reports) {
         if(reports.empty() || is_terminal(current_status)) {
@@ -530,9 +531,18 @@ namespace Details {
         auto updated_report = make_update(reports.back(), status, timestamp);
         updated_report.m_last_quantity = last_quantity;
         updated_report.m_last_price = last_price;
+        updated_report.m_text = text;
         order->update(updated_report);
       });
     });
+  }
+
+  template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
+  void TickerOrderSimulator<T>::enqueue(
+      const std::shared_ptr<PrimitiveOrder>& order, OrderStatus status,
+      boost::posix_time::ptime timestamp, Quantity last_quantity,
+      Money last_price) {
+    enqueue(order, status, timestamp, last_quantity, last_price, "");
   }
 
   template<typename T> requires Beam::IsTimeClient<Beam::dereference_t<T>>
@@ -566,11 +576,18 @@ namespace Details {
         fields.m_time_in_force.get_type() == TimeInForce::Type::MOC) {
       return status;
     }
+    if(m_bbo.m_bid.m_price == Money::ZERO ||
+        m_bbo.m_ask.m_price == Money::ZERO) {
+      return status;
+    }
     if(fields.m_type == OrderType::MARKET) {
       auto price =
         pick(fields.m_side, m_bbo.m_bid.m_price, m_bbo.m_ask.m_price);
       return fill(order, price);
     } else if(fields.m_type == OrderType::PEGGED) {
+      if(!m_pegged_entries.contains(order->get_info().m_id)) {
+        submit_pegged(*order);
+      }
       return update_pegged(order, status);
     } else if(fields.m_side == Side::BID &&
         m_bbo.m_ask.m_price <= fields.m_price) {

@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Ticker.hpp"
+#include "Nexus/MarketDataServiceTests/TestMarketDataClient.hpp"
 #include "Nexus/SimulationMatcher/SimulationOrderExecutionDriver.hpp"
 #include "Nexus/TestEnvironment/TestEnvironment.hpp"
 
@@ -8,6 +9,7 @@ using namespace Beam::Tests;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
+using namespace Nexus::Tests;
 
 namespace {
   const auto SHOP = parse_ticker("SHOP.TSX");
@@ -62,5 +64,31 @@ TEST_SUITE("SimulationOrderExecutionDriver") {
     REQUIRE(reports->pop().m_status == OrderStatus::NEW);
     fixture.m_environment.update_bbo_price(SHOP, Money::ONE, Money::ONE);
     REQUIRE(reports->pop().m_status == OrderStatus::FILLED);
+  }
+
+  TEST_CASE("submit_when_snapshot_is_empty") {
+    auto fixture = Fixture();
+    auto operations = std::make_shared<TestMarketDataClient::Queue>();
+    auto servicer = RoutineHandler(spawn([&] {
+      try {
+        while(true) {
+          auto operation = operations->pop();
+          if(auto snapshot = std::get_if<
+              TestMarketDataClient::LoadTickerSnapshotOperation>(&*operation)) {
+            snapshot->m_result.set(TickerSnapshot(snapshot->m_ticker));
+          }
+        }
+      } catch(const std::exception&) {}
+    }));
+    auto driver = SimulationOrderExecutionDriver(
+      MarketDataClient(std::in_place_type<TestMarketDataClient>, operations),
+      std::make_unique<TestTimeClient>(
+        Ref(fixture.m_environment.get_time_environment())));
+    auto order = driver.submit(fixture.make_bid_limit(Money::ONE));
+    REQUIRE(order);
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    order->get_publisher().monitor(reports);
+    REQUIRE(reports->pop().m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(reports->pop().m_status == OrderStatus::NEW);
   }
 }
