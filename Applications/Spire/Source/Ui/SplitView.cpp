@@ -28,6 +28,20 @@ namespace {
     return Qt::AlignTop;
   }
 
+  int get_size(const QSize& size, Qt::Orientation orientation) {
+    if(orientation == Qt::Orientation::Horizontal) {
+      return size.width();
+    }
+    return size.height();
+  }
+
+  int get_position(const QPoint& point, Qt::Orientation orientation) {
+    if(orientation == Qt::Orientation::Horizontal) {
+      return point.x();
+    }
+    return point.y();
+  }
+
   struct Sash : QWidget {
     using DragSignal = Signal<void (int offset)>;
     using ResetSignal = Signal<void ()>;
@@ -179,12 +193,10 @@ struct SplitView::DividerBox : Box {
 struct SplitView::Panel : QWidget {
   using LayoutSignal = Signal<void ()>;
   mutable LayoutSignal m_layout_signal;
-  QWidget* m_body;
 
-  Panel(QWidget& body)
-      : m_body(&body) {
+  Panel(QWidget& body) {
     setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-    enclose(*this, *m_body);
+    enclose(*this, body);
   }
 
   bool event(QEvent* event) override {
@@ -199,10 +211,11 @@ SplitView::SplitView(QWidget& primary, QWidget& secondary, QWidget* parent)
     : QWidget(parent),
       m_primary(new Panel(primary)),
       m_secondary(new Panel(secondary)),
-      m_orientation(Qt::Orientation::Horizontal) {
+      m_orientation(Qt::Orientation::Horizontal),
+      m_divider(new DividerBox(*this, m_orientation)),
+      m_primary_ratio(0.5) {
   match(*m_primary, Primary());
   match(*m_secondary, Secondary());
-  m_divider = new DividerBox(*this, m_orientation);
   match(*m_divider, Divider());
   update_style(*m_divider, [] (auto& style) {
     style.get(Any()).set(BackgroundColor(QColor(0xC8C8C8)));
@@ -219,12 +232,11 @@ SplitView::SplitView(QWidget& primary, QWidget& secondary, QWidget* parent)
   layout->addWidget(m_divider);
   layout->addWidget(m_secondary);
   m_primary->m_layout_signal.connect(
-    std::bind_front(&SplitView::update_divider_state, this));
+    std::bind_front(&SplitView::update_split, this));
   m_primary->stackUnder(m_divider->m_sash);
   m_secondary->m_layout_signal.connect(
-    std::bind_front(&SplitView::update_divider_state, this));
+    std::bind_front(&SplitView::update_split, this));
   m_secondary->stackUnder(m_divider->m_sash);
-  update_divider_state();
   update_style(*this, [] (auto& style) {
     style.get(Any()).set(Qt::Orientation::Horizontal);
     style.get(Any() >
@@ -235,89 +247,122 @@ SplitView::SplitView(QWidget& primary, QWidget& secondary, QWidget* parent)
     connect_style_signal(*this, std::bind_front(&SplitView::on_style, this));
 }
 
-void SplitView::update_divider_state() {
-  auto disabled = m_orientation == Qt::Orientation::Horizontal && (
-    m_primary->m_body->minimumWidth() == m_primary->m_body->maximumWidth() ||
-    m_secondary->m_body->minimumWidth() ==
-    m_secondary->m_body->maximumWidth()) ||
-    m_orientation == Qt::Orientation::Vertical && (
-    m_primary->m_body->minimumHeight() ==
-    m_primary->m_body->maximumHeight() ||
-    m_secondary->m_body->minimumHeight() ==
-    m_secondary->m_body->maximumHeight());
-  m_divider->setDisabled(disabled);
-  m_divider->m_sash->setDisabled(disabled);
+QSize SplitView::minimumSizeHint() const {
+  auto primary = m_primary->minimumSizeHint();
+  auto secondary = m_secondary->minimumSizeHint();
+  if(m_orientation == Qt::Orientation::Horizontal) {
+    return QSize(primary.width() + m_divider->width() + secondary.width(),
+      std::max(primary.height(), secondary.height()));
+  }
+  return QSize(std::max(primary.width(), secondary.width()),
+    primary.height() + m_divider->height() + secondary.height());
+}
+
+void SplitView::resizeEvent(QResizeEvent* event) {
+  update_split();
+  QWidget::resizeEvent(event);
+}
+
+int SplitView::get_content_size() const {
+  return std::max(get_size(size(), m_orientation) -
+    get_size(m_divider->size(), m_orientation), 0);
+}
+
+int SplitView::get_primary_size() const {
+  if(m_primary->isHidden()) {
+    return 0;
+  }
+  return get_size(m_primary->size(), m_orientation);
+}
+
+int SplitView::get_primary_min_expanded_size() const {
+  return get_size(m_primary->minimumSizeHint(), m_orientation);
+}
+
+int SplitView::get_secondary_min_expanded_size() const {
+  return get_size(m_secondary->minimumSizeHint(), m_orientation);
+}
+
+int SplitView::get_secondary_reserved_size() const {
+  if(m_secondary->isHidden()) {
+    return 0;
+  }
+  return get_secondary_min_expanded_size();
+}
+
+int SplitView::get_primary_max_size() const {
+  return std::max(get_content_size() - get_secondary_reserved_size(), 0);
+}
+
+int SplitView::clamp_primary_size(int size) const {
+  return std::max(
+    std::min(size, get_primary_max_size()), get_primary_min_expanded_size());
+}
+
+void SplitView::resize_primary(int size) {
+  if(m_orientation == Qt::Orientation::Horizontal) {
+    m_primary->setFixedWidth(size);
+  } else {
+    m_primary->setFixedHeight(size);
+  }
+}
+
+void SplitView::set_primary_size(int size) {
+  resize_primary(size);
+  if(auto content_size = get_content_size(); content_size > 0) {
+    m_primary_ratio = static_cast<double>(size) / content_size;
+  }
+}
+
+void SplitView::update_split() {
+  auto content_size = get_content_size();
+  if(content_size == 0) {
+    return;
+  }
+  if(m_primary->isHidden()) {
+    resize_primary(0);
+  } else if(m_secondary->isHidden()) {
+    resize_primary(content_size);
+  } else {
+    resize_primary(
+      clamp_primary_size(static_cast<int>(m_primary_ratio * content_size)));
+  }
 }
 
 void SplitView::on_drag(int offset) {
-  auto set_fixed_size = [&] (auto set_fixed_size, int cursor, int start,
-      int end, int primary_hint, int secondary_hint, int primary_minimum,
-      int primary_maximum, int secondary_minimum, int secondary_maximum,
-      int size, int body_size, int divider_size) {
-    if(cursor <= start) {
-      if(find_focus_state(*m_primary) != FocusObserver::State::NONE) {
-        setFocus(Qt::FocusReason::OtherFocusReason);
-      }
-      m_primary->hide();
-    } else if(cursor >= end) {
-      if(find_focus_state(*m_secondary) != FocusObserver::State::NONE) {
-        setFocus(Qt::FocusReason::OtherFocusReason);
-      }
-      m_secondary->hide();
-      (m_primary->*set_fixed_size)(QWIDGETSIZE_MAX);
-    } else if(m_secondary->isHidden() && cursor < end) {
-      (m_primary->*set_fixed_size)(size - divider_size -
-        std::max(secondary_hint, secondary_minimum));
-      m_secondary->show();
-    } else {
-      auto primary_size = [&] {
-        if(offset < 0) {
-          return std::max({primary_hint, primary_minimum, size + offset,
-            body_size - divider_size - secondary_maximum});
-        }
-        auto base = body_size - std::max(secondary_hint, secondary_minimum);
-        return std::min({primary_maximum, size + offset, base - divider_size});
-      }();
-      (m_primary->*set_fixed_size)(primary_size);
-      if(m_primary->isHidden() && cursor > start) {
-        m_primary->show();
-      }
+  auto cursor = get_position(QCursor::pos(), m_orientation);
+  auto start = get_position(mapToGlobal(QPoint(0, 0)), m_orientation);
+  auto end = start + get_content_size();
+  if(cursor <= start) {
+    if(find_focus_state(*m_primary) != FocusObserver::State::NONE) {
+      setFocus(Qt::FocusReason::OtherFocusReason);
     }
-  };
-  if(m_orientation == Qt::Orientation::Horizontal) {
-    auto cursor = QCursor::pos().x();
-    auto left = mapToGlobal(QPoint(0, 0)).x();
-    auto right = mapToGlobal(QPoint(width() - 1, 0)).x();
-    set_fixed_size(&QWidget::setFixedWidth, cursor, left, right,
-      m_primary->m_body->sizeHint().width(),
-      m_secondary->m_body->sizeHint().width(),
-      m_primary->m_body->minimumWidth(), m_primary->m_body->maximumWidth(),
-      m_secondary->m_body->minimumWidth(), m_secondary->m_body->maximumWidth(),
-      m_primary->width(), width(), m_divider->width());
+    m_secondary->show();
+    set_primary_size(0);
+    m_primary->hide();
+  } else if(cursor >= end) {
+    if(find_focus_state(*m_secondary) != FocusObserver::State::NONE) {
+      setFocus(Qt::FocusReason::OtherFocusReason);
+    }
+    m_secondary->hide();
+    m_primary->show();
+    set_primary_size(get_content_size());
+  } else if(m_secondary->isHidden()) {
+    m_secondary->show();
+    m_primary->show();
+    set_primary_size(get_primary_max_size());
   } else {
-    auto cursor = QCursor::pos().y();
-    auto top = mapToGlobal(QPoint(0, 0)).y();
-    auto bottom = mapToGlobal(QPoint(0, height() - 1)).y();
-    set_fixed_size(&QWidget::setFixedHeight, cursor, top, bottom,
-      m_primary->m_body->sizeHint().height(),
-      m_secondary->m_body->sizeHint().height(),
-      m_primary->m_body->minimumHeight(), m_primary->m_body->maximumHeight(),
-      m_secondary->m_body->minimumHeight(),
-      m_secondary->m_body->maximumHeight(), m_primary->height(), height(),
-      m_divider->height());
+    m_primary->show();
+    set_primary_size(clamp_primary_size(get_primary_size() + offset));
   }
 }
 
 void SplitView::on_reset() {
-  if(m_orientation == Qt::Orientation::Horizontal) {
-    m_primary->setFixedWidth(std::max(m_primary->m_body->minimumWidth(),
-      (width() - DividerBox::base_size) / 2));
-  } else {
-    m_primary->setFixedHeight(std::max(m_primary->m_body->minimumHeight(),
-      (height() - DividerBox::base_size) / 2));
-  }
   m_primary->show();
   m_secondary->show();
+  auto available_size = std::max(get_content_size() -
+    get_primary_min_expanded_size() - get_secondary_min_expanded_size(), 0);
+  set_primary_size(get_primary_min_expanded_size() + available_size / 2);
 }
 
 void SplitView::on_style() {
@@ -330,10 +375,12 @@ void SplitView::on_style() {
         }
         m_orientation = orientation;
         m_divider->set_orientation(m_orientation);
-        update_divider_state();
         static_cast<QBoxLayout*>(layout())->setDirection(
           to_direction(m_orientation));
         layout()->setAlignment(to_alignment(m_orientation));
+        m_primary->setMinimumSize(0, 0);
+        m_primary->setMaximumSize(QWIDGETSIZE_MAX, QWIDGETSIZE_MAX);
+        on_reset();
       });
     });
   }
