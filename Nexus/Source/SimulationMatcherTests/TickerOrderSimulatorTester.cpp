@@ -514,13 +514,13 @@ TEST_SUITE("TickerOrderSimulator") {
     simulator.initialize(TickerSnapshot(ABX));
     auto order = submit_limit_order(
       fixture, simulator, 1, Side::BID, 100, parse_money("0.99"));
-    auto reports = std::make_shared<Queue<ExecutionReport>>();
-    order->get_publisher().monitor(reports);
+    auto reports = monitor_reports(order);
+    REQUIRE(!reports->try_pop());
+    update_bbo_price(
+      fixture, simulator, parse_money("0.98"), parse_money("0.99"));
     auto report = reports->pop();
-    REQUIRE(report.m_status == OrderStatus::PENDING_NEW);
-    report = reports->pop();
-    REQUIRE(report.m_status == OrderStatus::REJECTED);
-    REQUIRE(report.m_text == "No BBO quote available.");
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("0.99"));
   }
 
   TEST_CASE("time_and_sale_bid_fill") {

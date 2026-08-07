@@ -268,9 +268,6 @@ namespace Details {
       return;
     }
     m_entries[order->get_info().m_id] = make_entry(*order, status, remaining);
-    if(order->get_info().m_fields.m_type == OrderType::PEGGED) {
-      submit_pegged(*order);
-    }
     auto next_status = evaluate(order, status);
     if(is_terminal(next_status)) {
       m_pegged_entries.erase(order->get_info().m_id);
@@ -289,19 +286,11 @@ namespace Details {
       enqueue(order, OrderStatus::REJECTED, order->get_info().m_timestamp, 0,
         Money::ZERO, "Invalid quantity.");
       return;
-    } else if(m_bbo.m_bid.m_price == Money::ZERO ||
-        m_bbo.m_ask.m_price == Money::ZERO) {
-      enqueue(order, OrderStatus::REJECTED, order->get_info().m_timestamp, 0,
-        Money::ZERO, "No BBO quote available.");
-      return;
     }
     enqueue(
       order, OrderStatus::NEW, order->get_info().m_timestamp, 0, Money::ZERO);
     m_entries[order->get_info().m_id] = make_entry(
       *order, OrderStatus::NEW, order->get_info().m_fields.m_quantity);
-    if(order->get_info().m_fields.m_type == OrderType::PEGGED) {
-      submit_pegged(*order);
-    }
     auto next_status = evaluate(order, OrderStatus::NEW);
     if(is_terminal(next_status)) {
       m_pegged_entries.erase(order->get_info().m_id);
@@ -581,11 +570,18 @@ namespace Details {
         fields.m_time_in_force.get_type() == TimeInForce::Type::MOC) {
       return status;
     }
+    if(m_bbo.m_bid.m_price == Money::ZERO ||
+        m_bbo.m_ask.m_price == Money::ZERO) {
+      return status;
+    }
     if(fields.m_type == OrderType::MARKET) {
       auto price =
         pick(fields.m_side, m_bbo.m_bid.m_price, m_bbo.m_ask.m_price);
       return fill(order, price);
     } else if(fields.m_type == OrderType::PEGGED) {
+      if(!m_pegged_entries.contains(order->get_info().m_id)) {
+        submit_pegged(*order);
+      }
       return update_pegged(order, status);
     } else if(fields.m_side == Side::BID &&
         m_bbo.m_ask.m_price <= fields.m_price) {
