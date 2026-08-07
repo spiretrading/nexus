@@ -538,6 +538,25 @@ TEST_SUITE("TickerOrderSimulator") {
     REQUIRE(report.m_text == "No BBO quote available.");
   }
 
+  TEST_CASE("market_order_fills_at_the_opposite_quote") {
+    auto fixture = Fixture();
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(
+      make_snapshot(parse_money("1.00"), parse_money("1.01")));
+    auto bid = submit_order(fixture, simulator, 1,
+      make_market_order_fields(ABX, CurrencyId::NONE, Side::BID, 100));
+    auto report = monitor_reports(bid)->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.01"));
+    REQUIRE(report.m_last_quantity == 100);
+    auto ask = submit_order(fixture, simulator, 2,
+      make_market_order_fields(ABX, CurrencyId::NONE, Side::ASK, 100));
+    report = monitor_reports(ask)->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("1.00"));
+    REQUIRE(report.m_last_quantity == 100);
+  }
+
   TEST_CASE("pegged_without_bbo_quote") {
     auto fixture = Fixture();
     auto simulator = make_simulator(fixture);
