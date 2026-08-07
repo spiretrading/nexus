@@ -523,6 +523,39 @@ TEST_SUITE("TickerOrderSimulator") {
     REQUIRE(report.m_last_price == parse_money("0.99"));
   }
 
+  TEST_CASE("submit_market_order_without_bbo_quote") {
+    auto fixture = Fixture();
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(TickerSnapshot(ABX));
+    auto order = submit_order(fixture, simulator, 1,
+      make_market_order_fields(ABX, CurrencyId::NONE, Side::BID, 100));
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    order->get_publisher().monitor(reports);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::PENDING_NEW);
+    report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::REJECTED);
+    REQUIRE(report.m_text == "No BBO quote available.");
+  }
+
+  TEST_CASE("pegged_without_bbo_quote") {
+    auto fixture = Fixture();
+    auto simulator = make_simulator(fixture);
+    simulator.initialize(TickerSnapshot(ABX));
+    auto order = submit_order(fixture, simulator, 1, make_pegged_order_fields(
+      ABX, Side::ASK, 100, Money::ZERO, Money::ZERO));
+    auto reports = monitor_reports(order);
+    REQUIRE(!reports->try_pop());
+    update_bbo_price(
+      fixture, simulator, parse_money("9.99"), parse_money("10.00"));
+    REQUIRE(!reports->try_pop());
+    update_bbo_price(
+      fixture, simulator, parse_money("10.00"), parse_money("10.00"));
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == parse_money("10.00"));
+  }
+
   TEST_CASE("time_and_sale_bid_fill") {
     auto fixture = Fixture();
     auto simulator = make_simulator(fixture);

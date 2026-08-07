@@ -286,6 +286,12 @@ namespace Details {
       enqueue(order, OrderStatus::REJECTED, order->get_info().m_timestamp, 0,
         Money::ZERO, "Invalid quantity.");
       return;
+    } else if(order->get_info().m_fields.m_type == OrderType::MARKET &&
+        (m_bbo.m_bid.m_price == Money::ZERO ||
+          m_bbo.m_ask.m_price == Money::ZERO)) {
+      enqueue(order, OrderStatus::REJECTED, order->get_info().m_timestamp, 0,
+        Money::ZERO, "No BBO quote available.");
+      return;
     }
     enqueue(
       order, OrderStatus::NEW, order->get_info().m_timestamp, 0, Money::ZERO);
