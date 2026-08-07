@@ -309,10 +309,6 @@ namespace Nexus {
     if(time.is_special()) {
       return snapshot;
     }
-    auto session = utc_start_of_day(ticker.get_venue(), time);
-    if(session.is_special()) {
-      return snapshot;
-    }
     auto& client = m_clients.get_market_data_client();
     auto bbo_query = TickerQuery();
     bbo_query.set_index(ticker);
@@ -324,6 +320,10 @@ namespace Nexus {
     Beam::flush(bbos, std::back_inserter(bbo));
     if(!bbo.empty()) {
       snapshot.m_bbo_quote = bbo.back();
+    }
+    auto session = utc_start_of_day(ticker.get_venue(), time);
+    if(session.is_special()) {
+      return snapshot;
     }
     auto book_query = TickerQuery();
     book_query.set_index(ticker);
