@@ -1,6 +1,5 @@
 #ifndef SPIRE_REPLAY_ATTACH_MENU_BUTTON_HPP
 #define SPIRE_REPLAY_ATTACH_MENU_BUTTON_HPP
-#include "Spire/Playback/Playback.hpp"
 #include "Spire/Playback/TargetMenuItem.hpp"
 #include "Spire/Ui/MenuButton.hpp"
 

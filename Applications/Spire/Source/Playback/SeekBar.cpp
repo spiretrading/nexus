@@ -1,8 +1,11 @@
 #include "Spire/Playback/SeekBar.hpp"
+#include <Beam/TimeService/ToLocalTime.hpp>
+#include <QPropertyAnimation>
 #include <QScreen>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Slider.hpp"
 
+using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace boost::signals2;
@@ -35,13 +38,6 @@ namespace {
       decimal_modifiers[i.key()] = to_decimal(i.value());
     }
     return decimal_modifiers;
-  }
-
-  auto to_local_time(const ptime& utc_time) {
-    if(utc_time.is_not_a_date_time()) {
-      return utc_time;
-    }
-    return boost::date_time::c_local_adjustor<ptime>::utc_to_local(utc_time);
   }
 
   auto format_time(const time_duration& time_duration) {

@@ -1,14 +1,14 @@
 #ifndef SPIRE_REPLAY_WINDOW_HPP
 #define SPIRE_REPLAY_WINDOW_HPP
-#include <Beam/TimeService/TimeClientBox.hpp>
-#include "Spire/Playback/Playback.hpp"
+#include <Beam/TimeService/TimeClient.hpp>
 #include "Spire/Playback/PlaybackSpeedBox.hpp"
 #include "Spire/Playback/ReplayAttachMenuButton.hpp"
 #include "Spire/Playback/SeekBar.hpp"
-#include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
 
 namespace Spire {
+  class Button;
+  class ToggleButton;
 
   /**
    * Displays a window that the user can control replay.
@@ -47,8 +47,7 @@ namespace Spire {
        * @param parent The parent widget.
        */
       ReplayWindow(std::shared_ptr<TimelineModel> timeline,
-        Beam::TimeService::TimeClientBox time_client,
-        std::shared_ptr<DurationModel> playhead,
+        Beam::TimeClient time_client, std::shared_ptr<DurationModel> playhead,
         std::shared_ptr<SelectableTargetListModel> targets,
         std::shared_ptr<PlaybackSpeedModel> speed,
         boost::optional<boost::gregorian::date> min_date,
@@ -58,7 +57,7 @@ namespace Spire {
       const std::shared_ptr<TimelineModel>& get_timeline() const;
 
       /** Returns the time client. */
-      Beam::TimeService::TimeClientBox get_time_client() const;
+      Beam::TimeClient get_time_client() const;
 
       /** Returns the timeline position. */
       const std::shared_ptr<DurationModel>& get_playhead() const;

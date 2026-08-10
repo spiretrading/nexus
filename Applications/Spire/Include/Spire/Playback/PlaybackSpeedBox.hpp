@@ -1,6 +1,5 @@
 #ifndef SPIRE_PLAYBACK_SPEED_BOX_HPP
 #define SPIRE_PLAYBACK_SPEED_BOX_HPP
-#include "Spire/Playback/Playback.hpp"
 #include "Spire/Spire/Decimal.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/EnumBox.hpp"

@@ -46,7 +46,7 @@ if(UNIX)
     optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
 endif()
 target_link_libraries(PlaybackUiTester Async Dashboard Charting PortfolioViewer
-  Utilities RiskTimer AccountViewer KeyBindings Blotter Catalog BookView Library
+  Utilities RiskTimer KeyBindings Blotter Catalog BookView Library
   Resources Playback Styles TimeAndSales OrderImbalanceIndicator InputWidgets
   CanvasView Canvas LegacyResources LegacyUI Toolbar
   debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}

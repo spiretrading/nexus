@@ -15,8 +15,8 @@ TargetMenuItem::TargetMenuItem(Target target, QWidget* parent)
 TargetMenuItem::TargetMenuItem(Target target,
     std::shared_ptr<BooleanModel> current, QWidget* parent)
     : QWidget(parent),
-      m_target(std::move(target)),
       m_current(std::move(current)),
+      m_target(std::move(target)),
 BEAM_SUPPRESS_THIS_INITIALIZER()
       m_click_observer(*this) {
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
@@ -67,14 +67,14 @@ void TargetMenuItem::on_click() {
 }
 
 QString Spire::to_text(const TargetMenuItem::Target& target) {
-  if(target.m_security != Security()) {
+  if(target.m_ticker) {
     if(target.m_count == 1) {
       return QObject::tr("%1 - %2").
-        arg(::to_text(target.m_security)).
+        arg(::to_text(target.m_ticker)).
         arg(target.m_name);
     }
     return QObject::tr("%1 (%2)").
-      arg(::to_text(target.m_security)).
+      arg(::to_text(target.m_ticker)).
       arg(target.m_count);
   } else if(target.m_count == 1) {
     return target.m_name;

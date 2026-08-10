@@ -11,7 +11,7 @@
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/Resources.hpp"
 
-using namespace Beam::TimeService;
+using namespace Beam;
 using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -50,27 +50,27 @@ namespace {
     auto targets = std::vector<SelectableTarget>();
     auto identifier = 0;
     targets.push_back({{to_string(identifier++), "Book View", QColor(),
-      Security(), 1}, false});
+      Ticker(), 1}, false});
     targets.push_back({{to_string(identifier++), "", QColor(0xBF9541),
-      Security(), 2}, false});
+      Ticker(), 2}, false});
     targets.push_back({{to_string(identifier++), "", QColor(0x00BFA0),
-      Security(), 2}, false});
+      Ticker(), 2}, false});
     targets.push_back({{to_string(identifier++), "Book View", QColor(Qt::red),
-      Security(), 1}, false});
+      Ticker(), 1}, false});
     targets.push_back({{to_string(identifier++), "Time and Sales", QColor(),
-      Security(), 1}, false});
+      Ticker(), 1}, false});
     targets.push_back({{to_string(identifier++), "", QColor(0xFF7B00),
-      ParseSecurity("ABX.TSX"), 3}, true});
+      parse_ticker("ABX.TSX"), 3}, true});
     targets.push_back({{to_string(identifier++), "Book View", QColor(),
-      ParseSecurity("ABX.TSX"), 1}, false});
+      parse_ticker("ABX.TSX"), 1}, false});
     targets.push_back({{to_string(identifier++), "Time and Sales", QColor(),
-      ParseSecurity("ABX.TSX"), 1}, false});
+      parse_ticker("ABX.TSX"), 1}, false});
     targets.push_back({{to_string(identifier++), "", QColor(Qt::blue),
-      ParseSecurity("ARE.TSX"), 2}, false});
+      parse_ticker("ARE.TSX"), 2}, false});
     targets.push_back({{to_string(identifier++), "", QColor(0x993EF2),
-      ParseSecurity("MFC.TSX"), 2}, false});
+      parse_ticker("MFC.TSX"), 2}, false});
     targets.push_back({{to_string(identifier++), "Time and Sales",
-      QColor(Qt::green), ParseSecurity("TD.TSX"), 2}, false});
+      QColor(Qt::green), parse_ticker("TD.TSX"), 2}, false});
     return targets;
   }
 
@@ -86,11 +86,11 @@ namespace {
     public:
       UtcTimeClient() = default;
 
-      ptime GetTime() {
+      ptime get_time() {
         return microsec_clock::universal_time();
       }
 
-      void Close() {}
+      void close() {}
   };
 }
 
@@ -105,7 +105,7 @@ struct DemoPlaybackController : private QObject {
           std::make_shared<LocalTimelineModel>(
             Timeline{ptime(microsec_clock::universal_time().date(),
               time_duration(4, 0, 0)), time_duration(8, 0, 0)}),
-          TimeClientBox(UtcTimeClient()),
+          TimeClient(UtcTimeClient()),
           std::make_shared<LocalDurationModel>(time_duration(0, 0, 0)),
           std::make_shared<ArrayListModel<SelectableTarget>>(),
           std::make_shared<LocalPlaybackSpeedModel>(1),
@@ -134,11 +134,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   void on_timeout() {
     auto& timeline = m_replay_window.get_timeline()->get();
     if(m_play_state->get() == ReplayWindow::State::REAL_TIME) {
-      auto now = m_replay_window.get_time_client().GetTime();
+      auto now = m_replay_window.get_time_client().get_time();
       m_replay_window.get_playhead()->set(now - timeline.m_start);
     } else {
       auto duration = std::min(timeline.m_duration,
-        m_replay_window.get_time_client().GetTime() - timeline.m_start);
+        m_replay_window.get_time_client().get_time() - timeline.m_start);
       m_replay_window.get_playhead()->set(
         std::min(m_replay_window.get_playhead()->get() +
           milliseconds(static_cast<long long>(m_replay_window.get_speed()->get()

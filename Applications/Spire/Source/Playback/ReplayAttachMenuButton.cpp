@@ -8,6 +8,7 @@
 #include "Spire/Ui/CustomQtVariants.hpp"
 #include "Spire/Ui/ListItem.hpp"
 #include "Spire/Ui/ListView.hpp"
+#include "Spire/Ui/Ui.hpp"
 
 using namespace boost::signals2;
 using namespace Nexus;
@@ -15,14 +16,9 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  bool is_valid(const Security& security) {
-    return security != Security();
-  }
-
   bool assigned_targets_comparator(const SelectableTarget& left,
       const SelectableTarget& right) {
-    return to_text(left.m_target.m_security) <
-      to_text(right.m_target.m_security);
+    return to_text(left.m_target.m_ticker) < to_text(right.m_target.m_ticker);
   }
 
   bool unassigned_targets_comparator(const SelectableTarget& left,
@@ -48,17 +44,18 @@ MenuButton* Spire::make_replay_attach_menu_button(
     std::shared_ptr<SelectableTargetListModel> targets,
     QWidget* parent) {
   auto button = make_menu_icon_button(
-    imageFromSvg(":/Icons/target.svg", scale(26, 26)), QObject::tr("Attach to"));
+    image_from_svg(":/Icons/target.svg", scale(26, 26)),
+    QObject::tr("Attach to"));
   button->set_empty_message(QObject::tr("No available windows"));
   auto assigned_targets = std::make_shared<SortedListModel<SelectableTarget>>(
     std::make_shared<FilteredListModel<SelectableTarget>>(targets,
       [] (const ListModel<SelectableTarget>& targets, int index) {
-        return !is_valid(targets.get(index).m_target.m_security);
+        return !targets.get(index).m_target.m_ticker;
       }), assigned_targets_comparator);
   auto unassigned_targets = std::make_shared<SortedListModel<SelectableTarget>>(
     std::make_shared<FilteredListModel<SelectableTarget>>(targets,
-      [] (const ListModel<SelectableTarget>& targets, int index) {
-        return is_valid(targets.get(index).m_target.m_security);
+      [] (const ListModel<SelectableTarget>& targets, int index){
+        return static_cast<bool>(targets.get(index).m_target.m_ticker);
       }), unassigned_targets_comparator);
   auto add_items = [=] {
     auto& menu = button->get_menu();
