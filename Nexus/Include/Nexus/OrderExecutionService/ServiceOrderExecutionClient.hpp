@@ -22,9 +22,6 @@
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
 namespace Nexus {
-namespace Tests {
-  struct ServiceOrderExecutionClientTester;
-}
 
   /**
    * Implements an OrderExecutionClient using Beam services.
@@ -66,7 +63,6 @@ namespace Tests {
       void close();
 
     private:
-      friend struct Tests::ServiceOrderExecutionClientTester;
       template<typename Value, typename Query, typename QueryService,
         typename EndQueryMessage>
       using QueryClientPublisher = Beam::QueryClientPublisher<
