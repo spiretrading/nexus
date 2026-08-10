@@ -524,6 +524,37 @@ TEST_SUITE("OrderExecutionServlet") {
     }));
   }
 
+  TEST_CASE("end_order_submission_query") {
+    auto fixture = Fixture();
+    fixture.start();
+    auto client = fixture.make_client("client", "1234");
+    auto submissions = std::make_shared<Queue<SequencedAccountOrderRecord>>();
+    add_message_slot<OrderSubmissionMessage>(
+      out(client->get_slots()), [=] (auto& sender, const auto& record) {
+        submissions->push(record);
+      });
+    auto updates = std::make_shared<Queue<ExecutionReport>>();
+    add_message_slot<OrderUpdateMessage>(
+      out(client->get_slots()), [=] (auto& sender, const auto& report) {
+        updates->push(report);
+      });
+    client->spawn_message_handler();
+    auto result = client->send_request<QueryOrderSubmissionsService>(
+      make_real_time_query(fixture.m_client_account));
+    auto first = fixture.m_client->submit(
+      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 100, Money::ONE));
+    fixture.m_submissions->pop();
+    REQUIRE((*submissions->pop())->m_info.m_id == first->get_info().m_id);
+    send_record_message<EndOrderSubmissionQueryMessage>(
+      *client, fixture.m_client_account, result.m_id);
+    REQUIRE(!client->send_request<LoadOrderByIdService>(0));
+    auto second = fixture.m_client->submit(
+      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 200, Money::ONE));
+    fixture.m_submissions->pop();
+    while(updates->pop().m_id != second->get_info().m_id) {}
+    REQUIRE(!submissions->try_pop());
+  }
+
   TEST_CASE("store_reports_after_client_disconnect") {
     auto operations = std::make_shared<TestOrderExecutionDataStore::Queue>();
     auto data_store = LocalOrderExecutionDataStore();

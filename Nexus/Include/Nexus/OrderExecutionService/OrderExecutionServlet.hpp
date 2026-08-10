@@ -144,9 +144,13 @@ namespace Nexus {
       void on_query_order_submissions_request(Beam::RequestToken<
         ServiceProtocolClient, QueryOrderSubmissionsService>& request,
         const AccountQuery& query);
+      void on_end_order_submission_query(ServiceProtocolClient& client,
+        const Beam::DirectoryEntry& account, int id);
       void on_query_execution_reports_request(Beam::RequestToken<
         ServiceProtocolClient, QueryExecutionReportsService>& request,
         const AccountQuery& query);
+      void on_end_execution_report_query(ServiceProtocolClient& client,
+        const Beam::DirectoryEntry& account, int id);
       void on_new_order_single_request(Beam::RequestToken<
         ServiceProtocolClient, NewOrderSingleService>& request,
         const OrderFields& fields);
@@ -215,8 +219,14 @@ namespace Nexus {
       &OrderExecutionServlet::on_load_order_by_id_request, this));
     QueryOrderSubmissionsService::add_request_slot(out(slots), std::bind_front(
       &OrderExecutionServlet::on_query_order_submissions_request, this));
+    Beam::add_message_slot<EndOrderSubmissionQueryMessage>(out(slots),
+      std::bind_front(
+        &OrderExecutionServlet::on_end_order_submission_query, this));
     QueryExecutionReportsService::add_request_slot(out(slots), std::bind_front(
       &OrderExecutionServlet::on_query_execution_reports_request, this));
+    Beam::add_message_slot<EndExecutionReportQueryMessage>(out(slots),
+      std::bind_front(
+        &OrderExecutionServlet::on_end_execution_report_query, this));
     NewOrderSingleService::add_request_slot(out(slots), std::bind_front(
       &OrderExecutionServlet::on_new_order_single_request, this));
     UpdateOrderService::add_slot(out(slots),
@@ -580,6 +590,20 @@ namespace Nexus {
               IsOrderExecutionDriver<Beam::dereference_t<O>> &&
                 IsOrderExecutionDataStore<Beam::dereference_t<D>>
   void OrderExecutionServlet<C, T, S, U, A, O, D>::
+      on_end_order_submission_query(ServiceProtocolClient& client,
+        const Beam::DirectoryEntry& account, int id) {
+    m_submission_subscriptions.end(account, id);
+  }
+
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D> requires
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+        Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+          Beam::IsUidClient<Beam::dereference_t<U>> &&
+            IsAdministrationClient<Beam::dereference_t<A>> &&
+              IsOrderExecutionDriver<Beam::dereference_t<O>> &&
+                IsOrderExecutionDataStore<Beam::dereference_t<D>>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::
       on_query_execution_reports_request(Beam::RequestToken<
         ServiceProtocolClient, QueryExecutionReportsService>& request,
         const AccountQuery& query) {
@@ -603,6 +627,20 @@ namespace Nexus {
       revised_query.get_index(), std::move(result), [&] (const auto& result) {
         request.set(result);
       });
+  }
+
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D> requires
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+        Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+          Beam::IsUidClient<Beam::dereference_t<U>> &&
+            IsAdministrationClient<Beam::dereference_t<A>> &&
+              IsOrderExecutionDriver<Beam::dereference_t<O>> &&
+                IsOrderExecutionDataStore<Beam::dereference_t<D>>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::
+      on_end_execution_report_query(ServiceProtocolClient& client,
+        const Beam::DirectoryEntry& account, int id) {
+    m_execution_report_subscriptions.end(account, id);
   }
 
   template<typename C, typename T, typename S, typename U, typename A,
