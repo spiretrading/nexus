@@ -4,7 +4,7 @@
 #include <vector>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/IO/OpenState.hpp>
-#include <boost/lexical_cast.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/throw_exception.hpp>
 #include <quickfix/Application.h>
 #include <quickfix/FileStore.h>
@@ -15,7 +15,6 @@
 #include "Nexus/Accounting/InventorySnapshot.hpp"
 #include "Nexus/FixUtilities/FixApplication.hpp"
 #include "Nexus/OrderExecutionService/AccountQuery.hpp"
-#include "Nexus/OrderExecutionService/OrderUnrecoverableException.hpp"
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 
 namespace Nexus {
@@ -76,6 +75,8 @@ namespace Nexus {
         m_applications;
       Beam::SynchronizedUnorderedMap<OrderId, std::shared_ptr<Application>>
         m_id_to_application;
+      Beam::SynchronizedUnorderedMap<OrderId, std::shared_ptr<PrimitiveOrder>>
+        m_orphaned_orders;
       Beam::OpenState m_open_state;
 
       FixOrderExecutionDriver(const FixOrderExecutionDriver&) = delete;
@@ -167,21 +168,24 @@ namespace Nexus {
     for(auto& record : records) {
       auto i = m_applications.find(record->m_info.m_fields.m_destination);
       if(i == m_applications.end()) {
-        if(!record->m_execution_reports.empty() &&
-            is_terminal(record->m_execution_reports.back().m_status)) {
-          orders.push_back(std::make_shared<PrimitiveOrder>(*record));
-          continue;
+        auto order = [&] {
+          if(record->m_execution_reports.empty()) {
+            return std::make_shared<PrimitiveOrder>(record->m_info);
+          }
+          return std::make_shared<PrimitiveOrder>(*record);
+        }();
+        if(record->m_execution_reports.empty() ||
+            !is_terminal(record->m_execution_reports.back().m_status)) {
+          m_orphaned_orders.insert(record->m_info.m_id, order);
         }
-        boost::throw_with_location(OrderUnrecoverableException(
-          "FIX application for given destination not found: [" +
-          record->m_info.m_fields.m_destination + "], " +
-          boost::lexical_cast<std::string>(record->m_info.m_id)));
+        orders.push_back(std::move(order));
+      } else {
+        auto entry = i->second;
+        auto order = entry->m_application->recover(Beam::SequencedValue(
+          Beam::IndexedValue(*record, account), record.get_sequence()));
+        m_id_to_application.insert(record->m_info.m_id, entry);
+        orders.push_back(std::move(order));
       }
-      auto entry = i->second;
-      auto order = entry->m_application->recover(Beam::SequencedValue(
-        Beam::IndexedValue(*record, account), record.get_sequence()));
-      m_id_to_application.insert(record->m_info.m_id, entry);
-      orders.push_back(order);
     }
     return orders;
   }
@@ -206,6 +210,18 @@ namespace Nexus {
       const OrderExecutionSession& session, OrderId id) {
     if(auto entry = m_id_to_application.find(id)) {
       (*entry)->m_application->cancel(session, id);
+    } else if(auto order = m_orphaned_orders.find(id)) {
+      auto timestamp = boost::posix_time::microsec_clock::universal_time();
+      (*order)->with([&] (auto status, const auto& reports) {
+        if(is_terminal(status) || reports.empty()) {
+          return;
+        }
+        auto pending_cancel =
+          make_update(reports.back(), OrderStatus::PENDING_CANCEL, timestamp);
+        (*order)->update(pending_cancel);
+        (*order)->update(
+          make_update(pending_cancel, OrderStatus::CANCELED, timestamp));
+      });
     }
   }
 

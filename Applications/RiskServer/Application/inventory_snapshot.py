@@ -72,12 +72,17 @@ def main():
   address = parse_ip_address(section['address'])
   username = section['username']
   password = section['password']
-  service_clients = nexus.ServiceClients(username, password, address)
-  nexus.load_definitions(service_clients.definitions_client)
-  if args.all:
-    accounts = service_clients.service_locator_client.load_all_accounts()
+  if args.output:
+    service_clients = nexus.ServiceClients(username, password, address)
+    nexus.load_definitions(service_clients.definitions_client)
+    service_locator_client = service_clients.service_locator_client
   else:
-    account = service_clients.service_locator_client.find_account(args.account)
+    service_locator_client = beam.ApplicationServiceLocatorClient(
+      username, password, address)
+  if args.all:
+    accounts = service_locator_client.load_all_accounts()
+  else:
+    account = service_locator_client.find_account(args.account)
     if not account:
       print(f'Account {args.account} not found.')
       return
