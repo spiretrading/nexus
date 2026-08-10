@@ -1,3 +1,4 @@
+#include <Beam/Queues/Queue.hpp>
 #include <Beam/ServicesTests/ServiceClientFixture.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Ticker.hpp"
@@ -9,6 +10,16 @@ using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Nexus::Venues;
+
+namespace Nexus::Tests {
+  struct ServiceOrderExecutionClientTester {
+    template<typename C>
+    static std::vector<ExecutionReport> get_execution_report_log(
+        const C& client) {
+      return client.m_execution_report_log.load();
+    }
+  };
+}
 
 namespace {
   auto make_order_fields() {
@@ -102,5 +113,38 @@ TEST_SUITE("ServiceOrderExecutionClient") {
       });
     REQUIRE_NOTHROW(fixture.m_client->cancel(order));
     completion_token.get();
+  }
+
+  TEST_CASE("redelivered_execution_report") {
+    auto fixture = Fixture();
+    auto id = 77;
+    auto timestamp = time_from_string("2024-05-21 00:00:10.000");
+    auto info = OrderInfo(make_order_fields(), id, timestamp);
+    auto report1 = ExecutionReport(id, timestamp);
+    auto sender =
+      static_cast<TestServiceProtocolServer::ServiceProtocolClient*>(nullptr);
+    fixture.on_request<LoadOrderByIdService>(
+      [&] (auto& request, auto received_id) {
+        sender = &request.get_client();
+        request.set(make_optional(SequencedValue(IndexedValue(
+          OrderRecord(info, {report1}),
+          DirectoryEntry::make_account(123, "user")), Beam::Sequence(555))));
+      });
+    auto order = fixture.m_client->load_order(id);
+    REQUIRE(order);
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    order->get_publisher().monitor(reports);
+    REQUIRE(reports->pop().m_status == OrderStatus::PENDING_NEW);
+    auto report2 =
+      make_update(report1, OrderStatus::NEW, timestamp + seconds(1));
+    send_record_message<OrderUpdateMessage>(*sender, report2);
+    REQUIRE(reports->pop().m_status == OrderStatus::NEW);
+    send_record_message<OrderUpdateMessage>(*sender, report2);
+    auto report3 = make_update(
+      report2, OrderStatus::PARTIALLY_FILLED, timestamp + seconds(2));
+    send_record_message<OrderUpdateMessage>(*sender, report3);
+    REQUIRE(reports->pop().m_status == OrderStatus::PARTIALLY_FILLED);
+    REQUIRE(Nexus::Tests::ServiceOrderExecutionClientTester::
+      get_execution_report_log(*fixture.m_client).empty());
   }
 }
