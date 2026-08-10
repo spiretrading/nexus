@@ -45,6 +45,13 @@ namespace {
     void fromApp(const FIX::Message&, const FIX::SessionID&) override {}
   };
 
+  auto make_record(OrderId id) {
+    auto timestamp = time_from_string("2026-07-15 09:30:00.000");
+    auto info = OrderInfo(make_limit_order_fields(parse_ticker("SHOP.TSX"),
+      Side::BID, "TSX", 100, Money::ONE), id, timestamp);
+    return SequencedValue(OrderRecord(info, {}), Sequence(id));
+  }
+
   auto make_record(OrderId id, OrderStatus status) {
     auto timestamp = time_from_string("2026-07-15 09:30:00.000");
     auto info = OrderInfo(make_limit_order_fields(parse_ticker("SHOP.TSX"),
@@ -113,8 +120,32 @@ TEST_SUITE("FixOrderExecutionDriver") {
     auto driver = FixOrderExecutionDriver(std::vector<FixApplicationEntry>());
     auto records = std::vector<SequencedOrderRecord>();
     records.push_back(make_record(1, OrderStatus::NEW));
-    REQUIRE_THROWS_AS(driver.restore(DirectoryEntry::make_account(123, "test"),
-      InventorySnapshot(), records), OrderUnrecoverableException);
+    auto orders = driver.restore(
+      DirectoryEntry::make_account(123, "test"), InventorySnapshot(), records);
+    REQUIRE(orders.size() == 1);
+    REQUIRE(orders[0]->get_info() == records[0]->m_info);
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    orders[0]->get_publisher().monitor(reports);
+    REQUIRE(reports->pop().m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(reports->pop().m_status == OrderStatus::NEW);
+    driver.cancel(OrderExecutionSession(), 1);
+    REQUIRE(reports->pop().m_status == OrderStatus::PENDING_CANCEL);
+    REQUIRE(reports->pop().m_status == OrderStatus::CANCELED);
+  }
+
+  TEST_CASE("restore_unknown_destination_without_reports") {
+    auto driver = FixOrderExecutionDriver(std::vector<FixApplicationEntry>());
+    auto records = std::vector<SequencedOrderRecord>();
+    records.push_back(make_record(1));
+    auto orders = driver.restore(
+      DirectoryEntry::make_account(123, "test"), InventorySnapshot(), records);
+    REQUIRE(orders.size() == 1);
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    orders[0]->get_publisher().monitor(reports);
+    REQUIRE(reports->pop().m_status == OrderStatus::PENDING_NEW);
+    driver.cancel(OrderExecutionSession(), 1);
+    REQUIRE(reports->pop().m_status == OrderStatus::PENDING_CANCEL);
+    REQUIRE(reports->pop().m_status == OrderStatus::CANCELED);
   }
 
   TEST_CASE("restore_unknown_destination_terminal") {

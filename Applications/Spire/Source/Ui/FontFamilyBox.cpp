@@ -1,5 +1,5 @@
 #include "Spire/Ui/FontFamilyBox.hpp"
-#include <map>
+#include <unordered_map>
 #include <QFontDatabase>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -18,7 +18,7 @@ namespace {
   };
 
   const FamilyMetrics& get_family_metrics(const QString& family) {
-    static auto metrics = std::map<QString, FamilyMetrics>();
+    static auto metrics = std::unordered_map<QString, FamilyMetrics>();
     if(auto i = metrics.find(family); i != metrics.end()) {
       return i->second;
     }

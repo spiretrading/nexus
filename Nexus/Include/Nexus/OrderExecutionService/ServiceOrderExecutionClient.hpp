@@ -282,12 +282,14 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       m_execution_report_log.with([&] (auto& log) {
         auto expected = next_sequence;
         std::erase_if(log, [&] (auto& report) {
-          if(report.m_id == id && report.m_sequence == expected) {
+          if(report.m_id != id || report.m_sequence > expected) {
+            return false;
+          }
+          if(report.m_sequence == expected) {
             pending.push_back(std::move(report));
             ++expected;
-            return true;
           }
-          return false;
+          return true;
         });
       });
       if(pending.empty()) {
