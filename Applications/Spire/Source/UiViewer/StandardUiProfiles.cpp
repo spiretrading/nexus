@@ -1311,6 +1311,48 @@ namespace {
       });
     }
   };
+
+  struct SplitViewWindow : Window {
+    SplitViewWindow(QWidget& body, QWidget* parent)
+        : Window(parent) {
+      setWindowTitle("SplitView");
+      set_body(&body);
+    }
+  };
+
+  struct SizeObserver : QObject {
+    QWidget* m_widget;
+    Qt::Orientation m_orientation;
+    std::function<void (int, int)> m_size_update;
+
+    SizeObserver(QWidget& widget, std::function<void (int, int)> size_update)
+        : QObject(&widget),
+          m_widget(&widget),
+          m_orientation(Qt::Orientation::Horizontal),
+          m_size_update(std::move(size_update)) {
+      m_widget->installEventFilter(this);
+    }
+
+    void set_orientation(Qt::Orientation orientation) {
+      m_orientation = orientation;
+      update_size();
+    }
+
+    void update_size() {
+      if(m_orientation == Qt::Orientation::Horizontal) {
+        m_size_update(unscale_width(m_widget->width()), m_widget->width());
+      } else {
+        m_size_update(unscale_height(m_widget->height()), m_widget->height());
+      }
+    }
+
+    bool eventFilter(QObject* watched, QEvent* event) override {
+      if(event->type() == QEvent::Resize) {
+        update_size();
+      }
+      return QObject::eventFilter(watched, event);
+    }
+  };
 }
 
 UiProfile Spire::make_account_box_profile() {
@@ -4903,111 +4945,131 @@ UiProfile Spire::make_slider_2d_profile() {
 
 UiProfile Spire::make_split_view_profile() {
   auto properties = std::vector<std::shared_ptr<UiProperty>>();
-  populate_widget_properties(properties);
+  properties.push_back(make_standard_property("enabled", true));
   properties.push_back(make_standard_enum_property(
     "orientation", Qt::Orientation::Horizontal, get_orientation_property()));
-  properties.push_back(make_standard_property("primary_minimum_width", 222));
-  properties.push_back(make_standard_property("primary_maximum_width", 774));
-  properties.push_back(make_standard_property("primary_minimum_height", 100));
-  properties.push_back(make_standard_property("primary_maximum_height", -1));
-  properties.push_back(make_standard_property("secondary_minimum_width", 224));
-  properties.push_back(make_standard_property("secondary_maximum_width", -1));
-  properties.push_back(make_standard_property("secondary_minimum_height", 100));
-  properties.push_back(make_standard_property("secondary_maximum_height", -1));
+  properties.push_back(
+    make_standard_property("primary_minimum_expanded_width", 200));
+  properties.push_back(
+    make_standard_property("primary_minimum_expanded_height", 200));
+  properties.push_back(
+    make_standard_property("secondary_minimum_expanded_width", 200));
+  properties.push_back(
+    make_standard_property("secondary_minimum_expanded_height", 200));
   auto profile = UiProfile("SplitView", properties, [] (auto& profile) {
-    auto primary_box = new Box();
-    update_style(*primary_box, [] (auto& style) {
-      style.get(Any()).set(BackgroundColor(QColor(0xFFDFBF)));
-    });
-    auto secondary_box = new Box();
-    update_style(*secondary_box, [] (auto& style) {
-      style.get(Any()).set(BackgroundColor(QColor(0xFFFFBF)));
-    });
-    auto view = new SplitView(*primary_box, *secondary_box);
-    auto& width = get<int>("width", profile.get_properties());
-    width.set(1000);
-    apply_widget_properties(view, profile.get_properties());
+    auto& enabled = get<bool>("enabled", profile.get_properties());
     auto& orientation =
       get<Qt::Orientation>("orientation", profile.get_properties());
-    orientation.connect_changed_signal([=, &profile] (auto orientation) {
-      update_style(*view, [&] (auto& style) {
-        auto& width = get<int>("width", profile.get_properties());
-        auto& height = get<int>("height", profile.get_properties());
-        if(orientation == Qt::Orientation::Horizontal) {
-          width.set(1000);
-          height.set(100);
-        } else {
-          width.set(100);
-          height.set(1000);
-        }
-        get<int>("primary_minimum_width", profile.get_properties()).set(222);
-        get<int>("primary_maximum_width", profile.get_properties()).set(774);
-        get<int>("primary_minimum_height", profile.get_properties()).set(100);
-        get<int>("primary_maximum_height", profile.get_properties()).set(-1);
-        get<int>("secondary_minimum_width", profile.get_properties()).set(224);
-        get<int>("secondary_maximum_width", profile.get_properties()).set(-1);
-        get<int>("secondary_minimum_height", profile.get_properties()).set(100);
-        get<int>("secondary_maximum_height", profile.get_properties()).set(-1);
-        style.get(Any()).set(orientation);
+    auto& primary_minimum_expanded_width =
+      get<int>("primary_minimum_expanded_width", profile.get_properties());
+    auto& primary_minimum_expanded_height =
+      get<int>("primary_minimum_expanded_height", profile.get_properties());
+    auto& secondary_minimum_expanded_width =
+      get<int>("secondary_minimum_expanded_width", profile.get_properties());
+    auto& secondary_minimum_expanded_height =
+      get<int>("secondary_minimum_expanded_height", profile.get_properties());
+    auto button = make_label_button("Click me");
+    button->connect_click_signal(
+        [=, window = QPointer<SplitViewWindow>(), &enabled, &orientation,
+        &primary_minimum_expanded_width, &primary_minimum_expanded_height,
+        &secondary_minimum_expanded_width,
+        &secondary_minimum_expanded_height] () mutable {
+      if(window) {
+        window->activateWindow();
+        window->raise();
+        return;
+      }
+      auto primary_box = make_label("");
+      primary_box->setSizePolicy(
+        QSizePolicy::Expanding, QSizePolicy::Expanding);
+      update_style(*primary_box, [] (auto& style) {
+        style.get(ReadOnly() && Disabled()).
+          set(BackgroundColor(QColor(0xFFDFBF)));
+        style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
       });
+      primary_box->setMinimumWidth(
+        scale_width(primary_minimum_expanded_width.get()));
+      primary_box->setMinimumHeight(
+        scale_height(primary_minimum_expanded_height.get()));
+      auto primary_size = new SizeObserver(*primary_box,
+        [=] (auto size, auto device_size) {
+          auto text = QString("%1 (%2px)").arg(size).arg(device_size);
+          if(primary_box->get_current()->get() != text) {
+            primary_box->get_current()->set(text);
+          }
+        });
+      auto secondary_box = make_label("");
+      secondary_box->setSizePolicy(
+        QSizePolicy::Expanding, QSizePolicy::Expanding);
+      update_style(*secondary_box, [] (auto& style) {
+        style.get(ReadOnly() && Disabled()).
+          set(BackgroundColor(QColor(0xFFFFBF)));
+        style.get(Any()).set(TextAlign(Qt::Alignment(Qt::AlignCenter)));
+      });
+      secondary_box->setMinimumWidth(
+        scale_width(secondary_minimum_expanded_width.get()));
+      secondary_box->setMinimumHeight(
+        scale_height(secondary_minimum_expanded_height.get()));
+      auto secondary_size = new SizeObserver(*secondary_box,
+        [=] (auto size, auto device_size) {
+          auto text = QString("%1 (%2px)").arg(size).arg(device_size);
+          if(secondary_box->get_current()->get() != text) {
+            secondary_box->get_current()->set(text);
+          }
+        });
+      auto view = new SplitView(*primary_box, *secondary_box);
+      window = new SplitViewWindow(*view, button);
+      window->setAttribute(Qt::WA_DeleteOnClose);
+      auto view_size = new SizeObserver(*view,
+        [=] (auto size, auto device_size) {
+          if(window) {
+            window->setWindowTitle(
+              QString("SplitView %1 (%2px)").arg(size).arg(device_size));
+          }
+        });
+      enabled.connect_changed_signal([=] (auto value) {
+        if(window) {
+          view->setEnabled(value);
+        }
+      });
+      orientation.connect_changed_signal([=] (auto orientation) {
+        if(window) {
+          update_style(*view, [&] (auto& style) {
+            style.get(Any()).set(orientation);
+          });
+          primary_size->set_orientation(orientation);
+          secondary_size->set_orientation(orientation);
+          view_size->set_orientation(orientation);
+        }
+      });
+      primary_minimum_expanded_width.connect_changed_signal([=] (auto value) {
+        if(window) {
+          primary_box->setMinimumWidth(scale_width(value));
+        }
+      });
+      primary_minimum_expanded_height.connect_changed_signal([=] (auto value) {
+        if(window) {
+          primary_box->setMinimumHeight(scale_height(value));
+        }
+      });
+      secondary_minimum_expanded_width.connect_changed_signal([=] (auto value) {
+        if(window) {
+          secondary_box->setMinimumWidth(scale_width(value));
+        }
+      });
+      secondary_minimum_expanded_height.connect_changed_signal(
+        [=] (auto value) {
+          if(window) {
+            secondary_box->setMinimumHeight(scale_height(value));
+          }
+        });
+      primary_size->set_orientation(orientation.get());
+      secondary_size->set_orientation(orientation.get());
+      view_size->set_orientation(orientation.get());
+      window->show();
+      window->resize(scale(1002, 200));
     });
-    auto& primary_minimum_width =
-      get<int>("primary_minimum_width", profile.get_properties());
-    primary_minimum_width.connect_changed_signal([=] (auto width) {
-      primary_box->setMinimumWidth(scale_width(width));
-    });
-    auto& primary_maximum_width =
-      get<int>("primary_maximum_width", profile.get_properties());
-    primary_maximum_width.connect_changed_signal([=] (auto width) {
-      if(width < 0) {
-        primary_box->setMaximumWidth(QWIDGETSIZE_MAX);
-      } else {
-        primary_box->setMaximumWidth(scale_width(width));
-      }
-    });
-    auto& primary_minimum_height =
-      get<int>("primary_minimum_height", profile.get_properties());
-    primary_minimum_height.connect_changed_signal([=] (auto height) {
-      primary_box->setMinimumHeight(scale_height(height));
-    });
-    auto& primary_maximum_height =
-      get<int>("primary_maximum_height", profile.get_properties());
-    primary_maximum_height.connect_changed_signal([=] (auto height) {
-      if(height < 0) {
-        primary_box->setMaximumHeight(QWIDGETSIZE_MAX);
-      } else {
-        primary_box->setMaximumHeight(scale_height(height));
-      }
-    });
-    auto& secondary_minimum_width =
-      get<int>("secondary_minimum_width", profile.get_properties());
-    secondary_minimum_width.connect_changed_signal([=] (auto width) {
-      secondary_box->setMinimumWidth(scale_width(width));
-    });
-    auto& secondary_maximum_width =
-      get<int>("secondary_maximum_width", profile.get_properties());
-    secondary_maximum_width.connect_changed_signal([=] (auto width) {
-      if(width < 0) {
-        secondary_box->setMaximumWidth(QWIDGETSIZE_MAX);
-      } else {
-        secondary_box->setMaximumWidth(scale_width(width));
-      }
-    });
-    auto& secondary_minimum_height =
-      get<int>("secondary_minimum_height", profile.get_properties());
-    secondary_minimum_height.connect_changed_signal([=] (auto height) {
-      secondary_box->setMinimumHeight(scale_height(height));
-    });
-    auto& secondary_maximum_height =
-      get<int>("secondary_maximum_height", profile.get_properties());
-    secondary_maximum_height.connect_changed_signal([=] (auto height) {
-      if(height < 0) {
-        secondary_box->setMaximumHeight(QWIDGETSIZE_MAX);
-      } else {
-        secondary_box->setMaximumHeight(scale_height(height));
-      }
-    });
-    return view;
+    return button;
   });
   return profile;
 }
