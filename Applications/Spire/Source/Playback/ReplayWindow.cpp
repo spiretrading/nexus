@@ -1,13 +1,17 @@
 #include "Spire/Playback/ReplayWindow.hpp"
+#include <Beam/TimeService/ToLocalTime.hpp>
+#include <QIcon>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
+#include "Spire/Ui/Button.hpp"
 #include "Spire/Ui/DateBox.hpp"
 #include "Spire/Ui/Icon.hpp"
 #include "Spire/Ui/MenuButton.hpp"
 #include "Spire/Ui/ToggleButton.hpp"
 #include "Spire/Ui/Tooltip.hpp"
+#include "Spire/Ui/Ui.hpp"
 
-using namespace Beam::TimeService;
+using namespace Beam;
 using namespace boost;
 using namespace boost::gregorian;
 using namespace boost::posix_time;
@@ -21,15 +25,15 @@ namespace {
   auto make_playback_icon_button(const QString& icon_path,
       const QString& tooltip) {
     auto button = make_icon_button(
-      imageFromSvg(icon_path, scale(26, 26)), tooltip);
+      image_from_svg(icon_path, scale(26, 26)), tooltip);
     button->setFixedSize(scale(26, 26));
     return button;
   }
 
   auto make_play_toggle_button() {
     auto play_toggle = make_icon_toggle_button(
-      imageFromSvg(":/Icons/play.svg", scale(26, 26)),
-      imageFromSvg(":/Icons/pause.svg", scale(26, 26)),
+      image_from_svg(":/Icons/play.svg", scale(26, 26)),
+      image_from_svg(":/Icons/pause.svg", scale(26, 26)),
       std::make_shared<LocalBooleanModel>(false));
     play_toggle->setFixedSize(scale(26, 26));
     add_tooltip(QObject::tr("Play (Space)"), *play_toggle);
@@ -102,16 +106,15 @@ namespace {
   };
 
   struct PlaybackTimeModel : OptionalDurationModel {
-    using local_adjustor = boost::date_time::c_local_adjustor<ptime>;
     std::shared_ptr<TimelineModel> m_timeline;
-    mutable TimeClientBox m_time_client;
+    mutable TimeClient m_time_client;
     std::shared_ptr<DurationModel> m_playhead;
     LocalValueModel<optional<time_duration>> m_value;
     QValidator::State m_state;
     scoped_connection m_connection;
 
     PlaybackTimeModel(std::shared_ptr<TimelineModel> timeline,
-        TimeClientBox time_client, std::shared_ptr<DurationModel> playhead)
+        TimeClient time_client, std::shared_ptr<DurationModel> playhead)
         : m_timeline(std::move(timeline)),
           m_time_client(std::move(time_client)),
           m_playhead(std::move(playhead)),
@@ -126,10 +129,9 @@ namespace {
     }
 
     optional<time_duration> get_maximum() const override {
-      auto start_date =
-        local_adjustor::utc_to_local(m_timeline->get().m_start).date();
+      auto start_date = to_local_time(m_timeline->get().m_start).date();
       auto end_time = get_start_time() + m_timeline->get().m_duration;
-      auto now = local_adjustor::utc_to_local(m_time_client.GetTime());
+      auto now = to_local_time(m_time_client.get_time());
       if(now.date() > start_date) {
         return end_time;
       } else if(now.date() < start_date) {
@@ -172,8 +174,7 @@ namespace {
     }
 
     time_duration get_start_time() const {
-      return local_adjustor::utc_to_local(
-        m_timeline->get().m_start).time_of_day();
+      return to_local_time(m_timeline->get().m_start).time_of_day();
     }
 
     void on_update(const time_duration& time) {
@@ -185,12 +186,12 @@ namespace {
 struct ReplayWindow::PlayheadModel : DurationModel {
   mutable UpdateSignal m_update_signal;
   std::shared_ptr<TimelineModel> m_timeline;
-  TimeClientBox m_time_client;
+  TimeClient m_time_client;
   std::shared_ptr<DurationModel> m_source;
   scoped_connection m_connection;
 
   PlayheadModel(std::shared_ptr<TimelineModel> timeline,
-      TimeClientBox time_client, std::shared_ptr<DurationModel> source)
+      TimeClient time_client, std::shared_ptr<DurationModel> source)
       : m_timeline(std::move(timeline)),
         m_time_client(std::move(time_client)),
         m_source(std::move(source)) {
@@ -220,7 +221,7 @@ struct ReplayWindow::PlayheadModel : DurationModel {
 
   QValidator::State set(const time_duration& value) override {
     return m_source->set(std::min(value,
-      std::max(m_time_client.GetTime() - m_timeline->get().m_start,
+      std::max(m_time_client.get_time() - m_timeline->get().m_start,
         time_duration(0, 0, 0))));
   }
 
@@ -235,7 +236,7 @@ struct ReplayWindow::PlayheadModel : DurationModel {
 };
 
 ReplayWindow::ReplayWindow(
-    std::shared_ptr<TimelineModel> timeline, TimeClientBox time_client,
+    std::shared_ptr<TimelineModel> timeline, TimeClient time_client,
     std::shared_ptr<DurationModel> playhead,
     std::shared_ptr<SelectableTargetListModel> targets,
     std::shared_ptr<PlaybackSpeedModel> speed, optional<date> min_date,
@@ -316,7 +317,7 @@ const std::shared_ptr<TimelineModel>& ReplayWindow::get_timeline() const {
   return m_playhead->m_timeline;
 }
 
-TimeClientBox ReplayWindow::get_time_client() const {
+TimeClient ReplayWindow::get_time_client() const {
   return m_playhead->m_time_client;
 }
 
@@ -360,7 +361,7 @@ bool ReplayWindow::is_playhead_at_end() const {
 
 void ReplayWindow::play() {
   if(get_timeline()->get().m_start + m_playhead->get() <
-      m_playhead->m_time_client.GetTime() - TIME_TOLERANCE) {
+      m_playhead->m_time_client.get_time() - TIME_TOLERANCE) {
     if(m_state.get() != State::REPLAYING) {
       m_state.set(State::REPLAYING);
     }
@@ -389,10 +390,10 @@ void ReplayWindow::on_jump_to_start_click() {
 
 void ReplayWindow::on_jump_to_end_click() {
   if(get_end_time(get_timeline()->get()) <
-      m_playhead->m_time_client.GetTime()) {
+      m_playhead->m_time_client.get_time()) {
     m_playhead->set(get_timeline()->get().m_duration);
   } else {
-    m_playhead->set(std::max(m_playhead->m_time_client.GetTime() -
+    m_playhead->set(std::max(m_playhead->m_time_client.get_time() -
       m_playhead->m_timeline->get().m_start, time_duration(0, 0, 0)));
   }
 }

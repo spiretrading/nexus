@@ -1,7 +1,6 @@
 #ifndef SPIRE_TARGET_MENU_ITEM_HPP
 #define SPIRE_TARGET_MENU_ITEM_HPP
-#include "Nexus/Definitions/Security.hpp"
-#include "Spire/Playback/Playback.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Ui/CheckBox.hpp"
 #include "Spire/Ui/ClickObserver.hpp"
 
@@ -23,8 +22,8 @@ namespace Spire {
         /** The color associated with the target. */
         QColor m_color;
 
-        /** The security assigned to the target. */
-        Nexus::Security m_security;
+        /** The ticker assigned to the target. */
+        Nexus::Ticker m_ticker;
 
         /** The number of windows in the group. */
         int m_count;
@@ -60,7 +59,7 @@ namespace Spire {
       void on_click();
   };
 
-  /** Returns the text representation of a Target. */ 
+  /** Returns the text representation of a Target. */
   QString to_text(const TargetMenuItem::Target& target);
 }
 

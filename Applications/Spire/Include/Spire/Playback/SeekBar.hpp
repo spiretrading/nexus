@@ -1,12 +1,11 @@
 #ifndef SPIRE_SEEK_BAR_HPP
 #define SPIRE_SEEK_BAR_HPP
-#include "Spire/Playback/Playback.hpp"
 #include "Spire/Ui/DurationBox.hpp"
 #include "Spire/Ui/HoverObserver.hpp"
 #include "Spire/Ui/MouseMoveObserver.hpp"
-#include "Spire/Ui/Ui.hpp"
 
 namespace Spire {
+  class Slider;
 
   /** Represents the timeline. */
   struct Timeline {
