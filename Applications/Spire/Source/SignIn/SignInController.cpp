@@ -162,7 +162,7 @@ namespace {
     }
     auto directories = parse_directories(directory_listing);
     try {
-      auto latest_build = std::stoi(load_version(track, version));
+      auto latest_build = std::stoi(version);
       for(auto& directory : directories) {
         try {
           latest_build = std::max(latest_build, std::stoi(directory));
@@ -357,8 +357,8 @@ void SignInController::on_sign_in(const std::string& username,
         return none;
       }
     } else {
-      auto latest_build = load_latest_build(address, track, current_version);
       auto version = load_version(track, current_version);
+      auto latest_build = load_latest_build(address, track, version);
       if(latest_build != version) {
         run_update->set(index(track));
         m_sign_in_window->set_state(SignInWindow::State::UPDATING);
