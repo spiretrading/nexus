@@ -1,3 +1,4 @@
+#include <atomic>
 #include <chrono>
 #include <future>
 #include <memory>
@@ -28,15 +29,20 @@ TEST_SUITE("QtValueModel") {
     run_test([&] {
       model = std::make_shared<QtValueModel<int>>(0);
     });
-    auto is_set = std::make_shared<std::promise<void>>();
-    auto is_set_result = is_set->get_future();
+    auto updates = std::make_shared<std::atomic_int>(0);
+    model->connect_update_signal([=] (const auto& value) {
+      ++*updates;
+    });
+    auto state = std::make_shared<std::promise<QValidator::State>>();
+    auto state_result = state->get_future();
     auto setter = std::thread([=] {
-      model->set(123);
-      is_set->set_value();
+      state->set_value(model->set(123));
     });
     setter.detach();
-    REQUIRE(is_set_result.wait_for(std::chrono::seconds(5)) ==
+    REQUIRE(state_result.wait_for(std::chrono::seconds(5)) ==
       std::future_status::ready);
-    REQUIRE(model->get() == 123);
+    REQUIRE(state_result.get() == QValidator::State::Invalid);
+    REQUIRE(model->get() == 0);
+    REQUIRE(*updates == 0);
   }
 }

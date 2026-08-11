@@ -77,7 +77,7 @@ namespace Spire {
     });
     while(!*state) {
       if(!QCoreApplication::instance() || QCoreApplication::closingDown()) {
-        *state = m_current.set(value);
+        *state = QValidator::State::Invalid;
       } else {
         m_update_condition.wait_for(lock, std::chrono::milliseconds(100));
       }
