@@ -602,7 +602,7 @@ namespace Nexus {
   void OrderExecutionServlet<C, T, S, U, A, O, D>::
       on_end_order_submission_query(ServiceProtocolClient& client,
         const Beam::DirectoryEntry& account, int id) {
-    m_submission_subscriptions.end(account, id);
+    m_submission_subscriptions.end(account, client, id);
   }
 
   template<typename C, typename T, typename S, typename U, typename A,
@@ -650,7 +650,7 @@ namespace Nexus {
   void OrderExecutionServlet<C, T, S, U, A, O, D>::
       on_end_execution_report_query(ServiceProtocolClient& client,
         const Beam::DirectoryEntry& account, int id) {
-    m_execution_report_subscriptions.end(account, id);
+    m_execution_report_subscriptions.end(account, client, id);
   }
 
   template<typename C, typename T, typename S, typename U, typename A,

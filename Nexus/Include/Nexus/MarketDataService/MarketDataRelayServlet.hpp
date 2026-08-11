@@ -416,7 +416,7 @@ namespace Nexus {
   void MarketDataRelayServlet<C, M, A>::on_end_query(
       ServiceProtocolClient& client, const typename Subscriptions::Index& index,
       int id, Subscriptions& subscriptions) {
-    subscriptions.end(index, id);
+    subscriptions.end(index, client, id);
   }
 
   template<typename C, typename M, typename A> requires
