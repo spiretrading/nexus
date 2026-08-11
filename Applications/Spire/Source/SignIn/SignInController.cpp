@@ -23,6 +23,8 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  const auto DOWNLOAD_SIZE = std::size_t(52277248);
+
   std::size_t index(Track track) {
     return static_cast<std::underlying_type_t<Track>>(track);
   }
@@ -191,17 +193,15 @@ namespace {
   bool update_build(
       const IpAddress& address, Track track, const std::string& username,
       const std::string& password, const std::string& build,
-      const std::shared_ptr<ProgressModel>& download_progress,
-      const std::shared_ptr<ProgressModel>& installation_progress,
-      const std::shared_ptr<ValueModel<time_duration>>& time_left) {
+      const UpdateDownloadChannelFactory& channel_factory,
+      std::shared_ptr<ProgressModel> download_progress,
+      std::shared_ptr<ProgressModel> installation_progress,
+      std::shared_ptr<ValueModel<time_duration>> time_left) {
     auto request = HttpRequest(get_update_url(
       address, track, build + "/" + get_application_filename(track).string()));
     auto directory_listing = std::string();
     try {
-      static const auto DOWNLOAD_SIZE = 52277248;
-      auto client =
-        HttpClient<std::unique_ptr<Channel>>(UpdateDownloadChannelFactory(
-          DOWNLOAD_SIZE, download_progress, time_left));
+      auto client = HttpClient<std::unique_ptr<Channel>>(channel_factory);
       auto response = client.send(request);
       if(response.get_status_code() != HttpStatusCode::OK) {
         download_progress->set(-1);
@@ -277,7 +277,9 @@ SignInController::SignInController(std::string version,
     m_download_progress(std::make_shared<QtValueModel<int>>(0)),
     m_installation_progress(std::make_shared<QtValueModel<int>>(0)),
     m_time_left(std::make_shared<QtValueModel<time_duration>>(seconds(0))),
-    m_sign_in_window(nullptr) {
+    m_channel_factory(DOWNLOAD_SIZE, m_download_progress, m_time_left),
+    m_sign_in_window(nullptr),
+    m_run_update(std::make_shared<TrackSet>()) {
   EventHandler();
 }
 
@@ -299,6 +301,8 @@ void SignInController::open() {
     std::bind_front(&SignInController::on_sign_in, this));
   m_sign_in_window->connect_cancel_signal(
     std::bind_front(&SignInController::on_cancel, this));
+  m_sign_in_window->connect_close_signal(
+    std::bind_front(&SignInController::on_close, this));
   m_sign_in_window->show();
 }
 
@@ -321,19 +325,24 @@ void SignInController::on_sign_in(const std::string& username,
     throw SignInException("Server not found.");
   }();
   store_track(track);
-  m_sign_in_promise = QtPromise([=] () -> optional<Clients> {
-    if(m_run_update.test(index(track))) {
+  m_sign_in_promise = QtPromise([=, channel_factory = m_channel_factory,
+      clients_factory = m_clients_factory, current_version = m_version,
+      run_update = m_run_update, download_progress = m_download_progress,
+      installation_progress = m_installation_progress,
+      time_left = m_time_left] () -> optional<Clients> {
+    if(run_update->test(index(track))) {
       if(launch_update(address, track, username, password)) {
         return none;
       }
     } else {
-      auto latest_build = load_latest_build(address, track, m_version);
-      auto version = load_version(track, m_version);
+      auto latest_build = load_latest_build(address, track, current_version);
+      auto version = load_version(track, current_version);
       if(latest_build != version) {
-        m_run_update.set(index(track));
+        run_update->set(index(track));
         m_sign_in_window->set_state(SignInWindow::State::UPDATING);
         if(update_build(address, track, username, password, latest_build,
-            m_download_progress, m_installation_progress, m_time_left)) {
+            channel_factory, download_progress, installation_progress,
+            time_left)) {
           return none;
         }
       } else if(track != Track::CURRENT) {
@@ -342,7 +351,10 @@ void SignInController::on_sign_in(const std::string& username,
         }
       }
     }
-    return m_clients_factory(username, password, address);
+    if(channel_factory.is_closed()) {
+      return none;
+    }
+    return clients_factory(username, password, address);
   }, LaunchPolicy::ASYNC).then([=] (Expect<optional<Clients>> clients) {
     if(clients.is_exception()) {
       on_sign_in_promise(Expect<Clients>(clients.get_exception()));
@@ -358,6 +370,10 @@ void SignInController::on_sign_in(const std::string& username,
 void SignInController::on_cancel() {
   m_sign_in_promise.disconnect();
   m_sign_in_window->set_state(SignInWindow::State::NONE);
+}
+
+void SignInController::on_close() {
+  m_channel_factory.close();
 }
 
 void SignInController::on_sign_in_promise(Expect<Clients> clients) {

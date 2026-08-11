@@ -1,4 +1,5 @@
 #include "Spire/SignIn/SignInWindow.hpp"
+#include <QCloseEvent>
 #include <QIcon>
 #include <QKeyEvent>
 #include "Spire/SignIn/ChromaHashWidget.hpp"
@@ -216,6 +217,16 @@ connection SignInWindow::connect_retry_signal(
 connection SignInWindow::connect_cancel_signal(
     const CancelSignal::slot_type& slot) const {
   return m_cancel_signal.connect(slot);
+}
+
+connection SignInWindow::connect_close_signal(
+    const CloseSignal::slot_type& slot) const {
+  return m_close_signal.connect(slot);
+}
+
+void SignInWindow::closeEvent(QCloseEvent* event) {
+  m_close_signal();
+  QWidget::closeEvent(event);
 }
 
 void SignInWindow::keyPressEvent(QKeyEvent* event) {

@@ -2,8 +2,10 @@
 #define SPIRE_UPDATE_DOWNLOAD_CHANNEL_FACTORY_HPP
 #include <memory>
 #include <Beam/IO/Channel.hpp>
+#include <Beam/Threading/Sync.hpp>
 #include <Beam/WebServices/Uri.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/optional/optional.hpp>
 #include "Spire/Ui/ProgressBar.hpp"
 
 namespace Spire {
@@ -27,12 +29,25 @@ namespace Spire {
         std::shared_ptr<ValueModel<boost::posix_time::time_duration>>
           time_left);
 
+      /** Returns <code>true</code> iff the download was closed. */
+      bool is_closed() const;
+
+      /** Closes the Channel used to download the update. */
+      void close() const;
+
       std::unique_ptr<Beam::Channel> operator ()(const Beam::Uri& uri) const;
 
     private:
+      struct State {
+        bool m_is_closed;
+        boost::optional<Beam::Channel> m_channel;
+
+        State();
+      };
       std::size_t m_download_size;
       std::shared_ptr<ProgressModel> m_download_progress;
       std::shared_ptr<ValueModel<boost::posix_time::time_duration>> m_time_left;
+      std::shared_ptr<Beam::Sync<State>> m_state;
   };
 }
 

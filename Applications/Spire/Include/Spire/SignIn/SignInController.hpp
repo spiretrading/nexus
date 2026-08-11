@@ -9,6 +9,7 @@
 #include "Nexus/Clients/Clients.hpp"
 #include "Spire/Async/QtPromise.hpp"
 #include "Spire/SignIn/Track.hpp"
+#include "Spire/SignIn/UpdateDownloadChannelFactory.hpp"
 #include "Spire/Ui/ProgressBar.hpp"
 
 namespace Spire {
@@ -63,6 +64,7 @@ namespace Spire {
         const SignedInSignal::slot_type& slot) const;
 
     private:
+      using TrackSet = std::bitset<3>;
       mutable SignedInSignal m_signed_in_signal;
       std::string m_version;
       std::vector<ServerEntry> m_servers;
@@ -70,15 +72,17 @@ namespace Spire {
       std::shared_ptr<ProgressModel> m_download_progress;
       std::shared_ptr<ProgressModel> m_installation_progress;
       std::shared_ptr<ValueModel<boost::posix_time::time_duration>> m_time_left;
+      UpdateDownloadChannelFactory m_channel_factory;
       SignInWindow* m_sign_in_window;
       QtPromise<void> m_sign_in_promise;
-      std::bitset<3> m_run_update;
+      std::shared_ptr<TrackSet> m_run_update;
 
       SignInController(const SignInController&) = delete;
       SignInController& operator =(const SignInController&) = delete;
       void on_sign_in(const std::string& username, const std::string& password,
         Track track, const std::string& server);
       void on_cancel();
+      void on_close();
       void on_sign_in_promise(Beam::Expect<Nexus::Clients> clients);
   };
 }
