@@ -480,9 +480,14 @@ namespace Nexus {
     query.set_range(order->get_sequence(), order->get_sequence());
     query.set_snapshot_limit(Beam::SnapshotLimit::from_head(1));
     auto result = ExecutionReportQueryResult();
-    result.m_id = m_order_subscriptions.init(query.get_index(),
-      request.get_client(), Beam::Range::TOTAL,
-      Beam::translate(Beam::ConstantExpression(true)));
+    result.m_id = [&] {
+      if(session.add_order_subscription(query.get_index())) {
+        return m_order_subscriptions.init(query.get_index(),
+          request.get_client(), Beam::Range::TOTAL,
+          Beam::translate(Beam::ConstantExpression(true)));
+      }
+      return -1;
+    }();
     order = m_data_store->load_order_record(id);
     auto pending_reports = std::vector<ExecutionReport>();
     m_order_subscriptions.commit(
@@ -539,9 +544,14 @@ namespace Nexus {
       revised_query.get_index(), request.get_client(),
       revised_query.get_range(), std::move(filter));
     auto execution_report_result = ExecutionReportQueryResult();
-    execution_report_result.m_id = m_order_subscriptions.init(
-      revised_query.get_index(), request.get_client(), Beam::Range::TOTAL,
-      Beam::translate(Beam::ConstantExpression(true)));
+    execution_report_result.m_id = [&] {
+      if(session.add_order_subscription(revised_query.get_index())) {
+        return m_order_subscriptions.init(revised_query.get_index(),
+          request.get_client(), Beam::Range::TOTAL,
+          Beam::translate(Beam::ConstantExpression(true)));
+      }
+      return -1;
+    }();
     submission_result.m_snapshot =
       m_data_store->load_order_records(revised_query);
     auto pending_reports = std::vector<ExecutionReport>();
