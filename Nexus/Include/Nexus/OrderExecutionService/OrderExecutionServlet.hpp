@@ -518,6 +518,8 @@ namespace Nexus {
       }
     } catch(...) {
       if(subscription_id != -1) {
+        m_order_subscriptions.discard(
+          query.get_index(), request.get_client(), subscription_id);
         session.remove_order_subscription(query.get_index());
       }
       throw;
@@ -547,10 +549,11 @@ namespace Nexus {
     }
     auto filter = Beam::translate<EvaluatorTranslator>(
       revised_query.get_filter(), Beam::Ref(m_live_orders));
-    auto submission_result = OrderSubmissionQueryResult();
-    submission_result.m_id = m_submission_subscriptions.init(
+    auto submission_id = m_submission_subscriptions.init(
       revised_query.get_index(), request.get_client(),
       revised_query.get_range(), std::move(filter));
+    auto submission_result = OrderSubmissionQueryResult();
+    submission_result.m_id = submission_id;
     auto subscription_id = [&] {
       if(session.add_order_subscription(revised_query.get_index())) {
         return m_order_subscriptions.init(revised_query.get_index(),
@@ -601,7 +604,11 @@ namespace Nexus {
           request.get_client(), report);
       }
     } catch(...) {
+      m_submission_subscriptions.discard(
+        revised_query.get_index(), request.get_client(), submission_id);
       if(subscription_id != -1) {
+        m_order_subscriptions.discard(
+          revised_query.get_index(), request.get_client(), subscription_id);
         session.remove_order_subscription(revised_query.get_index());
       }
       throw;
