@@ -56,6 +56,12 @@ namespace Nexus {
        */
       bool add_order_subscription(const Beam::DirectoryEntry& account);
 
+      /**
+       * Removes this session's Order subscription to an account.
+       * @param account The account whose subscription is to be removed.
+       */
+      void remove_order_subscription(const Beam::DirectoryEntry& account);
+
     private:
       bool m_is_administrator;
       bool m_is_globally_subscribed;
@@ -97,6 +103,11 @@ namespace Nexus {
   inline bool OrderExecutionSession::add_order_subscription(
       const Beam::DirectoryEntry& account) {
     return m_order_subscriptions.insert(account).second;
+  }
+
+  inline void OrderExecutionSession::remove_order_subscription(
+      const Beam::DirectoryEntry& account) {
+    m_order_subscriptions.erase(account);
   }
 }
 

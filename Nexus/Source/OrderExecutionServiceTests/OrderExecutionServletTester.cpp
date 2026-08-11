@@ -621,6 +621,63 @@ TEST_SUITE("OrderExecutionServlet") {
     REQUIRE(!submissions->try_pop());
   }
 
+  TEST_CASE("order_subscription_after_failed_query") {
+    auto failing_range = Range(Beam::Sequence(2000), Beam::Sequence::LAST);
+    auto operations = std::make_shared<TestOrderExecutionDataStore::Queue>();
+    auto data_store = LocalOrderExecutionDataStore();
+    auto servicer = std::async(std::launch::async, [&] {
+      try {
+        while(true) {
+          auto operation = operations->pop();
+          auto load =
+            std::get_if<TestOrderExecutionDataStore::LoadOrderRecordsOperation>(
+              &*operation);
+          if(load && load->m_query.get_range() == failing_range) {
+            load->m_result.set(
+              std::make_exception_ptr(std::runtime_error("data store down")));
+          } else {
+            service(*operation, data_store);
+          }
+        }
+      } catch(const std::exception&) {}
+    });
+    auto fixture = Fixture<TestOrderExecutionDataStore>(operations);
+    fixture.start();
+    auto client = fixture.make_client("client", "1234");
+    auto submissions = std::make_shared<Queue<SequencedAccountOrderRecord>>();
+    add_message_slot<OrderSubmissionMessage>(
+      out(client->get_slots()), [=] (auto& sender, const auto& record) {
+        submissions->push(record);
+      });
+    auto updates = std::make_shared<Queue<ExecutionReport>>();
+    add_message_slot<OrderUpdateMessage>(
+      out(client->get_slots()), [=] (auto& sender, const auto& report) {
+        updates->push(report);
+      });
+    client->spawn_message_handler();
+    auto failing_query = AccountQuery();
+    failing_query.set_index(fixture.m_client_account);
+    failing_query.set_range(failing_range);
+    failing_query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    REQUIRE_THROWS(
+      client->send_request<QueryOrderSubmissionsService>(failing_query));
+    client->send_request<QueryOrderSubmissionsService>(
+      make_real_time_query(fixture.m_client_account));
+    auto first = submit_and_fill(fixture,
+      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 100, Money::ONE));
+    auto second = fixture.m_client->submit(
+      make_limit_order_fields(TST, CAD, Side::BID, "TSX", 200, Money::ONE));
+    fixture.m_submissions->pop();
+    while((*submissions->pop())->m_info.m_id != second->get_info().m_id) {}
+    auto received = std::vector<ExecutionReport>();
+    while(auto report = updates->try_pop()) {
+      received.push_back(*report);
+    }
+    REQUIRE(std::ranges::any_of(received, [&] (const auto& report) {
+      return report.m_id == first->get_info().m_id;
+    }));
+  }
+
   TEST_CASE("store_reports_after_client_disconnect") {
     auto operations = std::make_shared<TestOrderExecutionDataStore::Queue>();
     auto data_store = LocalOrderExecutionDataStore();
