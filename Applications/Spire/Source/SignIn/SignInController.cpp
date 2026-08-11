@@ -3,6 +3,7 @@
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/WebServices/HttpClient.hpp>
 #include <Beam/WebServices/TcpSocketChannelFactory.hpp>
+#include <QDeadlineTimer>
 #include <QProcess>
 #include <QSharedMemory>
 #include <QStandardPaths>
@@ -24,6 +25,19 @@ using namespace Spire;
 
 namespace {
   const auto DOWNLOAD_SIZE = std::size_t(52277248);
+  const auto VERSION_TIMEOUT = seconds(30);
+  const auto LAUNCH_TIMEOUT = minutes(5);
+
+  bool is_running(qint64 process_id) {
+    auto process =
+      OpenProcess(SYNCHRONIZE, false, static_cast<DWORD>(process_id));
+    if(!process) {
+      return false;
+    }
+    auto status = WaitForSingleObject(process, 0);
+    CloseHandle(process);
+    return status == WAIT_TIMEOUT;
+  }
 
   std::size_t index(Track track) {
     return static_cast<std::underlying_type_t<Track>>(track);
@@ -42,7 +56,8 @@ namespace {
       get_application_filename(track));
   }
 
-  std::string launch_and_read(Track track, QStringList arguments) {
+  std::string launch_and_read(
+      Track track, QStringList arguments, time_duration timeout) {
     auto memory_key = QUuid::createUuid().toString();
     arguments << "-k" << memory_key;
     auto memory = QSharedMemory(memory_key);
@@ -54,22 +69,29 @@ namespace {
     child_process.setProgram(
       QString::fromStdString(get_application_path(track).string()));
     child_process.setArguments(arguments);
-    if(!child_process.startDetached()) {
+    auto process_id = qint64(0);
+    if(!child_process.startDetached(&process_id)) {
       throw std::runtime_error("Unable to start process.");
     }
+    auto deadline = QDeadlineTimer(timeout.total_milliseconds());
     while(true) {
+      auto is_alive = is_running(process_id);
       memory.lock();
-      if(static_cast<const char*>(memory.data())[0] != '\0') {
-        auto output =
-          QString::fromUtf8(static_cast<const char*>(memory.data()));
-        memory.unlock();
+      auto output = QString::fromUtf8(static_cast<const char*>(memory.data()));
+      memory.unlock();
+      if(!output.isEmpty()) {
         if(output.endsWith('\n')) {
           output.chop(1);
           return output.toStdString();
         }
         throw std::runtime_error("Unable to read output.");
       }
-      memory.unlock();
+      if(!is_alive) {
+        throw std::runtime_error("The process terminated unexpectedly.");
+      }
+      if(deadline.hasExpired()) {
+        throw std::runtime_error("The process timed out.");
+      }
       QThread::msleep(100);
     }
   }
@@ -81,7 +103,7 @@ namespace {
     try {
       auto arguments = QStringList();
       arguments << "-b";
-      return launch_and_read(track, arguments);
+      return launch_and_read(track, arguments, VERSION_TIMEOUT);
     } catch(const std::exception&) {
       return "0";
     }
@@ -162,7 +184,7 @@ namespace {
       QString::number(address.get_port());
     auto output = std::string();
     try {
-      output = launch_and_read(track, arguments);
+      output = launch_and_read(track, arguments, LAUNCH_TIMEOUT);
     } catch(const std::exception&) {
       return false;
     }
