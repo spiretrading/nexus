@@ -18,6 +18,9 @@ namespace Spire {
     PREVIEW
   };
 
+  /** The number of Tracks. */
+  static constexpr auto TRACK_COUNT = 3;
+
   /** Defines a model over a Track. */
   using TrackModel = ValueModel<Track>;
 

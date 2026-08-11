@@ -64,7 +64,7 @@ namespace Spire {
         const SignedInSignal::slot_type& slot) const;
 
     private:
-      using TrackSet = std::bitset<3>;
+      using TrackSet = std::bitset<TRACK_COUNT>;
       mutable SignedInSignal m_signed_in_signal;
       std::string m_version;
       std::vector<ServerEntry> m_servers;
