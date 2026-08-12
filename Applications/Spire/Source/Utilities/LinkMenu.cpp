@@ -158,11 +158,22 @@ void Spire::add_link_menu(ContextMenu& parent, TickerContext& context) {
   }
   current->connect_update_signal([&context] (const auto& selection) {
     if(!selection) {
+      auto link =
+        TickerContext::FindTickerContext(context.GetLinkedIdentifier());
       context.Unlink();
+      if(link && link->GetLinkedIdentifier() == context.GetIdentifier()) {
+        link->Unlink();
+      }
       return;
     }
     if(auto target =
         TickerContext::FindTickerContext(selection->m_id.toStdString())) {
+      auto link =
+        TickerContext::FindTickerContext(context.GetLinkedIdentifier());
+      if(link && &*link != &*target &&
+          link->GetLinkedIdentifier() == context.GetIdentifier()) {
+        link->Unlink();
+      }
       context.Link(*target);
       if(target->GetLinkedIdentifier().empty()) {
         target->Link(context);
