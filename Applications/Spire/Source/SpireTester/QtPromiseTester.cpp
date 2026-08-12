@@ -1,7 +1,12 @@
+#include <atomic>
+#include <memory>
+#include <Beam/Routines/Async.hpp>
 #include <doctest/doctest.h>
+#include "Spire/Async/PromiseRoutines.hpp"
 #include "Spire/Async/QtPromise.hpp"
 #include "Spire/SpireTester/SpireTester.hpp"
 
+using namespace Beam;
 using namespace Spire;
 
 TEST_SUITE("QtPromise") {
@@ -156,11 +161,31 @@ TEST_SUITE("QtPromise") {
       auto x = 0;
       auto p = QtPromise([&] {
         x += 5;
-      }).then([&] (Beam::Expect<void>) {
+      }).then([&] (Expect<void>) {
         x += 10;
       });
       wait(std::move(p));
       REQUIRE(x == 15);
     });
+  }
+
+  TEST_CASE("async_routine_is_owned_without_an_event_loop") {
+    auto argc = 0;
+    auto application = QApplication(argc, nullptr);
+    auto is_started = std::make_shared<Async<void>>();
+    auto is_released = std::make_shared<Async<void>>();
+    auto is_complete = std::make_shared<std::atomic_bool>(false);
+    {
+      auto promise = QtPromise([=] {
+        is_started->get_eval().set();
+        is_released->get();
+        *is_complete = true;
+      }, LaunchPolicy::ASYNC);
+      is_started->get();
+    }
+    REQUIRE(!*is_complete);
+    is_released->get_eval().set();
+    PromiseRoutines::get().wait();
+    REQUIRE(*is_complete);
   }
 }
