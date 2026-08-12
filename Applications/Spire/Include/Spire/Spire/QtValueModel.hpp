@@ -1,8 +1,11 @@
 #ifndef SPIRE_QT_VALUE_MODEL_HPP
 #define SPIRE_QT_VALUE_MODEL_HPP
+#include <chrono>
 #include <condition_variable>
 #include <mutex>
+#include <optional>
 #include <QCoreApplication>
+#include <QThread>
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -35,6 +38,7 @@ namespace Spire {
         const typename UpdateSignal::slot_type& slot) const;
 
     private:
+      static constexpr auto UPDATE_TIMEOUT = std::chrono::seconds(2);
       mutable std::recursive_mutex m_mutex;
       mutable std::condition_variable_any m_update_condition;
       LocalValueModel<Type> m_current;
@@ -64,18 +68,24 @@ namespace Spire {
       return m_current.set(value);
     }
     auto lock = std::unique_lock(m_mutex);
-    auto is_updated = false;
-    auto state = QValidator::State();
-    m_event_handler.push([&] {
+    auto state = std::make_shared<std::optional<QValidator::State>>();
+    m_event_handler.push([=, this] {
       auto lock = std::lock_guard(m_mutex);
-      state = m_current.set(value);
-      is_updated = true;
-      m_update_condition.notify_all();
+      if(!*state) {
+        *state = m_current.set(value);
+        m_update_condition.notify_all();
+      }
     });
-    while(!is_updated) {
-      m_update_condition.wait(lock);
+    auto expiry = std::chrono::steady_clock::now() + UPDATE_TIMEOUT;
+    while(!*state) {
+      if(!QCoreApplication::instance() || QCoreApplication::closingDown() ||
+          std::chrono::steady_clock::now() >= expiry) {
+        *state = QValidator::State::Invalid;
+      } else {
+        m_update_condition.wait_for(lock, std::chrono::milliseconds(100));
+      }
     }
-    return state;
+    return **state;
   }
 
   template<typename T>

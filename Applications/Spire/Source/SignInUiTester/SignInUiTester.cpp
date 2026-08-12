@@ -186,14 +186,8 @@ void SignInUiTester::on_sign_in(const std::string& username,
   }
 }
 
-void SignInUiTester::on_retry(SignInWindow::Operation operation) {
-  auto message = [&] {
-    if(operation == SignInWindow::Operation::DOWNLOAD) {
-      return tr("Retry Download");
-    }
-    return tr("Retry Installation");
-  }();
-  m_signals_text->append(message);
+void SignInUiTester::on_retry() {
+  m_signals_text->append(tr("Retry"));
 }
 
 void SignInUiTester::on_cancel() {

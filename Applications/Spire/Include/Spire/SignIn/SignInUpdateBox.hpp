@@ -15,21 +15,8 @@ namespace Spire {
   class SignInUpdateBox : public QWidget {
     public:
 
-      /** Lists the operations performed during an update. */
-      enum class Operation {
-
-        /** The update is being downloaded. */
-        DOWNLOAD,
-
-        /** The update is being installed. */
-        INSTALL
-      };
-
-      /**
-       * Signals a request to retry an operation.
-       * @param operation The operation to retry.
-       */
-      using RetrySignal = Signal<void (Operation operation)>;
+      /** Signals a request to retry the update. */
+      using RetrySignal = Signal<void ()>;
 
       /** Signals a request to cancel the update. */
       using CancelSignal = Signal<void ()>;

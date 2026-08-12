@@ -396,7 +396,7 @@ namespace Nexus {
       IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::on_end_order_imbalance_query(
       ServiceProtocolClient& client, Venue venue, int id) {
-    m_order_imbalance_subscriptions.end(venue, id);
+    m_order_imbalance_subscriptions.end(venue, client, id);
   }
 
   template<typename C, typename R, typename D, typename A> requires
@@ -413,7 +413,7 @@ namespace Nexus {
       IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::on_end_bbo_quote_query(
       ServiceProtocolClient& client, const Ticker& ticker, int id) {
-    m_bbo_quote_subscriptions.end(ticker, id);
+    m_bbo_quote_subscriptions.end(ticker, client, id);
   }
 
   template<typename C, typename R, typename D, typename A> requires
@@ -430,7 +430,7 @@ namespace Nexus {
       IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::on_end_book_quote_query(
       ServiceProtocolClient& client, const Ticker& ticker, int id) {
-    m_book_quote_subscriptions.end(ticker, id);
+    m_book_quote_subscriptions.end(ticker, client, id);
   }
 
   template<typename C, typename R, typename D, typename A> requires
@@ -447,7 +447,7 @@ namespace Nexus {
       IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::on_end_time_and_sale_query(
       ServiceProtocolClient& client, const Ticker& ticker, int id) {
-    m_time_and_sale_subscriptions.end(ticker, id);
+    m_time_and_sale_subscriptions.end(ticker, client, id);
   }
 
   template<typename C, typename R, typename D, typename A> requires
@@ -464,7 +464,7 @@ namespace Nexus {
       IsAdministrationClient<Beam::dereference_t<A>>
   void MarketDataRegistryServlet<C, R, D, A>::on_end_ticker_status_query(
       ServiceProtocolClient& client, const Ticker& ticker, int id) {
-    m_ticker_status_subscriptions.end(ticker, id);
+    m_ticker_status_subscriptions.end(ticker, client, id);
   }
 
   template<typename C, typename R, typename D, typename A> requires

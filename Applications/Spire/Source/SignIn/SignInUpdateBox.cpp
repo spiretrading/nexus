@@ -249,7 +249,8 @@ void SignInUpdateBox::layout_error() {
 }
 
 void SignInUpdateBox::on_download_progress(int progress) {
-  if(m_activity->get() == Activity::DOWNLOAD_ERROR) {
+  if(m_activity->get() == Activity::DOWNLOAD_ERROR ||
+      m_activity->get() == Activity::INSTALLATION_ERROR) {
     if(progress != -1) {
       m_activity->set(Activity::DOWNLOADING);
     }
@@ -285,7 +286,8 @@ void SignInUpdateBox::on_activity(Activity activity) {
     unmatch(*m_activity_label, ActivityStyle(*m_last_activity));
   }
   if(activity == Activity::DOWNLOADING) {
-    if(m_last_activity == Activity::DOWNLOAD_ERROR) {
+    if(m_last_activity == Activity::DOWNLOAD_ERROR ||
+        m_last_activity == Activity::INSTALLATION_ERROR) {
       m_last_activity = activity;
       clear_layout();
       layout_activity();
@@ -364,9 +366,5 @@ void SignInUpdateBox::on_cancel() {
 }
 
 void SignInUpdateBox::on_retry() {
-  if(m_activity->get() == Activity::DOWNLOAD_ERROR) {
-    m_retry_signal(Operation::DOWNLOAD);
-  } else {
-    m_retry_signal(Operation::INSTALL);
-  }
+  m_retry_signal();
 }
