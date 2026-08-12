@@ -131,6 +131,7 @@ SignInWindow::SignInWindow(std::string version, std::vector<Track> tracks,
       m_username(std::make_shared<LocalTextModel>()),
       m_password(std::make_shared<LocalTextModel>()),
       m_server_box(nullptr),
+      m_update_box(nullptr),
       m_is_dragging(false),
       m_last_focus(nullptr) {
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));

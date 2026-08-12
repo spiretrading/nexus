@@ -38,6 +38,7 @@ namespace Spire {
         const typename UpdateSignal::slot_type& slot) const;
 
     private:
+      static constexpr auto UPDATE_TIMEOUT = std::chrono::seconds(2);
       mutable std::recursive_mutex m_mutex;
       mutable std::condition_variable_any m_update_condition;
       LocalValueModel<Type> m_current;
@@ -75,7 +76,7 @@ namespace Spire {
         m_update_condition.notify_all();
       }
     });
-    auto expiry = std::chrono::steady_clock::now() + std::chrono::seconds(2);
+    auto expiry = std::chrono::steady_clock::now() + UPDATE_TIMEOUT;
     while(!*state) {
       if(!QCoreApplication::instance() || QCoreApplication::closingDown() ||
           std::chrono::steady_clock::now() >= expiry) {

@@ -39,6 +39,16 @@ namespace {
     return status == WAIT_TIMEOUT;
   }
 
+  void terminate(qint64 process_id) {
+    auto process =
+      OpenProcess(PROCESS_TERMINATE, false, static_cast<DWORD>(process_id));
+    if(!process) {
+      return;
+    }
+    TerminateProcess(process, 1);
+    CloseHandle(process);
+  }
+
   std::size_t index(Track track) {
     return static_cast<std::underlying_type_t<Track>>(track);
   }
@@ -90,6 +100,7 @@ namespace {
         throw std::runtime_error("The process terminated unexpectedly.");
       }
       if(deadline.hasExpired()) {
+        terminate(process_id);
         throw std::runtime_error("The process timed out.");
       }
       QThread::msleep(100);
@@ -222,6 +233,7 @@ namespace {
     auto request = HttpRequest(get_update_url(
       address, track, build + "/" + get_application_filename(track).string()));
     auto directory_listing = std::string();
+    auto is_downloaded = false;
     try {
       auto client = HttpClient<std::unique_ptr<Channel>>(channel_factory);
       auto response = client.send(request);
@@ -229,6 +241,7 @@ namespace {
         download_progress->set(-1);
         return false;
       }
+      is_downloaded = true;
       download_progress->set(100);
       installation_progress->set(30);
       time_left->set(seconds(3));
@@ -251,10 +264,13 @@ namespace {
       time_left->set(seconds(0));
       return launch_update(address, track, username, password);
     } catch(const std::exception&) {
-      if(download_progress->get() != 100) {
-        download_progress->set(-1);
-      } else {
+      if(channel_factory.is_closed()) {
+        return false;
+      }
+      if(is_downloaded) {
         installation_progress->set(-1);
+      } else {
+        download_progress->set(-1);
       }
       return false;
     }
@@ -359,11 +375,12 @@ void SignInController::on_sign_in(const std::string& username,
   m_download_progress->set(0);
   m_installation_progress->set(0);
   m_time_left->set(seconds(0));
+  m_channel_factory.close();
   m_channel_factory = UpdateDownloadChannelFactory(
     DOWNLOAD_SIZE, m_download_progress, m_time_left);
   auto is_update_failed = std::make_shared<bool>(false);
   auto [future, promise] = make_future<optional<Clients>>();
-  m_sign_in_routines.spawn([=, future = std::move(future),
+  m_sign_in_routines.spawn([=, this, future = std::move(future),
       channel_factory = m_channel_factory, clients_factory = m_clients_factory,
       current_version = m_version, run_update = m_run_update,
       download_progress = m_download_progress,
@@ -424,6 +441,7 @@ void SignInController::on_cancel() {
 
 void SignInController::on_cancel_update() {
   m_channel_factory.close();
+  m_sign_in_promise.disconnect();
   m_run_update->reset(index(m_track));
 }
 
