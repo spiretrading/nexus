@@ -24,6 +24,22 @@ TEST_SUITE("QtValueModel") {
     });
   }
 
+  TEST_CASE("set_without_a_running_event_loop") {
+    auto argc = 0;
+    auto application = QApplication(argc, nullptr);
+    auto model = std::make_shared<QtValueModel<int>>(0);
+    auto state = std::make_shared<std::promise<QValidator::State>>();
+    auto state_result = state->get_future();
+    auto setter = std::thread([=] {
+      state->set_value(model->set(123));
+    });
+    setter.detach();
+    REQUIRE(state_result.wait_for(std::chrono::seconds(10)) ==
+      std::future_status::ready);
+    REQUIRE(state_result.get() == QValidator::State::Invalid);
+    REQUIRE(model->get() == 0);
+  }
+
   TEST_CASE("set_after_event_loop_stops") {
     auto model = std::shared_ptr<QtValueModel<int>>();
     run_test([&] {

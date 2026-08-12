@@ -75,8 +75,10 @@ namespace Spire {
         m_update_condition.notify_all();
       }
     });
+    auto expiry = std::chrono::steady_clock::now() + std::chrono::seconds(2);
     while(!*state) {
-      if(!QCoreApplication::instance() || QCoreApplication::closingDown()) {
+      if(!QCoreApplication::instance() || QCoreApplication::closingDown() ||
+          std::chrono::steady_clock::now() >= expiry) {
         *state = QValidator::State::Invalid;
       } else {
         m_update_condition.wait_for(lock, std::chrono::milliseconds(100));
