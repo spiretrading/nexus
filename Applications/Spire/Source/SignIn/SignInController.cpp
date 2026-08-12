@@ -301,7 +301,8 @@ SignInController::SignInController(std::string version,
     m_time_left(std::make_shared<QtValueModel<time_duration>>(seconds(0))),
     m_channel_factory(DOWNLOAD_SIZE, m_download_progress, m_time_left),
     m_sign_in_window(nullptr),
-    m_run_update(std::make_shared<TrackSet>()) {
+    m_run_update(std::make_shared<TrackSet>()),
+    m_track(Track::CURRENT) {
   EventHandler();
 }
 
@@ -325,6 +326,11 @@ void SignInController::open() {
     std::bind_front(&SignInController::on_cancel, this));
   m_sign_in_window->connect_close_signal(
     std::bind_front(&SignInController::on_close, this));
+  m_sign_in_window->connect_cancel_update_signal(
+    std::bind_front(&SignInController::on_cancel_update, this));
+  m_sign_in_window->connect_retry_signal([=] (auto) {
+    on_retry();
+  });
   m_sign_in_window->show();
 }
 
@@ -347,42 +353,62 @@ void SignInController::on_sign_in(const std::string& username,
     throw SignInException("Server not found.");
   }();
   store_track(track);
-  m_sign_in_promise = QtPromise([=, channel_factory = m_channel_factory,
-      clients_factory = m_clients_factory, current_version = m_version,
-      run_update = m_run_update, download_progress = m_download_progress,
+  m_track = track;
+  m_retry = [=, this] {
+    on_sign_in(username, password, track, server);
+  };
+  m_download_progress->set(0);
+  m_installation_progress->set(0);
+  m_time_left->set(seconds(0));
+  m_channel_factory = UpdateDownloadChannelFactory(
+    DOWNLOAD_SIZE, m_download_progress, m_time_left);
+  auto is_update_failed = std::make_shared<bool>(false);
+  auto [future, promise] = make_future<optional<Clients>>();
+  m_sign_in_routines.spawn([=, future = std::move(future),
+      channel_factory = m_channel_factory, clients_factory = m_clients_factory,
+      current_version = m_version, run_update = m_run_update,
+      download_progress = m_download_progress,
       installation_progress = m_installation_progress,
-      time_left = m_time_left] () -> optional<Clients> {
-    if(run_update->test(index(track))) {
-      if(launch_update(address, track, username, password)) {
-        return none;
-      }
-    } else {
-      auto version = load_version(track, current_version);
-      auto latest_build = load_latest_build(address, track, version);
-      if(latest_build != version) {
-        run_update->set(index(track));
-        m_sign_in_window->set_state(SignInWindow::State::UPDATING);
-        if(update_build(address, track, username, password, latest_build,
-            channel_factory, download_progress, installation_progress,
-            time_left)) {
+      time_left = m_time_left] () mutable {
+    try {
+      future.resolve([&] () -> optional<Clients> {
+        if(run_update->test(index(track))) {
+          if(launch_update(address, track, username, password)) {
+            return none;
+          }
+        } else {
+          auto version = load_version(track, current_version);
+          auto latest_build = load_latest_build(address, track, version);
+          if(latest_build != version) {
+            run_update->set(index(track));
+            m_sign_in_window->set_state(SignInWindow::State::UPDATING);
+            if(!update_build(address, track, username, password, latest_build,
+                channel_factory, download_progress, installation_progress,
+                time_left)) {
+              *is_update_failed = true;
+            }
+            return none;
+          } else if(track != Track::CURRENT) {
+            if(launch_update(address, track, username, password)) {
+              return none;
+            }
+          }
+        }
+        if(channel_factory.is_closed()) {
           return none;
         }
-      } else if(track != Track::CURRENT) {
-        if(launch_update(address, track, username, password)) {
-          return none;
-        }
-      }
+        return clients_factory(username, password, address);
+      }());
+    } catch(...) {
+      future.resolve(std::current_exception());
     }
-    if(channel_factory.is_closed()) {
-      return none;
-    }
-    return clients_factory(username, password, address);
-  }, LaunchPolicy::ASYNC).then([=] (Expect<optional<Clients>> clients) {
+  });
+  m_sign_in_promise = promise.then([=] (Expect<optional<Clients>> clients) {
     if(clients.is_exception()) {
       on_sign_in_promise(Expect<Clients>(clients.get_exception()));
     } else if(clients.get()) {
       on_sign_in_promise(std::move(*clients.get()));
-    } else {
+    } else if(!*is_update_failed) {
       m_sign_in_window->close();
       delete_later(m_sign_in_window);
     }
@@ -390,8 +416,21 @@ void SignInController::on_sign_in(const std::string& username,
 }
 
 void SignInController::on_cancel() {
+  m_channel_factory.close();
   m_sign_in_promise.disconnect();
   m_sign_in_window->set_state(SignInWindow::State::NONE);
+}
+
+void SignInController::on_cancel_update() {
+  m_channel_factory.close();
+  m_run_update->reset(index(m_track));
+}
+
+void SignInController::on_retry() {
+  m_run_update->reset(index(m_track));
+  if(auto retry = m_retry) {
+    retry();
+  }
 }
 
 void SignInController::on_close() {

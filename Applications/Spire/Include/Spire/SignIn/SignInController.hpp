@@ -5,8 +5,10 @@
 #include <memory>
 #include <string>
 #include <Beam/Network/IpAddress.hpp>
+#include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <boost/optional/optional.hpp>
 #include "Nexus/Clients/Clients.hpp"
+#include "Spire/Async/QtFuture.hpp"
 #include "Spire/Async/QtPromise.hpp"
 #include "Spire/SignIn/Track.hpp"
 #include "Spire/SignIn/UpdateDownloadChannelFactory.hpp"
@@ -76,12 +78,17 @@ namespace Spire {
       SignInWindow* m_sign_in_window;
       QtPromise<void> m_sign_in_promise;
       std::shared_ptr<TrackSet> m_run_update;
+      Track m_track;
+      std::function<void ()> m_retry;
+      Beam::RoutineHandlerGroup m_sign_in_routines;
 
       SignInController(const SignInController&) = delete;
       SignInController& operator =(const SignInController&) = delete;
       void on_sign_in(const std::string& username, const std::string& password,
         Track track, const std::string& server);
       void on_cancel();
+      void on_cancel_update();
+      void on_retry();
       void on_close();
       void on_sign_in_promise(Beam::Expect<Nexus::Clients> clients);
   };

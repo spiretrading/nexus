@@ -60,6 +60,9 @@ namespace Spire {
       /** Signals this window was closed. */
       using CloseSignal = Signal<void ()>;
 
+      /** Signals to cancel an update in progress. */
+      using CancelUpdateSignal = Signal<void ()>;
+
       using RetrySignal = SignInUpdateBox::RetrySignal;
 
       /**
@@ -107,6 +110,10 @@ namespace Spire {
       boost::signals2::connection connect_close_signal(
         const CloseSignal::slot_type& slot) const;
 
+      /** Connects a slot to the cancel update signal. */
+      boost::signals2::connection connect_cancel_update_signal(
+        const CancelUpdateSignal::slot_type& slot) const;
+
     protected:
       void closeEvent(QCloseEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
@@ -118,6 +125,7 @@ namespace Spire {
       mutable SignInSignal m_sign_in_signal;
       mutable CancelSignal m_cancel_signal;
       mutable CloseSignal m_close_signal;
+      mutable CancelUpdateSignal m_cancel_update_signal;
       mutable RetrySignal m_retry_signal;
       std::string m_version;
       std::vector<std::string> m_servers;
