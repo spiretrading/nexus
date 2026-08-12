@@ -199,6 +199,10 @@ void SignInWindow::set_state(State state) {
 }
 
 void SignInWindow::set_error(const QString& message) {
+  if(m_update_box) {
+    clear_update();
+    layout_sign_in();
+  }
   if(!m_status_label) {
     return;
   }

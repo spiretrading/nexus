@@ -26,7 +26,7 @@ using namespace Spire;
 namespace {
   const auto DOWNLOAD_SIZE = std::size_t(52277248);
   const auto VERSION_TIMEOUT = seconds(30);
-  const auto LAUNCH_TIMEOUT = minutes(5);
+  const auto LAUNCH_TIMEOUT = minutes(1);
 
   bool is_running(qint64 process_id) {
     auto process =
@@ -328,9 +328,8 @@ void SignInController::open() {
     std::bind_front(&SignInController::on_close, this));
   m_sign_in_window->connect_cancel_update_signal(
     std::bind_front(&SignInController::on_cancel_update, this));
-  m_sign_in_window->connect_retry_signal([=] (auto) {
-    on_retry();
-  });
+  m_sign_in_window->connect_retry_signal(
+    std::bind_front(&SignInController::on_retry, this));
   m_sign_in_window->show();
 }
 
@@ -373,9 +372,10 @@ void SignInController::on_sign_in(const std::string& username,
     try {
       future.resolve([&] () -> optional<Clients> {
         if(run_update->test(index(track))) {
-          if(launch_update(address, track, username, password)) {
-            return none;
+          if(!launch_update(address, track, username, password)) {
+            throw SignInException("Unable to launch the selected track.");
           }
+          return none;
         } else {
           auto version = load_version(track, current_version);
           auto latest_build = load_latest_build(address, track, version);
@@ -389,9 +389,10 @@ void SignInController::on_sign_in(const std::string& username,
             }
             return none;
           } else if(track != Track::CURRENT) {
-            if(launch_update(address, track, username, password)) {
-              return none;
+            if(!launch_update(address, track, username, password)) {
+              throw SignInException("Unable to launch the selected track.");
             }
+            return none;
           }
         }
         if(channel_factory.is_closed()) {

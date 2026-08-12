@@ -364,9 +364,5 @@ void SignInUpdateBox::on_cancel() {
 }
 
 void SignInUpdateBox::on_retry() {
-  if(m_activity->get() == Activity::DOWNLOAD_ERROR) {
-    m_retry_signal(Operation::DOWNLOAD);
-  } else {
-    m_retry_signal(Operation::INSTALL);
-  }
+  m_retry_signal();
 }

@@ -22,7 +22,6 @@ namespace Spire {
   /** Displays the sign in window. */
   class SignInWindow : public QWidget {
     public:
-      using Operation = SignInUpdateBox::Operation;
 
       /** The sign in state to display to the user. */
       enum class State {
