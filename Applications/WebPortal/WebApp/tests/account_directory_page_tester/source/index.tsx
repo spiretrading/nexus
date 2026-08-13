@@ -17,6 +17,7 @@ interface State {
   filteredGroups: Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>;
   model: WebPortal.AccountDirectoryModel;
   statusCreateGroup: string;
+  isCreateGroupModalOpen: boolean;
 }
 
 /**  Displays and tests the AccountDirectoryPage. */
@@ -31,7 +32,8 @@ class TestApp extends React.Component<Properties, State> {
       filteredGroups: new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
       model: new WebPortal.LocalAccountDirectoryModel(
         new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>()),
-      statusCreateGroup: ''
+      statusCreateGroup: '',
+      isCreateGroupModalOpen: false
     };
     this.changeRole = this.changeRole.bind(this);
     this.onCardClick = this.onCardClick.bind(this);
@@ -58,6 +60,9 @@ class TestApp extends React.Component<Properties, State> {
           onFilterChange={this.onChange}
           onCardClick={this.onCardClick}
           createGroupStatus={this.state.statusCreateGroup}
+          isCreateGroupModalOpen={this.state.isCreateGroupModalOpen}
+          onCreateGroupClick={this.onCreateGroupClick}
+          onCloseCreateGroup={this.onCloseCreateGroup}
           onCreateGroup={this.onCreateNewGroup}/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
@@ -189,16 +194,25 @@ class TestApp extends React.Component<Properties, State> {
     }
   }
 
-  private onCreateNewGroup = (groupName: string) => {
-    if(this.state.statusCreateGroup === '') {
-      clearTimeout(this.timerId);
-      this.timerId = setTimeout(
-        async () => {
-          const newGroup = await this.state.model.createGroup(groupName);
-          this.state.groups.push(newGroup);
-          this.setState({groups: this.state.groups});
-        }, 100);
+  private onCreateGroupClick = () => {
+    this.setState({isCreateGroupModalOpen: true});
+  }
+
+  private onCloseCreateGroup = () => {
+    this.setState({isCreateGroupModalOpen: false});
+  }
+
+  private onCreateNewGroup = async (groupName: string) => {
+    await new Promise(resolve => setTimeout(resolve, 100));
+    if(this.state.statusCreateGroup !== '') {
+      return;
     }
+    const newGroup = await this.state.model.createGroup(groupName);
+    this.state.groups.push(newGroup);
+    this.setState({
+      groups: this.state.groups,
+      isCreateGroupModalOpen: false
+    });
   }
 
   private async onCardClick(group: Beam.DirectoryEntry) {

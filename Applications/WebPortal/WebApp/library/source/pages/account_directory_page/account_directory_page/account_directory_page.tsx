@@ -31,14 +31,23 @@ interface Properties {
   /** The error message from when a new group was created. */
   createGroupStatus?: string;
 
+  /** Determines if the modal used to create a new group is open. */
+  isCreateGroupModalOpen?: boolean;
+
   /** Called when the filter value changes. */
   onFilterChange?: (filter: string) => void;
 
   /** Called when a card is clicked on. */
   onCardClick?: (group: Beam.DirectoryEntry) => void;
 
+  /** Called when the user wants to open the modal to make a new group. */
+  onCreateGroupClick?: () => void;
+
+  /** Called when the modal used to create a new group is closed. */
+  onCloseCreateGroup?: () => void;
+
   /**
-   * Called when the user wants to make a new group. 
+   * Called when the user wants to make a new group.
    * @param name - The name of the group.
    */
   onCreateGroup?: (name: string) => void;
@@ -47,25 +56,16 @@ interface Properties {
   onNewAccountClick?: () => void;
 }
 
-interface State {
-  isCreateGroupModalOpen: boolean;
-}
-
 /** Displays a directory of accounts. */
-export class AccountDirectoryPage extends React.Component<Properties, State> {
+export class AccountDirectoryPage extends React.Component<Properties> {
   public static readonly defaultProps = {
     onFilterChange: () => {},
     onCardClick: () => {},
+    onCreateGroupClick: () => {},
+    onCloseCreateGroup: () => {},
     onCreateGroup: () => {},
     onNewAccountClick: () => {}
   };
-
-  constructor(props: Properties) {
-    super(props);
-    this.state = {
-      isCreateGroupModalOpen: false
-    };
-  }
 
   public render(): JSX.Element {
     const contentWidth = (() => {
@@ -117,17 +117,12 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
         return AccountDirectoryPage.STYLE.hidden;
       }
     })();
-    const createGroupModal = (() => {
-      if(this.state.isCreateGroupModalOpen) {
-        return <CreateGroupModal displaySize={this.props.displaySize}
-          errorStatus={this.props.createGroupStatus}
-          isOpen={this.state.isCreateGroupModalOpen}
-          onClose={this.onCloseCreateGroupModal}
-          onCreateGroup={this.props.onCreateGroup}/>;
-      } else {
-        return null;
-      }
-    })();
+    const createGroupModal = (
+      <CreateGroupModal displaySize={this.props.displaySize}
+        errorStatus={this.props.createGroupStatus}
+        isOpen={this.props.isCreateGroupModalOpen}
+        onClose={this.props.onCloseCreateGroup}
+        onCreateGroup={this.props.onCreateGroup}/>);
     const cards = this.props.groups.map(group => {
       const accounts = (() => {
         if(this.props.filter && !this.props.openedGroups.get(group)) {
@@ -154,7 +149,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
                     New Account
                   </button>
                   <div style={AccountDirectoryPage.STYLE.spacing}/>
-                  <button onClick={this.onCreateGroupClick}
+                  <button onClick={this.props.onCreateGroupClick}
                       className={css(buttonStyle)}>
                     New Group
                   </button>
@@ -170,7 +165,7 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
                   New Account
                 </button>
                 <div style={AccountDirectoryPage.STYLE.spacing}/>
-                <button onClick={this.onCreateGroupClick}
+                <button onClick={this.props.onCreateGroupClick}
                     className={css(buttonStyle)}>
                   New Group
                 </button>
@@ -181,14 +176,6 @@ export class AccountDirectoryPage extends React.Component<Properties, State> {
           </div>
         </div>
       </PageWrapper>);
-  }
-
-  private onCreateGroupClick = () => {
-    this.setState({isCreateGroupModalOpen: true});
-  }
-
-  private onCloseCreateGroupModal = () => {
-    this.setState({isCreateGroupModalOpen: false});
   }
 
   private static readonly STYLE: Record<string, React.CSSProperties> = {

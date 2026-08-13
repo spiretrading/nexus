@@ -25,10 +25,7 @@ interface Properties {
 
 interface State {
   groupName: string,
-  isSubmitted: boolean,
-  isLocalError: boolean,
-  localErrorMessage: string,
-  isOpenLocally: boolean
+  localErrorMessage: string
 }
 
 /** The modal that is used to create new groups. */
@@ -43,23 +40,19 @@ export class CreateGroupModal extends React.Component<Properties, State> {
     super(props);
     this.state = {
       groupName: '',
-      isSubmitted: false,
-      isLocalError: false,
-      localErrorMessage: '',
-      isOpenLocally: false
+      localErrorMessage: ''
     };
   }
 
   public render(): JSX.Element {
+    const message = this.state.localErrorMessage || this.props.errorStatus;
     const modalDimensions = (() => {
-      if(this.state.localErrorMessage !== '' &&
-          this.props.displaySize === DisplaySize.SMALL) {
+      if(message !== '' && this.props.displaySize === DisplaySize.SMALL) {
         return CreateGroupModal.MODAL_SMALL_DIMENSIONS_ERROR;
-      } else if(this.state.localErrorMessage !== '' &&
+      } else if(message !== '' &&
           this.props.displaySize !== DisplaySize.SMALL) {
         return CreateGroupModal.MODAL_LARGE_DIMENSIONS_ERROR;
-      } else if(this.state.localErrorMessage === '' &&
-          this.props.displaySize == DisplaySize.SMALL) {
+      } else if(message === '' && this.props.displaySize == DisplaySize.SMALL) {
         return CreateGroupModal.MODAL_SMALL_DIMENSIONS;
       } else {
         return CreateGroupModal.MODAL_LARGE_DIMENSIONS;
@@ -80,24 +73,22 @@ export class CreateGroupModal extends React.Component<Properties, State> {
       }
     })();
     const errorStatus = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL &&
-          this.state.localErrorMessage) {
+      if(this.props.displaySize === DisplaySize.SMALL && message) {
         return (
           <div style={CreateGroupModal.STYLE.errorMessageSmall}>
-            {this.state.localErrorMessage}
+            {message}
           </div>);
-      } else if(this.props.displaySize !== DisplaySize.SMALL &&
-          this.state.localErrorMessage) {
+      } else if(this.props.displaySize !== DisplaySize.SMALL && message) {
         return (
           <div style={CreateGroupModal.STYLE.errorMessage}>
-            {this.state.localErrorMessage}
+            {message}
           </div>);
       } else {
         return null;
       }
     })();
     return(
-      <Modal isOpen={this.state.isOpenLocally}
+      <Modal isOpen={this.props.isOpen}
           displaySize={this.props.displaySize}
           height={modalDimensions.height}
           width={modalDimensions.width}
@@ -121,8 +112,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
               value={this.state.groupName}
               placeholder={CreateGroupModal.PLACEHOLDER}
               style={{...CreateGroupModal.STYLE.textInputOverride,
-                ...(this.state.isLocalError ?
-                  CreateGroupModal.ERROR_STYLE : undefined)}}
+                ...(message ? CreateGroupModal.ERROR_STYLE : undefined)}}
               onChange={this.onInputChange}/>
             <div style={CreateGroupModal.STYLE.inputFiller}/>
             <Button 
@@ -135,53 +125,27 @@ export class CreateGroupModal extends React.Component<Properties, State> {
       </Modal>);
   }
 
-  public componentDidMount() {
-    if(this.props.isOpen) {
-      this.setState({
-        groupName: '',
-        localErrorMessage: '',
-        isSubmitted: false,
-        isLocalError: false,
-        isOpenLocally: true
-      });
-    }
-  }
   public componentDidUpdate(prevProps: Properties) {
     if(!prevProps.isOpen && this.props.isOpen) {
-      this.setState({
-        groupName: '',
-        localErrorMessage: '',
-        isSubmitted: false,
-        isLocalError: false,
-        isOpenLocally: true
-      });
-    }
-    if(this.state.isSubmitted && this.props.errorStatus === '') {
-      this.onClose();
-    } else if(this.state.isSubmitted && this.props.errorStatus !== '') {
-      this.setState({
-        isSubmitted: false,
-        localErrorMessage: this.props.errorStatus
-      });
+      this.setState({groupName: '', localErrorMessage: ''});
     }
   }
 
   private onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({groupName: event.target.value, isLocalError: false});
+    this.setState({groupName: event.target.value, localErrorMessage: ''});
   }
 
   private onClose = () => {
-    this.setState({isSubmitted: false, isOpenLocally: false});
-    setTimeout(() => this.props.onClose(), 200);
+    this.props.onClose();
   }
 
   private onCreateClick = () => {
     if(this.state.groupName === '') {
-      this.setState({isLocalError: true, localErrorMessage: 'Invalid input'});
+      this.setState({localErrorMessage: 'Invalid input'});
       return;
     }
+    this.setState({localErrorMessage: ''});
     this.props.onCreateGroup(this.state.groupName);
-    this.setState({isSubmitted: true});
   }
 
   private static readonly STYLE = {

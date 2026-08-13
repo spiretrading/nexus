@@ -347,13 +347,16 @@ HttpResponse ServiceLocatorWebServlet::on_create_group(
     clients.get_service_locator_client().load_directory_entry(
       DirectoryEntry::STAR_DIRECTORY, "trading_groups");
   auto parameters = session->shuttle_parameters<Parameters>(request);
-  auto new_group = clients.get_service_locator_client().make_directory(
-    parameters.m_name, trading_groups_directory);
-  auto managers_group =
+  try {
+    auto new_group = clients.get_service_locator_client().make_directory(
+      parameters.m_name, trading_groups_directory);
     clients.get_service_locator_client().make_directory("managers", new_group);
-  auto traders_group =
     clients.get_service_locator_client().make_directory("traders", new_group);
-  session->shuttle_response(new_group, out(response));
+    session->shuttle_response(new_group, out(response));
+  } catch(const std::exception& e) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    session->shuttle_response(std::string(e.what()), out(response));
+  }
   return response;
 }
 

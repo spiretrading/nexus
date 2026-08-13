@@ -31,6 +31,7 @@ interface State {
   filter: string;
   filteredGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
   createGroupStatus: string;
+  isCreateGroupModalOpen: boolean;
 }
 
 /** Implements the controller for the AccountDirectoryPage. */
@@ -46,7 +47,8 @@ export class AccountDirectoryController extends
       openedGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
       filter: '',
       filteredGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
-      createGroupStatus: ''
+      createGroupStatus: '',
+      isCreateGroupModalOpen: false
     };
   }
 
@@ -71,6 +73,9 @@ export class AccountDirectoryController extends
       filteredGroups={this.state.filteredGroups}
       onFilterChange={this.onFilterChange}  onCardClick={this.onCardClick}
       createGroupStatus={this.state.createGroupStatus}
+      isCreateGroupModalOpen={this.state.isCreateGroupModalOpen}
+      onCreateGroupClick={this.onCreateGroupClick}
+      onCloseCreateGroup={this.onCloseCreateGroup}
       onCreateGroup={this.onCreateGroup}
       onNewAccountClick={this.onNewAccountClick}/>;
   }
@@ -110,14 +115,28 @@ export class AccountDirectoryController extends
     this.setState({openedGroups: this.state.openedGroups});
   }
 
-  private onCreateGroup = async (name: string) => {
+  private onCreateGroupClick = () => {
+    this.setState({isCreateGroupModalOpen: true, createGroupStatus: ''});
+  }
+
+  private onCloseCreateGroup = () => {
+    this.setState({isCreateGroupModalOpen: false, createGroupStatus: ''});
+  }
+
+  private onCreateGroup = (name: string) => {
+    this.createGroup(name);
+  }
+
+  private async createGroup(name: string): Promise<void> {
     try {
       await this.props.model.createGroup(name);
       this.setState({
+        isCreateGroupModalOpen: false,
+        createGroupStatus: '',
         sortedKeys: this.props.model.groups.sort(this.groupComparator)
       });
     } catch(e: any) {
-      this.setState({createGroupStatus: e.toString()});
+      this.setState({createGroupStatus: toCreateGroupStatus(e)});
     }
   }
 
@@ -172,4 +191,8 @@ export class AccountDirectoryController extends
       accountA: AccountEntry, accountB: AccountEntry) {
     return accountA.account.name.localeCompare(accountB.account.name);
   }
+}
+
+function toCreateGroupStatus(error: any): string {
+  return error?.message || 'Unable to create the group.';
 }
