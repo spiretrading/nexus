@@ -3,11 +3,12 @@
 #include <functional>
 #include <memory>
 #include <utility>
-#include <Beam/Routines/RoutineHandler.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <boost/optional.hpp>
 #include <QCoreApplication>
 #include <QEvent>
 #include <QObject>
+#include "Spire/Async/PromiseRoutines.hpp"
 #include "Spire/Async/QtPromiseEvent.hpp"
 
 namespace Spire {
@@ -130,7 +131,6 @@ namespace details {
       boost::optional<Beam::Expect<Type>> m_value;
       boost::optional<ContinuationType> m_continuation;
       std::shared_ptr<void> m_self;
-      Beam::RoutineHandler m_routine;
 
       void execute();
   };
@@ -154,7 +154,7 @@ namespace details {
     if(m_launch_policy == LaunchPolicy::DEFERRED) {
       QCoreApplication::postEvent(this, new QtDeferredExecutionEvent());
     } else if(m_launch_policy == LaunchPolicy::ASYNC) {
-      m_routine = Beam::spawn([=] { execute(); });
+      PromiseRoutines::get().spawn([=] { execute(); });
     }
   }
 

@@ -49,10 +49,24 @@ namespace Nexus {
       /** Sets whether this session is subscribed to all execution reports. */
       void set_globally_subscribed(bool is_globally_subscribed);
 
+      /**
+       * Registers this session's Order subscription to an account.
+       * @param account The account subscribed to.
+       * @return <code>true</code> iff the session was not already subscribed.
+       */
+      bool add_order_subscription(const Beam::DirectoryEntry& account);
+
+      /**
+       * Removes this session's Order subscription to an account.
+       * @param account The account whose subscription is to be removed.
+       */
+      void remove_order_subscription(const Beam::DirectoryEntry& account);
+
     private:
       bool m_is_administrator;
       bool m_is_globally_subscribed;
       std::unordered_set<Beam::DirectoryEntry> m_accounts;
+      std::unordered_set<Beam::DirectoryEntry> m_order_subscriptions;
   };
 
   inline OrderExecutionSession::OrderExecutionSession() noexcept
@@ -84,6 +98,16 @@ namespace Nexus {
   inline void OrderExecutionSession::set_globally_subscribed(
       bool is_globally_subscribed) {
     m_is_globally_subscribed = is_globally_subscribed;
+  }
+
+  inline bool OrderExecutionSession::add_order_subscription(
+      const Beam::DirectoryEntry& account) {
+    return m_order_subscriptions.insert(account).second;
+  }
+
+  inline void OrderExecutionSession::remove_order_subscription(
+      const Beam::DirectoryEntry& account) {
+    m_order_subscriptions.erase(account);
   }
 }
 

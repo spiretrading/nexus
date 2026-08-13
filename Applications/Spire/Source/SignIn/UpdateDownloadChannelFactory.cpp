@@ -67,12 +67,31 @@ namespace {
   };
 }
 
+UpdateDownloadChannelFactory::State::State()
+  : m_is_closed(false) {}
+
 UpdateDownloadChannelFactory::UpdateDownloadChannelFactory(
   std::size_t download_size, std::shared_ptr<ProgressModel> download_progress,
   std::shared_ptr<ValueModel<posix_time::time_duration>> time_left)
   : m_download_size(download_size),
     m_download_progress(std::move(download_progress)),
-    m_time_left(std::move(time_left)) {}
+    m_time_left(std::move(time_left)),
+    m_state(std::make_shared<Sync<State>>()) {}
+
+bool UpdateDownloadChannelFactory::is_closed() const {
+  return with(*m_state, [] (const auto& state) {
+    return state.m_is_closed;
+  });
+}
+
+void UpdateDownloadChannelFactory::close() const {
+  with(*m_state, [] (auto& state) {
+    state.m_is_closed = true;
+    if(state.m_channel) {
+      state.m_channel->get_connection().close();
+    }
+  });
+}
 
 std::unique_ptr<Channel>
     UpdateDownloadChannelFactory::operator ()(const Uri& uri) const {
@@ -82,6 +101,12 @@ std::unique_ptr<Channel>
   auto progress_channel = std::make_unique<Channel>(
     std::in_place_type<WrapperChannel<Channel, Reader>>,
     Channel(std::move(tcp_channel)), Reader(std::move(reader)));
+  with(*m_state, [&] (auto& state) {
+    state.m_channel.emplace(*progress_channel);
+    if(state.m_is_closed) {
+      state.m_channel->get_connection().close();
+    }
+  });
   m_download_progress->set(0);
   return progress_channel;
 }

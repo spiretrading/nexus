@@ -55,7 +55,7 @@ namespace Spire {
       void on_rebuild();
       void on_sign_in(const std::string& username, const std::string& password,
         Track track, const std::string& server);
-      void on_retry(SignInWindow::Operation operation);
+      void on_retry();
       void on_cancel();
   };
 }

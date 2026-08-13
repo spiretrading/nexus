@@ -1,4 +1,5 @@
 #include "Spire/SignIn/SignInWindow.hpp"
+#include <QCloseEvent>
 #include <QIcon>
 #include <QKeyEvent>
 #include "Spire/SignIn/ChromaHashWidget.hpp"
@@ -130,6 +131,7 @@ SignInWindow::SignInWindow(std::string version, std::vector<Track> tracks,
       m_username(std::make_shared<LocalTextModel>()),
       m_password(std::make_shared<LocalTextModel>()),
       m_server_box(nullptr),
+      m_update_box(nullptr),
       m_is_dragging(false),
       m_last_focus(nullptr) {
   setWindowIcon(QIcon(":/Icons/taskbar_icons/spire.png"));
@@ -198,6 +200,13 @@ void SignInWindow::set_state(State state) {
 }
 
 void SignInWindow::set_error(const QString& message) {
+  if(m_update_box) {
+    clear_update();
+    layout_sign_in();
+  }
+  if(!m_status_label) {
+    return;
+  }
   m_status_label->get_current()->set(message);
   reset_visuals();
   m_state = State::ERROR;
@@ -216,6 +225,21 @@ connection SignInWindow::connect_retry_signal(
 connection SignInWindow::connect_cancel_signal(
     const CancelSignal::slot_type& slot) const {
   return m_cancel_signal.connect(slot);
+}
+
+connection SignInWindow::connect_close_signal(
+    const CloseSignal::slot_type& slot) const {
+  return m_close_signal.connect(slot);
+}
+
+connection SignInWindow::connect_cancel_update_signal(
+    const CancelUpdateSignal::slot_type& slot) const {
+  return m_cancel_update_signal.connect(slot);
+}
+
+void SignInWindow::closeEvent(QCloseEvent* event) {
+  m_close_signal();
+  QWidget::closeEvent(event);
 }
 
 void SignInWindow::keyPressEvent(QKeyEvent* event) {
@@ -461,6 +485,7 @@ void SignInWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
 }
 
 void SignInWindow::on_cancel_update() {
+  m_cancel_update_signal();
   QTimer::singleShot(0, this, [=] {
     clear_update();
     layout_sign_in();

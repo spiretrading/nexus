@@ -3,6 +3,7 @@
 #include <Beam/ServiceLocator/AuthenticationException.hpp>
 #include <Beam/WebServices/HttpClient.hpp>
 #include <Beam/WebServices/TcpSocketChannelFactory.hpp>
+#include <QDeadlineTimer>
 #include <QProcess>
 #include <QSharedMemory>
 #include <QStandardPaths>
@@ -23,6 +24,31 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  const auto DOWNLOAD_SIZE = std::size_t(52277248);
+  const auto VERSION_TIMEOUT = seconds(30);
+  const auto LAUNCH_TIMEOUT = minutes(1);
+
+  bool is_running(qint64 process_id) {
+    auto process =
+      OpenProcess(SYNCHRONIZE, false, static_cast<DWORD>(process_id));
+    if(!process) {
+      return false;
+    }
+    auto status = WaitForSingleObject(process, 0);
+    CloseHandle(process);
+    return status == WAIT_TIMEOUT;
+  }
+
+  void terminate(qint64 process_id) {
+    auto process =
+      OpenProcess(PROCESS_TERMINATE, false, static_cast<DWORD>(process_id));
+    if(!process) {
+      return;
+    }
+    TerminateProcess(process, 1);
+    CloseHandle(process);
+  }
+
   std::size_t index(Track track) {
     return static_cast<std::underlying_type_t<Track>>(track);
   }
@@ -40,7 +66,8 @@ namespace {
       get_application_filename(track));
   }
 
-  std::string launch_and_read(Track track, QStringList arguments) {
+  std::string launch_and_read(
+      Track track, QStringList arguments, time_duration timeout) {
     auto memory_key = QUuid::createUuid().toString();
     arguments << "-k" << memory_key;
     auto memory = QSharedMemory(memory_key);
@@ -52,22 +79,30 @@ namespace {
     child_process.setProgram(
       QString::fromStdString(get_application_path(track).string()));
     child_process.setArguments(arguments);
-    if(!child_process.startDetached()) {
+    auto process_id = qint64(0);
+    if(!child_process.startDetached(&process_id)) {
       throw std::runtime_error("Unable to start process.");
     }
+    auto deadline = QDeadlineTimer(timeout.total_milliseconds());
     while(true) {
+      auto is_alive = is_running(process_id);
       memory.lock();
-      if(static_cast<const char*>(memory.data())[0] != '\0') {
-        auto output =
-          QString::fromUtf8(static_cast<const char*>(memory.data()));
-        memory.unlock();
+      auto output = QString::fromUtf8(static_cast<const char*>(memory.data()));
+      memory.unlock();
+      if(!output.isEmpty()) {
         if(output.endsWith('\n')) {
           output.chop(1);
           return output.toStdString();
         }
         throw std::runtime_error("Unable to read output.");
       }
-      memory.unlock();
+      if(!is_alive) {
+        throw std::runtime_error("The process terminated unexpectedly.");
+      }
+      if(deadline.hasExpired()) {
+        terminate(process_id);
+        throw std::runtime_error("The process timed out.");
+      }
       QThread::msleep(100);
     }
   }
@@ -79,7 +114,7 @@ namespace {
     try {
       auto arguments = QStringList();
       arguments << "-b";
-      return launch_and_read(track, arguments);
+      return launch_and_read(track, arguments, VERSION_TIMEOUT);
     } catch(const std::exception&) {
       return "0";
     }
@@ -138,7 +173,7 @@ namespace {
     }
     auto directories = parse_directories(directory_listing);
     try {
-      auto latest_build = std::stoi(load_version(track, version));
+      auto latest_build = std::stoi(version);
       for(auto& directory : directories) {
         try {
           latest_build = std::max(latest_build, std::stoi(directory));
@@ -160,7 +195,7 @@ namespace {
       QString::number(address.get_port());
     auto output = std::string();
     try {
-      output = launch_and_read(track, arguments);
+      output = launch_and_read(track, arguments, LAUNCH_TIMEOUT);
     } catch(const std::exception&) {
       return false;
     }
@@ -191,22 +226,22 @@ namespace {
   bool update_build(
       const IpAddress& address, Track track, const std::string& username,
       const std::string& password, const std::string& build,
-      const std::shared_ptr<ProgressModel>& download_progress,
-      const std::shared_ptr<ProgressModel>& installation_progress,
-      const std::shared_ptr<ValueModel<time_duration>>& time_left) {
+      const UpdateDownloadChannelFactory& channel_factory,
+      std::shared_ptr<ProgressModel> download_progress,
+      std::shared_ptr<ProgressModel> installation_progress,
+      std::shared_ptr<ValueModel<time_duration>> time_left) {
     auto request = HttpRequest(get_update_url(
       address, track, build + "/" + get_application_filename(track).string()));
     auto directory_listing = std::string();
+    auto is_downloaded = false;
     try {
-      static const auto DOWNLOAD_SIZE = 52277248;
-      auto client =
-        HttpClient<std::unique_ptr<Channel>>(UpdateDownloadChannelFactory(
-          DOWNLOAD_SIZE, download_progress, time_left));
+      auto client = HttpClient<std::unique_ptr<Channel>>(channel_factory);
       auto response = client.send(request);
       if(response.get_status_code() != HttpStatusCode::OK) {
         download_progress->set(-1);
         return false;
       }
+      is_downloaded = true;
       download_progress->set(100);
       installation_progress->set(30);
       time_left->set(seconds(3));
@@ -229,10 +264,13 @@ namespace {
       time_left->set(seconds(0));
       return launch_update(address, track, username, password);
     } catch(const std::exception&) {
-      if(download_progress->get() != 100) {
-        download_progress->set(-1);
-      } else {
+      if(channel_factory.is_closed()) {
+        return false;
+      }
+      if(is_downloaded) {
         installation_progress->set(-1);
+      } else {
+        download_progress->set(-1);
       }
       return false;
     }
@@ -277,7 +315,10 @@ SignInController::SignInController(std::string version,
     m_download_progress(std::make_shared<QtValueModel<int>>(0)),
     m_installation_progress(std::make_shared<QtValueModel<int>>(0)),
     m_time_left(std::make_shared<QtValueModel<time_duration>>(seconds(0))),
-    m_sign_in_window(nullptr) {
+    m_channel_factory(DOWNLOAD_SIZE, m_download_progress, m_time_left),
+    m_sign_in_window(nullptr),
+    m_run_update(std::make_shared<TrackSet>()),
+    m_track(Track::CURRENT) {
   EventHandler();
 }
 
@@ -299,6 +340,12 @@ void SignInController::open() {
     std::bind_front(&SignInController::on_sign_in, this));
   m_sign_in_window->connect_cancel_signal(
     std::bind_front(&SignInController::on_cancel, this));
+  m_sign_in_window->connect_close_signal(
+    std::bind_front(&SignInController::on_close, this));
+  m_sign_in_window->connect_cancel_update_signal(
+    std::bind_front(&SignInController::on_cancel_update, this));
+  m_sign_in_window->connect_retry_signal(
+    std::bind_front(&SignInController::on_retry, this));
   m_sign_in_window->show();
 }
 
@@ -321,34 +368,65 @@ void SignInController::on_sign_in(const std::string& username,
     throw SignInException("Server not found.");
   }();
   store_track(track);
-  m_sign_in_promise = QtPromise([=] () -> optional<Clients> {
-    if(m_run_update.test(index(track))) {
-      if(launch_update(address, track, username, password)) {
-        return none;
-      }
-    } else {
-      auto latest_build = load_latest_build(address, track, m_version);
-      auto version = load_version(track, m_version);
-      if(latest_build != version) {
-        m_run_update.set(index(track));
-        m_sign_in_window->set_state(SignInWindow::State::UPDATING);
-        if(update_build(address, track, username, password, latest_build,
-            m_download_progress, m_installation_progress, m_time_left)) {
+  m_track = track;
+  m_retry = [=, this] {
+    on_sign_in(username, password, track, server);
+  };
+  m_download_progress->set(0);
+  m_installation_progress->set(0);
+  m_time_left->set(seconds(0));
+  m_channel_factory.close();
+  m_channel_factory = UpdateDownloadChannelFactory(
+    DOWNLOAD_SIZE, m_download_progress, m_time_left);
+  auto is_update_failed = std::make_shared<bool>(false);
+  auto [future, promise] = make_future<optional<Clients>>();
+  m_sign_in_routines.spawn([=, this, future = std::move(future),
+      channel_factory = m_channel_factory, clients_factory = m_clients_factory,
+      current_version = m_version, run_update = m_run_update,
+      download_progress = m_download_progress,
+      installation_progress = m_installation_progress,
+      time_left = m_time_left] () mutable {
+    try {
+      future.resolve([&] () -> optional<Clients> {
+        if(run_update->test(index(track))) {
+          if(!launch_update(address, track, username, password)) {
+            throw SignInException("Unable to launch the selected track.");
+          }
+          return none;
+        } else {
+          auto version = load_version(track, current_version);
+          auto latest_build = load_latest_build(address, track, version);
+          if(latest_build != version) {
+            run_update->set(index(track));
+            m_sign_in_window->set_state(SignInWindow::State::UPDATING);
+            if(!update_build(address, track, username, password, latest_build,
+                channel_factory, download_progress, installation_progress,
+                time_left)) {
+              *is_update_failed = true;
+            }
+            return none;
+          } else if(track != Track::CURRENT) {
+            if(!launch_update(address, track, username, password)) {
+              throw SignInException("Unable to launch the selected track.");
+            }
+            return none;
+          }
+        }
+        if(channel_factory.is_closed()) {
           return none;
         }
-      } else if(track != Track::CURRENT) {
-        if(launch_update(address, track, username, password)) {
-          return none;
-        }
-      }
+        return clients_factory(username, password, address);
+      }());
+    } catch(...) {
+      future.resolve(std::current_exception());
     }
-    return m_clients_factory(username, password, address);
-  }, LaunchPolicy::ASYNC).then([=] (Expect<optional<Clients>> clients) {
+  });
+  m_sign_in_promise = promise.then([=] (Expect<optional<Clients>> clients) {
     if(clients.is_exception()) {
       on_sign_in_promise(Expect<Clients>(clients.get_exception()));
     } else if(clients.get()) {
       on_sign_in_promise(std::move(*clients.get()));
-    } else {
+    } else if(!*is_update_failed) {
       m_sign_in_window->close();
       delete_later(m_sign_in_window);
     }
@@ -356,8 +434,26 @@ void SignInController::on_sign_in(const std::string& username,
 }
 
 void SignInController::on_cancel() {
+  m_channel_factory.close();
   m_sign_in_promise.disconnect();
   m_sign_in_window->set_state(SignInWindow::State::NONE);
+}
+
+void SignInController::on_cancel_update() {
+  m_channel_factory.close();
+  m_sign_in_promise.disconnect();
+  m_run_update->reset(index(m_track));
+}
+
+void SignInController::on_retry() {
+  m_run_update->reset(index(m_track));
+  if(auto retry = m_retry) {
+    retry();
+  }
+}
+
+void SignInController::on_close() {
+  m_channel_factory.close();
 }
 
 void SignInController::on_sign_in_promise(Expect<Clients> clients) {

@@ -144,9 +144,13 @@ namespace Nexus {
       void on_query_order_submissions_request(Beam::RequestToken<
         ServiceProtocolClient, QueryOrderSubmissionsService>& request,
         const AccountQuery& query);
+      void on_end_order_submission_query(ServiceProtocolClient& client,
+        const Beam::DirectoryEntry& account, int id);
       void on_query_execution_reports_request(Beam::RequestToken<
         ServiceProtocolClient, QueryExecutionReportsService>& request,
         const AccountQuery& query);
+      void on_end_execution_report_query(ServiceProtocolClient& client,
+        const Beam::DirectoryEntry& account, int id);
       void on_new_order_single_request(Beam::RequestToken<
         ServiceProtocolClient, NewOrderSingleService>& request,
         const OrderFields& fields);
@@ -215,8 +219,14 @@ namespace Nexus {
       &OrderExecutionServlet::on_load_order_by_id_request, this));
     QueryOrderSubmissionsService::add_request_slot(out(slots), std::bind_front(
       &OrderExecutionServlet::on_query_order_submissions_request, this));
+    Beam::add_message_slot<EndOrderSubmissionQueryMessage>(out(slots),
+      std::bind_front(
+        &OrderExecutionServlet::on_end_order_submission_query, this));
     QueryExecutionReportsService::add_request_slot(out(slots), std::bind_front(
       &OrderExecutionServlet::on_query_execution_reports_request, this));
+    Beam::add_message_slot<EndExecutionReportQueryMessage>(out(slots),
+      std::bind_front(
+        &OrderExecutionServlet::on_end_execution_report_query, this));
     NewOrderSingleService::add_request_slot(out(slots), std::bind_front(
       &OrderExecutionServlet::on_new_order_single_request, this));
     UpdateOrderService::add_slot(out(slots),
@@ -469,35 +479,50 @@ namespace Nexus {
     query.set_index((*order)->get_index());
     query.set_range(order->get_sequence(), order->get_sequence());
     query.set_snapshot_limit(Beam::SnapshotLimit::from_head(1));
-    auto result = ExecutionReportQueryResult();
-    result.m_id = m_order_subscriptions.init(query.get_index(),
-      request.get_client(), Beam::Range::TOTAL,
-      Beam::translate(Beam::ConstantExpression(true)));
-    order = m_data_store->load_order_record(id);
-    auto pending_reports = std::vector<ExecutionReport>();
-    m_order_subscriptions.commit(
-      query.get_index(), std::move(result), [&] (auto report_result) {
-        auto& reports = (**order)->m_execution_reports;
-        for(auto& report : report_result.m_snapshot) {
-          if(report->m_id != id) {
-            pending_reports.push_back(*report);
-            continue;
+    auto subscription_id = [&] {
+      if(session.add_order_subscription(query.get_index())) {
+        return m_order_subscriptions.init(query.get_index(),
+          request.get_client(), Beam::Range::TOTAL,
+          Beam::translate(Beam::ConstantExpression(true)));
+      }
+      return -1;
+    }();
+    try {
+      auto result = ExecutionReportQueryResult();
+      result.m_id = subscription_id;
+      order = m_data_store->load_order_record(id);
+      auto pending_reports = std::vector<ExecutionReport>();
+      m_order_subscriptions.commit(
+        query.get_index(), std::move(result), [&] (auto report_result) {
+          auto& reports = (**order)->m_execution_reports;
+          for(auto& report : report_result.m_snapshot) {
+            if(report->m_id != id) {
+              pending_reports.push_back(*report);
+              continue;
+            }
+            auto position =
+              std::lower_bound(reports.begin(), reports.end(), *report,
+                [] (const auto& lhs, const auto& rhs) {
+                  return lhs.m_sequence < rhs.m_sequence;
+                });
+            if(position == reports.end() ||
+                position->m_sequence != report->m_sequence) {
+              reports.insert(position, *report);
+            }
           }
-          auto position =
-            std::lower_bound(reports.begin(), reports.end(), *report,
-              [] (const auto& lhs, const auto& rhs) {
-                return lhs.m_sequence < rhs.m_sequence;
-              });
-          if(position == reports.end() ||
-              position->m_sequence != report->m_sequence) {
-            reports.insert(position, *report);
-          }
-        }
-        request.set(order);
-      });
-    for(auto& report : pending_reports) {
-      Beam::send_record_message<OrderUpdateMessage>(
-        request.get_client(), report);
+          request.set(order);
+        });
+      for(auto& report : pending_reports) {
+        Beam::send_record_message<OrderUpdateMessage>(
+          request.get_client(), report);
+      }
+    } catch(...) {
+      if(subscription_id != -1) {
+        m_order_subscriptions.discard(
+          query.get_index(), request.get_client(), subscription_id);
+        session.remove_order_subscription(query.get_index());
+      }
+      throw;
     }
   }
 
@@ -524,51 +549,84 @@ namespace Nexus {
     }
     auto filter = Beam::translate<EvaluatorTranslator>(
       revised_query.get_filter(), Beam::Ref(m_live_orders));
-    auto submission_result = OrderSubmissionQueryResult();
-    submission_result.m_id = m_submission_subscriptions.init(
+    auto submission_id = m_submission_subscriptions.init(
       revised_query.get_index(), request.get_client(),
       revised_query.get_range(), std::move(filter));
-    auto execution_report_result = ExecutionReportQueryResult();
-    execution_report_result.m_id = m_order_subscriptions.init(
-      revised_query.get_index(), request.get_client(), Beam::Range::TOTAL,
-      Beam::translate(Beam::ConstantExpression(true)));
-    submission_result.m_snapshot =
-      m_data_store->load_order_records(revised_query);
-    auto pending_reports = std::vector<ExecutionReport>();
-    m_submission_subscriptions.commit(revised_query.get_index(),
-      std::move(submission_result), [&] (auto submission_result) {
-        m_order_subscriptions.commit(revised_query.get_index(),
-          std::move(execution_report_result),
-          [&] (auto execution_report_result) {
-            for(auto& report : execution_report_result.m_snapshot) {
-              auto submission_iterator =
-                std::find_if(submission_result.m_snapshot.begin(),
-                  submission_result.m_snapshot.end(), [&] (const auto& record) {
-                    return record->m_info.m_id == report->m_id;
-                  });
-              if(submission_iterator == submission_result.m_snapshot.end()) {
-                pending_reports.push_back(*report);
-                continue;
+    auto submission_result = OrderSubmissionQueryResult();
+    submission_result.m_id = submission_id;
+    auto subscription_id = [&] {
+      if(session.add_order_subscription(revised_query.get_index())) {
+        return m_order_subscriptions.init(revised_query.get_index(),
+          request.get_client(), Beam::Range::TOTAL,
+          Beam::translate(Beam::ConstantExpression(true)));
+      }
+      return -1;
+    }();
+    try {
+      auto execution_report_result = ExecutionReportQueryResult();
+      execution_report_result.m_id = subscription_id;
+      submission_result.m_snapshot =
+        m_data_store->load_order_records(revised_query);
+      auto pending_reports = std::vector<ExecutionReport>();
+      m_submission_subscriptions.commit(revised_query.get_index(),
+        std::move(submission_result), [&] (auto submission_result) {
+          m_order_subscriptions.commit(revised_query.get_index(),
+            std::move(execution_report_result),
+            [&] (auto execution_report_result) {
+              for(auto& report : execution_report_result.m_snapshot) {
+                auto submission_iterator =
+                  std::find_if(submission_result.m_snapshot.begin(),
+                    submission_result.m_snapshot.end(),
+                    [&] (const auto& record) {
+                      return record->m_info.m_id == report->m_id;
+                    });
+                if(submission_iterator == submission_result.m_snapshot.end()) {
+                  pending_reports.push_back(*report);
+                  continue;
+                }
+                auto& submission = *submission_iterator;
+                auto position =
+                  std::lower_bound(submission->m_execution_reports.begin(),
+                    submission->m_execution_reports.end(), *report,
+                    [] (const auto& lhs, const auto& rhs) {
+                      return lhs.m_sequence < rhs.m_sequence;
+                    });
+                if(position == submission->m_execution_reports.end() ||
+                    position->m_sequence != report->m_sequence) {
+                  submission->m_execution_reports.insert(position, *report);
+                }
               }
-              auto& submission = *submission_iterator;
-              auto position =
-                std::lower_bound(submission->m_execution_reports.begin(),
-                  submission->m_execution_reports.end(), *report,
-                  [] (const auto& lhs, const auto& rhs) {
-                    return lhs.m_sequence < rhs.m_sequence;
-                  });
-              if(position == submission->m_execution_reports.end() ||
-                  position->m_sequence != report->m_sequence) {
-                submission->m_execution_reports.insert(position, *report);
-              }
-            }
-            request.set(submission_result);
-          });
-      });
-    for(auto& report : pending_reports) {
-      Beam::send_record_message<OrderUpdateMessage>(
-        request.get_client(), report);
+              request.set(submission_result);
+            });
+        });
+      for(auto& report : pending_reports) {
+        Beam::send_record_message<OrderUpdateMessage>(
+          request.get_client(), report);
+      }
+    } catch(...) {
+      m_submission_subscriptions.discard(
+        revised_query.get_index(), request.get_client(), submission_id);
+      if(subscription_id != -1) {
+        m_order_subscriptions.discard(
+          revised_query.get_index(), request.get_client(), subscription_id);
+        session.remove_order_subscription(revised_query.get_index());
+      }
+      throw;
     }
+  }
+
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D> requires
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+        Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+          Beam::IsUidClient<Beam::dereference_t<U>> &&
+            IsAdministrationClient<Beam::dereference_t<A>> &&
+              IsOrderExecutionDriver<Beam::dereference_t<O>> &&
+                IsOrderExecutionDataStore<Beam::dereference_t<D>>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::
+      on_end_order_submission_query(ServiceProtocolClient& client,
+        const Beam::DirectoryEntry& account, int id) {
+    m_submission_subscriptions.end(account, client, id);
   }
 
   template<typename C, typename T, typename S, typename U, typename A,
@@ -603,6 +661,20 @@ namespace Nexus {
       revised_query.get_index(), std::move(result), [&] (const auto& result) {
         request.set(result);
       });
+  }
+
+  template<typename C, typename T, typename S, typename U, typename A,
+    typename O, typename D> requires
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+        Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+          Beam::IsUidClient<Beam::dereference_t<U>> &&
+            IsAdministrationClient<Beam::dereference_t<A>> &&
+              IsOrderExecutionDriver<Beam::dereference_t<O>> &&
+                IsOrderExecutionDataStore<Beam::dereference_t<D>>
+  void OrderExecutionServlet<C, T, S, U, A, O, D>::
+      on_end_execution_report_query(ServiceProtocolClient& client,
+        const Beam::DirectoryEntry& account, int id) {
+    m_execution_report_subscriptions.end(account, client, id);
   }
 
   template<typename C, typename T, typename S, typename U, typename A,

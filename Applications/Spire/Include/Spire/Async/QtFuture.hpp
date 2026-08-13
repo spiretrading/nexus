@@ -1,6 +1,7 @@
 #ifndef SPIRE_QT_FUTURE_HPP
 #define SPIRE_QT_FUTURE_HPP
 #include <exception>
+#include <stdexcept>
 #include <utility>
 #include <Beam/Routines/Async.hpp>
 #include "Spire/Async/QtPromise.hpp"
@@ -33,10 +34,14 @@ namespace Spire {
 
       BaseQtFuture(Beam::Eval<Type> eval) noexcept;
       BaseQtFuture(BaseQtFuture&&) = default;
-      BaseQtFuture& operator =(BaseQtFuture&&) = default;
+      ~BaseQtFuture();
+
+      BaseQtFuture& operator =(BaseQtFuture&& other);
 
     private:
       friend struct std::pair<QtFuture<Type>, QtPromise<Type>>;
+
+      void abandon();
   };
 
   /**
@@ -109,6 +114,30 @@ namespace Spire {
   template<typename T>
   BaseQtFuture<T>::BaseQtFuture(Beam::Eval<Type> eval) noexcept
     : m_eval(std::move(eval)) {}
+
+  template<typename T>
+  BaseQtFuture<T>::~BaseQtFuture() {
+    abandon();
+  }
+
+  template<typename T>
+  BaseQtFuture<T>& BaseQtFuture<T>::operator =(BaseQtFuture&& other) {
+    if(this == &other) {
+      return *this;
+    }
+    abandon();
+    m_eval = std::move(other.m_eval);
+    return *this;
+  }
+
+  template<typename T>
+  void BaseQtFuture<T>::abandon() {
+    if(m_eval.is_empty()) {
+      return;
+    }
+    m_eval.set_exception(
+      std::make_exception_ptr(std::runtime_error("Broken future.")));
+  }
 
   template<typename T>
   void QtFuture<T>::resolve(Type value) {
