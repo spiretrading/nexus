@@ -23,6 +23,7 @@ interface Properties {
 
 interface State {
   errorStatus: string;
+  isSubmitting: boolean;
   isDone: boolean;
 }
 
@@ -33,6 +34,7 @@ export class CreateAccountController extends
     super(props);
     this.state = {
       errorStatus: '',
+      isSubmitting: false,
       isDone: false
     };
   }
@@ -44,6 +46,7 @@ export class CreateAccountController extends
     return <CreateAccountPage
       displaySize={this.props.displaySize}
       errorStatus={this.state.errorStatus}
+      isSubmitting={this.state.isSubmitting}
       countryDatabase={this.props.countryDatabase}
       groupSuggestionModel={this.props.groupSuggestionModel}
       onSubmit={this.createAccount}/>;
@@ -54,15 +57,30 @@ export class CreateAccountController extends
       roles: Nexus.AccountRoles) => {
     try {
       this.setState({
-        errorStatus: ''
+        errorStatus: '',
+        isSubmitting: true
       });
       await this.props.createAccountModel.createAccount(
         username, groups, identity, roles);
+      this.setState({isSubmitting: false, isDone: true});
     } catch(e: any) {
       this.setState({
-        errorStatus: e.toString()
+        errorStatus: toErrorStatus(e),
+        isSubmitting: false
       });
-    } 
-    this.setState({isDone:true});
+    }
   }
+
+  public static readonly REJECTED_MESSAGE = 'Invalid inputs';
+  public static readonly UNAVAILABLE_MESSAGE = 'Server issue';
+}
+
+const BAD_REQUEST = 400;
+const CONFLICT = 409;
+
+function toErrorStatus(error: any): string {
+  if(error?.code === CONFLICT || error?.code === BAD_REQUEST) {
+    return CreateAccountController.REJECTED_MESSAGE;
+  }
+  return CreateAccountController.UNAVAILABLE_MESSAGE;
 }

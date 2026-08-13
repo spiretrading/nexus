@@ -22,6 +22,9 @@ interface Properties {
   /** The status given back from the server on callback. */
   errorStatus?: string;
 
+  /** Determines if the account is in the process of being created. */
+  isSubmitting?: boolean;
+
   /** The model that provides the group suggestions. */
   groupSuggestionModel: GroupSuggestionModel;
 
@@ -215,8 +218,9 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <Input
                     value={this.state.identity.firstName}
-                    style={this.state.hasFirstNameError ?
-                      CreateAccountPage.ERROR_STYLE : undefined}
+                    style={{...CreateAccountPage.STYLE.inputField,
+                      ...(this.state.hasFirstNameError ?
+                        CreateAccountPage.ERROR_STYLE : undefined)}}
                     onChange={this.onInputChange(this.onFirstNameChange)}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -224,8 +228,9 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <Input
                     value={this.state.identity.lastName}
-                    style={this.state.hasLastNameError ?
-                      CreateAccountPage.ERROR_STYLE : undefined}
+                    style={{...CreateAccountPage.STYLE.inputField,
+                      ...(this.state.hasLastNameError ?
+                        CreateAccountPage.ERROR_STYLE : undefined)}}
                     onChange={this.onInputChange(this.onLastNameChange)}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -233,8 +238,9 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <Input
                     value={this.state.username}
-                    style={this.state.hasUserNameError ?
-                      CreateAccountPage.ERROR_STYLE : undefined}
+                    style={{...CreateAccountPage.STYLE.inputField,
+                      ...(this.state.hasUserNameError ?
+                        CreateAccountPage.ERROR_STYLE : undefined)}}
                     onChange={this.onInputChange(this.onUsernameChange)}/>
                 </FormEntry>
                   <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -264,8 +270,9 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <Input
                     value={this.state.identity.emailAddress}
-                    style={this.state.hasEmailError ?
-                      CreateAccountPage.ERROR_STYLE : undefined}
+                    style={{...CreateAccountPage.STYLE.inputField,
+                      ...(this.state.hasEmailError ?
+                        CreateAccountPage.ERROR_STYLE : undefined)}}
                     onChange={this.onInputChange(this.onEmailChange)}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -283,6 +290,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <Input
                     value={this.state.identity.city}
+                    style={CreateAccountPage.STYLE.inputField}
                     onChange={this.onInputChange(this.onCityChange)}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -290,6 +298,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     displaySize={this.props.displaySize}>
                   <Input
                     value={this.state.identity.province}
+                    style={CreateAccountPage.STYLE.inputField}
                     onChange={this.onInputChange(this.onProvinceChange)}/>
                 </FormEntry>
               <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
@@ -298,6 +307,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                   <CountrySelect
                     countryDatabase={this.props.countryDatabase}
                     value={this.state.identity.country}
+                    style={CreateAccountPage.STYLE.countryField}
                     onChange={this.onCountryChange}/>
                 </FormEntry>
               </Dali.VBoxLayout>
@@ -307,7 +317,8 @@ export class CreateAccountPage extends React.Component<Properties, State> {
             <Dali.Padding size={CreateAccountPage.STANDARD_PADDING}/>
             <div style={CreateAccountPage.STYLE.buttonBox}>
               <button className={css(buttonStyle)}
-                  disabled={this.state.isSubmitButtonDisabled}
+                  disabled={this.state.isSubmitButtonDisabled ||
+                    this.props.isSubmitting}
                   onClick={this.onSubmit}>
                 Create Account
               </button>
@@ -519,6 +530,12 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   }
 
   private static readonly STYLE: Record<string, React.CSSProperties> = {
+    inputField: {
+      width: '100%'
+    },
+    countryField: {
+      width: '200px'
+    },
     page: {
       height: '100%',
       width: '100%',
