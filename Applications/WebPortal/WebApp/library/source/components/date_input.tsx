@@ -24,6 +24,17 @@ interface Properties extends
   onChange?: (value?: Beam.Date) => void;
 }
 
+const MINIMUM_YEAR = 1400;
+const MAXIMUM_YEAR = 9999;
+const LEAP_YEAR = 2000;
+
+function getDaysInMonth(year?: number, month?: number): number {
+  if(month == null) {
+    return 31;
+  }
+  return new Date(Date.UTC(year ?? LEAP_YEAR, month, 0)).getUTCDate();
+}
+
 /** A component that displays a date. */
 export function DateInput({id, className, value, readOnly, disabled, error,
     onChange, ...rest}: Properties): JSX.Element {
@@ -42,12 +53,14 @@ export function DateInput({id, className, value, readOnly, disabled, error,
     prevValue.current = value;
   }
   const onchange = (y?: number, m?: number, d?: number) => {
+    const maximumDay = getDaysInMonth(y, m);
+    const day = (d != null && d > maximumDay) ? maximumDay : d;
     yearRef.current = y;
     monthRef.current = m;
-    dayRef.current = d;
-    if(y != null && m != null && d != null) {
-      onChange?.(new Beam.Date(y, m, d));
-    } else if(y == null && m == null && d == null) {
+    dayRef.current = day;
+    if(y != null && m != null && day != null) {
+      onChange?.(new Beam.Date(y, m, day));
+    } else if(y == null && m == null && day == null) {
       onChange?.(undefined);
     }
   };
@@ -71,7 +84,7 @@ export function DateInput({id, className, value, readOnly, disabled, error,
       <IntegerInput
         id={id}
         aria-label='Year' placeholder='YYYY'
-        min={0} max={9999}
+        min={MINIMUM_YEAR} max={MAXIMUM_YEAR}
         value={yearRef.current}
         readOnly={readOnly}
         disabled={disabled}
@@ -95,7 +108,7 @@ export function DateInput({id, className, value, readOnly, disabled, error,
       </span>
       <IntegerInput
         aria-label='Day' placeholder='DD'
-        min={1} max={31}
+        min={1} max={getDaysInMonth(yearRef.current, monthRef.current)}
         value={dayRef.current}
         readOnly={readOnly}
         disabled={disabled}
