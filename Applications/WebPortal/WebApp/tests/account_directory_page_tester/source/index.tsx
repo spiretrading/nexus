@@ -22,6 +22,7 @@ interface State {
   statusCreateGroup: WebPortal.CreateGroupModal.Status;
   rejectReasonCreateGroup: WebPortal.CreateGroupModal.RejectReason;
   isCreateGroupModalOpen: boolean;
+  isServerUnavailable: boolean;
 }
 
 /**  Displays and tests the AccountDirectoryPage. */
@@ -40,7 +41,8 @@ class TestApp extends React.Component<Properties, State> {
         new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>()),
       statusCreateGroup: Status.NONE,
       rejectReasonCreateGroup: RejectReason.DUPLICATE_NAME,
-      isCreateGroupModalOpen: false
+      isCreateGroupModalOpen: false,
+      isServerUnavailable: false
     };
     this.changeRole = this.changeRole.bind(this);
     this.onCardClick = this.onCardClick.bind(this);
@@ -49,10 +51,10 @@ class TestApp extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const errorButtonText = (() => {
-      if(this.state.statusCreateGroup === Status.NONE) {
-        return 'NO ERROR';
+      if(this.state.isServerUnavailable) {
+        return 'SERVER DOWN';
       } else {
-        return 'ERROR'
+        return 'SERVER UP';
       }
     })();
     return (
@@ -196,19 +198,14 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   private onToggleError = () => {
-    if(this.state.statusCreateGroup === Status.NONE) {
-      this.setState({
-        statusCreateGroup: Status.REJECTED
-      });
-    } else {
-      this.setState({
-        statusCreateGroup: Status.NONE
-      });
-    }
+    this.setState({isServerUnavailable: !this.state.isServerUnavailable});
   }
 
   private onCreateGroupClick = () => {
-    this.setState({isCreateGroupModalOpen: true});
+    this.setState({
+      isCreateGroupModalOpen: true,
+      statusCreateGroup: Status.NONE
+    });
   }
 
   private onCloseCreateGroup = () => {
@@ -216,16 +213,26 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   private onCreateNewGroup = async (groupName: string) => {
+    this.setState({statusCreateGroup: Status.IN_PROGRESS});
     await new Promise(resolve => setTimeout(resolve, 100));
-    if(this.state.statusCreateGroup !== Status.NONE) {
+    if(this.state.isServerUnavailable) {
+      this.setState({statusCreateGroup: Status.UNAVAILABLE});
       return;
     }
-    const newGroup = await this.state.model.createGroup(groupName);
-    this.state.groups.push(newGroup);
-    this.setState({
-      groups: this.state.groups,
-      isCreateGroupModalOpen: false
-    });
+    try {
+      const newGroup = await this.state.model.createGroup(groupName);
+      this.state.groups.push(newGroup);
+      this.setState({
+        groups: this.state.groups,
+        statusCreateGroup: Status.COMPLETE,
+        isCreateGroupModalOpen: false
+      });
+    } catch(error: any) {
+      this.setState({
+        statusCreateGroup: Status.REJECTED,
+        rejectReasonCreateGroup: RejectReason.DUPLICATE_NAME
+      });
+    }
   }
 
   private async onCardClick(group: Beam.DirectoryEntry) {

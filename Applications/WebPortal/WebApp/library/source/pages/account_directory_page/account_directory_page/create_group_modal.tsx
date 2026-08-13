@@ -198,7 +198,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
       width: '100%',
       font: '400 14px Roboto',
       color: '#E63F44',
-      height: '16px',
+      minHeight: '34px',
       marginTop: '18px'
     } as React.CSSProperties,
     errorMessage: {
@@ -208,7 +208,7 @@ export class CreateGroupModal extends React.Component<Properties, State> {
       width: '100%',
       font: '400 14px Roboto',
       color: '#E63F44',
-      height: '16px',
+      minHeight: '34px',
       marginTop: '18px'
     } as React.CSSProperties,
     stacked: {
@@ -251,9 +251,9 @@ export class CreateGroupModal extends React.Component<Properties, State> {
   private static readonly MODAL_LARGE_DIMENSIONS =
     {width: '550px', height: '120px'};
   private static readonly MODAL_SMALL_DIMENSIONS_ERROR =
-    {width: '282px', height: '218px'};
+    {width: '282px', height: '236px'};
   private static readonly MODAL_LARGE_DIMENSIONS_ERROR =
-    {width: '550px', height: '154px'};
+    {width: '550px', height: '172px'};
 }
 
 export namespace CreateGroupModal {
