@@ -107,7 +107,8 @@ export class CreateGroupModal extends React.Component<Properties, State> {
           displaySize={this.props.displaySize}
           height={modalDimensions.height}
           width={modalDimensions.width}
-          onClose={this.onClose}>
+          onClose={this.onClose}
+          onEntered={this.onEntered}>
         <div style={CreateGroupModal.STYLE.wrapper}>
           <span style={CreateGroupModal.STYLE.headerWrapper}>
             <span style={CreateGroupModal.STYLE.header}>
@@ -123,12 +124,13 @@ export class CreateGroupModal extends React.Component<Properties, State> {
           <div style={CreateGroupModal.STYLE.mediumPadding}/>
           <div style={inputStyle}>
             <Input
-              autoFocus
+              ref={this._inputRef}
               value={this.state.groupName}
               placeholder={CreateGroupModal.PLACEHOLDER}
               style={{...CreateGroupModal.STYLE.textInputOverride,
                 ...(message ? CreateGroupModal.ERROR_STYLE : undefined)}}
-              onChange={this.onInputChange}/>
+              onChange={this.onInputChange}
+              onKeyDown={this.onKeyDown}/>
             <div style={CreateGroupModal.STYLE.inputFiller}/>
             <Button 
               label={CreateGroupModal.BUTTON_TEXT} 
@@ -143,6 +145,16 @@ export class CreateGroupModal extends React.Component<Properties, State> {
   public componentDidUpdate(prevProps: Properties) {
     if(!prevProps.isOpen && this.props.isOpen) {
       this.setState({groupName: '', isNameInvalid: false});
+    }
+  }
+
+  private onEntered = () => {
+    this._inputRef.current?.focus();
+  }
+
+  private onKeyDown = (event: React.KeyboardEvent<HTMLInputElement>) => {
+    if(event.key === 'Enter') {
+      this.onCreateClick();
     }
   }
 
@@ -162,6 +174,8 @@ export class CreateGroupModal extends React.Component<Properties, State> {
     this.setState({isNameInvalid: false});
     this.props.onCreateGroup(this.state.groupName);
   }
+
+  private _inputRef = React.createRef<HTMLInputElement>();
 
   private static readonly STYLE = {
     hidden: {
@@ -304,6 +318,9 @@ interface ModalProperties {
 
   /** Called when the modal should be closed. */
   onClose?: () => void;
+
+  /** Called once the modal has finished opening. */
+  onEntered?: () => void;
 }
 
 /** This is a component that wraps a child component to style it as a modal. */
@@ -315,7 +332,8 @@ class Modal extends React.Component<ModalProperties> {
   public render(): JSX.Element {
     return (
       <Transition in={this.props.isOpen}
-          timeout={Modal.TIMEOUTS}>
+          timeout={Modal.TIMEOUTS}
+          onEntered={this.props.onEntered}>
         {(status: string) => {
           return (
             <div style={Modal.STYLE.wrapper}
