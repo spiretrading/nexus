@@ -6,6 +6,7 @@ import { DisplaySize, LoadingPage, LoadingState } from '../../..';
 import { AccountDirectoryModel } from './account_directory_model';
 import { AccountDirectoryPage } from './account_directory_page';
 import { AccountEntry } from './account_entry';
+import { CreateGroupModal } from './create_group_modal';
 
 interface Properties {
 
@@ -30,7 +31,8 @@ interface State {
   openedGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
   filter: string;
   filteredGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>;
-  createGroupStatus: string;
+  createGroupStatus: CreateGroupModal.Status;
+  createGroupRejectReason: CreateGroupModal.RejectReason;
   isCreateGroupModalOpen: boolean;
 }
 
@@ -47,7 +49,8 @@ export class AccountDirectoryController extends
       openedGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
       filter: '',
       filteredGroups: new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>(),
-      createGroupStatus: '',
+      createGroupStatus: CreateGroupModal.Status.NONE,
+      createGroupRejectReason: CreateGroupModal.RejectReason.OTHER,
       isCreateGroupModalOpen: false
     };
   }
@@ -73,6 +76,7 @@ export class AccountDirectoryController extends
       filteredGroups={this.state.filteredGroups}
       onFilterChange={this.onFilterChange}  onCardClick={this.onCardClick}
       createGroupStatus={this.state.createGroupStatus}
+      createGroupRejectReason={this.state.createGroupRejectReason}
       isCreateGroupModalOpen={this.state.isCreateGroupModalOpen}
       onCreateGroupClick={this.onCreateGroupClick}
       onCloseCreateGroup={this.onCloseCreateGroup}
@@ -116,11 +120,17 @@ export class AccountDirectoryController extends
   }
 
   private onCreateGroupClick = () => {
-    this.setState({isCreateGroupModalOpen: true, createGroupStatus: ''});
+    this.setState({
+      isCreateGroupModalOpen: true,
+      createGroupStatus: CreateGroupModal.Status.NONE
+    });
   }
 
   private onCloseCreateGroup = () => {
-    this.setState({isCreateGroupModalOpen: false, createGroupStatus: ''});
+    this.setState({
+      isCreateGroupModalOpen: false,
+      createGroupStatus: CreateGroupModal.Status.NONE
+    });
   }
 
   private onCreateGroup = (name: string) => {
@@ -128,15 +138,19 @@ export class AccountDirectoryController extends
   }
 
   private async createGroup(name: string): Promise<void> {
+    this.setState({createGroupStatus: CreateGroupModal.Status.IN_PROGRESS});
     try {
       await this.props.model.createGroup(name);
       this.setState({
         isCreateGroupModalOpen: false,
-        createGroupStatus: '',
+        createGroupStatus: CreateGroupModal.Status.COMPLETE,
         sortedKeys: this.props.model.groups.sort(this.groupComparator)
       });
     } catch(e: any) {
-      this.setState({createGroupStatus: toCreateGroupStatus(e)});
+      this.setState({
+        createGroupStatus: toCreateGroupStatus(e),
+        createGroupRejectReason: toCreateGroupRejectReason(e)
+      });
     }
   }
 
@@ -193,6 +207,20 @@ export class AccountDirectoryController extends
   }
 }
 
-function toCreateGroupStatus(error: any): string {
-  return error?.message || 'Unable to create the group.';
+const BAD_REQUEST = 400;
+const CONFLICT = 409;
+
+function toCreateGroupStatus(error: any): CreateGroupModal.Status {
+  if(error?.code === CONFLICT || error?.code === BAD_REQUEST) {
+    return CreateGroupModal.Status.REJECTED;
+  }
+  return CreateGroupModal.Status.UNAVAILABLE;
+}
+
+function toCreateGroupRejectReason(
+    error: any): CreateGroupModal.RejectReason {
+  if(error?.code === CONFLICT) {
+    return CreateGroupModal.RejectReason.DUPLICATE_NAME;
+  }
+  return CreateGroupModal.RejectReason.OTHER;
 }

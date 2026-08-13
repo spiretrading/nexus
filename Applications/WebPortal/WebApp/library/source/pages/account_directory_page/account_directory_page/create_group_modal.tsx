@@ -11,8 +11,11 @@ interface Properties {
   /** Determines if the modal is open. */
   isOpen: boolean;
 
-  /** The error message to display. */
-  errorStatus?: string;
+  /** The status of the group creation. */
+  status?: CreateGroupModal.Status;
+
+  /** The reason the group creation was rejected. */
+  rejectReason?: CreateGroupModal.RejectReason;
 
   /** Callback to close the modal. */
   onClose?: () => void;
@@ -25,13 +28,12 @@ interface Properties {
 
 interface State {
   groupName: string,
-  localErrorMessage: string
+  isNameInvalid: boolean
 }
 
 /** The modal that is used to create new groups. */
 export class CreateGroupModal extends React.Component<Properties, State> {
   public static readonly defaultProps = {
-    errorStatus: '',
     onClose: () => {},
     onCreateGroup: () => {}
   }
@@ -40,12 +42,25 @@ export class CreateGroupModal extends React.Component<Properties, State> {
     super(props);
     this.state = {
       groupName: '',
-      localErrorMessage: ''
+      isNameInvalid: false
     };
   }
 
   public render(): JSX.Element {
-    const message = this.state.localErrorMessage || this.props.errorStatus;
+    const message = (() => {
+      if(this.state.isNameInvalid) {
+        return CreateGroupModal.INVALID_INPUT_MESSAGE;
+      } else if(this.props.status === CreateGroupModal.Status.REJECTED) {
+        if(this.props.rejectReason ===
+            CreateGroupModal.RejectReason.DUPLICATE_NAME) {
+          return CreateGroupModal.DUPLICATE_NAME_MESSAGE;
+        }
+        return CreateGroupModal.INVALID_INPUT_MESSAGE;
+      } else if(this.props.status === CreateGroupModal.Status.UNAVAILABLE) {
+        return CreateGroupModal.UNAVAILABLE_MESSAGE;
+      }
+      return '';
+    })();
     const modalDimensions = (() => {
       if(message !== '' && this.props.displaySize === DisplaySize.SMALL) {
         return CreateGroupModal.MODAL_SMALL_DIMENSIONS_ERROR;
@@ -127,12 +142,12 @@ export class CreateGroupModal extends React.Component<Properties, State> {
 
   public componentDidUpdate(prevProps: Properties) {
     if(!prevProps.isOpen && this.props.isOpen) {
-      this.setState({groupName: '', localErrorMessage: ''});
+      this.setState({groupName: '', isNameInvalid: false});
     }
   }
 
   private onInputChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    this.setState({groupName: event.target.value, localErrorMessage: ''});
+    this.setState({groupName: event.target.value, isNameInvalid: false});
   }
 
   private onClose = () => {
@@ -141,10 +156,10 @@ export class CreateGroupModal extends React.Component<Properties, State> {
 
   private onCreateClick = () => {
     if(this.state.groupName === '') {
-      this.setState({localErrorMessage: 'Invalid input'});
+      this.setState({isNameInvalid: true});
       return;
     }
-    this.setState({localErrorMessage: ''});
+    this.setState({isNameInvalid: false});
     this.props.onCreateGroup(this.state.groupName);
   }
 
@@ -222,6 +237,9 @@ export class CreateGroupModal extends React.Component<Properties, State> {
   private static readonly ERROR_STYLE: React.CSSProperties = {
     borderColor: '#E63F44'
   };
+  private static readonly INVALID_INPUT_MESSAGE = 'Invalid input';
+  private static readonly DUPLICATE_NAME_MESSAGE = 'Group name already exists';
+  private static readonly UNAVAILABLE_MESSAGE = 'Server issue';
   private static readonly BUTTON_TEXT = 'Create';
   private static readonly HEADER_TEXT = 'Create Group';
   private static readonly IMAGE_SIZE = '20px';
@@ -236,6 +254,38 @@ export class CreateGroupModal extends React.Component<Properties, State> {
     {width: '282px', height: '218px'};
   private static readonly MODAL_LARGE_DIMENSIONS_ERROR =
     {width: '550px', height: '154px'};
+}
+
+export namespace CreateGroupModal {
+
+  /** The status of the group creation. */
+  export enum Status {
+
+    /** Default state. */
+    NONE,
+
+    /** The group is in the process of being created. */
+    IN_PROGRESS,
+
+    /** The group creation was rejected. */
+    REJECTED,
+
+    /** The server is not available. */
+    UNAVAILABLE,
+
+    /** The group creation succeeded. */
+    COMPLETE
+  }
+
+  /** The reason the group creation was rejected. */
+  export enum RejectReason {
+
+    /** The submitted group name already exists. */
+    DUPLICATE_NAME,
+
+    /** The reason is unspecified. */
+    OTHER
+  }
 }
 
 interface ModalProperties {

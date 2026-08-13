@@ -354,7 +354,21 @@ HttpResponse ServiceLocatorWebServlet::on_create_group(
     clients.get_service_locator_client().make_directory("traders", new_group);
     session->shuttle_response(new_group, out(response));
   } catch(const std::exception& e) {
-    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    auto groups = std::vector<DirectoryEntry>();
+    try {
+      groups = clients.get_service_locator_client().load_children(
+        trading_groups_directory);
+    } catch(const std::exception&) {}
+    auto name = trim_copy(parameters.m_name);
+    auto is_name_taken = std::any_of(groups.begin(), groups.end(),
+      [&] (const auto& group) {
+        return group.m_name == name;
+      });
+    if(is_name_taken) {
+      response.set_status_code(HttpStatusCode::CONFLICT);
+    } else {
+      response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    }
     session->shuttle_response(std::string(e.what()), out(response));
   }
   return response;

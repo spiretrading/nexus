@@ -28,8 +28,11 @@ interface Properties {
   /** The accounts that match the current filter. */
   filteredGroups: Beam.Map<Beam.DirectoryEntry, AccountEntry[]>
 
-  /** The error message from when a new group was created. */
-  createGroupStatus?: string;
+  /** The status of the group creation. */
+  createGroupStatus?: CreateGroupModal.Status;
+
+  /** The reason the group creation was rejected. */
+  createGroupRejectReason?: CreateGroupModal.RejectReason;
 
   /** Determines if the modal used to create a new group is open. */
   isCreateGroupModalOpen?: boolean;
@@ -119,7 +122,8 @@ export class AccountDirectoryPage extends React.Component<Properties> {
     })();
     const createGroupModal = (
       <CreateGroupModal displaySize={this.props.displaySize}
-        errorStatus={this.props.createGroupStatus}
+        status={this.props.createGroupStatus}
+        rejectReason={this.props.createGroupRejectReason}
         isOpen={this.props.isCreateGroupModalOpen}
         onClose={this.props.onCloseCreateGroup}
         onCreateGroup={this.props.onCreateGroup}/>);
