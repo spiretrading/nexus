@@ -1,4 +1,5 @@
 #include "Spire/Ui/FontStyleBox.hpp"
+#include <unordered_map>
 #include <QFontDatabase>
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
@@ -88,6 +89,59 @@ namespace {
     return result;
   }
 
+  struct StyleMetrics {
+    QFont m_font;
+    int m_width;
+  };
+
+  struct StyleKeyHash {
+    std::size_t operator()(const std::pair<QString, QString>& key) const {
+      return qHash(key);
+    }
+  };
+
+  const QString& get_display_family(const QString& font_family) {
+    static auto families = std::unordered_map<QString, QString>();
+    if(auto i = families.find(font_family); i != families.end()) {
+      return i->second;
+    }
+    auto family = [&] {
+      if(QFontDatabase().writingSystems(font_family).contains(
+          QFontDatabase::Latin)) {
+        return font_family;
+      }
+      return QString("Roboto");
+    }();
+    return families.emplace(font_family, std::move(family)).first->second;
+  }
+
+  const StyleMetrics& get_style_metrics(
+      const QString& font_family, const QString& style) {
+    static auto metrics = std::unordered_map<
+      std::pair<QString, QString>, StyleMetrics, StyleKeyHash>();
+    auto key = std::pair(font_family, style);
+    if(auto i = metrics.find(key); i != metrics.end()) {
+      return i->second;
+    }
+    auto style_metrics = StyleMetrics();
+    style_metrics.m_font =
+      QFontDatabase().font(get_display_family(font_family), style, -1);
+    style_metrics.m_font.setPixelSize(scale_width(12));
+    style_metrics.m_width =
+      QFontMetrics(style_metrics.m_font).horizontalAdvance(style);
+    return metrics.emplace(
+      std::move(key), std::move(style_metrics)).first->second;
+  }
+
+  int get_max_style_width(
+      const QString& font_family, const std::vector<QString>& styles) {
+    auto width = 0;
+    for(auto& style : styles) {
+      width = std::max(width, get_style_metrics(font_family, style).m_width);
+    }
+    return width;
+  }
+
   auto get_initial_style(const QString& font_family) {
     auto styles = QFontDatabase().styles(font_family);
     if(styles.isEmpty()) {
@@ -111,27 +165,22 @@ FontStyleBox* Spire::make_font_style_box(
     std::shared_ptr<ValueModel<QString>> font_family,
     std::shared_ptr<ValueModel<QString>> current, QWidget* parent) {
   auto settings = FontStyleBox::Settings();
-  auto font_styles = std::make_shared<ArrayListModel<QString>>(
-    get_font_styles(font_family->get()));
+  auto styles = get_font_styles(font_family->get());
+  auto max_width =
+    std::make_shared<int>(get_max_style_width(font_family->get(), styles));
+  auto font_styles =
+    std::make_shared<ArrayListModel<QString>>(std::move(styles));
   settings.m_cases = font_styles;
   settings.m_current = std::move(current);
-  settings.m_view_builder = [=] (auto& font_style) {
-    auto font_database = QFontDatabase();
-    auto family = [&] {
-      if(font_database.writingSystems(font_family->get()).contains(
-          QFontDatabase::Latin)) {
-        return font_family->get();
-      }
-      return QString("Roboto");
-    }();
-    auto font = font_database.font(family, font_style, -1);
-    font.setPixelSize(scale_width(12));
+  settings.m_view_builder = [=] (const auto& font_style) {
     auto label = make_label(font_style);
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     update_style(*label, [&] (auto& style) {
-      style.get(Any()).set(Font(font));
+      style.get(Any()).set(
+        Font(get_style_metrics(font_family->get(), font_style).m_font));
     });
     label->setFixedHeight(scale_height(26));
+    label->setMinimumWidth(*max_width);
     return label;
   };
   auto box = new FontStyleBox(std::move(settings), parent);
@@ -146,8 +195,10 @@ FontStyleBox* Spire::make_font_style_box(
   update_box_style();
   font_family->connect_update_signal([=] (auto& family) {
     box->get_current()->set("");
+    auto styles = get_font_styles(family);
+    *max_width = get_max_style_width(family, styles);
     clear(*font_styles);
-    for(auto& style : get_font_styles(family)) {
+    for(auto& style : styles) {
       font_styles->push(style);
     }
     box->get_current()->set(get_initial_style(family));

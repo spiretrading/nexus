@@ -474,11 +474,13 @@ namespace Nexus {
       request.get_client(), Beam::Range::TOTAL,
       Beam::translate(Beam::ConstantExpression(true)));
     order = m_data_store->load_order_record(id);
+    auto pending_reports = std::vector<ExecutionReport>();
     m_order_subscriptions.commit(
       query.get_index(), std::move(result), [&] (auto report_result) {
         auto& reports = (**order)->m_execution_reports;
         for(auto& report : report_result.m_snapshot) {
           if(report->m_id != id) {
+            pending_reports.push_back(*report);
             continue;
           }
           auto position =
@@ -493,6 +495,10 @@ namespace Nexus {
         }
         request.set(order);
       });
+    for(auto& report : pending_reports) {
+      Beam::send_record_message<OrderUpdateMessage>(
+        request.get_client(), report);
+    }
   }
 
   template<typename C, typename T, typename S, typename U, typename A,
@@ -528,6 +534,7 @@ namespace Nexus {
       Beam::translate(Beam::ConstantExpression(true)));
     submission_result.m_snapshot =
       m_data_store->load_order_records(revised_query);
+    auto pending_reports = std::vector<ExecutionReport>();
     m_submission_subscriptions.commit(revised_query.get_index(),
       std::move(submission_result), [&] (auto submission_result) {
         m_order_subscriptions.commit(revised_query.get_index(),
@@ -540,6 +547,7 @@ namespace Nexus {
                     return record->m_info.m_id == report->m_id;
                   });
               if(submission_iterator == submission_result.m_snapshot.end()) {
+                pending_reports.push_back(*report);
                 continue;
               }
               auto& submission = *submission_iterator;
@@ -557,6 +565,10 @@ namespace Nexus {
             request.set(submission_result);
           });
       });
+    for(auto& report : pending_reports) {
+      Beam::send_record_message<OrderUpdateMessage>(
+        request.get_client(), report);
+    }
   }
 
   template<typename C, typename T, typename S, typename U, typename A,
