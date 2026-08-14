@@ -359,6 +359,15 @@ HttpResponse ServiceLocatorWebServlet::on_create_group(
     clients.get_service_locator_client().load_directory_entry(
       DirectoryEntry::STAR_DIRECTORY, "trading_groups");
   auto parameters = session->shuttle_parameters<Parameters>(request);
+  auto name = trim_copy(parameters.m_name);
+  auto organization_name =
+    clients.get_definitions_client().load_organization_name();
+  if(name == organization_name) {
+    response.set_status_code(HttpStatusCode::CONFLICT);
+    session->shuttle_response(
+      std::string("Group already exists."), out(response));
+    return response;
+  }
   try {
     auto new_group = clients.get_service_locator_client().make_directory(
       parameters.m_name, trading_groups_directory);
@@ -371,7 +380,6 @@ HttpResponse ServiceLocatorWebServlet::on_create_group(
       groups = clients.get_service_locator_client().load_children(
         trading_groups_directory);
     } catch(const std::exception&) {}
-    auto name = trim_copy(parameters.m_name);
     if(std::ranges::contains(groups, name, &DirectoryEntry::m_name)) {
       response.set_status_code(HttpStatusCode::CONFLICT);
     } else {
