@@ -276,7 +276,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
                     onChange={this.onInputChange(this.onEmailChange)}/>
                 </FormEntry>
                 <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
-                <FormEntry name='Address'
+                <FormEntry name='Street Address'
                     displaySize={this.props.displaySize}>
                   <AddressField
                     addressLineOne={this.state.identity.addressLineOne}
