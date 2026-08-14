@@ -101,8 +101,9 @@ export class GroupCard extends React.Component<Properties, State> {
     })();
     const accounts: JSX.Element[] = [];
     if(this.state.localAccounts.length > 0) {
+      const target = this.props.filter.toLowerCase();
       for(const account of this.state.localAccounts) {
-        if(account.account.name.indexOf(this.props.filter) === 0 &&
+        if(account.account.name.toLowerCase().indexOf(target) === 0 &&
             this.props.filter) {
           accounts.push(
             <AccountEntryRow

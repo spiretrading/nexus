@@ -26,8 +26,9 @@ export class LocalGroupSuggestionModel extends GroupSuggestionModel {
     if(!this.isLoaded) {
       throw Error('Model not loaded.');
     }
+    const target = prefix.toLowerCase();
     const suggestions = this._groups.filter(
-      group => group.name.indexOf(prefix) === 0);
+      group => group.name.toLowerCase().indexOf(target) === 0);
     return suggestions;
   }
 

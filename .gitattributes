@@ -1,15 +1,8 @@
-# Dependency lockfiles are generated artifacts. They are committed so that
-# builds are reproducible and so security advisories can be pinned to a fixed
-# version, but they are not meant to be merged by hand.
+# Dependency lockfiles are generated artifacts. They are committed so builds
+# are reproducible and advisories can be pinned to a fixed version.
 #
-# On a conflict, `merge=ours` keeps the current branch's lockfile instead of
-# raising conflict markers. Regenerate it afterwards so that it matches the
-# merged package.json:
+# On the rare merge conflict, take either side and regenerate:
 #
 #     npm install --package-lock-only
 #
-# Git has no built-in driver by this name, so each clone needs this once:
-#
-#     git config merge.ours.driver true
-#
-package-lock.json merge=ours linguist-generated=true
+package-lock.json linguist-generated=true
