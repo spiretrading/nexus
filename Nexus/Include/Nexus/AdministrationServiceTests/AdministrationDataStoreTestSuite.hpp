@@ -1,9 +1,11 @@
 #ifndef NEXUS_ADMINISTRATION_DATA_STORE_TEST_SUITE_HPP
 #define NEXUS_ADMINISTRATION_DATA_STORE_TEST_SUITE_HPP
 #include <Beam/Queries/ConstantExpression.hpp>
+#include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationService/AccountModificationRequestAccessor.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 
 namespace Nexus::Tests {
@@ -690,6 +692,74 @@ namespace Nexus::Tests {
           query2);
       });
       REQUIRE(filtered.empty());
+    }
+
+    SUBCASE("load_account_modification_requests_by_category") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      data_store.with_transaction([&] {
+        data_store.store(AccountModificationRequest(1,
+          AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), EntitlementModification());
+        data_store.store(AccountModificationRequest(2,
+          AccountModificationRequest::Type::RISK, account, account,
+          time_from_string("2024-07-06 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), RiskModification());
+        data_store.store(AccountModificationRequest(3,
+          AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+          time_from_string("2024-07-07 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), EntitlementModification());
+      });
+      auto request = AccountModificationRequestAccessor::from_parameter(0);
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account);
+      query.set_snapshot_limit(SnapshotLimit::from_head(100));
+      query.set_filter(request.get_type() == ConstantExpression(
+        static_cast<int>(AccountModificationRequest::Type::ENTITLEMENTS)));
+      auto entitlements = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(entitlements.size() == 2);
+      REQUIRE(entitlements[0].get_id() == 1);
+      REQUIRE(entitlements[1].get_id() == 3);
+      query.set_filter(request.get_type() == ConstantExpression(
+        static_cast<int>(AccountModificationRequest::Type::RISK)));
+      auto risk = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(risk.size() == 1);
+      REQUIRE(risk[0].get_id() == 2);
+    }
+
+    SUBCASE("load_account_modification_requests_by_timestamp") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto modification = EntitlementModification();
+      data_store.with_transaction([&] {
+        data_store.store(AccountModificationRequest(1,
+          AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(2,
+          AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+          time_from_string("2024-07-10 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(3,
+          AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+          time_from_string("2024-07-15 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+      });
+      auto request = AccountModificationRequestAccessor::from_parameter(0);
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account);
+      query.set_snapshot_limit(SnapshotLimit::from_head(100));
+      query.set_filter(request.get_timestamp() >=
+        ConstantExpression(time_from_string("2024-07-10 00:00:00")));
+      auto recent = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(recent.size() == 2);
+      REQUIRE(recent[0].get_id() == 2);
+      REQUIRE(recent[1].get_id() == 3);
     }
 
     SUBCASE("store_and_load_effective_date") {

@@ -1,10 +1,10 @@
 #ifndef NEXUS_SQL_ADMINISTRATION_DATA_STORE_HPP
 #define NEXUS_SQL_ADMINISTRATION_DATA_STORE_HPP
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/Queries/SqlTranslator.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/KeyValueCache.hpp>
 #include <boost/throw_exception.hpp>
+#include "Nexus/AdministrationService/AccountModificationRequestSqlTranslator.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
 #include "Nexus/AdministrationService/SqlDefinitions.hpp"
@@ -369,7 +369,7 @@ namespace Nexus {
       SqlAdministrationDataStore<C>::load_requests(
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query) {
-    auto filter = Beam::make_sql_query<Beam::SqlTranslator>(
+    auto filter = make_account_modification_request_sql_query(
       "account_modification_requests", query.get_filter());
     auto is_head =
       query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
