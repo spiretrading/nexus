@@ -1,6 +1,7 @@
 #ifndef NEXUS_SQL_ADMINISTRATION_DATA_STORE_HPP
 #define NEXUS_SQL_ADMINISTRATION_DATA_STORE_HPP
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Queries/SqlTranslator.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/KeyValueCache.hpp>
 #include <boost/throw_exception.hpp>
@@ -62,6 +63,13 @@ namespace Nexus {
       std::vector<AccountModificationRequest::Id>
         load_account_modification_request_ids(
           AccountModificationRequest::Id start_id, int max_count);
+      std::vector<AccountModificationRequest>
+        load_account_modification_requests(
+          const std::vector<Beam::DirectoryEntry>& accounts,
+          const AccountModificationRequestQuery& query);
+      std::vector<AccountModificationRequest>
+        load_account_modification_requests(
+          const AccountModificationRequestQuery& query);
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
       void store_effective_date(AccountModificationRequest::Id id,
@@ -101,6 +109,10 @@ namespace Nexus {
       Beam::KeyValueCache<unsigned int, Beam::DirectoryEntry, Beam::Mutex>
         m_directory_entries;
       Beam::OpenState m_open_state;
+
+      std::vector<AccountModificationRequest> load_requests(
+        const Viper::Expression& accounts,
+        const AccountModificationRequestQuery& query);
   };
 
   template<typename C>
@@ -331,6 +343,72 @@ namespace Nexus {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }
     return ids;
+  }
+
+  template<typename C>
+  std::vector<AccountModificationRequest>
+      SqlAdministrationDataStore<C>::load_account_modification_requests(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query) {
+    auto filter = Viper::literal(false);
+    for(auto& account : accounts) {
+      filter = filter || Viper::sym("account") == account.m_id;
+    }
+    return load_requests(filter, query);
+  }
+
+  template<typename C>
+  std::vector<AccountModificationRequest>
+      SqlAdministrationDataStore<C>::load_account_modification_requests(
+        const AccountModificationRequestQuery& query) {
+    return load_requests(Viper::literal(true), query);
+  }
+
+  template<typename C>
+  std::vector<AccountModificationRequest>
+      SqlAdministrationDataStore<C>::load_requests(
+        const Viper::Expression& accounts,
+        const AccountModificationRequestQuery& query) {
+    auto filter = Beam::make_sql_query<Beam::SqlTranslator>(
+      "account_modification_requests", query.get_filter());
+    auto is_head =
+      query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
+    auto anchor = [&] {
+      if(auto anchor = query.get_anchor()) {
+        if(is_head) {
+          return Viper::sym("id") > *anchor;
+        }
+        return Viper::sym("id") < *anchor;
+      }
+      return Viper::literal(true);
+    }();
+    auto order = [&] {
+      if(is_head) {
+        return Viper::Order::ASC;
+      }
+      return Viper::Order::DESC;
+    }();
+    auto requests = std::vector<AccountModificationRequest>();
+    try {
+      m_connection->execute(Viper::select(
+        get_account_modification_request_row(),
+        "account_modification_requests", filter && anchor && accounts,
+        Viper::order_by("id", order),
+        Viper::limit(std::max(0, query.get_snapshot_limit().get_size())),
+        std::back_inserter(requests)));
+    } catch(const Viper::ExecuteException& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
+    if(!is_head) {
+      std::ranges::reverse(requests);
+    }
+    for(auto& request : requests) {
+      request = AccountModificationRequest(request.get_id(), request.get_type(),
+        m_directory_entries.load(request.get_account().m_id),
+        m_directory_entries.load(request.get_submission_account().m_id),
+        request.get_timestamp(), request.get_effective_date());
+    }
+    return requests;
   }
 
   template<typename C>

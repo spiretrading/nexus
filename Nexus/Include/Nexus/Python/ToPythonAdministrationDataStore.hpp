@@ -57,6 +57,13 @@ namespace Nexus {
       std::vector<AccountModificationRequest::Id>
         load_account_modification_request_ids(
           AccountModificationRequest::Id start_id, int max_count);
+      std::vector<AccountModificationRequest>
+        load_account_modification_requests(
+          const std::vector<Beam::DirectoryEntry>& accounts,
+          const AccountModificationRequestQuery& query);
+      std::vector<AccountModificationRequest>
+        load_account_modification_requests(
+          const AccountModificationRequestQuery& query);
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
       void store(const AccountModificationRequest& request,
@@ -216,6 +223,23 @@ namespace Nexus {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_account_modification_request_ids(
       start_id, max_count);
+  }
+
+  template<IsAdministrationDataStore D>
+  std::vector<AccountModificationRequest>
+      ToPythonAdministrationDataStore<D>::load_account_modification_requests(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query) {
+    auto release = Beam::Python::GilRelease();
+    return m_data_store->load_account_modification_requests(accounts, query);
+  }
+
+  template<IsAdministrationDataStore D>
+  std::vector<AccountModificationRequest>
+      ToPythonAdministrationDataStore<D>::load_account_modification_requests(
+        const AccountModificationRequestQuery& query) {
+    auto release = Beam::Python::GilRelease();
+    return m_data_store->load_account_modification_requests(query);
   }
 
   template<IsAdministrationDataStore D>

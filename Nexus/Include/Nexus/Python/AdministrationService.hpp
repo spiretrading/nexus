@@ -150,6 +150,13 @@ namespace Nexus::Python {
       def("load_account_modification_request_ids",
         pybind11::overload_cast<AccountModificationRequest::Id, int>(
           &D::load_account_modification_request_ids)).
+      def("load_account_modification_requests", pybind11::overload_cast<
+        const std::vector<Beam::DirectoryEntry>&,
+        const AccountModificationRequestQuery&>(
+          &D::load_account_modification_requests)).
+      def("load_account_modification_requests", pybind11::overload_cast<
+        const AccountModificationRequestQuery&>(
+          &D::load_account_modification_requests)).
       def("load_entitlement_modification", &D::load_entitlement_modification).
       def("store", pybind11::overload_cast<
         const AccountModificationRequest&, const EntitlementModification&>(

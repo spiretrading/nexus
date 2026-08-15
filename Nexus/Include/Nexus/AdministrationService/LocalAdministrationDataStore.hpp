@@ -45,6 +45,13 @@ namespace Nexus {
       std::vector<AccountModificationRequest::Id>
         load_account_modification_request_ids(
           AccountModificationRequest::Id start_id, int max_count);
+      std::vector<AccountModificationRequest>
+        load_account_modification_requests(
+          const std::vector<Beam::DirectoryEntry>& accounts,
+          const AccountModificationRequestQuery& query);
+      std::vector<AccountModificationRequest>
+        load_account_modification_requests(
+          const AccountModificationRequestQuery& query);
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
       void store_effective_date(AccountModificationRequest::Id id,
@@ -105,6 +112,9 @@ namespace Nexus {
         const LocalAdministrationDataStore&) = delete;
       LocalAdministrationDataStore& operator =(
         const LocalAdministrationDataStore&) = delete;
+      std::vector<AccountModificationRequest> load_requests(
+        const std::vector<Beam::DirectoryEntry>* accounts,
+        const AccountModificationRequestQuery& query);
   };
 
   inline std::vector<LocalAdministrationDataStore::IndexedAccountIdentity>
@@ -225,6 +235,63 @@ namespace Nexus {
       ids.pop_back();
     }
     return ids;
+  }
+
+  inline std::vector<AccountModificationRequest>
+      LocalAdministrationDataStore::load_account_modification_requests(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query) {
+    return load_requests(&accounts, query);
+  }
+
+  inline std::vector<AccountModificationRequest>
+      LocalAdministrationDataStore::load_account_modification_requests(
+        const AccountModificationRequestQuery& query) {
+    return load_requests(nullptr, query);
+  }
+
+  inline std::vector<AccountModificationRequest>
+      LocalAdministrationDataStore::load_requests(
+        const std::vector<Beam::DirectoryEntry>* accounts,
+        const AccountModificationRequestQuery& query) {
+    auto evaluator = Beam::translate(query.get_filter());
+    auto& anchor = query.get_anchor();
+    auto is_head =
+      query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
+    auto matches = std::vector<AccountModificationRequest>();
+    for(auto& entry : m_account_modification_requests) {
+      auto& request = entry.second;
+      if(accounts && !std::ranges::contains(*accounts, request.get_account())) {
+        continue;
+      }
+      auto is_excluded = [&] {
+        if(!anchor) {
+          return false;
+        }
+        if(is_head) {
+          return request.get_id() <= *anchor;
+        }
+        return request.get_id() >= *anchor;
+      }();
+      if(is_excluded) {
+        continue;
+      }
+      if(!Beam::test_filter(*evaluator, request)) {
+        continue;
+      }
+      matches.push_back(request);
+    }
+    std::ranges::sort(
+      matches, std::ranges::less(), &AccountModificationRequest::get_id);
+    auto size = std::max(0, query.get_snapshot_limit().get_size());
+    if(matches.size() > static_cast<std::size_t>(size)) {
+      if(is_head) {
+        matches.erase(matches.begin() + size, matches.end());
+      } else {
+        matches.erase(matches.begin(), matches.end() - size);
+      }
+    }
+    return matches;
   }
 
   inline EntitlementModification
