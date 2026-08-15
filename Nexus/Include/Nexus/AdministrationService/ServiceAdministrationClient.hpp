@@ -156,6 +156,8 @@ namespace Nexus {
 BEAM_SUPPRESS_THIS_INITIALIZER()
       try : m_client_handler(std::forward<BF>(client_builder), std::bind_front(
               &ServiceAdministrationClient::on_reconnect, this)) {
+    Beam::register_query_types(
+      Beam::out(m_client_handler.get_slots().get_registry()));
     register_administration_services(Beam::out(m_client_handler.get_slots()));
     register_administration_messages(Beam::out(m_client_handler.get_slots()));
     Beam::add_message_slot<RiskParametersMessage>(

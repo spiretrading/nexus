@@ -1,6 +1,7 @@
 #ifndef NEXUS_ADMINISTRATION_SERVICES_HPP
 #define NEXUS_ADMINISTRATION_SERVICES_HPP
 #include <string>
+#include <Beam/Queries/ShuttleQueryTypes.hpp>
 #include <Beam/Queries/SnapshotLimit.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
@@ -8,6 +9,9 @@
 #include <Beam/Services/Service.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestCounts.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestQuery.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestSummary.hpp"
 #include "Nexus/AdministrationService/AccountQueryResult.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
@@ -239,6 +243,26 @@ namespace Nexus {
       std::vector<AccountModificationRequest::Id>,
       (Beam::DirectoryEntry, account),
       (AccountModificationRequest::Id, start_id), (int, max_count)),
+
+    /**
+     * Loads a page of account modification request summaries.
+     * @param query The query specifying the summaries to load.
+     * @return The list of summaries satisfying the <i>query</i>.
+     */
+    (LoadAccountModificationRequestSummariesService,
+      "Nexus.AdministrationServices.LoadAccountModificationRequestSummariesService",
+      std::vector<AccountModificationRequestSummary>,
+      (AccountModificationRequestQuery, query)),
+
+    /**
+     * Counts the account modification requests in each state.
+     * @param query The query whose matching requests are to be counted.
+     * @return The number of requests in each state.
+     */
+    (LoadAccountModificationRequestCountsService,
+      "Nexus.AdministrationServices.LoadAccountModificationRequestCountsService",
+      AccountModificationRequestCounts,
+      (AccountModificationRequestQuery, query)),
 
     /**
      * Loads an entitlement modification.

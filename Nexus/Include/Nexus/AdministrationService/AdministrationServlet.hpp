@@ -123,6 +123,11 @@ namespace Nexus {
         const Beam::DirectoryEntry& parent, const Beam::DirectoryEntry& child);
       std::vector<Beam::DirectoryEntry> load_managed_trading_groups(
         const Beam::DirectoryEntry& account);
+      bool check_managed_trading_group(const Beam::DirectoryEntry& account,
+        const Beam::DirectoryEntry& directory);
+      std::vector<Beam::DirectoryEntry> load_authorized_accounts(
+        const Beam::DirectoryEntry& account,
+        const Beam::DirectoryEntry& index);
       TradingGroup load_trading_group(const Beam::DirectoryEntry& directory);
       std::vector<Beam::DirectoryEntry> load_entitlements(
         const Beam::DirectoryEntry& account);
@@ -201,6 +206,14 @@ namespace Nexus {
         on_load_managed_account_modification_request_ids(
           ServiceProtocolClient& client, const Beam::DirectoryEntry& account,
           AccountModificationRequest::Id start_id, int max_count);
+      std::vector<AccountModificationRequestSummary>
+        on_load_account_modification_request_summaries(
+          ServiceProtocolClient& client,
+          const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts
+        on_load_account_modification_request_counts(
+          ServiceProtocolClient& client,
+          const AccountModificationRequestQuery& query);
       EntitlementModification on_load_entitlement_modification(
         ServiceProtocolClient& client, AccountModificationRequest::Id id);
       AccountModificationRequest on_submit_entitlement_modification_request(
@@ -306,6 +319,7 @@ namespace Nexus {
           Beam::IsTimer<Beam::dereference_t<T>>
   void AdministrationServlet<C, S, D, R, T>::register_services(
       Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots) {
+    Beam::register_query_types(Beam::out(slots->get_registry()));
     register_administration_services(out(slots));
     register_administration_messages(out(slots));
     LoadAccountsByRolesService::add_slot(out(slots),
@@ -358,6 +372,12 @@ namespace Nexus {
     LoadManagedAccountModificationRequestIdsService::add_slot(
       out(slots), std::bind_front(&AdministrationServlet::
         on_load_managed_account_modification_request_ids, this));
+    LoadAccountModificationRequestSummariesService::add_slot(
+      out(slots), std::bind_front(&AdministrationServlet::
+        on_load_account_modification_request_summaries, this));
+    LoadAccountModificationRequestCountsService::add_slot(
+      out(slots), std::bind_front(&AdministrationServlet::
+        on_load_account_modification_request_counts, this));
     LoadEntitlementModificationService::add_slot(out(slots), std::bind_front(
       &AdministrationServlet::on_load_entitlement_modification, this));
     SubmitEntitlementModificationRequestService::add_slot(
@@ -596,6 +616,57 @@ namespace Nexus {
       }
     }
     return result;
+  }
+
+  template<typename C, typename S, typename D, typename R, typename T> requires
+    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+      IsAdministrationDataStore<Beam::dereference_t<D>> &&
+        Beam::IsTimeClient<Beam::dereference_t<R>> &&
+          Beam::IsTimer<Beam::dereference_t<T>>
+  bool AdministrationServlet<C, S, D, R, T>::check_managed_trading_group(
+      const Beam::DirectoryEntry& account,
+      const Beam::DirectoryEntry& directory) {
+    return std::ranges::contains(
+      load_managed_trading_groups(account), directory);
+  }
+
+  template<typename C, typename S, typename D, typename R, typename T> requires
+    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+      IsAdministrationDataStore<Beam::dereference_t<D>> &&
+        Beam::IsTimeClient<Beam::dereference_t<R>> &&
+          Beam::IsTimer<Beam::dereference_t<T>>
+  std::vector<Beam::DirectoryEntry>
+      AdministrationServlet<C, S, D, R, T>::load_authorized_accounts(
+        const Beam::DirectoryEntry& account,
+        const Beam::DirectoryEntry& index) {
+    if(index.m_type == Beam::DirectoryEntry::Type::ACCOUNT) {
+      if(!check_read_permission(account, index)) {
+        boost::throw_with_location(
+          Beam::ServiceRequestException("Insufficient permissions."));
+      }
+      return {index};
+    }
+    auto groups = load_managed_trading_groups(account);
+    if(index != m_trading_groups_root) {
+      if(!std::ranges::contains(groups, index)) {
+        boost::throw_with_location(
+          Beam::ServiceRequestException("Insufficient permissions."));
+      }
+      groups = {index};
+    }
+    auto accounts = std::vector<Beam::DirectoryEntry>();
+    for(auto& group : groups) {
+      auto trading_group = load_trading_group(group);
+      accounts.insert(accounts.end(), trading_group.get_managers().begin(),
+        trading_group.get_managers().end());
+      accounts.insert(accounts.end(), trading_group.get_traders().begin(),
+        trading_group.get_traders().end());
+    }
+    std::ranges::sort(
+      accounts, std::ranges::less(), &Beam::DirectoryEntry::m_id);
+    auto duplicates = std::ranges::unique(accounts);
+    accounts.erase(duplicates.begin(), duplicates.end());
+    return accounts;
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires
@@ -1455,6 +1526,118 @@ namespace Nexus {
       ids.erase(ids.begin() + max_count, ids.end());
     }
     return ids;
+  }
+
+  template<typename C, typename S, typename D, typename R, typename T> requires
+    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+      IsAdministrationDataStore<Beam::dereference_t<D>> &&
+        Beam::IsTimeClient<Beam::dereference_t<R>> &&
+          Beam::IsTimer<Beam::dereference_t<T>>
+  std::vector<AccountModificationRequestSummary>
+      AdministrationServlet<C, S, D, R, T>::
+        on_load_account_modification_request_summaries(
+          ServiceProtocolClient& client,
+          const AccountModificationRequestQuery& query) {
+    auto& session = client.get_session();
+    auto accounts =
+      load_authorized_accounts(session.get_account(), query.get_index());
+    auto requests = m_data_store->with_transaction([&] {
+      if(check_administrator(session.get_account()) &&
+          query.get_index() == m_trading_groups_root) {
+        return m_data_store->load_account_modification_requests(query);
+      }
+      return m_data_store->load_account_modification_requests(accounts, query);
+    });
+    auto ids = std::vector<AccountModificationRequest::Id>();
+    ids.reserve(requests.size());
+    for(auto& request : requests) {
+      ids.push_back(request.get_id());
+    }
+    return m_data_store->with_transaction([&] {
+      auto statuses =
+        m_data_store->load_account_modification_request_statuses(ids);
+      auto counts = m_data_store->load_message_counts(ids);
+      auto predecessors = m_data_store->load_previous_granted_requests(ids);
+      auto predecessor_ids = std::vector<AccountModificationRequest::Id>();
+      predecessor_ids.reserve(predecessors.size());
+      for(auto& predecessor : predecessors) {
+        predecessor_ids.push_back(predecessor.value_or(-1));
+      }
+      auto entitlements = m_data_store->load_entitlement_modifications(ids);
+      auto parameters = m_data_store->load_risk_modifications(ids);
+      auto previous_entitlements =
+        m_data_store->load_entitlement_modifications(predecessor_ids);
+      auto previous_parameters =
+        m_data_store->load_risk_modifications(predecessor_ids);
+      auto summaries = std::vector<AccountModificationRequestSummary>();
+      summaries.reserve(requests.size());
+      for(auto i = std::size_t(0); i != requests.size(); ++i) {
+        auto summary = AccountModificationRequestSummary();
+        summary.m_request = requests[i];
+        summary.m_status = statuses[i];
+        summary.m_comment_count = counts[i];
+        if(requests[i].get_type() ==
+            AccountModificationRequest::Type::ENTITLEMENTS) {
+          summary.m_modification = Modification(entitlements[i]);
+          if(predecessors[i]) {
+            summary.m_previous_state = Modification(previous_entitlements[i]);
+          }
+        } else if(requests[i].get_type() ==
+            AccountModificationRequest::Type::RISK) {
+          summary.m_modification = Modification(parameters[i]);
+          if(predecessors[i]) {
+            summary.m_previous_state = Modification(previous_parameters[i]);
+          }
+        }
+        summaries.push_back(std::move(summary));
+      }
+      return summaries;
+    });
+  }
+
+  template<typename C, typename S, typename D, typename R, typename T> requires
+    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+      IsAdministrationDataStore<Beam::dereference_t<D>> &&
+        Beam::IsTimeClient<Beam::dereference_t<R>> &&
+          Beam::IsTimer<Beam::dereference_t<T>>
+  AccountModificationRequestCounts AdministrationServlet<C, S, D, R, T>::
+      on_load_account_modification_request_counts(ServiceProtocolClient& client,
+        const AccountModificationRequestQuery& query) {
+    auto& session = client.get_session();
+    auto accounts =
+      load_authorized_accounts(session.get_account(), query.get_index());
+    auto total = query;
+    total.set_anchor(boost::optional<AccountModificationRequest::Id>());
+    total.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
+    return m_data_store->with_transaction([&] {
+      auto requests = [&] {
+        if(check_administrator(session.get_account()) &&
+            query.get_index() == m_trading_groups_root) {
+          return m_data_store->load_account_modification_requests(total);
+        }
+        return m_data_store->load_account_modification_requests(
+          accounts, total);
+      }();
+      auto ids = std::vector<AccountModificationRequest::Id>();
+      ids.reserve(requests.size());
+      for(auto& request : requests) {
+        ids.push_back(request.get_id());
+      }
+      auto statuses =
+        m_data_store->load_account_modification_request_statuses(ids);
+      auto counts = AccountModificationRequestCounts(0, 0, 0);
+      for(auto& status : statuses) {
+        if(status.m_status == AccountModificationRequest::Status::GRANTED) {
+          ++counts.m_granted;
+        } else if(status.m_status ==
+            AccountModificationRequest::Status::REJECTED) {
+          ++counts.m_rejected;
+        } else {
+          ++counts.m_pending;
+        }
+      }
+      return counts;
+    });
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires
