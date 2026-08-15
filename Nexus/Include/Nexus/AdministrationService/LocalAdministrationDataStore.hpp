@@ -53,6 +53,18 @@ namespace Nexus {
       std::vector<AccountModificationRequest>
         load_account_modification_requests(
           const AccountModificationRequestQuery& query);
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_statuses(
+          const std::vector<AccountModificationRequest::Id>& ids);
+      std::vector<int> load_message_counts(
+        const std::vector<AccountModificationRequest::Id>& ids);
+      std::vector<boost::optional<AccountModificationRequest::Id>>
+        load_previous_granted_requests(
+          const std::vector<AccountModificationRequest::Id>& ids);
+      std::vector<EntitlementModification> load_entitlement_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids);
+      std::vector<RiskModification> load_risk_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids);
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
       void store_effective_date(AccountModificationRequest::Id id,
@@ -294,6 +306,88 @@ namespace Nexus {
       }
     }
     return matches;
+  }
+
+  inline std::vector<AccountModificationRequest::Update>
+      LocalAdministrationDataStore::load_account_modification_request_statuses(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    auto statuses = std::vector<AccountModificationRequest::Update>();
+    statuses.reserve(ids.size());
+    for(auto id : ids) {
+      statuses.push_back(load_account_modification_request_status(id));
+    }
+    return statuses;
+  }
+
+  inline std::vector<int> LocalAdministrationDataStore::load_message_counts(
+      const std::vector<AccountModificationRequest::Id>& ids) {
+    auto counts = std::vector<int>();
+    counts.reserve(ids.size());
+    for(auto id : ids) {
+      auto i = m_request_messages.find(id);
+      if(i == m_request_messages.end()) {
+        counts.push_back(0);
+      } else {
+        counts.push_back(static_cast<int>(i->second.size()));
+      }
+    }
+    return counts;
+  }
+
+  inline std::vector<boost::optional<AccountModificationRequest::Id>>
+      LocalAdministrationDataStore::load_previous_granted_requests(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    auto predecessors =
+      std::vector<boost::optional<AccountModificationRequest::Id>>();
+    predecessors.reserve(ids.size());
+    for(auto id : ids) {
+      auto request = m_account_modification_requests.find(id);
+      if(request == m_account_modification_requests.end()) {
+        predecessors.emplace_back();
+        continue;
+      }
+      auto predecessor = boost::optional<AccountModificationRequest::Id>();
+      for(auto& entry : m_account_modification_requests) {
+        auto& candidate = entry.second;
+        if(candidate.get_id() >= id ||
+            candidate.get_account() != request->second.get_account() ||
+            candidate.get_type() != request->second.get_type()) {
+          continue;
+        }
+        if(load_account_modification_request_status(
+            candidate.get_id()).m_status !=
+              AccountModificationRequest::Status::GRANTED) {
+          continue;
+        }
+        if(!predecessor || *predecessor < candidate.get_id()) {
+          predecessor = candidate.get_id();
+        }
+      }
+      predecessors.push_back(predecessor);
+    }
+    return predecessors;
+  }
+
+  inline std::vector<EntitlementModification>
+      LocalAdministrationDataStore::load_entitlement_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    auto modifications = std::vector<EntitlementModification>();
+    modifications.reserve(ids.size());
+    for(auto id : ids) {
+      modifications.push_back(load_entitlement_modification(id));
+    }
+    return modifications;
+  }
+
+  inline std::vector<RiskModification>
+      LocalAdministrationDataStore::load_risk_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    auto modifications = std::vector<RiskModification>();
+    modifications.reserve(ids.size());
+    for(auto id : ids) {
+      modifications.push_back(load_risk_modification(id));
+    }
+    return modifications;
   }
 
   inline EntitlementModification

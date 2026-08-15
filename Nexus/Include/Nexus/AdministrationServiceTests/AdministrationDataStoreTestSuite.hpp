@@ -762,6 +762,131 @@ namespace Nexus::Tests {
       REQUIRE(recent[1].get_id() == 3);
     }
 
+    SUBCASE("load_batched_statuses_and_message_counts") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto modification = EntitlementModification();
+      data_store.with_transaction([&] {
+        for(auto id : {1, 2, 3}) {
+          data_store.store(AccountModificationRequest(id,
+            AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+            time_from_string("2024-07-05 10:00:00"),
+            time_from_string("2024-08-01 00:00:00")), modification);
+        }
+        data_store.store(1, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::PENDING, account, 0,
+          time_from_string("2024-07-05 10:00:00")));
+        data_store.store(1, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED, account, 1,
+          time_from_string("2024-07-05 11:00:00")));
+        data_store.store(3, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::REJECTED, account, 0,
+          time_from_string("2024-07-05 12:00:00")));
+        data_store.store(1, Message(10, account,
+          time_from_string("2024-07-05 13:00:00"), {}));
+        data_store.store(1, Message(11, account,
+          time_from_string("2024-07-05 14:00:00"), {}));
+      });
+      auto ids = std::vector<AccountModificationRequest::Id>({1, 2, 3});
+      auto statuses = data_store.with_transaction([&] {
+        return data_store.load_account_modification_request_statuses(ids);
+      });
+      REQUIRE(statuses.size() == 3);
+      REQUIRE(statuses[0].m_status ==
+        AccountModificationRequest::Status::GRANTED);
+      REQUIRE(statuses[1].m_status ==
+        AccountModificationRequest::Status::NONE);
+      REQUIRE(statuses[2].m_status ==
+        AccountModificationRequest::Status::REJECTED);
+      auto counts = data_store.with_transaction([&] {
+        return data_store.load_message_counts(ids);
+      });
+      REQUIRE(counts.size() == 3);
+      REQUIRE(counts[0] == 2);
+      REQUIRE(counts[1] == 0);
+      REQUIRE(counts[2] == 0);
+      auto empty = data_store.with_transaction([&] {
+        return data_store.load_message_counts({});
+      });
+      REQUIRE(empty.empty());
+    }
+
+    SUBCASE("load_previous_granted_requests") {
+      auto account_a = DirectoryEntry::make_account(100, "user_a");
+      auto account_b = DirectoryEntry::make_account(200, "user_b");
+      auto modification = EntitlementModification();
+      data_store.with_transaction([&] {
+        data_store.store(AccountModificationRequest(1,
+          AccountModificationRequest::Type::ENTITLEMENTS, account_a, account_a,
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(2,
+          AccountModificationRequest::Type::ENTITLEMENTS, account_a, account_a,
+          time_from_string("2024-07-06 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(3,
+          AccountModificationRequest::Type::ENTITLEMENTS, account_a, account_a,
+          time_from_string("2024-07-07 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(4,
+          AccountModificationRequest::Type::ENTITLEMENTS, account_b, account_b,
+          time_from_string("2024-07-08 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(5,
+          AccountModificationRequest::Type::ENTITLEMENTS, account_b, account_b,
+          time_from_string("2024-07-09 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(1, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED, account_a, 0,
+          time_from_string("2024-07-05 11:00:00")));
+        data_store.store(2, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::REJECTED, account_a, 0,
+          time_from_string("2024-07-06 11:00:00")));
+        data_store.store(4, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED, account_b, 0,
+          time_from_string("2024-07-08 11:00:00")));
+      });
+      auto ids = std::vector<AccountModificationRequest::Id>({1, 3, 5});
+      auto predecessors = data_store.with_transaction([&] {
+        return data_store.load_previous_granted_requests(ids);
+      });
+      REQUIRE(predecessors.size() == 3);
+      REQUIRE(!predecessors[0]);
+      REQUIRE(predecessors[1] == 1);
+      REQUIRE(predecessors[2] == 4);
+    }
+
+    SUBCASE("load_batched_modifications") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto entitlement = DirectoryEntry::make_directory(23, "TSX");
+      auto parameters = RiskParameters(
+        USD, 100 * Money::ONE, RiskState::Type::ACTIVE, Money::ONE, seconds(5));
+      data_store.with_transaction([&] {
+        data_store.store(AccountModificationRequest(1,
+          AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")),
+          EntitlementModification({entitlement}));
+        data_store.store(AccountModificationRequest(2,
+          AccountModificationRequest::Type::RISK, account, account,
+          time_from_string("2024-07-06 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")),
+          RiskModification(parameters));
+      });
+      auto entitlements = data_store.with_transaction([&] {
+        return data_store.load_entitlement_modifications({1, 2});
+      });
+      REQUIRE(entitlements.size() == 2);
+      REQUIRE(entitlements[0].get_entitlements().size() == 1);
+      REQUIRE(entitlements[0].get_entitlements()[0] == entitlement);
+      REQUIRE(entitlements[1].get_entitlements().empty());
+      auto risks = data_store.with_transaction([&] {
+        return data_store.load_risk_modifications({2, 1});
+      });
+      REQUIRE(risks.size() == 2);
+      REQUIRE(risks[0].get_parameters() == parameters);
+      REQUIRE(risks[1].get_parameters() == RiskParameters());
+    }
+
     SUBCASE("store_and_load_effective_date") {
       auto account = DirectoryEntry::make_account(123, "user1");
       auto submission_account = DirectoryEntry::make_account(456, "admin");

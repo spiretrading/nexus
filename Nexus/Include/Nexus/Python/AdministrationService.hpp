@@ -163,6 +163,12 @@ namespace Nexus::Python {
       def("load_account_modification_requests", pybind11::overload_cast<
         const AccountModificationRequestQuery&>(
           &D::load_account_modification_requests)).
+      def("load_account_modification_request_statuses",
+        &D::load_account_modification_request_statuses).
+      def("load_message_counts", &D::load_message_counts).
+      def("load_previous_granted_requests", &D::load_previous_granted_requests).
+      def("load_entitlement_modifications", &D::load_entitlement_modifications).
+      def("load_risk_modifications", &D::load_risk_modifications).
       def("load_entitlement_modification", &D::load_entitlement_modification).
       def("store", pybind11::overload_cast<
         const AccountModificationRequest&, const EntitlementModification&>(

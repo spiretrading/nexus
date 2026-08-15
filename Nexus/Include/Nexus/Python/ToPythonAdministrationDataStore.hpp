@@ -64,6 +64,18 @@ namespace Nexus {
       std::vector<AccountModificationRequest>
         load_account_modification_requests(
           const AccountModificationRequestQuery& query);
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_statuses(
+          const std::vector<AccountModificationRequest::Id>& ids);
+      std::vector<int> load_message_counts(
+        const std::vector<AccountModificationRequest::Id>& ids);
+      std::vector<boost::optional<AccountModificationRequest::Id>>
+        load_previous_granted_requests(
+          const std::vector<AccountModificationRequest::Id>& ids);
+      std::vector<EntitlementModification> load_entitlement_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids);
+      std::vector<RiskModification> load_risk_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids);
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
       void store(const AccountModificationRequest& request,
@@ -240,6 +252,46 @@ namespace Nexus {
         const AccountModificationRequestQuery& query) {
     auto release = Beam::Python::GilRelease();
     return m_data_store->load_account_modification_requests(query);
+  }
+
+  template<IsAdministrationDataStore D>
+  std::vector<AccountModificationRequest::Update>
+      ToPythonAdministrationDataStore<D>::
+        load_account_modification_request_statuses(
+          const std::vector<AccountModificationRequest::Id>& ids) {
+    auto release = Beam::Python::GilRelease();
+    return m_data_store->load_account_modification_request_statuses(ids);
+  }
+
+  template<IsAdministrationDataStore D>
+  std::vector<int> ToPythonAdministrationDataStore<D>::load_message_counts(
+      const std::vector<AccountModificationRequest::Id>& ids) {
+    auto release = Beam::Python::GilRelease();
+    return m_data_store->load_message_counts(ids);
+  }
+
+  template<IsAdministrationDataStore D>
+  std::vector<boost::optional<AccountModificationRequest::Id>>
+      ToPythonAdministrationDataStore<D>::load_previous_granted_requests(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    auto release = Beam::Python::GilRelease();
+    return m_data_store->load_previous_granted_requests(ids);
+  }
+
+  template<IsAdministrationDataStore D>
+  std::vector<EntitlementModification>
+      ToPythonAdministrationDataStore<D>::load_entitlement_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    auto release = Beam::Python::GilRelease();
+    return m_data_store->load_entitlement_modifications(ids);
+  }
+
+  template<IsAdministrationDataStore D>
+  std::vector<RiskModification>
+      ToPythonAdministrationDataStore<D>::load_risk_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    auto release = Beam::Python::GilRelease();
+    return m_data_store->load_risk_modifications(ids);
   }
 
   template<IsAdministrationDataStore D>

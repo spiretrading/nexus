@@ -14,7 +14,6 @@
 #include <Beam/Queries/SnapshotLimit.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
-#include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequestQuery.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
@@ -62,7 +61,23 @@ namespace Nexus {
           std::same_as<std::vector<AccountModificationRequest>>;
     { store.load_account_modification_requests(
       std::declval<const AccountModificationRequestQuery&>()) } ->
-      std::same_as<std::vector<AccountModificationRequest>>;
+        std::same_as<std::vector<AccountModificationRequest>>;
+    { store.load_account_modification_request_statuses(
+      std::declval<const std::vector<AccountModificationRequest::Id>&>()) } ->
+        std::same_as<std::vector<AccountModificationRequest::Update>>;
+    { store.load_message_counts(
+      std::declval<const std::vector<AccountModificationRequest::Id>&>()) } ->
+        std::same_as<std::vector<int>>;
+    { store.load_previous_granted_requests(
+      std::declval<const std::vector<AccountModificationRequest::Id>&>()) } ->
+        std::same_as<
+          std::vector<boost::optional<AccountModificationRequest::Id>>>;
+    { store.load_entitlement_modifications(
+      std::declval<const std::vector<AccountModificationRequest::Id>&>()) } ->
+        std::same_as<std::vector<EntitlementModification>>;
+    { store.load_risk_modifications(
+      std::declval<const std::vector<AccountModificationRequest::Id>&>()) } ->
+        std::same_as<std::vector<RiskModification>>;
     { store.load_entitlement_modification(
       std::declval<AccountModificationRequest::Id>()) } ->
       std::same_as<EntitlementModification>;
@@ -274,6 +289,50 @@ namespace Nexus {
           const AccountModificationRequestQuery& query);
 
       /**
+       * Loads the current status of a list of AccountModificationRequests.
+       * @param ids The ids of the requests whose statuses are to be loaded.
+       * @return The status of each request, in the order given.
+       */
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_statuses(
+          const std::vector<AccountModificationRequest::Id>& ids);
+
+      /**
+       * Loads the number of Messages attached to a list of
+       * AccountModificationRequests.
+       * @param ids The ids of the requests whose counts are to be loaded.
+       * @return The number of messages for each request, in the order given.
+       */
+      std::vector<int> load_message_counts(
+        const std::vector<AccountModificationRequest::Id>& ids);
+
+      /**
+       * Loads the most recently granted request preceding each of a list of
+       * AccountModificationRequests.
+       * @param ids The ids of the requests whose predecessors are to be loaded.
+       * @return The predecessor of each request, in the order given.
+       */
+      std::vector<boost::optional<AccountModificationRequest::Id>>
+        load_previous_granted_requests(
+          const std::vector<AccountModificationRequest::Id>& ids);
+
+      /**
+       * Loads a list of EntitlementModifications.
+       * @param ids The ids of the modifications to load.
+       * @return The modification of each request, in the order given.
+       */
+      std::vector<EntitlementModification> load_entitlement_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids);
+
+      /**
+       * Loads a list of RiskModifications.
+       * @param ids The ids of the modifications to load.
+       * @return The modification of each request, in the order given.
+       */
+      std::vector<RiskModification> load_risk_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids);
+
+      /**
        * Loads an EntitlementModification.
        * @param id The id of the request to load.
        * @return The EntitlementModification with the specified id.
@@ -447,6 +506,19 @@ namespace Nexus {
         virtual std::vector<AccountModificationRequest>
           load_account_modification_requests(
             const AccountModificationRequestQuery& query) = 0;
+        virtual std::vector<AccountModificationRequest::Update>
+          load_account_modification_request_statuses(
+            const std::vector<AccountModificationRequest::Id>& ids) = 0;
+        virtual std::vector<int> load_message_counts(
+          const std::vector<AccountModificationRequest::Id>& ids) = 0;
+        virtual std::vector<boost::optional<AccountModificationRequest::Id>>
+          load_previous_granted_requests(
+            const std::vector<AccountModificationRequest::Id>& ids) = 0;
+        virtual std::vector<EntitlementModification>
+          load_entitlement_modifications(
+            const std::vector<AccountModificationRequest::Id>& ids) = 0;
+        virtual std::vector<RiskModification> load_risk_modifications(
+          const std::vector<AccountModificationRequest::Id>& ids) = 0;
         virtual EntitlementModification load_entitlement_modification(
           AccountModificationRequest::Id id) = 0;
         virtual void store_effective_date(AccountModificationRequest::Id id,
@@ -522,6 +594,18 @@ namespace Nexus {
         std::vector<AccountModificationRequest>
           load_account_modification_requests(
             const AccountModificationRequestQuery& query) override;
+        std::vector<AccountModificationRequest::Update>
+          load_account_modification_request_statuses(
+            const std::vector<AccountModificationRequest::Id>& ids) override;
+        std::vector<int> load_message_counts(
+          const std::vector<AccountModificationRequest::Id>& ids) override;
+        std::vector<boost::optional<AccountModificationRequest::Id>>
+          load_previous_granted_requests(
+            const std::vector<AccountModificationRequest::Id>& ids) override;
+        std::vector<EntitlementModification> load_entitlement_modifications(
+          const std::vector<AccountModificationRequest::Id>& ids) override;
+        std::vector<RiskModification> load_risk_modifications(
+          const std::vector<AccountModificationRequest::Id>& ids) override;
         EntitlementModification load_entitlement_modification(
           AccountModificationRequest::Id id) override;
         void store_effective_date(AccountModificationRequest::Id id,
@@ -669,6 +753,35 @@ namespace Nexus {
       AdministrationDataStore::load_account_modification_requests(
         const AccountModificationRequestQuery& query) {
     return m_data_store->load_account_modification_requests(query);
+  }
+
+  inline std::vector<AccountModificationRequest::Update>
+      AdministrationDataStore::load_account_modification_request_statuses(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    return m_data_store->load_account_modification_request_statuses(ids);
+  }
+
+  inline std::vector<int> AdministrationDataStore::load_message_counts(
+      const std::vector<AccountModificationRequest::Id>& ids) {
+    return m_data_store->load_message_counts(ids);
+  }
+
+  inline std::vector<boost::optional<AccountModificationRequest::Id>>
+      AdministrationDataStore::load_previous_granted_requests(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    return m_data_store->load_previous_granted_requests(ids);
+  }
+
+  inline std::vector<EntitlementModification>
+      AdministrationDataStore::load_entitlement_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    return m_data_store->load_entitlement_modifications(ids);
+  }
+
+  inline std::vector<RiskModification>
+      AdministrationDataStore::load_risk_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    return m_data_store->load_risk_modifications(ids);
   }
 
   inline EntitlementModification
@@ -883,6 +996,43 @@ namespace Nexus {
       WrappedAdministrationDataStore<D>::load_account_modification_requests(
         const AccountModificationRequestQuery& query) {
     return m_data_store->load_account_modification_requests(query);
+  }
+
+  template<typename D>
+  std::vector<AccountModificationRequest::Update> AdministrationDataStore::
+      WrappedAdministrationDataStore<D>::
+        load_account_modification_request_statuses(
+          const std::vector<AccountModificationRequest::Id>& ids) {
+    return m_data_store->load_account_modification_request_statuses(ids);
+  }
+
+  template<typename D>
+  std::vector<int> AdministrationDataStore::
+      WrappedAdministrationDataStore<D>::load_message_counts(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    return m_data_store->load_message_counts(ids);
+  }
+
+  template<typename D>
+  std::vector<boost::optional<AccountModificationRequest::Id>>
+      AdministrationDataStore::WrappedAdministrationDataStore<D>::
+        load_previous_granted_requests(
+          const std::vector<AccountModificationRequest::Id>& ids) {
+    return m_data_store->load_previous_granted_requests(ids);
+  }
+
+  template<typename D>
+  std::vector<EntitlementModification> AdministrationDataStore::
+      WrappedAdministrationDataStore<D>::load_entitlement_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    return m_data_store->load_entitlement_modifications(ids);
+  }
+
+  template<typename D>
+  std::vector<RiskModification> AdministrationDataStore::
+      WrappedAdministrationDataStore<D>::load_risk_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    return m_data_store->load_risk_modifications(ids);
   }
 
   template<typename D>
