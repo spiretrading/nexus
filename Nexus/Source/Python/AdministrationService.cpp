@@ -7,6 +7,8 @@
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequestAccessor.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestCounts.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestSummary.hpp"
 #include "Nexus/AdministrationService/AccountQueryResult.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
@@ -125,6 +127,30 @@ void Nexus::Python::export_account_modification_request_accessor(
       &AccountModificationRequestAccessor::get_effective_date);
 }
 
+void Nexus::Python::export_account_modification_request_counts(
+    module& module) {
+  export_default_methods(class_<AccountModificationRequestCounts>(
+      module, "AccountModificationRequestCounts")).
+    def(init<int, int, int>()).
+    def_readwrite("pending", &AccountModificationRequestCounts::m_pending).
+    def_readwrite("granted", &AccountModificationRequestCounts::m_granted).
+    def_readwrite("rejected", &AccountModificationRequestCounts::m_rejected);
+}
+
+void Nexus::Python::export_account_modification_request_summary(
+    module& module) {
+  export_default_methods(class_<AccountModificationRequestSummary>(
+      module, "AccountModificationRequestSummary")).
+    def_readwrite("request", &AccountModificationRequestSummary::m_request).
+    def_readwrite("status", &AccountModificationRequestSummary::m_status).
+    def_readwrite(
+      "comment_count", &AccountModificationRequestSummary::m_comment_count).
+    def_readwrite(
+      "previous_state", &AccountModificationRequestSummary::m_previous_state).
+    def_readwrite(
+      "modification", &AccountModificationRequestSummary::m_modification);
+}
+
 void Nexus::Python::export_account_query_result(module& module) {
   export_default_methods(
     class_<AccountQueryResult>(module, "AccountQueryResult")).
@@ -182,6 +208,8 @@ void Nexus::Python::export_administration_service(module& module) {
   export_account_identity(module);
   export_account_modification_request(module);
   export_account_modification_request_accessor(module);
+  export_account_modification_request_counts(module);
+  export_account_modification_request_summary(module);
   export_account_query_result(module);
   export_account_roles(module);
   module.def("load_risk_parameters",

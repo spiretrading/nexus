@@ -24,6 +24,8 @@ namespace Nexus {
       /** Returns the list of entitlements to grant. */
       const std::vector<Beam::DirectoryEntry>& get_entitlements() const;
 
+      bool operator ==(const EntitlementModification&) const = default;
+
     private:
       friend struct Beam::Shuttle<EntitlementModification>;
       std::vector<Beam::DirectoryEntry> m_entitlements;

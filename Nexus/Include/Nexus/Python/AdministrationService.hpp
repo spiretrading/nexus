@@ -36,6 +36,18 @@ namespace Nexus::Python {
   void export_account_modification_request_accessor(pybind11::module& module);
 
   /**
+   * Exports the AccountModificationRequestCounts struct.
+   * @param module The module to export to.
+   */
+  void export_account_modification_request_counts(pybind11::module& module);
+
+  /**
+   * Exports the AccountModificationRequestSummary struct.
+   * @param module The module to export to.
+   */
+  void export_account_modification_request_summary(pybind11::module& module);
+
+  /**
    * Exports the AccountQueryResult struct.
    * @param module The module to export to.
    */
