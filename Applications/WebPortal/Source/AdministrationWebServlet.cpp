@@ -25,6 +25,7 @@ namespace {
     optional<ptime> m_start_date;
     optional<ptime> m_end_date;
     std::string m_query;
+    optional<DirectoryEntry> m_excluded_account;
 
     void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
       shuttle.shuttle("index", m_index);
@@ -35,6 +36,7 @@ namespace {
       shuttle.shuttle("start_date", m_start_date);
       shuttle.shuttle("end_date", m_end_date);
       shuttle.shuttle("query", m_query);
+      shuttle.shuttle("excluded_account", m_excluded_account);
     }
   };
 
@@ -77,6 +79,10 @@ namespace {
           ConstantExpression(static_cast<int>(account.m_account.m_id));
       }
       filter = filter && matches;
+    }
+    if(parameters.m_excluded_account) {
+      filter = filter && request.get_account() != ConstantExpression(
+        static_cast<int>(parameters.m_excluded_account->m_id));
     }
     query.set_filter(filter);
     return query;

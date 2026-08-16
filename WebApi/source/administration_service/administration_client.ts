@@ -2,6 +2,12 @@ import * as Beam from 'beam';
 import { Message, RiskParameters } from '..';
 import { AccountIdentity } from './account_identity';
 import { AccountModificationRequest } from './account_modification_request';
+import { AccountModificationRequestCounts } from
+  './account_modification_request_counts';
+import { AccountModificationRequestQuery } from
+  './account_modification_request_query';
+import { AccountModificationRequestSummary } from
+  './account_modification_request_summary';
 import { AccountQueryResult } from './account_query_result';
 import { AccountRoles } from './account_roles';
 import { EntitlementModification } from './entitlement_modification';
@@ -88,8 +94,8 @@ export abstract class AdministrationClient {
    * @param roles - The account's new roles.
    * @return The account's updated roles.
    */
-  public abstract storeAccountRoles(account: Beam.DirectoryEntry,
-    roles: AccountRoles): Promise<AccountRoles>;
+  public abstract storeAccountRoles(
+    account: Beam.DirectoryEntry, roles: AccountRoles): Promise<AccountRoles>;
 
   /**
    * Loads an account's identity.
@@ -104,8 +110,8 @@ export abstract class AdministrationClient {
    * @param account - The account to modify.
    * @param identity - The account's new identity.
    */
-  public abstract storeAccountIdentity(account: Beam.DirectoryEntry,
-    identity: AccountIdentity): Promise<void>;
+  public abstract storeAccountIdentity(
+    account: Beam.DirectoryEntry, identity: AccountIdentity): Promise<void>;
 
   /**
    * Loads an account's entitlements.
@@ -134,7 +140,7 @@ export abstract class AdministrationClient {
   public abstract submitEntitlementModificationRequest(
     account: Beam.DirectoryEntry, modification: EntitlementModification,
     comment: Message, effectiveDate: Beam.DateTime):
-    Promise<AccountModificationRequest>;
+      Promise<AccountModificationRequest>;
 
   /**
    * Loads an account's risk parameters.
@@ -163,7 +169,7 @@ export abstract class AdministrationClient {
   public abstract submitRiskModificationRequest(
     account: Beam.DirectoryEntry, modification: RiskModification,
     comment: Message, effectiveDate: Beam.DateTime):
-    Promise<AccountModificationRequest>;
+      Promise<AccountModificationRequest>;
 
   /**
    * Loads an account modification request.
@@ -182,7 +188,7 @@ export abstract class AdministrationClient {
    */
   public abstract loadAccountModificationRequestIds(
     account: Beam.DirectoryEntry, startId: number, maxCount: number):
-    Promise<number[]>;
+      Promise<number[]>;
 
   /**
    * Loads managed account modification request ids.
@@ -193,7 +199,25 @@ export abstract class AdministrationClient {
    */
   public abstract loadManagedAccountModificationRequestIds(
     account: Beam.DirectoryEntry, startId: number, maxCount: number):
-    Promise<number[]>;
+      Promise<number[]>;
+
+  /**
+   * Loads a page of account modification request summaries.
+   * @param query - Specifies the summaries to load.
+   * @return The list of summaries satisfying the query.
+   */
+  public abstract loadAccountModificationRequestSummaries(
+    query: AccountModificationRequestQuery):
+      Promise<AccountModificationRequestSummary[]>;
+
+  /**
+   * Counts the account modification requests in each state.
+   * @param query - Specifies the requests to count.
+   * @return The number of requests in each state.
+   */
+  public abstract loadAccountModificationRequestCounts(
+    query: AccountModificationRequestQuery):
+      Promise<AccountModificationRequestCounts>;
 
   /**
    * Loads the status of an account modification request.
@@ -218,9 +242,9 @@ export abstract class AdministrationClient {
    * @param effectiveDate - The date/time the modification takes effect.
    * @return The resulting status update.
    */
-  public abstract approveAccountModificationRequest(id: number,
-    comment: Message, effectiveDate: Beam.DateTime):
-    Promise<AccountModificationRequest.Update>;
+  public abstract approveAccountModificationRequest(
+    id: number, comment: Message, effectiveDate: Beam.DateTime):
+      Promise<AccountModificationRequest.Update>;
 
   /**
    * Rejects an account modification request.
@@ -228,8 +252,8 @@ export abstract class AdministrationClient {
    * @param comment - The comment to associate with the rejection.
    * @return The resulting status update.
    */
-  public abstract rejectAccountModificationRequest(id: number,
-    comment: Message): Promise<AccountModificationRequest.Update>;
+  public abstract rejectAccountModificationRequest(
+    id: number, comment: Message): Promise<AccountModificationRequest.Update>;
 
   /**
    * Loads a message.
@@ -251,8 +275,8 @@ export abstract class AdministrationClient {
    * @param message - The message to send.
    * @return The sent message.
    */
-  public abstract sendAccountModificationRequestMessage(id: number,
-    message: Message): Promise<Message>;
+  public abstract sendAccountModificationRequestMessage(
+    id: number, message: Message): Promise<Message>;
 
   /**
    * Monitors notifications for an account.
@@ -316,7 +340,7 @@ export abstract class AdministrationClient {
    */
   public abstract createAccount(name: string, group: Beam.DirectoryEntry,
     identity: AccountIdentity, roles: AccountRoles):
-    Promise<Beam.DirectoryEntry>;
+      Promise<Beam.DirectoryEntry>;
 
   /**
    * Connects to the service.
