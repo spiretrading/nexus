@@ -918,6 +918,7 @@ const requestDirectoryPage =
         response: {
           status: WebPortal.RequestsModel.ResponseStatus.READY,
           facetCounts: {pending: 5, approved: 122, rejected: 122},
+          totalCount: 5,
           requestList: SAMPLE_REQUEST_LIST
         },
         onSubmit: props.onSubmit
