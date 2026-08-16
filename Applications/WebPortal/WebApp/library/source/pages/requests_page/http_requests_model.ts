@@ -110,10 +110,16 @@ export class HttpRequestsModel extends RequestsModel {
       }
       return this.account;
     })();
-    const query = new Nexus.AccountModificationRequestQuery(index, PAGE_SIZE);
-    query.anchor = this.anchors[submission.pageIndex] ?? null;
+    const query = new Nexus.AccountModificationRequestQuery(
+      index, Beam.SnapshotLimit.fromTail(PAGE_SIZE));
+    const anchor = this.anchors[submission.pageIndex];
+    if(anchor === undefined) {
+      query.offset = submission.pageIndex * PAGE_SIZE;
+    } else {
+      query.anchor = anchor;
+    }
     query.categories = [...submission.filters.categories];
-    query.query = submission.filters.query;
+    query.search = submission.filters.query;
     if(submission.filters.startDate) {
       query.startDate = new Beam.DateTime(submission.filters.startDate);
     }
@@ -235,7 +241,8 @@ export class HttpRequestsModel extends RequestsModel {
 
   private async loadSummary(request: Nexus.AccountModificationRequest):
       Promise<Nexus.AccountModificationRequestSummary> {
-    const query = new Nexus.AccountModificationRequestQuery(request.account, 1);
+    const query = new Nexus.AccountModificationRequestQuery(
+      request.account, Beam.SnapshotLimit.fromTail(1));
     query.anchor = request.id + 1;
     const summaries = await this.serviceClients.administrationClient.
       loadAccountModificationRequestSummaries(query);

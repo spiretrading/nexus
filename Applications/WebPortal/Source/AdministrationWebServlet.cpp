@@ -17,39 +17,26 @@ using namespace Nexus;
 
 namespace {
   struct QueryParameters {
-    DirectoryEntry m_index;
-    optional<AccountModificationRequest::Id> m_anchor;
-    int m_limit;
-    bool m_is_head;
+    AccountModificationRequestQuery m_query;
     std::vector<int> m_categories;
     optional<ptime> m_start_date;
     optional<ptime> m_end_date;
-    std::string m_query;
+    std::string m_search;
     optional<DirectoryEntry> m_excluded_account;
 
     void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("index", m_index);
-      shuttle.shuttle("anchor", m_anchor);
-      shuttle.shuttle("limit", m_limit);
-      shuttle.shuttle("is_head", m_is_head);
+      Shuttle<AccountModificationRequestQuery>()(shuttle, m_query, version);
       shuttle.shuttle("categories", m_categories);
       shuttle.shuttle("start_date", m_start_date);
       shuttle.shuttle("end_date", m_end_date);
-      shuttle.shuttle("query", m_query);
+      shuttle.shuttle("search", m_search);
       shuttle.shuttle("excluded_account", m_excluded_account);
     }
   };
 
   AccountModificationRequestQuery make_query(
       const QueryParameters& parameters, AdministrationClient& client) {
-    auto query = AccountModificationRequestQuery();
-    query.set_index(parameters.m_index);
-    query.set_anchor(parameters.m_anchor);
-    if(parameters.m_is_head) {
-      query.set_snapshot_limit(SnapshotLimit::from_head(parameters.m_limit));
-    } else {
-      query.set_snapshot_limit(SnapshotLimit::from_tail(parameters.m_limit));
-    }
+    auto query = parameters.m_query;
     auto request = AccountModificationRequestAccessor::from_parameter(0);
     auto filter = Expression(ConstantExpression(true));
     if(!parameters.m_categories.empty()) {
@@ -68,13 +55,13 @@ namespace {
       filter = filter &&
         request.get_timestamp() <= ConstantExpression(*parameters.m_end_date);
     }
-    if(!parameters.m_query.empty()) {
+    if(!parameters.m_search.empty()) {
       auto matches = Expression(ConstantExpression(false));
       try {
         matches = matches || request.get_id() ==
-          ConstantExpression(lexical_cast<int>(parameters.m_query));
+          ConstantExpression(lexical_cast<int>(parameters.m_search));
       } catch(const bad_lexical_cast&) {}
-      for(auto& account : client.query_accounts(parameters.m_query)) {
+      for(auto& account : client.query_accounts(parameters.m_search)) {
         matches = matches || request.get_account() ==
           ConstantExpression(static_cast<int>(account.m_account.m_id));
       }
