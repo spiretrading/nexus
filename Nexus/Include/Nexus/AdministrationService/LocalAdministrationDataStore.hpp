@@ -253,6 +253,13 @@ namespace Nexus {
     }
     std::ranges::sort(
       matches, std::ranges::less(), &AccountModificationRequest::get_id);
+    auto offset = query.get_offset();
+    auto skip = std::min<std::size_t>(offset, matches.size());
+    if(is_head) {
+      matches.erase(matches.begin(), matches.begin() + skip);
+    } else {
+      matches.erase(matches.end() - skip, matches.end());
+    }
     auto size = std::max(0, query.get_snapshot_limit().get_size());
     if(matches.size() > static_cast<std::size_t>(size)) {
       if(is_head) {

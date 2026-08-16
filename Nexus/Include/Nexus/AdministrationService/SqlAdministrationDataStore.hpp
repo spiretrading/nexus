@@ -369,7 +369,8 @@ namespace Nexus {
         get_account_modification_request_row(),
         "account_modification_requests", filter && anchor && accounts,
         Viper::order_by("id", order),
-        Viper::limit(std::max(0, query.get_snapshot_limit().get_size())),
+        Viper::limit(std::max(0, query.get_snapshot_limit().get_size()),
+          query.get_offset()),
         std::back_inserter(requests)));
     } catch(const Viper::ExecuteException& e) {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
