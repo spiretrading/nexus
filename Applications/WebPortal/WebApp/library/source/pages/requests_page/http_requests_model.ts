@@ -17,35 +17,48 @@ export class HttpRequestsModel extends RequestsModel {
     this.account = account;
     this.serviceClients = serviceClients;
     this.localModel = null;
+    this.anchors = [null];
+    this.anchorKey = '';
   }
 
   public async load(): Promise<void> {
     const admin = this.serviceClients.administrationClient;
-    const ownIds = await admin.loadAccountModificationRequestIds(
-      this.account, 0, MAX_REQUEST_IDS);
-    const managedIds = await admin.loadManagedAccountModificationRequestIds(
-      this.account, 0, MAX_REQUEST_IDS);
-    const allIds = mergeIds(ownIds, managedIds);
-    const entries: RequestsModel.RequestEntry[] = [];
-    for(const id of allIds) {
-      const entry = await this.fetchEntry(id);
-      entries.push(entry);
-    }
     const roles = await admin.loadAccountRoles(this.account);
     this.accessRole = getAccessRole(roles);
-    this.localModel =
-      new LocalRequestsModel(this.account, entries, new Map());
-    await this.buildGrantedChain(allIds);
+    this.tradingGroupsRoot = await admin.loadTradingGroupsRootEntry();
+    this.localModel = new LocalRequestsModel(this.account, [], new Map());
   }
 
   public async loadRequestDirectory(submission: RequestsModel.Submission):
       Promise<RequestsModel.Response> {
     try {
-      return this.localModel.loadRequestDirectory(submission);
+      const admin = this.serviceClients.administrationClient;
+      this.resetAnchors(submission);
+      const query = this.makeQuery(submission);
+      const [summaries, counts] = await Promise.all([
+        admin.loadAccountModificationRequestSummaries(query),
+        admin.loadAccountModificationRequestCounts(query)
+      ]);
+      if(summaries.length > 0) {
+        this.anchors[submission.pageIndex + 1] = summaries[0].request.id;
+      }
+      const requestList =
+        summaries.slice().reverse().map(summary => this.toEntry(summary));
+      return {
+        status: RequestsModel.ResponseStatus.READY,
+        facetCounts: {
+          pending: counts.pending,
+          approved: counts.granted,
+          rejected: counts.rejected
+        },
+        totalCount: facetCount(counts, submission.requestState),
+        requestList
+      };
     } catch {
       return {
         status: RequestsModel.ResponseStatus.ERROR,
         facetCounts: {pending: 0, approved: 0, rejected: 0},
+        totalCount: 0,
         requestList: []
       };
     }
@@ -62,46 +75,114 @@ export class HttpRequestsModel extends RequestsModel {
     }
   }
 
-  public async approve(id: number, effectiveDate: Beam.DateTime, comment: string):
-      Promise<Nexus.AccountModificationRequest.Update> {
-    const message = comment.length > 0 ?
-      Nexus.Message.fromPlainText(comment) : new Nexus.Message();
+  public async approve(id: number, effectiveDate: Beam.DateTime,
+      comment: string): Promise<Nexus.AccountModificationRequest.Update> {
+    const message = toMessage(comment);
     const update = await this.serviceClients.administrationClient.
       approveAccountModificationRequest(id, message, effectiveDate);
-    this.localModel.updateEntry(id, update);
     await this.refreshDetail(id);
     return update;
   }
 
   public async reject(id: number, comment: string):
       Promise<Nexus.AccountModificationRequest.Update> {
-    const message = comment.length > 0 ?
-      Nexus.Message.fromPlainText(comment) : new Nexus.Message();
+    const message = toMessage(comment);
     const update = await this.serviceClients.administrationClient.
       rejectAccountModificationRequest(id, message);
-    this.localModel.updateEntry(id, update);
     await this.refreshDetail(id);
     return update;
   }
 
+  private resetAnchors(submission: RequestsModel.Submission): void {
+    const key = makeAnchorKey(submission);
+    if(key !== this.anchorKey) {
+      this.anchorKey = key;
+      this.anchors = [null];
+    }
+  }
 
-  private async fetchEntry(id: number): Promise<RequestsModel.RequestEntry> {
-    const admin = this.serviceClients.administrationClient;
-    const request = await admin.loadAccountModificationRequest(id);
-    const status = await admin.loadAccountModificationRequestStatus(id);
-    const messageIds = await admin.loadMessageIds(id);
-    const firstChange = await this.loadFirstChange(request);
-    const changeCount = await this.getChangeCount(request);
+  private makeQuery(submission: RequestsModel.Submission):
+      Nexus.AccountModificationRequestQuery {
+    const isGroup = submission.scope === RequestsModel.Scope.GROUP;
+    const index = (() => {
+      if(isGroup) {
+        return this.tradingGroupsRoot;
+      }
+      return this.account;
+    })();
+    const query = new Nexus.AccountModificationRequestQuery(index, PAGE_SIZE);
+    query.anchor = this.anchors[submission.pageIndex] ?? null;
+    query.categories = [...submission.filters.categories];
+    query.query = submission.filters.query;
+    if(submission.filters.startDate) {
+      query.startDate = new Beam.DateTime(submission.filters.startDate);
+    }
+    if(submission.filters.endDate) {
+      query.endDate = new Beam.DateTime(submission.filters.endDate);
+    }
+    if(isGroup) {
+      query.excludedAccount = this.account;
+    }
+    return query;
+  }
+
+  private toEntry(summary: Nexus.AccountModificationRequestSummary):
+      RequestsModel.RequestEntry {
+    const request = summary.request;
+    const status = summary.status;
+    const definitions = this.serviceClients.definitionsClient;
+    const state = (() => {
+      if(status.status === Nexus.AccountModificationRequest.Status.NONE) {
+        return Nexus.AccountModificationRequest.Status.PENDING;
+      }
+      return status.status;
+    })();
+    const updateTime = (() => {
+      if(status.status === Nexus.AccountModificationRequest.Status.NONE) {
+        return request.timestamp.toDate();
+      }
+      return status.timestamp.toDate();
+    })();
+    const changes = (() => {
+      if(request.type === Nexus.AccountModificationRequest.Type.RISK) {
+        const previous = summary.previousState as Nexus.RiskModification;
+        const requested = summary.modification as Nexus.RiskModification;
+        if(!previous || !requested) {
+          return {first: unknownChange(), count: 0};
+        }
+        return {
+          first: toFirstRiskChange(previous.parameters, requested.parameters,
+            definitions.currencyDatabase),
+          count: countRiskChanges(previous.parameters, requested.parameters)
+        };
+      }
+      if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
+        const previous = summary.previousState as Nexus.EntitlementModification;
+        const requested = summary.modification as Nexus.EntitlementModification;
+        if(!previous || !requested) {
+          return {first: unknownChange(), count: 0};
+        }
+        return {
+          first: toFirstEntitlementChange(previous.entitlements,
+            requested.entitlements, definitions.entitlementDatabase,
+            definitions.currencyDatabase),
+          count: RequestsModel.computeEntitlementChanges(previous.entitlements,
+            requested.entitlements, definitions.entitlementDatabase,
+            definitions.currencyDatabase).length
+        };
+      }
+      return {first: unknownChange(), count: 0};
+    })();
     return {
       id: request.id,
       category: request.type,
-      state: status.status,
-      updateTime: status.timestamp.toDate(),
+      state,
+      updateTime,
       account: request.account,
       effectiveDate: request.effectiveDate.toDate(),
-      firstChange,
-      additionalChangesCount: Math.max(0, changeCount - 1),
-      commentCount: messageIds.length,
+      firstChange: changes.first,
+      additionalChangesCount: Math.max(0, changes.count - 1),
+      commentCount: summary.commentCount,
       managerApproval: toManagerApproval(status)
     };
   }
@@ -109,11 +190,12 @@ export class HttpRequestsModel extends RequestsModel {
   private async fetchDetail(id: number): Promise<RequestsModel.RequestDetail> {
     const admin = this.serviceClients.administrationClient;
     const request = await admin.loadAccountModificationRequest(id);
+    const summary = await this.loadSummary(request);
     const updates = await admin.loadAccountModificationRequestUpdates(id);
     const accountIdentity = await tryLoadIdentity(admin, request.account);
     const submitterIdentity =
       await tryLoadIdentity(admin, request.submissionAccount);
-    const changes = await this.loadChanges(request);
+    const changes = this.loadChanges(request, summary);
     const comments = await this.loadActivityList(id);
     const statusEntries: RequestsModel.ActivityEntry[] = [];
     statusEntries.push({
@@ -132,10 +214,8 @@ export class HttpRequestsModel extends RequestsModel {
       }
     }
     const activityList = [...statusEntries, ...comments];
-    activityList.sort(
-      (a, b) => a.timestamp.getTime() - b.timestamp.getTime());
-    const latestUpdate = updates.length > 0 ? updates[updates.length - 1] :
-      null;
+    activityList.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+    const latestUpdate = updates[updates.length - 1] ?? null;
     return {
       id: request.id,
       category: request.type,
@@ -153,73 +233,41 @@ export class HttpRequestsModel extends RequestsModel {
     };
   }
 
+  private async loadSummary(request: Nexus.AccountModificationRequest):
+      Promise<Nexus.AccountModificationRequestSummary> {
+    const query = new Nexus.AccountModificationRequestQuery(request.account, 1);
+    query.anchor = request.id + 1;
+    const summaries = await this.serviceClients.administrationClient.
+      loadAccountModificationRequestSummaries(query);
+    return summaries.find(summary => summary.request.id === request.id);
+  }
+
   private async refreshDetail(id: number): Promise<void> {
     try {
-      const detail = await this.fetchDetail(id);
-      this.localModel.addDetail(detail);
+      this.localModel.addDetail(await this.fetchDetail(id));
     } catch {
+      this.localModel.removeDetail(id);
     }
   }
 
-  private async loadFirstChange(request: Nexus.AccountModificationRequest):
-      Promise<RequestsModel.ListChange> {
-    const admin = this.serviceClients.administrationClient;
+  private loadChanges(request: Nexus.AccountModificationRequest,
+      summary: Nexus.AccountModificationRequestSummary):
+        RequestsModel.DetailChange[] {
+    if(!summary || !summary.previousState || !summary.modification) {
+      return [];
+    }
+    const definitions = this.serviceClients.definitionsClient;
     if(request.type === Nexus.AccountModificationRequest.Type.RISK) {
-      const modification = await admin.loadRiskModification(request.id);
-      const oldState = await this.loadOldRiskState(request);
-      return toFirstRiskChange(oldState, modification.parameters,
-        this.serviceClients.definitionsClient.currencyDatabase);
+      const previous = summary.previousState as Nexus.RiskModification;
+      const requested = summary.modification as Nexus.RiskModification;
+      return toRiskChanges(previous.parameters, requested.parameters,
+        definitions.currencyDatabase);
     }
     if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
-      const modification = await admin.loadEntitlementModification(request.id);
-      const oldState = await this.loadOldEntitlementState(request);
-      return toFirstEntitlementChange(oldState, modification.entitlements,
-        this.serviceClients.definitionsClient.entitlementDatabase,
-        this.serviceClients.definitionsClient.currencyDatabase);
-    }
-    return {
-      type: 'risk_controls',
-      name: 'Unknown',
-      oldValue: '',
-      newValue: '',
-      delta: {value: '', direction: RequestsModel.Direction.NONE}
-    };
-  }
-
-  private async getChangeCount(
-      request: Nexus.AccountModificationRequest): Promise<number> {
-    const admin = this.serviceClients.administrationClient;
-    if(request.type === Nexus.AccountModificationRequest.Type.RISK) {
-      const modification = await admin.loadRiskModification(request.id);
-      const oldState = await this.loadOldRiskState(request);
-      return countRiskChanges(oldState, modification.parameters);
-    }
-    if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
-      const modification = await admin.loadEntitlementModification(request.id);
-      const oldState = await this.loadOldEntitlementState(request);
-      return RequestsModel.computeEntitlementChanges(oldState,
-        modification.entitlements,
-        this.serviceClients.definitionsClient.entitlementDatabase,
-        this.serviceClients.definitionsClient.currencyDatabase).length;
-    }
-    return 0;
-  }
-
-  private async loadChanges(request: Nexus.AccountModificationRequest):
-      Promise<RequestsModel.DetailChange[]> {
-    const admin = this.serviceClients.administrationClient;
-    if(request.type === Nexus.AccountModificationRequest.Type.RISK) {
-      const modification = await admin.loadRiskModification(request.id);
-      const oldState = await this.loadOldRiskState(request);
-      return toRiskChanges(oldState, modification.parameters,
-        this.serviceClients.definitionsClient.currencyDatabase);
-    }
-    if(request.type === Nexus.AccountModificationRequest.Type.ENTITLEMENTS) {
-      const modification = await admin.loadEntitlementModification(request.id);
-      const oldState = await this.loadOldEntitlementState(request);
-      return toEntitlementChanges(oldState, modification.entitlements,
-        this.serviceClients.definitionsClient.entitlementDatabase,
-        this.serviceClients.definitionsClient.currencyDatabase);
+      const previous = summary.previousState as Nexus.EntitlementModification;
+      const requested = summary.modification as Nexus.EntitlementModification;
+      return toEntitlementChanges(previous.entitlements, requested.entitlements,
+        definitions.entitlementDatabase, definitions.currencyDatabase);
     }
     return [];
   }
@@ -243,88 +291,67 @@ export class HttpRequestsModel extends RequestsModel {
     return activities;
   }
 
-  private async buildGrantedChain(allIds: number[]): Promise<void> {
-    const admin = this.serviceClients.administrationClient;
-    const chains = new Map<string, {id: number;
-        grantTimestamp: Date}[]>();
-    for(const id of allIds) {
-      const request = await admin.loadAccountModificationRequest(id);
-      const status = await admin.loadAccountModificationRequestStatus(id);
-      if(status.status === Nexus.AccountModificationRequest.Status.GRANTED) {
-        const key = `${request.account.id}:${request.type}`;
-        if(!chains.has(key)) {
-          chains.set(key, []);
-        }
-        chains.get(key).push({id, grantTimestamp: status.timestamp.toDate()});
-      }
-    }
-    for(const chain of chains.values()) {
-      chain.sort(
-        (a, b) => a.grantTimestamp.getTime() - b.grantTimestamp.getTime());
-      for(let i = 1; i < chain.length; ++i) {
-        this.previousGrantedRequest.set(chain[i].id, chain[i - 1].id);
-      }
-    }
-  }
-
-  private async loadOldRiskState(
-      request: Nexus.AccountModificationRequest):
-      Promise<Nexus.RiskParameters> {
-    const admin = this.serviceClients.administrationClient;
-    const status = await admin.loadAccountModificationRequestStatus(request.id);
-    if(status.status !== Nexus.AccountModificationRequest.Status.GRANTED) {
-      return admin.loadRiskParameters(request.account);
-    }
-    const previousId = this.previousGrantedRequest.get(request.id);
-    if(previousId === undefined) {
-      return Nexus.RiskParameters.INVALID;
-    }
-    const previousModification = await admin.loadRiskModification(previousId);
-    return previousModification.parameters;
-  }
-
-  private async loadOldEntitlementState(
-      request: Nexus.AccountModificationRequest):
-      Promise<Beam.Set<Beam.DirectoryEntry>> {
-    const admin = this.serviceClients.administrationClient;
-    const status = await admin.loadAccountModificationRequestStatus(request.id);
-    if(status.status !== Nexus.AccountModificationRequest.Status.GRANTED) {
-      return admin.loadAccountEntitlements(request.account);
-    }
-    const previousId = this.previousGrantedRequest.get(request.id);
-    if(previousId === undefined) {
-      return new Beam.Set<Beam.DirectoryEntry>();
-    }
-    const previousModification =
-      await admin.loadEntitlementModification(previousId);
-    return previousModification.entitlements;
-  }
-
   private account: Beam.DirectoryEntry;
   private serviceClients: Nexus.ServiceClients;
   private localModel: LocalRequestsModel;
   private accessRole: Nexus.AccountRoles.Role;
-  private previousGrantedRequest: Map<number, number> = new Map();
+  private tradingGroupsRoot: Beam.DirectoryEntry;
+  private anchors: number[];
+  private anchorKey: string;
 }
 
-const MAX_REQUEST_IDS = 1000;
+const PAGE_SIZE = 25;
 
-async function tryLoadIdentity(
-    admin: Nexus.AdministrationClient,
+function toMessage(comment: string): Nexus.Message {
+  if(comment.length > 0) {
+    return Nexus.Message.fromPlainText(comment);
+  }
+  return new Nexus.Message();
+}
+
+function entitlementName(
+    entry: Beam.DirectoryEntry, info: Nexus.EntitlementDatabase.Entry): string {
+  if(info.group.equals(Beam.DirectoryEntry.INVALID)) {
+    return entry.name;
+  }
+  return info.name;
+}
+
+function makeAnchorKey(submission: RequestsModel.Submission): string {
+  return [submission.scope, submission.requestState,
+    submission.filters.query, [...submission.filters.categories].join(','),
+    submission.filters.sortKey, submission.filters.startDate?.toJson() ?? '',
+    submission.filters.endDate?.toJson() ?? ''].join('|');
+}
+
+function facetCount(counts: Nexus.AccountModificationRequestCounts,
+    state: RequestsModel.RequestState): number {
+  if(state === RequestsModel.RequestState.APPROVED) {
+    return counts.granted;
+  }
+  if(state === RequestsModel.RequestState.REJECTED) {
+    return counts.rejected;
+  }
+  return counts.pending;
+}
+
+function unknownChange(): RequestsModel.ListChange {
+  return {
+    type: 'risk_controls',
+    name: 'Unknown',
+    oldValue: '',
+    newValue: '',
+    delta: {value: '', direction: RequestsModel.Direction.NONE}
+  };
+}
+
+async function tryLoadIdentity(admin: Nexus.AdministrationClient,
     account: Beam.DirectoryEntry): Promise<Nexus.AccountIdentity | undefined> {
   try {
     return await admin.loadAccountIdentity(account);
   } catch {
     return undefined;
   }
-}
-
-function mergeIds(ownIds: number[], managedIds: number[]): number[] {
-  const set = new Set(ownIds);
-  for(const id of managedIds) {
-    set.add(id);
-  }
-  return [...set];
 }
 
 function getAccessRole(roles: Nexus.AccountRoles): Nexus.AccountRoles.Role {
@@ -390,17 +417,21 @@ function toFirstRiskChange(current: Nexus.RiskParameters,
   if(!current.transitionTime.equals(requested.transitionTime)) {
     const diff = requested.transitionTime.subtract(current.transitionTime);
     const cmp = diff.compare(Beam.Duration.ZERO);
+    const direction = (() => {
+      if(cmp > 0) {
+        return RequestsModel.Direction.POSITIVE;
+      }
+      if(cmp < 0) {
+        return RequestsModel.Direction.NEGATIVE;
+      }
+      return RequestsModel.Direction.NONE;
+    })();
     return {
       type: 'risk_controls',
       name: 'Transition Time',
       oldValue: current.transitionTime.toString(),
       newValue: requested.transitionTime.toString(),
-      delta: {
-        value: diff.toString(),
-        direction: cmp > 0 ? RequestsModel.Direction.POSITIVE :
-          cmp < 0 ? RequestsModel.Direction.NEGATIVE :
-          RequestsModel.Direction.NONE
-      }
+      delta: {value: diff.toString(), direction}
     };
   }
   const oldState = RequestsModel.riskStateToString(current.allowedState);
@@ -418,17 +449,21 @@ function makeMoneyRiskChange(name: string, oldValue: Nexus.Money,
     newValue: Nexus.Money): RequestsModel.RiskControlsChange {
   const diff = newValue.subtract(oldValue);
   const cmp = diff.compare(Nexus.Money.ZERO);
+  const direction = (() => {
+    if(cmp > 0) {
+      return RequestsModel.Direction.POSITIVE;
+    }
+    if(cmp < 0) {
+      return RequestsModel.Direction.NEGATIVE;
+    }
+    return RequestsModel.Direction.NONE;
+  })();
   return {
     type: 'risk_controls',
     name,
     oldValue: oldValue.toString(),
     newValue: newValue.toString(),
-    delta: {
-      value: diff.toString(),
-      direction: cmp > 0 ? RequestsModel.Direction.POSITIVE :
-        cmp < 0 ? RequestsModel.Direction.NEGATIVE :
-        RequestsModel.Direction.NONE
-    }
+    delta: {value: diff.toString(), direction}
   };
 }
 
@@ -438,27 +473,29 @@ function toFirstEntitlementChange(current: Beam.Set<Beam.DirectoryEntry>,
     currencyDatabase: Nexus.CurrencyDatabase):
       RequestsModel.EntitlementsChange {
   for(const entry of requested) {
-    if(!current.has(entry)) {
+    if(!current.test(entry)) {
       const info = entitlementDatabase.fromGroup(entry);
-      const name = info.group.equals(Beam.DirectoryEntry.INVALID) ?
-        entry.name : info.name;
-      const isFree = info.price.equals(Nexus.Money.ZERO);
+      const name = entitlementName(entry, info);
+      const direction = (() => {
+        if(info.price.equals(Nexus.Money.ZERO)) {
+          return RequestsModel.Direction.NONE;
+        }
+        return RequestsModel.Direction.POSITIVE;
+      })();
       return {
         type: 'entitlements',
         name,
         action: RequestsModel.EntitlementAction.GRANT,
         fee: info.price,
         currency: currencyDatabase.fromCurrency(info.currency),
-        direction: isFree ? RequestsModel.Direction.NONE :
-          RequestsModel.Direction.POSITIVE
+        direction
       };
     }
   }
   for(const entry of current) {
-    if(!requested.has(entry)) {
+    if(!requested.test(entry)) {
       const info = entitlementDatabase.fromGroup(entry);
-      const name = info.group.equals(Beam.DirectoryEntry.INVALID) ?
-        entry.name : info.name;
+      const name = entitlementName(entry, info);
       return {
         type: 'entitlements',
         name,
@@ -503,8 +540,8 @@ function toRiskChanges(current: Nexus.RiskParameters,
     changes, 'Net Loss', current.netLoss, requested.netLoss);
   addDurationRiskChange(changes, 'Transition Time',
     current.transitionTime, requested.transitionTime);
-  addRiskChange(
-    changes, 'Allowed State', RequestsModel.riskStateToString(current.allowedState),
+  addRiskChange(changes, 'Allowed State',
+    RequestsModel.riskStateToString(current.allowedState),
     RequestsModel.riskStateToString(requested.allowedState));
   return changes;
 }
@@ -516,17 +553,21 @@ function addMoneyRiskChange(changes: RequestsModel.DetailChange[],
   }
   const diff = newValue.subtract(oldValue);
   const cmp = diff.compare(Nexus.Money.ZERO);
+  const direction = (() => {
+    if(cmp > 0) {
+      return RequestsModel.Direction.POSITIVE;
+    }
+    if(cmp < 0) {
+      return RequestsModel.Direction.NEGATIVE;
+    }
+    return RequestsModel.Direction.NONE;
+  })();
   changes.push({
     type: 'risk',
     name: name,
     oldValue: oldValue.toString(),
     newValue: newValue.toString(),
-    delta: {
-      value: diff.toString(),
-      direction: cmp > 0 ? RequestsModel.Direction.POSITIVE :
-        cmp < 0 ? RequestsModel.Direction.NEGATIVE :
-        RequestsModel.Direction.NONE
-    }
+    delta: {value: diff.toString(), direction}
   });
 }
 
@@ -537,17 +578,21 @@ function addDurationRiskChange(changes: RequestsModel.DetailChange[],
   }
   const diff = newValue.subtract(oldValue);
   const cmp = diff.compare(Beam.Duration.ZERO);
+  const direction = (() => {
+    if(cmp > 0) {
+      return RequestsModel.Direction.POSITIVE;
+    }
+    if(cmp < 0) {
+      return RequestsModel.Direction.NEGATIVE;
+    }
+    return RequestsModel.Direction.NONE;
+  })();
   changes.push({
     type: 'risk',
     name: name,
     oldValue: oldValue.toString(),
     newValue: newValue.toString(),
-    delta: {
-      value: diff.toString(),
-      direction: cmp > 0 ? RequestsModel.Direction.POSITIVE :
-        cmp < 0 ? RequestsModel.Direction.NEGATIVE :
-        RequestsModel.Direction.NONE
-    }
+    delta: {value: diff.toString(), direction}
   });
 }
 
@@ -571,10 +616,9 @@ function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
       RequestsModel.DetailChange[] {
   const changes: RequestsModel.DetailChange[] = [];
   for(const entry of requested) {
-    if(!current.has(entry)) {
+    if(!current.test(entry)) {
       const info = entitlementDatabase.fromGroup(entry);
-      const name = info.group.equals(Beam.DirectoryEntry.INVALID) ?
-        entry.name : info.name;
+      const name = entitlementName(entry, info);
       changes.push({
         type: 'entitlement',
         name,
@@ -586,10 +630,9 @@ function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
     }
   }
   for(const entry of current) {
-    if(!requested.has(entry)) {
+    if(!requested.test(entry)) {
       const info = entitlementDatabase.fromGroup(entry);
-      const name = info.group.equals(Beam.DirectoryEntry.INVALID) ?
-        entry.name : info.name;
+      const name = entitlementName(entry, info);
       changes.push({
         type: 'entitlement',
         name,
@@ -602,4 +645,3 @@ function toEntitlementChanges(current: Beam.Set<Beam.DirectoryEntry>,
   }
   return changes;
 }
-

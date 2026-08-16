@@ -520,9 +520,7 @@ function RequestList(props: {
         </ul>
       </section>);
   }
-  const all = props.response.requestList;
-  const start = props.pageIndex * PAGE_SIZE;
-  const items = all.slice(start, start + PAGE_SIZE);
+  const items = props.response.requestList;
   return (
     <section aria-label='Requests' aria-live='polite' aria-busy='false'>
       <ul className={css(STYLES.requestList)}>
@@ -553,9 +551,8 @@ function PaginationSection(props: {
     response: RequestsModel.Response;
     onPageNavigate?: (pageIndex: number) => void;
   }) {
-  if(props.displayStatus ===
-      RequestDirectoryPage.DisplayStatus.IN_PROGRESS &&
-      props.response.requestList.length <= PAGINATION_THRESHOLD) {
+  if(props.displayStatus === RequestDirectoryPage.DisplayStatus.IN_PROGRESS &&
+      props.response.totalCount <= PAGINATION_THRESHOLD) {
     return null;
   }
   return (
@@ -563,7 +560,7 @@ function PaginationSection(props: {
       <Pagination
         pageSize={PAGE_SIZE}
         pageIndex={props.pageIndex}
-        totalCount={props.response.requestList.length}
+        totalCount={props.response.totalCount}
         onNavigate={props.onPageNavigate}/>
     </div>);
 }

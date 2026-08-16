@@ -1581,12 +1581,18 @@ namespace Nexus {
           summary.m_modification = Modification(entitlements[i]);
           if(predecessors[i]) {
             summary.m_previous_state = Modification(previous_entitlements[i]);
+          } else {
+            summary.m_previous_state = Modification(EntitlementModification(
+              load_entitlements(requests[i].get_account())));
           }
         } else if(requests[i].get_type() ==
             AccountModificationRequest::Type::RISK) {
           summary.m_modification = Modification(parameters[i]);
           if(predecessors[i]) {
             summary.m_previous_state = Modification(previous_parameters[i]);
+          } else {
+            summary.m_previous_state = Modification(RiskModification(
+              m_data_store->load_risk_parameters(requests[i].get_account())));
           }
         }
         summaries.push_back(std::move(summary));

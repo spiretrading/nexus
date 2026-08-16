@@ -52,6 +52,13 @@ export class LocalRequestsModel extends RequestsModel {
     this.details.set(detail.id, detail);
   }
 
+  /** Removes a request detail.
+   *  @param id - The request id whose detail is to be removed.
+   */
+  public removeDetail(id: number): void {
+    this.details.delete(id);
+  }
+
   public async load(): Promise<void> {}
 
   public async loadRequestDirectory(submission: RequestsModel.Submission):
@@ -61,10 +68,12 @@ export class LocalRequestsModel extends RequestsModel {
     const facetCounts = this.computeFacetCounts(filtered);
     const stateFiltered = sorted.filter(
       entry => matchesState(entry.state, submission.requestState));
+    const start = submission.pageIndex * PAGE_SIZE;
     return {
       status: RequestsModel.ResponseStatus.READY,
       facetCounts,
-      requestList: stateFiltered
+      totalCount: stateFiltered.length,
+      requestList: stateFiltered.slice(start, start + PAGE_SIZE)
     };
   }
 
@@ -173,6 +182,8 @@ export class LocalRequestsModel extends RequestsModel {
   private entries: RequestsModel.RequestEntry[];
   private details: Map<number, RequestsModel.RequestDetail>;
 }
+
+const PAGE_SIZE = 25;
 
 function matchesState(status: Status,
     requestState: RequestsModel.RequestState): boolean {

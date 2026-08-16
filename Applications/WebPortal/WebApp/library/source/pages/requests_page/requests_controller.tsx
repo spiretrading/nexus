@@ -54,6 +54,7 @@ export class RequestsController extends React.Component<Properties, State> {
       response: {
         status: RequestsModel.ResponseStatus.IN_PROGRESS,
         facetCounts: {pending: 0, approved: 0, rejected: 0},
+        totalCount: 0,
         requestList: []
       },
       detailStatus: DetailStatus.LOADING,
@@ -191,6 +192,7 @@ export class RequestsController extends React.Component<Properties, State> {
       response: {
         status: RequestsModel.ResponseStatus.IN_PROGRESS,
         facetCounts: {pending: 0, approved: 0, rejected: 0},
+        totalCount: 0,
         requestList: []
       }
     });
