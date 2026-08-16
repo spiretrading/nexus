@@ -71,6 +71,12 @@ namespace Nexus {
         load_managed_account_modification_request_ids(
           const Beam::DirectoryEntry& account,
           AccountModificationRequest::Id start_id, int max_count);
+      std::vector<AccountModificationRequestSummary>
+        load_account_modification_request_summaries(
+          const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts
+        load_account_modification_request_counts(
+          const AccountModificationRequestQuery& query);
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
       AccountModificationRequest submit(const Beam::DirectoryEntry& account,
@@ -319,6 +325,23 @@ namespace Nexus {
     auto release = Beam::Python::GilRelease();
     return m_client->load_managed_account_modification_request_ids(
       account, start_id, max_count);
+  }
+
+  template<IsAdministrationClient C>
+  std::vector<AccountModificationRequestSummary>
+      ToPythonAdministrationClient<C>::
+        load_account_modification_request_summaries(
+          const AccountModificationRequestQuery& query) {
+    auto release = Beam::Python::GilRelease();
+    return m_client->load_account_modification_request_summaries(query);
+  }
+
+  template<IsAdministrationClient C>
+  AccountModificationRequestCounts ToPythonAdministrationClient<C>::
+      load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query) {
+    auto release = Beam::Python::GilRelease();
+    return m_client->load_account_modification_request_counts(query);
   }
 
   template<IsAdministrationClient C>

@@ -15,6 +15,9 @@
 #include <Beam/Queues/StateQueue.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestCounts.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestQuery.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestSummary.hpp"
 #include "Nexus/AdministrationService/AccountQueryResult.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
@@ -98,6 +101,12 @@ namespace Nexus {
           std::declval<AccountModificationRequest::Id>(),
           std::declval<int>()) } ->
             std::same_as<std::vector<AccountModificationRequest::Id>>;
+      { client.load_account_modification_request_summaries(
+          std::declval<const AccountModificationRequestQuery&>()) } ->
+            std::same_as<std::vector<AccountModificationRequestSummary>>;
+      { client.load_account_modification_request_counts(
+          std::declval<const AccountModificationRequestQuery&>()) } ->
+            std::same_as<AccountModificationRequestCounts>;
       { client.load_entitlement_modification(
           std::declval<AccountModificationRequest::Id>()) } ->
             std::same_as<EntitlementModification>;
@@ -349,6 +358,24 @@ namespace Nexus {
           AccountModificationRequest::Id start_id, int max_count);
 
       /**
+       * Loads a page of account modification request summaries.
+       * @param query The query specifying the summaries to load.
+       * @return The list of summaries satisfying the <i>query</i>.
+       */
+      std::vector<AccountModificationRequestSummary>
+        load_account_modification_request_summaries(
+          const AccountModificationRequestQuery& query);
+
+      /**
+       * Counts the account modification requests in each state.
+       * @param query The query whose matching requests are to be counted.
+       * @return The number of requests in each state.
+       */
+      AccountModificationRequestCounts
+        load_account_modification_request_counts(
+          const AccountModificationRequestQuery& query);
+
+      /**
        * Loads an entitlement modification.
        * @param id The id of the request to load.
        * @return The entitlement modification with the specified <i>id</i>.
@@ -548,6 +575,12 @@ namespace Nexus {
           load_managed_account_modification_request_ids(
             const Beam::DirectoryEntry& account,
             AccountModificationRequest::Id start_id, int max_count) = 0;
+        virtual std::vector<AccountModificationRequestSummary>
+          load_account_modification_request_summaries(
+            const AccountModificationRequestQuery& query) = 0;
+        virtual AccountModificationRequestCounts
+          load_account_modification_request_counts(
+            const AccountModificationRequestQuery& query) = 0;
         virtual EntitlementModification load_entitlement_modification(
           AccountModificationRequest::Id id) = 0;
         virtual AccountModificationRequest submit(
@@ -647,6 +680,12 @@ namespace Nexus {
           load_managed_account_modification_request_ids(
             const Beam::DirectoryEntry& account,
             AccountModificationRequest::Id start_id, int max_count) override;
+        std::vector<AccountModificationRequestSummary>
+          load_account_modification_request_summaries(
+            const AccountModificationRequestQuery& query) override;
+        AccountModificationRequestCounts
+          load_account_modification_request_counts(
+            const AccountModificationRequestQuery& query) override;
         EntitlementModification load_entitlement_modification(
           AccountModificationRequest::Id id) override;
         AccountModificationRequest submit(const Beam::DirectoryEntry& account,
@@ -851,6 +890,18 @@ namespace Nexus {
         AccountModificationRequest::Id start_id, int max_count) {
     return m_client->load_account_modification_request_ids(
       account, start_id, max_count);
+  }
+
+  inline std::vector<AccountModificationRequestSummary>
+      AdministrationClient::load_account_modification_request_summaries(
+        const AccountModificationRequestQuery& query) {
+    return m_client->load_account_modification_request_summaries(query);
+  }
+
+  inline AccountModificationRequestCounts
+      AdministrationClient::load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query) {
+    return m_client->load_account_modification_request_counts(query);
   }
 
   inline std::vector<AccountModificationRequest::Id>
@@ -1117,6 +1168,22 @@ namespace Nexus {
           AccountModificationRequest::Id start_id, int max_count) {
     return m_client->load_managed_account_modification_request_ids(
       account, start_id, max_count);
+  }
+
+  template<typename C>
+  std::vector<AccountModificationRequestSummary> AdministrationClient::
+      WrappedAdministrationClient<C>::
+        load_account_modification_request_summaries(
+          const AccountModificationRequestQuery& query) {
+    return m_client->load_account_modification_request_summaries(query);
+  }
+
+  template<typename C>
+  AccountModificationRequestCounts AdministrationClient::
+      WrappedAdministrationClient<C>::
+        load_account_modification_request_counts(
+          const AccountModificationRequestQuery& query) {
+    return m_client->load_account_modification_request_counts(query);
   }
 
   template<typename C>

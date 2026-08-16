@@ -19,6 +19,7 @@ namespace {
     std::unique_ptr<TestServiceAdministrationClient> m_client;
 
     Fixture() {
+      Beam::register_query_types(out(m_server.get_slots().get_registry()));
       register_administration_services(out(m_server.get_slots()));
       register_administration_messages(out(m_server.get_slots()));
       m_client = make_client<TestServiceAdministrationClient>();
@@ -469,6 +470,45 @@ TEST_SUITE("ServiceAdministrationClient") {
       REQUIRE_NO_THROW(fixture.m_client->load_account_modification_request_ids(
         account, start_id, max_count));
     REQUIRE(received_ids == ids);
+  }
+
+  TEST_CASE("load_account_modification_request_summaries") {
+    auto fixture = Fixture();
+    auto account = DirectoryEntry::make_account(23, "mod_account");
+    auto query = make_account_modification_request_query(account, 25);
+    auto summary = AccountModificationRequestSummary();
+    summary.m_request = AccountModificationRequest(7,
+      AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+      time_from_string("2024-07-04 12:00:00"),
+      time_from_string("2024-08-01 00:00:00"));
+    summary.m_comment_count = 2;
+    fixture.on_request<LoadAccountModificationRequestSummariesService>(
+      [&] (auto& request, const auto& received_query) {
+        REQUIRE(received_query.get_index() == account);
+        REQUIRE(received_query.get_snapshot_limit() ==
+          SnapshotLimit::from_tail(25));
+        request.set(std::vector<AccountModificationRequestSummary>({summary}));
+      });
+    auto received = REQUIRE_NO_THROW(
+      fixture.m_client->load_account_modification_request_summaries(query));
+    REQUIRE(received.size() == 1);
+    REQUIRE(received[0].m_request.get_id() == 7);
+    REQUIRE(received[0].m_comment_count == 2);
+  }
+
+  TEST_CASE("load_account_modification_request_counts") {
+    auto fixture = Fixture();
+    auto account = DirectoryEntry::make_account(23, "mod_account");
+    auto query = make_account_modification_request_query(account, 25);
+    auto counts = AccountModificationRequestCounts(3, 2, 1);
+    fixture.on_request<LoadAccountModificationRequestCountsService>(
+      [&] (auto& request, const auto& received_query) {
+        REQUIRE(received_query.get_index() == account);
+        request.set(counts);
+      });
+    auto received = REQUIRE_NO_THROW(
+      fixture.m_client->load_account_modification_request_counts(query));
+    REQUIRE(received == counts);
   }
 
   TEST_CASE("load_managed_account_modification_request_ids") {

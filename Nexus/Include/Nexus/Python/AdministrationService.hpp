@@ -103,6 +103,10 @@ namespace Nexus::Python {
         &C::load_account_modification_request_ids).
       def("load_managed_account_modification_request_ids",
         &C::load_managed_account_modification_request_ids).
+      def("load_account_modification_request_summaries",
+        &C::load_account_modification_request_summaries).
+      def("load_account_modification_request_counts",
+        &C::load_account_modification_request_counts).
       def("load_entitlement_modification", &C::load_entitlement_modification).
       def("submit", pybind11::overload_cast<
         const Beam::DirectoryEntry&, const EntitlementModification&,

@@ -157,6 +157,19 @@ namespace Nexus::Tests {
           m_result;
       };
 
+      /** Records a call to load_account_modification_request_summaries(). */
+      struct LoadAccountModificationRequestSummariesOperation {
+        AccountModificationRequestQuery m_query;
+        Beam::Tests::ServiceResult<
+          std::vector<AccountModificationRequestSummary>> m_result;
+      };
+
+      /** Records a call to load_account_modification_request_counts(). */
+      struct LoadAccountModificationRequestCountsOperation {
+        AccountModificationRequestQuery m_query;
+        Beam::Tests::ServiceResult<AccountModificationRequestCounts> m_result;
+      };
+
       /** Records a call to load_entitlement_modification(). */
       struct LoadEntitlementModificationOperation {
         AccountModificationRequest::Id m_id;
@@ -291,6 +304,8 @@ namespace Nexus::Tests {
         LoadAccountModificationRequestOperation,
         LoadAccountModificationRequestIdsOperation,
         LoadManagedAccountModificationRequestIdsOperation,
+        LoadAccountModificationRequestSummariesOperation,
+        LoadAccountModificationRequestCountsOperation,
         LoadEntitlementModificationOperation,
         SubmitEntitlementModificationRequestOperation,
         LoadRiskModificationOperation,
@@ -355,6 +370,12 @@ namespace Nexus::Tests {
         load_managed_account_modification_request_ids(
           const Beam::DirectoryEntry& account,
           AccountModificationRequest::Id start_id, int max_count);
+      std::vector<AccountModificationRequestSummary>
+        load_account_modification_request_summaries(
+          const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts
+        load_account_modification_request_counts(
+          const AccountModificationRequestQuery& query);
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
       AccountModificationRequest submit(const Beam::DirectoryEntry& account,
@@ -561,6 +582,22 @@ namespace Nexus::Tests {
       LoadManagedAccountModificationRequestIdsOperation,
       std::vector<AccountModificationRequest::Id>>(
         account, start_id, max_count);
+  }
+
+  inline std::vector<AccountModificationRequestSummary>
+      TestAdministrationClient::load_account_modification_request_summaries(
+        const AccountModificationRequestQuery& query) {
+    return m_queue.append_result<
+      LoadAccountModificationRequestSummariesOperation,
+      std::vector<AccountModificationRequestSummary>>(query);
+  }
+
+  inline AccountModificationRequestCounts
+      TestAdministrationClient::load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query) {
+    return m_queue.append_result<
+      LoadAccountModificationRequestCountsOperation,
+      AccountModificationRequestCounts>(query);
   }
 
   inline EntitlementModification

@@ -75,6 +75,12 @@ namespace Nexus {
         load_managed_account_modification_request_ids(
           const Beam::DirectoryEntry& account,
           AccountModificationRequest::Id start_id, int max_count);
+      std::vector<AccountModificationRequestSummary>
+        load_account_modification_request_summaries(
+          const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts
+        load_account_modification_request_counts(
+          const AccountModificationRequestQuery& query);
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
       AccountModificationRequest submit(const Beam::DirectoryEntry& account,
@@ -453,6 +459,30 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       boost::lexical_cast<std::string>(account) + ", " +
       boost::lexical_cast<std::string>(id) + ", " +
       boost::lexical_cast<std::string>(max_count));
+  }
+
+  template<typename B>
+  std::vector<AccountModificationRequestSummary> ServiceAdministrationClient<B>::
+      load_account_modification_request_summaries(
+        const AccountModificationRequestQuery& query) {
+    return Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      return client->template send_request<
+        LoadAccountModificationRequestSummariesService>(query);
+    }, "Failed to load account modification request summaries: " +
+      boost::lexical_cast<std::string>(query));
+  }
+
+  template<typename B>
+  AccountModificationRequestCounts ServiceAdministrationClient<B>::
+      load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query) {
+    return Beam::service_or_throw_with_nested([&] {
+      auto client = m_client_handler.get_client();
+      return client->template send_request<
+        LoadAccountModificationRequestCountsService>(query);
+    }, "Failed to load account modification request counts: " +
+      boost::lexical_cast<std::string>(query));
   }
 
   template<typename B>
