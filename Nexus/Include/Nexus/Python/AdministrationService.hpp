@@ -99,10 +99,6 @@ namespace Nexus::Python {
         const Beam::DirectoryEntry&, const RiskState&>(&C::store)).
       def("load_account_modification_request",
         &C::load_account_modification_request).
-      def("load_account_modification_request_ids",
-        &C::load_account_modification_request_ids).
-      def("load_managed_account_modification_request_ids",
-        &C::load_managed_account_modification_request_ids).
       def("load_account_modification_request_summaries",
         &C::load_account_modification_request_summaries).
       def("load_account_modification_request_counts",
@@ -166,12 +162,6 @@ namespace Nexus::Python {
         const Beam::DirectoryEntry&, const RiskState&>(&D::store)).
       def("load_account_modification_request",
         &D::load_account_modification_request).
-      def("load_account_modification_request_ids", pybind11::overload_cast<
-        const Beam::DirectoryEntry&, AccountModificationRequest::Id, int>(
-          &D::load_account_modification_request_ids)).
-      def("load_account_modification_request_ids",
-        pybind11::overload_cast<AccountModificationRequest::Id, int>(
-          &D::load_account_modification_request_ids)).
       def("load_account_modification_requests", pybind11::overload_cast<
         const std::vector<Beam::DirectoryEntry>&,
         const AccountModificationRequestQuery&>(

@@ -1473,6 +1473,64 @@ TEST_SUITE("AdministrationServlet") {
     }
   }
 
+  TEST_CASE("summary_previous_state_defaults_to_current_state") {
+    auto fixture = Fixture();
+    auto current = RiskParameters(USD, 100 * Money::ONE,
+      RiskState::Type::ACTIVE, 10 * Money::ONE, seconds(10));
+    auto requested = RiskParameters(USD, 200 * Money::ONE,
+      RiskState::Type::ACTIVE, 20 * Money::ONE, seconds(20));
+    fixture.m_data_store.with_transaction([&] {
+      fixture.m_data_store.store(fixture.m_trader_account, current);
+      fixture.m_data_store.store(AccountModificationRequest(1,
+        AccountModificationRequest::Type::RISK, fixture.m_trader_account,
+        fixture.m_trader_account, time_from_string("2024-07-04 12:00:00"),
+        time_from_string("2024-08-01 00:00:00")), RiskModification(requested));
+    });
+    auto query = AccountModificationRequestQuery();
+    query.set_index(fixture.m_trader_account);
+    query.set_snapshot_limit(SnapshotLimit::from_head(100));
+    auto summaries = fixture.m_trader_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(summaries.size() == 1);
+    REQUIRE(get<RiskModification>(
+      *summaries[0].m_previous_state).get_parameters() == current);
+    REQUIRE(get<RiskModification>(
+      *summaries[0].m_modification).get_parameters() == requested);
+  }
+
+  TEST_CASE("summary_previous_state_uses_granted_predecessor") {
+    auto fixture = Fixture();
+    auto current = RiskParameters(USD, 100 * Money::ONE,
+      RiskState::Type::ACTIVE, 10 * Money::ONE, seconds(10));
+    auto granted = RiskParameters(USD, 200 * Money::ONE,
+      RiskState::Type::ACTIVE, 20 * Money::ONE, seconds(20));
+    auto requested = RiskParameters(USD, 300 * Money::ONE,
+      RiskState::Type::ACTIVE, 30 * Money::ONE, seconds(30));
+    fixture.m_data_store.with_transaction([&] {
+      fixture.m_data_store.store(fixture.m_trader_account, current);
+      fixture.m_data_store.store(AccountModificationRequest(1,
+        AccountModificationRequest::Type::RISK, fixture.m_trader_account,
+        fixture.m_trader_account, time_from_string("2024-07-04 12:00:00"),
+        time_from_string("2024-08-01 00:00:00")), RiskModification(granted));
+      fixture.m_data_store.store(1, AccountModificationRequest::Update(
+        AccountModificationRequest::Status::GRANTED,
+        fixture.m_manager_account, 0,
+        time_from_string("2024-07-04 13:00:00")));
+      fixture.m_data_store.store(AccountModificationRequest(2,
+        AccountModificationRequest::Type::RISK, fixture.m_trader_account,
+        fixture.m_trader_account, time_from_string("2024-07-04 14:00:00"),
+        time_from_string("2024-08-01 00:00:00")), RiskModification(requested));
+    });
+    auto query = AccountModificationRequestQuery();
+    query.set_index(fixture.m_trader_account);
+    query.set_snapshot_limit(SnapshotLimit::from_head(100));
+    auto summaries = fixture.m_trader_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(summaries.size() == 2);
+    REQUIRE(get<RiskModification>(
+      *summaries[1].m_previous_state).get_parameters() == granted);
+  }
+
   TEST_CASE("load_account_modification_request_counts") {
     auto fixture = Fixture();
     auto modification = EntitlementModification();

@@ -164,15 +164,6 @@ std::vector<HttpRequestSlot> AdministrationWebServlet::get_slots() {
     "/api/administration_service/load_account_modification_request"),
     std::bind_front(
       &AdministrationWebServlet::on_load_account_modification_request, this));
-  slots.emplace_back(matches_path(HttpMethod::POST,
-    "/api/administration_service/load_account_modification_request_ids"),
-    std::bind_front(
-      &AdministrationWebServlet::on_load_account_modification_request_ids,
-      this));
-  slots.emplace_back(matches_path(HttpMethod::POST, "/api/"
-    "administration_service/load_managed_account_modification_request_ids"),
-    std::bind_front(&AdministrationWebServlet::
-      on_load_managed_account_modification_request_ids, this));
   slots.emplace_back(matches_path(HttpMethod::POST, "/api/"
     "administration_service/load_account_modification_request_summaries"),
     std::bind_front(&AdministrationWebServlet::
@@ -687,34 +678,6 @@ HttpResponse AdministrationWebServlet::on_load_account_modification_request(
   return response;
 }
 
-HttpResponse AdministrationWebServlet::on_load_account_modification_request_ids(
-    const HttpRequest& request) {
-  struct Parameters {
-    DirectoryEntry m_account;
-    AccountModificationRequest::Id m_start_id;
-    int m_max_count;
-
-    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("account", m_account);
-      shuttle.shuttle("start_id", m_start_id);
-      shuttle.shuttle("max_count", m_max_count);
-    }
-  };
-  auto response = HttpResponse();
-  auto session = m_sessions->find(request);
-  if(!session) {
-    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto params = session->shuttle_parameters<Parameters>(request);
-  auto& clients = session->get_clients();
-  auto request_ids =
-    clients.get_administration_client().load_account_modification_request_ids(
-      params.m_account, params.m_start_id, params.m_max_count);
-  session->shuttle_response(request_ids, out(response));
-  return response;
-}
-
 HttpResponse AdministrationWebServlet::
     on_load_account_modification_request_summaries(const HttpRequest& request) {
   auto response = HttpResponse();
@@ -744,35 +707,6 @@ HttpResponse AdministrationWebServlet::
   auto counts = client.load_account_modification_request_counts(
     make_query(parameters, client));
   session->shuttle_response(counts, out(response));
-  return response;
-}
-
-HttpResponse AdministrationWebServlet::
-    on_load_managed_account_modification_request_ids(
-      const HttpRequest& request) {
-  struct Parameters {
-    DirectoryEntry m_account;
-    AccountModificationRequest::Id m_start_id;
-    int m_max_count;
-
-    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("account", m_account);
-      shuttle.shuttle("start_id", m_start_id);
-      shuttle.shuttle("max_count", m_max_count);
-    }
-  };
-  auto response = HttpResponse();
-  auto session = m_sessions->find(request);
-  if(!session) {
-    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
-    return response;
-  }
-  auto params = session->shuttle_parameters<Parameters>(request);
-  auto& clients = session->get_clients();
-  auto request_ids = clients.get_administration_client().
-    load_managed_account_modification_request_ids(
-      params.m_account, params.m_start_id, params.m_max_count);
-  session->shuttle_response(request_ids, out(response));
   return response;
 }
 

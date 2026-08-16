@@ -139,24 +139,6 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<AccountModificationRequest> m_result;
       };
 
-      /** Records a call to load_account_modification_request_ids(). */
-      struct LoadAccountModificationRequestIdsOperation {
-        Beam::DirectoryEntry m_account;
-        AccountModificationRequest::Id m_start_id;
-        int m_max_count;
-        Beam::Tests::ServiceResult<std::vector<AccountModificationRequest::Id>>
-          m_result;
-      };
-
-      /** Records a call to load_managed_account_modification_request_ids(). */
-      struct LoadManagedAccountModificationRequestIdsOperation {
-        Beam::DirectoryEntry m_account;
-        AccountModificationRequest::Id m_start_id;
-        int m_max_count;
-        Beam::Tests::ServiceResult<std::vector<AccountModificationRequest::Id>>
-          m_result;
-      };
-
       /** Records a call to load_account_modification_request_summaries(). */
       struct LoadAccountModificationRequestSummariesOperation {
         AccountModificationRequestQuery m_query;
@@ -302,8 +284,6 @@ namespace Nexus::Tests {
         MonitorRiskParametersOperation,
         MonitorRiskStateOperation, StoreRiskStateOperation,
         LoadAccountModificationRequestOperation,
-        LoadAccountModificationRequestIdsOperation,
-        LoadManagedAccountModificationRequestIdsOperation,
         LoadAccountModificationRequestSummariesOperation,
         LoadAccountModificationRequestCountsOperation,
         LoadEntitlementModificationOperation,
@@ -362,14 +342,6 @@ namespace Nexus::Tests {
       void store(const Beam::DirectoryEntry& account, const RiskState& state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
-      std::vector<AccountModificationRequest::Id>
-        load_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
-      std::vector<AccountModificationRequest::Id>
-        load_managed_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
       std::vector<AccountModificationRequestSummary>
         load_account_modification_request_summaries(
           const AccountModificationRequestQuery& query);
@@ -563,25 +535,6 @@ namespace Nexus::Tests {
         AccountModificationRequest::Id id) {
     return m_queue.append_result<
       LoadAccountModificationRequestOperation, AccountModificationRequest>(id);
-  }
-
-  inline std::vector<AccountModificationRequest::Id>
-      TestAdministrationClient::load_account_modification_request_ids(
-        const Beam::DirectoryEntry& account,
-        AccountModificationRequest::Id start_id, int max_count) {
-    return m_queue.append_result<LoadAccountModificationRequestIdsOperation,
-      std::vector<AccountModificationRequest::Id>>(
-        account, start_id, max_count);
-  }
-
-  inline std::vector<AccountModificationRequest::Id>
-      TestAdministrationClient::load_managed_account_modification_request_ids(
-        const Beam::DirectoryEntry& account,
-        AccountModificationRequest::Id start_id, int max_count) {
-    return m_queue.append_result<
-      LoadManagedAccountModificationRequestIdsOperation,
-      std::vector<AccountModificationRequest::Id>>(
-        account, start_id, max_count);
   }
 
   inline std::vector<AccountModificationRequestSummary>

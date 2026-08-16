@@ -180,28 +180,6 @@ export abstract class AdministrationClient {
     Promise<AccountModificationRequest>;
 
   /**
-   * Loads account modification request ids for an account.
-   * @param account - The account whose request ids are to be loaded.
-   * @param startId - The id to start loading from.
-   * @param maxCount - The maximum number of ids to load.
-   * @return The list of matching request ids.
-   */
-  public abstract loadAccountModificationRequestIds(
-    account: Beam.DirectoryEntry, startId: number, maxCount: number):
-      Promise<number[]>;
-
-  /**
-   * Loads managed account modification request ids.
-   * @param account - The account whose managed request ids are to be loaded.
-   * @param startId - The id to start loading from.
-   * @param maxCount - The maximum number of ids to load.
-   * @return The list of matching request ids.
-   */
-  public abstract loadManagedAccountModificationRequestIds(
-    account: Beam.DirectoryEntry, startId: number, maxCount: number):
-      Promise<number[]>;
-
-  /**
    * Loads a page of account modification request summaries.
    * @param query - Specifies the summaries to load.
    * @return The list of summaries satisfying the query.

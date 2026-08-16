@@ -39,13 +39,6 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const RiskState& risk_state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
-      std::vector<AccountModificationRequest::Id>
-        load_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
-      std::vector<AccountModificationRequest::Id>
-        load_account_modification_request_ids(
-          AccountModificationRequest::Id start_id, int max_count);
       std::vector<AccountModificationRequest>
         load_account_modification_requests(
           const std::vector<Beam::DirectoryEntry>& accounts,
@@ -211,43 +204,6 @@ namespace Nexus {
       return AccountModificationRequest();
     }
     return i->second;
-  }
-
-  inline std::vector<AccountModificationRequest::Id>
-      LocalAdministrationDataStore::load_account_modification_request_ids(
-        const Beam::DirectoryEntry& account,
-        AccountModificationRequest::Id start_id, int max_count) {
-    auto ids = std::vector<AccountModificationRequest::Id>();
-    auto i = m_account_modification_requests.begin();
-    while(i != m_account_modification_requests.end()) {
-      if(i->second.get_id() > start_id && i->second.get_account() == account) {
-        ids.push_back(i->first);
-      }
-      ++i;
-    }
-    std::sort(ids.begin(), ids.end());
-    while(ids.size() > max_count) {
-      ids.pop_back();
-    }
-    return ids;
-  }
-
-  inline std::vector<AccountModificationRequest::Id>
-      LocalAdministrationDataStore::load_account_modification_request_ids(
-        AccountModificationRequest::Id start_id, int max_count) {
-    auto ids = std::vector<AccountModificationRequest::Id>();
-    auto i = m_account_modification_requests.begin();
-    while(i != m_account_modification_requests.end()) {
-      if(i->second.get_id() > start_id) {
-        ids.push_back(i->first);
-      }
-      ++i;
-    }
-    std::sort(ids.begin(), ids.end());
-    while(ids.size() > max_count) {
-      ids.pop_back();
-    }
-    return ids;
   }
 
   inline std::vector<AccountModificationRequest>

@@ -56,13 +56,6 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const RiskState& risk_state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
-      std::vector<AccountModificationRequest::Id>
-        load_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
-      std::vector<AccountModificationRequest::Id>
-        load_account_modification_request_ids(
-          AccountModificationRequest::Id start_id, int max_count);
       std::vector<AccountModificationRequest>
         load_account_modification_requests(
           const std::vector<Beam::DirectoryEntry>& accounts,
@@ -315,49 +308,6 @@ namespace Nexus {
     return request;
   }
 
-  template<typename C>
-  std::vector<AccountModificationRequest::Id>
-      SqlAdministrationDataStore<C>::load_account_modification_request_ids(
-        const Beam::DirectoryEntry& account,
-        AccountModificationRequest::Id start_id, int max_count) {
-    if(start_id == -1) {
-      start_id = std::numeric_limits<AccountModificationRequest::Id>::max();
-    }
-    max_count = std::min(max_count, 1000);
-    auto ids = std::vector<AccountModificationRequest::Id>();
-    try {
-      m_connection->execute(Viper::select(
-        Viper::Row<AccountModificationRequest::Id>("id"),
-        "account_modification_requests", Viper::sym("id") > start_id &&
-          Viper::sym("account") == account.m_id,
-        Viper::order_by("id", Viper::Order::ASC), Viper::limit(max_count),
-        std::back_inserter(ids)));
-    } catch(const Viper::ExecuteException& e) {
-      boost::throw_with_location(AdministrationDataStoreException(e.what()));
-    }
-    return ids;
-  }
-
-  template<typename C>
-  std::vector<AccountModificationRequest::Id>
-      SqlAdministrationDataStore<C>::load_account_modification_request_ids(
-        AccountModificationRequest::Id start_id, int max_count) {
-    if(start_id == -1) {
-      start_id = std::numeric_limits<AccountModificationRequest::Id>::max();
-    }
-    max_count = std::min(max_count, 1000);
-    auto ids = std::vector<AccountModificationRequest::Id>();
-    try {
-      m_connection->execute(Viper::select(
-        Viper::Row<AccountModificationRequest::Id>("id"),
-        "account_modification_requests", Viper::sym("id") > start_id,
-        Viper::order_by("id", Viper::Order::ASC), Viper::limit(max_count),
-        std::back_inserter(ids)));
-    } catch(const Viper::ExecuteException& e) {
-      boost::throw_with_location(AdministrationDataStoreException(e.what()));
-    }
-    return ids;
-  }
 
   template<typename C>
   std::vector<AccountModificationRequest>

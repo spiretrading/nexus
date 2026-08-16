@@ -47,14 +47,6 @@ namespace Nexus {
     { store.load_account_modification_request(
       std::declval<AccountModificationRequest::Id>()) } ->
         std::same_as<AccountModificationRequest>;
-    { store.load_account_modification_request_ids(
-        std::declval<const Beam::DirectoryEntry&>(),
-        std::declval<AccountModificationRequest::Id>(),
-        std::declval<int>()) } ->
-          std::same_as<std::vector<AccountModificationRequest::Id>>;
-    { store.load_account_modification_request_ids(
-      std::declval<AccountModificationRequest::Id>(), std::declval<int>()) } ->
-      std::same_as<std::vector<AccountModificationRequest::Id>>;
     { store.load_account_modification_requests(
         std::declval<const std::vector<Beam::DirectoryEntry>&>(),
         std::declval<const AccountModificationRequestQuery&>()) } ->
@@ -243,30 +235,6 @@ namespace Nexus {
        */
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
-
-      /**
-       * Loads all account modification request ids to modify an account.
-       * @param account The account being modified.
-       * @param start_id The id of the most recent request to load (exclusive),
-       *        or -1 to start with the most recent request.
-       * @param max_count The maximum number of ids to load.
-       * @return The list of ids specified.
-       */
-      std::vector<AccountModificationRequest::Id>
-        load_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
-
-      /**
-       * Loads all account modification request ids.
-       * @param start_id The id of the most recent request to load (exclusive),
-       *        or -1 to start with the most recent request.
-       * @param max_count The maximum number of ids to load.
-       * @return The list of ids specified.
-       */
-      std::vector<AccountModificationRequest::Id>
-        load_account_modification_request_ids(
-          AccountModificationRequest::Id start_id, int max_count);
 
       /**
        * Loads the AccountModificationRequests belonging to a set of accounts.
@@ -492,13 +460,6 @@ namespace Nexus {
           const RiskState& risk_state) = 0;
         virtual AccountModificationRequest load_account_modification_request(
           AccountModificationRequest::Id id) = 0;
-        virtual std::vector<AccountModificationRequest::Id>
-          load_account_modification_request_ids(
-            const Beam::DirectoryEntry& account,
-            AccountModificationRequest::Id start_id, int max_count) = 0;
-        virtual std::vector<AccountModificationRequest::Id>
-          load_account_modification_request_ids(
-            AccountModificationRequest::Id start_id, int max_count) = 0;
         virtual std::vector<AccountModificationRequest>
           load_account_modification_requests(
             const std::vector<Beam::DirectoryEntry>& accounts,
@@ -580,13 +541,6 @@ namespace Nexus {
           const RiskState& risk_state) override;
         AccountModificationRequest load_account_modification_request(
           AccountModificationRequest::Id id) override;
-        std::vector<AccountModificationRequest::Id>
-          load_account_modification_request_ids(
-            const Beam::DirectoryEntry& account,
-            AccountModificationRequest::Id start_id, int max_count) override;
-        std::vector<AccountModificationRequest::Id>
-          load_account_modification_request_ids(
-            AccountModificationRequest::Id start_id, int max_count) override;
         std::vector<AccountModificationRequest>
           load_account_modification_requests(
             const std::vector<Beam::DirectoryEntry>& accounts,
@@ -725,21 +679,6 @@ namespace Nexus {
       AdministrationDataStore::load_account_modification_request(
         AccountModificationRequest::Id id) {
     return m_data_store->load_account_modification_request(id);
-  }
-
-  inline std::vector<AccountModificationRequest::Id>
-      AdministrationDataStore::load_account_modification_request_ids(
-        const Beam::DirectoryEntry& account,
-        AccountModificationRequest::Id start_id, int max_count) {
-    return m_data_store->load_account_modification_request_ids(
-      account, start_id, max_count);
-  }
-
-  inline std::vector<AccountModificationRequest::Id>
-      AdministrationDataStore::load_account_modification_request_ids(
-        AccountModificationRequest::Id start_id, int max_count) {
-    return m_data_store->load_account_modification_request_ids(
-      start_id, max_count);
   }
 
   inline std::vector<AccountModificationRequest>
@@ -964,23 +903,6 @@ namespace Nexus {
       WrappedAdministrationDataStore<D>::load_account_modification_request(
         AccountModificationRequest::Id id) {
     return m_data_store->load_account_modification_request(id);
-  }
-
-  template<typename D>
-  std::vector<AccountModificationRequest::Id> AdministrationDataStore::
-      WrappedAdministrationDataStore<D>::load_account_modification_request_ids(
-        const Beam::DirectoryEntry& account,
-        AccountModificationRequest::Id start_id, int max_count) {
-    return m_data_store->load_account_modification_request_ids(
-      account, start_id, max_count);
-  }
-
-  template<typename D>
-  std::vector<AccountModificationRequest::Id> AdministrationDataStore::
-      WrappedAdministrationDataStore<D>::load_account_modification_request_ids(
-        AccountModificationRequest::Id start_id, int max_count) {
-    return m_data_store->load_account_modification_request_ids(
-      start_id, max_count);
   }
 
   template<typename D>

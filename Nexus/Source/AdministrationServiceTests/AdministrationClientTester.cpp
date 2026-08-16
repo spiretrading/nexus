@@ -198,26 +198,6 @@ TEST_SUITE("AdministrationClient") {
         });
   }
 
-  TEST_CASE("load_account_modification_request_ids") {
-    auto account = DirectoryEntry::make_account(14, "mod_ids_account");
-    auto ids = std::vector<AccountModificationRequest::Id>{1, 2, 3};
-    require_operation<
-      TestAdministrationClient::LoadAccountModificationRequestIdsOperation>(
-        [&] (auto& client) {
-          return client.load_account_modification_request_ids(account, 1, 3);
-        }, ids);
-  }
-
-  TEST_CASE("load_managed_account_modification_request_ids") {
-    auto account = DirectoryEntry::make_account(15, "managed_mod_ids_account");
-    auto ids = std::vector<AccountModificationRequest::Id>{4, 5, 6};
-    require_operation<TestAdministrationClient::
-      LoadManagedAccountModificationRequestIdsOperation>([&] (auto& client) {
-        return client.load_managed_account_modification_request_ids(
-          account, 4, 3);
-      }, ids);
-  }
-
   TEST_CASE("load_entitlement_modification") {
     auto id = AccountModificationRequest::Id(2);
     auto entitlements = std::vector<DirectoryEntry>();

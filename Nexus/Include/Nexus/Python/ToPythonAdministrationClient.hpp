@@ -63,14 +63,6 @@ namespace Nexus {
       void store(const Beam::DirectoryEntry& account, const RiskState& state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
-      std::vector<AccountModificationRequest::Id>
-        load_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
-      std::vector<AccountModificationRequest::Id>
-        load_managed_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
       std::vector<AccountModificationRequestSummary>
         load_account_modification_request_summaries(
           const AccountModificationRequestQuery& query);
@@ -305,26 +297,6 @@ namespace Nexus {
         AccountModificationRequest::Id id) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_account_modification_request(id);
-  }
-
-  template<IsAdministrationClient C>
-  std::vector<AccountModificationRequest::Id>
-      ToPythonAdministrationClient<C>::load_account_modification_request_ids(
-        const Beam::DirectoryEntry& account,
-        AccountModificationRequest::Id start_id, int max_count) {
-    auto release = Beam::Python::GilRelease();
-    return m_client->load_account_modification_request_ids(
-      account, start_id, max_count);
-  }
-
-  template<IsAdministrationClient C>
-  std::vector<AccountModificationRequest::Id> ToPythonAdministrationClient<C>::
-      load_managed_account_modification_request_ids(
-        const Beam::DirectoryEntry& account,
-        AccountModificationRequest::Id start_id, int max_count) {
-    auto release = Beam::Python::GilRelease();
-    return m_client->load_managed_account_modification_request_ids(
-      account, start_id, max_count);
   }
 
   template<IsAdministrationClient C>

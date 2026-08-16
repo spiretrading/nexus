@@ -452,26 +452,6 @@ TEST_SUITE("ServiceAdministrationClient") {
     test_json_equality(received_request, request_data);
   }
 
-  TEST_CASE("load_account_modification_request_ids") {
-    auto fixture = Fixture();
-    auto account = DirectoryEntry::make_account(23, "mod_account");
-    auto start_id = 24;
-    auto max_count = 10;
-    auto ids = std::vector<AccountModificationRequest::Id>{25, 26, 27};
-    fixture.on_request<LoadAccountModificationRequestIdsService>(
-      [&] (auto& request, const auto& received_account, auto received_start_id,
-          auto received_max_count) {
-        REQUIRE(received_account == account);
-        REQUIRE(received_start_id == start_id);
-        REQUIRE(received_max_count == max_count);
-        request.set(ids);
-      });
-    auto received_ids =
-      REQUIRE_NO_THROW(fixture.m_client->load_account_modification_request_ids(
-        account, start_id, max_count));
-    REQUIRE(received_ids == ids);
-  }
-
   TEST_CASE("load_account_modification_request_summaries") {
     auto fixture = Fixture();
     auto account = DirectoryEntry::make_account(23, "mod_account");
@@ -509,26 +489,6 @@ TEST_SUITE("ServiceAdministrationClient") {
     auto received = REQUIRE_NO_THROW(
       fixture.m_client->load_account_modification_request_counts(query));
     REQUIRE(received == counts);
-  }
-
-  TEST_CASE("load_managed_account_modification_request_ids") {
-    auto fixture = Fixture();
-    auto account = DirectoryEntry::make_account(28, "manager_account");
-    auto start_id = 29;
-    auto max_count = 5;
-    auto ids = std::vector<AccountModificationRequest::Id>{30, 31};
-    fixture.on_request<LoadManagedAccountModificationRequestIdsService>(
-      [&] (auto& request, const auto& received_account, auto received_start_id,
-          auto received_max_count) {
-        REQUIRE(received_account == account);
-        REQUIRE(received_start_id == start_id);
-        REQUIRE(received_max_count == max_count);
-        request.set(ids);
-      });
-    auto received_ids = REQUIRE_NO_THROW(
-      fixture.m_client->load_managed_account_modification_request_ids(
-        account, start_id, max_count));
-    REQUIRE(received_ids == ids);
   }
 
   TEST_CASE("load_entitlement_modification") {

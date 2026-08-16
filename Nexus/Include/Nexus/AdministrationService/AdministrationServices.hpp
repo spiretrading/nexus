@@ -216,35 +216,6 @@ namespace Nexus {
       AccountModificationRequest, (AccountModificationRequest::Id, id)),
 
     /**
-     * Given an account, loads the ids of requests to modify that account.
-     * @param account The account whose requests are to be loaded.
-     * @param start_id The id of the first request to load (exclusive) or -1 to
-     *        start with the most recent request.
-     * @param max_count The maximum number of ids to load.
-     * @return The list of account modification requests.
-     */
-    (LoadAccountModificationRequestIdsService,
-      "Nexus.AdministrationServices.LoadAccountModificationRequestIdsService",
-      std::vector<AccountModificationRequest::Id>,
-      (Beam::DirectoryEntry, account),
-      (AccountModificationRequest::Id, start_id), (int, max_count)),
-
-    /**
-     * Given an account, loads the ids of requests that the account is
-     * authorized to manage.
-     * @param account The account managing the modification requests.
-     * @param start_id The id of the first request to load (exclusive) or -1 to
-     *        start with the most recent request.
-     * @param max_count The maximum number of ids to load.
-     * @return The list of account modification requests.
-     */
-    (LoadManagedAccountModificationRequestIdsService,
-      "Nexus.AdministrationServices.LoadManagedAccountModificationRequestIdsService",
-      std::vector<AccountModificationRequest::Id>,
-      (Beam::DirectoryEntry, account),
-      (AccountModificationRequest::Id, start_id), (int, max_count)),
-
-    /**
      * Loads a page of account modification request summaries.
      * @param query The query specifying the summaries to load.
      * @return The list of summaries satisfying the <i>query</i>.

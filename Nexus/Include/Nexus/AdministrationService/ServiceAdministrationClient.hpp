@@ -67,14 +67,6 @@ namespace Nexus {
       void store(const Beam::DirectoryEntry& account, const RiskState& state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
-      std::vector<AccountModificationRequest::Id>
-        load_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
-      std::vector<AccountModificationRequest::Id>
-        load_managed_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
       std::vector<AccountModificationRequestSummary>
         load_account_modification_request_summaries(
           const AccountModificationRequestQuery& query);
@@ -427,38 +419,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         LoadAccountModificationRequestService>(id);
     }, "Failed to load account modification request: " +
       boost::lexical_cast<std::string>(id));
-  }
-
-  template<typename B>
-  std::vector<AccountModificationRequest::Id>
-      ServiceAdministrationClient<B>::load_account_modification_request_ids(
-        const Beam::DirectoryEntry& account,
-        AccountModificationRequest::Id id, int max_count) {
-    return Beam::service_or_throw_with_nested([&] {
-      auto client = m_client_handler.get_client();
-      return client->template send_request<
-        LoadAccountModificationRequestIdsService>(account, id, max_count);
-    }, "Failed to load account modification request ids: " +
-      boost::lexical_cast<std::string>(account) + ", " +
-      boost::lexical_cast<std::string>(id) + ", " +
-      boost::lexical_cast<std::string>(max_count));
-  }
-
-  template<typename B>
-  std::vector<AccountModificationRequest::Id>
-      ServiceAdministrationClient<B>::
-        load_managed_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id id, int max_count) {
-    return Beam::service_or_throw_with_nested([&] {
-      auto client = m_client_handler.get_client();
-      return client->template send_request<
-        LoadManagedAccountModificationRequestIdsService>(
-          account, id, max_count);
-    }, "Failed to load managed account modification request ids: " +
-      boost::lexical_cast<std::string>(account) + ", " +
-      boost::lexical_cast<std::string>(id) + ", " +
-      boost::lexical_cast<std::string>(max_count));
   }
 
   template<typename B>
