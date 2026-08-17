@@ -1015,10 +1015,18 @@ namespace Nexus::Tests {
       REQUIRE(counts[0] == 2);
       REQUIRE(counts[1] == 0);
       REQUIRE(counts[2] == 0);
-      auto empty = data_store.with_transaction([&] {
-        return data_store.load_message_counts({});
+    }
+
+    SUBCASE("load_batches_with_no_ids") {
+      auto ids = std::vector<AccountModificationRequest::Id>();
+      data_store.with_transaction([&] {
+        REQUIRE(
+          data_store.load_account_modification_request_statuses(ids).empty());
+        REQUIRE(data_store.load_message_counts(ids).empty());
+        REQUIRE(data_store.load_previous_granted_requests(ids).empty());
+        REQUIRE(data_store.load_entitlement_modifications(ids).empty());
+        REQUIRE(data_store.load_risk_modifications(ids).empty());
       });
-      REQUIRE(empty.empty());
     }
 
     SUBCASE("load_previous_granted_requests") {

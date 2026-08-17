@@ -1,3 +1,4 @@
+#include <Beam/Queries/ConstantExpression.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/ServiceLocator/SessionAuthenticator.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
@@ -8,6 +9,7 @@
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <boost/functional/factory.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationService/AccountModificationRequestAccessor.hpp"
 #include "Nexus/AdministrationService/AdministrationServlet.hpp"
 #include "Nexus/AdministrationService/LocalAdministrationDataStore.hpp"
 
@@ -613,6 +615,325 @@ TEST_SUITE("AdministrationServlet") {
     REQUIRE(counts.m_rejected == 1);
     REQUIRE(counts.m_pending == 1);
     REQUIRE(counts.m_granted == 0);
+  }
+
+  TEST_CASE("load_summaries_searching_by_id_and_requester") {
+    auto fixture = Fixture();
+    auto modification = EntitlementModification();
+    fixture.m_data_store.with_transaction([&] {
+      for(auto id : {11, 12, 23}) {
+        fixture.m_data_store.store(AccountModificationRequest(
+          id, AccountModificationRequest::Type::ENTITLEMENTS,
+          fixture.m_trader_account, fixture.m_manager_account,
+          time_from_string("2024-07-04 12:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+      }
+    });
+    auto root = fixture.m_admin_client->send_request<
+      LoadTradingGroupsRootEntryService>();
+    auto query = AccountModificationRequestQuery();
+    query.set_index(root);
+    query.set_snapshot_limit(SnapshotLimit::from_head(10));
+    query.set_search("23");
+    auto by_id = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(by_id.size() == 1);
+    REQUIRE(by_id[0].m_request.get_id() == 23);
+    query.set_search("1");
+    auto by_partial_id = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(by_partial_id.size() == 2);
+    REQUIRE(by_partial_id[0].m_request.get_id() == 11);
+    REQUIRE(by_partial_id[1].m_request.get_id() == 12);
+    query.set_search("manager");
+    auto by_requester = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(by_requester.size() == 3);
+  }
+
+  TEST_CASE("load_summaries_sorted_by_date") {
+    auto fixture = Fixture();
+    auto modification = EntitlementModification();
+    auto effective_dates = std::vector({
+      time_from_string("2024-08-03 00:00:00"),
+      time_from_string("2024-08-02 00:00:00"),
+      time_from_string("2024-08-01 00:00:00")});
+    auto update_times = std::vector({
+      time_from_string("2024-07-05 00:00:00"),
+      time_from_string("2024-07-06 00:00:00"),
+      time_from_string("2024-07-07 00:00:00")});
+    fixture.m_data_store.with_transaction([&] {
+      for(auto i = 0; i != 3; ++i) {
+        fixture.m_data_store.store(AccountModificationRequest(
+          i + 1, AccountModificationRequest::Type::ENTITLEMENTS,
+          fixture.m_trader_account, fixture.m_trader_account,
+          time_from_string("2024-07-04 12:00:00"), effective_dates[i]),
+          modification);
+        fixture.m_data_store.store(i + 1, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::PENDING,
+          fixture.m_trader_account, 0, update_times[i]));
+      }
+    });
+    auto query = AccountModificationRequestQuery();
+    query.set_index(fixture.m_trader_account);
+    query.set_snapshot_limit(SnapshotLimit::from_head(10));
+    query.set_sort_field(
+      AccountModificationRequestQuery::SortField::EFFECTIVE_DATE);
+    auto by_effective_date = fixture.m_trader_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(by_effective_date.size() == 3);
+    REQUIRE(by_effective_date[0].m_request.get_id() == 3);
+    REQUIRE(by_effective_date[1].m_request.get_id() == 2);
+    REQUIRE(by_effective_date[2].m_request.get_id() == 1);
+    query.set_sort_field(
+      AccountModificationRequestQuery::SortField::LAST_UPDATED);
+    auto by_last_update = fixture.m_trader_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(by_last_update.size() == 3);
+    REQUIRE(by_last_update[0].m_request.get_id() == 1);
+    REQUIRE(by_last_update[1].m_request.get_id() == 2);
+    REQUIRE(by_last_update[2].m_request.get_id() == 3);
+  }
+
+  TEST_CASE("load_summaries_sorted_by_name_anchored_from_the_tail") {
+    auto fixture = Fixture();
+    auto modification = EntitlementModification();
+    auto comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto traders = fixture.m_trading_group.get_traders_directory();
+    for(auto& name : {"alpha", "bravo", "charlie", "zulu"}) {
+      fixture.m_admin_client->send_request<
+        SubmitEntitlementModificationRequestService>(
+          fixture.make_account(name, traders), modification, ptime(), comment);
+    }
+    auto root = fixture.m_admin_client->send_request<
+      LoadTradingGroupsRootEntryService>();
+    auto query = AccountModificationRequestQuery();
+    query.set_index(root);
+    query.set_sort_field(AccountModificationRequestQuery::SortField::ACCOUNT);
+    query.set_snapshot_limit(SnapshotLimit::from_tail(2));
+    auto tail = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(tail.size() == 2);
+    REQUIRE(tail[0].m_request.get_account().m_name == "charlie");
+    REQUIRE(tail[1].m_request.get_account().m_name == "zulu");
+    query.set_anchor(AccountModificationRequestAnchor(
+      tail[1].m_request.get_id(), ptime(),
+      tail[1].m_request.get_account().m_name));
+    auto previous = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(previous.size() == 2);
+    REQUIRE(previous[0].m_request.get_account().m_name == "bravo");
+    REQUIRE(previous[1].m_request.get_account().m_name == "charlie");
+  }
+
+  TEST_CASE("load_summaries_matching_the_filter_fields") {
+    auto fixture = Fixture();
+    auto modification = EntitlementModification();
+    auto parameters = RiskParameters(USD, 100 * Money::ONE,
+      RiskState::Type::ACTIVE, 10 * Money::ONE, seconds(10));
+    fixture.m_data_store.with_transaction([&] {
+      fixture.m_data_store.store(AccountModificationRequest(
+        1, AccountModificationRequest::Type::ENTITLEMENTS,
+        fixture.m_trader_account, fixture.m_trader_account,
+        time_from_string("2024-07-04 12:00:00"),
+        time_from_string("2024-08-01 00:00:00")), modification);
+      fixture.m_data_store.store(1, AccountModificationRequest::Update(
+        AccountModificationRequest::Status::PENDING, fixture.m_trader_account,
+        0, time_from_string("2024-07-05 00:00:00")));
+      fixture.m_data_store.store(AccountModificationRequest(
+        2, AccountModificationRequest::Type::RISK, fixture.m_manager_account,
+        fixture.m_manager_account, time_from_string("2024-07-04 13:00:00"),
+        time_from_string("2024-08-01 00:00:00")),
+        RiskModification(parameters));
+      fixture.m_data_store.store(2, AccountModificationRequest::Update(
+        AccountModificationRequest::Status::PENDING, fixture.m_manager_account,
+        0, time_from_string("2024-07-09 00:00:00")));
+    });
+    auto root = fixture.m_admin_client->send_request<
+      LoadTradingGroupsRootEntryService>();
+    auto query = AccountModificationRequestQuery();
+    query.set_index(root);
+    query.set_snapshot_limit(SnapshotLimit::from_head(10));
+    query.set_categories({AccountModificationRequest::Type::RISK});
+    auto by_category = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(by_category.size() == 1);
+    REQUIRE(by_category[0].m_request.get_id() == 2);
+    query.set_categories({});
+    query.set_start_date(time_from_string("2024-07-08 00:00:00"));
+    auto from_start = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(from_start.size() == 1);
+    REQUIRE(from_start[0].m_request.get_id() == 2);
+    query.set_start_date(optional<ptime>());
+    query.set_end_date(time_from_string("2024-07-06 00:00:00"));
+    auto until_end = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(until_end.size() == 1);
+    REQUIRE(until_end[0].m_request.get_id() == 1);
+    query.set_end_date(optional<ptime>());
+    query.set_excluded_account(fixture.m_manager_account);
+    auto excluded = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(excluded.size() == 1);
+    REQUIRE(excluded[0].m_request.get_id() == 1);
+  }
+
+  TEST_CASE("load_counts_permissions") {
+    auto fixture = Fixture();
+    auto trading_groups_root =
+      fixture.m_service_locator_environment.get_root().load_directory_entry(
+        DirectoryEntry::STAR_DIRECTORY, "trading_groups");
+    auto modification = EntitlementModification();
+    fixture.m_data_store.with_transaction([&] {
+      fixture.m_data_store.store(AccountModificationRequest(
+        1, AccountModificationRequest::Type::ENTITLEMENTS,
+        fixture.m_trader_account, fixture.m_trader_account,
+        time_from_string("2024-07-04 12:00:00"),
+        time_from_string("2024-08-01 00:00:00")), modification);
+      fixture.m_data_store.store(AccountModificationRequest(
+        2, AccountModificationRequest::Type::ENTITLEMENTS,
+        fixture.m_manager_account, fixture.m_manager_account,
+        time_from_string("2024-07-04 13:00:00"),
+        time_from_string("2024-08-01 00:00:00")), modification);
+    });
+    auto query = AccountModificationRequestQuery();
+    query.set_snapshot_limit(SnapshotLimit::from_head(100));
+    SUBCASE("own_account") {
+      query.set_index(fixture.m_trader_account);
+      auto counts = fixture.m_trader_client->send_request<
+        LoadAccountModificationRequestCountsService>(query);
+      REQUIRE(counts == AccountModificationRequestCounts(1, 0, 0));
+    }
+    SUBCASE("foreign_account_is_rejected") {
+      query.set_index(fixture.m_manager_account);
+      REQUIRE_THROWS(fixture.m_trader_client->send_request<
+        LoadAccountModificationRequestCountsService>(query));
+    }
+    SUBCASE("trader_cannot_reach_root") {
+      query.set_index(trading_groups_root);
+      auto counts = fixture.m_trader_client->send_request<
+        LoadAccountModificationRequestCountsService>(query);
+      REQUIRE(counts == AccountModificationRequestCounts(0, 0, 0));
+    }
+    SUBCASE("manager_loads_group") {
+      query.set_index(fixture.m_trading_group.get_entry());
+      auto counts = fixture.m_manager_client->send_request<
+        LoadAccountModificationRequestCountsService>(query);
+      REQUIRE(counts == AccountModificationRequestCounts(2, 0, 0));
+    }
+    SUBCASE("manager_cannot_load_unmanaged_group") {
+      auto other_group = fixture.make_trading_group("other_group");
+      query.set_index(other_group.get_entry());
+      REQUIRE_THROWS(fixture.m_manager_client->send_request<
+        LoadAccountModificationRequestCountsService>(query));
+    }
+    SUBCASE("administrator_loads_root") {
+      query.set_index(trading_groups_root);
+      auto counts = fixture.m_admin_client->send_request<
+        LoadAccountModificationRequestCountsService>(query);
+      REQUIRE(counts == AccountModificationRequestCounts(2, 0, 0));
+    }
+  }
+
+  TEST_CASE("load_counts_matching_a_search") {
+    auto fixture = Fixture();
+    auto modification = EntitlementModification();
+    fixture.m_data_store.with_transaction([&] {
+      fixture.m_data_store.store(AccountModificationRequest(
+        1, AccountModificationRequest::Type::ENTITLEMENTS,
+        fixture.m_trader_account, fixture.m_trader_account,
+        time_from_string("2024-07-04 12:00:00"),
+        time_from_string("2024-08-01 00:00:00")), modification);
+      fixture.m_data_store.store(1, AccountModificationRequest::Update(
+        AccountModificationRequest::Status::GRANTED, fixture.m_manager_account,
+        0, time_from_string("2024-07-05 00:00:00")));
+      fixture.m_data_store.store(AccountModificationRequest(
+        2, AccountModificationRequest::Type::ENTITLEMENTS,
+        fixture.m_trader_account, fixture.m_trader_account,
+        time_from_string("2024-07-04 13:00:00"),
+        time_from_string("2024-08-01 00:00:00")), modification);
+      fixture.m_data_store.store(AccountModificationRequest(
+        3, AccountModificationRequest::Type::ENTITLEMENTS,
+        fixture.m_manager_account, fixture.m_manager_account,
+        time_from_string("2024-07-04 14:00:00"),
+        time_from_string("2024-08-01 00:00:00")), modification);
+      fixture.m_data_store.store(3, AccountModificationRequest::Update(
+        AccountModificationRequest::Status::REJECTED, fixture.m_manager_account,
+        0, time_from_string("2024-07-06 00:00:00")));
+    });
+    auto root = fixture.m_admin_client->send_request<
+      LoadTradingGroupsRootEntryService>();
+    auto query = AccountModificationRequestQuery();
+    query.set_index(root);
+    query.set_snapshot_limit(SnapshotLimit::from_head(100));
+    auto total = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestCountsService>(query);
+    REQUIRE(total == AccountModificationRequestCounts(1, 1, 1));
+    query.set_search("trader");
+    auto searched = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestCountsService>(query);
+    REQUIRE(searched == AccountModificationRequestCounts(1, 1, 0));
+  }
+
+  TEST_CASE("load_counts_matching_an_expression_filter") {
+    auto fixture = Fixture();
+    auto modification = EntitlementModification();
+    fixture.m_data_store.with_transaction([&] {
+      fixture.m_data_store.store(AccountModificationRequest(
+        1, AccountModificationRequest::Type::ENTITLEMENTS,
+        fixture.m_trader_account, fixture.m_trader_account,
+        time_from_string("2024-07-04 12:00:00"),
+        time_from_string("2024-08-01 00:00:00")), modification);
+      fixture.m_data_store.store(AccountModificationRequest(
+        2, AccountModificationRequest::Type::ENTITLEMENTS,
+        fixture.m_manager_account, fixture.m_manager_account,
+        time_from_string("2024-07-04 13:00:00"),
+        time_from_string("2024-08-01 00:00:00")), modification);
+    });
+    auto root = fixture.m_admin_client->send_request<
+      LoadTradingGroupsRootEntryService>();
+    auto query = AccountModificationRequestQuery();
+    query.set_index(root);
+    query.set_snapshot_limit(SnapshotLimit::from_head(100));
+    auto accessor = AccountModificationRequestAccessor::from_parameter(0);
+    query.set_filter(accessor.get_account() != ConstantExpression(
+      static_cast<int>(fixture.m_manager_account.m_id)));
+    auto counts = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestCountsService>(query);
+    REQUIRE(counts == AccountModificationRequestCounts(1, 0, 0));
+    auto summaries = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(summaries.size() == 1);
+    REQUIRE(summaries[0].m_request.get_id() == 1);
+  }
+
+  TEST_CASE("summary_counts_comments") {
+    auto fixture = Fixture();
+    auto modification = EntitlementModification();
+    auto comment = Nexus::Message(0, fixture.m_trader_account,
+      fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto request = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        fixture.m_trader_account, modification, ptime(), comment);
+    for(auto& text : {"first", "second"}) {
+      auto message = Nexus::Message(0, fixture.m_trader_account,
+        fixture.m_time_client.get_time(),
+        {Nexus::Message::Body::make_plain_text(text)});
+      fixture.m_trader_client->send_request<
+        SendAccountModificationRequestMessageService>(
+          request.get_id(), message);
+    }
+    auto query = AccountModificationRequestQuery();
+    query.set_index(fixture.m_trader_account);
+    query.set_snapshot_limit(SnapshotLimit::from_head(10));
+    auto summaries = fixture.m_trader_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(summaries.size() == 1);
+    REQUIRE(summaries[0].m_comment_count == 3);
   }
 
   TEST_CASE("submit_and_load_entitlement_modification") {
