@@ -1555,10 +1555,14 @@ namespace Nexus {
           ServiceProtocolClient& client,
           const AccountModificationRequestQuery& query) {
     auto& session = client.get_session();
-    auto accounts =
-      load_authorized_accounts(session.get_account(), query.get_index());
-    auto is_unrestricted = check_administrator(session.get_account()) &&
-      query.get_index() == m_trading_groups_root;
+    auto is_unrestricted = query.get_index() == m_trading_groups_root &&
+      check_administrator(session.get_account());
+    auto accounts = [&] {
+      if(is_unrestricted) {
+        return std::vector<Beam::DirectoryEntry>();
+      }
+      return load_authorized_accounts(session.get_account(), query.get_index());
+    }();
     auto requests = m_data_store->with_transaction([&] {
       return load_sorted_requests(accounts, is_unrestricted, query);
     });
@@ -1624,10 +1628,14 @@ namespace Nexus {
       on_load_account_modification_request_counts(ServiceProtocolClient& client,
         const AccountModificationRequestQuery& query) {
     auto& session = client.get_session();
-    auto accounts =
-      load_authorized_accounts(session.get_account(), query.get_index());
-    auto is_unrestricted = check_administrator(session.get_account()) &&
-      query.get_index() == m_trading_groups_root;
+    auto is_unrestricted = query.get_index() == m_trading_groups_root &&
+      check_administrator(session.get_account());
+    auto accounts = [&] {
+      if(is_unrestricted) {
+        return std::vector<Beam::DirectoryEntry>();
+      }
+      return load_authorized_accounts(session.get_account(), query.get_index());
+    }();
     auto total = query;
     total.set_anchor(boost::optional<AccountModificationRequestAnchor>());
     total.set_offset(0);
