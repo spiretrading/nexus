@@ -122,6 +122,8 @@ namespace Nexus {
 
       static Viper::Expression make_id_filter(const std::string& column,
         const std::vector<AccountModificationRequest::Id>& ids);
+      static Viper::Expression make_account_filter(
+        const std::vector<Beam::DirectoryEntry>& accounts);
       static std::string get_sort_column(
         AccountModificationRequestQuery::SortField field);
       static Viper::Expression make_query_filter(
@@ -326,10 +328,7 @@ namespace Nexus {
       SqlAdministrationDataStore<C>::load_account_modification_requests(
         const std::vector<Beam::DirectoryEntry>& accounts,
         const AccountModificationRequestQuery& query) {
-    auto filter = Viper::literal(false);
-    for(auto& account : accounts) {
-      filter = filter || Viper::sym("account") == account.m_id;
-    }
+    auto filter = make_account_filter(accounts);
     return load_requests(filter, query);
   }
 
@@ -345,10 +344,7 @@ namespace Nexus {
       SqlAdministrationDataStore<C>::load_account_modification_request_counts(
         const std::vector<Beam::DirectoryEntry>& accounts,
         const AccountModificationRequestQuery& query) {
-    auto filter = Viper::literal(false);
-    for(auto& account : accounts) {
-      filter = filter || Viper::sym("account") == account.m_id;
-    }
+    auto filter = make_account_filter(accounts);
     return count_requests(filter, query);
   }
 
@@ -363,11 +359,18 @@ namespace Nexus {
   Viper::Expression SqlAdministrationDataStore<C>::make_id_filter(
       const std::string& column,
       const std::vector<AccountModificationRequest::Id>& ids) {
-    auto filter = Viper::literal(false);
-    for(auto id : ids) {
-      filter = filter || Viper::sym(column) == id;
+    return Viper::in(Viper::sym(column), ids.begin(), ids.end());
+  }
+
+  template<typename C>
+  Viper::Expression SqlAdministrationDataStore<C>::make_account_filter(
+      const std::vector<Beam::DirectoryEntry>& accounts) {
+    auto ids = std::vector<Viper::Expression>();
+    ids.reserve(accounts.size());
+    for(auto& account : accounts) {
+      ids.push_back(Viper::literal(account.m_id));
     }
-    return filter;
+    return Viper::in(Viper::sym("account"), std::move(ids));
   }
 
   template<typename C>
@@ -387,18 +390,12 @@ namespace Nexus {
       const AccountModificationRequestQuery& query) {
     auto filter = Viper::literal(true);
     if(!query.get_categories().empty()) {
-      auto categories = Viper::literal(false);
-      for(auto category : query.get_categories()) {
-        categories = categories || Viper::sym("type") == category;
-      }
-      filter = filter && categories;
+      filter = filter && Viper::in(Viper::sym("type"),
+        query.get_categories().begin(), query.get_categories().end());
     }
     if(!query.get_statuses().empty()) {
-      auto statuses = Viper::literal(false);
-      for(auto status : query.get_statuses()) {
-        statuses = statuses || Viper::sym("status") == status;
-      }
-      filter = filter && statuses;
+      filter = filter && Viper::in(Viper::sym("status"),
+        query.get_statuses().begin(), query.get_statuses().end());
     }
     if(auto& start_date = query.get_start_date()) {
       filter = filter && Viper::sym("last_update_timestamp") >= *start_date;
