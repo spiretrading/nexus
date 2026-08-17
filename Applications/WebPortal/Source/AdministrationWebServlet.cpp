@@ -6,7 +6,6 @@
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
-#include "Nexus/AdministrationService/AccountModificationRequestAccessor.hpp"
 #include "Nexus/AdministrationService/AdministrationServices.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
@@ -14,67 +13,6 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
-
-namespace {
-  struct QueryParameters {
-    AccountModificationRequestQuery m_query;
-    std::vector<int> m_categories;
-    optional<ptime> m_start_date;
-    optional<ptime> m_end_date;
-    std::string m_search;
-    optional<DirectoryEntry> m_excluded_account;
-
-    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      Shuttle<AccountModificationRequestQuery>()(shuttle, m_query, version);
-      shuttle.shuttle("categories", m_categories);
-      shuttle.shuttle("start_date", m_start_date);
-      shuttle.shuttle("end_date", m_end_date);
-      shuttle.shuttle("search", m_search);
-      shuttle.shuttle("excluded_account", m_excluded_account);
-    }
-  };
-
-  AccountModificationRequestQuery make_query(
-      const QueryParameters& parameters, AdministrationClient& client) {
-    auto query = parameters.m_query;
-    auto request = AccountModificationRequestAccessor::from_parameter(0);
-    auto filter = Expression(ConstantExpression(true));
-    if(!parameters.m_categories.empty()) {
-      auto categories = Expression(ConstantExpression(false));
-      for(auto category : parameters.m_categories) {
-        categories = categories ||
-          request.get_type() == ConstantExpression(category);
-      }
-      filter = filter && categories;
-    }
-    if(parameters.m_start_date) {
-      filter = filter &&
-        request.get_timestamp() >= ConstantExpression(*parameters.m_start_date);
-    }
-    if(parameters.m_end_date) {
-      filter = filter &&
-        request.get_timestamp() <= ConstantExpression(*parameters.m_end_date);
-    }
-    if(!parameters.m_search.empty()) {
-      auto matches = Expression(ConstantExpression(false));
-      try {
-        matches = matches || request.get_id() ==
-          ConstantExpression(lexical_cast<int>(parameters.m_search));
-      } catch(const bad_lexical_cast&) {}
-      for(auto& account : client.query_accounts(parameters.m_search)) {
-        matches = matches || request.get_account() ==
-          ConstantExpression(static_cast<int>(account.m_account.m_id));
-      }
-      filter = filter && matches;
-    }
-    if(parameters.m_excluded_account) {
-      filter = filter && request.get_account() != ConstantExpression(
-        static_cast<int>(parameters.m_excluded_account->m_id));
-    }
-    query.set_filter(filter);
-    return query;
-  }
-}
 
 AdministrationWebServlet::AdministrationWebServlet(
   Ref<WebSessionStore<WebPortalSession>> sessions)
@@ -673,10 +611,10 @@ HttpResponse AdministrationWebServlet::
     response.set_status_code(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  auto parameters = session->shuttle_parameters<QueryParameters>(request);
+  auto query =
+    session->shuttle_parameters<AccountModificationRequestQuery>(request);
   auto& client = session->get_clients().get_administration_client();
-  auto summaries = client.load_account_modification_request_summaries(
-    make_query(parameters, client));
+  auto summaries = client.load_account_modification_request_summaries(query);
   session->shuttle_response(summaries, out(response));
   return response;
 }
@@ -689,10 +627,10 @@ HttpResponse AdministrationWebServlet::
     response.set_status_code(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  auto parameters = session->shuttle_parameters<QueryParameters>(request);
+  auto query =
+    session->shuttle_parameters<AccountModificationRequestQuery>(request);
   auto& client = session->get_clients().get_administration_client();
-  auto counts = client.load_account_modification_request_counts(
-    make_query(parameters, client));
+  auto counts = client.load_account_modification_request_counts(query);
   session->shuttle_response(counts, out(response));
   return response;
 }

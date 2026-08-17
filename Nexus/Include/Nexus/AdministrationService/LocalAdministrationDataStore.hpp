@@ -342,18 +342,17 @@ namespace Nexus {
           field == AccountModificationRequestQuery::SortField::EFFECTIVE_DATE) {
         return SortKey(request.get_effective_date(), request.get_id());
       }
-      return SortKey(boost::posix_time::ptime(boost::posix_time::neg_infin),
-        request.get_id());
+      return SortKey(boost::posix_time::neg_infin, request.get_id());
     };
     auto anchor_key = [&] {
       if(!anchor) {
         return SortKey();
       }
-      if(field == AccountModificationRequestQuery::SortField::CREATED) {
-        return SortKey(boost::posix_time::ptime(boost::posix_time::neg_infin),
-          anchor->m_id);
+      if(field == AccountModificationRequestQuery::SortField::LAST_UPDATED ||
+          field == AccountModificationRequestQuery::SortField::EFFECTIVE_DATE) {
+        return SortKey(anchor->m_date, anchor->m_id);
       }
-      return SortKey(anchor->m_date, anchor->m_id);
+      return SortKey(boost::posix_time::neg_infin, anchor->m_id);
     }();
     auto matches = std::vector<AccountModificationRequest>();
     for(auto& entry : m_account_modification_requests) {

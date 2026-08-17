@@ -713,6 +713,38 @@ namespace Nexus::Tests {
       REQUIRE(excluded[1].get_id() == 2);
     }
 
+    SUBCASE("load_account_modification_requests_anchored_by_name") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto modification = EntitlementModification();
+      data_store.with_transaction([&] {
+        for(auto id : {1, 2, 3, 4}) {
+          data_store.store(AccountModificationRequest(
+            id, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
+            time_from_string("2024-08-01 00:00:00")), modification);
+        }
+      });
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account);
+      query.set_sort_field(
+        AccountModificationRequestQuery::SortField::ACCOUNT);
+      query.set_snapshot_limit(SnapshotLimit::from_head(10));
+      query.set_anchor(AccountModificationRequestAnchor(
+        2, time_from_string("2024-07-05 10:00:00"), "user_a"));
+      auto head = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(head.size() == 2);
+      REQUIRE(head[0].get_id() == 3);
+      REQUIRE(head[1].get_id() == 4);
+      query.set_snapshot_limit(SnapshotLimit::from_tail(10));
+      auto tail = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(tail.size() == 1);
+      REQUIRE(tail[0].get_id() == 1);
+    }
+
     SUBCASE("load_account_modification_request_counts") {
       auto account = DirectoryEntry::make_account(100, "user_a");
       auto other = DirectoryEntry::make_account(101, "user_b");
