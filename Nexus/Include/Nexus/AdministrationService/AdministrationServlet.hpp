@@ -82,6 +82,8 @@ namespace Nexus {
       void close();
 
     private:
+      static constexpr auto UNLIMITED_SCAN_SIZE =
+        std::numeric_limits<int>::max() - 1;
       struct RiskStateEntry {
         RiskState m_risk_state;
         std::vector<ServiceProtocolClient*> m_subscribers;
@@ -1477,7 +1479,8 @@ namespace Nexus {
       return load(query);
     }
     auto scan = query;
-    scan.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
+    scan.set_snapshot_limit(Beam::SnapshotLimit(
+      query.get_snapshot_limit().get_type(), UNLIMITED_SCAN_SIZE));
     scan.set_offset(0);
     if(is_name_sort) {
       scan.set_sort_field(AccountModificationRequestQuery::SortField::CREATED);

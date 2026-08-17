@@ -546,6 +546,38 @@ TEST_SUITE("AdministrationServlet") {
     REQUIRE(none.empty());
   }
 
+  TEST_CASE("load_summaries_paged_with_a_search") {
+    auto fixture = Fixture();
+    auto modification = EntitlementModification();
+    fixture.m_data_store.with_transaction([&] {
+      for(auto id : {1, 2, 3, 4, 5, 6}) {
+        fixture.m_data_store.store(AccountModificationRequest(
+          id, AccountModificationRequest::Type::ENTITLEMENTS,
+          fixture.m_trader_account, fixture.m_trader_account,
+          time_from_string("2024-07-04 12:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+      }
+    });
+    auto root = fixture.m_admin_client->send_request<
+      LoadTradingGroupsRootEntryService>();
+    auto query = AccountModificationRequestQuery();
+    query.set_index(root);
+    query.set_snapshot_limit(SnapshotLimit::from_tail(3));
+    query.set_search("trader");
+    auto page = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(page.size() == 3);
+    REQUIRE(page[0].m_request.get_id() == 4);
+    REQUIRE(page[2].m_request.get_id() == 6);
+    query.set_anchor(AccountModificationRequestAnchor(
+      page[0].m_request.get_id(), page[0].m_request.get_timestamp(), ""));
+    auto next = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(next.size() == 3);
+    REQUIRE(next[0].m_request.get_id() == 1);
+    REQUIRE(next[2].m_request.get_id() == 3);
+  }
+
   TEST_CASE("load_summaries_matching_a_status") {
     auto fixture = Fixture();
     auto modification = EntitlementModification();
