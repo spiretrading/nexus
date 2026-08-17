@@ -1023,15 +1023,27 @@ namespace Nexus::Tests {
         data_store.store(4, AccountModificationRequest::Update(
           AccountModificationRequest::Status::GRANTED, account_b, 0,
           time_from_string("2024-07-08 11:00:00")));
+        data_store.store(AccountModificationRequest(
+          6, AccountModificationRequest::Type::RISK, account_a, account_a,
+          time_from_string("2024-07-10 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(
+          7, AccountModificationRequest::Type::ENTITLEMENTS, account_a,
+          account_a, time_from_string("2024-07-11 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(6, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED, account_a, 0,
+          time_from_string("2024-07-10 11:00:00")));
       });
-      auto ids = std::vector<AccountModificationRequest::Id>({1, 3, 5});
+      auto ids = std::vector<AccountModificationRequest::Id>({1, 3, 5, 7});
       auto predecessors = data_store.with_transaction([&] {
         return data_store.load_previous_granted_requests(ids);
       });
-      REQUIRE(predecessors.size() == 3);
+      REQUIRE(predecessors.size() == 4);
       REQUIRE(!predecessors[0]);
       REQUIRE(predecessors[1] == 1);
       REQUIRE(predecessors[2] == 4);
+      REQUIRE(predecessors[3] == 1);
     }
 
     SUBCASE("load_batched_modifications") {

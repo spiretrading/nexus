@@ -591,32 +591,35 @@ namespace Nexus {
     } catch(const std::exception& e) {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }
+    auto index = std::unordered_map<AccountModificationRequest::Id,
+      const AccountModificationRequest*>();
+    index.reserve(requests.size());
+    for(auto& request : requests) {
+      index[request.get_id()] = &request;
+    }
     for(auto i = std::size_t(0); i != ids.size(); ++i) {
-      auto request = std::ranges::find(
-        requests, ids[i], &AccountModificationRequest::get_id);
-      if(request == requests.end()) {
+      auto entry = index.find(ids[i]);
+      if(entry == index.end()) {
         continue;
       }
-      auto candidates = std::vector<AccountModificationRequest::Id>();
+      auto& request = *entry->second;
+      auto predecessor = std::optional<AccountModificationRequest::Id>();
       try {
         m_connection->execute(Viper::select(
           Viper::Row<AccountModificationRequest::Id>("id"),
           "account_modification_requests",
           Viper::sym("id") < ids[i] &&
-            Viper::sym("account") == request->get_account().m_id &&
-            Viper::sym("type") == static_cast<int>(request->get_type()),
-          Viper::order_by("id", Viper::Order::DESC),
-          std::back_inserter(candidates)));
+            Viper::sym("account") == request.get_account().m_id &&
+            Viper::sym("type") == request.get_type() &&
+            Viper::sym("status") ==
+              AccountModificationRequest::Status::GRANTED,
+          Viper::order_by("id", Viper::Order::DESC), Viper::limit(1),
+          &predecessor));
       } catch(const std::exception& e) {
         boost::throw_with_location(AdministrationDataStoreException(e.what()));
       }
-      auto statuses = load_account_modification_request_statuses(candidates);
-      for(auto j = std::size_t(0); j != candidates.size(); ++j) {
-        if(statuses[j].m_status ==
-            AccountModificationRequest::Status::GRANTED) {
-          predecessors[i] = candidates[j];
-          break;
-        }
+      if(predecessor) {
+        predecessors[i] = *predecessor;
       }
     }
     return predecessors;
