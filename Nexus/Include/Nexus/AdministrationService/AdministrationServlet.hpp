@@ -5,6 +5,7 @@
 #include <limits>
 #include <ranges>
 #include <sstream>
+#include <unordered_map>
 #include <unordered_set>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Pointers/Dereference.hpp>
@@ -1571,52 +1572,81 @@ namespace Nexus {
     for(auto& request : requests) {
       ids.push_back(request.get_id());
     }
-    return m_data_store->with_transaction([&] {
-      auto statuses =
-        m_data_store->load_account_modification_request_statuses(ids);
-      auto counts = m_data_store->load_message_counts(ids);
-      auto predecessors = m_data_store->load_previous_granted_requests(ids);
+    auto statuses = std::vector<AccountModificationRequest::Update>();
+    auto counts = std::vector<int>();
+    auto predecessors =
+      std::vector<boost::optional<AccountModificationRequest::Id>>();
+    auto entitlements = std::vector<EntitlementModification>();
+    auto parameters = std::vector<RiskModification>();
+    auto previous_entitlements = std::vector<EntitlementModification>();
+    auto previous_parameters = std::vector<RiskModification>();
+    auto current_parameters = std::vector<RiskParameters>();
+    m_data_store->with_transaction([&] {
+      statuses = m_data_store->load_account_modification_request_statuses(ids);
+      counts = m_data_store->load_message_counts(ids);
+      predecessors = m_data_store->load_previous_granted_requests(ids);
       auto predecessor_ids = std::vector<AccountModificationRequest::Id>();
       predecessor_ids.reserve(predecessors.size());
       for(auto& predecessor : predecessors) {
         predecessor_ids.push_back(predecessor.value_or(-1));
       }
-      auto entitlements = m_data_store->load_entitlement_modifications(ids);
-      auto parameters = m_data_store->load_risk_modifications(ids);
-      auto previous_entitlements =
+      entitlements = m_data_store->load_entitlement_modifications(ids);
+      parameters = m_data_store->load_risk_modifications(ids);
+      previous_entitlements =
         m_data_store->load_entitlement_modifications(predecessor_ids);
-      auto previous_parameters =
+      previous_parameters =
         m_data_store->load_risk_modifications(predecessor_ids);
-      auto summaries = std::vector<AccountModificationRequestSummary>();
-      summaries.reserve(requests.size());
+      current_parameters.resize(requests.size());
       for(auto i = std::size_t(0); i != requests.size(); ++i) {
-        auto summary = AccountModificationRequestSummary();
-        summary.m_request = requests[i];
-        summary.m_status = statuses[i];
-        summary.m_comment_count = counts[i];
-        if(requests[i].get_type() ==
-            AccountModificationRequest::Type::ENTITLEMENTS) {
-          summary.m_modification = Modification(entitlements[i]);
-          if(predecessors[i]) {
-            summary.m_previous_state = Modification(previous_entitlements[i]);
-          } else {
-            summary.m_previous_state = Modification(EntitlementModification(
-              load_entitlements(requests[i].get_account())));
-          }
-        } else if(requests[i].get_type() ==
-            AccountModificationRequest::Type::RISK) {
-          summary.m_modification = Modification(parameters[i]);
-          if(predecessors[i]) {
-            summary.m_previous_state = Modification(previous_parameters[i]);
-          } else {
-            summary.m_previous_state = Modification(RiskModification(
-              m_data_store->load_risk_parameters(requests[i].get_account())));
-          }
+        if(requests[i].get_type() == AccountModificationRequest::Type::RISK &&
+            !predecessors[i]) {
+          current_parameters[i] =
+            m_data_store->load_risk_parameters(requests[i].get_account());
         }
-        summaries.push_back(std::move(summary));
       }
-      return summaries;
     });
+    auto current_entitlements =
+      std::unordered_map<Beam::DirectoryEntry, EntitlementModification>();
+    for(auto i = std::size_t(0); i != requests.size(); ++i) {
+      if(requests[i].get_type() !=
+          AccountModificationRequest::Type::ENTITLEMENTS || predecessors[i]) {
+        continue;
+      }
+      auto& account = requests[i].get_account();
+      if(!current_entitlements.contains(account)) {
+        current_entitlements.emplace(
+          account, EntitlementModification(load_entitlements(account)));
+      }
+    }
+    auto summaries = std::vector<AccountModificationRequestSummary>();
+    summaries.reserve(requests.size());
+    for(auto i = std::size_t(0); i != requests.size(); ++i) {
+      auto summary = AccountModificationRequestSummary();
+      summary.m_request = requests[i];
+      summary.m_status = statuses[i];
+      summary.m_comment_count = counts[i];
+      if(requests[i].get_type() ==
+          AccountModificationRequest::Type::ENTITLEMENTS) {
+        summary.m_modification = Modification(entitlements[i]);
+        if(predecessors[i]) {
+          summary.m_previous_state = Modification(previous_entitlements[i]);
+        } else {
+          summary.m_previous_state =
+            Modification(current_entitlements.at(requests[i].get_account()));
+        }
+      } else if(requests[i].get_type() ==
+          AccountModificationRequest::Type::RISK) {
+        summary.m_modification = Modification(parameters[i]);
+        if(predecessors[i]) {
+          summary.m_previous_state = Modification(previous_parameters[i]);
+        } else {
+          summary.m_previous_state =
+            Modification(RiskModification(current_parameters[i]));
+        }
+      }
+      summaries.push_back(std::move(summary));
+    }
+    return summaries;
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires
