@@ -61,6 +61,8 @@ export class RequestsController extends React.Component<Properties, State> {
       detail: null,
       isSubmitting: false
     };
+    this.queryTimerId = null;
+    this.generation = 0;
   }
 
   public render(): JSX.Element {
@@ -137,6 +139,10 @@ export class RequestsController extends React.Component<Properties, State> {
     }
   }
 
+  public componentWillUnmount(): void {
+    clearTimeout(this.queryTimerId);
+  }
+
   private currentPage(): RequestsPage.Page {
     if(this.props.location.pathname.endsWith('/group')) {
       return RequestsPage.Page.GROUP_REQUESTS;
@@ -196,7 +202,7 @@ export class RequestsController extends React.Component<Properties, State> {
         requestList: []
       }
     });
-    this.loadDirectory({
+    this.loadNow({
       scope: this.currentPage() === RequestsPage.Page.YOUR_REQUESTS ?
         RequestsModel.Scope.YOU : RequestsModel.Scope.GROUP,
       requestState: parsed.requestState,
@@ -218,7 +224,11 @@ export class RequestsController extends React.Component<Properties, State> {
       pathname: this.props.location.pathname,
       search
     });
-    this.loadDirectory(submission);
+    if(submission.filters.query !== this.state.filters.query) {
+      this.scheduleLoad(submission);
+    } else {
+      this.loadNow(submission);
+    }
   }
 
   private onApprove = async (effectiveDate: Beam.Date, comment: string) => {
@@ -262,6 +272,20 @@ export class RequestsController extends React.Component<Properties, State> {
     }
   }
 
+  private scheduleLoad(submission: RequestsModel.Submission): void {
+    clearTimeout(this.queryTimerId);
+    this.queryTimerId = window.setTimeout(() => {
+      this.queryTimerId = null;
+      this.loadDirectory(submission);
+    }, QUERY_DELAY);
+  }
+
+  private loadNow(submission: RequestsModel.Submission): void {
+    clearTimeout(this.queryTimerId);
+    this.queryTimerId = null;
+    this.loadDirectory(submission);
+  }
+
   private async loadDirectory(
       submission?: RequestsModel.Submission): Promise<void> {
     const sub = submission ?? {
@@ -271,8 +295,12 @@ export class RequestsController extends React.Component<Properties, State> {
       filters: this.state.filters,
       pageIndex: this.state.pageIndex
     };
+    const generation = ++this.generation;
     try {
       const response = await this.props.model.loadRequestDirectory(sub);
+      if(generation !== this.generation) {
+        return;
+      }
       const displayStatus = (() => {
         if(response.status === RequestsModel.ResponseStatus.ERROR) {
           return RequestDirectoryPage.DisplayStatus.ERROR;
@@ -284,12 +312,20 @@ export class RequestsController extends React.Component<Properties, State> {
       })();
       this.setState({displayStatus, response});
     } catch {
+      if(generation !== this.generation) {
+        return;
+      }
       this.setState({
         displayStatus: RequestDirectoryPage.DisplayStatus.ERROR
       });
     }
   }
+
+  private queryTimerId: number;
+  private generation: number;
 }
+
+const QUERY_DELAY = 300;
 
 const DETAIL_STYLE: React.CSSProperties = {
   borderTop: '1px solid #E6E6E6',
@@ -366,7 +402,8 @@ function parseSearch(search: string): {
   const categories = new Set<Type>(
     (params.get('cat') ?? '').split(',')
       .map(s => parseInt(s, 10))
-      .filter(n => !isNaN(n) && n >= Type.ENTITLEMENTS && n <= Type.COMPLIANCE));
+      .filter(
+        n => !isNaN(n) && n >= Type.ENTITLEMENTS && n <= Type.COMPLIANCE));
   const sortKey =
     PARAM_TO_SORT_KEY[params.get('sort')] ??
     RequestsModel.SortField.LAST_UPDATED;
