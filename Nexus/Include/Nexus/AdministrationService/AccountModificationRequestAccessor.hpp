@@ -55,8 +55,8 @@ namespace Nexus {
       index, typeid(AccountModificationRequest)));
   }
 
-  inline AccountModificationRequestAccessor::
-    AccountModificationRequestAccessor(Beam::Expression expression) noexcept
+  inline AccountModificationRequestAccessor::AccountModificationRequestAccessor(
+    Beam::Expression expression) noexcept
     : m_expression(std::move(expression)) {}
 
   inline Beam::MemberAccessExpression

@@ -8,8 +8,7 @@
 namespace Nexus {
 
   /** Translates an AccountModificationRequest Expression into SQL. */
-  class AccountModificationRequestSqlTranslator :
-      public Beam::SqlTranslator {
+  class AccountModificationRequestSqlTranslator : public Beam::SqlTranslator {
     public:
       using Beam::SqlTranslator::SqlTranslator;
 

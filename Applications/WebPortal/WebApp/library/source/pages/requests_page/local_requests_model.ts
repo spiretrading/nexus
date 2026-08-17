@@ -8,13 +8,14 @@ const Status = Nexus.AccountModificationRequest.Status;
 /** Implements the RequestsModel using local memory. */
 export class LocalRequestsModel extends RequestsModel {
 
-  /** Constructs a LocalRequestsModel.
-   *  @param account - The logged-in account's directory entry.
-   *  @param entries - The initial request entries.
-   *  @param details - The initial request details keyed by id.
+  /**
+   * Constructs a LocalRequestsModel.
+   * @param account - The logged-in account's directory entry.
+   * @param entries - The initial request entries.
+   * @param details - The initial request details keyed by id.
    */
-  constructor(account: Beam.DirectoryEntry,
-      entries: RequestsModel.RequestEntry[],
+  constructor(
+      account: Beam.DirectoryEntry, entries: RequestsModel.RequestEntry[],
       details: Map<number, RequestsModel.RequestDetail>) {
     super();
     this.account = account;
@@ -22,19 +23,21 @@ export class LocalRequestsModel extends RequestsModel {
     this.details = new Map(details);
   }
 
-  /** Adds a request entry.
-   *  @param entry - The entry to add.
+  /**
+   * Adds a request entry.
+   * @param entry - The entry to add.
    */
   public addEntry(entry: RequestsModel.RequestEntry): void {
     this.entries.push(entry);
   }
 
-  /** Updates an existing entry's state and update time.
-   *  @param id - The request id to update.
-   *  @param update - The update containing the new status.
+  /**
+   * Updates an existing entry's state and update time.
+   * @param id - The request id to update.
+   * @param update - The update containing the new status.
    */
-  public updateEntry(id: number,
-      update: Nexus.AccountModificationRequest.Update): void {
+  public updateEntry(
+      id: number, update: Nexus.AccountModificationRequest.Update): void {
     const index = this.entries.findIndex(e => e.id === id);
     if(index >= 0) {
       this.entries[index] = {
@@ -45,15 +48,17 @@ export class LocalRequestsModel extends RequestsModel {
     }
   }
 
-  /** Adds a request detail.
-   *  @param detail - The detail to add.
+  /**
+   * Adds a request detail.
+   * @param detail - The detail to add.
    */
   public addDetail(detail: RequestsModel.RequestDetail): void {
     this.details.set(detail.id, detail);
   }
 
-  /** Removes a request detail.
-   *  @param id - The request id whose detail is to be removed.
+  /**
+   * Removes a request detail.
+   * @param id - The request id whose detail is to be removed.
    */
   public removeDetail(id: number): void {
     this.details.delete(id);

@@ -62,27 +62,6 @@ export class AccountModificationRequestAnchor {
 export class AccountModificationRequestQuery extends
     Beam.PagedQuery<Beam.DirectoryEntry, AccountModificationRequestAnchor> {
 
-  /** The request categories to match, or empty to match all. */
-  public categories: AccountModificationRequest.Type[];
-
-  /** The request statuses to match, or empty to match all. */
-  public statuses: AccountModificationRequest.Status[];
-
-  /** The earliest timestamp to match. */
-  public startDate: Beam.DateTime;
-
-  /** The latest timestamp to match. */
-  public endDate: Beam.DateTime;
-
-  /** Matches a request id or an account name. */
-  public search: string;
-
-  /** An account whose requests are to be excluded. */
-  public excludedAccount: Beam.DirectoryEntry;
-
-  /** The field used to order the requests. */
-  public sortField: AccountModificationRequestQuery.SortField;
-
   /**
    * Constructs an AccountModificationRequestQuery.
    * @param index - The account or directory whose requests are to be loaded.
@@ -91,28 +70,99 @@ export class AccountModificationRequestQuery extends
   constructor(index: Beam.DirectoryEntry, snapshotLimit: Beam.SnapshotLimit) {
     super(index);
     this.snapshotLimit = snapshotLimit;
-    this.categories = [];
-    this.statuses = [];
-    this.startDate = null;
-    this.endDate = null;
-    this.search = '';
-    this.excludedAccount = null;
-    this.sortField = AccountModificationRequestQuery.SortField.CREATED;
+    this._categories = [];
+    this._statuses = [];
+    this._startDate = null;
+    this._endDate = null;
+    this._search = '';
+    this._excludedAccount = null;
+    this._sortField = AccountModificationRequestQuery.SortField.CREATED;
+  }
+
+  /** Returns the request categories to match, or empty to match all. */
+  public get categories(): AccountModificationRequest.Type[] {
+    return this._categories;
+  }
+
+  public set categories(value: AccountModificationRequest.Type[]) {
+    this._categories = value;
+  }
+
+  /** Returns the request statuses to match, or empty to match all. */
+  public get statuses(): AccountModificationRequest.Status[] {
+    return this._statuses;
+  }
+
+  public set statuses(value: AccountModificationRequest.Status[]) {
+    this._statuses = value;
+  }
+
+  /** Returns the earliest timestamp to match. */
+  public get startDate(): Beam.DateTime {
+    return this._startDate;
+  }
+
+  public set startDate(value: Beam.DateTime) {
+    this._startDate = value;
+  }
+
+  /** Returns the latest timestamp to match. */
+  public get endDate(): Beam.DateTime {
+    return this._endDate;
+  }
+
+  public set endDate(value: Beam.DateTime) {
+    this._endDate = value;
+  }
+
+  /** Returns the text matching a request id or an account name. */
+  public get search(): string {
+    return this._search;
+  }
+
+  public set search(value: string) {
+    this._search = value;
+  }
+
+  /** Returns the account whose requests are to be excluded. */
+  public get excludedAccount(): Beam.DirectoryEntry {
+    return this._excludedAccount;
+  }
+
+  public set excludedAccount(value: Beam.DirectoryEntry) {
+    this._excludedAccount = value;
+  }
+
+  /** Returns the field used to order the requests. */
+  public get sortField(): AccountModificationRequestQuery.SortField {
+    return this._sortField;
+  }
+
+  public set sortField(value: AccountModificationRequestQuery.SortField) {
+    this._sortField = value;
   }
 
   /** Converts this object to JSON. */
   public toJson(): any {
     return {
       ...super.toJson(),
-      categories: this.categories.slice(),
-      statuses: this.statuses.slice(),
-      start_date: toOptionalJson(this.startDate?.toJson()),
-      end_date: toOptionalJson(this.endDate?.toJson()),
-      search: this.search,
-      excluded_account: toOptionalJson(this.excludedAccount?.toJson()),
-      sort_field: this.sortField
+      categories: this._categories.slice(),
+      statuses: this._statuses.slice(),
+      start_date: toOptionalJson(this._startDate?.toJson()),
+      end_date: toOptionalJson(this._endDate?.toJson()),
+      search: this._search,
+      excluded_account: toOptionalJson(this._excludedAccount?.toJson()),
+      sort_field: this._sortField
     };
   }
+
+  private _categories: AccountModificationRequest.Type[];
+  private _statuses: AccountModificationRequest.Status[];
+  private _startDate: Beam.DateTime;
+  private _endDate: Beam.DateTime;
+  private _search: string;
+  private _excludedAccount: Beam.DirectoryEntry;
+  private _sortField: AccountModificationRequestQuery.SortField;
 }
 
 export namespace AccountModificationRequestQuery {
@@ -137,7 +187,8 @@ export namespace AccountModificationRequestQuery {
   }
 }
 
-function toOptionalJson(value: any): any {
+/** Converts an optional value to its JSON representation. */
+export function toOptionalJson(value: any): any {
   if(value === null || value === undefined) {
     return {is_initialized: false};
   }

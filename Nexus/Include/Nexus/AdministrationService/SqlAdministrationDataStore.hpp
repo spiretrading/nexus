@@ -328,7 +328,6 @@ namespace Nexus {
     return request;
   }
 
-
   template<typename C>
   std::vector<AccountModificationRequest>
       SqlAdministrationDataStore<C>::load_account_modification_requests(

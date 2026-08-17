@@ -1,4 +1,5 @@
 import { AccountModificationRequest } from './account_modification_request';
+import { toOptionalJson } from './account_modification_request_query';
 import { EntitlementModification } from './entitlement_modification';
 import { RiskModification } from './risk_modification';
 
@@ -90,7 +91,7 @@ function modificationFromJson(value: any): Modification {
 
 function modificationToJson(value: Modification): any {
   if(!value) {
-    return {is_initialized: false};
+    return toOptionalJson(null);
   }
   const which = (() => {
     if(value instanceof EntitlementModification) {
@@ -98,11 +99,5 @@ function modificationToJson(value: Modification): any {
     }
     return 1;
   })();
-  return {
-    is_initialized: true,
-    value: {
-      which: which,
-      value: value.toJson()
-    }
-  };
+  return toOptionalJson({which: which, value: value.toJson()});
 }

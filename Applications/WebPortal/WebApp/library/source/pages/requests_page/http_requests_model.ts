@@ -526,15 +526,7 @@ function toFirstRiskChange(current: Nexus.RiskParameters,
   if(!current.transitionTime.equals(requested.transitionTime)) {
     const diff = requested.transitionTime.subtract(current.transitionTime);
     const cmp = diff.compare(Beam.Duration.ZERO);
-    const direction = (() => {
-      if(cmp > 0) {
-        return RequestsModel.Direction.POSITIVE;
-      }
-      if(cmp < 0) {
-        return RequestsModel.Direction.NEGATIVE;
-      }
-      return RequestsModel.Direction.NONE;
-    })();
+    const direction = toDirection(cmp);
     return {
       type: 'risk_controls',
       name: 'Transition Time',
@@ -554,19 +546,21 @@ function toFirstRiskChange(current: Nexus.RiskParameters,
   };
 }
 
+function toDirection(comparison: number): RequestsModel.Direction {
+  if(comparison > 0) {
+    return RequestsModel.Direction.POSITIVE;
+  }
+  if(comparison < 0) {
+    return RequestsModel.Direction.NEGATIVE;
+  }
+  return RequestsModel.Direction.NONE;
+}
+
 function makeMoneyRiskChange(name: string, oldValue: Nexus.Money,
     newValue: Nexus.Money): RequestsModel.RiskControlsChange {
   const diff = newValue.subtract(oldValue);
   const cmp = diff.compare(Nexus.Money.ZERO);
-  const direction = (() => {
-    if(cmp > 0) {
-      return RequestsModel.Direction.POSITIVE;
-    }
-    if(cmp < 0) {
-      return RequestsModel.Direction.NEGATIVE;
-    }
-    return RequestsModel.Direction.NONE;
-  })();
+  const direction = toDirection(cmp);
   return {
     type: 'risk_controls',
     name,
@@ -662,15 +656,7 @@ function addMoneyRiskChange(changes: RequestsModel.DetailChange[],
   }
   const diff = newValue.subtract(oldValue);
   const cmp = diff.compare(Nexus.Money.ZERO);
-  const direction = (() => {
-    if(cmp > 0) {
-      return RequestsModel.Direction.POSITIVE;
-    }
-    if(cmp < 0) {
-      return RequestsModel.Direction.NEGATIVE;
-    }
-    return RequestsModel.Direction.NONE;
-  })();
+  const direction = toDirection(cmp);
   changes.push({
     type: 'risk',
     name: name,
@@ -687,15 +673,7 @@ function addDurationRiskChange(changes: RequestsModel.DetailChange[],
   }
   const diff = newValue.subtract(oldValue);
   const cmp = diff.compare(Beam.Duration.ZERO);
-  const direction = (() => {
-    if(cmp > 0) {
-      return RequestsModel.Direction.POSITIVE;
-    }
-    if(cmp < 0) {
-      return RequestsModel.Direction.NEGATIVE;
-    }
-    return RequestsModel.Direction.NONE;
-  })();
+  const direction = toDirection(cmp);
   changes.push({
     type: 'risk',
     name: name,

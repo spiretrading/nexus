@@ -459,7 +459,6 @@ function RequestDirectoryContent(props: {
   return (<>
     <RequestList
       displayStatus={props.displayStatus}
-      pageIndex={props.pageIndex}
       response={props.response}
       onClickRequest={props.onClickRequest}/>
     <PaginationSection
@@ -493,7 +492,6 @@ function Fallback(props: {
  *  Shows 5 placeholders when IN_PROGRESS, otherwise paginated items. */
 function RequestList(props: {
     displayStatus: RequestDirectoryPage.DisplayStatus;
-    pageIndex: number;
     response: RequestsModel.Response;
     onClickRequest?: (id: number) => void;
   }) {

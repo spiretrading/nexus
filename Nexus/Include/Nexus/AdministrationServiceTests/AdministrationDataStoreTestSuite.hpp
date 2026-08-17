@@ -810,7 +810,8 @@ namespace Nexus::Tests {
       auto query = AccountModificationRequestQuery();
       query.set_index(account);
       query.set_snapshot_limit(SnapshotLimit::from_head(100));
-      query.set_anchor(AccountModificationRequestAnchor(20, ptime(), ""));
+      query.set_anchor(
+        AccountModificationRequestAnchor(20, not_a_date_time, ""));
       auto head = data_store.with_transaction([&] {
         return data_store.load_account_modification_requests(query);
       });
@@ -818,7 +819,8 @@ namespace Nexus::Tests {
       REQUIRE(head[0].get_id() == 30);
       REQUIRE(head[1].get_id() == 40);
       query.set_snapshot_limit(SnapshotLimit::from_tail(100));
-      query.set_anchor(AccountModificationRequestAnchor(30, ptime(), ""));
+      query.set_anchor(
+        AccountModificationRequestAnchor(30, not_a_date_time, ""));
       auto tail = data_store.with_transaction([&] {
         return data_store.load_account_modification_requests(query);
       });
@@ -888,7 +890,8 @@ namespace Nexus::Tests {
       });
       REQUIRE(requests.size() == 1);
       REQUIRE(requests[0].get_id() == 1);
-      query.set_anchor(AccountModificationRequestAnchor(1, ptime(), ""));
+      query.set_anchor(
+        AccountModificationRequestAnchor(1, not_a_date_time, ""));
       auto anchored = data_store.with_transaction([&] {
         return data_store.load_account_modification_requests({account_a},
           query);
