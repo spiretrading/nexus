@@ -1586,17 +1586,59 @@ namespace Nexus {
       statuses = m_data_store->load_account_modification_request_statuses(ids);
       counts = m_data_store->load_message_counts(ids);
       predecessors = m_data_store->load_previous_granted_requests(ids);
-      auto predecessor_ids = std::vector<AccountModificationRequest::Id>();
-      predecessor_ids.reserve(predecessors.size());
-      for(auto& predecessor : predecessors) {
-        predecessor_ids.push_back(predecessor.value_or(-1));
+      auto entitlement_positions = std::vector<std::size_t>();
+      auto risk_positions = std::vector<std::size_t>();
+      auto previous_entitlement_positions = std::vector<std::size_t>();
+      auto previous_risk_positions = std::vector<std::size_t>();
+      for(auto i = std::size_t(0); i != requests.size(); ++i) {
+        if(requests[i].get_type() ==
+            AccountModificationRequest::Type::ENTITLEMENTS) {
+          entitlement_positions.push_back(i);
+          if(predecessors[i]) {
+            previous_entitlement_positions.push_back(i);
+          }
+        } else if(requests[i].get_type() ==
+            AccountModificationRequest::Type::RISK) {
+          risk_positions.push_back(i);
+          if(predecessors[i]) {
+            previous_risk_positions.push_back(i);
+          }
+        }
       }
-      entitlements = m_data_store->load_entitlement_modifications(ids);
-      parameters = m_data_store->load_risk_modifications(ids);
-      previous_entitlements =
-        m_data_store->load_entitlement_modifications(predecessor_ids);
-      previous_parameters =
-        m_data_store->load_risk_modifications(predecessor_ids);
+      auto request_ids = [&] (const std::vector<std::size_t>& positions) {
+        auto result = std::vector<AccountModificationRequest::Id>();
+        result.reserve(positions.size());
+        for(auto position : positions) {
+          result.push_back(requests[position].get_id());
+        }
+        return result;
+      };
+      auto predecessor_ids = [&] (const std::vector<std::size_t>& positions) {
+        auto result = std::vector<AccountModificationRequest::Id>();
+        result.reserve(positions.size());
+        for(auto position : positions) {
+          result.push_back(*predecessors[position]);
+        }
+        return result;
+      };
+      auto scatter = [&] (const std::vector<std::size_t>& positions,
+          auto loaded, auto& target) {
+        target.resize(requests.size());
+        for(auto j = std::size_t(0); j != positions.size(); ++j) {
+          target[positions[j]] = std::move(loaded[j]);
+        }
+      };
+      scatter(entitlement_positions,
+        m_data_store->load_entitlement_modifications(
+          request_ids(entitlement_positions)), entitlements);
+      scatter(risk_positions, m_data_store->load_risk_modifications(
+        request_ids(risk_positions)), parameters);
+      scatter(previous_entitlement_positions,
+        m_data_store->load_entitlement_modifications(
+          predecessor_ids(previous_entitlement_positions)),
+        previous_entitlements);
+      scatter(previous_risk_positions, m_data_store->load_risk_modifications(
+        predecessor_ids(previous_risk_positions)), previous_parameters);
       current_parameters.resize(requests.size());
       auto loaded_parameters =
         std::unordered_map<Beam::DirectoryEntry, RiskParameters>();

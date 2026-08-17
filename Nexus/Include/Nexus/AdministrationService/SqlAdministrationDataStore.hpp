@@ -703,11 +703,16 @@ namespace Nexus {
     } catch(const std::exception& e) {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }
+    auto parameters =
+      std::unordered_map<AccountModificationRequest::Id, RiskParameters>();
+    parameters.reserve(rows.size());
+    for(auto& row : rows) {
+      parameters[row.m_id] = row.m_parameters;
+    }
     for(auto i = std::size_t(0); i != ids.size(); ++i) {
-      auto row =
-        std::ranges::find(rows, ids[i], &IndexedRiskModification::m_id);
-      if(row != rows.end()) {
-        modifications[i] = RiskModification(row->m_parameters);
+      auto entry = parameters.find(ids[i]);
+      if(entry != parameters.end()) {
+        modifications[i] = RiskModification(entry->second);
       }
     }
     return modifications;

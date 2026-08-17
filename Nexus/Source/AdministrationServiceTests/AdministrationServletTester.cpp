@@ -1800,6 +1800,93 @@ TEST_SUITE("AdministrationServlet") {
       *summaries[1].m_previous_state).get_parameters() == granted);
   }
 
+  TEST_CASE("summaries_mixing_entitlement_and_risk_requests") {
+    auto fixture = Fixture();
+    auto entitlements = std::vector<DirectoryEntry>();
+    for(auto& entry : fixture.m_entitlements.get_entries()) {
+      entitlements.push_back(entry.m_group_entry);
+    }
+    auto granted_parameters = RiskParameters(USD, 100 * Money::ONE,
+      RiskState::Type::ACTIVE, 10 * Money::ONE, seconds(10));
+    auto requested_parameters = RiskParameters(USD, 200 * Money::ONE,
+      RiskState::Type::ACTIVE, 20 * Money::ONE, seconds(20));
+    auto manager_parameters = RiskParameters(USD, 300 * Money::ONE,
+      RiskState::Type::ACTIVE, 30 * Money::ONE, seconds(30));
+    auto manager_requested = RiskParameters(USD, 400 * Money::ONE,
+      RiskState::Type::ACTIVE, 40 * Money::ONE, seconds(40));
+    fixture.m_data_store.with_transaction([&] {
+      fixture.m_data_store.store(fixture.m_manager_account, manager_parameters);
+      fixture.m_data_store.store(AccountModificationRequest(1,
+        AccountModificationRequest::Type::RISK, fixture.m_trader_account,
+        fixture.m_trader_account, time_from_string("2024-07-04 12:00:00"),
+        time_from_string("2024-08-01 00:00:00")),
+        RiskModification(granted_parameters));
+      fixture.m_data_store.store(1, AccountModificationRequest::Update(
+        AccountModificationRequest::Status::GRANTED,
+        fixture.m_manager_account, 0,
+        time_from_string("2024-07-04 12:30:00")));
+      fixture.m_data_store.store(AccountModificationRequest(2,
+        AccountModificationRequest::Type::ENTITLEMENTS,
+        fixture.m_trader_account, fixture.m_trader_account,
+        time_from_string("2024-07-04 13:00:00"),
+        time_from_string("2024-08-01 00:00:00")),
+        EntitlementModification({entitlements[0]}));
+      fixture.m_data_store.store(2, AccountModificationRequest::Update(
+        AccountModificationRequest::Status::GRANTED,
+        fixture.m_manager_account, 0,
+        time_from_string("2024-07-04 13:30:00")));
+      fixture.m_data_store.store(AccountModificationRequest(3,
+        AccountModificationRequest::Type::ENTITLEMENTS,
+        fixture.m_trader_account, fixture.m_trader_account,
+        time_from_string("2024-07-04 14:00:00"),
+        time_from_string("2024-08-01 00:00:00")),
+        EntitlementModification(entitlements));
+      fixture.m_data_store.store(AccountModificationRequest(4,
+        AccountModificationRequest::Type::RISK, fixture.m_trader_account,
+        fixture.m_trader_account, time_from_string("2024-07-04 15:00:00"),
+        time_from_string("2024-08-01 00:00:00")),
+        RiskModification(requested_parameters));
+      fixture.m_data_store.store(AccountModificationRequest(5,
+        AccountModificationRequest::Type::RISK, fixture.m_manager_account,
+        fixture.m_manager_account, time_from_string("2024-07-04 16:00:00"),
+        time_from_string("2024-08-01 00:00:00")),
+        RiskModification(manager_requested));
+      fixture.m_data_store.store(AccountModificationRequest(6,
+        AccountModificationRequest::Type::ENTITLEMENTS,
+        fixture.m_manager_account, fixture.m_manager_account,
+        time_from_string("2024-07-04 17:00:00"),
+        time_from_string("2024-08-01 00:00:00")),
+        EntitlementModification({entitlements[1]}));
+    });
+    auto trading_groups_root =
+      fixture.m_service_locator_environment.get_root().load_directory_entry(
+        DirectoryEntry::STAR_DIRECTORY, "trading_groups");
+    auto query = AccountModificationRequestQuery();
+    query.set_index(trading_groups_root);
+    query.set_snapshot_limit(SnapshotLimit::from_head(100));
+    auto summaries = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(summaries.size() == 6);
+    REQUIRE(get<EntitlementModification>(
+      *summaries[2].m_modification).get_entitlements() == entitlements);
+    REQUIRE(get<EntitlementModification>(
+      *summaries[2].m_previous_state).get_entitlements() ==
+        std::vector({entitlements[0]}));
+    REQUIRE(get<RiskModification>(
+      *summaries[3].m_modification).get_parameters() == requested_parameters);
+    REQUIRE(get<RiskModification>(
+      *summaries[3].m_previous_state).get_parameters() == granted_parameters);
+    REQUIRE(get<RiskModification>(
+      *summaries[4].m_modification).get_parameters() == manager_requested);
+    REQUIRE(get<RiskModification>(
+      *summaries[4].m_previous_state).get_parameters() == manager_parameters);
+    REQUIRE(get<EntitlementModification>(
+      *summaries[5].m_modification).get_entitlements() ==
+        std::vector({entitlements[1]}));
+    REQUIRE(get<EntitlementModification>(
+      *summaries[5].m_previous_state).get_entitlements().empty());
+  }
+
   TEST_CASE("load_account_modification_request_counts") {
     auto fixture = Fixture();
     auto modification = EntitlementModification();

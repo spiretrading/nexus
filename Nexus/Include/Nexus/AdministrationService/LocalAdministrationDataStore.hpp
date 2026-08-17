@@ -2,6 +2,7 @@
 #define NEXUS_LOCAL_ADMINISTRATION_DATA_STORE_HPP
 #include <ranges>
 #include <unordered_map>
+#include <unordered_set>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include "Nexus/AdministrationService/AccountModificationRequestEvaluatorTranslator.hpp"
@@ -119,6 +120,8 @@ namespace Nexus {
       std::unordered_map<Beam::DirectoryEntry, std::vector<Notification>>
         m_notifications;
 
+      static std::unordered_set<Beam::DirectoryEntry> make_account_scope(
+        const std::vector<Beam::DirectoryEntry>* accounts);
       LocalAdministrationDataStore(
         const LocalAdministrationDataStore&) = delete;
       LocalAdministrationDataStore& operator =(
@@ -291,16 +294,26 @@ namespace Nexus {
     return true;
   }
 
+  inline std::unordered_set<Beam::DirectoryEntry>
+      LocalAdministrationDataStore::make_account_scope(
+        const std::vector<Beam::DirectoryEntry>* accounts) {
+    if(!accounts) {
+      return {};
+    }
+    return std::unordered_set(accounts->begin(), accounts->end());
+  }
+
   inline AccountModificationRequestCounts
       LocalAdministrationDataStore::count_requests(
         const std::vector<Beam::DirectoryEntry>* accounts,
         const AccountModificationRequestQuery& query) {
     auto evaluator = Beam::translate<
       AccountModificationRequestEvaluatorTranslator>(query.get_filter());
+    auto scope = make_account_scope(accounts);
     auto counts = AccountModificationRequestCounts(0, 0, 0);
     for(auto& entry : m_account_modification_requests) {
       auto& request = entry.second;
-      if(accounts && !std::ranges::contains(*accounts, request.get_account())) {
+      if(accounts && !scope.contains(request.get_account())) {
         continue;
       }
       if(!Beam::test_filter(*evaluator, request)) {
@@ -354,10 +367,11 @@ namespace Nexus {
       }
       return SortKey(boost::posix_time::neg_infin, anchor->m_id);
     }();
+    auto scope = make_account_scope(accounts);
     auto matches = std::vector<AccountModificationRequest>();
     for(auto& entry : m_account_modification_requests) {
       auto& request = entry.second;
-      if(accounts && !std::ranges::contains(*accounts, request.get_account())) {
+      if(accounts && !scope.contains(request.get_account())) {
         continue;
       }
       auto is_excluded = [&] {
