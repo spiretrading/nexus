@@ -20,7 +20,10 @@ namespace Nexus {
         CREATED,
 
         /** Order by the time a request was last updated. */
-        LAST_UPDATED
+        LAST_UPDATED,
+
+        /** Order by the date a request takes effect. */
+        EFFECTIVE_DATE
       };
 
       /** Constructs a query ordered by the time a request was submitted. */
@@ -60,6 +63,9 @@ namespace Nexus {
       std::ostream& out, AccountModificationRequestQuery::SortField field) {
     if(field == AccountModificationRequestQuery::SortField::LAST_UPDATED) {
       return out << "LAST_UPDATED";
+    } else if(
+        field == AccountModificationRequestQuery::SortField::EFFECTIVE_DATE) {
+      return out << "EFFECTIVE_DATE";
     }
     return out << "CREATED";
   }
@@ -93,7 +99,8 @@ namespace Nexus {
     shuttle.shuttle("sort_field", m_sort_field);
     if constexpr(Beam::IsReceiver<S>) {
       if(m_sort_field != SortField::CREATED &&
-          m_sort_field != SortField::LAST_UPDATED) {
+          m_sort_field != SortField::LAST_UPDATED &&
+          m_sort_field != SortField::EFFECTIVE_DATE) {
         m_sort_field = SortField::CREATED;
       }
     }

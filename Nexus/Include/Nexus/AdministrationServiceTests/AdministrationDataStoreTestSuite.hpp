@@ -545,6 +545,48 @@ namespace Nexus::Tests {
       REQUIRE(created[2].get_id() == 3);
     }
 
+    SUBCASE("load_account_modification_requests_sorted_by_effective_date") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto modification = EntitlementModification();
+      auto dates = std::vector<std::string>{"2024-09-03 00:00:00",
+        "2024-09-01 00:00:00", "2024-09-02 00:00:00"};
+      data_store.with_transaction([&] {
+        for(auto i = 0; i != 3; ++i) {
+          data_store.store(AccountModificationRequest(i + 1,
+            AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+            time_from_string("2024-07-05 10:00:00"),
+            time_from_string(dates[i])), modification);
+        }
+      });
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account);
+      query.set_sort_field(
+        AccountModificationRequestQuery::SortField::EFFECTIVE_DATE);
+      query.set_snapshot_limit(SnapshotLimit::from_tail(3));
+      auto requests = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(requests.size() == 3);
+      REQUIRE(requests[0].get_id() == 2);
+      REQUIRE(requests[1].get_id() == 3);
+      REQUIRE(requests[2].get_id() == 1);
+      query.set_snapshot_limit(SnapshotLimit::from_tail(2));
+      query.set_anchor(3);
+      auto next = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(next.size() == 1);
+      REQUIRE(next[0].get_id() == 2);
+      query.set_anchor(boost::optional<AccountModificationRequest::Id>());
+      query.set_snapshot_limit(SnapshotLimit::from_head(2));
+      auto head = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(head.size() == 2);
+      REQUIRE(head[0].get_id() == 2);
+      REQUIRE(head[1].get_id() == 3);
+    }
+
     SUBCASE("load_account_modification_requests_with_anchor") {
       auto account = DirectoryEntry::make_account(100, "user_a");
       auto modification = EntitlementModification();

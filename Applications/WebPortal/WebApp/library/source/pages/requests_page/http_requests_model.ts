@@ -329,6 +329,8 @@ function toSortField(sortKey: RequestsModel.SortField):
     Nexus.AccountModificationRequestQuery.SortField {
   if(sortKey === RequestsModel.SortField.LAST_UPDATED) {
     return Nexus.AccountModificationRequestQuery.SortField.LAST_UPDATED;
+  } else if(sortKey === RequestsModel.SortField.EFFECTIVE_DATE) {
+    return Nexus.AccountModificationRequestQuery.SortField.EFFECTIVE_DATE;
   }
   return Nexus.AccountModificationRequestQuery.SortField.CREATED;
 }

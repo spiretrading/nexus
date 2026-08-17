@@ -62,7 +62,10 @@ export namespace AccountModificationRequestQuery {
     CREATED = 0,
 
     /** Order by the time a request was last updated. */
-    LAST_UPDATED = 1
+    LAST_UPDATED = 1,
+
+    /** Order by the date a request takes effect. */
+    EFFECTIVE_DATE = 2
   }
 }
 

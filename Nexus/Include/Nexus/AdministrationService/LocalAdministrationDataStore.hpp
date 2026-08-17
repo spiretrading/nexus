@@ -245,19 +245,19 @@ namespace Nexus {
     auto& anchor = query.get_anchor();
     auto is_head =
       query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
-    auto is_created =
-      query.get_sort_field() == AccountModificationRequestQuery::
-        SortField::CREATED;
+    auto field = query.get_sort_field();
     using SortKey =
       std::pair<boost::posix_time::ptime, AccountModificationRequest::Id>;
     auto key = [&] (const AccountModificationRequest& request) {
-      if(is_created) {
+      if(field == AccountModificationRequestQuery::SortField::LAST_UPDATED) {
         return SortKey(
-          boost::posix_time::ptime(boost::posix_time::neg_infin),
-          request.get_id());
+          load_last_update_timestamp(request.get_id()), request.get_id());
+      } else if(
+          field == AccountModificationRequestQuery::SortField::EFFECTIVE_DATE) {
+        return SortKey(request.get_effective_date(), request.get_id());
       }
-      return SortKey(
-        load_last_update_timestamp(request.get_id()), request.get_id());
+      return SortKey(boost::posix_time::ptime(boost::posix_time::neg_infin),
+        request.get_id());
     };
     auto anchor_key = [&] {
       if(!anchor) {

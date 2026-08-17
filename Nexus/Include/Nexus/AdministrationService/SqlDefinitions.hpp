@@ -193,7 +193,8 @@ namespace Nexus {
         &StoredAccountModificationRequest::m_request).
       add_column("last_update_timestamp",
         &StoredAccountModificationRequest::m_last_update_timestamp).
-      add_index("last_update_index", {"last_update_timestamp", "id"});
+      add_index("last_update_index", {"last_update_timestamp", "id"}).
+      add_index("effective_date_index", {"effective_date", "id"});
     return ROW;
   }
 

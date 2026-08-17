@@ -23,9 +23,14 @@ export function RequestSortSelect(
         style={{...STYLE.select, ...rest.style}}
         onChange={onSelectChange}>
       <option value={RequestsModel.SortField.LAST_UPDATED}>
-        Last Updated</option>
+        Last Updated
+      </option>
       <option value={RequestsModel.SortField.CREATED}>
-        Created</option>
+        Created
+      </option>
+      <option value={RequestsModel.SortField.EFFECTIVE_DATE}>
+        Effective Date
+      </option>
     </Select>);
 }
 

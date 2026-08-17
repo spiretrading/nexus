@@ -117,8 +117,10 @@ namespace Nexus {
 
       static Viper::Expression make_id_filter(const std::string& column,
         const std::vector<AccountModificationRequest::Id>& ids);
-      boost::posix_time::ptime load_last_update_timestamp(
-        AccountModificationRequest::Id id);
+      static std::string get_sort_column(
+        AccountModificationRequestQuery::SortField field);
+      boost::posix_time::ptime load_sort_timestamp(
+        const std::string& column, AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest> load_requests(
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query);
@@ -342,14 +344,25 @@ namespace Nexus {
   }
 
   template<typename C>
-  boost::posix_time::ptime
-      SqlAdministrationDataStore<C>::load_last_update_timestamp(
-        AccountModificationRequest::Id id) {
+  std::string SqlAdministrationDataStore<C>::get_sort_column(
+      AccountModificationRequestQuery::SortField field) {
+    if(field == AccountModificationRequestQuery::SortField::LAST_UPDATED) {
+      return "last_update_timestamp";
+    } else if(
+        field == AccountModificationRequestQuery::SortField::EFFECTIVE_DATE) {
+      return "effective_date";
+    }
+    return "";
+  }
+
+  template<typename C>
+  boost::posix_time::ptime SqlAdministrationDataStore<C>::load_sort_timestamp(
+      const std::string& column, AccountModificationRequest::Id id) {
     auto timestamp = std::optional<boost::posix_time::ptime>();
     try {
-      m_connection->execute(Viper::select(
-        Viper::Row<boost::posix_time::ptime>("last_update_timestamp"),
-        "account_modification_requests", Viper::sym("id") == id, &timestamp));
+      m_connection->execute(
+        Viper::select(Viper::Row<boost::posix_time::ptime>(column),
+          "account_modification_requests", Viper::sym("id") == id, &timestamp));
     } catch(const Viper::ExecuteException& e) {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }
@@ -368,29 +381,25 @@ namespace Nexus {
       "account_modification_requests", query.get_filter());
     auto is_head =
       query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
-    auto is_created =
-      query.get_sort_field() == AccountModificationRequestQuery::
-        SortField::CREATED;
+    auto sort_column = get_sort_column(query.get_sort_field());
     auto anchor = [&] {
       auto anchor = query.get_anchor();
       if(!anchor) {
         return Viper::literal(true);
       }
-      if(is_created) {
+      if(sort_column.empty()) {
         if(is_head) {
           return Viper::sym("id") > *anchor;
         }
         return Viper::sym("id") < *anchor;
       }
-      auto timestamp = load_last_update_timestamp(*anchor);
+      auto timestamp = load_sort_timestamp(sort_column, *anchor);
       if(is_head) {
-        return Viper::sym("last_update_timestamp") > timestamp ||
-          (Viper::sym("last_update_timestamp") == timestamp &&
-            Viper::sym("id") > *anchor);
+        return Viper::sym(sort_column) > timestamp ||
+          (Viper::sym(sort_column) == timestamp && Viper::sym("id") > *anchor);
       }
-      return Viper::sym("last_update_timestamp") < timestamp ||
-        (Viper::sym("last_update_timestamp") == timestamp &&
-          Viper::sym("id") < *anchor);
+      return Viper::sym(sort_column) < timestamp ||
+        (Viper::sym(sort_column) == timestamp && Viper::sym("id") < *anchor);
     }();
     auto direction = [&] {
       if(is_head) {
@@ -399,8 +408,8 @@ namespace Nexus {
       return Viper::Order::DESC;
     }();
     auto order = std::vector<Viper::Order::Column>();
-    if(!is_created) {
-      order.emplace_back("last_update_timestamp", direction);
+    if(!sort_column.empty()) {
+      order.emplace_back(sort_column, direction);
     }
     order.emplace_back("id", direction);
     auto requests = std::vector<AccountModificationRequest>();
