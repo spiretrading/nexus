@@ -120,6 +120,7 @@ export class HttpRequestsModel extends RequestsModel {
     }
     query.categories = [...submission.filters.categories];
     query.search = submission.filters.query;
+    query.sortField = toSortField(submission.filters.sortKey);
     if(submission.filters.startDate) {
       query.startDate = new Beam.DateTime(submission.filters.startDate);
     }
@@ -322,6 +323,14 @@ function entitlementName(
     return entry.name;
   }
   return info.name;
+}
+
+function toSortField(sortKey: RequestsModel.SortField):
+    Nexus.AccountModificationRequestQuery.SortField {
+  if(sortKey === RequestsModel.SortField.LAST_UPDATED) {
+    return Nexus.AccountModificationRequestQuery.SortField.LAST_UPDATED;
+  }
+  return Nexus.AccountModificationRequestQuery.SortField.CREATED;
 }
 
 function makeAnchorKey(submission: RequestsModel.Submission): string {

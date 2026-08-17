@@ -8,6 +8,7 @@
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequestAccessor.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequestCounts.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestQuery.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequestSummary.hpp"
 #include "Nexus/AdministrationService/AccountQueryResult.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
@@ -137,6 +138,31 @@ void Nexus::Python::export_account_modification_request_counts(
     def_readwrite("rejected", &AccountModificationRequestCounts::m_rejected);
 }
 
+void Nexus::Python::export_account_modification_request_query(
+    module& module) {
+  auto outer = class_<AccountModificationRequestQuery, SnapshotLimitedQuery,
+    FilteredQuery>(module, "AccountModificationRequestQuery");
+  enum_<AccountModificationRequestQuery::SortField>(outer, "SortField").
+    value("CREATED", AccountModificationRequestQuery::SortField::CREATED).
+    value("LAST_UPDATED",
+      AccountModificationRequestQuery::SortField::LAST_UPDATED);
+  export_default_methods(outer.
+    def(init()).
+    def_property("index", &AccountModificationRequestQuery::get_index,
+      &AccountModificationRequestQuery::set_index).
+    def_property("anchor", &AccountModificationRequestQuery::get_anchor,
+      overload_cast<
+        const optional<AccountModificationRequest::Id>&>(
+          &AccountModificationRequestQuery::set_anchor)).
+    def_property("offset", &AccountModificationRequestQuery::get_offset,
+      &AccountModificationRequestQuery::set_offset).
+    def_property("sort_field",
+      &AccountModificationRequestQuery::get_sort_field,
+      &AccountModificationRequestQuery::set_sort_field));
+  module.def("make_account_modification_request_query",
+    &make_account_modification_request_query);
+}
+
 void Nexus::Python::export_account_modification_request_summary(
     module& module) {
   export_default_methods(class_<AccountModificationRequestSummary>(
@@ -209,6 +235,7 @@ void Nexus::Python::export_administration_service(module& module) {
   export_account_modification_request(module);
   export_account_modification_request_accessor(module);
   export_account_modification_request_counts(module);
+  export_account_modification_request_query(module);
   export_account_modification_request_summary(module);
   export_account_query_result(module);
   export_account_roles(module);

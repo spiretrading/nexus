@@ -118,6 +118,8 @@ namespace Nexus {
         const LocalAdministrationDataStore&) = delete;
       LocalAdministrationDataStore& operator =(
         const LocalAdministrationDataStore&) = delete;
+      boost::posix_time::ptime load_last_update_timestamp(
+        AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest> load_requests(
         const std::vector<Beam::DirectoryEntry>* accounts,
         const AccountModificationRequestQuery& query);
@@ -219,6 +221,21 @@ namespace Nexus {
     return load_requests(nullptr, query);
   }
 
+  inline boost::posix_time::ptime
+      LocalAdministrationDataStore::load_last_update_timestamp(
+        AccountModificationRequest::Id id) {
+    auto updates = m_account_modification_request_updates.find(id);
+    if(updates != m_account_modification_request_updates.end() &&
+        !updates->second.empty()) {
+      return updates->second.back().m_timestamp;
+    }
+    auto request = m_account_modification_requests.find(id);
+    if(request == m_account_modification_requests.end()) {
+      return boost::posix_time::not_a_date_time;
+    }
+    return request->second.get_timestamp();
+  }
+
   inline std::vector<AccountModificationRequest>
       LocalAdministrationDataStore::load_requests(
         const std::vector<Beam::DirectoryEntry>* accounts,
@@ -228,6 +245,31 @@ namespace Nexus {
     auto& anchor = query.get_anchor();
     auto is_head =
       query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
+    auto is_created =
+      query.get_sort_field() == AccountModificationRequestQuery::
+        SortField::CREATED;
+    using SortKey =
+      std::pair<boost::posix_time::ptime, AccountModificationRequest::Id>;
+    auto key = [&] (const AccountModificationRequest& request) {
+      if(is_created) {
+        return SortKey(
+          boost::posix_time::ptime(boost::posix_time::neg_infin),
+          request.get_id());
+      }
+      return SortKey(
+        load_last_update_timestamp(request.get_id()), request.get_id());
+    };
+    auto anchor_key = [&] {
+      if(!anchor) {
+        return SortKey();
+      }
+      auto request = m_account_modification_requests.find(*anchor);
+      if(request == m_account_modification_requests.end()) {
+        return SortKey(
+          boost::posix_time::ptime(boost::posix_time::neg_infin), *anchor);
+      }
+      return key(request->second);
+    }();
     auto matches = std::vector<AccountModificationRequest>();
     for(auto& entry : m_account_modification_requests) {
       auto& request = entry.second;
@@ -239,9 +281,9 @@ namespace Nexus {
           return false;
         }
         if(is_head) {
-          return request.get_id() <= *anchor;
+          return key(request) <= anchor_key;
         }
-        return request.get_id() >= *anchor;
+        return key(request) >= anchor_key;
       }();
       if(is_excluded) {
         continue;
@@ -251,8 +293,7 @@ namespace Nexus {
       }
       matches.push_back(request);
     }
-    std::ranges::sort(
-      matches, std::ranges::less(), &AccountModificationRequest::get_id);
+    std::ranges::sort(matches, std::ranges::less(), key);
     auto offset = query.get_offset();
     auto skip = std::min<std::size_t>(offset, matches.size());
     if(is_head) {

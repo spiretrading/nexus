@@ -117,6 +117,8 @@ namespace Nexus {
 
       static Viper::Expression make_id_filter(const std::string& column,
         const std::vector<AccountModificationRequest::Id>& ids);
+      boost::posix_time::ptime load_last_update_timestamp(
+        AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest> load_requests(
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query);
@@ -137,7 +139,7 @@ namespace Nexus {
       m_connection->execute(Viper::create_if_not_exists(
         get_indexed_risk_state_row(), "risk_states"));
       m_connection->execute(Viper::create_if_not_exists(
-        get_account_modification_request_row(),
+        get_stored_account_modification_request_row(),
         "account_modification_requests"));
       m_connection->execute(Viper::create_if_not_exists(
         get_entitlement_modification_row(), "entitlement_modifications"));
@@ -340,6 +342,24 @@ namespace Nexus {
   }
 
   template<typename C>
+  boost::posix_time::ptime
+      SqlAdministrationDataStore<C>::load_last_update_timestamp(
+        AccountModificationRequest::Id id) {
+    auto timestamp = std::optional<boost::posix_time::ptime>();
+    try {
+      m_connection->execute(Viper::select(
+        Viper::Row<boost::posix_time::ptime>("last_update_timestamp"),
+        "account_modification_requests", Viper::sym("id") == id, &timestamp));
+    } catch(const Viper::ExecuteException& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
+    if(!timestamp) {
+      return boost::posix_time::not_a_date_time;
+    }
+    return *timestamp;
+  }
+
+  template<typename C>
   std::vector<AccountModificationRequest>
       SqlAdministrationDataStore<C>::load_requests(
         const Viper::Expression& accounts,
@@ -348,27 +368,47 @@ namespace Nexus {
       "account_modification_requests", query.get_filter());
     auto is_head =
       query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
+    auto is_created =
+      query.get_sort_field() == AccountModificationRequestQuery::
+        SortField::CREATED;
     auto anchor = [&] {
-      if(auto anchor = query.get_anchor()) {
+      auto anchor = query.get_anchor();
+      if(!anchor) {
+        return Viper::literal(true);
+      }
+      if(is_created) {
         if(is_head) {
           return Viper::sym("id") > *anchor;
         }
         return Viper::sym("id") < *anchor;
       }
-      return Viper::literal(true);
+      auto timestamp = load_last_update_timestamp(*anchor);
+      if(is_head) {
+        return Viper::sym("last_update_timestamp") > timestamp ||
+          (Viper::sym("last_update_timestamp") == timestamp &&
+            Viper::sym("id") > *anchor);
+      }
+      return Viper::sym("last_update_timestamp") < timestamp ||
+        (Viper::sym("last_update_timestamp") == timestamp &&
+          Viper::sym("id") < *anchor);
     }();
-    auto order = [&] {
+    auto direction = [&] {
       if(is_head) {
         return Viper::Order::ASC;
       }
       return Viper::Order::DESC;
     }();
+    auto order = std::vector<Viper::Order::Column>();
+    if(!is_created) {
+      order.emplace_back("last_update_timestamp", direction);
+    }
+    order.emplace_back("id", direction);
     auto requests = std::vector<AccountModificationRequest>();
     try {
       m_connection->execute(Viper::select(
         get_account_modification_request_row(),
         "account_modification_requests", filter && anchor && accounts,
-        Viper::order_by("id", order),
+        Viper::order_by(std::move(order)),
         Viper::limit(std::max(0, query.get_snapshot_limit().get_size()),
           query.get_offset()),
         std::back_inserter(requests)));
@@ -600,10 +640,12 @@ namespace Nexus {
     for(auto& entitlement : modification.get_entitlements()) {
       entitlements.push_back({request.get_id(), entitlement});
     }
+    auto stored =
+      StoredAccountModificationRequest(request, request.get_timestamp());
     try {
       m_connection->execute(Viper::insert(
-        get_account_modification_request_row(), "account_modification_requests",
-        &request));
+        get_stored_account_modification_request_row(),
+        "account_modification_requests", &stored));
       m_connection->execute(Viper::insert(get_entitlement_modification_row(),
         "entitlement_modifications", entitlements.begin(), entitlements.end()));
     } catch(const Viper::ExecuteException& e) {
@@ -630,10 +672,12 @@ namespace Nexus {
       const RiskModification& modification) {
     auto indexed_modification = IndexedRiskModification(
       request.get_id(), request.get_account(), modification.get_parameters());
+    auto stored =
+      StoredAccountModificationRequest(request, request.get_timestamp());
     try {
-      m_connection->execute(Viper::insert(
-        get_account_modification_request_row(), "account_modification_requests",
-        &request));
+      m_connection->execute(
+        Viper::insert(get_stored_account_modification_request_row(),
+          "account_modification_requests", &stored));
       m_connection->execute(Viper::insert(get_risk_modification_row(),
         "risk_modifications", &indexed_modification));
     } catch(const Viper::ExecuteException& e) {
@@ -709,9 +753,12 @@ namespace Nexus {
       const AccountModificationRequest::Update& status) {
     auto indexed_updated = IndexedAccountModificationRequestStatus(id, status);
     try {
-      m_connection->execute(Viper::insert(
-        get_indexed_account_modification_request_status(),
-        "account_modification_request_status", &indexed_updated));
+      m_connection->execute(
+        Viper::insert(get_indexed_account_modification_request_status(),
+          "account_modification_request_status", &indexed_updated));
+      m_connection->execute(Viper::update("account_modification_requests",
+        Viper::SetClause("last_update_timestamp", status.m_timestamp),
+        Viper::sym("id") == id));
     } catch(const Viper::ExecuteException& e) {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }

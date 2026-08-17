@@ -20,6 +20,9 @@ export class AccountModificationRequestQuery extends
   /** An account whose requests are to be excluded. */
   public excludedAccount: Beam.DirectoryEntry;
 
+  /** The field used to order the requests. */
+  public sortField: AccountModificationRequestQuery.SortField;
+
   /**
    * Constructs an AccountModificationRequestQuery.
    * @param index - The account or directory whose requests are to be loaded.
@@ -33,6 +36,7 @@ export class AccountModificationRequestQuery extends
     this.endDate = null;
     this.search = '';
     this.excludedAccount = null;
+    this.sortField = AccountModificationRequestQuery.SortField.CREATED;
   }
 
   /** Converts this object to JSON. */
@@ -43,8 +47,22 @@ export class AccountModificationRequestQuery extends
       start_date: toOptionalJson(this.startDate?.toJson()),
       end_date: toOptionalJson(this.endDate?.toJson()),
       search: this.search,
-      excluded_account: toOptionalJson(this.excludedAccount?.toJson())
+      excluded_account: toOptionalJson(this.excludedAccount?.toJson()),
+      sort_field: this.sortField
     };
+  }
+}
+
+export namespace AccountModificationRequestQuery {
+
+  /** Lists the fields that requests can be ordered by. */
+  export enum SortField {
+
+    /** Order by the time a request was submitted. */
+    CREATED = 0,
+
+    /** Order by the time a request was last updated. */
+    LAST_UPDATED = 1
   }
 }
 

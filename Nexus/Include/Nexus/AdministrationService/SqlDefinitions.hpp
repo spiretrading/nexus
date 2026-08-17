@@ -176,6 +176,27 @@ namespace Nexus {
     return ROW;
   }
 
+  /** Stores an AccountModificationRequest along with its ordering keys. */
+  struct StoredAccountModificationRequest {
+
+    /** The request. */
+    AccountModificationRequest m_request;
+
+    /** The timestamp of the request's most recent update. */
+    boost::posix_time::ptime m_last_update_timestamp;
+  };
+
+  /** Returns a row representing a StoredAccountModificationRequest. */
+  inline const auto& get_stored_account_modification_request_row() {
+    static const auto ROW = Viper::Row<StoredAccountModificationRequest>().
+      extend(get_account_modification_request_row(),
+        &StoredAccountModificationRequest::m_request).
+      add_column("last_update_timestamp",
+        &StoredAccountModificationRequest::m_last_update_timestamp).
+      add_index("last_update_index", {"last_update_timestamp", "id"});
+    return ROW;
+  }
+
   /** Represents a row representing a single entitlement modification. */
   struct EntitlementModificationRow {
 
