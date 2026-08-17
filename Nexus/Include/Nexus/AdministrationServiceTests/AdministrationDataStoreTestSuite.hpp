@@ -713,6 +713,57 @@ namespace Nexus::Tests {
       REQUIRE(excluded[1].get_id() == 2);
     }
 
+    SUBCASE("load_account_modification_request_counts") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto other = DirectoryEntry::make_account(101, "user_b");
+      auto modification = EntitlementModification();
+      auto store = [&] (AccountModificationRequest::Id id,
+          AccountModificationRequest::Type type, const DirectoryEntry& owner) {
+        data_store.store(AccountModificationRequest(
+          id, type, owner, owner, time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+      };
+      auto update = [&] (AccountModificationRequest::Id id,
+          AccountModificationRequest::Status status) {
+        data_store.store(id, AccountModificationRequest::Update(
+          status, DirectoryEntry::make_account(100, "user_a"), 1,
+          time_from_string("2024-07-07 10:00:00")));
+      };
+      data_store.with_transaction([&] {
+        store(1, AccountModificationRequest::Type::ENTITLEMENTS, account);
+        store(2, AccountModificationRequest::Type::RISK, account);
+        store(3, AccountModificationRequest::Type::ENTITLEMENTS, account);
+        store(4, AccountModificationRequest::Type::ENTITLEMENTS, other);
+        store(5, AccountModificationRequest::Type::ENTITLEMENTS, account);
+        update(1, AccountModificationRequest::Status::GRANTED);
+        update(2, AccountModificationRequest::Status::REJECTED);
+        update(3, AccountModificationRequest::Status::PENDING);
+        update(4, AccountModificationRequest::Status::SCHEDULED);
+      });
+      auto query = AccountModificationRequestQuery();
+      auto counts = data_store.with_transaction([&] {
+        return data_store.load_account_modification_request_counts(query);
+      });
+      REQUIRE(counts.m_granted == 1);
+      REQUIRE(counts.m_rejected == 1);
+      REQUIRE(counts.m_pending == 3);
+      auto accounts = std::vector<DirectoryEntry>{account};
+      auto restricted = data_store.with_transaction([&] {
+        return data_store.load_account_modification_request_counts(
+          accounts, query);
+      });
+      REQUIRE(restricted.m_granted == 1);
+      REQUIRE(restricted.m_rejected == 1);
+      REQUIRE(restricted.m_pending == 2);
+      query.set_categories({AccountModificationRequest::Type::RISK});
+      auto by_category = data_store.with_transaction([&] {
+        return data_store.load_account_modification_request_counts(query);
+      });
+      REQUIRE(by_category.m_granted == 0);
+      REQUIRE(by_category.m_rejected == 1);
+      REQUIRE(by_category.m_pending == 0);
+    }
+
     SUBCASE("load_account_modification_requests_with_anchor") {
       auto account = DirectoryEntry::make_account(100, "user_a");
       auto modification = EntitlementModification();

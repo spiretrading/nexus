@@ -1643,6 +1643,13 @@ namespace Nexus {
     total.set_statuses({});
     total.set_sort_field(AccountModificationRequestQuery::SortField::CREATED);
     return m_data_store->with_transaction([&] {
+      if(total.get_search().empty()) {
+        if(is_unrestricted) {
+          return m_data_store->load_account_modification_request_counts(total);
+        }
+        return m_data_store->load_account_modification_request_counts(
+          accounts, total);
+      }
       auto requests = load_sorted_requests(accounts, is_unrestricted, total);
       auto ids = std::vector<AccountModificationRequest::Id>();
       ids.reserve(requests.size());

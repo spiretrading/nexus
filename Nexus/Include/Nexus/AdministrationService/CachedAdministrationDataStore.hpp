@@ -54,6 +54,11 @@ namespace Nexus {
       std::vector<AccountModificationRequest>
         load_account_modification_requests(
           const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts load_account_modification_request_counts(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query);
       std::vector<AccountModificationRequest::Update>
         load_account_modification_request_statuses(
           const std::vector<AccountModificationRequest::Id>& ids);
@@ -210,6 +215,22 @@ namespace Nexus {
       load_account_modification_requests(
         const AccountModificationRequestQuery& query) {
     return m_data_store->load_account_modification_requests(query);
+  }
+
+  template<IsAdministrationDataStore D>
+  AccountModificationRequestCounts CachedAdministrationDataStore<D>::
+      load_account_modification_request_counts(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query) {
+    return m_data_store->load_account_modification_request_counts(
+      accounts, query);
+  }
+
+  template<IsAdministrationDataStore D>
+  AccountModificationRequestCounts CachedAdministrationDataStore<D>::
+      load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query) {
+    return m_data_store->load_account_modification_request_counts(query);
   }
 
   template<IsAdministrationDataStore D>

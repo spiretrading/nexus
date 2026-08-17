@@ -14,6 +14,7 @@
 #include <Beam/Queries/SnapshotLimit.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestCounts.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequestQuery.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
 #include "Nexus/AdministrationService/Message.hpp"
@@ -54,6 +55,13 @@ namespace Nexus {
     { store.load_account_modification_requests(
       std::declval<const AccountModificationRequestQuery&>()) } ->
         std::same_as<std::vector<AccountModificationRequest>>;
+    { store.load_account_modification_request_counts(
+        std::declval<const std::vector<Beam::DirectoryEntry>&>(),
+        std::declval<const AccountModificationRequestQuery&>()) } ->
+          std::same_as<AccountModificationRequestCounts>;
+    { store.load_account_modification_request_counts(
+      std::declval<const AccountModificationRequestQuery&>()) } ->
+        std::same_as<AccountModificationRequestCounts>;
     { store.load_account_modification_request_statuses(
       std::declval<const std::vector<AccountModificationRequest::Id>&>()) } ->
         std::same_as<std::vector<AccountModificationRequest::Update>>;
@@ -255,6 +263,26 @@ namespace Nexus {
       std::vector<AccountModificationRequest>
         load_account_modification_requests(
           const AccountModificationRequestQuery& query);
+
+      /**
+       * Counts the AccountModificationRequests belonging to a set of accounts,
+       * grouped by state.
+       * @param accounts The accounts whose requests are to be counted.
+       * @param query The query specifying the requests to count.
+       * @return The number of requests in each state.
+       */
+      AccountModificationRequestCounts load_account_modification_request_counts(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query);
+
+      /**
+       * Counts the AccountModificationRequests belonging to any account,
+       * grouped by state.
+       * @param query The query specifying the requests to count.
+       * @return The number of requests in each state.
+       */
+      AccountModificationRequestCounts load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query);
 
       /**
        * Loads the current status of a list of AccountModificationRequests.
@@ -467,6 +495,13 @@ namespace Nexus {
         virtual std::vector<AccountModificationRequest>
           load_account_modification_requests(
             const AccountModificationRequestQuery& query) = 0;
+        virtual AccountModificationRequestCounts
+          load_account_modification_request_counts(
+            const std::vector<Beam::DirectoryEntry>& accounts,
+            const AccountModificationRequestQuery& query) = 0;
+        virtual AccountModificationRequestCounts
+          load_account_modification_request_counts(
+            const AccountModificationRequestQuery& query) = 0;
         virtual std::vector<AccountModificationRequest::Update>
           load_account_modification_request_statuses(
             const std::vector<AccountModificationRequest::Id>& ids) = 0;
@@ -547,6 +582,13 @@ namespace Nexus {
             const AccountModificationRequestQuery& query) override;
         std::vector<AccountModificationRequest>
           load_account_modification_requests(
+            const AccountModificationRequestQuery& query) override;
+        AccountModificationRequestCounts
+          load_account_modification_request_counts(
+            const std::vector<Beam::DirectoryEntry>& accounts,
+            const AccountModificationRequestQuery& query) override;
+        AccountModificationRequestCounts
+          load_account_modification_request_counts(
             const AccountModificationRequestQuery& query) override;
         std::vector<AccountModificationRequest::Update>
           load_account_modification_request_statuses(
@@ -692,6 +734,20 @@ namespace Nexus {
       AdministrationDataStore::load_account_modification_requests(
         const AccountModificationRequestQuery& query) {
     return m_data_store->load_account_modification_requests(query);
+  }
+
+  inline AccountModificationRequestCounts
+      AdministrationDataStore::load_account_modification_request_counts(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query) {
+    return m_data_store->load_account_modification_request_counts(
+      accounts, query);
+  }
+
+  inline AccountModificationRequestCounts
+      AdministrationDataStore::load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query) {
+    return m_data_store->load_account_modification_request_counts(query);
   }
 
   inline std::vector<AccountModificationRequest::Update>
@@ -918,6 +974,24 @@ namespace Nexus {
       WrappedAdministrationDataStore<D>::load_account_modification_requests(
         const AccountModificationRequestQuery& query) {
     return m_data_store->load_account_modification_requests(query);
+  }
+
+  template<typename D>
+  AccountModificationRequestCounts AdministrationDataStore::
+      WrappedAdministrationDataStore<D>::
+        load_account_modification_request_counts(
+          const std::vector<Beam::DirectoryEntry>& accounts,
+          const AccountModificationRequestQuery& query) {
+    return m_data_store->load_account_modification_request_counts(
+      accounts, query);
+  }
+
+  template<typename D>
+  AccountModificationRequestCounts AdministrationDataStore::
+      WrappedAdministrationDataStore<D>::
+        load_account_modification_request_counts(
+          const AccountModificationRequestQuery& query) {
+    return m_data_store->load_account_modification_request_counts(query);
   }
 
   template<typename D>

@@ -46,6 +46,11 @@ namespace Nexus {
       std::vector<AccountModificationRequest>
         load_account_modification_requests(
           const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts load_account_modification_request_counts(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query);
       std::vector<AccountModificationRequest::Update>
         load_account_modification_request_statuses(
           const std::vector<AccountModificationRequest::Id>& ids);
@@ -121,6 +126,9 @@ namespace Nexus {
       boost::posix_time::ptime load_last_update_timestamp(
         AccountModificationRequest::Id id);
       bool matches_query(const AccountModificationRequest& request,
+        const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts count_requests(
+        const std::vector<Beam::DirectoryEntry>* accounts,
         const AccountModificationRequestQuery& query);
       std::vector<AccountModificationRequest> load_requests(
         const std::vector<Beam::DirectoryEntry>* accounts,
@@ -223,6 +231,19 @@ namespace Nexus {
     return load_requests(nullptr, query);
   }
 
+  inline AccountModificationRequestCounts
+      LocalAdministrationDataStore::load_account_modification_request_counts(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query) {
+    return count_requests(&accounts, query);
+  }
+
+  inline AccountModificationRequestCounts
+      LocalAdministrationDataStore::load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query) {
+    return count_requests(nullptr, query);
+  }
+
   inline boost::posix_time::ptime
       LocalAdministrationDataStore::load_last_update_timestamp(
         AccountModificationRequest::Id id) {
@@ -268,6 +289,37 @@ namespace Nexus {
       }
     }
     return true;
+  }
+
+  inline AccountModificationRequestCounts
+      LocalAdministrationDataStore::count_requests(
+        const std::vector<Beam::DirectoryEntry>* accounts,
+        const AccountModificationRequestQuery& query) {
+    auto evaluator = Beam::translate<
+      AccountModificationRequestEvaluatorTranslator>(query.get_filter());
+    auto counts = AccountModificationRequestCounts(0, 0, 0);
+    for(auto& entry : m_account_modification_requests) {
+      auto& request = entry.second;
+      if(accounts && !std::ranges::contains(*accounts, request.get_account())) {
+        continue;
+      }
+      if(!Beam::test_filter(*evaluator, request)) {
+        continue;
+      }
+      if(!matches_query(request, query)) {
+        continue;
+      }
+      auto status =
+        load_account_modification_request_status(request.get_id()).m_status;
+      if(status == AccountModificationRequest::Status::GRANTED) {
+        ++counts.m_granted;
+      } else if(status == AccountModificationRequest::Status::REJECTED) {
+        ++counts.m_rejected;
+      } else {
+        ++counts.m_pending;
+      }
+    }
+    return counts;
   }
 
   inline std::vector<AccountModificationRequest>

@@ -63,6 +63,11 @@ namespace Nexus {
       std::vector<AccountModificationRequest>
         load_account_modification_requests(
           const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts load_account_modification_request_counts(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query);
       std::vector<AccountModificationRequest::Update>
         load_account_modification_request_statuses(
           const std::vector<AccountModificationRequest::Id>& ids);
@@ -122,6 +127,9 @@ namespace Nexus {
       static Viper::Expression make_query_filter(
         const AccountModificationRequestQuery& query);
       std::vector<AccountModificationRequest> load_requests(
+        const Viper::Expression& accounts,
+        const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts count_requests(
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query);
   };
@@ -333,6 +341,25 @@ namespace Nexus {
   }
 
   template<typename C>
+  AccountModificationRequestCounts
+      SqlAdministrationDataStore<C>::load_account_modification_request_counts(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query) {
+    auto filter = Viper::literal(false);
+    for(auto& account : accounts) {
+      filter = filter || Viper::sym("account") == account.m_id;
+    }
+    return count_requests(filter, query);
+  }
+
+  template<typename C>
+  AccountModificationRequestCounts
+      SqlAdministrationDataStore<C>::load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query) {
+    return count_requests(Viper::literal(true), query);
+  }
+
+  template<typename C>
   Viper::Expression SqlAdministrationDataStore<C>::make_id_filter(
       const std::string& column,
       const std::vector<AccountModificationRequest::Id>& ids) {
@@ -383,6 +410,35 @@ namespace Nexus {
       filter = filter && Viper::sym("account") != excluded_account->m_id;
     }
     return filter;
+  }
+
+  template<typename C>
+  AccountModificationRequestCounts
+      SqlAdministrationDataStore<C>::count_requests(
+        const Viper::Expression& accounts,
+        const AccountModificationRequestQuery& query) {
+    auto filter = make_account_modification_request_sql_query(
+      "account_modification_requests", query.get_filter()) &&
+      make_query_filter(query) && accounts;
+    auto count = [&] (const Viper::Expression& status) {
+      auto result = 0;
+      m_connection->execute(Viper::select(Viper::count("id"),
+        "account_modification_requests", filter && status, &result));
+      return result;
+    };
+    auto counts = AccountModificationRequestCounts(0, 0, 0);
+    try {
+      counts.m_granted = count(
+        Viper::sym("status") == AccountModificationRequest::Status::GRANTED);
+      counts.m_rejected = count(
+        Viper::sym("status") == AccountModificationRequest::Status::REJECTED);
+      counts.m_pending = count(
+        Viper::sym("status") != AccountModificationRequest::Status::GRANTED &&
+        Viper::sym("status") != AccountModificationRequest::Status::REJECTED);
+    } catch(const Viper::ExecuteException& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
+    return counts;
   }
 
   template<typename C>
