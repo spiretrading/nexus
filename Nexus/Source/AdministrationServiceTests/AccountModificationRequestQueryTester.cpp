@@ -9,6 +9,7 @@
 using namespace Beam;
 using namespace Beam::Tests;
 using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
 
 TEST_SUITE("AccountModificationRequestQuery") {
@@ -24,7 +25,7 @@ TEST_SUITE("AccountModificationRequestQuery") {
     auto query = AccountModificationRequestQuery();
     query.set_index(DirectoryEntry::make_account(100, "account"));
     query.set_snapshot_limit(SnapshotLimit::from_head(25));
-    query.set_anchor(42);
+    query.set_anchor(AccountModificationRequestAnchor(42, ptime(), ""));
     query.set_filter(ConstantExpression(false));
     test_polymorphic_round_trip_shuttle(query, [] (auto registry) {
       register_query_types(registry);

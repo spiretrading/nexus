@@ -128,6 +128,16 @@ void Nexus::Python::export_account_modification_request_accessor(
       &AccountModificationRequestAccessor::get_effective_date);
 }
 
+void Nexus::Python::export_account_modification_request_anchor(
+    module& module) {
+  export_default_methods(class_<AccountModificationRequestAnchor>(
+      module, "AccountModificationRequestAnchor")).
+    def(init<AccountModificationRequest::Id, ptime, std::string>()).
+    def_readwrite("id", &AccountModificationRequestAnchor::m_id).
+    def_readwrite("date", &AccountModificationRequestAnchor::m_date).
+    def_readwrite("name", &AccountModificationRequestAnchor::m_name);
+}
+
 void Nexus::Python::export_account_modification_request_counts(
     module& module) {
   export_default_methods(class_<AccountModificationRequestCounts>(
@@ -155,9 +165,8 @@ void Nexus::Python::export_account_modification_request_query(
     def_property("index", &AccountModificationRequestQuery::get_index,
       &AccountModificationRequestQuery::set_index).
     def_property("anchor", &AccountModificationRequestQuery::get_anchor,
-      overload_cast<
-        const optional<AccountModificationRequest::Id>&>(
-          &AccountModificationRequestQuery::set_anchor)).
+      overload_cast<const optional<AccountModificationRequestAnchor>&>(
+        &AccountModificationRequestQuery::set_anchor)).
     def_property("offset", &AccountModificationRequestQuery::get_offset,
       &AccountModificationRequestQuery::set_offset).
     def_property("sort_field",
@@ -238,6 +247,7 @@ void Nexus::Python::export_administration_service(module& module) {
   export_account_identity(module);
   export_account_modification_request(module);
   export_account_modification_request_accessor(module);
+  export_account_modification_request_anchor(module);
   export_account_modification_request_counts(module);
   export_account_modification_request_query(module);
   export_account_modification_request_summary(module);

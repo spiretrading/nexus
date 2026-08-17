@@ -40,7 +40,8 @@ export class HttpRequestsModel extends RequestsModel {
         admin.loadAccountModificationRequestCounts(query)
       ]);
       if(summaries.length > 0) {
-        this.anchors[submission.pageIndex + 1] = summaries[0].request.id;
+        this.anchors[submission.pageIndex + 1] =
+          makeAnchor(summaries[0], query.sortField);
       }
       const requestList =
         summaries.slice().reverse().map(summary => this.toEntry(summary));
@@ -144,12 +145,6 @@ export class HttpRequestsModel extends RequestsModel {
       }
       return status.status;
     })();
-    const updateTime = (() => {
-      if(status.status === Nexus.AccountModificationRequest.Status.NONE) {
-        return request.timestamp.toDate();
-      }
-      return status.timestamp.toDate();
-    })();
     const changes = (() => {
       if(request.type === Nexus.AccountModificationRequest.Type.RISK) {
         const previous = summary.previousState as Nexus.RiskModification;
@@ -184,7 +179,7 @@ export class HttpRequestsModel extends RequestsModel {
       id: request.id,
       category: request.type,
       state,
-      updateTime,
+      updateTime: updateTime(summary).toDate(),
       account: request.account,
       effectiveDate: request.effectiveDate.toDate(),
       firstChange: changes.first,
@@ -233,7 +228,7 @@ export class HttpRequestsModel extends RequestsModel {
         request.timestamp.toDate(),
       account: toAccountProfile(request.account, accountIdentity),
       requester: toAccountProfile(request.submissionAccount, submitterIdentity),
-      effectiveDate: request.effectiveDate,
+      effectiveDate: request.effectiveDate.date,
       changes,
       activityList,
       accessRole: this.accessRole
@@ -244,7 +239,8 @@ export class HttpRequestsModel extends RequestsModel {
       Promise<Nexus.AccountModificationRequestSummary> {
     const query = new Nexus.AccountModificationRequestQuery(
       request.account, Beam.SnapshotLimit.fromTail(1));
-    query.anchor = request.id + 1;
+    query.anchor = new Nexus.AccountModificationRequestAnchor(
+      request.id + 1, request.timestamp, '');
     const summaries = await this.serviceClients.administrationClient.
       loadAccountModificationRequestSummaries(query);
     return summaries.find(summary => summary.request.id === request.id);
@@ -304,7 +300,7 @@ export class HttpRequestsModel extends RequestsModel {
   private localModel: LocalRequestsModel;
   private accessRole: Nexus.AccountRoles.Role;
   private tradingGroupsRoot: Beam.DirectoryEntry;
-  private anchors: number[];
+  private anchors: Nexus.AccountModificationRequestAnchor[];
   private anchorKey: string;
 }
 
@@ -337,6 +333,40 @@ function toSortField(sortKey: RequestsModel.SortField):
     return Nexus.AccountModificationRequestQuery.SortField.REQUESTER;
   }
   return Nexus.AccountModificationRequestQuery.SortField.CREATED;
+}
+
+function updateTime(summary: Nexus.AccountModificationRequestSummary):
+    Beam.DateTime {
+  if(summary.status.status ===
+      Nexus.AccountModificationRequest.Status.NONE) {
+    return summary.request.timestamp;
+  }
+  return summary.status.timestamp;
+}
+
+function makeAnchor(summary: Nexus.AccountModificationRequestSummary,
+    field: Nexus.AccountModificationRequestQuery.SortField):
+      Nexus.AccountModificationRequestAnchor {
+  const request = summary.request;
+  const date = (() => {
+    if(field === Nexus.AccountModificationRequestQuery.SortField.LAST_UPDATED) {
+      return updateTime(summary);
+    } else if(field ===
+        Nexus.AccountModificationRequestQuery.SortField.EFFECTIVE_DATE) {
+      return request.effectiveDate;
+    }
+    return request.timestamp;
+  })();
+  const name = (() => {
+    if(field === Nexus.AccountModificationRequestQuery.SortField.ACCOUNT) {
+      return request.account.name;
+    } else if(field ===
+        Nexus.AccountModificationRequestQuery.SortField.REQUESTER) {
+      return request.submissionAccount.name;
+    }
+    return '';
+  })();
+  return new Nexus.AccountModificationRequestAnchor(request.id, date, name);
 }
 
 function makeAnchorKey(submission: RequestsModel.Submission): string {

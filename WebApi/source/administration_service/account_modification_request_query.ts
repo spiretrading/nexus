@@ -1,9 +1,66 @@
 import * as Beam from 'beam';
 import { AccountModificationRequest } from './account_modification_request';
 
+/**
+ * Marks a position within an ordering of AccountModificationRequests. The
+ * field used depends on the ordering being paged.
+ */
+export class AccountModificationRequestAnchor {
+
+  /** Constructs an AccountModificationRequestAnchor from a JSON object. */
+  public static fromJson(value: any): AccountModificationRequestAnchor {
+    return new AccountModificationRequestAnchor(
+      value.id, Beam.DateTime.fromJson(value.date), value.name);
+  }
+
+  /**
+   * Constructs an AccountModificationRequestAnchor.
+   * @param id - The id of the request at this position.
+   * @param date - The date ordering the request.
+   * @param name - The account name ordering the request.
+   */
+  constructor(id: number, date: Beam.DateTime, name: string) {
+    this._id = id;
+    this._date = date;
+    this._name = name;
+  }
+
+  /** Returns the id of the request at this position. */
+  public get id(): number {
+    return this._id;
+  }
+
+  /** Returns the date ordering the request. */
+  public get date(): Beam.DateTime {
+    return this._date;
+  }
+
+  /** Returns the account name ordering the request. */
+  public get name(): string {
+    return this._name;
+  }
+
+  public toString(): string {
+    return `(${this._id} ${this._date} ${this._name})`;
+  }
+
+  /** Converts this object to JSON. */
+  public toJson(): any {
+    return {
+      id: this._id,
+      date: this._date.toJson(),
+      name: this._name
+    };
+  }
+
+  private _id: number;
+  private _date: Beam.DateTime;
+  private _name: string;
+}
+
 /** Specifies a page of account modification requests to load. */
 export class AccountModificationRequestQuery extends
-    Beam.PagedQuery<Beam.DirectoryEntry, number> {
+    Beam.PagedQuery<Beam.DirectoryEntry, AccountModificationRequestAnchor> {
 
   /** The request categories to match, or empty to match all. */
   public categories: AccountModificationRequest.Type[];

@@ -9,7 +9,7 @@ export class AccountModificationRequest {
       Beam.DirectoryEntry.fromJson(value.account),
       Beam.DirectoryEntry.fromJson(value.submission_account),
       Beam.DateTime.fromJson(value.timestamp),
-      Beam.Date.fromJson(value.effective_date));
+      Beam.DateTime.fromJson(value.effective_date));
   }
 
   /**
@@ -23,7 +23,7 @@ export class AccountModificationRequest {
    */
   constructor(id: number, type: AccountModificationRequest.Type,
       account: Beam.DirectoryEntry, submissionAccount: Beam.DirectoryEntry,
-      timestamp: Beam.DateTime, effectiveDate: Beam.Date) {
+      timestamp: Beam.DateTime, effectiveDate: Beam.DateTime) {
     this._id = id;
     this._type = type;
     this._account = account;
@@ -58,7 +58,7 @@ export class AccountModificationRequest {
   }
 
   /** Returns the date when the modification takes effect. */
-  public get effectiveDate(): Beam.Date {
+  public get effectiveDate(): Beam.DateTime {
     return this._effectiveDate;
   }
 
@@ -79,7 +79,7 @@ export class AccountModificationRequest {
   private _account: Beam.DirectoryEntry;
   private _submissionAccount: Beam.DirectoryEntry;
   private _timestamp: Beam.DateTime;
-  private _effectiveDate: Beam.Date;
+  private _effectiveDate: Beam.DateTime;
 }
 
 export namespace AccountModificationRequest {

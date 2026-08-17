@@ -457,12 +457,14 @@ TEST_SUITE("AdministrationServlet") {
     REQUIRE(page.size() == 2);
     REQUIRE(page[0].m_request.get_account().m_name == "admin");
     REQUIRE(page[1].m_request.get_account().m_name == "manager");
-    query.set_anchor(page[1].m_request.get_id());
+    query.set_anchor(AccountModificationRequestAnchor(
+      page[1].m_request.get_id(), ptime(),
+      page[1].m_request.get_account().m_name));
     auto next = fixture.m_admin_client->send_request<
       LoadAccountModificationRequestSummariesService>(query);
     REQUIRE(next.size() == 1);
     REQUIRE(next[0].m_request.get_account().m_name == "trader");
-    query.set_anchor(boost::optional<AccountModificationRequest::Id>());
+    query.set_anchor(optional<AccountModificationRequestAnchor>());
     query.set_offset(1);
     auto skipped = fixture.m_admin_client->send_request<
       LoadAccountModificationRequestSummariesService>(query);

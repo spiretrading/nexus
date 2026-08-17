@@ -263,12 +263,11 @@ namespace Nexus {
       if(!anchor) {
         return SortKey();
       }
-      auto request = m_account_modification_requests.find(*anchor);
-      if(request == m_account_modification_requests.end()) {
-        return SortKey(
-          boost::posix_time::ptime(boost::posix_time::neg_infin), *anchor);
+      if(field == AccountModificationRequestQuery::SortField::CREATED) {
+        return SortKey(boost::posix_time::ptime(boost::posix_time::neg_infin),
+          anchor->m_id);
       }
-      return key(request->second);
+      return SortKey(anchor->m_date, anchor->m_id);
     }();
     auto matches = std::vector<AccountModificationRequest>();
     for(auto& entry : m_account_modification_requests) {

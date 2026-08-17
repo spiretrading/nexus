@@ -8,9 +8,39 @@
 
 namespace Nexus {
 
+  /**
+   * Marks a position within an ordering of AccountModificationRequests. The
+   * field used depends on the ordering being paged.
+   */
+  struct AccountModificationRequestAnchor {
+
+    /** The id of the request at this position. */
+    AccountModificationRequest::Id m_id;
+
+    /** The date ordering the request. */
+    boost::posix_time::ptime m_date;
+
+    /** The account name ordering the request. */
+    std::string m_name;
+
+    /** Constructs an anchor at the first request. */
+    AccountModificationRequestAnchor() noexcept;
+
+    /**
+     * Constructs an anchor.
+     * @param id The id of the request at this position.
+     * @param date The date ordering the request.
+     * @param name The account name ordering the request.
+     */
+    AccountModificationRequestAnchor(AccountModificationRequest::Id id,
+      boost::posix_time::ptime date, std::string name) noexcept;
+
+    bool operator ==(const AccountModificationRequestAnchor&) const = default;
+  };
+
   /** Queries for a page of AccountModificationRequests. */
   class AccountModificationRequestQuery : public Beam::PagedQuery<
-      Beam::DirectoryEntry, AccountModificationRequest::Id> {
+      Beam::DirectoryEntry, AccountModificationRequestAnchor> {
     public:
 
       /** Lists the fields that requests can be ordered by. */
@@ -83,12 +113,30 @@ namespace Nexus {
   inline std::ostream& operator <<(
       std::ostream& out, const AccountModificationRequestQuery& query) {
     return out << '(' << static_cast<const Beam::PagedQuery<
-      Beam::DirectoryEntry, AccountModificationRequest::Id>&>(query) << ' ' <<
+      Beam::DirectoryEntry, AccountModificationRequestAnchor>&>(query) << ' ' <<
       query.get_sort_field() << ')';
   }
 
-  inline AccountModificationRequestQuery::
-    AccountModificationRequestQuery() noexcept
+  inline AccountModificationRequestAnchor::AccountModificationRequestAnchor()
+    noexcept
+    : m_id(-1),
+      m_date(boost::posix_time::not_a_date_time) {}
+
+  inline AccountModificationRequestAnchor::AccountModificationRequestAnchor(
+    AccountModificationRequest::Id id, boost::posix_time::ptime date,
+    std::string name) noexcept
+    : m_id(id),
+      m_date(date),
+      m_name(std::move(name)) {}
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AccountModificationRequestAnchor& anchor) {
+    return out << '(' << anchor.m_id << ' ' << anchor.m_date << ' ' <<
+      anchor.m_name << ')';
+  }
+
+  inline AccountModificationRequestQuery::AccountModificationRequestQuery()
+    noexcept
     : m_sort_field(SortField::CREATED) {}
 
   inline AccountModificationRequestQuery::SortField
@@ -96,8 +144,7 @@ namespace Nexus {
     return m_sort_field;
   }
 
-  inline void AccountModificationRequestQuery::set_sort_field(
-      SortField field) {
+  inline void AccountModificationRequestQuery::set_sort_field(SortField field) {
     m_sort_field = field;
   }
 
@@ -105,7 +152,7 @@ namespace Nexus {
   void AccountModificationRequestQuery::shuttle(
       S& shuttle, unsigned int version) {
     Beam::PagedQuery<Beam::DirectoryEntry,
-      AccountModificationRequest::Id>::shuttle(shuttle, version);
+      AccountModificationRequestAnchor>::shuttle(shuttle, version);
     shuttle.shuttle("sort_field", m_sort_field);
     if constexpr(Beam::IsReceiver<S>) {
       if(m_sort_field != SortField::CREATED &&
@@ -117,6 +164,19 @@ namespace Nexus {
       }
     }
   }
+}
+
+namespace Beam {
+  template<>
+  struct Shuttle<Nexus::AccountModificationRequestAnchor> {
+    template<IsShuttle S>
+    void operator ()(S& shuttle, Nexus::AccountModificationRequestAnchor& value,
+        unsigned int version) const {
+      shuttle.shuttle("id", value.m_id);
+      shuttle.shuttle("date", value.m_date);
+      shuttle.shuttle("name", value.m_name);
+    }
+  };
 }
 
 #endif

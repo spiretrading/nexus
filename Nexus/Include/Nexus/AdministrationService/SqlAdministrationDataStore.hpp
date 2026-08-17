@@ -119,8 +119,6 @@ namespace Nexus {
         const std::vector<AccountModificationRequest::Id>& ids);
       static std::string get_sort_column(
         AccountModificationRequestQuery::SortField field);
-      boost::posix_time::ptime load_sort_timestamp(
-        const std::string& column, AccountModificationRequest::Id id);
       std::vector<AccountModificationRequest> load_requests(
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query);
@@ -355,22 +353,6 @@ namespace Nexus {
     return "";
   }
 
-  template<typename C>
-  boost::posix_time::ptime SqlAdministrationDataStore<C>::load_sort_timestamp(
-      const std::string& column, AccountModificationRequest::Id id) {
-    auto timestamp = std::optional<boost::posix_time::ptime>();
-    try {
-      m_connection->execute(
-        Viper::select(Viper::Row<boost::posix_time::ptime>(column),
-          "account_modification_requests", Viper::sym("id") == id, &timestamp));
-    } catch(const Viper::ExecuteException& e) {
-      boost::throw_with_location(AdministrationDataStoreException(e.what()));
-    }
-    if(!timestamp) {
-      return boost::posix_time::not_a_date_time;
-    }
-    return *timestamp;
-  }
 
   template<typename C>
   std::vector<AccountModificationRequest>
@@ -389,17 +371,18 @@ namespace Nexus {
       }
       if(sort_column.empty()) {
         if(is_head) {
-          return Viper::sym("id") > *anchor;
+          return Viper::sym("id") > anchor->m_id;
         }
-        return Viper::sym("id") < *anchor;
+        return Viper::sym("id") < anchor->m_id;
       }
-      auto timestamp = load_sort_timestamp(sort_column, *anchor);
       if(is_head) {
-        return Viper::sym(sort_column) > timestamp ||
-          (Viper::sym(sort_column) == timestamp && Viper::sym("id") > *anchor);
+        return Viper::sym(sort_column) > anchor->m_date ||
+          (Viper::sym(sort_column) == anchor->m_date &&
+            Viper::sym("id") > anchor->m_id);
       }
-      return Viper::sym(sort_column) < timestamp ||
-        (Viper::sym(sort_column) == timestamp && Viper::sym("id") < *anchor);
+      return Viper::sym(sort_column) < anchor->m_date ||
+        (Viper::sym(sort_column) == anchor->m_date &&
+          Viper::sym("id") < anchor->m_id);
     }();
     auto direction = [&] {
       if(is_head) {

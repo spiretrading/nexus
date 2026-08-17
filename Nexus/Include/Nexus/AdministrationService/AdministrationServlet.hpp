@@ -1490,7 +1490,7 @@ namespace Nexus {
     scan.set_sort_field(AccountModificationRequestQuery::SortField::CREATED);
     scan.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
     scan.set_offset(0);
-    scan.set_anchor(boost::optional<AccountModificationRequest::Id>());
+    scan.set_anchor(boost::optional<AccountModificationRequestAnchor>());
     auto requests = load(scan);
     auto name = [&] (const AccountModificationRequest& request) ->
         const std::string& {
@@ -1510,14 +1510,23 @@ namespace Nexus {
     auto is_head =
       query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
     if(auto anchor = query.get_anchor()) {
-      auto position = std::ranges::find(
-        requests, *anchor, &AccountModificationRequest::get_id);
-      if(position != requests.end()) {
-        if(is_head) {
-          requests.erase(requests.begin(), position + 1);
-        } else {
-          requests.erase(position, requests.end());
-        }
+      auto position =
+        std::ranges::partition_point(requests, [&] (const auto& request) {
+          if(boost::ilexicographical_compare(name(request), anchor->m_name)) {
+            return true;
+          } else if(boost::ilexicographical_compare(
+              anchor->m_name, name(request))) {
+            return false;
+          }
+          if(is_head) {
+            return request.get_id() <= anchor->m_id;
+          }
+          return request.get_id() < anchor->m_id;
+        });
+      if(is_head) {
+        requests.erase(requests.begin(), position);
+      } else {
+        requests.erase(position, requests.end());
       }
     }
     auto skip = std::min<std::size_t>(query.get_offset(), requests.size());
@@ -1620,7 +1629,8 @@ namespace Nexus {
     auto accounts =
       load_authorized_accounts(session.get_account(), query.get_index());
     auto total = query;
-    total.set_anchor(boost::optional<AccountModificationRequest::Id>());
+    total.set_anchor(boost::optional<AccountModificationRequestAnchor>());
+    total.set_offset(0);
     total.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
     return m_data_store->with_transaction([&] {
       auto requests = [&] {
