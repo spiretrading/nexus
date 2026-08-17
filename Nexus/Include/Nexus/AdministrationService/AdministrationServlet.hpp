@@ -878,25 +878,14 @@ namespace Nexus {
           Beam::IsTimer<Beam::dereference_t<T>>
   void AdministrationServlet<C, S, D, R, T>::grant_scheduled_modifications() {
     auto now = m_time_client->get_time();
-    auto [requests, statuses] = m_data_store->with_transaction([&] {
+    auto requests = m_data_store->with_transaction([&] {
       auto query = AccountModificationRequestQuery();
+      query.set_statuses({AccountModificationRequest::Status::SCHEDULED});
       query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
-      auto requests = m_data_store->load_account_modification_requests(query);
-      auto ids = std::vector<AccountModificationRequest::Id>();
-      ids.reserve(requests.size());
-      for(auto& request : requests) {
-        ids.push_back(request.get_id());
-      }
-      return std::pair(std::move(requests),
-        m_data_store->load_account_modification_request_statuses(ids));
+      return m_data_store->load_account_modification_requests(query);
     });
-    for(auto i = std::size_t(0); i != requests.size(); ++i) {
-      auto& request = requests[i];
+    for(auto& request : requests) {
       auto id = request.get_id();
-      if(statuses[i].m_status !=
-          AccountModificationRequest::Status::SCHEDULED) {
-        continue;
-      }
       if(request.get_effective_date() > now) {
         continue;
       }
