@@ -23,7 +23,13 @@ namespace Nexus {
         LAST_UPDATED,
 
         /** Order by the date a request takes effect. */
-        EFFECTIVE_DATE
+        EFFECTIVE_DATE,
+
+        /** Order by the name of the account being modified. */
+        ACCOUNT,
+
+        /** Order by the name of the account that submitted the request. */
+        REQUESTER
       };
 
       /** Constructs a query ordered by the time a request was submitted. */
@@ -66,6 +72,10 @@ namespace Nexus {
     } else if(
         field == AccountModificationRequestQuery::SortField::EFFECTIVE_DATE) {
       return out << "EFFECTIVE_DATE";
+    } else if(field == AccountModificationRequestQuery::SortField::ACCOUNT) {
+      return out << "ACCOUNT";
+    } else if(field == AccountModificationRequestQuery::SortField::REQUESTER) {
+      return out << "REQUESTER";
     }
     return out << "CREATED";
   }
@@ -100,7 +110,9 @@ namespace Nexus {
     if constexpr(Beam::IsReceiver<S>) {
       if(m_sort_field != SortField::CREATED &&
           m_sort_field != SortField::LAST_UPDATED &&
-          m_sort_field != SortField::EFFECTIVE_DATE) {
+          m_sort_field != SortField::EFFECTIVE_DATE &&
+          m_sort_field != SortField::ACCOUNT &&
+          m_sort_field != SortField::REQUESTER) {
         m_sort_field = SortField::CREATED;
       }
     }

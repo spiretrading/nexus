@@ -147,7 +147,9 @@ void Nexus::Python::export_account_modification_request_query(
     value("LAST_UPDATED",
       AccountModificationRequestQuery::SortField::LAST_UPDATED).
     value("EFFECTIVE_DATE",
-      AccountModificationRequestQuery::SortField::EFFECTIVE_DATE);
+      AccountModificationRequestQuery::SortField::EFFECTIVE_DATE).
+    value("ACCOUNT", AccountModificationRequestQuery::SortField::ACCOUNT).
+    value("REQUESTER", AccountModificationRequestQuery::SortField::REQUESTER);
   export_default_methods(outer.
     def(init()).
     def_property("index", &AccountModificationRequestQuery::get_index,

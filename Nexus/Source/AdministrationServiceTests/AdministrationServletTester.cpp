@@ -412,6 +412,91 @@ TEST_SUITE("AdministrationServlet") {
     }
   }
 
+  TEST_CASE("load_summaries_sorted_by_account_name") {
+    auto fixture = Fixture();
+    auto modification = EntitlementModification();
+    auto comment = Nexus::Message(0, fixture.m_admin_account,
+      fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    for(auto& account : {fixture.m_trader_account, fixture.m_admin_account,
+        fixture.m_manager_account}) {
+      fixture.m_admin_client->send_request<
+        SubmitEntitlementModificationRequestService>(
+          account, modification, ptime(), comment);
+    }
+    auto root = fixture.m_admin_client->send_request<
+      LoadTradingGroupsRootEntryService>();
+    auto query = AccountModificationRequestQuery();
+    query.set_index(root);
+    query.set_snapshot_limit(SnapshotLimit::from_head(10));
+    query.set_sort_field(AccountModificationRequestQuery::SortField::ACCOUNT);
+    auto summaries = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(summaries.size() == 3);
+    REQUIRE(summaries[0].m_request.get_account().m_name == "admin");
+    REQUIRE(summaries[1].m_request.get_account().m_name == "manager");
+    REQUIRE(summaries[2].m_request.get_account().m_name == "trader");
+    query.set_snapshot_limit(SnapshotLimit::from_head(2));
+    auto page = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(page.size() == 2);
+    REQUIRE(page[0].m_request.get_account().m_name == "admin");
+    REQUIRE(page[1].m_request.get_account().m_name == "manager");
+    query.set_anchor(page[1].m_request.get_id());
+    auto next = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(next.size() == 1);
+    REQUIRE(next[0].m_request.get_account().m_name == "trader");
+    query.set_anchor(boost::optional<AccountModificationRequest::Id>());
+    query.set_offset(1);
+    auto skipped = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(skipped.size() == 2);
+    REQUIRE(skipped[0].m_request.get_account().m_name == "manager");
+    REQUIRE(skipped[1].m_request.get_account().m_name == "trader");
+    query.set_offset(0);
+    query.set_snapshot_limit(SnapshotLimit::from_tail(2));
+    auto tail = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(tail.size() == 2);
+    REQUIRE(tail[0].m_request.get_account().m_name == "manager");
+    REQUIRE(tail[1].m_request.get_account().m_name == "trader");
+    query.set_snapshot_limit(SnapshotLimit::from_head(10));
+    query.set_sort_field(AccountModificationRequestQuery::SortField::REQUESTER);
+    auto requesters = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(requesters.size() == 3);
+    for(auto& summary : requesters) {
+      REQUIRE(summary.m_request.get_submission_account().m_name == "admin");
+    }
+  }
+
+  TEST_CASE("load_summaries_sorted_by_account_name_ignores_case") {
+    auto fixture = Fixture();
+    auto modification = EntitlementModification();
+    auto comment = Nexus::Message(0, fixture.m_admin_account,
+      fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto traders = fixture.m_trading_group.get_traders_directory();
+    for(auto& name : {"Zulu", "alpha", "Bravo"}) {
+      fixture.m_admin_client->send_request<
+        SubmitEntitlementModificationRequestService>(
+          fixture.make_account(name, traders), modification, ptime(), comment);
+    }
+    auto root = fixture.m_admin_client->send_request<
+      LoadTradingGroupsRootEntryService>();
+    auto query = AccountModificationRequestQuery();
+    query.set_index(root);
+    query.set_snapshot_limit(SnapshotLimit::from_head(10));
+    query.set_sort_field(AccountModificationRequestQuery::SortField::ACCOUNT);
+    auto summaries = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(summaries.size() == 3);
+    REQUIRE(summaries[0].m_request.get_account().m_name == "alpha");
+    REQUIRE(summaries[1].m_request.get_account().m_name == "Bravo");
+    REQUIRE(summaries[2].m_request.get_account().m_name == "Zulu");
+  }
+
   TEST_CASE("submit_and_load_entitlement_modification") {
     auto fixture = Fixture();
     auto entitlements = std::vector<DirectoryEntry>();

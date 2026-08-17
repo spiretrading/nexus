@@ -28,6 +28,12 @@ export function RequestSortSelect(
       <option value={RequestsModel.SortField.CREATED}>
         Created
       </option>
+      <option value={RequestsModel.SortField.ACCOUNT}>
+        Account
+      </option>
+      <option value={RequestsModel.SortField.REQUESTER}>
+        Requester
+      </option>
       <option value={RequestsModel.SortField.EFFECTIVE_DATE}>
         Effective Date
       </option>

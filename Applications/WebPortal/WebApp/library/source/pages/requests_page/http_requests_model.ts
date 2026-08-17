@@ -331,6 +331,10 @@ function toSortField(sortKey: RequestsModel.SortField):
     return Nexus.AccountModificationRequestQuery.SortField.LAST_UPDATED;
   } else if(sortKey === RequestsModel.SortField.EFFECTIVE_DATE) {
     return Nexus.AccountModificationRequestQuery.SortField.EFFECTIVE_DATE;
+  } else if(sortKey === RequestsModel.SortField.ACCOUNT) {
+    return Nexus.AccountModificationRequestQuery.SortField.ACCOUNT;
+  } else if(sortKey === RequestsModel.SortField.REQUESTER) {
+    return Nexus.AccountModificationRequestQuery.SortField.REQUESTER;
   }
   return Nexus.AccountModificationRequestQuery.SortField.CREATED;
 }

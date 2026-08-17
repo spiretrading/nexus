@@ -196,6 +196,9 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const RiskState& risk_state);
       std::vector<Beam::DirectoryEntry> on_load_managed_trading_groups_request(
         ServiceProtocolClient& client, const Beam::DirectoryEntry& account);
+      std::vector<AccountModificationRequest> load_sorted_requests(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        bool is_unrestricted, const AccountModificationRequestQuery& query);
       AccountModificationRequest on_load_account_modification_request(
         ServiceProtocolClient& client, AccountModificationRequest::Id id);
       std::vector<AccountModificationRequestSummary>
@@ -1453,6 +1456,77 @@ namespace Nexus {
       IsAdministrationDataStore<Beam::dereference_t<D>> &&
         Beam::IsTimeClient<Beam::dereference_t<R>> &&
           Beam::IsTimer<Beam::dereference_t<T>>
+  std::vector<AccountModificationRequest>
+      AdministrationServlet<C, S, D, R, T>::load_sorted_requests(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        bool is_unrestricted, const AccountModificationRequestQuery& query) {
+    auto load = [&] (const AccountModificationRequestQuery& query) {
+      if(is_unrestricted) {
+        return m_data_store->load_account_modification_requests(query);
+      }
+      return m_data_store->load_account_modification_requests(accounts, query);
+    };
+    auto field = query.get_sort_field();
+    if(field != AccountModificationRequestQuery::SortField::ACCOUNT &&
+        field != AccountModificationRequestQuery::SortField::REQUESTER) {
+      return load(query);
+    }
+    auto scan = query;
+    scan.set_sort_field(AccountModificationRequestQuery::SortField::CREATED);
+    scan.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
+    scan.set_offset(0);
+    scan.set_anchor(boost::optional<AccountModificationRequest::Id>());
+    auto requests = load(scan);
+    auto name = [&] (const AccountModificationRequest& request) ->
+        const std::string& {
+      if(field == AccountModificationRequestQuery::SortField::ACCOUNT) {
+        return request.get_account().m_name;
+      }
+      return request.get_submission_account().m_name;
+    };
+    std::ranges::sort(requests, [&] (const auto& left, const auto& right) {
+      if(boost::ilexicographical_compare(name(left), name(right))) {
+        return true;
+      } else if(boost::ilexicographical_compare(name(right), name(left))) {
+        return false;
+      }
+      return left.get_id() < right.get_id();
+    });
+    auto is_head =
+      query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
+    if(auto anchor = query.get_anchor()) {
+      auto position = std::ranges::find(
+        requests, *anchor, &AccountModificationRequest::get_id);
+      if(position != requests.end()) {
+        if(is_head) {
+          requests.erase(requests.begin(), position + 1);
+        } else {
+          requests.erase(position, requests.end());
+        }
+      }
+    }
+    auto skip = std::min<std::size_t>(query.get_offset(), requests.size());
+    if(is_head) {
+      requests.erase(requests.begin(), requests.begin() + skip);
+    } else {
+      requests.erase(requests.end() - skip, requests.end());
+    }
+    auto size = std::max(0, query.get_snapshot_limit().get_size());
+    if(requests.size() > static_cast<std::size_t>(size)) {
+      if(is_head) {
+        requests.erase(requests.begin() + size, requests.end());
+      } else {
+        requests.erase(requests.begin(), requests.end() - size);
+      }
+    }
+    return requests;
+  }
+
+  template<typename C, typename S, typename D, typename R, typename T> requires
+    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+      IsAdministrationDataStore<Beam::dereference_t<D>> &&
+        Beam::IsTimeClient<Beam::dereference_t<R>> &&
+          Beam::IsTimer<Beam::dereference_t<T>>
   std::vector<AccountModificationRequestSummary>
       AdministrationServlet<C, S, D, R, T>::
         on_load_account_modification_request_summaries(
@@ -1461,12 +1535,10 @@ namespace Nexus {
     auto& session = client.get_session();
     auto accounts =
       load_authorized_accounts(session.get_account(), query.get_index());
+    auto is_unrestricted = check_administrator(session.get_account()) &&
+      query.get_index() == m_trading_groups_root;
     auto requests = m_data_store->with_transaction([&] {
-      if(check_administrator(session.get_account()) &&
-          query.get_index() == m_trading_groups_root) {
-        return m_data_store->load_account_modification_requests(query);
-      }
-      return m_data_store->load_account_modification_requests(accounts, query);
+      return load_sorted_requests(accounts, is_unrestricted, query);
     });
     auto ids = std::vector<AccountModificationRequest::Id>();
     ids.reserve(requests.size());

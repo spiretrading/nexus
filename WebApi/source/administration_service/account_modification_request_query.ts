@@ -65,7 +65,13 @@ export namespace AccountModificationRequestQuery {
     LAST_UPDATED = 1,
 
     /** Order by the date a request takes effect. */
-    EFFECTIVE_DATE = 2
+    EFFECTIVE_DATE = 2,
+
+    /** Order by the name of the account being modified. */
+    ACCOUNT = 3,
+
+    /** Order by the name of the account that submitted the request. */
+    REQUESTER = 4
   }
 }
 
