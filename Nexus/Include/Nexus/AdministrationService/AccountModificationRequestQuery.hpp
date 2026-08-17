@@ -68,7 +68,7 @@ namespace Nexus {
       };
 
       /** Constructs a query ordered by the time a request was submitted. */
-      AccountModificationRequestQuery() noexcept;
+      AccountModificationRequestQuery();
 
       /** Returns the field used to order the requests. */
       SortField get_sort_field() const;
@@ -190,7 +190,6 @@ namespace Nexus {
   }
 
   inline AccountModificationRequestQuery::AccountModificationRequestQuery()
-    noexcept
     : m_sort_field(SortField::CREATED) {}
 
   inline AccountModificationRequestQuery::SortField
