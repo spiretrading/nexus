@@ -171,7 +171,20 @@ void Nexus::Python::export_account_modification_request_query(
       &AccountModificationRequestQuery::set_offset).
     def_property("sort_field",
       &AccountModificationRequestQuery::get_sort_field,
-      &AccountModificationRequestQuery::set_sort_field));
+      &AccountModificationRequestQuery::set_sort_field).
+    def_property("categories", &AccountModificationRequestQuery::get_categories,
+      &AccountModificationRequestQuery::set_categories).
+    def_property("statuses", &AccountModificationRequestQuery::get_statuses,
+      &AccountModificationRequestQuery::set_statuses).
+    def_property("start_date", &AccountModificationRequestQuery::get_start_date,
+      &AccountModificationRequestQuery::set_start_date).
+    def_property("end_date", &AccountModificationRequestQuery::get_end_date,
+      &AccountModificationRequestQuery::set_end_date).
+    def_property("search", &AccountModificationRequestQuery::get_search,
+      &AccountModificationRequestQuery::set_search).
+    def_property("excluded_account",
+      &AccountModificationRequestQuery::get_excluded_account,
+      &AccountModificationRequestQuery::set_excluded_account));
   module.def("make_account_modification_request_query",
     &make_account_modification_request_query);
 }

@@ -119,6 +119,8 @@ namespace Nexus {
         const std::vector<AccountModificationRequest::Id>& ids);
       static std::string get_sort_column(
         AccountModificationRequestQuery::SortField field);
+      static Viper::Expression make_query_filter(
+        const AccountModificationRequestQuery& query);
       std::vector<AccountModificationRequest> load_requests(
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query);
@@ -353,6 +355,35 @@ namespace Nexus {
     return "";
   }
 
+  template<typename C>
+  Viper::Expression SqlAdministrationDataStore<C>::make_query_filter(
+      const AccountModificationRequestQuery& query) {
+    auto filter = Viper::literal(true);
+    if(!query.get_categories().empty()) {
+      auto categories = Viper::literal(false);
+      for(auto category : query.get_categories()) {
+        categories = categories || Viper::sym("type") == category;
+      }
+      filter = filter && categories;
+    }
+    if(!query.get_statuses().empty()) {
+      auto statuses = Viper::literal(false);
+      for(auto status : query.get_statuses()) {
+        statuses = statuses || Viper::sym("status") == status;
+      }
+      filter = filter && statuses;
+    }
+    if(auto& start_date = query.get_start_date()) {
+      filter = filter && Viper::sym("last_update_timestamp") >= *start_date;
+    }
+    if(auto& end_date = query.get_end_date()) {
+      filter = filter && Viper::sym("last_update_timestamp") <= *end_date;
+    }
+    if(auto& excluded_account = query.get_excluded_account()) {
+      filter = filter && Viper::sym("account") != excluded_account->m_id;
+    }
+    return filter;
+  }
 
   template<typename C>
   std::vector<AccountModificationRequest>
@@ -360,7 +391,8 @@ namespace Nexus {
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query) {
     auto filter = make_account_modification_request_sql_query(
-      "account_modification_requests", query.get_filter());
+      "account_modification_requests", query.get_filter()) &&
+      make_query_filter(query);
     auto is_head =
       query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
     auto sort_column = get_sort_column(query.get_sort_field());
@@ -633,7 +665,8 @@ namespace Nexus {
       entitlements.push_back({request.get_id(), entitlement});
     }
     auto stored =
-      StoredAccountModificationRequest(request, request.get_timestamp());
+      StoredAccountModificationRequest(request, request.get_timestamp(),
+        AccountModificationRequest::Status::NONE);
     try {
       m_connection->execute(Viper::insert(
         get_stored_account_modification_request_row(),
@@ -665,7 +698,8 @@ namespace Nexus {
     auto indexed_modification = IndexedRiskModification(
       request.get_id(), request.get_account(), modification.get_parameters());
     auto stored =
-      StoredAccountModificationRequest(request, request.get_timestamp());
+      StoredAccountModificationRequest(request, request.get_timestamp(),
+        AccountModificationRequest::Status::NONE);
     try {
       m_connection->execute(
         Viper::insert(get_stored_account_modification_request_row(),
@@ -751,6 +785,8 @@ namespace Nexus {
       m_connection->execute(Viper::update("account_modification_requests",
         Viper::SetClause("last_update_timestamp", status.m_timestamp),
         Viper::sym("id") == id));
+      m_connection->execute(Viper::update("account_modification_requests",
+        Viper::SetClause("status", status.m_status), Viper::sym("id") == id));
     } catch(const Viper::ExecuteException& e) {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }

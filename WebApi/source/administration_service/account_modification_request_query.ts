@@ -65,6 +65,9 @@ export class AccountModificationRequestQuery extends
   /** The request categories to match, or empty to match all. */
   public categories: AccountModificationRequest.Type[];
 
+  /** The request statuses to match, or empty to match all. */
+  public statuses: AccountModificationRequest.Status[];
+
   /** The earliest timestamp to match. */
   public startDate: Beam.DateTime;
 
@@ -89,6 +92,7 @@ export class AccountModificationRequestQuery extends
     super(index);
     this.snapshotLimit = snapshotLimit;
     this.categories = [];
+    this.statuses = [];
     this.startDate = null;
     this.endDate = null;
     this.search = '';
@@ -101,6 +105,7 @@ export class AccountModificationRequestQuery extends
     return {
       ...super.toJson(),
       categories: this.categories.slice(),
+      statuses: this.statuses.slice(),
       start_date: toOptionalJson(this.startDate?.toJson()),
       end_date: toOptionalJson(this.endDate?.toJson()),
       search: this.search,

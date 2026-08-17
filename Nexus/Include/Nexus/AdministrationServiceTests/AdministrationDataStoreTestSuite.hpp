@@ -649,6 +649,70 @@ namespace Nexus::Tests {
       REQUIRE(before_everything.empty());
     }
 
+    SUBCASE("load_account_modification_requests_filtered") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto other = DirectoryEntry::make_account(101, "user_b");
+      auto modification = EntitlementModification();
+      data_store.with_transaction([&] {
+        data_store.store(AccountModificationRequest(1,
+          AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(2,
+          AccountModificationRequest::Type::RISK, account, account,
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(3,
+          AccountModificationRequest::Type::ENTITLEMENTS, other, other,
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(1, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED, account, 1,
+          time_from_string("2024-07-07 10:00:00")));
+        data_store.store(2, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::PENDING, account, 1,
+          time_from_string("2024-07-08 10:00:00")));
+        data_store.store(3, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::REJECTED, other, 1,
+          time_from_string("2024-07-09 10:00:00")));
+      });
+      auto load = [&] (const AccountModificationRequestQuery& query) {
+        return data_store.with_transaction([&] {
+          return data_store.load_account_modification_requests(query);
+        });
+      };
+      auto query = AccountModificationRequestQuery();
+      query.set_snapshot_limit(SnapshotLimit::from_head(10));
+      query.set_categories({AccountModificationRequest::Type::RISK});
+      auto by_category = load(query);
+      REQUIRE(by_category.size() == 1);
+      REQUIRE(by_category[0].get_id() == 2);
+      query.set_categories({});
+      query.set_statuses({AccountModificationRequest::Status::GRANTED,
+        AccountModificationRequest::Status::REJECTED});
+      auto by_status = load(query);
+      REQUIRE(by_status.size() == 2);
+      REQUIRE(by_status[0].get_id() == 1);
+      REQUIRE(by_status[1].get_id() == 3);
+      query.set_statuses({});
+      query.set_start_date(time_from_string("2024-07-08 00:00:00"));
+      auto from_start = load(query);
+      REQUIRE(from_start.size() == 2);
+      REQUIRE(from_start[0].get_id() == 2);
+      REQUIRE(from_start[1].get_id() == 3);
+      query.set_end_date(time_from_string("2024-07-08 23:59:59"));
+      auto within_range = load(query);
+      REQUIRE(within_range.size() == 1);
+      REQUIRE(within_range[0].get_id() == 2);
+      query.set_start_date(optional<ptime>());
+      query.set_end_date(optional<ptime>());
+      query.set_excluded_account(other);
+      auto excluded = load(query);
+      REQUIRE(excluded.size() == 2);
+      REQUIRE(excluded[0].get_id() == 1);
+      REQUIRE(excluded[1].get_id() == 2);
+    }
+
     SUBCASE("load_account_modification_requests_with_anchor") {
       auto account = DirectoryEntry::make_account(100, "user_a");
       auto modification = EntitlementModification();

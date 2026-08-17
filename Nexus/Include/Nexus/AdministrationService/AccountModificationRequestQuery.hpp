@@ -1,9 +1,14 @@
 #ifndef NEXUS_ADMINISTRATION_SERVICE_ACCOUNT_MODIFICATION_REQUEST_QUERY_HPP
 #define NEXUS_ADMINISTRATION_SERVICE_ACCOUNT_MODIFICATION_REQUEST_QUERY_HPP
 #include <ostream>
+#include <string>
+#include <vector>
 #include <Beam/Queries/PagedQuery.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
+#include <Beam/Serialization/ShuttleOptional.hpp>
+#include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
+#include <boost/optional/optional.hpp>
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 
 namespace Nexus {
@@ -71,6 +76,49 @@ namespace Nexus {
       /** Sets the field used to order the requests. */
       void set_sort_field(SortField field);
 
+      /** Returns the types to match, or empty to match every type. */
+      const std::vector<AccountModificationRequest::Type>&
+        get_categories() const;
+
+      /** Sets the types to match. */
+      void set_categories(
+        const std::vector<AccountModificationRequest::Type>& types);
+
+      /** Returns the statuses to match, or empty to match every status. */
+      const std::vector<AccountModificationRequest::Status>&
+        get_statuses() const;
+
+      /** Sets the statuses to match. */
+      void set_statuses(
+        const std::vector<AccountModificationRequest::Status>& statuses);
+
+      /** Returns the earliest update time to match. */
+      const boost::optional<boost::posix_time::ptime>& get_start_date() const;
+
+      /** Sets the earliest update time to match. */
+      void set_start_date(
+        const boost::optional<boost::posix_time::ptime>& date);
+
+      /** Returns the latest update time to match. */
+      const boost::optional<boost::posix_time::ptime>& get_end_date() const;
+
+      /** Sets the latest update time to match. */
+      void set_end_date(const boost::optional<boost::posix_time::ptime>& date);
+
+      /** Returns the text matching a request id or an account name. */
+      const std::string& get_search() const;
+
+      /** Sets the text matching a request id or an account name. */
+      void set_search(const std::string& search);
+
+      /** Returns the account whose requests are excluded. */
+      const boost::optional<Beam::DirectoryEntry>&
+        get_excluded_account() const;
+
+      /** Sets the account whose requests are excluded. */
+      void set_excluded_account(
+        const boost::optional<Beam::DirectoryEntry>& account);
+
     protected:
       template<Beam::IsShuttle S>
       void shuttle(S& shuttle, unsigned int version);
@@ -78,6 +126,12 @@ namespace Nexus {
     private:
       friend struct Beam::DataShuttle;
       SortField m_sort_field;
+      std::vector<AccountModificationRequest::Type> m_categories;
+      std::vector<AccountModificationRequest::Status> m_statuses;
+      boost::optional<boost::posix_time::ptime> m_start_date;
+      boost::optional<boost::posix_time::ptime> m_end_date;
+      std::string m_search;
+      boost::optional<Beam::DirectoryEntry> m_excluded_account;
   };
 
   /**
@@ -148,12 +202,78 @@ namespace Nexus {
     m_sort_field = field;
   }
 
+  inline const std::vector<AccountModificationRequest::Type>&
+      AccountModificationRequestQuery::get_categories() const {
+    return m_categories;
+  }
+
+  inline void AccountModificationRequestQuery::set_categories(
+      const std::vector<AccountModificationRequest::Type>& types) {
+    m_categories = types;
+  }
+
+  inline const std::vector<AccountModificationRequest::Status>&
+      AccountModificationRequestQuery::get_statuses() const {
+    return m_statuses;
+  }
+
+  inline void AccountModificationRequestQuery::set_statuses(
+      const std::vector<AccountModificationRequest::Status>& statuses) {
+    m_statuses = statuses;
+  }
+
+  inline const boost::optional<boost::posix_time::ptime>&
+      AccountModificationRequestQuery::get_start_date() const {
+    return m_start_date;
+  }
+
+  inline void AccountModificationRequestQuery::set_start_date(
+      const boost::optional<boost::posix_time::ptime>& date) {
+    m_start_date = date;
+  }
+
+  inline const boost::optional<boost::posix_time::ptime>&
+      AccountModificationRequestQuery::get_end_date() const {
+    return m_end_date;
+  }
+
+  inline void AccountModificationRequestQuery::set_end_date(
+      const boost::optional<boost::posix_time::ptime>& date) {
+    m_end_date = date;
+  }
+
+  inline const std::string&
+      AccountModificationRequestQuery::get_search() const {
+    return m_search;
+  }
+
+  inline void AccountModificationRequestQuery::set_search(
+      const std::string& search) {
+    m_search = search;
+  }
+
+  inline const boost::optional<Beam::DirectoryEntry>&
+      AccountModificationRequestQuery::get_excluded_account() const {
+    return m_excluded_account;
+  }
+
+  inline void AccountModificationRequestQuery::set_excluded_account(
+      const boost::optional<Beam::DirectoryEntry>& account) {
+    m_excluded_account = account;
+  }
+
   template<Beam::IsShuttle S>
   void AccountModificationRequestQuery::shuttle(
       S& shuttle, unsigned int version) {
     Beam::PagedQuery<Beam::DirectoryEntry,
       AccountModificationRequestAnchor>::shuttle(shuttle, version);
     shuttle.shuttle("sort_field", m_sort_field);
+    shuttle.shuttle("categories", m_categories);
+    shuttle.shuttle("statuses", m_statuses);
+    shuttle.shuttle("start_date", m_start_date);
+    shuttle.shuttle("end_date", m_end_date);
+    shuttle.shuttle("search", m_search);
+    shuttle.shuttle("excluded_account", m_excluded_account);
     if constexpr(Beam::IsReceiver<S>) {
       if(m_sort_field != SortField::CREATED &&
           m_sort_field != SortField::LAST_UPDATED &&

@@ -184,6 +184,9 @@ namespace Nexus {
 
     /** The timestamp of the request's most recent update. */
     boost::posix_time::ptime m_last_update_timestamp;
+
+    /** The request's most recent status. */
+    AccountModificationRequest::Status m_status;
   };
 
   /** Returns a row representing a StoredAccountModificationRequest. */
@@ -193,8 +196,10 @@ namespace Nexus {
         &StoredAccountModificationRequest::m_request).
       add_column("last_update_timestamp",
         &StoredAccountModificationRequest::m_last_update_timestamp).
+      add_column("status", &StoredAccountModificationRequest::m_status).
       add_index("last_update_index", {"last_update_timestamp", "id"}).
-      add_index("effective_date_index", {"effective_date", "id"});
+      add_index("effective_date_index", {"effective_date", "id"}).
+      add_index("status_index", {"status", "id"});
     return ROW;
   }
 

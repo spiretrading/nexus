@@ -120,6 +120,7 @@ export class HttpRequestsModel extends RequestsModel {
       query.anchor = anchor;
     }
     query.categories = [...submission.filters.categories];
+    query.statuses = toStatuses(submission.requestState);
     query.search = submission.filters.query;
     query.sortField = toSortField(submission.filters.sortKey);
     if(submission.filters.startDate) {
@@ -333,6 +334,22 @@ function toSortField(sortKey: RequestsModel.SortField):
     return Nexus.AccountModificationRequestQuery.SortField.REQUESTER;
   }
   return Nexus.AccountModificationRequestQuery.SortField.CREATED;
+}
+
+function toStatuses(state: RequestsModel.RequestState):
+    Nexus.AccountModificationRequest.Status[] {
+  if(state === RequestsModel.RequestState.APPROVED) {
+    return [Nexus.AccountModificationRequest.Status.GRANTED];
+  }
+  if(state === RequestsModel.RequestState.REJECTED) {
+    return [Nexus.AccountModificationRequest.Status.REJECTED];
+  }
+  return [
+    Nexus.AccountModificationRequest.Status.NONE,
+    Nexus.AccountModificationRequest.Status.PENDING,
+    Nexus.AccountModificationRequest.Status.REVIEWED,
+    Nexus.AccountModificationRequest.Status.SCHEDULED
+  ];
 }
 
 function updateTime(summary: Nexus.AccountModificationRequestSummary):

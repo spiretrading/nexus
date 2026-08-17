@@ -1482,34 +1482,46 @@ namespace Nexus {
       return m_data_store->load_account_modification_requests(accounts, query);
     };
     auto field = query.get_sort_field();
-    if(field != AccountModificationRequestQuery::SortField::ACCOUNT &&
-        field != AccountModificationRequestQuery::SortField::REQUESTER) {
+    auto is_name_sort =
+      field == AccountModificationRequestQuery::SortField::ACCOUNT ||
+        field == AccountModificationRequestQuery::SortField::REQUESTER;
+    if(!is_name_sort && query.get_search().empty()) {
       return load(query);
     }
     auto scan = query;
-    scan.set_sort_field(AccountModificationRequestQuery::SortField::CREATED);
     scan.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
     scan.set_offset(0);
-    scan.set_anchor(boost::optional<AccountModificationRequestAnchor>());
+    if(is_name_sort) {
+      scan.set_sort_field(AccountModificationRequestQuery::SortField::CREATED);
+      scan.set_anchor(boost::optional<AccountModificationRequestAnchor>());
+    }
     auto requests = load(scan);
-    auto name = [&] (const AccountModificationRequest& request) ->
-        const std::string& {
+    if(auto& search = query.get_search(); !search.empty()) {
+      std::erase_if(requests, [&] (const auto& request) {
+        return !boost::icontains(request.get_account().m_name, search) &&
+          !boost::icontains(request.get_submission_account().m_name, search) &&
+          !boost::icontains(std::to_string(request.get_id()), search);
+      });
+    }
+    auto name = [&] (const AccountModificationRequest& request) -> const auto& {
       if(field == AccountModificationRequestQuery::SortField::ACCOUNT) {
         return request.get_account().m_name;
       }
       return request.get_submission_account().m_name;
     };
-    std::ranges::sort(requests, [&] (const auto& left, const auto& right) {
-      if(boost::ilexicographical_compare(name(left), name(right))) {
-        return true;
-      } else if(boost::ilexicographical_compare(name(right), name(left))) {
-        return false;
-      }
-      return left.get_id() < right.get_id();
-    });
+    if(is_name_sort) {
+      std::ranges::sort(requests, [&] (const auto& left, const auto& right) {
+        if(boost::ilexicographical_compare(name(left), name(right))) {
+          return true;
+        } else if(boost::ilexicographical_compare(name(right), name(left))) {
+          return false;
+        }
+        return left.get_id() < right.get_id();
+      });
+    }
     auto is_head =
       query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
-    if(auto anchor = query.get_anchor()) {
+    if(auto anchor = query.get_anchor(); anchor && is_name_sort) {
       auto position =
         std::ranges::partition_point(requests, [&] (const auto& request) {
           if(boost::ilexicographical_compare(name(request), anchor->m_name)) {
@@ -1628,19 +1640,16 @@ namespace Nexus {
     auto& session = client.get_session();
     auto accounts =
       load_authorized_accounts(session.get_account(), query.get_index());
+    auto is_unrestricted = check_administrator(session.get_account()) &&
+      query.get_index() == m_trading_groups_root;
     auto total = query;
     total.set_anchor(boost::optional<AccountModificationRequestAnchor>());
     total.set_offset(0);
     total.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
+    total.set_statuses({});
+    total.set_sort_field(AccountModificationRequestQuery::SortField::CREATED);
     return m_data_store->with_transaction([&] {
-      auto requests = [&] {
-        if(check_administrator(session.get_account()) &&
-            query.get_index() == m_trading_groups_root) {
-          return m_data_store->load_account_modification_requests(total);
-        }
-        return m_data_store->load_account_modification_requests(
-          accounts, total);
-      }();
+      auto requests = load_sorted_requests(accounts, is_unrestricted, total);
       auto ids = std::vector<AccountModificationRequest::Id>();
       ids.reserve(requests.size());
       for(auto& request : requests) {

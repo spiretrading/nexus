@@ -514,6 +514,75 @@ TEST_SUITE("AdministrationServlet") {
     REQUIRE(summaries[2].m_request.get_account().m_name == "Zulu");
   }
 
+  TEST_CASE("load_summaries_matching_a_search") {
+    auto fixture = Fixture();
+    auto modification = EntitlementModification();
+    auto comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto traders = fixture.m_trading_group.get_traders_directory();
+    for(auto& name : {"alpha", "beta", "gamma"}) {
+      fixture.m_admin_client->send_request<
+        SubmitEntitlementModificationRequestService>(
+          fixture.make_account(name, traders), modification, ptime(), comment);
+    }
+    auto root = fixture.m_admin_client->send_request<
+      LoadTradingGroupsRootEntryService>();
+    auto query = AccountModificationRequestQuery();
+    query.set_index(root);
+    query.set_snapshot_limit(SnapshotLimit::from_head(10));
+    query.set_search("BET");
+    auto summaries = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(summaries.size() == 1);
+    REQUIRE(summaries[0].m_request.get_account().m_name == "beta");
+    query.set_search("a");
+    auto every_name = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(every_name.size() == 3);
+    query.set_search("nobody");
+    auto none = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(none.empty());
+  }
+
+  TEST_CASE("load_summaries_matching_a_status") {
+    auto fixture = Fixture();
+    auto modification = EntitlementModification();
+    auto comment = Nexus::Message(
+      0, fixture.m_admin_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto pending = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        fixture.m_trader_account, modification, ptime(), comment);
+    auto rejected_request = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        fixture.m_trader_account, modification, ptime(), comment);
+    fixture.m_admin_client->send_request<
+      RejectAccountModificationRequestService>(
+        rejected_request.get_id(), comment);
+    auto root = fixture.m_admin_client->send_request<
+      LoadTradingGroupsRootEntryService>();
+    auto query = AccountModificationRequestQuery();
+    query.set_index(root);
+    query.set_snapshot_limit(SnapshotLimit::from_head(10));
+    query.set_statuses({AccountModificationRequest::Status::REJECTED});
+    auto rejected = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(rejected.size() == 1);
+    REQUIRE(rejected[0].m_request.get_id() == rejected_request.get_id());
+    query.set_statuses({AccountModificationRequest::Status::PENDING});
+    auto still_pending = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestSummariesService>(query);
+    REQUIRE(still_pending.size() == 1);
+    REQUIRE(still_pending[0].m_request.get_id() == pending.get_id());
+    auto counts = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestCountsService>(query);
+    REQUIRE(counts.m_rejected == 1);
+    REQUIRE(counts.m_pending == 1);
+    REQUIRE(counts.m_granted == 0);
+  }
+
   TEST_CASE("submit_and_load_entitlement_modification") {
     auto fixture = Fixture();
     auto entitlements = std::vector<DirectoryEntry>();
