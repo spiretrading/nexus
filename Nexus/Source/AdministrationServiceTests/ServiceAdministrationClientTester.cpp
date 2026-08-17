@@ -2,6 +2,7 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/ServicesTests/ServiceClientFixture.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/AdministrationService/AccountModificationRequestAccessor.hpp"
 #include "Nexus/AdministrationService/ServiceAdministrationClient.hpp"
 
 using namespace Beam;
@@ -19,7 +20,8 @@ namespace {
     std::unique_ptr<TestServiceAdministrationClient> m_client;
 
     Fixture() {
-      Beam::register_query_types(out(m_server.get_slots().get_registry()));
+      register_administration_query_types(
+        out(m_server.get_slots().get_registry()));
       register_administration_services(out(m_server.get_slots()));
       register_administration_messages(out(m_server.get_slots()));
       m_client = make_client<TestServiceAdministrationClient>();
@@ -474,6 +476,22 @@ TEST_SUITE("ServiceAdministrationClient") {
     REQUIRE(received.size() == 1);
     REQUIRE(received[0].m_request.get_id() == 7);
     REQUIRE(received[0].m_comment_count == 2);
+  }
+
+  TEST_CASE("load_account_modification_request_summaries_with_a_filter") {
+    auto fixture = Fixture();
+    auto account = DirectoryEntry::make_account(23, "mod_account");
+    auto query = make_account_modification_request_query(account, 25);
+    auto accessor = AccountModificationRequestAccessor::from_parameter(0);
+    query.set_filter(accessor.get_account() !=
+      ConstantExpression(static_cast<int>(account.m_id)));
+    fixture.on_request<LoadAccountModificationRequestSummariesService>(
+      [&] (auto& request, const auto& received_query) {
+        request.set(std::vector<AccountModificationRequestSummary>());
+      });
+    auto received = REQUIRE_NO_THROW(
+      fixture.m_client->load_account_modification_request_summaries(query));
+    REQUIRE(received.empty());
   }
 
   TEST_CASE("load_account_modification_request_counts") {

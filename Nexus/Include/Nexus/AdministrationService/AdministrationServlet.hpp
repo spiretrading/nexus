@@ -315,7 +315,7 @@ namespace Nexus {
           Beam::IsTimer<Beam::dereference_t<T>>
   void AdministrationServlet<C, S, D, R, T>::register_services(
       Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots) {
-    Beam::register_query_types(Beam::out(slots->get_registry()));
+    register_administration_query_types(Beam::out(slots->get_registry()));
     register_administration_services(out(slots));
     register_administration_messages(out(slots));
     LoadAccountsByRolesService::add_slot(out(slots),

@@ -81,7 +81,7 @@ namespace {
       auto protocol_client = std::make_unique<TestServiceProtocolClient>(
         std::make_unique<LocalClientChannel>(name, *m_server_connection),
         init());
-      Beam::register_query_types(
+      register_administration_query_types(
         out(protocol_client->get_slots().get_registry()));
       register_administration_services(out(protocol_client->get_slots()));
       register_administration_messages(out(protocol_client->get_slots()));
