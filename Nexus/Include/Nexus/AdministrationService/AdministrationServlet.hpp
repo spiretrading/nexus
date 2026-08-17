@@ -17,6 +17,7 @@
 #include <Beam/TimeService/Timer.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -1497,25 +1498,33 @@ namespace Nexus {
       return request.get_submission_account().m_name;
     };
     if(is_name_sort) {
-      std::ranges::sort(requests, [&] (const auto& left, const auto& right) {
-        if(boost::ilexicographical_compare(name(left), name(right))) {
-          return true;
-        } else if(boost::ilexicographical_compare(name(right), name(left))) {
-          return false;
+      auto keys = std::vector<std::pair<std::string, std::size_t>>();
+      keys.reserve(requests.size());
+      for(auto i = std::size_t(0); i != requests.size(); ++i) {
+        keys.emplace_back(boost::to_lower_copy(name(requests[i])), i);
+      }
+      std::ranges::sort(keys, [&] (const auto& left, const auto& right) {
+        if(left.first != right.first) {
+          return left.first < right.first;
         }
-        return left.get_id() < right.get_id();
+        return requests[left.second].get_id() < requests[right.second].get_id();
       });
+      auto sorted = std::vector<AccountModificationRequest>();
+      sorted.reserve(requests.size());
+      for(auto& key : keys) {
+        sorted.push_back(std::move(requests[key.second]));
+      }
+      requests = std::move(sorted);
     }
     auto is_head =
       query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
     if(auto anchor = query.get_anchor(); anchor && is_name_sort) {
+      auto anchor_key = boost::to_lower_copy(anchor->m_name);
       auto position =
         std::ranges::partition_point(requests, [&] (const auto& request) {
-          if(boost::ilexicographical_compare(name(request), anchor->m_name)) {
-            return true;
-          } else if(boost::ilexicographical_compare(
-              anchor->m_name, name(request))) {
-            return false;
+          auto key = boost::to_lower_copy(name(request));
+          if(key != anchor_key) {
+            return key < anchor_key;
           }
           if(is_head) {
             return request.get_id() <= anchor->m_id;
