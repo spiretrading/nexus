@@ -20,16 +20,31 @@ using namespace Nexus::Currencies;
 using namespace Nexus::Venues;
 
 namespace {
+  struct InterceptingDataStore : LocalAdministrationDataStore {
+    std::function<void ()> m_on_load_entitlement_modification;
+
+    EntitlementModification load_entitlement_modification(
+        AccountModificationRequest::Id id) {
+      if(m_on_load_entitlement_modification) {
+        auto callback =
+          std::exchange(m_on_load_entitlement_modification, nullptr);
+        callback();
+      }
+      return LocalAdministrationDataStore::load_entitlement_modification(id);
+    }
+  };
+
+  template<typename D = LocalAdministrationDataStore>
   struct Fixture {
+    using DataStore = D;
     using ServletContainer = TestAuthenticatedServiceProtocolServletContainer<
       MetaAdministrationServlet<
-        ServiceLocatorClient, LocalAdministrationDataStore*, FixedTimeClient*,
-        TriggerTimer*>>;
+        ServiceLocatorClient, DataStore*, FixedTimeClient*, TriggerTimer*>>;
     FixedTimeClient m_time_client;
     TriggerTimer m_timer;
     ServiceLocatorTestEnvironment m_service_locator_environment;
     optional<ServiceLocatorClient> m_servlet_service_locator_client;
-    LocalAdministrationDataStore m_data_store;
+    DataStore m_data_store;
     EntitlementDatabase m_entitlements;
     std::shared_ptr<LocalServerConnection> m_server_connection;
     optional<ServletContainer> m_container;
@@ -1383,6 +1398,63 @@ TEST_SUITE("AdministrationServlet") {
       LoadAccountEntitlementsService>(fixture.m_trader_account);
     REQUIRE(loaded_entitlements.size() ==
       fixture.m_entitlements.get_entries().size());
+  }
+
+  TEST_CASE("scheduled_grant_respects_a_concurrent_rejection") {
+    auto fixture = Fixture<InterceptingDataStore>();
+    auto entitlements = std::vector<DirectoryEntry>();
+    for(auto& entry : fixture.m_entitlements.get_entries()) {
+      entitlements.push_back(entry.m_group_entry);
+    }
+    auto modification = EntitlementModification(entitlements);
+    auto comment = Nexus::Message(0, fixture.m_trader_account,
+      fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto first = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        DirectoryEntry(), modification, ptime(), comment);
+    auto second = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        DirectoryEntry(), modification, ptime(), comment);
+    auto future_date = time_from_string("2024-08-01 00:00:00");
+    auto approve_comment = Nexus::Message(0, fixture.m_admin_account,
+      fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("Approved")});
+    for(auto id : {first.get_id(), second.get_id()}) {
+      auto update = fixture.m_admin_client->send_request<
+        ApproveAccountModificationRequestService>(
+          id, future_date, approve_comment);
+      REQUIRE(update.m_status == AccountModificationRequest::Status::SCHEDULED);
+    }
+    auto rejection_time = time_from_string("2024-08-02 12:00:00");
+    fixture.m_data_store.m_on_load_entitlement_modification = [&] {
+      auto status = fixture.m_data_store.
+        load_account_modification_request_status(second.get_id());
+      status.m_status = AccountModificationRequest::Status::REJECTED;
+      ++status.m_sequence_number;
+      status.m_timestamp = rejection_time;
+      fixture.m_data_store.store(second.get_id(), status);
+    };
+    fixture.m_time_client.set(rejection_time);
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    auto first_status = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestStatusService>(first.get_id());
+    REQUIRE(
+      first_status.m_status == AccountModificationRequest::Status::GRANTED);
+    auto second_status = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestStatusService>(second.get_id());
+    REQUIRE(
+      second_status.m_status == AccountModificationRequest::Status::REJECTED);
+    auto updates = fixture.m_data_store.
+      load_account_modification_request_updates(second.get_id());
+    auto sequence_numbers = std::vector<int>();
+    for(auto& update : updates) {
+      sequence_numbers.push_back(update.m_sequence_number);
+    }
+    std::ranges::sort(sequence_numbers);
+    REQUIRE(std::ranges::adjacent_find(sequence_numbers) ==
+      sequence_numbers.end());
   }
 
   TEST_CASE("query_accounts_by_username") {

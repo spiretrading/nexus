@@ -897,24 +897,33 @@ namespace Nexus {
     for(auto i = std::size_t(0); i != requests.size(); ++i) {
       auto& request = requests[i];
       auto id = request.get_id();
-      auto update = statuses[i];
-      if(update.m_status != AccountModificationRequest::Status::SCHEDULED) {
+      if(statuses[i].m_status !=
+          AccountModificationRequest::Status::SCHEDULED) {
         continue;
       }
       if(request.get_effective_date() > now) {
         continue;
       }
-      update.m_status = AccountModificationRequest::Status::GRANTED;
-      ++update.m_sequence_number;
-      update.m_timestamp = now;
-      m_data_store->with_transaction([&] {
-        m_data_store->store(id, update);
+      auto update = m_data_store->with_transaction([&] {
+        auto status =
+          m_data_store->load_account_modification_request_status(id);
+        if(status.m_status != AccountModificationRequest::Status::SCHEDULED) {
+          return boost::optional<AccountModificationRequest::Update>();
+        }
+        status.m_status = AccountModificationRequest::Status::GRANTED;
+        ++status.m_sequence_number;
+        status.m_timestamp = now;
+        m_data_store->store(id, status);
+        return boost::optional(status);
       });
+      if(!update) {
+        continue;
+      }
       if(request.get_type() == AccountModificationRequest::Type::ENTITLEMENTS) {
         auto modification = m_data_store->with_transaction([&] {
           return m_data_store->load_entitlement_modification(id);
         });
-        grant_entitlements(update.m_account, request.get_account(),
+        grant_entitlements(update->m_account, request.get_account(),
           modification.get_entitlements(), id);
       } else if(request.get_type() == AccountModificationRequest::Type::RISK) {
         auto modification = m_data_store->with_transaction([&] {
