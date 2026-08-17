@@ -1400,6 +1400,35 @@ TEST_SUITE("AdministrationServlet") {
       fixture.m_entitlements.get_entries().size());
   }
 
+  TEST_CASE("submitting_without_an_effective_date_resolves_it") {
+    auto fixture = Fixture();
+    auto comment = Nexus::Message(0, fixture.m_trader_account,
+      fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto entitlements = EntitlementModification();
+    auto entitlement_request = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        DirectoryEntry(), entitlements, ptime(), comment);
+    REQUIRE(entitlement_request.get_effective_date() ==
+      entitlement_request.get_timestamp());
+    auto risk = RiskModification(RiskParameters());
+    auto risk_request = fixture.m_trader_client->send_request<
+      SubmitRiskModificationRequestService>(
+        DirectoryEntry(), risk, ptime(), comment);
+    REQUIRE(risk_request.get_effective_date() ==
+      risk_request.get_timestamp());
+    auto scheduled_date = time_from_string("2024-08-01 00:00:00");
+    auto scheduled_request = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        DirectoryEntry(), entitlements, scheduled_date, comment);
+    REQUIRE(scheduled_request.get_effective_date() == scheduled_date);
+    for(auto id : {entitlement_request.get_id(), risk_request.get_id(),
+        scheduled_request.get_id()}) {
+      auto stored = fixture.m_data_store.load_account_modification_request(id);
+      REQUIRE(stored.get_effective_date() != ptime());
+    }
+  }
+
   TEST_CASE("scheduled_grant_respects_a_concurrent_rejection") {
     auto fixture = Fixture<InterceptingDataStore>();
     auto entitlements = std::vector<DirectoryEntry>();

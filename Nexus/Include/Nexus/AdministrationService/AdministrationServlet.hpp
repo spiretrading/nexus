@@ -871,8 +871,14 @@ namespace Nexus {
     }
     auto request_id = ++m_last_modification_request_id;
     auto timestamp = m_time_client->get_time();
-    return AccountModificationRequest(
-      request_id, type, account, submission_account, timestamp, effective_date);
+    auto resolved_effective_date = [&] {
+      if(effective_date == boost::posix_time::not_a_date_time) {
+        return timestamp;
+      }
+      return effective_date;
+    }();
+    return AccountModificationRequest(request_id, type, account,
+      submission_account, timestamp, resolved_effective_date);
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires
