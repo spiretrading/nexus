@@ -75,7 +75,6 @@ export class RequestDirectoryPage extends React.Component<Properties, State> {
             requestState={this.props.requestState}
             filters={this.props.filters}
             filterCount={this.props.filterCount}
-            pageIndex={this.props.pageIndex}
             response={this.props.response}
             isFilterModalOpen={this.state.isFilterModalOpen}
             filterModalSize={this.state.filterModalSize}
@@ -148,7 +147,6 @@ function Toolbar(props: {
     requestState: RequestsModel.RequestState;
     filters: RequestsModel.Filters;
     filterCount: number;
-    pageIndex: number;
     response: RequestsModel.Response;
     isFilterModalOpen: boolean;
     filterModalSize: DisplaySize;
@@ -168,7 +166,6 @@ function Toolbar(props: {
         requestState={props.requestState}
         filters={props.filters}
         filterCount={props.filterCount}
-        pageIndex={props.pageIndex}
         response={props.response}
         onSubmit={props.onSubmit}
         onOpenFilterModal={props.onOpenFilterModal}/>
@@ -177,7 +174,6 @@ function Toolbar(props: {
         requestState={props.requestState}
         filters={props.filters}
         filterCount={props.filterCount}
-        pageIndex={props.pageIndex}
         response={props.response}
         onSubmit={props.onSubmit}
         onOpenFilterModal={props.onOpenFilterModal}/>
@@ -200,7 +196,6 @@ function NarrowToolbar(props: {
     requestState: RequestsModel.RequestState;
     filters: RequestsModel.Filters;
     filterCount: number;
-    pageIndex: number;
     response: RequestsModel.Response;
     onSubmit?: (submission: RequestsModel.Submission) => void;
     onOpenFilterModal?: () => void;
@@ -212,7 +207,7 @@ function NarrowToolbar(props: {
       scope: props.scope,
       requestState: props.requestState,
       filters: {...props.filters, query: value},
-      pageIndex: props.pageIndex
+      pageIndex: 0
     });
   };
   const onSelectState = (state: RequestsModel.RequestState) => {
@@ -220,7 +215,7 @@ function NarrowToolbar(props: {
       scope: props.scope,
       requestState: state,
       filters: props.filters,
-      pageIndex: props.pageIndex
+      pageIndex: 0
     });
   };
   return (
@@ -252,7 +247,6 @@ function WideToolbar(props: {
     requestState: RequestsModel.RequestState;
     filters: RequestsModel.Filters;
     filterCount: number;
-    pageIndex: number;
     response: RequestsModel.Response;
     onSubmit?: (submission: RequestsModel.Submission) => void;
     onOpenFilterModal?: () => void;
@@ -264,7 +258,6 @@ function WideToolbar(props: {
           scope={props.scope}
           requestState={props.requestState}
           filters={props.filters}
-          pageIndex={props.pageIndex}
           onSubmit={props.onSubmit}/>
       </div>
       <div className={css(STYLES.wideFlexColumn)}/>
@@ -275,7 +268,6 @@ function WideToolbar(props: {
           requestState={props.requestState}
           filters={props.filters}
           filterCount={props.filterCount}
-          pageIndex={props.pageIndex}
           response={props.response}
           onSubmit={props.onSubmit}
           onOpenFilterModal={props.onOpenFilterModal}/>
@@ -289,7 +281,6 @@ function QuerySection(props: {
     scope: RequestsModel.Scope;
     requestState: RequestsModel.RequestState;
     filters: RequestsModel.Filters;
-    pageIndex: number;
     onSubmit?: (submission: RequestsModel.Submission) => void;
   }) {
   const onQueryChange = (value: string) => {
@@ -297,7 +288,7 @@ function QuerySection(props: {
       scope: props.scope,
       requestState: props.requestState,
       filters: {...props.filters, query: value},
-      pageIndex: props.pageIndex
+      pageIndex: 0
     });
   };
   const toggleCategory = (type: Type) => {
@@ -311,7 +302,7 @@ function QuerySection(props: {
       scope: props.scope,
       requestState: props.requestState,
       filters: {...props.filters, categories: next},
-      pageIndex: props.pageIndex
+      pageIndex: 0
     });
   };
   return (
@@ -343,7 +334,6 @@ function ControlsSection(props: {
     requestState: RequestsModel.RequestState;
     filters: RequestsModel.Filters;
     filterCount: number;
-    pageIndex: number;
     response: RequestsModel.Response;
     onSubmit?: (submission: RequestsModel.Submission) => void;
     onOpenFilterModal?: () => void;
@@ -355,7 +345,7 @@ function ControlsSection(props: {
       scope: props.scope,
       requestState: state,
       filters: props.filters,
-      pageIndex: props.pageIndex
+      pageIndex: 0
     });
   };
   const onSortChange = (value: RequestsModel.SortField) => {
@@ -363,7 +353,7 @@ function ControlsSection(props: {
       scope: props.scope,
       requestState: props.requestState,
       filters: {...props.filters, sortKey: value},
-      pageIndex: props.pageIndex
+      pageIndex: 0
     });
   };
   return (

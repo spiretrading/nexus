@@ -19,6 +19,7 @@ export class HttpRequestsModel extends RequestsModel {
     this.localModel = null;
     this.anchors = [null];
     this.anchorKey = '';
+    this.generation = 0;
   }
 
   public async load(): Promise<void> {
@@ -35,11 +36,12 @@ export class HttpRequestsModel extends RequestsModel {
       const admin = this.serviceClients.administrationClient;
       this.resetAnchors(submission);
       const query = this.makeQuery(submission);
+      const generation = ++this.generation;
       const [summaries, counts] = await Promise.all([
         admin.loadAccountModificationRequestSummaries(query),
         admin.loadAccountModificationRequestCounts(query)
       ]);
-      if(summaries.length > 0) {
+      if(summaries.length > 0 && generation === this.generation) {
         this.anchors[submission.pageIndex + 1] =
           makeAnchor(summaries[0], query.sortField);
       }
@@ -127,7 +129,7 @@ export class HttpRequestsModel extends RequestsModel {
       query.startDate = new Beam.DateTime(submission.filters.startDate);
     }
     if(submission.filters.endDate) {
-      query.endDate = new Beam.DateTime(submission.filters.endDate);
+      query.endDate = new Beam.DateTime(submission.filters.endDate, END_OF_DAY);
     }
     if(isGroup) {
       query.excludedAccount = this.account;
@@ -303,9 +305,13 @@ export class HttpRequestsModel extends RequestsModel {
   private tradingGroupsRoot: Beam.DirectoryEntry;
   private anchors: Nexus.AccountModificationRequestAnchor[];
   private anchorKey: string;
+  private generation: number;
 }
 
 const PAGE_SIZE = 25;
+
+const END_OF_DAY = new Beam.Duration(24 * Beam.Duration.MINUTES_PER_HOUR *
+  Beam.Duration.SECONDS_PER_MINUTE * Beam.Duration.TICKS_PER_SECOND - 1);
 
 function toMessage(comment: string): Nexus.Message {
   if(comment.length > 0) {
@@ -386,9 +392,14 @@ function makeAnchor(summary: Nexus.AccountModificationRequestSummary,
   return new Nexus.AccountModificationRequestAnchor(request.id, date, name);
 }
 
+function toCategoryKey(
+    categories: Set<Nexus.AccountModificationRequest.Type>): string {
+  return [...categories].sort((left, right) => left - right).join(',');
+}
+
 function makeAnchorKey(submission: RequestsModel.Submission): string {
   return [submission.scope, submission.requestState,
-    submission.filters.query, [...submission.filters.categories].join(','),
+    submission.filters.query, toCategoryKey(submission.filters.categories),
     submission.filters.sortKey, submission.filters.startDate?.toJson() ?? '',
     submission.filters.endDate?.toJson() ?? ''].join('|');
 }

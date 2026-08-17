@@ -273,12 +273,16 @@ export class RequestsController extends React.Component<Properties, State> {
     };
     try {
       const response = await this.props.model.loadRequestDirectory(sub);
-      this.setState({
-        displayStatus: response.requestList.length > 0 ?
-          RequestDirectoryPage.DisplayStatus.READY :
-          RequestDirectoryPage.DisplayStatus.EMPTY,
-        response
-      });
+      const displayStatus = (() => {
+        if(response.status === RequestsModel.ResponseStatus.ERROR) {
+          return RequestDirectoryPage.DisplayStatus.ERROR;
+        }
+        if(response.requestList.length > 0) {
+          return RequestDirectoryPage.DisplayStatus.READY;
+        }
+        return RequestDirectoryPage.DisplayStatus.EMPTY;
+      })();
+      this.setState({displayStatus, response});
     } catch {
       this.setState({
         displayStatus: RequestDirectoryPage.DisplayStatus.ERROR
@@ -330,7 +334,8 @@ function submissionToSearch(submission: RequestsModel.Submission): string {
     params.set('q', submission.filters.query);
   }
   if(submission.filters.categories.size > 0) {
-    params.set('cat', [...submission.filters.categories].join(','));
+    params.set('cat', [...submission.filters.categories].sort(
+      (left, right) => left - right).join(','));
   }
   if(submission.filters.sortKey !== RequestsModel.SortField.LAST_UPDATED) {
     params.set('sort', SORT_KEY_TO_PARAM[submission.filters.sortKey]);
