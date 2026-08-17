@@ -172,7 +172,7 @@ namespace Nexus {
             row.get_timestamp(), column);
         }).
       set_primary_key("id").
-      add_index("account_index", {"id", "account"});
+      add_index("account_index", {"account", "id"});
     return ROW;
   }
 
@@ -199,7 +199,11 @@ namespace Nexus {
       add_column("status", &StoredAccountModificationRequest::m_status).
       add_index("last_update_index", {"last_update_timestamp", "id"}).
       add_index("effective_date_index", {"effective_date", "id"}).
-      add_index("status_index", {"status", "id"});
+      add_index("status_index", {"status", "id"}).
+      add_index("account_last_update_index",
+        {"account", "last_update_timestamp", "id"}).
+      add_index("account_effective_date_index",
+        {"account", "effective_date", "id"});
     return ROW;
   }
 
