@@ -1565,76 +1565,56 @@ TEST_SUITE("AdministrationServlet") {
     REQUIRE(results[0].m_account == fixture.m_trader_account);
   }
 
-  TEST_CASE("query_accounts_by_first_name") {
+  TEST_CASE("query_accounts_by_name") {
     auto fixture = Fixture();
     auto identity = AccountIdentity();
     identity.m_first_name = "John";
     identity.m_last_name = "Smith";
     fixture.m_data_store.store(fixture.m_trader_account, identity);
-    auto results = fixture.m_admin_client->send_request<
-      QueryAccountsService>(std::string("joh"));
-    REQUIRE(results.size() == 1);
-    REQUIRE(results[0].m_account == fixture.m_trader_account);
-    REQUIRE(results[0].m_name == "John Smith");
+    SUBCASE("matches_a_first_name_prefix") {
+      auto results = fixture.m_admin_client->send_request<QueryAccountsService>(
+        std::string("joh"));
+      REQUIRE(results.size() == 1);
+      REQUIRE(results[0].m_account == fixture.m_trader_account);
+      REQUIRE(results[0].m_name == "John Smith");
+    }
+    SUBCASE("ignores_case") {
+      auto results = fixture.m_admin_client->send_request<QueryAccountsService>(
+        std::string("JOHN"));
+      REQUIRE(results.size() == 1);
+      REQUIRE(results[0].m_account == fixture.m_trader_account);
+    }
+    SUBCASE("does_not_match_an_interior_substring") {
+      auto results = fixture.m_admin_client->send_request<QueryAccountsService>(
+        std::string("ohn"));
+      REQUIRE(results.empty());
+    }
+    SUBCASE("does_not_match_an_unrelated_query") {
+      auto results = fixture.m_admin_client->send_request<QueryAccountsService>(
+        std::string("xyz"));
+      REQUIRE(results.empty());
+    }
   }
 
-  TEST_CASE("query_accounts_by_last_name") {
+  TEST_CASE("query_accounts_by_multi_token_name") {
     auto fixture = Fixture();
     auto identity = AccountIdentity();
     identity.m_first_name = "John";
     identity.m_last_name = "Van Der Berg";
     fixture.m_data_store.store(fixture.m_trader_account, identity);
-    auto results = fixture.m_admin_client->send_request<
-      QueryAccountsService>(std::string("van"));
-    REQUIRE(results.size() == 1);
-    REQUIRE(results[0].m_account == fixture.m_trader_account);
-    REQUIRE(results[0].m_name == "John Van Der Berg");
-  }
-
-  TEST_CASE("query_accounts_by_middle_token") {
-    auto fixture = Fixture();
-    auto identity = AccountIdentity();
-    identity.m_first_name = "John";
-    identity.m_last_name = "Van Der Berg";
-    fixture.m_data_store.store(fixture.m_trader_account, identity);
-    auto results = fixture.m_admin_client->send_request<
-      QueryAccountsService>(std::string("der"));
-    REQUIRE(results.size() == 1);
-    REQUIRE(results[0].m_account == fixture.m_trader_account);
-  }
-
-  TEST_CASE("query_accounts_case_insensitive") {
-    auto fixture = Fixture();
-    auto identity = AccountIdentity();
-    identity.m_first_name = "Riley";
-    identity.m_last_name = "Miller";
-    fixture.m_data_store.store(fixture.m_trader_account, identity);
-    auto results = fixture.m_admin_client->send_request<
-      QueryAccountsService>(std::string("RILEY"));
-    REQUIRE(results.size() == 1);
-    REQUIRE(results[0].m_account == fixture.m_trader_account);
-  }
-
-  TEST_CASE("query_accounts_no_match") {
-    auto fixture = Fixture();
-    auto identity = AccountIdentity();
-    identity.m_first_name = "John";
-    identity.m_last_name = "Smith";
-    fixture.m_data_store.store(fixture.m_trader_account, identity);
-    auto results = fixture.m_admin_client->send_request<
-      QueryAccountsService>(std::string("xyz"));
-    REQUIRE(results.empty());
-  }
-
-  TEST_CASE("query_accounts_substring_does_not_match") {
-    auto fixture = Fixture();
-    auto identity = AccountIdentity();
-    identity.m_first_name = "John";
-    identity.m_last_name = "Smith";
-    fixture.m_data_store.store(fixture.m_trader_account, identity);
-    auto results = fixture.m_admin_client->send_request<
-      QueryAccountsService>(std::string("ohn"));
-    REQUIRE(results.empty());
+    SUBCASE("matches_the_first_token") {
+      auto results = fixture.m_admin_client->send_request<QueryAccountsService>(
+        std::string("van"));
+      REQUIRE(results.size() == 1);
+      REQUIRE(results[0].m_account == fixture.m_trader_account);
+      REQUIRE(results[0].m_name == "John Van Der Berg");
+    }
+    SUBCASE("matches_a_middle_token") {
+      auto results = fixture.m_admin_client->send_request<QueryAccountsService>(
+        std::string("der"));
+      REQUIRE(results.size() == 1);
+      REQUIRE(results[0].m_account == fixture.m_trader_account);
+    }
   }
 
   TEST_CASE("query_accounts_empty_query") {

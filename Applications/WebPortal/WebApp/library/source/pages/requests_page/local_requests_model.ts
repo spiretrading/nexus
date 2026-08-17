@@ -68,12 +68,12 @@ export class LocalRequestsModel extends RequestsModel {
     const facetCounts = this.computeFacetCounts(filtered);
     const stateFiltered = sorted.filter(
       entry => matchesState(entry.state, submission.requestState));
-    const start = submission.pageIndex * PAGE_SIZE;
+    const start = submission.pageIndex * RequestsModel.PAGE_SIZE;
     return {
       status: RequestsModel.ResponseStatus.READY,
       facetCounts,
       totalCount: stateFiltered.length,
-      requestList: stateFiltered.slice(start, start + PAGE_SIZE)
+      requestList: stateFiltered.slice(start, start + RequestsModel.PAGE_SIZE)
     };
   }
 
@@ -182,8 +182,6 @@ export class LocalRequestsModel extends RequestsModel {
   private entries: RequestsModel.RequestEntry[];
   private details: Map<number, RequestsModel.RequestDetail>;
 }
-
-const PAGE_SIZE = 25;
 
 function matchesState(status: Status,
     requestState: RequestsModel.RequestState): boolean {

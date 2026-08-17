@@ -422,9 +422,10 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
-  std::vector<AccountModificationRequestSummary> ServiceAdministrationClient<B>::
-      load_account_modification_request_summaries(
-        const AccountModificationRequestQuery& query) {
+  std::vector<AccountModificationRequestSummary>
+      ServiceAdministrationClient<B>::
+        load_account_modification_request_summaries(
+          const AccountModificationRequestQuery& query) {
     return Beam::service_or_throw_with_nested([&] {
       auto client = m_client_handler.get_client();
       return client->template send_request<

@@ -114,10 +114,10 @@ export class HttpRequestsModel extends RequestsModel {
       return this.account;
     })();
     const query = new Nexus.AccountModificationRequestQuery(
-      index, Beam.SnapshotLimit.fromTail(PAGE_SIZE));
+      index, Beam.SnapshotLimit.fromTail(RequestsModel.PAGE_SIZE));
     const anchor = this.anchors[submission.pageIndex];
     if(anchor === undefined) {
-      query.offset = submission.pageIndex * PAGE_SIZE;
+      query.offset = submission.pageIndex * RequestsModel.PAGE_SIZE;
     } else {
       query.anchor = anchor;
     }
@@ -307,8 +307,6 @@ export class HttpRequestsModel extends RequestsModel {
   private anchorKey: string;
   private generation: number;
 }
-
-const PAGE_SIZE = 25;
 
 const END_OF_DAY = new Beam.Duration(24 * Beam.Duration.MINUTES_PER_HOUR *
   Beam.Duration.SECONDS_PER_MINUTE * Beam.Duration.TICKS_PER_SECOND - 1);

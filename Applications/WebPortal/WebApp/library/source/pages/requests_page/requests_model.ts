@@ -44,6 +44,9 @@ export abstract class RequestsModel {
 
 export namespace RequestsModel {
 
+  /** The number of requests shown on a page. */
+  export const PAGE_SIZE = 25;
+
   /** Enumerates the direction of a change. */
   export enum Direction {
 

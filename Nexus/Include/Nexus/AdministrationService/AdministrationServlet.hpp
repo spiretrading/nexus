@@ -123,8 +123,6 @@ namespace Nexus {
         const Beam::DirectoryEntry& parent, const Beam::DirectoryEntry& child);
       std::vector<Beam::DirectoryEntry> load_managed_trading_groups(
         const Beam::DirectoryEntry& account);
-      bool check_managed_trading_group(const Beam::DirectoryEntry& account,
-        const Beam::DirectoryEntry& directory);
       std::vector<Beam::DirectoryEntry> load_authorized_accounts(
         const Beam::DirectoryEntry& account,
         const Beam::DirectoryEntry& index);
@@ -605,18 +603,6 @@ namespace Nexus {
       }
     }
     return result;
-  }
-
-  template<typename C, typename S, typename D, typename R, typename T> requires
-    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
-      IsAdministrationDataStore<Beam::dereference_t<D>> &&
-        Beam::IsTimeClient<Beam::dereference_t<R>> &&
-          Beam::IsTimer<Beam::dereference_t<T>>
-  bool AdministrationServlet<C, S, D, R, T>::check_managed_trading_group(
-      const Beam::DirectoryEntry& account,
-      const Beam::DirectoryEntry& directory) {
-    return std::ranges::contains(
-      load_managed_trading_groups(account), directory);
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires

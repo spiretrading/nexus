@@ -412,9 +412,9 @@ namespace Nexus::Tests {
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
         for(auto id : {5, 1, 10, 3}) {
-          data_store.store(AccountModificationRequest(id,
-            AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-            time_from_string("2024-07-05 10:00:00"),
+          data_store.store(AccountModificationRequest(
+            id, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
             time_from_string("2024-08-01 00:00:00")), modification);
         }
       });
@@ -443,9 +443,9 @@ namespace Nexus::Tests {
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
         for(auto id : {1, 2, 3, 4, 5}) {
-          data_store.store(AccountModificationRequest(id,
-            AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-            time_from_string("2024-07-05 10:00:00"),
+          data_store.store(AccountModificationRequest(
+            id, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
             time_from_string("2024-08-01 00:00:00")), modification);
         }
       });
@@ -484,9 +484,9 @@ namespace Nexus::Tests {
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
         for(auto id : {1, 2, 3}) {
-          data_store.store(AccountModificationRequest(id,
-            AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-            time_from_string("2024-07-05 10:00:00"),
+          data_store.store(AccountModificationRequest(
+            id, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
             time_from_string("2024-08-01 00:00:00")), modification);
         }
         data_store.store(1, AccountModificationRequest::Update(
@@ -553,9 +553,9 @@ namespace Nexus::Tests {
         "2024-09-01 00:00:00", "2024-09-02 00:00:00"};
       data_store.with_transaction([&] {
         for(auto i = 0; i != 3; ++i) {
-          data_store.store(AccountModificationRequest(i + 1,
-            AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-            time_from_string("2024-07-05 10:00:00"),
+          data_store.store(AccountModificationRequest(
+            i + 1, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
             time_from_string(dates[i])), modification);
         }
       });
@@ -594,9 +594,9 @@ namespace Nexus::Tests {
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
         for(auto id : {1, 2, 3}) {
-          data_store.store(AccountModificationRequest(id,
-            AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-            time_from_string("2024-07-05 10:00:00"),
+          data_store.store(AccountModificationRequest(
+            id, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
             time_from_string("2024-08-01 00:00:00")), modification);
         }
         data_store.store(1, AccountModificationRequest::Update(
@@ -718,9 +718,9 @@ namespace Nexus::Tests {
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
         for(auto id : {10, 20, 30, 40}) {
-          data_store.store(AccountModificationRequest(id,
-            AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-            time_from_string("2024-07-05 10:00:00"),
+          data_store.store(AccountModificationRequest(
+            id, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
             time_from_string("2024-08-01 00:00:00")), modification);
         }
       });
@@ -895,9 +895,9 @@ namespace Nexus::Tests {
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
         for(auto id : {1, 2, 3}) {
-          data_store.store(AccountModificationRequest(id,
-            AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-            time_from_string("2024-07-05 10:00:00"),
+          data_store.store(AccountModificationRequest(
+            id, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
             time_from_string("2024-08-01 00:00:00")), modification);
         }
         data_store.store(1, AccountModificationRequest::Update(
@@ -1184,8 +1184,8 @@ namespace Nexus::Tests {
         data_store.store(Notification(
           "ggg-001", account, "Unread.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 10:00:00"), false));
-        data_store.store(Notification(
-          "ggg-002", account, "Also unread.", "", Notification::Category::REPORT,
+        data_store.store(Notification("ggg-002", account, "Also unread.", "",
+          Notification::Category::REPORT,
           time_from_string("2026-04-21 11:00:00"), false));
       });
       data_store.with_transaction([&] {

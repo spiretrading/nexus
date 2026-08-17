@@ -548,14 +548,13 @@ function PaginationSection(props: {
   return (
     <div className={css(STYLES.paginationSection)}>
       <Pagination
-        pageSize={PAGE_SIZE}
+        pageSize={RequestsModel.PAGE_SIZE}
         pageIndex={props.pageIndex}
         totalCount={props.response.totalCount}
         onNavigate={props.onPageNavigate}/>
     </div>);
 }
 
-const PAGE_SIZE = 25;
 const PAGINATION_THRESHOLD = 50;
 
 export namespace RequestDirectoryPage {

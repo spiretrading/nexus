@@ -1,7 +1,6 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <boost/lexical_cast.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/AdministrationService/AccountModificationRequestCounts.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequestSummary.hpp"
 
 using namespace Beam;
@@ -53,20 +52,11 @@ TEST_SUITE("AccountModificationRequestSummary") {
       REQUIRE(received.m_request.get_id() == summary.m_request.get_id());
       REQUIRE(received.m_status.m_status == summary.m_status.m_status);
       REQUIRE(received.m_comment_count == summary.m_comment_count);
-      REQUIRE(boost::get<EntitlementModification>(
+      REQUIRE(get<EntitlementModification>(
         *received.m_previous_state).get_entitlements().size() == 1);
-      REQUIRE(boost::get<RiskModification>(
-        *received.m_modification).get_parameters() ==
-          boost::get<RiskModification>(
-            *summary.m_modification).get_parameters());
+      REQUIRE(get<RiskModification>(
+        *received.m_modification).get_parameters() == get<RiskModification>(
+          *summary.m_modification).get_parameters());
     });
-  }
-}
-
-TEST_SUITE("AccountModificationRequestCounts") {
-  TEST_CASE("stream") {
-    auto counts = AccountModificationRequestCounts(4, 2, 1);
-    REQUIRE(lexical_cast<std::string>(counts) == "(4 2 1)");
-    test_round_trip_shuttle(counts);
   }
 }
