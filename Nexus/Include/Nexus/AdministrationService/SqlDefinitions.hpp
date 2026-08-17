@@ -176,6 +176,34 @@ namespace Nexus {
     return ROW;
   }
 
+  /** Identifies a request by the account and type it modifies. */
+  struct RequestIndex {
+
+    /** The id of the request. */
+    AccountModificationRequest::Id m_id;
+
+    /** The account the request modifies. */
+    Beam::DirectoryEntry m_account;
+
+    /** The type of modification requested. */
+    AccountModificationRequest::Type m_type;
+  };
+
+  /** Returns a row representing a RequestIndex. */
+  inline const auto& get_request_index_row() {
+    static const auto ROW = Viper::Row<RequestIndex>().
+      add_column("id", &RequestIndex::m_id).
+      add_column("account",
+        [] (const auto& row) {
+          return row.m_account.m_id;
+        },
+        [] (auto& row, auto column) {
+          row.m_account = Beam::DirectoryEntry::make_account(column);
+        }).
+      add_column("type", &RequestIndex::m_type);
+    return ROW;
+  }
+
   /** Stores an AccountModificationRequest along with its ordering keys. */
   struct StoredAccountModificationRequest {
 

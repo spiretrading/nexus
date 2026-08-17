@@ -1598,12 +1598,20 @@ namespace Nexus {
       previous_parameters =
         m_data_store->load_risk_modifications(predecessor_ids);
       current_parameters.resize(requests.size());
+      auto loaded_parameters =
+        std::unordered_map<Beam::DirectoryEntry, RiskParameters>();
       for(auto i = std::size_t(0); i != requests.size(); ++i) {
-        if(requests[i].get_type() == AccountModificationRequest::Type::RISK &&
-            !predecessors[i]) {
-          current_parameters[i] =
-            m_data_store->load_risk_parameters(requests[i].get_account());
+        if(requests[i].get_type() != AccountModificationRequest::Type::RISK ||
+            predecessors[i]) {
+          continue;
         }
+        auto& account = requests[i].get_account();
+        auto entry = loaded_parameters.find(account);
+        if(entry == loaded_parameters.end()) {
+          entry = loaded_parameters.emplace(
+            account, m_data_store->load_risk_parameters(account)).first;
+        }
+        current_parameters[i] = entry->second;
       }
     });
     auto current_entitlements =

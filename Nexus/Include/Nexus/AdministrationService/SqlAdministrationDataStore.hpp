@@ -1,5 +1,11 @@
 #ifndef NEXUS_SQL_ADMINISTRATION_DATA_STORE_HPP
 #define NEXUS_SQL_ADMINISTRATION_DATA_STORE_HPP
+#include <algorithm>
+#include <map>
+#include <ranges>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/KeyValueCache.hpp>
@@ -594,29 +600,57 @@ namespace Nexus {
     for(auto& request : requests) {
       index[request.get_id()] = &request;
     }
+    auto accounts = std::vector<unsigned int>();
+    auto types = std::vector<AccountModificationRequest::Type>();
+    auto ceiling = AccountModificationRequest::Id(0);
+    for(auto& request : requests) {
+      accounts.push_back(request.get_account().m_id);
+      types.push_back(request.get_type());
+      ceiling = std::max(ceiling, request.get_id());
+    }
+    std::ranges::sort(accounts);
+    accounts.erase(std::ranges::unique(accounts).begin(), accounts.end());
+    std::ranges::sort(types);
+    types.erase(std::ranges::unique(types).begin(), types.end());
+    if(accounts.empty()) {
+      return predecessors;
+    }
+    auto candidates = std::vector<RequestIndex>();
+    try {
+      m_connection->execute(Viper::select(get_request_index_row(),
+        "account_modification_requests",
+        Viper::in(Viper::sym("account"), accounts.begin(), accounts.end()) &&
+          Viper::in(Viper::sym("type"), types.begin(), types.end()) &&
+          Viper::sym("status") == AccountModificationRequest::Status::GRANTED &&
+          Viper::sym("id") < ceiling,
+        std::back_inserter(candidates)));
+    } catch(const std::exception& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
+    auto history = std::map<std::pair<unsigned int,
+      AccountModificationRequest::Type>,
+      std::vector<AccountModificationRequest::Id>>();
+    for(auto& candidate : candidates) {
+      history[std::pair(candidate.m_account.m_id, candidate.m_type)].
+        push_back(candidate.m_id);
+    }
+    for(auto& entry : history) {
+      std::ranges::sort(entry.second);
+    }
     for(auto i = std::size_t(0); i != ids.size(); ++i) {
       auto entry = index.find(ids[i]);
       if(entry == index.end()) {
         continue;
       }
       auto& request = *entry->second;
-      auto predecessor = std::optional<AccountModificationRequest::Id>();
-      try {
-        m_connection->execute(Viper::select(
-          Viper::Row<AccountModificationRequest::Id>("id"),
-          "account_modification_requests",
-          Viper::sym("id") < ids[i] &&
-            Viper::sym("account") == request.get_account().m_id &&
-            Viper::sym("type") == request.get_type() &&
-            Viper::sym("status") ==
-              AccountModificationRequest::Status::GRANTED,
-          Viper::order_by("id", Viper::Order::DESC), Viper::limit(1),
-          &predecessor));
-      } catch(const std::exception& e) {
-        boost::throw_with_location(AdministrationDataStoreException(e.what()));
+      auto candidate =
+        history.find(std::pair(request.get_account().m_id, request.get_type()));
+      if(candidate == history.end()) {
+        continue;
       }
-      if(predecessor) {
-        predecessors[i] = *predecessor;
+      auto position = std::ranges::lower_bound(candidate->second, ids[i]);
+      if(position != candidate->second.begin()) {
+        predecessors[i] = *std::prev(position);
       }
     }
     return predecessors;

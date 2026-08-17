@@ -20,6 +20,8 @@ export class HttpRequestsModel extends RequestsModel {
     this.anchors = [null];
     this.anchorKey = '';
     this.generation = 0;
+    this.countsKey = null;
+    this.counts = null;
   }
 
   public async load(): Promise<void> {
@@ -39,7 +41,7 @@ export class HttpRequestsModel extends RequestsModel {
       const generation = ++this.generation;
       const [summaries, counts] = await Promise.all([
         admin.loadAccountModificationRequestSummaries(query),
-        admin.loadAccountModificationRequestCounts(query)
+        this.loadCounts(makeCountsKey(submission), query)
       ]);
       if(summaries.length > 0 && generation === this.generation) {
         this.anchors[submission.pageIndex + 1] =
@@ -83,6 +85,7 @@ export class HttpRequestsModel extends RequestsModel {
     const message = toMessage(comment);
     const update = await this.serviceClients.administrationClient.
       approveAccountModificationRequest(id, message, effectiveDate);
+    this.invalidateCounts();
     await this.refreshDetail(id);
     return update;
   }
@@ -92,8 +95,27 @@ export class HttpRequestsModel extends RequestsModel {
     const message = toMessage(comment);
     const update = await this.serviceClients.administrationClient.
       rejectAccountModificationRequest(id, message);
+    this.invalidateCounts();
     await this.refreshDetail(id);
     return update;
+  }
+
+  private async loadCounts(
+      key: string, query: Nexus.AccountModificationRequestQuery):
+        Promise<Nexus.AccountModificationRequestCounts> {
+    if(key === this.countsKey) {
+      return this.counts;
+    }
+    const counts = await this.serviceClients.administrationClient.
+      loadAccountModificationRequestCounts(query);
+    this.countsKey = key;
+    this.counts = counts;
+    return counts;
+  }
+
+  private invalidateCounts(): void {
+    this.countsKey = null;
+    this.counts = null;
   }
 
   private resetAnchors(submission: RequestsModel.Submission): void {
@@ -306,6 +328,8 @@ export class HttpRequestsModel extends RequestsModel {
   private anchors: Nexus.AccountModificationRequestAnchor[];
   private anchorKey: string;
   private generation: number;
+  private countsKey: string;
+  private counts: Nexus.AccountModificationRequestCounts;
 }
 
 const END_OF_DAY = new Beam.Duration(24 * Beam.Duration.MINUTES_PER_HOUR *
@@ -399,6 +423,13 @@ function makeAnchorKey(submission: RequestsModel.Submission): string {
   return [submission.scope, submission.requestState,
     submission.filters.query, toCategoryKey(submission.filters.categories),
     submission.filters.sortKey, submission.filters.startDate?.toJson() ?? '',
+    submission.filters.endDate?.toJson() ?? ''].join('|');
+}
+
+function makeCountsKey(submission: RequestsModel.Submission): string {
+  return [submission.scope, submission.filters.query,
+    toCategoryKey(submission.filters.categories),
+    submission.filters.startDate?.toJson() ?? '',
     submission.filters.endDate?.toJson() ?? ''].join('|');
 }
 
