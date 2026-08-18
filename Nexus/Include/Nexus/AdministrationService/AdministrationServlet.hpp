@@ -1696,7 +1696,7 @@ namespace Nexus {
         if(!is_granted(i)) {
           summary.m_previous_state =
             Modification(current_entitlements.at(requests[i].get_account()));
-        } else if(predecessors[i]) {
+        } else {
           summary.m_previous_state = Modification(previous_entitlements[i]);
         }
       } else if(requests[i].get_type() ==
@@ -1705,7 +1705,7 @@ namespace Nexus {
         if(!is_granted(i)) {
           summary.m_previous_state =
             Modification(RiskModification(current_parameters[i]));
-        } else if(predecessors[i]) {
+        } else {
           summary.m_previous_state = Modification(previous_parameters[i]);
         }
       }

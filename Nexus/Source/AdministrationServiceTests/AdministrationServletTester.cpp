@@ -2282,7 +2282,9 @@ TEST_SUITE("AdministrationServlet") {
       });
       auto summaries = load();
       REQUIRE(summaries.size() == 1);
-      REQUIRE(!summaries[0].m_previous_state);
+      REQUIRE(summaries[0].m_previous_state.has_value());
+      REQUIRE(get<RiskModification>(
+        *summaries[0].m_previous_state).get_parameters() == RiskParameters());
     }
     SUBCASE("pending_ignores_a_granted_predecessor") {
       auto granted = RiskParameters(USD, 200 * Money::ONE,
@@ -2306,6 +2308,31 @@ TEST_SUITE("AdministrationServlet") {
       REQUIRE(summaries.size() == 2);
       REQUIRE(get<RiskModification>(
         *summaries[1].m_previous_state).get_parameters() == current);
+    }
+    SUBCASE("granted_entitlements_without_a_predecessor") {
+      auto entitlements = std::vector<DirectoryEntry>();
+      for(auto& entry : fixture.m_entitlements.get_entries()) {
+        entitlements.push_back(entry.m_group_entry);
+      }
+      fixture.m_data_store.with_transaction([&] {
+        fixture.m_data_store.store(AccountModificationRequest(1,
+          AccountModificationRequest::Type::ENTITLEMENTS,
+          fixture.m_trader_account, fixture.m_trader_account,
+          time_from_string("2024-07-04 12:00:00"),
+          time_from_string("2024-08-01 00:00:00")),
+          EntitlementModification(entitlements));
+        fixture.m_data_store.store(1, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED,
+          fixture.m_manager_account, 0,
+          time_from_string("2024-07-04 13:00:00")));
+      });
+      auto summaries = load();
+      REQUIRE(summaries.size() == 1);
+      REQUIRE(summaries[0].m_previous_state.has_value());
+      REQUIRE(get<EntitlementModification>(
+        *summaries[0].m_previous_state).get_entitlements().empty());
+      REQUIRE(get<EntitlementModification>(
+        *summaries[0].m_modification).get_entitlements() == entitlements);
     }
   }
 
