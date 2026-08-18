@@ -43,12 +43,24 @@ export class HttpRequestsModel extends RequestsModel {
         admin.loadAccountModificationRequestSummaries(query),
         this.loadCounts(makeCountsKey(submission), query)
       ]);
+      const descending = isDescending(submission.filters.sortKey);
       if(summaries.length > 0 && generation === this.generation) {
+        const boundary = (() => {
+          if(descending) {
+            return summaries[0];
+          }
+          return summaries[summaries.length - 1];
+        })();
         this.anchors[submission.pageIndex + 1] =
-          makeAnchor(summaries[0], query.sortField);
+          makeAnchor(boundary, query.sortField);
       }
-      const requestList =
-        summaries.slice().reverse().map(summary => this.toEntry(summary));
+      const ordered = (() => {
+        if(descending) {
+          return summaries.slice().reverse();
+        }
+        return summaries;
+      })();
+      const requestList = ordered.map(summary => this.toEntry(summary));
       return {
         status: RequestsModel.ResponseStatus.READY,
         facetCounts: {
@@ -136,8 +148,13 @@ export class HttpRequestsModel extends RequestsModel {
       }
       return this.account;
     })();
-    const query = new Nexus.AccountModificationRequestQuery(
-      index, Beam.SnapshotLimit.fromTail(RequestsModel.PAGE_SIZE));
+    const limit = (() => {
+      if(isDescending(submission.filters.sortKey)) {
+        return Beam.SnapshotLimit.fromTail(RequestsModel.PAGE_SIZE);
+      }
+      return Beam.SnapshotLimit.fromHead(RequestsModel.PAGE_SIZE);
+    })();
+    const query = new Nexus.AccountModificationRequestQuery(index, limit);
     const anchor = this.anchors[submission.pageIndex];
     if(anchor === undefined) {
       query.offset = submission.pageIndex * RequestsModel.PAGE_SIZE;
@@ -359,6 +376,11 @@ function entitlementName(
     return entry.name;
   }
   return info.name;
+}
+
+function isDescending(sortKey: RequestsModel.SortField): boolean {
+  return sortKey !== RequestsModel.SortField.ACCOUNT &&
+    sortKey !== RequestsModel.SortField.REQUESTER;
 }
 
 function toSortField(sortKey: RequestsModel.SortField):
