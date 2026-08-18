@@ -98,17 +98,15 @@ namespace Nexus {
     auto evaluator = Beam::translate<EvaluatorTranslator>(query.get_filter());
     auto& anchor = query.get_anchor();
     auto& scope = query.get_index();
-    auto compare_ticker = [] (const auto& info, const auto& ticker) {
-      return info.m_ticker < ticker;
-    };
     auto matches = std::vector<TickerInfo>();
-    if(!anchor && !scope.is_global() && scope.get_countries().empty() &&
-        scope.get_venues().empty() && scope.get_tickers().size() == 1 &&
+    if(!anchor && query.get_offset() == 0 && !scope.is_global() &&
+        scope.get_countries().empty() && scope.get_venues().empty() &&
+        scope.get_tickers().size() == 1 &&
         query.get_snapshot_limit().get_size() >= 1) {
       auto& ticker = *scope.get_tickers().begin();
       m_ticker_info.with([&] (auto& ticker_info) {
-        auto i = std::lower_bound(
-          ticker_info.begin(), ticker_info.end(), ticker, compare_ticker);
+        auto i = std::ranges::lower_bound(
+          ticker_info, ticker, std::ranges::less(), &TickerInfo::m_ticker);
         if(i != ticker_info.end() && i->m_ticker == ticker &&
             Beam::test_filter(*evaluator, *i)) {
           matches.push_back(*i);
@@ -124,8 +122,9 @@ namespace Nexus {
             if(!anchor) {
               return ticker_info.begin();
             }
-            auto i = std::lower_bound(
-              ticker_info.begin(), ticker_info.end(), *anchor, compare_ticker);
+            auto i = std::ranges::lower_bound(
+              ticker_info, *anchor, std::ranges::less(),
+              &TickerInfo::m_ticker);
             if(i != ticker_info.end() && i->m_ticker == *anchor) {
               return i + 1;
             }
@@ -138,18 +137,24 @@ namespace Nexus {
           if(!anchor) {
             return ticker_info.rbegin();
           }
-          auto i = std::lower_bound(
-            ticker_info.begin(), ticker_info.end(), *anchor, compare_ticker);
+          auto i = std::ranges::lower_bound(
+            ticker_info, *anchor, std::ranges::less(), &TickerInfo::m_ticker);
           return ticker_info.rbegin() + (ticker_info.end() - i);
         }();
         return std::tuple(Beam::AnyIterator(first),
           Beam::AnyIterator(ticker_info.rend()));
       }();
+      auto offset = query.get_offset();
+      auto skipped = 0;
       while(begin != end && static_cast<int>(matches.size()) <
           query.get_snapshot_limit().get_size()) {
         auto& info = *begin;
         if(info.m_ticker <= scope && Beam::test_filter(*evaluator, info)) {
-          matches.push_back(info);
+          if(skipped < offset) {
+            ++skipped;
+          } else {
+            matches.push_back(info);
+          }
         }
         ++begin;
       }

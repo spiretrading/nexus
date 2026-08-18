@@ -299,18 +299,16 @@ namespace Nexus {
         m_execution_reports_data_store.store(report);
       }
     }
-    auto erase_condition = Viper::literal(false);
-    auto has_erase = false;
+    auto terminal_ids = std::vector<Viper::Expression>();
     for(auto& report : reports) {
       if(is_terminal((*report)->m_status)) {
-        has_erase = true;
-        erase_condition =
-          erase_condition || Viper::sym("order_id") == (*report)->m_id;
+        terminal_ids.push_back(Viper::literal((*report)->m_id));
       }
     }
-    if(has_erase) {
+    if(!terminal_ids.empty()) {
       auto connection = m_writer_pool.load();
-      connection->execute(Viper::erase("live_orders", erase_condition));
+      connection->execute(Viper::erase("live_orders",
+        Viper::in(Viper::sym("order_id"), std::move(terminal_ids))));
     }
   }
 
@@ -320,16 +318,18 @@ namespace Nexus {
     auto snapshot = InventorySnapshot();
     auto connection = m_reader_pool.load();
     Viper::transaction(*connection, [&] {
-      connection->execute(Viper::select(get_inventory_entries_row(),
-        "order_execution_inventory_entries", Viper::sym("account") == account.m_id,
+      connection->execute(Viper::select(
+        get_inventory_entries_row(), "order_execution_inventory_entries",
+        Viper::sym("account") == account.m_id,
         boost::make_function_output_iterator([&] (const auto& row) {
           snapshot.m_inventories.push_back(std::move(row.m_inventory));
         })));
-      connection->execute(Viper::select(
-        Viper::Row<Beam::Sequence>("sequence"), "order_execution_inventory_sequences",
+      connection->execute(Viper::select(Viper::Row<Beam::Sequence>("sequence"),
+        "order_execution_inventory_sequences",
         Viper::sym("account") == account.m_id, &snapshot.m_sequence));
       connection->execute(Viper::select(get_inventory_excluded_orders_row(),
-        "order_execution_inventory_excluded_orders", Viper::sym("account") == account.m_id,
+        "order_execution_inventory_excluded_orders",
+        Viper::sym("account") == account.m_id,
         boost::make_function_output_iterator([&] (const auto& row) {
           snapshot.m_excluded_orders.push_back(row.m_id);
         })));

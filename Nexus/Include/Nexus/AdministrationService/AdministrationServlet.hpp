@@ -5,6 +5,7 @@
 #include <limits>
 #include <ranges>
 #include <sstream>
+#include <unordered_map>
 #include <unordered_set>
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Pointers/Dereference.hpp>
@@ -16,6 +17,7 @@
 #include <Beam/TimeService/Timer.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
+#include <boost/algorithm/string/case_conv.hpp>
 #include <boost/algorithm/string/classification.hpp>
 #include <boost/algorithm/string/predicate.hpp>
 #include <boost/algorithm/string/split.hpp>
@@ -25,6 +27,7 @@
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/AdministrationServices.hpp"
 #include "Nexus/AdministrationService/AdministrationSession.hpp"
+#include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
 namespace Nexus {
 
@@ -80,6 +83,8 @@ namespace Nexus {
       void close();
 
     private:
+      static constexpr auto UNLIMITED_SCAN_SIZE =
+        std::numeric_limits<int>::max() - 1;
       struct RiskStateEntry {
         RiskState m_risk_state;
         std::vector<ServiceProtocolClient*> m_subscribers;
@@ -123,6 +128,9 @@ namespace Nexus {
         const Beam::DirectoryEntry& parent, const Beam::DirectoryEntry& child);
       std::vector<Beam::DirectoryEntry> load_managed_trading_groups(
         const Beam::DirectoryEntry& account);
+      std::vector<Beam::DirectoryEntry> load_authorized_accounts(
+        const Beam::DirectoryEntry& account,
+        const Beam::DirectoryEntry& index);
       TradingGroup load_trading_group(const Beam::DirectoryEntry& directory);
       std::vector<Beam::DirectoryEntry> load_entitlements(
         const Beam::DirectoryEntry& account);
@@ -191,16 +199,19 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const RiskState& risk_state);
       std::vector<Beam::DirectoryEntry> on_load_managed_trading_groups_request(
         ServiceProtocolClient& client, const Beam::DirectoryEntry& account);
+      std::vector<AccountModificationRequest> load_sorted_requests(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        bool is_unrestricted, const AccountModificationRequestQuery& query);
       AccountModificationRequest on_load_account_modification_request(
         ServiceProtocolClient& client, AccountModificationRequest::Id id);
-      std::vector<AccountModificationRequest::Id>
-        on_load_account_modification_request_ids(
-          ServiceProtocolClient& client, const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
-      std::vector<AccountModificationRequest::Id>
-        on_load_managed_account_modification_request_ids(
-          ServiceProtocolClient& client, const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
+      std::vector<AccountModificationRequestSummary>
+        on_load_account_modification_request_summaries(
+          ServiceProtocolClient& client,
+          const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts
+        on_load_account_modification_request_counts(
+          ServiceProtocolClient& client,
+          const AccountModificationRequestQuery& query);
       EntitlementModification on_load_entitlement_modification(
         ServiceProtocolClient& client, AccountModificationRequest::Id id);
       AccountModificationRequest on_submit_entitlement_modification_request(
@@ -226,7 +237,8 @@ namespace Nexus {
       AccountModificationRequest::Update on_reject_account_modification_request(
         ServiceProtocolClient& client, AccountModificationRequest::Id id,
         Message comment);
-      Message on_load_message(ServiceProtocolClient& client, Message::Id id);
+      Message on_load_message(ServiceProtocolClient& client,
+        AccountModificationRequest::Id request_id, Message::Id id);
       std::vector<Message::Id> on_load_message_ids(
         ServiceProtocolClient& client, AccountModificationRequest::Id id);
       Message on_send_account_modification_request_message(
@@ -272,13 +284,14 @@ namespace Nexus {
         m_time_client(std::forward<RF>(time_client)),
         m_timer(std::forward<TF>(timer)) {
     try {
-      auto request_ids =
-        m_data_store->load_account_modification_request_ids(
-          0, std::numeric_limits<int>::max());
-      if(request_ids.empty()) {
+      auto last_query = AccountModificationRequestQuery();
+      last_query.set_snapshot_limit(Beam::SnapshotLimit::from_tail(1));
+      auto last_requests =
+        m_data_store->load_account_modification_requests(last_query);
+      if(last_requests.empty()) {
         m_last_modification_request_id = 0;
       } else {
-        m_last_modification_request_id = request_ids.back();
+        m_last_modification_request_id = last_requests.back().get_id();
       }
       m_last_message_id = m_data_store->load_last_message_id();
       m_administrators_root = Beam::load_or_create_directory(
@@ -306,6 +319,7 @@ namespace Nexus {
           Beam::IsTimer<Beam::dereference_t<T>>
   void AdministrationServlet<C, S, D, R, T>::register_services(
       Beam::Out<Beam::ServiceSlots<ServiceProtocolClient>> slots) {
+    Nexus::register_query_types(Beam::out(slots->get_registry()));
     register_administration_services(out(slots));
     register_administration_messages(out(slots));
     LoadAccountsByRolesService::add_slot(out(slots),
@@ -351,13 +365,12 @@ namespace Nexus {
     LoadAccountModificationRequestService::add_slot(
       out(slots), std::bind_front(
         &AdministrationServlet::on_load_account_modification_request, this));
-    LoadAccountModificationRequestIdsService::add_slot(
-      out(slots), std::bind_front(
-        &AdministrationServlet::on_load_account_modification_request_ids,
-        this));
-    LoadManagedAccountModificationRequestIdsService::add_slot(
+    LoadAccountModificationRequestSummariesService::add_slot(
       out(slots), std::bind_front(&AdministrationServlet::
-        on_load_managed_account_modification_request_ids, this));
+        on_load_account_modification_request_summaries, this));
+    LoadAccountModificationRequestCountsService::add_slot(
+      out(slots), std::bind_front(&AdministrationServlet::
+        on_load_account_modification_request_counts, this));
     LoadEntitlementModificationService::add_slot(out(slots), std::bind_front(
       &AdministrationServlet::on_load_entitlement_modification, this));
     SubmitEntitlementModificationRequestService::add_slot(
@@ -603,6 +616,45 @@ namespace Nexus {
       IsAdministrationDataStore<Beam::dereference_t<D>> &&
         Beam::IsTimeClient<Beam::dereference_t<R>> &&
           Beam::IsTimer<Beam::dereference_t<T>>
+  std::vector<Beam::DirectoryEntry>
+      AdministrationServlet<C, S, D, R, T>::load_authorized_accounts(
+        const Beam::DirectoryEntry& account,
+        const Beam::DirectoryEntry& index) {
+    if(index.m_type == Beam::DirectoryEntry::Type::ACCOUNT) {
+      if(!check_read_permission(account, index)) {
+        boost::throw_with_location(
+          Beam::ServiceRequestException("Insufficient permissions."));
+      }
+      return {index};
+    }
+    auto groups = load_managed_trading_groups(account);
+    if(index != m_trading_groups_root) {
+      if(!std::ranges::contains(groups, index)) {
+        boost::throw_with_location(
+          Beam::ServiceRequestException("Insufficient permissions."));
+      }
+      groups = {index};
+    }
+    auto accounts = std::vector<Beam::DirectoryEntry>();
+    for(auto& group : groups) {
+      auto trading_group = load_trading_group(group);
+      accounts.insert(accounts.end(), trading_group.get_managers().begin(),
+        trading_group.get_managers().end());
+      accounts.insert(accounts.end(), trading_group.get_traders().begin(),
+        trading_group.get_traders().end());
+    }
+    std::ranges::sort(
+      accounts, std::ranges::less(), &Beam::DirectoryEntry::m_id);
+    auto duplicates = std::ranges::unique(accounts);
+    accounts.erase(duplicates.begin(), duplicates.end());
+    return accounts;
+  }
+
+  template<typename C, typename S, typename D, typename R, typename T> requires
+    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+      IsAdministrationDataStore<Beam::dereference_t<D>> &&
+        Beam::IsTimeClient<Beam::dereference_t<R>> &&
+          Beam::IsTimer<Beam::dereference_t<T>>
   TradingGroup AdministrationServlet<C, S, D, R, T>::load_trading_group(
       const Beam::DirectoryEntry& directory) {
     auto managers_directory =
@@ -805,14 +857,20 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const AccountRoles& roles,
         AccountModificationRequest::Type type,
         boost::posix_time::ptime effective_date) {
-    if(!check_read_permission(session_account, submission_account)) {
+    if(!check_read_permission(session_account, account)) {
       boost::throw_with_location(
         Beam::ServiceRequestException("Insufficient permissions."));
     }
     auto request_id = ++m_last_modification_request_id;
     auto timestamp = m_time_client->get_time();
-    return AccountModificationRequest(
-      request_id, type, account, submission_account, timestamp, effective_date);
+    auto resolved_effective_date = [&] {
+      if(effective_date == boost::posix_time::not_a_date_time) {
+        return timestamp;
+      }
+      return effective_date;
+    }();
+    return AccountModificationRequest(request_id, type, account,
+      submission_account, timestamp, resolved_effective_date);
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires
@@ -822,34 +880,42 @@ namespace Nexus {
           Beam::IsTimer<Beam::dereference_t<T>>
   void AdministrationServlet<C, S, D, R, T>::grant_scheduled_modifications() {
     auto now = m_time_client->get_time();
-    auto ids = m_data_store->with_transaction([&] {
-      return m_data_store->load_account_modification_request_ids(
-        0, std::numeric_limits<int>::max());
+    auto requests = m_data_store->with_transaction([&] {
+      auto query = AccountModificationRequestQuery();
+      query.set_statuses({AccountModificationRequest::Status::SCHEDULED});
+      query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
+      return m_data_store->load_account_modification_requests(query);
     });
-    for(auto id : ids) {
-      auto update = m_data_store->with_transaction([&] {
-        return m_data_store->load_account_modification_request_status(id);
-      });
-      if(update.m_status != AccountModificationRequest::Status::SCHEDULED) {
-        continue;
-      }
-      auto request = m_data_store->with_transaction([&] {
-        return m_data_store->load_account_modification_request(id);
-      });
+    for(auto& request : requests) {
+      auto id = request.get_id();
       if(request.get_effective_date() > now) {
         continue;
       }
-      update.m_status = AccountModificationRequest::Status::GRANTED;
-      ++update.m_sequence_number;
-      update.m_timestamp = now;
-      m_data_store->with_transaction([&] {
-        m_data_store->store(id, update);
+      auto update = m_data_store->with_transaction([&] {
+        auto status =
+          m_data_store->load_account_modification_request_status(id);
+        if(status.m_status != AccountModificationRequest::Status::SCHEDULED) {
+          return boost::optional<AccountModificationRequest::Update>();
+        }
+        auto effective_date = m_data_store->load_account_modification_request(
+          id).get_effective_date();
+        if(effective_date > now) {
+          return boost::optional<AccountModificationRequest::Update>();
+        }
+        status.m_status = AccountModificationRequest::Status::GRANTED;
+        ++status.m_sequence_number;
+        status.m_timestamp = now;
+        m_data_store->store(id, status);
+        return boost::optional(status);
       });
+      if(!update) {
+        continue;
+      }
       if(request.get_type() == AccountModificationRequest::Type::ENTITLEMENTS) {
         auto modification = m_data_store->with_transaction([&] {
           return m_data_store->load_entitlement_modification(id);
         });
-        grant_entitlements(update.m_account, request.get_account(),
+        grant_entitlements(update->m_account, request.get_account(),
           modification.get_entitlements(), id);
       } else if(request.get_type() == AccountModificationRequest::Type::RISK) {
         auto modification = m_data_store->with_transaction([&] {
@@ -874,7 +940,11 @@ namespace Nexus {
       if(!m_open_state.is_open()) {
         break;
       }
-      grant_scheduled_modifications();
+      try {
+        grant_scheduled_modifications();
+      } catch(const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+      }
     }
   }
 
@@ -1391,20 +1461,100 @@ namespace Nexus {
       IsAdministrationDataStore<Beam::dereference_t<D>> &&
         Beam::IsTimeClient<Beam::dereference_t<R>> &&
           Beam::IsTimer<Beam::dereference_t<T>>
-  std::vector<AccountModificationRequest::Id>
-      AdministrationServlet<C, S, D, R, T>::
-        on_load_account_modification_request_ids(ServiceProtocolClient& client,
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count) {
-    auto& session = client.get_session();
-    if(!check_read_permission(session.get_account(), account)) {
-      boost::throw_with_location(
-        Beam::ServiceRequestException("Insufficient permissions."));
+  std::vector<AccountModificationRequest>
+      AdministrationServlet<C, S, D, R, T>::load_sorted_requests(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        bool is_unrestricted, const AccountModificationRequestQuery& query) {
+    auto load = [&] (const AccountModificationRequestQuery& query) {
+      if(is_unrestricted) {
+        return m_data_store->load_account_modification_requests(query);
+      }
+      return m_data_store->load_account_modification_requests(accounts, query);
+    };
+    auto field = query.get_sort_field();
+    auto is_name_sort =
+      field == AccountModificationRequestQuery::SortField::ACCOUNT ||
+        field == AccountModificationRequestQuery::SortField::REQUESTER;
+    if(!is_name_sort && query.get_search().empty()) {
+      return load(query);
     }
-    return m_data_store->with_transaction([&] {
-      return m_data_store->load_account_modification_request_ids(
-        account, start_id, max_count);
-    });
+    auto scan = query;
+    scan.set_snapshot_limit(Beam::SnapshotLimit(
+      query.get_snapshot_limit().get_type(), UNLIMITED_SCAN_SIZE));
+    scan.set_offset(0);
+    if(is_name_sort) {
+      scan.set_sort_field(AccountModificationRequestQuery::SortField::CREATED);
+      scan.set_anchor(boost::optional<AccountModificationRequestAnchor>());
+    }
+    auto requests = load(scan);
+    if(auto& search = query.get_search(); !search.empty()) {
+      std::erase_if(requests, [&] (const auto& request) {
+        return !boost::icontains(request.get_account().m_name, search) &&
+          !boost::icontains(request.get_submission_account().m_name, search) &&
+          !boost::icontains(std::to_string(request.get_id()), search);
+      });
+    }
+    auto name = [&] (const AccountModificationRequest& request) -> const auto& {
+      if(field == AccountModificationRequestQuery::SortField::ACCOUNT) {
+        return request.get_account().m_name;
+      }
+      return request.get_submission_account().m_name;
+    };
+    if(is_name_sort) {
+      auto keys = std::vector<std::pair<std::string, std::size_t>>();
+      keys.reserve(requests.size());
+      for(auto i = std::size_t(0); i != requests.size(); ++i) {
+        keys.emplace_back(boost::to_lower_copy(name(requests[i])), i);
+      }
+      std::ranges::sort(keys, [&] (const auto& left, const auto& right) {
+        if(left.first != right.first) {
+          return left.first < right.first;
+        }
+        return requests[left.second].get_id() < requests[right.second].get_id();
+      });
+      auto sorted = std::vector<AccountModificationRequest>();
+      sorted.reserve(requests.size());
+      for(auto& key : keys) {
+        sorted.push_back(std::move(requests[key.second]));
+      }
+      requests = std::move(sorted);
+    }
+    auto is_head =
+      query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
+    if(auto anchor = query.get_anchor(); anchor && is_name_sort) {
+      auto anchor_key = boost::to_lower_copy(anchor->m_name);
+      auto position =
+        std::ranges::partition_point(requests, [&] (const auto& request) {
+          auto key = boost::to_lower_copy(name(request));
+          if(key != anchor_key) {
+            return key < anchor_key;
+          }
+          if(is_head) {
+            return request.get_id() <= anchor->m_id;
+          }
+          return request.get_id() < anchor->m_id;
+        });
+      if(is_head) {
+        requests.erase(requests.begin(), position);
+      } else {
+        requests.erase(position, requests.end());
+      }
+    }
+    auto skip = std::min<std::size_t>(query.get_offset(), requests.size());
+    if(is_head) {
+      requests.erase(requests.begin(), requests.begin() + skip);
+    } else {
+      requests.erase(requests.end() - skip, requests.end());
+    }
+    auto size = std::max(0, query.get_snapshot_limit().get_size());
+    if(requests.size() > static_cast<std::size_t>(size)) {
+      if(is_head) {
+        requests.erase(requests.begin() + size, requests.end());
+      } else {
+        requests.erase(requests.begin(), requests.end() - size);
+      }
+    }
+    return requests;
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires
@@ -1412,49 +1562,210 @@ namespace Nexus {
       IsAdministrationDataStore<Beam::dereference_t<D>> &&
         Beam::IsTimeClient<Beam::dereference_t<R>> &&
           Beam::IsTimer<Beam::dereference_t<T>>
-  std::vector<AccountModificationRequest::Id>
+  std::vector<AccountModificationRequestSummary>
       AdministrationServlet<C, S, D, R, T>::
-        on_load_managed_account_modification_request_ids(
-          ServiceProtocolClient& client, const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count) {
+        on_load_account_modification_request_summaries(
+          ServiceProtocolClient& client,
+          const AccountModificationRequestQuery& query) {
     auto& session = client.get_session();
-    if(!check_read_permission(session.get_account(), account)) {
-      boost::throw_with_location(
-        Beam::ServiceRequestException("Insufficient permissions."));
-    }
-    if(check_administrator(session.get_account())) {
-      return m_data_store->with_transaction([&] {
-        return m_data_store->load_account_modification_request_ids(
-          start_id, max_count);
-      });
-    }
-    auto trading_group_entries = load_managed_trading_groups(account);
-    auto accounts = std::vector<Beam::DirectoryEntry>();
-    for(auto& trading_group_entry : trading_group_entries) {
-      auto trading_group = load_trading_group(trading_group_entry);
-      std::move(trading_group.get_managers().begin(),
-        trading_group.get_managers().end(), std::back_inserter(accounts));
-      std::move(trading_group.get_traders().begin(),
-        trading_group.get_traders().end(), std::back_inserter(accounts));
-    }
-    std::sort(accounts.begin(), accounts.end());
-    auto ids = std::vector<AccountModificationRequest::Id>();
-    for(auto i = std::size_t(0); i != accounts.size(); ++i) {
-      if(i != 0 && accounts[i] == accounts[i - 1]) {
+    auto is_unrestricted = query.get_index() == m_trading_groups_root &&
+      check_administrator(session.get_account());
+    auto accounts = [&] {
+      if(is_unrestricted) {
+        return std::vector<Beam::DirectoryEntry>();
+      }
+      return load_authorized_accounts(session.get_account(), query.get_index());
+    }();
+    auto requests = std::vector<AccountModificationRequest>();
+    auto statuses = std::vector<AccountModificationRequest::Update>();
+    auto counts = std::vector<int>();
+    auto predecessors =
+      std::vector<boost::optional<AccountModificationRequest::Id>>();
+    auto entitlements = std::vector<EntitlementModification>();
+    auto parameters = std::vector<RiskModification>();
+    auto previous_entitlements = std::vector<EntitlementModification>();
+    auto previous_parameters = std::vector<RiskModification>();
+    auto current_parameters = std::vector<RiskParameters>();
+    auto is_granted = [&] (std::size_t index) {
+      return statuses[index].m_status ==
+        AccountModificationRequest::Status::GRANTED;
+    };
+    m_data_store->with_transaction([&] {
+      requests = load_sorted_requests(accounts, is_unrestricted, query);
+      auto ids = std::vector<AccountModificationRequest::Id>();
+      ids.reserve(requests.size());
+      for(auto& request : requests) {
+        ids.push_back(request.get_id());
+      }
+      statuses = m_data_store->load_account_modification_request_statuses(ids);
+      counts = m_data_store->load_message_counts(ids);
+      predecessors = m_data_store->load_previous_granted_requests(ids);
+      auto entitlement_positions = std::vector<std::size_t>();
+      auto risk_positions = std::vector<std::size_t>();
+      auto previous_entitlement_positions = std::vector<std::size_t>();
+      auto previous_risk_positions = std::vector<std::size_t>();
+      for(auto i = std::size_t(0); i != requests.size(); ++i) {
+        if(requests[i].get_type() ==
+            AccountModificationRequest::Type::ENTITLEMENTS) {
+          entitlement_positions.push_back(i);
+          if(is_granted(i) && predecessors[i]) {
+            previous_entitlement_positions.push_back(i);
+          }
+        } else if(requests[i].get_type() ==
+            AccountModificationRequest::Type::RISK) {
+          risk_positions.push_back(i);
+          if(is_granted(i) && predecessors[i]) {
+            previous_risk_positions.push_back(i);
+          }
+        }
+      }
+      auto request_ids = [&] (const std::vector<std::size_t>& positions) {
+        auto result = std::vector<AccountModificationRequest::Id>();
+        result.reserve(positions.size());
+        for(auto position : positions) {
+          result.push_back(requests[position].get_id());
+        }
+        return result;
+      };
+      auto predecessor_ids = [&] (const std::vector<std::size_t>& positions) {
+        auto result = std::vector<AccountModificationRequest::Id>();
+        result.reserve(positions.size());
+        for(auto position : positions) {
+          result.push_back(*predecessors[position]);
+        }
+        return result;
+      };
+      auto scatter = [&] (const std::vector<std::size_t>& positions,
+          auto loaded, auto& target) {
+        target.resize(requests.size());
+        for(auto j = std::size_t(0); j != positions.size(); ++j) {
+          target[positions[j]] = std::move(loaded[j]);
+        }
+      };
+      scatter(entitlement_positions,
+        m_data_store->load_entitlement_modifications(
+          request_ids(entitlement_positions)), entitlements);
+      scatter(risk_positions, m_data_store->load_risk_modifications(
+        request_ids(risk_positions)), parameters);
+      scatter(previous_entitlement_positions,
+        m_data_store->load_entitlement_modifications(
+          predecessor_ids(previous_entitlement_positions)),
+        previous_entitlements);
+      scatter(previous_risk_positions, m_data_store->load_risk_modifications(
+        predecessor_ids(previous_risk_positions)), previous_parameters);
+      current_parameters.resize(requests.size());
+      auto loaded_parameters =
+        std::unordered_map<Beam::DirectoryEntry, RiskParameters>();
+      for(auto i = std::size_t(0); i != requests.size(); ++i) {
+        if(requests[i].get_type() != AccountModificationRequest::Type::RISK ||
+            is_granted(i)) {
+          continue;
+        }
+        auto& account = requests[i].get_account();
+        auto entry = loaded_parameters.find(account);
+        if(entry == loaded_parameters.end()) {
+          entry = loaded_parameters.emplace(
+            account, m_data_store->load_risk_parameters(account)).first;
+        }
+        current_parameters[i] = entry->second;
+      }
+    });
+    auto current_entitlements =
+      std::unordered_map<Beam::DirectoryEntry, EntitlementModification>();
+    for(auto i = std::size_t(0); i != requests.size(); ++i) {
+      if(requests[i].get_type() !=
+          AccountModificationRequest::Type::ENTITLEMENTS || is_granted(i)) {
         continue;
       }
-      auto account_request_ids = m_data_store->with_transaction([&] {
-        return m_data_store->load_account_modification_request_ids(
-          accounts[i], start_id, max_count);
-      });
-      ids.insert(
-        ids.end(), account_request_ids.begin(), account_request_ids.end());
+      auto& account = requests[i].get_account();
+      if(!current_entitlements.contains(account)) {
+        current_entitlements.emplace(
+          account, EntitlementModification(load_entitlements(account)));
+      }
     }
-    std::sort(ids.begin(), ids.end());
-    if(static_cast<int>(ids.size()) > max_count) {
-      ids.erase(ids.begin() + max_count, ids.end());
+    auto summaries = std::vector<AccountModificationRequestSummary>();
+    summaries.reserve(requests.size());
+    for(auto i = std::size_t(0); i != requests.size(); ++i) {
+      auto summary = AccountModificationRequestSummary();
+      summary.m_request = requests[i];
+      summary.m_status = statuses[i];
+      summary.m_comment_count = counts[i];
+      if(requests[i].get_type() ==
+          AccountModificationRequest::Type::ENTITLEMENTS) {
+        summary.m_modification = Modification(entitlements[i]);
+        if(!is_granted(i)) {
+          summary.m_previous_state =
+            Modification(current_entitlements.at(requests[i].get_account()));
+        } else {
+          summary.m_previous_state = Modification(previous_entitlements[i]);
+        }
+      } else if(requests[i].get_type() ==
+          AccountModificationRequest::Type::RISK) {
+        summary.m_modification = Modification(parameters[i]);
+        if(!is_granted(i)) {
+          summary.m_previous_state =
+            Modification(RiskModification(current_parameters[i]));
+        } else {
+          summary.m_previous_state = Modification(previous_parameters[i]);
+        }
+      }
+      summaries.push_back(std::move(summary));
     }
-    return ids;
+    return summaries;
+  }
+
+  template<typename C, typename S, typename D, typename R, typename T> requires
+    Beam::IsServiceLocatorClient<Beam::dereference_t<S>> &&
+      IsAdministrationDataStore<Beam::dereference_t<D>> &&
+        Beam::IsTimeClient<Beam::dereference_t<R>> &&
+          Beam::IsTimer<Beam::dereference_t<T>>
+  AccountModificationRequestCounts AdministrationServlet<C, S, D, R, T>::
+      on_load_account_modification_request_counts(ServiceProtocolClient& client,
+        const AccountModificationRequestQuery& query) {
+    auto& session = client.get_session();
+    auto is_unrestricted = query.get_index() == m_trading_groups_root &&
+      check_administrator(session.get_account());
+    auto accounts = [&] {
+      if(is_unrestricted) {
+        return std::vector<Beam::DirectoryEntry>();
+      }
+      return load_authorized_accounts(session.get_account(), query.get_index());
+    }();
+    auto total = query;
+    total.set_anchor(boost::optional<AccountModificationRequestAnchor>());
+    total.set_offset(0);
+    total.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
+    total.set_statuses({});
+    total.set_sort_field(AccountModificationRequestQuery::SortField::CREATED);
+    return m_data_store->with_transaction([&] {
+      if(total.get_search().empty()) {
+        if(is_unrestricted) {
+          return m_data_store->load_account_modification_request_counts(total);
+        }
+        return m_data_store->load_account_modification_request_counts(
+          accounts, total);
+      }
+      auto requests = load_sorted_requests(accounts, is_unrestricted, total);
+      auto ids = std::vector<AccountModificationRequest::Id>();
+      ids.reserve(requests.size());
+      for(auto& request : requests) {
+        ids.push_back(request.get_id());
+      }
+      auto statuses =
+        m_data_store->load_account_modification_request_statuses(ids);
+      auto counts = AccountModificationRequestCounts(0, 0, 0);
+      for(auto& status : statuses) {
+        if(status.m_status == AccountModificationRequest::Status::GRANTED) {
+          ++counts.m_granted;
+        } else if(status.m_status ==
+            AccountModificationRequest::Status::REJECTED) {
+          ++counts.m_rejected;
+        } else {
+          ++counts.m_pending;
+        }
+      }
+      return counts;
+    });
   }
 
   template<typename C, typename S, typename D, typename R, typename T> requires
@@ -1642,20 +1953,26 @@ namespace Nexus {
         boost::throw_with_location(
           Beam::ServiceRequestException("Request can not be updated."));
       }
+      auto resolved_effective_date = [&] {
+        if(effective_date != boost::posix_time::not_a_date_time) {
+          return effective_date;
+        }
+        return m_data_store->load_account_modification_request(
+          request.get_id()).get_effective_date();
+      }();
+      auto status = resolve_modification_status(
+        roles, resolved_effective_date, timestamp);
+      if(static_cast<int>(status) < static_cast<int>(update.m_status)) {
+        boost::throw_with_location(
+          Beam::ServiceRequestException("Insufficient permissions."));
+      }
       if(comment.get_id() != -1) {
         m_data_store->store(request.get_id(), comment);
       }
       if(effective_date != boost::posix_time::not_a_date_time) {
         m_data_store->store_effective_date(request.get_id(), effective_date);
       }
-      auto resolved_effective_date = [&] {
-        if(effective_date != boost::posix_time::not_a_date_time) {
-          return effective_date;
-        }
-        return request.get_effective_date();
-      }();
-      update.m_status = resolve_modification_status(
-        roles, resolved_effective_date, timestamp);
+      update.m_status = status;
       update.m_account = session.get_account();
       ++update.m_sequence_number;
       update.m_timestamp = timestamp;
@@ -1745,8 +2062,16 @@ namespace Nexus {
         Beam::IsTimeClient<Beam::dereference_t<R>> &&
           Beam::IsTimer<Beam::dereference_t<T>>
   Message AdministrationServlet<C, S, D, R, T>::on_load_message(
-      ServiceProtocolClient& client, Message::Id id) {
+      ServiceProtocolClient& client,
+      AccountModificationRequest::Id request_id, Message::Id id) {
+    auto& session = client.get_session();
+    ensure_modification_read_permission(session.get_account(), request_id);
     return m_data_store->with_transaction([&] {
+      auto ids = m_data_store->load_message_ids(request_id);
+      if(!std::ranges::contains(ids, id)) {
+        boost::throw_with_location(
+          Beam::ServiceRequestException("Message not found."));
+      }
       return m_data_store->load_message(id);
     });
   }
@@ -1782,6 +2107,7 @@ namespace Nexus {
         ServiceProtocolClient& client, AccountModificationRequest::Id id,
         Message message) {
     auto& session = client.get_session();
+    ensure_modification_read_permission(session.get_account(), id);
     auto account = message.get_account();
     if(account.m_id == -1) {
       account = session.get_account();

@@ -85,10 +85,11 @@ export class LocalAccountDirectoryModel extends AccountDirectoryModel {
     this.ensureLoaded();
     const matches = new Beam.Map<Beam.DirectoryEntry, AccountEntry[]>();
     if(filter) {
+      const target = filter.toLowerCase();
       for(const group of this._groups) {
         const accounts: AccountEntry[] = [];
         for(const account of this._accounts.get(group)) {
-          if(account.account.name.indexOf(filter) === 0) {
+          if(account.account.name.toLowerCase().indexOf(target) === 0) {
             accounts.push(account);
           }
         }

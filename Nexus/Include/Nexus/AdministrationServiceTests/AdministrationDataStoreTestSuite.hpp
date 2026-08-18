@@ -1,9 +1,13 @@
 #ifndef NEXUS_ADMINISTRATION_DATA_STORE_TEST_SUITE_HPP
 #define NEXUS_ADMINISTRATION_DATA_STORE_TEST_SUITE_HPP
+#include <Beam/Queries/ConstantExpression.hpp>
+#include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
+#include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
+#include "Nexus/Queries/AccountModificationRequestAccessor.hpp"
 
 namespace Nexus::Tests {
   TEST_CASE_TEMPLATE_DEFINE(
@@ -404,123 +408,461 @@ namespace Nexus::Tests {
       REQUIRE(non_existent_message == Message());
     }
 
-    SUBCASE("load_account_modification_request_ids_out_of_order") {
+    SUBCASE("load_account_modification_requests_head_and_tail") {
       auto account = DirectoryEntry::make_account(100, "user_a");
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
-        data_store.store(AccountModificationRequest(
-          5, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:00:00"),
-          time_from_string("2024-08-01 00:00:00")), modification);
-        data_store.store(AccountModificationRequest(
-          1, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:01:00"),
-          time_from_string("2024-08-01 00:00:00")), modification);
-        data_store.store(AccountModificationRequest(
-          10, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:02:00"),
-          time_from_string("2024-08-01 00:00:00")), modification);
-        data_store.store(AccountModificationRequest(
-          3, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:03:00"),
-          time_from_string("2024-08-01 00:00:00")), modification);
+        for(auto id : {5, 1, 10, 3}) {
+          data_store.store(AccountModificationRequest(
+            id, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
+            time_from_string("2024-08-01 00:00:00")), modification);
+        }
       });
-      auto ids = data_store.with_transaction([&] {
-        return data_store.load_account_modification_request_ids(0, 100);
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account);
+      query.set_snapshot_limit(SnapshotLimit::from_head(3));
+      auto head = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
       });
-      REQUIRE(ids.size() == 4);
-      REQUIRE(ids[0] == 1);
-      REQUIRE(ids[1] == 3);
-      REQUIRE(ids[2] == 5);
-      REQUIRE(ids[3] == 10);
+      REQUIRE(head.size() == 3);
+      REQUIRE(head[0].get_id() == 1);
+      REQUIRE(head[1].get_id() == 3);
+      REQUIRE(head[2].get_id() == 5);
+      REQUIRE(head[0].get_account() == account);
+      query.set_snapshot_limit(SnapshotLimit::from_tail(2));
+      auto tail = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(tail.size() == 2);
+      REQUIRE(tail[0].get_id() == 5);
+      REQUIRE(tail[1].get_id() == 10);
     }
 
-    SUBCASE("load_account_modification_request_ids_with_start_id") {
+    SUBCASE("load_account_modification_requests_with_offset") {
       auto account = DirectoryEntry::make_account(100, "user_a");
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
-        data_store.store(AccountModificationRequest(
-          10, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:00:00"),
-          time_from_string("2024-08-01 00:00:00")), modification);
-        data_store.store(AccountModificationRequest(
-          20, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:01:00"),
-          time_from_string("2024-08-01 00:00:00")), modification);
-        data_store.store(AccountModificationRequest(
-          30, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:02:00"),
-          time_from_string("2024-08-01 00:00:00")), modification);
-        data_store.store(AccountModificationRequest(
-          40, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:03:00"),
-          time_from_string("2024-08-01 00:00:00")), modification);
+        for(auto id : {1, 2, 3, 4, 5}) {
+          data_store.store(AccountModificationRequest(
+            id, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
+            time_from_string("2024-08-01 00:00:00")), modification);
+        }
       });
-      auto ids = data_store.with_transaction([&] {
-        return data_store.load_account_modification_request_ids(20, 100);
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account);
+      query.set_snapshot_limit(SnapshotLimit::from_tail(2));
+      auto first = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
       });
-      REQUIRE(ids.size() == 2);
-      REQUIRE(ids[0] == 30);
-      REQUIRE(ids[1] == 40);
+      REQUIRE(first.size() == 2);
+      REQUIRE(first[0].get_id() == 4);
+      REQUIRE(first[1].get_id() == 5);
+      query.set_offset(2);
+      auto second = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(second.size() == 2);
+      REQUIRE(second[0].get_id() == 2);
+      REQUIRE(second[1].get_id() == 3);
+      query.set_snapshot_limit(SnapshotLimit::from_head(2));
+      auto head = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(head.size() == 2);
+      REQUIRE(head[0].get_id() == 3);
+      REQUIRE(head[1].get_id() == 4);
+      query.set_offset(100);
+      auto beyond = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(beyond.empty());
     }
 
-    SUBCASE("load_account_modification_request_ids_with_max_count") {
+    SUBCASE("load_account_modification_requests_sorted_by_last_update") {
       auto account = DirectoryEntry::make_account(100, "user_a");
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
-        data_store.store(AccountModificationRequest(
-          10, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:00:00"),
-          time_from_string("2024-08-01 00:00:00")), modification);
-        data_store.store(AccountModificationRequest(
-          20, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:01:00"),
-          time_from_string("2024-08-01 00:00:00")), modification);
-        data_store.store(AccountModificationRequest(
-          30, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:02:00"),
-          time_from_string("2024-08-01 00:00:00")), modification);
-        data_store.store(AccountModificationRequest(
-          40, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
-          time_from_string("2024-07-05 10:03:00"),
-          time_from_string("2024-08-01 00:00:00")), modification);
+        for(auto id : {1, 2, 3}) {
+          data_store.store(AccountModificationRequest(
+            id, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
+            time_from_string("2024-08-01 00:00:00")), modification);
+        }
+        data_store.store(1, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED, account, 1,
+          time_from_string("2024-07-09 10:00:00")));
+        data_store.store(2, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED, account, 1,
+          time_from_string("2024-07-07 10:00:00")));
+        data_store.store(3, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED, account, 1,
+          time_from_string("2024-07-08 10:00:00")));
       });
-      auto ids = data_store.with_transaction([&] {
-        return data_store.load_account_modification_request_ids(0, 2);
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account);
+      query.set_sort_field(
+        AccountModificationRequestQuery::SortField::LAST_UPDATED);
+      query.set_snapshot_limit(SnapshotLimit::from_tail(3));
+      auto requests = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
       });
-      REQUIRE(ids.size() == 2);
-      REQUIRE(ids[0] == 10);
-      REQUIRE(ids[1] == 20);
+      REQUIRE(requests.size() == 3);
+      REQUIRE(requests[0].get_id() == 2);
+      REQUIRE(requests[1].get_id() == 3);
+      REQUIRE(requests[2].get_id() == 1);
+      query.set_snapshot_limit(SnapshotLimit::from_tail(2));
+      auto page = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(page.size() == 2);
+      REQUIRE(page[0].get_id() == 3);
+      REQUIRE(page[1].get_id() == 1);
+      query.set_anchor(AccountModificationRequestAnchor(
+        3, time_from_string("2024-07-08 10:00:00"), ""));
+      auto next = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(next.size() == 1);
+      REQUIRE(next[0].get_id() == 2);
+      query.set_anchor(optional<AccountModificationRequestAnchor>());
+      query.set_offset(1);
+      auto skipped = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(skipped.size() == 2);
+      REQUIRE(skipped[0].get_id() == 2);
+      REQUIRE(skipped[1].get_id() == 3);
+      query.set_offset(0);
+      query.set_sort_field(
+        AccountModificationRequestQuery::SortField::CREATED);
+      query.set_snapshot_limit(SnapshotLimit::from_tail(3));
+      auto created = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(created.size() == 3);
+      REQUIRE(created[0].get_id() == 1);
+      REQUIRE(created[1].get_id() == 2);
+      REQUIRE(created[2].get_id() == 3);
     }
 
-    SUBCASE("load_account_modification_request_ids_by_account") {
-      auto account_a = DirectoryEntry::make_account(100, "user_a");
-      auto account_b = DirectoryEntry::make_account(200, "user_b");
+    SUBCASE("load_account_modification_requests_sorted_by_effective_date") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto modification = EntitlementModification();
+      auto dates = std::vector<std::string>{"2024-09-03 00:00:00",
+        "2024-09-01 00:00:00", "2024-09-02 00:00:00"};
+      data_store.with_transaction([&] {
+        for(auto i = 0; i != 3; ++i) {
+          data_store.store(AccountModificationRequest(
+            i + 1, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
+            time_from_string(dates[i])), modification);
+        }
+      });
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account);
+      query.set_sort_field(
+        AccountModificationRequestQuery::SortField::EFFECTIVE_DATE);
+      query.set_snapshot_limit(SnapshotLimit::from_tail(3));
+      auto requests = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(requests.size() == 3);
+      REQUIRE(requests[0].get_id() == 2);
+      REQUIRE(requests[1].get_id() == 3);
+      REQUIRE(requests[2].get_id() == 1);
+      query.set_snapshot_limit(SnapshotLimit::from_tail(2));
+      query.set_anchor(AccountModificationRequestAnchor(3,
+        time_from_string("2024-09-02 00:00:00"), ""));
+      auto next = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(next.size() == 1);
+      REQUIRE(next[0].get_id() == 2);
+      query.set_anchor(optional<AccountModificationRequestAnchor>());
+      query.set_snapshot_limit(SnapshotLimit::from_head(2));
+      auto head = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(head.size() == 2);
+      REQUIRE(head[0].get_id() == 2);
+      REQUIRE(head[1].get_id() == 3);
+    }
+
+    SUBCASE("load_account_modification_requests_with_a_missing_anchor") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
       auto modification = EntitlementModification();
       data_store.with_transaction([&] {
-        data_store.store(AccountModificationRequest(
-          1, AccountModificationRequest::Type::ENTITLEMENTS, account_a,
-          account_a, time_from_string("2024-07-05 10:00:00"),
-          time_from_string("2024-08-01 00:00:00")), modification);
-        data_store.store(AccountModificationRequest(
-          2, AccountModificationRequest::Type::ENTITLEMENTS, account_b,
-          account_b, time_from_string("2024-07-05 10:01:00"),
-          time_from_string("2024-08-01 00:00:00")), modification);
-        data_store.store(AccountModificationRequest(
-          3, AccountModificationRequest::Type::ENTITLEMENTS, account_a,
-          account_a, time_from_string("2024-07-05 10:02:00"),
-          time_from_string("2024-08-01 00:00:00")), modification);
+        for(auto id : {1, 2, 3}) {
+          data_store.store(AccountModificationRequest(
+            id, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
+            time_from_string("2024-08-01 00:00:00")), modification);
+        }
+        data_store.store(1, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED, account, 1,
+          time_from_string("2024-07-09 10:00:00")));
+        data_store.store(2, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED, account, 1,
+          time_from_string("2024-07-07 10:00:00")));
+        data_store.store(3, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED, account, 1,
+          time_from_string("2024-07-08 10:00:00")));
       });
-      auto ids = data_store.with_transaction([&] {
-        return data_store.load_account_modification_request_ids(
-          account_a, 0, 100);
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account);
+      query.set_snapshot_limit(SnapshotLimit::from_head(10));
+      query.set_anchor(AccountModificationRequestAnchor(999,
+        time_from_string("2024-07-01 10:00:00"), ""));
+      query.set_sort_field(
+        AccountModificationRequestQuery::SortField::LAST_UPDATED);
+      auto by_update = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
       });
-      REQUIRE(ids.size() == 2);
-      REQUIRE(ids[0] == 1);
-      REQUIRE(ids[1] == 3);
+      REQUIRE(by_update.size() == 3);
+      REQUIRE(by_update[0].get_id() == 2);
+      REQUIRE(by_update[1].get_id() == 3);
+      REQUIRE(by_update[2].get_id() == 1);
+      query.set_sort_field(
+        AccountModificationRequestQuery::SortField::EFFECTIVE_DATE);
+      auto by_effective_date = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(by_effective_date.size() == 3);
+      query.set_snapshot_limit(SnapshotLimit::from_tail(10));
+      query.set_sort_field(
+        AccountModificationRequestQuery::SortField::LAST_UPDATED);
+      query.set_anchor(AccountModificationRequestAnchor(999,
+        time_from_string("2024-07-20 10:00:00"), ""));
+      auto tail = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(tail.size() == 3);
+      REQUIRE(tail[0].get_id() == 2);
+      REQUIRE(tail[1].get_id() == 3);
+      REQUIRE(tail[2].get_id() == 1);
+      query.set_anchor(AccountModificationRequestAnchor(999,
+        time_from_string("2024-07-01 10:00:00"), ""));
+      auto before_everything = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(before_everything.empty());
     }
 
-    SUBCASE("load_account_modification_request_ids_by_account_with_start_id") {
+    SUBCASE("load_account_modification_requests_filtered") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto other = DirectoryEntry::make_account(101, "user_b");
+      auto modification = EntitlementModification();
+      data_store.with_transaction([&] {
+        data_store.store(AccountModificationRequest(1,
+          AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(2,
+          AccountModificationRequest::Type::RISK, account, account,
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(3,
+          AccountModificationRequest::Type::ENTITLEMENTS, other, other,
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(1, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED, account, 1,
+          time_from_string("2024-07-07 10:00:00")));
+        data_store.store(2, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::PENDING, account, 1,
+          time_from_string("2024-07-08 10:00:00")));
+        data_store.store(3, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::REJECTED, other, 1,
+          time_from_string("2024-07-09 10:00:00")));
+      });
+      auto load = [&] (const AccountModificationRequestQuery& query) {
+        return data_store.with_transaction([&] {
+          return data_store.load_account_modification_requests(query);
+        });
+      };
+      auto query = AccountModificationRequestQuery();
+      query.set_snapshot_limit(SnapshotLimit::from_head(10));
+      query.set_categories({AccountModificationRequest::Type::RISK});
+      auto by_category = load(query);
+      REQUIRE(by_category.size() == 1);
+      REQUIRE(by_category[0].get_id() == 2);
+      query.set_categories({});
+      query.set_statuses({AccountModificationRequest::Status::GRANTED,
+        AccountModificationRequest::Status::REJECTED});
+      auto by_status = load(query);
+      REQUIRE(by_status.size() == 2);
+      REQUIRE(by_status[0].get_id() == 1);
+      REQUIRE(by_status[1].get_id() == 3);
+      query.set_statuses({});
+      query.set_start_date(time_from_string("2024-07-08 00:00:00"));
+      auto from_start = load(query);
+      REQUIRE(from_start.size() == 2);
+      REQUIRE(from_start[0].get_id() == 2);
+      REQUIRE(from_start[1].get_id() == 3);
+      query.set_end_date(time_from_string("2024-07-08 23:59:59"));
+      auto within_range = load(query);
+      REQUIRE(within_range.size() == 1);
+      REQUIRE(within_range[0].get_id() == 2);
+      query.set_start_date(optional<ptime>());
+      query.set_end_date(optional<ptime>());
+      query.set_excluded_account(other);
+      auto excluded = load(query);
+      REQUIRE(excluded.size() == 2);
+      REQUIRE(excluded[0].get_id() == 1);
+      REQUIRE(excluded[1].get_id() == 2);
+      query.set_excluded_account(
+        DirectoryEntry::make_directory(other.m_id, other.m_name));
+      auto excluded_by_id = load(query);
+      REQUIRE(excluded_by_id.size() == 2);
+      REQUIRE(excluded_by_id[0].get_id() == 1);
+      REQUIRE(excluded_by_id[1].get_id() == 2);
+    }
+
+    SUBCASE("load_account_modification_requests_anchored_by_name") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto modification = EntitlementModification();
+      data_store.with_transaction([&] {
+        for(auto id : {1, 2, 3, 4}) {
+          data_store.store(AccountModificationRequest(
+            id, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
+            time_from_string("2024-08-01 00:00:00")), modification);
+        }
+      });
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account);
+      query.set_sort_field(
+        AccountModificationRequestQuery::SortField::ACCOUNT);
+      query.set_snapshot_limit(SnapshotLimit::from_head(10));
+      query.set_anchor(AccountModificationRequestAnchor(
+        2, time_from_string("2024-07-05 10:00:00"), "user_a"));
+      auto head = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(head.size() == 2);
+      REQUIRE(head[0].get_id() == 3);
+      REQUIRE(head[1].get_id() == 4);
+      query.set_snapshot_limit(SnapshotLimit::from_tail(10));
+      auto tail = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(tail.size() == 1);
+      REQUIRE(tail[0].get_id() == 1);
+    }
+
+    SUBCASE("load_account_modification_request_counts") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto other = DirectoryEntry::make_account(101, "user_b");
+      auto modification = EntitlementModification();
+      auto store = [&] (AccountModificationRequest::Id id,
+          AccountModificationRequest::Type type, const DirectoryEntry& owner) {
+        data_store.store(AccountModificationRequest(
+          id, type, owner, owner, time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+      };
+      auto update = [&] (AccountModificationRequest::Id id,
+          AccountModificationRequest::Status status) {
+        data_store.store(id, AccountModificationRequest::Update(
+          status, DirectoryEntry::make_account(100, "user_a"), 1,
+          time_from_string("2024-07-07 10:00:00")));
+      };
+      data_store.with_transaction([&] {
+        store(1, AccountModificationRequest::Type::ENTITLEMENTS, account);
+        store(2, AccountModificationRequest::Type::RISK, account);
+        store(3, AccountModificationRequest::Type::ENTITLEMENTS, account);
+        store(4, AccountModificationRequest::Type::ENTITLEMENTS, other);
+        store(5, AccountModificationRequest::Type::ENTITLEMENTS, account);
+        update(1, AccountModificationRequest::Status::GRANTED);
+        update(2, AccountModificationRequest::Status::REJECTED);
+        update(3, AccountModificationRequest::Status::PENDING);
+        update(4, AccountModificationRequest::Status::SCHEDULED);
+      });
+      auto query = AccountModificationRequestQuery();
+      auto counts = data_store.with_transaction([&] {
+        return data_store.load_account_modification_request_counts(query);
+      });
+      REQUIRE(counts.m_granted == 1);
+      REQUIRE(counts.m_rejected == 1);
+      REQUIRE(counts.m_pending == 3);
+      auto accounts = std::vector<DirectoryEntry>{account};
+      auto restricted = data_store.with_transaction([&] {
+        return data_store.load_account_modification_request_counts(
+          accounts, query);
+      });
+      REQUIRE(restricted.m_granted == 1);
+      REQUIRE(restricted.m_rejected == 1);
+      REQUIRE(restricted.m_pending == 2);
+      query.set_categories({AccountModificationRequest::Type::RISK});
+      auto by_category = data_store.with_transaction([&] {
+        return data_store.load_account_modification_request_counts(query);
+      });
+      REQUIRE(by_category.m_granted == 0);
+      REQUIRE(by_category.m_rejected == 1);
+      REQUIRE(by_category.m_pending == 0);
+    }
+
+    SUBCASE("load_account_modification_requests_with_anchor") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto modification = EntitlementModification();
+      data_store.with_transaction([&] {
+        for(auto id : {10, 20, 30, 40}) {
+          data_store.store(AccountModificationRequest(
+            id, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
+            time_from_string("2024-08-01 00:00:00")), modification);
+        }
+      });
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account);
+      query.set_snapshot_limit(SnapshotLimit::from_head(100));
+      query.set_anchor(
+        AccountModificationRequestAnchor(20, not_a_date_time, ""));
+      auto head = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(head.size() == 2);
+      REQUIRE(head[0].get_id() == 30);
+      REQUIRE(head[1].get_id() == 40);
+      query.set_snapshot_limit(SnapshotLimit::from_tail(100));
+      query.set_anchor(
+        AccountModificationRequestAnchor(30, not_a_date_time, ""));
+      auto tail = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(tail.size() == 2);
+      REQUIRE(tail[0].get_id() == 10);
+      REQUIRE(tail[1].get_id() == 20);
+    }
+
+    SUBCASE("load_account_modification_requests_from_a_default_anchor") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto modification = EntitlementModification();
+      data_store.with_transaction([&] {
+        for(auto id : {10, 20, 30}) {
+          data_store.store(AccountModificationRequest(
+            id, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
+            time_from_string("2024-08-01 00:00:00")), modification);
+        }
+      });
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account);
+      query.set_snapshot_limit(SnapshotLimit::from_head(100));
+      query.set_sort_field(
+        AccountModificationRequestQuery::SortField::EFFECTIVE_DATE);
+      query.set_anchor(AccountModificationRequestAnchor());
+      auto requests = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(requests.size() == 3);
+      REQUIRE(requests[0].get_id() == 10);
+      REQUIRE(requests[1].get_id() == 20);
+      REQUIRE(requests[2].get_id() == 30);
+    }
+
+    SUBCASE("load_account_modification_requests_by_accounts") {
       auto account_a = DirectoryEntry::make_account(100, "user_a");
       auto account_b = DirectoryEntry::make_account(200, "user_b");
       auto modification = EntitlementModification();
@@ -537,18 +879,279 @@ namespace Nexus::Tests {
           AccountModificationRequest::Type::ENTITLEMENTS, account_a, account_a,
           time_from_string("2024-07-05 10:02:00"),
           time_from_string("2024-08-01 00:00:00")), modification);
-        data_store.store(AccountModificationRequest(4,
+      });
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account_a);
+      query.set_snapshot_limit(SnapshotLimit::from_head(100));
+      auto restricted = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests({account_a},
+          query);
+      });
+      REQUIRE(restricted.size() == 2);
+      REQUIRE(restricted[0].get_id() == 1);
+      REQUIRE(restricted[1].get_id() == 3);
+      auto unrestricted = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(unrestricted.size() == 3);
+      auto empty = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests({}, query);
+      });
+      REQUIRE(empty.empty());
+    }
+
+    SUBCASE("load_account_modification_requests_accounts_bound_results") {
+      auto account_a = DirectoryEntry::make_account(100, "user_a");
+      auto account_b = DirectoryEntry::make_account(200, "user_b");
+      auto modification = EntitlementModification();
+      data_store.with_transaction([&] {
+        data_store.store(AccountModificationRequest(1,
           AccountModificationRequest::Type::ENTITLEMENTS, account_a, account_a,
-          time_from_string("2024-07-05 10:03:00"),
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(2,
+          AccountModificationRequest::Type::ENTITLEMENTS, account_b, account_b,
+          time_from_string("2024-07-05 10:01:00"),
           time_from_string("2024-08-01 00:00:00")), modification);
       });
-      auto ids = data_store.with_transaction([&] {
-        return data_store.load_account_modification_request_ids(
-          account_a, 1, 100);
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account_b);
+      query.set_snapshot_limit(SnapshotLimit::from_head(100));
+      auto requests = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests({account_a},
+          query);
       });
-      REQUIRE(ids.size() == 2);
-      REQUIRE(ids[0] == 3);
-      REQUIRE(ids[1] == 4);
+      REQUIRE(requests.size() == 1);
+      REQUIRE(requests[0].get_id() == 1);
+      query.set_anchor(
+        AccountModificationRequestAnchor(1, not_a_date_time, ""));
+      auto anchored = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests({account_a},
+          query);
+      });
+      REQUIRE(anchored.empty());
+      auto query2 = AccountModificationRequestQuery();
+      query2.set_index(account_a);
+      query2.set_snapshot_limit(SnapshotLimit::from_head(100));
+      query2.set_filter(ConstantExpression(false));
+      auto filtered = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests({account_a},
+          query2);
+      });
+      REQUIRE(filtered.empty());
+    }
+
+    SUBCASE("load_account_modification_requests_by_category") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      data_store.with_transaction([&] {
+        data_store.store(AccountModificationRequest(1,
+          AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), EntitlementModification());
+        data_store.store(AccountModificationRequest(2,
+          AccountModificationRequest::Type::RISK, account, account,
+          time_from_string("2024-07-06 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), RiskModification());
+        data_store.store(AccountModificationRequest(3,
+          AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+          time_from_string("2024-07-07 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), EntitlementModification());
+      });
+      auto request = AccountModificationRequestAccessor::from_parameter(0);
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account);
+      query.set_snapshot_limit(SnapshotLimit::from_head(100));
+      query.set_filter(request.get_type() == ConstantExpression(
+        static_cast<int>(AccountModificationRequest::Type::ENTITLEMENTS)));
+      auto entitlements = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(entitlements.size() == 2);
+      REQUIRE(entitlements[0].get_id() == 1);
+      REQUIRE(entitlements[1].get_id() == 3);
+      query.set_filter(request.get_type() == ConstantExpression(
+        static_cast<int>(AccountModificationRequest::Type::RISK)));
+      auto risk = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(risk.size() == 1);
+      REQUIRE(risk[0].get_id() == 2);
+    }
+
+    SUBCASE("load_account_modification_requests_by_timestamp") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto modification = EntitlementModification();
+      data_store.with_transaction([&] {
+        data_store.store(AccountModificationRequest(1,
+          AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(2,
+          AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+          time_from_string("2024-07-10 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(3,
+          AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+          time_from_string("2024-07-15 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+      });
+      auto request = AccountModificationRequestAccessor::from_parameter(0);
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account);
+      query.set_snapshot_limit(SnapshotLimit::from_head(100));
+      query.set_filter(request.get_timestamp() >=
+        ConstantExpression(time_from_string("2024-07-10 00:00:00")));
+      auto recent = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(recent.size() == 2);
+      REQUIRE(recent[0].get_id() == 2);
+      REQUIRE(recent[1].get_id() == 3);
+    }
+
+    SUBCASE("load_batched_statuses_and_message_counts") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto modification = EntitlementModification();
+      data_store.with_transaction([&] {
+        for(auto id : {1, 2, 3}) {
+          data_store.store(AccountModificationRequest(
+            id, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
+            time_from_string("2024-08-01 00:00:00")), modification);
+        }
+        data_store.store(1, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::PENDING, account, 0,
+          time_from_string("2024-07-05 10:00:00")));
+        data_store.store(1, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED, account, 1,
+          time_from_string("2024-07-05 11:00:00")));
+        data_store.store(3, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::REJECTED, account, 0,
+          time_from_string("2024-07-05 12:00:00")));
+        data_store.store(1, Message(10, account,
+          time_from_string("2024-07-05 13:00:00"), {}));
+        data_store.store(1, Message(11, account,
+          time_from_string("2024-07-05 14:00:00"), {}));
+      });
+      auto ids = std::vector<AccountModificationRequest::Id>({1, 2, 3});
+      auto statuses = data_store.with_transaction([&] {
+        return data_store.load_account_modification_request_statuses(ids);
+      });
+      REQUIRE(statuses.size() == 3);
+      REQUIRE(statuses[0].m_status ==
+        AccountModificationRequest::Status::GRANTED);
+      REQUIRE(statuses[1].m_status ==
+        AccountModificationRequest::Status::NONE);
+      REQUIRE(statuses[2].m_status ==
+        AccountModificationRequest::Status::REJECTED);
+      auto counts = data_store.with_transaction([&] {
+        return data_store.load_message_counts(ids);
+      });
+      REQUIRE(counts.size() == 3);
+      REQUIRE(counts[0] == 2);
+      REQUIRE(counts[1] == 0);
+      REQUIRE(counts[2] == 0);
+    }
+
+    SUBCASE("load_batches_with_no_ids") {
+      auto ids = std::vector<AccountModificationRequest::Id>();
+      data_store.with_transaction([&] {
+        REQUIRE(
+          data_store.load_account_modification_request_statuses(ids).empty());
+        REQUIRE(data_store.load_message_counts(ids).empty());
+        REQUIRE(data_store.load_previous_granted_requests(ids).empty());
+        REQUIRE(data_store.load_entitlement_modifications(ids).empty());
+        REQUIRE(data_store.load_risk_modifications(ids).empty());
+      });
+    }
+
+    SUBCASE("load_previous_granted_requests") {
+      auto account_a = DirectoryEntry::make_account(100, "user_a");
+      auto account_b = DirectoryEntry::make_account(200, "user_b");
+      auto modification = EntitlementModification();
+      data_store.with_transaction([&] {
+        data_store.store(AccountModificationRequest(1,
+          AccountModificationRequest::Type::ENTITLEMENTS, account_a, account_a,
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(2,
+          AccountModificationRequest::Type::ENTITLEMENTS, account_a, account_a,
+          time_from_string("2024-07-06 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(3,
+          AccountModificationRequest::Type::ENTITLEMENTS, account_a, account_a,
+          time_from_string("2024-07-07 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(4,
+          AccountModificationRequest::Type::ENTITLEMENTS, account_b, account_b,
+          time_from_string("2024-07-08 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(5,
+          AccountModificationRequest::Type::ENTITLEMENTS, account_b, account_b,
+          time_from_string("2024-07-09 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(1, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED, account_a, 0,
+          time_from_string("2024-07-05 11:00:00")));
+        data_store.store(2, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::REJECTED, account_a, 0,
+          time_from_string("2024-07-06 11:00:00")));
+        data_store.store(4, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED, account_b, 0,
+          time_from_string("2024-07-08 11:00:00")));
+        data_store.store(AccountModificationRequest(
+          6, AccountModificationRequest::Type::RISK, account_a, account_a,
+          time_from_string("2024-07-10 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(AccountModificationRequest(
+          7, AccountModificationRequest::Type::ENTITLEMENTS, account_a,
+          account_a, time_from_string("2024-07-11 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")), modification);
+        data_store.store(6, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED, account_a, 0,
+          time_from_string("2024-07-10 11:00:00")));
+      });
+      auto ids = std::vector<AccountModificationRequest::Id>({1, 3, 5, 7});
+      auto predecessors = data_store.with_transaction([&] {
+        return data_store.load_previous_granted_requests(ids);
+      });
+      REQUIRE(predecessors.size() == 4);
+      REQUIRE(!predecessors[0]);
+      REQUIRE(predecessors[1] == 1);
+      REQUIRE(predecessors[2] == 4);
+      REQUIRE(predecessors[3] == 1);
+    }
+
+    SUBCASE("load_batched_modifications") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto entitlement = DirectoryEntry::make_directory(23, "TSX");
+      auto parameters = RiskParameters(
+        USD, 100 * Money::ONE, RiskState::Type::ACTIVE, Money::ONE, seconds(5));
+      data_store.with_transaction([&] {
+        data_store.store(AccountModificationRequest(1,
+          AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+          time_from_string("2024-07-05 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")),
+          EntitlementModification({entitlement}));
+        data_store.store(AccountModificationRequest(2,
+          AccountModificationRequest::Type::RISK, account, account,
+          time_from_string("2024-07-06 10:00:00"),
+          time_from_string("2024-08-01 00:00:00")),
+          RiskModification(parameters));
+      });
+      auto entitlements = data_store.with_transaction([&] {
+        return data_store.load_entitlement_modifications({1, 2});
+      });
+      REQUIRE(entitlements.size() == 2);
+      REQUIRE(entitlements[0].get_entitlements().size() == 1);
+      REQUIRE(entitlements[0].get_entitlements()[0] == entitlement);
+      REQUIRE(entitlements[1].get_entitlements().empty());
+      auto risks = data_store.with_transaction([&] {
+        return data_store.load_risk_modifications({2, 1});
+      });
+      REQUIRE(risks.size() == 2);
+      REQUIRE(risks[0].get_parameters() == parameters);
+      REQUIRE(risks[1].get_parameters() == RiskParameters());
     }
 
     SUBCASE("store_and_load_effective_date") {
@@ -720,8 +1323,8 @@ namespace Nexus::Tests {
         data_store.store(Notification(
           "ggg-001", account, "Unread.", "", Notification::Category::REPORT,
           time_from_string("2026-04-21 10:00:00"), false));
-        data_store.store(Notification(
-          "ggg-002", account, "Also unread.", "", Notification::Category::REPORT,
+        data_store.store(Notification("ggg-002", account, "Also unread.", "",
+          Notification::Category::REPORT,
           time_from_string("2026-04-21 11:00:00"), false));
       });
       data_store.with_transaction([&] {
@@ -814,6 +1417,43 @@ namespace Nexus::Tests {
       });
       REQUIRE(read.size() == 1);
       REQUIRE(read[0].m_id == "kkk-002");
+    }
+
+    SUBCASE("load_non_existent_request") {
+      REQUIRE_THROWS_AS(data_store.with_transaction([&] {
+        return data_store.load_account_modification_request(42);
+      }), AdministrationDataStoreException);
+    }
+
+    SUBCASE("load_notifications_from_an_absent_anchor") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      data_store.with_transaction([&] {
+        data_store.store(Notification(
+          "aaa-001", account, "First.", "", Notification::Category::REPORT,
+          time_from_string("2026-04-21 10:00:00"), false));
+        data_store.store(Notification(
+          "ccc-003", account, "Third.", "", Notification::Category::REPORT,
+          time_from_string("2026-04-21 11:00:00"), false));
+        data_store.store(Notification(
+          "eee-005", account, "Fifth.", "", Notification::Category::REPORT,
+          time_from_string("2026-04-21 12:00:00"), false));
+      });
+      auto load = [&] (const Notification::Id& id, SnapshotLimit limit) {
+        return data_store.with_transaction([&] {
+          return data_store.load_notifications(
+            account, id, limit, Notification::ReadState::ALL);
+        });
+      };
+      auto head = load("bbb-002", SnapshotLimit::from_head(10));
+      REQUIRE(head.size() == 2);
+      REQUIRE(head[0].m_id == "ccc-003");
+      REQUIRE(head[1].m_id == "eee-005");
+      auto tail = load("ddd-004", SnapshotLimit::from_tail(10));
+      REQUIRE(tail.size() == 2);
+      REQUIRE(tail[0].m_id == "aaa-001");
+      REQUIRE(tail[1].m_id == "ccc-003");
+      REQUIRE(load("zzz-999", SnapshotLimit::from_head(10)).empty());
+      REQUIRE(load("aaa-000", SnapshotLimit::from_tail(10)).empty());
     }
 
     SUBCASE("load_notification_helper") {

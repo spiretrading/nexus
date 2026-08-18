@@ -46,7 +46,7 @@ export class RequestsController extends React.Component<Properties, State> {
     const parsed = parseSearch(props.location.search);
     this.state = {
       redirect: null,
-      displayStatus: RequestDirectoryPage.DisplayStatus.IN_PROGRESS,
+      displayStatus: RequestDirectoryPage.DisplayStatus.READY,
       requestState: parsed.requestState,
       filters: parsed.filters,
       filterCount: computeFilterCount(parsed.filters),
@@ -54,12 +54,16 @@ export class RequestsController extends React.Component<Properties, State> {
       response: {
         status: RequestsModel.ResponseStatus.IN_PROGRESS,
         facetCounts: {pending: 0, approved: 0, rejected: 0},
+        totalCount: 0,
         requestList: []
       },
       detailStatus: DetailStatus.LOADING,
       detail: null,
       isSubmitting: false
     };
+    this.queryTimerId = null;
+    this.placeholderTimerId = null;
+    this.generation = 0;
   }
 
   public render(): JSX.Element {
@@ -113,6 +117,9 @@ export class RequestsController extends React.Component<Properties, State> {
   }
 
   public async componentDidMount(): Promise<void> {
+    if(this.parseRequestId() === null) {
+      this.schedulePlaceholder();
+    }
     await this.props.model.load();
     const requestId = this.parseRequestId();
     if(requestId !== null) {
@@ -134,6 +141,11 @@ export class RequestsController extends React.Component<Properties, State> {
         this.resetAndLoad();
       }
     }
+  }
+
+  public componentWillUnmount(): void {
+    clearTimeout(this.queryTimerId);
+    clearTimeout(this.placeholderTimerId);
   }
 
   private currentPage(): RequestsPage.Page {
@@ -183,18 +195,12 @@ export class RequestsController extends React.Component<Properties, State> {
   private async resetAndLoad(): Promise<void> {
     const parsed = parseSearch(this.props.location.search);
     this.setState({
-      displayStatus: RequestDirectoryPage.DisplayStatus.IN_PROGRESS,
       requestState: parsed.requestState,
       filters: parsed.filters,
       filterCount: computeFilterCount(parsed.filters),
-      pageIndex: parsed.pageIndex,
-      response: {
-        status: RequestsModel.ResponseStatus.IN_PROGRESS,
-        facetCounts: {pending: 0, approved: 0, rejected: 0},
-        requestList: []
-      }
+      pageIndex: parsed.pageIndex
     });
-    this.loadDirectory({
+    this.loadNow({
       scope: this.currentPage() === RequestsPage.Page.YOUR_REQUESTS ?
         RequestsModel.Scope.YOU : RequestsModel.Scope.GROUP,
       requestState: parsed.requestState,
@@ -204,8 +210,8 @@ export class RequestsController extends React.Component<Properties, State> {
   }
 
   private onSubmit = (submission: RequestsModel.Submission) => {
+    ++this.generation;
     this.setState({
-      displayStatus: RequestDirectoryPage.DisplayStatus.IN_PROGRESS,
       requestState: submission.requestState,
       filters: submission.filters,
       filterCount: computeFilterCount(submission.filters),
@@ -216,7 +222,11 @@ export class RequestsController extends React.Component<Properties, State> {
       pathname: this.props.location.pathname,
       search
     });
-    this.loadDirectory(submission);
+    if(submission.filters.query !== this.state.filters.query) {
+      this.scheduleLoad(submission);
+    } else {
+      this.loadNow(submission);
+    }
   }
 
   private onApprove = async (effectiveDate: Beam.Date, comment: string) => {
@@ -226,8 +236,8 @@ export class RequestsController extends React.Component<Properties, State> {
     }
     this.setState({isSubmitting: true});
     try {
-      await this.props.model.approve(requestId,
-        new Beam.DateTime(effectiveDate), comment);
+      await this.props.model.approve(
+        requestId, new Beam.DateTime(effectiveDate), comment);
       await this.loadDetail(requestId);
     } catch {
     } finally {
@@ -260,6 +270,49 @@ export class RequestsController extends React.Component<Properties, State> {
     }
   }
 
+  private scheduleLoad(submission: RequestsModel.Submission): void {
+    clearTimeout(this.queryTimerId);
+    this.queryTimerId = window.setTimeout(() => {
+      this.queryTimerId = null;
+      this.loadDirectory(submission);
+    }, QUERY_DELAY);
+  }
+
+  private loadNow(submission: RequestsModel.Submission): void {
+    clearTimeout(this.queryTimerId);
+    this.queryTimerId = null;
+    this.loadDirectory(submission);
+  }
+
+  private schedulePlaceholder(): void {
+    if(this.placeholderTimerId !== null) {
+      return;
+    }
+    this.placeholderTimerId = window.setTimeout(() => {
+      this.placeholderTimerId = null;
+      this.setState({
+        displayStatus: RequestDirectoryPage.DisplayStatus.IN_PROGRESS,
+        response: {
+          status: RequestsModel.ResponseStatus.IN_PROGRESS,
+          facetCounts: {pending: 0, approved: 0, rejected: 0},
+          totalCount: 0,
+          requestList: []
+        }
+      });
+    }, PLACEHOLDER_DELAY);
+  }
+
+  private clearPlaceholder(): void {
+    clearTimeout(this.placeholderTimerId);
+    this.placeholderTimerId = null;
+  }
+
+  private isCurrent(submission: RequestsModel.Submission): boolean {
+    return submission.requestState === this.state.requestState &&
+      submission.filters === this.state.filters &&
+      submission.pageIndex === this.state.pageIndex;
+  }
+
   private async loadDirectory(
       submission?: RequestsModel.Submission): Promise<void> {
     const sub = submission ?? {
@@ -269,21 +322,52 @@ export class RequestsController extends React.Component<Properties, State> {
       filters: this.state.filters,
       pageIndex: this.state.pageIndex
     };
+    const generation = ++this.generation;
+    this.schedulePlaceholder();
     try {
       const response = await this.props.model.loadRequestDirectory(sub);
-      this.setState({
-        displayStatus: response.requestList.length > 0 ?
-          RequestDirectoryPage.DisplayStatus.READY :
-          RequestDirectoryPage.DisplayStatus.EMPTY,
-        response
-      });
+      if(generation !== this.generation) {
+        return;
+      }
+      this.clearPlaceholder();
+      if(response.status !== RequestsModel.ResponseStatus.ERROR &&
+          response.requestList.length === 0 && sub.pageIndex > 0 &&
+          this.isCurrent(sub)) {
+        const lastPage = Math.max(
+          0, Math.ceil(response.totalCount / RequestsModel.PAGE_SIZE) - 1);
+        this.onSubmit(
+          {...sub, pageIndex: Math.min(lastPage, sub.pageIndex - 1)});
+        return;
+      }
+      const displayStatus = (() => {
+        if(response.status === RequestsModel.ResponseStatus.ERROR) {
+          return RequestDirectoryPage.DisplayStatus.ERROR;
+        }
+        if(response.requestList.length > 0) {
+          return RequestDirectoryPage.DisplayStatus.READY;
+        }
+        return RequestDirectoryPage.DisplayStatus.EMPTY;
+      })();
+      this.setState({displayStatus, response});
     } catch {
+      if(generation !== this.generation) {
+        return;
+      }
+      this.clearPlaceholder();
       this.setState({
         displayStatus: RequestDirectoryPage.DisplayStatus.ERROR
       });
     }
   }
+
+  private queryTimerId: number;
+  private placeholderTimerId: number;
+  private generation: number;
 }
+
+const QUERY_DELAY = 300;
+
+const PLACEHOLDER_DELAY = 500;
 
 const DETAIL_STYLE: React.CSSProperties = {
   borderTop: '1px solid #E6E6E6',
@@ -328,7 +412,8 @@ function submissionToSearch(submission: RequestsModel.Submission): string {
     params.set('q', submission.filters.query);
   }
   if(submission.filters.categories.size > 0) {
-    params.set('cat', [...submission.filters.categories].join(','));
+    params.set('cat', [...submission.filters.categories].sort(
+      (left, right) => left - right).join(','));
   }
   if(submission.filters.sortKey !== RequestsModel.SortField.LAST_UPDATED) {
     params.set('sort', SORT_KEY_TO_PARAM[submission.filters.sortKey]);
@@ -359,7 +444,8 @@ function parseSearch(search: string): {
   const categories = new Set<Type>(
     (params.get('cat') ?? '').split(',')
       .map(s => parseInt(s, 10))
-      .filter(n => !isNaN(n) && n >= Type.ENTITLEMENTS && n <= Type.COMPLIANCE));
+      .filter(
+        n => !isNaN(n) && n >= Type.ENTITLEMENTS && n <= Type.COMPLIANCE));
   const sortKey =
     PARAM_TO_SORT_KEY[params.get('sort')] ??
     RequestsModel.SortField.LAST_UPDATED;

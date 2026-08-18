@@ -4,6 +4,7 @@
 #include <Beam/Queries/EvaluatorTranslator.hpp>
 #include <Beam/Queries/SequencedValue.hpp>
 #include <boost/mp11/list.hpp>
+#include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/Money.hpp"
@@ -19,13 +20,15 @@ namespace Nexus {
   using QueryVariant = std::variant<bool, char, int, double, std::uint64_t,
     std::string, boost::posix_time::ptime, boost::posix_time::time_duration,
     Quantity, Money, Side, Quote, Venue, Ticker, TickerInfo, OrderImbalance,
-    BboQuote, BookQuote, TickerStatus, TimeAndSale, OrderFields, OrderInfo>;
+    BboQuote, BookQuote, TickerStatus, TimeAndSale, OrderFields, OrderInfo,
+    AccountModificationRequest>;
   using SequencedQueryVariant = Beam::SequencedValue<QueryVariant>;
 
   struct QueryTypes {
     using ExtendedNativeTypes = boost::mp11::mp_list<Quantity, Money, Side,
       Quote, Venue, Ticker, TickerInfo, OrderImbalance, BboQuote, BookQuote,
-      TickerStatus, TimeAndSale, OrderFields, OrderInfo>;
+      TickerStatus, TimeAndSale, OrderFields, OrderInfo,
+      AccountModificationRequest>;
     using NativeTypes = boost::mp11::mp_append<
       Beam::QueryTypes::NativeTypes, ExtendedNativeTypes>;
     using ExtendedValueTypes = boost::mp11::mp_list<Quantity, Money>;

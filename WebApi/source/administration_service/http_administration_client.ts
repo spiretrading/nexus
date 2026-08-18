@@ -2,6 +2,12 @@ import * as Beam from 'beam';
 import { RiskParameters } from '..';
 import { AccountIdentity } from './account_identity';
 import { AccountModificationRequest } from './account_modification_request';
+import { AccountModificationRequestCounts } from
+  './account_modification_request_counts';
+import { AccountModificationRequestQuery } from
+  './account_modification_request_query';
+import { AccountModificationRequestSummary } from
+  './account_modification_request_summary';
 import { AccountQueryResult } from './account_query_result';
 import { AccountRoles } from './account_roles';
 import { AdministrationClient } from './administration_client';
@@ -234,30 +240,21 @@ export class HttpAdministrationClient extends AdministrationClient {
     return AccountModificationRequest.fromJson(response);
   }
 
-  public async loadAccountModificationRequestIds(
-      account: Beam.DirectoryEntry, startId: number, maxCount: number):
-      Promise<number[]> {
-    const response = await Beam.post(
-      '/api/administration_service/load_account_modification_request_ids',
-      {
-        account: account.toJson(),
-        start_id: startId,
-        max_count: maxCount
-      });
-    return response;
+  public async loadAccountModificationRequestSummaries(
+      query: AccountModificationRequestQuery):
+        Promise<AccountModificationRequestSummary[]> {
+    const response = await Beam.post('/api/administration_service/' +
+      'load_account_modification_request_summaries', query.toJson());
+    return response.map(
+      (value: any) => AccountModificationRequestSummary.fromJson(value));
   }
 
-  public async loadManagedAccountModificationRequestIds(
-      account: Beam.DirectoryEntry, startId: number, maxCount: number):
-      Promise<number[]> {
+  public async loadAccountModificationRequestCounts(
+      query: AccountModificationRequestQuery):
+        Promise<AccountModificationRequestCounts> {
     const response = await Beam.post('/api/administration_service/' +
-      'load_managed_account_modification_request_ids',
-      {
-        account: account.toJson(),
-        start_id: startId,
-        max_count: maxCount
-      });
-    return response;
+      'load_account_modification_request_counts', query.toJson());
+    return AccountModificationRequestCounts.fromJson(response);
   }
 
   public async loadAccountModificationRequestStatus(id: number):
@@ -304,10 +301,10 @@ export class HttpAdministrationClient extends AdministrationClient {
     return AccountModificationRequest.Update.fromJson(response);
   }
 
-  public async loadMessage(id: number): Promise<Message> {
-    const response = await Beam.post(
-      '/api/administration_service/load_message',
+  public async loadMessage(requestId: number, id: number): Promise<Message> {
+    const response = await Beam.post('/api/administration_service/load_message',
       {
+        request_id: requestId,
         id: id
       });
     return Message.fromJson(response);

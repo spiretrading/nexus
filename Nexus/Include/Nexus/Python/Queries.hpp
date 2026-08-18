@@ -5,6 +5,12 @@
 namespace Nexus::Python {
 
   /**
+   * Exports the AccountModificationRequestAccessor class.
+   * @param module The module to export to.
+   */
+  void export_account_modification_request_accessor(pybind11::module& module);
+
+  /**
    * Exports the BboQuoteAccessor class.
    * @param module The module to export to.
    */

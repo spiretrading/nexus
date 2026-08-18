@@ -3,6 +3,7 @@
 #include <mutex>
 #include <Beam/Serialization/JsonReceiver.hpp>
 #include <Beam/Serialization/JsonSender.hpp>
+#include <Beam/Serialization/TypeRegistry.hpp>
 #include <Beam/WebServices/AuthenticatedWebSession.hpp>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
@@ -50,6 +51,7 @@ namespace Nexus {
 
     private:
       mutable boost::mutex m_mutex;
+      Beam::TypeRegistry<Beam::JsonSender<Beam::SharedBuffer>> m_types;
       Beam::JsonReceiver<Beam::SharedBuffer> m_receiver;
       Beam::JsonSender<Beam::SharedBuffer> m_sender;
       boost::optional<Clients> m_clients;

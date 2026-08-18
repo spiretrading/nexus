@@ -198,24 +198,57 @@ TEST_SUITE("AdministrationClient") {
         });
   }
 
-  TEST_CASE("load_account_modification_request_ids") {
-    auto account = DirectoryEntry::make_account(14, "mod_ids_account");
-    auto ids = std::vector<AccountModificationRequest::Id>{1, 2, 3};
-    require_operation<
-      TestAdministrationClient::LoadAccountModificationRequestIdsOperation>(
-        [&] (auto& client) {
-          return client.load_account_modification_request_ids(account, 1, 3);
-        }, ids);
+  TEST_CASE("load_account_modification_request_summaries") {
+    auto account = DirectoryEntry::make_account(14, "mod_summaries_account");
+    auto query = make_account_modification_request_query(account, 25);
+    query.set_search("alpha");
+    auto summary = AccountModificationRequestSummary();
+    summary.m_request = AccountModificationRequest(
+      7, AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+      ptime(), ptime());
+    summary.m_comment_count = 3;
+    auto operations = std::make_shared<TestAdministrationClient::Queue>();
+    auto client = AdministrationClient(
+      std::in_place_type<TestAdministrationClient>, operations);
+    auto future = std::async(std::launch::async, [&] {
+      return client.load_account_modification_request_summaries(query);
+    });
+    auto operation = operations->pop();
+    auto specific = std::get_if<TestAdministrationClient::
+      LoadAccountModificationRequestSummariesOperation>(&*operation);
+    REQUIRE(specific);
+    REQUIRE(specific->m_query.get_index() == account);
+    REQUIRE(specific->m_query.get_search() == "alpha");
+    REQUIRE(
+      specific->m_query.get_snapshot_limit() == SnapshotLimit::from_tail(25));
+    specific->m_result.set(std::vector({summary}));
+    auto received = std::move(future).get();
+    REQUIRE(received.size() == 1);
+    REQUIRE(received[0].m_request.get_id() == 7);
+    REQUIRE(received[0].m_comment_count == 3);
   }
 
-  TEST_CASE("load_managed_account_modification_request_ids") {
-    auto account = DirectoryEntry::make_account(15, "managed_mod_ids_account");
-    auto ids = std::vector<AccountModificationRequest::Id>{4, 5, 6};
-    require_operation<TestAdministrationClient::
-      LoadManagedAccountModificationRequestIdsOperation>([&] (auto& client) {
-        return client.load_managed_account_modification_request_ids(
-          account, 4, 3);
-      }, ids);
+  TEST_CASE("load_account_modification_request_counts") {
+    auto account = DirectoryEntry::make_account(15, "mod_counts_account");
+    auto query = make_account_modification_request_query(account, 25);
+    query.set_statuses({AccountModificationRequest::Status::GRANTED});
+    auto counts = AccountModificationRequestCounts(4, 5, 6);
+    auto operations = std::make_shared<TestAdministrationClient::Queue>();
+    auto client = AdministrationClient(
+      std::in_place_type<TestAdministrationClient>, operations);
+    auto future = std::async(std::launch::async, [&] {
+      return client.load_account_modification_request_counts(query);
+    });
+    auto operation = operations->pop();
+    auto specific = std::get_if<
+      TestAdministrationClient::LoadAccountModificationRequestCountsOperation>(
+        &*operation);
+    REQUIRE(specific);
+    REQUIRE(specific->m_query.get_index() == account);
+    REQUIRE(specific->m_query.get_statuses() ==
+      std::vector({AccountModificationRequest::Status::GRANTED}));
+    specific->m_result.set(counts);
+    REQUIRE(std::move(future).get() == counts);
   }
 
   TEST_CASE("load_entitlement_modification") {
@@ -328,7 +361,7 @@ TEST_SUITE("AdministrationClient") {
       id, DirectoryEntry::make_account(21, "message_account"), ptime(), {});
     require_operation<TestAdministrationClient::LoadMessageOperation>(
       [&] (auto& client) {
-        return client.load_message(id);
+        return client.load_message(7, id);
       }, message);
   }
 

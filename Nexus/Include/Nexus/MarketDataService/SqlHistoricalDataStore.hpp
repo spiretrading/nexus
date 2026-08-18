@@ -175,7 +175,8 @@ namespace Nexus {
       reader->execute(Viper::select(get_ticker_info_row(), "ticker_info",
         filter && anchor && scope_filter,
         Viper::order_by({{"symbol", order}, {"venue", order}}),
-        Viper::limit(query.get_snapshot_limit().get_size()),
+        Viper::limit(
+          query.get_snapshot_limit().get_size(), query.get_offset()),
         std::back_inserter(matches)));
     }
     if(query.get_snapshot_limit().get_type() ==

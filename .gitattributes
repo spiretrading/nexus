@@ -1,0 +1,8 @@
+# Dependency lockfiles are generated artifacts. They are committed so builds
+# are reproducible and advisories can be pinned to a fixed version.
+#
+# On the rare merge conflict, take either side and regenerate:
+#
+#     npm install --package-lock-only
+#
+package-lock.json linguist-generated=true

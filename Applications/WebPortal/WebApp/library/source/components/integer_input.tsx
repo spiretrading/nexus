@@ -108,6 +108,7 @@ export class IntegerInput extends React.Component<Properties, State> {
         return parsed;
       }
     })();
+    this.setState({text: padValue(value, this.props.leadingZeros)});
     if(value !== this.props.value) {
       this.props.onChange?.(value);
     }
