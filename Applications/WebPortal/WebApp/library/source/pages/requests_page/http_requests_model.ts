@@ -85,7 +85,7 @@ export class HttpRequestsModel extends RequestsModel {
     const message = toMessage(comment);
     const update = await this.serviceClients.administrationClient.
       approveAccountModificationRequest(id, message, effectiveDate);
-    this.invalidateCounts();
+    this.invalidateCache();
     await this.refreshDetail(id);
     return update;
   }
@@ -95,7 +95,7 @@ export class HttpRequestsModel extends RequestsModel {
     const message = toMessage(comment);
     const update = await this.serviceClients.administrationClient.
       rejectAccountModificationRequest(id, message);
-    this.invalidateCounts();
+    this.invalidateCache();
     await this.refreshDetail(id);
     return update;
   }
@@ -113,9 +113,10 @@ export class HttpRequestsModel extends RequestsModel {
     return counts;
   }
 
-  private invalidateCounts(): void {
+  private invalidateCache(): void {
     this.countsKey = null;
     this.counts = null;
+    this.anchors = [null];
   }
 
   private resetAnchors(submission: RequestsModel.Submission): void {
@@ -148,10 +149,12 @@ export class HttpRequestsModel extends RequestsModel {
     query.search = submission.filters.query;
     query.sortField = toSortField(submission.filters.sortKey);
     if(submission.filters.startDate) {
-      query.startDate = new Beam.DateTime(submission.filters.startDate);
+      query.startDate = toUtcDateTime(submission.filters.startDate.toDate());
     }
     if(submission.filters.endDate) {
-      query.endDate = new Beam.DateTime(submission.filters.endDate, END_OF_DAY);
+      const endDate = submission.filters.endDate.toDate();
+      endDate.setHours(23, 59, 59, 999);
+      query.endDate = toUtcDateTime(endDate);
     }
     if(isGroup) {
       query.excludedAccount = this.account;
@@ -206,7 +209,7 @@ export class HttpRequestsModel extends RequestsModel {
       state,
       updateTime: updateTime(summary).toDate(),
       account: request.account,
-      effectiveDate: request.effectiveDate.toDate(),
+      effectiveDate: request.effectiveDate.date.toDate(),
       firstChange: changes.first,
       additionalChangesCount: Math.max(0, changes.count - 1),
       commentCount: summary.commentCount,
@@ -332,8 +335,16 @@ export class HttpRequestsModel extends RequestsModel {
   private counts: Nexus.AccountModificationRequestCounts;
 }
 
-const END_OF_DAY = new Beam.Duration(24 * Beam.Duration.MINUTES_PER_HOUR *
-  Beam.Duration.SECONDS_PER_MINUTE * Beam.Duration.TICKS_PER_SECOND - 1);
+function toUtcDateTime(value: globalThis.Date): Beam.DateTime {
+  const date = new Beam.Date(value.getUTCFullYear(),
+    value.getUTCMonth() + 1 as Beam.Date.Month, value.getUTCDate());
+  const ticks = Beam.Duration.TICKS_PER_SECOND *
+    (Beam.Duration.SECONDS_PER_MINUTE * Beam.Duration.MINUTES_PER_HOUR *
+      value.getUTCHours() +
+    Beam.Duration.SECONDS_PER_MINUTE * value.getUTCMinutes() +
+    value.getUTCSeconds()) + value.getUTCMilliseconds();
+  return new Beam.DateTime(date, new Beam.Duration(ticks));
+}
 
 function toMessage(comment: string): Nexus.Message {
   if(comment.length > 0) {

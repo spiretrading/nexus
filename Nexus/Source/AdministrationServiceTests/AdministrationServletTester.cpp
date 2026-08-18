@@ -1842,6 +1842,52 @@ TEST_SUITE("AdministrationServlet") {
     }
   }
 
+  TEST_CASE("scheduled_grant_respects_a_concurrent_reschedule") {
+    auto fixture = Fixture<InterceptingDataStore>();
+    auto entitlements = std::vector<DirectoryEntry>();
+    for(auto& entry : fixture.m_entitlements.get_entries()) {
+      entitlements.push_back(entry.m_group_entry);
+    }
+    auto modification = EntitlementModification(entitlements);
+    auto comment = Nexus::Message(
+      0, fixture.m_trader_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto first = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        DirectoryEntry(), modification, ptime(), comment);
+    auto second = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        DirectoryEntry(), modification, ptime(), comment);
+    auto future_date = time_from_string("2024-08-01 00:00:00");
+    auto approve_comment = Nexus::Message(0, fixture.m_admin_account,
+      fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("Approved")});
+    for(auto id : {first.get_id(), second.get_id()}) {
+      auto update = fixture.m_admin_client->send_request<
+        ApproveAccountModificationRequestService>(
+          id, future_date, approve_comment);
+      REQUIRE(update.m_status == AccountModificationRequest::Status::SCHEDULED);
+    }
+    auto rescheduled_date = time_from_string("2024-09-01 00:00:00");
+    fixture.m_data_store.m_on_load_entitlement_modification = [&] {
+      fixture.m_data_store.store_effective_date(
+        second.get_id(), rescheduled_date);
+    };
+    fixture.m_time_client.set(time_from_string("2024-08-02 12:00:00"));
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    auto first_status = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestStatusService>(first.get_id());
+    REQUIRE(
+      first_status.m_status == AccountModificationRequest::Status::GRANTED);
+    auto second_status = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestStatusService>(second.get_id());
+    REQUIRE(
+      second_status.m_status == AccountModificationRequest::Status::SCHEDULED);
+    REQUIRE(fixture.m_data_store.load_account_modification_request(
+      second.get_id()).get_effective_date() == rescheduled_date);
+  }
+
   TEST_CASE("scheduled_grant_respects_a_concurrent_rejection") {
     auto fixture = Fixture<InterceptingDataStore>();
     auto entitlements = std::vector<DirectoryEntry>();
@@ -2097,11 +2143,54 @@ TEST_SUITE("AdministrationServlet") {
           fixture.m_manager_account, 0,
           time_from_string("2024-07-04 13:00:00")));
         store_request(2, "2024-07-04 14:00:00", requested);
+        fixture.m_data_store.store(2, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED,
+          fixture.m_manager_account, 0,
+          time_from_string("2024-07-04 15:00:00")));
       });
       auto summaries = load();
       REQUIRE(summaries.size() == 2);
       REQUIRE(get<RiskModification>(
         *summaries[1].m_previous_state).get_parameters() == granted);
+    }
+    SUBCASE("granted_without_a_predecessor") {
+      auto requested = RiskParameters(USD, 200 * Money::ONE,
+        RiskState::Type::ACTIVE, 20 * Money::ONE, seconds(20));
+      fixture.m_data_store.with_transaction([&] {
+        fixture.m_data_store.store(fixture.m_trader_account, current);
+        store_request(1, "2024-07-04 12:00:00", requested);
+        fixture.m_data_store.store(1, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED,
+          fixture.m_manager_account, 0,
+          time_from_string("2024-07-04 13:00:00")));
+      });
+      auto summaries = load();
+      REQUIRE(summaries.size() == 1);
+      REQUIRE(get<RiskModification>(
+        *summaries[0].m_previous_state).get_parameters() == RiskParameters());
+    }
+    SUBCASE("pending_ignores_a_granted_predecessor") {
+      auto granted = RiskParameters(USD, 200 * Money::ONE,
+        RiskState::Type::ACTIVE, 20 * Money::ONE, seconds(20));
+      auto requested = RiskParameters(USD, 300 * Money::ONE,
+        RiskState::Type::ACTIVE, 30 * Money::ONE, seconds(30));
+      fixture.m_data_store.with_transaction([&] {
+        fixture.m_data_store.store(fixture.m_trader_account, current);
+        store_request(1, "2024-07-04 12:00:00", granted);
+        fixture.m_data_store.store(1, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::GRANTED,
+          fixture.m_manager_account, 0,
+          time_from_string("2024-07-04 13:00:00")));
+        store_request(2, "2024-07-04 14:00:00", requested);
+        fixture.m_data_store.store(2, AccountModificationRequest::Update(
+          AccountModificationRequest::Status::PENDING,
+          fixture.m_trader_account, 0,
+          time_from_string("2024-07-04 14:00:00")));
+      });
+      auto summaries = load();
+      REQUIRE(summaries.size() == 2);
+      REQUIRE(get<RiskModification>(
+        *summaries[1].m_previous_state).get_parameters() == current);
     }
   }
 
@@ -2146,11 +2235,17 @@ TEST_SUITE("AdministrationServlet") {
         time_from_string("2024-07-04 14:00:00"),
         time_from_string("2024-08-01 00:00:00")),
         EntitlementModification(entitlements));
+      fixture.m_data_store.store(3, AccountModificationRequest::Update(
+        AccountModificationRequest::Status::GRANTED, fixture.m_manager_account,
+        0, time_from_string("2024-07-04 14:30:00")));
       fixture.m_data_store.store(AccountModificationRequest(4,
         AccountModificationRequest::Type::RISK, fixture.m_trader_account,
         fixture.m_trader_account, time_from_string("2024-07-04 15:00:00"),
         time_from_string("2024-08-01 00:00:00")),
         RiskModification(requested_parameters));
+      fixture.m_data_store.store(4, AccountModificationRequest::Update(
+        AccountModificationRequest::Status::GRANTED, fixture.m_manager_account,
+        0, time_from_string("2024-07-04 15:30:00")));
       fixture.m_data_store.store(AccountModificationRequest(5,
         AccountModificationRequest::Type::RISK, fixture.m_manager_account,
         fixture.m_manager_account, time_from_string("2024-07-04 16:00:00"),

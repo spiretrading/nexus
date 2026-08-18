@@ -287,7 +287,7 @@ namespace Nexus {
       }
     }
     if(auto& excluded_account = query.get_excluded_account()) {
-      if(request.get_account() == *excluded_account) {
+      if(request.get_account().m_id == excluded_account->m_id) {
         return false;
       }
     }

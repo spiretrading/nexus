@@ -895,6 +895,11 @@ namespace Nexus {
         if(status.m_status != AccountModificationRequest::Status::SCHEDULED) {
           return boost::optional<AccountModificationRequest::Update>();
         }
+        auto effective_date = m_data_store->load_account_modification_request(
+          id).get_effective_date();
+        if(effective_date > now) {
+          return boost::optional<AccountModificationRequest::Update>();
+        }
         status.m_status = AccountModificationRequest::Status::GRANTED;
         ++status.m_sequence_number;
         status.m_timestamp = now;
@@ -1582,6 +1587,10 @@ namespace Nexus {
     auto previous_entitlements = std::vector<EntitlementModification>();
     auto previous_parameters = std::vector<RiskModification>();
     auto current_parameters = std::vector<RiskParameters>();
+    auto is_granted = [&] (std::size_t index) {
+      return statuses[index].m_status ==
+        AccountModificationRequest::Status::GRANTED;
+    };
     m_data_store->with_transaction([&] {
       statuses = m_data_store->load_account_modification_request_statuses(ids);
       counts = m_data_store->load_message_counts(ids);
@@ -1594,13 +1603,13 @@ namespace Nexus {
         if(requests[i].get_type() ==
             AccountModificationRequest::Type::ENTITLEMENTS) {
           entitlement_positions.push_back(i);
-          if(predecessors[i]) {
+          if(is_granted(i) && predecessors[i]) {
             previous_entitlement_positions.push_back(i);
           }
         } else if(requests[i].get_type() ==
             AccountModificationRequest::Type::RISK) {
           risk_positions.push_back(i);
-          if(predecessors[i]) {
+          if(is_granted(i) && predecessors[i]) {
             previous_risk_positions.push_back(i);
           }
         }
@@ -1644,7 +1653,7 @@ namespace Nexus {
         std::unordered_map<Beam::DirectoryEntry, RiskParameters>();
       for(auto i = std::size_t(0); i != requests.size(); ++i) {
         if(requests[i].get_type() != AccountModificationRequest::Type::RISK ||
-            predecessors[i]) {
+            is_granted(i)) {
           continue;
         }
         auto& account = requests[i].get_account();
@@ -1660,7 +1669,7 @@ namespace Nexus {
       std::unordered_map<Beam::DirectoryEntry, EntitlementModification>();
     for(auto i = std::size_t(0); i != requests.size(); ++i) {
       if(requests[i].get_type() !=
-          AccountModificationRequest::Type::ENTITLEMENTS || predecessors[i]) {
+          AccountModificationRequest::Type::ENTITLEMENTS || is_granted(i)) {
         continue;
       }
       auto& account = requests[i].get_account();
@@ -1679,20 +1688,24 @@ namespace Nexus {
       if(requests[i].get_type() ==
           AccountModificationRequest::Type::ENTITLEMENTS) {
         summary.m_modification = Modification(entitlements[i]);
-        if(predecessors[i]) {
-          summary.m_previous_state = Modification(previous_entitlements[i]);
-        } else {
+        if(!is_granted(i)) {
           summary.m_previous_state =
             Modification(current_entitlements.at(requests[i].get_account()));
+        } else if(predecessors[i]) {
+          summary.m_previous_state = Modification(previous_entitlements[i]);
+        } else {
+          summary.m_previous_state = Modification(EntitlementModification());
         }
       } else if(requests[i].get_type() ==
           AccountModificationRequest::Type::RISK) {
         summary.m_modification = Modification(parameters[i]);
-        if(predecessors[i]) {
-          summary.m_previous_state = Modification(previous_parameters[i]);
-        } else {
+        if(!is_granted(i)) {
           summary.m_previous_state =
             Modification(RiskModification(current_parameters[i]));
+        } else if(predecessors[i]) {
+          summary.m_previous_state = Modification(previous_parameters[i]);
+        } else {
+          summary.m_previous_state = Modification(RiskModification());
         }
       }
       summaries.push_back(std::move(summary));

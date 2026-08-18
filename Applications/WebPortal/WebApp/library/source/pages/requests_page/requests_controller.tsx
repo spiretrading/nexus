@@ -301,6 +301,15 @@ export class RequestsController extends React.Component<Properties, State> {
       if(generation !== this.generation) {
         return;
       }
+      if(response.status !== RequestsModel.ResponseStatus.ERROR &&
+          response.requestList.length === 0 && response.totalCount > 0) {
+        const lastPage =
+          Math.ceil(response.totalCount / RequestsModel.PAGE_SIZE) - 1;
+        if(lastPage < sub.pageIndex) {
+          this.onSubmit({...sub, pageIndex: lastPage});
+          return;
+        }
+      }
       const displayStatus = (() => {
         if(response.status === RequestsModel.ResponseStatus.ERROR) {
           return RequestDirectoryPage.DisplayStatus.ERROR;

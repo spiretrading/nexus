@@ -711,6 +711,12 @@ namespace Nexus::Tests {
       REQUIRE(excluded.size() == 2);
       REQUIRE(excluded[0].get_id() == 1);
       REQUIRE(excluded[1].get_id() == 2);
+      query.set_excluded_account(
+        DirectoryEntry::make_directory(other.m_id, other.m_name));
+      auto excluded_by_id = load(query);
+      REQUIRE(excluded_by_id.size() == 2);
+      REQUIRE(excluded_by_id[0].get_id() == 1);
+      REQUIRE(excluded_by_id[1].get_id() == 2);
     }
 
     SUBCASE("load_account_modification_requests_anchored_by_name") {
