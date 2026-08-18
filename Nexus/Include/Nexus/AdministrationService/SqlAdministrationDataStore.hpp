@@ -313,19 +313,26 @@ namespace Nexus {
   template<typename C>
   AccountModificationRequest SqlAdministrationDataStore<C>::
       load_account_modification_request(AccountModificationRequest::Id id) {
-    auto request = AccountModificationRequest();
+    auto request = std::optional<AccountModificationRequest>();
     try {
       m_connection->execute(Viper::select(
         get_account_modification_request_row(), "account_modification_requests",
         Viper::sym("id") == id, &request));
-      request = AccountModificationRequest(request.get_id(), request.get_type(),
-        m_directory_entries.load(request.get_account().m_id),
-        m_directory_entries.load(request.get_submission_account().m_id),
-        request.get_timestamp(), request.get_effective_date());
+      if(request) {
+        request = AccountModificationRequest(
+          request->get_id(), request->get_type(),
+          m_directory_entries.load(request->get_account().m_id),
+          m_directory_entries.load(request->get_submission_account().m_id),
+          request->get_timestamp(), request->get_effective_date());
+      }
     } catch(const std::exception& e) {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }
-    return request;
+    if(!request) {
+      boost::throw_with_location(
+        AdministrationDataStoreException("Request not found."));
+    }
+    return *request;
   }
 
   template<typename C>

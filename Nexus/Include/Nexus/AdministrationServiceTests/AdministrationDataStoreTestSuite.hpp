@@ -6,6 +6,7 @@
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
+#include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
 #include "Nexus/Queries/AccountModificationRequestAccessor.hpp"
 
 namespace Nexus::Tests {
@@ -1416,6 +1417,43 @@ namespace Nexus::Tests {
       });
       REQUIRE(read.size() == 1);
       REQUIRE(read[0].m_id == "kkk-002");
+    }
+
+    SUBCASE("load_non_existent_request") {
+      REQUIRE_THROWS_AS(data_store.with_transaction([&] {
+        return data_store.load_account_modification_request(42);
+      }), AdministrationDataStoreException);
+    }
+
+    SUBCASE("load_notifications_from_an_absent_anchor") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      data_store.with_transaction([&] {
+        data_store.store(Notification(
+          "aaa-001", account, "First.", "", Notification::Category::REPORT,
+          time_from_string("2026-04-21 10:00:00"), false));
+        data_store.store(Notification(
+          "ccc-003", account, "Third.", "", Notification::Category::REPORT,
+          time_from_string("2026-04-21 11:00:00"), false));
+        data_store.store(Notification(
+          "eee-005", account, "Fifth.", "", Notification::Category::REPORT,
+          time_from_string("2026-04-21 12:00:00"), false));
+      });
+      auto load = [&] (const Notification::Id& id, SnapshotLimit limit) {
+        return data_store.with_transaction([&] {
+          return data_store.load_notifications(
+            account, id, limit, Notification::ReadState::ALL);
+        });
+      };
+      auto head = load("bbb-002", SnapshotLimit::from_head(10));
+      REQUIRE(head.size() == 2);
+      REQUIRE(head[0].m_id == "ccc-003");
+      REQUIRE(head[1].m_id == "eee-005");
+      auto tail = load("ddd-004", SnapshotLimit::from_tail(10));
+      REQUIRE(tail.size() == 2);
+      REQUIRE(tail[0].m_id == "aaa-001");
+      REQUIRE(tail[1].m_id == "ccc-003");
+      REQUIRE(load("zzz-999", SnapshotLimit::from_head(10)).empty());
+      REQUIRE(load("aaa-000", SnapshotLimit::from_tail(10)).empty());
     }
 
     SUBCASE("load_notification_helper") {

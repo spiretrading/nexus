@@ -6,6 +6,7 @@
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
+#include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
 
 namespace Nexus {
@@ -216,7 +217,8 @@ namespace Nexus {
         AccountModificationRequest::Id id) {
     auto i = m_account_modification_requests.find(id);
     if(i == m_account_modification_requests.end()) {
-      return AccountModificationRequest();
+      boost::throw_with_location(
+        AdministrationDataStoreException("Request not found."));
     }
     return i->second;
   }
@@ -659,9 +661,20 @@ namespace Nexus {
       }
       return matches;
     }
-    auto position = std::ranges::find_if(matches, [&] (const auto& n) {
-      return n.m_id == id;
-    });
+    auto position = [&] {
+      if(limit.get_type() == Beam::SnapshotLimit::Type::TAIL) {
+        auto match = matches.end();
+        for(auto i = matches.begin(); i != matches.end(); ++i) {
+          if(i->m_id <= id) {
+            match = i;
+          }
+        }
+        return match;
+      }
+      return std::ranges::find_if(matches, [&] (const auto& notification) {
+        return notification.m_id >= id;
+      });
+    }();
     if(position == matches.end()) {
       return {};
     }

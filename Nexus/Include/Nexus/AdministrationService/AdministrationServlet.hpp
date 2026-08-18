@@ -1698,8 +1698,6 @@ namespace Nexus {
             Modification(current_entitlements.at(requests[i].get_account()));
         } else if(predecessors[i]) {
           summary.m_previous_state = Modification(previous_entitlements[i]);
-        } else {
-          summary.m_previous_state = Modification(EntitlementModification());
         }
       } else if(requests[i].get_type() ==
           AccountModificationRequest::Type::RISK) {
@@ -1709,8 +1707,6 @@ namespace Nexus {
             Modification(RiskModification(current_parameters[i]));
         } else if(predecessors[i]) {
           summary.m_previous_state = Modification(previous_parameters[i]);
-        } else {
-          summary.m_previous_state = Modification(RiskModification());
         }
       }
       summaries.push_back(std::move(summary));

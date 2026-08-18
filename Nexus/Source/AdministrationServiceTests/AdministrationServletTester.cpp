@@ -2274,8 +2274,7 @@ TEST_SUITE("AdministrationServlet") {
       });
       auto summaries = load();
       REQUIRE(summaries.size() == 1);
-      REQUIRE(get<RiskModification>(
-        *summaries[0].m_previous_state).get_parameters() == RiskParameters());
+      REQUIRE(!summaries[0].m_previous_state);
     }
     SUBCASE("pending_ignores_a_granted_predecessor") {
       auto granted = RiskParameters(USD, 200 * Money::ONE,
