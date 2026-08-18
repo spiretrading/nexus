@@ -30,6 +30,30 @@ namespace Nexus::Python {
   void export_account_modification_request(pybind11::module& module);
 
   /**
+   * Exports the AccountModificationRequestAnchor struct.
+   * @param module The module to export to.
+   */
+  void export_account_modification_request_anchor(pybind11::module& module);
+
+  /**
+   * Exports the AccountModificationRequestCounts struct.
+   * @param module The module to export to.
+   */
+  void export_account_modification_request_counts(pybind11::module& module);
+
+  /**
+   * Exports the AccountModificationRequestQuery class.
+   * @param module The module to export to.
+   */
+  void export_account_modification_request_query(pybind11::module& module);
+
+  /**
+   * Exports the AccountModificationRequestSummary struct.
+   * @param module The module to export to.
+   */
+  void export_account_modification_request_summary(pybind11::module& module);
+
+  /**
    * Exports the AccountQueryResult struct.
    * @param module The module to export to.
    */
@@ -81,10 +105,10 @@ namespace Nexus::Python {
         const Beam::DirectoryEntry&, const RiskState&>(&C::store)).
       def("load_account_modification_request",
         &C::load_account_modification_request).
-      def("load_account_modification_request_ids",
-        &C::load_account_modification_request_ids).
-      def("load_managed_account_modification_request_ids",
-        &C::load_managed_account_modification_request_ids).
+      def("load_account_modification_request_summaries",
+        &C::load_account_modification_request_summaries).
+      def("load_account_modification_request_counts",
+        &C::load_account_modification_request_counts).
       def("load_entitlement_modification", &C::load_entitlement_modification).
       def("submit", pybind11::overload_cast<
         const Beam::DirectoryEntry&, const EntitlementModification&,
@@ -144,12 +168,26 @@ namespace Nexus::Python {
         const Beam::DirectoryEntry&, const RiskState&>(&D::store)).
       def("load_account_modification_request",
         &D::load_account_modification_request).
-      def("load_account_modification_request_ids", pybind11::overload_cast<
-        const Beam::DirectoryEntry&, AccountModificationRequest::Id, int>(
-          &D::load_account_modification_request_ids)).
-      def("load_account_modification_request_ids",
-        pybind11::overload_cast<AccountModificationRequest::Id, int>(
-          &D::load_account_modification_request_ids)).
+      def("load_account_modification_requests", pybind11::overload_cast<
+        const std::vector<Beam::DirectoryEntry>&,
+        const AccountModificationRequestQuery&>(
+          &D::load_account_modification_requests)).
+      def("load_account_modification_requests", pybind11::overload_cast<
+        const AccountModificationRequestQuery&>(
+          &D::load_account_modification_requests)).
+      def("load_account_modification_request_counts", pybind11::overload_cast<
+        const std::vector<Beam::DirectoryEntry>&,
+        const AccountModificationRequestQuery&>(
+          &D::load_account_modification_request_counts)).
+      def("load_account_modification_request_counts", pybind11::overload_cast<
+        const AccountModificationRequestQuery&>(
+          &D::load_account_modification_request_counts)).
+      def("load_account_modification_request_statuses",
+        &D::load_account_modification_request_statuses).
+      def("load_message_counts", &D::load_message_counts).
+      def("load_previous_granted_requests", &D::load_previous_granted_requests).
+      def("load_entitlement_modifications", &D::load_entitlement_modifications).
+      def("load_risk_modifications", &D::load_risk_modifications).
       def("load_entitlement_modification", &D::load_entitlement_modification).
       def("store", pybind11::overload_cast<
         const AccountModificationRequest&, const EntitlementModification&>(

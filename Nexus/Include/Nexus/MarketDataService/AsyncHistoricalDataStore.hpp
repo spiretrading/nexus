@@ -1,6 +1,7 @@
 #ifndef NEXUS_MARKET_DATA_ASYNC_HISTORICAL_DATA_STORE_HPP
 #define NEXUS_MARKET_DATA_ASYNC_HISTORICAL_DATA_STORE_HPP
 #include <algorithm>
+#include <limits>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Queries/AsyncDataStore.hpp>
@@ -97,21 +98,38 @@ namespace Nexus {
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
   std::vector<TickerInfo> AsyncHistoricalDataStore<D>::load_ticker_info(
       const TickerInfoQuery& query) {
-    auto local_info = m_ticker_info.load_ticker_info(query);
-    auto persistent_info = m_data_store->load_ticker_info(query);
+    auto offset = query.get_offset();
+    auto size = query.get_snapshot_limit().get_size();
+    auto is_head =
+      query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
+    auto source_query = query;
+    source_query.set_offset(0);
+    if(offset > 0 && size <= std::numeric_limits<int>::max() - offset) {
+      if(is_head) {
+        source_query.set_snapshot_limit(
+          Beam::SnapshotLimit::from_head(size + offset));
+      } else {
+        source_query.set_snapshot_limit(
+          Beam::SnapshotLimit::from_tail(size + offset));
+      }
+    }
+    auto local_info = m_ticker_info.load_ticker_info(source_query);
+    auto persistent_info = m_data_store->load_ticker_info(source_query);
     auto info = std::vector<TickerInfo>();
     std::ranges::set_union(local_info, persistent_info,
-      std::back_inserter(info), [] (const auto& left, const auto& right) {
-        return left.m_ticker < right.m_ticker;
-      });
-    if(static_cast<int>(info.size()) > query.get_snapshot_limit().get_size()) {
-      if(query.get_snapshot_limit().get_type() ==
-          Beam::SnapshotLimit::Type::HEAD) {
-        info.erase(
-          info.begin() + query.get_snapshot_limit().get_size(), info.end());
+      std::back_inserter(info), std::ranges::less(), &TickerInfo::m_ticker,
+      &TickerInfo::m_ticker);
+    auto skip = std::min<std::size_t>(offset, info.size());
+    if(is_head) {
+      info.erase(info.begin(), info.begin() + skip);
+    } else {
+      info.erase(info.end() - skip, info.end());
+    }
+    if(static_cast<int>(info.size()) > size) {
+      if(is_head) {
+        info.erase(info.begin() + size, info.end());
       } else {
-        info.erase(info.begin(),
-          info.begin() + (info.size() - query.get_snapshot_limit().get_size()));
+        info.erase(info.begin(), info.begin() + (info.size() - size));
       }
     }
     return info;

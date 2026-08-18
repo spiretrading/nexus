@@ -7,6 +7,7 @@
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
 #include "Nexus/AdministrationService/AdministrationServices.hpp"
+#include "Nexus/Queries/ShuttleQueryTypes.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
 using namespace Beam;
@@ -21,6 +22,8 @@ AdministrationWebServlet::AdministrationWebServlet(
       [] { return std::make_unique<LiveTimer>(seconds(30)); },
       std::bind_front(&AdministrationWebServlet::on_client_accepted, this),
       std::bind_front(&AdministrationWebServlet::on_client_closed, this)) {
+  Nexus::register_query_types(
+    out(m_protocol_server.get_slots().get_registry()));
   register_administration_services(out(m_protocol_server.get_slots()));
   register_administration_messages(out(m_protocol_server.get_slots()));
   MonitorNotificationsService::add_slot(out(m_protocol_server.get_slots()),
@@ -89,15 +92,14 @@ std::vector<HttpRequestSlot> AdministrationWebServlet::get_slots() {
     "/api/administration_service/load_account_modification_request"),
     std::bind_front(
       &AdministrationWebServlet::on_load_account_modification_request, this));
-  slots.emplace_back(matches_path(HttpMethod::POST,
-    "/api/administration_service/load_account_modification_request_ids"),
-    std::bind_front(
-      &AdministrationWebServlet::on_load_account_modification_request_ids,
-      this));
   slots.emplace_back(matches_path(HttpMethod::POST, "/api/"
-    "administration_service/load_managed_account_modification_request_ids"),
+    "administration_service/load_account_modification_request_summaries"),
     std::bind_front(&AdministrationWebServlet::
-      on_load_managed_account_modification_request_ids, this));
+      on_load_account_modification_request_summaries, this));
+  slots.emplace_back(matches_path(HttpMethod::POST, "/api/"
+    "administration_service/load_account_modification_request_counts"),
+    std::bind_front(&AdministrationWebServlet::
+      on_load_account_modification_request_counts, this));
   slots.emplace_back(matches_path(HttpMethod::POST,
     "/api/administration_service/load_entitlement_modification"),
     std::bind_front(
@@ -604,60 +606,35 @@ HttpResponse AdministrationWebServlet::on_load_account_modification_request(
   return response;
 }
 
-HttpResponse AdministrationWebServlet::on_load_account_modification_request_ids(
-    const HttpRequest& request) {
-  struct Parameters {
-    DirectoryEntry m_account;
-    AccountModificationRequest::Id m_start_id;
-    int m_max_count;
-
-    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("account", m_account);
-      shuttle.shuttle("start_id", m_start_id);
-      shuttle.shuttle("max_count", m_max_count);
-    }
-  };
+HttpResponse AdministrationWebServlet::
+    on_load_account_modification_request_summaries(const HttpRequest& request) {
   auto response = HttpResponse();
   auto session = m_sessions->find(request);
   if(!session) {
     response.set_status_code(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  auto params = session->shuttle_parameters<Parameters>(request);
-  auto& clients = session->get_clients();
-  auto request_ids =
-    clients.get_administration_client().load_account_modification_request_ids(
-      params.m_account, params.m_start_id, params.m_max_count);
-  session->shuttle_response(request_ids, out(response));
+  auto query =
+    session->shuttle_parameters<AccountModificationRequestQuery>(request);
+  auto& client = session->get_clients().get_administration_client();
+  auto summaries = client.load_account_modification_request_summaries(query);
+  session->shuttle_response(summaries, out(response));
   return response;
 }
 
 HttpResponse AdministrationWebServlet::
-    on_load_managed_account_modification_request_ids(
-      const HttpRequest& request) {
-  struct Parameters {
-    DirectoryEntry m_account;
-    AccountModificationRequest::Id m_start_id;
-    int m_max_count;
-
-    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
-      shuttle.shuttle("account", m_account);
-      shuttle.shuttle("start_id", m_start_id);
-      shuttle.shuttle("max_count", m_max_count);
-    }
-  };
+    on_load_account_modification_request_counts(const HttpRequest& request) {
   auto response = HttpResponse();
   auto session = m_sessions->find(request);
   if(!session) {
     response.set_status_code(HttpStatusCode::UNAUTHORIZED);
     return response;
   }
-  auto params = session->shuttle_parameters<Parameters>(request);
-  auto& clients = session->get_clients();
-  auto request_ids = clients.get_administration_client().
-    load_managed_account_modification_request_ids(
-      params.m_account, params.m_start_id, params.m_max_count);
-  session->shuttle_response(request_ids, out(response));
+  auto query =
+    session->shuttle_parameters<AccountModificationRequestQuery>(request);
+  auto& client = session->get_clients().get_administration_client();
+  auto counts = client.load_account_modification_request_counts(query);
+  session->shuttle_response(counts, out(response));
   return response;
 }
 
@@ -871,9 +848,11 @@ HttpResponse AdministrationWebServlet::on_reject_account_modification_request(
 HttpResponse AdministrationWebServlet::on_load_message(
     const HttpRequest& request) {
   struct Parameters {
+    AccountModificationRequest::Id m_request_id;
     Message::Id m_id;
 
     void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("request_id", m_request_id);
       shuttle.shuttle("id", m_id);
     }
   };
@@ -885,7 +864,8 @@ HttpResponse AdministrationWebServlet::on_load_message(
   }
   auto params = session->shuttle_parameters<Parameters>(request);
   auto& clients = session->get_clients();
-  auto message = clients.get_administration_client().load_message(params.m_id);
+  auto message = clients.get_administration_client().load_message(
+    params.m_request_id, params.m_id);
   session->shuttle_response(message, out(response));
   return response;
 }

@@ -3,6 +3,7 @@
 #include <Beam/ServicesTests/ServiceClientFixture.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationService/ServiceAdministrationClient.hpp"
+#include "Nexus/Queries/AccountModificationRequestAccessor.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
@@ -19,6 +20,7 @@ namespace {
     std::unique_ptr<TestServiceAdministrationClient> m_client;
 
     Fixture() {
+      Nexus::register_query_types(out(m_server.get_slots().get_registry()));
       register_administration_services(out(m_server.get_slots()));
       register_administration_messages(out(m_server.get_slots()));
       m_client = make_client<TestServiceAdministrationClient>();
@@ -451,44 +453,59 @@ TEST_SUITE("ServiceAdministrationClient") {
     test_json_equality(received_request, request_data);
   }
 
-  TEST_CASE("load_account_modification_request_ids") {
+  TEST_CASE("load_account_modification_request_summaries") {
     auto fixture = Fixture();
     auto account = DirectoryEntry::make_account(23, "mod_account");
-    auto start_id = 24;
-    auto max_count = 10;
-    auto ids = std::vector<AccountModificationRequest::Id>{25, 26, 27};
-    fixture.on_request<LoadAccountModificationRequestIdsService>(
-      [&] (auto& request, const auto& received_account, auto received_start_id,
-          auto received_max_count) {
-        REQUIRE(received_account == account);
-        REQUIRE(received_start_id == start_id);
-        REQUIRE(received_max_count == max_count);
-        request.set(ids);
+    auto query = make_account_modification_request_query(account, 25);
+    auto summary = AccountModificationRequestSummary();
+    summary.m_request = AccountModificationRequest(7,
+      AccountModificationRequest::Type::ENTITLEMENTS, account, account,
+      time_from_string("2024-07-04 12:00:00"),
+      time_from_string("2024-08-01 00:00:00"));
+    summary.m_comment_count = 2;
+    fixture.on_request<LoadAccountModificationRequestSummariesService>(
+      [&] (auto& request, const auto& received_query) {
+        REQUIRE(received_query.get_index() == account);
+        REQUIRE(received_query.get_snapshot_limit() ==
+          SnapshotLimit::from_tail(25));
+        request.set(std::vector<AccountModificationRequestSummary>({summary}));
       });
-    auto received_ids =
-      REQUIRE_NO_THROW(fixture.m_client->load_account_modification_request_ids(
-        account, start_id, max_count));
-    REQUIRE(received_ids == ids);
+    auto received = REQUIRE_NO_THROW(
+      fixture.m_client->load_account_modification_request_summaries(query));
+    REQUIRE(received.size() == 1);
+    REQUIRE(received[0].m_request.get_id() == 7);
+    REQUIRE(received[0].m_comment_count == 2);
   }
 
-  TEST_CASE("load_managed_account_modification_request_ids") {
+  TEST_CASE("load_account_modification_request_summaries_with_a_filter") {
     auto fixture = Fixture();
-    auto account = DirectoryEntry::make_account(28, "manager_account");
-    auto start_id = 29;
-    auto max_count = 5;
-    auto ids = std::vector<AccountModificationRequest::Id>{30, 31};
-    fixture.on_request<LoadManagedAccountModificationRequestIdsService>(
-      [&] (auto& request, const auto& received_account, auto received_start_id,
-          auto received_max_count) {
-        REQUIRE(received_account == account);
-        REQUIRE(received_start_id == start_id);
-        REQUIRE(received_max_count == max_count);
-        request.set(ids);
+    auto account = DirectoryEntry::make_account(23, "mod_account");
+    auto query = make_account_modification_request_query(account, 25);
+    auto accessor = AccountModificationRequestAccessor::from_parameter(0);
+    query.set_filter(accessor.get_account() !=
+      ConstantExpression(static_cast<int>(account.m_id)));
+    fixture.on_request<LoadAccountModificationRequestSummariesService>(
+      [&] (auto& request, const auto& received_query) {
+        request.set(std::vector<AccountModificationRequestSummary>());
       });
-    auto received_ids = REQUIRE_NO_THROW(
-      fixture.m_client->load_managed_account_modification_request_ids(
-        account, start_id, max_count));
-    REQUIRE(received_ids == ids);
+    auto received = REQUIRE_NO_THROW(
+      fixture.m_client->load_account_modification_request_summaries(query));
+    REQUIRE(received.empty());
+  }
+
+  TEST_CASE("load_account_modification_request_counts") {
+    auto fixture = Fixture();
+    auto account = DirectoryEntry::make_account(23, "mod_account");
+    auto query = make_account_modification_request_query(account, 25);
+    auto counts = AccountModificationRequestCounts(3, 2, 1);
+    fixture.on_request<LoadAccountModificationRequestCountsService>(
+      [&] (auto& request, const auto& received_query) {
+        REQUIRE(received_query.get_index() == account);
+        request.set(counts);
+      });
+    auto received = REQUIRE_NO_THROW(
+      fixture.m_client->load_account_modification_request_counts(query));
+    REQUIRE(received == counts);
   }
 
   TEST_CASE("load_entitlement_modification") {
@@ -641,12 +658,14 @@ TEST_SUITE("ServiceAdministrationClient") {
     auto message =
       Nexus::Message(id, DirectoryEntry::make_account(50, "msg_account"),
         ptime(gregorian::date(2024, 5, 26)), {});
-    fixture.on_request<LoadMessageService>([&] (auto& request, auto received_id) {
-      REQUIRE(received_id == id);
-      request.set(message);
-    });
+    fixture.on_request<LoadMessageService>(
+      [&] (auto& request, auto received_request_id, auto received_id) {
+        REQUIRE(received_request_id == 7);
+        REQUIRE(received_id == id);
+        request.set(message);
+      });
     auto received_message =
-      REQUIRE_NO_THROW(fixture.m_client->load_message(id));
+      REQUIRE_NO_THROW(fixture.m_client->load_message(7, id));
     test_json_equality(received_message, message);
   }
 

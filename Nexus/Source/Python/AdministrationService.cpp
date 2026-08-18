@@ -6,6 +6,9 @@
 #include <Viper/Sqlite3/Connection.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestCounts.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestQuery.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestSummary.hpp"
 #include "Nexus/AdministrationService/AccountQueryResult.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
@@ -104,6 +107,87 @@ void Nexus::Python::export_account_modification_request(module& module) {
   });
 }
 
+void Nexus::Python::export_account_modification_request_anchor(
+    module& module) {
+  export_default_methods(class_<AccountModificationRequestAnchor>(
+      module, "AccountModificationRequestAnchor")).
+    def(init<AccountModificationRequest::Id, ptime, std::string>()).
+    def_readwrite("id", &AccountModificationRequestAnchor::m_id).
+    def_readwrite("date", &AccountModificationRequestAnchor::m_date).
+    def_readwrite("name", &AccountModificationRequestAnchor::m_name);
+}
+
+void Nexus::Python::export_account_modification_request_counts(
+    module& module) {
+  export_default_methods(class_<AccountModificationRequestCounts>(
+      module, "AccountModificationRequestCounts")).
+    def(init<int, int, int>()).
+    def_readwrite("pending", &AccountModificationRequestCounts::m_pending).
+    def_readwrite("granted", &AccountModificationRequestCounts::m_granted).
+    def_readwrite("rejected", &AccountModificationRequestCounts::m_rejected);
+}
+
+void Nexus::Python::export_account_modification_request_query(
+    module& module) {
+  auto outer = class_<AccountModificationRequestQuery, FilteredQuery>(
+    module, "AccountModificationRequestQuery");
+  enum_<AccountModificationRequestQuery::SortField>(outer, "SortField").
+    value("CREATED", AccountModificationRequestQuery::SortField::CREATED).
+    value("LAST_UPDATED",
+      AccountModificationRequestQuery::SortField::LAST_UPDATED).
+    value("EFFECTIVE_DATE",
+      AccountModificationRequestQuery::SortField::EFFECTIVE_DATE).
+    value("ACCOUNT", AccountModificationRequestQuery::SortField::ACCOUNT).
+    value("REQUESTER", AccountModificationRequestQuery::SortField::REQUESTER);
+  export_default_methods(outer.
+    def(init()).
+    def_property("index", &AccountModificationRequestQuery::get_index,
+      &AccountModificationRequestQuery::set_index).
+    def_property("snapshot_limit",
+      &AccountModificationRequestQuery::get_snapshot_limit,
+      overload_cast<const SnapshotLimit&>(
+        &AccountModificationRequestQuery::set_snapshot_limit)).
+    def("set_snapshot_limit", overload_cast<SnapshotLimit::Type, int>(
+      &AccountModificationRequestQuery::set_snapshot_limit)).
+    def_property("anchor", &AccountModificationRequestQuery::get_anchor,
+      overload_cast<const optional<AccountModificationRequestAnchor>&>(
+        &AccountModificationRequestQuery::set_anchor)).
+    def_property("offset", &AccountModificationRequestQuery::get_offset,
+      &AccountModificationRequestQuery::set_offset).
+    def_property("sort_field",
+      &AccountModificationRequestQuery::get_sort_field,
+      &AccountModificationRequestQuery::set_sort_field).
+    def_property("categories", &AccountModificationRequestQuery::get_categories,
+      &AccountModificationRequestQuery::set_categories).
+    def_property("statuses", &AccountModificationRequestQuery::get_statuses,
+      &AccountModificationRequestQuery::set_statuses).
+    def_property("start_date", &AccountModificationRequestQuery::get_start_date,
+      &AccountModificationRequestQuery::set_start_date).
+    def_property("end_date", &AccountModificationRequestQuery::get_end_date,
+      &AccountModificationRequestQuery::set_end_date).
+    def_property("search", &AccountModificationRequestQuery::get_search,
+      &AccountModificationRequestQuery::set_search).
+    def_property("excluded_account",
+      &AccountModificationRequestQuery::get_excluded_account,
+      &AccountModificationRequestQuery::set_excluded_account));
+  module.def("make_account_modification_request_query",
+    &make_account_modification_request_query);
+}
+
+void Nexus::Python::export_account_modification_request_summary(
+    module& module) {
+  export_default_methods(class_<AccountModificationRequestSummary>(
+      module, "AccountModificationRequestSummary")).
+    def_readwrite("request", &AccountModificationRequestSummary::m_request).
+    def_readwrite("status", &AccountModificationRequestSummary::m_status).
+    def_readwrite(
+      "comment_count", &AccountModificationRequestSummary::m_comment_count).
+    def_readwrite(
+      "previous_state", &AccountModificationRequestSummary::m_previous_state).
+    def_readwrite(
+      "modification", &AccountModificationRequestSummary::m_modification);
+}
+
 void Nexus::Python::export_account_query_result(module& module) {
   export_default_methods(
     class_<AccountQueryResult>(module, "AccountQueryResult")).
@@ -160,6 +244,10 @@ void Nexus::Python::export_administration_service(module& module) {
   export_administration_service_application_definitions(module);
   export_account_identity(module);
   export_account_modification_request(module);
+  export_account_modification_request_anchor(module);
+  export_account_modification_request_counts(module);
+  export_account_modification_request_query(module);
+  export_account_modification_request_summary(module);
   export_account_query_result(module);
   export_account_roles(module);
   module.def("load_risk_parameters",

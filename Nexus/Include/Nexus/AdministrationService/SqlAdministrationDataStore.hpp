@@ -1,5 +1,11 @@
 #ifndef NEXUS_SQL_ADMINISTRATION_DATA_STORE_HPP
 #define NEXUS_SQL_ADMINISTRATION_DATA_STORE_HPP
+#include <algorithm>
+#include <map>
+#include <ranges>
+#include <unordered_map>
+#include <utility>
+#include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/KeyValueCache.hpp>
@@ -7,6 +13,7 @@
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
 #include "Nexus/AdministrationService/SqlDefinitions.hpp"
+#include "Nexus/Queries/SqlTranslator.hpp"
 
 namespace Nexus {
 
@@ -55,13 +62,30 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const RiskState& risk_state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
-      std::vector<AccountModificationRequest::Id>
-        load_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
-      std::vector<AccountModificationRequest::Id>
-        load_account_modification_request_ids(
-          AccountModificationRequest::Id start_id, int max_count);
+      std::vector<AccountModificationRequest>
+        load_account_modification_requests(
+          const std::vector<Beam::DirectoryEntry>& accounts,
+          const AccountModificationRequestQuery& query);
+      std::vector<AccountModificationRequest>
+        load_account_modification_requests(
+          const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts load_account_modification_request_counts(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query);
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_statuses(
+          const std::vector<AccountModificationRequest::Id>& ids);
+      std::vector<int> load_message_counts(
+        const std::vector<AccountModificationRequest::Id>& ids);
+      std::vector<boost::optional<AccountModificationRequest::Id>>
+        load_previous_granted_requests(
+          const std::vector<AccountModificationRequest::Id>& ids);
+      std::vector<EntitlementModification> load_entitlement_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids);
+      std::vector<RiskModification> load_risk_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids);
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
       void store_effective_date(AccountModificationRequest::Id id,
@@ -101,6 +125,21 @@ namespace Nexus {
       Beam::KeyValueCache<unsigned int, Beam::DirectoryEntry, Beam::Mutex>
         m_directory_entries;
       Beam::OpenState m_open_state;
+
+      static Viper::Expression make_id_filter(const std::string& column,
+        const std::vector<AccountModificationRequest::Id>& ids);
+      static Viper::Expression make_account_filter(
+        const std::vector<Beam::DirectoryEntry>& accounts);
+      static std::string get_sort_column(
+        AccountModificationRequestQuery::SortField field);
+      static Viper::Expression make_query_filter(
+        const AccountModificationRequestQuery& query);
+      std::vector<AccountModificationRequest> load_requests(
+        const Viper::Expression& accounts,
+        const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts count_requests(
+        const Viper::Expression& accounts,
+        const AccountModificationRequestQuery& query);
   };
 
   template<typename C>
@@ -118,7 +157,7 @@ namespace Nexus {
       m_connection->execute(Viper::create_if_not_exists(
         get_indexed_risk_state_row(), "risk_states"));
       m_connection->execute(Viper::create_if_not_exists(
-        get_account_modification_request_row(),
+        get_stored_account_modification_request_row(),
         "account_modification_requests"));
       m_connection->execute(Viper::create_if_not_exists(
         get_entitlement_modification_row(), "entitlement_modifications"));
@@ -274,63 +313,415 @@ namespace Nexus {
   template<typename C>
   AccountModificationRequest SqlAdministrationDataStore<C>::
       load_account_modification_request(AccountModificationRequest::Id id) {
-    auto request = AccountModificationRequest();
+    auto request = std::optional<AccountModificationRequest>();
     try {
       m_connection->execute(Viper::select(
         get_account_modification_request_row(), "account_modification_requests",
         Viper::sym("id") == id, &request));
+      if(request) {
+        request = AccountModificationRequest(
+          request->get_id(), request->get_type(),
+          m_directory_entries.load(request->get_account().m_id),
+          m_directory_entries.load(request->get_submission_account().m_id),
+          request->get_timestamp(), request->get_effective_date());
+      }
+    } catch(const std::exception& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
+    if(!request) {
+      boost::throw_with_location(
+        AdministrationDataStoreException("Request not found."));
+    }
+    return *request;
+  }
+
+  template<typename C>
+  std::vector<AccountModificationRequest>
+      SqlAdministrationDataStore<C>::load_account_modification_requests(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query) {
+    auto filter = make_account_filter(accounts);
+    return load_requests(filter, query);
+  }
+
+  template<typename C>
+  std::vector<AccountModificationRequest>
+      SqlAdministrationDataStore<C>::load_account_modification_requests(
+        const AccountModificationRequestQuery& query) {
+    return load_requests(Viper::literal(true), query);
+  }
+
+  template<typename C>
+  AccountModificationRequestCounts
+      SqlAdministrationDataStore<C>::load_account_modification_request_counts(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query) {
+    auto filter = make_account_filter(accounts);
+    return count_requests(filter, query);
+  }
+
+  template<typename C>
+  AccountModificationRequestCounts
+      SqlAdministrationDataStore<C>::load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query) {
+    return count_requests(Viper::literal(true), query);
+  }
+
+  template<typename C>
+  Viper::Expression SqlAdministrationDataStore<C>::make_id_filter(
+      const std::string& column,
+      const std::vector<AccountModificationRequest::Id>& ids) {
+    return Viper::in(Viper::sym(column), ids.begin(), ids.end());
+  }
+
+  template<typename C>
+  Viper::Expression SqlAdministrationDataStore<C>::make_account_filter(
+      const std::vector<Beam::DirectoryEntry>& accounts) {
+    auto ids = std::vector<Viper::Expression>();
+    ids.reserve(accounts.size());
+    for(auto& account : accounts) {
+      ids.push_back(Viper::literal(account.m_id));
+    }
+    return Viper::in(Viper::sym("account"), std::move(ids));
+  }
+
+  template<typename C>
+  std::string SqlAdministrationDataStore<C>::get_sort_column(
+      AccountModificationRequestQuery::SortField field) {
+    if(field == AccountModificationRequestQuery::SortField::LAST_UPDATED) {
+      return "last_update_timestamp";
+    } else if(
+        field == AccountModificationRequestQuery::SortField::EFFECTIVE_DATE) {
+      return "effective_date";
+    }
+    return "";
+  }
+
+  template<typename C>
+  Viper::Expression SqlAdministrationDataStore<C>::make_query_filter(
+      const AccountModificationRequestQuery& query) {
+    auto filter = Viper::literal(true);
+    if(!query.get_categories().empty()) {
+      filter = filter && Viper::in(Viper::sym("type"),
+        query.get_categories().begin(), query.get_categories().end());
+    }
+    if(!query.get_statuses().empty()) {
+      filter = filter && Viper::in(Viper::sym("status"),
+        query.get_statuses().begin(), query.get_statuses().end());
+    }
+    if(auto& start_date = query.get_start_date()) {
+      filter = filter && Viper::sym("last_update_timestamp") >= *start_date;
+    }
+    if(auto& end_date = query.get_end_date()) {
+      filter = filter && Viper::sym("last_update_timestamp") <= *end_date;
+    }
+    if(auto& excluded_account = query.get_excluded_account()) {
+      filter = filter && Viper::sym("account") != excluded_account->m_id;
+    }
+    return filter;
+  }
+
+  template<typename C>
+  AccountModificationRequestCounts
+      SqlAdministrationDataStore<C>::count_requests(
+        const Viper::Expression& accounts,
+        const AccountModificationRequestQuery& query) {
+    auto filter = make_sql_query(
+      "account_modification_requests", query.get_filter()) &&
+      make_query_filter(query) && accounts;
+    auto count = [&] (const Viper::Expression& status) {
+      auto result = 0;
+      m_connection->execute(Viper::select(Viper::count("id"),
+        "account_modification_requests", filter && status, &result));
+      return result;
+    };
+    auto counts = AccountModificationRequestCounts(0, 0, 0);
+    try {
+      counts.m_granted = count(
+        Viper::sym("status") == AccountModificationRequest::Status::GRANTED);
+      counts.m_rejected = count(
+        Viper::sym("status") == AccountModificationRequest::Status::REJECTED);
+      counts.m_pending = count(
+        Viper::sym("status") != AccountModificationRequest::Status::GRANTED &&
+        Viper::sym("status") != AccountModificationRequest::Status::REJECTED);
+    } catch(const Viper::ExecuteException& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
+    return counts;
+  }
+
+  template<typename C>
+  std::vector<AccountModificationRequest>
+      SqlAdministrationDataStore<C>::load_requests(
+        const Viper::Expression& accounts,
+        const AccountModificationRequestQuery& query) {
+    auto filter = make_sql_query(
+      "account_modification_requests", query.get_filter()) &&
+      make_query_filter(query);
+    auto is_head =
+      query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
+    auto sort_column = get_sort_column(query.get_sort_field());
+    auto anchor = [&] {
+      auto anchor = query.get_anchor();
+      if(!anchor) {
+        return Viper::literal(true);
+      }
+      if(sort_column.empty()) {
+        if(is_head) {
+          return Viper::sym("id") > anchor->m_id;
+        }
+        return Viper::sym("id") < anchor->m_id;
+      }
+      if(is_head) {
+        return Viper::sym(sort_column) > anchor->m_date ||
+          (Viper::sym(sort_column) == anchor->m_date &&
+            Viper::sym("id") > anchor->m_id);
+      }
+      return Viper::sym(sort_column) < anchor->m_date ||
+        (Viper::sym(sort_column) == anchor->m_date &&
+          Viper::sym("id") < anchor->m_id);
+    }();
+    auto direction = [&] {
+      if(is_head) {
+        return Viper::Order::ASC;
+      }
+      return Viper::Order::DESC;
+    }();
+    auto order = std::vector<Viper::Order::Column>();
+    if(!sort_column.empty()) {
+      order.emplace_back(sort_column, direction);
+    }
+    order.emplace_back("id", direction);
+    auto requests = std::vector<AccountModificationRequest>();
+    try {
+      m_connection->execute(Viper::select(
+        get_account_modification_request_row(),
+        "account_modification_requests", filter && anchor && accounts,
+        Viper::order_by(std::move(order)),
+        Viper::limit(std::max(0, query.get_snapshot_limit().get_size()),
+          query.get_offset()),
+        std::back_inserter(requests)));
+    } catch(const Viper::ExecuteException& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
+    if(!is_head) {
+      std::ranges::reverse(requests);
+    }
+    for(auto& request : requests) {
       request = AccountModificationRequest(request.get_id(), request.get_type(),
         m_directory_entries.load(request.get_account().m_id),
         m_directory_entries.load(request.get_submission_account().m_id),
         request.get_timestamp(), request.get_effective_date());
+    }
+    return requests;
+  }
+
+  template<typename C>
+  std::vector<AccountModificationRequest::Update>
+      SqlAdministrationDataStore<C>::load_account_modification_request_statuses(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    auto statuses = std::vector<AccountModificationRequest::Update>(ids.size());
+    if(ids.empty()) {
+      return statuses;
+    }
+    auto rows = std::vector<IndexedAccountModificationRequestStatus>();
+    try {
+      m_connection->execute(Viper::select(
+        get_indexed_account_modification_request_status(),
+        "account_modification_request_status", make_id_filter("id", ids),
+        std::back_inserter(rows)));
     } catch(const std::exception& e) {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }
-    return request;
+    auto latest = std::unordered_map<
+      AccountModificationRequest::Id, AccountModificationRequest::Update>();
+    for(auto& row : rows) {
+      auto i = latest.find(row.m_id);
+      if(i == latest.end() ||
+          i->second.m_sequence_number < row.m_update.m_sequence_number) {
+        latest[row.m_id] = row.m_update;
+      }
+    }
+    for(auto i = std::size_t(0); i != ids.size(); ++i) {
+      auto entry = latest.find(ids[i]);
+      if(entry != latest.end()) {
+        statuses[i] = entry->second;
+        statuses[i].m_account =
+          m_directory_entries.load(statuses[i].m_account.m_id);
+      }
+    }
+    return statuses;
   }
 
   template<typename C>
-  std::vector<AccountModificationRequest::Id>
-      SqlAdministrationDataStore<C>::load_account_modification_request_ids(
-        const Beam::DirectoryEntry& account,
-        AccountModificationRequest::Id start_id, int max_count) {
-    if(start_id == -1) {
-      start_id = std::numeric_limits<AccountModificationRequest::Id>::max();
+  std::vector<int> SqlAdministrationDataStore<C>::load_message_counts(
+      const std::vector<AccountModificationRequest::Id>& ids) {
+    auto counts = std::vector(ids.size(), 0);
+    if(ids.empty()) {
+      return counts;
     }
-    max_count = std::min(max_count, 1000);
-    auto ids = std::vector<AccountModificationRequest::Id>();
+    auto rows = std::vector<AccountModificationRequestMessageIndex>();
     try {
       m_connection->execute(Viper::select(
-        Viper::Row<AccountModificationRequest::Id>("id"),
-        "account_modification_requests", Viper::sym("id") > start_id &&
-          Viper::sym("account") == account.m_id,
-        Viper::order_by("id", Viper::Order::ASC), Viper::limit(max_count),
-        std::back_inserter(ids)));
-    } catch(const Viper::ExecuteException& e) {
+        get_account_modification_request_message_index_row(),
+        "account_modification_request_messages",
+        make_id_filter("request_id", ids), std::back_inserter(rows)));
+    } catch(const std::exception& e) {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }
-    return ids;
+    auto tally = std::unordered_map<AccountModificationRequest::Id, int>();
+    for(auto& row : rows) {
+      ++tally[row.m_request_id];
+    }
+    for(auto i = std::size_t(0); i != ids.size(); ++i) {
+      auto entry = tally.find(ids[i]);
+      if(entry != tally.end()) {
+        counts[i] = entry->second;
+      }
+    }
+    return counts;
   }
 
   template<typename C>
-  std::vector<AccountModificationRequest::Id>
-      SqlAdministrationDataStore<C>::load_account_modification_request_ids(
-        AccountModificationRequest::Id start_id, int max_count) {
-    if(start_id == -1) {
-      start_id = std::numeric_limits<AccountModificationRequest::Id>::max();
+  std::vector<boost::optional<AccountModificationRequest::Id>>
+      SqlAdministrationDataStore<C>::load_previous_granted_requests(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    auto predecessors =
+      std::vector<boost::optional<AccountModificationRequest::Id>>(ids.size());
+    if(ids.empty()) {
+      return predecessors;
     }
-    max_count = std::min(max_count, 1000);
-    auto ids = std::vector<AccountModificationRequest::Id>();
+    auto requests = std::vector<AccountModificationRequest>();
     try {
       m_connection->execute(Viper::select(
-        Viper::Row<AccountModificationRequest::Id>("id"),
-        "account_modification_requests", Viper::sym("id") > start_id,
-        Viper::order_by("id", Viper::Order::ASC), Viper::limit(max_count),
-        std::back_inserter(ids)));
-    } catch(const Viper::ExecuteException& e) {
+        get_account_modification_request_row(),
+        "account_modification_requests", make_id_filter("id", ids),
+        std::back_inserter(requests)));
+    } catch(const std::exception& e) {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }
-    return ids;
+    auto index = std::unordered_map<AccountModificationRequest::Id,
+      const AccountModificationRequest*>();
+    index.reserve(requests.size());
+    for(auto& request : requests) {
+      index[request.get_id()] = &request;
+    }
+    auto accounts = std::vector<unsigned int>();
+    auto types = std::vector<AccountModificationRequest::Type>();
+    auto ceiling = AccountModificationRequest::Id(0);
+    for(auto& request : requests) {
+      accounts.push_back(request.get_account().m_id);
+      types.push_back(request.get_type());
+      ceiling = std::max(ceiling, request.get_id());
+    }
+    std::ranges::sort(accounts);
+    accounts.erase(std::ranges::unique(accounts).begin(), accounts.end());
+    std::ranges::sort(types);
+    types.erase(std::ranges::unique(types).begin(), types.end());
+    if(accounts.empty()) {
+      return predecessors;
+    }
+    auto candidates = std::vector<RequestIndex>();
+    try {
+      m_connection->execute(Viper::select(get_request_index_row(),
+        "account_modification_requests",
+        Viper::in(Viper::sym("account"), accounts.begin(), accounts.end()) &&
+          Viper::in(Viper::sym("type"), types.begin(), types.end()) &&
+          Viper::sym("status") == AccountModificationRequest::Status::GRANTED &&
+          Viper::sym("id") < ceiling,
+        std::back_inserter(candidates)));
+    } catch(const std::exception& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
+    auto history = std::map<std::pair<unsigned int,
+      AccountModificationRequest::Type>,
+      std::vector<AccountModificationRequest::Id>>();
+    for(auto& candidate : candidates) {
+      history[std::pair(candidate.m_account.m_id, candidate.m_type)].
+        push_back(candidate.m_id);
+    }
+    for(auto& entry : history) {
+      std::ranges::sort(entry.second);
+    }
+    for(auto i = std::size_t(0); i != ids.size(); ++i) {
+      auto entry = index.find(ids[i]);
+      if(entry == index.end()) {
+        continue;
+      }
+      auto& request = *entry->second;
+      auto candidate =
+        history.find(std::pair(request.get_account().m_id, request.get_type()));
+      if(candidate == history.end()) {
+        continue;
+      }
+      auto position = std::ranges::lower_bound(candidate->second, ids[i]);
+      if(position != candidate->second.begin()) {
+        predecessors[i] = *std::prev(position);
+      }
+    }
+    return predecessors;
+  }
+
+  template<typename C>
+  std::vector<EntitlementModification>
+      SqlAdministrationDataStore<C>::load_entitlement_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    auto modifications = std::vector<EntitlementModification>(ids.size());
+    if(ids.empty()) {
+      return modifications;
+    }
+    auto rows = std::vector<EntitlementModificationRow>();
+    try {
+      m_connection->execute(Viper::select(
+        get_entitlement_modification_row(), "entitlement_modifications",
+        make_id_filter("id", ids), std::back_inserter(rows)));
+    } catch(const std::exception& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
+    auto entitlements = std::unordered_map<
+      AccountModificationRequest::Id, std::vector<Beam::DirectoryEntry>>();
+    for(auto& row : rows) {
+      entitlements[row.m_id].push_back(
+        m_directory_entries.load(row.m_entitlement.m_id));
+    }
+    for(auto i = std::size_t(0); i != ids.size(); ++i) {
+      auto entry = entitlements.find(ids[i]);
+      if(entry != entitlements.end()) {
+        modifications[i] = EntitlementModification(entry->second);
+      }
+    }
+    return modifications;
+  }
+
+  template<typename C>
+  std::vector<RiskModification>
+      SqlAdministrationDataStore<C>::load_risk_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    auto modifications = std::vector<RiskModification>(ids.size());
+    if(ids.empty()) {
+      return modifications;
+    }
+    auto rows = std::vector<IndexedRiskModification>();
+    try {
+      m_connection->execute(
+        Viper::select(get_risk_modification_row(), "risk_modifications",
+          make_id_filter("id", ids), std::back_inserter(rows)));
+    } catch(const std::exception& e) {
+      boost::throw_with_location(AdministrationDataStoreException(e.what()));
+    }
+    auto parameters =
+      std::unordered_map<AccountModificationRequest::Id, RiskParameters>();
+    parameters.reserve(rows.size());
+    for(auto& row : rows) {
+      parameters[row.m_id] = row.m_parameters;
+    }
+    for(auto i = std::size_t(0); i != ids.size(); ++i) {
+      auto entry = parameters.find(ids[i]);
+      if(entry != parameters.end()) {
+        modifications[i] = RiskModification(entry->second);
+      }
+    }
+    return modifications;
   }
 
   template<typename C>
@@ -374,10 +765,13 @@ namespace Nexus {
     for(auto& entitlement : modification.get_entitlements()) {
       entitlements.push_back({request.get_id(), entitlement});
     }
+    auto stored =
+      StoredAccountModificationRequest(request, request.get_timestamp(),
+        AccountModificationRequest::Status::NONE);
     try {
       m_connection->execute(Viper::insert(
-        get_account_modification_request_row(), "account_modification_requests",
-        &request));
+        get_stored_account_modification_request_row(),
+        "account_modification_requests", &stored));
       m_connection->execute(Viper::insert(get_entitlement_modification_row(),
         "entitlement_modifications", entitlements.begin(), entitlements.end()));
     } catch(const Viper::ExecuteException& e) {
@@ -404,10 +798,13 @@ namespace Nexus {
       const RiskModification& modification) {
     auto indexed_modification = IndexedRiskModification(
       request.get_id(), request.get_account(), modification.get_parameters());
+    auto stored =
+      StoredAccountModificationRequest(request, request.get_timestamp(),
+        AccountModificationRequest::Status::NONE);
     try {
-      m_connection->execute(Viper::insert(
-        get_account_modification_request_row(), "account_modification_requests",
-        &request));
+      m_connection->execute(
+        Viper::insert(get_stored_account_modification_request_row(),
+          "account_modification_requests", &stored));
       m_connection->execute(Viper::insert(get_risk_modification_row(),
         "risk_modifications", &indexed_modification));
     } catch(const Viper::ExecuteException& e) {
@@ -483,9 +880,14 @@ namespace Nexus {
       const AccountModificationRequest::Update& status) {
     auto indexed_updated = IndexedAccountModificationRequestStatus(id, status);
     try {
-      m_connection->execute(Viper::insert(
-        get_indexed_account_modification_request_status(),
-        "account_modification_request_status", &indexed_updated));
+      m_connection->execute(
+        Viper::insert(get_indexed_account_modification_request_status(),
+          "account_modification_request_status", &indexed_updated));
+      m_connection->execute(Viper::update("account_modification_requests",
+        Viper::SetClause("last_update_timestamp", status.m_timestamp),
+        Viper::sym("id") == id));
+      m_connection->execute(Viper::update("account_modification_requests",
+        Viper::SetClause("status", status.m_status), Viper::sym("id") == id));
     } catch(const Viper::ExecuteException& e) {
       boost::throw_with_location(AdministrationDataStoreException(e.what()));
     }

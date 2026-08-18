@@ -172,7 +172,66 @@ namespace Nexus {
             row.get_timestamp(), column);
         }).
       set_primary_key("id").
-      add_index("account_index", {"id", "account"});
+      add_index("account_index", {"account", "id"});
+    return ROW;
+  }
+
+  /** Identifies a request by the account and type it modifies. */
+  struct RequestIndex {
+
+    /** The id of the request. */
+    AccountModificationRequest::Id m_id;
+
+    /** The account the request modifies. */
+    Beam::DirectoryEntry m_account;
+
+    /** The type of modification requested. */
+    AccountModificationRequest::Type m_type;
+  };
+
+  /** Returns a row representing a RequestIndex. */
+  inline const auto& get_request_index_row() {
+    static const auto ROW = Viper::Row<RequestIndex>().
+      add_column("id", &RequestIndex::m_id).
+      add_column("account",
+        [] (const auto& row) {
+          return row.m_account.m_id;
+        },
+        [] (auto& row, auto column) {
+          row.m_account = Beam::DirectoryEntry::make_account(column);
+        }).
+      add_column("type", &RequestIndex::m_type);
+    return ROW;
+  }
+
+  /** Stores an AccountModificationRequest along with its ordering keys. */
+  struct StoredAccountModificationRequest {
+
+    /** The request. */
+    AccountModificationRequest m_request;
+
+    /** The timestamp of the request's most recent update. */
+    boost::posix_time::ptime m_last_update_timestamp;
+
+    /** The request's most recent status. */
+    AccountModificationRequest::Status m_status;
+  };
+
+  /** Returns a row representing a StoredAccountModificationRequest. */
+  inline const auto& get_stored_account_modification_request_row() {
+    static const auto ROW = Viper::Row<StoredAccountModificationRequest>().
+      extend(get_account_modification_request_row(),
+        &StoredAccountModificationRequest::m_request).
+      add_column("last_update_timestamp",
+        &StoredAccountModificationRequest::m_last_update_timestamp).
+      add_column("status", &StoredAccountModificationRequest::m_status).
+      add_index("last_update_index", {"last_update_timestamp", "id"}).
+      add_index("effective_date_index", {"effective_date", "id"}).
+      add_index("status_index", {"status", "id"}).
+      add_index("account_last_update_index",
+        {"account", "last_update_timestamp", "id"}).
+      add_index("account_effective_date_index",
+        {"account", "effective_date", "id"});
     return ROW;
   }
 

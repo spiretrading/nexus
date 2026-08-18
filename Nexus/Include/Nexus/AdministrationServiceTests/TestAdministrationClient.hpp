@@ -139,22 +139,17 @@ namespace Nexus::Tests {
         Beam::Tests::ServiceResult<AccountModificationRequest> m_result;
       };
 
-      /** Records a call to load_account_modification_request_ids(). */
-      struct LoadAccountModificationRequestIdsOperation {
-        Beam::DirectoryEntry m_account;
-        AccountModificationRequest::Id m_start_id;
-        int m_max_count;
-        Beam::Tests::ServiceResult<std::vector<AccountModificationRequest::Id>>
-          m_result;
+      /** Records a call to load_account_modification_request_summaries(). */
+      struct LoadAccountModificationRequestSummariesOperation {
+        AccountModificationRequestQuery m_query;
+        Beam::Tests::ServiceResult<
+          std::vector<AccountModificationRequestSummary>> m_result;
       };
 
-      /** Records a call to load_managed_account_modification_request_ids(). */
-      struct LoadManagedAccountModificationRequestIdsOperation {
-        Beam::DirectoryEntry m_account;
-        AccountModificationRequest::Id m_start_id;
-        int m_max_count;
-        Beam::Tests::ServiceResult<std::vector<AccountModificationRequest::Id>>
-          m_result;
+      /** Records a call to load_account_modification_request_counts(). */
+      struct LoadAccountModificationRequestCountsOperation {
+        AccountModificationRequestQuery m_query;
+        Beam::Tests::ServiceResult<AccountModificationRequestCounts> m_result;
       };
 
       /** Records a call to load_entitlement_modification(). */
@@ -220,6 +215,7 @@ namespace Nexus::Tests {
 
       /** Records a call to load_message(). */
       struct LoadMessageOperation {
+        AccountModificationRequest::Id m_request_id;
         Message::Id m_id;
         Beam::Tests::ServiceResult<Message> m_result;
       };
@@ -289,8 +285,8 @@ namespace Nexus::Tests {
         MonitorRiskParametersOperation,
         MonitorRiskStateOperation, StoreRiskStateOperation,
         LoadAccountModificationRequestOperation,
-        LoadAccountModificationRequestIdsOperation,
-        LoadManagedAccountModificationRequestIdsOperation,
+        LoadAccountModificationRequestSummariesOperation,
+        LoadAccountModificationRequestCountsOperation,
         LoadEntitlementModificationOperation,
         SubmitEntitlementModificationRequestOperation,
         LoadRiskModificationOperation,
@@ -347,14 +343,12 @@ namespace Nexus::Tests {
       void store(const Beam::DirectoryEntry& account, const RiskState& state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
-      std::vector<AccountModificationRequest::Id>
-        load_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
-      std::vector<AccountModificationRequest::Id>
-        load_managed_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
+      std::vector<AccountModificationRequestSummary>
+        load_account_modification_request_summaries(
+          const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts
+        load_account_modification_request_counts(
+          const AccountModificationRequestQuery& query);
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
       AccountModificationRequest submit(const Beam::DirectoryEntry& account,
@@ -376,7 +370,8 @@ namespace Nexus::Tests {
         boost::posix_time::ptime effective_date, const Message& comment);
       AccountModificationRequest::Update reject_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment);
-      Message load_message(Message::Id id);
+      Message load_message(
+        AccountModificationRequest::Id request_id, Message::Id id);
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
       Message send_account_modification_request_message(
@@ -544,23 +539,20 @@ namespace Nexus::Tests {
       LoadAccountModificationRequestOperation, AccountModificationRequest>(id);
   }
 
-  inline std::vector<AccountModificationRequest::Id>
-      TestAdministrationClient::load_account_modification_request_ids(
-        const Beam::DirectoryEntry& account,
-        AccountModificationRequest::Id start_id, int max_count) {
-    return m_queue.append_result<LoadAccountModificationRequestIdsOperation,
-      std::vector<AccountModificationRequest::Id>>(
-        account, start_id, max_count);
+  inline std::vector<AccountModificationRequestSummary>
+      TestAdministrationClient::load_account_modification_request_summaries(
+        const AccountModificationRequestQuery& query) {
+    return m_queue.append_result<
+      LoadAccountModificationRequestSummariesOperation,
+      std::vector<AccountModificationRequestSummary>>(query);
   }
 
-  inline std::vector<AccountModificationRequest::Id>
-      TestAdministrationClient::load_managed_account_modification_request_ids(
-        const Beam::DirectoryEntry& account,
-        AccountModificationRequest::Id start_id, int max_count) {
+  inline AccountModificationRequestCounts
+      TestAdministrationClient::load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query) {
     return m_queue.append_result<
-      LoadManagedAccountModificationRequestIdsOperation,
-      std::vector<AccountModificationRequest::Id>>(
-        account, start_id, max_count);
+      LoadAccountModificationRequestCountsOperation,
+      AccountModificationRequestCounts>(query);
   }
 
   inline EntitlementModification
@@ -623,8 +615,10 @@ namespace Nexus::Tests {
       AccountModificationRequest::Update>(id, comment);
   }
 
-  inline Message TestAdministrationClient::load_message(Message::Id id) {
-    return m_queue.append_result<LoadMessageOperation, Message>(id);
+  inline Message TestAdministrationClient::load_message(
+      AccountModificationRequest::Id request_id, Message::Id id) {
+    return m_queue.append_result<LoadMessageOperation, Message>(
+      request_id, id);
   }
 
   inline std::vector<Message::Id> TestAdministrationClient::load_message_ids(

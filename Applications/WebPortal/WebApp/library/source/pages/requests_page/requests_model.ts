@@ -44,6 +44,9 @@ export abstract class RequestsModel {
 
 export namespace RequestsModel {
 
+  /** The number of requests shown on a page. */
+  export const PAGE_SIZE = 25;
+
   /** Enumerates the direction of a change. */
   export enum Direction {
 
@@ -257,6 +260,7 @@ export namespace RequestsModel {
     state: Status;
     updateTime: Date;
     account: Beam.DirectoryEntry;
+    requester: Beam.DirectoryEntry;
     effectiveDate: Date;
     firstChange: ListChange;
     additionalChangesCount: number;
@@ -268,6 +272,11 @@ export namespace RequestsModel {
   export interface Response {
     status: ResponseStatus;
     facetCounts: FacetCounts;
+
+    /** The number of requests matching the current state facet. */
+    totalCount: number;
+
+    /** The entries belonging to the requested page. */
     requestList: RequestEntry[];
   }
 

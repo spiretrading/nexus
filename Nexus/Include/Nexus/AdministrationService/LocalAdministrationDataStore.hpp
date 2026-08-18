@@ -2,9 +2,12 @@
 #define NEXUS_LOCAL_ADMINISTRATION_DATA_STORE_HPP
 #include <ranges>
 #include <unordered_map>
+#include <unordered_set>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
+#include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
+#include "Nexus/Queries/EvaluatorTranslator.hpp"
 
 namespace Nexus {
 
@@ -38,13 +41,30 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const RiskState& risk_state);
       AccountModificationRequest load_account_modification_request(
         AccountModificationRequest::Id id);
-      std::vector<AccountModificationRequest::Id>
-        load_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
-      std::vector<AccountModificationRequest::Id>
-        load_account_modification_request_ids(
-          AccountModificationRequest::Id start_id, int max_count);
+      std::vector<AccountModificationRequest>
+        load_account_modification_requests(
+          const std::vector<Beam::DirectoryEntry>& accounts,
+          const AccountModificationRequestQuery& query);
+      std::vector<AccountModificationRequest>
+        load_account_modification_requests(
+          const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts load_account_modification_request_counts(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query);
+      std::vector<AccountModificationRequest::Update>
+        load_account_modification_request_statuses(
+          const std::vector<AccountModificationRequest::Id>& ids);
+      std::vector<int> load_message_counts(
+        const std::vector<AccountModificationRequest::Id>& ids);
+      std::vector<boost::optional<AccountModificationRequest::Id>>
+        load_previous_granted_requests(
+          const std::vector<AccountModificationRequest::Id>& ids);
+      std::vector<EntitlementModification> load_entitlement_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids);
+      std::vector<RiskModification> load_risk_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids);
       EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id);
       void store_effective_date(AccountModificationRequest::Id id,
@@ -101,10 +121,22 @@ namespace Nexus {
       std::unordered_map<Beam::DirectoryEntry, std::vector<Notification>>
         m_notifications;
 
+      static std::unordered_set<unsigned int> make_account_scope(
+        const std::vector<Beam::DirectoryEntry>* accounts);
       LocalAdministrationDataStore(
         const LocalAdministrationDataStore&) = delete;
       LocalAdministrationDataStore& operator =(
         const LocalAdministrationDataStore&) = delete;
+      boost::posix_time::ptime load_last_update_timestamp(
+        AccountModificationRequest::Id id);
+      bool matches_query(const AccountModificationRequest& request,
+        const AccountModificationRequestQuery& query);
+      AccountModificationRequestCounts count_requests(
+        const std::vector<Beam::DirectoryEntry>* accounts,
+        const AccountModificationRequestQuery& query);
+      std::vector<AccountModificationRequest> load_requests(
+        const std::vector<Beam::DirectoryEntry>* accounts,
+        const AccountModificationRequestQuery& query);
   };
 
   inline std::vector<LocalAdministrationDataStore::IndexedAccountIdentity>
@@ -185,46 +217,287 @@ namespace Nexus {
         AccountModificationRequest::Id id) {
     auto i = m_account_modification_requests.find(id);
     if(i == m_account_modification_requests.end()) {
-      return AccountModificationRequest();
+      boost::throw_with_location(
+        AdministrationDataStoreException("Request not found."));
     }
     return i->second;
   }
 
-  inline std::vector<AccountModificationRequest::Id>
-      LocalAdministrationDataStore::load_account_modification_request_ids(
-        const Beam::DirectoryEntry& account,
-        AccountModificationRequest::Id start_id, int max_count) {
-    auto ids = std::vector<AccountModificationRequest::Id>();
-    auto i = m_account_modification_requests.begin();
-    while(i != m_account_modification_requests.end()) {
-      if(i->second.get_id() > start_id && i->second.get_account() == account) {
-        ids.push_back(i->first);
-      }
-      ++i;
-    }
-    std::sort(ids.begin(), ids.end());
-    while(ids.size() > max_count) {
-      ids.pop_back();
-    }
-    return ids;
+  inline std::vector<AccountModificationRequest>
+      LocalAdministrationDataStore::load_account_modification_requests(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query) {
+    return load_requests(&accounts, query);
   }
 
-  inline std::vector<AccountModificationRequest::Id>
-      LocalAdministrationDataStore::load_account_modification_request_ids(
-        AccountModificationRequest::Id start_id, int max_count) {
-    auto ids = std::vector<AccountModificationRequest::Id>();
-    auto i = m_account_modification_requests.begin();
-    while(i != m_account_modification_requests.end()) {
-      if(i->second.get_id() > start_id) {
-        ids.push_back(i->first);
+  inline std::vector<AccountModificationRequest>
+      LocalAdministrationDataStore::load_account_modification_requests(
+        const AccountModificationRequestQuery& query) {
+    return load_requests(nullptr, query);
+  }
+
+  inline AccountModificationRequestCounts
+      LocalAdministrationDataStore::load_account_modification_request_counts(
+        const std::vector<Beam::DirectoryEntry>& accounts,
+        const AccountModificationRequestQuery& query) {
+    return count_requests(&accounts, query);
+  }
+
+  inline AccountModificationRequestCounts
+      LocalAdministrationDataStore::load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query) {
+    return count_requests(nullptr, query);
+  }
+
+  inline boost::posix_time::ptime
+      LocalAdministrationDataStore::load_last_update_timestamp(
+        AccountModificationRequest::Id id) {
+    auto updates = m_account_modification_request_updates.find(id);
+    if(updates != m_account_modification_request_updates.end() &&
+        !updates->second.empty()) {
+      return updates->second.back().m_timestamp;
+    }
+    auto request = m_account_modification_requests.find(id);
+    if(request == m_account_modification_requests.end()) {
+      return boost::posix_time::not_a_date_time;
+    }
+    return request->second.get_timestamp();
+  }
+
+  inline bool LocalAdministrationDataStore::matches_query(
+      const AccountModificationRequest& request,
+      const AccountModificationRequestQuery& query) {
+    if(!query.get_categories().empty() &&
+        !std::ranges::contains(query.get_categories(), request.get_type())) {
+      return false;
+    }
+    if(!query.get_statuses().empty()) {
+      auto status = load_account_modification_request_status(request.get_id());
+      if(!std::ranges::contains(query.get_statuses(), status.m_status)) {
+        return false;
       }
-      ++i;
     }
-    std::sort(ids.begin(), ids.end());
-    while(ids.size() > max_count) {
-      ids.pop_back();
+    auto& start_date = query.get_start_date();
+    auto& end_date = query.get_end_date();
+    if(start_date || end_date) {
+      auto timestamp = load_last_update_timestamp(request.get_id());
+      if(start_date && timestamp < *start_date) {
+        return false;
+      }
+      if(end_date && timestamp > *end_date) {
+        return false;
+      }
     }
-    return ids;
+    if(auto& excluded_account = query.get_excluded_account()) {
+      if(request.get_account().m_id == excluded_account->m_id) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  inline std::unordered_set<unsigned int>
+      LocalAdministrationDataStore::make_account_scope(
+        const std::vector<Beam::DirectoryEntry>* accounts) {
+    if(!accounts) {
+      return {};
+    }
+    auto scope = std::unordered_set<unsigned int>();
+    scope.reserve(accounts->size());
+    for(auto& account : *accounts) {
+      scope.insert(account.m_id);
+    }
+    return scope;
+  }
+
+  inline AccountModificationRequestCounts
+      LocalAdministrationDataStore::count_requests(
+        const std::vector<Beam::DirectoryEntry>* accounts,
+        const AccountModificationRequestQuery& query) {
+    auto evaluator = Beam::translate<EvaluatorTranslator>(query.get_filter());
+    auto scope = make_account_scope(accounts);
+    auto counts = AccountModificationRequestCounts(0, 0, 0);
+    for(auto& entry : m_account_modification_requests) {
+      auto& request = entry.second;
+      if(accounts && !scope.contains(request.get_account().m_id)) {
+        continue;
+      }
+      if(!Beam::test_filter(*evaluator, request)) {
+        continue;
+      }
+      if(!matches_query(request, query)) {
+        continue;
+      }
+      auto status =
+        load_account_modification_request_status(request.get_id()).m_status;
+      if(status == AccountModificationRequest::Status::GRANTED) {
+        ++counts.m_granted;
+      } else if(status == AccountModificationRequest::Status::REJECTED) {
+        ++counts.m_rejected;
+      } else {
+        ++counts.m_pending;
+      }
+    }
+    return counts;
+  }
+
+  inline std::vector<AccountModificationRequest>
+      LocalAdministrationDataStore::load_requests(
+        const std::vector<Beam::DirectoryEntry>* accounts,
+        const AccountModificationRequestQuery& query) {
+    auto evaluator = Beam::translate<EvaluatorTranslator>(query.get_filter());
+    auto& anchor = query.get_anchor();
+    auto is_head =
+      query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
+    auto field = query.get_sort_field();
+    using SortKey =
+      std::pair<boost::posix_time::ptime, AccountModificationRequest::Id>;
+    auto key = [&] (const AccountModificationRequest& request) {
+      if(field == AccountModificationRequestQuery::SortField::LAST_UPDATED) {
+        return SortKey(
+          load_last_update_timestamp(request.get_id()), request.get_id());
+      } else if(
+          field == AccountModificationRequestQuery::SortField::EFFECTIVE_DATE) {
+        return SortKey(request.get_effective_date(), request.get_id());
+      }
+      return SortKey(boost::posix_time::neg_infin, request.get_id());
+    };
+    auto anchor_key = [&] {
+      if(!anchor) {
+        return SortKey();
+      }
+      if(field == AccountModificationRequestQuery::SortField::LAST_UPDATED ||
+          field == AccountModificationRequestQuery::SortField::EFFECTIVE_DATE) {
+        return SortKey(anchor->m_date, anchor->m_id);
+      }
+      return SortKey(boost::posix_time::neg_infin, anchor->m_id);
+    }();
+    auto scope = make_account_scope(accounts);
+    auto matches = std::vector<AccountModificationRequest>();
+    for(auto& entry : m_account_modification_requests) {
+      auto& request = entry.second;
+      if(accounts && !scope.contains(request.get_account().m_id)) {
+        continue;
+      }
+      auto is_excluded = [&] {
+        if(!anchor) {
+          return false;
+        }
+        if(is_head) {
+          return key(request) <= anchor_key;
+        }
+        return key(request) >= anchor_key;
+      }();
+      if(is_excluded) {
+        continue;
+      }
+      if(!Beam::test_filter(*evaluator, request)) {
+        continue;
+      }
+      if(!matches_query(request, query)) {
+        continue;
+      }
+      matches.push_back(request);
+    }
+    std::ranges::sort(matches, std::ranges::less(), key);
+    auto offset = query.get_offset();
+    auto skip = std::min<std::size_t>(offset, matches.size());
+    if(is_head) {
+      matches.erase(matches.begin(), matches.begin() + skip);
+    } else {
+      matches.erase(matches.end() - skip, matches.end());
+    }
+    auto size = std::max(0, query.get_snapshot_limit().get_size());
+    if(matches.size() > static_cast<std::size_t>(size)) {
+      if(is_head) {
+        matches.erase(matches.begin() + size, matches.end());
+      } else {
+        matches.erase(matches.begin(), matches.end() - size);
+      }
+    }
+    return matches;
+  }
+
+  inline std::vector<AccountModificationRequest::Update>
+      LocalAdministrationDataStore::load_account_modification_request_statuses(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    auto statuses = std::vector<AccountModificationRequest::Update>();
+    statuses.reserve(ids.size());
+    for(auto id : ids) {
+      statuses.push_back(load_account_modification_request_status(id));
+    }
+    return statuses;
+  }
+
+  inline std::vector<int> LocalAdministrationDataStore::load_message_counts(
+      const std::vector<AccountModificationRequest::Id>& ids) {
+    auto counts = std::vector<int>();
+    counts.reserve(ids.size());
+    for(auto id : ids) {
+      auto i = m_request_messages.find(id);
+      if(i == m_request_messages.end()) {
+        counts.push_back(0);
+      } else {
+        counts.push_back(static_cast<int>(i->second.size()));
+      }
+    }
+    return counts;
+  }
+
+  inline std::vector<boost::optional<AccountModificationRequest::Id>>
+      LocalAdministrationDataStore::load_previous_granted_requests(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    auto predecessors =
+      std::vector<boost::optional<AccountModificationRequest::Id>>();
+    predecessors.reserve(ids.size());
+    for(auto id : ids) {
+      auto request = m_account_modification_requests.find(id);
+      if(request == m_account_modification_requests.end()) {
+        predecessors.emplace_back();
+        continue;
+      }
+      auto predecessor = boost::optional<AccountModificationRequest::Id>();
+      for(auto& entry : m_account_modification_requests) {
+        auto& candidate = entry.second;
+        if(candidate.get_id() >= id || candidate.get_account().m_id !=
+            request->second.get_account().m_id ||
+            candidate.get_type() != request->second.get_type()) {
+          continue;
+        }
+        if(load_account_modification_request_status(
+            candidate.get_id()).m_status !=
+              AccountModificationRequest::Status::GRANTED) {
+          continue;
+        }
+        if(!predecessor || *predecessor < candidate.get_id()) {
+          predecessor = candidate.get_id();
+        }
+      }
+      predecessors.push_back(predecessor);
+    }
+    return predecessors;
+  }
+
+  inline std::vector<EntitlementModification>
+      LocalAdministrationDataStore::load_entitlement_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    auto modifications = std::vector<EntitlementModification>();
+    modifications.reserve(ids.size());
+    for(auto id : ids) {
+      modifications.push_back(load_entitlement_modification(id));
+    }
+    return modifications;
+  }
+
+  inline std::vector<RiskModification>
+      LocalAdministrationDataStore::load_risk_modifications(
+        const std::vector<AccountModificationRequest::Id>& ids) {
+    auto modifications = std::vector<RiskModification>();
+    modifications.reserve(ids.size());
+    for(auto id : ids) {
+      modifications.push_back(load_risk_modification(id));
+    }
+    return modifications;
   }
 
   inline EntitlementModification
@@ -388,9 +661,20 @@ namespace Nexus {
       }
       return matches;
     }
-    auto position = std::ranges::find_if(matches, [&] (const auto& n) {
-      return n.m_id == id;
-    });
+    auto position = [&] {
+      if(limit.get_type() == Beam::SnapshotLimit::Type::TAIL) {
+        auto match = matches.end();
+        for(auto i = matches.begin(); i != matches.end(); ++i) {
+          if(i->m_id <= id) {
+            match = i;
+          }
+        }
+        return match;
+      }
+      return std::ranges::find_if(matches, [&] (const auto& notification) {
+        return notification.m_id >= id;
+      });
+    }();
     if(position == matches.end()) {
       return {};
     }
