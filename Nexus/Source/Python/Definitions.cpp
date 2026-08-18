@@ -374,7 +374,9 @@ void Nexus::Python::export_order_status(module& module) {
     value("DONE_FOR_DAY", OrderStatus::DONE_FOR_DAY).
     value("PENDING_CANCEL", OrderStatus::PENDING_CANCEL).
     value("CANCEL_REJECT", OrderStatus::CANCEL_REJECT);
-  module.def("is_terminal", &is_terminal);
+  module.def("is_terminal", [] (OrderStatus status) {
+    return is_terminal(status);
+  });
 }
 
 void Nexus::Python::export_order_type(module& module) {

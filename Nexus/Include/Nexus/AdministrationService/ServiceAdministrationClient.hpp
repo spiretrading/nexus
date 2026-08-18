@@ -14,6 +14,7 @@
 #include <boost/lexical_cast.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
 #include "Nexus/AdministrationService/AdministrationServices.hpp"
+#include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
 namespace Nexus {
 
@@ -154,7 +155,7 @@ namespace Nexus {
 BEAM_SUPPRESS_THIS_INITIALIZER()
       try : m_client_handler(std::forward<BF>(client_builder), std::bind_front(
               &ServiceAdministrationClient::on_reconnect, this)) {
-    register_administration_query_types(
+    Nexus::register_query_types(
       Beam::out(m_client_handler.get_slots().get_registry()));
     register_administration_services(Beam::out(m_client_handler.get_slots()));
     register_administration_messages(Beam::out(m_client_handler.get_slots()));

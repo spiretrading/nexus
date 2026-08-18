@@ -5,8 +5,8 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/AdministrationService/AccountModificationRequestAccessor.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
+#include "Nexus/Queries/AccountModificationRequestAccessor.hpp"
 
 namespace Nexus::Tests {
   TEST_CASE_TEMPLATE_DEFINE(

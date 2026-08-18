@@ -10,10 +10,10 @@
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/KeyValueCache.hpp>
 #include <boost/throw_exception.hpp>
-#include "Nexus/AdministrationService/AccountModificationRequestSqlTranslator.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStoreException.hpp"
 #include "Nexus/AdministrationService/SqlDefinitions.hpp"
+#include "Nexus/Queries/SqlTranslator.hpp"
 
 namespace Nexus {
 
@@ -419,7 +419,7 @@ namespace Nexus {
       SqlAdministrationDataStore<C>::count_requests(
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query) {
-    auto filter = make_account_modification_request_sql_query(
+    auto filter = make_sql_query(
       "account_modification_requests", query.get_filter()) &&
       make_query_filter(query) && accounts;
     auto count = [&] (const Viper::Expression& status) {
@@ -448,7 +448,7 @@ namespace Nexus {
       SqlAdministrationDataStore<C>::load_requests(
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query) {
-    auto filter = make_account_modification_request_sql_query(
+    auto filter = make_sql_query(
       "account_modification_requests", query.get_filter()) &&
       make_query_filter(query);
     auto is_head =

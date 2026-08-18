@@ -5,8 +5,8 @@
 #include <unordered_set>
 #include <boost/thread/locks.hpp>
 #include <boost/thread/mutex.hpp>
-#include "Nexus/AdministrationService/AccountModificationRequestEvaluatorTranslator.hpp"
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
+#include "Nexus/Queries/EvaluatorTranslator.hpp"
 
 namespace Nexus {
 
@@ -307,8 +307,7 @@ namespace Nexus {
       LocalAdministrationDataStore::count_requests(
         const std::vector<Beam::DirectoryEntry>* accounts,
         const AccountModificationRequestQuery& query) {
-    auto evaluator = Beam::translate<
-      AccountModificationRequestEvaluatorTranslator>(query.get_filter());
+    auto evaluator = Beam::translate<EvaluatorTranslator>(query.get_filter());
     auto scope = make_account_scope(accounts);
     auto counts = AccountModificationRequestCounts(0, 0, 0);
     for(auto& entry : m_account_modification_requests) {
@@ -339,8 +338,7 @@ namespace Nexus {
       LocalAdministrationDataStore::load_requests(
         const std::vector<Beam::DirectoryEntry>* accounts,
         const AccountModificationRequestQuery& query) {
-    auto evaluator = Beam::translate<
-      AccountModificationRequestEvaluatorTranslator>(query.get_filter());
+    auto evaluator = Beam::translate<EvaluatorTranslator>(query.get_filter());
     auto& anchor = query.get_anchor();
     auto is_head =
       query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;

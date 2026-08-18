@@ -56,6 +56,8 @@ namespace Nexus {
         const Beam::MemberAccessExpression& expression);
       void translate_order_info_member_access_expression(
         const Beam::MemberAccessExpression& expression);
+      void translate_account_modification_request_member_access_expression(
+        const Beam::MemberAccessExpression& expression);
   };
 
   /**
@@ -112,6 +114,10 @@ namespace Nexus {
       translate_order_fields_member_access_expression(expression);
     } else if(expression.get_expression().get_type() == typeid(OrderInfo)) {
       translate_order_info_member_access_expression(expression);
+    } else if(expression.get_expression().get_type() ==
+        typeid(AccountModificationRequest)) {
+      translate_account_modification_request_member_access_expression(
+        expression);
     } else {
       Beam::SqlTranslator::visit(expression);
     }
@@ -278,6 +284,21 @@ namespace Nexus {
       expression.get_expression().apply(*this);
       auto term = get_translation();
       get_translation() = Viper::access(term, expression.get_name());
+    } else {
+      Beam::SqlTranslator::visit(expression);
+    }
+  }
+
+  inline void SqlTranslator::
+      translate_account_modification_request_member_access_expression(
+        const Beam::MemberAccessExpression& expression) {
+    if(expression.get_name() == "id" || expression.get_name() == "type" ||
+        expression.get_name() == "account" ||
+        expression.get_name() == "submission_account" ||
+        expression.get_name() == "timestamp" ||
+        expression.get_name() == "effective_date") {
+      expression.get_expression().apply(*this);
+      get_translation() = Viper::sym(expression.get_name());
     } else {
       Beam::SqlTranslator::visit(expression);
     }

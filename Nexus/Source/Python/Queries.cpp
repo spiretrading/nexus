@@ -1,5 +1,6 @@
 #include "Nexus/Python/Queries.hpp"
 #include <Beam/Python/Beam.hpp>
+#include "Nexus/Queries/AccountModificationRequestAccessor.hpp"
 #include "Nexus/Queries/BboQuoteAccessor.hpp"
 #include "Nexus/Queries/BookQuoteAccessor.hpp"
 #include "Nexus/Queries/QuoteAccessor.hpp"
@@ -16,6 +17,26 @@ using namespace Beam;
 using namespace Beam::Python;
 using namespace Nexus;
 using namespace pybind11;
+
+void Nexus::Python::export_account_modification_request_accessor(
+    module& module) {
+  class_<AccountModificationRequestAccessor>(
+      module, "AccountModificationRequestAccessor").
+    def(init<Expression>()).
+    def_static(
+      "from_parameter", &AccountModificationRequestAccessor::from_parameter).
+    def_property_readonly("id", &AccountModificationRequestAccessor::get_id).
+    def_property_readonly(
+      "type", &AccountModificationRequestAccessor::get_type).
+    def_property_readonly(
+      "account", &AccountModificationRequestAccessor::get_account).
+    def_property_readonly("submission_account",
+      &AccountModificationRequestAccessor::get_submission_account).
+    def_property_readonly(
+      "timestamp", &AccountModificationRequestAccessor::get_timestamp).
+    def_property_readonly("effective_date",
+      &AccountModificationRequestAccessor::get_effective_date);
+}
 
 void Nexus::Python::export_bbo_quote_accessor(module& module) {
   class_<BboQuoteAccessor>(module, "BboQuoteAccessor").
@@ -90,6 +111,7 @@ void Nexus::Python::export_quote_accessor(module& module) {
 }
 
 void Nexus::Python::export_queries(module& module) {
+  export_account_modification_request_accessor(module);
   export_bbo_quote_accessor(module);
   export_book_quote_accessor(module);
   export_quote_accessor(module);

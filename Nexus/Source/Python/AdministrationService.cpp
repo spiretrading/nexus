@@ -6,7 +6,6 @@
 #include <Viper/Sqlite3/Connection.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
-#include "Nexus/AdministrationService/AccountModificationRequestAccessor.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequestCounts.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequestQuery.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequestSummary.hpp"
@@ -106,26 +105,6 @@ void Nexus::Python::export_account_modification_request(module& module) {
   module.def("is_terminal", [] (AccountModificationRequest::Status status) {
     return is_terminal(status);
   });
-}
-
-void Nexus::Python::export_account_modification_request_accessor(
-    module& module) {
-  class_<AccountModificationRequestAccessor>(
-      module, "AccountModificationRequestAccessor").
-    def(init<Expression>()).
-    def_static(
-      "from_parameter", &AccountModificationRequestAccessor::from_parameter).
-    def_property_readonly("id", &AccountModificationRequestAccessor::get_id).
-    def_property_readonly(
-      "type", &AccountModificationRequestAccessor::get_type).
-    def_property_readonly(
-      "account", &AccountModificationRequestAccessor::get_account).
-    def_property_readonly("submission_account",
-      &AccountModificationRequestAccessor::get_submission_account).
-    def_property_readonly(
-      "timestamp", &AccountModificationRequestAccessor::get_timestamp).
-    def_property_readonly("effective_date",
-      &AccountModificationRequestAccessor::get_effective_date);
 }
 
 void Nexus::Python::export_account_modification_request_anchor(
@@ -259,7 +238,6 @@ void Nexus::Python::export_administration_service(module& module) {
   export_administration_service_application_definitions(module);
   export_account_identity(module);
   export_account_modification_request(module);
-  export_account_modification_request_accessor(module);
   export_account_modification_request_anchor(module);
   export_account_modification_request_counts(module);
   export_account_modification_request_query(module);

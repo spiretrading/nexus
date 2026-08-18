@@ -1,5 +1,5 @@
-#ifndef NEXUS_ACCOUNT_MODIFICATION_REQUEST_ACCESSOR_HPP
-#define NEXUS_ACCOUNT_MODIFICATION_REQUEST_ACCESSOR_HPP
+#ifndef NEXUS_QUERIES_ACCOUNT_MODIFICATION_REQUEST_ACCESSOR_HPP
+#define NEXUS_QUERIES_ACCOUNT_MODIFICATION_REQUEST_ACCESSOR_HPP
 #include <Beam/Queries/MemberAccessExpression.hpp>
 #include <Beam/Queries/ParameterExpression.hpp>
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"

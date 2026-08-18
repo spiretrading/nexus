@@ -136,19 +136,6 @@ namespace Nexus {
   };
 
   /**
-   * Registers the types that an AccountModificationRequestQuery's filter can
-   * refer to.
-   * @param registry The registry to add the types to.
-   */
-  template<Beam::IsSender S>
-  void register_administration_query_types(
-      Beam::Out<Beam::TypeRegistry<S>> registry) {
-    Beam::register_query_types(Beam::out(registry));
-    registry->add(
-      typeid(AccountModificationRequest), "Nexus.AccountModificationRequest");
-  }
-
-  /**
    * Returns a query for an index's most recent AccountModificationRequests.
    * @param index The account or directory whose requests are to be queried.
    * @param count The maximum number of requests to query.

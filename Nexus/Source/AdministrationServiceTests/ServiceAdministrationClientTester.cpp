@@ -2,8 +2,8 @@
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/ServicesTests/ServiceClientFixture.hpp>
 #include <doctest/doctest.h>
-#include "Nexus/AdministrationService/AccountModificationRequestAccessor.hpp"
 #include "Nexus/AdministrationService/ServiceAdministrationClient.hpp"
+#include "Nexus/Queries/AccountModificationRequestAccessor.hpp"
 
 using namespace Beam;
 using namespace Beam::Tests;
@@ -20,8 +20,7 @@ namespace {
     std::unique_ptr<TestServiceAdministrationClient> m_client;
 
     Fixture() {
-      register_administration_query_types(
-        out(m_server.get_slots().get_registry()));
+      Nexus::register_query_types(out(m_server.get_slots().get_registry()));
       register_administration_services(out(m_server.get_slots()));
       register_administration_messages(out(m_server.get_slots()));
       m_client = make_client<TestServiceAdministrationClient>();
