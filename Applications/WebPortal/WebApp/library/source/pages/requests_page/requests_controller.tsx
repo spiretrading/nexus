@@ -46,7 +46,7 @@ export class RequestsController extends React.Component<Properties, State> {
     const parsed = parseSearch(props.location.search);
     this.state = {
       redirect: null,
-      displayStatus: RequestDirectoryPage.DisplayStatus.IN_PROGRESS,
+      displayStatus: RequestDirectoryPage.DisplayStatus.READY,
       requestState: parsed.requestState,
       filters: parsed.filters,
       filterCount: computeFilterCount(parsed.filters),
@@ -62,6 +62,7 @@ export class RequestsController extends React.Component<Properties, State> {
       isSubmitting: false
     };
     this.queryTimerId = null;
+    this.placeholderTimerId = null;
     this.generation = 0;
   }
 
@@ -116,6 +117,9 @@ export class RequestsController extends React.Component<Properties, State> {
   }
 
   public async componentDidMount(): Promise<void> {
+    if(this.parseRequestId() === null) {
+      this.schedulePlaceholder();
+    }
     await this.props.model.load();
     const requestId = this.parseRequestId();
     if(requestId !== null) {
@@ -141,6 +145,7 @@ export class RequestsController extends React.Component<Properties, State> {
 
   public componentWillUnmount(): void {
     clearTimeout(this.queryTimerId);
+    clearTimeout(this.placeholderTimerId);
   }
 
   private currentPage(): RequestsPage.Page {
@@ -190,17 +195,10 @@ export class RequestsController extends React.Component<Properties, State> {
   private async resetAndLoad(): Promise<void> {
     const parsed = parseSearch(this.props.location.search);
     this.setState({
-      displayStatus: RequestDirectoryPage.DisplayStatus.IN_PROGRESS,
       requestState: parsed.requestState,
       filters: parsed.filters,
       filterCount: computeFilterCount(parsed.filters),
-      pageIndex: parsed.pageIndex,
-      response: {
-        status: RequestsModel.ResponseStatus.IN_PROGRESS,
-        facetCounts: {pending: 0, approved: 0, rejected: 0},
-        totalCount: 0,
-        requestList: []
-      }
+      pageIndex: parsed.pageIndex
     });
     this.loadNow({
       scope: this.currentPage() === RequestsPage.Page.YOUR_REQUESTS ?
@@ -214,7 +212,6 @@ export class RequestsController extends React.Component<Properties, State> {
   private onSubmit = (submission: RequestsModel.Submission) => {
     ++this.generation;
     this.setState({
-      displayStatus: RequestDirectoryPage.DisplayStatus.IN_PROGRESS,
       requestState: submission.requestState,
       filters: submission.filters,
       filterCount: computeFilterCount(submission.filters),
@@ -287,6 +284,29 @@ export class RequestsController extends React.Component<Properties, State> {
     this.loadDirectory(submission);
   }
 
+  private schedulePlaceholder(): void {
+    if(this.placeholderTimerId !== null) {
+      return;
+    }
+    this.placeholderTimerId = window.setTimeout(() => {
+      this.placeholderTimerId = null;
+      this.setState({
+        displayStatus: RequestDirectoryPage.DisplayStatus.IN_PROGRESS,
+        response: {
+          status: RequestsModel.ResponseStatus.IN_PROGRESS,
+          facetCounts: {pending: 0, approved: 0, rejected: 0},
+          totalCount: 0,
+          requestList: []
+        }
+      });
+    }, PLACEHOLDER_DELAY);
+  }
+
+  private clearPlaceholder(): void {
+    clearTimeout(this.placeholderTimerId);
+    this.placeholderTimerId = null;
+  }
+
   private isCurrent(submission: RequestsModel.Submission): boolean {
     return submission.requestState === this.state.requestState &&
       submission.filters === this.state.filters &&
@@ -303,11 +323,13 @@ export class RequestsController extends React.Component<Properties, State> {
       pageIndex: this.state.pageIndex
     };
     const generation = ++this.generation;
+    this.schedulePlaceholder();
     try {
       const response = await this.props.model.loadRequestDirectory(sub);
       if(generation !== this.generation) {
         return;
       }
+      this.clearPlaceholder();
       if(response.status !== RequestsModel.ResponseStatus.ERROR &&
           response.requestList.length === 0 && sub.pageIndex > 0 &&
           this.isCurrent(sub)) {
@@ -331,6 +353,7 @@ export class RequestsController extends React.Component<Properties, State> {
       if(generation !== this.generation) {
         return;
       }
+      this.clearPlaceholder();
       this.setState({
         displayStatus: RequestDirectoryPage.DisplayStatus.ERROR
       });
@@ -338,10 +361,13 @@ export class RequestsController extends React.Component<Properties, State> {
   }
 
   private queryTimerId: number;
+  private placeholderTimerId: number;
   private generation: number;
 }
 
 const QUERY_DELAY = 300;
+
+const PLACEHOLDER_DELAY = 500;
 
 const DETAIL_STYLE: React.CSSProperties = {
   borderTop: '1px solid #E6E6E6',
