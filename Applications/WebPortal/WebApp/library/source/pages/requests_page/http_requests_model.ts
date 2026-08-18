@@ -184,12 +184,17 @@ export class HttpRequestsModel extends RequestsModel {
     query.search = submission.filters.query;
     query.sortField = toSortField(submission.filters.sortKey);
     if(submission.filters.startDate) {
-      query.startDate = toUtcDateTime(submission.filters.startDate.toDate());
+      const startDate = submission.filters.startDate.toDate();
+      if(!isNaN(startDate.getTime())) {
+        query.startDate = toUtcDateTime(startDate);
+      }
     }
     if(submission.filters.endDate) {
       const endDate = submission.filters.endDate.toDate();
-      endDate.setHours(23, 59, 59, 999);
-      query.endDate = toUtcDateTime(endDate);
+      if(!isNaN(endDate.getTime())) {
+        endDate.setHours(23, 59, 59, 999);
+        query.endDate = toUtcDateTime(endDate);
+      }
     }
     if(isGroup) {
       query.excludedAccount = this.account;
@@ -249,7 +254,7 @@ export class HttpRequestsModel extends RequestsModel {
       firstChange: changes.first,
       additionalChangesCount: Math.max(0, changes.count - 1),
       commentCount: summary.commentCount,
-      managerApproval: toManagerApproval(status)
+      managerApproval: toManagerApproval(status, this.account)
     };
   }
 
@@ -346,7 +351,7 @@ export class HttpRequestsModel extends RequestsModel {
     const messageIds = await admin.loadMessageIds(requestId);
     const activities: RequestsModel.ActivityEntry[] = [];
     for(const messageId of messageIds) {
-      const message = await admin.loadMessage(messageId);
+      const message = await admin.loadMessage(requestId, messageId);
       const identity = await tryLoadIdentity(admin, message.account);
       const plainText = message.bodies.find(
         body => body.contentType === Nexus.Message.PLAIN_TEXT);
@@ -546,13 +551,13 @@ function hashToColor(id: number): string {
   return TINTS[Math.abs(id) % TINTS.length];
 }
 
-function toManagerApproval(status: Nexus.AccountModificationRequest.Update):
-    RequestsModel.ManagerApproval | undefined {
+function toManagerApproval(status: Nexus.AccountModificationRequest.Update,
+    account: Beam.DirectoryEntry): RequestsModel.ManagerApproval | undefined {
   if(status.status === Nexus.AccountModificationRequest.Status.REVIEWED ||
       status.status === Nexus.AccountModificationRequest.Status.SCHEDULED) {
     return {
       approver: status.account.name,
-      self: false
+      self: status.account.id === account.id
     };
   }
   return undefined;

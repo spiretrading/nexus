@@ -90,7 +90,8 @@ namespace Nexus {
         boost::posix_time::ptime effective_date, const Message& comment);
       AccountModificationRequest::Update reject_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment);
-      Message load_message(Message::Id id);
+      Message load_message(
+        AccountModificationRequest::Id request_id, Message::Id id);
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
       Message send_account_modification_request_message(
@@ -385,9 +386,10 @@ namespace Nexus {
   }
 
   template<IsAdministrationClient C>
-  Message ToPythonAdministrationClient<C>::load_message(Message::Id id) {
+  Message ToPythonAdministrationClient<C>::load_message(
+      AccountModificationRequest::Id request_id, Message::Id id) {
     auto release = Beam::Python::GilRelease();
-    return m_client->load_message(id);
+    return m_client->load_message(request_id, id);
   }
 
   template<IsAdministrationClient C>

@@ -238,7 +238,7 @@ export abstract class AdministrationClient {
    * @param id - The id of the message to load.
    * @return The message with the specified id.
    */
-  public abstract loadMessage(id: number): Promise<Message>;
+  public abstract loadMessage(requestId: number, id: number): Promise<Message>;
 
   /**
    * Loads the message ids associated with a request.

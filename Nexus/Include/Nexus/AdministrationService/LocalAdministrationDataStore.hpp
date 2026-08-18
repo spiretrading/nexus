@@ -120,7 +120,7 @@ namespace Nexus {
       std::unordered_map<Beam::DirectoryEntry, std::vector<Notification>>
         m_notifications;
 
-      static std::unordered_set<Beam::DirectoryEntry> make_account_scope(
+      static std::unordered_set<unsigned int> make_account_scope(
         const std::vector<Beam::DirectoryEntry>* accounts);
       LocalAdministrationDataStore(
         const LocalAdministrationDataStore&) = delete;
@@ -294,13 +294,18 @@ namespace Nexus {
     return true;
   }
 
-  inline std::unordered_set<Beam::DirectoryEntry>
+  inline std::unordered_set<unsigned int>
       LocalAdministrationDataStore::make_account_scope(
         const std::vector<Beam::DirectoryEntry>* accounts) {
     if(!accounts) {
       return {};
     }
-    return std::unordered_set(accounts->begin(), accounts->end());
+    auto scope = std::unordered_set<unsigned int>();
+    scope.reserve(accounts->size());
+    for(auto& account : *accounts) {
+      scope.insert(account.m_id);
+    }
+    return scope;
   }
 
   inline AccountModificationRequestCounts
@@ -312,7 +317,7 @@ namespace Nexus {
     auto counts = AccountModificationRequestCounts(0, 0, 0);
     for(auto& entry : m_account_modification_requests) {
       auto& request = entry.second;
-      if(accounts && !scope.contains(request.get_account())) {
+      if(accounts && !scope.contains(request.get_account().m_id)) {
         continue;
       }
       if(!Beam::test_filter(*evaluator, request)) {
@@ -369,7 +374,7 @@ namespace Nexus {
     auto matches = std::vector<AccountModificationRequest>();
     for(auto& entry : m_account_modification_requests) {
       auto& request = entry.second;
-      if(accounts && !scope.contains(request.get_account())) {
+      if(accounts && !scope.contains(request.get_account().m_id)) {
         continue;
       }
       auto is_excluded = [&] {
@@ -452,8 +457,8 @@ namespace Nexus {
       auto predecessor = boost::optional<AccountModificationRequest::Id>();
       for(auto& entry : m_account_modification_requests) {
         auto& candidate = entry.second;
-        if(candidate.get_id() >= id ||
-            candidate.get_account() != request->second.get_account() ||
+        if(candidate.get_id() >= id || candidate.get_account().m_id !=
+            request->second.get_account().m_id ||
             candidate.get_type() != request->second.get_type()) {
           continue;
         }

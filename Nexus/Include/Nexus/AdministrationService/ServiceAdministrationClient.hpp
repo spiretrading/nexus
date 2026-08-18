@@ -95,7 +95,8 @@ namespace Nexus {
         boost::posix_time::ptime effective_date, const Message& comment);
       AccountModificationRequest::Update reject_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment);
-      Message load_message(Message::Id id);
+      Message load_message(
+        AccountModificationRequest::Id request_id, Message::Id id);
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
       Message send_account_modification_request_message(
@@ -551,10 +552,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   template<typename B>
-  Message ServiceAdministrationClient<B>::load_message(Message::Id id) {
+  Message ServiceAdministrationClient<B>::load_message(
+      AccountModificationRequest::Id request_id, Message::Id id) {
     return Beam::service_or_throw_with_nested([&] {
       auto client = m_client_handler.get_client();
-      return client->template send_request<LoadMessageService>(id);
+      return client->template send_request<LoadMessageService>(request_id, id);
     }, "Failed to load message: " + boost::lexical_cast<std::string>(id));
   }
 

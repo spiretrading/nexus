@@ -845,9 +845,11 @@ HttpResponse AdministrationWebServlet::on_reject_account_modification_request(
 HttpResponse AdministrationWebServlet::on_load_message(
     const HttpRequest& request) {
   struct Parameters {
+    AccountModificationRequest::Id m_request_id;
     Message::Id m_id;
 
     void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("request_id", m_request_id);
       shuttle.shuttle("id", m_id);
     }
   };
@@ -859,7 +861,8 @@ HttpResponse AdministrationWebServlet::on_load_message(
   }
   auto params = session->shuttle_parameters<Parameters>(request);
   auto& clients = session->get_clients();
-  auto message = clients.get_administration_client().load_message(params.m_id);
+  auto message = clients.get_administration_client().load_message(
+    params.m_request_id, params.m_id);
   session->shuttle_response(message, out(response));
   return response;
 }

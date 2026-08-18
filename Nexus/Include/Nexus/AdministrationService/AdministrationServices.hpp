@@ -330,7 +330,8 @@ namespace Nexus {
      * @return The message with the specified <i>id</i>.
      */
     (LoadMessageService, "Nexus.AdministrationServices.LoadMessageService",
-      Message, (Message::Id, id)),
+      Message, (AccountModificationRequest::Id, request_id),
+      (Message::Id, id)),
 
     /**
      * Loads the list of messages associated with an account modification.

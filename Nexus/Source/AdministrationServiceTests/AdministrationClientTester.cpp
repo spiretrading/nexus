@@ -361,7 +361,7 @@ TEST_SUITE("AdministrationClient") {
       id, DirectoryEntry::make_account(21, "message_account"), ptime(), {});
     require_operation<TestAdministrationClient::LoadMessageOperation>(
       [&] (auto& client) {
-        return client.load_message(id);
+        return client.load_message(7, id);
       }, message);
   }
 

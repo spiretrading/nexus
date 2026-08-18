@@ -128,8 +128,8 @@ namespace Nexus {
           std::declval<AccountModificationRequest::Id>(),
           std::declval<const Message&>()) } ->
             std::same_as<AccountModificationRequest::Update>;
-      { client.load_message(std::declval<Message::Id>()) } ->
-          std::same_as<Message>;
+      { client.load_message(std::declval<AccountModificationRequest::Id>(),
+          std::declval<Message::Id>()) } -> std::same_as<Message>;
       { client.load_message_ids(
           std::declval<AccountModificationRequest::Id>()) } ->
             std::same_as<std::vector<Message::Id>>;
@@ -421,7 +421,8 @@ namespace Nexus {
        * @param id The id of the message.
        * @return The message with the specified <i>id</i>.
        */
-      Message load_message(Message::Id id);
+      Message load_message(
+        AccountModificationRequest::Id request_id, Message::Id id);
 
       /**
        * Loads the list of messages associated with an account modification.
@@ -564,7 +565,8 @@ namespace Nexus {
         virtual AccountModificationRequest::Update
           reject_account_modification_request(
             AccountModificationRequest::Id id, const Message& comment) = 0;
-        virtual Message load_message(Message::Id id) = 0;
+        virtual Message load_message(
+          AccountModificationRequest::Id request_id, Message::Id id) = 0;
         virtual std::vector<Message::Id> load_message_ids(
           AccountModificationRequest::Id id) = 0;
         virtual Message send_account_modification_request_message(
@@ -657,7 +659,8 @@ namespace Nexus {
           const Message& comment) override;
         AccountModificationRequest::Update reject_account_modification_request(
           AccountModificationRequest::Id id, const Message& comment) override;
-        Message load_message(Message::Id id) override;
+        Message load_message(
+          AccountModificationRequest::Id request_id, Message::Id id) override;
         std::vector<Message::Id> load_message_ids(
           AccountModificationRequest::Id id) override;
         Message send_account_modification_request_message(
@@ -892,8 +895,9 @@ namespace Nexus {
     return m_client->reject_account_modification_request(id, comment);
   }
 
-  inline Message AdministrationClient::load_message(Message::Id id) {
-    return m_client->load_message(id);
+  inline Message AdministrationClient::load_message(
+      AccountModificationRequest::Id request_id, Message::Id id) {
+    return m_client->load_message(request_id, id);
   }
 
   inline std::vector<Message::Id> AdministrationClient::load_message_ids(
@@ -1161,8 +1165,8 @@ namespace Nexus {
 
   template<typename C>
   Message AdministrationClient::WrappedAdministrationClient<C>::load_message(
-      Message::Id id) {
-    return m_client->load_message(id);
+      AccountModificationRequest::Id request_id, Message::Id id) {
+    return m_client->load_message(request_id, id);
   }
 
   template<typename C>

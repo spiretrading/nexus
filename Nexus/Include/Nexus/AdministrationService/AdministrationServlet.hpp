@@ -237,7 +237,8 @@ namespace Nexus {
       AccountModificationRequest::Update on_reject_account_modification_request(
         ServiceProtocolClient& client, AccountModificationRequest::Id id,
         Message comment);
-      Message on_load_message(ServiceProtocolClient& client, Message::Id id);
+      Message on_load_message(ServiceProtocolClient& client,
+        AccountModificationRequest::Id request_id, Message::Id id);
       std::vector<Message::Id> on_load_message_ids(
         ServiceProtocolClient& client, AccountModificationRequest::Id id);
       Message on_send_account_modification_request_message(
@@ -856,7 +857,7 @@ namespace Nexus {
         const Beam::DirectoryEntry& account, const AccountRoles& roles,
         AccountModificationRequest::Type type,
         boost::posix_time::ptime effective_date) {
-    if(!check_read_permission(session_account, submission_account)) {
+    if(!check_read_permission(session_account, account)) {
       boost::throw_with_location(
         Beam::ServiceRequestException("Insufficient permissions."));
     }
@@ -939,7 +940,11 @@ namespace Nexus {
       if(!m_open_state.is_open()) {
         break;
       }
-      grant_scheduled_modifications();
+      try {
+        grant_scheduled_modifications();
+      } catch(const std::exception& e) {
+        std::cerr << e.what() << std::endl;
+      }
     }
   }
 
@@ -1962,10 +1967,16 @@ namespace Nexus {
         if(effective_date != boost::posix_time::not_a_date_time) {
           return effective_date;
         }
-        return request.get_effective_date();
+        return m_data_store->load_account_modification_request(
+          request.get_id()).get_effective_date();
       }();
-      update.m_status = resolve_modification_status(
+      auto status = resolve_modification_status(
         roles, resolved_effective_date, timestamp);
+      if(static_cast<int>(status) < static_cast<int>(update.m_status)) {
+        boost::throw_with_location(
+          Beam::ServiceRequestException("Insufficient permissions."));
+      }
+      update.m_status = status;
       update.m_account = session.get_account();
       ++update.m_sequence_number;
       update.m_timestamp = timestamp;
@@ -2055,8 +2066,16 @@ namespace Nexus {
         Beam::IsTimeClient<Beam::dereference_t<R>> &&
           Beam::IsTimer<Beam::dereference_t<T>>
   Message AdministrationServlet<C, S, D, R, T>::on_load_message(
-      ServiceProtocolClient& client, Message::Id id) {
+      ServiceProtocolClient& client,
+      AccountModificationRequest::Id request_id, Message::Id id) {
+    auto& session = client.get_session();
+    ensure_modification_read_permission(session.get_account(), request_id);
     return m_data_store->with_transaction([&] {
+      auto ids = m_data_store->load_message_ids(request_id);
+      if(!std::ranges::contains(ids, id)) {
+        boost::throw_with_location(
+          Beam::ServiceRequestException("Message not found."));
+      }
       return m_data_store->load_message(id);
     });
   }
@@ -2092,6 +2111,7 @@ namespace Nexus {
         ServiceProtocolClient& client, AccountModificationRequest::Id id,
         Message message) {
     auto& session = client.get_session();
+    ensure_modification_read_permission(session.get_account(), id);
     auto account = message.get_account();
     if(account.m_id == -1) {
       account = session.get_account();

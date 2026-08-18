@@ -24,6 +24,17 @@ using namespace Nexus::Venues;
 namespace {
   struct InterceptingDataStore : LocalAdministrationDataStore {
     std::function<void ()> m_on_load_entitlement_modification;
+    std::function<void ()> m_on_load_status;
+
+    AccountModificationRequest::Update load_account_modification_request_status(
+        AccountModificationRequest::Id id) {
+      if(m_on_load_status) {
+        auto callback = std::exchange(m_on_load_status, nullptr);
+        callback();
+      }
+      return LocalAdministrationDataStore::
+        load_account_modification_request_status(id);
+    }
 
     EntitlementModification load_entitlement_modification(
         AccountModificationRequest::Id id) {
@@ -1590,6 +1601,103 @@ TEST_SUITE("AdministrationServlet") {
       Notification::Category::ACCOUNT_MODIFICATION);
     REQUIRE(notification.m_timestamp == fixture.m_time_client.get_time());
     REQUIRE(!notification.m_is_read);
+  }
+
+  TEST_CASE("modification_requests_are_scoped_to_a_readable_account") {
+    auto fixture = Fixture();
+    auto outsider_group = fixture.make_trading_group("outsider_group");
+    fixture.make_account("outsider", outsider_group.get_traders_directory());
+    auto [outsider_account, outsider_client] = fixture.make_client("outsider");
+    auto comment =
+      Nexus::Message(0, outsider_account, fixture.m_time_client.get_time(),
+        {Nexus::Message::Body::make_plain_text("test comment")});
+    SUBCASE("submitting_for_another_group") {
+      REQUIRE_THROWS_AS(outsider_client->send_request<
+        SubmitEntitlementModificationRequestService>(fixture.m_trader_account,
+          EntitlementModification(), ptime(), comment), ServiceRequestException);
+      REQUIRE_THROWS_AS(outsider_client->send_request<
+        SubmitRiskModificationRequestService>(fixture.m_trader_account,
+          RiskModification(), ptime(), comment), ServiceRequestException);
+    }
+    SUBCASE("submitting_for_oneself") {
+      REQUIRE_NOTHROW(outsider_client->send_request<
+        SubmitEntitlementModificationRequestService>(outsider_account,
+          EntitlementModification(), ptime(), comment));
+    }
+    SUBCASE("reading_and_commenting_on_another_group") {
+      auto request = fixture.m_trader_client->send_request<
+        SubmitEntitlementModificationRequestService>(fixture.m_trader_account,
+          EntitlementModification(), ptime(), comment);
+      auto ids = fixture.m_trader_client->send_request<
+        LoadMessageIdsService>(request.get_id());
+      REQUIRE(ids.size() == 1);
+      REQUIRE_THROWS_AS(outsider_client->send_request<LoadMessageService>(
+        request.get_id(), ids[0]), ServiceRequestException);
+      REQUIRE_THROWS_AS(outsider_client->send_request<
+        SendAccountModificationRequestMessageService>(
+          request.get_id(), comment), ServiceRequestException);
+      REQUIRE_NOTHROW(fixture.m_trader_client->send_request<
+        LoadMessageService>(request.get_id(), ids[0]));
+    }
+  }
+
+  TEST_CASE("loading_a_message_from_an_unrelated_request") {
+    auto fixture = Fixture();
+    auto comment = Nexus::Message(
+      0, fixture.m_trader_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto first = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(fixture.m_trader_account,
+        EntitlementModification(), ptime(), comment);
+    auto second = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(
+        fixture.m_trader_account, EntitlementModification(), ptime(), comment);
+    auto ids = fixture.m_trader_client->send_request<LoadMessageIdsService>(
+      second.get_id());
+    REQUIRE(ids.size() == 1);
+    REQUIRE_THROWS_AS(fixture.m_trader_client->send_request<
+      LoadMessageService>(first.get_id(), ids[0]), ServiceRequestException);
+  }
+
+  TEST_CASE("approving_can_not_lower_a_request_status") {
+    auto fixture = Fixture();
+    auto comment = Nexus::Message(
+      0, fixture.m_trader_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto request = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(fixture.m_trader_account,
+        EntitlementModification(), ptime(), comment);
+    auto reviewed = fixture.m_manager_client->send_request<
+      ApproveAccountModificationRequestService>(
+        request.get_id(), ptime(), comment);
+    REQUIRE(reviewed.m_status == AccountModificationRequest::Status::REVIEWED);
+    REQUIRE_THROWS_AS(fixture.m_trader_client->send_request<
+      ApproveAccountModificationRequestService>(
+        request.get_id(), ptime(), comment), ServiceRequestException);
+    auto status = fixture.m_manager_client->send_request<
+      LoadAccountModificationRequestStatusService>(request.get_id());
+    REQUIRE(status.m_status == AccountModificationRequest::Status::REVIEWED);
+  }
+
+  TEST_CASE("approving_reads_a_concurrently_stored_effective_date") {
+    auto fixture = Fixture<InterceptingDataStore>();
+    auto comment = Nexus::Message(
+      0, fixture.m_trader_account, fixture.m_time_client.get_time(),
+      {Nexus::Message::Body::make_plain_text("test comment")});
+    auto request = fixture.m_trader_client->send_request<
+      SubmitEntitlementModificationRequestService>(fixture.m_trader_account,
+        EntitlementModification(), ptime(), comment);
+    auto scheduled_date = time_from_string("2024-08-01 00:00:00");
+    fixture.m_data_store.m_on_load_status = [&] {
+      fixture.m_data_store.store_effective_date(
+        request.get_id(), scheduled_date);
+    };
+    auto update = fixture.m_admin_client->send_request<
+      ApproveAccountModificationRequestService>(
+        request.get_id(), ptime(), comment);
+    REQUIRE(update.m_status == AccountModificationRequest::Status::SCHEDULED);
+    REQUIRE(fixture.m_data_store.load_account_modification_request(
+      request.get_id()).get_effective_date() == scheduled_date);
   }
 
   TEST_CASE("send_notification_insufficient_permissions") {

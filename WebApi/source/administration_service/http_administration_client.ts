@@ -301,10 +301,10 @@ export class HttpAdministrationClient extends AdministrationClient {
     return AccountModificationRequest.Update.fromJson(response);
   }
 
-  public async loadMessage(id: number): Promise<Message> {
-    const response = await Beam.post(
-      '/api/administration_service/load_message',
+  public async loadMessage(requestId: number, id: number): Promise<Message> {
+    const response = await Beam.post('/api/administration_service/load_message',
       {
+        request_id: requestId,
         id: id
       });
     return Message.fromJson(response);

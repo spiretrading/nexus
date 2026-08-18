@@ -658,12 +658,14 @@ TEST_SUITE("ServiceAdministrationClient") {
     auto message =
       Nexus::Message(id, DirectoryEntry::make_account(50, "msg_account"),
         ptime(gregorian::date(2024, 5, 26)), {});
-    fixture.on_request<LoadMessageService>([&] (auto& request, auto received_id) {
-      REQUIRE(received_id == id);
-      request.set(message);
-    });
+    fixture.on_request<LoadMessageService>(
+      [&] (auto& request, auto received_request_id, auto received_id) {
+        REQUIRE(received_request_id == 7);
+        REQUIRE(received_id == id);
+        request.set(message);
+      });
     auto received_message =
-      REQUIRE_NO_THROW(fixture.m_client->load_message(id));
+      REQUIRE_NO_THROW(fixture.m_client->load_message(7, id));
     test_json_equality(received_message, message);
   }
 

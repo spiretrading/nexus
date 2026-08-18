@@ -215,6 +215,7 @@ namespace Nexus::Tests {
 
       /** Records a call to load_message(). */
       struct LoadMessageOperation {
+        AccountModificationRequest::Id m_request_id;
         Message::Id m_id;
         Beam::Tests::ServiceResult<Message> m_result;
       };
@@ -369,7 +370,8 @@ namespace Nexus::Tests {
         boost::posix_time::ptime effective_date, const Message& comment);
       AccountModificationRequest::Update reject_account_modification_request(
         AccountModificationRequest::Id id, const Message& comment);
-      Message load_message(Message::Id id);
+      Message load_message(
+        AccountModificationRequest::Id request_id, Message::Id id);
       std::vector<Message::Id> load_message_ids(
         AccountModificationRequest::Id id);
       Message send_account_modification_request_message(
@@ -613,8 +615,10 @@ namespace Nexus::Tests {
       AccountModificationRequest::Update>(id, comment);
   }
 
-  inline Message TestAdministrationClient::load_message(Message::Id id) {
-    return m_queue.append_result<LoadMessageOperation, Message>(id);
+  inline Message TestAdministrationClient::load_message(
+      AccountModificationRequest::Id request_id, Message::Id id) {
+    return m_queue.append_result<LoadMessageOperation, Message>(
+      request_id, id);
   }
 
   inline std::vector<Message::Id> TestAdministrationClient::load_message_ids(
