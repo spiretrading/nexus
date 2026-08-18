@@ -22,6 +22,7 @@ export class HttpRequestsModel extends RequestsModel {
     this.generation = 0;
     this.countsKey = null;
     this.counts = null;
+    this.countsTime = 0;
   }
 
   public async load(): Promise<void> {
@@ -61,14 +62,21 @@ export class HttpRequestsModel extends RequestsModel {
         return summaries;
       })();
       const requestList = ordered.map(summary => this.toEntry(summary));
+      const currentCounts = await (async () => {
+        if(summaries.length > 0 || submission.pageIndex === 0) {
+          return counts;
+        }
+        this.invalidateCounts();
+        return this.loadCounts(makeCountsKey(submission), query);
+      })();
       return {
         status: RequestsModel.ResponseStatus.READY,
         facetCounts: {
-          pending: counts.pending,
-          approved: counts.granted,
-          rejected: counts.rejected
+          pending: currentCounts.pending,
+          approved: currentCounts.granted,
+          rejected: currentCounts.rejected
         },
-        totalCount: facetCount(counts, submission.requestState),
+        totalCount: facetCount(currentCounts, submission.requestState),
         requestList
       };
     } catch {
@@ -115,19 +123,26 @@ export class HttpRequestsModel extends RequestsModel {
   private async loadCounts(
       key: string, query: Nexus.AccountModificationRequestQuery):
         Promise<Nexus.AccountModificationRequestCounts> {
-    if(key === this.countsKey) {
+    if(key === this.countsKey &&
+        Date.now() - this.countsTime < COUNTS_MAX_AGE) {
       return this.counts;
     }
     const counts = await this.serviceClients.administrationClient.
       loadAccountModificationRequestCounts(query);
     this.countsKey = key;
     this.counts = counts;
+    this.countsTime = Date.now();
     return counts;
   }
 
-  private invalidateCache(): void {
+  private invalidateCounts(): void {
     this.countsKey = null;
     this.counts = null;
+    this.countsTime = 0;
+  }
+
+  private invalidateCache(): void {
+    this.invalidateCounts();
     this.anchors = [null];
   }
 
@@ -350,6 +365,7 @@ export class HttpRequestsModel extends RequestsModel {
   private generation: number;
   private countsKey: string;
   private counts: Nexus.AccountModificationRequestCounts;
+  private countsTime: number;
 }
 
 function toUtcDateTime(value: globalThis.Date): Beam.DateTime {
@@ -362,6 +378,8 @@ function toUtcDateTime(value: globalThis.Date): Beam.DateTime {
     value.getUTCSeconds()) + value.getUTCMilliseconds();
   return new Beam.DateTime(date, new Beam.Duration(ticks));
 }
+
+const COUNTS_MAX_AGE = 30000;
 
 function toMessage(comment: string): Nexus.Message {
   if(comment.length > 0) {

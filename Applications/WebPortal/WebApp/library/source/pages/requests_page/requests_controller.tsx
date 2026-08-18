@@ -286,6 +286,12 @@ export class RequestsController extends React.Component<Properties, State> {
     this.loadDirectory(submission);
   }
 
+  private isCurrent(submission: RequestsModel.Submission): boolean {
+    return submission.requestState === this.state.requestState &&
+      submission.filters === this.state.filters &&
+      submission.pageIndex === this.state.pageIndex;
+  }
+
   private async loadDirectory(
       submission?: RequestsModel.Submission): Promise<void> {
     const sub = submission ?? {
@@ -302,13 +308,13 @@ export class RequestsController extends React.Component<Properties, State> {
         return;
       }
       if(response.status !== RequestsModel.ResponseStatus.ERROR &&
-          response.requestList.length === 0 && response.totalCount > 0) {
-        const lastPage =
-          Math.ceil(response.totalCount / RequestsModel.PAGE_SIZE) - 1;
-        if(lastPage < sub.pageIndex) {
-          this.onSubmit({...sub, pageIndex: lastPage});
-          return;
-        }
+          response.requestList.length === 0 && sub.pageIndex > 0 &&
+          this.isCurrent(sub)) {
+        const lastPage = Math.max(
+          0, Math.ceil(response.totalCount / RequestsModel.PAGE_SIZE) - 1);
+        this.onSubmit(
+          {...sub, pageIndex: Math.min(lastPage, sub.pageIndex - 1)});
+        return;
       }
       const displayStatus = (() => {
         if(response.status === RequestsModel.ResponseStatus.ERROR) {
