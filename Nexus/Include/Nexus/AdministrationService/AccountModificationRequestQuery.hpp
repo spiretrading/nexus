@@ -29,7 +29,7 @@ namespace Nexus {
     /** The account name ordering the request. */
     std::string m_name;
 
-    /** Constructs an anchor at the first request. */
+    /** Constructs an anchor positioned before every request. */
     AccountModificationRequestAnchor() noexcept;
 
     /**
@@ -120,6 +120,8 @@ namespace Nexus {
       void set_excluded_account(
         const boost::optional<Beam::DirectoryEntry>& account);
 
+      bool operator ==(const AccountModificationRequestQuery&) const = delete;
+
     protected:
       template<Beam::IsShuttle S>
       void shuttle(S& shuttle, unsigned int version);
@@ -175,7 +177,7 @@ namespace Nexus {
   inline AccountModificationRequestAnchor::AccountModificationRequestAnchor()
     noexcept
     : m_id(-1),
-      m_date(boost::posix_time::not_a_date_time) {}
+      m_date(boost::posix_time::neg_infin) {}
 
   inline AccountModificationRequestAnchor::AccountModificationRequestAnchor(
     AccountModificationRequest::Id id, boost::posix_time::ptime date,

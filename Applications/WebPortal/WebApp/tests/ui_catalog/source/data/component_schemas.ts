@@ -888,6 +888,7 @@ const SAMPLE_REQUEST_LIST:
       Nexus.AccountModificationRequest.Status.PENDING,
     updateTime: yesterday,
     account: Beam.DirectoryEntry.makeAccount(100, 'achen01'),
+    requester: Beam.DirectoryEntry.makeAccount(101, 'bmartin02'),
     effectiveDate: new Date(2025, 9, 30),
     firstChange: change,
     additionalChangesCount: i === 0 ? 3 : 0,

@@ -62,6 +62,9 @@ export class HttpRequestsModel extends RequestsModel {
         return summaries;
       })();
       const requestList = ordered.map(summary => this.toEntry(summary));
+      for(const entry of requestList) {
+        this.localModel.removeStaleDetail(entry.id, entry.state);
+      }
       const currentCounts = await (async () => {
         if(summaries.length > 0 || submission.pageIndex === 0) {
           return counts;
@@ -241,6 +244,7 @@ export class HttpRequestsModel extends RequestsModel {
       state,
       updateTime: updateTime(summary).toDate(),
       account: request.account,
+      requester: request.submissionAccount,
       effectiveDate: request.effectiveDate.date.toDate(),
       firstChange: changes.first,
       additionalChangesCount: Math.max(0, changes.count - 1),

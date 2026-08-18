@@ -93,7 +93,7 @@ TEST_SUITE("AccountModificationRequestQuery") {
       42, time_from_string("2024-07-04 12:00:00"), "alpha")) ==
         "(42 2024-Jul-04 12:00:00 alpha)");
     REQUIRE(lexical_cast<std::string>(AccountModificationRequestAnchor()) ==
-      "(-1 not-a-date-time )");
+      "(-1 -infinity )");
   }
 
   TEST_CASE("query_stream") {

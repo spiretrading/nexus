@@ -835,6 +835,32 @@ namespace Nexus::Tests {
       REQUIRE(tail[1].get_id() == 20);
     }
 
+    SUBCASE("load_account_modification_requests_from_a_default_anchor") {
+      auto account = DirectoryEntry::make_account(100, "user_a");
+      auto modification = EntitlementModification();
+      data_store.with_transaction([&] {
+        for(auto id : {10, 20, 30}) {
+          data_store.store(AccountModificationRequest(
+            id, AccountModificationRequest::Type::ENTITLEMENTS, account,
+            account, time_from_string("2024-07-05 10:00:00"),
+            time_from_string("2024-08-01 00:00:00")), modification);
+        }
+      });
+      auto query = AccountModificationRequestQuery();
+      query.set_index(account);
+      query.set_snapshot_limit(SnapshotLimit::from_head(100));
+      query.set_sort_field(
+        AccountModificationRequestQuery::SortField::EFFECTIVE_DATE);
+      query.set_anchor(AccountModificationRequestAnchor());
+      auto requests = data_store.with_transaction([&] {
+        return data_store.load_account_modification_requests(query);
+      });
+      REQUIRE(requests.size() == 3);
+      REQUIRE(requests[0].get_id() == 10);
+      REQUIRE(requests[1].get_id() == 20);
+      REQUIRE(requests[2].get_id() == 30);
+    }
+
     SUBCASE("load_account_modification_requests_by_accounts") {
       auto account_a = DirectoryEntry::make_account(100, "user_a");
       auto account_b = DirectoryEntry::make_account(200, "user_b");

@@ -57,6 +57,18 @@ export class LocalRequestsModel extends RequestsModel {
   }
 
   /**
+   * Removes a cached detail whose state no longer matches the given state.
+   * @param id - The id of the request to check.
+   * @param state - The request's current state.
+   */
+  public removeStaleDetail(id: number, state: Status): void {
+    const detail = this.details.get(id);
+    if(detail && detail.state !== state) {
+      this.details.delete(id);
+    }
+  }
+
+  /**
    * Removes a request detail.
    * @param id - The request id whose detail is to be removed.
    */
@@ -121,6 +133,7 @@ export class LocalRequestsModel extends RequestsModel {
       const query = filters.query.toLowerCase();
       result = result.filter(e =>
         e.account.name.toLowerCase().includes(query) ||
+        e.requester.name.toLowerCase().includes(query) ||
         String(e.id).includes(query));
     }
     if(filters.startDate) {
@@ -146,6 +159,9 @@ export class LocalRequestsModel extends RequestsModel {
         break;
       case RequestsModel.SortField.ACCOUNT:
         sorted.sort((a, b) => a.account.name.localeCompare(b.account.name));
+        break;
+      case RequestsModel.SortField.REQUESTER:
+        sorted.sort((a, b) => a.requester.name.localeCompare(b.requester.name));
         break;
       case RequestsModel.SortField.EFFECTIVE_DATE:
         sorted.sort((a, b) => {
@@ -192,8 +208,8 @@ function matchesState(status: Status,
     requestState: RequestsModel.RequestState): boolean {
   switch(requestState) {
     case RequestsModel.RequestState.PENDING:
-      return status === Status.PENDING || status === Status.REVIEWED ||
-        status === Status.SCHEDULED;
+      return status === Status.NONE || status === Status.PENDING ||
+        status === Status.REVIEWED || status === Status.SCHEDULED;
     case RequestsModel.RequestState.APPROVED:
       return status === Status.GRANTED;
     case RequestsModel.RequestState.REJECTED:

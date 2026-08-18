@@ -260,6 +260,7 @@ export namespace RequestsModel {
     state: Status;
     updateTime: Date;
     account: Beam.DirectoryEntry;
+    requester: Beam.DirectoryEntry;
     effectiveDate: Date;
     firstChange: ListChange;
     additionalChangesCount: number;
