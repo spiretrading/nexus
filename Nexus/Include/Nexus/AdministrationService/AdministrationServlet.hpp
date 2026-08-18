@@ -1571,14 +1571,7 @@ namespace Nexus {
       }
       return load_authorized_accounts(session.get_account(), query.get_index());
     }();
-    auto requests = m_data_store->with_transaction([&] {
-      return load_sorted_requests(accounts, is_unrestricted, query);
-    });
-    auto ids = std::vector<AccountModificationRequest::Id>();
-    ids.reserve(requests.size());
-    for(auto& request : requests) {
-      ids.push_back(request.get_id());
-    }
+    auto requests = std::vector<AccountModificationRequest>();
     auto statuses = std::vector<AccountModificationRequest::Update>();
     auto counts = std::vector<int>();
     auto predecessors =
@@ -1593,6 +1586,12 @@ namespace Nexus {
         AccountModificationRequest::Status::GRANTED;
     };
     m_data_store->with_transaction([&] {
+      requests = load_sorted_requests(accounts, is_unrestricted, query);
+      auto ids = std::vector<AccountModificationRequest::Id>();
+      ids.reserve(requests.size());
+      for(auto& request : requests) {
+        ids.push_back(request.get_id());
+      }
       statuses = m_data_store->load_account_modification_request_statuses(ids);
       counts = m_data_store->load_message_counts(ids);
       predecessors = m_data_store->load_previous_granted_requests(ids);
