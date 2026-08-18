@@ -7,6 +7,7 @@
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
 #include "Nexus/AdministrationService/AdministrationServices.hpp"
+#include "Nexus/Queries/ShuttleQueryTypes.hpp"
 #include "WebPortal/WebPortalSession.hpp"
 
 using namespace Beam;
@@ -21,6 +22,8 @@ AdministrationWebServlet::AdministrationWebServlet(
       [] { return std::make_unique<LiveTimer>(seconds(30)); },
       std::bind_front(&AdministrationWebServlet::on_client_accepted, this),
       std::bind_front(&AdministrationWebServlet::on_client_closed, this)) {
+  Nexus::register_query_types(
+    out(m_protocol_server.get_slots().get_registry()));
   register_administration_services(out(m_protocol_server.get_slots()));
   register_administration_messages(out(m_protocol_server.get_slots()));
   MonitorNotificationsService::add_slot(out(m_protocol_server.get_slots()),

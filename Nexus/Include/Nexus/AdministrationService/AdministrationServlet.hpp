@@ -1953,12 +1953,6 @@ namespace Nexus {
         boost::throw_with_location(
           Beam::ServiceRequestException("Request can not be updated."));
       }
-      if(comment.get_id() != -1) {
-        m_data_store->store(request.get_id(), comment);
-      }
-      if(effective_date != boost::posix_time::not_a_date_time) {
-        m_data_store->store_effective_date(request.get_id(), effective_date);
-      }
       auto resolved_effective_date = [&] {
         if(effective_date != boost::posix_time::not_a_date_time) {
           return effective_date;
@@ -1971,6 +1965,12 @@ namespace Nexus {
       if(static_cast<int>(status) < static_cast<int>(update.m_status)) {
         boost::throw_with_location(
           Beam::ServiceRequestException("Insufficient permissions."));
+      }
+      if(comment.get_id() != -1) {
+        m_data_store->store(request.get_id(), comment);
+      }
+      if(effective_date != boost::posix_time::not_a_date_time) {
+        m_data_store->store_effective_date(request.get_id(), effective_date);
       }
       update.m_status = status;
       update.m_account = session.get_account();

@@ -129,8 +129,8 @@ void Nexus::Python::export_account_modification_request_counts(
 
 void Nexus::Python::export_account_modification_request_query(
     module& module) {
-  auto outer = class_<AccountModificationRequestQuery, SnapshotLimitedQuery,
-    FilteredQuery>(module, "AccountModificationRequestQuery");
+  auto outer = class_<AccountModificationRequestQuery, FilteredQuery>(
+    module, "AccountModificationRequestQuery");
   enum_<AccountModificationRequestQuery::SortField>(outer, "SortField").
     value("CREATED", AccountModificationRequestQuery::SortField::CREATED).
     value("LAST_UPDATED",
@@ -143,6 +143,12 @@ void Nexus::Python::export_account_modification_request_query(
     def(init()).
     def_property("index", &AccountModificationRequestQuery::get_index,
       &AccountModificationRequestQuery::set_index).
+    def_property("snapshot_limit",
+      &AccountModificationRequestQuery::get_snapshot_limit,
+      overload_cast<const SnapshotLimit&>(
+        &AccountModificationRequestQuery::set_snapshot_limit)).
+    def("set_snapshot_limit", overload_cast<SnapshotLimit::Type, int>(
+      &AccountModificationRequestQuery::set_snapshot_limit)).
     def_property("anchor", &AccountModificationRequestQuery::get_anchor,
       overload_cast<const optional<AccountModificationRequestAnchor>&>(
         &AccountModificationRequestQuery::set_anchor)).

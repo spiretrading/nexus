@@ -23,6 +23,7 @@ export class HttpRequestsModel extends RequestsModel {
     this.countsKey = null;
     this.counts = null;
     this.countsTime = 0;
+    this.detailTimes = new Map();
   }
 
   public async load(): Promise<void> {
@@ -94,11 +95,16 @@ export class HttpRequestsModel extends RequestsModel {
 
   public async loadRequestDetail(id: number):
       Promise<RequestsModel.RequestDetail> {
+    const time = this.detailTimes.get(id);
+    if(time === undefined || Date.now() - time >= CACHE_MAX_AGE) {
+      this.localModel.removeDetail(id);
+    }
     try {
       return await this.localModel.loadRequestDetail(id);
     } catch {
       const detail = await this.fetchDetail(id);
       this.localModel.addDetail(detail);
+      this.detailTimes.set(id, Date.now());
       return detail;
     }
   }
@@ -127,7 +133,7 @@ export class HttpRequestsModel extends RequestsModel {
       key: string, query: Nexus.AccountModificationRequestQuery):
         Promise<Nexus.AccountModificationRequestCounts> {
     if(key === this.countsKey &&
-        Date.now() - this.countsTime < COUNTS_MAX_AGE) {
+        Date.now() - this.countsTime < CACHE_MAX_AGE) {
       return this.counts;
     }
     const counts = await this.serviceClients.administrationClient.
@@ -318,8 +324,10 @@ export class HttpRequestsModel extends RequestsModel {
   private async refreshDetail(id: number): Promise<void> {
     try {
       this.localModel.addDetail(await this.fetchDetail(id));
+      this.detailTimes.set(id, Date.now());
     } catch {
       this.localModel.removeDetail(id);
+      this.detailTimes.delete(id);
     }
   }
 
@@ -375,6 +383,7 @@ export class HttpRequestsModel extends RequestsModel {
   private countsKey: string;
   private counts: Nexus.AccountModificationRequestCounts;
   private countsTime: number;
+  private detailTimes: Map<number, number>;
 }
 
 function toUtcDateTime(value: globalThis.Date): Beam.DateTime {
@@ -388,7 +397,7 @@ function toUtcDateTime(value: globalThis.Date): Beam.DateTime {
   return new Beam.DateTime(date, new Beam.Duration(ticks));
 }
 
-const COUNTS_MAX_AGE = 30000;
+const CACHE_MAX_AGE = 30000;
 
 function toMessage(comment: string): Nexus.Message {
   if(comment.length > 0) {

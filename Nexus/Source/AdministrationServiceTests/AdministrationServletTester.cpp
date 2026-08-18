@@ -1671,12 +1671,20 @@ TEST_SUITE("AdministrationServlet") {
       ApproveAccountModificationRequestService>(
         request.get_id(), ptime(), comment);
     REQUIRE(reviewed.m_status == AccountModificationRequest::Status::REVIEWED);
+    auto messages = fixture.m_data_store.load_message_ids(request.get_id());
+    auto effective_date = fixture.m_data_store.
+      load_account_modification_request(request.get_id()).get_effective_date();
     REQUIRE_THROWS_AS(fixture.m_trader_client->send_request<
       ApproveAccountModificationRequestService>(
-        request.get_id(), ptime(), comment), ServiceRequestException);
+        request.get_id(), time_from_string("2030-01-01 00:00:00"), comment),
+      ServiceRequestException);
     auto status = fixture.m_manager_client->send_request<
       LoadAccountModificationRequestStatusService>(request.get_id());
     REQUIRE(status.m_status == AccountModificationRequest::Status::REVIEWED);
+    REQUIRE(
+      fixture.m_data_store.load_message_ids(request.get_id()) == messages);
+    REQUIRE(fixture.m_data_store.load_account_modification_request(
+      request.get_id()).get_effective_date() == effective_date);
   }
 
   TEST_CASE("approving_reads_a_concurrently_stored_effective_date") {
