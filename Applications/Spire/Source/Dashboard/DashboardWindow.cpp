@@ -17,7 +17,6 @@
 #include "Spire/Dashboard/ValueDashboardCell.hpp"
 #include "Spire/LegacyUI/LineInputDialog.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
-#include "Spire/Ui/ScrollBox.hpp"
 #include "ui_DashboardWindow.h"
 
 using namespace Beam;
@@ -54,10 +53,6 @@ DashboardWindow::DashboardWindow(const string& name,
     m_ui->m_savesComboBox->addItem(QString::fromStdString(entry.m_name));
   }
   Apply(schema, name);
-  m_ui->verticalLayout->removeWidget(m_ui->m_dashboard);
-  auto scrollBox = new ScrollBox(m_ui->m_dashboard, this);
-  scrollBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_ui->verticalLayout->insertWidget(1, scrollBox, 1);
   resize(scale(size()));
   connect(m_ui->m_savesComboBox, &QComboBox::textActivated, this,
     &DashboardWindow::OnDashboardActivated);

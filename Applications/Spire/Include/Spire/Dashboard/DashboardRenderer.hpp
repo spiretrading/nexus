@@ -153,7 +153,14 @@ namespace Spire {
       */
       void InsertEmptyRow(int index);
 
-      //! Performs a draw operation.
+      //! Draws the header.
+      /*!
+        \param painter The painter to draw with.
+        \param region The region within the <i>painter</i> to draw to.
+      */
+      void DrawHeader(DashboardPainter& painter, const QRect& region);
+
+      //! Draws the rows.
       /*!
         \param painter The painter to draw with.
         \param region The region within the <i>painter</i> to draw to.
