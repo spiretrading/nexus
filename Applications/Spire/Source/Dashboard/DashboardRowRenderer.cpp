@@ -56,12 +56,13 @@ void DashboardRowRenderer::Move(int sourceIndex, int destinationIndex) {
   m_drawSignal();
 }
 
-void DashboardRowRenderer::Draw(QPaintDevice& device, const QRect& region) {
+void DashboardRowRenderer::Draw(
+    DashboardPainter& painter, const QRect& region) {
   auto leftmostPoint = region.left();
   for(auto& cell : m_cells) {
     QRect cellRegion{leftmostPoint, region.top(), cell->m_width,
       region.height()};
-    cell->m_renderer->Draw(device, cellRegion);
+    cell->m_renderer->Draw(painter, cellRegion);
     leftmostPoint += cell->m_width;
   }
 }

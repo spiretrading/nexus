@@ -71,14 +71,15 @@ struct DashboardWidget::RendererComparator {
       m_comparator(columnSortOrder) {}
 
   bool operator ()(int lhs, int rhs) const {
-    if(!m_renderer->GetRow(lhs).is_initialized()) {
+    auto leftRow = m_renderer->GetRow(lhs);
+    if(!leftRow.is_initialized()) {
       return false;
-    } else if(!m_renderer->GetRow(rhs).is_initialized()) {
+    }
+    auto rightRow = m_renderer->GetRow(rhs);
+    if(!rightRow.is_initialized()) {
       return true;
     }
-    auto& leftRow = *m_renderer->GetRow(lhs);
-    auto& rightRow = *m_renderer->GetRow(rhs);
-    return m_comparator(leftRow, rightRow);
+    return m_comparator(*leftRow, *rightRow);
   }
 };
 
@@ -92,9 +93,12 @@ DashboardWidget::DashboardWidget(QWidget* parent, Qt::WindowFlags flags)
       m_selectionController(
         std::make_unique<DashboardSelectionController>(Ref(*m_selectionModel))),
       m_isHoveringOverColumnResize(false),
-      m_mouseState(MouseState::NONE) {
+      m_mouseState(MouseState::NONE),
+      m_hasRepaintEvent(false),
+      m_isSortOrderStale(false) {
   setMouseTracking(true);
   setFocusPolicy(Qt::StrongFocus);
+  setAttribute(Qt::WA_OpaquePaintEvent);
   connect(
     &m_repaintTimer, &QTimer::timeout, this, &DashboardWidget::OnRepaintTimer);
   m_repaintTimer.start(REPAINT_INTERVAL);
@@ -159,8 +163,11 @@ void DashboardWidget::Initialize(Ref<DashboardModel> model,
     std::bind_front(&DashboardWidget::OnSelectedRowsUpdatedSignal, this));
   m_activeRowConnection = m_selectionModel->ConnectActiveRowUpdatedSignal(
     std::bind_front(&DashboardWidget::OnActiveRowUpdatedSignal, this));
+  m_cellUpdateConnections.disconnect();
   m_rowAddedConnection = m_model->ConnectRowAddedSignal(
     std::bind_front(&DashboardWidget::OnRowAddedSignal, this));
+  m_rowRemovedConnection = m_model->ConnectRowRemovedSignal(
+    std::bind_front(&DashboardWidget::OnRowRemovedSignal, this));
   for(auto i = 0; i < m_model->GetRowCount(); ++i) {
     OnRowAddedSignal(m_model->GetRow(i));
   }
@@ -168,6 +175,7 @@ void DashboardWidget::Initialize(Ref<DashboardModel> model,
     new TickerDialog(m_userProfile->GetTickerInfoQueryModel(), this);
   m_tickerDialog->connect_submit_signal(
     std::bind_front(&DashboardWidget::OnTickerSubmit, this));
+  m_hasRepaintEvent = true;
 }
 
 const DashboardSelectionModel& DashboardWidget::GetSelectionModel() const {
@@ -288,11 +296,26 @@ void DashboardWidget::mouseDoubleClickEvent(QMouseEvent* event) {
 }
 
 void DashboardWidget::paintEvent(QPaintEvent* event) {
+  auto painter = QPainter(this);
+  painter.setClipRect(event->rect());
   if(!m_model) {
+    painter.fillRect(event->rect(), palette().color(QPalette::Window));
     return;
   }
   auto region = QRect(0, 0, width(), height());
-  m_renderer->Draw(*this, region);
+  auto dashboardPainter = DashboardPainter(painter);
+  m_renderer->Draw(dashboardPainter, region);
+}
+
+void DashboardWidget::showEvent(QShowEvent* event) {
+  m_hasRepaintEvent = true;
+  m_repaintTimer.start(REPAINT_INTERVAL);
+  QWidget::showEvent(event);
+}
+
+void DashboardWidget::hideEvent(QHideEvent* event) {
+  m_repaintTimer.stop();
+  QWidget::hideEvent(event);
 }
 
 void DashboardWidget::resizeEvent(QResizeEvent* event) {
@@ -338,15 +361,16 @@ void DashboardWidget::ModifyColumnSortOrder(int index) {
 }
 
 void DashboardWidget::SortRows() {
+  m_isSortOrderStale = false;
   if(m_columnSortOrder.empty()) {
     return;
   }
   auto indicies = std::vector<int>();
+  indicies.reserve(m_renderer->GetSize());
   for(auto i = 0; i < static_cast<int>(m_renderer->GetSize()); ++i) {
     indicies.push_back(i);
   }
-  auto comparator = RowComparator{&m_columnSortOrder};
-  std::sort(indicies.begin(), indicies.end(),
+  std::stable_sort(indicies.begin(), indicies.end(),
     RendererComparator(&*m_renderer, &m_columnSortOrder));
   m_renderer->ReorderRows(indicies);
 }
@@ -457,7 +481,7 @@ void DashboardWidget::ResizeColumn(const QMouseEvent& event) {
       m_renderer->SetColumnWidth(m_activeColumnIndex + 1,
         m_renderer->GetColumnWidth(m_activeColumnIndex + 1) + leftColumnDelta);
     }
-    repaint();
+    update();
   } else if(delta > 0) {
     auto currentRightColumnSize =
       m_renderer->GetColumnWidth(m_activeColumnIndex + 1);
@@ -471,7 +495,7 @@ void DashboardWidget::ResizeColumn(const QMouseEvent& event) {
       m_renderer->SetColumnWidth(
         m_activeColumnIndex + 1, updatedRightColumnSize);
     }
-    repaint();
+    update();
   }
 }
 
@@ -486,10 +510,14 @@ void DashboardWidget::MoveColumn(const QMouseEvent& event) {
 
 void DashboardWidget::OnRowAddedSignal(const DashboardRow& row) {
   for(auto i = 0; i < row.GetSize(); ++i) {
-    m_cellUpdateConnections.add(
+    m_cellUpdateConnections.add(&row,
       row.GetCell(i).ConnectUpdateSignal(std::bind_front(
         &DashboardWidget::OnCellUpdatedSignal, this, std::ref(row))));
   }
+}
+
+void DashboardWidget::OnRowRemovedSignal(const DashboardRow& row) {
+  m_cellUpdateConnections.disconnect(&row);
 }
 
 void DashboardWidget::OnCellUpdatedSignal(
@@ -497,48 +525,15 @@ void DashboardWidget::OnCellUpdatedSignal(
   if(m_columnSortOrder.empty()) {
     return;
   }
-  auto rowIndex = m_renderer->GetRowDisplayIndex(row);
-  auto comparator = RowComparator(&m_columnSortOrder);
-  if(auto previousRow = m_renderer->GetRow(rowIndex - 1)) {
-    if(!comparator(*previousRow, row)) {
-      auto i = rowIndex - 1;
-      while(i >= 0) {
-        if(auto r = m_renderer->GetRow(i)) {
-          if(comparator(*r, row)) {
-            m_renderer->MoveRow(rowIndex, i);
-            return;
-          }
-        }
-        --i;
-      }
-      m_renderer->MoveRow(rowIndex, 0);
-      return;
-    }
-  }
-  if(auto followingRow = m_renderer->GetRow(rowIndex + 1)) {
-    if(!comparator(row, *followingRow)) {
-      auto i = rowIndex + 1;
-      while(i < m_renderer->GetSize()) {
-        if(auto r = m_renderer->GetRow(i)) {
-          if(comparator(row, *r)) {
-            m_renderer->MoveRow(rowIndex, i);
-            return;
-          }
-        }
-        ++i;
-      }
-      m_renderer->MoveRow(rowIndex, m_renderer->GetSize() - 1);
-      return;
-    }
-  }
+  m_isSortOrderStale = true;
 }
 
 void DashboardWidget::OnActiveRowUpdatedSignal(optional<int> activeRow) {
-  repaint();
+  update();
 }
 
 void DashboardWidget::OnSelectedRowsUpdatedSignal() {
-  repaint();
+  update();
 }
 
 void DashboardWidget::OnDrawSignal() {
@@ -546,6 +541,12 @@ void DashboardWidget::OnDrawSignal() {
 }
 
 void DashboardWidget::OnRepaintTimer() {
+  if(m_isSortOrderStale) {
+    SortRows();
+  }
+  if(!m_hasRepaintEvent) {
+    return;
+  }
   m_hasRepaintEvent = false;
-  repaint();
+  update();
 }

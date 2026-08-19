@@ -72,6 +72,8 @@ namespace Spire {
       void mouseDoubleClickEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void showEvent(QShowEvent* event) override;
+      void hideEvent(QHideEvent* event) override;
 
     private:
       template<typename, typename> friend struct Beam::Shuttle;
@@ -104,12 +106,14 @@ namespace Spire {
       int m_activeColumnIndex;
       QPoint m_lastMousePressPosition;
       bool m_hasRepaintEvent;
+      bool m_isSortOrderStale;
       QTimer m_repaintTimer;
       std::vector<SortOrder> m_columnSortOrder;
       boost::signals2::scoped_connection m_drawConnection;
       boost::signals2::scoped_connection m_selectedRowsConnection;
       boost::signals2::scoped_connection m_activeRowConnection;
       boost::signals2::scoped_connection m_rowAddedConnection;
+      boost::signals2::scoped_connection m_rowRemovedConnection;
       Beam::ConnectionGroup m_cellUpdateConnections;
 
       void ModifyColumnSortOrder(int index);
@@ -122,6 +126,7 @@ namespace Spire {
       void MoveColumn(const QMouseEvent& event);
       void OnSelectedRowsUpdatedSignal();
       void OnRowAddedSignal(const DashboardRow& row);
+      void OnRowRemovedSignal(const DashboardRow& row);
       void OnCellUpdatedSignal(
         const DashboardRow& row, const DashboardCell::Value& value);
       void OnActiveRowUpdatedSignal(boost::optional<int> activeRow);

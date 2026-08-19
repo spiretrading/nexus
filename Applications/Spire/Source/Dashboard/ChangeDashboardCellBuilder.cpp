@@ -1,5 +1,4 @@
 #include "Spire/Dashboard/ChangeDashboardCellBuilder.hpp"
-#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/TechnicalAnalysis/StandardTickerQueries.hpp"
 #include "Spire/Dashboard/QueueDashboardCell.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
@@ -32,8 +31,6 @@ std::unique_ptr<DashboardCell> ChangeDashboardCellBuilder::Make(
     }
     *closePrice = close->m_price;
     auto& marketDataClient = serviceClients.get_market_data_client();
-    auto venueStartOfDay = utc_start_of_day(
-      ticker.get_venue(), serviceClients.get_time_client().get_time());
     auto query = make_current_query(ticker);
     marketDataClient.query(query, baseQueue);
   });

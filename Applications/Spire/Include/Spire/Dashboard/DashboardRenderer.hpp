@@ -8,7 +8,7 @@
 #include <boost/noncopyable.hpp>
 #include <boost/optional/optional.hpp>
 #include <boost/signals2/signal.hpp>
-#include <QPaintDevice>
+#include <QPainter>
 #include <QRect>
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardRowRenderer.hpp"
@@ -155,10 +155,10 @@ namespace Spire {
 
       //! Performs a draw operation.
       /*!
-        \param device The device to draw to.
-        \param region The region within the <i>device</i> to draw to.
+        \param painter The painter to draw with.
+        \param region The region within the <i>painter</i> to draw to.
       */
-      void Draw(QPaintDevice& device, const QRect& region);
+      void Draw(DashboardPainter& painter, const QRect& region);
 
       //! Returns this renderer's current settings.
       DashboardRendererSettings GetSettings() const;
@@ -205,10 +205,10 @@ namespace Spire {
       mutable DrawSignal m_drawSignal;
 
       void SetupHeader();
-      void DrawBackground(QPainter& painter, QPaintDevice& device,
-        const QRect& region, int index);
-      void DrawForeground(QPainter& painter, QPaintDevice& device,
-        const QRect& region, int index);
+      void DrawBackground(
+        DashboardPainter& painter, const QRect& region, int index);
+      void DrawForeground(
+        DashboardPainter& painter, const QRect& region, int index);
       void OnRowAddedSignal(const DashboardRow& row);
       void OnRowRemovedSignal(const DashboardRow& row);
       void OnRowDrawSignal();
