@@ -117,6 +117,7 @@ namespace Spire {
       Beam::ConnectionGroup m_cellUpdateConnections;
 
       int GetContentWidth() const;
+      void ScrollToRow(int index);
       void StretchLastColumn(int width);
       void ModifyColumnSortOrder(int index);
       void SortRows();

@@ -16,6 +16,7 @@
 #include "Spire/Dashboard/ValueDashboardCell.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Ui/Layouts.hpp"
+#include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/Ui.hpp"
 
@@ -428,6 +429,18 @@ int DashboardWidget::GetContentWidth() const {
   return width;
 }
 
+void DashboardWidget::ScrollToRow(int index) {
+  auto height = std::max(1, m_renderer->GetMaxRowHeight());
+  auto top = index * height;
+  auto& scrollBar = m_scrollBox->get_vertical_scroll_bar();
+  auto position = scrollBar.get_position();
+  if(top < position) {
+    scrollBar.set_position(top);
+  } else if(top + height > position + scrollBar.get_page_size()) {
+    scrollBar.set_position(top + height - scrollBar.get_page_size());
+  }
+}
+
 void DashboardWidget::StretchLastColumn(int width) {
   if(!m_model) {
     return;
@@ -638,6 +651,9 @@ void DashboardWidget::OnCellUpdatedSignal(
 }
 
 void DashboardWidget::OnActiveRowUpdatedSignal(optional<int> activeRow) {
+  if(activeRow) {
+    ScrollToRow(*activeRow);
+  }
   m_body->update();
 }
 
