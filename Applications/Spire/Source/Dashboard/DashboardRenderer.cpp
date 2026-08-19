@@ -198,6 +198,8 @@ void DashboardRenderer::MoveRow(int sourceIndex, int destinationIndex) {
 
 void DashboardRenderer::ReorderRows(const vector<int>& indicies) {
   auto rows = std::move(m_rows);
+  m_rows.clear();
+  m_rows.reserve(indicies.size());
   for(auto i = 0; i < static_cast<int>(indicies.size()); ++i) {
     m_rows.push_back(std::move(rows[indicies[i]]));
   }

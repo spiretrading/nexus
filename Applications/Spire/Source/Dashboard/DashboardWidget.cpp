@@ -94,7 +94,8 @@ DashboardWidget::DashboardWidget(QWidget* parent, Qt::WindowFlags flags)
         std::make_unique<DashboardSelectionController>(Ref(*m_selectionModel))),
       m_isHoveringOverColumnResize(false),
       m_mouseState(MouseState::NONE),
-      m_hasRepaintEvent(false) {
+      m_hasRepaintEvent(false),
+      m_isSortOrderStale(false) {
   setMouseTracking(true);
   setFocusPolicy(Qt::StrongFocus);
   setAttribute(Qt::WA_OpaquePaintEvent);
@@ -359,14 +360,16 @@ void DashboardWidget::ModifyColumnSortOrder(int index) {
 }
 
 void DashboardWidget::SortRows() {
+  m_isSortOrderStale = false;
   if(m_columnSortOrder.empty()) {
     return;
   }
   auto indicies = std::vector<int>();
+  indicies.reserve(m_renderer->GetSize());
   for(auto i = 0; i < static_cast<int>(m_renderer->GetSize()); ++i) {
     indicies.push_back(i);
   }
-  std::sort(indicies.begin(), indicies.end(),
+  std::stable_sort(indicies.begin(), indicies.end(),
     RendererComparator(&*m_renderer, &m_columnSortOrder));
   m_renderer->ReorderRows(indicies);
 }
@@ -521,40 +524,7 @@ void DashboardWidget::OnCellUpdatedSignal(
   if(m_columnSortOrder.empty()) {
     return;
   }
-  auto rowIndex = m_renderer->GetRowDisplayIndex(row);
-  auto comparator = RowComparator(&m_columnSortOrder);
-  if(auto previousRow = m_renderer->GetRow(rowIndex - 1)) {
-    if(!comparator(*previousRow, row)) {
-      auto i = rowIndex - 1;
-      while(i >= 0) {
-        if(auto r = m_renderer->GetRow(i)) {
-          if(comparator(*r, row)) {
-            m_renderer->MoveRow(rowIndex, i);
-            return;
-          }
-        }
-        --i;
-      }
-      m_renderer->MoveRow(rowIndex, 0);
-      return;
-    }
-  }
-  if(auto followingRow = m_renderer->GetRow(rowIndex + 1)) {
-    if(!comparator(row, *followingRow)) {
-      auto i = rowIndex + 1;
-      while(i < m_renderer->GetSize()) {
-        if(auto r = m_renderer->GetRow(i)) {
-          if(comparator(row, *r)) {
-            m_renderer->MoveRow(rowIndex, i);
-            return;
-          }
-        }
-        ++i;
-      }
-      m_renderer->MoveRow(rowIndex, m_renderer->GetSize() - 1);
-      return;
-    }
-  }
+  m_isSortOrderStale = true;
 }
 
 void DashboardWidget::OnActiveRowUpdatedSignal(optional<int> activeRow) {
@@ -570,6 +540,9 @@ void DashboardWidget::OnDrawSignal() {
 }
 
 void DashboardWidget::OnRepaintTimer() {
+  if(m_isSortOrderStale) {
+    SortRows();
+  }
   if(!m_hasRepaintEvent) {
     return;
   }

@@ -106,6 +106,7 @@ namespace Spire {
       int m_activeColumnIndex;
       QPoint m_lastMousePressPosition;
       bool m_hasRepaintEvent;
+      bool m_isSortOrderStale;
       QTimer m_repaintTimer;
       std::vector<SortOrder> m_columnSortOrder;
       boost::signals2::scoped_connection m_drawConnection;
