@@ -3,7 +3,6 @@
 #include <Beam/Queues/ConverterQueueReader.hpp>
 #include <Beam/Queues/QueueReader.hpp>
 #include <Beam/Utilities/Casts.hpp>
-#include <QTimer>
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardCell.hpp"
 
@@ -28,6 +27,8 @@ namespace Spire {
       template<typename T>
       QueueDashboardCell(std::shared_ptr<Beam::QueueReader<T>> queue);
 
+      virtual ~QueueDashboardCell();
+
       //! Sets the size of the buffer.
       /*!
         \param size The size of the buffer.
@@ -40,12 +41,13 @@ namespace Spire {
         const UpdateSignal::slot_function_type& slot) const;
 
     private:
+      class Updater;
       std::shared_ptr<Beam::QueueReader<Value>> m_queue;
       boost::circular_buffer<Value> m_values;
       mutable UpdateSignal m_updateSignal;
-      QTimer m_updateTimer;
+      int m_updateIndex;
 
-      void OnUpdateTimer();
+      void Update();
   };
 
   template<typename T>

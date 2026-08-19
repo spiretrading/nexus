@@ -3,7 +3,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/noncopyable.hpp>
 #include <boost/signals2/signal.hpp>
-#include <QPaintDevice>
+#include <QPainter>
 #include <QRect>
 #include "Spire/Dashboard/Dashboard.hpp"
 
@@ -25,10 +25,10 @@ namespace Spire {
 
       //! Performs a draw operation.
       /*!
-        \param device The device to draw to.
-        \param region The region within the <i>device</i> to draw to.
+        \param painter The painter to draw with.
+        \param region The region within the <i>painter</i> to draw to.
       */
-      virtual void Draw(QPaintDevice& device, const QRect& region) = 0;
+      virtual void Draw(QPainter& painter, const QRect& region) = 0;
 
       //! Connects a slot to the DrawSignal.
       /*!

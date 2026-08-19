@@ -3,6 +3,7 @@
 #include <boost/optional/optional.hpp>
 #include <QFlags>
 #include <QPen>
+#include <QString>
 #include "Spire/Dashboard/Dashboard.hpp"
 #include "Spire/Dashboard/DashboardCell.hpp"
 #include "Spire/Dashboard/DashboardCellRenderer.hpp"
@@ -49,7 +50,7 @@ namespace Spire {
       */
       void SetAlignment(QFlags<Qt::AlignmentFlag> alignment);
 
-      virtual void Draw(QPaintDevice& device, const QRect& region);
+      virtual void Draw(QPainter& painter, const QRect& region);
 
       virtual boost::signals2::connection ConnectDrawSignal(
         const DrawSignal::slot_function_type& slot) const;
@@ -60,11 +61,14 @@ namespace Spire {
       QPen m_pen;
       QFlags<Qt::AlignmentFlag> m_alignment;
       std::unique_ptr<LegacyUI::CustomVariantItemDelegate> m_delegate;
+      QString m_text;
+      bool m_isTextStale;
       boost::optional<DashboardCell::Value> m_lastValue;
       int m_direction;
       boost::signals2::scoped_connection m_cellUpdateConnection;
       mutable DrawSignal m_drawSignal;
 
+      void UpdateText();
       void OnCellUpdateSignal(const DashboardCell::Value& value);
   };
 }

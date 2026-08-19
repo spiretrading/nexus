@@ -60,10 +60,6 @@ DashboardWindow::DashboardWindow(const string& name,
     &DashboardWindow::OnSaveButtonPressed);
   connect(m_ui->m_deleteButton, &QPushButton::pressed, this,
     &DashboardWindow::OnDeleteButtonPressed);
-  m_rowAddedConnection = m_model->ConnectRowAddedSignal(
-    std::bind(&DashboardWindow::OnRowAdded, this, std::placeholders::_1));
-  m_rowRemovedConnection = m_model->ConnectRowRemovedSignal(
-    std::bind(&DashboardWindow::OnRowRemoved, this, std::placeholders::_1));
   m_dashboardAddedConnection =
     m_userProfile->GetSavedDashboards().ConnectDashboardAddedSignal(
     std::bind(&DashboardWindow::OnDashboardAdded, this, std::placeholders::_1));
@@ -170,9 +166,18 @@ void DashboardWindow::SetName(const string& name) {
 
 void DashboardWindow::Apply(const DashboardModelSchema& schema,
     const string& name) {
-  m_model = schema.Make(Ref(*m_userProfile));
-  m_ui->m_dashboard->Initialize(Ref(*m_model), schema.GetRowBuilder(),
+  auto model = schema.Make(Ref(*m_userProfile));
+  m_ui->m_dashboard->Initialize(Ref(*model), schema.GetRowBuilder(),
     Ref(*m_userProfile));
+  m_model = std::move(model);
+  for(auto& bboQuote : m_bboQuotes) {
+    bboQuote.second.m_bboQuote->close();
+  }
+  m_bboQuotes.clear();
+  m_rowAddedConnection = m_model->ConnectRowAddedSignal(
+    std::bind(&DashboardWindow::OnRowAdded, this, std::placeholders::_1));
+  m_rowRemovedConnection = m_model->ConnectRowRemovedSignal(
+    std::bind(&DashboardWindow::OnRowRemoved, this, std::placeholders::_1));
   SetName(name);
 }
 
@@ -212,6 +217,7 @@ void DashboardWindow::OnRowRemoved(const DashboardRow& row) {
   auto& bboQuoteEntry = bboQuoteIterator->second;
   --bboQuoteEntry.m_counter;
   if(bboQuoteEntry.m_counter == 0) {
+    bboQuoteEntry.m_bboQuote->close();
     m_bboQuotes.erase(bboQuoteIterator);
   }
 }

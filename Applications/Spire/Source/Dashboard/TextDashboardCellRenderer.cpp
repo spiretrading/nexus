@@ -31,7 +31,9 @@ TextDashboardCellRenderer::TextDashboardCellRenderer(
       m_pen{QColor{255, 255, 255}},
       m_alignment(Qt::AlignRight | Qt::AlignBottom),
       m_delegate{std::make_unique<CustomVariantItemDelegate>(
-        Ref(*m_userProfile))} {
+        Ref(*m_userProfile))},
+      m_isTextStale(true) {
+  UpdateText();
   m_cellUpdateConnection = GetCell().ConnectUpdateSignal(
     std::bind(&TextDashboardCellRenderer::OnCellUpdateSignal, this,
     std::placeholders::_1));
@@ -62,22 +64,13 @@ void TextDashboardCellRenderer::SetAlignment(
   m_alignment = alignment;
 }
 
-void TextDashboardCellRenderer::Draw(QPaintDevice& device,
-    const QRect& region) {
-  auto& values = GetCell().GetValues();
-  auto text =
-    [&] {
-      if(values.empty()) {
-        return QObject::tr("N/A");
-      } else {
-        auto value = apply_visitor(VariantVisitor{}, values.back());
-        return m_delegate->displayText(value, QLocale{});
-      }
-    }();
-  QPainter painter{&device};
+void TextDashboardCellRenderer::Draw(QPainter& painter, const QRect& region) {
+  if(m_isTextStale) {
+    UpdateText();
+  }
   painter.setPen(m_pen);
   painter.setFont(m_font);
-  painter.drawText(region, m_alignment, text);
+  painter.drawText(region, m_alignment, m_text);
 }
 
 connection TextDashboardCellRenderer::ConnectDrawSignal(
@@ -85,7 +78,22 @@ connection TextDashboardCellRenderer::ConnectDrawSignal(
   return m_drawSignal.connect(slot);
 }
 
+void TextDashboardCellRenderer::UpdateText() {
+  auto& values = GetCell().GetValues();
+  if(values.empty()) {
+    m_text = QObject::tr("N/A");
+  } else {
+    m_text = m_delegate->displayText(
+      apply_visitor(VariantVisitor(), values.back()), QLocale());
+  }
+  m_isTextStale = false;
+}
+
 void TextDashboardCellRenderer::OnCellUpdateSignal(
     const DashboardCell::Value& value) {
+  if(m_isTextStale) {
+    return;
+  }
+  m_isTextStale = true;
   m_drawSignal();
 }

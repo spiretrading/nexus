@@ -32,7 +32,9 @@ DirectionalDashboardCellRenderer::DirectionalDashboardCellRenderer(
       m_alignment(Qt::AlignRight | Qt::AlignBottom),
       m_delegate{std::make_unique<CustomVariantItemDelegate>(
         Ref(*m_userProfile))},
+      m_isTextStale(true),
       m_direction{0} {
+  UpdateText();
   m_cellUpdateConnection = GetCell().ConnectUpdateSignal(
     std::bind(&DirectionalDashboardCellRenderer::OnCellUpdateSignal, this,
     std::placeholders::_1));
@@ -64,26 +66,14 @@ void DirectionalDashboardCellRenderer::SetAlignment(
   m_alignment = alignment;
 }
 
-void DirectionalDashboardCellRenderer::Draw(QPaintDevice& device,
-    const QRect& region) {
-  auto& values = GetCell().GetValues();
-  auto text =
-    [&] {
-      if(values.empty()) {
-        return QObject::tr("N/A");
-      } else {
-        auto value = apply_visitor(VariantVisitor{}, values.back());
-        if(value.type() == QVariant::Type::Double) {
-          return QString{QString::number(100 * value.toDouble(), 'f', 2) + "%"};
-        } else {
-          return m_delegate->displayText(value, QLocale{});
-        }
-      }
-    }();
-  QPainter painter{&device};
+void DirectionalDashboardCellRenderer::Draw(
+    QPainter& painter, const QRect& region) {
+  if(m_isTextStale) {
+    UpdateText();
+  }
   painter.setPen(m_pen);
   painter.setFont(m_font);
-  painter.drawText(region, m_alignment, text);
+  painter.drawText(region, m_alignment, m_text);
 }
 
 connection DirectionalDashboardCellRenderer::ConnectDrawSignal(
@@ -91,17 +81,36 @@ connection DirectionalDashboardCellRenderer::ConnectDrawSignal(
   return m_drawSignal.connect(slot);
 }
 
+void DirectionalDashboardCellRenderer::UpdateText() {
+  auto& values = GetCell().GetValues();
+  if(values.empty()) {
+    m_text = QObject::tr("N/A");
+  } else {
+    auto variant = apply_visitor(VariantVisitor(), values.back());
+    if(variant.type() == QVariant::Type::Double) {
+      m_text = QString::number(100 * variant.toDouble(), 'f', 2) + "%";
+    } else {
+      m_text = m_delegate->displayText(variant, QLocale());
+    }
+  }
+  m_isTextStale = false;
+}
+
 void DirectionalDashboardCellRenderer::OnCellUpdateSignal(
     const DashboardCell::Value& value) {
   if(m_lastValue.is_initialized()) {
     if(value > *m_lastValue) {
       m_direction = 1;
-      m_pen.setColor(QColor{0, 255, 0});
+      m_pen.setColor(QColor(0, 255, 0));
     } else if(value < *m_lastValue) {
       m_direction = -1;
-      m_pen.setColor(QColor{255, 0, 0});
+      m_pen.setColor(QColor(255, 0, 0));
     }
   }
   m_lastValue = value;
+  if(m_isTextStale) {
+    return;
+  }
+  m_isTextStale = true;
   m_drawSignal();
 }

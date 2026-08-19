@@ -110,6 +110,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_selectedRowsConnection;
       boost::signals2::scoped_connection m_activeRowConnection;
       boost::signals2::scoped_connection m_rowAddedConnection;
+      boost::signals2::scoped_connection m_rowRemovedConnection;
       Beam::ConnectionGroup m_cellUpdateConnections;
 
       void ModifyColumnSortOrder(int index);
@@ -122,6 +123,7 @@ namespace Spire {
       void MoveColumn(const QMouseEvent& event);
       void OnSelectedRowsUpdatedSignal();
       void OnRowAddedSignal(const DashboardRow& row);
+      void OnRowRemovedSignal(const DashboardRow& row);
       void OnCellUpdatedSignal(
         const DashboardRow& row, const DashboardCell::Value& value);
       void OnActiveRowUpdatedSignal(boost::optional<int> activeRow);
