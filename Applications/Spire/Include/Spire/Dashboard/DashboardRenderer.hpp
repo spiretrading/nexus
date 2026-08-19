@@ -158,7 +158,7 @@ namespace Spire {
         \param painter The painter to draw with.
         \param region The region within the <i>painter</i> to draw to.
       */
-      void Draw(QPainter& painter, const QRect& region);
+      void Draw(DashboardPainter& painter, const QRect& region);
 
       //! Returns this renderer's current settings.
       DashboardRendererSettings GetSettings() const;
@@ -205,8 +205,10 @@ namespace Spire {
       mutable DrawSignal m_drawSignal;
 
       void SetupHeader();
-      void DrawBackground(QPainter& painter, const QRect& region, int index);
-      void DrawForeground(QPainter& painter, const QRect& region, int index);
+      void DrawBackground(
+        DashboardPainter& painter, const QRect& region, int index);
+      void DrawForeground(
+        DashboardPainter& painter, const QRect& region, int index);
       void OnRowAddedSignal(const DashboardRow& row);
       void OnRowRemovedSignal(const DashboardRow& row);
       void OnRowDrawSignal();

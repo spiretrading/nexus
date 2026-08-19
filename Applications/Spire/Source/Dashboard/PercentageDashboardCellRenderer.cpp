@@ -51,13 +51,13 @@ void PercentageDashboardCellRenderer::SetAlignment(
 }
 
 void PercentageDashboardCellRenderer::Draw(
-    QPainter& painter, const QRect& region) {
+    DashboardPainter& painter, const QRect& region) {
   if(m_isTextStale) {
     UpdateText();
   }
-  painter.setPen(m_pen);
-  painter.setFont(m_font);
-  painter.drawText(region, m_alignment, m_text);
+  painter.SetPen(m_pen);
+  painter.SetFont(m_font);
+  painter.GetPainter().drawText(region, m_alignment, m_text);
 }
 
 connection PercentageDashboardCellRenderer::ConnectDrawSignal(

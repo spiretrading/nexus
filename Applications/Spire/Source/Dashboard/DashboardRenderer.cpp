@@ -216,11 +216,11 @@ void DashboardRenderer::InsertEmptyRow(int index) {
   m_drawSignal();
 }
 
-void DashboardRenderer::Draw(QPainter& painter, const QRect& region) {
+void DashboardRenderer::Draw(DashboardPainter& painter, const QRect& region) {
   auto height = std::max(1, std::min(GetMaxRowHeight(),
     static_cast<int>(region.height() / (m_rows.size() + 1))));
   auto clip = [&] {
-    auto bounds = painter.clipBoundingRect().toAlignedRect();
+    auto bounds = painter.GetPainter().clipBoundingRect().toAlignedRect();
     if(bounds.isEmpty()) {
       return region;
     }
@@ -228,19 +228,19 @@ void DashboardRenderer::Draw(QPainter& painter, const QRect& region) {
   }();
   auto topPoint = region.top();
   QRect headerRegion{region.left(), topPoint, region.width(), height};
-  painter.fillRect(headerRegion, QColor{19, 91, 164});
+  painter.GetPainter().fillRect(headerRegion, QColor{19, 91, 164});
   {
     QPen pen;
     pen.setColor(QColor{35, 35, 35});
-    painter.setPen(pen);
-    painter.drawRect(headerRegion);
+    painter.SetPen(pen);
+    painter.GetPainter().drawRect(headerRegion);
     int verticalBorder = 0;
     for(auto& column : m_columns) {
-      painter.drawLine(QPoint{verticalBorder, 0},
+      painter.GetPainter().drawLine(QPoint{verticalBorder, 0},
         QPoint{verticalBorder, height});
       verticalBorder += column.m_width;
     }
-    painter.drawLine(QPoint{verticalBorder, 0},
+    painter.GetPainter().drawLine(QPoint{verticalBorder, 0},
       QPoint{verticalBorder, height});
   }
   m_headerEntry->m_renderer->Draw(painter, headerRegion);
@@ -334,25 +334,25 @@ void DashboardRenderer::SetupHeader() {
 }
 
 void DashboardRenderer::DrawBackground(
-    QPainter& painter, const QRect& region, int index) {
+    DashboardPainter& painter, const QRect& region, int index) {
   if(m_selectionModel->IsRowSelected(index)) {
-    painter.fillRect(region, QColor{67, 79, 90});
+    painter.GetPainter().fillRect(region, QColor{67, 79, 90});
   } else {
     QColor backgroundColor{129, 147, 163};
-    painter.fillRect(region, backgroundColor);
+    painter.GetPainter().fillRect(region, backgroundColor);
   }
 }
 
 void DashboardRenderer::DrawForeground(
-    QPainter& painter, const QRect& region, int index) {
+    DashboardPainter& painter, const QRect& region, int index) {
   if(index == m_selectionModel->GetActiveRow().get_value_or(-1)) {
     QPen pen;
     pen.setColor(QColor{255, 255, 255});
-    painter.setPen(pen);
+    painter.SetPen(pen);
     auto rectange = region;
     rectange.setWidth(rectange.width() - pen.width());
     rectange.setHeight(rectange.height() - pen.width());
-    painter.drawRect(rectange);
+    painter.GetPainter().drawRect(rectange);
   }
 }
 

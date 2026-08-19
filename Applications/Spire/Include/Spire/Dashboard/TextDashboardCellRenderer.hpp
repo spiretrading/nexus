@@ -49,7 +49,7 @@ namespace Spire {
       */
       void SetAlignment(QFlags<Qt::AlignmentFlag> alignment);
 
-      virtual void Draw(QPainter& painter, const QRect& region);
+      virtual void Draw(DashboardPainter& painter, const QRect& region);
 
       virtual boost::signals2::connection ConnectDrawSignal(
         const DrawSignal::slot_function_type& slot) const;

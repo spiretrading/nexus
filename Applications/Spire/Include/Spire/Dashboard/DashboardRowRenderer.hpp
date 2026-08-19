@@ -81,7 +81,7 @@ namespace Spire {
         \param painter The painter to draw with.
         \param region The region within the <i>painter</i> to draw to.
       */
-      void Draw(QPainter& painter, const QRect& region);
+      void Draw(DashboardPainter& painter, const QRect& region);
 
       //! Connects a slot to the DrawSignal.
       /*!

@@ -303,7 +303,8 @@ void DashboardWidget::paintEvent(QPaintEvent* event) {
     return;
   }
   auto region = QRect(0, 0, width(), height());
-  m_renderer->Draw(painter, region);
+  auto dashboardPainter = DashboardPainter(painter);
+  m_renderer->Draw(dashboardPainter, region);
 }
 
 void DashboardWidget::showEvent(QShowEvent* event) {
