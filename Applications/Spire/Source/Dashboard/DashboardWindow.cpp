@@ -178,6 +178,9 @@ void DashboardWindow::Apply(const DashboardModelSchema& schema,
     std::bind(&DashboardWindow::OnRowAdded, this, std::placeholders::_1));
   m_rowRemovedConnection = m_model->ConnectRowRemovedSignal(
     std::bind(&DashboardWindow::OnRowRemoved, this, std::placeholders::_1));
+  for(auto i = 0; i < m_model->GetRowCount(); ++i) {
+    OnRowAdded(m_model->GetRow(i));
+  }
   SetName(name);
 }
 
