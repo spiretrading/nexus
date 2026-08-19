@@ -217,8 +217,7 @@ void DashboardRenderer::InsertEmptyRow(int index) {
 }
 
 void DashboardRenderer::Draw(DashboardPainter& painter, const QRect& region) {
-  auto height = std::max(1, std::min(GetMaxRowHeight(),
-    static_cast<int>(region.height() / (m_rows.size() + 1))));
+  auto height = std::max(1, GetMaxRowHeight());
   auto clip = [&] {
     auto bounds = painter.GetPainter().clipBoundingRect().toAlignedRect();
     if(bounds.isEmpty()) {

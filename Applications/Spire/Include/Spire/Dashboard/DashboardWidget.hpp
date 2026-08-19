@@ -60,6 +60,8 @@ namespace Spire {
        */
       boost::optional<int> GetRowDisplayIndex(const QPoint& position) const;
 
+      QSize sizeHint() const override;
+
       std::unique_ptr<LegacyUI::WindowSettings>
         GetWindowSettings() const override;
 
@@ -107,6 +109,7 @@ namespace Spire {
       QPoint m_lastMousePressPosition;
       bool m_hasRepaintEvent;
       bool m_isSortOrderStale;
+      QSize m_sizeHint;
       QTimer m_repaintTimer;
       std::vector<SortOrder> m_columnSortOrder;
       boost::signals2::scoped_connection m_drawConnection;

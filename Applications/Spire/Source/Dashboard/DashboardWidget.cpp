@@ -99,6 +99,8 @@ DashboardWidget::DashboardWidget(QWidget* parent, Qt::WindowFlags flags)
   setMouseTracking(true);
   setFocusPolicy(Qt::StrongFocus);
   setAttribute(Qt::WA_OpaquePaintEvent);
+  setSizePolicy(
+    QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
   connect(
     &m_repaintTimer, &QTimer::timeout, this, &DashboardWidget::OnRepaintTimer);
   m_repaintTimer.start(REPAINT_INTERVAL);
@@ -200,6 +202,19 @@ optional<int> DashboardWidget::GetRowDisplayIndex(
     return none;
   }
   return (position.y() / m_renderer->GetMaxRowHeight()) - 1;
+}
+
+QSize DashboardWidget::sizeHint() const {
+  if(!m_model) {
+    return QWidget::sizeHint();
+  }
+  auto width = 0;
+  for(auto i = 0; i < m_model->GetColumnCount(); ++i) {
+    width += m_renderer->GetColumnWidth(i);
+  }
+  auto height =
+    (m_renderer->GetSize() + 1) * std::max(1, m_renderer->GetMaxRowHeight());
+  return QSize(width, height);
 }
 
 std::unique_ptr<WindowSettings> DashboardWidget::GetWindowSettings() const {
@@ -319,6 +334,9 @@ void DashboardWidget::hideEvent(QHideEvent* event) {
 }
 
 void DashboardWidget::resizeEvent(QResizeEvent* event) {
+  if(!m_model) {
+    return;
+  }
   auto width = 0;
   for(auto i = 0; i < m_model->GetColumnCount(); ++i) {
     width += m_renderer->GetColumnWidth(i);
@@ -548,5 +566,10 @@ void DashboardWidget::OnRepaintTimer() {
     return;
   }
   m_hasRepaintEvent = false;
+  auto hint = sizeHint();
+  if(hint != m_sizeHint) {
+    m_sizeHint = hint;
+    updateGeometry();
+  }
   update();
 }
