@@ -72,6 +72,8 @@ namespace Spire {
       void mouseDoubleClickEvent(QMouseEvent* event) override;
       void paintEvent(QPaintEvent* event) override;
       void resizeEvent(QResizeEvent* event) override;
+      void showEvent(QShowEvent* event) override;
+      void hideEvent(QHideEvent* event) override;
 
     private:
       template<typename, typename> friend struct Beam::Shuttle;

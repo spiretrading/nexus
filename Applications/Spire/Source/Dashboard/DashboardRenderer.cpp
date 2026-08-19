@@ -215,8 +215,15 @@ void DashboardRenderer::InsertEmptyRow(int index) {
 }
 
 void DashboardRenderer::Draw(QPainter& painter, const QRect& region) {
-  auto height = std::min(GetMaxRowHeight(),
-    static_cast<int>(region.height() / (m_rows.size() + 1)));
+  auto height = std::max(1, std::min(GetMaxRowHeight(),
+    static_cast<int>(region.height() / (m_rows.size() + 1))));
+  auto clip = [&] {
+    auto bounds = painter.clipBoundingRect().toAlignedRect();
+    if(bounds.isEmpty()) {
+      return region;
+    }
+    return bounds;
+  }();
   auto topPoint = region.top();
   QRect headerRegion{region.left(), topPoint, region.width(), height};
   painter.fillRect(headerRegion, QColor{19, 91, 164});
@@ -240,11 +247,13 @@ void DashboardRenderer::Draw(QPainter& painter, const QRect& region) {
   auto activeRow = m_selectionModel->GetActiveRow().get_value_or(-1);
   for(auto& row : m_rows) {
     QRect rowRegion{region.left(), topPoint, region.width(), height};
-    DrawBackground(painter, rowRegion, rowCount);
-    if(row->m_row != nullptr) {
-      row->m_renderer->Draw(painter, rowRegion);
+    if(rowRegion.intersects(clip)) {
+      DrawBackground(painter, rowRegion, rowCount);
+      if(row->m_row != nullptr) {
+        row->m_renderer->Draw(painter, rowRegion);
+      }
+      DrawForeground(painter, rowRegion, rowCount);
     }
-    DrawForeground(painter, rowRegion, rowCount);
     topPoint += height;
     ++rowCount;
     if(topPoint > region.bottom()) {
@@ -256,8 +265,10 @@ void DashboardRenderer::Draw(QPainter& painter, const QRect& region) {
   }
   while(topPoint <= region.bottom()) {
     QRect rowRegion{region.left(), topPoint, region.width(), height};
-    DrawBackground(painter, rowRegion, rowCount);
-    DrawForeground(painter, rowRegion, rowCount);
+    if(rowRegion.intersects(clip)) {
+      DrawBackground(painter, rowRegion, rowCount);
+      DrawForeground(painter, rowRegion, rowCount);
+    }
     topPoint += height;
     ++rowCount;
   }
@@ -358,6 +369,7 @@ void DashboardRenderer::OnRowAddedSignal(const DashboardRow& row) {
         rowEntry->m_renderer->Move(j, i);
         indexes.erase(indexes.begin() + j);
         indexes.insert(indexes.begin() + i, index);
+        break;
       }
     }
   }

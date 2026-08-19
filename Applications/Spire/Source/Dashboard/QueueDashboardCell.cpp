@@ -56,7 +56,7 @@ class QueueDashboardCell::Updater {
 QueueDashboardCell::QueueDashboardCell(
     std::shared_ptr<QueueReader<Value>> queue)
     : m_queue{std::move(queue)},
-      m_values(30) {
+      m_values(1) {
   Updater::GetInstance().Add(*this);
 }
 
