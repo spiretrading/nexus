@@ -35,7 +35,11 @@ void Nexus::Python::export_account_modification_request_accessor(
     def_property_readonly(
       "timestamp", &AccountModificationRequestAccessor::get_timestamp).
     def_property_readonly("effective_date",
-      &AccountModificationRequestAccessor::get_effective_date);
+      &AccountModificationRequestAccessor::get_effective_date).
+    def_property_readonly(
+      "status", &AccountModificationRequestAccessor::get_status).
+    def_property_readonly("last_update_timestamp",
+      &AccountModificationRequestAccessor::get_last_update_timestamp);
 }
 
 void Nexus::Python::export_bbo_quote_accessor(module& module) {

@@ -39,11 +39,14 @@ export class HttpRequestsModel extends RequestsModel {
     try {
       const admin = this.serviceClients.administrationClient;
       this.resetAnchors(submission);
-      const query = this.makeQuery(submission);
+      const filter = this.makeFilter(submission);
+      const query = this.makeQuery(submission, Beam.conjunction(
+        [filter, makeStateFilter(submission.requestState)]));
+      const countsQuery = this.makeQuery(submission, filter);
       const generation = ++this.generation;
       const [summaries, counts] = await Promise.all([
         admin.loadAccountModificationRequestSummaries(query),
-        this.loadCounts(makeCountsKey(submission), query)
+        this.loadCounts(makeCountsKey(submission), countsQuery)
       ]);
       const descending = isDescending(submission.filters.sortKey);
       if(summaries.length > 0 && generation === this.generation) {
@@ -71,7 +74,7 @@ export class HttpRequestsModel extends RequestsModel {
           return counts;
         }
         this.invalidateCounts();
-        return this.loadCounts(makeCountsKey(submission), query);
+        return this.loadCounts(makeCountsKey(submission), countsQuery);
       })();
       return {
         status: RequestsModel.ResponseStatus.READY,
@@ -163,8 +166,8 @@ export class HttpRequestsModel extends RequestsModel {
     }
   }
 
-  private makeQuery(submission: RequestsModel.Submission):
-      Nexus.AccountModificationRequestQuery {
+  private makeQuery(submission: RequestsModel.Submission,
+      filter: Beam.Expression): Nexus.AccountModificationRequestQuery {
     const isGroup = submission.scope === RequestsModel.Scope.GROUP;
     const index = (() => {
       if(isGroup) {
@@ -185,27 +188,41 @@ export class HttpRequestsModel extends RequestsModel {
     } else {
       query.anchor = anchor;
     }
-    query.categories = [...submission.filters.categories];
-    query.statuses = toStatuses(submission.requestState);
     query.search = submission.filters.query;
     query.sortField = toSortField(submission.filters.sortKey);
-    if(submission.filters.startDate) {
-      const startDate = submission.filters.startDate.toDate();
-      if(!isNaN(startDate.getTime())) {
-        query.startDate = toUtcDateTime(startDate);
-      }
+    query.filter = filter;
+    return query;
+  }
+
+  private makeFilter(
+      submission: RequestsModel.Submission): Beam.Expression {
+    const isGroup = submission.scope === RequestsModel.Scope.GROUP;
+    const accessor = Nexus.AccountModificationRequestAccessor.fromParameter(0);
+    const clauses = [] as Beam.Expression[];
+    const categories = [...submission.filters.categories];
+    if(categories.length > 0) {
+      clauses.push(Beam.disjunction(categories.map(category =>
+        Beam.makeEquals(accessor.type,
+          new Beam.ConstantExpression(new Beam.IntValue(category))))));
     }
-    if(submission.filters.endDate) {
-      const endDate = submission.filters.endDate.toDate();
-      if(!isNaN(endDate.getTime())) {
-        endDate.setHours(23, 59, 59, 999);
-        query.endDate = toUtcDateTime(endDate);
-      }
+    const startDate = toFilterDate(submission.filters.startDate, false);
+    if(startDate) {
+      clauses.push(Beam.makeGreaterEquals(accessor.lastUpdateTimestamp,
+        new Beam.ConstantExpression(new Beam.DateTimeValue(startDate))));
+    }
+    const endDate = toFilterDate(submission.filters.endDate, true);
+    if(endDate) {
+      clauses.push(Beam.makeLessEquals(accessor.lastUpdateTimestamp,
+        new Beam.ConstantExpression(new Beam.DateTimeValue(endDate))));
     }
     if(isGroup) {
-      query.excludedAccount = this.account;
+      clauses.push(Beam.makeNotEquals(accessor.account,
+        new Beam.ConstantExpression(new Beam.IntValue(this.account.id))));
     }
-    return query;
+    if(clauses.length === 0) {
+      return Beam.ConstantExpression.TRUE;
+    }
+    return Beam.conjunction(clauses);
   }
 
   private toEntry(summary: Nexus.AccountModificationRequestSummary):
@@ -384,6 +401,28 @@ export class HttpRequestsModel extends RequestsModel {
   private counts: Nexus.AccountModificationRequestCounts;
   private countsTime: number;
   private detailTimes: Map<number, number>;
+}
+
+function makeStateFilter(state: RequestsModel.RequestState): Beam.Expression {
+  const accessor = Nexus.AccountModificationRequestAccessor.fromParameter(0);
+  return Beam.disjunction(toStatuses(state).map(status =>
+    Beam.makeEquals(accessor.status,
+      new Beam.ConstantExpression(new Beam.IntValue(status)))));
+}
+
+function toFilterDate(
+    value: Beam.Date, isEnd: boolean): Beam.DateTime {
+  if(!value) {
+    return null;
+  }
+  const date = value.toDate();
+  if(isNaN(date.getTime())) {
+    return null;
+  }
+  if(isEnd) {
+    date.setHours(23, 59, 59, 999);
+  }
+  return toUtcDateTime(date);
 }
 
 function toUtcDateTime(value: globalThis.Date): Beam.DateTime {

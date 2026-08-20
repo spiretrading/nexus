@@ -31,14 +31,7 @@ TEST_SUITE("AccountModificationRequestQuery") {
     query.set_filter(ConstantExpression(false));
     query.set_sort_field(
       AccountModificationRequestQuery::SortField::EFFECTIVE_DATE);
-    query.set_categories({AccountModificationRequest::Type::ENTITLEMENTS,
-      AccountModificationRequest::Type::RISK});
-    query.set_statuses({AccountModificationRequest::Status::GRANTED,
-      AccountModificationRequest::Status::REJECTED});
-    query.set_start_date(time_from_string("2024-07-01 00:00:00"));
-    query.set_end_date(time_from_string("2024-07-31 23:59:59"));
     query.set_search("beta");
-    query.set_excluded_account(DirectoryEntry::make_account(101, "excluded"));
     test_polymorphic_round_trip_shuttle(query, [] (auto registry) {
       register_query_types(registry);
     }, [&] (const auto& received) {
@@ -47,12 +40,7 @@ TEST_SUITE("AccountModificationRequestQuery") {
       REQUIRE(received.get_anchor() == query.get_anchor());
       REQUIRE(received.get_offset() == query.get_offset());
       REQUIRE(received.get_sort_field() == query.get_sort_field());
-      REQUIRE(received.get_categories() == query.get_categories());
-      REQUIRE(received.get_statuses() == query.get_statuses());
-      REQUIRE(received.get_start_date() == query.get_start_date());
-      REQUIRE(received.get_end_date() == query.get_end_date());
       REQUIRE(received.get_search() == query.get_search());
-      REQUIRE(received.get_excluded_account() == query.get_excluded_account());
       REQUIRE(lexical_cast<std::string>(received.get_filter()) ==
         lexical_cast<std::string>(query.get_filter()));
     });

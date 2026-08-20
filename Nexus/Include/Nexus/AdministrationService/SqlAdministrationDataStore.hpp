@@ -132,8 +132,6 @@ namespace Nexus {
         const std::vector<Beam::DirectoryEntry>& accounts);
       static std::string get_sort_column(
         AccountModificationRequestQuery::SortField field);
-      static Viper::Expression make_query_filter(
-        const AccountModificationRequestQuery& query);
       std::vector<AccountModificationRequest> load_requests(
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query);
@@ -398,44 +396,19 @@ namespace Nexus {
   }
 
   template<typename C>
-  Viper::Expression SqlAdministrationDataStore<C>::make_query_filter(
-      const AccountModificationRequestQuery& query) {
-    auto filter = Viper::literal(true);
-    if(!query.get_categories().empty()) {
-      filter = filter && Viper::in(Viper::sym("type"),
-        query.get_categories().begin(), query.get_categories().end());
-    }
-    if(!query.get_statuses().empty()) {
-      filter = filter && Viper::in(Viper::sym("status"),
-        query.get_statuses().begin(), query.get_statuses().end());
-    }
-    if(auto& start_date = query.get_start_date()) {
-      filter = filter && Viper::sym("last_update_timestamp") >= *start_date;
-    }
-    if(auto& end_date = query.get_end_date()) {
-      filter = filter && Viper::sym("last_update_timestamp") <= *end_date;
-    }
-    if(auto& excluded_account = query.get_excluded_account()) {
-      filter = filter && Viper::sym("account") != excluded_account->m_id;
-    }
-    return filter;
-  }
-
-  template<typename C>
   AccountModificationRequestCounts
       SqlAdministrationDataStore<C>::count_requests(
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query) {
     auto filter = make_sql_query(
-      "account_modification_requests", query.get_filter()) &&
-      make_query_filter(query) && accounts;
+      "account_modification_requests", query.get_filter()) && accounts;
     auto count = [&] (const Viper::Expression& status) {
       auto result = 0;
       m_connection->execute(Viper::select(Viper::count("id"),
         "account_modification_requests", filter && status, &result));
       return result;
     };
-    auto counts = AccountModificationRequestCounts(0, 0, 0);
+    auto counts = AccountModificationRequestCounts();
     try {
       counts.m_granted = count(
         Viper::sym("status") == AccountModificationRequest::Status::GRANTED);
@@ -455,9 +428,8 @@ namespace Nexus {
       SqlAdministrationDataStore<C>::load_requests(
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query) {
-    auto filter = make_sql_query(
-      "account_modification_requests", query.get_filter()) &&
-      make_query_filter(query);
+    auto filter =
+      make_sql_query("account_modification_requests", query.get_filter());
     auto is_head =
       query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
     auto sort_column = get_sort_column(query.get_sort_field());

@@ -111,9 +111,7 @@ namespace Nexus {
         EntitlementModification> m_entitlement_modifications;
       std::unordered_map<AccountModificationRequest::Id, RiskModification>
         m_risk_modifications;
-      std::unordered_map<AccountModificationRequest::Id,
-        std::vector<AccountModificationRequest::Update>>
-          m_account_modification_request_updates;
+      AccountModificationRequestUpdates m_account_modification_request_updates;
       std::unordered_map<AccountModificationRequest::Id,
         std::vector<Message::Id>> m_request_messages;
       std::unordered_map<Message::Id, Message> m_messages;
@@ -129,8 +127,6 @@ namespace Nexus {
         const LocalAdministrationDataStore&) = delete;
       boost::posix_time::ptime load_last_update_timestamp(
         AccountModificationRequest::Id id);
-      bool matches_query(const AccountModificationRequest& request,
-        const AccountModificationRequestQuery& query);
       AccountModificationRequestCounts count_requests(
         const std::vector<Beam::DirectoryEntry>* accounts,
         const AccountModificationRequestQuery& query);
@@ -264,38 +260,6 @@ namespace Nexus {
     return request->second.get_timestamp();
   }
 
-  inline bool LocalAdministrationDataStore::matches_query(
-      const AccountModificationRequest& request,
-      const AccountModificationRequestQuery& query) {
-    if(!query.get_categories().empty() &&
-        !std::ranges::contains(query.get_categories(), request.get_type())) {
-      return false;
-    }
-    if(!query.get_statuses().empty()) {
-      auto status = load_account_modification_request_status(request.get_id());
-      if(!std::ranges::contains(query.get_statuses(), status.m_status)) {
-        return false;
-      }
-    }
-    auto& start_date = query.get_start_date();
-    auto& end_date = query.get_end_date();
-    if(start_date || end_date) {
-      auto timestamp = load_last_update_timestamp(request.get_id());
-      if(start_date && timestamp < *start_date) {
-        return false;
-      }
-      if(end_date && timestamp > *end_date) {
-        return false;
-      }
-    }
-    if(auto& excluded_account = query.get_excluded_account()) {
-      if(request.get_account().m_id == excluded_account->m_id) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   inline std::unordered_set<unsigned int>
       LocalAdministrationDataStore::make_account_scope(
         const std::vector<Beam::DirectoryEntry>* accounts) {
@@ -314,18 +278,16 @@ namespace Nexus {
       LocalAdministrationDataStore::count_requests(
         const std::vector<Beam::DirectoryEntry>* accounts,
         const AccountModificationRequestQuery& query) {
-    auto evaluator = Beam::translate<EvaluatorTranslator>(query.get_filter());
+    auto evaluator = Beam::translate<EvaluatorTranslator>(
+      query.get_filter(), Beam::Ref(m_account_modification_request_updates));
     auto scope = make_account_scope(accounts);
-    auto counts = AccountModificationRequestCounts(0, 0, 0);
+    auto counts = AccountModificationRequestCounts();
     for(auto& entry : m_account_modification_requests) {
       auto& request = entry.second;
       if(accounts && !scope.contains(request.get_account().m_id)) {
         continue;
       }
       if(!Beam::test_filter(*evaluator, request)) {
-        continue;
-      }
-      if(!matches_query(request, query)) {
         continue;
       }
       auto status =
@@ -345,7 +307,8 @@ namespace Nexus {
       LocalAdministrationDataStore::load_requests(
         const std::vector<Beam::DirectoryEntry>* accounts,
         const AccountModificationRequestQuery& query) {
-    auto evaluator = Beam::translate<EvaluatorTranslator>(query.get_filter());
+    auto evaluator = Beam::translate<EvaluatorTranslator>(
+      query.get_filter(), Beam::Ref(m_account_modification_request_updates));
     auto& anchor = query.get_anchor();
     auto is_head =
       query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
@@ -392,9 +355,6 @@ namespace Nexus {
         continue;
       }
       if(!Beam::test_filter(*evaluator, request)) {
-        continue;
-      }
-      if(!matches_query(request, query)) {
         continue;
       }
       matches.push_back(request);

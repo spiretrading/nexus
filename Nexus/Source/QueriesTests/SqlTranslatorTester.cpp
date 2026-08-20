@@ -1,5 +1,7 @@
 #include <Beam/Queries/StandardValues.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/Queries/AccountModificationRequestAccessor.hpp"
 #include "Nexus/Queries/BboQuoteAccessor.hpp"
 #include "Nexus/Queries/BookQuoteAccessor.hpp"
 #include "Nexus/Queries/OrderImbalanceAccessor.hpp"
@@ -10,6 +12,7 @@
 #include "Nexus/OrderExecutionService/StandardQueries.hpp"
 
 using namespace Beam;
+using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
@@ -136,5 +139,21 @@ TEST_SUITE("SqlTranslator") {
     auto expression = make_order_id_filter(ids);
     REQUIRE(translate("submissions", expression) ==
       "((submissions.order_id = 13) OR (submissions.order_id = 31))");
+  }
+
+  TEST_CASE("account_modification_request_status") {
+    auto accessor = AccountModificationRequestAccessor::from_parameter(0);
+    auto expression = accessor.get_status() == ConstantExpression(
+      static_cast<int>(AccountModificationRequest::Status::GRANTED));
+    REQUIRE(translate("account_modification_requests", expression) ==
+      "(status = 4)");
+  }
+
+  TEST_CASE("account_modification_request_last_update_timestamp") {
+    auto accessor = AccountModificationRequestAccessor::from_parameter(0);
+    auto expression = accessor.get_last_update_timestamp() >=
+      ConstantExpression(time_from_string("2026-05-08 09:30:00"));
+    REQUIRE(translate("account_modification_requests", expression) ==
+      "(last_update_timestamp >= 1778232600000)");
   }
 }
