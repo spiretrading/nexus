@@ -281,7 +281,7 @@ namespace Nexus {
     auto evaluator = Beam::translate<EvaluatorTranslator>(
       query.get_filter(), Beam::Ref(m_account_modification_request_updates));
     auto scope = make_account_scope(accounts);
-    auto counts = AccountModificationRequestCounts(0, 0, 0);
+    auto counts = AccountModificationRequestCounts();
     for(auto& entry : m_account_modification_requests) {
       auto& request = entry.second;
       if(accounts && !scope.contains(request.get_account().m_id)) {

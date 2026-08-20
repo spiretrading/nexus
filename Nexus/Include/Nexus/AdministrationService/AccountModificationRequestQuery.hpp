@@ -2,14 +2,10 @@
 #define NEXUS_ADMINISTRATION_SERVICE_ACCOUNT_MODIFICATION_REQUEST_QUERY_HPP
 #include <ostream>
 #include <string>
-#include <vector>
 #include <Beam/Queries/PagedQuery.hpp>
 #include <Beam/Queries/ShuttleQueryTypes.hpp>
 #include <Beam/Serialization/DataShuttle.hpp>
-#include <Beam/Serialization/ShuttleOptional.hpp>
-#include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
-#include <boost/optional/optional.hpp>
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
 
 namespace Nexus {

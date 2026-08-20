@@ -1,5 +1,4 @@
 import * as Beam from 'beam';
-import { AccountModificationRequest } from './account_modification_request';
 
 /**
  * Marks a position within an ordering of AccountModificationRequests. The

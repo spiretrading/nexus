@@ -408,7 +408,7 @@ namespace Nexus {
         "account_modification_requests", filter && status, &result));
       return result;
     };
-    auto counts = AccountModificationRequestCounts(0, 0, 0);
+    auto counts = AccountModificationRequestCounts();
     try {
       counts.m_granted = count(
         Viper::sym("status") == AccountModificationRequest::Status::GRANTED);

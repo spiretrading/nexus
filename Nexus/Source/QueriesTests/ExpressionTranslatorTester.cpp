@@ -303,8 +303,8 @@ TEST_SUITE("EvaluatorTranslator") {
     auto request = make_request();
     auto updates = AccountModificationRequestUpdates();
     SUBCASE("no_updates") {
-      auto evaluator =
-        translate<Nexus::EvaluatorTranslator>(accessor.get_status(), Ref(updates));
+      auto evaluator = translate<Nexus::EvaluatorTranslator>(
+        accessor.get_status(), Ref(updates));
       REQUIRE(evaluator->eval<int>(request) ==
         static_cast<int>(AccountModificationRequest::Status::NONE));
     }
@@ -361,5 +361,20 @@ TEST_SUITE("EvaluatorTranslator") {
       ExpressionTranslationException);
     REQUIRE_THROWS_AS(translate<Nexus::EvaluatorTranslator>(
       accessor.get_last_update_timestamp()), ExpressionTranslationException);
+  }
+
+  TEST_CASE("account_modification_request_members_in_sub_translator") {
+    auto accessor = AccountModificationRequestAccessor::from_parameter(0);
+    auto request = make_request();
+    auto updates = AccountModificationRequestUpdates();
+    updates[request.get_id()].emplace_back(
+      AccountModificationRequest::Status::GRANTED,
+      DirectoryEntry::make_account(101, "manager"), 0,
+      time_from_string("2026-05-08 11:00:00"));
+    auto translator = Nexus::EvaluatorTranslator(Ref(updates));
+    auto sub_translator = translator.make_translator();
+    auto evaluator = translate(accessor.get_status(), *sub_translator);
+    REQUIRE(evaluator->eval<int>(request) ==
+      static_cast<int>(AccountModificationRequest::Status::GRANTED));
   }
 }

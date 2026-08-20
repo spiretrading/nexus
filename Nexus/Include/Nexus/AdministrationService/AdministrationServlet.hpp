@@ -1756,7 +1756,7 @@ namespace Nexus {
       }
       auto statuses =
         m_data_store->load_account_modification_request_statuses(ids);
-      auto counts = AccountModificationRequestCounts(0, 0, 0);
+      auto counts = AccountModificationRequestCounts();
       for(auto& status : statuses) {
         if(status.m_status == AccountModificationRequest::Status::GRANTED) {
           ++counts.m_granted;
