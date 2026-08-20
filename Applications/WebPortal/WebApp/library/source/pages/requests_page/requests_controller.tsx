@@ -176,10 +176,22 @@ export class RequestsController extends React.Component<Properties, State> {
 
   private onNavigate = (page: RequestsPage.Page) => {
     const prefix = this.parseUrlPrefix();
-    if(page === RequestsPage.Page.YOUR_REQUESTS) {
-      this.setState({redirect: `${prefix}/you`});
+    const scope = (() => {
+      if(page === RequestsPage.Page.YOUR_REQUESTS) {
+        return RequestsModel.Scope.YOU;
+      }
+      return RequestsModel.Scope.GROUP;
+    })();
+    const search = submissionToSearch({
+      scope,
+      requestState: this.state.requestState,
+      filters: this.state.filters,
+      pageIndex: 0
+    });
+    if(scope === RequestsModel.Scope.YOU) {
+      this.setState({redirect: `${prefix}/you${search}`});
     } else {
-      this.setState({redirect: `${prefix}/group`});
+      this.setState({redirect: `${prefix}/group${search}`});
     }
   }
 
