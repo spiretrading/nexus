@@ -15,6 +15,7 @@
 #include "Spire/Dashboard/TextDashboardCellRenderer.hpp"
 #include "Spire/Dashboard/ValueDashboardCell.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -67,18 +68,22 @@ class DashboardWidget::Header : public QWidget {
           event->rect(), palette().color(QPalette::Window));
         return;
       }
+      auto offset = m_dashboard->GetHorizontalScrollPosition();
       auto dashboardPainter = DashboardPainter(painter);
-      m_dashboard->m_renderer->DrawHeader(
-        dashboardPainter, QRect(0, 0, width(), height()));
+      m_dashboard->m_renderer->DrawHeader(dashboardPainter,
+        QRect(-offset, 0,
+          std::max(m_dashboard->GetContentWidth(), offset + width()),
+          height()));
     }
 
     void mouseMoveEvent(QMouseEvent* event) override {
+      auto position = MapToContent(event->pos());
       if(m_dashboard->m_mouseState == MouseState::RESIZING_COLUMN) {
-        m_dashboard->ResizeColumn(*event);
+        m_dashboard->ResizeColumn(position);
       } else if(m_dashboard->m_mouseState == MouseState::MOVING_COLUMN) {
-        m_dashboard->MoveColumn(*event);
+        m_dashboard->MoveColumn(position);
       } else {
-        m_dashboard->TestHoveringColumnExpansion(*event);
+        m_dashboard->TestHoveringColumnExpansion(position);
       }
     }
 
@@ -90,21 +95,22 @@ class DashboardWidget::Header : public QWidget {
         m_dashboard->m_mouseState = MouseState::RESIZING_COLUMN;
         return;
       }
-      m_dashboard->m_lastMousePressPosition = event->pos();
-      m_dashboard->m_activeColumnIndex = m_dashboard->GetColumnAt(event->pos());
+      auto position = MapToContent(event->pos());
+      m_dashboard->m_lastMousePressPosition = position;
+      m_dashboard->m_activeColumnIndex = m_dashboard->GetColumnAt(position);
       m_dashboard->m_mouseState = MouseState::MOVING_COLUMN;
       setCursor(Qt::ClosedHandCursor);
     }
 
     void mouseReleaseEvent(QMouseEvent* event) override {
+      auto position = MapToContent(event->pos());
       if(m_dashboard->m_mouseState == MouseState::RESIZING_COLUMN) {
         m_dashboard->m_mouseState = MouseState::NONE;
-        m_dashboard->TestHoveringColumnExpansion(*event);
+        m_dashboard->TestHoveringColumnExpansion(position);
       } else if(m_dashboard->m_mouseState == MouseState::MOVING_COLUMN) {
         m_dashboard->m_mouseState = MouseState::NONE;
         setCursor(Qt::ArrowCursor);
-        m_dashboard->TestHoveringColumnExpansion(*event);
-        auto position = event->pos();
+        m_dashboard->TestHoveringColumnExpansion(position);
         if(std::abs(position.x() -
               m_dashboard->m_lastMousePressPosition.x()) <= 5 &&
             std::abs(position.y() -
@@ -118,6 +124,11 @@ class DashboardWidget::Header : public QWidget {
   private:
     DashboardWidget* m_dashboard;
     QSize m_sizeHint;
+
+    QPoint MapToContent(const QPoint& position) {
+      return QPoint(position.x() + m_dashboard->GetHorizontalScrollPosition(),
+        position.y());
+    }
 };
 
 class DashboardWidget::Body : public QWidget {
@@ -127,7 +138,8 @@ class DashboardWidget::Body : public QWidget {
       setMouseTracking(true);
       setFocusPolicy(Qt::NoFocus);
       setAttribute(Qt::WA_OpaquePaintEvent);
-      setSizePolicy(QSizePolicy::Expanding, QSizePolicy::MinimumExpanding);
+      setSizePolicy(
+        QSizePolicy::MinimumExpanding, QSizePolicy::MinimumExpanding);
     }
 
     QSize sizeHint() const override {
@@ -186,10 +198,6 @@ class DashboardWidget::Body : public QWidget {
         return;
       }
       m_dashboard->ActivateRow(*rowIndex);
-    }
-
-    void resizeEvent(QResizeEvent* event) override {
-      m_dashboard->StretchLastColumn(width());
     }
 
   private:
@@ -269,9 +277,13 @@ DashboardWidget::DashboardWidget(QWidget* parent, Qt::WindowFlags flags)
   m_header = new Header(*this);
   m_body = new Body(*this);
   m_scrollBox = new ScrollBox(m_body);
-  m_scrollBox->set(ScrollBox::DisplayPolicy::ON_ENGAGE);
+  m_scrollBox->set(ScrollBox::DisplayPolicy::ON_OVERFLOW);
   m_scrollBox->setFocusPolicy(Qt::NoFocus);
   m_scrollBox->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_scrollBox->get_horizontal_scroll_bar().set_line_size(scale_width(26));
+  m_horizontalScrollConnection =
+    m_scrollBox->get_horizontal_scroll_bar().connect_position_signal(
+      [=, this] (auto position) { m_header->update(); });
   auto layout = make_vbox_layout(this);
   layout->addWidget(m_header);
   layout->addWidget(m_scrollBox);
@@ -330,9 +342,9 @@ void DashboardWidget::Initialize(Ref<DashboardModel> model,
   m_renderer = std::make_unique<DashboardRenderer>(
     Ref(*m_model), Ref(*m_selectionModel), rowRenderer, Ref(*m_userProfile));
   auto p = QPalette(palette());
-  p.setColor(QPalette::Window, QColor{13, 13, 13});
+  p.setColor(QPalette::Window, QColor(13, 13, 13));
   setPalette(p);
-  StretchLastColumn(m_body->width());
+  StretchLastColumn(GetContentAreaWidth());
   m_drawConnection = m_renderer->ConnectDrawSignal(
     std::bind_front(&DashboardWidget::OnDrawSignal, this));
   m_selectedRowsConnection = m_selectionModel->ConnectSelectedRowsUpdatedSignal(
@@ -418,6 +430,15 @@ void DashboardWidget::hideEvent(QHideEvent* event) {
   QWidget::hideEvent(event);
 }
 
+void DashboardWidget::resizeEvent(QResizeEvent* event) {
+  StretchLastColumn(GetContentAreaWidth());
+  if(m_renderer) {
+    m_header->Refresh();
+    m_body->Refresh();
+  }
+  QWidget::resizeEvent(event);
+}
+
 int DashboardWidget::GetContentWidth() const {
   if(!m_model) {
     return 0;
@@ -427,6 +448,20 @@ int DashboardWidget::GetContentWidth() const {
     width += m_renderer->GetColumnWidth(i);
   }
   return width;
+}
+
+int DashboardWidget::GetContentAreaWidth() {
+  if(!m_renderer) {
+    return width();
+  }
+  if(m_body->sizeHint().height() <= height() - m_header->sizeHint().height()) {
+    return width();
+  }
+  return width() - m_scrollBox->get_vertical_scroll_bar().sizeHint().width();
+}
+
+int DashboardWidget::GetHorizontalScrollPosition() {
+  return m_scrollBox->get_horizontal_scroll_bar().get_position();
 }
 
 void DashboardWidget::ScrollToRow(int index) {
@@ -534,9 +569,8 @@ void DashboardWidget::DeleteSelectedRows() {
   }
 }
 
-void DashboardWidget::TestHoveringColumnExpansion(const QMouseEvent& event) {
+void DashboardWidget::TestHoveringColumnExpansion(const QPoint& position) {
   const auto WIDTH_ADJUSTMENT_THRESHOLD = 3;
-  auto position = event.pos();
   if(position.y() > m_renderer->GetMaxRowHeight()) {
     if(m_isHoveringOverColumnResize) {
       m_isHoveringOverColumnResize = false;
@@ -582,7 +616,7 @@ int DashboardWidget::GetColumnAt(const QPoint& point) {
   return m_model->GetColumnCount() - 1;
 }
 
-void DashboardWidget::ResizeColumn(const QMouseEvent& event) {
+void DashboardWidget::ResizeColumn(const QPoint& position) {
   if(m_activeColumnIndex == m_model->GetColumnCount() - 1) {
     return;
   }
@@ -590,7 +624,7 @@ void DashboardWidget::ResizeColumn(const QMouseEvent& event) {
   for(auto i = 0; i <= m_activeColumnIndex; ++i) {
     columnWidthAccumulator += m_renderer->GetColumnWidth(i);
   }
-  auto delta = event.pos().x() - columnWidthAccumulator;
+  auto delta = position.x() - columnWidthAccumulator;
   if(delta < 0) {
     auto currentLeftColumnSize = m_renderer->GetColumnWidth(
       m_activeColumnIndex);
@@ -621,8 +655,7 @@ void DashboardWidget::ResizeColumn(const QMouseEvent& event) {
   }
 }
 
-void DashboardWidget::MoveColumn(const QMouseEvent& event) {
-  auto position = event.pos();
+void DashboardWidget::MoveColumn(const QPoint& position) {
   auto currentIndex = GetColumnAt(position);
   if(currentIndex != m_activeColumnIndex) {
     m_renderer->MoveColumn(m_activeColumnIndex, currentIndex);
@@ -673,6 +706,7 @@ void DashboardWidget::OnRepaintTimer() {
     return;
   }
   m_hasRepaintEvent = false;
+  StretchLastColumn(GetContentAreaWidth());
   m_header->Refresh();
   m_body->Refresh();
 }

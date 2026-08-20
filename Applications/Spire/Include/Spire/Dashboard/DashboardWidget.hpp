@@ -69,6 +69,7 @@ namespace Spire {
       void keyReleaseEvent(QKeyEvent* event) override;
       void showEvent(QShowEvent* event) override;
       void hideEvent(QHideEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       template<typename, typename> friend struct Beam::Shuttle;
@@ -114,19 +115,22 @@ namespace Spire {
       boost::signals2::scoped_connection m_activeRowConnection;
       boost::signals2::scoped_connection m_rowAddedConnection;
       boost::signals2::scoped_connection m_rowRemovedConnection;
+      boost::signals2::scoped_connection m_horizontalScrollConnection;
       Beam::ConnectionGroup m_cellUpdateConnections;
 
       int GetContentWidth() const;
+      int GetContentAreaWidth();
+      int GetHorizontalScrollPosition();
       void ScrollToRow(int index);
       void StretchLastColumn(int width);
       void ModifyColumnSortOrder(int index);
       void SortRows();
       void ActivateRow(int index);
       void DeleteSelectedRows();
-      void TestHoveringColumnExpansion(const QMouseEvent& event);
+      void TestHoveringColumnExpansion(const QPoint& position);
       int GetColumnAt(const QPoint& point);
-      void ResizeColumn(const QMouseEvent& event);
-      void MoveColumn(const QMouseEvent& event);
+      void ResizeColumn(const QPoint& position);
+      void MoveColumn(const QPoint& position);
       void OnSelectedRowsUpdatedSignal();
       void OnRowAddedSignal(const DashboardRow& row);
       void OnRowRemovedSignal(const DashboardRow& row);
