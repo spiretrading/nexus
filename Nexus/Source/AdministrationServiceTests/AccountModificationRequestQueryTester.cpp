@@ -31,8 +31,6 @@ TEST_SUITE("AccountModificationRequestQuery") {
     query.set_filter(ConstantExpression(false));
     query.set_sort_field(
       AccountModificationRequestQuery::SortField::EFFECTIVE_DATE);
-    query.set_statuses({AccountModificationRequest::Status::GRANTED,
-      AccountModificationRequest::Status::REJECTED});
     query.set_search("beta");
     test_polymorphic_round_trip_shuttle(query, [] (auto registry) {
       register_query_types(registry);
@@ -42,7 +40,6 @@ TEST_SUITE("AccountModificationRequestQuery") {
       REQUIRE(received.get_anchor() == query.get_anchor());
       REQUIRE(received.get_offset() == query.get_offset());
       REQUIRE(received.get_sort_field() == query.get_sort_field());
-      REQUIRE(received.get_statuses() == query.get_statuses());
       REQUIRE(received.get_search() == query.get_search());
       REQUIRE(lexical_cast<std::string>(received.get_filter()) ==
         lexical_cast<std::string>(query.get_filter()));

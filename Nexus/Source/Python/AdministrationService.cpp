@@ -154,11 +154,8 @@ void Nexus::Python::export_account_modification_request_query(
         &AccountModificationRequestQuery::set_anchor)).
     def_property("offset", &AccountModificationRequestQuery::get_offset,
       &AccountModificationRequestQuery::set_offset).
-    def_property("sort_field",
-      &AccountModificationRequestQuery::get_sort_field,
+    def_property("sort_field", &AccountModificationRequestQuery::get_sort_field,
       &AccountModificationRequestQuery::set_sort_field).
-    def_property("statuses", &AccountModificationRequestQuery::get_statuses,
-      &AccountModificationRequestQuery::set_statuses).
     def_property("search", &AccountModificationRequestQuery::get_search,
       &AccountModificationRequestQuery::set_search));
   module.def("make_account_modification_request_query",

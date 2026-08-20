@@ -601,21 +601,33 @@ TEST_SUITE("AdministrationServlet") {
     auto query = AccountModificationRequestQuery();
     query.set_index(root);
     query.set_snapshot_limit(SnapshotLimit::from_head(10));
-    query.set_statuses({AccountModificationRequest::Status::REJECTED});
+    auto accessor = AccountModificationRequestAccessor::from_parameter(0);
+    auto by_status = [&] (AccountModificationRequest::Status status) {
+      query.set_filter(accessor.get_status() == static_cast<int>(status));
+      return query;
+    };
     auto rejected = fixture.m_admin_client->send_request<
-      LoadAccountModificationRequestSummariesService>(query);
+      LoadAccountModificationRequestSummariesService>(
+        by_status(AccountModificationRequest::Status::REJECTED));
     REQUIRE(rejected.size() == 1);
     REQUIRE(rejected[0].m_request.get_id() == rejected_request.get_id());
-    query.set_statuses({AccountModificationRequest::Status::PENDING});
     auto still_pending = fixture.m_admin_client->send_request<
-      LoadAccountModificationRequestSummariesService>(query);
+      LoadAccountModificationRequestSummariesService>(
+        by_status(AccountModificationRequest::Status::PENDING));
     REQUIRE(still_pending.size() == 1);
     REQUIRE(still_pending[0].m_request.get_id() == pending.get_id());
+    query.set_filter(ConstantExpression(true));
     auto counts = fixture.m_admin_client->send_request<
       LoadAccountModificationRequestCountsService>(query);
     REQUIRE(counts.m_rejected == 1);
     REQUIRE(counts.m_pending == 1);
     REQUIRE(counts.m_granted == 0);
+    auto restricted = fixture.m_admin_client->send_request<
+      LoadAccountModificationRequestCountsService>(
+        by_status(AccountModificationRequest::Status::PENDING));
+    REQUIRE(restricted.m_rejected == 0);
+    REQUIRE(restricted.m_pending == 1);
+    REQUIRE(restricted.m_granted == 0);
   }
 
   TEST_CASE("load_summaries_searching_by_id_and_requester") {

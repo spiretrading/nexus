@@ -77,14 +77,6 @@ namespace Nexus {
       /** Sets the field used to order the requests. */
       void set_sort_field(SortField field);
 
-      /** Returns the statuses to match, or empty to match every status. */
-      const std::vector<AccountModificationRequest::Status>&
-        get_statuses() const;
-
-      /** Sets the statuses to match. */
-      void set_statuses(
-        const std::vector<AccountModificationRequest::Status>& statuses);
-
       /** Returns the text matching a request id or an account name. */
       const std::string& get_search() const;
 
@@ -100,7 +92,6 @@ namespace Nexus {
     private:
       friend struct Beam::DataShuttle;
       SortField m_sort_field;
-      std::vector<AccountModificationRequest::Status> m_statuses;
       std::string m_search;
   };
 
@@ -171,16 +162,6 @@ namespace Nexus {
     m_sort_field = field;
   }
 
-  inline const std::vector<AccountModificationRequest::Status>&
-      AccountModificationRequestQuery::get_statuses() const {
-    return m_statuses;
-  }
-
-  inline void AccountModificationRequestQuery::set_statuses(
-      const std::vector<AccountModificationRequest::Status>& statuses) {
-    m_statuses = statuses;
-  }
-
   inline const std::string&
       AccountModificationRequestQuery::get_search() const {
     return m_search;
@@ -197,7 +178,6 @@ namespace Nexus {
     Beam::PagedQuery<Beam::DirectoryEntry,
       AccountModificationRequestAnchor>::shuttle(shuttle, version);
     shuttle.shuttle("sort_field", m_sort_field);
-    shuttle.shuttle("statuses", m_statuses);
     shuttle.shuttle("search", m_search);
     if constexpr(Beam::IsReceiver<S>) {
       if(m_sort_field != SortField::CREATED &&

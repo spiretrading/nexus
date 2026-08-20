@@ -132,8 +132,6 @@ namespace Nexus {
         const std::vector<Beam::DirectoryEntry>& accounts);
       static std::string get_sort_column(
         AccountModificationRequestQuery::SortField field);
-      static Viper::Expression make_query_filter(
-        const AccountModificationRequestQuery& query);
       std::vector<AccountModificationRequest> load_requests(
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query);
@@ -398,24 +396,12 @@ namespace Nexus {
   }
 
   template<typename C>
-  Viper::Expression SqlAdministrationDataStore<C>::make_query_filter(
-      const AccountModificationRequestQuery& query) {
-    auto filter = Viper::literal(true);
-    if(!query.get_statuses().empty()) {
-      filter = filter && Viper::in(Viper::sym("status"),
-        query.get_statuses().begin(), query.get_statuses().end());
-    }
-    return filter;
-  }
-
-  template<typename C>
   AccountModificationRequestCounts
       SqlAdministrationDataStore<C>::count_requests(
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query) {
     auto filter = make_sql_query(
-      "account_modification_requests", query.get_filter()) &&
-      make_query_filter(query) && accounts;
+      "account_modification_requests", query.get_filter()) && accounts;
     auto count = [&] (const Viper::Expression& status) {
       auto result = 0;
       m_connection->execute(Viper::select(Viper::count("id"),
@@ -442,9 +428,8 @@ namespace Nexus {
       SqlAdministrationDataStore<C>::load_requests(
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query) {
-    auto filter = make_sql_query(
-      "account_modification_requests", query.get_filter()) &&
-      make_query_filter(query);
+    auto filter =
+      make_sql_query("account_modification_requests", query.get_filter());
     auto is_head =
       query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
     auto sort_column = get_sort_column(query.get_sort_field());

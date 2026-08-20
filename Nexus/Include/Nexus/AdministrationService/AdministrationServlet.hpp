@@ -10,6 +10,7 @@
 #include <Beam/Collections/SynchronizedMap.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
+#include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/ServiceLocator/ServiceLocatorClient.hpp>
 #include <Beam/Threading/Sync.hpp>
@@ -27,6 +28,7 @@
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
 #include "Nexus/AdministrationService/AdministrationServices.hpp"
 #include "Nexus/AdministrationService/AdministrationSession.hpp"
+#include "Nexus/Queries/AccountModificationRequestAccessor.hpp"
 #include "Nexus/Queries/ShuttleQueryTypes.hpp"
 
 namespace Nexus {
@@ -882,7 +884,9 @@ namespace Nexus {
     auto now = m_time_client->get_time();
     auto requests = m_data_store->with_transaction([&] {
       auto query = AccountModificationRequestQuery();
-      query.set_statuses({AccountModificationRequest::Status::SCHEDULED});
+      query.set_filter(
+        AccountModificationRequestAccessor::from_parameter(0).get_status() ==
+          static_cast<int>(AccountModificationRequest::Status::SCHEDULED));
       query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
       return m_data_store->load_account_modification_requests(query);
     });
@@ -1735,7 +1739,6 @@ namespace Nexus {
     total.set_anchor(boost::optional<AccountModificationRequestAnchor>());
     total.set_offset(0);
     total.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
-    total.set_statuses({});
     total.set_sort_field(AccountModificationRequestQuery::SortField::CREATED);
     return m_data_store->with_transaction([&] {
       if(total.get_search().empty()) {

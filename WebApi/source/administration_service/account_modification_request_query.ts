@@ -78,18 +78,8 @@ export class AccountModificationRequestQuery extends
   constructor(index: Beam.DirectoryEntry, snapshotLimit: Beam.SnapshotLimit) {
     super(index);
     this.snapshotLimit = snapshotLimit;
-    this._statuses = [];
     this._search = '';
     this._sortField = AccountModificationRequestQuery.SortField.CREATED;
-  }
-
-  /** Returns the request statuses to match, or empty to match all. */
-  public get statuses(): AccountModificationRequest.Status[] {
-    return this._statuses.slice();
-  }
-
-  public set statuses(value: AccountModificationRequest.Status[]) {
-    this._statuses = value.slice();
   }
 
   /** Returns the text matching a request id or an account name. */
@@ -114,7 +104,6 @@ export class AccountModificationRequestQuery extends
   public equals(other: AccountModificationRequestQuery): boolean {
     return other && super.equals(other) &&
       this._sortField === other._sortField &&
-      equalsArray(this._statuses, other._statuses) &&
       this._search === other._search;
   }
 
@@ -126,13 +115,11 @@ export class AccountModificationRequestQuery extends
   public toJson(): any {
     return {
       ...super.toJson(),
-      statuses: this._statuses.slice(),
       search: this._search,
       sort_field: this._sortField
     };
   }
 
-  private _statuses: AccountModificationRequest.Status[];
   private _search: string;
   private _sortField: AccountModificationRequestQuery.SortField;
 }
@@ -170,10 +157,5 @@ export function toOptionalJson(value: any): any {
 function sortFieldToString(
     field: AccountModificationRequestQuery.SortField): string {
   return AccountModificationRequestQuery.SortField[field];
-}
-
-function equalsArray(left: any[], right: any[]): boolean {
-  return left.length === right.length &&
-    left.every((value, index) => value === right[index]);
 }
 

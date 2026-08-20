@@ -39,11 +39,14 @@ export class HttpRequestsModel extends RequestsModel {
     try {
       const admin = this.serviceClients.administrationClient;
       this.resetAnchors(submission);
-      const query = this.makeQuery(submission);
+      const filter = this.makeFilter(submission);
+      const query = this.makeQuery(submission, Beam.conjunction(
+        [filter, makeStateFilter(submission.requestState)]));
+      const countsQuery = this.makeQuery(submission, filter);
       const generation = ++this.generation;
       const [summaries, counts] = await Promise.all([
         admin.loadAccountModificationRequestSummaries(query),
-        this.loadCounts(makeCountsKey(submission), query)
+        this.loadCounts(makeCountsKey(submission), countsQuery)
       ]);
       const descending = isDescending(submission.filters.sortKey);
       if(summaries.length > 0 && generation === this.generation) {
@@ -71,7 +74,7 @@ export class HttpRequestsModel extends RequestsModel {
           return counts;
         }
         this.invalidateCounts();
-        return this.loadCounts(makeCountsKey(submission), query);
+        return this.loadCounts(makeCountsKey(submission), countsQuery);
       })();
       return {
         status: RequestsModel.ResponseStatus.READY,
@@ -163,8 +166,8 @@ export class HttpRequestsModel extends RequestsModel {
     }
   }
 
-  private makeQuery(submission: RequestsModel.Submission):
-      Nexus.AccountModificationRequestQuery {
+  private makeQuery(submission: RequestsModel.Submission,
+      filter: Beam.Expression): Nexus.AccountModificationRequestQuery {
     const isGroup = submission.scope === RequestsModel.Scope.GROUP;
     const index = (() => {
       if(isGroup) {
@@ -185,15 +188,15 @@ export class HttpRequestsModel extends RequestsModel {
     } else {
       query.anchor = anchor;
     }
-    query.statuses = toStatuses(submission.requestState);
     query.search = submission.filters.query;
     query.sortField = toSortField(submission.filters.sortKey);
-    query.filter = this.makeFilter(submission, isGroup);
+    query.filter = filter;
     return query;
   }
 
   private makeFilter(
-      submission: RequestsModel.Submission, isGroup: boolean): Beam.Expression {
+      submission: RequestsModel.Submission): Beam.Expression {
+    const isGroup = submission.scope === RequestsModel.Scope.GROUP;
     const accessor = Nexus.AccountModificationRequestAccessor.fromParameter(0);
     const clauses = [] as Beam.Expression[];
     const categories = [...submission.filters.categories];
@@ -398,6 +401,13 @@ export class HttpRequestsModel extends RequestsModel {
   private counts: Nexus.AccountModificationRequestCounts;
   private countsTime: number;
   private detailTimes: Map<number, number>;
+}
+
+function makeStateFilter(state: RequestsModel.RequestState): Beam.Expression {
+  const accessor = Nexus.AccountModificationRequestAccessor.fromParameter(0);
+  return Beam.disjunction(toStatuses(state).map(status =>
+    Beam.makeEquals(accessor.status,
+      new Beam.ConstantExpression(new Beam.IntValue(status)))));
 }
 
 function toFilterDate(

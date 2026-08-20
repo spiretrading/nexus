@@ -1,8 +1,6 @@
 import { describe, it } from 'node:test';
 import * as assert from 'node:assert';
 import * as Beam from 'beam';
-import { AccountModificationRequest } from
-  '../../source/administration_service/account_modification_request';
 import { AccountModificationRequestAnchor,
   AccountModificationRequestQuery } from
   '../../source/administration_service/account_modification_request_query';
@@ -51,9 +49,6 @@ describe('AccountModificationRequestQuery', () => {
   });
 
   it('equals_compares_its_own_fields', () => {
-    const statuses = makeQuery();
-    statuses.statuses = [AccountModificationRequest.Status.GRANTED];
-    assert.ok(!makeQuery().equals(statuses));
     const search = makeQuery();
     search.search = 'trader';
     assert.ok(!makeQuery().equals(search));
@@ -62,23 +57,11 @@ describe('AccountModificationRequestQuery', () => {
     assert.ok(!makeQuery().equals(sorted));
   });
 
-  it('statuses_is_copied_in_and_out', () => {
-    const query = makeQuery();
-    const source = [AccountModificationRequest.Status.GRANTED];
-    query.statuses = source;
-    source.push(AccountModificationRequest.Status.REJECTED);
-    assert.deepStrictEqual(
-      query.statuses, [AccountModificationRequest.Status.GRANTED]);
-    query.statuses.push(AccountModificationRequest.Status.REJECTED);
-    assert.deepStrictEqual(
-      query.statuses, [AccountModificationRequest.Status.GRANTED]);
-  });
-
   it('sends_only_the_fields_the_service_reads', () => {
     const json = makeQuery().toJson();
     assert.deepStrictEqual(Object.keys(json).filter(key =>
       !['index', 'snapshot_limit', 'filter', 'anchor', 'offset'].
-        includes(key)).sort(), ['search', 'sort_field', 'statuses']);
+        includes(key)).sort(), ['search', 'sort_field']);
   });
 
   it('equals_compares_the_inherited_fields', () => {

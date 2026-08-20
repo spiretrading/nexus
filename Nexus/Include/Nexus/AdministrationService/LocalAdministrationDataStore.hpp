@@ -127,8 +127,6 @@ namespace Nexus {
         const LocalAdministrationDataStore&) = delete;
       boost::posix_time::ptime load_last_update_timestamp(
         AccountModificationRequest::Id id);
-      bool matches_query(const AccountModificationRequest& request,
-        const AccountModificationRequestQuery& query);
       AccountModificationRequestCounts count_requests(
         const std::vector<Beam::DirectoryEntry>* accounts,
         const AccountModificationRequestQuery& query);
@@ -262,18 +260,6 @@ namespace Nexus {
     return request->second.get_timestamp();
   }
 
-  inline bool LocalAdministrationDataStore::matches_query(
-      const AccountModificationRequest& request,
-      const AccountModificationRequestQuery& query) {
-    if(!query.get_statuses().empty()) {
-      auto status = load_account_modification_request_status(request.get_id());
-      if(!std::ranges::contains(query.get_statuses(), status.m_status)) {
-        return false;
-      }
-    }
-    return true;
-  }
-
   inline std::unordered_set<unsigned int>
       LocalAdministrationDataStore::make_account_scope(
         const std::vector<Beam::DirectoryEntry>* accounts) {
@@ -302,9 +288,6 @@ namespace Nexus {
         continue;
       }
       if(!Beam::test_filter(*evaluator, request)) {
-        continue;
-      }
-      if(!matches_query(request, query)) {
         continue;
       }
       auto status =
@@ -372,9 +355,6 @@ namespace Nexus {
         continue;
       }
       if(!Beam::test_filter(*evaluator, request)) {
-        continue;
-      }
-      if(!matches_query(request, query)) {
         continue;
       }
       matches.push_back(request);

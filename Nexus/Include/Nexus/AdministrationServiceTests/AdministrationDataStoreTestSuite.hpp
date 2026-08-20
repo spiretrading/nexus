@@ -2,6 +2,7 @@
 #define NEXUS_ADMINISTRATION_DATA_STORE_TEST_SUITE_HPP
 #include <Beam/Queries/AndExpression.hpp>
 #include <Beam/Queries/ConstantExpression.hpp>
+#include <Beam/Queries/OrExpression.hpp>
 #include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <boost/optional/optional_io.hpp>
@@ -691,14 +692,15 @@ namespace Nexus::Tests {
       auto by_category = load(query);
       REQUIRE(by_category.size() == 1);
       REQUIRE(by_category[0].get_id() == 2);
-      query.set_filter(ConstantExpression(true));
-      query.set_statuses({AccountModificationRequest::Status::GRANTED,
-        AccountModificationRequest::Status::REJECTED});
+      query.set_filter(OrExpression(
+        accessor.get_status() ==
+          static_cast<int>(AccountModificationRequest::Status::GRANTED),
+        accessor.get_status() ==
+          static_cast<int>(AccountModificationRequest::Status::REJECTED)));
       auto by_status = load(query);
       REQUIRE(by_status.size() == 2);
       REQUIRE(by_status[0].get_id() == 1);
       REQUIRE(by_status[1].get_id() == 3);
-      query.set_statuses({});
       query.set_filter(accessor.get_last_update_timestamp() >=
         time_from_string("2024-07-08 00:00:00"));
       auto from_start = load(query);
