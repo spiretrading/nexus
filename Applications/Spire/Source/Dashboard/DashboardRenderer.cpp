@@ -216,9 +216,26 @@ void DashboardRenderer::InsertEmptyRow(int index) {
   m_drawSignal();
 }
 
+void DashboardRenderer::DrawHeader(
+    DashboardPainter& painter, const QRect& region) {
+  painter.GetPainter().fillRect(region, QColor(19, 91, 164));
+  auto pen = QPen();
+  pen.setColor(QColor(35, 35, 35));
+  painter.SetPen(pen);
+  painter.GetPainter().drawRect(region);
+  auto verticalBorder = region.left();
+  for(auto& column : m_columns) {
+    painter.GetPainter().drawLine(QPoint(verticalBorder, region.top()),
+      QPoint(verticalBorder, region.bottom()));
+    verticalBorder += column.m_width;
+  }
+  painter.GetPainter().drawLine(QPoint(verticalBorder, region.top()),
+    QPoint(verticalBorder, region.bottom()));
+  m_headerEntry->m_renderer->Draw(painter, region);
+}
+
 void DashboardRenderer::Draw(DashboardPainter& painter, const QRect& region) {
-  auto height = std::max(1, std::min(GetMaxRowHeight(),
-    static_cast<int>(region.height() / (m_rows.size() + 1))));
+  auto height = std::max(1, GetMaxRowHeight());
   auto clip = [&] {
     auto bounds = painter.GetPainter().clipBoundingRect().toAlignedRect();
     if(bounds.isEmpty()) {
@@ -226,53 +243,19 @@ void DashboardRenderer::Draw(DashboardPainter& painter, const QRect& region) {
     }
     return bounds;
   }();
-  auto topPoint = region.top();
-  QRect headerRegion{region.left(), topPoint, region.width(), height};
-  painter.GetPainter().fillRect(headerRegion, QColor{19, 91, 164});
-  {
-    QPen pen;
-    pen.setColor(QColor{35, 35, 35});
-    painter.SetPen(pen);
-    painter.GetPainter().drawRect(headerRegion);
-    int verticalBorder = 0;
-    for(auto& column : m_columns) {
-      painter.GetPainter().drawLine(QPoint{verticalBorder, 0},
-        QPoint{verticalBorder, height});
-      verticalBorder += column.m_width;
-    }
-    painter.GetPainter().drawLine(QPoint{verticalBorder, 0},
-      QPoint{verticalBorder, height});
-  }
-  m_headerEntry->m_renderer->Draw(painter, headerRegion);
-  topPoint += height;
-  auto rowCount = 0;
-  auto activeRow = m_selectionModel->GetActiveRow().get_value_or(-1);
-  for(auto& row : m_rows) {
+  auto index = std::max(0, (clip.top() - region.top()) / height);
+  auto topPoint = region.top() + index * height;
+  auto bottom = std::min(region.bottom(), clip.bottom());
+  while(topPoint <= bottom) {
     QRect rowRegion{region.left(), topPoint, region.width(), height};
-    if(rowRegion.intersects(clip)) {
-      DrawBackground(painter, rowRegion, rowCount);
-      if(row->m_row != nullptr) {
-        row->m_renderer->Draw(painter, rowRegion);
-      }
-      DrawForeground(painter, rowRegion, rowCount);
+    DrawBackground(painter, rowRegion, index);
+    if(index < static_cast<int>(m_rows.size()) &&
+        m_rows[index]->m_row != nullptr) {
+      m_rows[index]->m_renderer->Draw(painter, rowRegion);
     }
+    DrawForeground(painter, rowRegion, index);
     topPoint += height;
-    ++rowCount;
-    if(topPoint > region.bottom()) {
-      break;
-    }
-  }
-  if(topPoint > region.bottom()) {
-    return;
-  }
-  while(topPoint <= region.bottom()) {
-    QRect rowRegion{region.left(), topPoint, region.width(), height};
-    if(rowRegion.intersects(clip)) {
-      DrawBackground(painter, rowRegion, rowCount);
-      DrawForeground(painter, rowRegion, rowCount);
-    }
-    topPoint += height;
-    ++rowCount;
+    ++index;
   }
 }
 

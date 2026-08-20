@@ -16,6 +16,7 @@
 #include "Spire/Ui/TickerDialog.hpp"
 
 namespace Spire {
+  class ScrollBox;
   class UserProfile;
 
   /** A QWidget that displays a DashboardModel. */
@@ -66,18 +67,15 @@ namespace Spire {
     protected:
       void keyPressEvent(QKeyEvent* event) override;
       void keyReleaseEvent(QKeyEvent* event) override;
-      void mouseMoveEvent(QMouseEvent* event) override;
-      void mousePressEvent(QMouseEvent* event) override;
-      void mouseReleaseEvent(QMouseEvent* event) override;
-      void mouseDoubleClickEvent(QMouseEvent* event) override;
-      void paintEvent(QPaintEvent* event) override;
-      void resizeEvent(QResizeEvent* event) override;
       void showEvent(QShowEvent* event) override;
       void hideEvent(QHideEvent* event) override;
+      void resizeEvent(QResizeEvent* event) override;
 
     private:
       template<typename, typename> friend struct Beam::Shuttle;
       friend class DashboardWidgetWindowSettings;
+      class Header;
+      class Body;
       enum MouseState {
         NONE,
         RESIZING_COLUMN,
@@ -107,6 +105,9 @@ namespace Spire {
       QPoint m_lastMousePressPosition;
       bool m_hasRepaintEvent;
       bool m_isSortOrderStale;
+      Header* m_header;
+      Body* m_body;
+      ScrollBox* m_scrollBox;
       QTimer m_repaintTimer;
       std::vector<SortOrder> m_columnSortOrder;
       boost::signals2::scoped_connection m_drawConnection;
@@ -114,16 +115,22 @@ namespace Spire {
       boost::signals2::scoped_connection m_activeRowConnection;
       boost::signals2::scoped_connection m_rowAddedConnection;
       boost::signals2::scoped_connection m_rowRemovedConnection;
+      boost::signals2::scoped_connection m_horizontalScrollConnection;
       Beam::ConnectionGroup m_cellUpdateConnections;
 
+      int GetContentWidth() const;
+      int GetContentAreaWidth();
+      int GetHorizontalScrollPosition();
+      void ScrollToRow(int index);
+      void StretchLastColumn(int width);
       void ModifyColumnSortOrder(int index);
       void SortRows();
       void ActivateRow(int index);
       void DeleteSelectedRows();
-      void TestHoveringColumnExpansion(const QMouseEvent& event);
+      void TestHoveringColumnExpansion(const QPoint& position);
       int GetColumnAt(const QPoint& point);
-      void ResizeColumn(const QMouseEvent& event);
-      void MoveColumn(const QMouseEvent& event);
+      void ResizeColumn(const QPoint& position);
+      void MoveColumn(const QPoint& position);
       void OnSelectedRowsUpdatedSignal();
       void OnRowAddedSignal(const DashboardRow& row);
       void OnRowRemovedSignal(const DashboardRow& row);
