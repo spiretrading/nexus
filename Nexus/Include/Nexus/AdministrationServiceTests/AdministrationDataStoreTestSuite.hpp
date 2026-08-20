@@ -1,5 +1,6 @@
 #ifndef NEXUS_ADMINISTRATION_DATA_STORE_TEST_SUITE_HPP
 #define NEXUS_ADMINISTRATION_DATA_STORE_TEST_SUITE_HPP
+#include <Beam/Queries/AndExpression.hpp>
 #include <Beam/Queries/ConstantExpression.hpp>
 #include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
@@ -682,13 +683,15 @@ namespace Nexus::Tests {
           return data_store.load_account_modification_requests(query);
         });
       };
+      auto accessor = AccountModificationRequestAccessor::from_parameter(0);
       auto query = AccountModificationRequestQuery();
       query.set_snapshot_limit(SnapshotLimit::from_head(10));
-      query.set_categories({AccountModificationRequest::Type::RISK});
+      query.set_filter(accessor.get_type() ==
+        static_cast<int>(AccountModificationRequest::Type::RISK));
       auto by_category = load(query);
       REQUIRE(by_category.size() == 1);
       REQUIRE(by_category[0].get_id() == 2);
-      query.set_categories({});
+      query.set_filter(ConstantExpression(true));
       query.set_statuses({AccountModificationRequest::Status::GRANTED,
         AccountModificationRequest::Status::REJECTED});
       auto by_status = load(query);
@@ -696,28 +699,26 @@ namespace Nexus::Tests {
       REQUIRE(by_status[0].get_id() == 1);
       REQUIRE(by_status[1].get_id() == 3);
       query.set_statuses({});
-      query.set_start_date(time_from_string("2024-07-08 00:00:00"));
+      query.set_filter(accessor.get_last_update_timestamp() >=
+        time_from_string("2024-07-08 00:00:00"));
       auto from_start = load(query);
       REQUIRE(from_start.size() == 2);
       REQUIRE(from_start[0].get_id() == 2);
       REQUIRE(from_start[1].get_id() == 3);
-      query.set_end_date(time_from_string("2024-07-08 23:59:59"));
+      query.set_filter(AndExpression(
+        accessor.get_last_update_timestamp() >=
+          time_from_string("2024-07-08 00:00:00"),
+        accessor.get_last_update_timestamp() <=
+          time_from_string("2024-07-08 23:59:59")));
       auto within_range = load(query);
       REQUIRE(within_range.size() == 1);
       REQUIRE(within_range[0].get_id() == 2);
-      query.set_start_date(optional<ptime>());
-      query.set_end_date(optional<ptime>());
-      query.set_excluded_account(other);
+      query.set_filter(
+        accessor.get_account() != static_cast<int>(other.m_id));
       auto excluded = load(query);
       REQUIRE(excluded.size() == 2);
       REQUIRE(excluded[0].get_id() == 1);
       REQUIRE(excluded[1].get_id() == 2);
-      query.set_excluded_account(
-        DirectoryEntry::make_directory(other.m_id, other.m_name));
-      auto excluded_by_id = load(query);
-      REQUIRE(excluded_by_id.size() == 2);
-      REQUIRE(excluded_by_id[0].get_id() == 1);
-      REQUIRE(excluded_by_id[1].get_id() == 2);
     }
 
     SUBCASE("load_account_modification_requests_anchored_by_name") {
@@ -794,7 +795,9 @@ namespace Nexus::Tests {
       REQUIRE(restricted.m_granted == 1);
       REQUIRE(restricted.m_rejected == 1);
       REQUIRE(restricted.m_pending == 2);
-      query.set_categories({AccountModificationRequest::Type::RISK});
+      query.set_filter(
+        AccountModificationRequestAccessor::from_parameter(0).get_type() ==
+          static_cast<int>(AccountModificationRequest::Type::RISK));
       auto by_category = data_store.with_transaction([&] {
         return data_store.load_account_modification_request_counts(query);
       });

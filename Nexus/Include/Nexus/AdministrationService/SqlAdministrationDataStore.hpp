@@ -401,22 +401,9 @@ namespace Nexus {
   Viper::Expression SqlAdministrationDataStore<C>::make_query_filter(
       const AccountModificationRequestQuery& query) {
     auto filter = Viper::literal(true);
-    if(!query.get_categories().empty()) {
-      filter = filter && Viper::in(Viper::sym("type"),
-        query.get_categories().begin(), query.get_categories().end());
-    }
     if(!query.get_statuses().empty()) {
       filter = filter && Viper::in(Viper::sym("status"),
         query.get_statuses().begin(), query.get_statuses().end());
-    }
-    if(auto& start_date = query.get_start_date()) {
-      filter = filter && Viper::sym("last_update_timestamp") >= *start_date;
-    }
-    if(auto& end_date = query.get_end_date()) {
-      filter = filter && Viper::sym("last_update_timestamp") <= *end_date;
-    }
-    if(auto& excluded_account = query.get_excluded_account()) {
-      filter = filter && Viper::sym("account") != excluded_account->m_id;
     }
     return filter;
   }

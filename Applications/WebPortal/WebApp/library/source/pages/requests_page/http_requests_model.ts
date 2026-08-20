@@ -185,27 +185,41 @@ export class HttpRequestsModel extends RequestsModel {
     } else {
       query.anchor = anchor;
     }
-    query.categories = [...submission.filters.categories];
     query.statuses = toStatuses(submission.requestState);
     query.search = submission.filters.query;
     query.sortField = toSortField(submission.filters.sortKey);
-    if(submission.filters.startDate) {
-      const startDate = submission.filters.startDate.toDate();
-      if(!isNaN(startDate.getTime())) {
-        query.startDate = toUtcDateTime(startDate);
-      }
+    query.filter = this.makeFilter(submission, isGroup);
+    return query;
+  }
+
+  private makeFilter(
+      submission: RequestsModel.Submission, isGroup: boolean): Beam.Expression {
+    const accessor = Nexus.AccountModificationRequestAccessor.fromParameter(0);
+    const clauses = [] as Beam.Expression[];
+    const categories = [...submission.filters.categories];
+    if(categories.length > 0) {
+      clauses.push(Beam.disjunction(categories.map(category =>
+        Beam.makeEquals(accessor.type,
+          new Beam.ConstantExpression(new Beam.IntValue(category))))));
     }
-    if(submission.filters.endDate) {
-      const endDate = submission.filters.endDate.toDate();
-      if(!isNaN(endDate.getTime())) {
-        endDate.setHours(23, 59, 59, 999);
-        query.endDate = toUtcDateTime(endDate);
-      }
+    const startDate = toFilterDate(submission.filters.startDate, false);
+    if(startDate) {
+      clauses.push(Beam.makeGreaterEquals(accessor.lastUpdateTimestamp,
+        new Beam.ConstantExpression(new Beam.DateTimeValue(startDate))));
+    }
+    const endDate = toFilterDate(submission.filters.endDate, true);
+    if(endDate) {
+      clauses.push(Beam.makeLessEquals(accessor.lastUpdateTimestamp,
+        new Beam.ConstantExpression(new Beam.DateTimeValue(endDate))));
     }
     if(isGroup) {
-      query.excludedAccount = this.account;
+      clauses.push(Beam.makeNotEquals(accessor.account,
+        new Beam.ConstantExpression(new Beam.IntValue(this.account.id))));
     }
-    return query;
+    if(clauses.length === 0) {
+      return Beam.ConstantExpression.TRUE;
+    }
+    return Beam.conjunction(clauses);
   }
 
   private toEntry(summary: Nexus.AccountModificationRequestSummary):
@@ -384,6 +398,21 @@ export class HttpRequestsModel extends RequestsModel {
   private counts: Nexus.AccountModificationRequestCounts;
   private countsTime: number;
   private detailTimes: Map<number, number>;
+}
+
+function toFilterDate(
+    value: Beam.Date, isEnd: boolean): Beam.DateTime {
+  if(!value) {
+    return null;
+  }
+  const date = value.toDate();
+  if(isNaN(date.getTime())) {
+    return null;
+  }
+  if(isEnd) {
+    date.setHours(23, 59, 59, 999);
+  }
+  return toUtcDateTime(date);
 }
 
 function toUtcDateTime(value: globalThis.Date): Beam.DateTime {

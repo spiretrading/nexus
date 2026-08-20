@@ -1,4 +1,5 @@
 #include <Beam/Queries/ConstantExpression.hpp>
+#include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/ServiceLocator/SessionAuthenticator.hpp>
 #include <Beam/ServiceLocatorTests/ServiceLocatorTestEnvironment.hpp>
@@ -756,25 +757,27 @@ TEST_SUITE("AdministrationServlet") {
     auto query = AccountModificationRequestQuery();
     query.set_index(root);
     query.set_snapshot_limit(SnapshotLimit::from_head(10));
-    query.set_categories({AccountModificationRequest::Type::RISK});
+    auto accessor = AccountModificationRequestAccessor::from_parameter(0);
+    query.set_filter(accessor.get_type() ==
+      static_cast<int>(AccountModificationRequest::Type::RISK));
     auto by_category = fixture.m_admin_client->send_request<
       LoadAccountModificationRequestSummariesService>(query);
     REQUIRE(by_category.size() == 1);
     REQUIRE(by_category[0].m_request.get_id() == 2);
-    query.set_categories({});
-    query.set_start_date(time_from_string("2024-07-08 00:00:00"));
+    query.set_filter(accessor.get_last_update_timestamp() >=
+      time_from_string("2024-07-08 00:00:00"));
     auto from_start = fixture.m_admin_client->send_request<
       LoadAccountModificationRequestSummariesService>(query);
     REQUIRE(from_start.size() == 1);
     REQUIRE(from_start[0].m_request.get_id() == 2);
-    query.set_start_date(optional<ptime>());
-    query.set_end_date(time_from_string("2024-07-06 00:00:00"));
+    query.set_filter(accessor.get_last_update_timestamp() <=
+      time_from_string("2024-07-06 00:00:00"));
     auto until_end = fixture.m_admin_client->send_request<
       LoadAccountModificationRequestSummariesService>(query);
     REQUIRE(until_end.size() == 1);
     REQUIRE(until_end[0].m_request.get_id() == 1);
-    query.set_end_date(optional<ptime>());
-    query.set_excluded_account(fixture.m_manager_account);
+    query.set_filter(accessor.get_account() !=
+      static_cast<int>(fixture.m_manager_account.m_id));
     auto excluded = fixture.m_admin_client->send_request<
       LoadAccountModificationRequestSummariesService>(query);
     REQUIRE(excluded.size() == 1);

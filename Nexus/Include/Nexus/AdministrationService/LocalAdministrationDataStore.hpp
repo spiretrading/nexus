@@ -265,29 +265,9 @@ namespace Nexus {
   inline bool LocalAdministrationDataStore::matches_query(
       const AccountModificationRequest& request,
       const AccountModificationRequestQuery& query) {
-    if(!query.get_categories().empty() &&
-        !std::ranges::contains(query.get_categories(), request.get_type())) {
-      return false;
-    }
     if(!query.get_statuses().empty()) {
       auto status = load_account_modification_request_status(request.get_id());
       if(!std::ranges::contains(query.get_statuses(), status.m_status)) {
-        return false;
-      }
-    }
-    auto& start_date = query.get_start_date();
-    auto& end_date = query.get_end_date();
-    if(start_date || end_date) {
-      auto timestamp = load_last_update_timestamp(request.get_id());
-      if(start_date && timestamp < *start_date) {
-        return false;
-      }
-      if(end_date && timestamp > *end_date) {
-        return false;
-      }
-    }
-    if(auto& excluded_account = query.get_excluded_account()) {
-      if(request.get_account().m_id == excluded_account->m_id) {
         return false;
       }
     }
