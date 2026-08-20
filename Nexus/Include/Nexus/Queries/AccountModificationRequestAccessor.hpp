@@ -45,6 +45,12 @@ namespace Nexus {
       /** Returns an accessor for the effective date member. */
       Beam::MemberAccessExpression get_effective_date() const;
 
+      /** Returns an accessor for the status member. */
+      Beam::MemberAccessExpression get_status() const;
+
+      /** Returns an accessor for the last update timestamp member. */
+      Beam::MemberAccessExpression get_last_update_timestamp() const;
+
     private:
       Beam::Expression m_expression;
   };
@@ -90,6 +96,17 @@ namespace Nexus {
       AccountModificationRequestAccessor::get_effective_date() const {
     return Beam::MemberAccessExpression(
       "effective_date", typeid(boost::posix_time::ptime), m_expression);
+  }
+
+  inline Beam::MemberAccessExpression
+      AccountModificationRequestAccessor::get_status() const {
+    return Beam::MemberAccessExpression("status", typeid(int), m_expression);
+  }
+
+  inline Beam::MemberAccessExpression
+      AccountModificationRequestAccessor::get_last_update_timestamp() const {
+    return Beam::MemberAccessExpression("last_update_timestamp",
+      typeid(boost::posix_time::ptime), m_expression);
   }
 }
 

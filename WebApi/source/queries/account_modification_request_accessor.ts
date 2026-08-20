@@ -58,5 +58,17 @@ export class AccountModificationRequestAccessor {
       'effective_date', Beam.QueryType.DATE_TIME, this._expression);
   }
 
+  /** Returns an accessor for the status member. */
+  public get status(): Beam.MemberAccessExpression {
+    return new Beam.MemberAccessExpression(
+      'status', Beam.QueryType.INT, this._expression);
+  }
+
+  /** Returns an accessor for the last update timestamp member. */
+  public get lastUpdateTimestamp(): Beam.MemberAccessExpression {
+    return new Beam.MemberAccessExpression(
+      'last_update_timestamp', Beam.QueryType.DATE_TIME, this._expression);
+  }
+
   private _expression: Beam.Expression;
 }

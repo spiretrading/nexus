@@ -11,7 +11,7 @@ import { QueryType } from '../../source/queries/query_type';
  * the filter is translated.
  */
 const MEMBERS = ['id', 'type', 'account', 'submission_account', 'timestamp',
-  'effective_date'];
+  'effective_date', 'status', 'last_update_timestamp'];
 
 describe('AccountModificationRequestAccessor', () => {
   it('from_parameter', () => {
@@ -26,7 +26,8 @@ describe('AccountModificationRequestAccessor', () => {
   it('accesses_only_translatable_members', () => {
     const accessor = AccountModificationRequestAccessor.fromParameter(0);
     const accessed = [accessor.id, accessor.type, accessor.account,
-      accessor.submissionAccount, accessor.timestamp, accessor.effectiveDate];
+      accessor.submissionAccount, accessor.timestamp, accessor.effectiveDate,
+      accessor.status, accessor.lastUpdateTimestamp];
     assert.deepStrictEqual(
       accessed.map((member) => member.name), MEMBERS);
   });
@@ -39,6 +40,9 @@ describe('AccountModificationRequestAccessor', () => {
     assert.strictEqual(accessor.submissionAccount.type, Beam.QueryType.INT);
     assert.strictEqual(accessor.timestamp.type, Beam.QueryType.DATE_TIME);
     assert.strictEqual(accessor.effectiveDate.type, Beam.QueryType.DATE_TIME);
+    assert.strictEqual(accessor.status.type, Beam.QueryType.INT);
+    assert.strictEqual(
+      accessor.lastUpdateTimestamp.type, Beam.QueryType.DATE_TIME);
   });
 
   it('to_string', () => {

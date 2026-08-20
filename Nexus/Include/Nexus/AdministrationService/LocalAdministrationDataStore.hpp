@@ -111,9 +111,7 @@ namespace Nexus {
         EntitlementModification> m_entitlement_modifications;
       std::unordered_map<AccountModificationRequest::Id, RiskModification>
         m_risk_modifications;
-      std::unordered_map<AccountModificationRequest::Id,
-        std::vector<AccountModificationRequest::Update>>
-          m_account_modification_request_updates;
+      AccountModificationRequestUpdates m_account_modification_request_updates;
       std::unordered_map<AccountModificationRequest::Id,
         std::vector<Message::Id>> m_request_messages;
       std::unordered_map<Message::Id, Message> m_messages;
@@ -314,7 +312,8 @@ namespace Nexus {
       LocalAdministrationDataStore::count_requests(
         const std::vector<Beam::DirectoryEntry>* accounts,
         const AccountModificationRequestQuery& query) {
-    auto evaluator = Beam::translate<EvaluatorTranslator>(query.get_filter());
+    auto evaluator = Beam::translate<EvaluatorTranslator>(
+      query.get_filter(), Beam::Ref(m_account_modification_request_updates));
     auto scope = make_account_scope(accounts);
     auto counts = AccountModificationRequestCounts(0, 0, 0);
     for(auto& entry : m_account_modification_requests) {
@@ -345,7 +344,8 @@ namespace Nexus {
       LocalAdministrationDataStore::load_requests(
         const std::vector<Beam::DirectoryEntry>* accounts,
         const AccountModificationRequestQuery& query) {
-    auto evaluator = Beam::translate<EvaluatorTranslator>(query.get_filter());
+    auto evaluator = Beam::translate<EvaluatorTranslator>(
+      query.get_filter(), Beam::Ref(m_account_modification_request_updates));
     auto& anchor = query.get_anchor();
     auto is_head =
       query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;

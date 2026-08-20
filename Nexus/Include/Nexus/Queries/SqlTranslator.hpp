@@ -296,7 +296,9 @@ namespace Nexus {
         expression.get_name() == "account" ||
         expression.get_name() == "submission_account" ||
         expression.get_name() == "timestamp" ||
-        expression.get_name() == "effective_date") {
+        expression.get_name() == "effective_date" ||
+        expression.get_name() == "status" ||
+        expression.get_name() == "last_update_timestamp") {
       expression.get_expression().apply(*this);
       get_translation() = Viper::sym(expression.get_name());
     } else {
