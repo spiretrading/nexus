@@ -11,6 +11,7 @@ namespace Spire {
   class DashboardCellRenderer;
   class DashboardModel;
   class DashboardModelSchema;
+  class DashboardPainter;
   class DashboardRenderer;
   class DashboardRow;
   class DashboardRowBuilder;

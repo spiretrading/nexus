@@ -16,7 +16,9 @@ PercentageDashboardCellRenderer::PercentageDashboardCellRenderer(
       m_pen{QColor{255, 255, 255}},
       m_alignment(Qt::AlignRight | Qt::AlignBottom),
       m_delegate{std::make_unique<CustomVariantItemDelegate>(
-        Ref(*m_userProfile))} {
+        Ref(*m_userProfile))},
+      m_isTextStale(true) {
+  UpdateText();
   m_cellUpdateConnection = GetCell().ConnectUpdateSignal(
     std::bind(&PercentageDashboardCellRenderer::OnCellUpdateSignal, this,
     std::placeholders::_1));
@@ -48,28 +50,14 @@ void PercentageDashboardCellRenderer::SetAlignment(
   m_alignment = alignment;
 }
 
-void PercentageDashboardCellRenderer::Draw(QPaintDevice& device,
-    const QRect& region) {
-  auto& values = GetCell().GetValues();
-  QString text;
-  if(values.empty()) {
-    text = QObject::tr("N/A");
-    m_pen.setColor(QColor{255, 255, 255});
-  } else {
-    auto percentage = boost::get<double>(values.back());
-    text = QString::number(100 * percentage, 'f', 2) + "%";
-    if(percentage > 0) {
-      m_pen.setColor(QColor{0, 255, 0});
-    } else if(percentage < 0) {
-      m_pen.setColor(QColor{255, 0, 0});
-    } else {
-      m_pen.setColor(QColor{255, 255, 255});
-    }
+void PercentageDashboardCellRenderer::Draw(
+    DashboardPainter& painter, const QRect& region) {
+  if(m_isTextStale) {
+    UpdateText();
   }
-  QPainter painter{&device};
-  painter.setPen(m_pen);
-  painter.setFont(m_font);
-  painter.drawText(region, m_alignment, text);
+  painter.SetPen(m_pen);
+  painter.SetFont(m_font);
+  painter.GetPainter().drawText(region, m_alignment, m_text);
 }
 
 connection PercentageDashboardCellRenderer::ConnectDrawSignal(
@@ -77,7 +65,30 @@ connection PercentageDashboardCellRenderer::ConnectDrawSignal(
   return m_drawSignal.connect(slot);
 }
 
+void PercentageDashboardCellRenderer::UpdateText() {
+  auto& values = GetCell().GetValues();
+  if(values.empty()) {
+    m_text = QObject::tr("N/A");
+    m_pen.setColor(QColor(255, 255, 255));
+  } else {
+    auto percentage = boost::get<double>(values.back());
+    m_text = QString::number(100 * percentage, 'f', 2) + "%";
+    if(percentage > 0) {
+      m_pen.setColor(QColor(0, 255, 0));
+    } else if(percentage < 0) {
+      m_pen.setColor(QColor(255, 0, 0));
+    } else {
+      m_pen.setColor(QColor(255, 255, 255));
+    }
+  }
+  m_isTextStale = false;
+}
+
 void PercentageDashboardCellRenderer::OnCellUpdateSignal(
     const DashboardCell::Value& value) {
+  if(m_isTextStale) {
+    return;
+  }
+  m_isTextStale = true;
   m_drawSignal();
 }
