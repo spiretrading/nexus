@@ -1,5 +1,4 @@
 import * as Beam from 'beam';
-import { AccountModificationRequest } from './account_modification_request';
 
 /**
  * Marks a position within an ordering of AccountModificationRequests. The
@@ -14,12 +13,14 @@ export class AccountModificationRequestAnchor {
   }
 
   /**
-   * Constructs an AccountModificationRequestAnchor.
+   * Constructs an AccountModificationRequestAnchor positioned before every
+   * request.
    * @param id - The id of the request at this position.
    * @param date - The date ordering the request.
    * @param name - The account name ordering the request.
    */
-  constructor(id: number, date: Beam.DateTime, name: string) {
+  constructor(id: number = -1,
+      date: Beam.DateTime = Beam.DateTime.NEG_INFIN, name: string = '') {
     this._id = id;
     this._date = date;
     this._name = name;
@@ -38,6 +39,12 @@ export class AccountModificationRequestAnchor {
   /** Returns the account name ordering the request. */
   public get name(): string {
     return this._name;
+  }
+
+  /** Tests if two anchors mark the same position. */
+  public equals(other: AccountModificationRequestAnchor): boolean {
+    return other && this._id === other._id &&
+      this._date.equals(other._date) && this._name === other._name;
   }
 
   public toString(): string {
@@ -70,49 +77,8 @@ export class AccountModificationRequestQuery extends
   constructor(index: Beam.DirectoryEntry, snapshotLimit: Beam.SnapshotLimit) {
     super(index);
     this.snapshotLimit = snapshotLimit;
-    this._categories = [];
-    this._statuses = [];
-    this._startDate = null;
-    this._endDate = null;
     this._search = '';
-    this._excludedAccount = null;
     this._sortField = AccountModificationRequestQuery.SortField.CREATED;
-  }
-
-  /** Returns the request categories to match, or empty to match all. */
-  public get categories(): AccountModificationRequest.Type[] {
-    return this._categories;
-  }
-
-  public set categories(value: AccountModificationRequest.Type[]) {
-    this._categories = value;
-  }
-
-  /** Returns the request statuses to match, or empty to match all. */
-  public get statuses(): AccountModificationRequest.Status[] {
-    return this._statuses;
-  }
-
-  public set statuses(value: AccountModificationRequest.Status[]) {
-    this._statuses = value;
-  }
-
-  /** Returns the earliest timestamp to match. */
-  public get startDate(): Beam.DateTime {
-    return this._startDate;
-  }
-
-  public set startDate(value: Beam.DateTime) {
-    this._startDate = value;
-  }
-
-  /** Returns the latest timestamp to match. */
-  public get endDate(): Beam.DateTime {
-    return this._endDate;
-  }
-
-  public set endDate(value: Beam.DateTime) {
-    this._endDate = value;
   }
 
   /** Returns the text matching a request id or an account name. */
@@ -124,15 +90,6 @@ export class AccountModificationRequestQuery extends
     this._search = value;
   }
 
-  /** Returns the account whose requests are to be excluded. */
-  public get excludedAccount(): Beam.DirectoryEntry {
-    return this._excludedAccount;
-  }
-
-  public set excludedAccount(value: Beam.DirectoryEntry) {
-    this._excludedAccount = value;
-  }
-
   /** Returns the field used to order the requests. */
   public get sortField(): AccountModificationRequestQuery.SortField {
     return this._sortField;
@@ -142,26 +99,27 @@ export class AccountModificationRequestQuery extends
     this._sortField = value;
   }
 
+  /** Tests if two queries specify the same page of requests. */
+  public equals(other: AccountModificationRequestQuery): boolean {
+    return other && super.equals(other) &&
+      this._sortField === other._sortField &&
+      this._search === other._search;
+  }
+
+  public toString(): string {
+    return `(${super.toString()} ${sortFieldToString(this._sortField)})`;
+  }
+
   /** Converts this object to JSON. */
   public toJson(): any {
     return {
       ...super.toJson(),
-      categories: this._categories.slice(),
-      statuses: this._statuses.slice(),
-      start_date: toOptionalJson(this._startDate?.toJson()),
-      end_date: toOptionalJson(this._endDate?.toJson()),
       search: this._search,
-      excluded_account: toOptionalJson(this._excludedAccount?.toJson()),
       sort_field: this._sortField
     };
   }
 
-  private _categories: AccountModificationRequest.Type[];
-  private _statuses: AccountModificationRequest.Status[];
-  private _startDate: Beam.DateTime;
-  private _endDate: Beam.DateTime;
   private _search: string;
-  private _excludedAccount: Beam.DirectoryEntry;
   private _sortField: AccountModificationRequestQuery.SortField;
 }
 
@@ -194,3 +152,9 @@ export function toOptionalJson(value: any): any {
   }
   return {is_initialized: true, value: value};
 }
+
+function sortFieldToString(
+    field: AccountModificationRequestQuery.SortField): string {
+  return AccountModificationRequestQuery.SortField[field];
+}
+

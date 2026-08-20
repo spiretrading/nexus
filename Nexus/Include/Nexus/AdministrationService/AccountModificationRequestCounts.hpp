@@ -9,13 +9,13 @@ namespace Nexus {
   struct AccountModificationRequestCounts {
 
     /** The number of requests awaiting a decision. */
-    int m_pending;
+    int m_pending = 0;
 
     /** The number of requests that have been granted. */
-    int m_granted;
+    int m_granted = 0;
 
     /** The number of requests that have been rejected. */
-    int m_rejected;
+    int m_rejected = 0;
 
     bool operator ==(const AccountModificationRequestCounts&) const = default;
   };

@@ -36,5 +36,12 @@ TEST_SUITE("AccountModificationRequestAccessor") {
       test_member(
         accessor.get_effective_date(), "effective_date", typeid(ptime));
     }
+    SUBCASE("status") {
+      test_member(accessor.get_status(), "status", typeid(int));
+    }
+    SUBCASE("last_update_timestamp") {
+      test_member(accessor.get_last_update_timestamp(),
+        "last_update_timestamp", typeid(ptime));
+    }
   }
 }

@@ -1,8 +1,11 @@
 #include <future>
+#include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Queues/ScopedQueueWriter.hpp>
+#include <boost/lexical_cast.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/AdministrationServiceTests/TestAdministrationClient.hpp"
+#include "Nexus/Queries/AccountModificationRequestAccessor.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -231,7 +234,9 @@ TEST_SUITE("AdministrationClient") {
   TEST_CASE("load_account_modification_request_counts") {
     auto account = DirectoryEntry::make_account(15, "mod_counts_account");
     auto query = make_account_modification_request_query(account, 25);
-    query.set_statuses({AccountModificationRequest::Status::GRANTED});
+    query.set_filter(
+      AccountModificationRequestAccessor::from_parameter(0).get_status() ==
+        static_cast<int>(AccountModificationRequest::Status::GRANTED));
     auto counts = AccountModificationRequestCounts(4, 5, 6);
     auto operations = std::make_shared<TestAdministrationClient::Queue>();
     auto client = AdministrationClient(
@@ -245,8 +250,8 @@ TEST_SUITE("AdministrationClient") {
         &*operation);
     REQUIRE(specific);
     REQUIRE(specific->m_query.get_index() == account);
-    REQUIRE(specific->m_query.get_statuses() ==
-      std::vector({AccountModificationRequest::Status::GRANTED}));
+    REQUIRE(lexical_cast<std::string>(specific->m_query.get_filter()) ==
+      lexical_cast<std::string>(query.get_filter()));
     specific->m_result.set(counts);
     REQUIRE(std::move(future).get() == counts);
   }

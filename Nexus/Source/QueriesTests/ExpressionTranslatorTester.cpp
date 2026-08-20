@@ -2,6 +2,7 @@
 #include <Beam/Queries/Evaluator.hpp>
 #include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/Queries/AccountModificationRequestAccessor.hpp"
 #include "Nexus/Queries/BboQuoteAccessor.hpp"
 #include "Nexus/Queries/BookQuoteAccessor.hpp"
 #include "Nexus/Queries/EvaluatorTranslator.hpp"
@@ -13,6 +14,17 @@ using namespace Beam;
 using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
+
+namespace {
+  auto make_request() {
+    return AccountModificationRequest(
+      12, AccountModificationRequest::Type::ENTITLEMENTS,
+      DirectoryEntry::make_account(100, "trader"),
+      DirectoryEntry::make_account(101, "manager"),
+      time_from_string("2026-05-08 09:30:00"),
+      time_from_string("2026-05-09 00:00:00"));
+  }
+}
 
 TEST_SUITE("EvaluatorTranslator") {
   TEST_CASE("bbo_quote_timestamp") {
@@ -284,5 +296,85 @@ TEST_SUITE("EvaluatorTranslator") {
       Venues::TSX, "AuthorizedHalted", TickerStatus::Flag::IS_ACCEPTING_CANCELS,
       time_from_string("2026-05-08 10:00:00"));
     REQUIRE(!evaluator->eval<bool>(no_match));
+  }
+
+  TEST_CASE("account_modification_request_status") {
+    auto accessor = AccountModificationRequestAccessor::from_parameter(0);
+    auto request = make_request();
+    auto updates = AccountModificationRequestUpdates();
+    SUBCASE("no_updates") {
+      auto evaluator = translate<Nexus::EvaluatorTranslator>(
+        accessor.get_status(), Ref(updates));
+      REQUIRE(evaluator->eval<int>(request) ==
+        static_cast<int>(AccountModificationRequest::Status::NONE));
+    }
+    SUBCASE("last_update") {
+      updates[request.get_id()].emplace_back(
+        AccountModificationRequest::Status::PENDING,
+        DirectoryEntry::make_account(101, "manager"), 0,
+        time_from_string("2026-05-08 10:00:00"));
+      updates[request.get_id()].emplace_back(
+        AccountModificationRequest::Status::GRANTED,
+        DirectoryEntry::make_account(101, "manager"), 1,
+        time_from_string("2026-05-08 11:00:00"));
+      auto evaluator = translate<Nexus::EvaluatorTranslator>(
+        accessor.get_status(), Ref(updates));
+      REQUIRE(evaluator->eval<int>(request) ==
+        static_cast<int>(AccountModificationRequest::Status::GRANTED));
+    }
+    SUBCASE("unrelated_request") {
+      updates[request.get_id() + 1].emplace_back(
+        AccountModificationRequest::Status::GRANTED,
+        DirectoryEntry::make_account(101, "manager"), 0,
+        time_from_string("2026-05-08 11:00:00"));
+      auto evaluator = translate<Nexus::EvaluatorTranslator>(
+        accessor.get_status(), Ref(updates));
+      REQUIRE(evaluator->eval<int>(request) ==
+        static_cast<int>(AccountModificationRequest::Status::NONE));
+    }
+  }
+
+  TEST_CASE("account_modification_request_last_update_timestamp") {
+    auto accessor = AccountModificationRequestAccessor::from_parameter(0);
+    auto request = make_request();
+    auto updates = AccountModificationRequestUpdates();
+    SUBCASE("no_updates") {
+      auto evaluator = translate<Nexus::EvaluatorTranslator>(
+        accessor.get_last_update_timestamp(), Ref(updates));
+      REQUIRE(evaluator->eval<ptime>(request) == request.get_timestamp());
+    }
+    SUBCASE("last_update") {
+      updates[request.get_id()].emplace_back(
+        AccountModificationRequest::Status::GRANTED,
+        DirectoryEntry::make_account(101, "manager"), 0,
+        time_from_string("2026-05-08 11:00:00"));
+      REQUIRE(translate<Nexus::EvaluatorTranslator>(
+        accessor.get_last_update_timestamp(), Ref(updates))->eval<ptime>(
+          request) == time_from_string("2026-05-08 11:00:00"));
+    }
+  }
+
+  TEST_CASE("account_modification_request_members_without_updates") {
+    auto accessor = AccountModificationRequestAccessor::from_parameter(0);
+    REQUIRE_THROWS_AS(
+      translate<Nexus::EvaluatorTranslator>(accessor.get_status()),
+      ExpressionTranslationException);
+    REQUIRE_THROWS_AS(translate<Nexus::EvaluatorTranslator>(
+      accessor.get_last_update_timestamp()), ExpressionTranslationException);
+  }
+
+  TEST_CASE("account_modification_request_members_in_sub_translator") {
+    auto accessor = AccountModificationRequestAccessor::from_parameter(0);
+    auto request = make_request();
+    auto updates = AccountModificationRequestUpdates();
+    updates[request.get_id()].emplace_back(
+      AccountModificationRequest::Status::GRANTED,
+      DirectoryEntry::make_account(101, "manager"), 0,
+      time_from_string("2026-05-08 11:00:00"));
+    auto translator = Nexus::EvaluatorTranslator(Ref(updates));
+    auto sub_translator = translator.make_translator();
+    auto evaluator = translate(accessor.get_status(), *sub_translator);
+    REQUIRE(evaluator->eval<int>(request) ==
+      static_cast<int>(AccountModificationRequest::Status::GRANTED));
   }
 }
