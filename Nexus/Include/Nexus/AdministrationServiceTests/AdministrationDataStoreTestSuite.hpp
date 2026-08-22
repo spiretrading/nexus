@@ -2,7 +2,10 @@
 #define NEXUS_ADMINISTRATION_DATA_STORE_TEST_SUITE_HPP
 #include <Beam/Queries/AndExpression.hpp>
 #include <Beam/Queries/ConstantExpression.hpp>
+#include <Beam/Queries/ExpressionTranslationException.hpp>
+#include <Beam/Queries/MemberAccessExpression.hpp>
 #include <Beam/Queries/OrExpression.hpp>
+#include <Beam/Queries/ParameterExpression.hpp>
 #include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <boost/optional/optional_io.hpp>
@@ -733,6 +736,30 @@ namespace Nexus::Tests {
       auto without_updates_timestamp = load(query);
       REQUIRE(without_updates_timestamp.size() == 1);
       REQUIRE(without_updates_timestamp[0].get_id() == 4);
+    }
+
+    SUBCASE("load_account_modification_requests_type_lying_filter") {
+      auto load = [&] (const Beam::Expression& filter) {
+        auto query = AccountModificationRequestQuery();
+        query.set_snapshot_limit(SnapshotLimit::from_head(10));
+        query.set_filter(filter);
+        return data_store.with_transaction([&] {
+          return data_store.load_account_modification_requests(query);
+        });
+      };
+      auto parameter =
+        ParameterExpression(0, typeid(AccountModificationRequest));
+      auto member =
+        Beam::MemberAccessExpression("timestamp", typeid(int), parameter);
+      REQUIRE_THROWS_AS(
+        load(member == ConstantExpression(7)), ExpressionTranslationException);
+      auto operand =
+        FunctionExpression(EQUALS_NAME, typeid(AccountModificationRequest),
+          {ConstantExpression(0), ConstantExpression(0)});
+      auto lying_operand =
+        Beam::MemberAccessExpression("id", typeid(int), operand);
+      REQUIRE_THROWS_AS(load(lying_operand == ConstantExpression(7)),
+        ExpressionTranslationException);
     }
 
     SUBCASE("load_account_modification_requests_anchored_by_name") {

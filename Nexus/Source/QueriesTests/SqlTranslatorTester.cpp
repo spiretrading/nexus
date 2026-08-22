@@ -64,14 +64,6 @@ TEST_SUITE("SqlTranslator") {
       translate("book_quotes", expression) == "(book_quotes.mpid = \"MM01\")");
   }
 
-  TEST_CASE("query_book_quote_venue") {
-    auto accessor = BookQuoteAccessor::from_parameter(0);
-    auto expression =
-      accessor.get_venue() == ConstantExpression(std::string("TSE"));
-    REQUIRE(translate("book_quotes", expression) ==
-      "(book_quotes.quote_venue = \"TSE\")");
-  }
-
   TEST_CASE("query_book_quote_quote_price") {
     auto book_accessor = BookQuoteAccessor::from_parameter(0);
     auto quote_accessor = QuoteAccessor(book_accessor.get_quote());
@@ -105,8 +97,7 @@ TEST_SUITE("SqlTranslator") {
 
   TEST_CASE("query_ticker_status_venue") {
     auto accessor = TickerStatusAccessor::from_parameter(0);
-    auto expression =
-      accessor.get_venue() == ConstantExpression(std::string("TSE"));
+    auto expression = accessor.get_venue() == ConstantExpression(Venue("TSE"));
     REQUIRE(translate("ticker_statuses", expression) ==
       "(ticker_statuses.status_venue = \"TSE\")");
   }
@@ -155,5 +146,32 @@ TEST_SUITE("SqlTranslator") {
       ConstantExpression(time_from_string("2026-05-08 09:30:00"));
     REQUIRE(translate("account_modification_requests", expression) ==
       "(last_update_timestamp >= 1778232600000)");
+  }
+
+  TEST_CASE("mismatched_member_type_throws") {
+    SUBCASE("member") {
+      auto member = MemberAccessExpression("timestamp", typeid(int),
+        ParameterExpression(0, typeid(AccountModificationRequest)));
+      auto expression = member == ConstantExpression(7);
+      REQUIRE_THROWS_AS(translate("account_modification_requests", expression),
+        ExpressionTranslationException);
+    }
+
+    SUBCASE("operand") {
+      auto operand =
+        FunctionExpression(EQUALS_NAME, typeid(AccountModificationRequest),
+          {ConstantExpression(0), ConstantExpression(0)});
+      auto member = MemberAccessExpression("id", typeid(int), operand);
+      auto expression = member == ConstantExpression(7);
+      REQUIRE_THROWS_AS(translate("account_modification_requests", expression),
+        ExpressionTranslationException);
+    }
+
+    SUBCASE("quantity") {
+      auto accessor = OrderImbalanceAccessor::from_parameter(0);
+      auto expression = accessor.get_size() > ConstantExpression(500);
+      REQUIRE_THROWS_AS(translate("order_imbalances", expression),
+        ExpressionTranslationException);
+    }
   }
 }

@@ -411,7 +411,8 @@ namespace Nexus {
       const Beam::MemberAccessExpression& expression) {
     if(expression.get_expression().get_type() == typeid(OrderInfo) &&
         expression.get_name() == "is_live") {
-      get_translation() = Viper::literal(IsLive);
+      translate(expression.get_expression());
+      set_translation(Viper::literal(IsLive), typeid(bool));
     } else {
       SqlTranslator::visit(expression);
     }
