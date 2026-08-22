@@ -7,6 +7,8 @@
 #include <unordered_set>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/Threading/Mutex.hpp>
+#include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/HashTuple.hpp>
 #include <boost/variant/variant.hpp>
 #include "Nexus/Backtester/BacktesterEventHandler.hpp"
@@ -15,6 +17,12 @@
 #include "Nexus/MarketDataServiceTests/MarketDataServiceTestEnvironment.hpp"
 
 namespace Nexus {
+  class BacktesterMarketDataService;
+
+namespace Details {
+  using BacktesterMarketDataServiceHandle =
+    std::shared_ptr<Beam::Sync<BacktesterMarketDataService*, Beam::Mutex>>;
+}
 
   /** Provides historical market data to the backtester. */
   class BacktesterMarketDataService {
@@ -33,7 +41,9 @@ namespace Nexus {
         Beam::Ref<BacktesterEventHandler> event_handler,
         Beam::Ref<Tests::MarketDataServiceTestEnvironment>
           market_data_environment,
-        MarketDataClient market_data_client) noexcept;
+        MarketDataClient market_data_client);
+
+      ~BacktesterMarketDataService();
 
       /**
        * Submits a query for OrderImbalances.
@@ -100,6 +110,7 @@ namespace Nexus {
       std::function<void (const Ticker&, const BookQuote&)> m_book_quote_slot;
       std::unordered_set<
         std::tuple<boost::variant<Ticker, Venue>, MarketDataType>> m_queries;
+      Details::BacktesterMarketDataServiceHandle m_self;
 
       BacktesterMarketDataService(const BacktesterMarketDataService&) = delete;
       BacktesterMarketDataService& operator =(
@@ -134,7 +145,7 @@ namespace Nexus {
 
     private:
       QueryType m_query;
-      BacktesterMarketDataService* m_service;
+      Details::BacktesterMarketDataServiceHandle m_service;
   };
 
   /**
@@ -168,7 +179,7 @@ namespace Nexus {
     private:
       typename QueryType::Index m_index;
       Beam::Range::Point m_start;
-      BacktesterMarketDataService* m_service;
+      Details::BacktesterMarketDataServiceHandle m_service;
   };
 
   /**
@@ -202,16 +213,25 @@ namespace Nexus {
     private:
       Index m_index;
       MarketDataType m_value;
-      BacktesterMarketDataService* m_service;
+      Details::BacktesterMarketDataServiceHandle m_service;
   };
 
   inline BacktesterMarketDataService::BacktesterMarketDataService(
-    Beam::Ref<BacktesterEventHandler> event_handler,
-    Beam::Ref<Tests::MarketDataServiceTestEnvironment> market_data_environment,
-    MarketDataClient market_data_client) noexcept
-    : m_event_handler(event_handler.get()),
-      m_market_data_environment(market_data_environment.get()),
-      m_market_data_client(std::move(market_data_client)) {}
+      Beam::Ref<BacktesterEventHandler> event_handler,
+      Beam::Ref<Tests::MarketDataServiceTestEnvironment>
+        market_data_environment, MarketDataClient market_data_client)
+      : m_event_handler(event_handler.get()),
+        m_market_data_environment(market_data_environment.get()),
+        m_market_data_client(std::move(market_data_client)) {
+    m_self = std::make_shared<
+      Beam::Sync<BacktesterMarketDataService*, Beam::Mutex>>(this);
+  }
+
+  inline BacktesterMarketDataService::~BacktesterMarketDataService() {
+    m_self->with([] (auto& service) {
+      service = nullptr;
+    });
+  }
 
   inline void BacktesterMarketDataService::query_order_imbalances(
       const VenueQuery& query) {
@@ -268,21 +288,26 @@ namespace Nexus {
     Beam::Ref<BacktesterMarketDataService> service) noexcept
     : BacktesterEvent(boost::posix_time::neg_infin),
       m_query(std::move(query)),
-      m_service(service.get()) {}
+      m_service(service->m_self) {}
 
   template<typename T>
   void MarketDataQueryEvent<T>::execute() {
-    auto type = get_market_data_type<MarketDataType>();
-    auto key = std::tuple(m_query.get_index(), type);
-    if(m_query.get_range().get_end() != Beam::Sequence::LAST ||
-        !m_service->m_queries.insert(key).second) {
-      return;
-    }
-    auto time = m_service->m_event_handler->get_time();
-    auto event = std::make_shared<MarketDataLoadEvent<MarketDataType>>(
-      m_query.get_index(), time, boost::posix_time::neg_infin,
-      Beam::Ref(*m_service));
-    m_service->m_event_handler->add(event);
+    Beam::with(*m_service, [&] (const auto& service) {
+      if(!service) {
+        return;
+      }
+      auto type = get_market_data_type<MarketDataType>();
+      auto key = std::tuple(m_query.get_index(), type);
+      if(m_query.get_range().get_end() != Beam::Sequence::LAST ||
+          !service->m_queries.insert(key).second) {
+        return;
+      }
+      auto time = service->m_event_handler->get_time();
+      auto event = std::make_shared<MarketDataLoadEvent<MarketDataType>>(
+        m_query.get_index(), time, boost::posix_time::neg_infin,
+        Beam::Ref(*service));
+      service->m_event_handler->add(event);
+    });
   }
 
   template<typename T>
@@ -292,43 +317,48 @@ namespace Nexus {
     : BacktesterEvent(timestamp),
       m_index(std::move(index)),
       m_start(start),
-      m_service(service.get()) {}
+      m_service(service->m_self) {}
 
   template<typename T>
   void MarketDataLoadEvent<T>::execute() {
-    const auto QUERY_SIZE = 1000;
-    auto end = [&] () -> Beam::Range::Point {
-      if(m_service->m_event_handler->get_end_time() ==
-          boost::posix_time::pos_infin) {
-        return Beam::Sequence::PRESENT;
+    Beam::with(*m_service, [&] (const auto& service) {
+      if(!service) {
+        return;
       }
-      return m_service->m_event_handler->get_end_time();
-    }();
-    auto query = QueryType();
-    query.set_index(m_index);
-    query.set_range(m_start, end);
-    query.set_snapshot_limit(Beam::SnapshotLimit::Type::HEAD, QUERY_SIZE);
-    auto queue =
-      std::make_shared<Beam::Queue<Beam::SequencedValue<MarketDataType>>>();
-    m_service->m_market_data_client.query(query, queue);
-    auto data = std::vector<Beam::SequencedValue<MarketDataType>>();
-    Beam::flush(queue, std::back_inserter(data));
-    if(data.empty()) {
-      return;
-    }
-    auto events = std::vector<std::shared_ptr<BacktesterEvent>>();
-    auto timestamp = m_service->m_event_handler->get_time();
-    for(auto& value : data) {
-      timestamp = std::max(timestamp, Beam::get_timestamp(value.get_value()));
-      events.push_back(std::make_shared<MarketDataEvent<
-        typename QueryType::Index, MarketDataType>>(query.get_index(),
-          std::move(value), timestamp, Beam::Ref(*m_service)));
-    }
-    auto reload_event = std::make_shared<MarketDataLoadEvent>(m_index,
-      Beam::increment(data.back().get_sequence()),
-      events.back()->get_timestamp(), Beam::Ref(*m_service));
-    events.push_back(reload_event);
-    m_service->m_event_handler->add(events);
+      const auto QUERY_SIZE = 1000;
+      auto end = [&] () -> Beam::Range::Point {
+        if(service->m_event_handler->get_end_time() ==
+            boost::posix_time::pos_infin) {
+          return Beam::Sequence::PRESENT;
+        }
+        return service->m_event_handler->get_end_time();
+      }();
+      auto query = QueryType();
+      query.set_index(m_index);
+      query.set_range(m_start, end);
+      query.set_snapshot_limit(Beam::SnapshotLimit::Type::HEAD, QUERY_SIZE);
+      auto queue =
+        std::make_shared<Beam::Queue<Beam::SequencedValue<MarketDataType>>>();
+      service->m_market_data_client.query(query, queue);
+      auto data = std::vector<Beam::SequencedValue<MarketDataType>>();
+      Beam::flush(queue, std::back_inserter(data));
+      if(data.empty()) {
+        return;
+      }
+      auto events = std::vector<std::shared_ptr<BacktesterEvent>>();
+      auto timestamp = service->m_event_handler->get_time();
+      for(auto& value : data) {
+        timestamp = std::max(timestamp, Beam::get_timestamp(value.get_value()));
+        events.push_back(std::make_shared<MarketDataEvent<
+          typename QueryType::Index, MarketDataType>>(query.get_index(),
+            std::move(value), timestamp, Beam::Ref(*service)));
+      }
+      auto reload_event = std::make_shared<MarketDataLoadEvent>(
+        m_index, Beam::increment(data.back().get_sequence()),
+        events.back()->get_timestamp(), Beam::Ref(*service));
+      events.push_back(reload_event);
+      service->m_event_handler->add(events);
+    });
   }
 
   template<typename I, typename T>
@@ -338,28 +368,33 @@ namespace Nexus {
     : BacktesterEvent(timestamp),
       m_index(std::move(index)),
       m_value(std::move(value)),
-      m_service(service.get()) {}
+      m_service(service->m_self) {}
 
   template<typename I, typename T>
   void MarketDataEvent<I, T>::execute() {
-    if constexpr(std::is_same_v<Index, Ticker> &&
-        std::is_same_v<MarketDataType, BboQuote>) {
-      if(m_service->m_bbo_slot) {
-        m_service->m_bbo_slot(m_index, m_value);
+    Beam::with(*m_service, [&] (const auto& service) {
+      if(!service) {
+        return;
       }
-    } else if constexpr(std::is_same_v<Index, Ticker> &&
-        std::is_same_v<MarketDataType, TimeAndSale>) {
-      if(m_service->m_time_and_sale_slot) {
-        m_service->m_time_and_sale_slot(m_index, m_value);
+      if constexpr(std::is_same_v<Index, Ticker> &&
+          std::is_same_v<MarketDataType, BboQuote>) {
+        if(service->m_bbo_slot) {
+          service->m_bbo_slot(m_index, m_value);
+        }
+      } else if constexpr(std::is_same_v<Index, Ticker> &&
+          std::is_same_v<MarketDataType, TimeAndSale>) {
+        if(service->m_time_and_sale_slot) {
+          service->m_time_and_sale_slot(m_index, m_value);
+        }
+      } else if constexpr(std::is_same_v<Index, Ticker> &&
+          std::is_same_v<MarketDataType, BookQuote>) {
+        if(service->m_book_quote_slot) {
+          service->m_book_quote_slot(m_index, m_value);
+        }
       }
-    } else if constexpr(std::is_same_v<Index, Ticker> &&
-        std::is_same_v<MarketDataType, BookQuote>) {
-      if(m_service->m_book_quote_slot) {
-        m_service->m_book_quote_slot(m_index, m_value);
-      }
-    }
-    m_service->m_market_data_environment->get_feed_client().publish(
-      Beam::IndexedValue(m_value, m_index));
+      service->m_market_data_environment->get_feed_client().publish(
+        Beam::IndexedValue(m_value, m_index));
+    });
   }
 }
 

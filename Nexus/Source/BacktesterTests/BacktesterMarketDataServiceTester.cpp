@@ -97,6 +97,21 @@ TEST_SUITE("BacktesterMarketDataService") {
     REQUIRE(received_bbo1 == bbo_at_start);
     auto received_bbo2 = bbo_queue->pop();
     REQUIRE(received_bbo2 == bbo_after);
-    event_handler.close();
+  }
+
+  TEST_CASE("destroy_service_with_pending_events") {
+    auto fixture = Fixture();
+    auto start_time =
+      fixture.m_event_handler_environment.get_time_environment().get_time();
+    auto event_handler =
+      BacktesterEventHandler(start_time, start_time + hours(8));
+    event_handler.suspend();
+    {
+      auto service = BacktesterMarketDataService(Ref(event_handler),
+        Ref(fixture.m_event_handler_environment.get_market_data_environment()),
+        *fixture.m_source_market_data_client);
+      service.query_bbo_quotes(make_real_time_query(TD));
+    }
+    REQUIRE(event_handler.advance() != nullptr);
   }
 }
