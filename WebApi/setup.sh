@@ -1,5 +1,5 @@
 #!/bin/bash
-beam_commit="efebd23a3303128864acbcd8fad708b1c407c18a"
+beam_commit="11ebb00cd58490f678756e792e350aa02a8ee7d6"
 if [ ! -d "Beam" ]; then
   git clone https://www.github.com/spiretrading/beam.git Beam
   if [ "$?" == "0" ]; then
