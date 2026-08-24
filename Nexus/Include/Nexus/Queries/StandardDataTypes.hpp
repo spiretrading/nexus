@@ -1,5 +1,6 @@
 #ifndef NEXUS_QUERY_STANDARD_DATA_TYPES_HPP
 #define NEXUS_QUERY_STANDARD_DATA_TYPES_HPP
+#include <cstdint>
 #include <type_traits>
 #include <variant>
 #include <Beam/Queries/EvaluatorTranslator.hpp>
@@ -29,6 +30,14 @@ namespace Beam {
 
   template<>
   struct is_compatible_operand<double, Nexus::Quantity> : std::true_type {};
+
+  template<>
+  struct is_compatible_operand<Nexus::Quantity, std::uint64_t> :
+    std::true_type {};
+
+  template<>
+  struct is_compatible_operand<std::uint64_t, Nexus::Quantity> :
+    std::true_type {};
 }
 
 namespace Nexus {

@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <Beam/Queries/StandardValues.hpp>
 #include <Viper/Sqlite3/QueryBuilder.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -243,6 +244,18 @@ TEST_SUITE("SqlTranslator") {
       REQUIRE(translate("order_imbalances", typeid(OrderImbalance),
         accessor.get_size() >= ConstantExpression(2.5)) ==
           "(order_imbalances.size >= (2.500000 * 1000000))");
+    }
+
+    SUBCASE("quantity_and_unsigned") {
+      REQUIRE(translate("order_imbalances", typeid(OrderImbalance),
+        accessor.get_size() > ConstantExpression(std::uint64_t(500))) ==
+          "(order_imbalances.size > (500 * 1000000))");
+      REQUIRE(translate("order_imbalances", typeid(OrderImbalance),
+        ConstantExpression(std::uint64_t(500)) < accessor.get_size()) ==
+          "((500 * 1000000) < order_imbalances.size)");
+      REQUIRE(translate("order_imbalances", typeid(OrderImbalance),
+        accessor.get_size() + ConstantExpression(std::uint64_t(5))) ==
+          "(order_imbalances.size + (5 * 1000000))");
     }
 
     SUBCASE("quantity_arithmetic") {

@@ -1,3 +1,4 @@
+#include <cstdint>
 #include <Beam/Queries/ConstantExpression.hpp>
 #include <Beam/Queries/Evaluator.hpp>
 #include <Beam/Queries/StandardFunctionExpressions.hpp>
@@ -364,6 +365,17 @@ TEST_SUITE("EvaluatorTranslator") {
         ConstantExpression(500) > accessor.get_size())->eval<bool>(quote));
       REQUIRE(translate<Nexus::EvaluatorTranslator>(
         accessor.get_size() > ConstantExpression(2.5))->eval<bool>(quote));
+    }
+
+    SUBCASE("quantity_and_unsigned") {
+      REQUIRE(!translate<Nexus::EvaluatorTranslator>(accessor.get_size() >
+        ConstantExpression(std::uint64_t(500)))->eval<bool>(quote));
+      REQUIRE(translate<Nexus::EvaluatorTranslator>(
+        ConstantExpression(std::uint64_t(500)) >
+          accessor.get_size())->eval<bool>(quote));
+      REQUIRE(translate<Nexus::EvaluatorTranslator>(accessor.get_size() +
+        ConstantExpression(std::uint64_t(5)))->eval<Quantity>(quote) ==
+          Quantity(305));
     }
 
     SUBCASE("quantity_arithmetic") {
