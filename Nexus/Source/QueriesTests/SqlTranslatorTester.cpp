@@ -133,6 +133,13 @@ TEST_SUITE("SqlTranslator") {
       "((submissions.order_id = 13) OR (submissions.order_id = 31))");
   }
 
+  TEST_CASE("query_order_id_against_int") {
+    auto info = ParameterExpression(0, typeid(OrderInfo));
+    auto order_id = MemberAccessExpression("order_id", typeid(OrderId), info);
+    REQUIRE(translate("submissions", order_id == ConstantExpression(13)) ==
+      "(submissions.order_id = 13)");
+  }
+
   TEST_CASE("account_modification_request_status") {
     auto accessor = AccountModificationRequestAccessor::from_parameter(0);
     auto expression = accessor.get_status() == ConstantExpression(
