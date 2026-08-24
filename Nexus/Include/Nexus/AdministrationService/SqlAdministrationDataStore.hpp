@@ -400,8 +400,8 @@ namespace Nexus {
       SqlAdministrationDataStore<C>::count_requests(
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query) {
-    auto filter = make_sql_query(
-      "account_modification_requests", query.get_filter()) && accounts;
+    auto filter = make_sql_query("account_modification_requests",
+      typeid(AccountModificationRequest), query.get_filter()) && accounts;
     auto count = [&] (const Viper::Expression& status) {
       auto result = 0;
       m_connection->execute(Viper::select(Viper::count("id"),
@@ -428,8 +428,8 @@ namespace Nexus {
       SqlAdministrationDataStore<C>::load_requests(
         const Viper::Expression& accounts,
         const AccountModificationRequestQuery& query) {
-    auto filter =
-      make_sql_query("account_modification_requests", query.get_filter());
+    auto filter = make_sql_query("account_modification_requests",
+      typeid(AccountModificationRequest), query.get_filter());
     auto is_head =
       query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;
     auto sort_column = get_sort_column(query.get_sort_field());
