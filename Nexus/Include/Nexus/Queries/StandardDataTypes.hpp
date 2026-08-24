@@ -1,5 +1,6 @@
 #ifndef NEXUS_QUERY_STANDARD_DATA_TYPES_HPP
 #define NEXUS_QUERY_STANDARD_DATA_TYPES_HPP
+#include <type_traits>
 #include <variant>
 #include <Beam/Queries/EvaluatorTranslator.hpp>
 #include <Beam/Queries/SequencedValue.hpp>
@@ -15,6 +16,20 @@
 #include "Nexus/Queries/OrderInfoAccessor.hpp"
 #include "Nexus/Queries/TickerAccessor.hpp"
 #include "Nexus/Queries/TimeAndSaleAccessor.hpp"
+
+namespace Beam {
+  template<>
+  struct is_compatible_operand<Nexus::Quantity, int> : std::true_type {};
+
+  template<>
+  struct is_compatible_operand<int, Nexus::Quantity> : std::true_type {};
+
+  template<>
+  struct is_compatible_operand<Nexus::Quantity, double> : std::true_type {};
+
+  template<>
+  struct is_compatible_operand<double, Nexus::Quantity> : std::true_type {};
+}
 
 namespace Nexus {
   using QueryVariant = std::variant<bool, char, int, double, std::uint64_t,
@@ -38,6 +53,10 @@ namespace Nexus {
     using ComparableTypes = boost::mp11::mp_append<
       Beam::QueryTypes::ComparableTypes, ExtendedComparableTypes>;
   };
+
+namespace Details {
+  inline const auto QUERY_PROMOTIONS = Beam::register_promotions<QueryTypes>();
+}
 }
 
 #endif

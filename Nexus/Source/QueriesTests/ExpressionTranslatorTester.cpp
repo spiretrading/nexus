@@ -354,6 +354,63 @@ TEST_SUITE("EvaluatorTranslator") {
     }
   }
 
+  TEST_CASE("mixed_operand_types") {
+    auto accessor = QuoteAccessor::from_parameter(0);
+    auto quote = make_bid(5 * Money::ONE, 300);
+    SUBCASE("quantity_and_scalar") {
+      REQUIRE(!translate<Nexus::EvaluatorTranslator>(
+        accessor.get_size() > ConstantExpression(500))->eval<bool>(quote));
+      REQUIRE(translate<Nexus::EvaluatorTranslator>(
+        ConstantExpression(500) > accessor.get_size())->eval<bool>(quote));
+      REQUIRE(translate<Nexus::EvaluatorTranslator>(
+        accessor.get_size() > ConstantExpression(2.5))->eval<bool>(quote));
+    }
+
+    SUBCASE("quantity_arithmetic") {
+      REQUIRE(translate<Nexus::EvaluatorTranslator>(
+        accessor.get_size() + ConstantExpression(5))->eval<Quantity>(quote) ==
+          Quantity(305));
+      REQUIRE(translate<Nexus::EvaluatorTranslator>(
+        ConstantExpression(5) + accessor.get_size())->eval<Quantity>(quote) ==
+          Quantity(305));
+      REQUIRE(translate<Nexus::EvaluatorTranslator>(
+        accessor.get_size() * ConstantExpression(2))->eval<Quantity>(quote) ==
+          Quantity(600));
+      REQUIRE(translate<Nexus::EvaluatorTranslator>(
+        ConstantExpression(600) / accessor.get_size())->eval<Quantity>(quote) ==
+          Quantity(2));
+    }
+
+    SUBCASE("money_ratio") {
+      REQUIRE(translate<Nexus::EvaluatorTranslator>(accessor.get_price() /
+        ConstantExpression(Money::ONE))->eval<double>(quote) == 5.0);
+    }
+
+    SUBCASE("max_and_min") {
+      REQUIRE(translate<Nexus::EvaluatorTranslator>(
+        max(accessor.get_size(), ConstantExpression(500)))->eval<Quantity>(
+          quote) == Quantity(500));
+      REQUIRE(translate<Nexus::EvaluatorTranslator>(
+        min(ConstantExpression(500), accessor.get_size()))->eval<Quantity>(
+          quote) == Quantity(300));
+    }
+
+    SUBCASE("incompatible") {
+      REQUIRE_THROWS_AS(translate<Nexus::EvaluatorTranslator>(
+        accessor.get_price() > ConstantExpression(2)),
+        ExpressionTranslationException);
+      REQUIRE_THROWS_AS(translate<Nexus::EvaluatorTranslator>(
+        accessor.get_price() > accessor.get_size()),
+        ExpressionTranslationException);
+      REQUIRE_THROWS_AS(translate<Nexus::EvaluatorTranslator>(
+        accessor.get_size() * accessor.get_price()),
+        ExpressionTranslationException);
+      REQUIRE_THROWS_AS(translate<Nexus::EvaluatorTranslator>(
+        accessor.get_price() / ConstantExpression(4)),
+        ExpressionTranslationException);
+    }
+  }
+
   TEST_CASE("account_modification_request_members_without_updates") {
     auto accessor = AccountModificationRequestAccessor::from_parameter(0);
     REQUIRE_THROWS_AS(

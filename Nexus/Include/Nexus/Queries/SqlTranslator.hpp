@@ -19,26 +19,6 @@
 #include "Nexus/Queries/ExpressionVisitor.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 
-namespace Beam {
-  template<typename V>
-  struct SqlOperation<MultiplicationExpressionTranslator<V>, Nexus::Quantity,
-      Nexus::Quantity> {
-    Viper::Expression operator ()(
-        Viper::Expression left, Viper::Expression right) const {
-      return left * right / Viper::literal(Nexus::Quantity::MULTIPLIER);
-    }
-  };
-
-  template<typename V>
-  struct SqlOperation<DivisionExpressionTranslator<V>, Nexus::Quantity,
-      Nexus::Quantity> {
-    Viper::Expression operator ()(
-        Viper::Expression left, Viper::Expression right) const {
-      return left / right * Viper::literal(Nexus::Quantity::MULTIPLIER);
-    }
-  };
-}
-
 namespace Nexus {
 
   /** Translates an Expression into an SQL query. */

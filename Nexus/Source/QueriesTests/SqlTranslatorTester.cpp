@@ -196,11 +196,65 @@ TEST_SUITE("SqlTranslator") {
       REQUIRE_THROWS_AS(translate("account_modification_requests", expression),
         ExpressionTranslationException);
     }
+  }
 
-    SUBCASE("quantity") {
-      auto accessor = OrderImbalanceAccessor::from_parameter(0);
-      auto expression = accessor.get_size() > ConstantExpression(500);
-      REQUIRE_THROWS_AS(translate("order_imbalances", expression),
+  TEST_CASE("mixed_operand_types") {
+    auto accessor = OrderImbalanceAccessor::from_parameter(0);
+    auto money = ConstantExpression(Money::ONE);
+    auto quantity = ConstantExpression(Quantity(3));
+    SUBCASE("quantity_and_scalar") {
+      REQUIRE(translate("order_imbalances",
+        accessor.get_size() > ConstantExpression(500)) ==
+          "(order_imbalances.size > (500 * 1000000))");
+      REQUIRE(translate("order_imbalances",
+        ConstantExpression(500) < accessor.get_size()) ==
+          "((500 * 1000000) < order_imbalances.size)");
+      REQUIRE(translate("order_imbalances",
+        accessor.get_size() >= ConstantExpression(2.5)) ==
+          "(order_imbalances.size >= (2.500000 * 1000000))");
+    }
+
+    SUBCASE("quantity_arithmetic") {
+      REQUIRE(translate("order_imbalances",
+        accessor.get_size() + ConstantExpression(5)) ==
+          "(order_imbalances.size + (5 * 1000000))");
+      REQUIRE(translate("order_imbalances",
+        ConstantExpression(5) + accessor.get_size()) ==
+          "((5 * 1000000) + order_imbalances.size)");
+      REQUIRE(translate("order_imbalances",
+        accessor.get_size() * ConstantExpression(5)) ==
+          "(order_imbalances.size * 5)");
+      REQUIRE(translate("order_imbalances",
+        ConstantExpression(5) / accessor.get_size()) ==
+          "((5 / order_imbalances.size) * 1000000000000)");
+    }
+
+    SUBCASE("money_ratio") {
+      auto expression = money / ConstantExpression(2 * Money::ONE);
+      REQUIRE(expression.get_type() == typeid(double));
+      REQUIRE(translate("order_imbalances", expression) ==
+        "(1000000.000000 / 2000000.000000)");
+    }
+
+    SUBCASE("max_and_min") {
+      REQUIRE(translate("order_imbalances",
+        max(accessor.get_size(), ConstantExpression(500))) ==
+          "MAX(order_imbalances.size, (500 * 1000000))");
+      REQUIRE(translate("order_imbalances",
+        min(ConstantExpression(500), accessor.get_size())) ==
+          "MIN((500 * 1000000), order_imbalances.size)");
+    }
+
+    SUBCASE("incompatible") {
+      REQUIRE_THROWS_AS(
+        translate("order_imbalances", money > ConstantExpression(2)),
+        ExpressionTranslationException);
+      REQUIRE_THROWS_AS(translate("order_imbalances", money > quantity),
+        ExpressionTranslationException);
+      REQUIRE_THROWS_AS(translate("order_imbalances", quantity * money),
+        ExpressionTranslationException);
+      REQUIRE_THROWS_AS(
+        translate("order_imbalances", money / ConstantExpression(2)),
         ExpressionTranslationException);
     }
   }
