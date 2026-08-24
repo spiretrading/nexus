@@ -29,9 +29,11 @@ namespace Nexus {
       /**
        * Constructs an SqlTranslator.
        * @param parameter The parameter/table name.
+       * @param type The type of value the expression filters.
        * @param expression The Expression to translate.
        */
-      SqlTranslator(std::string parameter, Beam::Expression expression);
+      SqlTranslator(std::string parameter, std::type_index type,
+        Beam::Expression expression);
 
     protected:
       void visit(const Beam::ConstantExpression& expression) override;
@@ -71,19 +73,20 @@ namespace Nexus {
   /**
    * Translates an Expression into an SQL query.
    * @param parameter The parameter/table name.
+   * @param type The type of value the expression filters.
    * @param expression The Expression to translate.
    * @return The SQL query representing the <i>expression</i>.
    */
-  inline auto make_sql_query(
-      std::string parameter, Beam::Expression expression) {
+  inline auto make_sql_query(std::string parameter, std::type_index type,
+      Beam::Expression expression) {
     return Beam::make_sql_query<SqlTranslator>(
-      std::move(parameter), std::move(expression));
+      std::move(parameter), type, std::move(expression));
   }
 
-  inline SqlTranslator::SqlTranslator(
-    std::string parameter, Beam::Expression expression)
+  inline SqlTranslator::SqlTranslator(std::string parameter,
+    std::type_index type, Beam::Expression expression)
     : Beam::SqlTranslator<QueryTypes>(
-        std::move(parameter), std::move(expression)) {}
+        std::move(parameter), type, std::move(expression)) {}
 
   inline void SqlTranslator::visit(const Beam::ConstantExpression& expression) {
     auto& value = expression.get_value();

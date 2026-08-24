@@ -124,8 +124,8 @@ namespace Nexus {
   std::vector<TickerInfo> SqlHistoricalDataStore<C>::load_ticker_info(
       const TickerInfoQuery& query) {
     auto matches = std::vector<TickerInfo>();
-    auto filter =
-      Beam::make_sql_query<SqlTranslator>("ticker_info", query.get_filter());
+    auto filter = Beam::make_sql_query<SqlTranslator>(
+      "ticker_info", typeid(TickerInfo), query.get_filter());
     auto anchor = [&] {
       if(auto anchor = query.get_anchor()) {
         auto left = Viper::Expression(
