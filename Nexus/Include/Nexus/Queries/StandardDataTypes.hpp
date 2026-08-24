@@ -55,7 +55,8 @@ namespace Nexus {
       AccountModificationRequest>;
     using NativeTypes = boost::mp11::mp_append<
       Beam::QueryTypes::NativeTypes, ExtendedNativeTypes>;
-    using ExtendedValueTypes = boost::mp11::mp_list<Quantity, Money>;
+    using ExtendedValueTypes =
+      boost::mp11::mp_list<Quantity, Money, Side, Venue>;
     using ValueTypes =
       boost::mp11::mp_append<Beam::QueryTypes::ValueTypes, ExtendedValueTypes>;
     using ExtendedComparableTypes = boost::mp11::mp_list<Quantity, Money>;

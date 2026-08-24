@@ -1,11 +1,14 @@
 #include <cstdint>
+#include <Beam/Queries/Evaluator.hpp>
 #include <Beam/Queries/StandardValues.hpp>
 #include <Viper/Sqlite3/QueryBuilder.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/mp11.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Queries/AccountModificationRequestAccessor.hpp"
 #include "Nexus/Queries/BboQuoteAccessor.hpp"
 #include "Nexus/Queries/BookQuoteAccessor.hpp"
+#include "Nexus/Queries/EvaluatorTranslator.hpp"
 #include "Nexus/Queries/OrderImbalanceAccessor.hpp"
 #include "Nexus/Queries/QuoteAccessor.hpp"
 #include "Nexus/Queries/SqlTranslator.hpp"
@@ -25,6 +28,24 @@ namespace {
     auto query = std::string();
     Viper::Sqlite3::build_query(translation, query);
     return query;
+  }
+
+  auto is_evaluator_constant(const Expression& expression) {
+    try {
+      return Beam::translate<Nexus::EvaluatorTranslator>(
+        expression, typeid(OrderImbalance)) != nullptr;
+    } catch(const ExpressionTranslationException&) {
+      return false;
+    }
+  }
+
+  auto is_sql_constant(const Expression& expression) {
+    try {
+      translate("order_imbalances", typeid(OrderImbalance), expression);
+      return true;
+    } catch(const ExpressionTranslationException&) {
+      return false;
+    }
   }
 }
 
@@ -300,5 +321,42 @@ TEST_SUITE("SqlTranslator") {
       REQUIRE_THROWS_AS(translate("order_imbalances", typeid(OrderImbalance),
         money / ConstantExpression(2)), ExpressionTranslationException);
     }
+  }
+
+  TEST_CASE("quantity_constant_parity") {
+    auto expression = ConstantExpression(Quantity(100));
+    REQUIRE(is_evaluator_constant(expression) == is_sql_constant(expression));
+  }
+
+  TEST_CASE("side_constant_parity") {
+    auto expression = ConstantExpression(Side(Side::BID));
+    REQUIRE(is_evaluator_constant(expression) == is_sql_constant(expression));
+  }
+
+  TEST_CASE("ticker_constant_parity") {
+    auto expression = ConstantExpression(Ticker("TST", Venue("XXXX")));
+    REQUIRE(is_evaluator_constant(expression) == is_sql_constant(expression));
+  }
+
+  TEST_CASE("time_and_sale_constant_parity") {
+    auto expression = ConstantExpression(TimeAndSale());
+    REQUIRE(is_evaluator_constant(expression) == is_sql_constant(expression));
+  }
+
+  TEST_CASE("every_value_type_translates_to_sql") {
+    boost::mp11::mp_for_each<boost::mp11::mp_transform<
+      boost::mp11::mp_identity, Nexus::QueryTypes::ValueTypes>>(
+        [] (auto type) {
+          using Type = typename decltype(type)::type;
+          REQUIRE(is_sql_constant(ConstantExpression(Type())));
+        });
+  }
+
+  TEST_CASE("value_types_lists_every_translatable_constant") {
+    using ValueTypes = Nexus::QueryTypes::ValueTypes;
+    REQUIRE(boost::mp11::mp_contains<ValueTypes, Quantity>::value);
+    REQUIRE(boost::mp11::mp_contains<ValueTypes, Money>::value);
+    REQUIRE(boost::mp11::mp_contains<ValueTypes, Side>::value);
+    REQUIRE(boost::mp11::mp_contains<ValueTypes, Venue>::value);
   }
 }
