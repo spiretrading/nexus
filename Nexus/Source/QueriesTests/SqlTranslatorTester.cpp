@@ -1,4 +1,5 @@
 #include <Beam/Queries/StandardValues.hpp>
+#include <Viper/Sqlite3/QueryBuilder.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Queries/AccountModificationRequestAccessor.hpp"
@@ -20,7 +21,7 @@ namespace {
     auto translator = Nexus::SqlTranslator(table, expression);
     auto translation = translator.make();
     auto query = std::string();
-    translation.append_query(query);
+    Viper::Sqlite3::build_query(translation, query);
     return query;
   }
 }
@@ -146,6 +147,35 @@ TEST_SUITE("SqlTranslator") {
       ConstantExpression(time_from_string("2026-05-08 09:30:00"));
     REQUIRE(translate("account_modification_requests", expression) ==
       "(last_update_timestamp >= 1778232600000)");
+  }
+
+  TEST_CASE("scaled_arithmetic") {
+    SUBCASE("product") {
+      auto parameters = std::vector<Expression>{
+        ConstantExpression(Quantity(3)), ConstantExpression(Quantity(4))};
+      auto expression =
+        FunctionExpression(MULTIPLICATION_NAME, typeid(Quantity), parameters);
+      REQUIRE(translate("order_imbalances", expression) ==
+        "((3000000.000000 * 4000000.000000) / 1000000)");
+    }
+
+    SUBCASE("quotient") {
+      auto parameters = std::vector<Expression>{
+        ConstantExpression(Quantity(12)), ConstantExpression(Quantity(4))};
+      auto expression =
+        FunctionExpression(DIVISION_NAME, typeid(Quantity), parameters);
+      REQUIRE(translate("order_imbalances", expression) ==
+        "((12000000.000000 / 4000000.000000) * 1000000)");
+    }
+
+    SUBCASE("sum") {
+      auto parameters = std::vector<Expression>{
+        ConstantExpression(Money::ONE), ConstantExpression(Money::ONE)};
+      auto expression =
+        FunctionExpression(ADDITION_NAME, typeid(Money), parameters);
+      REQUIRE(translate("order_imbalances", expression) ==
+        "(1000000.000000 + 1000000.000000)");
+    }
   }
 
   TEST_CASE("mismatched_member_type_throws") {
