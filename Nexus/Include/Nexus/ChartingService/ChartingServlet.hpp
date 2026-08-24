@@ -240,8 +240,9 @@ namespace Details {
     }
     auto result = TickerChartingQueryResult();
     result.m_id = client_query_id;
-    auto filter = Beam::translate<EvaluatorTranslator>(query.get_filter());
-    auto translator = EvaluatorTranslator();
+    auto filter = Beam::translate<EvaluatorTranslator>(
+      query.get_filter(), typeid(MarketDataType));
+    auto translator = EvaluatorTranslator(typeid(MarketDataType));
     translator.translate(query.get_expression());
     auto base_expression = translator.take_evaluator();
     auto expression = Beam::instantiate<Details::ExpressionConverter>(

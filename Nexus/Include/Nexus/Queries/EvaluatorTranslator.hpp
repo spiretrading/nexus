@@ -1,6 +1,7 @@
 #ifndef NEXUS_EVALUATOR_TRANSLATOR_HPP
 #define NEXUS_EVALUATOR_TRANSLATOR_HPP
 #include <memory>
+#include <typeindex>
 #include <unordered_map>
 #include <vector>
 #include <Beam/Collections/SynchronizedSet.hpp>
@@ -28,27 +29,38 @@ namespace Nexus {
       protected ExpressionVisitor {
     public:
 
-      /** Constructs an EvaluatorTranslator. */
+      /**
+       * Constructs an EvaluatorTranslator for an Expression evaluated without
+       * a parameter.
+       */
       EvaluatorTranslator();
 
       /**
+       * Constructs an EvaluatorTranslator.
+       * @param type The type of value the parameters are bound to.
+       */
+      explicit EvaluatorTranslator(std::type_index type);
+
+      /**
        * Constructs an EvaluatorTranslator maintaining a set of live Orders.
+       * @param type The type of value the parameters are bound to.
        * @param live_orders The set of live Orders.
        */
-      explicit EvaluatorTranslator(
+      EvaluatorTranslator(std::type_index type,
         Beam::Ref<const Beam::SynchronizedUnorderedSet<OrderId>> live_orders);
 
       /**
        * Constructs an EvaluatorTranslator able to access the members of an
        * account modification request that are stored separately from it.
+       * @param type The type of value the parameters are bound to.
        * @param request_updates The updates of every account modification
        *        request.
        */
-      explicit EvaluatorTranslator(
+      EvaluatorTranslator(std::type_index type,
         Beam::Ref<const AccountModificationRequestUpdates> request_updates);
 
       std::unique_ptr<Beam::EvaluatorTranslator<QueryTypes>>
-        make_translator() const override;
+        make_translator(std::type_index type) const override;
 
     protected:
       void visit(const Beam::MemberAccessExpression& expression) override;
@@ -86,22 +98,28 @@ namespace Nexus {
   };
 
   inline EvaluatorTranslator::EvaluatorTranslator()
-    : m_live_orders(nullptr),
+    : EvaluatorTranslator(typeid(void)) {}
+
+  inline EvaluatorTranslator::EvaluatorTranslator(std::type_index type)
+    : Beam::EvaluatorTranslator<QueryTypes>(type),
+      m_live_orders(nullptr),
       m_request_updates(nullptr) {}
 
-  inline EvaluatorTranslator::EvaluatorTranslator(
+  inline EvaluatorTranslator::EvaluatorTranslator(std::type_index type,
     Beam::Ref<const Beam::SynchronizedUnorderedSet<OrderId>> live_orders)
-    : m_live_orders(live_orders.get()),
+    : Beam::EvaluatorTranslator<QueryTypes>(type),
+      m_live_orders(live_orders.get()),
       m_request_updates(nullptr) {}
 
-  inline EvaluatorTranslator::EvaluatorTranslator(
+  inline EvaluatorTranslator::EvaluatorTranslator(std::type_index type,
     Beam::Ref<const AccountModificationRequestUpdates> request_updates)
-    : m_live_orders(nullptr),
+    : Beam::EvaluatorTranslator<QueryTypes>(type),
+      m_live_orders(nullptr),
       m_request_updates(request_updates.get()) {}
 
   inline std::unique_ptr<Beam::EvaluatorTranslator<QueryTypes>>
-      EvaluatorTranslator::make_translator() const {
-    auto translator = std::make_unique<EvaluatorTranslator>();
+      EvaluatorTranslator::make_translator(std::type_index type) const {
+    auto translator = std::make_unique<EvaluatorTranslator>(type);
     translator->m_live_orders = m_live_orders;
     translator->m_request_updates = m_request_updates;
     return translator;

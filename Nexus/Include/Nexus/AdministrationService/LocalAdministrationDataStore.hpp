@@ -278,8 +278,9 @@ namespace Nexus {
       LocalAdministrationDataStore::count_requests(
         const std::vector<Beam::DirectoryEntry>* accounts,
         const AccountModificationRequestQuery& query) {
-    auto evaluator = Beam::translate<EvaluatorTranslator>(
-      query.get_filter(), Beam::Ref(m_account_modification_request_updates));
+    auto evaluator = Beam::translate<EvaluatorTranslator>(query.get_filter(),
+      typeid(AccountModificationRequest),
+      Beam::Ref(m_account_modification_request_updates));
     auto scope = make_account_scope(accounts);
     auto counts = AccountModificationRequestCounts();
     for(auto& entry : m_account_modification_requests) {
@@ -307,8 +308,9 @@ namespace Nexus {
       LocalAdministrationDataStore::load_requests(
         const std::vector<Beam::DirectoryEntry>* accounts,
         const AccountModificationRequestQuery& query) {
-    auto evaluator = Beam::translate<EvaluatorTranslator>(
-      query.get_filter(), Beam::Ref(m_account_modification_request_updates));
+    auto evaluator = Beam::translate<EvaluatorTranslator>(query.get_filter(),
+      typeid(AccountModificationRequest),
+      Beam::Ref(m_account_modification_request_updates));
     auto& anchor = query.get_anchor();
     auto is_head =
       query.get_snapshot_limit().get_type() == Beam::SnapshotLimit::Type::HEAD;

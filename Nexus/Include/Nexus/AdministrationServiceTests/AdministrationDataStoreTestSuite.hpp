@@ -760,6 +760,12 @@ namespace Nexus::Tests {
         Beam::MemberAccessExpression("id", typeid(int), operand);
       REQUIRE_THROWS_AS(load(lying_operand == ConstantExpression(7)),
         ExpressionTranslationException);
+      auto lying_parameter = ParameterExpression(0, typeid(OrderInfo));
+      auto lying_member =Beam::MemberAccessExpression(
+        "timestamp", typeid(ptime), lying_parameter);
+      REQUIRE_THROWS_AS(load(lying_member ==
+        ConstantExpression(time_from_string("2024-07-05 10:00:00"))),
+        ExpressionTranslationException);
     }
 
     SUBCASE("load_account_modification_requests_anchored_by_name") {

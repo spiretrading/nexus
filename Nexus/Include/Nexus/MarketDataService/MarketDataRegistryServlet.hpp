@@ -372,7 +372,8 @@ namespace Nexus {
       request.set(Result());
       return;
     }
-    auto filter = Beam::translate<EvaluatorTranslator>(query.get_filter());
+    auto filter =
+      Beam::translate<EvaluatorTranslator>(query.get_filter(), typeid(Type));
     auto result = Result();
     result.m_id = subscriptions.init(
       index, request.get_client(), query.get_range(), std::move(filter));

@@ -30,8 +30,8 @@ namespace {
 TEST_SUITE("EvaluatorTranslator") {
   TEST_CASE("bbo_quote_timestamp") {
     auto accessor = BboQuoteAccessor::from_parameter(0);
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(accessor.get_timestamp());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_timestamp(), typeid(BboQuote));
     auto bbo = BboQuote(
       make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 200),
       time_from_string("2026-05-08 09:30:00"));
@@ -41,7 +41,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("bbo_quote_bid") {
     auto accessor = BboQuoteAccessor::from_parameter(0);
-    auto evaluator = translate<Nexus::EvaluatorTranslator>(accessor.get_bid());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_bid(), typeid(BboQuote));
     auto bbo = BboQuote(
       make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 200),
       time_from_string("2026-05-08 09:30:00"));
@@ -51,7 +52,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("bbo_quote_ask") {
     auto accessor = BboQuoteAccessor::from_parameter(0);
-    auto evaluator = translate<Nexus::EvaluatorTranslator>(accessor.get_ask());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_ask(), typeid(BboQuote));
     auto bbo = BboQuote(
       make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 200),
       time_from_string("2026-05-08 09:30:00"));
@@ -62,8 +64,8 @@ TEST_SUITE("EvaluatorTranslator") {
   TEST_CASE("bbo_quote_bid_price") {
     auto bbo_accessor = BboQuoteAccessor::from_parameter(0);
     auto quote_accessor = QuoteAccessor(bbo_accessor.get_bid());
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(quote_accessor.get_price());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      quote_accessor.get_price(), typeid(BboQuote));
     auto bbo = BboQuote(
       make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 200),
       time_from_string("2026-05-08 09:30:00"));
@@ -74,8 +76,8 @@ TEST_SUITE("EvaluatorTranslator") {
   TEST_CASE("bbo_quote_ask_size") {
     auto bbo_accessor = BboQuoteAccessor::from_parameter(0);
     auto quote_accessor = QuoteAccessor(bbo_accessor.get_ask());
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(quote_accessor.get_size());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      quote_accessor.get_size(), typeid(BboQuote));
     auto bbo = BboQuote(
       make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 200),
       time_from_string("2026-05-08 09:30:00"));
@@ -86,8 +88,8 @@ TEST_SUITE("EvaluatorTranslator") {
   TEST_CASE("bbo_quote_bid_side") {
     auto bbo_accessor = BboQuoteAccessor::from_parameter(0);
     auto quote_accessor = QuoteAccessor(bbo_accessor.get_bid());
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(quote_accessor.get_side());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      quote_accessor.get_side(), typeid(BboQuote));
     auto bbo = BboQuote(
       make_bid(Money::ONE, 100), make_ask(Money::ONE + Money::CENT, 200),
       time_from_string("2026-05-08 09:30:00"));
@@ -97,8 +99,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("quote_price") {
     auto accessor = QuoteAccessor::from_parameter(0);
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(accessor.get_price());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_price(), typeid(Quote));
     auto quote = make_bid(5 * Money::ONE, 500);
     auto result = evaluator->eval<Money>(quote);
     REQUIRE(result == 5 * Money::ONE);
@@ -106,7 +108,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("quote_size") {
     auto accessor = QuoteAccessor::from_parameter(0);
-    auto evaluator = translate<Nexus::EvaluatorTranslator>(accessor.get_size());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_size(), typeid(Quote));
     auto quote = make_ask(3 * Money::ONE, 300);
     auto result = evaluator->eval<Quantity>(quote);
     REQUIRE(result == Quantity(300));
@@ -114,7 +117,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("quote_side") {
     auto accessor = QuoteAccessor::from_parameter(0);
-    auto evaluator = translate<Nexus::EvaluatorTranslator>(accessor.get_side());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_side(), typeid(Quote));
     auto quote = make_ask(3 * Money::ONE, 300);
     auto result = evaluator->eval<Side>(quote);
     REQUIRE(result == Side::ASK);
@@ -124,7 +128,8 @@ TEST_SUITE("EvaluatorTranslator") {
     auto bbo_accessor = BboQuoteAccessor::from_parameter(0);
     auto quote_accessor = QuoteAccessor(bbo_accessor.get_bid());
     auto filter = quote_accessor.get_price() > ConstantExpression(Money::ONE);
-    auto evaluator = translate<Nexus::EvaluatorTranslator>(filter);
+    auto evaluator =
+      translate<Nexus::EvaluatorTranslator>(filter, typeid(BboQuote));
     auto bbo_above =
       BboQuote(make_bid(2 * Money::ONE, 100), make_ask(3 * Money::ONE, 200),
         time_from_string("2026-05-08 09:30:00"));
@@ -137,7 +142,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("book_quote_mpid") {
     auto accessor = BookQuoteAccessor::from_parameter(0);
-    auto evaluator = translate<Nexus::EvaluatorTranslator>(accessor.get_mpid());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_mpid(), typeid(BookQuote));
     auto quote = BookQuote("MM01", true, Venues::TSX, make_bid(Money::ONE, 100),
       time_from_string("2026-05-08 09:30:00"));
     REQUIRE(evaluator->eval<std::string>(quote) == "MM01");
@@ -145,8 +151,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("book_quote_is_primary_mpid") {
     auto accessor = BookQuoteAccessor::from_parameter(0);
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(accessor.is_primary_mpid());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.is_primary_mpid(), typeid(BookQuote));
     auto quote = BookQuote("MM01", true, Venues::TSX, make_bid(Money::ONE, 100),
       time_from_string("2026-05-08 09:30:00"));
     REQUIRE(evaluator->eval<bool>(quote));
@@ -154,8 +160,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("book_quote_venue") {
     auto accessor = BookQuoteAccessor::from_parameter(0);
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(accessor.get_venue());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_venue(), typeid(BookQuote));
     auto quote = BookQuote("MM01", true, Venues::TSX, make_bid(Money::ONE, 100),
       time_from_string("2026-05-08 09:30:00"));
     REQUIRE(evaluator->eval<Venue>(quote) == Venues::TSX);
@@ -163,8 +169,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("book_quote_timestamp") {
     auto accessor = BookQuoteAccessor::from_parameter(0);
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(accessor.get_timestamp());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_timestamp(), typeid(BookQuote));
     auto timestamp = time_from_string("2026-05-08 09:30:00");
     auto quote = BookQuote(
       "MM01", true, Venues::TSX, make_bid(Money::ONE, 100), timestamp);
@@ -174,8 +180,8 @@ TEST_SUITE("EvaluatorTranslator") {
   TEST_CASE("book_quote_quote_price") {
     auto book_accessor = BookQuoteAccessor::from_parameter(0);
     auto quote_accessor = QuoteAccessor(book_accessor.get_quote());
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(quote_accessor.get_price());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      quote_accessor.get_price(), typeid(BookQuote));
     auto quote = BookQuote("MM01", true, Venues::TSX,
       make_bid(5 * Money::ONE, 500), time_from_string("2026-05-08 09:30:00"));
     REQUIRE(evaluator->eval<Money>(quote) == 5 * Money::ONE);
@@ -183,9 +189,10 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("book_quote_mpid_filter") {
     auto accessor = BookQuoteAccessor::from_parameter(0);
-    auto filter = accessor.get_mpid() ==
-      ConstantExpression(std::string("MM01"));
-    auto evaluator = translate<Nexus::EvaluatorTranslator>(filter);
+    auto filter =
+      accessor.get_mpid() == ConstantExpression(std::string("MM01"));
+    auto evaluator =
+      translate<Nexus::EvaluatorTranslator>(filter, typeid(BookQuote));
     auto match = BookQuote("MM01", true, Venues::TSX, make_bid(Money::ONE, 100),
       time_from_string("2026-05-08 09:30:00"));
     REQUIRE(evaluator->eval<bool>(match));
@@ -196,8 +203,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("order_imbalance_side") {
     auto accessor = OrderImbalanceAccessor::from_parameter(0);
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(accessor.get_side());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_side(), typeid(OrderImbalance));
     auto imbalance = OrderImbalance(parse_ticker("A.TSX"), Side::BID, 1000,
       Money::ONE, time_from_string("2026-05-08 15:50:00"));
     REQUIRE(evaluator->eval<Side>(imbalance) == Side::BID);
@@ -205,8 +212,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("order_imbalance_size") {
     auto accessor = OrderImbalanceAccessor::from_parameter(0);
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(accessor.get_size());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_size(), typeid(OrderImbalance));
     auto imbalance = OrderImbalance(parse_ticker("A.TSX"), Side::ASK, 500,
       2 * Money::ONE, time_from_string("2026-05-08 15:50:00"));
     REQUIRE(evaluator->eval<Quantity>(imbalance) == Quantity(500));
@@ -214,8 +221,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("order_imbalance_reference_price") {
     auto accessor = OrderImbalanceAccessor::from_parameter(0);
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(accessor.get_reference_price());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_reference_price(), typeid(OrderImbalance));
     auto imbalance = OrderImbalance(parse_ticker("A.TSX"), Side::BID, 1000,
       5 * Money::ONE, time_from_string("2026-05-08 15:50:00"));
     REQUIRE(evaluator->eval<Money>(imbalance) == 5 * Money::ONE);
@@ -223,8 +230,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("order_imbalance_timestamp") {
     auto accessor = OrderImbalanceAccessor::from_parameter(0);
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(accessor.get_timestamp());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_timestamp(), typeid(OrderImbalance));
     auto timestamp = time_from_string("2026-05-08 15:50:00");
     auto imbalance = OrderImbalance(
       parse_ticker("A.TSX"), Side::BID, 1000, Money::ONE, timestamp);
@@ -234,7 +241,8 @@ TEST_SUITE("EvaluatorTranslator") {
   TEST_CASE("order_imbalance_size_filter") {
     auto accessor = OrderImbalanceAccessor::from_parameter(0);
     auto filter = accessor.get_size() > ConstantExpression(Quantity(500));
-    auto evaluator = translate<Nexus::EvaluatorTranslator>(filter);
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      filter, typeid(OrderImbalance));
     auto large = OrderImbalance(parse_ticker("A.TSX"), Side::BID, 1000,
       Money::ONE, time_from_string("2026-05-08 15:50:00"));
     REQUIRE(evaluator->eval<bool>(large));
@@ -245,8 +253,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("ticker_status_state") {
     auto accessor = TickerStatusAccessor::from_parameter(0);
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(accessor.get_state());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_state(), typeid(TickerStatus));
     auto status =
       TickerStatus(Venues::TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
         time_from_string("2026-05-08 09:30:00"));
@@ -255,8 +263,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("ticker_status_venue") {
     auto accessor = TickerStatusAccessor::from_parameter(0);
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(accessor.get_venue());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_venue(), typeid(TickerStatus));
     auto status =
       TickerStatus(Venues::TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
         time_from_string("2026-05-08 09:30:00"));
@@ -265,8 +273,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("ticker_status_flags") {
     auto accessor = TickerStatusAccessor::from_parameter(0);
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(accessor.get_flags());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_flags(), typeid(TickerStatus));
     auto status =
       TickerStatus(Venues::TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
         time_from_string("2026-05-08 09:30:00"));
@@ -276,8 +284,8 @@ TEST_SUITE("EvaluatorTranslator") {
 
   TEST_CASE("ticker_status_timestamp") {
     auto accessor = TickerStatusAccessor::from_parameter(0);
-    auto evaluator =
-      translate<Nexus::EvaluatorTranslator>(accessor.get_timestamp());
+    auto evaluator = translate<Nexus::EvaluatorTranslator>(
+      accessor.get_timestamp(), typeid(TickerStatus));
     auto timestamp = time_from_string("2026-05-08 09:30:00");
     auto status = TickerStatus(
       Venues::TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS, timestamp);
@@ -288,7 +296,8 @@ TEST_SUITE("EvaluatorTranslator") {
     auto accessor = TickerStatusAccessor::from_parameter(0);
     auto filter =
       accessor.get_state() == ConstantExpression(std::string("Authorized"));
-    auto evaluator = translate<Nexus::EvaluatorTranslator>(filter);
+    auto evaluator =
+      translate<Nexus::EvaluatorTranslator>(filter, typeid(TickerStatus));
     auto match =
       TickerStatus(Venues::TSX, "Authorized", TickerStatus::Flag::IS_CONTINUOUS,
         time_from_string("2026-05-08 09:30:00"));
@@ -305,7 +314,8 @@ TEST_SUITE("EvaluatorTranslator") {
     auto updates = AccountModificationRequestUpdates();
     SUBCASE("no_updates") {
       auto evaluator = translate<Nexus::EvaluatorTranslator>(
-        accessor.get_status(), Ref(updates));
+        accessor.get_status(), typeid(AccountModificationRequest),
+        Ref(updates));
       REQUIRE(evaluator->eval<int>(request) ==
         static_cast<int>(AccountModificationRequest::Status::NONE));
     }
@@ -319,7 +329,8 @@ TEST_SUITE("EvaluatorTranslator") {
         DirectoryEntry::make_account(101, "manager"), 1,
         time_from_string("2026-05-08 11:00:00"));
       auto evaluator = translate<Nexus::EvaluatorTranslator>(
-        accessor.get_status(), Ref(updates));
+        accessor.get_status(), typeid(AccountModificationRequest),
+        Ref(updates));
       REQUIRE(evaluator->eval<int>(request) ==
         static_cast<int>(AccountModificationRequest::Status::GRANTED));
     }
@@ -329,7 +340,8 @@ TEST_SUITE("EvaluatorTranslator") {
         DirectoryEntry::make_account(101, "manager"), 0,
         time_from_string("2026-05-08 11:00:00"));
       auto evaluator = translate<Nexus::EvaluatorTranslator>(
-        accessor.get_status(), Ref(updates));
+        accessor.get_status(), typeid(AccountModificationRequest),
+        Ref(updates));
       REQUIRE(evaluator->eval<int>(request) ==
         static_cast<int>(AccountModificationRequest::Status::NONE));
     }
@@ -341,7 +353,8 @@ TEST_SUITE("EvaluatorTranslator") {
     auto updates = AccountModificationRequestUpdates();
     SUBCASE("no_updates") {
       auto evaluator = translate<Nexus::EvaluatorTranslator>(
-        accessor.get_last_update_timestamp(), Ref(updates));
+        accessor.get_last_update_timestamp(),
+        typeid(AccountModificationRequest), Ref(updates));
       REQUIRE(evaluator->eval<ptime>(request) == request.get_timestamp());
     }
     SUBCASE("last_update") {
@@ -350,9 +363,19 @@ TEST_SUITE("EvaluatorTranslator") {
         DirectoryEntry::make_account(101, "manager"), 0,
         time_from_string("2026-05-08 11:00:00"));
       REQUIRE(translate<Nexus::EvaluatorTranslator>(
-        accessor.get_last_update_timestamp(), Ref(updates))->eval<ptime>(
+        accessor.get_last_update_timestamp(),
+        typeid(AccountModificationRequest), Ref(updates))->eval<ptime>(
           request) == time_from_string("2026-05-08 11:00:00"));
     }
+  }
+
+  TEST_CASE("mismatched_parameter_type_throws") {
+    auto accessor = QuoteAccessor::from_parameter(0);
+    auto filter = accessor.get_price() > ConstantExpression(Money::ONE);
+    REQUIRE_THROWS_AS(
+      translate<Nexus::EvaluatorTranslator>(filter, typeid(BboQuote)),
+      ExpressionTranslationException);
+    REQUIRE(translate<Nexus::EvaluatorTranslator>(filter, typeid(Quote)));
   }
 
   TEST_CASE("mixed_operand_types") {
@@ -360,76 +383,82 @@ TEST_SUITE("EvaluatorTranslator") {
     auto quote = make_bid(5 * Money::ONE, 300);
     SUBCASE("quantity_and_scalar") {
       REQUIRE(!translate<Nexus::EvaluatorTranslator>(
-        accessor.get_size() > ConstantExpression(500))->eval<bool>(quote));
+        accessor.get_size() > ConstantExpression(500),
+        typeid(Quote))->eval<bool>(quote));
       REQUIRE(translate<Nexus::EvaluatorTranslator>(
-        ConstantExpression(500) > accessor.get_size())->eval<bool>(quote));
+        ConstantExpression(500) > accessor.get_size(),
+        typeid(Quote))->eval<bool>(quote));
       REQUIRE(translate<Nexus::EvaluatorTranslator>(
-        accessor.get_size() > ConstantExpression(2.5))->eval<bool>(quote));
+        accessor.get_size() > ConstantExpression(2.5),
+        typeid(Quote))->eval<bool>(quote));
     }
 
     SUBCASE("quantity_and_unsigned") {
-      REQUIRE(!translate<Nexus::EvaluatorTranslator>(accessor.get_size() >
-        ConstantExpression(std::uint64_t(500)))->eval<bool>(quote));
+      REQUIRE(!translate<Nexus::EvaluatorTranslator>(
+        accessor.get_size() > ConstantExpression(std::uint64_t(500)),
+        typeid(Quote))->eval<bool>(quote));
       REQUIRE(translate<Nexus::EvaluatorTranslator>(
-        ConstantExpression(std::uint64_t(500)) >
-          accessor.get_size())->eval<bool>(quote));
-      REQUIRE(translate<Nexus::EvaluatorTranslator>(accessor.get_size() +
-        ConstantExpression(std::uint64_t(5)))->eval<Quantity>(quote) ==
-          Quantity(305));
+        ConstantExpression(std::uint64_t(500)) > accessor.get_size(),
+        typeid(Quote))->eval<bool>(quote));
+      REQUIRE(translate<Nexus::EvaluatorTranslator>(
+        accessor.get_size() + ConstantExpression(std::uint64_t(5)),
+        typeid(Quote))->eval<Quantity>(quote) == Quantity(305));
     }
 
     SUBCASE("quantity_arithmetic") {
       REQUIRE(translate<Nexus::EvaluatorTranslator>(
-        accessor.get_size() + ConstantExpression(5))->eval<Quantity>(quote) ==
-          Quantity(305));
+        accessor.get_size() + ConstantExpression(5),
+        typeid(Quote))->eval<Quantity>(quote) == Quantity(305));
       REQUIRE(translate<Nexus::EvaluatorTranslator>(
-        ConstantExpression(5) + accessor.get_size())->eval<Quantity>(quote) ==
-          Quantity(305));
+        ConstantExpression(5) + accessor.get_size(),
+        typeid(Quote))->eval<Quantity>(quote) == Quantity(305));
       REQUIRE(translate<Nexus::EvaluatorTranslator>(
-        accessor.get_size() * ConstantExpression(2))->eval<Quantity>(quote) ==
-          Quantity(600));
+        accessor.get_size() * ConstantExpression(2),
+        typeid(Quote))->eval<Quantity>(quote) == Quantity(600));
       REQUIRE(translate<Nexus::EvaluatorTranslator>(
-        ConstantExpression(600) / accessor.get_size())->eval<Quantity>(quote) ==
-          Quantity(2));
+        ConstantExpression(600) / accessor.get_size(),
+        typeid(Quote))->eval<Quantity>(quote) == Quantity(2));
     }
 
     SUBCASE("money_ratio") {
-      REQUIRE(translate<Nexus::EvaluatorTranslator>(accessor.get_price() /
-        ConstantExpression(Money::ONE))->eval<double>(quote) == 5.0);
+      REQUIRE(translate<Nexus::EvaluatorTranslator>(
+        accessor.get_price() / ConstantExpression(Money::ONE),
+        typeid(Quote))->eval<double>(quote) == 5.0);
     }
 
     SUBCASE("max_and_min") {
       REQUIRE(translate<Nexus::EvaluatorTranslator>(
-        max(accessor.get_size(), ConstantExpression(500)))->eval<Quantity>(
-          quote) == Quantity(500));
+        max(accessor.get_size(), ConstantExpression(500)),
+        typeid(Quote))->eval<Quantity>(quote) == Quantity(500));
       REQUIRE(translate<Nexus::EvaluatorTranslator>(
-        min(ConstantExpression(500), accessor.get_size()))->eval<Quantity>(
-          quote) == Quantity(300));
+        min(ConstantExpression(500), accessor.get_size()),
+        typeid(Quote))->eval<Quantity>(quote) == Quantity(300));
     }
 
     SUBCASE("incompatible") {
       REQUIRE_THROWS_AS(translate<Nexus::EvaluatorTranslator>(
-        accessor.get_price() > ConstantExpression(2)),
+        accessor.get_price() > ConstantExpression(2), typeid(Quote)),
         ExpressionTranslationException);
       REQUIRE_THROWS_AS(translate<Nexus::EvaluatorTranslator>(
-        accessor.get_price() > accessor.get_size()),
+        accessor.get_price() > accessor.get_size(), typeid(Quote)),
         ExpressionTranslationException);
       REQUIRE_THROWS_AS(translate<Nexus::EvaluatorTranslator>(
-        accessor.get_size() * accessor.get_price()),
+        accessor.get_size() * accessor.get_price(), typeid(Quote)),
         ExpressionTranslationException);
       REQUIRE_THROWS_AS(translate<Nexus::EvaluatorTranslator>(
-        accessor.get_price() / ConstantExpression(4)),
+        accessor.get_price() / ConstantExpression(4), typeid(Quote)),
         ExpressionTranslationException);
     }
   }
 
   TEST_CASE("account_modification_request_members_without_updates") {
     auto accessor = AccountModificationRequestAccessor::from_parameter(0);
-    REQUIRE_THROWS_AS(
-      translate<Nexus::EvaluatorTranslator>(accessor.get_status()),
+    REQUIRE_THROWS_AS(translate<Nexus::EvaluatorTranslator>(
+      accessor.get_status(), typeid(AccountModificationRequest)),
       ExpressionTranslationException);
     REQUIRE_THROWS_AS(translate<Nexus::EvaluatorTranslator>(
-      accessor.get_last_update_timestamp()), ExpressionTranslationException);
+      accessor.get_last_update_timestamp(), typeid(AccountModificationRequest)),
+      ExpressionTranslationException);
   }
 
   TEST_CASE("account_modification_request_members_in_sub_translator") {
@@ -440,8 +469,10 @@ TEST_SUITE("EvaluatorTranslator") {
       AccountModificationRequest::Status::GRANTED,
       DirectoryEntry::make_account(101, "manager"), 0,
       time_from_string("2026-05-08 11:00:00"));
-    auto translator = Nexus::EvaluatorTranslator(Ref(updates));
-    auto sub_translator = translator.make_translator();
+    auto translator = Nexus::EvaluatorTranslator(
+      typeid(AccountModificationRequest), Ref(updates));
+    auto sub_translator =
+      translator.make_translator(typeid(AccountModificationRequest));
     auto evaluator = translate(accessor.get_status(), *sub_translator);
     REQUIRE(evaluator->eval<int>(request) ==
       static_cast<int>(AccountModificationRequest::Status::GRANTED));

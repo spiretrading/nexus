@@ -548,7 +548,7 @@ namespace Nexus {
       return;
     }
     auto filter = Beam::translate<EvaluatorTranslator>(
-      revised_query.get_filter(), Beam::Ref(m_live_orders));
+      revised_query.get_filter(), typeid(OrderInfo), Beam::Ref(m_live_orders));
     auto submission_id = m_submission_subscriptions.init(
       revised_query.get_index(), request.get_client(),
       revised_query.get_range(), std::move(filter));
@@ -650,8 +650,8 @@ namespace Nexus {
       request.set(ExecutionReportQueryResult());
       return;
     }
-    auto filter =
-      Beam::translate<EvaluatorTranslator>(revised_query.get_filter());
+    auto filter = Beam::translate<EvaluatorTranslator>(
+      revised_query.get_filter(), typeid(ExecutionReport));
     auto result = ExecutionReportQueryResult();
     result.m_id = m_execution_report_subscriptions.init(
       revised_query.get_index(), request.get_client(),

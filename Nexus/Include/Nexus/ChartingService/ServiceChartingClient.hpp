@@ -93,7 +93,8 @@ namespace Nexus {
       Beam::ScopedQueueWriter<QueryVariant> queue) {
     if(query.get_range().get_end() == Beam::Sequence::LAST) {
       m_query_routines.spawn([=, this, queue = std::move(queue)] () mutable {
-        auto filter = Beam::translate<EvaluatorTranslator>(query.get_filter());
+        auto filter = Beam::translate<EvaluatorTranslator>(
+          query.get_filter(), typeid(QueryVariant));
         auto conversion_queue = Beam::convert<SequencedQueryVariant>(
           std::move(queue), [] (const auto& value) {
             return *value;

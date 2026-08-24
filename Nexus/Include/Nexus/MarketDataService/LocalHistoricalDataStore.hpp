@@ -95,7 +95,8 @@ namespace Nexus {
 
   inline std::vector<TickerInfo> LocalHistoricalDataStore::load_ticker_info(
       const TickerInfoQuery& query) {
-    auto evaluator = Beam::translate<EvaluatorTranslator>(query.get_filter());
+    auto evaluator = Beam::translate<EvaluatorTranslator>(
+      query.get_filter(), typeid(TickerInfo));
     auto& anchor = query.get_anchor();
     auto& scope = query.get_index();
     auto matches = std::vector<TickerInfo>();
