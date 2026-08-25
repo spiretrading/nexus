@@ -3,7 +3,7 @@ import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import { CountrySelect, DisplaySize, Input, PageLayout } from '../../..';
-import { PhotoField, PhotoFieldDisplayMode } from '../..';
+import { AddressField, PhotoField, PhotoFieldDisplayMode } from '../..';
 import { CreateAccountModel } from './create_account_model';
 import { GroupSelectionBox } from './group_selection_box';
 import { GroupSuggestionModel } from './group_suggestion_model';
@@ -211,12 +211,12 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       this.renderInput(Field.EMAIL, 'email', 'email',
         this.state.identity.emailAddress, this.onEmailChange),
       this.renderItem(Field.ADDRESS,
-        <textarea
+        <AddressField
           id={CreateAccountPage.IDS[Field.ADDRESS]}
-          name={CreateAccountPage.IDS[Field.ADDRESS]}
-          autoComplete='street-address'
-          value={this.state.identity.addressLineOne}
-          style={this.getTextAreaStyle()}
+          displaySize={this.props.displaySize}
+          addressLineOne={this.state.identity.addressLineOne}
+          addressLineTwo={this.state.identity.addressLineTwo}
+          addressLineThree={this.state.identity.addressLineThree}
           onChange={this.onAddressChange}/>),
       this.renderInput(Field.CITY, 'text', 'address-level2',
         this.state.identity.city, this.onCityChange),
@@ -293,12 +293,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       return {...style, borderColor: '#E63F44'};
     }
     return style;
-  }
-
-  private getTextAreaStyle(): React.CSSProperties {
-    return {
-      ...CreateAccountPage.STYLE.textArea, fontSize: this.getFontSize()
-    };
   }
 
   private isShowingError(field: CreateAccountPage.Field): boolean {
@@ -382,9 +376,11 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     this.markValid(CreateAccountPage.Field.EMAIL);
   }
 
-  private onAddressChange = (
-      event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    this.state.identity.addressLineOne = event.target.value;
+  private onAddressChange = (addressLineOne: string,
+      addressLineTwo: string, addressLineThree: string) => {
+    this.state.identity.addressLineOne = addressLineOne;
+    this.state.identity.addressLineTwo = addressLineTwo;
+    this.state.identity.addressLineThree = addressLineThree;
     this.setState({identity: this.state.identity});
   }
 
@@ -618,21 +614,6 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     inputField: {
       width: '100%',
       boxSizing: 'border-box'
-    },
-    textArea: {
-      width: '100%',
-      height: '68px',
-      boxSizing: 'border-box',
-      resize: 'none',
-      padding: '3px 9px',
-      borderWidth: '1px',
-      borderStyle: 'solid',
-      borderColor: '#C8C8C8',
-      borderRadius: '1px',
-      fontFamily: 'inherit',
-      fontWeight: 'inherit',
-      color: '#000000',
-      outline: 'none'
     },
     countryField: {
       width: '100%'

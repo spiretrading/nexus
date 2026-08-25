@@ -60,6 +60,13 @@ class TestModel extends WebPortal.CreateAccountModel {
   public async createAccount(username: string, groups: Beam.DirectoryEntry,
       identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles):
       Promise<void> {
+    console.log('POST /api/service_locator/create_account',
+      JSON.stringify({
+        name: username,
+        group: groups?.toJson(),
+        identity: identity.toJson(),
+        roles: roles.toJson()
+      }, null, 2));
     if(this.behavior === TestBehavior.HANG) {
       await new Promise<void>(() => {});
     }
@@ -112,7 +119,7 @@ class TestApp extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     return (
-      <Router.BrowserRouter>
+      <Router.MemoryRouter>
         <div style={STYLE.wrapper}>
           <div style={STYLE.toolbar}>
             <span style={STYLE.toolbarLabel}>Behavior:</span>
@@ -128,7 +135,7 @@ class TestApp extends React.Component<Properties, State> {
           <Router.Switch>
             <Router.Route exact path='/account_directory'>
               <div style={STYLE.done}>
-                Account created. Go back to submit another.
+                Account created. Refresh to submit another.
               </div>
             </Router.Route>
             <Router.Route>
@@ -140,7 +147,7 @@ class TestApp extends React.Component<Properties, State> {
             </Router.Route>
           </Router.Switch>
         </div>
-      </Router.BrowserRouter>);
+      </Router.MemoryRouter>);
   }
 
   private renderBehaviorButton(label: string,

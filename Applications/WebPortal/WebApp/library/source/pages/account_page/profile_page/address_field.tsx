@@ -4,6 +4,9 @@ import { DisplaySize } from '../../..';
 
 interface Properties {
 
+  /** The id of the underlying textarea. */
+  id?: string;
+
   /** The size to display the component at. */
   displaySize: DisplaySize;
 
@@ -82,6 +85,7 @@ export class AddressField extends React.Component<Properties, State> {
     })();
     return (
       <textarea
+        id={this.props.id}
         spellCheck={!this.props.readonly}
         rows={3}
         disabled={this.props.readonly}
