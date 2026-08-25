@@ -37,6 +37,8 @@ const GROUPS = [
 
 const CONFLICT = 409;
 
+const TAKEN_USERNAMES = ['frodo', 'samwise', 'gandalf'];
+
 enum TestBehavior {
   SUCCEED,
   DUPLICATE_NAME,
@@ -77,7 +79,8 @@ class TestModel extends WebPortal.CreateAccountModel {
       return error;
     }
     await new Promise(resolve => setTimeout(resolve, this.delay));
-    if(this.behavior === TestBehavior.DUPLICATE_NAME) {
+    if(this.behavior === TestBehavior.DUPLICATE_NAME ||
+        TAKEN_USERNAMES.indexOf(name) >= 0) {
       return WebPortal.CreateAccountModel.ValidationError.DUPLICATE;
     }
     return WebPortal.CreateAccountModel.ValidationError.NONE;
@@ -118,6 +121,9 @@ class TestApp extends React.Component<Properties, State> {
               'Duplicate name', TestBehavior.DUPLICATE_NAME)}
             {this.renderBehaviorButton('Unavailable', TestBehavior.UNAVAILABLE)}
             {this.renderBehaviorButton('Hang', TestBehavior.HANG)}
+            <span style={STYLE.toolbarHint}>
+              taken: {TAKEN_USERNAMES.join(', ')}
+            </span>
           </div>
           <Router.Switch>
             <Router.Route exact path='/account_directory'>
@@ -182,6 +188,11 @@ const STYLE: Record<string, React.CSSProperties> = {
     borderRadius: '3px',
     backgroundColor: '#fff',
     cursor: 'pointer'
+  },
+  toolbarHint: {
+    fontSize: '11px',
+    fontFamily: 'monospace',
+    color: '#666'
   },
   buttonActive: {
     backgroundColor: '#684BC7',
