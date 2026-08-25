@@ -13,6 +13,27 @@ using namespace Beam;
 using namespace boost;
 using namespace Nexus;
 
+namespace {
+  const auto MAX_ACCOUNT_NAME_LENGTH = std::size_t(100);
+
+  bool is_name_character(char c) {
+    return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
+  }
+
+  bool is_valid_account_name(const std::string& name) {
+    if(name.empty() || name.size() > MAX_ACCOUNT_NAME_LENGTH) {
+      return false;
+    }
+    if(!is_name_character(name.front()) ||
+        !is_name_character(name.back())) {
+      return false;
+    }
+    return std::ranges::all_of(name, [] (auto c) {
+      return is_name_character(c) || c == '.' || c == '-' || c == '_';
+    });
+  }
+}
+
 ServiceLocatorWebServlet::ServiceLocatorWebServlet(
   Ref<WebSessionStore<WebPortalSession>> sessions,
   ClientsBuilder clients_builder,
@@ -307,6 +328,10 @@ HttpResponse ServiceLocatorWebServlet::on_create_account(
     return response;
   }
   auto parameters = session->shuttle_parameters<Parameters>(request);
+  if(!is_valid_account_name(parameters.m_name)) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
   auto& clients = session->get_clients();
   auto validated_group =
     clients.get_service_locator_client().load_directory_entry(

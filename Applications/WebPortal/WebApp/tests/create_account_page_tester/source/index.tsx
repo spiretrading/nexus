@@ -56,8 +56,8 @@ class TestModel extends WebPortal.CreateAccountModel {
   }
 
   public async createAccount(username: string, groups: Beam.DirectoryEntry,
-      identity: Nexus.AccountIdentity,
-      roles: Nexus.AccountRoles): Promise<void> {
+      identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles):
+      Promise<void> {
     if(this.behavior === TestBehavior.HANG) {
       await new Promise<void>(() => {});
     }
@@ -67,6 +67,20 @@ class TestModel extends WebPortal.CreateAccountModel {
     } else if(this.behavior === TestBehavior.UNAVAILABLE) {
       throw new Beam.ServiceError('Server unreachable.');
     }
+  }
+
+  public async validateUsername(username: string):
+      Promise<WebPortal.CreateAccountModel.ValidationError> {
+    const name = WebPortal.CreateAccountModel.normalizeUsername(username);
+    const error = WebPortal.CreateAccountModel.checkUsernameFormat(name);
+    if(error !== WebPortal.CreateAccountModel.ValidationError.NONE) {
+      return error;
+    }
+    await new Promise(resolve => setTimeout(resolve, this.delay));
+    if(this.behavior === TestBehavior.DUPLICATE_NAME) {
+      return WebPortal.CreateAccountModel.ValidationError.DUPLICATE;
+    }
+    return WebPortal.CreateAccountModel.ValidationError.NONE;
   }
 
   private delay: number;
