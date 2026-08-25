@@ -48,6 +48,9 @@ std::vector<HttpRequestSlot> ServiceLocatorWebServlet::get_slots() {
     std::bind_front(
       &ServiceLocatorWebServlet::on_search_directory_entry, this));
   slots.emplace_back(
+    matches_path(HttpMethod::POST, "/api/service_locator/find_account"),
+    std::bind_front(&ServiceLocatorWebServlet::on_find_account, this));
+  slots.emplace_back(
     matches_path(HttpMethod::POST, "/api/service_locator/create_account"),
     std::bind_front(&ServiceLocatorWebServlet::on_create_account, this));
   slots.emplace_back(
@@ -256,6 +259,29 @@ HttpResponse ServiceLocatorWebServlet::on_search_directory_entry(
     }
   }
   session->shuttle_response(result, out(response));
+  return response;
+}
+
+HttpResponse ServiceLocatorWebServlet::on_find_account(
+    const HttpRequest& request) {
+  struct Parameters {
+    std::string m_name;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("name", m_name);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->shuttle_parameters<Parameters>(request);
+  auto& clients = session->get_clients();
+  auto account =
+    clients.get_service_locator_client().find_account(parameters.m_name);
+  session->shuttle_response(account.value_or(DirectoryEntry()), out(response));
   return response;
 }
 
