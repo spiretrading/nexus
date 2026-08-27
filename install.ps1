@@ -12,6 +12,7 @@ Set-StrictMode -Version Latest
 $ErrorActionPreference = 'Stop'
 $ProgressPreference = 'SilentlyContinue'
 
+$UserAgent = 'nexus-install'
 $GitVersion = '2.52.0'
 $GitHash = 'd8de7a3152266c8bb13577eab850ea1df6dccf8c2aa48be5b4a1c58b7190d62c'
 $CMakeVersion = '4.3.2'
@@ -22,7 +23,6 @@ $PythonVersion = '3.14.4'
 $PythonHash = 'b571567bd11ea98fd7a2cf85791d2c8557a63b1e04e9d1dae665a275cac87f1b'
 $NsisVersion = '3.12'
 $NsisHash = '3bc2b06253a7e4957111be152ac6a536e0c7478a706e19da814038db5d706495'
-$VisualStudioName = 'Visual Studio 2026 Community'
 $VisualStudioRange = '[18.0,19.0)'
 $VisualStudioBootstrapper = 'https://aka.ms/vs/18/stable/vs_community.exe'
 $VisualStudioComponents = @(
@@ -32,27 +32,8 @@ $VisualStudioComponents = @(
   'Microsoft.Component.MSBuild'
 )
 
-$Results = [System.Collections.Generic.List[psobject]]::new()
 $RestartRequired = $false
-
-function Write-Step {
-  param([Parameter(Mandatory)] [string] $Message)
-  Write-Host "==> $Message" -ForegroundColor Cyan
-}
-
-function Add-Result {
-  param(
-    [Parameter(Mandatory)] [string] $Package,
-    [Parameter(Mandatory)] [string] $Version,
-    [Parameter(Mandatory)]
-    [ValidateSet('Installed', 'Up to date')] [string] $Action
-  )
-  $Results.Add([PSCustomObject]@{
-    Package = $Package
-    Version = $Version
-    Action = $Action
-  })
-}
+$InstalledAny = $false
 
 function ConvertTo-Version {
   param([string] $Text)
@@ -130,7 +111,8 @@ function Save-Download {
   )
   for ($attempt = 1; $attempt -le $Retries; $attempt += 1) {
     try {
-      Invoke-WebRequest -Uri $Uri -OutFile $Path -UseBasicParsing
+      Invoke-WebRequest -Uri $Uri -OutFile $Path -UseBasicParsing `
+        -UserAgent $UserAgent
       if (-not $Sha256) {
         return
       }
@@ -145,7 +127,6 @@ function Save-Download {
       if ($attempt -eq $Retries) {
         throw
       }
-      Write-Warning "$($_.Exception.Message) Retrying ($attempt/$Retries)."
       Start-Sleep -Seconds (2 * $attempt)
     }
   }
@@ -175,12 +156,12 @@ function Invoke-Installer {
   if (@(3010, 1641) -contains $process.ExitCode) {
     $script:RestartRequired = $true
   }
+  $script:InstalledAny = $true
   Update-SessionPath
 }
 
 function Test-Requirement {
   param(
-    [Parameter(Mandatory)] [string] $Package,
     [Parameter(Mandatory)] [string] $Required,
     [version] $Installed,
     [switch] $Exact
@@ -190,26 +171,17 @@ function Test-Requirement {
   }
   $target = ConvertTo-Version $Required
   if ($Installed -lt $target) {
-    Write-Step "Upgrading $Package $Installed to $Required."
     return $false
   }
-  if ($Exact -and $Installed -ne $target) {
-    Write-Step "Replacing $Package $Installed with the pinned $Required."
-    return $false
-  }
-  Write-Host "$Package $Installed is already installed."
-  Add-Result -Package $Package -Version $Installed -Action 'Up to date'
-  return $true
+  return -not ($Exact -and $Installed -ne $target)
 }
 
 function Install-Git {
   param([Parameter(Mandatory)] [string] $Directory)
-  $installed = Get-ApplicationVersion -Name 'git'
-  if (Test-Requirement -Package 'Git' -Required $GitVersion `
-      -Installed $installed) {
+  if (Test-Requirement -Required $GitVersion `
+      -Installed (Get-ApplicationVersion -Name 'git')) {
     return
   }
-  Write-Step "Installing Git $GitVersion."
   $package = "Git-$GitVersion-64-bit.exe"
   $installer = Join-Path $Directory $package
   Save-Download -Sha256 $GitHash -Path $installer -Uri ('https://github.com/' +
@@ -239,17 +211,14 @@ function Install-Git {
     '/VERYSILENT', '/NORESTART', '/NOCANCEL', '/SP-', '/SUPPRESSMSGBOXES',
     '/CLOSEAPPLICATIONS', "/LOADINF=`"$answers`""
   )
-  Add-Result -Package 'Git' -Version $GitVersion -Action 'Installed'
 }
 
 function Install-CMake {
   param([Parameter(Mandatory)] [string] $Directory)
-  $installed = Get-ApplicationVersion -Name 'cmake'
-  if (Test-Requirement -Package 'CMake' -Required $CMakeVersion `
-      -Installed $installed) {
+  if (Test-Requirement -Required $CMakeVersion `
+      -Installed (Get-ApplicationVersion -Name 'cmake')) {
     return
   }
-  Write-Step "Installing CMake $CMakeVersion."
   $package = "cmake-$CMakeVersion-windows-x86_64.msi"
   $installer = Join-Path $Directory $package
   Save-Download -Sha256 $CMakeHash -Path $installer -Uri (
@@ -258,17 +227,14 @@ function Install-CMake {
   Invoke-Installer -FilePath 'msiexec.exe' -ArgumentList @(
     '/i', "`"$installer`"", '/qn', '/norestart', 'ADD_CMAKE_TO_PATH=System'
   )
-  Add-Result -Package 'CMake' -Version $CMakeVersion -Action 'Installed'
 }
 
 function Install-Node {
   param([Parameter(Mandatory)] [string] $Directory)
-  $installed = Get-ApplicationVersion -Name 'node'
-  if (Test-Requirement -Package 'Node.js' -Required $NodeVersion -Exact `
-      -Installed $installed) {
+  if (Test-Requirement -Required $NodeVersion -Exact `
+      -Installed (Get-ApplicationVersion -Name 'node')) {
     return
   }
-  Write-Step "Installing Node.js $NodeVersion."
   $package = "node-v$NodeVersion-x64.msi"
   $installer = Join-Path $Directory $package
   Save-Download -Sha256 $NodeHash -Path $installer `
@@ -276,7 +242,6 @@ function Install-Node {
   Invoke-Installer -FilePath 'msiexec.exe' -ArgumentList @(
     '/i', "`"$installer`"", '/qn', '/norestart'
   )
-  Add-Result -Package 'Node.js' -Version $NodeVersion -Action 'Installed'
 }
 
 function Get-PythonVersion {
@@ -295,12 +260,10 @@ function Get-PythonVersion {
 
 function Install-Python {
   param([Parameter(Mandatory)] [string] $Directory)
-  $installed = Get-PythonVersion
-  if (Test-Requirement -Package 'Python' -Required $PythonVersion `
-      -Installed $installed) {
+  if (Test-Requirement -Required $PythonVersion `
+      -Installed (Get-PythonVersion)) {
     return
   }
-  Write-Step "Installing Python $PythonVersion."
   $package = "python-$PythonVersion-amd64.exe"
   $installer = Join-Path $Directory $package
   Save-Download -Sha256 $PythonHash -Path $installer `
@@ -310,7 +273,6 @@ function Install-Python {
     'PrependPath=1', 'Include_launcher=1', 'Include_pip=1',
     'Include_test=0', 'Include_doc=0', 'AssociateFiles=1', 'CompileAll=1'
   )
-  Add-Result -Package 'Python' -Version $PythonVersion -Action 'Installed'
 }
 
 function Install-Nsis {
@@ -321,18 +283,15 @@ function Install-Nsis {
     $installed = ConvertTo-Version (Invoke-Native -FilePath $makensis `
       -ArgumentList @('/VERSION')).Output
   }
-  if (Test-Requirement -Package 'NSIS' -Required $NsisVersion `
-      -Installed $installed) {
+  if (Test-Requirement -Required $NsisVersion -Installed $installed) {
     return
   }
-  Write-Step "Installing NSIS $NsisVersion."
   $package = "nsis-$NsisVersion-setup.exe"
   $installer = Join-Path $Directory $package
-  Save-Download -Sha256 $NsisHash -Path $installer -Uri ('https://' +
-    "sourceforge.net/projects/nsis/files/NSIS%203/$NsisVersion/$package/" +
-    'download')
+  Save-Download -Sha256 $NsisHash -Path $installer -Uri (
+    'https://downloads.sourceforge.net/project/nsis/' +
+    "NSIS%203/$NsisVersion/$package")
   Invoke-Installer -FilePath $installer -ArgumentList @('/S')
-  Add-Result -Package 'NSIS' -Version $NsisVersion -Action 'Installed'
 }
 
 function Get-VisualStudioProperty {
@@ -360,21 +319,9 @@ function Get-VisualStudioProperty {
   return ($result.Output -split "`n" | Select-Object -First 1).Trim()
 }
 
-function Get-VisualStudioVersion {
-  $version = Get-VisualStudioProperty -Property 'installationVersion'
-  if (-not $version) {
-    return 'unknown'
-  }
-  return $version
-}
-
 function Install-VisualStudio {
   param([Parameter(Mandatory)] [string] $Directory)
   if (Get-VisualStudioProperty -Complete -Property 'installationPath') {
-    $version = Get-VisualStudioVersion
-    Write-Host "$VisualStudioName $version is already installed."
-    Add-Result -Package $VisualStudioName -Version $version `
-      -Action 'Up to date'
     return
   }
   $existing = Get-VisualStudioProperty -Property 'installationPath'
@@ -385,14 +332,9 @@ function Install-VisualStudio {
     $arguments += @('--add', $component)
   }
   if ($existing) {
-    Write-Step "Adding the C++ build components to $VisualStudioName."
     $arguments = @('modify', '--installPath', "`"$existing`"") + $arguments
-  } else {
-    Write-Step "Installing $VisualStudioName."
   }
   Invoke-Installer -FilePath $installer -ArgumentList $arguments
-  Add-Result -Package $VisualStudioName -Action 'Installed' `
-    -Version (Get-VisualStudioVersion)
 }
 
 function Main {
@@ -422,13 +364,13 @@ function Main {
     Remove-Item -LiteralPath $directory -Recurse -Force `
       -ErrorAction SilentlyContinue
   }
-  Write-Host ''
-  $Results | Format-Table -AutoSize
   if ($RestartRequired) {
     Write-Warning ('An installer reported that a restart is pending. ' +
       'Nothing was restarted, so restart the machine when convenient.')
   }
-  Write-Host 'Open a new terminal so the updated PATH takes effect.'
+  if ($InstalledAny) {
+    Write-Host 'Open a new terminal so the updated PATH takes effect.'
+  }
 }
 
 Main

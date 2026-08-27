@@ -54,7 +54,7 @@ build_quickfix() {
 
 install_gitpython() {
   if ! python3 -c "import git" 2>/dev/null; then
-    pip3 install --user --break-system-packages GitPython || true
+    pip3 install --user --break-system-packages --quiet GitPython || true
   fi
 }
 

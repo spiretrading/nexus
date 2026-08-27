@@ -77,7 +77,7 @@ EXIT /B 0
 :InstallGitPython
 python -c "import git" >NUL 2>&1
 IF NOT ERRORLEVEL 1 EXIT /B 0
-python -m pip install --user GitPython
+python -m pip install --user --quiet GitPython
 EXIT /B 0
 
 :CheckCache

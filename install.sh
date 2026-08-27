@@ -47,7 +47,7 @@ function install_node() {
   fi
   local node_dir="node-v$NODE_VERSION-linux-$node_arch"
   local archive="$node_dir.tar.xz"
-  curl -fLO "https://nodejs.org/dist/v$NODE_VERSION/$archive"
+  curl -fsSLO "https://nodejs.org/dist/v$NODE_VERSION/$archive"
   if ! verify_archive "$archive" "$node_hash"; then
     rm -f "$archive"
     exit 1
@@ -68,8 +68,8 @@ function check_and_install_node() {
 
 function install_dependencies() {
   if [ "$is_root" -eq 1 ]; then
-    apt-get update
-    apt-get install -y automake build-essential cmake curl git libtool \
+    apt-get update -qq
+    apt-get install -y -qq automake build-essential cmake curl git libtool \
       mysql-server parallel perl python3 python3-pip unzip
     if ! command -v yq &> /dev/null; then
       local yq_arch="$ARCH"
@@ -78,7 +78,7 @@ function install_dependencies() {
       elif [[ "$yq_arch" == "aarch64" || "$yq_arch" == "arm64" ]]; then
         yq_arch="arm64"
       fi
-      curl -fL "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_$yq_arch" \
+      curl -fsSL "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_$yq_arch" \
         -o /usr/local/bin/yq && chmod +x /usr/local/bin/yq
     fi
     check_and_install_node
