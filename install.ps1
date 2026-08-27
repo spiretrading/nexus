@@ -1,41 +1,485 @@
-$program_files_x86_path = (Get-Item -LiteralPath "C:\Progra~1").FullName
-$program_files_path = (Get-Item -LiteralPath "C:\Progra~2").FullName
-If("$program_files_x86_path" -eq "C:\Program Files") {
-  $program_files_x86_path = "C:\Progra~2"
-  $program_files_path = "C:\Progra~1"
-} Else {
-  $program_files_x86_path = "C:\Progra~1"
-  $program_files_path = "C:\Progra~2"
+<#
+.SYNOPSIS
+  Installs the tools required to build Nexus on Windows.
+
+.EXAMPLE
+  .\install.ps1
+#>
+#Requires -Version 5.1
+#Requires -RunAsAdministrator
+
+Set-StrictMode -Version Latest
+$ErrorActionPreference = 'Stop'
+$ProgressPreference = 'SilentlyContinue'
+
+$GitVersion = '2.52.0'
+$GitHash = 'd8de7a3152266c8bb13577eab850ea1df6dccf8c2aa48be5b4a1c58b7190d62c'
+$CMakeVersion = '4.3.2'
+$CMakeHash = '6915813bedf3a8a698b72fc858e0c2a99761be981745c3c3c99bd30e1477e142'
+$PythonVersion = '3.14.4'
+$PythonHash = 'b571567bd11ea98fd7a2cf85791d2c8557a63b1e04e9d1dae665a275cac87f1b'
+$NsisVersion = '3.12'
+$NsisHash = '3bc2b06253a7e4957111be152ac6a536e0c7478a706e19da814038db5d706495'
+$VisualStudioName = 'Visual Studio 2026 Community'
+$VisualStudioRange = '[18.0,19.0)'
+$VisualStudioBootstrapper = 'https://aka.ms/vs/18/stable/vs_community.exe'
+$VisualStudioComponents = @(
+  'Microsoft.VisualStudio.Workload.NativeDesktop',
+  'Microsoft.VisualStudio.Component.VC.Tools.x86.x64',
+  'Microsoft.VisualStudio.Component.Windows11SDK.26100',
+  'Microsoft.Component.MSBuild'
+)
+
+$Results = [System.Collections.Generic.List[psobject]]::new()
+$RestartRequired = $false
+
+function Write-Step {
+  param([Parameter(Mandatory)] [string] $Message)
+  Write-Host "==> $Message" -ForegroundColor Cyan
 }
-[Net.ServicePointManager]::SecurityProtocol = "tls12, tls11, tls"
-If((Get-Command "git.exe" -ErrorAction SilentlyContinue) -eq $null) {
-  New-Item git_config.inf -type file -force -value "[Setup]`r`nPathOption=Cmd"
-  Invoke-WebRequest -UseBasicParsing -Uri https://github.com/git-for-windows/git/releases/download/v2.47.1.windows.2/Git-2.47.1.2-64-bit.exe -OutFile Git-2.47.1.2-64-bit.exe
-  .\Git-2.47.1.2-64-bit.exe /SILENT /LOADINF="git_config.inf" | Out-Null
-  rm .\Git-2.47.1.2-64-bit.exe -Force
-  rm .\git_config.inf -Force
+
+function Add-Result {
+  param(
+    [Parameter(Mandatory)] [string] $Package,
+    [Parameter(Mandatory)] [string] $Version,
+    [Parameter(Mandatory)]
+    [ValidateSet('Installed', 'Up to date')] [string] $Action
+  )
+  $Results.Add([PSCustomObject]@{
+    Package = $Package
+    Version = $Version
+    Action = $Action
+  })
 }
-If((Get-Command "cmake.exe" -ErrorAction SilentlyContinue) -eq $null) {
-  Invoke-WebRequest -UseBasicParsing -Uri https://github.com/Kitware/CMake/releases/download/v3.31.5/cmake-3.31.5-windows-x86_64.msi -OutFile cmake-3.31.5-windows-x86_64.msi
-  msiexec /quiet /i cmake-3.31.5-windows-x86_64.msi ADD_CMAKE_TO_PATH=User | Out-Null
-  rm .\cmake-3.31.5-windows-x86_64.msi -Force
+
+function ConvertTo-Version {
+  param([string] $Text)
+  if (-not $Text) {
+    return $null
+  }
+  $match = [regex]::Match($Text, '\d+(\.\d+){1,3}')
+  if (-not $match.Success) {
+    return $null
+  }
+  return [version] $match.Value
 }
-If((Get-Command "node.exe" -ErrorAction SilentlyContinue) -eq $null) {
-  Invoke-WebRequest -UseBasicParsing -Uri https://nodejs.org/dist/v22.13.1/node-v22.13.1-x64.msi -OutFile node-v22.13.1-x64.msi
-  msiexec /quiet /i node-v22.13.1-x64.msi | Out-Null
-  rm .\node-v22.13.1-x64.msi
+
+function Invoke-Native {
+  param(
+    [Parameter(Mandatory)] [string] $FilePath,
+    [string[]] $ArgumentList = @()
+  )
+  $preference = $ErrorActionPreference
+  $ErrorActionPreference = 'Continue'
+  try {
+    $output = & $FilePath @ArgumentList 2>$null
+    $code = $LASTEXITCODE
+  } finally {
+    $ErrorActionPreference = $preference
+  }
+  return [PSCustomObject]@{
+    Output = ($output -join [Environment]::NewLine)
+    ExitCode = $code
+  }
 }
-If(-Not (Test-Path "C:\Program Files\Microsoft Visual Studio")) {
-  Invoke-WebRequest -UseBasicParsing -Uri "https://aka.ms/vs/17/release/vs_community.exe" -OutFile vs_Community.exe
-  ./vs_Community.exe --passive --norestart --wait `
-    --add Microsoft.Component.MSBuild `
-    --add Microsoft.VisualStudio.Component.Debugger.JustInTime `
-    --add Microsoft.VisualStudio.Component.Windows10SDK.10586 `
-    --add Microsoft.VisualStudio.Component.Windows10SDK.20348 `
-    --add Microsoft.VisualStudio.Component.Windows10SDK `
-    --add Microsoft.VisualStudio.Component.VC.Tools.x86.x64 `
-    --add Microsoft.VisualStudio.Component.VC.CoreIde `
-    --add Microsoft.VisualStudio.Component.VC.Redist.14.Latest `
-    --add Microsoft.VisualStudio.ComponentGroup.NativeDesktop.Core | Out-Null
-  rm vs_Community.exe
+
+function Get-ApplicationPath {
+  param([Parameter(Mandatory)] [string] $Name)
+  $commands = @(Get-Command -Name $Name -CommandType Application `
+    -ErrorAction SilentlyContinue)
+  foreach ($command in $commands) {
+    if ($command.Path -notmatch '\\WindowsApps\\') {
+      return $command.Path
+    }
+  }
+  return $null
 }
+
+function Get-ApplicationVersion {
+  param(
+    [Parameter(Mandatory)] [string] $Name,
+    [string[]] $ArgumentList = @('--version')
+  )
+  $path = Get-ApplicationPath -Name $Name
+  if (-not $path) {
+    return $null
+  }
+  $result = Invoke-Native -FilePath $path -ArgumentList $ArgumentList
+  if ($result.ExitCode -ne 0) {
+    return $null
+  }
+  return ConvertTo-Version $result.Output
+}
+
+function Update-SessionPath {
+  $paths = @(
+    [Environment]::GetEnvironmentVariable('Path', 'Machine'),
+    [Environment]::GetEnvironmentVariable('Path', 'User')
+  )
+  $env:Path = ($paths | Where-Object { $_ }) -join ';'
+}
+
+function Save-Download {
+  param(
+    [Parameter(Mandatory)] [string] $Uri,
+    [Parameter(Mandatory)] [string] $Path,
+    [string] $Sha256,
+    [int] $Retries = 3
+  )
+  for ($attempt = 1; $attempt -le $Retries; $attempt += 1) {
+    try {
+      Invoke-WebRequest -Uri $Uri -OutFile $Path -UseBasicParsing
+      if (-not $Sha256) {
+        return
+      }
+      $actual = (Get-FileHash -LiteralPath $Path -Algorithm SHA256).Hash
+      if ($actual -eq $Sha256) {
+        return
+      }
+      throw "SHA256 mismatch for $(Split-Path -Leaf $Path). " +
+        "Expected $Sha256, got $actual."
+    } catch {
+      Remove-Item -LiteralPath $Path -Force -ErrorAction SilentlyContinue
+      if ($attempt -eq $Retries) {
+        throw
+      }
+      Write-Warning "$($_.Exception.Message) Retrying ($attempt/$Retries)."
+      Start-Sleep -Seconds (2 * $attempt)
+    }
+  }
+}
+
+function Invoke-Installer {
+  param(
+    [Parameter(Mandatory)] [string] $FilePath,
+    [string[]] $ArgumentList = @(),
+    [int[]] $SuccessCodes = @(0, 3010, 1641)
+  )
+  $parameters = @{
+    FilePath = $FilePath
+    PassThru = $true
+    NoNewWindow = $true
+    Wait = $true
+  }
+  if ($ArgumentList) {
+    $parameters['ArgumentList'] = $ArgumentList
+  }
+  $process = Start-Process @parameters
+  $process.WaitForExit()
+  if ($SuccessCodes -notcontains $process.ExitCode) {
+    throw "$(Split-Path -Leaf $FilePath) failed with exit code " +
+      "$($process.ExitCode)."
+  }
+  if (@(3010, 1641) -contains $process.ExitCode) {
+    $script:RestartRequired = $true
+  }
+  Update-SessionPath
+}
+
+function Test-Requirement {
+  param(
+    [Parameter(Mandatory)] [string] $Package,
+    [Parameter(Mandatory)] [string] $Required,
+    [version] $Installed
+  )
+  if (-not $Installed) {
+    return $false
+  }
+  if ($Installed -lt (ConvertTo-Version $Required)) {
+    Write-Step "Upgrading $Package $Installed to $Required."
+    return $false
+  }
+  Write-Host "$Package $Installed is already installed."
+  Add-Result -Package $Package -Version $Installed -Action 'Up to date'
+  return $true
+}
+
+function Get-LatestNodeLtsVersion {
+  $index = Invoke-RestMethod -Uri 'https://nodejs.org/dist/index.json' `
+    -UseBasicParsing
+  $release = $index | Where-Object { $_.lts } | Select-Object -First 1
+  if (-not $release) {
+    throw 'Unable to determine the latest Node.js LTS release.'
+  }
+  return $release.version.TrimStart('v')
+}
+
+function Get-NodeHash {
+  param(
+    [Parameter(Mandatory)] [string] $Version,
+    [Parameter(Mandatory)] [string] $FileName
+  )
+  $sums = Invoke-RestMethod -UseBasicParsing `
+    -Uri "https://nodejs.org/dist/v$Version/SHASUMS256.txt"
+  foreach ($line in ($sums -split "`n")) {
+    $fields = $line.Trim() -split '\s+'
+    if ($fields.Length -eq 2 -and $fields[1] -eq $FileName) {
+      return $fields[0]
+    }
+  }
+  throw "No published SHA256 for $FileName."
+}
+
+function Install-Git {
+  param([Parameter(Mandatory)] [string] $Directory)
+  $installed = Get-ApplicationVersion -Name 'git'
+  if (Test-Requirement -Package 'Git' -Required $GitVersion `
+      -Installed $installed) {
+    return
+  }
+  Write-Step "Installing Git $GitVersion."
+  $package = "Git-$GitVersion-64-bit.exe"
+  $installer = Join-Path $Directory $package
+  Save-Download -Sha256 $GitHash -Path $installer -Uri ('https://github.com/' +
+    "git-for-windows/git/releases/download/v$GitVersion.windows.1/$package")
+  $answers = Join-Path $Directory 'git.inf'
+  @(
+    '[Setup]',
+    'Lang=default',
+    "Dir=$(Join-Path $env:ProgramFiles 'Git')",
+    'Group=Git',
+    'NoIcons=1',
+    'SetupType=default',
+    'Components=gitlfs,assoc,assoc_sh',
+    'Tasks=',
+    'PathOption=Cmd',
+    'SSHOption=OpenSSH',
+    'CURLOption=OpenSSL',
+    'CRLFOption=CRLFAlways',
+    'BashTerminalOption=ConHost',
+    'GitPullBehaviorOption=Merge',
+    'UseCredentialManager=Enabled',
+    'PerformanceTweaksFSCache=Enabled',
+    'EnableSymlinks=Disabled',
+    'EnableFSMonitor=Disabled'
+  ) | Set-Content -LiteralPath $answers -Encoding ASCII
+  Invoke-Installer -FilePath $installer -ArgumentList @(
+    '/VERYSILENT', '/NORESTART', '/NOCANCEL', '/SP-', '/SUPPRESSMSGBOXES',
+    '/CLOSEAPPLICATIONS', "/LOADINF=`"$answers`""
+  )
+  Add-Result -Package 'Git' -Version $GitVersion -Action 'Installed'
+}
+
+function Install-CMake {
+  param([Parameter(Mandatory)] [string] $Directory)
+  $installed = Get-ApplicationVersion -Name 'cmake'
+  if (Test-Requirement -Package 'CMake' -Required $CMakeVersion `
+      -Installed $installed) {
+    return
+  }
+  Write-Step "Installing CMake $CMakeVersion."
+  $package = "cmake-$CMakeVersion-windows-x86_64.msi"
+  $installer = Join-Path $Directory $package
+  Save-Download -Sha256 $CMakeHash -Path $installer -Uri (
+    'https://github.com/Kitware/CMake/releases/download/' +
+    "v$CMakeVersion/$package")
+  Invoke-Installer -FilePath 'msiexec.exe' -ArgumentList @(
+    '/i', "`"$installer`"", '/qn', '/norestart', 'ADD_CMAKE_TO_PATH=System'
+  )
+  Add-Result -Package 'CMake' -Version $CMakeVersion -Action 'Installed'
+}
+
+function Install-Node {
+  param([Parameter(Mandatory)] [string] $Directory)
+  $version = Get-LatestNodeLtsVersion
+  $installed = Get-ApplicationVersion -Name 'node'
+  if (Test-Requirement -Package 'Node.js' -Required $version `
+      -Installed $installed) {
+    return
+  }
+  Write-Step "Installing Node.js $version."
+  $package = "node-v$version-x64.msi"
+  $installer = Join-Path $Directory $package
+  Save-Download -Path $installer `
+    -Uri "https://nodejs.org/dist/v$version/$package" `
+    -Sha256 (Get-NodeHash -Version $version -FileName $package)
+  Invoke-Installer -FilePath 'msiexec.exe' -ArgumentList @(
+    '/i', "`"$installer`"", '/qn', '/norestart'
+  )
+  Add-Result -Package 'Node.js' -Version $version -Action 'Installed'
+}
+
+function Invoke-Python {
+  param([Parameter(Mandatory)] [string[]] $ArgumentList)
+  $required = ConvertTo-Version $PythonVersion
+  $launcher = Get-ApplicationPath -Name 'py'
+  if ($launcher) {
+    return Invoke-Native -FilePath $launcher -ArgumentList (
+      @("-$($required.Major).$($required.Minor)") + $ArgumentList)
+  }
+  $python = Get-ApplicationPath -Name 'python'
+  if (-not $python) {
+    throw 'Unable to locate a Python interpreter.'
+  }
+  return Invoke-Native -FilePath $python -ArgumentList $ArgumentList
+}
+
+function Get-PythonVersion {
+  $required = ConvertTo-Version $PythonVersion
+  $installed = Get-ApplicationVersion -Name 'py' `
+    -ArgumentList @("-$($required.Major).$($required.Minor)", '--version')
+  if (-not $installed) {
+    $installed = Get-ApplicationVersion -Name 'python'
+  }
+  if ($installed -and ($installed.Major -ne $required.Major -or
+      $installed.Minor -ne $required.Minor)) {
+    return $null
+  }
+  return $installed
+}
+
+function Install-GitPython {
+  if ((Invoke-Python -ArgumentList @('-c', 'import git')).ExitCode -eq 0) {
+    Write-Host 'GitPython is already installed.'
+    Add-Result -Package 'GitPython' -Version 'latest' -Action 'Up to date'
+    return
+  }
+  Write-Step 'Installing GitPython.'
+  $result = Invoke-Python -ArgumentList @(
+    '-m', 'pip', 'install', '--upgrade', '--quiet', 'GitPython')
+  if ($result.ExitCode -ne 0) {
+    Write-Host $result.Output
+    throw "Unable to install GitPython, pip exited with $($result.ExitCode)."
+  }
+  Add-Result -Package 'GitPython' -Version 'latest' -Action 'Installed'
+}
+
+function Install-Python {
+  param([Parameter(Mandatory)] [string] $Directory)
+  $installed = Get-PythonVersion
+  if (-not (Test-Requirement -Package 'Python' -Required $PythonVersion `
+      -Installed $installed)) {
+    Write-Step "Installing Python $PythonVersion."
+    $package = "python-$PythonVersion-amd64.exe"
+    $installer = Join-Path $Directory $package
+    Save-Download -Sha256 $PythonHash -Path $installer `
+      -Uri "https://www.python.org/ftp/python/$PythonVersion/$package"
+    Invoke-Installer -FilePath $installer -ArgumentList @(
+      '/quiet', '/norestart', 'InstallAllUsers=1', 'InstallLauncherAllUsers=1',
+      'PrependPath=1', 'Include_launcher=1', 'Include_pip=1',
+      'Include_test=0', 'Include_doc=0', 'AssociateFiles=1', 'CompileAll=1'
+    )
+    Add-Result -Package 'Python' -Version $PythonVersion -Action 'Installed'
+  }
+  Install-GitPython
+}
+
+function Install-Nsis {
+  param([Parameter(Mandatory)] [string] $Directory)
+  $makensis = Join-Path ${env:ProgramFiles(x86)} 'NSIS\makensis.exe'
+  $installed = $null
+  if (Test-Path -LiteralPath $makensis) {
+    $installed = ConvertTo-Version (Invoke-Native -FilePath $makensis `
+      -ArgumentList @('/VERSION')).Output
+  }
+  if (Test-Requirement -Package 'NSIS' -Required $NsisVersion `
+      -Installed $installed) {
+    return
+  }
+  Write-Step "Installing NSIS $NsisVersion."
+  $package = "nsis-$NsisVersion-setup.exe"
+  $installer = Join-Path $Directory $package
+  Save-Download -Sha256 $NsisHash -Path $installer -Uri ('https://' +
+    "sourceforge.net/projects/nsis/files/NSIS%203/$NsisVersion/$package/" +
+    'download')
+  Invoke-Installer -FilePath $installer -ArgumentList @('/S')
+  Add-Result -Package 'NSIS' -Version $NsisVersion -Action 'Installed'
+}
+
+function Get-VisualStudioProperty {
+  param(
+    [Parameter(Mandatory)] [string] $Property,
+    [switch] $Complete
+  )
+  $vswhere = Join-Path ${env:ProgramFiles(x86)} `
+    'Microsoft Visual Studio\Installer\vswhere.exe'
+  if (-not (Test-Path -LiteralPath $vswhere)) {
+    return $null
+  }
+  $arguments = @(
+    '-products', '*',
+    '-version', $VisualStudioRange,
+    '-latest', '-property', $Property
+  )
+  if ($Complete) {
+    $arguments += @('-requires') + $VisualStudioComponents
+  }
+  $result = Invoke-Native -FilePath $vswhere -ArgumentList $arguments
+  if ($result.ExitCode -ne 0 -or -not $result.Output) {
+    return $null
+  }
+  return ($result.Output -split "`n" | Select-Object -First 1).Trim()
+}
+
+function Get-VisualStudioVersion {
+  $version = Get-VisualStudioProperty -Property 'installationVersion'
+  if (-not $version) {
+    return 'unknown'
+  }
+  return $version
+}
+
+function Install-VisualStudio {
+  param([Parameter(Mandatory)] [string] $Directory)
+  if (Get-VisualStudioProperty -Complete -Property 'installationPath') {
+    $version = Get-VisualStudioVersion
+    Write-Host "$VisualStudioName $version is already installed."
+    Add-Result -Package $VisualStudioName -Version $version `
+      -Action 'Up to date'
+    return
+  }
+  $existing = Get-VisualStudioProperty -Property 'installationPath'
+  $installer = Join-Path $Directory 'vs_community.exe'
+  Save-Download -Uri $VisualStudioBootstrapper -Path $installer
+  $arguments = @('--quiet', '--norestart', '--wait', '--nocache')
+  foreach ($component in $VisualStudioComponents) {
+    $arguments += @('--add', $component)
+  }
+  if ($existing) {
+    Write-Step "Adding the C++ build components to $VisualStudioName."
+    $arguments = @('modify', '--installPath', "`"$existing`"") + $arguments
+  } else {
+    Write-Step "Installing $VisualStudioName."
+  }
+  Invoke-Installer -FilePath $installer -ArgumentList $arguments
+  Add-Result -Package $VisualStudioName -Action 'Installed' `
+    -Version (Get-VisualStudioVersion)
+}
+
+function Main {
+  $architecture = $env:PROCESSOR_ARCHITEW6432
+  if (-not $architecture) {
+    $architecture = $env:PROCESSOR_ARCHITECTURE
+  }
+  if ($architecture -ne 'AMD64') {
+    throw 'Nexus builds 64-bit binaries and requires an x64 host, but this ' +
+      "machine reports '$architecture'."
+  }
+  if ([Net.ServicePointManager]::SecurityProtocol -ne 0) {
+    [Net.ServicePointManager]::SecurityProtocol =
+      [Net.ServicePointManager]::SecurityProtocol -bor
+      [Net.SecurityProtocolType]::Tls12
+  }
+  $directory = Join-Path ([IO.Path]::GetTempPath()) "nexus-install-$PID"
+  New-Item -ItemType Directory -Path $directory -Force | Out-Null
+  try {
+    Install-Git -Directory $directory
+    Install-CMake -Directory $directory
+    Install-Node -Directory $directory
+    Install-Python -Directory $directory
+    Install-Nsis -Directory $directory
+    Install-VisualStudio -Directory $directory
+  } finally {
+    Remove-Item -LiteralPath $directory -Recurse -Force `
+      -ErrorAction SilentlyContinue
+  }
+  Write-Host ''
+  $Results | Format-Table -AutoSize
+  if ($RestartRequired) {
+    Write-Warning ('An installer reported that a restart is pending. ' +
+      'Nothing was restarted, so restart the machine when convenient.')
+  }
+  Write-Host 'Open a new terminal so the updated PATH takes effect.'
+}
+
+Main
