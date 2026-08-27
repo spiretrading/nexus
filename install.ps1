@@ -16,6 +16,8 @@ $GitVersion = '2.52.0'
 $GitHash = 'd8de7a3152266c8bb13577eab850ea1df6dccf8c2aa48be5b4a1c58b7190d62c'
 $CMakeVersion = '4.3.2'
 $CMakeHash = '6915813bedf3a8a698b72fc858e0c2a99761be981745c3c3c99bd30e1477e142'
+$NodeVersion = '24.20.0'
+$NodeHash = '28b69132c35ccc033bf8f2a67cd10c9d75ef5822593363309da448f2afff2d8a'
 $PythonVersion = '3.14.4'
 $PythonHash = 'b571567bd11ea98fd7a2cf85791d2c8557a63b1e04e9d1dae665a275cac87f1b'
 $NsisVersion = '3.12'
@@ -180,44 +182,24 @@ function Test-Requirement {
   param(
     [Parameter(Mandatory)] [string] $Package,
     [Parameter(Mandatory)] [string] $Required,
-    [version] $Installed
+    [version] $Installed,
+    [switch] $Exact
   )
   if (-not $Installed) {
     return $false
   }
-  if ($Installed -lt (ConvertTo-Version $Required)) {
+  $target = ConvertTo-Version $Required
+  if ($Installed -lt $target) {
     Write-Step "Upgrading $Package $Installed to $Required."
+    return $false
+  }
+  if ($Exact -and $Installed -ne $target) {
+    Write-Step "Replacing $Package $Installed with the pinned $Required."
     return $false
   }
   Write-Host "$Package $Installed is already installed."
   Add-Result -Package $Package -Version $Installed -Action 'Up to date'
   return $true
-}
-
-function Get-LatestNodeLtsVersion {
-  $index = Invoke-RestMethod -Uri 'https://nodejs.org/dist/index.json' `
-    -UseBasicParsing
-  $release = $index | Where-Object { $_.lts } | Select-Object -First 1
-  if (-not $release) {
-    throw 'Unable to determine the latest Node.js LTS release.'
-  }
-  return $release.version.TrimStart('v')
-}
-
-function Get-NodeHash {
-  param(
-    [Parameter(Mandatory)] [string] $Version,
-    [Parameter(Mandatory)] [string] $FileName
-  )
-  $sums = Invoke-RestMethod -UseBasicParsing `
-    -Uri "https://nodejs.org/dist/v$Version/SHASUMS256.txt"
-  foreach ($line in ($sums -split "`n")) {
-    $fields = $line.Trim() -split '\s+'
-    if ($fields.Length -eq 2 -and $fields[1] -eq $FileName) {
-      return $fields[0]
-    }
-  }
-  throw "No published SHA256 for $FileName."
 }
 
 function Install-Git {
@@ -281,22 +263,20 @@ function Install-CMake {
 
 function Install-Node {
   param([Parameter(Mandatory)] [string] $Directory)
-  $version = Get-LatestNodeLtsVersion
   $installed = Get-ApplicationVersion -Name 'node'
-  if (Test-Requirement -Package 'Node.js' -Required $version `
+  if (Test-Requirement -Package 'Node.js' -Required $NodeVersion -Exact `
       -Installed $installed) {
     return
   }
-  Write-Step "Installing Node.js $version."
-  $package = "node-v$version-x64.msi"
+  Write-Step "Installing Node.js $NodeVersion."
+  $package = "node-v$NodeVersion-x64.msi"
   $installer = Join-Path $Directory $package
-  Save-Download -Path $installer `
-    -Uri "https://nodejs.org/dist/v$version/$package" `
-    -Sha256 (Get-NodeHash -Version $version -FileName $package)
+  Save-Download -Sha256 $NodeHash -Path $installer `
+    -Uri "https://nodejs.org/dist/v$NodeVersion/$package"
   Invoke-Installer -FilePath 'msiexec.exe' -ArgumentList @(
     '/i', "`"$installer`"", '/qn', '/norestart'
   )
-  Add-Result -Package 'Node.js' -Version $version -Action 'Installed'
+  Add-Result -Package 'Node.js' -Version $NodeVersion -Action 'Installed'
 }
 
 function Invoke-Python {

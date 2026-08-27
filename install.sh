@@ -1,6 +1,8 @@
 #!/bin/bash
 set -e
-NODE_VERSION="24.15.0"
+NODE_VERSION="24.20.0"
+NODE_X64_HASH="2f2c0da162318f0de47665410c7c8c2ed3d36c8f3105de4bbc61176c70a7cbf2"
+NODE_ARM64_HASH="5f4ddab610c1ab2016b3c227cebdbf6d9495161487e4739c7b90090595f465f7"
 ARCH="$(uname -m)"
 ROOT_DIRECTORY="$(pwd)"
 
@@ -17,27 +19,47 @@ function print_usage() {
   echo "      The default value is ($local_interface)."
 }
 
+function verify_archive() {
+  local archive="$1"
+  local expected="$2"
+  local actual
+  actual=$(sha256sum "$archive" | cut -d" " -f1)
+  if [ "$expected" != "$actual" ]; then
+    echo "SHA256 mismatch for $archive."
+    echo "  Expected: $expected"
+    echo "  Actual:   $actual"
+    return 1
+  fi
+}
+
 function install_node() {
   local node_arch="$ARCH"
+  local node_hash
   if [ "$node_arch" == "x86_64" ]; then
     node_arch="x64"
+    node_hash="$NODE_X64_HASH"
   elif [[ "$node_arch" == "aarch64" || "$node_arch" == "arm64" ]]; then
     node_arch="arm64"
+    node_hash="$NODE_ARM64_HASH"
   else
     echo "Unsupported architecture: $node_arch"
     exit 1
   fi
   local node_dir="node-v$NODE_VERSION-linux-$node_arch"
-  curl -fLO "https://nodejs.org/dist/v$NODE_VERSION/$node_dir.tar.xz"
-  tar -xf "$node_dir.tar.xz"
+  local archive="$node_dir.tar.xz"
+  curl -fLO "https://nodejs.org/dist/v$NODE_VERSION/$archive"
+  if ! verify_archive "$archive" "$node_hash"; then
+    rm -f "$archive"
+    exit 1
+  fi
+  tar -xf "$archive"
   cp -r "$node_dir"/{bin,include,lib,share} /usr/local/
-  rm -rf "$node_dir" "$node_dir.tar.xz"
+  rm -rf "$node_dir" "$archive"
 }
 
 function check_and_install_node() {
   if command -v node &> /dev/null; then
-    INSTALLED_VERSION=$(node -v | sed 's/v//')
-    if [ "$INSTALLED_VERSION" = "$NODE_VERSION" ]; then
+    if [ "$(node -v | sed 's/v//')" == "$NODE_VERSION" ]; then
       return
     fi
   fi
@@ -48,8 +70,10 @@ function install_dependencies() {
   if [ "$is_root" -eq 1 ]; then
     apt-get update
     apt-get install -y automake build-essential cmake curl gdb git \
-      libncurses-dev libreadline-dev libtool libxml2-dev m4 mysql-server \
-      parallel python3 python3-dev python3-pip ruby zip
+      libbz2-dev libffi-dev libgdbm-dev liblzma-dev libncurses-dev \
+      libreadline-dev libsqlite3-dev libssl-dev libtool libxml2-dev m4 \
+      mysql-server parallel perl pkg-config python3 python3-dev python3-pip \
+      ruby unzip uuid-dev zip zlib1g-dev
     if ! command -v yq &> /dev/null; then
       local yq_arch="$ARCH"
       if [ "$yq_arch" == "x86_64" ]; then
