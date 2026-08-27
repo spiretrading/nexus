@@ -13,7 +13,7 @@ main() {
   check_cache "nexus_webapp" || exit 0
   add_repo "dali" \
     "https://www.github.com/spiretrading/dali" \
-    "2c305bb47a518b870bf5cc27697bd27ccb9a848c"
+    "a8d51439fbb84e9be79edd43662b653cd304f0e6"
   install_repos || return 1
   configure_webapi || return 1
   commit

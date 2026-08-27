@@ -7,7 +7,7 @@ CALL :CheckCache "nexus_webapp"
 IF ERRORLEVEL 1 EXIT /B 0
 CALL :AddRepo "dali" ^
   "https://www.github.com/spiretrading/dali" ^
-  "2c305bb47a518b870bf5cc27697bd27ccb9a848c"
+  "a8d51439fbb84e9be79edd43662b653cd304f0e6"
 CALL :InstallRepos || EXIT /B 1
 CALL :ConfigureWebApi || EXIT /B 1
 CALL :Commit
