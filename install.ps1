@@ -279,21 +279,6 @@ function Install-Node {
   Add-Result -Package 'Node.js' -Version $NodeVersion -Action 'Installed'
 }
 
-function Invoke-Python {
-  param([Parameter(Mandatory)] [string[]] $ArgumentList)
-  $required = ConvertTo-Version $PythonVersion
-  $launcher = Get-ApplicationPath -Name 'py'
-  if ($launcher) {
-    return Invoke-Native -FilePath $launcher -ArgumentList (
-      @("-$($required.Major).$($required.Minor)") + $ArgumentList)
-  }
-  $python = Get-ApplicationPath -Name 'python'
-  if (-not $python) {
-    throw 'Unable to locate a Python interpreter.'
-  }
-  return Invoke-Native -FilePath $python -ArgumentList $ArgumentList
-}
-
 function Get-PythonVersion {
   $required = ConvertTo-Version $PythonVersion
   $installed = Get-ApplicationVersion -Name 'py' `
@@ -308,40 +293,24 @@ function Get-PythonVersion {
   return $installed
 }
 
-function Install-GitPython {
-  if ((Invoke-Python -ArgumentList @('-c', 'import git')).ExitCode -eq 0) {
-    Write-Host 'GitPython is already installed.'
-    Add-Result -Package 'GitPython' -Version 'latest' -Action 'Up to date'
-    return
-  }
-  Write-Step 'Installing GitPython.'
-  $result = Invoke-Python -ArgumentList @(
-    '-m', 'pip', 'install', '--upgrade', '--quiet', 'GitPython')
-  if ($result.ExitCode -ne 0) {
-    Write-Host $result.Output
-    throw "Unable to install GitPython, pip exited with $($result.ExitCode)."
-  }
-  Add-Result -Package 'GitPython' -Version 'latest' -Action 'Installed'
-}
-
 function Install-Python {
   param([Parameter(Mandatory)] [string] $Directory)
   $installed = Get-PythonVersion
-  if (-not (Test-Requirement -Package 'Python' -Required $PythonVersion `
-      -Installed $installed)) {
-    Write-Step "Installing Python $PythonVersion."
-    $package = "python-$PythonVersion-amd64.exe"
-    $installer = Join-Path $Directory $package
-    Save-Download -Sha256 $PythonHash -Path $installer `
-      -Uri "https://www.python.org/ftp/python/$PythonVersion/$package"
-    Invoke-Installer -FilePath $installer -ArgumentList @(
-      '/quiet', '/norestart', 'InstallAllUsers=1', 'InstallLauncherAllUsers=1',
-      'PrependPath=1', 'Include_launcher=1', 'Include_pip=1',
-      'Include_test=0', 'Include_doc=0', 'AssociateFiles=1', 'CompileAll=1'
-    )
-    Add-Result -Package 'Python' -Version $PythonVersion -Action 'Installed'
+  if (Test-Requirement -Package 'Python' -Required $PythonVersion `
+      -Installed $installed) {
+    return
   }
-  Install-GitPython
+  Write-Step "Installing Python $PythonVersion."
+  $package = "python-$PythonVersion-amd64.exe"
+  $installer = Join-Path $Directory $package
+  Save-Download -Sha256 $PythonHash -Path $installer `
+    -Uri "https://www.python.org/ftp/python/$PythonVersion/$package"
+  Invoke-Installer -FilePath $installer -ArgumentList @(
+    '/quiet', '/norestart', 'InstallAllUsers=1', 'InstallLauncherAllUsers=1',
+    'PrependPath=1', 'Include_launcher=1', 'Include_pip=1',
+    'Include_test=0', 'Include_doc=0', 'AssociateFiles=1', 'CompileAll=1'
+  )
+  Add-Result -Package 'Python' -Version $PythonVersion -Action 'Installed'
 }
 
 function Install-Nsis {

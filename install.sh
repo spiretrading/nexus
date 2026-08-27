@@ -69,11 +69,8 @@ function check_and_install_node() {
 function install_dependencies() {
   if [ "$is_root" -eq 1 ]; then
     apt-get update
-    apt-get install -y automake build-essential cmake curl gdb git \
-      libbz2-dev libffi-dev libgdbm-dev liblzma-dev libncurses-dev \
-      libreadline-dev libsqlite3-dev libssl-dev libtool libxml2-dev m4 \
-      mysql-server parallel perl pkg-config python3 python3-dev python3-pip \
-      ruby unzip uuid-dev zip zlib1g-dev
+    apt-get install -y automake build-essential cmake curl git libtool \
+      mysql-server parallel perl python3 python3-pip unzip
     if ! command -v yq &> /dev/null; then
       local yq_arch="$ARCH"
       if [ "$yq_arch" == "x86_64" ]; then

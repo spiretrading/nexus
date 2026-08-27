@@ -23,6 +23,7 @@ CALL :AddDependency "hat-trie-0.7.0" ^
   "https://github.com/Tessil/hat-trie/archive/refs/tags/v0.7.0.zip" ^
   "8ea5441c06fd5d9de1ec8725bf762025a63f931949b9f49d211ab76a75ced68f"
 CALL :InstallDependencies || EXIT /B 1
+CALL :InstallGitPython
 CALL :Commit
 EXIT /B !ERRORLEVEL!
 ENDLOCAL
@@ -71,6 +72,12 @@ cmake -DCMAKE_INSTALL_PREFIX="!cd!" . || EXIT /B 1
 cmake --build . --target quickfix --config Debug
 cmake --build . --target quickfix --config Release
 cmake --install . --config Release
+EXIT /B 0
+
+:InstallGitPython
+python -c "import git" >NUL 2>&1
+IF NOT ERRORLEVEL 1 EXIT /B 0
+python -m pip install --user GitPython
 EXIT /B 0
 
 :CheckCache
