@@ -40,6 +40,7 @@ namespace Spire {
       Beam::ConditionVariable m_updateCondition;
       Beam::OpenState m_openState;
 
+      Aspen::State Commit(int sequence);
       void RunLoop();
       void OnUpdate();
   };

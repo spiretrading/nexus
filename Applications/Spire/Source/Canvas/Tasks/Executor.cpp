@@ -34,13 +34,17 @@ void Executor::Close() {
   m_openState.close();
 }
 
+Aspen::State Executor::Commit(int sequence) {
+  m_flag.clear();
+  auto scope = Aspen::CommitFlagScope(m_flag);
+  return m_reactor.commit(sequence);
+}
+
 void Executor::RunLoop() {
   m_has_update = false;
   auto sequence = 0;
-  auto scope = Aspen::CommitFlagScope(m_flag);
   while(m_openState.is_open()) {
-    m_flag.clear();
-    auto state = m_reactor.commit(sequence);
+    auto state = Commit(sequence);
     ++sequence;
     if(Aspen::is_complete(state)) {
       break;
