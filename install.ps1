@@ -33,7 +33,6 @@ $VisualStudioComponents = @(
 )
 
 $RestartRequired = $false
-$InstalledAny = $false
 
 function ConvertTo-Version {
   param([string] $Text)
@@ -156,7 +155,6 @@ function Invoke-Installer {
   if (@(3010, 1641) -contains $process.ExitCode) {
     $script:RestartRequired = $true
   }
-  $script:InstalledAny = $true
   Update-SessionPath
 }
 
@@ -367,9 +365,6 @@ function Main {
   if ($RestartRequired) {
     Write-Warning ('An installer reported that a restart is pending. ' +
       'Nothing was restarted, so restart the machine when convenient.')
-  }
-  if ($InstalledAny) {
-    Write-Host 'Open a new terminal so the updated PATH takes effect.'
   }
 }
 
