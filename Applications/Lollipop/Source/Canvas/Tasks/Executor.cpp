@@ -37,7 +37,11 @@ void Executor::Close() {
 Aspen::State Executor::Commit(int sequence) {
   m_flag.clear();
   auto scope = Aspen::CommitFlagScope(m_flag);
-  return m_reactor.commit(sequence);
+  auto previous = Aspen::Trigger::get_trigger();
+  Aspen::Trigger::set_trigger(m_trigger);
+  auto state = m_reactor.commit(sequence);
+  Aspen::Trigger::set_trigger(previous);
+  return state;
 }
 
 void Executor::RunLoop() {

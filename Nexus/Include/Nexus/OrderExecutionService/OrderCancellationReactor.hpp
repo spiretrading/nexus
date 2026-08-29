@@ -49,7 +49,7 @@ namespace Nexus {
       bool m_is_series_complete;
       std::vector<std::shared_ptr<Order>> m_orders;
       std::unique_ptr<std::atomic_int> m_cancel_count;
-      Aspen::Trigger* m_trigger;
+      Aspen::CommitFlag* m_flag;
       std::unique_ptr<Beam::RoutineTaskQueue> m_tasks;
   };
 
@@ -84,15 +84,15 @@ namespace Nexus {
         if(*m_cancel_count == 0) {
           return state;
         }
-        m_trigger = Aspen::Trigger::get_trigger();
+        m_flag = Aspen::CommitFlag::get_current();
         for(auto& order : m_orders) {
           m_client->cancel(order);
           order->get_publisher().monitor(m_tasks->get_slot<ExecutionReport>(
-            [cancel_count = m_cancel_count.get(), trigger = m_trigger] (
+            [cancel_count = m_cancel_count.get(), flag = m_flag] (
                 const ExecutionReport& report) {
               if(is_terminal(report.m_status)) {
                 if(--*cancel_count == 0) {
-                  trigger->signal();
+                  flag->raise();
                 }
               }
             }));
