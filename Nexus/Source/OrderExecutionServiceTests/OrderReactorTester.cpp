@@ -49,7 +49,9 @@ namespace {
 
     void require_state(Aspen::State expected_state) {
       if(m_sequence != 0) {
-        m_commits.pop();
+        while(!m_flag.is_raised()) {
+          m_commits.pop();
+        }
       }
       m_flag.clear();
       REQUIRE(m_order->commit(m_sequence) == expected_state);
