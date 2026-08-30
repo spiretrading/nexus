@@ -31,6 +31,7 @@ namespace Spire {
     private:
       std::mutex m_mutex;
       Aspen::Trigger m_trigger;
+      Aspen::CommitFlag m_flag;
       Beam::RoutineHandler m_reactorLoop;
       bool m_has_update;
       Aspen::Shared<Aspen::Queue<Aspen::SharedBox<void>>> m_producer;
@@ -39,6 +40,7 @@ namespace Spire {
       Beam::ConditionVariable m_updateCondition;
       Beam::OpenState m_openState;
 
+      Aspen::State Commit(int sequence);
       void RunLoop();
       void OnUpdate();
   };

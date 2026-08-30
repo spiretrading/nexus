@@ -4,8 +4,10 @@ using namespace Beam;
 using namespace Spire;
 
 Executor::Executor()
-  : m_trigger([=] { OnUpdate(); }),
-    m_reactor(m_producer) {}
+    : m_trigger([=] { OnUpdate(); }),
+      m_reactor(m_producer) {
+  m_flag.set_trigger(&m_trigger);
+}
 
 Executor::~Executor() {
   Close();
@@ -32,12 +34,21 @@ void Executor::Close() {
   m_openState.close();
 }
 
+Aspen::State Executor::Commit(int sequence) {
+  m_flag.clear();
+  auto scope = Aspen::CommitFlagScope(m_flag);
+  auto previous = Aspen::Trigger::get_trigger();
+  Aspen::Trigger::set_trigger(m_trigger);
+  auto state = m_reactor.commit(sequence);
+  Aspen::Trigger::set_trigger(previous);
+  return state;
+}
+
 void Executor::RunLoop() {
   m_has_update = false;
   auto sequence = 0;
   while(m_openState.is_open()) {
-    Aspen::Trigger::set_trigger(m_trigger);
-    auto state = m_reactor.commit(sequence);
+    auto state = Commit(sequence);
     ++sequence;
     if(Aspen::is_complete(state)) {
       break;

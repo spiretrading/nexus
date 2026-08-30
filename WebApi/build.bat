@@ -110,7 +110,7 @@ IF NOT EXIST node_modules (
 )
 IF "!UPDATE_NODE!"=="1" (
   SET "UPDATE_BUILD=1"
-  CALL npm install || EXIT /B 1
+  CALL npm install --no-package-lock || EXIT /B 1
 )
 EXIT /B 0
 

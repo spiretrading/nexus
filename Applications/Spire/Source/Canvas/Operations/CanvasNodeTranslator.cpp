@@ -1062,7 +1062,7 @@ namespace {
 
     template<typename T>
     Translation operator ()(std::exception_ptr exception) const {
-      return Aspen::throws<T>(std::move(exception));
+      return Aspen::Throw<T>(std::move(exception));
     }
   };
 

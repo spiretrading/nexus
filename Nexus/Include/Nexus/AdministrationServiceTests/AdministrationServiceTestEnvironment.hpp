@@ -215,6 +215,9 @@ namespace Nexus::Tests {
   }
 
   inline void AdministrationServiceTestEnvironment::close() {
+    if(m_client) {
+      m_client->close();
+    }
     m_container.close();
   }
 

@@ -28,6 +28,13 @@ TEST_SUITE("OrderCancellationReactor") {
   }
 
   TEST_CASE("single_order_cancellation") {
+    auto commits = Beam::Queue<bool>();
+    auto trigger = Trigger([&] {
+      commits.push(true);
+    });
+    auto flag = CommitFlag();
+    flag.set_trigger(&trigger);
+    auto scope = CommitFlagScope(flag);
     auto operations = std::make_shared<
       Beam::Queue<std::shared_ptr<TestOrderExecutionClient::Operation>>>();
     auto client = TestOrderExecutionClient(operations);
@@ -39,14 +46,22 @@ TEST_SUITE("OrderCancellationReactor") {
     auto series = Shared<Aspen::Queue<std::shared_ptr<Order>>>();
     auto reactor = OrderCancellationReactor(&client, series);
     series->push(order);
-    auto state = reactor.commit(0);
+    flag.clear();
+    REQUIRE(reactor.commit(0) == Aspen::State::EVALUATED);
     series->set_complete();
-    state = reactor.commit(1);
-    bool found_cancel = false;
+    flag.clear();
+    REQUIRE(reactor.commit(1) == Aspen::State::NONE);
     auto operation = operations->pop();
-    auto cancel =
+    auto cancellation =
       std::get_if<TestOrderExecutionClient::CancelOperation>(operation.get());
-    REQUIRE(cancel);
-    REQUIRE(cancel->m_id == 123);
+    REQUIRE(cancellation);
+    REQUIRE(cancellation->m_id == 123);
+    set_order_status(*order, OrderStatus::PENDING_CANCEL);
+    cancel(*order);
+    while(!flag.is_raised()) {
+      commits.pop();
+    }
+    flag.clear();
+    REQUIRE(reactor.commit(2) == Aspen::State::COMPLETE);
   }
 }
