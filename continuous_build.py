@@ -3,6 +3,7 @@ import errno
 import git
 import os
 import shutil
+import signal
 import subprocess
 import sys
 import tarfile
@@ -10,10 +11,25 @@ import time
 import zipfile
 
 
-def call(command, cwd=None):
+def terminate(process):
+  if sys.platform == 'win32':
+    subprocess.call(['taskkill', '/F', '/T', '/PID', str(process.pid)],
+      stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+  else:
+    os.killpg(os.getpgid(process.pid), signal.SIGKILL)
+
+
+def call(command, cwd, timeout):
   process = subprocess.Popen(
-    command, stdout=subprocess.PIPE, cwd=cwd, stderr=subprocess.PIPE)
-  output = process.communicate()
+    command, stdout=subprocess.PIPE, cwd=cwd, stderr=subprocess.PIPE,
+    start_new_session=True)
+  try:
+    output = process.communicate(timeout=timeout)
+  except subprocess.TimeoutExpired:
+    terminate(process)
+    output = process.communicate()
+    message = 'Timed out after %d seconds.' % timeout
+    return (output[0], output[1] + message.encode('utf-8'), 1)
   return (output[0], output[1], process.returncode)
 
 
@@ -118,7 +134,7 @@ def clean_python_libraries(repo_path):
       os.remove(library)
 
 
-def build_repo(repo, path, branch):
+def build_repo(repo, path, branch, timeout):
   commits = repo.git.rev_list('--first-parent', 'HEAD').split('\n')
   commits.reverse()
   builds = [int(d) for d in os.listdir(path)
@@ -157,11 +173,11 @@ def build_repo(repo, path, branch):
     result = []
     result.append(
       call([os.path.join(repo.working_dir, 'configure.%s' % extension)],
-      repo.working_dir))
+      repo.working_dir, timeout))
     if result[-1][2] == 0:
       result.append(
         call([os.path.join(repo.working_dir, 'build.%s' % extension)],
-        repo.working_dir))
+        repo.working_dir, timeout))
     terminal_output = b''
     for output in result:
       terminal_output += output[0] + b'\n\n\n\n'
@@ -217,6 +233,8 @@ def main():
     required=True)
   parser.add_argument('-t', '--period', type=int, help='Time period.',
     default=600)
+  parser.add_argument('--timeout', type=int,
+    help='Build timeout in seconds.', default=14400)
   args = parser.parse_args()
   makedirs(args.path)
   repo = git.Repo('.')
@@ -230,7 +248,7 @@ def main():
     except:
       print('Failed to pull: ', sys.exc_info()[0])
     try:
-      build_repo(repo, args.path, branch)
+      build_repo(repo, args.path, branch, args.timeout)
     except Exception as e:
       print('Failed to build: %s' % e)
     try:
