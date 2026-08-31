@@ -58,6 +58,15 @@ def make_zipfile(source, destination):
   archive.close()
 
 
+def write_log(path, mode, sections):
+  separator = os.linesep.encode('utf-8')
+  with open(path, mode) as log_file:
+    for title, text in sections:
+      log_file.write(('=== %s ===' % title).encode('utf-8') + separator)
+      log_file.write(text)
+      log_file.write(separator + separator)
+
+
 def copy_build(applications, version, name, source, path):
   errors = []
   destination_path = os.path.join(path, str(version))
@@ -171,28 +180,32 @@ def build_repo(repo, path, branch, timeout):
     clean_build(beam_applications, beam_path)
     clean_python_libraries(repo.working_dir)
     result = []
-    result.append(
-      call([os.path.join(repo.working_dir, 'configure.%s' % extension)],
-      repo.working_dir, timeout))
-    if result[-1][2] == 0:
-      result.append(
-        call([os.path.join(repo.working_dir, 'build.%s' % extension)],
-        repo.working_dir, timeout))
-    terminal_output = b''
-    for output in result:
-      terminal_output += output[0] + b'\n\n\n\n'
-    for output in result:
-      terminal_output += output[1] + b'\n\n\n\n'
+    status = 0
+    for step in ['configure', 'build']:
+      output = call(
+        [os.path.join(repo.working_dir, '%s.%s' % (step, extension))],
+        repo.working_dir, timeout)
+      result.append((step, output))
+      status = output[2]
+      if status != 0:
+        break
+    sections = []
+    for step, output in result:
+      sections.append((step, output[0]))
+      sections.append(('%s errors' % step, output[1]))
+    log_path = os.path.join(path, 'build-%s.txt' % version)
+    write_log(log_path, 'wb', sections)
     destination_path = os.path.join(path, str(version))
     makedirs(destination_path)
     archive_path = None
-    if result[-1][2] == 0:
+    if status == 0:
       errors = copy_build(nexus_applications, version, 'Nexus',
         repo.working_dir, path)
       errors.extend(
         copy_build(beam_applications, version, 'Beam', beam_path, path))
-      for error in errors:
-        terminal_output += error.encode('utf-8') + b'\n'
+      if len(errors) != 0:
+        write_log(log_path, 'ab',
+          [('copy errors', os.linesep.join(errors).encode('utf-8'))])
       shutil.copy2(os.path.join(repo.working_dir, 'Applications', 'setup.py'),
         os.path.join(destination_path, 'setup.py'))
       shutil.copytree(os.path.join(repo.working_dir, 'Applications', 'Python'),
@@ -220,8 +233,7 @@ def build_repo(repo, path, branch, timeout):
           make_tarfile(destination_path, archive_path)
       shutil.rmtree(destination_path)
       makedirs(destination_path)
-    with open(os.path.join(destination_path, 'build.txt'), 'wb') as log_file:
-      log_file.write(terminal_output)
+    shutil.move(log_path, os.path.join(destination_path, 'build.txt'))
     if archive_path is not None:
       shutil.move(archive_path, destination_path)
 
