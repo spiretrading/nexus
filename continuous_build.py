@@ -11,6 +11,9 @@ import time
 import zipfile
 
 
+DRAIN_TIMEOUT = 30
+
+
 def terminate(process):
   if sys.platform == 'win32':
     subprocess.call(['taskkill', '/F', '/T', '/PID', str(process.pid)],
@@ -27,7 +30,10 @@ def call(command, cwd, timeout):
     output = process.communicate(timeout=timeout)
   except subprocess.TimeoutExpired:
     terminate(process)
-    output = process.communicate()
+    try:
+      output = process.communicate(timeout=DRAIN_TIMEOUT)
+    except subprocess.TimeoutExpired:
+      output = (b'', b'')
     message = 'Timed out after %d seconds.' % timeout
     return (output[0], output[1] + message.encode('utf-8'), 1)
   return (output[0], output[1], process.returncode)
@@ -64,13 +70,12 @@ def executable_extension():
     return ''
 
 
-def copy_build(applications, version, name, source, path):
+def copy_build(applications, name, source, destination):
   binary = executable_extension()
   errors = []
-  destination_path = os.path.join(path, str(version))
   for application in applications:
     try:
-      application_path = os.path.join(destination_path, application)
+      application_path = os.path.join(destination, application)
       os.makedirs(application_path, exist_ok=True)
       source_directory = os.path.join(source, 'Applications', application,
         'Application')
@@ -136,12 +141,16 @@ def python_libraries(repo_path):
     nexus_library(repo_path)]
 
 
-def copy_python_libraries(path, version, repo_path):
-  python_path = os.path.join(path, str(version), 'Python')
+def copy_python_libraries(destination, repo_path):
+  python_path = os.path.join(destination, 'Python')
   os.makedirs(python_path, exist_ok=True)
+  errors = []
   for library in python_libraries(repo_path):
     if os.path.isfile(library):
       shutil.copy2(library, python_path)
+    else:
+      errors.append('%s was not built.' % os.path.basename(library))
+  return errors
 
 
 def clean_nexus_library(repo_path):
@@ -158,7 +167,7 @@ def build_repo(repo, path, timeout):
   builds.sort(reverse=True)
   latest = None
   for version in builds:
-    if version <= len(commits):
+    if 0 < version <= len(commits):
       latest = version
       break
   if latest is None:
@@ -169,22 +178,22 @@ def build_repo(repo, path, timeout):
     extension = 'bat'
   else:
     extension = 'sh'
+  nexus_applications = ['AdministrationServer', 'ChartingServer',
+    'ComplianceServer', 'DefinitionsServer', 'MarketDataRelayServer',
+    'MarketDataServer', 'ReplayMarketDataFeedClient', 'RiskServer',
+    'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
+    'WebPortal']
+  if sys.platform == 'win32':
+    nexus_applications.extend(['Lollipop', 'Spire'])
+  beam_applications = ['AdminClient', 'ServiceLocator', 'UidServer']
+  beam_path = os.path.join(repo.working_dir, 'Nexus', 'Dependencies', 'Beam')
+  staging_path = os.path.join(path, 'staging')
   for version in versions:
     commit = commits[version - 1]
     repo.git.checkout(commit)
-    nexus_applications = ['AdministrationServer', 'ChartingServer',
-      'ComplianceServer', 'DefinitionsServer', 'MarketDataRelayServer',
-      'MarketDataServer', 'ReplayMarketDataFeedClient', 'RiskServer',
-      'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
-      'WebPortal']
-    if sys.platform == 'win32':
-      nexus_applications.extend(['Lollipop', 'Spire'])
-    beam_applications = ['AdminClient', 'ServiceLocator', 'UidServer']
-    beam_path = os.path.join(repo.working_dir, 'Nexus', 'Dependencies', 'Beam')
     clean_build(nexus_applications, repo.working_dir)
     clean_nexus_library(repo.working_dir)
     result = []
-    status = 0
     for step in ['configure', 'build']:
       output = call(
         [os.path.join(repo.working_dir, '%s.%s' % (step, extension))],
@@ -197,47 +206,57 @@ def build_repo(repo, path, timeout):
     for step, output in result:
       sections.append((step, output[0]))
       sections.append(('%s errors' % step, output[1]))
-    log_path = os.path.join(path, 'build-%s.txt' % version)
+    if os.path.isdir(staging_path):
+      shutil.rmtree(staging_path)
+    package_path = os.path.join(staging_path, 'package')
+    os.makedirs(package_path)
+    log_path = os.path.join(staging_path, 'build.txt')
     write_log(log_path, 'wb', sections)
+    archive_path = None
+    try:
+      if status == 0:
+        errors = copy_build(nexus_applications, 'Nexus', repo.working_dir,
+          package_path)
+        errors.extend(
+          copy_build(beam_applications, 'Beam', beam_path, package_path))
+        shutil.copy2(os.path.join(repo.working_dir, 'Applications',
+          'setup.py'), os.path.join(package_path, 'setup.py'))
+        shutil.copytree(os.path.join(repo.working_dir, 'Applications',
+          'Python'), os.path.join(package_path, 'Python'), dirs_exist_ok=True)
+        errors.extend(copy_python_libraries(package_path, repo.working_dir))
+        if len(errors) != 0:
+          write_log(log_path, 'ab',
+            [('copy errors', os.linesep.join(errors).encode('utf-8'))])
+        else:
+          if sys.platform == 'win32':
+            file = 'install_python.bat'
+            shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
+              os.path.join(package_path, file))
+            archive_path = os.path.join(staging_path,
+              'nexus-%s.zip' % version)
+            make_zipfile(package_path, archive_path)
+          else:
+            for file in ['check.sh', 'install_python.sh', 'start.sh',
+                'stop.sh']:
+              copy_path = os.path.join(package_path, file)
+              shutil.copy2(os.path.join(repo.working_dir, 'Applications',
+                file), copy_path)
+              with open(copy_path, 'r') as f:
+                translation = re.sub(r'/Application\b', '', f.read())
+              with open(copy_path, 'w') as f:
+                f.write(translation)
+            archive_path = os.path.join(staging_path,
+              'nexus-%s.tar.gz' % version)
+            make_tarfile(package_path, archive_path)
+    except Exception as e:
+      archive_path = None
+      write_log(log_path, 'ab', [('packaging error', str(e).encode('utf-8'))])
     destination_path = os.path.join(path, str(version))
     os.makedirs(destination_path, exist_ok=True)
-    archive_path = None
-    if status == 0:
-      errors = copy_build(nexus_applications, version, 'Nexus',
-        repo.working_dir, path)
-      errors.extend(
-        copy_build(beam_applications, version, 'Beam', beam_path, path))
-      if len(errors) != 0:
-        write_log(log_path, 'ab',
-          [('copy errors', os.linesep.join(errors).encode('utf-8'))])
-      shutil.copy2(os.path.join(repo.working_dir, 'Applications', 'setup.py'),
-        os.path.join(destination_path, 'setup.py'))
-      shutil.copytree(os.path.join(repo.working_dir, 'Applications', 'Python'),
-        os.path.join(destination_path, 'Python'), dirs_exist_ok=True)
-      copy_python_libraries(path, version, repo.working_dir)
-      if len(errors) == 0:
-        if sys.platform == 'win32':
-          file = 'install_python.bat'
-          shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
-            os.path.join(destination_path, file))
-          archive_path = os.path.join(path, 'nexus-%s.zip' % version)
-          make_zipfile(destination_path, archive_path)
-        else:
-          for file in ['check.sh', 'install_python.sh', 'start.sh', 'stop.sh']:
-            copy_path = os.path.join(destination_path, file)
-            shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
-              copy_path)
-            with open(copy_path, 'r') as f:
-              translation = re.sub(r'/Application\b', '', f.read())
-            with open(copy_path, 'w') as f:
-              f.write(translation)
-          archive_path = os.path.join(path, 'nexus-%s.tar.gz' % version)
-          make_tarfile(destination_path, archive_path)
-      shutil.rmtree(destination_path)
-      os.makedirs(destination_path, exist_ok=True)
     shutil.move(log_path, os.path.join(destination_path, 'build.txt'))
     if archive_path is not None:
       shutil.move(archive_path, destination_path)
+    shutil.rmtree(staging_path)
   return len(versions)
 
 
