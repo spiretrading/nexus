@@ -1,6 +1,7 @@
 import argparse
 import git
 import os
+import re
 import shutil
 import signal
 import subprocess
@@ -211,7 +212,7 @@ def build_repo(repo, path, timeout):
             shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
               copy_path)
             with open(copy_path, 'r') as f:
-              translation = f.read().replace('/Application', '')
+              translation = re.sub(r'/Application\b', '', f.read())
             with open(copy_path, 'w') as f:
               f.write(translation)
           archive_path = os.path.join(path, 'nexus-%s.tar.gz' % version)
