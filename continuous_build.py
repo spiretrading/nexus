@@ -70,27 +70,49 @@ def copy_build(applications, version, name, source, path):
     return
 
 
+def clean_build(applications, source):
+  if sys.platform == 'win32':
+    executable_extension = '.exe'
+  else:
+    executable_extension = ''
+  for application in applications:
+    source_directory = os.path.join(source, 'Applications', application,
+      'Application')
+    if not os.path.isdir(source_directory):
+      continue
+    for file in os.listdir(source_directory):
+      file_path = os.path.join(source_directory, file)
+      if not os.path.isfile(file_path):
+        continue
+      if os.path.splitext(file_path)[1] == executable_extension:
+        os.remove(file_path)
+
+
+def python_libraries(repo_path):
+  if sys.platform == 'win32':
+    extension = '.pyd'
+  else:
+    extension = '.so'
+  return [os.path.join(repo_path, 'Nexus', 'Dependencies', 'aspen',
+    'Libraries', 'Release', 'aspen%s' % extension),
+    os.path.join(repo_path, 'Nexus', 'Dependencies', 'Beam', 'Beam',
+    'Libraries', 'Release', 'beam%s' % extension),
+    os.path.join(repo_path, 'Nexus', 'Libraries', 'Release',
+    'nexus%s' % extension)]
+
+
 def copy_python_libraries(path, version, repo_path):
-  beam_path = os.path.join(repo_path, 'Nexus', 'Dependencies', 'Beam')
   python_path = os.path.join(path, str(version), 'Python')
   makedirs(python_path)
-  if sys.platform == 'win32':
-    python_ext = '.pyd'
-  else:
-    python_ext = '.so'
-  aspen_path = os.path.join(repo_path, 'Nexus', 'Dependencies', 'aspen')
-  aspen_lib = os.path.join(aspen_path, 'Libraries', 'Release',
-    'aspen%s' % python_ext)
-  if os.path.isfile(aspen_lib):
-    shutil.copy2(aspen_lib, python_path)
-  beam_lib = os.path.join(beam_path, 'Beam', 'Libraries', 'Release',
-    'beam%s' % python_ext)
-  if os.path.isfile(beam_lib):
-    shutil.copy2(beam_lib, python_path)
-  nexus_lib = os.path.join(repo_path, 'Nexus', 'Libraries', 'Release',
-    'nexus%s' % python_ext)
-  if os.path.isfile(nexus_lib):
-    shutil.copy2(nexus_lib, python_path)
+  for library in python_libraries(repo_path):
+    if os.path.isfile(library):
+      shutil.copy2(library, python_path)
+
+
+def clean_python_libraries(repo_path):
+  for library in python_libraries(repo_path):
+    if os.path.isfile(library):
+      os.remove(library)
 
 
 def build_repo(repo, path, branch):
@@ -114,6 +136,18 @@ def build_repo(repo, path, branch):
   for commit in commits:
     version = int(repo.git.rev_list('--count', '--first-parent', commit))
     repo.git.checkout(commit)
+    nexus_applications = ['AdministrationServer', 'ChartingServer',
+      'ComplianceServer', 'DefinitionsServer', 'MarketDataRelayServer',
+      'MarketDataServer', 'ReplayMarketDataFeedClient', 'RiskServer',
+      'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
+      'WebPortal']
+    if sys.platform == 'win32':
+      nexus_applications.append('Spire')
+    beam_applications = ['AdminClient', 'ServiceLocator', 'UidServer']
+    beam_path = os.path.join(repo.working_dir, 'Nexus', 'Dependencies', 'Beam')
+    clean_build(nexus_applications, repo.working_dir)
+    clean_build(beam_applications, beam_path)
+    clean_python_libraries(repo.working_dir)
     result = []
     result.append(
       call(os.path.join(repo.working_dir, 'configure.%s' % extension),
@@ -130,17 +164,8 @@ def build_repo(repo, path, branch):
     makedirs(destination_path)
     archive_path = None
     if result[-1][2] == 0:
-      nexus_applications = ['AdministrationServer', 'ChartingServer',
-        'ComplianceServer', 'DefinitionsServer', 'MarketDataRelayServer',
-        'MarketDataServer', 'ReplayMarketDataFeedClient', 'RiskServer',
-        'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
-        'WebPortal']
-      if sys.platform == 'win32':
-        nexus_applications.append('Spire')
       copy_build(nexus_applications, version, 'Nexus', repo.working_dir, path)
-      beam_applications = ['AdminClient', 'ServiceLocator', 'UidServer']
-      copy_build(beam_applications, version, 'Beam',
-        os.path.join(repo.working_dir, 'Nexus', 'Dependencies', 'Beam'), path)
+      copy_build(beam_applications, version, 'Beam', beam_path, path)
       shutil.copy2(os.path.join(repo.working_dir, 'Applications', 'setup.py'),
         os.path.join(destination_path, 'setup.py'))
       shutil.copytree(os.path.join(repo.working_dir, 'Applications', 'Python'),
