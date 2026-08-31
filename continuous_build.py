@@ -219,14 +219,23 @@ def main():
   args = parser.parse_args()
   makedirs(args.path)
   repo = git.Repo('.')
-  branch = repo.active_branch.name
+  try:
+    branch = repo.active_branch.name
+  except TypeError:
+    sys.exit('HEAD is detached, check out the branch to build first.')
   while True:
     try:
       repo.git.pull()
     except:
       print('Failed to pull: ', sys.exc_info()[0])
-    build_repo(repo, args.path, branch)
-    repo.git.checkout(branch)
+    try:
+      build_repo(repo, args.path, branch)
+    except Exception as e:
+      print('Failed to build: %s' % e)
+    try:
+      repo.git.checkout(branch)
+    except Exception as e:
+      print('Failed to check out %s: %s' % (branch, e))
     time.sleep(args.period)
 
 
