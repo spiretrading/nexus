@@ -244,7 +244,9 @@ def main():
     sys.exit('HEAD is detached, check out the branch to build first.')
   while True:
     try:
-      repo.git.pull()
+      repo.git.fetch()
+      repo.git.checkout('--force', branch)
+      repo.git.reset('--hard', '@{upstream}')
     except:
       print('Failed to pull: ', sys.exc_info()[0])
     try:
