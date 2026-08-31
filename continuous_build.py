@@ -54,7 +54,8 @@ def copy_build(applications, version, name, source, path):
       for file in os.listdir(source_directory):
         file_path = os.path.join(source_directory, file)
         if os.path.isdir(file_path):
-          shutil.copytree(file_path, os.path.join(application_path, file))
+          shutil.copytree(file_path, os.path.join(application_path, file),
+            dirs_exist_ok=True)
           continue
         if not os.path.isfile(file_path):
           continue
@@ -179,7 +180,7 @@ def build_repo(repo, path, branch):
       shutil.copy2(os.path.join(repo.working_dir, 'Applications', 'setup.py'),
         os.path.join(destination_path, 'setup.py'))
       shutil.copytree(os.path.join(repo.working_dir, 'Applications', 'Python'),
-        os.path.join(destination_path, 'Python'))
+        os.path.join(destination_path, 'Python'), dirs_exist_ok=True)
       copy_python_libraries(path, version, repo.working_dir)
       if len(errors) == 0:
         if sys.platform == 'win32':
