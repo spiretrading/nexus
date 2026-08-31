@@ -11,8 +11,10 @@ import zipfile
 
 
 def call(command, cwd=None):
-  return subprocess.Popen(command.split(), stdout=subprocess.PIPE, cwd=cwd,
-    stderr=subprocess.PIPE).communicate()
+  process = subprocess.Popen(
+    command.split(), stdout=subprocess.PIPE, cwd=cwd, stderr=subprocess.PIPE)
+  output = process.communicate()
+  return (output[0], output[1], process.returncode)
 
 
 def makedirs(path):
@@ -116,9 +118,9 @@ def build_repo(repo, path, branch):
     result.append(
       call(os.path.join(repo.working_dir, 'configure.%s' % extension),
       repo.working_dir))
-    result.append(
-      call(os.path.join(repo.working_dir, 'build.%s' % extension),
-      repo.working_dir))
+    if result[-1][2] == 0:
+      result.append(call(os.path.join(repo.working_dir, 'build.%s' % extension),
+        repo.working_dir))
     terminal_output = b''
     for output in result:
       terminal_output += output[0] + b'\n\n\n\n'
@@ -126,46 +128,49 @@ def build_repo(repo, path, branch):
       terminal_output += output[1] + b'\n\n\n\n'
     destination_path = os.path.join(path, str(version))
     makedirs(destination_path)
-    nexus_applications = ['AdministrationServer', 'ChartingServer',
-      'ComplianceServer', 'DefinitionsServer', 'MarketDataRelayServer',
-      'MarketDataServer', 'ReplayMarketDataFeedClient', 'RiskServer',
-      'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
-      'WebPortal']
-    if sys.platform == 'win32':
-      nexus_applications.append('Spire')
-    copy_build(nexus_applications, version, 'Nexus', repo.working_dir, path)
-    beam_applications = ['AdminClient', 'ServiceLocator', 'UidServer']
-    copy_build(beam_applications, version, 'Beam',
-      os.path.join(repo.working_dir, 'Nexus', 'Dependencies', 'Beam'), path)
-    shutil.copy2(os.path.join(repo.working_dir, 'Applications', 'setup.py'),
-      os.path.join(destination_path, 'setup.py'))
-    shutil.copytree(os.path.join(repo.working_dir, 'Applications', 'Python'),
-      os.path.join(destination_path, 'Python'))
-    copy_python_libraries(path, version, repo.working_dir)
-    if sys.platform == 'win32':
-      for file in ['install_python.bat', 'setup.py']:
-        shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
-          os.path.join(destination_path, file))
-      archive_path = os.path.join(path, 'nexus-%s.zip' % str(version))
-      make_zipfile(destination_path, archive_path)
-    else:
-      for file in ['check.sh', 'install_python.sh', 'setup.py', 'start.sh',
-          'stop.sh']:
-        copy_path = os.path.join(destination_path, file)
-        shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
-          copy_path)
-        if file.endswith('.sh'):
-          with open(copy_path, 'r') as f:
-            translation = f.read().replace('/Application', '')
-          with open(copy_path, 'w') as f:
-            f.write(translation)
-      archive_path = os.path.join(path, 'nexus-%s.tar.gz' % str(version))
-      make_tarfile(destination_path, archive_path)
-    shutil.rmtree(destination_path)
-    makedirs(destination_path)
+    archive_path = None
+    if result[-1][2] == 0:
+      nexus_applications = ['AdministrationServer', 'ChartingServer',
+        'ComplianceServer', 'DefinitionsServer', 'MarketDataRelayServer',
+        'MarketDataServer', 'ReplayMarketDataFeedClient', 'RiskServer',
+        'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
+        'WebPortal']
+      if sys.platform == 'win32':
+        nexus_applications.append('Spire')
+      copy_build(nexus_applications, version, 'Nexus', repo.working_dir, path)
+      beam_applications = ['AdminClient', 'ServiceLocator', 'UidServer']
+      copy_build(beam_applications, version, 'Beam',
+        os.path.join(repo.working_dir, 'Nexus', 'Dependencies', 'Beam'), path)
+      shutil.copy2(os.path.join(repo.working_dir, 'Applications', 'setup.py'),
+        os.path.join(destination_path, 'setup.py'))
+      shutil.copytree(os.path.join(repo.working_dir, 'Applications', 'Python'),
+        os.path.join(destination_path, 'Python'))
+      copy_python_libraries(path, version, repo.working_dir)
+      if sys.platform == 'win32':
+        for file in ['install_python.bat', 'setup.py']:
+          shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
+            os.path.join(destination_path, file))
+        archive_path = os.path.join(path, 'nexus-%s.zip' % str(version))
+        make_zipfile(destination_path, archive_path)
+      else:
+        for file in ['check.sh', 'install_python.sh', 'setup.py', 'start.sh',
+            'stop.sh']:
+          copy_path = os.path.join(destination_path, file)
+          shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
+            copy_path)
+          if file.endswith('.sh'):
+            with open(copy_path, 'r') as f:
+              translation = f.read().replace('/Application', '')
+            with open(copy_path, 'w') as f:
+              f.write(translation)
+        archive_path = os.path.join(path, 'nexus-%s.tar.gz' % str(version))
+        make_tarfile(destination_path, archive_path)
+      shutil.rmtree(destination_path)
+      makedirs(destination_path)
     with open(os.path.join(destination_path, 'build.txt'), 'wb') as log_file:
       log_file.write(terminal_output)
-    shutil.move(archive_path, destination_path)
+    if archive_path is not None:
+      shutil.move(archive_path, destination_path)
 
 
 def main():
