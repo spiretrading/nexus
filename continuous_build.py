@@ -238,6 +238,7 @@ def build_repo(repo, path, timeout):
     shutil.move(log_path, os.path.join(destination_path, 'build.txt'))
     if archive_path is not None:
       shutil.move(archive_path, destination_path)
+  return len(versions)
 
 
 def main():
@@ -263,15 +264,17 @@ def main():
       repo.git.reset('--hard', '@{upstream}')
     except Exception as e:
       print('Failed to pull: %s' % e)
+    built = 0
     try:
-      build_repo(repo, args.path, args.timeout)
+      built = build_repo(repo, args.path, args.timeout)
     except Exception as e:
       print('Failed to build: %s' % e)
     try:
       repo.git.checkout(branch)
     except Exception as e:
       print('Failed to check out %s: %s' % (branch, e))
-    time.sleep(args.period)
+    if built == 0:
+      time.sleep(args.period)
 
 
 if __name__ == '__main__':
