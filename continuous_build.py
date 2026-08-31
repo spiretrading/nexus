@@ -57,7 +57,15 @@ def write_log(path, mode, sections):
       log_file.write(separator + separator)
 
 
+def executable_extension():
+  if sys.platform == 'win32':
+    return '.exe'
+  else:
+    return ''
+
+
 def copy_build(applications, version, name, source, path):
+  binary = executable_extension()
   errors = []
   destination_path = os.path.join(path, str(version))
   for application in applications:
@@ -66,6 +74,7 @@ def copy_build(applications, version, name, source, path):
       os.makedirs(application_path, exist_ok=True)
       source_directory = os.path.join(source, 'Applications', application,
         'Application')
+      executables = 0
       for file in os.listdir(source_directory):
         file_path = os.path.join(source_directory, file)
         if os.path.isdir(file_path):
@@ -75,6 +84,8 @@ def copy_build(applications, version, name, source, path):
         if not os.path.isfile(file_path):
           continue
         extension = os.path.splitext(file_path)[1]
+        if extension == binary:
+          executables += 1
         if extension in ['.py', '.yml', '.csv']:
           shutil.copy2(file_path, os.path.join(application_path, file))
         if sys.platform == 'win32':
@@ -83,16 +94,15 @@ def copy_build(applications, version, name, source, path):
         else:
           if extension in ['', '.sh']:
             shutil.copy2(file_path, os.path.join(application_path, file))
+      if executables == 0:
+        errors.append('%s %s produced no executable.' % (name, application))
     except OSError as e:
       errors.append('Failed to copy %s %s: %s' % (name, application, e))
   return errors
 
 
 def clean_build(applications, source):
-  if sys.platform == 'win32':
-    executable_extension = '.exe'
-  else:
-    executable_extension = ''
+  binary = executable_extension()
   for application in applications:
     source_directory = os.path.join(source, 'Applications', application,
       'Application')
@@ -102,7 +112,7 @@ def clean_build(applications, source):
       file_path = os.path.join(source_directory, file)
       if not os.path.isfile(file_path):
         continue
-      if os.path.splitext(file_path)[1] == executable_extension:
+      if os.path.splitext(file_path)[1] == binary:
         os.remove(file_path)
 
 
@@ -168,7 +178,7 @@ def build_repo(repo, path, timeout):
       'SimulationMarketDataFeedClient', 'SimulationOrderExecutionServer',
       'WebPortal']
     if sys.platform == 'win32':
-      nexus_applications.append('Spire')
+      nexus_applications.extend(['Lollipop', 'Spire'])
     beam_applications = ['AdminClient', 'ServiceLocator', 'UidServer']
     beam_path = os.path.join(repo.working_dir, 'Nexus', 'Dependencies', 'Beam')
     clean_build(nexus_applications, repo.working_dir)
