@@ -150,22 +150,20 @@ def build_repo(repo, path, branch, timeout):
     if d.isdecimal() and os.path.isdir(os.path.join(path, d))]
   builds.sort(reverse=True)
   latest = None
-  if len(builds) != 0:
-    for i in range(len(commits) - 1, -1, -1):
-      version = int(repo.git.rev_list('--count', '--first-parent', commits[i]))
-      if version in builds:
-        latest = i
-        break
+  for version in builds:
+    if version <= len(commits):
+      latest = version
+      break
   if latest is None:
-    commits = [commits[-1]]
+    versions = [len(commits)]
   else:
-    commits = commits[latest + 1:]
+    versions = range(latest + 1, len(commits) + 1)
   if sys.platform == 'win32':
     extension = 'bat'
   else:
     extension = 'sh'
-  for commit in commits:
-    version = int(repo.git.rev_list('--count', '--first-parent', commit))
+  for version in versions:
+    commit = commits[version - 1]
     repo.git.checkout(commit)
     nexus_applications = ['AdministrationServer', 'ChartingServer',
       'ComplianceServer', 'DefinitionsServer', 'MarketDataRelayServer',
