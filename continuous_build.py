@@ -1,5 +1,4 @@
 import argparse
-import errno
 import git
 import os
 import shutil
@@ -33,14 +32,6 @@ def call(command, cwd, timeout):
   return (output[0], output[1], process.returncode)
 
 
-def makedirs(path):
-  try:
-    os.makedirs(path)
-  except OSError as e:
-    if e.errno != errno.EEXIST:
-      raise
-
-
 def make_tarfile(source, destination):
   with tarfile.open(destination, 'w:gz') as tar:
     for file in os.listdir(source):
@@ -48,14 +39,12 @@ def make_tarfile(source, destination):
 
 
 def make_zipfile(source, destination):
-  archive = zipfile.ZipFile(destination, 'w', zipfile.ZIP_DEFLATED)
   source = os.path.abspath(source)
-  for root, dirs, files in os.walk(source):
-    for file in files:
-      absolute_path = os.path.abspath(os.path.join(root, file))
-      archive.write(os.path.join(root, file),
-        arcname=absolute_path[len(source) + 1:])
-  archive.close()
+  with zipfile.ZipFile(destination, 'w', zipfile.ZIP_DEFLATED) as archive:
+    for root, directories, files in os.walk(source):
+      for entry in directories + files:
+        entry_path = os.path.join(root, entry)
+        archive.write(entry_path, arcname=os.path.relpath(entry_path, source))
 
 
 def write_log(path, mode, sections):
@@ -73,7 +62,7 @@ def copy_build(applications, version, name, source, path):
   for application in applications:
     try:
       application_path = os.path.join(destination_path, application)
-      makedirs(application_path)
+      os.makedirs(application_path, exist_ok=True)
       source_directory = os.path.join(source, 'Applications', application,
         'Application')
       for file in os.listdir(source_directory):
@@ -131,7 +120,7 @@ def python_libraries(repo_path):
 
 def copy_python_libraries(path, version, repo_path):
   python_path = os.path.join(path, str(version), 'Python')
-  makedirs(python_path)
+  os.makedirs(python_path, exist_ok=True)
   for library in python_libraries(repo_path):
     if os.path.isfile(library):
       shutil.copy2(library, python_path)
@@ -143,7 +132,7 @@ def clean_python_libraries(repo_path):
       os.remove(library)
 
 
-def build_repo(repo, path, branch, timeout):
+def build_repo(repo, path, timeout):
   commits = repo.git.rev_list('--first-parent', 'HEAD').split('\n')
   commits.reverse()
   builds = [int(d) for d in os.listdir(path)
@@ -194,7 +183,7 @@ def build_repo(repo, path, branch, timeout):
     log_path = os.path.join(path, 'build-%s.txt' % version)
     write_log(log_path, 'wb', sections)
     destination_path = os.path.join(path, str(version))
-    makedirs(destination_path)
+    os.makedirs(destination_path, exist_ok=True)
     archive_path = None
     if status == 0:
       errors = copy_build(nexus_applications, version, 'Nexus',
@@ -211,26 +200,24 @@ def build_repo(repo, path, branch, timeout):
       copy_python_libraries(path, version, repo.working_dir)
       if len(errors) == 0:
         if sys.platform == 'win32':
-          for file in ['install_python.bat', 'setup.py']:
-            shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
-              os.path.join(destination_path, file))
-          archive_path = os.path.join(path, 'nexus-%s.zip' % str(version))
+          file = 'install_python.bat'
+          shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
+            os.path.join(destination_path, file))
+          archive_path = os.path.join(path, 'nexus-%s.zip' % version)
           make_zipfile(destination_path, archive_path)
         else:
-          for file in ['check.sh', 'install_python.sh', 'setup.py', 'start.sh',
-              'stop.sh']:
+          for file in ['check.sh', 'install_python.sh', 'start.sh', 'stop.sh']:
             copy_path = os.path.join(destination_path, file)
             shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
               copy_path)
-            if file.endswith('.sh'):
-              with open(copy_path, 'r') as f:
-                translation = f.read().replace('/Application', '')
-              with open(copy_path, 'w') as f:
-                f.write(translation)
-          archive_path = os.path.join(path, 'nexus-%s.tar.gz' % str(version))
+            with open(copy_path, 'r') as f:
+              translation = f.read().replace('/Application', '')
+            with open(copy_path, 'w') as f:
+              f.write(translation)
+          archive_path = os.path.join(path, 'nexus-%s.tar.gz' % version)
           make_tarfile(destination_path, archive_path)
       shutil.rmtree(destination_path)
-      makedirs(destination_path)
+      os.makedirs(destination_path, exist_ok=True)
     shutil.move(log_path, os.path.join(destination_path, 'build.txt'))
     if archive_path is not None:
       shutil.move(archive_path, destination_path)
@@ -246,7 +233,7 @@ def main():
   parser.add_argument('--timeout', type=int,
     help='Build timeout in seconds.', default=14400)
   args = parser.parse_args()
-  makedirs(args.path)
+  os.makedirs(args.path, exist_ok=True)
   repo = git.Repo('.')
   try:
     branch = repo.active_branch.name
@@ -257,10 +244,10 @@ def main():
       repo.git.fetch()
       repo.git.checkout('--force', branch)
       repo.git.reset('--hard', '@{upstream}')
-    except:
-      print('Failed to pull: ', sys.exc_info()[0])
+    except Exception as e:
+      print('Failed to pull: %s' % e)
     try:
-      build_repo(repo, args.path, branch, args.timeout)
+      build_repo(repo, args.path, args.timeout)
     except Exception as e:
       print('Failed to build: %s' % e)
     try:
