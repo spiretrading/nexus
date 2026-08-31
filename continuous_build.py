@@ -106,17 +106,24 @@ def clean_build(applications, source):
         os.remove(file_path)
 
 
-def python_libraries(repo_path):
+def python_extension():
   if sys.platform == 'win32':
-    extension = '.pyd'
+    return '.pyd'
   else:
-    extension = '.so'
+    return '.so'
+
+
+def nexus_library(repo_path):
+  return os.path.join(repo_path, 'Nexus', 'Libraries', 'Release',
+    'nexus%s' % python_extension())
+
+
+def python_libraries(repo_path):
   return [os.path.join(repo_path, 'Nexus', 'Dependencies', 'aspen',
-    'Libraries', 'Release', 'aspen%s' % extension),
+    'Libraries', 'Release', 'aspen%s' % python_extension()),
     os.path.join(repo_path, 'Nexus', 'Dependencies', 'Beam', 'Beam',
-    'Libraries', 'Release', 'beam%s' % extension),
-    os.path.join(repo_path, 'Nexus', 'Libraries', 'Release',
-    'nexus%s' % extension)]
+    'Libraries', 'Release', 'beam%s' % python_extension()),
+    nexus_library(repo_path)]
 
 
 def copy_python_libraries(path, version, repo_path):
@@ -127,10 +134,10 @@ def copy_python_libraries(path, version, repo_path):
       shutil.copy2(library, python_path)
 
 
-def clean_python_libraries(repo_path):
-  for library in python_libraries(repo_path):
-    if os.path.isfile(library):
-      os.remove(library)
+def clean_nexus_library(repo_path):
+  library = nexus_library(repo_path)
+  if os.path.isfile(library):
+    os.remove(library)
 
 
 def build_repo(repo, path, timeout):
@@ -165,8 +172,7 @@ def build_repo(repo, path, timeout):
     beam_applications = ['AdminClient', 'ServiceLocator', 'UidServer']
     beam_path = os.path.join(repo.working_dir, 'Nexus', 'Dependencies', 'Beam')
     clean_build(nexus_applications, repo.working_dir)
-    clean_build(beam_applications, beam_path)
-    clean_python_libraries(repo.working_dir)
+    clean_nexus_library(repo.working_dir)
     result = []
     status = 0
     for step in ['configure', 'build']:
