@@ -120,17 +120,20 @@ def clean_python_libraries(repo_path):
 def build_repo(repo, path, branch):
   commits = repo.git.rev_list('--first-parent', 'HEAD').split('\n')
   commits.reverse()
-  builds = [int(d) for d in os.listdir(path) if os.path.isdir(
-    os.path.join(path, d))]
+  builds = [int(d) for d in os.listdir(path)
+    if d.isdecimal() and os.path.isdir(os.path.join(path, d))]
   builds.sort(reverse=True)
-  if len(builds) == 0:
-    commits = [commits[-1]]
-  else:
+  latest = None
+  if len(builds) != 0:
     for i in range(len(commits) - 1, -1, -1):
       version = int(repo.git.rev_list('--count', '--first-parent', commits[i]))
       if version in builds:
-        commits = commits[i + 1:]
+        latest = i
         break
+  if latest is None:
+    commits = [commits[-1]]
+  else:
+    commits = commits[latest + 1:]
   if sys.platform == 'win32':
     extension = 'bat'
   else:
