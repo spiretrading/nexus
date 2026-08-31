@@ -43,9 +43,10 @@ def make_zipfile(source, destination):
 
 
 def copy_build(applications, version, name, source, path):
-  try:
-    destination_path = os.path.join(path, str(version))
-    for application in applications:
+  errors = []
+  destination_path = os.path.join(path, str(version))
+  for application in applications:
+    try:
       application_path = os.path.join(destination_path, application)
       makedirs(application_path)
       source_directory = os.path.join(source, 'Applications', application,
@@ -66,8 +67,9 @@ def copy_build(applications, version, name, source, path):
         else:
           if extension in ['', '.sh']:
             shutil.copy2(file_path, os.path.join(application_path, file))
-  except OSError:
-    return
+    except OSError as e:
+      errors.append('Failed to copy %s %s: %s' % (name, application, e))
+  return errors
 
 
 def clean_build(applications, source):
@@ -164,32 +166,37 @@ def build_repo(repo, path, branch):
     makedirs(destination_path)
     archive_path = None
     if result[-1][2] == 0:
-      copy_build(nexus_applications, version, 'Nexus', repo.working_dir, path)
-      copy_build(beam_applications, version, 'Beam', beam_path, path)
+      errors = copy_build(nexus_applications, version, 'Nexus',
+        repo.working_dir, path)
+      errors.extend(
+        copy_build(beam_applications, version, 'Beam', beam_path, path))
+      for error in errors:
+        terminal_output += error.encode('utf-8') + b'\n'
       shutil.copy2(os.path.join(repo.working_dir, 'Applications', 'setup.py'),
         os.path.join(destination_path, 'setup.py'))
       shutil.copytree(os.path.join(repo.working_dir, 'Applications', 'Python'),
         os.path.join(destination_path, 'Python'))
       copy_python_libraries(path, version, repo.working_dir)
-      if sys.platform == 'win32':
-        for file in ['install_python.bat', 'setup.py']:
-          shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
-            os.path.join(destination_path, file))
-        archive_path = os.path.join(path, 'nexus-%s.zip' % str(version))
-        make_zipfile(destination_path, archive_path)
-      else:
-        for file in ['check.sh', 'install_python.sh', 'setup.py', 'start.sh',
-            'stop.sh']:
-          copy_path = os.path.join(destination_path, file)
-          shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
-            copy_path)
-          if file.endswith('.sh'):
-            with open(copy_path, 'r') as f:
-              translation = f.read().replace('/Application', '')
-            with open(copy_path, 'w') as f:
-              f.write(translation)
-        archive_path = os.path.join(path, 'nexus-%s.tar.gz' % str(version))
-        make_tarfile(destination_path, archive_path)
+      if len(errors) == 0:
+        if sys.platform == 'win32':
+          for file in ['install_python.bat', 'setup.py']:
+            shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
+              os.path.join(destination_path, file))
+          archive_path = os.path.join(path, 'nexus-%s.zip' % str(version))
+          make_zipfile(destination_path, archive_path)
+        else:
+          for file in ['check.sh', 'install_python.sh', 'setup.py', 'start.sh',
+              'stop.sh']:
+            copy_path = os.path.join(destination_path, file)
+            shutil.copy2(os.path.join(repo.working_dir, 'Applications', file),
+              copy_path)
+            if file.endswith('.sh'):
+              with open(copy_path, 'r') as f:
+                translation = f.read().replace('/Application', '')
+              with open(copy_path, 'w') as f:
+                f.write(translation)
+          archive_path = os.path.join(path, 'nexus-%s.tar.gz' % str(version))
+          make_tarfile(destination_path, archive_path)
       shutil.rmtree(destination_path)
       makedirs(destination_path)
     with open(os.path.join(destination_path, 'build.txt'), 'wb') as log_file:
