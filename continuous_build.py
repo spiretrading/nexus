@@ -12,7 +12,7 @@ import zipfile
 
 def call(command, cwd=None):
   process = subprocess.Popen(
-    command.split(), stdout=subprocess.PIPE, cwd=cwd, stderr=subprocess.PIPE)
+    command, stdout=subprocess.PIPE, cwd=cwd, stderr=subprocess.PIPE)
   output = process.communicate()
   return (output[0], output[1], process.returncode)
 
@@ -152,10 +152,11 @@ def build_repo(repo, path, branch):
     clean_python_libraries(repo.working_dir)
     result = []
     result.append(
-      call(os.path.join(repo.working_dir, 'configure.%s' % extension),
+      call([os.path.join(repo.working_dir, 'configure.%s' % extension)],
       repo.working_dir))
     if result[-1][2] == 0:
-      result.append(call(os.path.join(repo.working_dir, 'build.%s' % extension),
+      result.append(
+        call([os.path.join(repo.working_dir, 'build.%s' % extension)],
         repo.working_dir))
     terminal_output = b''
     for output in result:
