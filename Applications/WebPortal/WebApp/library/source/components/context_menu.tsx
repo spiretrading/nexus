@@ -63,14 +63,14 @@ export class ContextMenu extends React.Component<Properties, State> {
           className={[css(STYLES.contextMenu), this.props.className].join(' ')}
           style={this.props.style} onKeyDown={this.onKeyDown}
           onFocus={this.onFocus}>
-        <ul role='menu' className={css(STYLES.menu)}
+        <menu role='menu' className={css(STYLES.menu)}
             onPointerMove={this.onPointerMove}>
           {this.props.items.map((item, index) =>
             <li key={index} role='presentation'
                 onClick={(event) => this.onClick(event, index)}>
               {this.renderBody(item, index)}
             </li>)}
-        </ul>
+        </menu>
       </div>);
   }
 
@@ -125,9 +125,12 @@ export class ContextMenu extends React.Component<Properties, State> {
       } else if(event.key === 'End') {
         return items.length - 1;
       } else if(event.key === 'ArrowUp') {
-        return Math.max(this.state.currentIndex - 1, 0);
+        if(this.state.currentIndex === -1) {
+          return items.length - 1;
+        }
+        return (this.state.currentIndex - 1 + items.length) % items.length;
       } else if(event.key === 'ArrowDown') {
-        return Math.min(this.state.currentIndex + 1, items.length - 1);
+        return (this.state.currentIndex + 1) % items.length;
       }
       return -1;
     })();
@@ -146,7 +149,7 @@ export class ContextMenu extends React.Component<Properties, State> {
     this.setState({currentIndex: this.focusableItems.indexOf(item)});
   };
 
-  private onPointerMove = (event: React.PointerEvent<HTMLUListElement>) => {
+  private onPointerMove = (event: React.PointerEvent<HTMLElement>) => {
     const item = this.getItem(event.target as HTMLElement);
     if(!item || item === document.activeElement) {
       return;
@@ -283,9 +286,10 @@ const STYLES = StyleSheet.create({
     color: '#333333',
     fontFamily: '"Roboto", system-ui, sans-serif',
     opacity: 0,
-    transitionProperty: 'opacity',
+    transitionProperty: 'opacity, display, overlay',
     transitionDuration: '200ms',
     transitionTimingFunction: 'ease-out',
+    transitionBehavior: 'allow-discrete',
     ':popover-open': {
       opacity: 1
     },
@@ -319,6 +323,7 @@ const STYLES = StyleSheet.create({
     fontSize: '0.875rem',
     color: '#333333',
     fontFamily: '"Roboto", system-ui, sans-serif',
+    cursor: 'pointer',
     ':focus': {
       backgroundColor: '#F8F8F8'
     }
@@ -333,10 +338,11 @@ const STYLES = StyleSheet.create({
     border: 'none',
     outline: 'none',
     borderRadius: 0,
-    padding: '0 18px 0 7px',
+    padding: '0 18px 0 8px',
     fontSize: '0.875rem',
     color: '#333333',
     fontFamily: '"Roboto", system-ui, sans-serif',
+    cursor: 'pointer',
     ':focus': {
       backgroundColor: '#F8F8F8'
     }
