@@ -1,6 +1,13 @@
+#include <string>
+#include <Beam/IO/SharedBuffer.hpp>
+#include <Beam/Serialization/BinaryReceiver.hpp>
+#include <Beam/Serialization/BinarySender.hpp>
+#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Spire/Spire/LocalValueModel.hpp"
 
+using namespace Beam;
+using namespace Beam::Tests;
 using namespace Spire;
 
 TEST_SUITE("LocalValueModel") {
@@ -40,5 +47,30 @@ TEST_SUITE("LocalValueModel") {
     connection.disconnect();
     model.set(4);
     REQUIRE(update_count == 2);
+  }
+
+  TEST_CASE("shuttle") {
+    test_round_trip_shuttle(LocalValueModel(std::string("abc")),
+      [] (auto&& received) {
+        REQUIRE(received.get() == "abc");
+      });
+  }
+
+  TEST_CASE("receive") {
+    auto buffer = SharedBuffer();
+    auto sender = BinarySender<SharedBuffer>();
+    sender.set(Ref(buffer));
+    sender.shuttle(LocalValueModel(std::string("abc")));
+    auto receiver = BinaryReceiver<SharedBuffer>();
+    receiver.set(Ref(buffer));
+    auto model = LocalValueModel<std::string>();
+    auto update_count = 0;
+    model.connect_update_signal([&] (const auto& value) {
+      ++update_count;
+      CHECK(value == "abc");
+    });
+    receiver.shuttle(model);
+    REQUIRE(update_count == 1);
+    REQUIRE(model.get() == "abc");
   }
 }

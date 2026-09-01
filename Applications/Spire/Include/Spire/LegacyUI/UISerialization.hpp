@@ -121,6 +121,7 @@
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorVenueSelectionWidgetWindowSettings.hpp"
 #include "Spire/OrderImbalanceIndicator/OrderImbalanceIndicatorWindowSettings.hpp"
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
+#include "Spire/Spire/PropertyHubSerialization.hpp"
 #include "Spire/TimeAndSales/LegacyTimeAndSalesWindowSettings.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
 #include "Spire/Toolbar/ToolbarWindowSettings.hpp"
@@ -296,6 +297,7 @@ namespace Spire {
     RegisterCanvasTypeTypes(Beam::out(registry));
     RegisterCanvasValueNodeTypes(Beam::out(registry));
     RegisterDashboardTypes(Beam::out(registry));
+    RegisterPropertyHubTypes(Beam::out(registry));
     RegisterWindowSettingsTypes(Beam::out(registry));
   }
 }

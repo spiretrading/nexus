@@ -1,6 +1,8 @@
 #ifndef SPIRE_LOCAL_VALUE_MODEL_HPP
 #define SPIRE_LOCAL_VALUE_MODEL_HPP
 #include <utility>
+#include <Beam/Serialization/Receiver.hpp>
+#include <Beam/Serialization/Sender.hpp>
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 
@@ -66,6 +68,26 @@ namespace Spire {
       const typename UpdateSignal::slot_type& slot) const {
     return m_update_signal.connect(slot);
   }
+}
+
+namespace Beam {
+  template<typename T>
+  struct Send<Spire::LocalValueModel<T>> {
+    template<IsSender S>
+    void operator ()(S& sender, const Spire::LocalValueModel<T>& value,
+        unsigned int version) const {
+      sender.send("value", value.get());
+    }
+  };
+
+  template<typename T>
+  struct Receive<Spire::LocalValueModel<T>> {
+    template<IsReceiver R>
+    void operator ()(R& receiver, Spire::LocalValueModel<T>& value,
+        unsigned int version) const {
+      value.set(receive<T>(receiver, "value"));
+    }
+  };
 }
 
 #endif
