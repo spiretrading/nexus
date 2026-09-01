@@ -49,7 +49,7 @@ namespace Nexus {
       bool m_is_series_complete;
       std::vector<std::shared_ptr<Order>> m_orders;
       std::unique_ptr<std::atomic_int> m_cancel_count;
-      Aspen::Trigger* m_trigger;
+      std::unique_ptr<std::atomic<Aspen::CommitFlag*>> m_flag;
       std::unique_ptr<Beam::RoutineTaskQueue> m_tasks;
   };
 
@@ -66,11 +66,13 @@ namespace Nexus {
       m_series(std::move(series)),
       m_is_series_complete(false),
       m_cancel_count(std::make_unique<std::atomic_int>(0)),
+      m_flag(std::make_unique<std::atomic<Aspen::CommitFlag*>>(nullptr)),
       m_tasks(std::make_unique<Beam::RoutineTaskQueue>()) {}
 
   template<typename C, typename S> requires
     IsOrderExecutionClient<Beam::dereference_t<C>>
   Aspen::State OrderCancellationReactor<C, S>::commit(int sequence) noexcept {
+    m_flag->store(Aspen::CommitFlag::get_current());
     if(!m_is_series_complete) {
       auto state = m_series.commit(sequence);
       if(Aspen::has_evaluation(state)) {
@@ -84,15 +86,16 @@ namespace Nexus {
         if(*m_cancel_count == 0) {
           return state;
         }
-        m_trigger = Aspen::Trigger::get_trigger();
         for(auto& order : m_orders) {
           m_client->cancel(order);
           order->get_publisher().monitor(m_tasks->get_slot<ExecutionReport>(
-            [cancel_count = m_cancel_count.get(), trigger = m_trigger] (
+            [cancel_count = m_cancel_count.get(), flag = m_flag.get()] (
                 const ExecutionReport& report) {
               if(is_terminal(report.m_status)) {
                 if(--*cancel_count == 0) {
-                  trigger->signal();
+                  if(auto parent = flag->load()) {
+                    parent->raise();
+                  }
                 }
               }
             }));
