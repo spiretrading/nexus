@@ -196,7 +196,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
         <RolesInput
           displaySize={this.props.displaySize}
           roles={this.state.roles}
-          isError={this.isShowingError(Field.ROLES)}
+          labelId={CreateAccountPage.ROLES_LABEL_ID}
           onClick={this.onRoleClick}/>),
       this.renderItem(Field.GROUPS,
         <GroupSelectionBox
@@ -224,6 +224,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
         this.state.identity.province, this.onProvinceChange),
       this.renderItem(Field.COUNTRY,
         <CountrySelect
+          id={CreateAccountPage.IDS[Field.COUNTRY]}
           countryDatabase={this.props.countryDatabase}
           value={this.state.identity.country}
           style={CreateAccountPage.STYLE.countryField}
@@ -260,13 +261,28 @@ export class CreateAccountPage extends React.Component<Properties, State> {
 
   private renderItem(field: CreateAccountPage.Field, item: JSX.Element,
       isLast?: boolean): JSX.Element {
+    const isRoles = field === CreateAccountPage.Field.ROLES;
+    const htmlFor = (() => {
+      if(isRoles) {
+        return null;
+      }
+      return CreateAccountPage.IDS[field];
+    })();
+    const labelId = (() => {
+      if(isRoles) {
+        return CreateAccountPage.ROLES_LABEL_ID;
+      }
+      return null;
+    })();
     return (
       <PropertyItem
           displaySize={this.props.displaySize}
           label={CreateAccountPage.LABELS[field]}
-          htmlFor={CreateAccountPage.IDS[field]}
+          htmlFor={htmlFor}
+          labelId={labelId}
           validation={this.state.validation[field]}
-          isLast={isLast}>
+          isLast={isLast}
+          onBlur={() => this.onFieldBlur(field)}>
         {item}
       </PropertyItem>);
   }
@@ -305,12 +321,48 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       !this.state.validation.every(input => input.valid);
   }
 
-  private markValid(field: CreateAccountPage.Field): void {
+  private markRequired(field: CreateAccountPage.Field, isEmpty: boolean): void {
+    this.validateRequired(field, isEmpty,
+      this.state.validation[field].showError);
+  }
+
+  private validateRequired(field: CreateAccountPage.Field, isEmpty: boolean,
+      showError: boolean): void {
     this.updateValidation(field, {
-      valid: true,
-      error: CreateAccountModel.ValidationError.NONE,
-      showError: true
+      valid: !isEmpty,
+      error: (() => {
+        if(isEmpty) {
+          return CreateAccountModel.ValidationError.REQUIRED;
+        }
+        return CreateAccountModel.ValidationError.NONE;
+      })(),
+      showError: showError
     });
+  }
+
+  private isFieldEmpty(field: CreateAccountPage.Field): boolean {
+    switch(field) {
+      case CreateAccountPage.Field.FIRST_NAME:
+        return this.state.identity.firstName.trim() === '';
+      case CreateAccountPage.Field.LAST_NAME:
+        return this.state.identity.lastName.trim() === '';
+      case CreateAccountPage.Field.ROLES:
+        return !this.hasRole();
+      case CreateAccountPage.Field.GROUPS:
+        return this.state.selectedGroups.length === 0;
+      case CreateAccountPage.Field.EMAIL:
+        return this.state.identity.emailAddress.trim() === '';
+      default:
+        return false;
+    }
+  }
+
+  private onFieldBlur(field: CreateAccountPage.Field): void {
+    const validation = this.state.validation[field];
+    if(validation.showError) {
+      return;
+    }
+    this.updateValidation(field, {...validation, showError: true});
   }
 
   private updateValidation(field: CreateAccountPage.Field,
@@ -355,25 +407,25 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       this.state.roles.set(role);
     }
     this.setState({roles: this.state.roles});
-    this.markValid(CreateAccountPage.Field.ROLES);
+    this.validateRequired(CreateAccountPage.Field.ROLES, !this.hasRole(), true);
   }
 
   private onFirstNameChange = (value: string) => {
     this.state.identity.firstName = value;
     this.setState({identity: this.state.identity});
-    this.markValid(CreateAccountPage.Field.FIRST_NAME);
+    this.markRequired(CreateAccountPage.Field.FIRST_NAME, value.trim() === '');
   }
 
   private onLastNameChange = (value: string) => {
     this.state.identity.lastName = value;
     this.setState({identity: this.state.identity});
-    this.markValid(CreateAccountPage.Field.LAST_NAME);
+    this.markRequired(CreateAccountPage.Field.LAST_NAME, value.trim() === '');
   }
 
   private onEmailChange = (value: string) => {
     this.state.identity.emailAddress = value;
     this.setState({identity: this.state.identity});
-    this.markValid(CreateAccountPage.Field.EMAIL);
+    this.markRequired(CreateAccountPage.Field.EMAIL, value.trim() === '');
   }
 
   private onAddressChange = (addressLineOne: string,
@@ -400,9 +452,20 @@ export class CreateAccountPage extends React.Component<Properties, State> {
   }
 
   private onUsernameChange = (value: string) => {
+    const field = CreateAccountPage.Field.USERNAME;
     this.setState({username: value});
-    this.markValid(CreateAccountPage.Field.USERNAME);
     clearTimeout(this._usernameTimer);
+    ++this._usernameRequest;
+    const error = CreateAccountModel.checkUsernameFormat(
+      CreateAccountModel.normalizeUsername(value));
+    this.updateValidation(field, {
+      valid: error === CreateAccountModel.ValidationError.NONE,
+      error: error,
+      showError: this.state.validation[field].showError
+    });
+    if(error !== CreateAccountModel.ValidationError.NONE) {
+      return;
+    }
     this._usernameTimer = setTimeout(() => {
       this.validateUsername(value);
     }, CreateAccountPage.VALIDATION_DELAY);
@@ -415,10 +478,11 @@ export class CreateAccountPage extends React.Component<Properties, State> {
         this.state.username !== username) {
       return;
     }
-    this.updateValidation(CreateAccountPage.Field.USERNAME, {
+    const field = CreateAccountPage.Field.USERNAME;
+    this.updateValidation(field, {
       valid: error === CreateAccountModel.ValidationError.NONE,
       error: error,
-      showError: true
+      showError: this.state.validation[field].showError
     });
   }
 
@@ -444,54 +508,61 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       groupsValue: '',
       suggestedGroups: []
     });
-    this.markValid(CreateAccountPage.Field.GROUPS);
+    this.markRequired(CreateAccountPage.Field.GROUPS, false);
   }
 
   private onRemoveGroup = (group: Beam.DirectoryEntry) => {
     this.state.selectedGroups.splice(
       this.state.selectedGroups.indexOf(group), 1);
     this.setState({selectedGroups: this.state.selectedGroups});
+    this.markRequired(CreateAccountPage.Field.GROUPS,
+      this.state.selectedGroups.length === 0);
   }
 
   private onSubmit = async () => {
     const Field = CreateAccountPage.Field;
     const ValidationError = CreateAccountModel.ValidationError;
-    const inputs = this.state.validation.slice();
-    const markRequired = (
-        field: CreateAccountPage.Field, isEmpty: boolean) => {
-      inputs[field] = (() => {
-        if(isEmpty) {
-          return {
-            valid: false, error: ValidationError.REQUIRED, showError: true
-          };
-        }
-        return {valid: true, error: ValidationError.NONE, showError: true};
-      })();
-    };
-    markRequired(Field.FIRST_NAME, this.state.identity.firstName === '');
-    markRequired(Field.LAST_NAME, this.state.identity.lastName === '');
-    markRequired(Field.EMAIL, this.state.identity.emailAddress === '');
-    markRequired(Field.GROUPS, this.state.selectedGroups.length === 0);
-    markRequired(Field.ROLES, !this.hasRole());
-    const username = CreateAccountModel.normalizeUsername(this.state.username);
-    const usernameError = await this.props.model.validateUsername(username);
-    inputs[Field.USERNAME] = {
-      valid: usernameError === ValidationError.NONE,
-      error: usernameError,
-      showError: true
-    };
-    this.setState({validation: inputs});
-    if(!inputs.every(input => input.valid)) {
-      return;
-    }
     this.setState({status: CreateAccountPage.Status.IN_PROGRESS});
+    const username = CreateAccountModel.normalizeUsername(this.state.username);
     try {
+      const usernameError = await this.props.model.validateUsername(username);
+      const inputs = this.state.validation.slice();
+      for(let index = 0; index !== inputs.length; ++index) {
+        const field = index as CreateAccountPage.Field;
+        if(field === Field.USERNAME) {
+          inputs[field] = {
+            valid: usernameError === ValidationError.NONE,
+            error: usernameError,
+            showError: true
+          };
+        } else if(CreateAccountPage.isRequired(field)) {
+          const isEmpty = this.isFieldEmpty(field);
+          inputs[field] = {
+            valid: !isEmpty,
+            error: (() => {
+              if(isEmpty) {
+                return ValidationError.REQUIRED;
+              }
+              return ValidationError.NONE;
+            })(),
+            showError: true
+          };
+        } else {
+          inputs[field] = {...inputs[field], showError: true};
+        }
+      }
+      this.setState({validation: inputs});
+      if(!inputs.every(input => input.valid)) {
+        this.setState({status: CreateAccountPage.Status.NONE});
+        return;
+      }
       await this.props.model.createAccount(username,
         this.state.selectedGroups[0], this.state.identity, this.state.roles);
       this.setState({status: CreateAccountPage.Status.COMPLETE});
       this.props.onComplete?.();
     } catch(error: any) {
       if(error?.code === CreateAccountPage.CONFLICT) {
+        const inputs = this.state.validation.slice();
         inputs[Field.USERNAME] = {
           valid: false, error: ValidationError.DUPLICATE, showError: true
         };
@@ -513,15 +584,32 @@ export class CreateAccountPage extends React.Component<Properties, State> {
 
   private static makeValidation(): InputValidation[] {
     const validation = [] as InputValidation[];
-    for(const label of CreateAccountPage.LABELS) {
-      validation.push({...VALID_INPUT});
+    for(let index = 0; index !== CreateAccountPage.LABELS.length; ++index) {
+      if(CreateAccountPage.isRequired(index as CreateAccountPage.Field)) {
+        validation.push({
+          valid: false,
+          error: CreateAccountModel.ValidationError.REQUIRED,
+          showError: false
+        });
+      } else {
+        validation.push({...VALID_INPUT});
+      }
     }
-    validation[CreateAccountPage.Field.USERNAME] = {
-      valid: false,
-      error: CreateAccountModel.ValidationError.REQUIRED,
-      showError: false
-    };
     return validation;
+  }
+
+  private static isRequired(field: CreateAccountPage.Field): boolean {
+    switch(field) {
+      case CreateAccountPage.Field.FIRST_NAME:
+      case CreateAccountPage.Field.LAST_NAME:
+      case CreateAccountPage.Field.USERNAME:
+      case CreateAccountPage.Field.ROLES:
+      case CreateAccountPage.Field.GROUPS:
+      case CreateAccountPage.Field.EMAIL:
+        return true;
+      default:
+        return false;
+    }
   }
 
   private static readonly LABELS = ['First Name', 'Last Name', 'Username',
@@ -538,6 +626,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       padding: '18px 18px 40px',
       fontFamily: '"Roboto", system-ui, sans-serif',
       fontWeight: 400,
+      fontSize: '0.875rem',
       color: '#333333'
     },
     section: {
@@ -702,6 +791,7 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       }
     }
   });
+  private static readonly ROLES_LABEL_ID = 'roles-label';
   private static readonly CONFLICT = 409;
   private static readonly MAX_NUMBER_OF_GROUPS = 1;
   private static readonly VALIDATION_DELAY = 300;

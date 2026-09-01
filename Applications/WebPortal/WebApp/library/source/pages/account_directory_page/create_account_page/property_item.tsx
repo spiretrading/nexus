@@ -12,13 +12,19 @@ interface Properties {
   label: string;
 
   /** The id of the input the label names. */
-  htmlFor: string;
+  htmlFor?: string;
+
+  /** The id given to the label itself. */
+  labelId?: string;
 
   /** The validation state of the input. */
   validation: InputValidation;
 
   /** Whether the input takes a fixed width rather than filling the row. */
   isLast?: boolean;
+
+  /** Called when the focus leaves the input. */
+  onBlur?: () => void;
 }
 
 /** Displays a labelled input alongside its validation error. */
@@ -31,8 +37,9 @@ export class PropertyItem extends React.Component<Properties> {
         validation={this.props.validation}/>);
     if(this.props.displaySize === DisplaySize.SMALL) {
       return (
-        <div style={PropertyItem.STYLE.item}>
+        <div style={PropertyItem.STYLE.item} onBlur={this.props.onBlur}>
           <label
+              id={this.props.labelId}
               style={PropertyItem.STYLE.smallLabel}
               htmlFor={this.props.htmlFor}>
             {this.props.label}
@@ -61,12 +68,13 @@ export class PropertyItem extends React.Component<Properties> {
         <div style={PropertyItem.STYLE.field}>{this.props.children}</div>);
     })();
     return (
-      <div style={PropertyItem.STYLE.item}>
+      <div style={PropertyItem.STYLE.item} onBlur={this.props.onBlur}>
         <div style={PropertyItem.STYLE.row}>
           <div style={PropertyItem.STYLE.labelColumn}>
             <div style={PropertyItem.STYLE.wrapper}>
               <div style={PropertyItem.STYLE.filler}/>
               <label
+                  id={this.props.labelId}
                   style={PropertyItem.STYLE.label}
                   htmlFor={this.props.htmlFor}>
                 {this.props.label}

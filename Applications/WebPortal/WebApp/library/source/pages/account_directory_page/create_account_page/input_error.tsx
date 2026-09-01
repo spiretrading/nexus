@@ -122,7 +122,7 @@ export class InputError extends React.Component<Properties, State> {
     },
     message: {
       flexGrow: 1,
-      textAlign: 'center',
+      fontSize: '0.875rem',
       color: '#E63F44'
     }
   };
