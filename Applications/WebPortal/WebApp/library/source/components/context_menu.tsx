@@ -115,6 +115,11 @@ export class ContextMenu extends React.Component<Properties, State> {
   };
 
   private onKeyDown = (event: React.KeyboardEvent<HTMLDivElement>) => {
+    if(event.key === 'Tab') {
+      event.preventDefault();
+      this.menu.current.hidePopover();
+      return;
+    }
     const items = this.focusableItems;
     if(items.length === 0) {
       return;
@@ -271,8 +276,6 @@ function getCheckedIndexes(items: ContextMenu.Entry[]) {
 const STYLES = StyleSheet.create({
   contextMenu: {
     boxSizing: 'border-box',
-    display: 'flex',
-    flexDirection: 'column',
     minWidth: '192px',
     maxHeight: 'calc(100dvh - 80px)',
     backgroundColor: '#FFFFFF',
@@ -301,7 +304,6 @@ const STYLES = StyleSheet.create({
     listStyle: 'none',
     margin: 0,
     padding: 0,
-    minHeight: 0,
     overflowY: 'auto',
     overscrollBehavior: 'contain',
     containerType: 'inline-size',
