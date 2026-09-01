@@ -773,32 +773,35 @@ void ListView::update_visible_region() {
     }
     return last_visible;
   }();
-  if(top_item) {
-    for(auto& item : m_items |
-          std::views::drop(m_top_index) | std::views::take(m_visible_count)) {
-      if(item->m_item->is_mounted() && !item->m_item->is_current() &&
-          !test_visibility(*this, item->m_item->frameGeometry(), direction)) {
-        if(auto widget = item->m_item->unmount()) {
-          m_item_builder.unmount(widget, item->m_index);
-        }
+  if(!top_item) {
+    m_top_index = -1;
+    initialize_visible_region();
+    return;
+  }
+  for(auto& item : m_items |
+        std::views::drop(m_top_index) | std::views::take(m_visible_count)) {
+    if(item->m_item->is_mounted() && !item->m_item->is_current() &&
+        !test_visibility(*this, item->m_item->frameGeometry(), direction)) {
+      if(auto widget = item->m_item->unmount()) {
+        m_item_builder.unmount(widget, item->m_index);
       }
     }
-    m_top_index = top_item->m_index;
-    m_visible_count = 0;
-    auto position = get_directed_point(top_item->m_item->pos(), direction);
-    for(auto& item : m_items | std::views::drop(m_top_index)) {
-      auto geometry =
-        QRect(make_directed_point(position, direction), item->m_item->size());
-      if(test_visibility(*this, geometry, direction)) {
-        if(!item->m_item->is_mounted()) {
-          item->m_item->mount(*m_item_builder.mount(m_list, item->m_index));
-        }
-        ++m_visible_count;
-      } else {
-        break;
+  }
+  m_top_index = top_item->m_index;
+  m_visible_count = 0;
+  auto position = get_directed_point(top_item->m_item->pos(), direction);
+  for(auto& item : m_items | std::views::drop(m_top_index)) {
+    auto geometry =
+      QRect(make_directed_point(position, direction), item->m_item->size());
+    if(test_visibility(*this, geometry, direction)) {
+      if(!item->m_item->is_mounted()) {
+        item->m_item->mount(*m_item_builder.mount(m_list, item->m_index));
       }
-      position += get_directed_size(item->m_item->size(), direction) + item_gap;
+      ++m_visible_count;
+    } else {
+      break;
     }
+    position += get_directed_size(item->m_item->size(), direction) + item_gap;
   }
 }
 
