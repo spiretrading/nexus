@@ -57,7 +57,7 @@ void ChartWindowSettings::Apply(Ref<UserProfile> userProfile,
   window.SetInteractionMode(m_interactionMode);
   window.SetAutoScale(m_isAutoScaleEnabled);
   window.SetLockGrid(m_isLockGridEnabled);
-  if(m_ticker) {
+  if(m_ticker && !window.m_ticker) {
     window.DisplayTicker(m_ticker);
   }
   window.m_tickerViewStack = m_tickerViewStack;

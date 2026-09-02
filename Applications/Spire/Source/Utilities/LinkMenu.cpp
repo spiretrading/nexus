@@ -1,11 +1,12 @@
 #include "Spire/Utilities/LinkMenu.hpp"
 #include <algorithm>
 #include <unordered_set>
+#include <QHash>
 #include <QPointer>
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/AssociativeValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
+#include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Ui/CheckButtonMenuItem.hpp"
 #include "Spire/Ui/Ui.hpp"
 #include "Spire/Ui/Window.hpp"
@@ -22,6 +23,32 @@ namespace {
       }
     }
     return nullptr;
+  }
+
+  const QImage& find_icon(const QString& path) {
+    static auto icons = QHash<QString, QImage>();
+    auto i = icons.find(path);
+    if(i == icons.end()) {
+      i = icons.insert(path, image_from_svg(path, scale(10, 10)));
+    }
+    return *i;
+  }
+
+  std::vector<Window*> find_hub_windows(
+      const PropertyHub& hub, const UserProfile& user_profile) {
+    auto windows = std::vector<Window*>();
+    auto& roster = *user_profile.GetPropertyHubMembers();
+    for(auto i = 0; i != roster.get_size(); ++i) {
+      auto member = roster.get(i);
+      if(member->get_hub()->get().get() != &hub) {
+        continue;
+      }
+      if(auto window = dynamic_cast<Window*>(&member->get_component());
+          window && window->isVisible()) {
+        windows.push_back(window);
+      }
+    }
+    return windows;
   }
 
   void install_hover_highlight(ContextMenu& submenu,
@@ -68,33 +95,22 @@ void Spire::add_link_menu(ContextMenu& parent, PropertyHubMember& member,
   auto candidates = std::make_shared<std::vector<PropertyHubMember*>>(
     find_link_candidates(member, user_profile));
   auto submenu = new ContextMenu(static_cast<QWidget&>(parent));
-  auto current = std::make_shared<AssociativeValueModel<int>>();
   for(auto i = 0; i != static_cast<int>(candidates->size()); ++i) {
     auto& candidate = *(*candidates)[i];
-    auto item = new CheckButtonMenuItem(
-      image_from_svg(candidate.get_icon_path(), scale(10, 10)),
-      candidate.get_name()->get(), current->get_association(i + 1));
+    auto is_linked = candidate.get_hub()->get() == member.get_hub()->get();
+    auto item = new CheckButtonMenuItem(find_icon(candidate.get_icon_path()),
+      candidate.get_name()->get(),
+      std::make_shared<LocalValueModel<bool>>(is_linked));
     item->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    submenu->add_action("", [item] {
-      item->get_current()->set(!item->get_current()->get());
-    }, item);
-  }
-  for(auto i = 0; i != static_cast<int>(candidates->size()); ++i) {
-    if((*candidates)[i]->get_hub()->get() == member.get_hub()->get()) {
-      current->set(i + 1);
-      break;
-    }
-  }
-  current->connect_update_signal(
-    [=, &member, &user_profile, &parent] (auto index) {
-      if(index == 0) {
+    submenu->add_action("", [=, &member, &user_profile, &parent] {
+      if(is_linked) {
         member.get_hub()->set(user_profile.MakePropertyHub());
       } else {
-        member.get_hub()->set((*candidates)[index - 1]->get_hub()->get());
+        member.get_hub()->set((*candidates)[i]->get_hub()->get());
       }
       parent.hide();
-    });
-  QObject::connect(submenu, &QObject::destroyed, [current] {});
+    }, item);
+  }
   parent.add_menu(QObject::tr("Link To"), *submenu);
   install_hover_highlight(*submenu, std::move(candidates), user_profile);
 }
@@ -114,21 +130,4 @@ std::vector<PropertyHubMember*> Spire::find_link_candidates(
       return left->get_name()->get() < right->get_name()->get();
     });
   return candidates;
-}
-
-std::vector<Window*> Spire::find_hub_windows(
-    const PropertyHub& hub, const UserProfile& user_profile) {
-  auto windows = std::vector<Window*>();
-  auto& roster = *user_profile.GetPropertyHubMembers();
-  for(auto i = 0; i != roster.get_size(); ++i) {
-    auto member = roster.get(i);
-    if(member->get_hub()->get().get() != &hub) {
-      continue;
-    }
-    if(auto window = dynamic_cast<Window*>(&member->get_component());
-        window && window->isVisible()) {
-      windows.push_back(window);
-    }
-  }
-  return windows;
 }

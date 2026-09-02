@@ -124,9 +124,8 @@ namespace Spire {
       std::shared_ptr<BookViewPropertiesWindowFactory> m_factory;
       ModelBuilder m_model_builder;
       std::shared_ptr<ProxyValueModel<BookViewProperties>> m_properties_proxy;
-      std::shared_ptr<ProxyValueModel<Nexus::Ticker>> m_ticker;
       PropertyHubMember m_member;
-      boost::signals2::scoped_connection m_hub_connection;
+      Nexus::Ticker m_ticker;
       std::shared_ptr<InteractionsKeyBindingsModel> m_interactions;
       std::shared_ptr<BookViewModel> m_model;
       BookDepth* m_book_depth;
@@ -149,7 +148,6 @@ namespace Spire {
       void on_cancel_all(const CurrentUserOrder& user_order);
       void on_properties_menu();
       void on_current(const Nexus::Ticker& ticker);
-      void on_hub(const std::shared_ptr<PropertyHub>& hub);
       void on_order_operation(Nexus::Side side,
         const ListModel<BookViewModel::UserOrder>::Operation& operation);
   };

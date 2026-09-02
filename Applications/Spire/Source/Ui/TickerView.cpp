@@ -69,7 +69,7 @@ TickerView::State TickerView::save_state() const {
 void TickerView::restore(const State& state) {
   m_tickers = state.m_tickers;
   if(auto top = m_tickers.get_top()) {
-    if(*top != m_current->get()) {
+    if(!m_current->get()) {
       auto blocker = shared_connection_block(m_current_connection);
       m_current->set(*top);
       if(m_layers->currentWidget() != m_body) {

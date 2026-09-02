@@ -58,7 +58,10 @@ namespace Spire {
       /** Saves the state of this TickerView. */
       State save_state() const;
 
-      /** Restores the state of this TickerView. */
+      /**
+       * Restores the state of this TickerView, keeping the ticker being
+       * displayed if there is one.
+       */
       void restore(const State& state);
 
     protected:

@@ -6,9 +6,9 @@
 #include <QStandardPaths>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ExportTable.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
-#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
 #include "Spire/Ui/ContextMenu.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
@@ -50,7 +50,6 @@ TimeAndSalesWindow::TimeAndSalesWindow(Ref<UserProfile> user_profile,
       m_factory(std::move(factory)),
       m_model_builder(std::move(model_builder)),
       m_properties_proxy(make_proxy_value_model(m_factory->get_properties())),
-      m_ticker(make_proxy_value_model(hub->get<Ticker>(TICKER_PROPERTY))),
 BEAM_SUPPRESS_THIS_INITIALIZER()
       m_member(*m_user_profile, *this, TITLE_NAME, ":/Icons/time-sales.svg",
         std::move(hub)),
@@ -65,8 +64,9 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   m_transition_view = new TransitionView(new QWidget());
   m_table_model->connect_end_loading_signal(
     std::bind_front(&TimeAndSalesWindow::on_end_loading, this));
+  auto ticker = m_member.get_property<Ticker>(TICKER_PROPERTY);
   m_ticker_view =
-    new TickerView(std::move(tickers), m_ticker, *m_transition_view);
+    new TickerView(std::move(tickers), ticker, *m_transition_view);
   m_ticker_view->get_current()->connect_update_signal(
     std::bind_front(&TimeAndSalesWindow::on_current, this));
   m_ticker_view->setSizePolicy(
@@ -78,10 +78,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   });
   connect(m_ticker_view, &QWidget::customContextMenuRequested,
     std::bind_front(&TimeAndSalesWindow::on_context_menu, this, m_ticker_view));
-  m_hub_connection = m_member.get_hub()->connect_update_signal(
-    std::bind_front(&TimeAndSalesWindow::on_hub, this));
   resize(m_ticker_view->sizeHint().width(), scale_height(361));
-  on_current(m_ticker->get());
+  on_current(ticker->get());
 }
 
 const std::shared_ptr<TickerModel>& TimeAndSalesWindow::get_current() const {
@@ -91,15 +89,6 @@ const std::shared_ptr<TickerModel>& TimeAndSalesWindow::get_current() const {
 std::unique_ptr<LegacyUI::WindowSettings>
     TimeAndSalesWindow::GetWindowSettings() const {
   return std::make_unique<TimeAndSalesWindowSettings>(*this);
-}
-
-void TimeAndSalesWindow::on_hub(const std::shared_ptr<PropertyHub>& hub) {
-  auto is_new = !hub->find(TICKER_PROPERTY);
-  auto ticker = hub->get<Ticker>(TICKER_PROPERTY);
-  if(is_new) {
-    ticker->set(m_ticker->get());
-  }
-  m_ticker->set_source(ticker);
 }
 
 void TimeAndSalesWindow::on_context_menu(QWidget* parent, const QPoint& pos) {
@@ -154,6 +143,10 @@ void TimeAndSalesWindow::on_end_loading() {
 }
 
 void TimeAndSalesWindow::on_current(const Ticker& ticker) {
+  if(ticker == m_ticker) {
+    return;
+  }
+  m_ticker = ticker;
   if(!ticker) {
     setWindowTitle(TITLE_NAME);
     m_member.get_name()->set(windowTitle());

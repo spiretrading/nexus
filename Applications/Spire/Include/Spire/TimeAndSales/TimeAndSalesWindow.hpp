@@ -74,15 +74,13 @@ namespace Spire {
       ModelBuilder m_model_builder;
       std::shared_ptr<ProxyValueModel<TimeAndSalesProperties>>
         m_properties_proxy;
-      std::shared_ptr<ProxyValueModel<Nexus::Ticker>> m_ticker;
       PropertyHubMember m_member;
-      boost::signals2::scoped_connection m_hub_connection;
+      Nexus::Ticker m_ticker;
       std::shared_ptr<TimeAndSalesTableModel> m_table_model;
       TableView* m_table_view;
       TransitionView* m_transition_view;
       TickerView* m_ticker_view;
 
-      void on_hub(const std::shared_ptr<PropertyHub>& hub);
       void on_context_menu(QWidget* parent, const QPoint& pos);
       void on_export_menu();
       void on_properties_menu();

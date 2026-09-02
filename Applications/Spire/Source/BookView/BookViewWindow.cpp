@@ -125,7 +125,6 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
       m_factory(std::move(factory)),
       m_model_builder(std::move(model_builder)),
       m_properties_proxy(make_proxy_value_model(m_factory->get_properties())),
-      m_ticker(make_proxy_value_model(hub->get<Ticker>(TICKER_PROPERTY))),
 BEAM_SUPPRESS_THIS_INITIALIZER()
       m_member(*m_user_profile, *this, TITLE_NAME, ":/Icons/bookview.svg",
         std::move(hub)),
@@ -138,8 +137,9 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   setWindowIcon(QIcon(":/Icons/taskbar_icons/bookview.png"));
   setWindowTitle(TITLE_NAME);
   m_transition_view = new TransitionView(new QWidget());
+  auto ticker = m_member.get_property<Ticker>(TICKER_PROPERTY);
   m_ticker_view =
-    new TickerView(std::move(tickers), m_ticker, *m_transition_view);
+    new TickerView(std::move(tickers), ticker, *m_transition_view);
   m_ticker_view->get_current()->connect_update_signal(
     std::bind_front(&BookViewWindow::on_current, this));
   m_ticker_view->setSizePolicy(
@@ -152,12 +152,10 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   connect(m_ticker_view, &QWidget::customContextMenuRequested,
     std::bind_front(&BookViewWindow::on_context_menu, this));
   resize(scale(266, 361));
-  m_hub_connection = m_member.get_hub()->connect_update_signal(
-    std::bind_front(&BookViewWindow::on_hub, this));
   m_page_key_observer.emplace(*this);
   m_page_key_observer->connect_filtered_key_press_signal(
     std::bind_front(&BookViewWindow::on_key_press, this));
-  on_current(m_ticker->get());
+  on_current(ticker->get());
 }
 
 const std::shared_ptr<TickerModel>& BookViewWindow::get_current() const {
@@ -202,15 +200,6 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
       m_ticker_view->get_current()->get(), sequence)) {
     display_task_entry_panel(*arguments);
   }
-}
-
-void BookViewWindow::on_hub(const std::shared_ptr<PropertyHub>& hub) {
-  auto is_new = !hub->find(TICKER_PROPERTY);
-  auto ticker = hub->get<Ticker>(TICKER_PROPERTY);
-  if(is_new) {
-    ticker->set(m_ticker->get());
-  }
-  m_ticker->set_source(ticker);
 }
 
 std::unique_ptr<CanvasNode>
@@ -436,6 +425,10 @@ void BookViewWindow::on_properties_menu() {
 }
 
 void BookViewWindow::on_current(const Ticker& ticker) {
+  if(ticker == m_ticker) {
+    return;
+  }
+  m_ticker = ticker;
   if(!ticker) {
     setWindowTitle(TITLE_NAME);
     m_member.get_name()->set(windowTitle());

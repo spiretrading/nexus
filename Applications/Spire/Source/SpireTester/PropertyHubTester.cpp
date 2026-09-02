@@ -1,4 +1,5 @@
 #include <any>
+#include <string>
 #include <doctest/doctest.h>
 #include "Spire/Spire/PropertyHub.hpp"
 
@@ -24,16 +25,21 @@ TEST_SUITE("PropertyHub") {
     REQUIRE(any_cast<int>(property->get()) == 123);
   }
 
-  TEST_CASE("remove") {
+  TEST_CASE("adopt") {
     auto hub = PropertyHub();
     hub.get<int>("count")->set(123);
-    hub.remove("count");
-    REQUIRE(hub.find("count") == nullptr);
-    REQUIRE(hub.get<int>("count")->get() == 0);
+    hub.get<std::string>("name")->set("abc");
+    auto adopter = PropertyHub();
+    adopter.get<std::string>("name")->set("xyz");
+    adopter.adopt(hub);
+    REQUIRE(adopter.get<int>("count")->get() == 123);
+    REQUIRE(adopter.get<std::string>("name")->get() == "xyz");
   }
 
   TEST_CASE("id") {
     auto hub = PropertyHub();
     REQUIRE(hub.get_id() != PropertyHub().get_id());
+    auto id = hub.get_id();
+    REQUIRE(PropertyHub(id).get_id() == id);
   }
 }

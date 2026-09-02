@@ -30,6 +30,8 @@ std::shared_ptr<AnyValueModel> PropertyHub::find(
   return i->second;
 }
 
-void PropertyHub::remove(const std::string& name) {
-  m_properties.erase(name);
+void PropertyHub::adopt(const PropertyHub& hub) {
+  for(auto& property : hub.m_properties) {
+    m_properties.emplace(property.first, property.second);
+  }
 }

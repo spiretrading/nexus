@@ -53,10 +53,11 @@ namespace Spire {
       std::shared_ptr<AnyValueModel> find(const std::string& name) const;
 
       /**
-       * Removes a property.
-       * @param name The name identifying the property to remove.
+       * Stores every property of another PropertyHub that is not already
+       * stored by this PropertyHub.
+       * @param hub The PropertyHub whose properties are to be stored.
        */
-      void remove(const std::string& name);
+      void adopt(const PropertyHub& hub);
 
     private:
       boost::uuids::uuid m_id;

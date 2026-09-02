@@ -47,6 +47,7 @@ std::shared_ptr<PropertyHub> LegacyPropertyHubMap::find(
 
 void LegacyPropertyHubMap::merge(const std::shared_ptr<PropertyHub>& source,
     const std::shared_ptr<PropertyHub>& destination) {
+  destination->adopt(*source);
   for(auto& entry : m_hubs) {
     if(entry.second.lock() == source) {
       entry.second = destination;

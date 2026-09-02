@@ -37,12 +37,11 @@ ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
       m_ui(std::make_unique<Ui_ChartWindow>()),
       m_userProfile(userProfile.get()),
       m_interactionMode(ChartInteractionMode::NONE),
-      m_tickerModel(
-        make_proxy_value_model(hub->get<Ticker>(TICKER_PROPERTY))),
 BEAM_SUPPRESS_THIS_INITIALIZER()
       m_member(*m_userProfile, *this, tr("Chart"), ":/Icons/chart.svg",
-        std::move(hub))
-BEAM_UNSUPPRESS_THIS_INITIALIZER() {
+        std::move(hub)),
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
+      m_tickerModel(m_member.get_property<Ticker>(TICKER_PROPERTY)) {
   m_ui->setupUi(this);
   m_intervalComboBox = new ChartIntervalComboBox(this);
   m_ui->m_toolBar->insertWidget(m_ui->m_panAction, m_intervalComboBox);
@@ -111,8 +110,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER() {
   SetLockGrid(true);
   m_tickerConnection = m_tickerModel->connect_update_signal(
     std::bind_front(&ChartWindow::OnTickerUpdate, this));
-  m_hubConnection = m_member.get_hub()->connect_update_signal(
-    std::bind_front(&ChartWindow::OnHubUpdate, this));
   OnTickerUpdate(m_tickerModel->get());
 }
 
@@ -196,6 +193,9 @@ void ChartWindow::OnTickerSubmit(const Ticker& ticker) {
 }
 
 void ChartWindow::OnTickerUpdate(const Ticker& ticker) {
+  if(ticker == m_ticker) {
+    return;
+  }
   m_ticker = ticker;
   if(!m_ticker) {
     setWindowTitle(tr("Chart - Spire"));
@@ -205,15 +205,6 @@ void ChartWindow::OnTickerUpdate(const Ticker& ticker) {
       m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());
   }
   m_member.get_name()->set(windowTitle());
-}
-
-void ChartWindow::OnHubUpdate(const std::shared_ptr<PropertyHub>& hub) {
-  auto isNew = !hub->find(TICKER_PROPERTY);
-  auto ticker = hub->get<Ticker>(TICKER_PROPERTY);
-  if(isNew) {
-    ticker->set(m_tickerModel->get());
-  }
-  m_tickerModel->set_source(ticker);
 }
 
 void ChartWindow::AdjustSlider(int previousMinimum, int previousMaximum,

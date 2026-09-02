@@ -6,6 +6,7 @@ using namespace Spire;
 TEST_SUITE("LegacyPropertyHubMap") {
   TEST_CASE("acquire") {
     auto map = LegacyPropertyHubMap();
+    REQUIRE(map.acquire("", "") != map.acquire("", ""));
     auto a = map.acquire("a", "");
     auto b = map.acquire("b", "");
     REQUIRE(a != nullptr);
@@ -32,6 +33,7 @@ TEST_SUITE("LegacyPropertyHubMap") {
     auto c = map.acquire("c", "d");
     REQUIRE(a != c);
     REQUIRE(merges == 0);
+    c->get<int>("count")->set(7);
     auto b = map.acquire("b", "d");
     REQUIRE(merges == 1);
     REQUIRE(source == c);
@@ -39,6 +41,7 @@ TEST_SUITE("LegacyPropertyHubMap") {
     REQUIRE(b == a);
     REQUIRE(map.acquire("c", "") == a);
     REQUIRE(map.acquire("d", "") == a);
+    REQUIRE(a->get<int>("count")->get() == 7);
   }
 
   TEST_CASE("expired") {
