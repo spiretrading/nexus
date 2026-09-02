@@ -23,13 +23,22 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 
+ChartWindow::ChartWindow(
+  Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
+  : ChartWindow(
+      Ref(userProfile), "", std::make_shared<PropertyHub>(), parent, flags) {}
+
 ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
-    const std::string& identifier, QWidget* parent, Qt::WindowFlags flags)
+    const std::string& identifier, std::shared_ptr<PropertyHub> hub,
+    QWidget* parent, Qt::WindowFlags flags)
     : QMainWindow(parent, flags),
       TickerContext(identifier),
       m_ui(std::make_unique<Ui_ChartWindow>()),
       m_userProfile(userProfile.get()),
-      m_interactionMode(ChartInteractionMode::NONE) {
+      m_interactionMode(ChartInteractionMode::NONE),
+      m_hub(std::move(hub)),
+      m_tickerModel(
+        make_proxy_value_model(m_hub->get<Ticker>(TICKER_PROPERTY))) {
   m_ui->setupUi(this);
   m_intervalComboBox = new ChartIntervalComboBox(this);
   m_ui->m_toolBar->insertWidget(m_ui->m_panAction, m_intervalComboBox);
@@ -96,6 +105,8 @@ ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
   SetInteractionMode(ChartInteractionMode::PAN);
   SetAutoScale(true);
   SetLockGrid(true);
+  m_tickerConnection = m_tickerModel->connect_update_signal(
+    std::bind_front(&ChartWindow::OnTickerUpdate, this));
 }
 
 ChartInteractionMode ChartWindow::GetInteractionMode() const {
@@ -130,15 +141,7 @@ void ChartWindow::SetLockGrid(bool lockGrid) {
 }
 
 void ChartWindow::DisplayTicker(const Ticker& ticker) {
-  m_ticker = ticker;
-  if(!m_ticker) {
-    setWindowTitle(tr("Chart - Spire"));
-  } else {
-    setWindowTitle(displayText(m_ticker) + tr(" - Chart"));
-    OnIntervalChanged(
-      m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());
-  }
-  SetDisplayedTicker(m_ticker);
+  m_tickerModel->set(ticker);
 }
 
 std::unique_ptr<WindowSettings> ChartWindow::GetWindowSettings() const {
@@ -198,6 +201,9 @@ void ChartWindow::OnTickerSubmit(const Ticker& ticker) {
 
 void ChartWindow::HandleLink(TickerContext& context) {
   m_linkIdentifier = context.GetIdentifier();
+  if(auto window = dynamic_cast<ChartWindow*>(&context)) {
+    SetHub(window->m_hub);
+  }
   m_linkConnection = context.ConnectTickerDisplaySignal(
     std::bind_front(&ChartWindow::DisplayTicker, this));
   DisplayTicker(context.GetDisplayedTicker());
@@ -205,7 +211,30 @@ void ChartWindow::HandleLink(TickerContext& context) {
 
 void ChartWindow::HandleUnlink() {
   m_linkConnection.disconnect();
+  if(m_linkIdentifier.empty()) {
+    return;
+  }
   m_linkIdentifier.clear();
+  auto hub = std::make_shared<PropertyHub>();
+  hub->get<Ticker>(TICKER_PROPERTY)->set(m_tickerModel->get());
+  SetHub(std::move(hub));
+}
+
+void ChartWindow::OnTickerUpdate(const Ticker& ticker) {
+  m_ticker = ticker;
+  if(!m_ticker) {
+    setWindowTitle(tr("Chart - Spire"));
+  } else {
+    setWindowTitle(displayText(m_ticker) + tr(" - Chart"));
+    OnIntervalChanged(
+      m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());
+  }
+  SetDisplayedTicker(m_ticker);
+}
+
+void ChartWindow::SetHub(std::shared_ptr<PropertyHub> hub) {
+  m_hub = std::move(hub);
+  m_tickerModel->set_source(m_hub->get<Ticker>(TICKER_PROPERTY));
 }
 
 void ChartWindow::AdjustSlider(int previousMinimum, int previousMaximum,
