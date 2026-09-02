@@ -110,13 +110,14 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
   ModelBuilder model_builder, QWidget* parent)
   : BookViewWindow(Ref(user_profile), std::move(tickers),
       std::move(key_bindings), std::move(factory), std::move(model_builder), "",
-      parent)  {}
+      std::make_shared<PropertyHub>(), parent)  {}
 
 BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
     std::shared_ptr<TickerInfoQueryModel> tickers,
     std::shared_ptr<KeyBindingsModel> key_bindings,
     std::shared_ptr<BookViewPropertiesWindowFactory> factory,
-    ModelBuilder model_builder, std::string identifier, QWidget* parent)
+    ModelBuilder model_builder, std::string identifier,
+    std::shared_ptr<PropertyHub> hub, QWidget* parent)
     : Window(parent),
       TickerContext(std::move(identifier)),
       m_user_profile(user_profile.get()),
@@ -124,6 +125,8 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
       m_factory(std::move(factory)),
       m_model_builder(std::move(model_builder)),
       m_properties_proxy(make_proxy_value_model(m_factory->get_properties())),
+      m_hub(std::move(hub)),
+      m_ticker(make_proxy_value_model(m_hub->get<Ticker>(TICKER_PROPERTY))),
       m_book_depth(nullptr),
       m_task_entry_panel(nullptr),
       m_is_task_entry_panel_for_interactions(false) {
@@ -132,7 +135,8 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
   setWindowIcon(QIcon(":/Icons/taskbar_icons/bookview.png"));
   setWindowTitle(TITLE_NAME);
   m_transition_view = new TransitionView(new QWidget());
-  m_ticker_view = new TickerView(std::move(tickers), *m_transition_view);
+  m_ticker_view =
+    new TickerView(std::move(tickers), m_ticker, *m_transition_view);
   m_ticker_view->get_current()->connect_update_signal(
     std::bind_front(&BookViewWindow::on_current, this));
   m_ticker_view->setSizePolicy(
@@ -205,6 +209,9 @@ void BookViewWindow::showEvent(QShowEvent* event) {
 
 void BookViewWindow::HandleLink(TickerContext& context) {
   m_link_identifier = context.GetIdentifier();
+  if(auto window = dynamic_cast<BookViewWindow*>(&context)) {
+    set_hub(window->m_hub);
+  }
   m_link_connection = context.ConnectTickerDisplaySignal(
     [=] (const auto& ticker) {
       if(m_ticker_view->get_current()->get() != ticker) {
@@ -216,7 +223,18 @@ void BookViewWindow::HandleLink(TickerContext& context) {
 
 void BookViewWindow::HandleUnlink() {
   m_link_connection.disconnect();
+  if(m_link_identifier.empty()) {
+    return;
+  }
   m_link_identifier.clear();
+  auto hub = std::make_shared<PropertyHub>();
+  hub->get<Ticker>(TICKER_PROPERTY)->set(m_ticker->get());
+  set_hub(std::move(hub));
+}
+
+void BookViewWindow::set_hub(std::shared_ptr<PropertyHub> hub) {
+  m_hub = std::move(hub);
+  m_ticker->set_source(m_hub->get<Ticker>(TICKER_PROPERTY));
 }
 
 std::unique_ptr<CanvasNode>

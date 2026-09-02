@@ -30,7 +30,8 @@ QWidget* BookViewWindowSettings::Reopen(Ref<UserProfile> user_profile) const {
     user_profile->GetTickerInfoQueryModel(),
     user_profile->GetKeyBindings(),
     user_profile->GetBookViewPropertiesWindowFactory(),
-    user_profile->GetBookViewModelBuilder(), m_identifier);
+    user_profile->GetBookViewModelBuilder(), m_identifier,
+    std::make_shared<PropertyHub>());
   Apply(Ref(user_profile), out(*window));
   return window;
 }

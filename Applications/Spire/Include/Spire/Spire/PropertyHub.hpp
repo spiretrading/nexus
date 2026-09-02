@@ -15,6 +15,9 @@
 
 namespace Spire {
 
+  /** The name of the property storing the ticker being displayed. */
+  inline const auto TICKER_PROPERTY = std::string("ticker");
+
   /**
    * Stores a set of named properties shared among the components connected to
    * it.
