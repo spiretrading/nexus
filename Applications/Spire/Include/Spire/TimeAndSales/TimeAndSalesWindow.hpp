@@ -4,6 +4,8 @@
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/TickerContext.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Spire/PropertyHub.hpp"
+#include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesWindowFactory.hpp"
 #include "Spire/Ui/TickerBox.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -47,12 +49,14 @@ namespace Spire {
        *        TimeAndSalesPropertiesWindow.
        * @param model_builder The ModelBuilder to use.
        * @param identifier The TickerContext identifier.
+       * @param hub The PropertyHub storing the properties shared with the
+       *        components this window is linked to.
        * @param parent The parent widget.
        */
       TimeAndSalesWindow(std::shared_ptr<TickerInfoQueryModel> tickers,
         std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
         ModelBuilder model_builder, std::string identifier,
-        QWidget* parent = nullptr);
+        std::shared_ptr<PropertyHub> hub, QWidget* parent = nullptr);
 
       /** Returns the currently displayed ticker. */
       const std::shared_ptr<TickerModel>& get_current() const;
@@ -72,6 +76,8 @@ namespace Spire {
       ModelBuilder m_model_builder;
       std::shared_ptr<ProxyValueModel<TimeAndSalesProperties>>
         m_properties_proxy;
+      std::shared_ptr<PropertyHub> m_hub;
+      std::shared_ptr<ProxyValueModel<Nexus::Ticker>> m_ticker;
       std::shared_ptr<TimeAndSalesTableModel> m_table_model;
       TableView* m_table_view;
       TransitionView* m_transition_view;
@@ -79,6 +85,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_link_connection;
       TickerView* m_ticker_view;
 
+      void set_hub(std::shared_ptr<PropertyHub> hub);
       void on_context_menu(QWidget* parent, const QPoint& pos);
       void on_export_menu();
       void on_properties_menu();

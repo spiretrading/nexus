@@ -22,7 +22,8 @@ QWidget* LegacyTimeAndSalesWindowSettings::Reopen(
     Ref<UserProfile> user_profile) const {
   auto window = new TimeAndSalesWindow(user_profile->GetTickerInfoQueryModel(),
     user_profile->GetTimeAndSalesPropertiesWindowFactory(),
-    user_profile->GetTimeAndSalesModelBuilder(), m_identifier);
+    user_profile->GetTimeAndSalesModelBuilder(), m_identifier,
+    std::make_shared<PropertyHub>());
   window->setAttribute(Qt::WA_DeleteOnClose);
   Apply(Ref(user_profile), out(*window));
   return window;

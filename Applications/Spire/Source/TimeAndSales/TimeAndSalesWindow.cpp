@@ -34,17 +34,21 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
   ModelBuilder model_builder, QWidget* parent)
   : TimeAndSalesWindow(std::move(tickers), std::move(factory),
-      std::move(model_builder), std::string(), parent) {}
+      std::move(model_builder), std::string(), std::make_shared<PropertyHub>(),
+      parent) {}
 
 TimeAndSalesWindow::TimeAndSalesWindow(
     std::shared_ptr<TickerInfoQueryModel> tickers,
     std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
-    ModelBuilder model_builder, std::string identifier, QWidget* parent)
+    ModelBuilder model_builder, std::string identifier,
+    std::shared_ptr<PropertyHub> hub, QWidget* parent)
     : Window(parent),
       TickerContext(std::move(identifier)),
       m_factory(std::move(factory)),
       m_model_builder(std::move(model_builder)),
       m_properties_proxy(make_proxy_value_model(m_factory->get_properties())),
+      m_hub(std::move(hub)),
+      m_ticker(make_proxy_value_model(m_hub->get<Ticker>(TICKER_PROPERTY))),
       m_table_model(std::make_shared<TimeAndSalesTableModel>(
         std::make_shared<NoneTimeAndSalesModel>())),
       m_table_view(nullptr) {
@@ -55,7 +59,8 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   m_transition_view = new TransitionView(new QWidget());
   m_table_model->connect_end_loading_signal(
     std::bind_front(&TimeAndSalesWindow::on_end_loading, this));
-  m_ticker_view = new TickerView(std::move(tickers), *m_transition_view);
+  m_ticker_view =
+    new TickerView(std::move(tickers), m_ticker, *m_transition_view);
   m_ticker_view->get_current()->connect_update_signal(
     std::bind_front(&TimeAndSalesWindow::on_current, this));
   m_ticker_view->setSizePolicy(
@@ -90,6 +95,9 @@ void TimeAndSalesWindow::showEvent(QShowEvent* event) {
 
 void TimeAndSalesWindow::HandleLink(TickerContext& context) {
   m_link_identifier = context.GetIdentifier();
+  if(auto window = dynamic_cast<TimeAndSalesWindow*>(&context)) {
+    set_hub(window->m_hub);
+  }
   m_link_connection = context.ConnectTickerDisplaySignal(
     [=] (const auto& ticker) {
       if(m_ticker_view->get_current()->get() != ticker) {
@@ -101,7 +109,18 @@ void TimeAndSalesWindow::HandleLink(TickerContext& context) {
 
 void TimeAndSalesWindow::HandleUnlink() {
   m_link_connection.disconnect();
+  if(m_link_identifier.empty()) {
+    return;
+  }
   m_link_identifier.clear();
+  auto hub = std::make_shared<PropertyHub>();
+  hub->get<Ticker>(TICKER_PROPERTY)->set(m_ticker->get());
+  set_hub(std::move(hub));
+}
+
+void TimeAndSalesWindow::set_hub(std::shared_ptr<PropertyHub> hub) {
+  m_hub = std::move(hub);
+  m_ticker->set_source(m_hub->get<Ticker>(TICKER_PROPERTY));
 }
 
 void TimeAndSalesWindow::on_context_menu(QWidget* parent, const QPoint& pos) {
