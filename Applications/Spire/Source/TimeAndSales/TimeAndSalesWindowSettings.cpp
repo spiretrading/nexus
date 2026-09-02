@@ -13,6 +13,7 @@ using namespace Spire;
 TimeAndSalesWindowSettings::TimeAndSalesWindowSettings(
     const TimeAndSalesWindow& window)
     : m_ticker_view(window.m_ticker_view->save_state()),
+      m_hub_id(window.m_member.get_hub()->get()->get_id()),
       m_geometry(window.saveGeometry()) {
   if(window.m_table_view) {
     auto& widths = *window.m_table_view->get_header().get_widths();
@@ -35,7 +36,8 @@ QWidget* TimeAndSalesWindowSettings::Reopen(
     Ref(user_profile), user_profile->GetTickerInfoQueryModel(),
     user_profile->GetTimeAndSalesPropertiesWindowFactory(),
     user_profile->GetTimeAndSalesModelBuilder(),
-    user_profile->MakePropertyHub());
+    user_profile->AcquirePropertyHub(
+      m_hub_id, m_identifier, m_link_identifier));
   window->setAttribute(Qt::WA_DeleteOnClose);
   Apply(Ref(user_profile), out(*window));
   return window;

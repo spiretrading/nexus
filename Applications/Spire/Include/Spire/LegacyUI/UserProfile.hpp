@@ -3,8 +3,10 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include <Beam/WebServices/Uri.hpp>
+#include <boost/uuid/uuid.hpp>
 #include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
@@ -108,6 +110,38 @@ namespace Spire {
 
       /** Returns a new PropertyHub. */
       std::shared_ptr<PropertyHub> MakePropertyHub();
+
+      /**
+       * Returns the PropertyHub with a given id, constructing it if no such
+       * PropertyHub exists.
+       * @param id The id of the PropertyHub to return.
+       */
+      std::shared_ptr<PropertyHub> AcquirePropertyHub(
+        const boost::uuids::uuid& id);
+
+      /**
+       * Returns the PropertyHub that a pair of linked components saved before
+       * PropertyHubs were introduced belong to, constructing it if no such
+       * PropertyHub exists.
+       * @param identifier The identifier of the component being restored.
+       * @param link_identifier The identifier of the component that the
+       *        component being restored is linked to.
+       */
+      std::shared_ptr<PropertyHub> AcquirePropertyHub(
+        const std::string& identifier, const std::string& link_identifier);
+
+      /**
+       * Returns the PropertyHub that a component being restored belongs to,
+       * constructing it if no such PropertyHub exists.
+       * @param id The id of the component's PropertyHub, or a nil id if the
+       *        component was saved before PropertyHubs were introduced.
+       * @param identifier The identifier of the component being restored.
+       * @param link_identifier The identifier of the component that the
+       *        component being restored is linked to.
+       */
+      std::shared_ptr<PropertyHub> AcquirePropertyHub(
+        const boost::uuids::uuid& id, const std::string& identifier,
+        const std::string& link_identifier);
 
       /** Returns the list of components that can join a PropertyHub. */
       const std::shared_ptr<ListModel<PropertyHubMember*>>&
@@ -237,6 +271,10 @@ namespace Spire {
       std::shared_ptr<AccountQueryModel> m_account_query_model;
       std::shared_ptr<TickerInfoQueryModel> m_ticker_info_query_model;
       std::shared_ptr<ListModel<PropertyHubMember*>> m_property_hub_members;
+      std::unordered_map<boost::uuids::uuid, std::weak_ptr<PropertyHub>>
+        m_property_hubs;
+      std::unordered_map<std::string, std::weak_ptr<PropertyHub>>
+        m_legacy_property_hubs;
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties
         m_defaultOrderImbalanceIndicatorProperties;
@@ -260,6 +298,12 @@ namespace Spire {
         m_initialOrderImbalanceIndicatorWindowSettings;
       boost::optional<PortfolioViewerWindowSettings>
         m_initialPortfolioViewerWindowSettings;
+
+      void CollectPropertyHubs();
+      std::shared_ptr<PropertyHub> FindPropertyHub(
+        const std::string& identifier) const;
+      void MergePropertyHubs(const std::shared_ptr<PropertyHub>& source,
+        const std::shared_ptr<PropertyHub>& destination);
   };
 
   /** Returns the path to the folder containing all user profiles. */

@@ -1,5 +1,7 @@
 #ifndef SPIRE_BOOK_VIEW_WINDOW_SETTINGS_HPP
 #define SPIRE_BOOK_VIEW_WINDOW_SETTINGS_HPP
+#include <Beam/Serialization/ShuttleUuid.hpp>
+#include <boost/uuid/uuid.hpp>
 #include "Spire/LegacyUI/TickerViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
@@ -31,6 +33,7 @@ namespace Spire {
       friend struct Beam::DataShuttle;
       std::string m_name;
       TickerView::State m_ticker_view;
+      boost::uuids::uuid m_hub_id;
       std::string m_identifier;
       std::string m_link_identifier;
       QByteArray m_geometry;
@@ -43,8 +46,12 @@ namespace Spire {
   void BookViewWindowSettings::shuttle(S& shuttle, unsigned int version) {
     shuttle.shuttle("name", m_name);
     shuttle.shuttle("ticker_view", m_ticker_view);
-    shuttle.shuttle("identifier", m_identifier);
-    shuttle.shuttle("link_identifier", m_link_identifier);
+    if(version == 0) {
+      shuttle.shuttle("identifier", m_identifier);
+      shuttle.shuttle("link_identifier", m_link_identifier);
+    } else {
+      shuttle.shuttle("hub_id", m_hub_id);
+    }
     shuttle.shuttle("geometry", m_geometry);
   }
 }

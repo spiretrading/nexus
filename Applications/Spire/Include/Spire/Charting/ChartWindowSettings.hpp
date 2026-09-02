@@ -2,6 +2,8 @@
 #define SPIRE_CHARTWINDOWSETTINGS_HPP
 #include <string>
 #include <Beam/Serialization/DataShuttle.hpp>
+#include <Beam/Serialization/ShuttleUuid.hpp>
+#include <boost/uuid/uuid.hpp>
 #include <QByteArray>
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Charting/Charting.hpp"
@@ -46,6 +48,7 @@ namespace Spire {
       Nexus::Ticker m_ticker;
       std::string m_name;
       LegacyUI::TickerViewStack m_tickerViewStack;
+      boost::uuids::uuid m_hub_id;
       std::string m_identifier;
       std::string m_linkIdentifier;
       QByteArray m_geometry;
@@ -65,8 +68,12 @@ namespace Spire {
     shuttle.shuttle("ticker", m_ticker);
     shuttle.shuttle("name", m_name);
     shuttle.shuttle("ticker_view_stack", m_tickerViewStack);
-    shuttle.shuttle("identifier", m_identifier);
-    shuttle.shuttle("link_identifier", m_linkIdentifier);
+    if(version == 0) {
+      shuttle.shuttle("identifier", m_identifier);
+      shuttle.shuttle("link_identifier", m_linkIdentifier);
+    } else {
+      shuttle.shuttle("hub_id", m_hub_id);
+    }
     shuttle.shuttle("geometry", m_geometry);
     shuttle.shuttle("chart_plot_view_window_settings",
       m_chartPlotViewWindowSettings);

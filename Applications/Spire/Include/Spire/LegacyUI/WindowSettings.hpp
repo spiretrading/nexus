@@ -5,6 +5,7 @@
 #include <vector>
 #include <Beam/Pointers/Out.hpp>
 #include <Beam/Pointers/Ref.hpp>
+#include <Beam/Serialization/DataShuttle.hpp>
 #include <QByteArray>
 #include "Spire/Spire/Spire.hpp"
 
@@ -61,6 +62,11 @@ namespace LegacyUI {
    */
   void restore_geometry(QWidget& widget, const QByteArray& geometry);
 }
+}
+
+namespace Beam {
+  template<>
+  constexpr auto shuttle_version<Spire::LegacyUI::WindowSettings> = 1;
 }
 
 #endif

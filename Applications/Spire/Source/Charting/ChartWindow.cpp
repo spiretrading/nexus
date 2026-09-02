@@ -113,6 +113,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER() {
     std::bind_front(&ChartWindow::OnTickerUpdate, this));
   m_hubConnection = m_member.get_hub()->connect_update_signal(
     std::bind_front(&ChartWindow::OnHubUpdate, this));
+  OnTickerUpdate(m_tickerModel->get());
 }
 
 ChartInteractionMode ChartWindow::GetInteractionMode() const {

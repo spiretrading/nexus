@@ -81,6 +81,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   m_hub_connection = m_member.get_hub()->connect_update_signal(
     std::bind_front(&TimeAndSalesWindow::on_hub, this));
   resize(m_ticker_view->sizeHint().width(), scale_height(361));
+  on_current(m_ticker->get());
 }
 
 const std::shared_ptr<TickerModel>& TimeAndSalesWindow::get_current() const {

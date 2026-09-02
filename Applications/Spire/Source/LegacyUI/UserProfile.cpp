@@ -1,4 +1,5 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include <unordered_map>
 #include <vector>
 #include <Beam/ServiceLocator/SessionEncryption.hpp>
 #include <Beam/Utilities/ToString.hpp>
@@ -155,7 +156,53 @@ const std::shared_ptr<TickerInfoQueryModel>&
 }
 
 std::shared_ptr<PropertyHub> UserProfile::MakePropertyHub() {
-  return std::make_shared<PropertyHub>();
+  CollectPropertyHubs();
+  auto hub = std::make_shared<PropertyHub>();
+  m_property_hubs[hub->get_id()] = hub;
+  return hub;
+}
+
+std::shared_ptr<PropertyHub> UserProfile::AcquirePropertyHub(
+    const uuids::uuid& id) {
+  CollectPropertyHubs();
+  auto& entry = m_property_hubs[id];
+  if(auto hub = entry.lock()) {
+    return hub;
+  }
+  auto hub = std::make_shared<PropertyHub>(id);
+  entry = hub;
+  return hub;
+}
+
+std::shared_ptr<PropertyHub> UserProfile::AcquirePropertyHub(
+    const std::string& identifier, const std::string& link_identifier) {
+  auto hub = FindPropertyHub(identifier);
+  if(auto link_hub = FindPropertyHub(link_identifier)) {
+    if(!hub) {
+      hub = link_hub;
+    } else if(hub != link_hub) {
+      MergePropertyHubs(link_hub, hub);
+    }
+  }
+  if(!hub) {
+    hub = MakePropertyHub();
+  }
+  if(!identifier.empty()) {
+    m_legacy_property_hubs[identifier] = hub;
+  }
+  if(!link_identifier.empty()) {
+    m_legacy_property_hubs[link_identifier] = hub;
+  }
+  return hub;
+}
+
+std::shared_ptr<PropertyHub> UserProfile::AcquirePropertyHub(
+    const uuids::uuid& id, const std::string& identifier,
+    const std::string& link_identifier) {
+  if(id.is_nil()) {
+    return AcquirePropertyHub(identifier, link_identifier);
+  }
+  return AcquirePropertyHub(id);
 }
 
 const std::shared_ptr<ListModel<PropertyHubMember*>>&
@@ -286,6 +333,42 @@ void UserProfile::SetInitialPortfolioViewerWindowSettings(
 
 void UserProfile::initialize_ui() {
   m_book_view_properties_window_factory->make(m_keyBindings);
+}
+
+void UserProfile::CollectPropertyHubs() {
+  std::erase_if(m_property_hubs, [] (const auto& entry) {
+    return entry.second.expired();
+  });
+  std::erase_if(m_legacy_property_hubs, [] (const auto& entry) {
+    return entry.second.expired();
+  });
+}
+
+std::shared_ptr<PropertyHub> UserProfile::FindPropertyHub(
+    const std::string& identifier) const {
+  if(identifier.empty()) {
+    return nullptr;
+  }
+  auto i = m_legacy_property_hubs.find(identifier);
+  if(i == m_legacy_property_hubs.end()) {
+    return nullptr;
+  }
+  return i->second.lock();
+}
+
+void UserProfile::MergePropertyHubs(const std::shared_ptr<PropertyHub>& source,
+    const std::shared_ptr<PropertyHub>& destination) {
+  for(auto i = 0; i != m_property_hub_members->get_size(); ++i) {
+    auto& member = *m_property_hub_members->get(i);
+    if(member.get_hub()->get() == source) {
+      member.get_hub()->set(destination);
+    }
+  }
+  for(auto& entry : m_legacy_property_hubs) {
+    if(entry.second.lock() == source) {
+      entry.second = destination;
+    }
+  }
 }
 
 std::filesystem::path Spire::get_profile_path() {

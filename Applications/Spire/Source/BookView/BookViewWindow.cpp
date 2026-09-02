@@ -157,6 +157,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   m_page_key_observer.emplace(*this);
   m_page_key_observer->connect_filtered_key_press_signal(
     std::bind_front(&BookViewWindow::on_key_press, this));
+  on_current(m_ticker->get());
 }
 
 const std::shared_ptr<TickerModel>& BookViewWindow::get_current() const {

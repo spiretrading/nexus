@@ -23,7 +23,8 @@ QWidget* LegacyBookViewWindowSettings::Reopen(
   auto window = new BookViewWindow(Ref(user_profile),
     user_profile->GetTickerInfoQueryModel(), user_profile->GetKeyBindings(),
     user_profile->GetBookViewPropertiesWindowFactory(),
-    user_profile->GetBookViewModelBuilder(), user_profile->MakePropertyHub());
+    user_profile->GetBookViewModelBuilder(),
+    user_profile->AcquirePropertyHub(m_identifier, m_link_identifier));
   Apply(Ref(user_profile), out(*window));
   return window;
 }

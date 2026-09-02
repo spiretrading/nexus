@@ -1,6 +1,8 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_SETTINGS_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_SETTINGS_HPP
 #include <vector>
+#include <Beam/Serialization/ShuttleUuid.hpp>
+#include <boost/uuid/uuid.hpp>
 #include <QByteArray>
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/LegacyUI/TickerViewStack.hpp"
@@ -35,6 +37,7 @@ namespace Spire {
       std::string m_name;
       TickerView::State m_ticker_view;
       std::vector<int> m_column_widths;
+      boost::uuids::uuid m_hub_id;
       std::string m_identifier;
       std::string m_link_identifier;
       QByteArray m_geometry;
@@ -48,8 +51,12 @@ namespace Spire {
     shuttle.shuttle("name", m_name);
     shuttle.shuttle("ticker_view", m_ticker_view);
     shuttle.shuttle("column_widths", m_column_widths);
-    shuttle.shuttle("identifier", m_identifier);
-    shuttle.shuttle("link_identifier", m_link_identifier);
+    if(version == 0) {
+      shuttle.shuttle("identifier", m_identifier);
+      shuttle.shuttle("link_identifier", m_link_identifier);
+    } else {
+      shuttle.shuttle("hub_id", m_hub_id);
+    }
     shuttle.shuttle("geometry", m_geometry);
   }
 }

@@ -12,7 +12,10 @@ namespace {
 }
 
 PropertyHub::PropertyHub()
-  : m_id(generate_id()) {}
+  : PropertyHub(generate_id()) {}
+
+PropertyHub::PropertyHub(uuid id)
+  : m_id(id) {}
 
 const uuid& PropertyHub::get_id() const {
   return m_id;

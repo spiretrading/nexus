@@ -28,6 +28,12 @@ namespace Spire {
       /** Constructs a PropertyHub with a unique id. */
       PropertyHub();
 
+      /**
+       * Constructs a PropertyHub with a given id.
+       * @param id The id uniquely identifying the hub.
+       */
+      explicit PropertyHub(boost::uuids::uuid id);
+
       /** Returns the id uniquely identifying this hub. */
       const boost::uuids::uuid& get_id() const;
 

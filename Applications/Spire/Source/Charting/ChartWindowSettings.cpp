@@ -20,7 +20,7 @@ ChartWindowSettings::ChartWindowSettings(const ChartWindow& window,
       m_isLockGridEnabled(window.IsLockGridEnabled()),
       m_ticker(window.m_ticker),
       m_tickerViewStack(window.m_tickerViewStack),
-
+      m_hub_id(window.m_member.get_hub()->get()->get_id()),
       m_geometry(window.saveGeometry()),
       m_chartPlotViewWindowSettings(window.m_ui->m_chart->GetWindowSettings()),
       m_chartIntervalComboBoxWindowSettings(
@@ -39,8 +39,8 @@ string ChartWindowSettings::GetName() const {
 }
 
 QWidget* ChartWindowSettings::Reopen(Ref<UserProfile> userProfile) const {
-  ChartWindow* window =
-    new ChartWindow(Ref(userProfile), userProfile->MakePropertyHub());
+  ChartWindow* window = new ChartWindow(Ref(userProfile),
+    userProfile->AcquirePropertyHub(m_hub_id, m_identifier, m_linkIdentifier));
   window->setAttribute(Qt::WA_DeleteOnClose);
   Apply(Ref(userProfile), out(*window));
   return window;
