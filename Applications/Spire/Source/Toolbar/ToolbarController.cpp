@@ -48,10 +48,11 @@ namespace {
     auto windows = std::vector<QWidget*>();
     while(instantiate_ticker_windows && index < tickers.size()) {
       auto width = 0;
+      auto hub = user_profile.MakePropertyHub();
       auto book_view_window = new BookViewWindow(Ref(user_profile),
         user_profile.GetTickerInfoQueryModel(), user_profile.GetKeyBindings(),
         user_profile.GetBookViewPropertiesWindowFactory(),
-        user_profile.GetBookViewModelBuilder());
+        user_profile.GetBookViewModelBuilder(), hub);
       book_view_window->move(next_position);
       book_view_window->show();
       next_position.rx() += book_view_window->frameSize().width();
@@ -61,13 +62,11 @@ namespace {
       auto time_and_sales_window = new TimeAndSalesWindow(
         Ref(user_profile), user_profile.GetTickerInfoQueryModel(),
         user_profile.GetTimeAndSalesPropertiesWindowFactory(),
-        user_profile.GetTimeAndSalesModelBuilder());
-      book_view_window->Link(*time_and_sales_window);
+        user_profile.GetTimeAndSalesModelBuilder(), hub);
       time_and_sales_window->resize(
         time_and_sales_window->width(), book_view_window->frameSize().height());
       time_and_sales_window->move(next_position);
       time_and_sales_window->show();
-      time_and_sales_window->Link(*book_view_window);
       windows.push_back(time_and_sales_window);
       book_view_window->get_current()->set(tickers[index]);
       next_position.rx() += time_and_sales_window->frameSize().width();

@@ -80,7 +80,7 @@ void BookViewController::close() {
   if(!m_window) {
     return;
   }
-  if(m_window->GetDisplayedTicker()) {
+  if(m_window->get_current()->get()) {
     m_user_profile->GetRecentlyClosedWindows()->push(
       m_window->GetWindowSettings());
   }

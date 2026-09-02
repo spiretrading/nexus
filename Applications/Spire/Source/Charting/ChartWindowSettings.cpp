@@ -18,10 +18,9 @@ ChartWindowSettings::ChartWindowSettings(const ChartWindow& window,
     : m_interactionMode(window.GetInteractionMode()),
       m_isAutoScaleEnabled(window.IsAutoScaleEnabled()),
       m_isLockGridEnabled(window.IsLockGridEnabled()),
-      m_ticker(window.GetDisplayedTicker()),
+      m_ticker(window.m_ticker),
       m_tickerViewStack(window.m_tickerViewStack),
-      m_identifier(window.GetIdentifier()),
-      m_linkIdentifier(window.m_linkIdentifier),
+
       m_geometry(window.saveGeometry()),
       m_chartPlotViewWindowSettings(window.m_ui->m_chart->GetWindowSettings()),
       m_chartIntervalComboBoxWindowSettings(
@@ -40,8 +39,8 @@ string ChartWindowSettings::GetName() const {
 }
 
 QWidget* ChartWindowSettings::Reopen(Ref<UserProfile> userProfile) const {
-  ChartWindow* window = new ChartWindow(
-    Ref(userProfile), m_identifier, userProfile->MakePropertyHub());
+  ChartWindow* window =
+    new ChartWindow(Ref(userProfile), userProfile->MakePropertyHub());
   window->setAttribute(Qt::WA_DeleteOnClose);
   Apply(Ref(userProfile), out(*window));
   return window;
@@ -61,7 +60,6 @@ void ChartWindowSettings::Apply(Ref<UserProfile> userProfile,
   if(m_ticker) {
     window.DisplayTicker(m_ticker);
   }
-  window.m_linkIdentifier = m_linkIdentifier;
   window.m_tickerViewStack = m_tickerViewStack;
   if(window.m_intervalComboBox != nullptr) {
     m_chartIntervalComboBoxWindowSettings->Apply(Ref(userProfile),

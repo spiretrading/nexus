@@ -8,7 +8,6 @@
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/OrderTaskArguments.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
-#include "Spire/LegacyUI/TickerContext.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/PropertyHubMember.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
@@ -24,8 +23,7 @@ namespace Spire {
   class TransitionView;
 
   /** Display the book view window for a ticker. */
-  class BookViewWindow : public Window, public LegacyUI::PersistentWindow,
-      public LegacyUI::TickerContext {
+  class BookViewWindow : public Window, public LegacyUI::PersistentWindow {
     public:
 
       /**
@@ -88,7 +86,6 @@ namespace Spire {
        * @param venues The database of venues.
        * @param factory The factory used to create a BookViewPropertiesWindow.
        * @param model_builder The ModelBuilder to use.
-       * @param identifier The TickerContext identifier.
        * @param hub The PropertyHub storing the properties shared with the
        *        components this window is linked to.
        * @param parent The parent widget.
@@ -97,8 +94,8 @@ namespace Spire {
         std::shared_ptr<TickerInfoQueryModel> tickers,
         std::shared_ptr<KeyBindingsModel> key_bindings,
         std::shared_ptr<BookViewPropertiesWindowFactory> factory,
-        ModelBuilder model_builder, std::string identifier,
-        std::shared_ptr<PropertyHub> hub, QWidget* parent = nullptr);
+        ModelBuilder model_builder, std::shared_ptr<PropertyHub> hub,
+        QWidget* parent = nullptr);
 
       /** Returns the currently displayed ticker. */
       const std::shared_ptr<TickerModel>& get_current() const;
@@ -116,9 +113,6 @@ namespace Spire {
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;
-      void showEvent(QShowEvent* event) override;
-      void HandleLink(TickerContext& context) override;
-      void HandleUnlink() override;
 
     private:
       friend class BookViewWindowSettings;
@@ -138,8 +132,6 @@ namespace Spire {
       BookDepth* m_book_depth;
       TransitionView* m_transition_view;
       boost::optional<KeyObserver> m_page_key_observer;
-      std::string m_link_identifier;
-      boost::signals2::scoped_connection m_link_connection;
       TickerView* m_ticker_view;
       CondensedCanvasWidget* m_task_entry_panel;
       bool m_is_task_entry_panel_for_interactions;

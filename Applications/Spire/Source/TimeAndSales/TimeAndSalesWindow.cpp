@@ -37,16 +37,15 @@ TimeAndSalesWindow::TimeAndSalesWindow(
   std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
   ModelBuilder model_builder, QWidget* parent)
   : TimeAndSalesWindow(Ref(user_profile), std::move(tickers),
-      std::move(factory), std::move(model_builder), std::string(),
+      std::move(factory), std::move(model_builder),
       user_profile->MakePropertyHub(), parent) {}
 
 TimeAndSalesWindow::TimeAndSalesWindow(Ref<UserProfile> user_profile,
     std::shared_ptr<TickerInfoQueryModel> tickers,
     std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
-    ModelBuilder model_builder, std::string identifier,
-    std::shared_ptr<PropertyHub> hub, QWidget* parent)
+    ModelBuilder model_builder, std::shared_ptr<PropertyHub> hub,
+    QWidget* parent)
     : Window(parent),
-      TickerContext(std::move(identifier)),
       m_user_profile(user_profile.get()),
       m_factory(std::move(factory)),
       m_model_builder(std::move(model_builder)),
@@ -93,40 +92,6 @@ std::unique_ptr<LegacyUI::WindowSettings>
   return std::make_unique<TimeAndSalesWindowSettings>(*this);
 }
 
-void TimeAndSalesWindow::showEvent(QShowEvent* event) {
-  if(auto context = TickerContext::FindTickerContext(m_link_identifier)) {
-    Link(*context);
-  } else {
-    HandleUnlink();
-  }
-  Window::showEvent(event);
-}
-
-void TimeAndSalesWindow::HandleLink(TickerContext& context) {
-  m_link_identifier = context.GetIdentifier();
-  if(auto widget = dynamic_cast<QWidget*>(&context)) {
-    if(auto member = m_user_profile->FindPropertyHubMember(*widget)) {
-      m_member.get_hub()->set(member->get_hub()->get());
-    }
-  }
-  m_link_connection = context.ConnectTickerDisplaySignal(
-    [=] (const auto& ticker) {
-      if(m_ticker_view->get_current()->get() != ticker) {
-         m_ticker_view->get_current()->set(ticker);
-      }
-    });
-  m_ticker_view->get_current()->set(context.GetDisplayedTicker());
-}
-
-void TimeAndSalesWindow::HandleUnlink() {
-  m_link_connection.disconnect();
-  if(m_link_identifier.empty()) {
-    return;
-  }
-  m_link_identifier.clear();
-  m_member.get_hub()->set(m_user_profile->MakePropertyHub());
-}
-
 void TimeAndSalesWindow::on_hub(const std::shared_ptr<PropertyHub>& hub) {
   auto is_new = !hub->find(TICKER_PROPERTY);
   auto ticker = hub->get<Ticker>(TICKER_PROPERTY);
@@ -140,7 +105,7 @@ void TimeAndSalesWindow::on_context_menu(QWidget* parent, const QPoint& pos) {
   auto menu = new ContextMenu(*parent);
   menu->add_action(tr("Properties"),
     std::bind_front(&TimeAndSalesWindow::on_properties_menu, this));
-  add_link_menu(*menu, *this);
+  add_link_menu(*menu, m_member, *m_user_profile);
   menu->add_separator();
   menu->add_action(tr("Export..."),
     std::bind_front(&TimeAndSalesWindow::on_export_menu, this));
@@ -205,5 +170,4 @@ void TimeAndSalesWindow::on_current(const Ticker& ticker) {
   }
   m_table_model->load_history(m_ticker_view->height() /
     estimate_row_height(m_properties_proxy->get().get_font()));
-  SetDisplayedTicker(ticker);
 }

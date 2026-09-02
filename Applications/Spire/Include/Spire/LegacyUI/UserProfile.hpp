@@ -127,13 +127,6 @@ namespace Spire {
        */
       void RemovePropertyHubMember(PropertyHubMember& member);
 
-      /**
-       * Returns the PropertyHubMember representing a component, or
-       * <code>nullptr</code> if the component has no member.
-       * @param component The component to look up.
-       */
-      PropertyHubMember* FindPropertyHubMember(const QWidget& component) const;
-
       /** Returns the model used to query tickers. */
       const std::shared_ptr<TickerInfoQueryModel>&
         GetTickerInfoQueryModel() const;

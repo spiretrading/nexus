@@ -11,7 +11,6 @@
 #include "Spire/Charting/ChartPlotController.hpp"
 #include "Spire/Charting/ChartValue.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
-#include "Spire/LegacyUI/TickerContext.hpp"
 #include "Spire/LegacyUI/TickerViewStack.hpp"
 #include "Spire/Spire/PropertyHubMember.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
@@ -24,8 +23,7 @@ class Ui_ChartWindow;
 namespace Spire {
 
   /** Displays a chart. */
-  class ChartWindow : public QMainWindow, public LegacyUI::PersistentWindow,
-      public LegacyUI::TickerContext {
+  class ChartWindow : public QMainWindow, public LegacyUI::PersistentWindow {
     public:
 
       /**
@@ -40,15 +38,14 @@ namespace Spire {
       /**
        * Constructs a ChartWindow.
        * @param userProfile The user's profile.
-       * @param identifier The TickerContext's identifier.
        * @param hub The PropertyHub storing the properties shared with the
        *        components this window is linked to.
        * @param parent The parent widget.
        * @param flags Qt flags passed to the parent widget.
        */
       ChartWindow(Beam::Ref<UserProfile> userProfile,
-        const std::string& identifier, std::shared_ptr<PropertyHub> hub,
-        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
+        std::shared_ptr<PropertyHub> hub, QWidget* parent = nullptr,
+        Qt::WindowFlags flags = Qt::WindowFlags());
 
       /** Returns the ChartInteractionMode. */
       ChartInteractionMode GetInteractionMode() const;
@@ -78,11 +75,8 @@ namespace Spire {
         GetWindowSettings() const override;
 
     protected:
-      void showEvent(QShowEvent* event) override;
       void closeEvent(QCloseEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void HandleLink(TickerContext& context) override;
-      void HandleUnlink() override;
 
     private:
       friend class ChartWindowSettings;
@@ -96,13 +90,11 @@ namespace Spire {
       std::shared_ptr<ProxyValueModel<Nexus::Ticker>> m_tickerModel;
       PropertyHubMember m_member;
       Nexus::Ticker m_ticker;
-      std::string m_linkIdentifier;
       LegacyUI::TickerViewStack m_tickerViewStack;
       ChartValue m_xPan;
       ChartValue m_yPan;
       boost::signals2::scoped_connection m_tickerConnection;
       boost::signals2::scoped_connection m_hubConnection;
-      boost::signals2::scoped_connection m_linkConnection;
       boost::signals2::scoped_connection m_verticalSliderConnection;
       boost::signals2::scoped_connection m_horizontalSliderConnection;
       boost::signals2::scoped_connection m_intervalChangedConnection;

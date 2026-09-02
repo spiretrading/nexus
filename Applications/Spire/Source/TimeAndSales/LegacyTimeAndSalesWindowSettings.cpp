@@ -23,7 +23,7 @@ QWidget* LegacyTimeAndSalesWindowSettings::Reopen(
   auto window = new TimeAndSalesWindow(Ref(user_profile),
     user_profile->GetTickerInfoQueryModel(),
     user_profile->GetTimeAndSalesPropertiesWindowFactory(),
-    user_profile->GetTimeAndSalesModelBuilder(), m_identifier,
+    user_profile->GetTimeAndSalesModelBuilder(),
     user_profile->MakePropertyHub());
   window->setAttribute(Qt::WA_DeleteOnClose);
   Apply(Ref(user_profile), out(*window));
@@ -40,5 +40,4 @@ void LegacyTimeAndSalesWindowSettings::Apply(
   if(m_ticker) {
     window.m_ticker_view->get_current()->set(m_ticker);
   }
-  window.m_link_identifier = m_link_identifier;
 }

@@ -1,8 +1,10 @@
 #include "Spire/Charting/ChartWindow.hpp"
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <QApplication>
+#include <QIcon>
 #include <QKeyEvent>
 #include <QToolButton>
+#include <QVariant>
 #include "Spire/Canvas/Types/DateTimeType.hpp"
 #include "Spire/Canvas/Types/DurationType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
@@ -11,9 +13,9 @@
 #include "Spire/Charting/ChartWindowSettings.hpp"
 #include "Spire/Charting/TickerPriceChartPlotSeries.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
-#include "Spire/LegacyUI/LinkTickerContextAction.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Ui/Ui.hpp"
+#include "Spire/Utilities/LinkMenu.hpp"
 #include "ui_ChartWindow.h"
 
 using namespace Beam;
@@ -27,13 +29,11 @@ using namespace Spire::LegacyUI;
 ChartWindow::ChartWindow(
   Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
   : ChartWindow(
-      Ref(userProfile), "", userProfile->MakePropertyHub(), parent, flags) {}
+      Ref(userProfile), userProfile->MakePropertyHub(), parent, flags) {}
 
 ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
-    const std::string& identifier, std::shared_ptr<PropertyHub> hub,
-    QWidget* parent, Qt::WindowFlags flags)
+    std::shared_ptr<PropertyHub> hub, QWidget* parent, Qt::WindowFlags flags)
     : QMainWindow(parent, flags),
-      TickerContext(identifier),
       m_ui(std::make_unique<Ui_ChartWindow>()),
       m_userProfile(userProfile.get()),
       m_interactionMode(ChartInteractionMode::NONE),
@@ -154,17 +154,6 @@ std::unique_ptr<WindowSettings> ChartWindow::GetWindowSettings() const {
   return std::make_unique<ChartWindowSettings>(*this, Ref(*m_userProfile));
 }
 
-void ChartWindow::showEvent(QShowEvent* event) {
-  auto context = TickerContext::FindTickerContext(m_linkIdentifier);
-  if(context) {
-    Link(*context);
-  } else {
-    m_linkConnection.disconnect();
-    m_linkIdentifier.clear();
-  }
-  QMainWindow::showEvent(event);
-}
-
 void ChartWindow::closeEvent(QCloseEvent* event) {
   if(m_ticker) {
     auto settings = GetWindowSettings();
@@ -205,27 +194,6 @@ void ChartWindow::OnTickerSubmit(const Ticker& ticker) {
   DisplayTicker(ticker);
 }
 
-void ChartWindow::HandleLink(TickerContext& context) {
-  m_linkIdentifier = context.GetIdentifier();
-  if(auto widget = dynamic_cast<QWidget*>(&context)) {
-    if(auto member = m_userProfile->FindPropertyHubMember(*widget)) {
-      m_member.get_hub()->set(member->get_hub()->get());
-    }
-  }
-  m_linkConnection = context.ConnectTickerDisplaySignal(
-    std::bind_front(&ChartWindow::DisplayTicker, this));
-  DisplayTicker(context.GetDisplayedTicker());
-}
-
-void ChartWindow::HandleUnlink() {
-  m_linkConnection.disconnect();
-  if(m_linkIdentifier.empty()) {
-    return;
-  }
-  m_linkIdentifier.clear();
-  m_member.get_hub()->set(m_userProfile->MakePropertyHub());
-}
-
 void ChartWindow::OnTickerUpdate(const Ticker& ticker) {
   m_ticker = ticker;
   if(!m_ticker) {
@@ -236,7 +204,6 @@ void ChartWindow::OnTickerUpdate(const Ticker& ticker) {
       m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());
   }
   m_member.get_name()->set(windowTitle());
-  SetDisplayedTicker(m_ticker);
 }
 
 void ChartWindow::OnHubUpdate(const std::shared_ptr<PropertyHub>& hub) {
@@ -411,10 +378,14 @@ void ChartWindow::OnLinkMenuActionTriggered(bool triggered) {
     m_linkMenu->removeAction(action.get());
   }
   m_linkMenu->clear();
-  auto linkActions = LinkTickerContextAction::MakeActions(
-    this, m_linkIdentifier, m_linkMenu, *m_userProfile);
-  for(auto& linkAction : linkActions) {
-    m_linkMenu->addAction(linkAction.get());
+  auto candidates = find_link_candidates(m_member, *m_userProfile);
+  for(auto candidate : candidates) {
+    auto action = m_linkMenu->addAction(
+      QIcon(candidate->get_icon_path()), candidate->get_name()->get());
+    action->setCheckable(true);
+    action->setChecked(
+      candidate->get_hub()->get() == m_member.get_hub()->get());
+    action->setData(QVariant::fromValue(static_cast<void*>(candidate)));
   }
   if(m_linkMenu->isEmpty()) {
     auto disabledAction = m_linkMenu->addAction(tr("No links available."));
@@ -426,9 +397,14 @@ void ChartWindow::OnLinkMenuActionTriggered(bool triggered) {
 }
 
 void ChartWindow::OnLinkActionTriggered(QAction* action) {
-  auto linkAction = dynamic_cast<LinkTickerContextAction*>(action);
-  if(!linkAction) {
+  auto candidate =
+    static_cast<PropertyHubMember*>(action->data().value<void*>());
+  if(!candidate) {
     return;
   }
-  linkAction->Execute(out(*this));
+  if(candidate->get_hub()->get() == m_member.get_hub()->get()) {
+    m_member.get_hub()->set(m_userProfile->MakePropertyHub());
+  } else {
+    m_member.get_hub()->set(candidate->get_hub()->get());
+  }
 }

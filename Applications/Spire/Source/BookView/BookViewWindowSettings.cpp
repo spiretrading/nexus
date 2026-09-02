@@ -10,10 +10,8 @@ using namespace Spire;
 
 BookViewWindowSettings::BookViewWindowSettings(const BookViewWindow& window)
     : m_ticker_view(window.m_ticker_view->save_state()),
-      m_identifier(window.GetIdentifier()),
-      m_link_identifier(window.m_link_identifier),
       m_geometry(window.saveGeometry()) {
-  auto& ticker = window.GetDisplayedTicker();
+  auto& ticker = window.get_current()->get();
   if(ticker) {
     m_name = "Book View - " + to_string(ticker);
   } else {
@@ -30,8 +28,7 @@ QWidget* BookViewWindowSettings::Reopen(Ref<UserProfile> user_profile) const {
     user_profile->GetTickerInfoQueryModel(),
     user_profile->GetKeyBindings(),
     user_profile->GetBookViewPropertiesWindowFactory(),
-    user_profile->GetBookViewModelBuilder(), m_identifier,
-    user_profile->MakePropertyHub());
+    user_profile->GetBookViewModelBuilder(), user_profile->MakePropertyHub());
   Apply(Ref(user_profile), out(*window));
   return window;
 }
@@ -40,6 +37,5 @@ void BookViewWindowSettings::Apply(
     Ref<UserProfile> user_profile, Out<QWidget> widget) const {
   auto& window = dynamic_cast<BookViewWindow&>(*widget);
   restore_geometry(window, m_geometry);
-  window.m_link_identifier = m_link_identifier;
   window.m_ticker_view->restore(m_ticker_view);
 }

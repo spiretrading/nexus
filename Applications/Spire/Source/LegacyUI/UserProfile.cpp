@@ -167,17 +167,6 @@ void UserProfile::AddPropertyHubMember(PropertyHubMember& member) {
   m_property_hub_members->push(&member);
 }
 
-PropertyHubMember* UserProfile::FindPropertyHubMember(
-    const QWidget& component) const {
-  for(auto i = 0; i != m_property_hub_members->get_size(); ++i) {
-    auto member = m_property_hub_members->get(i);
-    if(&member->get_component() == &component) {
-      return member;
-    }
-  }
-  return nullptr;
-}
-
 void UserProfile::RemovePropertyHubMember(PropertyHubMember& member) {
   for(auto i = m_property_hub_members->get_size() - 1; i >= 0; --i) {
     if(m_property_hub_members->get(i) == &member) {

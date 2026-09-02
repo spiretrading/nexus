@@ -110,17 +110,16 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
   std::shared_ptr<BookViewPropertiesWindowFactory> factory,
   ModelBuilder model_builder, QWidget* parent)
   : BookViewWindow(Ref(user_profile), std::move(tickers),
-      std::move(key_bindings), std::move(factory), std::move(model_builder), "",
+      std::move(key_bindings), std::move(factory), std::move(model_builder),
       user_profile->MakePropertyHub(), parent)  {}
 
 BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
     std::shared_ptr<TickerInfoQueryModel> tickers,
     std::shared_ptr<KeyBindingsModel> key_bindings,
     std::shared_ptr<BookViewPropertiesWindowFactory> factory,
-    ModelBuilder model_builder, std::string identifier,
-    std::shared_ptr<PropertyHub> hub, QWidget* parent)
+    ModelBuilder model_builder, std::shared_ptr<PropertyHub> hub,
+    QWidget* parent)
     : Window(parent),
-      TickerContext(std::move(identifier)),
       m_user_profile(user_profile.get()),
       m_key_bindings(std::move(key_bindings)),
       m_factory(std::move(factory)),
@@ -202,40 +201,6 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
       m_ticker_view->get_current()->get(), sequence)) {
     display_task_entry_panel(*arguments);
   }
-}
-
-void BookViewWindow::showEvent(QShowEvent* event) {
-  if(auto context = TickerContext::FindTickerContext(m_link_identifier)) {
-    Link(*context);
-  } else {
-    HandleUnlink();
-  }
-  Window::showEvent(event);
-}
-
-void BookViewWindow::HandleLink(TickerContext& context) {
-  m_link_identifier = context.GetIdentifier();
-  if(auto widget = dynamic_cast<QWidget*>(&context)) {
-    if(auto member = m_user_profile->FindPropertyHubMember(*widget)) {
-      m_member.get_hub()->set(member->get_hub()->get());
-    }
-  }
-  m_link_connection = context.ConnectTickerDisplaySignal(
-    [=] (const auto& ticker) {
-      if(m_ticker_view->get_current()->get() != ticker) {
-         m_ticker_view->get_current()->set(ticker);
-      }
-    });
-  m_ticker_view->get_current()->set(context.GetDisplayedTicker());
-}
-
-void BookViewWindow::HandleUnlink() {
-  m_link_connection.disconnect();
-  if(m_link_identifier.empty()) {
-    return;
-  }
-  m_link_identifier.clear();
-  m_member.get_hub()->set(m_user_profile->MakePropertyHub());
 }
 
 void BookViewWindow::on_hub(const std::shared_ptr<PropertyHub>& hub) {
@@ -398,7 +363,7 @@ void BookViewWindow::on_context_menu(const QPoint& pos) {
   }
   menu->add_action(tr("Properties"),
     std::bind_front(&BookViewWindow::on_properties_menu, this));
-  add_link_menu(*menu, *this);
+  add_link_menu(*menu, m_member, *m_user_profile);
   menu->window()->setAttribute(Qt::WA_DeleteOnClose);
   menu->window()->move(m_ticker_view->mapToGlobal(pos));
   menu->window()->show();
@@ -498,7 +463,6 @@ void BookViewWindow::on_current(const Ticker& ticker) {
     std::bind_front(&BookViewWindow::on_order_operation, this, Side::BID));
   m_ask_order_connection = m_model->get_ask_orders()->connect_operation_signal(
     std::bind_front(&BookViewWindow::on_order_operation, this, Side::ASK));
-  SetDisplayedTicker(ticker);
   m_page_key_observer.emplace(*this);
   m_page_key_observer->connect_filtered_key_press_signal(
     std::bind_front(&BookViewWindow::on_key_press, this));

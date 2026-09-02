@@ -13,14 +13,12 @@ using namespace Spire;
 TimeAndSalesWindowSettings::TimeAndSalesWindowSettings(
     const TimeAndSalesWindow& window)
     : m_ticker_view(window.m_ticker_view->save_state()),
-      m_identifier(window.GetIdentifier()),
-      m_link_identifier(window.m_link_identifier),
       m_geometry(window.saveGeometry()) {
   if(window.m_table_view) {
     auto& widths = *window.m_table_view->get_header().get_widths();
     m_column_widths.insert(m_column_widths.end(), widths.begin(), widths.end());
   }
-  if(auto& ticker = window.GetDisplayedTicker()) {
+  if(auto& ticker = window.get_current()->get()) {
     m_name = "Time And Sales - " + to_string(ticker);
   } else {
     m_name = "Time And Sales";
@@ -36,7 +34,7 @@ QWidget* TimeAndSalesWindowSettings::Reopen(
   auto window = new TimeAndSalesWindow(
     Ref(user_profile), user_profile->GetTickerInfoQueryModel(),
     user_profile->GetTimeAndSalesPropertiesWindowFactory(),
-    user_profile->GetTimeAndSalesModelBuilder(), m_identifier,
+    user_profile->GetTimeAndSalesModelBuilder(),
     user_profile->MakePropertyHub());
   window->setAttribute(Qt::WA_DeleteOnClose);
   Apply(Ref(user_profile), out(*window));
@@ -47,7 +45,6 @@ void TimeAndSalesWindowSettings::Apply(
     Ref<UserProfile> user_profile, Out<QWidget> widget) const {
   auto& window = dynamic_cast<TimeAndSalesWindow&>(*widget);
   restore_geometry(window, m_geometry);
-  window.m_link_identifier = m_link_identifier;
   window.m_ticker_view->restore(m_ticker_view);
   if(window.m_table_view) {
     auto& widths = *window.m_table_view->get_header().get_widths();
