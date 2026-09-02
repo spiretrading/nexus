@@ -28,7 +28,10 @@
 #include "Spire/Ui/AccountBox.hpp"
 #include "Spire/Ui/TickerBox.hpp"
 
+class QWidget;
+
 namespace Spire {
+  class PropertyHubMember;
 
   /** The type of model used to store the list of recently closed windows. */
   using RecentlyClosedWindowListModel =
@@ -105,6 +108,31 @@ namespace Spire {
 
       /** Returns a new PropertyHub. */
       std::shared_ptr<PropertyHub> MakePropertyHub();
+
+      /** Returns the list of components that can join a PropertyHub. */
+      const std::shared_ptr<ListModel<PropertyHubMember*>>&
+        GetPropertyHubMembers() const;
+
+      /**
+       * Adds a component to the list of components that can join a
+       * PropertyHub.
+       * @param member The component to add.
+       */
+      void AddPropertyHubMember(PropertyHubMember& member);
+
+      /**
+       * Removes a component from the list of components that can join a
+       * PropertyHub.
+       * @param member The component to remove.
+       */
+      void RemovePropertyHubMember(PropertyHubMember& member);
+
+      /**
+       * Returns the PropertyHubMember representing a component, or
+       * <code>nullptr</code> if the component has no member.
+       * @param component The component to look up.
+       */
+      PropertyHubMember* FindPropertyHubMember(const QWidget& component) const;
 
       /** Returns the model used to query tickers. */
       const std::shared_ptr<TickerInfoQueryModel>&
@@ -215,7 +243,7 @@ namespace Spire {
       std::shared_ptr<RecentlyClosedWindowListModel> m_recentlyClosedWindows;
       std::shared_ptr<AccountQueryModel> m_account_query_model;
       std::shared_ptr<TickerInfoQueryModel> m_ticker_info_query_model;
-      std::vector<std::weak_ptr<PropertyHub>> m_property_hubs;
+      std::shared_ptr<ListModel<PropertyHubMember*>> m_property_hub_members;
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties
         m_defaultOrderImbalanceIndicatorProperties;

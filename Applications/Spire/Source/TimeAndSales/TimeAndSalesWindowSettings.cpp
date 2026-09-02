@@ -33,7 +33,8 @@ std::string TimeAndSalesWindowSettings::GetName() const {
 
 QWidget* TimeAndSalesWindowSettings::Reopen(
     Ref<UserProfile> user_profile) const {
-  auto window = new TimeAndSalesWindow(user_profile->GetTickerInfoQueryModel(),
+  auto window = new TimeAndSalesWindow(
+    Ref(user_profile), user_profile->GetTickerInfoQueryModel(),
     user_profile->GetTimeAndSalesPropertiesWindowFactory(),
     user_profile->GetTimeAndSalesModelBuilder(), m_identifier,
     user_profile->MakePropertyHub());

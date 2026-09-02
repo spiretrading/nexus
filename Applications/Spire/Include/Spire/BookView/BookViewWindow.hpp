@@ -10,7 +10,7 @@
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/TickerContext.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
-#include "Spire/Spire/PropertyHub.hpp"
+#include "Spire/Spire/PropertyHubMember.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Ui/KeyObserver.hpp"
 #include "Spire/Ui/TickerBox.hpp"
@@ -130,8 +130,9 @@ namespace Spire {
       std::shared_ptr<BookViewPropertiesWindowFactory> m_factory;
       ModelBuilder m_model_builder;
       std::shared_ptr<ProxyValueModel<BookViewProperties>> m_properties_proxy;
-      std::shared_ptr<PropertyHub> m_hub;
       std::shared_ptr<ProxyValueModel<Nexus::Ticker>> m_ticker;
+      PropertyHubMember m_member;
+      boost::signals2::scoped_connection m_hub_connection;
       std::shared_ptr<InteractionsKeyBindingsModel> m_interactions;
       std::shared_ptr<BookViewModel> m_model;
       BookDepth* m_book_depth;
@@ -145,7 +146,6 @@ namespace Spire {
       boost::signals2::scoped_connection m_bid_order_connection;
       boost::signals2::scoped_connection m_ask_order_connection;
 
-      void set_hub(std::shared_ptr<PropertyHub> hub);
       std::unique_ptr<CanvasNode> make_task_node(const CanvasNode& node);
       void display_interactions_panel();
       void display_task_entry_panel(const OrderTaskArguments& arguments);
@@ -157,6 +157,7 @@ namespace Spire {
       void on_cancel_all(const CurrentUserOrder& user_order);
       void on_properties_menu();
       void on_current(const Nexus::Ticker& ticker);
+      void on_hub(const std::shared_ptr<PropertyHub>& hub);
       void on_order_operation(Nexus::Side side,
         const ListModel<BookViewModel::UserOrder>::Operation& operation);
   };

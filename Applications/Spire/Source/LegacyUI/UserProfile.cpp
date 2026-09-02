@@ -12,6 +12,7 @@
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/PropertyHubMember.hpp"
 #include "Spire/Spire/ServiceAccountQueryModel.hpp"
 #include "Spire/Spire/ServiceTickerInfoQueryModel.hpp"
 #include "Spire/TimeAndSales/CachedTimeAndSalesModel.hpp"
@@ -60,6 +61,8 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
         m_clients.get_administration_client())),
       m_ticker_info_query_model(std::make_shared<ServiceTickerInfoQueryModel>(
         m_clients.get_market_data_client())),
+      m_property_hub_members(
+        std::make_shared<ArrayListModel<PropertyHubMember*>>()),
       m_book_view_properties_window_factory(
         std::make_shared<BookViewPropertiesWindowFactory>(
           std::make_shared<LocalBookViewPropertiesModel>(
@@ -152,12 +155,36 @@ const std::shared_ptr<TickerInfoQueryModel>&
 }
 
 std::shared_ptr<PropertyHub> UserProfile::MakePropertyHub() {
-  std::erase_if(m_property_hubs, [] (const auto& hub) {
-    return hub.expired();
-  });
-  auto hub = std::make_shared<PropertyHub>();
-  m_property_hubs.push_back(hub);
-  return hub;
+  return std::make_shared<PropertyHub>();
+}
+
+const std::shared_ptr<ListModel<PropertyHubMember*>>&
+    UserProfile::GetPropertyHubMembers() const {
+  return m_property_hub_members;
+}
+
+void UserProfile::AddPropertyHubMember(PropertyHubMember& member) {
+  m_property_hub_members->push(&member);
+}
+
+PropertyHubMember* UserProfile::FindPropertyHubMember(
+    const QWidget& component) const {
+  for(auto i = 0; i != m_property_hub_members->get_size(); ++i) {
+    auto member = m_property_hub_members->get(i);
+    if(&member->get_component() == &component) {
+      return member;
+    }
+  }
+  return nullptr;
+}
+
+void UserProfile::RemovePropertyHubMember(PropertyHubMember& member) {
+  for(auto i = m_property_hub_members->get_size() - 1; i >= 0; --i) {
+    if(m_property_hub_members->get(i) == &member) {
+      m_property_hub_members->remove(i);
+      return;
+    }
+  }
 }
 
 const BlotterSettings& UserProfile::GetBlotterSettings() const {

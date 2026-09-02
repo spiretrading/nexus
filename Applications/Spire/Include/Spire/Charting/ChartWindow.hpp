@@ -13,7 +13,7 @@
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/TickerContext.hpp"
 #include "Spire/LegacyUI/TickerViewStack.hpp"
-#include "Spire/Spire/PropertyHub.hpp"
+#include "Spire/Spire/PropertyHubMember.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Ui/TickerDialog.hpp"
@@ -93,14 +93,15 @@ namespace Spire {
       TickerDialog* m_tickerDialog;
       ChartInteractionMode m_interactionMode;
       std::optional<ChartPlotController> m_controller;
-      std::shared_ptr<PropertyHub> m_hub;
       std::shared_ptr<ProxyValueModel<Nexus::Ticker>> m_tickerModel;
+      PropertyHubMember m_member;
       Nexus::Ticker m_ticker;
       std::string m_linkIdentifier;
       LegacyUI::TickerViewStack m_tickerViewStack;
       ChartValue m_xPan;
       ChartValue m_yPan;
       boost::signals2::scoped_connection m_tickerConnection;
+      boost::signals2::scoped_connection m_hubConnection;
       boost::signals2::scoped_connection m_linkConnection;
       boost::signals2::scoped_connection m_verticalSliderConnection;
       boost::signals2::scoped_connection m_horizontalSliderConnection;
@@ -128,7 +129,7 @@ namespace Spire {
       void OnLinkActionTriggered(QAction* action);
       void OnTickerSubmit(const Nexus::Ticker& ticker);
       void OnTickerUpdate(const Nexus::Ticker& ticker);
-      void SetHub(std::shared_ptr<PropertyHub> hub);
+      void OnHubUpdate(const std::shared_ptr<PropertyHub>& hub);
   };
 }
 

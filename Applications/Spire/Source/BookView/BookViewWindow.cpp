@@ -1,6 +1,7 @@
 #include "Spire/BookView/BookViewWindow.hpp"
 #include <limits>
 #include <tuple>
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <QApplication>
 #include <QIcon>
 #include <QKeyEvent>
@@ -125,8 +126,11 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
       m_factory(std::move(factory)),
       m_model_builder(std::move(model_builder)),
       m_properties_proxy(make_proxy_value_model(m_factory->get_properties())),
-      m_hub(std::move(hub)),
-      m_ticker(make_proxy_value_model(m_hub->get<Ticker>(TICKER_PROPERTY))),
+      m_ticker(make_proxy_value_model(hub->get<Ticker>(TICKER_PROPERTY))),
+BEAM_SUPPRESS_THIS_INITIALIZER()
+      m_member(*m_user_profile, *this, TITLE_NAME, ":/Icons/bookview.svg",
+        std::move(hub)),
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
       m_book_depth(nullptr),
       m_task_entry_panel(nullptr),
       m_is_task_entry_panel_for_interactions(false) {
@@ -149,6 +153,8 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
   connect(m_ticker_view, &QWidget::customContextMenuRequested,
     std::bind_front(&BookViewWindow::on_context_menu, this));
   resize(scale(266, 361));
+  m_hub_connection = m_member.get_hub()->connect_update_signal(
+    std::bind_front(&BookViewWindow::on_hub, this));
   m_page_key_observer.emplace(*this);
   m_page_key_observer->connect_filtered_key_press_signal(
     std::bind_front(&BookViewWindow::on_key_press, this));
@@ -209,8 +215,10 @@ void BookViewWindow::showEvent(QShowEvent* event) {
 
 void BookViewWindow::HandleLink(TickerContext& context) {
   m_link_identifier = context.GetIdentifier();
-  if(auto window = dynamic_cast<BookViewWindow*>(&context)) {
-    set_hub(window->m_hub);
+  if(auto widget = dynamic_cast<QWidget*>(&context)) {
+    if(auto member = m_user_profile->FindPropertyHubMember(*widget)) {
+      m_member.get_hub()->set(member->get_hub()->get());
+    }
   }
   m_link_connection = context.ConnectTickerDisplaySignal(
     [=] (const auto& ticker) {
@@ -227,14 +235,16 @@ void BookViewWindow::HandleUnlink() {
     return;
   }
   m_link_identifier.clear();
-  auto hub = m_user_profile->MakePropertyHub();
-  hub->get<Ticker>(TICKER_PROPERTY)->set(m_ticker->get());
-  set_hub(std::move(hub));
+  m_member.get_hub()->set(m_user_profile->MakePropertyHub());
 }
 
-void BookViewWindow::set_hub(std::shared_ptr<PropertyHub> hub) {
-  m_hub = std::move(hub);
-  m_ticker->set_source(m_hub->get<Ticker>(TICKER_PROPERTY));
+void BookViewWindow::on_hub(const std::shared_ptr<PropertyHub>& hub) {
+  auto is_new = !hub->find(TICKER_PROPERTY);
+  auto ticker = hub->get<Ticker>(TICKER_PROPERTY);
+  if(is_new) {
+    ticker->set(m_ticker->get());
+  }
+  m_ticker->set_source(ticker);
 }
 
 std::unique_ptr<CanvasNode>
@@ -461,9 +471,12 @@ void BookViewWindow::on_properties_menu() {
 
 void BookViewWindow::on_current(const Ticker& ticker) {
   if(!ticker) {
+    setWindowTitle(TITLE_NAME);
+    m_member.get_name()->set(windowTitle());
     return;
   }
   setWindowTitle(to_text(ticker) + " " + QString(0x2013) + " " + TITLE_NAME);
+  m_member.get_name()->set(windowTitle());
   m_transition_view->set_status(TransitionView::Status::NONE);
   m_interactions = m_key_bindings->get_interactions_key_bindings(ticker);
   m_model = m_model_builder(ticker);

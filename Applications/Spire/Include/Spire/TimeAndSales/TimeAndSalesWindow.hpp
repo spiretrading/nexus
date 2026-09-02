@@ -1,10 +1,11 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
+#include <Beam/Pointers/Ref.hpp>
 #include <boost/signals2/connection.hpp>
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/TickerContext.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
-#include "Spire/Spire/PropertyHub.hpp"
+#include "Spire/Spire/PropertyHubMember.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesPropertiesWindowFactory.hpp"
 #include "Spire/Ui/TickerBox.hpp"
@@ -32,18 +33,21 @@ namespace Spire {
 
       /**
        * Constructs a TimeAndSalesWindow.
+       * @param user_profile The user's profile.
        * @param tickers The set of tickers to use.
        * @param factory The factory used to create a
        *        TimeAndSalesPropertiesWindow.
        * @param model_builder The ModelBuilder to use.
        * @param parent The parent widget.
        */
-      TimeAndSalesWindow(std::shared_ptr<TickerInfoQueryModel> tickers,
+      TimeAndSalesWindow(Beam::Ref<UserProfile> user_profile,
+        std::shared_ptr<TickerInfoQueryModel> tickers,
         std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
         ModelBuilder model_builder, QWidget* parent = nullptr);
 
       /**
        * Constructs a TimeAndSalesWindow.
+       * @param user_profile The user's profile.
        * @param tickers The set of tickers to use.
        * @param factory The factory used to create a
        *        TimeAndSalesPropertiesWindow.
@@ -53,7 +57,8 @@ namespace Spire {
        *        components this window is linked to.
        * @param parent The parent widget.
        */
-      TimeAndSalesWindow(std::shared_ptr<TickerInfoQueryModel> tickers,
+      TimeAndSalesWindow(Beam::Ref<UserProfile> user_profile,
+        std::shared_ptr<TickerInfoQueryModel> tickers,
         std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory,
         ModelBuilder model_builder, std::string identifier,
         std::shared_ptr<PropertyHub> hub, QWidget* parent = nullptr);
@@ -72,12 +77,14 @@ namespace Spire {
     private:
       friend class LegacyTimeAndSalesWindowSettings;
       friend class TimeAndSalesWindowSettings;
+      UserProfile* m_user_profile;
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory> m_factory;
       ModelBuilder m_model_builder;
       std::shared_ptr<ProxyValueModel<TimeAndSalesProperties>>
         m_properties_proxy;
-      std::shared_ptr<PropertyHub> m_hub;
       std::shared_ptr<ProxyValueModel<Nexus::Ticker>> m_ticker;
+      PropertyHubMember m_member;
+      boost::signals2::scoped_connection m_hub_connection;
       std::shared_ptr<TimeAndSalesTableModel> m_table_model;
       TableView* m_table_view;
       TransitionView* m_transition_view;
@@ -85,7 +92,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_link_connection;
       TickerView* m_ticker_view;
 
-      void set_hub(std::shared_ptr<PropertyHub> hub);
+      void on_hub(const std::shared_ptr<PropertyHub>& hub);
       void on_context_menu(QWidget* parent, const QPoint& pos);
       void on_export_menu();
       void on_properties_menu();

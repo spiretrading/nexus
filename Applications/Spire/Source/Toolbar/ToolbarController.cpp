@@ -59,7 +59,7 @@ namespace {
       next_height = book_view_window->frameSize().height();
       windows.push_back(book_view_window);
       auto time_and_sales_window = new TimeAndSalesWindow(
-        user_profile.GetTickerInfoQueryModel(),
+        Ref(user_profile), user_profile.GetTickerInfoQueryModel(),
         user_profile.GetTimeAndSalesPropertiesWindowFactory(),
         user_profile.GetTimeAndSalesModelBuilder());
       book_view_window->Link(*time_and_sales_window);
