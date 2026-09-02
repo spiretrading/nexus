@@ -5,10 +5,6 @@
 #include <string>
 #include <typeinfo>
 #include <unordered_map>
-#include <Beam/Serialization/DataShuttle.hpp>
-#include <Beam/Serialization/ShuttleSharedPtr.hpp>
-#include <Beam/Serialization/ShuttleUnorderedMap.hpp>
-#include <Beam/Serialization/ShuttleUuid.hpp>
 #include <boost/uuid/uuid.hpp>
 #include "Spire/Spire/LocalValueModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
@@ -63,15 +59,12 @@ namespace Spire {
       void remove(const std::string& name);
 
     private:
-      friend struct Beam::DataShuttle;
       boost::uuids::uuid m_id;
       std::unordered_map<std::string, std::shared_ptr<AnyValueModel>>
         m_properties;
 
       PropertyHub(const PropertyHub&) = delete;
       PropertyHub& operator =(const PropertyHub&) = delete;
-      template<Beam::IsShuttle S>
-      void shuttle(S& shuttle, unsigned int version);
   };
 
   template<typename T>
@@ -86,12 +79,6 @@ namespace Spire {
       throw std::bad_any_cast();
     }
     return std::static_pointer_cast<ValueModel<T>>(i->second);
-  }
-
-  template<Beam::IsShuttle S>
-  void PropertyHub::shuttle(S& shuttle, unsigned int version) {
-    shuttle.shuttle("id", m_id);
-    shuttle.shuttle("properties", m_properties);
   }
 }
 

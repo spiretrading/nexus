@@ -89,6 +89,8 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_additionalTagDatabase(additionalTagDatabase) {
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
+  m_merge_connection = m_legacy_property_hubs.connect_merge_signal(
+    std::bind_front(&UserProfile::MergePropertyHubs, this));
   m_keyBindings = load_key_bindings_profile(m_profilePath);
   for(auto& exchangeRate : exchangeRates) {
     m_exchangeRates.add(exchangeRate);
@@ -176,23 +178,9 @@ std::shared_ptr<PropertyHub> UserProfile::AcquirePropertyHub(
 
 std::shared_ptr<PropertyHub> UserProfile::AcquirePropertyHub(
     const std::string& identifier, const std::string& link_identifier) {
-  auto hub = FindPropertyHub(identifier);
-  if(auto link_hub = FindPropertyHub(link_identifier)) {
-    if(!hub) {
-      hub = link_hub;
-    } else if(hub != link_hub) {
-      MergePropertyHubs(link_hub, hub);
-    }
-  }
-  if(!hub) {
-    hub = MakePropertyHub();
-  }
-  if(!identifier.empty()) {
-    m_legacy_property_hubs[identifier] = hub;
-  }
-  if(!link_identifier.empty()) {
-    m_legacy_property_hubs[link_identifier] = hub;
-  }
+  CollectPropertyHubs();
+  auto hub = m_legacy_property_hubs.acquire(identifier, link_identifier);
+  m_property_hubs[hub->get_id()] = hub;
   return hub;
 }
 
@@ -339,21 +327,6 @@ void UserProfile::CollectPropertyHubs() {
   std::erase_if(m_property_hubs, [] (const auto& entry) {
     return entry.second.expired();
   });
-  std::erase_if(m_legacy_property_hubs, [] (const auto& entry) {
-    return entry.second.expired();
-  });
-}
-
-std::shared_ptr<PropertyHub> UserProfile::FindPropertyHub(
-    const std::string& identifier) const {
-  if(identifier.empty()) {
-    return nullptr;
-  }
-  auto i = m_legacy_property_hubs.find(identifier);
-  if(i == m_legacy_property_hubs.end()) {
-    return nullptr;
-  }
-  return i->second.lock();
 }
 
 void UserProfile::MergePropertyHubs(const std::shared_ptr<PropertyHub>& source,
@@ -362,11 +335,6 @@ void UserProfile::MergePropertyHubs(const std::shared_ptr<PropertyHub>& source,
     auto& member = *m_property_hub_members->get(i);
     if(member.get_hub()->get() == source) {
       member.get_hub()->set(destination);
-    }
-  }
-  for(auto& entry : m_legacy_property_hubs) {
-    if(entry.second.lock() == source) {
-      entry.second = destination;
     }
   }
 }

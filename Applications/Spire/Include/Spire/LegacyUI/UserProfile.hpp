@@ -24,6 +24,7 @@
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
 #include "Spire/Spire/CachedModelBuilder.hpp"
+#include "Spire/Spire/LegacyPropertyHubMap.hpp"
 #include "Spire/Spire/PropertyHub.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
@@ -273,8 +274,8 @@ namespace Spire {
       std::shared_ptr<ListModel<PropertyHubMember*>> m_property_hub_members;
       std::unordered_map<boost::uuids::uuid, std::weak_ptr<PropertyHub>>
         m_property_hubs;
-      std::unordered_map<std::string, std::weak_ptr<PropertyHub>>
-        m_legacy_property_hubs;
+      LegacyPropertyHubMap m_legacy_property_hubs;
+      boost::signals2::scoped_connection m_merge_connection;
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties
         m_defaultOrderImbalanceIndicatorProperties;
@@ -300,8 +301,6 @@ namespace Spire {
         m_initialPortfolioViewerWindowSettings;
 
       void CollectPropertyHubs();
-      std::shared_ptr<PropertyHub> FindPropertyHub(
-        const std::string& identifier) const;
       void MergePropertyHubs(const std::shared_ptr<PropertyHub>& source,
         const std::shared_ptr<PropertyHub>& destination);
   };

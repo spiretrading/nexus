@@ -1,11 +1,7 @@
 #include <any>
-#include <string>
-#include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <doctest/doctest.h>
 #include "Spire/Spire/PropertyHub.hpp"
-#include "Spire/Spire/PropertyHubSerialization.hpp"
 
-using namespace Beam::Tests;
 using namespace Spire;
 
 TEST_SUITE("PropertyHub") {
@@ -39,20 +35,5 @@ TEST_SUITE("PropertyHub") {
   TEST_CASE("id") {
     auto hub = PropertyHub();
     REQUIRE(hub.get_id() != PropertyHub().get_id());
-  }
-
-  TEST_CASE("shuttle") {
-    auto hub = PropertyHub();
-    hub.get<int>("count")->set(123);
-    hub.get<std::string>("name")->set("abc");
-    test_polymorphic_round_trip_shuttle(hub,
-      [] (auto registry) {
-        RegisterPropertyHubTypes(out(registry));
-      },
-      [&] (auto&& received) {
-        REQUIRE(received.get_id() == hub.get_id());
-        REQUIRE(received.get<int>("count")->get() == 123);
-        REQUIRE(received.get<std::string>("name")->get() == "abc");
-      });
   }
 }
