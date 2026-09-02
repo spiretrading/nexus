@@ -22,6 +22,7 @@
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
 #include "Spire/Spire/CachedModelBuilder.hpp"
+#include "Spire/Spire/PropertyHub.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/Ui/AccountBox.hpp"
@@ -101,6 +102,9 @@ namespace Spire {
       /** Returns the model used to query accounts. */
       const std::shared_ptr<AccountQueryModel>&
         GetAccountQueryModel() const;
+
+      /** Returns a new PropertyHub. */
+      std::shared_ptr<PropertyHub> MakePropertyHub();
 
       /** Returns the model used to query tickers. */
       const std::shared_ptr<TickerInfoQueryModel>&
@@ -211,6 +215,7 @@ namespace Spire {
       std::shared_ptr<RecentlyClosedWindowListModel> m_recentlyClosedWindows;
       std::shared_ptr<AccountQueryModel> m_account_query_model;
       std::shared_ptr<TickerInfoQueryModel> m_ticker_info_query_model;
+      std::vector<std::weak_ptr<PropertyHub>> m_property_hubs;
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties
         m_defaultOrderImbalanceIndicatorProperties;

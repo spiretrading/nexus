@@ -26,7 +26,7 @@ using namespace Spire::LegacyUI;
 ChartWindow::ChartWindow(
   Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
   : ChartWindow(
-      Ref(userProfile), "", std::make_shared<PropertyHub>(), parent, flags) {}
+      Ref(userProfile), "", userProfile->MakePropertyHub(), parent, flags) {}
 
 ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
     const std::string& identifier, std::shared_ptr<PropertyHub> hub,
@@ -215,7 +215,7 @@ void ChartWindow::HandleUnlink() {
     return;
   }
   m_linkIdentifier.clear();
-  auto hub = std::make_shared<PropertyHub>();
+  auto hub = m_userProfile->MakePropertyHub();
   hub->get<Ticker>(TICKER_PROPERTY)->set(m_tickerModel->get());
   SetHub(std::move(hub));
 }

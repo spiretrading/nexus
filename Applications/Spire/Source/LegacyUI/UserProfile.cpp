@@ -1,4 +1,5 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include <vector>
 #include <Beam/ServiceLocator/SessionEncryption.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <QDesktopServices>
@@ -148,6 +149,15 @@ const std::shared_ptr<AccountQueryModel>&
 const std::shared_ptr<TickerInfoQueryModel>&
     UserProfile::GetTickerInfoQueryModel() const {
   return m_ticker_info_query_model;
+}
+
+std::shared_ptr<PropertyHub> UserProfile::MakePropertyHub() {
+  std::erase_if(m_property_hubs, [] (const auto& hub) {
+    return hub.expired();
+  });
+  auto hub = std::make_shared<PropertyHub>();
+  m_property_hubs.push_back(hub);
+  return hub;
 }
 
 const BlotterSettings& UserProfile::GetBlotterSettings() const {

@@ -110,7 +110,7 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
   ModelBuilder model_builder, QWidget* parent)
   : BookViewWindow(Ref(user_profile), std::move(tickers),
       std::move(key_bindings), std::move(factory), std::move(model_builder), "",
-      std::make_shared<PropertyHub>(), parent)  {}
+      user_profile->MakePropertyHub(), parent)  {}
 
 BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
     std::shared_ptr<TickerInfoQueryModel> tickers,
@@ -227,7 +227,7 @@ void BookViewWindow::HandleUnlink() {
     return;
   }
   m_link_identifier.clear();
-  auto hub = std::make_shared<PropertyHub>();
+  auto hub = m_user_profile->MakePropertyHub();
   hub->get<Ticker>(TICKER_PROPERTY)->set(m_ticker->get());
   set_hub(std::move(hub));
 }

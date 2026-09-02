@@ -41,7 +41,7 @@ string ChartWindowSettings::GetName() const {
 
 QWidget* ChartWindowSettings::Reopen(Ref<UserProfile> userProfile) const {
   ChartWindow* window = new ChartWindow(
-    Ref(userProfile), m_identifier, std::make_shared<PropertyHub>());
+    Ref(userProfile), m_identifier, userProfile->MakePropertyHub());
   window->setAttribute(Qt::WA_DeleteOnClose);
   Apply(Ref(userProfile), out(*window));
   return window;

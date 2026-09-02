@@ -24,7 +24,7 @@ QWidget* LegacyBookViewWindowSettings::Reopen(
     user_profile->GetTickerInfoQueryModel(), user_profile->GetKeyBindings(),
     user_profile->GetBookViewPropertiesWindowFactory(),
     user_profile->GetBookViewModelBuilder(), m_identifier,
-    std::make_shared<PropertyHub>());
+    user_profile->MakePropertyHub());
   Apply(Ref(user_profile), out(*window));
   return window;
 }
