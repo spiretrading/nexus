@@ -41,7 +41,8 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
       m_member(*m_userProfile, *this, tr("Chart"), ":/Icons/chart.svg",
         std::move(hub)),
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
-      m_tickerModel(m_member.get_property<Ticker>(TICKER_PROPERTY)) {
+      m_tickerModel(
+        m_member.get_property<Ticker>(PropertyHub::TICKER_PROPERTY)) {
   m_ui->setupUi(this);
   m_intervalComboBox = new ChartIntervalComboBox(this);
   m_ui->m_toolBar->insertWidget(m_ui->m_panAction, m_intervalComboBox);

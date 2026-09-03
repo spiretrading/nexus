@@ -11,6 +11,8 @@ namespace {
   }
 }
 
+const std::string PropertyHub::TICKER_PROPERTY = "ticker";
+
 PropertyHub::PropertyHub()
   : PropertyHub(generate_id()) {}
 

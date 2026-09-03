@@ -1,7 +1,9 @@
 #ifndef SPIRE_PROPERTY_HUB_MEMBER_HPP
 #define SPIRE_PROPERTY_HUB_MEMBER_HPP
+#include <any>
 #include <memory>
 #include <string>
+#include <typeinfo>
 #include <unordered_map>
 #include <vector>
 #include <boost/signals2/connection.hpp>
@@ -51,8 +53,7 @@ namespace Spire {
 
       /**
        * Returns the model over a property shared with the components belonging
-       * to the same PropertyHub, following the PropertyHub this component
-       * belongs to.
+       * to the same PropertyHub.
        * @param name The name identifying the property.
        * @return The model over the property.
        * @throws <code>std::bad_any_cast</code> iff a property with the same

@@ -137,7 +137,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   setWindowIcon(QIcon(":/Icons/taskbar_icons/bookview.png"));
   setWindowTitle(TITLE_NAME);
   m_transition_view = new TransitionView(new QWidget());
-  auto ticker = m_member.get_property<Ticker>(TICKER_PROPERTY);
+  auto ticker = m_member.get_property<Ticker>(PropertyHub::TICKER_PROPERTY);
   m_ticker_view =
     new TickerView(std::move(tickers), ticker, *m_transition_view);
   m_ticker_view->get_current()->connect_update_signal(

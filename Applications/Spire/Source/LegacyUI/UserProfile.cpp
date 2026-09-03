@@ -1,5 +1,4 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
-#include <unordered_map>
 #include <vector>
 #include <Beam/ServiceLocator/SessionEncryption.hpp>
 #include <Beam/Utilities/ToString.hpp>

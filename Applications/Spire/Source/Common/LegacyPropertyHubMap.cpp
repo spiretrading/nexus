@@ -50,9 +50,9 @@ std::shared_ptr<PropertyHub> LegacyPropertyHubMap::find(
 void LegacyPropertyHubMap::merge(const std::shared_ptr<PropertyHub>& source,
     const std::shared_ptr<PropertyHub>& destination) {
   destination->adopt(*source);
-  auto ticker = destination->get<Ticker>(TICKER_PROPERTY);
+  auto ticker = destination->get<Ticker>(PropertyHub::TICKER_PROPERTY);
   if(!ticker->get()) {
-    ticker->set(source->get<Ticker>(TICKER_PROPERTY)->get());
+    ticker->set(source->get<Ticker>(PropertyHub::TICKER_PROPERTY)->get());
   }
   for(auto& entry : m_hubs) {
     if(entry.second.lock() == source) {

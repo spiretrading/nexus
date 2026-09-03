@@ -51,16 +51,18 @@ TEST_SUITE("LegacyPropertyHubMap") {
     auto abx = Ticker("ABX", Venue("TSX"));
     auto msft = Ticker("MSFT", Venue("XNAS"));
     auto a = map.acquire("a", "b");
+    auto ticker = a->get<Ticker>(PropertyHub::TICKER_PROPERTY);
     auto c = map.acquire("c", "d");
-    c->get<Ticker>(TICKER_PROPERTY)->set(msft);
+    c->get<Ticker>(PropertyHub::TICKER_PROPERTY)->set(msft);
     map.acquire("b", "d");
-    REQUIRE(a->get<Ticker>(TICKER_PROPERTY)->get() == msft);
+    REQUIRE(a->get<Ticker>(PropertyHub::TICKER_PROPERTY) == ticker);
+    REQUIRE(ticker->get() == msft);
     auto e = map.acquire("e", "f");
-    e->get<Ticker>(TICKER_PROPERTY)->set(abx);
+    e->get<Ticker>(PropertyHub::TICKER_PROPERTY)->set(abx);
     auto g = map.acquire("g", "h");
-    g->get<Ticker>(TICKER_PROPERTY)->set(msft);
+    g->get<Ticker>(PropertyHub::TICKER_PROPERTY)->set(msft);
     map.acquire("f", "h");
-    REQUIRE(e->get<Ticker>(TICKER_PROPERTY)->get() == abx);
+    REQUIRE(e->get<Ticker>(PropertyHub::TICKER_PROPERTY)->get() == abx);
   }
 
   TEST_CASE("expired") {

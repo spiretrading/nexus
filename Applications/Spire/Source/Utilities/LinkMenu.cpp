@@ -106,7 +106,7 @@ void Spire::add_link_menu(ContextMenu& parent, PropertyHubMember& member,
       toggle_link(member, *(*candidates)[i], user_profile);
       parent.hide();
     });
-    submenu->add_action("", [item] {
+    submenu->add_action("", [=] {
       item->get_current()->set(!item->get_current()->get());
     }, item);
   }
