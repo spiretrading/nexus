@@ -1,3 +1,4 @@
+#include <memory>
 #include <doctest/doctest.h>
 #include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Spire/LegacyPropertyHubMap.hpp"

@@ -1,4 +1,5 @@
 #include <any>
+#include <memory>
 #include <string>
 #include <doctest/doctest.h>
 #include <QWidget>

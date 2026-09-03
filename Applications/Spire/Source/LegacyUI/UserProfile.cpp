@@ -1,4 +1,5 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include <functional>
 #include <vector>
 #include <Beam/ServiceLocator/SessionEncryption.hpp>
 #include <Beam/Utilities/ToString.hpp>
@@ -89,7 +90,7 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_additionalTagDatabase(additionalTagDatabase) {
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
-  m_merge_connection = m_legacy_property_hubs.connect_merge_signal(
+  m_legacy_property_hubs.connect_merge_signal(
     std::bind_front(&UserProfile::MergePropertyHubs, this));
   m_keyBindings = load_key_bindings_profile(m_profilePath);
   for(auto& exchangeRate : exchangeRates) {

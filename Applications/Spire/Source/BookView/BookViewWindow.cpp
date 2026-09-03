@@ -197,11 +197,9 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
     display_interactions_panel();
   } else if(auto operation =
       m_key_bindings->get_cancel_key_bindings()->find_operation(sequence)) {
-    m_cancel_operation_signal(
-      *operation, m_ticker_view->get_current()->get(), none);
+    m_cancel_operation_signal(*operation, m_ticker, none);
   } else if(auto arguments = find_order_task_arguments(
-      *m_key_bindings->get_order_task_arguments(),
-      m_ticker_view->get_current()->get(), sequence)) {
+      *m_key_bindings->get_order_task_arguments(), m_ticker, sequence)) {
     display_task_entry_panel(*arguments);
   }
 }
@@ -212,7 +210,7 @@ std::unique_ptr<CanvasNode>
   auto ticker_node =
     task_node->FindNode(SingleOrderTaskNode::TICKER_PROPERTY);
   if(ticker_node && !ticker_node->IsReadOnly()) {
-    auto ticker = m_ticker_view->get_current()->get();
+    auto ticker = m_ticker;
     if(auto ticker_value_node =
         dynamic_cast<const TickerNode*>(&*ticker_node)) {
       auto builder = CanvasNodeBuilder(*task_node);
@@ -270,12 +268,11 @@ std::unique_ptr<CanvasNode>
 }
 
 void BookViewWindow::display_interactions_panel() {
-  auto ticker = m_ticker_view->get_current()->get();
-  if(!ticker) {
+  if(!m_ticker) {
     return;
   }
-  auto& interactions = *m_key_bindings->get_interactions_key_bindings(ticker);
-  auto interactions_node = InteractionsNode(ticker, interactions);
+  auto& interactions = *m_key_bindings->get_interactions_key_bindings(m_ticker);
+  auto interactions_node = InteractionsNode(m_ticker, interactions);
   m_task_entry_panel =
     new CondensedCanvasWidget("Interactions", Ref(*m_user_profile), this);
   m_is_task_entry_panel_for_interactions = true;
@@ -393,8 +390,7 @@ void BookViewWindow::on_task_entry_key_press(const QKeyEvent& event) {
     auto sequence =
       QKeySequence(static_cast<int>(event.modifiers() + event.key()));
     if(auto arguments = find_order_task_arguments(
-        *m_key_bindings->get_order_task_arguments(),
-        m_ticker_view->get_current()->get(), sequence)) {
+        *m_key_bindings->get_order_task_arguments(), m_ticker, sequence)) {
       remove_task_entry_panel();
       display_task_entry_panel(*arguments);
     }
@@ -406,7 +402,7 @@ void BookViewWindow::on_cancel_most_recent(const CurrentUserOrder& user_order) {
     CancelKeyBindingsModel::Operation::MOST_RECENT_ASK,
     CancelKeyBindingsModel::Operation::MOST_RECENT_BID);
   m_cancel_operation_signal(
-    operation, m_ticker_view->get_current()->get(), CancelCriteria(
+    operation, m_ticker, CancelCriteria(
       user_order.m_user_order.m_destination, user_order.m_user_order.m_price));
 }
 
@@ -414,14 +410,16 @@ void BookViewWindow::on_cancel_all(const CurrentUserOrder& user_order) {
   auto operation = pick(user_order.m_side,
     CancelKeyBindingsModel::Operation::ALL_ASKS,
     CancelKeyBindingsModel::Operation::ALL_BIDS);
-  m_cancel_operation_signal(
-    operation, m_ticker_view->get_current()->get(), CancelCriteria(
-      user_order.m_user_order.m_destination, user_order.m_user_order.m_price));
+  m_cancel_operation_signal(operation, m_ticker, CancelCriteria(
+    user_order.m_user_order.m_destination, user_order.m_user_order.m_price));
 }
 
 void BookViewWindow::on_properties_menu() {
-  auto properties_window = m_factory->make(
-    m_key_bindings, m_ticker_view->get_current()->get(), m_properties_proxy);
+  if(!m_ticker) {
+    return;
+  }
+  auto properties_window =
+    m_factory->make(m_key_bindings, m_ticker, m_properties_proxy);
   if(!properties_window->isVisible()) {
     properties_window->show();
     if(screen()->geometry().right() - frameGeometry().right() >=
@@ -492,8 +490,7 @@ void BookViewWindow::on_order_operation(Side side,
         CancelKeyBindingsModel::Operation::ALL_BIDS);
       if(operation.get_value().m_status == OrderStatus::FILLED &&
           m_interactions->is_cancel_on_fill()->get()) {
-        m_cancel_operation_signal(
-          cancel_operation, m_ticker_view->get_current()->get(), none);
+        m_cancel_operation_signal(cancel_operation, m_ticker, none);
       }
     });
 }

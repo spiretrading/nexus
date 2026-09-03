@@ -3,7 +3,6 @@
 #include <any>
 #include <memory>
 #include <string>
-#include <typeinfo>
 #include <unordered_map>
 #include <boost/uuid/uuid.hpp>
 #include "Spire/Spire/LocalValueModel.hpp"
@@ -78,10 +77,10 @@ namespace Spire {
   template<typename T>
   std::shared_ptr<ValueModel<T>> property_cast(
       const std::shared_ptr<AnyValueModel>& property) {
-    if(property->get().get_type() != typeid(T)) {
-      throw std::bad_any_cast();
+    if(auto model = std::dynamic_pointer_cast<ValueModel<T>>(property)) {
+      return model;
     }
-    return std::static_pointer_cast<ValueModel<T>>(property);
+    throw std::bad_any_cast();
   }
 
   template<typename T>

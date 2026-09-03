@@ -48,7 +48,7 @@ namespace Spire {
       Nexus::Ticker m_ticker;
       std::string m_name;
       LegacyUI::TickerViewStack m_tickerViewStack;
-      boost::uuids::uuid m_hub_id;
+      boost::uuids::uuid m_hubId;
       std::string m_identifier;
       std::string m_linkIdentifier;
       QByteArray m_geometry;
@@ -72,7 +72,7 @@ namespace Spire {
       shuttle.shuttle("identifier", m_identifier);
       shuttle.shuttle("link_identifier", m_linkIdentifier);
     } else {
-      shuttle.shuttle("hub_id", m_hub_id);
+      shuttle.shuttle("hub_id", m_hubId);
     }
     shuttle.shuttle("geometry", m_geometry);
     shuttle.shuttle("chart_plot_view_window_settings",

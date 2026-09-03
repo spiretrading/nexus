@@ -149,6 +149,7 @@ void TimeAndSalesWindow::on_current(const Ticker& ticker) {
     setWindowTitle(TITLE_NAME);
     m_table_model->set_model(std::make_shared<NoneTimeAndSalesModel>());
     m_transition_view->set_status(TransitionView::Status::NONE);
+    m_ticker_view->setFocus();
     return;
   }
   setWindowTitle(to_text(ticker) + " " + QString(0x2013) + " " + TITLE_NAME);

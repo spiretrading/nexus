@@ -6,7 +6,6 @@
 #include <unordered_map>
 #include <vector>
 #include <Beam/WebServices/Uri.hpp>
-#include <boost/signals2/connection.hpp>
 #include <boost/uuid/uuid.hpp>
 #include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
@@ -263,7 +262,6 @@ namespace Spire {
       std::unordered_map<boost::uuids::uuid, std::weak_ptr<PropertyHub>>
         m_property_hubs;
       LegacyPropertyHubMap m_legacy_property_hubs;
-      boost::signals2::scoped_connection m_merge_connection;
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties
         m_defaultOrderImbalanceIndicatorProperties;
