@@ -11,7 +11,7 @@ namespace Spire {
    * Adds a ContextMenu sub-menu used to join the PropertyHub that another
    * component belongs to.
    * @param parent The ContextMenu to add the sub-menu to.
-   * @param member The member whose PropertyHub is to be selected.
+   * @param member The member joining a PropertyHub.
    * @param user_profile The user's profile.
    */
   void add_link_menu(

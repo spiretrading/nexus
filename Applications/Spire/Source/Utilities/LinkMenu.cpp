@@ -35,12 +35,13 @@ namespace {
   }
 
   std::vector<Window*> find_hub_windows(
-      const PropertyHub& hub, const UserProfile& user_profile) {
+      const std::shared_ptr<PropertyHub>& hub,
+      const UserProfile& user_profile) {
     auto windows = std::vector<Window*>();
     auto& roster = *user_profile.GetPropertyHubMembers();
     for(auto i = 0; i != roster.get_size(); ++i) {
       auto member = roster.get(i);
-      if(member->get_hub()->get().get() != &hub) {
+      if(member->get_hub()->get() != hub) {
         continue;
       }
       if(auto window = dynamic_cast<Window*>(&member->get_component());
@@ -67,7 +68,7 @@ namespace {
         if(source && current_index && *current_index >= 0 &&
             *current_index < static_cast<int>(candidates->size())) {
           auto& candidate = *(*candidates)[*current_index];
-          group = find_hub_windows(*candidate.get_hub()->get(), user_profile);
+          group = find_hub_windows(candidate.get_hub()->get(), user_profile);
           if(!std::ranges::contains(group, source.data())) {
             group.push_back(source.data());
           }
@@ -95,15 +96,14 @@ void Spire::add_link_menu(ContextMenu& parent, PropertyHubMember& member,
   auto candidates = std::make_shared<std::vector<PropertyHubMember*>>(
     find_link_candidates(member, user_profile));
   auto submenu = new ContextMenu(static_cast<QWidget&>(parent));
-  for(auto i = 0; i != static_cast<int>(candidates->size()); ++i) {
-    auto& candidate = *(*candidates)[i];
+  for(auto candidate : *candidates) {
     auto current = std::make_shared<LocalValueModel<bool>>(
-      candidate.get_hub()->get() == member.get_hub()->get());
-    auto item = new CheckButtonMenuItem(find_icon(candidate.get_icon_path()),
-      candidate.get_name()->get(), current);
+      candidate->get_hub()->get() == member.get_hub()->get());
+    auto item = new CheckButtonMenuItem(find_icon(candidate->get_icon_path()),
+      candidate->get_name(), current);
     item->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     current->connect_update_signal([=, &member, &user_profile, &parent] (auto) {
-      toggle_link(member, *(*candidates)[i], user_profile);
+      toggle_link(member, *candidate, user_profile);
       parent.hide();
     });
     submenu->add_action("", [=] {
@@ -126,7 +126,7 @@ std::vector<PropertyHubMember*> Spire::find_link_candidates(
   }
   std::sort(candidates.begin(), candidates.end(),
     [] (const auto& left, const auto& right) {
-      return left->get_name()->get() < right->get_name()->get();
+      return left->get_name() < right->get_name();
     });
   return candidates;
 }

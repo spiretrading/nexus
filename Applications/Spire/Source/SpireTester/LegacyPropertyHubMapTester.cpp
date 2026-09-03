@@ -18,6 +18,7 @@ TEST_SUITE("LegacyPropertyHubMap") {
     REQUIRE(c != a);
     REQUIRE(c == d);
     REQUIRE(map.acquire("e", "d") == c);
+    REQUIRE(map.acquire("", "d") == c);
   }
 
   TEST_CASE("merge") {

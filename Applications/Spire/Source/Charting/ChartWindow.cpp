@@ -374,7 +374,7 @@ void ChartWindow::OnLinkMenuActionTriggered(bool triggered) {
   auto candidates = find_link_candidates(m_member, *m_userProfile);
   for(auto candidate : candidates) {
     auto action = m_linkMenu->addAction(
-      QIcon(candidate->get_icon_path()), candidate->get_name()->get());
+      QIcon(candidate->get_icon_path()), candidate->get_name());
     action->setCheckable(true);
     action->setChecked(
       candidate->get_hub()->get() == m_member.get_hub()->get());

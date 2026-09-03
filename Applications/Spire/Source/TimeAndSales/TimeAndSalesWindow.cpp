@@ -158,8 +158,8 @@ void TimeAndSalesWindow::on_current(const Ticker& ticker) {
       make_time_and_sales_table_view(m_table_model, m_properties_proxy);
     m_table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     m_transition_view->set_body(*m_table_view);
-    m_transition_view->set_status(TransitionView::Status::LOADING);
   }
+  m_transition_view->set_status(TransitionView::Status::LOADING);
   m_table_model->load_history(m_ticker_view->height() /
     estimate_row_height(m_properties_proxy->get().get_font()));
 }

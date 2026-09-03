@@ -41,8 +41,8 @@ namespace Spire {
       /** Returns the component represented by this member. */
       QWidget& get_component() const;
 
-      /** Returns the model over the component's window title. */
-      const std::shared_ptr<ValueModel<QString>>& get_name() const;
+      /** Returns the component's window title. */
+      QString get_name() const;
 
       /** Returns the path to the icon representing the component. */
       const QString& get_icon_path() const;
@@ -64,7 +64,6 @@ namespace Spire {
     private:
       std::shared_ptr<ListModel<PropertyHubMember*>> m_roster;
       QWidget* m_component;
-      std::shared_ptr<ValueModel<QString>> m_name;
       QString m_icon_path;
       std::shared_ptr<HubModel> m_hub;
       std::unordered_map<std::string, std::shared_ptr<AnyValueModel>>

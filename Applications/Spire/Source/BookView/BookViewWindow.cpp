@@ -285,6 +285,9 @@ void BookViewWindow::display_interactions_panel() {
 
 void BookViewWindow::display_task_entry_panel(
     const OrderTaskArguments& arguments) {
+  if(!m_model) {
+    return;
+  }
   auto task_node = make_task_node(
     *make_canvas_node(arguments, m_user_profile->GetAdditionalTagDatabase()));
   m_task_entry_panel = new CondensedCanvasWidget(
@@ -438,6 +441,7 @@ void BookViewWindow::on_current(const Ticker& ticker) {
     m_bid_order_connection.disconnect();
     m_ask_order_connection.disconnect();
     m_transition_view->set_status(TransitionView::Status::NONE);
+    m_transition_view->set_body(*new QWidget());
     m_book_depth = nullptr;
     m_model = nullptr;
     m_interactions = nullptr;
