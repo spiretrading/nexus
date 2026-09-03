@@ -414,9 +414,6 @@ void BookViewWindow::on_cancel_all(const CurrentUserOrder& user_order) {
 }
 
 void BookViewWindow::on_properties_menu() {
-  if(!m_ticker) {
-    return;
-  }
   auto properties_window =
     m_factory->make(m_key_bindings, m_ticker, m_properties_proxy);
   if(!properties_window->isVisible()) {
