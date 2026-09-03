@@ -37,6 +37,8 @@ const GROUPS = [
 
 const CONFLICT = 409;
 
+const TAKEN_USERNAMES = ['frodo', 'samwise', 'gandalf'];
+
 enum TestBehavior {
   SUCCEED,
   DUPLICATE_NAME,
@@ -56,8 +58,15 @@ class TestModel extends WebPortal.CreateAccountModel {
   }
 
   public async createAccount(username: string, groups: Beam.DirectoryEntry,
-      identity: Nexus.AccountIdentity,
-      roles: Nexus.AccountRoles): Promise<void> {
+      identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles):
+      Promise<void> {
+    console.log('POST /api/service_locator/create_account',
+      JSON.stringify({
+        name: username,
+        group: groups?.toJson(),
+        identity: identity.toJson(),
+        roles: roles.toJson()
+      }, null, 2));
     if(this.behavior === TestBehavior.HANG) {
       await new Promise<void>(() => {});
     }
@@ -67,6 +76,21 @@ class TestModel extends WebPortal.CreateAccountModel {
     } else if(this.behavior === TestBehavior.UNAVAILABLE) {
       throw new Beam.ServiceError('Server unreachable.');
     }
+  }
+
+  public async validateUsername(username: string):
+      Promise<WebPortal.CreateAccountModel.ValidationError> {
+    const name = WebPortal.CreateAccountModel.normalizeUsername(username);
+    const error = WebPortal.CreateAccountModel.checkUsernameFormat(name);
+    if(error !== WebPortal.CreateAccountModel.ValidationError.NONE) {
+      return error;
+    }
+    await new Promise(resolve => setTimeout(resolve, this.delay));
+    if(this.behavior === TestBehavior.DUPLICATE_NAME ||
+        TAKEN_USERNAMES.indexOf(name) >= 0) {
+      return WebPortal.CreateAccountModel.ValidationError.DUPLICATE;
+    }
+    return WebPortal.CreateAccountModel.ValidationError.NONE;
   }
 
   private delay: number;
@@ -95,7 +119,7 @@ class TestApp extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     return (
-      <Router.BrowserRouter>
+      <Router.MemoryRouter>
         <div style={STYLE.wrapper}>
           <div style={STYLE.toolbar}>
             <span style={STYLE.toolbarLabel}>Behavior:</span>
@@ -104,11 +128,14 @@ class TestApp extends React.Component<Properties, State> {
               'Duplicate name', TestBehavior.DUPLICATE_NAME)}
             {this.renderBehaviorButton('Unavailable', TestBehavior.UNAVAILABLE)}
             {this.renderBehaviorButton('Hang', TestBehavior.HANG)}
+            <span style={STYLE.toolbarHint}>
+              taken: {TAKEN_USERNAMES.join(', ')}
+            </span>
           </div>
           <Router.Switch>
             <Router.Route exact path='/account_directory'>
               <div style={STYLE.done}>
-                Account created. Go back to submit another.
+                Account created. Refresh to submit another.
               </div>
             </Router.Route>
             <Router.Route>
@@ -120,7 +147,7 @@ class TestApp extends React.Component<Properties, State> {
             </Router.Route>
           </Router.Switch>
         </div>
-      </Router.BrowserRouter>);
+      </Router.MemoryRouter>);
   }
 
   private renderBehaviorButton(label: string,
@@ -168,6 +195,11 @@ const STYLE: Record<string, React.CSSProperties> = {
     borderRadius: '3px',
     backgroundColor: '#fff',
     cursor: 'pointer'
+  },
+  toolbarHint: {
+    fontSize: '11px',
+    fontFamily: 'monospace',
+    color: '#666'
   },
   buttonActive: {
     backgroundColor: '#684BC7',

@@ -69,6 +69,95 @@ const checkbox =
         }));
     });
 
+enum MenuMode {
+  COMMANDS,
+  RADIO_GROUP,
+  MIXED,
+  SCROLLING
+}
+
+const makeMenuItem = (label: string, value: string) => ({
+  body: React.createElement(WebPortal.ContextMenu.Item, {label: label}),
+  value: value
+});
+
+const makeMenuItemRadio = (label: string, group: string, value: string,
+    checked?: boolean) => ({
+  body: React.createElement(WebPortal.ContextMenu.ItemRadio,
+    {label: label, group: group, checked: checked}),
+  value: value
+});
+
+const makeMenuSeparator = () => ({
+  body: React.createElement(WebPortal.ContextMenu.Separator)
+});
+
+const CONTEXT_MENU_ITEMS: Record<MenuMode, WebPortal.ContextMenu.Entry[]> = {
+  [MenuMode.COMMANDS]: [
+    makeMenuItem('Full Width', 'full-width'),
+    makeMenuItem('Duplicate Widget', 'duplicate-widget'),
+    makeMenuSeparator(),
+    makeMenuItem('Remove Widget', 'remove-widget')],
+  [MenuMode.RADIO_GROUP]: [
+    makeMenuItemRadio('Small', 'size', 'small'),
+    makeMenuItemRadio('Medium', 'size', 'medium', true),
+    makeMenuItemRadio('Large', 'size', 'large')],
+  [MenuMode.MIXED]: [
+    makeMenuItem('Full Width', 'full-width'),
+    makeMenuSeparator(),
+    makeMenuItemRadio('Small', 'size', 'small'),
+    makeMenuItemRadio('Medium', 'size', 'medium', true),
+    makeMenuItemRadio('Large', 'size', 'large'),
+    makeMenuSeparator(),
+    makeMenuItem('Remove Widget', 'remove-widget')],
+  [MenuMode.SCROLLING]: Array.from({length: 30}, (element, index) =>
+    makeMenuItem(`Command ${index + 1}`, `command-${index + 1}`))
+};
+
+const CONTEXT_MENU_STYLES = StyleSheet.create({
+  invoker: {
+    anchorName: '--catalog-context-menu'
+  },
+  contextMenu: {
+    positionAnchor: '--catalog-context-menu',
+    positionArea: 'bottom span-right',
+    positionTryFallbacks: 'flip-block flip-inline',
+    margin: '2px 0'
+  }
+});
+
+class ContextMenuDemo extends React.Component<any> {
+  constructor(props: any) {
+    super(props);
+    this.invoker = React.createRef();
+  }
+
+  public render(): JSX.Element {
+    return React.createElement('div', null,
+      React.createElement('button', {
+        ref: this.invoker,
+        popovertarget: 'catalog-context-menu',
+        className: css(CONTEXT_MENU_STYLES.invoker)
+      } as any, 'Open Menu'),
+      React.createElement(WebPortal.ContextMenu, {
+        id: 'catalog-context-menu',
+        invoker: this.invoker,
+        items: CONTEXT_MENU_ITEMS[this.props.mode as MenuMode],
+        className: css(CONTEXT_MENU_STYLES.contextMenu),
+        onSubmit: this.props.onSubmit
+      }));
+  }
+
+  private invoker: React.RefObject<HTMLButtonElement>;
+}
+
+const contextMenu =
+  new ComponentSchema('ContextMenu',
+    [new PropertySchema('mode', MenuMode.MIXED, EnumInput(MenuMode)),
+      new PropertySchema('lastSubmitted', '', TextInput)],
+    [new SignalSchema('onSubmit', 'lastSubmitted')],
+    ContextMenuDemo);
+
 const countrySelect =
   new ComponentSchema('CountrySelect',
     [new PropertySchema('value', Nexus.Countries.US,
@@ -1088,13 +1177,13 @@ const tableHeaderCell =
     }, 132);
 
 export const componentSections = [
-  new ComponentSection('UI Kit', [button, burgerButton, checkbox, countrySelect,
-    currencySelect, dateInput, disclosure, dateTimeInput, decimalInput,
-    durationInput, emptyMessage, errorMessage, expandButton, filterChip,
-    filterInput, hLine, iconLabelButton, input, integerField, labeledCheckbox,
-    link, modal, moneyInput, navigationHeader, navigationTab, pageLayout,
-    pagination, scopeInput, scopeItemInput, relativeDate, roleIcon, rolePanel,
-    tickersInput, tickerInput, segmentedSpinner, select, skeleton,
+  new ComponentSection('UI Kit', [button, burgerButton, checkbox, contextMenu,
+    countrySelect, currencySelect, dateInput, disclosure, dateTimeInput,
+    decimalInput, durationInput, emptyMessage, errorMessage, expandButton,
+    filterChip, filterInput, hLine, iconLabelButton, input, integerField,
+    labeledCheckbox, link, modal, moneyInput, navigationHeader, navigationTab,
+    pageLayout, pagination, scopeInput, scopeItemInput, relativeDate, roleIcon,
+    rolePanel, tickersInput, tickerInput, segmentedSpinner, select, skeleton,
     segmentButton, segmentedControl, timeOfDayInput]),
   new ComponentSection('Requests Page', [accountLink, changeTable,
     complianceRuleStatusTag, diffBadge, entitlementsChangeItem,

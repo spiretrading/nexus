@@ -174,12 +174,16 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
   if(m_task_entry_panel) {
     on_task_entry_key_press(*event);
   } else if(sequence == QKeySequence(Qt::CTRL + Qt::Key_K)) {
-    if(auto current = m_book_depth->get_current()->get()) {
-      on_cancel_most_recent(*current);
+    if(m_book_depth) {
+      if(auto current = m_book_depth->get_current()->get()) {
+        on_cancel_most_recent(*current);
+      }
     }
   } else if(sequence == QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_K)) {
-    if(auto current = m_book_depth->get_current()->get()) {
-      on_cancel_all(*current);
+    if(m_book_depth) {
+      if(auto current = m_book_depth->get_current()->get()) {
+        on_cancel_all(*current);
+      }
     }
   } else if(sequence.matches(Qt::Key_QuoteLeft) == QKeySequence::ExactMatch) {
     display_interactions_panel();

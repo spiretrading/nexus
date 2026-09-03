@@ -10,8 +10,8 @@ interface Properties {
   /** The selected roles. */
   roles: Nexus.AccountRoles;
 
-  /** Is there an error. */
-  isError?: boolean;
+  /** The id of the label naming the group of roles. */
+  labelId?: string;
 
   /** Called when the user clicks on a role
    * @param value - The role of the icon clicked.
@@ -20,28 +20,15 @@ interface Properties {
 }
 
 export class RolesInput extends React.Component<Properties> {
-  public static readonly defaultProps = {
-    onClick: () => {}
-  };
-
   public render(): JSX.Element {
-    const error = (() => {
-      if(this.props.isError) {
-        return (
-          <div style={RolesInput.STYLE.errorText}>
-            {RolesInput.ERROR_TEXT}
-          </div>);
-      } else {
-        return null;
-      }
-    })();
     return (
-      <div style={RolesInput.STYLE.container}>
+      <div style={RolesInput.STYLE.container}
+          role='group'
+          aria-labelledby={this.props.labelId}>
         <RolesField
           displaySize={this.props.displaySize}
           roles={this.props.roles}
           onClick={this.props.onClick}/>
-        {error}
       </div>);
   }
 
@@ -53,11 +40,6 @@ export class RolesInput extends React.Component<Properties> {
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'space-between'
-    } as React.CSSProperties,
-    errorText: {
-      font: '400 14px Roboto',
-      color: '#E63F44',
     } as React.CSSProperties
   }
-  private static readonly ERROR_TEXT = 'Select roles(s)';
 }

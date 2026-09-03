@@ -1,14 +1,14 @@
 import { css, StyleSheet } from 'aphrodite';
 import * as Beam from 'beam';
-import * as Dali from 'dali';
 import * as Nexus from 'nexus';
 import * as React from 'react';
-import { DisplaySize, HLine } from '../../..';
-import { CountrySelect, Input } from '../../..';
-import { AddressField, FormEntry, PhotoField, PhotoFieldDisplayMode } 
-  from '../..';
+import { CountrySelect, DisplaySize, Input, PageLayout } from '../../..';
+import { AddressField, PhotoField, PhotoFieldDisplayMode } from '../..';
+import { CreateAccountModel } from './create_account_model';
 import { GroupSelectionBox } from './group_selection_box';
 import { GroupSuggestionModel } from './group_suggestion_model';
+import { InputValidation, VALID_INPUT } from './input_validation';
+import { PropertyItem } from './property_item';
 import { RolesInput } from './roles_input';
 
 interface Properties {
@@ -19,41 +19,26 @@ interface Properties {
   /** The database of available countries. */
   countryDatabase: Nexus.CountryDatabase;
 
-  /** The status given back from the server on callback. */
-  errorStatus?: string;
-
-  /** Determines if the account is in the process of being created. */
-  isSubmitting?: boolean;
+  /** The model used to create the account. */
+  model: CreateAccountModel;
 
   /** The model that provides the group suggestions. */
   groupSuggestionModel: GroupSuggestionModel;
 
-  /** The call to submit the profile page.
-   * @param username - The username for the account.
-   * @param groups - The groups the account belongs to.
-   * @param identity - Contains extra details about the account.
-   * @param roles - The roles associated with the account.
-   */
-  onSubmit?: (username: string, groups: Beam.DirectoryEntry,
-    identity: Nexus.AccountIdentity, roles: Nexus.AccountRoles) => void;
+  /** Indicates the account was created. */
+  onComplete?: () => void;
 }
 
 interface State {
   isModelLoaded: boolean;
-  roles: Nexus.AccountRoles;
+  status: CreateAccountPage.Status;
+  validation: InputValidation[];
   username: string;
   identity: Nexus.AccountIdentity;
+  roles: Nexus.AccountRoles;
   groupsValue: string;
   suggestedGroups: Beam.DirectoryEntry[];
   selectedGroups: Beam.DirectoryEntry[];
-  isSubmitButtonDisabled: boolean;
-  errorStatus: string;
-  hasFirstNameError: boolean;
-  hasLastNameError: boolean;
-  hasUserNameError: boolean;
-  hasRoleError: boolean;
-  hasGroupError: boolean;
-  hasEmailError: boolean;
   photoUploaderMode: PhotoFieldDisplayMode;
   newPhoto: string;
   newScaling: number;
@@ -61,76 +46,41 @@ interface State {
 
 /** The page that is shown when the user wants to create a new account. */
 export class CreateAccountPage extends React.Component<Properties, State> {
-  public static readonly defaultProps = {
-    errorStatus: '',
-    onSubmit: () => {}
-  };
-
-  constructor(props: Properties) {
+  public constructor(props: Properties) {
     super(props);
     this.state = {
       isModelLoaded: false,
-      roles: new Nexus.AccountRoles(),
+      status: CreateAccountPage.Status.NONE,
+      validation: CreateAccountPage.makeValidation(),
       username: '',
       identity: new Nexus.AccountIdentity(),
+      roles: new Nexus.AccountRoles(),
       groupsValue: '',
       suggestedGroups: [],
       selectedGroups: [],
-      isSubmitButtonDisabled: true,
-      errorStatus: '',
-      hasRoleError: false,
-      hasFirstNameError: false,
-      hasLastNameError: false,
-      hasUserNameError: false,
-      hasGroupError: false,
-      hasEmailError: false,
       photoUploaderMode: PhotoFieldDisplayMode.DISPLAY,
       newPhoto: '',
       newScaling: 1
     };
-    this.onPhotoFieldClick = this.onPhotoFieldClick.bind(this);
-    this.onPhotoChange = this.onPhotoChange.bind(this);
-    this.onScaleChange = this.onScaleChange.bind(this);
-    this.onPhotoSubmit = this.onPhotoSubmit.bind(this);
-    this.onRoleClick = this.onRoleClick.bind(this);
-    this.onFirstNameChange = this.onFirstNameChange.bind(this);
-    this.onLastNameChange = this.onLastNameChange.bind(this);
-    this.onUsernameChange = this.onUsernameChange.bind(this);
-    this.onGroupsValueChange = this.onGroupsValueChange.bind(this);
-    this.onAddGroup = this.onAddGroup.bind(this);
-    this.onRemoveGroup = this.onRemoveGroup.bind(this);
-    this.onEmailChange = this.onEmailChange.bind(this);
-    this.onAddressChange = this.onAddressChange.bind(this);
-    this.onCityChange = this.onCityChange.bind(this);
-    this.onProvinceChange = this.onProvinceChange.bind(this);
-    this.onCountryChange = this.onCountryChange.bind(this);
-    this.checkInputs = this.checkInputs.bind(this);
-    this.onSubmit = this.onSubmit.bind(this);
   }
 
   public render(): JSX.Element {
     if(!this.state.isModelLoaded) {
       return <div/>;
     }
-    const contentWidth = (() => {
+    const isSmall = this.props.displaySize === DisplaySize.SMALL;
+    const areaStyle = (() => {
       switch(this.props.displaySize) {
         case DisplaySize.SMALL:
-          return CreateAccountPage.STYLE.contentSmall;
+          return CreateAccountPage.STYLE.areaSmall;
         case DisplaySize.MEDIUM:
-          return CreateAccountPage.STYLE.contentMedium;
+          return CreateAccountPage.STYLE.areaMedium;
         case DisplaySize.LARGE:
-          return CreateAccountPage.STYLE.contentLarge;
+          return CreateAccountPage.STYLE.areaLarge;
       }
     })();
-    const topPadding = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return <Dali.Padding size='30px'/>;
-      } else {
-        return <Dali.Padding size='60px'/>;
-      }
-    })();
-    const photo = (() => {
-      return (
+    const areaA = (
+      <div style={areaStyle}>
         <PhotoField
           displaySize={this.props.displaySize}
           displayMode={this.state.photoUploaderMode}
@@ -141,194 +91,82 @@ export class CreateAccountPage extends React.Component<Properties, State> {
           onNewScalingChange={this.onScaleChange}
           newImageSource={this.state.newPhoto}
           newScaling={this.state.newScaling}
-          scaling={1}/>);
-    })();
-    const sidePanelPhoto = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return null;
-      } else {
-        return photo;
-      }
-    })();
-    const sidePanelPhotoPadding = (() => {
-      switch(this.props.displaySize) {
-        case DisplaySize.SMALL:
-          return 0;
-        case DisplaySize.MEDIUM:
-          return '30px';
-        case DisplaySize.LARGE:
-          return '100px';
-      }
-    })();
-    const topPanelPhoto = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
+          scaling={1}/>
+        <div style={CreateAccountPage.STYLE.filler}/>
+      </div>);
+    const content = (() => {
+      if(isSmall) {
         return (
-          <Dali.VBoxLayout>
-            {photo}
-            <Dali.Padding size={CreateAccountPage.STANDARD_PADDING}/>
-          </Dali.VBoxLayout>);
-      } else {
-        return null;
+          <React.Fragment>
+            {areaA}
+            <div style={CreateAccountPage.STYLE.areaPadding}/>
+            {this.renderProperties()}
+          </React.Fragment>);
       }
+      const gap = (() => {
+        if(this.props.displaySize === DisplaySize.MEDIUM) {
+          return CreateAccountPage.STYLE.mediumGap;
+        }
+        return CreateAccountPage.STYLE.largeGap;
+      })();
+      return (
+        <div style={CreateAccountPage.STYLE.sectionRow}>
+          {areaA}
+          <div style={gap}/>
+          <div style={CreateAccountPage.STYLE.listArea}>
+            {this.renderProperties()}
+          </div>
+        </div>);
     })();
-    const buttonStyle = (() => {
-      if(this.props.displaySize === DisplaySize.SMALL) {
-        return CreateAccountPage.DYNAMIC_STYLE.buttonSmall;
-      } else {
-        return CreateAccountPage.DYNAMIC_STYLE.buttonLarge;
+    const headerPadding = (() => {
+      if(isSmall) {
+        return CreateAccountPage.STYLE.headerPaddingSmall;
       }
+      return CreateAccountPage.STYLE.headerPaddingLarge;
     })();
-    const errorStatus = (() => {
-      if(this.state.errorStatus) {
-        return (
-          <Dali.VBoxLayout>
-            <Dali.Padding size='18px'/>
-            <div style={CreateAccountPage.STYLE.errorStatus}>
-              {this.state.errorStatus}
-            </div>
-          </Dali.VBoxLayout>);
-      } else if(this.props.errorStatus) {
-        return (
-          <Dali.VBoxLayout>
-            <Dali.Padding size='18px'/>
-            <div style={CreateAccountPage.STYLE.errorStatus}>
-              {this.props.errorStatus}
-            </div>
-          </Dali.VBoxLayout>);
-      } else {
-        return null;
+    const submit = (
+      <button
+          className={css(this.getButtonStyle())}
+          disabled={this.isSubmitDisabled()}
+          onClick={this.onSubmit}>
+        Create Account
+      </button>);
+    const submitRow = (() => {
+      if(isSmall) {
+        return submit;
       }
+      return (
+        <div style={CreateAccountPage.STYLE.submitRow}>
+          <div style={CreateAccountPage.STYLE.filler}/>
+          {submit}
+          <div style={CreateAccountPage.STYLE.filler}/>
+        </div>);
+    })();
+    const status = (() => {
+      if(this.state.status !== CreateAccountPage.Status.UNAVAILABLE) {
+        return <div style={CreateAccountPage.STYLE.statusPlaceholder}/>;
+      }
+      return (
+        <div style={CreateAccountPage.STYLE.statusFeedback}>
+          <div style={CreateAccountPage.STYLE.statusPadding}/>
+          <span style={CreateAccountPage.STYLE.statusMessage}>
+            Server issue
+          </span>
+        </div>);
     })();
     return (
-      <div style={CreateAccountPage.STYLE.page}>
-        <div style={CreateAccountPage.STYLE.pagePadding}/>
-        <div style={contentWidth}>
-          <Dali.VBoxLayout width='100%'>
-            <Dali.Padding size='18px'/>
-            <div style={CreateAccountPage.STYLE.headerStyler}>
-              Create Account
-            </div>
-            {topPadding}
-            <Dali.HBoxLayout>
-              {sidePanelPhoto}
-              <Dali.Padding size={sidePanelPhotoPadding}/>
-              <Dali.VBoxLayout width='100%'>
-                {topPanelPhoto}
-                <FormEntry name='First Name'
-                    displaySize={this.props.displaySize}>
-                  <Input
-                    value={this.state.identity.firstName}
-                    style={{...CreateAccountPage.STYLE.inputField,
-                      ...(this.state.hasFirstNameError ?
-                        CreateAccountPage.ERROR_STYLE : undefined)}}
-                    onChange={this.onInputChange(this.onFirstNameChange)}/>
-                </FormEntry>
-                <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
-                <FormEntry name='Last Name'
-                    displaySize={this.props.displaySize}>
-                  <Input
-                    value={this.state.identity.lastName}
-                    style={{...CreateAccountPage.STYLE.inputField,
-                      ...(this.state.hasLastNameError ?
-                        CreateAccountPage.ERROR_STYLE : undefined)}}
-                    onChange={this.onInputChange(this.onLastNameChange)}/>
-                </FormEntry>
-                <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
-                <FormEntry name='Username'
-                    displaySize={this.props.displaySize}>
-                  <Input
-                    value={this.state.username}
-                    style={{...CreateAccountPage.STYLE.inputField,
-                      ...(this.state.hasUserNameError ?
-                        CreateAccountPage.ERROR_STYLE : undefined)}}
-                    onChange={this.onInputChange(this.onUsernameChange)}/>
-                </FormEntry>
-                  <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
-                  <FormEntry name='Role(s)'
-                    displaySize={this.props.displaySize}>
-                    <RolesInput
-                      displaySize={this.props.displaySize}
-                      roles={this.state.roles}
-                      isError={this.state.hasRoleError}
-                      onClick={this.onRoleClick}/>
-                </FormEntry>
-                <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
-                <FormEntry name='Group'
-                    displaySize={this.props.displaySize}>
-                  <GroupSelectionBox
-                    value={this.state.groupsValue}
-                    onValueChange={this.onGroupsValueChange}
-                    displaySize={this.props.displaySize}
-                    selectedGroups={this.state.selectedGroups}
-                    suggestions={this.state.suggestedGroups}
-                    onAddGroup={this.onAddGroup}
-                    onRemoveGroup={this.onRemoveGroup}
-                    isError={this.state.hasGroupError}/>
-                </FormEntry>
-                <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
-                <FormEntry name='Email'
-                    displaySize={this.props.displaySize}>
-                  <Input
-                    value={this.state.identity.emailAddress}
-                    style={{...CreateAccountPage.STYLE.inputField,
-                      ...(this.state.hasEmailError ?
-                        CreateAccountPage.ERROR_STYLE : undefined)}}
-                    onChange={this.onInputChange(this.onEmailChange)}/>
-                </FormEntry>
-                <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
-                <FormEntry name='Street Address'
-                    displaySize={this.props.displaySize}>
-                  <AddressField
-                    addressLineOne={this.state.identity.addressLineOne}
-                    addressLineTwo={this.state.identity.addressLineTwo}
-                    addressLineThree={this.state.identity.addressLineThree}
-                    displaySize={this.props.displaySize}
-                    onChange={this.onAddressChange}/>
-                </FormEntry>
-                <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
-                <FormEntry name='City'
-                    displaySize={this.props.displaySize}>
-                  <Input
-                    value={this.state.identity.city}
-                    style={CreateAccountPage.STYLE.inputField}
-                    onChange={this.onInputChange(this.onCityChange)}/>
-                </FormEntry>
-                <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
-                <FormEntry name='Province/State'
-                    displaySize={this.props.displaySize}>
-                  <Input
-                    value={this.state.identity.province}
-                    style={CreateAccountPage.STYLE.inputField}
-                    onChange={this.onInputChange(this.onProvinceChange)}/>
-                </FormEntry>
-              <Dali.Padding size={CreateAccountPage.SMALL_PADDING}/>
-                <FormEntry name='Country'
-                    displaySize={this.props.displaySize}>
-                  <CountrySelect
-                    countryDatabase={this.props.countryDatabase}
-                    value={this.state.identity.country}
-                    style={CreateAccountPage.STYLE.countryField}
-                    onChange={this.onCountryChange}/>
-                </FormEntry>
-              </Dali.VBoxLayout>
-            </Dali.HBoxLayout>
-            <Dali.Padding size={CreateAccountPage.STANDARD_PADDING}/>
-            <HLine color='#E6E6E6'/>
-            <Dali.Padding size={CreateAccountPage.STANDARD_PADDING}/>
-            <div style={CreateAccountPage.STYLE.buttonBox}>
-              <button className={css(buttonStyle)}
-                  disabled={this.state.isSubmitButtonDisabled ||
-                    this.props.isSubmitting}
-                  onClick={this.onSubmit}>
-                Create Account
-              </button>
-            </div>
-            {errorStatus}
-            <Dali.Padding size={CreateAccountPage.BOTTOM_PADDING}/>
-          </Dali.VBoxLayout>
-        </div>
-        <div style={CreateAccountPage.STYLE.pagePadding}/>
-      </div>);
+      <PageLayout>
+        <main style={CreateAccountPage.STYLE.main}>
+          <section style={CreateAccountPage.STYLE.section}>
+            <h1 style={CreateAccountPage.STYLE.header}>Create Account</h1>
+            <div style={headerPadding}/>
+            {content}
+          </section>
+          <div style={CreateAccountPage.STYLE.submitPadding}/>
+          {submitRow}
+          {status}
+        </main>
+      </PageLayout>);
   }
 
   public componentDidMount(): void {
@@ -341,7 +179,200 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     });
   }
 
-  private onPhotoFieldClick() {
+  public componentWillUnmount(): void {
+    clearTimeout(this._usernameTimer);
+  }
+
+  private renderProperties(): JSX.Element {
+    const Field = CreateAccountPage.Field;
+    const items = [
+      this.renderInput(Field.FIRST_NAME, 'text', 'given-name',
+        this.state.identity.firstName, this.onFirstNameChange),
+      this.renderInput(Field.LAST_NAME, 'text', 'family-name',
+        this.state.identity.lastName, this.onLastNameChange),
+      this.renderInput(Field.USERNAME, 'text', 'username',
+        this.state.username, this.onUsernameChange),
+      this.renderItem(Field.ROLES,
+        <RolesInput
+          displaySize={this.props.displaySize}
+          roles={this.state.roles}
+          labelId={CreateAccountPage.ROLES_LABEL_ID}
+          onClick={this.onRoleClick}/>),
+      this.renderItem(Field.GROUPS,
+        <GroupSelectionBox
+          value={this.state.groupsValue}
+          onValueChange={this.onGroupsValueChange}
+          displaySize={this.props.displaySize}
+          selectedGroups={this.state.selectedGroups}
+          suggestions={this.state.suggestedGroups}
+          onAddGroup={this.onAddGroup}
+          onRemoveGroup={this.onRemoveGroup}
+          isError={this.isShowingError(Field.GROUPS)}/>),
+      this.renderInput(Field.EMAIL, 'email', 'email',
+        this.state.identity.emailAddress, this.onEmailChange),
+      this.renderItem(Field.ADDRESS,
+        <AddressField
+          id={CreateAccountPage.IDS[Field.ADDRESS]}
+          displaySize={this.props.displaySize}
+          addressLineOne={this.state.identity.addressLineOne}
+          addressLineTwo={this.state.identity.addressLineTwo}
+          addressLineThree={this.state.identity.addressLineThree}
+          onChange={this.onAddressChange}/>),
+      this.renderInput(Field.CITY, 'text', 'address-level2',
+        this.state.identity.city, this.onCityChange),
+      this.renderInput(Field.PROVINCE, 'text', 'address-level1',
+        this.state.identity.province, this.onProvinceChange),
+      this.renderItem(Field.COUNTRY,
+        <CountrySelect
+          id={CreateAccountPage.IDS[Field.COUNTRY]}
+          countryDatabase={this.props.countryDatabase}
+          value={this.state.identity.country}
+          style={CreateAccountPage.STYLE.countryField}
+          onChange={this.onCountryChange}/>, true)
+    ];
+    const children = items.map((item, index) => {
+      const style = (() => {
+        if(index === 0) {
+          return CreateAccountPage.STYLE.firstListItem;
+        }
+        return CreateAccountPage.STYLE.listItem;
+      })();
+      return (
+        <li key={CreateAccountPage.LABELS[index]} style={style}>{item}</li>);
+    });
+    return (
+      <ul style={CreateAccountPage.STYLE.list}>{children}</ul>);
+  }
+
+  private renderInput(field: CreateAccountPage.Field, type: string,
+      autoComplete: string, value: string,
+      onChange: (value: string) => void): JSX.Element {
+    return this.renderItem(field,
+      <Input
+        id={CreateAccountPage.IDS[field]}
+        name={CreateAccountPage.IDS[field]}
+        type={type}
+        autoComplete={autoComplete}
+        value={value}
+        style={this.getInputStyle(field)}
+        onChange={(event: React.ChangeEvent<HTMLInputElement>) =>
+          onChange(event.target.value)}/>);
+  }
+
+  private renderItem(field: CreateAccountPage.Field, item: JSX.Element,
+      isLast?: boolean): JSX.Element {
+    const isRoles = field === CreateAccountPage.Field.ROLES;
+    const htmlFor = (() => {
+      if(isRoles) {
+        return null;
+      }
+      return CreateAccountPage.IDS[field];
+    })();
+    const labelId = (() => {
+      if(isRoles) {
+        return CreateAccountPage.ROLES_LABEL_ID;
+      }
+      return null;
+    })();
+    return (
+      <PropertyItem
+          displaySize={this.props.displaySize}
+          label={CreateAccountPage.LABELS[field]}
+          htmlFor={htmlFor}
+          labelId={labelId}
+          validation={this.state.validation[field]}
+          isLast={isLast}
+          onBlur={() => this.onFieldBlur(field)}>
+        {item}
+      </PropertyItem>);
+  }
+
+  private getFontSize(): string {
+    if(this.props.displaySize === DisplaySize.SMALL) {
+      return '1rem';
+    }
+    return '0.875rem';
+  }
+
+  private getButtonStyle() {
+    if(this.props.displaySize === DisplaySize.SMALL) {
+      return CreateAccountPage.DYNAMIC_STYLE.buttonSmall;
+    }
+    return CreateAccountPage.DYNAMIC_STYLE.buttonLarge;
+  }
+
+  private getInputStyle(field: CreateAccountPage.Field): React.CSSProperties {
+    const style = {
+      ...CreateAccountPage.STYLE.inputField, fontSize: this.getFontSize()
+    };
+    if(this.isShowingError(field)) {
+      return {...style, borderColor: '#E63F44'};
+    }
+    return style;
+  }
+
+  private isShowingError(field: CreateAccountPage.Field): boolean {
+    const validation = this.state.validation[field];
+    return !validation.valid && validation.showError;
+  }
+
+  private isSubmitDisabled(): boolean {
+    return this.state.status === CreateAccountPage.Status.IN_PROGRESS ||
+      !this.state.validation.every(input => input.valid);
+  }
+
+  private markRequired(field: CreateAccountPage.Field, isEmpty: boolean): void {
+    this.validateRequired(field, isEmpty,
+      this.state.validation[field].showError);
+  }
+
+  private validateRequired(field: CreateAccountPage.Field, isEmpty: boolean,
+      showError: boolean): void {
+    this.updateValidation(field, {
+      valid: !isEmpty,
+      error: (() => {
+        if(isEmpty) {
+          return CreateAccountModel.ValidationError.REQUIRED;
+        }
+        return CreateAccountModel.ValidationError.NONE;
+      })(),
+      showError: showError
+    });
+  }
+
+  private isFieldEmpty(field: CreateAccountPage.Field): boolean {
+    switch(field) {
+      case CreateAccountPage.Field.FIRST_NAME:
+        return this.state.identity.firstName.trim() === '';
+      case CreateAccountPage.Field.LAST_NAME:
+        return this.state.identity.lastName.trim() === '';
+      case CreateAccountPage.Field.ROLES:
+        return !this.hasRole();
+      case CreateAccountPage.Field.GROUPS:
+        return this.state.selectedGroups.length === 0;
+      case CreateAccountPage.Field.EMAIL:
+        return this.state.identity.emailAddress.trim() === '';
+      default:
+        return false;
+    }
+  }
+
+  private onFieldBlur(field: CreateAccountPage.Field): void {
+    const validation = this.state.validation[field];
+    if(validation.showError) {
+      return;
+    }
+    this.updateValidation(field, {...validation, showError: true});
+  }
+
+  private updateValidation(field: CreateAccountPage.Field,
+      validation: InputValidation): void {
+    const inputs = this.state.validation.slice();
+    inputs[field] = validation;
+    this.setState({validation: inputs});
+  }
+
+  private onPhotoFieldClick = () => {
     if(this.state.photoUploaderMode === PhotoFieldDisplayMode.DISPLAY) {
       this.setState({
         photoUploaderMode: PhotoFieldDisplayMode.UPLOADING,
@@ -356,261 +387,360 @@ export class CreateAccountPage extends React.Component<Properties, State> {
     }
   }
 
-  private onPhotoChange(photo: string) {
+  private onPhotoChange = (photo: string) => {
     this.setState({newPhoto: photo});
   }
 
-  private onScaleChange(scaling: number) {
+  private onScaleChange = (scaling: number) => {
     this.setState({newScaling: scaling});
   }
 
-  private onPhotoSubmit(newFileLocation: string, scaling: number) {
+  private onPhotoSubmit = (newFileLocation: string, scaling: number) => {
     this.state.identity.photoId = newFileLocation;
     this.setState({identity: this.state.identity});
   }
 
-  private onRoleClick(role: Nexus.AccountRoles.Role) {
+  private onRoleClick = (role: Nexus.AccountRoles.Role) => {
     if(this.state.roles.test(role)) {
       this.state.roles.unset(role);
     } else {
       this.state.roles.set(role);
     }
     this.setState({roles: this.state.roles});
+    this.validateRequired(CreateAccountPage.Field.ROLES, !this.hasRole(), true);
   }
 
-  private onInputChange = (handler: (value: string) => void) =>
-    (event: React.ChangeEvent<HTMLInputElement>) => {
-      handler(event.target.value);
-    };
-
-  private onFirstNameChange(newValue: string) {
-    this.state.identity.firstName = newValue;
-    this.setState({ identity: this.state.identity });
-    this.enableSubmit();
+  private onFirstNameChange = (value: string) => {
+    this.state.identity.firstName = value;
+    this.setState({identity: this.state.identity});
+    this.markRequired(CreateAccountPage.Field.FIRST_NAME, value.trim() === '');
   }
 
-  private onLastNameChange(newValue: string) {
-    this.state.identity.lastName = newValue;
-    this.setState({ identity: this.state.identity });
-    this.enableSubmit();
+  private onLastNameChange = (value: string) => {
+    this.state.identity.lastName = value;
+    this.setState({identity: this.state.identity});
+    this.markRequired(CreateAccountPage.Field.LAST_NAME, value.trim() === '');
   }
 
-  private onUsernameChange(newValue: string) {
-    this.setState({ username: newValue });
-    this.enableSubmit();
+  private onEmailChange = (value: string) => {
+    this.state.identity.emailAddress = value;
+    this.setState({identity: this.state.identity});
+    this.markRequired(CreateAccountPage.Field.EMAIL, value.trim() === '');
   }
 
-  private async onGroupsValueChange(newValue: string) {
-    this.setState({
-      groupsValue: newValue
-    });
-    this.filterGroups(newValue);
-  }
-
-  private async filterGroups(newValue: string) {
-    const newSuggestions =
-      await this.props.groupSuggestionModel.loadSuggestions(newValue);
-    const filteredSuggestions = newSuggestions.filter(
-      group => this.state.selectedGroups.indexOf(group) < 0);
-    this.setState({
-      suggestedGroups: filteredSuggestions
-    });
-  }
-
-  private async onAddGroup(group: Beam.DirectoryEntry) {
-    const length = this.state.selectedGroups.length;
-    if(this.state.selectedGroups.indexOf(group) < 0 && 
-        length < CreateAccountPage.MAX_NUMBER_OF_GROUPS) {
-      this.state.selectedGroups.push(group);
-      this.setState({
-        selectedGroups: this.state.selectedGroups,
-        groupsValue: '',
-        suggestedGroups: []
-      });
-    }
-  }
-
-  private onRemoveGroup(group: Beam.DirectoryEntry) {
-    this.state.selectedGroups.splice(
-      this.state.selectedGroups.indexOf(group), 1);
-    this.setState({
-      selectedGroups: this.state.selectedGroups
-    });
-  }
-
-  private onEmailChange(newValue: string) {
-    this.state.identity.emailAddress = newValue;
-    this.setState({ identity: this.state.identity });
-    this.enableSubmit();
-  }
-
-  private onAddressChange(addressLineOne: string, addressLineTwo: string,
-      addressLineThree: string) {
+  private onAddressChange = (addressLineOne: string,
+      addressLineTwo: string, addressLineThree: string) => {
     this.state.identity.addressLineOne = addressLineOne;
     this.state.identity.addressLineTwo = addressLineTwo;
     this.state.identity.addressLineThree = addressLineThree;
-    this.setState({ identity: this.state.identity });
-    this.enableSubmit();
-  }
-
-  private onCityChange(newValue: string) {
-    this.state.identity.city = newValue;
-    this.setState({ identity: this.state.identity });
-    this.enableSubmit();
-  }
-
-  private onProvinceChange(newValue: string) {
-    this.state.identity.province = newValue;
     this.setState({identity: this.state.identity});
-    this.enableSubmit();
   }
 
-  private onCountryChange(newValue: Nexus.CountryCode) {
-    this.state.identity.country = newValue;
+  private onCityChange = (value: string) => {
+    this.state.identity.city = value;
     this.setState({identity: this.state.identity});
-    this.enableSubmit();
   }
 
-  private enableSubmit() {
-    if(this.state.identity.firstName || this.state.identity.lastName ||
-        this.state.username || this.state.identity.addressLineOne ||
-        this.state.identity.city || this.state.identity.province ||
-        this.state.identity.emailAddress) {
-      this.enableButton();
-    } else {
-      this.setState({isSubmitButtonDisabled: false});
+  private onProvinceChange = (value: string) => {
+    this.state.identity.province = value;
+    this.setState({identity: this.state.identity});
+  }
+
+  private onCountryChange = (value: Nexus.CountryCode) => {
+    this.state.identity.country = value;
+    this.setState({identity: this.state.identity});
+  }
+
+  private onUsernameChange = (value: string) => {
+    const field = CreateAccountPage.Field.USERNAME;
+    this.setState({username: value});
+    clearTimeout(this._usernameTimer);
+    ++this._usernameRequest;
+    const error = CreateAccountModel.checkUsernameFormat(
+      CreateAccountModel.normalizeUsername(value));
+    this.updateValidation(field, {
+      valid: error === CreateAccountModel.ValidationError.NONE,
+      error: error,
+      showError: this.state.validation[field].showError
+    });
+    if(error !== CreateAccountModel.ValidationError.NONE) {
+      return;
+    }
+    this._usernameTimer = setTimeout(() => {
+      this.validateUsername(value);
+    }, CreateAccountPage.VALIDATION_DELAY);
+  }
+
+  private async validateUsername(username: string): Promise<void> {
+    const request = ++this._usernameRequest;
+    const error = await this.props.model.validateUsername(username);
+    if(request !== this._usernameRequest ||
+        this.state.username !== username) {
+      return;
+    }
+    const field = CreateAccountPage.Field.USERNAME;
+    this.updateValidation(field, {
+      valid: error === CreateAccountModel.ValidationError.NONE,
+      error: error,
+      showError: this.state.validation[field].showError
+    });
+  }
+
+  private onGroupsValueChange = async (value: string) => {
+    this.setState({groupsValue: value});
+    const suggestions =
+      await this.props.groupSuggestionModel.loadSuggestions(value);
+    this.setState({
+      suggestedGroups: suggestions.filter(
+        group => this.state.selectedGroups.indexOf(group) < 0)
+    });
+  }
+
+  private onAddGroup = (group: Beam.DirectoryEntry) => {
+    if(this.state.selectedGroups.indexOf(group) >= 0 ||
+        this.state.selectedGroups.length >=
+        CreateAccountPage.MAX_NUMBER_OF_GROUPS) {
+      return;
+    }
+    this.state.selectedGroups.push(group);
+    this.setState({
+      selectedGroups: this.state.selectedGroups,
+      groupsValue: '',
+      suggestedGroups: []
+    });
+    this.markRequired(CreateAccountPage.Field.GROUPS, false);
+  }
+
+  private onRemoveGroup = (group: Beam.DirectoryEntry) => {
+    this.state.selectedGroups.splice(
+      this.state.selectedGroups.indexOf(group), 1);
+    this.setState({selectedGroups: this.state.selectedGroups});
+    this.markRequired(CreateAccountPage.Field.GROUPS,
+      this.state.selectedGroups.length === 0);
+  }
+
+  private onSubmit = async () => {
+    const Field = CreateAccountPage.Field;
+    const ValidationError = CreateAccountModel.ValidationError;
+    this.setState({status: CreateAccountPage.Status.IN_PROGRESS});
+    const username = CreateAccountModel.normalizeUsername(this.state.username);
+    try {
+      const usernameError = await this.props.model.validateUsername(username);
+      const inputs = this.state.validation.slice();
+      for(let index = 0; index !== inputs.length; ++index) {
+        const field = index as CreateAccountPage.Field;
+        if(field === Field.USERNAME) {
+          inputs[field] = {
+            valid: usernameError === ValidationError.NONE,
+            error: usernameError,
+            showError: true
+          };
+        } else if(CreateAccountPage.isRequired(field)) {
+          const isEmpty = this.isFieldEmpty(field);
+          inputs[field] = {
+            valid: !isEmpty,
+            error: (() => {
+              if(isEmpty) {
+                return ValidationError.REQUIRED;
+              }
+              return ValidationError.NONE;
+            })(),
+            showError: true
+          };
+        } else {
+          inputs[field] = {...inputs[field], showError: true};
+        }
+      }
+      this.setState({validation: inputs});
+      if(!inputs.every(input => input.valid)) {
+        this.setState({status: CreateAccountPage.Status.NONE});
+        return;
+      }
+      await this.props.model.createAccount(username,
+        this.state.selectedGroups[0], this.state.identity, this.state.roles);
+      this.setState({status: CreateAccountPage.Status.COMPLETE});
+      this.props.onComplete?.();
+    } catch(error: any) {
+      if(error?.code === CreateAccountPage.CONFLICT) {
+        const inputs = this.state.validation.slice();
+        inputs[Field.USERNAME] = {
+          valid: false, error: ValidationError.DUPLICATE, showError: true
+        };
+        this.setState({
+          status: CreateAccountPage.Status.NONE, validation: inputs
+        });
+      } else {
+        this.setState({status: CreateAccountPage.Status.UNAVAILABLE});
+      }
     }
   }
 
-  private enableButton() {
-    this.setState({isSubmitButtonDisabled: false});
-  }
-
-  private onSubmit() {
-    if(this.checkInputs()) {
-      this.props.onSubmit(this.state.username, this.state.selectedGroups[0],
-        this.state.identity, this.state.roles);
-    }
-  }
-
-  private checkInputs(): boolean {
-    const hasErrorFirstName = this.state.identity.firstName === '';
-    const hasErrorLastName = this.state.identity.lastName === '';
-    const hasErrorUsername = this.state.username === '';
-    const hasErrorGroups = this.state.selectedGroups.length === 0;
-    const hasErrorEmail = this.state.identity.emailAddress === '';
-    const hasRoleError = 
-      !(this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR) ||
+  private hasRole(): boolean {
+    return this.state.roles.test(Nexus.AccountRoles.Role.ADMINISTRATOR) ||
       this.state.roles.test(Nexus.AccountRoles.Role.MANAGER) ||
       this.state.roles.test(Nexus.AccountRoles.Role.TRADER) ||
-      this.state.roles.test(Nexus.AccountRoles.Role.SERVICE));
-    if(hasErrorFirstName || hasErrorLastName || hasErrorEmail ||
-        hasErrorUsername || hasRoleError || hasErrorGroups) {
-      this.setState({
-        errorStatus: 'Invalid inputs',
-        hasFirstNameError: hasErrorFirstName,
-        hasLastNameError: hasErrorLastName,
-        hasEmailError: hasErrorEmail,
-        hasUserNameError: hasErrorUsername,
-        hasGroupError: hasErrorGroups,
-        hasRoleError: hasRoleError
-      });
-      return false;
-    } else {
-      this.setState({
-        errorStatus: '',
-        hasFirstNameError: false,
-        hasLastNameError: false,
-        hasEmailError: false,
-        hasUserNameError: false,
-        hasRoleError: false
-      });
-      return true;
+      this.state.roles.test(Nexus.AccountRoles.Role.SERVICE);
+  }
+
+  private static makeValidation(): InputValidation[] {
+    const validation = [] as InputValidation[];
+    for(let index = 0; index !== CreateAccountPage.LABELS.length; ++index) {
+      if(CreateAccountPage.isRequired(index as CreateAccountPage.Field)) {
+        validation.push({
+          valid: false,
+          error: CreateAccountModel.ValidationError.REQUIRED,
+          showError: false
+        });
+      } else {
+        validation.push({...VALID_INPUT});
+      }
+    }
+    return validation;
+  }
+
+  private static isRequired(field: CreateAccountPage.Field): boolean {
+    switch(field) {
+      case CreateAccountPage.Field.FIRST_NAME:
+      case CreateAccountPage.Field.LAST_NAME:
+      case CreateAccountPage.Field.USERNAME:
+      case CreateAccountPage.Field.ROLES:
+      case CreateAccountPage.Field.GROUPS:
+      case CreateAccountPage.Field.EMAIL:
+        return true;
+      default:
+        return false;
     }
   }
 
+  private static readonly LABELS = ['First Name', 'Last Name', 'Username',
+    'Role(s)', 'Group(s)', 'Email', 'Address', 'City', 'Province/State',
+    'Country'];
+  private static readonly IDS = ['first-name', 'last-name', 'username', 'role',
+    'group', 'email', 'address', 'city', 'province-state', 'country'];
   private static readonly STYLE: Record<string, React.CSSProperties> = {
-    inputField: {
-      width: '100%'
-    },
-    countryField: {
-      width: '200px'
-    },
-    page: {
-      height: '100%',
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'space-between',
-      overflowY: 'auto'
-    },
-    headerStyler: {
-      color: '#333333',
-      font: '400 18px Roboto',
-      width: '100%',
-      display: 'flex',
-      flexDirection: 'row',
-      justifyContent: 'center',
-      alignItems: 'center'
-    },
-    contentSmall: {
-      minWidth: '284px',
-      flexShrink: 1,
+    main: {
+      boxSizing: 'border-box',
       flexGrow: 1,
-      maxWidth: '424px'
-    },
-    contentMedium: {
-      width: '732px'
-    },
-    contentLarge: {
-      width: '1000px'
-    },
-    pagePadding: {
-      width: '18px'
-    },
-    rolesWrapper: {
-      marginLeft: '11px',
       display: 'flex',
-      flexDirection: 'row',
-      height: '34px',
-      justifyContent: 'flex-start',
-      alignItems: 'center'
+      flexDirection: 'column',
+      padding: '18px 18px 40px',
+      fontFamily: '"Roboto", system-ui, sans-serif',
+      fontWeight: 400,
+      fontSize: '0.875rem',
+      color: '#333333'
+    },
+    section: {
+      display: 'flex',
+      flexDirection: 'column',
+      padding: '0 0 30px',
+      borderBottom: '1px solid #E6E6E6'
+    },
+    header: {
+      margin: 0,
+      fontSize: '1.125rem',
+      fontWeight: 'inherit'
+    },
+    headerPaddingSmall: {
+      height: '30px',
+      flexShrink: 0
+    },
+    headerPaddingLarge: {
+      height: '60px',
+      flexShrink: 0
+    },
+    areaSmall: {
+      display: 'flex',
+      flexDirection: 'column'
+    },
+    areaMedium: {
+      width: '280px',
+      minWidth: '280px',
+      display: 'flex',
+      flexDirection: 'column'
+    },
+    areaLarge: {
+      width: '380px',
+      minWidth: '380px',
+      display: 'flex',
+      flexDirection: 'column'
+    },
+    areaPadding: {
+      height: '30px',
+      flexShrink: 0
+    },
+    sectionRow: {
+      display: 'flex',
+      flexDirection: 'row'
+    },
+    mediumGap: {
+      width: '30px',
+      minWidth: '30px',
+      flexShrink: 0
+    },
+    largeGap: {
+      width: '100px',
+      minWidth: '100px',
+      flexShrink: 0
+    },
+    listArea: {
+      flexGrow: 1,
+      minWidth: 0
+    },
+    list: {
+      margin: 0,
+      padding: 0,
+      listStyle: 'none'
+    },
+    firstListItem: {
+      marginTop: 0
+    },
+    listItem: {
+      marginTop: '20px'
     },
     filler: {
       flexGrow: 1
     },
-    smallPadding: {
+    inputField: {
       width: '100%',
-      height: '18px'
+      boxSizing: 'border-box'
     },
-    mediumPadding: {
-      width: '100%',
-      height: '30px'
+    countryField: {
+      width: '100%'
     },
-    buttonBox: {
+    submitPadding: {
+      height: '30px',
+      flexShrink: 0
+    },
+    submitRow: {
       display: 'flex',
-      justifyContent: 'center',
-      textAlign: 'center'
+      flexDirection: 'row'
     },
-    errorStatus: {
+    statusPlaceholder: {
+      height: '34px',
+      flexShrink: 0
+    },
+    statusFeedback: {
       display: 'flex',
-      justifyContent: 'center',
+      flexDirection: 'column'
+    },
+    statusPadding: {
+      height: '18px',
+      flexShrink: 0
+    },
+    statusMessage: {
       textAlign: 'center',
-      color: '#E63F44',
-      font: '400 14px Roboto'
-    },
-    roleErrorStatus: {
-      color: '#E63F44',
-      font: '400 14px Roboto'
+      color: '#E63F44'
     }
   };
-  private static DYNAMIC_STYLE = StyleSheet.create({
+  private static readonly DYNAMIC_STYLE = StyleSheet.create({
     buttonSmall: {
       boxSizing: 'border-box',
       width: '100%',
       height: '34px',
       backgroundColor: '#684BC7',
-      font: '400 14px Roboto',
+      fontFamily: 'inherit',
+      fontSize: 'inherit',
+      fontWeight: 'inherit',
       color: '#FFFFFF',
       border: 'none',
       outline: 0,
@@ -619,10 +749,10 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       ':active': {
         backgroundColor: '#4B23A0'
       },
-      ':focus' : {
+      ':focus': {
         backgroundColor: '#4B23A0'
       },
-      ':hover' : {
+      ':hover': {
         backgroundColor: '#4B23A0'
       },
       ':disabled': {
@@ -632,13 +762,14 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       }
     },
     buttonLarge: {
-      margin: 0,
-      padding: 0,
       boxSizing: 'border-box',
-      width: '200px',
+      width: '246px',
+      minWidth: '246px',
       height: '34px',
       backgroundColor: '#684BC7',
-      font: '400 14px Roboto',
+      fontFamily: 'inherit',
+      fontSize: 'inherit',
+      fontWeight: 'inherit',
       color: '#FFFFFF',
       border: 'none',
       outline: 0,
@@ -647,10 +778,10 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       ':active': {
         backgroundColor: '#4B23A0'
       },
-      ':focus' : {
+      ':focus': {
         backgroundColor: '#4B23A0'
       },
-      ':hover' : {
+      ':hover': {
         backgroundColor: '#4B23A0'
       },
       ':disabled': {
@@ -660,11 +791,43 @@ export class CreateAccountPage extends React.Component<Properties, State> {
       }
     }
   });
-  private static readonly ERROR_STYLE: React.CSSProperties = {
-    borderColor: '#E63F44'
-  };
+  private static readonly ROLES_LABEL_ID = 'roles-label';
+  private static readonly CONFLICT = 409;
   private static readonly MAX_NUMBER_OF_GROUPS = 1;
-  private static readonly SMALL_PADDING = '20px';
-  private static readonly STANDARD_PADDING = '30px';
-  private static readonly BOTTOM_PADDING = '60px';
+  private static readonly VALIDATION_DELAY = 300;
+  private _usernameTimer: ReturnType<typeof setTimeout>;
+  private _usernameRequest = 0;
+}
+
+export namespace CreateAccountPage {
+
+  /** Lists the account creation states. */
+  export enum Status {
+
+    /** Default state. */
+    NONE,
+
+    /** The account is being created. */
+    IN_PROGRESS,
+
+    /** The server is unavailable. */
+    UNAVAILABLE,
+
+    /** The account creation succeeded. */
+    COMPLETE
+  }
+
+  /** Lists the inputs shown on the page. */
+  export enum Field {
+    FIRST_NAME,
+    LAST_NAME,
+    USERNAME,
+    ROLES,
+    GROUPS,
+    EMAIL,
+    ADDRESS,
+    CITY,
+    PROVINCE,
+    COUNTRY
+  }
 }
