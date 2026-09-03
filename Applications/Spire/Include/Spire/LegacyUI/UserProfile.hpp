@@ -146,20 +146,6 @@ namespace Spire {
       const std::shared_ptr<ListModel<PropertyHubMember*>>&
         GetPropertyHubMembers() const;
 
-      /**
-       * Adds a component to the list of components that can join a
-       * PropertyHub.
-       * @param member The component to add.
-       */
-      void AddPropertyHubMember(PropertyHubMember& member);
-
-      /**
-       * Removes a component from the list of components that can join a
-       * PropertyHub.
-       * @param member The component to remove.
-       */
-      void RemovePropertyHubMember(PropertyHubMember& member);
-
       /** Returns the model used to query tickers. */
       const std::shared_ptr<TickerInfoQueryModel>&
         GetTickerInfoQueryModel() const;

@@ -9,13 +9,12 @@
 #include <boost/signals2/connection.hpp>
 #include <QString>
 #include <QWidget>
+#include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/PropertyHub.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
-  class UserProfile;
-
   /**
    * Represents a component that shares its properties with the other
    * components belonging to the same PropertyHub.
@@ -28,14 +27,16 @@ namespace Spire {
 
       /**
        * Constructs a PropertyHubMember.
-       * @param user_profile The user's profile.
+       * @param roster The list of components this member joins.
        * @param component The component represented by this member.
        * @param name The name displayed for the component.
        * @param icon_path The path to the icon representing the component.
        * @param hub The PropertyHub to join.
        */
-      PropertyHubMember(UserProfile& user_profile, QWidget& component,
-        QString name, QString icon_path, std::shared_ptr<PropertyHub> hub);
+      PropertyHubMember(
+        std::shared_ptr<ListModel<PropertyHubMember*>> roster,
+        QWidget& component, QString name, QString icon_path,
+        std::shared_ptr<PropertyHub> hub);
 
       ~PropertyHubMember();
 
@@ -63,7 +64,7 @@ namespace Spire {
       std::shared_ptr<ValueModel<T>> get_property(const std::string& name);
 
     private:
-      UserProfile* m_user_profile;
+      std::shared_ptr<ListModel<PropertyHubMember*>> m_roster;
       QWidget* m_component;
       std::shared_ptr<ValueModel<QString>> m_name;
       QString m_icon_path;

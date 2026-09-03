@@ -38,8 +38,8 @@ ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
       m_userProfile(userProfile.get()),
       m_interactionMode(ChartInteractionMode::NONE),
 BEAM_SUPPRESS_THIS_INITIALIZER()
-      m_member(*m_userProfile, *this, tr("Chart"), ":/Icons/chart.svg",
-        std::move(hub)),
+      m_member(m_userProfile->GetPropertyHubMembers(), *this, tr("Chart"),
+        ":/Icons/chart.svg", std::move(hub)),
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
       m_tickerModel(
         m_member.get_property<Ticker>(PropertyHub::TICKER_PROPERTY)) {

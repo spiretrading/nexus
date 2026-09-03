@@ -197,19 +197,6 @@ const std::shared_ptr<ListModel<PropertyHubMember*>>&
   return m_property_hub_members;
 }
 
-void UserProfile::AddPropertyHubMember(PropertyHubMember& member) {
-  m_property_hub_members->push(&member);
-}
-
-void UserProfile::RemovePropertyHubMember(PropertyHubMember& member) {
-  for(auto i = m_property_hub_members->get_size() - 1; i >= 0; --i) {
-    if(m_property_hub_members->get(i) == &member) {
-      m_property_hub_members->remove(i);
-      return;
-    }
-  }
-}
-
 const BlotterSettings& UserProfile::GetBlotterSettings() const {
   return *m_blotterSettings;
 }
