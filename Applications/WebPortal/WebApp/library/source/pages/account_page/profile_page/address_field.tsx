@@ -4,6 +4,9 @@ import { DisplaySize } from '../../..';
 
 interface Properties {
 
+  /** The id of the underlying textarea. */
+  id?: string;
+
   /** The size to display the component at. */
   displaySize: DisplaySize;
 
@@ -82,6 +85,7 @@ export class AddressField extends React.Component<Properties, State> {
     })();
     return (
       <textarea
+        id={this.props.id}
         spellCheck={!this.props.readonly}
         rows={3}
         disabled={this.props.readonly}
@@ -160,14 +164,13 @@ export class AddressField extends React.Component<Properties, State> {
       paddingBottom: '7px',
       backgroundColor: '#FFFFFF',
       flexGrow: 1,
-      minWidth: '284px',
       width: '100%'
     } as React.CSSProperties,
     containerMedium: {
       boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
-      minWidth: '284px',
+      width: '100%',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
@@ -183,7 +186,7 @@ export class AddressField extends React.Component<Properties, State> {
       boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
-      minWidth: '350px',
+      width: '100%',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
@@ -210,14 +213,13 @@ export class AddressField extends React.Component<Properties, State> {
       paddingBottom: '7px',
       backgroundColor: '#FFFFFF',
       flexGrow: 1,
-      minWidth: '284px',
       width: '100%'
     } as React.CSSProperties,
     readonlyMedium: {
       boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
-      minWidth: '284px',
+      width: '100%',
       border: '1px solid #FFFFFF',
       borderRadius: '1px',
       font: '400 14px Roboto',
@@ -233,7 +235,7 @@ export class AddressField extends React.Component<Properties, State> {
       boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
-      minWidth: '350px',
+      width: '100%',
       border: '1px solid #FFFFFF',
       borderRadius: '1px',
       font: '400 14px Roboto',

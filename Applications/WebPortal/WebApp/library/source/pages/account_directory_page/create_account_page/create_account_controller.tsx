@@ -1,4 +1,3 @@
-import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
@@ -10,7 +9,7 @@ interface Properties {
 
   /** The size of the viewport. */
   displaySize: DisplaySize;
-  
+
   /** The database of all available countries. */
   countryDatabase?: Nexus.CountryDatabase;
 
@@ -22,21 +21,15 @@ interface Properties {
 }
 
 interface State {
-  errorStatus: string;
-  isSubmitting: boolean;
   isDone: boolean;
 }
 
 /** Implements the controller for the CreateAccountPage. */
 export class CreateAccountController extends
     React.Component<Properties, State> {
-  constructor(props: Properties) {
+  public constructor(props: Properties) {
     super(props);
-    this.state = {
-      errorStatus: '',
-      isSubmitting: false,
-      isDone: false
-    };
+    this.state = {isDone: false};
   }
 
   public render(): JSX.Element {
@@ -45,42 +38,13 @@ export class CreateAccountController extends
     }
     return <CreateAccountPage
       displaySize={this.props.displaySize}
-      errorStatus={this.state.errorStatus}
-      isSubmitting={this.state.isSubmitting}
       countryDatabase={this.props.countryDatabase}
+      model={this.props.createAccountModel}
       groupSuggestionModel={this.props.groupSuggestionModel}
-      onSubmit={this.createAccount}/>;
+      onComplete={this.onComplete}/>;
   }
 
-  private createAccount = async (username: string,
-      groups: Beam.DirectoryEntry, identity: Nexus.AccountIdentity,
-      roles: Nexus.AccountRoles) => {
-    try {
-      this.setState({
-        errorStatus: '',
-        isSubmitting: true
-      });
-      await this.props.createAccountModel.createAccount(
-        username, groups, identity, roles);
-      this.setState({isSubmitting: false, isDone: true});
-    } catch(e: any) {
-      this.setState({
-        errorStatus: toErrorStatus(e),
-        isSubmitting: false
-      });
-    }
+  private onComplete = () => {
+    this.setState({isDone: true});
   }
-
-  public static readonly REJECTED_MESSAGE = 'Invalid inputs';
-  public static readonly UNAVAILABLE_MESSAGE = 'Server issue';
-}
-
-const BAD_REQUEST = 400;
-const CONFLICT = 409;
-
-function toErrorStatus(error: any): string {
-  if(error?.code === CONFLICT || error?.code === BAD_REQUEST) {
-    return CreateAccountController.REJECTED_MESSAGE;
-  }
-  return CreateAccountController.UNAVAILABLE_MESSAGE;
 }
