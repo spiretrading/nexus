@@ -22,10 +22,10 @@ TEST_SUITE("LegacyPropertyHubMap") {
   }
 
   TEST_CASE("merge") {
-    auto map = LegacyPropertyHubMap();
     auto merges = 0;
     auto source = std::shared_ptr<PropertyHub>();
     auto destination = std::shared_ptr<PropertyHub>();
+    auto map = LegacyPropertyHubMap();
     map.connect_merge_signal(
       [&] (const auto& merged_hub, const auto& surviving_hub) {
         ++merges;

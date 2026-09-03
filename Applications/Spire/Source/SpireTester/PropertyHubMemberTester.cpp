@@ -1,4 +1,5 @@
 #include <any>
+#include <string>
 #include <doctest/doctest.h>
 #include <QWidget>
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -81,11 +82,15 @@ TEST_SUITE("PropertyHubMember") {
       auto origin = std::make_shared<PropertyHub>();
       auto member = PropertyHubMember(roster, widget, "", origin);
       auto count = member.get_property<int>("count");
+      auto label = member.get_property<std::string>("label");
       count->set(5);
+      label->set("origin");
       auto populated = std::make_shared<PropertyHub>();
       populated->get<int>("count")->set(9);
+      populated->get<std::string>("label")->set("populated");
       member.get_hub()->set(populated);
       REQUIRE(count->get() == 9);
+      REQUIRE(label->get() == "populated");
       populated->get<int>("count")->set(13);
       REQUIRE(count->get() == 13);
       origin->get<int>("count")->set(21);
@@ -94,6 +99,7 @@ TEST_SUITE("PropertyHubMember") {
       member.get_hub()->set(empty);
       REQUIRE(count->get() == 13);
       REQUIRE(empty->get<int>("count")->get() == 13);
+      REQUIRE(empty->get<std::string>("label")->get() == "populated");
     });
   }
 }

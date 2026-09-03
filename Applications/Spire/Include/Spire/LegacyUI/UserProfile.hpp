@@ -6,6 +6,7 @@
 #include <unordered_map>
 #include <vector>
 #include <Beam/WebServices/Uri.hpp>
+#include <boost/signals2/connection.hpp>
 #include <boost/uuid/uuid.hpp>
 #include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
@@ -114,6 +115,7 @@ namespace Spire {
        * Returns the PropertyHub with a given id, constructing it if no such
        * PropertyHub exists.
        * @param id The id of the PropertyHub to return.
+       * @return The PropertyHub with the given id.
        */
       std::shared_ptr<PropertyHub> AcquirePropertyHub(
         const boost::uuids::uuid& id);
@@ -125,6 +127,7 @@ namespace Spire {
        * @param identifier The identifier of the component being restored.
        * @param link_identifier The identifier of the component that the
        *        component being restored is linked to.
+       * @return The PropertyHub both identifiers belong to.
        */
       std::shared_ptr<PropertyHub> AcquirePropertyHub(
         const std::string& identifier, const std::string& link_identifier);
@@ -137,6 +140,7 @@ namespace Spire {
        * @param identifier The identifier of the component being restored.
        * @param link_identifier The identifier of the component that the
        *        component being restored is linked to.
+       * @return The PropertyHub the component belongs to.
        */
       std::shared_ptr<PropertyHub> AcquirePropertyHub(
         const boost::uuids::uuid& id, const std::string& identifier,

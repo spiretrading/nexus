@@ -1,9 +1,7 @@
 #ifndef SPIRE_PROPERTY_HUB_MEMBER_HPP
 #define SPIRE_PROPERTY_HUB_MEMBER_HPP
-#include <any>
 #include <memory>
 #include <string>
-#include <typeinfo>
 #include <unordered_map>
 #include <vector>
 #include <boost/signals2/connection.hpp>
@@ -80,10 +78,7 @@ namespace Spire {
       const std::string& name) {
     auto i = m_properties.find(name);
     if(i != m_properties.end()) {
-      if(i->second->get().get_type() != typeid(T)) {
-        throw std::bad_any_cast();
-      }
-      return std::static_pointer_cast<ValueModel<T>>(i->second);
+      return property_cast<T>(i->second);
     }
     auto property = make_proxy_value_model(m_hub->get()->get<T>(name));
     m_properties.emplace(name, property);

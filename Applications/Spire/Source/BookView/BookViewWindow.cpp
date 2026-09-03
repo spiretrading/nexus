@@ -271,6 +271,9 @@ std::unique_ptr<CanvasNode>
 
 void BookViewWindow::display_interactions_panel() {
   auto ticker = m_ticker_view->get_current()->get();
+  if(!ticker) {
+    return;
+  }
   auto& interactions = *m_key_bindings->get_interactions_key_bindings(ticker);
   auto interactions_node = InteractionsNode(ticker, interactions);
   m_task_entry_panel =
@@ -317,6 +320,7 @@ void BookViewWindow::display_task_entry_panel(
 void BookViewWindow::remove_task_entry_panel() {
   setUpdatesEnabled(false);
   m_transition_view->layout()->removeWidget(m_task_entry_panel);
+  m_task_entry_panel->hide();
   m_task_entry_panel->deleteLater();
   m_task_entry_panel = nullptr;
   m_is_task_entry_panel_for_interactions = false;
@@ -448,6 +452,7 @@ void BookViewWindow::on_current(const Ticker& ticker) {
     m_book_depth = nullptr;
     m_model = nullptr;
     m_interactions = nullptr;
+    m_ticker_view->setFocus();
     return;
   }
   setWindowTitle(to_text(ticker) + " " + QString(0x2013) + " " + TITLE_NAME);

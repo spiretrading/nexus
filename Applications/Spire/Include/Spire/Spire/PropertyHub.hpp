@@ -68,6 +68,22 @@ namespace Spire {
       PropertyHub& operator =(const PropertyHub&) = delete;
   };
 
+  /**
+   * Casts a property to a model over a given type.
+   * @param property The property to cast.
+   * @return The model over the property.
+   * @throws <code>std::bad_any_cast</code> iff the property does not store a
+   *         value of type <i>T</i>.
+   */
+  template<typename T>
+  std::shared_ptr<ValueModel<T>> property_cast(
+      const std::shared_ptr<AnyValueModel>& property) {
+    if(property->get().get_type() != typeid(T)) {
+      throw std::bad_any_cast();
+    }
+    return std::static_pointer_cast<ValueModel<T>>(property);
+  }
+
   template<typename T>
   std::shared_ptr<ValueModel<T>> PropertyHub::get(const std::string& name) {
     auto i = m_properties.find(name);
@@ -76,10 +92,7 @@ namespace Spire {
       m_properties.emplace(name, property);
       return property;
     }
-    if(i->second->get().get_type() != typeid(T)) {
-      throw std::bad_any_cast();
-    }
-    return std::static_pointer_cast<ValueModel<T>>(i->second);
+    return property_cast<T>(i->second);
   }
 }
 
