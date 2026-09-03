@@ -200,6 +200,7 @@ void ChartWindow::OnTickerUpdate(const Ticker& ticker) {
   m_ticker = ticker;
   if(!m_ticker) {
     setWindowTitle(tr("Chart - Spire"));
+    m_controller->Clear();
   } else {
     setWindowTitle(displayText(m_ticker) + tr(" - Chart"));
     OnIntervalChanged(

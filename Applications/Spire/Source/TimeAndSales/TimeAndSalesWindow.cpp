@@ -68,8 +68,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     new TickerView(std::move(tickers), ticker, *m_transition_view);
   m_ticker_view->get_current()->connect_update_signal(
     std::bind_front(&TimeAndSalesWindow::on_current, this));
-  m_ticker_view->setSizePolicy(
-    QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_ticker_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_ticker_view->setContextMenuPolicy(Qt::CustomContextMenu);
   set_body(m_ticker_view);
   update_style(*this, [] (auto& style) {
@@ -148,6 +147,8 @@ void TimeAndSalesWindow::on_current(const Ticker& ticker) {
   m_ticker = ticker;
   if(!ticker) {
     setWindowTitle(TITLE_NAME);
+    m_table_model->set_model(std::make_shared<NoneTimeAndSalesModel>());
+    m_transition_view->set_status(TransitionView::Status::NONE);
     return;
   }
   setWindowTitle(to_text(ticker) + " " + QString(0x2013) + " " + TITLE_NAME);

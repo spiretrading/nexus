@@ -435,6 +435,12 @@ void BookViewWindow::on_current(const Ticker& ticker) {
   m_ticker = ticker;
   if(!ticker) {
     setWindowTitle(TITLE_NAME);
+    m_bid_order_connection.disconnect();
+    m_ask_order_connection.disconnect();
+    m_transition_view->set_status(TransitionView::Status::NONE);
+    m_book_depth = nullptr;
+    m_model = nullptr;
+    m_interactions = nullptr;
     return;
   }
   setWindowTitle(to_text(ticker) + " " + QString(0x2013) + " " + TITLE_NAME);
