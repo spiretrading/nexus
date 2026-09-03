@@ -6,13 +6,18 @@ using namespace Spire;
 
 PropertyHubMember::PropertyHubMember(
     std::shared_ptr<ListModel<PropertyHubMember*>> roster, QWidget& component,
-    QString name, QString icon_path, std::shared_ptr<PropertyHub> hub)
+    QString icon_path, std::shared_ptr<PropertyHub> hub)
     : m_roster(std::move(roster)),
       m_component(&component),
-      m_name(std::make_shared<LocalValueModel<QString>>(std::move(name))),
+      m_name(
+        std::make_shared<LocalValueModel<QString>>(component.windowTitle())),
       m_icon_path(std::move(icon_path)),
       m_hub(std::make_shared<LocalValueModel<std::shared_ptr<PropertyHub>>>(
         std::move(hub))) {
+  QObject::connect(&component, &QWidget::windowTitleChanged, &component,
+    [name = m_name] (const auto& title) {
+      name->set(title);
+    });
   m_roster->push(this);
 }
 

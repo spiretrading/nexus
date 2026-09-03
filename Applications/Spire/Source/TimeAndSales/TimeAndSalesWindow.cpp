@@ -50,7 +50,7 @@ TimeAndSalesWindow::TimeAndSalesWindow(Ref<UserProfile> user_profile,
       m_model_builder(std::move(model_builder)),
       m_properties_proxy(make_proxy_value_model(m_factory->get_properties())),
 BEAM_SUPPRESS_THIS_INITIALIZER()
-      m_member(m_user_profile->GetPropertyHubMembers(), *this, TITLE_NAME,
+      m_member(m_user_profile->GetPropertyHubMembers(), *this,
         ":/Icons/time-sales.svg", std::move(hub)),
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
       m_table_model(std::make_shared<TimeAndSalesTableModel>(
@@ -148,11 +148,9 @@ void TimeAndSalesWindow::on_current(const Ticker& ticker) {
   m_ticker = ticker;
   if(!ticker) {
     setWindowTitle(TITLE_NAME);
-    m_member.get_name()->set(windowTitle());
     return;
   }
   setWindowTitle(to_text(ticker) + " " + QString(0x2013) + " " + TITLE_NAME);
-  m_member.get_name()->set(windowTitle());
   m_table_model->set_model(m_model_builder(ticker));
   if(!m_table_view) {
     m_table_view =

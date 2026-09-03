@@ -20,6 +20,7 @@
 
 using namespace Beam;
 using namespace boost;
+using namespace boost::uuids;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::LegacyUI;
@@ -163,8 +164,7 @@ std::shared_ptr<PropertyHub> UserProfile::MakePropertyHub() {
   return hub;
 }
 
-std::shared_ptr<PropertyHub> UserProfile::AcquirePropertyHub(
-    const uuids::uuid& id) {
+std::shared_ptr<PropertyHub> UserProfile::AcquirePropertyHub(const uuid& id) {
   CollectPropertyHubs();
   auto& entry = m_property_hubs[id];
   if(auto hub = entry.lock()) {
@@ -184,7 +184,7 @@ std::shared_ptr<PropertyHub> UserProfile::AcquirePropertyHub(
 }
 
 std::shared_ptr<PropertyHub> UserProfile::AcquirePropertyHub(
-    const uuids::uuid& id, const std::string& identifier,
+    const uuid& id, const std::string& identifier,
     const std::string& link_identifier) {
   if(id.is_nil()) {
     return AcquirePropertyHub(identifier, link_identifier);

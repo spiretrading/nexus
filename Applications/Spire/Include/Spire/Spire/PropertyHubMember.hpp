@@ -29,13 +29,11 @@ namespace Spire {
        * Constructs a PropertyHubMember.
        * @param roster The list of components this member joins.
        * @param component The component represented by this member.
-       * @param name The name displayed for the component.
        * @param icon_path The path to the icon representing the component.
        * @param hub The PropertyHub to join.
        */
-      PropertyHubMember(
-        std::shared_ptr<ListModel<PropertyHubMember*>> roster,
-        QWidget& component, QString name, QString icon_path,
+      PropertyHubMember(std::shared_ptr<ListModel<PropertyHubMember*>> roster,
+        QWidget& component, QString icon_path,
         std::shared_ptr<PropertyHub> hub);
 
       ~PropertyHubMember();
@@ -43,7 +41,7 @@ namespace Spire {
       /** Returns the component represented by this member. */
       QWidget& get_component() const;
 
-      /** Returns the model over the name displayed for the component. */
+      /** Returns the model over the component's window title. */
       const std::shared_ptr<ValueModel<QString>>& get_name() const;
 
       /** Returns the path to the icon representing the component. */
@@ -89,17 +87,16 @@ namespace Spire {
     }
     auto property = make_proxy_value_model(m_hub->get()->get<T>(name));
     m_properties.emplace(name, property);
-    m_connections.push_back(m_hub->connect_update_signal(
-      [=] (const auto& hub) {
-        auto is_new = !hub->find(name);
-        auto source = hub->get<T>(name);
-        if(is_new) {
-          source->set(property->get());
-        }
-        if(source != property->get_source()) {
-          property->set_source(source);
-        }
-      }));
+    m_connections.push_back(m_hub->connect_update_signal([=] (const auto& hub) {
+      auto is_new = !hub->find(name);
+      auto source = hub->get<T>(name);
+      if(is_new) {
+        source->set(property->get());
+      }
+      if(source != property->get_source()) {
+        property->set_source(source);
+      }
+    }));
     return property;
   }
 }

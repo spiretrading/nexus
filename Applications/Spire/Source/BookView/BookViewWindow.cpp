@@ -126,7 +126,7 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
       m_model_builder(std::move(model_builder)),
       m_properties_proxy(make_proxy_value_model(m_factory->get_properties())),
 BEAM_SUPPRESS_THIS_INITIALIZER()
-      m_member(m_user_profile->GetPropertyHubMembers(), *this, TITLE_NAME,
+      m_member(m_user_profile->GetPropertyHubMembers(), *this,
         ":/Icons/bookview.svg", std::move(hub)),
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
       m_book_depth(nullptr),
@@ -431,11 +431,9 @@ void BookViewWindow::on_current(const Ticker& ticker) {
   m_ticker = ticker;
   if(!ticker) {
     setWindowTitle(TITLE_NAME);
-    m_member.get_name()->set(windowTitle());
     return;
   }
   setWindowTitle(to_text(ticker) + " " + QString(0x2013) + " " + TITLE_NAME);
-  m_member.get_name()->set(windowTitle());
   m_transition_view->set_status(TransitionView::Status::NONE);
   m_interactions = m_key_bindings->get_interactions_key_bindings(ticker);
   m_model = m_model_builder(ticker);

@@ -38,7 +38,7 @@ ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
       m_userProfile(userProfile.get()),
       m_interactionMode(ChartInteractionMode::NONE),
 BEAM_SUPPRESS_THIS_INITIALIZER()
-      m_member(m_userProfile->GetPropertyHubMembers(), *this, tr("Chart"),
+      m_member(m_userProfile->GetPropertyHubMembers(), *this,
         ":/Icons/chart.svg", std::move(hub)),
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
       m_tickerModel(
@@ -205,7 +205,6 @@ void ChartWindow::OnTickerUpdate(const Ticker& ticker) {
     OnIntervalChanged(
       m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());
   }
-  m_member.get_name()->set(windowTitle());
 }
 
 void ChartWindow::AdjustSlider(int previousMinimum, int previousMaximum,
