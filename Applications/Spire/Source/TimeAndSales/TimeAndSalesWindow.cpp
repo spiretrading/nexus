@@ -66,7 +66,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   auto ticker = m_member.get_property<Ticker>(PropertyHub::TICKER_PROPERTY);
   m_ticker_view =
     new TickerView(std::move(tickers), ticker, *m_transition_view);
-  m_ticker_view->get_current()->connect_update_signal(
+  ticker->connect_update_signal(
     std::bind_front(&TimeAndSalesWindow::on_current, this));
   m_ticker_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_ticker_view->setContextMenuPolicy(Qt::CustomContextMenu);

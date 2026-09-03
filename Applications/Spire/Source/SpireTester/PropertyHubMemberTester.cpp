@@ -39,6 +39,8 @@ TEST_SUITE("PropertyHubMember") {
       REQUIRE(&member.get_component() == &widget);
       REQUIRE(member.get_name() == "Book View");
       REQUIRE(member.get_icon_path() == ":/Icons/bookview.svg");
+      widget.setWindowTitle("MSFT - Book View");
+      REQUIRE(member.get_name() == "MSFT - Book View");
     });
   }
 
@@ -48,6 +50,7 @@ TEST_SUITE("PropertyHubMember") {
       auto widget = QWidget();
       auto hub = std::make_shared<PropertyHub>();
       auto member = PropertyHubMember(roster, widget, "", hub);
+      REQUIRE(member.get_hub()->get() == hub);
       auto count = member.get_property<int>("count");
       REQUIRE(count->get() == 0);
       REQUIRE(member.get_property<int>("count") == count);
@@ -57,22 +60,11 @@ TEST_SUITE("PropertyHubMember") {
       REQUIRE(hub->get<int>("count")->get() == 5);
       hub->get<int>("count")->set(7);
       REQUIRE(count->get() == 7);
-    });
-  }
-
-  TEST_CASE("share") {
-    run_test([] {
-      auto roster = std::make_shared<ArrayListModel<PropertyHubMember*>>();
-      auto widget = QWidget();
-      auto hub = std::make_shared<PropertyHub>();
-      auto left = PropertyHubMember(roster, widget, "", hub);
-      auto right = PropertyHubMember(roster, widget, "", hub);
-      auto left_count = left.get_property<int>("count");
-      auto right_count = right.get_property<int>("count");
-      left_count->set(5);
-      REQUIRE(right_count->get() == 5);
-      right_count->set(9);
-      REQUIRE(left_count->get() == 9);
+      auto peer = PropertyHubMember(roster, widget, "", hub);
+      auto peer_count = peer.get_property<int>("count");
+      REQUIRE(peer_count->get() == 7);
+      peer_count->set(9);
+      REQUIRE(count->get() == 9);
     });
   }
 

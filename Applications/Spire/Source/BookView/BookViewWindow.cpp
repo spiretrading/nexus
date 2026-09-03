@@ -140,7 +140,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   auto ticker = m_member.get_property<Ticker>(PropertyHub::TICKER_PROPERTY);
   m_ticker_view =
     new TickerView(std::move(tickers), ticker, *m_transition_view);
-  m_ticker_view->get_current()->connect_update_signal(
+  ticker->connect_update_signal(
     std::bind_front(&BookViewWindow::on_current, this));
   m_ticker_view->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -210,11 +210,10 @@ std::unique_ptr<CanvasNode>
   auto ticker_node =
     task_node->FindNode(SingleOrderTaskNode::TICKER_PROPERTY);
   if(ticker_node && !ticker_node->IsReadOnly()) {
-    auto ticker = m_ticker;
     if(auto ticker_value_node =
         dynamic_cast<const TickerNode*>(&*ticker_node)) {
       auto builder = CanvasNodeBuilder(*task_node);
-      builder.Replace(*ticker_node, ticker_value_node->SetValue(ticker));
+      builder.Replace(*ticker_node, ticker_value_node->SetValue(m_ticker));
       builder.SetReadOnly(*ticker_node, true);
       auto price_node =
         task_node->FindNode(SingleOrderTaskNode::PRICE_PROPERTY);
@@ -247,12 +246,12 @@ std::unique_ptr<CanvasNode>
             auto side_node =
               task_node->FindNode(SingleOrderTaskNode::SIDE_PROPERTY);
             auto& interactions =
-              *m_key_bindings->get_interactions_key_bindings(ticker);
+              *m_key_bindings->get_interactions_key_bindings(m_ticker);
             if(side_node) {
               if(auto side_value_node =
                   dynamic_cast<const SideNode*>(&*side_node)) {
                 return get_default_order_quantity(
-                  *m_user_profile, ticker, side_value_node->GetValue());
+                  *m_user_profile, m_ticker, side_value_node->GetValue());
               }
             }
             return interactions.get_default_quantity()->get();

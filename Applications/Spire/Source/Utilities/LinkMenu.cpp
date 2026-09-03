@@ -94,7 +94,7 @@ namespace {
 void Spire::add_link_menu(ContextMenu& parent, PropertyHubMember& member,
     UserProfile& user_profile) {
   auto candidates = std::make_shared<std::vector<PropertyHubMember*>>(
-    find_link_candidates(member, user_profile));
+    find_link_candidates(member, *user_profile.GetPropertyHubMembers()));
   auto submenu = new ContextMenu(static_cast<QWidget&>(parent));
   for(auto candidate : *candidates) {
     auto current = std::make_shared<LocalValueModel<bool>>(
@@ -108,7 +108,7 @@ void Spire::add_link_menu(ContextMenu& parent, PropertyHubMember& member,
         parent.hide();
       });
     submenu->add_action(candidate->get_name(), [=] {
-      item->get_current()->set(!item->get_current()->get());
+      current->set(!current->get());
     }, item);
   }
   parent.add_menu(QObject::tr("Link To"), *submenu);
@@ -116,9 +116,9 @@ void Spire::add_link_menu(ContextMenu& parent, PropertyHubMember& member,
 }
 
 std::vector<PropertyHubMember*> Spire::find_link_candidates(
-    const PropertyHubMember& member, const UserProfile& user_profile) {
+    const PropertyHubMember& member,
+    const ListModel<PropertyHubMember*>& roster) {
   auto candidates = std::vector<PropertyHubMember*>();
-  auto& roster = *user_profile.GetPropertyHubMembers();
   for(auto i = 0; i != roster.get_size(); ++i) {
     auto candidate = roster.get(i);
     if(candidate != &member && candidate->get_component().isVisible()) {

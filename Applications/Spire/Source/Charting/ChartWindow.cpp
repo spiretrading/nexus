@@ -347,7 +347,8 @@ void ChartWindow::OnLinkMenuActionTriggered(bool triggered) {
     m_linkMenu->removeAction(action.get());
   }
   m_linkMenu->clear();
-  auto candidates = find_link_candidates(m_member, *m_userProfile);
+  auto candidates = find_link_candidates(
+    m_member, *m_userProfile->GetPropertyHubMembers());
   for(auto candidate : candidates) {
     auto action = m_linkMenu->addAction(
       QIcon(candidate->get_icon_path()), candidate->get_name());

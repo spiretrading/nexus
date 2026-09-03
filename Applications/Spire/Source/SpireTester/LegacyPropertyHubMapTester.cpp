@@ -66,6 +66,13 @@ TEST_SUITE("LegacyPropertyHubMap") {
     g->get<Ticker>(PropertyHub::TICKER_PROPERTY)->set(msft);
     map.acquire("f", "h");
     REQUIRE(e->get<Ticker>(PropertyHub::TICKER_PROPERTY)->get() == abx);
+    auto i = map.acquire("i", "j");
+    auto k = map.acquire("k", "l");
+    k->get<Ticker>(PropertyHub::TICKER_PROPERTY)->set(abx);
+    map.acquire("j", "l");
+    REQUIRE(i->get<Ticker>(PropertyHub::TICKER_PROPERTY) ==
+      k->get<Ticker>(PropertyHub::TICKER_PROPERTY));
+    REQUIRE(i->get<Ticker>(PropertyHub::TICKER_PROPERTY)->get() == abx);
   }
 
   TEST_CASE("expired") {
