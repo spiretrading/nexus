@@ -44,6 +44,7 @@ TEST_SUITE("LegacyPropertyHubMap") {
     REQUIRE(b == a);
     REQUIRE(map.acquire("c", "") == a);
     REQUIRE(map.acquire("d", "") == a);
+    REQUIRE(merges == 1);
     REQUIRE(a->get<int>("count")->get() == 7);
   }
 

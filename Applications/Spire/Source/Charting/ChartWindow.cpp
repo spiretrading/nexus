@@ -184,30 +184,6 @@ void ChartWindow::keyPressEvent(QKeyEvent* event) {
   QApplication::sendEvent(find_focus_proxy(*m_tickerDialog), event);
 }
 
-void ChartWindow::OnTickerSubmit(const Ticker& ticker) {
-  m_tickerDialog->hide();
-  if(!ticker || ticker == m_ticker) {
-    return;
-  }
-  m_tickerViewStack.Push(m_ticker);
-  DisplayTicker(ticker);
-}
-
-void ChartWindow::OnTickerUpdate(const Ticker& ticker) {
-  if(ticker == m_ticker) {
-    return;
-  }
-  m_ticker = ticker;
-  if(!m_ticker) {
-    setWindowTitle(tr("Chart - Spire"));
-    m_controller->Clear();
-  } else {
-    setWindowTitle(displayText(m_ticker) + tr(" - Chart"));
-    OnIntervalChanged(
-      m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());
-  }
-}
-
 void ChartWindow::AdjustSlider(int previousMinimum, int previousMaximum,
     int minimum, int maximum, ScalableScrollBar* scrollBar) {
   auto axisParameters = [&] {
@@ -396,4 +372,28 @@ void ChartWindow::OnLinkActionTriggered(QAction* action) {
     return;
   }
   toggle_link(m_member, *candidate, *m_userProfile);
+}
+
+void ChartWindow::OnTickerSubmit(const Ticker& ticker) {
+  m_tickerDialog->hide();
+  if(!ticker || ticker == m_ticker) {
+    return;
+  }
+  m_tickerViewStack.Push(m_ticker);
+  DisplayTicker(ticker);
+}
+
+void ChartWindow::OnTickerUpdate(const Ticker& ticker) {
+  if(ticker == m_ticker) {
+    return;
+  }
+  m_ticker = ticker;
+  if(!m_ticker) {
+    setWindowTitle(tr("Chart - Spire"));
+    m_controller->Clear();
+  } else {
+    setWindowTitle(displayText(m_ticker) + tr(" - Chart"));
+    OnIntervalChanged(
+      m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());
+  }
 }

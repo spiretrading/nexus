@@ -436,12 +436,15 @@ void BookViewWindow::on_current(const Ticker& ticker) {
     return;
   }
   m_ticker = ticker;
+  if(m_task_entry_panel) {
+    remove_task_entry_panel();
+  }
   if(!ticker) {
     setWindowTitle(TITLE_NAME);
     m_bid_order_connection.disconnect();
     m_ask_order_connection.disconnect();
-    m_transition_view->set_status(TransitionView::Status::NONE);
     m_transition_view->set_body(*new QWidget());
+    m_transition_view->set_status(TransitionView::Status::NONE);
     m_book_depth = nullptr;
     m_model = nullptr;
     m_interactions = nullptr;

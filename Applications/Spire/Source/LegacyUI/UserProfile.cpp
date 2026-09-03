@@ -152,11 +152,6 @@ const std::shared_ptr<AccountQueryModel>&
   return m_account_query_model;
 }
 
-const std::shared_ptr<TickerInfoQueryModel>&
-    UserProfile::GetTickerInfoQueryModel() const {
-  return m_ticker_info_query_model;
-}
-
 std::shared_ptr<PropertyHub> UserProfile::MakePropertyHub() {
   CollectPropertyHubs();
   auto hub = std::make_shared<PropertyHub>();
@@ -195,6 +190,11 @@ std::shared_ptr<PropertyHub> UserProfile::AcquirePropertyHub(
 const std::shared_ptr<ListModel<PropertyHubMember*>>&
     UserProfile::GetPropertyHubMembers() const {
   return m_property_hub_members;
+}
+
+const std::shared_ptr<TickerInfoQueryModel>&
+    UserProfile::GetTickerInfoQueryModel() const {
+  return m_ticker_info_query_model;
 }
 
 const BlotterSettings& UserProfile::GetBlotterSettings() const {

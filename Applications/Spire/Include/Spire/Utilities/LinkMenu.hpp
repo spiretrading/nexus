@@ -21,6 +21,7 @@ namespace Spire {
    * Returns the members that a component can join, ordered by name.
    * @param member The member doing the joining.
    * @param user_profile The user's profile.
+   * @return The members that <i>member</i> can join, ordered by name.
    */
   std::vector<PropertyHubMember*> find_link_candidates(
     const PropertyHubMember& member, const UserProfile& user_profile);

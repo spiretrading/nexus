@@ -4,8 +4,6 @@
 #include <Beam/Serialization/ShuttleUuid.hpp>
 #include <boost/uuid/uuid.hpp>
 #include <QByteArray>
-#include "Nexus/Definitions/Ticker.hpp"
-#include "Spire/LegacyUI/TickerViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"

@@ -2,7 +2,6 @@
 #define SPIRE_BOOK_VIEW_WINDOW_SETTINGS_HPP
 #include <Beam/Serialization/ShuttleUuid.hpp>
 #include <boost/uuid/uuid.hpp>
-#include "Spire/LegacyUI/TickerViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ShuttleQtTypes.hpp"
 #include "Spire/Spire/Spire.hpp"

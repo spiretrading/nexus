@@ -102,11 +102,12 @@ void Spire::add_link_menu(ContextMenu& parent, PropertyHubMember& member,
     auto item = new CheckButtonMenuItem(find_icon(candidate->get_icon_path()),
       candidate->get_name(), current);
     item->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    current->connect_update_signal([=, &member, &user_profile, &parent] (auto) {
-      toggle_link(member, *candidate, user_profile);
-      parent.hide();
-    });
-    submenu->add_action("", [=] {
+    current->connect_update_signal(
+      [=, &member, &user_profile, &parent] (const auto&) {
+        toggle_link(member, *candidate, user_profile);
+        parent.hide();
+      });
+    submenu->add_action(candidate->get_name(), [=] {
       item->get_current()->set(!item->get_current()->get());
     }, item);
   }

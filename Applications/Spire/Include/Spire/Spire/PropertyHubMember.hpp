@@ -15,6 +15,7 @@
 #include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
+
   /**
    * Represents a component that shares its properties with the other
    * components belonging to the same PropertyHub.
@@ -27,7 +28,7 @@ namespace Spire {
 
       /**
        * Constructs a PropertyHubMember.
-       * @param roster The list of components this member joins.
+       * @param roster The list of members to register with.
        * @param component The component represented by this member.
        * @param icon_path The path to the icon representing the component.
        * @param hub The PropertyHub to join.
@@ -41,7 +42,7 @@ namespace Spire {
       /** Returns the component represented by this member. */
       QWidget& get_component() const;
 
-      /** Returns the component's window title. */
+      /** Returns the name displayed for the component. */
       QString get_name() const;
 
       /** Returns the path to the icon representing the component. */
