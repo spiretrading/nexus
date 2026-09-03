@@ -31,8 +31,6 @@
 #include "Spire/Ui/AccountBox.hpp"
 #include "Spire/Ui/TickerBox.hpp"
 
-class QWidget;
-
 namespace Spire {
   class PropertyHubMember;
 

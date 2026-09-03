@@ -394,9 +394,5 @@ void ChartWindow::OnLinkActionTriggered(QAction* action) {
   if(!candidate) {
     return;
   }
-  if(candidate->get_hub()->get() == m_member.get_hub()->get()) {
-    m_member.get_hub()->set(m_userProfile->MakePropertyHub());
-  } else {
-    m_member.get_hub()->set(candidate->get_hub()->get());
-  }
+  toggle_link(m_member, *candidate, *m_userProfile);
 }

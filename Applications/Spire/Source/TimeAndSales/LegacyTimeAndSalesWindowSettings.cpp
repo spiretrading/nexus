@@ -37,7 +37,7 @@ void LegacyTimeAndSalesWindowSettings::Apply(
   auto frame_height = get_frame_height();
   window.move(window.x(), window.y() - frame_height);
   window.resize(window.width(), window.height() + frame_height);
-  if(m_ticker) {
+  if(m_ticker && !window.m_ticker_view->get_current()->get()) {
     window.m_ticker_view->get_current()->set(m_ticker);
   }
 }

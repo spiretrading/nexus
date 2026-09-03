@@ -4,9 +4,9 @@
 #include <QIcon>
 #include <QScreen>
 #include <QStandardPaths>
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ExportTable.hpp"
-#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/TimeAndSales/NoneTimeAndSalesModel.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesTableView.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindowSettings.hpp"
@@ -17,7 +17,6 @@
 #include "Spire/Utilities/LinkMenu.hpp"
 
 using namespace Beam;
-using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;

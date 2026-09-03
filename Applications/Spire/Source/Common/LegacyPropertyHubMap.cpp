@@ -1,6 +1,8 @@
 #include "Spire/Spire/LegacyPropertyHubMap.hpp"
+#include "Nexus/Definitions/Ticker.hpp"
 
 using namespace boost::signals2;
+using namespace Nexus;
 using namespace Spire;
 
 std::shared_ptr<PropertyHub> LegacyPropertyHubMap::acquire(
@@ -48,6 +50,10 @@ std::shared_ptr<PropertyHub> LegacyPropertyHubMap::find(
 void LegacyPropertyHubMap::merge(const std::shared_ptr<PropertyHub>& source,
     const std::shared_ptr<PropertyHub>& destination) {
   destination->adopt(*source);
+  auto ticker = destination->get<Ticker>(TICKER_PROPERTY);
+  if(!ticker->get()) {
+    ticker->set(source->get<Ticker>(TICKER_PROPERTY)->get());
+  }
   for(auto& entry : m_hubs) {
     if(entry.second.lock() == source) {
       entry.second = destination;

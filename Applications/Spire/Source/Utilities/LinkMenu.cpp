@@ -97,18 +97,17 @@ void Spire::add_link_menu(ContextMenu& parent, PropertyHubMember& member,
   auto submenu = new ContextMenu(static_cast<QWidget&>(parent));
   for(auto i = 0; i != static_cast<int>(candidates->size()); ++i) {
     auto& candidate = *(*candidates)[i];
-    auto is_linked = candidate.get_hub()->get() == member.get_hub()->get();
+    auto current = std::make_shared<LocalValueModel<bool>>(
+      candidate.get_hub()->get() == member.get_hub()->get());
     auto item = new CheckButtonMenuItem(find_icon(candidate.get_icon_path()),
-      candidate.get_name()->get(),
-      std::make_shared<LocalValueModel<bool>>(is_linked));
+      candidate.get_name()->get(), current);
     item->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
-    submenu->add_action("", [=, &member, &user_profile, &parent] {
-      if(is_linked) {
-        member.get_hub()->set(user_profile.MakePropertyHub());
-      } else {
-        member.get_hub()->set((*candidates)[i]->get_hub()->get());
-      }
+    current->connect_update_signal([=, &member, &user_profile, &parent] (auto) {
+      toggle_link(member, *(*candidates)[i], user_profile);
       parent.hide();
+    });
+    submenu->add_action("", [item] {
+      item->get_current()->set(!item->get_current()->get());
     }, item);
   }
   parent.add_menu(QObject::tr("Link To"), *submenu);
@@ -130,4 +129,13 @@ std::vector<PropertyHubMember*> Spire::find_link_candidates(
       return left->get_name()->get() < right->get_name()->get();
     });
   return candidates;
+}
+
+void Spire::toggle_link(PropertyHubMember& member, PropertyHubMember& candidate,
+    UserProfile& user_profile) {
+  if(candidate.get_hub()->get() == member.get_hub()->get()) {
+    member.get_hub()->set(user_profile.MakePropertyHub());
+  } else {
+    member.get_hub()->set(candidate.get_hub()->get());
+  }
 }

@@ -24,6 +24,16 @@ namespace Spire {
    */
   std::vector<PropertyHubMember*> find_link_candidates(
     const PropertyHubMember& member, const UserProfile& user_profile);
+
+  /**
+   * Joins the PropertyHub that another component belongs to, or a new
+   * PropertyHub if the component already belongs to it.
+   * @param member The member joining a PropertyHub.
+   * @param candidate The member whose PropertyHub is to be joined.
+   * @param user_profile The user's profile.
+   */
+  void toggle_link(PropertyHubMember& member, PropertyHubMember& candidate,
+    UserProfile& user_profile);
 }
 
 #endif

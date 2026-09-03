@@ -32,7 +32,8 @@ TEST_SUITE("PropertyHub") {
     auto adopter = PropertyHub();
     adopter.get<std::string>("name")->set("xyz");
     adopter.adopt(hub);
-    REQUIRE(adopter.get<int>("count")->get() == 123);
+    REQUIRE(adopter.get<int>("count") == hub.get<int>("count"));
+    REQUIRE(adopter.get<std::string>("name") != hub.get<std::string>("name"));
     REQUIRE(adopter.get<std::string>("name")->get() == "xyz");
   }
 

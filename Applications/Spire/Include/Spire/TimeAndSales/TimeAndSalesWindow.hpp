@@ -1,7 +1,6 @@
 #ifndef SPIRE_TIME_AND_SALES_WINDOW_HPP
 #define SPIRE_TIME_AND_SALES_WINDOW_HPP
 #include <Beam/Pointers/Ref.hpp>
-#include <boost/signals2/connection.hpp>
 #include "Spire/LegacyUI/PersistentWindow.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/PropertyHubMember.hpp"

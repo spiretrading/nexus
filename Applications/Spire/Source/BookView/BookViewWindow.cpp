@@ -111,7 +111,7 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
   ModelBuilder model_builder, QWidget* parent)
   : BookViewWindow(Ref(user_profile), std::move(tickers),
       std::move(key_bindings), std::move(factory), std::move(model_builder),
-      user_profile->MakePropertyHub(), parent)  {}
+      user_profile->MakePropertyHub(), parent) {}
 
 BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
     std::shared_ptr<TickerInfoQueryModel> tickers,

@@ -1,6 +1,8 @@
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/Ticker.hpp"
 #include "Spire/Spire/LegacyPropertyHubMap.hpp"
 
+using namespace Nexus;
 using namespace Spire;
 
 TEST_SUITE("LegacyPropertyHubMap") {
@@ -42,6 +44,23 @@ TEST_SUITE("LegacyPropertyHubMap") {
     REQUIRE(map.acquire("c", "") == a);
     REQUIRE(map.acquire("d", "") == a);
     REQUIRE(a->get<int>("count")->get() == 7);
+  }
+
+  TEST_CASE("merge_ticker") {
+    auto map = LegacyPropertyHubMap();
+    auto abx = Ticker("ABX", Venue("TSX"));
+    auto msft = Ticker("MSFT", Venue("XNAS"));
+    auto a = map.acquire("a", "b");
+    auto c = map.acquire("c", "d");
+    c->get<Ticker>(TICKER_PROPERTY)->set(msft);
+    map.acquire("b", "d");
+    REQUIRE(a->get<Ticker>(TICKER_PROPERTY)->get() == msft);
+    auto e = map.acquire("e", "f");
+    e->get<Ticker>(TICKER_PROPERTY)->set(abx);
+    auto g = map.acquire("g", "h");
+    g->get<Ticker>(TICKER_PROPERTY)->set(msft);
+    map.acquire("f", "h");
+    REQUIRE(e->get<Ticker>(TICKER_PROPERTY)->get() == abx);
   }
 
   TEST_CASE("expired") {

@@ -10,8 +10,8 @@
 namespace Spire {
 
   /**
-   * Associates the identifiers used to link components before PropertyHubs
-   * were introduced with the PropertyHubs that replace them.
+   * Associates the identifiers used to link components before PropertyHubs were
+   * introduced with the PropertyHubs that replace them.
    */
   class LegacyPropertyHubMap {
     public:
