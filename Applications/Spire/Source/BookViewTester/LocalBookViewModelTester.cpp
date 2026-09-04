@@ -105,13 +105,18 @@ TEST_SUITE("LocalBookViewModel") {
     model.add(make_entry(order));
     auto report = ExecutionReport();
     report.m_id = order->get_info().m_id;
-    report.m_status = OrderStatus::FILLED;
-    report.m_last_quantity = 100;
+    report.m_status = OrderStatus::PARTIALLY_FILLED;
+    report.m_last_quantity = 40;
     report.m_last_price = parse_money("10.00");
     model.update(report);
+    REQUIRE(model.get_bid_orders()->get_size() == 1);
     auto& user_order = model.get_bid_orders()->get(0);
-    REQUIRE(user_order.m_status == OrderStatus::FILLED);
-    REQUIRE(user_order.m_size == 0);
+    REQUIRE(user_order.m_status == OrderStatus::PARTIALLY_FILLED);
+    REQUIRE(user_order.m_size == 60);
+    report.m_status = OrderStatus::FILLED;
+    report.m_last_quantity = 60;
+    model.update(report);
+    REQUIRE(model.get_bid_orders()->get_size() == 0);
   }
 
   TEST_CASE("pegged_order") {
@@ -195,8 +200,9 @@ TEST_SUITE("LocalBookViewModel") {
     report.m_status = OrderStatus::FILLED;
     report.m_last_quantity = 100;
     model.update(report);
+    REQUIRE(model.get_bid_orders()->get_size() == 0);
     model.update(make_bbo(parse_money("10.50"), parse_money("10.60")));
-    REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("10.00"));
+    REQUIRE(model.get_bid_orders()->get_size() == 0);
   }
 
   TEST_CASE("clear_orders") {
