@@ -67,7 +67,7 @@ namespace Nexus {
     try : m_channel(std::forward<CF>(channel)),
           m_sequence_number(-1) {
     } catch(const std::exception&) {
-      std::throw_with_nested(
+      Beam::throw_nested_with_location(
         Beam::ConnectException("MoldUDP64 client failed to connect."));
     }
 

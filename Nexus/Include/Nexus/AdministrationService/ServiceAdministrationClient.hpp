@@ -10,6 +10,7 @@
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Utilities/BeamWorkaround.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/Streamable.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/AdministrationService/AdministrationClient.hpp"
@@ -171,7 +172,7 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
         &ServiceAdministrationClient::on_notification_message, this));
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
   } catch(const std::exception&) {
-    std::throw_with_nested(Beam::ConnectException(
+    Beam::throw_nested_with_location(Beam::ConnectException(
       "Failed to connect to the administration server."));
   }
 
