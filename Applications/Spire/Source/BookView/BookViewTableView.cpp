@@ -94,21 +94,8 @@ namespace {
     std::shared_ptr<ColumnViewListModel<Money>> m_prices;
     std::shared_ptr<ColumnViewListModel<Quantity>> m_sizes;
 
-    void initialize(const std::shared_ptr<TableModel>& table) {
-      if(m_entries) {
-        return;
-      }
-      m_entries = std::make_shared<ColumnViewListModel<BookEntry>>(
-        table, static_cast<int>(BookViewColumn::MPID));
-      m_prices = std::make_shared<ColumnViewListModel<Money>>(
-        table, static_cast<int>(BookViewColumn::PRICE));
-      m_sizes = std::make_shared<ColumnViewListModel<Quantity>>(
-        table, static_cast<int>(BookViewColumn::SIZE));
-    }
-
     QWidget* mount(
         const std::shared_ptr<TableModel>& table, int row, int column) {
-      initialize(table);
       auto column_id = static_cast<BookViewColumn>(column);
       if(column_id == BookViewColumn::MPID) {
         auto entry =
@@ -160,7 +147,6 @@ namespace {
 
     void reset(QWidget& widget, const std::shared_ptr<TableModel>& table,
         int row, int column) {
-      initialize(table);
       auto column_id = static_cast<BookViewColumn>(column);
       if(column_id == BookViewColumn::MPID) {
         auto& mpid_box = static_cast<MpidBox&>(widget);
@@ -460,6 +446,12 @@ TableView* Spire::make_book_view_table_view(
     std::make_shared<ColumnViewListModel<Money>>(
       table, static_cast<int>(BookViewColumn::PRICE)),
       make_max_level_model(properties));
+  auto book_entries = std::make_shared<ColumnViewListModel<BookEntry>>(
+    table, static_cast<int>(BookViewColumn::MPID));
+  auto prices = std::make_shared<ColumnViewListModel<Money>>(
+    table, static_cast<int>(BookViewColumn::PRICE));
+  auto sizes = std::make_shared<ColumnViewListModel<Quantity>>(
+    table, static_cast<int>(BookViewColumn::SIZE));
   auto top_mpid_prices =
     std::make_shared<TopMpidPriceListModel>(std::move(quotes));
   auto proxy_current = make_proxy_value_model(
@@ -468,7 +460,8 @@ TableView* Spire::make_book_view_table_view(
     set_header(make_header_model()).
     set_current(proxy_current).
     set_item_builder(RecycledTableViewItemBuilder(
-      ItemBuilder(std::move(price_levels), std::move(top_mpid_prices)))).make();
+      ItemBuilder(std::move(price_levels), std::move(top_mpid_prices),
+        std::move(book_entries), std::move(prices), std::move(sizes)))).make();
   proxy_current->set_source(std::make_shared<BookViewCurrentTableModel>(table));
   table_view->get_header().setVisible(false);
   table_view->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);

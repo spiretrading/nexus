@@ -145,6 +145,7 @@ void ServiceBookViewModel::on_end_book_quote_buffer() {
 
 void ServiceBookViewModel::on_book_quote_interruption(
     const std::exception_ptr&) {
+  m_buffered_book_quotes.clear();
   m_model.clear_book_quotes();
   query_book_quotes();
 }

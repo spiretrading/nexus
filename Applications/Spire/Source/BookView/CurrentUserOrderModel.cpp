@@ -21,22 +21,25 @@ namespace {
   void navigate_between_sides(
       TableCurrentController::CurrentModel& target_model,
       int current_row, int row_size, optional<int> undo_navigation) {
+    auto select = [&] (int row) {
+      if(row < 0 || row >= row_size) {
+        return false;
+      }
+      auto index = TableIndex(row, 0);
+      if(target_model.test(index) == QValidator::State::Invalid) {
+        return false;
+      }
+      target_model.set(index);
+      return true;
+    };
     if(undo_navigation) {
-      target_model.set(TableIndex(*undo_navigation, 0));
+      select(*undo_navigation);
       return;
     }
     for(auto offset = 0; offset < row_size; ++offset) {
-      if(current_row + offset < row_size) {
-        auto result = target_model.set(TableIndex(current_row + offset, 0));
-        if(result != QValidator::State::Invalid) {
-          return;
-        }
-      }
-      if(offset > 0 && current_row - offset >= 0) {
-        auto result = target_model.set(TableIndex(current_row - offset, 0));
-        if(result != QValidator::State::Invalid) {
-          return;
-        }
+      if(select(current_row + offset) ||
+          (offset > 0 && select(current_row - offset))) {
+        return;
       }
     }
   }
