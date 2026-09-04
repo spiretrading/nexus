@@ -75,6 +75,7 @@ namespace Spire {
         std::string m_exec_inst;
         Nexus::Money m_peg_difference;
         Nexus::Money m_effective_price;
+        bool m_is_initialized;
       };
       AggregateBookViewModel m_model;
       std::string m_market_center;

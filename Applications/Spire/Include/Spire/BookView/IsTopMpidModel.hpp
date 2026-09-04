@@ -34,6 +34,7 @@ namespace Spire {
       LocalValueModel<bool> m_current;
       boost::signals2::scoped_connection m_mpid_connection;
       boost::signals2::scoped_connection m_price_connection;
+      boost::signals2::scoped_connection m_top_mpid_connection;
       boost::signals2::scoped_connection m_top_mpid_prices_connection;
 
       void initialize_top_mpid();

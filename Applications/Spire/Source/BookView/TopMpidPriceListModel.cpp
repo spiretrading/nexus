@@ -1,4 +1,5 @@
 #include "Spire/BookView/TopMpidPriceListModel.hpp"
+#include <boost/optional/optional.hpp>
 
 using namespace boost;
 using namespace boost::signals2;
@@ -76,17 +77,25 @@ void TopMpidPriceListModel::on_operation(
         return;
       }
       auto mpid_index = find_index(m_top_prices, m_removed_quote.m_venue);
-      auto& top_mpid = m_top_prices.get(mpid_index);
-      if(top_mpid.m_price == m_removed_quote.m_quote.m_price) {
-        for(auto i = operation.m_index; i != m_quotes->get_size(); ++i) {
-          auto& quote = m_quotes->get(i);
-          if(quote.m_is_primary_mpid && quote.m_venue == top_mpid.m_venue) {
-            auto update = top_mpid;
-            update.m_price = quote.m_quote.m_price;
-            m_top_prices.set(mpid_index, update);
-            break;
+      auto venue = m_top_prices.get(mpid_index).m_venue;
+      if(m_top_prices.get(mpid_index).m_price !=
+          m_removed_quote.m_quote.m_price) {
+        return;
+      }
+      auto top = optional<Money>();
+      for(auto i = 0; i != m_quotes->get_size(); ++i) {
+        auto& quote = m_quotes->get(i);
+        if(quote.m_is_primary_mpid && quote.m_venue == venue) {
+          auto direction = get_direction(quote.m_quote.m_side);
+          if(!top || direction * quote.m_quote.m_price > direction * *top) {
+            top = quote.m_quote.m_price;
           }
         }
+      }
+      if(top) {
+        m_top_prices.set(mpid_index, TopMpidPrice(venue, *top));
+      } else {
+        m_top_prices.remove(mpid_index);
       }
     });
 }

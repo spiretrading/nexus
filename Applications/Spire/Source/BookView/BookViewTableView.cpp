@@ -396,7 +396,8 @@ namespace {
         std::shared_ptr<BookViewPropertiesModel> properties)
         : FilteredListModel(std::move(orders),
             [] (const auto&, auto) { return false; }),
-          m_properties(std::move(properties)) {
+          m_properties(std::move(properties)),
+          m_previous_is_displayed(true) {
       on_properties(m_properties->get());
       m_connection = m_properties->connect_update_signal(
         std::bind_front(&UserOrderDisplayListModel::on_properties, this));

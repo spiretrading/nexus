@@ -233,7 +233,7 @@ void LocalBookViewModel::submit_pegged(const Order& order) {
   auto [same_price, opposite_price] = pick(fields.m_side,
     std::pair(bbo.m_ask.m_price, bbo.m_bid.m_price),
     std::pair(bbo.m_bid.m_price, bbo.m_ask.m_price));
-  entry.m_effective_price = [&] {
+  auto price = [&] {
     if(entry.m_exec_inst == MARKET_PEG) {
       return opposite_price;
     } else if(entry.m_exec_inst == MID_PRICE_PEG) {
@@ -241,7 +241,8 @@ void LocalBookViewModel::submit_pegged(const Order& order) {
     }
     return same_price;
   }();
-  entry.m_effective_price -= direction * entry.m_peg_difference;
+  entry.m_is_initialized = price != Money::ZERO;
+  entry.m_effective_price = price - direction * entry.m_peg_difference;
   auto limit_price = fields.m_price;
   if(limit_price != Money::ZERO &&
       direction * entry.m_effective_price > direction * limit_price) {
@@ -264,7 +265,7 @@ void LocalBookViewModel::update_pegged_orders() {
       auto [same_price, opposite_price] = pick(side,
         std::pair(bbo.m_ask.m_price, bbo.m_bid.m_price),
         std::pair(bbo.m_bid.m_price, bbo.m_ask.m_price));
-      auto candidate = [&] {
+      auto price = [&] {
         if(entry.m_exec_inst == MARKET_PEG) {
           return opposite_price;
         } else if(entry.m_exec_inst == MID_PRICE_PEG) {
@@ -272,9 +273,14 @@ void LocalBookViewModel::update_pegged_orders() {
         }
         return same_price;
       }();
-      candidate -= direction * entry.m_peg_difference;
-      if(direction * candidate > direction * entry.m_effective_price) {
+      if(price == Money::ZERO) {
+        continue;
+      }
+      auto candidate = price - direction * entry.m_peg_difference;
+      if(!entry.m_is_initialized ||
+          direction * candidate > direction * entry.m_effective_price) {
         entry.m_effective_price = candidate;
+        entry.m_is_initialized = true;
       }
       auto limit_price = order->get_info().m_fields.m_price;
       if(limit_price != Money::ZERO &&

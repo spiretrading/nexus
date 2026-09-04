@@ -14,10 +14,8 @@ IsTopMpidModel::IsTopMpidModel(
       m_mpid(std::move(mpid)),
       m_price(std::move(price)) {
   on_mpid(m_mpid->get());
-  if(!m_top_mpid) {
-    m_top_mpid_prices_connection = m_top_mpid_prices->connect_operation_signal(
-      std::bind_front(&IsTopMpidModel::on_operation, this));
-  }
+  m_top_mpid_prices_connection = m_top_mpid_prices->connect_operation_signal(
+    std::bind_front(&IsTopMpidModel::on_operation, this));
   m_mpid_connection = m_mpid->connect_update_signal(
     std::bind_front(&IsTopMpidModel::on_mpid, this));
   m_price_connection = m_price->connect_update_signal(
@@ -34,25 +32,31 @@ connection IsTopMpidModel::connect_update_signal(
 }
 
 void IsTopMpidModel::initialize_top_mpid() {
+  m_top_mpid = nullptr;
   for(auto i = 0; i != m_top_mpid_prices->get_size(); ++i) {
     if(m_top_mpid_prices->get(i).m_venue == m_venue) {
       m_top_mpid = make_list_value_model(m_top_mpid_prices, i);
       on_top_mpid(m_top_mpid->get());
-      m_top_mpid->connect_update_signal(
+      m_top_mpid_connection = m_top_mpid->connect_update_signal(
         std::bind_front(&IsTopMpidModel::on_top_mpid, this));
-      break;
+      return;
     }
+  }
+  if(m_current.get()) {
+    m_current.set(false);
   }
 }
 
 void IsTopMpidModel::on_mpid(const BookEntry& mpid) {
-  m_top_mpid = nullptr;
   if(auto quote = boost::get<BookQuote>(&mpid)) {
     m_venue = quote->m_venue;
     initialize_top_mpid();
-  } else if(m_current.get()) {
+  } else {
+    m_top_mpid = nullptr;
     m_venue = Venue();
-    m_current.set(false);
+    if(m_current.get()) {
+      m_current.set(false);
+    }
   }
 }
 
@@ -83,9 +87,12 @@ void IsTopMpidModel::on_operation(
     const ListModel<TopMpidPrice>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<TopMpidPrice>::AddOperation& operation) {
-      if(m_top_mpid_prices->get(operation.m_index).m_venue == m_venue) {
+      if(!m_top_mpid &&
+          m_top_mpid_prices->get(operation.m_index).m_venue == m_venue) {
         initialize_top_mpid();
-        m_top_mpid_prices_connection.disconnect();
       }
+    },
+    [&] (const ListModel<TopMpidPrice>::RemoveOperation& operation) {
+      initialize_top_mpid();
     });
 }
