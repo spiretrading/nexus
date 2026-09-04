@@ -40,7 +40,11 @@ namespace {
 }
 
 bool Spire::book_view_comparator(const AnyRef& left, const AnyRef& right) {
-  if(left.get_type() == typeid(BookEntry)) {
+  if(left.get_type() == typeid(Money)) {
+    return any_cast<Money>(left) < any_cast<Money>(right);
+  } else if(left.get_type() == typeid(Quantity)) {
+    return any_cast<Quantity>(left) < any_cast<Quantity>(right);
+  } else if(left.get_type() == typeid(BookEntry)) {
     return get_id(any_cast<BookEntry>(left)) <
       get_id(any_cast<BookEntry>(right));
   }

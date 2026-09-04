@@ -1,6 +1,6 @@
 #ifndef SPIRE_MERGED_BOOK_ENTRY_LIST_MODEL_HPP
 #define SPIRE_MERGED_BOOK_ENTRY_LIST_MODEL_HPP
-#include <vector>
+#include <deque>
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
 
@@ -38,14 +38,14 @@ namespace Spire {
       std::shared_ptr<BookViewModel::UserOrderListModel> m_user_orders;
       std::shared_ptr<BookViewModel::PreviewOrderModel> m_preview;
       BookViewModel::PreviewOrderModel::Type m_previous_preview;
-      std::vector<BookEntry> m_entries;
+      std::deque<BookEntry> m_entries;
       ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_book_quotes_connection;
       boost::signals2::scoped_connection m_user_orders_connection;
       boost::signals2::scoped_connection m_preview_connection;
 
       static void move_entry(
-        std::vector<BookEntry>& entries, int source, int destination);
+        std::deque<BookEntry>& entries, int source, int destination);
       template<typename T>
       void apply(const typename ListModel<T>::Operation& operation,
         const ListModel<T>& source, int offset);

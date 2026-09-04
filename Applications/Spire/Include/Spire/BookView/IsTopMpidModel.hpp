@@ -31,6 +31,7 @@ namespace Spire {
       Nexus::Venue m_venue;
       std::shared_ptr<ValueModel<Nexus::Money>> m_price;
       std::shared_ptr<ValueModel<TopMpidPrice>> m_top_mpid;
+      bool m_is_top_mpid_removed;
       LocalValueModel<bool> m_current;
       boost::signals2::scoped_connection m_mpid_connection;
       boost::signals2::scoped_connection m_price_connection;

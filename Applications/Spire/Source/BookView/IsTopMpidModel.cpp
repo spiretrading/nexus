@@ -12,7 +12,8 @@ IsTopMpidModel::IsTopMpidModel(
     std::shared_ptr<ValueModel<Money>> price)
     : m_top_mpid_prices(std::move(top_mpid_prices)),
       m_mpid(std::move(mpid)),
-      m_price(std::move(price)) {
+      m_price(std::move(price)),
+      m_is_top_mpid_removed(false) {
   on_mpid(m_mpid->get());
   m_top_mpid_prices_connection = m_top_mpid_prices->connect_operation_signal(
     std::bind_front(&IsTopMpidModel::on_operation, this));
@@ -87,7 +88,13 @@ void IsTopMpidModel::on_operation(
         initialize_top_mpid();
       }
     },
+    [&] (const ListModel<TopMpidPrice>::PreRemoveOperation& operation) {
+      m_is_top_mpid_removed =
+        m_top_mpid_prices->get(operation.m_index).m_venue == m_venue;
+    },
     [&] (const ListModel<TopMpidPrice>::RemoveOperation& operation) {
-      initialize_top_mpid();
+      if(m_is_top_mpid_removed) {
+        initialize_top_mpid();
+      }
     });
 }

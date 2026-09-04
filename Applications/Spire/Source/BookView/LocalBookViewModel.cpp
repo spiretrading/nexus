@@ -269,6 +269,9 @@ void LocalBookViewModel::submit_pegged(const Order& order) {
 }
 
 void LocalBookViewModel::update_pegged_orders() {
+  if(m_pegged_entries.empty()) {
+    return;
+  }
   auto& bbo = m_model.get_bbo_quote()->get();
   auto update_side = [&] (auto& orders, auto& user_orders, Side side) {
     auto direction = get_direction(side);

@@ -54,7 +54,7 @@ void MergedBookEntryListModel::transact(
 }
 
 void MergedBookEntryListModel::move_entry(
-    std::vector<BookEntry>& entries, int source, int destination) {
+    std::deque<BookEntry>& entries, int source, int destination) {
   auto i = std::next(entries.begin(), source);
   auto j = std::next(entries.begin(), destination);
   if(source < destination) {
