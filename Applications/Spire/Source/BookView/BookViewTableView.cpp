@@ -91,19 +91,34 @@ namespace {
   struct ItemBuilder {
     std::shared_ptr<PriceLevelModel> m_price_levels;
     std::shared_ptr<TopMpidPriceListModel> m_top_mpid_prices;
+    std::shared_ptr<ColumnViewListModel<BookEntry>> m_entries;
+    std::shared_ptr<ColumnViewListModel<Money>> m_prices;
+    std::shared_ptr<ColumnViewListModel<Quantity>> m_sizes;
+
+    void initialize(const std::shared_ptr<TableModel>& table) {
+      if(m_entries) {
+        return;
+      }
+      m_entries = std::make_shared<ColumnViewListModel<BookEntry>>(
+        table, static_cast<int>(BookViewColumn::MPID));
+      m_prices = std::make_shared<ColumnViewListModel<Money>>(
+        table, static_cast<int>(BookViewColumn::PRICE));
+      m_sizes = std::make_shared<ColumnViewListModel<Quantity>>(
+        table, static_cast<int>(BookViewColumn::SIZE));
+    }
 
     QWidget* mount(
         const std::shared_ptr<TableModel>& table, int row, int column) {
+      initialize(table);
       auto column_id = static_cast<BookViewColumn>(column);
       if(column_id == BookViewColumn::MPID) {
-        auto entry = make_proxy_value_model(
-          make_table_value_model<BookEntry>(table, row, column));
+        auto entry =
+          make_proxy_value_model(make_list_value_model(m_entries, row));
         auto level =
           make_proxy_value_model(make_list_value_model(m_price_levels, row));
         auto is_top_mpid =
           std::make_shared<BookViewProxyValueModel<Money, bool>>(
-            make_table_value_model<Money>(
-              table, row, static_cast<int>(BookViewColumn::PRICE)));
+            make_list_value_model(m_prices, row));
         is_top_mpid->set_target(std::make_shared<IsTopMpidModel>(
           m_top_mpid_prices, entry, is_top_mpid->get_proxy()));
         auto mpid_box = new MpidBox(
@@ -112,7 +127,7 @@ namespace {
       } else if(column_id == BookViewColumn::PRICE) {
         auto current =
           std::make_shared<BookViewProxyValueModel<Money, QString>>(
-            make_table_value_model<Money>(table, row, column));
+            make_list_value_model(m_prices, row));
         current->set_target(make_to_text_model(current->get_proxy()));
         auto price_box = make_label(std::move(current));
         update_style(*price_box, [] (auto& style) {
@@ -124,7 +139,7 @@ namespace {
       } else {
         auto current =
           std::make_shared<BookViewProxyValueModel<Quantity, QString>>(
-            make_table_value_model<Quantity>(table, row, column));
+            make_list_value_model(m_sizes, row));
         current->set_target(
           make_to_text_model(make_transform_value_model(current->get_proxy(),
             [] (auto quantity) {
@@ -146,32 +161,31 @@ namespace {
 
     void reset(QWidget& widget, const std::shared_ptr<TableModel>& table,
         int row, int column) {
+      initialize(table);
       auto column_id = static_cast<BookViewColumn>(column);
       if(column_id == BookViewColumn::MPID) {
         auto& mpid_box = static_cast<MpidBox&>(widget);
         mpid_box.reset();
         auto& entry = static_cast<ProxyValueModel<BookEntry>&>(
           *mpid_box.get_current().get());
-        entry.set_source(make_table_value_model<BookEntry>(table, row, column));
+        entry.set_source(make_list_value_model(m_entries, row));
         auto& level =
           static_cast<ProxyValueModel<int>&>(*mpid_box.get_level().get());
         level.set_source(make_list_value_model(m_price_levels, row));
         auto& is_top_mpid = static_cast<BookViewProxyValueModel<Money, bool>&>(
           *mpid_box.is_top_mpid().get());
-        is_top_mpid.set_source(make_table_value_model<Money>(
-          table, row, static_cast<int>(BookViewColumn::PRICE)));
+        is_top_mpid.set_source(make_list_value_model(m_prices, row));
       } else if(column_id == BookViewColumn::PRICE) {
         auto& price_box = static_cast<TextBox&>(widget);
         auto& current = static_cast<BookViewProxyValueModel<Money, QString>&>(
           *price_box.get_current().get());
-        current.set_source(make_table_value_model<Money>(table, row, column));
+        current.set_source(make_list_value_model(m_prices, row));
       } else {
         auto& quantity_box = static_cast<TextBox&>(widget);
         auto& current =
           static_cast<BookViewProxyValueModel<Quantity, QString>&>(
             *quantity_box.get_current().get());
-        current.set_source(
-          make_table_value_model<Quantity>(table, row, column));
+        current.set_source(make_list_value_model(m_sizes, row));
       }
     }
 

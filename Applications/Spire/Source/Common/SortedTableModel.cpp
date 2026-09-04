@@ -96,6 +96,12 @@ connection SortedTableModel::connect_operation_signal(
   return m_transaction.connect_operation_signal(slot);
 }
 
+bool SortedTableModel::is_sorted(int column) const {
+  return std::ranges::any_of(m_order, [&] (const auto& order) {
+    return order.m_index == column && order.m_order != Ordering::NONE;
+  });
+}
+
 bool SortedTableModel::row_comparator(int lhs, int rhs) const {
   for(auto& order : m_order) {
     if(order.m_order == Ordering::NONE) {
@@ -157,6 +163,10 @@ void SortedTableModel::on_operation(const Operation& operation) {
       m_transaction.push(AddOperation(index));
     },
     [&] (const UpdateOperation& operation) {
+      if(!is_sorted(operation.m_column)) {
+        m_transaction.push(operation);
+        return;
+      }
       auto index = find_sorted_index(operation.m_row, get_row_size());
       auto update = UpdateOperation(
         index, operation.m_column, operation.m_previous, operation.m_value);

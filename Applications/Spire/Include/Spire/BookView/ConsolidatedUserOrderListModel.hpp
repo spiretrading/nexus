@@ -44,6 +44,9 @@ namespace Spire {
       iterator find(const BookViewModel::UserOrder& order);
       void contribute(int index);
       void withdraw(int index, const BookViewModel::UserOrder& order);
+      void revise(int index, const BookViewModel::UserOrder& order);
+      void start_transition(
+        BookViewModel::UserOrder& level, Nexus::OrderStatus status);
       void expire(
         const BookViewModel::UserOrder& level, std::uint64_t transition);
       void on_operation(const Operation& operation);

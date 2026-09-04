@@ -167,6 +167,7 @@ namespace Spire {
       TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_source_connection;
 
+      bool is_sorted(int column) const;
       bool row_comparator(int lhs, int rhs) const;
       void sort();
       int find_sorted_index(int row, int size) const;

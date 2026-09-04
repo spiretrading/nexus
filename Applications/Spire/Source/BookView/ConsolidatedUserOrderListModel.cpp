@@ -114,13 +114,35 @@ void ConsolidatedUserOrderListModel::withdraw(
   if(update.m_size < 0) {
     update.m_size = 0;
   }
-  ++m_transition_count;
-  update.m_highlight = order.m_status;
-  update.m_transition = m_transition_count;
+  start_transition(update, order.m_status);
   *i = update;
+}
+
+void ConsolidatedUserOrderListModel::revise(
+    int index, const BookViewModel::UserOrder& order) {
+  auto contribution = *m_contributions[index];
+  auto i = find(contribution);
+  if(i == m_model.end()) {
+    return;
+  }
+  auto update = static_cast<BookViewModel::UserOrder>(*i);
+  update.m_size += order.m_size - contribution.m_size;
+  update.m_status = order.m_status;
+  if(is_transitioning(order)) {
+    start_transition(update, order.m_status);
+  }
+  m_contributions[index] = order;
+  *i = update;
+}
+
+void ConsolidatedUserOrderListModel::start_transition(
+    BookViewModel::UserOrder& level, OrderStatus status) {
+  ++m_transition_count;
+  level.m_highlight = status;
+  level.m_transition = m_transition_count;
   QTimer::singleShot(TRANSITION_DURATION, this,
-    [=, this, transition = m_transition_count, level = *contribution] {
-      expire(level, transition);
+    [=, this, transition = m_transition_count, key = level] {
+      expire(key, transition);
     });
 }
 
@@ -164,7 +186,15 @@ void ConsolidatedUserOrderListModel::on_operation(const Operation& operation) {
         std::next(m_contributions.begin(), operation.m_index));
     },
     [&] (const UpdateOperation& operation) {
-      withdraw(operation.m_index, operation.get_value());
-      contribute(operation.m_index);
+      auto& order = operation.get_value();
+      auto& contribution = m_contributions[operation.m_index];
+      if(contribution && is_displayed(order) &&
+          contribution->m_price == order.m_price &&
+          contribution->m_destination == order.m_destination) {
+        revise(operation.m_index, order);
+      } else {
+        withdraw(operation.m_index, order);
+        contribute(operation.m_index);
+      }
     });
 }
