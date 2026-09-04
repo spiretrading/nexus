@@ -1,4 +1,5 @@
 #include "Spire/BookView/ConsolidatedUserOrderListModel.hpp"
+#include <algorithm>
 #include <QTimer>
 
 using namespace boost;
@@ -29,7 +30,8 @@ ConsolidatedUserOrderListModel::ConsolidatedUserOrderListModel(
     std::shared_ptr<BookViewModel::UserOrderListModel> user_orders)
     : m_user_orders(std::move(user_orders)),
       m_contributions(m_user_orders->get_size()),
-      m_transition_count(0) {
+      m_transition_count(0),
+      m_is_scheduled(false) {
   for(auto i = 0; i != m_user_orders->get_size(); ++i) {
     contribute(i);
   }
@@ -140,10 +142,37 @@ void ConsolidatedUserOrderListModel::start_transition(
   ++m_transition_count;
   level.m_highlight = status;
   level.m_transition = m_transition_count;
-  QTimer::singleShot(TRANSITION_DURATION, this,
-    [=, this, transition = m_transition_count, key = level] {
-      expire(key, transition);
-    });
+  std::erase_if(m_transitions, [&] (const auto& transition) {
+    return transition.m_level.m_price == level.m_price &&
+      transition.m_level.m_destination == level.m_destination;
+  });
+  m_transitions.push_back(
+    Transition(level, m_transition_count, std::chrono::steady_clock::now() +
+      std::chrono::milliseconds(TRANSITION_DURATION)));
+  schedule();
+}
+
+void ConsolidatedUserOrderListModel::schedule() {
+  if(m_is_scheduled || m_transitions.empty()) {
+    return;
+  }
+  m_is_scheduled = true;
+  auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(
+    m_transitions.front().m_expiry - std::chrono::steady_clock::now()).count();
+  QTimer::singleShot(std::max<int>(0, static_cast<int>(delay)), this, [this] {
+    on_expiry();
+  });
+}
+
+void ConsolidatedUserOrderListModel::on_expiry() {
+  m_is_scheduled = false;
+  auto now = std::chrono::steady_clock::now();
+  while(!m_transitions.empty() && m_transitions.front().m_expiry <= now) {
+    auto transition = m_transitions.front();
+    m_transitions.erase(m_transitions.begin());
+    expire(transition.m_level, transition.m_transition);
+  }
+  schedule();
 }
 
 void ConsolidatedUserOrderListModel::expire(

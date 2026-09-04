@@ -54,6 +54,61 @@ TEST_SUITE("LocalBookViewModel") {
     REQUIRE(model.get_asks()->get(0).m_quote.m_price == parse_money("10.01"));
   }
 
+  TEST_CASE("book_quote_ordering_at_depth") {
+    auto model = LocalBookViewModel(parse_ticker("ABX.TSX"));
+    auto price = [] (int level) {
+      return parse_money("10.00") - level * 2 * Money::CENT;
+    };
+    for(auto i = 0; i != 20; ++i) {
+      model.update(
+        make_book_quote("M" + std::to_string(i), price(i), 100, Side::BID));
+    }
+    auto bids = model.get_bids();
+    REQUIRE(bids->get_size() == 20);
+    for(auto i = 0; i != 20; ++i) {
+      REQUIRE(bids->get(i).m_quote.m_price == price(i));
+    }
+    model.update(make_book_quote("A", parse_money("9.99"), 100, Side::BID));
+    REQUIRE(bids->get_size() == 21);
+    REQUIRE(bids->get(1).m_mpid == "A");
+    model.update(make_book_quote("B", parse_money("9.63"), 100, Side::BID));
+    REQUIRE(bids->get_size() == 22);
+    REQUIRE(bids->get(20).m_mpid == "B");
+    model.update(make_book_quote("C", parse_money("10.50"), 100, Side::BID));
+    REQUIRE(bids->get_size() == 23);
+    REQUIRE(bids->get(0).m_mpid == "C");
+    model.update(make_book_quote("D", parse_money("9.00"), 100, Side::BID));
+    REQUIRE(bids->get_size() == 24);
+    REQUIRE(bids->get(23).m_mpid == "D");
+    model.update(make_book_quote("M10", price(10), 0, Side::BID));
+    REQUIRE(bids->get_size() == 23);
+    for(auto i = 1; i != bids->get_size(); ++i) {
+      REQUIRE(bids->get(i - 1).m_quote.m_price >= bids->get(i).m_quote.m_price);
+    }
+  }
+
+  TEST_CASE("ask_quote_ordering_at_depth") {
+    auto model = LocalBookViewModel(parse_ticker("ABX.TSX"));
+    auto price = [] (int level) {
+      return parse_money("10.00") + level * 2 * Money::CENT;
+    };
+    for(auto i = 0; i != 20; ++i) {
+      model.update(
+        make_book_quote("M" + std::to_string(i), price(i), 100, Side::ASK));
+    }
+    auto asks = model.get_asks();
+    REQUIRE(asks->get_size() == 20);
+    model.update(make_book_quote("A", parse_money("10.01"), 100, Side::ASK));
+    REQUIRE(asks->get(1).m_mpid == "A");
+    model.update(make_book_quote("B", parse_money("9.50"), 100, Side::ASK));
+    REQUIRE(asks->get(0).m_mpid == "B");
+    model.update(make_book_quote("C", parse_money("11.00"), 100, Side::ASK));
+    REQUIRE(asks->get(asks->get_size() - 1).m_mpid == "C");
+    for(auto i = 1; i != asks->get_size(); ++i) {
+      REQUIRE(asks->get(i - 1).m_quote.m_price <= asks->get(i).m_quote.m_price);
+    }
+  }
+
   TEST_CASE("remove_book_quote") {
     auto model = LocalBookViewModel(parse_ticker("ABX.TSX"));
     model.update(make_book_quote("TSX", parse_money("10.00"), 100, Side::BID));

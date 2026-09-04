@@ -1,5 +1,6 @@
 #ifndef SPIRE_CONSOLIDATED_USER_ORDER_LIST_MODEL_HPP
 #define SPIRE_CONSOLIDATED_USER_ORDER_LIST_MODEL_HPP
+#include <chrono>
 #include <cstdint>
 #include <memory>
 #include <vector>
@@ -34,11 +35,18 @@ namespace Spire {
       void transact(const std::function<void ()>& transaction) override;
 
     private:
+      struct Transition {
+        BookViewModel::UserOrder m_level;
+        std::uint64_t m_transition;
+        std::chrono::steady_clock::time_point m_expiry;
+      };
       std::shared_ptr<BookViewModel::UserOrderListModel> m_user_orders;
       std::vector<boost::optional<BookViewModel::UserOrder>> m_contributions;
       ArrayListModel<BookViewModel::UserOrder> m_model;
       BookViewModel::UserOrder m_removed_order;
       std::uint64_t m_transition_count;
+      std::vector<Transition> m_transitions;
+      bool m_is_scheduled;
       boost::signals2::scoped_connection m_connection;
 
       iterator find(const BookViewModel::UserOrder& order);
@@ -49,6 +57,8 @@ namespace Spire {
         BookViewModel::UserOrder& level, Nexus::OrderStatus status);
       void expire(
         const BookViewModel::UserOrder& level, std::uint64_t transition);
+      void schedule();
+      void on_expiry();
       void on_operation(const Operation& operation);
   };
 }

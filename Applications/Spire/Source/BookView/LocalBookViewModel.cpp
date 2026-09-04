@@ -1,6 +1,8 @@
 #include "Spire/BookView/LocalBookViewModel.hpp"
+#include <algorithm>
 #include <ranges>
 #include <sstream>
+#include <boost/iterator/counting_iterator.hpp>
 #include "Nexus/Definitions/FixTags.hpp"
 #include "Nexus/Definitions/StandardVenues.hpp"
 #include "Nexus/TechnicalAnalysis/SessionTechnicals.hpp"
@@ -10,6 +12,26 @@
 using namespace boost;
 using namespace Nexus;
 using namespace Spire;
+
+namespace {
+  int find_partition_point(const BookQuoteListModel& quotes, auto is_before) {
+    auto size = quotes.get_size();
+    if(size == 0 || !is_before(quotes.get(0))) {
+      return 0;
+    }
+    auto lower = 0;
+    auto upper = 1;
+    while(upper < size && is_before(quotes.get(upper))) {
+      lower = upper;
+      upper *= 2;
+    }
+    upper = std::min(upper, size);
+    return *std::partition_point(make_counting_iterator(lower + 1),
+      make_counting_iterator(upper), [&] (auto index) {
+        return is_before(quotes.get(index));
+      });
+  }
+}
 
 LocalBookViewModel::LocalBookViewModel(Ticker ticker)
   : m_model(std::make_shared<ReversedListModel<BookQuote>>(
@@ -38,14 +60,11 @@ void LocalBookViewModel::update(const BookQuote& quote) {
   auto direction = get_direction(quote.m_quote.m_side);
   auto quotes =
     pick(quote.m_quote.m_side, m_model.get_asks(), m_model.get_bids());
-  auto lower_bound = [&] {
-    for(auto i = quotes->begin(); i != quotes->end(); ++i) {
-      if(direction * i->m_quote.m_price <= direction * quote.m_quote.m_price) {
-        return i;
-      }
-    }
-    return quotes->end();
-  }();
+  auto lower_bound = std::next(
+    quotes->begin(), find_partition_point(*quotes, [&] (const auto& entry) {
+      return direction * entry.m_quote.m_price >
+        direction * quote.m_quote.m_price;
+    }));
   auto existing_iterator = lower_bound;
   while(existing_iterator != quotes->end() &&
       existing_iterator->m_quote.m_price == quote.m_quote.m_price &&
@@ -92,8 +111,8 @@ void LocalBookViewModel::update(const BookQuote& quote) {
           return;
         }
       }
-      quotes->remove(existing_index);
-      quotes->insert(quote, insert_index);
+      quotes->set(existing_index, quote);
+      quotes->move(existing_index, insert_index);
     }
   }
 }
@@ -184,12 +203,9 @@ void LocalBookViewModel::clear_orders() {
 
 void LocalBookViewModel::clear_book_quotes() {
   auto clear_side = [&] (auto& quotes) {
-    auto cleared = std::vector(quotes.begin(), quotes.end());
-    for(auto& quote : cleared) {
-      if(!quote.m_mpid.empty()) {
-        auto cleared_quote = quote;
-        cleared_quote.m_quote.m_size = 0;
-        update(cleared_quote);
+    for(auto i = quotes.get_size() - 1; i >= 0; --i) {
+      if(!quotes.get(i).m_mpid.empty()) {
+        quotes.remove(i);
       }
     }
   };

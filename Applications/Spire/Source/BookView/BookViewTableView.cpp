@@ -13,7 +13,6 @@
 #include "Spire/Spire/FilteredListModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
-#include "Spire/Spire/SortedListModel.hpp"
 #include "Spire/Spire/TableCurrentIndexModel.hpp"
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
@@ -461,10 +460,8 @@ TableView* Spire::make_book_view_table_view(
     std::make_shared<ColumnViewListModel<Money>>(
       table, static_cast<int>(BookViewColumn::PRICE)),
       make_max_level_model(properties));
-  auto top_mpid_prices = std::make_shared<TopMpidPriceListModel>(
-    std::make_shared<SortedListModel<BookQuote>>(std::move(quotes),
-      static_cast<bool (*)(const BookQuote&, const BookQuote&)>(
-        &listing_comparator)));
+  auto top_mpid_prices =
+    std::make_shared<TopMpidPriceListModel>(std::move(quotes));
   auto proxy_current = make_proxy_value_model(
     std::make_shared<LocalValueModel<optional<TableIndex>>>());
   auto table_view = TableViewBuilder(table).

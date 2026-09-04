@@ -49,6 +49,9 @@ void IsTopMpidModel::initialize_top_mpid() {
 
 void IsTopMpidModel::on_mpid(const BookEntry& mpid) {
   if(auto quote = boost::get<BookQuote>(&mpid)) {
+    if(quote->m_venue == m_venue) {
+      return;
+    }
     m_venue = quote->m_venue;
     initialize_top_mpid();
   } else {
