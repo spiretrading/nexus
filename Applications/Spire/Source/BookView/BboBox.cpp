@@ -130,7 +130,7 @@ void BboBox::on_style() {
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const FontSize& size) {
-        stylist.evaluate(size, [=] (auto size) {
+        stylist.evaluate(size, [=, this] (auto size) {
           m_font_size = size;
         });
       });

@@ -7,17 +7,19 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
+namespace {
+  const auto UPDATE_INTERVAL_MS = 300;
+}
+
 DefaultQuantityModel::DefaultQuantityModel(
     Ref<UserProfile> user_profile, Ticker ticker, Side side)
     : m_user_profile(user_profile.get()),
       m_ticker(std::move(ticker)),
       m_side(side) {
-  const auto UPDATE_INTERVAL_MS = 300;
   m_update_timer.setInterval(UPDATE_INTERVAL_MS);
   on_update();
   m_update_timer.start();
 }
-
 
 const DefaultQuantityModel::Type& DefaultQuantityModel::get() const {
   return m_current.get();

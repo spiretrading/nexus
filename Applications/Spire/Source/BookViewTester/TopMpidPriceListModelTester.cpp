@@ -8,19 +8,19 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  auto make_book_quote(Venue venue, Money price, Side side = Side::BID) {
+  auto make_book_quote(Venue venue, Money price) {
     return BookQuote(venue.get_code().get_data(), true, venue,
-      Quote(price, 100, side), time_from_string("2016-07-31 19:00:00"));
+      Quote(price, 100, Side::BID), time_from_string("2016-07-31 19:00:00"));
   }
 
-  int find_mpid(const ListModel<TopMpidPrice>& list, Venue venue) {
+  int find_index(const ListModel<TopMpidPrice>& list, Venue venue) {
     auto i = std::find_if(list.begin(), list.end(), [&] (const auto& top) {
       return top.m_venue == venue;
     });
     if(i == list.end()) {
       return -1;
     }
-    return std::distance(list.begin(), i);
+    return static_cast<int>(std::distance(list.begin(), i));
   }
 }
 
@@ -43,8 +43,8 @@ TEST_SUITE("TopMpidPriceListModel") {
     quotes->push(make_book_quote(Venues::TSX, Money(100)));
     quotes->push(make_book_quote(Venues::OMGA, Money(200)));
     REQUIRE(top_prices.get_size() == 2);
-    REQUIRE(find_mpid(top_prices, Venues::TSX) != -1);
-    REQUIRE(find_mpid(top_prices, Venues::OMGA) != -1);
+    REQUIRE(find_index(top_prices, Venues::TSX) != -1);
+    REQUIRE(find_index(top_prices, Venues::OMGA) != -1);
   }
 
   TEST_CASE("multiple_quotes") {
@@ -100,8 +100,8 @@ TEST_SUITE("TopMpidPriceListModel") {
     quotes->push(make_book_quote(Venues::OMGA, Money(100)));
     REQUIRE(top_prices.get_size() == 2);
     quotes->remove(0);
-    REQUIRE(find_mpid(top_prices, Venues::TSX) == -1);
-    REQUIRE(find_mpid(top_prices, Venues::OMGA) != -1);
+    REQUIRE(find_index(top_prices, Venues::TSX) == -1);
+    REQUIRE(find_index(top_prices, Venues::OMGA) != -1);
   }
 
   TEST_CASE("re_add_quote_below_a_removed_top") {

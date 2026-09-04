@@ -31,7 +31,7 @@ connection TopMpidPriceListModel::connect_operation_signal(
 
 void TopMpidPriceListModel::transact(
     const std::function<void ()>& transaction) {
-  return m_top_prices.transact([&] {
+  m_top_prices.transact([&] {
     transaction();
   });
 }

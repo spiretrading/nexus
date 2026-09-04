@@ -13,7 +13,7 @@ namespace {
       const SortedTableModel& table, const TableIndex& index) {
     auto source_row = table.index_to_source(index.m_row);
     auto source_list = static_cast<const ListToTableModel<BookEntry>&>(
-      *table.get_source().get()).get_source();
+      *table.get_source()).get_source();
     auto& entry = source_list->get(source_row);
     return get<BookViewModel::UserOrder>(entry);
   }
@@ -104,30 +104,29 @@ connection CurrentUserOrderModel::connect_update_signal(
   return m_current.connect_update_signal(slot);
 }
 
+void CurrentUserOrderModel::clear_undo_navigation() {
+  m_undo_navigation = none;
+  m_undo_navigation_connection.disconnect();
+}
+
 void CurrentUserOrderModel::update_side(
     const SideEntry& selected_side, const SideEntry& other_side, Side side,
     const optional<TableIndex>& current_index) {
-  if(current_index) {
-    if(other_side.m_current->get()) {
-      auto blocker = shared_connection_block(other_side.m_connection);
-      other_side.m_current->set(none);
-    }
-    auto& user_order =
-      extract_user_order(*selected_side.m_table, *current_index);
-    if(!m_current.get() || side != m_current.get()->m_side ||
-        user_order != m_current.get()->m_user_order) {
-      m_undo_navigation = none;
-      m_undo_navigation_connection.disconnect();
-      m_current.set(CurrentUserOrder(user_order, side));
-    }
-  } else {
-    if(other_side.m_current->get()) {
-      auto blocker = shared_connection_block(other_side.m_connection);
-      other_side.m_current->set(none);
-    }
-    m_undo_navigation = none;
-    m_undo_navigation_connection.disconnect();
+  if(other_side.m_current->get()) {
+    auto blocker = shared_connection_block(other_side.m_connection);
+    other_side.m_current->set(none);
+  }
+  if(!current_index) {
+    clear_undo_navigation();
     m_current.set(none);
+    return;
+  }
+  auto& user_order =
+    extract_user_order(*selected_side.m_table, *current_index);
+  if(!m_current.get() || side != m_current.get()->m_side ||
+      user_order != m_current.get()->m_user_order) {
+    clear_undo_navigation();
+    m_current.set(CurrentUserOrder(user_order, side));
   }
 }
 
@@ -143,7 +142,6 @@ void CurrentUserOrderModel::on_operation(
     const TableModel::Operation& operation) {
   m_undo_navigation->update(operation);
   if(m_undo_navigation->get_index() == -1) {
-    m_undo_navigation = none;
-    m_undo_navigation_connection.disconnect();
+    clear_undo_navigation();
   }
 }

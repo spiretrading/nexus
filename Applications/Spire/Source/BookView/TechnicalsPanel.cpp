@@ -17,7 +17,9 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto& LABEL_FONT() {
+  const auto SPACER_COUNT = 4;
+
+  const auto& get_label_font() {
     static auto font = [] {
       auto font = QFont("Roboto");
       font.setWeight(QFont::Medium);
@@ -28,7 +30,7 @@ namespace {
   }
 
   auto get_value_field_minimum_width() {
-    return get_character_width(LABEL_FONT()) * 8;
+    return get_character_width(get_label_font()) * 8;
   }
 
   auto to_default_quantity(Quantity bid_quantity, Quantity ask_quantity) {
@@ -82,12 +84,13 @@ namespace {
       const std::vector<TextBox*>& fields) {
     auto layout = make_grid_layout();
     layout->setVerticalSpacing(scale_height(2));
-    for(auto i = 0, initial_column = 0, column = 0; i < std::ssize(indicators);
-        ++i) {
+    auto initial_column = 0;
+    auto column = 0;
+    for(auto i = 0; i < std::ssize(indicators); ++i) {
       auto row = i % 2;
       layout->addWidget(indicators[i], row, column++);
       layout->addWidget(fields[i], row, column++);
-      if(i < 4) {
+      if(i < SPACER_COUNT) {
         layout->addItem(new QSpacerItem(scale_width(4), 0, QSizePolicy::Fixed),
           row, column++);
       }
@@ -140,7 +143,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     make_technicals_value_field(m_technicals,
       [] (const SessionTechnicals& technicals) {
         return technicals.m_volume;
-      }), m_default_field};
+      }),
+    m_default_field};
   for(auto i = 0; i < std::ssize(fields); ++i) {
     link(*this, *name_indicators[i]);
     link(*this, *short_name_indicators[i]);
@@ -167,7 +171,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(4)));
     style.get(Any() > is_a<TextBox>()).
-      set(Font(LABEL_FONT()));
+      set(Font(get_label_font()));
   });
 }
 
@@ -187,11 +191,11 @@ const std::shared_ptr<QuantityModel>&
 }
 
 QSize TechnicalsPanel::minimumSizeHint() const {
-  if(m_minimum_size_hint) {
-    return *m_minimum_size_hint;
+  if(!m_minimum_size_hint) {
+    m_minimum_size_hint.emplace(
+      m_extra_small_layout->totalMinimumSize().grownBy(
+        get_content_margins(m_geometry)));
   }
-  m_minimum_size_hint.emplace(m_extra_small_layout->totalMinimumSize().grownBy(
-    get_content_margins(m_geometry)));
   return *m_minimum_size_hint;
 }
 

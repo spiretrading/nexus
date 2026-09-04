@@ -24,14 +24,14 @@ namespace {
   using VenueHighlightLevel =
     BookViewHighlightProperties::VenueHighlightLevel;
   using VenueHighlight = BookViewHighlightProperties::VenueHighlight;
-  using EmptyVenue = StateSelector<void, struct EmptyVenueSeletorTag>;
+  using EmptyVenue = StateSelector<void, struct EmptyVenueSelectorTag>;
 
-  static const auto COLUMN_COUNT = 3;
-  static const auto VENUE_COLUMN = 0;
-  static const auto LEVEL_COLUMN = 1;
-  static const auto COLOR_COLUMN = 2;
+  const auto COLUMN_COUNT = 3;
+  const auto VENUE_COLUMN = 0;
+  const auto LEVEL_COLUMN = 1;
+  const auto COLOR_COLUMN = 2;
 
-  const auto& DEFAULT_VENUE_HIGHLIGHTS() {
+  const auto& get_default_venue_highlights() {
     static const auto default_venue_highlights = std::vector<HighlightColor>{
       {QColor(0xFFFFC4), QColor(0x834A2D)},
       {QColor(0xDDF9FF), QColor(0x003698)},
@@ -194,11 +194,11 @@ namespace {
         }
         auto blocker = shared_connection_block(m_connection);
         add_available_venues(get_row_size());
-        auto& highlights = DEFAULT_VENUE_HIGHLIGHTS();
+        auto& highlights = get_default_venue_highlights();
         auto& highlight =
           highlights[m_source->get_row_size() % highlights.size()];
-        m_source->push({std::any_cast<const Venue&>(value), highlight,
-          BookViewHighlightProperties::VenueHighlightLevel::TOP});
+        m_source->push(VenueHighlight(std::any_cast<const Venue&>(value),
+          highlight, VenueHighlightLevel::TOP));
         reduce_available_venues(row);
         m_transaction.transact([&] {
           m_transaction.push(UpdateOperation(row, column, Venue(), value));
@@ -247,21 +247,25 @@ namespace {
         m_available_venues.begin() + row, std::move(available_venues));
     }
 
+    void for_each_other_row(int row, auto action) {
+      for(auto i = 0; i < get_row_size(); ++i) {
+        if(i != row) {
+          action(*m_available_venues[i]);
+        }
+      }
+    }
+
     void reduce_available_venues(int row, Venue venue) {
       if(!venue) {
         return;
       }
-      for(auto i = 0; i < get_row_size(); ++i) {
-        if(i == row) {
-          continue;
-        }
-        auto& available_venues = *m_available_venues[i];
-        auto j =
+      for_each_other_row(row, [&] (auto& available_venues) {
+        auto i =
           std::find(available_venues.begin(), available_venues.end(), venue);
-        if(j != available_venues.end()) {
-          available_venues.remove(j);
+        if(i != available_venues.end()) {
+          available_venues.remove(i);
         }
-      }
+      });
     }
 
     void reduce_available_venues(int row) {
@@ -272,17 +276,13 @@ namespace {
       if(!venue) {
         return;
       }
-      for(auto i = 0; i < get_row_size(); ++i) {
-        if(i == row) {
-          continue;
-        }
-        auto& available_venues = *m_available_venues[i];
-        auto j =
+      for_each_other_row(row, [&] (auto& available_venues) {
+        auto i =
           std::find(available_venues.begin(), available_venues.end(), venue);
-        if(j == available_venues.end()) {
+        if(i == available_venues.end()) {
           available_venues.push(venue);
         }
-      }
+      });
     }
 
     void augment_available_venues(int row) {
@@ -363,9 +363,9 @@ namespace {
 
     InputBoxWrapper(Model model, std::shared_ptr<VenueModel> venue,
         QWidget* parent = nullptr)
-        : m_model(std::move(model)),
-          m_venue(std::move(venue)),
-          QWidget(parent) {
+        : QWidget(parent),
+          m_model(std::move(model)),
+          m_venue(std::move(venue)) {
       make_vbox_layout(this);
       if(m_venue->get()) {
         on_venue_update(m_venue->get());

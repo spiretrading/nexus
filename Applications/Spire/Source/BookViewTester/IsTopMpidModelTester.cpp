@@ -8,8 +8,8 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  auto TEST_MPID =
-    BookQuote("TSXID", true, Venues::TSX, Quote(), ptime());
+  const auto TEST_MPID = BookQuote("TSXID", true, Venues::TSX, Quote(),
+    time_from_string("2016-07-31 19:00:00"));
 }
 
 TEST_SUITE("IsTopMpidModel") {
@@ -45,7 +45,7 @@ TEST_SUITE("IsTopMpidModel") {
   TEST_CASE("constructor_missing_origin") {
     auto top_mpid_prices = std::make_shared<ArrayListModel<TopMpidPrice>>();
     top_mpid_prices->push(TopMpidPrice(Venues::TSXV, Money::ONE));
-    top_mpid_prices->push(TopMpidPrice(Venues::TSX, 2 *  Money::ONE));
+    top_mpid_prices->push(TopMpidPrice(Venues::TSX, 2 * Money::ONE));
     SUBCASE("user_order") {
       auto missing_mpid =
         BookViewModel::UserOrder("TSX", Money::ONE, 100, OrderStatus::NEW);

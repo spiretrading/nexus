@@ -19,13 +19,13 @@ namespace Styles {
 
   /** Styles an MpidBox based on whether it represents a user's order. */
   using UserOrderRow =
-    StateSelector<Nexus::OrderStatus, struct UserOrderSelectorTag>;
+    StateSelector<Nexus::OrderStatus, struct UserOrderRowSelectorTag>;
 
   /** Styles an MpidBox based on whether it represents an order preview. */
-  using PreviewRow = StateSelector<void, struct PreviewSelectorTag>;
+  using PreviewRow = StateSelector<void, struct PreviewRowSelectorTag>;
 
   /** Styles an MpidBox whose highlight began before it was displayed. */
-  using SettledRow = StateSelector<void, struct SettledSelectorTag>;
+  using SettledRow = StateSelector<void, struct SettledRowSelectorTag>;
 }
 
   /**

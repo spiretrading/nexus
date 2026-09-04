@@ -77,25 +77,25 @@ void MergedBookEntryListModel::on_user_order_operation(
 
 void MergedBookEntryListModel::on_preview(
     const optional<OrderFields>& preview) {
-  if(preview) {
-    auto index = m_book_quotes->get_size() + m_user_orders->get_size();
-    if(m_previous_preview) {
-      auto update = UpdateOperation(index, *m_previous_preview, *preview);
-      m_previous_preview = preview;
-      m_entries[index] = *preview;
-      m_transaction.push(update);
-    } else {
-      m_previous_preview = preview;
-      m_entries.push_back(*preview);
-      m_transaction.push(AddOperation(index));
-    }
-  } else if(m_previous_preview) {
-    auto index = m_book_quotes->get_size() + m_user_orders->get_size();
+  if(!preview && !m_previous_preview) {
+    return;
+  }
+  auto index = m_book_quotes->get_size() + m_user_orders->get_size();
+  if(!preview) {
     m_transaction.transact([&] {
       m_transaction.push(PreRemoveOperation(index));
       m_previous_preview = none;
       m_entries.pop_back();
       m_transaction.push(RemoveOperation(index));
     });
+  } else if(m_previous_preview) {
+    auto update = UpdateOperation(index, *m_previous_preview, *preview);
+    m_previous_preview = preview;
+    m_entries[index] = *preview;
+    m_transaction.push(update);
+  } else {
+    m_previous_preview = preview;
+    m_entries.push_back(*preview);
+    m_transaction.push(AddOperation(index));
   }
 }

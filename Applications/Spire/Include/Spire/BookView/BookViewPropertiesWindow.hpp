@@ -1,5 +1,5 @@
-#ifndef BOOK_VIEW_PROPERTIES_WINDOW_HPP
-#define BOOK_VIEW_PROPERTIES_WINDOW_HPP
+#ifndef SPIRE_BOOK_VIEW_PROPERTIES_WINDOW_HPP
+#define SPIRE_BOOK_VIEW_PROPERTIES_WINDOW_HPP
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/Ui/NavigationView.hpp"

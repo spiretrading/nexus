@@ -1,4 +1,5 @@
 #include "Spire/BookView/BookViewProperties.hpp"
+#include <array>
 #include <fstream>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
@@ -31,7 +32,7 @@ namespace {
       auto receiver = BinaryReceiver<SharedBuffer>(Ref(type_registry));
       receiver.set(Ref(buffer));
       receiver.shuttle(properties);
-    } catch(std::exception&) {
+    } catch(const std::exception&) {
       throw std::runtime_error("Unable to load book view properties.");
     }
     return properties;
@@ -131,50 +132,24 @@ const HighlightColor& Spire::get_highlight(const BookViewProperties& properties,
 
 const QString& Spire::to_text(
     BookViewHighlightProperties::OrderVisibility visibility) {
-  if(visibility == BookViewHighlightProperties::OrderVisibility::HIDDEN) {
-    static const auto value = QObject::tr("Hide");
-    return value;
-  } else if(
-      visibility == BookViewHighlightProperties::OrderVisibility::VISIBLE) {
-    static const auto value = QObject::tr("Show");
-    return value;
-  } else {
-    static const auto value = QObject::tr("Highlight");
-    return value;
-  }
+  static const auto VALUES = std::array{
+    QObject::tr("Hide"), QObject::tr("Show"), QObject::tr("Highlight")};
+  return VALUES[static_cast<int>(visibility)];
 }
 
 const QString& Spire::to_text(
     BookViewHighlightProperties::VenueHighlightLevel level) {
-  if(level == BookViewHighlightProperties::VenueHighlightLevel::TOP) {
-    static const auto value = QObject::tr("Top Level");
-    return value;
-  } else {
-    static const auto value = QObject::tr("All Levels");
-    return value;
-  }
+  static const auto VALUES =
+    std::array{QObject::tr("Top Level"), QObject::tr("All Levels")};
+  return VALUES[static_cast<int>(level)];
 }
 
 const QString& Spire::to_text(
     BookViewHighlightProperties::OrderHighlightState state) {
-  if(state == BookViewHighlightProperties::OrderHighlightState::PREVIEW) {
-    static const auto value = QObject::tr("Preview");
-    return value;
-  } else if(
-      state == BookViewHighlightProperties::OrderHighlightState::ACTIVE) {
-    static const auto value = QObject::tr("Active");
-    return value;
-  } else if(state == BookViewHighlightProperties::OrderHighlightState::FILLED) {
-    static const auto value = QObject::tr("Filled");
-    return value;
-  } else if(
-      state == BookViewHighlightProperties::OrderHighlightState::CANCELED) {
-    static const auto value = QObject::tr("Canceled");
-    return value;
-  } else {
-    static const auto value = QObject::tr("Rejected");
-    return value;
-  }
+  static const auto VALUES = std::array{QObject::tr("Preview"),
+    QObject::tr("Active"), QObject::tr("Filled"), QObject::tr("Canceled"),
+    QObject::tr("Rejected")};
+  return VALUES[static_cast<int>(state)];
 }
 
 BookViewProperties Spire::load_book_view_properties(

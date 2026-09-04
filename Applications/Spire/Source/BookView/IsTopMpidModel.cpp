@@ -43,8 +43,13 @@ void IsTopMpidModel::initialize_top_mpid() {
       return;
     }
   }
-  if(m_current.get()) {
-    m_current.set(false);
+  update_current();
+}
+
+void IsTopMpidModel::update_current() {
+  auto is_top = m_top_mpid && m_top_mpid->get().m_price == m_price->get();
+  if(is_top != m_current.get()) {
+    m_current.set(is_top);
   }
 }
 
@@ -58,16 +63,7 @@ void IsTopMpidModel::on_mpid(const BookEntry& mpid) {
   } else {
     m_top_mpid = nullptr;
     m_venue = Venue();
-    if(m_current.get()) {
-      m_current.set(false);
-    }
-  }
-}
-
-void IsTopMpidModel::update_current() {
-  auto is_top = m_top_mpid && m_top_mpid->get().m_price == m_price->get();
-  if(is_top != m_current.get()) {
-    m_current.set(is_top);
+    update_current();
   }
 }
 

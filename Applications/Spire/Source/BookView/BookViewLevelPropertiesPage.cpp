@@ -33,7 +33,7 @@ namespace {
   const auto COLOR_LIST_RIGHT_PADDING = 4;
   const auto DEBOUNCE_TIME_MS = 100;
 
-  auto INTEGER_BOX_HORIZONTAL_PADDING() {
+  auto get_integer_box_horizontal_padding() {
     static auto padding = scale_width(32);
     return padding;
   }
@@ -58,29 +58,28 @@ namespace {
     }
   }
 
+  void truncate(ListModel<QColor>& colors, int size) {
+    while(colors.get_size() > size) {
+      colors.remove(colors.get_size() - 1);
+    }
+  }
+
   void scale(ListModel<QColor>& scheme, const QColor& start,
       const QColor& end, int levels) {
     auto colors = scale_oklch(start, end, levels);
     auto alphas = scale_alpha(start.alpha(), end.alpha(), levels);
     scheme.transact([&] {
-      auto index = 0;
-      while(index < levels) {
-        if(index < scheme.get_size()) {
-          if(scheme.get(index).rgb() != colors[index].rgb() ||
-              scheme.get(index).alpha() != alphas[index]) {
-            scheme.set(index,
-              QColor(colors[index].red(), colors[index].green(),
-                colors[index].blue(), alphas[index]));
-          }
-        } else {
-          scheme.insert(QColor(colors[index].red(), colors[index].green(),
-            colors[index].blue(), alphas[index]), index);
+      for(auto index = 0; index < levels; ++index) {
+        auto color = QColor(colors[index].red(), colors[index].green(),
+          colors[index].blue(), alphas[index]);
+        if(index >= scheme.get_size()) {
+          scheme.insert(color, index);
+        } else if(scheme.get(index).rgb() != color.rgb() ||
+            scheme.get(index).alpha() != color.alpha()) {
+          scheme.set(index, color);
         }
-        ++index;
       }
-      while(scheme.get_size() > index) {
-        scheme.remove(scheme.get_size() - 1);
-      }
+      truncate(scheme, levels);
     });
   }
 
@@ -107,7 +106,7 @@ namespace {
     auto levels_box = new IntegerBox(std::move(levels));
     levels_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     levels_box->setFixedWidth(
-      6 * ::get_character_width() + INTEGER_BOX_HORIZONTAL_PADDING());
+      6 * ::get_character_width() + get_integer_box_horizontal_padding());
     auto body = new QWidget();
     auto layout = make_hbox_layout(body);
     layout->addWidget(label);
@@ -196,7 +195,7 @@ namespace {
       scale(*m_band_colors, m_band_colors->get(0), m_end_color, levels);
     }
 
-    void on_levels_update(const optional<int> levels) {
+    void on_levels_update(optional<int> levels) {
       if(!levels || *levels < m_levels->get_minimum() ||
           *levels > m_levels->get_maximum()) {
         return;
@@ -211,9 +210,7 @@ namespace {
               m_band_colors->insert(color, i);
             }
           } else {
-            while(m_band_colors->get_size() > *levels) {
-              m_band_colors->remove(m_band_colors->get_size() - 1);
-            }
+            truncate(*m_band_colors, *levels);
           }
         });
       }
@@ -225,15 +222,14 @@ namespace {
         m_colors->transact([&] {
           if(m_colors->get_size() == 0) {
             auto size = std::min(m_band_colors->get_size(), 2);
-            for(auto i = 0; i < size; ++i) {
-              if(i == 1) {
-                m_colors->insert(
-                  m_band_colors->get(m_band_colors->get_size() - 1), i);
-              } else {
-                m_colors->insert(m_band_colors->get(i), i);
-              }
+            if(size > 0) {
+              m_colors->insert(m_band_colors->get(0), 0);
             }
-          } else if(m_colors->get_size() > 2) {
+            if(size > 1) {
+              m_colors->insert(
+                m_band_colors->get(m_band_colors->get_size() - 1), 1);
+            }
+          } else {
             while(m_colors->get_size() > 2) {
               m_colors->remove(1);
             }
@@ -409,11 +405,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     return QWidget::eventFilter(watched, event);
   }
 
-  void make_button(FillType type) {
+  void add_button(FillType type) {
     auto button = make_radio_button();
     button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
     button->set_label(::to_text(type));
-    button->get_current()->connect_update_signal([=] (auto value) {
+    button->get_current()->connect_update_signal([=, this] (auto value) {
       if(m_model->m_fill_type->get() == type && !value) {
         button->get_current()->set(true);
       } else if(value) {
@@ -426,8 +422,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   QWidget* make_fill_type_slot() {
-    make_button(FillType::GRADIENT);
-    make_button(FillType::SOLID);
+    add_button(FillType::GRADIENT);
+    add_button(FillType::SOLID);
     auto label = make_label(QObject::tr("Fill Type"));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto body = new QWidget();
@@ -498,12 +494,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     if(m_model->m_fill_type->get() != FillType::GRADIENT || levels == 0) {
       return;
     }
-    auto color_levels = [&] {
-      if(levels >= 2) {
-        return 2;
-      }
-      return 1;
-    }();
+    auto color_levels = std::min(levels, 2);
     m_gradient_color_levels = color_levels;
     auto vertical_paddings = COLOR_BOXES_VERTICAL_PADDING * 2;
     auto height = scale_height(vertical_paddings +
@@ -539,7 +530,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     }
   }
 
-  void on_levels_update(const optional<int> levels) {
+  void on_levels_update(optional<int> levels) {
     if(!levels) {
       return;
     }

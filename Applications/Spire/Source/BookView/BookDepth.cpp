@@ -104,8 +104,8 @@ void BookDepth::apply_font(const QFont& font) {
 }
 
 void BookDepth::synchronize_position(
-    int position, scoped_connection& blocked, TableView& target) {
-  auto blocker = shared_connection_block(blocked);
+    int position, scoped_connection& connection, TableView& target) {
+  auto blocker = shared_connection_block(connection);
   target.get_scroll_box().get_vertical_scroll_bar().set_position(position);
 }
 

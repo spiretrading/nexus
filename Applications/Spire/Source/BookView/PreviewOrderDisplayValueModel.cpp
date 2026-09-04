@@ -49,10 +49,6 @@ void PreviewOrderDisplayValueModel::on_properties(
   }
   m_is_displayed = is_displayed;
   if(m_has_preview) {
-    if(m_is_displayed) {
-      m_update_signal(m_preview->get());
-    } else {
-      m_update_signal(none);
-    }
+    m_update_signal(get());
   }
 }

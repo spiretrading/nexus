@@ -56,7 +56,7 @@ namespace Spire {
       void clear_book_quotes();
 
       /** Performs a transaction. */
-      void transact(const std::function<void ()>& f);
+      void transact(const std::function<void ()>& transaction);
 
       const std::shared_ptr<BookQuoteListModel>& get_bids() const override;
       const std::shared_ptr<BookQuoteListModel>& get_asks() const override;

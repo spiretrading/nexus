@@ -1,4 +1,5 @@
 #include "Spire/BookView/BookViewTableView.hpp"
+#include <array>
 #include "Spire/BookView/BookViewCurrentTableModel.hpp"
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/BookView/ConsolidatedUserOrderListModel.hpp"
@@ -35,6 +36,7 @@ namespace {
   using ShowGrid = StateSelector<void, struct ShowGridSelectorTag>;
   const auto CURRENT_BACKGROUND_COLOR = QColor(0x8D78EC);
   const auto CURRENT_TEXT_COLOR = QColor(0xFFFFFF);
+  const auto HIGHLIGHT_FADE_DURATION = milliseconds(100);
 
   auto make_header_model() {
     auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
@@ -152,24 +154,24 @@ namespace {
         auto& mpid_box = static_cast<MpidBox&>(widget);
         mpid_box.reset();
         auto& entry = static_cast<ProxyValueModel<BookEntry>&>(
-          *mpid_box.get_current().get());
+          *mpid_box.get_current());
         entry.set_source(make_list_value_model(m_entries, row));
         auto& level =
-          static_cast<ProxyValueModel<int>&>(*mpid_box.get_level().get());
+          static_cast<ProxyValueModel<int>&>(*mpid_box.get_level());
         level.set_source(make_list_value_model(m_price_levels, row));
         auto& is_top_mpid = static_cast<BookViewProxyValueModel<Money, bool>&>(
-          *mpid_box.is_top_mpid().get());
+          *mpid_box.is_top_mpid());
         is_top_mpid.set_source(make_list_value_model(m_prices, row));
       } else if(column_id == BookViewColumn::PRICE) {
         auto& price_box = static_cast<TextBox&>(widget);
         auto& current = static_cast<BookViewProxyValueModel<Money, QString>&>(
-          *price_box.get_current().get());
+          *price_box.get_current());
         current.set_source(make_list_value_model(m_prices, row));
       } else {
         auto& quantity_box = static_cast<TextBox&>(widget);
         auto& current =
           static_cast<BookViewProxyValueModel<Quantity, QString>&>(
-            *quantity_box.get_current().get());
+            *quantity_box.get_current());
         current.set_source(make_list_value_model(m_sizes, row));
       }
     }
@@ -201,7 +203,6 @@ namespace {
   void apply_transition_styles(StyleSheet& style,
       const HighlightColor& active_highlight,
       const HighlightColor& status_highlight, OrderStatus status) {
-    const auto HIGHLIGHT_FADE_DURATION = milliseconds(100);
     apply_row_style(style, UserOrderRow(status),
       TextColor(linear(active_highlight.m_text_color,
         status_highlight.m_text_color, HIGHLIGHT_FADE_DURATION)),
@@ -226,18 +227,17 @@ namespace {
       apply_row_style(style, UserOrderRow(OrderStatus::NONE),
         TextColor(active_highlight.m_text_color),
         BackgroundColor(active_highlight.m_background_color));
-      auto& filled_highlight = get_highlight(
-        properties, BookViewHighlightProperties::OrderHighlightState::FILLED);
-      apply_transition_styles(
-        style, active_highlight, filled_highlight, OrderStatus::FILLED);
-      auto& canceled_highlight = get_highlight(
-        properties, BookViewHighlightProperties::OrderHighlightState::CANCELED);
-      apply_transition_styles(
-        style, active_highlight, canceled_highlight, OrderStatus::CANCELED);
-      auto& rejected_highlight = get_highlight(
-        properties, BookViewHighlightProperties::OrderHighlightState::REJECTED);
-      apply_transition_styles(
-        style, active_highlight, rejected_highlight, OrderStatus::REJECTED);
+      static const auto TRANSITIONS = std::array{
+        std::pair(BookViewHighlightProperties::OrderHighlightState::FILLED,
+          OrderStatus::FILLED),
+        std::pair(BookViewHighlightProperties::OrderHighlightState::CANCELED,
+          OrderStatus::CANCELED),
+        std::pair(BookViewHighlightProperties::OrderHighlightState::REJECTED,
+          OrderStatus::REJECTED)};
+      for(auto& [state, status] : TRANSITIONS) {
+        apply_transition_styles(
+          style, active_highlight, get_highlight(properties, state), status);
+      }
     } else {
       clear_row_style(style, PreviewRow());
       for(auto status : {OrderStatus::NONE, OrderStatus::FILLED,
@@ -303,30 +303,23 @@ namespace {
 
     void apply_venue_highlight_styles(
         StyleSheet& style, const BookViewProperties& properties) {
-      for(auto& highlight : m_previous_venue_highlights) {
+      auto get_selector = [] (const auto& highlight) -> Selector {
         if(highlight.m_level ==
             BookViewHighlightProperties::VenueHighlightLevel::TOP) {
-          clear_row_style(
-            style, TopVenueRow() && VenueRow(highlight.m_venue));
-        } else {
-          clear_row_style(style, VenueRow(highlight.m_venue));
+          return TopVenueRow() && VenueRow(highlight.m_venue);
         }
+        return VenueRow(highlight.m_venue);
+      };
+      for(auto& highlight : m_previous_venue_highlights) {
+        clear_row_style(style, get_selector(highlight));
       }
       m_previous_venue_highlights.clear();
       auto& venue_highlights =
         properties.m_highlight_properties.m_venue_highlights;
       for(auto& highlight : venue_highlights) {
-        if(highlight.m_level ==
-            BookViewHighlightProperties::VenueHighlightLevel::TOP) {
-          apply_row_style(
-            style, TopVenueRow() && VenueRow(highlight.m_venue),
-            TextColor(highlight.m_color.m_text_color),
-            BackgroundColor(highlight.m_color.m_background_color));
-        } else {
-          apply_row_style(style, VenueRow(highlight.m_venue),
-            TextColor(highlight.m_color.m_text_color),
-            BackgroundColor(highlight.m_color.m_background_color));
-        }
+        apply_row_style(style, get_selector(highlight),
+          TextColor(highlight.m_color.m_text_color),
+          BackgroundColor(highlight.m_color.m_background_color));
         m_previous_venue_highlights.push_back(
           PreviousVenueHighlight(highlight.m_venue, highlight.m_level));
       }
@@ -430,7 +423,10 @@ TableView* Spire::make_book_view_table_view(
       SortedTableModel::Ordering::ASCENDING);
   }();
   auto column_orders = std::vector<SortedTableModel::ColumnOrder>{
-    {1, ordering}, {2, SortedTableModel::Ordering::DESCENDING}};
+    SortedTableModel::ColumnOrder(
+      static_cast<int>(BookViewColumn::PRICE), ordering),
+    SortedTableModel::ColumnOrder(static_cast<int>(BookViewColumn::SIZE),
+      SortedTableModel::Ordering::DESCENDING)};
   auto displayed_orders =
     std::make_shared<UserOrderDisplayListModel>(
       std::make_shared<ConsolidatedUserOrderListModel>(std::move(orders)),
@@ -465,6 +461,6 @@ TableView* Spire::make_book_view_table_view(
   proxy_current->set_source(std::make_shared<BookViewCurrentTableModel>(table));
   table_view->get_header().setVisible(false);
   table_view->get_scroll_box().set(ScrollBox::DisplayPolicy::NEVER);
-  auto stylist = new TableViewStylist(*table_view, std::move(properties));
+  new TableViewStylist(*table_view, std::move(properties));
   return table_view;
 }

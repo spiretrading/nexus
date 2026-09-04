@@ -6,8 +6,8 @@
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/Spire/AnyRef.hpp"
-#include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/ListModel.hpp"
+#include "Spire/Spire/TableModel.hpp"
 #include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
@@ -26,7 +26,7 @@ namespace Spire {
   /** The type used for a list of BookEntries. */
   using BookEntryListModel = ListModel<BookEntry>;
 
-  /* Enumerates the columns of the BookViewTableModel. */
+  /** Enumerates the columns of the BookViewTableModel. */
   enum class BookViewColumn {
 
     /** The MPID column. */

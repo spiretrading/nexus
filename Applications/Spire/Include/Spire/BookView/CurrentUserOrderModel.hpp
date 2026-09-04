@@ -67,6 +67,7 @@ namespace Spire {
 
       void navigate(
         const SideEntry& from, const SideEntry& to, Nexus::Side side);
+      void clear_undo_navigation();
       void update_side(const SideEntry& selected_side,
         const SideEntry& other_side, Nexus::Side side,
         const boost::optional<TableIndex>& current_index);

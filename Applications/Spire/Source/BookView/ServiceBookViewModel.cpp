@@ -9,9 +9,9 @@ using namespace Spire;
 
 namespace {
   bool is_order_displayed(const Order& order, const Ticker& ticker) {
-    return order.get_info().m_fields.m_ticker == ticker &&
-      (order.get_info().m_fields.m_type == OrderType::LIMIT ||
-        order.get_info().m_fields.m_type == OrderType::PEGGED);
+    auto& fields = order.get_info().m_fields;
+    return fields.m_ticker == ticker && (fields.m_type == OrderType::LIMIT ||
+      fields.m_type == OrderType::PEGGED);
   }
 }
 
@@ -87,11 +87,7 @@ void ServiceBookViewModel::initialize_order(
   if(!is_order_displayed(*order.m_order, m_ticker)) {
     return;
   }
-  auto execution_reports = optional<std::vector<ExecutionReport>>();
-  order.m_order->get_publisher().monitor(
-    m_order_event_handler->get_slot<ExecutionReport>(
-      std::bind_front(&ServiceBookViewModel::on_execution_report, this)),
-    out(execution_reports));
+  auto execution_reports = monitor(order);
   if(execution_reports && !execution_reports->empty() &&
       is_terminal(execution_reports->back().m_status)) {
     return;
@@ -154,6 +150,16 @@ void ServiceBookViewModel::on_time_and_sales(const TimeAndSale& time_and_sale) {
   m_model.update(time_and_sale);
 }
 
+optional<std::vector<ExecutionReport>> ServiceBookViewModel::monitor(
+    const OrderLogModel::OrderEntry& order) {
+  auto reports = optional<std::vector<ExecutionReport>>();
+  order.m_order->get_publisher().monitor(
+    m_order_event_handler->get_slot<ExecutionReport>(
+      std::bind_front(&ServiceBookViewModel::on_execution_report, this)),
+    out(reports));
+  return reports;
+}
+
 void ServiceBookViewModel::on_execution_report(const ExecutionReport& report) {
   m_model.update(report);
 }
@@ -162,20 +168,16 @@ void ServiceBookViewModel::on_order_added(
     const OrderLogModel::OrderEntry& order) {
   if(order.m_order->get_info().m_timestamp < m_snapshot_cutoff) {
     initialize_order(order);
-  } else {
-    if(!is_order_displayed(*order.m_order, m_ticker)) {
-      return;
-    }
-    m_model.add(order);
-    auto execution_reports = optional<std::vector<ExecutionReport>>();
-    order.m_order->get_publisher().monitor(
-      m_order_event_handler->get_slot<ExecutionReport>(
-        std::bind_front(&ServiceBookViewModel::on_execution_report, this)),
-      out(execution_reports));
-    if(execution_reports) {
-      for(auto& report : *execution_reports) {
-        m_model.update(report);
-      }
+    return;
+  }
+  if(!is_order_displayed(*order.m_order, m_ticker)) {
+    return;
+  }
+  m_model.add(order);
+  auto execution_reports = monitor(order);
+  if(execution_reports) {
+    for(auto& report : *execution_reports) {
+      m_model.update(report);
     }
   }
 }

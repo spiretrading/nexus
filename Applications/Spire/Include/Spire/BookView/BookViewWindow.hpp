@@ -142,6 +142,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_ask_order_connection;
 
       std::unique_ptr<CanvasNode> make_task_node(const CanvasNode& node);
+      void reset_key_observer();
       void display_interactions_panel();
       void display_task_entry_panel(const OrderTaskArguments& arguments);
       void remove_task_entry_panel();

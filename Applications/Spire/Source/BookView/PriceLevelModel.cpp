@@ -32,7 +32,7 @@ connection PriceLevelModel::connect_operation_signal(
 }
 
 void PriceLevelModel::transact(const std::function<void ()>& transaction) {
-  return m_levels.transact([&] {
+  m_levels.transact([&] {
     transaction();
   });
 }
@@ -56,9 +56,8 @@ void PriceLevelModel::on_price_operation(
               preceding_level == m_max_level->get()) {
             m_levels.insert(preceding_level, operation.m_index);
             return;
-          } else {
-            m_levels.insert(preceding_level + 1, operation.m_index);
           }
+          m_levels.insert(preceding_level + 1, operation.m_index);
         }
         if(operation.m_index != m_prices->get_size() - 1) {
           auto following_price = m_prices->get(operation.m_index + 1);
@@ -99,8 +98,7 @@ void PriceLevelModel::on_price_operation(
                 break;
               }
             }
-            auto level = m_levels.get(i);
-            m_levels.set(i, level - 1);
+            m_levels.set(i, m_levels.get(i) - 1);
           }
         }
       });

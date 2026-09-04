@@ -13,6 +13,19 @@ namespace {
   const auto USER_ORDER_TYPE_INDEX = 1;
   const auto PREVIEW_TYPE_INDEX = 2;
 
+  OrderStatus to_highlight_status(OrderStatus status) {
+    if(status == OrderStatus::CANCELED || status == OrderStatus::FILLED ||
+        status == OrderStatus::REJECTED) {
+      return status;
+    } else if(status == OrderStatus::PARTIALLY_FILLED) {
+      return OrderStatus::FILLED;
+    } else if(status == OrderStatus::EXPIRED ||
+        status == OrderStatus::DONE_FOR_DAY) {
+      return OrderStatus::CANCELED;
+    }
+    return OrderStatus::NONE;
+  }
+
   QString make_id(const BookEntry& entry) {
     if(auto quote = get<BookQuote>(&entry)) {
       return QString::fromStdString(quote->m_mpid);
@@ -88,7 +101,7 @@ void MpidBox::update_row_state(int type_index) {
         m_is_settled = false;
       }
       m_current_transition = 0;
-    } else {
+    } else if(*m_current_type_index == PREVIEW_TYPE_INDEX) {
       unmatch(*this, PreviewRow());
     }
   }
@@ -97,7 +110,7 @@ void MpidBox::update_row_state(int type_index) {
     match(*this, PriceLevelRow(m_current_level));
   } else if(type_index == USER_ORDER_TYPE_INDEX) {
     match(*this, UserOrderRow(OrderStatus::NONE));
-  } else {
+  } else if(type_index == PREVIEW_TYPE_INDEX) {
     match(*this, PreviewRow());
   }
 }
@@ -128,17 +141,8 @@ void MpidBox::update_status(const BookEntry& entry) {
   auto status = [&] () -> OrderStatus {
     if(!order || transition == 0) {
       return OrderStatus::NONE;
-    } else if(order->m_highlight == OrderStatus::CANCELED ||
-        order->m_highlight == OrderStatus::FILLED ||
-        order->m_highlight == OrderStatus::REJECTED) {
-      return order->m_highlight;
-    } else if(order->m_highlight == OrderStatus::PARTIALLY_FILLED) {
-      return OrderStatus::FILLED;
-    } else if(order->m_highlight == OrderStatus::EXPIRED ||
-        order->m_highlight == OrderStatus::DONE_FOR_DAY) {
-      return OrderStatus::CANCELED;
     }
-    return OrderStatus::NONE;
+    return to_highlight_status(order->m_highlight);
   }();
   auto is_settled = status != OrderStatus::NONE && m_is_reset;
   m_is_reset = false;

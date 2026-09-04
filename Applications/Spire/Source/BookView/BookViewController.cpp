@@ -135,15 +135,18 @@ void BookViewController::on_cancel_operation(
   auto tasks = std::vector<std::shared_ptr<Task>>();
   for(auto i = 0; i != tasks_model.rowCount(tasks_model.index(0, 0)); ++i) {
     auto& entry = tasks_model.GetEntry(i);
-    if(!IsTerminal(entry.m_state) &&
-        entry.m_state != Task::State::PENDING_CANCEL) {
-      auto& task = entry.m_task;
-      if(find_ticker(task->GetNode()) == ticker) {
-        if(!criteria || find_price(task->GetNode()) == criteria->m_price &&
-            find_destination(task->GetNode()) == criteria->m_destination) {
-          tasks.push_back(task);
-        }
-      }
+    if(IsTerminal(entry.m_state) ||
+        entry.m_state == Task::State::PENDING_CANCEL) {
+      continue;
+    }
+    auto& task = entry.m_task;
+    auto& node = task->GetNode();
+    if(find_ticker(node) != ticker) {
+      continue;
+    }
+    if(!criteria || (find_price(node) == criteria->m_price &&
+        find_destination(node) == criteria->m_destination)) {
+      tasks.push_back(task);
     }
   }
   execute(operation, out(tasks));

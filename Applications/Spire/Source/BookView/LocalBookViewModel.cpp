@@ -35,6 +35,17 @@ namespace {
     return price;
   }
 
+  void reorder(BookQuoteListModel& quotes, int existing_index,
+      int insert_index, const BookQuote& quote) {
+    if(insert_index > existing_index) {
+      --insert_index;
+    }
+    quotes.set(existing_index, quote);
+    if(insert_index != existing_index) {
+      quotes.move(existing_index, insert_index);
+    }
+  }
+
   int find_partition_point(const BookQuoteListModel& quotes, auto is_before) {
     auto size = quotes.get_size();
     if(size == 0 || !is_before(quotes.get(0))) {
@@ -110,26 +121,17 @@ void LocalBookViewModel::update(const BookQuote& quote) {
   }
   if(quote.m_quote.m_size == 0) {
     quotes->remove(existing_iterator);
-  } else {
-    auto insert_iterator = find_insert_position();
-    if(insert_iterator == existing_iterator) {
-      *insert_iterator = quote;
-    } else {
-      auto existing_index =
-        std::ranges::distance(quotes->begin(), existing_iterator);
-      auto insert_index =
-        std::ranges::distance(quotes->begin(), insert_iterator);
-      if(insert_index > existing_index) {
-        --insert_index;
-        if(insert_index == existing_index) {
-          *existing_iterator = quote;
-          return;
-        }
-      }
-      quotes->set(existing_index, quote);
-      quotes->move(existing_index, insert_index);
-    }
+    return;
   }
+  auto insert_iterator = find_insert_position();
+  if(insert_iterator == existing_iterator) {
+    *insert_iterator = quote;
+    return;
+  }
+  reorder(*quotes,
+    static_cast<int>(std::ranges::distance(quotes->begin(), existing_iterator)),
+    static_cast<int>(std::ranges::distance(quotes->begin(), insert_iterator)),
+    quote);
 }
 
 void LocalBookViewModel::update(const TimeAndSale& time_and_sale) {
@@ -209,8 +211,8 @@ void LocalBookViewModel::update(const ExecutionReport& report) {
 }
 
 void LocalBookViewModel::clear_orders() {
-  Spire::clear(*m_model.get_bid_orders());
-  Spire::clear(*m_model.get_ask_orders());
+  clear(*m_model.get_bid_orders());
+  clear(*m_model.get_ask_orders());
   m_bid_orders.clear();
   m_ask_orders.clear();
   m_pegged_entries.clear();
@@ -228,10 +230,10 @@ void LocalBookViewModel::clear_book_quotes() {
   clear_side(*m_model.get_bids());
 }
 
-void LocalBookViewModel::transact(const std::function<void ()>& f) {
+void LocalBookViewModel::transact(const std::function<void ()>& transaction) {
   m_model.get_asks()->transact([&] {
     m_model.get_bids()->transact([&] {
-      f();
+      transaction();
     });
   });
 }
@@ -241,7 +243,7 @@ void LocalBookViewModel::submit_pegged(const Order& order) {
   auto entry = PeggedOrderEntry();
   entry.m_exec_inst = PRIMARY_PEG;
   if(auto tag = find_field(fields, EXEC_INST_KEY)) {
-    if(auto* value = boost::get<std::string>(&tag->get_value())) {
+    if(auto value = get<std::string>(&tag->get_value())) {
       auto stream = std::istringstream(*value);
       auto token = std::string();
       while(stream >> token) {
@@ -255,7 +257,7 @@ void LocalBookViewModel::submit_pegged(const Order& order) {
   }
   entry.m_peg_difference = Money::ZERO;
   if(auto tag = find_field(fields, PEG_DIFFERENCE_KEY)) {
-    if(auto* money = boost::get<Money>(&tag->get_value())) {
+    if(auto money = get<Money>(&tag->get_value())) {
       entry.m_peg_difference = *money;
     }
   }
@@ -277,11 +279,11 @@ void LocalBookViewModel::update_pegged_orders() {
     auto direction = get_direction(side);
     for(auto i = 0; i != static_cast<int>(orders.size()); ++i) {
       auto& order = orders[i];
-      auto it = m_pegged_entries.find(order->get_info().m_id);
-      if(it == m_pegged_entries.end()) {
+      auto pegged = m_pegged_entries.find(order->get_info().m_id);
+      if(pegged == m_pegged_entries.end()) {
         continue;
       }
-      auto& entry = it->second;
+      auto& entry = pegged->second;
       auto price = compute_peg_price(entry.m_exec_inst, bbo, side);
       if(price == Money::ZERO) {
         continue;

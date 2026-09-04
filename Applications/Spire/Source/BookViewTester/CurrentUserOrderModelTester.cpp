@@ -14,6 +14,13 @@ namespace {
     return BookQuote("TSX", true, Venues::TSX, Quote(price, 100, side),
       time_from_string("2016-07-31 19:00:00"));
   }
+
+  void require_current(const CurrentUserOrderModel& model, Side side,
+      const BookViewModel::UserOrder& order) {
+    REQUIRE(model.get().has_value());
+    REQUIRE(model.get()->m_side == side);
+    REQUIRE((model.get()->m_user_order == order));
+  }
 }
 
 TEST_SUITE("CurrentUserOrderModel") {
@@ -45,25 +52,17 @@ TEST_SUITE("CurrentUserOrderModel") {
       ask_entries->push(
         BookViewModel::UserOrder("TSX", Money(203), 100, OrderStatus::NEW));
       current_bid->set(TableIndex(4, 0));
-      REQUIRE(current.get().has_value());
-      REQUIRE(current.get()->m_side == Side::BID);
-      REQUIRE((current.get()->m_user_order ==
-        BookViewModel::UserOrder("TSX", Money(103), 100, OrderStatus::NEW)));
+      require_current(current, Side::BID,
+        BookViewModel::UserOrder("TSX", Money(103), 100, OrderStatus::NEW));
       current.navigate_to_asks();
-      REQUIRE(current.get().has_value());
-      REQUIRE(current.get()->m_side == Side::ASK);
-      REQUIRE((current.get()->m_user_order ==
-        BookViewModel::UserOrder("TSX", Money(203), 100, OrderStatus::NEW)));
+      require_current(current, Side::ASK,
+        BookViewModel::UserOrder("TSX", Money(203), 100, OrderStatus::NEW));
       current.navigate_to_bids();
-      REQUIRE(current.get().has_value());
-      REQUIRE(current.get()->m_side == Side::BID);
-      REQUIRE((current.get()->m_user_order ==
-        BookViewModel::UserOrder("TSX", Money(103), 100, OrderStatus::NEW)));
+      require_current(current, Side::BID,
+        BookViewModel::UserOrder("TSX", Money(103), 100, OrderStatus::NEW));
       current.navigate_to_asks();
-      REQUIRE(current.get().has_value());
-      REQUIRE(current.get()->m_side == Side::ASK);
-      REQUIRE((current.get()->m_user_order ==
-        BookViewModel::UserOrder("TSX", Money(203), 100, OrderStatus::NEW)));
+      require_current(current, Side::ASK,
+        BookViewModel::UserOrder("TSX", Money(203), 100, OrderStatus::NEW));
     }
     SUBCASE("shifting") {
       bid_entries->push(
@@ -79,15 +78,11 @@ TEST_SUITE("CurrentUserOrderModel") {
       ask_entries->push(
         BookViewModel::UserOrder("TSX", Money(200), 100, OrderStatus::NEW));
       current_bid->set(TableIndex(0, 0));
-      REQUIRE(current.get().has_value());
-      REQUIRE(current.get()->m_side == Side::BID);
-      REQUIRE((current.get()->m_user_order ==
-        BookViewModel::UserOrder("TSX", Money(107), 100, OrderStatus::NEW)));
+      require_current(current, Side::BID,
+        BookViewModel::UserOrder("TSX", Money(107), 100, OrderStatus::NEW));
       current.navigate_to_asks();
-      REQUIRE(current.get().has_value());
-      REQUIRE(current.get()->m_side == Side::ASK);
-      REQUIRE((current.get()->m_user_order ==
-        BookViewModel::UserOrder("TSX", Money(200), 100, OrderStatus::NEW)));
+      require_current(current, Side::ASK,
+        BookViewModel::UserOrder("TSX", Money(200), 100, OrderStatus::NEW));
       ask_entries->insert(BookEntry(make_book_quote(Money(199), Side::ASK)), 0);
       ask_entries->insert(BookEntry(make_book_quote(Money(198), Side::ASK)), 0);
       ask_entries->insert(BookEntry(make_book_quote(Money(197), Side::ASK)), 0);
@@ -97,14 +92,11 @@ TEST_SUITE("CurrentUserOrderModel") {
       ask_entries->insert(BookEntry(
         BookViewModel::UserOrder("TSX", Money(193), 100, OrderStatus::NEW)), 0);
       current.navigate_to_bids();
-      REQUIRE(current.get().has_value());
-      REQUIRE(current.get()->m_side == Side::BID);
-      REQUIRE((current.get()->m_user_order ==
-        BookViewModel::UserOrder("TSX", Money(107), 100, OrderStatus::NEW)));
+      require_current(current, Side::BID,
+        BookViewModel::UserOrder("TSX", Money(107), 100, OrderStatus::NEW));
       current.navigate_to_asks();
-      REQUIRE(current.get()->m_side == Side::ASK);
-      REQUIRE((current.get()->m_user_order ==
-        BookViewModel::UserOrder("TSX", Money(200), 100, OrderStatus::NEW)));
+      require_current(current, Side::ASK,
+        BookViewModel::UserOrder("TSX", Money(200), 100, OrderStatus::NEW));
     }
   }
 }
