@@ -104,7 +104,7 @@ void ConsolidatedUserOrderListModel::withdraw(
   update.m_size -= contribution->m_size;
   update.m_status = order.m_status;
   if(!is_transitioning(order)) {
-    if(update.m_size > 0) {
+    if(update.m_size > 0 || update.m_transition != 0) {
       *i = update;
     } else {
       m_model.remove(i);
@@ -115,6 +115,7 @@ void ConsolidatedUserOrderListModel::withdraw(
     update.m_size = 0;
   }
   ++m_transition_count;
+  update.m_highlight = order.m_status;
   update.m_transition = m_transition_count;
   *i = update;
   QTimer::singleShot(TRANSITION_DURATION, this,
@@ -124,7 +125,7 @@ void ConsolidatedUserOrderListModel::withdraw(
 }
 
 void ConsolidatedUserOrderListModel::expire(
-    const BookViewModel::UserOrder& level, int transition) {
+    const BookViewModel::UserOrder& level, std::uint64_t transition) {
   auto i = find(level);
   if(i == m_model.end() || i->m_transition != transition) {
     return;
@@ -134,6 +135,7 @@ void ConsolidatedUserOrderListModel::expire(
     return;
   }
   auto update = static_cast<BookViewModel::UserOrder>(*i);
+  update.m_highlight = OrderStatus::NONE;
   update.m_transition = 0;
   *i = update;
 }

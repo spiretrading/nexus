@@ -1,5 +1,6 @@
 #ifndef SPIRE_CONSOLIDATED_USER_ORDER_LIST_MODEL_HPP
 #define SPIRE_CONSOLIDATED_USER_ORDER_LIST_MODEL_HPP
+#include <cstdint>
 #include <memory>
 #include <vector>
 #include <boost/optional/optional.hpp>
@@ -37,13 +38,14 @@ namespace Spire {
       std::vector<boost::optional<BookViewModel::UserOrder>> m_contributions;
       ArrayListModel<BookViewModel::UserOrder> m_model;
       BookViewModel::UserOrder m_removed_order;
-      int m_transition_count;
+      std::uint64_t m_transition_count;
       boost::signals2::scoped_connection m_connection;
 
       iterator find(const BookViewModel::UserOrder& order);
       void contribute(int index);
       void withdraw(int index, const BookViewModel::UserOrder& order);
-      void expire(const BookViewModel::UserOrder& level, int transition);
+      void expire(
+        const BookViewModel::UserOrder& level, std::uint64_t transition);
       void on_operation(const Operation& operation);
   };
 }

@@ -149,6 +149,7 @@ namespace {
       auto column_id = static_cast<BookViewColumn>(column);
       if(column_id == BookViewColumn::MPID) {
         auto& mpid_box = static_cast<MpidBox&>(widget);
+        mpid_box.reset();
         auto& entry = static_cast<ProxyValueModel<BookEntry>&>(
           *mpid_box.get_current().get());
         entry.set_source(make_table_value_model<BookEntry>(table, row, column));
@@ -207,6 +208,9 @@ namespace {
         status_highlight.m_text_color, HIGHLIGHT_TRANSITION_DURATION)),
       BackgroundColor(linear(active_highlight.m_background_color,
         status_highlight.m_background_color, HIGHLIGHT_TRANSITION_DURATION)));
+    apply_row_style(style, UserOrderRow(status) && SettledRow(),
+      TextColor(status_highlight.m_text_color),
+      BackgroundColor(status_highlight.m_background_color));
   }
 
   void apply_order_visibility_styles(

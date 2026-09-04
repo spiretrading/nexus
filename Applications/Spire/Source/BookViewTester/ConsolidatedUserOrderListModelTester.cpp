@@ -138,6 +138,7 @@ TEST_SUITE("ConsolidatedUserOrderListModel") {
       REQUIRE(model.get_size() == 1);
       REQUIRE(model.get(0).m_size == 0);
       REQUIRE(model.get(0).m_status == status);
+      REQUIRE(model.get(0).m_highlight == status);
       REQUIRE(model.get(0).m_transition != 0);
     }
   }
@@ -178,7 +179,7 @@ TEST_SUITE("ConsolidatedUserOrderListModel") {
     REQUIRE(model.get_size() == 1);
     REQUIRE(model.get(0).m_size == 100);
     REQUIRE(model.get(0).m_transition == highlight);
-    REQUIRE(model.get(0).m_status == OrderStatus::CANCELED);
+    REQUIRE(model.get(0).m_highlight == OrderStatus::CANCELED);
   }
 
   TEST_CASE("sibling_update_preserves_highlight") {
@@ -191,16 +192,18 @@ TEST_SUITE("ConsolidatedUserOrderListModel") {
     REQUIRE(highlight != 0);
     transition(*source, 1, OrderStatus::PENDING_CANCEL, 200);
     REQUIRE(model.get(0).m_transition == highlight);
-    REQUIRE(model.get(0).m_status == OrderStatus::CANCELED);
+    REQUIRE(model.get(0).m_highlight == OrderStatus::CANCELED);
   }
 
-  TEST_CASE("clear_removes_transitioning_level") {
+  TEST_CASE("transitioning_level_survives_source_removal") {
     auto source =
       make_source({make_user_order("TSX", Money::ONE, 100, OrderStatus::NEW)});
     auto model = ConsolidatedUserOrderListModel(source);
     transition(*source, 0, OrderStatus::CANCELED, 0);
     REQUIRE(model.get_size() == 1);
+    REQUIRE(model.get(0).m_highlight == OrderStatus::CANCELED);
     source->remove(0);
-    REQUIRE(model.get_size() == 0);
+    REQUIRE(model.get_size() == 1);
+    REQUIRE(model.get(0).m_highlight == OrderStatus::CANCELED);
   }
 }

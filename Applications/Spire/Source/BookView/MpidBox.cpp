@@ -33,6 +33,8 @@ MpidBox::MpidBox(std::shared_ptr<BookEntryModel> current,
     : m_current(std::move(current)),
       m_current_status(OrderStatus::NONE),
       m_current_transition(0),
+      m_is_reset(true),
+      m_is_settled(false),
       m_level(std::move(level)),
       m_current_level(m_level->get()),
       m_is_top_mpid(std::move(is_top_mpid)) {
@@ -66,6 +68,10 @@ const std::shared_ptr<ValueModel<bool>>& MpidBox::is_top_mpid() const {
   return m_is_top_mpid;
 }
 
+void MpidBox::reset() {
+  m_is_reset = true;
+}
+
 void MpidBox::update_row_state(int type_index) {
   if(type_index == m_current_type_index) {
     return;
@@ -78,6 +84,10 @@ void MpidBox::update_row_state(int type_index) {
       if(m_current_status != OrderStatus::NONE) {
         unmatch(*this, UserOrderRow(m_current_status));
         m_current_status = OrderStatus::NONE;
+      }
+      if(m_is_settled) {
+        unmatch(*this, SettledRow());
+        m_is_settled = false;
       }
       m_current_transition = 0;
     } else {
@@ -111,7 +121,7 @@ void MpidBox::update_venue_state(const BookEntry& entry) {
 
 void MpidBox::update_status(const BookEntry& entry) {
   auto order = get<BookViewModel::UserOrder>(&entry);
-  auto transition = [&] {
+  auto transition = [&] () -> std::uint64_t {
     if(order) {
       return order->m_transition;
     }
@@ -120,23 +130,33 @@ void MpidBox::update_status(const BookEntry& entry) {
   auto status = [&] () -> OrderStatus {
     if(transition == 0) {
       return OrderStatus::NONE;
-    } else if(order->m_status == OrderStatus::CANCELED ||
-        order->m_status == OrderStatus::FILLED ||
-        order->m_status == OrderStatus::REJECTED) {
-      return order->m_status;
-    } else if(order->m_status == OrderStatus::PARTIALLY_FILLED) {
+    } else if(order->m_highlight == OrderStatus::CANCELED ||
+        order->m_highlight == OrderStatus::FILLED ||
+        order->m_highlight == OrderStatus::REJECTED) {
+      return order->m_highlight;
+    } else if(order->m_highlight == OrderStatus::PARTIALLY_FILLED) {
       return OrderStatus::FILLED;
     }
     return OrderStatus::NONE;
   }();
-  if(status == m_current_status && transition == m_current_transition) {
+  auto is_settled = status != OrderStatus::NONE && m_is_reset;
+  m_is_reset = false;
+  if(status == m_current_status && transition == m_current_transition &&
+      is_settled == m_is_settled) {
     return;
   }
   if(m_current_status != OrderStatus::NONE) {
     unmatch(*this, UserOrderRow(m_current_status));
   }
+  if(m_is_settled) {
+    unmatch(*this, SettledRow());
+  }
   m_current_status = status;
   m_current_transition = transition;
+  m_is_settled = is_settled;
+  if(m_is_settled) {
+    match(*this, SettledRow());
+  }
   if(m_current_status != OrderStatus::NONE) {
     match(*this, UserOrderRow(m_current_status));
   }
