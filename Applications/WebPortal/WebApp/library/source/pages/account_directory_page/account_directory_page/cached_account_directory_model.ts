@@ -49,6 +49,7 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
 
   public async loadFilteredAccounts(filter: string):
       Promise<Beam.Map<Beam.DirectoryEntry, AccountEntry[]>> {
+    const target = filter.toLowerCase();
     let substringLength = filter.length;
     while(substringLength) {
       const substring = filter.substring(0, substringLength);
@@ -59,7 +60,7 @@ export class CachedAccountDirectoryModel extends AccountDirectoryModel {
           for(const pair of superset) {
             const accountSubset: AccountEntry[] = [];
             for(const account of superset.get(pair[0])) {
-              if(account.account.name.indexOf(filter) === 0) {
+              if(account.account.name.toLowerCase().indexOf(target) === 0) {
                 accountSubset.push(account);
               }
             }

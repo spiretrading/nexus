@@ -21,10 +21,10 @@ std::string LegacyBookViewWindowSettings::GetName() const {
 QWidget* LegacyBookViewWindowSettings::Reopen(
     Ref<UserProfile> user_profile) const {
   auto window = new BookViewWindow(Ref(user_profile),
-    user_profile->GetTickerInfoQueryModel(),
-    user_profile->GetKeyBindings(),
+    user_profile->GetTickerInfoQueryModel(), user_profile->GetKeyBindings(),
     user_profile->GetBookViewPropertiesWindowFactory(),
-    user_profile->GetBookViewModelBuilder(), m_identifier);
+    user_profile->GetBookViewModelBuilder(),
+    user_profile->AcquirePropertyHub(m_identifier, m_link_identifier));
   Apply(Ref(user_profile), out(*window));
   return window;
 }
@@ -36,8 +36,7 @@ void LegacyBookViewWindowSettings::Apply(
   auto frame_height = get_frame_height();
   window.move(window.x(), window.y() - frame_height);
   window.resize(window.width(), window.height() + frame_height);
-  if(m_ticker) {
+  if(m_ticker && !window.m_ticker_view->get_current()->get()) {
     window.m_ticker_view->get_current()->set(m_ticker);
   }
-  window.m_link_identifier = m_link_identifier;
 }

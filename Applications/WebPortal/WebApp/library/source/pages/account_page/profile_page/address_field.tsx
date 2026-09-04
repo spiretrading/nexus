@@ -4,6 +4,9 @@ import { DisplaySize } from '../../..';
 
 interface Properties {
 
+  /** The id of the underlying textarea. */
+  id?: string;
+
   /** The size to display the component at. */
   displaySize: DisplaySize;
 
@@ -45,8 +48,7 @@ export class AddressField extends React.Component<Properties, State> {
   constructor(props: Properties) {
     super(props);
     this.state = {
-      displayValue: this.props.addressLineOne + 
-        '\n' + this.props.addressLineTwo + '\n' + this.props.addressLineThree,
+      displayValue: this.toDisplayValue(),
       isEditing: false
     };
   }
@@ -72,21 +74,18 @@ export class AddressField extends React.Component<Properties, State> {
       }
     })();
     const heightOverride = (() => {
-      if(this.props.readonly) {
-        if(this.props.addressLineTwo === '' &&
-            this.props.addressLineThree === '') {
-          return AddressField.STYLE.singleLineHeight;
-        } else if(this.props.addressLineThree === ''){
-          return AddressField.STYLE.doubleLineHeight;
-        } else {
-          return AddressField.STYLE.tripleLineHeight;
-        }
+      const lineCount = this.state.displayValue.split('\n').length;
+      if(lineCount <= 1) {
+        return AddressField.STYLE.singleLineHeight;
+      } else if(lineCount === 2) {
+        return AddressField.STYLE.doubleLineHeight;
       } else {
-        return null;
+        return AddressField.STYLE.tripleLineHeight;
       }
     })();
     return (
       <textarea
+        id={this.props.id}
         spellCheck={!this.props.readonly}
         rows={3}
         disabled={this.props.readonly}
@@ -98,10 +97,6 @@ export class AddressField extends React.Component<Properties, State> {
         onChange={this.onChange}/>);
   }
 
-  public onComponentDidMount() {
-    this.updateDisplayValue();
-  }
-
   public componentDidUpdate(prevProps: Properties) {
     if(!this.state.isEditing && (
         prevProps.addressLineOne !== this.props.addressLineOne ||
@@ -111,20 +106,21 @@ export class AddressField extends React.Component<Properties, State> {
     }
   }
 
+  private toDisplayValue(): string {
+    if(this.props.addressLineTwo === '' &&
+        this.props.addressLineThree === '') {
+      return this.props.addressLineOne;
+    } else if(this.props.addressLineThree === '') {
+      return this.props.addressLineOne + '\n' + this.props.addressLineTwo;
+    } else {
+      return (this.props.addressLineOne +
+        '\n' + this.props.addressLineTwo +
+        '\n' + this.props.addressLineThree);
+    }
+  }
+
   private updateDisplayValue() {
-    const displayText = (() => {
-      if(this.props.addressLineTwo === '' &&
-          this.props.addressLineThree === '') {
-        return this.props.addressLineOne;
-      } else if(this.props.addressLineThree === '') {
-        return this.props.addressLineOne + '\n' + this.props.addressLineTwo;
-      } else {
-        return (this.props.addressLineOne +
-          '\n' + this.props.addressLineTwo +
-          '\n' + this.props.addressLineThree);
-      }
-    })();
-    this.setState({displayValue: displayText});
+    this.setState({displayValue: this.toDisplayValue()});
   }
 
   private onBlur = () => {
@@ -168,14 +164,13 @@ export class AddressField extends React.Component<Properties, State> {
       paddingBottom: '7px',
       backgroundColor: '#FFFFFF',
       flexGrow: 1,
-      minWidth: '284px',
       width: '100%'
     } as React.CSSProperties,
     containerMedium: {
       boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
-      minWidth: '284px',
+      width: '100%',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
@@ -191,7 +186,7 @@ export class AddressField extends React.Component<Properties, State> {
       boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
-      minWidth: '350px',
+      width: '100%',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       font: '400 14px Roboto',
@@ -218,14 +213,13 @@ export class AddressField extends React.Component<Properties, State> {
       paddingBottom: '7px',
       backgroundColor: '#FFFFFF',
       flexGrow: 1,
-      minWidth: '284px',
       width: '100%'
     } as React.CSSProperties,
     readonlyMedium: {
       boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
-      minWidth: '284px',
+      width: '100%',
       border: '1px solid #FFFFFF',
       borderRadius: '1px',
       font: '400 14px Roboto',
@@ -241,7 +235,7 @@ export class AddressField extends React.Component<Properties, State> {
       boxSizing: 'border-box',
       resize: 'none',
       height: '75px',
-      minWidth: '350px',
+      width: '100%',
       border: '1px solid #FFFFFF',
       borderRadius: '1px',
       font: '400 14px Roboto',

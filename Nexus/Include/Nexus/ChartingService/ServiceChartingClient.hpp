@@ -9,6 +9,7 @@
 #include <Beam/Queues/ConverterQueueWriter.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <boost/atomic/atomic.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/ChartingService/ChartingClient.hpp"
@@ -79,8 +80,8 @@ namespace Nexus {
       out(m_client_handler.get_slots()),
       std::bind_front(&ServiceChartingClient::on_ticker_query, this));
   } catch(const std::exception&) {
-    std::throw_with_nested(Beam::ConnectException(
-      "Failed to connect to the charting server."));
+    Beam::throw_nested_with_location(
+      Beam::ConnectException("Failed to connect to the charting server."));
   }
 
   template<typename B>
@@ -93,7 +94,8 @@ namespace Nexus {
       Beam::ScopedQueueWriter<QueryVariant> queue) {
     if(query.get_range().get_end() == Beam::Sequence::LAST) {
       m_query_routines.spawn([=, this, queue = std::move(queue)] () mutable {
-        auto filter = Beam::translate<EvaluatorTranslator>(query.get_filter());
+        auto filter = Beam::translate<EvaluatorTranslator>(
+          query.get_filter(), typeid(QueryVariant));
         auto conversion_queue = Beam::convert<SequencedQueryVariant>(
           std::move(queue), [] (const auto& value) {
             return *value;

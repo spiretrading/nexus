@@ -403,7 +403,7 @@ export class ProfilePage extends React.Component<Properties, State> {
                   <Dali.Padding size={ProfilePage.LINE_PADDING}/>
                   <HLine color={ProfilePage.LINE_COLOR}/>
                   <Dali.Padding size={ProfilePage.LINE_PADDING}/>
-                  <FormEntry name='Address'
+                  <FormEntry name='Street Address'
                       displaySize={this.props.displaySize}>
                     <AddressField
                       addressLineOne={this.state.newIdentity.addressLineOne}

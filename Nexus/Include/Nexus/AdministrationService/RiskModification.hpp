@@ -22,6 +22,8 @@ namespace Nexus {
       /** Returns the requested risk parameters. */
       const RiskParameters& get_parameters() const;
 
+      bool operator ==(const RiskModification&) const = default;
+
     private:
       friend struct Beam::Shuttle<RiskModification>;
       RiskParameters m_parameters;

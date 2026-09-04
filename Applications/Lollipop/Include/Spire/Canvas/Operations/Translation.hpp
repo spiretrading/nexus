@@ -38,7 +38,7 @@ namespace Details {
        * Constructs a Translation for a reactor.
        * @param reactor The reactor that was translated.
        */
-      template<typename R, typename=std::enable_if_t<Aspen::is_reactor_v<R>>>
+      template<typename R> requires Aspen::IsReactor<std::remove_cvref_t<R>>
       Translation(R&& reactor);
 
       /** Returns the type of value produced by the translated reactor. */
@@ -109,7 +109,7 @@ namespace Details {
     : m_type(&typeid(Aspen::reactor_result_t<Aspen::Shared<R>>)),
       m_holder(std::make_shared<Holder<R>>(std::move(reactor))) {}
 
-  template<typename R, typename>
+  template<typename R> requires Aspen::IsReactor<std::remove_cvref_t<R>>
   Translation::Translation(R&& reactor)
     : m_type(&typeid(Aspen::reactor_result_t<R>)),
       m_holder(std::make_shared<Holder<std::decay_t<R>>>(
@@ -203,7 +203,7 @@ namespace Details {
             Aspen::constant(m_reactor.eval())));
         } catch(...) {
           return std::make_shared<Holder<Aspen::Box<Type>>>(Aspen::box(
-            Aspen::throws<Type>(std::current_exception())));
+            Aspen::Throw<Type>(std::current_exception())));
         }
       } else {
         try {
@@ -211,7 +211,7 @@ namespace Details {
             Aspen::constant(m_reactor.eval()));
         } catch(...) {
           return std::make_shared<Holder<Aspen::Throw<Type>>>(
-            Aspen::throws<Type>(std::current_exception()));
+            Aspen::Throw<Type>(std::current_exception()));
         }
       }
     }

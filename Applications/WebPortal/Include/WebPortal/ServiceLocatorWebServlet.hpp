@@ -63,6 +63,7 @@ namespace Nexus {
       Beam::HttpResponse on_store_password(const Beam::HttpRequest& request);
       Beam::HttpResponse on_search_directory_entry(
         const Beam::HttpRequest& request);
+      Beam::HttpResponse on_find_account(const Beam::HttpRequest& request);
       Beam::HttpResponse on_create_account(const Beam::HttpRequest& request);
       Beam::HttpResponse on_create_group(const Beam::HttpRequest& request);
       Beam::HttpResponse on_login_from_session(

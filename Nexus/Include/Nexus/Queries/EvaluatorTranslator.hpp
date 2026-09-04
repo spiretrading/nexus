@@ -1,42 +1,78 @@
 #ifndef NEXUS_EVALUATOR_TRANSLATOR_HPP
 #define NEXUS_EVALUATOR_TRANSLATOR_HPP
 #include <memory>
+#include <typeindex>
+#include <unordered_map>
 #include <vector>
 #include <Beam/Collections/SynchronizedSet.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Queries/EvaluatorTranslator.hpp>
+#include <Beam/Queries/ExpressionTranslationException.hpp>
 #include <Beam/Queries/FunctionEvaluatorNode.hpp>
 #include <Beam/Queries/MemberAccessEvaluatorNode.hpp>
-#include <Beam/Utilities/Casts.hpp>
+#include <boost/throw_exception.hpp>
 #include "Nexus/Queries/ExpressionVisitor.hpp"
 #include "Nexus/Queries/StandardDataTypes.hpp"
 
 namespace Nexus {
+
+  /**
+   * Stores the status updates of account modification requests, keyed by the
+   * id of the request they belong to.
+   */
+  using AccountModificationRequestUpdates =
+    std::unordered_map<AccountModificationRequest::Id,
+      std::vector<AccountModificationRequest::Update>>;
 
   /** Translates an Expression into an EvaluatorNode. */
   class EvaluatorTranslator : public Beam::EvaluatorTranslator<QueryTypes>,
       protected ExpressionVisitor {
     public:
 
-      /** Constructs an EvaluatorTranslator. */
+      /**
+       * Constructs an EvaluatorTranslator for an Expression evaluated without
+       * a parameter.
+       */
       EvaluatorTranslator();
 
       /**
+       * Constructs an EvaluatorTranslator.
+       * @param type The type of value the parameters are bound to.
+       */
+      explicit EvaluatorTranslator(std::type_index type);
+
+      /**
        * Constructs an EvaluatorTranslator maintaining a set of live Orders.
+       * @param type The type of value the parameters are bound to.
        * @param live_orders The set of live Orders.
        */
-      explicit EvaluatorTranslator(
+      EvaluatorTranslator(std::type_index type,
         Beam::Ref<const Beam::SynchronizedUnorderedSet<OrderId>> live_orders);
 
+      /**
+       * Constructs an EvaluatorTranslator able to access the members of an
+       * account modification request that are stored separately from it.
+       * @param type The type of value the parameters are bound to.
+       * @param request_updates The updates of every account modification
+       *        request.
+       */
+      EvaluatorTranslator(std::type_index type,
+        Beam::Ref<const AccountModificationRequestUpdates> request_updates);
+
       std::unique_ptr<Beam::EvaluatorTranslator<QueryTypes>>
-        make_translator() const override;
+        make_translator(std::type_index type) const override;
 
     protected:
       void visit(const Beam::MemberAccessExpression& expression) override;
 
     private:
       const Beam::SynchronizedUnorderedSet<OrderId>* m_live_orders;
+      const AccountModificationRequestUpdates* m_request_updates;
 
+      static const std::vector<AccountModificationRequest::Update>*
+        find_updates(const AccountModificationRequestUpdates& updates,
+          AccountModificationRequest::Id id);
+      const AccountModificationRequestUpdates& require_request_updates() const;
       void translate_ticker_member_access_expression(
         const Beam::MemberAccessExpression& expression);
       void translate_ticker_info_member_access_expression(
@@ -57,22 +93,56 @@ namespace Nexus {
         const Beam::MemberAccessExpression& expression);
       void translate_order_info_member_access_expression(
         const Beam::MemberAccessExpression& expression);
+      void translate_account_modification_request_member_access_expression(
+        const Beam::MemberAccessExpression& expression);
   };
 
   inline EvaluatorTranslator::EvaluatorTranslator()
-    : m_live_orders(nullptr) {}
+    : EvaluatorTranslator(typeid(void)) {}
 
-  inline EvaluatorTranslator::EvaluatorTranslator(
+  inline EvaluatorTranslator::EvaluatorTranslator(std::type_index type)
+    : Beam::EvaluatorTranslator<QueryTypes>(type),
+      m_live_orders(nullptr),
+      m_request_updates(nullptr) {}
+
+  inline EvaluatorTranslator::EvaluatorTranslator(std::type_index type,
     Beam::Ref<const Beam::SynchronizedUnorderedSet<OrderId>> live_orders)
-    : m_live_orders(live_orders.get()) {}
+    : Beam::EvaluatorTranslator<QueryTypes>(type),
+      m_live_orders(live_orders.get()),
+      m_request_updates(nullptr) {}
+
+  inline EvaluatorTranslator::EvaluatorTranslator(std::type_index type,
+    Beam::Ref<const AccountModificationRequestUpdates> request_updates)
+    : Beam::EvaluatorTranslator<QueryTypes>(type),
+      m_live_orders(nullptr),
+      m_request_updates(request_updates.get()) {}
 
   inline std::unique_ptr<Beam::EvaluatorTranslator<QueryTypes>>
-      EvaluatorTranslator::make_translator() const {
-    if(m_live_orders) {
-      return std::make_unique<EvaluatorTranslator>(Beam::Ref(*m_live_orders));
-    } else {
-      return std::make_unique<EvaluatorTranslator>();
+      EvaluatorTranslator::make_translator(std::type_index type) const {
+    auto translator = std::make_unique<EvaluatorTranslator>(type);
+    translator->m_live_orders = m_live_orders;
+    translator->m_request_updates = m_request_updates;
+    return translator;
+  }
+
+  inline const std::vector<AccountModificationRequest::Update>*
+      EvaluatorTranslator::find_updates(
+        const AccountModificationRequestUpdates& updates,
+        AccountModificationRequest::Id id) {
+    auto entry = updates.find(id);
+    if(entry == updates.end() || entry->second.empty()) {
+      return nullptr;
     }
+    return &entry->second;
+  }
+
+  inline const AccountModificationRequestUpdates&
+      EvaluatorTranslator::require_request_updates() const {
+    if(!m_request_updates) {
+      boost::throw_with_location(Beam::ExpressionTranslationException(
+        "Account modification request updates not available."));
+    }
+    return *m_request_updates;
   }
 
   inline void EvaluatorTranslator::visit(
@@ -98,6 +168,10 @@ namespace Nexus {
       translate_order_fields_member_access_expression(expression);
     } else if(expression.get_expression().get_type() == typeid(OrderInfo)) {
       translate_order_info_member_access_expression(expression);
+    } else if(expression.get_expression().get_type() ==
+        typeid(AccountModificationRequest)) {
+      translate_account_modification_request_member_access_expression(
+        expression);
     } else {
       Beam::EvaluatorTranslator<QueryTypes>::visit(expression);
     }
@@ -105,9 +179,8 @@ namespace Nexus {
 
   inline void EvaluatorTranslator::translate_ticker_member_access_expression(
       const Beam::MemberAccessExpression& expression) {
-    expression.get_expression().apply(*this);
     auto ticker_expression =
-      Beam::static_pointer_cast<Beam::EvaluatorNode<Ticker>>(get_evaluator());
+      translate_operand<Ticker>(expression.get_expression());
     if(expression.get_name() == "symbol") {
       set_evaluator(Beam::make_function_evaluator_node(
         [] (const Ticker& ticker) {
@@ -127,9 +200,8 @@ namespace Nexus {
   inline void EvaluatorTranslator::
       translate_ticker_info_member_access_expression(
         const Beam::MemberAccessExpression& expression) {
-    expression.get_expression().apply(*this);
-    auto ticker_info_expression = Beam::static_pointer_cast<
-      Beam::EvaluatorNode<TickerInfo>>(get_evaluator());
+    auto ticker_info_expression =
+      translate_operand<TickerInfo>(expression.get_expression());
     if(expression.get_name() == "ticker") {
       set_evaluator(std::make_unique<
         Beam::MemberAccessEvaluatorNode<TickerInfo, Ticker>>(
@@ -153,9 +225,8 @@ namespace Nexus {
 
   inline void EvaluatorTranslator::translate_quote_member_access_expression(
       const Beam::MemberAccessExpression& expression) {
-    expression.get_expression().apply(*this);
     auto quote_expression =
-      Beam::static_pointer_cast<Beam::EvaluatorNode<Quote>>(get_evaluator());
+      translate_operand<Quote>(expression.get_expression());
     if(expression.get_name() == "price") {
       set_evaluator(
         std::make_unique<Beam::MemberAccessEvaluatorNode<Quote, Money>>(
@@ -175,9 +246,8 @@ namespace Nexus {
 
   inline void EvaluatorTranslator::translate_bbo_quote_member_access_expression(
       const Beam::MemberAccessExpression& expression) {
-    expression.get_expression().apply(*this);
     auto bbo_quote_expression =
-      Beam::static_pointer_cast<Beam::EvaluatorNode<BboQuote>>(get_evaluator());
+      translate_operand<BboQuote>(expression.get_expression());
     if(expression.get_name() == "bid") {
       set_evaluator(
         std::make_unique<Beam::MemberAccessEvaluatorNode<BboQuote, Quote>>(
@@ -198,9 +268,8 @@ namespace Nexus {
   inline void EvaluatorTranslator::
       translate_book_quote_member_access_expression(
         const Beam::MemberAccessExpression& expression) {
-    expression.get_expression().apply(*this);
-    auto book_quote_expression = Beam::static_pointer_cast<
-      Beam::EvaluatorNode<BookQuote>>(get_evaluator());
+    auto book_quote_expression =
+      translate_operand<BookQuote>(expression.get_expression());
     if(expression.get_name() == "mpid") {
       set_evaluator(std::make_unique<
         Beam::MemberAccessEvaluatorNode<BookQuote, std::string>>(
@@ -229,9 +298,8 @@ namespace Nexus {
   inline void EvaluatorTranslator::
       translate_order_imbalance_member_access_expression(
         const Beam::MemberAccessExpression& expression) {
-    expression.get_expression().apply(*this);
-    auto imbalance_expression = Beam::static_pointer_cast<
-      Beam::EvaluatorNode<OrderImbalance>>(get_evaluator());
+    auto imbalance_expression =
+      translate_operand<OrderImbalance>(expression.get_expression());
     if(expression.get_name() == "ticker") {
       set_evaluator(std::make_unique<
         Beam::MemberAccessEvaluatorNode<OrderImbalance, Ticker>>(
@@ -261,9 +329,8 @@ namespace Nexus {
   inline void EvaluatorTranslator::
       translate_ticker_status_member_access_expression(
         const Beam::MemberAccessExpression& expression) {
-    expression.get_expression().apply(*this);
-    auto status_expression = Beam::static_pointer_cast<
-      Beam::EvaluatorNode<TickerStatus>>(get_evaluator());
+    auto status_expression =
+      translate_operand<TickerStatus>(expression.get_expression());
     if(expression.get_name() == "venue") {
       set_evaluator(
         std::make_unique<Beam::MemberAccessEvaluatorNode<TickerStatus, Venue>>(
@@ -289,9 +356,8 @@ namespace Nexus {
   inline void EvaluatorTranslator::
       translate_time_and_sale_member_access_expression(
         const Beam::MemberAccessExpression& expression) {
-    expression.get_expression().apply(*this);
-    auto time_and_sale_expression = Beam::static_pointer_cast<
-      Beam::EvaluatorNode<TimeAndSale>>(get_evaluator());
+    auto time_and_sale_expression =
+      translate_operand<TimeAndSale>(expression.get_expression());
     if(expression.get_name() == "timestamp") {
       set_evaluator(std::make_unique<Beam::MemberAccessEvaluatorNode<
         TimeAndSale, boost::posix_time::ptime>>(
@@ -324,9 +390,8 @@ namespace Nexus {
   inline void EvaluatorTranslator::
       translate_order_fields_member_access_expression(
         const Beam::MemberAccessExpression& expression) {
-    expression.get_expression().apply(*this);
-    auto order_fields_expression = Beam::static_pointer_cast<
-      Beam::EvaluatorNode<OrderFields>>(get_evaluator());
+    auto order_fields_expression =
+      translate_operand<OrderFields>(expression.get_expression());
     if(expression.get_name() == "ticker") {
       set_evaluator(std::make_unique<
         Beam::MemberAccessEvaluatorNode<OrderFields, Ticker>>(
@@ -339,9 +404,8 @@ namespace Nexus {
   inline void EvaluatorTranslator::
       translate_order_info_member_access_expression(
         const Beam::MemberAccessExpression& expression) {
-    expression.get_expression().apply(*this);
-    auto order_info_expression = Beam::static_pointer_cast<
-      Beam::EvaluatorNode<OrderInfo>>(get_evaluator());
+    auto order_info_expression =
+      translate_operand<OrderInfo>(expression.get_expression());
     if(expression.get_name() == "fields") {
       set_evaluator(std::make_unique<
         Beam::MemberAccessEvaluatorNode<OrderInfo, OrderFields>>(
@@ -366,6 +430,64 @@ namespace Nexus {
           }
           return live_orders->contains(info.m_id);
         }, std::move(order_info_expression)));
+    } else {
+      Beam::EvaluatorTranslator<QueryTypes>::visit(expression);
+    }
+  }
+
+  inline void EvaluatorTranslator::
+      translate_account_modification_request_member_access_expression(
+        const Beam::MemberAccessExpression& expression) {
+    auto request_expression =
+      translate_operand<AccountModificationRequest>(expression.get_expression());
+    if(expression.get_name() == "id") {
+      set_evaluator(Beam::make_function_evaluator_node(
+        [] (const AccountModificationRequest& request) {
+          return request.get_id();
+        }, std::move(request_expression)));
+    } else if(expression.get_name() == "type") {
+      set_evaluator(Beam::make_function_evaluator_node(
+        [] (const AccountModificationRequest& request) {
+          return static_cast<int>(request.get_type());
+        }, std::move(request_expression)));
+    } else if(expression.get_name() == "account") {
+      set_evaluator(Beam::make_function_evaluator_node(
+        [] (const AccountModificationRequest& request) {
+          return static_cast<int>(request.get_account().m_id);
+        }, std::move(request_expression)));
+    } else if(expression.get_name() == "submission_account") {
+      set_evaluator(Beam::make_function_evaluator_node(
+        [] (const AccountModificationRequest& request) {
+          return static_cast<int>(request.get_submission_account().m_id);
+        }, std::move(request_expression)));
+    } else if(expression.get_name() == "timestamp") {
+      set_evaluator(Beam::make_function_evaluator_node(
+        [] (const AccountModificationRequest& request) {
+          return request.get_timestamp();
+        }, std::move(request_expression)));
+    } else if(expression.get_name() == "effective_date") {
+      set_evaluator(Beam::make_function_evaluator_node(
+        [] (const AccountModificationRequest& request) {
+          return request.get_effective_date();
+        }, std::move(request_expression)));
+    } else if(expression.get_name() == "status") {
+      set_evaluator(Beam::make_function_evaluator_node(
+        [&updates = require_request_updates()] (
+            const AccountModificationRequest& request) {
+          if(auto entry = find_updates(updates, request.get_id())) {
+            return static_cast<int>(entry->back().m_status);
+          }
+          return static_cast<int>(AccountModificationRequest::Status::NONE);
+        }, std::move(request_expression)));
+    } else if(expression.get_name() == "last_update_timestamp") {
+      set_evaluator(Beam::make_function_evaluator_node(
+        [&updates = require_request_updates()] (
+            const AccountModificationRequest& request) {
+          if(auto entry = find_updates(updates, request.get_id())) {
+            return entry->back().m_timestamp;
+          }
+          return request.get_timestamp();
+        }, std::move(request_expression)));
     } else {
       Beam::EvaluatorTranslator<QueryTypes>::visit(expression);
     }

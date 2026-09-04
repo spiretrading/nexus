@@ -5,6 +5,9 @@ import * as ReactDOM from 'react-dom';
 import * as Router from 'react-router-dom';
 import * as WebPortal from 'web_portal';
 
+const Status = WebPortal.CreateGroupModal.Status;
+const RejectReason = WebPortal.CreateGroupModal.RejectReason;
+
 interface Properties {
   displaySize: WebPortal.DisplaySize;
 }
@@ -16,7 +19,10 @@ interface State {
   filter: string;
   filteredGroups: Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>;
   model: WebPortal.AccountDirectoryModel;
-  statusCreateGroup: string;
+  statusCreateGroup: WebPortal.CreateGroupModal.Status;
+  rejectReasonCreateGroup: WebPortal.CreateGroupModal.RejectReason;
+  isCreateGroupModalOpen: boolean;
+  isServerUnavailable: boolean;
 }
 
 /**  Displays and tests the AccountDirectoryPage. */
@@ -26,12 +32,17 @@ class TestApp extends React.Component<Properties, State> {
     this.state = {
       roles: this.testAdmin,
       groups: [] as Beam.DirectoryEntry[] ,
-      openedGroups: new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
+      openedGroups:
+        new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
       filter: '',
-      filteredGroups: new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
+      filteredGroups:
+        new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>(),
       model: new WebPortal.LocalAccountDirectoryModel(
         new Beam.Map<Beam.DirectoryEntry, WebPortal.AccountEntry[]>()),
-      statusCreateGroup: ''
+      statusCreateGroup: Status.NONE,
+      rejectReasonCreateGroup: RejectReason.DUPLICATE_NAME,
+      isCreateGroupModalOpen: false,
+      isServerUnavailable: false
     };
     this.changeRole = this.changeRole.bind(this);
     this.onCardClick = this.onCardClick.bind(this);
@@ -40,10 +51,10 @@ class TestApp extends React.Component<Properties, State> {
 
   public render(): JSX.Element {
     const errorButtonText = (() => {
-      if(this.state.statusCreateGroup === '') {
-        return 'NO ERROR';
+      if(this.state.isServerUnavailable) {
+        return 'SERVER DOWN';
       } else {
-        return 'ERROR'
+        return 'SERVER UP';
       }
     })();
     return (
@@ -58,6 +69,10 @@ class TestApp extends React.Component<Properties, State> {
           onFilterChange={this.onChange}
           onCardClick={this.onCardClick}
           createGroupStatus={this.state.statusCreateGroup}
+          createGroupRejectReason={this.state.rejectReasonCreateGroup}
+          isCreateGroupModalOpen={this.state.isCreateGroupModalOpen}
+          onCreateGroupClick={this.onCreateGroupClick}
+          onCloseCreateGroup={this.onCloseCreateGroup}
           onCreateGroup={this.onCreateNewGroup}/>
         <div style={TestApp.STYLE.testingComponents}>
           <button tabIndex={-1}
@@ -156,13 +171,14 @@ class TestApp extends React.Component<Properties, State> {
 
   private changeRole(newRole: Nexus.AccountRoles.Role): void {
     if(newRole === Nexus.AccountRoles.Role.ADMINISTRATOR) {
-      this.setState({roles: this.testAdmin, statusCreateGroup: ''});
+      this.setState({roles: this.testAdmin, statusCreateGroup: Status.NONE});
     }
     if(newRole === Nexus.AccountRoles.Role.TRADER) {
-      this.setState({roles: this.testTrader, statusCreateGroup: ''});
+      this.setState({roles: this.testTrader, statusCreateGroup: Status.NONE});
     }
     if(newRole === Nexus.AccountRoles.Role.MANAGER) {
-      this.setState({ roles: this.testManager, statusCreateGroup: ''});
+      this.setState({roles: this.testManager,
+        statusCreateGroup: Status.NONE});
     }
   }
 
@@ -182,22 +198,40 @@ class TestApp extends React.Component<Properties, State> {
   }
 
   private onToggleError = () => {
-    if(this.state.statusCreateGroup === '') {
-      this.setState({statusCreateGroup: 'Server Issue'});
-    } else {
-      this.setState({statusCreateGroup: ''});
-    }
+    this.setState({isServerUnavailable: !this.state.isServerUnavailable});
   }
 
-  private onCreateNewGroup = (groupName: string) => {
-    if(this.state.statusCreateGroup === '') {
-      clearTimeout(this.timerId);
-      this.timerId = setTimeout(
-        async () => {
-          const newGroup = await this.state.model.createGroup(groupName);
-          this.state.groups.push(newGroup);
-          this.setState({groups: this.state.groups});
-        }, 100);
+  private onCreateGroupClick = () => {
+    this.setState({
+      isCreateGroupModalOpen: true,
+      statusCreateGroup: Status.NONE
+    });
+  }
+
+  private onCloseCreateGroup = () => {
+    this.setState({isCreateGroupModalOpen: false});
+  }
+
+  private onCreateNewGroup = async (groupName: string) => {
+    this.setState({statusCreateGroup: Status.IN_PROGRESS});
+    await new Promise(resolve => setTimeout(resolve, 100));
+    if(this.state.isServerUnavailable) {
+      this.setState({statusCreateGroup: Status.UNAVAILABLE});
+      return;
+    }
+    try {
+      const newGroup = await this.state.model.createGroup(groupName);
+      this.state.groups.push(newGroup);
+      this.setState({
+        groups: this.state.groups,
+        statusCreateGroup: Status.COMPLETE,
+        isCreateGroupModalOpen: false
+      });
+    } catch(error: any) {
+      this.setState({
+        statusCreateGroup: Status.REJECTED,
+        rejectReasonCreateGroup: RejectReason.DUPLICATE_NAME
+      });
     }
   }
 

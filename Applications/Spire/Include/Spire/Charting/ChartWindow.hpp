@@ -11,9 +11,10 @@
 #include "Spire/Charting/ChartPlotController.hpp"
 #include "Spire/Charting/ChartValue.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
-#include "Spire/LegacyUI/TickerContext.hpp"
 #include "Spire/LegacyUI/TickerViewStack.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Spire/PropertyHubMember.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 #include "Spire/Ui/TickerDialog.hpp"
 
 class QMenu;
@@ -22,19 +23,28 @@ class Ui_ChartWindow;
 namespace Spire {
 
   /** Displays a chart. */
-  class ChartWindow : public QMainWindow, public LegacyUI::PersistentWindow,
-      public LegacyUI::TickerContext {
+  class ChartWindow : public QMainWindow, public LegacyUI::PersistentWindow {
     public:
 
       /**
        * Constructs a ChartWindow.
        * @param userProfile The user's profile.
-       * @param identifier The TickerContext's identifier.
        * @param parent The parent widget.
        * @param flags Qt flags passed to the parent widget.
        */
       explicit ChartWindow(Beam::Ref<UserProfile> userProfile,
-        const std::string& identifier = "", QWidget* parent = nullptr,
+        QWidget* parent = nullptr, Qt::WindowFlags flags = Qt::WindowFlags());
+
+      /**
+       * Constructs a ChartWindow.
+       * @param userProfile The user's profile.
+       * @param hub The PropertyHub storing the properties shared with the
+       *        components this window is linked to.
+       * @param parent The parent widget.
+       * @param flags Qt flags passed to the parent widget.
+       */
+      ChartWindow(Beam::Ref<UserProfile> userProfile,
+        std::shared_ptr<PropertyHub> hub, QWidget* parent = nullptr,
         Qt::WindowFlags flags = Qt::WindowFlags());
 
       /** Returns the ChartInteractionMode. */
@@ -65,11 +75,8 @@ namespace Spire {
         GetWindowSettings() const override;
 
     protected:
-      void showEvent(QShowEvent* event) override;
       void closeEvent(QCloseEvent* event) override;
       void keyPressEvent(QKeyEvent* event) override;
-      void HandleLink(TickerContext& context) override;
-      void HandleUnlink() override;
 
     private:
       friend class ChartWindowSettings;
@@ -80,12 +87,13 @@ namespace Spire {
       TickerDialog* m_tickerDialog;
       ChartInteractionMode m_interactionMode;
       std::optional<ChartPlotController> m_controller;
+      PropertyHubMember m_member;
+      std::shared_ptr<ValueModel<Nexus::Ticker>> m_tickerModel;
       Nexus::Ticker m_ticker;
-      std::string m_linkIdentifier;
       LegacyUI::TickerViewStack m_tickerViewStack;
       ChartValue m_xPan;
       ChartValue m_yPan;
-      boost::signals2::scoped_connection m_linkConnection;
+      boost::signals2::scoped_connection m_tickerConnection;
       boost::signals2::scoped_connection m_verticalSliderConnection;
       boost::signals2::scoped_connection m_horizontalSliderConnection;
       boost::signals2::scoped_connection m_intervalChangedConnection;
@@ -111,6 +119,7 @@ namespace Spire {
       void OnLinkMenuActionTriggered(bool triggered);
       void OnLinkActionTriggered(QAction* action);
       void OnTickerSubmit(const Nexus::Ticker& ticker);
+      void OnTickerUpdate(const Nexus::Ticker& ticker);
   };
 }
 

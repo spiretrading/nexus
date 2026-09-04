@@ -37,6 +37,14 @@ namespace {
       info.m_timestamp = m_environment.get_time_environment().get_time();
       return info;
     }
+
+    OrderInfo make_bid_market(OrderId id) {
+      auto info = OrderInfo();
+      info.m_fields = make_market_order_fields(SHOP, Side::BID, 100);
+      info.m_id = id;
+      info.m_timestamp = m_environment.get_time_environment().get_time();
+      return info;
+    }
   };
 }
 
@@ -64,6 +72,28 @@ TEST_SUITE("SimulationOrderExecutionDriver") {
     REQUIRE(reports->pop().m_status == OrderStatus::NEW);
     fixture.m_environment.update_bbo_price(SHOP, Money::ONE, Money::ONE);
     REQUIRE(reports->pop().m_status == OrderStatus::FILLED);
+  }
+
+  TEST_CASE("market_order_fills_after_a_late_bbo_quote") {
+    auto fixture = Fixture();
+    auto driver = fixture.make_driver();
+    auto rejection = driver.submit(fixture.make_bid_market(1));
+    auto rejection_reports = std::make_shared<Queue<ExecutionReport>>();
+    rejection->get_publisher().monitor(rejection_reports);
+    REQUIRE(rejection_reports->pop().m_status == OrderStatus::PENDING_NEW);
+    auto rejection_report = rejection_reports->pop();
+    REQUIRE(rejection_report.m_status == OrderStatus::REJECTED);
+    REQUIRE(rejection_report.m_text == "No BBO quote available.");
+    fixture.m_environment.update_bbo_price(SHOP, Money::ONE, Money::ONE);
+    flush_pending_routines();
+    auto order = driver.submit(fixture.make_bid_market(2));
+    auto reports = std::make_shared<Queue<ExecutionReport>>();
+    order->get_publisher().monitor(reports);
+    REQUIRE(reports->pop().m_status == OrderStatus::PENDING_NEW);
+    REQUIRE(reports->pop().m_status == OrderStatus::NEW);
+    auto report = reports->pop();
+    REQUIRE(report.m_status == OrderStatus::FILLED);
+    REQUIRE(report.m_last_price == Money::ONE);
   }
 
   TEST_CASE("submit_when_snapshot_is_empty") {

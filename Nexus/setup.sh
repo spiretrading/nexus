@@ -13,7 +13,7 @@ main() {
   check_cache "nexus" || exit 0
   add_repo "Beam" \
     "https://www.github.com/spiretrading/beam" \
-    "8a1c470954a8196f39525457f9fcd01d4851e70d" \
+    "b066803f61454a7aee0e8b600c6c0dd7e19eb5f9" \
     "build_beam"
   add_dependency "lua-5.5.0" \
     "https://www.lua.org/ftp/lua-5.5.0.tar.gz" \
@@ -54,7 +54,7 @@ build_quickfix() {
 
 install_gitpython() {
   if ! python3 -c "import git" 2>/dev/null; then
-    pip3 install --user --break-system-packages GitPython || true
+    pip3 install --user --break-system-packages --quiet GitPython || true
   fi
 }
 

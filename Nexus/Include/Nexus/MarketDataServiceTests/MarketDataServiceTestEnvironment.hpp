@@ -286,6 +286,8 @@ namespace Nexus::Tests {
   }
 
   inline void MarketDataServiceTestEnvironment::close() {
+    m_feed_client.close();
+    m_registry_client.close();
     m_feed_container.close();
     m_container.close();
     m_registry_servlet.close();

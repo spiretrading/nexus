@@ -14,8 +14,7 @@ const vector<int>& DashboardSelectionModel::GetSelectedRows() const {
 }
 
 bool DashboardSelectionModel::IsRowSelected(int row) const {
-  return find(m_selectedRows.begin(), m_selectedRows.end(), row) !=
-    m_selectedRows.end();
+  return binary_search(m_selectedRows.begin(), m_selectedRows.end(), row);
 }
 
 void DashboardSelectionModel::AddRow(int index) {

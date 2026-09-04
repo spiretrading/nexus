@@ -9,6 +9,7 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
 #include <Beam/Services/ServiceRequestException.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <boost/lexical_cast.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Nexus/MarketDataService/MarketDataRegistryServices.hpp"
@@ -121,8 +122,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_ticker_status_publisher.
       template add_message_handler<TickerStatusMessage>();
   } catch(const std::exception&) {
-    std::throw_with_nested(Beam::ConnectException(
-      "Failed to connect to the market data server."));
+    Beam::throw_nested_with_location(
+      Beam::ConnectException("Failed to connect to the market data server."));
   }
 
   template<typename B>

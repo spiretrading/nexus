@@ -24,6 +24,8 @@ namespace Nexus {
   template<Beam::IsSender S>
   void register_query_types(Beam::Out<Beam::TypeRegistry<S>> registry) {
     Beam::register_query_types(out(registry));
+    registry->add(
+      typeid(AccountModificationRequest), "Nexus.AccountModificationRequest");
     registry->add(typeid(BboQuote), "Nexus.BboQuote");
     registry->add(typeid(BookQuote), "Nexus.BookQuote");
     registry->add(typeid(Money), "Nexus.Money");

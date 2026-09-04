@@ -8,8 +8,9 @@
 #include "Spire/KeyBindings/CancelKeyBindingsModel.hpp"
 #include "Spire/KeyBindings/OrderTaskArguments.hpp"
 #include "Spire/LegacyUI/PersistentWindow.hpp"
-#include "Spire/LegacyUI/TickerContext.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
+#include "Spire/Spire/PropertyHubMember.hpp"
+#include "Spire/Spire/ProxyValueModel.hpp"
 #include "Spire/Ui/KeyObserver.hpp"
 #include "Spire/Ui/TickerBox.hpp"
 #include "Spire/Ui/Ui.hpp"
@@ -22,8 +23,7 @@ namespace Spire {
   class TransitionView;
 
   /** Display the book view window for a ticker. */
-  class BookViewWindow : public Window, public LegacyUI::PersistentWindow,
-      public LegacyUI::TickerContext {
+  class BookViewWindow : public Window, public LegacyUI::PersistentWindow {
     public:
 
       /**
@@ -83,17 +83,17 @@ namespace Spire {
        * @param user_profile The user's profile.
        * @param tickers The set of tickers to use.
        * @param key_bindings The user's key bindings.
-       * @param venues The database of venues.
        * @param factory The factory used to create a BookViewPropertiesWindow.
        * @param model_builder The ModelBuilder to use.
-       * @param identifier The TickerContext identifier.
+       * @param hub The PropertyHub storing the properties shared with the
+       *        components this window is linked to.
        * @param parent The parent widget.
        */
       BookViewWindow(Beam::Ref<UserProfile> user_profile,
         std::shared_ptr<TickerInfoQueryModel> tickers,
         std::shared_ptr<KeyBindingsModel> key_bindings,
         std::shared_ptr<BookViewPropertiesWindowFactory> factory,
-        ModelBuilder model_builder, std::string identifier,
+        ModelBuilder model_builder, std::shared_ptr<PropertyHub> hub,
         QWidget* parent = nullptr);
 
       /** Returns the currently displayed ticker. */
@@ -112,9 +112,6 @@ namespace Spire {
 
     protected:
       void keyPressEvent(QKeyEvent* event) override;
-      void showEvent(QShowEvent* event) override;
-      void HandleLink(TickerContext& context) override;
-      void HandleUnlink() override;
 
     private:
       friend class BookViewWindowSettings;
@@ -126,13 +123,13 @@ namespace Spire {
       std::shared_ptr<BookViewPropertiesWindowFactory> m_factory;
       ModelBuilder m_model_builder;
       std::shared_ptr<ProxyValueModel<BookViewProperties>> m_properties_proxy;
+      PropertyHubMember m_member;
+      Nexus::Ticker m_ticker;
       std::shared_ptr<InteractionsKeyBindingsModel> m_interactions;
       std::shared_ptr<BookViewModel> m_model;
       BookDepth* m_book_depth;
       TransitionView* m_transition_view;
       boost::optional<KeyObserver> m_page_key_observer;
-      std::string m_link_identifier;
-      boost::signals2::scoped_connection m_link_connection;
       TickerView* m_ticker_view;
       CondensedCanvasWidget* m_task_entry_panel;
       bool m_is_task_entry_panel_for_interactions;

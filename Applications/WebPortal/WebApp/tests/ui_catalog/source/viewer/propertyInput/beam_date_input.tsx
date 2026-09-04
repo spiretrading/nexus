@@ -13,6 +13,9 @@ interface Properties {
 /** A date input that converts between Beam.Date and JavaScript Date. */
 export class BeamDateInput extends React.Component<Properties> {
   public render(): JSX.Element {
+    if(this.props.value == null) {
+      return <input type='date' value='' onChange={this.onChange}/>;
+    }
     const year = String(this.props.value.year).padStart(4, '0');
     const month = String(this.props.value.month).padStart(2, '0');
     const day = String(this.props.value.day).padStart(2, '0');

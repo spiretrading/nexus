@@ -107,9 +107,9 @@ namespace Nexus {
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_account_modification_request(
         const Beam::HttpRequest& request);
-      Beam::HttpResponse on_load_account_modification_request_ids(
+      Beam::HttpResponse on_load_account_modification_request_summaries(
         const Beam::HttpRequest& request);
-      Beam::HttpResponse on_load_managed_account_modification_request_ids(
+      Beam::HttpResponse on_load_account_modification_request_counts(
         const Beam::HttpRequest& request);
       Beam::HttpResponse on_load_entitlement_modification(
         const Beam::HttpRequest& request);

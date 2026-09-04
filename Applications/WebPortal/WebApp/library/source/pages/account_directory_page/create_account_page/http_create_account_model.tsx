@@ -20,5 +20,20 @@ export class HttpCreateAccountModel extends CreateAccountModel {
       username, groups, identity, roles);
   }
 
+  public async validateUsername(username: string):
+      Promise<CreateAccountModel.ValidationError> {
+    const name = CreateAccountModel.normalizeUsername(username);
+    const error = CreateAccountModel.checkUsernameFormat(name);
+    if(error !== CreateAccountModel.ValidationError.NONE) {
+      return error;
+    }
+    const account =
+      await this.serviceClients.serviceLocatorClient.findAccount(name);
+    if(!account.equals(Beam.DirectoryEntry.INVALID)) {
+      return CreateAccountModel.ValidationError.DUPLICATE;
+    }
+    return CreateAccountModel.ValidationError.NONE;
+  }
+
   private serviceClients: Nexus.ServiceClients;
 }

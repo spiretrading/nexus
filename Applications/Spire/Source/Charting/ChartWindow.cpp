@@ -1,7 +1,10 @@
 #include "Spire/Charting/ChartWindow.hpp"
+#include <Beam/Utilities/BeamWorkaround.hpp>
 #include <QApplication>
+#include <QIcon>
 #include <QKeyEvent>
 #include <QToolButton>
+#include <QVariant>
 #include "Spire/Canvas/Types/DateTimeType.hpp"
 #include "Spire/Canvas/Types/DurationType.hpp"
 #include "Spire/Canvas/Types/MoneyType.hpp"
@@ -10,9 +13,9 @@
 #include "Spire/Charting/ChartWindowSettings.hpp"
 #include "Spire/Charting/TickerPriceChartPlotSeries.hpp"
 #include "Spire/LegacyUI/CustomQtVariants.hpp"
-#include "Spire/LegacyUI/LinkTickerContextAction.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Ui/Ui.hpp"
+#include "Spire/Utilities/LinkMenu.hpp"
 #include "ui_ChartWindow.h"
 
 using namespace Beam;
@@ -23,13 +26,23 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::LegacyUI;
 
+ChartWindow::ChartWindow(
+  Ref<UserProfile> userProfile, QWidget* parent, Qt::WindowFlags flags)
+  : ChartWindow(
+      Ref(userProfile), userProfile->MakePropertyHub(), parent, flags) {}
+
 ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
-    const std::string& identifier, QWidget* parent, Qt::WindowFlags flags)
+    std::shared_ptr<PropertyHub> hub, QWidget* parent, Qt::WindowFlags flags)
     : QMainWindow(parent, flags),
-      TickerContext(identifier),
       m_ui(std::make_unique<Ui_ChartWindow>()),
       m_userProfile(userProfile.get()),
-      m_interactionMode(ChartInteractionMode::NONE) {
+      m_interactionMode(ChartInteractionMode::NONE),
+BEAM_SUPPRESS_THIS_INITIALIZER()
+      m_member(m_userProfile->GetPropertyHubMembers(), *this,
+        ":/Icons/chart.svg", std::move(hub)),
+BEAM_UNSUPPRESS_THIS_INITIALIZER()
+      m_tickerModel(
+        m_member.get_property<Ticker>(PropertyHub::TICKER_PROPERTY)) {
   m_ui->setupUi(this);
   m_intervalComboBox = new ChartIntervalComboBox(this);
   m_ui->m_toolBar->insertWidget(m_ui->m_panAction, m_intervalComboBox);
@@ -96,6 +109,9 @@ ChartWindow::ChartWindow(Ref<UserProfile> userProfile,
   SetInteractionMode(ChartInteractionMode::PAN);
   SetAutoScale(true);
   SetLockGrid(true);
+  m_tickerConnection = m_tickerModel->connect_update_signal(
+    std::bind_front(&ChartWindow::OnTickerUpdate, this));
+  OnTickerUpdate(m_tickerModel->get());
 }
 
 ChartInteractionMode ChartWindow::GetInteractionMode() const {
@@ -130,30 +146,11 @@ void ChartWindow::SetLockGrid(bool lockGrid) {
 }
 
 void ChartWindow::DisplayTicker(const Ticker& ticker) {
-  m_ticker = ticker;
-  if(!m_ticker) {
-    setWindowTitle(tr("Chart - Spire"));
-  } else {
-    setWindowTitle(displayText(m_ticker) + tr(" - Chart"));
-    OnIntervalChanged(
-      m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());
-  }
-  SetDisplayedTicker(m_ticker);
+  m_tickerModel->set(ticker);
 }
 
 std::unique_ptr<WindowSettings> ChartWindow::GetWindowSettings() const {
   return std::make_unique<ChartWindowSettings>(*this, Ref(*m_userProfile));
-}
-
-void ChartWindow::showEvent(QShowEvent* event) {
-  auto context = TickerContext::FindTickerContext(m_linkIdentifier);
-  if(context) {
-    Link(*context);
-  } else {
-    m_linkConnection.disconnect();
-    m_linkIdentifier.clear();
-  }
-  QMainWindow::showEvent(event);
 }
 
 void ChartWindow::closeEvent(QCloseEvent* event) {
@@ -185,27 +182,6 @@ void ChartWindow::keyPressEvent(QKeyEvent* event) {
   }
   m_tickerDialog->show();
   QApplication::sendEvent(find_focus_proxy(*m_tickerDialog), event);
-}
-
-void ChartWindow::OnTickerSubmit(const Ticker& ticker) {
-  m_tickerDialog->hide();
-  if(!ticker || ticker == m_ticker) {
-    return;
-  }
-  m_tickerViewStack.Push(m_ticker);
-  DisplayTicker(ticker);
-}
-
-void ChartWindow::HandleLink(TickerContext& context) {
-  m_linkIdentifier = context.GetIdentifier();
-  m_linkConnection = context.ConnectTickerDisplaySignal(
-    std::bind_front(&ChartWindow::DisplayTicker, this));
-  DisplayTicker(context.GetDisplayedTicker());
-}
-
-void ChartWindow::HandleUnlink() {
-  m_linkConnection.disconnect();
-  m_linkIdentifier.clear();
 }
 
 void ChartWindow::AdjustSlider(int previousMinimum, int previousMaximum,
@@ -371,10 +347,15 @@ void ChartWindow::OnLinkMenuActionTriggered(bool triggered) {
     m_linkMenu->removeAction(action.get());
   }
   m_linkMenu->clear();
-  auto linkActions = LinkTickerContextAction::MakeActions(
-    this, m_linkIdentifier, m_linkMenu, *m_userProfile);
-  for(auto& linkAction : linkActions) {
-    m_linkMenu->addAction(linkAction.get());
+  auto candidates = find_link_candidates(
+    m_member, *m_userProfile->GetPropertyHubMembers());
+  for(auto candidate : candidates) {
+    auto action = m_linkMenu->addAction(
+      QIcon(candidate->get_icon_path()), candidate->get_name());
+    action->setCheckable(true);
+    action->setChecked(
+      candidate->get_hub()->get() == m_member.get_hub()->get());
+    action->setData(QVariant::fromValue(static_cast<void*>(candidate)));
   }
   if(m_linkMenu->isEmpty()) {
     auto disabledAction = m_linkMenu->addAction(tr("No links available."));
@@ -386,9 +367,34 @@ void ChartWindow::OnLinkMenuActionTriggered(bool triggered) {
 }
 
 void ChartWindow::OnLinkActionTriggered(QAction* action) {
-  auto linkAction = dynamic_cast<LinkTickerContextAction*>(action);
-  if(!linkAction) {
+  auto candidate =
+    static_cast<PropertyHubMember*>(action->data().value<void*>());
+  if(!candidate) {
     return;
   }
-  linkAction->Execute(out(*this));
+  toggle_link(m_member, *candidate, *m_userProfile);
+}
+
+void ChartWindow::OnTickerSubmit(const Ticker& ticker) {
+  m_tickerDialog->hide();
+  if(!ticker || ticker == m_ticker) {
+    return;
+  }
+  m_tickerViewStack.Push(m_ticker);
+  DisplayTicker(ticker);
+}
+
+void ChartWindow::OnTickerUpdate(const Ticker& ticker) {
+  if(ticker == m_ticker) {
+    return;
+  }
+  m_ticker = ticker;
+  if(!m_ticker) {
+    setWindowTitle(tr("Chart - Spire"));
+    m_controller->Clear();
+  } else {
+    setWindowTitle(displayText(m_ticker) + tr(" - Chart"));
+    OnIntervalChanged(
+      m_intervalComboBox->GetType(), m_intervalComboBox->GetValue());
+  }
 }

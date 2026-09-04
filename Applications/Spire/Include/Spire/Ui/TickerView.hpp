@@ -58,7 +58,10 @@ namespace Spire {
       /** Saves the state of this TickerView. */
       State save_state() const;
 
-      /** Restores the state of this TickerView. */
+      /**
+       * Restores the state of this TickerView, keeping the ticker being
+       * displayed if there is one.
+       */
       void restore(const State& state);
 
     protected:
@@ -68,6 +71,7 @@ namespace Spire {
       TickerDialog m_ticker_dialog;
       std::shared_ptr<CurrentModel> m_current;
       QWidget* m_body;
+      QWidget* m_prompt;
       QStackedWidget* m_layers;
       TickerDeck m_tickers;
       boost::signals2::scoped_connection m_current_connection;

@@ -6,6 +6,7 @@
 #include <Beam/Pointers/Ref.hpp>
 #include <Beam/Services/ApplicationDefinitions.hpp>
 #include <Beam/TimeService/LiveTimer.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/Country.hpp"
 #include "Nexus/MarketDataService/ServiceMarketDataClient.hpp"
@@ -145,7 +146,7 @@ namespace Nexus {
                   boost::get<std::string>(
                     service->get_properties().at("addresses")));
               } catch(const std::exception&) {
-                std::throw_with_nested(Beam::ConnectException(
+                Beam::throw_nested_with_location(Beam::ConnectException(
                   "Failed to connect to the market data server."));
               }
             }(),
@@ -174,7 +175,7 @@ namespace Nexus {
                   boost::get<std::string>(
                     service.get_properties().at("addresses")));
               } catch(const std::exception&) {
-                std::throw_with_nested(Beam::ConnectException(
+                Beam::throw_nested_with_location(Beam::ConnectException(
                   "Failed to connect to the market data server."));
               }
             }(),

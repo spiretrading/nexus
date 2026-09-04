@@ -1,6 +1,8 @@
 #ifndef SPIRE_CONSOLIDATED_USER_ORDER_LIST_MODEL_HPP
 #define SPIRE_CONSOLIDATED_USER_ORDER_LIST_MODEL_HPP
 #include <memory>
+#include <vector>
+#include <boost/optional/optional.hpp>
 #include <QObject>
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -32,12 +34,14 @@ namespace Spire {
 
     private:
       std::shared_ptr<BookViewModel::UserOrderListModel> m_user_orders;
+      std::vector<boost::optional<BookViewModel::UserOrder>> m_contributions;
       ArrayListModel<BookViewModel::UserOrder> m_model;
       BookViewModel::UserOrder m_removed_order;
       boost::signals2::scoped_connection m_connection;
 
-      void add(const BookViewModel::UserOrder& order);
-      void remove(const BookViewModel::UserOrder& order);
+      iterator find(const BookViewModel::UserOrder& order);
+      void contribute(int index);
+      void withdraw(int index, const BookViewModel::UserOrder& order);
       void on_operation(const Operation& operation);
   };
 }

@@ -1,6 +1,7 @@
 #ifndef NEXUS_ADMINISTRATION_SERVICES_HPP
 #define NEXUS_ADMINISTRATION_SERVICES_HPP
 #include <string>
+#include <Beam/Queries/ShuttleQueryTypes.hpp>
 #include <Beam/Queries/SnapshotLimit.hpp>
 #include <Beam/Serialization/ShuttleVector.hpp>
 #include <Beam/ServiceLocator/DirectoryEntry.hpp>
@@ -8,6 +9,9 @@
 #include <Beam/Services/Service.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestCounts.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestQuery.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestSummary.hpp"
 #include "Nexus/AdministrationService/AccountQueryResult.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
@@ -212,33 +216,24 @@ namespace Nexus {
       AccountModificationRequest, (AccountModificationRequest::Id, id)),
 
     /**
-     * Given an account, loads the ids of requests to modify that account.
-     * @param account The account whose requests are to be loaded.
-     * @param start_id The id of the first request to load (exclusive) or -1 to
-     *        start with the most recent request.
-     * @param max_count The maximum number of ids to load.
-     * @return The list of account modification requests.
+     * Loads a page of account modification request summaries.
+     * @param query The query specifying the summaries to load.
+     * @return The list of summaries satisfying the <i>query</i>.
      */
-    (LoadAccountModificationRequestIdsService,
-      "Nexus.AdministrationServices.LoadAccountModificationRequestIdsService",
-      std::vector<AccountModificationRequest::Id>,
-      (Beam::DirectoryEntry, account),
-      (AccountModificationRequest::Id, start_id), (int, max_count)),
+    (LoadAccountModificationRequestSummariesService,
+      "Nexus.AdministrationServices.LoadAccountModificationRequestSummariesService",
+      std::vector<AccountModificationRequestSummary>,
+      (AccountModificationRequestQuery, query)),
 
     /**
-     * Given an account, loads the ids of requests that the account is
-     * authorized to manage.
-     * @param account The account managing the modification requests.
-     * @param start_id The id of the first request to load (exclusive) or -1 to
-     *        start with the most recent request.
-     * @param max_count The maximum number of ids to load.
-     * @return The list of account modification requests.
+     * Counts the account modification requests in each state.
+     * @param query The query whose matching requests are to be counted.
+     * @return The number of requests in each state.
      */
-    (LoadManagedAccountModificationRequestIdsService,
-      "Nexus.AdministrationServices.LoadManagedAccountModificationRequestIdsService",
-      std::vector<AccountModificationRequest::Id>,
-      (Beam::DirectoryEntry, account),
-      (AccountModificationRequest::Id, start_id), (int, max_count)),
+    (LoadAccountModificationRequestCountsService,
+      "Nexus.AdministrationServices.LoadAccountModificationRequestCountsService",
+      AccountModificationRequestCounts,
+      (AccountModificationRequestQuery, query)),
 
     /**
      * Loads an entitlement modification.
@@ -335,7 +330,8 @@ namespace Nexus {
      * @return The message with the specified <i>id</i>.
      */
     (LoadMessageService, "Nexus.AdministrationServices.LoadMessageService",
-      Message, (Message::Id, id)),
+      Message, (AccountModificationRequest::Id, request_id),
+      (Message::Id, id)),
 
     /**
      * Loads the list of messages associated with an account modification.

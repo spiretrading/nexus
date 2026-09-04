@@ -1,4 +1,5 @@
 #include "WebPortal/ServiceLocatorWebServlet.hpp"
+#include <algorithm>
 #include <Beam/WebServices/HttpRequest.hpp>
 #include <Beam/WebServices/HttpResponse.hpp>
 #include <Beam/WebServices/HttpServerPredicates.hpp>
@@ -11,6 +12,27 @@
 using namespace Beam;
 using namespace boost;
 using namespace Nexus;
+
+namespace {
+  const auto MAX_ACCOUNT_NAME_LENGTH = std::size_t(100);
+
+  bool is_name_character(char c) {
+    return (c >= 'a' && c <= 'z') || (c >= '0' && c <= '9');
+  }
+
+  bool is_valid_account_name(const std::string& name) {
+    if(name.empty() || name.size() > MAX_ACCOUNT_NAME_LENGTH) {
+      return false;
+    }
+    if(!is_name_character(name.front()) ||
+        !is_name_character(name.back())) {
+      return false;
+    }
+    return std::ranges::all_of(name, [] (auto c) {
+      return is_name_character(c) || c == '.' || c == '-' || c == '_';
+    });
+  }
+}
 
 ServiceLocatorWebServlet::ServiceLocatorWebServlet(
   Ref<WebSessionStore<WebPortalSession>> sessions,
@@ -46,6 +68,9 @@ std::vector<HttpRequestSlot> ServiceLocatorWebServlet::get_slots() {
     HttpMethod::POST, "/api/service_locator/search_directory_entry"),
     std::bind_front(
       &ServiceLocatorWebServlet::on_search_directory_entry, this));
+  slots.emplace_back(
+    matches_path(HttpMethod::POST, "/api/service_locator/find_account"),
+    std::bind_front(&ServiceLocatorWebServlet::on_find_account, this));
   slots.emplace_back(
     matches_path(HttpMethod::POST, "/api/service_locator/create_account"),
     std::bind_front(&ServiceLocatorWebServlet::on_create_account, this));
@@ -258,6 +283,29 @@ HttpResponse ServiceLocatorWebServlet::on_search_directory_entry(
   return response;
 }
 
+HttpResponse ServiceLocatorWebServlet::on_find_account(
+    const HttpRequest& request) {
+  struct Parameters {
+    std::string m_name;
+
+    void shuttle(JsonReceiver<SharedBuffer>& shuttle, unsigned int version) {
+      shuttle.shuttle("name", m_name);
+    }
+  };
+  auto response = HttpResponse();
+  auto session = m_sessions->find(request);
+  if(!session) {
+    response.set_status_code(HttpStatusCode::UNAUTHORIZED);
+    return response;
+  }
+  auto parameters = session->shuttle_parameters<Parameters>(request);
+  auto& clients = session->get_clients();
+  auto account =
+    clients.get_service_locator_client().find_account(parameters.m_name);
+  session->shuttle_response(account.value_or(DirectoryEntry()), out(response));
+  return response;
+}
+
 HttpResponse ServiceLocatorWebServlet::on_create_account(
     const HttpRequest& request) {
   struct Parameters {
@@ -280,6 +328,10 @@ HttpResponse ServiceLocatorWebServlet::on_create_account(
     return response;
   }
   auto parameters = session->shuttle_parameters<Parameters>(request);
+  if(!is_valid_account_name(parameters.m_name)) {
+    response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    return response;
+  }
   auto& clients = session->get_clients();
   auto validated_group =
     clients.get_service_locator_client().load_directory_entry(
@@ -291,39 +343,50 @@ HttpResponse ServiceLocatorWebServlet::on_create_account(
   auto new_account = DirectoryEntry();
   auto group_children =
     clients.get_service_locator_client().load_children(validated_group);
-  if(parameters.m_account_roles.test(AccountRole::MANAGER)) {
-    auto manager_group = std::find_if(
-      group_children.begin(), group_children.end(), [] (const auto& child) {
-        return child.m_name == "managers";
-      });
-    if(manager_group == group_children.end()) {
-      response.set_status_code(HttpStatusCode::BAD_REQUEST);
-      return response;
-    }
-    new_account = clients.get_service_locator_client().make_account(
-      parameters.m_name, "1234", *manager_group);
-    clients.get_service_locator_client().store(
-      new_account, validated_group, Permission::READ);
-  }
-  if(parameters.m_account_roles.test(AccountRole::TRADER)) {
-    auto trader_group = std::find_if(
-      group_children.begin(), group_children.end(), [] (const auto& child) {
-        return child.m_name == "traders";
-      });
-    if(trader_group == group_children.end()) {
-      response.set_status_code(HttpStatusCode::BAD_REQUEST);
-      return response;
-    }
-    if(new_account.m_id == -1) {
+  try {
+    if(parameters.m_account_roles.test(AccountRole::MANAGER)) {
+      auto manager_group = std::ranges::find(
+        group_children, "managers", &DirectoryEntry::m_name);
+      if(manager_group == group_children.end()) {
+        response.set_status_code(HttpStatusCode::BAD_REQUEST);
+        return response;
+      }
       new_account = clients.get_service_locator_client().make_account(
-        parameters.m_name, "1234", *trader_group);
-    } else {
-      clients.get_service_locator_client().associate(
-        new_account, *trader_group);
+        parameters.m_name, "1234", *manager_group);
+      clients.get_service_locator_client().store(
+        new_account, validated_group, Permission::READ);
     }
+    if(parameters.m_account_roles.test(AccountRole::TRADER)) {
+      auto trader_group = std::ranges::find(
+        group_children, "traders", &DirectoryEntry::m_name);
+      if(trader_group == group_children.end()) {
+        response.set_status_code(HttpStatusCode::BAD_REQUEST);
+        return response;
+      }
+      if(new_account.m_id == -1) {
+        new_account = clients.get_service_locator_client().make_account(
+          parameters.m_name, "1234", *trader_group);
+      } else {
+        clients.get_service_locator_client().associate(
+          new_account, *trader_group);
+      }
+    }
+    clients.get_administration_client().store(
+      new_account, parameters.m_identity);
+    session->shuttle_response(new_account, out(response));
+  } catch(const std::exception& e) {
+    auto existing_account = optional<DirectoryEntry>();
+    try {
+      existing_account = clients.get_service_locator_client().find_account(
+        parameters.m_name);
+    } catch(const std::exception&) {}
+    if(existing_account) {
+      response.set_status_code(HttpStatusCode::CONFLICT);
+    } else {
+      response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    }
+    session->shuttle_response(std::string(e.what()), out(response));
   }
-  clients.get_administration_client().store(new_account, parameters.m_identity);
-  session->shuttle_response(new_account, out(response));
   return response;
 }
 
@@ -347,13 +410,34 @@ HttpResponse ServiceLocatorWebServlet::on_create_group(
     clients.get_service_locator_client().load_directory_entry(
       DirectoryEntry::STAR_DIRECTORY, "trading_groups");
   auto parameters = session->shuttle_parameters<Parameters>(request);
-  auto new_group = clients.get_service_locator_client().make_directory(
-    parameters.m_name, trading_groups_directory);
-  auto managers_group =
+  auto name = trim_copy(parameters.m_name);
+  auto organization_name =
+    clients.get_definitions_client().load_organization_name();
+  if(name == organization_name) {
+    response.set_status_code(HttpStatusCode::CONFLICT);
+    session->shuttle_response(
+      std::string("Group already exists."), out(response));
+    return response;
+  }
+  try {
+    auto new_group = clients.get_service_locator_client().make_directory(
+      parameters.m_name, trading_groups_directory);
     clients.get_service_locator_client().make_directory("managers", new_group);
-  auto traders_group =
     clients.get_service_locator_client().make_directory("traders", new_group);
-  session->shuttle_response(new_group, out(response));
+    session->shuttle_response(new_group, out(response));
+  } catch(const std::exception& e) {
+    auto groups = std::vector<DirectoryEntry>();
+    try {
+      groups = clients.get_service_locator_client().load_children(
+        trading_groups_directory);
+    } catch(const std::exception&) {}
+    if(std::ranges::contains(groups, name, &DirectoryEntry::m_name)) {
+      response.set_status_code(HttpStatusCode::CONFLICT);
+    } else {
+      response.set_status_code(HttpStatusCode::BAD_REQUEST);
+    }
+    session->shuttle_response(std::string(e.what()), out(response));
+  }
   return response;
 }
 

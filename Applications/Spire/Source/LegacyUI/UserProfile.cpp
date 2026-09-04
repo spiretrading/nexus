@@ -1,4 +1,6 @@
 #include "Spire/LegacyUI/UserProfile.hpp"
+#include <functional>
+#include <vector>
 #include <Beam/ServiceLocator/SessionEncryption.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <QDesktopServices>
@@ -11,6 +13,7 @@
 #include "Spire/KeyBindings/KeyBindingsProfile.hpp"
 #include "Spire/LegacyUI/WindowSettings.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
+#include "Spire/Spire/PropertyHubMember.hpp"
 #include "Spire/Spire/ServiceAccountQueryModel.hpp"
 #include "Spire/Spire/ServiceTickerInfoQueryModel.hpp"
 #include "Spire/TimeAndSales/CachedTimeAndSalesModel.hpp"
@@ -18,6 +21,7 @@
 
 using namespace Beam;
 using namespace boost;
+using namespace boost::uuids;
 using namespace Nexus;
 using namespace Spire;
 using namespace Spire::LegacyUI;
@@ -59,6 +63,8 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
         m_clients.get_administration_client())),
       m_ticker_info_query_model(std::make_shared<ServiceTickerInfoQueryModel>(
         m_clients.get_market_data_client())),
+      m_property_hub_members(
+        std::make_shared<ArrayListModel<PropertyHubMember*>>()),
       m_book_view_properties_window_factory(
         std::make_shared<BookViewPropertiesWindowFactory>(
           std::make_shared<LocalBookViewPropertiesModel>(
@@ -84,6 +90,8 @@ BEAM_SUPPRESS_THIS_INITIALIZER()
       m_catalogSettings(m_profilePath / "Catalog", isAdministrator),
       m_additionalTagDatabase(additionalTagDatabase) {
 BEAM_UNSUPPRESS_THIS_INITIALIZER()
+  m_legacy_property_hubs.connect_merge_signal(
+    std::bind_front(&UserProfile::MergePropertyHubs, this));
   m_keyBindings = load_key_bindings_profile(m_profilePath);
   for(auto& exchangeRate : exchangeRates) {
     m_exchangeRates.add(exchangeRate);
@@ -143,6 +151,46 @@ const std::shared_ptr<RecentlyClosedWindowListModel>&
 const std::shared_ptr<AccountQueryModel>&
     UserProfile::GetAccountQueryModel() const {
   return m_account_query_model;
+}
+
+std::shared_ptr<PropertyHub> UserProfile::MakePropertyHub() {
+  CollectPropertyHubs();
+  auto hub = std::make_shared<PropertyHub>();
+  m_property_hubs[hub->get_id()] = hub;
+  return hub;
+}
+
+std::shared_ptr<PropertyHub> UserProfile::AcquirePropertyHub(const uuid& id) {
+  CollectPropertyHubs();
+  auto& entry = m_property_hubs[id];
+  if(auto hub = entry.lock()) {
+    return hub;
+  }
+  auto hub = std::make_shared<PropertyHub>(id);
+  entry = hub;
+  return hub;
+}
+
+std::shared_ptr<PropertyHub> UserProfile::AcquirePropertyHub(
+    const std::string& identifier, const std::string& link_identifier) {
+  CollectPropertyHubs();
+  auto hub = m_legacy_property_hubs.acquire(identifier, link_identifier);
+  m_property_hubs[hub->get_id()] = hub;
+  return hub;
+}
+
+std::shared_ptr<PropertyHub> UserProfile::AcquirePropertyHub(
+    const uuid& id, const std::string& identifier,
+    const std::string& link_identifier) {
+  if(id.is_nil()) {
+    return AcquirePropertyHub(identifier, link_identifier);
+  }
+  return AcquirePropertyHub(id);
+}
+
+const std::shared_ptr<ListModel<PropertyHubMember*>>&
+    UserProfile::GetPropertyHubMembers() const {
+  return m_property_hub_members;
 }
 
 const std::shared_ptr<TickerInfoQueryModel>&
@@ -260,6 +308,22 @@ void UserProfile::SetInitialPortfolioViewerWindowSettings(
 
 void UserProfile::initialize_ui() {
   m_book_view_properties_window_factory->make(m_keyBindings);
+}
+
+void UserProfile::CollectPropertyHubs() {
+  std::erase_if(m_property_hubs, [] (const auto& entry) {
+    return entry.second.expired();
+  });
+}
+
+void UserProfile::MergePropertyHubs(const std::shared_ptr<PropertyHub>& source,
+    const std::shared_ptr<PropertyHub>& destination) {
+  for(auto i = 0; i != m_property_hub_members->get_size(); ++i) {
+    auto& member = *m_property_hub_members->get(i);
+    if(member.get_hub()->get() == source) {
+      member.get_hub()->set(destination);
+    }
+  }
 }
 
 std::filesystem::path Spire::get_profile_path() {

@@ -124,16 +124,16 @@ namespace Nexus {
   std::vector<TickerInfo> SqlHistoricalDataStore<C>::load_ticker_info(
       const TickerInfoQuery& query) {
     auto matches = std::vector<TickerInfo>();
-    auto filter =
-      Beam::make_sql_query<SqlTranslator>("ticker_info", query.get_filter());
+    auto filter = Beam::make_sql_query<SqlTranslator>(
+      "ticker_info", typeid(TickerInfo), query.get_filter());
     auto anchor = [&] {
       if(auto anchor = query.get_anchor()) {
         auto left = Viper::Expression(
           std::make_shared<Viper::LiteralExpression>("(symbol,venue)"));
         auto symbol_literal = std::string();
-        Viper::literal(anchor->get_symbol()).append_query(symbol_literal);
+        Viper::to_sql(anchor->get_symbol(), symbol_literal);
         auto venue_literal = std::string();
-        Viper::literal(anchor->get_venue()).append_query(venue_literal);
+        Viper::to_sql(anchor->get_venue(), venue_literal);
         auto right = Viper::Expression(
           std::make_shared<Viper::LiteralExpression>(
             "(" + symbol_literal + "," + venue_literal + ")"));
@@ -175,7 +175,8 @@ namespace Nexus {
       reader->execute(Viper::select(get_ticker_info_row(), "ticker_info",
         filter && anchor && scope_filter,
         Viper::order_by({{"symbol", order}, {"venue", order}}),
-        Viper::limit(query.get_snapshot_limit().get_size()),
+        Viper::limit(
+          query.get_snapshot_limit().get_size(), query.get_offset()),
         std::back_inserter(matches)));
     }
     if(query.get_snapshot_limit().get_type() ==

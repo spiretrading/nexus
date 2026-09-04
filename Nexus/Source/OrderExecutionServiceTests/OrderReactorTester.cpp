@@ -21,6 +21,8 @@ namespace {
   struct Fixture {
     Beam::Queue<bool> m_commits;
     Trigger m_trigger;
+    CommitFlag m_flag;
+    CommitFlagScope m_scope;
     optional<Aspen::Shared<Aspen::Box<std::shared_ptr<Order>>>> m_order;
     int m_sequence;
     OrderId m_next_id;
@@ -32,12 +34,13 @@ namespace {
       : m_trigger([&] {
           m_commits.push(true);
         }),
+        m_scope(m_flag),
         m_sequence(0),
         m_next_id(123),
         m_operations(std::make_shared<Beam::Queue<
           std::shared_ptr<TestOrderExecutionClient::Operation>>>()),
         m_client(m_operations) {
-      Trigger::set_trigger(m_trigger);
+      m_flag.set_trigger(&m_trigger);
     }
 
     void set(Aspen::Shared<Aspen::Box<std::shared_ptr<Order>>> order) {
@@ -46,8 +49,11 @@ namespace {
 
     void require_state(Aspen::State expected_state) {
       if(m_sequence != 0) {
-        m_commits.pop();
+        while(!m_flag.is_raised()) {
+          m_commits.pop();
+        }
       }
+      m_flag.clear();
       REQUIRE(m_order->commit(m_sequence) == expected_state);
       ++m_sequence;
     }

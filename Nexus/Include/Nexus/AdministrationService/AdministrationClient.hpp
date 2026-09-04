@@ -15,6 +15,9 @@
 #include <Beam/Queues/StateQueue.hpp>
 #include "Nexus/AdministrationService/AccountIdentity.hpp"
 #include "Nexus/AdministrationService/AccountModificationRequest.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestCounts.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestQuery.hpp"
+#include "Nexus/AdministrationService/AccountModificationRequestSummary.hpp"
 #include "Nexus/AdministrationService/AccountQueryResult.hpp"
 #include "Nexus/AdministrationService/AccountRoles.hpp"
 #include "Nexus/AdministrationService/EntitlementModification.hpp"
@@ -88,16 +91,12 @@ namespace Nexus {
       { client.load_account_modification_request(
           std::declval<AccountModificationRequest::Id>()) } ->
             std::same_as<AccountModificationRequest>;
-      { client.load_account_modification_request_ids(
-          std::declval<const Beam::DirectoryEntry&>(),
-          std::declval<AccountModificationRequest::Id>(),
-          std::declval<int>()) } ->
-            std::same_as<std::vector<AccountModificationRequest::Id>>;
-      { client.load_managed_account_modification_request_ids(
-          std::declval<const Beam::DirectoryEntry&>(),
-          std::declval<AccountModificationRequest::Id>(),
-          std::declval<int>()) } ->
-            std::same_as<std::vector<AccountModificationRequest::Id>>;
+      { client.load_account_modification_request_summaries(
+          std::declval<const AccountModificationRequestQuery&>()) } ->
+            std::same_as<std::vector<AccountModificationRequestSummary>>;
+      { client.load_account_modification_request_counts(
+          std::declval<const AccountModificationRequestQuery&>()) } ->
+            std::same_as<AccountModificationRequestCounts>;
       { client.load_entitlement_modification(
           std::declval<AccountModificationRequest::Id>()) } ->
             std::same_as<EntitlementModification>;
@@ -129,8 +128,8 @@ namespace Nexus {
           std::declval<AccountModificationRequest::Id>(),
           std::declval<const Message&>()) } ->
             std::same_as<AccountModificationRequest::Update>;
-      { client.load_message(std::declval<Message::Id>()) } ->
-          std::same_as<Message>;
+      { client.load_message(std::declval<AccountModificationRequest::Id>(),
+          std::declval<Message::Id>()) } -> std::same_as<Message>;
       { client.load_message_ids(
           std::declval<AccountModificationRequest::Id>()) } ->
             std::same_as<std::vector<Message::Id>>;
@@ -322,31 +321,22 @@ namespace Nexus {
         AccountModificationRequest::Id id);
 
       /**
-       * Given an account, loads the ids of requests to modify that account.
-       * @param account The account whose requests are to be loaded.
-       * @param start_id The id of the first request to load (exclusive) or -1
-       *        to start with the most recent request.
-       * @param max_count The maximum number of ids to load.
-       * @return The list of account modification requests.
+       * Loads a page of account modification request summaries.
+       * @param query The query specifying the summaries to load.
+       * @return The list of summaries satisfying the <i>query</i>.
        */
-      std::vector<AccountModificationRequest::Id>
-        load_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
+      std::vector<AccountModificationRequestSummary>
+        load_account_modification_request_summaries(
+          const AccountModificationRequestQuery& query);
 
       /**
-       * Given an account, loads the ids of requests that the account is
-       * authorized to manage.
-       * @param account The account managing modifications.
-       * @param start_id The id of the first request to load (exclusive) or -1
-       *        to start with the most recent request.
-       * @param max_count The maximum number of ids to load.
-       * @return The list of account modification requests.
+       * Counts the account modification requests in each state.
+       * @param query The query whose matching requests are to be counted.
+       * @return The number of requests in each state.
        */
-      std::vector<AccountModificationRequest::Id>
-        load_managed_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count);
+      AccountModificationRequestCounts
+        load_account_modification_request_counts(
+          const AccountModificationRequestQuery& query);
 
       /**
        * Loads an entitlement modification.
@@ -431,7 +421,8 @@ namespace Nexus {
        * @param id The id of the message.
        * @return The message with the specified <i>id</i>.
        */
-      Message load_message(Message::Id id);
+      Message load_message(
+        AccountModificationRequest::Id request_id, Message::Id id);
 
       /**
        * Loads the list of messages associated with an account modification.
@@ -540,14 +531,12 @@ namespace Nexus {
           const RiskState& risk_state) = 0;
         virtual AccountModificationRequest load_account_modification_request(
           AccountModificationRequest::Id id) = 0;
-        virtual std::vector<AccountModificationRequest::Id>
-          load_account_modification_request_ids(
-            const Beam::DirectoryEntry& account,
-            AccountModificationRequest::Id start_id, int max_count) = 0;
-        virtual std::vector<AccountModificationRequest::Id>
-          load_managed_account_modification_request_ids(
-            const Beam::DirectoryEntry& account,
-            AccountModificationRequest::Id start_id, int max_count) = 0;
+        virtual std::vector<AccountModificationRequestSummary>
+          load_account_modification_request_summaries(
+            const AccountModificationRequestQuery& query) = 0;
+        virtual AccountModificationRequestCounts
+          load_account_modification_request_counts(
+            const AccountModificationRequestQuery& query) = 0;
         virtual EntitlementModification load_entitlement_modification(
           AccountModificationRequest::Id id) = 0;
         virtual AccountModificationRequest submit(
@@ -576,7 +565,8 @@ namespace Nexus {
         virtual AccountModificationRequest::Update
           reject_account_modification_request(
             AccountModificationRequest::Id id, const Message& comment) = 0;
-        virtual Message load_message(Message::Id id) = 0;
+        virtual Message load_message(
+          AccountModificationRequest::Id request_id, Message::Id id) = 0;
         virtual std::vector<Message::Id> load_message_ids(
           AccountModificationRequest::Id id) = 0;
         virtual Message send_account_modification_request_message(
@@ -639,14 +629,12 @@ namespace Nexus {
           const RiskState& risk_state) override;
         AccountModificationRequest load_account_modification_request(
           AccountModificationRequest::Id id) override;
-        std::vector<AccountModificationRequest::Id>
-          load_account_modification_request_ids(
-            const Beam::DirectoryEntry& account,
-            AccountModificationRequest::Id start_id, int max_count) override;
-        std::vector<AccountModificationRequest::Id>
-          load_managed_account_modification_request_ids(
-            const Beam::DirectoryEntry& account,
-            AccountModificationRequest::Id start_id, int max_count) override;
+        std::vector<AccountModificationRequestSummary>
+          load_account_modification_request_summaries(
+            const AccountModificationRequestQuery& query) override;
+        AccountModificationRequestCounts
+          load_account_modification_request_counts(
+            const AccountModificationRequestQuery& query) override;
         EntitlementModification load_entitlement_modification(
           AccountModificationRequest::Id id) override;
         AccountModificationRequest submit(const Beam::DirectoryEntry& account,
@@ -671,7 +659,8 @@ namespace Nexus {
           const Message& comment) override;
         AccountModificationRequest::Update reject_account_modification_request(
           AccountModificationRequest::Id id, const Message& comment) override;
-        Message load_message(Message::Id id) override;
+        Message load_message(
+          AccountModificationRequest::Id request_id, Message::Id id) override;
         std::vector<Message::Id> load_message_ids(
           AccountModificationRequest::Id id) override;
         Message send_account_modification_request_message(
@@ -845,20 +834,16 @@ namespace Nexus {
     return m_client->load_account_modification_request(id);
   }
 
-  inline std::vector<AccountModificationRequest::Id>
-      AdministrationClient::load_account_modification_request_ids(
-        const Beam::DirectoryEntry& account,
-        AccountModificationRequest::Id start_id, int max_count) {
-    return m_client->load_account_modification_request_ids(
-      account, start_id, max_count);
+  inline std::vector<AccountModificationRequestSummary>
+      AdministrationClient::load_account_modification_request_summaries(
+        const AccountModificationRequestQuery& query) {
+    return m_client->load_account_modification_request_summaries(query);
   }
 
-  inline std::vector<AccountModificationRequest::Id>
-      AdministrationClient::load_managed_account_modification_request_ids(
-        const Beam::DirectoryEntry& account,
-        AccountModificationRequest::Id start_id, int max_count) {
-    return m_client->load_managed_account_modification_request_ids(
-      account, start_id, max_count);
+  inline AccountModificationRequestCounts
+      AdministrationClient::load_account_modification_request_counts(
+        const AccountModificationRequestQuery& query) {
+    return m_client->load_account_modification_request_counts(query);
   }
 
   inline EntitlementModification AdministrationClient::
@@ -910,8 +895,9 @@ namespace Nexus {
     return m_client->reject_account_modification_request(id, comment);
   }
 
-  inline Message AdministrationClient::load_message(Message::Id id) {
-    return m_client->load_message(id);
+  inline Message AdministrationClient::load_message(
+      AccountModificationRequest::Id request_id, Message::Id id) {
+    return m_client->load_message(request_id, id);
   }
 
   inline std::vector<Message::Id> AdministrationClient::load_message_ids(
@@ -1100,23 +1086,19 @@ namespace Nexus {
   }
 
   template<typename C>
-  std::vector<AccountModificationRequest::Id>
-      AdministrationClient::WrappedAdministrationClient<C>::
-        load_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count) {
-    return m_client->load_account_modification_request_ids(
-      account, start_id, max_count);
+  std::vector<AccountModificationRequestSummary> AdministrationClient::
+      WrappedAdministrationClient<C>::
+        load_account_modification_request_summaries(
+          const AccountModificationRequestQuery& query) {
+    return m_client->load_account_modification_request_summaries(query);
   }
 
   template<typename C>
-  std::vector<AccountModificationRequest::Id>
-      AdministrationClient::WrappedAdministrationClient<C>::
-        load_managed_account_modification_request_ids(
-          const Beam::DirectoryEntry& account,
-          AccountModificationRequest::Id start_id, int max_count) {
-    return m_client->load_managed_account_modification_request_ids(
-      account, start_id, max_count);
+  AccountModificationRequestCounts AdministrationClient::
+      WrappedAdministrationClient<C>::
+        load_account_modification_request_counts(
+          const AccountModificationRequestQuery& query) {
+    return m_client->load_account_modification_request_counts(query);
   }
 
   template<typename C>
@@ -1183,8 +1165,8 @@ namespace Nexus {
 
   template<typename C>
   Message AdministrationClient::WrappedAdministrationClient<C>::load_message(
-      Message::Id id) {
-    return m_client->load_message(id);
+      AccountModificationRequest::Id request_id, Message::Id id) {
+    return m_client->load_message(request_id, id);
   }
 
   template<typename C>

@@ -269,7 +269,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       height: '34px',
       flexGrow: 0,
       flexShrink: 0,
-      width: '284px',
+      width: '100%',
       border: '1px solid #C8C8C8',
       borderRadius: '1px',
       ':focus': {
@@ -291,7 +291,7 @@ export class GroupSelectionBox extends React.Component<Properties, State> {
       boxSizing: 'border-box',
       paddingLeft: '10px',
       height: '34px',
-      width: '350px',
+      width: '100%',
       flexGrow: 0,
       flexShrink: 0,
       border: '1px solid #C8C8C8',

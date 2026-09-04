@@ -1,4 +1,3 @@
-import * as Beam from 'beam';
 import * as Nexus from 'nexus';
 import * as React from 'react';
 import * as Router from 'react-router-dom';
@@ -10,7 +9,7 @@ interface Properties {
 
   /** The size of the viewport. */
   displaySize: DisplaySize;
-  
+
   /** The database of all available countries. */
   countryDatabase?: Nexus.CountryDatabase;
 
@@ -22,19 +21,15 @@ interface Properties {
 }
 
 interface State {
-  errorStatus: string;
   isDone: boolean;
 }
 
 /** Implements the controller for the CreateAccountPage. */
 export class CreateAccountController extends
     React.Component<Properties, State> {
-  constructor(props: Properties) {
+  public constructor(props: Properties) {
     super(props);
-    this.state = {
-      errorStatus: '',
-      isDone: false
-    };
+    this.state = {isDone: false};
   }
 
   public render(): JSX.Element {
@@ -43,26 +38,13 @@ export class CreateAccountController extends
     }
     return <CreateAccountPage
       displaySize={this.props.displaySize}
-      errorStatus={this.state.errorStatus}
       countryDatabase={this.props.countryDatabase}
+      model={this.props.createAccountModel}
       groupSuggestionModel={this.props.groupSuggestionModel}
-      onSubmit={this.createAccount}/>;
+      onComplete={this.onComplete}/>;
   }
 
-  private createAccount = async (username: string,
-      groups: Beam.DirectoryEntry, identity: Nexus.AccountIdentity,
-      roles: Nexus.AccountRoles) => {
-    try {
-      this.setState({
-        errorStatus: ''
-      });
-      await this.props.createAccountModel.createAccount(
-        username, groups, identity, roles);
-    } catch(e: any) {
-      this.setState({
-        errorStatus: e.toString()
-      });
-    } 
-    this.setState({isDone:true});
+  private onComplete = () => {
+    this.setState({isDone: true});
   }
 }

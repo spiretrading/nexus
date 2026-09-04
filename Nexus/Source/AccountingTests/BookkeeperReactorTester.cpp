@@ -1,3 +1,4 @@
+#include <Aspen/CommitFlag.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/Accounting/BookkeeperReactor.hpp"
 #include "Nexus/Accounting/TrueAverageBookkeeper.hpp"
@@ -24,7 +25,9 @@ TEST_SUITE("BookkeeperReactor") {
     auto trigger = Trigger([&] {
       commits.push(true);
     });
-    Trigger::set_trigger(trigger);
+    auto flag = CommitFlag();
+    flag.set_trigger(&trigger);
+    auto scope = CommitFlagScope(flag);
     auto order = std::make_shared<PrimitiveOrder>(
       OrderInfo(make_limit_order_fields(TST, CAD, Side::BID, "TSX", 1000,
         Money::ONE), 10, ptime(date(2019, 10, 3))));
@@ -33,6 +36,7 @@ TEST_SUITE("BookkeeperReactor") {
     auto bookkeeper = make_bookkeeper_reactor<TrueAverageBookkeeper>(
       constant(std::static_pointer_cast<Order>(order)));
     for(auto i = 0; i < 10; ++i) {
+      flag.clear();
       auto state = bookkeeper.commit(i);
       if(has_evaluation(state)) {
         break;

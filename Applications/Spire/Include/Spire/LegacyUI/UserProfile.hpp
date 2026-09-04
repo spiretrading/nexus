@@ -3,8 +3,10 @@
 #include <filesystem>
 #include <optional>
 #include <string>
+#include <unordered_map>
 #include <vector>
 #include <Beam/WebServices/Uri.hpp>
+#include <boost/uuid/uuid.hpp>
 #include "Nexus/Clients/Clients.hpp"
 #include "Nexus/Definitions/ExchangeRateTable.hpp"
 #include "Nexus/MarketDataService/EntitlementDatabase.hpp"
@@ -22,12 +24,15 @@
 #include "Spire/PortfolioViewer/PortfolioViewerWindowSettings.hpp"
 #include "Spire/RiskTimer/RiskTimerProperties.hpp"
 #include "Spire/Spire/CachedModelBuilder.hpp"
+#include "Spire/Spire/LegacyPropertyHubMap.hpp"
+#include "Spire/Spire/PropertyHub.hpp"
 #include "Spire/Spire/Spire.hpp"
 #include "Spire/TimeAndSales/TimeAndSalesWindow.hpp"
 #include "Spire/Ui/AccountBox.hpp"
 #include "Spire/Ui/TickerBox.hpp"
 
 namespace Spire {
+  class PropertyHubMember;
 
   /** The type of model used to store the list of recently closed windows. */
   using RecentlyClosedWindowListModel =
@@ -101,6 +106,48 @@ namespace Spire {
       /** Returns the model used to query accounts. */
       const std::shared_ptr<AccountQueryModel>&
         GetAccountQueryModel() const;
+
+      /** Returns a new PropertyHub. */
+      std::shared_ptr<PropertyHub> MakePropertyHub();
+
+      /**
+       * Returns the PropertyHub with a given id, constructing it if no such
+       * PropertyHub exists.
+       * @param id The id of the PropertyHub to return.
+       * @return The PropertyHub with the given id.
+       */
+      std::shared_ptr<PropertyHub> AcquirePropertyHub(
+        const boost::uuids::uuid& id);
+
+      /**
+       * Returns the PropertyHub that a pair of linked components saved before
+       * PropertyHubs were introduced belong to, constructing it if no such
+       * PropertyHub exists.
+       * @param identifier The identifier of the component being restored.
+       * @param link_identifier The identifier of the component that the
+       *        component being restored is linked to.
+       * @return The PropertyHub both identifiers belong to.
+       */
+      std::shared_ptr<PropertyHub> AcquirePropertyHub(
+        const std::string& identifier, const std::string& link_identifier);
+
+      /**
+       * Returns the PropertyHub that a component being restored belongs to,
+       * constructing it if no such PropertyHub exists.
+       * @param id The id of the component's PropertyHub, or a nil id if the
+       *        component was saved before PropertyHubs were introduced.
+       * @param identifier The identifier of the component being restored.
+       * @param link_identifier The identifier of the component that the
+       *        component being restored is linked to.
+       * @return The PropertyHub the component belongs to.
+       */
+      std::shared_ptr<PropertyHub> AcquirePropertyHub(
+        const boost::uuids::uuid& id, const std::string& identifier,
+        const std::string& link_identifier);
+
+      /** Returns the list of components that can join a PropertyHub. */
+      const std::shared_ptr<ListModel<PropertyHubMember*>>&
+        GetPropertyHubMembers() const;
 
       /** Returns the model used to query tickers. */
       const std::shared_ptr<TickerInfoQueryModel>&
@@ -211,6 +258,10 @@ namespace Spire {
       std::shared_ptr<RecentlyClosedWindowListModel> m_recentlyClosedWindows;
       std::shared_ptr<AccountQueryModel> m_account_query_model;
       std::shared_ptr<TickerInfoQueryModel> m_ticker_info_query_model;
+      std::shared_ptr<ListModel<PropertyHubMember*>> m_property_hub_members;
+      std::unordered_map<boost::uuids::uuid, std::weak_ptr<PropertyHub>>
+        m_property_hubs;
+      LegacyPropertyHubMap m_legacy_property_hubs;
       SavedDashboards m_savedDashboards;
       OrderImbalanceIndicatorProperties
         m_defaultOrderImbalanceIndicatorProperties;
@@ -234,6 +285,10 @@ namespace Spire {
         m_initialOrderImbalanceIndicatorWindowSettings;
       boost::optional<PortfolioViewerWindowSettings>
         m_initialPortfolioViewerWindowSettings;
+
+      void CollectPropertyHubs();
+      void MergePropertyHubs(const std::shared_ptr<PropertyHub>& source,
+        const std::shared_ptr<PropertyHub>& destination);
   };
 
   /** Returns the path to the folder containing all user profiles. */

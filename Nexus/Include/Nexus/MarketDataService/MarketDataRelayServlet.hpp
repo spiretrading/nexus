@@ -358,8 +358,8 @@ namespace Nexus {
       }
     }
     if(query.get_range().get_end() == Beam::Sequence::LAST) {
-      auto filter =
-        Beam::translate<EvaluatorTranslator>(query.get_filter());
+      auto filter = Beam::translate<EvaluatorTranslator>(
+        query.get_filter(), typeid(typename MarketDataType::Value));
       result.m_id = subscriptions.init(query.get_index(), request.get_client(),
         Beam::Range::TOTAL, std::move(filter));
       auto& subscription = real_time_subscriptions.get(query.get_index());

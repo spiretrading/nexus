@@ -116,6 +116,8 @@ namespace Nexus {
       /** Returns the date when the modification should take effect. */
       boost::posix_time::ptime get_effective_date() const;
 
+      bool operator ==(const AccountModificationRequest&) const = default;
+
     private:
       friend struct Beam::Shuttle<AccountModificationRequest>;
       Id m_id;
@@ -168,6 +170,14 @@ namespace Nexus {
       std::ostream& out, const AccountModificationRequest::Update& update) {
     return out << '(' << update.m_status << ' ' << update.m_account << ' '
       << update.m_sequence_number << ' ' << update.m_timestamp << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AccountModificationRequest& request) {
+    return out << '(' << request.get_id() << ' ' << request.get_type() <<
+      ' ' << request.get_account() << ' ' << request.get_submission_account() <<
+      ' ' << request.get_timestamp() << ' ' << request.get_effective_date() <<
+      ')';
   }
 
   inline AccountModificationRequest::Update::Update() noexcept

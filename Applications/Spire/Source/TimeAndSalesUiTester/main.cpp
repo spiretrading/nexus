@@ -1,6 +1,10 @@
 #include <QApplication>
 #include <QPointer>
 #include <QScreen>
+#include "Nexus/TestEnvironment/TestClients.hpp"
+#include "Nexus/TestEnvironment/TestEnvironment.hpp"
+#include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/LocalQueryModel.hpp"
@@ -15,6 +19,7 @@
 #include "Spire/Ui/TextBox.hpp"
 #include "Version.hpp"
 
+using namespace Beam;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
@@ -187,13 +192,19 @@ struct TimeAndSalesTestWindow : QWidget {
 };
 
 struct TimeAndSalesWindowController {
+  TestEnvironment m_environment;
+  Clients m_clients;
+  UserProfile m_user_profile;
   std::shared_ptr<TimeAndSalesPropertiesWindowFactory> m_factory;
   QPointer<TimeAndSalesWindow> m_last_window;
   TimeAndSalesTestWindow m_time_and_sales_test_window;
 
   explicit TimeAndSalesWindowController(
       std::shared_ptr<TimeAndSalesPropertiesWindowFactory> factory)
-      : m_factory(std::move(factory)),
+      : m_clients(std::in_place_type<TestClients>, Ref(m_environment)),
+        m_user_profile("", false, false, {}, {},
+          get_default_additional_tag_database(), {}, {}, {}, m_clients),
+        m_factory(std::move(factory)),
 BEAM_SUPPRESS_THIS_INITIALIZER()
         m_time_and_sales_test_window(
           std::make_shared<DemoTimeAndSalesModel>(),
@@ -211,7 +222,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   void open_window() {
-    auto window = new TimeAndSalesWindow(populate_tickers(), m_factory,
+    auto window = new TimeAndSalesWindow(
+      Ref(m_user_profile), populate_tickers(), m_factory,
       std::bind_front(&TimeAndSalesWindowController::model_builder, this));
     window->setAttribute(Qt::WA_DeleteOnClose);
     window->show();

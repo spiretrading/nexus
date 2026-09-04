@@ -25,15 +25,15 @@ TickerView::TickerView(std::shared_ptr<TickerInfoQueryModel> tickers,
       m_current(std::move(current)),
       m_body(&body) {
   setFocusPolicy(Qt::StrongFocus);
-  auto prompt = make_label(tr("Enter a ticker symbol."));
-  update_style(*prompt, [] (auto& style) {
+  m_prompt = make_label(tr("Enter a ticker symbol."));
+  update_style(*m_prompt, [] (auto& style) {
     style.get(ReadOnly() && Disabled()).
       set(TextAlign(Qt::AlignCenter)).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(8)));
   });
   m_layers = new QStackedWidget();
-  m_layers->addWidget(prompt);
+  m_layers->addWidget(m_prompt);
   m_layers->addWidget(m_body);
   enclose(*this, *m_layers);
   m_current_connection = m_current->connect_update_signal(
@@ -67,14 +67,17 @@ TickerView::State TickerView::save_state() const {
 }
 
 void TickerView::restore(const State& state) {
+  auto current = m_current->get();
   m_tickers = state.m_tickers;
+  if(current) {
+    m_tickers.add(current);
+    return;
+  }
   if(auto top = m_tickers.get_top()) {
-    if(*top != m_current->get()) {
-      auto blocker = shared_connection_block(m_current_connection);
-      m_current->set(*top);
-      if(m_layers->currentWidget() != m_body) {
-        m_layers->setCurrentWidget(m_body);
-      }
+    auto blocker = shared_connection_block(m_current_connection);
+    m_current->set(*top);
+    if(m_layers->currentWidget() != m_body) {
+      m_layers->setCurrentWidget(m_body);
     }
   }
 }
@@ -104,6 +107,7 @@ void TickerView::keyPressEvent(QKeyEvent* event) {
 
 void TickerView::on_current(const Ticker& ticker) {
   if(!ticker) {
+    m_layers->setCurrentWidget(m_prompt);
     return;
   }
   m_ticker_dialog.hide();

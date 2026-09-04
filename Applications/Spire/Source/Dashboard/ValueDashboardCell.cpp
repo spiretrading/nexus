@@ -5,7 +5,7 @@ using namespace boost::signals2;
 using namespace Spire;
 
 ValueDashboardCell::ValueDashboardCell()
-    : m_values(30) {}
+    : m_values(1) {}
 
 void ValueDashboardCell::SetBufferSize(int size) {
   m_values.set_capacity(size);

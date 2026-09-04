@@ -131,24 +131,30 @@ export class DecimalInput extends React.Component<Properties, State> {
   }
 
   private increment = () => {
-    const current = this.props.value ?? 0;
+    const current = parseFloat(this.state.text) || 0;
     const increment = current + 1;
     if(this.props.max != null && increment > this.props.max) {
       return;
     }
     this._start = this._inputRef.current?.selectionStart;
     this._end = this._inputRef.current?.selectionEnd;
+    this.setState({
+      text: formatValue(increment, this.props.decimalPlaces)
+    });
     this.props.onChange?.(increment);
   }
 
   private decrement = () => {
-    const current = this.props.value ?? 0;
+    const current = parseFloat(this.state.text) || 0;
     const decrement = current - 1;
     if(this.props.min != null && decrement < this.props.min) {
       return;
     }
     this._start = this._inputRef.current?.selectionStart;
     this._end = this._inputRef.current?.selectionEnd;
+    this.setState({
+      text: formatValue(decrement, this.props.decimalPlaces)
+    });
     this.props.onChange?.(decrement);
   }
 

@@ -128,10 +128,10 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         return TickerSnapshot(ticker);
       }
     }();
-    m_query_routines.add(query_real_time_with_snapshot(m_market_data_client,
-      ticker, m_tasks.get_slot<BboQuote>([=, this] (const auto& bbo) {
+    m_market_data_client.query(Beam::make_current_query(ticker),
+      m_tasks.get_slot<BboQuote>([=, this] (const auto& bbo) {
         m_driver.update(ticker, bbo);
-      })));
+      }));
     m_query_routines.add(query_real_time_with_snapshot(m_market_data_client,
       ticker, m_tasks.get_slot<BookQuote>([=, this] (const auto& book_quote) {
         m_driver.update(ticker, book_quote);

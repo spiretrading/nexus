@@ -9,6 +9,15 @@
 #include "Nexus/Definitions/Quantity.hpp"
 #include "Nexus/Definitions/Venue.hpp"
 
+namespace Beam {
+  template<>
+  inline constexpr auto sql_scale_v<Nexus::Quantity> =
+    Nexus::Quantity::MULTIPLIER;
+
+  template<>
+  inline constexpr auto sql_scale_v<Nexus::Money> = Nexus::Quantity::MULTIPLIER;
+}
+
 namespace Viper {
   template<>
   inline const auto native_to_data_type_v<Nexus::CountryCode> = small_uint;
