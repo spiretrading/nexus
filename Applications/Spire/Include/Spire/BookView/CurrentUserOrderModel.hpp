@@ -22,7 +22,8 @@ namespace Spire {
   /**
    * Keeps track of the current UserOrder between both sides of the book quotes.
    */
-  class CurrentUserOrderModel : ValueModel<boost::optional<CurrentUserOrder>> {
+  class CurrentUserOrderModel :
+      public ValueModel<boost::optional<CurrentUserOrder>> {
     public:
 
       /**

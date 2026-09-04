@@ -136,6 +136,9 @@ void MpidBox::update_status(const BookEntry& entry) {
       return order->m_highlight;
     } else if(order->m_highlight == OrderStatus::PARTIALLY_FILLED) {
       return OrderStatus::FILLED;
+    } else if(order->m_highlight == OrderStatus::EXPIRED ||
+        order->m_highlight == OrderStatus::DONE_FOR_DAY) {
+      return OrderStatus::CANCELED;
     }
     return OrderStatus::NONE;
   }();

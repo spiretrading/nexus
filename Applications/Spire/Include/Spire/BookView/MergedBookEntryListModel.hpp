@@ -1,6 +1,6 @@
 #ifndef SPIRE_MERGED_BOOK_ENTRY_LIST_MODEL_HPP
 #define SPIRE_MERGED_BOOK_ENTRY_LIST_MODEL_HPP
-#include <boost/circular_buffer.hpp>
+#include <vector>
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
 
@@ -38,7 +38,7 @@ namespace Spire {
       std::shared_ptr<BookViewModel::UserOrderListModel> m_user_orders;
       std::shared_ptr<BookViewModel::PreviewOrderModel> m_preview;
       BookViewModel::PreviewOrderModel::Type m_previous_preview;
-      mutable boost::circular_buffer<BookEntry> m_reads;
+      std::vector<BookEntry> m_entries;
       ListModelTransactionLog<Type> m_transaction;
       boost::signals2::scoped_connection m_book_quotes_connection;
       boost::signals2::scoped_connection m_user_orders_connection;
