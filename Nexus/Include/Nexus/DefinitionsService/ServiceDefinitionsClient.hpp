@@ -7,6 +7,7 @@
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Services/ServiceProtocolClientHandler.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include "Nexus/DefinitionsService/DefinitionsClient.hpp"
 #include "Nexus/DefinitionsService/DefinitionsServices.hpp"
 
@@ -59,8 +60,8 @@ namespace Nexus {
       try : m_client_handler(std::forward<BF>(client_builder)) {
     register_definitions_services(Beam::out(m_client_handler.get_slots()));
   } catch(const std::exception&) {
-    std::throw_with_nested(Beam::ConnectException(
-      "Failed to connect to the definitions server."));
+    Beam::throw_nested_with_location(
+      Beam::ConnectException("Failed to connect to the definitions server."));
   }
 
   template<typename B>

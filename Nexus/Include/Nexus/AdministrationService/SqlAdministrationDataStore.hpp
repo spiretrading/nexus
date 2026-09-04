@@ -8,6 +8,7 @@
 #include <vector>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Threading/Mutex.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/KeyValueCache.hpp>
 #include <boost/throw_exception.hpp>
 #include "Nexus/AdministrationService/AdministrationDataStore.hpp"
@@ -1003,7 +1004,12 @@ namespace Nexus {
   decltype(auto) SqlAdministrationDataStore<C>::with_transaction(
       F&& transaction) {
     auto lock = std::lock_guard(m_mutex);
-    return Viper::transaction(*m_connection, std::forward<F>(transaction));
+    try {
+      return Viper::transaction(*m_connection, std::forward<F>(transaction));
+    } catch(const Viper::ExecuteException& e) {
+      Beam::throw_nested_with_location(
+        AdministrationDataStoreException(), e.get_location());
+    }
   }
 
   template<typename C>

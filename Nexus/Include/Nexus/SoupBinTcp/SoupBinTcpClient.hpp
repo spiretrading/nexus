@@ -156,8 +156,8 @@ namespace Nexus {
       throw;
     }
   } catch(const std::exception&) {
-    std::throw_with_nested(Beam::ConnectException(
-      "SoupBinTCP client failed to connect."));
+    Beam::throw_nested_with_location(
+      Beam::ConnectException("SoupBinTCP client failed to connect."));
   }
 
   template<typename C, typename T> requires

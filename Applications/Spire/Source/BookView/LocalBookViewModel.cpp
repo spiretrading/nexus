@@ -148,7 +148,7 @@ void LocalBookViewModel::remove(const OrderLogModel::OrderEntry& order) {
 }
 
 void LocalBookViewModel::update(const ExecutionReport& report) {
-  auto find_order = [&] (auto& orders, auto& user_orders) -> optional<int> {
+  auto find_order = [&] (auto& orders) -> optional<int> {
     for(auto i = 0; i != static_cast<int>(orders.size()); ++i) {
       if(orders[i]->get_info().m_id == report.m_id) {
         return i;
@@ -156,19 +156,21 @@ void LocalBookViewModel::update(const ExecutionReport& report) {
     }
     return none;
   };
-  auto update_order = [&] (int index, auto& user_orders) {
+  auto update_order = [&] (int index, auto& orders, auto& user_orders) {
     auto user_order = user_orders.get(index);
     user_order.m_status = report.m_status;
     user_order.m_size -= report.m_last_quantity;
     user_orders.set(index, user_order);
     if(is_terminal(report.m_status)) {
       m_pegged_entries.erase(report.m_id);
+      orders.erase(std::next(orders.begin(), index));
+      user_orders.remove(index);
     }
   };
-  if(auto index = find_order(m_bid_orders, *m_model.get_bid_orders())) {
-    update_order(*index, *m_model.get_bid_orders());
-  } else if(auto index = find_order(m_ask_orders, *m_model.get_ask_orders())) {
-    update_order(*index, *m_model.get_ask_orders());
+  if(auto index = find_order(m_bid_orders)) {
+    update_order(*index, m_bid_orders, *m_model.get_bid_orders());
+  } else if(auto index = find_order(m_ask_orders)) {
+    update_order(*index, m_ask_orders, *m_model.get_ask_orders());
   }
 }
 
