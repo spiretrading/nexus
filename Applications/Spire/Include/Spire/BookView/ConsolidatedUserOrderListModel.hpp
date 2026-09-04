@@ -37,11 +37,13 @@ namespace Spire {
       std::vector<boost::optional<BookViewModel::UserOrder>> m_contributions;
       ArrayListModel<BookViewModel::UserOrder> m_model;
       BookViewModel::UserOrder m_removed_order;
+      int m_transition_count;
       boost::signals2::scoped_connection m_connection;
 
       iterator find(const BookViewModel::UserOrder& order);
       void contribute(int index);
       void withdraw(int index, const BookViewModel::UserOrder& order);
+      void expire(const BookViewModel::UserOrder& level, int transition);
       void on_operation(const Operation& operation);
   };
 }

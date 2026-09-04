@@ -48,6 +48,9 @@ namespace Spire {
         /** The status of the user order. */
         Nexus::OrderStatus m_status;
 
+        /** Identifies the status transition to highlight, or 0 for none. */
+        int m_transition = 0;
+
         bool operator ==(const UserOrder&) const = default;
       };
 

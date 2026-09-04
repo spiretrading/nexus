@@ -18,10 +18,7 @@
 #include "Spire/Spire/TableValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
-#include "Spire/Styles/ChainExpression.hpp"
 #include "Spire/Styles/LinearExpression.hpp"
-#include "Spire/Styles/RevertExpression.hpp"
-#include "Spire/Styles/TimeoutExpression.hpp"
 #include "Spire/Ui/ColorConversion.hpp"
 #include "Spire/Ui/RecycledTableViewItemBuilder.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -205,15 +202,11 @@ namespace {
       const HighlightColor& active_highlight,
       const HighlightColor& status_highlight, OrderStatus status) {
     const auto HIGHLIGHT_TRANSITION_DURATION = milliseconds(100);
-    const auto HIGHLIGHT_DURATION = milliseconds(900);
     apply_row_style(style, UserOrderRow(status),
-      TextColor(chain(linear(active_highlight.m_text_color,
-        status_highlight.m_text_color, HIGHLIGHT_TRANSITION_DURATION),
-        timeout(status_highlight.m_text_color, HIGHLIGHT_DURATION), revert)),
-      BackgroundColor(chain(linear(active_highlight.m_background_color,
-        status_highlight.m_background_color, HIGHLIGHT_TRANSITION_DURATION),
-        timeout(status_highlight.m_background_color, HIGHLIGHT_DURATION),
-        revert)));
+      TextColor(linear(active_highlight.m_text_color,
+        status_highlight.m_text_color, HIGHLIGHT_TRANSITION_DURATION)),
+      BackgroundColor(linear(active_highlight.m_background_color,
+        status_highlight.m_background_color, HIGHLIGHT_TRANSITION_DURATION)));
   }
 
   void apply_order_visibility_styles(

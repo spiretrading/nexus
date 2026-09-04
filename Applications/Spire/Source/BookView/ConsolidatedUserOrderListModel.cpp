@@ -28,7 +28,8 @@ namespace {
 ConsolidatedUserOrderListModel::ConsolidatedUserOrderListModel(
     std::shared_ptr<BookViewModel::UserOrderListModel> user_orders)
     : m_user_orders(std::move(user_orders)),
-      m_contributions(m_user_orders->get_size()) {
+      m_contributions(m_user_orders->get_size()),
+      m_transition_count(0) {
   for(auto i = 0; i != m_user_orders->get_size(); ++i) {
     contribute(i);
   }
@@ -102,23 +103,39 @@ void ConsolidatedUserOrderListModel::withdraw(
   auto update = static_cast<BookViewModel::UserOrder>(*i);
   update.m_size -= contribution->m_size;
   update.m_status = order.m_status;
-  if(update.m_size > 0) {
-    *i = update;
+  if(!is_transitioning(order)) {
+    if(update.m_size > 0) {
+      *i = update;
+    } else {
+      m_model.remove(i);
+    }
     return;
   }
-  if(!is_transitioning(order)) {
+  if(update.m_size < 0) {
+    update.m_size = 0;
+  }
+  ++m_transition_count;
+  update.m_transition = m_transition_count;
+  *i = update;
+  QTimer::singleShot(TRANSITION_DURATION, this,
+    [=, this, transition = m_transition_count, level = *contribution] {
+      expire(level, transition);
+    });
+}
+
+void ConsolidatedUserOrderListModel::expire(
+    const BookViewModel::UserOrder& level, int transition) {
+  auto i = find(level);
+  if(i == m_model.end() || i->m_transition != transition) {
+    return;
+  }
+  if(i->m_size == 0) {
     m_model.remove(i);
     return;
   }
-  update.m_size = 0;
+  auto update = static_cast<BookViewModel::UserOrder>(*i);
+  update.m_transition = 0;
   *i = update;
-  QTimer::singleShot(TRANSITION_DURATION, this,
-    [=, this, level = *contribution] {
-      auto i = find(level);
-      if(i != m_model.end() && i->m_size == 0) {
-        m_model.remove(i);
-      }
-    });
 }
 
 void ConsolidatedUserOrderListModel::on_operation(const Operation& operation) {

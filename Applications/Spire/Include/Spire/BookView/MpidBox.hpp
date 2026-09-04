@@ -56,6 +56,7 @@ namespace Styles {
       boost::optional<int> m_current_type_index;
       Nexus::Venue m_current_venue;
       Nexus::OrderStatus m_current_status;
+      int m_current_transition;
       std::shared_ptr<ValueModel<int>> m_level;
       int m_current_level;
       std::shared_ptr<ValueModel<bool>> m_is_top_mpid;

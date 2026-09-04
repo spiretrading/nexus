@@ -32,6 +32,7 @@ MpidBox::MpidBox(std::shared_ptr<BookEntryModel> current,
     std::shared_ptr<ValueModel<bool>> is_top_mpid)
     : m_current(std::move(current)),
       m_current_status(OrderStatus::NONE),
+      m_current_transition(0),
       m_level(std::move(level)),
       m_current_level(m_level->get()),
       m_is_top_mpid(std::move(is_top_mpid)) {
@@ -76,7 +77,9 @@ void MpidBox::update_row_state(int type_index) {
       unmatch(*this, UserOrderRow(OrderStatus::NONE));
       if(m_current_status != OrderStatus::NONE) {
         unmatch(*this, UserOrderRow(m_current_status));
+        m_current_status = OrderStatus::NONE;
       }
+      m_current_transition = 0;
     } else {
       unmatch(*this, PreviewRow());
     }
@@ -108,11 +111,16 @@ void MpidBox::update_venue_state(const BookEntry& entry) {
 
 void MpidBox::update_status(const BookEntry& entry) {
   auto order = get<BookViewModel::UserOrder>(&entry);
-  if(!order) {
-    return;
-  }
+  auto transition = [&] {
+    if(order) {
+      return order->m_transition;
+    }
+    return 0;
+  }();
   auto status = [&] () -> OrderStatus {
-    if(order->m_status == OrderStatus::CANCELED ||
+    if(transition == 0) {
+      return OrderStatus::NONE;
+    } else if(order->m_status == OrderStatus::CANCELED ||
         order->m_status == OrderStatus::FILLED ||
         order->m_status == OrderStatus::REJECTED) {
       return order->m_status;
@@ -121,14 +129,17 @@ void MpidBox::update_status(const BookEntry& entry) {
     }
     return OrderStatus::NONE;
   }();
-  if(status == OrderStatus::NONE) {
+  if(status == m_current_status && transition == m_current_transition) {
     return;
   }
   if(m_current_status != OrderStatus::NONE) {
     unmatch(*this, UserOrderRow(m_current_status));
   }
-  match(*this, UserOrderRow(status));
   m_current_status = status;
+  m_current_transition = transition;
+  if(m_current_status != OrderStatus::NONE) {
+    match(*this, UserOrderRow(m_current_status));
+  }
 }
 
 void MpidBox::on_current(const BookEntry& entry) {
