@@ -16,6 +16,7 @@ TEST_SUITE("MergedBookEntryListModel") {
       std::make_shared<LocalValueModel<optional<OrderFields>>>());
     REQUIRE(list.get_size() == 0);
   }
+
   TEST_CASE("constructor_book_quotes") {
     auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
     quotes->push(BookQuote("TSX", false, Venues::TSX,
@@ -31,6 +32,7 @@ TEST_SUITE("MergedBookEntryListModel") {
     REQUIRE((list.get(0) == BookEntry(quotes->get(0))));
     REQUIRE((list.get(1) == BookEntry(quotes->get(1))));
   }
+
   TEST_CASE("constructor_user_orders") {
     auto orders = std::make_shared<ArrayListModel<BookViewModel::UserOrder>>();
     orders->push(
@@ -47,6 +49,7 @@ TEST_SUITE("MergedBookEntryListModel") {
     REQUIRE((list.get(1) == BookEntry(orders->get(1))));
     REQUIRE((list.get(2) == BookEntry(orders->get(2))));
   }
+
   TEST_CASE("constructor_preview") {
     auto preview = std::make_shared<LocalValueModel<optional<OrderFields>>>();
     preview->set(make_limit_order_fields(
@@ -57,6 +60,7 @@ TEST_SUITE("MergedBookEntryListModel") {
     REQUIRE(list.get_size() == 1);
     REQUIRE((list.get(0) == BookEntry(*preview->get())));
   }
+
   TEST_CASE("constructor_full") {
     auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
     quotes->push(BookQuote("TSX", false, Venues::TSX,
@@ -84,6 +88,7 @@ TEST_SUITE("MergedBookEntryListModel") {
     REQUIRE((list.get(4) == BookEntry(orders->get(2))));
     REQUIRE((list.get(5) == BookEntry(*preview->get())));
   }
+
   TEST_CASE("update_book_quotes") {
     auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
     auto list = MergedBookEntryListModel(quotes,
@@ -98,6 +103,7 @@ TEST_SUITE("MergedBookEntryListModel") {
     quotes->remove(0);
     REQUIRE(list.get_size() == 0);
   }
+
   TEST_CASE("update_user_orders") {
     auto orders = std::make_shared<ArrayListModel<BookViewModel::UserOrder>>();
     auto list = MergedBookEntryListModel(
@@ -111,6 +117,7 @@ TEST_SUITE("MergedBookEntryListModel") {
     orders->remove(0);
     REQUIRE(list.get_size() == 0);
   }
+
   TEST_CASE("update_preview") {
     auto preview = std::make_shared<LocalValueModel<optional<OrderFields>>>();
     auto list = MergedBookEntryListModel(
@@ -129,6 +136,7 @@ TEST_SUITE("MergedBookEntryListModel") {
     preview->set(none);
     REQUIRE(list.get_size() == 0);
   }
+
   TEST_CASE("update_mixed") {
     auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
     auto orders = std::make_shared<ArrayListModel<BookViewModel::UserOrder>>();
@@ -150,5 +158,23 @@ TEST_SUITE("MergedBookEntryListModel") {
     REQUIRE((list.get(0) == BookEntry(quotes->get(0))));
     REQUIRE((list.get(1) == BookEntry(orders->get(0))));
     REQUIRE((list.get(2) == BookEntry(*preview->get())));
+  }
+
+  TEST_CASE("get_reference_survives_subsequent_reads") {
+    auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
+    for(auto i = 0; i != 12; ++i) {
+      quotes->push(BookQuote(
+        "TSX", false, Venues::TSX, Quote((i + 1) * Money::ONE, 100, Side::BID),
+        time_from_string("2016-07-31 19:00:00")));
+    }
+    auto list = MergedBookEntryListModel(
+      quotes, std::make_shared<ArrayListModel<BookViewModel::UserOrder>>(),
+      std::make_shared<LocalValueModel<optional<OrderFields>>>());
+    auto expected = list.get(0);
+    auto& entry = list.get(0);
+    for(auto i = 1; i != list.get_size(); ++i) {
+      list.get(i);
+    }
+    REQUIRE((entry == expected));
   }
 }
