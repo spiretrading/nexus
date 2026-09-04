@@ -38,6 +38,7 @@ namespace Spire {
       boost::signals2::scoped_connection m_top_mpid_prices_connection;
 
       void initialize_top_mpid();
+      void update_current();
       void on_mpid(const BookEntry& mpid);
       void on_top_mpid(const TopMpidPrice& top);
       void on_price(Nexus::Money price);

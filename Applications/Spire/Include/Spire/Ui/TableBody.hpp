@@ -196,7 +196,10 @@ namespace Styles {
       void reset_visible_region();
       void update_visible_region();
       void update_column_covers();
+      void for_each_row(const std::function<void (RowCover&)>& f);
+      void update_row_widths(RowCover& row);
       void update_column_widths();
+      void navigate_selection();
       bool navigate_next();
       bool navigate_previous();
       void on_item_activated(TableItem& item);

@@ -36,9 +36,9 @@ void IsTopMpidModel::initialize_top_mpid() {
   for(auto i = 0; i != m_top_mpid_prices->get_size(); ++i) {
     if(m_top_mpid_prices->get(i).m_venue == m_venue) {
       m_top_mpid = make_list_value_model(m_top_mpid_prices, i);
-      on_top_mpid(m_top_mpid->get());
       m_top_mpid_connection = m_top_mpid->connect_update_signal(
         std::bind_front(&IsTopMpidModel::on_top_mpid, this));
+      update_current();
       return;
     }
   }
@@ -63,27 +63,19 @@ void IsTopMpidModel::on_mpid(const BookEntry& mpid) {
   }
 }
 
-void IsTopMpidModel::on_top_mpid(const TopMpidPrice& top) {
-  if(m_price->get() == top.m_price) {
-    if(!m_current.get()) {
-      m_current.set(true);
-    }
-  } else if(m_current.get()) {
-    m_current.set(false);
+void IsTopMpidModel::update_current() {
+  auto is_top = m_top_mpid && m_top_mpid->get().m_price == m_price->get();
+  if(is_top != m_current.get()) {
+    m_current.set(is_top);
   }
 }
 
+void IsTopMpidModel::on_top_mpid(const TopMpidPrice& top) {
+  update_current();
+}
+
 void IsTopMpidModel::on_price(Money price) {
-  if(!m_top_mpid) {
-    return;
-  }
-  if(m_top_mpid->get().m_price == price) {
-    if(!m_current.get()) {
-      m_current.set(true);
-    }
-  } else if(m_current.get()) {
-    m_current.set(false);
-  }
+  update_current();
 }
 
 void IsTopMpidModel::on_operation(

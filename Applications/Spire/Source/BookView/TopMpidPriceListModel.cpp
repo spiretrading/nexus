@@ -1,4 +1,5 @@
 #include "Spire/BookView/TopMpidPriceListModel.hpp"
+#include <algorithm>
 #include <boost/optional/optional.hpp>
 
 using namespace boost;
@@ -8,14 +9,14 @@ using namespace Spire;
 
 namespace {
   int find_index(const ListModel<TopMpidPrice>& prices, Venue venue) {
-    auto i = std::find_if(prices.begin(), prices.end(),
+    auto i = std::ranges::find_if(prices.begin(), prices.end(),
       [&] (const auto& price) {
         return price.m_venue == venue;
       });
-    if(i != prices.end()) {
-      return static_cast<int>(std::distance(prices.begin(), i));
+    if(i == prices.end()) {
+      return -1;
     }
-    return -1;
+    return static_cast<int>(std::ranges::distance(prices.begin(), i));
   }
 }
 

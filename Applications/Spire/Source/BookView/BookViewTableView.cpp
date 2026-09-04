@@ -307,10 +307,10 @@ namespace {
       if(event->type() == QEvent::Resize) {
         auto& table_view = *static_cast<TableView*>(parent());
         auto& resize_event = *static_cast<QResizeEvent*>(event);
-        auto column_width = resize_event.size().width() / 3;
-        table_view.get_header().get_widths()->set(0, column_width);
-        table_view.get_header().get_widths()->set(1, column_width);
-        table_view.get_header().get_widths()->set(2, column_width);
+        auto column_width = resize_event.size().width() / BOOK_VIEW_COLUMN_SIZE;
+        for(auto i = 0; i != BOOK_VIEW_COLUMN_SIZE; ++i) {
+          table_view.get_header().get_widths()->set(i, column_width);
+        }
       }
       return QObject::eventFilter(watched, event);
     }

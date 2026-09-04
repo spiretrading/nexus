@@ -65,6 +65,8 @@ namespace Spire {
       LocalValueModel<boost::optional<CurrentUserOrder>> m_current;
       boost::signals2::scoped_connection m_undo_navigation_connection;
 
+      void navigate(
+        const SideEntry& from, const SideEntry& to, Nexus::Side side);
       void update_side(const SideEntry& selected_side,
         const SideEntry& other_side, Nexus::Side side,
         const boost::optional<TableIndex>& current_index);

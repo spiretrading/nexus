@@ -30,15 +30,7 @@ ServiceBookViewModel::ServiceBookViewModel(Ticker ticker,
   bbo_query.set_interruption_policy(InterruptionPolicy::IGNORE_CONTINUE);
   m_market_data_client.query(bbo_query, m_event_handler.get_slot<BboQuote>(
     std::bind_front(&ServiceBookViewModel::on_bbo, this)));
-  spawn([client = m_market_data_client, ticker = m_ticker, slot =
-      m_event_handler.get_slot<BookQuote>(
-        std::bind_front(&ServiceBookViewModel::buffer_book_quote, this),
-        std::bind_front(
-          &ServiceBookViewModel::on_book_quote_interruption, this))] () mutable {
-    auto id = query_real_time_with_snapshot(
-      client, ticker, std::move(slot), InterruptionPolicy::BREAK_QUERY);
-    Beam::wait(id);
-  });
+  query_book_quotes();
   auto time_and_sale_query = make_real_time_query(m_ticker);
   time_and_sale_query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_market_data_client.query(
@@ -118,6 +110,18 @@ void ServiceBookViewModel::initialize_order(
   m_model.add(order, fields.m_quantity - filled_quantity, status);
 }
 
+void ServiceBookViewModel::query_book_quotes() {
+  spawn([client = m_market_data_client, ticker = m_ticker, slot =
+      m_event_handler.get_slot<BookQuote>(
+        std::bind_front(&ServiceBookViewModel::buffer_book_quote, this),
+        std::bind_front(
+          &ServiceBookViewModel::on_book_quote_interruption, this))] () mutable {
+    auto id = query_real_time_with_snapshot(
+      client, ticker, std::move(slot), InterruptionPolicy::BREAK_QUERY);
+    Beam::wait(id);
+  });
+}
+
 void ServiceBookViewModel::buffer_book_quote(const BookQuote& quote) {
   m_buffered_book_quotes.push_back(quote);
   if(m_buffered_book_quotes.size() == 1) {
@@ -142,15 +146,7 @@ void ServiceBookViewModel::on_end_book_quote_buffer() {
 void ServiceBookViewModel::on_book_quote_interruption(
     const std::exception_ptr&) {
   m_model.clear_book_quotes();
-  spawn([client = m_market_data_client, ticker = m_ticker, slot =
-      m_event_handler.get_slot<BookQuote>(
-        std::bind_front(&ServiceBookViewModel::buffer_book_quote, this),
-        std::bind_front(
-          &ServiceBookViewModel::on_book_quote_interruption, this))] () mutable {
-    auto id = query_real_time_with_snapshot(
-      client, ticker, std::move(slot), InterruptionPolicy::BREAK_QUERY);
-    Beam::wait(id);
-  });
+  query_book_quotes();
 }
 
 void ServiceBookViewModel::on_time_and_sales(const TimeAndSale& time_and_sale) {

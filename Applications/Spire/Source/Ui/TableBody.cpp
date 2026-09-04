@@ -815,9 +815,7 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
       } else {
         m_current_controller.navigate_home_column();
       }
-      if(auto current = m_current_controller.get()) {
-        m_selection_controller.navigate(*current);
-      }
+      navigate_selection();
       break;
     case Qt::Key_End:
       if(event->modifiers() & Qt::KeyboardModifier::ControlModifier) {
@@ -825,33 +823,23 @@ void TableBody::keyPressEvent(QKeyEvent* event) {
       } else {
         m_current_controller.navigate_end_column();
       }
-      if(auto current = m_current_controller.get()) {
-        m_selection_controller.navigate(*current);
-      }
+      navigate_selection();
       break;
     case Qt::Key_Up:
       m_current_controller.navigate_previous_row();
-      if(auto current = m_current_controller.get()) {
-        m_selection_controller.navigate(*current);
-      }
+      navigate_selection();
       break;
     case Qt::Key_Down:
       m_current_controller.navigate_next_row();
-      if(auto current = m_current_controller.get()) {
-        m_selection_controller.navigate(*current);
-      }
+      navigate_selection();
       break;
     case Qt::Key_Left:
       m_current_controller.navigate_previous_column();
-      if(auto current = m_current_controller.get()) {
-        m_selection_controller.navigate(*current);
-      }
+      navigate_selection();
       break;
     case Qt::Key_Right:
       m_current_controller.navigate_next_column();
-      if(auto current = m_current_controller.get()) {
-        m_selection_controller.navigate(*current);
-      }
+      navigate_selection();
       break;
     case Qt::Key_A:
       if(event->modifiers() & Qt::Modifier::CTRL && !event->isAutoRepeat()) {
@@ -1172,16 +1160,7 @@ TableBody::RowCover* TableBody::make_row_cover() {
   row->layout()->setSpacing(m_styles.m_horizontal_spacing);
   row->layout()->setContentsMargins(
     m_styles.m_horizontal_spacing, 0, m_styles.m_horizontal_spacing, 0);
-  for(auto i = 0; i != m_widths->get_size(); ++i) {
-    auto spacing = get_left_spacing(i);
-    if(auto item = row->get_item(i)) {
-      if(m_column_covers[i]->isVisible()) {
-        item->setFixedWidth(m_widths->get(i) - spacing);
-      } else {
-        item->setFixedWidth(0);
-      }
-    }
-  }
+  update_row_widths(*row);
   return row;
 }
 
@@ -1315,7 +1294,7 @@ void TableBody::update_column_covers() {
   }
 }
 
-void TableBody::update_column_widths() {
+void TableBody::for_each_row(const std::function<void (RowCover&)>& f) {
   for(auto i = 0; i != get_layout().count() + 1; ++i) {
     auto row = [&] () -> RowCover* {
       if(i == get_layout().count()) {
@@ -1328,23 +1307,40 @@ void TableBody::update_column_widths() {
       return nullptr;
     }();
     if(row) {
-      if(row->layout()->spacing() != m_styles.m_horizontal_spacing) {
-        row->layout()->setSpacing(m_styles.m_horizontal_spacing);
-      }
-      auto margins = QMargins(m_styles.m_horizontal_spacing, 0,
-        m_styles.m_horizontal_spacing, 0);
-      if(row->layout()->contentsMargins() != margins) {
-        row->layout()->setContentsMargins(margins);
-      }
-      for(auto column = 0; column != m_widths->get_size(); ++column) {
-        auto& item = *row->get_item(column);
-        if(m_column_covers[column]->isVisible()) {
-          item.setFixedWidth(m_widths->get(column) - get_left_spacing(column));
-        } else {
-          item.setFixedWidth(0);
-        }
+      f(*row);
+    }
+  }
+}
+
+void TableBody::update_row_widths(RowCover& row) {
+  for(auto i = 0; i != m_widths->get_size(); ++i) {
+    if(auto item = row.get_item(i)) {
+      if(m_column_covers[i]->isVisible()) {
+        item->setFixedWidth(m_widths->get(i) - get_left_spacing(i));
+      } else {
+        item->setFixedWidth(0);
       }
     }
+  }
+}
+
+void TableBody::update_column_widths() {
+  for_each_row([&] (auto& row) {
+    if(row.layout()->spacing() != m_styles.m_horizontal_spacing) {
+      row.layout()->setSpacing(m_styles.m_horizontal_spacing);
+    }
+    auto margins = QMargins(m_styles.m_horizontal_spacing, 0,
+      m_styles.m_horizontal_spacing, 0);
+    if(row.layout()->contentsMargins() != margins) {
+      row.layout()->setContentsMargins(margins);
+    }
+    update_row_widths(row);
+  });
+}
+
+void TableBody::navigate_selection() {
+  if(auto current = m_current_controller.get()) {
+    m_selection_controller.navigate(*current);
   }
 }
 
@@ -1368,21 +1364,15 @@ bool TableBody::navigate_next() {
       } else {
         get_current()->set(
           Index(row, get_next_column(*get_current(), row, -1)));
-        if(auto current = m_current_controller.get()) {
-          m_selection_controller.navigate(*current);
-        }
+        navigate_selection();
       }
     } else {
       get_current()->set(Index(current->m_row, column));
-      if(auto current = m_current_controller.get()) {
-        m_selection_controller.navigate(*current);
-      }
+      navigate_selection();
     }
   } else if(get_table()->get_row_size() > 0) {
     get_current()->set(Index(0, get_next_column(*get_current(), 0, -1)));
-    if(auto current = m_current_controller.get()) {
-      m_selection_controller.navigate(*current);
-    }
+    navigate_selection();
   } else {
     return false;
   }
@@ -1408,24 +1398,18 @@ bool TableBody::navigate_previous() {
       } else {
         get_current()->set(Index(row, get_previous_column(*get_current(),
           row, get_table()->get_column_size())));
-        if(auto current = m_current_controller.get()) {
-          m_selection_controller.navigate(*current);
-        }
+        navigate_selection();
       }
     } else {
       get_current()->set(Index(current->m_row, column));
-      if(auto current = m_current_controller.get()) {
-        m_selection_controller.navigate(*current);
-      }
+      navigate_selection();
     }
   } else if(get_table()->get_row_size() > 0) {
     auto row = get_table()->get_row_size() - 1;
     auto column =
       get_previous_column(*get_current(), row, get_table()->get_column_size());
     get_current()->set(Index(row, column));
-    if(auto current = m_current_controller.get()) {
-      m_selection_controller.navigate(*current);
-    }
+    navigate_selection();
   } else {
     return false;
   }
@@ -1546,52 +1530,50 @@ void TableBody::on_style() {
   m_styles.m_background_color = Qt::transparent;
   m_styles.m_horizontal_grid_color = Qt::transparent;
   m_styles.m_vertical_grid_color = Qt::transparent;
+  auto assign_color = [] (QColor& target) {
+    return [&target] (auto color) {
+      target = color;
+    };
+  };
+  auto assign_size = [] (int& target) {
+    return [&target] (auto size) {
+      target = std::max(0, size);
+    };
+  };
+  auto assign_padding = [this] (void (QMargins::*setter)(int)) {
+    return [=, this] (auto size) {
+      (m_styles.m_padding.*setter)(std::max(0, size));
+    };
+  };
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const BackgroundColor& color) {
-        stylist.evaluate(color, [=] (auto color) {
-          m_styles.m_background_color = color;
-        });
+        stylist.evaluate(color, assign_color(m_styles.m_background_color));
       },
       [&] (const HorizontalSpacing& spacing) {
-        stylist.evaluate(spacing, [=] (auto spacing) {
-          m_styles.m_horizontal_spacing = std::max(0, spacing);
-        });
+        stylist.evaluate(spacing, assign_size(m_styles.m_horizontal_spacing));
       },
       [&] (const VerticalSpacing& spacing) {
-        stylist.evaluate(spacing, [=] (auto spacing) {
-          m_styles.m_vertical_spacing = std::max(0, spacing);
-        });
+        stylist.evaluate(spacing, assign_size(m_styles.m_vertical_spacing));
       },
       [&] (const HorizontalGridColor& color) {
-        stylist.evaluate(color, [=] (auto color) {
-          m_styles.m_horizontal_grid_color = color;
-        });
+        stylist.evaluate(
+          color, assign_color(m_styles.m_horizontal_grid_color));
       },
       [&] (const VerticalGridColor& color) {
-        stylist.evaluate(color, [=] (auto color) {
-          m_styles.m_vertical_grid_color = color;
-        });
+        stylist.evaluate(color, assign_color(m_styles.m_vertical_grid_color));
       },
       [&] (const PaddingTop& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_styles.m_padding.setTop(std::max(0, size));
-        });
+        stylist.evaluate(size, assign_padding(&QMargins::setTop));
       },
       [&] (const PaddingRight& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_styles.m_padding.setRight(std::max(0, size));
-        });
+        stylist.evaluate(size, assign_padding(&QMargins::setRight));
       },
       [&] (const PaddingBottom& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_styles.m_padding.setBottom(std::max(0, size));
-        });
+        stylist.evaluate(size, assign_padding(&QMargins::setBottom));
       },
       [&] (const PaddingLeft& size) {
-        stylist.evaluate(size, [=] (auto size) {
-          m_styles.m_padding.setLeft(std::max(0, size));
-        });
+        stylist.evaluate(size, assign_padding(&QMargins::setLeft));
       });
   }
   if(get_layout().contentsMargins() != m_styles.m_padding) {
@@ -1656,27 +1638,15 @@ void TableBody::on_widths_update(const ListModel<int>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<int>::UpdateOperation& operation) {
       auto spacing = get_left_spacing(operation.m_index);
-      for(auto i = 0; i != get_layout().count() + 1; ++i) {
-        auto row = [&] () -> RowCover* {
-          if(i == get_layout().count()) {
-            return m_current_row;
-          }
-          auto row = &get_layout().get_row(i);
-          if(row != m_current_row) {
-            return row;
-          }
-          return nullptr;
-        }();
-        if(row) {
-          if(auto item = row->get_item(operation.m_index)) {
-            if(m_column_covers[operation.m_index]->isVisible()) {
-              item->setFixedWidth(m_widths->get(operation.m_index) - spacing);
-            } else {
-              item->setFixedWidth(0);
-            }
+      for_each_row([&] (auto& row) {
+        if(auto item = row.get_item(operation.m_index)) {
+          if(m_column_covers[operation.m_index]->isVisible()) {
+            item->setFixedWidth(m_widths->get(operation.m_index) - spacing);
+          } else {
+            item->setFixedWidth(0);
           }
         }
-      }
+      });
     },
     [&] (const ListModel<int>::MoveOperation& operation) {
       if(operation.m_source == operation.m_destination) {

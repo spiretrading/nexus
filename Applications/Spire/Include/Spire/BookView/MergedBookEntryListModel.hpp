@@ -44,12 +44,56 @@ namespace Spire {
       boost::signals2::scoped_connection m_user_orders_connection;
       boost::signals2::scoped_connection m_preview_connection;
 
+      static void move_entry(
+        std::vector<BookEntry>& entries, int source, int destination);
+      template<typename T>
+      void apply(const typename ListModel<T>::Operation& operation,
+        const ListModel<T>& source, int offset);
       void on_book_quote_operation(
         const BookQuoteListModel::Operation& operation);
       void on_user_order_operation(
         const BookViewModel::UserOrderListModel::Operation& operation);
       void on_preview(const boost::optional<Nexus::OrderFields>& preview);
   };
+
+  template<typename T>
+  void MergedBookEntryListModel::apply(
+      const typename ListModel<T>::Operation& operation,
+      const ListModel<T>& source, int offset) {
+    visit(operation,
+      [&] (typename ListModel<T>::StartTransaction) {
+        m_transaction.start();
+      },
+      [&] (typename ListModel<T>::EndTransaction) {
+        m_transaction.end();
+      },
+      [&] (const typename ListModel<T>::AddOperation& operation) {
+        auto index = offset + operation.m_index;
+        m_entries.insert(
+          std::next(m_entries.begin(), index), source.get(operation.m_index));
+        m_transaction.push(AddOperation(index));
+      },
+      [&] (const typename ListModel<T>::PreRemoveOperation& operation) {
+        m_transaction.push(PreRemoveOperation(offset + operation.m_index));
+      },
+      [&] (const typename ListModel<T>::RemoveOperation& operation) {
+        auto index = offset + operation.m_index;
+        m_entries.erase(std::next(m_entries.begin(), index));
+        m_transaction.push(RemoveOperation(index));
+      },
+      [&] (const typename ListModel<T>::MoveOperation& operation) {
+        auto source_index = offset + operation.m_source;
+        auto destination = offset + operation.m_destination;
+        move_entry(m_entries, source_index, destination);
+        m_transaction.push(MoveOperation(source_index, destination));
+      },
+      [&] (const typename ListModel<T>::UpdateOperation& operation) {
+        auto index = offset + operation.m_index;
+        m_entries[index] = operation.get_value();
+        m_transaction.push(UpdateOperation(
+          index, operation.get_previous(), operation.get_value()));
+      });
+  }
 }
 
 #endif

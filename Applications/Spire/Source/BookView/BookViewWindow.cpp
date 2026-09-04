@@ -411,22 +411,23 @@ void BookViewWindow::on_task_entry_key_press(const QKeyEvent& event) {
   }
 }
 
-void BookViewWindow::on_cancel_most_recent(const CurrentUserOrder& user_order) {
-  auto operation = pick(user_order.m_side,
-    CancelKeyBindingsModel::Operation::MOST_RECENT_ASK,
-    CancelKeyBindingsModel::Operation::MOST_RECENT_BID);
+void BookViewWindow::cancel(const CurrentUserOrder& user_order,
+    CancelKeyBindingsModel::Operation ask_operation,
+    CancelKeyBindingsModel::Operation bid_operation) {
   m_cancel_operation_signal(
-    operation, m_ticker_view->get_current()->get(), CancelCriteria(
+    pick(user_order.m_side, ask_operation, bid_operation),
+    m_ticker_view->get_current()->get(), CancelCriteria(
       user_order.m_user_order.m_destination, user_order.m_user_order.m_price));
 }
 
+void BookViewWindow::on_cancel_most_recent(const CurrentUserOrder& user_order) {
+  cancel(user_order, CancelKeyBindingsModel::Operation::MOST_RECENT_ASK,
+    CancelKeyBindingsModel::Operation::MOST_RECENT_BID);
+}
+
 void BookViewWindow::on_cancel_all(const CurrentUserOrder& user_order) {
-  auto operation = pick(user_order.m_side,
-    CancelKeyBindingsModel::Operation::ALL_ASKS,
+  cancel(user_order, CancelKeyBindingsModel::Operation::ALL_ASKS,
     CancelKeyBindingsModel::Operation::ALL_BIDS);
-  m_cancel_operation_signal(
-    operation, m_ticker_view->get_current()->get(), CancelCriteria(
-      user_order.m_user_order.m_destination, user_order.m_user_order.m_price));
 }
 
 void BookViewWindow::on_properties_menu() {

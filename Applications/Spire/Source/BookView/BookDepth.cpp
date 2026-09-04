@@ -108,16 +108,18 @@ void BookDepth::apply_font(const QFont& font) {
   });
 }
 
+void BookDepth::synchronize_position(
+    int position, scoped_connection& blocked, TableView& target) {
+  auto blocker = shared_connection_block(blocked);
+  target.get_scroll_box().get_vertical_scroll_bar().set_position(position);
+}
+
 void BookDepth::on_bid_position(int position) {
-  auto blocker = shared_connection_block(m_ask_position_connection);
-  m_ask_table_view->get_scroll_box().get_vertical_scroll_bar().set_position(
-    position);
+  synchronize_position(position, m_ask_position_connection, *m_ask_table_view);
 }
 
 void BookDepth::on_ask_position(int position) {
-  auto blocker = shared_connection_block(m_bid_position_connection);
-  m_bid_table_view->get_scroll_box().get_vertical_scroll_bar().set_position(
-    position);
+  synchronize_position(position, m_bid_position_connection, *m_bid_table_view);
 }
 
 void BookDepth::on_font_property_update(const QFont& font) {

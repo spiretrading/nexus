@@ -14,6 +14,27 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  Money compute_peg_price(
+      const std::string& exec_inst, const BboQuote& bbo, Side side) {
+    auto [same_price, opposite_price] = pick(side,
+      std::pair(bbo.m_ask.m_price, bbo.m_bid.m_price),
+      std::pair(bbo.m_bid.m_price, bbo.m_ask.m_price));
+    if(exec_inst == MARKET_PEG) {
+      return opposite_price;
+    } else if(exec_inst == MID_PRICE_PEG) {
+      return (same_price + opposite_price) / 2;
+    }
+    return same_price;
+  }
+
+  Money clamp_to_limit(Money price, Money limit, Side side) {
+    auto direction = get_direction(side);
+    if(limit != Money::ZERO && direction * price > direction * limit) {
+      return limit;
+    }
+    return price;
+  }
+
   int find_partition_point(const BookQuoteListModel& quotes, auto is_before) {
     auto size = quotes.get_size();
     if(size == 0 || !is_before(quotes.get(0))) {
@@ -65,6 +86,15 @@ void LocalBookViewModel::update(const BookQuote& quote) {
       return direction * entry.m_quote.m_price >
         direction * quote.m_quote.m_price;
     }));
+  auto find_insert_position = [&] {
+    auto i = lower_bound;
+    while(i != quotes->end() && i->m_quote.m_price == quote.m_quote.m_price &&
+        std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
+          std::tie(i->m_quote.m_size, i->m_timestamp, i->m_mpid)) {
+      ++i;
+    }
+    return i;
+  };
   auto existing_iterator = lower_bound;
   while(existing_iterator != quotes->end() &&
       existing_iterator->m_quote.m_price == quote.m_quote.m_price &&
@@ -74,29 +104,14 @@ void LocalBookViewModel::update(const BookQuote& quote) {
   if(existing_iterator == quotes->end() ||
       existing_iterator->m_quote.m_price != quote.m_quote.m_price) {
     if(quote.m_quote.m_size != 0) {
-      auto insert_iterator = lower_bound;
-      while(insert_iterator != quotes->end() &&
-          insert_iterator->m_quote.m_price == quote.m_quote.m_price &&
-            std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
-              std::tie(insert_iterator->m_quote.m_size,
-                insert_iterator->m_timestamp, insert_iterator->m_mpid)) {
-        ++insert_iterator;
-      }
-      quotes->insert(quote, insert_iterator);
+      quotes->insert(quote, find_insert_position());
     }
     return;
   }
   if(quote.m_quote.m_size == 0) {
     quotes->remove(existing_iterator);
   } else {
-    auto insert_iterator = lower_bound;
-    while(insert_iterator != quotes->end() &&
-        insert_iterator->m_quote.m_price == quote.m_quote.m_price &&
-          std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
-            std::tie(insert_iterator->m_quote.m_size,
-              insert_iterator->m_timestamp, insert_iterator->m_mpid)) {
-      ++insert_iterator;
-    }
+    auto insert_iterator = find_insert_position();
     if(insert_iterator == existing_iterator) {
       *insert_iterator = quote;
     } else {
@@ -245,25 +260,11 @@ void LocalBookViewModel::submit_pegged(const Order& order) {
     }
   }
   auto direction = get_direction(fields.m_side);
-  auto& bbo = m_model.get_bbo_quote()->get();
-  auto [same_price, opposite_price] = pick(fields.m_side,
-    std::pair(bbo.m_ask.m_price, bbo.m_bid.m_price),
-    std::pair(bbo.m_bid.m_price, bbo.m_ask.m_price));
-  auto price = [&] {
-    if(entry.m_exec_inst == MARKET_PEG) {
-      return opposite_price;
-    } else if(entry.m_exec_inst == MID_PRICE_PEG) {
-      return (same_price + opposite_price) / 2;
-    }
-    return same_price;
-  }();
+  auto price = compute_peg_price(
+    entry.m_exec_inst, m_model.get_bbo_quote()->get(), fields.m_side);
   entry.m_is_initialized = price != Money::ZERO;
-  entry.m_effective_price = price - direction * entry.m_peg_difference;
-  auto limit_price = fields.m_price;
-  if(limit_price != Money::ZERO &&
-      direction * entry.m_effective_price > direction * limit_price) {
-    entry.m_effective_price = limit_price;
-  }
+  entry.m_effective_price = clamp_to_limit(
+    price - direction * entry.m_peg_difference, fields.m_price, fields.m_side);
   m_pegged_entries[order.get_info().m_id] = entry;
 }
 
@@ -278,17 +279,7 @@ void LocalBookViewModel::update_pegged_orders() {
         continue;
       }
       auto& entry = it->second;
-      auto [same_price, opposite_price] = pick(side,
-        std::pair(bbo.m_ask.m_price, bbo.m_bid.m_price),
-        std::pair(bbo.m_bid.m_price, bbo.m_ask.m_price));
-      auto price = [&] {
-        if(entry.m_exec_inst == MARKET_PEG) {
-          return opposite_price;
-        } else if(entry.m_exec_inst == MID_PRICE_PEG) {
-          return (same_price + opposite_price) / 2;
-        }
-        return same_price;
-      }();
+      auto price = compute_peg_price(entry.m_exec_inst, bbo, side);
       if(price == Money::ZERO) {
         continue;
       }
@@ -298,11 +289,8 @@ void LocalBookViewModel::update_pegged_orders() {
         entry.m_effective_price = candidate;
         entry.m_is_initialized = true;
       }
-      auto limit_price = order->get_info().m_fields.m_price;
-      if(limit_price != Money::ZERO &&
-          direction * entry.m_effective_price > direction * limit_price) {
-        entry.m_effective_price = limit_price;
-      }
+      entry.m_effective_price = clamp_to_limit(
+        entry.m_effective_price, order->get_info().m_fields.m_price, side);
       auto user_order = user_orders.get(i);
       if(user_order.m_price != entry.m_effective_price) {
         user_order.m_price = entry.m_effective_price;

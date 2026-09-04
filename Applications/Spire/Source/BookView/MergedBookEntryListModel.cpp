@@ -6,19 +6,6 @@ using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
-namespace {
-  void move_entry(
-      std::vector<BookEntry>& entries, int source, int destination) {
-    auto i = std::next(entries.begin(), source);
-    auto j = std::next(entries.begin(), destination);
-    if(source < destination) {
-      std::rotate(i, std::next(i), std::next(j));
-    } else {
-      std::rotate(j, i, std::next(i));
-    }
-  }
-}
-
 MergedBookEntryListModel::MergedBookEntryListModel(
     std::shared_ptr<BookQuoteListModel> book_quotes,
     std::shared_ptr<BookViewModel::UserOrderListModel> user_orders,
@@ -66,76 +53,26 @@ void MergedBookEntryListModel::transact(
   m_transaction.transact(transaction);
 }
 
+void MergedBookEntryListModel::move_entry(
+    std::vector<BookEntry>& entries, int source, int destination) {
+  auto i = std::next(entries.begin(), source);
+  auto j = std::next(entries.begin(), destination);
+  if(source < destination) {
+    std::rotate(i, std::next(i), std::next(j));
+  } else {
+    std::rotate(j, i, std::next(i));
+  }
+}
+
 void MergedBookEntryListModel::on_book_quote_operation(
     const BookQuoteListModel::Operation& operation) {
-  visit(operation,
-    [&] (BookQuoteListModel::StartTransaction) {
-      m_transaction.start();
-    },
-    [&] (BookQuoteListModel::EndTransaction) {
-      m_transaction.end();
-    },
-    [&] (const BookQuoteListModel::AddOperation& operation) {
-      m_entries.insert(std::next(m_entries.begin(), operation.m_index),
-        m_book_quotes->get(operation.m_index));
-      m_transaction.push(AddOperation(operation.m_index));
-    },
-    [&] (const BookQuoteListModel::PreRemoveOperation& operation) {
-      m_transaction.push(PreRemoveOperation(operation.m_index));
-    },
-    [&] (const BookQuoteListModel::RemoveOperation& operation) {
-      m_entries.erase(std::next(m_entries.begin(), operation.m_index));
-      m_transaction.push(RemoveOperation(operation.m_index));
-    },
-    [&] (const BookQuoteListModel::MoveOperation& operation) {
-      move_entry(m_entries, operation.m_source, operation.m_destination);
-      m_transaction.push(
-        MoveOperation(operation.m_source, operation.m_destination));
-    },
-    [&] (const BookQuoteListModel::UpdateOperation& operation) {
-      m_entries[operation.m_index] = operation.get_value();
-      m_transaction.push(UpdateOperation(
-        operation.m_index, operation.get_previous(), operation.get_value()));
-    });
+  apply<BookQuote>(operation, *m_book_quotes, 0);
 }
 
 void MergedBookEntryListModel::on_user_order_operation(
     const BookViewModel::UserOrderListModel::Operation& operation) {
-  visit(operation,
-    [&] (BookViewModel::UserOrderListModel::StartTransaction) {
-      m_transaction.start();
-    },
-    [&] (BookViewModel::UserOrderListModel::EndTransaction) {
-      m_transaction.end();
-    },
-    [&] (const BookViewModel::UserOrderListModel::AddOperation& operation) {
-      auto index = m_book_quotes->get_size() + operation.m_index;
-      m_entries.insert(std::next(m_entries.begin(), index),
-        m_user_orders->get(operation.m_index));
-      m_transaction.push(AddOperation(index));
-    },
-    [&] (const
-        BookViewModel::UserOrderListModel::PreRemoveOperation& operation) {
-      m_transaction.push(
-        PreRemoveOperation(m_book_quotes->get_size() + operation.m_index));
-    },
-    [&] (const BookViewModel::UserOrderListModel::RemoveOperation& operation) {
-      auto index = m_book_quotes->get_size() + operation.m_index;
-      m_entries.erase(std::next(m_entries.begin(), index));
-      m_transaction.push(RemoveOperation(index));
-    },
-    [&] (const BookViewModel::UserOrderListModel::MoveOperation& operation) {
-      auto source = m_book_quotes->get_size() + operation.m_source;
-      auto destination = m_book_quotes->get_size() + operation.m_destination;
-      move_entry(m_entries, source, destination);
-      m_transaction.push(MoveOperation(source, destination));
-    },
-    [&] (const BookViewModel::UserOrderListModel::UpdateOperation& operation) {
-      auto index = m_book_quotes->get_size() + operation.m_index;
-      m_entries[index] = operation.get_value();
-      m_transaction.push(UpdateOperation(
-        index, operation.get_previous(), operation.get_value()));
-    });
+  apply<BookViewModel::UserOrder>(
+    operation, *m_user_orders, m_book_quotes->get_size());
 }
 
 void MergedBookEntryListModel::on_preview(

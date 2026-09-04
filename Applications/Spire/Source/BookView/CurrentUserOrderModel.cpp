@@ -55,14 +55,14 @@ CurrentUserOrderModel::CurrentUserOrderModel(
     std::bind_front(&CurrentUserOrderModel::on_ask, this));
 }
 
-void CurrentUserOrderModel::navigate_to_bids() {
+void CurrentUserOrderModel::navigate(
+    const SideEntry& from, const SideEntry& to, Side side) {
   auto& current = get();
-  if(!current || current->m_side != Side::ASK ||
-      !m_current_ask.m_current->get()) {
+  if(!current || current->m_side != side || !from.m_current->get()) {
     return;
   }
-  auto current_index = *m_current_ask.m_current->get();
-  auto row_size = m_current_bid.m_table->get_row_size();
+  auto current_index = *from.m_current->get();
+  auto row_size = to.m_table->get_row_size();
   auto undo_navigation = [&] () -> optional<int> {
     if(m_undo_navigation) {
       return m_undo_navigation->get_index();
@@ -70,33 +70,18 @@ void CurrentUserOrderModel::navigate_to_bids() {
     return none;
   }();
   navigate_between_sides(
-    *m_current_bid.m_current, current_index.m_row, row_size, undo_navigation);
+    *to.m_current, current_index.m_row, row_size, undo_navigation);
   m_undo_navigation.emplace(current_index.m_row);
-  m_undo_navigation_connection =
-    m_current_ask.m_table->connect_operation_signal(
-      std::bind_front(&CurrentUserOrderModel::on_operation, this));
+  m_undo_navigation_connection = from.m_table->connect_operation_signal(
+    std::bind_front(&CurrentUserOrderModel::on_operation, this));
+}
+
+void CurrentUserOrderModel::navigate_to_bids() {
+  navigate(m_current_ask, m_current_bid, Side::ASK);
 }
 
 void CurrentUserOrderModel::navigate_to_asks() {
-  auto& current = get();
-  if(!current || current->m_side != Side::BID ||
-     !m_current_bid.m_current->get()) {
-    return;
-  }
-  auto current_index = *m_current_bid.m_current->get();
-  auto row_size = m_current_ask.m_table->get_row_size();
-  auto undo_navigation = [&] () -> optional<int> {
-    if(m_undo_navigation) {
-      return m_undo_navigation->get_index();
-    }
-    return none;
-  }();
-  navigate_between_sides(
-    *m_current_ask.m_current, current_index.m_row, row_size, undo_navigation);
-  m_undo_navigation.emplace(current_index.m_row);
-  m_undo_navigation_connection =
-    m_current_bid.m_table->connect_operation_signal(
-      std::bind_front(&CurrentUserOrderModel::on_operation, this));
+  navigate(m_current_bid, m_current_ask, Side::BID);
 }
 
 const CurrentUserOrderModel::Type& CurrentUserOrderModel::get() const {
