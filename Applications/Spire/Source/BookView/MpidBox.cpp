@@ -1,9 +1,7 @@
 #include "Spire/BookView/MpidBox.hpp"
-#include <QEvent>
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
-#include "Spire/Ui/TableView.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
 using namespace Nexus;
@@ -122,13 +120,13 @@ void MpidBox::update_venue_state(const BookEntry& entry) {
 void MpidBox::update_status(const BookEntry& entry) {
   auto order = get<BookViewModel::UserOrder>(&entry);
   auto transition = [&] () -> std::uint64_t {
-    if(order) {
-      return order->m_transition;
+    if(!order) {
+      return 0;
     }
-    return 0;
+    return order->m_transition;
   }();
   auto status = [&] () -> OrderStatus {
-    if(transition == 0) {
+    if(!order || transition == 0) {
       return OrderStatus::NONE;
     } else if(order->m_highlight == OrderStatus::CANCELED ||
         order->m_highlight == OrderStatus::FILLED ||

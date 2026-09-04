@@ -8,7 +8,7 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  const auto TRANSITION_DURATION = 1000;
+  const auto TRANSITION_DURATION = std::chrono::milliseconds(1000);
 
   bool user_order_comparator(const BookViewModel::UserOrder& left,
       const BookViewModel::UserOrder& right) {
@@ -146,9 +146,8 @@ void ConsolidatedUserOrderListModel::start_transition(
     return transition.m_level.m_price == level.m_price &&
       transition.m_level.m_destination == level.m_destination;
   });
-  m_transitions.push_back(
-    Transition(level, m_transition_count, std::chrono::steady_clock::now() +
-      std::chrono::milliseconds(TRANSITION_DURATION)));
+  m_transitions.push_back(Transition(level, m_transition_count,
+    std::chrono::steady_clock::now() + TRANSITION_DURATION));
   schedule();
 }
 
@@ -176,8 +175,8 @@ void ConsolidatedUserOrderListModel::on_expiry() {
 }
 
 void ConsolidatedUserOrderListModel::expire(
-    const BookViewModel::UserOrder& level, std::uint64_t transition) {
-  auto i = find(level);
+    const BookViewModel::UserOrder& key, std::uint64_t transition) {
+  auto i = find(key);
   if(i == m_model.end() || i->m_transition != transition) {
     return;
   }

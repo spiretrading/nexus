@@ -114,8 +114,8 @@ void ServiceBookViewModel::query_book_quotes() {
   spawn([client = m_market_data_client, ticker = m_ticker, slot =
       m_event_handler.get_slot<BookQuote>(
         std::bind_front(&ServiceBookViewModel::buffer_book_quote, this),
-        std::bind_front(
-          &ServiceBookViewModel::on_book_quote_interruption, this))] () mutable {
+        std::bind_front(&ServiceBookViewModel::on_book_quote_interruption,
+          this))] () mutable {
     auto id = query_real_time_with_snapshot(
       client, ticker, std::move(slot), InterruptionPolicy::BREAK_QUERY);
     Beam::wait(id);

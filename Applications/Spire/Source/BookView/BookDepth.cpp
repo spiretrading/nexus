@@ -5,10 +5,7 @@
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/BookView/BookViewTableView.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
-#include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
-#include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -33,8 +30,6 @@ namespace {
       make_book_view_table_view(std::move(model), std::move(properties), side);
     table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     layout->addWidget(table_view);
-    auto table =
-      std::static_pointer_cast<SortedTableModel>(table_view->get_table());
     return std::tuple(panel, bbo_box, table_view);
   }
 }

@@ -133,7 +133,7 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
   setWindowTitle(TITLE_NAME);
   m_transition_view = new TransitionView(new QWidget());
   m_ticker_view = new TickerView(std::move(tickers), *m_transition_view);
-  m_ticker_view->get_current()->connect_update_signal(
+  m_current_connection = m_ticker_view->get_current()->connect_update_signal(
     std::bind_front(&BookViewWindow::on_current, this));
   m_ticker_view->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
@@ -146,8 +146,9 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
     std::bind_front(&BookViewWindow::on_context_menu, this));
   resize(scale(266, 361));
   m_page_key_observer.emplace(*this);
-  m_page_key_observer->connect_filtered_key_press_signal(
-    std::bind_front(&BookViewWindow::on_key_press, this));
+  m_key_press_connection =
+    m_page_key_observer->connect_filtered_key_press_signal(
+      std::bind_front(&BookViewWindow::on_key_press, this));
 }
 
 const std::shared_ptr<TickerModel>& BookViewWindow::get_current() const {
@@ -307,7 +308,7 @@ void BookViewWindow::display_task_entry_panel(
   m_task_entry_panel = new CondensedCanvasWidget(
     arguments.m_name.toStdString(), Ref(*m_user_profile), this);
   auto coordinate = CanvasNodeModel::Coordinate(0, 0);
-  auto isVisible = [&] {
+  auto is_visible = [&] {
     try {
       m_task_entry_panel->Add(coordinate, *task_node);
       return true;
@@ -315,7 +316,7 @@ void BookViewWindow::display_task_entry_panel(
       return false;
     }
   }();
-  if(isVisible) {
+  if(is_visible) {
     m_task_entry_panel->setSizePolicy(
       QSizePolicy::Preferred, QSizePolicy::Fixed);
     m_transition_view->layout()->addWidget(m_task_entry_panel);
@@ -366,7 +367,8 @@ void BookViewWindow::on_context_menu(const QPoint& pos) {
   if(m_book_depth) {
     if(auto current = m_book_depth->get_current()->get()) {
       menu->add_action(tr("Cancel Single Selected"),
-        std::bind_front(&BookViewWindow::on_cancel_most_recent, this, *current));
+        std::bind_front(
+          &BookViewWindow::on_cancel_most_recent, this, *current));
       menu->add_action(tr("Cancel All Selected"),
         std::bind_front(&BookViewWindow::on_cancel_all, this, *current));
       menu->add_separator();
@@ -474,7 +476,7 @@ void BookViewWindow::on_current(const Ticker& ticker) {
     std::bind_front(&BookViewWindow::on_order_operation, this, Side::ASK));
   SetDisplayedTicker(ticker);
   m_page_key_observer.emplace(*this);
-  m_page_key_observer->connect_filtered_key_press_signal(
+  m_key_press_connection = m_page_key_observer->connect_filtered_key_press_signal(
     std::bind_front(&BookViewWindow::on_key_press, this));
 }
 

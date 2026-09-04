@@ -32,7 +32,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  using ShowGrid = StateSelector<void, struct ShowGridSeletorTag>;
+  using ShowGrid = StateSelector<void, struct ShowGridSelectorTag>;
   const auto CURRENT_BACKGROUND_COLOR = QColor(0x8D78EC);
   const auto CURRENT_TEXT_COLOR = QColor(0xFFFFFF);
 
@@ -215,12 +215,12 @@ namespace {
   void apply_transition_styles(StyleSheet& style,
       const HighlightColor& active_highlight,
       const HighlightColor& status_highlight, OrderStatus status) {
-    const auto HIGHLIGHT_TRANSITION_DURATION = milliseconds(100);
+    const auto HIGHLIGHT_FADE_DURATION = milliseconds(100);
     apply_row_style(style, UserOrderRow(status),
       TextColor(linear(active_highlight.m_text_color,
-        status_highlight.m_text_color, HIGHLIGHT_TRANSITION_DURATION)),
+        status_highlight.m_text_color, HIGHLIGHT_FADE_DURATION)),
       BackgroundColor(linear(active_highlight.m_background_color,
-        status_highlight.m_background_color, HIGHLIGHT_TRANSITION_DURATION)));
+        status_highlight.m_background_color, HIGHLIGHT_FADE_DURATION)));
     apply_row_style(style, UserOrderRow(status) && SettledRow(),
       TextColor(status_highlight.m_text_color),
       BackgroundColor(status_highlight.m_background_color));

@@ -56,7 +56,7 @@ namespace Spire {
       void start_transition(
         BookViewModel::UserOrder& level, Nexus::OrderStatus status);
       void expire(
-        const BookViewModel::UserOrder& level, std::uint64_t transition);
+        const BookViewModel::UserOrder& key, std::uint64_t transition);
       void schedule();
       void on_expiry();
       void on_operation(const Operation& operation);

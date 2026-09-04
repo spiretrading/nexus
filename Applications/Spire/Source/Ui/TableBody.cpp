@@ -1084,7 +1084,12 @@ void TableBody::move_row(int source, int destination) {
   increment_operation_counter();
   if(m_current_index) {
     auto& current_row = m_current_index->m_row;
-    auto direction = source < destination ? -1 : 1;
+    auto direction = [&] {
+      if(source < destination) {
+        return -1;
+      }
+      return 1;
+    }();
     if(current_row == source) {
       current_row = destination;
     } else if((current_row - destination) * direction >= 0 &&
@@ -1526,7 +1531,7 @@ void TableBody::on_hover(TableItem& item, HoverObserver::State state) {
 
 void TableBody::on_style() {
   auto& stylist = find_stylist(*this);
-  m_styles = {};
+  m_styles = Styles();
   m_styles.m_background_color = Qt::transparent;
   m_styles.m_horizontal_grid_color = Qt::transparent;
   m_styles.m_vertical_grid_color = Qt::transparent;

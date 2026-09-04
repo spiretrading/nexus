@@ -132,6 +132,8 @@ namespace Spire {
       TransitionView* m_transition_view;
       boost::optional<KeyObserver> m_page_key_observer;
       std::string m_link_identifier;
+      boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_key_press_connection;
       boost::signals2::scoped_connection m_link_connection;
       TickerView* m_ticker_view;
       CondensedCanvasWidget* m_task_entry_panel;

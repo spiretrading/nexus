@@ -17,8 +17,8 @@ namespace {
   const auto BORDER_TOP_COLOR = QColor(0xC8C8C8);
   const auto DOWNTICK_BORDER_TOP_COLOR = QColor(0xE63F44);
   const auto UPTICK_BORDER_TOP_COLOR = QColor(0x1FD37A);
-  const auto MINIMUM_FONT_TATIO = 0.4;
-  const auto MAXIMUM_FONT_TATIO = 1.8;
+  const auto MINIMUM_FONT_RATIO = 0.4;
+  const auto MAXIMUM_FONT_RATIO = 1.8;
   const auto FONT_ADJUSTMENT = 6.89;
   const auto WIDTH_SCALE_FACTOR = 0.48276;
 
@@ -45,7 +45,7 @@ namespace {
   auto get_gap_width(int font_size, int parent_width) {
     return std::clamp(
       WIDTH_SCALE_FACTOR * parent_width - FONT_ADJUSTMENT * font_size,
-      MINIMUM_FONT_TATIO * font_size, MAXIMUM_FONT_TATIO * font_size);
+      MINIMUM_FONT_RATIO * font_size, MAXIMUM_FONT_RATIO * font_size);
   }
 }
 
