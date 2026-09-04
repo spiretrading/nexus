@@ -10,6 +10,7 @@
 #include <Beam/Services/ServiceProtocolClient.hpp>
 #include <Beam/TimeService/Timer.hpp>
 #include <Beam/Utilities/AssertionException.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/TypeTraits.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
@@ -178,7 +179,7 @@ namespace Nexus {
       throw;
     }
   } catch(const std::exception&) {
-    std::throw_with_nested(Beam::ConnectException(
+    Beam::throw_nested_with_location(Beam::ConnectException(
       "Failed to connect to the market data feed server."));
   }
 
