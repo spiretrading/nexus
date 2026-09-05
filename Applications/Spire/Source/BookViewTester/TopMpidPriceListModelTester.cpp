@@ -111,6 +111,24 @@ TEST_SUITE("TopMpidPriceListModel") {
     REQUIRE(top_prices.get(0).m_price == Money(100));
   }
 
+  TEST_CASE("update_quote_price") {
+    auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
+    auto top_prices = TopMpidPriceListModel(quotes);
+    quotes->push(make_book_quote(Venues::TSX, Money(200)));
+    quotes->push(make_book_quote(Venues::TSX, Money(100)));
+    REQUIRE(top_prices.get(0).m_price == Money(200));
+    SUBCASE("lower_the_top") {
+      quotes->set(0, make_book_quote(Venues::TSX, Money(50)));
+      REQUIRE(top_prices.get_size() == 1);
+      REQUIRE(top_prices.get(0).m_price == Money(100));
+    }
+    SUBCASE("raise_below_the_top") {
+      quotes->set(1, make_book_quote(Venues::TSX, Money(300)));
+      REQUIRE(top_prices.get_size() == 1);
+      REQUIRE(top_prices.get(0).m_price == Money(300));
+    }
+  }
+
   TEST_CASE("remove_non_primary_quote") {
     auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
     auto top_prices = TopMpidPriceListModel(quotes);

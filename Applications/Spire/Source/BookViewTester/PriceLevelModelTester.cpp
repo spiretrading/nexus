@@ -378,6 +378,31 @@ TEST_SUITE("PriceLevelModel") {
     REQUIRE(levels.get(4) == 3);
   }
 
+  TEST_CASE("price_move") {
+    auto prices = make_prices(
+      {12 * Money::ONE, 11 * Money::ONE, 10 * Money::ONE});
+    auto levels =
+      PriceLevelModel(prices, std::make_shared<LocalValueModel<int>>(5));
+    REQUIRE(levels.get(0) == 0);
+    REQUIRE(levels.get(1) == 1);
+    REQUIRE(levels.get(2) == 2);
+    SUBCASE("move") {
+      prices->move(0, 2);
+      REQUIRE(levels.get(0) == 0);
+      REQUIRE(levels.get(1) == 1);
+      REQUIRE(levels.get(2) == 2);
+    }
+    SUBCASE("move_and_update") {
+      prices->transact([&] {
+        prices->move(0, 2);
+        prices->set(2, 9 * Money::ONE);
+      });
+      REQUIRE(levels.get(0) == 0);
+      REQUIRE(levels.get(1) == 1);
+      REQUIRE(levels.get(2) == 2);
+    }
+  }
+
   TEST_CASE("price_update_in_place") {
     auto prices =
       make_prices({10 * Money::ONE, 10 * Money::ONE, 9 * Money::ONE});
