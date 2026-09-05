@@ -1,5 +1,6 @@
 #include "Spire/BookView/BookViewProperties.hpp"
 #include <array>
+#include <cstddef>
 #include <fstream>
 #include <Beam/IO/BasicIStreamReader.hpp>
 #include <Beam/IO/BasicOStreamWriter.hpp>
@@ -44,6 +45,15 @@ namespace {
       throw std::runtime_error("book_view.dat not found.");
     }
     return to_book_view_properties(load_legacy_properties(properties_path));
+  }
+
+  template<std::size_t N>
+  const QString& get_text(const std::array<QString, N>& values, auto value) {
+    auto index = static_cast<int>(value);
+    if(index < 0 || index >= static_cast<int>(N)) {
+      return values.back();
+    }
+    return values[index];
   }
 }
 
@@ -135,14 +145,14 @@ const QString& Spire::to_text(
     BookViewHighlightProperties::OrderVisibility visibility) {
   static const auto VALUES = std::array{
     QObject::tr("Hide"), QObject::tr("Show"), QObject::tr("Highlight")};
-  return VALUES[static_cast<int>(visibility)];
+  return get_text(VALUES, visibility);
 }
 
 const QString& Spire::to_text(
     BookViewHighlightProperties::VenueHighlightLevel level) {
   static const auto VALUES =
     std::array{QObject::tr("Top Level"), QObject::tr("All Levels")};
-  return VALUES[static_cast<int>(level)];
+  return get_text(VALUES, level);
 }
 
 const QString& Spire::to_text(
@@ -150,7 +160,7 @@ const QString& Spire::to_text(
   static const auto VALUES = std::array{QObject::tr("Preview"),
     QObject::tr("Active"), QObject::tr("Filled"), QObject::tr("Canceled"),
     QObject::tr("Rejected")};
-  return VALUES[static_cast<int>(state)];
+  return get_text(VALUES, state);
 }
 
 BookViewProperties Spire::load_book_view_properties(

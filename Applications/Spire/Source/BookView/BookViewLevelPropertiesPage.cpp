@@ -348,6 +348,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         m_gradient_color_levels(0) {
     auto body = new QWidget();
     m_body_layout = make_hbox_layout(body);
+    m_scroll_box = new ScrollBox(body);
     auto color_bands = make_color_bands();
     color_bands->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     color_bands->setFixedWidth(scale_width(COLOR_BAND_WIDTH));
@@ -357,7 +358,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_color_boxes->setSizePolicy(QSizePolicy::Expanding,
       QSizePolicy::Expanding);
     m_body_layout->addWidget(m_color_boxes, 0, Qt::AlignTop);
-    m_scroll_box = new ScrollBox(body);
     m_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     m_scroll_box->get_body().installEventFilter(this);
     m_scroll_box->get_vertical_scroll_bar().installEventFilter(this);
