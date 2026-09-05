@@ -60,10 +60,12 @@ namespace {
     if(insert_index > existing_index) {
       --insert_index;
     }
-    quotes.set(existing_index, quote);
-    if(insert_index != existing_index) {
-      quotes.move(existing_index, insert_index);
+    if(insert_index == existing_index) {
+      quotes.set(existing_index, quote);
+      return;
     }
+    quotes.remove(existing_index);
+    quotes.insert(quote, insert_index);
   }
 
   int find_partition_point(const BookQuoteListModel& quotes, auto is_before) {
