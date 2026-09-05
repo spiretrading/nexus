@@ -104,11 +104,11 @@ namespace {
           make_proxy_value_model(make_list_value_model(m_entries, row));
         auto level =
           make_proxy_value_model(make_list_value_model(m_price_levels, row));
-        auto is_top_mpid =
-          std::make_shared<BookViewProxyValueModel<Money, bool>>(
-            make_list_value_model(m_prices, row));
-        is_top_mpid->set_target(std::make_shared<IsTopMpidModel>(
-          m_top_mpid_prices, entry, is_top_mpid->get_proxy()));
+        auto is_top_mpid = std::make_shared<IsTopMpidModel>(
+          m_top_mpid_prices, entry, make_transform_value_model(entry,
+            [] (const auto& entry) {
+              return get_price(entry);
+            }));
         auto mpid_box = new MpidBox(
           std::move(entry), std::move(level), std::move(is_top_mpid));
         return mpid_box;
@@ -159,9 +159,6 @@ namespace {
         auto& level =
           static_cast<ProxyValueModel<int>&>(*mpid_box.get_level());
         level.set_source(make_list_value_model(m_price_levels, row));
-        auto& is_top_mpid = static_cast<BookViewProxyValueModel<Money, bool>&>(
-          *mpid_box.is_top_mpid());
-        is_top_mpid.set_source(make_list_value_model(m_prices, row));
       } else if(column_id == BookViewColumn::PRICE) {
         auto& price_box = static_cast<TextBox&>(widget);
         auto& current = static_cast<BookViewProxyValueModel<Money, QString>&>(
@@ -438,14 +435,12 @@ TableView* Spire::make_book_view_table_view(
   auto table = std::make_shared<SortedTableModel>(
     make_book_view_table_model(std::move(entries)), std::move(column_orders),
     &book_view_comparator);
-  auto price_levels = std::make_shared<PriceLevelModel>(
-    std::make_shared<ColumnViewListModel<Money>>(
-      table, static_cast<int>(BookViewColumn::PRICE)),
-      make_max_level_model(properties));
-  auto book_entries = std::make_shared<ColumnViewListModel<BookEntry>>(
-    table, static_cast<int>(BookViewColumn::MPID));
   auto prices = std::make_shared<ColumnViewListModel<Money>>(
     table, static_cast<int>(BookViewColumn::PRICE));
+  auto price_levels = std::make_shared<PriceLevelModel>(
+    prices, make_max_level_model(properties));
+  auto book_entries = std::make_shared<ColumnViewListModel<BookEntry>>(
+    table, static_cast<int>(BookViewColumn::MPID));
   auto sizes = std::make_shared<ColumnViewListModel<Quantity>>(
     table, static_cast<int>(BookViewColumn::SIZE));
   auto top_mpid_prices =

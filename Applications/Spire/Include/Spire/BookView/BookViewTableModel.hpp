@@ -23,6 +23,9 @@ namespace Spire {
   /** The type of ValueModel used for a BookEntry. */
   using BookEntryModel = ValueModel<BookEntry>;
 
+  /** Returns the price of a BookEntry. */
+  Nexus::Money get_price(const BookEntry& entry);
+
   /** The type used for a list of BookEntries. */
   using BookEntryListModel = ListModel<BookEntry>;
 

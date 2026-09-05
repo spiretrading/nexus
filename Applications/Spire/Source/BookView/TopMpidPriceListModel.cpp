@@ -59,7 +59,7 @@ void TopMpidPriceListModel::on_operation(
       } else {
         auto& top_mpid = m_top_prices.get(mpid_index);
         auto direction = get_direction(quote.m_quote.m_side);
-        if(direction * quote.m_quote.m_price >= direction * top_mpid.m_price) {
+        if(direction * quote.m_quote.m_price > direction * top_mpid.m_price) {
           m_top_prices.set(
             mpid_index, TopMpidPrice(quote.m_venue, quote.m_quote.m_price));
         }

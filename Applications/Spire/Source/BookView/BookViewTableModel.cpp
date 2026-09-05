@@ -1,4 +1,5 @@
 #include "Spire/BookView/BookViewTableModel.hpp"
+#include "Spire/Spire/DeduplicatedTableModel.hpp"
 #include "Spire/Spire/ListToTableModel.hpp"
 #include "Spire/Ui/CustomQtVariants.hpp"
 
@@ -16,7 +17,7 @@ namespace {
     return get<OrderFields>(entry).m_destination;
   }
 
-  const Money& get_price(const BookEntry& entry) {
+  const Money& extract_price(const BookEntry& entry) {
     if(auto quote = get<BookQuote>(&entry)) {
       return quote->m_quote.m_price;
     } else if(auto order = get<BookViewModel::UserOrder>(&entry)) {
@@ -25,7 +26,7 @@ namespace {
     return get<OrderFields>(entry).m_price;
   }
 
-  const Quantity& get_size(const BookEntry& entry) {
+  const Quantity& extract_size(const BookEntry& entry) {
     if(auto quote = get<BookQuote>(&entry)) {
       return quote->m_quote.m_size;
     } else if(auto order = get<BookViewModel::UserOrder>(&entry)) {
@@ -34,15 +35,28 @@ namespace {
     return get<OrderFields>(entry).m_quantity;
   }
 
+  bool is_column_unchanged(
+      const std::any& previous, const std::any& value, int column) {
+    auto book_view_column = static_cast<BookViewColumn>(column);
+    if(book_view_column == BookViewColumn::PRICE) {
+      return std::any_cast<const Money&>(previous) ==
+        std::any_cast<const Money&>(value);
+    } else if(book_view_column == BookViewColumn::SIZE) {
+      return std::any_cast<const Quantity&>(previous) ==
+        std::any_cast<const Quantity&>(value);
+    }
+    return false;
+  }
+
   struct Extractor {
     AnyRef operator ()(const BookEntry& entry, int index) {
       auto column = static_cast<BookViewColumn>(index);
       if(column == BookViewColumn::MPID) {
         return entry;
       } else if(column == BookViewColumn::PRICE) {
-        return get_price(entry);
+        return extract_price(entry);
       }
-      return get_size(entry);
+      return extract_size(entry);
     }
   };
 }
@@ -59,8 +73,13 @@ bool Spire::book_view_comparator(const AnyRef& left, const AnyRef& right) {
   return compare(left, right);
 }
 
+Money Spire::get_price(const BookEntry& entry) {
+  return extract_price(entry);
+}
+
 std::shared_ptr<TableModel> Spire::make_book_view_table_model(
     std::shared_ptr<BookEntryListModel> entries) {
-  return std::make_shared<ListToTableModel<BookEntry>>(
-    std::move(entries), BOOK_VIEW_COLUMN_SIZE, Extractor());
+  return std::make_shared<DeduplicatedTableModel>(
+    std::make_shared<ListToTableModel<BookEntry>>(std::move(entries),
+      BOOK_VIEW_COLUMN_SIZE, Extractor()), &is_column_unchanged);
 }

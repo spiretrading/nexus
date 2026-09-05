@@ -2,6 +2,7 @@
 #include <type_traits>
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <QEvent>
+#include "Spire/Spire/DeduplicatedValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
@@ -41,7 +42,8 @@ namespace {
   auto make_technicals_value_field(
       std::shared_ptr<SessionTechnicalsModel> technicals, F accessor) {
     auto label = make_label(make_read_only_to_text_model(
-      make_transform_value_model(std::move(technicals), std::move(accessor)),
+      make_deduplicated_value_model(make_transform_value_model(
+        std::move(technicals), std::move(accessor))),
       [] (const auto& value) {
         if constexpr(
             std::is_same_v<std::decay_t<decltype(value)>, optional<Money>>) {

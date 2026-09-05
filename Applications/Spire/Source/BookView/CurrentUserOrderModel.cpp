@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/BookView/BookViewTableModel.hpp"
-#include "Spire/Spire/ListToTableModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -12,11 +11,8 @@ using namespace Spire;
 namespace {
   const BookViewModel::UserOrder& extract_user_order(
       const SortedTableModel& table, const TableIndex& index) {
-    auto source_row = table.index_to_source(index.m_row);
-    auto source_list = static_cast<const ListToTableModel<BookEntry>&>(
-      *table.get_source()).get_source();
-    auto& entry = source_list->get(source_row);
-    return get<BookViewModel::UserOrder>(entry);
+    return get<BookViewModel::UserOrder>(table.get<BookEntry>(
+      index.m_row, static_cast<int>(BookViewColumn::MPID)));
   }
 
   bool navigate_between_sides(
