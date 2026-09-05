@@ -1,4 +1,5 @@
 #include "Spire/BookView/MpidBox.hpp"
+#include "Spire/Spire/DeduplicatedValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
@@ -49,7 +50,8 @@ MpidBox::MpidBox(std::shared_ptr<BookEntryModel> current,
       m_current_level(m_level->get()),
       m_is_reset(true),
       m_is_settled(false) {
-  auto label = make_label(make_read_only_to_text_model(m_current, &make_id));
+  auto label = make_label(make_deduplicated_value_model(
+    make_read_only_to_text_model(m_current, &make_id)));
   enclose(*this, *label);
   proxy_style(*this, *label);
   update_style(*this, [] (auto& style) {

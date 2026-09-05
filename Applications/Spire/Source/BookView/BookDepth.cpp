@@ -4,6 +4,7 @@
 #include "Spire/BookView/BboBox.hpp"
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/BookView/BookViewTableView.hpp"
+#include "Spire/Spire/DeduplicatedValueModel.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
@@ -22,7 +23,8 @@ namespace {
     panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     auto layout = make_vbox_layout(panel);
     auto bbo_accessor = pick(side, &BboQuote::m_ask, &BboQuote::m_bid);
-    auto bbo = make_field_value_model(model->get_bbo_quote(), bbo_accessor);
+    auto bbo = make_deduplicated_value_model(
+      make_field_value_model(model->get_bbo_quote(), bbo_accessor));
     auto bbo_box = new BboBox(std::move(bbo));
     bbo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     layout->addWidget(bbo_box);

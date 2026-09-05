@@ -77,6 +77,19 @@ TEST_SUITE("IsTopMpidModel") {
     REQUIRE(is_top.get());
   }
 
+  TEST_CASE("update_top_price") {
+    auto top_mpid_prices = std::make_shared<ArrayListModel<TopMpidPrice>>();
+    top_mpid_prices->push(TopMpidPrice(Venues::TSX, 2 * Money::ONE));
+    auto mpid = std::make_shared<LocalValueModel<BookEntry>>(TEST_MPID);
+    auto price = std::make_shared<LocalValueModel<Money>>(2 * Money::ONE);
+    auto is_top = IsTopMpidModel(top_mpid_prices, mpid, price);
+    REQUIRE(is_top.get());
+    top_mpid_prices->set(0, TopMpidPrice(Venues::TSX, 3 * Money::ONE));
+    REQUIRE(!is_top.get());
+    top_mpid_prices->set(0, TopMpidPrice(Venues::TSX, 2 * Money::ONE));
+    REQUIRE(is_top.get());
+  }
+
   TEST_CASE("change_to_venue_without_a_top_price") {
     auto top_mpid_prices = std::make_shared<ArrayListModel<TopMpidPrice>>();
     top_mpid_prices->push(TopMpidPrice(Venues::TSX, 2 * Money::ONE));

@@ -1,5 +1,4 @@
 #include "Spire/BookView/IsTopMpidModel.hpp"
-#include "Spire/Spire/ListValueModel.hpp"
 
 using namespace boost;
 using namespace boost::signals2;
@@ -32,21 +31,29 @@ connection IsTopMpidModel::connect_update_signal(
   return m_current.connect_update_signal(slot);
 }
 
-void IsTopMpidModel::initialize_top_mpid() {
-  m_top_mpid = nullptr;
+void IsTopMpidModel::initialize_top_price() {
+  m_top_price = none;
   for(auto i = 0; i != m_top_mpid_prices->get_size(); ++i) {
-    if(m_top_mpid_prices->get(i).m_venue == m_venue) {
-      m_top_mpid = make_list_value_model(m_top_mpid_prices, i);
-      m_top_mpid_connection = m_top_mpid->connect_update_signal(
-        std::bind_front(&IsTopMpidModel::on_top_mpid, this));
+    auto& top = m_top_mpid_prices->get(i);
+    if(top.m_venue == m_venue) {
+      m_top_price = top.m_price;
       break;
     }
   }
   update_current();
 }
 
+void IsTopMpidModel::update_top_price(int index) {
+  auto& top = m_top_mpid_prices->get(index);
+  if(top.m_venue != m_venue) {
+    return;
+  }
+  m_top_price = top.m_price;
+  update_current();
+}
+
 void IsTopMpidModel::update_current() {
-  auto is_top = m_top_mpid && m_top_mpid->get().m_price == m_price->get();
+  auto is_top = m_top_price && *m_top_price == m_price->get();
   if(is_top != m_current.get()) {
     m_current.set(is_top);
   }
@@ -58,16 +65,12 @@ void IsTopMpidModel::on_mpid(const BookEntry& mpid) {
       return;
     }
     m_venue = quote->m_venue;
-    initialize_top_mpid();
+    initialize_top_price();
   } else {
-    m_top_mpid = nullptr;
+    m_top_price = none;
     m_venue = Venue();
     update_current();
   }
-}
-
-void IsTopMpidModel::on_top_mpid(const TopMpidPrice& top) {
-  update_current();
 }
 
 void IsTopMpidModel::on_price(Money price) {
@@ -78,10 +81,10 @@ void IsTopMpidModel::on_operation(
     const ListModel<TopMpidPrice>::Operation& operation) {
   visit(operation,
     [&] (const ListModel<TopMpidPrice>::AddOperation& operation) {
-      if(!m_top_mpid &&
-          m_top_mpid_prices->get(operation.m_index).m_venue == m_venue) {
-        initialize_top_mpid();
-      }
+      update_top_price(operation.m_index);
+    },
+    [&] (const ListModel<TopMpidPrice>::UpdateOperation& operation) {
+      update_top_price(operation.m_index);
     },
     [&] (const ListModel<TopMpidPrice>::PreRemoveOperation& operation) {
       m_is_top_mpid_removed =
@@ -89,7 +92,7 @@ void IsTopMpidModel::on_operation(
     },
     [&] (const ListModel<TopMpidPrice>::RemoveOperation& operation) {
       if(m_is_top_mpid_removed) {
-        initialize_top_mpid();
+        initialize_top_price();
       }
     });
 }

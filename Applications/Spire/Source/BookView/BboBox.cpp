@@ -1,4 +1,5 @@
 #include "Spire/BookView/BboBox.hpp"
+#include "Spire/Spire/DeduplicatedValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
@@ -23,21 +24,22 @@ namespace {
   const auto WIDTH_SCALE_FACTOR = 0.48276;
 
   auto make_quantity_label(std::shared_ptr<QuoteModel> quote) {
-    auto label = make_label(make_to_text_model(make_transform_value_model(
-      make_field_value_model(std::move(quote), &Quote::m_size),
+    auto label = make_label(make_to_text_model(make_deduplicated_value_model(
+      make_transform_value_model(
+        make_field_value_model(std::move(quote), &Quote::m_size),
         [] (auto quantity) {
           if(quantity == 0) {
             return Quantity(0);
           }
           return std::max<Quantity>(1, floor_to(quantity / 100, 1));
-        })));
+        }))));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     return label;
   }
 
   auto make_price_label(std::shared_ptr<QuoteModel> quote) {
-    auto label = make_label(make_to_text_model(
-      make_field_value_model(std::move(quote), &Quote::m_price)));
+    auto label = make_label(make_to_text_model(make_deduplicated_value_model(
+      make_field_value_model(std::move(quote), &Quote::m_price))));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     return label;
   }

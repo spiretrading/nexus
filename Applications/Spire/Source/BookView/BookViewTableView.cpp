@@ -11,6 +11,7 @@
 #include "Spire/BookView/TopMpidPriceListModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ColumnViewListModel.hpp"
+#include "Spire/Spire/DeduplicatedValueModel.hpp"
 #include "Spire/Spire/FilteredListModel.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Spire/ProxyValueModel.hpp"
@@ -108,10 +109,11 @@ namespace {
         auto level =
           make_proxy_value_model(make_list_value_model(m_price_levels, row));
         auto is_top_mpid = std::make_shared<IsTopMpidModel>(
-          m_top_mpid_prices, entry, make_transform_value_model(entry,
+          m_top_mpid_prices, entry,
+          make_deduplicated_value_model(make_transform_value_model(entry,
             [] (const auto& entry) {
               return get_price(entry);
-            }));
+            })));
         auto mpid_box = new MpidBox(
           std::move(entry), std::move(level), std::move(is_top_mpid));
         return mpid_box;
@@ -131,14 +133,14 @@ namespace {
         auto current =
           std::make_shared<BookViewProxyValueModel<Quantity, QString>>(
             make_list_value_model(m_sizes, row));
-        current->set_target(
-          make_to_text_model(make_transform_value_model(current->get_proxy(),
+        current->set_target(make_to_text_model(make_deduplicated_value_model(
+          make_transform_value_model(current->get_proxy(),
             [] (auto quantity) {
               if(quantity == 0) {
                 return Quantity(0);
               }
               return std::max<Quantity>(1, floor_to(quantity / 100, 1));
-            })));
+            }))));
         auto quantity_box = make_label(std::move(current));
         update_style(*quantity_box, [] (auto& style) {
           style.get(Any()).

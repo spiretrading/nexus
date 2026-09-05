@@ -46,7 +46,8 @@ namespace Spire {
   constexpr auto BOOK_VIEW_COLUMN_COUNT = 3;
 
   /** Implements the comparator used by the BookEntry TableModel. */
-  bool book_view_comparator(const AnyRef& left, const AnyRef& right);
+  bool book_view_comparator(const AnyRef& left, int left_row,
+    const AnyRef& right, int right_row, int column);
 
   /** Makes a TableModel as a view over a list of BookEntries. */
   std::shared_ptr<TableModel> make_book_view_table_model(

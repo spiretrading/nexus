@@ -92,19 +92,23 @@ void PriceLevelModel::collapse_levels_from(int index, int level) {
   }
 }
 
-void PriceLevelModel::update_levels(int index) {
+void PriceLevelModel::update_levels(int index, int last_change) {
   m_levels.transact([&] {
-    for(auto i = index; i != m_levels.get_size(); ++i) {
+    auto max_level = m_max_level->get();
+    auto size = m_levels.get_size();
+    for(auto i = index; i != size; ++i) {
       auto level = [&] {
         if(i == 0) {
           return 0;
         } else if(m_prices->get(i - 1) == m_prices->get(i)) {
           return m_levels.get(i - 1);
         }
-        return std::min(m_levels.get(i - 1) + 1, m_max_level->get());
+        return std::min(m_levels.get(i - 1) + 1, max_level);
       }();
       if(m_levels.get(i) != level) {
         m_levels.set(i, level);
+      } else if(i > last_change) {
+        break;
       }
     }
   });
@@ -134,14 +138,15 @@ void PriceLevelModel::on_price_operation(
     [&] (const PriceListModel::MoveOperation& operation) {
       m_levels.transact([&] {
         m_levels.move(operation.m_source, operation.m_destination);
-        update_levels(std::min(operation.m_source, operation.m_destination));
+        update_levels(std::min(operation.m_source, operation.m_destination),
+          std::max(operation.m_source, operation.m_destination));
       });
     },
     [&] (const PriceListModel::UpdateOperation& operation) {
       if(operation.get_previous() == operation.get_value()) {
         return;
       }
-      update_levels(operation.m_index);
+      update_levels(operation.m_index, operation.m_index);
     });
 }
 

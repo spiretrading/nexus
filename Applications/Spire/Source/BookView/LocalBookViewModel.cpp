@@ -107,7 +107,7 @@ void LocalBookViewModel::update(const BboQuote& bbo) {
 
 void LocalBookViewModel::update(const BookQuote& quote) {
   auto direction = get_direction(quote.m_quote.m_side);
-  auto quotes =
+  auto& quotes =
     pick(quote.m_quote.m_side, m_model.get_asks(), m_model.get_bids());
   auto lower_bound = std::next(
     quotes->begin(), find_partition_point(*quotes, [&] (const auto& entry) {
@@ -242,11 +242,13 @@ void LocalBookViewModel::clear_orders() {
 
 void LocalBookViewModel::clear_book_quotes() {
   auto clear_side = [&] (auto& quotes) {
-    for(auto i = quotes.get_size() - 1; i >= 0; --i) {
-      if(!quotes.get(i).m_mpid.empty()) {
-        quotes.remove(i);
+    quotes.transact([&] {
+      for(auto i = quotes.get_size() - 1; i >= 0; --i) {
+        if(!quotes.get(i).m_mpid.empty()) {
+          quotes.remove(i);
+        }
       }
-    }
+    });
   };
   clear_side(*m_model.get_asks());
   clear_side(*m_model.get_bids());
