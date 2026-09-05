@@ -17,6 +17,9 @@ DefaultQuantityModel::DefaultQuantityModel(
       m_ticker(std::move(ticker)),
       m_side(side) {
   m_update_timer.setInterval(UPDATE_INTERVAL_MS);
+  QObject::connect(&m_update_timer, &QTimer::timeout, [=, this] {
+    on_update();
+  });
   on_update();
   m_update_timer.start();
 }

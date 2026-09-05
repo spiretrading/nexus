@@ -158,8 +158,10 @@ void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order,
   auto display_price = fields.m_price;
   if(fields.m_type == OrderType::PEGGED) {
     submit_pegged(*order.m_order);
-    display_price =
-      m_pegged_entries[order.m_order->get_info().m_id].m_effective_price;
+    auto& entry = m_pegged_entries[order.m_order->get_info().m_id];
+    if(entry.m_is_initialized) {
+      display_price = entry.m_effective_price;
+    }
   }
   user_orders.push(
     UserOrder(fields.m_destination, display_price, quantity, status));

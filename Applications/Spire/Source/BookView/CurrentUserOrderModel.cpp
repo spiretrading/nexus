@@ -1,4 +1,5 @@
 #include "Spire/BookView/CurrentUserOrderModel.hpp"
+#include <algorithm>
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/Spire/ListToTableModel.hpp"
@@ -18,9 +19,12 @@ namespace {
     return get<BookViewModel::UserOrder>(entry);
   }
 
-  void navigate_between_sides(
+  bool navigate_between_sides(
       TableCurrentController::CurrentModel& target_model,
       int current_row, int row_size, optional<int> undo_navigation) {
+    if(row_size == 0) {
+      return false;
+    }
     auto select = [&] (int row) {
       if(row < 0 || row >= row_size) {
         return false;
@@ -32,16 +36,16 @@ namespace {
       target_model.set(index);
       return true;
     };
-    if(undo_navigation) {
-      select(*undo_navigation);
-      return;
+    if(undo_navigation && select(*undo_navigation)) {
+      return true;
     }
-    for(auto offset = 0; offset < row_size; ++offset) {
-      if(select(current_row + offset) ||
-          (offset > 0 && select(current_row - offset))) {
-        return;
+    auto origin = std::clamp(current_row, 0, row_size - 1);
+    for(auto offset = 0; offset != row_size; ++offset) {
+      if(select(origin + offset) || (offset > 0 && select(origin - offset))) {
+        return true;
       }
     }
+    return false;
   }
 }
 
@@ -72,8 +76,10 @@ void CurrentUserOrderModel::navigate(
     }
     return none;
   }();
-  navigate_between_sides(
-    *to.m_current, current_index.m_row, row_size, undo_navigation);
+  if(!navigate_between_sides(
+      *to.m_current, current_index.m_row, row_size, undo_navigation)) {
+    return;
+  }
   m_undo_navigation.emplace(current_index.m_row);
   m_undo_navigation_connection = from.m_table->connect_operation_signal(
     std::bind_front(&CurrentUserOrderModel::on_operation, this));

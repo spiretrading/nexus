@@ -1,4 +1,5 @@
 #include "Spire/BookView/PriceLevelModel.hpp"
+#include <algorithm>
 
 using namespace boost;
 using namespace boost::signals2;
@@ -34,6 +35,24 @@ connection PriceLevelModel::connect_operation_signal(
 void PriceLevelModel::transact(const std::function<void ()>& transaction) {
   m_levels.transact([&] {
     transaction();
+  });
+}
+
+void PriceLevelModel::update_levels(int index) {
+  m_levels.transact([&] {
+    for(auto i = index; i != m_levels.get_size(); ++i) {
+      auto level = [&] {
+        if(i == 0) {
+          return 0;
+        } else if(m_prices->get(i - 1) == m_prices->get(i)) {
+          return m_levels.get(i - 1);
+        }
+        return std::min(m_levels.get(i - 1) + 1, m_max_level->get());
+      }();
+      if(m_levels.get(i) != level) {
+        m_levels.set(i, level);
+      }
+    }
   });
 }
 
@@ -105,6 +124,12 @@ void PriceLevelModel::on_price_operation(
     },
     [&] (const PriceListModel::MoveOperation& operation) {
       m_levels.move(operation.m_source, operation.m_destination);
+    },
+    [&] (const PriceListModel::UpdateOperation& operation) {
+      if(operation.get_previous() == operation.get_value()) {
+        return;
+      }
+      update_levels(operation.m_index);
     });
 }
 

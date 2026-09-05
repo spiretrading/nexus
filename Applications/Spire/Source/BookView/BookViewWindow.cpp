@@ -106,9 +106,11 @@ namespace {
   BookViewWindow* find_previous_window(const BookViewWindow& origin) {
     auto previous = static_cast<BookViewWindow*>(nullptr);
     auto next = find_next_window(origin);
-    while(next && next != &origin) {
+    auto remaining = QApplication::topLevelWidgets().size();
+    while(next && next != &origin && remaining != 0) {
       previous = next;
       next = find_next_window(*next);
+      --remaining;
     }
     return previous;
   }
