@@ -132,7 +132,10 @@ void PriceLevelModel::on_price_operation(
       });
     },
     [&] (const PriceListModel::MoveOperation& operation) {
-      m_levels.move(operation.m_source, operation.m_destination);
+      m_levels.transact([&] {
+        m_levels.move(operation.m_source, operation.m_destination);
+        update_levels(std::min(operation.m_source, operation.m_destination));
+      });
     },
     [&] (const PriceListModel::UpdateOperation& operation) {
       if(operation.get_previous() == operation.get_value()) {

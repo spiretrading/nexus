@@ -246,6 +246,7 @@ namespace {
       clear_row_style(style, UserOrderRow(OrderStatus::NONE));
       for(auto& [state, status] : TRANSITIONS) {
         clear_row_style(style, UserOrderRow(status));
+        clear_row_style(style, UserOrderRow(status) && SettledRow());
       }
     }
     style.get(Any() > CurrentRow()).
@@ -365,7 +366,7 @@ namespace {
     return make_transform_value_model(std::move(properties),
       [] (const auto& properties) {
         return std::max(static_cast<int>(
-          properties.m_level_properties.m_color_scheme.size()) - 1, 1);
+          properties.m_level_properties.m_color_scheme.size()) - 1, 0);
       });
   }
 

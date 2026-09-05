@@ -61,53 +61,63 @@ optional<int> TopMpidPriceListModel::find_index(Venue venue) const {
   return i->second;
 }
 
+void TopMpidPriceListModel::add_quote(const BookQuote& quote) {
+  if(!quote.m_is_primary_mpid) {
+    return;
+  }
+  auto venue_index = find_index(quote.m_venue);
+  if(!venue_index) {
+    m_indexes[quote.m_venue] = m_top_prices.get_size();
+    m_top_prices.push(TopMpidPrice(quote.m_venue, quote.m_quote.m_price));
+    return;
+  }
+  auto& top_mpid = m_top_prices.get(*venue_index);
+  auto direction = get_direction(quote.m_quote.m_side);
+  if(direction * quote.m_quote.m_price > direction * top_mpid.m_price) {
+    m_top_prices.set(
+      *venue_index, TopMpidPrice(quote.m_venue, quote.m_quote.m_price));
+  }
+}
+
+void TopMpidPriceListModel::remove_quote(const BookQuote& quote) {
+  if(!quote.m_is_primary_mpid) {
+    return;
+  }
+  auto venue_index = find_index(quote.m_venue);
+  if(!venue_index) {
+    return;
+  }
+  auto venue = m_top_prices.get(*venue_index).m_venue;
+  if(m_top_prices.get(*venue_index).m_price != quote.m_quote.m_price) {
+    return;
+  }
+  if(auto top = find_top_price(*m_quotes, venue)) {
+    m_top_prices.set(*venue_index, TopMpidPrice(venue, *top));
+  } else {
+    m_indexes.erase(venue);
+    for(auto& entry : m_indexes) {
+      if(entry.second > *venue_index) {
+        --entry.second;
+      }
+    }
+    m_top_prices.remove(*venue_index);
+  }
+}
+
 void TopMpidPriceListModel::on_operation(
     const BookQuoteListModel::Operation& operation) {
   visit(operation,
     [&] (const BookQuoteListModel::AddOperation& operation) {
-      auto& quote = m_quotes->get(operation.m_index);
-      if(!quote.m_is_primary_mpid) {
-        return;
-      }
-      auto mpid_index = find_index(quote.m_venue);
-      if(!mpid_index) {
-        m_indexes[quote.m_venue] = m_top_prices.get_size();
-        m_top_prices.push(TopMpidPrice(quote.m_venue, quote.m_quote.m_price));
-        return;
-      }
-      auto& top_mpid = m_top_prices.get(*mpid_index);
-      auto direction = get_direction(quote.m_quote.m_side);
-      if(direction * quote.m_quote.m_price > direction * top_mpid.m_price) {
-        m_top_prices.set(
-          *mpid_index, TopMpidPrice(quote.m_venue, quote.m_quote.m_price));
-      }
+      add_quote(m_quotes->get(operation.m_index));
     },
     [&] (const BookQuoteListModel::PreRemoveOperation& operation) {
       m_removed_quote = m_quotes->get(operation.m_index);
     },
     [&] (const BookQuoteListModel::RemoveOperation& operation) {
-      if(!m_removed_quote.m_is_primary_mpid) {
-        return;
-      }
-      auto mpid_index = find_index(m_removed_quote.m_venue);
-      if(!mpid_index) {
-        return;
-      }
-      auto venue = m_top_prices.get(*mpid_index).m_venue;
-      if(m_top_prices.get(*mpid_index).m_price !=
-          m_removed_quote.m_quote.m_price) {
-        return;
-      }
-      if(auto top = find_top_price(*m_quotes, venue)) {
-        m_top_prices.set(*mpid_index, TopMpidPrice(venue, *top));
-      } else {
-        m_indexes.erase(venue);
-        for(auto& entry : m_indexes) {
-          if(entry.second > *mpid_index) {
-            --entry.second;
-          }
-        }
-        m_top_prices.remove(*mpid_index);
-      }
+      remove_quote(m_removed_quote);
+    },
+    [&] (const BookQuoteListModel::UpdateOperation& operation) {
+      remove_quote(operation.get_previous());
+      add_quote(operation.get_value());
     });
 }

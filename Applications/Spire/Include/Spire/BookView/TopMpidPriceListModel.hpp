@@ -46,6 +46,8 @@ namespace Spire {
       boost::signals2::scoped_connection m_connection;
 
       boost::optional<int> find_index(Nexus::Venue venue) const;
+      void add_quote(const Nexus::BookQuote& quote);
+      void remove_quote(const Nexus::BookQuote& quote);
       void on_operation(const BookQuoteListModel::Operation& operation);
   };
 }
