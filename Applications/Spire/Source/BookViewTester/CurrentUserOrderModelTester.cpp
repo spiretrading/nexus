@@ -3,7 +3,6 @@
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/BookView/CurrentUserOrderModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
-#include "Spire/Spire/TableCurrentIndexModel.hpp"
 
 using namespace boost;
 using namespace boost::posix_time;
@@ -29,11 +28,11 @@ TEST_SUITE("CurrentUserOrderModel") {
     auto bid_entries = std::make_shared<ArrayListModel<BookEntry>>();
     auto bid_table = std::make_shared<SortedTableModel>(
       make_book_view_table_model(bid_entries));
-    auto current_bid = std::make_shared<TableCurrentIndexModel>(bid_table);
+    auto current_bid = std::make_shared<BookViewCurrentTableModel>(bid_table);
     auto ask_entries = std::make_shared<ArrayListModel<BookEntry>>();
     auto ask_table = std::make_shared<SortedTableModel>(
       make_book_view_table_model(ask_entries));
-    auto current_ask = std::make_shared<TableCurrentIndexModel>(ask_table);
+    auto current_ask = std::make_shared<BookViewCurrentTableModel>(ask_table);
     auto current =
       CurrentUserOrderModel(bid_table, current_bid, ask_table, current_ask);
     SUBCASE("no_shifting") {
