@@ -57,7 +57,7 @@ namespace {
     return default_venue_highlights;
   }
 
-  auto apply_table_view_style(StyleSheet& style) {
+  void apply_table_view_style(StyleSheet& style) {
     auto font = QFont("Roboto");
     font.setWeight(QFont::Medium);
     font.setPixelSize(scale_width(10));
@@ -83,9 +83,10 @@ namespace {
       return highlight.m_venue;
     } else if(index == LEVEL_COLUMN) {
       return highlight.m_level;
-    } else {
+    } else if(index == COLOR_COLUMN) {
       return highlight.m_color;
     }
+    throw std::runtime_error("Invalid column.");
   }
 
   auto setup_level_box() {
@@ -171,15 +172,15 @@ namespace {
         return m_source->at(row, column);
       } else if(row == m_source->get_row_size()) {
         if(column == VENUE_COLUMN) {
-          static const auto NONE = Venue();
-          return NONE;
+          static const auto NO_VENUE = Venue();
+          return NO_VENUE;
         } else if(column == LEVEL_COLUMN) {
-          static auto DEFAULT = VenueHighlightLevel::TOP;
-          return DEFAULT;
+          static const auto DEFAULT_LEVEL = VenueHighlightLevel::TOP;
+          return DEFAULT_LEVEL;
         } else if(column == COLOR_COLUMN) {
-          static auto DEFAULT =
+          static const auto DEFAULT_COLOR =
             HighlightColor(Qt::transparent, Qt::transparent);
-          return DEFAULT;
+          return DEFAULT_COLOR;
         }
       }
       throw std::out_of_range("The row or column is out of range.");
@@ -432,12 +433,11 @@ namespace {
       if(row == table->get_row_size() - 1) {
         match(*item, EmptyVenue());
       }
-      venue_box->get_current()->connect_update_signal(
-        [=] (const auto& venue) {
-          if(venue && is_match(*item, EmptyVenue())) {
-            unmatch(*item, EmptyVenue());
-          }
-        });
+      venue_box->get_current()->connect_update_signal([=] (const auto& venue) {
+        if(venue && is_match(*item, EmptyVenue())) {
+          unmatch(*item, EmptyVenue());
+        }
+      });
       return item;
     } else if(column == LEVEL_COLUMN) {
       auto settings = setup_level_box();
@@ -480,10 +480,19 @@ TableView* Spire::make_venue_highlights_table_view(
   });
   auto table_view = table_builder.make();
   table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  table_view->get_header().get_widths()->set(0, scale_width(26));
-  table_view->get_header().get_widths()->set(1, scale_width(92));
-  table_view->get_header().get_widths()->set(2, scale_width(92));
-  table_view->get_header().get_widths()->set(3, scale_width(138));
+  static const auto EDITABLE_COLUMN_OFFSET = 1;
+  static const auto DELETE_COLUMN_WIDTH = 26;
+  static const auto VENUE_COLUMN_WIDTH = 92;
+  static const auto LEVEL_COLUMN_WIDTH = 92;
+  static const auto COLOR_COLUMN_WIDTH = 138;
+  auto& widths = *table_view->get_header().get_widths();
+  widths.set(0, scale_width(DELETE_COLUMN_WIDTH));
+  widths.set(
+    EDITABLE_COLUMN_OFFSET + VENUE_COLUMN, scale_width(VENUE_COLUMN_WIDTH));
+  widths.set(
+    EDITABLE_COLUMN_OFFSET + LEVEL_COLUMN, scale_width(LEVEL_COLUMN_WIDTH));
+  widths.set(
+    EDITABLE_COLUMN_OFFSET + COLOR_COLUMN, scale_width(COLOR_COLUMN_WIDTH));
   update_style(*table_view, apply_table_view_style);
   auto filter = new ChildAddedObserver(table_view->get_body(), table_view);
   table_view->get_body().installEventFilter(filter);

@@ -17,29 +17,27 @@ namespace {
   using OrderVisibility = BookViewHighlightProperties::OrderVisibility;
   using VenueHighlight = BookViewHighlightProperties::VenueHighlight;
 
-  auto apply_header_label_style(int bottom_padding, StyleSheet& style) {
+  auto make_font(QFont::Weight weight, int size) {
     auto font = QFont("Roboto");
-    font.setWeight(QFont::Medium);
-    font.setPixelSize(scale_width(12));
+    font.setWeight(weight);
+    font.setPixelSize(scale_width(size));
+    return font;
+  }
+
+  void apply_header_label_style(int bottom_padding, StyleSheet& style) {
     style.get(Any()).
-      set(Font(font)).
+      set(Font(make_font(QFont::Medium, 12))).
       set(PaddingBottom(scale_height(bottom_padding)));
   }
 
-  auto apply_description_label_style(StyleSheet& style) {
-    auto font = QFont("Roboto");
-    font.setWeight(QFont::Normal);
-    font.setPixelSize(scale_width(10));
+  void apply_description_label_style(StyleSheet& style) {
     style.get(Any()).
-      set(Font(font)).
+      set(Font(make_font(QFont::Normal, 10))).
       set(TextColor(QColor(0x808080)));
   }
 
-  auto apply_highlight_box_style(StyleSheet& style) {
-    auto font = QFont("Roboto");
-    font.setWeight(QFont::Medium);
-    font.setPixelSize(scale_width(10));
-    style.get(Any() > is_a<TextBox>()).set(Font(font));
+  void apply_highlight_box_style(StyleSheet& style) {
+    style.get(Any() > is_a<TextBox>()).set(Font(make_font(QFont::Medium, 10)));
   }
 
   auto make_venues_title() {
@@ -168,7 +166,7 @@ namespace {
         return m_transaction.connect_operation_signal(slot);
       }
 
-      void transact(const std::function<void()>& transaction) override {
+      void transact(const std::function<void ()>& transaction) override {
         m_transaction.transact(transaction);
       }
 

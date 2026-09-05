@@ -38,6 +38,15 @@ namespace {
   const auto EN_DASH = QString(0x2013);
   const auto POSITION_TOLERANCE = 20;
 
+  optional<Side> find_side(const CanvasNode& node) {
+    if(auto side_node = node.FindNode(SingleOrderTaskNode::SIDE_PROPERTY)) {
+      if(auto side_value_node = dynamic_cast<const SideNode*>(&*side_node)) {
+        return side_value_node->GetValue();
+      }
+    }
+    return none;
+  }
+
   optional<CurrentUserOrder> get_current_user_order(BookDepth* book_depth) {
     if(book_depth) {
       return book_depth->get_current()->get();
@@ -77,18 +86,18 @@ namespace {
           position.x() >= origin_position.x() &&
           position.x() <= right_closest_position) {
         right_closest_window = candidate;
-        right_closest_position = right_closest_window->pos().x();
+        right_closest_position = position.x();
       }
       if(position.y() > origin_position.y() &&
           position.x() <= bottom_left_position.x() &&
           position.y() <= bottom_left_position.y()) {
         bottom_left_window = candidate;
-        bottom_left_position = bottom_left_window->pos();
+        bottom_left_position = position;
       }
       if(std::tuple(position.y(), position.x()) <=
           std::tuple(top_left_position.y(), top_left_position.x())) {
         top_left_window = candidate;
-        top_left_position = top_left_window->pos();
+        top_left_position = position;
       }
     }
     if(right_closest_window) {
@@ -148,8 +157,7 @@ BookViewWindow::BookViewWindow(Ref<UserProfile> user_profile,
   m_ticker_view = new TickerView(std::move(tickers), *m_transition_view);
   m_current_connection = m_ticker_view->get_current()->connect_update_signal(
     std::bind_front(&BookViewWindow::on_current, this));
-  m_ticker_view->setSizePolicy(
-    QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_ticker_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_ticker_view->setContextMenuPolicy(Qt::CustomContextMenu);
   set_body(m_ticker_view);
   update_style(*this, [] (auto& style) {
@@ -256,14 +264,9 @@ std::unique_ptr<CanvasNode>
   auto price_node = task_node->FindNode(SingleOrderTaskNode::PRICE_PROPERTY);
   if(price_node && !price_node->IsReadOnly()) {
     auto price = [&] {
-      if(auto side_node =
-          task_node->FindNode(SingleOrderTaskNode::SIDE_PROPERTY)) {
-        if(auto side_value_node =
-            dynamic_cast<const SideNode*>(&*side_node)) {
-          if(side_value_node->GetValue() == Side::ASK) {
-            return m_model->get_bbo_quote()->get().m_ask.m_price;
-          }
-        }
+      auto side = find_side(*task_node);
+      if(side && *side == Side::ASK) {
+        return m_model->get_bbo_quote()->get().m_ask.m_price;
       }
       return m_model->get_bbo_quote()->get().m_bid.m_price;
     }();
@@ -280,13 +283,8 @@ std::unique_ptr<CanvasNode>
     if(auto quantity_value_node =
         dynamic_cast<const IntegerNode*>(&*quantity_node)) {
       auto quantity = [&] {
-        if(auto side_node =
-            task_node->FindNode(SingleOrderTaskNode::SIDE_PROPERTY)) {
-          if(auto side_value_node =
-              dynamic_cast<const SideNode*>(&*side_node)) {
-            return get_default_order_quantity(
-              *m_user_profile, ticker, side_value_node->GetValue());
-          }
+        if(auto side = find_side(*task_node)) {
+          return get_default_order_quantity(*m_user_profile, ticker, *side);
         }
         auto interactions =
           m_key_bindings->get_interactions_key_bindings(ticker);

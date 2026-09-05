@@ -40,7 +40,7 @@ BookDepth::BookDepth(std::shared_ptr<BookViewModel> model,
       m_model(std::move(model)),
       m_font_property(make_field_value_model(make_field_value_model(
         properties, &BookViewProperties::m_level_properties),
-          &BookViewLevelProperties::m_font)),
+        &BookViewLevelProperties::m_font)),
       m_font(m_font_property->get()) {
   setFocusPolicy(Qt::StrongFocus);
   auto [bid_panel, bid_bbo, bid_table_view] =

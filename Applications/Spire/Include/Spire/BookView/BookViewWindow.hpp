@@ -17,7 +17,7 @@
 
 namespace Spire {
   class BookDepth;
-  class CurrentUserOrder;
+  struct CurrentUserOrder;
   class TickerView;
   class TransitionView;
 
@@ -83,7 +83,6 @@ namespace Spire {
        * @param user_profile The user's profile.
        * @param tickers The set of tickers to use.
        * @param key_bindings The user's key bindings.
-       * @param venues The database of venues.
        * @param factory The factory used to create a BookViewPropertiesWindow.
        * @param model_builder The ModelBuilder to use.
        * @param identifier The TickerContext identifier.

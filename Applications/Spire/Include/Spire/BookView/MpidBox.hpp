@@ -60,15 +60,15 @@ namespace Styles {
 
     private:
       std::shared_ptr<BookEntryModel> m_current;
+      std::shared_ptr<ValueModel<int>> m_level;
+      std::shared_ptr<ValueModel<bool>> m_is_top_mpid;
       boost::optional<int> m_current_type_index;
       Nexus::Venue m_current_venue;
       Nexus::OrderStatus m_current_status;
       std::uint64_t m_current_transition;
+      int m_current_level;
       bool m_is_reset;
       bool m_is_settled;
-      std::shared_ptr<ValueModel<int>> m_level;
-      int m_current_level;
-      std::shared_ptr<ValueModel<bool>> m_is_top_mpid;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_level_connection;
       boost::signals2::scoped_connection m_is_top_mpid_connection;

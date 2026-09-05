@@ -39,8 +39,7 @@ void IsTopMpidModel::initialize_top_mpid() {
       m_top_mpid = make_list_value_model(m_top_mpid_prices, i);
       m_top_mpid_connection = m_top_mpid->connect_update_signal(
         std::bind_front(&IsTopMpidModel::on_top_mpid, this));
-      update_current();
-      return;
+      break;
     }
   }
   update_current();

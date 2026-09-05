@@ -27,6 +27,26 @@ namespace {
     return same_price;
   }
 
+  bool is_displayed(const OrderFields& fields) {
+    return fields.m_type == OrderType::LIMIT ||
+      fields.m_type == OrderType::PEGGED;
+  }
+
+  auto make_book_quotes() {
+    return std::make_shared<ReversedListModel<BookQuote>>(
+      std::make_shared<ArrayListModel<BookQuote>>());
+  }
+
+  template<typename T>
+  optional<T> find_tag_value(const OrderFields& fields, int key) {
+    if(auto tag = find_field(fields, key)) {
+      if(auto value = get<T>(&tag->get_value())) {
+        return *value;
+      }
+    }
+    return none;
+  }
+
   Money clamp_to_limit(Money price, Money limit, Side side) {
     auto direction = get_direction(side);
     if(limit != Money::ZERO && direction * price > direction * limit) {
@@ -66,15 +86,12 @@ namespace {
 }
 
 LocalBookViewModel::LocalBookViewModel(Ticker ticker)
-  : m_model(std::make_shared<ReversedListModel<BookQuote>>(
-      std::make_shared<ArrayListModel<BookQuote>>()),
-      std::make_shared<ReversedListModel<BookQuote>>(
-        std::make_shared<ArrayListModel<BookQuote>>()),
-      std::make_shared<ArrayListModel<UserOrder>>(),
-      std::make_shared<ArrayListModel<UserOrder>>(),
-      std::make_shared<LocalValueModel<optional<OrderFields>>>(),
-      std::make_shared<LocalBboQuoteModel>(),
-      std::make_shared<LocalSessionTechnicalsModel>()) {
+    : m_model(make_book_quotes(), make_book_quotes(),
+        std::make_shared<ArrayListModel<UserOrder>>(),
+        std::make_shared<ArrayListModel<UserOrder>>(),
+        std::make_shared<LocalValueModel<optional<OrderFields>>>(),
+        std::make_shared<LocalBboQuoteModel>(),
+        std::make_shared<LocalSessionTechnicalsModel>()) {
   if(ticker) {
     m_market_center = VENUES.from(ticker.get_venue()).m_market_center;
     if(m_market_center.empty()) {
@@ -106,12 +123,15 @@ void LocalBookViewModel::update(const BookQuote& quote) {
     }
     return i;
   };
-  auto existing_iterator = lower_bound;
-  while(existing_iterator != quotes->end() &&
-      existing_iterator->m_quote.m_price == quote.m_quote.m_price &&
-      existing_iterator->m_mpid != quote.m_mpid) {
-    ++existing_iterator;
-  }
+  auto find_existing_position = [&] {
+    auto i = lower_bound;
+    while(i != quotes->end() && i->m_quote.m_price == quote.m_quote.m_price &&
+        i->m_mpid != quote.m_mpid) {
+      ++i;
+    }
+    return i;
+  };
+  auto existing_iterator = find_existing_position();
   if(existing_iterator == quotes->end() ||
       existing_iterator->m_quote.m_price != quote.m_quote.m_price) {
     if(quote.m_quote.m_size != 0) {
@@ -148,7 +168,7 @@ void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order) {
 void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order,
     Quantity quantity, OrderStatus status) {
   auto& fields = order.m_order->get_info().m_fields;
-  if(fields.m_type != OrderType::LIMIT && fields.m_type != OrderType::PEGGED) {
+  if(!is_displayed(fields)) {
     return;
   }
   auto& orders = pick(fields.m_side, m_ask_orders, m_bid_orders);
@@ -169,7 +189,7 @@ void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order,
 
 void LocalBookViewModel::remove(const OrderLogModel::OrderEntry& order) {
   auto& fields = order.m_order->get_info().m_fields;
-  if(fields.m_type != OrderType::LIMIT && fields.m_type != OrderType::PEGGED) {
+  if(!is_displayed(fields)) {
     return;
   }
   auto& orders = pick(fields.m_side, m_ask_orders, m_bid_orders);
@@ -244,24 +264,20 @@ void LocalBookViewModel::submit_pegged(const Order& order) {
   auto& fields = order.get_info().m_fields;
   auto entry = PeggedOrderEntry();
   entry.m_exec_inst = PRIMARY_PEG;
-  if(auto tag = find_field(fields, EXEC_INST_KEY)) {
-    if(auto value = get<std::string>(&tag->get_value())) {
-      auto stream = std::istringstream(*value);
-      auto token = std::string();
-      while(stream >> token) {
-        if(token == PRIMARY_PEG || token == MARKET_PEG ||
-            token == MID_PRICE_PEG) {
-          entry.m_exec_inst = token;
-          break;
-        }
+  if(auto instruction = find_tag_value<std::string>(fields, EXEC_INST_KEY)) {
+    auto stream = std::istringstream(*instruction);
+    auto token = std::string();
+    while(stream >> token) {
+      if(token == PRIMARY_PEG || token == MARKET_PEG ||
+          token == MID_PRICE_PEG) {
+        entry.m_exec_inst = token;
+        break;
       }
     }
   }
   entry.m_peg_difference = Money::ZERO;
-  if(auto tag = find_field(fields, PEG_DIFFERENCE_KEY)) {
-    if(auto money = get<Money>(&tag->get_value())) {
-      entry.m_peg_difference = *money;
-    }
+  if(auto difference = find_tag_value<Money>(fields, PEG_DIFFERENCE_KEY)) {
+    entry.m_peg_difference = *difference;
   }
   auto direction = get_direction(fields.m_side);
   auto price = compute_peg_price(

@@ -48,17 +48,15 @@ namespace {
     return false;
   }
 
-  struct Extractor {
-    AnyRef operator ()(const BookEntry& entry, int index) {
-      auto column = static_cast<BookViewColumn>(index);
-      if(column == BookViewColumn::MPID) {
-        return entry;
-      } else if(column == BookViewColumn::PRICE) {
-        return extract_price(entry);
-      }
-      return extract_size(entry);
+  AnyRef extract(const BookEntry& entry, int index) {
+    auto column = static_cast<BookViewColumn>(index);
+    if(column == BookViewColumn::MPID) {
+      return entry;
+    } else if(column == BookViewColumn::PRICE) {
+      return extract_price(entry);
     }
-  };
+    return extract_size(entry);
+  }
 }
 
 bool Spire::book_view_comparator(const AnyRef& left, const AnyRef& right) {
@@ -81,5 +79,5 @@ std::shared_ptr<TableModel> Spire::make_book_view_table_model(
     std::shared_ptr<BookEntryListModel> entries) {
   return std::make_shared<DeduplicatedTableModel>(
     std::make_shared<ListToTableModel<BookEntry>>(std::move(entries),
-      BOOK_VIEW_COLUMN_SIZE, Extractor()), &is_column_unchanged);
+      BOOK_VIEW_COLUMN_COUNT, &extract), &is_column_unchanged);
 }

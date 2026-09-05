@@ -24,8 +24,8 @@ const PreviewOrderDisplayValueModel::Type&
   if(m_is_displayed) {
     return m_preview->get();
   }
-  static const auto NONE = optional<OrderFields>();
-  return NONE;
+  static const auto NO_PREVIEW = optional<OrderFields>();
+  return NO_PREVIEW;
 }
 
 connection PreviewOrderDisplayValueModel::connect_update_signal(

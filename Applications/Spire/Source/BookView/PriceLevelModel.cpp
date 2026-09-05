@@ -38,6 +38,60 @@ void PriceLevelModel::transact(const std::function<void ()>& transaction) {
   });
 }
 
+bool PriceLevelModel::insert_level(int index) {
+  if(index == 0) {
+    m_levels.insert(0, 0);
+    return true;
+  }
+  auto preceding_level = m_levels.get(index - 1);
+  if(m_prices->get(index - 1) == m_prices->get(index) ||
+      preceding_level == m_max_level->get()) {
+    m_levels.insert(preceding_level, index);
+    return false;
+  }
+  m_levels.insert(preceding_level + 1, index);
+  return true;
+}
+
+void PriceLevelModel::shift_levels_after(int index) {
+  if(index == m_prices->get_size() - 1 ||
+      m_prices->get(index + 1) == m_prices->get(index)) {
+    return;
+  }
+  for(auto i = index + 1; i != m_levels.get_size(); ++i) {
+    auto level = m_levels.get(i);
+    if(level == m_max_level->get()) {
+      break;
+    }
+    m_levels.set(i, level + 1);
+  }
+}
+
+void PriceLevelModel::collapse_levels_from(int index, int level) {
+  if(index != 0 && m_levels.get(index - 1) == level) {
+    return;
+  }
+  if(index == m_prices->get_size()) {
+    return;
+  }
+  auto following_level = m_levels.get(index);
+  if(following_level == level) {
+    return;
+  }
+  auto following_price = m_prices->get(index);
+  for(auto i = index; i != m_levels.get_size(); ++i) {
+    auto price = m_prices->get(i);
+    if(price != following_price) {
+      ++following_level;
+      following_price = price;
+      if(following_level == m_max_level->get() + 1) {
+        break;
+      }
+    }
+    m_levels.set(i, m_levels.get(i) - 1);
+  }
+}
+
 void PriceLevelModel::update_levels(int index) {
   m_levels.transact([&] {
     for(auto i = index; i != m_levels.get_size(); ++i) {
@@ -64,31 +118,9 @@ void PriceLevelModel::on_price_operation(
         m_levels.push(0);
         return;
       }
-      auto price = m_prices->get(operation.m_index);
       m_levels.transact([&] {
-        if(operation.m_index == 0) {
-          m_levels.insert(0, 0);
-        } else {
-          auto preceding_price = m_prices->get(operation.m_index - 1);
-          auto preceding_level = m_levels.get(operation.m_index - 1);
-          if(preceding_price == price ||
-              preceding_level == m_max_level->get()) {
-            m_levels.insert(preceding_level, operation.m_index);
-            return;
-          }
-          m_levels.insert(preceding_level + 1, operation.m_index);
-        }
-        if(operation.m_index != m_prices->get_size() - 1) {
-          auto following_price = m_prices->get(operation.m_index + 1);
-          if(following_price != price) {
-            for(auto i = operation.m_index + 1; i != m_levels.get_size(); ++i) {
-              auto level = m_levels.get(i);
-              if(level == m_max_level->get()) {
-                break;
-              }
-              m_levels.set(i, level + 1);
-            }
-          }
+        if(insert_level(operation.m_index)) {
+          shift_levels_after(operation.m_index);
         }
       });
     },
@@ -96,30 +128,7 @@ void PriceLevelModel::on_price_operation(
       auto level = m_levels.get(operation.m_index);
       m_levels.transact([&] {
         m_levels.remove(operation.m_index);
-        if(operation.m_index != 0) {
-          auto preceding_level = m_levels.get(operation.m_index - 1);
-          if(preceding_level == level) {
-            return;
-          }
-        }
-        if(operation.m_index != m_prices->get_size()) {
-          auto following_level = m_levels.get(operation.m_index);
-          if(following_level == level) {
-            return;
-          }
-          auto following_price = m_prices->get(operation.m_index);
-          for(auto i = operation.m_index; i != m_levels.get_size(); ++i) {
-            auto price = m_prices->get(i);
-            if(price != following_price) {
-              ++following_level;
-              following_price = price;
-              if(following_level == m_max_level->get() + 1) {
-                break;
-              }
-            }
-            m_levels.set(i, m_levels.get(i) - 1);
-          }
-        }
+        collapse_levels_from(operation.m_index, level);
       });
     },
     [&] (const PriceListModel::MoveOperation& operation) {

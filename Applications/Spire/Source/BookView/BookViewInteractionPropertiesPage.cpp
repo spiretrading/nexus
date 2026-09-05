@@ -29,7 +29,8 @@ namespace {
 BookViewInteractionPropertiesPage::BookViewInteractionPropertiesPage(
     std::shared_ptr<KeyBindingsModel> key_bindings,
     std::shared_ptr<TickerModel> ticker, QWidget* parent)
-    : m_key_bindings(std::move(key_bindings)) {
+    : QWidget(parent),
+      m_key_bindings(std::move(key_bindings)) {
   m_current_scope = make_transform_value_model(std::move(ticker),
     [] (const auto& ticker) {
       return Scope(ticker);

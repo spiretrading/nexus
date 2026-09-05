@@ -29,6 +29,10 @@ namespace Spire {
       /**
        * Constructs a CurrentUserOrderModel by consolidating the current bid
        * with the current ask.
+       * @param bid_table The table of bid entries.
+       * @param current_bid The current index within the <i>bid_table</i>.
+       * @param ask_table The table of ask entries.
+       * @param current_ask The current index within the <i>ask_table</i>.
        */
       CurrentUserOrderModel(std::shared_ptr<SortedTableModel> bid_table,
         std::shared_ptr<TableCurrentController::CurrentModel> current_bid,

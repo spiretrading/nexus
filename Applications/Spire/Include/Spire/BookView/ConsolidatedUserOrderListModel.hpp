@@ -50,6 +50,7 @@ namespace Spire {
       bool m_is_scheduled;
       boost::signals2::scoped_connection m_connection;
 
+      iterator lower_bound(const UserOrder& order);
       iterator find(const UserOrder& order);
       void contribute(int index);
       void withdraw(int index, const UserOrder& order);

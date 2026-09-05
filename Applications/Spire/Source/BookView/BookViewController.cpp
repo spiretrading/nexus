@@ -20,8 +20,7 @@ using namespace Spire;
 
 namespace {
   optional<Ticker> find_ticker(const CanvasNode& node) {
-    return find_value<TickerNode>(
-      node, SingleOrderTaskNode::TICKER_PROPERTY);
+    return find_value<TickerNode>(node, SingleOrderTaskNode::TICKER_PROPERTY);
   }
 
   optional<Money> find_price(const CanvasNode& node) {

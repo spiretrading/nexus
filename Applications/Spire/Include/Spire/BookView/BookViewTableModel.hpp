@@ -43,7 +43,7 @@ namespace Spire {
   };
 
   /** The number of columns in a TableModel representing a BookView. */
-  static const auto BOOK_VIEW_COLUMN_SIZE = 3;
+  constexpr auto BOOK_VIEW_COLUMN_COUNT = 3;
 
   /** Implements the comparator used by the BookEntry TableModel. */
   bool book_view_comparator(const AnyRef& left, const AnyRef& right);

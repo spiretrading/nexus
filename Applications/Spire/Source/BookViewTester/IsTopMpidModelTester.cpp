@@ -10,6 +10,12 @@ using namespace Spire;
 namespace {
   const auto TEST_MPID = BookQuote("TSXID", true, Venues::TSX, Quote(),
     time_from_string("2016-07-31 19:00:00"));
+
+  auto make_book_quote(Venue venue) {
+    auto quote = TEST_MPID;
+    quote.m_venue = venue;
+    return quote;
+  }
 }
 
 TEST_SUITE("IsTopMpidModel") {
@@ -35,9 +41,7 @@ TEST_SUITE("IsTopMpidModel") {
     auto is_top = IsTopMpidModel(top_mpid_prices, mpid, price);
     REQUIRE(!is_top.get());
     SUBCASE("update_mpid") {
-      auto updated_mpid = TEST_MPID;
-      updated_mpid.m_venue = Venues::TSXV;
-      mpid->set(updated_mpid);
+      mpid->set(make_book_quote(Venues::TSXV));
       REQUIRE(is_top.get());
     }
   }
@@ -46,11 +50,11 @@ TEST_SUITE("IsTopMpidModel") {
     auto top_mpid_prices = std::make_shared<ArrayListModel<TopMpidPrice>>();
     top_mpid_prices->push(TopMpidPrice(Venues::TSXV, Money::ONE));
     top_mpid_prices->push(TopMpidPrice(Venues::TSX, 2 * Money::ONE));
+    auto price = std::make_shared<LocalValueModel<Money>>(2 * Money::ONE);
     SUBCASE("user_order") {
       auto missing_mpid =
         BookViewModel::UserOrder("TSX", Money::ONE, 100, OrderStatus::NEW);
       auto mpid = std::make_shared<LocalValueModel<BookEntry>>(missing_mpid);
-      auto price = std::make_shared<LocalValueModel<Money>>(2 * Money::ONE);
       auto is_top = IsTopMpidModel(top_mpid_prices, mpid, price);
       REQUIRE(!is_top.get());
     }
@@ -58,7 +62,6 @@ TEST_SUITE("IsTopMpidModel") {
       auto missing_mpid = make_limit_order_fields(
         parse_ticker("TST.TSX"), Side::BID, "TSX", 100, Money::ONE);
       auto mpid = std::make_shared<LocalValueModel<BookEntry>>(missing_mpid);
-      auto price = std::make_shared<LocalValueModel<Money>>(2 * Money::ONE);
       auto is_top = IsTopMpidModel(top_mpid_prices, mpid, price);
       REQUIRE(!is_top.get());
     }
@@ -81,9 +84,7 @@ TEST_SUITE("IsTopMpidModel") {
     auto price = std::make_shared<LocalValueModel<Money>>(2 * Money::ONE);
     auto is_top = IsTopMpidModel(top_mpid_prices, mpid, price);
     REQUIRE(is_top.get());
-    auto updated_mpid = TEST_MPID;
-    updated_mpid.m_venue = Venues::TSXV;
-    mpid->set(updated_mpid);
+    mpid->set(make_book_quote(Venues::TSXV));
     REQUIRE(!is_top.get());
   }
 
@@ -94,9 +95,7 @@ TEST_SUITE("IsTopMpidModel") {
     auto price = std::make_shared<LocalValueModel<Money>>(Money::ONE);
     auto is_top = IsTopMpidModel(top_mpid_prices, mpid, price);
     REQUIRE(!is_top.get());
-    auto updated_mpid = TEST_MPID;
-    updated_mpid.m_venue = Venues::TSXV;
-    mpid->set(updated_mpid);
+    mpid->set(make_book_quote(Venues::TSXV));
     REQUIRE(!is_top.get());
     top_mpid_prices->push(TopMpidPrice(Venues::TSXV, Money::ONE));
     REQUIRE(is_top.get());

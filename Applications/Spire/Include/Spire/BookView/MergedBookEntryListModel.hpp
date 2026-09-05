@@ -44,8 +44,6 @@ namespace Spire {
       boost::signals2::scoped_connection m_user_orders_connection;
       boost::signals2::scoped_connection m_preview_connection;
 
-      static void move_entry(
-        std::deque<BookEntry>& entries, int source, int destination);
       template<typename T>
       void apply(const typename ListModel<T>::Operation& operation,
         const ListModel<T>& source, int offset);
@@ -55,6 +53,15 @@ namespace Spire {
         const BookViewModel::UserOrderListModel::Operation& operation);
       void on_preview(const boost::optional<Nexus::OrderFields>& preview);
   };
+
+  /**
+   * Moves a BookEntry to a new position within a list of BookEntries.
+   * @param entries The list of BookEntries to update.
+   * @param source The index of the BookEntry to move.
+   * @param destination The index to move the BookEntry to.
+   */
+  void move_book_entry(
+    std::deque<BookEntry>& entries, int source, int destination);
 
   template<typename T>
   void MergedBookEntryListModel::apply(
@@ -84,7 +91,7 @@ namespace Spire {
       [&] (const typename ListModel<T>::MoveOperation& operation) {
         auto source_index = offset + operation.m_source;
         auto destination = offset + operation.m_destination;
-        move_entry(m_entries, source_index, destination);
+        move_book_entry(m_entries, source_index, destination);
         m_transaction.push(MoveOperation(source_index, destination));
       },
       [&] (const typename ListModel<T>::UpdateOperation& operation) {

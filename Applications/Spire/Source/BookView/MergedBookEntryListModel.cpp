@@ -53,17 +53,6 @@ void MergedBookEntryListModel::transact(
   m_transaction.transact(transaction);
 }
 
-void MergedBookEntryListModel::move_entry(
-    std::deque<BookEntry>& entries, int source, int destination) {
-  auto i = std::next(entries.begin(), source);
-  auto j = std::next(entries.begin(), destination);
-  if(source < destination) {
-    std::rotate(i, std::next(i), std::next(j));
-  } else {
-    std::rotate(j, i, std::next(i));
-  }
-}
-
 void MergedBookEntryListModel::on_book_quote_operation(
     const BookQuoteListModel::Operation& operation) {
   apply<BookQuote>(operation, *m_book_quotes, 0);
@@ -97,5 +86,16 @@ void MergedBookEntryListModel::on_preview(
     m_previous_preview = preview;
     m_entries.push_back(*preview);
     m_transaction.push(AddOperation(index));
+  }
+}
+
+void Spire::move_book_entry(
+    std::deque<BookEntry>& entries, int source, int destination) {
+  auto i = std::next(entries.begin(), source);
+  auto j = std::next(entries.begin(), destination);
+  if(source < destination) {
+    std::rotate(i, std::next(i), std::next(j));
+  } else {
+    std::rotate(j, i, std::next(i));
   }
 }

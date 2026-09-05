@@ -49,6 +49,7 @@ namespace Spire {
       bool m_is_submitted;
       NavigationView* m_navigation_view;
       QWidget* m_highlights_page;
+      int m_interactions_tab;
       boost::signals2::scoped_connection m_level_connection;
       boost::signals2::scoped_connection m_ticker_connection;
 

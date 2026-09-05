@@ -1,5 +1,6 @@
 #include "Spire/BookView/TechnicalsPanel.hpp"
 #include <type_traits>
+#include <utility>
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <QEvent>
 #include "Spire/Spire/DeduplicatedValueModel.hpp"
@@ -38,12 +39,15 @@ namespace {
     return to_text(bid_quantity) + "x" + to_text(ask_quantity);
   }
 
-  template<typename F>
+  template<typename T>
   auto make_technicals_value_field(
-      std::shared_ptr<SessionTechnicalsModel> technicals, F accessor) {
+      std::shared_ptr<SessionTechnicalsModel> technicals,
+      T SessionTechnicals::* field) {
     auto label = make_label(make_read_only_to_text_model(
       make_deduplicated_value_model(make_transform_value_model(
-        std::move(technicals), std::move(accessor))),
+        std::move(technicals), [=] (const auto& technicals) {
+          return technicals.*field;
+        })),
       [] (const auto& value) {
         if constexpr(
             std::is_same_v<std::decay_t<decltype(value)>, optional<Money>>) {
@@ -123,29 +127,22 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   m_default_field = make_label("");
   m_default_field->setMinimumWidth(get_value_field_minimum_width());
   on_ask_quantity_update(m_ask_quantity->get());
-  auto name_indicators = std::vector<TextBox*>{
-    make_indicator_label(tr("High")), make_indicator_label(tr("Low")),
-    make_indicator_label(tr("Open")), make_indicator_label(tr("Close")),
-    make_indicator_label(tr("Vol")), make_indicator_label(tr("Def"))};
-  auto short_name_indicators = std::vector<TextBox*>{
-    make_indicator_label(tr("H")), make_indicator_label(tr("L")),
-    make_indicator_label(tr("O")), make_indicator_label(tr("C")),
-    make_indicator_label(tr("V")), make_indicator_label(tr("D"))};
+  auto name_indicators = std::vector<TextBox*>();
+  auto short_name_indicators = std::vector<TextBox*>();
+  for(auto& [name, short_name] : {std::pair(tr("High"), tr("H")),
+      std::pair(tr("Low"), tr("L")), std::pair(tr("Open"), tr("O")),
+      std::pair(tr("Close"), tr("C")), std::pair(tr("Vol"), tr("V")),
+      std::pair(tr("Def"), tr("D"))}) {
+    name_indicators.push_back(make_indicator_label(name));
+    short_name_indicators.push_back(make_indicator_label(short_name));
+  }
   auto fields = std::vector<TextBox*>{
-    make_technicals_value_field(m_technicals,
-      [] (const SessionTechnicals& technicals) { return technicals.m_high; }),
-    make_technicals_value_field(m_technicals,
-      [] (const SessionTechnicals& technicals) { return technicals.m_low; }),
-    make_technicals_value_field(m_technicals,
-      [] (const SessionTechnicals& technicals) { return technicals.m_open; }),
-    make_technicals_value_field(m_technicals,
-      [] (const SessionTechnicals& technicals) {
-        return technicals.m_previous_close;
-      }),
-    make_technicals_value_field(m_technicals,
-      [] (const SessionTechnicals& technicals) {
-        return technicals.m_volume;
-      }),
+    make_technicals_value_field(m_technicals, &SessionTechnicals::m_high),
+    make_technicals_value_field(m_technicals, &SessionTechnicals::m_low),
+    make_technicals_value_field(m_technicals, &SessionTechnicals::m_open),
+    make_technicals_value_field(
+      m_technicals, &SessionTechnicals::m_previous_close),
+    make_technicals_value_field(m_technicals, &SessionTechnicals::m_volume),
     m_default_field};
   for(auto i = 0; i < std::ssize(fields); ++i) {
     link(*this, *name_indicators[i]);

@@ -1,6 +1,7 @@
 #ifndef SPIRE_TOP_MPID_PRICE_LIST_MODEL_HPP
 #define SPIRE_TOP_MPID_PRICE_LIST_MODEL_HPP
 #include <unordered_map>
+#include <boost/optional/optional.hpp>
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
 
@@ -44,7 +45,7 @@ namespace Spire {
       Nexus::BookQuote m_removed_quote;
       boost::signals2::scoped_connection m_connection;
 
-      int find_index(Nexus::Venue venue) const;
+      boost::optional<int> find_index(Nexus::Venue venue) const;
       void on_operation(const BookQuoteListModel::Operation& operation);
   };
 }

@@ -42,13 +42,13 @@ MpidBox::MpidBox(std::shared_ptr<BookEntryModel> current,
     std::shared_ptr<ValueModel<int>> level,
     std::shared_ptr<ValueModel<bool>> is_top_mpid)
     : m_current(std::move(current)),
+      m_level(std::move(level)),
+      m_is_top_mpid(std::move(is_top_mpid)),
       m_current_status(OrderStatus::NONE),
       m_current_transition(0),
-      m_is_reset(true),
-      m_is_settled(false),
-      m_level(std::move(level)),
       m_current_level(m_level->get()),
-      m_is_top_mpid(std::move(is_top_mpid)) {
+      m_is_reset(true),
+      m_is_settled(false) {
   auto label = make_label(make_read_only_to_text_model(m_current, &make_id));
   enclose(*this, *label);
   proxy_style(*this, *label);

@@ -57,8 +57,7 @@ TEST_SUITE("MergedBookEntryListModel") {
     auto orders = make_orders();
     orders->push(UserOrder("TSX", Money::ONE, 100, OrderStatus::NEW));
     orders->push(UserOrder("TSX", 2 * Money::ONE, 200, OrderStatus::FILLED));
-    orders->push(
-      UserOrder("TSX", 3 * Money::ONE, 200, OrderStatus::CANCELED));
+    orders->push(UserOrder("TSX", 3 * Money::ONE, 200, OrderStatus::CANCELED));
     auto list =
       MergedBookEntryListModel(make_quotes(), orders, make_preview());
     REQUIRE(list.get_size() == 3);
@@ -83,8 +82,7 @@ TEST_SUITE("MergedBookEntryListModel") {
     auto orders = make_orders();
     orders->push(UserOrder("TSX", Money::ONE, 100, OrderStatus::NEW));
     orders->push(UserOrder("TSX", 2 * Money::ONE, 200, OrderStatus::FILLED));
-    orders->push(
-      UserOrder("TSX", 3 * Money::ONE, 200, OrderStatus::CANCELED));
+    orders->push(UserOrder("TSX", 3 * Money::ONE, 200, OrderStatus::CANCELED));
     auto preview = make_preview();
     preview->set(make_fields(100, Money::CENT));
     auto list = MergedBookEntryListModel(quotes, orders, preview);

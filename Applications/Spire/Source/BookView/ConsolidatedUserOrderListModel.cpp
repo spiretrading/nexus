@@ -11,10 +11,13 @@ namespace {
   using UserOrder = BookViewModel::UserOrder;
   const auto TRANSITION_DURATION = std::chrono::milliseconds(1000);
 
-  bool user_order_comparator(const UserOrder& left,
-      const UserOrder& right) {
+  bool user_order_comparator(const UserOrder& left, const UserOrder& right) {
     return std::tie(left.m_price, left.m_destination) <
       std::tie(right.m_price, right.m_destination);
+  }
+
+  UserOrder to_order(const ListModelReference<UserOrder>& reference) {
+    return reference;
   }
 
   bool is_same_level(const UserOrder& left, const UserOrder& right) {
@@ -66,10 +69,15 @@ void ConsolidatedUserOrderListModel::transact(
   });
 }
 
+ConsolidatedUserOrderListModel::iterator
+    ConsolidatedUserOrderListModel::lower_bound(const UserOrder& order) {
+  return std::lower_bound(
+    m_model.begin(), m_model.end(), order, user_order_comparator);
+}
+
 ConsolidatedUserOrderListModel::iterator ConsolidatedUserOrderListModel::find(
     const UserOrder& order) {
-  auto i = std::lower_bound(
-    m_model.begin(), m_model.end(), order, user_order_comparator);
+  auto i = lower_bound(order);
   if(i != m_model.end() && !is_same_level(*i, order)) {
     return m_model.end();
   }
@@ -83,13 +91,12 @@ void ConsolidatedUserOrderListModel::contribute(int index) {
     return;
   }
   m_contributions[index] = order;
-  auto i = std::lower_bound(
-    m_model.begin(), m_model.end(), order, user_order_comparator);
+  auto i = lower_bound(order);
   if(i == m_model.end() || !is_same_level(*i, order)) {
     m_model.insert(order, i);
     return;
   }
-  auto update = static_cast<UserOrder>(*i);
+  auto update = to_order(*i);
   update.m_size += order.m_size;
   update.m_status = order.m_status;
   *i = update;
@@ -106,7 +113,7 @@ void ConsolidatedUserOrderListModel::withdraw(
   if(i == m_model.end()) {
     return;
   }
-  auto update = static_cast<UserOrder>(*i);
+  auto update = to_order(*i);
   update.m_size -= contribution->m_size;
   update.m_status = order.m_status;
   if(!is_transitioning(order)) {
@@ -130,7 +137,7 @@ void ConsolidatedUserOrderListModel::revise(int index, const UserOrder& order) {
   if(i == m_model.end()) {
     return;
   }
-  auto update = static_cast<UserOrder>(*i);
+  auto update = to_order(*i);
   update.m_size += order.m_size - contribution.m_size;
   update.m_status = order.m_status;
   if(is_transitioning(order)) {
@@ -186,7 +193,7 @@ void ConsolidatedUserOrderListModel::expire(
     m_model.remove(i);
     return;
   }
-  auto update = static_cast<UserOrder>(*i);
+  auto update = to_order(*i);
   update.m_highlight = OrderStatus::NONE;
   update.m_transition = 0;
   *i = update;

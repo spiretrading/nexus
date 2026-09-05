@@ -32,29 +32,39 @@ namespace {
   const auto COLOR_LIST_SPACING = 8;
   const auto COLOR_LIST_RIGHT_PADDING = 4;
   const auto DEBOUNCE_TIME_MS = 100;
+  const auto GRADIENT_COLOR_COUNT = 2;
+
+  auto make_font(QFont::Weight weight, int size) {
+    auto font = QFont("Roboto");
+    font.setWeight(weight);
+    font.setPixelSize(scale_width(size));
+    return font;
+  }
 
   auto get_integer_box_horizontal_padding() {
     static auto padding = scale_width(32);
     return padding;
   }
 
-  auto get_character_width() {
-    static auto width = [] {
-      auto font = QFont("Roboto");
-      font.setWeight(QFont::Normal);
-      font.setPixelSize(scale_width(12));
-      return Spire::get_character_width(font);
-    }();
+  auto get_level_character_width() {
+    static auto width = get_character_width(make_font(QFont::Normal, 12));
     return width;
   }
 
-  auto to_text(FillType type) {
+  auto to_fill_type_text(FillType type) {
     if(type == FillType::GRADIENT) {
       static const auto value = QObject::tr("Gradient");
       return value;
     } else {
       static const auto value = QObject::tr("Solid");
       return value;
+    }
+  }
+
+  void remove_widget(QLayout& layout, int index) {
+    if(auto item = layout.takeAt(index)) {
+      delete item->widget();
+      delete item;
     }
   }
 
@@ -87,11 +97,8 @@ namespace {
     auto label = make_label(name);
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     update_style(*label, [] (auto& style) {
-      auto font = QFont("Roboto");
-      font.setWeight(QFont::Medium);
-      font.setPixelSize(scale_width(12));
       style.get(Any()).
-        set(Font(font)).
+        set(Font(make_font(QFont::Medium, 12))).
         set(PaddingBottom(scale_height(8)));
     });
     return label;
@@ -106,7 +113,7 @@ namespace {
     auto levels_box = new IntegerBox(std::move(levels));
     levels_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     levels_box->setFixedWidth(
-      6 * ::get_character_width() + get_integer_box_horizontal_padding());
+      6 * get_level_character_width() + get_integer_box_horizontal_padding());
     auto body = new QWidget();
     auto layout = make_hbox_layout(body);
     layout->addWidget(label);
@@ -221,7 +228,8 @@ namespace {
       if(type == FillType::GRADIENT) {
         m_colors->transact([&] {
           if(m_colors->get_size() == 0) {
-            auto size = std::min(m_band_colors->get_size(), 2);
+            auto size =
+              std::min(m_band_colors->get_size(), GRADIENT_COLOR_COUNT);
             if(size > 0) {
               m_colors->insert(m_band_colors->get(0), 0);
             }
@@ -230,7 +238,7 @@ namespace {
                 m_band_colors->get(m_band_colors->get_size() - 1), 1);
             }
           } else {
-            while(m_colors->get_size() > 2) {
+            while(m_colors->get_size() > GRADIENT_COLOR_COUNT) {
               m_colors->remove(1);
             }
           }
@@ -408,7 +416,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   void add_button(FillType type) {
     auto button = make_radio_button();
     button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    button->set_label(::to_text(type));
+    button->set_label(to_fill_type_text(type));
     button->get_current()->connect_update_signal([=, this] (auto value) {
       if(m_model->m_fill_type->get() == type && !value) {
         button->get_current()->set(true);
@@ -494,7 +502,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     if(m_model->m_fill_type->get() != FillType::GRADIENT || levels == 0) {
       return;
     }
-    auto color_levels = std::min(levels, 2);
+    auto color_levels = std::min(levels, GRADIENT_COLOR_COUNT);
     m_gradient_color_levels = color_levels;
     auto vertical_paddings = COLOR_BOXES_VERTICAL_PADDING * 2;
     auto height = scale_height(vertical_paddings +
@@ -514,9 +522,9 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     }
   }
 
-  void on_type_update(FillType type, bool value) {
-    m_buttons[static_cast<int>(type)]->get_current()->set(value);
-    if(value) {
+  void on_type_update(FillType type, bool is_selected) {
+    m_buttons[static_cast<int>(type)]->get_current()->set(is_selected);
+    if(is_selected) {
       if(type == FillType::SOLID) {
         m_body_layout->addWidget(m_color_boxes, 0, Qt::AlignTop);
       } else {
@@ -544,10 +552,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
           make_color_band(operation.m_index));
       },
       [&] (const ListModel<QColor>::RemoveOperation& operation) {
-        if(auto item = m_color_bands_layout->takeAt(operation.m_index)) {
-          delete item->widget();
-          delete item;
-        }
+        remove_widget(*m_color_bands_layout, operation.m_index);
       },
       [&] (const ListModel<QColor>::UpdateOperation& operation) {
         auto band = m_color_bands_layout->itemAt(operation.m_index)->widget();
@@ -576,10 +581,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         }
       },
       [&] (const ListModel<QColor>::RemoveOperation& operation) {
-        if(auto item = m_color_boxes_layout->takeAt(operation.m_index)) {
-          delete item->widget();
-          delete item;
-        }
+        remove_widget(*m_color_boxes_layout, operation.m_index);
       });
   }
 };

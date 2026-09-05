@@ -43,6 +43,9 @@ namespace Spire {
       boost::signals2::scoped_connection m_price_connection;
       boost::signals2::scoped_connection m_max_level_connection;
 
+      bool insert_level(int index);
+      void shift_levels_after(int index);
+      void collapse_levels_from(int index, int level);
       void update_levels(int index);
       void on_price_operation(const PriceListModel::Operation& operation);
       void on_max_level(int max_level);
