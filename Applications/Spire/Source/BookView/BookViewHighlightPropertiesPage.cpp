@@ -1,7 +1,11 @@
 #include "Spire/BookView/BookViewHighlightPropertiesPage.hpp"
+#include <stdexcept>
+#include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/BookView/VenueHighlightsTableView.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/ArrayValueToListModel.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
+#include "Spire/Spire/ListModelTransactionLog.hpp"
 #include "Spire/Spire/ListValueModel.hpp"
 #include "Spire/Ui/Box.hpp"
 #include "Spire/Ui/EnumBox.hpp"
@@ -62,7 +66,7 @@ namespace {
     return box;
   }
 
-  auto setup_visibility_box() {
+  auto get_visibility_settings() {
     static auto settings = [] {
       auto settings = EnumBox<OrderVisibility>::Settings(
         [] (const auto& value) {
@@ -88,7 +92,7 @@ namespace {
     update_style(*label, [] (auto& style) {
       style.get(Any()).set(PaddingRight(scale_width(8)));
     });
-    auto settings = setup_visibility_box();
+    auto settings = get_visibility_settings();
     settings.m_current = std::move(visibility);
     auto visibility_box = new EnumBox<OrderVisibility>(std::move(settings));
     visibility_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
@@ -110,7 +114,7 @@ namespace {
     auto label = make_label(name);
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     update_style(*label, [] (auto& style) {
-      style.get(Any()).set(PaddingRight(scale_height(8)));
+      style.get(Any()).set(PaddingRight(scale_width(8)));
     });
     auto highlight_box = new HighlightBox(std::move(current));
     highlight_box->setFixedSize(scale(120, 19));
@@ -125,10 +129,8 @@ namespace {
   class FixedSizeArrayValueToListModel : public ListModel<T> {
     public:
       using Type = typename ListModel<T>::Type;
-      using OperationSignal = ListModel<T>::OperationSignal;
+      using OperationSignal = typename ListModel<T>::OperationSignal;
       using UpdateOperation = typename ListModel<T>::UpdateOperation;
-      using StartTransaction = typename ListModel<T>::StartTransaction;
-      using EndTransaction = typename ListModel<T>::EndTransaction;
 
       explicit FixedSizeArrayValueToListModel(
         std::shared_ptr<ValueModel<std::array<Type, N>>> source)
@@ -170,9 +172,15 @@ namespace {
         m_transaction.transact(transaction);
       }
 
+    private:
+      std::shared_ptr<ValueModel<std::array<Type, N>>> m_source;
+      std::array<Type, N> m_data;
+      ListModelTransactionLog<Type> m_transaction;
+      scoped_connection m_connection;
+
       void on_update(const std::array<Type, N>& data) {
         m_transaction.transact([&] {
-          for(auto i = 0; i < data.size(); ++i) {
+          for(auto i = 0; i != get_size(); ++i) {
             if(m_data[i] != data[i]) {
               auto previous = m_data[i];
               m_data[i] = data[i];
@@ -182,12 +190,6 @@ namespace {
           }
         });
       }
-
-    private:
-      std::shared_ptr<ValueModel<std::array<Type, N>>> m_source;
-      std::array<Type, N> m_data;
-      ListModelTransactionLog<Type> m_transaction;
-      scoped_connection m_connection;
   };
 
   using OrderHighlightStateListModel =

@@ -42,8 +42,6 @@ namespace Spire {
       boost::signals2::scoped_connection m_font_property_connection;
 
       void apply_font(const QFont& font);
-      void synchronize_position(int position,
-        boost::signals2::scoped_connection& connection, TableView& target);
       void on_bid_position(int position);
       void on_ask_position(int position);
       void on_font_property_update(const QFont& font);

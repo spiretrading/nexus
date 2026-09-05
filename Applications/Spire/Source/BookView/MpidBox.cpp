@@ -32,10 +32,8 @@ namespace {
       return QString::fromStdString(quote->m_mpid);
     } else if(auto order = get<BookViewModel::UserOrder>(&entry)) {
       return QString::fromStdString('@' + order->m_destination);
-    } else if(auto preview = get<OrderFields>(&entry)) {
-      return QString::fromStdString('@' + preview->m_destination);
     }
-    return {};
+    return QString::fromStdString('@' + get<OrderFields>(entry).m_destination);
   }
 }
 

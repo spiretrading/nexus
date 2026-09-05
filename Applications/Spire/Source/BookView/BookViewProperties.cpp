@@ -107,11 +107,12 @@ const BookViewHighlightProperties& BookViewHighlightProperties::get_default() {
   static auto PROPERTIES = [] {
     auto properties = BookViewHighlightProperties();
     properties.m_order_visibility = OrderVisibility::HIGHLIGHTED;
-    properties.m_order_highlights = {{{QColor(0xBDFFC5), QColor(0x808080)},
-      {QColor(0x3CFF53), QColor(Qt::black)},
-      {QColor(Qt::black), QColor(0x3CFF53)},
-      {QColor(0xFFC758), QColor(Qt::black)},
-      {QColor(0xE63F44), QColor(0xFFFFFF)}}};
+    properties.m_order_highlights = {
+      HighlightColor(QColor(0xBDFFC5), QColor(0x808080)),
+      HighlightColor(QColor(0x3CFF53), QColor(Qt::black)),
+      HighlightColor(QColor(Qt::black), QColor(0x3CFF53)),
+      HighlightColor(QColor(0xFFC758), QColor(Qt::black)),
+      HighlightColor(QColor(0xE63F44), QColor(0xFFFFFF))};
     return properties;
   }();
   return PROPERTIES;

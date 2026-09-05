@@ -106,6 +106,16 @@ void ServiceBookViewModel::initialize_order(
   m_model.add(order, fields.m_quantity - filled_quantity, status);
 }
 
+optional<std::vector<ExecutionReport>> ServiceBookViewModel::monitor(
+    const OrderLogModel::OrderEntry& order) {
+  auto reports = optional<std::vector<ExecutionReport>>();
+  order.m_order->get_publisher().monitor(
+    m_order_event_handler->get_slot<ExecutionReport>(
+      std::bind_front(&ServiceBookViewModel::on_execution_report, this)),
+    out(reports));
+  return reports;
+}
+
 void ServiceBookViewModel::query_book_quotes() {
   auto slot = m_event_handler.get_slot<BookQuote>(
     std::bind_front(&ServiceBookViewModel::buffer_book_quote, this),
@@ -148,16 +158,6 @@ void ServiceBookViewModel::on_book_quote_interruption(
 
 void ServiceBookViewModel::on_time_and_sales(const TimeAndSale& time_and_sale) {
   m_model.update(time_and_sale);
-}
-
-optional<std::vector<ExecutionReport>> ServiceBookViewModel::monitor(
-    const OrderLogModel::OrderEntry& order) {
-  auto reports = optional<std::vector<ExecutionReport>>();
-  order.m_order->get_publisher().monitor(
-    m_order_event_handler->get_slot<ExecutionReport>(
-      std::bind_front(&ServiceBookViewModel::on_execution_report, this)),
-    out(reports));
-  return reports;
 }
 
 void ServiceBookViewModel::on_execution_report(const ExecutionReport& report) {

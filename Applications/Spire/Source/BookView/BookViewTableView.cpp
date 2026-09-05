@@ -46,8 +46,8 @@ namespace {
   auto make_header_model() {
     auto model = std::make_shared<ArrayListModel<TableHeaderItem::Model>>();
     for(auto i = 0; i != BOOK_VIEW_COLUMN_COUNT; ++i) {
-      model->push(
-        {"", "", TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE});
+      model->push(TableHeaderItem::Model("", "",
+        TableHeaderItem::Order::UNORDERED, TableFilter::Filter::NONE));
     }
     return model;
   }
@@ -267,7 +267,7 @@ namespace {
       BookViewHighlightProperties::VenueHighlightLevel m_level;
     };
     std::shared_ptr<BookViewPropertiesModel> m_properties;
-    std::size_t m_previous_levels;
+    int m_previous_levels;
     std::vector<PreviousVenueHighlight> m_previous_venue_highlights;
     scoped_connection m_connection;
 
@@ -287,7 +287,7 @@ namespace {
         style.get(Any() > CurrentColumn()).
           set(BackgroundColor(Qt::transparent));
         style.get(Any() > Row() > Any() > Any()).
-          set(vertical_padding(scale_width(1.5)));
+          set(vertical_padding(scale_height(1.5)));
       });
       on_properties(m_properties->get());
       table_view.installEventFilter(this);
@@ -335,11 +335,12 @@ namespace {
     void apply_level_highlight_styles(
         StyleSheet& style, const BookViewProperties& properties) {
       auto& level_colors = properties.m_level_properties.m_color_scheme;
-      for(auto i = level_colors.size(); i < m_previous_levels; ++i) {
+      auto level_count = static_cast<int>(level_colors.size());
+      for(auto i = level_count; i < m_previous_levels; ++i) {
         clear_row_style(style, PriceLevelRow(i));
       }
-      m_previous_levels = level_colors.size();
-      for(auto i = std::size_t(0); i < level_colors.size(); ++i) {
+      m_previous_levels = level_count;
+      for(auto i = 0; i < level_count; ++i) {
         apply_row_style(style, PriceLevelRow(i),
           TextColor(apca_text_color(level_colors[i])),
           BackgroundColor(level_colors[i]));

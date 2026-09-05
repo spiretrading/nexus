@@ -3,7 +3,6 @@
 #include "Nexus/OrderExecutionService/PrimitiveOrder.hpp"
 #include "Spire/BookView/LocalBookViewModel.hpp"
 
-using namespace boost;
 using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;

@@ -1,5 +1,6 @@
 #include <doctest/doctest.h>
 #include "Spire/BookView/PriceLevelModel.hpp"
+#include "Spire/Spire/ArrayListModel.hpp"
 #include "Spire/Spire/LocalValueModel.hpp"
 
 using namespace Nexus;
@@ -13,7 +14,6 @@ namespace {
     }
     return model;
   }
-
 }
 
 TEST_SUITE("PriceLevelModel") {
@@ -67,7 +67,7 @@ TEST_SUITE("PriceLevelModel") {
     auto levels =
       PriceLevelModel(prices, std::make_shared<LocalValueModel<int>>(10));
     SUBCASE("insert_front_existing_price") {
-      prices->insert(1 * Money::ONE, 0);
+      prices->insert(Money::ONE, 0);
       REQUIRE(levels.get_size() == 7);
       REQUIRE(levels.get(0) == 0);
       REQUIRE(levels.get(1) == 0);

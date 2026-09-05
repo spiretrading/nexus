@@ -192,11 +192,11 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
   auto sequence = QKeySequence(event->modifiers() | event->key());
   if(m_task_entry_panel) {
     on_task_entry_key_press(*event);
-  } else if(sequence == QKeySequence(Qt::CTRL + Qt::Key_K)) {
+  } else if(sequence == QKeySequence(Qt::CTRL | Qt::Key_K)) {
     if(auto current = get_current_user_order(m_book_depth)) {
       on_cancel_most_recent(*current);
     }
-  } else if(sequence == QKeySequence(Qt::CTRL + Qt::SHIFT + Qt::Key_K)) {
+  } else if(sequence == QKeySequence(Qt::CTRL | Qt::SHIFT | Qt::Key_K)) {
     if(auto current = get_current_user_order(m_book_depth)) {
       on_cancel_all(*current);
     }
@@ -236,13 +236,6 @@ void BookViewWindow::HandleLink(TickerContext& context) {
 void BookViewWindow::HandleUnlink() {
   m_link_connection.disconnect();
   m_link_identifier.clear();
-}
-
-void BookViewWindow::reset_key_observer() {
-  m_page_key_observer.emplace(*this);
-  m_key_press_connection =
-    m_page_key_observer->connect_filtered_key_press_signal(
-      std::bind_front(&BookViewWindow::on_key_press, this));
 }
 
 std::unique_ptr<CanvasNode>
@@ -295,6 +288,13 @@ std::unique_ptr<CanvasNode>
     }
   }
   return builder.Make();
+}
+
+void BookViewWindow::reset_key_observer() {
+  m_page_key_observer.emplace(*this);
+  m_key_press_connection =
+    m_page_key_observer->connect_filtered_key_press_signal(
+      std::bind_front(&BookViewWindow::on_key_press, this));
 }
 
 void BookViewWindow::display_interactions_panel() {
@@ -364,8 +364,8 @@ bool BookViewWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
     return true;
   } else if(m_book_depth && &target != m_ticker_view &&
       (event.key() == Qt::Key_PageUp || event.key() == Qt::Key_PageDown) &&
-        !(event.modifiers() &
-          (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier))) {
+      !(event.modifiers() &
+        (Qt::ControlModifier | Qt::AltModifier | Qt::MetaModifier))) {
     send_event(*m_ticker_view, event);
     return true;
   }
@@ -409,8 +409,7 @@ void BookViewWindow::on_task_entry_key_press(const QKeyEvent& event) {
     remove_task_entry_panel();
     display_interactions_panel();
   } else {
-    auto sequence =
-      QKeySequence(static_cast<int>(event.modifiers() + event.key()));
+    auto sequence = QKeySequence(event.modifiers() | event.key());
     if(auto arguments = find_order_task_arguments(
         *m_key_bindings->get_order_task_arguments(),
         m_ticker_view->get_current()->get(), sequence)) {

@@ -19,8 +19,6 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto SPACER_COUNT = 4;
-
   const auto& get_label_font() {
     static auto font = [] {
       auto font = QFont("Roboto");
@@ -88,6 +86,7 @@ namespace {
 
   auto make_small_layout(const std::vector<TextBox*>& indicators,
       const std::vector<TextBox*>& fields) {
+    const auto SPACER_COUNT = 4;
     auto layout = make_grid_layout();
     layout->setVerticalSpacing(scale_height(2));
     auto initial_column = 0;
@@ -169,8 +168,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(4)));
-    style.get(Any() > is_a<TextBox>()).
-      set(Font(get_label_font()));
+    style.get(Any() > is_a<TextBox>()).set(Font(get_label_font()));
   });
 }
 

@@ -8,7 +8,7 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  const std::string& get_id(const BookEntry& entry) {
+  const std::string& extract_id(const BookEntry& entry) {
     if(auto quote = get<BookQuote>(&entry)) {
       return quote->m_mpid;
     } else if(auto order = get<BookViewModel::UserOrder>(&entry)) {
@@ -66,8 +66,8 @@ bool Spire::book_view_comparator(const AnyRef& left, int left_row,
   } else if(left.get_type() == typeid(Quantity)) {
     return any_cast<Quantity>(left) < any_cast<Quantity>(right);
   } else if(left.get_type() == typeid(BookEntry)) {
-    return get_id(any_cast<BookEntry>(left)) <
-      get_id(any_cast<BookEntry>(right));
+    return extract_id(any_cast<BookEntry>(left)) <
+      extract_id(any_cast<BookEntry>(right));
   }
   return compare(left, right);
 }

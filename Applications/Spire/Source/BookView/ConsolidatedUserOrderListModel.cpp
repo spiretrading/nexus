@@ -160,6 +160,22 @@ void ConsolidatedUserOrderListModel::start_transition(
   schedule();
 }
 
+void ConsolidatedUserOrderListModel::expire(
+    const UserOrder& key, std::uint64_t transition) {
+  auto i = find(key);
+  if(i == m_model.end() || i->m_transition != transition) {
+    return;
+  }
+  if(i->m_size == 0) {
+    m_model.remove(i);
+    return;
+  }
+  auto update = to_order(*i);
+  update.m_highlight = OrderStatus::NONE;
+  update.m_transition = 0;
+  *i = update;
+}
+
 void ConsolidatedUserOrderListModel::schedule() {
   if(m_is_scheduled || m_transitions.empty()) {
     return;
@@ -181,22 +197,6 @@ void ConsolidatedUserOrderListModel::on_expiry() {
     expire(transition.m_order, transition.m_transition);
   }
   schedule();
-}
-
-void ConsolidatedUserOrderListModel::expire(
-    const UserOrder& key, std::uint64_t transition) {
-  auto i = find(key);
-  if(i == m_model.end() || i->m_transition != transition) {
-    return;
-  }
-  if(i->m_size == 0) {
-    m_model.remove(i);
-    return;
-  }
-  auto update = to_order(*i);
-  update.m_highlight = OrderStatus::NONE;
-  update.m_transition = 0;
-  *i = update;
 }
 
 void ConsolidatedUserOrderListModel::on_operation(const Operation& operation) {

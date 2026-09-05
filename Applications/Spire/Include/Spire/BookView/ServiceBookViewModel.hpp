@@ -11,9 +11,7 @@
 
 namespace Spire {
 
-  /**
-   * Implements a BookViewModel using ServiceClient calls.
-   */
+  /** Implements a BookViewModel using ServiceClient calls. */
   class ServiceBookViewModel : public BookViewModel {
     public:
 

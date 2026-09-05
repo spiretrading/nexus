@@ -7,17 +7,17 @@ using namespace Spire;
 
 IsTopMpidModel::IsTopMpidModel(
     std::shared_ptr<ListModel<TopMpidPrice>> top_mpid_prices,
-    std::shared_ptr<BookEntryModel> mpid,
+    std::shared_ptr<BookEntryModel> entry,
     std::shared_ptr<ValueModel<Money>> price)
     : m_top_mpid_prices(std::move(top_mpid_prices)),
-      m_mpid(std::move(mpid)),
+      m_entry(std::move(entry)),
       m_price(std::move(price)),
       m_is_top_mpid_removed(false) {
-  on_mpid(m_mpid->get());
+  on_entry(m_entry->get());
   m_top_mpid_prices_connection = m_top_mpid_prices->connect_operation_signal(
     std::bind_front(&IsTopMpidModel::on_operation, this));
-  m_mpid_connection = m_mpid->connect_update_signal(
-    std::bind_front(&IsTopMpidModel::on_mpid, this));
+  m_entry_connection = m_entry->connect_update_signal(
+    std::bind_front(&IsTopMpidModel::on_entry, this));
   m_price_connection = m_price->connect_update_signal(
     std::bind_front(&IsTopMpidModel::on_price, this));
 }
@@ -59,8 +59,8 @@ void IsTopMpidModel::update_current() {
   }
 }
 
-void IsTopMpidModel::on_mpid(const BookEntry& mpid) {
-  if(auto quote = boost::get<BookQuote>(&mpid)) {
+void IsTopMpidModel::on_entry(const BookEntry& entry) {
+  if(auto quote = boost::get<BookQuote>(&entry)) {
     if(quote->m_venue == m_venue) {
       return;
     }

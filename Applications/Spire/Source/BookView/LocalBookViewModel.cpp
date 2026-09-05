@@ -109,13 +109,13 @@ void LocalBookViewModel::update(const BookQuote& quote) {
   auto direction = get_direction(quote.m_quote.m_side);
   auto& quotes =
     pick(quote.m_quote.m_side, m_model.get_asks(), m_model.get_bids());
-  auto lower_bound = std::next(
+  auto price_start = std::next(
     quotes->begin(), find_partition_point(*quotes, [&] (const auto& entry) {
       return direction * entry.m_quote.m_price >
         direction * quote.m_quote.m_price;
     }));
   auto find_insert_position = [&] {
-    auto i = lower_bound;
+    auto i = price_start;
     while(i != quotes->end() && i->m_quote.m_price == quote.m_quote.m_price &&
         std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
           std::tie(i->m_quote.m_size, i->m_timestamp, i->m_mpid)) {
@@ -124,7 +124,7 @@ void LocalBookViewModel::update(const BookQuote& quote) {
     return i;
   };
   auto find_existing_position = [&] {
-    auto i = lower_bound;
+    auto i = price_start;
     while(i != quotes->end() && i->m_quote.m_price == quote.m_quote.m_price &&
         i->m_mpid != quote.m_mpid) {
       ++i;
@@ -262,6 +262,41 @@ void LocalBookViewModel::transact(const std::function<void ()>& transaction) {
   });
 }
 
+const std::shared_ptr<BookQuoteListModel>&
+    LocalBookViewModel::get_bids() const {
+  return m_model.get_bids();
+}
+
+const std::shared_ptr<BookQuoteListModel>&
+    LocalBookViewModel::get_asks() const {
+  return m_model.get_asks();
+}
+
+const std::shared_ptr<LocalBookViewModel::UserOrderListModel>&
+    LocalBookViewModel::get_bid_orders() const {
+  return m_model.get_bid_orders();
+}
+
+const std::shared_ptr<LocalBookViewModel::UserOrderListModel>&
+    LocalBookViewModel::get_ask_orders() const {
+  return m_model.get_ask_orders();
+}
+
+const std::shared_ptr<LocalBookViewModel::PreviewOrderModel>&
+    LocalBookViewModel::get_preview_order() const {
+  return m_model.get_preview_order();
+}
+
+const std::shared_ptr<BboQuoteModel>&
+    LocalBookViewModel::get_bbo_quote() const {
+  return m_model.get_bbo_quote();
+}
+
+const std::shared_ptr<SessionTechnicalsModel>&
+    LocalBookViewModel::get_session_technicals() const {
+  return m_model.get_session_technicals();
+}
+
 void LocalBookViewModel::submit_pegged(const Order& order) {
   auto& fields = order.get_info().m_fields;
   auto entry = PeggedOrderEntry();
@@ -325,39 +360,4 @@ void LocalBookViewModel::update_pegged_orders() {
   };
   update_side(m_bid_orders, *m_model.get_bid_orders(), Side::BID);
   update_side(m_ask_orders, *m_model.get_ask_orders(), Side::ASK);
-}
-
-const std::shared_ptr<BookQuoteListModel>&
-    LocalBookViewModel::get_bids() const {
-  return m_model.get_bids();
-}
-
-const std::shared_ptr<BookQuoteListModel>&
-    LocalBookViewModel::get_asks() const {
-  return m_model.get_asks();
-}
-
-const std::shared_ptr<LocalBookViewModel::UserOrderListModel>&
-    LocalBookViewModel::get_bid_orders() const {
-  return m_model.get_bid_orders();
-}
-
-const std::shared_ptr<LocalBookViewModel::UserOrderListModel>&
-    LocalBookViewModel::get_ask_orders() const {
-  return m_model.get_ask_orders();
-}
-
-const std::shared_ptr<LocalBookViewModel::PreviewOrderModel>&
-    LocalBookViewModel::get_preview_order() const {
-  return m_model.get_preview_order();
-}
-
-const std::shared_ptr<BboQuoteModel>&
-    LocalBookViewModel::get_bbo_quote() const {
-  return m_model.get_bbo_quote();
-}
-
-const std::shared_ptr<SessionTechnicalsModel>&
-    LocalBookViewModel::get_session_technicals() const {
-  return m_model.get_session_technicals();
 }

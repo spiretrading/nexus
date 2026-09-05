@@ -58,29 +58,6 @@ CurrentUserOrderModel::CurrentUserOrderModel(
     std::bind_front(&CurrentUserOrderModel::on_ask, this));
 }
 
-void CurrentUserOrderModel::navigate(
-    const SideEntry& from, const SideEntry& to, Side side) {
-  auto& current = get();
-  if(!current || current->m_side != side || !from.m_current->get()) {
-    return;
-  }
-  auto current_index = *from.m_current->get();
-  auto row_size = to.m_table->get_row_size();
-  auto undo_navigation = [&] () -> optional<int> {
-    if(m_undo_navigation) {
-      return m_undo_navigation->get_index();
-    }
-    return none;
-  }();
-  if(!navigate_between_sides(
-      *to.m_current, current_index.m_row, row_size, undo_navigation)) {
-    return;
-  }
-  m_undo_navigation.emplace(current_index.m_row);
-  m_undo_navigation_connection = from.m_table->connect_operation_signal(
-    std::bind_front(&CurrentUserOrderModel::on_operation, this));
-}
-
 void CurrentUserOrderModel::navigate_to_bids() {
   navigate(m_current_ask, m_current_bid, Side::ASK);
 }
@@ -104,6 +81,29 @@ QValidator::State CurrentUserOrderModel::set(const Type& value) {
 connection CurrentUserOrderModel::connect_update_signal(
     const UpdateSignal::slot_type& slot) const {
   return m_current.connect_update_signal(slot);
+}
+
+void CurrentUserOrderModel::navigate(
+    const SideEntry& from, const SideEntry& to, Side side) {
+  auto& current = get();
+  if(!current || current->m_side != side || !from.m_current->get()) {
+    return;
+  }
+  auto current_index = *from.m_current->get();
+  auto row_size = to.m_table->get_row_size();
+  auto undo_navigation = [&] () -> optional<int> {
+    if(m_undo_navigation) {
+      return m_undo_navigation->get_index();
+    }
+    return none;
+  }();
+  if(!navigate_between_sides(
+      *to.m_current, current_index.m_row, row_size, undo_navigation)) {
+    return;
+  }
+  m_undo_navigation.emplace(current_index.m_row);
+  m_undo_navigation_connection = from.m_table->connect_operation_signal(
+    std::bind_front(&CurrentUserOrderModel::on_operation, this));
 }
 
 void CurrentUserOrderModel::clear_undo_navigation() {

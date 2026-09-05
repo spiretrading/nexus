@@ -34,6 +34,12 @@ namespace {
     layout->addWidget(table_view);
     return std::tuple(panel, bbo_box, table_view);
   }
+
+  void synchronize_position(
+      int position, scoped_connection& connection, TableView& target) {
+    auto blocker = shared_connection_block(connection);
+    target.get_scroll_box().get_vertical_scroll_bar().set_position(position);
+  }
 }
 
 BookDepth::BookDepth(std::shared_ptr<BookViewModel> model,
@@ -103,12 +109,6 @@ void BookDepth::apply_font(const QFont& font) {
   update_style(*this, [&] (auto& style) {
     style.get(Any() > is_a<BboBox>() > is_a<TextBox>()).set(Font(font));
   });
-}
-
-void BookDepth::synchronize_position(
-    int position, scoped_connection& connection, TableView& target) {
-  auto blocker = shared_connection_block(connection);
-  target.get_scroll_box().get_vertical_scroll_bar().set_position(position);
 }
 
 void BookDepth::on_bid_position(int position) {

@@ -65,14 +65,14 @@ BboBox::BboBox(std::shared_ptr<QuoteModel> quote, QWidget* parent)
   m_body_layout->addStretch(1);
   m_body_layout->addWidget(m_money_label);
   auto gap_width = get_gap_width(m_font_size, width());
-  m_gap1 = new QSpacerItem(gap_width, 0, QSizePolicy::Fixed);
-  m_body_layout->addItem(m_gap1);
+  m_leading_gap = new QSpacerItem(gap_width, 0, QSizePolicy::Fixed);
+  m_body_layout->addItem(m_leading_gap);
   auto label = make_label(tr("/"));
   label->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Expanding);
   link(*this, *label);
   m_body_layout->addWidget(label);
-  m_gap2 = new QSpacerItem(gap_width, 0, QSizePolicy::Fixed);
-  m_body_layout->addItem(m_gap2);
+  m_trailing_gap = new QSpacerItem(gap_width, 0, QSizePolicy::Fixed);
+  m_body_layout->addItem(m_trailing_gap);
   auto quantity_label = make_quantity_label(m_quote);
   link(*this, *quantity_label);
   m_body_layout->addWidget(quantity_label);
@@ -91,8 +91,7 @@ BboBox::BboBox(std::shared_ptr<QuoteModel> quote, QWidget* parent)
       set(padding(scale_width(4)));
     style.get(Downtick()).set(BorderTopColor(DOWNTICK_BORDER_TOP_COLOR));
     style.get(Uptick()).set(BorderTopColor(UPTICK_BORDER_TOP_COLOR));
-    style.get(Any() > is_a<TextBox>()).
-      set(Font(font));
+    style.get(Any() > is_a<TextBox>()).set(Font(font));
   });
   on_quote(m_quote->get());
   m_style_connection = connect_style_signal(*m_money_label,
@@ -110,8 +109,8 @@ void BboBox::resizeEvent(QResizeEvent* event) {
 
 void BboBox::update_gap_width() {
   auto gap_width = get_gap_width(m_font_size, width());
-  m_gap1->changeSize(gap_width, 0, QSizePolicy::Fixed);
-  m_gap2->changeSize(gap_width, 0, QSizePolicy::Fixed);
+  m_leading_gap->changeSize(gap_width, 0, QSizePolicy::Fixed);
+  m_trailing_gap->changeSize(gap_width, 0, QSizePolicy::Fixed);
   m_body_layout->invalidate();
 }
 

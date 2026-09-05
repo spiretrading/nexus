@@ -154,7 +154,7 @@ void PriceLevelModel::on_max_level(int max_level) {
   m_levels.transact([&] {
     auto previous_price = Money();
     auto current_level = 0;
-    for(auto i = 0; i < m_prices->get_size(); ++i) {
+    for(auto i = 0; i != m_prices->get_size(); ++i) {
       auto price = m_prices->get(i);
       if(i > 0 && price != previous_price && current_level < max_level) {
         ++current_level;
