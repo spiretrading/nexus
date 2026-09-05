@@ -16,112 +16,125 @@ namespace {
     quote.m_venue = venue;
     return quote;
   }
+
+  auto make_book_quote(Venue venue, Money price) {
+    return BookQuote("TSXID", true, venue, Quote(price, 100, Side::BID),
+      time_from_string("2016-07-31 19:00:00"));
+  }
 }
 
 TEST_SUITE("IsTopMpidModel") {
   TEST_CASE("constructor_empty") {
-    auto top_mpid_prices = std::make_shared<ArrayListModel<TopMpidPrice>>();
-    auto mpid = std::make_shared<LocalValueModel<BookEntry>>(TEST_MPID);
+    auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
+    auto top_mpid_prices = std::make_shared<TopMpidPriceListModel>(quotes);
+    auto entry = std::make_shared<LocalValueModel<BookEntry>>(TEST_MPID);
     auto price = std::make_shared<LocalValueModel<Money>>(2 * Money::ONE);
-    auto is_top = IsTopMpidModel(top_mpid_prices, mpid, price);
+    auto is_top = IsTopMpidModel(top_mpid_prices, entry, price);
     REQUIRE(!is_top.get());
     SUBCASE("update_top_prices") {
-      top_mpid_prices->push(TopMpidPrice(Venues::TSXV, Money::ONE));
+      quotes->push(make_book_quote(Venues::TSXV, Money::ONE));
       REQUIRE(!is_top.get());
-      top_mpid_prices->push(TopMpidPrice(Venues::TSX, 2 * Money::ONE));
+      quotes->push(make_book_quote(Venues::TSX, 2 * Money::ONE));
       REQUIRE(is_top.get());
     }
   }
 
   TEST_CASE("constructor_missing_mpid") {
-    auto top_mpid_prices = std::make_shared<ArrayListModel<TopMpidPrice>>();
-    top_mpid_prices->push(TopMpidPrice(Venues::TSXV, Money::ONE));
-    auto mpid = std::make_shared<LocalValueModel<BookEntry>>(TEST_MPID);
+    auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
+    quotes->push(make_book_quote(Venues::TSXV, Money::ONE));
+    auto top_mpid_prices = std::make_shared<TopMpidPriceListModel>(quotes);
+    auto entry = std::make_shared<LocalValueModel<BookEntry>>(TEST_MPID);
     auto price = std::make_shared<LocalValueModel<Money>>(Money::ONE);
-    auto is_top = IsTopMpidModel(top_mpid_prices, mpid, price);
+    auto is_top = IsTopMpidModel(top_mpid_prices, entry, price);
     REQUIRE(!is_top.get());
     SUBCASE("update_mpid") {
-      mpid->set(make_book_quote(Venues::TSXV));
+      entry->set(make_book_quote(Venues::TSXV));
       REQUIRE(is_top.get());
     }
   }
 
   TEST_CASE("constructor_missing_origin") {
-    auto top_mpid_prices = std::make_shared<ArrayListModel<TopMpidPrice>>();
-    top_mpid_prices->push(TopMpidPrice(Venues::TSXV, Money::ONE));
-    top_mpid_prices->push(TopMpidPrice(Venues::TSX, 2 * Money::ONE));
+    auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
+    quotes->push(make_book_quote(Venues::TSXV, Money::ONE));
+    quotes->push(make_book_quote(Venues::TSX, 2 * Money::ONE));
+    auto top_mpid_prices = std::make_shared<TopMpidPriceListModel>(quotes);
     auto price = std::make_shared<LocalValueModel<Money>>(2 * Money::ONE);
     SUBCASE("user_order") {
       auto missing_mpid =
         BookViewModel::UserOrder("TSX", Money::ONE, 100, OrderStatus::NEW);
-      auto mpid = std::make_shared<LocalValueModel<BookEntry>>(missing_mpid);
-      auto is_top = IsTopMpidModel(top_mpid_prices, mpid, price);
+      auto entry = std::make_shared<LocalValueModel<BookEntry>>(missing_mpid);
+      auto is_top = IsTopMpidModel(top_mpid_prices, entry, price);
       REQUIRE(!is_top.get());
     }
     SUBCASE("preview") {
       auto missing_mpid = make_limit_order_fields(
         parse_ticker("TST.TSX"), Side::BID, "TSX", 100, Money::ONE);
-      auto mpid = std::make_shared<LocalValueModel<BookEntry>>(missing_mpid);
-      auto is_top = IsTopMpidModel(top_mpid_prices, mpid, price);
+      auto entry = std::make_shared<LocalValueModel<BookEntry>>(missing_mpid);
+      auto is_top = IsTopMpidModel(top_mpid_prices, entry, price);
       REQUIRE(!is_top.get());
     }
   }
 
   TEST_CASE("constructor") {
-    auto top_mpid_prices = std::make_shared<ArrayListModel<TopMpidPrice>>();
-    top_mpid_prices->push(TopMpidPrice(Venues::TSXV, Money::ONE));
-    top_mpid_prices->push(TopMpidPrice(Venues::TSX, 2 * Money::ONE));
-    auto mpid = std::make_shared<LocalValueModel<BookEntry>>(TEST_MPID);
+    auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
+    quotes->push(make_book_quote(Venues::TSXV, Money::ONE));
+    quotes->push(make_book_quote(Venues::TSX, 2 * Money::ONE));
+    auto top_mpid_prices = std::make_shared<TopMpidPriceListModel>(quotes);
+    auto entry = std::make_shared<LocalValueModel<BookEntry>>(TEST_MPID);
     auto price = std::make_shared<LocalValueModel<Money>>(2 * Money::ONE);
-    auto is_top = IsTopMpidModel(top_mpid_prices, mpid, price);
+    auto is_top = IsTopMpidModel(top_mpid_prices, entry, price);
     REQUIRE(is_top.get());
   }
 
   TEST_CASE("update_top_price") {
-    auto top_mpid_prices = std::make_shared<ArrayListModel<TopMpidPrice>>();
-    top_mpid_prices->push(TopMpidPrice(Venues::TSX, 2 * Money::ONE));
-    auto mpid = std::make_shared<LocalValueModel<BookEntry>>(TEST_MPID);
+    auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
+    quotes->push(make_book_quote(Venues::TSX, 2 * Money::ONE));
+    auto top_mpid_prices = std::make_shared<TopMpidPriceListModel>(quotes);
+    auto entry = std::make_shared<LocalValueModel<BookEntry>>(TEST_MPID);
     auto price = std::make_shared<LocalValueModel<Money>>(2 * Money::ONE);
-    auto is_top = IsTopMpidModel(top_mpid_prices, mpid, price);
+    auto is_top = IsTopMpidModel(top_mpid_prices, entry, price);
     REQUIRE(is_top.get());
-    top_mpid_prices->set(0, TopMpidPrice(Venues::TSX, 3 * Money::ONE));
+    quotes->push(make_book_quote(Venues::TSX, 3 * Money::ONE));
     REQUIRE(!is_top.get());
-    top_mpid_prices->set(0, TopMpidPrice(Venues::TSX, 2 * Money::ONE));
+    quotes->remove(1);
     REQUIRE(is_top.get());
   }
 
   TEST_CASE("change_to_venue_without_a_top_price") {
-    auto top_mpid_prices = std::make_shared<ArrayListModel<TopMpidPrice>>();
-    top_mpid_prices->push(TopMpidPrice(Venues::TSX, 2 * Money::ONE));
-    auto mpid = std::make_shared<LocalValueModel<BookEntry>>(TEST_MPID);
+    auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
+    quotes->push(make_book_quote(Venues::TSX, 2 * Money::ONE));
+    auto top_mpid_prices = std::make_shared<TopMpidPriceListModel>(quotes);
+    auto entry = std::make_shared<LocalValueModel<BookEntry>>(TEST_MPID);
     auto price = std::make_shared<LocalValueModel<Money>>(2 * Money::ONE);
-    auto is_top = IsTopMpidModel(top_mpid_prices, mpid, price);
+    auto is_top = IsTopMpidModel(top_mpid_prices, entry, price);
     REQUIRE(is_top.get());
-    mpid->set(make_book_quote(Venues::TSXV));
+    entry->set(make_book_quote(Venues::TSXV));
     REQUIRE(!is_top.get());
   }
 
   TEST_CASE("top_price_arrives_after_a_venue_change") {
-    auto top_mpid_prices = std::make_shared<ArrayListModel<TopMpidPrice>>();
-    top_mpid_prices->push(TopMpidPrice(Venues::TSX, 2 * Money::ONE));
-    auto mpid = std::make_shared<LocalValueModel<BookEntry>>(TEST_MPID);
+    auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
+    quotes->push(make_book_quote(Venues::TSX, 2 * Money::ONE));
+    auto top_mpid_prices = std::make_shared<TopMpidPriceListModel>(quotes);
+    auto entry = std::make_shared<LocalValueModel<BookEntry>>(TEST_MPID);
     auto price = std::make_shared<LocalValueModel<Money>>(Money::ONE);
-    auto is_top = IsTopMpidModel(top_mpid_prices, mpid, price);
+    auto is_top = IsTopMpidModel(top_mpid_prices, entry, price);
     REQUIRE(!is_top.get());
-    mpid->set(make_book_quote(Venues::TSXV));
+    entry->set(make_book_quote(Venues::TSXV));
     REQUIRE(!is_top.get());
-    top_mpid_prices->push(TopMpidPrice(Venues::TSXV, Money::ONE));
+    quotes->push(make_book_quote(Venues::TSXV, Money::ONE));
     REQUIRE(is_top.get());
   }
 
   TEST_CASE("change_from_a_top_quote_to_a_user_order") {
-    auto top_mpid_prices = std::make_shared<ArrayListModel<TopMpidPrice>>();
-    top_mpid_prices->push(TopMpidPrice(Venues::TSX, 2 * Money::ONE));
-    auto mpid = std::make_shared<LocalValueModel<BookEntry>>(TEST_MPID);
+    auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
+    quotes->push(make_book_quote(Venues::TSX, 2 * Money::ONE));
+    auto top_mpid_prices = std::make_shared<TopMpidPriceListModel>(quotes);
+    auto entry = std::make_shared<LocalValueModel<BookEntry>>(TEST_MPID);
     auto price = std::make_shared<LocalValueModel<Money>>(2 * Money::ONE);
-    auto is_top = IsTopMpidModel(top_mpid_prices, mpid, price);
+    auto is_top = IsTopMpidModel(top_mpid_prices, entry, price);
     REQUIRE(is_top.get());
-    mpid->set(BookViewModel::UserOrder(
+    entry->set(BookViewModel::UserOrder(
       "TSX", 2 * Money::ONE, 100, OrderStatus::NEW));
     REQUIRE(!is_top.get());
   }

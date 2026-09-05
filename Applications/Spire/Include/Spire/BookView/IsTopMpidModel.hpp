@@ -17,7 +17,7 @@ namespace Spire {
        * @param entry The book entry whose venue is tracked.
        * @param price The price of the quote to track.
        */
-      IsTopMpidModel(std::shared_ptr<ListModel<TopMpidPrice>> top_mpid_prices,
+      IsTopMpidModel(std::shared_ptr<TopMpidPriceListModel> top_mpid_prices,
         std::shared_ptr<BookEntryModel> entry,
         std::shared_ptr<ValueModel<Nexus::Money>> price);
 
@@ -26,23 +26,21 @@ namespace Spire {
         const UpdateSignal::slot_type& slot) const override;
 
     private:
-      std::shared_ptr<ListModel<TopMpidPrice>> m_top_mpid_prices;
+      std::shared_ptr<TopMpidPriceListModel> m_top_mpid_prices;
       std::shared_ptr<BookEntryModel> m_entry;
       std::shared_ptr<ValueModel<Nexus::Money>> m_price;
       Nexus::Venue m_venue;
-      boost::optional<Nexus::Money> m_top_price;
-      bool m_is_top_mpid_removed;
+      std::shared_ptr<TopMpidPriceListModel::TopPriceModel> m_top_price;
       LocalValueModel<bool> m_current;
       boost::signals2::scoped_connection m_entry_connection;
       boost::signals2::scoped_connection m_price_connection;
-      boost::signals2::scoped_connection m_top_mpid_prices_connection;
+      boost::signals2::scoped_connection m_top_price_connection;
 
-      void initialize_top_price();
-      void update_top_price(int index);
+      void set_venue(Nexus::Venue venue);
       void update_current();
       void on_entry(const BookEntry& entry);
       void on_price(Nexus::Money price);
-      void on_operation(const ListModel<TopMpidPrice>::Operation& operation);
+      void on_top_price(const boost::optional<Nexus::Money>& price);
   };
 }
 

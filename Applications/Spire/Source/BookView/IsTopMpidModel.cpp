@@ -6,16 +6,13 @@ using namespace Nexus;
 using namespace Spire;
 
 IsTopMpidModel::IsTopMpidModel(
-    std::shared_ptr<ListModel<TopMpidPrice>> top_mpid_prices,
+    std::shared_ptr<TopMpidPriceListModel> top_mpid_prices,
     std::shared_ptr<BookEntryModel> entry,
     std::shared_ptr<ValueModel<Money>> price)
     : m_top_mpid_prices(std::move(top_mpid_prices)),
       m_entry(std::move(entry)),
-      m_price(std::move(price)),
-      m_is_top_mpid_removed(false) {
+      m_price(std::move(price)) {
   on_entry(m_entry->get());
-  m_top_mpid_prices_connection = m_top_mpid_prices->connect_operation_signal(
-    std::bind_front(&IsTopMpidModel::on_operation, this));
   m_entry_connection = m_entry->connect_update_signal(
     std::bind_front(&IsTopMpidModel::on_entry, this));
   m_price_connection = m_price->connect_update_signal(
@@ -31,29 +28,25 @@ connection IsTopMpidModel::connect_update_signal(
   return m_current.connect_update_signal(slot);
 }
 
-void IsTopMpidModel::initialize_top_price() {
-  m_top_price = none;
-  for(auto i = 0; i != m_top_mpid_prices->get_size(); ++i) {
-    auto& top = m_top_mpid_prices->get(i);
-    if(top.m_venue == m_venue) {
-      m_top_price = top.m_price;
-      break;
-    }
-  }
-  update_current();
-}
-
-void IsTopMpidModel::update_top_price(int index) {
-  auto& top = m_top_mpid_prices->get(index);
-  if(top.m_venue != m_venue) {
+void IsTopMpidModel::set_venue(Venue venue) {
+  if(venue == m_venue) {
     return;
   }
-  m_top_price = top.m_price;
+  m_venue = venue;
+  if(m_venue) {
+    m_top_price = m_top_mpid_prices->get_top_price(m_venue);
+    m_top_price_connection = m_top_price->connect_update_signal(
+      std::bind_front(&IsTopMpidModel::on_top_price, this));
+  } else {
+    m_top_price_connection.disconnect();
+    m_top_price = nullptr;
+  }
   update_current();
 }
 
 void IsTopMpidModel::update_current() {
-  auto is_top = m_top_price && *m_top_price == m_price->get();
+  auto is_top = m_top_price && m_top_price->get() &&
+    *m_top_price->get() == m_price->get();
   if(is_top != m_current.get()) {
     m_current.set(is_top);
   }
@@ -61,15 +54,9 @@ void IsTopMpidModel::update_current() {
 
 void IsTopMpidModel::on_entry(const BookEntry& entry) {
   if(auto quote = boost::get<BookQuote>(&entry)) {
-    if(quote->m_venue == m_venue) {
-      return;
-    }
-    m_venue = quote->m_venue;
-    initialize_top_price();
+    set_venue(quote->m_venue);
   } else {
-    m_top_price = none;
-    m_venue = Venue();
-    update_current();
+    set_venue(Venue());
   }
 }
 
@@ -77,22 +64,6 @@ void IsTopMpidModel::on_price(Money price) {
   update_current();
 }
 
-void IsTopMpidModel::on_operation(
-    const ListModel<TopMpidPrice>::Operation& operation) {
-  visit(operation,
-    [&] (const ListModel<TopMpidPrice>::AddOperation& operation) {
-      update_top_price(operation.m_index);
-    },
-    [&] (const ListModel<TopMpidPrice>::UpdateOperation& operation) {
-      update_top_price(operation.m_index);
-    },
-    [&] (const ListModel<TopMpidPrice>::PreRemoveOperation& operation) {
-      m_is_top_mpid_removed =
-        m_top_mpid_prices->get(operation.m_index).m_venue == m_venue;
-    },
-    [&] (const ListModel<TopMpidPrice>::RemoveOperation& operation) {
-      if(m_is_top_mpid_removed) {
-        initialize_top_price();
-      }
-    });
+void IsTopMpidModel::on_top_price(const optional<Money>& price) {
+  update_current();
 }

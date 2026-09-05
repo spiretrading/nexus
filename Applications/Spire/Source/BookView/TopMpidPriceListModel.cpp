@@ -53,12 +53,40 @@ void TopMpidPriceListModel::transact(
   });
 }
 
+std::shared_ptr<TopMpidPriceListModel::TopPriceModel>
+    TopMpidPriceListModel::get_top_price(Venue venue) {
+  auto& model = m_top_price_models[venue];
+  if(!model) {
+    model =
+      std::make_shared<LocalValueModel<optional<Money>>>(find_price(venue));
+  }
+  return model;
+}
+
 optional<int> TopMpidPriceListModel::find_index(Venue venue) const {
   auto i = m_indexes.find(venue);
   if(i == m_indexes.end()) {
     return none;
   }
   return i->second;
+}
+
+optional<Money> TopMpidPriceListModel::find_price(Venue venue) const {
+  if(auto index = find_index(venue)) {
+    return m_top_prices.get(*index).m_price;
+  }
+  return none;
+}
+
+void TopMpidPriceListModel::update_top_price_model(Venue venue) {
+  auto i = m_top_price_models.find(venue);
+  if(i == m_top_price_models.end()) {
+    return;
+  }
+  auto price = find_price(venue);
+  if(i->second->get() != price) {
+    i->second->set(price);
+  }
 }
 
 void TopMpidPriceListModel::add_quote(const BookQuote& quote) {
@@ -69,6 +97,7 @@ void TopMpidPriceListModel::add_quote(const BookQuote& quote) {
   if(!venue_index) {
     m_indexes[quote.m_venue] = m_top_prices.get_size();
     m_top_prices.push(TopMpidPrice(quote.m_venue, quote.m_quote.m_price));
+    update_top_price_model(quote.m_venue);
     return;
   }
   auto& top_mpid = m_top_prices.get(*venue_index);
@@ -76,6 +105,7 @@ void TopMpidPriceListModel::add_quote(const BookQuote& quote) {
   if(direction * quote.m_quote.m_price > direction * top_mpid.m_price) {
     m_top_prices.set(
       *venue_index, TopMpidPrice(quote.m_venue, quote.m_quote.m_price));
+    update_top_price_model(quote.m_venue);
   }
 }
 
@@ -102,6 +132,7 @@ void TopMpidPriceListModel::remove_quote(const BookQuote& quote) {
     }
     m_top_prices.remove(*venue_index);
   }
+  update_top_price_model(venue);
 }
 
 void TopMpidPriceListModel::on_operation(
