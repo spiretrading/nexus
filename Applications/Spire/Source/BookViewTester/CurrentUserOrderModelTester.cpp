@@ -1,4 +1,5 @@
 #include <doctest/doctest.h>
+#include "Spire/BookView/BookViewCurrentTableModel.hpp"
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/BookView/CurrentUserOrderModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -98,5 +99,72 @@ TEST_SUITE("CurrentUserOrderModel") {
       require_current(current, Side::ASK,
         BookViewModel::UserOrder("TSX", Money(200), 100, OrderStatus::NEW));
     }
+  }
+
+  TEST_CASE("navigate_from_a_row_beyond_the_target_size") {
+    auto bid_entries = std::make_shared<ArrayListModel<BookEntry>>();
+    auto bid_table = std::make_shared<SortedTableModel>(
+      make_book_view_table_model(bid_entries));
+    auto current_bid = std::make_shared<BookViewCurrentTableModel>(bid_table);
+    auto ask_entries = std::make_shared<ArrayListModel<BookEntry>>();
+    auto ask_table = std::make_shared<SortedTableModel>(
+      make_book_view_table_model(ask_entries));
+    auto current_ask = std::make_shared<BookViewCurrentTableModel>(ask_table);
+    auto current =
+      CurrentUserOrderModel(bid_table, current_bid, ask_table, current_ask);
+    auto bid_order =
+      BookViewModel::UserOrder("TSX", Money(75), 100, OrderStatus::NEW);
+    for(auto i = 0; i != 30; ++i) {
+      if(i == 25) {
+        bid_entries->push(bid_order);
+      } else {
+        bid_entries->push(make_book_quote(Money(100 - i), Side::BID));
+      }
+    }
+    auto ask_order =
+      BookViewModel::UserOrder("TSX", Money(203), 100, OrderStatus::NEW);
+    for(auto i = 0; i != 8; ++i) {
+      if(i == 3) {
+        ask_entries->push(ask_order);
+      } else {
+        ask_entries->push(make_book_quote(Money(200 + i), Side::ASK));
+      }
+    }
+    current_bid->set(TableIndex(25, 0));
+    require_current(current, Side::BID, bid_order);
+    current.navigate_to_asks();
+    require_current(current, Side::ASK, ask_order);
+  }
+
+  TEST_CASE("navigate_after_a_crossing_that_selected_nothing") {
+    auto bid_entries = std::make_shared<ArrayListModel<BookEntry>>();
+    auto bid_table = std::make_shared<SortedTableModel>(
+      make_book_view_table_model(bid_entries));
+    auto current_bid = std::make_shared<BookViewCurrentTableModel>(bid_table);
+    auto ask_entries = std::make_shared<ArrayListModel<BookEntry>>();
+    auto ask_table = std::make_shared<SortedTableModel>(
+      make_book_view_table_model(ask_entries));
+    auto current_ask = std::make_shared<BookViewCurrentTableModel>(ask_table);
+    auto current =
+      CurrentUserOrderModel(bid_table, current_bid, ask_table, current_ask);
+    auto bid_order =
+      BookViewModel::UserOrder("TSX", Money(102), 100, OrderStatus::NEW);
+    bid_entries->push(make_book_quote(Money(104), Side::BID));
+    bid_entries->push(make_book_quote(Money(103), Side::BID));
+    bid_entries->push(bid_order);
+    bid_entries->push(make_book_quote(Money(101), Side::BID));
+    bid_entries->push(make_book_quote(Money(100), Side::BID));
+    for(auto i = 0; i != 10; ++i) {
+      ask_entries->push(make_book_quote(Money(200 + i), Side::ASK));
+    }
+    current_bid->set(TableIndex(2, 0));
+    require_current(current, Side::BID, bid_order);
+    current.navigate_to_asks();
+    require_current(current, Side::BID, bid_order);
+    auto ask_order =
+      BookViewModel::UserOrder("TSX", Money(205), 100, OrderStatus::NEW);
+    ask_entries->set(5, ask_order);
+    current.navigate_to_asks();
+    require_current(current, Side::ASK, ask_order);
   }
 }

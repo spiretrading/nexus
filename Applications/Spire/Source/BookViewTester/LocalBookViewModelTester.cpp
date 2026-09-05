@@ -212,6 +212,15 @@ TEST_SUITE("LocalBookViewModel") {
     REQUIRE(model.get_ask_orders()->get(0).m_price == parse_money("10.01"));
   }
 
+  TEST_CASE("pegged_bid_price_without_bbo") {
+    auto model = LocalBookViewModel(TICKER);
+    auto order = make_order(make_pegged_order_fields(
+      TICKER, Side::BID, 100, parse_money("10.00"), parse_money("0.05")));
+    model.add(make_entry(order));
+    REQUIRE(model.get_bid_orders()->get_size() == 1);
+    REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("10.00"));
+  }
+
   TEST_CASE("pegged_order_ratchet") {
     auto model = LocalBookViewModel(TICKER);
     model.update(make_bbo(parse_money("10.00"), parse_money("10.01")));

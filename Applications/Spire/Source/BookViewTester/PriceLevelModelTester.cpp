@@ -396,4 +396,20 @@ TEST_SUITE("PriceLevelModel") {
     REQUIRE(levels.get(3) == 2);
     REQUIRE(levels.get(4) == 3);
   }
+
+  TEST_CASE("price_update_in_place") {
+    auto prices = std::make_shared<ArrayListModel<Money>>();
+    prices->push(10 * Money::ONE);
+    prices->push(10 * Money::ONE);
+    prices->push(9 * Money::ONE);
+    auto levels =
+      PriceLevelModel(prices, std::make_shared<LocalValueModel<int>>(5));
+    REQUIRE(levels.get(0) == 0);
+    REQUIRE(levels.get(1) == 0);
+    REQUIRE(levels.get(2) == 1);
+    prices->set(1, 9 * Money::ONE + 50 * Money::CENT);
+    REQUIRE(levels.get(0) == 0);
+    REQUIRE(levels.get(1) == 1);
+    REQUIRE(levels.get(2) == 2);
+  }
 }
