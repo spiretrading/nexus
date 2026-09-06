@@ -41,6 +41,16 @@ TopMpidPriceListModel::TopMpidPriceListModel(
     std::bind_front(&TopMpidPriceListModel::on_operation, this));
 }
 
+std::shared_ptr<TopMpidPriceListModel::TopPriceModel>
+    TopMpidPriceListModel::get_top_price(Venue venue) {
+  auto& model = m_top_price_models[venue];
+  if(!model) {
+    model =
+      std::make_shared<LocalValueModel<optional<Money>>>(find_price(venue));
+  }
+  return model;
+}
+
 int TopMpidPriceListModel::get_size() const {
   return m_top_prices.get_size();
 }
@@ -59,16 +69,6 @@ void TopMpidPriceListModel::transact(
   m_top_prices.transact([&] {
     transaction();
   });
-}
-
-std::shared_ptr<TopMpidPriceListModel::TopPriceModel>
-    TopMpidPriceListModel::get_top_price(Venue venue) {
-  auto& model = m_top_price_models[venue];
-  if(!model) {
-    model =
-      std::make_shared<LocalValueModel<optional<Money>>>(find_price(venue));
-  }
-  return model;
 }
 
 optional<int> TopMpidPriceListModel::find_index(Venue venue) const {

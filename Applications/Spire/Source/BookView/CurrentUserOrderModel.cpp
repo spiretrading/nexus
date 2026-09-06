@@ -123,8 +123,7 @@ void CurrentUserOrderModel::update_side(
     m_current.set(none);
     return;
   }
-  auto& user_order =
-    extract_user_order(*selected_side.m_table, *current_index);
+  auto& user_order = extract_user_order(*selected_side.m_table, *current_index);
   if(!m_current.get() || side != m_current.get()->m_side ||
       user_order != m_current.get()->m_user_order) {
     clear_undo_navigation();

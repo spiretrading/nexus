@@ -129,8 +129,7 @@ TEST_SUITE("PreviewOrderDisplayValueModel") {
   TEST_CASE("constructor_some_displayed") {
     for(auto visibility :
         {OrderVisibility::VISIBLE, OrderVisibility::HIGHLIGHTED}) {
-      auto preview =
-        std::make_shared<LocalValueModel<optional<OrderFields>>>();
+      auto preview = std::make_shared<LocalValueModel<optional<OrderFields>>>();
       preview->set(TEST_FIELDS);
       auto properties = std::make_shared<LocalBookViewPropertiesModel>();
       set_visibility(*properties, visibility);

@@ -12,8 +12,7 @@ namespace {
   using UserOrder = BookViewModel::UserOrder;
 
   auto make_book_quote(Money price, Quantity size) {
-    return BookQuote("TSX", false, Venues::TSX,
-      Quote(price, size, Side::BID),
+    return BookQuote("TSX", false, Venues::TSX, Quote(price, size, Side::BID),
       time_from_string("2016-07-31 19:00:00"));
   }
 
@@ -46,8 +45,7 @@ TEST_SUITE("MergedBookEntryListModel") {
     auto quotes = make_quotes();
     quotes->push(make_book_quote(Money::ONE, 100));
     quotes->push(make_book_quote(2 * Money::ONE, 200));
-    auto list =
-      MergedBookEntryListModel(quotes, make_orders(), make_preview());
+    auto list = MergedBookEntryListModel(quotes, make_orders(), make_preview());
     REQUIRE(list.get_size() == 2);
     REQUIRE((list.get(0) == BookEntry(quotes->get(0))));
     REQUIRE((list.get(1) == BookEntry(quotes->get(1))));
@@ -58,8 +56,7 @@ TEST_SUITE("MergedBookEntryListModel") {
     orders->push(UserOrder("TSX", Money::ONE, 100, OrderStatus::NEW));
     orders->push(UserOrder("TSX", 2 * Money::ONE, 200, OrderStatus::FILLED));
     orders->push(UserOrder("TSX", 3 * Money::ONE, 200, OrderStatus::CANCELED));
-    auto list =
-      MergedBookEntryListModel(make_quotes(), orders, make_preview());
+    auto list = MergedBookEntryListModel(make_quotes(), orders, make_preview());
     REQUIRE(list.get_size() == 3);
     REQUIRE((list.get(0) == BookEntry(orders->get(0))));
     REQUIRE((list.get(1) == BookEntry(orders->get(1))));
@@ -69,8 +66,7 @@ TEST_SUITE("MergedBookEntryListModel") {
   TEST_CASE("constructor_preview") {
     auto preview = make_preview();
     preview->set(make_fields(100, Money::CENT));
-    auto list =
-      MergedBookEntryListModel(make_quotes(), make_orders(), preview);
+    auto list = MergedBookEntryListModel(make_quotes(), make_orders(), preview);
     REQUIRE(list.get_size() == 1);
     REQUIRE((list.get(0) == BookEntry(*preview->get())));
   }
@@ -97,8 +93,7 @@ TEST_SUITE("MergedBookEntryListModel") {
 
   TEST_CASE("update_book_quotes") {
     auto quotes = make_quotes();
-    auto list =
-      MergedBookEntryListModel(quotes, make_orders(), make_preview());
+    auto list = MergedBookEntryListModel(quotes, make_orders(), make_preview());
     auto quote = make_book_quote(Money::ONE, 100);
     quotes->push(quote);
     REQUIRE(list.get_size() == 1);
@@ -109,8 +104,7 @@ TEST_SUITE("MergedBookEntryListModel") {
 
   TEST_CASE("update_user_orders") {
     auto orders = make_orders();
-    auto list =
-      MergedBookEntryListModel(make_quotes(), orders, make_preview());
+    auto list = MergedBookEntryListModel(make_quotes(), orders, make_preview());
     auto order = UserOrder("TSX", Money::ONE, 100, OrderStatus::NEW);
     orders->push(order);
     REQUIRE(list.get_size() == 1);
@@ -121,8 +115,7 @@ TEST_SUITE("MergedBookEntryListModel") {
 
   TEST_CASE("update_preview") {
     auto preview = make_preview();
-    auto list =
-      MergedBookEntryListModel(make_quotes(), make_orders(), preview);
+    auto list = MergedBookEntryListModel(make_quotes(), make_orders(), preview);
     preview->set(make_fields(100, Money::CENT));
     REQUIRE(list.get_size() == 1);
     REQUIRE((list.get(0) == BookEntry(*preview->get())));
@@ -159,8 +152,7 @@ TEST_SUITE("MergedBookEntryListModel") {
     for(auto i = 0; i != 12; ++i) {
       quotes->push(make_book_quote((i + 1) * Money::ONE, 100));
     }
-    auto list =
-      MergedBookEntryListModel(quotes, make_orders(), make_preview());
+    auto list = MergedBookEntryListModel(quotes, make_orders(), make_preview());
     auto expected = list.get(0);
     auto& entry = list.get(0);
     for(auto i = 1; i != list.get_size(); ++i) {

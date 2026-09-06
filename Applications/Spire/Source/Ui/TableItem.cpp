@@ -110,8 +110,8 @@ void TableItem::on_style() {
   auto& stylist = find_stylist(*this);
   m_styles = Styles(Qt::transparent, Qt::transparent, Qt::transparent,
     Qt::transparent, Qt::transparent);
-  auto assign = [this] (QColor& target) {
-    return [&target, this] (auto color) {
+  auto assign = [=, this] (QColor& target) {
+    return [&] (auto color) {
       target = color;
       if(auto row = parentWidget()) {
         if(auto body = row->parentWidget()) {

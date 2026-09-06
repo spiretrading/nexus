@@ -196,7 +196,7 @@ namespace Styles {
       void reset_visible_region();
       void update_visible_region();
       void update_column_covers();
-      void for_each_row(const std::function<void (RowCover&)>& f);
+      void for_each_row(const std::function<void (RowCover&)>& action);
       void update_row_widths(RowCover& row);
       void update_column_widths();
       void navigate_selection();

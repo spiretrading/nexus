@@ -19,8 +19,7 @@ namespace {
 TEST_SUITE("PriceLevelModel") {
   TEST_CASE("constructor") {
     SUBCASE("empty") {
-      auto levels = PriceLevelModel(
-        std::make_shared<ArrayListModel<Money>>(),
+      auto levels = PriceLevelModel(std::make_shared<ArrayListModel<Money>>(),
         std::make_shared<LocalValueModel<int>>(5));
       REQUIRE(levels.get_size() == 0);
     }

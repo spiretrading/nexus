@@ -1299,7 +1299,8 @@ void TableBody::update_column_covers() {
   }
 }
 
-void TableBody::for_each_row(const std::function<void (RowCover&)>& f) {
+void TableBody::for_each_row(
+    const std::function<void (RowCover&)>& action) {
   for(auto i = 0; i != get_layout().count() + 1; ++i) {
     auto row = [&] () -> RowCover* {
       if(i == get_layout().count()) {
@@ -1312,7 +1313,7 @@ void TableBody::for_each_row(const std::function<void (RowCover&)>& f) {
       return nullptr;
     }();
     if(row) {
-      f(*row);
+      action(*row);
     }
   }
 }
@@ -1536,16 +1537,16 @@ void TableBody::on_style() {
   m_styles.m_horizontal_grid_color = Qt::transparent;
   m_styles.m_vertical_grid_color = Qt::transparent;
   auto assign_color = [] (QColor& target) {
-    return [&target] (auto color) {
+    return [&] (auto color) {
       target = color;
     };
   };
   auto assign_size = [] (int& target) {
-    return [&target] (auto size) {
+    return [&] (auto size) {
       target = std::max(0, size);
     };
   };
-  auto assign_padding = [this] (void (QMargins::*setter)(int)) {
+  auto assign_padding = [=, this] (void (QMargins::*setter)(int)) {
     return [=, this] (auto size) {
       (m_styles.m_padding.*setter)(std::max(0, size));
     };

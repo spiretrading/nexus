@@ -351,6 +351,15 @@ void BookViewWindow::remove_task_entry_panel() {
   setUpdatesEnabled(true);
 }
 
+void BookViewWindow::cancel(const CurrentUserOrder& user_order,
+    CancelKeyBindingsModel::Operation ask_operation,
+    CancelKeyBindingsModel::Operation bid_operation) {
+  m_cancel_operation_signal(
+    pick(user_order.m_side, ask_operation, bid_operation),
+    m_ticker_view->get_current()->get(), CancelCriteria(
+      user_order.m_user_order.m_destination, user_order.m_user_order.m_price));
+}
+
 bool BookViewWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
   if(!m_task_entry_panel && event.key() == Qt::Key_Tab) {
     if(auto window = find_next_window(*this)) {
@@ -417,15 +426,6 @@ void BookViewWindow::on_task_entry_key_press(const QKeyEvent& event) {
       display_task_entry_panel(*arguments);
     }
   }
-}
-
-void BookViewWindow::cancel(const CurrentUserOrder& user_order,
-    CancelKeyBindingsModel::Operation ask_operation,
-    CancelKeyBindingsModel::Operation bid_operation) {
-  m_cancel_operation_signal(
-    pick(user_order.m_side, ask_operation, bid_operation),
-    m_ticker_view->get_current()->get(), CancelCriteria(
-      user_order.m_user_order.m_destination, user_order.m_user_order.m_price));
 }
 
 void BookViewWindow::on_cancel_most_recent(const CurrentUserOrder& user_order) {

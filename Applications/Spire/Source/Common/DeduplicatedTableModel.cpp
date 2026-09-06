@@ -12,9 +12,9 @@ DeduplicatedTableModel::DeduplicatedTableModel(
       }) {}
 
 DeduplicatedTableModel::DeduplicatedTableModel(
-    std::shared_ptr<TableModel> source, Comparator comparator)
+    std::shared_ptr<TableModel> source, IsEqual is_equal)
     : m_source(std::move(source)),
-      m_comparator(std::move(comparator)) {
+      m_is_equal(std::move(is_equal)) {
   m_connection = m_source->connect_operation_signal(
     std::bind_front(&DeduplicatedTableModel::on_operation, this));
 }
@@ -48,7 +48,7 @@ connection DeduplicatedTableModel::connect_operation_signal(
 void DeduplicatedTableModel::on_operation(const Operation& operation) {
   visit(operation,
     [&] (const UpdateOperation& operation) {
-      if(m_comparator(
+      if(m_is_equal(
           operation.m_previous, operation.m_value, operation.m_column)) {
         return;
       }

@@ -145,12 +145,12 @@ namespace Spire {
       void display_interactions_panel();
       void display_task_entry_panel(const OrderTaskArguments& arguments);
       void remove_task_entry_panel();
-      bool on_key_press(QWidget& target, const QKeyEvent& event);
-      void on_context_menu(const QPoint& pos);
-      void on_task_entry_key_press(const QKeyEvent& event);
       void cancel(const CurrentUserOrder& user_order,
         CancelKeyBindingsModel::Operation ask_operation,
         CancelKeyBindingsModel::Operation bid_operation);
+      bool on_key_press(QWidget& target, const QKeyEvent& event);
+      void on_context_menu(const QPoint& pos);
+      void on_task_entry_key_press(const QKeyEvent& event);
       void on_cancel_most_recent(const CurrentUserOrder& user_order);
       void on_cancel_all(const CurrentUserOrder& user_order);
       void on_properties_menu();

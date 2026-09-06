@@ -361,8 +361,11 @@ namespace {
     std::shared_ptr<VenueModel> m_venue;
     scoped_connection m_connection;
 
+    InputBoxWrapper(Model model, std::shared_ptr<VenueModel> venue)
+      : InputBoxWrapper(std::move(model), std::move(venue), nullptr) {}
+
     InputBoxWrapper(Model model, std::shared_ptr<VenueModel> venue,
-        QWidget* parent = nullptr)
+        QWidget* parent)
         : QWidget(parent),
           m_model(std::move(model)),
           m_venue(std::move(venue)) {

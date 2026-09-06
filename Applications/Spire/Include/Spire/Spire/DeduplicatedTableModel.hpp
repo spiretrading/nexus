@@ -23,12 +23,11 @@ namespace Spire {
        * @param column The column that both values belong to.
        * @return <code>true</code> iff the values are equal.
        */
-      using Comparator = std::function<
+      using IsEqual = std::function<
         bool (const std::any& previous, const std::any& value, int column)>;
 
       /**
-       * Constructs a DeduplicatedTableModel testing values for equality using
-       * <i>is_equal</i>.
+       * Constructs a DeduplicatedTableModel.
        * @param source The table to view.
        */
       explicit DeduplicatedTableModel(std::shared_ptr<TableModel> source);
@@ -36,10 +35,10 @@ namespace Spire {
       /**
        * Constructs a DeduplicatedTableModel.
        * @param source The table to view.
-       * @param comparator The function used to test values for equality.
+       * @param is_equal The function used to test values for equality.
        */
       DeduplicatedTableModel(
-        std::shared_ptr<TableModel> source, Comparator comparator);
+        std::shared_ptr<TableModel> source, IsEqual is_equal);
 
       int get_row_size() const override;
       int get_column_size() const override;
@@ -52,7 +51,7 @@ namespace Spire {
 
     private:
       std::shared_ptr<TableModel> m_source;
-      Comparator m_comparator;
+      IsEqual m_is_equal;
       TableModelTransactionLog m_transaction;
       boost::signals2::scoped_connection m_connection;
 

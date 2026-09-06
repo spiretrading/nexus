@@ -183,9 +183,10 @@ void ConsolidatedUserOrderListModel::schedule() {
   m_is_scheduled = true;
   auto delay = std::chrono::duration_cast<std::chrono::milliseconds>(
     m_transitions.front().m_expiry - std::chrono::steady_clock::now()).count();
-  QTimer::singleShot(std::max<int>(0, static_cast<int>(delay)), this, [this] {
-    on_expiry();
-  });
+  QTimer::singleShot(std::max<int>(0, static_cast<int>(delay)), this,
+    [=, this] {
+      on_expiry();
+    });
 }
 
 void ConsolidatedUserOrderListModel::on_expiry() {

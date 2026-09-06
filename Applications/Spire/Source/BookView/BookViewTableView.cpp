@@ -161,8 +161,7 @@ namespace {
         auto& entry = static_cast<ProxyValueModel<BookEntry>&>(
           *mpid_box.get_current());
         entry.set_source(make_list_value_model(m_entries, row));
-        auto& level =
-          static_cast<ProxyValueModel<int>&>(*mpid_box.get_level());
+        auto& level = static_cast<ProxyValueModel<int>&>(*mpid_box.get_level());
         level.set_source(make_list_value_model(m_price_levels, row));
       } else if(column_id == BookViewColumn::PRICE) {
         auto& price_box = static_cast<TextBox&>(widget);
