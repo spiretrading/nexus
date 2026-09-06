@@ -144,7 +144,12 @@ void MpidBox::update_status(const BookEntry& entry) {
     }
     return to_highlight_status(order->m_highlight);
   }();
-  auto is_settled = status != OrderStatus::NONE && m_is_reset;
+  auto is_settled = [&] {
+    if(m_is_reset) {
+      return status != OrderStatus::NONE;
+    }
+    return m_is_settled && transition == m_current_transition;
+  }();
   m_is_reset = false;
   if(status == m_current_status && transition == m_current_transition &&
       is_settled == m_is_settled) {
