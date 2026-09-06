@@ -1,5 +1,6 @@
 #ifndef SPIRE_MPID_BOX_HPP
 #define SPIRE_MPID_BOX_HPP
+#include <cstdint>
 #include <boost/optional/optional.hpp>
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/Styles/StateSelector.hpp"
@@ -18,10 +19,13 @@ namespace Styles {
 
   /** Styles an MpidBox based on whether it represents a user's order. */
   using UserOrderRow =
-    StateSelector<Nexus::OrderStatus, struct UserOrderSelectorTag>;
+    StateSelector<Nexus::OrderStatus, struct UserOrderRowSelectorTag>;
 
   /** Styles an MpidBox based on whether it represents an order preview. */
-  using PreviewRow = StateSelector<void, struct PreviewSelectorTag>;
+  using PreviewRow = StateSelector<void, struct PreviewRowSelectorTag>;
+
+  /** Styles an MpidBox whose highlight began before it was displayed. */
+  using SettledRow = StateSelector<void, struct SettledRowSelectorTag>;
 }
 
   /**
@@ -51,14 +55,20 @@ namespace Styles {
       /** Returns whether this represents the top MPID price level. */
       const std::shared_ptr<ValueModel<bool>>& is_top_mpid() const;
 
+      /** Prepares this MpidBox to display a different entry. */
+      void reset();
+
     private:
       std::shared_ptr<BookEntryModel> m_current;
+      std::shared_ptr<ValueModel<int>> m_level;
+      std::shared_ptr<ValueModel<bool>> m_is_top_mpid;
       boost::optional<int> m_current_type_index;
       Nexus::Venue m_current_venue;
       Nexus::OrderStatus m_current_status;
-      std::shared_ptr<ValueModel<int>> m_level;
+      std::uint64_t m_current_transition;
       int m_current_level;
-      std::shared_ptr<ValueModel<bool>> m_is_top_mpid;
+      bool m_is_reset;
+      bool m_is_settled;
       boost::signals2::scoped_connection m_current_connection;
       boost::signals2::scoped_connection m_level_connection;
       boost::signals2::scoped_connection m_is_top_mpid_connection;

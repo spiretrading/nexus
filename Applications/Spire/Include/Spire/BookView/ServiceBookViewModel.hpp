@@ -11,9 +11,7 @@
 
 namespace Spire {
 
-  /**
-   * Implements a BookViewModel using ServiceClient calls.
-   */
+  /** Implements a BookViewModel using ServiceClient calls. */
   class ServiceBookViewModel : public BookViewModel {
     public:
 
@@ -57,6 +55,9 @@ namespace Spire {
       boost::signals2::scoped_connection m_active_blotter_connection;
 
       void initialize_order(const OrderLogModel::OrderEntry& order);
+      boost::optional<std::vector<Nexus::ExecutionReport>> monitor(
+        const OrderLogModel::OrderEntry& order);
+      void query_book_quotes();
       void buffer_book_quote(const Nexus::BookQuote& quote);
       void on_bbo(const Nexus::BboQuote& bbo);
       void on_end_book_quote_buffer();

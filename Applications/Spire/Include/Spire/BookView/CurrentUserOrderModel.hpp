@@ -22,12 +22,17 @@ namespace Spire {
   /**
    * Keeps track of the current UserOrder between both sides of the book quotes.
    */
-  class CurrentUserOrderModel : ValueModel<boost::optional<CurrentUserOrder>> {
+  class CurrentUserOrderModel :
+      public ValueModel<boost::optional<CurrentUserOrder>> {
     public:
 
       /**
        * Constructs a CurrentUserOrderModel by consolidating the current bid
        * with the current ask.
+       * @param bid_table The table of bid entries.
+       * @param current_bid The current index within the <i>bid_table</i>.
+       * @param ask_table The table of ask entries.
+       * @param current_ask The current index within the <i>ask_table</i>.
        */
       CurrentUserOrderModel(std::shared_ptr<SortedTableModel> bid_table,
         std::shared_ptr<TableCurrentController::CurrentModel> current_bid,
@@ -64,6 +69,9 @@ namespace Spire {
       LocalValueModel<boost::optional<CurrentUserOrder>> m_current;
       boost::signals2::scoped_connection m_undo_navigation_connection;
 
+      void navigate(
+        const SideEntry& from, const SideEntry& to, Nexus::Side side);
+      void clear_undo_navigation();
       void update_side(const SideEntry& selected_side,
         const SideEntry& other_side, Nexus::Side side,
         const boost::optional<TableIndex>& current_index);

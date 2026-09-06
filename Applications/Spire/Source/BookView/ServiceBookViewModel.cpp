@@ -9,9 +9,9 @@ using namespace Spire;
 
 namespace {
   bool is_order_displayed(const Order& order, const Ticker& ticker) {
-    return order.get_info().m_fields.m_ticker == ticker &&
-      (order.get_info().m_fields.m_type == OrderType::LIMIT ||
-        order.get_info().m_fields.m_type == OrderType::PEGGED);
+    auto& fields = order.get_info().m_fields;
+    return fields.m_ticker == ticker && (fields.m_type == OrderType::LIMIT ||
+      fields.m_type == OrderType::PEGGED);
   }
 }
 
@@ -30,15 +30,7 @@ ServiceBookViewModel::ServiceBookViewModel(Ticker ticker,
   bbo_query.set_interruption_policy(InterruptionPolicy::IGNORE_CONTINUE);
   m_market_data_client.query(bbo_query, m_event_handler.get_slot<BboQuote>(
     std::bind_front(&ServiceBookViewModel::on_bbo, this)));
-  spawn([client = m_market_data_client, ticker = m_ticker, slot =
-      m_event_handler.get_slot<BookQuote>(
-        std::bind_front(&ServiceBookViewModel::buffer_book_quote, this),
-        std::bind_front(
-          &ServiceBookViewModel::on_book_quote_interruption, this))] () mutable {
-    auto id = query_real_time_with_snapshot(
-      client, ticker, std::move(slot), InterruptionPolicy::BREAK_QUERY);
-    Beam::wait(id);
-  });
+  query_book_quotes();
   auto time_and_sale_query = make_real_time_query(m_ticker);
   time_and_sale_query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
   m_market_data_client.query(
@@ -95,11 +87,7 @@ void ServiceBookViewModel::initialize_order(
   if(!is_order_displayed(*order.m_order, m_ticker)) {
     return;
   }
-  auto execution_reports = optional<std::vector<ExecutionReport>>();
-  order.m_order->get_publisher().monitor(
-    m_order_event_handler->get_slot<ExecutionReport>(
-      std::bind_front(&ServiceBookViewModel::on_execution_report, this)),
-    out(execution_reports));
+  auto execution_reports = monitor(order);
   if(execution_reports && !execution_reports->empty() &&
       is_terminal(execution_reports->back().m_status)) {
     return;
@@ -116,6 +104,28 @@ void ServiceBookViewModel::initialize_order(
   }
   auto& fields = order.m_order->get_info().m_fields;
   m_model.add(order, fields.m_quantity - filled_quantity, status);
+}
+
+optional<std::vector<ExecutionReport>> ServiceBookViewModel::monitor(
+    const OrderLogModel::OrderEntry& order) {
+  auto reports = optional<std::vector<ExecutionReport>>();
+  order.m_order->get_publisher().monitor(
+    m_order_event_handler->get_slot<ExecutionReport>(
+      std::bind_front(&ServiceBookViewModel::on_execution_report, this)),
+    out(reports));
+  return reports;
+}
+
+void ServiceBookViewModel::query_book_quotes() {
+  auto slot = m_event_handler.get_slot<BookQuote>(
+    std::bind_front(&ServiceBookViewModel::buffer_book_quote, this),
+    std::bind_front(&ServiceBookViewModel::on_book_quote_interruption, this));
+  spawn([client = m_market_data_client, ticker = m_ticker,
+      slot = std::move(slot)] () mutable {
+    auto id = query_real_time_with_snapshot(
+      client, ticker, std::move(slot), InterruptionPolicy::BREAK_QUERY);
+    Beam::wait(id);
+  });
 }
 
 void ServiceBookViewModel::buffer_book_quote(const BookQuote& quote) {
@@ -141,16 +151,9 @@ void ServiceBookViewModel::on_end_book_quote_buffer() {
 
 void ServiceBookViewModel::on_book_quote_interruption(
     const std::exception_ptr&) {
+  m_buffered_book_quotes.clear();
   m_model.clear_book_quotes();
-  spawn([client = m_market_data_client, ticker = m_ticker, slot =
-      m_event_handler.get_slot<BookQuote>(
-        std::bind_front(&ServiceBookViewModel::buffer_book_quote, this),
-        std::bind_front(
-          &ServiceBookViewModel::on_book_quote_interruption, this))] () mutable {
-    auto id = query_real_time_with_snapshot(
-      client, ticker, std::move(slot), InterruptionPolicy::BREAK_QUERY);
-    Beam::wait(id);
-  });
+  query_book_quotes();
 }
 
 void ServiceBookViewModel::on_time_and_sales(const TimeAndSale& time_and_sale) {
@@ -165,20 +168,16 @@ void ServiceBookViewModel::on_order_added(
     const OrderLogModel::OrderEntry& order) {
   if(order.m_order->get_info().m_timestamp < m_snapshot_cutoff) {
     initialize_order(order);
-  } else {
-    if(!is_order_displayed(*order.m_order, m_ticker)) {
-      return;
-    }
-    m_model.add(order);
-    auto execution_reports = optional<std::vector<ExecutionReport>>();
-    order.m_order->get_publisher().monitor(
-      m_order_event_handler->get_slot<ExecutionReport>(
-        std::bind_front(&ServiceBookViewModel::on_execution_report, this)),
-      out(execution_reports));
-    if(execution_reports) {
-      for(auto& report : *execution_reports) {
-        m_model.update(report);
-      }
+    return;
+  }
+  if(!is_order_displayed(*order.m_order, m_ticker)) {
+    return;
+  }
+  m_model.add(order);
+  auto execution_reports = monitor(order);
+  if(execution_reports) {
+    for(auto& report : *execution_reports) {
+      m_model.update(report);
     }
   }
 }

@@ -4,11 +4,9 @@
 #include "Spire/BookView/BboBox.hpp"
 #include "Spire/BookView/BookViewTableModel.hpp"
 #include "Spire/BookView/BookViewTableView.hpp"
+#include "Spire/Spire/DeduplicatedValueModel.hpp"
 #include "Spire/Spire/FieldValueModel.hpp"
-#include "Spire/Spire/LocalValueModel.hpp"
-#include "Spire/Spire/TransformValueModel.hpp"
 #include "Spire/Ui/Layouts.hpp"
-#include "Spire/Ui/ScrollBar.hpp"
 #include "Spire/Ui/ScrollBox.hpp"
 #include "Spire/Ui/TextBox.hpp"
 
@@ -25,7 +23,8 @@ namespace {
     panel->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Preferred);
     auto layout = make_vbox_layout(panel);
     auto bbo_accessor = pick(side, &BboQuote::m_ask, &BboQuote::m_bid);
-    auto bbo = make_field_value_model(model->get_bbo_quote(), bbo_accessor);
+    auto bbo = make_deduplicated_value_model(
+      make_field_value_model(model->get_bbo_quote(), bbo_accessor));
     auto bbo_box = new BboBox(std::move(bbo));
     bbo_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     layout->addWidget(bbo_box);
@@ -33,9 +32,13 @@ namespace {
       make_book_view_table_view(std::move(model), std::move(properties), side);
     table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     layout->addWidget(table_view);
-    auto table =
-      std::static_pointer_cast<SortedTableModel>(table_view->get_table());
     return std::tuple(panel, bbo_box, table_view);
+  }
+
+  void synchronize_position(
+      int position, scoped_connection& connection, TableView& target) {
+    auto blocker = shared_connection_block(connection);
+    target.get_scroll_box().get_vertical_scroll_bar().set_position(position);
   }
 }
 
@@ -45,7 +48,7 @@ BookDepth::BookDepth(std::shared_ptr<BookViewModel> model,
       m_model(std::move(model)),
       m_font_property(make_field_value_model(make_field_value_model(
         properties, &BookViewProperties::m_level_properties),
-          &BookViewLevelProperties::m_font)),
+        &BookViewLevelProperties::m_font)),
       m_font(m_font_property->get()) {
   setFocusPolicy(Qt::StrongFocus);
   auto [bid_panel, bid_bbo, bid_table_view] =
@@ -109,15 +112,11 @@ void BookDepth::apply_font(const QFont& font) {
 }
 
 void BookDepth::on_bid_position(int position) {
-  auto blocker = shared_connection_block(m_ask_position_connection);
-  m_ask_table_view->get_scroll_box().get_vertical_scroll_bar().set_position(
-    position);
+  synchronize_position(position, m_ask_position_connection, *m_ask_table_view);
 }
 
 void BookDepth::on_ask_position(int position) {
-  auto blocker = shared_connection_block(m_bid_position_connection);
-  m_bid_table_view->get_scroll_box().get_vertical_scroll_bar().set_position(
-    position);
+  synchronize_position(position, m_bid_position_connection, *m_bid_table_view);
 }
 
 void BookDepth::on_font_property_update(const QFont& font) {

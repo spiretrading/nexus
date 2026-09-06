@@ -1,5 +1,5 @@
-#ifndef BOOK_VIEW_PROPERTIES_WINDOW_HPP
-#define BOOK_VIEW_PROPERTIES_WINDOW_HPP
+#ifndef SPIRE_BOOK_VIEW_PROPERTIES_WINDOW_HPP
+#define SPIRE_BOOK_VIEW_PROPERTIES_WINDOW_HPP
 #include "Spire/BookView/BookViewProperties.hpp"
 #include "Spire/KeyBindings/KeyBindingsModel.hpp"
 #include "Spire/Ui/NavigationView.hpp"
@@ -49,6 +49,7 @@ namespace Spire {
       bool m_is_submitted;
       NavigationView* m_navigation_view;
       QWidget* m_highlights_page;
+      int m_interactions_tab;
       boost::signals2::scoped_connection m_level_connection;
       boost::signals2::scoped_connection m_ticker_connection;
 

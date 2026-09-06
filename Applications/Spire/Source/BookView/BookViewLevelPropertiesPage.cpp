@@ -31,24 +31,27 @@ namespace {
   const auto COLOR_BOXES_VERTICAL_PADDING = 2;
   const auto COLOR_LIST_SPACING = 8;
   const auto COLOR_LIST_RIGHT_PADDING = 4;
-  const auto DEBOUNCE_TIME_MS = 100;
+  const auto DEBOUNCE_DURATION = std::chrono::milliseconds(100);
+  const auto GRADIENT_COLOR_COUNT = 2;
 
-  auto INTEGER_BOX_HORIZONTAL_PADDING() {
+  auto make_font(QFont::Weight weight, int size) {
+    auto font = QFont("Roboto");
+    font.setWeight(weight);
+    font.setPixelSize(scale_width(size));
+    return font;
+  }
+
+  auto get_integer_box_horizontal_padding() {
     static auto padding = scale_width(32);
     return padding;
   }
 
-  auto get_character_width() {
-    static auto width = [] {
-      auto font = QFont("Roboto");
-      font.setWeight(QFont::Normal);
-      font.setPixelSize(scale_width(12));
-      return Spire::get_character_width(font);
-    }();
+  auto get_level_character_width() {
+    static auto width = get_character_width(make_font(QFont::Normal, 12));
     return width;
   }
 
-  auto to_text(FillType type) {
+  const QString& to_fill_type_text(FillType type) {
     if(type == FillType::GRADIENT) {
       static const auto value = QObject::tr("Gradient");
       return value;
@@ -58,29 +61,35 @@ namespace {
     }
   }
 
-  void scale(ListModel<QColor>& scheme, const QColor& start,
+  void remove_widget(QLayout& layout, int index) {
+    if(auto item = layout.takeAt(index)) {
+      delete item->widget();
+      delete item;
+    }
+  }
+
+  void truncate(ListModel<QColor>& colors, int size) {
+    while(colors.get_size() > size) {
+      colors.remove(colors.get_size() - 1);
+    }
+  }
+
+  void interpolate(ListModel<QColor>& scheme, const QColor& start,
       const QColor& end, int levels) {
     auto colors = scale_oklch(start, end, levels);
     auto alphas = scale_alpha(start.alpha(), end.alpha(), levels);
     scheme.transact([&] {
-      auto index = 0;
-      while(index < levels) {
-        if(index < scheme.get_size()) {
-          if(scheme.get(index).rgb() != colors[index].rgb() ||
-              scheme.get(index).alpha() != alphas[index]) {
-            scheme.set(index,
-              QColor(colors[index].red(), colors[index].green(),
-                colors[index].blue(), alphas[index]));
-          }
-        } else {
-          scheme.insert(QColor(colors[index].red(), colors[index].green(),
-            colors[index].blue(), alphas[index]), index);
+      for(auto index = 0; index < levels; ++index) {
+        auto color = QColor(colors[index].red(), colors[index].green(),
+          colors[index].blue(), alphas[index]);
+        if(index >= scheme.get_size()) {
+          scheme.insert(color, index);
+        } else if(scheme.get(index).rgb() != color.rgb() ||
+            scheme.get(index).alpha() != color.alpha()) {
+          scheme.set(index, color);
         }
-        ++index;
       }
-      while(scheme.get_size() > index) {
-        scheme.remove(scheme.get_size() - 1);
-      }
+      truncate(scheme, levels);
     });
   }
 
@@ -88,11 +97,8 @@ namespace {
     auto label = make_label(name);
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Fixed);
     update_style(*label, [] (auto& style) {
-      auto font = QFont("Roboto");
-      font.setWeight(QFont::Medium);
-      font.setPixelSize(scale_width(12));
       style.get(Any()).
-        set(Font(font)).
+        set(Font(make_font(QFont::Medium, 12))).
         set(PaddingBottom(scale_height(8)));
     });
     return label;
@@ -102,12 +108,12 @@ namespace {
     auto label = make_label(QObject::tr("Levels"));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     update_style(*label, [] (auto& style) {
-      style.get(Any()).set(PaddingRight(scale_height(8)));
+      style.get(Any()).set(PaddingRight(scale_width(8)));
     });
     auto levels_box = new IntegerBox(std::move(levels));
     levels_box->setSizePolicy(QSizePolicy::Preferred, QSizePolicy::Fixed);
     levels_box->setFixedWidth(
-      6 * ::get_character_width() + INTEGER_BOX_HORIZONTAL_PADDING());
+      6 * get_level_character_width() + get_integer_box_horizontal_padding());
     auto body = new QWidget();
     auto layout = make_hbox_layout(body);
     layout->addWidget(label);
@@ -193,10 +199,10 @@ namespace {
       if(m_band_colors->get_size() > 1) {
         m_end_color = m_band_colors->get(m_band_colors->get_size() - 1);
       }
-      scale(*m_band_colors, m_band_colors->get(0), m_end_color, levels);
+      interpolate(*m_band_colors, m_band_colors->get(0), m_end_color, levels);
     }
 
-    void on_levels_update(const optional<int> levels) {
+    void on_levels_update(optional<int> levels) {
       if(!levels || *levels < m_levels->get_minimum() ||
           *levels > m_levels->get_maximum()) {
         return;
@@ -211,9 +217,7 @@ namespace {
               m_band_colors->insert(color, i);
             }
           } else {
-            while(m_band_colors->get_size() > *levels) {
-              m_band_colors->remove(m_band_colors->get_size() - 1);
-            }
+            truncate(*m_band_colors, *levels);
           }
         });
       }
@@ -224,17 +228,17 @@ namespace {
       if(type == FillType::GRADIENT) {
         m_colors->transact([&] {
           if(m_colors->get_size() == 0) {
-            auto size = std::min(m_band_colors->get_size(), 2);
-            for(auto i = 0; i < size; ++i) {
-              if(i == 1) {
-                m_colors->insert(
-                  m_band_colors->get(m_band_colors->get_size() - 1), i);
-              } else {
-                m_colors->insert(m_band_colors->get(i), i);
-              }
+            auto size =
+              std::min(m_band_colors->get_size(), GRADIENT_COLOR_COUNT);
+            if(size > 0) {
+              m_colors->insert(m_band_colors->get(0), 0);
             }
-          } else if(m_colors->get_size() > 2) {
-            while(m_colors->get_size() > 2) {
+            if(size > 1) {
+              m_colors->insert(
+                m_band_colors->get(m_band_colors->get_size() - 1), 1);
+            }
+          } else {
+            while(m_colors->get_size() > GRADIENT_COLOR_COUNT) {
               m_colors->remove(1);
             }
           }
@@ -306,7 +310,7 @@ namespace {
               m_band_colors->set(m_band_colors->get_size() - 1,
                 operation.get_value());
             }
-            m_timer->start(DEBOUNCE_TIME_MS);
+            m_timer->start(DEBOUNCE_DURATION);
           } else {
             m_band_colors->set(operation.m_index, operation.get_value());
           }
@@ -344,6 +348,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         m_gradient_color_levels(0) {
     auto body = new QWidget();
     m_body_layout = make_hbox_layout(body);
+    m_scroll_box = new ScrollBox(body);
     auto color_bands = make_color_bands();
     color_bands->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     color_bands->setFixedWidth(scale_width(COLOR_BAND_WIDTH));
@@ -353,7 +358,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_color_boxes->setSizePolicy(QSizePolicy::Expanding,
       QSizePolicy::Expanding);
     m_body_layout->addWidget(m_color_boxes, 0, Qt::AlignTop);
-    m_scroll_box = new ScrollBox(body);
     m_scroll_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     m_scroll_box->get_body().installEventFilter(this);
     m_scroll_box->get_vertical_scroll_bar().installEventFilter(this);
@@ -375,9 +379,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     m_colors_connection = m_model->m_colors->connect_operation_signal(
       std::bind_front(&PriceLevelWidget::on_colors_operation, this));
     on_type_update(m_model->m_fill_type->get(), true);
-    for(auto i = 0; i < m_color_boxes_layout->count(); ++i) {
-      m_color_boxes_layout->itemAt(i)->widget()->installEventFilter(this);
-    }
   }
 
   bool eventFilter(QObject* watched, QEvent* event) override {
@@ -409,11 +410,11 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     return QWidget::eventFilter(watched, event);
   }
 
-  void make_button(FillType type) {
+  void add_button(FillType type) {
     auto button = make_radio_button();
     button->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
-    button->set_label(::to_text(type));
-    button->get_current()->connect_update_signal([=] (auto value) {
+    button->set_label(to_fill_type_text(type));
+    button->get_current()->connect_update_signal([=, this] (auto value) {
       if(m_model->m_fill_type->get() == type && !value) {
         button->get_current()->set(true);
       } else if(value) {
@@ -426,8 +427,8 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   QWidget* make_fill_type_slot() {
-    make_button(FillType::GRADIENT);
-    make_button(FillType::SOLID);
+    add_button(FillType::GRADIENT);
+    add_button(FillType::SOLID);
     auto label = make_label(QObject::tr("Fill Type"));
     label->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     auto body = new QWidget();
@@ -463,6 +464,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       std::make_shared<ListValueModel<QColor>>(m_model->m_colors, index));
     color_box->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
     color_box->setFixedHeight(scale_height(COLOR_BOX_HEIGHT));
+    color_box->installEventFilter(this);
     return color_box;
   }
 
@@ -498,12 +500,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     if(m_model->m_fill_type->get() != FillType::GRADIENT || levels == 0) {
       return;
     }
-    auto color_levels = [&] {
-      if(levels >= 2) {
-        return 2;
-      }
-      return 1;
-    }();
+    auto color_levels = std::min(levels, GRADIENT_COLOR_COUNT);
     m_gradient_color_levels = color_levels;
     auto vertical_paddings = COLOR_BOXES_VERTICAL_PADDING * 2;
     auto height = scale_height(vertical_paddings +
@@ -523,9 +520,9 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     }
   }
 
-  void on_type_update(FillType type, bool value) {
-    m_buttons[static_cast<int>(type)]->get_current()->set(value);
-    if(value) {
+  void on_type_update(FillType type, bool is_selected) {
+    m_buttons[static_cast<int>(type)]->get_current()->set(is_selected);
+    if(is_selected) {
       if(type == FillType::SOLID) {
         m_body_layout->addWidget(m_color_boxes, 0, Qt::AlignTop);
       } else {
@@ -539,7 +536,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     }
   }
 
-  void on_levels_update(const optional<int> levels) {
+  void on_levels_update(optional<int> levels) {
     if(!levels) {
       return;
     }
@@ -553,10 +550,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
           make_color_band(operation.m_index));
       },
       [&] (const ListModel<QColor>::RemoveOperation& operation) {
-        if(auto item = m_color_bands_layout->takeAt(operation.m_index)) {
-          delete item->widget();
-          delete item;
-        }
+        remove_widget(*m_color_bands_layout, operation.m_index);
       },
       [&] (const ListModel<QColor>::UpdateOperation& operation) {
         auto band = m_color_bands_layout->itemAt(operation.m_index)->widget();
@@ -572,7 +566,6 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
     visit(operation,
       [&] (const ListModel<QColor>::AddOperation& operation) {
         auto color_box = make_color_box(operation.m_index);
-        color_box->installEventFilter(this);
         m_color_boxes_layout->insertWidget(operation.m_index, color_box);
         if(operation.m_index > 0) {
           QWidget::setTabOrder(
@@ -585,10 +578,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
         }
       },
       [&] (const ListModel<QColor>::RemoveOperation& operation) {
-        if(auto item = m_color_boxes_layout->takeAt(operation.m_index)) {
-          delete item->widget();
-          delete item;
-        }
+        remove_widget(*m_color_boxes_layout, operation.m_index);
       });
   }
 };

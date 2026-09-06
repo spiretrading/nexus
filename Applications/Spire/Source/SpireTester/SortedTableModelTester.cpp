@@ -523,4 +523,16 @@ TEST_SUITE("SortedTableModel") {
     });
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{2, 3, 4, 5, 6, 9});
   }
+
+  TEST_CASE("source_move") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({3});
+    source->push({1});
+    source->push({2});
+    auto sorted_model = SortedTableModel(
+      source, {{0, SortedTableModel::Ordering::ASCENDING}}, test_comparator);
+    REQUIRE(column_span<int>(sorted_model, 0) == std::vector{1, 2, 3});
+    source->move(0, 2);
+    REQUIRE(column_span<int>(sorted_model, 0) == std::vector{1, 2, 3});
+  }
 }

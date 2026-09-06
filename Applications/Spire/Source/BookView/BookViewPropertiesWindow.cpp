@@ -10,6 +10,15 @@ using namespace Nexus;
 using namespace Spire;
 using namespace Spire::Styles;
 
+namespace {
+  auto make_action_button(const QString& label, auto slot) {
+    auto button = make_label_button(label);
+    button->setFixedWidth(scale_width(100));
+    button->connect_click_signal(std::move(slot));
+    return button;
+  }
+}
+
 BookViewPropertiesWindow::BookViewPropertiesWindow(
     std::shared_ptr<BookViewPropertiesModel> properties,
     std::shared_ptr<KeyBindingsModel> key_bindings,
@@ -41,20 +50,15 @@ BookViewPropertiesWindow::BookViewPropertiesWindow(
   interactions_page->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
   m_navigation_view->add_tab(*interactions_page, tr("Interactions"));
+  m_interactions_tab = m_navigation_view->get_count() - 1;
   auto actions_body = new QWidget();
   auto actions_body_layout = make_hbox_layout(actions_body);
   actions_body_layout->addStretch(1);
-  auto cancel_button = make_label_button(tr("Cancel"));
-  cancel_button->setFixedWidth(scale_width(100));
-  cancel_button->connect_click_signal(
-    std::bind_front(&BookViewPropertiesWindow::on_cancel_button_click, this));
-  actions_body_layout->addWidget(cancel_button);
+  actions_body_layout->addWidget(make_action_button(tr("Cancel"),
+    std::bind_front(&BookViewPropertiesWindow::on_cancel_button_click, this)));
   actions_body_layout->addSpacing(scale_width(8));
-  auto done_button = make_label_button(QObject::tr("Done"));
-  done_button->setFixedWidth(scale_width(100));
-  done_button->connect_click_signal(
-    std::bind_front(&BookViewPropertiesWindow::on_done_button_click, this));
-  actions_body_layout->addWidget(done_button);
+  actions_body_layout->addWidget(make_action_button(tr("Done"),
+    std::bind_front(&BookViewPropertiesWindow::on_done_button_click, this)));
   auto actions_box = new Box(actions_body);
   update_style(*actions_box, [] (auto& style) {
     style.get(Any()).
@@ -111,6 +115,5 @@ void BookViewPropertiesWindow::on_level_update(
 }
 
 void BookViewPropertiesWindow::on_ticker_update(const Ticker& ticker) {
-  m_navigation_view->set_enabled(
-    m_navigation_view->get_count() - 1, static_cast<bool>(ticker));
+  m_navigation_view->set_enabled(m_interactions_tab, static_cast<bool>(ticker));
 }
