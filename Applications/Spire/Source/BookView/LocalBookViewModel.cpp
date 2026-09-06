@@ -185,8 +185,10 @@ void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order,
       display_price = entry.m_effective_price;
     }
   }
-  user_orders.push(
-    UserOrder(fields.m_destination, display_price, quantity, status));
+  auto user_order =
+    UserOrder(fields.m_destination, display_price, quantity, status);
+  user_order.m_id = order.m_order->get_info().m_id;
+  user_orders.push(user_order);
 }
 
 void LocalBookViewModel::remove(const OrderLogModel::OrderEntry& order) {

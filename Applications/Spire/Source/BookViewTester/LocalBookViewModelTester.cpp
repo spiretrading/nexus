@@ -25,9 +25,14 @@ namespace {
     return make_bbo(parse_money("10.00"), parse_money("10.01"));
   }
 
-  auto make_order(const OrderFields& fields) {
-    auto info = OrderInfo(fields, 1, time_from_string("2025-08-14 09:00:00"));
+  auto make_order(const OrderFields& fields, OrderId id) {
+    auto info =
+      OrderInfo(fields, id, time_from_string("2025-08-14 09:00:00"));
     return std::make_shared<PrimitiveOrder>(info);
+  }
+
+  auto make_order(const OrderFields& fields) {
+    return make_order(fields, 1);
   }
 
   auto make_entry(std::shared_ptr<Order> order) {
@@ -142,6 +147,16 @@ TEST_SUITE("LocalBookViewModel") {
     REQUIRE(user_order.m_size == 100);
   }
 
+  TEST_CASE("order_id") {
+    auto model = LocalBookViewModel(TICKER);
+    auto fields =
+      make_limit_order_fields(TICKER, Side::BID, 100, parse_money("10.00"));
+    model.add(make_entry(make_order(fields, 7)));
+    model.add(make_entry(make_order(fields, 9)));
+    REQUIRE(model.get_bid_orders()->get(0).m_id == 7);
+    REQUIRE(model.get_bid_orders()->get(1).m_id == 9);
+  }
+
   TEST_CASE("remove_order") {
     auto model = LocalBookViewModel(TICKER);
     auto order = make_order(
@@ -234,11 +249,13 @@ TEST_SUITE("LocalBookViewModel") {
     auto model = LocalBookViewModel(TICKER);
     model.update(make_bbo(parse_money("9.99"), parse_money("10.01")));
     auto order = make_order(make_pegged_order_fields(TICKER,
-      Side::ASK, 100, parse_money("9.95"), Money::ZERO));
+      Side::ASK, 100, parse_money("9.95"), Money::ZERO), 3);
     model.add(make_entry(order));
     REQUIRE(model.get_ask_orders()->get(0).m_price == parse_money("10.01"));
+    REQUIRE(model.get_ask_orders()->get(0).m_id == 3);
     model.update(make_bbo(parse_money("9.80"), parse_money("9.90")));
     REQUIRE(model.get_ask_orders()->get(0).m_price == parse_money("9.95"));
+    REQUIRE(model.get_ask_orders()->get(0).m_id == 3);
   }
 
   TEST_CASE("pegged_order_with_peg_difference") {

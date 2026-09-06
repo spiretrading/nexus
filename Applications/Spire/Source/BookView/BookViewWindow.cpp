@@ -351,13 +351,27 @@ void BookViewWindow::remove_task_entry_panel() {
   setUpdatesEnabled(true);
 }
 
+std::vector<OrderId> BookViewWindow::find_order_ids(
+    const CurrentUserOrder& user_order) const {
+  auto ids = std::vector<OrderId>();
+  auto& orders = *pick(
+    user_order.m_side, m_model->get_ask_orders(), m_model->get_bid_orders());
+  for(auto i = 0; i != orders.get_size(); ++i) {
+    auto& order = orders.get(i);
+    if(order.m_price == user_order.m_user_order.m_price &&
+        order.m_destination == user_order.m_user_order.m_destination) {
+      ids.push_back(order.m_id);
+    }
+  }
+  return ids;
+}
+
 void BookViewWindow::cancel(const CurrentUserOrder& user_order,
     CancelKeyBindingsModel::Operation ask_operation,
     CancelKeyBindingsModel::Operation bid_operation) {
   m_cancel_operation_signal(
     pick(user_order.m_side, ask_operation, bid_operation),
-    m_ticker_view->get_current()->get(), CancelCriteria(
-      user_order.m_user_order.m_destination, user_order.m_user_order.m_price));
+    m_ticker_view->get_current()->get(), find_order_ids(user_order));
 }
 
 bool BookViewWindow::on_key_press(QWidget& target, const QKeyEvent& event) {

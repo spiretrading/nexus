@@ -1,5 +1,6 @@
 #ifndef SPIRE_BOOK_VIEW_WINDOW_HPP
 #define SPIRE_BOOK_VIEW_WINDOW_HPP
+#include <vector>
 #include <boost/optional/optional.hpp>
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/BookView/BookViewPropertiesWindowFactory.hpp"
@@ -33,26 +34,17 @@ namespace Spire {
       using SubmitTaskSignal =
         Signal<void (const std::shared_ptr<CanvasNode>& task)>;
 
-      /** Specifies the criteria to match when canceling tasks. */
-      struct CancelCriteria {
-
-        /** The destination to match. */
-        Nexus::Destination m_destination;
-
-        /** The price to match. */
-        Nexus::Money m_price;
-      };
-
       /**
        * Signals that a cancellation operation is emitted.
        * @param operation The cancellation operation.
        * @param ticker The ticker for which orders will be canceled.
-       * @param criteria The criteria of the tasks to cancel.
+       * @param ids The ids of the orders to cancel, or none to cancel every
+       *        order for the <i>ticker</i>.
        */
       using CancelOperationSignal = Signal<void (
         CancelKeyBindingsModel::Operation operation,
         const Nexus::Ticker& ticker,
-        const boost::optional<CancelCriteria>& criteria)>;
+        const boost::optional<std::vector<Nexus::OrderId>>& ids)>;
 
       /**
        * The type of function used to build a BookViewModel based on
@@ -145,6 +137,8 @@ namespace Spire {
       void display_interactions_panel();
       void display_task_entry_panel(const OrderTaskArguments& arguments);
       void remove_task_entry_panel();
+      std::vector<Nexus::OrderId> find_order_ids(
+        const CurrentUserOrder& user_order) const;
       void cancel(const CurrentUserOrder& user_order,
         CancelKeyBindingsModel::Operation ask_operation,
         CancelKeyBindingsModel::Operation bid_operation);

@@ -4,6 +4,7 @@
 #include "Nexus/Definitions/BboQuote.hpp"
 #include "Nexus/Definitions/BookQuote.hpp"
 #include "Nexus/Definitions/OrderStatus.hpp"
+#include "Nexus/OrderExecutionService/ExecutionReport.hpp"
 #include "Nexus/OrderExecutionService/OrderFields.hpp"
 #include "Nexus/TechnicalAnalysis/SessionTechnicals.hpp"
 #include "Spire/Spire/ListModel.hpp"
@@ -48,6 +49,9 @@ namespace Spire {
 
         /** The status of the user order. */
         Nexus::OrderStatus m_status;
+
+        /** The id of the order represented. */
+        Nexus::OrderId m_id;
 
         /** The status of the transition to highlight, or NONE for none. */
         Nexus::OrderStatus m_highlight = Nexus::OrderStatus::NONE;
