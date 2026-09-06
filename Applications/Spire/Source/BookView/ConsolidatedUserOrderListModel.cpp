@@ -29,9 +29,12 @@ namespace {
     return order.m_size != 0 && !is_terminal(order.m_status);
   }
 
-  bool is_transitioning(const UserOrder& order) {
-    return is_terminal(order.m_status) ||
-      order.m_status == OrderStatus::PARTIALLY_FILLED;
+  bool is_transitioning(const UserOrder& previous, const UserOrder& order) {
+    if(is_terminal(order.m_status)) {
+      return !is_terminal(previous.m_status);
+    }
+    return order.m_status == OrderStatus::PARTIALLY_FILLED &&
+      order.m_size < previous.m_size;
   }
 }
 
@@ -116,7 +119,7 @@ void ConsolidatedUserOrderListModel::withdraw(
   auto update = to_order(*i);
   update.m_size -= contribution->m_size;
   update.m_status = order.m_status;
-  if(!is_transitioning(order)) {
+  if(!is_transitioning(*contribution, order)) {
     if(update.m_size > 0 || update.m_transition != 0) {
       *i = update;
     } else {
@@ -140,7 +143,7 @@ void ConsolidatedUserOrderListModel::revise(int index, const UserOrder& order) {
   auto update = to_order(*i);
   update.m_size += order.m_size - contribution.m_size;
   update.m_status = order.m_status;
-  if(is_transitioning(order)) {
+  if(is_transitioning(contribution, order)) {
     start_transition(update, order.m_status);
   }
   m_contributions[index] = order;

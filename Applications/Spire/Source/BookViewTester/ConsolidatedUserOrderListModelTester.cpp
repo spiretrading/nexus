@@ -21,6 +21,12 @@ namespace {
     return source;
   }
 
+  void reprice(ArrayListModel<UserOrder>& source, int index, Money price) {
+    auto order = source.get(index);
+    order.m_price = price;
+    source.set(index, order);
+  }
+
   void transition(ArrayListModel<UserOrder>& source, int index,
       OrderStatus status, Quantity size) {
     auto order = source.get(index);
@@ -109,9 +115,7 @@ TEST_SUITE("ConsolidatedUserOrderListModel") {
       {make_order(Money::ONE, 100), make_order(Money::ONE, 200)});
     auto model = ConsolidatedUserOrderListModel(source);
     REQUIRE(model.get_size() == 1);
-    auto order = source->get(0);
-    order.m_price = 2 * Money::ONE;
-    source->set(0, order);
+    reprice(*source, 0, 2 * Money::ONE);
     REQUIRE(model.get_size() == 2);
     REQUIRE(model.get(0).m_price == Money::ONE);
     REQUIRE(model.get(0).m_size == 200);
@@ -145,6 +149,28 @@ TEST_SUITE("ConsolidatedUserOrderListModel") {
     auto second = model.get(0).m_transition;
     REQUIRE(second != 0);
     REQUIRE(second != first);
+  }
+
+  TEST_CASE("only_a_fill_stamps_a_fill_transition") {
+    auto source = make_source({make_order(Money::ONE, 100)});
+    auto model = ConsolidatedUserOrderListModel(source);
+    transition(*source, 0, OrderStatus::PARTIALLY_FILLED, 60);
+    auto fill = model.get(0).m_transition;
+    REQUIRE(fill != 0);
+    reprice(*source, 0, 2 * Money::ONE);
+    REQUIRE(model.get_size() == 2);
+    REQUIRE(model.get(0).m_price == Money::ONE);
+    REQUIRE(model.get(0).m_size == 0);
+    REQUIRE(model.get(0).m_transition == fill);
+    REQUIRE(model.get(1).m_price == 2 * Money::ONE);
+    REQUIRE(model.get(1).m_size == 60);
+    REQUIRE(model.get(1).m_transition == 0);
+    reprice(*source, 0, 3 * Money::ONE);
+    REQUIRE(model.get_size() == 2);
+    REQUIRE(model.get(1).m_price == 3 * Money::ONE);
+    REQUIRE(model.get(1).m_size == 60);
+    transition(*source, 0, OrderStatus::PARTIALLY_FILLED, 60);
+    REQUIRE(model.get(1).m_transition == 0);
   }
 
   TEST_CASE("cancel_of_one_contributor_stamps_the_level") {
