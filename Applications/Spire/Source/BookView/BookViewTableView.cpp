@@ -366,11 +366,12 @@ namespace {
 
   auto make_max_level_model(
       std::shared_ptr<BookViewPropertiesModel> properties) {
-    return make_transform_value_model(std::move(properties),
-      [] (const auto& properties) {
-        return std::max(static_cast<int>(
-          properties.m_level_properties.m_color_scheme.size()) - 1, 0);
-      });
+    return make_deduplicated_value_model(
+      make_transform_value_model(std::move(properties),
+        [] (const auto& properties) {
+          return std::max(static_cast<int>(
+            properties.m_level_properties.m_color_scheme.size()) - 1, 0);
+        }));
   }
 
   auto filter_by_side(

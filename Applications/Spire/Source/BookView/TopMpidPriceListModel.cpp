@@ -21,6 +21,14 @@ namespace {
     }
     return top;
   }
+
+  bool is_top_price_equivalent(
+      const BookQuote& previous, const BookQuote& value) {
+    return previous.m_is_primary_mpid == value.m_is_primary_mpid &&
+      previous.m_venue == value.m_venue &&
+      previous.m_quote.m_side == value.m_quote.m_side &&
+      previous.m_quote.m_price == value.m_quote.m_price;
+  }
 }
 
 TopMpidPriceListModel::TopMpidPriceListModel(
@@ -148,6 +156,10 @@ void TopMpidPriceListModel::on_operation(
       remove_quote(m_removed_quote);
     },
     [&] (const BookQuoteListModel::UpdateOperation& operation) {
+      if(is_top_price_equivalent(
+          operation.get_previous(), operation.get_value())) {
+        return;
+      }
       remove_quote(operation.get_previous());
       add_quote(operation.get_value());
     });
