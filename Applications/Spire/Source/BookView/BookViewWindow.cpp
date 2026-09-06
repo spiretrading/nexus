@@ -458,6 +458,9 @@ void BookViewWindow::on_current(const Ticker& ticker) {
   if(!ticker) {
     return;
   }
+  if(m_task_entry_panel) {
+    remove_task_entry_panel();
+  }
   setWindowTitle(to_text(ticker) + " " + EN_DASH + " " + TITLE_NAME);
   m_transition_view->set_status(TransitionView::Status::NONE);
   m_interactions = m_key_bindings->get_interactions_key_bindings(ticker);
