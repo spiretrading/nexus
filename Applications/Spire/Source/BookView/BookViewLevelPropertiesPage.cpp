@@ -202,6 +202,14 @@ namespace {
       interpolate(*m_band_colors, m_band_colors->get(0), m_end_color, levels);
     }
 
+    void flush() {
+      if(!m_timer->isActive()) {
+        return;
+      }
+      m_timer->stop();
+      on_timeout();
+    }
+
     void on_levels_update(optional<int> levels) {
       if(!levels || *levels < m_levels->get_minimum() ||
           *levels > m_levels->get_maximum()) {
@@ -224,6 +232,7 @@ namespace {
     }
 
     void on_type_update(FillType type) {
+      m_timer->stop();
       auto blocker = shared_connection_block(m_colors_connection);
       if(type == FillType::GRADIENT) {
         m_colors->transact([&] {
@@ -258,6 +267,9 @@ namespace {
     }
 
     void on_timeout() {
+      if(m_fill_type->get() != FillType::GRADIENT) {
+        return;
+      }
       update_gradient_colors(m_band_colors->get_size());
     }
 
@@ -627,6 +639,10 @@ BookViewLevelPropertiesPage::BookViewLevelPropertiesPage(
 const std::shared_ptr<LevelPropertiesModel>&
     BookViewLevelPropertiesPage::get_current() const {
   return m_current;
+}
+
+void BookViewLevelPropertiesPage::flush() {
+  m_price_level_widget->m_model->flush();
 }
 
 void BookViewLevelPropertiesPage::on_font(const QFont& font) {

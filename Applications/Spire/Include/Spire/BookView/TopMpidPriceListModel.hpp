@@ -1,5 +1,6 @@
 #ifndef SPIRE_TOP_MPID_PRICE_LIST_MODEL_HPP
 #define SPIRE_TOP_MPID_PRICE_LIST_MODEL_HPP
+#include <map>
 #include <unordered_map>
 #include <boost/optional/optional.hpp>
 #include "Spire/BookView/BookViewModel.hpp"
@@ -50,6 +51,8 @@ namespace Spire {
       std::shared_ptr<BookQuoteListModel> m_quotes;
       ArrayListModel<TopMpidPrice> m_top_prices;
       std::unordered_map<Nexus::Venue, int> m_indexes;
+      std::unordered_map<Nexus::Venue, std::map<Nexus::Money, int>>
+        m_prices;
       std::unordered_map<Nexus::Venue,
         std::shared_ptr<LocalValueModel<boost::optional<Nexus::Money>>>>
           m_top_price_models;
@@ -59,6 +62,7 @@ namespace Spire {
       boost::optional<int> find_index(Nexus::Venue venue) const;
       boost::optional<Nexus::Money> find_price(Nexus::Venue venue) const;
       void update_top_price_model(Nexus::Venue venue);
+      void update_top_price(Nexus::Venue venue, Nexus::Side side);
       void add_quote(const Nexus::BookQuote& quote);
       void remove_quote(const Nexus::BookQuote& quote);
       void on_operation(const BookQuoteListModel::Operation& operation);

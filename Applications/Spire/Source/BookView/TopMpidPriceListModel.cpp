@@ -7,21 +7,6 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  optional<Money> find_top_price(
-      const BookQuoteListModel& quotes, Venue venue) {
-    auto top = optional<Money>();
-    for(auto i = 0; i != quotes.get_size(); ++i) {
-      auto& quote = quotes.get(i);
-      if(quote.m_is_primary_mpid && quote.m_venue == venue) {
-        auto direction = get_direction(quote.m_quote.m_side);
-        if(!top || direction * quote.m_quote.m_price > direction * *top) {
-          top = quote.m_quote.m_price;
-        }
-      }
-    }
-    return top;
-  }
-
   bool is_top_price_equivalent(
       const BookQuote& previous, const BookQuote& value) {
     return previous.m_is_primary_mpid == value.m_is_primary_mpid &&
@@ -97,41 +82,13 @@ void TopMpidPriceListModel::update_top_price_model(Venue venue) {
   }
 }
 
-void TopMpidPriceListModel::add_quote(const BookQuote& quote) {
-  if(!quote.m_is_primary_mpid) {
-    return;
-  }
-  auto venue_index = find_index(quote.m_venue);
-  if(!venue_index) {
-    m_indexes[quote.m_venue] = m_top_prices.get_size();
-    m_top_prices.push(TopMpidPrice(quote.m_venue, quote.m_quote.m_price));
-    update_top_price_model(quote.m_venue);
-    return;
-  }
-  auto& top_mpid = m_top_prices.get(*venue_index);
-  auto direction = get_direction(quote.m_quote.m_side);
-  if(direction * quote.m_quote.m_price > direction * top_mpid.m_price) {
-    m_top_prices.set(
-      *venue_index, TopMpidPrice(quote.m_venue, quote.m_quote.m_price));
-    update_top_price_model(quote.m_venue);
-  }
-}
-
-void TopMpidPriceListModel::remove_quote(const BookQuote& quote) {
-  if(!quote.m_is_primary_mpid) {
-    return;
-  }
-  auto venue_index = find_index(quote.m_venue);
-  if(!venue_index) {
-    return;
-  }
-  auto venue = m_top_prices.get(*venue_index).m_venue;
-  if(m_top_prices.get(*venue_index).m_price != quote.m_quote.m_price) {
-    return;
-  }
-  if(auto top = find_top_price(*m_quotes, venue)) {
-    m_top_prices.set(*venue_index, TopMpidPrice(venue, *top));
-  } else {
+void TopMpidPriceListModel::update_top_price(Venue venue, Side side) {
+  auto prices = m_prices.find(venue);
+  auto venue_index = find_index(venue);
+  if(prices == m_prices.end()) {
+    if(!venue_index) {
+      return;
+    }
     m_indexes.erase(venue);
     for(auto& entry : m_indexes) {
       if(entry.second > *venue_index) {
@@ -139,8 +96,49 @@ void TopMpidPriceListModel::remove_quote(const BookQuote& quote) {
       }
     }
     m_top_prices.remove(*venue_index);
+  } else {
+    auto top =
+      pick(side, prices->second.begin()->first, prices->second.rbegin()->first);
+    if(!venue_index) {
+      m_indexes[venue] = m_top_prices.get_size();
+      m_top_prices.push(TopMpidPrice(venue, top));
+    } else if(m_top_prices.get(*venue_index).m_price != top) {
+      m_top_prices.set(*venue_index, TopMpidPrice(venue, top));
+    } else {
+      return;
+    }
   }
   update_top_price_model(venue);
+}
+
+void TopMpidPriceListModel::add_quote(const BookQuote& quote) {
+  if(!quote.m_is_primary_mpid) {
+    return;
+  }
+  ++m_prices[quote.m_venue][quote.m_quote.m_price];
+  update_top_price(quote.m_venue, quote.m_quote.m_side);
+}
+
+void TopMpidPriceListModel::remove_quote(const BookQuote& quote) {
+  if(!quote.m_is_primary_mpid) {
+    return;
+  }
+  auto prices = m_prices.find(quote.m_venue);
+  if(prices == m_prices.end()) {
+    return;
+  }
+  auto price = prices->second.find(quote.m_quote.m_price);
+  if(price == prices->second.end()) {
+    return;
+  }
+  --price->second;
+  if(price->second == 0) {
+    prices->second.erase(price);
+    if(prices->second.empty()) {
+      m_prices.erase(prices);
+    }
+  }
+  update_top_price(quote.m_venue, quote.m_quote.m_side);
 }
 
 void TopMpidPriceListModel::on_operation(
