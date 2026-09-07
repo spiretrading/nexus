@@ -28,6 +28,9 @@ namespace Spire {
       /** Returns the current properties. */
       const std::shared_ptr<LevelPropertiesModel>& get_current() const;
 
+      /** Applies all pending edits. */
+      void flush();
+
     private:
       struct PriceLevelWidget;
       std::shared_ptr<LevelPropertiesModel> m_current;

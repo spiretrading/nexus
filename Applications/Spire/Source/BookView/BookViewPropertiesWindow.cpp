@@ -33,12 +33,12 @@ BookViewPropertiesWindow::BookViewPropertiesWindow(
   m_navigation_view = new NavigationView();
   m_navigation_view->setSizePolicy(
     QSizePolicy::Expanding, QSizePolicy::Expanding);
-  auto levels_page = new BookViewLevelPropertiesPage(make_field_value_model(
+  m_levels_page = new BookViewLevelPropertiesPage(make_field_value_model(
     m_properties, &BookViewProperties::m_level_properties));
-  levels_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  m_level_connection = levels_page->get_current()->connect_update_signal(
+  m_levels_page->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
+  m_level_connection = m_levels_page->get_current()->connect_update_signal(
     std::bind_front(&BookViewPropertiesWindow::on_level_update, this));
-  m_navigation_view->add_tab(*levels_page, tr("Levels"));
+  m_navigation_view->add_tab(*m_levels_page, tr("Levels"));
   m_highlights_page = new BookViewHighlightPropertiesPage(
     make_field_value_model(
       m_properties, &BookViewProperties::m_highlight_properties));
@@ -88,6 +88,7 @@ connection BookViewPropertiesWindow::connect_cancel_signal(
 }
 
 void BookViewPropertiesWindow::closeEvent(QCloseEvent* event) {
+  m_levels_page->flush();
   if(m_is_submitted) {
     m_submit_signal();
   } else {

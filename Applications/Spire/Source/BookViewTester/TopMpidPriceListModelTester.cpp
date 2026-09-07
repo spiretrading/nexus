@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
 #include "Spire/BookView/TopMpidPriceListModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -9,9 +10,13 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
-  auto make_book_quote(Venue venue, Money price) {
+  auto make_book_quote(Venue venue, Money price, Side side) {
     return BookQuote(venue.get_code().get_data(), true, venue,
-      Quote(price, 100, Side::BID), time_from_string("2016-07-31 19:00:00"));
+      Quote(price, 100, side), time_from_string("2016-07-31 19:00:00"));
+  }
+
+  auto make_book_quote(Venue venue, Money price) {
+    return make_book_quote(venue, price, Side::BID);
   }
 
   bool has_venue(const ListModel<TopMpidPrice>& list, Venue venue) {
@@ -85,6 +90,33 @@ TEST_SUITE("TopMpidPriceListModel") {
     quotes->push(make_book_quote(Venues::TSX, Money(200)));
     quotes->push(make_book_quote(Venues::TSX, Money(100)));
     REQUIRE(top_prices.get(0).m_price == Money(200));
+    quotes->remove(1);
+    REQUIRE(top_prices.get_size() == 1);
+    REQUIRE(top_prices.get(0).m_price == Money(200));
+  }
+
+  TEST_CASE("rerank_top_quote_preserves_the_top_price") {
+    auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
+    auto top_prices = TopMpidPriceListModel(quotes);
+    quotes->push(make_book_quote(Venues::TSX, Money(200)));
+    quotes->push(make_book_quote(Venues::TSX, Money(100)));
+    auto top = top_prices.get_top_price(Venues::TSX);
+    REQUIRE(top->get() == Money(200));
+    auto quote = quotes->get(0);
+    quote.m_quote.m_size = 500;
+    quotes->remove(0);
+    quotes->insert(quote, 1);
+    REQUIRE(top_prices.get_size() == 1);
+    REQUIRE(top_prices.get(0).m_price == Money(200));
+    REQUIRE(top->get() == Money(200));
+  }
+
+  TEST_CASE("ask_top_is_the_lowest_price") {
+    auto quotes = std::make_shared<ArrayListModel<BookQuote>>();
+    auto top_prices = TopMpidPriceListModel(quotes);
+    quotes->push(make_book_quote(Venues::TSX, Money(200), Side::ASK));
+    quotes->push(make_book_quote(Venues::TSX, Money(100), Side::ASK));
+    REQUIRE(top_prices.get(0).m_price == Money(100));
     quotes->remove(1);
     REQUIRE(top_prices.get_size() == 1);
     REQUIRE(top_prices.get(0).m_price == Money(200));
