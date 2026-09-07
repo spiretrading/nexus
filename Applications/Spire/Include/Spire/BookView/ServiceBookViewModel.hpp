@@ -1,6 +1,6 @@
 #ifndef SPIRE_SERVICE_BOOK_VIEW_MODEL_HPP
 #define SPIRE_SERVICE_BOOK_VIEW_MODEL_HPP
-#include <unordered_set>
+#include <unordered_map>
 #include <vector>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Spire/Async/EventHandler.hpp"
@@ -40,7 +40,7 @@ namespace Spire {
       Nexus::Ticker m_ticker;
       BlotterSettings* m_blotter;
       Nexus::MarketDataClient m_market_data_client;
-      std::unordered_set<Nexus::OrderId> m_monitored_orders;
+      std::unordered_map<Nexus::OrderId, int> m_order_sequences;
       LocalBookViewModel m_model;
       std::vector<Nexus::BookQuote> m_buffered_book_quotes;
       EventHandler m_event_handler;

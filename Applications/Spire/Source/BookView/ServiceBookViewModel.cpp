@@ -98,14 +98,18 @@ optional<std::vector<ExecutionReport>> ServiceBookViewModel::monitor(
     const OrderLogModel::OrderEntry& order) {
   auto& publisher = order.m_order->get_publisher();
   auto id = order.m_order->get_info().m_id;
-  if(m_monitored_orders.contains(id)) {
-    return publisher.get_snapshot();
-  }
+  auto [sequence, is_inserted] = m_order_sequences.try_emplace(id, -1);
   auto reports = optional<std::vector<ExecutionReport>>();
-  publisher.monitor(m_order_event_handler->get_slot<ExecutionReport>(
-    std::bind_front(&ServiceBookViewModel::on_execution_report, this)),
-    out(reports));
-  m_monitored_orders.insert(id);
+  if(is_inserted) {
+    publisher.monitor(m_order_event_handler->get_slot<ExecutionReport>(
+      std::bind_front(&ServiceBookViewModel::on_execution_report, this)),
+      out(reports));
+  } else {
+    reports = publisher.get_snapshot();
+  }
+  if(reports && !reports->empty()) {
+    sequence->second = reports->back().m_sequence;
+  }
   return reports;
 }
 
@@ -186,6 +190,12 @@ void ServiceBookViewModel::on_time_and_sales(const TimeAndSale& time_and_sale) {
 }
 
 void ServiceBookViewModel::on_execution_report(const ExecutionReport& report) {
+  auto sequence = m_order_sequences.find(report.m_id);
+  if(sequence == m_order_sequences.end() ||
+      report.m_sequence <= sequence->second) {
+    return;
+  }
+  sequence->second = report.m_sequence;
   m_model.update(report);
 }
 
@@ -205,7 +215,7 @@ void ServiceBookViewModel::on_order_removed(
 void ServiceBookViewModel::on_active_blotter(BlotterModel& blotter) {
   m_order_event_handler.reset();
   m_order_event_handler.emplace();
-  m_monitored_orders.clear();
+  m_order_sequences.clear();
   auto& orders = blotter.GetOrderLogModel();
   m_model.transact([&] {
     m_model.clear_orders();
