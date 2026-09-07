@@ -49,7 +49,7 @@ namespace Nexus {
     { client.load_snapshot(std::declval<const Ticker&>()) } ->
         std::same_as<TickerSnapshot>;
     { client.load_session_technicals(std::declval<const Ticker&>()) } ->
-        std::same_as<SessionTechnicals>;
+        std::same_as<SequencedSessionTechnicals>;
     { client.load_ticker_info_from_prefix(
         std::declval<const std::string&>()) } ->
           std::same_as<std::vector<TickerInfo>>;
@@ -178,7 +178,7 @@ namespace Nexus {
        * @param ticker The Ticker whose session candlestick is to be loaded.
        * @return The SessionTechnicals for the specified <i>ticker</i>.
        */
-      SessionTechnicals load_session_technicals(const Ticker& ticker);
+      SequencedSessionTechnicals load_session_technicals(const Ticker& ticker);
 
       /**
        * Loads TickerInfo objects that match a prefix.
@@ -216,7 +216,7 @@ namespace Nexus {
           Beam::ScopedQueueWriter<TickerStatus> queue) = 0;
         virtual std::vector<TickerInfo> query(const TickerInfoQuery& query) = 0;
         virtual TickerSnapshot load_snapshot(const Ticker& ticker) = 0;
-        virtual SessionTechnicals load_session_technicals(
+        virtual SequencedSessionTechnicals load_session_technicals(
           const Ticker& ticker) = 0;
         virtual std::vector<TickerInfo> load_ticker_info_from_prefix(
           const std::string& prefix) = 0;
@@ -252,7 +252,7 @@ namespace Nexus {
           Beam::ScopedQueueWriter<TickerStatus> queue) override;
         std::vector<TickerInfo> query(const TickerInfoQuery& query) override;
         TickerSnapshot load_snapshot(const Ticker& ticker) override;
-        SessionTechnicals load_session_technicals(
+        SequencedSessionTechnicals load_session_technicals(
           const Ticker& ticker) override;
         std::vector<TickerInfo> load_ticker_info_from_prefix(
           const std::string& prefix) override;
@@ -429,8 +429,8 @@ namespace Nexus {
     return m_client->load_snapshot(ticker);
   }
 
-  inline SessionTechnicals MarketDataClient::load_session_technicals(
-      const Ticker& ticker) {
+  inline SequencedSessionTechnicals
+      MarketDataClient::load_session_technicals(const Ticker& ticker) {
     return m_client->load_session_technicals(ticker);
   }
 
@@ -527,7 +527,7 @@ namespace Nexus {
   }
 
   template<typename C>
-  SessionTechnicals MarketDataClient::WrappedMarketDataClient<C>::
+  SequencedSessionTechnicals MarketDataClient::WrappedMarketDataClient<C>::
       load_session_technicals(const Ticker& ticker) {
     return m_client->load_session_technicals(ticker);
   }

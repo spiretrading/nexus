@@ -14,7 +14,7 @@
 
 namespace Spire {
 
-  /** 
+  /**
    * Stores the legacy window settings for a BookViewWindow. Provided for
    * backward compatibility with Spire Classic.
    */
@@ -86,9 +86,9 @@ namespace Spire {
 
       std::string GetName() const override;
 
-      QWidget* Reopen(Beam::Ref<UserProfile> userProfile) const override;
+      QWidget* Reopen(Beam::Ref<UserProfile> user_profile) const override;
 
-      void Apply(Beam::Ref<UserProfile> userProfile,
+      void Apply(Beam::Ref<UserProfile> user_profile,
         Beam::Out<QWidget> widget) const override;
 
     private:

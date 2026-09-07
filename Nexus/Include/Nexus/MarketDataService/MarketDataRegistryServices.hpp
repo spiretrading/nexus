@@ -86,8 +86,8 @@ namespace Nexus {
      * @return The SessionTechnicals for the specified <i>ticker</i>.
      */
     (LoadSessionTechnicalsService,
-      "Nexus.MarketDataService.LoadSessionTechnicalsService", SessionTechnicals,
-      (Ticker, ticker)),
+      "Nexus.MarketDataService.LoadSessionTechnicalsService",
+      SequencedSessionTechnicals, (Ticker, ticker)),
 
     /**
      * Queries for all TickerInfo objects that are within a scope.

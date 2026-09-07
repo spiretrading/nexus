@@ -1,5 +1,6 @@
 #ifndef SPIRE_BOOK_VIEW_WINDOW_HPP
 #define SPIRE_BOOK_VIEW_WINDOW_HPP
+#include <vector>
 #include <boost/optional/optional.hpp>
 #include "Spire/BookView/BookViewModel.hpp"
 #include "Spire/BookView/BookViewPropertiesWindowFactory.hpp"
@@ -18,7 +19,7 @@
 
 namespace Spire {
   class BookDepth;
-  class CurrentUserOrder;
+  struct CurrentUserOrder;
   class TickerView;
   class TransitionView;
 
@@ -33,26 +34,17 @@ namespace Spire {
       using SubmitTaskSignal =
         Signal<void (const std::shared_ptr<CanvasNode>& task)>;
 
-      /** Specifies the criteria to match when canceling tasks. */
-      struct CancelCriteria {
-
-        /** The destination to match. */
-        Nexus::Destination m_destination;
-
-        /** The price to match. */
-        Nexus::Money m_price;
-      };
-
       /**
        * Signals that a cancellation operation is emitted.
        * @param operation The cancellation operation.
        * @param ticker The ticker for which orders will be canceled.
-       * @param criteria The criteria of the tasks to cancel.
+       * @param ids The ids of the orders to cancel, or none to cancel every
+       *        order for the <i>ticker</i>.
        */
       using CancelOperationSignal = Signal<void (
         CancelKeyBindingsModel::Operation operation,
         const Nexus::Ticker& ticker,
-        const boost::optional<CancelCriteria>& criteria)>;
+        const boost::optional<std::vector<Nexus::OrderId>>& ids)>;
 
       /**
        * The type of function used to build a BookViewModel based on
@@ -130,6 +122,8 @@ namespace Spire {
       BookDepth* m_book_depth;
       TransitionView* m_transition_view;
       boost::optional<KeyObserver> m_page_key_observer;
+      boost::signals2::scoped_connection m_current_connection;
+      boost::signals2::scoped_connection m_key_press_connection;
       TickerView* m_ticker_view;
       CondensedCanvasWidget* m_task_entry_panel;
       bool m_is_task_entry_panel_for_interactions;
@@ -137,9 +131,15 @@ namespace Spire {
       boost::signals2::scoped_connection m_ask_order_connection;
 
       std::unique_ptr<CanvasNode> make_task_node(const CanvasNode& node);
+      void reset_key_observer();
       void display_interactions_panel();
       void display_task_entry_panel(const OrderTaskArguments& arguments);
       void remove_task_entry_panel();
+      std::vector<Nexus::OrderId> find_order_ids(
+        const CurrentUserOrder& user_order) const;
+      void cancel(const CurrentUserOrder& user_order,
+        CancelKeyBindingsModel::Operation ask_operation,
+        CancelKeyBindingsModel::Operation bid_operation);
       bool on_key_press(QWidget& target, const QKeyEvent& event);
       void on_context_menu(const QPoint& pos);
       void on_task_entry_key_press(const QKeyEvent& event);

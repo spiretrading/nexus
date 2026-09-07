@@ -62,15 +62,14 @@ namespace {
 }
 
 FontBox::FontBox(QWidget* parent)
-  : FontBox(std::make_shared<LocalValueModel<QFont>>(QFont())) {}
+  : FontBox(make_local_value_model(QFont())) {}
 
 FontBox::FontBox(std::shared_ptr<ValueModel<QFont>> current, QWidget* parent)
     : QWidget(parent),
       m_current(std::move(current)) {
   m_font_family_box = make_font_family_box(m_current->get().family());
   m_font_style_box = make_font_style_box(m_font_family_box->get_current(),
-    std::make_shared<LocalValueModel<QString>>(
-      QFontDatabase().styleString(m_current->get())));
+    make_local_value_model(QFontDatabase().styleString(m_current->get())));
   auto size_model = std::make_shared<LocalScalarValueModel<optional<int>>>();
   size_model->set_minimum(1);
   auto font_size = [&] {

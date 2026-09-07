@@ -131,7 +131,7 @@ namespace Nexus {
         Subscriptions& subscriptions);
       TickerSnapshot on_load_ticker_snapshot(
         ServiceProtocolClient& client, const Ticker& ticker);
-      SessionTechnicals on_load_session_technicals(
+      SequencedSessionTechnicals on_load_session_technicals(
         ServiceProtocolClient& client, const Ticker& ticker);
       std::vector<TickerInfo> on_query_ticker_info(
         ServiceProtocolClient& client, const TickerInfoQuery& query);
@@ -455,8 +455,9 @@ namespace Nexus {
   template<typename C, typename M, typename A> requires
     IsMarketDataClient<Beam::dereference_t<M>> &&
       IsAdministrationClient<Beam::dereference_t<A>>
-  SessionTechnicals MarketDataRelayServlet<C, M, A>::on_load_session_technicals(
-      ServiceProtocolClient& client, const Ticker& ticker) {
+  SequencedSessionTechnicals
+      MarketDataRelayServlet<C, M, A>::on_load_session_technicals(
+        ServiceProtocolClient& client, const Ticker& ticker) {
     auto market_data_client = m_market_data_clients.load();
     return market_data_client->load_session_technicals(ticker);
   }

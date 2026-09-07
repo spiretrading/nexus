@@ -49,14 +49,14 @@ namespace Spire {
       /** Updates from an execution report. */
       void update(const Nexus::ExecutionReport& report);
 
-      /** Removes all orders and pegged entries. */
+      /** Removes all orders. */
       void clear_orders();
 
       /** Removes all book quotes. */
       void clear_book_quotes();
 
       /** Performs a transaction. */
-      void transact(const std::function<void ()>& f);
+      void transact(const std::function<void ()>& transaction);
 
       const std::shared_ptr<BookQuoteListModel>& get_bids() const override;
       const std::shared_ptr<BookQuoteListModel>& get_asks() const override;
@@ -75,6 +75,7 @@ namespace Spire {
         std::string m_exec_inst;
         Nexus::Money m_peg_difference;
         Nexus::Money m_effective_price;
+        bool m_is_initialized;
       };
       AggregateBookViewModel m_model;
       std::string m_market_center;

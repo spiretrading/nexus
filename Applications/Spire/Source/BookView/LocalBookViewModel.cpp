@@ -1,6 +1,8 @@
 #include "Spire/BookView/LocalBookViewModel.hpp"
+#include <algorithm>
 #include <ranges>
 #include <sstream>
+#include <boost/iterator/counting_iterator.hpp>
 #include "Nexus/Definitions/FixTags.hpp"
 #include "Nexus/Definitions/StandardVenues.hpp"
 #include "Nexus/TechnicalAnalysis/SessionTechnicals.hpp"
@@ -11,16 +13,87 @@ using namespace boost;
 using namespace Nexus;
 using namespace Spire;
 
+namespace {
+  Money compute_peg_price(
+      const std::string& exec_inst, const BboQuote& bbo, Side side) {
+    auto [same_price, opposite_price] = pick(side,
+      std::pair(bbo.m_ask.m_price, bbo.m_bid.m_price),
+      std::pair(bbo.m_bid.m_price, bbo.m_ask.m_price));
+    if(exec_inst == MARKET_PEG) {
+      return opposite_price;
+    } else if(exec_inst == MID_PRICE_PEG) {
+      return (same_price + opposite_price) / 2;
+    }
+    return same_price;
+  }
+
+  bool is_displayed(const OrderFields& fields) {
+    return fields.m_type == OrderType::LIMIT ||
+      fields.m_type == OrderType::PEGGED;
+  }
+
+  auto make_book_quotes() {
+    return std::make_shared<ReversedListModel<BookQuote>>(
+      std::make_shared<ArrayListModel<BookQuote>>());
+  }
+
+  template<typename T>
+  optional<T> find_tag_value(const OrderFields& fields, int key) {
+    if(auto tag = find_field(fields, key)) {
+      if(auto value = get<T>(&tag->get_value())) {
+        return *value;
+      }
+    }
+    return none;
+  }
+
+  Money clamp_to_limit(Money price, Money limit, Side side) {
+    auto direction = get_direction(side);
+    if(limit != Money::ZERO && direction * price > direction * limit) {
+      return limit;
+    }
+    return price;
+  }
+
+  void reorder(BookQuoteListModel& quotes, int existing_index,
+      int insert_index, const BookQuote& quote) {
+    if(insert_index > existing_index) {
+      --insert_index;
+    }
+    if(insert_index == existing_index) {
+      quotes.set(existing_index, quote);
+      return;
+    }
+    quotes.remove(existing_index);
+    quotes.insert(quote, insert_index);
+  }
+
+  int find_partition_point(const BookQuoteListModel& quotes, auto is_before) {
+    auto size = quotes.get_size();
+    if(size == 0 || !is_before(quotes.get(0))) {
+      return 0;
+    }
+    auto lower = 0;
+    auto upper = 1;
+    while(upper < size && is_before(quotes.get(upper))) {
+      lower = upper;
+      upper *= 2;
+    }
+    upper = std::min(upper, size);
+    return *std::partition_point(make_counting_iterator(lower + 1),
+      make_counting_iterator(upper), [&] (auto index) {
+        return is_before(quotes.get(index));
+      });
+  }
+}
+
 LocalBookViewModel::LocalBookViewModel(Ticker ticker)
-  : m_model(std::make_shared<ReversedListModel<BookQuote>>(
-      std::make_shared<ArrayListModel<BookQuote>>()),
-      std::make_shared<ReversedListModel<BookQuote>>(
-        std::make_shared<ArrayListModel<BookQuote>>()),
-      std::make_shared<ArrayListModel<UserOrder>>(),
-      std::make_shared<ArrayListModel<UserOrder>>(),
-      std::make_shared<LocalValueModel<optional<OrderFields>>>(),
-      std::make_shared<LocalBboQuoteModel>(),
-      std::make_shared<LocalSessionTechnicalsModel>()) {
+    : m_model(make_book_quotes(), make_book_quotes(),
+        std::make_shared<ArrayListModel<UserOrder>>(),
+        std::make_shared<ArrayListModel<UserOrder>>(),
+        std::make_shared<LocalValueModel<optional<OrderFields>>>(),
+        std::make_shared<LocalBboQuoteModel>(),
+        std::make_shared<LocalSessionTechnicalsModel>()) {
   if(ticker) {
     m_market_center = VENUES.from(ticker.get_venue()).m_market_center;
     if(m_market_center.empty()) {
@@ -36,66 +109,51 @@ void LocalBookViewModel::update(const BboQuote& bbo) {
 
 void LocalBookViewModel::update(const BookQuote& quote) {
   auto direction = get_direction(quote.m_quote.m_side);
-  auto quotes =
+  auto& quotes =
     pick(quote.m_quote.m_side, m_model.get_asks(), m_model.get_bids());
-  auto lower_bound = [&] {
-    for(auto i = quotes->begin(); i != quotes->end(); ++i) {
-      if(direction * i->m_quote.m_price <= direction * quote.m_quote.m_price) {
-        return i;
-      }
+  auto price_start = std::next(
+    quotes->begin(), find_partition_point(*quotes, [&] (const auto& entry) {
+      return direction * entry.m_quote.m_price >
+        direction * quote.m_quote.m_price;
+    }));
+  auto find_insert_position = [&] {
+    auto i = price_start;
+    while(i != quotes->end() && i->m_quote.m_price == quote.m_quote.m_price &&
+        std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
+          std::tie(i->m_quote.m_size, i->m_timestamp, i->m_mpid)) {
+      ++i;
     }
-    return quotes->end();
-  }();
-  auto existing_iterator = lower_bound;
-  while(existing_iterator != quotes->end() &&
-      existing_iterator->m_quote.m_price == quote.m_quote.m_price &&
-      existing_iterator->m_mpid != quote.m_mpid) {
-    ++existing_iterator;
-  }
+    return i;
+  };
+  auto find_existing_position = [&] {
+    auto i = price_start;
+    while(i != quotes->end() && i->m_quote.m_price == quote.m_quote.m_price &&
+        i->m_mpid != quote.m_mpid) {
+      ++i;
+    }
+    return i;
+  };
+  auto existing_iterator = find_existing_position();
   if(existing_iterator == quotes->end() ||
       existing_iterator->m_quote.m_price != quote.m_quote.m_price) {
     if(quote.m_quote.m_size != 0) {
-      auto insert_iterator = lower_bound;
-      while(insert_iterator != quotes->end() &&
-          insert_iterator->m_quote.m_price == quote.m_quote.m_price &&
-            std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
-              std::tie(insert_iterator->m_quote.m_size,
-                insert_iterator->m_timestamp, insert_iterator->m_mpid)) {
-        ++insert_iterator;
-      }
-      quotes->insert(quote, insert_iterator);
+      quotes->insert(quote, find_insert_position());
     }
     return;
   }
   if(quote.m_quote.m_size == 0) {
     quotes->remove(existing_iterator);
-  } else {
-    auto insert_iterator = lower_bound;
-    while(insert_iterator != quotes->end() &&
-        insert_iterator->m_quote.m_price == quote.m_quote.m_price &&
-          std::tie(quote.m_quote.m_size, quote.m_timestamp, quote.m_mpid) <
-            std::tie(insert_iterator->m_quote.m_size,
-              insert_iterator->m_timestamp, insert_iterator->m_mpid)) {
-      ++insert_iterator;
-    }
-    if(insert_iterator == existing_iterator) {
-      *insert_iterator = quote;
-    } else {
-      auto existing_index =
-        std::ranges::distance(quotes->begin(), existing_iterator);
-      auto insert_index =
-        std::ranges::distance(quotes->begin(), insert_iterator);
-      if(insert_index > existing_index) {
-        --insert_index;
-        if(insert_index == existing_index) {
-          *existing_iterator = quote;
-          return;
-        }
-      }
-      quotes->remove(existing_index);
-      quotes->insert(quote, insert_index);
-    }
+    return;
   }
+  auto insert_iterator = find_insert_position();
+  if(insert_iterator == existing_iterator) {
+    *insert_iterator = quote;
+    return;
+  }
+  reorder(*quotes,
+    static_cast<int>(std::ranges::distance(quotes->begin(), existing_iterator)),
+    static_cast<int>(std::ranges::distance(quotes->begin(), insert_iterator)),
+    quote);
 }
 
 void LocalBookViewModel::update(const TimeAndSale& time_and_sale) {
@@ -112,7 +170,7 @@ void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order) {
 void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order,
     Quantity quantity, OrderStatus status) {
   auto& fields = order.m_order->get_info().m_fields;
-  if(fields.m_type != OrderType::LIMIT && fields.m_type != OrderType::PEGGED) {
+  if(!is_displayed(fields)) {
     return;
   }
   auto& orders = pick(fields.m_side, m_ask_orders, m_bid_orders);
@@ -122,16 +180,20 @@ void LocalBookViewModel::add(const OrderLogModel::OrderEntry& order,
   auto display_price = fields.m_price;
   if(fields.m_type == OrderType::PEGGED) {
     submit_pegged(*order.m_order);
-    display_price =
-      m_pegged_entries[order.m_order->get_info().m_id].m_effective_price;
+    auto& entry = m_pegged_entries[order.m_order->get_info().m_id];
+    if(entry.m_is_initialized) {
+      display_price = entry.m_effective_price;
+    }
   }
-  user_orders.push(
-    UserOrder(fields.m_destination, display_price, quantity, status));
+  auto user_order =
+    UserOrder(fields.m_destination, display_price, quantity, status);
+  user_order.m_id = order.m_order->get_info().m_id;
+  user_orders.push(user_order);
 }
 
 void LocalBookViewModel::remove(const OrderLogModel::OrderEntry& order) {
   auto& fields = order.m_order->get_info().m_fields;
-  if(fields.m_type != OrderType::LIMIT && fields.m_type != OrderType::PEGGED) {
+  if(!is_displayed(fields)) {
     return;
   }
   auto& orders = pick(fields.m_side, m_ask_orders, m_bid_orders);
@@ -142,7 +204,6 @@ void LocalBookViewModel::remove(const OrderLogModel::OrderEntry& order) {
   auto index = static_cast<int>(std::ranges::distance(orders.begin(), i));
   auto& user_orders =
     *pick(fields.m_side, m_model.get_ask_orders(), m_model.get_bid_orders());
-  m_pegged_entries.erase(order.m_order->get_info().m_id);
   orders.erase(i);
   user_orders.remove(index);
 }
@@ -175,121 +236,32 @@ void LocalBookViewModel::update(const ExecutionReport& report) {
 }
 
 void LocalBookViewModel::clear_orders() {
-  Spire::clear(*m_model.get_bid_orders());
-  Spire::clear(*m_model.get_ask_orders());
+  clear(*m_model.get_bid_orders());
+  clear(*m_model.get_ask_orders());
   m_bid_orders.clear();
   m_ask_orders.clear();
-  m_pegged_entries.clear();
 }
 
 void LocalBookViewModel::clear_book_quotes() {
   auto clear_side = [&] (auto& quotes) {
-    auto cleared = std::vector(quotes.begin(), quotes.end());
-    for(auto& quote : cleared) {
-      if(!quote.m_mpid.empty()) {
-        auto cleared_quote = quote;
-        cleared_quote.m_quote.m_size = 0;
-        update(cleared_quote);
+    quotes.transact([&] {
+      for(auto i = quotes.get_size() - 1; i >= 0; --i) {
+        if(!quotes.get(i).m_mpid.empty()) {
+          quotes.remove(i);
+        }
       }
-    }
+    });
   };
   clear_side(*m_model.get_asks());
   clear_side(*m_model.get_bids());
 }
 
-void LocalBookViewModel::transact(const std::function<void ()>& f) {
+void LocalBookViewModel::transact(const std::function<void ()>& transaction) {
   m_model.get_asks()->transact([&] {
     m_model.get_bids()->transact([&] {
-      f();
+      transaction();
     });
   });
-}
-
-void LocalBookViewModel::submit_pegged(const Order& order) {
-  auto& fields = order.get_info().m_fields;
-  auto entry = PeggedOrderEntry();
-  entry.m_exec_inst = PRIMARY_PEG;
-  if(auto tag = find_field(fields, EXEC_INST_KEY)) {
-    if(auto* value = boost::get<std::string>(&tag->get_value())) {
-      auto stream = std::istringstream(*value);
-      auto token = std::string();
-      while(stream >> token) {
-        if(token == PRIMARY_PEG || token == MARKET_PEG ||
-            token == MID_PRICE_PEG) {
-          entry.m_exec_inst = token;
-          break;
-        }
-      }
-    }
-  }
-  entry.m_peg_difference = Money::ZERO;
-  if(auto tag = find_field(fields, PEG_DIFFERENCE_KEY)) {
-    if(auto* money = boost::get<Money>(&tag->get_value())) {
-      entry.m_peg_difference = *money;
-    }
-  }
-  auto direction = get_direction(fields.m_side);
-  auto& bbo = m_model.get_bbo_quote()->get();
-  auto [same_price, opposite_price] = pick(fields.m_side,
-    std::pair(bbo.m_ask.m_price, bbo.m_bid.m_price),
-    std::pair(bbo.m_bid.m_price, bbo.m_ask.m_price));
-  entry.m_effective_price = [&] {
-    if(entry.m_exec_inst == MARKET_PEG) {
-      return opposite_price;
-    } else if(entry.m_exec_inst == MID_PRICE_PEG) {
-      return (same_price + opposite_price) / 2;
-    }
-    return same_price;
-  }();
-  entry.m_effective_price -= direction * entry.m_peg_difference;
-  auto limit_price = fields.m_price;
-  if(limit_price != Money::ZERO &&
-      direction * entry.m_effective_price > direction * limit_price) {
-    entry.m_effective_price = limit_price;
-  }
-  m_pegged_entries[order.get_info().m_id] = entry;
-}
-
-void LocalBookViewModel::update_pegged_orders() {
-  auto& bbo = m_model.get_bbo_quote()->get();
-  auto update_side = [&] (auto& orders, auto& user_orders, Side side) {
-    auto direction = get_direction(side);
-    for(auto i = 0; i != static_cast<int>(orders.size()); ++i) {
-      auto& order = orders[i];
-      auto it = m_pegged_entries.find(order->get_info().m_id);
-      if(it == m_pegged_entries.end()) {
-        continue;
-      }
-      auto& entry = it->second;
-      auto [same_price, opposite_price] = pick(side,
-        std::pair(bbo.m_ask.m_price, bbo.m_bid.m_price),
-        std::pair(bbo.m_bid.m_price, bbo.m_ask.m_price));
-      auto candidate = [&] {
-        if(entry.m_exec_inst == MARKET_PEG) {
-          return opposite_price;
-        } else if(entry.m_exec_inst == MID_PRICE_PEG) {
-          return (same_price + opposite_price) / 2;
-        }
-        return same_price;
-      }();
-      candidate -= direction * entry.m_peg_difference;
-      if(direction * candidate > direction * entry.m_effective_price) {
-        entry.m_effective_price = candidate;
-      }
-      auto limit_price = order->get_info().m_fields.m_price;
-      if(limit_price != Money::ZERO &&
-          direction * entry.m_effective_price > direction * limit_price) {
-        entry.m_effective_price = limit_price;
-      }
-      auto user_order = user_orders.get(i);
-      if(user_order.m_price != entry.m_effective_price) {
-        user_order.m_price = entry.m_effective_price;
-        user_orders.set(i, user_order);
-      }
-    }
-  };
-  update_side(m_bid_orders, *m_model.get_bid_orders(), Side::BID);
-  update_side(m_ask_orders, *m_model.get_ask_orders(), Side::ASK);
 }
 
 const std::shared_ptr<BookQuoteListModel>&
@@ -325,4 +297,73 @@ const std::shared_ptr<BboQuoteModel>&
 const std::shared_ptr<SessionTechnicalsModel>&
     LocalBookViewModel::get_session_technicals() const {
   return m_model.get_session_technicals();
+}
+
+void LocalBookViewModel::submit_pegged(const Order& order) {
+  auto existing = m_pegged_entries.find(order.get_info().m_id);
+  if(existing != m_pegged_entries.end() && existing->second.m_is_initialized) {
+    return;
+  }
+  auto& fields = order.get_info().m_fields;
+  auto entry = PeggedOrderEntry();
+  entry.m_exec_inst = PRIMARY_PEG;
+  if(auto instruction = find_tag_value<std::string>(fields, EXEC_INST_KEY)) {
+    auto stream = std::istringstream(*instruction);
+    auto token = std::string();
+    while(stream >> token) {
+      if(token == PRIMARY_PEG || token == MARKET_PEG ||
+          token == MID_PRICE_PEG) {
+        entry.m_exec_inst = token;
+        break;
+      }
+    }
+  }
+  entry.m_peg_difference = Money::ZERO;
+  if(auto difference = find_tag_value<Money>(fields, PEG_DIFFERENCE_KEY)) {
+    entry.m_peg_difference = *difference;
+  }
+  auto direction = get_direction(fields.m_side);
+  auto price = compute_peg_price(
+    entry.m_exec_inst, m_model.get_bbo_quote()->get(), fields.m_side);
+  entry.m_is_initialized = price != Money::ZERO;
+  entry.m_effective_price = clamp_to_limit(
+    price - direction * entry.m_peg_difference, fields.m_price, fields.m_side);
+  m_pegged_entries[order.get_info().m_id] = entry;
+}
+
+void LocalBookViewModel::update_pegged_orders() {
+  if(m_pegged_entries.empty()) {
+    return;
+  }
+  auto& bbo = m_model.get_bbo_quote()->get();
+  auto update_side = [&] (auto& orders, auto& user_orders, Side side) {
+    auto direction = get_direction(side);
+    for(auto i = 0; i != static_cast<int>(orders.size()); ++i) {
+      auto& order = orders[i];
+      auto pegged = m_pegged_entries.find(order->get_info().m_id);
+      if(pegged == m_pegged_entries.end()) {
+        continue;
+      }
+      auto& entry = pegged->second;
+      auto price = compute_peg_price(entry.m_exec_inst, bbo, side);
+      if(price == Money::ZERO) {
+        continue;
+      }
+      auto candidate = price - direction * entry.m_peg_difference;
+      if(!entry.m_is_initialized ||
+          direction * candidate > direction * entry.m_effective_price) {
+        entry.m_effective_price = candidate;
+        entry.m_is_initialized = true;
+      }
+      entry.m_effective_price = clamp_to_limit(
+        entry.m_effective_price, order->get_info().m_fields.m_price, side);
+      auto user_order = user_orders.get(i);
+      if(user_order.m_price != entry.m_effective_price) {
+        user_order.m_price = entry.m_effective_price;
+        user_orders.set(i, user_order);
+      }
+    }
+  };
+  update_side(m_bid_orders, *m_model.get_bid_orders(), Side::BID);
+  update_side(m_ask_orders, *m_model.get_ask_orders(), Side::ASK);
 }

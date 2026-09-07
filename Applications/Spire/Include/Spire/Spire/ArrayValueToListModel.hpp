@@ -4,6 +4,7 @@
 #include <boost/signals2/shared_connection_block.hpp>
 #include "Spire/Spire/ListModel.hpp"
 #include "Spire/Spire/ListModelTransactionLog.hpp"
+#include "Spire/Spire/ValueModel.hpp"
 
 namespace Spire {
 
@@ -45,6 +46,10 @@ namespace Spire {
 
       void on_update(const std::vector<Type>& data);
   };
+
+  template<typename M>
+  ArrayValueToListModel(std::shared_ptr<M>) ->
+    ArrayValueToListModel<typename M::Type::value_type>;
 
   template<typename T>
   ArrayValueToListModel<T>::ArrayValueToListModel(
@@ -128,10 +133,18 @@ namespace Spire {
   void ArrayValueToListModel<T>::transact(
       const std::function<void()>& transaction) {
     m_is_transaction = true;
-    m_transaction.transact(transaction);
-    auto blocker = boost::signals2::shared_connection_block(m_connection);
-    m_source->set(m_data);
-    m_is_transaction = false;
+    auto end = [&] {
+      auto blocker = boost::signals2::shared_connection_block(m_connection);
+      m_source->set(m_data);
+      m_is_transaction = false;
+    };
+    try {
+      m_transaction.transact(transaction);
+    } catch(...) {
+      end();
+      throw;
+    }
+    end();
   }
 
   template<typename T>

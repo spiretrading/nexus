@@ -98,10 +98,10 @@ void BookViewPropertiesWindowFactory::revert_interactions() {
   }
   auto& current =
     m_key_bindings->get_interactions_key_bindings(m_ticker->get());
-  if(current && current->is_detached()) {
+  if(current) {
     if(m_are_interactions_detached) {
       copy_interactions(m_initial_interactions, *current);
-    } else {
+    } else if(current->is_detached()) {
       current->reset();
     }
   }

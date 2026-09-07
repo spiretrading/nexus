@@ -38,8 +38,8 @@ namespace Spire {
       Nexus::Money m_previous_price;
       TextBox* m_money_label;
       QHBoxLayout* m_body_layout;
-      QSpacerItem* m_gap1;
-      QSpacerItem* m_gap2;
+      QSpacerItem* m_leading_gap;
+      QSpacerItem* m_trailing_gap;
       int m_font_size;
       boost::signals2::scoped_connection m_quote_connection;
       boost::signals2::scoped_connection m_style_connection;

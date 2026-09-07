@@ -1,3 +1,4 @@
+#include <vector>
 #include <doctest/doctest.h>
 #include "Spire/Spire/LocalValueModel.hpp"
 
@@ -24,6 +25,13 @@ TEST_SUITE("LocalValueModel") {
   TEST_CASE("test") {
     auto model = LocalValueModel(5);
     REQUIRE(model.test(5) == QValidator::Acceptable);
+  }
+
+  TEST_CASE("make_local_value_model") {
+    auto model = make_local_value_model(std::vector{1, 2, 3});
+    REQUIRE(model->get() == std::vector{1, 2, 3});
+    model->set(std::vector{4});
+    REQUIRE(model->get() == std::vector{4});
   }
 
   TEST_CASE("update") {

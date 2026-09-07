@@ -16,8 +16,8 @@ TableItem::TableItem(QWidget& body, QWidget* parent)
 
 TableItem::TableItem(QWidget* parent)
     : QWidget(parent),
-      m_styles{Qt::transparent, Qt::transparent, Qt::transparent,
-        Qt::transparent, Qt::transparent},
+      m_styles(Qt::transparent, Qt::transparent, Qt::transparent,
+        Qt::transparent, Qt::transparent),
       m_click_observer(*this),
       m_focus_observer(*this),
       m_mouse_observer(*this) {
@@ -108,59 +108,34 @@ void TableItem::on_mouse(QWidget& target, const QMouseEvent& event) {
 
 void TableItem::on_style() {
   auto& stylist = find_stylist(*this);
-  m_styles = {Qt::transparent, Qt::transparent, Qt::transparent,
-    Qt::transparent, Qt::transparent};
+  m_styles = Styles(Qt::transparent, Qt::transparent, Qt::transparent,
+    Qt::transparent, Qt::transparent);
+  auto assign = [=, this] (QColor& target) {
+    return [&] (auto color) {
+      target = color;
+      if(auto row = parentWidget()) {
+        if(auto body = row->parentWidget()) {
+          body->update();
+        }
+      }
+    };
+  };
   for(auto& property : stylist.get_computed_block()) {
     property.visit(
       [&] (const BackgroundColor& color) {
-        stylist.evaluate(color, [=] (auto color) {
-          m_styles.m_background_color = color;
-          if(auto row = parentWidget()) {
-            if(auto body = row->parentWidget()) {
-              body->update();
-            }
-          }
-        });
+        stylist.evaluate(color, assign(m_styles.m_background_color));
       },
       [&] (const BorderTopColor& color) {
-        stylist.evaluate(color, [=] (auto color) {
-          m_styles.m_border_top_color = color;
-          if(auto row = parentWidget()) {
-            if(auto body = row->parentWidget()) {
-              body->update();
-            }
-          }
-        });
+        stylist.evaluate(color, assign(m_styles.m_border_top_color));
       },
       [&] (const BorderRightColor& color) {
-        stylist.evaluate(color, [=] (auto color) {
-          m_styles.m_border_right_color = color;
-          if(auto row = parentWidget()) {
-            if(auto body = row->parentWidget()) {
-              body->update();
-            }
-          }
-        });
+        stylist.evaluate(color, assign(m_styles.m_border_right_color));
       },
       [&] (const BorderBottomColor& color) {
-        stylist.evaluate(color, [=] (auto color) {
-          m_styles.m_border_bottom_color = color;
-          if(auto row = parentWidget()) {
-            if(auto body = row->parentWidget()) {
-              body->update();
-            }
-          }
-        });
+        stylist.evaluate(color, assign(m_styles.m_border_bottom_color));
       },
       [&] (const BorderLeftColor& color) {
-        stylist.evaluate(color, [=] (auto color) {
-          m_styles.m_border_left_color = color;
-          if(auto row = parentWidget()) {
-            if(auto body = row->parentWidget()) {
-              body->update();
-            }
-          }
-        });
+        stylist.evaluate(color, assign(m_styles.m_border_left_color));
       });
   }
 }

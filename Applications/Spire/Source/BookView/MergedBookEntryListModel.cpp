@@ -1,4 +1,5 @@
 #include "Spire/BookView/MergedBookEntryListModel.hpp"
+#include <algorithm>
 
 using namespace boost;
 using namespace boost::signals2;
@@ -12,8 +13,16 @@ MergedBookEntryListModel::MergedBookEntryListModel(
     : m_book_quotes(std::move(book_quotes)),
       m_user_orders(std::move(user_orders)),
       m_preview(std::move(preview)),
-      m_previous_preview(m_preview->get()),
-      m_reads(10) {
+      m_previous_preview(m_preview->get()) {
+  for(auto i = 0; i != m_book_quotes->get_size(); ++i) {
+    m_entries.push_back(m_book_quotes->get(i));
+  }
+  for(auto i = 0; i != m_user_orders->get_size(); ++i) {
+    m_entries.push_back(m_user_orders->get(i));
+  }
+  if(m_previous_preview) {
+    m_entries.push_back(*m_previous_preview);
+  }
   m_book_quotes_connection = m_book_quotes->connect_operation_signal(
     std::bind_front(&MergedBookEntryListModel::on_book_quote_operation, this));
   m_user_orders_connection = m_user_orders->connect_operation_signal(
@@ -23,22 +32,15 @@ MergedBookEntryListModel::MergedBookEntryListModel(
 }
 
 int MergedBookEntryListModel::get_size() const {
-  auto preview_size = m_previous_preview.has_value() ? 1 : 0;
-  return m_book_quotes->get_size() + m_user_orders->get_size() + preview_size;
+  return static_cast<int>(m_entries.size());
 }
 
 const MergedBookEntryListModel::Type&
     MergedBookEntryListModel::get(int index) const {
-  if(index < m_book_quotes->get_size()) {
-    m_reads.push_back(m_book_quotes->get(index));
-  } else if(index < m_book_quotes->get_size() + m_user_orders->get_size()) {
-    m_reads.push_back(m_user_orders->get(index - m_book_quotes->get_size()));
-  } else if(m_previous_preview && index == get_size() - 1) {
-    m_reads.push_back(*m_previous_preview);
-  } else {
+  if(index < 0 || index >= get_size()) {
     throw std::out_of_range("The index is out of range.");
   }
-  return m_reads.back();
+  return m_entries[index];
 }
 
 connection MergedBookEntryListModel::connect_operation_signal(
@@ -53,84 +55,47 @@ void MergedBookEntryListModel::transact(
 
 void MergedBookEntryListModel::on_book_quote_operation(
     const BookQuoteListModel::Operation& operation) {
-  visit(operation,
-    [&] (BookQuoteListModel::StartTransaction) {
-      m_transaction.start();
-    },
-    [&] (BookQuoteListModel::EndTransaction) {
-      m_transaction.end();
-    },
-    [&] (const BookQuoteListModel::AddOperation& operation) {
-      m_transaction.push(AddOperation(operation.m_index));
-    },
-    [&] (const BookQuoteListModel::PreRemoveOperation& operation) {
-      m_transaction.push(PreRemoveOperation(operation.m_index));
-    },
-    [&] (const BookQuoteListModel::RemoveOperation& operation) {
-      m_transaction.push(RemoveOperation(operation.m_index));
-    },
-    [&] (const BookQuoteListModel::MoveOperation& operation) {
-      m_transaction.push(
-        MoveOperation(operation.m_source, operation.m_destination));
-    },
-    [&] (const BookQuoteListModel::UpdateOperation& operation) {
-      m_transaction.push(UpdateOperation(
-        operation.m_index, operation.get_previous(), operation.get_value()));
-    });
+  apply<BookQuote>(operation, *m_book_quotes, 0);
 }
 
 void MergedBookEntryListModel::on_user_order_operation(
     const BookViewModel::UserOrderListModel::Operation& operation) {
-  visit(operation,
-    [&] (BookViewModel::UserOrderListModel::StartTransaction) {
-      m_transaction.start();
-    },
-    [&] (BookViewModel::UserOrderListModel::EndTransaction) {
-      m_transaction.end();
-    },
-    [&] (const BookViewModel::UserOrderListModel::AddOperation& operation) {
-      m_transaction.push(
-        AddOperation(m_book_quotes->get_size() + operation.m_index));
-    },
-    [&] (const
-        BookViewModel::UserOrderListModel::PreRemoveOperation& operation) {
-      m_transaction.push(
-        PreRemoveOperation(m_book_quotes->get_size() + operation.m_index));
-    },
-    [&] (const BookViewModel::UserOrderListModel::RemoveOperation& operation) {
-      m_transaction.push(
-        RemoveOperation(m_book_quotes->get_size() + operation.m_index));
-    },
-    [&] (const BookViewModel::UserOrderListModel::MoveOperation& operation) {
-      m_transaction.push(
-        MoveOperation(m_book_quotes->get_size() + operation.m_source,
-          m_book_quotes->get_size() + operation.m_destination));
-    },
-    [&] (const BookViewModel::UserOrderListModel::UpdateOperation& operation) {
-      m_transaction.push(UpdateOperation(
-        m_book_quotes->get_size() + operation.m_index, operation.get_previous(),
-          operation.get_value()));
-    });
+  apply<BookViewModel::UserOrder>(
+    operation, *m_user_orders, m_book_quotes->get_size());
 }
 
 void MergedBookEntryListModel::on_preview(
     const optional<OrderFields>& preview) {
-  if(preview) {
-    auto index = m_book_quotes->get_size() + m_user_orders->get_size();
-    if(m_previous_preview) {
-      auto update = UpdateOperation(index, *m_previous_preview, *preview);
-      m_previous_preview = preview;
-      m_transaction.push(update);
-    } else {
-      m_previous_preview = preview;
-      m_transaction.push(AddOperation(index));
-    }
-  } else if(m_previous_preview) {
-    auto index = m_book_quotes->get_size() + m_user_orders->get_size();
+  if(!preview && !m_previous_preview) {
+    return;
+  }
+  auto index = m_book_quotes->get_size() + m_user_orders->get_size();
+  if(!preview) {
     m_transaction.transact([&] {
       m_transaction.push(PreRemoveOperation(index));
       m_previous_preview = none;
+      m_entries.pop_back();
       m_transaction.push(RemoveOperation(index));
     });
+  } else if(m_previous_preview) {
+    auto update = UpdateOperation(index, *m_previous_preview, *preview);
+    m_previous_preview = preview;
+    m_entries[index] = *preview;
+    m_transaction.push(update);
+  } else {
+    m_previous_preview = preview;
+    m_entries.push_back(*preview);
+    m_transaction.push(AddOperation(index));
+  }
+}
+
+void Spire::move_book_entry(
+    std::deque<BookEntry>& entries, int source, int destination) {
+  auto i = std::next(entries.begin(), source);
+  auto j = std::next(entries.begin(), destination);
+  if(source < destination) {
+    std::rotate(i, std::next(i), std::next(j));
+  } else {
+    std::rotate(j, i, std::next(i));
   }
 }

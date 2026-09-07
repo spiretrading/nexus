@@ -30,7 +30,7 @@ QWidget* LegacyBookViewWindowSettings::Reopen(
 }
 
 void LegacyBookViewWindowSettings::Apply(
-    Ref<UserProfile> userProfile, Out<QWidget> widget) const {
+    Ref<UserProfile> user_profile, Out<QWidget> widget) const {
   auto& window = dynamic_cast<BookViewWindow&>(*widget);
   restore_geometry(window, m_geometry);
   auto frame_height = get_frame_height();

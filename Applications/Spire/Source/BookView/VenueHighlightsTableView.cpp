@@ -24,40 +24,39 @@ namespace {
   using VenueHighlightLevel =
     BookViewHighlightProperties::VenueHighlightLevel;
   using VenueHighlight = BookViewHighlightProperties::VenueHighlight;
-  using EmptyVenue = StateSelector<void, struct EmptyVenueSeletorTag>;
+  using EmptyVenue = StateSelector<void, struct EmptyVenueSelectorTag>;
 
-  static const auto COLUMN_COUNT = 3;
-  static const auto VENUE_COLUMN = 0;
-  static const auto LEVEL_COLUMN = 1;
-  static const auto COLOR_COLUMN = 2;
+  const auto COLUMN_COUNT = 3;
+  const auto VENUE_COLUMN = 0;
+  const auto LEVEL_COLUMN = 1;
+  const auto COLOR_COLUMN = 2;
 
-  const auto& DEFAULT_VENUE_HIGHLIGHTS() {
-    static const auto default_venue_highlights = std::vector<HighlightColor>{
-      {QColor(0xFFFFC4), QColor(0x834A2D)},
-      {QColor(0xDDF9FF), QColor(0x003698)},
-      {QColor(0xFFECFF), QColor(0x76008A)},
-      {QColor(0xF4F4FF), QColor(0x4C00DA)},
-      {QColor(0xFFE6C9), QColor(0xA00000)},
-      {QColor(0xFEEE7F), QColor(0x630000)},
-      {QColor(0x92CFE9), QColor(0x0000C6)},
-      {QColor(0xF1A6F1), QColor(0x770088)},
-      {QColor(0xC1BAFF), QColor(0x4F00D7)},
-      {QColor(0xFFBF76), QColor(0xA00000)},
-      {QColor(0x8A6729), QColor(0xFFFFFF)},
-      {QColor(0x246FBC), QColor(0xFFFFFF)},
-      {QColor(0xA937B2), QColor(0xFFFFFF)},
-      {QColor(0x6F53C5), QColor(0xFFFFFF)},
-      {QColor(0xAE4D1F), QColor(0xFFFFFF)},
-      {QColor(0x4D2A00), QColor(0xFFFFFF)},
-      {QColor(0x21148C), QColor(0xFFFFFF)},
-      {QColor(0x5F006F), QColor(0xFFFFFF)},
-      {QColor(0x361976), QColor(0xFFFFFF)},
-      {QColor(0x680000), QColor(0xFFFFFF)}
-    };
-    return default_venue_highlights;
+  const auto& get_default_venue_highlights() {
+    static const auto DEFAULT_VENUE_HIGHLIGHTS = std::vector{
+      HighlightColor(QColor(0xFFFFC4), QColor(0x834A2D)),
+      HighlightColor(QColor(0xDDF9FF), QColor(0x003698)),
+      HighlightColor(QColor(0xFFECFF), QColor(0x76008A)),
+      HighlightColor(QColor(0xF4F4FF), QColor(0x4C00DA)),
+      HighlightColor(QColor(0xFFE6C9), QColor(0xA00000)),
+      HighlightColor(QColor(0xFEEE7F), QColor(0x630000)),
+      HighlightColor(QColor(0x92CFE9), QColor(0x0000C6)),
+      HighlightColor(QColor(0xF1A6F1), QColor(0x770088)),
+      HighlightColor(QColor(0xC1BAFF), QColor(0x4F00D7)),
+      HighlightColor(QColor(0xFFBF76), QColor(0xA00000)),
+      HighlightColor(QColor(0x8A6729), QColor(0xFFFFFF)),
+      HighlightColor(QColor(0x246FBC), QColor(0xFFFFFF)),
+      HighlightColor(QColor(0xA937B2), QColor(0xFFFFFF)),
+      HighlightColor(QColor(0x6F53C5), QColor(0xFFFFFF)),
+      HighlightColor(QColor(0xAE4D1F), QColor(0xFFFFFF)),
+      HighlightColor(QColor(0x4D2A00), QColor(0xFFFFFF)),
+      HighlightColor(QColor(0x21148C), QColor(0xFFFFFF)),
+      HighlightColor(QColor(0x5F006F), QColor(0xFFFFFF)),
+      HighlightColor(QColor(0x361976), QColor(0xFFFFFF)),
+      HighlightColor(QColor(0x680000), QColor(0xFFFFFF))};
+    return DEFAULT_VENUE_HIGHLIGHTS;
   }
 
-  auto apply_table_view_style(StyleSheet& style) {
+  void apply_table_view_style(StyleSheet& style) {
     auto font = QFont("Roboto");
     font.setWeight(QFont::Medium);
     font.setPixelSize(scale_width(10));
@@ -83,12 +82,13 @@ namespace {
       return highlight.m_venue;
     } else if(index == LEVEL_COLUMN) {
       return highlight.m_level;
-    } else {
+    } else if(index == COLOR_COLUMN) {
       return highlight.m_color;
     }
+    throw std::runtime_error("Invalid column.");
   }
 
-  auto setup_level_box() {
+  auto get_level_settings() {
     static auto settings = [] {
       auto settings = EnumBox<VenueHighlightLevel>::Settings(
         [] (const auto& value) {
@@ -107,21 +107,21 @@ namespace {
   }
 
   VenueBox* make_venue_box(std::shared_ptr<VenueModel> current,
-      std::shared_ptr<ListModel<Venue>> available_venues,
-      QWidget* parent = nullptr) {
-    auto settings = VenueBox::Settings([=] (const auto& venue) {
-      return QString::fromStdString(VENUES.from(venue).m_display_name);
-    },
-    [=] (const auto& venue) {
-      auto& entry = VENUES.from(venue);
-      auto destination_entry = DestinationDatabase::Entry();
-      destination_entry.m_id = entry.m_display_name;
-      destination_entry.m_description = entry.m_description;
-      return new DestinationListItem(std::move(destination_entry));
-    });
+      std::shared_ptr<ListModel<Venue>> available_venues) {
+    auto settings = VenueBox::Settings(
+      [=] (const auto& venue) {
+        return QString::fromStdString(VENUES.from(venue).m_display_name);
+      },
+      [=] (const auto& venue) {
+        auto& entry = VENUES.from(venue);
+        auto destination_entry = DestinationDatabase::Entry();
+        destination_entry.m_id = entry.m_display_name;
+        destination_entry.m_description = entry.m_description;
+        return new DestinationListItem(std::move(destination_entry));
+      });
     settings.m_cases = std::move(available_venues);
     settings.m_current = std::move(current);
-    return new VenueBox(std::move(settings), parent);
+    return new VenueBox(std::move(settings));
   }
 
   struct VenueHighlightListToTableModel : ListToTableModel<VenueHighlight> {
@@ -171,15 +171,15 @@ namespace {
         return m_source->at(row, column);
       } else if(row == m_source->get_row_size()) {
         if(column == VENUE_COLUMN) {
-          static const auto NONE = Venue();
-          return NONE;
+          static const auto NO_VENUE = Venue();
+          return NO_VENUE;
         } else if(column == LEVEL_COLUMN) {
-          static auto DEFAULT = VenueHighlightLevel::TOP;
-          return DEFAULT;
+          static const auto DEFAULT_LEVEL = VenueHighlightLevel::TOP;
+          return DEFAULT_LEVEL;
         } else if(column == COLOR_COLUMN) {
-          static auto DEFAULT =
+          static const auto DEFAULT_COLOR =
             HighlightColor(Qt::transparent, Qt::transparent);
-          return DEFAULT;
+          return DEFAULT_COLOR;
         }
       }
       throw std::out_of_range("The row or column is out of range.");
@@ -194,11 +194,11 @@ namespace {
         }
         auto blocker = shared_connection_block(m_connection);
         add_available_venues(get_row_size());
-        auto& highlights = DEFAULT_VENUE_HIGHLIGHTS();
+        auto& highlights = get_default_venue_highlights();
         auto& highlight =
           highlights[m_source->get_row_size() % highlights.size()];
-        m_source->push({std::any_cast<const Venue&>(value), highlight,
-          BookViewHighlightProperties::VenueHighlightLevel::TOP});
+        m_source->push(VenueHighlight(std::any_cast<const Venue&>(value),
+          highlight, VenueHighlightLevel::TOP));
         reduce_available_venues(row);
         m_transaction.transact([&] {
           m_transaction.push(UpdateOperation(row, column, Venue(), value));
@@ -247,21 +247,30 @@ namespace {
         m_available_venues.begin() + row, std::move(available_venues));
     }
 
-    void reduce_available_venues(int row, Venue venue) {
+    void for_each_other_row(int row, auto action) {
+      for(auto i = 0; i < get_row_size(); ++i) {
+        if(i != row) {
+          action(*m_available_venues[i]);
+        }
+      }
+    }
+
+    void update_available_venues(int row, Venue venue, auto action) {
       if(!venue) {
         return;
       }
-      for(auto i = 0; i < get_row_size(); ++i) {
-        if(i == row) {
-          continue;
+      for_each_other_row(row, [&] (auto& available_venues) {
+        action(available_venues,
+          std::find(available_venues.begin(), available_venues.end(), venue));
+      });
+    }
+
+    void reduce_available_venues(int row, Venue venue) {
+      update_available_venues(row, venue, [&] (auto& available_venues, auto i) {
+        if(i != available_venues.end()) {
+          available_venues.remove(i);
         }
-        auto& available_venues = *m_available_venues[i];
-        auto j =
-          std::find(available_venues.begin(), available_venues.end(), venue);
-        if(j != available_venues.end()) {
-          available_venues.remove(j);
-        }
-      }
+      });
     }
 
     void reduce_available_venues(int row) {
@@ -269,20 +278,11 @@ namespace {
     }
 
     void augment_available_venues(int row, Venue venue) {
-      if(!venue) {
-        return;
-      }
-      for(auto i = 0; i < get_row_size(); ++i) {
-        if(i == row) {
-          continue;
-        }
-        auto& available_venues = *m_available_venues[i];
-        auto j =
-          std::find(available_venues.begin(), available_venues.end(), venue);
-        if(j == available_venues.end()) {
+      update_available_venues(row, venue, [&] (auto& available_venues, auto i) {
+        if(i == available_venues.end()) {
           available_venues.push(venue);
         }
-      }
+      });
     }
 
     void augment_available_venues(int row) {
@@ -361,11 +361,14 @@ namespace {
     std::shared_ptr<VenueModel> m_venue;
     scoped_connection m_connection;
 
+    InputBoxWrapper(Model model, std::shared_ptr<VenueModel> venue)
+      : InputBoxWrapper(std::move(model), std::move(venue), nullptr) {}
+
     InputBoxWrapper(Model model, std::shared_ptr<VenueModel> venue,
-        QWidget* parent = nullptr)
-        : m_model(std::move(model)),
-          m_venue(std::move(venue)),
-          QWidget(parent) {
+        QWidget* parent)
+        : QWidget(parent),
+          m_model(std::move(model)),
+          m_venue(std::move(venue)) {
       make_vbox_layout(this);
       if(m_venue->get()) {
         on_venue_update(m_venue->get());
@@ -432,15 +435,14 @@ namespace {
       if(row == table->get_row_size() - 1) {
         match(*item, EmptyVenue());
       }
-      venue_box->get_current()->connect_update_signal(
-        [=] (const auto& venue) {
-          if(venue && is_match(*item, EmptyVenue())) {
-            unmatch(*item, EmptyVenue());
-          }
-        });
+      venue_box->get_current()->connect_update_signal([=] (const auto& venue) {
+        if(venue && is_match(*item, EmptyVenue())) {
+          unmatch(*item, EmptyVenue());
+        }
+      });
       return item;
     } else if(column == LEVEL_COLUMN) {
-      auto settings = setup_level_box();
+      auto settings = get_level_settings();
       settings.m_current =
         make_table_value_model<VenueHighlightLevel>(table, row, column);
       return new EditableBox(*new InputBoxWrapper<EnumBox<VenueHighlightLevel>,
@@ -480,10 +482,19 @@ TableView* Spire::make_venue_highlights_table_view(
   });
   auto table_view = table_builder.make();
   table_view->setSizePolicy(QSizePolicy::Expanding, QSizePolicy::Expanding);
-  table_view->get_header().get_widths()->set(0, scale_width(26));
-  table_view->get_header().get_widths()->set(1, scale_width(92));
-  table_view->get_header().get_widths()->set(2, scale_width(92));
-  table_view->get_header().get_widths()->set(3, scale_width(138));
+  static const auto EDITABLE_COLUMN_OFFSET = 1;
+  static const auto DELETE_COLUMN_WIDTH = 26;
+  static const auto VENUE_COLUMN_WIDTH = 92;
+  static const auto LEVEL_COLUMN_WIDTH = 92;
+  static const auto COLOR_COLUMN_WIDTH = 138;
+  auto& widths = *table_view->get_header().get_widths();
+  widths.set(0, scale_width(DELETE_COLUMN_WIDTH));
+  widths.set(
+    EDITABLE_COLUMN_OFFSET + VENUE_COLUMN, scale_width(VENUE_COLUMN_WIDTH));
+  widths.set(
+    EDITABLE_COLUMN_OFFSET + LEVEL_COLUMN, scale_width(LEVEL_COLUMN_WIDTH));
+  widths.set(
+    EDITABLE_COLUMN_OFFSET + COLOR_COLUMN, scale_width(COLOR_COLUMN_WIDTH));
   update_style(*table_view, apply_table_view_style);
   auto filter = new ChildAddedObserver(table_view->get_body(), table_view);
   table_view->get_body().installEventFilter(filter);
