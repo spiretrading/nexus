@@ -73,8 +73,7 @@ struct TimeAndSalesPropertiesWindow::PropertiesWindowModel {
   explicit PropertiesWindowModel(
       std::shared_ptr<TimeAndSalesPropertiesModel> properties)
       : m_properties(std::move(properties)),
-        m_font(std::make_shared<LocalValueModel<QFont>>(
-          m_properties->get().get_font())),
+        m_font(make_local_value_model(m_properties->get().get_font())),
         m_is_grid_enabled(std::make_shared<LocalBooleanModel>(
           m_properties->get().is_grid_enabled())) {
     m_properties_connection = m_properties->connect_update_signal(

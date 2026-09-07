@@ -19,15 +19,14 @@ namespace {
 TEST_SUITE("PriceLevelModel") {
   TEST_CASE("constructor") {
     SUBCASE("empty") {
-      auto levels = PriceLevelModel(std::make_shared<ArrayListModel<Money>>(),
-        std::make_shared<LocalValueModel<int>>(5));
+      auto levels = PriceLevelModel(
+        std::make_shared<ArrayListModel<Money>>(), make_local_value_model(5));
       REQUIRE(levels.get_size() == 0);
     }
     SUBCASE("levels") {
       auto levels = PriceLevelModel(make_prices({5 * Money::ONE,
         5 * Money::ONE, 5 * Money::ONE, 4 * Money::ONE, 4 * Money::ONE,
-        3 * Money::ONE, 2 * Money::ONE}),
-        std::make_shared<LocalValueModel<int>>(5));
+        3 * Money::ONE, 2 * Money::ONE}), make_local_value_model(5));
       REQUIRE(levels.get_size() == 7);
       REQUIRE(levels.get(0) == 0);
       REQUIRE(levels.get(1) == 0);
@@ -42,7 +41,7 @@ TEST_SUITE("PriceLevelModel") {
         5 * Money::ONE, 5 * Money::ONE, 4 * Money::ONE, 4 * Money::ONE,
         3 * Money::ONE, 2 * Money::ONE, 2 * Money::ONE, 2 * Money::ONE,
         2 * Money::ONE, Money::ONE, Money::ONE, Money::CENT}),
-        std::make_shared<LocalValueModel<int>>(3));
+        make_local_value_model(3));
       REQUIRE(levels.get_size() == 13);
       REQUIRE(levels.get(0) == 0);
       REQUIRE(levels.get(1) == 0);
@@ -63,8 +62,7 @@ TEST_SUITE("PriceLevelModel") {
   TEST_CASE("add") {
     auto prices = make_prices({Money::ONE, Money::ONE, 2 * Money::ONE,
       2 * Money::ONE, 3 * Money::ONE, 3 * Money::ONE});
-    auto levels =
-      PriceLevelModel(prices, std::make_shared<LocalValueModel<int>>(10));
+    auto levels = PriceLevelModel(prices, make_local_value_model(10));
     SUBCASE("insert_front_existing_price") {
       prices->insert(Money::ONE, 0);
       REQUIRE(levels.get_size() == 7);
@@ -159,8 +157,7 @@ TEST_SUITE("PriceLevelModel") {
     auto prices = make_prices({Money::ONE, Money::ONE, Money::ONE,
       2 * Money::ONE, 2 * Money::ONE, 2 * Money::ONE, 3 * Money::ONE,
       3 * Money::ONE, 3 * Money::ONE});
-    auto levels =
-      PriceLevelModel(prices, std::make_shared<LocalValueModel<int>>(10));
+    auto levels = PriceLevelModel(prices, make_local_value_model(10));
     SUBCASE("remove_front") {
       prices->remove(0);
       REQUIRE(levels.get_size() == 8);
@@ -243,7 +240,7 @@ TEST_SUITE("PriceLevelModel") {
   }
 
   TEST_CASE("decrease_max_level") {
-    auto max_level = std::make_shared<LocalValueModel<int>>(3);
+    auto max_level = make_local_value_model(3);
     auto levels = PriceLevelModel(make_prices({10 * Money::ONE,
       11 * Money::ONE, 12 * Money::ONE, 13 * Money::ONE}), max_level);
     max_level->set(2);
@@ -254,7 +251,7 @@ TEST_SUITE("PriceLevelModel") {
   }
 
   TEST_CASE("increase_max_level") {
-    auto max_level = std::make_shared<LocalValueModel<int>>(3);
+    auto max_level = make_local_value_model(3);
     auto levels = PriceLevelModel(make_prices({10 * Money::ONE,
       11 * Money::ONE, 12 * Money::ONE, 13 * Money::ONE, 14 * Money::ONE,
       15 * Money::ONE, 16 * Money::ONE}), max_level);
@@ -272,8 +269,7 @@ TEST_SUITE("PriceLevelModel") {
     auto prices = make_prices({10 * Money::ONE, 11 * Money::ONE,
       12 * Money::ONE, 12 * Money::ONE, 12 * Money::ONE, 12 * Money::ONE,
       12 * Money::ONE});
-    auto levels =
-      PriceLevelModel(prices, std::make_shared<LocalValueModel<int>>(4));
+    auto levels = PriceLevelModel(prices, make_local_value_model(4));
     prices->remove(0);
     REQUIRE(levels.get(0) == 0);
     REQUIRE(levels.get(1) == 1);
@@ -285,8 +281,7 @@ TEST_SUITE("PriceLevelModel") {
 
   TEST_CASE("clear_prices") {
     auto prices = std::make_shared<ArrayListModel<Money>>();
-    auto levels =
-      PriceLevelModel(prices, std::make_shared<LocalValueModel<int>>(3));
+    auto levels = PriceLevelModel(prices, make_local_value_model(3));
     prices->push(10 * Money::ONE);
     prices->remove(0);
     REQUIRE(levels.get_size() == 0);
@@ -294,8 +289,7 @@ TEST_SUITE("PriceLevelModel") {
 
   TEST_CASE("last_price") {
     auto prices = std::make_shared<ArrayListModel<Money>>();
-    auto levels =
-      PriceLevelModel(prices, std::make_shared<LocalValueModel<int>>(3));
+    auto levels = PriceLevelModel(prices, make_local_value_model(3));
     prices->push(10 * Money::ONE);
     prices->push(11 * Money::ONE);
     prices->push(12 * Money::ONE);
@@ -305,8 +299,7 @@ TEST_SUITE("PriceLevelModel") {
 
   TEST_CASE("last_price_at_max_level") {
     auto prices = std::make_shared<ArrayListModel<Money>>();
-    auto levels =
-      PriceLevelModel(prices, std::make_shared<LocalValueModel<int>>(2));
+    auto levels = PriceLevelModel(prices, make_local_value_model(2));
     prices->push(10 * Money::ONE);
     prices->push(11 * Money::ONE);
     prices->push(12 * Money::ONE);
@@ -317,8 +310,7 @@ TEST_SUITE("PriceLevelModel") {
 
   TEST_CASE("remove_same_price") {
     auto prices = std::make_shared<ArrayListModel<Money>>();
-    auto levels =
-      PriceLevelModel(prices, std::make_shared<LocalValueModel<int>>(3));
+    auto levels = PriceLevelModel(prices, make_local_value_model(3));
     prices->push(10 * Money::ONE);
     prices->push(10 * Money::ONE);
     prices->push(11 * Money::ONE);
@@ -338,8 +330,7 @@ TEST_SUITE("PriceLevelModel") {
 
   TEST_CASE("remove_max_price") {
     auto prices = std::make_shared<ArrayListModel<Money>>();
-    auto levels =
-      PriceLevelModel(prices, std::make_shared<LocalValueModel<int>>(2));
+    auto levels = PriceLevelModel(prices, make_local_value_model(2));
     prices->push(10 * Money::ONE);
     prices->push(11 * Money::ONE);
     prices->push(12 * Money::ONE);
@@ -356,8 +347,7 @@ TEST_SUITE("PriceLevelModel") {
 
   TEST_CASE("insert_middle") {
     auto prices = std::make_shared<ArrayListModel<Money>>();
-    auto levels =
-      PriceLevelModel(prices, std::make_shared<LocalValueModel<int>>(3));
+    auto levels = PriceLevelModel(prices, make_local_value_model(3));
     prices->push(10 * Money::ONE);
     prices->push(12 * Money::ONE);
     prices->push(14 * Money::ONE);
@@ -380,8 +370,7 @@ TEST_SUITE("PriceLevelModel") {
   TEST_CASE("price_move") {
     auto prices = make_prices(
       {12 * Money::ONE, 11 * Money::ONE, 10 * Money::ONE});
-    auto levels =
-      PriceLevelModel(prices, std::make_shared<LocalValueModel<int>>(5));
+    auto levels = PriceLevelModel(prices, make_local_value_model(5));
     REQUIRE(levels.get(0) == 0);
     REQUIRE(levels.get(1) == 1);
     REQUIRE(levels.get(2) == 2);
@@ -405,8 +394,7 @@ TEST_SUITE("PriceLevelModel") {
   TEST_CASE("price_update_in_place") {
     auto prices =
       make_prices({10 * Money::ONE, 10 * Money::ONE, 9 * Money::ONE});
-    auto levels =
-      PriceLevelModel(prices, std::make_shared<LocalValueModel<int>>(5));
+    auto levels = PriceLevelModel(prices, make_local_value_model(5));
     REQUIRE(levels.get(0) == 0);
     REQUIRE(levels.get(1) == 0);
     REQUIRE(levels.get(2) == 1);

@@ -831,8 +831,7 @@ namespace {
         }
         return Type();
       }();
-      auto current_model =
-        std::make_shared<LocalValueModel<Type>>(current_value);
+      auto current_model = make_local_value_model(current_value);
       auto box = make_box(source, current_model);
       using Box = std::decay_t<decltype(*box)>;
       box->setMinimumWidth(scale_width(112));
@@ -1943,8 +1942,7 @@ UiProfile Spire::make_combo_box_profile() {
     model->add("Black");
     model->add("Car");
     auto& current = get<QString>("current", profile.get_properties());
-    auto current_model =
-      std::make_shared<LocalValueModel<QString>>(current.get());
+    auto current_model = make_local_value_model(current.get());
     auto box =
       new ComboBox(model, current_model, &ListView::default_item_builder);
     box->setFixedWidth(scale_width(112));
@@ -2786,7 +2784,7 @@ UiProfile Spire::make_font_style_box_profile() {
   properties.push_back(make_standard_property<QString>("current", "Regular"));
   properties.push_back(make_standard_property("read_only", false));
   auto profile = UiProfile("FontStyleBox", properties, [] (auto& profile) {
-    auto family_model = std::make_shared<LocalValueModel<QString>>("Roboto");
+    auto family_model = make_local_value_model<QString>("Roboto");
     auto box = make_font_style_box(family_model);
     box->setFixedWidth(scale_width(150));
     apply_widget_properties(box, profile.get_properties());
@@ -2914,9 +2912,8 @@ UiProfile Spire::make_highlight_picker_profile() {
       get<QColor>("background_color", profile.get_properties());
     auto& text_color = get<QColor>("text_color", profile.get_properties());
     auto button = make_label_button("HighlightPicker");
-    auto picker = new HighlightPicker(
-      std::make_shared<LocalValueModel<HighlightPicker::Highlight>>(
-        HighlightPicker::Highlight{background_color.get(), text_color.get()}),
+    auto picker = new HighlightPicker(make_local_value_model(
+      HighlightPicker::Highlight{background_color.get(), text_color.get()}),
       *button);
     background_color.connect_changed_signal([=] (const auto& color) {
       auto highlight = picker->get_current()->get();
@@ -4200,7 +4197,7 @@ UiProfile Spire::make_popup_box_profile() {
         return make_filter_panel();
       } else if(value == 2) {
         return new DateFilterPanel(
-          std::make_shared<LocalValueModel<DateFilterPanel::DateRange>>(
+          make_local_value_model<DateFilterPanel::DateRange>(
             DateFilterPanel::RelativeDateRange{
               DateFilterPanel::DateUnit::WEEK, 10}));
       }
@@ -4334,8 +4331,7 @@ UiProfile Spire::make_scope_box_profile() {
       return text;
     };
     auto& current = get<QString>("current", profile.get_properties());
-    auto current_model =
-      std::make_shared<LocalValueModel<Scope>>(to_scope(current.get()));
+    auto current_model = make_local_value_model(to_scope(current.get()));
     current.connect_changed_signal([=] (const auto& value) {
       auto scope = to_scope(value);
       if(current_model->get() != scope) {
@@ -5172,8 +5168,7 @@ UiProfile Spire::make_table_header_item_profile() {
     auto item_model = TableHeaderItem::Model();
     item_model.m_name = name.get();
     item_model.m_short_name = short_name.get();
-    auto model =
-      std::make_shared<LocalValueModel<TableHeaderItem::Model>>(item_model);
+    auto model = make_local_value_model(item_model);
     auto item = new TableHeaderItem(model);
     apply_widget_properties(item, profile.get_properties());
     auto& style_sheet =
@@ -5615,7 +5610,7 @@ UiProfile Spire::make_ticker_box_profile() {
       }
       return Ticker();
     }();
-    auto current_model = std::make_shared<LocalValueModel<Ticker>>(ticker);
+    auto current_model = make_local_value_model(ticker);
     auto box = new TickerBox(model, current_model);
     box->setFixedWidth(scale_width(112));
     apply_widget_properties(box, profile.get_properties());
