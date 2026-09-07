@@ -194,6 +194,10 @@ BookViewProperties Spire::load_book_view_properties(
       QObject::tr("Unable to load book view properties, using defaults."));
     return BookViewProperties::get_default();
   }
+  if(properties.m_level_properties.m_color_scheme.empty()) {
+    properties.m_level_properties.m_color_scheme =
+      BookViewProperties::get_default().m_level_properties.m_color_scheme;
+  }
   return properties;
 }
 

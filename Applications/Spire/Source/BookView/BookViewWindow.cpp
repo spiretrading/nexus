@@ -229,11 +229,14 @@ void BookViewWindow::HandleLink(TickerContext& context) {
   m_link_identifier = context.GetIdentifier();
   m_link_connection = context.ConnectTickerDisplaySignal(
     [=, this] (const auto& ticker) {
-      if(m_ticker_view->get_current()->get() != ticker) {
+      if(ticker && m_ticker_view->get_current()->get() != ticker) {
         m_ticker_view->get_current()->set(ticker);
       }
     });
-  m_ticker_view->get_current()->set(context.GetDisplayedTicker());
+  auto& ticker = context.GetDisplayedTicker();
+  if(ticker) {
+    m_ticker_view->get_current()->set(ticker);
+  }
 }
 
 void BookViewWindow::HandleUnlink() {

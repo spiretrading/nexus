@@ -524,6 +524,34 @@ TEST_SUITE("SortedTableModel") {
     REQUIRE(column_span<int>(sorted_model, 0) == std::vector{2, 3, 4, 5, 6, 9});
   }
 
+  TEST_CASE("update_two_sorted_columns_in_one_transaction") {
+    auto source = std::make_shared<ArrayTableModel>();
+    source->push({1, 10});
+    source->push({2, 20});
+    source->push({3, 30});
+    auto order = std::vector<SortedTableModel::ColumnOrder>();
+    order.push_back({0, SortedTableModel::Ordering::ASCENDING});
+    order.push_back({1, SortedTableModel::Ordering::ASCENDING});
+    auto sorted_model = SortedTableModel(source, order, test_comparator);
+    auto operations = std::deque<TableModel::Operation>();
+    sorted_model.connect_operation_signal(
+      [&] (const auto& operation) {
+        operations.push_back(operation);
+      });
+    source->transact([&] {
+      source->set(0, 0, 4);
+      source->set(0, 1, 40);
+    });
+    require_transaction(operations,
+      {
+        TableModel::MoveOperation(0, 2),
+        TableModel::UpdateOperation(2, 0, 1, 4),
+        TableModel::UpdateOperation(2, 1, 10, 40)
+      });
+    REQUIRE(column_span<int>(sorted_model, 0) == std::vector{2, 3, 4});
+    REQUIRE(column_span<int>(sorted_model, 1) == std::vector{20, 30, 40});
+  }
+
   TEST_CASE("source_move") {
     auto source = std::make_shared<ArrayTableModel>();
     source->push({3});
