@@ -6,7 +6,7 @@ using namespace Spire;
 
 TEST_SUITE("ToTextModel") {
   TEST_CASE("state") {
-    auto local_model = std::make_shared<LocalValueModel<int>>(1);
+    auto local_model = make_local_value_model(1);
     auto model = ToTextModel<int>(local_model);
     REQUIRE(model.get_state() == QValidator::Acceptable);
     local_model->set(2);
@@ -20,7 +20,7 @@ TEST_SUITE("ToTextModel") {
   }
 
   TEST_CASE("value") {
-    auto local_model = std::make_shared<LocalValueModel<int>>(1);
+    auto local_model = make_local_value_model(1);
     auto model = ToTextModel<int>(local_model);
     REQUIRE(model.get() == QString("1"));
     local_model->set(2);
@@ -32,7 +32,7 @@ TEST_SUITE("ToTextModel") {
   }
 
   TEST_CASE("update_signal") {
-    auto local_model = std::make_shared<LocalValueModel<int>>(1);
+    auto local_model = make_local_value_model(1);
     auto model = ToTextModel<int>(local_model);
     auto current = QString();
     auto call_count = 0;

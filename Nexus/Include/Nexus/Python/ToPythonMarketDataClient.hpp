@@ -55,7 +55,7 @@ namespace Nexus {
         const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue);
       std::vector<TickerInfo> query(const TickerInfoQuery& query);
       TickerSnapshot load_snapshot(const Ticker& ticker);
-      SessionTechnicals load_session_technicals(const Ticker& ticker);
+      SequencedSessionTechnicals load_session_technicals(const Ticker& ticker);
       std::vector<TickerInfo> load_ticker_info_from_prefix(
         const std::string& prefix);
       void close();
@@ -181,8 +181,9 @@ namespace Nexus {
   }
 
   template<IsMarketDataClient C>
-  SessionTechnicals ToPythonMarketDataClient<C>::load_session_technicals(
-      const Ticker& ticker) {
+  SequencedSessionTechnicals
+      ToPythonMarketDataClient<C>::load_session_technicals(
+        const Ticker& ticker) {
     auto release = Beam::Python::GilRelease();
     return m_client->load_session_technicals(ticker);
   }

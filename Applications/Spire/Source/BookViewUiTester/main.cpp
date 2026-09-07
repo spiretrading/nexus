@@ -561,14 +561,19 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
 
   void on_cancel_order(CancelKeyBindingsModel::Operation operation,
       const Ticker& ticker,
-      const optional<BookViewWindow::CancelCriteria>& criteria) {
+      const optional<std::vector<OrderId>>& ids) {
     auto log = QString("%1: Operation:[%2]").
       arg(++m_line_number).
       arg(to_text(operation));
-    if(criteria) {
-      log += QString(" Order Destination:[%1] Order Price:[%2]").
-        arg(QString::fromStdString(criteria->m_destination)).
-        arg(to_text(criteria->m_price));
+    if(ids) {
+      auto text = QString();
+      for(auto id : *ids) {
+        if(!text.isEmpty()) {
+          text += ", ";
+        }
+        text += QString::number(id);
+      }
+      log += QString(" Order Ids:[%1]").arg(text);
     }
     m_logs->append(log);
   }

@@ -138,8 +138,7 @@ namespace Details {
       model->push(m_current->get());
       settings.m_cases = std::move(model);
     } if(!m_current) {
-      m_current =
-        std::make_shared<LocalValueModel<Type>>(settings.m_cases->get(0));
+      m_current = make_local_value_model(settings.m_cases->get(0));
     }
     m_drop_down_box = new DropDownBox(settings.m_cases,
       std::make_shared<ListIndexValueModel<Type>>(settings.m_cases, m_current),

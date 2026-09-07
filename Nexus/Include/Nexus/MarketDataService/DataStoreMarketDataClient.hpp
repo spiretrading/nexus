@@ -52,7 +52,7 @@ namespace Nexus {
         const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue);
       std::vector<TickerInfo> query(const TickerInfoQuery& query);
       TickerSnapshot load_snapshot(const Ticker& ticker);
-      SessionTechnicals load_session_technicals(const Ticker& ticker);
+      SequencedSessionTechnicals load_session_technicals(const Ticker& ticker);
       std::vector<TickerInfo> load_ticker_info_from_prefix(
         const std::string& prefix);
       void close();
@@ -179,8 +179,9 @@ namespace Nexus {
   }
 
   template<typename D> requires IsHistoricalDataStore<Beam::dereference_t<D>>
-  SessionTechnicals DataStoreMarketDataClient<D>::load_session_technicals(
-      const Ticker& ticker) {
+  SequencedSessionTechnicals
+      DataStoreMarketDataClient<D>::load_session_technicals(
+        const Ticker& ticker) {
     return {};
   }
 

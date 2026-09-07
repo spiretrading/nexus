@@ -1,7 +1,9 @@
 #include "Spire/BookView/TechnicalsPanel.hpp"
 #include <type_traits>
+#include <utility>
 #include <Beam/Utilities/BeamWorkaround.hpp>
 #include <QEvent>
+#include "Spire/Spire/DeduplicatedValueModel.hpp"
 #include "Spire/Spire/Dimensions.hpp"
 #include "Spire/Spire/ToTextModel.hpp"
 #include "Spire/Spire/TransformValueModel.hpp"
@@ -17,7 +19,7 @@ using namespace Spire;
 using namespace Spire::Styles;
 
 namespace {
-  const auto& LABEL_FONT() {
+  const auto& get_label_font() {
     static auto font = [] {
       auto font = QFont("Roboto");
       font.setWeight(QFont::Medium);
@@ -28,18 +30,22 @@ namespace {
   }
 
   auto get_value_field_minimum_width() {
-    return get_character_width(LABEL_FONT()) * 8;
+    return get_character_width(get_label_font()) * 8;
   }
 
   auto to_default_quantity(Quantity bid_quantity, Quantity ask_quantity) {
     return to_text(bid_quantity) + "x" + to_text(ask_quantity);
   }
 
-  template<typename F>
+  template<typename T>
   auto make_technicals_value_field(
-      std::shared_ptr<SessionTechnicalsModel> technicals, F accessor) {
+      std::shared_ptr<SessionTechnicalsModel> technicals,
+      T SessionTechnicals::* field) {
     auto label = make_label(make_read_only_to_text_model(
-      make_transform_value_model(std::move(technicals), std::move(accessor)),
+      make_deduplicated_value_model(make_transform_value_model(
+        std::move(technicals), [=] (const auto& technicals) {
+          return technicals.*field;
+        })),
       [] (const auto& value) {
         if constexpr(
             std::is_same_v<std::decay_t<decltype(value)>, optional<Money>>) {
@@ -80,14 +86,16 @@ namespace {
 
   auto make_small_layout(const std::vector<TextBox*>& indicators,
       const std::vector<TextBox*>& fields) {
+    const auto SPACER_COUNT = 4;
     auto layout = make_grid_layout();
     layout->setVerticalSpacing(scale_height(2));
-    for(auto i = 0, initial_column = 0, column = 0; i < std::ssize(indicators);
-        ++i) {
+    auto initial_column = 0;
+    auto column = 0;
+    for(auto i = 0; i < std::ssize(indicators); ++i) {
       auto row = i % 2;
       layout->addWidget(indicators[i], row, column++);
       layout->addWidget(fields[i], row, column++);
-      if(i < 4) {
+      if(i < SPACER_COUNT) {
         layout->addItem(new QSpacerItem(scale_width(4), 0, QSizePolicy::Fixed),
           row, column++);
       }
@@ -118,29 +126,23 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   m_default_field = make_label("");
   m_default_field->setMinimumWidth(get_value_field_minimum_width());
   on_ask_quantity_update(m_ask_quantity->get());
-  auto name_indicators = std::vector<TextBox*>{
-    make_indicator_label(tr("High")), make_indicator_label(tr("Low")),
-    make_indicator_label(tr("Open")), make_indicator_label(tr("Close")),
-    make_indicator_label(tr("Vol")), make_indicator_label(tr("Def"))};
-  auto short_name_indicators = std::vector<TextBox*>{
-    make_indicator_label(tr("H")), make_indicator_label(tr("L")),
-    make_indicator_label(tr("O")), make_indicator_label(tr("C")),
-    make_indicator_label(tr("V")), make_indicator_label(tr("D"))};
+  auto name_indicators = std::vector<TextBox*>();
+  auto short_name_indicators = std::vector<TextBox*>();
+  for(auto& [name, short_name] : {std::pair(tr("High"), tr("H")),
+      std::pair(tr("Low"), tr("L")), std::pair(tr("Open"), tr("O")),
+      std::pair(tr("Close"), tr("C")), std::pair(tr("Vol"), tr("V")),
+      std::pair(tr("Def"), tr("D"))}) {
+    name_indicators.push_back(make_indicator_label(name));
+    short_name_indicators.push_back(make_indicator_label(short_name));
+  }
   auto fields = std::vector<TextBox*>{
-    make_technicals_value_field(m_technicals,
-      [] (const SessionTechnicals& technicals) { return technicals.m_high; }),
-    make_technicals_value_field(m_technicals,
-      [] (const SessionTechnicals& technicals) { return technicals.m_low; }),
-    make_technicals_value_field(m_technicals,
-      [] (const SessionTechnicals& technicals) { return technicals.m_open; }),
-    make_technicals_value_field(m_technicals,
-      [] (const SessionTechnicals& technicals) {
-        return technicals.m_previous_close;
-      }),
-    make_technicals_value_field(m_technicals,
-      [] (const SessionTechnicals& technicals) {
-        return technicals.m_volume;
-      }), m_default_field};
+    make_technicals_value_field(m_technicals, &SessionTechnicals::m_high),
+    make_technicals_value_field(m_technicals, &SessionTechnicals::m_low),
+    make_technicals_value_field(m_technicals, &SessionTechnicals::m_open),
+    make_technicals_value_field(
+      m_technicals, &SessionTechnicals::m_previous_close),
+    make_technicals_value_field(m_technicals, &SessionTechnicals::m_volume),
+    m_default_field};
   for(auto i = 0; i < std::ssize(fields); ++i) {
     link(*this, *name_indicators[i]);
     link(*this, *short_name_indicators[i]);
@@ -166,8 +168,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
       set(BackgroundColor(QColor(0xFFFFFF))).
       set(horizontal_padding(scale_width(8))).
       set(vertical_padding(scale_height(4)));
-    style.get(Any() > is_a<TextBox>()).
-      set(Font(LABEL_FONT()));
+    style.get(Any() > is_a<TextBox>()).set(Font(get_label_font()));
   });
 }
 
@@ -187,11 +188,11 @@ const std::shared_ptr<QuantityModel>&
 }
 
 QSize TechnicalsPanel::minimumSizeHint() const {
-  if(m_minimum_size_hint) {
-    return *m_minimum_size_hint;
+  if(!m_minimum_size_hint) {
+    m_minimum_size_hint.emplace(
+      m_extra_small_layout->totalMinimumSize().grownBy(
+        get_content_margins(m_geometry)));
   }
-  m_minimum_size_hint.emplace(m_extra_small_layout->totalMinimumSize().grownBy(
-    get_content_margins(m_geometry)));
   return *m_minimum_size_hint;
 }
 

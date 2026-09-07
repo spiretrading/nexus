@@ -1,14 +1,15 @@
 #include "Spire/BookView/BookViewController.hpp"
+#include <algorithm>
+#include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
 #include "Spire/Blotter/BlotterWindow.hpp"
 #include "Spire/BookView/BookViewWindow.hpp"
 #include "Spire/BookView/ServiceBookViewModel.hpp"
+#include "Spire/Canvas/Operations/CanvasNodeTranslationContext.hpp"
 #include "Spire/Canvas/Operations/CanvasNodeValidator.hpp"
 #include "Spire/Canvas/Operations/FindCanvasNodeValue.hpp"
 #include "Spire/Canvas/OrderExecutionNodes/SingleOrderTaskNode.hpp"
-#include "Spire/Canvas/ValueNodes/DestinationNode.hpp"
-#include "Spire/Canvas/ValueNodes/MoneyNode.hpp"
 #include "Spire/Canvas/ValueNodes/TickerNode.hpp"
 #include "Spire/LegacyUI/UserProfile.hpp"
 
@@ -20,17 +21,23 @@ using namespace Spire;
 
 namespace {
   optional<Ticker> find_ticker(const CanvasNode& node) {
-    return find_value<TickerNode>(
-      node, SingleOrderTaskNode::TICKER_PROPERTY);
+    return find_value<TickerNode>(node, SingleOrderTaskNode::TICKER_PROPERTY);
   }
 
-  optional<Money> find_price(const CanvasNode& node) {
-    return find_value<MoneyNode>(node, SingleOrderTaskNode::PRICE_PROPERTY);
-  }
-
-  optional<Destination> find_destination(const CanvasNode& node) {
-    return find_value<DestinationNode>(
-      node, SingleOrderTaskNode::DESTINATION_PROPERTY);
+  bool is_match(Task& task, const std::vector<OrderId>& ids) {
+    auto is_found = false;
+    task.GetContext().GetOrderPublisher().with([&] (auto orders) {
+      if(!orders) {
+        return;
+      }
+      for(auto& order : *orders) {
+        if(std::ranges::find(ids, order->get_info().m_id) != ids.end()) {
+          is_found = true;
+          return;
+        }
+      }
+    });
+    return is_found;
   }
 }
 
@@ -129,21 +136,23 @@ void BookViewController::on_submit_task(
 
 void BookViewController::on_cancel_operation(
     CancelKeyBindingsModel::Operation operation, const Ticker& ticker,
-    const optional<BookViewWindow::CancelCriteria>& criteria) {
+    const optional<std::vector<OrderId>>& ids) {
   auto& tasks_model =
     m_user_profile->GetBlotterSettings().GetActiveBlotter().GetTasksModel();
   auto tasks = std::vector<std::shared_ptr<Task>>();
   for(auto i = 0; i != tasks_model.rowCount(tasks_model.index(0, 0)); ++i) {
     auto& entry = tasks_model.GetEntry(i);
-    if(!IsTerminal(entry.m_state) &&
-        entry.m_state != Task::State::PENDING_CANCEL) {
-      auto& task = entry.m_task;
-      if(find_ticker(task->GetNode()) == ticker) {
-        if(!criteria || find_price(task->GetNode()) == criteria->m_price &&
-            find_destination(task->GetNode()) == criteria->m_destination) {
-          tasks.push_back(task);
-        }
-      }
+    if(IsTerminal(entry.m_state) ||
+        entry.m_state == Task::State::PENDING_CANCEL) {
+      continue;
+    }
+    auto& task = entry.m_task;
+    auto& node = task->GetNode();
+    if(find_ticker(node) != ticker) {
+      continue;
+    }
+    if(!ids || is_match(*task, *ids)) {
+      tasks.push_back(task);
     }
   }
   execute(operation, out(tasks));

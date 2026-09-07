@@ -24,6 +24,7 @@ namespace Spire {
         std::shared_ptr<BookViewPropertiesModel> properties,
         QWidget* parent = nullptr);
 
+      /** Returns the current UserOrder. */
       const std::shared_ptr<CurrentUserOrderModel>& get_current() const;
 
     protected:

@@ -54,7 +54,7 @@ FontFamilyBox* Spire::make_font_family_box(const QString& current,
     font_families->push(family);
   }
   return make_font_family_box(std::move(font_families),
-    std::make_shared<LocalValueModel<QString>>(current), parent);
+    make_local_value_model(current), parent);
 }
 
 FontFamilyBox* Spire::make_font_family_box(

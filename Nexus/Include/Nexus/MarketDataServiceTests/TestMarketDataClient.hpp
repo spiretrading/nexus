@@ -142,7 +142,7 @@ namespace Nexus::Tests {
         Ticker m_ticker;
 
         /** Used to return a value to the caller. */
-        Beam::Tests::ServiceResult<SessionTechnicals> m_result;
+        Beam::Tests::ServiceResult<SequencedSessionTechnicals> m_result;
       };
 
       /** Records a call to load_ticker_info_from_prefix(...). */
@@ -199,7 +199,7 @@ namespace Nexus::Tests {
         const TickerQuery& query, Beam::ScopedQueueWriter<TickerStatus> queue);
       std::vector<TickerInfo> query(const TickerInfoQuery& query);
       TickerSnapshot load_snapshot(const Ticker& ticker);
-      SessionTechnicals load_session_technicals(const Ticker& ticker);
+      SequencedSessionTechnicals load_session_technicals(const Ticker& ticker);
       std::vector<TickerInfo> load_ticker_info_from_prefix(
         const std::string& prefix);
       void close();
@@ -307,10 +307,10 @@ namespace Nexus::Tests {
       ticker);
   }
 
-  inline SessionTechnicals TestMarketDataClient::load_session_technicals(
-      const Ticker& ticker) {
+  inline SequencedSessionTechnicals
+      TestMarketDataClient::load_session_technicals(const Ticker& ticker) {
     return m_queue.append_result<
-      LoadSessionTechnicalsOperation, SessionTechnicals>(ticker);
+      LoadSessionTechnicalsOperation, SequencedSessionTechnicals>(ticker);
   }
 
   inline std::vector<TickerInfo> TestMarketDataClient::
