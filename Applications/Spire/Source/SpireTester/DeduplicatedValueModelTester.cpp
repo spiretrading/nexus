@@ -6,7 +6,7 @@ using namespace Spire;
 
 TEST_SUITE("DeduplicatedValueModel") {
   TEST_CASE("update") {
-    auto source = std::make_shared<LocalValueModel<int>>(1);
+    auto source = make_local_value_model(1);
     auto model = make_deduplicated_value_model(source);
     REQUIRE(model->get() == 1);
     auto updates = 0;
@@ -29,7 +29,7 @@ TEST_SUITE("DeduplicatedValueModel") {
   }
 
   TEST_CASE("set") {
-    auto source = std::make_shared<LocalValueModel<int>>(1);
+    auto source = make_local_value_model(1);
     auto model = make_deduplicated_value_model(source);
     auto updates = 0;
     auto connection = model->connect_update_signal([&] (auto update) {

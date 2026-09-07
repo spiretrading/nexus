@@ -30,8 +30,7 @@ std::shared_ptr<TopMpidPriceListModel::TopPriceModel>
     TopMpidPriceListModel::get_top_price(Venue venue) {
   auto& model = m_top_price_models[venue];
   if(!model) {
-    model =
-      std::make_shared<LocalValueModel<optional<Money>>>(find_price(venue));
+    model = make_local_value_model(find_price(venue));
   }
   return model;
 }

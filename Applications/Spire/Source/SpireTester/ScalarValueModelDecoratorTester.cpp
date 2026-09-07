@@ -8,7 +8,7 @@ using namespace Spire;
 
 TEST_SUITE("ScalarValueModelDecorator") {
   TEST_CASE("decorate_local_model") {
-    auto source = std::make_shared<LocalValueModel<int>>(47);
+    auto source = make_local_value_model(47);
     auto model = ScalarValueModelDecorator(source);
     REQUIRE(model.get_state() == QValidator::State::Acceptable);
     REQUIRE(model.get() == 47);

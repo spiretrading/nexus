@@ -19,13 +19,12 @@ namespace {
   }
 
   auto make_entry(const UserOrder& order) {
-    return std::make_shared<LocalValueModel<BookEntry>>(order);
+    return make_local_value_model<BookEntry>(order);
   }
 
   auto make_box(std::shared_ptr<LocalValueModel<BookEntry>> entry) {
-    return MpidBox(std::move(entry),
-      std::make_shared<LocalValueModel<int>>(0),
-      std::make_shared<LocalValueModel<bool>>(false));
+    return MpidBox(std::move(entry), make_local_value_model(0),
+      make_local_value_model(false));
   }
 }
 

@@ -459,9 +459,7 @@ namespace {
           static_cast<AdditionalTagsState&>(*m_item_states[&widget]);
         auto proxy = std::static_pointer_cast<
           ProxyValueModel<std::vector<AdditionalTag>>>(state.m_proxy);
-        auto temporary_model =
-          std::make_shared<LocalValueModel<std::vector<AdditionalTag>>>(
-            proxy->get());
+        auto temporary_model = make_local_value_model(proxy->get());
         proxy->set_source(temporary_model);
         state.m_destination->set_source(make_table_value_model<Destination>(
           table, row, static_cast<int>(OrderTaskColumns::DESTINATION)));
