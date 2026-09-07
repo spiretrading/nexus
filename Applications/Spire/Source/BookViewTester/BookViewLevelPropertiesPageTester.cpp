@@ -37,6 +37,34 @@ namespace {
 }
 
 TEST_SUITE("BookViewLevelPropertiesPage") {
+  TEST_CASE("restore_two_level_gradient") {
+    run_test([] {
+      auto current = make_current(FillType::GRADIENT);
+      auto properties = current->get();
+      properties.m_color_scheme.resize(2);
+      current->set(properties);
+      auto page = BookViewLevelPropertiesPage(current);
+      auto initial = current->get();
+      auto color_boxes = find_color_boxes(page);
+      REQUIRE(color_boxes.size() == 2);
+      color_boxes.back()->get_current()->set(QColor(0xFF0000));
+      page.flush();
+      REQUIRE(current->get().m_color_scheme.back() == QColor(0xFF0000));
+      current->set(initial);
+      color_boxes = find_color_boxes(page);
+      REQUIRE(color_boxes.size() == 2);
+      REQUIRE(current->get().m_color_scheme == initial.m_color_scheme);
+      REQUIRE(color_boxes.front()->get_current()->get() ==
+        initial.m_color_scheme.front());
+      REQUIRE(color_boxes.back()->get_current()->get() ==
+        initial.m_color_scheme.back());
+      color_boxes.front()->get_current()->set(QColor(0x00FF00));
+      page.flush();
+      REQUIRE(
+        current->get().m_color_scheme.back() == initial.m_color_scheme.back());
+    });
+  }
+
   TEST_CASE("pending_gradient_update_does_not_overwrite_solid_colors") {
     run_test([] {
       auto current = make_current(FillType::GRADIENT);

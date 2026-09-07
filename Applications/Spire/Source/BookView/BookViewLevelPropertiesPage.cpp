@@ -285,6 +285,10 @@ namespace {
       visit(operation,
         [&] (const ListModel<QColor>::AddOperation& operation) {
           auto blocker = shared_connection_block(m_colors_connection);
+          if(operation.m_index != 0 &&
+              operation.m_index == m_band_colors->get_size() - 1) {
+            m_end_color = m_band_colors->get(operation.m_index);
+          }
           if(m_fill_type->get() == FillType::SOLID) {
             m_colors->insert(m_band_colors->get(operation.m_index),
               operation.m_index);
