@@ -16,12 +16,10 @@ namespace {
 }
 
 ServiceBookViewModel::ServiceBookViewModel(Ticker ticker,
-    BlotterSettings& blotter, MarketDataClient market_data_client,
-    TimeClient time_client)
+    BlotterSettings& blotter, MarketDataClient market_data_client)
     : m_ticker(std::move(ticker)),
       m_blotter(&blotter),
       m_market_data_client(std::move(market_data_client)),
-      m_time_client(std::move(time_client)),
       m_model(m_ticker) {
   if(!m_ticker) {
     return;
@@ -98,11 +96,16 @@ void ServiceBookViewModel::initialize_order(
 
 optional<std::vector<ExecutionReport>> ServiceBookViewModel::monitor(
     const OrderLogModel::OrderEntry& order) {
+  auto& publisher = order.m_order->get_publisher();
+  auto id = order.m_order->get_info().m_id;
+  if(m_monitored_orders.contains(id)) {
+    return publisher.get_snapshot();
+  }
   auto reports = optional<std::vector<ExecutionReport>>();
-  order.m_order->get_publisher().monitor(
-    m_order_event_handler->get_slot<ExecutionReport>(
-      std::bind_front(&ServiceBookViewModel::on_execution_report, this)),
+  publisher.monitor(m_order_event_handler->get_slot<ExecutionReport>(
+    std::bind_front(&ServiceBookViewModel::on_execution_report, this)),
     out(reports));
+  m_monitored_orders.insert(id);
   return reports;
 }
 
@@ -188,20 +191,7 @@ void ServiceBookViewModel::on_execution_report(const ExecutionReport& report) {
 
 void ServiceBookViewModel::on_order_added(
     const OrderLogModel::OrderEntry& order) {
-  if(order.m_order->get_info().m_timestamp < m_snapshot_cutoff) {
-    initialize_order(order);
-    return;
-  }
-  if(!is_order_displayed(*order.m_order, m_ticker)) {
-    return;
-  }
-  m_model.add(order);
-  auto execution_reports = monitor(order);
-  if(execution_reports) {
-    for(auto& report : *execution_reports) {
-      m_model.update(report);
-    }
-  }
+  initialize_order(order);
 }
 
 void ServiceBookViewModel::on_order_removed(
@@ -213,9 +203,9 @@ void ServiceBookViewModel::on_order_removed(
 }
 
 void ServiceBookViewModel::on_active_blotter(BlotterModel& blotter) {
-  m_snapshot_cutoff = m_time_client.get_time();
   m_order_event_handler.reset();
   m_order_event_handler.emplace();
+  m_monitored_orders.clear();
   auto& orders = blotter.GetOrderLogModel();
   m_model.transact([&] {
     m_model.clear_orders();

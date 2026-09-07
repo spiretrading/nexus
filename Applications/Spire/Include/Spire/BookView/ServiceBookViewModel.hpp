@@ -1,7 +1,7 @@
 #ifndef SPIRE_SERVICE_BOOK_VIEW_MODEL_HPP
 #define SPIRE_SERVICE_BOOK_VIEW_MODEL_HPP
+#include <unordered_set>
 #include <vector>
-#include <Beam/TimeService/TimeClient.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/Blotter.hpp"
@@ -20,11 +20,9 @@ namespace Spire {
        * @param blotter The blotter used to keep track of tasks on the given
        *        <i>ticker</i>.
        * @param market_data_client The client used to access market data.
-       * @param time_client The client used to retrieve the current time.
        */
       ServiceBookViewModel(Nexus::Ticker ticker, BlotterSettings& blotter,
-        Nexus::MarketDataClient market_data_client,
-        Beam::TimeClient time_client);
+        Nexus::MarketDataClient market_data_client);
 
       const std::shared_ptr<BookQuoteListModel>& get_bids() const override;
       const std::shared_ptr<BookQuoteListModel>& get_asks() const override;
@@ -42,8 +40,7 @@ namespace Spire {
       Nexus::Ticker m_ticker;
       BlotterSettings* m_blotter;
       Nexus::MarketDataClient m_market_data_client;
-      Beam::TimeClient m_time_client;
-      boost::posix_time::ptime m_snapshot_cutoff;
+      std::unordered_set<Nexus::OrderId> m_monitored_orders;
       LocalBookViewModel m_model;
       std::vector<Nexus::BookQuote> m_buffered_book_quotes;
       EventHandler m_event_handler;
