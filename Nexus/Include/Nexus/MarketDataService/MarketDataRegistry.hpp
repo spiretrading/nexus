@@ -87,7 +87,7 @@ namespace Nexus {
        * @param ticker The Ticker whose session technicals are to be returned.
        * @return A snapshot of the <i>ticker</i>'s SessionTechnicals.
        */
-      boost::optional<SessionTechnicals>
+      boost::optional<SequencedSessionTechnicals>
         find_session_technicals(const Ticker& ticker) const;
 
       /**
@@ -201,8 +201,8 @@ namespace Nexus {
     }
     for(auto& entry : activity_result) {
       if(auto technicals = find_session_technicals(entry.second.m_ticker)) {
-        entry.first =
-          abs(technicals->m_volume * technicals->m_open.value_or(Money::ZERO));
+        entry.first = abs((*technicals)->m_volume *
+          (*technicals)->m_open.value_or(Money::ZERO));
       }
     }
     std::sort(activity_result.begin(), activity_result.end(),
@@ -243,14 +243,15 @@ namespace Nexus {
     return ticker;
   }
 
-  inline boost::optional<SessionTechnicals>
+  inline boost::optional<SequencedSessionTechnicals>
       MarketDataRegistry::find_session_technicals(const Ticker& ticker) const {
     auto entry = m_ticker_entries.find(get_primary_listing(ticker));
     if(!entry || !(*entry)->is_available()) {
       return boost::none;
     }
     return Beam::with(***entry, [&] (const auto& entry) {
-      return entry.get_session_technicals();
+      return SequencedSessionTechnicals(entry.get_session_technicals(),
+        entry.get_time_and_sale().get_sequence());
     });
   }
 

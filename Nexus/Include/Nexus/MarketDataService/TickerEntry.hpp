@@ -58,6 +58,9 @@ namespace Nexus {
       /** Returns the most recently published BboQuote. */
       const SequencedTickerBboQuote& get_bbo_quote() const;
 
+      /** Returns the most recently published TimeAndSale. */
+      const SequencedTickerTimeAndSale& get_time_and_sale() const;
+
       /**
        * Publishes a BboQuote.
        * @param bbo_quote The BboQuote to publish.
@@ -235,6 +238,11 @@ namespace Nexus {
 
   inline const SequencedTickerBboQuote& TickerEntry::get_bbo_quote() const {
     return m_bbo_quote;
+  }
+
+  inline const SequencedTickerTimeAndSale&
+      TickerEntry::get_time_and_sale() const {
+    return m_time_and_sale;
   }
 
   inline boost::optional<SequencedTickerBboQuote> TickerEntry::publish(
