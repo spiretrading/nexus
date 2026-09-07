@@ -4,7 +4,6 @@
 #include <Beam/TimeService/TimeClient.hpp>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Spire/Async/EventHandler.hpp"
-#include "Spire/Async/QtPromise.hpp"
 #include "Spire/Blotter/Blotter.hpp"
 #include "Spire/Blotter/OrderLogModel.hpp"
 #include "Spire/BookView/LocalBookViewModel.hpp"
@@ -47,7 +46,6 @@ namespace Spire {
       boost::posix_time::ptime m_snapshot_cutoff;
       LocalBookViewModel m_model;
       std::vector<Nexus::BookQuote> m_buffered_book_quotes;
-      std::shared_ptr<QtPromise<void>> m_load_promise;
       EventHandler m_event_handler;
       boost::optional<EventHandler> m_order_event_handler;
       boost::signals2::scoped_connection m_order_added_connection;
@@ -58,10 +56,12 @@ namespace Spire {
       boost::optional<std::vector<Nexus::ExecutionReport>> monitor(
         const OrderLogModel::OrderEntry& order);
       void query_book_quotes();
+      void query_time_and_sales();
       void buffer_book_quote(const Nexus::BookQuote& quote);
       void on_bbo(const Nexus::BboQuote& bbo);
       void on_end_book_quote_buffer();
       void on_book_quote_interruption(const std::exception_ptr& e);
+      void on_session_technicals(const Nexus::SessionTechnicals& technicals);
       void on_time_and_sales(const Nexus::TimeAndSale& time_and_sale);
       void on_execution_report(const Nexus::ExecutionReport& report);
       void on_order_added(const OrderLogModel::OrderEntry& order);

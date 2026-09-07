@@ -31,17 +31,7 @@ ServiceBookViewModel::ServiceBookViewModel(Ticker ticker,
   m_market_data_client.query(bbo_query, m_event_handler.get_slot<BboQuote>(
     std::bind_front(&ServiceBookViewModel::on_bbo, this)));
   query_book_quotes();
-  auto time_and_sale_query = make_real_time_query(m_ticker);
-  time_and_sale_query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
-  m_market_data_client.query(
-    time_and_sale_query, m_event_handler.get_slot<TimeAndSale>(
-      std::bind_front(&ServiceBookViewModel::on_time_and_sales, this)));
-  m_load_promise = std::make_shared<QtPromise<void>>(QtPromise(
-    [client = m_market_data_client, ticker = m_ticker] () mutable {
-      return client.load_session_technicals(ticker);
-    }, LaunchPolicy::ASYNC).then([this] (const auto& technicals) {
-      m_model.get_session_technicals()->set(technicals);
-    }));
+  query_time_and_sales();
   on_active_blotter(m_blotter->GetActiveBlotter());
   m_active_blotter_connection = m_blotter->ConnectActiveBlotterChangedSignal(
     std::bind_front(&ServiceBookViewModel::on_active_blotter, this));
@@ -128,6 +118,33 @@ void ServiceBookViewModel::query_book_quotes() {
   });
 }
 
+void ServiceBookViewModel::query_time_and_sales() {
+  auto technicals = m_event_handler.get_slot<SessionTechnicals>(
+    std::bind_front(&ServiceBookViewModel::on_session_technicals, this));
+  auto trades = m_event_handler.get_slot<TimeAndSale>(
+    std::bind_front(&ServiceBookViewModel::on_time_and_sales, this));
+  spawn([client = m_market_data_client, ticker = m_ticker,
+      technicals = std::move(technicals),
+      trades = std::move(trades)] () mutable {
+    auto snapshot = SequencedSessionTechnicals();
+    try {
+      snapshot = client.load_session_technicals(ticker);
+    } catch(const std::exception&) {
+      technicals.close(std::current_exception());
+      trades.close(std::current_exception());
+      return;
+    }
+    technicals.push(*snapshot);
+    auto query = TickerQuery();
+    query.set_index(std::move(ticker));
+    query.set_range(
+      increment(snapshot.get_sequence()), Beam::Sequence::LAST);
+    query.set_snapshot_limit(SnapshotLimit::UNLIMITED);
+    query.set_interruption_policy(InterruptionPolicy::RECOVER_DATA);
+    client.query(query, std::move(trades));
+  });
+}
+
 void ServiceBookViewModel::buffer_book_quote(const BookQuote& quote) {
   m_buffered_book_quotes.push_back(quote);
   if(m_buffered_book_quotes.size() == 1) {
@@ -154,6 +171,11 @@ void ServiceBookViewModel::on_book_quote_interruption(
   m_buffered_book_quotes.clear();
   m_model.clear_book_quotes();
   query_book_quotes();
+}
+
+void ServiceBookViewModel::on_session_technicals(
+    const SessionTechnicals& technicals) {
+  m_model.get_session_technicals()->set(technicals);
 }
 
 void ServiceBookViewModel::on_time_and_sales(const TimeAndSale& time_and_sale) {
