@@ -49,7 +49,7 @@ namespace Spire {
       /** Updates from an execution report. */
       void update(const Nexus::ExecutionReport& report);
 
-      /** Removes all orders and pegged entries. */
+      /** Removes all orders. */
       void clear_orders();
 
       /** Removes all book quotes. */

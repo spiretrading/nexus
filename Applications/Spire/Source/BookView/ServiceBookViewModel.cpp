@@ -165,12 +165,13 @@ void ServiceBookViewModel::on_bbo(const BboQuote& bbo) {
 }
 
 void ServiceBookViewModel::on_end_book_quote_buffer() {
+  auto quotes = std::vector<BookQuote>();
+  quotes.swap(m_buffered_book_quotes);
   m_model.transact([&] {
-    for(auto& quote : m_buffered_book_quotes) {
+    for(auto& quote : quotes) {
       m_model.update(quote);
     }
   });
-  m_buffered_book_quotes.clear();
 }
 
 void ServiceBookViewModel::on_book_quote_interruption(

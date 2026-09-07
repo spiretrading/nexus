@@ -76,10 +76,10 @@ namespace Spire {
 
   template<typename T>
   void ModelTransactionLog<T>::push(const typename Type::Operation& operation) {
-    if(operation.type() == typeid(typename Type::StartTransaction())) {
+    if(operation.type() == typeid(typename Type::StartTransaction)) {
       start();
       return;
-    } else if(operation.type() == typeid(typename Type::EndTransaction())) {
+    } else if(operation.type() == typeid(typename Type::EndTransaction)) {
       end();
       return;
     }
@@ -96,7 +96,7 @@ namespace Spire {
     start();
     try {
       std::forward<F>(transaction)();
-    } catch(const std::exception&) {
+    } catch(...) {
       end();
       throw;
     }

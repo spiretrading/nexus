@@ -234,7 +234,7 @@ void BookViewWindow::HandleLink(TickerContext& context) {
       }
     });
   auto& ticker = context.GetDisplayedTicker();
-  if(ticker) {
+  if(ticker && m_ticker_view->get_current()->get() != ticker) {
     m_ticker_view->get_current()->set(ticker);
   }
 }

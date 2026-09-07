@@ -204,7 +204,6 @@ void LocalBookViewModel::remove(const OrderLogModel::OrderEntry& order) {
   auto index = static_cast<int>(std::ranges::distance(orders.begin(), i));
   auto& user_orders =
     *pick(fields.m_side, m_model.get_ask_orders(), m_model.get_bid_orders());
-  m_pegged_entries.erase(order.m_order->get_info().m_id);
   orders.erase(i);
   user_orders.remove(index);
 }
@@ -241,7 +240,6 @@ void LocalBookViewModel::clear_orders() {
   clear(*m_model.get_ask_orders());
   m_bid_orders.clear();
   m_ask_orders.clear();
-  m_pegged_entries.clear();
 }
 
 void LocalBookViewModel::clear_book_quotes() {
@@ -302,6 +300,10 @@ const std::shared_ptr<SessionTechnicalsModel>&
 }
 
 void LocalBookViewModel::submit_pegged(const Order& order) {
+  auto existing = m_pegged_entries.find(order.get_info().m_id);
+  if(existing != m_pegged_entries.end() && existing->second.m_is_initialized) {
+    return;
+  }
   auto& fields = order.get_info().m_fields;
   auto entry = PeggedOrderEntry();
   entry.m_exec_inst = PRIMARY_PEG;

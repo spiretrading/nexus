@@ -245,6 +245,51 @@ TEST_SUITE("LocalBookViewModel") {
     REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("10.50"));
   }
 
+  TEST_CASE("pegged_ratchet_survives_clear_orders") {
+    auto model = LocalBookViewModel(TICKER);
+    model.update(make_default_bbo());
+    auto order = make_order(make_pegged_order_fields(
+      TICKER, Side::BID, 100, Money::ZERO, Money::ZERO));
+    model.add(make_entry(order));
+    model.update(make_bbo(parse_money("10.50"), parse_money("10.60")));
+    model.update(make_bbo(parse_money("9.80"), parse_money("9.90")));
+    REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("10.50"));
+    model.clear_orders();
+    model.add(make_entry(order));
+    REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("10.50"));
+  }
+
+  TEST_CASE("pegged_ratchet_survives_remove") {
+    auto model = LocalBookViewModel(TICKER);
+    model.update(make_default_bbo());
+    auto order = make_order(make_pegged_order_fields(
+      TICKER, Side::BID, 100, Money::ZERO, Money::ZERO));
+    model.add(make_entry(order));
+    model.update(make_bbo(parse_money("10.50"), parse_money("10.60")));
+    model.update(make_bbo(parse_money("9.80"), parse_money("9.90")));
+    model.remove(make_entry(order));
+    REQUIRE(model.get_bid_orders()->get_size() == 0);
+    model.add(make_entry(order));
+    REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("10.50"));
+  }
+
+  TEST_CASE("pegged_ratchet_is_recomputed_after_a_terminal_report") {
+    auto model = LocalBookViewModel(TICKER);
+    model.update(make_default_bbo());
+    auto order = make_order(make_pegged_order_fields(
+      TICKER, Side::BID, 100, Money::ZERO, Money::ZERO));
+    model.add(make_entry(order));
+    model.update(make_bbo(parse_money("10.50"), parse_money("10.60")));
+    model.update(make_bbo(parse_money("9.80"), parse_money("9.90")));
+    auto report = ExecutionReport();
+    report.m_id = order->get_info().m_id;
+    report.m_status = OrderStatus::CANCELED;
+    model.update(report);
+    REQUIRE(model.get_bid_orders()->get_size() == 0);
+    model.add(make_entry(order));
+    REQUIRE(model.get_bid_orders()->get(0).m_price == parse_money("9.80"));
+  }
+
   TEST_CASE("pegged_order_with_limit") {
     auto model = LocalBookViewModel(TICKER);
     model.update(make_bbo(parse_money("9.99"), parse_money("10.01")));

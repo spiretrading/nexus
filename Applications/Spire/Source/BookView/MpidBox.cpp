@@ -122,7 +122,9 @@ void MpidBox::update_venue_state(const BookEntry& entry) {
         unmatch(*this, VenueRow(m_current_venue));
       }
       m_current_venue = quote->m_venue;
-      match(*this, VenueRow(quote->m_venue));
+      if(m_current_venue) {
+        match(*this, VenueRow(m_current_venue));
+      }
     }
   } else if(m_current_venue) {
     unmatch(*this, VenueRow(m_current_venue));
