@@ -189,6 +189,9 @@ std::unique_ptr<LegacyUI::WindowSettings>
 }
 
 void BookViewWindow::keyPressEvent(QKeyEvent* event) {
+  if(!m_ticker_view->get_current()->get()) {
+    return;
+  }
   auto sequence = QKeySequence(event->modifiers() | event->key());
   if(m_task_entry_panel) {
     on_task_entry_key_press(*event);
