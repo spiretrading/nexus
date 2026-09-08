@@ -338,7 +338,9 @@ void Nexus::Python::export_ticker_snapshot(module& module) {
     def_readwrite("bbo_quote", &TickerSnapshot::m_bbo_quote).
     def_readwrite("time_and_sale", &TickerSnapshot::m_time_and_sale).
     def_readwrite("asks", &TickerSnapshot::m_asks).
-    def_readwrite("bids", &TickerSnapshot::m_bids);
+    def_readwrite("bids", &TickerSnapshot::m_bids).
+    def_readwrite(
+      "book_quote_sequence", &TickerSnapshot::m_book_quote_sequence);
 }
 
 void Nexus::Python::export_sqlite_historical_data_store(module& module) {
