@@ -35,6 +35,7 @@ CALL :BuildApp Applications\ChartingServer %*
 CALL :BuildApp Applications\ChiaMarketDataFeedClient %*
 CALL :BuildApp Applications\ComplianceServer %*
 CALL :BuildApp Applications\CseMarketDataFeedClient %*
+CALL :BuildApp Applications\CxaPitchMarketDataFeedClient %*
 CALL :BuildApp Applications\DefinitionsServer %*
 CALL :BuildApp Applications\Lollipop %*
 CALL :BuildApp Applications\MarketDataRelayServer %*

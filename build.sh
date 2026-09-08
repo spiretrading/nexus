@@ -16,6 +16,7 @@ main() {
     "Applications/ChiaMarketDataFeedClient"
     "Applications/ComplianceServer"
     "Applications/CseMarketDataFeedClient"
+    "Applications/CxaPitchMarketDataFeedClient"
     "Applications/DefinitionsServer"
     "Applications/MarketDataRelayServer"
     "Applications/MarketDataServer"

@@ -16,6 +16,7 @@ services=(
   "AsxItchMarketDataFeedClient"
   "ChiaMarketDataFeedClient"
   "CseMarketDataFeedClient"
+  "CxaPitchMarketDataFeedClient"
   "NeoeMarketDataFeedClient"
   "TmxTl1MarketDataFeedClient"
   "TmxIpMarketDataFeedClient"

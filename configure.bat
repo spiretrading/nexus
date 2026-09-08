@@ -18,6 +18,7 @@ CALL :Configure Applications\ChartingServer %*
 CALL :Configure Applications\ChiaMarketDataFeedClient %*
 CALL :Configure Applications\ComplianceServer %*
 CALL :Configure Applications\CseMarketDataFeedClient %*
+CALL :Configure Applications\CxaPitchMarketDataFeedClient %*
 CALL :Configure Applications\DefinitionsServer %*
 CALL :Configure Applications\Lollipop %*
 CALL :Configure Applications\MarketDataRelayServer %*
