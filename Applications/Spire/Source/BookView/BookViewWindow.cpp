@@ -372,12 +372,11 @@ std::vector<OrderId> BookViewWindow::find_order_ids(
   return ids;
 }
 
-void BookViewWindow::cancel(const CurrentUserOrder& user_order,
+void BookViewWindow::cancel(Side side, std::vector<OrderId> ids,
     CancelKeyBindingsModel::Operation ask_operation,
     CancelKeyBindingsModel::Operation bid_operation) {
-  m_cancel_operation_signal(
-    pick(user_order.m_side, ask_operation, bid_operation),
-    m_ticker_view->get_current()->get(), find_order_ids(user_order));
+  m_cancel_operation_signal(pick(side, ask_operation, bid_operation),
+    m_ticker_view->get_current()->get(), std::move(ids));
 }
 
 bool BookViewWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
@@ -404,10 +403,15 @@ bool BookViewWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
 void BookViewWindow::on_context_menu(const QPoint& pos) {
   auto menu = new ContextMenu(*m_ticker_view);
   if(auto current = get_current_user_order(m_book_depth)) {
+    auto ids = find_order_ids(*current);
     menu->add_action(tr("Cancel Single Selected"),
-      std::bind_front(&BookViewWindow::on_cancel_most_recent, this, *current));
+      std::bind_front(&BookViewWindow::cancel, this, current->m_side, ids,
+        CancelKeyBindingsModel::Operation::MOST_RECENT_ASK,
+        CancelKeyBindingsModel::Operation::MOST_RECENT_BID));
     menu->add_action(tr("Cancel All Selected"),
-      std::bind_front(&BookViewWindow::on_cancel_all, this, *current));
+      std::bind_front(&BookViewWindow::cancel, this, current->m_side,
+        std::move(ids), CancelKeyBindingsModel::Operation::ALL_ASKS,
+        CancelKeyBindingsModel::Operation::ALL_BIDS));
     menu->add_separator();
   }
   menu->add_action(tr("Properties"),
@@ -449,12 +453,14 @@ void BookViewWindow::on_task_entry_key_press(const QKeyEvent& event) {
 }
 
 void BookViewWindow::on_cancel_most_recent(const CurrentUserOrder& user_order) {
-  cancel(user_order, CancelKeyBindingsModel::Operation::MOST_RECENT_ASK,
+  cancel(user_order.m_side, find_order_ids(user_order),
+    CancelKeyBindingsModel::Operation::MOST_RECENT_ASK,
     CancelKeyBindingsModel::Operation::MOST_RECENT_BID);
 }
 
 void BookViewWindow::on_cancel_all(const CurrentUserOrder& user_order) {
-  cancel(user_order, CancelKeyBindingsModel::Operation::ALL_ASKS,
+  cancel(user_order.m_side, find_order_ids(user_order),
+    CancelKeyBindingsModel::Operation::ALL_ASKS,
     CancelKeyBindingsModel::Operation::ALL_BIDS);
 }
 

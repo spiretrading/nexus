@@ -51,6 +51,7 @@ struct BookViewController::EventFilter : QObject {
   bool eventFilter(QObject* watched, QEvent* event) override {
     if(event->type() == QEvent::Close) {
       m_controller->close();
+      return false;
     }
     return QObject::eventFilter(watched, event);
   }
@@ -68,6 +69,9 @@ BookViewController::BookViewController(
 
 BookViewController::~BookViewController() {
   close();
+  if(m_event_filter) {
+    m_event_filter.release()->deleteLater();
+  }
 }
 
 void BookViewController::open() {

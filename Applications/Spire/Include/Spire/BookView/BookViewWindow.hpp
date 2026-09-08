@@ -139,7 +139,7 @@ namespace Spire {
       void remove_task_entry_panel();
       std::vector<Nexus::OrderId> find_order_ids(
         const CurrentUserOrder& user_order) const;
-      void cancel(const CurrentUserOrder& user_order,
+      void cancel(Nexus::Side side, std::vector<Nexus::OrderId> ids,
         CancelKeyBindingsModel::Operation ask_operation,
         CancelKeyBindingsModel::Operation bid_operation);
       bool on_key_press(QWidget& target, const QKeyEvent& event);

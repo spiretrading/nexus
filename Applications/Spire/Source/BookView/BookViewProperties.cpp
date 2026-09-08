@@ -21,6 +21,18 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  void repair_font(QFont& font) {
+    if(font.pixelSize() >= 1) {
+      return;
+    }
+    if(font.pointSize() > 0) {
+      font.setPixelSize(scale_width(font.pointSize()));
+    } else {
+      font.setPixelSize(BookViewProperties::get_default().
+        m_level_properties.m_font.pixelSize());
+    }
+  }
+
   auto load_legacy_properties(const std::filesystem::path& path) {
     auto properties = LegacyBookViewWindowSettings::Properties();
     try {
@@ -61,6 +73,7 @@ BookViewProperties Spire::to_book_view_properties(
     const LegacyBookViewWindowSettings::Properties& legacy_properties) {
   auto properties = BookViewProperties::get_default();
   properties.m_level_properties.m_font = legacy_properties.m_book_quote_font;
+  repair_font(properties.m_level_properties.m_font);
   properties.m_level_properties.m_is_grid_enabled =
     legacy_properties.m_show_grid;
   properties.m_level_properties.m_fill_type =
@@ -198,6 +211,7 @@ BookViewProperties Spire::load_book_view_properties(
     properties.m_level_properties.m_color_scheme =
       BookViewProperties::get_default().m_level_properties.m_color_scheme;
   }
+  repair_font(properties.m_level_properties.m_font);
   return properties;
 }
 
