@@ -78,11 +78,15 @@ namespace Spire {
         bool m_is_initialized;
       };
       AggregateBookViewModel m_model;
+      Nexus::Ticker m_ticker;
       std::string m_market_center;
+      boost::posix_time::ptime m_session_reset_time;
+      Nexus::Money m_last_price;
       std::vector<std::shared_ptr<Nexus::Order>> m_bid_orders;
       std::vector<std::shared_ptr<Nexus::Order>> m_ask_orders;
       std::unordered_map<Nexus::OrderId, PeggedOrderEntry> m_pegged_entries;
 
+      void reset_session_technicals();
       void submit_pegged(const Nexus::Order& order);
       void update_pegged_orders();
   };
