@@ -1,6 +1,7 @@
 #include "Spire/BookView/BookViewPropertiesWindowFactory.hpp"
 #include <ranges>
 
+using namespace boost::signals2;
 using namespace Nexus;
 using namespace Spire;
 
@@ -33,6 +34,8 @@ BookViewPropertiesWindowFactory::BookViewPropertiesWindowFactory(
     m_has_interactions_snapshot(false) {
   m_ticker_connection = m_ticker->connect_update_signal(
     std::bind_front(&BookViewPropertiesWindowFactory::on_ticker, this));
+  m_properties_connection = m_properties->connect_update_signal(
+    std::bind_front(&BookViewPropertiesWindowFactory::on_properties, this));
 }
 
 const std::shared_ptr<BookViewPropertiesModel>&
@@ -116,10 +119,19 @@ void BookViewPropertiesWindowFactory::on_ticker(const Ticker& ticker) {
   snapshot_interactions();
 }
 
+void BookViewPropertiesWindowFactory::on_properties(
+    const BookViewProperties& properties) {
+  if(!m_preview) {
+    return;
+  }
+  m_preview->set(properties);
+}
+
 void BookViewPropertiesWindowFactory::on_submit() {
   if(!m_live_preview) {
     return;
   }
+  auto blocker = shared_connection_block(m_properties_connection);
   m_properties->set(m_preview->get());
   m_live_preview->set_source(m_properties);
   m_window_proxy->set_source(m_properties);

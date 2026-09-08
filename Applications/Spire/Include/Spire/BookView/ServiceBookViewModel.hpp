@@ -2,6 +2,7 @@
 #define SPIRE_SERVICE_BOOK_VIEW_MODEL_HPP
 #include <unordered_map>
 #include <vector>
+#include <QTimer>
 #include "Nexus/MarketDataService/MarketDataClient.hpp"
 #include "Spire/Async/EventHandler.hpp"
 #include "Spire/Blotter/Blotter.hpp"
@@ -43,6 +44,8 @@ namespace Spire {
       std::unordered_map<Nexus::OrderId, int> m_order_sequences;
       LocalBookViewModel m_model;
       std::vector<Nexus::BookQuote> m_buffered_book_quotes;
+      QTimer m_book_quote_retry_timer;
+      QTimer m_time_and_sale_retry_timer;
       EventHandler m_event_handler;
       boost::optional<EventHandler> m_order_event_handler;
       boost::signals2::scoped_connection m_order_added_connection;

@@ -61,10 +61,12 @@ namespace Spire {
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_cancel_connection;
       boost::signals2::scoped_connection m_ticker_connection;
+      boost::signals2::scoped_connection m_properties_connection;
 
       void snapshot_interactions();
       void revert_interactions();
       void on_ticker(const Nexus::Ticker& ticker);
+      void on_properties(const BookViewProperties& properties);
       void on_submit();
       void on_cancel();
   };

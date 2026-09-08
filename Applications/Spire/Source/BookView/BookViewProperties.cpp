@@ -73,7 +73,6 @@ BookViewProperties Spire::to_book_view_properties(
     const LegacyBookViewWindowSettings::Properties& legacy_properties) {
   auto properties = BookViewProperties::get_default();
   properties.m_level_properties.m_font = legacy_properties.m_book_quote_font;
-  repair_font(properties.m_level_properties.m_font);
   properties.m_level_properties.m_is_grid_enabled =
     legacy_properties.m_show_grid;
   properties.m_level_properties.m_fill_type =
@@ -109,7 +108,16 @@ BookViewProperties Spire::to_book_view_properties(
           highlight.first, color, level));
     }
   }
+  repair_book_view_properties(properties);
   return properties;
+}
+
+void Spire::repair_book_view_properties(BookViewProperties& properties) {
+  if(properties.m_level_properties.m_color_scheme.empty()) {
+    properties.m_level_properties.m_color_scheme =
+      BookViewProperties::get_default().m_level_properties.m_color_scheme;
+  }
+  repair_font(properties.m_level_properties.m_font);
 }
 
 const BookViewLevelProperties& BookViewLevelProperties::get_default() {
@@ -207,11 +215,7 @@ BookViewProperties Spire::load_book_view_properties(
       QObject::tr("Unable to load book view properties, using defaults."));
     return BookViewProperties::get_default();
   }
-  if(properties.m_level_properties.m_color_scheme.empty()) {
-    properties.m_level_properties.m_color_scheme =
-      BookViewProperties::get_default().m_level_properties.m_color_scheme;
-  }
-  repair_font(properties.m_level_properties.m_font);
+  repair_book_view_properties(properties);
   return properties;
 }
 
