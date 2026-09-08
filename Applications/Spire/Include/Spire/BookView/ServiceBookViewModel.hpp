@@ -60,6 +60,7 @@ namespace Spire {
       void on_book_quote_interruption(const std::exception_ptr& e);
       void on_session_technicals(const Nexus::SessionTechnicals& technicals);
       void on_time_and_sales(const Nexus::TimeAndSale& time_and_sale);
+      void on_time_and_sales_interruption(const std::exception_ptr& e);
       void on_execution_report(const Nexus::ExecutionReport& report);
       void on_order_added(const OrderLogModel::OrderEntry& order);
       void on_order_removed(const OrderLogModel::OrderEntry& order);

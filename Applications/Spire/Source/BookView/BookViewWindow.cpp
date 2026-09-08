@@ -460,7 +460,7 @@ void BookViewWindow::on_cancel_all(const CurrentUserOrder& user_order) {
 
 void BookViewWindow::on_properties_menu() {
   auto properties_window = m_factory->make(
-    m_key_bindings, m_ticker_view->get_current()->get(), m_properties_proxy);
+    m_key_bindings, m_ticker_view->get_current(), m_properties_proxy);
   if(!properties_window->isVisible()) {
     properties_window->show();
     if(screen()->geometry().right() - frameGeometry().right() >=

@@ -43,12 +43,13 @@ namespace Spire {
        */
       BookViewPropertiesWindow* make(
         std::shared_ptr<KeyBindingsModel> key_bindings,
-        const Nexus::Ticker& ticker,
+        std::shared_ptr<TickerModel> ticker,
         std::shared_ptr<ProxyValueModel<BookViewProperties>> live_preview);
 
     private:
       std::shared_ptr<BookViewPropertiesModel> m_properties;
-      std::shared_ptr<TickerModel> m_ticker;
+      std::shared_ptr<ProxyValueModel<Nexus::Ticker>> m_ticker;
+      Nexus::Ticker m_snapshot_ticker;
       std::unique_ptr<BookViewPropertiesWindow> m_properties_window;
       std::shared_ptr<ProxyValueModel<BookViewProperties>> m_window_proxy;
       std::shared_ptr<LocalBookViewPropertiesModel> m_preview;
@@ -59,9 +60,11 @@ namespace Spire {
       bool m_has_interactions_snapshot;
       boost::signals2::scoped_connection m_submit_connection;
       boost::signals2::scoped_connection m_cancel_connection;
+      boost::signals2::scoped_connection m_ticker_connection;
 
       void snapshot_interactions();
       void revert_interactions();
+      void on_ticker(const Nexus::Ticker& ticker);
       void on_submit();
       void on_cancel();
   };

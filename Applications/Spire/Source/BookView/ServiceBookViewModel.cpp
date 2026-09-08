@@ -129,7 +129,9 @@ void ServiceBookViewModel::query_time_and_sales() {
   auto technicals = m_event_handler.get_slot<SessionTechnicals>(
     std::bind_front(&ServiceBookViewModel::on_session_technicals, this));
   auto trades = m_event_handler.get_slot<TimeAndSale>(
-    std::bind_front(&ServiceBookViewModel::on_time_and_sales, this));
+    std::bind_front(&ServiceBookViewModel::on_time_and_sales, this),
+    std::bind_front(
+      &ServiceBookViewModel::on_time_and_sales_interruption, this));
   spawn([client = m_market_data_client, ticker = m_ticker,
       technicals = std::move(technicals),
       trades = std::move(trades)] () mutable {
@@ -188,6 +190,11 @@ void ServiceBookViewModel::on_session_technicals(
 
 void ServiceBookViewModel::on_time_and_sales(const TimeAndSale& time_and_sale) {
   m_model.update(time_and_sale);
+}
+
+void ServiceBookViewModel::on_time_and_sales_interruption(
+    const std::exception_ptr&) {
+  query_time_and_sales();
 }
 
 void ServiceBookViewModel::on_execution_report(const ExecutionReport& report) {

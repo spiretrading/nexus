@@ -1,5 +1,6 @@
 #include "Spire/BookView/BookViewController.hpp"
 #include <algorithm>
+#include <QMessageBox>
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
@@ -117,6 +118,8 @@ void BookViewController::on_submit_task(
     const std::shared_ptr<CanvasNode>& task) {
   auto errors = Validate(*task);
   if(!errors.empty()) {
+    QMessageBox::warning(m_window, QObject::tr("Error"),
+      QString::fromStdString(errors.front().GetErrorMessage()));
     return;
   }
   auto& active_blotter =

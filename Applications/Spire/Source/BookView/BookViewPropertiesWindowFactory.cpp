@@ -28,9 +28,12 @@ BookViewPropertiesWindowFactory::BookViewPropertiesWindowFactory()
 BookViewPropertiesWindowFactory::BookViewPropertiesWindowFactory(
   std::shared_ptr<BookViewPropertiesModel> properties)
   : m_properties(std::move(properties)),
-    m_ticker(std::make_shared<LocalTickerModel>()),
+    m_ticker(make_proxy_value_model(std::make_shared<LocalTickerModel>())),
     m_are_interactions_detached(true),
-    m_has_interactions_snapshot(false) {}
+    m_has_interactions_snapshot(false) {
+  m_ticker_connection = m_ticker->connect_update_signal(
+    std::bind_front(&BookViewPropertiesWindowFactory::on_ticker, this));
+}
 
 const std::shared_ptr<BookViewPropertiesModel>&
     BookViewPropertiesWindowFactory::get_properties() const {
@@ -53,24 +56,19 @@ BookViewPropertiesWindow* BookViewPropertiesWindowFactory::make(
 }
 
 BookViewPropertiesWindow* BookViewPropertiesWindowFactory::make(
-    std::shared_ptr<KeyBindingsModel> key_bindings, const Ticker& ticker,
+    std::shared_ptr<KeyBindingsModel> key_bindings,
+    std::shared_ptr<TickerModel> ticker,
     std::shared_ptr<ProxyValueModel<BookViewProperties>> live_preview) {
   make(std::move(key_bindings));
   if(m_live_preview == live_preview) {
-    if(m_ticker->get() != ticker) {
-      revert_interactions();
-      m_ticker->set(ticker);
-      snapshot_interactions();
-    }
+    m_ticker->set_source(std::move(ticker));
     return m_properties_window.get();
   }
   if(m_live_preview) {
     revert_interactions();
     m_live_preview->set_source(m_properties);
   }
-  if(m_ticker->get() != ticker) {
-    m_ticker->set(ticker);
-  }
+  m_ticker->set_source(std::move(ticker));
   m_preview = std::make_shared<LocalBookViewPropertiesModel>(
     m_properties->get());
   m_live_preview = std::move(live_preview);
@@ -81,8 +79,9 @@ BookViewPropertiesWindow* BookViewPropertiesWindowFactory::make(
 }
 
 void BookViewPropertiesWindowFactory::snapshot_interactions() {
+  m_snapshot_ticker = m_ticker->get();
   auto& current =
-    m_key_bindings->get_interactions_key_bindings(m_ticker->get());
+    m_key_bindings->get_interactions_key_bindings(m_snapshot_ticker);
   if(current) {
     m_are_interactions_detached = current->is_detached();
     copy_interactions(*current, m_initial_interactions);
@@ -97,7 +96,7 @@ void BookViewPropertiesWindowFactory::revert_interactions() {
     return;
   }
   auto& current =
-    m_key_bindings->get_interactions_key_bindings(m_ticker->get());
+    m_key_bindings->get_interactions_key_bindings(m_snapshot_ticker);
   if(current) {
     if(m_are_interactions_detached) {
       copy_interactions(m_initial_interactions, *current);
@@ -106,6 +105,15 @@ void BookViewPropertiesWindowFactory::revert_interactions() {
     }
   }
   m_has_interactions_snapshot = false;
+}
+
+void BookViewPropertiesWindowFactory::on_ticker(const Ticker& ticker) {
+  if(!m_live_preview ||
+      m_has_interactions_snapshot && ticker == m_snapshot_ticker) {
+    return;
+  }
+  revert_interactions();
+  snapshot_interactions();
 }
 
 void BookViewPropertiesWindowFactory::on_submit() {
