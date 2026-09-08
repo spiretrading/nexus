@@ -1,5 +1,6 @@
 #ifndef SPIRE_BOOK_VIEW_WINDOW_HPP
 #define SPIRE_BOOK_VIEW_WINDOW_HPP
+#include <unordered_map>
 #include <vector>
 #include <boost/optional/optional.hpp>
 #include "Spire/BookView/BookViewModel.hpp"
@@ -38,13 +39,16 @@ namespace Spire {
        * Signals that a cancellation operation is emitted.
        * @param operation The cancellation operation.
        * @param ticker The ticker for which orders will be canceled.
+       * @param prices The price displayed for an order, used to rank the orders
+       *        being canceled.
        * @param ids The ids of the orders to cancel, or none to cancel every
        *        order for the <i>ticker</i>.
        */
-      using CancelOperationSignal = Signal<void (
-        CancelKeyBindingsModel::Operation operation,
-        const Nexus::Ticker& ticker,
-        const boost::optional<std::vector<Nexus::OrderId>>& ids)>;
+      using CancelOperationSignal =
+        Signal<void (CancelKeyBindingsModel::Operation operation,
+          const Nexus::Ticker& ticker,
+          const std::unordered_map<Nexus::OrderId, Nexus::Money>& prices,
+          const boost::optional<std::vector<Nexus::OrderId>>& ids)>;
 
       /**
        * The type of function used to build a BookViewModel based on
@@ -139,6 +143,8 @@ namespace Spire {
       void remove_task_entry_panel();
       std::vector<Nexus::OrderId> find_order_ids(
         const CurrentUserOrder& user_order) const;
+      std::unordered_map<Nexus::OrderId, Nexus::Money>
+        find_order_prices() const;
       void cancel(Nexus::Side side, std::vector<Nexus::OrderId> ids,
         CancelKeyBindingsModel::Operation ask_operation,
         CancelKeyBindingsModel::Operation bid_operation);

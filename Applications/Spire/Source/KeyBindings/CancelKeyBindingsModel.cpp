@@ -122,9 +122,23 @@ void CancelKeyBindingsModel::on_update(Operation operation,
 
 void Spire::execute(CancelKeyBindingsModel::Operation operation,
     Out<std::vector<std::shared_ptr<Task>>> tasks) {
+  auto prices = std::unordered_map<std::shared_ptr<Task>, Money>();
+  execute(operation, prices, tasks);
+}
+
+void Spire::execute(CancelKeyBindingsModel::Operation operation,
+    const std::unordered_map<std::shared_ptr<Task>, Money>& prices,
+    Out<std::vector<std::shared_ptr<Task>>> tasks) {
   if(tasks->empty()) {
     return;
   }
+  auto find_price = [&] (const std::shared_ptr<Task>& task) {
+    auto i = prices.find(task);
+    if(i != prices.end()) {
+      return boost::optional<Money>(i->second);
+    }
+    return get_price(task->GetNode());
+  };
   auto tasks_to_cancel = std::vector<std::shared_ptr<Task>>();
   auto expected_side = get_side(operation);
   if(operation == CancelKeyBindingsModel::Operation::MOST_RECENT) {
@@ -173,7 +187,7 @@ void Spire::execute(CancelKeyBindingsModel::Operation operation,
       auto closest_price = optional<Money>();
       for(auto i = begin; i != end; ++i) {
         if(get_side((*i)->GetNode()) == expected_side) {
-          if(auto price = get_price((*i)->GetNode())) {
+          if(auto price = find_price(*i)) {
             if(!closest_price || (find_max ?
                 *price > *closest_price : *price < *closest_price)) {
               closest_price = *price;

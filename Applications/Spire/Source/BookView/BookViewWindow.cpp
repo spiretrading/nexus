@@ -207,8 +207,8 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
     display_interactions_panel();
   } else if(auto operation =
       m_key_bindings->get_cancel_key_bindings()->find_operation(sequence)) {
-    m_cancel_operation_signal(
-      *operation, m_ticker_view->get_current()->get(), none);
+    m_cancel_operation_signal(*operation,
+      m_ticker_view->get_current()->get(), find_order_prices(), none);
   } else if(auto arguments = find_order_task_arguments(
       *m_key_bindings->get_order_task_arguments(),
       m_ticker_view->get_current()->get(), sequence)) {
@@ -372,11 +372,28 @@ std::vector<OrderId> BookViewWindow::find_order_ids(
   return ids;
 }
 
+std::unordered_map<OrderId, Money> BookViewWindow::find_order_prices() const {
+  auto prices = std::unordered_map<OrderId, Money>();
+  if(!m_model) {
+    return prices;
+  }
+  auto add_side = [&] (const auto& orders) {
+    for(auto i = 0; i != orders->get_size(); ++i) {
+      auto& order = orders->get(i);
+      prices.insert(std::pair(order.m_id, order.m_price));
+    }
+  };
+  add_side(m_model->get_ask_orders());
+  add_side(m_model->get_bid_orders());
+  return prices;
+}
+
 void BookViewWindow::cancel(Side side, std::vector<OrderId> ids,
     CancelKeyBindingsModel::Operation ask_operation,
     CancelKeyBindingsModel::Operation bid_operation) {
   m_cancel_operation_signal(pick(side, ask_operation, bid_operation),
-    m_ticker_view->get_current()->get(), std::move(ids));
+    m_ticker_view->get_current()->get(), find_order_prices(),
+    std::move(ids));
 }
 
 bool BookViewWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
@@ -523,8 +540,8 @@ void BookViewWindow::on_order_operation(Side side,
         CancelKeyBindingsModel::Operation::ALL_BIDS);
       if(operation.get_value().m_status == OrderStatus::FILLED &&
           m_interactions->is_cancel_on_fill()->get()) {
-        m_cancel_operation_signal(
-          cancel_operation, m_ticker_view->get_current()->get(), none);
+        m_cancel_operation_signal(cancel_operation,
+          m_ticker_view->get_current()->get(), find_order_prices(), none);
       }
     });
 }
