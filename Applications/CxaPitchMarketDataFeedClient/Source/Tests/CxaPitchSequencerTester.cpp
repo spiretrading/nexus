@@ -1,6 +1,8 @@
 #include <cstdint>
 #include <string>
+#include <string_view>
 #include <vector>
+#include <boost/optional/optional.hpp>
 #include <doctest/doctest.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
@@ -10,6 +12,15 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
+  int read(CxaPitchSequencer& sequencer) {
+    auto payload = sequencer.read();
+    if(!payload) {
+      return 0;
+    }
+    return CxaPitchMessage::parse(
+      std::string_view(payload->get_data(), payload->get_size())).m_type;
+  }
+
   std::string encode_block(
       std::uint32_t sequence, const std::vector<std::uint8_t>& types) {
     auto payload = std::string();
@@ -40,10 +51,10 @@ TEST_SUITE("CxaPitchSequencer") {
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto data = encode_block(1, {0x11, 0x12, 0x13});
     sequencer.add(0, CxaPitchBlock::parse(data), timestamp);
-    REQUIRE(sequencer.read()->m_type == 0x11);
-    REQUIRE(sequencer.read()->m_type == 0x12);
-    REQUIRE(sequencer.read()->m_type == 0x13);
-    REQUIRE(!sequencer.read());
+    REQUIRE(read(sequencer) == 0x11);
+    REQUIRE(read(sequencer) == 0x12);
+    REQUIRE(read(sequencer) == 0x13);
+    REQUIRE(!read(sequencer));
     REQUIRE(!sequencer.get_gap());
   }
 
@@ -54,17 +65,17 @@ TEST_SUITE("CxaPitchSequencer") {
     auto first = encode_block(1, {0x11, 0x12});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
-    REQUIRE(sequencer.read()->m_type == 0x11);
-    REQUIRE(sequencer.read()->m_type == 0x12);
-    REQUIRE(!sequencer.read());
+    REQUIRE(read(sequencer) == 0x11);
+    REQUIRE(read(sequencer) == 0x12);
+    REQUIRE(!read(sequencer));
     auto fourth = encode_block(4, {0x14});
     sequencer.add(0, CxaPitchBlock::parse(fourth), timestamp);
-    REQUIRE(!sequencer.read());
+    REQUIRE(!read(sequencer));
     REQUIRE(!sequencer.get_gap());
     auto third = encode_block(3, {0x13});
     sequencer.add(1, CxaPitchBlock::parse(third), timestamp);
-    REQUIRE(sequencer.read()->m_type == 0x13);
-    REQUIRE(sequencer.read()->m_type == 0x14);
+    REQUIRE(read(sequencer) == 0x13);
+    REQUIRE(read(sequencer) == 0x14);
     REQUIRE(!sequencer.get_gap());
   }
 
@@ -75,8 +86,8 @@ TEST_SUITE("CxaPitchSequencer") {
     auto first = encode_block(1, {0x11, 0x12});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
-    REQUIRE(sequencer.read()->m_type == 0x11);
-    REQUIRE(sequencer.read()->m_type == 0x12);
+    REQUIRE(read(sequencer) == 0x11);
+    REQUIRE(read(sequencer) == 0x12);
     auto fourth = encode_block(4, {0x14});
     sequencer.add(0, CxaPitchBlock::parse(fourth), timestamp);
     REQUIRE(!sequencer.get_gap());
@@ -93,8 +104,8 @@ TEST_SUITE("CxaPitchSequencer") {
     auto first = encode_block(1, {0x11, 0x12});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
-    REQUIRE(sequencer.read()->m_type == 0x11);
-    REQUIRE(sequencer.read()->m_type == 0x12);
+    REQUIRE(read(sequencer) == 0x11);
+    REQUIRE(read(sequencer) == 0x12);
     auto fifth = encode_block(5, {0x15});
     sequencer.add(0, CxaPitchBlock::parse(fifth), timestamp);
     REQUIRE(!sequencer.get_gap());
@@ -112,8 +123,8 @@ TEST_SUITE("CxaPitchSequencer") {
     auto first = encode_block(1, {0x11, 0x12});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
-    REQUIRE(sequencer.read()->m_type == 0x11);
-    REQUIRE(sequencer.read()->m_type == 0x12);
+    REQUIRE(read(sequencer) == 0x11);
+    REQUIRE(read(sequencer) == 0x12);
     auto fourth = encode_block(4, {0x14});
     sequencer.add(0, CxaPitchBlock::parse(fourth), timestamp);
     auto heartbeat = encode_block(0, {});
@@ -128,8 +139,8 @@ TEST_SUITE("CxaPitchSequencer") {
     auto first = encode_block(1, {0x11, 0x12});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
-    REQUIRE(sequencer.read()->m_type == 0x11);
-    REQUIRE(sequencer.read()->m_type == 0x12);
+    REQUIRE(read(sequencer) == 0x11);
+    REQUIRE(read(sequencer) == 0x12);
     auto fourth = encode_block(4, {0x14});
     sequencer.add(0, CxaPitchBlock::parse(fourth), timestamp);
     REQUIRE(!sequencer.get_gap());
@@ -144,9 +155,9 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(gap->m_count == 1);
     auto third = encode_block(3, {0x13});
     sequencer.add(1, CxaPitchBlock::parse(third), later);
-    REQUIRE(sequencer.read()->m_type == 0x13);
-    REQUIRE(sequencer.read()->m_type == 0x14);
-    REQUIRE(sequencer.read()->m_type == 0x15);
+    REQUIRE(read(sequencer) == 0x13);
+    REQUIRE(read(sequencer) == 0x14);
+    REQUIRE(read(sequencer) == 0x15);
     auto seventh = encode_block(7, {0x17});
     sequencer.add(0, CxaPitchBlock::parse(seventh), later);
     REQUIRE(!sequencer.get_gap());
@@ -158,8 +169,8 @@ TEST_SUITE("CxaPitchSequencer") {
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11, 0x12});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
-    REQUIRE(sequencer.read()->m_type == 0x11);
-    REQUIRE(sequencer.read()->m_type == 0x12);
+    REQUIRE(read(sequencer) == 0x11);
+    REQUIRE(read(sequencer) == 0x12);
     auto fourth = encode_block(4, {0x14});
     sequencer.add(0, CxaPitchBlock::parse(fourth), timestamp);
     auto gap = sequencer.get_gap();
@@ -174,9 +185,9 @@ TEST_SUITE("CxaPitchSequencer") {
     auto data = encode_block(1, {0x11, 0x12, 0x13});
     sequencer.add(0, CxaPitchBlock::parse(data), timestamp);
     sequencer.reset(2);
-    REQUIRE(sequencer.read()->m_type == 0x12);
-    REQUIRE(sequencer.read()->m_type == 0x13);
-    REQUIRE(!sequencer.read());
+    REQUIRE(read(sequencer) == 0x12);
+    REQUIRE(read(sequencer) == 0x13);
+    REQUIRE(!read(sequencer));
   }
 
   TEST_CASE("recover_fills_a_confirmed_gap") {
@@ -185,7 +196,7 @@ TEST_SUITE("CxaPitchSequencer") {
     auto first = encode_block(1, {0x11});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
-    REQUIRE(sequencer.read()->m_type == 0x11);
+    REQUIRE(read(sequencer) == 0x11);
     auto fourth = encode_block(4, {0x14});
     sequencer.add(0, CxaPitchBlock::parse(fourth), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(fourth), timestamp);
@@ -194,9 +205,9 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(gap->m_count == 2);
     auto replay = encode_block(2, {0x12, 0x13});
     sequencer.recover(CxaPitchBlock::parse(replay));
-    REQUIRE(sequencer.read()->m_type == 0x12);
-    REQUIRE(sequencer.read()->m_type == 0x13);
-    REQUIRE(sequencer.read()->m_type == 0x14);
+    REQUIRE(read(sequencer) == 0x12);
+    REQUIRE(read(sequencer) == 0x13);
+    REQUIRE(read(sequencer) == 0x14);
     REQUIRE(!sequencer.get_gap());
   }
 
@@ -206,10 +217,10 @@ TEST_SUITE("CxaPitchSequencer") {
     auto first = encode_block(1, {0x11});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
-    REQUIRE(sequencer.read()->m_type == 0x11);
+    REQUIRE(read(sequencer) == 0x11);
     auto replay = encode_block(3, {0x13});
     sequencer.recover(CxaPitchBlock::parse(replay));
-    REQUIRE(!sequencer.read());
+    REQUIRE(!read(sequencer));
     REQUIRE(!sequencer.get_gap());
   }
 
@@ -217,11 +228,11 @@ TEST_SUITE("CxaPitchSequencer") {
     auto sequencer = CxaPitchSequencer(1, duration_from_string("00:00:03"));
     auto replay = encode_block(1, {0x11});
     sequencer.recover(CxaPitchBlock::parse(replay));
-    REQUIRE(!sequencer.read());
+    REQUIRE(!read(sequencer));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto second = encode_block(2, {0x12});
     sequencer.add(0, CxaPitchBlock::parse(second), timestamp);
-    REQUIRE(sequencer.read()->m_type == 0x12);
+    REQUIRE(read(sequencer) == 0x12);
   }
 
   TEST_CASE("add_rejects_an_unknown_feed") {

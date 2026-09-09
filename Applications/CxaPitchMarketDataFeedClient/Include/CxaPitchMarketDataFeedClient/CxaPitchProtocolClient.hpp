@@ -1,5 +1,6 @@
 #ifndef CXA_PITCH_PROTOCOL_CLIENT_HPP
 #define CXA_PITCH_PROTOCOL_CLIENT_HPP
+#include <concepts>
 #include <exception>
 #include <string_view>
 #include <type_traits>
@@ -16,6 +17,13 @@
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
 
 namespace Nexus {
+
+  /** Concept satisfied by types delivering the blocks of a CXA PITCH feed. */
+  template<typename T>
+  concept IsCxaPitchProtocolClient = requires(T& t) {
+    { t.read() } -> std::same_as<CxaPitchBlock>;
+    { t.close() } -> std::same_as<void>;
+  };
 
   /**
    * Reads the blocks delivered by a CXA PITCH feed.

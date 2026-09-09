@@ -35,7 +35,7 @@ namespace Nexus {
 
   /** Concept satisfied by types implementing a CXA PITCH server session. */
   template<typename T>
-  concept IsCxaPitchSession = requires(T& t) {
+  concept IsCxaPitchSessionClient = requires(T& t) {
     { t.read() } -> std::same_as<CxaPitchMessage>;
     { t.write(std::declval<const CxaPitchGapRequest&>()) } ->
       std::same_as<void>;

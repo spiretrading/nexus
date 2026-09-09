@@ -1,5 +1,6 @@
 #ifndef CXA_PITCH_SPIN_CLIENT_HPP
 #define CXA_PITCH_SPIN_CLIENT_HPP
+#include <concepts>
 #include <cstdint>
 #include <exception>
 #include <functional>
@@ -33,11 +34,20 @@ namespace Nexus {
     std::vector<Beam::SharedBuffer> m_messages;
   };
 
+  /** Concept satisfied by types requesting a snapshot of a unit's book. */
+  template<typename T>
+  concept IsCxaPitchSpinClient = requires(T& t) {
+    { t.get_offers() } -> std::convertible_to<
+      const std::shared_ptr<Beam::Queue<std::uint32_t>>&>;
+    { t.request(std::declval<std::uint32_t>()) } -> std::same_as<CxaPitchSpin>;
+    { t.close() } -> std::same_as<void>;
+  };
+
   /**
    * Requests a snapshot of a unit's open orders from a CXA PITCH spin server.
    * @param <S> The type of session connected to the spin server.
    */
-  template<typename S> requires IsCxaPitchSession<Beam::dereference_t<S>>
+  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   class CxaPitchSpinClient {
     public:
 
@@ -84,7 +94,7 @@ namespace Nexus {
   template<typename SF>
   CxaPitchSpinClient(SF&&) -> CxaPitchSpinClient<std::remove_cvref_t<SF>>;
 
-  template<typename S> requires IsCxaPitchSession<Beam::dereference_t<S>>
+  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   template<Beam::Initializes<S> SF>
   CxaPitchSpinClient<S>::CxaPitchSpinClient(SF&& session)
       try : m_session(std::forward<SF>(session)),
@@ -98,18 +108,18 @@ namespace Nexus {
       "Failed to initialize the CXA PITCH spin client."));
   }
 
-  template<typename S> requires IsCxaPitchSession<Beam::dereference_t<S>>
+  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   CxaPitchSpinClient<S>::~CxaPitchSpinClient() {
     close();
   }
 
-  template<typename S> requires IsCxaPitchSession<Beam::dereference_t<S>>
+  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   const std::shared_ptr<Beam::Queue<std::uint32_t>>&
       CxaPitchSpinClient<S>::get_offers() const {
     return m_offers;
   }
 
-  template<typename S> requires IsCxaPitchSession<Beam::dereference_t<S>>
+  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   CxaPitchSpin CxaPitchSpinClient<S>::request(std::uint32_t sequence) {
     auto message = CxaPitchSpinRequest();
     message.m_sequence = sequence;
@@ -117,7 +127,7 @@ namespace Nexus {
     return m_spins->pop();
   }
 
-  template<typename S> requires IsCxaPitchSession<Beam::dereference_t<S>>
+  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   void CxaPitchSpinClient<S>::close() {
     if(m_open_state.set_closing()) {
       return;
@@ -129,7 +139,7 @@ namespace Nexus {
     m_open_state.close();
   }
 
-  template<typename S> requires IsCxaPitchSession<Beam::dereference_t<S>>
+  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   void CxaPitchSpinClient<S>::read_loop() {
     try {
       while(true) {

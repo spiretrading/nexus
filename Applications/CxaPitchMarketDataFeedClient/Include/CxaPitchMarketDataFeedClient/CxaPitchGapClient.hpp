@@ -1,6 +1,7 @@
 #ifndef CXA_PITCH_GAP_CLIENT_HPP
 #define CXA_PITCH_GAP_CLIENT_HPP
 #include <algorithm>
+#include <concepts>
 #include <cstdint>
 #include <exception>
 #include <functional>
@@ -20,12 +21,24 @@
 
 namespace Nexus {
 
+  /** Concept satisfied by types requesting the retransmission of messages. */
+  template<typename T>
+  concept IsCxaPitchGapClient = requires(T& t) {
+    { t.request(std::declval<std::uint8_t>(),
+        std::declval<const CxaPitchGap&>(), std::declval<std::uint32_t>(),
+        std::declval<boost::posix_time::ptime>()) } ->
+          std::same_as<std::uint32_t>;
+    { t.get_responses() } -> std::convertible_to<
+      const std::shared_ptr<Beam::Queue<CxaPitchGapResponse>>&>;
+    { t.close() } -> std::same_as<void>;
+  };
+
   /**
    * Requests the retransmission of missing messages from a CXA PITCH gap
    * request proxy, within the limits that the proxy imposes.
    * @param <S> The type of session connected to the gap request proxy.
    */
-  template<typename S> requires IsCxaPitchSession<Beam::dereference_t<S>>
+  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   class CxaPitchGapClient {
     public:
 
@@ -95,7 +108,7 @@ namespace Nexus {
   template<typename SF>
   CxaPitchGapClient(SF&&) -> CxaPitchGapClient<std::remove_cvref_t<SF>>;
 
-  template<typename S> requires IsCxaPitchSession<Beam::dereference_t<S>>
+  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   template<Beam::Initializes<S> SF>
   CxaPitchGapClient<S>::CxaPitchGapClient(SF&& session)
       try : m_session(std::forward<SF>(session)),
@@ -110,12 +123,12 @@ namespace Nexus {
       "Failed to initialize the CXA PITCH gap client."));
   }
 
-  template<typename S> requires IsCxaPitchSession<Beam::dereference_t<S>>
+  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   CxaPitchGapClient<S>::~CxaPitchGapClient() {
     close();
   }
 
-  template<typename S> requires IsCxaPitchSession<Beam::dereference_t<S>>
+  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   std::uint32_t CxaPitchGapClient<S>::request(std::uint8_t unit,
       const CxaPitchGap& gap, std::uint32_t live,
       boost::posix_time::ptime timestamp) {
@@ -143,13 +156,13 @@ namespace Nexus {
     return requested;
   }
 
-  template<typename S> requires IsCxaPitchSession<Beam::dereference_t<S>>
+  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   const std::shared_ptr<Beam::Queue<CxaPitchGapResponse>>&
       CxaPitchGapClient<S>::get_responses() const {
     return m_responses;
   }
 
-  template<typename S> requires IsCxaPitchSession<Beam::dereference_t<S>>
+  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   void CxaPitchGapClient<S>::close() {
     if(m_open_state.set_closing()) {
       return;
@@ -160,7 +173,7 @@ namespace Nexus {
     m_open_state.close();
   }
 
-  template<typename S> requires IsCxaPitchSession<Beam::dereference_t<S>>
+  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   void CxaPitchGapClient<S>::renew(boost::posix_time::ptime timestamp) {
     auto time = timestamp.time_of_day();
     auto second = boost::posix_time::ptime(
@@ -181,7 +194,7 @@ namespace Nexus {
     }
   }
 
-  template<typename S> requires IsCxaPitchSession<Beam::dereference_t<S>>
+  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   void CxaPitchGapClient<S>::read_loop() {
     try {
       while(true) {

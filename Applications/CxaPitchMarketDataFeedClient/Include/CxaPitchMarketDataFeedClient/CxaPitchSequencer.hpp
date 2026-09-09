@@ -58,8 +58,11 @@ namespace Nexus {
        */
       void update(boost::posix_time::ptime timestamp);
 
-      /** Returns the next message in sequence. */
-      boost::optional<CxaPitchMessage> read();
+      /** Returns the payload of the next message in sequence. */
+      boost::optional<Beam::SharedBuffer> read();
+
+      /** Returns the sequence of the next message to return. */
+      boost::optional<std::uint32_t> get_sequence() const;
 
       /** Returns the range of sequences that are missing from every feed. */
       boost::optional<CxaPitchGap> get_gap() const;
@@ -79,7 +82,6 @@ namespace Nexus {
       boost::posix_time::time_duration m_liveness;
       std::vector<Feed> m_feeds;
       std::map<std::uint32_t, Beam::SharedBuffer> m_messages;
-      Beam::SharedBuffer m_payload;
       std::uint32_t m_expected;
       bool m_is_initialized;
 
@@ -130,7 +132,7 @@ namespace Nexus {
     expire(timestamp);
   }
 
-  inline boost::optional<CxaPitchMessage> CxaPitchSequencer::read() {
+  inline boost::optional<Beam::SharedBuffer> CxaPitchSequencer::read() {
     if(!m_is_initialized) {
       return boost::none;
     }
@@ -138,11 +140,18 @@ namespace Nexus {
     if(entry == m_messages.end()) {
       return boost::none;
     }
-    m_payload = std::move(entry->second);
+    auto payload = std::move(entry->second);
     m_messages.erase(entry);
     ++m_expected;
-    return CxaPitchMessage::parse(
-      std::string_view(m_payload.get_data(), m_payload.get_size()));
+    return payload;
+  }
+
+  inline boost::optional<std::uint32_t>
+      CxaPitchSequencer::get_sequence() const {
+    if(!m_is_initialized) {
+      return boost::none;
+    }
+    return m_expected;
   }
 
   inline boost::optional<CxaPitchGap> CxaPitchSequencer::get_gap() const {
