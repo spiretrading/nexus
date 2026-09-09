@@ -1,6 +1,5 @@
 #include <cstddef>
 #include <cstdint>
-#include <iostream>
 #include <memory>
 #include <stdexcept>
 #include <vector>
@@ -99,28 +98,19 @@ int main(int argc, const char** argv) {
     };
     auto gap_client = optional<std::unique_ptr<ApplicationGapClient>>();
     if(feed_configuration.m_retransmission) {
-      try {
-        auto session = *feed_configuration.m_retransmission;
-        gap_client = std::make_unique<ApplicationGapClient>(
+      auto session = *feed_configuration.m_retransmission;
+      gap_client = try_or_nest([&] {
+        return std::make_unique<ApplicationGapClient>(
           [=] { return make_session(session); }, init(RECONNECT));
-        std::cout << ",retransmission,connected" << std::endl;
-      } catch(const std::exception&) {
-        std::cout << ",retransmission,error" << std::endl;
-        std::cout << make_exception_report(std::current_exception()) <<
-          std::endl;
-      }
+      }, std::runtime_error(
+        "Unable to connect to the CXA PITCH gap request proxy."));
     }
     auto spin_client = optional<std::unique_ptr<ApplicationSpinClient>>();
     if(feed_configuration.m_spin) {
-      try {
-        spin_client = std::make_unique<ApplicationSpinClient>(
+      spin_client = try_or_nest([&] {
+        return std::make_unique<ApplicationSpinClient>(
           make_session(*feed_configuration.m_spin));
-        std::cout << ",spin,connected" << std::endl;
-      } catch(const std::exception&) {
-        std::cout << ",spin,error" << std::endl;
-        std::cout << make_exception_report(std::current_exception()) <<
-          std::endl;
-      }
+      }, std::runtime_error("Unable to connect to the CXA PITCH spin server."));
     }
     auto feeds = std::vector<std::unique_ptr<ApplicationProtocolClient>>();
     auto recovery = std::vector<std::unique_ptr<ApplicationProtocolClient>>();

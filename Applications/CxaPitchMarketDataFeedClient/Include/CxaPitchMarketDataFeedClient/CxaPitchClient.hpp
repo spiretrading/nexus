@@ -386,6 +386,10 @@ namespace Nexus {
     } catch(const std::exception&) {}
     Beam::with(m_sequencer, [&] (auto& sequencer) {
       if(!m_is_ready) {
+        if(m_open_state.is_open()) {
+          std::cout << "(no_spin " << m_time_client->get_time() << ')' <<
+            std::endl;
+        }
         m_is_ready = true;
         flush(sequencer);
       }
