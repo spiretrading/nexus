@@ -4,6 +4,7 @@
 #include <cstddef>
 #include <cstdint>
 #include <exception>
+#include <iostream>
 #include <functional>
 #include <memory>
 #include <string_view>
@@ -18,6 +19,7 @@
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
+#include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/optional/optional.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
@@ -250,6 +252,8 @@ namespace Nexus {
             pending = *gap;
             position = m_live;
           } else if(timestamp - m_gap_timestamp > m_gap_timeout) {
+            std::cout << "(dropped " << timestamp << ' ' << gap->m_sequence <<
+              ' ' << gap->m_count << ')' << std::endl;
             sequencer.reset(gap->m_sequence + gap->m_count);
             m_reported_gap = 0;
             flush(sequencer);
@@ -306,6 +310,9 @@ namespace Nexus {
           if(!gap || gap->m_sequence != response.m_sequence) {
             return;
           }
+          std::cout << "(dropped " << m_time_client->get_time() << ' ' <<
+            response.m_sequence << ' ' << response.m_count << ')' <<
+            std::endl;
           sequencer.reset(response.m_sequence + response.m_count);
           m_reported_gap = 0;
           flush(sequencer);

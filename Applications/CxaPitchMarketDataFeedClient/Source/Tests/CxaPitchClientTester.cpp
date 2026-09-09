@@ -210,6 +210,29 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(client.read().m_type == 0x15);
   }
 
+  TEST_CASE("skip_a_rejected_gap") {
+    auto first = StubProtocolClient();
+    auto second = StubProtocolClient();
+    auto gap_client = StubGapClient();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = Client(1, seconds(3), seconds(5),
+      std::vector<StubProtocolClient*>({&first, &second}),
+      std::vector<StubProtocolClient*>(), &gap_client, none, &time_client);
+    first.m_blocks->push(encode_block(1, {0x11}));
+    second.m_blocks->push(encode_block(1, {0x11}));
+    REQUIRE(client.read().m_type == 0x11);
+    first.m_blocks->push(encode_block(4, {0x14}));
+    second.m_blocks->push(encode_block(4, {0x14}));
+    REQUIRE(gap_client.m_requests->pop().m_sequence == 2);
+    auto response = CxaPitchGapResponse();
+    response.m_unit = 1;
+    response.m_sequence = 2;
+    response.m_count = 2;
+    response.m_status = 'O';
+    gap_client.m_responses->push(response);
+    REQUIRE(client.read().m_type == 0x14);
+  }
+
   TEST_CASE("apply_a_snapshot_before_the_live_messages") {
     auto feed = StubProtocolClient();
     auto spin_client = StubSpinClient();
