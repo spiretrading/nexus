@@ -297,6 +297,33 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     REQUIRE(!feed.m_time_and_sales->try_pop());
   }
 
+  TEST_CASE("forget_a_fully_executed_order") {
+    auto feed = StubMarketDataFeedClient();
+    auto pitch = StubClient();
+    auto client = Client(CONFIGURATION, &feed, &pitch);
+    pitch.m_messages->push(ADD_ORDER);
+    feed.m_operations->pop();
+    pitch.m_messages->push(ORDER_EXECUTED);
+    REQUIRE(feed.m_operations->pop() == "(offset " + ORDER_ID + " -700)");
+    feed.m_time_and_sales->pop();
+    pitch.m_messages->push(UNIT_CLEAR);
+    pitch.m_messages->push(ADD_ORDER);
+    REQUIRE(feed.m_operations->pop() == "(add " + ORDER_ID + ' ' +
+      to_string(TICKER) + ' ' + to_string(Side::BID) + ' ' + to_string(PRICE) +
+      " 700)");
+  }
+
+  TEST_CASE("disclose_an_undisclosed_order") {
+    auto feed = StubMarketDataFeedClient();
+    auto pitch = StubClient();
+    auto client = Client(CONFIGURATION, &feed, &pitch);
+    pitch.m_messages->push(UNDISCLOSED_ADD_ORDER);
+    pitch.m_messages->push(MODIFY_ORDER);
+    REQUIRE(feed.m_operations->pop() == "(add " + ORDER_ID + ' ' +
+      to_string(TICKER) + ' ' + to_string(Side::ASK) + ' ' +
+      to_string(EXECUTION_PRICE) + " 300)");
+  }
+
   TEST_CASE("report_a_trade") {
     auto feed = StubMarketDataFeedClient();
     auto pitch = StubClient();

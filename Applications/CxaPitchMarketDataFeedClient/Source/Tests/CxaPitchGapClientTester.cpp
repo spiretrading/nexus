@@ -1,3 +1,4 @@
+#include <cstddef>
 #include <cstdint>
 #include <memory>
 #include <string>
@@ -5,6 +6,7 @@
 #include <vector>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
@@ -18,6 +20,7 @@ namespace {
   struct StubSession {
     std::vector<std::string> m_requests;
     std::shared_ptr<Queue<SharedBuffer>> m_messages;
+    std::shared_ptr<Queue<int>> m_gate;
     SharedBuffer m_payload;
 
     StubSession()
@@ -31,6 +34,9 @@ namespace {
 
     template<typename M>
     void write(const M& message) {
+      if(m_gate) {
+        m_gate->pop();
+      }
       auto buffer = SharedBuffer();
       message.encode(out(buffer));
       m_requests.emplace_back(buffer.get_data(), buffer.get_size());
@@ -38,6 +44,9 @@ namespace {
 
     void close() {
       m_messages->close();
+      if(m_gate) {
+        m_gate->push(0);
+      }
     }
   };
 
@@ -163,6 +172,59 @@ TEST_SUITE("CxaPitchGapClient") {
     auto rejected = client.get_responses()->pop();
     REQUIRE(rejected.m_sequence == 900);
     REQUIRE(rejected.m_status != CxaPitchGapResponse::ACCEPTED);
+  }
+
+  TEST_CASE("close_while_connecting") {
+    auto first = StubSession();
+    auto second = StubSession();
+    auto sessions = std::vector<StubSession*>({&first, &second});
+    auto index = std::size_t(0);
+    auto gate = std::make_shared<Queue<int>>();
+    auto timer = TriggerTimer();
+    auto client = GapClient([&] {
+      if(index != 0) {
+        gate->pop();
+      }
+      return sessions[index++];
+    }, &timer);
+    timer.trigger();
+    first.close();
+    flush_pending_routines();
+    auto is_closed = std::make_shared<Queue<bool>>();
+    auto closer = RoutineHandler(spawn([&] {
+      client.close();
+      is_closed->push(true);
+    }));
+    flush_pending_routines();
+    gate->push(0);
+    flush_pending_routines();
+    auto is_shut = static_cast<bool>(is_closed->try_pop());
+    second.close();
+    closer.wait();
+    REQUIRE(is_shut);
+  }
+
+  TEST_CASE("close_while_writing_a_request") {
+    auto session = StubSession();
+    session.m_gate = std::make_shared<Queue<int>>();
+    auto timer = TriggerTimer();
+    auto client = GapClient([&] { return &session; }, &timer);
+    auto timestamp = time_from_string("2026-09-09 10:00:00");
+    auto requester = RoutineHandler(spawn([&] {
+      client.request(1, make_gap(1000, 50), 1000, timestamp);
+    }));
+    flush_pending_routines();
+    auto is_closed = std::make_shared<Queue<bool>>();
+    auto closer = RoutineHandler(spawn([&] {
+      client.close();
+      is_closed->push(true);
+    }));
+    flush_pending_routines();
+    auto is_shut = static_cast<bool>(is_closed->try_pop());
+    session.m_gate->push(0);
+    requester.wait();
+    closer.wait();
+    REQUIRE(is_shut);
   }
 
   TEST_CASE("reconnect_after_the_session_is_lost") {

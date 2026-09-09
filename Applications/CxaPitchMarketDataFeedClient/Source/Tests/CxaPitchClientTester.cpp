@@ -7,6 +7,7 @@
 #include <vector>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/optional/optional.hpp>
@@ -104,6 +105,27 @@ namespace {
     StubSpinClient*, FixedTimeClient*>;
 
   const auto TIMESTAMP = time_from_string("2026-09-09 10:00:00");
+
+  struct MessageReader {
+    Client* m_client;
+    std::shared_ptr<Queue<int>> m_types;
+    RoutineHandler m_routine;
+
+    explicit MessageReader(Client& client)
+      : m_client(&client),
+        m_types(std::make_shared<Queue<int>>()),
+        m_routine(spawn([&client, types = m_types] {
+          try {
+            while(true) {
+              types->push(client.read().m_type);
+            }
+          } catch(const std::exception&) {}
+        })) {}
+
+    ~MessageReader() {
+      m_client->close();
+    }
+  };
 
   SharedBuffer encode_block(
       std::uint32_t sequence, const std::vector<std::uint8_t>& types) {
@@ -222,6 +244,90 @@ TEST_SUITE("CxaPitchClient") {
     auto retry = gap_client.m_requests->pop();
     REQUIRE(retry.m_sequence == 3);
     REQUIRE(retry.m_count == 1);
+  }
+
+  TEST_CASE("survive_a_malformed_block") {
+    auto feed = StubProtocolClient();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = Client(
+      1, seconds(3), seconds(5), std::vector<StubProtocolClient*>({&feed}),
+      std::vector<StubProtocolClient*>(), none, none, &time_client);
+    feed.m_blocks->push(encode_block(1, {0x11}));
+    REQUIRE(client.read().m_type == 0x11);
+    feed.m_blocks->push(SharedBuffer("\xff\x00\x01\x01\x02\x00\x00\x00", 8));
+    feed.m_blocks->push(encode_block(2, {0x12}));
+    flush_pending_routines();
+    REQUIRE(!feed.m_blocks->try_pop());
+  }
+
+  TEST_CASE("start_without_a_snapshot_offer") {
+    auto feed = StubProtocolClient();
+    auto spin_client = StubSpinClient();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = Client(
+      1, seconds(3), seconds(5), std::vector<StubProtocolClient*>({&feed}),
+      std::vector<StubProtocolClient*>(), none, &spin_client, &time_client);
+    auto reader = MessageReader(client);
+    feed.m_blocks->push(encode_block(1, {0x11}));
+    time_client.set(TIMESTAMP + seconds(6));
+    feed.m_blocks->push(encode_block(2, {0x12}));
+    flush_pending_routines();
+    auto type = reader.m_types->try_pop().value_or(0);
+    REQUIRE(type == 0x11);
+  }
+
+  TEST_CASE("skip_a_gap_whose_later_chunk_is_rejected") {
+    auto first = StubProtocolClient();
+    auto second = StubProtocolClient();
+    auto gap_client = StubGapClient();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = Client(1, seconds(3), seconds(5),
+      std::vector<StubProtocolClient*>({&first, &second}),
+      std::vector<StubProtocolClient*>(), &gap_client, none, &time_client);
+    auto reader = MessageReader(client);
+    first.m_blocks->push(encode_block(1, {0x11}));
+    second.m_blocks->push(encode_block(1, {0x11}));
+    REQUIRE(reader.m_types->pop() == 0x11);
+    first.m_blocks->push(encode_block(250, {0x14}));
+    second.m_blocks->push(encode_block(250, {0x14}));
+    auto gap = gap_client.m_requests->pop();
+    REQUIRE(gap.m_sequence == 2);
+    REQUIRE(gap.m_count == 248);
+    auto response = CxaPitchGapResponse();
+    response.m_unit = 1;
+    response.m_sequence = 202;
+    response.m_count = 48;
+    response.m_status = 'O';
+    gap_client.m_responses->push(response);
+    flush_pending_routines();
+    auto type = reader.m_types->try_pop().value_or(0);
+    REQUIRE(type == 0x14);
+  }
+
+  TEST_CASE("request_a_partially_recovered_gap_once") {
+    auto first = StubProtocolClient();
+    auto second = StubProtocolClient();
+    auto recovery = StubProtocolClient();
+    auto gap_client = StubGapClient();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = Client(1, seconds(3), seconds(5),
+      std::vector<StubProtocolClient*>({&first, &second}),
+      std::vector<StubProtocolClient*>({&recovery}), &gap_client, none,
+      &time_client);
+    auto reader = MessageReader(client);
+    first.m_blocks->push(encode_block(1, {0x11}));
+    second.m_blocks->push(encode_block(1, {0x11}));
+    REQUIRE(reader.m_types->pop() == 0x11);
+    first.m_blocks->push(encode_block(5, {0x15}));
+    second.m_blocks->push(encode_block(5, {0x15}));
+    REQUIRE(gap_client.m_requests->pop().m_count == 3);
+    recovery.m_blocks->push(encode_block(2, {0x12}));
+    REQUIRE(reader.m_types->pop() == 0x12);
+    first.m_blocks->push(encode_block(6, {0x16}));
+    second.m_blocks->push(encode_block(6, {0x16}));
+    flush_pending_routines();
+    auto is_requested = static_cast<bool>(gap_client.m_requests->try_pop());
+    REQUIRE(!is_requested);
   }
 
   TEST_CASE("drop_a_gap_with_no_proxy") {
