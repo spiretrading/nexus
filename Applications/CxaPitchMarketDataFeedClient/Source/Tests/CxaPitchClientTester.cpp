@@ -1,4 +1,6 @@
+#include <algorithm>
 #include <cstdint>
+#include <limits>
 #include <memory>
 #include <string>
 #include <string_view>
@@ -42,15 +44,17 @@ namespace {
   struct StubGapClient {
     std::shared_ptr<Queue<CxaPitchGap>> m_requests;
     std::shared_ptr<Queue<CxaPitchGapResponse>> m_responses;
+    std::uint32_t m_limit;
 
     StubGapClient()
       : m_requests(std::make_shared<Queue<CxaPitchGap>>()),
-        m_responses(std::make_shared<Queue<CxaPitchGapResponse>>()) {}
+        m_responses(std::make_shared<Queue<CxaPitchGapResponse>>()),
+        m_limit(std::numeric_limits<std::uint32_t>::max()) {}
 
     std::uint32_t request(std::uint8_t unit, const CxaPitchGap& gap,
         std::uint32_t live, ptime timestamp) {
       m_requests->push(gap);
-      return gap.m_count;
+      return std::min(gap.m_count, m_limit);
     }
 
     const std::shared_ptr<Queue<CxaPitchGapResponse>>&
@@ -188,6 +192,30 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(client.read().m_type == 0x12);
     REQUIRE(client.read().m_type == 0x13);
     REQUIRE(client.read().m_type == 0x14);
+  }
+
+  TEST_CASE("retry_a_throttled_gap_request") {
+    auto first = StubProtocolClient();
+    auto second = StubProtocolClient();
+    auto gap_client = StubGapClient();
+    gap_client.m_limit = 1;
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = Client(1, seconds(3), seconds(5),
+      std::vector<StubProtocolClient*>({&first, &second}),
+      std::vector<StubProtocolClient*>(), &gap_client, none, &time_client);
+    first.m_blocks->push(encode_block(1, {0x11}));
+    second.m_blocks->push(encode_block(1, {0x11}));
+    REQUIRE(client.read().m_type == 0x11);
+    first.m_blocks->push(encode_block(4, {0x14}));
+    second.m_blocks->push(encode_block(4, {0x14}));
+    auto request = gap_client.m_requests->pop();
+    REQUIRE(request.m_sequence == 2);
+    REQUIRE(request.m_count == 2);
+    first.m_blocks->push(encode_block(5, {0x15}));
+    second.m_blocks->push(encode_block(5, {0x15}));
+    auto retry = gap_client.m_requests->pop();
+    REQUIRE(retry.m_sequence == 3);
+    REQUIRE(retry.m_count == 1);
   }
 
   TEST_CASE("skip_a_gap_that_stays_unfilled") {

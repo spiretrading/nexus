@@ -109,6 +109,7 @@ namespace Nexus {
       std::shared_ptr<Beam::Queue<Beam::SharedBuffer>> m_messages;
       Beam::SharedBuffer m_payload;
       std::uint32_t m_reported_gap;
+      std::uint32_t m_requested;
       std::uint32_t m_live;
       boost::posix_time::ptime m_gap_timestamp;
       bool m_is_ready;
@@ -145,6 +146,7 @@ namespace Nexus {
             m_sequencer(static_cast<int>(m_feeds.size()), liveness),
             m_messages(std::make_shared<Beam::Queue<Beam::SharedBuffer>>()),
             m_reported_gap(0),
+            m_requested(0),
             m_live(0),
             m_gap_timestamp(m_time_client->get_time()),
             m_is_ready(!m_spin) {
@@ -255,19 +257,32 @@ namespace Nexus {
           }
           if(gap->m_sequence != m_reported_gap) {
             m_reported_gap = gap->m_sequence;
+            m_requested = gap->m_sequence;
             m_gap_timestamp = timestamp;
-            pending = *gap;
-            position = m_live;
           } else if(timestamp - m_gap_timestamp > m_gap_timeout) {
             std::cout << "(dropped " << timestamp << ' ' << gap->m_sequence <<
               ' ' << gap->m_count << ')' << std::endl;
             sequencer.reset(gap->m_sequence + gap->m_count);
             m_reported_gap = 0;
             flush(sequencer);
+            return;
+          }
+          auto end = gap->m_sequence + gap->m_count;
+          if(m_requested < end) {
+            pending = CxaPitchGap(m_requested, end - m_requested);
+            position = m_live;
+            m_requested = end;
           }
         });
         if(pending && m_gap) {
-          (*m_gap)->request(m_unit, *pending, position, timestamp);
+          auto count = (*m_gap)->request(m_unit, *pending, position, timestamp);
+          if(count != pending->m_count) {
+            Beam::with(m_sequencer, [&] (auto&) {
+              if(m_requested == pending->m_sequence + pending->m_count) {
+                m_requested = pending->m_sequence + count;
+              }
+            });
+          }
         }
       } catch(const std::exception&) {
         break;
