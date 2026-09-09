@@ -3,4 +3,15 @@ service_locator:
   address: $service_locator_address
   username: $username
   password: $admin_password
+
+enable_logging: true
+unit: 2
+venue: CXA
+disseminating_venue: CXA
+mpid: CXA
+liveness: 3s
+interface: "$local_interface:6002"
+feeds:
+  - name: PRIMARY
+    address: "233.218.133.2:6002"
 ...
