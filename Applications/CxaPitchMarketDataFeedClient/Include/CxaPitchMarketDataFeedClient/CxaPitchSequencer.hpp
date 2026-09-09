@@ -33,10 +33,9 @@ namespace Nexus {
        * Constructs a CxaPitchSequencer.
        * @param feeds The number of feeds to merge.
        * @param liveness How long a feed may be silent before it is excluded.
-       * @param capacity The number of messages that may be held out of order.
        */
       CxaPitchSequencer(
-        int feeds, boost::posix_time::time_duration liveness, int capacity);
+        int feeds, boost::posix_time::time_duration liveness);
 
       /**
        * Adds a block received from a feed.
@@ -72,7 +71,6 @@ namespace Nexus {
         boost::posix_time::ptime m_timestamp;
       };
       boost::posix_time::time_duration m_liveness;
-      std::size_t m_capacity;
       std::vector<Feed> m_feeds;
       std::map<std::uint32_t, Beam::SharedBuffer> m_messages;
       Beam::SharedBuffer m_payload;
@@ -83,9 +81,8 @@ namespace Nexus {
   };
 
   inline CxaPitchSequencer::CxaPitchSequencer(
-    int feeds, boost::posix_time::time_duration liveness, int capacity)
+    int feeds, boost::posix_time::time_duration liveness)
     : m_liveness(liveness),
-      m_capacity(capacity),
       m_feeds(feeds),
       m_expected(0),
       m_is_initialized(false) {}
@@ -114,8 +111,7 @@ namespace Nexus {
     }
     auto sequence = header.m_sequence;
     for(auto& message : block) {
-      if(sequence >= m_expected && m_messages.size() < m_capacity &&
-          !m_messages.contains(sequence)) {
+      if(sequence >= m_expected && !m_messages.contains(sequence)) {
         m_messages.emplace(sequence, Beam::SharedBuffer(
           message.m_payload - CxaPitchMessage::HEADER_LENGTH,
           message.m_length));
@@ -148,31 +144,22 @@ namespace Nexus {
       return boost::none;
     }
     auto end = std::uint32_t(0);
-    auto has_source = false;
-    auto is_confirmed = true;
     for(auto& source : m_feeds) {
       if(!source.m_is_active) {
         continue;
       }
-      has_source = true;
       if(source.m_position <= m_expected) {
-        is_confirmed = false;
-      } else if(end == 0 || source.m_position < end) {
+        return boost::none;
+      }
+      if(end == 0 || source.m_position < end) {
         end = source.m_position;
       }
     }
-    if(!has_source) {
+    if(end == 0) {
       return boost::none;
     }
-    if(!is_confirmed && m_messages.size() < m_capacity) {
-      return boost::none;
-    }
-    if(!m_messages.empty() &&
-        (end == 0 || m_messages.begin()->first < end)) {
+    if(!m_messages.empty() && m_messages.begin()->first < end) {
       end = m_messages.begin()->first;
-    }
-    if(end <= m_expected) {
-      return boost::none;
     }
     auto gap = CxaPitchGap();
     gap.m_sequence = m_expected;
