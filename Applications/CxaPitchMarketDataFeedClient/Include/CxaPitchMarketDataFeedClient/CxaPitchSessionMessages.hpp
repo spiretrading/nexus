@@ -11,12 +11,6 @@
 #include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"
 
 namespace Nexus {
-namespace Details {
-  constexpr auto SESSION_SUB_ID_LENGTH = 4;
-  constexpr auto USERNAME_LENGTH = 4;
-  constexpr auto FILLER_LENGTH = 2;
-  constexpr auto PASSWORD_LENGTH = 10;
-}
 
   /** Stores a login message. */
   struct CxaPitchLogin {
@@ -217,13 +211,17 @@ namespace Details {
 
   template<Beam::IsBuffer B>
   void CxaPitchLogin::encode(Beam::Out<B> buffer) const {
+    constexpr auto SESSION_SUB_ID_LENGTH = 4;
+    constexpr auto USERNAME_LENGTH = 4;
+    constexpr auto FILLER_LENGTH = 2;
+    constexpr auto PASSWORD_LENGTH = 10;
     auto encoder = CxaPitchEncoder(Beam::Ref(*buffer));
     encoder.write_uint8(static_cast<std::uint8_t>(LENGTH));
     encoder.write_uint8(TYPE);
-    encoder.write_text(m_session_sub_id, Details::SESSION_SUB_ID_LENGTH);
-    encoder.write_text(m_username, Details::USERNAME_LENGTH);
-    encoder.pad(Details::FILLER_LENGTH);
-    encoder.write_text(m_password, Details::PASSWORD_LENGTH);
+    encoder.write_text(m_session_sub_id, SESSION_SUB_ID_LENGTH);
+    encoder.write_text(m_username, USERNAME_LENGTH);
+    encoder.pad(FILLER_LENGTH);
+    encoder.write_text(m_password, PASSWORD_LENGTH);
   }
 
   inline CxaPitchLoginResponse CxaPitchLoginResponse::parse(

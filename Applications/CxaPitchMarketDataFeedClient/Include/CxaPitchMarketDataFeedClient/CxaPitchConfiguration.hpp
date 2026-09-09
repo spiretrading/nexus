@@ -126,9 +126,9 @@ namespace Nexus {
 
   inline CxaPitchConfiguration CxaPitchConfiguration::parse(
       const YAML::Node& config) {
-    static const auto DEFAULT_LIVENESS = boost::posix_time::seconds(3);
-    static const auto DEFAULT_GAP_TIMEOUT = boost::posix_time::seconds(5);
     return Beam::try_or_nest([&] {
+      static const auto DEFAULT_LIVENESS = boost::posix_time::seconds(3);
+      static const auto DEFAULT_GAP_TIMEOUT = boost::posix_time::seconds(5);
       auto configuration = CxaPitchConfiguration();
       configuration.m_is_logging_messages =
         Beam::extract<bool>(config, "enable_logging", false);

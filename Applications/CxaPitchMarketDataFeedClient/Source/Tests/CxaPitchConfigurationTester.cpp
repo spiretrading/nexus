@@ -91,7 +91,7 @@ feeds:
     REQUIRE(!config.m_spin);
   }
 
-  TEST_CASE("parse_rejects_an_empty_feed_list") {
+  TEST_CASE("parse_empty_feed_list") {
     auto source = std::string(R"(
 unit: 1
 venue: ASX
@@ -102,7 +102,7 @@ feeds: []
       CxaPitchConfiguration::parse(YAML::Load(source)), std::runtime_error);
   }
 
-  TEST_CASE("parse_rejects_a_missing_unit") {
+  TEST_CASE("parse_missing_unit") {
     auto source = std::string(R"(
 venue: ASX
 disseminating_venue: CXA
@@ -115,7 +115,7 @@ feeds:
       CxaPitchConfiguration::parse(YAML::Load(source)), std::runtime_error);
   }
 
-  TEST_CASE("parse_rejects_an_unknown_venue") {
+  TEST_CASE("parse_unknown_venue") {
     auto source = std::string(R"(
 unit: 1
 venue: NOPE

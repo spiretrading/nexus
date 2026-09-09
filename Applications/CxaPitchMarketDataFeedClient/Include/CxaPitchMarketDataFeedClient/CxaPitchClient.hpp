@@ -4,10 +4,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <exception>
-#include <iostream>
 #include <functional>
+#include <iostream>
 #include <memory>
 #include <string_view>
+#include <type_traits>
 #include <utility>
 #include <vector>
 #include <Beam/IO/ConnectException.hpp>
@@ -128,6 +129,12 @@ namespace Nexus {
       void response_loop();
       void spin_loop();
   };
+
+  template<typename P, typename G, typename S, typename R>
+  CxaPitchClient(std::uint8_t, boost::posix_time::time_duration,
+    boost::posix_time::time_duration, std::vector<P>, std::vector<P>,
+    boost::optional<G>, boost::optional<S>, R&&) ->
+      CxaPitchClient<P, G, S, std::remove_cvref_t<R>>;
 
   template<typename P, typename G, typename S, typename R>
     requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&

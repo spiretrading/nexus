@@ -48,14 +48,6 @@ namespace {
     CxaPitchGapClient<ApplicationSessionClient, LiveTimer>;
   using ApplicationSpinClient =
     CxaPitchSpinClient<std::shared_ptr<ApplicationSessionClient>>;
-  using ApplicationCxaPitchClient =
-    CxaPitchClient<std::unique_ptr<ApplicationProtocolClient>,
-      std::unique_ptr<ApplicationGapClient>,
-      std::unique_ptr<ApplicationSpinClient>, std::unique_ptr<LocalTimeClient>>;
-  using ApplicationCxaPitchMarketDataFeedClient =
-    CxaPitchMarketDataFeedClient<ApplicationMarketDataFeedClient*,
-      ApplicationCxaPitchClient*>;
-  static const auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(134217728);
 
   std::unique_ptr<ApplicationProtocolClient> make_protocol_client(
       const IpAddress& address, const IpAddress& interface,
@@ -83,14 +75,14 @@ int main(int argc, const char** argv) {
     auto feed_configuration = CxaPitchConfiguration::parse(config);
     auto sampling = extract<time_duration>(config, "sampling");
     auto options = MulticastSocketOptions();
+    static const auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(134217728);
     options.m_receive_buffer_size =
       extract<int>(config, "receive_buffer", DEFAULT_RECEIVE_BUFFER_SIZE);
     options.m_max_datagram_size =
       extract<int>(config, "mtu", options.m_max_datagram_size);
-    static const auto HEARTBEAT = seconds(1);
-    static const auto RECONNECT = seconds(10);
     auto make_session = [] (
         const CxaPitchSession& session, std::stop_token stop_token) {
+      static const auto HEARTBEAT = seconds(1);
       auto login = CxaPitchLogin();
       login.m_session_sub_id = session.m_session_sub_id;
       login.m_username = session.m_username;
@@ -102,6 +94,7 @@ int main(int argc, const char** argv) {
     if(feed_configuration.m_retransmission) {
       auto session = *feed_configuration.m_retransmission;
       gap_client = try_or_nest([&] {
+        static const auto RECONNECT = seconds(10);
         return std::make_unique<ApplicationGapClient>(
           [=] (std::stop_token stop_token) {
             return make_session(session, stop_token);
@@ -126,13 +119,13 @@ int main(int argc, const char** argv) {
           make_protocol_client(feed.m_gap_address, feed.m_interface, options));
       }
     }
-    auto client = ApplicationCxaPitchClient(feed_configuration.m_unit,
+    auto client = CxaPitchClient(feed_configuration.m_unit,
       feed_configuration.m_liveness, feed_configuration.m_gap_timeout,
       std::move(feeds), std::move(recovery), std::move(gap_client),
       std::move(spin_client), std::make_unique<LocalTimeClient>());
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
       Ref(service_locator_client), sampling, feed_configuration.m_country);
-    auto feed_client = ApplicationCxaPitchMarketDataFeedClient(
+    auto feed_client = CxaPitchMarketDataFeedClient(
       feed_configuration, &market_data_feed_client, &client);
     wait_for_kill_event();
     feed_client.close();

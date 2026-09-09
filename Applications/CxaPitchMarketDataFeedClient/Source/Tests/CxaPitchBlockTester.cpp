@@ -45,7 +45,7 @@ TEST_SUITE("CxaPitchBlock") {
     REQUIRE(block.begin() == block.end());
   }
 
-  TEST_CASE("parse_skips_unknown_message") {
+  TEST_CASE("parse_unknown_message") {
     auto data = std::array<char, 30>{
       0x1E, 0x00,
       0x03,

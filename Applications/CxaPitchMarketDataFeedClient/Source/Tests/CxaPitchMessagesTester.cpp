@@ -1,8 +1,8 @@
 #include <string>
 #include <string_view>
 #include <Beam/Utilities/ToString.hpp>
-#include <doctest/doctest.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"
@@ -375,7 +375,7 @@ TEST_SUITE("CxaPitchMessages") {
       " ZVZT C " + PRICE_TEXT + " 700)");
   }
 
-  TEST_CASE("visit_a_known_message") {
+  TEST_CASE("visit_known_message") {
     auto source = std::string_view(
       "\x12\x3c"
       "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
@@ -387,7 +387,7 @@ TEST_SUITE("CxaPitchMessages") {
     REQUIRE(text == "(delete_order " + TIME_TEXT + " 800891482924597253)");
   }
 
-  TEST_CASE("visit_the_first_matching_callable") {
+  TEST_CASE("visit_first_matching_callable") {
     auto source = std::string_view(
       "\x12\x3c"
       "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
@@ -402,7 +402,7 @@ TEST_SUITE("CxaPitchMessages") {
       " 800891482924597253)");
   }
 
-  TEST_CASE("visit_an_unmatched_message") {
+  TEST_CASE("visit_unmatched_message") {
     auto source = std::string_view("\x06\x7f\x00\x00\x00\x00", 6);
     auto text = visit(CxaPitchMessage::parse(source),
       [] (const CxaPitchAddOrder&) { return std::string("add_order"); },
@@ -410,7 +410,7 @@ TEST_SUITE("CxaPitchMessages") {
     REQUIRE(text == "(unknown 0x7F 6)");
   }
 
-  TEST_CASE("visit_ignores_an_unhandled_message") {
+  TEST_CASE("visit_unhandled_void_message") {
     auto source = std::string_view("\x06\x7f\x00\x00\x00\x00", 6);
     auto count = 0;
     visit(CxaPitchMessage::parse(source),
@@ -418,14 +418,14 @@ TEST_SUITE("CxaPitchMessages") {
     REQUIRE(count == 0);
   }
 
-  TEST_CASE("visit_rejects_an_unhandled_message") {
+  TEST_CASE("visit_unhandled_value_message") {
     auto source = std::string_view("\x06\x7f\x00\x00\x00\x00", 6);
     REQUIRE_THROWS_AS(visit(CxaPitchMessage::parse(source),
       [] (const CxaPitchAddOrder&) { return std::string("add_order"); }),
       CxaPitchParserException);
   }
 
-  TEST_CASE("visit_an_unknown_message") {
+  TEST_CASE("visit_unknown_message") {
     auto source = std::string_view("\x06\x7f\x00\x00\x00\x00", 6);
     auto text = visit(CxaPitchMessage::parse(source),
       [] (const auto& message) {

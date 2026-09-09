@@ -94,7 +94,7 @@ TEST_SUITE("CxaPitchSpinClient") {
     REQUIRE(client.get_offers()->pop() == 310175);
   }
 
-  TEST_CASE("request_a_snapshot") {
+  TEST_CASE("request_snapshot") {
     auto session = StubSession();
     auto client = SpinClient(&session);
     session.m_messages->push(encode_response(310175, 2, 'A'));
@@ -114,7 +114,7 @@ TEST_SUITE("CxaPitchSpinClient") {
       std::string_view("\x06\x81" "\x9f\xbb\x04\x00", 6));
   }
 
-  TEST_CASE("reject_a_request") {
+  TEST_CASE("reject_request") {
     auto session = StubSession();
     auto client = SpinClient(&session);
     session.m_messages->push(encode_response(310175, 0, 'O'));
@@ -123,7 +123,7 @@ TEST_SUITE("CxaPitchSpinClient") {
     REQUIRE(spin.m_messages.empty());
   }
 
-  TEST_CASE("ignore_messages_outside_a_snapshot") {
+  TEST_CASE("ignore_messages_outside_snapshot") {
     auto session = StubSession();
     auto client = SpinClient(&session);
     session.m_messages->push(encode_order(CxaPitchAddOrder::TYPE));

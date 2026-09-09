@@ -113,14 +113,15 @@ namespace {
 
     explicit MessageReader(Client& client)
       : m_client(&client),
-        m_types(std::make_shared<Queue<int>>()),
-        m_routine(spawn([&client, types = m_types] {
-          try {
-            while(true) {
-              types->push(client.read().m_type);
-            }
-          } catch(const std::exception&) {}
-        })) {}
+        m_types(std::make_shared<Queue<int>>()) {
+      m_routine = spawn([=, this] {
+        try {
+          while(true) {
+            m_types->push(m_client->read().m_type);
+          }
+        } catch(const std::exception&) {}
+      });
+    }
 
     ~MessageReader() {
       m_client->close();
@@ -198,7 +199,7 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(!feed.m_blocks->try_pop());
   }
 
-  TEST_CASE("request_and_recover_a_gap") {
+  TEST_CASE("recover_gap") {
     auto first = StubProtocolClient();
     auto second = StubProtocolClient();
     auto recovery = StubProtocolClient();
@@ -222,7 +223,7 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(client.read().m_type == 0x14);
   }
 
-  TEST_CASE("retry_a_throttled_gap_request") {
+  TEST_CASE("request_throttling") {
     auto first = StubProtocolClient();
     auto second = StubProtocolClient();
     auto gap_client = StubGapClient();
@@ -246,7 +247,7 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(retry.m_count == 1);
   }
 
-  TEST_CASE("survive_a_malformed_block") {
+  TEST_CASE("read_malformed_block") {
     auto feed = StubProtocolClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(
@@ -260,7 +261,7 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(!feed.m_blocks->try_pop());
   }
 
-  TEST_CASE("start_without_a_snapshot_offer") {
+  TEST_CASE("missing_snapshot_offer") {
     auto feed = StubProtocolClient();
     auto spin_client = StubSpinClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
@@ -276,7 +277,7 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(type == 0x11);
   }
 
-  TEST_CASE("recover_a_malformed_datagram") {
+  TEST_CASE("recover_malformed_datagram") {
     for(auto is_recovery : {false, true}) {
       auto feed = StubProtocolClient();
       auto recovery = StubProtocolClient();
@@ -312,7 +313,7 @@ TEST_SUITE("CxaPitchClient") {
     }
   }
 
-  TEST_CASE("finish_a_slow_snapshot") {
+  TEST_CASE("slow_snapshot") {
     auto feed = StubProtocolClient();
     auto spin_client = StubSpinClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
@@ -339,7 +340,7 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(reader.m_types->try_pop().value_or(0) == 0x14);
   }
 
-  TEST_CASE("skip_a_gap_whose_later_chunk_is_rejected") {
+  TEST_CASE("rejected_gap_chunk") {
     auto first = StubProtocolClient();
     auto second = StubProtocolClient();
     auto gap_client = StubGapClient();
@@ -367,7 +368,7 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(type == 0x14);
   }
 
-  TEST_CASE("request_a_partially_recovered_gap_once") {
+  TEST_CASE("partial_gap_recovery") {
     auto first = StubProtocolClient();
     auto second = StubProtocolClient();
     auto recovery = StubProtocolClient();
@@ -393,7 +394,7 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(!is_requested);
   }
 
-  TEST_CASE("drop_a_gap_with_no_proxy") {
+  TEST_CASE("gap_without_proxy") {
     auto first = StubProtocolClient();
     auto second = StubProtocolClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
@@ -408,7 +409,7 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(client.read().m_type == 0x14);
   }
 
-  TEST_CASE("drop_an_unrecoverable_gap") {
+  TEST_CASE("unrecoverable_gap") {
     auto first = StubProtocolClient();
     auto second = StubProtocolClient();
     auto gap_client = StubGapClient();
@@ -426,7 +427,7 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(!gap_client.m_requests->try_pop());
   }
 
-  TEST_CASE("skip_a_gap_that_stays_unfilled") {
+  TEST_CASE("gap_timeout") {
     auto first = StubProtocolClient();
     auto second = StubProtocolClient();
     auto gap_client = StubGapClient();
@@ -446,7 +447,7 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(client.read().m_type == 0x15);
   }
 
-  TEST_CASE("skip_a_rejected_gap") {
+  TEST_CASE("rejected_gap") {
     auto first = StubProtocolClient();
     auto second = StubProtocolClient();
     auto gap_client = StubGapClient();
@@ -469,7 +470,7 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(client.read().m_type == 0x14);
   }
 
-  TEST_CASE("apply_a_snapshot_before_the_live_messages") {
+  TEST_CASE("snapshot_message_order") {
     auto feed = StubProtocolClient();
     auto spin_client = StubSpinClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
@@ -494,7 +495,7 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(client.read().m_type == 0x13);
   }
 
-  TEST_CASE("give_up_on_a_rejected_snapshot") {
+  TEST_CASE("snapshot_attempt_limit") {
     auto feed = StubProtocolClient();
     auto spin_client = StubSpinClient();
     auto time_client = FixedTimeClient(TIMESTAMP);

@@ -6,6 +6,7 @@
 #include <iostream>
 #include <string>
 #include <tuple>
+#include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <Beam/IO/ConnectException.hpp>
@@ -94,6 +95,11 @@ namespace Nexus {
       void dispatch(const CxaPitchMessage& message);
       void read_loop();
   };
+
+  template<typename M, typename C>
+  CxaPitchMarketDataFeedClient(CxaPitchConfiguration, M&&, C&&) ->
+    CxaPitchMarketDataFeedClient<
+      std::remove_cvref_t<M>, std::remove_cvref_t<C>>;
 
   template<typename M, typename C>
     requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&

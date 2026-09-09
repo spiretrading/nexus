@@ -103,13 +103,6 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     return configuration;
   }();
   static const auto UNIT_CLEAR = std::string("\x06\x97\x20\x20\x20\x20", 6);
-  static const auto TRADING_STATUS = std::string(
-    "\x16\x3b"
-    "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
-    "ZVZT  "
-    "T"
-    "AUS "
-    "\x00", 22);
   static const auto ADD_ORDER = std::string(
     "\x2a\x37"
     "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
@@ -182,22 +175,6 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     " "
     "\x00\x00\x00\x00\x00\x00\x00\x00"
     "\x00", 72);
-  static const auto OFF_EXCHANGE_TRADE = std::string(
-    "\x48\x3d"
-    "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
-    "ZVZT  "
-    "\xbc\x02\x00\x00"
-    "\x15\xcd\x5b\x07\x00\x00\x00\x00"
-    "\x34\x2b\x46\xe0\xbb\x00\x00\x00"
-    "\x05\x40\x5b\x77\x8f\x56\x1d\x0b"
-    "\x06\x40\x5b\x77\x8f\x56\x1d\x0b"
-    "1234"
-    "    "
-    " "
-    " "
-    "P"
-    "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
-    "\x02", 72);
   static const auto AUCTION_UPDATE = std::string(
     "\x22\x59"
     "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
@@ -208,7 +185,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     "\x15\xcd\x5b\x07\x00\x00\x00\x00"
     "\x00", 34);
 
-  TEST_CASE("add_an_order") {
+  TEST_CASE("add_order") {
     auto feed = StubMarketDataFeedClient();
     auto pitch = StubClient();
     auto client = Client(CONFIGURATION, &feed, &pitch);
@@ -218,7 +195,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
       " 700)");
   }
 
-  TEST_CASE("add_an_undisclosed_order") {
+  TEST_CASE("add_undisclosed_order") {
     auto feed = StubMarketDataFeedClient();
     auto pitch = StubClient();
     auto client = Client(CONFIGURATION, &feed, &pitch);
@@ -230,7 +207,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     REQUIRE(!feed.m_operations->try_pop());
   }
 
-  TEST_CASE("execute_an_order") {
+  TEST_CASE("execute_order") {
     auto feed = StubMarketDataFeedClient();
     auto pitch = StubClient();
     auto client = Client(CONFIGURATION, &feed, &pitch);
@@ -249,7 +226,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     REQUIRE(sale->m_seller_mpid == "5678");
   }
 
-  TEST_CASE("execute_an_order_at_price") {
+  TEST_CASE("execute_order_at_price") {
     auto feed = StubMarketDataFeedClient();
     auto pitch = StubClient();
     auto client = Client(CONFIGURATION, &feed, &pitch);
@@ -263,7 +240,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     REQUIRE(sale->m_condition.m_type == TimeAndSale::Condition::Type::CLOSE);
   }
 
-  TEST_CASE("reduce_an_order") {
+  TEST_CASE("reduce_order") {
     auto feed = StubMarketDataFeedClient();
     auto pitch = StubClient();
     auto client = Client(CONFIGURATION, &feed, &pitch);
@@ -271,7 +248,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     REQUIRE(feed.m_operations->pop() == "(offset " + ORDER_ID + " -700)");
   }
 
-  TEST_CASE("modify_an_order") {
+  TEST_CASE("modify_order") {
     auto feed = StubMarketDataFeedClient();
     auto pitch = StubClient();
     auto client = Client(CONFIGURATION, &feed, &pitch);
@@ -288,7 +265,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     REQUIRE(feed.m_time_and_sales->pop()->m_price == EXECUTION_PRICE);
   }
 
-  TEST_CASE("delete_an_order") {
+  TEST_CASE("delete_order") {
     auto feed = StubMarketDataFeedClient();
     auto pitch = StubClient();
     auto client = Client(CONFIGURATION, &feed, &pitch);
@@ -302,7 +279,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     REQUIRE(!feed.m_time_and_sales->try_pop());
   }
 
-  TEST_CASE("forget_a_fully_executed_order") {
+  TEST_CASE("fully_executed_order") {
     auto feed = StubMarketDataFeedClient();
     auto pitch = StubClient();
     auto client = Client(CONFIGURATION, &feed, &pitch);
@@ -318,7 +295,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
       " 700)");
   }
 
-  TEST_CASE("disclose_an_undisclosed_order") {
+  TEST_CASE("disclose_undisclosed_order") {
     auto feed = StubMarketDataFeedClient();
     auto pitch = StubClient();
     auto client = Client(CONFIGURATION, &feed, &pitch);
@@ -329,7 +306,23 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
       to_string(EXECUTION_PRICE) + " 300)");
   }
 
-  TEST_CASE("report_a_trade") {
+  TEST_CASE("report_trade") {
+    static const auto OFF_EXCHANGE_TRADE = std::string(
+      "\x48\x3d"
+      "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
+      "ZVZT  "
+      "\xbc\x02\x00\x00"
+      "\x15\xcd\x5b\x07\x00\x00\x00\x00"
+      "\x34\x2b\x46\xe0\xbb\x00\x00\x00"
+      "\x05\x40\x5b\x77\x8f\x56\x1d\x0b"
+      "\x06\x40\x5b\x77\x8f\x56\x1d\x0b"
+      "1234"
+      "    "
+      " "
+      " "
+      "P"
+      "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
+      "\x02", 72);
     auto feed = StubMarketDataFeedClient();
     auto pitch = StubClient();
     auto client = Client(CONFIGURATION, &feed, &pitch);
@@ -384,7 +377,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     }
   }
 
-  TEST_CASE("modify_to_undisclosed_and_back") {
+  TEST_CASE("modify_order_visibility") {
     auto feed = StubMarketDataFeedClient();
     auto pitch = StubClient();
     auto client = Client(CONFIGURATION, &feed, &pitch);
@@ -404,7 +397,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
       to_string(EXECUTION_PRICE) + " 300)");
   }
 
-  TEST_CASE("report_an_auction_update") {
+  TEST_CASE("report_auction_update") {
     auto feed = StubMarketDataFeedClient();
     auto pitch = StubClient();
     auto client = Client(CONFIGURATION, &feed, &pitch);
@@ -424,7 +417,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     REQUIRE(imbalance->m_reference_price == EXECUTION_PRICE);
   }
 
-  TEST_CASE("clear_a_unit") {
+  TEST_CASE("clear_unit") {
     auto feed = StubMarketDataFeedClient();
     auto pitch = StubClient();
     auto client = Client(CONFIGURATION, &feed, &pitch);
@@ -438,7 +431,14 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     REQUIRE(!feed.m_time_and_sales->try_pop());
   }
 
-  TEST_CASE("ignore_an_unhandled_message") {
+  TEST_CASE("ignore_unhandled_message") {
+    static const auto TRADING_STATUS = std::string(
+      "\x16\x3b"
+      "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
+      "ZVZT  "
+      "T"
+      "AUS "
+      "\x00", 22);
     auto feed = StubMarketDataFeedClient();
     auto pitch = StubClient();
     auto client = Client(CONFIGURATION, &feed, &pitch);

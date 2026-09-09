@@ -1,7 +1,7 @@
 #include <array>
 #include <cstdint>
-#include <doctest/doctest.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchCursor.hpp"
 
 using namespace boost::posix_time;
@@ -50,7 +50,7 @@ TEST_SUITE("CxaPitchCursor") {
     REQUIRE(cursor.read_side() == Side::NONE);
   }
 
-  TEST_CASE("read_price_preserves_decimal_scale") {
+  TEST_CASE("read_price_decimal_scale") {
     auto data = std::array<char, 8>();
     auto price = std::uint64_t(20100000);
     for(auto& byte : data) {

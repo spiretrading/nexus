@@ -55,7 +55,7 @@ namespace {
 }
 
 TEST_SUITE("CxaPitchProtocolClient") {
-  TEST_CASE("read_a_block") {
+  TEST_CASE("read_block") {
     auto fixture = Fixture();
     fixture.m_server_channel->get_writer().write(
       encode_block(4155, {0x37, 0x38}));
@@ -70,7 +70,7 @@ TEST_SUITE("CxaPitchProtocolClient") {
     REQUIRE(types == std::vector<std::uint8_t>({0x37, 0x38}));
   }
 
-  TEST_CASE("read_a_heartbeat") {
+  TEST_CASE("read_heartbeat") {
     auto fixture = Fixture();
     fixture.m_server_channel->get_writer().write(encode_block(4155, {}));
     auto block = fixture.m_client->read();
@@ -92,7 +92,7 @@ TEST_SUITE("CxaPitchProtocolClient") {
     REQUIRE(second.begin()->m_type == 0x3C);
   }
 
-  TEST_CASE("read_a_truncated_block") {
+  TEST_CASE("read_truncated_block") {
     auto fixture = Fixture();
     auto data = std::string("\x08\x00\x00\x01", 4);
     fixture.m_server_channel->get_writer().write(

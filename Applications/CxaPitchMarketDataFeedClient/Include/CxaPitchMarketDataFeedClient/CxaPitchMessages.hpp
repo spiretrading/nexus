@@ -1,11 +1,11 @@
 #ifndef CXA_PITCH_MESSAGES_HPP
 #define CXA_PITCH_MESSAGES_HPP
 #include <concepts>
-#include <tuple>
 #include <cstddef>
 #include <cstdint>
 #include <ostream>
 #include <string>
+#include <tuple>
 #include <type_traits>
 #include <utility>
 #include <boost/callable_traits/args.hpp>

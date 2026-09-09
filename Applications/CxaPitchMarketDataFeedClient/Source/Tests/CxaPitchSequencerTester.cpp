@@ -2,9 +2,9 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/optional/optional.hpp>
 #include <doctest/doctest.h>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSequencer.hpp"
 
@@ -58,7 +58,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(!sequencer.get_gap());
   }
 
-  TEST_CASE("arbitrate_duplicates_and_recover_a_loss") {
+  TEST_CASE("arbitrate_duplicate_messages") {
     auto sequencer =
       CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
@@ -79,7 +79,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(!sequencer.get_gap());
   }
 
-  TEST_CASE("confirm_a_gap_once_every_feed_passes_it") {
+  TEST_CASE("gap_quorum") {
     auto sequencer =
       CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
@@ -97,7 +97,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(gap->m_count == 1);
   }
 
-  TEST_CASE("confirm_a_gap_from_a_heartbeat") {
+  TEST_CASE("heartbeat_gap") {
     auto sequencer =
       CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
@@ -116,7 +116,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(gap->m_count == 2);
   }
 
-  TEST_CASE("ignore_an_unsequenced_heartbeat") {
+  TEST_CASE("ignore_unsequenced_heartbeat") {
     auto sequencer =
       CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
@@ -132,7 +132,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(!sequencer.get_gap());
   }
 
-  TEST_CASE("exclude_a_silent_feed_and_readmit_it") {
+  TEST_CASE("feed_liveness") {
     auto sequencer =
       CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
@@ -163,7 +163,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(!sequencer.get_gap());
   }
 
-  TEST_CASE("confirm_a_gap_immediately_with_one_feed") {
+  TEST_CASE("single_feed_gap") {
     auto sequencer =
       CxaPitchSequencer(1, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
@@ -178,7 +178,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(gap->m_count == 1);
   }
 
-  TEST_CASE("reset_discards_earlier_messages") {
+  TEST_CASE("reset_sequence") {
     auto sequencer =
       CxaPitchSequencer(1, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
@@ -190,7 +190,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(!read(sequencer));
   }
 
-  TEST_CASE("recover_fills_a_confirmed_gap") {
+  TEST_CASE("recover_confirmed_gap") {
     auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11});
@@ -211,7 +211,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(!sequencer.get_gap());
   }
 
-  TEST_CASE("recover_does_not_form_a_quorum") {
+  TEST_CASE("recovery_quorum") {
     auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11});
@@ -224,7 +224,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(!sequencer.get_gap());
   }
 
-  TEST_CASE("recover_before_a_feed_is_received_is_ignored") {
+  TEST_CASE("recovery_before_initialization") {
     auto sequencer = CxaPitchSequencer(1, duration_from_string("00:00:03"));
     auto replay = encode_block(1, {0x11});
     sequencer.recover(CxaPitchBlock::parse(replay));
@@ -235,7 +235,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(read(sequencer) == 0x12);
   }
 
-  TEST_CASE("add_rejects_an_unknown_feed") {
+  TEST_CASE("add_unknown_feed") {
     auto sequencer =
       CxaPitchSequencer(1, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");

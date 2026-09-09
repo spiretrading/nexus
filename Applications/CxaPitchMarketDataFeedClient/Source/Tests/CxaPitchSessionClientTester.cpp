@@ -83,11 +83,11 @@ TEST_SUITE("CxaPitchSessionClient") {
       "\x16\x01" "0001" "FIRM" "  " "ABCD00    ", 30));
   }
 
-  TEST_CASE("reject_a_login") {
+  TEST_CASE("reject_login") {
     REQUIRE_THROWS_AS(Fixture('N'), ConnectException);
   }
 
-  TEST_CASE("cancel_a_pending_login") {
+  TEST_CASE("cancel_pending_login") {
     auto server = LocalServerConnection();
     auto stop_source = std::stop_source();
     auto accepting = std::async(std::launch::async, [&] {
@@ -119,7 +119,7 @@ TEST_SUITE("CxaPitchSessionClient") {
     server_channel->get_connection().close();
   }
 
-  TEST_CASE("read_a_message") {
+  TEST_CASE("read_message") {
     auto fixture = Fixture();
     fixture.m_server_channel->get_writer().write(encode(GAP_RESPONSE, 1));
     auto message = fixture.m_client->read();
@@ -131,7 +131,7 @@ TEST_SUITE("CxaPitchSessionClient") {
     REQUIRE(response.m_status == CxaPitchGapResponse::ACCEPTED);
   }
 
-  TEST_CASE("read_a_message_split_across_reads") {
+  TEST_CASE("read_fragmented_message") {
     auto fixture = Fixture();
     auto block = encode(GAP_RESPONSE, 1);
     fixture.m_server_channel->get_writer().write(
@@ -143,7 +143,7 @@ TEST_SUITE("CxaPitchSessionClient") {
     REQUIRE(CxaPitchGapResponse::parse(message).m_sequence == 4155);
   }
 
-  TEST_CASE("read_two_messages_in_one_block") {
+  TEST_CASE("read_multiple_messages") {
     auto fixture = Fixture();
     auto messages = std::string(GAP_RESPONSE) + std::string(GAP_RESPONSE);
     fixture.m_server_channel->get_writer().write(encode(messages, 2));
@@ -151,14 +151,14 @@ TEST_SUITE("CxaPitchSessionClient") {
     REQUIRE(fixture.m_client->read().m_type == CxaPitchGapResponse::TYPE);
   }
 
-  TEST_CASE("skip_a_heartbeat") {
+  TEST_CASE("skip_heartbeat") {
     auto fixture = Fixture();
     fixture.m_server_channel->get_writer().write(encode("", 0));
     fixture.m_server_channel->get_writer().write(encode(GAP_RESPONSE, 1));
     REQUIRE(fixture.m_client->read().m_type == CxaPitchGapResponse::TYPE);
   }
 
-  TEST_CASE("write_a_gap_request") {
+  TEST_CASE("write_gap_request") {
     auto fixture = Fixture();
     auto request = CxaPitchGapRequest();
     request.m_unit = 1;
@@ -171,7 +171,7 @@ TEST_SUITE("CxaPitchSessionClient") {
         "\x09\x03" "\x01" "\x3b\x10\x00\x00" "\x32\x00", 17));
   }
 
-  TEST_CASE("write_a_heartbeat") {
+  TEST_CASE("write_heartbeat") {
     auto fixture = Fixture();
     fixture.m_timer.trigger();
     REQUIRE(read_exactly(*fixture.m_server_channel, CxaPitchHeader::LENGTH) ==

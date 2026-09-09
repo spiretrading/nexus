@@ -88,7 +88,7 @@ namespace {
 }
 
 TEST_SUITE("CxaPitchGapClient") {
-  TEST_CASE("request_splits_at_the_message_limit") {
+  TEST_CASE("request_message_limit") {
     auto session = std::make_shared<StubSession>();
     auto timer = TriggerTimer();
     auto time_client = FixedTimeClient(TIMESTAMP);
@@ -106,7 +106,7 @@ TEST_SUITE("CxaPitchGapClient") {
     REQUIRE(parse_request(session->m_requests[2]).m_count == 50);
   }
 
-  TEST_CASE("request_renews_the_second_allowance") {
+  TEST_CASE("request_second_limit") {
     auto session = std::make_shared<StubSession>();
     auto timer = TriggerTimer();
     auto time_client = FixedTimeClient(TIMESTAMP);
@@ -122,7 +122,7 @@ TEST_SUITE("CxaPitchGapClient") {
     REQUIRE(client.request(1, CxaPitchGap(1, 1), 1) == 1);
   }
 
-  TEST_CASE("request_renews_the_minute_allowance") {
+  TEST_CASE("request_minute_limit") {
     auto session = std::make_shared<StubSession>();
     auto timer = TriggerTimer();
     auto time_client = FixedTimeClient(TIMESTAMP);
@@ -140,7 +140,7 @@ TEST_SUITE("CxaPitchGapClient") {
     REQUIRE(client.request(1, CxaPitchGap(1, 1), 1) == 1);
   }
 
-  TEST_CASE("request_crosses_a_clock_boundary") {
+  TEST_CASE("request_clock_boundary") {
     for(auto duration : {seconds(1), seconds(60), seconds(86400)}) {
       auto session = std::make_shared<StubSession>();
       auto timer = TriggerTimer();
@@ -158,7 +158,7 @@ TEST_SUITE("CxaPitchGapClient") {
     }
   }
 
-  TEST_CASE("request_does_not_renew_after_a_clock_rollback") {
+  TEST_CASE("request_clock_rollback") {
     auto session = std::make_shared<StubSession>();
     auto timer = TriggerTimer();
     auto time_client = FixedTimeClient(TIMESTAMP);
@@ -174,7 +174,7 @@ TEST_SUITE("CxaPitchGapClient") {
     REQUIRE(client.request(1, CxaPitchGap(count + 1, 1), 1) == 1);
   }
 
-  TEST_CASE("request_renews_the_daily_allowance") {
+  TEST_CASE("request_daily_limit") {
     auto session = std::make_shared<StubSession>();
     auto timer = TriggerTimer();
     auto time_client = FixedTimeClient(TIMESTAMP);
@@ -193,7 +193,7 @@ TEST_SUITE("CxaPitchGapClient") {
     REQUIRE(client.request(1, CxaPitchGap(1, 1), 1) == 1);
   }
 
-  TEST_CASE("request_ignores_a_gap_beyond_the_recoverable_range") {
+  TEST_CASE("request_unrecoverable_gap") {
     auto session = std::make_shared<StubSession>();
     auto timer = TriggerTimer();
     auto time_client = FixedTimeClient(TIMESTAMP);
@@ -222,7 +222,7 @@ TEST_SUITE("CxaPitchGapClient") {
     REQUIRE(rejected.m_status != CxaPitchGapResponse::ACCEPTED);
   }
 
-  TEST_CASE("close_while_connecting") {
+  TEST_CASE("close_during_connection") {
     auto first = std::make_shared<StubSession>();
     auto second = std::make_shared<StubSession>();
     auto sessions = std::vector<std::shared_ptr<StubSession>>({first, second});
@@ -255,7 +255,7 @@ TEST_SUITE("CxaPitchGapClient") {
     REQUIRE(is_shut);
   }
 
-  TEST_CASE("close_while_writing_a_request") {
+  TEST_CASE("close_during_request") {
     auto session = std::make_shared<StubSession>();
     session->m_gate = std::make_shared<Queue<int>>();
     auto timer = TriggerTimer();
@@ -279,7 +279,7 @@ TEST_SUITE("CxaPitchGapClient") {
     REQUIRE(is_shut);
   }
 
-  TEST_CASE("reconnect_after_the_session_is_lost") {
+  TEST_CASE("session_reconnection") {
     auto first = std::make_shared<StubSession>();
     auto second = std::make_shared<StubSession>();
     auto sessions = std::vector<std::shared_ptr<StubSession>>({first, second});
