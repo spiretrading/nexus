@@ -28,9 +28,10 @@ namespace {
         std::string_view(m_payload.get_data(), m_payload.get_size()));
     }
 
-    void write(const CxaPitchGapRequest& request) {
+    template<typename M>
+    void write(const M& message) {
       auto buffer = SharedBuffer();
-      request.encode(out(buffer));
+      message.encode(out(buffer));
       m_requests.emplace_back(buffer.get_data(), buffer.get_size());
     }
 

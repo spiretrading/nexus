@@ -125,6 +125,96 @@ namespace Details {
     static CxaPitchGapResponse parse(const CxaPitchMessage& message);
   };
 
+  /** Stores a spin image available message. */
+  struct CxaPitchSpinImageAvailable {
+
+    /** The type of a spin image available message. */
+    static constexpr auto TYPE = std::uint8_t(0x80);
+
+    /** The smallest valid length of a spin image available message. */
+    static constexpr auto LENGTH = std::size_t(6);
+
+    /** The sequence that the available snapshot is current through. */
+    std::uint32_t m_sequence;
+
+    /**
+     * Parses a CxaPitchSpinImageAvailable.
+     * @param message The message to parse.
+     * @return The CxaPitchSpinImageAvailable represented by the
+     *         <i>message</i>.
+     */
+    static CxaPitchSpinImageAvailable parse(const CxaPitchMessage& message);
+  };
+
+  /** Stores a spin request message. */
+  struct CxaPitchSpinRequest {
+
+    /** The type of a spin request message. */
+    static constexpr auto TYPE = std::uint8_t(0x81);
+
+    /** The length of a spin request message. */
+    static constexpr auto LENGTH = std::size_t(6);
+
+    /** The sequence to request the snapshot at. */
+    std::uint32_t m_sequence;
+
+    /**
+     * Encodes this message, appending it to a buffer.
+     * @param buffer The buffer to append this message to.
+     */
+    template<Beam::IsBuffer B>
+    void encode(Beam::Out<B> buffer) const;
+  };
+
+  /** Stores a spin response message. */
+  struct CxaPitchSpinResponse {
+
+    /** The type of a spin response message. */
+    static constexpr auto TYPE = std::uint8_t(0x82);
+
+    /** The smallest valid length of a spin response message. */
+    static constexpr auto LENGTH = std::size_t(11);
+
+    /** The status indicating that the request was accepted. */
+    static constexpr auto ACCEPTED = 'A';
+
+    /** The sequence that the snapshot is current through. */
+    std::uint32_t m_sequence;
+
+    /** The number of add order messages that the snapshot contains. */
+    std::uint32_t m_order_count;
+
+    /** Whether the request was accepted, or the reason it was rejected. */
+    char m_status;
+
+    /**
+     * Parses a CxaPitchSpinResponse.
+     * @param message The message to parse.
+     * @return The CxaPitchSpinResponse represented by the <i>message</i>.
+     */
+    static CxaPitchSpinResponse parse(const CxaPitchMessage& message);
+  };
+
+  /** Stores a spin finished message. */
+  struct CxaPitchSpinFinished {
+
+    /** The type of a spin finished message. */
+    static constexpr auto TYPE = std::uint8_t(0x83);
+
+    /** The smallest valid length of a spin finished message. */
+    static constexpr auto LENGTH = std::size_t(6);
+
+    /** The sequence that the completed snapshot is current through. */
+    std::uint32_t m_sequence;
+
+    /**
+     * Parses a CxaPitchSpinFinished.
+     * @param message The message to parse.
+     * @return The CxaPitchSpinFinished represented by the <i>message</i>.
+     */
+    static CxaPitchSpinFinished parse(const CxaPitchMessage& message);
+  };
+
   template<Beam::IsBuffer B>
   void CxaPitchLogin::encode(Beam::Out<B> buffer) const {
     auto encoder = CxaPitchEncoder(Beam::Ref(*buffer));
@@ -171,6 +261,52 @@ namespace Details {
     response.m_count = cursor.read_uint16();
     response.m_status = cursor.read_char();
     return response;
+  }
+
+  inline CxaPitchSpinImageAvailable CxaPitchSpinImageAvailable::parse(
+      const CxaPitchMessage& message) {
+    if(message.m_length < LENGTH) {
+      boost::throw_with_location(
+        CxaPitchParserException("Spin image available message too short."));
+    }
+    auto cursor = message.get_cursor();
+    auto available = CxaPitchSpinImageAvailable();
+    available.m_sequence = cursor.read_uint32();
+    return available;
+  }
+
+  template<Beam::IsBuffer B>
+  void CxaPitchSpinRequest::encode(Beam::Out<B> buffer) const {
+    auto encoder = CxaPitchEncoder(Beam::Ref(*buffer));
+    encoder.write_uint8(static_cast<std::uint8_t>(LENGTH));
+    encoder.write_uint8(TYPE);
+    encoder.write_uint32(m_sequence);
+  }
+
+  inline CxaPitchSpinResponse CxaPitchSpinResponse::parse(
+      const CxaPitchMessage& message) {
+    if(message.m_length < LENGTH) {
+      boost::throw_with_location(
+        CxaPitchParserException("Spin response message too short."));
+    }
+    auto cursor = message.get_cursor();
+    auto response = CxaPitchSpinResponse();
+    response.m_sequence = cursor.read_uint32();
+    response.m_order_count = cursor.read_uint32();
+    response.m_status = cursor.read_char();
+    return response;
+  }
+
+  inline CxaPitchSpinFinished CxaPitchSpinFinished::parse(
+      const CxaPitchMessage& message) {
+    if(message.m_length < LENGTH) {
+      boost::throw_with_location(
+        CxaPitchParserException("Spin finished message too short."));
+    }
+    auto cursor = message.get_cursor();
+    auto finished = CxaPitchSpinFinished();
+    finished.m_sequence = cursor.read_uint32();
+    return finished;
   }
 }
 
