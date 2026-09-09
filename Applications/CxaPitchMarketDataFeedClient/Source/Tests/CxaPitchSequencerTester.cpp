@@ -179,6 +179,51 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(!sequencer.read());
   }
 
+  TEST_CASE("recover_fills_a_confirmed_gap") {
+    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto timestamp = time_from_string("2026-09-08 10:00:00");
+    auto first = encode_block(1, {0x11});
+    sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
+    sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
+    REQUIRE(sequencer.read()->m_type == 0x11);
+    auto fourth = encode_block(4, {0x14});
+    sequencer.add(0, CxaPitchBlock::parse(fourth), timestamp);
+    sequencer.add(1, CxaPitchBlock::parse(fourth), timestamp);
+    auto gap = sequencer.get_gap();
+    REQUIRE(gap->m_sequence == 2);
+    REQUIRE(gap->m_count == 2);
+    auto replay = encode_block(2, {0x12, 0x13});
+    sequencer.recover(CxaPitchBlock::parse(replay));
+    REQUIRE(sequencer.read()->m_type == 0x12);
+    REQUIRE(sequencer.read()->m_type == 0x13);
+    REQUIRE(sequencer.read()->m_type == 0x14);
+    REQUIRE(!sequencer.get_gap());
+  }
+
+  TEST_CASE("recover_does_not_form_a_quorum") {
+    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto timestamp = time_from_string("2026-09-08 10:00:00");
+    auto first = encode_block(1, {0x11});
+    sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
+    sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
+    REQUIRE(sequencer.read()->m_type == 0x11);
+    auto replay = encode_block(3, {0x13});
+    sequencer.recover(CxaPitchBlock::parse(replay));
+    REQUIRE(!sequencer.read());
+    REQUIRE(!sequencer.get_gap());
+  }
+
+  TEST_CASE("recover_before_a_feed_is_received_is_ignored") {
+    auto sequencer = CxaPitchSequencer(1, duration_from_string("00:00:03"));
+    auto replay = encode_block(1, {0x11});
+    sequencer.recover(CxaPitchBlock::parse(replay));
+    REQUIRE(!sequencer.read());
+    auto timestamp = time_from_string("2026-09-08 10:00:00");
+    auto second = encode_block(2, {0x12});
+    sequencer.add(0, CxaPitchBlock::parse(second), timestamp);
+    REQUIRE(sequencer.read()->m_type == 0x12);
+  }
+
   TEST_CASE("add_rejects_an_unknown_feed") {
     auto sequencer =
       CxaPitchSequencer(1, duration_from_string("00:00:03"));

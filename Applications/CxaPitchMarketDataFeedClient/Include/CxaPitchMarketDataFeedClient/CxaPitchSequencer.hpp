@@ -47,6 +47,12 @@ namespace Nexus {
         boost::posix_time::ptime timestamp);
 
       /**
+       * Adds a block received from a gap response feed.
+       * @param block The block that was received.
+       */
+      void recover(const CxaPitchBlock& block);
+
+      /**
        * Advances the time used to determine whether a feed is silent.
        * @param timestamp The current time.
        */
@@ -78,6 +84,7 @@ namespace Nexus {
       bool m_is_initialized;
 
       void expire(boost::posix_time::ptime timestamp);
+      void store(const CxaPitchBlock& block);
   };
 
   inline CxaPitchSequencer::CxaPitchSequencer(
@@ -109,15 +116,14 @@ namespace Nexus {
     if(position > source.m_position) {
       source.m_position = position;
     }
-    auto sequence = header.m_sequence;
-    for(auto& message : block) {
-      if(sequence >= m_expected && !m_messages.contains(sequence)) {
-        m_messages.emplace(sequence, Beam::SharedBuffer(
-          message.m_payload - CxaPitchMessage::HEADER_LENGTH,
-          message.m_length));
-      }
-      ++sequence;
+    store(block);
+  }
+
+  inline void CxaPitchSequencer::recover(const CxaPitchBlock& block) {
+    if(!m_is_initialized || block.get_header().m_sequence == 0) {
+      return;
     }
+    store(block);
   }
 
   inline void CxaPitchSequencer::update(boost::posix_time::ptime timestamp) {
@@ -178,6 +184,18 @@ namespace Nexus {
       if(source.m_is_active && timestamp - source.m_timestamp > m_liveness) {
         source.m_is_active = false;
       }
+    }
+  }
+
+  inline void CxaPitchSequencer::store(const CxaPitchBlock& block) {
+    auto sequence = block.get_header().m_sequence;
+    for(auto& message : block) {
+      if(sequence >= m_expected && !m_messages.contains(sequence)) {
+        m_messages.emplace(sequence, Beam::SharedBuffer(
+          message.m_payload - CxaPitchMessage::HEADER_LENGTH,
+          message.m_length));
+      }
+      ++sequence;
     }
   }
 }

@@ -21,7 +21,9 @@
 #include <Beam/Utilities/ReportException.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <boost/optional/optional.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchConfiguration.hpp"
+#include "CxaPitchMarketDataFeedClient/CxaPitchGapClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchProtocolClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSequencer.hpp"
@@ -42,13 +44,16 @@ namespace {
     CxaPitchProtocolClient<std::unique_ptr<ApplicationFeedChannel>>;
   using ApplicationSessionClient =
     CxaPitchSessionClient<TcpSocketChannel, LiveTimer>;
+  using ApplicationGapClient =
+    CxaPitchGapClient<std::unique_ptr<ApplicationSessionClient>>;
   static const auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(134217728);
 
   std::unique_ptr<ApplicationProtocolClient> make_protocol_client(
-      const CxaPitchFeed& feed, const MulticastSocketOptions& options) {
+      const IpAddress& address, const IpAddress& interface,
+      const MulticastSocketOptions& options) {
     auto channel = try_or_nest([&] {
       return std::make_unique<MulticastSocketChannel>(
-        feed.m_address, feed.m_interface, options);
+        address, interface, options);
     }, std::runtime_error("Unable to join the CXA PITCH multicast group."));
     auto reader = &channel->get_reader();
     return std::make_unique<ApplicationProtocolClient>(
@@ -149,10 +154,11 @@ int main(int argc, const char** argv) {
       extract<int>(config, "mtu", options.m_max_datagram_size);
     auto clients = std::vector<std::unique_ptr<ApplicationProtocolClient>>();
     for(auto& feed : feed_configuration.m_feeds) {
-      clients.push_back(make_protocol_client(feed, options));
+      clients.push_back(
+        make_protocol_client(feed.m_address, feed.m_interface, options));
     }
     static const auto HEARTBEAT = seconds(1);
-    auto session_client = std::unique_ptr<ApplicationSessionClient>();
+    auto gap_client = std::unique_ptr<ApplicationGapClient>();
     if(feed_configuration.m_retransmission) {
       auto& retransmission = *feed_configuration.m_retransmission;
       auto login = CxaPitchLogin();
@@ -160,8 +166,9 @@ int main(int argc, const char** argv) {
       login.m_username = retransmission.m_username;
       login.m_password = retransmission.m_password;
       try {
-        session_client = std::make_unique<ApplicationSessionClient>(
-          login, init(retransmission.m_address), init(HEARTBEAT));
+        gap_client = std::make_unique<ApplicationGapClient>(
+          std::make_unique<ApplicationSessionClient>(
+            login, init(retransmission.m_address), init(HEARTBEAT)));
         std::cout << ",retransmission,connected" << std::endl;
       } catch(const std::exception&) {
         std::cout << ",retransmission,error" << std::endl;
@@ -169,12 +176,30 @@ int main(int argc, const char** argv) {
           std::endl;
       }
     }
+    auto recovery_clients =
+      std::vector<std::unique_ptr<ApplicationProtocolClient>>();
+    if(gap_client) {
+      for(auto& feed : feed_configuration.m_feeds) {
+        if(!feed.m_gap_address.get_host().empty()) {
+          recovery_clients.push_back(make_protocol_client(
+            feed.m_gap_address, feed.m_interface, options));
+        }
+      }
+    }
     auto sequencer = Sync<CxaPitchSequencer>(
       static_cast<int>(clients.size()), feed_configuration.m_liveness);
     auto routines = RoutineHandlerGroup();
     auto reported_gap = std::uint32_t(0);
+    auto live = std::uint32_t(0);
     auto gap_timestamp = microsec_clock::universal_time();
     auto is_running = std::atomic<bool>(true);
+    auto drain = [&] (auto& sequencer) {
+      while(auto message = sequencer.read()) {
+        if(feed_configuration.m_is_logging_messages) {
+          log(*message);
+        }
+      }
+    };
     for(auto i = std::size_t(0); i != clients.size(); ++i) {
       routines.spawn([&, i] {
         auto units = std::set<std::uint8_t>();
@@ -191,13 +216,14 @@ int main(int argc, const char** argv) {
             if(header.m_unit != feed_configuration.m_unit) {
               continue;
             }
+            auto timestamp = microsec_clock::universal_time();
+            auto pending = optional<CxaPitchGap>();
+            auto position = std::uint32_t(0);
             with(sequencer, [&] (auto& sequencer) {
-              auto timestamp = microsec_clock::universal_time();
               sequencer.add(static_cast<int>(i), block, timestamp);
-              while(auto message = sequencer.read()) {
-                if(feed_configuration.m_is_logging_messages) {
-                  log(*message);
-                }
+              drain(sequencer);
+              if(header.m_sequence + header.m_count > live) {
+                live = header.m_sequence + header.m_count;
               }
               auto gap = sequencer.get_gap();
               if(!gap) {
@@ -206,6 +232,8 @@ int main(int argc, const char** argv) {
               if(gap->m_sequence != reported_gap) {
                 reported_gap = gap->m_sequence;
                 gap_timestamp = timestamp;
+                pending = *gap;
+                position = live;
                 if(feed_configuration.m_is_logging_messages) {
                   std::cout << ",gap," << gap->m_sequence << ',' <<
                     gap->m_count << std::endl;
@@ -218,13 +246,17 @@ int main(int argc, const char** argv) {
                 }
                 sequencer.reset(gap->m_sequence + gap->m_count);
                 reported_gap = 0;
-                while(auto message = sequencer.read()) {
-                  if(feed_configuration.m_is_logging_messages) {
-                    log(*message);
-                  }
-                }
+                drain(sequencer);
               }
             });
+            if(pending && gap_client) {
+              auto requested = gap_client->request(
+                feed_configuration.m_unit, *pending, position, timestamp);
+              if(feed_configuration.m_is_logging_messages) {
+                std::cout << ",request," << pending->m_sequence << ',' <<
+                  requested << std::endl;
+              }
+            }
           } catch(const std::exception& e) {
             if(feed_configuration.m_is_logging_messages) {
               std::cout << feed_configuration.m_feeds[i].m_name <<
@@ -237,25 +269,56 @@ int main(int argc, const char** argv) {
         }
       });
     }
-    if(session_client) {
+    for(auto i = std::size_t(0); i != recovery_clients.size(); ++i) {
+      routines.spawn([&, i] {
+        while(true) {
+          try {
+            auto block = recovery_clients[i]->read();
+            if(block.get_header().m_unit != feed_configuration.m_unit) {
+              continue;
+            }
+            with(sequencer, [&] (auto& sequencer) {
+              sequencer.recover(block);
+              drain(sequencer);
+              if(!sequencer.get_gap()) {
+                reported_gap = 0;
+              }
+            });
+          } catch(const std::exception& e) {
+            if(feed_configuration.m_is_logging_messages) {
+              std::cout << ",recovery,error," << e.what() << std::endl;
+            }
+            if(!is_running) {
+              break;
+            }
+          }
+        }
+      });
+    }
+    if(gap_client) {
       routines.spawn([&] {
         while(true) {
           try {
-            auto message = session_client->read();
-            if(message.m_type == CxaPitchGapResponse::TYPE) {
-              auto response = CxaPitchGapResponse::parse(message);
+            auto response = gap_client->get_responses()->pop();
+            if(feed_configuration.m_is_logging_messages) {
               std::cout << ",gap_response," <<
                 static_cast<int>(response.m_unit) << ',' <<
                 response.m_sequence << ',' << response.m_count << ',' <<
                 response.m_status << std::endl;
-            } else {
-              std::cout << ",retransmission,message," <<
-                static_cast<int>(message.m_type) << std::endl;
             }
-          } catch(const std::exception& e) {
-            if(is_running) {
-              std::cout << ",retransmission,error," << e.what() << std::endl;
+            if(response.m_status == CxaPitchGapResponse::ACCEPTED) {
+              continue;
             }
+            with(sequencer, [&] (auto& sequencer) {
+              auto gap = sequencer.get_gap();
+              if(!gap || gap->m_sequence != response.m_sequence) {
+                return;
+              }
+              sequencer.reset(response.m_sequence + response.m_count);
+              reported_gap = 0;
+              drain(sequencer);
+            });
+          } catch(const std::exception&) {
             break;
           }
         }
@@ -263,8 +326,11 @@ int main(int argc, const char** argv) {
     }
     wait_for_kill_event();
     is_running = false;
-    if(session_client) {
-      session_client->close();
+    if(gap_client) {
+      gap_client->close();
+    }
+    for(auto& client : recovery_clients) {
+      client->close();
     }
     for(auto& client : clients) {
       client->close();

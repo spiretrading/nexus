@@ -1,5 +1,6 @@
 #ifndef CXA_PITCH_SESSION_CLIENT_HPP
 #define CXA_PITCH_SESSION_CLIENT_HPP
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
@@ -31,6 +32,14 @@
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionMessages.hpp"
 
 namespace Nexus {
+
+  /** Concept satisfied by types implementing a CXA PITCH server session. */
+  template<typename T>
+  concept IsCxaPitchSession = requires(T& t, const CxaPitchGapRequest& r) {
+    { t.read() } -> std::same_as<CxaPitchMessage>;
+    { t.write(r) } -> std::same_as<void>;
+    { t.close() } -> std::same_as<void>;
+  };
 
   /**
    * Maintains a logged in session with a CXA PITCH gap request proxy or spin

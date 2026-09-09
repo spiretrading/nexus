@@ -1,0 +1,159 @@
+#include <cstdint>
+#include <memory>
+#include <string>
+#include <string_view>
+#include <vector>
+#include <Beam/IO/SharedBuffer.hpp>
+#include <Beam/Queues/Queue.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
+#include <doctest/doctest.h>
+#include "CxaPitchMarketDataFeedClient/CxaPitchGapClient.hpp"
+
+using namespace Beam;
+using namespace boost::posix_time;
+using namespace Nexus;
+
+namespace {
+  struct StubSession {
+    std::vector<std::string> m_requests;
+    std::shared_ptr<Queue<SharedBuffer>> m_messages;
+    SharedBuffer m_payload;
+
+    StubSession()
+      : m_messages(std::make_shared<Queue<SharedBuffer>>()) {}
+
+    CxaPitchMessage read() {
+      m_payload = m_messages->pop();
+      return CxaPitchMessage::parse(
+        std::string_view(m_payload.get_data(), m_payload.get_size()));
+    }
+
+    void write(const CxaPitchGapRequest& request) {
+      auto buffer = SharedBuffer();
+      request.encode(out(buffer));
+      m_requests.emplace_back(buffer.get_data(), buffer.get_size());
+    }
+
+    void close() {
+      m_messages->close();
+    }
+  };
+
+  using GapClient = CxaPitchGapClient<StubSession*>;
+
+  CxaPitchGapRequest parse_request(const std::string& source) {
+    auto cursor = CxaPitchMessage::parse(source).get_cursor();
+    auto request = CxaPitchGapRequest();
+    request.m_unit = cursor.read_uint8();
+    request.m_sequence = cursor.read_uint32();
+    request.m_count = cursor.read_uint16();
+    return request;
+  }
+
+  SharedBuffer encode_response(std::uint8_t unit, std::uint32_t sequence,
+      std::uint16_t count, char status) {
+    auto message = std::string();
+    message += char(CxaPitchGapResponse::LENGTH);
+    message += static_cast<char>(CxaPitchGapResponse::TYPE);
+    message += static_cast<char>(unit);
+    message += static_cast<char>(sequence & 0xFF);
+    message += static_cast<char>((sequence >> 8) & 0xFF);
+    message += static_cast<char>((sequence >> 16) & 0xFF);
+    message += static_cast<char>((sequence >> 24) & 0xFF);
+    message += static_cast<char>(count & 0xFF);
+    message += static_cast<char>((count >> 8) & 0xFF);
+    message += status;
+    return SharedBuffer(message.data(), message.size());
+  }
+
+  CxaPitchGap make_gap(std::uint32_t sequence, std::uint32_t count) {
+    auto gap = CxaPitchGap();
+    gap.m_sequence = sequence;
+    gap.m_count = count;
+    return gap;
+  }
+}
+
+TEST_SUITE("CxaPitchGapClient") {
+  TEST_CASE("request_splits_at_the_message_limit") {
+    auto session = StubSession();
+    auto client = GapClient(&session);
+    auto timestamp = time_from_string("2026-09-09 10:00:00");
+    REQUIRE(client.request(1, make_gap(1000, 250), 1000, timestamp) == 250);
+    REQUIRE(session.m_requests.size() == 3);
+    auto first = parse_request(session.m_requests[0]);
+    REQUIRE(first.m_unit == 1);
+    REQUIRE(first.m_sequence == 1000);
+    REQUIRE(first.m_count == 100);
+    REQUIRE(parse_request(session.m_requests[1]).m_sequence == 1100);
+    REQUIRE(parse_request(session.m_requests[1]).m_count == 100);
+    REQUIRE(parse_request(session.m_requests[2]).m_sequence == 1200);
+    REQUIRE(parse_request(session.m_requests[2]).m_count == 50);
+  }
+
+  TEST_CASE("request_renews_the_second_allowance") {
+    auto session = StubSession();
+    auto client = GapClient(&session);
+    auto timestamp = time_from_string("2026-09-09 10:00:00");
+    auto total = 0;
+    for(auto i = 0; i != GapClient::SECOND_LIMIT; ++i) {
+      total += client.request(1, make_gap(1, 1), 1, timestamp);
+    }
+    REQUIRE(total == GapClient::SECOND_LIMIT);
+    REQUIRE(client.request(1, make_gap(1, 1), 1, timestamp) == 0);
+    REQUIRE(
+      client.request(1, make_gap(1, 1), 1, timestamp + seconds(1)) == 1);
+  }
+
+  TEST_CASE("request_renews_the_minute_allowance") {
+    auto session = StubSession();
+    auto client = GapClient(&session);
+    auto timestamp = time_from_string("2026-09-09 10:00:00");
+    auto total = 0;
+    for(auto i = 0; i != GapClient::MINUTE_LIMIT; ++i) {
+      total +=
+        client.request(1, make_gap(1, 1), 1, timestamp + seconds(i / 100));
+    }
+    REQUIRE(total == GapClient::MINUTE_LIMIT);
+    REQUIRE(client.request(1, make_gap(1, 1), 1, timestamp + seconds(30)) == 0);
+    REQUIRE(client.request(1, make_gap(1, 1), 1, timestamp + minutes(1)) == 1);
+  }
+
+  TEST_CASE("request_renews_the_daily_allowance") {
+    auto session = StubSession();
+    auto client = GapClient(&session);
+    auto timestamp = time_from_string("2026-09-09 10:00:00");
+    auto total = 0;
+    for(auto i = 0; i != GapClient::DAY_LIMIT; ++i) {
+      total += client.request(1, make_gap(1, 1), 1,
+        timestamp + minutes(i / 1000) + seconds((i % 1000) / 100));
+    }
+    REQUIRE(total == GapClient::DAY_LIMIT);
+    REQUIRE(client.request(1, make_gap(1, 1), 1, timestamp + hours(2)) == 0);
+    REQUIRE(client.request(1, make_gap(1, 1), 1, timestamp + hours(24)) == 1);
+  }
+
+  TEST_CASE("request_ignores_a_gap_beyond_the_recoverable_range") {
+    auto session = StubSession();
+    auto client = GapClient(&session);
+    auto timestamp = time_from_string("2026-09-09 10:00:00");
+    REQUIRE(client.request(1, make_gap(500000, 1), 2000000, timestamp) == 0);
+    REQUIRE(session.m_requests.empty());
+    REQUIRE(client.request(1, make_gap(500000, 1), 1000000, timestamp) == 1);
+  }
+
+  TEST_CASE("read_responses") {
+    auto session = StubSession();
+    auto client = GapClient(&session);
+    session.m_messages->push(encode_response(1, 4155, 50, 'A'));
+    session.m_messages->push(encode_response(2, 900, 10, 'D'));
+    auto accepted = client.get_responses()->pop();
+    REQUIRE(accepted.m_unit == 1);
+    REQUIRE(accepted.m_sequence == 4155);
+    REQUIRE(accepted.m_count == 50);
+    REQUIRE(accepted.m_status == CxaPitchGapResponse::ACCEPTED);
+    auto rejected = client.get_responses()->pop();
+    REQUIRE(rejected.m_sequence == 900);
+    REQUIRE(rejected.m_status != CxaPitchGapResponse::ACCEPTED);
+  }
+}
