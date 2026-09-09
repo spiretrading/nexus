@@ -44,9 +44,9 @@ namespace {
   using ApplicationSessionClient =
     CxaPitchSessionClient<TcpSocketChannel, LiveTimer>;
   using ApplicationGapClient =
-    CxaPitchGapClient<std::unique_ptr<ApplicationSessionClient>, LiveTimer>;
+    CxaPitchGapClient<ApplicationSessionClient, LiveTimer>;
   using ApplicationSpinClient =
-    CxaPitchSpinClient<std::unique_ptr<ApplicationSessionClient>>;
+    CxaPitchSpinClient<std::shared_ptr<ApplicationSessionClient>>;
   using ApplicationCxaPitchClient =
     CxaPitchClient<std::unique_ptr<ApplicationProtocolClient>,
       std::unique_ptr<ApplicationGapClient>,
@@ -93,7 +93,7 @@ int main(int argc, const char** argv) {
       login.m_session_sub_id = session.m_session_sub_id;
       login.m_username = session.m_username;
       login.m_password = session.m_password;
-      return std::make_unique<ApplicationSessionClient>(
+      return std::make_shared<ApplicationSessionClient>(
         login, init(session.m_address), init(HEARTBEAT));
     };
     auto gap_client = optional<std::unique_ptr<ApplicationGapClient>>();

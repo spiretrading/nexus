@@ -97,6 +97,6 @@ TEST_SUITE("CxaPitchProtocolClient") {
     auto data = std::string("\x08\x00\x00\x01", 4);
     fixture.m_server_channel->get_writer().write(
       SharedBuffer(data.data(), data.size()));
-    REQUIRE_THROWS_AS(fixture.m_client->read(), IOException);
+    REQUIRE_THROWS_AS(fixture.m_client->read(), CxaPitchParserException);
   }
 }

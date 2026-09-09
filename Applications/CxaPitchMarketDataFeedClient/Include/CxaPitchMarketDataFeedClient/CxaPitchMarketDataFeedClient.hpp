@@ -1,6 +1,7 @@
 #ifndef CXA_PITCH_MARKET_DATA_FEED_CLIENT_HPP
 #define CXA_PITCH_MARKET_DATA_FEED_CLIENT_HPP
 #include <cstdint>
+#include <exception>
 #include <functional>
 #include <iostream>
 #include <string>
@@ -64,6 +65,7 @@ namespace Nexus {
         Money m_price;
         Side m_side;
         std::string m_pid;
+        std::uint32_t m_quantity;
       };
       CxaPitchConfiguration m_config;
       Beam::local_ptr_t<M> m_feed_client;
@@ -105,7 +107,7 @@ namespace Nexus {
             m_read_loop(Beam::spawn(std::bind_front(
               &CxaPitchMarketDataFeedClient::read_loop, this))) {
   } catch(const std::exception&) {
-    std::throw_with_nested(Beam::ConnectException(
+    Beam::throw_nested_with_location(Beam::ConnectException(
       "Unable to initialize the CXA PITCH market data feed client."));
   }
 
@@ -124,8 +126,8 @@ namespace Nexus {
       return;
     }
     m_client->close();
-    m_feed_client->close();
     m_read_loop.wait();
+    m_feed_client->close();
     m_open_state.close();
   }
 
@@ -170,8 +172,8 @@ namespace Nexus {
     m_timestamp = message.m_timestamp;
     auto id = std::to_string(message.m_order_id);
     auto ticker = Ticker(message.m_symbol, m_config.m_primary_venue);
-    m_orders[id] =
-      OrderEntry(ticker, message.m_price, message.m_side, message.m_pid);
+    m_orders[id] = OrderEntry(ticker, message.m_price, message.m_side,
+      message.m_pid, message.m_quantity);
     if(message.m_quantity == 0) {
       return;
     }
@@ -197,6 +199,11 @@ namespace Nexus {
       publish(order->m_ticker, message.m_timestamp, order->m_price,
         message.m_executed_quantity, ' ', order->m_side, order->m_pid,
         message.m_contra_pid);
+      if(order->m_quantity > message.m_executed_quantity) {
+        order->m_quantity -= message.m_executed_quantity;
+      } else {
+        m_orders.erase(id);
+      }
     }
   }
 
@@ -217,6 +224,11 @@ namespace Nexus {
       publish(order->m_ticker, message.m_timestamp, message.m_price,
         message.m_executed_quantity, message.m_execution_type, order->m_side,
         order->m_pid, message.m_contra_pid);
+      if(order->m_quantity > message.m_executed_quantity) {
+        order->m_quantity -= message.m_executed_quantity;
+      } else {
+        m_orders.erase(id);
+      }
     }
   }
 
@@ -229,9 +241,17 @@ namespace Nexus {
     if(message.m_cancelled_quantity == 0) {
       return;
     }
-    m_feed_client->offset_order_size(std::to_string(message.m_order_id),
+    auto id = std::to_string(message.m_order_id);
+    m_feed_client->offset_order_size(id,
       -static_cast<std::int32_t>(message.m_cancelled_quantity),
       message.m_timestamp);
+    if(auto order = Beam::lookup(m_orders, id)) {
+      if(order->m_quantity > message.m_cancelled_quantity) {
+        order->m_quantity -= message.m_cancelled_quantity;
+      } else {
+        m_orders.erase(id);
+      }
+    }
   }
 
   template<typename M, typename C>
@@ -241,11 +261,21 @@ namespace Nexus {
       const CxaPitchModifyOrder& message) {
     m_timestamp = message.m_timestamp;
     auto id = std::to_string(message.m_order_id);
+    auto order = Beam::lookup(m_orders, id);
+    if(order && order->m_quantity == 0 && message.m_quantity != 0) {
+      order->m_price = message.m_price;
+      order->m_quantity = message.m_quantity;
+      m_feed_client->add_order(order->m_ticker, m_config.m_disseminating_venue,
+        m_config.m_mpid, false, id, order->m_side, message.m_price,
+        message.m_quantity, message.m_timestamp);
+      return;
+    }
     m_feed_client->modify_order_size(
       id, message.m_quantity, message.m_timestamp);
     m_feed_client->modify_order_price(id, message.m_price, message.m_timestamp);
-    if(auto order = Beam::lookup(m_orders, id)) {
+    if(order) {
       order->m_price = message.m_price;
+      order->m_quantity = message.m_quantity;
     }
   }
 

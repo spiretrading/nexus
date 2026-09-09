@@ -76,12 +76,12 @@ namespace Nexus {
 
   template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>
   CxaPitchBlock CxaPitchProtocolClient<C>::read() {
-    return Beam::try_or_nest([&] {
+    Beam::try_or_nest([&] {
       reset(m_buffer);
       m_channel->get_reader().read(Beam::out(m_buffer));
-      return CxaPitchBlock::parse(
-        std::string_view(m_buffer.get_data(), m_buffer.get_size()));
     }, Beam::IOException("Failed to read CXA PITCH block."));
+    return CxaPitchBlock::parse(
+      std::string_view(m_buffer.get_data(), m_buffer.get_size()));
   }
 
   template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>
