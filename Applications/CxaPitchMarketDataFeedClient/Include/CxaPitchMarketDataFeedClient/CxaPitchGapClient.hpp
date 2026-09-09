@@ -6,6 +6,7 @@
 #include <exception>
 #include <functional>
 #include <memory>
+#include <type_traits>
 #include <utility>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -132,6 +133,10 @@ namespace Nexus {
       bool reconnect();
       void read_loop();
   };
+
+  template<typename S, typename TF>
+  CxaPitchGapClient(std::function<std::shared_ptr<S> ()>, TF&&) ->
+    CxaPitchGapClient<S, std::remove_cvref_t<TF>>;
 
   template<IsCxaPitchSessionClient S, typename T> requires
     Beam::IsTimer<Beam::dereference_t<T>>

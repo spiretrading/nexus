@@ -76,13 +76,6 @@ namespace {
     message += status;
     return SharedBuffer(message.data(), message.size());
   }
-
-  CxaPitchGap make_gap(std::uint32_t sequence, std::uint32_t count) {
-    auto gap = CxaPitchGap();
-    gap.m_sequence = sequence;
-    gap.m_count = count;
-    return gap;
-  }
 }
 
 TEST_SUITE("CxaPitchGapClient") {
@@ -91,7 +84,7 @@ TEST_SUITE("CxaPitchGapClient") {
     auto timer = TriggerTimer();
     auto client = GapClient([=] { return session; }, &timer);
     auto timestamp = time_from_string("2026-09-09 10:00:00");
-    REQUIRE(client.request(1, make_gap(1000, 250), 1000, timestamp) == 250);
+    REQUIRE(client.request(1, CxaPitchGap(1000, 250), 1000, timestamp) == 250);
     REQUIRE(session->m_requests.size() == 3);
     auto first = parse_request(session->m_requests[0]);
     REQUIRE(first.m_unit == 1);
@@ -110,12 +103,12 @@ TEST_SUITE("CxaPitchGapClient") {
     auto timestamp = time_from_string("2026-09-09 10:00:00");
     auto total = 0;
     for(auto i = 0; i != GapClient::SECOND_LIMIT; ++i) {
-      total += client.request(1, make_gap(1, 1), 1, timestamp);
+      total += client.request(1, CxaPitchGap(1, 1), 1, timestamp);
     }
     REQUIRE(total == GapClient::SECOND_LIMIT);
-    REQUIRE(client.request(1, make_gap(1, 1), 1, timestamp) == 0);
+    REQUIRE(client.request(1, CxaPitchGap(1, 1), 1, timestamp) == 0);
     REQUIRE(
-      client.request(1, make_gap(1, 1), 1, timestamp + seconds(1)) == 1);
+      client.request(1, CxaPitchGap(1, 1), 1, timestamp + seconds(1)) == 1);
   }
 
   TEST_CASE("request_renews_the_minute_allowance") {
@@ -126,11 +119,13 @@ TEST_SUITE("CxaPitchGapClient") {
     auto total = 0;
     for(auto i = 0; i != GapClient::MINUTE_LIMIT; ++i) {
       total +=
-        client.request(1, make_gap(1, 1), 1, timestamp + seconds(i / 100));
+        client.request(1, CxaPitchGap(1, 1), 1, timestamp + seconds(i / 100));
     }
     REQUIRE(total == GapClient::MINUTE_LIMIT);
-    REQUIRE(client.request(1, make_gap(1, 1), 1, timestamp + seconds(30)) == 0);
-    REQUIRE(client.request(1, make_gap(1, 1), 1, timestamp + minutes(1)) == 1);
+    REQUIRE(
+      client.request(1, CxaPitchGap(1, 1), 1, timestamp + seconds(30)) == 0);
+    REQUIRE(
+      client.request(1, CxaPitchGap(1, 1), 1, timestamp + minutes(1)) == 1);
   }
 
   TEST_CASE("request_renews_the_daily_allowance") {
@@ -140,12 +135,13 @@ TEST_SUITE("CxaPitchGapClient") {
     auto timestamp = time_from_string("2026-09-09 10:00:00");
     auto total = 0;
     for(auto i = 0; i != GapClient::DAY_LIMIT; ++i) {
-      total += client.request(1, make_gap(1, 1), 1,
+      total += client.request(1, CxaPitchGap(1, 1), 1,
         timestamp + minutes(i / 1000) + seconds((i % 1000) / 100));
     }
     REQUIRE(total == GapClient::DAY_LIMIT);
-    REQUIRE(client.request(1, make_gap(1, 1), 1, timestamp + hours(2)) == 0);
-    REQUIRE(client.request(1, make_gap(1, 1), 1, timestamp + hours(24)) == 1);
+    REQUIRE(client.request(1, CxaPitchGap(1, 1), 1, timestamp + hours(2)) == 0);
+    REQUIRE(
+      client.request(1, CxaPitchGap(1, 1), 1, timestamp + hours(24)) == 1);
   }
 
   TEST_CASE("request_ignores_a_gap_beyond_the_recoverable_range") {
@@ -153,9 +149,9 @@ TEST_SUITE("CxaPitchGapClient") {
     auto timer = TriggerTimer();
     auto client = GapClient([=] { return session; }, &timer);
     auto timestamp = time_from_string("2026-09-09 10:00:00");
-    REQUIRE(client.request(1, make_gap(500000, 1), 2000000, timestamp) == 0);
+    REQUIRE(client.request(1, CxaPitchGap(500000, 1), 2000000, timestamp) == 0);
     REQUIRE(session->m_requests.empty());
-    REQUIRE(client.request(1, make_gap(500000, 1), 1000000, timestamp) == 1);
+    REQUIRE(client.request(1, CxaPitchGap(500000, 1), 1000000, timestamp) == 1);
   }
 
   TEST_CASE("read_responses") {
@@ -211,7 +207,7 @@ TEST_SUITE("CxaPitchGapClient") {
     auto client = GapClient([=] { return session; }, &timer);
     auto timestamp = time_from_string("2026-09-09 10:00:00");
     auto requester = RoutineHandler(spawn([&] {
-      client.request(1, make_gap(1000, 50), 1000, timestamp);
+      client.request(1, CxaPitchGap(1000, 50), 1000, timestamp);
     }));
     flush_pending_routines();
     auto is_closed = std::make_shared<Queue<bool>>();
@@ -241,7 +237,7 @@ TEST_SUITE("CxaPitchGapClient") {
     second->m_messages->push(encode_response(1, 900, 10, 'A'));
     REQUIRE(client.get_responses()->pop().m_sequence == 900);
     auto timestamp = time_from_string("2026-09-09 10:00:00");
-    REQUIRE(client.request(1, make_gap(1000, 50), 1000, timestamp) == 50);
+    REQUIRE(client.request(1, CxaPitchGap(1000, 50), 1000, timestamp) == 50);
     REQUIRE(second->m_requests.size() == 1);
     REQUIRE(parse_request(second->m_requests[0]).m_sequence == 1000);
   }

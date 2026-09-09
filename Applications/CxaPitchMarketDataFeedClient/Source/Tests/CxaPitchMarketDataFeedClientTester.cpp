@@ -1,9 +1,10 @@
 #include <memory>
 #include <string>
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Utilities/ToString.hpp>
-#include <doctest/doctest.h>
 #include <boost/date_time/posix_time/posix_time.hpp>
+#include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchMarketDataFeedClient.hpp"
 
 using namespace Beam;
@@ -82,11 +83,12 @@ namespace {
       m_imbalances->close();
     }
   };
+
+  using Client =
+    CxaPitchMarketDataFeedClient<StubMarketDataFeedClient*, StubClient*>;
 }
 
 TEST_SUITE("CxaPitchMarketDataFeedClient") {
-  using Client =
-    CxaPitchMarketDataFeedClient<StubMarketDataFeedClient*, StubClient*>;
   static const auto VENUE = Venue("CXA");
   static const auto TICKER = Ticker("ZVZT", VENUE);
   static const auto ORDER_ID = std::string("800891482924597253");
@@ -291,9 +293,8 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     pitch.m_messages->push(DELETE_ORDER);
     REQUIRE(feed.m_operations->pop() == "(remove " + ORDER_ID + ')');
     pitch.m_messages->push(ORDER_EXECUTED);
+    flush_pending_routines();
     REQUIRE(feed.m_operations->pop() == "(offset " + ORDER_ID + " -700)");
-    pitch.m_messages->push(DELETE_ORDER);
-    REQUIRE(feed.m_operations->pop() == "(remove " + ORDER_ID + ')');
     REQUIRE(!feed.m_time_and_sales->try_pop());
   }
 
@@ -365,9 +366,8 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     pitch.m_messages->push(UNIT_CLEAR);
     REQUIRE(feed.m_operations->pop() == "(remove " + ORDER_ID + ')');
     pitch.m_messages->push(ORDER_EXECUTED);
+    flush_pending_routines();
     REQUIRE(feed.m_operations->pop() == "(offset " + ORDER_ID + " -700)");
-    pitch.m_messages->push(DELETE_ORDER);
-    REQUIRE(feed.m_operations->pop() == "(remove " + ORDER_ID + ')');
     REQUIRE(!feed.m_time_and_sales->try_pop());
   }
 
