@@ -18,6 +18,7 @@ disseminating_venue: CXA
 mpid: XCXA
 enable_logging: true
 liveness: 5s
+gap_timeout: 2s
 feeds:
   - name: A
     address: "233.218.133.80:30501"
@@ -46,6 +47,7 @@ spin:
     REQUIRE(config.m_disseminating_venue == Venues::CXA);
     REQUIRE(config.m_mpid == "XCXA");
     REQUIRE(config.m_liveness == seconds(5));
+    REQUIRE(config.m_gap_timeout == seconds(2));
     REQUIRE(config.m_feeds.size() == 2);
     REQUIRE(config.m_feeds[0].m_name == "A");
     REQUIRE(config.m_feeds[0].m_address.get_host() == "233.218.133.80");
@@ -81,6 +83,7 @@ feeds:
     REQUIRE(config.m_unit == 2);
     REQUIRE(config.m_mpid == "CXA");
     REQUIRE(config.m_liveness == seconds(3));
+    REQUIRE(config.m_gap_timeout == seconds(5));
     REQUIRE(config.m_feeds.size() == 1);
     REQUIRE(config.m_feeds[0].m_interface.get_host() == "10.0.0.1");
     REQUIRE(config.m_feeds[0].m_gap_address.get_host().empty());

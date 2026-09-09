@@ -87,6 +87,9 @@ namespace Nexus {
     /** How long a feed may be silent before it is excluded. */
     boost::posix_time::time_duration m_liveness;
 
+    /** How long to wait for a missing message before skipping over it. */
+    boost::posix_time::time_duration m_gap_timeout;
+
     /** The gap request proxy to request missing messages from. */
     boost::optional<CxaPitchSession> m_retransmission;
 
@@ -124,6 +127,7 @@ namespace Nexus {
   inline CxaPitchConfiguration CxaPitchConfiguration::parse(
       const YAML::Node& config) {
     static const auto DEFAULT_LIVENESS = boost::posix_time::seconds(3);
+    static const auto DEFAULT_GAP_TIMEOUT = boost::posix_time::seconds(5);
     return Beam::try_or_nest([&] {
       auto configuration = CxaPitchConfiguration();
       configuration.m_is_logging_messages =
@@ -154,6 +158,9 @@ namespace Nexus {
       configuration.m_liveness =
         Beam::extract<boost::posix_time::time_duration>(
           config, "liveness", DEFAULT_LIVENESS);
+      configuration.m_gap_timeout =
+        Beam::extract<boost::posix_time::time_duration>(
+          config, "gap_timeout", DEFAULT_GAP_TIMEOUT);
       if(config["retransmission"]) {
         configuration.m_retransmission =
           CxaPitchSession::parse(Beam::get_node(config, "retransmission"));

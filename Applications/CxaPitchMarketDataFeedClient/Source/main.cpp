@@ -1,3 +1,4 @@
+#include <atomic>
 #include <cstddef>
 #include <cstdint>
 #include <iostream>
@@ -148,6 +149,8 @@ int main(int argc, const char** argv) {
       static_cast<int>(clients.size()), feed_configuration.m_liveness);
     auto routines = RoutineHandlerGroup();
     auto reported_gap = std::uint32_t(0);
+    auto gap_timestamp = microsec_clock::universal_time();
+    auto is_running = std::atomic<bool>(true);
     for(auto i = std::size_t(0); i != clients.size(); ++i) {
       routines.spawn([&, i] {
         auto units = std::set<std::uint8_t>();
@@ -165,29 +168,53 @@ int main(int argc, const char** argv) {
               continue;
             }
             with(sequencer, [&] (auto& sequencer) {
-              sequencer.add(static_cast<int>(i), block,
-                microsec_clock::universal_time());
+              auto timestamp = microsec_clock::universal_time();
+              sequencer.add(static_cast<int>(i), block, timestamp);
               while(auto message = sequencer.read()) {
                 if(feed_configuration.m_is_logging_messages) {
                   log(*message);
                 }
               }
               auto gap = sequencer.get_gap();
-              if(gap && gap->m_sequence != reported_gap) {
+              if(!gap) {
+                return;
+              }
+              if(gap->m_sequence != reported_gap) {
                 reported_gap = gap->m_sequence;
+                gap_timestamp = timestamp;
                 if(feed_configuration.m_is_logging_messages) {
                   std::cout << ",gap," << gap->m_sequence << ',' <<
                     gap->m_count << std::endl;
                 }
+              } else if(timestamp - gap_timestamp >
+                  feed_configuration.m_gap_timeout) {
+                if(feed_configuration.m_is_logging_messages) {
+                  std::cout << ",skip," << gap->m_sequence << ',' <<
+                    gap->m_count << std::endl;
+                }
+                sequencer.reset(gap->m_sequence + gap->m_count);
+                reported_gap = 0;
+                while(auto message = sequencer.read()) {
+                  if(feed_configuration.m_is_logging_messages) {
+                    log(*message);
+                  }
+                }
               }
             });
-          } catch(const IOException&) {
-            break;
+          } catch(const std::exception& e) {
+            if(feed_configuration.m_is_logging_messages) {
+              std::cout << feed_configuration.m_feeds[i].m_name <<
+                ",error," << e.what() << std::endl;
+            }
+            if(!is_running) {
+              break;
+            }
           }
         }
       });
     }
     wait_for_kill_event();
+    is_running = false;
     for(auto& client : clients) {
       client->close();
     }
