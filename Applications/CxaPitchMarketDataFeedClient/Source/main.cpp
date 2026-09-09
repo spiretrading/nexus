@@ -11,17 +11,21 @@
 #include <Beam/IO/WrapperChannel.hpp>
 #include <Beam/Network/IpAddress.hpp>
 #include <Beam/Network/MulticastSocketChannel.hpp>
+#include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/Threading/Sync.hpp>
+#include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
+#include <Beam/Utilities/ReportException.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchConfiguration.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchProtocolClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSequencer.hpp"
+#include "CxaPitchMarketDataFeedClient/CxaPitchSessionClient.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Version.hpp"
 
@@ -36,6 +40,8 @@ namespace {
       QueuedReader<MulticastSocketChannel::Reader*>>;
   using ApplicationProtocolClient =
     CxaPitchProtocolClient<std::unique_ptr<ApplicationFeedChannel>>;
+  using ApplicationSessionClient =
+    CxaPitchSessionClient<TcpSocketChannel, LiveTimer>;
   static const auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(134217728);
 
   std::unique_ptr<ApplicationProtocolClient> make_protocol_client(
@@ -145,6 +151,24 @@ int main(int argc, const char** argv) {
     for(auto& feed : feed_configuration.m_feeds) {
       clients.push_back(make_protocol_client(feed, options));
     }
+    static const auto HEARTBEAT = seconds(1);
+    auto session_client = std::unique_ptr<ApplicationSessionClient>();
+    if(feed_configuration.m_retransmission) {
+      auto& retransmission = *feed_configuration.m_retransmission;
+      auto login = CxaPitchLogin();
+      login.m_session_sub_id = retransmission.m_session_sub_id;
+      login.m_username = retransmission.m_username;
+      login.m_password = retransmission.m_password;
+      try {
+        session_client = std::make_unique<ApplicationSessionClient>(
+          login, init(retransmission.m_address), init(HEARTBEAT));
+        std::cout << ",retransmission,connected" << std::endl;
+      } catch(const std::exception&) {
+        std::cout << ",retransmission,error" << std::endl;
+        std::cout << make_exception_report(std::current_exception()) <<
+          std::endl;
+      }
+    }
     auto sequencer = Sync<CxaPitchSequencer>(
       static_cast<int>(clients.size()), feed_configuration.m_liveness);
     auto routines = RoutineHandlerGroup();
@@ -213,8 +237,35 @@ int main(int argc, const char** argv) {
         }
       });
     }
+    if(session_client) {
+      routines.spawn([&] {
+        while(true) {
+          try {
+            auto message = session_client->read();
+            if(message.m_type == CxaPitchGapResponse::TYPE) {
+              auto response = CxaPitchGapResponse::parse(message);
+              std::cout << ",gap_response," <<
+                static_cast<int>(response.m_unit) << ',' <<
+                response.m_sequence << ',' << response.m_count << ',' <<
+                response.m_status << std::endl;
+            } else {
+              std::cout << ",retransmission,message," <<
+                static_cast<int>(message.m_type) << std::endl;
+            }
+          } catch(const std::exception& e) {
+            if(is_running) {
+              std::cout << ",retransmission,error," << e.what() << std::endl;
+            }
+            break;
+          }
+        }
+      });
+    }
     wait_for_kill_event();
     is_running = false;
+    if(session_client) {
+      session_client->close();
+    }
     for(auto& client : clients) {
       client->close();
     }

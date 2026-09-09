@@ -19,4 +19,9 @@ feeds:
     address: "233.218.133.96:30501"
     gap_address: "233.218.133.97:30501"
     interface: "$local_interface:30501"
+retransmission:
+  address: "202.94.78.7:39001"
+  session_sub_id: "$retransmission_session_sub_id"
+  username: "$retransmission_username"
+  password: "$retransmission_password"
 ...

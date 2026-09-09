@@ -3,8 +3,11 @@
 #include <cstddef>
 #include <cstdint>
 #include <string_view>
+#include <Beam/IO/Buffer.hpp>
+#include <Beam/Pointers/Out.hpp>
 #include <boost/throw_exception.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchCursor.hpp"
+#include "CxaPitchMarketDataFeedClient/CxaPitchEncoder.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"
 
 namespace Nexus {
@@ -33,6 +36,13 @@ namespace Nexus {
      * @return The CxaPitchHeader represented by the <i>source</i>.
      */
     static CxaPitchHeader parse(std::string_view source);
+
+    /**
+     * Encodes this header, appending it to a buffer.
+     * @param buffer The buffer to append this header to.
+     */
+    template<Beam::IsBuffer B>
+    void encode(Beam::Out<B> buffer) const;
   };
 
   inline CxaPitchHeader CxaPitchHeader::parse(std::string_view source) {
@@ -47,6 +57,15 @@ namespace Nexus {
     header.m_unit = cursor.read_uint8();
     header.m_sequence = cursor.read_uint32();
     return header;
+  }
+
+  template<Beam::IsBuffer B>
+  void CxaPitchHeader::encode(Beam::Out<B> buffer) const {
+    auto encoder = CxaPitchEncoder(Beam::Ref(*buffer));
+    encoder.write_uint16(m_length);
+    encoder.write_uint8(m_count);
+    encoder.write_uint8(m_unit);
+    encoder.write_uint32(m_sequence);
   }
 }
 

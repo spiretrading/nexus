@@ -1,5 +1,8 @@
 #include <array>
+#include <cstdint>
 #include <string_view>
+#include <Beam/IO/SharedBuffer.hpp>
+#include <Beam/Pointers/Out.hpp>
 #include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchHeader.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"
@@ -33,6 +36,18 @@ TEST_SUITE("CxaPitchHeader") {
     REQUIRE(header.m_count == 0);
     REQUIRE(header.m_unit == 2);
     REQUIRE(header.m_sequence == 4155);
+  }
+
+  TEST_CASE("encode_unsequenced_header") {
+    auto header = CxaPitchHeader();
+    header.m_length = static_cast<std::uint16_t>(CxaPitchHeader::LENGTH + 22);
+    header.m_count = 1;
+    header.m_unit = 0;
+    header.m_sequence = 0;
+    auto buffer = Beam::SharedBuffer();
+    header.encode(Beam::out(buffer));
+    REQUIRE(std::string_view(buffer.get_data(), buffer.get_size()) ==
+      std::string_view("\x1e\x00" "\x01" "\x00" "\x00\x00\x00\x00", 8));
   }
 
   TEST_CASE("parse_header_too_short") {
