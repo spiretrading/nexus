@@ -7,7 +7,7 @@ service_locator:
 sampling: 100ms
 enable_logging: false
 unit: 2
-venue: CXA
+venue: ASX
 disseminating_venue: CXA
 mpid: CXA
 liveness: 3s
