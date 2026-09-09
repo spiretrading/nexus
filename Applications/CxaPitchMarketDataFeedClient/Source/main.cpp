@@ -3,7 +3,6 @@
 #include <iostream>
 #include <memory>
 #include <stdexcept>
-#include <string_view>
 #include <vector>
 #include <Beam/IO/IOException.hpp>
 #include <Beam/IO/QueuedReader.hpp>
@@ -24,11 +23,12 @@
 #include "CxaPitchMarketDataFeedClient/CxaPitchClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchConfiguration.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchGapClient.hpp"
-#include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
+#include "CxaPitchMarketDataFeedClient/CxaPitchMarketDataFeedClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchProtocolClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSpinClient.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
+#include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
@@ -52,6 +52,9 @@ namespace {
     CxaPitchClient<std::unique_ptr<ApplicationProtocolClient>,
       std::unique_ptr<ApplicationGapClient>,
       std::unique_ptr<ApplicationSpinClient>, std::unique_ptr<LocalTimeClient>>;
+  using ApplicationCxaPitchMarketDataFeedClient =
+    CxaPitchMarketDataFeedClient<ApplicationMarketDataFeedClient*,
+      ApplicationCxaPitchClient*>;
   static const auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(134217728);
 
   std::unique_ptr<ApplicationProtocolClient> make_protocol_client(
@@ -64,12 +67,6 @@ namespace {
     auto reader = &channel->get_reader();
     return std::make_unique<ApplicationProtocolClient>(
       std::make_unique<ApplicationFeedChannel>(std::move(channel), reader));
-  }
-
-  void log(const CxaPitchMessage& message) {
-    visit(message, [] (const auto& message) {
-      std::cout << message << std::endl;
-    });
   }
 }
 
@@ -84,6 +81,7 @@ int main(int argc, const char** argv) {
       ApplicationDefinitionsClient(Ref(service_locator_client));
     load_definitions(definitions_client);
     auto feed_configuration = CxaPitchConfiguration::parse(config);
+    auto sampling = extract<time_duration>(config, "sampling");
     auto options = MulticastSocketOptions();
     options.m_receive_buffer_size =
       extract<int>(config, "receive_buffer", DEFAULT_RECEIVE_BUFFER_SIZE);
@@ -136,21 +134,12 @@ int main(int argc, const char** argv) {
       feed_configuration.m_liveness, feed_configuration.m_gap_timeout,
       std::move(feeds), std::move(recovery), std::move(gap_client),
       std::move(spin_client), std::make_unique<LocalTimeClient>());
-    auto read_loop = RoutineHandler(spawn([&] {
-      while(true) {
-        try {
-          auto message = client.read();
-          if(feed_configuration.m_is_logging_messages) {
-            log(message);
-          }
-        } catch(const std::exception&) {
-          break;
-        }
-      }
-    }));
+    auto market_data_feed_client = ApplicationMarketDataFeedClient(
+      Ref(service_locator_client), sampling, feed_configuration.m_country);
+    auto feed_client = ApplicationCxaPitchMarketDataFeedClient(
+      feed_configuration, &market_data_feed_client, &client);
     wait_for_kill_event();
-    client.close();
-    read_loop.wait();
+    feed_client.close();
     service_locator_client.close();
   } catch(...) {
     report_current_exception();

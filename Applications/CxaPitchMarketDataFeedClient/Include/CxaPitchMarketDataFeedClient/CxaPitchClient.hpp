@@ -31,6 +31,13 @@
 
 namespace Nexus {
 
+  /** Concept satisfied by types delivering a unit's PITCH messages. */
+  template<typename T>
+  concept IsCxaPitchClient = requires(T& t) {
+    { t.read() } -> std::same_as<CxaPitchMessage>;
+    { t.close() } -> std::same_as<void>;
+  };
+
   /**
    * Delivers a unit's CXA PITCH messages in sequence, arbitrating its feeds,
    * recovering the messages missing from all of them and building the initial

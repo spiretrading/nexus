@@ -4,6 +4,7 @@ service_locator:
   username: $username
   password: $admin_password
 
+sampling: 100ms
 enable_logging: true
 unit: 1
 venue: CXA
