@@ -1,12 +1,14 @@
 #ifndef CXA_PITCH_CLIENT_HPP
 #define CXA_PITCH_CLIENT_HPP
+#include <algorithm>
 #include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <exception>
 #include <functional>
-#include <iostream>
+#include <map>
 #include <memory>
+#include <string>
 #include <string_view>
 #include <type_traits>
 #include <utility>
@@ -26,6 +28,7 @@
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchGapClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchProtocolClient.hpp"
+#include "CxaPitchMarketDataFeedClient/CxaPitchReport.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSequencer.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionMessages.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSpinClient.hpp"
@@ -99,6 +102,10 @@ namespace Nexus {
       void close();
 
     private:
+      struct Rejection {
+        std::uint32_t m_end;
+        char m_status;
+      };
       std::uint8_t m_unit;
       boost::posix_time::time_duration m_gap_timeout;
       std::vector<P> m_feeds;
@@ -112,6 +119,7 @@ namespace Nexus {
       std::uint32_t m_reported_gap;
       std::uint32_t m_requested;
       std::uint32_t m_live;
+      std::map<std::uint32_t, Rejection> m_rejections;
       std::uint64_t m_spin_progress;
       boost::posix_time::ptime m_start;
       boost::posix_time::ptime m_spin_timestamp;
@@ -126,6 +134,8 @@ namespace Nexus {
       void flush(CxaPitchSequencer& sequencer);
       void drop(CxaPitchSequencer& sequencer, const CxaPitchGap& gap,
         boost::posix_time::ptime timestamp, std::string_view reason);
+      void skip(
+        CxaPitchSequencer& sequencer, boost::posix_time::ptime timestamp);
       void feed_loop(int index);
       void recovery_loop(int index);
       void response_loop();
@@ -254,11 +264,45 @@ namespace Nexus {
   void CxaPitchClient<P, G, S, R>::drop(CxaPitchSequencer& sequencer,
       const CxaPitchGap& gap, boost::posix_time::ptime timestamp,
       std::string_view reason) {
-    std::cout << "(dropped " << timestamp << ' ' << gap.m_sequence << ' ' <<
-      gap.m_count << ' ' << reason << ')' << std::endl;
+    print([&] (auto& out) {
+      out << "(dropped " << timestamp << ' ' << gap.m_sequence << ' ' <<
+        gap.m_count << ' ' << reason << ')';
+    });
     sequencer.reset(gap.m_sequence + gap.m_count);
     m_reported_gap = 0;
     flush(sequencer);
+  }
+
+  template<typename P, typename G, typename S, typename R>
+    requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
+      IsCxaPitchGapClient<Beam::dereference_t<G>> &&
+      IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>>
+  void CxaPitchClient<P, G, S, R>::skip(
+      CxaPitchSequencer& sequencer, boost::posix_time::ptime timestamp) {
+    while(!m_rejections.empty()) {
+      auto gap = sequencer.get_gap();
+      if(!gap) {
+        break;
+      }
+      auto rejection = m_rejections.upper_bound(gap->m_sequence);
+      if(rejection == m_rejections.begin()) {
+        break;
+      }
+      --rejection;
+      if(rejection->second.m_end <= gap->m_sequence) {
+        break;
+      }
+      auto end =
+        std::min(rejection->second.m_end, gap->m_sequence + gap->m_count);
+      drop(sequencer, CxaPitchGap(gap->m_sequence, end - gap->m_sequence),
+        timestamp, "rejected " + std::string(1, rejection->second.m_status));
+    }
+    auto sequence = sequencer.get_sequence().value_or(0);
+    while(!m_rejections.empty() &&
+        m_rejections.begin()->second.m_end <= sequence) {
+      m_rejections.erase(m_rejections.begin());
+    }
   }
 
   template<typename P, typename G, typename S, typename R>
@@ -291,12 +335,15 @@ namespace Nexus {
               start = m_spin_timestamp;
             }
             if(timestamp - start > m_gap_timeout) {
-              std::cout << "(no_spin " << timestamp << ')' << std::endl;
+              print([&] (auto& out) {
+                out << "(no_spin " << timestamp << ')';
+              });
               m_is_ready = true;
               close_spin = true;
             }
           }
           flush(sequencer);
+          skip(sequencer, timestamp);
           if(header.m_sequence + header.m_count > m_live) {
             m_live = header.m_sequence + header.m_count;
           }
@@ -354,8 +401,9 @@ namespace Nexus {
           }
         }
       } catch(const CxaPitchParserException& e) {
-        std::cout << "(bad_datagram feed " << index << ' ' << e.what() << ')' <<
-          std::endl;
+        print([&] (auto& out) {
+          out << "(bad_datagram feed " << index << ' ' << e.what() << ')';
+        });
         continue;
       } catch(const std::exception&) {
         break;
@@ -375,16 +423,19 @@ namespace Nexus {
         if(block.get_header().m_unit != m_unit) {
           continue;
         }
+        auto timestamp = m_time_client->get_time();
         Beam::with(m_sequencer, [&] (auto& sequencer) {
           sequencer.recover(block);
           flush(sequencer);
+          skip(sequencer, timestamp);
           if(!sequencer.get_gap()) {
             m_reported_gap = 0;
           }
         });
       } catch(const CxaPitchParserException& e) {
-        std::cout << "(bad_datagram recovery " << index << ' ' << e.what() <<
-          ')' << std::endl;
+        print([&] (auto& out) {
+          out << "(bad_datagram recovery " << index << ' ' << e.what() << ')';
+        });
         continue;
       } catch(const std::exception&) {
         break;
@@ -406,13 +457,15 @@ namespace Nexus {
         }
         auto timestamp = m_time_client->get_time();
         Beam::with(m_sequencer, [&] (auto& sequencer) {
-          auto gap = sequencer.get_gap();
-          if(!gap || response.m_sequence < gap->m_sequence ||
-              response.m_sequence >= gap->m_sequence + gap->m_count) {
-            return;
+          auto end = response.m_sequence + response.m_count;
+          auto rejection = m_rejections.find(response.m_sequence);
+          if(rejection == m_rejections.end()) {
+            m_rejections.emplace(
+              response.m_sequence, Rejection(end, response.m_status));
+          } else if(rejection->second.m_end < end) {
+            rejection->second.m_end = end;
           }
-          drop(sequencer, *gap, timestamp,
-            "rejected " + std::string(1, response.m_status));
+          skip(sequencer, timestamp);
         });
       } catch(const std::exception&) {
         break;
@@ -469,8 +522,10 @@ namespace Nexus {
       Beam::with(m_sequencer, [&] (auto& sequencer) {
         if(!m_is_ready) {
           if(m_open_state.is_open()) {
-            std::cout << "(no_spin " << m_time_client->get_time() << ')' <<
-              std::endl;
+            auto timestamp = m_time_client->get_time();
+            print([&] (auto& out) {
+              out << "(no_spin " << timestamp << ')';
+            });
           }
           m_is_ready = true;
           flush(sequencer);

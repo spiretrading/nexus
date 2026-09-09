@@ -125,6 +125,23 @@ TEST_SUITE("CxaPitchMessages") {
     REQUIRE(add_order.m_pid == "");
   }
 
+  TEST_CASE("parse_sideless_add_order") {
+    auto source = std::string_view(
+      "\x2a\x37"
+      "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
+      "\x05\x40\x5b\x77\x8f\x56\x1d\x0b"
+      " "
+      "\xbc\x02\x00\x00"
+      "ZVZT  "
+      "\x15\xcd\x5b\x07\x00\x00\x00\x00"
+      "1234"
+      "\x00", 42);
+    auto message = CxaPitchMessage::parse(source);
+    REQUIRE_NOTHROW(validate(message));
+    REQUIRE_THROWS_AS(
+      CxaPitchAddOrder::parse(message), CxaPitchParserException);
+  }
+
   TEST_CASE("parse_grown_add_order") {
     auto source = std::string_view(
       "\x2b\x37"

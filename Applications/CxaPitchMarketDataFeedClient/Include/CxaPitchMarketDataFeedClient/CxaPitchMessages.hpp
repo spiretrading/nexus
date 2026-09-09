@@ -556,6 +556,10 @@ namespace Details {
     add_order.m_timestamp = cursor.read_timestamp();
     add_order.m_order_id = cursor.read_uint64();
     add_order.m_side = cursor.read_side();
+    if(add_order.m_side == Side::NONE) {
+      boost::throw_with_location(
+        CxaPitchParserException("Add order side indicator out of range."));
+    }
     add_order.m_quantity = cursor.read_uint32();
     add_order.m_symbol = cursor.read_text(Details::SYMBOL_LENGTH);
     add_order.m_price = cursor.read_price();

@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <exception>
 #include <functional>
-#include <iostream>
 #include <string>
 #include <tuple>
 #include <type_traits>
@@ -19,6 +18,7 @@
 #include "CxaPitchMarketDataFeedClient/CxaPitchClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchConfiguration.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
+#include "CxaPitchMarketDataFeedClient/CxaPitchReport.hpp"
 #include "Nexus/Definitions/OrderImbalance.hpp"
 #include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
@@ -381,12 +381,16 @@ namespace Nexus {
       try {
         if(m_config.m_is_logging_messages) {
           visit(message, [] (const auto& message) {
-            std::cout << message << std::endl;
+            print([&] (auto& out) {
+              out << message;
+            });
           });
         }
         dispatch(message);
       } catch(const std::exception& e) {
-        std::cout << "(bad_message " << e.what() << ')' << std::endl;
+        print([&] (auto& out) {
+          out << "(bad_message " << e.what() << ')';
+        });
       }
     }
   }

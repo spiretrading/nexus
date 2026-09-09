@@ -169,8 +169,10 @@ namespace Nexus {
             m_spins->push(std::move(m_spin));
           }
         } else if(message.m_type == CxaPitchSpinFinished::TYPE) {
-          m_is_spinning = false;
-          m_spins->push(std::move(m_spin));
+          if(m_is_spinning) {
+            m_is_spinning = false;
+            m_spins->push(std::move(m_spin));
+          }
         } else if(m_is_spinning) {
           validate(message);
           m_spin.m_messages.emplace_back(

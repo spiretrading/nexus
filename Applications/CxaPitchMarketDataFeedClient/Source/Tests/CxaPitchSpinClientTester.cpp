@@ -158,6 +158,19 @@ TEST_SUITE("CxaPitchSpinClient") {
     REQUIRE(client.get_progress() == 2);
   }
 
+  TEST_CASE("unexpected_snapshot_finish") {
+    auto session = StubSession();
+    auto client = SpinClient(&session);
+    session.m_messages->push(encode_finished(310174));
+    session.m_messages->push(encode_response(310175, 1, 'A'));
+    session.m_messages->push(encode_order(CxaPitchAddOrder::TYPE));
+    session.m_messages->push(encode_finished(310175));
+    auto spin = client.request(310175);
+    REQUIRE(spin.m_sequence == 310175);
+    REQUIRE(spin.m_status == CxaPitchSpinResponse::ACCEPTED);
+    REQUIRE(spin.m_messages.size() == 1);
+  }
+
   TEST_CASE("malformed_snapshot_message") {
     auto session = StubSession();
     auto client = SpinClient(&session);

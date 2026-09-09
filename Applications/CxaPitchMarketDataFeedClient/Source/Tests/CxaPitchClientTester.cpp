@@ -388,29 +388,61 @@ TEST_SUITE("CxaPitchClient") {
   TEST_CASE("rejected_gap_chunk") {
     auto first = StubProtocolClient();
     auto second = StubProtocolClient();
+    auto recovery = StubProtocolClient();
     auto gap_client = StubGapClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(1, seconds(3), seconds(5),
       std::vector{&first, &second},
-      std::vector<StubProtocolClient*>(), &gap_client, none, &time_client);
+      std::vector{&recovery}, &gap_client, none, &time_client);
     auto reader = MessageReader(client);
     first.m_blocks->push(encode_block(1, {0x11}));
     second.m_blocks->push(encode_block(1, {0x11}));
     REQUIRE(reader.m_types->pop() == 0x11);
-    first.m_blocks->push(encode_block(250, {0x14}));
-    second.m_blocks->push(encode_block(250, {0x14}));
+    first.m_blocks->push(encode_block(6, {0x16}));
+    second.m_blocks->push(encode_block(6, {0x16}));
     auto gap = gap_client.m_requests->pop();
     REQUIRE(gap.m_sequence == 2);
-    REQUIRE(gap.m_count == 248);
+    REQUIRE(gap.m_count == 4);
     auto response = CxaPitchGapResponse();
     response.m_unit = 1;
-    response.m_sequence = 202;
-    response.m_count = 48;
+    response.m_sequence = 4;
+    response.m_count = 2;
     response.m_status = 'O';
     gap_client.m_responses->push(response);
     flush_pending_routines();
-    auto type = reader.m_types->try_pop().value_or(0);
-    REQUIRE(type == 0x14);
+    recovery.m_blocks->push(encode_block(2, {0x12, 0x13}));
+    REQUIRE(reader.m_types->pop() == 0x12);
+    REQUIRE(reader.m_types->pop() == 0x13);
+    REQUIRE(reader.m_types->pop() == 0x16);
+  }
+
+  TEST_CASE("rejected_gap_prefix") {
+    auto first = StubProtocolClient();
+    auto second = StubProtocolClient();
+    auto recovery = StubProtocolClient();
+    auto gap_client = StubGapClient();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = Client(1, seconds(3), seconds(5),
+      std::vector{&first, &second},
+      std::vector{&recovery}, &gap_client, none, &time_client);
+    auto reader = MessageReader(client);
+    first.m_blocks->push(encode_block(1, {0x11}));
+    second.m_blocks->push(encode_block(1, {0x11}));
+    REQUIRE(reader.m_types->pop() == 0x11);
+    first.m_blocks->push(encode_block(6, {0x16}));
+    second.m_blocks->push(encode_block(6, {0x16}));
+    REQUIRE(gap_client.m_requests->pop().m_count == 4);
+    auto response = CxaPitchGapResponse();
+    response.m_unit = 1;
+    response.m_sequence = 2;
+    response.m_count = 2;
+    response.m_status = 'O';
+    gap_client.m_responses->push(response);
+    flush_pending_routines();
+    recovery.m_blocks->push(encode_block(4, {0x14, 0x15}));
+    REQUIRE(reader.m_types->pop() == 0x14);
+    REQUIRE(reader.m_types->pop() == 0x15);
+    REQUIRE(reader.m_types->pop() == 0x16);
   }
 
   TEST_CASE("partial_gap_recovery") {
