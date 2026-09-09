@@ -11,7 +11,8 @@ disseminating_venue: CXA
 mpid: CXA
 liveness: 3s
 feeds:
-  - name: PRIMARY
-    address: "233.218.133.2:6002"
-    interface: "$local_interface:6002"
+  - name: A
+    address: "233.218.133.80:30502"
+    gap_address: "233.218.133.81:30502"
+    interface: "$local_interface:30502"
 ...
