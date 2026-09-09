@@ -25,4 +25,9 @@ retransmission:
   session_sub_id: "$retransmission_session_sub_id"
   username: "$retransmission_username"
   password: "$retransmission_password"
+spin:
+  address: "$spin_address"
+  session_sub_id: "$spin_session_sub_id"
+  username: "$spin_username"
+  password: "$spin_password"
 ...

@@ -47,6 +47,16 @@ def main():
     help='CXA gap request proxy username.', default='')
   parser.add_argument('-rp', '--retransmission_password', type=str,
     help='CXA gap request proxy password.', default='')
+  parser.add_argument('-s1', '--spin_address1', type=str,
+    help='CXA unit 1 spin server address.', default='')
+  parser.add_argument('-s2', '--spin_address2', type=str,
+    help='CXA unit 2 spin server address.', default='')
+  parser.add_argument('-ss', '--spin_session_sub_id', type=str,
+    help='CXA spin server session sub id.', default='')
+  parser.add_argument('-su', '--spin_username', type=str,
+    help='CXA spin server username.', default='')
+  parser.add_argument('-sp', '--spin_password', type=str,
+    help='CXA spin server password.', default='')
   args = parser.parse_args()
   variables = {}
   variables['local_interface'] = args.local
@@ -59,6 +69,13 @@ def main():
     args.retransmission_session_sub_id
   variables['retransmission_username'] = args.retransmission_username
   variables['retransmission_password'] = args.retransmission_password
+  variables['spin_session_sub_id'] = args.spin_session_sub_id
+  variables['spin_username'] = args.spin_username
+  variables['spin_password'] = args.spin_password
+  spin_addresses = {
+    'cxa_partition1': args.spin_address1,
+    'cxa_partition2': args.spin_address2
+  }
   for filename in os.listdir('.'):
     default_path = os.path.join(filename, 'config.default.yml')
     if filename.startswith('cxa_') and os.path.isdir(filename) and \
@@ -67,6 +84,9 @@ def main():
         source = file.read()
         if not args.retransmission_password:
           source = remove_section(source, 'retransmission')
+        variables['spin_address'] = spin_addresses.get(filename, '')
+        if not variables['spin_address'] or not args.spin_password:
+          source = remove_section(source, 'spin')
         source = setup_utils.translate(source, variables)
         file.seek(0)
         file.write(source)
