@@ -16,7 +16,7 @@ TEST_SUITE("CxaPitchMessages") {
   static const auto ORDER_ID = std::uint64_t(800891482924597253);
   static const auto CONTRA_ORDER_ID = std::uint64_t(800891482924597254);
   static const auto EXECUTION_ID = std::uint64_t(806921579316);
-  static const auto PRICE = Money(Quantity(12.3456789));
+  static const auto PRICE = parse_money("12.3456789");
   static const auto TIME_TEXT = to_string(TIMESTAMP);
   static const auto PRICE_TEXT = to_string(PRICE);
 

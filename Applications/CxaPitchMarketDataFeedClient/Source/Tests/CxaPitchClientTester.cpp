@@ -59,7 +59,7 @@ namespace {
     }
 
     std::uint32_t request(std::uint8_t unit, const CxaPitchGap& gap,
-        std::uint32_t live, ptime timestamp) {
+        std::uint32_t live) {
       m_requests->push(gap);
       return std::min(gap.m_count, m_limit);
     }
@@ -274,6 +274,69 @@ TEST_SUITE("CxaPitchClient") {
     flush_pending_routines();
     auto type = reader.m_types->try_pop().value_or(0);
     REQUIRE(type == 0x11);
+  }
+
+  TEST_CASE("recover_a_malformed_datagram") {
+    for(auto is_recovery : {false, true}) {
+      auto feed = StubProtocolClient();
+      auto recovery = StubProtocolClient();
+      auto gap_client = StubGapClient();
+      auto time_client = FixedTimeClient(TIMESTAMP);
+      auto client = Client(1, seconds(3), seconds(5),
+        std::vector<StubProtocolClient*>({&feed}),
+        std::vector<StubProtocolClient*>({&recovery}), &gap_client, none,
+        &time_client);
+      auto reader = MessageReader(client);
+      feed.m_blocks->push(encode_block(1, {0x11}));
+      REQUIRE(reader.m_types->pop() == 0x11);
+      auto malformed = SharedBuffer(
+        "\x10\x00\x02\x01\x02\x00\x00\x00"
+        "\x06\x42\x00\x00\x00\x00\xff\x43", 16);
+      if(!is_recovery) {
+        feed.m_blocks->push(malformed);
+      }
+      feed.m_blocks->push(encode_block(4, {0x14}));
+      auto gap = gap_client.m_requests->pop();
+      REQUIRE(gap.m_sequence == 2);
+      REQUIRE(gap.m_count == 2);
+      if(is_recovery) {
+        recovery.m_blocks->push(malformed);
+      }
+      flush_pending_routines();
+      REQUIRE(!reader.m_types->try_pop());
+      recovery.m_blocks->push(encode_block(2, {0x12, 0x13}));
+      flush_pending_routines();
+      REQUIRE(reader.m_types->try_pop().value_or(0) == 0x12);
+      REQUIRE(reader.m_types->try_pop().value_or(0) == 0x13);
+      REQUIRE(reader.m_types->try_pop().value_or(0) == 0x14);
+    }
+  }
+
+  TEST_CASE("finish_a_slow_snapshot") {
+    auto feed = StubProtocolClient();
+    auto spin_client = StubSpinClient();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = Client(1, seconds(3), seconds(5),
+      std::vector<StubProtocolClient*>({&feed}),
+      std::vector<StubProtocolClient*>(), none, &spin_client, &time_client);
+    auto reader = MessageReader(client);
+    feed.m_blocks->push(encode_block(5, {0x11, 0x12, 0x13}));
+    flush_pending_routines();
+    spin_client.m_offers->push(6);
+    REQUIRE(spin_client.m_requests->pop() == 6);
+    time_client.set(TIMESTAMP + seconds(6));
+    feed.m_blocks->push(encode_block(8, {0x14}));
+    flush_pending_routines();
+    REQUIRE(!reader.m_types->try_pop());
+    auto spin = CxaPitchSpin();
+    spin.m_sequence = 6;
+    spin.m_status = CxaPitchSpinResponse::ACCEPTED;
+    spin.m_messages.push_back(encode_message(0x37));
+    spin_client.m_spins->push(spin);
+    flush_pending_routines();
+    REQUIRE(reader.m_types->try_pop().value_or(0) == 0x37);
+    REQUIRE(reader.m_types->try_pop().value_or(0) == 0x13);
+    REQUIRE(reader.m_types->try_pop().value_or(0) == 0x14);
   }
 
   TEST_CASE("skip_a_gap_whose_later_chunk_is_rejected") {

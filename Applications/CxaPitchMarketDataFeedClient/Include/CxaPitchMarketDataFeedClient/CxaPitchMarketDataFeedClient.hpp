@@ -139,15 +139,24 @@ namespace Nexus {
       char code, Side side, std::string pid, std::string contra_pid) {
     auto condition = TimeAndSale::Condition();
     if(code == ' ') {
+      condition.m_type = TimeAndSale::Condition::Type::REGULAR;
       condition.m_code = "@";
     } else {
       condition.m_code = std::string(1, code);
+      if(code == 'O' || code == 'H') {
+        condition.m_type = TimeAndSale::Condition::Type::OPEN;
+      } else if(code == 'C') {
+        condition.m_type = TimeAndSale::Condition::Type::CLOSE;
+      }
     }
     auto [buyer, seller] = [&] {
       if(side == Side::ASK) {
         return std::tuple(std::move(contra_pid), std::move(pid));
       }
-      return std::tuple(std::move(pid), std::move(contra_pid));
+      if(side == Side::BID) {
+        return std::tuple(std::move(pid), std::move(contra_pid));
+      }
+      return std::tuple(std::string(), std::string());
     }();
     m_feed_client->publish(TickerTimeAndSale(
       TimeAndSale(timestamp, price, quantity, std::move(condition),
@@ -193,8 +202,7 @@ namespace Nexus {
     }
     auto id = std::to_string(message.m_order_id);
     m_feed_client->offset_order_size(
-      id, -static_cast<std::int32_t>(message.m_executed_quantity),
-      message.m_timestamp);
+      id, -Quantity(message.m_executed_quantity), message.m_timestamp);
     if(auto order = Beam::lookup(m_orders, id)) {
       publish(order->m_ticker, message.m_timestamp, order->m_price,
         message.m_executed_quantity, ' ', order->m_side, order->m_pid,
@@ -218,8 +226,7 @@ namespace Nexus {
     }
     auto id = std::to_string(message.m_order_id);
     m_feed_client->offset_order_size(
-      id, -static_cast<std::int32_t>(message.m_executed_quantity),
-      message.m_timestamp);
+      id, -Quantity(message.m_executed_quantity), message.m_timestamp);
     if(auto order = Beam::lookup(m_orders, id)) {
       publish(order->m_ticker, message.m_timestamp, message.m_price,
         message.m_executed_quantity, message.m_execution_type, order->m_side,
@@ -242,9 +249,8 @@ namespace Nexus {
       return;
     }
     auto id = std::to_string(message.m_order_id);
-    m_feed_client->offset_order_size(id,
-      -static_cast<std::int32_t>(message.m_cancelled_quantity),
-      message.m_timestamp);
+    m_feed_client->offset_order_size(
+      id, -Quantity(message.m_cancelled_quantity), message.m_timestamp);
     if(auto order = Beam::lookup(m_orders, id)) {
       if(order->m_quantity > message.m_cancelled_quantity) {
         order->m_quantity -= message.m_cancelled_quantity;
@@ -262,21 +268,18 @@ namespace Nexus {
     m_timestamp = message.m_timestamp;
     auto id = std::to_string(message.m_order_id);
     auto order = Beam::lookup(m_orders, id);
-    if(order && order->m_quantity == 0 && message.m_quantity != 0) {
-      order->m_price = message.m_price;
-      order->m_quantity = message.m_quantity;
+    if(!order) {
+      return;
+    }
+    if(message.m_quantity == 0) {
+      m_feed_client->remove_order(id, message.m_timestamp);
+    } else {
       m_feed_client->add_order(order->m_ticker, m_config.m_disseminating_venue,
         m_config.m_mpid, false, id, order->m_side, message.m_price,
         message.m_quantity, message.m_timestamp);
-      return;
     }
-    m_feed_client->modify_order_size(
-      id, message.m_quantity, message.m_timestamp);
-    m_feed_client->modify_order_price(id, message.m_price, message.m_timestamp);
-    if(order) {
-      order->m_price = message.m_price;
-      order->m_quantity = message.m_quantity;
-    }
+    order->m_price = message.m_price;
+    order->m_quantity = message.m_quantity;
   }
 
   template<typename M, typename C>
@@ -304,11 +307,18 @@ namespace Nexus {
           Beam::lookup(m_orders, std::to_string(message.m_order_id))) {
         return order->m_side;
       }
-      return Side(Side::BID);
+      return Side(Side::NONE);
+    }();
+    auto code = [&] {
+      if(message.m_trade_type == 'O' || message.m_trade_type == 'C' ||
+          message.m_trade_type == 'H') {
+        return message.m_trade_type;
+      }
+      return message.m_trade_report_type;
     }();
     publish(Ticker(message.m_symbol, m_config.m_primary_venue),
-      message.m_timestamp, message.m_price, message.m_quantity,
-      message.m_trade_report_type, side, message.m_pid, message.m_contra_pid);
+      message.m_timestamp, message.m_price, message.m_quantity, code, side,
+      message.m_pid, message.m_contra_pid);
   }
 
   template<typename M, typename C>
@@ -317,10 +327,10 @@ namespace Nexus {
   void CxaPitchMarketDataFeedClient<M, C>::report(
       const CxaPitchAuctionUpdate& message) {
     m_timestamp = message.m_timestamp;
-    if(message.m_buy_shares == message.m_sell_shares) {
-      return;
-    }
     auto [side, size] = [&] {
+      if(message.m_buy_shares == message.m_sell_shares) {
+        return std::tuple(Side(Side::NONE), std::uint32_t(0));
+      }
       if(message.m_buy_shares > message.m_sell_shares) {
         return std::tuple(
           Side(Side::BID), message.m_buy_shares - message.m_sell_shares);

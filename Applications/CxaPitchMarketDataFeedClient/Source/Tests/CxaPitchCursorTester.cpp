@@ -37,7 +37,7 @@ TEST_SUITE("CxaPitchCursor") {
       static_cast<char>(0xA0), static_cast<char>(0x86), 0x01, 0x00, 0x00, 0x00,
       0x00, 0x00};
     auto cursor = CxaPitchCursor(data.data());
-    REQUIRE(cursor.read_price() == Money(Quantity(12.3456789)));
+    REQUIRE(cursor.read_price() == parse_money("12.3456789"));
     REQUIRE(cursor.read_price() == Money::ONE);
     REQUIRE(cursor.read_price() == Money::CENT);
   }
@@ -48,6 +48,21 @@ TEST_SUITE("CxaPitchCursor") {
     REQUIRE(cursor.read_side() == Side::BID);
     REQUIRE(cursor.read_side() == Side::ASK);
     REQUIRE(cursor.read_side() == Side::NONE);
+  }
+
+  TEST_CASE("read_price_preserves_decimal_scale") {
+    auto data = std::array<char, 8>();
+    auto price = std::uint64_t(20100000);
+    for(auto& byte : data) {
+      byte = static_cast<char>(price & 0xFF);
+      price >>= 8;
+    }
+    auto cursor = CxaPitchCursor(data.data());
+    REQUIRE(cursor.read_price() == 201 * Money::CENT);
+    data[0] += 1;
+    cursor = CxaPitchCursor(data.data());
+    REQUIRE(
+      cursor.read_price() == Money(Quantity::from_representation(2010000.1)));
   }
 
   TEST_CASE("read_text") {

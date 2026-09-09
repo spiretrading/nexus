@@ -1,12 +1,15 @@
 #include <cstddef>
 #include <cstdint>
+#include <functional>
 #include <memory>
+#include <stop_token>
 #include <string>
 #include <string_view>
 #include <vector>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
+#include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
@@ -21,6 +24,7 @@ namespace {
     std::vector<std::string> m_requests;
     std::shared_ptr<Queue<SharedBuffer>> m_messages;
     std::shared_ptr<Queue<int>> m_gate;
+    std::function<void ()> m_on_write;
     SharedBuffer m_payload;
 
     StubSession()
@@ -37,6 +41,9 @@ namespace {
       if(m_gate) {
         m_gate->pop();
       }
+      if(m_on_write) {
+        m_on_write();
+      }
       auto buffer = SharedBuffer();
       message.encode(out(buffer));
       m_requests.emplace_back(buffer.get_data(), buffer.get_size());
@@ -49,6 +56,8 @@ namespace {
       }
     }
   };
+
+  const auto TIMESTAMP = time_from_string("2026-09-09 10:00:00");
 
   using GapClient = CxaPitchGapClient<StubSession, TriggerTimer*>;
 
@@ -82,9 +91,10 @@ TEST_SUITE("CxaPitchGapClient") {
   TEST_CASE("request_splits_at_the_message_limit") {
     auto session = std::make_shared<StubSession>();
     auto timer = TriggerTimer();
-    auto client = GapClient([=] { return session; }, &timer);
-    auto timestamp = time_from_string("2026-09-09 10:00:00");
-    REQUIRE(client.request(1, CxaPitchGap(1000, 250), 1000, timestamp) == 250);
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = GapClient(
+      [=] (std::stop_token) { return session; }, &timer, &time_client);
+    REQUIRE(client.request(1, CxaPitchGap(1000, 250), 1000) == 250);
     REQUIRE(session->m_requests.size() == 3);
     auto first = parse_request(session->m_requests[0]);
     REQUIRE(first.m_unit == 1);
@@ -99,65 +109,107 @@ TEST_SUITE("CxaPitchGapClient") {
   TEST_CASE("request_renews_the_second_allowance") {
     auto session = std::make_shared<StubSession>();
     auto timer = TriggerTimer();
-    auto client = GapClient([=] { return session; }, &timer);
-    auto timestamp = time_from_string("2026-09-09 10:00:00");
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = GapClient(
+      [=] (std::stop_token) { return session; }, &timer, &time_client);
     auto total = 0;
     for(auto i = 0; i != GapClient::SECOND_LIMIT; ++i) {
-      total += client.request(1, CxaPitchGap(1, 1), 1, timestamp);
+      total += client.request(1, CxaPitchGap(1, 1), 1);
     }
     REQUIRE(total == GapClient::SECOND_LIMIT);
-    REQUIRE(client.request(1, CxaPitchGap(1, 1), 1, timestamp) == 0);
-    REQUIRE(
-      client.request(1, CxaPitchGap(1, 1), 1, timestamp + seconds(1)) == 1);
+    REQUIRE(client.request(1, CxaPitchGap(1, 1), 1) == 0);
+    time_client.set(TIMESTAMP + seconds(1));
+    REQUIRE(client.request(1, CxaPitchGap(1, 1), 1) == 1);
   }
 
   TEST_CASE("request_renews_the_minute_allowance") {
     auto session = std::make_shared<StubSession>();
     auto timer = TriggerTimer();
-    auto client = GapClient([=] { return session; }, &timer);
-    auto timestamp = time_from_string("2026-09-09 10:00:00");
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = GapClient(
+      [=] (std::stop_token) { return session; }, &timer, &time_client);
     auto total = 0;
     for(auto i = 0; i != GapClient::MINUTE_LIMIT; ++i) {
-      total +=
-        client.request(1, CxaPitchGap(1, 1), 1, timestamp + seconds(i / 100));
+      time_client.set(TIMESTAMP + seconds(i / 100));
+      total += client.request(1, CxaPitchGap(1, 1), 1);
     }
     REQUIRE(total == GapClient::MINUTE_LIMIT);
-    REQUIRE(
-      client.request(1, CxaPitchGap(1, 1), 1, timestamp + seconds(30)) == 0);
-    REQUIRE(
-      client.request(1, CxaPitchGap(1, 1), 1, timestamp + minutes(1)) == 1);
+    time_client.set(TIMESTAMP + seconds(30));
+    REQUIRE(client.request(1, CxaPitchGap(1, 1), 1) == 0);
+    time_client.set(TIMESTAMP + minutes(1));
+    REQUIRE(client.request(1, CxaPitchGap(1, 1), 1) == 1);
+  }
+
+  TEST_CASE("request_crosses_a_clock_boundary") {
+    for(auto duration : {seconds(1), seconds(60), seconds(86400)}) {
+      auto session = std::make_shared<StubSession>();
+      auto timer = TriggerTimer();
+      auto time_client = FixedTimeClient(TIMESTAMP);
+      auto client = GapClient(
+        [=] (std::stop_token) { return session; }, &timer, &time_client);
+      session->m_on_write = [&] {
+        time_client.set(TIMESTAMP + duration);
+      };
+      auto count = GapClient::SECOND_LIMIT * GapClient::MAXIMUM_COUNT;
+      REQUIRE(client.request(
+        1, CxaPitchGap(1, count + GapClient::MAXIMUM_COUNT), 1) == count);
+      REQUIRE(session->m_requests.size() == GapClient::SECOND_LIMIT);
+      REQUIRE(client.request(1, CxaPitchGap(count + 1, 1), 1) == 0);
+    }
+  }
+
+  TEST_CASE("request_does_not_renew_after_a_clock_rollback") {
+    auto session = std::make_shared<StubSession>();
+    auto timer = TriggerTimer();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = GapClient(
+      [=] (std::stop_token) { return session; }, &timer, &time_client);
+    auto count = GapClient::SECOND_LIMIT * GapClient::MAXIMUM_COUNT;
+    REQUIRE(client.request(1, CxaPitchGap(1, count), 1) == count);
+    time_client.set(TIMESTAMP - hours(24));
+    REQUIRE(client.request(1, CxaPitchGap(count + 1, 1), 1) == 0);
+    time_client.set(TIMESTAMP);
+    REQUIRE(client.request(1, CxaPitchGap(count + 1, 1), 1) == 0);
+    time_client.set(TIMESTAMP + seconds(1));
+    REQUIRE(client.request(1, CxaPitchGap(count + 1, 1), 1) == 1);
   }
 
   TEST_CASE("request_renews_the_daily_allowance") {
     auto session = std::make_shared<StubSession>();
     auto timer = TriggerTimer();
-    auto client = GapClient([=] { return session; }, &timer);
-    auto timestamp = time_from_string("2026-09-09 10:00:00");
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = GapClient(
+      [=] (std::stop_token) { return session; }, &timer, &time_client);
     auto total = 0;
     for(auto i = 0; i != GapClient::DAY_LIMIT; ++i) {
-      total += client.request(1, CxaPitchGap(1, 1), 1,
-        timestamp + minutes(i / 1000) + seconds((i % 1000) / 100));
+      time_client.set(
+        TIMESTAMP + minutes(i / 1000) + seconds((i % 1000) / 100));
+      total += client.request(1, CxaPitchGap(1, 1), 1);
     }
     REQUIRE(total == GapClient::DAY_LIMIT);
-    REQUIRE(client.request(1, CxaPitchGap(1, 1), 1, timestamp + hours(2)) == 0);
-    REQUIRE(
-      client.request(1, CxaPitchGap(1, 1), 1, timestamp + hours(24)) == 1);
+    time_client.set(TIMESTAMP + hours(2));
+    REQUIRE(client.request(1, CxaPitchGap(1, 1), 1) == 0);
+    time_client.set(TIMESTAMP + hours(24));
+    REQUIRE(client.request(1, CxaPitchGap(1, 1), 1) == 1);
   }
 
   TEST_CASE("request_ignores_a_gap_beyond_the_recoverable_range") {
     auto session = std::make_shared<StubSession>();
     auto timer = TriggerTimer();
-    auto client = GapClient([=] { return session; }, &timer);
-    auto timestamp = time_from_string("2026-09-09 10:00:00");
-    REQUIRE(client.request(1, CxaPitchGap(500000, 1), 2000000, timestamp) == 0);
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = GapClient(
+      [=] (std::stop_token) { return session; }, &timer, &time_client);
+    REQUIRE(client.request(1, CxaPitchGap(500000, 1), 2000000) == 0);
     REQUIRE(session->m_requests.empty());
-    REQUIRE(client.request(1, CxaPitchGap(500000, 1), 1000000, timestamp) == 1);
+    REQUIRE(client.request(1, CxaPitchGap(500000, 1), 1000000) == 1);
   }
 
   TEST_CASE("read_responses") {
     auto session = std::make_shared<StubSession>();
     auto timer = TriggerTimer();
-    auto client = GapClient([=] { return session; }, &timer);
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = GapClient(
+      [=] (std::stop_token) { return session; }, &timer, &time_client);
     session->m_messages->push(encode_response(1, 4155, 50, 'A'));
     session->m_messages->push(encode_response(2, 900, 10, 'D'));
     auto accepted = client.get_responses()->pop();
@@ -177,12 +229,16 @@ TEST_SUITE("CxaPitchGapClient") {
     auto index = std::size_t(0);
     auto gate = std::make_shared<Queue<int>>();
     auto timer = TriggerTimer();
-    auto client = GapClient([&] {
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = GapClient([&] (std::stop_token stop_token) {
       if(index != 0) {
+        auto cancellation = std::stop_callback(stop_token, [&] {
+          gate->close();
+        });
         gate->pop();
       }
       return sessions[index++];
-    }, &timer);
+    }, &timer, &time_client);
     timer.trigger();
     first->close();
     flush_pending_routines();
@@ -192,9 +248,8 @@ TEST_SUITE("CxaPitchGapClient") {
       is_closed->push(true);
     }));
     flush_pending_routines();
-    gate->push(0);
-    flush_pending_routines();
     auto is_shut = static_cast<bool>(is_closed->try_pop());
+    gate->close();
     second->close();
     closer.wait();
     REQUIRE(is_shut);
@@ -204,10 +259,11 @@ TEST_SUITE("CxaPitchGapClient") {
     auto session = std::make_shared<StubSession>();
     session->m_gate = std::make_shared<Queue<int>>();
     auto timer = TriggerTimer();
-    auto client = GapClient([=] { return session; }, &timer);
-    auto timestamp = time_from_string("2026-09-09 10:00:00");
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = GapClient(
+      [=] (std::stop_token) { return session; }, &timer, &time_client);
     auto requester = RoutineHandler(spawn([&] {
-      client.request(1, CxaPitchGap(1000, 50), 1000, timestamp);
+      client.request(1, CxaPitchGap(1000, 50), 1000);
     }));
     flush_pending_routines();
     auto is_closed = std::make_shared<Queue<bool>>();
@@ -229,15 +285,17 @@ TEST_SUITE("CxaPitchGapClient") {
     auto sessions = std::vector<std::shared_ptr<StubSession>>({first, second});
     auto index = std::size_t(0);
     auto timer = TriggerTimer();
-    auto client = GapClient([&] { return sessions[index++]; }, &timer);
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = GapClient([&] (std::stop_token) {
+      return sessions[index++];
+    }, &timer, &time_client);
     first->m_messages->push(encode_response(1, 4155, 50, 'A'));
     REQUIRE(client.get_responses()->pop().m_sequence == 4155);
     timer.trigger();
     first->close();
     second->m_messages->push(encode_response(1, 900, 10, 'A'));
     REQUIRE(client.get_responses()->pop().m_sequence == 900);
-    auto timestamp = time_from_string("2026-09-09 10:00:00");
-    REQUIRE(client.request(1, CxaPitchGap(1000, 50), 1000, timestamp) == 50);
+    REQUIRE(client.request(1, CxaPitchGap(1000, 50), 1000) == 50);
     REQUIRE(second->m_requests.size() == 1);
     REQUIRE(parse_request(second->m_requests[0]).m_sequence == 1000);
   }

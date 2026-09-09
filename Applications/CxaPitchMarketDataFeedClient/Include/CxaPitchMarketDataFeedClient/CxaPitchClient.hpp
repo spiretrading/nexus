@@ -114,6 +114,7 @@ namespace Nexus {
       boost::posix_time::ptime m_start;
       boost::posix_time::ptime m_gap_timestamp;
       bool m_is_ready;
+      bool m_is_spinning;
       Beam::RoutineHandlerGroup m_routines;
       Beam::OpenState m_open_state;
 
@@ -153,7 +154,8 @@ namespace Nexus {
             m_live(0),
             m_start(m_time_client->get_time()),
             m_gap_timestamp(m_start),
-            m_is_ready(!m_spin) {
+            m_is_ready(!m_spin),
+            m_is_spinning(false) {
     for(auto i = std::size_t(0); i != m_feeds.size(); ++i) {
       m_routines.spawn(
         std::bind_front(&CxaPitchClient::feed_loop, this, static_cast<int>(i)));
@@ -266,7 +268,8 @@ namespace Nexus {
         auto position = std::uint32_t(0);
         Beam::with(m_sequencer, [&] (auto& sequencer) {
           sequencer.add(index, block, timestamp);
-          if(!m_is_ready && timestamp - m_start > m_gap_timeout) {
+          if(!m_is_ready && !m_is_spinning &&
+              timestamp - m_start > m_gap_timeout) {
             std::cout << "(no_spin " << timestamp << ')' << std::endl;
             m_is_ready = true;
           }
@@ -311,7 +314,7 @@ namespace Nexus {
         if(pending && m_gap) {
           auto count = [&] {
             try {
-              return (*m_gap)->request(m_unit, *pending, position, timestamp);
+              return (*m_gap)->request(m_unit, *pending, position);
             } catch(const std::exception&) {
               return std::uint32_t(0);
             }
@@ -324,7 +327,9 @@ namespace Nexus {
             });
           }
         }
-      } catch(const CxaPitchParserException&) {
+      } catch(const CxaPitchParserException& e) {
+        std::cout << "(bad_datagram feed " << index << ' ' << e.what() << ')' <<
+          std::endl;
         continue;
       } catch(const std::exception&) {
         break;
@@ -351,6 +356,10 @@ namespace Nexus {
             m_reported_gap = 0;
           }
         });
+      } catch(const CxaPitchParserException& e) {
+        std::cout << "(bad_datagram recovery " << index << ' ' << e.what() <<
+          ')' << std::endl;
+        continue;
       } catch(const std::exception&) {
         break;
       }
@@ -395,15 +404,22 @@ namespace Nexus {
     try {
       while(attempts != SPIN_ATTEMPTS) {
         auto offer = (*m_spin)->get_offers()->pop();
-        auto sequence = boost::optional<std::uint32_t>();
-        Beam::with(m_sequencer, [&] (auto& sequencer) {
-          sequence = sequencer.get_sequence();
+        auto is_requested = Beam::with(m_sequencer, [&] (auto& sequencer) {
+          auto sequence = sequencer.get_sequence();
+          if(m_is_ready || !sequence || offer + 1 < *sequence) {
+            return false;
+          }
+          m_is_spinning = true;
+          return true;
         });
-        if(!sequence || offer + 1 < *sequence) {
+        if(!is_requested) {
           continue;
         }
         auto spin = (*m_spin)->request(offer);
         if(spin.m_status != CxaPitchSpinResponse::ACCEPTED) {
+          Beam::with(m_sequencer, [&] (auto& sequencer) {
+            m_is_spinning = false;
+          });
           ++attempts;
           continue;
         }

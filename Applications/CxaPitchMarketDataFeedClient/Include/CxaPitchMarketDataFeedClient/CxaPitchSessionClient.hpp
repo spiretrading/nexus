@@ -6,6 +6,7 @@
 #include <exception>
 #include <functional>
 #include <memory>
+#include <stop_token>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -71,6 +72,17 @@ namespace Nexus {
       template<Beam::Initializes<C> CF, Beam::Initializes<T> TF>
       CxaPitchSessionClient(CxaPitchLogin login, CF&& channel, TF&& timer);
 
+      /**
+       * Constructs a session whose login can be cancelled.
+       * @param login The credentials to log in with.
+       * @param channel The channel connected to the server.
+       * @param timer The timer measuring the period between heartbeats.
+       * @param stop_token Cancels a pending login by closing the channel.
+       */
+      template<Beam::Initializes<C> CF, Beam::Initializes<T> TF>
+      CxaPitchSessionClient(CxaPitchLogin login, CF&& channel, TF&& timer,
+        std::stop_token stop_token);
+
       ~CxaPitchSessionClient();
 
       /** Reads the next message sent by the server. */
@@ -113,12 +125,25 @@ namespace Nexus {
   CxaPitchSessionClient(CxaPitchLogin, C&&, T&&) -> CxaPitchSessionClient<
     std::remove_cvref_t<C>, std::remove_cvref_t<T>>;
 
+  template<typename C, typename T>
+  CxaPitchSessionClient(CxaPitchLogin, C&&, T&&, std::stop_token) ->
+    CxaPitchSessionClient<std::remove_cvref_t<C>, std::remove_cvref_t<T>>;
+
   template<typename C, typename T> requires
     Beam::IsChannel<Beam::dereference_t<C>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
   template<Beam::Initializes<C> CF, Beam::Initializes<T> TF>
   CxaPitchSessionClient<C, T>::CxaPitchSessionClient(
       CxaPitchLogin login, CF&& channel, TF&& timer)
+    : CxaPitchSessionClient(std::move(login), std::forward<CF>(channel),
+        std::forward<TF>(timer), std::stop_token()) {}
+
+  template<typename C, typename T> requires
+    Beam::IsChannel<Beam::dereference_t<C>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  template<Beam::Initializes<C> CF, Beam::Initializes<T> TF>
+  CxaPitchSessionClient<C, T>::CxaPitchSessionClient(CxaPitchLogin login,
+      CF&& channel, TF&& timer, std::stop_token stop_token)
       try : m_channel(std::forward<CF>(channel)),
             m_timer(std::forward<TF>(timer)),
             m_position(0),
@@ -128,7 +153,12 @@ namespace Nexus {
               std::make_shared<Beam::Queue<Beam::Timer::Result>>()) {
     try {
       m_timer->get_publisher().monitor(m_timer_queue);
-      log_in(login);
+      {
+        auto cancellation = std::stop_callback(stop_token, [&] {
+          m_channel->get_connection().close();
+        });
+        log_in(login);
+      }
       m_timer->start();
       m_heartbeat_loop = Beam::spawn(
         std::bind_front(&CxaPitchSessionClient::heartbeat_loop, this));

@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <memory>
 #include <stdexcept>
+#include <stop_token>
 #include <vector>
 #include <Beam/IO/IOException.hpp>
 #include <Beam/IO/QueuedReader.hpp>
@@ -88,20 +89,23 @@ int main(int argc, const char** argv) {
       extract<int>(config, "mtu", options.m_max_datagram_size);
     static const auto HEARTBEAT = seconds(1);
     static const auto RECONNECT = seconds(10);
-    auto make_session = [] (const CxaPitchSession& session) {
+    auto make_session = [] (
+        const CxaPitchSession& session, std::stop_token stop_token) {
       auto login = CxaPitchLogin();
       login.m_session_sub_id = session.m_session_sub_id;
       login.m_username = session.m_username;
       login.m_password = session.m_password;
       return std::make_shared<ApplicationSessionClient>(
-        login, init(session.m_address), init(HEARTBEAT));
+        login, init(session.m_address), init(HEARTBEAT), stop_token);
     };
     auto gap_client = optional<std::unique_ptr<ApplicationGapClient>>();
     if(feed_configuration.m_retransmission) {
       auto session = *feed_configuration.m_retransmission;
       gap_client = try_or_nest([&] {
         return std::make_unique<ApplicationGapClient>(
-          [=] { return make_session(session); }, init(RECONNECT));
+          [=] (std::stop_token stop_token) {
+            return make_session(session, stop_token);
+          }, init(RECONNECT), TimeClient(std::in_place_type<LocalTimeClient>));
       }, std::runtime_error(
         "Unable to connect to the CXA PITCH gap request proxy."));
     }
@@ -109,7 +113,7 @@ int main(int argc, const char** argv) {
     if(feed_configuration.m_spin) {
       spin_client = try_or_nest([&] {
         return std::make_unique<ApplicationSpinClient>(
-          make_session(*feed_configuration.m_spin));
+          make_session(*feed_configuration.m_spin, std::stop_token()));
       }, std::runtime_error("Unable to connect to the CXA PITCH spin server."));
     }
     auto feeds = std::vector<std::unique_ptr<ApplicationProtocolClient>>();

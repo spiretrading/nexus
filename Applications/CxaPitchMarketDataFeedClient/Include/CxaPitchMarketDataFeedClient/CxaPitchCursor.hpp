@@ -105,8 +105,10 @@ namespace Nexus {
   }
 
   inline Money CxaPitchCursor::read_price() {
-    static constexpr auto DENOMINATOR = 10000000.0;
-    return Money(Quantity(read_uint64() / DENOMINATOR));
+    static constexpr auto DENOMINATOR = 10000000 / Quantity::MULTIPLIER;
+    auto price = read_uint64();
+    return Money(Quantity::from_representation(price / DENOMINATOR +
+      static_cast<double>(price % DENOMINATOR) / DENOMINATOR));
   }
 
   inline Side CxaPitchCursor::read_side() {

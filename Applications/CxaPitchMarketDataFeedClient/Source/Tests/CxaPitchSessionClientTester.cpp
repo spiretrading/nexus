@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <future>
 #include <memory>
+#include <stop_token>
 #include <string>
 #include <string_view>
 #include <Beam/IO/ConnectException.hpp>
@@ -84,6 +85,38 @@ TEST_SUITE("CxaPitchSessionClient") {
 
   TEST_CASE("reject_a_login") {
     REQUIRE_THROWS_AS(Fixture('N'), ConnectException);
+  }
+
+  TEST_CASE("cancel_a_pending_login") {
+    auto server = LocalServerConnection();
+    auto stop_source = std::stop_source();
+    auto accepting = std::async(std::launch::async, [&] {
+      auto channel = server.accept();
+      read_exactly(*channel, LOGIN_SIZE);
+      stop_source.request_stop();
+      return channel;
+    });
+    auto channel = LocalClientChannel("cxa", server);
+    auto timer = TriggerTimer();
+    REQUIRE_THROWS_AS(CxaPitchSessionClient(CxaPitchLogin(), &channel, &timer,
+      stop_source.get_token()), ConnectException);
+    auto server_channel = accepting.get();
+    server_channel->get_connection().close();
+  }
+
+  TEST_CASE("cancel_before_login") {
+    auto server = LocalServerConnection();
+    auto accepting = std::async(std::launch::async, [&] {
+      return server.accept();
+    });
+    auto channel = LocalClientChannel("cxa", server);
+    auto server_channel = accepting.get();
+    auto stop_source = std::stop_source();
+    stop_source.request_stop();
+    auto timer = TriggerTimer();
+    REQUIRE_THROWS_AS(CxaPitchSessionClient(CxaPitchLogin(), &channel, &timer,
+      stop_source.get_token()), ConnectException);
+    server_channel->get_connection().close();
   }
 
   TEST_CASE("read_a_message") {

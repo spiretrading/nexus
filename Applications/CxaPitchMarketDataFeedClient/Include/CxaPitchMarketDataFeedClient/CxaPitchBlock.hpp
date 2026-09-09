@@ -153,12 +153,21 @@ namespace Nexus {
     auto block = CxaPitchBlock();
     block.m_header = CxaPitchHeader::parse(source);
     if(block.m_header.m_length < CxaPitchHeader::LENGTH ||
-        block.m_header.m_length > source.size()) {
+        block.m_header.m_length != source.size()) {
       boost::throw_with_location(
         CxaPitchParserException("Sequenced unit header length out of range."));
     }
-    block.m_payload = source.substr(CxaPitchHeader::LENGTH,
-      block.m_header.m_length - CxaPitchHeader::LENGTH);
+    block.m_payload = source.substr(
+      CxaPitchHeader::LENGTH, block.m_header.m_length - CxaPitchHeader::LENGTH);
+    auto remaining = block.m_payload;
+    for(auto i = 0; i != block.m_header.m_count; ++i) {
+      auto message = CxaPitchMessage::parse(remaining);
+      remaining.remove_prefix(message.m_length);
+    }
+    if(!remaining.empty()) {
+      boost::throw_with_location(
+        CxaPitchParserException("PITCH block message count mismatch."));
+    }
     return block;
   }
 

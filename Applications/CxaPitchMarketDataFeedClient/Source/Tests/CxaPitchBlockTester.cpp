@@ -1,5 +1,6 @@
 #include <array>
 #include <cstdint>
+#include <string>
 #include <string_view>
 #include <vector>
 #include <doctest/doctest.h>
@@ -81,9 +82,29 @@ TEST_SUITE("CxaPitchBlock") {
       0x01,
       0x01, 0x00, 0x00, 0x00,
       0x2A, 0x37, 0x00, 0x00, 0x00, 0x00};
-    auto block =
-      CxaPitchBlock::parse(std::string_view(data.data(), data.size()));
-    REQUIRE_THROWS_AS(block.begin(), CxaPitchParserException);
+    REQUIRE_THROWS_AS(
+      CxaPitchBlock::parse(std::string_view(data.data(), data.size())),
+      CxaPitchParserException);
+  }
+
+  TEST_CASE("parse_malformed_second_message") {
+    auto data = std::string_view(
+      "\x10\x00\x02\x01\x01\x00\x00\x00"
+      "\x06\x97\x00\x00\x00\x00\xff\x37", 16);
+    REQUIRE_THROWS_AS(CxaPitchBlock::parse(data), CxaPitchParserException);
+  }
+
+  TEST_CASE("parse_message_count_mismatch") {
+    auto data = std::string(
+      "\x0e\x00\x01\x01\x01\x00\x00\x00"
+      "\x06\x97\x00\x00\x00\x00", 14);
+    for(auto count : {0, 2}) {
+      data[2] = static_cast<char>(count);
+      REQUIRE_THROWS_AS(CxaPitchBlock::parse(data), CxaPitchParserException);
+    }
+    data[2] = 1;
+    data += char(0);
+    REQUIRE_THROWS_AS(CxaPitchBlock::parse(data), CxaPitchParserException);
   }
 
   TEST_CASE("parse_message_too_short") {
