@@ -11,6 +11,7 @@
 #include <boost/optional/optional.hpp>
 #include <boost/throw_exception.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
+#include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"
 
 namespace Nexus {
@@ -102,6 +103,7 @@ namespace Nexus {
       boost::throw_with_location(
         CxaPitchParserException("Feed index out of range."));
     }
+    validate(block);
     auto& source = m_feeds[feed];
     source.m_is_active = true;
     source.m_timestamp = timestamp;
@@ -125,6 +127,7 @@ namespace Nexus {
     if(!m_is_initialized || block.get_header().m_sequence == 0) {
       return;
     }
+    validate(block);
     store(block);
   }
 

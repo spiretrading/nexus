@@ -211,7 +211,9 @@ namespace Nexus {
       } catch(const std::exception&) {
         {
           auto lock = boost::lock_guard(m_mutex);
-          m_is_connected = false;
+          if(session == m_session) {
+            m_is_connected = false;
+          }
         }
         session->close();
         break;

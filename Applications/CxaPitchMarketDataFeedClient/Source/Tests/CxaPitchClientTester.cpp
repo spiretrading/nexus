@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <atomic>
 #include <cstdint>
 #include <limits>
 #include <memory>
@@ -79,14 +80,22 @@ namespace {
     std::shared_ptr<Queue<std::uint32_t>> m_offers;
     std::shared_ptr<Queue<std::uint32_t>> m_requests;
     std::shared_ptr<Queue<CxaPitchSpin>> m_spins;
+    std::atomic_uint64_t m_progress;
+    std::atomic_bool m_is_closed;
 
     StubSpinClient()
       : m_offers(std::make_shared<Queue<std::uint32_t>>()),
         m_requests(std::make_shared<Queue<std::uint32_t>>()),
-        m_spins(std::make_shared<Queue<CxaPitchSpin>>()) {}
+        m_spins(std::make_shared<Queue<CxaPitchSpin>>()),
+        m_progress(0),
+        m_is_closed(false) {}
 
     const std::shared_ptr<Queue<std::uint32_t>>& get_offers() const {
       return m_offers;
+    }
+
+    std::uint64_t get_progress() const {
+      return m_progress.load();
     }
 
     CxaPitchSpin request(std::uint32_t sequence) {
@@ -95,6 +104,7 @@ namespace {
     }
 
     void close() {
+      m_is_closed = true;
       m_offers->close();
       m_requests->close();
       m_spins->close();
@@ -165,7 +175,7 @@ TEST_SUITE("CxaPitchClient") {
     auto feed = StubProtocolClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(1, seconds(3), seconds(5),
-      std::vector<StubProtocolClient*>({&feed}),
+      std::vector{&feed},
       std::vector<StubProtocolClient*>(), none, none, &time_client);
     feed.m_blocks->push(encode_block(1, {0x11, 0x12}));
     feed.m_blocks->push(encode_block(3, {0x13}));
@@ -179,7 +189,7 @@ TEST_SUITE("CxaPitchClient") {
     auto second = StubProtocolClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(1, seconds(3), seconds(5),
-      std::vector<StubProtocolClient*>({&first, &second}),
+      std::vector{&first, &second},
       std::vector<StubProtocolClient*>(), none, none, &time_client);
     first.m_blocks->push(encode_block(1, {0x11}));
     second.m_blocks->push(encode_block(1, {0x11}));
@@ -192,7 +202,7 @@ TEST_SUITE("CxaPitchClient") {
     auto feed = StubProtocolClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(2, seconds(3), seconds(5),
-      std::vector<StubProtocolClient*>({&feed}),
+      std::vector{&feed},
       std::vector<StubProtocolClient*>(), none, none, &time_client);
     feed.m_blocks->push(encode_block(1, {0x11}));
     feed.m_reads->pop();
@@ -206,8 +216,8 @@ TEST_SUITE("CxaPitchClient") {
     auto gap_client = StubGapClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(1, seconds(3), seconds(5),
-      std::vector<StubProtocolClient*>({&first, &second}),
-      std::vector<StubProtocolClient*>({&recovery}), &gap_client, none,
+      std::vector{&first, &second},
+      std::vector{&recovery}, &gap_client, none,
       &time_client);
     first.m_blocks->push(encode_block(1, {0x11}));
     second.m_blocks->push(encode_block(1, {0x11}));
@@ -230,7 +240,7 @@ TEST_SUITE("CxaPitchClient") {
     gap_client.m_limit = 1;
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(1, seconds(3), seconds(5),
-      std::vector<StubProtocolClient*>({&first, &second}),
+      std::vector{&first, &second},
       std::vector<StubProtocolClient*>(), &gap_client, none, &time_client);
     first.m_blocks->push(encode_block(1, {0x11}));
     second.m_blocks->push(encode_block(1, {0x11}));
@@ -251,7 +261,7 @@ TEST_SUITE("CxaPitchClient") {
     auto feed = StubProtocolClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(
-      1, seconds(3), seconds(5), std::vector<StubProtocolClient*>({&feed}),
+      1, seconds(3), seconds(5), std::vector{&feed},
       std::vector<StubProtocolClient*>(), none, none, &time_client);
     feed.m_blocks->push(encode_block(1, {0x11}));
     REQUIRE(client.read().m_type == 0x11);
@@ -266,7 +276,7 @@ TEST_SUITE("CxaPitchClient") {
     auto spin_client = StubSpinClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(
-      1, seconds(3), seconds(5), std::vector<StubProtocolClient*>({&feed}),
+      1, seconds(3), seconds(5), std::vector{&feed},
       std::vector<StubProtocolClient*>(), none, &spin_client, &time_client);
     auto reader = MessageReader(client);
     feed.m_blocks->push(encode_block(1, {0x11}));
@@ -284,8 +294,8 @@ TEST_SUITE("CxaPitchClient") {
       auto gap_client = StubGapClient();
       auto time_client = FixedTimeClient(TIMESTAMP);
       auto client = Client(1, seconds(3), seconds(5),
-        std::vector<StubProtocolClient*>({&feed}),
-        std::vector<StubProtocolClient*>({&recovery}), &gap_client, none,
+        std::vector{&feed},
+        std::vector{&recovery}, &gap_client, none,
         &time_client);
       auto reader = MessageReader(client);
       feed.m_blocks->push(encode_block(1, {0x11}));
@@ -318,17 +328,22 @@ TEST_SUITE("CxaPitchClient") {
     auto spin_client = StubSpinClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(1, seconds(3), seconds(5),
-      std::vector<StubProtocolClient*>({&feed}),
+      std::vector{&feed},
       std::vector<StubProtocolClient*>(), none, &spin_client, &time_client);
     auto reader = MessageReader(client);
     feed.m_blocks->push(encode_block(5, {0x11, 0x12, 0x13}));
     flush_pending_routines();
     spin_client.m_offers->push(6);
     REQUIRE(spin_client.m_requests->pop() == 6);
+    time_client.set(TIMESTAMP + duration_from_string("00:00:04"));
+    ++spin_client.m_progress;
+    feed.m_blocks->push(encode_block(8, {}));
+    flush_pending_routines();
     time_client.set(TIMESTAMP + seconds(6));
     feed.m_blocks->push(encode_block(8, {0x14}));
     flush_pending_routines();
     REQUIRE(!reader.m_types->try_pop());
+    REQUIRE(!spin_client.m_is_closed.load());
     auto spin = CxaPitchSpin();
     spin.m_sequence = 6;
     spin.m_status = CxaPitchSpinResponse::ACCEPTED;
@@ -340,13 +355,43 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(reader.m_types->try_pop().value_or(0) == 0x14);
   }
 
+  TEST_CASE("snapshot_progress_timeout") {
+    auto feed = StubProtocolClient();
+    auto spin_client = StubSpinClient();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = Client(
+      1, seconds(3), seconds(5), std::vector{&feed},
+      std::vector<StubProtocolClient*>(), none, &spin_client, &time_client);
+    auto reader = MessageReader(client);
+    feed.m_blocks->push(encode_block(5, {0x11, 0x12}));
+    flush_pending_routines();
+    spin_client.m_offers->push(6);
+    REQUIRE(spin_client.m_requests->pop() == 6);
+    time_client.set(TIMESTAMP + duration_from_string("00:00:04"));
+    ++spin_client.m_progress;
+    feed.m_blocks->push(encode_block(7, {}));
+    flush_pending_routines();
+    time_client.set(TIMESTAMP + duration_from_string("00:00:08"));
+    spin_client.m_offers->push(7);
+    feed.m_blocks->push(encode_block(7, {}));
+    flush_pending_routines();
+    REQUIRE(!reader.m_types->try_pop());
+    time_client.set(TIMESTAMP + duration_from_string("00:00:10"));
+    feed.m_blocks->push(encode_block(7, {0x13}));
+    flush_pending_routines();
+    REQUIRE(spin_client.m_is_closed.load());
+    REQUIRE(reader.m_types->try_pop().value_or(0) == 0x11);
+    REQUIRE(reader.m_types->try_pop().value_or(0) == 0x12);
+    REQUIRE(reader.m_types->try_pop().value_or(0) == 0x13);
+  }
+
   TEST_CASE("rejected_gap_chunk") {
     auto first = StubProtocolClient();
     auto second = StubProtocolClient();
     auto gap_client = StubGapClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(1, seconds(3), seconds(5),
-      std::vector<StubProtocolClient*>({&first, &second}),
+      std::vector{&first, &second},
       std::vector<StubProtocolClient*>(), &gap_client, none, &time_client);
     auto reader = MessageReader(client);
     first.m_blocks->push(encode_block(1, {0x11}));
@@ -375,8 +420,8 @@ TEST_SUITE("CxaPitchClient") {
     auto gap_client = StubGapClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(1, seconds(3), seconds(5),
-      std::vector<StubProtocolClient*>({&first, &second}),
-      std::vector<StubProtocolClient*>({&recovery}), &gap_client, none,
+      std::vector{&first, &second},
+      std::vector{&recovery}, &gap_client, none,
       &time_client);
     auto reader = MessageReader(client);
     first.m_blocks->push(encode_block(1, {0x11}));
@@ -399,7 +444,7 @@ TEST_SUITE("CxaPitchClient") {
     auto second = StubProtocolClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(1, seconds(3), seconds(-1),
-      std::vector<StubProtocolClient*>({&first, &second}),
+      std::vector{&first, &second},
       std::vector<StubProtocolClient*>(), none, none, &time_client);
     first.m_blocks->push(encode_block(1, {0x11}));
     second.m_blocks->push(encode_block(1, {0x11}));
@@ -416,7 +461,7 @@ TEST_SUITE("CxaPitchClient") {
     gap_client.m_is_recoverable = false;
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(1, seconds(3), seconds(5),
-      std::vector<StubProtocolClient*>({&first, &second}),
+      std::vector{&first, &second},
       std::vector<StubProtocolClient*>(), &gap_client, none, &time_client);
     first.m_blocks->push(encode_block(1, {0x11}));
     second.m_blocks->push(encode_block(1, {0x11}));
@@ -433,7 +478,7 @@ TEST_SUITE("CxaPitchClient") {
     auto gap_client = StubGapClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(1, seconds(3), seconds(5),
-      std::vector<StubProtocolClient*>({&first, &second}),
+      std::vector{&first, &second},
       std::vector<StubProtocolClient*>(), &gap_client, none, &time_client);
     first.m_blocks->push(encode_block(1, {0x11}));
     second.m_blocks->push(encode_block(1, {0x11}));
@@ -453,7 +498,7 @@ TEST_SUITE("CxaPitchClient") {
     auto gap_client = StubGapClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(1, seconds(3), seconds(5),
-      std::vector<StubProtocolClient*>({&first, &second}),
+      std::vector{&first, &second},
       std::vector<StubProtocolClient*>(), &gap_client, none, &time_client);
     first.m_blocks->push(encode_block(1, {0x11}));
     second.m_blocks->push(encode_block(1, {0x11}));
@@ -475,7 +520,7 @@ TEST_SUITE("CxaPitchClient") {
     auto spin_client = StubSpinClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(1, seconds(3), seconds(5),
-      std::vector<StubProtocolClient*>({&feed}),
+      std::vector{&feed},
       std::vector<StubProtocolClient*>(), none, &spin_client,
       &time_client);
     feed.m_blocks->push(encode_block(5, {0x11, 0x12, 0x13}));
@@ -500,7 +545,7 @@ TEST_SUITE("CxaPitchClient") {
     auto spin_client = StubSpinClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(1, seconds(3), seconds(5),
-      std::vector<StubProtocolClient*>({&feed}),
+      std::vector{&feed},
       std::vector<StubProtocolClient*>(), none, &spin_client,
       &time_client);
     feed.m_blocks->push(encode_block(5, {0x11}));

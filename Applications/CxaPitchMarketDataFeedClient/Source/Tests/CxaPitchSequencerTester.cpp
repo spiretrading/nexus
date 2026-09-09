@@ -243,4 +243,45 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE_THROWS_AS(sequencer.add(1, CxaPitchBlock::parse(data), timestamp),
       CxaPitchParserException);
   }
+
+  TEST_CASE("malformed_message_recovery") {
+    for(auto is_recovery : {false, true}) {
+      auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+      auto timestamp = time_from_string("2026-09-09 10:00:00");
+      auto first = encode_block(1, {0x11});
+      sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
+      REQUIRE(read(sequencer) == 0x11);
+      auto malformed = encode_block(2, {0x42, CxaPitchAddOrder::TYPE});
+      auto block = CxaPitchBlock::parse(malformed);
+      if(is_recovery) {
+        REQUIRE_THROWS_AS(sequencer.recover(block), CxaPitchParserException);
+      } else {
+        REQUIRE_THROWS_AS(
+          sequencer.add(0, block, timestamp), CxaPitchParserException);
+      }
+      REQUIRE(sequencer.get_sequence().value_or(0) == 2);
+      REQUIRE(!read(sequencer));
+      auto replay = encode_block(2, {0x12, 0x13});
+      if(is_recovery) {
+        sequencer.recover(CxaPitchBlock::parse(replay));
+      } else {
+        sequencer.add(1, CxaPitchBlock::parse(replay), timestamp);
+      }
+      REQUIRE(read(sequencer) == 0x12);
+      REQUIRE(read(sequencer) == 0x13);
+    }
+  }
+
+  TEST_CASE("malformed_initial_message") {
+    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto timestamp = time_from_string("2026-09-09 10:00:00");
+    auto malformed = encode_block(100, {CxaPitchAddOrder::TYPE});
+    REQUIRE_THROWS_AS(
+      sequencer.add(0, CxaPitchBlock::parse(malformed), timestamp),
+      CxaPitchParserException);
+    REQUIRE(!sequencer.get_sequence());
+    auto first = encode_block(1, {0x11});
+    sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
+    REQUIRE(read(sequencer) == 0x11);
+  }
 }

@@ -75,8 +75,8 @@ namespace Nexus {
        * Constructs a CxaPitchClient.
        * @param unit The unit to deliver the messages of.
        * @param liveness How long a feed may be silent before it is excluded.
-       * @param gap_timeout How long to wait for a missing message before
-       *        skipping over it.
+       * @param gap_timeout How long to wait for missing messages or snapshot
+       *        progress before proceeding without them.
        * @param feeds The clients receiving the unit's real time feeds.
        * @param recovery The clients receiving the unit's gap response feeds.
        * @param gap The client requesting retransmissions, if enabled.
@@ -112,7 +112,9 @@ namespace Nexus {
       std::uint32_t m_reported_gap;
       std::uint32_t m_requested;
       std::uint32_t m_live;
+      std::uint64_t m_spin_progress;
       boost::posix_time::ptime m_start;
+      boost::posix_time::ptime m_spin_timestamp;
       boost::posix_time::ptime m_gap_timestamp;
       bool m_is_ready;
       bool m_is_spinning;
@@ -159,7 +161,9 @@ namespace Nexus {
             m_reported_gap(0),
             m_requested(0),
             m_live(0),
+            m_spin_progress(0),
             m_start(m_time_client->get_time()),
+            m_spin_timestamp(m_start),
             m_gap_timestamp(m_start),
             m_is_ready(!m_spin),
             m_is_spinning(false) {
@@ -273,12 +277,24 @@ namespace Nexus {
         auto timestamp = m_time_client->get_time();
         auto pending = boost::optional<CxaPitchGap>();
         auto position = std::uint32_t(0);
+        auto close_spin = false;
         Beam::with(m_sequencer, [&] (auto& sequencer) {
           sequencer.add(index, block, timestamp);
-          if(!m_is_ready && !m_is_spinning &&
-              timestamp - m_start > m_gap_timeout) {
-            std::cout << "(no_spin " << timestamp << ')' << std::endl;
-            m_is_ready = true;
+          if(!m_is_ready) {
+            auto start = m_start;
+            if(m_is_spinning) {
+              auto progress = (*m_spin)->get_progress();
+              if(progress != m_spin_progress) {
+                m_spin_progress = progress;
+                m_spin_timestamp = timestamp;
+              }
+              start = m_spin_timestamp;
+            }
+            if(timestamp - start > m_gap_timeout) {
+              std::cout << "(no_spin " << timestamp << ')' << std::endl;
+              m_is_ready = true;
+              close_spin = true;
+            }
           }
           flush(sequencer);
           if(header.m_sequence + header.m_count > m_live) {
@@ -318,6 +334,9 @@ namespace Nexus {
             m_requested = end;
           }
         });
+        if(close_spin) {
+          (*m_spin)->close();
+        }
         if(pending && m_gap) {
           auto count = [&] {
             try {
@@ -417,6 +436,8 @@ namespace Nexus {
             return false;
           }
           m_is_spinning = true;
+          m_spin_progress = (*m_spin)->get_progress();
+          m_spin_timestamp = m_time_client->get_time();
           return true;
         });
         if(!is_requested) {

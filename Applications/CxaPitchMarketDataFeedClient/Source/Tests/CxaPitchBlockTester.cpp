@@ -29,7 +29,7 @@ TEST_SUITE("CxaPitchBlock") {
       REQUIRE(message.m_length == 6);
       types.push_back(message.m_type);
     }
-    REQUIRE(types == std::vector<std::uint8_t>({0x97, 0x2D}));
+    REQUIRE(types == std::vector<std::uint8_t>{0x97, 0x2D});
   }
 
   TEST_CASE("parse_heartbeat") {
@@ -60,7 +60,7 @@ TEST_SUITE("CxaPitchBlock") {
     for(auto& message : block) {
       types.push_back(message.m_type);
     }
-    REQUIRE(types == std::vector<std::uint8_t>({0x97, 0x7F, 0x2D}));
+    REQUIRE(types == std::vector<std::uint8_t>{0x97, 0x7F, 0x2D});
   }
 
   TEST_CASE("parse_block_longer_than_source") {

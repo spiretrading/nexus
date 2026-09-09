@@ -1,5 +1,6 @@
 #ifndef CXA_PITCH_SPIN_CLIENT_HPP
 #define CXA_PITCH_SPIN_CLIENT_HPP
+#include <atomic>
 #include <concepts>
 #include <cstdint>
 #include <exception>
@@ -16,6 +17,7 @@
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
+#include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionMessages.hpp"
 
@@ -37,6 +39,7 @@ namespace Nexus {
   /** Concept satisfied by types requesting a snapshot of a unit's book. */
   template<typename T>
   concept IsCxaPitchSpinClient = requires(T& t) {
+    { std::as_const(t).get_progress() } -> std::same_as<std::uint64_t>;
     { t.get_offers() } -> std::convertible_to<
       const std::shared_ptr<Beam::Queue<std::uint32_t>>&>;
     { t.request(std::declval<std::uint32_t>()) } -> std::same_as<CxaPitchSpin>;
@@ -66,6 +69,9 @@ namespace Nexus {
       /** Returns the queue of sequences a snapshot is available through. */
       const std::shared_ptr<Beam::Queue<std::uint32_t>>& get_offers() const;
 
+      /** Returns the number of snapshot messages received by this client. */
+      std::uint64_t get_progress() const;
+
       /**
        * Requests a snapshot of the open orders on this session's unit.
        * @param sequence The sequence, taken from an offer, to request the
@@ -83,6 +89,7 @@ namespace Nexus {
       std::shared_ptr<Beam::Queue<CxaPitchSpin>> m_spins;
       CxaPitchSpin m_spin;
       bool m_is_spinning;
+      std::atomic_uint64_t m_progress;
       Beam::RoutineHandler m_read_loop;
       Beam::OpenState m_open_state;
 
@@ -100,7 +107,8 @@ namespace Nexus {
       try : m_session(std::forward<SF>(session)),
             m_offers(std::make_shared<Beam::Queue<std::uint32_t>>()),
             m_spins(std::make_shared<Beam::Queue<CxaPitchSpin>>()),
-            m_is_spinning(false) {
+            m_is_spinning(false),
+            m_progress(0) {
     m_read_loop =
       Beam::spawn(std::bind_front(&CxaPitchSpinClient::read_loop, this));
   } catch(const std::exception&) {
@@ -117,6 +125,11 @@ namespace Nexus {
   const std::shared_ptr<Beam::Queue<std::uint32_t>>&
       CxaPitchSpinClient<S>::get_offers() const {
     return m_offers;
+  }
+
+  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
+  std::uint64_t CxaPitchSpinClient<S>::get_progress() const {
+    return m_progress.load();
   }
 
   template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
@@ -159,9 +172,11 @@ namespace Nexus {
           m_is_spinning = false;
           m_spins->push(std::move(m_spin));
         } else if(m_is_spinning) {
+          validate(message);
           m_spin.m_messages.emplace_back(
             message.m_payload - CxaPitchMessage::HEADER_LENGTH,
             message.m_length);
+          ++m_progress;
         }
       }
     } catch(const std::exception&) {

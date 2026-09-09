@@ -6,6 +6,7 @@
 #include <string>
 #include <string_view>
 #include <vector>
+#include <Beam/IO/IOException.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
@@ -225,7 +226,7 @@ TEST_SUITE("CxaPitchGapClient") {
   TEST_CASE("close_during_connection") {
     auto first = std::make_shared<StubSession>();
     auto second = std::make_shared<StubSession>();
-    auto sessions = std::vector<std::shared_ptr<StubSession>>({first, second});
+    auto sessions = std::vector{first, second};
     auto index = std::size_t(0);
     auto gate = std::make_shared<Queue<int>>();
     auto timer = TriggerTimer();
@@ -282,7 +283,7 @@ TEST_SUITE("CxaPitchGapClient") {
   TEST_CASE("session_reconnection") {
     auto first = std::make_shared<StubSession>();
     auto second = std::make_shared<StubSession>();
-    auto sessions = std::vector<std::shared_ptr<StubSession>>({first, second});
+    auto sessions = std::vector{first, second};
     auto index = std::size_t(0);
     auto timer = TriggerTimer();
     auto time_client = FixedTimeClient(TIMESTAMP);
@@ -298,5 +299,37 @@ TEST_SUITE("CxaPitchGapClient") {
     REQUIRE(client.request(1, CxaPitchGap(1000, 50), 1000) == 50);
     REQUIRE(second->m_requests.size() == 1);
     REQUIRE(parse_request(second->m_requests[0]).m_sequence == 1000);
+  }
+
+  TEST_CASE("old_session_write_failure") {
+    auto first = std::make_shared<StubSession>();
+    auto second = std::make_shared<StubSession>();
+    auto sessions = std::vector{first, second};
+    auto index = std::size_t(0);
+    auto gate = Queue<int>();
+    first->m_on_write = [&] {
+      gate.pop();
+      throw IOException("Old session write failed.");
+    };
+    auto timer = TriggerTimer();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = GapClient([&] (std::stop_token) {
+      return sessions[index++];
+    }, &timer, &time_client);
+    auto requested = std::uint32_t(0);
+    auto requester = RoutineHandler(spawn([&] {
+      requested = client.request(1, CxaPitchGap(1000, 50), 1000);
+    }));
+    flush_pending_routines();
+    timer.trigger();
+    first->m_messages->close();
+    second->m_messages->push(encode_response(1, 900, 10, 'A'));
+    auto response = client.get_responses()->pop();
+    gate.push(0);
+    requester.wait();
+    REQUIRE(response.m_sequence == 900);
+    REQUIRE(requested == 0);
+    REQUIRE(client.request(1, CxaPitchGap(1000, 50), 1000) == 50);
+    REQUIRE(second->m_requests.size() == 1);
   }
 }

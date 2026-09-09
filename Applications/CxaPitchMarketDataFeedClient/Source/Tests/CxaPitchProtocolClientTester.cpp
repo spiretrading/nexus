@@ -67,7 +67,7 @@ TEST_SUITE("CxaPitchProtocolClient") {
     for(auto& message : block) {
       types.push_back(message.m_type);
     }
-    REQUIRE(types == std::vector<std::uint8_t>({0x37, 0x38}));
+    REQUIRE(types == std::vector<std::uint8_t>{0x37, 0x38});
   }
 
   TEST_CASE("read_heartbeat") {

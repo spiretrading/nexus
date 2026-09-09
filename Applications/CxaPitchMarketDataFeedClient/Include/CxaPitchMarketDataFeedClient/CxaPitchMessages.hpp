@@ -464,6 +464,63 @@ namespace Details {
     static CxaPitchAuctionSummary parse(const CxaPitchMessage& message);
   };
 
+  /**
+   * Validates the minimum length of a known PITCH message.
+   * @param message The message to validate.
+   * @throws CxaPitchParserException If the message is truncated.
+   */
+  inline void validate(const CxaPitchMessage& message) {
+    auto length = [&] {
+      switch(message.m_type) {
+        case CxaPitchUnitClear::TYPE:
+          return CxaPitchUnitClear::LENGTH;
+        case CxaPitchTradingStatus::TYPE:
+          return CxaPitchTradingStatus::LENGTH;
+        case CxaPitchAddOrder::TYPE:
+          return CxaPitchAddOrder::LENGTH;
+        case CxaPitchOrderExecuted::TYPE:
+          return CxaPitchOrderExecuted::LENGTH;
+        case CxaPitchOrderExecutedAtPrice::TYPE:
+          return CxaPitchOrderExecutedAtPrice::LENGTH;
+        case CxaPitchReduceSize::TYPE:
+          return CxaPitchReduceSize::LENGTH;
+        case CxaPitchModifyOrder::TYPE:
+          return CxaPitchModifyOrder::LENGTH;
+        case CxaPitchDeleteOrder::TYPE:
+          return CxaPitchDeleteOrder::LENGTH;
+        case CxaPitchTrade::TYPE:
+          return CxaPitchTrade::LENGTH;
+        case CxaPitchTradeBreak::TYPE:
+          return CxaPitchTradeBreak::LENGTH;
+        case CxaPitchCalculatedValue::TYPE:
+          return CxaPitchCalculatedValue::LENGTH;
+        case CxaPitchEndOfSession::TYPE:
+          return CxaPitchEndOfSession::LENGTH;
+        case CxaPitchAuctionUpdate::TYPE:
+          return CxaPitchAuctionUpdate::LENGTH;
+        case CxaPitchAuctionSummary::TYPE:
+          return CxaPitchAuctionSummary::LENGTH;
+        default:
+          return CxaPitchMessage::HEADER_LENGTH;
+      }
+    }();
+    if(message.m_length < length) {
+      boost::throw_with_location(
+        CxaPitchParserException("PITCH message too short for its type."));
+    }
+  }
+
+  /**
+   * Validates the messages in a PITCH block.
+   * @param block The block to validate.
+   * @throws CxaPitchParserException If a known message is truncated.
+   */
+  inline void validate(const CxaPitchBlock& block) {
+    for(auto& message : block) {
+      validate(message);
+    }
+  }
+
   inline CxaPitchUnitClear CxaPitchUnitClear::parse(
       const CxaPitchMessage& message) {
     if(message.m_length < LENGTH) {

@@ -20,6 +20,41 @@ TEST_SUITE("CxaPitchMessages") {
   static const auto TIME_TEXT = to_string(TIMESTAMP);
   static const auto PRICE_TEXT = to_string(PRICE);
 
+  TEST_CASE("validate_message_length") {
+    auto validate_length = [] (const auto& type, const auto& length) {
+      auto message = std::string(length, char(0));
+      message[0] = static_cast<char>(length);
+      message[1] = static_cast<char>(type);
+      REQUIRE_NOTHROW(validate(CxaPitchMessage::parse(message)));
+      message.push_back(char(0));
+      message[0] = static_cast<char>(message.size());
+      REQUIRE_NOTHROW(validate(CxaPitchMessage::parse(message)));
+      message.resize(length - 1);
+      message[0] = static_cast<char>(message.size());
+      REQUIRE_THROWS_AS(
+        validate(CxaPitchMessage::parse(message)), CxaPitchParserException);
+    };
+    validate_length(CxaPitchUnitClear::TYPE, CxaPitchUnitClear::LENGTH);
+    validate_length(CxaPitchTradingStatus::TYPE, CxaPitchTradingStatus::LENGTH);
+    validate_length(CxaPitchAddOrder::TYPE, CxaPitchAddOrder::LENGTH);
+    validate_length(CxaPitchOrderExecuted::TYPE, CxaPitchOrderExecuted::LENGTH);
+    validate_length(
+      CxaPitchOrderExecutedAtPrice::TYPE, CxaPitchOrderExecutedAtPrice::LENGTH);
+    validate_length(CxaPitchReduceSize::TYPE, CxaPitchReduceSize::LENGTH);
+    validate_length(CxaPitchModifyOrder::TYPE, CxaPitchModifyOrder::LENGTH);
+    validate_length(CxaPitchDeleteOrder::TYPE, CxaPitchDeleteOrder::LENGTH);
+    validate_length(CxaPitchTrade::TYPE, CxaPitchTrade::LENGTH);
+    validate_length(CxaPitchTradeBreak::TYPE, CxaPitchTradeBreak::LENGTH);
+    validate_length(
+      CxaPitchCalculatedValue::TYPE, CxaPitchCalculatedValue::LENGTH);
+    validate_length(CxaPitchEndOfSession::TYPE, CxaPitchEndOfSession::LENGTH);
+    validate_length(CxaPitchAuctionUpdate::TYPE, CxaPitchAuctionUpdate::LENGTH);
+    validate_length(CxaPitchAuctionSummary::TYPE,
+      CxaPitchAuctionSummary::LENGTH);
+    REQUIRE_NOTHROW(
+      validate(CxaPitchMessage::parse(std::string_view("\x02\x7f", 2))));
+  }
+
   TEST_CASE("parse_unit_clear") {
     auto source = std::string_view("\x06\x97\x20\x20\x20\x20", 6);
     auto message = CxaPitchMessage::parse(source);

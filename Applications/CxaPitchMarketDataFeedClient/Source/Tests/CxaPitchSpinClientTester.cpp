@@ -5,6 +5,7 @@
 #include <vector>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/Routines/RoutineHandler.hpp>
 #include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSpinClient.hpp"
@@ -76,10 +77,13 @@ namespace {
   }
 
   SharedBuffer encode_order(std::uint8_t type) {
-    auto message = std::string();
-    message += char(6);
-    message += static_cast<char>(type);
-    message.append(4, char(0));
+    auto length = CxaPitchAddOrder::LENGTH;
+    if(type == CxaPitchTradingStatus::TYPE) {
+      length = CxaPitchTradingStatus::LENGTH;
+    }
+    auto message = std::string(length, char(0));
+    message[0] = static_cast<char>(length);
+    message[1] = static_cast<char>(type);
     return SharedBuffer(message.data(), message.size());
   }
 }
@@ -92,6 +96,7 @@ TEST_SUITE("CxaPitchSpinClient") {
     session.m_messages->push(encode_available(310175));
     REQUIRE(client.get_offers()->pop() == 310169);
     REQUIRE(client.get_offers()->pop() == 310175);
+    REQUIRE(client.get_progress() == 0);
   }
 
   TEST_CASE("request_snapshot") {
@@ -106,6 +111,7 @@ TEST_SUITE("CxaPitchSpinClient") {
     REQUIRE(spin.m_sequence == 310175);
     REQUIRE(spin.m_status == CxaPitchSpinResponse::ACCEPTED);
     REQUIRE(spin.m_messages.size() == 3);
+    REQUIRE(client.get_progress() == 3);
     REQUIRE(CxaPitchMessage::parse(std::string_view(
       spin.m_messages[1].get_data(),
       spin.m_messages[1].get_size())).m_type == CxaPitchTradingStatus::TYPE);
@@ -132,5 +138,33 @@ TEST_SUITE("CxaPitchSpinClient") {
     session.m_messages->push(encode_finished(310175));
     auto spin = client.request(310175);
     REQUIRE(spin.m_messages.size() == 1);
+    REQUIRE(client.get_progress() == 1);
+  }
+
+  TEST_CASE("snapshot_progress") {
+    auto session = StubSession();
+    auto client = SpinClient(&session);
+    session.m_messages->push(encode_response(310175, 2, 'A'));
+    session.m_messages->push(encode_order(CxaPitchAddOrder::TYPE));
+    session.m_messages->push(encode_available(310176));
+    REQUIRE(client.get_offers()->pop() == 310176);
+    REQUIRE(client.get_progress() == 1);
+    session.m_messages->push(encode_available(310177));
+    REQUIRE(client.get_offers()->pop() == 310177);
+    REQUIRE(client.get_progress() == 1);
+    session.m_messages->push(encode_order(CxaPitchAddOrder::TYPE));
+    session.m_messages->push(encode_finished(310175));
+    REQUIRE(client.request(310175).m_messages.size() == 2);
+    REQUIRE(client.get_progress() == 2);
+  }
+
+  TEST_CASE("malformed_snapshot_message") {
+    auto session = StubSession();
+    auto client = SpinClient(&session);
+    session.m_messages->push(encode_response(310175, 1, 'A'));
+    session.m_messages->push(SharedBuffer("\x02\x37", 2));
+    flush_pending_routines();
+    REQUIRE_THROWS_AS(client.request(310175), CxaPitchParserException);
+    REQUIRE(client.get_progress() == 0);
   }
 }
