@@ -2,6 +2,7 @@
 #include <cstdint>
 #include <iostream>
 #include <memory>
+#include <set>
 #include <stdexcept>
 #include <vector>
 #include <Beam/IO/IOException.hpp>
@@ -146,12 +147,21 @@ int main(int argc, const char** argv) {
     auto sequencer = Sync<CxaPitchSequencer>(
       static_cast<int>(clients.size()), feed_configuration.m_liveness);
     auto routines = RoutineHandlerGroup();
+    auto reported_gap = std::uint32_t(0);
     for(auto i = std::size_t(0); i != clients.size(); ++i) {
       routines.spawn([&, i] {
+        auto units = std::set<std::uint8_t>();
         while(true) {
           try {
             auto block = clients[i]->read();
-            if(block.get_header().m_unit != feed_configuration.m_unit) {
+            auto& header = block.get_header();
+            if(feed_configuration.m_is_logging_messages &&
+                units.insert(header.m_unit).second) {
+              std::cout << feed_configuration.m_feeds[i].m_name << ",feed," <<
+                static_cast<int>(header.m_unit) << ',' << header.m_sequence <<
+                std::endl;
+            }
+            if(header.m_unit != feed_configuration.m_unit) {
               continue;
             }
             with(sequencer, [&] (auto& sequencer) {
@@ -160,6 +170,14 @@ int main(int argc, const char** argv) {
               while(auto message = sequencer.read()) {
                 if(feed_configuration.m_is_logging_messages) {
                   log(*message);
+                }
+              }
+              auto gap = sequencer.get_gap();
+              if(gap && gap->m_sequence != reported_gap) {
+                reported_gap = gap->m_sequence;
+                if(feed_configuration.m_is_logging_messages) {
+                  std::cout << ",gap," << gap->m_sequence << ',' <<
+                    gap->m_count << std::endl;
                 }
               }
             });

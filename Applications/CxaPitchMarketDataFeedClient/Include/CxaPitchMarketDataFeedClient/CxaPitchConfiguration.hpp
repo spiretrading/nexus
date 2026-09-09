@@ -32,11 +32,9 @@ namespace Nexus {
     /**
      * Parses a CxaPitchFeed.
      * @param config The configuration to parse.
-     * @param interface The interface to receive the feed on by default.
      * @return The CxaPitchFeed represented by the <i>config</i>.
      */
-    static CxaPitchFeed parse(
-      const YAML::Node& config, const Beam::IpAddress& interface);
+    static CxaPitchFeed parse(const YAML::Node& config);
   };
 
   /** Stores the credentials used to connect to a CXA PITCH server. */
@@ -103,15 +101,13 @@ namespace Nexus {
     static CxaPitchConfiguration parse(const YAML::Node& config);
   };
 
-  inline CxaPitchFeed CxaPitchFeed::parse(
-      const YAML::Node& config, const Beam::IpAddress& interface) {
+  inline CxaPitchFeed CxaPitchFeed::parse(const YAML::Node& config) {
     auto feed = CxaPitchFeed();
     feed.m_name = Beam::extract<std::string>(config, "name");
     feed.m_address = Beam::extract<Beam::IpAddress>(config, "address");
     feed.m_gap_address = Beam::extract<Beam::IpAddress>(
       config, "gap_address", Beam::IpAddress());
-    feed.m_interface =
-      Beam::extract<Beam::IpAddress>(config, "interface", interface);
+    feed.m_interface = Beam::extract<Beam::IpAddress>(config, "interface");
     return feed;
   }
 
@@ -149,9 +145,8 @@ namespace Nexus {
       configuration.m_disseminating_venue = disseminating_venue.m_venue;
       configuration.m_mpid = Beam::extract<std::string>(
         config, "mpid", disseminating_venue.m_display_name);
-      auto interface = Beam::extract<Beam::IpAddress>(config, "interface");
       for(auto feed : Beam::get_node(config, "feeds")) {
-        configuration.m_feeds.push_back(CxaPitchFeed::parse(feed, interface));
+        configuration.m_feeds.push_back(CxaPitchFeed::parse(feed));
       }
       if(configuration.m_feeds.empty()) {
         throw std::runtime_error("No feeds specified.");

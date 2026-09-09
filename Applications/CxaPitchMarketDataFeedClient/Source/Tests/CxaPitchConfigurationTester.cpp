@@ -18,15 +18,15 @@ disseminating_venue: CXA
 mpid: XCXA
 enable_logging: true
 liveness: 5s
-interface: "10.0.0.1"
 feeds:
   - name: A
     address: "233.218.133.80:30501"
     gap_address: "233.218.133.81:30501"
+    interface: "10.0.0.1:30501"
   - name: B
     address: "233.218.133.96:30501"
     gap_address: "233.218.133.97:30501"
-    interface: "10.0.0.2"
+    interface: "10.0.0.2:30501"
 retransmission:
   address: "10.1.0.1:30601"
   session_sub_id: "0001"
@@ -52,6 +52,7 @@ spin:
     REQUIRE(config.m_feeds[0].m_address.get_port() == 30501);
     REQUIRE(config.m_feeds[0].m_gap_address.get_host() == "233.218.133.81");
     REQUIRE(config.m_feeds[0].m_interface.get_host() == "10.0.0.1");
+    REQUIRE(config.m_feeds[0].m_interface.get_port() == 30501);
     REQUIRE(config.m_feeds[1].m_name == "B");
     REQUIRE(config.m_feeds[1].m_address.get_host() == "233.218.133.96");
     REQUIRE(config.m_feeds[1].m_interface.get_host() == "10.0.0.2");
@@ -70,10 +71,10 @@ spin:
 unit: 2
 venue: ASX
 disseminating_venue: CXA
-interface: "10.0.0.1"
 feeds:
   - name: A
     address: "233.218.133.82:30502"
+    interface: "10.0.0.1:30502"
 )");
     auto config = CxaPitchConfiguration::parse(YAML::Load(source));
     REQUIRE(!config.m_is_logging_messages);
@@ -92,7 +93,6 @@ feeds:
 unit: 1
 venue: ASX
 disseminating_venue: CXA
-interface: "10.0.0.1"
 feeds: []
 )");
     REQUIRE_THROWS_AS(
@@ -103,10 +103,10 @@ feeds: []
     auto source = std::string(R"(
 venue: ASX
 disseminating_venue: CXA
-interface: "10.0.0.1"
 feeds:
   - name: A
     address: "233.218.133.80:30501"
+    interface: "10.0.0.1:30501"
 )");
     REQUIRE_THROWS_AS(
       CxaPitchConfiguration::parse(YAML::Load(source)), std::runtime_error);
@@ -117,10 +117,10 @@ feeds:
 unit: 1
 venue: NOPE
 disseminating_venue: CXA
-interface: "10.0.0.1"
 feeds:
   - name: A
     address: "233.218.133.80:30501"
+    interface: "10.0.0.1:30501"
 )");
     REQUIRE_THROWS_AS(
       CxaPitchConfiguration::parse(YAML::Load(source)), std::runtime_error);

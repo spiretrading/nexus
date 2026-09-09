@@ -10,8 +10,8 @@ venue: CXA
 disseminating_venue: CXA
 mpid: CXA
 liveness: 3s
-interface: "$local_interface:6002"
 feeds:
   - name: PRIMARY
     address: "233.218.133.2:6002"
+    interface: "$local_interface:6002"
 ...
