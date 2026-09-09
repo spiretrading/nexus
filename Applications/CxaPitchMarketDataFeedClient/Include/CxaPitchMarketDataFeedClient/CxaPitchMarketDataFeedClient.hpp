@@ -326,16 +326,21 @@ namespace Nexus {
       IsCxaPitchClient<Beam::dereference_t<C>>
   void CxaPitchMarketDataFeedClient<M, C>::read_loop() {
     while(true) {
+      auto message = CxaPitchMessage();
       try {
-        auto message = m_client->read();
+        message = m_client->read();
+      } catch(const std::exception&) {
+        break;
+      }
+      try {
         if(m_config.m_is_logging_messages) {
           visit(message, [] (const auto& message) {
             std::cout << message << std::endl;
           });
         }
         dispatch(message);
-      } catch(const std::exception&) {
-        break;
+      } catch(const std::exception& e) {
+        std::cout << "(bad_message " << e.what() << ')' << std::endl;
       }
     }
   }

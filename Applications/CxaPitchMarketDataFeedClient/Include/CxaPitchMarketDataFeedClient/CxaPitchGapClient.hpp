@@ -31,6 +31,8 @@ namespace Nexus {
         std::declval<const CxaPitchGap&>(), std::declval<std::uint32_t>(),
         std::declval<boost::posix_time::ptime>()) } ->
           std::same_as<std::uint32_t>;
+    { t.is_recoverable(std::declval<const CxaPitchGap&>(),
+        std::declval<std::uint32_t>()) } -> std::same_as<bool>;
     { t.get_responses() } -> std::convertible_to<
       const std::shared_ptr<Beam::Queue<CxaPitchGapResponse>>&>;
     { t.close() } -> std::same_as<void>;
@@ -91,6 +93,13 @@ namespace Nexus {
        */
       std::uint32_t request(std::uint8_t unit, const CxaPitchGap& gap,
         std::uint32_t live, boost::posix_time::ptime timestamp);
+
+      /**
+       * Returns whether the proxy is able to retransmit a range of messages.
+       * @param gap The range of missing messages.
+       * @param live The most recent sequence received from the feeds.
+       */
+      bool is_recoverable(const CxaPitchGap& gap, std::uint32_t live) const;
 
       /** Returns the queue of responses sent by the gap request proxy. */
       const std::shared_ptr<Beam::Queue<CxaPitchGapResponse>>&
@@ -162,7 +171,7 @@ namespace Nexus {
       boost::posix_time::ptime timestamp) {
     auto lock = boost::lock_guard(m_mutex);
     renew(timestamp);
-    if(live > gap.m_sequence && live - gap.m_sequence > MAXIMUM_RANGE) {
+    if(!is_recoverable(gap, live)) {
       return 0;
     }
     auto requested = std::uint32_t(0);
@@ -189,6 +198,14 @@ namespace Nexus {
       requested += count;
     }
     return requested;
+  }
+
+  template<typename S, typename T> requires
+    IsCxaPitchSessionClient<Beam::dereference_t<S>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  bool CxaPitchGapClient<S, T>::is_recoverable(
+      const CxaPitchGap& gap, std::uint32_t live) const {
+    return live <= gap.m_sequence || live - gap.m_sequence <= MAXIMUM_RANGE;
   }
 
   template<typename S, typename T> requires

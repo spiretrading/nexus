@@ -259,9 +259,22 @@ namespace Nexus {
             m_reported_gap = gap->m_sequence;
             m_requested = gap->m_sequence;
             m_gap_timestamp = timestamp;
-          } else if(timestamp - m_gap_timestamp > m_gap_timeout) {
+          }
+          auto reason = [&] () -> std::string_view {
+            if(!m_gap) {
+              if(timestamp - m_gap_timestamp > m_gap_timeout) {
+                return "disabled";
+              }
+            } else if(!(*m_gap)->is_recoverable(*gap, m_live)) {
+              return "unrecoverable";
+            } else if(timestamp - m_gap_timestamp > m_gap_timeout) {
+              return "timeout";
+            }
+            return {};
+          }();
+          if(!reason.empty()) {
             std::cout << "(dropped " << timestamp << ' ' << gap->m_sequence <<
-              ' ' << gap->m_count << ')' << std::endl;
+              ' ' << gap->m_count << ' ' << reason << ')' << std::endl;
             sequencer.reset(gap->m_sequence + gap->m_count);
             m_reported_gap = 0;
             flush(sequencer);
@@ -339,8 +352,8 @@ namespace Nexus {
             return;
           }
           std::cout << "(dropped " << m_time_client->get_time() << ' ' <<
-            response.m_sequence << ' ' << response.m_count << ')' <<
-            std::endl;
+            response.m_sequence << ' ' << response.m_count << " rejected " <<
+            response.m_status << ')' << std::endl;
           sequencer.reset(response.m_sequence + response.m_count);
           m_reported_gap = 0;
           flush(sequencer);
