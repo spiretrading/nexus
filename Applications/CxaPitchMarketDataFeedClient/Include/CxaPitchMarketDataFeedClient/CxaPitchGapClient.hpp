@@ -6,7 +6,6 @@
 #include <exception>
 #include <functional>
 #include <memory>
-#include <type_traits>
 #include <utility>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -14,7 +13,11 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
+#include <Beam/Threading/Mutex.hpp>
+#include <Beam/TimeService/Timer.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <boost/optional/optional.hpp>
+#include <boost/thread/lock_guard.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchSequencer.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionMessages.hpp"
@@ -35,15 +38,22 @@ namespace Nexus {
 
   /**
    * Requests the retransmission of missing messages from a CXA PITCH gap
-   * request proxy, within the limits that the proxy imposes.
+   * request proxy, within the limits that the proxy imposes, reconnecting
+   * whenever the session to the proxy is lost.
    * @param <S> The type of session connected to the gap request proxy.
+   * @param <T> The type of Timer measuring the delay between connections.
    */
-  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
+  template<typename S, typename T> requires
+    IsCxaPitchSessionClient<Beam::dereference_t<S>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
   class CxaPitchGapClient {
     public:
 
       /** The type of session connected to the gap request proxy. */
       using Session = Beam::dereference_t<S>;
+
+      /** The type of timer measuring the delay between connections. */
+      using Timer = Beam::dereference_t<T>;
 
       /** The most messages that a single request may ask for. */
       static constexpr auto MAXIMUM_COUNT = std::uint32_t(100);
@@ -62,10 +72,12 @@ namespace Nexus {
 
       /**
        * Constructs a CxaPitchGapClient.
-       * @param session The session connected to the gap request proxy.
+       * @param connection_builder The function used to connect a session to the
+       *        gap request proxy.
+       * @param timer The timer measuring the delay between connections.
        */
-      template<Beam::Initializes<S> SF>
-      explicit CxaPitchGapClient(SF&& session);
+      template<Beam::Initializes<T> TF>
+      CxaPitchGapClient(std::function<S ()> connection_builder, TF&& timer);
 
       ~CxaPitchGapClient();
 
@@ -88,8 +100,13 @@ namespace Nexus {
       void close();
 
     private:
-      Beam::local_ptr_t<S> m_session;
+      mutable Beam::Mutex m_mutex;
+      std::function<S ()> m_connection_builder;
+      boost::optional<Beam::local_ptr_t<S>> m_session;
+      Beam::local_ptr_t<T> m_timer;
+      bool m_is_connected;
       std::shared_ptr<Beam::Queue<CxaPitchGapResponse>> m_responses;
+      std::shared_ptr<Beam::Queue<Beam::Timer::Result>> m_timer_queue;
       boost::posix_time::ptime m_second;
       boost::posix_time::ptime m_minute;
       boost::gregorian::date m_day;
@@ -102,20 +119,27 @@ namespace Nexus {
       CxaPitchGapClient(const CxaPitchGapClient&) = delete;
       CxaPitchGapClient& operator =(const CxaPitchGapClient&) = delete;
       void renew(boost::posix_time::ptime timestamp);
+      bool reconnect();
       void read_loop();
   };
 
-  template<typename SF>
-  CxaPitchGapClient(SF&&) -> CxaPitchGapClient<std::remove_cvref_t<SF>>;
-
-  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
-  template<Beam::Initializes<S> SF>
-  CxaPitchGapClient<S>::CxaPitchGapClient(SF&& session)
-      try : m_session(std::forward<SF>(session)),
+  template<typename S, typename T> requires
+    IsCxaPitchSessionClient<Beam::dereference_t<S>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  template<Beam::Initializes<T> TF>
+  CxaPitchGapClient<S, T>::CxaPitchGapClient(
+      std::function<S ()> connection_builder, TF&& timer)
+      try : m_connection_builder(std::move(connection_builder)),
+            m_session(m_connection_builder()),
+            m_timer(std::forward<TF>(timer)),
+            m_is_connected(true),
             m_responses(std::make_shared<Beam::Queue<CxaPitchGapResponse>>()),
+            m_timer_queue(
+              std::make_shared<Beam::Queue<Beam::Timer::Result>>()),
             m_second_count(0),
             m_minute_count(0),
             m_day_count(0) {
+    m_timer->get_publisher().monitor(m_timer_queue);
     m_read_loop =
       Beam::spawn(std::bind_front(&CxaPitchGapClient::read_loop, this));
   } catch(const std::exception&) {
@@ -123,23 +147,28 @@ namespace Nexus {
       "Failed to initialize the CXA PITCH gap client."));
   }
 
-  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
-  CxaPitchGapClient<S>::~CxaPitchGapClient() {
+  template<typename S, typename T> requires
+    IsCxaPitchSessionClient<Beam::dereference_t<S>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  CxaPitchGapClient<S, T>::~CxaPitchGapClient() {
     close();
   }
 
-  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
-  std::uint32_t CxaPitchGapClient<S>::request(std::uint8_t unit,
+  template<typename S, typename T> requires
+    IsCxaPitchSessionClient<Beam::dereference_t<S>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  std::uint32_t CxaPitchGapClient<S, T>::request(std::uint8_t unit,
       const CxaPitchGap& gap, std::uint32_t live,
       boost::posix_time::ptime timestamp) {
+    auto lock = boost::lock_guard(m_mutex);
     renew(timestamp);
     if(live > gap.m_sequence && live - gap.m_sequence > MAXIMUM_RANGE) {
       return 0;
     }
     auto requested = std::uint32_t(0);
     while(requested != gap.m_count) {
-      if(m_second_count == SECOND_LIMIT || m_minute_count == MINUTE_LIMIT ||
-          m_day_count == DAY_LIMIT) {
+      if(!m_is_connected || m_second_count == SECOND_LIMIT ||
+          m_minute_count == MINUTE_LIMIT || m_day_count == DAY_LIMIT) {
         break;
       }
       auto count = std::min(gap.m_count - requested, MAXIMUM_COUNT);
@@ -147,7 +176,13 @@ namespace Nexus {
       message.m_unit = unit;
       message.m_sequence = gap.m_sequence + requested;
       message.m_count = static_cast<std::uint16_t>(count);
-      m_session->write(message);
+      try {
+        (*m_session)->write(message);
+      } catch(const std::exception&) {
+        m_is_connected = false;
+        (*m_session)->close();
+        break;
+      }
       ++m_second_count;
       ++m_minute_count;
       ++m_day_count;
@@ -156,25 +191,37 @@ namespace Nexus {
     return requested;
   }
 
-  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
+  template<typename S, typename T> requires
+    IsCxaPitchSessionClient<Beam::dereference_t<S>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
   const std::shared_ptr<Beam::Queue<CxaPitchGapResponse>>&
-      CxaPitchGapClient<S>::get_responses() const {
+      CxaPitchGapClient<S, T>::get_responses() const {
     return m_responses;
   }
 
-  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
-  void CxaPitchGapClient<S>::close() {
+  template<typename S, typename T> requires
+    IsCxaPitchSessionClient<Beam::dereference_t<S>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void CxaPitchGapClient<S, T>::close() {
     if(m_open_state.set_closing()) {
       return;
     }
-    m_session->close();
-    m_responses->close();
+    m_timer->cancel();
+    m_timer_queue->close();
+    {
+      auto lock = boost::lock_guard(m_mutex);
+      m_is_connected = false;
+      (*m_session)->close();
+    }
     m_read_loop.wait();
+    m_responses->close();
     m_open_state.close();
   }
 
-  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
-  void CxaPitchGapClient<S>::renew(boost::posix_time::ptime timestamp) {
+  template<typename S, typename T> requires
+    IsCxaPitchSessionClient<Beam::dereference_t<S>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void CxaPitchGapClient<S, T>::renew(boost::posix_time::ptime timestamp) {
     auto time = timestamp.time_of_day();
     auto second = boost::posix_time::ptime(
       timestamp.date(), boost::posix_time::seconds(time.total_seconds()));
@@ -194,17 +241,57 @@ namespace Nexus {
     }
   }
 
-  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
-  void CxaPitchGapClient<S>::read_loop() {
-    try {
-      while(true) {
-        auto message = m_session->read();
-        if(message.m_type == CxaPitchGapResponse::TYPE) {
-          m_responses->push(CxaPitchGapResponse::parse(message));
+  template<typename S, typename T> requires
+    IsCxaPitchSessionClient<Beam::dereference_t<S>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  bool CxaPitchGapClient<S, T>::reconnect() {
+    while(m_open_state.is_open()) {
+      m_timer->start();
+      try {
+        if(m_timer_queue->pop() != Beam::Timer::Result::EXPIRED) {
+          return false;
         }
+      } catch(const std::exception&) {
+        return false;
       }
-    } catch(const std::exception&) {
-      m_responses->close(std::current_exception());
+      if(!m_open_state.is_open()) {
+        return false;
+      }
+      try {
+        auto session = m_connection_builder();
+        auto lock = boost::lock_guard(m_mutex);
+        m_session.emplace(std::move(session));
+        m_is_connected = true;
+        return true;
+      } catch(const std::exception&) {}
+    }
+    return false;
+  }
+
+  template<typename S, typename T> requires
+    IsCxaPitchSessionClient<Beam::dereference_t<S>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void CxaPitchGapClient<S, T>::read_loop() {
+    while(true) {
+      auto session = [&] {
+        auto lock = boost::lock_guard(m_mutex);
+        return &**m_session;
+      }();
+      try {
+        while(true) {
+          auto message = session->read();
+          if(message.m_type == CxaPitchGapResponse::TYPE) {
+            m_responses->push(CxaPitchGapResponse::parse(message));
+          }
+        }
+      } catch(const std::exception&) {}
+      {
+        auto lock = boost::lock_guard(m_mutex);
+        m_is_connected = false;
+      }
+      if(!m_open_state.is_open() || !reconnect()) {
+        break;
+      }
     }
   }
 }

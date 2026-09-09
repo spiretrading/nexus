@@ -45,7 +45,7 @@ namespace {
   using ApplicationSessionClient =
     CxaPitchSessionClient<TcpSocketChannel, LiveTimer>;
   using ApplicationGapClient =
-    CxaPitchGapClient<std::unique_ptr<ApplicationSessionClient>>;
+    CxaPitchGapClient<std::unique_ptr<ApplicationSessionClient>, LiveTimer>;
   using ApplicationSpinClient =
     CxaPitchSpinClient<std::unique_ptr<ApplicationSessionClient>>;
   using ApplicationCxaPitchClient =
@@ -88,7 +88,8 @@ int main(int argc, const char** argv) {
     options.m_max_datagram_size =
       extract<int>(config, "mtu", options.m_max_datagram_size);
     static const auto HEARTBEAT = seconds(1);
-    auto make_session = [&] (const CxaPitchSession& session) {
+    static const auto RECONNECT = seconds(10);
+    auto make_session = [] (const CxaPitchSession& session) {
       auto login = CxaPitchLogin();
       login.m_session_sub_id = session.m_session_sub_id;
       login.m_username = session.m_username;
@@ -99,8 +100,9 @@ int main(int argc, const char** argv) {
     auto gap_client = optional<std::unique_ptr<ApplicationGapClient>>();
     if(feed_configuration.m_retransmission) {
       try {
+        auto session = *feed_configuration.m_retransmission;
         gap_client = std::make_unique<ApplicationGapClient>(
-          make_session(*feed_configuration.m_retransmission));
+          [=] { return make_session(session); }, init(RECONNECT));
         std::cout << ",retransmission,connected" << std::endl;
       } catch(const std::exception&) {
         std::cout << ",retransmission,error" << std::endl;

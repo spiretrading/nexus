@@ -275,7 +275,13 @@ namespace Nexus {
           }
         });
         if(pending && m_gap) {
-          auto count = (*m_gap)->request(m_unit, *pending, position, timestamp);
+          auto count = [&] {
+            try {
+              return (*m_gap)->request(m_unit, *pending, position, timestamp);
+            } catch(const std::exception&) {
+              return std::uint32_t(0);
+            }
+          }();
           if(count != pending->m_count) {
             Beam::with(m_sequencer, [&] (auto&) {
               if(m_requested == pending->m_sequence + pending->m_count) {
