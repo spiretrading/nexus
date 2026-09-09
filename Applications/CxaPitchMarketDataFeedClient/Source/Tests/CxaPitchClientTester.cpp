@@ -193,21 +193,17 @@ TEST_SUITE("CxaPitchClient") {
   TEST_CASE("skip_a_gap_that_stays_unfilled") {
     auto first = StubProtocolClient();
     auto second = StubProtocolClient();
+    auto gap_client = StubGapClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto client = Client(1, seconds(3), seconds(5),
       std::vector<StubProtocolClient*>({&first, &second}),
-      std::vector<StubProtocolClient*>(), none, none, &time_client);
+      std::vector<StubProtocolClient*>(), &gap_client, none, &time_client);
     first.m_blocks->push(encode_block(1, {0x11}));
     second.m_blocks->push(encode_block(1, {0x11}));
     REQUIRE(client.read().m_type == 0x11);
     first.m_blocks->push(encode_block(4, {0x14}));
     second.m_blocks->push(encode_block(4, {0x14}));
-    first.m_blocks->push(encode_block(6, {}));
-    second.m_blocks->push(encode_block(6, {}));
-    first.m_reads->pop();
-    first.m_reads->pop();
-    second.m_reads->pop();
-    second.m_reads->pop();
+    REQUIRE(gap_client.m_requests->pop().m_sequence == 2);
     time_client.set(TIMESTAMP + seconds(6));
     first.m_blocks->push(encode_block(5, {0x15}));
     REQUIRE(client.read().m_type == 0x14);

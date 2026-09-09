@@ -67,78 +67,9 @@ namespace {
   }
 
   void log(const CxaPitchMessage& message) {
-    if(message.m_type == CxaPitchAddOrder::TYPE) {
-      auto add_order = CxaPitchAddOrder::parse(message);
-      std::cout << add_order.m_timestamp << ",add_order," <<
-        add_order.m_order_id << ',' << add_order.m_side << ',' <<
-        add_order.m_quantity << ',' << add_order.m_symbol << ',' <<
-        add_order.m_price << ',' << add_order.m_pid << std::endl;
-    } else if(message.m_type == CxaPitchOrderExecuted::TYPE) {
-      auto executed = CxaPitchOrderExecuted::parse(message);
-      std::cout << executed.m_timestamp << ",order_executed," <<
-        executed.m_order_id << ',' << executed.m_executed_quantity << ',' <<
-        executed.m_execution_id << ',' << executed.m_contra_order_id << ',' <<
-        executed.m_contra_pid << std::endl;
-    } else if(message.m_type == CxaPitchOrderExecutedAtPrice::TYPE) {
-      auto executed = CxaPitchOrderExecutedAtPrice::parse(message);
-      std::cout << executed.m_timestamp << ",order_executed_at_price," <<
-        executed.m_order_id << ',' << executed.m_executed_quantity << ',' <<
-        executed.m_execution_id << ',' << executed.m_contra_order_id << ',' <<
-        executed.m_contra_pid << ',' << executed.m_execution_type << ',' <<
-        executed.m_price << std::endl;
-    } else if(message.m_type == CxaPitchReduceSize::TYPE) {
-      auto reduce_size = CxaPitchReduceSize::parse(message);
-      std::cout << reduce_size.m_timestamp << ",reduce_size," <<
-        reduce_size.m_order_id << ',' << reduce_size.m_cancelled_quantity <<
-        std::endl;
-    } else if(message.m_type == CxaPitchModifyOrder::TYPE) {
-      auto modify_order = CxaPitchModifyOrder::parse(message);
-      std::cout << modify_order.m_timestamp << ",modify_order," <<
-        modify_order.m_order_id << ',' << modify_order.m_quantity << ',' <<
-        modify_order.m_price << std::endl;
-    } else if(message.m_type == CxaPitchDeleteOrder::TYPE) {
-      auto delete_order = CxaPitchDeleteOrder::parse(message);
-      std::cout << delete_order.m_timestamp << ",delete_order," <<
-        delete_order.m_order_id << std::endl;
-    } else if(message.m_type == CxaPitchTrade::TYPE) {
-      auto trade = CxaPitchTrade::parse(message);
-      std::cout << trade.m_timestamp << ",trade," << trade.m_symbol << ',' <<
-        trade.m_quantity << ',' << trade.m_price << ',' <<
-        trade.m_execution_id << ',' << trade.m_order_id << ',' <<
-        trade.m_contra_order_id << ',' << trade.m_pid << ',' <<
-        trade.m_contra_pid << ',' << trade.m_trade_type << ',' <<
-        trade.m_trade_designation << ',' << trade.m_trade_report_type <<
-        std::endl;
-    } else if(message.m_type == CxaPitchTradeBreak::TYPE) {
-      auto trade_break = CxaPitchTradeBreak::parse(message);
-      std::cout << trade_break.m_timestamp << ",trade_break," <<
-        trade_break.m_execution_id << std::endl;
-    } else if(message.m_type == CxaPitchTradingStatus::TYPE) {
-      auto status = CxaPitchTradingStatus::parse(message);
-      std::cout << status.m_timestamp << ",trading_status," <<
-        status.m_symbol << ',' << status.m_status << ',' <<
-        status.m_market_id_code << std::endl;
-    } else if(message.m_type == CxaPitchCalculatedValue::TYPE) {
-      auto value = CxaPitchCalculatedValue::parse(message);
-      std::cout << value.m_timestamp << ",calculated_value," <<
-        value.m_symbol << ',' << value.m_category << ',' << value.m_value <<
-        ',' << value.m_value_timestamp << std::endl;
-    } else if(message.m_type == CxaPitchAuctionUpdate::TYPE) {
-      auto update = CxaPitchAuctionUpdate::parse(message);
-      std::cout << update.m_timestamp << ",auction_update," <<
-        update.m_symbol << ',' << update.m_auction_type << ',' <<
-        update.m_buy_shares << ',' << update.m_sell_shares << ',' <<
-        update.m_indicative_price << std::endl;
-    } else if(message.m_type == CxaPitchAuctionSummary::TYPE) {
-      auto summary = CxaPitchAuctionSummary::parse(message);
-      std::cout << summary.m_timestamp << ",auction_summary," <<
-        summary.m_symbol << ',' << summary.m_auction_type << ',' <<
-        summary.m_price << ',' << summary.m_shares << std::endl;
-    } else if(message.m_type == CxaPitchUnitClear::TYPE) {
-      std::cout << ",unit_clear" << std::endl;
-    } else if(message.m_type == CxaPitchEndOfSession::TYPE) {
-      std::cout << ",end_of_session" << std::endl;
-    }
+    visit(message, [] (const auto& message) {
+      std::cout << message << std::endl;
+    });
   }
 }
 
