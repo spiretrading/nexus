@@ -15,4 +15,8 @@ feeds:
     address: "233.218.133.80:30501"
     gap_address: "233.218.133.81:30501"
     interface: "$local_interface:30501"
+  - name: B
+    address: "233.218.133.96:30501"
+    gap_address: "233.218.133.97:30501"
+    interface: "$local_interface:30501"
 ...
