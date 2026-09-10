@@ -19,12 +19,16 @@ TEST_SUITE("CxaPitchMessages") {
   static const auto PRICE = parse_money("12.3456789");
   static const auto TIME_TEXT = to_string(TIMESTAMP);
   static const auto PRICE_TEXT = to_string(PRICE);
+  static const auto SIDE_POSITION = std::size_t(18);
 
   TEST_CASE("validate_message_length") {
     auto validate_length = [] (const auto& type, const auto& length) {
       auto message = std::string(length, char(0));
       message[0] = static_cast<char>(length);
       message[1] = static_cast<char>(type);
+      if(type == CxaPitchAddOrder::TYPE) {
+        message[SIDE_POSITION] = 'B';
+      }
       REQUIRE_NOTHROW(validate(CxaPitchMessage::parse(message)));
       message.push_back(char(0));
       message[0] = static_cast<char>(message.size());
@@ -137,7 +141,7 @@ TEST_SUITE("CxaPitchMessages") {
       "1234"
       "\x00", 42);
     auto message = CxaPitchMessage::parse(source);
-    REQUIRE_NOTHROW(validate(message));
+    REQUIRE_THROWS_AS(validate(message), CxaPitchParserException);
     REQUIRE_THROWS_AS(
       CxaPitchAddOrder::parse(message), CxaPitchParserException);
   }

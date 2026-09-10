@@ -64,7 +64,7 @@ namespace Nexus {
       /** The type of timer used to schedule heartbeats. */
       using Timer = Beam::dereference_t<T>;
 
-      /** The number of consecutive silent heartbeat periods to tolerate. */
+      /** The number of heartbeat periods to tolerate without progress. */
       static constexpr auto SILENT_HEARTBEAT_LIMIT = 10;
 
       /**
@@ -111,9 +111,12 @@ namespace Nexus {
       std::size_t m_end;
       std::uint8_t m_remaining;
       std::atomic_bool m_is_receiving;
+      std::atomic_bool m_is_logged_in;
       Beam::SharedBuffer m_write_buffer;
+      Beam::RoutineHandler m_timeout_loop;
       Beam::RoutineHandler m_heartbeat_loop;
       std::shared_ptr<Beam::Queue<Beam::Timer::Result>> m_timer_queue;
+      std::shared_ptr<Beam::Queue<Beam::Timer::Result>> m_heartbeat_queue;
       Beam::OpenState m_open_state;
 
       CxaPitchSessionClient(const CxaPitchSessionClient&) = delete;
@@ -123,6 +126,7 @@ namespace Nexus {
       void fill(std::size_t size);
       void write_header(std::uint8_t count, std::uint16_t length);
       void write_heartbeat();
+      void timeout_loop();
       void heartbeat_loop();
   };
 
@@ -155,10 +159,13 @@ namespace Nexus {
             m_end(0),
             m_remaining(0),
             m_is_receiving(false),
-            m_timer_queue(
+            m_is_logged_in(false),
+            m_timer_queue(std::make_shared<Beam::Queue<Beam::Timer::Result>>()),
+            m_heartbeat_queue(
               std::make_shared<Beam::Queue<Beam::Timer::Result>>()) {
     try {
       m_timer->get_publisher().monitor(m_timer_queue);
+      m_timer->get_publisher().monitor(m_heartbeat_queue);
       {
         auto cancellation = std::stop_callback(stop_token, [&] {
           m_channel->get_connection().close();
@@ -197,6 +204,8 @@ namespace Nexus {
             "Sequenced unit header length out of range."));
         }
         fill(header.m_length);
+        CxaPitchBlock::parse(
+          std::string_view(m_buffer.get_data() + m_position, header.m_length));
         m_end = m_position + header.m_length;
         m_position += CxaPitchHeader::LENGTH;
         m_remaining = header.m_count;
@@ -205,10 +214,6 @@ namespace Nexus {
         m_buffer.get_data() + m_position, m_end - m_position));
       m_position += message.m_length;
       --m_remaining;
-      if(m_remaining == 0 && m_position != m_end) {
-        boost::throw_with_location(
-          CxaPitchParserException("PITCH block message count mismatch."));
-      }
       return message;
     }, Beam::IOException("Failed to read from the CXA PITCH server."));
   }
@@ -237,6 +242,8 @@ namespace Nexus {
     m_channel->get_connection().close();
     m_timer->cancel();
     m_timer_queue->close();
+    m_heartbeat_queue->close();
+    m_timeout_loop.wait();
     m_heartbeat_loop.wait();
     m_open_state.close();
   }
@@ -245,8 +252,10 @@ namespace Nexus {
     Beam::IsChannel<Beam::dereference_t<C>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
   void CxaPitchSessionClient<C, T>::log_in(const CxaPitchLogin& login) {
-    write(login);
     m_timer->start();
+    m_timeout_loop =
+      Beam::spawn(std::bind_front(&CxaPitchSessionClient::timeout_loop, this));
+    write(login);
     m_heartbeat_loop = Beam::spawn(
       std::bind_front(&CxaPitchSessionClient::heartbeat_loop, this));
     auto response = read();
@@ -260,6 +269,7 @@ namespace Nexus {
         "The CXA PITCH server rejected the login with status " +
           std::string(1, status) + "."));
     }
+    m_is_logged_in = true;
   }
 
   template<typename C, typename T> requires
@@ -319,21 +329,36 @@ namespace Nexus {
   template<typename C, typename T> requires
     Beam::IsChannel<Beam::dereference_t<C>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  void CxaPitchSessionClient<C, T>::heartbeat_loop() {
+  void CxaPitchSessionClient<C, T>::timeout_loop() {
     auto silence = 0;
     try {
       while(m_open_state.is_open()) {
         if(m_timer_queue->pop() != Beam::Timer::Result::EXPIRED) {
           break;
         }
-        if(m_is_receiving.exchange(false)) {
+        if(m_is_logged_in.load() && m_is_receiving.exchange(false)) {
           silence = 0;
         } else if(++silence == SILENT_HEARTBEAT_LIMIT) {
           m_channel->get_connection().close();
           break;
         }
-        write_heartbeat();
         m_timer->start();
+      }
+    } catch(const std::exception&) {
+      return;
+    }
+  }
+
+  template<typename C, typename T> requires
+    Beam::IsChannel<Beam::dereference_t<C>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void CxaPitchSessionClient<C, T>::heartbeat_loop() {
+    try {
+      while(m_open_state.is_open()) {
+        if(m_heartbeat_queue->pop() != Beam::Timer::Result::EXPIRED) {
+          break;
+        }
+        write_heartbeat();
       }
     } catch(const std::exception&) {
       return;

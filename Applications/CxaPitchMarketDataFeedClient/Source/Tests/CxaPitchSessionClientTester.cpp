@@ -9,6 +9,8 @@
 #include <Beam/IO/IOException.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
+#include <Beam/IO/WrapperChannel.hpp>
+#include <Beam/Queues/Queue.hpp>
 #include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -38,6 +40,18 @@ namespace {
     block += messages;
     return SharedBuffer(block.data(), block.size());
   }
+
+  struct GatedWriter {
+    LocalClientChannel::Writer* m_writer;
+    std::shared_ptr<Queue<int>> m_gate;
+    std::shared_ptr<Queue<int>> m_writes;
+
+    void write(BufferCRef buffer) {
+      m_writes->push(0);
+      m_gate->pop();
+      m_writer->write(buffer);
+    }
+  };
 
   std::string read_exactly(LocalServerChannel& channel, std::size_t size) {
     auto buffer = SharedBuffer();
@@ -156,6 +170,32 @@ TEST_SUITE("CxaPitchSessionClient") {
     server_channel->get_connection().close();
   }
 
+  TEST_CASE("timeout_blocked_write") {
+    auto server = LocalServerConnection();
+    auto accepting = std::async(std::launch::async, [&] {
+      auto channel = server.accept();
+      read_exactly(*channel, LOGIN_SIZE);
+      auto response = std::string("\x03\x02", 2);
+      response += CxaPitchLoginResponse::ACCEPTED;
+      channel->get_writer().write(encode(response, 1));
+      return channel;
+    });
+    auto channel = LocalClientChannel("cxa", server);
+    auto gate = std::make_shared<Queue<int>>();
+    auto writes = std::make_shared<Queue<int>>();
+    gate->push(0);
+    auto wrapper = WrapperChannel<LocalClientChannel*, GatedWriter>(
+      &channel, GatedWriter(&channel.get_writer(), gate, writes));
+    auto timer = LiveTimer(milliseconds(1));
+    auto client = CxaPitchSessionClient(CxaPitchLogin(), &wrapper, &timer);
+    auto server_channel = accepting.get();
+    writes->pop();
+    writes->pop();
+    REQUIRE_THROWS_AS(client.read(), IOException);
+    gate->close();
+    server_channel->get_connection().close();
+  }
+
   TEST_CASE("read_message") {
     auto fixture = Fixture();
     fixture.m_server_channel->get_writer().write(encode(GAP_RESPONSE, 1));
@@ -196,10 +236,13 @@ TEST_SUITE("CxaPitchSessionClient") {
   }
 
   TEST_CASE("read_miscounted_block") {
-    auto fixture = Fixture();
-    auto messages = std::string(GAP_RESPONSE) + std::string("\x02\x04", 2);
-    fixture.m_server_channel->get_writer().write(encode(messages, 1));
-    REQUIRE_THROWS_AS(fixture.m_client->read(), IOException);
+    auto trailing = std::string(GAP_RESPONSE) + std::string("\x02\x04", 2);
+    for(auto& block : {encode(GAP_RESPONSE, 0), encode(GAP_RESPONSE, 2),
+        encode(trailing, 1)}) {
+      auto fixture = Fixture();
+      fixture.m_server_channel->get_writer().write(block);
+      REQUIRE_THROWS_AS(fixture.m_client->read(), IOException);
+    }
   }
 
   TEST_CASE("write_gap_request") {

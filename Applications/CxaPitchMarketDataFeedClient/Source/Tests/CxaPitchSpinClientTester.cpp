@@ -77,6 +77,7 @@ namespace {
   }
 
   SharedBuffer encode_order(std::uint8_t type) {
+    static const auto SIDE_POSITION = std::size_t(18);
     auto length = CxaPitchAddOrder::LENGTH;
     if(type == CxaPitchTradingStatus::TYPE) {
       length = CxaPitchTradingStatus::LENGTH;
@@ -84,6 +85,9 @@ namespace {
     auto message = std::string(length, char(0));
     message[0] = static_cast<char>(length);
     message[1] = static_cast<char>(type);
+    if(type == CxaPitchAddOrder::TYPE) {
+      message[SIDE_POSITION] = 'B';
+    }
     return SharedBuffer(message.data(), message.size());
   }
 }

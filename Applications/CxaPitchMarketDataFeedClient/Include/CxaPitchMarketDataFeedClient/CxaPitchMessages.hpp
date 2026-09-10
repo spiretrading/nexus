@@ -22,6 +22,7 @@ namespace Nexus {
 namespace Details {
   constexpr auto SYMBOL_LENGTH = 6;
   constexpr auto PID_LENGTH = 4;
+  constexpr auto ADD_ORDER_SIDE_OFFSET = 16;
 }
 
   /** Stores a unit clear message. */
@@ -465,9 +466,9 @@ namespace Details {
   };
 
   /**
-   * Validates the minimum length of a known PITCH message.
+   * Validates the length and fields of a known PITCH message.
    * @param message The message to validate.
-   * @throws CxaPitchParserException If the message is truncated.
+   * @throws CxaPitchParserException If the message is truncated or malformed.
    */
   inline void validate(const CxaPitchMessage& message) {
     auto length = [&] {
@@ -508,12 +509,21 @@ namespace Details {
       boost::throw_with_location(
         CxaPitchParserException("PITCH message too short for its type."));
     }
+    if(message.m_type == CxaPitchAddOrder::TYPE) {
+      auto cursor = message.get_cursor();
+      cursor.skip(Details::ADD_ORDER_SIDE_OFFSET);
+      if(cursor.read_side() == Side::NONE) {
+        boost::throw_with_location(
+          CxaPitchParserException("Add order side indicator out of range."));
+      }
+    }
   }
 
   /**
    * Validates the messages in a PITCH block.
    * @param block The block to validate.
-   * @throws CxaPitchParserException If a known message is truncated.
+   * @throws CxaPitchParserException If a known message is truncated or
+   *         malformed.
    */
   inline void validate(const CxaPitchBlock& block) {
     for(auto& message : block) {
