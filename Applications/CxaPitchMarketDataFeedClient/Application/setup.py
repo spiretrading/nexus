@@ -41,6 +41,8 @@ def main():
     default='market_data_feed')
   parser.add_argument('-p', '--password', type=str, help='Password.',
     required=True)
+  parser.add_argument('-ra', '--retransmission_address', type=str,
+    help='CXA gap request proxy address.', default='')
   parser.add_argument('-rs', '--retransmission_session_sub_id', type=str,
     help='CXA gap request proxy session sub id.', default='')
   parser.add_argument('-ru', '--retransmission_username', type=str,
@@ -65,6 +67,7 @@ def main():
     args.address
   variables['username'] = args.username
   variables['admin_password'] = args.password
+  variables['retransmission_address'] = args.retransmission_address
   variables['retransmission_session_sub_id'] = \
     args.retransmission_session_sub_id
   variables['retransmission_username'] = args.retransmission_username
@@ -82,7 +85,8 @@ def main():
         os.path.isfile(default_path):
       with open(default_path, 'r+') as file:
         source = file.read()
-        if not args.retransmission_password:
+        if not args.retransmission_address or \
+            not args.retransmission_password:
           source = remove_section(source, 'retransmission')
         variables['spin_address'] = spin_addresses.get(filename, '')
         if not variables['spin_address'] or not args.spin_password:
