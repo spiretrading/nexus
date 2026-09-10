@@ -8,6 +8,7 @@
 #include <functional>
 #include <iterator>
 #include <map>
+#include <memory>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -23,6 +24,7 @@
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
+#include <Beam/TimeService/Timer.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/optional/optional.hpp>
@@ -51,12 +53,14 @@ namespace Nexus {
    * @param <G> The type of client requesting retransmissions.
    * @param <S> The type of client requesting a snapshot.
    * @param <R> The type of client used to get the current time.
+   * @param <T> The type of Timer used to detect a silent feed.
    */
-  template<typename P, typename G, typename S, typename R>
+  template<typename P, typename G, typename S, typename R, typename T>
     requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
       IsCxaPitchGapClient<Beam::dereference_t<G>> &&
       IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
-      Beam::IsTimeClient<Beam::dereference_t<R>>
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
   class CxaPitchClient {
     public:
 
@@ -72,6 +76,9 @@ namespace Nexus {
       /** The type of client used to get the current time. */
       using TimeClient = Beam::dereference_t<R>;
 
+      /** The type of timer used to detect a silent feed. */
+      using Timer = Beam::dereference_t<T>;
+
       /** The number of rejected snapshot requests to tolerate. */
       static constexpr auto SPIN_ATTEMPTS = 10;
 
@@ -86,13 +93,14 @@ namespace Nexus {
        * @param gap The client requesting retransmissions, if enabled.
        * @param spin The client requesting the initial snapshot, if enabled.
        * @param time_client The client used to get the current time.
+       * @param timer The timer measuring the period between silence checks.
        */
-      template<Beam::Initializes<R> RF>
+      template<Beam::Initializes<R> RF, Beam::Initializes<T> TF>
       CxaPitchClient(std::uint8_t unit,
         boost::posix_time::time_duration liveness,
         boost::posix_time::time_duration gap_timeout, std::vector<P> feeds,
         std::vector<P> recovery, boost::optional<G> gap,
-        boost::optional<S> spin, RF&& time_client);
+        boost::optional<S> spin, RF&& time_client, TF&& timer);
 
       ~CxaPitchClient();
 
@@ -105,29 +113,33 @@ namespace Nexus {
     private:
       struct Rejection {
         std::uint32_t m_end;
-        char m_status;
+        std::string m_reason;
       };
       std::uint8_t m_unit;
+      boost::posix_time::time_duration m_liveness;
       boost::posix_time::time_duration m_gap_timeout;
       std::vector<Beam::local_ptr_t<P>> m_feeds;
       std::vector<Beam::local_ptr_t<P>> m_recovery;
       boost::optional<Beam::local_ptr_t<G>> m_gap;
       boost::optional<Beam::local_ptr_t<S>> m_spin;
       Beam::local_ptr_t<R> m_time_client;
+      Beam::local_ptr_t<T> m_timer;
       Beam::Sync<CxaPitchSequencer> m_sequencer;
       Beam::Queue<Beam::SharedBuffer> m_messages;
       Beam::StateQueue<std::uint32_t> m_requests;
       Beam::SharedBuffer m_payload;
       std::uint32_t m_reported_gap;
       std::uint32_t m_requested;
-      std::uint32_t m_live;
       std::map<std::uint32_t, Rejection> m_rejections;
       std::uint64_t m_spin_progress;
       boost::posix_time::ptime m_start;
       boost::posix_time::ptime m_spin_timestamp;
       boost::posix_time::ptime m_gap_timestamp;
+      boost::posix_time::ptime m_feed_timestamp;
       bool m_is_ready;
       bool m_is_spinning;
+      bool m_is_silent;
+      std::shared_ptr<Beam::Queue<Beam::Timer::Result>> m_timer_queue;
       Beam::RoutineHandlerGroup m_routines;
       Beam::OpenState m_open_state;
 
@@ -138,31 +150,36 @@ namespace Nexus {
         boost::posix_time::ptime timestamp, std::string_view reason);
       void skip(
         CxaPitchSequencer& sequencer, boost::posix_time::ptime timestamp);
+      void reject(
+        std::uint32_t sequence, std::uint32_t count, std::string reason);
       void feed_loop(int index);
       void recovery_loop(int index);
       void request_loop();
       void response_loop();
       void spin_loop();
+      void watch_loop();
   };
 
-  template<typename P, typename G, typename S, typename R>
+  template<typename P, typename G, typename S, typename R, typename T>
   CxaPitchClient(std::uint8_t, boost::posix_time::time_duration,
     boost::posix_time::time_duration, std::vector<P>, std::vector<P>,
-    boost::optional<G>, boost::optional<S>, R&&) ->
-      CxaPitchClient<P, G, S, std::remove_cvref_t<R>>;
+    boost::optional<G>, boost::optional<S>, R&&, T&&) ->
+      CxaPitchClient<P, G, S, std::remove_cvref_t<R>, std::remove_cvref_t<T>>;
 
-  template<typename P, typename G, typename S, typename R>
+  template<typename P, typename G, typename S, typename R, typename T>
     requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
       IsCxaPitchGapClient<Beam::dereference_t<G>> &&
       IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
-      Beam::IsTimeClient<Beam::dereference_t<R>>
-  template<Beam::Initializes<R> RF>
-  CxaPitchClient<P, G, S, R>::CxaPitchClient(std::uint8_t unit,
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  template<Beam::Initializes<R> RF, Beam::Initializes<T> TF>
+  CxaPitchClient<P, G, S, R, T>::CxaPitchClient(std::uint8_t unit,
       boost::posix_time::time_duration liveness,
       boost::posix_time::time_duration gap_timeout, std::vector<P> feeds,
       std::vector<P> recovery, boost::optional<G> gap, boost::optional<S> spin,
-      RF&& time_client)
+      RF&& time_client, TF&& timer)
       try : m_unit(unit),
+            m_liveness(liveness),
             m_gap_timeout(gap_timeout),
             m_feeds(std::make_move_iterator(feeds.begin()),
               std::make_move_iterator(feeds.end())),
@@ -171,16 +188,20 @@ namespace Nexus {
             m_gap(std::move(gap)),
             m_spin(std::move(spin)),
             m_time_client(std::forward<RF>(time_client)),
+            m_timer(std::forward<TF>(timer)),
             m_sequencer(static_cast<int>(m_feeds.size()), liveness),
             m_reported_gap(0),
             m_requested(0),
-            m_live(0),
             m_spin_progress(0),
             m_start(m_time_client->get_time()),
             m_spin_timestamp(m_start),
             m_gap_timestamp(m_start),
+            m_feed_timestamp(m_start),
             m_is_ready(!m_spin),
-            m_is_spinning(false) {
+            m_is_spinning(false),
+            m_is_silent(false),
+            m_timer_queue(
+              std::make_shared<Beam::Queue<Beam::Timer::Result>>()) {
     for(auto i = std::size_t(0); i != m_feeds.size(); ++i) {
       m_routines.spawn(
         std::bind_front(&CxaPitchClient::feed_loop, this, static_cast<int>(i)));
@@ -196,37 +217,43 @@ namespace Nexus {
     if(m_spin) {
       m_routines.spawn(std::bind_front(&CxaPitchClient::spin_loop, this));
     }
+    m_timer->get_publisher().monitor(m_timer_queue);
+    m_timer->start();
+    m_routines.spawn(std::bind_front(&CxaPitchClient::watch_loop, this));
   } catch(const std::exception&) {
     Beam::throw_nested_with_location(
       Beam::ConnectException("Failed to initialize the CXA PITCH client."));
   }
 
-  template<typename P, typename G, typename S, typename R>
+  template<typename P, typename G, typename S, typename R, typename T>
     requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
       IsCxaPitchGapClient<Beam::dereference_t<G>> &&
       IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
-      Beam::IsTimeClient<Beam::dereference_t<R>>
-  CxaPitchClient<P, G, S, R>::~CxaPitchClient() {
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  CxaPitchClient<P, G, S, R, T>::~CxaPitchClient() {
     close();
   }
 
-  template<typename P, typename G, typename S, typename R>
+  template<typename P, typename G, typename S, typename R, typename T>
     requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
       IsCxaPitchGapClient<Beam::dereference_t<G>> &&
       IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
-      Beam::IsTimeClient<Beam::dereference_t<R>>
-  CxaPitchMessage CxaPitchClient<P, G, S, R>::read() {
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  CxaPitchMessage CxaPitchClient<P, G, S, R, T>::read() {
     m_payload = m_messages.pop();
     return CxaPitchMessage::parse(
       std::string_view(m_payload.get_data(), m_payload.get_size()));
   }
 
-  template<typename P, typename G, typename S, typename R>
+  template<typename P, typename G, typename S, typename R, typename T>
     requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
       IsCxaPitchGapClient<Beam::dereference_t<G>> &&
       IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
-      Beam::IsTimeClient<Beam::dereference_t<R>>
-  void CxaPitchClient<P, G, S, R>::close() {
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void CxaPitchClient<P, G, S, R, T>::close() {
     if(m_open_state.set_closing()) {
       return;
     }
@@ -242,18 +269,21 @@ namespace Nexus {
     for(auto& client : m_feeds) {
       client->close();
     }
+    m_timer->cancel();
+    m_timer_queue->close();
     m_messages.close();
     m_requests.close();
     m_routines.wait();
     m_open_state.close();
   }
 
-  template<typename P, typename G, typename S, typename R>
+  template<typename P, typename G, typename S, typename R, typename T>
     requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
       IsCxaPitchGapClient<Beam::dereference_t<G>> &&
       IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
-      Beam::IsTimeClient<Beam::dereference_t<R>>
-  void CxaPitchClient<P, G, S, R>::flush(CxaPitchSequencer& sequencer) {
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void CxaPitchClient<P, G, S, R, T>::flush(CxaPitchSequencer& sequencer) {
     if(!m_is_ready) {
       return;
     }
@@ -262,12 +292,13 @@ namespace Nexus {
     }
   }
 
-  template<typename P, typename G, typename S, typename R>
+  template<typename P, typename G, typename S, typename R, typename T>
     requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
       IsCxaPitchGapClient<Beam::dereference_t<G>> &&
       IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
-      Beam::IsTimeClient<Beam::dereference_t<R>>
-  void CxaPitchClient<P, G, S, R>::drop(CxaPitchSequencer& sequencer,
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void CxaPitchClient<P, G, S, R, T>::drop(CxaPitchSequencer& sequencer,
       const CxaPitchGap& gap, boost::posix_time::ptime timestamp,
       std::string_view reason) {
     print([&] (auto& out) {
@@ -279,12 +310,13 @@ namespace Nexus {
     flush(sequencer);
   }
 
-  template<typename P, typename G, typename S, typename R>
+  template<typename P, typename G, typename S, typename R, typename T>
     requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
       IsCxaPitchGapClient<Beam::dereference_t<G>> &&
       IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
-      Beam::IsTimeClient<Beam::dereference_t<R>>
-  void CxaPitchClient<P, G, S, R>::skip(
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void CxaPitchClient<P, G, S, R, T>::skip(
       CxaPitchSequencer& sequencer, boost::posix_time::ptime timestamp) {
     while(!m_rejections.empty()) {
       auto gap = sequencer.get_gap();
@@ -302,7 +334,7 @@ namespace Nexus {
       auto end =
         std::min(rejection->second.m_end, gap->m_sequence + gap->m_count);
       drop(sequencer, CxaPitchGap(gap->m_sequence, end - gap->m_sequence),
-        timestamp, "rejected " + std::string(1, rejection->second.m_status));
+        timestamp, rejection->second.m_reason);
     }
     auto sequence = sequencer.get_sequence().value_or(0);
     while(!m_rejections.empty() &&
@@ -311,12 +343,30 @@ namespace Nexus {
     }
   }
 
-  template<typename P, typename G, typename S, typename R>
+  template<typename P, typename G, typename S, typename R, typename T>
     requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
       IsCxaPitchGapClient<Beam::dereference_t<G>> &&
       IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
-      Beam::IsTimeClient<Beam::dereference_t<R>>
-  void CxaPitchClient<P, G, S, R>::feed_loop(int index) {
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void CxaPitchClient<P, G, S, R, T>::reject(
+      std::uint32_t sequence, std::uint32_t count, std::string reason) {
+    auto end = sequence + count;
+    auto rejection = m_rejections.find(sequence);
+    if(rejection == m_rejections.end()) {
+      m_rejections.emplace(sequence, Rejection(end, std::move(reason)));
+    } else if(rejection->second.m_end < end) {
+      rejection->second.m_end = end;
+    }
+  }
+
+  template<typename P, typename G, typename S, typename R, typename T>
+    requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
+      IsCxaPitchGapClient<Beam::dereference_t<G>> &&
+      IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void CxaPitchClient<P, G, S, R, T>::feed_loop(int index) {
     while(true) {
       try {
         auto block = m_feeds[index]->read();
@@ -328,7 +378,23 @@ namespace Nexus {
         auto live = boost::optional<std::uint32_t>();
         auto close_spin = false;
         Beam::with(m_sequencer, [&] (auto& sequencer) {
-          sequencer.add(index, block, timestamp);
+          auto is_restart = sequencer.add(index, block, timestamp);
+          m_feed_timestamp = timestamp;
+          if(m_is_silent) {
+            m_is_silent = false;
+            print([&] (auto& out) {
+              out << "(feed " << timestamp << ')';
+            });
+          }
+          if(is_restart) {
+            print([&] (auto& out) {
+              out << "(restarted " << timestamp << ' ' <<
+                block.get_header().m_sequence << ')';
+            });
+            m_reported_gap = 0;
+            m_requested = 0;
+            m_rejections.clear();
+          }
           if(!m_is_ready) {
             auto start = m_start;
             if(m_is_spinning) {
@@ -349,9 +415,6 @@ namespace Nexus {
           }
           flush(sequencer);
           skip(sequencer, timestamp);
-          if(header.m_sequence + header.m_count > m_live) {
-            m_live = header.m_sequence + header.m_count;
-          }
           auto gap = sequencer.get_gap();
           if(!gap) {
             return;
@@ -361,7 +424,8 @@ namespace Nexus {
             m_gap_timestamp = timestamp;
           }
           auto reason = [&] () -> std::string_view {
-            if(m_gap && !(*m_gap)->is_recoverable(*gap, m_live)) {
+            if(m_gap &&
+                !(*m_gap)->is_recoverable(*gap, sequencer.get_position())) {
               return "unrecoverable";
             }
             if(timestamp - m_gap_timestamp <= m_gap_timeout) {
@@ -377,7 +441,7 @@ namespace Nexus {
             return;
           }
           if(m_gap && m_requested < gap->m_sequence + gap->m_count) {
-            live = m_live;
+            live = sequencer.get_position();
           }
         });
         if(close_spin) {
@@ -397,12 +461,13 @@ namespace Nexus {
     }
   }
 
-  template<typename P, typename G, typename S, typename R>
+  template<typename P, typename G, typename S, typename R, typename T>
     requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
       IsCxaPitchGapClient<Beam::dereference_t<G>> &&
       IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
-      Beam::IsTimeClient<Beam::dereference_t<R>>
-  void CxaPitchClient<P, G, S, R>::recovery_loop(int index) {
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void CxaPitchClient<P, G, S, R, T>::recovery_loop(int index) {
     while(true) {
       try {
         auto block = m_recovery[index]->read();
@@ -411,7 +476,21 @@ namespace Nexus {
         }
         auto timestamp = m_time_client->get_time();
         Beam::with(m_sequencer, [&] (auto& sequencer) {
-          sequencer.recover(block);
+          try {
+            try {
+            sequencer.recover(block);
+          } catch(const CxaPitchParserException&) {
+            auto& header = block.get_header();
+            if(header.m_sequence != 0 && header.m_count != 0) {
+              reject(header.m_sequence, header.m_count, "malformed");
+            }
+          }
+          } catch(const CxaPitchParserException&) {
+            auto& header = block.get_header();
+            if(header.m_sequence != 0 && header.m_count != 0) {
+              reject(header.m_sequence, header.m_count, "malformed");
+            }
+          }
           flush(sequencer);
           skip(sequencer, timestamp);
           if(!sequencer.get_gap()) {
@@ -429,12 +508,13 @@ namespace Nexus {
     }
   }
 
-  template<typename P, typename G, typename S, typename R>
+  template<typename P, typename G, typename S, typename R, typename T>
     requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
       IsCxaPitchGapClient<Beam::dereference_t<G>> &&
       IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
-      Beam::IsTimeClient<Beam::dereference_t<R>>
-  void CxaPitchClient<P, G, S, R>::request_loop() {
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void CxaPitchClient<P, G, S, R, T>::request_loop() {
     while(true) {
       try {
         auto live = m_requests.pop();
@@ -463,7 +543,9 @@ namespace Nexus {
           }
         }();
         Beam::with(m_sequencer, [&] (auto&) {
-          m_requested = pending->m_sequence + count;
+          if(m_requested == pending->m_sequence) {
+            m_requested = pending->m_sequence + count;
+          }
         });
       } catch(const std::exception&) {
         break;
@@ -471,12 +553,13 @@ namespace Nexus {
     }
   }
 
-  template<typename P, typename G, typename S, typename R>
+  template<typename P, typename G, typename S, typename R, typename T>
     requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
       IsCxaPitchGapClient<Beam::dereference_t<G>> &&
       IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
-      Beam::IsTimeClient<Beam::dereference_t<R>>
-  void CxaPitchClient<P, G, S, R>::response_loop() {
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void CxaPitchClient<P, G, S, R, T>::response_loop() {
     while(true) {
       try {
         auto response = (*m_gap)->get_responses()->pop();
@@ -485,14 +568,22 @@ namespace Nexus {
         }
         auto timestamp = m_time_client->get_time();
         Beam::with(m_sequencer, [&] (auto& sequencer) {
-          auto end = response.m_sequence + response.m_count;
-          auto rejection = m_rejections.find(response.m_sequence);
-          if(rejection == m_rejections.end()) {
-            m_rejections.emplace(
-              response.m_sequence, Rejection(end, response.m_status));
-          } else if(rejection->second.m_end < end) {
-            rejection->second.m_end = end;
+          if(response.m_status == CxaPitchGapResponse::MINUTE_EXHAUSTED ||
+              response.m_status == CxaPitchGapResponse::SECOND_EXHAUSTED) {
+            if(m_requested > response.m_sequence) {
+              m_requested = response.m_sequence;
+            }
+            return;
           }
+          if(response.m_status == CxaPitchGapResponse::MINUTE_EXHAUSTED ||
+              response.m_status == CxaPitchGapResponse::SECOND_EXHAUSTED) {
+            if(m_requested > response.m_sequence) {
+              m_requested = response.m_sequence;
+            }
+            return;
+          }
+          reject(response.m_sequence, response.m_count,
+            "rejected " + std::string(1, response.m_status));
           skip(sequencer, timestamp);
         });
       } catch(const std::exception&) {
@@ -501,12 +592,13 @@ namespace Nexus {
     }
   }
 
-  template<typename P, typename G, typename S, typename R>
+  template<typename P, typename G, typename S, typename R, typename T>
     requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
       IsCxaPitchGapClient<Beam::dereference_t<G>> &&
       IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
-      Beam::IsTimeClient<Beam::dereference_t<R>>
-  void CxaPitchClient<P, G, S, R>::spin_loop() {
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void CxaPitchClient<P, G, S, R, T>::spin_loop() {
     auto attempts = 0;
     try {
       while(attempts != SPIN_ATTEMPTS) {
@@ -539,7 +631,11 @@ namespace Nexus {
           for(auto& message : spin.m_messages) {
             m_messages.push(message);
           }
-          sequencer.reset(spin.m_sequence + 1);
+          if(sequencer.get_sequence().value_or(0) < spin.m_sequence + 1) {
+            if(sequencer.get_sequence().value_or(0) < spin.m_sequence + 1) {
+            sequencer.reset(spin.m_sequence + 1);
+          }
+          }
           m_is_ready = true;
           flush(sequencer);
         });
@@ -561,6 +657,46 @@ namespace Nexus {
       });
     } catch(const std::exception&) {}
     (*m_spin)->close();
+  }
+
+  template<typename P, typename G, typename S, typename R, typename T>
+    requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
+      IsCxaPitchGapClient<Beam::dereference_t<G>> &&
+      IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void CxaPitchClient<P, G, S, R, T>::watch_loop() {
+    while(true) {
+      try {
+        if(m_timer_queue->pop() != Beam::Timer::Result::EXPIRED) {
+          break;
+        }
+        auto timestamp = m_time_client->get_time();
+        Beam::with(m_sequencer, [&] (auto& sequencer) {
+          if(!m_is_silent && timestamp - m_feed_timestamp > m_liveness) {
+            m_is_silent = true;
+            print([&] (auto& out) {
+              out << "(no_feed " << timestamp << ')';
+            });
+          }
+          flush(sequencer);
+          skip(sequencer, timestamp);
+          auto gap = sequencer.get_gap();
+          if(!gap) {
+            return;
+          }
+          if(gap->m_sequence != m_reported_gap) {
+            m_reported_gap = gap->m_sequence;
+            m_gap_timestamp = timestamp;
+          } else if(timestamp - m_gap_timestamp > m_gap_timeout) {
+            drop(sequencer, *gap, timestamp, "timeout");
+          }
+        });
+        m_timer->start();
+      } catch(const std::exception&) {
+        break;
+      }
+    }
   }
 }
 

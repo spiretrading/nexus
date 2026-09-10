@@ -99,6 +99,12 @@ namespace Nexus {
     /** The status indicating that the request was accepted. */
     static constexpr auto ACCEPTED = 'A';
 
+    /** The status indicating the minute request allowance was exhausted. */
+    static constexpr auto MINUTE_EXHAUSTED = 'M';
+
+    /** The status indicating the second request allowance was exhausted. */
+    static constexpr auto SECOND_EXHAUSTED = 'S';
+
     /** The unit that the request was made for. */
     std::uint8_t m_unit;
 

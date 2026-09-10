@@ -115,6 +115,25 @@ feeds:
       CxaPitchConfiguration::parse(YAML::Load(source)), std::runtime_error);
   }
 
+  TEST_CASE("parse_retransmission_without_gap_address") {
+    auto source = std::string(R"(
+unit: 1
+venue: ASX
+disseminating_venue: CXA
+feeds:
+  - name: A
+    address: "233.218.133.80:30501"
+    interface: "10.0.0.1:30501"
+retransmission:
+  address: "10.1.0.1:30601"
+  session_sub_id: "0001"
+  username: FIRM
+  password: ABCD00
+)");
+    REQUIRE_THROWS_AS(
+      CxaPitchConfiguration::parse(YAML::Load(source)), std::runtime_error);
+  }
+
   TEST_CASE("parse_unit_out_of_range") {
     for(auto unit : {"0", "256"}) {
       auto source = "unit: " + std::string(unit) + R"(

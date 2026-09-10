@@ -6,6 +6,7 @@
 #include <boost/optional/optional.hpp>
 #include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
+#include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSequencer.hpp"
 
 using namespace boost::posix_time;
@@ -45,6 +46,49 @@ namespace {
 }
 
 TEST_SUITE("CxaPitchSequencer") {
+  TEST_CASE("restart_sequence") {
+    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto timestamp = time_from_string("2026-09-08 10:00:00");
+    auto first = encode_block(100, {0x11});
+    REQUIRE(!sequencer.add(0, CxaPitchBlock::parse(first), timestamp));
+    REQUIRE(!sequencer.add(1, CxaPitchBlock::parse(first), timestamp));
+    REQUIRE(read(sequencer) == 0x11);
+    auto clear = encode_block(1, {CxaPitchUnitClear::TYPE});
+    REQUIRE(!sequencer.add(0, CxaPitchBlock::parse(clear), timestamp));
+    REQUIRE(!read(sequencer));
+    REQUIRE(sequencer.add(1, CxaPitchBlock::parse(clear), timestamp));
+    REQUIRE(read(sequencer) == CxaPitchUnitClear::TYPE);
+    auto next = encode_block(2, {0x12});
+    REQUIRE(!sequencer.add(0, CxaPitchBlock::parse(next), timestamp));
+    REQUIRE(read(sequencer) == 0x12);
+  }
+
+  TEST_CASE("ignore_duplicate_block") {
+    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto timestamp = time_from_string("2026-09-08 10:00:00");
+    auto first = encode_block(100, {0x11});
+    sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
+    sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
+    REQUIRE(read(sequencer) == 0x11);
+    REQUIRE(!sequencer.add(0, CxaPitchBlock::parse(first), timestamp));
+    auto next = encode_block(101, {0x12});
+    REQUIRE(!sequencer.add(1, CxaPitchBlock::parse(next), timestamp));
+    REQUIRE(!sequencer.add(0, CxaPitchBlock::parse(first), timestamp));
+    REQUIRE(read(sequencer) == 0x12);
+  }
+
+  TEST_CASE("position_ignores_a_leading_feed") {
+    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto timestamp = time_from_string("2026-09-08 10:00:00");
+    sequencer.add(0, CxaPitchBlock::parse(encode_block(1, {0x11})), timestamp);
+    sequencer.add(1, CxaPitchBlock::parse(encode_block(1, {0x11})), timestamp);
+    REQUIRE(read(sequencer) == 0x11);
+    sequencer.add(
+      0, CxaPitchBlock::parse(encode_block(1000000, {0x12})), timestamp);
+    REQUIRE(sequencer.get_position() == 2);
+    REQUIRE(!sequencer.get_gap());
+  }
+
   TEST_CASE("read_messages_in_order") {
     auto sequencer =
       CxaPitchSequencer(1, duration_from_string("00:00:03"));

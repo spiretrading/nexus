@@ -1,5 +1,6 @@
 #ifndef CXA_PITCH_CONFIGURATION_HPP
 #define CXA_PITCH_CONFIGURATION_HPP
+#include <algorithm>
 #include <cstdint>
 #include <stdexcept>
 #include <string>
@@ -167,6 +168,14 @@ namespace Nexus {
       if(config["retransmission"]) {
         configuration.m_retransmission =
           CxaPitchSession::parse(Beam::get_node(config, "retransmission"));
+      }
+      if(configuration.m_retransmission &&
+        std::none_of(configuration.m_feeds.begin(),
+          configuration.m_feeds.end(), [] (const auto& feed) {
+            return !feed.m_gap_address.get_host().empty();
+          })) {
+        throw std::runtime_error(
+          "No gap response address specified to receive retransmissions.");
       }
       if(config["spin"]) {
         configuration.m_spin =

@@ -30,6 +30,9 @@ namespace Nexus {
   class CxaPitchSequencer {
     public:
 
+      /** The number of consecutive rewound blocks that signal a restart. */
+      static constexpr auto REWIND_LIMIT = 2;
+
       /**
        * Constructs a CxaPitchSequencer.
        * @param feeds The number of feeds to merge.
@@ -43,8 +46,9 @@ namespace Nexus {
        * @param feed The index of the feed that received the block.
        * @param block The block that was received.
        * @param timestamp The time that the block was received.
+       * @return Whether the unit's sequence restarted, discarding all state.
        */
-      void add(int feed, const CxaPitchBlock& block,
+      bool add(int feed, const CxaPitchBlock& block,
         boost::posix_time::ptime timestamp);
 
       /**
@@ -65,6 +69,9 @@ namespace Nexus {
       /** Returns the sequence of the next message to return. */
       boost::optional<std::uint32_t> get_sequence() const;
 
+      /** Returns the sequence that every feed has delivered through. */
+      std::uint32_t get_position() const;
+
       /** Returns the range of sequences that are missing from every feed. */
       boost::optional<CxaPitchGap> get_gap() const;
 
@@ -84,8 +91,10 @@ namespace Nexus {
       std::vector<Feed> m_feeds;
       std::map<std::uint32_t, Beam::SharedBuffer> m_messages;
       std::uint32_t m_expected;
+      int m_rewinds;
       bool m_is_initialized;
 
+      void restart(std::uint32_t sequence);
       void expire(boost::posix_time::ptime timestamp);
       void store(const CxaPitchBlock& block);
   };
@@ -95,9 +104,10 @@ namespace Nexus {
     : m_liveness(liveness),
       m_feeds(feeds),
       m_expected(0),
+      m_rewinds(0),
       m_is_initialized(false) {}
 
-  inline void CxaPitchSequencer::add(int feed, const CxaPitchBlock& block,
+  inline bool CxaPitchSequencer::add(int feed, const CxaPitchBlock& block,
       boost::posix_time::ptime timestamp) {
     if(feed < 0 || feed >= static_cast<int>(m_feeds.size())) {
       boost::throw_with_location(
@@ -110,17 +120,28 @@ namespace Nexus {
     expire(timestamp);
     auto& header = block.get_header();
     if(header.m_sequence == 0) {
-      return;
+      return false;
     }
     if(!m_is_initialized) {
       m_expected = header.m_sequence;
       m_is_initialized = true;
+    }
+    auto is_restart = false;
+    if(header.m_sequence < source.m_position) {
+      ++m_rewinds;
+      if(m_rewinds >= REWIND_LIMIT) {
+        restart(header.m_sequence);
+        is_restart = true;
+      }
+    } else {
+      m_rewinds = 0;
     }
     auto position = header.m_sequence + header.m_count;
     if(position > source.m_position) {
       source.m_position = position;
     }
     store(block);
+    return is_restart;
   }
 
   inline void CxaPitchSequencer::recover(const CxaPitchBlock& block) {
@@ -157,23 +178,25 @@ namespace Nexus {
     return m_expected;
   }
 
-  inline boost::optional<CxaPitchGap> CxaPitchSequencer::get_gap() const {
-    if(!m_is_initialized || m_messages.contains(m_expected)) {
-      return boost::none;
-    }
-    auto end = std::uint32_t(0);
+  inline std::uint32_t CxaPitchSequencer::get_position() const {
+    auto position = std::uint32_t(0);
     for(auto& source : m_feeds) {
       if(!source.m_is_active) {
         continue;
       }
-      if(source.m_position <= m_expected) {
-        return boost::none;
-      }
-      if(end == 0 || source.m_position < end) {
-        end = source.m_position;
+      if(position == 0 || source.m_position < position) {
+        position = source.m_position;
       }
     }
-    if(end == 0) {
+    return position;
+  }
+
+  inline boost::optional<CxaPitchGap> CxaPitchSequencer::get_gap() const {
+    if(!m_is_initialized || m_messages.contains(m_expected)) {
+      return boost::none;
+    }
+    auto end = get_position();
+    if(end <= m_expected) {
       return boost::none;
     }
     if(!m_messages.empty() && m_messages.begin()->first < end) {
@@ -188,6 +211,16 @@ namespace Nexus {
   inline void CxaPitchSequencer::reset(std::uint32_t sequence) {
     m_messages.erase(m_messages.begin(), m_messages.lower_bound(sequence));
     m_expected = sequence;
+    m_is_initialized = true;
+  }
+
+  inline void CxaPitchSequencer::restart(std::uint32_t sequence) {
+    m_messages.clear();
+    for(auto& source : m_feeds) {
+      source.m_position = 0;
+    }
+    m_expected = sequence;
+    m_rewinds = 0;
     m_is_initialized = true;
   }
 
