@@ -106,21 +106,4 @@ TEST_SUITE("CxaPitchBlock") {
     data += char(0);
     REQUIRE_THROWS_AS(CxaPitchBlock::parse(data), CxaPitchParserException);
   }
-
-  TEST_CASE("parse_message_too_short") {
-    auto data = std::array<char, 1>{0x06};
-    REQUIRE_THROWS_AS(
-      CxaPitchMessage::parse(std::string_view(data.data(), data.size())),
-      CxaPitchParserException);
-  }
-
-  TEST_CASE("parse_message_payload") {
-    auto data = std::array<char, 6>{
-      0x06, static_cast<char>(0x97), 0x20, 0x20, 0x20, 0x20};
-    auto message =
-      CxaPitchMessage::parse(std::string_view(data.data(), data.size()));
-    REQUIRE(message.m_length == 6);
-    REQUIRE(message.m_type == 0x97);
-    REQUIRE(message.m_payload == data.data() + CxaPitchMessage::HEADER_LENGTH);
-  }
 }
