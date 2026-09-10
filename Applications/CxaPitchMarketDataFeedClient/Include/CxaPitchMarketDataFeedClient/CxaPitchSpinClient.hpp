@@ -16,8 +16,10 @@
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
+#include <boost/throw_exception.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
+#include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionMessages.hpp"
 
@@ -88,6 +90,7 @@ namespace Nexus {
       std::shared_ptr<Beam::Queue<std::uint32_t>> m_offers;
       std::shared_ptr<Beam::Queue<CxaPitchSpin>> m_spins;
       CxaPitchSpin m_spin;
+      std::uint32_t m_orders;
       bool m_is_spinning;
       std::atomic_uint64_t m_progress;
       Beam::RoutineHandler m_read_loop;
@@ -107,6 +110,7 @@ namespace Nexus {
       try : m_session(std::forward<SF>(session)),
             m_offers(std::make_shared<Beam::Queue<std::uint32_t>>()),
             m_spins(std::make_shared<Beam::Queue<CxaPitchSpin>>()),
+            m_orders(0),
             m_is_spinning(false),
             m_progress(0) {
     m_read_loop =
@@ -164,17 +168,34 @@ namespace Nexus {
           m_spin = CxaPitchSpin();
           m_spin.m_sequence = response.m_sequence;
           m_spin.m_status = response.m_status;
+          m_orders = response.m_order_count;
           m_is_spinning = response.m_status == CxaPitchSpinResponse::ACCEPTED;
           if(!m_is_spinning) {
             m_spins->push(std::move(m_spin));
           }
         } else if(message.m_type == CxaPitchSpinFinished::TYPE) {
           if(m_is_spinning) {
+            auto finished = CxaPitchSpinFinished::parse(message);
+            if(finished.m_sequence != m_spin.m_sequence) {
+              boost::throw_with_location(
+                CxaPitchParserException("Spin finished out of sequence."));
+            }
+            if(m_orders != 0) {
+              boost::throw_with_location(
+                CxaPitchParserException("Spin order count mismatch."));
+            }
             m_is_spinning = false;
             m_spins->push(std::move(m_spin));
           }
         } else if(m_is_spinning) {
           validate(message);
+          if(message.m_type == CxaPitchAddOrder::TYPE) {
+            if(m_orders == 0) {
+              boost::throw_with_location(
+                CxaPitchParserException("Spin order count mismatch."));
+            }
+            --m_orders;
+          }
           m_spin.m_messages.emplace_back(
             message.m_payload - CxaPitchMessage::HEADER_LENGTH,
             message.m_length);

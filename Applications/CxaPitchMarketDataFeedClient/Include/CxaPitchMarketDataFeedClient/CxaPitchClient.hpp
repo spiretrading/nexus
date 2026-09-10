@@ -6,8 +6,8 @@
 #include <cstdint>
 #include <exception>
 #include <functional>
+#include <iterator>
 #include <map>
-#include <memory>
 #include <string>
 #include <string_view>
 #include <type_traits>
@@ -19,6 +19,7 @@
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
@@ -108,13 +109,14 @@ namespace Nexus {
       };
       std::uint8_t m_unit;
       boost::posix_time::time_duration m_gap_timeout;
-      std::vector<P> m_feeds;
-      std::vector<P> m_recovery;
-      boost::optional<G> m_gap;
-      boost::optional<S> m_spin;
+      std::vector<Beam::local_ptr_t<P>> m_feeds;
+      std::vector<Beam::local_ptr_t<P>> m_recovery;
+      boost::optional<Beam::local_ptr_t<G>> m_gap;
+      boost::optional<Beam::local_ptr_t<S>> m_spin;
       Beam::local_ptr_t<R> m_time_client;
       Beam::Sync<CxaPitchSequencer> m_sequencer;
-      std::shared_ptr<Beam::Queue<Beam::SharedBuffer>> m_messages;
+      Beam::Queue<Beam::SharedBuffer> m_messages;
+      Beam::StateQueue<std::uint32_t> m_requests;
       Beam::SharedBuffer m_payload;
       std::uint32_t m_reported_gap;
       std::uint32_t m_requested;
@@ -138,6 +140,7 @@ namespace Nexus {
         CxaPitchSequencer& sequencer, boost::posix_time::ptime timestamp);
       void feed_loop(int index);
       void recovery_loop(int index);
+      void request_loop();
       void response_loop();
       void spin_loop();
   };
@@ -161,13 +164,14 @@ namespace Nexus {
       RF&& time_client)
       try : m_unit(unit),
             m_gap_timeout(gap_timeout),
-            m_feeds(std::move(feeds)),
-            m_recovery(std::move(recovery)),
+            m_feeds(std::make_move_iterator(feeds.begin()),
+              std::make_move_iterator(feeds.end())),
+            m_recovery(std::make_move_iterator(recovery.begin()),
+              std::make_move_iterator(recovery.end())),
             m_gap(std::move(gap)),
             m_spin(std::move(spin)),
             m_time_client(std::forward<RF>(time_client)),
             m_sequencer(static_cast<int>(m_feeds.size()), liveness),
-            m_messages(std::make_shared<Beam::Queue<Beam::SharedBuffer>>()),
             m_reported_gap(0),
             m_requested(0),
             m_live(0),
@@ -186,6 +190,7 @@ namespace Nexus {
         &CxaPitchClient::recovery_loop, this, static_cast<int>(i)));
     }
     if(m_gap) {
+      m_routines.spawn(std::bind_front(&CxaPitchClient::request_loop, this));
       m_routines.spawn(std::bind_front(&CxaPitchClient::response_loop, this));
     }
     if(m_spin) {
@@ -211,7 +216,7 @@ namespace Nexus {
       IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
       Beam::IsTimeClient<Beam::dereference_t<R>>
   CxaPitchMessage CxaPitchClient<P, G, S, R>::read() {
-    m_payload = m_messages->pop();
+    m_payload = m_messages.pop();
     return CxaPitchMessage::parse(
       std::string_view(m_payload.get_data(), m_payload.get_size()));
   }
@@ -237,7 +242,8 @@ namespace Nexus {
     for(auto& client : m_feeds) {
       client->close();
     }
-    m_messages->close();
+    m_messages.close();
+    m_requests.close();
     m_routines.wait();
     m_open_state.close();
   }
@@ -252,7 +258,7 @@ namespace Nexus {
       return;
     }
     while(auto payload = sequencer.read()) {
-      m_messages->push(std::move(*payload));
+      m_messages.push(std::move(*payload));
     }
   }
 
@@ -319,8 +325,7 @@ namespace Nexus {
           continue;
         }
         auto timestamp = m_time_client->get_time();
-        auto pending = boost::optional<CxaPitchGap>();
-        auto position = std::uint32_t(0);
+        auto live = boost::optional<std::uint32_t>();
         auto close_spin = false;
         Beam::with(m_sequencer, [&] (auto& sequencer) {
           sequencer.add(index, block, timestamp);
@@ -355,9 +360,6 @@ namespace Nexus {
             m_reported_gap = gap->m_sequence;
             m_gap_timestamp = timestamp;
           }
-          if(m_requested < gap->m_sequence) {
-            m_requested = gap->m_sequence;
-          }
           auto reason = [&] () -> std::string_view {
             if(m_gap && !(*m_gap)->is_recoverable(*gap, m_live)) {
               return "unrecoverable";
@@ -374,31 +376,15 @@ namespace Nexus {
             drop(sequencer, *gap, timestamp, reason);
             return;
           }
-          auto end = gap->m_sequence + gap->m_count;
-          if(m_requested < end) {
-            pending = CxaPitchGap(m_requested, end - m_requested);
-            position = m_live;
-            m_requested = end;
+          if(m_gap && m_requested < gap->m_sequence + gap->m_count) {
+            live = m_live;
           }
         });
         if(close_spin) {
           (*m_spin)->close();
         }
-        if(pending && m_gap) {
-          auto count = [&] {
-            try {
-              return (*m_gap)->request(m_unit, *pending, position);
-            } catch(const std::exception&) {
-              return std::uint32_t(0);
-            }
-          }();
-          if(count != pending->m_count) {
-            Beam::with(m_sequencer, [&] (auto&) {
-              if(m_requested == pending->m_sequence + pending->m_count) {
-                m_requested = pending->m_sequence + count;
-              }
-            });
-          }
+        if(live) {
+          m_requests.push(*live);
         }
       } catch(const CxaPitchParserException& e) {
         print([&] (auto& out) {
@@ -437,6 +423,48 @@ namespace Nexus {
           out << "(bad_datagram recovery " << index << ' ' << e.what() << ')';
         });
         continue;
+      } catch(const std::exception&) {
+        break;
+      }
+    }
+  }
+
+  template<typename P, typename G, typename S, typename R>
+    requires IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
+      IsCxaPitchGapClient<Beam::dereference_t<G>> &&
+      IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>>
+  void CxaPitchClient<P, G, S, R>::request_loop() {
+    while(true) {
+      try {
+        auto live = m_requests.pop();
+        auto pending = Beam::with(m_sequencer, [&] (auto& sequencer) {
+          auto request = boost::optional<CxaPitchGap>();
+          auto gap = sequencer.get_gap();
+          if(gap) {
+            if(m_requested < gap->m_sequence) {
+              m_requested = gap->m_sequence;
+            }
+            auto end = gap->m_sequence + gap->m_count;
+            if(m_requested < end) {
+              request = CxaPitchGap(m_requested, end - m_requested);
+            }
+          }
+          return request;
+        });
+        if(!pending) {
+          continue;
+        }
+        auto count = [&] {
+          try {
+            return (*m_gap)->request(m_unit, *pending, live);
+          } catch(const std::exception&) {
+            return std::uint32_t(0);
+          }
+        }();
+        Beam::with(m_sequencer, [&] (auto&) {
+          m_requested = pending->m_sequence + count;
+        });
       } catch(const std::exception&) {
         break;
       }
@@ -509,7 +537,7 @@ namespace Nexus {
             return;
           }
           for(auto& message : spin.m_messages) {
-            m_messages->push(message);
+            m_messages.push(message);
           }
           sequencer.reset(spin.m_sequence + 1);
           m_is_ready = true;

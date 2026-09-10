@@ -132,8 +132,11 @@ namespace Nexus {
       auto configuration = CxaPitchConfiguration();
       configuration.m_is_logging_messages =
         Beam::extract<bool>(config, "enable_logging", false);
-      configuration.m_unit =
-        static_cast<std::uint8_t>(Beam::extract<int>(config, "unit"));
+      auto unit = Beam::extract<int>(config, "unit");
+      if(unit <= 0 || unit > 255) {
+        throw std::runtime_error("Unit out of range.");
+      }
+      configuration.m_unit = static_cast<std::uint8_t>(unit);
       auto primary_venue = VENUES.from_display_name(
         Beam::extract<std::string>(config, "venue"));
       if(!primary_venue.m_venue) {

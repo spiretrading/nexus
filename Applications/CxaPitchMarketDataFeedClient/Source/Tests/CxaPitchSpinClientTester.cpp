@@ -171,6 +171,36 @@ TEST_SUITE("CxaPitchSpinClient") {
     REQUIRE(spin.m_messages.size() == 1);
   }
 
+  TEST_CASE("incomplete_snapshot") {
+    auto session = StubSession();
+    auto client = SpinClient(&session);
+    session.m_messages->push(encode_response(310175, 2, 'A'));
+    session.m_messages->push(encode_order(CxaPitchAddOrder::TYPE));
+    session.m_messages->push(encode_finished(310175));
+    REQUIRE_THROWS_AS(client.request(310175), CxaPitchParserException);
+  }
+
+  TEST_CASE("oversized_snapshot") {
+    auto session = StubSession();
+    auto client = SpinClient(&session);
+    session.m_messages->push(encode_response(310175, 1, 'A'));
+    session.m_messages->push(encode_order(CxaPitchAddOrder::TYPE));
+    session.m_messages->push(encode_order(CxaPitchAddOrder::TYPE));
+    REQUIRE_THROWS_AS(client.request(310175), CxaPitchParserException);
+  }
+
+  TEST_CASE("malformed_snapshot_finish") {
+    for(auto& finished :
+        {SharedBuffer("\x02\x83", 2), encode_finished(310176)}) {
+      auto session = StubSession();
+      auto client = SpinClient(&session);
+      session.m_messages->push(encode_response(310175, 1, 'A'));
+      session.m_messages->push(encode_order(CxaPitchAddOrder::TYPE));
+      session.m_messages->push(finished);
+      REQUIRE_THROWS_AS(client.request(310175), CxaPitchParserException);
+    }
+  }
+
   TEST_CASE("malformed_snapshot_message") {
     auto session = StubSession();
     auto client = SpinClient(&session);

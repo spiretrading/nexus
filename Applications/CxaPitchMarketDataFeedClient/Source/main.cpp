@@ -44,8 +44,8 @@ namespace {
     CxaPitchProtocolClient<std::unique_ptr<ApplicationFeedChannel>>;
   using ApplicationSessionClient =
     CxaPitchSessionClient<TcpSocketChannel, LiveTimer>;
-  using ApplicationGapClient =
-    CxaPitchGapClient<ApplicationSessionClient, LiveTimer>;
+  using ApplicationGapClient = CxaPitchGapClient<ApplicationSessionClient,
+    LiveTimer, std::unique_ptr<LocalTimeClient>>;
   using ApplicationSpinClient =
     CxaPitchSpinClient<std::shared_ptr<ApplicationSessionClient>>;
 
@@ -98,7 +98,7 @@ int main(int argc, const char** argv) {
         return std::make_unique<ApplicationGapClient>(
           [=] (std::stop_token stop_token) {
             return make_session(session, stop_token);
-          }, init(RECONNECT), TimeClient(std::in_place_type<LocalTimeClient>));
+          }, init(RECONNECT), std::make_unique<LocalTimeClient>());
       }, std::runtime_error(
         "Unable to connect to the CXA PITCH gap request proxy."));
     }

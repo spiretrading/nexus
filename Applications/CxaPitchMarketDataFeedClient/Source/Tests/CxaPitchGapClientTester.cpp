@@ -27,9 +27,11 @@ namespace {
     std::shared_ptr<Queue<int>> m_gate;
     std::function<void ()> m_on_write;
     SharedBuffer m_payload;
+    bool m_is_closed;
 
     StubSession()
-      : m_messages(std::make_shared<Queue<SharedBuffer>>()) {}
+      : m_messages(std::make_shared<Queue<SharedBuffer>>()),
+        m_is_closed(false) {}
 
     CxaPitchMessage read() {
       m_payload = m_messages->pop();
@@ -51,6 +53,7 @@ namespace {
     }
 
     void close() {
+      m_is_closed = true;
       m_messages->close();
       if(m_gate) {
         m_gate->push(0);
@@ -60,7 +63,8 @@ namespace {
 
   const auto TIMESTAMP = time_from_string("2026-09-09 10:00:00");
 
-  using GapClient = CxaPitchGapClient<StubSession, TriggerTimer*>;
+  using GapClient =
+    CxaPitchGapClient<StubSession, TriggerTimer*, FixedTimeClient*>;
 
   CxaPitchGapRequest parse_request(const std::string& source) {
     auto cursor = CxaPitchMessage::parse(source).get_cursor();
@@ -299,6 +303,23 @@ TEST_SUITE("CxaPitchGapClient") {
     REQUIRE(client.request(1, CxaPitchGap(1000, 50), 1000) == 50);
     REQUIRE(second->m_requests.size() == 1);
     REQUIRE(parse_request(second->m_requests[0]).m_sequence == 1000);
+  }
+
+  TEST_CASE("close_failed_session") {
+    auto first = std::make_shared<StubSession>();
+    auto second = std::make_shared<StubSession>();
+    auto sessions = std::vector{first, second};
+    auto index = std::size_t(0);
+    auto timer = TriggerTimer();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = GapClient([&] (std::stop_token) {
+      return sessions[index++];
+    }, &timer, &time_client);
+    first->m_messages->close();
+    timer.trigger();
+    second->m_messages->push(encode_response(1, 900, 10, 'A'));
+    REQUIRE(client.get_responses()->pop().m_sequence == 900);
+    REQUIRE(first->m_is_closed);
   }
 
   TEST_CASE("old_session_write_failure") {

@@ -46,6 +46,7 @@ namespace {
   struct StubGapClient {
     std::shared_ptr<Queue<CxaPitchGap>> m_requests;
     std::shared_ptr<Queue<CxaPitchGapResponse>> m_responses;
+    std::shared_ptr<Queue<int>> m_gate;
     std::uint32_t m_limit;
     bool m_is_recoverable;
 
@@ -61,6 +62,9 @@ namespace {
 
     std::uint32_t request(std::uint8_t unit, const CxaPitchGap& gap,
         std::uint32_t live) {
+      if(m_gate) {
+        m_gate->pop();
+      }
       m_requests->push(gap);
       return std::min(gap.m_count, m_limit);
     }
@@ -73,6 +77,9 @@ namespace {
     void close() {
       m_requests->close();
       m_responses->close();
+      if(m_gate) {
+        m_gate->push(0);
+      }
     }
   };
 
@@ -198,11 +205,23 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(client.read().m_type == 0x12);
   }
 
+  TEST_CASE("own_clients") {
+    using OwnedClient = CxaPitchClient<StubProtocolClient, StubGapClient,
+      StubSpinClient*, FixedTimeClient*>;
+    auto feed = StubProtocolClient();
+    auto gap_client = StubGapClient();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = OwnedClient(1, seconds(3), seconds(5), std::vector{feed},
+      std::vector<StubProtocolClient>(), optional(gap_client), none,
+      &time_client);
+    feed.m_blocks->push(encode_block(1, {0x11}));
+    REQUIRE(client.read().m_type == 0x11);
+  }
+
   TEST_CASE("ignore_another_unit") {
     auto feed = StubProtocolClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
-    auto client = Client(2, seconds(3), seconds(5),
-      std::vector{&feed},
+    auto client = Client(2, seconds(3), seconds(5), std::vector{&feed},
       std::vector<StubProtocolClient*>(), none, none, &time_client);
     feed.m_blocks->push(encode_block(1, {0x11}));
     feed.m_reads->pop();
@@ -255,6 +274,55 @@ TEST_SUITE("CxaPitchClient") {
     auto retry = gap_client.m_requests->pop();
     REQUIRE(retry.m_sequence == 3);
     REQUIRE(retry.m_count == 1);
+  }
+
+  TEST_CASE("feed_during_request") {
+    auto feed = StubProtocolClient();
+    auto gap_client = StubGapClient();
+    gap_client.m_gate = std::make_shared<Queue<int>>();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = Client(1, seconds(3), seconds(5), std::vector{&feed},
+      std::vector<StubProtocolClient*>(), &gap_client, none, &time_client);
+    auto reader = MessageReader(client);
+    feed.m_blocks->push(encode_block(1, {0x11}));
+    REQUIRE(reader.m_types->pop() == 0x11);
+    feed.m_blocks->push(encode_block(4, {}));
+    flush_pending_routines();
+    time_client.set(TIMESTAMP + seconds(6));
+    feed.m_blocks->push(encode_block(4, {0x14}));
+    flush_pending_routines();
+    REQUIRE(reader.m_types->try_pop().value_or(0) == 0x14);
+  }
+
+  TEST_CASE("partial_request_retry") {
+    auto first = StubProtocolClient();
+    auto second = StubProtocolClient();
+    auto gap_client = StubGapClient();
+    gap_client.m_limit = 1;
+    gap_client.m_gate = std::make_shared<Queue<int>>();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client =
+      Client(1, seconds(3), seconds(30), std::vector{&first, &second},
+        std::vector<StubProtocolClient*>(), &gap_client, none, &time_client);
+    auto reader = MessageReader(client);
+    first.m_blocks->push(encode_block(1, {0x11}));
+    second.m_blocks->push(encode_block(1, {0x11}));
+    REQUIRE(reader.m_types->pop() == 0x11);
+    first.m_blocks->push(encode_block(4, {}));
+    second.m_blocks->push(encode_block(4, {}));
+    flush_pending_routines();
+    time_client.set(TIMESTAMP + seconds(4));
+    first.m_blocks->push(encode_block(6, {}));
+    second.m_blocks->push(encode_block(6, {}));
+    flush_pending_routines();
+    gap_client.m_gate->push(0);
+    auto request = gap_client.m_requests->pop();
+    REQUIRE(request.m_sequence == 2);
+    REQUIRE(request.m_count == 2);
+    gap_client.m_gate->push(0);
+    auto retry = gap_client.m_requests->pop();
+    REQUIRE(retry.m_sequence == 3);
+    REQUIRE(retry.m_count == 3);
   }
 
   TEST_CASE("read_malformed_block") {
