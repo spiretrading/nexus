@@ -3,10 +3,12 @@
 #include <algorithm>
 #include <cstddef>
 #include <cstdint>
+#include <stdexcept>
 #include <string_view>
 #include <Beam/IO/Buffer.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/endian/conversion.hpp>
+#include <boost/throw_exception.hpp>
 
 namespace Nexus {
 
@@ -76,16 +78,22 @@ namespace Nexus {
 
   template<Beam::IsBuffer B>
   void CxaPitchEncoder<B>::write_text(std::string_view value, int size) {
-    auto length = std::min(value.size(), static_cast<std::size_t>(size));
+    auto length =
+      std::min(value.size(), static_cast<std::size_t>(std::max(size, 0)));
     Beam::append(*m_buffer, value.data(), length);
     pad(size - static_cast<int>(length));
   }
 
   template<Beam::IsBuffer B>
   void CxaPitchEncoder<B>::pad(int size) {
-    for(auto i = 0; i != size; ++i) {
-      Beam::append(*m_buffer, " ", 1);
+    if(size <= 0) {
+      return;
     }
+    auto length = static_cast<std::size_t>(size);
+    if(m_buffer->grow(length) < length) {
+      boost::throw_with_location(std::out_of_range("Buffer failed to grow."));
+    }
+    std::fill_n(Beam::get_mutable_suffix(*m_buffer, length), length, ' ');
   }
 }
 

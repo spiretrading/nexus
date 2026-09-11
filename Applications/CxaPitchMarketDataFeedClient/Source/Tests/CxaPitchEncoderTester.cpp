@@ -1,6 +1,9 @@
-#include <string>
+#include <array>
+#include <limits>
+#include <stdexcept>
 #include <string_view>
 #include <Beam/IO/SharedBuffer.hpp>
+#include <Beam/IO/StaticBuffer.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchEncoder.hpp"
@@ -28,5 +31,37 @@ TEST_SUITE("CxaPitchEncoder") {
     encoder.pad(3);
     REQUIRE(std::string_view(buffer.get_data(), buffer.get_size()) ==
       "FIRMAB    ABCD   ");
+  }
+
+  TEST_CASE("nonpositive_widths") {
+    auto buffer = Beam::SharedBuffer("FIRM", 4);
+    auto encoder = CxaPitchEncoder(Beam::Ref(buffer));
+    for(auto size : std::array{0, -1, std::numeric_limits<int>::min()}) {
+      encoder.pad(size);
+      REQUIRE(std::string_view(buffer.get_data(), buffer.get_size()) == "FIRM");
+      encoder.write_text("AB", size);
+      REQUIRE(std::string_view(buffer.get_data(), buffer.get_size()) == "FIRM");
+    }
+  }
+
+  TEST_CASE("shared_padding") {
+    auto original = Beam::SharedBuffer("FIRMxxxx", 8);
+    auto buffer = original;
+    buffer.shrink(4);
+    auto encoder = CxaPitchEncoder(Beam::Ref(buffer));
+    encoder.pad(4);
+    REQUIRE(
+      std::string_view(buffer.get_data(), buffer.get_size()) == "FIRM    ");
+    REQUIRE(
+      std::string_view(original.get_data(), original.get_size()) == "FIRMxxxx");
+  }
+
+  TEST_CASE("padding_capacity") {
+    auto buffer = Beam::StaticBuffer<8>("FIRMxxxx", 8);
+    buffer.shrink(4);
+    auto encoder = CxaPitchEncoder(Beam::Ref(buffer));
+    REQUIRE_THROWS_AS(encoder.pad(5), std::out_of_range);
+    REQUIRE(
+      std::string_view(buffer.get_data(), buffer.get_size()) == "FIRMxxxx");
   }
 }
