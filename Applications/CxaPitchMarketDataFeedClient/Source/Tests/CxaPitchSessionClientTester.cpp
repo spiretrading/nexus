@@ -5,6 +5,7 @@
 #include <stop_token>
 #include <string>
 #include <string_view>
+#include <Beam/IO/AsyncWriter.hpp>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/IOException.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
@@ -49,6 +50,9 @@ namespace {
       m_writer->write(buffer);
     }
   };
+
+  using GatedChannel =
+    WrapperChannel<LocalClientChannel*, AsyncWriter<GatedWriter>>;
 
   std::string read_exactly(LocalServerChannel& channel, std::size_t size) {
     auto buffer = SharedBuffer();
@@ -205,7 +209,7 @@ TEST_SUITE("CxaPitchSessionClient") {
     auto gate = std::make_shared<Queue<int>>();
     auto writes = std::make_shared<Queue<int>>();
     gate->push(0);
-    auto wrapper = WrapperChannel<LocalClientChannel*, GatedWriter>(
+    auto wrapper = GatedChannel(
       &channel, GatedWriter(&channel.get_writer(), gate, writes));
     auto timer = TriggerTimer();
     auto client = CxaPitchSessionClient(CxaPitchLogin(), &wrapper, &timer);
@@ -317,7 +321,7 @@ TEST_SUITE("CxaPitchSessionClient") {
     auto gate = std::make_shared<Queue<int>>();
     auto writes = std::make_shared<Queue<int>>();
     gate->push(0);
-    auto wrapper = WrapperChannel<LocalClientChannel*, GatedWriter>(
+    auto wrapper = GatedChannel(
       &channel, GatedWriter(&channel.get_writer(), gate, writes));
     auto timer = TriggerTimer();
     auto client = CxaPitchSessionClient(CxaPitchLogin(), &wrapper, &timer);

@@ -7,14 +7,13 @@
 #include <stop_token>
 #include <type_traits>
 #include <utility>
-#include <Beam/IO/AsyncWriter.hpp>
 #include <Beam/IO/Channel.hpp>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/IOException.hpp>
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/IO/Reader.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/IO/StaticBuffer.hpp>
+#include <Beam/IO/SyncWriter.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
@@ -99,7 +98,7 @@ namespace Nexus {
 
     private:
       Beam::local_ptr_t<C> m_channel;
-      Beam::AsyncWriter<typename Channel::Writer*> m_writer;
+      Beam::SyncWriter<typename Channel::Writer*> m_writer;
       Beam::local_ptr_t<T> m_timer;
       Beam::SharedBuffer m_buffer;
       std::string_view m_payload;
