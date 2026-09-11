@@ -346,15 +346,17 @@ TEST_SUITE("CxaPitchClient") {
       std::vector{&first, &second},
       std::vector<StubProtocolClient*>(), none, none, &time_client, &timer);
     auto reader = MessageReader(client);
-    first.m_blocks->push(encode_block(100, {0x11}));
-    second.m_blocks->push(encode_block(100, {0x11}));
-    REQUIRE(reader.m_types->pop() == 0x11);
+    first.m_blocks->push(encode_block(500000, {0x11}));
+    second.m_blocks->push(encode_block(500000, {0x11}));
+    flush_pending_routines();
+    REQUIRE(reader.m_types->try_pop().value_or(0) == 0x11);
     first.m_blocks->push(encode_block(1, {CxaPitchUnitClear::TYPE}));
     second.m_blocks->push(encode_block(1, {CxaPitchUnitClear::TYPE}));
     flush_pending_routines();
-    REQUIRE(reader.m_types->try_pop().value_or(0) == CxaPitchUnitClear::TYPE);
+    REQUIRE(!reader.m_types->try_pop());
     first.m_blocks->push(encode_block(2, {0x12}));
     flush_pending_routines();
+    REQUIRE(reader.m_types->try_pop().value_or(0) == CxaPitchUnitClear::TYPE);
     REQUIRE(reader.m_types->try_pop().value_or(0) == 0x12);
   }
 
