@@ -248,6 +248,29 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(!sequencer.get_gap());
   }
 
+  TEST_CASE("overlapping_blocks") {
+    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto timestamp = time_from_string("2026-09-08 10:00:00");
+    auto first = encode_block(1, {0x11, 0x12});
+    sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
+    REQUIRE(read(sequencer) == 0x11);
+    auto buffered = encode_block(5, {0x15, 0x16});
+    sequencer.add(0, CxaPitchBlock::parse(buffered), timestamp);
+    auto overlap = encode_block(1, {0x11, 0x12, 0x13, 0x14, 0x15, 0x16, 0x17});
+    SUBCASE("redundant_feed") {
+      sequencer.add(1, CxaPitchBlock::parse(overlap), timestamp);
+    }
+    SUBCASE("recovery") {
+      sequencer.recover(CxaPitchBlock::parse(overlap));
+    }
+    for(auto type = 0x12; type != 0x18; ++type) {
+      REQUIRE(read(sequencer) == type);
+    }
+    REQUIRE(read(sequencer) == 0);
+    REQUIRE(sequencer.get_sequence().value_or(0) == 8);
+    REQUIRE(!sequencer.get_gap());
+  }
+
   TEST_CASE("gap_quorum") {
     auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
@@ -264,6 +287,53 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(gap.has_value());
     REQUIRE(gap->m_sequence == 3);
     REQUIRE(gap->m_count == 1);
+  }
+
+  TEST_CASE("three_feed_quorum") {
+    auto sequencer = CxaPitchSequencer(3, duration_from_string("00:00:03"));
+    auto timestamp = time_from_string("2026-09-08 10:00:00");
+    auto first = encode_block(1, {0x11});
+    for(auto feed = 0; feed != 3; ++feed) {
+      sequencer.add(feed, CxaPitchBlock::parse(first), timestamp);
+    }
+    REQUIRE(read(sequencer) == 0x11);
+    auto slowest = 0;
+    SUBCASE("first_feed") {
+      slowest = 0;
+    }
+    SUBCASE("second_feed") {
+      slowest = 1;
+    }
+    SUBCASE("third_feed") {
+      slowest = 2;
+    }
+    sequencer.add(
+      slowest, CxaPitchBlock::parse(encode_block(4, {})), timestamp);
+    auto later = timestamp + duration_from_string("00:00:02");
+    sequencer.add((slowest + 1) % 3,
+      CxaPitchBlock::parse(encode_block(6, {})), later);
+    sequencer.add((slowest + 2) % 3,
+      CxaPitchBlock::parse(encode_block(8, {})), later);
+    REQUIRE(sequencer.get_position() == 4);
+    auto gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_sequence == 2);
+    REQUIRE(gap->m_count == 2);
+    later = timestamp + duration_from_string("00:00:04");
+    sequencer.update(later);
+    REQUIRE(sequencer.get_position() == 6);
+    gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_sequence == 2);
+    REQUIRE(gap->m_count == 4);
+    sequencer.add(slowest, CxaPitchBlock::parse(encode_block(5, {})), later);
+    REQUIRE(sequencer.get_position() == 5);
+    gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_sequence == 2);
+    REQUIRE(gap->m_count == 3);
+    REQUIRE(read(sequencer) == 0);
+    REQUIRE(sequencer.get_sequence().value_or(0) == 2);
   }
 
   TEST_CASE("heartbeat_gap") {
@@ -397,6 +467,41 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(read(sequencer) == 0x12);
     REQUIRE(read(sequencer) == 0x13);
     REQUIRE(read(sequencer) == 0);
+  }
+
+  TEST_CASE("recovery_after_skip") {
+    auto sequencer = CxaPitchSequencer(1, duration_from_string("00:00:03"));
+    auto timestamp = time_from_string("2026-09-08 10:00:00");
+    auto first = encode_block(1, {0x11});
+    sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
+    REQUIRE(read(sequencer) == 0x11);
+    auto fourth = encode_block(4, {0x14});
+    sequencer.add(0, CxaPitchBlock::parse(fourth), timestamp);
+    auto sixth = encode_block(6, {0x16});
+    sequencer.add(0, CxaPitchBlock::parse(sixth), timestamp);
+    auto gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_sequence == 2);
+    REQUIRE(gap->m_count == 2);
+    sequencer.reset(4);
+    REQUIRE(read(sequencer) == 0x14);
+    REQUIRE(read(sequencer) == 0);
+    auto skipped = encode_block(2, {0x12, 0x13});
+    sequencer.recover(CxaPitchBlock::parse(skipped));
+    REQUIRE(read(sequencer) == 0);
+    REQUIRE(sequencer.get_sequence().value_or(0) == 5);
+    gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_sequence == 5);
+    REQUIRE(gap->m_count == 1);
+    auto overlap = encode_block(2, {0x12, 0x13, 0x14, 0x15, 0x16, 0x17});
+    sequencer.recover(CxaPitchBlock::parse(overlap));
+    REQUIRE(read(sequencer) == 0x15);
+    REQUIRE(read(sequencer) == 0x16);
+    REQUIRE(read(sequencer) == 0x17);
+    REQUIRE(read(sequencer) == 0);
+    REQUIRE(sequencer.get_sequence().value_or(0) == 8);
+    REQUIRE(!sequencer.get_gap());
   }
 
   TEST_CASE("recover_confirmed_gap") {
