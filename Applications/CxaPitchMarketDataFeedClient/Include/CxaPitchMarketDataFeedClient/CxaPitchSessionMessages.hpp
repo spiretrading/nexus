@@ -61,6 +61,13 @@ namespace Nexus {
      * @return The CxaPitchLoginResponse represented by the <i>message</i>.
      */
     static CxaPitchLoginResponse parse(const CxaPitchMessage& message);
+
+    /**
+     * Encodes this message, appending it to a buffer.
+     * @param buffer The buffer to append this message to.
+     */
+    template<Beam::IsBuffer B>
+    void encode(Beam::Out<B> buffer) const;
   };
 
   /** Stores a gap request message. */
@@ -125,6 +132,13 @@ namespace Nexus {
      * @return The CxaPitchGapResponse represented by the <i>message</i>.
      */
     static CxaPitchGapResponse parse(const CxaPitchMessage& message);
+
+    /**
+     * Encodes this message, appending it to a buffer.
+     * @param buffer The buffer to append this message to.
+     */
+    template<Beam::IsBuffer B>
+    void encode(Beam::Out<B> buffer) const;
   };
 
   /** Stores a spin image available message. */
@@ -146,6 +160,13 @@ namespace Nexus {
      *         <i>message</i>.
      */
     static CxaPitchSpinImageAvailable parse(const CxaPitchMessage& message);
+
+    /**
+     * Encodes this message, appending it to a buffer.
+     * @param buffer The buffer to append this message to.
+     */
+    template<Beam::IsBuffer B>
+    void encode(Beam::Out<B> buffer) const;
   };
 
   /** Stores a spin request message. */
@@ -195,6 +216,13 @@ namespace Nexus {
      * @return The CxaPitchSpinResponse represented by the <i>message</i>.
      */
     static CxaPitchSpinResponse parse(const CxaPitchMessage& message);
+
+    /**
+     * Encodes this message, appending it to a buffer.
+     * @param buffer The buffer to append this message to.
+     */
+    template<Beam::IsBuffer B>
+    void encode(Beam::Out<B> buffer) const;
   };
 
   /** Stores a spin finished message. */
@@ -215,6 +243,13 @@ namespace Nexus {
      * @return The CxaPitchSpinFinished represented by the <i>message</i>.
      */
     static CxaPitchSpinFinished parse(const CxaPitchMessage& message);
+
+    /**
+     * Encodes this message, appending it to a buffer.
+     * @param buffer The buffer to append this message to.
+     */
+    template<Beam::IsBuffer B>
+    void encode(Beam::Out<B> buffer) const;
   };
 
   /** Matches the concrete CXA PITCH session message types. */
@@ -257,6 +292,14 @@ namespace Nexus {
   }
 
   template<Beam::IsBuffer B>
+  void CxaPitchLoginResponse::encode(Beam::Out<B> buffer) const {
+    auto encoder = CxaPitchEncoder(Beam::Ref(*buffer));
+    encoder.write_uint8(static_cast<std::uint8_t>(LENGTH));
+    encoder.write_uint8(TYPE);
+    encoder.write_uint8(static_cast<std::uint8_t>(m_status));
+  }
+
+  template<Beam::IsBuffer B>
   void CxaPitchGapRequest::encode(Beam::Out<B> buffer) const {
     auto encoder = CxaPitchEncoder(Beam::Ref(*buffer));
     encoder.write_uint8(static_cast<std::uint8_t>(LENGTH));
@@ -281,6 +324,17 @@ namespace Nexus {
     return response;
   }
 
+  template<Beam::IsBuffer B>
+  void CxaPitchGapResponse::encode(Beam::Out<B> buffer) const {
+    auto encoder = CxaPitchEncoder(Beam::Ref(*buffer));
+    encoder.write_uint8(static_cast<std::uint8_t>(LENGTH));
+    encoder.write_uint8(TYPE);
+    encoder.write_uint8(m_unit);
+    encoder.write_uint32(m_sequence);
+    encoder.write_uint16(m_count);
+    encoder.write_uint8(static_cast<std::uint8_t>(m_status));
+  }
+
   inline CxaPitchSpinImageAvailable CxaPitchSpinImageAvailable::parse(
       const CxaPitchMessage& message) {
     if(message.m_length < LENGTH) {
@@ -291,6 +345,14 @@ namespace Nexus {
     auto available = CxaPitchSpinImageAvailable();
     available.m_sequence = cursor.read_uint32();
     return available;
+  }
+
+  template<Beam::IsBuffer B>
+  void CxaPitchSpinImageAvailable::encode(Beam::Out<B> buffer) const {
+    auto encoder = CxaPitchEncoder(Beam::Ref(*buffer));
+    encoder.write_uint8(static_cast<std::uint8_t>(LENGTH));
+    encoder.write_uint8(TYPE);
+    encoder.write_uint32(m_sequence);
   }
 
   template<Beam::IsBuffer B>
@@ -315,6 +377,16 @@ namespace Nexus {
     return response;
   }
 
+  template<Beam::IsBuffer B>
+  void CxaPitchSpinResponse::encode(Beam::Out<B> buffer) const {
+    auto encoder = CxaPitchEncoder(Beam::Ref(*buffer));
+    encoder.write_uint8(static_cast<std::uint8_t>(LENGTH));
+    encoder.write_uint8(TYPE);
+    encoder.write_uint32(m_sequence);
+    encoder.write_uint32(m_order_count);
+    encoder.write_uint8(static_cast<std::uint8_t>(m_status));
+  }
+
   inline CxaPitchSpinFinished CxaPitchSpinFinished::parse(
       const CxaPitchMessage& message) {
     if(message.m_length < LENGTH) {
@@ -326,6 +398,14 @@ namespace Nexus {
     finished.m_sequence = cursor.read_uint32();
     return finished;
   }
+  template<Beam::IsBuffer B>
+  void CxaPitchSpinFinished::encode(Beam::Out<B> buffer) const {
+    auto encoder = CxaPitchEncoder(Beam::Ref(*buffer));
+    encoder.write_uint8(static_cast<std::uint8_t>(LENGTH));
+    encoder.write_uint8(TYPE);
+    encoder.write_uint32(m_sequence);
+  }
+
 }
 
 #endif
