@@ -1,3 +1,4 @@
+#include <climits>
 #include <vector>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
@@ -21,13 +22,14 @@ namespace {
       std::uint32_t sequence, const std::vector<std::uint8_t>& types) {
     auto payload = std::string();
     for(auto type : types) {
-      payload += char(6);
+      payload += static_cast<char>(CxaPitchUnitClear::LENGTH);
       payload += static_cast<char>(type);
-      payload.append(4, char(0));
+      payload.append(
+        CxaPitchUnitClear::LENGTH - CxaPitchMessage::HEADER_LENGTH, char(0));
     }
     auto header = CxaPitchHeader();
-    header.m_length = static_cast<std::uint16_t>(
-      CxaPitchHeader::LENGTH + payload.size());
+    header.m_length =
+      static_cast<std::uint16_t>(CxaPitchHeader::LENGTH + payload.size());
     header.m_count = static_cast<std::uint8_t>(types.size());
     header.m_unit = 1;
     header.m_sequence = sequence;
@@ -41,10 +43,11 @@ namespace {
     auto payload = std::string();
     payload += static_cast<char>(CxaPitchDeleteOrder::LENGTH);
     payload += static_cast<char>(CxaPitchDeleteOrder::TYPE);
-    for(auto i = 0; i != 8; ++i) {
-      payload += static_cast<char>((timestamp >> (8 * i)) & 0xFF);
+    for(auto i = std::size_t(0); i != sizeof(timestamp); ++i) {
+      auto byte = static_cast<std::uint8_t>(timestamp >> (CHAR_BIT * i));
+      payload += static_cast<char>(byte);
     }
-    payload.append(8, char(0));
+    payload.append(sizeof(CxaPitchDeleteOrder::m_order_id), char(0));
     auto header = CxaPitchHeader();
     header.m_length = static_cast<std::uint16_t>(
       CxaPitchHeader::LENGTH + payload.size());
@@ -58,7 +61,7 @@ namespace {
 }
 
 TEST_SUITE("CxaPitchSequencer") {
-  TEST_CASE("unit_clear_sequence") {
+  TEST_CASE("unit_clear") {
     auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(100, {0x11});
@@ -119,7 +122,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(sequencer.get_sequence().value_or(0) == 102);
   }
 
-  TEST_CASE("ignore_duplicate_block") {
+  TEST_CASE("duplicate_block") {
     auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(100, {0x11});
@@ -133,7 +136,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(read(sequencer) == 0x12);
   }
 
-  TEST_CASE("ignore_duplicate_block_on_each_feed") {
+  TEST_CASE("redundant_blocks") {
     auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_timed_block(100, 1500000000000000000);
@@ -147,7 +150,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(sequencer.get_sequence().value_or(0) == 101);
   }
 
-  TEST_CASE("duplicate_unit_clear_on_each_feed") {
+  TEST_CASE("duplicate_unit_clear") {
     auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto clear = encode_block(100, {CxaPitchUnitClear::TYPE});
@@ -216,7 +219,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(!sequencer.get_gap());
   }
 
-  TEST_CASE("read_messages_in_order") {
+  TEST_CASE("message_order") {
     auto sequencer = CxaPitchSequencer(1, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto data = encode_block(1, {0x11, 0x12, 0x13});
@@ -228,7 +231,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(!sequencer.get_gap());
   }
 
-  TEST_CASE("arbitrate_duplicate_messages") {
+  TEST_CASE("message_arbitration") {
     auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11, 0x12});
@@ -355,7 +358,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(gap->m_count == 2);
   }
 
-  TEST_CASE("ignore_unsequenced_heartbeat") {
+  TEST_CASE("unsequenced_heartbeat") {
     auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11, 0x12});
@@ -521,7 +524,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(gap->m_count == 1);
   }
 
-  TEST_CASE("reset_sequence") {
+  TEST_CASE("sequence_reset") {
     auto sequencer = CxaPitchSequencer(1, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto data = encode_block(1, {0x11, 0x12, 0x13});
@@ -532,7 +535,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(read(sequencer) == 0);
   }
 
-  TEST_CASE("recovery_after_skip") {
+  TEST_CASE("skipped_gap_recovery") {
     auto sequencer = CxaPitchSequencer(1, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11});
@@ -567,7 +570,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(!sequencer.get_gap());
   }
 
-  TEST_CASE("recover_confirmed_gap") {
+  TEST_CASE("gap_recovery") {
     auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11});
@@ -602,7 +605,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(!sequencer.get_gap());
   }
 
-  TEST_CASE("recovery_before_initialization") {
+  TEST_CASE("uninitialized_recovery") {
     auto sequencer = CxaPitchSequencer(1, duration_from_string("00:00:03"));
     auto replay = encode_block(1, {0x11});
     sequencer.recover(CxaPitchBlock::parse(replay));
