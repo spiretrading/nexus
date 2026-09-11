@@ -1,9 +1,6 @@
-#include <string>
-#include <string_view>
 #include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
-#include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"
 
@@ -456,6 +453,80 @@ TEST_SUITE("CxaPitchMessages") {
       [] (const CxaPitchMessage&) { return std::string("unknown"); });
     REQUIRE(text == "(delete_order " + TIME_TEXT +
       " 800891482924597253)");
+  }
+
+  TEST_CASE("visit_partial_callable") {
+    struct Visitor {
+      int operator ()(const CxaPitchUnitClear&) const {
+        return 1;
+      }
+
+      int operator ()(const CxaPitchEndOfSession&) const {
+        return 2;
+      }
+    };
+    auto unit_clear = CxaPitchMessage::parse(
+      std::string_view("\x06\x97\x00\x00\x00\x00", 6));
+    auto end_of_session = CxaPitchMessage::parse(
+      std::string_view("\x06\x2d\x00\x00\x00\x00", 6));
+    auto unknown = CxaPitchMessage::parse(std::string_view("\x02\x7f", 2));
+    auto fallback = [] (const auto&) { return -1; };
+    SUBCASE("overloaded") {
+      auto visitor = Visitor();
+      REQUIRE(visit(unit_clear, visitor, fallback) == 1);
+      REQUIRE(visit(end_of_session, visitor, fallback) == 2);
+      REQUIRE(visit(unknown, visitor, fallback) == -1);
+      REQUIRE(visit(unit_clear, fallback, visitor) == -1);
+    }
+    SUBCASE("constrained_generic") {
+      auto visitor = []<typename T>(const T&) requires
+          std::same_as<T, CxaPitchUnitClear> ||
+            std::same_as<T, CxaPitchEndOfSession> {
+        return T::TYPE;
+      };
+      auto fallback = [] (const auto&) { return std::uint8_t(0); };
+      REQUIRE(visit(unit_clear, visitor, fallback) == CxaPitchUnitClear::TYPE);
+      REQUIRE(visit(end_of_session, visitor, fallback) ==
+        CxaPitchEndOfSession::TYPE);
+      REQUIRE(visit(unknown, visitor, fallback) == 0);
+      REQUIRE(visit(unit_clear, fallback, visitor) == 0);
+    }
+  }
+
+  TEST_CASE("visit_rvalue_callable") {
+    auto source = std::string_view(
+      "\x12\x3c"
+      "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
+      "\x05\x40\x5b\x77\x8f\x56\x1d\x0b", 18);
+    auto message = CxaPitchMessage::parse(source);
+    auto unknown = CxaPitchMessage::parse(std::string_view("\x02\x7f", 2));
+    SUBCASE("value") {
+      auto visitor = [] (CxaPitchDeleteOrder&& message) {
+        return message.m_order_id;
+      };
+      REQUIRE(visit(message, visitor) == ORDER_ID);
+      REQUIRE_THROWS_AS(visit(unknown, visitor), CxaPitchParserException);
+    }
+    SUBCASE("void") {
+      auto order_id = std::uint64_t(0);
+      auto visitor = [&] (CxaPitchDeleteOrder&& message) {
+        order_id = message.m_order_id;
+      };
+      visit(message, visitor);
+      REQUIRE(order_id == ORDER_ID);
+      REQUIRE_NOTHROW(visit(unknown, visitor));
+      REQUIRE(order_id == ORDER_ID);
+    }
+    SUBCASE("fallback") {
+      auto visitor = [] (CxaPitchDeleteOrder&& message) {
+        return message.m_order_id;
+      };
+      auto fallback = [] (const CxaPitchMessage&) {
+        return std::uint64_t(0);
+      };
+      REQUIRE(visit(message, visitor, fallback) == ORDER_ID);
+      REQUIRE(visit(unknown, visitor, fallback) == 0);
+    }
   }
 
   TEST_CASE("visit_unmatched_message") {
