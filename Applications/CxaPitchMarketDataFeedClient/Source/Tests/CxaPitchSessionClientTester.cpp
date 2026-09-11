@@ -11,16 +11,13 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/IO/WrapperChannel.hpp>
 #include <Beam/Queues/Queue.hpp>
-#include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <boost/optional/optional.hpp>
 #include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionClient.hpp"
 
 using namespace Beam;
 using namespace boost;
-using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
@@ -139,35 +136,50 @@ TEST_SUITE("CxaPitchSessionClient") {
 
   TEST_CASE("timeout_pending_login") {
     auto server = LocalServerConnection();
-    auto timer = LiveTimer(milliseconds(1));
+    auto timer = TriggerTimer();
     auto accepting = std::async(std::launch::async, [&] {
       auto channel = server.accept();
       read_exactly(*channel, LOGIN_SIZE);
       return channel;
     });
     auto channel = LocalClientChannel("cxa", server);
-    REQUIRE_THROWS_AS(CxaPitchSessionClient(CxaPitchLogin(), &channel, &timer),
-      ConnectException);
+    auto results = Queue<bool>();
+    auto connecting = RoutineHandler(spawn([&] {
+      try {
+        auto client = CxaPitchSessionClient(CxaPitchLogin(), &channel, &timer);
+        results.push(false);
+      } catch(const ConnectException&) {
+        results.push(true);
+      } catch(const std::exception&) {
+        results.push(false);
+      }
+    }));
     auto server_channel = accepting.get();
+    flush_pending_routines();
+    using Client = CxaPitchSessionClient<LocalClientChannel*, TriggerTimer*>;
+    for(auto i = 0; i != Client::SILENT_HEARTBEAT_LIMIT; ++i) {
+      timer.trigger();
+      flush_pending_routines();
+    }
+    auto result = results.try_pop();
     server_channel->get_connection().close();
+    connecting.wait();
+    REQUIRE(result.has_value());
+    REQUIRE(*result);
   }
 
   TEST_CASE("timeout_silent_session") {
-    auto server = LocalServerConnection();
-    auto accepting = std::async(std::launch::async, [&] {
-      auto channel = server.accept();
-      read_exactly(*channel, LOGIN_SIZE);
-      auto response = std::string("\x03\x02", 2);
-      response += CxaPitchLoginResponse::ACCEPTED;
-      channel->get_writer().write(encode(response, 1));
-      return channel;
-    });
-    auto channel = LocalClientChannel("cxa", server);
-    auto timer = LiveTimer(milliseconds(1));
-    auto client = CxaPitchSessionClient(CxaPitchLogin(), &channel, &timer);
-    auto server_channel = accepting.get();
-    REQUIRE_THROWS_AS(client.read(), IOException);
-    server_channel->get_connection().close();
+    auto fixture = Fixture();
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    using Client = CxaPitchSessionClient<LocalClientChannel*, TriggerTimer*>;
+    for(auto i = 0; i != Client::SILENT_HEARTBEAT_LIMIT; ++i) {
+      fixture.m_timer.trigger();
+      flush_pending_routines();
+    }
+    REQUIRE_THROWS(fixture.m_server_channel->get_writer().write(
+      encode(GAP_RESPONSE, 1)));
+    REQUIRE_THROWS_AS(fixture.m_client->read(), IOException);
   }
 
   TEST_CASE("timer_failure") {
@@ -195,13 +207,21 @@ TEST_SUITE("CxaPitchSessionClient") {
     gate->push(0);
     auto wrapper = WrapperChannel<LocalClientChannel*, GatedWriter>(
       &channel, GatedWriter(&channel.get_writer(), gate, writes));
-    auto timer = LiveTimer(milliseconds(1));
+    auto timer = TriggerTimer();
     auto client = CxaPitchSessionClient(CxaPitchLogin(), &wrapper, &timer);
     auto server_channel = accepting.get();
     writes->pop();
+    timer.trigger();
+    flush_pending_routines();
     writes->pop();
-    REQUIRE_THROWS_AS(client.read(), IOException);
+    using Client = decltype(client);
+    for(auto i = 0; i != Client::SILENT_HEARTBEAT_LIMIT; ++i) {
+      timer.trigger();
+      flush_pending_routines();
+    }
     gate->close();
+    REQUIRE_THROWS(server_channel->get_writer().write(encode(GAP_RESPONSE, 1)));
+    REQUIRE_THROWS_AS(client.read(), IOException);
     server_channel->get_connection().close();
   }
 

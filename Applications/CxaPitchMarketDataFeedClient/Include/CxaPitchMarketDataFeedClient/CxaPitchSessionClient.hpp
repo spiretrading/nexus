@@ -81,7 +81,10 @@ namespace Nexus {
 
       ~CxaPitchSessionClient();
 
-      /** Reads the next message sent by the server. */
+      /**
+       * Reads the next message sent by the server.
+       * The returned payload is valid until the next read or destruction.
+       */
       CxaPitchMessage read();
 
       /**
