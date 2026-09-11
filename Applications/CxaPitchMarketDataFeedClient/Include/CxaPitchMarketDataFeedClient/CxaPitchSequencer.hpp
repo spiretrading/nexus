@@ -107,8 +107,15 @@ namespace Nexus {
     }
     auto& source = m_feeds[feed];
     auto position = header.m_sequence + header.m_count;
-    if(position > source.m_position ||
-        header.m_count == 0 && position == source.m_position) {
+    auto is_current_heartbeat = [&] {
+      if(header.m_count != 0 || position != source.m_position) {
+        return false;
+      }
+      return std::ranges::none_of(m_feeds, [&] (const auto& feed) {
+        return feed.m_position > position;
+      });
+    };
+    if(position > source.m_position || is_current_heartbeat()) {
       source.m_is_active = true;
       source.m_timestamp = timestamp;
     }
