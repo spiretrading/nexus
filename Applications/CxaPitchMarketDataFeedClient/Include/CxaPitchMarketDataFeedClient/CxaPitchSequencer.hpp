@@ -7,7 +7,6 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <boost/optional/optional.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
-#include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
 
 namespace Nexus {
 
@@ -39,9 +38,8 @@ namespace Nexus {
        * @param feed The index of the feed that received the block.
        * @param block The block that was received.
        * @param timestamp The time that the block was received.
-       * @return Whether the feed's sequence restarted, discarding all state.
        */
-      bool add(int feed, const CxaPitchBlock& block,
+      void add(int feed, const CxaPitchBlock& block,
         boost::posix_time::ptime timestamp);
 
       /**
@@ -84,19 +82,11 @@ namespace Nexus {
         std::uint32_t m_position;
         boost::posix_time::ptime m_timestamp;
       };
-      struct Rewind {
-        std::uint32_t m_sequence;
-        std::deque<Entry> m_messages;
-      };
       std::vector<Feed> m_feeds;
       boost::posix_time::time_duration m_feed_timeout;
       boost::optional<std::uint32_t> m_expected_sequence;
       std::deque<Entry> m_messages;
-      boost::posix_time::ptime m_message_timestamp;
-      boost::optional<Rewind> m_rewind;
 
-      void restart(std::uint32_t sequence);
-      void expire(boost::posix_time::ptime timestamp);
       void store(const CxaPitchBlock& block);
   };
 
@@ -105,60 +95,25 @@ namespace Nexus {
     : m_feeds(feeds),
       m_feed_timeout(feed_timeout) {}
 
-  inline bool CxaPitchSequencer::add(int feed, const CxaPitchBlock& block,
+  inline void CxaPitchSequencer::add(int feed, const CxaPitchBlock& block,
       boost::posix_time::ptime timestamp) {
-    expire(timestamp);
+    update(timestamp);
     auto& header = block.get_header();
     if(header.m_sequence == 0) {
-      return false;
+      return;
     }
     if(!m_expected_sequence) {
       m_expected_sequence = header.m_sequence;
     }
-    auto message_timestamp = get_timestamp(block);
-    auto is_stale =
-      message_timestamp && !m_message_timestamp.is_not_a_date_time() &&
-      *message_timestamp <= m_message_timestamp;
     auto& source = m_feeds[feed];
     auto position = header.m_sequence + header.m_count;
-    auto is_restart = false;
-    if(header.m_sequence < source.m_position && !is_stale) {
-      auto is_clear = std::ranges::any_of(block, [] (const auto& message) {
-        return message.m_type == CxaPitchUnitClear::TYPE;
-      });
-      if(header.m_count != 0 && (message_timestamp || is_clear ||
-          m_rewind && header.m_sequence > m_rewind->m_sequence)) {
-        if(m_rewind) {
-          if(message_timestamp || header.m_sequence > m_rewind->m_sequence) {
-            restart(std::min(m_rewind->m_sequence, header.m_sequence));
-            is_restart = true;
-          }
-        } else {
-          m_rewind.emplace(header.m_sequence);
-          auto sequence = header.m_sequence;
-          for(auto& message : block) {
-            m_rewind->m_messages.emplace_back(sequence, Beam::SharedBuffer(
-              message.m_payload - CxaPitchMessage::HEADER_LENGTH,
-              message.m_length));
-            ++sequence;
-          }
-        }
-      }
-    } else {
-      m_rewind = boost::none;
-      if(position > source.m_position ||
-          (header.m_count == 0 && position == source.m_position)) {
-        source.m_is_active = true;
-        source.m_timestamp = timestamp;
-      }
-      if(message_timestamp && (m_message_timestamp.is_not_a_date_time() ||
-          *message_timestamp > m_message_timestamp)) {
-        m_message_timestamp = *message_timestamp;
-      }
+    if(position > source.m_position ||
+        header.m_count == 0 && position == source.m_position) {
+      source.m_is_active = true;
+      source.m_timestamp = timestamp;
     }
     source.m_position = std::max(source.m_position, position);
     store(block);
-    return is_restart;
   }
 
   inline void CxaPitchSequencer::recover(const CxaPitchBlock& block) {
@@ -169,7 +124,12 @@ namespace Nexus {
   }
 
   inline void CxaPitchSequencer::update(boost::posix_time::ptime timestamp) {
-    expire(timestamp);
+    for(auto& source : m_feeds) {
+      if(source.m_is_active &&
+          timestamp - source.m_timestamp > m_feed_timeout) {
+        source.m_is_active = false;
+      }
+    }
   }
 
   inline boost::optional<Beam::SharedBuffer> CxaPitchSequencer::read() {
@@ -202,9 +162,8 @@ namespace Nexus {
   }
 
   inline boost::optional<CxaPitchGap> CxaPitchSequencer::get_gap() const {
-    if(!m_expected_sequence ||
-        !m_messages.empty() &&
-          m_messages.front().m_sequence == m_expected_sequence) {
+    if(!m_expected_sequence || !m_messages.empty() &&
+        m_messages.front().m_sequence == m_expected_sequence) {
       return boost::none;
     }
     auto end = get_position();
@@ -222,24 +181,6 @@ namespace Nexus {
       m_messages.pop_front();
     }
     m_expected_sequence = sequence;
-  }
-
-  inline void CxaPitchSequencer::restart(std::uint32_t sequence) {
-    m_messages = std::move(m_rewind->m_messages);
-    for(auto& source : m_feeds) {
-      source.m_position = 0;
-    }
-    m_expected_sequence = sequence;
-    m_rewind = boost::none;
-  }
-
-  inline void CxaPitchSequencer::expire(boost::posix_time::ptime timestamp) {
-    for(auto& source : m_feeds) {
-      if(source.m_is_active &&
-          timestamp - source.m_timestamp > m_feed_timeout) {
-        source.m_is_active = false;
-      }
-    }
   }
 
   inline void CxaPitchSequencer::store(const CxaPitchBlock& block) {

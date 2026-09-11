@@ -337,7 +337,7 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(retry.m_count == 3);
   }
 
-  TEST_CASE("restarted_feed") {
+  TEST_CASE("lower_sequences") {
     auto first = StubProtocolClient();
     auto second = StubProtocolClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
@@ -356,8 +356,11 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(!reader.m_types->try_pop());
     first.m_blocks->push(encode_block(2, {0x12}));
     flush_pending_routines();
-    REQUIRE(reader.m_types->try_pop().value_or(0) == CxaPitchUnitClear::TYPE);
-    REQUIRE(reader.m_types->try_pop().value_or(0) == 0x12);
+    REQUIRE(!reader.m_types->try_pop());
+    first.m_blocks->push(encode_block(500001, {0x13}));
+    flush_pending_routines();
+    REQUIRE(reader.m_types->try_pop().value_or(0) == 0x13);
+    REQUIRE(!reader.m_types->try_pop());
   }
 
   TEST_CASE("silent_feed") {

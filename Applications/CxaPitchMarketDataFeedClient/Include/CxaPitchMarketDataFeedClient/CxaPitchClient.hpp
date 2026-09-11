@@ -378,22 +378,13 @@ namespace Nexus {
         auto live = boost::optional<std::uint32_t>();
         auto close_spin = false;
         Beam::with(m_sequencer, [&] (auto& sequencer) {
-          auto is_restart = sequencer.add(index, block, timestamp);
+          sequencer.add(index, block, timestamp);
           m_feed_timestamp = timestamp;
           if(m_is_silent) {
             m_is_silent = false;
             print([&] (auto& out) {
               out << "(feed " << timestamp << ')';
             });
-          }
-          if(is_restart) {
-            print([&] (auto& out) {
-              out << "(restarted " << timestamp << ' ' <<
-                block.get_header().m_sequence << ')';
-            });
-            m_reported_gap = 0;
-            m_requested = 0;
-            m_rejections.clear();
           }
           if(!m_is_ready) {
             auto start = m_start;
