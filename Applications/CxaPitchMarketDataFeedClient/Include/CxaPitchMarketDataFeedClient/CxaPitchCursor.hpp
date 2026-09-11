@@ -1,6 +1,5 @@
 #ifndef CXA_PITCH_CURSOR_HPP
 #define CXA_PITCH_CURSOR_HPP
-#include <cstdint>
 #include <cstring>
 #include <string>
 #include <boost/date_time/posix_time/posix_time_types.hpp>
