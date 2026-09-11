@@ -268,10 +268,14 @@ namespace Nexus {
     Beam::IsChannel<Beam::dereference_t<C>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
   void CxaPitchSessionClient<C, T>::on_timer(typename Timer::Result result) {
-    if(result != Timer::Result::EXPIRED || !m_open_state.is_open()) {
+    if(result == Timer::Result::CANCELED || !m_open_state.is_open()) {
       return;
     }
     try {
+      if(result == Timer::Result::FAIL) {
+        m_channel->get_connection().close();
+        return;
+      }
       if(m_is_logged_in && m_is_receiving.exchange(false)) {
         m_silence = 0;
       } else {

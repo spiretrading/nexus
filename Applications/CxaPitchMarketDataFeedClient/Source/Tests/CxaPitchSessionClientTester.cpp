@@ -170,6 +170,15 @@ TEST_SUITE("CxaPitchSessionClient") {
     server_channel->get_connection().close();
   }
 
+  TEST_CASE("timer_failure") {
+    auto fixture = Fixture();
+    fixture.m_timer.fail();
+    flush_pending_routines();
+    REQUIRE_THROWS(fixture.m_server_channel->get_writer().write(
+      encode(GAP_RESPONSE, 1)));
+    REQUIRE_THROWS_AS(fixture.m_client->read(), IOException);
+  }
+
   TEST_CASE("timeout_blocked_write") {
     auto server = LocalServerConnection();
     auto accepting = std::async(std::launch::async, [&] {
