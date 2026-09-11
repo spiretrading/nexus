@@ -120,10 +120,10 @@ int main(int argc, const char** argv) {
       }
     }
     auto client = CxaPitchClient(feed_configuration.m_unit,
-      feed_configuration.m_liveness, feed_configuration.m_gap_timeout,
+      feed_configuration.m_feed_timeout, feed_configuration.m_gap_timeout,
       std::move(feeds), std::move(recovery), std::move(gap_client),
       std::move(spin_client), std::make_unique<LocalTimeClient>(),
-      std::make_unique<LiveTimer>(feed_configuration.m_liveness));
+      std::make_unique<LiveTimer>(feed_configuration.m_feed_timeout));
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
       Ref(service_locator_client), sampling, feed_configuration.m_country);
     auto feed_client = CxaPitchMarketDataFeedClient(
