@@ -235,6 +235,22 @@ TEST_SUITE("CxaPitchSessionClient") {
     REQUIRE(fixture.m_client->read().m_type == CxaPitchGapResponse::TYPE);
   }
 
+  TEST_CASE("read_consecutive_blocks") {
+    auto fixture = Fixture();
+    auto messages = std::string(GAP_RESPONSE) + std::string(GAP_RESPONSE);
+    auto buffer = encode(messages, 2);
+    append(buffer, encode("", 0));
+    append(buffer, encode(std::string_view("\x03\x02" "A", 3), 1));
+    fixture.m_server_channel->get_writer().write(buffer);
+    auto first = fixture.m_client->read();
+    auto second = fixture.m_client->read();
+    REQUIRE(CxaPitchGapResponse::parse(first).m_sequence == 4155);
+    REQUIRE(CxaPitchGapResponse::parse(second).m_sequence == 4155);
+    REQUIRE(second.m_payload == first.m_payload + first.m_length);
+    auto response = CxaPitchLoginResponse::parse(fixture.m_client->read());
+    REQUIRE(response.m_status == CxaPitchLoginResponse::ACCEPTED);
+  }
+
   TEST_CASE("read_miscounted_block") {
     auto trailing = std::string(GAP_RESPONSE) + std::string("\x02\x04", 2);
     for(auto& block : {encode(GAP_RESPONSE, 0), encode(GAP_RESPONSE, 2),

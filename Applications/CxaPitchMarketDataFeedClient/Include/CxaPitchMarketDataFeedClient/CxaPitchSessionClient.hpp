@@ -99,9 +99,7 @@ namespace Nexus {
       Beam::AsyncWriter<typename Channel::Writer*> m_writer;
       Beam::local_ptr_t<T> m_timer;
       Beam::SharedBuffer m_buffer;
-      std::size_t m_position;
-      std::size_t m_end;
-      std::uint8_t m_remaining;
+      std::string_view m_payload;
       std::atomic_bool m_is_receiving;
       std::atomic_bool m_is_logged_in;
       int m_silence;
@@ -111,8 +109,7 @@ namespace Nexus {
       CxaPitchSessionClient(const CxaPitchSessionClient&) = delete;
       CxaPitchSessionClient& operator =(const CxaPitchSessionClient&) = delete;
       void log_in(const CxaPitchLogin& login);
-      void compact();
-      void fill(std::size_t size);
+      void read_until(std::size_t size);
       void write_heartbeat();
       void on_timer(typename Timer::Result result);
   };
@@ -143,9 +140,6 @@ namespace Nexus {
       try : m_channel(std::forward<CF>(channel)),
             m_writer(&m_channel->get_writer()),
             m_timer(std::forward<TF>(timer)),
-            m_position(0),
-            m_end(0),
-            m_remaining(0),
             m_is_receiving(false),
             m_is_logged_in(false),
             m_silence(0) {
@@ -177,27 +171,23 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<T>>
   CxaPitchMessage CxaPitchSessionClient<C, T>::read() {
     return Beam::try_or_nest([&] {
-      while(m_remaining == 0) {
-        m_position = m_end;
-        compact();
-        fill(CxaPitchHeader::LENGTH);
-        auto header = CxaPitchHeader::parse(std::string_view(
-          m_buffer.get_data() + m_position, m_buffer.get_size() - m_position));
+      while(m_payload.empty()) {
+        reset(m_buffer);
+        read_until(CxaPitchHeader::LENGTH);
+        auto header = CxaPitchHeader::parse(
+          std::string_view(m_buffer.get_data(), m_buffer.get_size()));
         if(header.m_length < CxaPitchHeader::LENGTH) {
           boost::throw_with_location(CxaPitchParserException(
             "Sequenced unit header length out of range."));
         }
-        fill(header.m_length);
-        CxaPitchBlock::parse(
-          std::string_view(m_buffer.get_data() + m_position, header.m_length));
-        m_end = m_position + header.m_length;
-        m_position += CxaPitchHeader::LENGTH;
-        m_remaining = header.m_count;
+        read_until(header.m_length);
+        auto source =
+          std::string_view(m_buffer.get_data(), m_buffer.get_size());
+        CxaPitchBlock::parse(source);
+        m_payload = source.substr(CxaPitchHeader::LENGTH);
       }
-      auto message = CxaPitchMessage::parse(std::string_view(
-        m_buffer.get_data() + m_position, m_end - m_position));
-      m_position += message.m_length;
-      --m_remaining;
+      auto message = CxaPitchMessage::parse(m_payload);
+      m_payload.remove_prefix(message.m_length);
       return message;
     }, Beam::IOException("Failed to read from the CXA PITCH server."));
   }
@@ -254,25 +244,8 @@ namespace Nexus {
   template<typename C, typename T> requires
     Beam::IsChannel<Beam::dereference_t<C>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  void CxaPitchSessionClient<C, T>::compact() {
-    if(m_position == 0) {
-      return;
-    }
-    if(m_position == m_buffer.get_size()) {
-      reset(m_buffer);
-    } else {
-      m_buffer = Beam::SharedBuffer(
-        m_buffer.get_data() + m_position, m_buffer.get_size() - m_position);
-    }
-    m_position = 0;
-    m_end = 0;
-  }
-
-  template<typename C, typename T> requires
-    Beam::IsChannel<Beam::dereference_t<C>> &&
-      Beam::IsTimer<Beam::dereference_t<T>>
-  void CxaPitchSessionClient<C, T>::fill(std::size_t size) {
-    auto available = m_buffer.get_size() - m_position;
+  void CxaPitchSessionClient<C, T>::read_until(std::size_t size) {
+    auto available = m_buffer.get_size();
     if(available >= size) {
       return;
     }
