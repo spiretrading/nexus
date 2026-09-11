@@ -1,10 +1,5 @@
 #ifndef CXA_PITCH_HEADER_HPP
 #define CXA_PITCH_HEADER_HPP
-#include <cstddef>
-#include <cstdint>
-#include <string_view>
-#include <Beam/IO/Buffer.hpp>
-#include <Beam/Pointers/Out.hpp>
 #include <boost/throw_exception.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchCursor.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchEncoder.hpp"
