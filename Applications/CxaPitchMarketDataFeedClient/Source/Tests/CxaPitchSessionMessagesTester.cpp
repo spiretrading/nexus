@@ -1,8 +1,6 @@
 #include <string_view>
 #include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/Pointers/Out.hpp>
 #include <doctest/doctest.h>
-#include "CxaPitchMarketDataFeedClient/CxaPitchMessage.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionMessages.hpp"
 
@@ -55,7 +53,7 @@ TEST_SUITE("CxaPitchSessionMessages") {
     auto source = std::string_view("\x03\x02" "N", 3);
     auto response =
       CxaPitchLoginResponse::parse(CxaPitchMessage::parse(source));
-    REQUIRE(response.m_status != CxaPitchLoginResponse::ACCEPTED);
+    REQUIRE(response.m_status == 'N');
   }
 
   TEST_CASE("encode_gap_request") {
@@ -111,8 +109,8 @@ TEST_SUITE("CxaPitchSessionMessages") {
     SUBCASE("gap_response") {
       auto response = CxaPitchGapResponse(2, 0x12345678, 0x0123, 'O');
       response.encode(Beam::out(buffer));
-      expected = std::string_view(
-        "prefix\x0a\x04\x02\x78\x56\x34\x12\x23\x01" "O", 16);
+      expected =
+        std::string_view("prefix\x0a\x04\x02\x78\x56\x34\x12\x23\x01" "O", 16);
     }
     SUBCASE("spin_image_available") {
       auto available = CxaPitchSpinImageAvailable(0x12345678);
@@ -131,5 +129,63 @@ TEST_SUITE("CxaPitchSessionMessages") {
       expected = std::string_view("prefix\x06\x83\x78\x56\x34\x12", 12);
     }
     REQUIRE(std::string_view(buffer.get_data(), buffer.get_size()) == expected);
+  }
+
+  TEST_CASE("parse_short_session_message") {
+    SUBCASE("login_response") {
+      auto message = CxaPitchMessage::parse(std::string_view("\x02\x02", 2));
+      REQUIRE_THROWS_AS(
+        CxaPitchLoginResponse::parse(message), CxaPitchParserException);
+    }
+    SUBCASE("spin_image_available") {
+      auto message =
+        CxaPitchMessage::parse(std::string_view("\x05\x80\x78\x56\x34", 5));
+      REQUIRE_THROWS_AS(
+        CxaPitchSpinImageAvailable::parse(message), CxaPitchParserException);
+    }
+    SUBCASE("spin_response") {
+      auto message = CxaPitchMessage::parse(
+        std::string_view("\x0a\x82\x78\x56\x34\x12\x67\x45\x23\x01", 10));
+      REQUIRE_THROWS_AS(
+        CxaPitchSpinResponse::parse(message), CxaPitchParserException);
+    }
+  }
+
+  TEST_CASE("parse_extended_session_message") {
+    SUBCASE("login_response") {
+      auto message =
+        CxaPitchMessage::parse(std::string_view("\x04\x02" "N\xff", 4));
+      auto response = CxaPitchLoginResponse::parse(message);
+      REQUIRE(response.m_status == 'N');
+    }
+    SUBCASE("gap_response") {
+      auto message = CxaPitchMessage::parse(
+        std::string_view("\x0b\x04\x02\x78\x56\x34\x12\x23\x01" "O\xff", 11));
+      auto response = CxaPitchGapResponse::parse(message);
+      REQUIRE(response.m_unit == 2);
+      REQUIRE(response.m_sequence == 0x12345678);
+      REQUIRE(response.m_count == 0x0123);
+      REQUIRE(response.m_status == 'O');
+    }
+    SUBCASE("spin_image_available") {
+      auto message = CxaPitchMessage::parse(
+        std::string_view("\x07\x80\x78\x56\x34\x12\xff", 7));
+      auto available = CxaPitchSpinImageAvailable::parse(message);
+      REQUIRE(available.m_sequence == 0x12345678);
+    }
+    SUBCASE("spin_response") {
+      auto message = CxaPitchMessage::parse(std::string_view(
+        "\x0c\x82\x78\x56\x34\x12\x67\x45\x23\x01" "A\xff", 12));
+      auto response = CxaPitchSpinResponse::parse(message);
+      REQUIRE(response.m_sequence == 0x12345678);
+      REQUIRE(response.m_order_count == 0x01234567);
+      REQUIRE(response.m_status == 'A');
+    }
+    SUBCASE("spin_finished") {
+      auto message = CxaPitchMessage::parse(
+        std::string_view("\x07\x83\x78\x56\x34\x12\xff", 7));
+      auto finished = CxaPitchSpinFinished::parse(message);
+      REQUIRE(finished.m_sequence == 0x12345678);
+    }
   }
 }

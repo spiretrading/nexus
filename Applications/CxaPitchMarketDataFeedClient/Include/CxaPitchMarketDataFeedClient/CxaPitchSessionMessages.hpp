@@ -5,7 +5,6 @@
 #include <cstdint>
 #include <string>
 #include <type_traits>
-#include <Beam/IO/Buffer.hpp>
 #include <Beam/Pointers/Out.hpp>
 #include <boost/throw_exception.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchEncoder.hpp"
@@ -398,6 +397,7 @@ namespace Nexus {
     finished.m_sequence = cursor.read_uint32();
     return finished;
   }
+
   template<Beam::IsBuffer B>
   void CxaPitchSpinFinished::encode(Beam::Out<B> buffer) const {
     auto encoder = CxaPitchEncoder(Beam::Ref(*buffer));
@@ -405,7 +405,6 @@ namespace Nexus {
     encoder.write_uint8(TYPE);
     encoder.write_uint32(m_sequence);
   }
-
 }
 
 #endif
