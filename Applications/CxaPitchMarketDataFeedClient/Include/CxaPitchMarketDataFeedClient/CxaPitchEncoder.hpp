@@ -1,10 +1,7 @@
 #ifndef CXA_PITCH_ENCODER_HPP
 #define CXA_PITCH_ENCODER_HPP
 #include <algorithm>
-#include <cstddef>
-#include <cstdint>
 #include <stdexcept>
-#include <string_view>
 #include <Beam/IO/Buffer.hpp>
 #include <Beam/Pointers/Ref.hpp>
 #include <boost/endian/conversion.hpp>

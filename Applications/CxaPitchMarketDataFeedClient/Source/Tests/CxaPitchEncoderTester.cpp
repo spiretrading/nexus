@@ -1,10 +1,8 @@
 #include <array>
 #include <limits>
 #include <stdexcept>
-#include <string_view>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/IO/StaticBuffer.hpp>
-#include <Beam/Pointers/Ref.hpp>
 #include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchEncoder.hpp"
 
