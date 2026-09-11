@@ -10,7 +10,7 @@ unit: 1
 venue: ASX
 disseminating_venue: CXA
 mpid: CXA
-liveness: 3s
+feed_timeout: 3s
 feeds:
   - name: A
     address: "233.218.133.80:30501"
