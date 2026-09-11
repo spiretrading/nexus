@@ -1,4 +1,3 @@
-#include <climits>
 #include <vector>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
@@ -19,6 +18,19 @@ namespace {
   }
 
   std::string encode_block(
+      std::uint32_t sequence, std::uint8_t count, const std::string& payload) {
+    auto header = CxaPitchHeader();
+    header.m_length =
+      static_cast<std::uint16_t>(CxaPitchHeader::LENGTH + payload.size());
+    header.m_count = count;
+    header.m_unit = 1;
+    header.m_sequence = sequence;
+    auto block = Beam::SharedBuffer();
+    header.encode(Beam::out(block));
+    return std::string(block.get_data(), block.get_size()) + payload;
+  }
+
+  std::string encode_block(
       std::uint32_t sequence, const std::vector<std::uint8_t>& types) {
     auto payload = std::string();
     for(auto type : types) {
@@ -27,36 +39,17 @@ namespace {
       payload.append(
         CxaPitchUnitClear::LENGTH - CxaPitchMessage::HEADER_LENGTH, char(0));
     }
-    auto header = CxaPitchHeader();
-    header.m_length =
-      static_cast<std::uint16_t>(CxaPitchHeader::LENGTH + payload.size());
-    header.m_count = static_cast<std::uint8_t>(types.size());
-    header.m_unit = 1;
-    header.m_sequence = sequence;
-    auto block = Beam::SharedBuffer();
-    header.encode(Beam::out(block));
-    return std::string(block.get_data(), block.get_size()) + payload;
+    return encode_block(
+      sequence, static_cast<std::uint8_t>(types.size()), payload);
   }
 
-  std::string encode_timed_block(
-      std::uint32_t sequence, std::uint64_t timestamp) {
+  std::string encode_delete_order_block(std::uint32_t sequence) {
     auto payload = std::string();
     payload += static_cast<char>(CxaPitchDeleteOrder::LENGTH);
     payload += static_cast<char>(CxaPitchDeleteOrder::TYPE);
-    for(auto i = std::size_t(0); i != sizeof(timestamp); ++i) {
-      auto byte = static_cast<std::uint8_t>(timestamp >> (CHAR_BIT * i));
-      payload += static_cast<char>(byte);
-    }
-    payload.append(sizeof(CxaPitchDeleteOrder::m_order_id), char(0));
-    auto header = CxaPitchHeader();
-    header.m_length = static_cast<std::uint16_t>(
-      CxaPitchHeader::LENGTH + payload.size());
-    header.m_count = 1;
-    header.m_unit = 1;
-    header.m_sequence = sequence;
-    auto block = Beam::SharedBuffer();
-    header.encode(Beam::out(block));
-    return std::string(block.get_data(), block.get_size()) + payload;
+    payload.append(
+      CxaPitchDeleteOrder::LENGTH - CxaPitchMessage::HEADER_LENGTH, char(0));
+    return encode_block(sequence, 1, payload);
   }
 }
 
@@ -96,26 +89,20 @@ TEST_SUITE("CxaPitchSequencer") {
   TEST_CASE("lower_sequences") {
     auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
-    auto first = encode_timed_block(100, 1500000000000000000);
+    auto first = encode_delete_order_block(100);
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
     REQUIRE(read(sequencer) == CxaPitchDeleteOrder::TYPE);
-    auto earlier = std::string();
-    SUBCASE("unit_clear") {
-      earlier = encode_block(1, {CxaPitchUnitClear::TYPE});
-    }
-    SUBCASE("newer_timestamp") {
-      earlier = encode_timed_block(1, 1500000001000000000);
-    }
+    auto earlier = encode_block(1, {CxaPitchUnitClear::TYPE});
     sequencer.add(0, CxaPitchBlock::parse(earlier), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(earlier), timestamp);
-    auto second = encode_timed_block(2, 1500000002000000000);
+    auto second = encode_delete_order_block(2);
     sequencer.add(0, CxaPitchBlock::parse(second), timestamp);
     REQUIRE(read(sequencer) == 0);
     REQUIRE(sequencer.get_sequence().value_or(0) == 101);
     REQUIRE(sequencer.get_position() == 101);
     REQUIRE(!sequencer.get_gap());
-    auto next = encode_timed_block(101, 1500000003000000000);
+    auto next = encode_delete_order_block(101);
     sequencer.add(0, CxaPitchBlock::parse(next), timestamp);
     REQUIRE(read(sequencer) == CxaPitchDeleteOrder::TYPE);
     REQUIRE(read(sequencer) == 0);
@@ -129,25 +116,17 @@ TEST_SUITE("CxaPitchSequencer") {
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
     REQUIRE(read(sequencer) == 0x11);
-    sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
-    auto next = encode_block(101, {0x12});
-    sequencer.add(1, CxaPitchBlock::parse(next), timestamp);
-    sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
-    REQUIRE(read(sequencer) == 0x12);
-  }
-
-  TEST_CASE("redundant_blocks") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
-    auto timestamp = time_from_string("2026-09-08 10:00:00");
-    auto first = encode_timed_block(100, 1500000000000000000);
-    sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
-    sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
-    REQUIRE(read(sequencer) == CxaPitchDeleteOrder::TYPE);
     REQUIRE(read(sequencer) == 0);
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
     REQUIRE(read(sequencer) == 0);
     REQUIRE(sequencer.get_sequence().value_or(0) == 101);
+    REQUIRE(!sequencer.get_gap());
+    auto next = encode_block(101, {0x12});
+    sequencer.add(1, CxaPitchBlock::parse(next), timestamp);
+    sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
+    REQUIRE(read(sequencer) == 0x12);
+    REQUIRE(sequencer.get_sequence().value_or(0) == 102);
   }
 
   TEST_CASE("duplicate_unit_clear") {
@@ -158,7 +137,7 @@ TEST_SUITE("CxaPitchSequencer") {
       sequencer.add(feed, CxaPitchBlock::parse(clear), timestamp);
     }
     REQUIRE(read(sequencer) == CxaPitchUnitClear::TYPE);
-    auto buffered = encode_timed_block(102, 1500000000000000000);
+    auto buffered = encode_delete_order_block(102);
     for(auto feed = 0; feed != 2; ++feed) {
       sequencer.add(feed, CxaPitchBlock::parse(buffered), timestamp);
     }
@@ -171,7 +150,7 @@ TEST_SUITE("CxaPitchSequencer") {
       REQUIRE(gap->m_sequence == 101);
       REQUIRE(gap->m_count == 1);
     }
-    auto recovery = encode_timed_block(101, 1499999999000000000);
+    auto recovery = encode_delete_order_block(101);
     sequencer.recover(CxaPitchBlock::parse(recovery));
     REQUIRE(read(sequencer) == CxaPitchDeleteOrder::TYPE);
     REQUIRE(read(sequencer) == CxaPitchDeleteOrder::TYPE);
@@ -182,22 +161,17 @@ TEST_SUITE("CxaPitchSequencer") {
   TEST_CASE("untimestamped_replay") {
     auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
-    auto type = CxaPitchEndOfSession::TYPE;
     auto replay = std::string();
     SUBCASE("delayed_heartbeat") {
       replay = encode_block(100, {});
     }
     SUBCASE("duplicate_message") {
-      replay = encode_block(100, {type});
+      replay = encode_block(100, {CxaPitchEndOfSession::TYPE});
     }
-    SUBCASE("duplicate_unit_clear") {
-      type = CxaPitchUnitClear::TYPE;
-      replay = encode_block(100, {type});
-    }
-    auto first = encode_block(100, {type});
+    auto first = encode_block(100, {CxaPitchEndOfSession::TYPE});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
-    REQUIRE(read(sequencer) == type);
+    REQUIRE(read(sequencer) == CxaPitchEndOfSession::TYPE);
     for(auto i = 0; i != 2; ++i) {
       sequencer.add(0, CxaPitchBlock::parse(replay), timestamp);
       REQUIRE(read(sequencer) == 0);
@@ -272,24 +246,6 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(read(sequencer) == 0);
     REQUIRE(sequencer.get_sequence().value_or(0) == 8);
     REQUIRE(!sequencer.get_gap());
-  }
-
-  TEST_CASE("gap_quorum") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
-    auto timestamp = time_from_string("2026-09-08 10:00:00");
-    auto first = encode_block(1, {0x11, 0x12});
-    sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
-    sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
-    REQUIRE(read(sequencer) == 0x11);
-    REQUIRE(read(sequencer) == 0x12);
-    auto fourth = encode_block(4, {0x14});
-    sequencer.add(0, CxaPitchBlock::parse(fourth), timestamp);
-    REQUIRE(!sequencer.get_gap());
-    sequencer.add(1, CxaPitchBlock::parse(fourth), timestamp);
-    auto gap = sequencer.get_gap();
-    REQUIRE(gap.has_value());
-    REQUIRE(gap->m_sequence == 3);
-    REQUIRE(gap->m_count == 1);
   }
 
   TEST_CASE("three_feed_quorum") {
@@ -404,29 +360,35 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(!sequencer.get_gap());
   }
 
+  TEST_CASE("every_feed_timed_out") {
+    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto timestamp = time_from_string("2026-09-08 10:00:00");
+    auto first = encode_block(1, {0x11});
+    sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
+    sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
+    REQUIRE(read(sequencer) == 0x11);
+    auto third = encode_block(3, {0x13});
+    sequencer.add(0, CxaPitchBlock::parse(third), timestamp);
+    sequencer.add(1, CxaPitchBlock::parse(third), timestamp);
+    auto gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_sequence == 2);
+    REQUIRE(gap->m_count == 1);
+    sequencer.update(timestamp + duration_from_string("00:00:04"));
+    REQUIRE(sequencer.get_position() == 0);
+    REQUIRE(!sequencer.get_gap());
+    REQUIRE(sequencer.get_sequence().value_or(0) == 2);
+  }
+
   TEST_CASE("stalled_feed_replay") {
     auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
-    auto first = std::string();
-    auto second = std::string();
-    auto fifth = std::string();
-    auto type = 0;
-    SUBCASE("untimestamped") {
-      first = encode_block(1, {0x11});
-      second = encode_block(2, {0x11});
-      fifth = encode_block(5, {0x15});
-      type = 0x11;
-    }
-    SUBCASE("timestamped") {
-      first = encode_timed_block(1, 1500000000000000000);
-      second = encode_timed_block(2, 1500000000000000000);
-      fifth = encode_timed_block(5, 1500000001000000000);
-      type = CxaPitchDeleteOrder::TYPE;
-    }
+    auto first = encode_block(1, {0x11});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
-    REQUIRE(read(sequencer) == type);
+    REQUIRE(read(sequencer) == 0x11);
     auto later = timestamp + duration_from_string("00:00:04");
+    auto fifth = encode_block(5, {0x15});
     sequencer.add(0, CxaPitchBlock::parse(fifth), later);
     REQUIRE(sequencer.get_gap().has_value());
     auto heartbeat = encode_block(6, {});
@@ -440,8 +402,9 @@ TEST_SUITE("CxaPitchSequencer") {
       REQUIRE(read(sequencer) == 0);
       later += duration_from_string("00:00:01");
     }
+    auto second = encode_block(2, {0x12});
     sequencer.add(1, CxaPitchBlock::parse(second), later);
-    REQUIRE(read(sequencer) == type);
+    REQUIRE(read(sequencer) == 0x12);
     REQUIRE(sequencer.get_sequence().value_or(0) == 3);
     REQUIRE(!sequencer.get_gap());
   }
@@ -529,10 +492,17 @@ TEST_SUITE("CxaPitchSequencer") {
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto data = encode_block(1, {0x11, 0x12, 0x13});
     sequencer.add(0, CxaPitchBlock::parse(data), timestamp);
-    sequencer.reset(2);
-    REQUIRE(read(sequencer) == 0x12);
-    REQUIRE(read(sequencer) == 0x13);
+    SUBCASE("buffered_message") {
+      sequencer.reset(2);
+      REQUIRE(read(sequencer) == 0x12);
+      REQUIRE(read(sequencer) == 0x13);
+    }
+    SUBCASE("past_every_message") {
+      sequencer.reset(4);
+    }
     REQUIRE(read(sequencer) == 0);
+    REQUIRE(sequencer.get_sequence().value_or(0) == 4);
+    REQUIRE(!sequencer.get_gap());
   }
 
   TEST_CASE("skipped_gap_recovery") {
@@ -579,6 +549,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(read(sequencer) == 0x11);
     auto fourth = encode_block(4, {0x14});
     sequencer.add(0, CxaPitchBlock::parse(fourth), timestamp);
+    REQUIRE(!sequencer.get_gap());
     sequencer.add(1, CxaPitchBlock::parse(fourth), timestamp);
     auto gap = sequencer.get_gap();
     REQUIRE(gap.has_value());
@@ -589,6 +560,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(read(sequencer) == 0x12);
     REQUIRE(read(sequencer) == 0x13);
     REQUIRE(read(sequencer) == 0x14);
+    REQUIRE(read(sequencer) == 0);
     REQUIRE(!sequencer.get_gap());
   }
 
@@ -607,13 +579,16 @@ TEST_SUITE("CxaPitchSequencer") {
 
   TEST_CASE("uninitialized_recovery") {
     auto sequencer = CxaPitchSequencer(1, duration_from_string("00:00:03"));
+    REQUIRE(!sequencer.get_sequence());
+    REQUIRE(sequencer.get_position() == 0);
+    REQUIRE(!sequencer.get_gap());
     auto replay = encode_block(1, {0x11});
     sequencer.recover(CxaPitchBlock::parse(replay));
     REQUIRE(read(sequencer) == 0);
+    REQUIRE(!sequencer.get_sequence());
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto second = encode_block(2, {0x12});
     sequencer.add(0, CxaPitchBlock::parse(second), timestamp);
     REQUIRE(read(sequencer) == 0x12);
   }
-
 }
