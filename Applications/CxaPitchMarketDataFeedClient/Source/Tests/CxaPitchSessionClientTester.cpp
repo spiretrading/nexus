@@ -258,6 +258,55 @@ TEST_SUITE("CxaPitchSessionClient") {
         "\x09\x03" "\x01" "\x3b\x10\x00\x00" "\x32\x00", 17));
   }
 
+  TEST_CASE("queued_writes") {
+    auto server = LocalServerConnection();
+    auto accepting = std::async(std::launch::async, [&] {
+      auto channel = server.accept();
+      read_exactly(*channel, LOGIN_SIZE);
+      auto response = std::string("\x03\x02", 2);
+      response += CxaPitchLoginResponse::ACCEPTED;
+      channel->get_writer().write(encode(response, 1));
+      return channel;
+    });
+    auto channel = LocalClientChannel("cxa", server);
+    auto gate = std::make_shared<Queue<int>>();
+    auto writes = std::make_shared<Queue<int>>();
+    gate->push(0);
+    auto wrapper = WrapperChannel<LocalClientChannel*, GatedWriter>(
+      &channel, GatedWriter(&channel.get_writer(), gate, writes));
+    auto timer = TriggerTimer();
+    auto client = CxaPitchSessionClient(CxaPitchLogin(), &wrapper, &timer);
+    auto server_channel = accepting.get();
+    writes->pop();
+    auto completed = Queue<int>();
+    auto writer = RoutineHandler(spawn([&] {
+      auto request = CxaPitchGapRequest(1, 100, 1);
+      client.write(request);
+      request.m_sequence = 200;
+      request.m_count = 2;
+      client.write(request);
+      completed.push(0);
+    }));
+    writes->pop();
+    flush_pending_routines();
+    auto is_completed = completed.try_pop().has_value();
+    gate->push(0);
+    gate->push(0);
+    writer.wait();
+    auto size = CxaPitchHeader::LENGTH + CxaPitchGapRequest::LENGTH;
+    auto first = read_exactly(*server_channel, size);
+    auto second = read_exactly(*server_channel, size);
+    REQUIRE(is_completed);
+    auto cursor = (*CxaPitchBlock::parse(first).begin()).get_cursor();
+    REQUIRE(cursor.read_uint8() == 1);
+    REQUIRE(cursor.read_uint32() == 100);
+    REQUIRE(cursor.read_uint16() == 1);
+    cursor = (*CxaPitchBlock::parse(second).begin()).get_cursor();
+    REQUIRE(cursor.read_uint8() == 1);
+    REQUIRE(cursor.read_uint32() == 200);
+    REQUIRE(cursor.read_uint16() == 2);
+  }
+
   TEST_CASE("write_heartbeat") {
     auto fixture = Fixture();
     fixture.m_timer.trigger();

@@ -2,13 +2,30 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Pointers/Out.hpp>
 #include <doctest/doctest.h>
-#include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
+#include "CxaPitchMarketDataFeedClient/CxaPitchMessage.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionMessages.hpp"
 
 using namespace Nexus;
 
 TEST_SUITE("CxaPitchSessionMessages") {
+  TEST_CASE("session_message_concept") {
+    REQUIRE(IsCxaPitchSessionMessage<CxaPitchLogin>);
+    REQUIRE(IsCxaPitchSessionMessage<CxaPitchLoginResponse>);
+    REQUIRE(IsCxaPitchSessionMessage<CxaPitchGapRequest>);
+    REQUIRE(IsCxaPitchSessionMessage<CxaPitchGapResponse>);
+    REQUIRE(IsCxaPitchSessionMessage<CxaPitchSpinImageAvailable>);
+    REQUIRE(IsCxaPitchSessionMessage<CxaPitchSpinRequest>);
+    REQUIRE(IsCxaPitchSessionMessage<CxaPitchSpinResponse>);
+    REQUIRE(IsCxaPitchSessionMessage<CxaPitchSpinFinished>);
+    REQUIRE(IsCxaPitchSessionMessage<const CxaPitchLogin&>);
+    REQUIRE(IsCxaPitchSessionMessage<CxaPitchGapRequest&&>);
+    REQUIRE(!IsCxaPitchSessionMessage<CxaPitchMessage>);
+    REQUIRE(!IsCxaPitchSessionMessage<int>);
+    struct DerivedLogin : CxaPitchLogin {};
+    REQUIRE(!IsCxaPitchSessionMessage<DerivedLogin>);
+  }
+
   TEST_CASE("encode_login") {
     auto login = CxaPitchLogin();
     login.m_session_sub_id = "0001";

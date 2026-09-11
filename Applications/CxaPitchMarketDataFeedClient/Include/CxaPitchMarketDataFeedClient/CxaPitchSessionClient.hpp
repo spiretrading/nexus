@@ -2,34 +2,26 @@
 #define CXA_PITCH_SESSION_CLIENT_HPP
 #include <atomic>
 #include <concepts>
-#include <cstddef>
-#include <cstdint>
 #include <exception>
 #include <functional>
-#include <memory>
 #include <stop_token>
-#include <string>
-#include <string_view>
 #include <type_traits>
 #include <utility>
+#include <Beam/IO/AsyncWriter.hpp>
 #include <Beam/IO/Channel.hpp>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/IOException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/IO/Reader.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
+#include <Beam/IO/StaticBuffer.hpp>
 #include <Beam/Pointers/Dereference.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Pointers/Out.hpp>
-#include <Beam/Queues/Queue.hpp>
-#include <Beam/Routines/RoutineHandler.hpp>
-#include <Beam/Threading/Mutex.hpp>
+#include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/TimeService/Timer.hpp>
 #include <Beam/Utilities/Expect.hpp>
-#include <boost/thread/lock_guard.hpp>
 #include <boost/throw_exception.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
-#include "CxaPitchMarketDataFeedClient/CxaPitchHeader.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionMessages.hpp"
 
@@ -49,8 +41,8 @@ namespace Nexus {
   /**
    * Maintains a logged in session with a CXA PITCH gap request proxy or spin
    * server.
-   * @param <C> The type of Channel connected to the server.
-   * @param <T> The type of Timer used to schedule heartbeats.
+   * @tparam C The type of Channel connected to the server.
+   * @tparam T The type of Timer used to schedule heartbeats.
    */
   template<typename C, typename T> requires
     Beam::IsChannel<Beam::dereference_t<C>> &&
@@ -81,7 +73,7 @@ namespace Nexus {
        * @param login The credentials to log in with.
        * @param channel The channel connected to the server.
        * @param timer The timer measuring the period between heartbeats.
-       * @param stop_token Cancels a pending login by closing the channel.
+       * @param stop_token Cancels a pending login.
        */
       template<Beam::Initializes<C> CF, Beam::Initializes<T> TF>
       CxaPitchSessionClient(CxaPitchLogin login, CF&& channel, TF&& timer,
@@ -96,15 +88,15 @@ namespace Nexus {
        * Sends a message to the server.
        * @param message The message to send.
        */
-      template<typename M>
+      template<IsCxaPitchSessionMessage M>
       void write(const M& message);
 
       /** Closes the connection to the server. */
       void close();
 
     private:
-      mutable Beam::Mutex m_mutex;
       Beam::local_ptr_t<C> m_channel;
+      Beam::AsyncWriter<typename Channel::Writer*> m_writer;
       Beam::local_ptr_t<T> m_timer;
       Beam::SharedBuffer m_buffer;
       std::size_t m_position;
@@ -112,11 +104,8 @@ namespace Nexus {
       std::uint8_t m_remaining;
       std::atomic_bool m_is_receiving;
       std::atomic_bool m_is_logged_in;
-      Beam::SharedBuffer m_write_buffer;
-      Beam::RoutineHandler m_timeout_loop;
-      Beam::RoutineHandler m_heartbeat_loop;
-      std::shared_ptr<Beam::Queue<Beam::Timer::Result>> m_timer_queue;
-      std::shared_ptr<Beam::Queue<Beam::Timer::Result>> m_heartbeat_queue;
+      int m_silence;
+      Beam::RoutineTaskQueue m_tasks;
       Beam::OpenState m_open_state;
 
       CxaPitchSessionClient(const CxaPitchSessionClient&) = delete;
@@ -124,15 +113,13 @@ namespace Nexus {
       void log_in(const CxaPitchLogin& login);
       void compact();
       void fill(std::size_t size);
-      void write_header(std::uint8_t count, std::uint16_t length);
       void write_heartbeat();
-      void timeout_loop();
-      void heartbeat_loop();
+      void on_timer(typename Timer::Result result);
   };
 
   template<typename C, typename T>
-  CxaPitchSessionClient(CxaPitchLogin, C&&, T&&) -> CxaPitchSessionClient<
-    std::remove_cvref_t<C>, std::remove_cvref_t<T>>;
+  CxaPitchSessionClient(CxaPitchLogin, C&&, T&&) ->
+    CxaPitchSessionClient<std::remove_cvref_t<C>, std::remove_cvref_t<T>>;
 
   template<typename C, typename T>
   CxaPitchSessionClient(CxaPitchLogin, C&&, T&&, std::stop_token) ->
@@ -143,7 +130,7 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<T>>
   template<Beam::Initializes<C> CF, Beam::Initializes<T> TF>
   CxaPitchSessionClient<C, T>::CxaPitchSessionClient(
-      CxaPitchLogin login, CF&& channel, TF&& timer)
+    CxaPitchLogin login, CF&& channel, TF&& timer)
     : CxaPitchSessionClient(std::move(login), std::forward<CF>(channel),
         std::forward<TF>(timer), std::stop_token()) {}
 
@@ -154,24 +141,21 @@ namespace Nexus {
   CxaPitchSessionClient<C, T>::CxaPitchSessionClient(CxaPitchLogin login,
       CF&& channel, TF&& timer, std::stop_token stop_token)
       try : m_channel(std::forward<CF>(channel)),
+            m_writer(&m_channel->get_writer()),
             m_timer(std::forward<TF>(timer)),
             m_position(0),
             m_end(0),
             m_remaining(0),
             m_is_receiving(false),
             m_is_logged_in(false),
-            m_timer_queue(std::make_shared<Beam::Queue<Beam::Timer::Result>>()),
-            m_heartbeat_queue(
-              std::make_shared<Beam::Queue<Beam::Timer::Result>>()) {
+            m_silence(0) {
     try {
-      m_timer->get_publisher().monitor(m_timer_queue);
-      m_timer->get_publisher().monitor(m_heartbeat_queue);
-      {
-        auto cancellation = std::stop_callback(stop_token, [&] {
-          m_channel->get_connection().close();
-        });
-        log_in(login);
-      }
+      m_timer->get_publisher().monitor(m_tasks.get_slot<typename Timer::Result>(
+        std::bind_front(&CxaPitchSessionClient::on_timer, this)));
+      auto cancellation = std::stop_callback(stop_token, [&] {
+        m_channel->get_connection().close();
+      });
+      log_in(login);
     } catch(const std::exception&) {
       close();
       throw;
@@ -221,14 +205,15 @@ namespace Nexus {
   template<typename C, typename T> requires
     Beam::IsChannel<Beam::dereference_t<C>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  template<typename M>
+  template<IsCxaPitchSessionMessage M>
   void CxaPitchSessionClient<C, T>::write(const M& message) {
     Beam::try_or_nest([&] {
-      auto lock = boost::lock_guard(m_mutex);
-      reset(m_write_buffer);
-      write_header(1, static_cast<std::uint16_t>(M::LENGTH));
-      message.encode(Beam::out(m_write_buffer));
-      m_channel->get_writer().write(m_write_buffer);
+      auto buffer = Beam::StaticBuffer<CxaPitchHeader::LENGTH + M::LENGTH>();
+      auto header = CxaPitchHeader(static_cast<std::uint16_t>(
+        CxaPitchHeader::LENGTH + M::LENGTH), 1, 0, 0);
+      header.encode(Beam::out(buffer));
+      message.encode(Beam::out(buffer));
+      m_writer.write(buffer);
     }, Beam::IOException("Failed to write to the CXA PITCH server."));
   }
 
@@ -241,10 +226,8 @@ namespace Nexus {
     }
     m_channel->get_connection().close();
     m_timer->cancel();
-    m_timer_queue->close();
-    m_heartbeat_queue->close();
-    m_timeout_loop.wait();
-    m_heartbeat_loop.wait();
+    m_tasks.close();
+    m_tasks.wait();
     m_open_state.close();
   }
 
@@ -252,12 +235,8 @@ namespace Nexus {
     Beam::IsChannel<Beam::dereference_t<C>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
   void CxaPitchSessionClient<C, T>::log_in(const CxaPitchLogin& login) {
-    m_timer->start();
-    m_timeout_loop =
-      Beam::spawn(std::bind_front(&CxaPitchSessionClient::timeout_loop, this));
     write(login);
-    m_heartbeat_loop = Beam::spawn(
-      std::bind_front(&CxaPitchSessionClient::heartbeat_loop, this));
+    m_timer->start();
     auto response = read();
     if(response.m_type != CxaPitchLoginResponse::TYPE) {
       boost::throw_with_location(Beam::ConnectException(
@@ -305,63 +284,34 @@ namespace Nexus {
   template<typename C, typename T> requires
     Beam::IsChannel<Beam::dereference_t<C>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  void CxaPitchSessionClient<C, T>::write_header(
-      std::uint8_t count, std::uint16_t length) {
-    auto header = CxaPitchHeader();
-    header.m_length =
-      static_cast<std::uint16_t>(CxaPitchHeader::LENGTH + length);
-    header.m_count = count;
-    header.m_unit = 0;
-    header.m_sequence = 0;
-    header.encode(Beam::out(m_write_buffer));
-  }
-
-  template<typename C, typename T> requires
-    Beam::IsChannel<Beam::dereference_t<C>> &&
-      Beam::IsTimer<Beam::dereference_t<T>>
   void CxaPitchSessionClient<C, T>::write_heartbeat() {
-    auto lock = boost::lock_guard(m_mutex);
-    reset(m_write_buffer);
-    write_header(0, 0);
-    m_channel->get_writer().write(m_write_buffer);
+    auto buffer = Beam::StaticBuffer<CxaPitchHeader::LENGTH>();
+    auto header = CxaPitchHeader(CxaPitchHeader::LENGTH, 0, 0, 0);
+    header.encode(Beam::out(buffer));
+    m_writer.write(buffer);
   }
 
   template<typename C, typename T> requires
     Beam::IsChannel<Beam::dereference_t<C>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  void CxaPitchSessionClient<C, T>::timeout_loop() {
-    auto silence = 0;
-    try {
-      while(m_open_state.is_open()) {
-        if(m_timer_queue->pop() != Beam::Timer::Result::EXPIRED) {
-          break;
-        }
-        if(m_is_logged_in.load() && m_is_receiving.exchange(false)) {
-          silence = 0;
-        } else if(++silence == SILENT_HEARTBEAT_LIMIT) {
-          m_channel->get_connection().close();
-          break;
-        }
-        m_timer->start();
-      }
-    } catch(const std::exception&) {
+  void CxaPitchSessionClient<C, T>::on_timer(typename Timer::Result result) {
+    if(result != Timer::Result::EXPIRED || !m_open_state.is_open()) {
       return;
     }
-  }
-
-  template<typename C, typename T> requires
-    Beam::IsChannel<Beam::dereference_t<C>> &&
-      Beam::IsTimer<Beam::dereference_t<T>>
-  void CxaPitchSessionClient<C, T>::heartbeat_loop() {
     try {
-      while(m_open_state.is_open()) {
-        if(m_heartbeat_queue->pop() != Beam::Timer::Result::EXPIRED) {
-          break;
-        }
-        write_heartbeat();
+      if(m_is_logged_in && m_is_receiving.exchange(false)) {
+        m_silence = 0;
+      } else {
+        ++m_silence;
       }
+      if(m_silence == SILENT_HEARTBEAT_LIMIT) {
+        m_channel->get_connection().close();
+        return;
+      }
+      write_heartbeat();
+      m_timer->start();
     } catch(const std::exception&) {
-      return;
+      m_channel->get_connection().close();
     }
   }
 }

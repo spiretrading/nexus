@@ -1,13 +1,15 @@
 #ifndef CXA_PITCH_SESSION_MESSAGES_HPP
 #define CXA_PITCH_SESSION_MESSAGES_HPP
+#include <concepts>
 #include <cstddef>
 #include <cstdint>
 #include <string>
+#include <type_traits>
 #include <Beam/IO/Buffer.hpp>
 #include <Beam/Pointers/Out.hpp>
 #include <boost/throw_exception.hpp>
-#include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchEncoder.hpp"
+#include "CxaPitchMarketDataFeedClient/CxaPitchMessage.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"
 
 namespace Nexus {
@@ -214,6 +216,18 @@ namespace Nexus {
      */
     static CxaPitchSpinFinished parse(const CxaPitchMessage& message);
   };
+
+  /** Matches the concrete CXA PITCH session message types. */
+  template<typename T>
+  concept IsCxaPitchSessionMessage =
+    std::same_as<std::remove_cvref_t<T>, CxaPitchLogin> ||
+    std::same_as<std::remove_cvref_t<T>, CxaPitchLoginResponse> ||
+    std::same_as<std::remove_cvref_t<T>, CxaPitchGapRequest> ||
+    std::same_as<std::remove_cvref_t<T>, CxaPitchGapResponse> ||
+    std::same_as<std::remove_cvref_t<T>, CxaPitchSpinImageAvailable> ||
+    std::same_as<std::remove_cvref_t<T>, CxaPitchSpinRequest> ||
+    std::same_as<std::remove_cvref_t<T>, CxaPitchSpinResponse> ||
+    std::same_as<std::remove_cvref_t<T>, CxaPitchSpinFinished>;
 
   template<Beam::IsBuffer B>
   void CxaPitchLogin::encode(Beam::Out<B> buffer) const {
