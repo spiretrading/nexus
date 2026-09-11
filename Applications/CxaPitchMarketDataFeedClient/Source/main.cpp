@@ -4,6 +4,7 @@
 #include <stdexcept>
 #include <stop_token>
 #include <vector>
+#include <Beam/IO/AsyncWriter.hpp>
 #include <Beam/IO/IOException.hpp>
 #include <Beam/IO/QueuedReader.hpp>
 #include <Beam/IO/WrapperChannel.hpp>
@@ -42,8 +43,12 @@ namespace {
       QueuedReader<MulticastSocketChannel::Reader*>>;
   using ApplicationProtocolClient =
     CxaPitchProtocolClient<std::unique_ptr<ApplicationFeedChannel>>;
-  using ApplicationSessionClient =
-    CxaPitchSessionClient<TcpSocketChannel, LiveTimer>;
+  using ApplicationSessionChannel =
+    WrapperChannel<std::unique_ptr<TcpSocketChannel>,
+      QueuedReader<TcpSocketChannel::Reader*>,
+      AsyncWriter<TcpSocketChannel::Writer*>>;
+  using ApplicationSessionClient = CxaPitchSessionClient<
+    std::unique_ptr<ApplicationSessionChannel>, LiveTimer>;
   using ApplicationGapClient = CxaPitchGapClient<ApplicationSessionClient,
     LiveTimer, std::unique_ptr<LocalTimeClient>>;
   using ApplicationSpinClient =
@@ -87,8 +92,13 @@ int main(int argc, const char** argv) {
       login.m_session_sub_id = session.m_session_sub_id;
       login.m_username = session.m_username;
       login.m_password = session.m_password;
-      return std::make_shared<ApplicationSessionClient>(
-        login, init(session.m_address), init(HEARTBEAT), stop_token);
+      auto channel = std::make_unique<TcpSocketChannel>(session.m_address);
+      auto reader = &channel->get_reader();
+      auto writer = &channel->get_writer();
+      return std::make_shared<ApplicationSessionClient>(login,
+        std::make_unique<ApplicationSessionChannel>(
+          std::move(channel), reader, writer),
+        init(HEARTBEAT), stop_token);
     };
     auto gap_client = optional<std::unique_ptr<ApplicationGapClient>>();
     if(feed_configuration.m_retransmission) {
