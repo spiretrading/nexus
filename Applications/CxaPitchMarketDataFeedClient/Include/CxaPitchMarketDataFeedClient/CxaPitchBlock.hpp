@@ -18,16 +18,19 @@ namespace Nexus {
       class Iterator {
         public:
 
-          /** Returns the message at this position. */
+          /** The message type produced by this iterator. */
+          using value_type = CxaPitchMessage;
+
+          /** The type representing a distance between iterator positions. */
+          using difference_type = std::ptrdiff_t;
+
+          /** The traversal supported by this iterator. */
+          using iterator_concept = std::input_iterator_tag;
+
           const CxaPitchMessage& operator *() const;
-
-          /** Returns the message at this position. */
           const CxaPitchMessage* operator ->() const;
-
-          /** Advances to the next message. */
           Iterator& operator ++();
-
-          /** Returns whether every message has been iterated over. */
+          Iterator operator ++(int);
           bool operator ==(std::default_sentinel_t) const;
 
         private:
@@ -49,10 +52,7 @@ namespace Nexus {
       /** Returns this block's header. */
       const CxaPitchHeader& get_header() const;
 
-      /** Returns an iterator to this block's first message. */
       Iterator begin() const;
-
-      /** Returns the sentinel marking the end of this block's messages. */
       std::default_sentinel_t end() const;
 
     private:
@@ -85,6 +85,12 @@ namespace Nexus {
       m_message = CxaPitchMessage::parse(m_source);
     }
     return *this;
+  }
+
+  inline CxaPitchBlock::Iterator CxaPitchBlock::Iterator::operator ++(int) {
+    auto previous = *this;
+    ++*this;
+    return previous;
   }
 
   inline bool CxaPitchBlock::Iterator::operator ==(

@@ -1,7 +1,7 @@
+#include <algorithm>
 #include <array>
-#include <cstdint>
+#include <ranges>
 #include <string>
-#include <string_view>
 #include <vector>
 #include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
@@ -25,11 +25,34 @@ TEST_SUITE("CxaPitchBlock") {
     REQUIRE(block.get_header().m_unit == 1);
     REQUIRE(block.get_header().m_sequence == 100);
     auto types = std::vector<std::uint8_t>();
-    for(auto& message : block) {
-      REQUIRE(message.m_length == 6);
-      types.push_back(message.m_type);
-    }
+    std::ranges::transform(block, std::back_inserter(types),
+      [] (const auto& message) {
+        REQUIRE(message.m_length == 6);
+        return message.m_type;
+      });
     REQUIRE(types == std::vector<std::uint8_t>{0x97, 0x2D});
+  }
+
+  TEST_CASE("parse_grown_message") {
+    auto data = std::string_view(
+      "\x16\x00\x02\x01\x64\x00\x00\x00"
+      "\x08\x97\x20\x20\x20\x20\xab\xcd"
+      "\x06\x2d\x00\x00\x00\x00", 22);
+    auto block = CxaPitchBlock::parse(data);
+    REQUIRE(std::ranges::distance(block) == 2);
+    auto iterator = block.begin();
+    auto first = iterator++;
+    REQUIRE(first->m_type == 0x97);
+    REQUIRE(first->m_length == 8);
+    REQUIRE(std::string_view(first->m_payload, 6) ==
+      std::string_view("\x20\x20\x20\x20\xab\xcd", 6));
+    REQUIRE(iterator != block.end());
+    REQUIRE(iterator->m_type == 0x2D);
+    REQUIRE(iterator->m_length == 6);
+    REQUIRE(std::string_view(iterator->m_payload, 4) ==
+      std::string_view("\x00\x00\x00\x00", 4));
+    ++iterator;
+    REQUIRE(iterator == block.end());
   }
 
   TEST_CASE("parse_heartbeat") {
