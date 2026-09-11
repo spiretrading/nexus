@@ -3,6 +3,7 @@
 #include <concepts>
 #include <utility>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
+#include <boost/optional/optional.hpp>
 #include <boost/throw_exception.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchMessage.hpp"
@@ -963,6 +964,30 @@ namespace Details {
       boost::throw_with_location(
         CxaPitchParserException("Unhandled PITCH message type."));
     }
+  }
+
+  /** Returns the message's timestamp, or none if it has no timestamp field. */
+  inline boost::optional<boost::posix_time::ptime> get_timestamp(
+      const CxaPitchMessage& message) {
+    return visit(message, [] (const auto& message) ->
+        boost::optional<boost::posix_time::ptime> {
+      if constexpr(requires { message.m_timestamp; }) {
+        return message.m_timestamp;
+      } else {
+        return boost::none;
+      }
+    });
+  }
+
+  /** Returns the first available message timestamp in the block, or none. */
+  inline boost::optional<boost::posix_time::ptime> get_timestamp(
+      const CxaPitchBlock& block) {
+    for(auto& message : block) {
+      if(auto timestamp = get_timestamp(message)) {
+        return timestamp;
+      }
+    }
+    return boost::none;
   }
 }
 

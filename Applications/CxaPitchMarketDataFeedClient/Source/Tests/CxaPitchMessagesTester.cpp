@@ -428,6 +428,46 @@ TEST_SUITE("CxaPitchMessages") {
       " ZVZT C " + PRICE_TEXT + " 700)");
   }
 
+  TEST_CASE("get_timestamp") {
+    auto source = std::string_view(
+      "\x12\x3c"
+      "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
+      "\x05\x40\x5b\x77\x8f\x56\x1d\x0b", 18);
+    auto timestamp = get_timestamp(CxaPitchMessage::parse(source));
+    REQUIRE(timestamp.has_value());
+    REQUIRE(*timestamp == TIMESTAMP);
+    auto clear = std::string_view("\x06\x97\x00\x00\x00\x00", 6);
+    REQUIRE(!get_timestamp(CxaPitchMessage::parse(clear)));
+    auto end_of_session = std::string_view("\x06\x2d\x00\x00\x00\x00", 6);
+    REQUIRE(!get_timestamp(CxaPitchMessage::parse(end_of_session)));
+    auto unknown = std::string_view("\x02\x7f", 2);
+    REQUIRE(!get_timestamp(CxaPitchMessage::parse(unknown)));
+  }
+
+  TEST_CASE("get_block_timestamp") {
+    auto source = std::string_view(
+      "\x32\x00\x03\x01\x01\x00\x00\x00"
+      "\x06\x97\x00\x00\x00\x00"
+      "\x12\x3c"
+      "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
+      "\x05\x40\x5b\x77\x8f\x56\x1d\x0b"
+      "\x12\x3c"
+      "\x00\x00\x00\x00\x00\x00\x00\x00"
+      "\x06\x40\x5b\x77\x8f\x56\x1d\x0b", 50);
+    auto timestamp = get_timestamp(CxaPitchBlock::parse(source));
+    REQUIRE(timestamp.has_value());
+    REQUIRE(*timestamp == TIMESTAMP);
+    auto untimestamped = std::string_view(
+      "\x16\x00\x03\x01\x01\x00\x00\x00"
+      "\x06\x97\x00\x00\x00\x00"
+      "\x06\x2d\x00\x00\x00\x00"
+      "\x02\x7f", 22);
+    REQUIRE(!get_timestamp(CxaPitchBlock::parse(untimestamped)));
+    auto heartbeat = std::string_view(
+      "\x08\x00\x00\x01\x01\x00\x00\x00", 8);
+    REQUIRE(!get_timestamp(CxaPitchBlock::parse(heartbeat)));
+  }
+
   TEST_CASE("visit_known_message") {
     auto source = std::string_view(
       "\x12\x3c"
