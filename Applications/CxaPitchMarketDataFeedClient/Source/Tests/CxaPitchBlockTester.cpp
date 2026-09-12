@@ -10,6 +10,22 @@
 using namespace Nexus;
 
 TEST_SUITE("CxaPitchBlock") {
+  TEST_CASE("payload") {
+    auto source = std::string_view();
+    auto expected = std::string_view();
+    SUBCASE("messages") {
+      source = std::string_view(
+        "\x0c\x00\x02\x01\x64\x00\x00\x00\x02\x7e\x02\x7f", 12);
+      expected = std::string_view("\x02\x7e\x02\x7f", 4);
+    }
+    SUBCASE("heartbeat") {
+      source = std::string_view("\x08\x00\x00\x01\x64\x00\x00\x00", 8);
+    }
+    auto payload = CxaPitchBlock::parse(source).get_payload();
+    REQUIRE(payload == expected);
+    REQUIRE(payload.data() == source.data() + CxaPitchHeader::LENGTH);
+  }
+
   TEST_CASE("parse_block") {
     auto data = std::array<char, 20>{
       0x14, 0x00,

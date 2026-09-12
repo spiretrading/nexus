@@ -52,6 +52,9 @@ namespace Nexus {
       /** Returns this block's header. */
       const CxaPitchHeader& get_header() const;
 
+      /** Returns a view of the message bytes following the header. */
+      std::string_view get_payload() const;
+
       Iterator begin() const;
       std::default_sentinel_t end() const;
 
@@ -122,6 +125,10 @@ namespace Nexus {
 
   inline const CxaPitchHeader& CxaPitchBlock::get_header() const {
     return m_header;
+  }
+
+  inline std::string_view CxaPitchBlock::get_payload() const {
+    return m_payload;
   }
 
   inline CxaPitchBlock::Iterator CxaPitchBlock::begin() const {

@@ -294,6 +294,17 @@ TEST_SUITE("CxaPitchSessionClient") {
     }
   }
 
+  TEST_CASE("read_invalid_block_length") {
+    for(auto length = std::size_t(0); length < CxaPitchHeader::LENGTH;
+        ++length) {
+      auto fixture = Fixture();
+      auto buffer = SharedBuffer();
+      CxaPitchHeader(length, 0, 0, 0).encode(out(buffer));
+      fixture.m_server_channel->get_writer().write(buffer);
+      REQUIRE_THROWS_AS(fixture.m_client->read(), IOException);
+    }
+  }
+
   TEST_CASE("write_gap_request") {
     auto fixture = Fixture();
     auto request = CxaPitchGapRequest();

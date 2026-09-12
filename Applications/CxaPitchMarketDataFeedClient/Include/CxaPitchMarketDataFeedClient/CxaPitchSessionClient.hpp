@@ -178,15 +178,10 @@ namespace Nexus {
         read_until(CxaPitchHeader::LENGTH);
         auto header = CxaPitchHeader::parse(
           std::string_view(m_buffer.get_data(), m_buffer.get_size()));
-        if(header.m_length < CxaPitchHeader::LENGTH) {
-          boost::throw_with_location(CxaPitchParserException(
-            "Sequenced unit header length out of range."));
-        }
         read_until(header.m_length);
         auto source =
           std::string_view(m_buffer.get_data(), m_buffer.get_size());
-        CxaPitchBlock::parse(source);
-        m_payload = source.substr(CxaPitchHeader::LENGTH);
+        m_payload = CxaPitchBlock::parse(source).get_payload();
       }
       auto message = CxaPitchMessage::parse(m_payload);
       m_payload.remove_prefix(message.m_length);
@@ -201,8 +196,8 @@ namespace Nexus {
   void CxaPitchSessionClient<C, T>::write(const M& message) {
     Beam::try_or_nest([&] {
       auto buffer = Beam::StaticBuffer<CxaPitchHeader::LENGTH + M::LENGTH>();
-      auto header = CxaPitchHeader(static_cast<std::uint16_t>(
-        CxaPitchHeader::LENGTH + M::LENGTH), 1, 0, 0);
+      auto header =
+        CxaPitchHeader(CxaPitchHeader::LENGTH + M::LENGTH, 1, 0, 0);
       header.encode(Beam::out(buffer));
       message.encode(Beam::out(buffer));
       m_writer.write(buffer);
