@@ -1,18 +1,8 @@
-#include <cstddef>
-#include <cstdint>
-#include <functional>
-#include <memory>
-#include <stop_token>
-#include <string>
-#include <string_view>
 #include <vector>
 #include <Beam/IO/IOException.hpp>
-#include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchGapClient.hpp"
 
@@ -39,8 +29,7 @@ namespace {
         std::string_view(m_payload.get_data(), m_payload.get_size()));
     }
 
-    template<typename M>
-    void write(const M& message) {
+    void write(const auto& message) {
       if(m_gate) {
         m_gate->pop();
       }
@@ -61,12 +50,44 @@ namespace {
     }
   };
 
+  struct GatedTimer : TriggerTimer {
+    Queue<int> m_start;
+    Queue<int> m_canceled;
+
+    void start() {
+      m_start.pop();
+      TriggerTimer::start();
+    }
+
+    void cancel() {
+      TriggerTimer::cancel();
+      m_canceled.push(0);
+    }
+  };
+
   const auto TIMESTAMP = time_from_string("2026-09-09 10:00:00");
+  const auto SECOND = duration_from_string("00:00:01");
+  const auto MINUTE = duration_from_string("00:01:00");
+  const auto DAY = duration_from_string("24:00:00");
+  constexpr auto REQUESTS_PER_SECOND = 100;
 
   using GapClient =
     CxaPitchGapClient<StubSession, TriggerTimer*, FixedTimeClient*>;
 
-  CxaPitchGapRequest parse_request(const std::string& source) {
+  struct Fixture {
+    std::shared_ptr<StubSession> m_session;
+    TriggerTimer m_timer;
+    FixedTimeClient m_time_client;
+    GapClient m_client;
+
+    Fixture()
+      : m_session(std::make_shared<StubSession>()),
+        m_time_client(TIMESTAMP),
+        m_client([&] (std::stop_token) { return m_session; },
+          &m_timer, &m_time_client) {}
+  };
+
+  CxaPitchGapRequest parse_request(std::string_view source) {
     auto cursor = CxaPitchMessage::parse(source).get_cursor();
     auto request = CxaPitchGapRequest();
     request.m_unit = cursor.read_uint8();
@@ -77,152 +98,112 @@ namespace {
 
   SharedBuffer encode_response(std::uint8_t unit, std::uint32_t sequence,
       std::uint16_t count, char status) {
-    auto message = std::string();
-    message += char(CxaPitchGapResponse::LENGTH);
-    message += static_cast<char>(CxaPitchGapResponse::TYPE);
-    message += static_cast<char>(unit);
-    message += static_cast<char>(sequence & 0xFF);
-    message += static_cast<char>((sequence >> 8) & 0xFF);
-    message += static_cast<char>((sequence >> 16) & 0xFF);
-    message += static_cast<char>((sequence >> 24) & 0xFF);
-    message += static_cast<char>(count & 0xFF);
-    message += static_cast<char>((count >> 8) & 0xFF);
-    message += status;
-    return SharedBuffer(message.data(), message.size());
+    auto buffer = SharedBuffer();
+    CxaPitchGapResponse(unit, sequence, count, status).encode(out(buffer));
+    return buffer;
   }
 }
 
 TEST_SUITE("CxaPitchGapClient") {
   TEST_CASE("request_message_limit") {
-    auto session = std::make_shared<StubSession>();
-    auto timer = TriggerTimer();
-    auto time_client = FixedTimeClient(TIMESTAMP);
-    auto client = GapClient(
-      [=] (std::stop_token) { return session; }, &timer, &time_client);
-    REQUIRE(client.request(1, CxaPitchGap(1000, 250), 1000) == 250);
-    REQUIRE(session->m_requests.size() == 3);
-    auto first = parse_request(session->m_requests[0]);
+    auto fixture = Fixture();
+    REQUIRE(fixture.m_client.request(1, CxaPitchGap(1000, 250), 1000) == 250);
+    REQUIRE(fixture.m_session->m_requests.size() == 3);
+    auto first = parse_request(fixture.m_session->m_requests[0]);
     REQUIRE(first.m_unit == 1);
     REQUIRE(first.m_sequence == 1000);
     REQUIRE(first.m_count == 100);
-    REQUIRE(parse_request(session->m_requests[1]).m_sequence == 1100);
-    REQUIRE(parse_request(session->m_requests[1]).m_count == 100);
-    REQUIRE(parse_request(session->m_requests[2]).m_sequence == 1200);
-    REQUIRE(parse_request(session->m_requests[2]).m_count == 50);
+    REQUIRE(parse_request(fixture.m_session->m_requests[1]).m_sequence == 1100);
+    REQUIRE(parse_request(fixture.m_session->m_requests[1]).m_count == 100);
+    REQUIRE(parse_request(fixture.m_session->m_requests[2]).m_sequence == 1200);
+    REQUIRE(parse_request(fixture.m_session->m_requests[2]).m_count == 50);
   }
 
   TEST_CASE("request_second_limit") {
-    auto session = std::make_shared<StubSession>();
-    auto timer = TriggerTimer();
-    auto time_client = FixedTimeClient(TIMESTAMP);
-    auto client = GapClient(
-      [=] (std::stop_token) { return session; }, &timer, &time_client);
+    auto fixture = Fixture();
     auto total = 0;
     for(auto i = 0; i != GapClient::SECOND_LIMIT; ++i) {
-      total += client.request(1, CxaPitchGap(1, 1), 1);
+      total += fixture.m_client.request(1, CxaPitchGap(1, 1), 1);
     }
     REQUIRE(total == GapClient::SECOND_LIMIT);
-    REQUIRE(client.request(1, CxaPitchGap(1, 1), 1) == 0);
-    time_client.set(TIMESTAMP + seconds(1));
-    REQUIRE(client.request(1, CxaPitchGap(1, 1), 1) == 1);
+    REQUIRE(fixture.m_client.request(1, CxaPitchGap(1, 1), 1) == 0);
+    fixture.m_time_client.set(TIMESTAMP + SECOND);
+    REQUIRE(fixture.m_client.request(1, CxaPitchGap(1, 1), 1) == 1);
   }
 
   TEST_CASE("request_minute_limit") {
-    auto session = std::make_shared<StubSession>();
-    auto timer = TriggerTimer();
-    auto time_client = FixedTimeClient(TIMESTAMP);
-    auto client = GapClient(
-      [=] (std::stop_token) { return session; }, &timer, &time_client);
+    auto fixture = Fixture();
     auto total = 0;
     for(auto i = 0; i != GapClient::MINUTE_LIMIT; ++i) {
-      time_client.set(TIMESTAMP + seconds(i / 100));
-      total += client.request(1, CxaPitchGap(1, 1), 1);
+      fixture.m_time_client.set(TIMESTAMP + SECOND * (i / REQUESTS_PER_SECOND));
+      total += fixture.m_client.request(1, CxaPitchGap(1, 1), 1);
     }
     REQUIRE(total == GapClient::MINUTE_LIMIT);
-    time_client.set(TIMESTAMP + seconds(30));
-    REQUIRE(client.request(1, CxaPitchGap(1, 1), 1) == 0);
-    time_client.set(TIMESTAMP + minutes(1));
-    REQUIRE(client.request(1, CxaPitchGap(1, 1), 1) == 1);
+    fixture.m_time_client.set(TIMESTAMP + duration_from_string("00:00:30"));
+    REQUIRE(fixture.m_client.request(1, CxaPitchGap(1, 1), 1) == 0);
+    fixture.m_time_client.set(TIMESTAMP + MINUTE);
+    REQUIRE(fixture.m_client.request(1, CxaPitchGap(1, 1), 1) == 1);
   }
 
   TEST_CASE("request_clock_boundary") {
-    for(auto duration : {seconds(1), seconds(60), seconds(86400)}) {
-      auto session = std::make_shared<StubSession>();
-      auto timer = TriggerTimer();
-      auto time_client = FixedTimeClient(TIMESTAMP);
-      auto client = GapClient(
-        [=] (std::stop_token) { return session; }, &timer, &time_client);
-      session->m_on_write = [&] {
-        time_client.set(TIMESTAMP + duration);
+    for(auto duration : {SECOND, MINUTE, DAY}) {
+      auto fixture = Fixture();
+      fixture.m_session->m_on_write = [&] {
+        fixture.m_time_client.set(TIMESTAMP + duration);
       };
       auto count = GapClient::SECOND_LIMIT * GapClient::MAXIMUM_COUNT;
-      REQUIRE(client.request(
+      REQUIRE(fixture.m_client.request(
         1, CxaPitchGap(1, count + GapClient::MAXIMUM_COUNT), 1) == count);
-      REQUIRE(session->m_requests.size() == GapClient::SECOND_LIMIT);
-      REQUIRE(client.request(1, CxaPitchGap(count + 1, 1), 1) == 0);
+      REQUIRE(fixture.m_session->m_requests.size() == GapClient::SECOND_LIMIT);
+      REQUIRE(fixture.m_client.request(1, CxaPitchGap(count + 1, 1), 1) == 0);
     }
   }
 
   TEST_CASE("request_clock_rollback") {
-    auto session = std::make_shared<StubSession>();
-    auto timer = TriggerTimer();
-    auto time_client = FixedTimeClient(TIMESTAMP);
-    auto client = GapClient(
-      [=] (std::stop_token) { return session; }, &timer, &time_client);
+    auto fixture = Fixture();
     auto count = GapClient::SECOND_LIMIT * GapClient::MAXIMUM_COUNT;
-    REQUIRE(client.request(1, CxaPitchGap(1, count), 1) == count);
-    time_client.set(TIMESTAMP - hours(24));
-    REQUIRE(client.request(1, CxaPitchGap(count + 1, 1), 1) == 0);
-    time_client.set(TIMESTAMP);
-    REQUIRE(client.request(1, CxaPitchGap(count + 1, 1), 1) == 0);
-    time_client.set(TIMESTAMP + seconds(1));
-    REQUIRE(client.request(1, CxaPitchGap(count + 1, 1), 1) == 1);
+    REQUIRE(fixture.m_client.request(1, CxaPitchGap(1, count), 1) == count);
+    fixture.m_time_client.set(TIMESTAMP - DAY);
+    REQUIRE(fixture.m_client.request(1, CxaPitchGap(count + 1, 1), 1) == 0);
+    fixture.m_time_client.set(TIMESTAMP);
+    REQUIRE(fixture.m_client.request(1, CxaPitchGap(count + 1, 1), 1) == 0);
+    fixture.m_time_client.set(TIMESTAMP + SECOND);
+    REQUIRE(fixture.m_client.request(1, CxaPitchGap(count + 1, 1), 1) == 1);
   }
 
   TEST_CASE("request_daily_limit") {
-    auto session = std::make_shared<StubSession>();
-    auto timer = TriggerTimer();
-    auto time_client = FixedTimeClient(TIMESTAMP);
-    auto client = GapClient(
-      [=] (std::stop_token) { return session; }, &timer, &time_client);
+    auto fixture = Fixture();
+    constexpr auto REQUESTS_PER_MINUTE = 1000;
     auto total = 0;
     for(auto i = 0; i != GapClient::DAY_LIMIT; ++i) {
-      time_client.set(
-        TIMESTAMP + minutes(i / 1000) + seconds((i % 1000) / 100));
-      total += client.request(1, CxaPitchGap(1, 1), 1);
+      fixture.m_time_client.set(TIMESTAMP + MINUTE * (i / REQUESTS_PER_MINUTE) +
+        SECOND * ((i % REQUESTS_PER_MINUTE) / REQUESTS_PER_SECOND));
+      total += fixture.m_client.request(1, CxaPitchGap(1, 1), 1);
     }
     REQUIRE(total == GapClient::DAY_LIMIT);
-    time_client.set(TIMESTAMP + hours(2));
-    REQUIRE(client.request(1, CxaPitchGap(1, 1), 1) == 0);
-    time_client.set(TIMESTAMP + hours(24));
-    REQUIRE(client.request(1, CxaPitchGap(1, 1), 1) == 1);
+    fixture.m_time_client.set(TIMESTAMP + duration_from_string("02:00:00"));
+    REQUIRE(fixture.m_client.request(1, CxaPitchGap(1, 1), 1) == 0);
+    fixture.m_time_client.set(TIMESTAMP + DAY);
+    REQUIRE(fixture.m_client.request(1, CxaPitchGap(1, 1), 1) == 1);
   }
 
   TEST_CASE("request_unrecoverable_gap") {
-    auto session = std::make_shared<StubSession>();
-    auto timer = TriggerTimer();
-    auto time_client = FixedTimeClient(TIMESTAMP);
-    auto client = GapClient(
-      [=] (std::stop_token) { return session; }, &timer, &time_client);
-    REQUIRE(client.request(1, CxaPitchGap(500000, 1), 2000000) == 0);
-    REQUIRE(session->m_requests.empty());
-    REQUIRE(client.request(1, CxaPitchGap(500000, 1), 1000000) == 1);
+    auto fixture = Fixture();
+    REQUIRE(fixture.m_client.request(1, CxaPitchGap(500000, 1), 2000000) == 0);
+    REQUIRE(fixture.m_session->m_requests.empty());
+    REQUIRE(fixture.m_client.request(1, CxaPitchGap(500000, 1), 1000000) == 1);
   }
 
   TEST_CASE("read_responses") {
-    auto session = std::make_shared<StubSession>();
-    auto timer = TriggerTimer();
-    auto time_client = FixedTimeClient(TIMESTAMP);
-    auto client = GapClient(
-      [=] (std::stop_token) { return session; }, &timer, &time_client);
-    session->m_messages->push(encode_response(1, 4155, 50, 'A'));
-    session->m_messages->push(encode_response(2, 900, 10, 'D'));
-    auto accepted = client.get_responses()->pop();
+    auto fixture = Fixture();
+    fixture.m_session->m_messages->push(encode_response(1, 4155, 50, 'A'));
+    fixture.m_session->m_messages->push(encode_response(2, 900, 10, 'D'));
+    auto accepted = fixture.m_client.get_responses()->pop();
     REQUIRE(accepted.m_unit == 1);
     REQUIRE(accepted.m_sequence == 4155);
     REQUIRE(accepted.m_count == 50);
     REQUIRE(accepted.m_status == CxaPitchGapResponse::ACCEPTED);
-    auto rejected = client.get_responses()->pop();
+    auto rejected = fixture.m_client.get_responses()->pop();
     REQUIRE(rejected.m_sequence == 900);
     REQUIRE(rejected.m_status != CxaPitchGapResponse::ACCEPTED);
   }
@@ -247,41 +228,71 @@ TEST_SUITE("CxaPitchGapClient") {
     timer.trigger();
     first->close();
     flush_pending_routines();
-    auto is_closed = std::make_shared<Queue<bool>>();
+    auto completion = Queue<bool>();
     auto closer = RoutineHandler(spawn([&] {
       client.close();
-      is_closed->push(true);
+      completion.push(true);
     }));
     flush_pending_routines();
-    auto is_shut = static_cast<bool>(is_closed->try_pop());
+    auto is_closed = completion.try_pop().has_value();
     gate->close();
     second->close();
     closer.wait();
-    REQUIRE(is_shut);
+    REQUIRE(is_closed);
+  }
+
+  TEST_CASE("close_during_reconnect_delay") {
+    auto session = std::make_shared<StubSession>();
+    auto timer = GatedTimer();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto connections = 0;
+    auto client = CxaPitchGapClient<StubSession, GatedTimer*, FixedTimeClient*>(
+      [&] (std::stop_token stop_token) {
+        if(stop_token.stop_requested()) {
+          throw IOException("Connection canceled.");
+        }
+        ++connections;
+        return session;
+      }, &timer, &time_client);
+    SUBCASE("timer_start") {}
+    SUBCASE("timer_wait") {
+      timer.m_start.push(0);
+    }
+    session->close();
+    flush_pending_routines();
+    auto completion = Queue<bool>();
+    auto closer = RoutineHandler(spawn([&] {
+      client.close();
+      completion.push(true);
+    }));
+    timer.m_canceled.pop();
+    timer.m_start.push(0);
+    flush_pending_routines();
+    auto is_closed = completion.try_pop().has_value();
+    timer.trigger();
+    closer.wait();
+    REQUIRE(is_closed);
+    REQUIRE(connections == 1);
   }
 
   TEST_CASE("close_during_request") {
-    auto session = std::make_shared<StubSession>();
-    session->m_gate = std::make_shared<Queue<int>>();
-    auto timer = TriggerTimer();
-    auto time_client = FixedTimeClient(TIMESTAMP);
-    auto client = GapClient(
-      [=] (std::stop_token) { return session; }, &timer, &time_client);
+    auto fixture = Fixture();
+    fixture.m_session->m_gate = std::make_shared<Queue<int>>();
     auto requester = RoutineHandler(spawn([&] {
-      client.request(1, CxaPitchGap(1000, 50), 1000);
+      fixture.m_client.request(1, CxaPitchGap(1000, 50), 1000);
     }));
     flush_pending_routines();
-    auto is_closed = std::make_shared<Queue<bool>>();
+    auto completion = Queue<bool>();
     auto closer = RoutineHandler(spawn([&] {
-      client.close();
-      is_closed->push(true);
+      fixture.m_client.close();
+      completion.push(true);
     }));
     flush_pending_routines();
-    auto is_shut = static_cast<bool>(is_closed->try_pop());
-    session->m_gate->push(0);
+    auto is_closed = completion.try_pop().has_value();
+    fixture.m_session->m_gate->push(0);
     requester.wait();
     closer.wait();
-    REQUIRE(is_shut);
+    REQUIRE(is_closed);
   }
 
   TEST_CASE("session_reconnection") {
@@ -303,6 +314,27 @@ TEST_SUITE("CxaPitchGapClient") {
     REQUIRE(client.request(1, CxaPitchGap(1000, 50), 1000) == 50);
     REQUIRE(second->m_requests.size() == 1);
     REQUIRE(parse_request(second->m_requests[0]).m_sequence == 1000);
+  }
+
+  TEST_CASE("reconnect_timer_failure") {
+    auto first = std::make_shared<StubSession>();
+    auto second = std::make_shared<StubSession>();
+    auto sessions = std::vector{first, second};
+    auto index = std::size_t(0);
+    auto timer = TriggerTimer();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = GapClient([&] (std::stop_token) {
+      return sessions[index++];
+    }, &timer, &time_client);
+    first->close();
+    flush_pending_routines();
+    second->m_messages->push(encode_response(1, 900, 10, 'A'));
+    timer.fail();
+    flush_pending_routines();
+    auto response = client.get_responses()->try_pop();
+    client.close();
+    REQUIRE(response.has_value());
+    REQUIRE(response->m_sequence == 900);
   }
 
   TEST_CASE("close_failed_session") {
