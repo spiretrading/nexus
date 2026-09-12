@@ -1,18 +1,9 @@
 #ifndef CXA_PITCH_PROTOCOL_CLIENT_HPP
 #define CXA_PITCH_PROTOCOL_CLIENT_HPP
-#include <concepts>
-#include <exception>
-#include <string_view>
-#include <type_traits>
-#include <utility>
 #include <Beam/IO/Channel.hpp>
 #include <Beam/IO/ConnectException.hpp>
-#include <Beam/IO/IOException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/Pointers/Dereference.hpp>
-#include <Beam/Pointers/LocalPtr.hpp>
-#include <Beam/Pointers/Out.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
 
@@ -26,8 +17,8 @@ namespace Nexus {
   };
 
   /**
-   * Reads the blocks delivered by a CXA PITCH feed.
-   * @param <C> The type of Channel receiving the feed.
+   * Reads the blocks delivered by a CXA PITCH multicast feed.
+   * @tparam C The type of Channel delivering one complete datagram per read.
    */
   template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>
   class CxaPitchProtocolClient {
@@ -45,7 +36,10 @@ namespace Nexus {
 
       ~CxaPitchProtocolClient();
 
-      /** Reads the next block from the feed. */
+      /**
+       * Reads the next block from the feed.
+       * The returned payload is valid until the next read or destruction.
+       */
       CxaPitchBlock read();
 
       void close();
@@ -65,7 +59,7 @@ namespace Nexus {
   CxaPitchProtocolClient<C>::CxaPitchProtocolClient(CF&& channel)
     try : m_channel(std::forward<CF>(channel)) {}
     catch(const std::exception&) {
-      std::throw_with_nested(Beam::ConnectException(
+      Beam::throw_nested_with_location(Beam::ConnectException(
         "Failed to initialize the CXA PITCH protocol client."));
     }
 
