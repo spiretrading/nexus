@@ -124,9 +124,9 @@ int main(int argc, const char** argv) {
     for(auto& feed : feed_configuration.m_feeds) {
       feeds.push_back(
         make_protocol_client(feed.m_address, feed.m_interface, options));
-      if(gap_client && !feed.m_gap_address.get_host().empty()) {
+      if(gap_client && feed.m_gap_address) {
         recovery.push_back(
-          make_protocol_client(feed.m_gap_address, feed.m_interface, options));
+          make_protocol_client(*feed.m_gap_address, feed.m_interface, options));
       }
     }
     auto client = CxaPitchClient(feed_configuration.m_unit,

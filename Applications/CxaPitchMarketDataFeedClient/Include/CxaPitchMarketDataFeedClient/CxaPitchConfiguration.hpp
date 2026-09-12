@@ -1,16 +1,11 @@
 #ifndef CXA_PITCH_CONFIGURATION_HPP
 #define CXA_PITCH_CONFIGURATION_HPP
 #include <algorithm>
-#include <cstdint>
-#include <stdexcept>
-#include <string>
-#include <vector>
-#include <Beam/Network/IpAddress.hpp>
+#include <limits>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
 #include <boost/optional/optional.hpp>
-#include "Nexus/Definitions/Country.hpp"
+#include <boost/throw_exception.hpp>
 #include "Nexus/Definitions/Venue.hpp"
 
 namespace Nexus {
@@ -25,7 +20,7 @@ namespace Nexus {
     Beam::IpAddress m_address;
 
     /** The feed's gap response multicast group. */
-    Beam::IpAddress m_gap_address;
+    boost::optional<Beam::IpAddress> m_gap_address;
 
     /** The interface to receive the feed on. */
     Beam::IpAddress m_interface;
@@ -86,7 +81,7 @@ namespace Nexus {
     std::vector<CxaPitchFeed> m_feeds;
 
     /** How long a feed may be silent before it is excluded. */
-    boost::posix_time::time_duration m_liveness;
+    boost::posix_time::time_duration m_feed_timeout;
 
     /** How long to wait for a missing message before skipping over it. */
     boost::posix_time::time_duration m_gap_timeout;
@@ -109,8 +104,10 @@ namespace Nexus {
     auto feed = CxaPitchFeed();
     feed.m_name = Beam::extract<std::string>(config, "name");
     feed.m_address = Beam::extract<Beam::IpAddress>(config, "address");
-    feed.m_gap_address = Beam::extract<Beam::IpAddress>(
-      config, "gap_address", Beam::IpAddress());
+    if(config["gap_address"]) {
+      feed.m_gap_address =
+        Beam::extract<Beam::IpAddress>(config, "gap_address");
+    }
     feed.m_interface = Beam::extract<Beam::IpAddress>(config, "interface");
     return feed;
   }
@@ -128,27 +125,28 @@ namespace Nexus {
   inline CxaPitchConfiguration CxaPitchConfiguration::parse(
       const YAML::Node& config) {
     return Beam::try_or_nest([&] {
-      static const auto DEFAULT_LIVENESS = boost::posix_time::seconds(3);
+      static const auto DEFAULT_FEED_TIMEOUT = boost::posix_time::seconds(3);
       static const auto DEFAULT_GAP_TIMEOUT = boost::posix_time::seconds(5);
+      static const auto MAXIMUM_TIMEOUT =
+        boost::posix_time::time_duration(boost::date_time::max_date_time);
       auto configuration = CxaPitchConfiguration();
       configuration.m_is_logging_messages =
         Beam::extract<bool>(config, "enable_logging", false);
-      auto unit = Beam::extract<int>(config, "unit");
-      if(unit <= 0 || unit > 255) {
-        throw std::runtime_error("Unit out of range.");
-      }
-      configuration.m_unit = static_cast<std::uint8_t>(unit);
+      configuration.m_unit = static_cast<std::uint8_t>(Beam::extract<int>(
+        config, "unit", 1, std::numeric_limits<std::uint8_t>::max()));
       auto primary_venue = VENUES.from_display_name(
         Beam::extract<std::string>(config, "venue"));
       if(!primary_venue.m_venue) {
-        throw std::runtime_error("Unknown venue specified.");
+        boost::throw_with_location(
+          std::runtime_error("Unknown venue specified."));
       }
       configuration.m_country = primary_venue.m_country_code;
       configuration.m_primary_venue = primary_venue.m_venue;
       auto disseminating_venue = VENUES.from_display_name(
         Beam::extract<std::string>(config, "disseminating_venue"));
       if(!disseminating_venue.m_venue) {
-        throw std::runtime_error("Unknown disseminating venue specified.");
+        boost::throw_with_location(
+          std::runtime_error("Unknown disseminating venue specified."));
       }
       configuration.m_disseminating_venue = disseminating_venue.m_venue;
       configuration.m_mpid = Beam::extract<std::string>(
@@ -157,25 +155,26 @@ namespace Nexus {
         configuration.m_feeds.push_back(CxaPitchFeed::parse(feed));
       }
       if(configuration.m_feeds.empty()) {
-        throw std::runtime_error("No feeds specified.");
+        boost::throw_with_location(std::runtime_error("No feeds specified."));
       }
-      configuration.m_liveness =
+      configuration.m_feed_timeout =
         Beam::extract<boost::posix_time::time_duration>(
-          config, "liveness", DEFAULT_LIVENESS);
+          config, "feed_timeout", DEFAULT_FEED_TIMEOUT,
+          boost::posix_time::time_duration::unit(), MAXIMUM_TIMEOUT);
       configuration.m_gap_timeout =
         Beam::extract<boost::posix_time::time_duration>(
-          config, "gap_timeout", DEFAULT_GAP_TIMEOUT);
+          config, "gap_timeout", DEFAULT_GAP_TIMEOUT,
+          boost::posix_time::time_duration(), MAXIMUM_TIMEOUT);
       if(config["retransmission"]) {
         configuration.m_retransmission =
           CxaPitchSession::parse(Beam::get_node(config, "retransmission"));
       }
       if(configuration.m_retransmission &&
-        std::none_of(configuration.m_feeds.begin(),
-          configuration.m_feeds.end(), [] (const auto& feed) {
-            return !feed.m_gap_address.get_host().empty();
+          std::ranges::none_of(configuration.m_feeds, [] (const auto& feed) {
+            return feed.m_gap_address.has_value();
           })) {
-        throw std::runtime_error(
-          "No gap response address specified to receive retransmissions.");
+        boost::throw_with_location(std::runtime_error(
+          "No gap response address specified to receive retransmissions."));
       }
       if(config["spin"]) {
         configuration.m_spin =
