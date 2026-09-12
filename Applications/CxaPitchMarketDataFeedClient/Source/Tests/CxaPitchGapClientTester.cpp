@@ -119,6 +119,47 @@ TEST_SUITE("CxaPitchGapClient") {
     REQUIRE(parse_request(fixture.m_session->m_requests[2]).m_count == 50);
   }
 
+  TEST_CASE("request_partial_write_failure") {
+    auto first = std::make_shared<StubSession>();
+    auto second = std::make_shared<StubSession>();
+    auto sessions = std::vector{first, second};
+    auto index = std::size_t(0);
+    auto attempts = 0;
+    first->m_on_write = [&] {
+      ++attempts;
+      if(attempts == 2) {
+        throw IOException("Write failed.");
+      }
+    };
+    auto timer = TriggerTimer();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = GapClient([&] (std::stop_token) {
+      return sessions[index++];
+    }, &timer, &time_client);
+    auto gap = CxaPitchGap(1000, 250);
+    auto count = client.request(1, gap, gap.m_sequence);
+    REQUIRE(count == GapClient::MAXIMUM_COUNT);
+    REQUIRE(attempts == 2);
+    REQUIRE(first->m_requests.size() == 1);
+    REQUIRE(parse_request(first->m_requests[0]).m_sequence == gap.m_sequence);
+    REQUIRE(parse_request(first->m_requests[0]).m_count == count);
+    flush_pending_routines();
+    timer.trigger();
+    flush_pending_routines();
+    auto remainder = CxaPitchGap(gap.m_sequence + count, gap.m_count - count);
+    REQUIRE(client.request(1, remainder, remainder.m_sequence) ==
+      remainder.m_count);
+    REQUIRE(second->m_requests.size() == 2);
+    REQUIRE(parse_request(second->m_requests[0]).m_sequence ==
+      remainder.m_sequence);
+    REQUIRE(parse_request(second->m_requests[0]).m_count ==
+      GapClient::MAXIMUM_COUNT);
+    REQUIRE(parse_request(second->m_requests[1]).m_sequence ==
+      remainder.m_sequence + GapClient::MAXIMUM_COUNT);
+    REQUIRE(parse_request(second->m_requests[1]).m_count ==
+      remainder.m_count - GapClient::MAXIMUM_COUNT);
+  }
+
   TEST_CASE("request_second_limit") {
     auto fixture = Fixture();
     auto total = 0;
@@ -129,6 +170,49 @@ TEST_SUITE("CxaPitchGapClient") {
     REQUIRE(fixture.m_client.request(1, CxaPitchGap(1, 1), 1) == 0);
     fixture.m_time_client.set(TIMESTAMP + SECOND);
     REQUIRE(fixture.m_client.request(1, CxaPitchGap(1, 1), 1) == 1);
+  }
+
+  TEST_CASE("concurrent_request_limit") {
+    auto fixture = Fixture();
+    constexpr auto REMAINING_REQUESTS = 3;
+    for(auto i = 0; i != GapClient::SECOND_LIMIT - REMAINING_REQUESTS; ++i) {
+      fixture.m_client.request(1, CxaPitchGap(1, 1), 1);
+    }
+    REQUIRE(fixture.m_session->m_requests.size() ==
+      GapClient::SECOND_LIMIT - REMAINING_REQUESTS);
+    fixture.m_session->m_requests.clear();
+    fixture.m_session->m_gate = std::make_shared<Queue<int>>();
+    auto count = 2 * GapClient::MAXIMUM_COUNT;
+    auto first_count = std::uint32_t(0);
+    auto second_count = std::uint32_t(0);
+    auto first = RoutineHandler(spawn([&] {
+      first_count = fixture.m_client.request(1, CxaPitchGap(1000, count), 1000);
+    }));
+    flush_pending_routines();
+    auto second = RoutineHandler(spawn([&] {
+      second_count = fixture.m_client.request(2, CxaPitchGap(2000, count),
+        2000);
+    }));
+    flush_pending_routines();
+    for(auto i = 0; i != 2 * count / GapClient::MAXIMUM_COUNT; ++i) {
+      fixture.m_session->m_gate->push(0);
+    }
+    first.wait();
+    second.wait();
+    REQUIRE(first_count + second_count ==
+      REMAINING_REQUESTS * GapClient::MAXIMUM_COUNT);
+    REQUIRE(fixture.m_session->m_requests.size() == REMAINING_REQUESTS);
+    auto sequences = std::vector{std::uint32_t(1000), std::uint32_t(2000)};
+    for(const auto& source : fixture.m_session->m_requests) {
+      auto request = parse_request(source);
+      REQUIRE((request.m_unit == 1 || request.m_unit == 2));
+      REQUIRE(request.m_count == GapClient::MAXIMUM_COUNT);
+      REQUIRE(request.m_sequence == sequences[request.m_unit - 1]);
+      sequences[request.m_unit - 1] += request.m_count;
+    }
+    REQUIRE(first_count == sequences[0] - 1000);
+    REQUIRE(second_count == sequences[1] - 2000);
+    REQUIRE(fixture.m_client.request(1, CxaPitchGap(3000, 1), 3000) == 0);
   }
 
   TEST_CASE("request_minute_limit") {
@@ -198,14 +282,19 @@ TEST_SUITE("CxaPitchGapClient") {
     auto fixture = Fixture();
     fixture.m_session->m_messages->push(encode_response(1, 4155, 50, 'A'));
     fixture.m_session->m_messages->push(encode_response(2, 900, 10, 'D'));
-    auto accepted = fixture.m_client.get_responses()->pop();
-    REQUIRE(accepted.m_unit == 1);
-    REQUIRE(accepted.m_sequence == 4155);
-    REQUIRE(accepted.m_count == 50);
-    REQUIRE(accepted.m_status == CxaPitchGapResponse::ACCEPTED);
-    auto rejected = fixture.m_client.get_responses()->pop();
-    REQUIRE(rejected.m_sequence == 900);
-    REQUIRE(rejected.m_status != CxaPitchGapResponse::ACCEPTED);
+    flush_pending_routines();
+    auto accepted = fixture.m_client.get_responses()->try_pop();
+    REQUIRE(accepted.has_value());
+    REQUIRE(accepted->m_unit == 1);
+    REQUIRE(accepted->m_sequence == 4155);
+    REQUIRE(accepted->m_count == 50);
+    REQUIRE(accepted->m_status == CxaPitchGapResponse::ACCEPTED);
+    auto rejected = fixture.m_client.get_responses()->try_pop();
+    REQUIRE(rejected.has_value());
+    REQUIRE(rejected->m_unit == 2);
+    REQUIRE(rejected->m_sequence == 900);
+    REQUIRE(rejected->m_count == 10);
+    REQUIRE(rejected->m_status == 'D');
   }
 
   TEST_CASE("close_during_connection") {
@@ -241,6 +330,44 @@ TEST_SUITE("CxaPitchGapClient") {
     REQUIRE(is_closed);
   }
 
+  TEST_CASE("connection_completed_during_close") {
+    auto first = std::make_shared<StubSession>();
+    auto second = std::make_shared<StubSession>();
+    auto sessions = std::vector{first, second};
+    auto index = std::size_t(0);
+    auto gate = Queue<int>();
+    auto timer = TriggerTimer();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto client = GapClient([&] (std::stop_token stop_token) {
+      if(index != 0) {
+        auto cancellation = std::stop_callback(stop_token, [&] {
+          gate.push(0);
+        });
+        gate.pop();
+      }
+      return sessions[index++];
+    }, &timer, &time_client);
+    timer.trigger();
+    first->close();
+    flush_pending_routines();
+    auto completion = Queue<bool>();
+    auto closer = RoutineHandler(spawn([&] {
+      client.close();
+      completion.push(true);
+    }));
+    flush_pending_routines();
+    auto is_closed = completion.try_pop().has_value();
+    auto is_session_closed = second->m_is_closed;
+    gate.push(0);
+    second->close();
+    closer.wait();
+    REQUIRE(is_closed);
+    REQUIRE(is_session_closed);
+    REQUIRE(index == sessions.size());
+    REQUIRE(client.request(1, CxaPitchGap(1000, 50), 1000) == 0);
+    REQUIRE(second->m_requests.empty());
+  }
+
   TEST_CASE("close_during_reconnect_delay") {
     auto session = std::make_shared<StubSession>();
     auto timer = GatedTimer();
@@ -265,12 +392,14 @@ TEST_SUITE("CxaPitchGapClient") {
       client.close();
       completion.push(true);
     }));
-    timer.m_canceled.pop();
+    flush_pending_routines();
+    auto canceled = timer.m_canceled.try_pop();
     timer.m_start.push(0);
     flush_pending_routines();
     auto is_closed = completion.try_pop().has_value();
     timer.trigger();
     closer.wait();
+    REQUIRE(canceled.has_value());
     REQUIRE(is_closed);
     REQUIRE(connections == 1);
   }
@@ -295,6 +424,17 @@ TEST_SUITE("CxaPitchGapClient") {
     REQUIRE(is_closed);
   }
 
+  TEST_CASE("disconnected_session") {
+    auto fixture = Fixture();
+    fixture.m_session->m_messages->close();
+    flush_pending_routines();
+    REQUIRE(fixture.m_client.request(1, CxaPitchGap(1000, 50), 1000) == 0);
+    REQUIRE(fixture.m_session->m_requests.empty());
+    fixture.m_client.close();
+    REQUIRE(fixture.m_session->m_is_closed);
+    REQUIRE(fixture.m_client.request(1, CxaPitchGap(1000, 50), 1000) == 0);
+  }
+
   TEST_CASE("session_reconnection") {
     auto first = std::make_shared<StubSession>();
     auto second = std::make_shared<StubSession>();
@@ -306,11 +446,17 @@ TEST_SUITE("CxaPitchGapClient") {
       return sessions[index++];
     }, &timer, &time_client);
     first->m_messages->push(encode_response(1, 4155, 50, 'A'));
-    REQUIRE(client.get_responses()->pop().m_sequence == 4155);
+    flush_pending_routines();
+    auto response = client.get_responses()->try_pop();
+    REQUIRE(response.has_value());
+    REQUIRE(response->m_sequence == 4155);
     timer.trigger();
     first->close();
     second->m_messages->push(encode_response(1, 900, 10, 'A'));
-    REQUIRE(client.get_responses()->pop().m_sequence == 900);
+    flush_pending_routines();
+    response = client.get_responses()->try_pop();
+    REQUIRE(response.has_value());
+    REQUIRE(response->m_sequence == 900);
     REQUIRE(client.request(1, CxaPitchGap(1000, 50), 1000) == 50);
     REQUIRE(second->m_requests.size() == 1);
     REQUIRE(parse_request(second->m_requests[0]).m_sequence == 1000);
@@ -350,7 +496,10 @@ TEST_SUITE("CxaPitchGapClient") {
     first->m_messages->close();
     timer.trigger();
     second->m_messages->push(encode_response(1, 900, 10, 'A'));
-    REQUIRE(client.get_responses()->pop().m_sequence == 900);
+    flush_pending_routines();
+    auto response = client.get_responses()->try_pop();
+    REQUIRE(response.has_value());
+    REQUIRE(response->m_sequence == 900);
     REQUIRE(first->m_is_closed);
   }
 
@@ -377,10 +526,12 @@ TEST_SUITE("CxaPitchGapClient") {
     timer.trigger();
     first->m_messages->close();
     second->m_messages->push(encode_response(1, 900, 10, 'A'));
-    auto response = client.get_responses()->pop();
+    flush_pending_routines();
+    auto response = client.get_responses()->try_pop();
     gate.push(0);
     requester.wait();
-    REQUIRE(response.m_sequence == 900);
+    REQUIRE(response.has_value());
+    REQUIRE(response->m_sequence == 900);
     REQUIRE(requested == 0);
     REQUIRE(client.request(1, CxaPitchGap(1000, 50), 1000) == 50);
     REQUIRE(second->m_requests.size() == 1);
