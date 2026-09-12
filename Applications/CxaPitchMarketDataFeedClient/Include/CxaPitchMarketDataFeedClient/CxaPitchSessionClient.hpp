@@ -196,8 +196,7 @@ namespace Nexus {
   void CxaPitchSessionClient<C, T>::write(const M& message) {
     Beam::try_or_nest([&] {
       auto buffer = Beam::StaticBuffer<CxaPitchHeader::LENGTH + M::LENGTH>();
-      auto header =
-        CxaPitchHeader(CxaPitchHeader::LENGTH + M::LENGTH, 1, 0, 0);
+      auto header = CxaPitchHeader(CxaPitchHeader::LENGTH + M::LENGTH, 1, 0, 0);
       header.encode(Beam::out(buffer));
       message.encode(Beam::out(buffer));
       m_writer.write(buffer);
