@@ -30,6 +30,8 @@
 #include <boost/optional/optional.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchGapClient.hpp"
+#include "CxaPitchMarketDataFeedClient/CxaPitchMessage.hpp"
+#include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchProtocolClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchReport.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSequencer.hpp"
@@ -85,9 +87,10 @@ namespace Nexus {
       /**
        * Constructs a CxaPitchClient.
        * @param unit The unit to deliver the messages of.
-       * @param liveness How long a feed may be silent before it is excluded.
-       * @param gap_timeout How long to wait for missing messages or snapshot
-       *        progress before proceeding without them.
+       * @param feed_timeout How long a feed may be silent before it is
+       *        excluded.
+       * @param gap_timeout How long to wait for missing messages or an initial
+       *        snapshot offer before proceeding without them.
        * @param feeds The clients receiving the unit's real time feeds.
        * @param recovery The clients receiving the unit's gap response feeds.
        * @param gap The client requesting retransmissions, if enabled.
@@ -97,7 +100,7 @@ namespace Nexus {
        */
       template<Beam::Initializes<R> RF, Beam::Initializes<T> TF>
       CxaPitchClient(std::uint8_t unit,
-        boost::posix_time::time_duration liveness,
+        boost::posix_time::time_duration feed_timeout,
         boost::posix_time::time_duration gap_timeout, std::vector<P> feeds,
         std::vector<P> recovery, boost::optional<G> gap,
         boost::optional<S> spin, RF&& time_client, TF&& timer);
@@ -116,7 +119,7 @@ namespace Nexus {
         std::string m_reason;
       };
       std::uint8_t m_unit;
-      boost::posix_time::time_duration m_liveness;
+      boost::posix_time::time_duration m_feed_timeout;
       boost::posix_time::time_duration m_gap_timeout;
       std::vector<Beam::local_ptr_t<P>> m_feeds;
       std::vector<Beam::local_ptr_t<P>> m_recovery;
@@ -131,9 +134,7 @@ namespace Nexus {
       std::uint32_t m_reported_gap;
       std::uint32_t m_requested;
       std::map<std::uint32_t, Rejection> m_rejections;
-      std::uint64_t m_spin_progress;
       boost::posix_time::ptime m_start;
-      boost::posix_time::ptime m_spin_timestamp;
       boost::posix_time::ptime m_gap_timestamp;
       boost::posix_time::ptime m_feed_timestamp;
       bool m_is_ready;
@@ -174,12 +175,12 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<T>>
   template<Beam::Initializes<R> RF, Beam::Initializes<T> TF>
   CxaPitchClient<P, G, S, R, T>::CxaPitchClient(std::uint8_t unit,
-      boost::posix_time::time_duration liveness,
+      boost::posix_time::time_duration feed_timeout,
       boost::posix_time::time_duration gap_timeout, std::vector<P> feeds,
       std::vector<P> recovery, boost::optional<G> gap, boost::optional<S> spin,
       RF&& time_client, TF&& timer)
       try : m_unit(unit),
-            m_liveness(liveness),
+            m_feed_timeout(feed_timeout),
             m_gap_timeout(gap_timeout),
             m_feeds(std::make_move_iterator(feeds.begin()),
               std::make_move_iterator(feeds.end())),
@@ -189,12 +190,10 @@ namespace Nexus {
             m_spin(std::move(spin)),
             m_time_client(std::forward<RF>(time_client)),
             m_timer(std::forward<TF>(timer)),
-            m_sequencer(static_cast<int>(m_feeds.size()), liveness),
+            m_sequencer(static_cast<int>(m_feeds.size()), feed_timeout),
             m_reported_gap(0),
             m_requested(0),
-            m_spin_progress(0),
             m_start(m_time_client->get_time()),
-            m_spin_timestamp(m_start),
             m_gap_timestamp(m_start),
             m_feed_timestamp(m_start),
             m_is_ready(!m_spin),
@@ -374,6 +373,7 @@ namespace Nexus {
         if(header.m_unit != m_unit) {
           continue;
         }
+        validate(block);
         auto timestamp = m_time_client->get_time();
         auto live = boost::optional<std::uint32_t>();
         auto close_spin = false;
@@ -386,23 +386,13 @@ namespace Nexus {
               out << "(feed " << timestamp << ')';
             });
           }
-          if(!m_is_ready) {
-            auto start = m_start;
-            if(m_is_spinning) {
-              auto progress = (*m_spin)->get_progress();
-              if(progress != m_spin_progress) {
-                m_spin_progress = progress;
-                m_spin_timestamp = timestamp;
-              }
-              start = m_spin_timestamp;
-            }
-            if(timestamp - start > m_gap_timeout) {
-              print([&] (auto& out) {
-                out << "(no_spin " << timestamp << ')';
-              });
-              m_is_ready = true;
-              close_spin = true;
-            }
+          if(!m_is_ready && !m_is_spinning &&
+              timestamp - m_start > m_gap_timeout) {
+            print([&] (auto& out) {
+              out << "(no_spin " << timestamp << ')';
+            });
+            m_is_ready = true;
+            close_spin = true;
           }
           flush(sequencer);
           skip(sequencer, timestamp);
@@ -468,14 +458,8 @@ namespace Nexus {
         auto timestamp = m_time_client->get_time();
         Beam::with(m_sequencer, [&] (auto& sequencer) {
           try {
-            try {
+            validate(block);
             sequencer.recover(block);
-          } catch(const CxaPitchParserException&) {
-            auto& header = block.get_header();
-            if(header.m_sequence != 0 && header.m_count != 0) {
-              reject(header.m_sequence, header.m_count, "malformed");
-            }
-          }
           } catch(const CxaPitchParserException&) {
             auto& header = block.get_header();
             if(header.m_sequence != 0 && header.m_count != 0) {
@@ -566,13 +550,6 @@ namespace Nexus {
             }
             return;
           }
-          if(response.m_status == CxaPitchGapResponse::MINUTE_EXHAUSTED ||
-              response.m_status == CxaPitchGapResponse::SECOND_EXHAUSTED) {
-            if(m_requested > response.m_sequence) {
-              m_requested = response.m_sequence;
-            }
-            return;
-          }
           reject(response.m_sequence, response.m_count,
             "rejected " + std::string(1, response.m_status));
           skip(sequencer, timestamp);
@@ -592,23 +569,23 @@ namespace Nexus {
   void CxaPitchClient<P, G, S, R, T>::spin_loop() {
     auto attempts = 0;
     try {
+      auto sequences = std::make_shared<Beam::StateQueue<std::uint32_t>>();
+      (*m_spin)->monitor_snapshot_sequences(sequences);
       while(attempts != SPIN_ATTEMPTS) {
-        auto offer = (*m_spin)->get_offers()->pop();
+        auto offer = sequences->pop();
         auto is_requested = Beam::with(m_sequencer, [&] (auto& sequencer) {
           auto sequence = sequencer.get_sequence();
           if(m_is_ready || !sequence || offer + 1 < *sequence) {
             return false;
           }
           m_is_spinning = true;
-          m_spin_progress = (*m_spin)->get_progress();
-          m_spin_timestamp = m_time_client->get_time();
           return true;
         });
         if(!is_requested) {
           continue;
         }
-        auto spin = (*m_spin)->request(offer);
-        if(spin.m_status != CxaPitchSpinResponse::ACCEPTED) {
+        auto snapshot = (*m_spin)->load_snapshot(offer);
+        if(snapshot.m_status != CxaPitchSpinResponse::ACCEPTED) {
           Beam::with(m_sequencer, [&] (auto& sequencer) {
             m_is_spinning = false;
           });
@@ -619,13 +596,11 @@ namespace Nexus {
           if(m_is_ready) {
             return;
           }
-          for(auto& message : spin.m_messages) {
+          for(auto& message : snapshot.m_messages) {
             m_messages.push(message);
           }
-          if(sequencer.get_sequence().value_or(0) < spin.m_sequence + 1) {
-            if(sequencer.get_sequence().value_or(0) < spin.m_sequence + 1) {
-            sequencer.reset(spin.m_sequence + 1);
-          }
+          if(sequencer.get_sequence().value_or(0) < snapshot.m_sequence + 1) {
+            sequencer.reset(snapshot.m_sequence + 1);
           }
           m_is_ready = true;
           flush(sequencer);
@@ -664,7 +639,7 @@ namespace Nexus {
         }
         auto timestamp = m_time_client->get_time();
         Beam::with(m_sequencer, [&] (auto& sequencer) {
-          if(!m_is_silent && timestamp - m_feed_timestamp > m_liveness) {
+          if(!m_is_silent && timestamp - m_feed_timestamp > m_feed_timeout) {
             m_is_silent = true;
             print([&] (auto& out) {
               out << "(no_feed " << timestamp << ')';

@@ -8,6 +8,7 @@
 #include <vector>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/Queues/StatePublisher.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
@@ -85,37 +86,31 @@ namespace {
   };
 
   struct StubSpinClient {
-    std::shared_ptr<Queue<std::uint32_t>> m_offers;
+    StatePublisher<std::uint32_t> m_sequences;
     std::shared_ptr<Queue<std::uint32_t>> m_requests;
-    std::shared_ptr<Queue<CxaPitchSpin>> m_spins;
-    std::atomic_uint64_t m_progress;
+    std::shared_ptr<Queue<CxaPitchSnapshot>> m_snapshots;
     std::atomic_bool m_is_closed;
 
     StubSpinClient()
-      : m_offers(std::make_shared<Queue<std::uint32_t>>()),
-        m_requests(std::make_shared<Queue<std::uint32_t>>()),
-        m_spins(std::make_shared<Queue<CxaPitchSpin>>()),
-        m_progress(0),
+      : m_requests(std::make_shared<Queue<std::uint32_t>>()),
+        m_snapshots(std::make_shared<Queue<CxaPitchSnapshot>>()),
         m_is_closed(false) {}
 
-    const std::shared_ptr<Queue<std::uint32_t>>& get_offers() const {
-      return m_offers;
+    void monitor_snapshot_sequences(
+        ScopedQueueWriter<std::uint32_t> queue) const {
+      m_sequences.monitor(std::move(queue));
     }
 
-    std::uint64_t get_progress() const {
-      return m_progress.load();
-    }
-
-    CxaPitchSpin request(std::uint32_t sequence) {
+    CxaPitchSnapshot load_snapshot(std::uint32_t sequence) {
       m_requests->push(sequence);
-      return m_spins->pop();
+      return m_snapshots->pop();
     }
 
     void close() {
       m_is_closed = true;
-      m_offers->close();
+      m_sequences.close();
       m_requests->close();
-      m_spins->close();
+      m_snapshots->close();
     }
   };
 
@@ -449,23 +444,38 @@ TEST_SUITE("CxaPitchClient") {
     auto reader = MessageReader(client);
     feed.m_blocks->push(encode_block(5, {}));
     flush_pending_routines();
-    spin_client.m_offers->push(6);
+    spin_client.m_sequences.push(6);
     REQUIRE(spin_client.m_requests->pop() == 6);
     feed.m_blocks->push(encode_block(10, {0x1a}));
     flush_pending_routines();
     time_client.set(TIMESTAMP + seconds(6));
-    ++spin_client.m_progress;
     feed.m_blocks->push(encode_block(11, {0x1b}));
     flush_pending_routines();
-    auto spin = CxaPitchSpin();
-    spin.m_sequence = 6;
-    spin.m_status = CxaPitchSpinResponse::ACCEPTED;
-    spin.m_messages.push_back(encode_message(0x37));
-    spin_client.m_spins->push(spin);
+    auto snapshot = CxaPitchSnapshot();
+    snapshot.m_sequence = 6;
+    snapshot.m_status = CxaPitchSpinResponse::ACCEPTED;
+    snapshot.m_messages.push_back(encode_message(0x37));
+    spin_client.m_snapshots->push(snapshot);
     flush_pending_routines();
     REQUIRE(reader.m_types->try_pop().value_or(0) == 0x37);
     REQUIRE(reader.m_types->try_pop().value_or(0) == 0x1a);
     REQUIRE(reader.m_types->try_pop().value_or(0) == 0x1b);
+  }
+
+  TEST_CASE("malformed_feed_message") {
+    auto first = StubProtocolClient();
+    auto second = StubProtocolClient();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto timer = TriggerTimer();
+    auto client = Client(1, seconds(3), seconds(5),
+      std::vector{&first, &second},
+      std::vector<StubProtocolClient*>(), none, none, &time_client, &timer);
+    auto reader = MessageReader(client);
+    first.m_blocks->push(encode_block(1, {CxaPitchAddOrder::TYPE}));
+    second.m_blocks->push(encode_block(1, {0x11}));
+    flush_pending_routines();
+    REQUIRE(reader.m_types->try_pop().value_or(0) == 0x11);
+    REQUIRE(!reader.m_types->try_pop());
   }
 
   TEST_CASE("read_malformed_block") {
@@ -550,29 +560,27 @@ TEST_SUITE("CxaPitchClient") {
     auto reader = MessageReader(client);
     feed.m_blocks->push(encode_block(5, {0x11, 0x12, 0x13}));
     flush_pending_routines();
-    spin_client.m_offers->push(6);
+    spin_client.m_sequences.push(6);
     REQUIRE(spin_client.m_requests->pop() == 6);
-    time_client.set(TIMESTAMP + duration_from_string("00:00:04"));
-    ++spin_client.m_progress;
-    feed.m_blocks->push(encode_block(8, {}));
-    flush_pending_routines();
-    time_client.set(TIMESTAMP + seconds(6));
+    time_client.set(TIMESTAMP + duration_from_string("01:00:00"));
     feed.m_blocks->push(encode_block(8, {0x14}));
     flush_pending_routines();
+    timer.trigger();
+    flush_pending_routines();
+    REQUIRE(!spin_client.m_is_closed);
     REQUIRE(!reader.m_types->try_pop());
-    REQUIRE(!spin_client.m_is_closed.load());
-    auto spin = CxaPitchSpin();
-    spin.m_sequence = 6;
-    spin.m_status = CxaPitchSpinResponse::ACCEPTED;
-    spin.m_messages.push_back(encode_message(0x37));
-    spin_client.m_spins->push(spin);
+    auto snapshot = CxaPitchSnapshot();
+    snapshot.m_sequence = 6;
+    snapshot.m_status = CxaPitchSpinResponse::ACCEPTED;
+    snapshot.m_messages.push_back(encode_message(0x37));
+    spin_client.m_snapshots->push(snapshot);
     flush_pending_routines();
     REQUIRE(reader.m_types->try_pop().value_or(0) == 0x37);
     REQUIRE(reader.m_types->try_pop().value_or(0) == 0x13);
     REQUIRE(reader.m_types->try_pop().value_or(0) == 0x14);
   }
 
-  TEST_CASE("snapshot_progress_timeout") {
+  TEST_CASE("close_pending_snapshot") {
     auto feed = StubProtocolClient();
     auto spin_client = StubSpinClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
@@ -584,24 +592,11 @@ TEST_SUITE("CxaPitchClient") {
     auto reader = MessageReader(client);
     feed.m_blocks->push(encode_block(5, {0x11, 0x12}));
     flush_pending_routines();
-    spin_client.m_offers->push(6);
+    spin_client.m_sequences.push(6);
     REQUIRE(spin_client.m_requests->pop() == 6);
-    time_client.set(TIMESTAMP + duration_from_string("00:00:04"));
-    ++spin_client.m_progress;
-    feed.m_blocks->push(encode_block(7, {}));
-    flush_pending_routines();
-    time_client.set(TIMESTAMP + duration_from_string("00:00:08"));
-    spin_client.m_offers->push(7);
-    feed.m_blocks->push(encode_block(7, {}));
-    flush_pending_routines();
     REQUIRE(!reader.m_types->try_pop());
-    time_client.set(TIMESTAMP + duration_from_string("00:00:10"));
-    feed.m_blocks->push(encode_block(7, {0x13}));
-    flush_pending_routines();
-    REQUIRE(spin_client.m_is_closed.load());
-    REQUIRE(reader.m_types->try_pop().value_or(0) == 0x11);
-    REQUIRE(reader.m_types->try_pop().value_or(0) == 0x12);
-    REQUIRE(reader.m_types->try_pop().value_or(0) == 0x13);
+    client.close();
+    REQUIRE(spin_client.m_is_closed);
   }
 
   TEST_CASE("rejected_gap_chunk") {
@@ -689,7 +684,7 @@ TEST_SUITE("CxaPitchClient") {
     first.m_blocks->push(encode_block(6, {0x16}));
     second.m_blocks->push(encode_block(6, {0x16}));
     flush_pending_routines();
-    auto is_requested = static_cast<bool>(gap_client.m_requests->try_pop());
+    auto is_requested = gap_client.m_requests->try_pop().has_value();
     REQUIRE(!is_requested);
   }
 
@@ -789,17 +784,55 @@ TEST_SUITE("CxaPitchClient") {
     feed.m_blocks->push(encode_block(8, {}));
     feed.m_reads->pop();
     feed.m_reads->pop();
-    spin_client.m_offers->push(6);
+    spin_client.m_sequences.push(6);
     REQUIRE(spin_client.m_requests->pop() == 6);
-    auto spin = CxaPitchSpin();
-    spin.m_sequence = 6;
-    spin.m_status = CxaPitchSpinResponse::ACCEPTED;
-    spin.m_messages.push_back(encode_message(0x37));
-    spin.m_messages.push_back(encode_message(0x3B));
-    spin_client.m_spins->push(std::move(spin));
+    auto snapshot = CxaPitchSnapshot();
+    snapshot.m_sequence = 6;
+    snapshot.m_status = CxaPitchSpinResponse::ACCEPTED;
+    snapshot.m_messages.push_back(encode_message(0x37));
+    snapshot.m_messages.push_back(encode_message(0x3B));
+    spin_client.m_snapshots->push(std::move(snapshot));
     REQUIRE(client.read().m_type == 0x37);
     REQUIRE(client.read().m_type == 0x3B);
     REQUIRE(client.read().m_type == 0x13);
+  }
+
+  TEST_CASE("latest_snapshot_request") {
+    auto feed = StubProtocolClient();
+    auto spin_client = StubSpinClient();
+    auto time_client = FixedTimeClient(TIMESTAMP);
+    auto timer = TriggerTimer();
+    auto client = Client(1, seconds(3), seconds(5), std::vector{&feed},
+      std::vector<StubProtocolClient*>(), none, &spin_client, &time_client,
+      &timer);
+    auto reader = MessageReader(client);
+    feed.m_blocks->push(encode_block(5, {0x11, 0x12, 0x13, 0x14, 0x15, 0x16}));
+    flush_pending_routines();
+    spin_client.m_sequences.push(6);
+    flush_pending_routines();
+    auto request = spin_client.m_requests->try_pop();
+    REQUIRE(request.has_value());
+    REQUIRE(*request == 6);
+    spin_client.m_sequences.push(7);
+    spin_client.m_sequences.push(8);
+    spin_client.m_sequences.push(9);
+    spin_client.m_snapshots->push(CxaPitchSnapshot(6, 'O'));
+    flush_pending_routines();
+    request = spin_client.m_requests->try_pop();
+    REQUIRE(request.has_value());
+    REQUIRE(*request == 9);
+    REQUIRE(!spin_client.m_requests->try_pop());
+    spin_client.m_snapshots->push(CxaPitchSnapshot(9,
+      CxaPitchSpinResponse::ACCEPTED,
+      std::vector{encode_message(CxaPitchAddOrder::TYPE)}));
+    flush_pending_routines();
+    auto message = reader.m_types->try_pop();
+    REQUIRE(message.has_value());
+    REQUIRE(*message == CxaPitchAddOrder::TYPE);
+    message = reader.m_types->try_pop();
+    REQUIRE(message.has_value());
+    REQUIRE(*message == 0x16);
+    REQUIRE(!reader.m_types->try_pop());
   }
 
   TEST_CASE("snapshot_attempt_limit") {
@@ -816,12 +849,12 @@ TEST_SUITE("CxaPitchClient") {
     feed.m_reads->pop();
     feed.m_reads->pop();
     for(auto i = 0; i != Client::SPIN_ATTEMPTS; ++i) {
-      spin_client.m_offers->push(6);
+      spin_client.m_sequences.push(6);
       REQUIRE(spin_client.m_requests->pop() == 6);
-      auto spin = CxaPitchSpin();
-      spin.m_sequence = 6;
-      spin.m_status = 'O';
-      spin_client.m_spins->push(std::move(spin));
+      auto snapshot = CxaPitchSnapshot();
+      snapshot.m_sequence = 6;
+      snapshot.m_status = 'O';
+      spin_client.m_snapshots->push(std::move(snapshot));
     }
     REQUIRE(client.read().m_type == 0x11);
   }

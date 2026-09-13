@@ -1,32 +1,23 @@
 #ifndef CXA_PITCH_SPIN_CLIENT_HPP
 #define CXA_PITCH_SPIN_CLIENT_HPP
-#include <atomic>
-#include <concepts>
-#include <cstdint>
 #include <exception>
 #include <functional>
-#include <memory>
-#include <type_traits>
-#include <utility>
 #include <vector>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/Pointers/Dereference.hpp>
-#include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/Queues/StatePublisher.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <boost/throw_exception.hpp>
-#include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
-#include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionClient.hpp"
-#include "CxaPitchMarketDataFeedClient/CxaPitchSessionMessages.hpp"
 
 namespace Nexus {
 
-  /** Stores a snapshot of the open orders on a unit. */
-  struct CxaPitchSpin {
+  /** Stores a snapshot of the open orders on a feed. */
+  struct CxaPitchSnapshot {
 
     /** The sequence that the snapshot is current through. */
     std::uint32_t m_sequence;
@@ -38,19 +29,20 @@ namespace Nexus {
     std::vector<Beam::SharedBuffer> m_messages;
   };
 
-  /** Concept satisfied by types requesting a snapshot of a unit's book. */
+  /** Concept satisfied by types requesting a snapshot of a feed's book. */
   template<typename T>
   concept IsCxaPitchSpinClient = requires(T& t) {
-    { std::as_const(t).get_progress() } -> std::same_as<std::uint64_t>;
-    { t.get_offers() } -> std::convertible_to<
-      const std::shared_ptr<Beam::Queue<std::uint32_t>>&>;
-    { t.request(std::declval<std::uint32_t>()) } -> std::same_as<CxaPitchSpin>;
+    { std::as_const(t).monitor_snapshot_sequences(
+        std::declval<Beam::ScopedQueueWriter<std::uint32_t>>()) } ->
+      std::same_as<void>;
+    { t.load_snapshot(std::declval<std::uint32_t>()) } ->
+      std::same_as<CxaPitchSnapshot>;
     { t.close() } -> std::same_as<void>;
   };
 
   /**
-   * Requests a snapshot of a unit's open orders from a CXA PITCH spin server.
-   * @param <S> The type of session connected to the spin server.
+   * Requests a snapshot of a feed's open orders from a CXA PITCH spin server.
+   * @tparam S The type of session connected to the spin server.
    */
   template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   class CxaPitchSpinClient {
@@ -68,31 +60,27 @@ namespace Nexus {
 
       ~CxaPitchSpinClient();
 
-      /** Returns the queue of sequences a snapshot is available through. */
-      const std::shared_ptr<Beam::Queue<std::uint32_t>>& get_offers() const;
-
-      /** Returns the number of snapshot messages received by this client. */
-      std::uint64_t get_progress() const;
+      /**
+       * Monitors the latest available snapshot sequence and subsequent updates.
+       * @param queue Receives the snapshot sequences.
+       */
+      void monitor_snapshot_sequences(
+        Beam::ScopedQueueWriter<std::uint32_t> queue) const;
 
       /**
-       * Requests a snapshot of the open orders on this session's unit.
-       * @param sequence The sequence, taken from an offer, to request the
-       *        snapshot at.
-       * @return The snapshot, or the reason that the request was rejected.
+       * Loads a snapshot of the open orders on this session's feed.
+       * @param sequence The sequence to request the snapshot at.
+       * @return The snapshot or the reason that the request was rejected.
        */
-      CxaPitchSpin request(std::uint32_t sequence);
+      CxaPitchSnapshot load_snapshot(std::uint32_t sequence);
 
       /** Closes the connection to the spin server. */
       void close();
 
     private:
       Beam::local_ptr_t<S> m_session;
-      std::shared_ptr<Beam::Queue<std::uint32_t>> m_offers;
-      std::shared_ptr<Beam::Queue<CxaPitchSpin>> m_spins;
-      CxaPitchSpin m_spin;
-      std::uint32_t m_orders;
-      bool m_is_spinning;
-      std::atomic_uint64_t m_progress;
+      Beam::StatePublisher<std::uint32_t> m_sequences;
+      Beam::Queue<CxaPitchSnapshot> m_snapshots;
       Beam::RoutineHandler m_read_loop;
       Beam::OpenState m_open_state;
 
@@ -107,12 +95,7 @@ namespace Nexus {
   template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   template<Beam::Initializes<S> SF>
   CxaPitchSpinClient<S>::CxaPitchSpinClient(SF&& session)
-      try : m_session(std::forward<SF>(session)),
-            m_offers(std::make_shared<Beam::Queue<std::uint32_t>>()),
-            m_spins(std::make_shared<Beam::Queue<CxaPitchSpin>>()),
-            m_orders(0),
-            m_is_spinning(false),
-            m_progress(0) {
+      try : m_session(std::forward<SF>(session)) {
     m_read_loop =
       Beam::spawn(std::bind_front(&CxaPitchSpinClient::read_loop, this));
   } catch(const std::exception&) {
@@ -126,22 +109,17 @@ namespace Nexus {
   }
 
   template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
-  const std::shared_ptr<Beam::Queue<std::uint32_t>>&
-      CxaPitchSpinClient<S>::get_offers() const {
-    return m_offers;
+  void CxaPitchSpinClient<S>::monitor_snapshot_sequences(
+      Beam::ScopedQueueWriter<std::uint32_t> queue) const {
+    m_sequences.monitor(std::move(queue));
   }
 
   template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
-  std::uint64_t CxaPitchSpinClient<S>::get_progress() const {
-    return m_progress.load();
-  }
-
-  template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
-  CxaPitchSpin CxaPitchSpinClient<S>::request(std::uint32_t sequence) {
-    auto message = CxaPitchSpinRequest();
-    message.m_sequence = sequence;
+  CxaPitchSnapshot CxaPitchSpinClient<S>::load_snapshot(
+      std::uint32_t sequence) {
+    auto message = CxaPitchSpinRequest(sequence);
     m_session->write(message);
-    return m_spins->pop();
+    return m_snapshots.pop();
   }
 
   template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
@@ -149,9 +127,9 @@ namespace Nexus {
     if(m_open_state.set_closing()) {
       return;
     }
+    m_snapshots.close();
+    m_sequences.close();
     m_session->close();
-    m_offers->close();
-    m_spins->close();
     m_read_loop.wait();
     m_open_state.close();
   }
@@ -159,52 +137,50 @@ namespace Nexus {
   template<typename S> requires IsCxaPitchSessionClient<Beam::dereference_t<S>>
   void CxaPitchSpinClient<S>::read_loop() {
     try {
+      auto snapshot = CxaPitchSnapshot();
+      auto orders = std::uint32_t(0);
       while(true) {
         auto message = m_session->read();
         if(message.m_type == CxaPitchSpinImageAvailable::TYPE) {
-          m_offers->push(CxaPitchSpinImageAvailable::parse(message).m_sequence);
+          m_sequences.push(
+            CxaPitchSpinImageAvailable::parse(message).m_sequence);
         } else if(message.m_type == CxaPitchSpinResponse::TYPE) {
           auto response = CxaPitchSpinResponse::parse(message);
-          m_spin = CxaPitchSpin();
-          m_spin.m_sequence = response.m_sequence;
-          m_spin.m_status = response.m_status;
-          m_orders = response.m_order_count;
-          m_is_spinning = response.m_status == CxaPitchSpinResponse::ACCEPTED;
-          if(!m_is_spinning) {
-            m_spins->push(std::move(m_spin));
+          snapshot = CxaPitchSnapshot();
+          snapshot.m_sequence = response.m_sequence;
+          snapshot.m_status = response.m_status;
+          orders = response.m_order_count;
+          if(response.m_status != CxaPitchSpinResponse::ACCEPTED) {
+            m_snapshots.push(std::move(snapshot));
           }
         } else if(message.m_type == CxaPitchSpinFinished::TYPE) {
-          if(m_is_spinning) {
-            auto finished = CxaPitchSpinFinished::parse(message);
-            if(finished.m_sequence != m_spin.m_sequence) {
-              boost::throw_with_location(
-                CxaPitchParserException("Spin finished out of sequence."));
-            }
-            if(m_orders != 0) {
-              boost::throw_with_location(
-                CxaPitchParserException("Spin order count mismatch."));
-            }
-            m_is_spinning = false;
-            m_spins->push(std::move(m_spin));
+          auto finished = CxaPitchSpinFinished::parse(message);
+          if(finished.m_sequence != snapshot.m_sequence) {
+            boost::throw_with_location(
+              CxaPitchParserException("Spin finished out of sequence."));
           }
-        } else if(m_is_spinning) {
+          if(orders != 0) {
+            boost::throw_with_location(
+              CxaPitchParserException("Spin order count mismatch."));
+          }
+          m_snapshots.push(std::move(snapshot));
+        } else {
           validate(message);
           if(message.m_type == CxaPitchAddOrder::TYPE) {
-            if(m_orders == 0) {
+            if(orders == 0) {
               boost::throw_with_location(
                 CxaPitchParserException("Spin order count mismatch."));
             }
-            --m_orders;
+            --orders;
           }
-          m_spin.m_messages.emplace_back(
+          snapshot.m_messages.emplace_back(
             message.m_payload - CxaPitchMessage::HEADER_LENGTH,
             message.m_length);
-          ++m_progress;
         }
       }
     } catch(const std::exception&) {
-      m_offers->close(std::current_exception());
-      m_spins->close(std::current_exception());
+      m_sequences.close(std::current_exception());
+      m_snapshots.close(std::current_exception());
     }
   }
 }
