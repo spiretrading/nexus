@@ -1,3 +1,4 @@
+#include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <doctest/doctest.h>
@@ -8,6 +9,9 @@ using namespace Beam;
 using namespace Nexus;
 
 namespace {
+  constexpr auto SIDE_POSITION =
+    CxaPitchMessage::HEADER_LENGTH + 2 * sizeof(std::uint64_t);
+
   SharedBuffer encode(const IsCxaPitchSessionMessage auto& message) {
     auto buffer = SharedBuffer();
     message.encode(out(buffer));
@@ -16,14 +20,11 @@ namespace {
 
   struct StubSession {
     Queue<SharedBuffer> m_requests;
-    std::shared_ptr<Queue<SharedBuffer>> m_messages;
+    Queue<SharedBuffer> m_messages;
     SharedBuffer m_payload;
 
-    StubSession()
-      : m_messages(std::make_shared<Queue<SharedBuffer>>()) {}
-
     CxaPitchMessage read() {
-      auto buffer = m_messages->pop();
+      auto buffer = m_messages.pop();
       reset(m_payload);
       append(m_payload, buffer);
       return CxaPitchMessage::parse(
@@ -35,7 +36,7 @@ namespace {
     }
 
     void close() {
-      m_messages->close();
+      m_messages.close();
     }
   };
 
@@ -81,13 +82,11 @@ namespace {
     }
 
     void send(const SharedBuffer& message) {
-      m_session.m_messages->push(message);
+      m_session.m_messages.push(message);
     }
   };
 
   SharedBuffer encode_message(std::uint8_t type) {
-    static const auto SIDE_POSITION =
-      CxaPitchMessage::HEADER_LENGTH + 2 * sizeof(std::uint64_t);
     auto length = CxaPitchAddOrder::LENGTH;
     if(type == CxaPitchTradingStatus::TYPE) {
       length = CxaPitchTradingStatus::LENGTH;
@@ -113,8 +112,8 @@ TEST_SUITE("CxaPitchSpinClient") {
     auto sequences = std::make_shared<Queue<std::uint32_t>>();
     client.monitor_snapshot_sequences(sequences);
     REQUIRE(!sequences->try_pop());
-    session.m_messages->push(encode(CxaPitchSpinImageAvailable(310169)));
-    session.m_messages->push(encode(CxaPitchSpinImageAvailable(310175)));
+    session.m_messages.push(encode(CxaPitchSpinImageAvailable(310169)));
+    session.m_messages.push(encode(CxaPitchSpinImageAvailable(310175)));
     flush_pending_routines();
     auto offer = sequences->try_pop();
     REQUIRE(offer.has_value());
@@ -312,6 +311,45 @@ TEST_SUITE("CxaPitchSpinClient") {
     REQUIRE(fixture.read().get().m_messages.size() == 2);
   }
 
+  TEST_CASE("request_write_failure") {
+    auto fixture = Fixture();
+    auto exception = std::make_exception_ptr(
+      IOException("Snapshot request write failed."));
+    fixture.m_session.m_requests.close(exception);
+    fixture.m_request = spawn([&] {
+      fixture.m_results.push(try_call([&] {
+        return fixture.m_client.load_snapshot(310175);
+      }));
+    });
+    auto result = fixture.read();
+    REQUIRE(result.is_exception());
+    REQUIRE_THROWS_WITH_AS(
+      result.get(), "Snapshot request write failed.", IOException);
+  }
+
+  TEST_CASE("session_disconnect") {
+    auto fixture = Fixture();
+    auto sequences = std::make_shared<Queue<std::uint32_t>>();
+    fixture.m_client.monitor_snapshot_sequences(sequences);
+    fixture.request(310175);
+    SUBCASE("pending_response") {}
+    SUBCASE("partial_snapshot") {
+      fixture.send(CxaPitchSpinResponse(310175, 2, 'A'));
+      fixture.send(encode_message(CxaPitchAddOrder::TYPE));
+      flush_pending_routines();
+      REQUIRE(!fixture.m_results.try_pop());
+    }
+    fixture.m_session.m_messages.close(std::make_exception_ptr(
+      EndOfFileException("Snapshot session disconnected.")));
+    auto result = fixture.read();
+    REQUIRE(result.is_exception());
+    REQUIRE_THROWS_WITH_AS(
+      result.get(), "Snapshot session disconnected.", EndOfFileException);
+    REQUIRE(sequences->is_broken());
+    REQUIRE_THROWS_WITH_AS(
+      sequences->pop(), "Snapshot session disconnected.", EndOfFileException);
+  }
+
   TEST_CASE("close_pending_request") {
     auto fixture = Fixture();
     auto sequences = std::make_shared<Queue<std::uint32_t>>();
@@ -352,6 +390,14 @@ TEST_SUITE("CxaPitchSpinClient") {
     REQUIRE_THROWS_AS(fixture.read().get(), CxaPitchParserException);
   }
 
+  TEST_CASE("malformed_snapshot_response") {
+    auto fixture = Fixture();
+    fixture.request(310175);
+    fixture.send(
+      SharedBuffer("\x02\x82", CxaPitchMessage::HEADER_LENGTH));
+    REQUIRE_THROWS_AS(fixture.read().get(), CxaPitchParserException);
+  }
+
   TEST_CASE("malformed_snapshot_finish") {
     for(const auto& finished : {SharedBuffer("\x02\x83",
         CxaPitchMessage::HEADER_LENGTH),
@@ -369,8 +415,15 @@ TEST_SUITE("CxaPitchSpinClient") {
     auto fixture = Fixture();
     fixture.request(310175);
     fixture.send(CxaPitchSpinResponse(310175, 1, 'A'));
-    fixture.send(
-      SharedBuffer("\x02\x37", CxaPitchMessage::HEADER_LENGTH));
+    auto message = SharedBuffer();
+    SUBCASE("truncated") {
+      message = SharedBuffer("\x02\x37", CxaPitchMessage::HEADER_LENGTH);
+    }
+    SUBCASE("invalid_side") {
+      message = encode_message(CxaPitchAddOrder::TYPE);
+      message.get_mutable_data()[SIDE_POSITION] = 'X';
+    }
+    fixture.send(message);
     REQUIRE_THROWS_AS(fixture.read().get(), CxaPitchParserException);
   }
 }

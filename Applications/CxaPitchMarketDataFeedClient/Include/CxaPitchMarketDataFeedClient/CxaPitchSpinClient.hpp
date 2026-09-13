@@ -146,12 +146,12 @@ namespace Nexus {
             CxaPitchSpinImageAvailable::parse(message).m_sequence);
         } else if(message.m_type == CxaPitchSpinResponse::TYPE) {
           auto response = CxaPitchSpinResponse::parse(message);
-          snapshot = CxaPitchSnapshot();
-          snapshot.m_sequence = response.m_sequence;
-          snapshot.m_status = response.m_status;
+          snapshot = CxaPitchSnapshot(response.m_sequence, response.m_status);
           orders = response.m_order_count;
           if(response.m_status != CxaPitchSpinResponse::ACCEPTED) {
             m_snapshots.push(std::move(snapshot));
+          } else {
+            snapshot.m_messages.reserve(orders);
           }
         } else if(message.m_type == CxaPitchSpinFinished::TYPE) {
           auto finished = CxaPitchSpinFinished::parse(message);
