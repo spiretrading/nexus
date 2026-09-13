@@ -1,7 +1,6 @@
 #ifndef CXA_PITCH_MESSAGE_HPP
 #define CXA_PITCH_MESSAGE_HPP
 #include <cstddef>
-#include <cstdint>
 #include <ostream>
 #include <string_view>
 #include <boost/throw_exception.hpp>

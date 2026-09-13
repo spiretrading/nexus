@@ -1,5 +1,4 @@
 #include <array>
-#include <string_view>
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchMessage.hpp"
