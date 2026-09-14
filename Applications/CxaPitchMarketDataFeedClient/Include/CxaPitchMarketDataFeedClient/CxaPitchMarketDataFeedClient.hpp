@@ -101,16 +101,16 @@ namespace Nexus {
       IsCxaPitchClient<Beam::dereference_t<C>>
   template<Beam::Initializes<M> MF, Beam::Initializes<C> CF>
   CxaPitchMarketDataFeedClient<M, C>::CxaPitchMarketDataFeedClient(
-      CxaPitchConfiguration config, MF&& feed_client, CF&& client)
-      try : m_config(std::move(config)),
-            m_feed_client(std::forward<MF>(feed_client)),
-            m_client(std::forward<CF>(client)),
-            m_read_loop(Beam::spawn(std::bind_front(
-              &CxaPitchMarketDataFeedClient::read_loop, this))) {
-  } catch(const std::exception&) {
-    Beam::throw_nested_with_location(Beam::ConnectException(
-      "Unable to initialize the CXA PITCH market data feed client."));
-  }
+    CxaPitchConfiguration config, MF&& feed_client, CF&& client)
+    try : m_config(std::move(config)),
+          m_feed_client(std::forward<MF>(feed_client)),
+          m_client(std::forward<CF>(client)),
+          m_read_loop(Beam::spawn(std::bind_front(
+            &CxaPitchMarketDataFeedClient::read_loop, this))) {
+    } catch(const std::exception&) {
+      Beam::throw_nested_with_location(Beam::ConnectException(
+        "Unable to initialize the CXA PITCH market data feed client."));
+    }
 
   template<typename M, typename C> requires
     IsMarketDataFeedClient<Beam::dereference_t<M>> &&
