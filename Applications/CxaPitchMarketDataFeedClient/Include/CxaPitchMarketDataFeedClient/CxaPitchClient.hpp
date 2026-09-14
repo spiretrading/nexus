@@ -628,13 +628,10 @@ namespace Nexus {
           ++attempts;
           continue;
         }
+        for(auto& message : snapshot.m_messages) {
+          m_messages.push(message);
+        }
         Beam::with(m_sequencer, [&] (auto& sequencer) {
-          if(m_is_ready) {
-            return;
-          }
-          for(auto& message : snapshot.m_messages) {
-            m_messages.push(message);
-          }
           if(sequencer.get_sequence().value_or(0) < snapshot.m_sequence + 1) {
             sequencer.reset(snapshot.m_sequence + 1);
           }
