@@ -522,12 +522,26 @@ TEST_SUITE("CxaPitchClient") {
     fixture.publish(encode_block(1, {0x11}));
     flush_pending_routines();
     REQUIRE(!reader.m_types.try_pop());
+    fixture.m_time_client.set(TIMESTAMP + Fixture::GAP_TIMEOUT);
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    REQUIRE(!reader.m_types.try_pop());
+    REQUIRE(!fixture.m_spin_client->m_is_closed);
     fixture.m_time_client.set(
       TIMESTAMP + Fixture::GAP_TIMEOUT + time_duration::unit());
-    fixture.publish(encode_block(2, {0x12}));
+    auto types = std::vector{0x11};
+    SUBCASE("feed") {
+      fixture.publish(encode_block(2, {0x12}));
+      types.push_back(0x12);
+    }
+    SUBCASE("timer") {
+      fixture.m_timer.trigger();
+    }
     flush_pending_routines();
-    REQUIRE(reader.m_types.try_pop() == 0x11);
-    REQUIRE(reader.m_types.try_pop() == 0x12);
+    for(auto type : types) {
+      REQUIRE(reader.m_types.try_pop() == type);
+    }
+    REQUIRE(!reader.m_types.try_pop());
     REQUIRE(fixture.m_spin_client->m_is_closed);
   }
 

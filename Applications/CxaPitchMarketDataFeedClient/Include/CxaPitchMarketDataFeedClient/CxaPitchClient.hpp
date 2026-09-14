@@ -139,6 +139,7 @@ namespace Nexus {
         CxaPitchSequencer& sequencer, boost::posix_time::ptime timestamp);
       boost::optional<std::uint32_t> advance_recovery(
         CxaPitchSequencer& sequencer, boost::posix_time::ptime timestamp);
+      bool expire_snapshot_offer(boost::posix_time::ptime timestamp);
       void feed_loop(int index);
       void recovery_loop(int index);
       void request_loop();
@@ -401,6 +402,24 @@ namespace Nexus {
       IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
       Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
+  bool CxaPitchClient<P, G, S, R, T>::expire_snapshot_offer(
+      boost::posix_time::ptime timestamp) {
+    if(m_is_ready || m_is_spinning || timestamp - m_start <= m_gap_timeout) {
+      return false;
+    }
+    print([&] (auto& out) {
+      out << "(no_spin " << timestamp << ')';
+    });
+    m_is_ready = true;
+    return true;
+  }
+
+  template<typename P, typename G, typename S, typename R, typename T> requires
+    IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
+      IsCxaPitchGapClient<Beam::dereference_t<G>> &&
+      IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
   void CxaPitchClient<P, G, S, R, T>::feed_loop(int index) {
     while(true) {
       try {
@@ -425,17 +444,7 @@ namespace Nexus {
                 out << "(feed " << timestamp << ')';
               });
             }
-            auto close_spin = [&] {
-              if(m_is_ready || m_is_spinning ||
-                  timestamp - m_start <= m_gap_timeout) {
-                return false;
-              }
-              print([&] (auto& out) {
-                out << "(no_spin " << timestamp << ')';
-              });
-              m_is_ready = true;
-              return true;
-            }();
+            auto close_spin = expire_snapshot_offer(timestamp);
             return std::pair(
               close_spin, advance_recovery(sequencer, timestamp));
           });
@@ -660,30 +669,35 @@ namespace Nexus {
     }
     try {
       auto timestamp = m_time_client->get_time();
-      auto recovery_position = Beam::with(m_sequencer,
-        [&] (auto& sequencer) -> boost::optional<std::uint32_t> {
+      auto [close_spin, recovery_position] = Beam::with(m_sequencer,
+        [&] (auto& sequencer) {
           if(!m_is_silent && timestamp - m_feed_timestamp > m_feed_timeout) {
             m_is_silent = true;
             print([&] (auto& out) {
               out << "(no_feed " << timestamp << ')';
             });
           }
+          auto close_spin = expire_snapshot_offer(timestamp);
+          flush(sequencer);
           if(!sequencer.get_gap()) {
             sequencer.update(timestamp);
           }
           auto previous_gap = m_reported_gap;
+          auto recovery_position = boost::optional<std::uint32_t>();
           if(auto gap = update_gap(sequencer, timestamp)) {
             if(gap->m_sequence == previous_gap &&
                 timestamp - m_gap_timestamp > m_gap_timeout) {
               drop(sequencer, *gap, timestamp, "timeout");
-              return boost::none;
-            }
-            if(m_gap_client && m_requested < gap->m_sequence + gap->m_count) {
-              return advance_recovery(sequencer, timestamp);
+            } else if(m_gap_client &&
+                m_requested < gap->m_sequence + gap->m_count) {
+              recovery_position = advance_recovery(sequencer, timestamp);
             }
           }
-          return boost::none;
+          return std::pair(close_spin, recovery_position);
         });
+      if(close_spin) {
+        (*m_spin_client)->close();
+      }
       if(recovery_position) {
         m_requests.push(*recovery_position);
       }
