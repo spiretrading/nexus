@@ -473,44 +473,30 @@ TEST_SUITE("CxaPitchClient") {
     auto response =
       CxaPitchGapResponse(1, 2, 2, CxaPitchGapResponse::SECOND_EXHAUSTED);
     auto is_complete = false;
-    SUBCASE("pending_second") {}
-    SUBCASE("pending_minute") {
-      response.m_status = CxaPitchGapResponse::MINUTE_EXHAUSTED;
-    }
-    SUBCASE("pending_second_prefix") {
+    SUBCASE("pending_range") {}
+    SUBCASE("pending_prefix") {
       gap.m_count = 200;
       response.m_count = 100;
     }
-    SUBCASE("pending_minute_prefix") {
+    SUBCASE("pending_suffix") {
       gap.m_count = 200;
+      response.m_sequence = 102;
       response.m_count = 100;
-      response.m_status = CxaPitchGapResponse::MINUTE_EXHAUSTED;
     }
-    SUBCASE("pending_second_suffix") {
-      response =
-        CxaPitchGapResponse(1, 3, 1, CxaPitchGapResponse::SECOND_EXHAUSTED);
-    }
-    SUBCASE("pending_minute_suffix") {
-      response =
-        CxaPitchGapResponse(1, 3, 1, CxaPitchGapResponse::MINUTE_EXHAUSTED);
-    }
-    SUBCASE("completed_second") {
-      is_complete = true;
-    }
-    SUBCASE("completed_minute") {
+    SUBCASE("completed_range") {
       is_complete = true;
       response.m_status = CxaPitchGapResponse::MINUTE_EXHAUSTED;
     }
-    SUBCASE("completed_second_prefix") {
+    SUBCASE("completed_prefix") {
       is_complete = true;
       gap.m_count = 200;
       response.m_count = 100;
     }
-    SUBCASE("completed_minute_prefix") {
+    SUBCASE("completed_suffix") {
       is_complete = true;
       gap.m_count = 200;
+      response.m_sequence = 102;
       response.m_count = 100;
-      response.m_status = CxaPitchGapResponse::MINUTE_EXHAUSTED;
     }
     fixture.publish(encode_block(1, {0x11}));
     REQUIRE(reader.m_types.pop() == 0x11);
@@ -522,6 +508,12 @@ TEST_SUITE("CxaPitchClient") {
     if(is_complete) {
       request->m_result.set(gap.m_count);
       flush_pending_routines();
+    }
+    if(response.m_sequence > gap.m_sequence) {
+      fixture.m_gap_client.get_responses()->push(
+        CxaPitchGapResponse(1, gap.m_sequence,
+          static_cast<std::uint16_t>(response.m_sequence - gap.m_sequence),
+          CxaPitchGapResponse::ACCEPTED));
     }
     fixture.m_gap_client.get_responses()->push(response);
     auto accepted_sequence = response.m_sequence + response.m_count;
@@ -589,6 +581,73 @@ TEST_SUITE("CxaPitchClient") {
     recoverable->m_result.set(true);
     flush_pending_routines();
     REQUIRE(!fixture.m_gap_operations->try_pop());
+  }
+
+  TEST_CASE("retry_remainder") {
+    auto fixture = Fixture(1, 1, 1);
+    auto reader = MessageReader(*fixture.m_client);
+    fixture.publish(encode_block(1, {0x11}));
+    REQUIRE(reader.m_types.pop() == 0x11);
+    fixture.publish(encode_block(8, {0x18}));
+    auto request = fixture.require_recovery_request(CxaPitchGap(2, 6), 9);
+    request->m_result.set(6);
+    fixture.m_gap_client.get_responses()->push(
+      CxaPitchGapResponse(1, 2, 6, CxaPitchGapResponse::SECOND_EXHAUSTED));
+    fixture.m_recovery_clients[0]->m_blocks.push(encode_block(5, {0x15}));
+    flush_pending_routines();
+    REQUIRE(!reader.m_types.try_pop());
+    fixture.m_timer.trigger();
+    request = fixture.require_recovery_request(CxaPitchGap(2, 3), 9);
+    request->m_result.set(3);
+    fixture.m_recovery_clients[0]->m_blocks.push(
+      encode_block(2, {0x12, 0x13, 0x14}));
+    flush_pending_routines();
+    REQUIRE(reader.m_types.try_pop() == 0x12);
+    REQUIRE(reader.m_types.try_pop() == 0x13);
+    REQUIRE(reader.m_types.try_pop() == 0x14);
+    REQUIRE(reader.m_types.try_pop() == 0x15);
+    REQUIRE(!reader.m_types.try_pop());
+    fixture.m_timer.trigger();
+    request = fixture.require_recovery_request(CxaPitchGap(6, 2), 9);
+    request->m_result.set(2);
+    fixture.m_recovery_clients[0]->m_blocks.push(
+      encode_block(6, {0x16, 0x17}));
+    flush_pending_routines();
+    REQUIRE(reader.m_types.try_pop() == 0x16);
+    REQUIRE(reader.m_types.try_pop() == 0x17);
+    REQUIRE(reader.m_types.try_pop() == 0x18);
+    REQUIRE(!reader.m_types.try_pop());
+    REQUIRE(!fixture.m_gap_operations->try_pop());
+  }
+
+  TEST_CASE("snapshot_offer") {
+    auto fixture = Fixture(1, 1, 0, Fixture::WithSpin());
+    auto reader = MessageReader(*fixture.m_client);
+    auto block = encode_block(5, {0x11, 0x12, 0x13, 0x14});
+    SUBCASE("stale") {
+      fixture.publish(block);
+      flush_pending_routines();
+      fixture.m_spin_client->m_sequences.push(3);
+    }
+    SUBCASE("before_feed") {
+      fixture.m_spin_client->m_sequences.push(6);
+      flush_pending_routines();
+      REQUIRE(!fixture.m_spin_client->m_requests.try_pop());
+      fixture.publish(block);
+    }
+    flush_pending_routines();
+    REQUIRE(!fixture.m_spin_client->m_requests.try_pop());
+    REQUIRE(!reader.m_types.try_pop());
+    fixture.m_spin_client->m_sequences.push(7);
+    flush_pending_routines();
+    REQUIRE(fixture.m_spin_client->m_requests.try_pop() == std::uint32_t(7));
+    fixture.m_spin_client->m_snapshots.push(CxaPitchSnapshot(
+      7, CxaPitchSpinResponse::ACCEPTED, std::vector{ADD_ORDER}));
+    flush_pending_routines();
+    REQUIRE(reader.m_types.try_pop() == int(CxaPitchAddOrder::TYPE));
+    REQUIRE(reader.m_types.try_pop() == 0x14);
+    REQUIRE(!reader.m_types.try_pop());
+    REQUIRE(!fixture.m_spin_client->m_requests.try_pop());
   }
 
   TEST_CASE("stale_snapshot") {
