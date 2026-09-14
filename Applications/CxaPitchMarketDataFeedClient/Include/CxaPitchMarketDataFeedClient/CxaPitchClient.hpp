@@ -611,7 +611,8 @@ namespace Nexus {
           }
         }();
         Beam::with(m_sequencer, [&] (const auto&) {
-          m_is_request_deferred = count < requested_gap->m_count;
+          m_is_request_deferred =
+            m_is_request_deferred || count < requested_gap->m_count;
           if(is_retry) {
             if(count < requested_gap->m_count) {
               retry(CxaPitchGap(requested_gap->m_sequence + count,
@@ -645,6 +646,7 @@ namespace Nexus {
           if(response.m_status == CxaPitchGapResponse::MINUTE_EXHAUSTED ||
               response.m_status == CxaPitchGapResponse::SECOND_EXHAUSTED) {
             retry(CxaPitchGap(response.m_sequence, response.m_count));
+            m_is_request_deferred = true;
             return;
           }
           reject(response.m_sequence, response.m_count,

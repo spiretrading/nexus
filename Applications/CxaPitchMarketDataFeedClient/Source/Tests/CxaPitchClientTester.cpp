@@ -533,9 +533,10 @@ TEST_SUITE("CxaPitchClient") {
       TestCxaPitchGapClient::IsRecoverableOperation>(gap, position);
     recoverable->m_result.set(true);
     flush_pending_routines();
-    auto retry = fixture.try_require_operation<
-      TestCxaPitchGapClient::RequestOperation>(
-        1, CxaPitchGap(response.m_sequence, response.m_count), position);
+    REQUIRE(!fixture.m_gap_operations->try_pop());
+    fixture.m_timer.trigger();
+    auto retry = fixture.require_recovery_request(
+      gap, CxaPitchGap(response.m_sequence, response.m_count), position);
     retry->m_result.set(response.m_count);
     flush_pending_routines();
     fixture.m_feed_clients[0]->m_blocks.push(encode_block(position + 1, {}));
@@ -562,7 +563,7 @@ TEST_SUITE("CxaPitchClient") {
     responses->push(
       CxaPitchGapResponse(1, 202, 100, CxaPitchGapResponse::MINUTE_EXHAUSTED));
     flush_pending_routines();
-    fixture.publish(encode_block(303, {}));
+    fixture.m_timer.trigger();
     auto retry =
       fixture.require_recovery_request(gap, CxaPitchGap(2, 100), 303);
     retry->m_result.set(0);
