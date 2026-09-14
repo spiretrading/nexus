@@ -419,11 +419,21 @@ TEST_SUITE("CxaPitchClient") {
   TEST_CASE("throttled_gap_response") {
     auto fixture = Fixture(2);
     auto reader = MessageReader(*fixture.m_client);
+    auto gap = CxaPitchGap(2, 2);
     auto response =
       CxaPitchGapResponse(1, 2, 2, CxaPitchGapResponse::SECOND_EXHAUSTED);
     auto is_complete = false;
     SUBCASE("pending_second") {}
     SUBCASE("pending_minute") {
+      response.m_status = CxaPitchGapResponse::MINUTE_EXHAUSTED;
+    }
+    SUBCASE("pending_second_prefix") {
+      gap.m_count = 200;
+      response.m_count = 100;
+    }
+    SUBCASE("pending_minute_prefix") {
+      gap.m_count = 200;
+      response.m_count = 100;
       response.m_status = CxaPitchGapResponse::MINUTE_EXHAUSTED;
     }
     SUBCASE("pending_second_suffix") {
@@ -441,31 +451,96 @@ TEST_SUITE("CxaPitchClient") {
       is_complete = true;
       response.m_status = CxaPitchGapResponse::MINUTE_EXHAUSTED;
     }
+    SUBCASE("completed_second_prefix") {
+      is_complete = true;
+      gap.m_count = 200;
+      response.m_count = 100;
+    }
+    SUBCASE("completed_minute_prefix") {
+      is_complete = true;
+      gap.m_count = 200;
+      response.m_count = 100;
+      response.m_status = CxaPitchGapResponse::MINUTE_EXHAUSTED;
+    }
     fixture.publish(encode_block(1, {0x11}));
     REQUIRE(reader.m_types.pop() == 0x11);
     flush_pending_routines();
-    fixture.publish(encode_block(4, {0x14}));
-    auto request = fixture.require_recovery_request(1, CxaPitchGap(2, 2), 5);
+    auto end = gap.m_sequence + gap.m_count;
+    auto position = end + 1;
+    fixture.publish(encode_block(end, {0x14}));
+    auto request = fixture.require_recovery_request(1, gap, position);
     if(is_complete) {
-      request->m_result.set(2);
+      request->m_result.set(gap.m_count);
       flush_pending_routines();
     }
     fixture.m_gap_client.get_responses()->push(response);
+    auto accepted_sequence = response.m_sequence + response.m_count;
+    if(accepted_sequence < end) {
+      fixture.m_gap_client.get_responses()->push(
+        CxaPitchGapResponse(1, accepted_sequence, static_cast<std::uint16_t>(
+          end - accepted_sequence), CxaPitchGapResponse::ACCEPTED));
+    }
     flush_pending_routines();
     REQUIRE(!reader.m_types.try_pop());
     if(!is_complete) {
-      request->m_result.set(2);
+      request->m_result.set(gap.m_count);
       flush_pending_routines();
     }
-    fixture.m_feed_clients[0]->m_blocks.push(encode_block(5, {0x15}));
+    fixture.m_feed_clients[0]->m_blocks.push(encode_block(position, {0x15}));
     auto recoverable = fixture.require_operation<
-      TestCxaPitchGapClient::IsRecoverableOperation>(CxaPitchGap(2, 2), 5);
+      TestCxaPitchGapClient::IsRecoverableOperation>(gap, position);
     recoverable->m_result.set(true);
     flush_pending_routines();
     auto retry = fixture.try_require_operation<
       TestCxaPitchGapClient::RequestOperation>(
-        1, CxaPitchGap(response.m_sequence, response.m_count), 5);
+        1, CxaPitchGap(response.m_sequence, response.m_count), position);
     retry->m_result.set(response.m_count);
+    flush_pending_routines();
+    fixture.m_feed_clients[0]->m_blocks.push(encode_block(position + 1, {}));
+    recoverable = fixture.require_operation<
+      TestCxaPitchGapClient::IsRecoverableOperation>(gap, position);
+    recoverable->m_result.set(true);
+    flush_pending_routines();
+    REQUIRE(!fixture.m_gap_operations->try_pop());
+  }
+
+  TEST_CASE("throttled_gap_ranges") {
+    auto fixture = Fixture(1);
+    fixture.publish(encode_block(1, {0x11}));
+    REQUIRE(fixture.m_client->read().m_type == 0x11);
+    fixture.publish(encode_block(302, {0x14}));
+    auto gap = CxaPitchGap(2, 300);
+    auto request = fixture.require_recovery_request(1, gap, 303);
+    request->m_result.set(gap.m_count);
+    auto responses = fixture.m_gap_client.get_responses();
+    responses->push(
+      CxaPitchGapResponse(1, 2, 100, CxaPitchGapResponse::SECOND_EXHAUSTED));
+    responses->push(
+      CxaPitchGapResponse(1, 102, 100, CxaPitchGapResponse::ACCEPTED));
+    responses->push(
+      CxaPitchGapResponse(1, 202, 100, CxaPitchGapResponse::MINUTE_EXHAUSTED));
+    flush_pending_routines();
+    fixture.publish(encode_block(303, {}));
+    auto retry = fixture.require_recovery_request(
+      1, gap, CxaPitchGap(2, 100), 303);
+    retry->m_result.set(0);
+    flush_pending_routines();
+    fixture.publish(encode_block(303, {}));
+    retry = fixture.require_recovery_request(
+      1, gap, CxaPitchGap(2, 100), 303);
+    retry->m_result.set(100);
+    flush_pending_routines();
+    fixture.publish(encode_block(303, {}));
+    retry = fixture.require_recovery_request(
+      1, gap, CxaPitchGap(202, 100), 303);
+    retry->m_result.set(100);
+    flush_pending_routines();
+    fixture.publish(encode_block(303, {}));
+    auto recoverable = fixture.require_operation<
+      TestCxaPitchGapClient::IsRecoverableOperation>(gap, 303);
+    recoverable->m_result.set(true);
+    flush_pending_routines();
+    REQUIRE(!fixture.m_gap_operations->try_pop());
   }
 
   TEST_CASE("stale_snapshot") {
