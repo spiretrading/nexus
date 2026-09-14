@@ -1,94 +1,35 @@
-#include <memory>
-#include <string>
-#include <Beam/Queues/Queue.hpp>
+#include <tuple>
 #include <Beam/Routines/RoutineHandler.hpp>
-#include <Beam/Utilities/ToString.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchMarketDataFeedClient.hpp"
+#include "Nexus/MarketDataServiceTests/TestMarketDataFeedClient.hpp"
 
 using namespace Beam;
 using namespace boost::posix_time;
 using namespace Nexus;
+using namespace std::string_view_literals;
 
 namespace {
-  struct StubClient {
-    std::shared_ptr<Queue<std::string>> m_messages;
+  struct TestPitchClient {
+    Queue<std::string> m_messages;
     std::string m_payload;
 
-    StubClient()
-      : m_messages(std::make_shared<Queue<std::string>>()) {}
-
     CxaPitchMessage read() {
-      m_payload = m_messages->pop();
+      m_payload = m_messages.pop();
       return CxaPitchMessage::parse(m_payload);
     }
 
     void close() {
-      m_messages->close();
+      m_messages.close();
     }
   };
 
-  struct StubMarketDataFeedClient {
-    std::shared_ptr<Queue<std::string>> m_operations;
-    std::shared_ptr<Queue<TickerTimeAndSale>> m_time_and_sales;
-    std::shared_ptr<Queue<VenueOrderImbalance>> m_imbalances;
+  using FeedClient = Nexus::Tests::TestMarketDataFeedClient;
 
-    StubMarketDataFeedClient()
-      : m_operations(std::make_shared<Queue<std::string>>()),
-        m_time_and_sales(std::make_shared<Queue<TickerTimeAndSale>>()),
-        m_imbalances(std::make_shared<Queue<VenueOrderImbalance>>()) {}
-
-    void add(const TickerInfo&) {}
-
-    void publish(const VenueOrderImbalance& imbalance) {
-      m_imbalances->push(imbalance);
-    }
-
-    void publish(const TickerBboQuote&) {}
-
-    void publish(const TickerBookQuote&) {}
-
-    void publish(const TickerTimeAndSale& time_and_sale) {
-      m_time_and_sales->push(time_and_sale);
-    }
-
-    void publish(const IndexedTickerStatus&) {}
-
-    void add_order(const Ticker& ticker, Venue, const std::string&, bool,
-        const std::string& id, Side side, Money price, Quantity size, ptime) {
-      m_operations->push("(add " + id + ' ' + to_string(ticker) + ' ' +
-        to_string(side) + ' ' + to_string(price) + ' ' + to_string(size) + ')');
-    }
-
-    void modify_order_size(const std::string& id, Quantity size, ptime) {
-      m_operations->push("(size " + id + ' ' + to_string(size) + ')');
-    }
-
-    void offset_order_size(const std::string& id, Quantity delta, ptime) {
-      m_operations->push("(offset " + id + ' ' + to_string(delta) + ')');
-    }
-
-    void modify_order_price(const std::string& id, Money price, ptime) {
-      m_operations->push("(price " + id + ' ' + to_string(price) + ')');
-    }
-
-    void remove_order(const std::string& id, ptime) {
-      m_operations->push("(remove " + id + ')');
-    }
-
-    void close() {
-      m_operations->close();
-      m_time_and_sales->close();
-      m_imbalances->close();
-    }
-  };
-
-  using Client =
-    CxaPitchMarketDataFeedClient<StubMarketDataFeedClient*, StubClient*>;
-}
-
-TEST_SUITE("CxaPitchMarketDataFeedClient") {
+  const auto TIMESTAMP = time_from_string("2021-02-10 14:45:48.641622");
+  constexpr auto QUANTITY_OFFSET =
+    CxaPitchMessage::HEADER_LENGTH + 2 * sizeof(std::uint64_t);
   static const auto VENUE = Venue("CXA");
   static const auto TICKER = Ticker("ZVZT", VENUE);
   static const auto ORDER_ID = std::string("800891482924597253");
@@ -102,7 +43,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     configuration.m_mpid = "CXA";
     return configuration;
   }();
-  static const auto UNIT_CLEAR = std::string("\x06\x97\x20\x20\x20\x20", 6);
+  static const auto UNIT_CLEAR = std::string("\x06\x97\x20\x20\x20\x20"sv);
   static const auto ADD_ORDER = std::string(
     "\x2a\x37"
     "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
@@ -112,7 +53,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     "ZVZT  "
     "\x00\xe1\xf5\x05\x00\x00\x00\x00"
     "1234"
-    "\x00", 42);
+    "\x00"sv);
   static const auto UNDISCLOSED_ADD_ORDER = std::string(
     "\x2a\x37"
     "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
@@ -122,7 +63,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     "ZVZT  "
     "\x00\xe1\xf5\x05\x00\x00\x00\x00"
     "    "
-    "\x00", 42);
+    "\x00"sv);
   static const auto ORDER_EXECUTED = std::string(
     "\x2b\x38"
     "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
@@ -131,7 +72,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     "\x34\x2b\x46\xe0\xbb\x00\x00\x00"
     "\x06\x40\x5b\x77\x8f\x56\x1d\x0b"
     "5678"
-    "\x00", 43);
+    "\x00"sv);
   static const auto ORDER_EXECUTED_AT_PRICE = std::string(
     "\x34\x58"
     "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
@@ -142,23 +83,23 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     "5678"
     "C"
     "\x15\xcd\x5b\x07\x00\x00\x00\x00"
-    "\x00", 52);
+    "\x00"sv);
   static const auto REDUCE_SIZE = std::string(
     "\x16\x39"
     "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
     "\x05\x40\x5b\x77\x8f\x56\x1d\x0b"
-    "\xbc\x02\x00\x00", 22);
+    "\xbc\x02\x00\x00"sv);
   static const auto MODIFY_ORDER = std::string(
     "\x1f\x3a"
     "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
     "\x05\x40\x5b\x77\x8f\x56\x1d\x0b"
     "\x2c\x01\x00\x00"
     "\x15\xcd\x5b\x07\x00\x00\x00\x00"
-    "\x00", 31);
+    "\x00"sv);
   static const auto DELETE_ORDER = std::string(
     "\x12\x3c"
     "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
-    "\x05\x40\x5b\x77\x8f\x56\x1d\x0b", 18);
+    "\x05\x40\x5b\x77\x8f\x56\x1d\x0b"sv);
   static const auto TRADE = std::string(
     "\x48\x3d"
     "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
@@ -174,139 +115,196 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     "C"
     " "
     "\x00\x00\x00\x00\x00\x00\x00\x00"
-    "\x00", 72);
-  static const auto AUCTION_UPDATE = std::string(
-    "\x22\x59"
-    "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
-    "ZVZT  "
-    "O"
-    "\xbc\x02\x00\x00"
-    "\x2c\x01\x00\x00"
-    "\x15\xcd\x5b\x07\x00\x00\x00\x00"
-    "\x00", 34);
+    "\x00"sv);
+  struct Fixture {
+    using Client =
+      CxaPitchMarketDataFeedClient<FeedClient*, TestPitchClient*>;
 
+    std::shared_ptr<FeedClient::Queue> m_operations;
+    FeedClient m_feed_client;
+    TestPitchClient m_pitch_client;
+    Client m_client;
+
+    Fixture()
+      : m_operations(std::make_shared<FeedClient::Queue>()),
+        m_feed_client(m_operations),
+        m_client(CONFIGURATION, &m_feed_client, &m_pitch_client) {}
+
+    ~Fixture() {
+      m_feed_client.close();
+    }
+
+    void publish(const std::string& message) {
+      m_pitch_client.m_messages.push(message);
+    }
+
+    template<typename O>
+    std::shared_ptr<O> pop_operation() {
+      auto operation = m_operations->pop();
+      auto actual = std::get_if<O>(&*operation);
+      REQUIRE(actual);
+      return std::shared_ptr<O>(operation, actual);
+    }
+
+    template<typename O>
+    void require_operation(const auto&... args) {
+      auto operation = pop_operation<O>();
+      auto fields = [&] {
+        if constexpr(std::same_as<O, FeedClient::AddOrderOperation>) {
+          return std::tie(operation->m_ticker, operation->m_venue,
+            operation->m_mpid, operation->m_is_primary_mpid, operation->m_id,
+            operation->m_side, operation->m_price, operation->m_size,
+            operation->m_timestamp);
+        } else if constexpr(
+            std::same_as<O, FeedClient::OffsetOrderSizeOperation>) {
+          return std::tie(
+            operation->m_id, operation->m_delta, operation->m_timestamp);
+        } else {
+          return std::tie(operation->m_id, operation->m_timestamp);
+        }
+      }();
+      REQUIRE(fields == std::tie(args...));
+      operation->m_result.set();
+    }
+
+    TickerTimeAndSale read_time_and_sale() {
+      auto operation = pop_operation<FeedClient::PublishTimeAndSaleOperation>();
+      auto sale = operation->m_time_and_sale;
+      operation->m_result.set();
+      return sale;
+    }
+
+    VenueOrderImbalance read_imbalance() {
+      auto operation =
+        pop_operation<FeedClient::PublishOrderImbalanceOperation>();
+      auto imbalance = operation->m_imbalance;
+      operation->m_result.set();
+      return imbalance;
+    }
+
+    void add_order() {
+      publish(ADD_ORDER);
+      require_operation<FeedClient::AddOrderOperation>(
+        TICKER, VENUE, "CXA", false, ORDER_ID, Side::BID, PRICE, 700,
+        TIMESTAMP);
+    }
+  };
+}
+
+TEST_SUITE("CxaPitchMarketDataFeedClient") {
   TEST_CASE("add_order") {
-    auto feed = StubMarketDataFeedClient();
-    auto pitch = StubClient();
-    auto client = Client(CONFIGURATION, &feed, &pitch);
-    pitch.m_messages->push(ADD_ORDER);
-    REQUIRE(feed.m_operations->pop() == "(add " + ORDER_ID + ' ' +
-      to_string(TICKER) + ' ' + to_string(Side::BID) + ' ' + to_string(PRICE) +
-      " 700)");
+    auto fixture = Fixture();
+    fixture.publish(ADD_ORDER);
+    fixture.require_operation<FeedClient::AddOrderOperation>(
+      TICKER, VENUE, "CXA", false, ORDER_ID, Side::BID, PRICE, 700, TIMESTAMP);
   }
 
-  TEST_CASE("add_undisclosed_order") {
-    auto feed = StubMarketDataFeedClient();
-    auto pitch = StubClient();
-    auto client = Client(CONFIGURATION, &feed, &pitch);
-    pitch.m_messages->push(UNDISCLOSED_ADD_ORDER);
-    pitch.m_messages->push(TRADE);
-    auto sale = feed.m_time_and_sales->pop();
-    REQUIRE(sale->m_buyer_mpid == "5678");
-    REQUIRE(sale->m_seller_mpid == "1234");
-    REQUIRE(!feed.m_operations->try_pop());
+  TEST_CASE("order_visibility") {
+    auto fixture = Fixture();
+    auto side = Side(Side::ASK);
+    auto buyer = std::string("5678");
+    auto seller = std::string("1234");
+    SUBCASE("undisclosed_order") {
+      fixture.publish(UNDISCLOSED_ADD_ORDER);
+    }
+    SUBCASE("disclosed_order") {
+      fixture.add_order();
+      auto message = MODIFY_ORDER;
+      message.replace(QUANTITY_OFFSET, sizeof(std::uint32_t),
+        sizeof(std::uint32_t), char(0));
+      fixture.publish(message);
+      fixture.require_operation<FeedClient::RemoveOrderOperation>(
+        ORDER_ID, TIMESTAMP);
+      side = Side::BID;
+      std::swap(buyer, seller);
+    }
+    fixture.publish(TRADE);
+    auto sale = fixture.read_time_and_sale();
+    REQUIRE(sale->m_buyer_mpid == buyer);
+    REQUIRE(sale->m_seller_mpid == seller);
+    flush_pending_routines();
+    REQUIRE(!fixture.m_operations->try_pop());
+    fixture.publish(MODIFY_ORDER);
+    fixture.require_operation<FeedClient::AddOrderOperation>(
+      TICKER, VENUE, "CXA", false,
+      ORDER_ID, side, EXECUTION_PRICE, 300, TIMESTAMP);
   }
 
-  TEST_CASE("execute_order") {
-    auto feed = StubMarketDataFeedClient();
-    auto pitch = StubClient();
-    auto client = Client(CONFIGURATION, &feed, &pitch);
-    pitch.m_messages->push(ADD_ORDER);
-    feed.m_operations->pop();
-    pitch.m_messages->push(ORDER_EXECUTED);
-    REQUIRE(feed.m_operations->pop() == "(offset " + ORDER_ID + " -700)");
-    auto sale = feed.m_time_and_sales->pop();
+  TEST_CASE("order_execution") {
+    auto fixture = Fixture();
+    fixture.add_order();
+    auto message = ORDER_EXECUTED;
+    auto price = PRICE;
+    auto code = std::string("@");
+    auto condition = TimeAndSale::Condition::Type::REGULAR;
+    SUBCASE("resting_price") {}
+    SUBCASE("execution_price") {
+      message = ORDER_EXECUTED_AT_PRICE;
+      price = EXECUTION_PRICE;
+      code = "C";
+      condition = TimeAndSale::Condition::Type::CLOSE;
+    }
+    fixture.publish(message);
+    fixture.require_operation<FeedClient::OffsetOrderSizeOperation>(
+      ORDER_ID, -700,
+      TIMESTAMP);
+    auto sale = fixture.read_time_and_sale();
     REQUIRE(sale.get_index() == TICKER);
-    REQUIRE(sale->m_price == PRICE);
+    REQUIRE(sale->m_timestamp == TIMESTAMP);
+    REQUIRE(sale->m_price == price);
     REQUIRE(sale->m_size == 700);
-    REQUIRE(sale->m_condition.m_code == "@");
-    REQUIRE(sale->m_condition.m_type == TimeAndSale::Condition::Type::REGULAR);
+    REQUIRE(sale->m_condition.m_code == code);
+    REQUIRE(sale->m_condition.m_type == condition);
     REQUIRE(sale->m_market_center == "CXA");
     REQUIRE(sale->m_buyer_mpid == "1234");
     REQUIRE(sale->m_seller_mpid == "5678");
+    fixture.publish(UNIT_CLEAR);
+    fixture.add_order();
   }
 
-  TEST_CASE("execute_order_at_price") {
-    auto feed = StubMarketDataFeedClient();
-    auto pitch = StubClient();
-    auto client = Client(CONFIGURATION, &feed, &pitch);
-    pitch.m_messages->push(ADD_ORDER);
-    feed.m_operations->pop();
-    pitch.m_messages->push(ORDER_EXECUTED_AT_PRICE);
-    REQUIRE(feed.m_operations->pop() == "(offset " + ORDER_ID + " -700)");
-    auto sale = feed.m_time_and_sales->pop();
-    REQUIRE(sale->m_price == EXECUTION_PRICE);
-    REQUIRE(sale->m_condition.m_code == "C");
-    REQUIRE(sale->m_condition.m_type == TimeAndSale::Condition::Type::CLOSE);
+  TEST_CASE("size_reduction") {
+    auto fixture = Fixture();
+    fixture.publish(REDUCE_SIZE);
+    fixture.require_operation<FeedClient::OffsetOrderSizeOperation>(
+      ORDER_ID, -700, TIMESTAMP);
   }
 
-  TEST_CASE("reduce_order") {
-    auto feed = StubMarketDataFeedClient();
-    auto pitch = StubClient();
-    auto client = Client(CONFIGURATION, &feed, &pitch);
-    pitch.m_messages->push(REDUCE_SIZE);
-    REQUIRE(feed.m_operations->pop() == "(offset " + ORDER_ID + " -700)");
-  }
-
-  TEST_CASE("modify_order") {
-    auto feed = StubMarketDataFeedClient();
-    auto pitch = StubClient();
-    auto client = Client(CONFIGURATION, &feed, &pitch);
-    pitch.m_messages->push(ADD_ORDER);
-    feed.m_operations->pop();
-    pitch.m_messages->push(MODIFY_ORDER);
-    REQUIRE(feed.m_operations->pop() == "(add " + ORDER_ID + ' ' +
-      to_string(TICKER) + ' ' + to_string(Side::BID) + ' ' +
-      to_string(EXECUTION_PRICE) + " 300)");
+  TEST_CASE("order_modification") {
+    auto fixture = Fixture();
+    fixture.add_order();
+    fixture.publish(MODIFY_ORDER);
+    fixture.require_operation<FeedClient::AddOrderOperation>(
+      TICKER, VENUE, "CXA", false,
+      ORDER_ID, Side::BID, EXECUTION_PRICE, 300, TIMESTAMP);
     flush_pending_routines();
-    REQUIRE(!feed.m_operations->try_pop());
-    pitch.m_messages->push(ORDER_EXECUTED);
-    feed.m_operations->pop();
-    REQUIRE(feed.m_time_and_sales->pop()->m_price == EXECUTION_PRICE);
+    REQUIRE(!fixture.m_operations->try_pop());
+    fixture.publish(ORDER_EXECUTED);
+    fixture.require_operation<FeedClient::OffsetOrderSizeOperation>(
+      ORDER_ID, -700, TIMESTAMP);
+    REQUIRE(fixture.read_time_and_sale()->m_price ==
+      EXECUTION_PRICE);
   }
 
-  TEST_CASE("delete_order") {
-    auto feed = StubMarketDataFeedClient();
-    auto pitch = StubClient();
-    auto client = Client(CONFIGURATION, &feed, &pitch);
-    pitch.m_messages->push(ADD_ORDER);
-    feed.m_operations->pop();
-    pitch.m_messages->push(DELETE_ORDER);
-    REQUIRE(feed.m_operations->pop() == "(remove " + ORDER_ID + ')');
-    pitch.m_messages->push(ORDER_EXECUTED);
+  TEST_CASE("order_removal") {
+    auto fixture = Fixture();
+    fixture.add_order();
+    auto message = DELETE_ORDER;
+    SUBCASE("delete_order") {}
+    SUBCASE("unit_clear") {
+      message = UNIT_CLEAR;
+    }
+    fixture.publish(message);
+    fixture.require_operation<FeedClient::RemoveOrderOperation>(
+      ORDER_ID, TIMESTAMP);
+    fixture.publish(ORDER_EXECUTED);
     flush_pending_routines();
-    REQUIRE(feed.m_operations->pop() == "(offset " + ORDER_ID + " -700)");
-    REQUIRE(!feed.m_time_and_sales->try_pop());
+    fixture.require_operation<FeedClient::OffsetOrderSizeOperation>(
+      ORDER_ID, -700, TIMESTAMP);
+    flush_pending_routines();
+    REQUIRE(!fixture.m_operations->try_pop());
   }
 
-  TEST_CASE("fully_executed_order") {
-    auto feed = StubMarketDataFeedClient();
-    auto pitch = StubClient();
-    auto client = Client(CONFIGURATION, &feed, &pitch);
-    pitch.m_messages->push(ADD_ORDER);
-    feed.m_operations->pop();
-    pitch.m_messages->push(ORDER_EXECUTED);
-    REQUIRE(feed.m_operations->pop() == "(offset " + ORDER_ID + " -700)");
-    feed.m_time_and_sales->pop();
-    pitch.m_messages->push(UNIT_CLEAR);
-    pitch.m_messages->push(ADD_ORDER);
-    REQUIRE(feed.m_operations->pop() == "(add " + ORDER_ID + ' ' +
-      to_string(TICKER) + ' ' + to_string(Side::BID) + ' ' + to_string(PRICE) +
-      " 700)");
-  }
-
-  TEST_CASE("disclose_undisclosed_order") {
-    auto feed = StubMarketDataFeedClient();
-    auto pitch = StubClient();
-    auto client = Client(CONFIGURATION, &feed, &pitch);
-    pitch.m_messages->push(UNDISCLOSED_ADD_ORDER);
-    pitch.m_messages->push(MODIFY_ORDER);
-    REQUIRE(feed.m_operations->pop() == "(add " + ORDER_ID + ' ' +
-      to_string(TICKER) + ' ' + to_string(Side::ASK) + ' ' +
-      to_string(EXECUTION_PRICE) + " 300)");
-  }
-
-  TEST_CASE("report_trade") {
+  TEST_CASE("trade") {
     static const auto OFF_EXCHANGE_TRADE = std::string(
       "\x48\x3d"
       "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
@@ -322,12 +320,10 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
       " "
       "P"
       "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
-      "\x02", 72);
-    auto feed = StubMarketDataFeedClient();
-    auto pitch = StubClient();
-    auto client = Client(CONFIGURATION, &feed, &pitch);
-    pitch.m_messages->push(TRADE);
-    auto sale = feed.m_time_and_sales->pop();
+      "\x02"sv);
+    auto fixture = Fixture();
+    fixture.publish(TRADE);
+    auto sale = fixture.read_time_and_sale();
     REQUIRE(sale.get_index() == TICKER);
     REQUIRE(sale->m_price == EXECUTION_PRICE);
     REQUIRE(sale->m_size == 700);
@@ -335,22 +331,21 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     REQUIRE(sale->m_condition.m_type == TimeAndSale::Condition::Type::REGULAR);
     REQUIRE(sale->m_buyer_mpid.empty());
     REQUIRE(sale->m_seller_mpid.empty());
-    pitch.m_messages->push(OFF_EXCHANGE_TRADE);
-    auto report = feed.m_time_and_sales->pop();
+    fixture.publish(OFF_EXCHANGE_TRADE);
+    auto report = fixture.read_time_and_sale();
     REQUIRE(report->m_condition.m_code == "P");
     REQUIRE(report->m_buyer_mpid.empty());
     REQUIRE(report->m_seller_mpid.empty());
   }
 
-  TEST_CASE("report_auction_trades") {
-    auto feed = StubMarketDataFeedClient();
-    auto pitch = StubClient();
-    auto client = Client(CONFIGURATION, &feed, &pitch);
+  TEST_CASE("auction_trade") {
+    constexpr auto TRADE_TYPE_OFFSET = std::size_t(60);
+    auto fixture = Fixture();
     for(auto code : {'O', 'C', 'H'}) {
       auto trade = TRADE;
-      trade[60] = code;
-      pitch.m_messages->push(trade);
-      auto sale = feed.m_time_and_sales->pop();
+      trade[TRADE_TYPE_OFFSET] = code;
+      fixture.publish(trade);
+      auto sale = fixture.read_time_and_sale();
       REQUIRE(sale->m_condition.m_code == std::string(1, code));
       if(code == 'C') {
         REQUIRE(
@@ -361,89 +356,65 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     }
   }
 
-  TEST_CASE("offset_large_quantities") {
-    auto feed = StubMarketDataFeedClient();
-    auto pitch = StubClient();
-    auto client = Client(CONFIGURATION, &feed, &pitch);
+  TEST_CASE("large_quantity_offset") {
+    auto fixture = Fixture();
     for(auto message : {ORDER_EXECUTED, ORDER_EXECUTED_AT_PRICE, REDUCE_SIZE}) {
-      message.replace(18, 4, "\x00\x00\x00\x80", 4);
-      pitch.m_messages->push(message);
-      REQUIRE(feed.m_operations->pop() ==
-        "(offset " + ORDER_ID + " -2147483648)");
-      message.replace(18, 4, "\xff\xff\xff\xff", 4);
-      pitch.m_messages->push(message);
-      REQUIRE(feed.m_operations->pop() ==
-        "(offset " + ORDER_ID + " -4294967295)");
+      message.replace(
+        QUANTITY_OFFSET, sizeof(std::uint32_t), "\x00\x00\x00\x80"sv);
+      fixture.publish(message);
+      fixture.require_operation<FeedClient::OffsetOrderSizeOperation>(
+        ORDER_ID, -2147483648LL, TIMESTAMP);
+      message.replace(
+        QUANTITY_OFFSET, sizeof(std::uint32_t), "\xff\xff\xff\xff"sv);
+      fixture.publish(message);
+      fixture.require_operation<FeedClient::OffsetOrderSizeOperation>(
+        ORDER_ID, -4294967295LL, TIMESTAMP);
     }
   }
 
-  TEST_CASE("modify_order_visibility") {
-    auto feed = StubMarketDataFeedClient();
-    auto pitch = StubClient();
-    auto client = Client(CONFIGURATION, &feed, &pitch);
-    pitch.m_messages->push(ADD_ORDER);
-    feed.m_operations->pop();
-    auto message = MODIFY_ORDER;
-    message.replace(18, 4, 4, char(0));
-    pitch.m_messages->push(message);
-    REQUIRE(feed.m_operations->pop() == "(remove " + ORDER_ID + ')');
-    pitch.m_messages->push(TRADE);
-    auto sale = feed.m_time_and_sales->pop();
-    REQUIRE(sale->m_buyer_mpid == "1234");
-    REQUIRE(sale->m_seller_mpid == "5678");
-    pitch.m_messages->push(MODIFY_ORDER);
-    REQUIRE(feed.m_operations->pop() == "(add " + ORDER_ID + ' ' +
-      to_string(TICKER) + ' ' + to_string(Side::BID) + ' ' +
-      to_string(EXECUTION_PRICE) + " 300)");
-  }
-
-  TEST_CASE("report_auction_update") {
-    auto feed = StubMarketDataFeedClient();
-    auto pitch = StubClient();
-    auto client = Client(CONFIGURATION, &feed, &pitch);
-    pitch.m_messages->push(AUCTION_UPDATE);
-    auto imbalance = feed.m_imbalances->pop();
+  TEST_CASE("auction_update") {
+    static const auto AUCTION_UPDATE = std::string(
+      "\x22\x59"
+      "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
+      "ZVZT  "
+      "O"
+      "\xbc\x02\x00\x00"
+      "\x2c\x01\x00\x00"
+      "\x15\xcd\x5b\x07\x00\x00\x00\x00"
+      "\x00"sv);
+    constexpr auto BUY_SHARES_OFFSET = std::size_t(17);
+    constexpr auto SELL_SHARES_OFFSET =
+      BUY_SHARES_OFFSET + sizeof(std::uint32_t);
+    auto fixture = Fixture();
+    fixture.publish(AUCTION_UPDATE);
+    auto imbalance = fixture.read_imbalance();
     REQUIRE(imbalance.get_index() == VENUE);
     REQUIRE(imbalance->m_ticker == TICKER);
     REQUIRE(imbalance->m_side == Side::BID);
     REQUIRE(imbalance->m_size == 400);
     REQUIRE(imbalance->m_reference_price == EXECUTION_PRICE);
     auto message = AUCTION_UPDATE;
-    message.replace(17, 4, message, 21, 4);
-    pitch.m_messages->push(message);
-    imbalance = feed.m_imbalances->pop();
+    message.replace(BUY_SHARES_OFFSET, sizeof(std::uint32_t), message,
+      SELL_SHARES_OFFSET, sizeof(std::uint32_t));
+    fixture.publish(message);
+    imbalance = fixture.read_imbalance();
     REQUIRE(imbalance->m_side == Side::NONE);
     REQUIRE(imbalance->m_size == 0);
     REQUIRE(imbalance->m_reference_price == EXECUTION_PRICE);
   }
 
-  TEST_CASE("clear_unit") {
-    auto feed = StubMarketDataFeedClient();
-    auto pitch = StubClient();
-    auto client = Client(CONFIGURATION, &feed, &pitch);
-    pitch.m_messages->push(ADD_ORDER);
-    feed.m_operations->pop();
-    pitch.m_messages->push(UNIT_CLEAR);
-    REQUIRE(feed.m_operations->pop() == "(remove " + ORDER_ID + ')');
-    pitch.m_messages->push(ORDER_EXECUTED);
-    flush_pending_routines();
-    REQUIRE(feed.m_operations->pop() == "(offset " + ORDER_ID + " -700)");
-    REQUIRE(!feed.m_time_and_sales->try_pop());
-  }
-
-  TEST_CASE("ignore_unhandled_message") {
+  TEST_CASE("unhandled_message") {
     static const auto TRADING_STATUS = std::string(
       "\x16\x3b"
       "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
       "ZVZT  "
       "T"
       "AUS "
-      "\x00", 22);
-    auto feed = StubMarketDataFeedClient();
-    auto pitch = StubClient();
-    auto client = Client(CONFIGURATION, &feed, &pitch);
-    pitch.m_messages->push(TRADING_STATUS);
-    pitch.m_messages->push(DELETE_ORDER);
-    REQUIRE(feed.m_operations->pop() == "(remove " + ORDER_ID + ')');
+      "\x00"sv);
+    auto fixture = Fixture();
+    fixture.publish(TRADING_STATUS);
+    fixture.publish(DELETE_ORDER);
+    fixture.require_operation<FeedClient::RemoveOrderOperation>(
+      ORDER_ID, TIMESTAMP);
   }
 }

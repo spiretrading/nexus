@@ -1,38 +1,30 @@
 #ifndef CXA_PITCH_MARKET_DATA_FEED_CLIENT_HPP
 #define CXA_PITCH_MARKET_DATA_FEED_CLIENT_HPP
-#include <cstdint>
 #include <exception>
 #include <functional>
-#include <string>
 #include <tuple>
 #include <type_traits>
 #include <unordered_map>
 #include <utility>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
-#include <Beam/Pointers/Dereference.hpp>
-#include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
-#include <boost/date_time/posix_time/posix_time_types.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchConfiguration.hpp"
-#include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchReport.hpp"
-#include "Nexus/Definitions/OrderImbalance.hpp"
-#include "Nexus/Definitions/TimeAndSale.hpp"
 #include "Nexus/MarketDataService/MarketDataFeedClient.hpp"
 
 namespace Nexus {
 
   /**
    * Publishes the market data carried by a CXA PITCH feed.
-   * @param <M> The type of MarketDataFeedClient used to update the
-   *        MarketDataServer.
-   * @param <C> The type of client delivering the PITCH messages.
+   * @tparam M The type of client used to publish market data.
+   * @tparam C The type of client delivering the PITCH messages.
    */
-  template<typename M, typename C>
-    requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   class CxaPitchMarketDataFeedClient {
     public:
@@ -85,8 +77,11 @@ namespace Nexus {
         std::string pid, std::string contra_pid);
       void clear();
       void add(const CxaPitchAddOrder& message);
-      void execute(const CxaPitchOrderExecuted& message);
-      void execute(const CxaPitchOrderExecutedAtPrice& message);
+      template<typename E> requires std::same_as<E, CxaPitchOrderExecuted> ||
+        std::same_as<E, CxaPitchOrderExecutedAtPrice>
+      void execute(const E& message);
+      void reduce(
+        const std::string& id, OrderEntry& order, std::uint32_t quantity);
       void reduce(const CxaPitchReduceSize& message);
       void modify(const CxaPitchModifyOrder& message);
       void remove(const CxaPitchDeleteOrder& message);
@@ -101,8 +96,8 @@ namespace Nexus {
     CxaPitchMarketDataFeedClient<
       std::remove_cvref_t<M>, std::remove_cvref_t<C>>;
 
-  template<typename M, typename C>
-    requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   template<Beam::Initializes<M> MF, Beam::Initializes<C> CF>
   CxaPitchMarketDataFeedClient<M, C>::CxaPitchMarketDataFeedClient(
@@ -117,15 +112,15 @@ namespace Nexus {
       "Unable to initialize the CXA PITCH market data feed client."));
   }
 
-  template<typename M, typename C>
-    requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   CxaPitchMarketDataFeedClient<M, C>::~CxaPitchMarketDataFeedClient() {
     close();
   }
 
-  template<typename M, typename C>
-    requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   void CxaPitchMarketDataFeedClient<M, C>::close() {
     if(m_open_state.set_closing()) {
@@ -137,8 +132,8 @@ namespace Nexus {
     m_open_state.close();
   }
 
-  template<typename M, typename C>
-    requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   void CxaPitchMarketDataFeedClient<M, C>::publish(const Ticker& ticker,
       boost::posix_time::ptime timestamp, Money price, std::uint32_t quantity,
@@ -169,8 +164,8 @@ namespace Nexus {
         m_config.m_mpid, std::move(buyer), std::move(seller)), ticker));
   }
 
-  template<typename M, typename C>
-    requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   void CxaPitchMarketDataFeedClient<M, C>::clear() {
     for(auto& order : m_orders) {
@@ -179,8 +174,8 @@ namespace Nexus {
     m_orders.clear();
   }
 
-  template<typename M, typename C>
-    requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   void CxaPitchMarketDataFeedClient<M, C>::add(
       const CxaPitchAddOrder& message) {
@@ -197,11 +192,12 @@ namespace Nexus {
       message.m_quantity, message.m_timestamp);
   }
 
-  template<typename M, typename C>
-    requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
-  void CxaPitchMarketDataFeedClient<M, C>::execute(
-      const CxaPitchOrderExecuted& message) {
+  template<typename E> requires std::same_as<E, CxaPitchOrderExecuted> ||
+    std::same_as<E, CxaPitchOrderExecutedAtPrice>
+  void CxaPitchMarketDataFeedClient<M, C>::execute(const E& message) {
     m_timestamp = message.m_timestamp;
     if(message.m_executed_quantity == 0) {
       return;
@@ -210,43 +206,34 @@ namespace Nexus {
     m_feed_client->offset_order_size(
       id, -Quantity(message.m_executed_quantity), message.m_timestamp);
     if(auto order = Beam::lookup(m_orders, id)) {
-      publish(order->m_ticker, message.m_timestamp, order->m_price,
-        message.m_executed_quantity, ' ', order->m_side, order->m_pid,
+      auto [price, code] = [&] {
+        if constexpr(std::same_as<E, CxaPitchOrderExecutedAtPrice>) {
+          return std::pair(message.m_price, message.m_execution_type);
+        } else {
+          return std::pair(order->m_price, ' ');
+        }
+      }();
+      publish(order->m_ticker, message.m_timestamp, price,
+        message.m_executed_quantity, code, order->m_side, order->m_pid,
         message.m_contra_pid);
-      if(order->m_quantity > message.m_executed_quantity) {
-        order->m_quantity -= message.m_executed_quantity;
-      } else {
-        m_orders.erase(id);
-      }
+      reduce(id, *order, message.m_executed_quantity);
     }
   }
 
-  template<typename M, typename C>
-    requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
-  void CxaPitchMarketDataFeedClient<M, C>::execute(
-      const CxaPitchOrderExecutedAtPrice& message) {
-    m_timestamp = message.m_timestamp;
-    if(message.m_executed_quantity == 0) {
-      return;
-    }
-    auto id = std::to_string(message.m_order_id);
-    m_feed_client->offset_order_size(
-      id, -Quantity(message.m_executed_quantity), message.m_timestamp);
-    if(auto order = Beam::lookup(m_orders, id)) {
-      publish(order->m_ticker, message.m_timestamp, message.m_price,
-        message.m_executed_quantity, message.m_execution_type, order->m_side,
-        order->m_pid, message.m_contra_pid);
-      if(order->m_quantity > message.m_executed_quantity) {
-        order->m_quantity -= message.m_executed_quantity;
-      } else {
-        m_orders.erase(id);
-      }
+  void CxaPitchMarketDataFeedClient<M, C>::reduce(
+      const std::string& id, OrderEntry& order, std::uint32_t quantity) {
+    if(order.m_quantity > quantity) {
+      order.m_quantity -= quantity;
+    } else {
+      m_orders.erase(id);
     }
   }
 
-  template<typename M, typename C>
-    requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   void CxaPitchMarketDataFeedClient<M, C>::reduce(
       const CxaPitchReduceSize& message) {
@@ -258,16 +245,12 @@ namespace Nexus {
     m_feed_client->offset_order_size(
       id, -Quantity(message.m_cancelled_quantity), message.m_timestamp);
     if(auto order = Beam::lookup(m_orders, id)) {
-      if(order->m_quantity > message.m_cancelled_quantity) {
-        order->m_quantity -= message.m_cancelled_quantity;
-      } else {
-        m_orders.erase(id);
-      }
+      reduce(id, *order, message.m_cancelled_quantity);
     }
   }
 
-  template<typename M, typename C>
-    requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   void CxaPitchMarketDataFeedClient<M, C>::modify(
       const CxaPitchModifyOrder& message) {
@@ -288,8 +271,8 @@ namespace Nexus {
     order->m_quantity = message.m_quantity;
   }
 
-  template<typename M, typename C>
-    requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   void CxaPitchMarketDataFeedClient<M, C>::remove(
       const CxaPitchDeleteOrder& message) {
@@ -299,8 +282,8 @@ namespace Nexus {
     m_orders.erase(id);
   }
 
-  template<typename M, typename C>
-    requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   void CxaPitchMarketDataFeedClient<M, C>::report(
       const CxaPitchTrade& message) {
@@ -327,8 +310,8 @@ namespace Nexus {
       message.m_pid, message.m_contra_pid);
   }
 
-  template<typename M, typename C>
-    requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   void CxaPitchMarketDataFeedClient<M, C>::report(
       const CxaPitchAuctionUpdate& message) {
@@ -350,8 +333,8 @@ namespace Nexus {
       m_config.m_disseminating_venue));
   }
 
-  template<typename M, typename C>
-    requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   void CxaPitchMarketDataFeedClient<M, C>::dispatch(
       const CxaPitchMessage& message) {
@@ -367,8 +350,8 @@ namespace Nexus {
       [&] (const CxaPitchUnitClear&) { clear(); });
   }
 
-  template<typename M, typename C>
-    requires IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   void CxaPitchMarketDataFeedClient<M, C>::read_loop() {
     while(true) {
