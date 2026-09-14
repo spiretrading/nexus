@@ -33,7 +33,7 @@ namespace Nexus {
    * @tparam G The type of client requesting retransmissions.
    * @tparam S The type of client requesting a snapshot.
    * @tparam R The type of client used to get the current time.
-   * @tparam T The type of timer used to detect a silent feed.
+   * @tparam T The type of timer used for timeouts and recovery retries.
    */
   template<typename P, typename G, typename S, typename R, typename T> requires
     IsCxaPitchProtocolClient<Beam::dereference_t<P>> &&
@@ -56,7 +56,7 @@ namespace Nexus {
       /** The type of client used to get the current time. */
       using TimeClient = Beam::dereference_t<R>;
 
-      /** The type of timer used to detect a silent feed. */
+      /** The type of timer used for timeouts and recovery retries. */
       using Timer = Beam::dereference_t<T>;
 
       /** The number of rejected snapshot requests to tolerate. */
@@ -76,7 +76,8 @@ namespace Nexus {
        * @param spin_client The client requesting the initial snapshot, if
        *        enabled.
        * @param time_client The client used to get the current time.
-       * @param timer The timer measuring the period between silence checks.
+       * @param timer The timer checking feed silence, gap timeouts, recovery
+       *        retries, and snapshot offer expiry.
        */
       template<Beam::Initializes<P> PF, Beam::Initializes<G> GF,
         Beam::Initializes<S> SF, Beam::Initializes<R> RF,
@@ -590,10 +591,10 @@ namespace Nexus {
               }
               auto end = gap->m_sequence + gap->m_count;
               if(m_request_sequence < end) {
-                auto requested_gap =
+                auto range =
                   CxaPitchGap(m_request_sequence, end - m_request_sequence);
                 m_request_sequence = end;
-                return requested_gap;
+                return range;
               }
             }
             return boost::none;
@@ -663,8 +664,8 @@ namespace Nexus {
       Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
   void CxaPitchClient<P, G, S, R, T>::spin_loop() {
-    auto attempts = 0;
     try {
+      auto attempts = 0;
       auto sequences = std::make_shared<Beam::StateQueue<std::uint32_t>>();
       (*m_spin_client)->monitor_snapshot_sequences(sequences);
       while(attempts != SPIN_ATTEMPTS) {
