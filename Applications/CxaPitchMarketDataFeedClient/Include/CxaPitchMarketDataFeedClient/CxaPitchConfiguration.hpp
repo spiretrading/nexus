@@ -2,6 +2,7 @@
 #define CXA_PITCH_CONFIGURATION_HPP
 #include <algorithm>
 #include <limits>
+#include <Beam/Network/MulticastSocketOptions.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
 #include <boost/optional/optional.hpp>
@@ -80,6 +81,12 @@ namespace Nexus {
     /** The feeds to receive. */
     std::vector<CxaPitchFeed> m_feeds;
 
+    /** The socket options used to receive multicast data. */
+    Beam::MulticastSocketOptions m_socket_options;
+
+    /** The interval between publishing sampled market data. */
+    boost::posix_time::time_duration m_sampling;
+
     /** How long a feed may be silent before it is excluded. */
     boost::posix_time::time_duration m_feed_timeout;
 
@@ -98,6 +105,9 @@ namespace Nexus {
      * @return The CxaPitchConfiguration represented by the <i>config</i>.
      */
     static CxaPitchConfiguration parse(const YAML::Node& config);
+
+    /** Returns the polling interval for timeouts and recovery retries. */
+    boost::posix_time::time_duration get_timer_interval() const;
   };
 
   inline CxaPitchFeed CxaPitchFeed::parse(const YAML::Node& config) {
@@ -127,7 +137,7 @@ namespace Nexus {
     return Beam::try_or_nest([&] {
       static const auto DEFAULT_FEED_TIMEOUT = boost::posix_time::seconds(3);
       static const auto DEFAULT_GAP_TIMEOUT = boost::posix_time::seconds(5);
-      static const auto MAXIMUM_TIMEOUT =
+      static const auto MAXIMUM_DURATION =
         boost::posix_time::time_duration(boost::date_time::max_date_time);
       auto configuration = CxaPitchConfiguration();
       configuration.m_is_logging_messages =
@@ -157,14 +167,29 @@ namespace Nexus {
       if(configuration.m_feeds.empty()) {
         boost::throw_with_location(std::runtime_error("No feeds specified."));
       }
+      static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE =
+        std::size_t(128 * 1024 * 1024);
+      static constexpr auto MINIMUM_DATAGRAM_SIZE = std::size_t(1500);
+      configuration.m_socket_options.m_receive_buffer_size =
+        Beam::extract<std::size_t>(config, "receive_buffer",
+          DEFAULT_RECEIVE_BUFFER_SIZE, std::size_t(1),
+          std::size_t(std::numeric_limits<int>::max()));
+      configuration.m_socket_options.m_max_datagram_size =
+        Beam::extract<std::size_t>(config, "mtu",
+          configuration.m_socket_options.m_max_datagram_size,
+          MINIMUM_DATAGRAM_SIZE,
+          std::size_t(std::numeric_limits<std::uint16_t>::max()));
+      configuration.m_sampling =
+        Beam::extract<boost::posix_time::time_duration>(config, "sampling",
+          boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
       configuration.m_feed_timeout =
         Beam::extract<boost::posix_time::time_duration>(
           config, "feed_timeout", DEFAULT_FEED_TIMEOUT,
-          boost::posix_time::time_duration::unit(), MAXIMUM_TIMEOUT);
+          boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
       configuration.m_gap_timeout =
         Beam::extract<boost::posix_time::time_duration>(
           config, "gap_timeout", DEFAULT_GAP_TIMEOUT,
-          boost::posix_time::time_duration(), MAXIMUM_TIMEOUT);
+          boost::posix_time::time_duration(), MAXIMUM_DURATION);
       if(config["retransmission"]) {
         configuration.m_retransmission =
           CxaPitchSession::parse(Beam::get_node(config, "retransmission"));
@@ -182,6 +207,16 @@ namespace Nexus {
       }
       return configuration;
     }, std::runtime_error("Unable to parse the CXA PITCH configuration."));
+  }
+
+  inline boost::posix_time::time_duration
+      CxaPitchConfiguration::get_timer_interval() const {
+    auto interval = std::min<boost::posix_time::time_duration>(
+      boost::posix_time::milliseconds(100), m_feed_timeout);
+    if(m_gap_timeout > boost::posix_time::time_duration()) {
+      interval = std::min(interval, m_gap_timeout);
+    }
+    return interval;
   }
 }
 

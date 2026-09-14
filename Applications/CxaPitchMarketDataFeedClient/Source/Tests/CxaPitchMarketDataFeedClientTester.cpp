@@ -192,6 +192,24 @@ namespace {
 }
 
 TEST_SUITE("CxaPitchMarketDataFeedClient") {
+  TEST_CASE("read_failure") {
+    auto fixture = Fixture();
+    REQUIRE(!fixture.m_client.get_exception());
+    SUBCASE("failure") {
+      fixture.m_pitch_client.m_messages.close(
+        std::make_exception_ptr(IOException("Feed failed.")));
+      flush_pending_routines();
+      auto exception = fixture.m_client.get_exception();
+      REQUIRE(exception);
+      REQUIRE_THROWS_AS(std::rethrow_exception(exception), IOException);
+    }
+    SUBCASE("shutdown") {
+      fixture.m_client.close();
+      flush_pending_routines();
+      REQUIRE(!fixture.m_client.get_exception());
+    }
+  }
+
   TEST_CASE("add_order") {
     auto fixture = Fixture();
     fixture.publish(ADD_ORDER);

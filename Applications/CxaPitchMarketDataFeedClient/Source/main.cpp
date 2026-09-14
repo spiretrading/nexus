@@ -1,33 +1,16 @@
-#include <cstddef>
-#include <cstdint>
-#include <memory>
 #include <stdexcept>
-#include <stop_token>
-#include <vector>
+#include <thread>
 #include <Beam/IO/AsyncWriter.hpp>
-#include <Beam/IO/IOException.hpp>
 #include <Beam/IO/QueuedReader.hpp>
 #include <Beam/IO/WrapperChannel.hpp>
-#include <Beam/Network/IpAddress.hpp>
 #include <Beam/Network/MulticastSocketChannel.hpp>
-#include <Beam/Network/TcpSocketChannel.hpp>
-#include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
-#include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/TimeService/LocalTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/ReportException.hpp>
 #include <Beam/Utilities/YamlConfig.hpp>
-#include <boost/date_time/posix_time/posix_time.hpp>
-#include <boost/optional/optional.hpp>
-#include "CxaPitchMarketDataFeedClient/CxaPitchClient.hpp"
-#include "CxaPitchMarketDataFeedClient/CxaPitchConfiguration.hpp"
-#include "CxaPitchMarketDataFeedClient/CxaPitchGapClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchMarketDataFeedClient.hpp"
-#include "CxaPitchMarketDataFeedClient/CxaPitchProtocolClient.hpp"
-#include "CxaPitchMarketDataFeedClient/CxaPitchSessionClient.hpp"
-#include "CxaPitchMarketDataFeedClient/CxaPitchSpinClient.hpp"
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Version.hpp"
@@ -78,27 +61,17 @@ int main(int argc, const char** argv) {
       ApplicationDefinitionsClient(Ref(service_locator_client));
     load_definitions(definitions_client);
     auto feed_configuration = CxaPitchConfiguration::parse(config);
-    auto sampling = extract<time_duration>(config, "sampling");
-    auto options = MulticastSocketOptions();
-    static const auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(134217728);
-    options.m_receive_buffer_size =
-      extract<int>(config, "receive_buffer", DEFAULT_RECEIVE_BUFFER_SIZE);
-    options.m_max_datagram_size =
-      extract<int>(config, "mtu", options.m_max_datagram_size);
     auto make_session = [] (
         const CxaPitchSession& session, std::stop_token stop_token) {
       static const auto HEARTBEAT = seconds(1);
-      auto login = CxaPitchLogin();
-      login.m_session_sub_id = session.m_session_sub_id;
-      login.m_username = session.m_username;
-      login.m_password = session.m_password;
+      auto login = CxaPitchLogin(
+        session.m_session_sub_id, session.m_username, session.m_password);
       auto channel = std::make_unique<TcpSocketChannel>(session.m_address);
       auto reader = &channel->get_reader();
       auto writer = &channel->get_writer();
-      return std::make_shared<ApplicationSessionClient>(login,
-        std::make_unique<ApplicationSessionChannel>(
-          std::move(channel), reader, writer),
-        init(HEARTBEAT), stop_token);
+      return std::make_shared<ApplicationSessionClient>(
+        login, std::make_unique<ApplicationSessionChannel>(
+          std::move(channel), reader, writer), init(HEARTBEAT), stop_token);
     };
     auto gap_client = optional<std::unique_ptr<ApplicationGapClient>>();
     if(feed_configuration.m_retransmission) {
@@ -119,26 +92,35 @@ int main(int argc, const char** argv) {
           make_session(*feed_configuration.m_spin, std::stop_token()));
       }, std::runtime_error("Unable to connect to the CXA PITCH spin server."));
     }
-    auto feeds = std::vector<std::unique_ptr<ApplicationProtocolClient>>();
-    auto recovery = std::vector<std::unique_ptr<ApplicationProtocolClient>>();
+    auto feed_clients =
+      std::vector<std::unique_ptr<ApplicationProtocolClient>>();
+    auto recovery_clients =
+      std::vector<std::unique_ptr<ApplicationProtocolClient>>();
     for(auto& feed : feed_configuration.m_feeds) {
-      feeds.push_back(
-        make_protocol_client(feed.m_address, feed.m_interface, options));
+      feed_clients.push_back(make_protocol_client(feed.m_address,
+        feed.m_interface, feed_configuration.m_socket_options));
       if(gap_client && feed.m_gap_address) {
-        recovery.push_back(
-          make_protocol_client(*feed.m_gap_address, feed.m_interface, options));
+        recovery_clients.push_back(make_protocol_client(*feed.m_gap_address,
+          feed.m_interface, feed_configuration.m_socket_options));
       }
     }
     auto client = CxaPitchClient(feed_configuration.m_unit,
       feed_configuration.m_feed_timeout, feed_configuration.m_gap_timeout,
-      std::move(feeds), std::move(recovery), std::move(gap_client),
-      std::move(spin_client), std::make_unique<LocalTimeClient>(),
-      std::make_unique<LiveTimer>(feed_configuration.m_feed_timeout));
+      std::move(feed_clients), std::move(recovery_clients),
+      std::move(gap_client), std::move(spin_client),
+      std::make_unique<LocalTimeClient>(),
+      std::make_unique<LiveTimer>(feed_configuration.get_timer_interval()));
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
-      Ref(service_locator_client), sampling, feed_configuration.m_country);
+      Ref(service_locator_client), feed_configuration.m_sampling,
+      feed_configuration.m_country);
     auto feed_client = CxaPitchMarketDataFeedClient(
       feed_configuration, &market_data_feed_client, &client);
-    wait_for_kill_event();
+    while(!received_kill_event()) {
+      if(auto exception = feed_client.get_exception()) {
+        std::rethrow_exception(exception);
+      }
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
     feed_client.close();
     service_locator_client.close();
   } catch(...) {

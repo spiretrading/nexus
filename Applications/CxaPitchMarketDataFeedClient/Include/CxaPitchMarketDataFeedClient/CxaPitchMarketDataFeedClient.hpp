@@ -9,6 +9,7 @@
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
+#include <Beam/Threading/Sync.hpp>
 #include <Beam/Utilities/Algorithm.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchClient.hpp"
@@ -49,6 +50,9 @@ namespace Nexus {
 
       ~CxaPitchMarketDataFeedClient();
 
+      /** Returns the exception that stopped message reception, if any. */
+      std::exception_ptr get_exception() const;
+
       /** Closes the feed. */
       void close();
 
@@ -65,6 +69,7 @@ namespace Nexus {
       Beam::local_ptr_t<C> m_client;
       std::unordered_map<std::string, OrderEntry> m_orders;
       boost::posix_time::ptime m_timestamp;
+      Beam::Sync<std::exception_ptr> m_exception;
       Beam::RoutineHandler m_read_loop;
       Beam::OpenState m_open_state;
 
@@ -101,22 +106,29 @@ namespace Nexus {
       IsCxaPitchClient<Beam::dereference_t<C>>
   template<Beam::Initializes<M> MF, Beam::Initializes<C> CF>
   CxaPitchMarketDataFeedClient<M, C>::CxaPitchMarketDataFeedClient(
-    CxaPitchConfiguration config, MF&& feed_client, CF&& client)
-    try : m_config(std::move(config)),
-          m_feed_client(std::forward<MF>(feed_client)),
-          m_client(std::forward<CF>(client)),
-          m_read_loop(Beam::spawn(std::bind_front(
-            &CxaPitchMarketDataFeedClient::read_loop, this))) {
-    } catch(const std::exception&) {
-      Beam::throw_nested_with_location(Beam::ConnectException(
-        "Unable to initialize the CXA PITCH market data feed client."));
-    }
+      CxaPitchConfiguration config, MF&& feed_client, CF&& client)
+      try : m_config(std::move(config)),
+            m_feed_client(std::forward<MF>(feed_client)),
+            m_client(std::forward<CF>(client)) {
+    m_read_loop = Beam::spawn(std::bind_front(
+      &CxaPitchMarketDataFeedClient::read_loop, this));
+  } catch(const std::exception&) {
+    Beam::throw_nested_with_location(Beam::ConnectException(
+      "Unable to initialize the CXA PITCH market data feed client."));
+  }
 
   template<typename M, typename C> requires
     IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   CxaPitchMarketDataFeedClient<M, C>::~CxaPitchMarketDataFeedClient() {
     close();
+  }
+
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+      IsCxaPitchClient<Beam::dereference_t<C>>
+  std::exception_ptr CxaPitchMarketDataFeedClient<M, C>::get_exception() const {
+    return m_exception.load();
   }
 
   template<typename M, typename C> requires
@@ -359,6 +371,9 @@ namespace Nexus {
       try {
         message = m_client->read();
       } catch(const std::exception&) {
+        if(m_open_state.is_open()) {
+          m_exception = std::current_exception();
+        }
         break;
       }
       try {

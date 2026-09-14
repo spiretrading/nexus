@@ -1,3 +1,4 @@
+#include <limits>
 #include <stdexcept>
 #include <boost/date_time/posix_time/time_parsers.hpp>
 #include <doctest/doctest.h>
@@ -11,6 +12,7 @@ namespace {
   YAML::Node make_config() {
     return YAML::Load(R"(
 unit: 1
+sampling: 100ms
 venue: ASX
 disseminating_venue: CXA
 feeds:
@@ -114,6 +116,71 @@ password: ABCD01
     REQUIRE(!config.m_spin);
   }
 
+  TEST_CASE("parse_socket_sizes") {
+    auto source = make_config();
+    SUBCASE("defaults") {
+      auto config = CxaPitchConfiguration::parse(source);
+      REQUIRE(config.m_socket_options.m_receive_buffer_size ==
+        128 * 1024 * 1024);
+      REQUIRE(config.m_socket_options.m_max_datagram_size ==
+        Beam::MulticastSocketOptions().m_max_datagram_size);
+    }
+    SUBCASE("bounds") {
+      source["receive_buffer"] = 1;
+      source["mtu"] = 1500;
+      auto config = CxaPitchConfiguration::parse(source);
+      REQUIRE(config.m_socket_options.m_receive_buffer_size == 1);
+      REQUIRE(config.m_socket_options.m_max_datagram_size == 1500);
+      source["receive_buffer"] = std::numeric_limits<int>::max();
+      source["mtu"] = std::numeric_limits<std::uint16_t>::max();
+      config = CxaPitchConfiguration::parse(source);
+      REQUIRE(config.m_socket_options.m_receive_buffer_size ==
+        std::numeric_limits<int>::max());
+      REQUIRE(config.m_socket_options.m_max_datagram_size ==
+        std::numeric_limits<std::uint16_t>::max());
+    }
+    SUBCASE("receive_buffer") {
+      for(auto value : {"0", "-1", "2147483648"}) {
+        CAPTURE(std::string_view(value));
+        source["receive_buffer"] = value;
+        REQUIRE_THROWS_AS(
+          CxaPitchConfiguration::parse(source), std::runtime_error);
+      }
+    }
+    SUBCASE("mtu") {
+      for(auto value : {"0", "-1", "1499", "65536"}) {
+        CAPTURE(std::string_view(value));
+        source["mtu"] = value;
+        REQUIRE_THROWS_AS(
+          CxaPitchConfiguration::parse(source), std::runtime_error);
+      }
+    }
+  }
+
+  TEST_CASE("parse_sampling") {
+    auto source = make_config();
+    SUBCASE("valid") {
+      auto config = CxaPitchConfiguration::parse(source);
+      REQUIRE(config.m_sampling == duration_from_string("00:00:00.100000"));
+      source["sampling"] = "1us";
+      config = CxaPitchConfiguration::parse(source);
+      REQUIRE(config.m_sampling == duration_from_string("00:00:00.000001"));
+    }
+    SUBCASE("missing") {
+      source.remove("sampling");
+      REQUIRE_THROWS_AS(
+        CxaPitchConfiguration::parse(source), std::runtime_error);
+    }
+    SUBCASE("invalid") {
+      for(auto value : {"0s", "-1us", "infinity", "+infinity", "-infinity"}) {
+        CAPTURE(std::string_view(value));
+        source["sampling"] = value;
+        REQUIRE_THROWS_AS(
+          CxaPitchConfiguration::parse(source), std::runtime_error);
+      }
+    }
+  }
+
   TEST_CASE("parse_timeouts") {
     auto source = make_config();
     SUBCASE("feed") {
@@ -139,6 +206,28 @@ password: ABCD01
       REQUIRE(config.m_feed_timeout == duration_from_string("00:00:00.000001"));
       REQUIRE(config.m_gap_timeout == duration_from_string("00:00:00"));
     }
+  }
+
+  TEST_CASE("timer_interval") {
+    auto source = make_config();
+    auto expected = duration_from_string("00:00:00.100000");
+    SUBCASE("defaults") {}
+    SUBCASE("long_feed_timeout") {
+      source["feed_timeout"] = "30s";
+    }
+    SUBCASE("short_feed_timeout") {
+      source["feed_timeout"] = "50ms";
+      expected = duration_from_string("00:00:00.050000");
+    }
+    SUBCASE("short_gap_timeout") {
+      source["gap_timeout"] = "10ms";
+      expected = duration_from_string("00:00:00.010000");
+    }
+    SUBCASE("zero_gap_timeout") {
+      source["gap_timeout"] = "0s";
+    }
+    auto config = CxaPitchConfiguration::parse(source);
+    REQUIRE(config.get_timer_interval() == expected);
   }
 
   TEST_CASE("parse_empty_feed_list") {
