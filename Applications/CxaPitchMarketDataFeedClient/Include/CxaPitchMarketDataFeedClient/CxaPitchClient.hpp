@@ -137,7 +137,7 @@ namespace Nexus {
         std::uint32_t sequence, std::uint32_t count, std::string reason);
       boost::optional<CxaPitchGap> update_gap(
         CxaPitchSequencer& sequencer, boost::posix_time::ptime timestamp);
-      boost::optional<std::uint32_t> prepare_request(
+      boost::optional<std::uint32_t> advance_recovery(
         CxaPitchSequencer& sequencer, boost::posix_time::ptime timestamp);
       void feed_loop(int index);
       void recovery_loop(int index);
@@ -371,8 +371,9 @@ namespace Nexus {
       IsCxaPitchSpinClient<Beam::dereference_t<S>> &&
       Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  boost::optional<std::uint32_t> CxaPitchClient<P, G, S, R, T>::prepare_request(
-      CxaPitchSequencer& sequencer, boost::posix_time::ptime timestamp) {
+  boost::optional<std::uint32_t>
+      CxaPitchClient<P, G, S, R, T>::advance_recovery(
+        CxaPitchSequencer& sequencer, boost::posix_time::ptime timestamp) {
     if(auto gap = update_gap(sequencer, timestamp)) {
       if(m_gap_client &&
           !(*m_gap_client)->is_recoverable(*gap, sequencer.get_position())) {
@@ -406,36 +407,43 @@ namespace Nexus {
         auto block = m_feed_clients[index]->read();
         auto& header = block.get_header();
         if(header.m_unit != m_unit) {
-          continue;
+          m_messages.close(std::make_exception_ptr(Beam::IOException(
+            "CXA PITCH feed " + std::to_string(index) + " received unit " +
+            std::to_string(header.m_unit) + "; expected unit " +
+            std::to_string(m_unit) + ".")));
+          return;
         }
         validate(block);
         auto timestamp = m_time_client->get_time();
-        auto live = boost::optional<std::uint32_t>();
-        auto close_spin = false;
-        Beam::with(m_sequencer, [&] (auto& sequencer) {
-          sequencer.add(index, block, timestamp);
-          m_feed_timestamp = timestamp;
-          if(m_is_silent) {
-            m_is_silent = false;
-            print([&] (auto& out) {
-              out << "(feed " << timestamp << ')';
-            });
-          }
-          if(!m_is_ready && !m_is_spinning &&
-              timestamp - m_start > m_gap_timeout) {
-            print([&] (auto& out) {
-              out << "(no_spin " << timestamp << ')';
-            });
-            m_is_ready = true;
-            close_spin = true;
-          }
-          live = prepare_request(sequencer, timestamp);
-        });
+        auto [close_spin, recovery_position] = Beam::with(m_sequencer,
+          [&] (auto& sequencer) {
+            sequencer.add(index, block, timestamp);
+            m_feed_timestamp = timestamp;
+            if(m_is_silent) {
+              m_is_silent = false;
+              print([&] (auto& out) {
+                out << "(feed " << timestamp << ')';
+              });
+            }
+            auto close_spin = [&] {
+              if(m_is_ready || m_is_spinning ||
+                  timestamp - m_start <= m_gap_timeout) {
+                return false;
+              }
+              print([&] (auto& out) {
+                out << "(no_spin " << timestamp << ')';
+              });
+              m_is_ready = true;
+              return true;
+            }();
+            return std::pair(
+              close_spin, advance_recovery(sequencer, timestamp));
+          });
         if(close_spin) {
           (*m_spin_client)->close();
         }
-        if(live) {
-          m_requests.push(*live);
+        if(recovery_position) {
+          m_requests.push(*recovery_position);
         }
       } catch(const CxaPitchParserException& e) {
         print([&] (auto& out) {
@@ -458,8 +466,13 @@ namespace Nexus {
     while(true) {
       try {
         auto block = m_recovery_clients[index]->read();
-        if(block.get_header().m_unit != m_unit) {
-          continue;
+        auto& header = block.get_header();
+        if(header.m_unit != m_unit) {
+          m_messages.close(std::make_exception_ptr(Beam::IOException(
+            "CXA PITCH recovery feed " + std::to_string(index) +
+            " received unit " + std::to_string(header.m_unit) +
+            "; expected unit " + std::to_string(m_unit) + ".")));
+          return;
         }
         auto timestamp = m_time_client->get_time();
         Beam::with(m_sequencer, [&] (auto& sequencer) {
@@ -467,7 +480,6 @@ namespace Nexus {
             validate(block);
             sequencer.recover(block);
           } catch(const CxaPitchParserException&) {
-            auto& header = block.get_header();
             if(header.m_sequence != 0 && header.m_count != 0) {
               reject(header.m_sequence, header.m_count, "malformed");
             }
@@ -498,33 +510,34 @@ namespace Nexus {
   void CxaPitchClient<P, G, S, R, T>::request_loop() {
     while(true) {
       try {
-        auto live = m_requests.pop();
-        auto pending = Beam::with(m_sequencer, [&] (const auto& sequencer) {
-          auto request = boost::optional<CxaPitchGap>();
-          if(auto gap = sequencer.get_gap()) {
-            if(m_requested < gap->m_sequence) {
-              m_requested = gap->m_sequence;
+        auto recovery_position = m_requests.pop();
+        auto requested_gap = Beam::with(m_sequencer,
+          [&] (const auto& sequencer) -> boost::optional<CxaPitchGap> {
+            if(auto gap = sequencer.get_gap()) {
+              if(m_requested < gap->m_sequence) {
+                m_requested = gap->m_sequence;
+              }
+              auto end = gap->m_sequence + gap->m_count;
+              if(m_requested < end) {
+                return CxaPitchGap(m_requested, end - m_requested);
+              }
             }
-            auto end = gap->m_sequence + gap->m_count;
-            if(m_requested < end) {
-              request = CxaPitchGap(m_requested, end - m_requested);
-            }
-          }
-          return request;
-        });
-        if(!pending) {
+            return boost::none;
+          });
+        if(!requested_gap) {
           continue;
         }
         auto count = [&] {
           try {
-            return (*m_gap_client)->request(m_unit, *pending, live);
+            return (*m_gap_client)->request(
+              m_unit, *requested_gap, recovery_position);
           } catch(const std::exception&) {
             return std::uint32_t(0);
           }
         }();
         Beam::with(m_sequencer, [&] (const auto&) {
-          if(m_requested == pending->m_sequence) {
-            m_requested = pending->m_sequence + count;
+          if(m_requested == requested_gap->m_sequence) {
+            m_requested = requested_gap->m_sequence + count;
           }
         });
       } catch(const std::exception&) {
@@ -602,7 +615,7 @@ namespace Nexus {
           if(m_is_ready) {
             return;
           }
-          for(const auto& message : snapshot.m_messages) {
+          for(auto& message : snapshot.m_messages) {
             m_messages.push(message);
           }
           if(sequencer.get_sequence().value_or(0) < snapshot.m_sequence + 1) {

@@ -234,17 +234,39 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(client.read().m_type == 0x13);
   }
 
-  TEST_CASE("unit_filter") {
+  TEST_CASE("unit_mismatch") {
     auto feed = StubProtocolClient();
+    auto recovery = StubProtocolClient();
     auto time_client = FixedTimeClient(TIMESTAMP);
     auto timer = TriggerTimer();
     auto client = Client(2, duration_from_string("00:00:03"),
       duration_from_string("00:00:05"), std::vector{&feed},
-      std::vector<StubProtocolClient*>(), optional<StubGapClient*>(),
+      std::vector{&recovery}, optional<StubGapClient*>(),
       optional<StubSpinClient*>(), &time_client, &timer);
-    feed.m_blocks->push(encode_block(1, {0x11}));
-    feed.m_reads->pop();
-    REQUIRE(!feed.m_blocks->try_pop());
+    auto errors = Queue<std::exception_ptr>();
+    auto reader = RoutineHandler(spawn([&] {
+      try {
+        client.read();
+      } catch(const std::exception&) {
+        errors.push(std::current_exception());
+      }
+    }));
+    auto expected = std::string();
+    SUBCASE("feed") {
+      feed.m_blocks->push(encode_block(1, {0x11}));
+      expected = "CXA PITCH feed 0 received unit 1; expected unit 2.";
+    }
+    SUBCASE("recovery") {
+      recovery.m_blocks->push(encode_block(1, {0x11}));
+      expected = "CXA PITCH recovery feed 0 received unit 1; expected unit 2.";
+    }
+    flush_pending_routines();
+    auto error = errors.try_pop();
+    client.close();
+    reader.wait();
+    REQUIRE(error.has_value());
+    REQUIRE_THROWS_WITH_AS(
+      std::rethrow_exception(*error), expected.c_str(), IOException);
   }
 
   TEST_CASE("gap_recovery") {
