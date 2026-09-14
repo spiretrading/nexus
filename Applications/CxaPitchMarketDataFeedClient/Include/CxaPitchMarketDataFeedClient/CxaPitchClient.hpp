@@ -683,9 +683,7 @@ namespace Nexus {
           }
           auto close_spin = expire_snapshot_offer(timestamp);
           flush(sequencer);
-          if(!sequencer.get_gap()) {
-            sequencer.update(timestamp);
-          }
+          sequencer.update(timestamp);
           auto previous_gap = m_reported_gap;
           auto recovery_position = boost::optional<std::uint32_t>();
           if(auto gap = update_gap(sequencer, timestamp)) {

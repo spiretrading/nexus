@@ -60,7 +60,10 @@ namespace Nexus {
       /** Returns the sequence of the next message to return. */
       boost::optional<std::uint32_t> get_sequence() const;
 
-      /** Returns the sequence that every feed has delivered through. */
+      /**
+       * Returns the common position of active feeds, or the furthest known
+       * position when none are active.
+       */
       std::uint32_t get_position() const;
 
       /** Returns the range of sequences that are missing from every feed. */
@@ -163,6 +166,11 @@ namespace Nexus {
       }
       if(position == 0 || source.m_position < position) {
         position = source.m_position;
+      }
+    }
+    if(position == 0) {
+      for(auto& source : m_feeds) {
+        position = std::max(position, source.m_position);
       }
     }
     return position;

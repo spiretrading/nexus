@@ -376,7 +376,10 @@ TEST_SUITE("CxaPitchClient") {
     fixture.publish(encode_block(1, {0x11}));
     REQUIRE(reader.m_types.pop() == 0x11);
     flush_pending_routines();
-    fixture.m_time_client.set(TIMESTAMP + Fixture::FEED_TIMEOUT);
+    SUBCASE("active_feed") {
+      fixture.m_time_client.set(TIMESTAMP + Fixture::FEED_TIMEOUT);
+    }
+    SUBCASE("silent_feeds") {}
     fixture.m_feed_clients[0]->m_blocks.push(encode_block(3, {0x13}));
     flush_pending_routines();
     REQUIRE(!fixture.m_gap_operations->try_pop());

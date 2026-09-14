@@ -369,15 +369,29 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(read(sequencer) == 0x11);
     auto third = encode_block(3, {0x13});
     sequencer.add(0, CxaPitchBlock::parse(third), timestamp);
-    sequencer.add(1, CxaPitchBlock::parse(third), timestamp);
+    SUBCASE("both_feeds") {
+      sequencer.add(1, CxaPitchBlock::parse(third), timestamp);
+      auto gap = sequencer.get_gap();
+      REQUIRE(gap.has_value());
+      REQUIRE(gap->m_sequence == 2);
+      REQUIRE(gap->m_count == 1);
+    }
+    SUBCASE("leading_feed") {
+      REQUIRE(!sequencer.get_gap());
+    }
+    sequencer.update(timestamp + duration_from_string("00:00:04"));
+    REQUIRE(sequencer.get_position() == 4);
     auto gap = sequencer.get_gap();
     REQUIRE(gap.has_value());
     REQUIRE(gap->m_sequence == 2);
     REQUIRE(gap->m_count == 1);
-    sequencer.update(timestamp + duration_from_string("00:00:04"));
-    REQUIRE(sequencer.get_position() == 0);
-    REQUIRE(!sequencer.get_gap());
     REQUIRE(sequencer.get_sequence().value_or(0) == 2);
+    auto second = encode_block(2, {0x12});
+    sequencer.recover(CxaPitchBlock::parse(second));
+    REQUIRE(read(sequencer) == 0x12);
+    REQUIRE(read(sequencer) == 0x13);
+    REQUIRE(read(sequencer) == 0);
+    REQUIRE(!sequencer.get_gap());
   }
 
   TEST_CASE("stalled_feed_replay") {
