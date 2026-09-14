@@ -419,26 +419,50 @@ TEST_SUITE("CxaPitchClient") {
     fixture.publish(encode_block(4, {0x14}));
     auto request = fixture.require_recovery_request(1, CxaPitchGap(2, 2), 5);
     request->m_result.set(2);
-    auto is_rejected = false;
     SUBCASE("framing") {
       fixture.m_recovery_clients[0]->m_blocks.push(from<SharedBuffer>(
         "\x10\x00\x02\x01\x02\x00\x00\x00"
         "\x06\x42\x00\x00\x00\x00\xff\x43"sv));
     }
     SUBCASE("message") {
-      is_rejected = true;
       fixture.m_recovery_clients[0]->m_blocks.push(
         encode_malformed_block(2, {0x12}));
     }
     flush_pending_routines();
-    if(!is_rejected) {
-      REQUIRE(!reader.m_types.try_pop());
-      fixture.m_recovery_clients[0]->m_blocks.push(
-        encode_block(2, {0x12, 0x13}));
+    REQUIRE(!reader.m_types.try_pop());
+    fixture.m_recovery_clients[0]->m_blocks.push(
+      encode_block(2, {0x12, 0x13}));
+    flush_pending_routines();
+    REQUIRE(reader.m_types.try_pop() == 0x12);
+    REQUIRE(reader.m_types.try_pop() == 0x13);
+    REQUIRE(reader.m_types.try_pop() == 0x14);
+    REQUIRE(!reader.m_types.try_pop());
+  }
+
+  TEST_CASE("recovery_arbitration") {
+    auto fixture = Fixture(1, 2, 2);
+    auto reader = MessageReader(*fixture.m_client);
+    fixture.publish(encode_block(1, {0x11}));
+    REQUIRE(reader.m_types.pop() == 0x11);
+    flush_pending_routines();
+    fixture.publish(encode_block(4, {0x14}));
+    auto request = fixture.require_recovery_request(1, CxaPitchGap(2, 2), 5);
+    request->m_result.set(2);
+    auto malformed = encode_malformed_block(2, {0x12});
+    auto valid = encode_block(2, {0x12, 0x13});
+    SUBCASE("malformed_first") {
+      fixture.m_recovery_clients[0]->m_blocks.push(malformed);
       flush_pending_routines();
-      REQUIRE(reader.m_types.try_pop() == 0x12);
-      REQUIRE(reader.m_types.try_pop() == 0x13);
+      fixture.m_recovery_clients[1]->m_blocks.push(valid);
     }
+    SUBCASE("valid_first") {
+      fixture.m_recovery_clients[1]->m_blocks.push(valid);
+      flush_pending_routines();
+      fixture.m_recovery_clients[0]->m_blocks.push(malformed);
+    }
+    flush_pending_routines();
+    REQUIRE(reader.m_types.try_pop() == 0x12);
+    REQUIRE(reader.m_types.try_pop() == 0x13);
     REQUIRE(reader.m_types.try_pop() == 0x14);
     REQUIRE(!reader.m_types.try_pop());
   }

@@ -537,16 +537,10 @@ namespace Nexus {
             "; expected unit " + std::to_string(m_unit) + ".")));
           return;
         }
+        validate(block);
         auto timestamp = m_time_client->get_time();
         Beam::with(m_sequencer, [&] (auto& sequencer) {
-          try {
-            validate(block);
-            sequencer.recover(block);
-          } catch(const CxaPitchParserException&) {
-            if(header.m_sequence != 0 && header.m_count != 0) {
-              reject(header.m_sequence, header.m_count, "malformed");
-            }
-          }
+          sequencer.recover(block);
           flush(sequencer);
           skip(sequencer, timestamp);
           if(!sequencer.get_gap()) {
