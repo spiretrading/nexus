@@ -660,21 +660,33 @@ namespace Nexus {
     }
     try {
       auto timestamp = m_time_client->get_time();
-      Beam::with(m_sequencer, [&] (auto& sequencer) {
-        if(!m_is_silent && timestamp - m_feed_timestamp > m_feed_timeout) {
-          m_is_silent = true;
-          print([&] (auto& out) {
-            out << "(no_feed " << timestamp << ')';
-          });
-        }
-        auto previous_gap = m_reported_gap;
-        if(auto gap = update_gap(sequencer, timestamp)) {
-          if(gap->m_sequence == previous_gap &&
-              timestamp - m_gap_timestamp > m_gap_timeout) {
-            drop(sequencer, *gap, timestamp, "timeout");
+      auto recovery_position = Beam::with(m_sequencer,
+        [&] (auto& sequencer) -> boost::optional<std::uint32_t> {
+          if(!m_is_silent && timestamp - m_feed_timestamp > m_feed_timeout) {
+            m_is_silent = true;
+            print([&] (auto& out) {
+              out << "(no_feed " << timestamp << ')';
+            });
           }
-        }
-      });
+          if(!sequencer.get_gap()) {
+            sequencer.update(timestamp);
+          }
+          auto previous_gap = m_reported_gap;
+          if(auto gap = update_gap(sequencer, timestamp)) {
+            if(gap->m_sequence == previous_gap &&
+                timestamp - m_gap_timestamp > m_gap_timeout) {
+              drop(sequencer, *gap, timestamp, "timeout");
+              return boost::none;
+            }
+            if(m_gap_client && m_requested < gap->m_sequence + gap->m_count) {
+              return advance_recovery(sequencer, timestamp);
+            }
+          }
+          return boost::none;
+        });
+      if(recovery_position) {
+        m_requests.push(*recovery_position);
+      }
       m_timer->start();
     } catch(const std::exception&) {
       m_tasks.close();

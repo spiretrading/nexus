@@ -69,6 +69,7 @@ namespace {
     struct WithSpin {};
     struct WithoutGap {};
 
+    inline static const auto FEED_TIMEOUT = duration_from_string("00:00:03");
     inline static const auto GAP_TIMEOUT = duration_from_string("00:00:05");
     std::vector<std::unique_ptr<StubProtocolClient>> m_feed_clients;
     std::vector<std::unique_ptr<StubProtocolClient>> m_recovery_clients;
@@ -111,9 +112,8 @@ namespace {
       if constexpr(!std::same_as<S, WithoutGap>) {
         gap_client = &m_gap_client;
       }
-      m_client.emplace(unit, duration_from_string("00:00:03"), GAP_TIMEOUT,
-        feed_clients, recovery_clients, gap_client, spin_client, &m_time_client,
-        &m_timer);
+      m_client.emplace(unit, FEED_TIMEOUT, GAP_TIMEOUT, feed_clients,
+        recovery_clients, gap_client, spin_client, &m_time_client, &m_timer);
     }
 
     void publish(const SharedBuffer& block) {
@@ -345,6 +345,11 @@ TEST_SUITE("CxaPitchClient") {
     flush_pending_routines();
     REQUIRE(!reader.m_types.try_pop());
     fixture.m_time_client.set(
+      TIMESTAMP + Fixture::FEED_TIMEOUT + time_duration::unit());
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    REQUIRE(!reader.m_types.try_pop());
+    fixture.m_time_client.set(
       TIMESTAMP + Fixture::GAP_TIMEOUT + time_duration::unit());
     fixture.m_timer.trigger();
     flush_pending_routines();
@@ -363,6 +368,34 @@ TEST_SUITE("CxaPitchClient") {
     fixture.m_timer.trigger();
     flush_pending_routines();
     REQUIRE(reader.m_types.try_pop() == 0x15);
+  }
+
+  TEST_CASE("timer_gap_recovery") {
+    auto fixture = Fixture(1, 2, 1);
+    auto reader = MessageReader(*fixture.m_client);
+    fixture.publish(encode_block(1, {0x11}));
+    REQUIRE(reader.m_types.pop() == 0x11);
+    flush_pending_routines();
+    fixture.m_time_client.set(TIMESTAMP + Fixture::FEED_TIMEOUT);
+    fixture.m_feed_clients[0]->m_blocks.push(encode_block(3, {0x13}));
+    flush_pending_routines();
+    REQUIRE(!fixture.m_gap_operations->try_pop());
+    REQUIRE(!reader.m_types.try_pop());
+    fixture.m_time_client.set(
+      TIMESTAMP + Fixture::FEED_TIMEOUT + time_duration::unit());
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    auto recoverable = fixture.try_require_operation<
+      TestCxaPitchGapClient::IsRecoverableOperation>(CxaPitchGap(2, 1), 4);
+    recoverable->m_result.set(true);
+    flush_pending_routines();
+    auto request = fixture.try_require_operation<
+      TestCxaPitchGapClient::RequestOperation>(1, CxaPitchGap(2, 1), 4);
+    request->m_result.set(1);
+    fixture.m_recovery_clients[0]->m_blocks.push(encode_block(2, {0x12}));
+    flush_pending_routines();
+    REQUIRE(reader.m_types.try_pop() == 0x12);
+    REQUIRE(reader.m_types.try_pop() == 0x13);
   }
 
   TEST_CASE("malformed_recovery") {
