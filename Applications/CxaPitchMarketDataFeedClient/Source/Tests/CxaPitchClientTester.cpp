@@ -247,6 +247,20 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE_THROWS_AS(fixture.m_client->read(), IOException);
   }
 
+  TEST_CASE("unit_zero_heartbeat") {
+    auto fixture = Fixture(1, 1, 1);
+    auto heartbeat = from<SharedBuffer>("\x08\x00\x00\x00\x00\x00\x00\x00"sv);
+    SUBCASE("feed") {
+      fixture.m_feed_clients[0]->m_blocks.push(heartbeat);
+    }
+    SUBCASE("recovery") {
+      fixture.m_recovery_clients[0]->m_blocks.push(heartbeat);
+    }
+    flush_pending_routines();
+    fixture.publish(encode_block(1, {0x11}));
+    REQUIRE(fixture.m_client->read().m_type == 0x11);
+  }
+
   TEST_CASE("gap_recovery") {
     auto fixture = Fixture(1, 2, 1);
     fixture.publish(encode_block(1, {0x11}));
@@ -521,18 +535,17 @@ TEST_SUITE("CxaPitchClient") {
       CxaPitchGapResponse(1, 202, 100, CxaPitchGapResponse::MINUTE_EXHAUSTED));
     flush_pending_routines();
     fixture.publish(encode_block(303, {}));
-    auto retry = fixture.require_recovery_request(
-      1, gap, CxaPitchGap(2, 100), 303);
+    auto retry =
+      fixture.require_recovery_request(1, gap, CxaPitchGap(2, 100), 303);
     retry->m_result.set(0);
     flush_pending_routines();
     fixture.publish(encode_block(303, {}));
-    retry = fixture.require_recovery_request(
-      1, gap, CxaPitchGap(2, 100), 303);
+    retry = fixture.require_recovery_request(1, gap, CxaPitchGap(2, 100), 303);
     retry->m_result.set(100);
     flush_pending_routines();
     fixture.publish(encode_block(303, {}));
-    retry = fixture.require_recovery_request(
-      1, gap, CxaPitchGap(202, 100), 303);
+    retry =
+      fixture.require_recovery_request(1, gap, CxaPitchGap(202, 100), 303);
     retry->m_result.set(100);
     flush_pending_routines();
     fixture.publish(encode_block(303, {}));
