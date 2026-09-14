@@ -89,7 +89,11 @@ namespace Nexus {
 
       ~CxaPitchClient();
 
-      /** Reads the next message in sequence. */
+      /**
+       * Reads the next message in sequence.
+       * @return A message whose payload remains valid until the next read or
+       *         this client is destroyed.
+       */
       CxaPitchMessage read();
 
       /** Closes the connection to every feed and server. */
