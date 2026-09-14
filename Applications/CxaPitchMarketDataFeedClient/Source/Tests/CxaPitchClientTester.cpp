@@ -390,6 +390,14 @@ TEST_SUITE("CxaPitchClient") {
     SUBCASE("pending_minute") {
       response.m_status = CxaPitchGapResponse::MINUTE_EXHAUSTED;
     }
+    SUBCASE("pending_second_suffix") {
+      response =
+        CxaPitchGapResponse(1, 3, 1, CxaPitchGapResponse::SECOND_EXHAUSTED);
+    }
+    SUBCASE("pending_minute_suffix") {
+      response =
+        CxaPitchGapResponse(1, 3, 1, CxaPitchGapResponse::MINUTE_EXHAUSTED);
+    }
     SUBCASE("completed_second") {
       is_complete = true;
     }
@@ -419,8 +427,9 @@ TEST_SUITE("CxaPitchClient") {
     recoverable->m_result.set(true);
     flush_pending_routines();
     auto retry = fixture.try_require_operation<
-      TestCxaPitchGapClient::RequestOperation>(1, CxaPitchGap(2, 2), 5);
-    retry->m_result.set(2);
+      TestCxaPitchGapClient::RequestOperation>(
+        1, CxaPitchGap(response.m_sequence, response.m_count), 5);
+    retry->m_result.set(response.m_count);
   }
 
   TEST_CASE("stale_snapshot") {

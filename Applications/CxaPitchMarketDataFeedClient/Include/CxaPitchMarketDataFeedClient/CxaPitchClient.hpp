@@ -519,7 +519,10 @@ namespace Nexus {
               }
               auto end = gap->m_sequence + gap->m_count;
               if(m_requested < end) {
-                return CxaPitchGap(m_requested, end - m_requested);
+                auto requested_gap =
+                  CxaPitchGap(m_requested, end - m_requested);
+                m_requested = end;
+                return requested_gap;
               }
             }
             return boost::none;
@@ -536,7 +539,8 @@ namespace Nexus {
           }
         }();
         Beam::with(m_sequencer, [&] (const auto&) {
-          if(m_requested == requested_gap->m_sequence) {
+          if(m_requested ==
+              requested_gap->m_sequence + requested_gap->m_count) {
             m_requested = requested_gap->m_sequence + count;
           }
         });
