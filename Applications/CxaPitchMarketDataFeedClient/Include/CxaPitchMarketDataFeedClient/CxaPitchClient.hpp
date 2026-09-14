@@ -10,6 +10,7 @@
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Threading/Sync.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchGapClient.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
@@ -510,7 +511,6 @@ namespace Nexus {
         print([&] (auto& out) {
           out << "(bad_datagram feed " << index << ' ' << e.what() << ')';
         });
-        continue;
       } catch(const std::exception&) {
         break;
       }
@@ -555,7 +555,6 @@ namespace Nexus {
         print([&] (auto& out) {
           out << "(bad_datagram recovery " << index << ' ' << e.what() << ')';
         });
-        continue;
       } catch(const std::exception&) {
         break;
       }
@@ -695,7 +694,7 @@ namespace Nexus {
           m_messages.push(message);
         }
         Beam::with(m_sequencer, [&] (auto& sequencer) {
-          if(sequencer.get_sequence().value_or(0) < snapshot.m_sequence + 1) {
+          if(*sequencer.get_sequence() < snapshot.m_sequence + 1) {
             sequencer.reset(snapshot.m_sequence + 1);
           }
           m_snapshot_state = SnapshotState::READY;
@@ -742,20 +741,8 @@ namespace Nexus {
             });
           }
           auto close_spin = expire_snapshot_offer(timestamp);
-          flush(sequencer);
           sequencer.update(timestamp);
-          auto previous_gap = m_reported_gap;
-          auto recovery_position = boost::optional<std::uint32_t>();
-          if(auto gap = update_gap(sequencer, timestamp)) {
-            if(gap->m_sequence == previous_gap &&
-                timestamp - m_gap_timestamp > m_gap_timeout) {
-              drop(sequencer, *gap, timestamp, "timeout");
-            } else if(m_gap_client && (get_retry(*gap) ||
-                m_request_sequence < gap->m_sequence + gap->m_count)) {
-              recovery_position = advance_recovery(sequencer, timestamp);
-            }
-          }
-          return std::pair(close_spin, recovery_position);
+          return std::pair(close_spin, advance_recovery(sequencer, timestamp));
         });
       if(close_spin) {
         (*m_spin_client)->close();

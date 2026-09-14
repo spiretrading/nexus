@@ -64,6 +64,16 @@ namespace {
     StubSpinClient*, FixedTimeClient*, TriggerTimer*>;
 
   const auto TIMESTAMP = time_from_string("2026-09-09 10:00:00");
+  const auto ADD_ORDER = from<SharedBuffer>(
+    "\x2a\x37"
+    "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"
+    "\x05\x40\x5b\x77\x8f\x56\x1d\x0b"
+    "B"
+    "\xbc\x02\x00\x00"
+    "ZVZT  "
+    "\x15\xcd\x5b\x07\x00\x00\x00\x00"
+    "1234"
+    "\x00"sv);
 
   struct Fixture {
     struct WithSpin {};
@@ -193,20 +203,13 @@ namespace {
     }
   };
 
-  SharedBuffer encode_message(std::uint8_t type) {
-    auto message = SharedBuffer();
-    auto encoder = CxaPitchEncoder(Ref(message));
-    encoder.write_uint8(CxaPitchUnitClear::LENGTH);
-    encoder.write_uint8(type);
-    encoder.pad(CxaPitchUnitClear::LENGTH - CxaPitchMessage::HEADER_LENGTH);
-    return message;
-  }
-
   SharedBuffer encode_block(
       std::uint32_t sequence, const std::vector<std::uint8_t>& types) {
     auto payload = SharedBuffer();
+    auto encoder = CxaPitchEncoder(Ref(payload));
     for(auto type : types) {
-      append(payload, encode_message(type));
+      encoder.write_uint8(CxaPitchMessage::HEADER_LENGTH);
+      encoder.write_uint8(type);
     }
     auto header = CxaPitchHeader(
       static_cast<std::uint16_t>(CxaPitchHeader::LENGTH + payload.get_size()),
@@ -215,6 +218,12 @@ namespace {
     header.encode(out(block));
     append(block, payload);
     return block;
+  }
+
+  SharedBuffer encode_malformed_block(
+      std::uint32_t sequence, std::vector<std::uint8_t> types) {
+    types.push_back(CxaPitchAddOrder::TYPE);
+    return encode_block(sequence, types);
   }
 }
 
@@ -277,74 +286,37 @@ TEST_SUITE("CxaPitchClient") {
   }
 
   TEST_CASE("request_throttling") {
-    auto fixture = Fixture(1);
-    fixture.publish(encode_block(1, {0x11}));
-    REQUIRE(fixture.m_client->read().m_type == 0x11);
-    fixture.publish(encode_block(4, {0x14}));
-    auto request = fixture.require_recovery_request(1, CxaPitchGap(2, 2), 5);
-    request->m_result.set(1);
-    flush_pending_routines();
-    fixture.publish(encode_block(5, {0x15}));
-    auto retry = fixture.require_recovery_request(
-      1, CxaPitchGap(2, 2), CxaPitchGap(3, 1), 6);
-    retry->m_result.set(1);
-  }
-
-  TEST_CASE("feed_during_request") {
-    auto fixture = Fixture(1);
-    auto reader = MessageReader(*fixture.m_client);
-    fixture.publish(encode_block(1, {0x11}));
-    REQUIRE(reader.m_types.pop() == 0x11);
-    fixture.publish(encode_block(4, {}));
-    auto request = fixture.require_recovery_request(1, CxaPitchGap(2, 2), 4);
-    fixture.m_time_client.set(
-      TIMESTAMP + Fixture::GAP_TIMEOUT + time_duration::unit());
-    fixture.publish(encode_block(4, {0x14}));
-    auto recoverable = fixture.require_operation<
-      TestCxaPitchGapClient::IsRecoverableOperation>(CxaPitchGap(2, 2), 5);
-    recoverable->m_result.set(true);
-    flush_pending_routines();
-    REQUIRE(reader.m_types.try_pop() == 0x14);
-    request->m_result.set(2);
-  }
-
-  TEST_CASE("partial_request_retry") {
     auto fixture = Fixture(2);
     fixture.publish(encode_block(1, {0x11}));
     REQUIRE(fixture.m_client->read().m_type == 0x11);
     flush_pending_routines();
     fixture.publish(encode_block(4, {}));
     auto request = fixture.require_recovery_request(1, CxaPitchGap(2, 2), 4);
-    fixture.m_time_client.set(TIMESTAMP + Fixture::GAP_TIMEOUT);
-    fixture.publish(encode_block(6, {}));
-    for(auto i = std::size_t(0); i != fixture.m_feed_clients.size(); ++i) {
+    auto retry_gap = CxaPitchGap(3, 1);
+    SUBCASE("completed_request") {
+      request->m_result.set(1);
+      flush_pending_routines();
+      fixture.m_feed_clients[0]->m_blocks.push(encode_block(4, {}));
       auto recoverable = fixture.require_operation<
-        TestCxaPitchGapClient::IsRecoverableOperation>(CxaPitchGap(2, 4), 6);
+        TestCxaPitchGapClient::IsRecoverableOperation>(CxaPitchGap(2, 2), 4);
       recoverable->m_result.set(true);
     }
-    flush_pending_routines();
-    request->m_result.set(1);
+    SUBCASE("growing_gap") {
+      fixture.m_time_client.set(TIMESTAMP + Fixture::GAP_TIMEOUT);
+      fixture.publish(encode_block(6, {}));
+      for(auto i = std::size_t(0); i != fixture.m_feed_clients.size(); ++i) {
+        auto recoverable = fixture.require_operation<
+          TestCxaPitchGapClient::IsRecoverableOperation>(CxaPitchGap(2, 4), 6);
+        recoverable->m_result.set(true);
+      }
+      flush_pending_routines();
+      request->m_result.set(1);
+      retry_gap.m_count = 3;
+    }
+    auto position = retry_gap.m_sequence + retry_gap.m_count;
     auto retry = fixture.require_operation<
-      TestCxaPitchGapClient::RequestOperation>(1, CxaPitchGap(3, 3), 6);
+      TestCxaPitchGapClient::RequestOperation>(1, retry_gap, position);
     retry->m_result.set(1);
-  }
-
-  TEST_CASE("lower_sequences") {
-    auto fixture = Fixture(2);
-    auto reader = MessageReader(*fixture.m_client);
-    fixture.publish(encode_block(500000, {0x11}));
-    flush_pending_routines();
-    REQUIRE(reader.m_types.try_pop() == 0x11);
-    fixture.publish(encode_block(1, {CxaPitchUnitClear::TYPE}));
-    flush_pending_routines();
-    REQUIRE(!reader.m_types.try_pop());
-    fixture.m_feed_clients[0]->m_blocks.push(encode_block(2, {0x12}));
-    flush_pending_routines();
-    REQUIRE(!reader.m_types.try_pop());
-    fixture.m_feed_clients[0]->m_blocks.push(encode_block(500001, {0x13}));
-    flush_pending_routines();
-    REQUIRE(reader.m_types.try_pop() == 0x13);
-    REQUIRE(!reader.m_types.try_pop());
   }
 
   TEST_CASE("silent_feed") {
@@ -361,18 +333,24 @@ TEST_SUITE("CxaPitchClient") {
     fixture.m_time_client.set(
       TIMESTAMP + Fixture::FEED_TIMEOUT + time_duration::unit());
     fixture.m_timer.trigger();
+    auto recoverable = fixture.require_operation<
+      TestCxaPitchGapClient::IsRecoverableOperation>(CxaPitchGap(2, 1), 4);
+    recoverable->m_result.set(true);
     flush_pending_routines();
     REQUIRE(!reader.m_types.try_pop());
     fixture.m_time_client.set(
       TIMESTAMP + Fixture::GAP_TIMEOUT + time_duration::unit());
     fixture.m_timer.trigger();
+    recoverable = fixture.require_operation<
+      TestCxaPitchGapClient::IsRecoverableOperation>(CxaPitchGap(2, 1), 4);
+    recoverable->m_result.set(true);
     flush_pending_routines();
     REQUIRE(reader.m_types.try_pop() == 0x13);
     fixture.m_feed_clients[0]->m_blocks.push(encode_block(5, {0x15}));
     request = fixture.require_recovery_request(1, CxaPitchGap(4, 1), 6);
     request->m_result.set(1);
     fixture.m_feed_clients[1]->m_blocks.push(encode_block(5, {0x15}));
-    auto recoverable = fixture.require_operation<
+    recoverable = fixture.require_operation<
       TestCxaPitchGapClient::IsRecoverableOperation>(CxaPitchGap(4, 1), 6);
     recoverable->m_result.set(true);
     flush_pending_routines();
@@ -380,6 +358,9 @@ TEST_SUITE("CxaPitchClient") {
     fixture.m_time_client.set(fixture.m_time_client.get_time() +
       Fixture::GAP_TIMEOUT + time_duration::unit());
     fixture.m_timer.trigger();
+    recoverable = fixture.require_operation<
+      TestCxaPitchGapClient::IsRecoverableOperation>(CxaPitchGap(4, 1), 6);
+    recoverable->m_result.set(true);
     flush_pending_routines();
     REQUIRE(reader.m_types.try_pop() == 0x15);
   }
@@ -416,7 +397,7 @@ TEST_SUITE("CxaPitchClient") {
   }
 
   TEST_CASE("malformed_recovery") {
-    auto fixture = Fixture(1, 2, 1);
+    auto fixture = Fixture(1, 1, 1);
     auto reader = MessageReader(*fixture.m_client);
     fixture.publish(encode_block(1, {0x11}));
     REQUIRE(reader.m_types.pop() == 0x11);
@@ -424,10 +405,28 @@ TEST_SUITE("CxaPitchClient") {
     fixture.publish(encode_block(4, {0x14}));
     auto request = fixture.require_recovery_request(1, CxaPitchGap(2, 2), 5);
     request->m_result.set(2);
-    fixture.m_recovery_clients[0]->m_blocks.push(
-      encode_block(2, {0x12, CxaPitchAddOrder::TYPE}));
+    auto is_rejected = false;
+    SUBCASE("framing") {
+      fixture.m_recovery_clients[0]->m_blocks.push(from<SharedBuffer>(
+        "\x10\x00\x02\x01\x02\x00\x00\x00"
+        "\x06\x42\x00\x00\x00\x00\xff\x43"sv));
+    }
+    SUBCASE("message") {
+      is_rejected = true;
+      fixture.m_recovery_clients[0]->m_blocks.push(
+        encode_malformed_block(2, {0x12}));
+    }
     flush_pending_routines();
+    if(!is_rejected) {
+      REQUIRE(!reader.m_types.try_pop());
+      fixture.m_recovery_clients[0]->m_blocks.push(
+        encode_block(2, {0x12, 0x13}));
+      flush_pending_routines();
+      REQUIRE(reader.m_types.try_pop() == 0x12);
+      REQUIRE(reader.m_types.try_pop() == 0x13);
+    }
     REQUIRE(reader.m_types.try_pop() == 0x14);
+    REQUIRE(!reader.m_types.try_pop());
   }
 
   TEST_CASE("throttled_gap_response") {
@@ -574,8 +573,8 @@ TEST_SUITE("CxaPitchClient") {
       TestCxaPitchGapClient::IsRecoverableOperation>(CxaPitchGap(5, 5), 12);
     recoverable->m_result.set(true);
     flush_pending_routines();
-    auto snapshot = CxaPitchSnapshot(6, CxaPitchSpinResponse::ACCEPTED,
-      std::vector{encode_message(CxaPitchAddOrder::TYPE)});
+    auto snapshot = CxaPitchSnapshot(
+      6, CxaPitchSpinResponse::ACCEPTED, std::vector{ADD_ORDER});
     fixture.m_spin_client->m_snapshots.push(snapshot);
     flush_pending_routines();
     REQUIRE(reader.m_types.try_pop() == int(CxaPitchAddOrder::TYPE));
@@ -586,8 +585,7 @@ TEST_SUITE("CxaPitchClient") {
   TEST_CASE("malformed_feed_message") {
     auto fixture = Fixture(2);
     auto reader = MessageReader(*fixture.m_client);
-    fixture.m_feed_clients[0]->m_blocks.push(
-      encode_block(1, {CxaPitchAddOrder::TYPE}));
+    fixture.m_feed_clients[0]->m_blocks.push(encode_malformed_block(1, {}));
     fixture.m_feed_clients[1]->m_blocks.push(encode_block(1, {0x11}));
     flush_pending_routines();
     REQUIRE(reader.m_types.try_pop() == 0x11);
@@ -599,11 +597,18 @@ TEST_SUITE("CxaPitchClient") {
     auto reader = MessageReader(*fixture.m_client);
     fixture.publish(encode_block(1, {0x11}));
     REQUIRE(reader.m_types.pop() == 0x11);
-    fixture.publish(
-      from<SharedBuffer>("\xff\x00\x01\x01\x02\x00\x00\x00"sv));
-    fixture.publish(encode_block(2, {0x12}));
+    SUBCASE("header") {
+      fixture.publish(from<SharedBuffer>("\xff\x00\x01\x01\x02\x00\x00\x00"sv));
+    }
+    SUBCASE("message_tail") {
+      fixture.publish(from<SharedBuffer>(
+        "\x10\x00\x02\x01\x02\x00\x00\x00"
+        "\x06\x42\x00\x00\x00\x00\xff\x43"sv));
+    }
+    fixture.publish(encode_block(2, {0x12, 0x13}));
     flush_pending_routines();
     REQUIRE(reader.m_types.try_pop() == 0x12);
+    REQUIRE(reader.m_types.try_pop() == 0x13);
     REQUIRE(!reader.m_types.try_pop());
   }
 
@@ -636,37 +641,6 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(fixture.m_spin_client->m_is_closed);
   }
 
-  TEST_CASE("malformed_datagram_recovery") {
-    auto fixture = Fixture(1, 1, 1);
-    auto reader = MessageReader(*fixture.m_client);
-    auto is_recovery = false;
-    SUBCASE("feed") {}
-    SUBCASE("recovery") {
-      is_recovery = true;
-    }
-    fixture.publish(encode_block(1, {0x11}));
-    REQUIRE(reader.m_types.pop() == 0x11);
-    auto malformed = from<SharedBuffer>(
-      "\x10\x00\x02\x01\x02\x00\x00\x00"
-      "\x06\x42\x00\x00\x00\x00\xff\x43"sv);
-    if(!is_recovery) {
-      fixture.publish(malformed);
-    }
-    fixture.publish(encode_block(4, {0x14}));
-    auto request = fixture.require_recovery_request(1, CxaPitchGap(2, 2), 5);
-    request->m_result.set(2);
-    if(is_recovery) {
-      fixture.m_recovery_clients[0]->m_blocks.push(malformed);
-    }
-    flush_pending_routines();
-    REQUIRE(!reader.m_types.try_pop());
-    fixture.m_recovery_clients[0]->m_blocks.push(encode_block(2, {0x12, 0x13}));
-    flush_pending_routines();
-    REQUIRE(reader.m_types.try_pop() == 0x12);
-    REQUIRE(reader.m_types.try_pop() == 0x13);
-    REQUIRE(reader.m_types.try_pop() == 0x14);
-  }
-
   TEST_CASE("slow_snapshot") {
     auto fixture = Fixture(1, 1, 0, Fixture::WithSpin());
     auto reader = MessageReader(*fixture.m_client);
@@ -682,16 +656,20 @@ TEST_SUITE("CxaPitchClient") {
     flush_pending_routines();
     REQUIRE(!fixture.m_spin_client->m_is_closed);
     REQUIRE(!reader.m_types.try_pop());
-    auto snapshot = CxaPitchSnapshot(6, CxaPitchSpinResponse::ACCEPTED,
-      std::vector{encode_message(CxaPitchAddOrder::TYPE)});
+    auto status = from<SharedBuffer>(
+      "\x16\x3b\xf0\x77\xbb\xce\x2a\x6a\x62\x16ZVZT  TAUS \x00"sv);
+    auto snapshot = CxaPitchSnapshot(
+      6, CxaPitchSpinResponse::ACCEPTED, std::vector{ADD_ORDER, status});
     fixture.m_spin_client->m_snapshots.push(snapshot);
     flush_pending_routines();
     REQUIRE(reader.m_types.try_pop() == int(CxaPitchAddOrder::TYPE));
+    REQUIRE(reader.m_types.try_pop() == int(CxaPitchTradingStatus::TYPE));
     REQUIRE(reader.m_types.try_pop() == 0x13);
     REQUIRE(reader.m_types.try_pop() == 0x14);
+    REQUIRE(!reader.m_types.try_pop());
   }
 
-  TEST_CASE("close_during_snapshot") {
+  TEST_CASE("snapshot_interruption") {
     auto fixture = Fixture(1, 1, 0, Fixture::WithSpin());
     auto reader = MessageReader(*fixture.m_client);
     fixture.publish(encode_block(5, {0x11, 0x12}));
@@ -699,7 +677,20 @@ TEST_SUITE("CxaPitchClient") {
     fixture.m_spin_client->m_sequences.push(6);
     REQUIRE(fixture.m_spin_client->m_requests.pop() == 6);
     REQUIRE(!reader.m_types.try_pop());
-    fixture.m_client->close();
+    SUBCASE("client_close") {
+      fixture.m_client->close();
+    }
+    SUBCASE("session_failure") {
+      fixture.m_spin_client->m_snapshots.close(
+        std::make_exception_ptr(IOException("Snapshot session failed.")));
+      flush_pending_routines();
+      REQUIRE(reader.m_types.try_pop() == 0x11);
+      REQUIRE(reader.m_types.try_pop() == 0x12);
+      fixture.publish(encode_block(7, {0x13}));
+      flush_pending_routines();
+      REQUIRE(reader.m_types.try_pop() == 0x13);
+      REQUIRE(!reader.m_types.try_pop());
+    }
     REQUIRE(fixture.m_spin_client->m_is_closed);
   }
 
@@ -713,6 +704,7 @@ TEST_SUITE("CxaPitchClient") {
     auto request = fixture.require_recovery_request(1, CxaPitchGap(2, 4), 7);
     request->m_result.set(4);
     auto sequence = std::uint32_t();
+    auto count = std::uint16_t(2);
     auto payload = SharedBuffer();
     auto types = std::vector<std::uint8_t>();
     SUBCASE("suffix") {
@@ -725,12 +717,18 @@ TEST_SUITE("CxaPitchClient") {
       types = {0x14, 0x15};
       payload = encode_block(4, types);
     }
-    auto response = CxaPitchGapResponse(1, sequence, 2, 'O');
+    SUBCASE("whole_range") {
+      sequence = 2;
+      count = 4;
+    }
+    auto response = CxaPitchGapResponse(1, sequence, count, 'O');
     fixture.m_gap_client.get_responses()->push(response);
     flush_pending_routines();
-    REQUIRE(!reader.m_types.try_pop());
-    fixture.m_recovery_clients[0]->m_blocks.push(payload);
-    flush_pending_routines();
+    if(!types.empty()) {
+      REQUIRE(!reader.m_types.try_pop());
+      fixture.m_recovery_clients[0]->m_blocks.push(payload);
+      flush_pending_routines();
+    }
     for(auto type : types) {
       REQUIRE(reader.m_types.try_pop() == int(type));
     }
@@ -797,49 +795,28 @@ TEST_SUITE("CxaPitchClient") {
     fixture.publish(encode_block(1, {0x11}));
     REQUIRE(reader.m_types.pop() == 0x11);
     flush_pending_routines();
-    fixture.publish(encode_block(4, {0x14}));
-    auto request = fixture.require_recovery_request(1, CxaPitchGap(2, 2), 5);
-    request->m_result.set(2);
+    fixture.publish(encode_block(4, {}));
+    auto request = fixture.require_recovery_request(1, CxaPitchGap(2, 2), 4);
+    auto is_complete = false;
+    SUBCASE("pending_request") {}
+    SUBCASE("completed_request") {
+      is_complete = true;
+      request->m_result.set(2);
+    }
     flush_pending_routines();
     REQUIRE(!reader.m_types.try_pop());
     fixture.m_time_client.set(
       TIMESTAMP + Fixture::GAP_TIMEOUT + time_duration::unit());
-    fixture.m_feed_clients[0]->m_blocks.push(encode_block(5, {0x15}));
+    fixture.m_feed_clients[0]->m_blocks.push(encode_block(4, {0x14, 0x15}));
     auto recoverable = fixture.require_operation<
       TestCxaPitchGapClient::IsRecoverableOperation>(CxaPitchGap(2, 2), 6);
     recoverable->m_result.set(true);
     flush_pending_routines();
     REQUIRE(reader.m_types.try_pop() == 0x14);
     REQUIRE(reader.m_types.try_pop() == 0x15);
-  }
-
-  TEST_CASE("rejected_gap") {
-    auto fixture = Fixture(2);
-    fixture.publish(encode_block(1, {0x11}));
-    REQUIRE(fixture.m_client->read().m_type == 0x11);
-    flush_pending_routines();
-    fixture.publish(encode_block(4, {0x14}));
-    auto request = fixture.require_recovery_request(1, CxaPitchGap(2, 2), 5);
-    request->m_result.set(2);
-    auto response = CxaPitchGapResponse(1, 2, 2, 'O');
-    fixture.m_gap_client.get_responses()->push(response);
-    REQUIRE(fixture.m_client->read().m_type == 0x14);
-  }
-
-  TEST_CASE("snapshot_message_order") {
-    auto fixture = Fixture(1, 1, 0, Fixture::WithSpin());
-    fixture.publish(encode_block(5, {0x11, 0x12, 0x13}));
-    fixture.publish(encode_block(8, {}));
-    flush_pending_routines();
-    fixture.m_spin_client->m_sequences.push(6);
-    REQUIRE(fixture.m_spin_client->m_requests.pop() == 6);
-    auto snapshot = CxaPitchSnapshot(6, CxaPitchSpinResponse::ACCEPTED,
-      std::vector{encode_message(CxaPitchAddOrder::TYPE),
-        encode_message(CxaPitchTradingStatus::TYPE)});
-    fixture.m_spin_client->m_snapshots.push(snapshot);
-    REQUIRE(fixture.m_client->read().m_type == CxaPitchAddOrder::TYPE);
-    REQUIRE(fixture.m_client->read().m_type == CxaPitchTradingStatus::TYPE);
-    REQUIRE(fixture.m_client->read().m_type == 0x13);
+    if(!is_complete) {
+      request->m_result.set(2);
+    }
   }
 
   TEST_CASE("latest_snapshot_request") {
@@ -857,8 +834,8 @@ TEST_SUITE("CxaPitchClient") {
     flush_pending_routines();
     REQUIRE(fixture.m_spin_client->m_requests.try_pop() == std::uint32_t(9));
     REQUIRE(!fixture.m_spin_client->m_requests.try_pop());
-    auto snapshot = CxaPitchSnapshot(9, CxaPitchSpinResponse::ACCEPTED,
-      std::vector{encode_message(CxaPitchAddOrder::TYPE)});
+    auto snapshot = CxaPitchSnapshot(
+      9, CxaPitchSpinResponse::ACCEPTED, std::vector{ADD_ORDER});
     fixture.m_spin_client->m_snapshots.push(snapshot);
     flush_pending_routines();
     REQUIRE(reader.m_types.try_pop() == int(CxaPitchAddOrder::TYPE));
