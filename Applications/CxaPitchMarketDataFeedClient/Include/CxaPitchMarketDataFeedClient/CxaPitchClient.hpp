@@ -133,6 +133,7 @@ namespace Nexus {
       boost::posix_time::ptime m_feed_timestamp;
       SnapshotState m_snapshot_state;
       bool m_is_silent;
+      bool m_is_request_deferred;
       Beam::RoutineTaskQueue m_tasks;
       Beam::RoutineHandlerGroup m_routines;
       Beam::OpenState m_open_state;
@@ -200,7 +201,8 @@ namespace Nexus {
             m_gap_timestamp(m_start),
             m_feed_timestamp(m_start),
             m_snapshot_state(SnapshotState::READY),
-            m_is_silent(false) {
+            m_is_silent(false),
+            m_is_request_deferred(false) {
     if(m_spin_client) {
       m_snapshot_state = SnapshotState::WAITING;
     }
@@ -440,7 +442,7 @@ namespace Nexus {
         }
         return boost::none;
       }
-      if(m_gap_client && (get_retry(*gap) ||
+      if(m_gap_client && !m_is_request_deferred && (get_retry(*gap) ||
           m_request_sequence < gap->m_sequence + gap->m_count)) {
         return sequencer.get_position();
       }
@@ -574,6 +576,9 @@ namespace Nexus {
         auto is_retry = false;
         auto requested_gap = Beam::with(m_sequencer,
           [&] (const auto& sequencer) -> boost::optional<CxaPitchGap> {
+            if(m_is_request_deferred) {
+              return boost::none;
+            }
             if(auto gap = sequencer.get_gap()) {
               if(auto pending = get_retry(*gap)) {
                 is_retry = true;
@@ -611,6 +616,7 @@ namespace Nexus {
           }
         }();
         Beam::with(m_sequencer, [&] (const auto&) {
+          m_is_request_deferred = count < requested_gap->m_count;
           if(is_retry) {
             if(count < requested_gap->m_count) {
               retry(CxaPitchGap(requested_gap->m_sequence + count,
@@ -742,6 +748,7 @@ namespace Nexus {
           }
           auto close_spin = expire_snapshot_offer(timestamp);
           sequencer.update(timestamp);
+          m_is_request_deferred = false;
           return std::pair(close_spin, advance_recovery(sequencer, timestamp));
         });
       if(close_spin) {
