@@ -190,13 +190,14 @@ namespace Nexus {
     m_timestamp = message.m_timestamp;
     auto id = std::to_string(message.m_order_id);
     auto ticker = Ticker(message.m_symbol, m_config.m_primary_venue);
-    m_orders[id] = OrderEntry(ticker, message.m_price, message.m_side,
-      message.m_pid, message.m_quantity);
+    auto order = m_orders.insert_or_assign(
+      std::move(id), OrderEntry(ticker, message.m_price, message.m_side,
+        message.m_pid, message.m_quantity)).first;
     if(message.m_quantity == 0) {
       return;
     }
     m_feed_client->add_order(ticker, m_config.m_disseminating_venue,
-      m_config.m_mpid, false, id, message.m_side, message.m_price,
+      m_config.m_mpid, false, order->first, message.m_side, message.m_price,
       message.m_quantity, message.m_timestamp);
   }
 
