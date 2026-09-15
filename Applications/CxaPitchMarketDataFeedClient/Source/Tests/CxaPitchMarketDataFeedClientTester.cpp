@@ -378,12 +378,12 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
         QUANTITY_OFFSET, sizeof(std::uint32_t), "\x00\x00\x00\x80"sv);
       fixture.publish(message);
       fixture.require_operation<FeedClient::OffsetOrderSizeOperation>(
-        ORDER_ID, -2147483648LL, TIMESTAMP);
+        ORDER_ID, std::int64_t(-2147483648LL), TIMESTAMP);
       message.replace(
         QUANTITY_OFFSET, sizeof(std::uint32_t), "\xff\xff\xff\xff"sv);
       fixture.publish(message);
       fixture.require_operation<FeedClient::OffsetOrderSizeOperation>(
-        ORDER_ID, -4294967295LL, TIMESTAMP);
+        ORDER_ID, std::int64_t(-4294967295LL), TIMESTAMP);
     }
   }
 
