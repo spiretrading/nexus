@@ -5,8 +5,18 @@ SHOW_RUNNING=false
 FORCE_REPORT=false
 
 is_process_running() {
-  kill -0 "$1" 2> /dev/null
-  return $?
+  local pid=$1
+  if [[ ! "$pid" =~ ^[1-9][0-9]*$ ]] ||
+      ! kill -0 "$pid" 2> /dev/null; then
+    return 1
+  fi
+  local executable
+  executable=$(readlink "/proc/$pid/exe" 2> /dev/null) || return 1
+  local target
+  target=$(readlink -f "$2" 2> /dev/null) || return 1
+  local directory
+  directory=$(readlink -f "/proc/$pid/cwd" 2> /dev/null) || return 1
+  [[ "${executable% (deleted)}" == "$target" && "$directory" == "$(pwd -P)" ]]
 }
 
 usage() {
@@ -31,7 +41,7 @@ check_application() {
   cd "$dir" || return
   if [[ -f "$PID_FILE" ]]; then
     existing_pid=$(<"$PID_FILE")
-    if is_process_running "$existing_pid"; then
+    if is_process_running "$existing_pid" "$app_name"; then
       if $SHOW_RUNNING || $FORCE_REPORT; then
         echo "$app_name is running (pid $existing_pid)."
       fi
