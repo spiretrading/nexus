@@ -40,7 +40,7 @@ check_application() {
   local app_name="${dir#*_}"_"${dir%%_*}"
   cd "$dir" || return
   if [[ -f "$PID_FILE" ]]; then
-    existing_pid=$(<"$PID_FILE")
+    local existing_pid=$(<"$PID_FILE")
     if is_process_running "$existing_pid" "$app_name"; then
       if $SHOW_RUNNING || $FORCE_REPORT; then
         echo "$app_name is running (pid $existing_pid)."

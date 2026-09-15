@@ -6,7 +6,7 @@ LOG_DIR="./logs"
 is_application_running() {
   pushd .. > /dev/null
   ./check.sh "$1" > /dev/null
-  result=$?
+  local result=$?
   popd > /dev/null
   return $result
 }
@@ -32,6 +32,7 @@ start_application() (
     return 1
   fi
   mkdir -p "$LOG_DIR" || return 1
+  local existing_log
   for existing_log in srv_*.log; do
     if [[ -f "$existing_log" ]]; then
       mv "$existing_log" "$LOG_DIR" || return 1

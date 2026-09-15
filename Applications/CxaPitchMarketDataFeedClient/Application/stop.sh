@@ -5,7 +5,7 @@ PID_FILE="pid.lock"
 is_application_running() {
   pushd .. > /dev/null
   ./check.sh "$1" > /dev/null
-  result=$?
+  local result=$?
   popd > /dev/null
   return $result
 }
@@ -48,7 +48,7 @@ stop_application() (
           echo "Error: Unable to terminate $app_name (pid $pid)." >&2
           return 1
         fi
-        log_file=$(ls -t srv_*.log 2>/dev/null | head -n 1)
+        local log_file=$(ls -t srv_*.log 2>/dev/null | head -n 1)
         if [[ -n "$log_file" ]]; then
           echo "Forcefully terminated $app_name." >> "$log_file"
         fi
