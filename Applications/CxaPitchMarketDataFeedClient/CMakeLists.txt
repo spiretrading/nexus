@@ -15,7 +15,7 @@ if(NOT CMAKE_BUILD_TYPE AND NOT CMAKE_CONFIGURATION_TYPES)
 endif()
 if(WIN32)
   set(configure_script
-    cmd /c "CALL ${CMAKE_SOURCE_DIR}/configure.bat -DD=${D}")
+    cmd /c CALL "${CMAKE_SOURCE_DIR}/configure.bat" -DD "${D}")
 elseif(UNIX)
   set(configure_script "${CMAKE_SOURCE_DIR}/configure.sh" "-DD=${D}"
     "${CMAKE_BUILD_TYPE}")
