@@ -11,7 +11,7 @@ namespace Nexus {
 
   /**
    * Encodes the fields of a CXA PITCH message.
-   * @param <B> The type of buffer to encode to.
+   * @tparam B The type of buffer to encode to.
    */
   template<Beam::IsBuffer B>
   class CxaPitchEncoder {

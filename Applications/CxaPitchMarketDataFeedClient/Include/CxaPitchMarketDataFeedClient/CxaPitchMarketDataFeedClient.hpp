@@ -1,11 +1,7 @@
 #ifndef CXA_PITCH_MARKET_DATA_FEED_CLIENT_HPP
 #define CXA_PITCH_MARKET_DATA_FEED_CLIENT_HPP
-#include <exception>
 #include <functional>
 #include <tuple>
-#include <type_traits>
-#include <unordered_map>
-#include <utility>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>

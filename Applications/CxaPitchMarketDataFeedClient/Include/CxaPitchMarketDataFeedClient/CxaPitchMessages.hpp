@@ -13,7 +13,11 @@ namespace Nexus {
 namespace Details {
   constexpr auto SYMBOL_LENGTH = 6;
   constexpr auto PID_LENGTH = 4;
-  constexpr auto ADD_ORDER_SIDE_OFFSET = 16;
+
+  template<typename F, typename... T>
+  constexpr auto is_void_invocable = (requires(F&& f) {
+    { std::forward<F>(f)(std::declval<T>()) } -> std::same_as<void>;
+  } || ...);
 }
 
   /** Stores a unit clear message. */
@@ -501,8 +505,9 @@ namespace Details {
         CxaPitchParserException("PITCH message too short for its type."));
     }
     if(message.m_type == CxaPitchAddOrder::TYPE) {
+      constexpr auto ADD_ORDER_SIDE_OFFSET = 16;
       auto cursor = message.get_cursor();
-      cursor.skip(Details::ADD_ORDER_SIDE_OFFSET);
+      cursor.skip(ADD_ORDER_SIDE_OFFSET);
       if(cursor.read_side() == Side::NONE) {
         boost::throw_with_location(
           CxaPitchParserException("Add order side indicator out of range."));
@@ -520,6 +525,147 @@ namespace Details {
     for(auto& message : block) {
       validate(message);
     }
+  }
+
+  /** Concept satisfied by callables able to receive any PITCH message. */
+  template<typename F>
+  concept IsCxaPitchVisitor =
+    std::invocable<F, const CxaPitchMessage&> &&
+    std::invocable<F, CxaPitchUnitClear> &&
+    std::invocable<F, CxaPitchTradingStatus> &&
+    std::invocable<F, CxaPitchAddOrder> &&
+    std::invocable<F, CxaPitchOrderExecuted> &&
+    std::invocable<F, CxaPitchOrderExecutedAtPrice> &&
+    std::invocable<F, CxaPitchReduceSize> &&
+    std::invocable<F, CxaPitchModifyOrder> &&
+    std::invocable<F, CxaPitchDeleteOrder> &&
+    std::invocable<F, CxaPitchTrade> &&
+    std::invocable<F, CxaPitchTradeBreak> &&
+    std::invocable<F, CxaPitchCalculatedValue> &&
+    std::invocable<F, CxaPitchEndOfSession> &&
+    std::invocable<F, CxaPitchAuctionUpdate> &&
+    std::invocable<F, CxaPitchAuctionSummary>;
+
+  /**
+   * Passes a message to the first callable able to receive its type,
+   * parsed as that type.
+   * @param message The message to parse.
+   * @param f The callable to try first.
+   * @param g The callables to try if <i>f</i> does not receive the message's
+   *        type.
+   * @return The value returned by the callable that received the message.
+   */
+  template<typename F, typename... G>
+  decltype(auto) visit(const CxaPitchMessage& message, F&& f, G&&... g) {
+    if constexpr(std::invocable<F, CxaPitchUnitClear>) {
+      if(message.m_type == CxaPitchUnitClear::TYPE) {
+        return std::forward<F>(f)(CxaPitchUnitClear::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, CxaPitchTradingStatus>) {
+      if(message.m_type == CxaPitchTradingStatus::TYPE) {
+        return std::forward<F>(f)(CxaPitchTradingStatus::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, CxaPitchAddOrder>) {
+      if(message.m_type == CxaPitchAddOrder::TYPE) {
+        return std::forward<F>(f)(CxaPitchAddOrder::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, CxaPitchOrderExecuted>) {
+      if(message.m_type == CxaPitchOrderExecuted::TYPE) {
+        return std::forward<F>(f)(CxaPitchOrderExecuted::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, CxaPitchOrderExecutedAtPrice>) {
+      if(message.m_type == CxaPitchOrderExecutedAtPrice::TYPE) {
+        return std::forward<F>(f)(CxaPitchOrderExecutedAtPrice::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, CxaPitchReduceSize>) {
+      if(message.m_type == CxaPitchReduceSize::TYPE) {
+        return std::forward<F>(f)(CxaPitchReduceSize::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, CxaPitchModifyOrder>) {
+      if(message.m_type == CxaPitchModifyOrder::TYPE) {
+        return std::forward<F>(f)(CxaPitchModifyOrder::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, CxaPitchDeleteOrder>) {
+      if(message.m_type == CxaPitchDeleteOrder::TYPE) {
+        return std::forward<F>(f)(CxaPitchDeleteOrder::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, CxaPitchTrade>) {
+      if(message.m_type == CxaPitchTrade::TYPE) {
+        return std::forward<F>(f)(CxaPitchTrade::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, CxaPitchTradeBreak>) {
+      if(message.m_type == CxaPitchTradeBreak::TYPE) {
+        return std::forward<F>(f)(CxaPitchTradeBreak::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, CxaPitchCalculatedValue>) {
+      if(message.m_type == CxaPitchCalculatedValue::TYPE) {
+        return std::forward<F>(f)(CxaPitchCalculatedValue::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, CxaPitchEndOfSession>) {
+      if(message.m_type == CxaPitchEndOfSession::TYPE) {
+        return std::forward<F>(f)(CxaPitchEndOfSession::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, CxaPitchAuctionUpdate>) {
+      if(message.m_type == CxaPitchAuctionUpdate::TYPE) {
+        return std::forward<F>(f)(CxaPitchAuctionUpdate::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, CxaPitchAuctionSummary>) {
+      if(message.m_type == CxaPitchAuctionSummary::TYPE) {
+        return std::forward<F>(f)(CxaPitchAuctionSummary::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, const CxaPitchMessage&>) {
+      return std::forward<F>(f)(message);
+    } else if constexpr(sizeof...(G) != 0) {
+      return visit(message, std::forward<G>(g)...);
+    } else if constexpr(Details::is_void_invocable<F, CxaPitchUnitClear,
+        CxaPitchTradingStatus, CxaPitchAddOrder, CxaPitchOrderExecuted,
+        CxaPitchOrderExecutedAtPrice, CxaPitchReduceSize, CxaPitchModifyOrder,
+        CxaPitchDeleteOrder, CxaPitchTrade, CxaPitchTradeBreak,
+        CxaPitchCalculatedValue, CxaPitchEndOfSession, CxaPitchAuctionUpdate,
+        CxaPitchAuctionSummary>) {
+      return;
+    } else {
+      boost::throw_with_location(
+        CxaPitchParserException("Unhandled PITCH message type."));
+    }
+  }
+
+  /** Returns the message's timestamp, or none if it has no timestamp field. */
+  inline boost::optional<boost::posix_time::ptime> get_timestamp(
+      const CxaPitchMessage& message) {
+    return visit(message, [] (const auto& message) ->
+        boost::optional<boost::posix_time::ptime> {
+      if constexpr(requires { message.m_timestamp; }) {
+        return message.m_timestamp;
+      } else {
+        return boost::none;
+      }
+    });
+  }
+
+  /** Returns the first available message timestamp in the block, or none. */
+  inline boost::optional<boost::posix_time::ptime> get_timestamp(
+      const CxaPitchBlock& block) {
+    for(auto& message : block) {
+      if(auto timestamp = get_timestamp(message)) {
+        return timestamp;
+      }
+    }
+    return boost::none;
   }
 
   inline CxaPitchUnitClear CxaPitchUnitClear::parse(
@@ -542,7 +688,8 @@ namespace Details {
     status.m_timestamp = cursor.read_timestamp();
     status.m_symbol = cursor.read_text(Details::SYMBOL_LENGTH);
     status.m_status = cursor.read_char();
-    status.m_market_id_code = cursor.read_text(4);
+    constexpr auto MARKET_ID_CODE_LENGTH = 4;
+    status.m_market_id_code = cursor.read_text(MARKET_ID_CODE_LENGTH);
     return status;
   }
 
@@ -840,154 +987,6 @@ namespace Details {
     return out << "(auction_summary " << message.m_timestamp << ' ' <<
       message.m_symbol << ' ' << message.m_auction_type << ' ' <<
       message.m_price << ' ' << message.m_shares << ')';
-  }
-
-  /** Concept satisfied by callables able to receive any PITCH message. */
-  template<typename F>
-  concept IsCxaPitchVisitor =
-    std::invocable<F, const CxaPitchMessage&> &&
-      std::invocable<F, CxaPitchUnitClear> &&
-      std::invocable<F, CxaPitchTradingStatus> &&
-      std::invocable<F, CxaPitchAddOrder> &&
-      std::invocable<F, CxaPitchOrderExecuted> &&
-      std::invocable<F, CxaPitchOrderExecutedAtPrice> &&
-      std::invocable<F, CxaPitchReduceSize> &&
-      std::invocable<F, CxaPitchModifyOrder> &&
-      std::invocable<F, CxaPitchDeleteOrder> &&
-      std::invocable<F, CxaPitchTrade> &&
-      std::invocable<F, CxaPitchTradeBreak> &&
-      std::invocable<F, CxaPitchCalculatedValue> &&
-      std::invocable<F, CxaPitchEndOfSession> &&
-      std::invocable<F, CxaPitchAuctionUpdate> &&
-      std::invocable<F, CxaPitchAuctionSummary>;
-
-  namespace Details {
-    template<typename F, typename... T>
-    constexpr auto is_void_invocable = (requires(F&& f) {
-      { std::forward<F>(f)(std::declval<T>()) } -> std::same_as<void>;
-    } || ...);
-  }
-
-  /**
-   * Passes a message to the first callable able to receive its type,
-   * parsed as that type.
-   * @param message The message to parse.
-   * @param f The callable to try first.
-   * @param g The callables to try if <i>f</i> does not receive the message's
-   *        type.
-   * @return The value returned by the callable that received the message.
-   */
-  template<typename F, typename... G>
-  decltype(auto) visit(const CxaPitchMessage& message, F&& f, G&&... g) {
-    if constexpr(std::invocable<F, CxaPitchUnitClear>) {
-      if(message.m_type == CxaPitchUnitClear::TYPE) {
-        return std::forward<F>(f)(CxaPitchUnitClear::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, CxaPitchTradingStatus>) {
-      if(message.m_type == CxaPitchTradingStatus::TYPE) {
-        return std::forward<F>(f)(CxaPitchTradingStatus::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, CxaPitchAddOrder>) {
-      if(message.m_type == CxaPitchAddOrder::TYPE) {
-        return std::forward<F>(f)(CxaPitchAddOrder::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, CxaPitchOrderExecuted>) {
-      if(message.m_type == CxaPitchOrderExecuted::TYPE) {
-        return std::forward<F>(f)(CxaPitchOrderExecuted::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, CxaPitchOrderExecutedAtPrice>) {
-      if(message.m_type == CxaPitchOrderExecutedAtPrice::TYPE) {
-        return std::forward<F>(f)(CxaPitchOrderExecutedAtPrice::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, CxaPitchReduceSize>) {
-      if(message.m_type == CxaPitchReduceSize::TYPE) {
-        return std::forward<F>(f)(CxaPitchReduceSize::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, CxaPitchModifyOrder>) {
-      if(message.m_type == CxaPitchModifyOrder::TYPE) {
-        return std::forward<F>(f)(CxaPitchModifyOrder::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, CxaPitchDeleteOrder>) {
-      if(message.m_type == CxaPitchDeleteOrder::TYPE) {
-        return std::forward<F>(f)(CxaPitchDeleteOrder::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, CxaPitchTrade>) {
-      if(message.m_type == CxaPitchTrade::TYPE) {
-        return std::forward<F>(f)(CxaPitchTrade::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, CxaPitchTradeBreak>) {
-      if(message.m_type == CxaPitchTradeBreak::TYPE) {
-        return std::forward<F>(f)(CxaPitchTradeBreak::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, CxaPitchCalculatedValue>) {
-      if(message.m_type == CxaPitchCalculatedValue::TYPE) {
-        return std::forward<F>(f)(CxaPitchCalculatedValue::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, CxaPitchEndOfSession>) {
-      if(message.m_type == CxaPitchEndOfSession::TYPE) {
-        return std::forward<F>(f)(CxaPitchEndOfSession::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, CxaPitchAuctionUpdate>) {
-      if(message.m_type == CxaPitchAuctionUpdate::TYPE) {
-        return std::forward<F>(f)(CxaPitchAuctionUpdate::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, CxaPitchAuctionSummary>) {
-      if(message.m_type == CxaPitchAuctionSummary::TYPE) {
-        return std::forward<F>(f)(CxaPitchAuctionSummary::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, const CxaPitchMessage&>) {
-      return std::forward<F>(f)(message);
-    } else if constexpr(sizeof...(G) != 0) {
-      return visit(message, std::forward<G>(g)...);
-    } else if constexpr(Details::is_void_invocable<F, CxaPitchUnitClear,
-        CxaPitchTradingStatus, CxaPitchAddOrder, CxaPitchOrderExecuted,
-        CxaPitchOrderExecutedAtPrice, CxaPitchReduceSize, CxaPitchModifyOrder,
-        CxaPitchDeleteOrder, CxaPitchTrade, CxaPitchTradeBreak,
-        CxaPitchCalculatedValue, CxaPitchEndOfSession, CxaPitchAuctionUpdate,
-        CxaPitchAuctionSummary>) {
-      return;
-    } else {
-      boost::throw_with_location(
-        CxaPitchParserException("Unhandled PITCH message type."));
-    }
-  }
-
-  /** Returns the message's timestamp, or none if it has no timestamp field. */
-  inline boost::optional<boost::posix_time::ptime> get_timestamp(
-      const CxaPitchMessage& message) {
-    return visit(message, [] (const auto& message) ->
-        boost::optional<boost::posix_time::ptime> {
-      if constexpr(requires { message.m_timestamp; }) {
-        return message.m_timestamp;
-      } else {
-        return boost::none;
-      }
-    });
-  }
-
-  /** Returns the first available message timestamp in the block, or none. */
-  inline boost::optional<boost::posix_time::ptime> get_timestamp(
-      const CxaPitchBlock& block) {
-    for(auto& message : block) {
-      if(auto timestamp = get_timestamp(message)) {
-        return timestamp;
-      }
-    }
-    return boost::none;
   }
 }
 

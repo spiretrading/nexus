@@ -1,11 +1,6 @@
 #ifndef CXA_PITCH_SESSION_MESSAGES_HPP
 #define CXA_PITCH_SESSION_MESSAGES_HPP
-#include <concepts>
-#include <cstddef>
-#include <cstdint>
-#include <string>
 #include <type_traits>
-#include <Beam/Pointers/Out.hpp>
 #include <boost/throw_exception.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchEncoder.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchMessage.hpp"
@@ -155,8 +150,7 @@ namespace Nexus {
     /**
      * Parses a CxaPitchSpinImageAvailable.
      * @param message The message to parse.
-     * @return The CxaPitchSpinImageAvailable represented by the
-     *         <i>message</i>.
+     * @return The CxaPitchSpinImageAvailable represented by the <i>message</i>.
      */
     static CxaPitchSpinImageAvailable parse(const CxaPitchMessage& message);
 

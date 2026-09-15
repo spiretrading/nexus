@@ -1,7 +1,5 @@
 #ifndef CXA_PITCH_SPIN_CLIENT_HPP
 #define CXA_PITCH_SPIN_CLIENT_HPP
-#include <exception>
-#include <functional>
 #include <vector>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>

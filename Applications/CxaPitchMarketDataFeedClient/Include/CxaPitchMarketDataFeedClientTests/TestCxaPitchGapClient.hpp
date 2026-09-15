@@ -15,14 +15,14 @@ namespace Nexus::Tests {
       struct RequestOperation {
         std::uint8_t m_unit;
         CxaPitchGap m_gap;
-        std::uint32_t m_live;
+        std::uint32_t m_position;
         Beam::Tests::ServiceResult<std::uint32_t> m_result;
       };
 
       /** Records a call to is_recoverable(). */
       struct IsRecoverableOperation {
         CxaPitchGap m_gap;
-        std::uint32_t m_live;
+        std::uint32_t m_position;
         Beam::Tests::ServiceResult<bool> m_result;
       };
 
@@ -41,9 +41,9 @@ namespace Nexus::Tests {
 
       ~TestCxaPitchGapClient();
 
-      std::uint32_t request(
-        std::uint8_t unit, const CxaPitchGap& gap, std::uint32_t live);
-      bool is_recoverable(const CxaPitchGap& gap, std::uint32_t live) const;
+      std::uint32_t request(std::uint8_t unit, const CxaPitchGap& gap,
+        std::uint32_t position);
+      bool is_recoverable(const CxaPitchGap& gap, std::uint32_t position) const;
       const std::shared_ptr<Beam::Queue<CxaPitchGapResponse>>&
         get_responses() const;
       void close();
@@ -67,14 +67,15 @@ namespace Nexus::Tests {
   }
 
   inline std::uint32_t TestCxaPitchGapClient::request(
-      std::uint8_t unit, const CxaPitchGap& gap, std::uint32_t live) {
+      std::uint8_t unit, const CxaPitchGap& gap, std::uint32_t position) {
     return m_operations.append_result<RequestOperation, std::uint32_t>(
-      unit, gap, live);
+      unit, gap, position);
   }
 
   inline bool TestCxaPitchGapClient::is_recoverable(
-      const CxaPitchGap& gap, std::uint32_t live) const {
-    return m_operations.append_result<IsRecoverableOperation, bool>(gap, live);
+      const CxaPitchGap& gap, std::uint32_t position) const {
+    return m_operations.append_result<IsRecoverableOperation, bool>(
+      gap, position);
   }
 
   inline const std::shared_ptr<Beam::Queue<CxaPitchGapResponse>>&

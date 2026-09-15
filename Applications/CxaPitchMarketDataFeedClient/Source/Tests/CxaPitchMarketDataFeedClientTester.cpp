@@ -117,8 +117,7 @@ namespace {
     "\x00\x00\x00\x00\x00\x00\x00\x00"
     "\x00"sv);
   struct Fixture {
-    using Client =
-      CxaPitchMarketDataFeedClient<FeedClient*, TestPitchClient*>;
+    using Client = CxaPitchMarketDataFeedClient<FeedClient*, TestPitchClient*>;
 
     std::shared_ptr<FeedClient::Queue> m_operations;
     FeedClient m_feed_client;
@@ -264,8 +263,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     }
     fixture.publish(message);
     fixture.require_operation<FeedClient::OffsetOrderSizeOperation>(
-      ORDER_ID, -700,
-      TIMESTAMP);
+      ORDER_ID, -700, TIMESTAMP);
     auto sale = fixture.read_time_and_sale();
     REQUIRE(sale.get_index() == TICKER);
     REQUIRE(sale->m_timestamp == TIMESTAMP);
@@ -299,8 +297,7 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
     fixture.publish(ORDER_EXECUTED);
     fixture.require_operation<FeedClient::OffsetOrderSizeOperation>(
       ORDER_ID, -700, TIMESTAMP);
-    REQUIRE(fixture.read_time_and_sale()->m_price ==
-      EXECUTION_PRICE);
+    REQUIRE(fixture.read_time_and_sale()->m_price == EXECUTION_PRICE);
   }
 
   TEST_CASE("order_removal") {

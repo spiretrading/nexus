@@ -10,14 +10,13 @@ namespace Nexus {
 
   /**
    * Writes a report to the console followed by a newline.
-   * @param f The callable writing the report to a stream.
+   * @param writer The callable writing the report to a stream.
    */
-  template<std::invocable<std::stringstream&> F>
-  void print(F&& f) {
-    auto out = std::stringstream();
-    std::invoke(std::forward<F>(f), out);
-    out << '\n';
-    std::cout << out.view() << std::flush;
+  void print(std::invocable<std::stringstream&> auto&& writer) {
+    auto stream = std::stringstream();
+    std::invoke(std::forward<decltype(writer)>(writer), stream);
+    stream << '\n';
+    std::cout << stream.view() << std::flush;
   }
 }
 

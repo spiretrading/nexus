@@ -4,6 +4,7 @@
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
+#include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
 
@@ -57,8 +58,8 @@ namespace Nexus {
   template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>
   template<Beam::Initializes<C> CF>
   CxaPitchProtocolClient<C>::CxaPitchProtocolClient(CF&& channel)
-    try : m_channel(std::forward<CF>(channel)) {}
-    catch(const std::exception&) {
+    try : m_channel(std::forward<CF>(channel)) {
+    } catch(const std::exception&) {
       Beam::throw_nested_with_location(Beam::ConnectException(
         "Failed to initialize the CXA PITCH protocol client."));
     }

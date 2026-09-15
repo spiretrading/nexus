@@ -1,13 +1,7 @@
 #ifndef CXA_PITCH_GAP_CLIENT_HPP
 #define CXA_PITCH_GAP_CLIENT_HPP
 #include <algorithm>
-#include <concepts>
-#include <exception>
-#include <functional>
-#include <memory>
 #include <mutex>
-#include <type_traits>
-#include <utility>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/Queue.hpp>
@@ -15,6 +9,7 @@
 #include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
+#include <Beam/Utilities/Expect.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchSequencer.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionClient.hpp"
 
@@ -89,19 +84,19 @@ namespace Nexus {
        * Requests the retransmission of a range of missing messages.
        * @param unit The unit that the missing messages belong to.
        * @param gap The range of missing messages.
-       * @param live The most recent sequence received from the feeds.
+       * @param position The most recent sequence received from the feeds.
        * @return The number of messages that were requested.
        */
       std::uint32_t request(
-        std::uint8_t unit, const CxaPitchGap& gap, std::uint32_t live);
+        std::uint8_t unit, const CxaPitchGap& gap, std::uint32_t position);
 
       /**
        * Returns whether the proxy is able to retransmit a range of messages.
        * @param gap The range of missing messages.
-       * @param live The most recent sequence received from the feeds.
+       * @param position The most recent sequence received from the feeds.
        * @return Whether the proxy is able to retransmit the <i>gap</i>.
        */
-      bool is_recoverable(const CxaPitchGap& gap, std::uint32_t live) const;
+      bool is_recoverable(const CxaPitchGap& gap, std::uint32_t position) const;
 
       /** Returns the queue of responses sent by the gap request proxy. */
       const std::shared_ptr<Beam::Queue<CxaPitchGapResponse>>&
@@ -173,8 +168,8 @@ namespace Nexus {
     Beam::IsTimer<Beam::dereference_t<T>> &&
       Beam::IsTimeClient<Beam::dereference_t<R>>
   std::uint32_t CxaPitchGapClient<S, T, R>::request(
-      std::uint8_t unit, const CxaPitchGap& gap, std::uint32_t live) {
-    if(!is_recoverable(gap, live)) {
+      std::uint8_t unit, const CxaPitchGap& gap, std::uint32_t position) {
+    if(!is_recoverable(gap, position)) {
       return 0;
     }
     auto requested = std::uint32_t(0);
@@ -216,8 +211,9 @@ namespace Nexus {
     Beam::IsTimer<Beam::dereference_t<T>> &&
       Beam::IsTimeClient<Beam::dereference_t<R>>
   bool CxaPitchGapClient<S, T, R>::is_recoverable(
-      const CxaPitchGap& gap, std::uint32_t live) const {
-    return live <= gap.m_sequence || live - gap.m_sequence <= MAXIMUM_RANGE;
+      const CxaPitchGap& gap, std::uint32_t position) const {
+    return position <= gap.m_sequence ||
+      position - gap.m_sequence <= MAXIMUM_RANGE;
   }
 
   template<IsCxaPitchSessionClient S, typename T, typename R> requires

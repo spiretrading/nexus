@@ -2,7 +2,6 @@
 #define CXA_PITCH_CLIENT_HPP
 #include <algorithm>
 #include <deque>
-#include <exception>
 #include <iterator>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -570,11 +569,11 @@ namespace Nexus {
               if(auto pending = get_retry(*gap)) {
                 is_retry = true;
                 auto end = pending->m_sequence + pending->m_count;
-                auto remaining =
+                auto retry_end =
                   m_retries.front().m_sequence + m_retries.front().m_count;
                 m_retries.pop_front();
-                if(end < remaining) {
-                  retry(CxaPitchGap(end, remaining - end));
+                if(end < retry_end) {
+                  retry(CxaPitchGap(end, retry_end - end));
                 }
                 return pending;
               }

@@ -1,21 +1,16 @@
-#include <cstddef>
-#include <cstdint>
 #include <future>
-#include <memory>
-#include <stop_token>
-#include <string>
-#include <string_view>
 #include <Beam/IO/AsyncWriter.hpp>
 #include <Beam/IO/ConnectException.hpp>
-#include <Beam/IO/IOException.hpp>
+#include <Beam/IO/LocalClientChannel.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/IO/WrapperChannel.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/Async.hpp>
+#include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
-#include <boost/optional/optional.hpp>
 #include <doctest/doctest.h>
+#include "CxaPitchMarketDataFeedClient/CxaPitchHeader.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionClient.hpp"
 
 using namespace Beam;
@@ -69,9 +64,7 @@ namespace {
 
   std::string read_exactly(LocalServerChannel& channel, std::size_t size) {
     auto buffer = SharedBuffer();
-    while(buffer.get_size() < size) {
-      channel.get_reader().read(out(buffer), size - buffer.get_size());
-    }
+    read_exact(channel.get_reader(), out(buffer), size);
     return std::string(buffer.get_data(), buffer.get_size());
   }
 

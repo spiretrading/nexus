@@ -1,4 +1,3 @@
-#include <string_view>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"

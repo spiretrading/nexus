@@ -2,7 +2,6 @@
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchMessages.hpp"
-#include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"
 
 using namespace Beam;
 using namespace boost::posix_time;
@@ -119,8 +118,7 @@ TEST_SUITE("CxaPitchMessages") {
       "\x15\xcd\x5b\x07\x00\x00\x00\x00"
       "    "
       "\x00", 42);
-    auto add_order =
-      CxaPitchAddOrder::parse(CxaPitchMessage::parse(source));
+    auto add_order = CxaPitchAddOrder::parse(CxaPitchMessage::parse(source));
     REQUIRE(add_order.m_side == Side::ASK);
     REQUIRE(add_order.m_quantity == 0);
     REQUIRE(add_order.m_pid == "");
@@ -491,8 +489,7 @@ TEST_SUITE("CxaPitchMessages") {
         return to_string(message);
       },
       [] (const CxaPitchMessage&) { return std::string("unknown"); });
-    REQUIRE(text == "(delete_order " + TIME_TEXT +
-      " 800891482924597253)");
+    REQUIRE(text == "(delete_order " + TIME_TEXT + " 800891482924597253)");
   }
 
   TEST_CASE("visit_partial_callable") {
@@ -533,7 +530,7 @@ TEST_SUITE("CxaPitchMessages") {
     }
   }
 
-  TEST_CASE("visit_rvalue_callable") {
+  TEST_CASE("visit_rvalue_message_parameter") {
     auto source = std::string_view(
       "\x12\x3c"
       "\xf0\x77\xbb\xce\x2a\x6a\x62\x16"

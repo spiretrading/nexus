@@ -1,8 +1,6 @@
 #ifndef CXA_PITCH_BLOCK_HPP
 #define CXA_PITCH_BLOCK_HPP
-#include <cstdint>
 #include <iterator>
-#include <string_view>
 #include <boost/throw_exception.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchHeader.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchMessage.hpp"
@@ -63,16 +61,6 @@ namespace Nexus {
       std::string_view m_payload;
   };
 
-  inline CxaPitchBlock::Iterator::Iterator(
-      std::string_view source, std::uint8_t remaining)
-      : m_source(source),
-        m_remaining(remaining),
-        m_message() {
-    if(m_remaining != 0) {
-      m_message = CxaPitchMessage::parse(m_source);
-    }
-  }
-
   inline const CxaPitchMessage& CxaPitchBlock::Iterator::operator *() const {
     return m_message;
   }
@@ -99,6 +87,16 @@ namespace Nexus {
   inline bool CxaPitchBlock::Iterator::operator ==(
       std::default_sentinel_t) const {
     return m_remaining == 0;
+  }
+
+  inline CxaPitchBlock::Iterator::Iterator(std::string_view source,
+      std::uint8_t remaining)
+      : m_source(source),
+        m_remaining(remaining),
+        m_message() {
+    if(m_remaining != 0) {
+      m_message = CxaPitchMessage::parse(m_source);
+    }
   }
 
   inline CxaPitchBlock CxaPitchBlock::parse(std::string_view source) {

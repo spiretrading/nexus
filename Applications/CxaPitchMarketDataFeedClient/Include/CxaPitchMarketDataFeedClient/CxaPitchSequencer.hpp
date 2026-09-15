@@ -5,7 +5,6 @@
 #include <utility>
 #include <vector>
 #include <Beam/IO/SharedBuffer.hpp>
-#include <boost/optional/optional.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
 
 namespace Nexus {
@@ -27,8 +26,8 @@ namespace Nexus {
       /**
        * Constructs a CxaPitchSequencer.
        * @param feeds The number of feeds to merge.
-       * @param feed_timeout How long a feed may be silent before it is
-       *        excluded.
+       * @param feed_timeout How long a feed may be silent or stalled before
+       *        it is excluded.
        */
       CxaPitchSequencer(
         int feeds, boost::posix_time::time_duration feed_timeout);
@@ -49,12 +48,12 @@ namespace Nexus {
       void recover(const CxaPitchBlock& block);
 
       /**
-       * Advances the time used to determine whether a feed is silent.
+       * Advances the time used to exclude silent or stalled feeds.
        * @param timestamp The current time.
        */
       void update(boost::posix_time::ptime timestamp);
 
-      /** Returns the payload of the next message in sequence. */
+      /** Returns the next complete encoded message in sequence. */
       boost::optional<Beam::SharedBuffer> read();
 
       /** Returns the sequence of the next message to return. */

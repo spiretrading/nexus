@@ -46,12 +46,7 @@ address: "233.218.133.96:30501"
 gap_address: "233.218.133.97:30501"
 interface: "10.0.0.2:30501"
 )"));
-    source["retransmission"] = YAML::Load(R"(
-address: "10.1.0.1:30601"
-session_sub_id: "0001"
-username: FIRM
-password: ABCD00
-)");
+    source["retransmission"] = make_session();
     source["spin"] = YAML::Load(R"(
 address: "10.1.0.2:30701"
 session_sub_id: "0002"

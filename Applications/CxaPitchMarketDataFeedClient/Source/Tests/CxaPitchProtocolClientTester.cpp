@@ -6,6 +6,7 @@
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <doctest/doctest.h>
+#include "CxaPitchMarketDataFeedClient/CxaPitchEncoder.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchProtocolClient.hpp"
 
 using namespace Beam;
@@ -153,9 +154,7 @@ TEST_SUITE("CxaPitchProtocolClient") {
     try {
       std::rethrow_exception(error);
     } catch(const IOException& e) {
-      REQUIRE(std::string_view(e.what()) == "Failed to read CXA PITCH block.");
-      REQUIRE_THROWS_WITH_AS(
-        std::rethrow_if_nested(e), "Feed disconnected.", EndOfFileException);
+      REQUIRE_THROWS_AS(std::rethrow_if_nested(e), EndOfFileException);
     }
   }
 

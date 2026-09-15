@@ -1,8 +1,5 @@
 #ifndef CXA_PITCH_MESSAGE_HPP
 #define CXA_PITCH_MESSAGE_HPP
-#include <cstddef>
-#include <ostream>
-#include <string_view>
 #include <boost/throw_exception.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchCursor.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"
@@ -58,7 +55,7 @@ namespace Nexus {
 
   inline std::ostream& operator <<(
       std::ostream& out, const CxaPitchMessage& message) {
-    static const auto DIGITS = std::string_view("0123456789ABCDEF");
+    static constexpr auto DIGITS = std::string_view("0123456789ABCDEF");
     return out << "(unknown 0x" << DIGITS[message.m_type >> 4] <<
       DIGITS[message.m_type & 0x0F] << ' ' <<
       static_cast<int>(message.m_length) << ')';

@@ -1,7 +1,5 @@
 #include <algorithm>
 #include <array>
-#include <ranges>
-#include <string>
 #include <vector>
 #include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
@@ -26,7 +24,7 @@ TEST_SUITE("CxaPitchBlock") {
     REQUIRE(payload.data() == source.data() + CxaPitchHeader::LENGTH);
   }
 
-  TEST_CASE("parse_block") {
+  TEST_CASE("parse") {
     auto data = std::array<char, 20>{
       0x14, 0x00,
       0x02,

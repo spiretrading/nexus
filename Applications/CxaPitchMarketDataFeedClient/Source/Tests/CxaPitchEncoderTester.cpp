@@ -15,8 +15,8 @@ TEST_SUITE("CxaPitchEncoder") {
     encoder.write_uint8(0x2A);
     encoder.write_uint16(50);
     encoder.write_uint32(4155);
-    REQUIRE(std::string_view(buffer.get_data(), buffer.get_size()) ==
-      std::string_view("\x2a" "\x32\x00" "\x3b\x10\x00\x00", 7));
+    REQUIRE(
+      buffer == std::string_view("\x2a" "\x32\x00" "\x3b\x10\x00\x00", 7));
   }
 
   TEST_CASE("write_text") {
@@ -27,8 +27,7 @@ TEST_SUITE("CxaPitchEncoder") {
     encoder.write_text("", 2);
     encoder.write_text("ABCDEF", 4);
     encoder.pad(3);
-    REQUIRE(std::string_view(buffer.get_data(), buffer.get_size()) ==
-      "FIRMAB    ABCD   ");
+    REQUIRE(buffer == "FIRMAB    ABCD   ");
   }
 
   TEST_CASE("nonpositive_widths") {
@@ -36,9 +35,9 @@ TEST_SUITE("CxaPitchEncoder") {
     auto encoder = CxaPitchEncoder(Beam::Ref(buffer));
     for(auto size : std::array{0, -1, std::numeric_limits<int>::min()}) {
       encoder.pad(size);
-      REQUIRE(std::string_view(buffer.get_data(), buffer.get_size()) == "FIRM");
+      REQUIRE(buffer == "FIRM");
       encoder.write_text("AB", size);
-      REQUIRE(std::string_view(buffer.get_data(), buffer.get_size()) == "FIRM");
+      REQUIRE(buffer == "FIRM");
     }
   }
 
@@ -48,10 +47,8 @@ TEST_SUITE("CxaPitchEncoder") {
     buffer.shrink(4);
     auto encoder = CxaPitchEncoder(Beam::Ref(buffer));
     encoder.pad(4);
-    REQUIRE(
-      std::string_view(buffer.get_data(), buffer.get_size()) == "FIRM    ");
-    REQUIRE(
-      std::string_view(original.get_data(), original.get_size()) == "FIRMxxxx");
+    REQUIRE(buffer == "FIRM    ");
+    REQUIRE(original == "FIRMxxxx");
   }
 
   TEST_CASE("padding_capacity") {
@@ -59,7 +56,6 @@ TEST_SUITE("CxaPitchEncoder") {
     buffer.shrink(4);
     auto encoder = CxaPitchEncoder(Beam::Ref(buffer));
     REQUIRE_THROWS_AS(encoder.pad(5), std::out_of_range);
-    REQUIRE(
-      std::string_view(buffer.get_data(), buffer.get_size()) == "FIRMxxxx");
+    REQUIRE(buffer == "FIRMxxxx");
   }
 }

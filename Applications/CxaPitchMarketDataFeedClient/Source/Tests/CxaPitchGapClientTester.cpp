@@ -445,62 +445,44 @@ TEST_SUITE("CxaPitchGapClient") {
     auto client = GapClient([&] (std::stop_token) {
       return sessions[index++];
     }, &timer, &time_client);
-    first->m_messages->push(encode_response(1, 4155, 50, 'A'));
-    flush_pending_routines();
-    auto response = client.get_responses()->try_pop();
-    REQUIRE(response.has_value());
-    REQUIRE(response->m_sequence == 4155);
-    timer.trigger();
-    first->close();
-    second->m_messages->push(encode_response(1, 900, 10, 'A'));
-    flush_pending_routines();
-    response = client.get_responses()->try_pop();
-    REQUIRE(response.has_value());
-    REQUIRE(response->m_sequence == 900);
-    REQUIRE(client.request(1, CxaPitchGap(1000, 50), 1000) == 50);
-    REQUIRE(second->m_requests.size() == 1);
-    REQUIRE(parse_request(second->m_requests[0]).m_sequence == 1000);
-  }
-
-  TEST_CASE("reconnect_timer_failure") {
-    auto first = std::make_shared<StubSession>();
-    auto second = std::make_shared<StubSession>();
-    auto sessions = std::vector{first, second};
-    auto index = std::size_t(0);
-    auto timer = TriggerTimer();
-    auto time_client = FixedTimeClient(TIMESTAMP);
-    auto client = GapClient([&] (std::stop_token) {
-      return sessions[index++];
-    }, &timer, &time_client);
-    first->close();
-    flush_pending_routines();
-    second->m_messages->push(encode_response(1, 900, 10, 'A'));
-    timer.fail();
-    flush_pending_routines();
-    auto response = client.get_responses()->try_pop();
-    client.close();
-    REQUIRE(response.has_value());
-    REQUIRE(response->m_sequence == 900);
-  }
-
-  TEST_CASE("close_failed_session") {
-    auto first = std::make_shared<StubSession>();
-    auto second = std::make_shared<StubSession>();
-    auto sessions = std::vector{first, second};
-    auto index = std::size_t(0);
-    auto timer = TriggerTimer();
-    auto time_client = FixedTimeClient(TIMESTAMP);
-    auto client = GapClient([&] (std::stop_token) {
-      return sessions[index++];
-    }, &timer, &time_client);
-    first->m_messages->close();
-    timer.trigger();
-    second->m_messages->push(encode_response(1, 900, 10, 'A'));
-    flush_pending_routines();
-    auto response = client.get_responses()->try_pop();
-    REQUIRE(response.has_value());
-    REQUIRE(response->m_sequence == 900);
-    REQUIRE(first->m_is_closed);
+    SUBCASE("replacement_session") {
+      first->m_messages->push(encode_response(1, 4155, 50, 'A'));
+      flush_pending_routines();
+      auto response = client.get_responses()->try_pop();
+      REQUIRE(response.has_value());
+      REQUIRE(response->m_sequence == 4155);
+      timer.trigger();
+      first->close();
+      second->m_messages->push(encode_response(1, 900, 10, 'A'));
+      flush_pending_routines();
+      response = client.get_responses()->try_pop();
+      REQUIRE(response.has_value());
+      REQUIRE(response->m_sequence == 900);
+      REQUIRE(client.request(1, CxaPitchGap(1000, 50), 1000) == 50);
+      REQUIRE(second->m_requests.size() == 1);
+      REQUIRE(parse_request(second->m_requests[0]).m_sequence == 1000);
+    }
+    SUBCASE("timer_failure") {
+      first->close();
+      flush_pending_routines();
+      second->m_messages->push(encode_response(1, 900, 10, 'A'));
+      timer.fail();
+      flush_pending_routines();
+      auto response = client.get_responses()->try_pop();
+      client.close();
+      REQUIRE(response.has_value());
+      REQUIRE(response->m_sequence == 900);
+    }
+    SUBCASE("failed_session_close") {
+      first->m_messages->close();
+      timer.trigger();
+      second->m_messages->push(encode_response(1, 900, 10, 'A'));
+      flush_pending_routines();
+      auto response = client.get_responses()->try_pop();
+      REQUIRE(response.has_value());
+      REQUIRE(response->m_sequence == 900);
+      REQUIRE(first->m_is_closed);
+    }
   }
 
   TEST_CASE("old_session_write_failure") {

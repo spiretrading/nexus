@@ -1,27 +1,18 @@
 #ifndef CXA_PITCH_SESSION_CLIENT_HPP
 #define CXA_PITCH_SESSION_CLIENT_HPP
 #include <atomic>
-#include <concepts>
-#include <exception>
-#include <functional>
 #include <stop_token>
-#include <type_traits>
-#include <utility>
 #include <Beam/IO/Channel.hpp>
 #include <Beam/IO/ConnectException.hpp>
-#include <Beam/IO/IOException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/IO/StaticBuffer.hpp>
 #include <Beam/IO/SyncWriter.hpp>
-#include <Beam/Pointers/Dereference.hpp>
-#include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/TimeService/Timer.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <boost/throw_exception.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
-#include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchSessionMessages.hpp"
 
 namespace Nexus {

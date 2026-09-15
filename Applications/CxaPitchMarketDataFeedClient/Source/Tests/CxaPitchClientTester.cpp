@@ -144,37 +144,38 @@ namespace {
     template<typename O>
     std::shared_ptr<O> check_operation(
         const std::shared_ptr<TestCxaPitchGapClient::Operation>& operation,
-        const CxaPitchGap& gap, std::uint32_t live) {
+        const CxaPitchGap& gap, std::uint32_t position) {
       auto specific = std::get_if<O>(&*operation);
       REQUIRE(specific);
       REQUIRE(specific->m_gap.m_sequence == gap.m_sequence);
       REQUIRE(specific->m_gap.m_count == gap.m_count);
-      REQUIRE(specific->m_live == live);
+      REQUIRE(specific->m_position == position);
       return std::shared_ptr<O>(operation, specific);
     }
 
     template<std::same_as<TestCxaPitchGapClient::RequestOperation> O>
     std::shared_ptr<O> check_operation(
         const std::shared_ptr<TestCxaPitchGapClient::Operation>& operation,
-        std::uint8_t unit, const CxaPitchGap& gap, std::uint32_t live) {
-      auto request = check_operation<O>(operation, gap, live);
+        std::uint8_t unit, const CxaPitchGap& gap, std::uint32_t position) {
+      auto request = check_operation<O>(operation, gap, position);
       REQUIRE(request->m_unit == unit);
       return request;
     }
 
     std::shared_ptr<TestCxaPitchGapClient::RequestOperation>
-        require_recovery_request(const CxaPitchGap& gap, std::uint32_t live) {
-      return require_recovery_request(gap, gap, live);
+        require_recovery_request(
+          const CxaPitchGap& gap, std::uint32_t position) {
+      return require_recovery_request(gap, gap, position);
     }
 
     std::shared_ptr<TestCxaPitchGapClient::RequestOperation>
         require_recovery_request(const CxaPitchGap& gap,
-          const CxaPitchGap& requested_gap, std::uint32_t live) {
+          const CxaPitchGap& requested_gap, std::uint32_t position) {
       auto recoverable = require_operation<
-        TestCxaPitchGapClient::IsRecoverableOperation>(gap, live);
+        TestCxaPitchGapClient::IsRecoverableOperation>(gap, position);
       recoverable->m_result.set(true);
       return require_operation<TestCxaPitchGapClient::RequestOperation>(
-        1, requested_gap, live);
+        1, requested_gap, position);
     }
   };
 
@@ -859,9 +860,10 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(fixture.m_client->read().m_type == 0x12);
     flush_pending_routines();
     fixture.publish(encode_block(6, {0x16}));
-    for(auto live : {6, 7}) {
+    for(auto position : {6, 7}) {
       auto recoverable = fixture.require_operation<
-        TestCxaPitchGapClient::IsRecoverableOperation>(CxaPitchGap(3, 2), live);
+        TestCxaPitchGapClient::IsRecoverableOperation>(
+          CxaPitchGap(3, 2), position);
       recoverable->m_result.set(true);
     }
     flush_pending_routines();
