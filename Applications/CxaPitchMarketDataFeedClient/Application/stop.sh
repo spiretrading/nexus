@@ -50,7 +50,7 @@ stop_application() (
         fi
         log_file=$(ls -t srv_*.log 2>/dev/null | head -n 1)
         if [[ -n "$log_file" ]]; then
-         echo "Forcefully terminated $APPLICATION." >> "$log_file"
+          echo "Forcefully terminated $app_name." >> "$log_file"
         fi
       fi
     fi
