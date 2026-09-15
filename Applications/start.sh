@@ -12,7 +12,6 @@ services=(
   "RiskServer"
   "WebPortal"
   "AsxItchMarketDataFeedClient"
-  "ChiaMarketDataFeedClient"
   "CseMarketDataFeedClient"
   "CxaPitchMarketDataFeedClient"
   "NeoeMarketDataFeedClient"

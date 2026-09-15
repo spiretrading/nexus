@@ -14,7 +14,6 @@ services=(
   "WebPortal"
   "SimulationMarketDataFeedClient"
   "AsxItchMarketDataFeedClient"
-  "ChiaMarketDataFeedClient"
   "CseMarketDataFeedClient"
   "CxaPitchMarketDataFeedClient"
   "NeoeMarketDataFeedClient"

@@ -2,7 +2,6 @@
 services=(
   "OtcLinkMarketDataFeedClient"
   "AsxItchMarketDataFeedClient"
-  "ChiaMarketDataFeedClient"
   "CseMarketDataFeedClient"
   "CxaPitchMarketDataFeedClient"
   "NeoeMarketDataFeedClient"

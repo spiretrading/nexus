@@ -13,7 +13,6 @@ main() {
     "Applications/AdministrationServer"
     "Applications/AsxItchMarketDataFeedClient"
     "Applications/ChartingServer"
-    "Applications/ChiaMarketDataFeedClient"
     "Applications/ComplianceServer"
     "Applications/CseMarketDataFeedClient"
     "Applications/CxaPitchMarketDataFeedClient"

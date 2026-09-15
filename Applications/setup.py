@@ -101,10 +101,10 @@ def main():
     help='ASX Glimpse username.', default='')
   parser.add_argument('-gp', '--glimpse_password', type=str,
     help='ASX Glimpse password.', default='')
-  parser.add_argument('-cru', '--chia_retrans_username', type=str,
-    help='CHIA retransmission username.', default='')
-  parser.add_argument('-crp', '--chia_retrans_password', type=str,
-    help='CHIA retransmission password.', default='')
+  parser.add_argument('-cru', '--cxa_retrans_username', type=str,
+    help='CXA retransmission username.', default='')
+  parser.add_argument('-crp', '--cxa_retrans_password', type=str,
+    help='CXA retransmission password.', default='')
   arg_vars = vars(parser.parse_args())
   setup_beam(arg_vars)
   for server in ['AdministrationServer', 'ComplianceServer',

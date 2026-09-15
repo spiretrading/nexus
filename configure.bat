@@ -15,7 +15,6 @@ CALL :Configure WebApi %*
 CALL :Configure Applications\AdministrationServer %*
 CALL :Configure Applications\AsxItchMarketDataFeedClient %*
 CALL :Configure Applications\ChartingServer %*
-CALL :Configure Applications\ChiaMarketDataFeedClient %*
 CALL :Configure Applications\ComplianceServer %*
 CALL :Configure Applications\CseMarketDataFeedClient %*
 CALL :Configure Applications\CxaPitchMarketDataFeedClient %*

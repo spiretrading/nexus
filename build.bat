@@ -32,7 +32,6 @@ IF !PARALLEL! EQU 1 (
 CALL :BuildApp Applications\AdministrationServer %*
 CALL :BuildApp Applications\AsxItchMarketDataFeedClient %*
 CALL :BuildApp Applications\ChartingServer %*
-CALL :BuildApp Applications\ChiaMarketDataFeedClient %*
 CALL :BuildApp Applications\ComplianceServer %*
 CALL :BuildApp Applications\CseMarketDataFeedClient %*
 CALL :BuildApp Applications\CxaPitchMarketDataFeedClient %*
