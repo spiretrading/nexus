@@ -6,7 +6,6 @@
 #include <boost/optional/optional.hpp>
 #include <boost/throw_exception.hpp>
 #include "CxaPitchMarketDataFeedClient/CxaPitchBlock.hpp"
-#include "CxaPitchMarketDataFeedClient/CxaPitchMessage.hpp"
 #include "CxaPitchMarketDataFeedClient/CxaPitchParserException.hpp"
 
 namespace Nexus {
@@ -735,8 +734,8 @@ namespace Details {
   inline CxaPitchOrderExecutedAtPrice CxaPitchOrderExecutedAtPrice::parse(
       const CxaPitchMessage& message) {
     if(message.m_length < LENGTH) {
-      boost::throw_with_location(CxaPitchParserException(
-        "Order executed at price message too short."));
+      boost::throw_with_location(
+        CxaPitchParserException("Order executed at price message too short."));
     }
     auto cursor = message.get_cursor();
     auto executed = CxaPitchOrderExecutedAtPrice();

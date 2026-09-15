@@ -75,8 +75,7 @@ namespace Nexus {
        * @param spin_client The client requesting the initial snapshot, if
        *        enabled.
        * @param time_client The client used to get the current time.
-       * @param timer The timer checking feed silence, gap timeouts, recovery
-       *        retries, and snapshot offer expiry.
+       * @param timer The timer used for timeouts and recovery retries.
        */
       template<Beam::Initializes<P> PF, Beam::Initializes<G> GF,
         Beam::Initializes<S> SF, Beam::Initializes<R> RF,
@@ -485,7 +484,7 @@ namespace Nexus {
         }
         validate(block);
         auto timestamp = m_time_client->get_time();
-        auto [close_spin, recovery_position] = Beam::with(m_sequencer,
+        auto [is_expired, recovery_position] = Beam::with(m_sequencer,
           [&] (auto& sequencer) {
             sequencer.add(index, block, timestamp);
             m_feed_timestamp = timestamp;
@@ -495,11 +494,11 @@ namespace Nexus {
                 out << "(feed " << timestamp << ')';
               });
             }
-            auto close_spin = expire_snapshot_offer(timestamp);
+            auto is_expired = expire_snapshot_offer(timestamp);
             return std::pair(
-              close_spin, advance_recovery(sequencer, timestamp));
+              is_expired, advance_recovery(sequencer, timestamp));
           });
-        if(close_spin) {
+        if(is_expired) {
           (*m_spin_client)->close();
         }
         if(recovery_position) {
@@ -726,7 +725,7 @@ namespace Nexus {
     }
     try {
       auto timestamp = m_time_client->get_time();
-      auto [close_spin, recovery_position] = Beam::with(m_sequencer,
+      auto [is_expired, recovery_position] = Beam::with(m_sequencer,
         [&] (auto& sequencer) {
           if(!m_is_silent && timestamp - m_feed_timestamp > m_feed_timeout) {
             m_is_silent = true;
@@ -734,12 +733,12 @@ namespace Nexus {
               out << "(no_feed " << timestamp << ')';
             });
           }
-          auto close_spin = expire_snapshot_offer(timestamp);
+          auto is_expired = expire_snapshot_offer(timestamp);
           sequencer.update(timestamp);
           m_is_request_deferred = false;
-          return std::pair(close_spin, advance_recovery(sequencer, timestamp));
+          return std::pair(is_expired, advance_recovery(sequencer, timestamp));
         });
-      if(close_spin) {
+      if(is_expired) {
         (*m_spin_client)->close();
       }
       if(recovery_position) {

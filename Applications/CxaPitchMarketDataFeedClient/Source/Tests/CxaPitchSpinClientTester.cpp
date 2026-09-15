@@ -87,14 +87,16 @@ namespace {
   };
 
   SharedBuffer encode_message(std::uint8_t type) {
-    auto length = CxaPitchAddOrder::LENGTH;
-    if(type == CxaPitchTradingStatus::TYPE) {
-      length = CxaPitchTradingStatus::LENGTH;
-    } else if(type == CxaPitchCalculatedValue::TYPE) {
-      length = CxaPitchCalculatedValue::LENGTH;
-    } else if(type == CxaPitchAuctionUpdate::TYPE) {
-      length = CxaPitchAuctionUpdate::LENGTH;
-    }
+    auto length = [&] {
+      if(type == CxaPitchTradingStatus::TYPE) {
+        return CxaPitchTradingStatus::LENGTH;
+      } else if(type == CxaPitchCalculatedValue::TYPE) {
+        return CxaPitchCalculatedValue::LENGTH;
+      } else if(type == CxaPitchAuctionUpdate::TYPE) {
+        return CxaPitchAuctionUpdate::LENGTH;
+      }
+      return CxaPitchAddOrder::LENGTH;
+    }();
     auto message = std::string(length, char(0));
     message[0] = static_cast<char>(length);
     message[1] = static_cast<char>(type);
@@ -393,8 +395,8 @@ TEST_SUITE("CxaPitchSpinClient") {
   }
 
   TEST_CASE("malformed_snapshot_finish") {
-    for(const auto& finished : {SharedBuffer("\x02\x83",
-        CxaPitchMessage::HEADER_LENGTH),
+    for(auto& finished : {
+        SharedBuffer("\x02\x83", CxaPitchMessage::HEADER_LENGTH),
         encode(CxaPitchSpinFinished(310176))}) {
       auto fixture = Fixture();
       fixture.request(310175);

@@ -49,6 +49,10 @@ namespace Nexus {
       Beam::local_ptr_t<C> m_channel;
       Beam::SharedBuffer m_buffer;
       Beam::OpenState m_open_state;
+
+      CxaPitchProtocolClient(const CxaPitchProtocolClient&) = delete;
+      CxaPitchProtocolClient& operator =(
+        const CxaPitchProtocolClient&) = delete;
   };
 
   template<typename CF>

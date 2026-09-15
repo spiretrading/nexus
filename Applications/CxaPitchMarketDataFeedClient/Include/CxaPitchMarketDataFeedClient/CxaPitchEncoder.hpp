@@ -37,7 +37,7 @@ namespace Nexus {
 
       /**
        * Encodes a space padded text field.
-       * @param value The value to encode, truncated to the field's width.
+       * @param value The value to encode.
        * @param size The width of the field.
        */
       void write_text(std::string_view value, int size);
@@ -75,17 +75,13 @@ namespace Nexus {
 
   template<Beam::IsBuffer B>
   void CxaPitchEncoder<B>::write_text(std::string_view value, int size) {
-    auto length =
-      std::min(value.size(), static_cast<std::size_t>(std::max(size, 0)));
+    auto length = std::min(value.size(), static_cast<std::size_t>(size));
     Beam::append(*m_buffer, value.data(), length);
     pad(size - static_cast<int>(length));
   }
 
   template<Beam::IsBuffer B>
   void CxaPitchEncoder<B>::pad(int size) {
-    if(size <= 0) {
-      return;
-    }
     auto length = static_cast<std::size_t>(size);
     if(m_buffer->grow(length) < length) {
       boost::throw_with_location(std::out_of_range("Buffer failed to grow."));

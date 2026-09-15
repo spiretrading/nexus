@@ -245,7 +245,7 @@ namespace Nexus {
     void encode(Beam::Out<B> buffer) const;
   };
 
-  /** Matches the concrete CXA PITCH session message types. */
+  /** Concept satisfied by the CXA PITCH session message types. */
   template<typename T>
   concept IsCxaPitchSessionMessage =
     std::same_as<std::remove_cvref_t<T>, CxaPitchLogin> ||

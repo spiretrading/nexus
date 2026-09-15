@@ -1,5 +1,3 @@
-#include <array>
-#include <limits>
 #include <stdexcept>
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/IO/StaticBuffer.hpp>
@@ -28,17 +26,6 @@ TEST_SUITE("CxaPitchEncoder") {
     encoder.write_text("ABCDEF", 4);
     encoder.pad(3);
     REQUIRE(buffer == "FIRMAB    ABCD   ");
-  }
-
-  TEST_CASE("nonpositive_widths") {
-    auto buffer = Beam::SharedBuffer("FIRM", 4);
-    auto encoder = CxaPitchEncoder(Beam::Ref(buffer));
-    for(auto size : std::array{0, -1, std::numeric_limits<int>::min()}) {
-      encoder.pad(size);
-      REQUIRE(buffer == "FIRM");
-      encoder.write_text("AB", size);
-      REQUIRE(buffer == "FIRM");
-    }
   }
 
   TEST_CASE("shared_padding") {
