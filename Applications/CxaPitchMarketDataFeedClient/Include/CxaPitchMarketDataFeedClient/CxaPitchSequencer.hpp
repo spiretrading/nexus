@@ -199,6 +199,10 @@ namespace Nexus {
 
   inline void CxaPitchSequencer::store(const CxaPitchBlock& block) {
     auto sequence = block.get_header().m_sequence;
+    if(sequence < *m_expected_sequence &&
+        block.get_header().m_count <= *m_expected_sequence - sequence) {
+      return;
+    }
     for(auto& message : block) {
       if(sequence >= *m_expected_sequence) {
         auto entry = [&] {
