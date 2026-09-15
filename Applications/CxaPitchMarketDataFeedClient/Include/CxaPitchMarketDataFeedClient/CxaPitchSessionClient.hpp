@@ -240,7 +240,7 @@ namespace Nexus {
     }
     Beam::read_exact(
       m_channel->get_reader(), Beam::out(m_buffer), size - available);
-    m_is_receiving = true;
+    m_is_receiving.store(true, std::memory_order_release);
   }
 
   template<typename C, typename T> requires

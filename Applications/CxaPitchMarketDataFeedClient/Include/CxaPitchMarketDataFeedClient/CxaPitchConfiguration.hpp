@@ -152,7 +152,7 @@ namespace Nexus {
         Beam::extract<bool>(config, "enable_logging", false);
       configuration.m_unit = static_cast<std::uint8_t>(Beam::extract<int>(
         config, "unit", 1, std::numeric_limits<std::uint8_t>::max()));
-      auto primary_venue = VENUES.from_display_name(
+      auto& primary_venue = VENUES.from_display_name(
         Beam::extract<std::string>(config, "venue"));
       if(!primary_venue.m_venue) {
         boost::throw_with_location(
@@ -160,7 +160,7 @@ namespace Nexus {
       }
       configuration.m_country = primary_venue.m_country_code;
       configuration.m_primary_venue = primary_venue.m_venue;
-      auto disseminating_venue = VENUES.from_display_name(
+      auto& disseminating_venue = VENUES.from_display_name(
         Beam::extract<std::string>(config, "disseminating_venue"));
       if(!disseminating_venue.m_venue) {
         boost::throw_with_location(

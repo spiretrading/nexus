@@ -684,7 +684,7 @@ namespace Nexus {
           continue;
         }
         for(auto& message : snapshot.m_messages) {
-          m_messages.push(message);
+          m_messages.push(std::move(message));
         }
         Beam::with(m_sequencer, [&] (auto& sequencer) {
           if(*sequencer.get_sequence() < snapshot.m_sequence + 1) {
