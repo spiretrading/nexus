@@ -2,6 +2,7 @@ import argparse
 import importlib.util
 import os
 import shutil
+from string import Template
 
 try:
   spec = importlib.util.spec_from_file_location('setup_utils',
@@ -91,7 +92,11 @@ def main():
         variables['spin_address'] = spin_addresses.get(filename, '')
         if not variables['spin_address'] or not args.spin_password:
           source = remove_section(source, 'spin')
-        source = setup_utils.translate(source, variables)
+        escaped_variables = {
+          key: value.encode('unicode_escape').decode('ascii').replace(
+            '"', r'\"') for key, value in variables.items()
+        }
+        source = Template(source).substitute(escaped_variables)
         file.seek(0)
         file.write(source)
         file.truncate()
