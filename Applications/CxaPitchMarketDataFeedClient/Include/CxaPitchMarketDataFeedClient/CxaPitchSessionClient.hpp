@@ -149,7 +149,9 @@ namespace Nexus {
       m_timer->get_publisher().monitor(m_tasks.get_slot<typename Timer::Result>(
         std::bind_front(&CxaPitchSessionClient::on_timer, this)));
       auto cancellation = std::stop_callback(stop_token, [&] {
-        m_channel->get_connection().close();
+        m_tasks.push([&] {
+          m_channel->get_connection().close();
+        });
       });
       log_in(login);
     } catch(const std::exception&) {

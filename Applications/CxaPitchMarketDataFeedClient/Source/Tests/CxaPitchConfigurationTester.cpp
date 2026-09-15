@@ -116,6 +116,29 @@ password: ABCD01
     REQUIRE(!config.m_spin);
   }
 
+  TEST_CASE("parse_feed_ports") {
+    auto source = make_config()["feeds"][0];
+    source["interface"] = "10.0.0.1";
+    for(auto name : {"address", "gap_address"}) {
+      SUBCASE(name) {
+        SUBCASE("missing") {
+          source[name] = "233.218.133.80";
+          REQUIRE_THROWS_AS(CxaPitchFeed::parse(source), std::runtime_error);
+        }
+        SUBCASE("zero") {
+          source[name] = "233.218.133.80:0";
+          REQUIRE_THROWS_AS(CxaPitchFeed::parse(source), std::runtime_error);
+        }
+        SUBCASE("bounds") {
+          for(auto port : {1, 65535}) {
+            source[name] = "233.218.133.80:" + std::to_string(port);
+            REQUIRE_NOTHROW(CxaPitchFeed::parse(source));
+          }
+        }
+      }
+    }
+  }
+
   TEST_CASE("parse_socket_sizes") {
     auto source = make_config();
     SUBCASE("defaults") {

@@ -114,9 +114,17 @@ namespace Nexus {
     auto feed = CxaPitchFeed();
     feed.m_name = Beam::extract<std::string>(config, "name");
     feed.m_address = Beam::extract<Beam::IpAddress>(config, "address");
+    if(feed.m_address.get_port() == 0) {
+      boost::throw_with_location(std::runtime_error(
+        "The feed address must specify a nonzero port."));
+    }
     if(config["gap_address"]) {
       feed.m_gap_address =
         Beam::extract<Beam::IpAddress>(config, "gap_address");
+      if(feed.m_gap_address->get_port() == 0) {
+        boost::throw_with_location(std::runtime_error(
+          "The gap response address must specify a nonzero port."));
+      }
     }
     feed.m_interface = Beam::extract<Beam::IpAddress>(config, "interface");
     return feed;

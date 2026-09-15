@@ -12,6 +12,7 @@
 #include <Beam/IO/SharedBuffer.hpp>
 #include <Beam/IO/WrapperChannel.hpp>
 #include <Beam/Queues/Queue.hpp>
+#include <Beam/Routines/Async.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <boost/optional/optional.hpp>
 #include <doctest/doctest.h>
@@ -53,6 +54,18 @@ namespace {
 
   using GatedChannel =
     WrapperChannel<LocalClientChannel*, AsyncWriter<GatedWriter>>;
+
+  struct GatedConnection {
+    LocalClientChannel::Connection* m_connection;
+    Queue<int>* m_closes;
+    Async<void>* m_gate;
+
+    void close() {
+      m_closes->push(0);
+      m_gate->get();
+      m_connection->close();
+    }
+  };
 
   std::string read_exactly(LocalServerChannel& channel, std::size_t size) {
     auto buffer = SharedBuffer();
@@ -136,6 +149,39 @@ TEST_SUITE("CxaPitchSessionClient") {
     REQUIRE_THROWS_AS(CxaPitchSessionClient(CxaPitchLogin(), &channel, &timer,
       stop_source.get_token()), ConnectException);
     server_channel->get_connection().close();
+  }
+
+  TEST_CASE("cancel_blocked_connection") {
+    auto server = LocalServerConnection();
+    auto accepting = std::async(std::launch::async, [&] {
+      return server.accept();
+    });
+    auto channel = LocalClientChannel("cxa", server);
+    auto server_channel = accepting.get();
+    auto closes = Queue<int>();
+    auto gate = Async<void>();
+    auto wrapper = WrapperChannel<LocalClientChannel*, GatedConnection>(
+      &channel, GatedConnection(&channel.get_connection(), &closes, &gate));
+    auto timer = TriggerTimer();
+    auto stop_source = std::stop_source();
+    using Client = CxaPitchSessionClient<decltype(wrapper)*, TriggerTimer*>;
+    auto connecting = std::async(std::launch::async, [&] {
+      return std::make_unique<Client>(CxaPitchLogin(), &wrapper, &timer,
+        stop_source.get_token());
+    });
+    read_exactly(*server_channel, LOGIN_SIZE);
+    auto cancellations = Queue<bool>();
+    auto canceling = RoutineHandler(spawn([&] {
+      cancellations.push(stop_source.request_stop());
+    }));
+    closes.pop();
+    flush_pending_routines();
+    auto cancellation = cancellations.try_pop();
+    gate.get_eval().set();
+    canceling.wait();
+    REQUIRE_THROWS_AS(connecting.get(), ConnectException);
+    REQUIRE(cancellation.has_value());
+    REQUIRE(*cancellation);
   }
 
   TEST_CASE("timeout_pending_login") {
