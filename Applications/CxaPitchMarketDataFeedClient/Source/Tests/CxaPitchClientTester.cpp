@@ -199,8 +199,8 @@ namespace {
     }
   };
 
-  SharedBuffer encode_block(
-      std::uint32_t sequence, const std::vector<std::uint8_t>& types) {
+  SharedBuffer encode_block(std::uint8_t unit, std::uint32_t sequence,
+      const std::vector<std::uint8_t>& types) {
     auto payload = SharedBuffer();
     auto encoder = CxaPitchEncoder(Ref(payload));
     for(auto type : types) {
@@ -209,11 +209,16 @@ namespace {
     }
     auto header = CxaPitchHeader(
       static_cast<std::uint16_t>(CxaPitchHeader::LENGTH + payload.get_size()),
-      static_cast<std::uint8_t>(types.size()), 1, sequence);
+      static_cast<std::uint8_t>(types.size()), unit, sequence);
     auto block = SharedBuffer();
     header.encode(out(block));
     append(block, payload);
     return block;
+  }
+
+  SharedBuffer encode_block(
+      std::uint32_t sequence, const std::vector<std::uint8_t>& types) {
+    return encode_block(1, sequence, types);
   }
 
   SharedBuffer encode_malformed_block(
@@ -241,15 +246,25 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(fixture.m_client->read().m_type == 0x12);
   }
 
-  TEST_CASE("unit_mismatch") {
-    auto fixture = Fixture(2, 1, 1);
+  TEST_CASE("unit_filter") {
+    auto fixture = Fixture(1, 1, 1);
+    fixture.publish(encode_block(1, {0x11}));
+    REQUIRE(fixture.m_client->read().m_type == 0x11);
     SUBCASE("feed") {
-      fixture.m_feed_clients[0]->m_blocks.push(encode_block(1, {0x11}));
+      fixture.publish(encode_block(2, 2, {0x21, 0x22}));
+      fixture.publish(encode_block(2, {0x12, 0x13}));
     }
     SUBCASE("recovery") {
-      fixture.m_recovery_clients[0]->m_blocks.push(encode_block(1, {0x11}));
+      fixture.publish(encode_block(4, {0x14}));
+      auto request = fixture.require_recovery_request(CxaPitchGap(2, 2), 5);
+      request->m_result.set(2);
+      fixture.m_recovery_clients[0]->m_blocks.push(
+        encode_block(2, 2, {0x21, 0x22}));
+      fixture.m_recovery_clients[0]->m_blocks.push(
+        encode_block(2, {0x12, 0x13}));
     }
-    REQUIRE_THROWS_AS(fixture.m_client->read(), IOException);
+    REQUIRE(fixture.m_client->read().m_type == 0x12);
+    REQUIRE(fixture.m_client->read().m_type == 0x13);
   }
 
   TEST_CASE("unit_zero_heartbeat") {

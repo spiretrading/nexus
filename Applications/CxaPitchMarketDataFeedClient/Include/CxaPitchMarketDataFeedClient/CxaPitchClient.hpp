@@ -482,11 +482,7 @@ namespace Nexus {
         auto block = m_feed_clients[index]->read();
         auto& header = block.get_header();
         if(header.m_sequence != 0 && header.m_unit != m_unit) {
-          m_messages.close(std::make_exception_ptr(Beam::IOException(
-            "CXA PITCH feed " + std::to_string(index) + " received unit " +
-            std::to_string(header.m_unit) + "; expected unit " +
-            std::to_string(m_unit) + ".")));
-          return;
+          continue;
         }
         validate(block);
         auto timestamp = m_time_client->get_time();
@@ -532,11 +528,7 @@ namespace Nexus {
         auto block = m_recovery_clients[index]->read();
         auto& header = block.get_header();
         if(header.m_sequence != 0 && header.m_unit != m_unit) {
-          m_messages.close(std::make_exception_ptr(Beam::IOException(
-            "CXA PITCH recovery feed " + std::to_string(index) +
-            " received unit " + std::to_string(header.m_unit) +
-            "; expected unit " + std::to_string(m_unit) + ".")));
-          return;
+          continue;
         }
         validate(block);
         auto timestamp = m_time_client->get_time();
