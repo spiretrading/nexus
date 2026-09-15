@@ -77,9 +77,11 @@ if [[ -n "$1" ]]; then
     exit 1
   fi
 else
+  status=0
   for dir in "${PREFIX}"_*; do
     if [[ -d "$dir" ]]; then
-      check_application "$dir"
+      check_application "$dir" || status=1
     fi
   done
+  exit "$status"
 fi
