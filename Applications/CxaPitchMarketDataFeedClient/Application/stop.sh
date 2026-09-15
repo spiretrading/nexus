@@ -30,7 +30,7 @@ wait_for_termination() {
   return 1
 }
 
-stop_application() {
+stop_application() (
   local dir=$1
   local feed_name="${dir#*_}"
   local app_name="$feed_name"_"${dir%%_*}"
@@ -38,9 +38,16 @@ stop_application() {
   if [[ -f "$PID_FILE" ]]; then
     if is_application_running "$feed_name"; then
       local pid=$(<"$PID_FILE")
-      kill -SIGINT "$pid" 2> /dev/null
+      if ! kill -SIGINT "$pid" 2> /dev/null; then
+        echo "Error: Unable to signal $app_name (pid $pid)." >&2
+        return 1
+      fi
       if ! wait_for_termination "$pid"; then
-        kill -SIGKILL "$pid" > /dev/null
+        if ! kill -SIGKILL "$pid" 2> /dev/null ||
+            ! wait_for_termination "$pid"; then
+          echo "Error: Unable to terminate $app_name (pid $pid)." >&2
+          return 1
+        fi
         log_file=$(ls -t srv_*.log 2>/dev/null | head -n 1)
         if [[ -n "$log_file" ]]; then
          echo "Forcefully terminated $APPLICATION." >> "$log_file"
@@ -49,8 +56,7 @@ stop_application() {
     fi
     rm -f "$PID_FILE"
   fi
-  cd - > /dev/null
-}
+)
 
 if [[ -n "$1" ]]; then
   target_dir="${PREFIX}_$1"
@@ -61,9 +67,11 @@ if [[ -n "$1" ]]; then
     exit 1
   fi
 else
+  status=0
   for dir in "${PREFIX}"_*; do
     if [[ -d "$dir" ]]; then
-      stop_application "$dir"
+      stop_application "$dir" || status=1
     fi
   done
+  exit "$status"
 fi
