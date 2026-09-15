@@ -12,19 +12,19 @@ is_application_running() {
 
 wait_for_termination() {
   local pid=$1
-  local timeout=300
-  local interval=0.1
-  local max_interval=10
-  local elapsed=0
-  while(( $(echo "$elapsed < $timeout" | bc -l) )); do
+  local timeout_tenths=3000
+  local interval_tenths=1
+  local max_interval_tenths=100
+  local elapsed_tenths=0
+  while((elapsed_tenths < timeout_tenths)); do
     if [[ ! -e /proc/$pid ]]; then
       return 0
     fi
-    sleep $interval
-    elapsed=$(echo "$elapsed + $interval" | bc)
-    interval=$(echo "$interval * 2" | bc)
-    if(( $(echo "$interval > $max_interval" | bc -l) )); then
-      interval=$max_interval
+    sleep "$((interval_tenths / 10)).$((interval_tenths % 10))"
+    elapsed_tenths=$((elapsed_tenths + interval_tenths))
+    interval_tenths=$((interval_tenths * 2))
+    if((interval_tenths > max_interval_tenths)); then
+      interval_tenths=$max_interval_tenths
     fi
   done
   return 1
