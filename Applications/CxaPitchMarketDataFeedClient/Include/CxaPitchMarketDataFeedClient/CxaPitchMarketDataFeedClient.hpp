@@ -82,7 +82,8 @@ namespace Nexus {
         std::same_as<E, CxaPitchOrderExecutedAtPrice>
       void execute(const E& message);
       void reduce(
-        const std::string& id, OrderEntry& order, std::uint32_t quantity);
+        typename std::unordered_map<std::string, OrderEntry>::iterator order,
+        std::uint32_t quantity);
       void reduce(const CxaPitchReduceSize& message);
       void modify(const CxaPitchModifyOrder& message);
       void remove(const CxaPitchDeleteOrder& message);
@@ -214,18 +215,19 @@ namespace Nexus {
     auto id = std::to_string(message.m_order_id);
     m_feed_client->offset_order_size(
       id, -Quantity(message.m_executed_quantity), message.m_timestamp);
-    if(auto order = Beam::lookup(m_orders, id)) {
+    auto order = m_orders.find(id);
+    if(order != m_orders.end()) {
       auto [price, code] = [&] {
         if constexpr(std::same_as<E, CxaPitchOrderExecutedAtPrice>) {
           return std::pair(message.m_price, message.m_execution_type);
         } else {
-          return std::pair(order->m_price, ' ');
+          return std::pair(order->second.m_price, ' ');
         }
       }();
-      publish(order->m_ticker, message.m_timestamp, price,
-        message.m_executed_quantity, code, order->m_side, order->m_pid,
-        message.m_contra_pid);
-      reduce(id, *order, message.m_executed_quantity);
+      publish(order->second.m_ticker, message.m_timestamp, price,
+        message.m_executed_quantity, code, order->second.m_side,
+        order->second.m_pid, message.m_contra_pid);
+      reduce(order, message.m_executed_quantity);
     }
   }
 
@@ -233,11 +235,12 @@ namespace Nexus {
     IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   void CxaPitchMarketDataFeedClient<M, C>::reduce(
-      const std::string& id, OrderEntry& order, std::uint32_t quantity) {
-    if(order.m_quantity > quantity) {
-      order.m_quantity -= quantity;
+      typename std::unordered_map<std::string, OrderEntry>::iterator order,
+      std::uint32_t quantity) {
+    if(order->second.m_quantity > quantity) {
+      order->second.m_quantity -= quantity;
     } else {
-      m_orders.erase(id);
+      m_orders.erase(order);
     }
   }
 
@@ -253,8 +256,9 @@ namespace Nexus {
     auto id = std::to_string(message.m_order_id);
     m_feed_client->offset_order_size(
       id, -Quantity(message.m_cancelled_quantity), message.m_timestamp);
-    if(auto order = Beam::lookup(m_orders, id)) {
-      reduce(id, *order, message.m_cancelled_quantity);
+    auto order = m_orders.find(id);
+    if(order != m_orders.end()) {
+      reduce(order, message.m_cancelled_quantity);
     }
   }
 
