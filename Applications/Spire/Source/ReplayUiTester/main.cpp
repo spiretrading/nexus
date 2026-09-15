@@ -1,6 +1,14 @@
 #include <vector>
 #include <QApplication>
 #include <QTextEdit>
+#include "Nexus/TestEnvironment/TestClients.hpp"
+#include "Nexus/TestEnvironment/TestEnvironment.hpp"
+#include "Spire/Blotter/BlotterSettings.hpp"
+#include "Spire/BookView/AggregateBookViewModel.hpp"
+#include "Spire/BookView/BookViewWindow.hpp"
+#include "Spire/KeyBindings/AdditionalTagDatabase.hpp"
+#include "Spire/KeyBindings/KeyBindingsModel.hpp"
+#include "Spire/LegacyUI/UserProfile.hpp"
 #include "Spire/Playback/ReplayWindow.hpp"
 #include "Spire/ReplayUiTester/GeneratedTimeAndSalesModel.hpp"
 #include "Spire/Spire/ArrayListModel.hpp"
@@ -61,10 +69,43 @@ namespace {
     return infos;
   }
 
+  auto to_text(const std::shared_ptr<PropertyHub>& hub,
+      const ListModel<PropertyHubMember*>& roster) {
+    auto count = 0;
+    auto name = QString();
+    for(auto i = 0; i < roster.get_size(); ++i) {
+      auto member = roster.get(i);
+      if(member->get_hub()->get() == hub) {
+        if(count == 0) {
+          name = member->get_name();
+        }
+        ++count;
+      }
+    }
+    auto ticker = hub->get<Ticker>(PropertyHub::TICKER_PROPERTY)->get();
+    if(count == 0) {
+      if(ticker) {
+        name = Spire::to_text(ticker);
+      } else {
+        name = QObject::tr("Unassigned");
+      }
+    } else if(count > 1) {
+      if(ticker) {
+        name = QObject::tr("%1 (%2)").
+          arg(Spire::to_text(ticker)).
+          arg(count);
+      } else {
+        name = QObject::tr("Unassigned (%1)").arg(count);
+      }
+    }
+    return QString("%1 [%2]").arg(name).
+      arg(QString::fromStdString(to_string(hub->get_id())).left(8));
+  }
+
   auto populate_tickers() {
     auto model = std::make_shared<LocalQueryModel<TickerInfo>>();
     for(auto& info : get_ticker_infos()) {
-      model->add(to_text(info.m_ticker).toLower(), info);
+      model->add(Spire::to_text(info.m_ticker).toLower(), info);
       model->add(QString::fromStdString(info.m_name).toLower(), info);
     }
     return model;
@@ -74,46 +115,82 @@ namespace {
 
 struct ReplayUiTester : QWidget {
   ptime m_start;
+  TestEnvironment m_environment;
+  Clients m_clients;
+  UserProfile m_user_profile;
   std::shared_ptr<TickerInfoQueryModel> m_tickers;
-  std::shared_ptr<TimeAndSalesPropertiesWindowFactory> m_factory;
-  std::shared_ptr<ArrayListModel<SelectableTarget>> m_targets;
+  std::shared_ptr<KeyBindingsModel> m_key_bindings;
+  std::shared_ptr<TimeAndSalesPropertiesWindowFactory>
+    m_time_and_sales_factory;
+  std::shared_ptr<BookViewPropertiesWindowFactory> m_book_view_factory;
+  std::shared_ptr<ArrayListModel<std::shared_ptr<PropertyHub>>> m_attachments;
   ReplayWindow m_replay_window;
   QTextEdit* m_event_log;
   int m_time_and_sale_count;
-  scoped_connection m_targets_connection;
+  int m_book_view_count;
+  scoped_connection m_attachments_connection;
 
   ReplayUiTester()
       : m_start(microsec_clock::universal_time() - HISTORY),
+        m_clients(std::in_place_type<TestClients>, Ref(m_environment)),
+        m_user_profile("", false, false, {}, {},
+          get_default_additional_tag_database(), {}, {}, {}, m_clients),
         m_tickers(populate_tickers()),
-        m_factory(std::make_shared<TimeAndSalesPropertiesWindowFactory>()),
-        m_targets(std::make_shared<ArrayListModel<SelectableTarget>>()),
+        m_key_bindings(std::make_shared<KeyBindingsModel>()),
+        m_time_and_sales_factory(
+          std::make_shared<TimeAndSalesPropertiesWindowFactory>()),
+        m_book_view_factory(
+          std::make_shared<BookViewPropertiesWindowFactory>()),
+        m_attachments(std::make_shared<
+          ArrayListModel<std::shared_ptr<PropertyHub>>>()),
         m_replay_window(std::make_shared<LocalTimelineModel>(
           Timeline(m_start, TIMELINE_DURATION)),
           TimeClient(UtcTimeClient()),
           std::make_shared<LocalDurationModel>(time_duration(0, 0, 0)),
-          m_targets,
+          m_user_profile.GetPropertyHubMembers(), m_attachments,
           std::make_shared<LocalPlaybackSpeedModel>(1),
           day_clock::universal_day() - years(1)),
-        m_time_and_sale_count(0) {
+        m_time_and_sale_count(0),
+        m_book_view_count(0) {
     setWindowTitle(tr("Replay Ui Tester"));
     setAttribute(Qt::WA_ShowWithoutActivating);
+    auto& settings = m_user_profile.GetBlotterSettings();
+    settings.SetActiveBlotter(settings.GetConsolidatedBlotter());
     auto layout = make_vbox_layout(this);
     m_event_log = new QTextEdit();
     m_event_log->setReadOnly(true);
     layout->addWidget(m_event_log);
-    auto open_button = make_label_button(tr("Open Time and Sales Window"));
-    open_button->connect_click_signal(
+    auto open_time_and_sales_button =
+      make_label_button(tr("Open Time and Sales Window"));
+    open_time_and_sales_button->connect_click_signal(
       std::bind_front(&ReplayUiTester::open_time_and_sales_window, this));
-    layout->addWidget(open_button);
+    auto open_book_view_button = make_label_button(tr("Open Book View Window"));
+    open_book_view_button->connect_click_signal(
+      std::bind_front(&ReplayUiTester::open_book_view_window, this));
+    auto button_layout = make_hbox_layout();
+    button_layout->setSpacing(scale_width(8));
+    button_layout->addWidget(open_book_view_button);
+    button_layout->addWidget(open_time_and_sales_button);
+    layout->addLayout(button_layout);
     resize(scale(500, 400));
-    m_targets_connection = m_targets->connect_operation_signal(
-      std::bind_front(&ReplayUiTester::on_targets_operation, this));
+    m_attachments_connection = m_attachments->connect_operation_signal(
+      std::bind_front(&ReplayUiTester::on_attachments_operation, this));
+    m_replay_window.installEventFilter(this);
+  }
+
+  bool eventFilter(QObject* object, QEvent* event) override {
+    if(event->type() == QEvent::Close) {
+      QApplication::quit();
+    }
+    return QWidget::eventFilter(object, event);
   }
 
   void showEvent(QShowEvent* event) override {
     m_replay_window.show();
-    move(m_replay_window.pos() + QPoint(-width() / 2, 200));
+    move(m_replay_window.pos() + QPoint((m_replay_window.frameGeometry().
+      width() - frameGeometry().width()) / 2, 200));
     open_time_and_sales_window();
+    open_book_view_window();
     QWidget::showEvent(event);
   }
 
@@ -129,7 +206,8 @@ struct ReplayUiTester : QWidget {
   }
 
   void open_time_and_sales_window() {
-    auto window = new TimeAndSalesWindow(m_tickers, m_factory,
+    auto window = new TimeAndSalesWindow(Ref(m_user_profile), m_tickers,
+      m_time_and_sales_factory,
       std::bind_front(&ReplayUiTester::time_and_sales_model_builder, this));
     window->setAttribute(Qt::WA_DeleteOnClose);
     window->show();
@@ -140,22 +218,32 @@ struct ReplayUiTester : QWidget {
     ++m_time_and_sale_count;
   }
 
-  void on_targets_operation(
-      const SelectableTargetListModel::Operation& operation) {
-    auto& targets = *m_targets;
+  void open_book_view_window() {
+    auto window = new BookViewWindow(Ref(m_user_profile), m_tickers,
+      m_key_bindings, m_book_view_factory,
+      [] (const auto&) { return make_local_aggregate_book_view_model(); });
+    window->setAttribute(Qt::WA_DeleteOnClose);
+    window->show();
+    auto offset = scale(WINDOW_GAP * m_book_view_count,
+      WINDOW_GAP * m_book_view_count);
+    window->move(
+      QPoint(x() - window->frameGeometry().width() - scale_width(WINDOW_GAP),
+        y()) + QPoint(-offset.width(), offset.height()));
+    ++m_book_view_count;
+  }
+
+  void on_attachments_operation(
+      const PropertyHubListModel::Operation& operation) {
     visit(operation,
-      [&] (const SelectableTargetListModel::AddOperation& operation) {
-        m_event_log->append(QString("Add %1: %2").
-          arg(operation.m_index).
-          arg(to_text(targets.get(operation.m_index).m_target)));
+      [&] (const PropertyHubListModel::AddOperation& operation) {
+        m_event_log->append(tr("Attached: %1").
+          arg(to_text(m_attachments->get(operation.m_index),
+            *m_user_profile.GetPropertyHubMembers())));
       },
-      [&] (const SelectableTargetListModel::UpdateOperation& operation) {
-        m_event_log->append(QString("Update %1: %2").
-          arg(operation.m_index).
-          arg(to_text(operation.get_value().m_target)));
-      },
-      [&] (const SelectableTargetListModel::RemoveOperation& operation) {
-        m_event_log->append(QString("Remove %1").arg(operation.m_index));
+      [&] (const PropertyHubListModel::PreRemoveOperation& operation) {
+        m_event_log->append(tr("Detached: %1").
+          arg(to_text(m_attachments->get(operation.m_index),
+            *m_user_profile.GetPropertyHubMembers())));
       });
   }
 };
