@@ -69,66 +69,41 @@ target_include_directories(Library INTERFACE
   ${PROJECT_BINARY_DIR})
 file(GLOB application_source_files Source/main.cpp)
 add_executable(Application ${application_source_files} Version.hpp)
-target_compile_definitions(Application PRIVATE YAML_CPP_STATIC_DEFINE)
 set_target_properties(
   Application PROPERTIES OUTPUT_NAME CxaPitchMarketDataFeedClient)
-target_link_libraries(Application Library
-  debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
-  optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
-  debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
-  optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
-  debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
-  optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
-  debug ${YAML_LIBRARY_DEBUG_PATH}
-  optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
-  debug ${ZLIB_LIBRARY_DEBUG_PATH}
-  optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
-if(UNIX)
-  target_link_libraries(Application
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
-    dl pthread rt)
-endif()
-if(WIN32)
-  target_link_libraries(Application Crypt32.lib)
-endif()
 install(TARGETS Application DESTINATION ${PROJECT_BINARY_DIR}/Application)
 file(GLOB test_source_files Source/Tests/*.cpp)
 add_executable(Tests ${test_source_files})
-target_compile_definitions(Tests PRIVATE YAML_CPP_STATIC_DEFINE)
 set_target_properties(
   Tests PROPERTIES OUTPUT_NAME CxaPitchMarketDataFeedClientTester)
-target_link_libraries(Tests Library
-  debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
-  optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
-  debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
-  optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
-  debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
-  optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
-  debug ${YAML_LIBRARY_DEBUG_PATH}
-  optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
-  debug ${ZLIB_LIBRARY_DEBUG_PATH}
-  optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
-if(UNIX)
-  target_link_libraries(Tests
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
-    dl pthread rt)
-endif()
-if(WIN32)
-  target_link_libraries(Tests Crypt32.lib)
-endif()
+foreach(target Application Tests)
+  target_compile_definitions(${target} PRIVATE YAML_CPP_STATIC_DEFINE)
+  target_link_libraries(${target} Library
+    debug ${CRYPTOPP_LIBRARY_DEBUG_PATH}
+    optimized ${CRYPTOPP_LIBRARY_OPTIMIZED_PATH}
+    debug ${OPEN_SSL_LIBRARY_DEBUG_PATH}
+    optimized ${OPEN_SSL_LIBRARY_OPTIMIZED_PATH}
+    debug ${OPEN_SSL_BASE_LIBRARY_DEBUG_PATH}
+    optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
+    debug ${YAML_LIBRARY_DEBUG_PATH}
+    optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
+    debug ${ZLIB_LIBRARY_DEBUG_PATH}
+    optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
+  if(UNIX)
+    target_link_libraries(${target}
+      debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
+      optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
+      debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
+      optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
+      debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
+      optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
+      debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
+      optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
+      dl pthread rt)
+  endif()
+  if(WIN32)
+    target_link_libraries(${target} Crypt32.lib)
+  endif()
+endforeach()
 install(TARGETS Tests DESTINATION ${PROJECT_BINARY_DIR}/Tests)
 add_custom_command(TARGET Tests POST_BUILD COMMAND Tests)
