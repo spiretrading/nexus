@@ -109,6 +109,24 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(sequencer.get_sequence().value_or(0) == 102);
   }
 
+  TEST_CASE("shared_block_storage") {
+    auto sequencer = CxaPitchSequencer(1, duration_from_string("00:00:03"));
+    auto timestamp = time_from_string("2026-09-08 10:00:00");
+    auto source = encode_block(100, {0x11, 0x12, 0x13});
+    auto expected = source.substr(CxaPitchHeader::LENGTH);
+    sequencer.add(0, CxaPitchBlock::parse(source), timestamp);
+    auto first = sequencer.read();
+    REQUIRE(first.has_value());
+    auto second = sequencer.read();
+    REQUIRE(second.has_value());
+    REQUIRE(second->get_data() == first->get_data() + first->get_size());
+    source.assign(source.size(), char(0));
+    sequencer.reset(103);
+    REQUIRE(*first == expected.substr(0, CxaPitchUnitClear::LENGTH));
+    REQUIRE(*second ==
+      expected.substr(CxaPitchUnitClear::LENGTH, CxaPitchUnitClear::LENGTH));
+  }
+
   TEST_CASE("duplicate_block") {
     auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
     auto timestamp = time_from_string("2026-09-08 10:00:00");

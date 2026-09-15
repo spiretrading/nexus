@@ -203,6 +203,8 @@ namespace Nexus {
         block.get_header().m_count <= *m_expected_sequence - sequence) {
       return;
     }
+    auto payload = Beam::SharedBuffer();
+    auto offset = std::size_t(0);
     for(auto& message : block) {
       if(sequence >= *m_expected_sequence) {
         auto entry = [&] {
@@ -213,11 +215,15 @@ namespace Nexus {
             m_messages, sequence, {}, &Entry::m_sequence);
         }();
         if(entry == m_messages.end() || entry->m_sequence != sequence) {
-          m_messages.insert(entry, Entry(sequence, Beam::SharedBuffer(
-            message.m_payload - CxaPitchMessage::HEADER_LENGTH,
-            message.m_length)));
+          if(payload.get_size() == 0) {
+            auto source = block.get_payload();
+            payload = Beam::SharedBuffer(source.data(), source.size());
+          }
+          m_messages.insert(entry,
+            Entry(sequence, payload.slice(offset, message.m_length)));
         }
       }
+      offset += message.m_length;
       ++sequence;
     }
   }
