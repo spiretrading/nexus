@@ -41,14 +41,17 @@ namespace Spire {
        *        the playback.
        * @param time_client The time client that provides the current time.
        * @param playhead The current position within the timeline.
-       * @param targets The replay attachment targets that user can select.
+       * @param roster The members whose PropertyHubs form the attachment
+       *        targets.
+       * @param attachments The PropertyHubs that the replay is attached to.
        * @param speed The playback speed.
        * @param min_date The minimum date for the replay.
        * @param parent The parent widget.
        */
       ReplayWindow(std::shared_ptr<TimelineModel> timeline,
         Beam::TimeClient time_client, std::shared_ptr<DurationModel> playhead,
-        std::shared_ptr<SelectableTargetListModel> targets,
+        std::shared_ptr<ListModel<PropertyHubMember*>> roster,
+        std::shared_ptr<PropertyHubListModel> attachments,
         std::shared_ptr<PlaybackSpeedModel> speed,
         boost::optional<boost::gregorian::date> min_date,
         QWidget* parent = nullptr);
@@ -62,8 +65,9 @@ namespace Spire {
       /** Returns the timeline position. */
       const std::shared_ptr<DurationModel>& get_playhead() const;
 
-      /** Returns the replay attachment targets. */
-      const std::shared_ptr<SelectableTargetListModel>& get_targets() const;
+      /** Returns the PropertyHubs that the replay is attached to. */
+      const std::shared_ptr<PropertyHubListModel>&
+        get_attachments() const;
 
       /** Returns the replay speed. */
       const std::shared_ptr<PlaybackSpeedModel>& get_speed() const;
@@ -78,7 +82,7 @@ namespace Spire {
     private:
       struct PlayheadModel;
       std::shared_ptr<PlayheadModel> m_playhead;
-      std::shared_ptr<SelectableTargetListModel> m_targets;
+      std::shared_ptr<PropertyHubListModel> m_attachments;
       LocalValueModel<State> m_state;
       SeekBar* m_seek_bar;
       Button* m_start_button;
