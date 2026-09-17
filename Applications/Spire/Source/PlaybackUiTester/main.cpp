@@ -43,33 +43,22 @@ namespace {
 
   auto to_text(const std::shared_ptr<PropertyHub>& hub,
       const ListModel<PropertyHubMember*>& roster) {
-    auto count = 0;
-    auto name = QString();
-    for(auto i = 0; i < roster.get_size(); ++i) {
-      auto member = roster.get(i);
-      if(member->get_hub()->get() == hub) {
-        if(count == 0) {
-          name = member->get_name();
-        }
-        ++count;
-      }
-    }
+    auto is_member = [&] (auto member) {
+      return member->get_hub()->get() == hub;
+    };
+    auto count = std::count_if(roster.begin(), roster.end(), is_member);
     auto ticker = hub->get<Ticker>(PropertyHub::TICKER_PROPERTY)->get();
-    if(count == 0) {
-      if(ticker) {
-        name = Spire::to_text(ticker);
-      } else {
-        name = QObject::tr("Unassigned");
+    auto name = [&] {
+      if(count == 1) {
+        return (*std::find_if(roster.begin(), roster.end(), is_member))->
+          get_name();
       }
-    } else if(count > 1) {
-      if(ticker) {
-        name = QObject::tr("%1 (%2)").
-          arg(Spire::to_text(ticker)).
-          arg(count);
-      } else {
-        name = QObject::tr("Unassigned (%1)").arg(count);
+      auto label = ticker ? Spire::to_text(ticker) : QObject::tr("Unassigned");
+      if(count == 0) {
+        return label;
       }
-    }
+      return QString("%1 (%2)").arg(label).arg(count);
+    }();
     return QString("%1 [%2]").arg(name).
       arg(QString::fromStdString(to_string(hub->get_id())).left(8));
   }

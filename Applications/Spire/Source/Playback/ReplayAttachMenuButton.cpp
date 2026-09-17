@@ -21,13 +21,12 @@ namespace {
   class AttachmentModel : public ValueModel<bool> {
     public:
       AttachmentModel(std::shared_ptr<PropertyHubListModel> attachments,
-          std::shared_ptr<PropertyHub> hub)
-          : m_attachments(std::move(attachments)),
-            m_hub(std::move(hub)),
-            m_is_attached(find() != -1) {
-        m_connection = m_attachments->connect_operation_signal(
-          std::bind_front(&AttachmentModel::on_operation, this));
-      }
+        std::shared_ptr<PropertyHub> hub)
+        : m_attachments(std::move(attachments)),
+          m_hub(std::move(hub)),
+          m_is_attached(find() != -1),
+          m_connection(m_attachments->connect_operation_signal(
+            std::bind_front(&AttachmentModel::on_operation, this))) {}
 
       const Type& get() const override {
         return m_is_attached;
@@ -89,14 +88,11 @@ namespace {
             m_roster(std::move(roster)),
             m_attachments(std::move(attachments)),
             m_highlight(std::make_shared<ArrayListModel<Window*>>()),
-            m_is_rebuild_pending(false) {
-        m_roster_connection = m_roster->connect_operation_signal(
-          [=] (const auto&) {
-            clear_items();
-            schedule_rebuild();
-          });
-        m_current_connection = m_button->get_menu().connect_current_signal(
-          std::bind_front(&ReplayAttachMenu::on_current, this));
+            m_is_rebuild_pending(false),
+            m_roster_connection(m_roster->connect_operation_signal(
+              std::bind_front(&ReplayAttachMenu::on_operation, this))),
+            m_current_connection(m_button->get_menu().connect_current_signal(
+              std::bind_front(&ReplayAttachMenu::on_current, this))) {
         rebuild();
       }
 
@@ -162,6 +158,7 @@ namespace {
               QObject::tr("Unassigned (%1)").arg(target.m_members.size());
           }
         }
+        std::stable_sort(targets.begin(), targets.end(), compare_targets);
         return targets;
       }
 
@@ -186,8 +183,7 @@ namespace {
         }
       }
 
-      void render(std::vector<Target> targets) {
-        std::stable_sort(targets.begin(), targets.end(), compare_targets);
+      void render(const std::vector<Target>& targets) {
         auto unassigned = std::ranges::find_if(targets,
           [] (auto& target) {
             return !target.m_ticker;
@@ -200,8 +196,8 @@ namespace {
             menu.add_separator();
             m_items.emplace_back();
           }
-          menu.add_check_box(i->m_name, std::make_shared<AttachmentModel>(
-            m_attachments, i->m_hub));
+          menu.add_check_box(i->m_name,
+            std::make_shared<AttachmentModel>(m_attachments, i->m_hub));
           m_items.push_back(i->m_members);
         }
       }
@@ -211,7 +207,7 @@ namespace {
         auto targets = make_targets(*m_roster);
         collect_attachments(targets);
         observe(targets);
-        render(std::move(targets));
+        render(targets);
       }
 
       void schedule_rebuild() {
@@ -228,6 +224,12 @@ namespace {
       void clear_items() {
         m_items.clear();
         clear(*m_highlight.get_current());
+      }
+
+      void on_operation(
+          const ListModel<PropertyHubMember*>::Operation& operation) {
+        clear_items();
+        schedule_rebuild();
       }
 
       void on_current(const optional<int>& current) {
