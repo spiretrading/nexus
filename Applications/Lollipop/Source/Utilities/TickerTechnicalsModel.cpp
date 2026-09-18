@@ -124,7 +124,7 @@ TickerTechnicalsModel::TickerTechnicalsModel(
     timeAndSaleQuery, m_eventHandler.get_slot<TimeAndSale>(
       std::bind_front(&TickerTechnicalsModel::OnTimeAndSale, this)));
   m_loadPromise = std::make_shared<QtPromise<void>>(QtPromise([=] {
-    return userProfile->GetClients().get_market_data_client().
+    return *userProfile->GetClients().get_market_data_client().
       load_session_technicals(ticker);
   }, LaunchPolicy::ASYNC).then([=] (const SessionTechnicals& technicals) {
     if(technicals.m_open) {
