@@ -6,7 +6,7 @@ const path = require('node:path');
 const source = fs.realpathSync(__dirname);
 const root = fs.realpathSync(process.cwd());
 const stateFile = path.join(root, '.build_state.json');
-const beamCommit = '24f3a8088fb66148f3970899f59efc78cb149bc4';
+const beamCommit = '7784fa0b7e52e857e5e69c4aeb8a8e4d7f70672f';
 const configuration = [
   'package.json', 'package-lock.json', 'tsconfig.json', 'tsconfig.test.json'
 ];
@@ -55,7 +55,8 @@ function record() {
   }
   const previous = new Set(state.snapshot);
   state.generated = [...new Set([...state.generated,
-    ...outputs().filter(filename => !previous.has(filename))])];
+    ...outputs().filter(filename => !previous.has(filename))])].filter(
+      filename => inspect(path.join(root, filename)));
   delete state.snapshot;
   save();
 }
@@ -282,8 +283,6 @@ function build() {
   save();
   fs.rmSync(path.join(root, 'mod_time.txt'), { force: true });
   remove(generated);
-  state.generated = state.generated.filter(filename =>
-    !generated.includes(filename));
   state.snapshot = outputs();
   save();
   try {

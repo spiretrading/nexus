@@ -14,6 +14,10 @@ FOR /F "skip=1" %%H IN ('certutil -hashfile "%~dp0setup.bat" SHA256') DO (
 )
 IF NOT DEFINED SETUP_HASH EXIT /B 1
 SET "ROOT=%cd%"
+SET "CACHE_DIRECTORY=!ROOT!\cache_files\nexus"
+IF NOT EXIST "!CACHE_DIRECTORY!" (
+  MD "!CACHE_DIRECTORY!" || EXIT /B 1
+)
 CALL :SetupVSEnvironment || EXIT /B 1
 SET "LUA_HASH="
 FOR /F "skip=1" %%H IN ('
@@ -24,7 +28,7 @@ IF NOT DEFINED LUA_HASH EXIT /B 1
 SET "SETUP_HASH=!SETUP_HASH! !LUA_HASH!"
 CALL :AddRepo "Beam" ^
   "https://www.github.com/spiretrading/beam" ^
-  "24f3a8088fb66148f3970899f59efc78cb149bc4" ^
+  "7784fa0b7e52e857e5e69c4aeb8a8e4d7f70672f" ^
   ":BuildBeam"
 CALL :InstallRepos || EXIT /B 1
 SET "PATH=!ROOT!\Strawberry\perl\bin;!PATH!"
@@ -55,12 +59,15 @@ CALL build.bat Release -DD="!ROOT!" || EXIT /B 1
 EXIT /B 0
 
 :InstallQt
+SET "BUILD_MARKER=!CACHE_DIRECTORY!\qt-5.15.13.build_complete"
 SET "CACHED_HASH="
-IF EXIST "qt-5.15.13\.nexus_build_complete" (
-  SET /P CACHED_HASH=<"qt-5.15.13\.nexus_build_complete"
-  IF "!CACHED_HASH!"=="!SETUP_HASH!" EXIT /B 0
-  DEL /F /Q "qt-5.15.13\.nexus_build_complete"
-  IF EXIST "qt-5.15.13\.nexus_build_complete" EXIT /B 1
+IF EXIST "!BUILD_MARKER!" (
+  SET /P CACHED_HASH=<"!BUILD_MARKER!"
+  IF EXIST "qt-5.15.13\" (
+    IF "!CACHED_HASH!"=="!SETUP_HASH!" EXIT /B 0
+  )
+  DEL /F /Q "!BUILD_MARKER!"
+  IF EXIST "!BUILD_MARKER!" EXIT /B 1
 )
 IF NOT EXIST "qt-5.15.13" (
   git clone --branch v5.15.13-lts-lgpl --depth 1 ^
@@ -100,7 +107,7 @@ SETLOCAL
 SET "CL=/MP"
 nmake || (ENDLOCAL & POPD & EXIT /B 1)
 ENDLOCAL
-(ECHO !SETUP_HASH!) >.nexus_build_complete || (POPD & EXIT /B 1)
+(ECHO !SETUP_HASH!) >"!BUILD_MARKER!" || (POPD & EXIT /B 1)
 POPD
 EXIT /B 0
 
@@ -211,6 +218,7 @@ GOTO InstallReposLoop
 
 :DownloadAndExtract
 SET "FOLDER=%~1"
+SET "BUILD_MARKER=!CACHE_DIRECTORY!\!FOLDER!.build_complete"
 SET "URL=%~2"
 SET "EXPECTED_HASH=%~3"
 SET "BUILD_HASH=!EXPECTED_HASH! !SETUP_HASH!"
@@ -222,11 +230,13 @@ FOR /F "tokens=* delims=/" %%A IN ("!URL!") DO (
   SET "ARCHIVE=%%~nxA"
 )
 SET "CACHED_HASH="
-IF EXIST "!FOLDER!\.nexus_build_complete" (
-  SET /P CACHED_HASH=<"!FOLDER!\.nexus_build_complete"
-  IF "!CACHED_HASH!"=="!BUILD_HASH!" EXIT /B 0
-  DEL /F /Q "!FOLDER!\.nexus_build_complete"
-  IF EXIST "!FOLDER!\.nexus_build_complete" EXIT /B 1
+IF EXIST "!BUILD_MARKER!" (
+  SET /P CACHED_HASH=<"!BUILD_MARKER!"
+  IF EXIST "!FOLDER!\" (
+    IF "!CACHED_HASH!"=="!BUILD_HASH!" EXIT /B 0
+  )
+  DEL /F /Q "!BUILD_MARKER!"
+  IF EXIST "!BUILD_MARKER!" EXIT /B 1
 )
 IF EXIST "!FOLDER!\.nexus_extract_complete" (
   SET /P CACHED_HASH=<"!FOLDER!\.nexus_extract_complete"
@@ -260,17 +270,22 @@ IF DEFINED BUILD_LABEL (
   POPD
   IF NOT "!BUILD_RESULT!"=="0" EXIT /B !BUILD_RESULT!
 )
-(ECHO !BUILD_HASH!) >"!FOLDER!\.nexus_build_complete" || EXIT /B 1
+(ECHO !BUILD_HASH!) >"!BUILD_MARKER!" || EXIT /B 1
 IF EXIST "!ARCHIVE!" DEL /F /Q "!ARCHIVE!"
 EXIT /B 0
 
 :CloneOrUpdateRepo
 SET "REPO_NAME=%~1"
+SET "BUILD_MARKER=!CACHE_DIRECTORY!\!REPO_NAME!.build_complete"
 SET "REPO_URL=%~2"
 SET "REPO_COMMIT=%~3"
 SET "BUILD_LABEL=%~4"
 SET "IS_NEW_REPO="
 IF NOT EXIST "!REPO_NAME!" (
+  IF EXIST "!BUILD_MARKER!" (
+    DEL /F /Q "!BUILD_MARKER!"
+    IF EXIST "!BUILD_MARKER!" EXIT /B 1
+  )
   git clone "!REPO_URL!" "!REPO_NAME!" || EXIT /B 1
   SET "IS_NEW_REPO=1"
 )
@@ -281,9 +296,9 @@ IF DEFINED IS_NEW_REPO (
 git merge-base --is-ancestor "!REPO_COMMIT!" HEAD >NUL 2>NUL
 IF ERRORLEVEL 1 (
   git fetch origin || (POPD & EXIT /B 1)
-  IF EXIST .nexus_build_complete (
-    DEL /F /Q .nexus_build_complete
-    IF EXIST .nexus_build_complete (POPD & EXIT /B 1)
+  IF EXIST "!BUILD_MARKER!" (
+    DEL /F /Q "!BUILD_MARKER!"
+    IF EXIST "!BUILD_MARKER!" (POPD & EXIT /B 1)
   )
   git checkout "!REPO_COMMIT!" || (POPD & EXIT /B 1)
 )
@@ -294,20 +309,20 @@ FOR /F %%H IN ('git rev-parse HEAD') DO (
 IF NOT DEFINED REPO_HEAD (POPD & EXIT /B 1)
 SET "BUILD_HASH=!REPO_HEAD! !SETUP_HASH!"
 SET "CACHED_HASH="
-IF EXIST .nexus_build_complete (
-  SET /P CACHED_HASH=<.nexus_build_complete
+IF EXIST "!BUILD_MARKER!" (
+  SET /P CACHED_HASH=<"!BUILD_MARKER!"
 )
 IF NOT "!CACHED_HASH!"=="!BUILD_HASH!" (
-  IF EXIST .nexus_build_complete (
-    DEL /F /Q .nexus_build_complete
-    IF EXIST .nexus_build_complete (POPD & EXIT /B 1)
+  IF EXIST "!BUILD_MARKER!" (
+    DEL /F /Q "!BUILD_MARKER!"
+    IF EXIST "!BUILD_MARKER!" (POPD & EXIT /B 1)
   )
   IF DEFINED BUILD_LABEL (
     CALL !BUILD_LABEL!
     SET "BUILD_RESULT=!ERRORLEVEL!"
     IF NOT "!BUILD_RESULT!"=="0" (POPD & EXIT /B !BUILD_RESULT!)
   )
-  (ECHO !BUILD_HASH!) >.nexus_build_complete || (POPD & EXIT /B 1)
+  (ECHO !BUILD_HASH!) >"!BUILD_MARKER!" || (POPD & EXIT /B 1)
 ) ELSE (
   PUSHD "!ROOT!" || (POPD & EXIT /B 1)
   CALL "!ROOT!\!REPO_NAME!\Beam\setup.bat"

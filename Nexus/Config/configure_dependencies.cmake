@@ -7,7 +7,8 @@ function(fingerprint result)
   file(GLOB inputs
     "${source_directory}/setup.*"
     "${source_directory}/Config/lua.cmake"
-    "${dependencies_directory}/*/.*_complete")
+    "${dependencies_directory}/*/.*_complete"
+    "${dependencies_directory}/cache_files/*/*.build_complete")
   list(APPEND inputs "${CMAKE_CURRENT_FUNCTION_LIST_FILE}")
   set(revisions)
   foreach(repository Beam aspen viper)

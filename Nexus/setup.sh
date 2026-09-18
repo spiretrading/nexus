@@ -3,16 +3,19 @@ set -o errexit
 set -o pipefail
 DIRECTORY=""
 ROOT=""
+CACHE_DIRECTORY=""
 SETUP_HASH=""
 DEPENDENCIES=()
 REPOS=()
 
 main() {
   resolve_paths
+  CACHE_DIRECTORY="$ROOT/cache_files/nexus"
+  mkdir -p "$CACHE_DIRECTORY" || return 1
   SETUP_HASH=$(sha256 "$DIRECTORY/setup.sh") || return 1
   add_repo "Beam" \
     "https://www.github.com/spiretrading/beam" \
-    "24f3a8088fb66148f3970899f59efc78cb149bc4" \
+    "7784fa0b7e52e857e5e69c4aeb8a8e4d7f70672f" \
     "build_beam"
   add_dependency "lua-5.5.0" \
     "https://www.lua.org/ftp/lua-5.5.0.tar.gz" \
@@ -122,16 +125,17 @@ install_repos() {
 
 download_and_extract() {
   local folder="$1"
+  local build_marker="$CACHE_DIRECTORY/$folder.build_complete"
   local url="$2"
   local expected_hash="$3"
   local build_hash="$expected_hash $SETUP_HASH"
   local build_func="$4"
   local archive="${url##*/}"
-  if [[ -f "$folder/.nexus_build_complete" ]] &&
-      [[ "$(< "$folder/.nexus_build_complete")" == "$build_hash" ]]; then
+  if [[ -d "$folder" && -f "$build_marker" ]] &&
+      [[ "$(< "$build_marker")" == "$build_hash" ]]; then
     return 0
   fi
-  rm -f "$folder/.nexus_build_complete" || return 1
+  rm -f "$build_marker" || return 1
   if [[ ! -f "$folder/.nexus_extract_complete" ]] ||
       [[ "$(< "$folder/.nexus_extract_complete")" != "$expected_hash" ]]; then
     rm -f "$folder/.nexus_extract_complete" || return 1
@@ -168,7 +172,7 @@ download_and_extract() {
     $build_func || { popd > /dev/null; return 1; }
     popd > /dev/null
   fi
-  echo "$build_hash" > "$folder/.nexus_build_complete" || return 1
+  echo "$build_hash" > "$build_marker" || return 1
   if [[ -f "$archive" ]]; then
     rm -f "$archive" || return 1
   fi
@@ -176,11 +180,13 @@ download_and_extract() {
 
 clone_or_update_repo() {
   local repo_name="$1"
+  local build_marker="$CACHE_DIRECTORY/$repo_name.build_complete"
   local repo_url="$2"
   local repo_commit="$3"
   local build_func="$4"
   local is_new_repo=0
   if [[ ! -d "$repo_name" ]]; then
+    rm -f "$build_marker" || return 1
     git clone "$repo_url" "$repo_name" || return 1
     is_new_repo=1
   fi
@@ -190,19 +196,19 @@ clone_or_update_repo() {
   fi
   if ! git merge-base --is-ancestor "$repo_commit" HEAD; then
     git fetch origin || { popd > /dev/null; return 1; }
-    rm -f .nexus_build_complete || { popd > /dev/null; return 1; }
+    rm -f "$build_marker" || { popd > /dev/null; return 1; }
     git checkout "$repo_commit" || { popd > /dev/null; return 1; }
   fi
   local repo_head
   repo_head=$(git rev-parse HEAD) || { popd > /dev/null; return 1; }
   local build_hash="$repo_head $SETUP_HASH"
-  if [[ ! -f .nexus_build_complete ]] ||
-      [[ "$(< .nexus_build_complete)" != "$build_hash" ]]; then
-    rm -f .nexus_build_complete || { popd > /dev/null; return 1; }
+  if [[ ! -f "$build_marker" ]] ||
+      [[ "$(< "$build_marker")" != "$build_hash" ]]; then
+    rm -f "$build_marker" || { popd > /dev/null; return 1; }
     if [[ -n "$build_func" ]]; then
       $build_func || { popd > /dev/null; return 1; }
     fi
-    echo "$build_hash" > .nexus_build_complete ||
+    echo "$build_hash" > "$build_marker" ||
       { popd > /dev/null; return 1; }
   else
     (cd "$ROOT" && "./$repo_name/Beam/setup.sh") ||

@@ -47,7 +47,8 @@ Section "Spire" SEC01
   ClearErrors
   ExecWait '"$PLUGINSDIR\VC_redist.x64.exe" /quiet /norestart' $0
   ${If} ${Errors}
-    MessageBox MB_OK|MB_ICONSTOP "Unable to start the VC++ runtime installer."
+    MessageBox MB_OK|MB_ICONSTOP \
+      "Unable to start the VC++ runtime installer." /SD IDOK
     SetErrorLevel 1
     Abort
   ${EndIf}
@@ -61,12 +62,14 @@ Section "Spire" SEC01
       "SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" "Installed"
     SetRegView lastused
     ${If} $1 <> 1
-      MessageBox MB_OK|MB_ICONSTOP "The required VC++ runtime is unavailable."
+      MessageBox MB_OK|MB_ICONSTOP \
+        "The required VC++ runtime is unavailable." /SD IDOK
       SetErrorLevel 1
       Abort
     ${EndIf}
   ${ElseIf} $0 <> 0
-    MessageBox MB_OK|MB_ICONSTOP "VC++ runtime installation failed ($0)."
+    MessageBox MB_OK|MB_ICONSTOP \
+      "VC++ runtime installation failed ($0)." /SD IDOK
     SetErrorLevel 1
     Abort
   ${EndIf}
@@ -103,13 +106,20 @@ SectionEnd
 
 ; Uninstaller
 Section "Uninstall" SEC04
+  ClearErrors
+  Delete "$INSTDIR\Spire.exe"
+  ${If} ${Errors}
+    MessageBox MB_OK|MB_ICONSTOP \
+      "Unable to remove Spire. Close the application and try again." /SD IDOK
+    SetErrorLevel 1
+    Abort
+  ${EndIf}
   ; Remove desktop and start menu shortcuts
   Delete "$DESKTOP\Spire.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME}.lnk"
   RmDir "$SMPROGRAMS\${PRODUCT_NAME}"
 
-  Delete "$INSTDIR\Spire.exe"
   Delete "$INSTDIR\uninstall.exe"
   SetOutPath "$TEMP"
   RmDir "$INSTDIR"

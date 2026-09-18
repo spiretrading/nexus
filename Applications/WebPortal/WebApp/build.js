@@ -349,21 +349,59 @@ function deploy() {
   }
   fs.mkdirSync(destination, { recursive: true });
   const directory = fs.realpathSync(destination);
+  let previous = [];
   if(state.deployment && state.deployment.directory == directory) {
-    remove(directory, state.deployment.files);
+    previous = state.deployment.files;
   }
   const output = path.join(root, 'application');
   const files = collect(output);
-  state.deployment = {
-    directory, files: files.map(filename => path.relative(output, filename))
-  };
-  save();
+  const names = files.map(filename => path.relative(output, filename));
+  const updates = [];
   for(const filename of files) {
-    if(fs.statSync(filename).isFile()) {
-      copyOutput(filename,
-        path.join(directory, path.relative(output, filename)), directory);
+    if(!fs.statSync(filename).isFile()) {
+      continue;
+    }
+    const target = path.join(directory, path.relative(output, filename));
+    checkPath(directory, target);
+    const info = inspect(target);
+    if(info && (info.isSymbolicLink() || !info.isFile())) {
+      throw new Error(`Refusing to overwrite the existing ${target}.`);
+    }
+    if(!info || !fs.readFileSync(filename).equals(fs.readFileSync(target))) {
+      updates.push(path.relative(output, filename));
     }
   }
+  const obsolete = previous.filter(filename => !names.includes(filename));
+  if(updates.length == 0 && obsolete.length == 0 &&
+      names.every(filename => previous.includes(filename))) {
+    return;
+  }
+  let staging;
+  try {
+    const tracked = [...previous, ...names];
+    if(updates.length != 0) {
+      staging = fs.mkdtempSync(path.join(directory, '.deploy-'));
+      const relative = path.relative(directory, staging);
+      tracked.push(relative, ...names.map(name => path.join(relative, name)));
+    }
+    state.deployment = { directory, files: [...new Set(tracked)] };
+    save();
+    for(const name of updates) {
+      copyOutput(path.join(output, name), path.join(staging, name), staging);
+    }
+    for(const name of updates) {
+      const target = path.join(directory, name);
+      fs.mkdirSync(path.dirname(target), { recursive: true });
+      fs.renameSync(path.join(staging, name), target);
+    }
+    remove(directory, obsolete);
+  } finally {
+    if(staging) {
+      fs.rmSync(staging, { recursive: true, force: true });
+    }
+  }
+  state.deployment = { directory, files: names };
+  save();
 }
 
 function build() {
@@ -421,8 +459,6 @@ function build() {
   const generated = state.generated.filter(filename =>
     filename == outputName() || filename.startsWith(outputName() + path.sep));
   remove(root, generated);
-  state.generated = state.generated.filter(filename =>
-    !generated.includes(filename));
   state.snapshot = outputs();
   save();
   try {
@@ -444,7 +480,8 @@ function build() {
   } finally {
     const previous = new Set(state.snapshot);
     state.generated = [...new Set([...state.generated,
-      ...outputs().filter(filename => !previous.has(filename))])];
+      ...outputs().filter(filename => !previous.has(filename))])].filter(
+        filename => inspect(path.join(root, filename)));
     delete state.snapshot;
     save();
   }

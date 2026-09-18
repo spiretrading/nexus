@@ -41,6 +41,10 @@ if [[ ! -f "$CONFIG_FILE" ]]; then
   echo "Error: $CONFIG_FILE does not exist." >&2
   exit 1
 fi
+if [[ "$platform" != "Linux" ]] && ! command -v lsof > /dev/null; then
+  echo "Error: lsof is required to identify $APPLICATION." >&2
+  exit 1
+fi
 log_name="srv_*.log"
 if [[ -z "$pid" ]]; then
   mkdir -p "$LOG_DIR" || exit 1

@@ -55,11 +55,14 @@ create_forwarding_scripts() {
 build_function() {
   local location="${*: -1}"
   if [[ ! -d "$location" ]]; then
-    mkdir -p "$location"
+    mkdir -p "$location" || return 1
   fi
-  pushd "$location" > /dev/null
-  "$DIRECTORY/$location/build.sh" -DD="$ROOT/Nexus/Dependencies" "${@:1:$#-1}"
-  popd > /dev/null
+  pushd "$location" > /dev/null || return 1
+  local status=0
+  "$DIRECTORY/$location/build.sh" -DD="$ROOT/Nexus/Dependencies" \
+    "${@:1:$#-1}" || status=$?
+  popd > /dev/null || return 1
+  return "$status"
 }
 
 get_job_count() {
