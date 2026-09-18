@@ -237,6 +237,7 @@ void Nexus::Python::export_market_data_service(module& module) {
     });
   auto test_module = module.def_submodule("tests");
   export_market_data_service_test_environment(test_module);
+  export_test_market_data_feed_client(test_module);
 }
 
 void Nexus::Python::export_market_data_service_application_definitions(

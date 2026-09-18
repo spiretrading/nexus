@@ -13,7 +13,7 @@ main() {
   check_cache "nexus" || exit 0
   add_repo "Beam" \
     "https://www.github.com/spiretrading/beam" \
-    "cc0403fc33d34464d535f7c833a592a48ac1a9b6" \
+    "91dfb6f4f3b286e5e8f735993929826212761cd3" \
     "build_beam"
   add_dependency "lua-5.5.0" \
     "https://www.lua.org/ftp/lua-5.5.0.tar.gz" \
