@@ -4,7 +4,6 @@ set -o pipefail
 DIRECTORY=""
 ROOT=""
 CACHE_DIRECTORY=""
-SETUP_HASH=""
 DEPENDENCIES=()
 REPOS=()
 
@@ -12,24 +11,23 @@ main() {
   resolve_paths
   CACHE_DIRECTORY="$ROOT/cache_files/nexus"
   mkdir -p "$CACHE_DIRECTORY" || return 1
-  SETUP_HASH=$(sha256 "$DIRECTORY/setup.sh") || return 1
   add_repo "Beam" \
     "https://www.github.com/spiretrading/beam" \
-    "ed5e07643ae52208a502d9209ab1c2f636d0f1f8" \
+    "ce4093d90d698bf30db78c07723b1ee8b24dee26" 1 \
     "build_beam"
   add_dependency "lua-5.5.0" \
     "https://www.lua.org/ftp/lua-5.5.0.tar.gz" \
-    "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d" \
+    "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d" 1 \
     "build_lua"
   local quickfix_url="https://github.com/quickfix/quickfix/archive"
   local quickfix_commit="2ce8a60667d95a55cdc57a210f165e19cb757126"
   add_dependency "quickfix-v.1.16.0" \
     "$quickfix_url/$quickfix_commit.zip" \
-    "b6fcea5402b443e71c751132938b8ef83efcd0167e005f5bbab103b1875614d1" \
+    "b6fcea5402b443e71c751132938b8ef83efcd0167e005f5bbab103b1875614d1" 1 \
     "build_quickfix"
   add_dependency "hat-trie-0.7.0" \
     "https://github.com/Tessil/hat-trie/archive/refs/tags/v0.7.0.zip" \
-    "8ea5441c06fd5d9de1ec8725bf762025a63f931949b9f49d211ab76a75ced68f"
+    "8ea5441c06fd5d9de1ec8725bf762025a63f931949b9f49d211ab76a75ced68f" 1
   install_repos || return 1
   install_dependencies || return 1
   install_gitpython || return 1
@@ -97,29 +95,33 @@ add_dependency() {
   local name="$1"
   local url="$2"
   local hash="$3"
-  local build="${4:-}"
-  DEPENDENCIES+=("$name|$url|$hash|$build")
+  local revision="$4"
+  local build="${5:-}"
+  DEPENDENCIES+=("$name|$url|$hash|$revision|$build")
 }
 
 add_repo() {
   local name="$1"
   local url="$2"
   local commit="$3"
-  local build="${4:-}"
-  REPOS+=("$name|$url|$commit|$build")
+  local revision="$4"
+  local build="${5:-}"
+  REPOS+=("$name|$url|$commit|$revision|$build")
 }
 
 install_dependencies() {
   for dep in "${DEPENDENCIES[@]}"; do
-    IFS='|' read -r name url hash build <<< "$dep"
-    download_and_extract "$name" "$url" "$hash" "$build" || return 1
+    IFS='|' read -r name url hash revision build <<< "$dep"
+    download_and_extract "$name" "$url" "$hash" "$revision" "$build" ||
+      return 1
   done
 }
 
 install_repos() {
   for repo in "${REPOS[@]}"; do
-    IFS='|' read -r name url commit build <<< "$repo"
-    clone_or_update_repo "$name" "$url" "$commit" "$build" || return 1
+    IFS='|' read -r name url commit revision build <<< "$repo"
+    clone_or_update_repo "$name" "$url" "$commit" "$revision" "$build" ||
+      return 1
   done
 }
 
@@ -128,8 +130,8 @@ download_and_extract() {
   local build_marker="$CACHE_DIRECTORY/$folder.build_complete"
   local url="$2"
   local expected_hash="$3"
-  local build_hash="$expected_hash $SETUP_HASH"
-  local build_func="$4"
+  local build_hash="$expected_hash posix-$4"
+  local build_func="$5"
   local archive="${url##*/}"
   if [[ -d "$folder" && -f "$build_marker" ]] &&
       [[ "$(< "$build_marker")" == "$build_hash" ]]; then
@@ -186,7 +188,8 @@ clone_or_update_repo() {
   local build_marker="$CACHE_DIRECTORY/$repo_name.build_complete"
   local repo_url="$2"
   local repo_commit="$3"
-  local build_func="$4"
+  local revision="$4"
+  local build_func="$5"
   local is_new_repo=0
   if [[ ! -d "$repo_name" ]]; then
     rm -f "$build_marker" || return 1
@@ -204,7 +207,7 @@ clone_or_update_repo() {
   fi
   local repo_head
   repo_head=$(git rev-parse HEAD) || { popd > /dev/null; return 1; }
-  local build_hash="$repo_head $SETUP_HASH"
+  local build_hash="$repo_head posix-$revision"
   if [[ ! -f "$build_marker" ]] ||
       [[ "$(< "$build_marker")" != "$build_hash" ]]; then
     rm -f "$build_marker" || { popd > /dev/null; return 1; }
