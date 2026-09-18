@@ -167,6 +167,12 @@ namespace Spire {
     BookViewHighlightProperties::OrderHighlightState state);
 
   /**
+   * Repairs BookViewProperties that came from outside of this application.
+   * @param properties The properties to repair.
+   */
+  void repair_book_view_properties(BookViewProperties& properties);
+
+  /**
    * Loads BookViewProperties from a file.
    * @param path The path to the file to load.
    * @return The properties loaded from the given <i>path</i>.

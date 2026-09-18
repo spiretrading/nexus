@@ -285,7 +285,13 @@ namespace Nexus {
         if(snapshot.m_asks.empty() && snapshot.m_bids.empty()) {
           auto query = TickerQuery();
           query.set_index(ticker);
-          query.set_range(Beam::Range::REAL_TIME);
+          if(snapshot.m_book_quote_sequence == Beam::Sequence::FIRST) {
+            query.set_range(Beam::Range::REAL_TIME);
+          } else {
+            query.set_range(
+              snapshot.m_book_quote_sequence, Beam::Sequence::LAST);
+            query.set_snapshot_limit(Beam::SnapshotLimit::UNLIMITED);
+          }
           query.set_interruption_policy(interruption_policy);
           client.query(query, std::move(queue));
         } else {

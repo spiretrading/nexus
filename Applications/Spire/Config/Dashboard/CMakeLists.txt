@@ -12,11 +12,10 @@ source_group("Generated Files\\Source Files" FILES ${generated_source_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(Dashboard ${header_files} ${source_files}
   ${generated_header_files} ${generated_source_files})
+beam_configure_target(Dashboard)
+target_link_libraries(Dashboard BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Dashboard PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME spire_dashboard)
-install(TARGETS Dashboard CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS Dashboard CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(Dashboard "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")

@@ -1,15 +1,20 @@
-const path = require('path');
+const path = require('node:path');
 module.paths.push(path.resolve(process.cwd(), 'node_modules'));
-const PROD = JSON.parse(process.env.PROD_ENV || '0');
+let mode = 'development';
+let devtool = 'source-map';
+if(process.env.PROD_ENV == '1') {
+  mode = 'production';
+  devtool = false;
+}
 module.exports = {
-  devtool: PROD ? false : 'source-map',
+  devtool,
   entry: path.resolve(process.cwd(), 'source/index.tsx'),
   ignoreWarnings: [
     {
       message: /Failed to parse source map/,
     }
   ],
-  mode: PROD ? 'production' : 'development',
+  mode,
   module: {
     rules: [
       {

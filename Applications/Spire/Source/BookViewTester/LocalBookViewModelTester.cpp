@@ -25,6 +25,19 @@ namespace {
     return make_bbo(parse_money("10.00"), parse_money("10.01"));
   }
 
+  auto make_bbo_at(const std::string& timestamp) {
+    return BboQuote(make_bid(parse_money("10.00"), 100),
+      make_ask(parse_money("10.01"), 100), time_from_string(timestamp));
+  }
+
+  auto make_trade(Money price, Quantity size) {
+    auto trade = TimeAndSale();
+    trade.m_price = price;
+    trade.m_size = size;
+    trade.m_market_center = "TSE";
+    return trade;
+  }
+
   auto make_order(const OrderFields& fields, OrderId id) {
     auto info =
       OrderInfo(fields, id, time_from_string("2025-08-14 09:00:00"));
@@ -134,6 +147,44 @@ TEST_SUITE("LocalBookViewModel") {
     REQUIRE(technicals.m_high == parse_money("10.00"));
     REQUIRE(technicals.m_low == parse_money("10.00"));
     REQUIRE(technicals.m_volume == 100);
+  }
+
+  TEST_CASE("session_technicals_reset_overnight") {
+    auto model = LocalBookViewModel(TICKER);
+    model.update(make_bbo_at("2025-08-14 13:00:00"));
+    model.update(make_trade(parse_money("10.00"), 100));
+    model.update(make_trade(parse_money("11.00"), 200));
+    REQUIRE(model.get_session_technicals()->get().m_volume == 300);
+    model.update(make_bbo_at("2025-08-16 13:00:00"));
+    auto& technicals = model.get_session_technicals()->get();
+    REQUIRE(technicals.m_volume == 0);
+    REQUIRE(!technicals.m_open);
+    REQUIRE(!technicals.m_high);
+    REQUIRE(!technicals.m_low);
+    REQUIRE(technicals.m_previous_close == parse_money("11.00"));
+    model.update(make_trade(parse_money("12.00"), 400));
+    REQUIRE(technicals.m_open == parse_money("12.00"));
+    REQUIRE(technicals.m_volume == 400);
+    REQUIRE(technicals.m_previous_close == parse_money("11.00"));
+  }
+
+  TEST_CASE("session_technicals_survive_within_a_session") {
+    auto model = LocalBookViewModel(TICKER);
+    model.update(make_bbo_at("2025-08-14 13:00:00"));
+    model.update(make_trade(parse_money("10.00"), 100));
+    model.update(make_bbo_at("2025-08-14 14:00:00"));
+    auto& technicals = model.get_session_technicals()->get();
+    REQUIRE(technicals.m_volume == 100);
+    REQUIRE(technicals.m_open == parse_money("10.00"));
+  }
+
+  TEST_CASE("session_technicals_reset_without_trades") {
+    auto model = LocalBookViewModel(TICKER);
+    model.update(make_bbo_at("2025-08-14 13:00:00"));
+    model.update(make_bbo_at("2025-08-16 13:00:00"));
+    auto& technicals = model.get_session_technicals()->get();
+    REQUIRE(technicals.m_volume == 0);
+    REQUIRE(!technicals.m_previous_close);
   }
 
   TEST_CASE("add_limit_order") {

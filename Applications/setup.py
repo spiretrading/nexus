@@ -1,25 +1,21 @@
 import argparse
 import importlib.util
 import os
+from pathlib import Path
 import subprocess
 import sys
 
-try:
-  spec = importlib.util.spec_from_file_location('setup_utils',
-    os.path.join('..', 'Python', 'setup_utils.py'))
-  setup_utils = importlib.util.module_from_spec(spec)
-  spec.loader.exec_module(setup_utils)
-except FileNotFoundError:
-  spec = importlib.util.spec_from_file_location('setup_utils',
-    os.path.join('Python', 'setup_utils.py'))
-  setup_utils = importlib.util.module_from_spec(spec)
-  spec.loader.exec_module(setup_utils)
+directory = Path(__file__).resolve().parent
+spec = importlib.util.spec_from_file_location('setup_utils',
+  directory / 'Python' / 'setup_utils.py')
+setup_utils = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(setup_utils)
 
 
 def create_symlink(source, target):
   if sys.platform == 'win32':
-    subprocess.Popen(['cmd', '/c', 'mklink /j %s %s' % (source, target)],
-      stdout=subprocess.PIPE, stderr=subprocess.PIPE).communicate()
+    subprocess.run(['cmd', '/c', 'mklink', '/j', source,
+      str(Path(target).resolve())], check=True, stdout=subprocess.DEVNULL)
   else:
     os.symlink(target, source, target_is_directory=True)
 
@@ -27,8 +23,8 @@ def create_symlink(source, target):
 def make_sub_args(arg_vars, *args):
   sub_args = []
   for arg in args:
-    if arg_vars[arg]:
-      sub_args += ['--' + arg, arg_vars[arg]]
+    if arg_vars[arg] is not None:
+      sub_args.append('--' + arg + '=' + arg_vars[arg])
   return sub_args
 
 
@@ -73,7 +69,7 @@ def setup_beam(arg_vars):
   for beam_service in ['ServiceLocator', 'UidServer']:
     if not os.path.exists(beam_service):
       create_symlink(beam_service, os.path.join('..', 'Nexus', 'Dependencies',
-      'Beam', 'Applications', beam_service))
+        'Beam', 'Applications', beam_service))
   setup_service_locator(arg_vars)
   setup_server_with_mysql('UidServer', arg_vars)
 

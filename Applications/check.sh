@@ -22,8 +22,12 @@ services=(
   "OtcLinkMarketDataFeedClient"
 )
 
+status=0
 for directory in "${services[@]}"; do
-  pushd $directory/Application > /dev/null
-  ./check.sh "$@"
-  popd > /dev/null
+  application="$directory/Application"
+  if [[ ! -d "$application" ]]; then
+    application="$directory"
+  fi
+  (cd "$application" && ./check.sh "$@") || status=$?
 done
+exit "$status"

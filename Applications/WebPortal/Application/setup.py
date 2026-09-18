@@ -1,18 +1,16 @@
 import argparse
 import importlib.util
-import os
-import shutil
+from pathlib import Path
 
-try:
-  spec = importlib.util.spec_from_file_location('setup_utils',
-    os.path.join('..', '..', 'Python', 'setup_utils.py'))
-  setup_utils = importlib.util.module_from_spec(spec)
-  spec.loader.exec_module(setup_utils)
-except FileNotFoundError:
-  spec = importlib.util.spec_from_file_location('setup_utils',
-    os.path.join('..', 'Python', 'setup_utils.py'))
-  setup_utils = importlib.util.module_from_spec(spec)
-  spec.loader.exec_module(setup_utils)
+directory = Path(__file__).resolve().parent
+helper_path = directory / 'setup_utils.py'
+if not helper_path.is_file():
+  helper_path = directory / '..' / '..' / 'Python' / 'setup_utils.py'
+  if not helper_path.is_file():
+    helper_path = directory / '..' / 'Python' / 'setup_utils.py'
+spec = importlib.util.spec_from_file_location('setup_utils', helper_path)
+setup_utils = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(setup_utils)
 
 
 def main():
@@ -35,12 +33,10 @@ def main():
     ('%s:20000' % variables['local_interface']) if args.address is None else \
     args.address
   variables['admin_password'] = args.password
-  shutil.copy('config.default.yml', 'config.yml')
-  with open('config.yml', 'r+') as file:
+  with open(directory / 'config.default.yml', encoding='utf-8') as file:
     source = setup_utils.translate(file.read(), variables)
-    file.seek(0)
+  with open('config.yml', 'w', encoding='utf-8') as file:
     file.write(source)
-    file.truncate()
 
 
 if __name__ == '__main__':

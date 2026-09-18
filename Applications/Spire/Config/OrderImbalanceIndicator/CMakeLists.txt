@@ -14,11 +14,11 @@ source_group("Generated Files\\Source Files" FILES ${generated_source_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(OrderImbalanceIndicator ${header_files} ${source_files}
   ${generated_header_files} ${generated_source_files})
+beam_configure_target(OrderImbalanceIndicator)
+target_link_libraries(OrderImbalanceIndicator BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(OrderImbalanceIndicator PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME spire_order_imbalance_indicator)
-install(TARGETS OrderImbalanceIndicator CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS OrderImbalanceIndicator CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(
+  OrderImbalanceIndicator "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")

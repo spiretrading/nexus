@@ -9,9 +9,6 @@
     "compile": "node node_modules/typescript/bin/tsc -p .",
     "build": "npm run compile"
   },
-  "allowScripts": {
-    "esbuild": false
-  },
   "devDependencies": {
     "@types/node": "24.13.3",
     "@types/react": "17.0.80",
@@ -37,5 +34,8 @@
     "react": "17.0.2",
     "react-dom": "17.0.2",
     "react-router-dom": "5.3.4"
-  }
+  },
+  "files": [
+    "library"
+  ]
 }

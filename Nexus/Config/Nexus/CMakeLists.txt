@@ -78,6 +78,8 @@ file(GLOB_RECURSE header_files ${accounting_header_files}
   ${simulation_matcher_header_files} ${soup_bin_tcp_header_files}
   ${stamp_header_files} ${technical_analysis_header_files}
   ${test_environment_header_files})
-add_library(Nexus ${header_files} ${source_files})
+add_library(Nexus STATIC ${header_files})
+beam_configure_target(Nexus)
+set_property(GLOBAL APPEND PROPERTY BEAM_BUILD_TARGETS Nexus)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Nexus PROPERTIES LINKER_LANGUAGE CXX OUTPUT_NAME nexus)

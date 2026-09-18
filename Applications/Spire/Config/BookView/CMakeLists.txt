@@ -12,14 +12,13 @@ source_group("Generated Files\\Source Files" FILES ${generated_source_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(BookView ${header_files} ${source_files}
   ${generated_header_files} ${generated_source_files})
+beam_configure_target(BookView)
+target_link_libraries(BookView BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(BookView PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME spire_book_view)
-install(TARGETS BookView CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS BookView CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(BookView "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")
 file(GLOB_RECURSE header_files ../../Include/Spire/BookViewUiTester/*.hpp)
 file(GLOB_RECURSE source_files ../../Source/BookViewUiTester/*.cpp)
 if(WIN32)
@@ -28,31 +27,10 @@ elseif(APPLE)
   set(app_type MACOSX_BUNDLE)
 endif()
 add_executable(BookViewUiTester ${app_type} ${header_files} ${source_files})
+beam_configure_target(BookViewUiTester)
+target_link_libraries(BookViewUiTester BeamRoutines)
 target_compile_definitions(BookViewUiTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-if(UNIX)
-  target_link_libraries(BookViewUiTester
-    debug ${QT_GIF_LIBRARY_DEBUG_PATH}
-    optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_PLATFORM_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_PLUGIN_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH})
-  if(EXISTS ${QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH})
-    target_link_libraries(BookViewUiTester
-      debug ${QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH}
-      optimized ${QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_OPTIMIZED_PATH})
-  endif()
-  target_link_libraries(BookViewUiTester
-    debug ${QT_SERVICE_SUPPORT_LIBRARY_DEBUG_PATH}
-    optimized ${QT_SERVICE_SUPPORT_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_THEME_LIBRARY_DEBUG_PATH}
-    optimized ${QT_THEME_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_DBUS_LIBRARY_DEBUG_PATH}
-    optimized ${QT_DBUS_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XML_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
-endif()
 target_link_libraries(BookViewUiTester Async Dashboard Charting
   PortfolioViewer Utilities RiskTimer KeyBindings Blotter Catalog
   BookView Styles Library Resources TimeAndSales OrderImbalanceIndicator
@@ -67,35 +45,36 @@ target_link_libraries(BookViewUiTester Async Dashboard Charting
   optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
   debug ${YAML_LIBRARY_DEBUG_PATH}
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_GIF_LIBRARY_DEBUG_PATH}
-  optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}
-  optimized ${QT_SVG_ICON_PLUGIN_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_SVG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_SVG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
-  optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_FONT_LIBRARY_DEBUG_PATH}
-  optimized ${QT_FONT_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_GUI_LIBRARY_DEBUG_PATH}
-  optimized ${QT_GUI_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_PNG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_PNG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_EVENT_LIBRARY_DEBUG_PATH}
-  optimized ${QT_EVENT_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_ACCESS_LIBRARY_DEBUG_PATH}
-  optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_HBNG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_HBNG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_CORE_LIBRARY_DEBUG_PATH}
-  optimized ${QT_CORE_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_PCRE_LIBRARY_DEBUG_PATH}
-  optimized ${QT_PCRE_LIBRARY_OPTIMIZED_PATH}
   debug ${YAML_LIBRARY_DEBUG_PATH}
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(WIN32)
+  target_link_libraries(BookViewUiTester
+    debug ${QT_GIF_LIBRARY_DEBUG_PATH}
+    optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}
+    optimized ${QT_SVG_ICON_PLUGIN_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_SVG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_SVG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
+    optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_FONT_LIBRARY_DEBUG_PATH}
+    optimized ${QT_FONT_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_GUI_LIBRARY_DEBUG_PATH}
+    optimized ${QT_GUI_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_PNG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_PNG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_EVENT_LIBRARY_DEBUG_PATH}
+    optimized ${QT_EVENT_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_ACCESS_LIBRARY_DEBUG_PATH}
+    optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_HBNG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_HBNG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_CORE_LIBRARY_DEBUG_PATH}
+    optimized ${QT_CORE_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_PCRE_LIBRARY_DEBUG_PATH}
+    optimized ${QT_PCRE_LIBRARY_OPTIMIZED_PATH})
   target_link_libraries(BookViewUiTester
     debug ${QT_THEME_LIBRARY_DEBUG_PATH}
     optimized ${QT_THEME_LIBRARY_OPTIMIZED_PATH}
@@ -110,62 +89,14 @@ if(WIN32)
     Crypt32.lib dwmapi.lib imm32.lib netapi32.lib opengl32.lib Userenv.lib
     version.lib winmm.lib ws2_32.lib Wtsapi32.lib)
 endif()
-if(UNIX)
-  target_link_libraries(BookViewUiTester
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_FILE_SYSTEM_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_REGEX_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_REGEX_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_EDID_LIBRARY_DEBUG_PATH}
-    optimized ${QT_EDID_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_PLATFORM_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_PLUGIN_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_LIBRARY_OPTIMIZED_PATH}
-    dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM
-    X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
-endif()
-install(
-  TARGETS BookViewUiTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
-
+beam_install_target(BookViewUiTester "${SPIRE_TESTS_INSTALL_DIRECTORY}")
 
 file(GLOB_RECURSE header_files ../../Include/Spire/BookViewTester/*.hpp)
 file(GLOB_RECURSE source_files ../../Source/BookViewTester/*.cpp)
 add_executable(BookViewTester ${header_files} ${source_files})
+beam_configure_target(BookViewTester)
+target_link_libraries(BookViewTester BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-if(UNIX)
-  target_link_libraries(BookViewTester
-    debug ${QT_GIF_LIBRARY_DEBUG_PATH}
-    optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_PLATFORM_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_PLUGIN_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH})
-  if(EXISTS ${QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH})
-    target_link_libraries(BookViewTester
-      debug ${QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH}
-      optimized ${QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_OPTIMIZED_PATH})
-  endif()
-  target_link_libraries(BookViewTester
-    debug ${QT_SERVICE_SUPPORT_LIBRARY_DEBUG_PATH}
-    optimized ${QT_SERVICE_SUPPORT_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_THEME_LIBRARY_DEBUG_PATH}
-    optimized ${QT_THEME_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_DBUS_LIBRARY_DEBUG_PATH}
-    optimized ${QT_DBUS_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XML_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
-endif()
 target_link_libraries(BookViewTester Async Dashboard Charting PortfolioViewer
   Utilities RiskTimer KeyBindings Blotter Catalog BookView Library Resources
   Styles TimeAndSales OrderImbalanceIndicator InputWidgets CanvasView Canvas
@@ -180,35 +111,36 @@ target_link_libraries(BookViewTester Async Dashboard Charting PortfolioViewer
   optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
   debug ${YAML_LIBRARY_DEBUG_PATH}
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_GIF_LIBRARY_DEBUG_PATH}
-  optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}
-  optimized ${QT_SVG_ICON_PLUGIN_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_SVG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_SVG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
-  optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_FONT_LIBRARY_DEBUG_PATH}
-  optimized ${QT_FONT_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_GUI_LIBRARY_DEBUG_PATH}
-  optimized ${QT_GUI_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_PNG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_PNG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_EVENT_LIBRARY_DEBUG_PATH}
-  optimized ${QT_EVENT_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_ACCESS_LIBRARY_DEBUG_PATH}
-  optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_HBNG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_HBNG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_CORE_LIBRARY_DEBUG_PATH}
-  optimized ${QT_CORE_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_PCRE_LIBRARY_DEBUG_PATH}
-  optimized ${QT_PCRE_LIBRARY_OPTIMIZED_PATH}
   debug ${YAML_LIBRARY_DEBUG_PATH}
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(WIN32)
+  target_link_libraries(BookViewTester
+    debug ${QT_GIF_LIBRARY_DEBUG_PATH}
+    optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}
+    optimized ${QT_SVG_ICON_PLUGIN_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_SVG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_SVG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
+    optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_FONT_LIBRARY_DEBUG_PATH}
+    optimized ${QT_FONT_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_GUI_LIBRARY_DEBUG_PATH}
+    optimized ${QT_GUI_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_PNG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_PNG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_EVENT_LIBRARY_DEBUG_PATH}
+    optimized ${QT_EVENT_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_ACCESS_LIBRARY_DEBUG_PATH}
+    optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_HBNG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_HBNG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_CORE_LIBRARY_DEBUG_PATH}
+    optimized ${QT_CORE_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_PCRE_LIBRARY_DEBUG_PATH}
+    optimized ${QT_PCRE_LIBRARY_OPTIMIZED_PATH})
   target_link_libraries(BookViewTester
     debug ${QT_THEME_LIBRARY_DEBUG_PATH}
     optimized ${QT_THEME_LIBRARY_OPTIMIZED_PATH}
@@ -223,32 +155,5 @@ if(WIN32)
     Crypt32.lib dwmapi.lib imm32.lib netapi32.lib opengl32.lib Userenv.lib
     version.lib winmm.lib ws2_32.lib Wtsapi32.lib)
 endif()
-if(UNIX)
-  target_link_libraries(BookViewTester
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_FILE_SYSTEM_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_REGEX_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_REGEX_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_EDID_LIBRARY_DEBUG_PATH}
-    optimized ${QT_EDID_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_PLATFORM_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_PLUGIN_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_LIBRARY_OPTIMIZED_PATH}
-    dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM
-    X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
-endif()
 add_custom_command(TARGET BookViewTester POST_BUILD COMMAND BookViewTester)
-install(TARGETS BookViewTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
+beam_install_target(BookViewTester "${SPIRE_TESTS_INSTALL_DIRECTORY}")

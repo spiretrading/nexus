@@ -9,6 +9,7 @@ using namespace Spire;
 
 namespace {
   const auto DEPTH_LIMIT = 50;
+  const auto RETRY_INTERVAL = 3000;
 
   bool is_order_displayed(const Order& order, const Ticker& ticker) {
     auto& fields = order.get_info().m_fields;
@@ -26,6 +27,12 @@ ServiceBookViewModel::ServiceBookViewModel(Ticker ticker,
   if(!m_ticker) {
     return;
   }
+  m_book_quote_retry_timer.setSingleShot(true);
+  QObject::connect(&m_book_quote_retry_timer, &QTimer::timeout,
+    std::bind_front(&ServiceBookViewModel::query_book_quotes, this));
+  m_time_and_sale_retry_timer.setSingleShot(true);
+  QObject::connect(&m_time_and_sale_retry_timer, &QTimer::timeout,
+    std::bind_front(&ServiceBookViewModel::query_time_and_sales, this));
   auto bbo_query = make_current_query(m_ticker);
   bbo_query.set_interruption_policy(InterruptionPolicy::IGNORE_CONTINUE);
   m_market_data_client.query(bbo_query, m_event_handler.get_slot<BboQuote>(
@@ -131,7 +138,9 @@ void ServiceBookViewModel::query_time_and_sales() {
   auto technicals = m_event_handler.get_slot<SessionTechnicals>(
     std::bind_front(&ServiceBookViewModel::on_session_technicals, this));
   auto trades = m_event_handler.get_slot<TimeAndSale>(
-    std::bind_front(&ServiceBookViewModel::on_time_and_sales, this));
+    std::bind_front(&ServiceBookViewModel::on_time_and_sales, this),
+    std::bind_front(
+      &ServiceBookViewModel::on_time_and_sales_interruption, this));
   spawn([client = m_market_data_client, ticker = m_ticker,
       technicals = std::move(technicals),
       trades = std::move(trades)] () mutable {
@@ -180,7 +189,7 @@ void ServiceBookViewModel::on_book_quote_interruption(
     const std::exception_ptr&) {
   m_buffered_book_quotes.clear();
   m_model.clear_book_quotes();
-  query_book_quotes();
+  m_book_quote_retry_timer.start(RETRY_INTERVAL);
 }
 
 void ServiceBookViewModel::on_session_technicals(
@@ -190,6 +199,11 @@ void ServiceBookViewModel::on_session_technicals(
 
 void ServiceBookViewModel::on_time_and_sales(const TimeAndSale& time_and_sale) {
   m_model.update(time_and_sale);
+}
+
+void ServiceBookViewModel::on_time_and_sales_interruption(
+    const std::exception_ptr&) {
+  m_time_and_sale_retry_timer.start(RETRY_INTERVAL);
 }
 
 void ServiceBookViewModel::on_execution_report(const ExecutionReport& report) {

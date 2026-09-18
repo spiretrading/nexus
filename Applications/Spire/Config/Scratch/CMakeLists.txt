@@ -8,31 +8,10 @@ elseif(APPLE)
   set(app_type MACOSX_BUNDLE)
 endif()
 add_executable(Scratch ${app_type} ${header_files} ${source_files})
+beam_configure_target(Scratch)
+target_link_libraries(Scratch BeamRoutines)
 target_compile_definitions(Scratch PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
-if(UNIX)
-  target_link_libraries(Scratch
-    debug ${QT_GIF_LIBRARY_DEBUG_PATH}
-    optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_PLATFORM_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_PLUGIN_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH})
-  if(EXISTS ${QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH})
-    target_link_libraries(Scratch
-      debug ${QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_DEBUG_PATH}
-      optimized ${QT_LINUX_ACCESSIBILITY_SUPPORT_LIBRARY_OPTIMIZED_PATH})
-  endif()
-  target_link_libraries(Scratch
-    debug ${QT_SERVICE_SUPPORT_LIBRARY_DEBUG_PATH}
-    optimized ${QT_SERVICE_SUPPORT_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_THEME_LIBRARY_DEBUG_PATH}
-    optimized ${QT_THEME_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_DBUS_LIBRARY_DEBUG_PATH}
-    optimized ${QT_DBUS_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XML_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XML_LIBRARY_OPTIMIZED_PATH})
-endif()
 target_link_libraries(Scratch Async Dashboard Charting
   PortfolioViewer Utilities RiskTimer KeyBindings Blotter Catalog
   BookView Styles Library Resources TimeAndSales OrderImbalanceIndicator
@@ -47,35 +26,36 @@ target_link_libraries(Scratch Async Dashboard Charting
   optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
   debug ${YAML_LIBRARY_DEBUG_PATH}
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_GIF_LIBRARY_DEBUG_PATH}
-  optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}
-  optimized ${QT_SVG_ICON_PLUGIN_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_SVG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_SVG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
-  optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_FONT_LIBRARY_DEBUG_PATH}
-  optimized ${QT_FONT_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_GUI_LIBRARY_DEBUG_PATH}
-  optimized ${QT_GUI_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_PNG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_PNG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_EVENT_LIBRARY_DEBUG_PATH}
-  optimized ${QT_EVENT_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_ACCESS_LIBRARY_DEBUG_PATH}
-  optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_HBNG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_HBNG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_CORE_LIBRARY_DEBUG_PATH}
-  optimized ${QT_CORE_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_PCRE_LIBRARY_DEBUG_PATH}
-  optimized ${QT_PCRE_LIBRARY_OPTIMIZED_PATH}
   debug ${YAML_LIBRARY_DEBUG_PATH}
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(WIN32)
+  target_link_libraries(Scratch
+    debug ${QT_GIF_LIBRARY_DEBUG_PATH}
+    optimized ${QT_GIF_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_SVG_ICON_PLUGIN_LIBRARY_DEBUG_PATH}
+    optimized ${QT_SVG_ICON_PLUGIN_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_SVG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_SVG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
+    optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_FONT_LIBRARY_DEBUG_PATH}
+    optimized ${QT_FONT_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_GUI_LIBRARY_DEBUG_PATH}
+    optimized ${QT_GUI_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_PNG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_PNG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_EVENT_LIBRARY_DEBUG_PATH}
+    optimized ${QT_EVENT_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_ACCESS_LIBRARY_DEBUG_PATH}
+    optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_HBNG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_HBNG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_CORE_LIBRARY_DEBUG_PATH}
+    optimized ${QT_CORE_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_PCRE_LIBRARY_DEBUG_PATH}
+    optimized ${QT_PCRE_LIBRARY_OPTIMIZED_PATH})
   target_link_libraries(Scratch
     debug ${QT_THEME_LIBRARY_DEBUG_PATH}
     optimized ${QT_THEME_LIBRARY_OPTIMIZED_PATH}
@@ -90,29 +70,4 @@ if(WIN32)
     Crypt32.lib dwmapi.lib imm32.lib netapi32.lib opengl32.lib Userenv.lib
     version.lib winmm.lib ws2_32.lib Wtsapi32.lib)
 endif()
-if(UNIX)
-  target_link_libraries(Scratch
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_FILE_SYSTEM_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_REGEX_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_REGEX_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_EDID_LIBRARY_DEBUG_PATH}
-    optimized ${QT_EDID_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_PLATFORM_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_PLUGIN_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH}
-    debug ${QT_XCB_LIBRARY_DEBUG_PATH}
-    optimized ${QT_XCB_LIBRARY_OPTIMIZED_PATH}
-    dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM
-    X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
-endif()
-install(TARGETS Scratch DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
+beam_install_target(Scratch "${SPIRE_TESTS_INSTALL_DIRECTORY}")

@@ -79,7 +79,8 @@ function install_dependencies() {
         yq_arch="arm64"
       fi
       curl -fsSL "https://github.com/mikefarah/yq/releases/latest/download/yq_linux_$yq_arch" \
-        -o /usr/local/bin/yq && chmod +x /usr/local/bin/yq
+        -o /usr/local/bin/yq || return $?
+      chmod +x /usr/local/bin/yq || return $?
     fi
     check_and_install_node
   fi
@@ -98,8 +99,8 @@ function wait_for_service_locator() {
 }
 
 function admin_client_login() {
-  sudo -u "$username" python3 setup.py -a "$local_interface:20000" -u "$1" \
-    -p "$2" > /dev/null
+  sudo -u "$username" python3 setup.py --address="$local_interface:20000" \
+    --username="$1" --password="$2" > /dev/null || return $?
   sudo -u "$username" ./AdminClient <<< "exit" > /dev/null 2>&1
 }
 
@@ -153,6 +154,11 @@ fi
 if [ "$spire_password" == "" ]; then
   spire_password="$mysql_password"
 fi
+if [[ "$spire_password" == *' '* || "$spire_password" == *$'\n'* ||
+    "$spire_password" == *$'\r'* ]]; then
+  echo "The Spire password cannot contain spaces or line breaks."
+  exit 1
+fi
 if [ "$mysql_username" == "" ]; then
   mysql_username="spireadmin"
 fi
@@ -171,24 +177,36 @@ if [ "$global_interface" == "" ]; then
 fi
 install_dependencies
 sudo -u "$username" ./build.sh || { echo "Build failed."; exit 1; }
+database_username="${mysql_username//\'/\'\'}"
+database_password="${mysql_password//\'/\'\'}"
 mysql_input="
+SET SESSION sql_mode = 'NO_BACKSLASH_ESCAPES';
 CREATE DATABASE IF NOT EXISTS spire;
-CREATE USER IF NOT EXISTS '$mysql_username'@'localhost' IDENTIFIED WITH caching_sha2_password BY '$mysql_password';
-ALTER USER '$mysql_username'@'localhost' IDENTIFIED WITH caching_sha2_password BY '$mysql_password';
-GRANT ALL ON spire.* TO '$mysql_username'@'localhost';
+CREATE USER IF NOT EXISTS '$database_username'@'localhost'
+  IDENTIFIED WITH caching_sha2_password BY '$database_password';
+ALTER USER '$database_username'@'localhost'
+  IDENTIFIED WITH caching_sha2_password BY '$database_password';
+GRANT ALL ON spire.* TO '$database_username'@'localhost';
 "
 if [ "$is_root" -eq 1 ]; then
-  mysql -uroot <<< "$mysql_input"
+  mysql --binary-mode -uroot <<< "$mysql_input"
 fi
 pushd Applications
-sudo -u "$username" python3 setup.py -l "$local_interface" \
-  -w "$global_interface" -a "$local_interface:20000" -p "$spire_password" \
-  -mu "$mysql_username" -mp "$mysql_password"
+sudo -u "$username" python3 setup.py --local="$local_interface" \
+  --world="$global_interface" --address="$local_interface:20000" \
+  --password="$spire_password" --mysql_username="$mysql_username" \
+  --mysql_password="$mysql_password"
 sudo -u "$username" ./install_python.sh
 pushd ServiceLocator/Application
+service_locator_status=0
+sudo -u "$username" ./check.sh > /dev/null || service_locator_status=$?
+if [ "$service_locator_status" -eq 1 ]; then
+  trap stop_service_locator EXIT
+elif [ "$service_locator_status" -ne 0 ]; then
+  exit "$service_locator_status"
+fi
 sudo -u "$username" ./start.sh
 wait_for_service_locator
-trap stop_service_locator EXIT
 popd
 admin_input="
 cd @0
@@ -245,7 +263,7 @@ if ! admin_client_login "root" "" && \
   exit 1
 fi
 sudo -u "$username" ./AdminClient <<< "$admin_input"
-sudo -u "$username" python3 setup.py -a "$local_interface:20000" \
-  -u "administration_service" -p "$spire_password"
+sudo -u "$username" python3 setup.py --address="$local_interface:20000" \
+  --username="administration_service" --password="$spire_password"
 popd
 popd

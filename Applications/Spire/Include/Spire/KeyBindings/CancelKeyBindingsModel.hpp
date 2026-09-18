@@ -106,6 +106,18 @@ namespace Spire {
     Beam::Out<std::vector<std::shared_ptr<Task>>> tasks);
 
   /**
+   * Executes a cancel operation on a list of order tasks, ranking them by a
+   * given set of prices.
+   * @param operation The cancel operation to execute.
+   * @param prices The price to rank a task by, taking precedence over the price
+   *        its node carries.
+   * @param tasks The list of tasks to execute the cancel operation on.
+   */
+  void execute(CancelKeyBindingsModel::Operation operation,
+    const std::unordered_map<std::shared_ptr<Task>, Nexus::Money>& prices,
+    Beam::Out<std::vector<std::shared_ptr<Task>>> tasks);
+
+  /**
    * Executes a cancel operation on a list of order entries.
    * @param operation The cancel operation to execute.
    * @param entries The list of order entries to execute the cancel operation

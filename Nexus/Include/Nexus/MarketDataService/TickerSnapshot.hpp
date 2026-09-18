@@ -25,6 +25,9 @@ namespace Nexus {
     /** The list of BookQuotes that are bids. */
     std::vector<SequencedBookQuote> m_bids;
 
+    /** The next Sequence a BookQuote will be published with. */
+    Beam::Sequence m_book_quote_sequence;
+
     /** Constructs an empty TickerSnapshot. */
     TickerSnapshot() = default;
 
@@ -43,6 +46,9 @@ namespace Nexus {
 
 namespace Beam {
   template<>
+  inline constexpr unsigned int shuttle_version<Nexus::TickerSnapshot> = 1;
+
+  template<>
   struct Shuttle<Nexus::TickerSnapshot> {
     template<IsShuttle S>
     void operator ()(
@@ -52,6 +58,9 @@ namespace Beam {
       shuttle.shuttle("time_and_sale", value.m_time_and_sale);
       shuttle.shuttle("asks", value.m_asks);
       shuttle.shuttle("bids", value.m_bids);
+      if(version >= 1) {
+        shuttle.shuttle("book_quote_sequence", value.m_book_quote_sequence);
+      }
     }
   };
 }
