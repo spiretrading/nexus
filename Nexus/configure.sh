@@ -19,16 +19,24 @@ main() {
     run_version
     return $?
   fi
-  generated_files begin || return 1
+  check_hashes || return 1
+  if [[ "$DIRECTORY" != "$SCRIPT_DIR" &&
+      -f "$DIRECTORY/version.sh" && ! -f Version.hpp ]]; then
+    RUN_CMAKE=1
+  fi
+  if [[ "$RUN_CMAKE" == "1" ]]; then
+    generated_files begin || return 1
+  fi
   local configure_error=0
   configure_build || configure_error=$?
-  generated_files end || return 1
+  if [[ "$RUN_CMAKE" == "1" ]]; then
+    generated_files end || return 1
+  fi
   return "$configure_error"
 }
 
 configure_build() {
   run_version || return 1
-  check_hashes || return 1
   run_cmake || return 1
   commit_hashes || return 1
 }
@@ -136,9 +144,11 @@ setup_dependencies() {
     echo "Error: $ROOT/Dependencies exists and is not a symbolic link."
     return 1
   fi
-  pushd "$DEPENDENCIES" > /dev/null || return 1
-  "$SCRIPT_DIR/setup.sh" || { popd > /dev/null; return 1; }
-  popd > /dev/null
+  if [[ "${NEXUS_SETUP_DIRECTORY:-}" != "$DEPENDENCIES" ]]; then
+    cmake -DDEPENDENCIES_DIRECTORY:PATH="$DEPENDENCIES" \
+      -P "$SCRIPT_DIR/Config/configure_dependencies.cmake" || return 1
+  fi
+  export NEXUS_SETUP_DIRECTORY="$DEPENDENCIES"
   if [[ ! "$ROOT/Dependencies" -ef "$DEPENDENCIES" ]]; then
     if [[ -L "$ROOT/Dependencies" ]]; then
       rm "$ROOT/Dependencies" || return 1
@@ -175,7 +185,6 @@ check_hashes() {
     fi
   fi
   if [[ ! -d "CMakeFiles" ]]; then
-    mkdir -p CMakeFiles || return 1
     RUN_CMAKE=1
   fi
   check_file_hash "$CONFIG" "CMakeFiles/config.txt"

@@ -185,8 +185,10 @@ function configureFiles() {
 }
 
 function setup(directory) {
+  if(process.env.WEB_PORTAL_SETUP_DIRECTORY == directory) {
+    return;
+  }
   const nexus = path.resolve(portal, '../../../WebApi/build.js');
-  run(process.execPath, [nexus, 'setup'], directory, process.env);
   const repository = path.join(directory, 'dali');
   const commit = 'a8d51439fbb84e9be79edd43662b653cd304f0e6';
   if(!inspect(repository)) {
@@ -214,6 +216,16 @@ function setup(directory) {
   fs.mkdirSync(webApi, { recursive: true });
   run(process.execPath,
     [nexus, 'configure', '-DD', directory], webApi, process.env);
+  process.env.WEB_PORTAL_SETUP_DIRECTORY = directory;
+}
+
+function configureLibrary(directory) {
+  if(process.env.WEB_PORTAL_LIBRARY_DIRECTORY == directory) {
+    return;
+  }
+  invoke('library', 'configure', path.join(directory, 'library'),
+    ['-DD', directory]);
+  process.env.WEB_PORTAL_LIBRARY_DIRECTORY = directory;
 }
 
 function configureDependencies() {
@@ -242,8 +254,7 @@ function configureDependencies() {
   save();
   setup(target);
   if(project == 'application') {
-    invoke('library', 'configure', path.join(target, 'library'),
-      ['-DD', target]);
+    configureLibrary(target);
   }
 }
 
@@ -483,8 +494,12 @@ function orchestrate() {
     }
   }
   if(!cleaning) {
+    fs.mkdirSync(dependencies, { recursive: true });
+    dependencies = fs.realpathSync(dependencies);
     state.dependenciesDirectory = dependencies;
     save();
+    setup(dependencies);
+    configureLibrary(dependencies);
   }
   const children = projects();
   if(cleaning) {
@@ -545,7 +560,7 @@ function main() {
   if(command == 'setup') {
     setup(root);
     if(project == 'application' || project == 'tests') {
-      invoke('library', 'configure', path.join(root, 'library'), ['-DD', root]);
+      configureLibrary(root);
     }
     return;
   }

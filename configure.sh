@@ -7,8 +7,13 @@ ROOT=""
 main() {
   resolve_paths
   create_forwarding_scripts
+  unset NEXUS_SETUP_DIRECTORY
+  configure_target Nexus "$@"
+  if [[ -d "$ROOT/Nexus/Dependencies" ]]; then
+    export NEXUS_SETUP_DIRECTORY="$(
+      cd "$ROOT/Nexus/Dependencies" && pwd -P)"
+  fi
   local targets=(
-    "Nexus"
     "WebApi"
     "Applications/AdministrationServer"
     "Applications/ChartingServer"

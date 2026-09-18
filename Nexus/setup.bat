@@ -24,7 +24,7 @@ IF NOT DEFINED LUA_HASH EXIT /B 1
 SET "SETUP_HASH=!SETUP_HASH! !LUA_HASH!"
 CALL :AddRepo "Beam" ^
   "https://www.github.com/spiretrading/beam" ^
-  "c149608fae1b4b3298db9b192747f632e506bc16" ^
+  "24f3a8088fb66148f3970899f59efc78cb149bc4" ^
   ":BuildBeam"
 CALL :InstallRepos || EXIT /B 1
 SET "PATH=!ROOT!\Strawberry\perl\bin;!PATH!"
