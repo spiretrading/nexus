@@ -7,8 +7,13 @@ if(NOT DEPENDENCIES_DIRECTORY AND EXISTS "${build_directory}/CMakeCache.txt")
   set(DEPENDENCIES_DIRECTORY "${cached_D}")
 endif()
 if(DEPENDENCIES_DIRECTORY)
-  file(REAL_PATH "${DEPENDENCIES_DIRECTORY}" dependencies
-    BASE_DIRECTORY "${build_directory}")
+  cmake_path(ABSOLUTE_PATH DEPENDENCIES_DIRECTORY
+    BASE_DIRECTORY "${build_directory}" OUTPUT_VARIABLE dependencies)
+  if(EXISTS "${dependencies}")
+    file(REAL_PATH "${dependencies}" dependencies)
+  else()
+    cmake_path(NORMAL_PATH dependencies)
+  endif()
 endif()
 
 function(collect directory result)
