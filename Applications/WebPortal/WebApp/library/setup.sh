@@ -1,6 +1,11 @@
 #!/bin/bash
 set -o errexit
 set -o pipefail
-SCRIPT_DIR="$(cd -P "$(dirname "${BASH_SOURCE[0]}")" > /dev/null 2>&1 && \
-  pwd -P)"
-exec "$SCRIPT_DIR/../setup.sh"
+SOURCE="${BASH_SOURCE[0]}"
+while [[ -h "$SOURCE" ]]; do
+  DIRECTORY="$(cd -P "$(dirname "$SOURCE")" >/dev/null && pwd -P)"
+  SOURCE="$(readlink "$SOURCE")"
+  [[ $SOURCE != /* ]] && SOURCE="$DIRECTORY/$SOURCE"
+done
+DIRECTORY="$(cd -P "$(dirname "$SOURCE")" >/dev/null && pwd -P)"
+exec node "$DIRECTORY/../build.js" library setup "$@"

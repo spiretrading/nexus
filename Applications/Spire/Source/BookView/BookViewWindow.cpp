@@ -215,7 +215,8 @@ void BookViewWindow::keyPressEvent(QKeyEvent* event) {
     display_interactions_panel();
   } else if(auto operation =
       m_key_bindings->get_cancel_key_bindings()->find_operation(sequence)) {
-    m_cancel_operation_signal(*operation, m_ticker, none);
+    m_cancel_operation_signal(
+      *operation, m_ticker, find_order_prices(), none);
   } else if(auto arguments = find_order_task_arguments(
       *m_key_bindings->get_order_task_arguments(), m_ticker, sequence)) {
     display_task_entry_panel(*arguments);
@@ -356,12 +357,27 @@ std::vector<OrderId> BookViewWindow::find_order_ids(
   return ids;
 }
 
-void BookViewWindow::cancel(const CurrentUserOrder& user_order,
+std::unordered_map<OrderId, Money> BookViewWindow::find_order_prices() const {
+  auto prices = std::unordered_map<OrderId, Money>();
+  if(!m_model) {
+    return prices;
+  }
+  auto add_side = [&] (const auto& orders) {
+    for(auto i = 0; i != orders->get_size(); ++i) {
+      auto& order = orders->get(i);
+      prices.insert(std::pair(order.m_id, order.m_price));
+    }
+  };
+  add_side(m_model->get_ask_orders());
+  add_side(m_model->get_bid_orders());
+  return prices;
+}
+
+void BookViewWindow::cancel(Side side, std::vector<OrderId> ids,
     CancelKeyBindingsModel::Operation ask_operation,
     CancelKeyBindingsModel::Operation bid_operation) {
-  m_cancel_operation_signal(
-    pick(user_order.m_side, ask_operation, bid_operation),
-    m_ticker, find_order_ids(user_order));
+  m_cancel_operation_signal(pick(side, ask_operation, bid_operation),
+    m_ticker, find_order_prices(), std::move(ids));
 }
 
 bool BookViewWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
@@ -388,10 +404,15 @@ bool BookViewWindow::on_key_press(QWidget& target, const QKeyEvent& event) {
 void BookViewWindow::on_context_menu(const QPoint& pos) {
   auto menu = new ContextMenu(*m_ticker_view);
   if(auto current = get_current_user_order(m_book_depth)) {
+    auto ids = find_order_ids(*current);
     menu->add_action(tr("Cancel Single Selected"),
-      std::bind_front(&BookViewWindow::on_cancel_most_recent, this, *current));
+      std::bind_front(&BookViewWindow::cancel, this, current->m_side, ids,
+        CancelKeyBindingsModel::Operation::MOST_RECENT_ASK,
+        CancelKeyBindingsModel::Operation::MOST_RECENT_BID));
     menu->add_action(tr("Cancel All Selected"),
-      std::bind_front(&BookViewWindow::on_cancel_all, this, *current));
+      std::bind_front(&BookViewWindow::cancel, this, current->m_side,
+        std::move(ids), CancelKeyBindingsModel::Operation::ALL_ASKS,
+        CancelKeyBindingsModel::Operation::ALL_BIDS));
     menu->add_separator();
   }
   menu->add_action(tr("Properties"),
@@ -432,18 +453,20 @@ void BookViewWindow::on_task_entry_key_press(const QKeyEvent& event) {
 }
 
 void BookViewWindow::on_cancel_most_recent(const CurrentUserOrder& user_order) {
-  cancel(user_order, CancelKeyBindingsModel::Operation::MOST_RECENT_ASK,
+  cancel(user_order.m_side, find_order_ids(user_order),
+    CancelKeyBindingsModel::Operation::MOST_RECENT_ASK,
     CancelKeyBindingsModel::Operation::MOST_RECENT_BID);
 }
 
 void BookViewWindow::on_cancel_all(const CurrentUserOrder& user_order) {
-  cancel(user_order, CancelKeyBindingsModel::Operation::ALL_ASKS,
+  cancel(user_order.m_side, find_order_ids(user_order),
+    CancelKeyBindingsModel::Operation::ALL_ASKS,
     CancelKeyBindingsModel::Operation::ALL_BIDS);
 }
 
 void BookViewWindow::on_properties_menu() {
-  auto properties_window =
-    m_factory->make(m_key_bindings, m_ticker, m_properties_proxy);
+  auto properties_window = m_factory->make(
+    m_key_bindings, m_ticker_view->get_current(), m_properties_proxy);
   if(!properties_window->isVisible()) {
     properties_window->show();
     if(screen()->geometry().right() - frameGeometry().right() >=
@@ -515,7 +538,8 @@ void BookViewWindow::on_order_operation(Side side,
         CancelKeyBindingsModel::Operation::ALL_BIDS);
       if(operation.get_value().m_status == OrderStatus::FILLED &&
           m_interactions->is_cancel_on_fill()->get()) {
-        m_cancel_operation_signal(cancel_operation, m_ticker, none);
+        m_cancel_operation_signal(
+          cancel_operation, m_ticker, find_order_prices(), none);
       }
     });
 }

@@ -13,10 +13,9 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${PROJECT_BINARY_DIR})
 add_library(UI ${header_files} ${source_files}
   ${generated_header_files} ${generated_source_files})
+beam_configure_target(UI)
+target_link_libraries(UI BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(UI PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}" OUTPUT_NAME spire_ui)
-install(TARGETS UI CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS UI CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(UI "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")

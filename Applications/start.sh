@@ -14,12 +14,18 @@ services=(
   "SimulationMarketDataFeedClient"
 )
 
+status=0
 for directory in "${services[@]}"; do
-  pushd $directory/Application > /dev/null
-  ./start.sh
-  popd > /dev/null
+  application="$directory/Application"
+  if [[ ! -d "$application" ]]; then
+    application="$directory"
+  fi
+  (cd "$application" && ./start.sh "$@") || exit $?
 done
 
-pushd AdministrationServer/Application > /dev/null
-python3 reset_risk_states.py
-popd > /dev/null
+application="AdministrationServer/Application"
+if [[ ! -d "$application" ]]; then
+  application="AdministrationServer"
+fi
+(cd "$application" && python3 reset_risk_states.py) || exit $?
+exit "$status"

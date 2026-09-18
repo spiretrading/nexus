@@ -560,7 +560,7 @@ BEAM_UNSUPPRESS_THIS_INITIALIZER()
   }
 
   void on_cancel_order(CancelKeyBindingsModel::Operation operation,
-      const Ticker& ticker,
+      const Ticker& ticker, const std::unordered_map<OrderId, Money>& prices,
       const optional<std::vector<OrderId>>& ids) {
     auto log = QString("%1: Operation:[%2]").
       arg(++m_line_number).

@@ -1,5 +1,7 @@
 import importlib.util
+import json
 import os
+import re
 import shutil
 import socket
 import sys
@@ -26,33 +28,28 @@ def run_subscript(path, arguments):
       ignore_errors=True)
 
 
-def needs_quotes(value):
-  if value.strip() != value or len(value) == 0:
-    return True
-  special_characters = [':', '{', '}', '[', ']', ',', '&', '*', '#', '?', '|',
-    '-', '<', '>', '=', '!', '%', '@', '\\']
-  for c in value:
-    if c in special_characters:
-      return True
-  return False
-
-
 def translate(source, variables):
-  for key in variables.keys():
-    if needs_quotes(variables[key]):
-      index = source.find('$' + key)
-      while index != -1:
-        c = source.rfind('\n', 0, index) + 1
-        q = False
-        while c < index:
-          if source[c] == '\"':
-            q = not q
-          c += 1
-        if q:
-          source = source.replace('$' + key, '%s' % variables[key], 1)
-        else:
-          source = source.replace('$' + key, '"%s"' % variables[key], 1)
-        index = source.find('$' + key, index + 1)
-    else:
-      source = source.replace('$' + key, '%s' % variables[key])
-  return source
+  placeholder = r'\$([A-Za-z_][A-Za-z_0-9]*)'
+
+  def encode(value):
+    return json.dumps(str(value), ensure_ascii=False).replace(
+      '\x85', r'\u0085').replace('\u2028', r'\u2028').replace(
+      '\u2029', r'\u2029')
+
+  def replace(match):
+    token = match.group()
+    if token.startswith('"'):
+      return re.sub(placeholder, lambda item:
+        encode(variables[item[1]])[1:-1] if item[1] in variables
+          else item[0], token)
+    if token.startswith("'"):
+      value = token[1:-1].replace("''", "'")
+      value = re.sub(placeholder, lambda item:
+        str(variables[item[1]]) if item[1] in variables else item[0], value)
+      return encode(value)
+    if token[1:] in variables:
+      return encode(variables[token[1:]])
+    return token
+
+  return re.sub(r'"(?:[^"\\]|\\.)*"|\'(?:[^\']|\'\')*\'|' + placeholder,
+    replace, source)

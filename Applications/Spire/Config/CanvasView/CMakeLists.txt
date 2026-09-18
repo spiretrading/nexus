@@ -12,16 +12,17 @@ source_group("Generated Files\\Source Files" FILES ${generated_source_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(CanvasView ${header_files} ${source_files}
   ${generated_header_files} ${generated_source_files})
+beam_configure_target(CanvasView)
+target_link_libraries(CanvasView BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(CanvasView PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME spire_canvas_view)
-install(TARGETS CanvasView CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS CanvasView CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(CanvasView "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")
 file(GLOB_RECURSE test_source_files ${SPIRE_SOURCE_PATH}/CanvasViewTests/*.cpp)
 add_executable(CanvasViewTests ${test_source_files})
+beam_configure_target(CanvasViewTests)
+target_link_libraries(CanvasViewTests BeamRoutines)
 target_compile_definitions(CanvasViewTests PRIVATE YAML_CPP_STATIC_DEFINE)
 target_link_libraries(CanvasViewTests Async Dashboard Charting PortfolioViewer
   Utilities RiskTimer Blotter Catalog BookView TimeAndSales
@@ -37,45 +38,34 @@ target_link_libraries(CanvasViewTests Async Dashboard Charting PortfolioViewer
   optimized ${OPEN_SSL_BASE_LIBRARY_OPTIMIZED_PATH}
   debug ${YAML_LIBRARY_DEBUG_PATH}
   optimized ${YAML_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_CORE_LIBRARY_DEBUG_PATH}
-  optimized ${QT_CORE_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_FREETYPE_LIBRARY_DEBUG_PATH}
-  optimized ${QT_FREETYPE_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_HBNG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_HBNG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_GUI_LIBRARY_DEBUG_PATH}
-  optimized ${QT_GUI_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_MAIN_LIBRARY_DEBUG_PATH}
-  optimized ${QT_MAIN_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_PCRE_LIBRARY_DEBUG_PATH}
-  optimized ${QT_PCRE_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
-  optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_PNG_LIBRARY_DEBUG_PATH}
-  optimized ${QT_PNG_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_EVENT_LIBRARY_DEBUG_PATH}
-  optimized ${QT_EVENT_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_FONT_LIBRARY_DEBUG_PATH}
-  optimized ${QT_FONT_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_THEME_LIBRARY_DEBUG_PATH}
-  optimized ${QT_THEME_LIBRARY_OPTIMIZED_PATH}
-  debug ${QT_ACCESS_LIBRARY_DEBUG_PATH}
-  optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
-if(UNIX)
-  target_link_libraries(CanvasViewTests
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
-    pthread rt)
-endif()
 if(WIN32)
+  target_link_libraries(CanvasViewTests
+    debug ${QT_CORE_LIBRARY_DEBUG_PATH}
+    optimized ${QT_CORE_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_FREETYPE_LIBRARY_DEBUG_PATH}
+    optimized ${QT_FREETYPE_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_HBNG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_HBNG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_GUI_LIBRARY_DEBUG_PATH}
+    optimized ${QT_GUI_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_MAIN_LIBRARY_DEBUG_PATH}
+    optimized ${QT_MAIN_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_PCRE_LIBRARY_DEBUG_PATH}
+    optimized ${QT_PCRE_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_WIDGETS_LIBRARY_DEBUG_PATH}
+    optimized ${QT_WIDGETS_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_PNG_LIBRARY_DEBUG_PATH}
+    optimized ${QT_PNG_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_EVENT_LIBRARY_DEBUG_PATH}
+    optimized ${QT_EVENT_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_FONT_LIBRARY_DEBUG_PATH}
+    optimized ${QT_FONT_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_THEME_LIBRARY_DEBUG_PATH}
+    optimized ${QT_THEME_LIBRARY_OPTIMIZED_PATH}
+    debug ${QT_ACCESS_LIBRARY_DEBUG_PATH}
+    optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH})
   target_link_libraries(CanvasViewTests
     debug ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_DEBUG_PATH}
     optimized ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_OPTIMIZED_PATH}
@@ -84,11 +74,6 @@ if(WIN32)
     Crypt32.lib dwmapi.lib imm32.lib netapi32.lib opengl32.lib userenv.lib
     version.lib winmm.lib ws2_32.lib wtsapi32.lib)
 endif()
-if(${CMAKE_SYSTEM_NAME} STREQUAL SunOS)
-  target_link_libraries(CanvasViewTests rt socket nsl)
-endif()
 add_custom_command(TARGET CanvasViewTests POST_BUILD COMMAND CanvasViewTests)
-install(TARGETS CanvasViewTests CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY}/Debug)
-install(TARGETS CanvasViewTests CONFIGURATIONS Release
-  RelWithDebInfo DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY}/Release)
+beam_install_target(
+  CanvasViewTests "${SPIRE_TESTS_INSTALL_DIRECTORY}/$<CONFIG>")

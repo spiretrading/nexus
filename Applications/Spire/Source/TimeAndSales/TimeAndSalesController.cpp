@@ -15,6 +15,7 @@ struct TimeAndSalesController::EventFilter : QObject {
   bool eventFilter(QObject* watched, QEvent* event) override {
     if(event->type() == QEvent::Close) {
       m_controller->close();
+      return false;
     }
     return QObject::eventFilter(watched, event);
   }
@@ -32,6 +33,9 @@ TimeAndSalesController::TimeAndSalesController(
 
 TimeAndSalesController::~TimeAndSalesController() {
   close();
+  if(m_event_filter) {
+    m_event_filter.release()->deleteLater();
+  }
 }
 
 void TimeAndSalesController::open() {

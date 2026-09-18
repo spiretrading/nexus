@@ -10,6 +10,7 @@
 #include "Spire/Spire/ReversedListModel.hpp"
 
 using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
 using namespace Spire;
 
@@ -30,6 +31,15 @@ namespace {
   bool is_displayed(const OrderFields& fields) {
     return fields.m_type == OrderType::LIMIT ||
       fields.m_type == OrderType::PEGGED;
+  }
+
+  ptime get_session_reset_time(const Ticker& ticker, ptime timestamp) {
+    auto venue_time = utc_to_venue(ticker.get_venue(), timestamp);
+    if(venue_time.is_special()) {
+      return pos_infin;
+    }
+    return venue_to_utc(
+      ticker.get_venue(), ptime(venue_time.date() + gregorian::days(1)));
   }
 
   auto make_book_quotes() {
@@ -93,18 +103,36 @@ LocalBookViewModel::LocalBookViewModel(Ticker ticker)
         std::make_shared<ArrayListModel<UserOrder>>(),
         std::make_shared<LocalValueModel<optional<OrderFields>>>(),
         std::make_shared<LocalBboQuoteModel>(),
-        std::make_shared<LocalSessionTechnicalsModel>()) {
-  if(ticker) {
-    m_market_center = VENUES.from(ticker.get_venue()).m_market_center;
+        std::make_shared<LocalSessionTechnicalsModel>()),
+      m_ticker(std::move(ticker)) {
+  if(m_ticker) {
+    m_market_center = VENUES.from(m_ticker.get_venue()).m_market_center;
     if(m_market_center.empty()) {
-      m_market_center = ticker.get_venue().get_code().get_data();
+      m_market_center = m_ticker.get_venue().get_code().get_data();
     }
   }
 }
 
 void LocalBookViewModel::update(const BboQuote& bbo) {
+  if(m_ticker && !bbo.m_timestamp.is_not_a_date_time()) {
+    if(m_session_reset_time.is_not_a_date_time()) {
+      m_session_reset_time = get_session_reset_time(m_ticker, bbo.m_timestamp);
+    } else if(bbo.m_timestamp >= m_session_reset_time) {
+      reset_session_technicals();
+      m_session_reset_time = get_session_reset_time(m_ticker, bbo.m_timestamp);
+    }
+  }
   m_model.get_bbo_quote()->set(bbo);
   update_pegged_orders();
+}
+
+void LocalBookViewModel::reset_session_technicals() {
+  auto technicals = SessionTechnicals();
+  if(m_last_price != Money::ZERO) {
+    technicals.m_previous_close = m_last_price;
+  }
+  m_last_price = Money::ZERO;
+  m_model.get_session_technicals()->set(technicals);
 }
 
 void LocalBookViewModel::update(const BookQuote& quote) {
@@ -157,6 +185,7 @@ void LocalBookViewModel::update(const BookQuote& quote) {
 }
 
 void LocalBookViewModel::update(const TimeAndSale& time_and_sale) {
+  m_last_price = time_and_sale.m_price;
   auto technicals = m_model.get_session_technicals()->get();
   Nexus::update(technicals, time_and_sale, m_market_center);
   m_model.get_session_technicals()->set(technicals);

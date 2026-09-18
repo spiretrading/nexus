@@ -21,6 +21,18 @@ using namespace Nexus;
 using namespace Spire;
 
 namespace {
+  void repair_font(QFont& font) {
+    if(font.pixelSize() >= 1) {
+      return;
+    }
+    if(font.pointSize() > 0) {
+      font.setPixelSize(scale_width(font.pointSize()));
+    } else {
+      font.setPixelSize(BookViewProperties::get_default().
+        m_level_properties.m_font.pixelSize());
+    }
+  }
+
   auto load_legacy_properties(const std::filesystem::path& path) {
     auto properties = LegacyBookViewWindowSettings::Properties();
     try {
@@ -96,7 +108,16 @@ BookViewProperties Spire::to_book_view_properties(
           highlight.first, color, level));
     }
   }
+  repair_book_view_properties(properties);
   return properties;
+}
+
+void Spire::repair_book_view_properties(BookViewProperties& properties) {
+  if(properties.m_level_properties.m_color_scheme.empty()) {
+    properties.m_level_properties.m_color_scheme =
+      BookViewProperties::get_default().m_level_properties.m_color_scheme;
+  }
+  repair_font(properties.m_level_properties.m_font);
 }
 
 const BookViewLevelProperties& BookViewLevelProperties::get_default() {
@@ -194,10 +215,7 @@ BookViewProperties Spire::load_book_view_properties(
       QObject::tr("Unable to load book view properties, using defaults."));
     return BookViewProperties::get_default();
   }
-  if(properties.m_level_properties.m_color_scheme.empty()) {
-    properties.m_level_properties.m_color_scheme =
-      BookViewProperties::get_default().m_level_properties.m_color_scheme;
-  }
+  repair_book_view_properties(properties);
   return properties;
 }
 

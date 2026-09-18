@@ -1,5 +1,6 @@
 #include "Spire/BookView/BookViewController.hpp"
 #include <algorithm>
+#include <QMessageBox>
 #include "Nexus/OrderExecutionService/Order.hpp"
 #include "Spire/Blotter/BlotterModel.hpp"
 #include "Spire/Blotter/BlotterSettings.hpp"
@@ -22,6 +23,24 @@ using namespace Spire;
 namespace {
   optional<Ticker> find_ticker(const CanvasNode& node) {
     return find_value<TickerNode>(node, SingleOrderTaskNode::TICKER_PROPERTY);
+  }
+
+  optional<Money> find_price(
+      Task& task, const std::unordered_map<OrderId, Money>& prices) {
+    auto result = optional<Money>();
+    task.GetContext().GetOrderPublisher().with([&] (auto orders) {
+      if(!orders) {
+        return;
+      }
+      for(auto& order : *orders) {
+        auto i = prices.find(order->get_info().m_id);
+        if(i != prices.end()) {
+          result = i->second;
+          return;
+        }
+      }
+    });
+    return result;
   }
 
   bool is_match(Task& task, const std::vector<OrderId>& ids) {
@@ -50,6 +69,7 @@ struct BookViewController::EventFilter : QObject {
   bool eventFilter(QObject* watched, QEvent* event) override {
     if(event->type() == QEvent::Close) {
       m_controller->close();
+      return false;
     }
     return QObject::eventFilter(watched, event);
   }
@@ -67,6 +87,9 @@ BookViewController::BookViewController(
 
 BookViewController::~BookViewController() {
   close();
+  if(m_event_filter) {
+    m_event_filter.release()->deleteLater();
+  }
 }
 
 void BookViewController::open() {
@@ -117,6 +140,8 @@ void BookViewController::on_submit_task(
     const std::shared_ptr<CanvasNode>& task) {
   auto errors = Validate(*task);
   if(!errors.empty()) {
+    QMessageBox::warning(m_window, QObject::tr("Error"),
+      QString::fromStdString(errors.front().GetErrorMessage()));
     return;
   }
   auto& active_blotter =
@@ -136,10 +161,12 @@ void BookViewController::on_submit_task(
 
 void BookViewController::on_cancel_operation(
     CancelKeyBindingsModel::Operation operation, const Ticker& ticker,
+    const std::unordered_map<OrderId, Money>& prices,
     const optional<std::vector<OrderId>>& ids) {
   auto& tasks_model =
     m_user_profile->GetBlotterSettings().GetActiveBlotter().GetTasksModel();
   auto tasks = std::vector<std::shared_ptr<Task>>();
+  auto task_prices = std::unordered_map<std::shared_ptr<Task>, Money>();
   for(auto i = 0; i != tasks_model.rowCount(tasks_model.index(0, 0)); ++i) {
     auto& entry = tasks_model.GetEntry(i);
     if(IsTerminal(entry.m_state) ||
@@ -152,8 +179,11 @@ void BookViewController::on_cancel_operation(
       continue;
     }
     if(!ids || is_match(*task, *ids)) {
+      if(auto price = find_price(*task, prices)) {
+        task_prices.insert(std::pair(task, *price));
+      }
       tasks.push_back(task);
     }
   }
-  execute(operation, out(tasks));
+  execute(operation, task_prices, out(tasks));
 }
