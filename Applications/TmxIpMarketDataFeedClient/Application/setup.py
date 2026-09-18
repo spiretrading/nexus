@@ -1,18 +1,16 @@
 import argparse
 import importlib.util
-import os
-import shutil
+from pathlib import Path
 
-try:
-  spec = importlib.util.spec_from_file_location('setup_utils',
-    os.path.join('..', '..', 'Python', 'setup_utils.py'))
-  setup_utils = importlib.util.module_from_spec(spec)
-  spec.loader.exec_module(setup_utils)
-except FileNotFoundError:
-  spec = importlib.util.spec_from_file_location('setup_utils',
-    os.path.join('..', 'Python', 'setup_utils.py'))
-  setup_utils = importlib.util.module_from_spec(spec)
-  spec.loader.exec_module(setup_utils)
+directory = Path(__file__).resolve().parent
+helper_path = directory / 'setup_utils.py'
+if not helper_path.is_file():
+  helper_path = directory / '..' / '..' / 'Python' / 'setup_utils.py'
+  if not helper_path.is_file():
+    helper_path = directory / '..' / 'Python' / 'setup_utils.py'
+spec = importlib.util.spec_from_file_location('setup_utils', helper_path)
+setup_utils = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(setup_utils)
 
 
 def main():
@@ -34,16 +32,17 @@ def main():
     args.address
   variables['username'] = args.username
   variables['admin_password'] = args.password
-  for filename in os.listdir('.'):
-    default_path = os.path.join(filename, 'config.default.yml')
-    if filename.startswith('tmxip_') and os.path.isdir(filename) and \
-        os.path.isfile(default_path):
-      with open(default_path, 'r+') as file:
-        source = setup_utils.translate(file.read(), variables)
-        file.seek(0)
-        file.write(source)
-        file.truncate()
-        shutil.move(default_path, os.path.join(filename, 'config.yml'))
+  for folder in sorted(directory.glob('tmxip_*')):
+    default_path = folder / 'config.default.yml'
+    if not default_path.is_file():
+      continue
+    with open(default_path, encoding='utf-8') as file:
+      source = file.read()
+    source = setup_utils.translate(source, variables)
+    output_directory = Path(folder.name)
+    output_directory.mkdir(exist_ok=True)
+    with open(output_directory / 'config.yml', 'w', encoding='utf-8') as file:
+      file.write(source)
 
 
 if __name__ == '__main__':

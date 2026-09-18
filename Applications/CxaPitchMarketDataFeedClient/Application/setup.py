@@ -1,19 +1,16 @@
 import argparse
 import importlib.util
-import os
-import shutil
-from string import Template
+from pathlib import Path
 
-try:
-  spec = importlib.util.spec_from_file_location('setup_utils',
-    os.path.join('..', '..', 'Python', 'setup_utils.py'))
-  setup_utils = importlib.util.module_from_spec(spec)
-  spec.loader.exec_module(setup_utils)
-except FileNotFoundError:
-  spec = importlib.util.spec_from_file_location('setup_utils',
-    os.path.join('..', 'Python', 'setup_utils.py'))
-  setup_utils = importlib.util.module_from_spec(spec)
-  spec.loader.exec_module(setup_utils)
+directory = Path(__file__).resolve().parent
+helper_path = directory / 'setup_utils.py'
+if not helper_path.is_file():
+  helper_path = directory / '..' / '..' / 'Python' / 'setup_utils.py'
+  if not helper_path.is_file():
+    helper_path = directory / '..' / 'Python' / 'setup_utils.py'
+spec = importlib.util.spec_from_file_location('setup_utils', helper_path)
+setup_utils = importlib.util.module_from_spec(spec)
+spec.loader.exec_module(setup_utils)
 
 
 def remove_section(source, name):
@@ -80,27 +77,22 @@ def main():
     'cxa_partition1': args.spin_address1,
     'cxa_partition2': args.spin_address2
   }
-  for filename in os.listdir('.'):
-    default_path = os.path.join(filename, 'config.default.yml')
-    if filename.startswith('cxa_') and os.path.isdir(filename) and \
-        os.path.isfile(default_path):
-      with open(default_path, 'r+') as file:
-        source = file.read()
-        if not args.retransmission_address or \
-            not args.retransmission_password:
-          source = remove_section(source, 'retransmission')
-        variables['spin_address'] = spin_addresses.get(filename, '')
-        if not variables['spin_address'] or not args.spin_password:
-          source = remove_section(source, 'spin')
-        escaped_variables = {
-          key: value.encode('unicode_escape').decode('ascii').replace(
-            '"', r'\"') for key, value in variables.items()
-        }
-        source = Template(source).substitute(escaped_variables)
-        file.seek(0)
-        file.write(source)
-        file.truncate()
-        shutil.move(default_path, os.path.join(filename, 'config.yml'))
+  for folder in sorted(directory.glob('cxa_*')):
+    default_path = folder / 'config.default.yml'
+    if not default_path.is_file():
+      continue
+    with open(default_path, encoding='utf-8') as file:
+      source = file.read()
+    if not args.retransmission_address or not args.retransmission_password:
+      source = remove_section(source, 'retransmission')
+    variables['spin_address'] = spin_addresses.get(folder.name, '')
+    if not variables['spin_address'] or not args.spin_password:
+      source = remove_section(source, 'spin')
+    source = setup_utils.translate(source, variables)
+    output_directory = Path(folder.name)
+    output_directory.mkdir(exist_ok=True)
+    with open(output_directory / 'config.yml', 'w', encoding='utf-8') as file:
+      file.write(source)
 
 
 if __name__ == '__main__':
