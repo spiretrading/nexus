@@ -103,20 +103,14 @@ clean_build() {
   local clean_type="$1"
   local clean_error=0
   if [[ -f "$ROOT/CMakeCache.txt" ]]; then
-    local scripts=("$ROOT"/CMakeFiles/clean_*.cmake)
-    if [[ ! -f "${scripts[0]}" ]]; then
-      CONFIG=""
-      configure || return 1
-      scripts=("$ROOT"/CMakeFiles/clean_*.cmake)
-    fi
     generated_files begin || return 1
-    if [[ -f "${scripts[0]}" ]]; then
+    cmake -DBUILD_DIRECTORY:PATH="$ROOT" \
+      -P "$SCRIPT_DIR/Config/native_clean.cmake" || clean_error=1
+    local scripts=("$ROOT"/CMakeFiles/clean_outputs_*.cmake)
+    if [[ "$clean_error" == "0" && -f "${scripts[0]}" ]]; then
       for script in "${scripts[@]}"; do
         cmake -P "$script" || clean_error=1
       done
-    else
-      cmake -DBUILD_DIRECTORY:PATH="$ROOT" \
-        -P "$SCRIPT_DIR/Config/native_clean.cmake" || clean_error=1
     fi
     generated_files end || return 1
   fi

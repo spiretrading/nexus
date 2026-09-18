@@ -1,7 +1,8 @@
 cmake_minimum_required(VERSION 3.28)
 file(REAL_PATH "${CMAKE_CURRENT_LIST_DIR}/.." source_directory)
 file(REAL_PATH "${DEPENDENCIES_DIRECTORY}" dependencies_directory)
-set(cache_file "${dependencies_directory}/.nexus_configure_complete")
+set(cache_file
+  "${dependencies_directory}/cache_files/nexus/configure_complete")
 
 function(fingerprint result)
   file(GLOB inputs

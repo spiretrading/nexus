@@ -82,18 +82,13 @@ SET "CLEAN_ERROR=0"
 IF NOT EXIST "!ROOT!\CMakeCache.txt" (
   GOTO CleanConfiguration
 )
-IF NOT EXIST "!ROOT!\CMakeFiles\clean_*.cmake" (
-  SET "CONFIG="
-  CALL :Configure || EXIT /B 1
-)
 CALL :GeneratedFiles begin || EXIT /B 1
-IF EXIST "!ROOT!\CMakeFiles\clean_*.cmake" (
-  FOR %%F IN ("!ROOT!\CMakeFiles\clean_*.cmake") DO (
+cmake -DBUILD_DIRECTORY:PATH="!ROOT!" ^
+  -P "%~dp0Config\native_clean.cmake" || SET "CLEAN_ERROR=1"
+IF !CLEAN_ERROR! EQU 0 IF EXIST "!ROOT!\CMakeFiles\clean_outputs_*.cmake" (
+  FOR %%F IN ("!ROOT!\CMakeFiles\clean_outputs_*.cmake") DO (
     cmake -P "%%F" || SET "CLEAN_ERROR=1"
   )
-) ELSE (
-  cmake -DBUILD_DIRECTORY:PATH="!ROOT!" ^
-    -P "%~dp0Config\native_clean.cmake" || SET "CLEAN_ERROR=1"
 )
 CALL :GeneratedFiles end || EXIT /B 1
 :CleanConfiguration
