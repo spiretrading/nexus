@@ -8,14 +8,13 @@ source_group("Generated Files\\Source Files" FILES ${generated_source_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(
   TimeAndSales ${header_files} ${source_files} ${generated_source_files})
+beam_configure_target(TimeAndSales)
+target_link_libraries(TimeAndSales BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(TimeAndSales PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME spire_time_and_sales)
-install(TARGETS TimeAndSales CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS TimeAndSales CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(TimeAndSales "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")
 file(GLOB header_files ../../Include/Spire/TimeAndSalesUiTester/*.hpp)
 file(GLOB source_files ../../Source/TimeAndSalesUiTester/*.cpp)
 if(WIN32)
@@ -25,6 +24,8 @@ elseif(APPLE)
 endif()
 add_executable(
   TimeAndSalesUiTester ${app_type} ${header_files} ${source_files})
+beam_configure_target(TimeAndSalesUiTester)
+target_link_libraries(TimeAndSalesUiTester BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
   target_link_libraries(TimeAndSalesUiTester
@@ -108,18 +109,10 @@ if(WIN32)
 endif()
 if(UNIX)
   target_link_libraries(TimeAndSalesUiTester
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_FILE_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_REGEX_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_REGEX_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_EDID_LIBRARY_DEBUG_PATH}
@@ -130,14 +123,15 @@ if(UNIX)
     optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_XCB_LIBRARY_DEBUG_PATH}
     optimized ${QT_XCB_LIBRARY_OPTIMIZED_PATH}
-    dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM
+    dbus-1 fontconfig freetype glib-2.0 ICE double-conversion SM
     X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
 endif()
-install(
-  TARGETS TimeAndSalesUiTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
+beam_install_target(TimeAndSalesUiTester "${SPIRE_TESTS_INSTALL_DIRECTORY}")
 file(GLOB header_files ../../Include/Spire/TimeAndSalesTester/*.hpp)
 file(GLOB source_files ../../Source/TimeAndSalesTester/*.cpp)
 add_executable(TimeAndSalesTester ${header_files} ${source_files})
+beam_configure_target(TimeAndSalesTester)
+target_link_libraries(TimeAndSalesTester BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
   target_link_libraries(TimeAndSalesTester
@@ -221,18 +215,10 @@ if(WIN32)
 endif()
 if(UNIX)
   target_link_libraries(TimeAndSalesTester
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_FILE_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_REGEX_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_REGEX_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_EDID_LIBRARY_DEBUG_PATH}
@@ -243,10 +229,9 @@ if(UNIX)
     optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_XCB_LIBRARY_DEBUG_PATH}
     optimized ${QT_XCB_LIBRARY_OPTIMIZED_PATH}
-    dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM
+    dbus-1 fontconfig freetype glib-2.0 ICE double-conversion SM
     X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
 endif()
 add_custom_command(
   TARGET TimeAndSalesTester POST_BUILD COMMAND TimeAndSalesTester)
-install(
-  TARGETS TimeAndSalesTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
+beam_install_target(TimeAndSalesTester "${SPIRE_TESTS_INSTALL_DIRECTORY}")

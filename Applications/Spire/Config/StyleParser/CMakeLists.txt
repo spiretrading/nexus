@@ -9,18 +9,19 @@ source_group("DataTypes\\Header Files" FILES ${data_types_header_files})
 source_group("DataTypes\\Source Files" FILES ${data_types_source_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(StyleParser ${header_files} ${source_files})
+beam_configure_target(StyleParser)
+target_link_libraries(StyleParser BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(StyleParser PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME spire_style_parser)
-install(TARGETS StyleParser CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS StyleParser CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(StyleParser "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")
 file(GLOB_RECURSE
   test_header_files ${SPIRE_INCLUDE_PATH}/Spire/StyleParserTests/*.hpp)
 file(GLOB_RECURSE test_source_files ${SPIRE_SOURCE_PATH}/StyleParserTests/*.cpp)
 add_executable(StyleParserTests ${test_header_files} ${test_source_files})
+beam_configure_target(StyleParserTests)
+target_link_libraries(StyleParserTests BeamRoutines)
 target_compile_definitions(StyleParserTests PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(
   ${test_header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
@@ -61,18 +62,6 @@ target_link_libraries(StyleParserTests Styles StyleParser Library
   optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
-if(UNIX)
-  target_link_libraries(StyleParserTests
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
-    pthread rt)
-endif()
 if(WIN32)
   target_link_libraries(StyleParserTests
     debug ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_DEBUG_PATH}
@@ -82,11 +71,6 @@ if(WIN32)
     Crypt32.lib dwmapi.lib imm32.lib netapi32.lib opengl32.lib userenv.lib
     version.lib winmm.lib ws2_32.lib wtsapi32.lib)
 endif()
-if(${CMAKE_SYSTEM_NAME} STREQUAL SunOS)
-  target_link_libraries(StyleParserTests rt socket nsl)
-endif()
 add_custom_command(TARGET StyleParserTests POST_BUILD COMMAND StyleParserTests)
-install(TARGETS StyleParserTests CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY}/Debug)
-install(TARGETS StyleParserTests CONFIGURATIONS Release
-  RelWithDebInfo DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY}/Release)
+beam_install_target(
+  StyleParserTests "${SPIRE_TESTS_INSTALL_DIRECTORY}/$<CONFIG>")

@@ -6,14 +6,13 @@ qt5_wrap_cpp(generated_source_files ${qobject_source_files}
   OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(SignIn ${header_files} ${source_files})
+beam_configure_target(SignIn)
+target_link_libraries(SignIn BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(SignIn PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME spire_sign_in)
-install(TARGETS SignIn CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS SignIn CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(SignIn "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")
 file(GLOB_RECURSE test_header_files ../../Include/Spire/SignInUiTester/*.hpp)
 file(GLOB_RECURSE test_source_files ../../Source/SignInUiTester/*.cpp)
 if(WIN32)
@@ -23,6 +22,8 @@ elseif(APPLE)
 endif()
 add_executable(
   SignInUiTester ${app_type} ${test_header_files} ${test_source_files})
+beam_configure_target(SignInUiTester)
+target_link_libraries(SignInUiTester BeamRoutines)
 target_compile_definitions(SignInUiTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(
   ${test_header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
@@ -103,18 +104,10 @@ if(WIN32)
 endif()
 if(UNIX)
   target_link_libraries(SignInUiTester
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_FILE_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_REGEX_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_REGEX_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_EDID_LIBRARY_DEBUG_PATH}
     optimized ${QT_EDID_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
@@ -123,7 +116,7 @@ if(UNIX)
     optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_XCB_LIBRARY_DEBUG_PATH}
     optimized ${QT_XCB_LIBRARY_OPTIMIZED_PATH}
-    dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM
+    dbus-1 fontconfig freetype glib-2.0 ICE double-conversion SM
     X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
 endif()
-install(TARGETS SignInUiTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
+beam_install_target(SignInUiTester "${SPIRE_TESTS_INSTALL_DIRECTORY}")

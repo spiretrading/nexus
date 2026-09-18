@@ -3,17 +3,18 @@ file(GLOB_RECURSE source_files ../../Source/Styles/*.cpp)
 source_group("Header Files" FILES ${header_files})
 source_group("Source Files" FILES ${source_files})
 add_library(Styles ${header_files} ${source_files})
+beam_configure_target(Styles)
+target_link_libraries(Styles BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Styles PROPERTIES STATIC_LIBRARY_FLAGS_RELEASE
   "${CMAKE_LIBRARY_FLAGS}" OUTPUT_NAME styles)
-install(TARGETS Library CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS Library CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(Styles "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")
 file(GLOB_RECURSE test_header_files ../../Include/Spire/StylesTester/*.hpp)
 file(GLOB_RECURSE test_source_files ../../Source/StylesTester/*.cpp)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_executable(StylesTester ${test_header_files} ${test_source_files})
+beam_configure_target(StylesTester)
+target_link_libraries(StylesTester BeamRoutines)
 target_compile_definitions(StylesTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(
   ${test_header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
@@ -94,18 +95,10 @@ if(WIN32)
 endif()
 if(UNIX)
   target_link_libraries(StylesTester
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_FILE_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_REGEX_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_REGEX_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_EDID_LIBRARY_DEBUG_PATH}
     optimized ${QT_EDID_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
@@ -114,8 +107,8 @@ if(UNIX)
     optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_XCB_LIBRARY_DEBUG_PATH}
     optimized ${QT_XCB_LIBRARY_OPTIMIZED_PATH}
-    dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM
+    dbus-1 fontconfig freetype glib-2.0 ICE double-conversion SM
     X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
 endif()
 add_custom_command(TARGET StylesTester POST_BUILD COMMAND StylesTester)
-install(TARGETS StylesTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
+beam_install_target(StylesTester "${SPIRE_TESTS_INSTALL_DIRECTORY}")

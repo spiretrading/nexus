@@ -13,10 +13,9 @@ include_directories(${CMAKE_CURRENT_BINARY_DIR})
 include_directories(${PROJECT_BINARY_DIR})
 add_library(LegacyUI ${header_files} ${source_files}
   ${generated_header_files} ${generated_source_files})
+beam_configure_target(LegacyUI)
+target_link_libraries(LegacyUI BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(LegacyUI PROPERTIES STATIC_LIBRARY_FLAGS_RELEASE
   "${CMAKE_LIBRARY_FLAGS}" OUTPUT_NAME spire_legacy_ui)
-install(TARGETS LegacyUI CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS LegacyUI CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(LegacyUI "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")

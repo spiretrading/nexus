@@ -12,11 +12,10 @@ source_group("Generated Files\\Source Files" FILES ${generated_source_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(InputWidgets ${header_files} ${source_files}
   ${generated_header_files} ${generated_source_files})
+beam_configure_target(InputWidgets)
+target_link_libraries(InputWidgets BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(InputWidgets PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME spire_input_widgets)
-install(TARGETS InputWidgets CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS InputWidgets CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(InputWidgets "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")

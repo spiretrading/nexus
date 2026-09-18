@@ -20,8 +20,8 @@ RequestExecutionLevel user
 
 !include "MUI2.nsh"
 ; Use the product's icon
-!define MUI_ICON "spire.ico"
-!define MUI_UNICON "spire.ico"
+!define MUI_ICON "${__FILEDIR__}\spire.ico"
+!define MUI_UNICON "${__FILEDIR__}\spire.ico"
 
 ; Define the installation pages
 !insertmacro MUI_PAGE_COMPONENTS

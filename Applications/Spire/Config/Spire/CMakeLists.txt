@@ -17,6 +17,8 @@ endif(WIN32)
 include_directories(${PROJECT_BINARY_DIR})
 add_executable(Spire ${app_type} ${header_files} ${source_files}
   ${resource_files} ${manifest_files})
+beam_configure_target(Spire)
+target_link_libraries(Spire BeamRoutines)
 target_compile_definitions(Spire PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 target_link_libraries(Spire Async Dashboard Charting PortfolioViewer Utilities
@@ -67,12 +69,6 @@ target_link_libraries(Spire Async Dashboard Charting PortfolioViewer Utilities
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
 if(UNIX)
   target_compile_options(Spire PRIVATE -fPIC)
-  target_link_libraries(Spire
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
-    pthread rt)
 endif()
 if(WIN32)
   target_link_libraries(Spire
@@ -83,4 +79,4 @@ if(WIN32)
     Crypt32.lib dwmapi.lib imm32.lib netapi32.lib opengl32.lib userenv.lib
     version.lib winmm.lib ws2_32.lib wtsapi32.lib)
 endif()
-install(TARGETS Spire DESTINATION ${PROJECT_BINARY_DIR}/Application)
+beam_install_target(Spire "${PROJECT_BINARY_DIR}/Application")

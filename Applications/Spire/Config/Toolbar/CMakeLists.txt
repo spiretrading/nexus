@@ -6,14 +6,13 @@ qt5_wrap_cpp(generated_source_files ${qobject_source_files}
   OPTIONS -DBOOST_TT_HAS_OPERATOR_HPP_INCLUDED)
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(Toolbar ${header_files} ${source_files})
+beam_configure_target(Toolbar)
+target_link_libraries(Toolbar BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Toolbar PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME spire_toolbar)
-install(TARGETS Toolbar CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS Toolbar CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(Toolbar "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")
 file(GLOB_RECURSE header_files ../../Include/Spire/ToolbarUiTester/*.hpp)
 file(GLOB_RECURSE source_files ../../Source/ToolbarUiTester/*.cpp)
 if(WIN32)
@@ -22,6 +21,8 @@ elseif(APPLE)
   set(app_type MACOSX_BUNDLE)
 endif()
 add_executable(ToolbarUiTester ${app_type} ${header_files} ${source_files})
+beam_configure_target(ToolbarUiTester)
+target_link_libraries(ToolbarUiTester BeamRoutines)
 target_compile_definitions(ToolbarUiTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
@@ -106,18 +107,10 @@ if(WIN32)
 endif()
 if(UNIX)
   target_link_libraries(ToolbarUiTester
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_FILE_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_REGEX_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_REGEX_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_EDID_LIBRARY_DEBUG_PATH}
     optimized ${QT_EDID_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
@@ -126,7 +119,7 @@ if(UNIX)
     optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_XCB_LIBRARY_DEBUG_PATH}
     optimized ${QT_XCB_LIBRARY_OPTIMIZED_PATH}
-    dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM
+    dbus-1 fontconfig freetype glib-2.0 ICE double-conversion SM
     X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
 endif()
-install(TARGETS ToolbarUiTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
+beam_install_target(ToolbarUiTester "${SPIRE_TESTS_INSTALL_DIRECTORY}")

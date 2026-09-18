@@ -8,6 +8,8 @@ elseif(APPLE)
   set(app_type MACOSX_BUNDLE)
 endif()
 add_executable(Scratch ${app_type} ${header_files} ${source_files})
+beam_configure_target(Scratch)
+target_link_libraries(Scratch BeamRoutines)
 target_compile_definitions(Scratch PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
@@ -92,18 +94,10 @@ if(WIN32)
 endif()
 if(UNIX)
   target_link_libraries(Scratch
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_FILE_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_REGEX_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_REGEX_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_EDID_LIBRARY_DEBUG_PATH}
     optimized ${QT_EDID_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
@@ -112,7 +106,7 @@ if(UNIX)
     optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_XCB_LIBRARY_DEBUG_PATH}
     optimized ${QT_XCB_LIBRARY_OPTIMIZED_PATH}
-    dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM
+    dbus-1 fontconfig freetype glib-2.0 ICE double-conversion SM
     X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
 endif()
-install(TARGETS Scratch DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
+beam_install_target(Scratch "${SPIRE_TESTS_INSTALL_DIRECTORY}")

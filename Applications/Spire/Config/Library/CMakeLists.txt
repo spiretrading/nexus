@@ -9,10 +9,9 @@ source_group("Ui\\Source Files" FILES ${ui_source_files})
 file(GLOB_RECURSE header_files ${common_header_files} ${ui_header_files})
 file(GLOB_RECURSE source_files ${common_source_files} ${ui_source_files})
 add_library(Library ${header_files} ${source_files})
+beam_configure_target(Library)
+target_link_libraries(Library BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Library PROPERTIES STATIC_LIBRARY_FLAGS_RELEASE
   "${CMAKE_LIBRARY_FLAGS}" OUTPUT_NAME Spire)
-install(TARGETS Library CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS Library CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(Library "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")

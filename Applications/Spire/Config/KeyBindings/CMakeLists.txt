@@ -12,14 +12,13 @@ source_group("Form Files" FILES ${form_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(KeyBindings ${header_files} ${source_files}
   ${generated_header_files} ${generated_source_files})
+beam_configure_target(KeyBindings)
+target_link_libraries(KeyBindings BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(KeyBindings PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME spire_key_bindings)
-install(TARGETS KeyBindings CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS KeyBindings CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(KeyBindings "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")
 file(GLOB_RECURSE header_files ../../Include/Spire/KeyBindingsUiTester/*.hpp)
 file(GLOB_RECURSE source_files ../../Source/KeyBindingsUiTester/*.cpp)
 if(WIN32)
@@ -28,6 +27,8 @@ elseif(APPLE)
   set(app_type MACOSX_BUNDLE)
 endif()
 add_executable(KeyBindingsUiTester ${app_type} ${header_files} ${source_files})
+beam_configure_target(KeyBindingsUiTester)
+target_link_libraries(KeyBindingsUiTester BeamRoutines)
 target_compile_definitions(KeyBindingsUiTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
@@ -112,18 +113,10 @@ if(WIN32)
 endif()
 if(UNIX)
   target_link_libraries(KeyBindingsUiTester
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_FILE_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_REGEX_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_REGEX_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_EDID_LIBRARY_DEBUG_PATH}
     optimized ${QT_EDID_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
@@ -132,13 +125,14 @@ if(UNIX)
     optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_XCB_LIBRARY_DEBUG_PATH}
     optimized ${QT_XCB_LIBRARY_OPTIMIZED_PATH}
-    dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM
+    dbus-1 fontconfig freetype glib-2.0 ICE double-conversion SM
     X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
 endif()
-install(
-  TARGETS KeyBindingsUiTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
+beam_install_target(KeyBindingsUiTester "${SPIRE_TESTS_INSTALL_DIRECTORY}")
 file(GLOB_RECURSE source_files ../../Source/KeyBindingsTester/*.cpp)
 add_executable(KeyBindingsTester ${source_files})
+beam_configure_target(KeyBindingsTester)
+target_link_libraries(KeyBindingsTester BeamRoutines)
 target_compile_definitions(KeyBindingsTester PRIVATE YAML_CPP_STATIC_DEFINE)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 if(UNIX)
@@ -223,18 +217,10 @@ if(WIN32)
 endif()
 if(UNIX)
   target_link_libraries(KeyBindingsTester
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_FILE_SYSTEM_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_FILE_SYSTEM_LIBRARY_OPTIMIZED_PATH}
     debug ${BOOST_REGEX_LIBRARY_DEBUG_PATH}
     optimized ${BOOST_REGEX_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_EDID_LIBRARY_DEBUG_PATH}
     optimized ${QT_EDID_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_XCB_PLATFORM_LIBRARY_DEBUG_PATH}
@@ -243,9 +229,9 @@ if(UNIX)
     optimized ${QT_XCB_PLUGIN_LIBRARY_OPTIMIZED_PATH}
     debug ${QT_XCB_LIBRARY_DEBUG_PATH}
     optimized ${QT_XCB_LIBRARY_OPTIMIZED_PATH}
-    dbus-1 dl fontconfig freetype glib-2.0 ICE double-conversion pthread rt SM
+    dbus-1 fontconfig freetype glib-2.0 ICE double-conversion SM
     X11 X11-xcb xcb Xi xkbcommon xkbcommon-x11 Xrender)
 endif()
 add_custom_command(
   TARGET KeyBindingsTester POST_BUILD COMMAND KeyBindingsTester)
-install(TARGETS KeyBindingsTester DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY})
+beam_install_target(KeyBindingsTester "${SPIRE_TESTS_INSTALL_DIRECTORY}")

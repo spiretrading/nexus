@@ -110,16 +110,17 @@ source_group("Generated Files\\Source Files" FILES ${generated_source_files})
 include_directories(${CMAKE_CURRENT_BINARY_DIR})
 add_library(Canvas ${header_files} ${source_files} ${generated_header_files}
   ${generated_source_files})
+beam_configure_target(Canvas)
+target_link_libraries(Canvas BeamRoutines)
 set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
 set_target_properties(Canvas PROPERTIES
   STATIC_LIBRARY_FLAGS_RELEASE "${CMAKE_LIBRARY_FLAGS}"
   OUTPUT_NAME spire_canvas)
-install(TARGETS Canvas CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Debug)
-install(TARGETS Canvas CONFIGURATIONS Release
-  DESTINATION ${SPIRE_LIBRARY_INSTALL_DIRECTORY}/Release)
+beam_install_target(Canvas "${SPIRE_LIBRARY_INSTALL_DIRECTORY}/$<CONFIG>")
 file(GLOB test_source_files ${SPIRE_SOURCE_PATH}/CanvasTests/*.cpp)
 add_executable(CanvasTests ${test_source_files})
+beam_configure_target(CanvasTests)
+target_link_libraries(CanvasTests BeamRoutines)
 target_compile_definitions(CanvasTests PRIVATE YAML_CPP_STATIC_DEFINE)
 target_link_libraries(CanvasTests Async Dashboard Charting PortfolioViewer
   Utilities RiskTimer Blotter Catalog BookView TimeAndSales
@@ -161,18 +162,6 @@ target_link_libraries(CanvasTests Async Dashboard Charting PortfolioViewer
   optimized ${QT_ACCESS_LIBRARY_OPTIMIZED_PATH}
   debug ${ZLIB_LIBRARY_DEBUG_PATH}
   optimized ${ZLIB_LIBRARY_OPTIMIZED_PATH})
-if(UNIX)
-  target_link_libraries(CanvasTests
-    debug ${BOOST_CHRONO_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CHRONO_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_CONTEXT_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_CONTEXT_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_DATE_TIME_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_DATE_TIME_LIBRARY_OPTIMIZED_PATH}
-    debug ${BOOST_THREAD_LIBRARY_DEBUG_PATH}
-    optimized ${BOOST_THREAD_LIBRARY_OPTIMIZED_PATH}
-    pthread rt)
-endif()
 if(WIN32)
   target_link_libraries(CanvasTests
     debug ${QT_WINDOWS_ACCESSIBILITY_LIBRARY_DEBUG_PATH}
@@ -182,11 +171,5 @@ if(WIN32)
     Crypt32.lib dwmapi.lib imm32.lib netapi32.lib opengl32.lib userenv.lib
     version.lib winmm.lib ws2_32.lib wtsapi32.lib)
 endif()
-if(${CMAKE_SYSTEM_NAME} STREQUAL SunOS)
-  target_link_libraries(CanvasTests rt socket nsl)
-endif()
 add_custom_command(TARGET CanvasTests POST_BUILD COMMAND CanvasTests)
-install(TARGETS CanvasTests CONFIGURATIONS Debug
-  DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY}/Debug)
-install(TARGETS CanvasTests CONFIGURATIONS Release
-  RelWithDebInfo DESTINATION ${SPIRE_TESTS_INSTALL_DIRECTORY}/Release)
+beam_install_target(CanvasTests "${SPIRE_TESTS_INSTALL_DIRECTORY}/$<CONFIG>")
