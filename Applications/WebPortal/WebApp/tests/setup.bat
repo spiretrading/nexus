@@ -1,11 +1,5 @@
 @ECHO OFF
-SETLOCAL
-SET ROOT=%cd%
-CALL "%~dp0..\setup.bat"
-IF NOT EXIST library (
-  MD library
-  PUSHD library
-  CALL "%~dp0..\library\configure.bat" -DD="%ROOT%"
-  POPD
-)
-ENDLOCAL
+SETLOCAL DisableDelayedExpansion
+SET ARGS=%*
+node "%~dp0..\build.js" tests setup %ARGS:\=/%
+EXIT /B %ERRORLEVEL%

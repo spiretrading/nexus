@@ -1,3 +1,5 @@
 @ECHO OFF
-CALL "%~dp0..\setup.bat"
+SETLOCAL DisableDelayedExpansion
+SET ARGS=%*
+node "%~dp0..\build.js" library setup %ARGS:\=/%
 EXIT /B %ERRORLEVEL%
