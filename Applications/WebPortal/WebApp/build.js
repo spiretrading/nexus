@@ -14,6 +14,20 @@ let action = 'release';
 let dependenciesDirectory;
 let state = { generated: [] };
 
+function samePath(first, second) {
+  if(!first || !second) {
+    return false;
+  }
+  if(path.resolve(first) == path.resolve(second)) {
+    return true;
+  }
+  const firstInfo = fs.statSync(first, { bigint: true, throwIfNoEntry: false });
+  const secondInfo = fs.statSync(
+    second, { bigint: true, throwIfNoEntry: false });
+  return Boolean(firstInfo && secondInfo) && firstInfo.dev == secondInfo.dev &&
+    firstInfo.ino == secondInfo.ino;
+}
+
 function inspect(filename) {
   return fs.lstatSync(filename, { throwIfNoEntry: false });
 }
@@ -45,8 +59,9 @@ function checkPath(directory, filename) {
   while(!inspect(parent)) {
     parent = path.dirname(parent);
   }
-  const target = fs.realpathSync(parent);
-  if(target != directory && !target.startsWith(directory + path.sep)) {
+  const target = path.relative(directory, fs.realpathSync(parent));
+  if(target == '..' || target.startsWith('..' + path.sep) ||
+      path.isAbsolute(target)) {
     throw new Error(`Generated path crosses a directory link: ${filename}`);
   }
 }
@@ -100,15 +115,22 @@ function forward() {
   for(const name of ['build', 'configure']) {
     if(process.platform == 'win32') {
       const filename = path.join(root, name + '.bat');
-      if(!inspect(filename)) {
-        let arguments = '';
-        if(project == 'application') {
-          arguments = ' -D="' + source + '"';
-        }
-        fs.writeFileSync(filename,
-          '@ECHO OFF\r\nSETLOCAL DisableDelayedExpansion\r\nSET ARGS=%*\r\n' +
-          'node "' + __filename + '" ' + project + ' ' + name + arguments +
-          ' %ARGS:\\=/%\r\nEXIT /B %ERRORLEVEL%\r\n');
+      let arguments = '';
+      if(project == 'application') {
+        arguments = ' -D="' + source + '"';
+      }
+      const header =
+        '@ECHO OFF\r\nSETLOCAL DisableDelayedExpansion\r\nSET ARGS=%*\r\n';
+      const invocation = 'node "' + __filename + '" ' + project + ' ' + name +
+        arguments;
+      const previous = header + invocation +
+        ' %ARGS:\\=/%\r\nEXIT /B %ERRORLEVEL%\r\n';
+      const info = inspect(filename);
+      if(!info || info.isFile() &&
+          fs.readFileSync(filename, 'utf8') == previous) {
+        fs.writeFileSync(filename, header +
+          'IF DEFINED ARGS SET ARGS=%ARGS:\\=/%\r\n' +
+          invocation + ' %ARGS%\r\nEXIT /B %ERRORLEVEL%\r\n');
       }
     } else {
       const filename = path.join(root, name + '.sh');
@@ -132,7 +154,7 @@ function copy(name) {
   const content = fs.readFileSync(target);
   const info = inspect(filename);
   if(info) {
-    if(fs.realpathSync(filename) == fs.realpathSync(target)) {
+    if(samePath(fs.realpathSync(filename), fs.realpathSync(target))) {
       return;
     }
     if(info.isFile() && fs.readFileSync(filename).equals(content)) {
@@ -157,13 +179,13 @@ function configuration() {
 }
 
 function configureFiles() {
-  if(root == source) {
+  if(samePath(root, source)) {
     return;
   }
   const filename = path.join(root, 'source');
   const target = path.join(source, 'source');
   if(inspect(filename)) {
-    if(fs.realpathSync(filename) != fs.realpathSync(target)) {
+    if(!samePath(fs.realpathSync(filename), fs.realpathSync(target))) {
       throw new Error(`Refusing to replace the existing ${filename}.`);
     }
   } else {
@@ -185,7 +207,7 @@ function configureFiles() {
 }
 
 function setup(directory) {
-  if(process.env.WEB_PORTAL_SETUP_DIRECTORY == directory) {
+  if(samePath(process.env.WEB_PORTAL_SETUP_DIRECTORY, directory)) {
     return;
   }
   const nexus = path.resolve(portal, '../../../WebApi/build.js');
@@ -220,7 +242,7 @@ function setup(directory) {
 }
 
 function configureLibrary(directory) {
-  if(process.env.WEB_PORTAL_LIBRARY_DIRECTORY == directory) {
+  if(samePath(process.env.WEB_PORTAL_LIBRARY_DIRECTORY, directory)) {
     return;
   }
   invoke('library', 'configure', path.join(directory, 'library'),
@@ -233,13 +255,13 @@ function configureDependencies() {
   const requested = path.resolve(root,
     dependenciesDirectory || state.dependenciesDirectory || 'Dependencies');
   const info = inspect(filename);
-  if(requested != filename && info && !info.isSymbolicLink()) {
+  if(!samePath(requested, filename) && info && !info.isSymbolicLink()) {
     throw new Error(`Refusing to replace the existing ${filename}.`);
   }
   fs.mkdirSync(requested, { recursive: true });
   const target = fs.realpathSync(requested);
-  if(requested != filename) {
-    if(info && fs.realpathSync(filename) != target) {
+  if(!samePath(requested, filename)) {
+    if(info && !samePath(fs.realpathSync(filename), target)) {
       fs.unlinkSync(filename);
     }
     if(!inspect(filename)) {
@@ -283,14 +305,16 @@ function buildDependencies() {
     return [];
   }
   const directory = state.dependenciesDirectory;
-  if(project == 'library') {
-    invoke('dali', 'build', path.join(directory, 'dali'), []);
-    const nexus = path.resolve(portal, '../../../WebApi/build.js');
-    run(process.execPath, [nexus, 'build', '-DD', directory],
-      path.join(directory, 'WebApi'), process.env);
-  } else {
-    invoke('library', 'build', path.join(directory, 'library'),
-      ['-DD', directory]);
+  if(!samePath(process.env.WEB_PORTAL_BUILD_DIRECTORY, directory)) {
+    if(project == 'library') {
+      invoke('dali', 'build', path.join(directory, 'dali'), []);
+      const nexus = path.resolve(portal, '../../../WebApi/build.js');
+      run(process.execPath, [nexus, 'build', '-DD', directory],
+        path.join(directory, 'WebApi'), process.env);
+    } else {
+      invoke('library', 'build', path.join(directory, 'library'),
+        ['-DD', directory]);
+    }
   }
   const packages = ['Beam/WebApi', 'dali', 'WebApi'];
   if(project == 'application') {
@@ -343,19 +367,22 @@ function resources() {
 
 function deploy() {
   const destination = path.resolve(root, '../../Application/web_app');
-  if(project != 'application' || source != path.join(portal, 'application') ||
+  if(project != 'application' ||
+      !samePath(source, path.join(portal, 'application')) ||
       !inspect(path.dirname(destination))) {
     return;
   }
   fs.mkdirSync(destination, { recursive: true });
   const directory = fs.realpathSync(destination);
   let previous = [];
-  if(state.deployment && state.deployment.directory == directory) {
+  if(state.deployment && samePath(state.deployment.directory, directory)) {
     previous = state.deployment.files;
   }
   const output = path.join(root, 'application');
   const files = collect(output);
   const names = files.map(filename => path.relative(output, filename));
+  const owned = names.filter(filename => previous.includes(filename) ||
+    !inspect(path.join(directory, filename)));
   const updates = [];
   for(const filename of files) {
     if(!fs.statSync(filename).isFile()) {
@@ -372,13 +399,12 @@ function deploy() {
     }
   }
   const obsolete = previous.filter(filename => !names.includes(filename));
-  if(updates.length == 0 && obsolete.length == 0 &&
-      names.every(filename => previous.includes(filename))) {
+  if(updates.length == 0 && obsolete.length == 0) {
     return;
   }
   let staging;
   try {
-    const tracked = [...previous, ...names];
+    const tracked = [...previous, ...owned];
     if(updates.length != 0) {
       staging = fs.mkdtempSync(path.join(directory, '.deploy-'));
       const relative = path.relative(directory, staging);
@@ -400,7 +426,7 @@ function deploy() {
       fs.rmSync(staging, { recursive: true, force: true });
     }
   }
-  state.deployment = { directory, files: names };
+  state.deployment = { directory, files: owned };
   save();
 }
 
@@ -422,8 +448,8 @@ function build() {
       return false;
     }
     return !version.startsWith('file:') ||
-      fs.realpathSync(filename) ==
-        fs.realpathSync(path.resolve(root, version.slice(5)));
+      samePath(fs.realpathSync(filename),
+        fs.realpathSync(path.resolve(root, version.slice(5))));
   });
   if(state.dependencies != dependencyHash || !installed ||
       !inspect(path.join(root, 'node_modules/.package-lock.json'))) {
@@ -491,7 +517,7 @@ function clean() {
   remove(root, state.generated);
   const destination = path.resolve(root, '../../Application/web_app');
   if(state.deployment && inspect(destination) &&
-      fs.realpathSync(destination) == state.deployment.directory) {
+      samePath(fs.realpathSync(destination), state.deployment.directory)) {
     remove(state.deployment.directory, state.deployment.files);
   }
   if(action == 'reset') {
@@ -537,6 +563,12 @@ function orchestrate() {
     save();
     setup(dependencies);
     configureLibrary(dependencies);
+    if(command == 'build' &&
+        !samePath(process.env.WEB_PORTAL_BUILD_DIRECTORY, dependencies)) {
+      invoke('library', 'build', path.join(dependencies, 'library'),
+        ['-DD', dependencies]);
+      process.env.WEB_PORTAL_BUILD_DIRECTORY = dependencies;
+    }
   }
   const children = projects();
   if(cleaning) {
@@ -550,6 +582,10 @@ function orchestrate() {
       arguments.push('-D', path.join(source, name));
     }
     const directory = path.join(root, name);
+    if(project == 'portal' && child == 'application' &&
+        command == 'build' && !cleaning) {
+      fs.mkdirSync(path.resolve(root, '../Application'), { recursive: true });
+    }
     if(!cleaning || inspect(directory)) {
       invoke(child, command, directory, arguments);
     }

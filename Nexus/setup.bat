@@ -28,7 +28,7 @@ IF NOT DEFINED LUA_HASH EXIT /B 1
 SET "SETUP_HASH=!SETUP_HASH! !LUA_HASH!"
 CALL :AddRepo "Beam" ^
   "https://www.github.com/spiretrading/beam" ^
-  "7784fa0b7e52e857e5e69c4aeb8a8e4d7f70672f" ^
+  "2e0a3bb6a6c9189b127094e7254f606d5413ecb7" ^
   ":BuildBeam"
 CALL :InstallRepos || EXIT /B 1
 SET "PATH=!ROOT!\Strawberry\perl\bin;!PATH!"
@@ -245,7 +245,10 @@ IF EXIST "!FOLDER!\.nexus_extract_complete" (
   IF EXIST "!FOLDER!\.nexus_extract_complete" EXIT /B 1
 )
 IF NOT EXIST "!ARCHIVE!" (
-  curl -fsL -o "!ARCHIVE!" "!URL!" || EXIT /B 1
+  curl -fsL -o "!ARCHIVE!" "!URL!" || (
+    IF EXIST "!ARCHIVE!" DEL /F /Q "!ARCHIVE!"
+    EXIT /B 1
+  )
 )
 FOR /F "skip=1 tokens=*" %%H IN ('certutil -hashfile "!ARCHIVE!" SHA256') DO (
   IF NOT DEFINED ACTUAL_HASH SET "ACTUAL_HASH=%%H"

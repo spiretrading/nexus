@@ -15,7 +15,7 @@ main() {
   SETUP_HASH=$(sha256 "$DIRECTORY/setup.sh") || return 1
   add_repo "Beam" \
     "https://www.github.com/spiretrading/beam" \
-    "7784fa0b7e52e857e5e69c4aeb8a8e4d7f70672f" \
+    "2e0a3bb6a6c9189b127094e7254f606d5413ecb7" \
     "build_beam"
   add_dependency "lua-5.5.0" \
     "https://www.lua.org/ftp/lua-5.5.0.tar.gz" \
@@ -140,7 +140,10 @@ download_and_extract() {
       [[ "$(< "$folder/.nexus_extract_complete")" != "$expected_hash" ]]; then
     rm -f "$folder/.nexus_extract_complete" || return 1
     if [[ ! -f "$archive" ]]; then
-      curl -fsSL -o "$archive" "$url" || return 1
+      curl -fsSL -o "$archive" "$url" || {
+        rm -f "$archive"
+        return 1
+      }
     fi
     local actual_hash
     actual_hash=$(sha256 "$archive") || return 1

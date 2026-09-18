@@ -1,3 +1,6 @@
 @ECHO OFF
-node "%~dp0build.js" build %*
+SETLOCAL DisableDelayedExpansion
+SET ARGS=%*
+IF DEFINED ARGS SET ARGS=%ARGS:\=/%
+node "%~dp0build.js" build %ARGS%
 EXIT /B %ERRORLEVEL%

@@ -1,6 +1,7 @@
 @ECHO OFF
+SETLOCAL
 
-pushd %~dp0
+PUSHD "%~dp0" || EXIT /B 1
 
 REM Command file for Sphinx documentation
 
@@ -11,9 +12,7 @@ set SOURCEDIR=source
 set BUILDDIR=build
 set SPHINXPROJ=SpireWebServices
 
-if "%1" == "" goto help
-
-%SPHINXBUILD% >NUL 2>NUL
+CALL "%SPHINXBUILD%" --version >NUL 2>NUL
 if errorlevel 9009 (
 	echo.
 	echo.The 'sphinx-build' command was not found. Make sure you have Sphinx
@@ -23,14 +22,20 @@ if errorlevel 9009 (
 	echo.
 	echo.If you don't have Sphinx installed, grab it from
 	echo.http://sphinx-doc.org/
-	exit /b 1
+	POPD
+	EXIT /B 1
 )
 
-%SPHINXBUILD% -M %1 %SOURCEDIR% %BUILDDIR% %SPHINXOPTS%
+if "%~1" == "" goto help
+
+CALL "%SPHINXBUILD%" -M "%~1" "%SOURCEDIR%" "%BUILDDIR%" %SPHINXOPTS%
+SET "BUILD_RESULT=%ERRORLEVEL%"
 goto end
 
 :help
-%SPHINXBUILD% -M help %SOURCEDIR% %BUILDDIR% %SPHINXOPTS%
+CALL "%SPHINXBUILD%" -M help "%SOURCEDIR%" "%BUILDDIR%" %SPHINXOPTS%
+SET "BUILD_RESULT=%ERRORLEVEL%"
 
 :end
 popd
+EXIT /B %BUILD_RESULT%

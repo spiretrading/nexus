@@ -6,12 +6,26 @@ const path = require('node:path');
 const source = fs.realpathSync(__dirname);
 const root = fs.realpathSync(process.cwd());
 const stateFile = path.join(root, '.build_state.json');
-const beamCommit = '7784fa0b7e52e857e5e69c4aeb8a8e4d7f70672f';
+const beamCommit = '2e0a3bb6a6c9189b127094e7254f606d5413ecb7';
 const configuration = [
   'package.json', 'package-lock.json', 'tsconfig.json', 'tsconfig.test.json'
 ];
 let state = { generated: [] };
 let dependenciesDirectory;
+
+function samePath(first, second) {
+  if(!first || !second) {
+    return false;
+  }
+  if(path.resolve(first) == path.resolve(second)) {
+    return true;
+  }
+  const firstInfo = fs.statSync(first, { bigint: true, throwIfNoEntry: false });
+  const secondInfo = fs.statSync(
+    second, { bigint: true, throwIfNoEntry: false });
+  return Boolean(firstInfo && secondInfo) && firstInfo.dev == secondInfo.dev &&
+    firstInfo.ino == secondInfo.ino;
+}
 
 function inspect(filename) {
   return fs.lstatSync(filename, { throwIfNoEntry: false });
@@ -72,8 +86,10 @@ function remove(filenames) {
     if(!info) {
       continue;
     }
-    const parent = fs.realpathSync(path.dirname(filename));
-    if(parent != root && !parent.startsWith(root + path.sep)) {
+    const parent = path.relative(root,
+      fs.realpathSync(path.dirname(filename)));
+    if(parent == '..' || parent.startsWith('..' + path.sep) ||
+        path.isAbsolute(parent)) {
       throw new Error(`Generated path crosses a directory link: ${relative}`);
     }
     if(info.isDirectory() && !info.isSymbolicLink()) {
@@ -90,7 +106,7 @@ function link(name) {
   const target = path.join(source, name);
   const filename = path.join(root, name);
   if(inspect(filename)) {
-    if(fs.realpathSync(filename) != fs.realpathSync(target)) {
+    if(!samePath(fs.realpathSync(filename), fs.realpathSync(target))) {
       throw new Error(`Refusing to replace the existing ${filename}.`);
     }
     return;
@@ -110,7 +126,7 @@ function copy(name) {
   const content = fs.readFileSync(target);
   const info = inspect(filename);
   if(info) {
-    if(fs.realpathSync(filename) == fs.realpathSync(target)) {
+    if(samePath(fs.realpathSync(filename), fs.realpathSync(target))) {
       return;
     }
     if(info.isFile() && fs.readFileSync(filename).equals(content)) {
@@ -168,13 +184,13 @@ function configureDependencies() {
   const requested = path.resolve(root,
     dependenciesDirectory || state.dependenciesDirectory || 'Dependencies');
   const info = inspect(filename);
-  if(requested != filename && info && !info.isSymbolicLink()) {
+  if(!samePath(requested, filename) && info && !info.isSymbolicLink()) {
     throw new Error(`Refusing to replace the existing ${filename}.`);
   }
   fs.mkdirSync(requested, { recursive: true });
   const target = fs.realpathSync(requested);
-  if(requested != filename) {
-    if(info && fs.realpathSync(filename) != target) {
+  if(!samePath(requested, filename)) {
+    if(info && !samePath(fs.realpathSync(filename), target)) {
       fs.unlinkSync(filename);
     }
     if(!inspect(filename)) {
@@ -192,7 +208,7 @@ function configureDependencies() {
 
 function configure() {
   configureDependencies();
-  if(root == source) {
+  if(samePath(root, source)) {
     return;
   }
   for(const name of ['source', 'tests']) {
@@ -255,7 +271,7 @@ function build() {
   if(state.dependencies != dependencies ||
       !inspect('node_modules/.package-lock.json') || packages.some(name =>
         !fs.existsSync(path.join('node_modules', name, 'package.json'))) ||
-      fs.realpathSync(beamLink) != beam) {
+      !samePath(fs.realpathSync(beamLink), beam)) {
     delete state.dependencies;
     delete state.build;
     save();

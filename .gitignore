@@ -94,6 +94,10 @@ CMakeFiles
 CMakeScripts
 Testing
 Makefile
+build.ninja
+build-*.ninja
+.ninja_deps
+.ninja_log
 cmake_install.cmake
 install_manifest.txt
 compile_commands.json
@@ -438,3 +442,7 @@ config.yml
 
 # MacOS files.
 **/.DS_Store
+
+# Generated project outputs
+Nexus/Config/Python/**/nexus.exp
+Nexus/Config/Python/**/nexus.pyd

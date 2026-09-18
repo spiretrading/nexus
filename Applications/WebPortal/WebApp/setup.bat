@@ -1,5 +1,6 @@
 @ECHO OFF
 SETLOCAL DisableDelayedExpansion
 SET ARGS=%*
-node "%~dp0build.js" portal setup %ARGS:\=/%
+IF DEFINED ARGS SET ARGS=%ARGS:\=/%
+node "%~dp0build.js" portal setup %ARGS%
 EXIT /B %ERRORLEVEL%

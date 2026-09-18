@@ -15,9 +15,11 @@ CALL :ParseArgs %* || EXIT /B 1
 SET "PARALLEL=1"
 IF /I "!CONFIG!"=="clean" SET "PARALLEL=0"
 IF /I "!CONFIG!"=="reset" SET "PARALLEL=0"
-CALL :Build Nexus %*
-IF !EXIT_STATUS! NEQ 0 (
-  EXIT /B !EXIT_STATUS!
+IF !PARALLEL! EQU 1 (
+  CALL :Build Nexus %*
+  IF !EXIT_STATUS! NEQ 0 (
+    EXIT /B !EXIT_STATUS!
+  )
 )
 CALL :Build WebApi %*
 IF !EXIT_STATUS! NEQ 0 (
@@ -25,8 +27,8 @@ IF !EXIT_STATUS! NEQ 0 (
 )
 IF !PARALLEL! EQU 1 (
   SET "BUILD_TEMP=!ROOT!\_build_tmp"
-  IF EXIST "!BUILD_TEMP!" RD /S /Q "!BUILD_TEMP!"
-  MD "!BUILD_TEMP!"
+  IF EXIST "!BUILD_TEMP!" RD /S /Q "!BUILD_TEMP!" || GOTO BuildError
+  MD "!BUILD_TEMP!" || GOTO BuildError
 )
 CALL :BuildApp Applications\AdministrationServer %*
 CALL :BuildApp Applications\ChartingServer %*
@@ -44,6 +46,7 @@ CALL :BuildApp Applications\Spire %*
 CALL :BuildApp Applications\WebPortal\WebApp %*
 CALL :BuildApp Applications\WebPortal %*
 IF !PARALLEL! EQU 0 (
+  IF !EXIT_STATUS! EQU 0 CALL :Build Nexus %*
   EXIT /B !EXIT_STATUS!
 )
 :WaitLoop
@@ -52,7 +55,7 @@ FOR %%F IN ("!BUILD_TEMP!\*.running") DO (
   SET "RUNNING=1"
 )
 IF !RUNNING! EQU 1 (
-  timeout /t 1 /nobreak >NUL
+  waitfor /T 1 NexusBuildDelay >NUL 2>&1
   GOTO WaitLoop
 )
 FOR %%F IN ("!BUILD_TEMP!\*.log") DO (
@@ -70,6 +73,9 @@ FOR %%F IN ("!BUILD_TEMP!\*.failed") DO (
 RD /S /Q "!BUILD_TEMP!"
 EXIT /B !EXIT_STATUS!
 ENDLOCAL
+
+:BuildError
+EXIT /B 1
 
 :ParseArgs
 SET "DEPENDENCIES=!ROOT!\Nexus\Dependencies"
@@ -111,9 +117,15 @@ EXIT /B 0
 :Build
 SET "PROJECT=%~1"
 IF NOT EXIST "!PROJECT!" (
-  MD "!PROJECT!"
+  MD "!PROJECT!" || (
+    SET "EXIT_STATUS=1"
+    EXIT /B 1
+  )
 )
-PUSHD "!PROJECT!"
+PUSHD "!PROJECT!" || (
+  SET "EXIT_STATUS=1"
+  EXIT /B 1
+)
 CALL "!DIRECTORY!!PROJECT!\build.bat" -DD="!DEPENDENCIES!" !ARGS!
 IF ERRORLEVEL 1 SET "EXIT_STATUS=1"
 POPD
@@ -127,8 +139,17 @@ IF !PARALLEL! EQU 0 (
 SET "PROJECT=%~1"
 SET "PROJECT_NAME=%~n1"
 IF NOT EXIST "!PROJECT!" (
-  MD "!PROJECT!"
+  MD "!PROJECT!" || (
+    SET "EXIT_STATUS=1"
+    EXIT /B 1
+  )
 )
->"!BUILD_TEMP!\!PROJECT_NAME!.running" ECHO !PROJECT_NAME!
-START /B cmd /c "PUSHD "!ROOT!\!PROJECT!" && CALL "!DIRECTORY!!PROJECT!\build.bat" -DD="!DEPENDENCIES!" !ARGS! && DEL "!BUILD_TEMP!\!PROJECT_NAME!.running" || (ECHO failed > "!BUILD_TEMP!\!PROJECT_NAME!.failed" & DEL "!BUILD_TEMP!\!PROJECT_NAME!.running")" >"!BUILD_TEMP!\!PROJECT_NAME!.log" 2>&1
+>"!BUILD_TEMP!\!PROJECT_NAME!.running" ECHO !PROJECT_NAME! || (
+  SET "EXIT_STATUS=1"
+  EXIT /B 1
+)
+START /B cmd /c "PUSHD "!ROOT!\!PROJECT!" && CALL "!DIRECTORY!!PROJECT!\build.bat" -DD="!DEPENDENCIES!" !ARGS! && DEL "!BUILD_TEMP!\!PROJECT_NAME!.running" || (ECHO failed > "!BUILD_TEMP!\!PROJECT_NAME!.failed" & DEL "!BUILD_TEMP!\!PROJECT_NAME!.running")" >"!BUILD_TEMP!\!PROJECT_NAME!.log" 2>&1 || (
+  SET "EXIT_STATUS=1"
+  DEL "!BUILD_TEMP!\!PROJECT_NAME!.running"
+)
 EXIT /B 0
