@@ -79,6 +79,8 @@ Nexus/Config/SimulationMatcher/SimulationMatcherTests
 Nexus/Config/SoupBinTcp/SoupBinTcpTests
 Nexus/Config/Stamp/StampTests
 Nexus/Config/TechnicalAnalysis/TechnicalAnalysisTests
+Nexus/Libraries/
+Nexus/Tests/
 
 
 ## Ignore CMake files

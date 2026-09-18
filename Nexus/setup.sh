@@ -3,14 +3,13 @@ set -o errexit
 set -o pipefail
 DIRECTORY=""
 ROOT=""
-CACHE_NAME=""
 SETUP_HASH=""
 DEPENDENCIES=()
 REPOS=()
 
 main() {
   resolve_paths
-  check_cache "nexus" || exit 0
+  SETUP_HASH=$(sha256 "$DIRECTORY/setup.sh") || return 1
   add_repo "Beam" \
     "https://www.github.com/spiretrading/beam" \
     "91dfb6f4f3b286e5e8f735993929826212761cd3" \
@@ -19,8 +18,10 @@ main() {
     "https://www.lua.org/ftp/lua-5.5.0.tar.gz" \
     "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d" \
     "build_lua"
+  local quickfix_url="https://github.com/quickfix/quickfix/archive"
+  local quickfix_commit="2ce8a60667d95a55cdc57a210f165e19cb757126"
   add_dependency "quickfix-v.1.16.0" \
-    "https://github.com/quickfix/quickfix/archive/2ce8a60667d95a55cdc57a210f165e19cb757126.zip" \
+    "$quickfix_url/$quickfix_commit.zip" \
     "b6fcea5402b443e71c751132938b8ef83efcd0167e005f5bbab103b1875614d1" \
     "build_quickfix"
   add_dependency "hat-trie-0.7.0" \
@@ -28,33 +29,43 @@ main() {
     "8ea5441c06fd5d9de1ec8725bf762025a63f931949b9f49d211ab76a75ced68f"
   install_repos || return 1
   install_dependencies || return 1
-  install_gitpython
-  commit
+  install_gitpython || return 1
 }
 
 build_beam() {
-  ./build.sh Debug -DD="$ROOT" || return 1
-  ./build.sh Release -DD="$ROOT" || return 1
+  pushd Beam > /dev/null || return 1
+  ./build.sh Debug -DD="$ROOT" || { popd > /dev/null; return 1; }
+  ./build.sh Release -DD="$ROOT" || { popd > /dev/null; return 1; }
+  popd > /dev/null
 }
 
 build_lua() {
-  local cores
+  local cores platform
   cores=$(get_core_count)
-  make -j "$cores" linux || return 1
+  case "$(uname -s)" in
+    Darwin) platform=macosx ;;
+    Linux) platform=linux ;;
+    *) platform=posix ;;
+  esac
+  make -j "$cores" "$platform" MYCFLAGS=-fPIC || return 1
   make local || return 1
 }
 
 build_quickfix() {
-  ./bootstrap || return 1
-  ./configure --enable-shared=no --enable-static=yes || return 1
   local cores
   cores=$(get_core_count)
-  make -j "$cores" || return 1
+  cmake --fresh -S . -B build -G "Unix Makefiles" \
+    -DCMAKE_BUILD_TYPE=Release -DCMAKE_POSITION_INDEPENDENT_CODE=ON \
+    -DCMAKE_INSTALL_PREFIX="$PWD" -DQUICKFIX_SHARED_LIBS=OFF \
+    -DQUICKFIX_EXAMPLES=OFF -DQUICKFIX_TESTS=OFF || return 1
+  cmake --build build --target quickfix --parallel "$cores" || return 1
+  cmake --install build || return 1
 }
 
 install_gitpython() {
   if ! python3 -c "import git" 2>/dev/null; then
-    pip3 install --user --break-system-packages --quiet GitPython || true
+    python3 -m pip install --user --break-system-packages --quiet GitPython ||
+      return 1
   fi
 }
 
@@ -79,26 +90,6 @@ resolve_paths() {
   done
   DIRECTORY="$(cd -P "$(dirname "$source")" >/dev/null && pwd -P)"
   ROOT="$(pwd -P)"
-}
-
-check_cache() {
-  CACHE_NAME="$1"
-  SETUP_HASH=$(sha256 "$DIRECTORY/setup.sh")
-  if [[ -f "cache_files/$CACHE_NAME.txt" ]]; then
-    local cached_hash
-    cached_hash=$(cat "cache_files/$CACHE_NAME.txt")
-    if [[ "$SETUP_HASH" == "$cached_hash" ]]; then
-      return 1
-    fi
-  fi
-  return 0
-}
-
-commit() {
-  if [[ ! -d "cache_files" ]]; then
-    mkdir -p cache_files || return 1
-  fi
-  echo "$SETUP_HASH" > "cache_files/$CACHE_NAME.txt"
 }
 
 add_dependency() {
@@ -135,59 +126,53 @@ download_and_extract() {
   local folder="$1"
   local url="$2"
   local expected_hash="$3"
+  local build_hash="$expected_hash $SETUP_HASH"
   local build_func="$4"
   local archive="${url##*/}"
-  if [[ -d "$folder" ]]; then
+  if [[ -f "$folder/.nexus_build_complete" ]] &&
+      [[ "$(< "$folder/.nexus_build_complete")" == "$build_hash" ]]; then
     return 0
   fi
-  if [[ ! -f "$archive" ]]; then
-    curl -fsSL -o "$archive" "$url" || return 1
+  rm -f "$folder/.nexus_build_complete" || return 1
+  if [[ ! -f "$folder/.nexus_extract_complete" ]] ||
+      [[ "$(< "$folder/.nexus_extract_complete")" != "$expected_hash" ]]; then
+    rm -f "$folder/.nexus_extract_complete" || return 1
+    if [[ ! -f "$archive" ]]; then
+      curl -fsSL -o "$archive" "$url" || return 1
+    fi
+    local actual_hash
+    actual_hash=$(sha256 "$archive") || return 1
+    if [[ "$actual_hash" != "$expected_hash" ]]; then
+      echo "Error: SHA256 mismatch for $archive."
+      rm -f "$archive"
+      return 1
+    fi
+    mkdir -p "$folder" || return 1
+    if [[ "$archive" == *.zip ]]; then
+      local archive_directory
+      archive_directory=$(unzip -Z -1 "$archive" | sed -n '1s,/.*,,p') ||
+        return 1
+      if [[ -z "$archive_directory" || "$archive_directory" == "." ||
+          "$archive_directory" == ".." ]]; then
+        echo "Error: Invalid archive directory."
+        return 1
+      fi
+      unzip -qo "$archive" -d "$folder" || return 1
+      cp -R "$folder/$archive_directory/." "$folder/" || return 1
+      rm -r "$folder/$archive_directory" || return 1
+    else
+      tar -xf "$archive" --strip-components=1 -C "$folder" || return 1
+    fi
+    echo "$expected_hash" > "$folder/.nexus_extract_complete" || return 1
   fi
-  local actual_hash
-  actual_hash=$(sha256 "$archive")
-  if [[ "$actual_hash" != "$expected_hash" ]]; then
-    echo "Error: SHA256 mismatch for $archive."
-    echo "  Expected: $expected_hash"
-    echo "  Actual:   $actual_hash"
-    rm -f "$archive"
-    return 1
-  fi
-  mkdir -p "$folder" || return 1
-  if [[ "$archive" == *.zip ]]; then
-    unzip -q "$archive" -d "$folder" || { rm -rf "$folder"; return 1; }
-  else
-    tar -xf "$archive" -C "$folder" || { rm -rf "$folder"; return 1; }
-  fi
-  flatten_directory "$folder"
   if [[ -n "$build_func" ]]; then
-    pushd "$folder" > /dev/null
+    pushd "$folder" > /dev/null || return 1
     $build_func || { popd > /dev/null; return 1; }
     popd > /dev/null
   fi
-  rm -f "$archive"
-}
-
-flatten_directory() {
-  local folder="$1"
-  local dir_count=0
-  local file_count=0
-  local single_dir=""
-  for d in "$folder"/*/; do
-    if [[ -d "$d" ]]; then
-      ((dir_count += 1))
-      single_dir="$d"
-    fi
-  done
-  for f in "$folder"/*; do
-    if [[ -f "$f" ]]; then
-      ((file_count += 1))
-    fi
-  done
-  if [[ "$dir_count" -eq 1 ]] && [[ "$file_count" -eq 0 ]]; then
-    shopt -s dotglob
-    mv "$single_dir"* "$folder/" 2>/dev/null || true
-    shopt -u dotglob
-    rmdir "$single_dir" 2>/dev/null || true
+  echo "$build_hash" > "$folder/.nexus_build_complete" || return 1
+  if [[ -f "$archive" ]]; then
+    rm -f "$archive" || return 1
   fi
 }
 
@@ -196,28 +181,36 @@ clone_or_update_repo() {
   local repo_url="$2"
   local repo_commit="$3"
   local build_func="$4"
-  local needs_build=0
+  local is_new_repo=0
   if [[ ! -d "$repo_name" ]]; then
-    git clone "$repo_url" "$repo_name" || { rm -rf "$repo_name"; return 1; }
-    pushd "$repo_name" > /dev/null
-    git checkout "$repo_commit"
-    popd > /dev/null
-    needs_build=1
-  else
-    pushd "$repo_name" > /dev/null
-    if ! git merge-base --is-ancestor "$repo_commit" HEAD; then
-      git checkout master
-      git pull
-      git checkout "$repo_commit"
-      needs_build=1
+    git clone "$repo_url" "$repo_name" || return 1
+    is_new_repo=1
+  fi
+  pushd "$repo_name" > /dev/null || return 1
+  if [[ "$is_new_repo" -eq 1 ]]; then
+    git checkout "$repo_commit" || { popd > /dev/null; return 1; }
+  fi
+  if ! git merge-base --is-ancestor "$repo_commit" HEAD; then
+    git fetch origin || { popd > /dev/null; return 1; }
+    rm -f .nexus_build_complete || { popd > /dev/null; return 1; }
+    git checkout "$repo_commit" || { popd > /dev/null; return 1; }
+  fi
+  local repo_head
+  repo_head=$(git rev-parse HEAD) || { popd > /dev/null; return 1; }
+  local build_hash="$repo_head $SETUP_HASH"
+  if [[ ! -f .nexus_build_complete ]] ||
+      [[ "$(< .nexus_build_complete)" != "$build_hash" ]]; then
+    rm -f .nexus_build_complete || { popd > /dev/null; return 1; }
+    if [[ -n "$build_func" ]]; then
+      $build_func || { popd > /dev/null; return 1; }
     fi
-    popd > /dev/null
+    echo "$build_hash" > .nexus_build_complete ||
+      { popd > /dev/null; return 1; }
+  else
+    (cd "$ROOT" && "./$repo_name/Beam/setup.sh") ||
+      { popd > /dev/null; return 1; }
   fi
-  if [[ "$needs_build" == "1" ]] && [[ -n "$build_func" ]]; then
-    pushd "$repo_name" > /dev/null
-    $build_func || { popd > /dev/null; return 1; }
-    popd > /dev/null
-  fi
+  popd > /dev/null
 }
 
 main "$@"

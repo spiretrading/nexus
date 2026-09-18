@@ -1,0 +1,27 @@
+cmake_minimum_required(VERSION 3.28)
+load_cache("${BUILD_DIRECTORY}" READ_WITH_PREFIX cached_
+  CMAKE_BUILD_TYPE CMAKE_CONFIGURATION_TYPES CMAKE_GENERATOR)
+set(configurations ${cached_CMAKE_CONFIGURATION_TYPES})
+if(NOT configurations)
+  if(cached_CMAKE_BUILD_TYPE)
+    set(configurations "${cached_CMAKE_BUILD_TYPE}")
+  else()
+    set(configurations Release)
+  endif()
+endif()
+set(arguments)
+if(cached_CMAKE_GENERATOR MATCHES "^Visual Studio ")
+  set(arguments -- /nologo /p:ExtensionsToDeleteOnClean=__no_files__)
+endif()
+foreach(configuration IN LISTS configurations)
+  execute_process(COMMAND "${CMAKE_COMMAND}" --build "${BUILD_DIRECTORY}"
+    --config "${configuration}" --target clean ${arguments}
+    RESULT_VARIABLE result OUTPUT_VARIABLE output
+    OUTPUT_STRIP_TRAILING_WHITESPACE)
+  if(NOT output STREQUAL "")
+    message("${output}")
+  endif()
+  if(NOT result EQUAL 0)
+    message(FATAL_ERROR "Failed to clean ${configuration}.")
+  endif()
+endforeach()

@@ -1,125 +1,176 @@
 @ECHO OFF
 SETLOCAL EnableDelayedExpansion
+FOR /F "delims==" %%V IN ('SET DEPENDENCIES[ 2^>NUL') DO (
+  SET "%%V="
+)
+SET "NEXT_DEPENDENCY_INDEX=0"
+FOR /F "delims==" %%V IN ('SET REPOS[ 2^>NUL') DO (
+  SET "%%V="
+)
+SET "NEXT_REPO_INDEX=0"
+SET "SETUP_HASH="
+FOR /F "skip=1" %%H IN ('certutil -hashfile "%~dp0setup.bat" SHA256') DO (
+  IF NOT DEFINED SETUP_HASH SET "SETUP_HASH=%%H"
+)
+IF NOT DEFINED SETUP_HASH EXIT /B 1
 SET "ROOT=%cd%"
-CALL :CheckCache "nexus"
-IF ERRORLEVEL 1 EXIT /B 0
-CALL :SetupVSEnvironment
+CALL :SetupVSEnvironment || EXIT /B 1
+SET "LUA_HASH="
+FOR /F "skip=1" %%H IN ('
+    certutil -hashfile "%~dp0Config\lua.cmake" SHA256') DO (
+  IF NOT DEFINED LUA_HASH SET "LUA_HASH=%%H"
+)
+IF NOT DEFINED LUA_HASH EXIT /B 1
+SET "SETUP_HASH=!SETUP_HASH! !LUA_HASH!"
 CALL :AddRepo "Beam" ^
   "https://www.github.com/spiretrading/beam" ^
   "91dfb6f4f3b286e5e8f735993929826212761cd3" ^
   ":BuildBeam"
 CALL :InstallRepos || EXIT /B 1
-SET "PATH=!PATH!;!ROOT!\Strawberry\perl\site\bin;!ROOT!\Strawberry\perl\bin;!ROOT!\Strawberry\c\bin"
+SET "PATH=!ROOT!\Strawberry\perl\bin;!PATH!"
+SET "PATH=!ROOT!\Strawberry\perl\site\bin;!PATH!"
+SET "PATH=!PATH!;!ROOT!\Strawberry\c\bin"
 CALL :InstallQt || EXIT /B 1
+SET "QUICKFIX_URL=https://github.com/quickfix/quickfix/archive"
+SET "QUICKFIX_COMMIT=2ce8a60667d95a55cdc57a210f165e19cb757126"
 CALL :AddDependency "lua-5.5.0" ^
   "https://www.lua.org/ftp/lua-5.5.0.tar.gz" ^
   "57ccc32bbbd005cab75bcc52444052535af691789dba2b9016d5c50640d68b3d" ^
   ":BuildLua"
 CALL :AddDependency "quickfix-v.1.16.0" ^
-  "https://github.com/quickfix/quickfix/archive/2ce8a60667d95a55cdc57a210f165e19cb757126.zip" ^
+  "!QUICKFIX_URL!/!QUICKFIX_COMMIT!.zip" ^
   "b6fcea5402b443e71c751132938b8ef83efcd0167e005f5bbab103b1875614d1" ^
   ":BuildQuickfix"
 CALL :AddDependency "hat-trie-0.7.0" ^
   "https://github.com/Tessil/hat-trie/archive/refs/tags/v0.7.0.zip" ^
   "8ea5441c06fd5d9de1ec8725bf762025a63f931949b9f49d211ab76a75ced68f"
 CALL :InstallDependencies || EXIT /B 1
-CALL :InstallGitPython
-CALL :Commit
-EXIT /B !ERRORLEVEL!
+CALL :InstallGitPython || EXIT /B 1
+EXIT /B 0
 ENDLOCAL
 
 :BuildBeam
-CALL build.bat Debug -DD="!ROOT!" || EXIT /B 1
-CALL build.bat Release -DD="!ROOT!" || EXIT /B 1
+PUSHD Beam || EXIT /B 1
+CALL build.bat Debug -DD="!ROOT!" || (POPD & EXIT /B 1)
+CALL build.bat Release -DD="!ROOT!" || (POPD & EXIT /B 1)
+POPD
 EXIT /B 0
 
 :InstallQt
-IF EXIST "qt-5.15.13" EXIT /B 0
-git clone --branch v5.15.13-lts-lgpl --depth 1 ^
-  https://code.qt.io/qt/qt5.git qt-5.15.13
-IF ERRORLEVEL 1 (
-  RD /S /Q "qt-5.15.13" >NUL 2>NUL
+SET "CACHED_HASH="
+IF EXIST "qt-5.15.13\.nexus_build_complete" (
+  SET /P CACHED_HASH=<"qt-5.15.13\.nexus_build_complete"
+  IF "!CACHED_HASH!"=="!SETUP_HASH!" EXIT /B 0
+  DEL /F /Q "qt-5.15.13\.nexus_build_complete"
+  IF EXIST "qt-5.15.13\.nexus_build_complete" EXIT /B 1
+)
+IF NOT EXIST "qt-5.15.13" (
+  git clone --branch v5.15.13-lts-lgpl --depth 1 ^
+    https://code.qt.io/qt/qt5.git qt-5.15.13 || EXIT /B 1
+)
+PUSHD qt-5.15.13 || EXIT /B 1
+perl init-repository --force ^
+  --module-subset=qtbase,qtsvg,qttools,qttranslations || (
+  POPD
   EXIT /B 1
 )
-PUSHD qt-5.15.13
-perl init-repository --module-subset=qtbase,qtsvg,qttools,qttranslations
-powershell -NoProfile -ExecutionPolicy Bypass -Command "& {" ^
+powershell -NoProfile -ExecutionPolicy Bypass -Command ^
+  "$ErrorActionPreference = 'Stop';" ^
   "$f = 'qtbase/src/corelib/global/qcompilerdetection.h';" ^
-  "(Get-Content $f) -replace " ^
-  "  '.*stdext::make_(unchecked|checked)_array_iterator.*', " ^
-  "  '' | Set-Content $f" ^
-"}"
-CALL configure -prefix !cd!\qtbase -opensource -static -mp -make libs ^
+  "(Get-Content $f) -replace" ^
+  "  '.*stdext::make_(unchecked|checked)_array_iterator.*'," ^
+  "  '' | Set-Content $f" || (POPD & EXIT /B 1)
+CALL configure.bat -prefix "!cd!\qtbase" -opensource -static -mp -make libs ^
   -make tools -nomake examples -nomake tests -opengl desktop ^
   -no-feature-vulkan -no-icu -qt-freetype -qt-harfbuzz -qt-libpng ^
-  -qt-pcre -qt-zlib -confirm-license
+  -qt-pcre -qt-zlib -confirm-license || (POPD & EXIT /B 1)
+SETLOCAL
 SET "CL=/MP"
-nmake
+nmake || (ENDLOCAL & POPD & EXIT /B 1)
+ENDLOCAL
+(ECHO !SETUP_HASH!) >.nexus_build_complete || (POPD & EXIT /B 1)
 POPD
 EXIT /B 0
 
 :BuildLua
-PUSHD src
-COPY "%~dp0Config\lua.cmake" CMakeLists.txt || (POPD & EXIT /B 1)
-cmake . || (POPD & EXIT /B 1)
-cmake --build . --target ALL_BUILD --config Debug || (POPD & EXIT /B 1)
-cmake --build . --target ALL_BUILD --config Release || (POPD & EXIT /B 1)
+SETLOCAL
+SET "CMAKE_GENERATOR="
+SET "CMAKE_GENERATOR_PLATFORM="
+SET "CMAKE_GENERATOR_TOOLSET="
+SET "CMAKE_GENERATOR_INSTANCE="
+PUSHD src || (ENDLOCAL & EXIT /B 1)
+COPY /Y "%~dp0Config\lua.cmake" CMakeLists.txt >NUL || (
+  POPD
+  ENDLOCAL
+  EXIT /B 1
+)
+cmake --fresh -S . -B . -A x64 || (POPD & ENDLOCAL & EXIT /B 1)
+FOR %%C IN (Debug Release) DO (
+  cmake --build . --target lua --config %%C --parallel || (
+    POPD
+    ENDLOCAL
+    EXIT /B 1
+  )
+)
 POPD
+ENDLOCAL
 EXIT /B 0
 
 :BuildQuickfix
-cmake -DCMAKE_INSTALL_PREFIX="!cd!" . || EXIT /B 1
-cmake --build . --target quickfix --config Debug
-cmake --build . --target quickfix --config Release
-cmake --install . --config Release
+SETLOCAL
+SET "CMAKE_GENERATOR="
+SET "CMAKE_GENERATOR_PLATFORM="
+SET "CMAKE_GENERATOR_TOOLSET="
+SET "CMAKE_GENERATOR_INSTANCE="
+cmake --fresh -S . -B build -A x64 -DCMAKE_INSTALL_PREFIX="!cd!" ^
+  -DQUICKFIX_SHARED_LIBS=OFF -DQUICKFIX_EXAMPLES=OFF -DQUICKFIX_TESTS=OFF ^
+  -DSTATIC_RUNTIME=OFF || (ENDLOCAL & EXIT /B 1)
+FOR %%C IN (Debug Release) DO (
+  cmake --build build --target quickfix --config %%C --parallel || (
+    ENDLOCAL
+    EXIT /B 1
+  )
+)
+cmake --install build --config Release || (ENDLOCAL & EXIT /B 1)
+ENDLOCAL
 EXIT /B 0
 
 :InstallGitPython
 python -c "import git" >NUL 2>&1
 IF NOT ERRORLEVEL 1 EXIT /B 0
 python -m pip install --user --quiet GitPython
-EXIT /B 0
-
-:CheckCache
-SET "CACHE_NAME=%~1"
-SET "SETUP_HASH="
-FOR /F "skip=1" %%H IN ('certutil -hashfile "%~dp0setup.bat" SHA256') DO (
-  IF NOT DEFINED SETUP_HASH SET "SETUP_HASH=%%H"
-)
-IF EXIST "cache_files\!CACHE_NAME!.txt" (
-  SET /P CACHED_HASH=<"cache_files\!CACHE_NAME!.txt"
-  IF "!SETUP_HASH!"=="!CACHED_HASH!" EXIT /B 1
-)
-EXIT /B 0
-
-:Commit
-IF NOT EXIST cache_files (
-  MD cache_files || EXIT /B 1
-)
->"cache_files\!CACHE_NAME!.txt" ECHO !SETUP_HASH!
-EXIT /B 0
+EXIT /B !ERRORLEVEL!
 
 :SetupVSEnvironment
 SET "VSWHERE=%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe"
+SET "VS_FOUND="
 FOR /F "usebackq delims=" %%i IN (` ^
-    "!VSWHERE!" -prerelease -latest -property installationPath`) DO (
+    "!VSWHERE!" -prerelease -latest -products * ^
+      -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 ^
+      -property installationPath`) DO (
   IF EXIST "%%i\Common7\Tools\vsdevcmd.bat" (
-    CALL "%%i\Common7\Tools\vsdevcmd.bat" -arch=amd64
+    CALL "%%i\Common7\Tools\vsdevcmd.bat" -arch=x64 -host_arch=x64 || (
+      EXIT /B 1
+    )
+    SET "VS_FOUND=1"
   )
+)
+IF NOT DEFINED VS_FOUND (
+  ECHO Error: Visual Studio C++ build tools were not found.
+  EXIT /B 1
 )
 EXIT /B 0
 
 :AddDependency
-IF NOT DEFINED NEXT_DEPENDENCY_INDEX SET "NEXT_DEPENDENCY_INDEX=0"
 SET "DEPENDENCIES[%NEXT_DEPENDENCY_INDEX%].NAME=%~1"
 SET "DEPENDENCIES[%NEXT_DEPENDENCY_INDEX%].URL=%~2"
 SET "DEPENDENCIES[%NEXT_DEPENDENCY_INDEX%].HASH=%~3"
 SET "DEPENDENCIES[%NEXT_DEPENDENCY_INDEX%].BUILD=%~4"
+SET "DEPENDENCIES[%NEXT_DEPENDENCY_INDEX%].STRIP=%~5"
 SET /A NEXT_DEPENDENCY_INDEX+=1
 EXIT /B 0
 
 :AddRepo
-IF NOT DEFINED NEXT_REPO_INDEX SET "NEXT_REPO_INDEX=0"
 SET "REPOS[%NEXT_REPO_INDEX%].NAME=%~1"
 SET "REPOS[%NEXT_REPO_INDEX%].URL=%~2"
 SET "REPOS[%NEXT_REPO_INDEX%].COMMIT=%~3"
@@ -132,7 +183,8 @@ SET "I=0"
 :InstallDependenciesLoop
 IF NOT DEFINED DEPENDENCIES[%I%].NAME EXIT /B 0
 CALL :DownloadAndExtract "!DEPENDENCIES[%I%].NAME!" "!DEPENDENCIES[%I%].URL!" ^
-  "!DEPENDENCIES[%I%].HASH!" "!DEPENDENCIES[%I%].BUILD!" || EXIT /B 1
+  "!DEPENDENCIES[%I%].HASH!" "!DEPENDENCIES[%I%].BUILD!" ^
+  "!DEPENDENCIES[%I%].STRIP!" || EXIT /B 1
 SET /A I+=1
 GOTO InstallDependenciesLoop
 
@@ -149,13 +201,26 @@ GOTO InstallReposLoop
 SET "FOLDER=%~1"
 SET "URL=%~2"
 SET "EXPECTED_HASH=%~3"
+SET "BUILD_HASH=!EXPECTED_HASH! !SETUP_HASH!"
 SET "BUILD_LABEL=%~4"
+SET "STRIP=%~5"
+IF NOT DEFINED STRIP SET "STRIP=1"
 SET "ACTUAL_HASH="
 FOR /F "tokens=* delims=/" %%A IN ("!URL!") DO (
   SET "ARCHIVE=%%~nxA"
 )
-IF EXIST "!FOLDER!" (
-  EXIT /B 0
+SET "CACHED_HASH="
+IF EXIST "!FOLDER!\.nexus_build_complete" (
+  SET /P CACHED_HASH=<"!FOLDER!\.nexus_build_complete"
+  IF "!CACHED_HASH!"=="!BUILD_HASH!" EXIT /B 0
+  DEL /F /Q "!FOLDER!\.nexus_build_complete"
+  IF EXIST "!FOLDER!\.nexus_build_complete" EXIT /B 1
+)
+IF EXIST "!FOLDER!\.nexus_extract_complete" (
+  SET /P CACHED_HASH=<"!FOLDER!\.nexus_extract_complete"
+  IF "!CACHED_HASH!"=="!EXPECTED_HASH!" GOTO BuildDependency
+  DEL /F /Q "!FOLDER!\.nexus_extract_complete"
+  IF EXIST "!FOLDER!\.nexus_extract_complete" EXIT /B 1
 )
 IF NOT EXIST "!ARCHIVE!" (
   curl -fsL -o "!ARCHIVE!" "!URL!" || EXIT /B 1
@@ -166,52 +231,25 @@ FOR /F "skip=1 tokens=*" %%H IN ('certutil -hashfile "!ARCHIVE!" SHA256') DO (
 SET "ACTUAL_HASH=!ACTUAL_HASH: =!"
 IF /I NOT "!ACTUAL_HASH!"=="!EXPECTED_HASH!" (
   ECHO Error: SHA256 mismatch for !ARCHIVE!.
-  ECHO   Expected: !EXPECTED_HASH!
-  ECHO   Actual:   !ACTUAL_HASH!
   DEL /F /Q "!ARCHIVE!"
-  SET "ACTUAL_HASH="
   EXIT /B 1
 )
-SET "ACTUAL_HASH="
-MD "!FOLDER!" || EXIT /B 1
-powershell -NoProfile -Command ^
-  "$ProgressPreference = 'SilentlyContinue'; " ^
-  "if ('!ARCHIVE!' -match '\.zip$') { " ^
-  "  Expand-Archive -Path '!ARCHIVE!' -DestinationPath '!FOLDER!' -Force " ^
-  "} else { " ^
-  "  tar -xf '!ARCHIVE!' -C '!FOLDER!' " ^
-  "}"
-IF ERRORLEVEL 1 (
-  RD /S /Q "!FOLDER!" >NUL 2>NUL
-  EXIT /B 1
+IF NOT EXIST "!FOLDER!" (
+  MD "!FOLDER!" || EXIT /B 1
 )
-SET "DIR_COUNT=0"
-SET "FILE_COUNT=0"
-SET "SINGLE_DIR="
-FOR /D %%D IN ("!FOLDER!\*") DO (
-  SET /A DIR_COUNT+=1
-  SET "SINGLE_DIR=%%~nxD"
-)
-FOR %%F IN ("!FOLDER!\*") DO (
-  SET /A FILE_COUNT+=1
-)
-IF "!DIR_COUNT!"=="1" IF "!FILE_COUNT!"=="0" (
-  FOR /F "delims=" %%D IN ('DIR /AD /B "!FOLDER!\!SINGLE_DIR!" 2^>NUL') DO (
-    MOVE "!FOLDER!\!SINGLE_DIR!\%%D" "!FOLDER!" >NUL
-  )
-  FOR /F "delims=" %%F IN ('DIR /A-D /B "!FOLDER!\!SINGLE_DIR!" 2^>NUL') DO (
-    MOVE "!FOLDER!\!SINGLE_DIR!\%%F" "!FOLDER!" >NUL
-  )
-  RD /S /Q "!FOLDER!\!SINGLE_DIR!" 2>NUL
-)
+cmake -DARCHIVE:FILEPATH="!ARCHIVE!" -DDESTINATION:PATH="!FOLDER!" ^
+  -DSTRIP_COMPONENTS=!STRIP! -P "%~dp0Config\extract.cmake" || EXIT /B 1
+(ECHO !EXPECTED_HASH!) >"!FOLDER!\.nexus_extract_complete" || EXIT /B 1
+:BuildDependency
 IF DEFINED BUILD_LABEL (
-  PUSHD "!FOLDER!"
+  PUSHD "!FOLDER!" || EXIT /B 1
   CALL !BUILD_LABEL!
   SET "BUILD_RESULT=!ERRORLEVEL!"
   POPD
   IF NOT "!BUILD_RESULT!"=="0" EXIT /B !BUILD_RESULT!
 )
-DEL /F /Q "!ARCHIVE!"
+(ECHO !BUILD_HASH!) >"!FOLDER!\.nexus_build_complete" || EXIT /B 1
+IF EXIST "!ARCHIVE!" DEL /F /Q "!ARCHIVE!"
 EXIT /B 0
 
 :CloneOrUpdateRepo
@@ -219,35 +257,51 @@ SET "REPO_NAME=%~1"
 SET "REPO_URL=%~2"
 SET "REPO_COMMIT=%~3"
 SET "BUILD_LABEL=%~4"
-SET "NEEDS_BUILD=0"
+SET "IS_NEW_REPO="
 IF NOT EXIST "!REPO_NAME!" (
-  git clone "!REPO_URL!" "!REPO_NAME!"
-  IF ERRORLEVEL 1 (
-    RD /S /Q "!REPO_NAME!" >NUL 2>NUL
-    EXIT /B 1
-  )
-  PUSHD "!REPO_NAME!"
-  git checkout "!REPO_COMMIT!"
-  POPD
-  SET "NEEDS_BUILD=1"
-) ELSE (
-  PUSHD "!REPO_NAME!"
-  git merge-base --is-ancestor "!REPO_COMMIT!" HEAD
-  IF ERRORLEVEL 1 (
-    git checkout master
-    git pull
-    git checkout "!REPO_COMMIT!"
-    SET "NEEDS_BUILD=1"
-  )
-  POPD
+  git clone "!REPO_URL!" "!REPO_NAME!" || EXIT /B 1
+  SET "IS_NEW_REPO=1"
 )
-IF "!NEEDS_BUILD!"=="1" (
+PUSHD "!REPO_NAME!" || EXIT /B 1
+IF DEFINED IS_NEW_REPO (
+  git checkout "!REPO_COMMIT!" || (POPD & EXIT /B 1)
+)
+git merge-base --is-ancestor "!REPO_COMMIT!" HEAD >NUL 2>NUL
+IF ERRORLEVEL 1 (
+  git fetch origin || (POPD & EXIT /B 1)
+  IF EXIST .nexus_build_complete (
+    DEL /F /Q .nexus_build_complete
+    IF EXIST .nexus_build_complete (POPD & EXIT /B 1)
+  )
+  git checkout "!REPO_COMMIT!" || (POPD & EXIT /B 1)
+)
+SET "REPO_HEAD="
+FOR /F %%H IN ('git rev-parse HEAD') DO (
+  SET "REPO_HEAD=%%H"
+)
+IF NOT DEFINED REPO_HEAD (POPD & EXIT /B 1)
+SET "BUILD_HASH=!REPO_HEAD! !SETUP_HASH!"
+SET "CACHED_HASH="
+IF EXIST .nexus_build_complete (
+  SET /P CACHED_HASH=<.nexus_build_complete
+)
+IF NOT "!CACHED_HASH!"=="!BUILD_HASH!" (
+  IF EXIST .nexus_build_complete (
+    DEL /F /Q .nexus_build_complete
+    IF EXIST .nexus_build_complete (POPD & EXIT /B 1)
+  )
   IF DEFINED BUILD_LABEL (
-    PUSHD "!REPO_NAME!"
     CALL !BUILD_LABEL!
     SET "BUILD_RESULT=!ERRORLEVEL!"
-    POPD
-    IF NOT "!BUILD_RESULT!"=="0" EXIT /B !BUILD_RESULT!
+    IF NOT "!BUILD_RESULT!"=="0" (POPD & EXIT /B !BUILD_RESULT!)
   )
+  (ECHO !BUILD_HASH!) >.nexus_build_complete || (POPD & EXIT /B 1)
+) ELSE (
+  PUSHD "!ROOT!" || (POPD & EXIT /B 1)
+  CALL "!ROOT!\!REPO_NAME!\Beam\setup.bat"
+  SET "BUILD_RESULT=!ERRORLEVEL!"
+  POPD
+  IF NOT "!BUILD_RESULT!"=="0" (POPD & EXIT /B !BUILD_RESULT!)
 )
+POPD
 EXIT /B 0

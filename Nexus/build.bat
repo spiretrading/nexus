@@ -2,7 +2,7 @@
 SETLOCAL EnableDelayedExpansion
 SET "DIRECTORY=%~dp0"
 SET "ROOT=%cd%"
-CALL :ParseArgs %*
+CALL :ParseArgs %* || EXIT /B 1
 IF /I "!CONFIG!"=="clean" (
   CALL :CleanBuild "clean"
   EXIT /B !ERRORLEVEL!
@@ -12,8 +12,11 @@ IF /I "!CONFIG!"=="reset" (
   EXIT /B !ERRORLEVEL!
 )
 CALL :Configure || EXIT /B 1
+CALL :GeneratedFiles begin || EXIT /B 1
 CALL :RunBuild
-EXIT /B !ERRORLEVEL!
+SET "BUILD_ERROR=!ERRORLEVEL!"
+CALL :GeneratedFiles end || EXIT /B 1
+EXIT /B !BUILD_ERROR!
 ENDLOCAL
 
 :ParseArgs
@@ -32,7 +35,7 @@ IF "!ARG!"=="" (
     ECHO Error: -D requires a path argument.
     EXIT /B 1
   )
-  EXIT /B 0
+  GOTO ParseArgsDone
 )
 IF "!IS_DEPENDENCY!"=="1" (
   SET "DEPENDENCIES=!ARG!"
@@ -67,18 +70,47 @@ IF "!IS_DEPENDENCY!"=="1" (
   SHIFT
   GOTO ParseArgsLoop
 )
+
+:ParseArgsDone
+FOR %%D IN ("!DIRECTORY!\.") DO (
+  SET "DIRECTORY=%%~fD\"
+)
 EXIT /B 0
 
 :CleanBuild
 SET "CLEAN_ERROR=0"
-IF "%~1"=="reset" (
-  RD /S /Q Dependencies 2>NUL
-  git clean -ffxd || SET "CLEAN_ERROR=1"
+IF NOT EXIST "!ROOT!\CMakeCache.txt" (
+  GOTO CleanConfiguration
+)
+IF NOT EXIST "!ROOT!\CMakeFiles\clean_*.cmake" (
+  SET "CONFIG="
+  CALL :Configure || EXIT /B 1
+)
+CALL :GeneratedFiles begin || EXIT /B 1
+IF EXIST "!ROOT!\CMakeFiles\clean_*.cmake" (
+  FOR %%F IN ("!ROOT!\CMakeFiles\clean_*.cmake") DO (
+    cmake -P "%%F" || SET "CLEAN_ERROR=1"
+  )
 ) ELSE (
-  git clean -ffxd -e "*Dependencies*" || SET "CLEAN_ERROR=1"
-  DEL "Dependencies\cache_files\nexus.txt" >NUL 2>&1
+  cmake -DBUILD_DIRECTORY:PATH="!ROOT!" ^
+    -P "%~dp0Config\native_clean.cmake" || SET "CLEAN_ERROR=1"
+)
+CALL :GeneratedFiles end || EXIT /B 1
+:CleanConfiguration
+IF !CLEAN_ERROR! EQU 0 (
+  CALL :GeneratedFiles clean || SET "CLEAN_ERROR=1"
+)
+IF !CLEAN_ERROR! EQU 0 IF "%~1"=="reset" (
+  cmake -DBUILD_DIRECTORY:PATH="!ROOT!" ^
+    -P "%~dp0Config\reset.cmake" || SET "CLEAN_ERROR=1"
 )
 EXIT /B !CLEAN_ERROR!
+
+:GeneratedFiles
+cmake -DBUILD_DIRECTORY:PATH="!ROOT!" ^
+  -DDEPENDENCIES_DIRECTORY:PATH="!DEPENDENCIES!" -DACTION=%1 ^
+  -P "%~dp0Config\generated_files.cmake"
+EXIT /B !ERRORLEVEL!
 
 :Configure
 IF "!CONFIG!"=="" (
@@ -108,7 +140,7 @@ IF NOT "!DEPENDENCIES!"=="" (
 EXIT /B !ERRORLEVEL!
 
 :RunBuild
-cmake --build "!ROOT!" --target INSTALL --config "!CONFIG!" --parallel ^
-  || EXIT /B 1
+cmake --build "!ROOT!" --config "!CONFIG!" --parallel || EXIT /B 1
+cmake --install "!ROOT!" --config "!CONFIG!" || EXIT /B 1
 >"CMakeFiles\config.txt" ECHO !CONFIG!
 EXIT /B 0
