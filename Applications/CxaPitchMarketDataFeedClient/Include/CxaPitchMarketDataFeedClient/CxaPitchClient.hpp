@@ -111,7 +111,6 @@ namespace Nexus {
         std::string m_reason;
       };
       std::uint8_t m_unit;
-      boost::posix_time::time_duration m_feed_timeout;
       boost::posix_time::time_duration m_gap_timeout;
       std::vector<Beam::local_ptr_t<P>> m_feed_clients;
       std::vector<Beam::local_ptr_t<P>> m_recovery_clients;
@@ -129,9 +128,7 @@ namespace Nexus {
       std::deque<Rejection> m_rejections;
       boost::posix_time::ptime m_start;
       boost::posix_time::ptime m_gap_timestamp;
-      boost::posix_time::ptime m_feed_timestamp;
       SnapshotState m_snapshot_state;
-      bool m_is_silent;
       bool m_is_request_deferred;
       Beam::RoutineTaskQueue m_tasks;
       Beam::RoutineHandlerGroup m_routines;
@@ -182,7 +179,6 @@ namespace Nexus {
       boost::optional<GF> gap_client, boost::optional<SF> spin_client,
       RF&& time_client, TF&& timer)
       try : m_unit(unit),
-            m_feed_timeout(feed_timeout),
             m_gap_timeout(gap_timeout),
             m_feed_clients(std::make_move_iterator(feed_clients.begin()),
               std::make_move_iterator(feed_clients.end())),
@@ -198,9 +194,7 @@ namespace Nexus {
             m_request_sequence(0),
             m_start(m_time_client->get_time()),
             m_gap_timestamp(m_start),
-            m_feed_timestamp(m_start),
             m_snapshot_state(SnapshotState::READY),
-            m_is_silent(false),
             m_is_request_deferred(false) {
     if(m_spin_client) {
       m_snapshot_state = SnapshotState::WAITING;
@@ -487,13 +481,6 @@ namespace Nexus {
         auto [is_expired, recovery_position] = Beam::with(m_sequencer,
           [&] (auto& sequencer) {
             sequencer.add(index, block, timestamp);
-            m_feed_timestamp = timestamp;
-            if(m_is_silent) {
-              m_is_silent = false;
-              print([&] (auto& out) {
-                out << "(feed " << timestamp << ')';
-              });
-            }
             auto is_expired = expire_snapshot_offer(timestamp);
             return std::pair(
               is_expired, advance_recovery(sequencer, timestamp));
@@ -727,12 +714,6 @@ namespace Nexus {
       auto timestamp = m_time_client->get_time();
       auto [is_expired, recovery_position] = Beam::with(m_sequencer,
         [&] (auto& sequencer) {
-          if(!m_is_silent && timestamp - m_feed_timestamp > m_feed_timeout) {
-            m_is_silent = true;
-            print([&] (auto& out) {
-              out << "(no_feed " << timestamp << ')';
-            });
-          }
           auto is_expired = expire_snapshot_offer(timestamp);
           sequencer.update(timestamp);
           m_is_request_deferred = false;
