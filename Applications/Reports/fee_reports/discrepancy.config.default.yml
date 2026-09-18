@@ -1,0 +1,7 @@
+---
+# Copy to discrepancy.config.yml and pass it to fee_discrepancy.py --config.
+service_locator: "local_interface:20000"
+username: risk_service
+password: admin_password
+fee_table: "fee_table.yml"
+...

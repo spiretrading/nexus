@@ -19,6 +19,7 @@ InstallDirRegKey HKCU "${PRODUCT_DIR_REGKEY}" "InstallLocation"
 RequestExecutionLevel user
 
 !include "MUI2.nsh"
+!include "LogicLib.nsh"
 ; Use the product's icon
 !define MUI_ICON "${__FILEDIR__}\spire.ico"
 !define MUI_UNICON "${__FILEDIR__}\spire.ico"
@@ -39,21 +40,47 @@ RequestExecutionLevel user
 ; Components
 Section "Spire" SEC01
   SectionIn RO
+  ; Install Visual C++ Redistributable silently
+  InitPluginsDir
+  SetOutPath "$PLUGINSDIR"
+  File "VC_redist.x64.exe"
+  ClearErrors
+  ExecWait '"$PLUGINSDIR\VC_redist.x64.exe" /quiet /norestart' $0
+  ${If} ${Errors}
+    MessageBox MB_OK|MB_ICONSTOP "Unable to start the VC++ runtime installer."
+    SetErrorLevel 1
+    Abort
+  ${EndIf}
+  ${If} $0 = 3010
+  ${OrIf} $0 = 1641
+    SetRebootFlag true
+  ${ElseIf} $0 = 1638
+  ${OrIf} $0 = 0x80070666
+    SetRegView 64
+    ReadRegDWORD $1 HKLM \
+      "SOFTWARE\Microsoft\VisualStudio\14.0\VC\Runtimes\x64" "Installed"
+    SetRegView lastused
+    ${If} $1 <> 1
+      MessageBox MB_OK|MB_ICONSTOP "The required VC++ runtime is unavailable."
+      SetErrorLevel 1
+      Abort
+    ${EndIf}
+  ${ElseIf} $0 <> 0
+    MessageBox MB_OK|MB_ICONSTOP "VC++ runtime installation failed ($0)."
+    SetErrorLevel 1
+    Abort
+  ${EndIf}
+  Delete "$PLUGINSDIR\VC_redist.x64.exe"
   SetOutPath "$INSTDIR"
   File "Spire.exe"
-
-  ; Install Visual C++ Redistributable silently
-  SetOutPath "$TEMP"
-  File "VC_redist.x64.exe"
-  ExecWait '"$TEMP\VC_redist.x64.exe" /quiet /norestart'
-  Delete "$TEMP\VC_redist.x64.exe"
 
   ; Write uninstaller
   WriteUninstaller "$INSTDIR\uninstall.exe"
 
   ; Write registry keys for Add/Remove Programs
   WriteRegStr HKCU "${PRODUCT_DIR_REGKEY}" "DisplayName" "${PRODUCT_NAME} ${PRODUCT_VERSION}"
-  WriteRegStr HKCU "${PRODUCT_DIR_REGKEY}" "UninstallString" "$INSTDIR\\uninstall.exe"
+  WriteRegStr HKCU "${PRODUCT_DIR_REGKEY}" "UninstallString" \
+    '"$INSTDIR\uninstall.exe"'
   WriteRegStr HKCU "${PRODUCT_DIR_REGKEY}" "DisplayIcon" "$INSTDIR\\Spire.exe"
   WriteRegStr HKCU "${PRODUCT_DIR_REGKEY}" "Publisher" "${PRODUCT_PUBLISHER}"
   WriteRegStr HKCU "${PRODUCT_DIR_REGKEY}" "URLInfoAbout" "${PRODUCT_WEB_SITE}"
@@ -80,11 +107,12 @@ Section "Uninstall" SEC04
   Delete "$DESKTOP\Spire.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\Uninstall.lnk"
   Delete "$SMPROGRAMS\${PRODUCT_NAME}\${PRODUCT_NAME}.lnk"
-  RmDir /r "$SMPROGRAMS\${PRODUCT_NAME}"
+  RmDir "$SMPROGRAMS\${PRODUCT_NAME}"
 
   Delete "$INSTDIR\Spire.exe"
-
-  RmDir /r "$INSTDIR"
+  Delete "$INSTDIR\uninstall.exe"
+  SetOutPath "$TEMP"
+  RmDir "$INSTDIR"
 
   RmDir /r "$LOCALAPPDATA\Eidolon Systems\${PRODUCT_NAME}"
   RmDir "$LOCALAPPDATA\Eidolon Systems"

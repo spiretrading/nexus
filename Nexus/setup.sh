@@ -12,7 +12,7 @@ main() {
   SETUP_HASH=$(sha256 "$DIRECTORY/setup.sh") || return 1
   add_repo "Beam" \
     "https://www.github.com/spiretrading/beam" \
-    "91dfb6f4f3b286e5e8f735993929826212761cd3" \
+    "fcdb171df37d1e6c546f1ad623467d1516445497" \
     "build_beam"
   add_dependency "lua-5.5.0" \
     "https://www.lua.org/ftp/lua-5.5.0.tar.gz" \
@@ -33,10 +33,8 @@ main() {
 }
 
 build_beam() {
-  pushd Beam > /dev/null || return 1
-  ./build.sh Debug -DD="$ROOT" || { popd > /dev/null; return 1; }
-  ./build.sh Release -DD="$ROOT" || { popd > /dev/null; return 1; }
-  popd > /dev/null
+  ./build.sh Debug -DD="$ROOT" || return 1
+  ./build.sh Release -DD="$ROOT" || return 1
 }
 
 build_lua() {

@@ -68,16 +68,20 @@ if [[ -z "$pid" ]]; then
   mkdir -p "$LOG_DIR" || exit 1
   for existing_log in srv_*.log; do
     if [[ -f "$existing_log" ]]; then
-      mv "$existing_log" "$LOG_DIR" || exit 1
+      archive="$LOG_DIR/${existing_log##*/}"
+      if [[ -e "$archive" ]]; then
+        archive=$(mktemp "$archive.XXXXXX") || exit 1
+      fi
+      mv "$existing_log" "$archive" || exit 1
     fi
   done
-  log_name="srv_$(date '+%Y%m%d_%H_%M_%S').log"
-  : > "$log_name" || exit 1
-  {
-    ./"$APPLICATION" > "$log_name" 2>&1 &
-    pid=$!
-    echo "$pid"
-  } > pid.lock || exit 1
+  log_name="srv_$(date '+%Y%m%d_%H_%M_%S')_$$.log"
+  (set -o noclobber; : > "$log_name") || exit 1
+  bash -c '
+    echo "$$" > pid.lock || exit 1
+    exec "$@"
+  ' bash "./$APPLICATION" > "$log_name" 2>&1 &
+  pid=$!
 fi
 
 is_listening() {

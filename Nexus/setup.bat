@@ -24,7 +24,7 @@ IF NOT DEFINED LUA_HASH EXIT /B 1
 SET "SETUP_HASH=!SETUP_HASH! !LUA_HASH!"
 CALL :AddRepo "Beam" ^
   "https://www.github.com/spiretrading/beam" ^
-  "91dfb6f4f3b286e5e8f735993929826212761cd3" ^
+  "fcdb171df37d1e6c546f1ad623467d1516445497" ^
   ":BuildBeam"
 CALL :InstallRepos || EXIT /B 1
 SET "PATH=!ROOT!\Strawberry\perl\bin;!PATH!"
@@ -50,10 +50,8 @@ EXIT /B 0
 ENDLOCAL
 
 :BuildBeam
-PUSHD Beam || EXIT /B 1
-CALL build.bat Debug -DD="!ROOT!" || (POPD & EXIT /B 1)
-CALL build.bat Release -DD="!ROOT!" || (POPD & EXIT /B 1)
-POPD
+CALL build.bat Debug -DD="!ROOT!" || EXIT /B 1
+CALL build.bat Release -DD="!ROOT!" || EXIT /B 1
 EXIT /B 0
 
 :InstallQt
@@ -69,21 +67,35 @@ IF NOT EXIST "qt-5.15.13" (
     https://code.qt.io/qt/qt5.git qt-5.15.13 || EXIT /B 1
 )
 PUSHD qt-5.15.13 || EXIT /B 1
-perl init-repository --force ^
-  --module-subset=qtbase,qtsvg,qttools,qttranslations || (
-  POPD
-  EXIT /B 1
+SET "QT_INITIALIZED=1"
+FOR %%M IN (qtbase qtsvg qttools qttranslations) DO (
+  IF NOT EXIST "%%M\.git" SET "QT_INITIALIZED=0"
+  IF NOT EXIST "%%M\%%M.pro" SET "QT_INITIALIZED=0"
+)
+git diff --quiet --ignore-submodules=dirty -- ^
+  qtbase qtsvg qttools qttranslations
+IF ERRORLEVEL 1 SET "QT_INITIALIZED=0"
+IF "!QT_INITIALIZED!"=="0" (
+  perl init-repository --force ^
+    --module-subset=qtbase,qtsvg,qttools,qttranslations || (
+    POPD
+    EXIT /B 1
+  )
 )
 powershell -NoProfile -ExecutionPolicy Bypass -Command ^
   "$ErrorActionPreference = 'Stop';" ^
   "$f = 'qtbase/src/corelib/global/qcompilerdetection.h';" ^
-  "(Get-Content $f) -replace" ^
-  "  '.*stdext::make_(unchecked|checked)_array_iterator.*'," ^
-  "  '' | Set-Content $f" || (POPD & EXIT /B 1)
+  "$source = [IO.File]::ReadAllText($f);" ^
+  "$patched = $source -replace" ^
+  "  '(?m)^.*stdext::make_(unchecked|checked)_array_iterator[^\r\n]*', '';" ^
+  "if ($source -cne $patched) { [IO.File]::WriteAllText($f, $patched) }" || (
+  POPD
+  EXIT /B 1
+)
 CALL configure.bat -prefix "!cd!\qtbase" -opensource -static -mp -make libs ^
   -make tools -nomake examples -nomake tests -opengl desktop ^
-  -no-feature-vulkan -no-icu -qt-freetype -qt-harfbuzz -qt-libpng ^
-  -qt-pcre -qt-zlib -confirm-license || (POPD & EXIT /B 1)
+  -no-feature-vulkan -no-icu -qt-freetype -qt-harfbuzz -qt-libpng -qt-pcre ^
+  -qt-zlib -confirm-license || (POPD & EXIT /B 1)
 SETLOCAL
 SET "CL=/MP"
 nmake || (ENDLOCAL & POPD & EXIT /B 1)
