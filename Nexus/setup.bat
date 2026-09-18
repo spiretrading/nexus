@@ -24,7 +24,7 @@ IF NOT DEFINED LUA_HASH EXIT /B 1
 SET "SETUP_HASH=!SETUP_HASH! !LUA_HASH!"
 CALL :AddRepo "Beam" ^
   "https://www.github.com/spiretrading/beam" ^
-  "fcdb171df37d1e6c546f1ad623467d1516445497" ^
+  "c149608fae1b4b3298db9b192747f632e506bc16" ^
   ":BuildBeam"
 CALL :InstallRepos || EXIT /B 1
 SET "PATH=!ROOT!\Strawberry\perl\bin;!PATH!"
@@ -161,7 +161,7 @@ FOR /F "usebackq delims=" %%i IN (` ^
       -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 ^
       -property installationPath`) DO (
   IF EXIST "%%i\Common7\Tools\vsdevcmd.bat" (
-    CALL "%%i\Common7\Tools\vsdevcmd.bat" -arch=x64 -host_arch=x64 || (
+    CALL "%%i\Common7\Tools\vsdevcmd.bat" -no_logo -arch=x64 -host_arch=x64 || (
       EXIT /B 1
     )
     SET "VS_FOUND=1"
