@@ -7,6 +7,7 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
+#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include "AsxTradeItchMarketDataFeedClient/AsxTradeItchGlimpseClient.hpp"
@@ -97,7 +98,7 @@ namespace Nexus {
       boost::optional<Beam::local_ptr_t<S>> m_glimpse_client;
       Beam::local_ptr_t<R> m_time_client;
       Beam::local_ptr_t<T> m_timer;
-      Beam::Sync<State> m_state;
+      Beam::Sync<State, Beam::Mutex> m_state;
       Beam::Queue<Beam::SharedBuffer> m_messages;
       Beam::StateQueue<bool> m_requests;
       Beam::Queue<bool> m_snapshot_start;
@@ -272,11 +273,11 @@ namespace Nexus {
       try {
         auto packet = m_feed_clients[index]->read();
         validate(packet);
-        auto timestamp = m_time_client->get_time();
         auto is_finished = Beam::with(m_state, [&] (auto& state) {
           if(state.m_is_finished) {
             return true;
           }
+          auto timestamp = m_time_client->get_time();
           auto has_session = state.m_sequencer.get_session().has_value();
           state.m_sequencer.add(index, packet, timestamp);
           if(!has_session && m_glimpse_client) {
@@ -410,8 +411,8 @@ namespace Nexus {
       if(result == Timer::Result::FAIL) {
         boost::throw_with_location(Beam::IOException("ITCH timer failed."));
       }
-      auto timestamp = m_time_client->get_time();
       auto is_finished = Beam::with(m_state, [&] (auto& state) {
+        auto timestamp = m_time_client->get_time();
         state.m_sequencer.update(timestamp);
         flush(state);
         return state.m_is_finished;
