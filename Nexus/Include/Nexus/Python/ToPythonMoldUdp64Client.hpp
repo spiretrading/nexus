@@ -38,6 +38,9 @@ namespace Nexus {
       /** Reads the next owned packet. Supports one reader at a time. */
       ToPythonMoldUdp64Packet read();
 
+      /** Sends a retransmission request. */
+      void request(const MoldUdp64Request& request);
+
       /** Closes the client and interrupts a pending read. */
       void close();
 
@@ -81,6 +84,12 @@ namespace Nexus {
   ToPythonMoldUdp64Packet ToPythonMoldUdp64Client<C>::read() {
     auto release = Beam::Python::GilRelease();
     return ToPythonMoldUdp64Packet(m_client->read());
+  }
+
+  template<typename C>
+  void ToPythonMoldUdp64Client<C>::request(const MoldUdp64Request& request) {
+    auto release = Beam::Python::GilRelease();
+    m_client->request(request);
   }
 
   template<typename C>

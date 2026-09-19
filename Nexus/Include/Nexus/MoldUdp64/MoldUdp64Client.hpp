@@ -4,14 +4,15 @@
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
+#include <Beam/IO/StaticBuffer.hpp>
 #include <Beam/Pointers/LocalPtr.hpp>
 #include <Beam/Utilities/Expect.hpp>
-#include "Nexus/MoldUdp64/MoldUdp64Packet.hpp"
+#include "Nexus/MoldUdp64/MoldUdp64Request.hpp"
 
 namespace Nexus {
 
   /**
-   * Reads packets from a MoldUDP64 feed.
+   * Reads MoldUDP64 packets and sends retransmission requests.
    * @tparam C The type of Channel delivering one complete datagram per read.
    */
   template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>
@@ -35,6 +36,12 @@ namespace Nexus {
        * The returned payload is valid until the next read or destruction.
        */
       MoldUdp64Packet read();
+
+      /**
+       * Sends a retransmission request to the channel's destination.
+       * @param request The session and range to request.
+       */
+      void request(const MoldUdp64Request& request);
 
       /** Closes the connection to the feed. */
       void close();
@@ -76,6 +83,18 @@ namespace Nexus {
     }
     return MoldUdp64Packet::parse(
       std::string_view(m_buffer.get_data(), m_buffer.get_size()));
+  }
+
+  template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>
+  void MoldUdp64Client<C>::request(const MoldUdp64Request& request) {
+    auto buffer = Beam::StaticBuffer<MoldUdp64Request::LENGTH>();
+    encode(request, Beam::out(buffer));
+    try {
+      m_channel->get_writer().write(buffer);
+    } catch(const std::exception&) {
+      Beam::throw_nested_with_location(
+        Beam::IOException("Failed to send MoldUDP64 request."));
+    }
   }
 
   template<typename C> requires Beam::IsChannel<Beam::dereference_t<C>>

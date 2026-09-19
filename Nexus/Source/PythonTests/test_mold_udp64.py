@@ -6,6 +6,23 @@ import nexus
 
 
 class TestMoldUdp64(unittest.TestCase):
+    def test_request(self):
+        for sequence, count in ((0x0102030405060708, 0x0910),
+                (2**64 - 1, 65535)):
+            with self.subTest(sequence=sequence, count=count):
+                request = nexus.MoldUdp64Request(b'SESSION123', sequence, count)
+                self.assertEqual(request.session, b'SESSION123')
+                self.assertEqual(request.sequence_number, sequence)
+                self.assertEqual(request.count, count)
+                self.assertEqual(request.encode(),
+                    struct.pack('!10sQH', b'SESSION123', sequence, count))
+        for session in (b'', b'SHORT', b'SESSION1234'):
+            with self.subTest(session=session):
+                with self.assertRaises(ValueError):
+                    nexus.MoldUdp64Request(session, 1, 1)
+        with self.assertRaises(TypeError):
+            nexus.MoldUdp64Request('SESSION123', 1, 1)
+
     def test_parse(self):
         source = struct.pack('!10sQH', b'SESSION123', 0x0102030405060708, 3)
         source += b'\x00\x03X\x00Y\x00\x00\x00\x01\xff'
@@ -122,6 +139,28 @@ class TestMoldUdp64Client(unittest.TestCase):
         self.assertEqual(second.session, b'SESSION456')
         self.assertEqual(second.sequence_number, 1)
         self.assertEqual(list(second), [b'X'])
+
+    def test_request(self):
+        self.client.request(nexus.MoldUdp64Request(b'SESSION123', 42, 100))
+        source = beam.SharedBuffer()
+        self.sender.reader.read(source)
+        self.assertEqual(source.get_data(),
+            struct.pack('!10sQH', b'SESSION123', 42, 100))
+        response = struct.pack('!10sQH', b'SESSION123', 42, 2)
+        response += b'\x00\x03ONE\x00\x03TWO'
+        self.sender.writer.write(response)
+        packet = self.client.read()
+        self.assertEqual(packet.sequence_number, 42)
+        self.assertEqual(list(packet), [b'ONE', b'TWO'])
+        self.client.request(nexus.MoldUdp64Request(b'SESSION123', 44, 98))
+        source.reset()
+        self.sender.reader.read(source)
+        self.assertEqual(source.get_data(),
+            struct.pack('!10sQH', b'SESSION123', 44, 98))
+        self.assertEqual(list(packet), [b'ONE', b'TWO'])
+        self.client.close()
+        with self.assertRaises(beam.IOException):
+            self.client.request(nexus.MoldUdp64Request(b'SESSION123', 44, 98))
 
     def test_close_pending_read(self):
         result = beam.Queue()

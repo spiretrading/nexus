@@ -24,6 +24,7 @@ namespace Nexus::Python {
     return pybind11::class_<T>(module, name.data(),
         "Supports one reader; close may be called from another thread.").
       def("read", &T::read, "Returns the next owned packet.").
+      def("request", &T::request, pybind11::arg("request")).
       def("close", &T::close);
   }
 }
