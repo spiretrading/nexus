@@ -60,7 +60,7 @@ namespace Nexus {
     auto& session = *sequencer.get_session();
     if(m_request && m_request->m_session == session &&
         m_request->m_sequence_number == gap->m_sequence &&
-        timestamp - m_timestamp < m_timeout) {
+        timestamp >= m_timestamp && timestamp - m_timestamp < m_timeout) {
       return boost::none;
     }
     auto count = static_cast<std::uint16_t>(std::min<std::uint64_t>(

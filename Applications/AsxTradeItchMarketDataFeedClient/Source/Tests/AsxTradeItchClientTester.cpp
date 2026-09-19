@@ -396,8 +396,15 @@ TEST_SUITE("AsxTradeItchClient") {
     SUBCASE("retry") {
       fixture.publish(0, 5, {FIVE});
       REQUIRE(!fixture.m_recovery.m_requests.try_pop());
-      fixture.advance(Fixture::REQUEST_TIMEOUT);
-      fixture.require_request(2, 2);
+      for(auto i = 0; i != 2; ++i) {
+        fixture.advance(Fixture::REQUEST_TIMEOUT);
+        auto request = fixture.m_recovery.m_requests.try_pop();
+        REQUIRE(request.has_value());
+        REQUIRE(request->m_session == "SESSION123");
+        REQUIRE(request->m_sequence_number == 2);
+        REQUIRE(request->m_count == 2);
+        REQUIRE(!fixture.m_recovery.m_requests.try_pop());
+      }
       fixture.recover(2, {TWO, THREE});
       fixture.require_message(2);
     }

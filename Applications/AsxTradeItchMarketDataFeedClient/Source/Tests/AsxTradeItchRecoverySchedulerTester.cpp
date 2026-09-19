@@ -173,6 +173,10 @@ TEST_SUITE("AsxTradeItchRecoveryScheduler") {
     require_message("one");
     add(4, {"four"});
     require_request(2, 2);
+    SUBCASE("clock_rollback") {
+      m_timestamp -= seconds(30);
+      require_request(2, 2);
+    }
     m_timestamp += m_timeout / 2;
     SUBCASE("heartbeat") {
       recover(2, {});
