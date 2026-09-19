@@ -37,8 +37,7 @@ namespace Nexus {
         AsxTradeItchParserException("ITCH message too short."));
     }
     return AsxTradeItchMessage(source.size(),
-      static_cast<std::uint8_t>(source.front()),
-      source.data() + HEADER_LENGTH);
+      static_cast<std::uint8_t>(source.front()), source.data() + HEADER_LENGTH);
   }
 
   inline AsxTradeItchCursor AsxTradeItchMessage::get_cursor() const {

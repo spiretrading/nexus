@@ -3,6 +3,7 @@
 #include <array>
 #include <charconv>
 #include <concepts>
+#include <type_traits>
 #include <utility>
 #include "AsxTradeItchMarketDataFeedClient/AsxTradeItchMessage.hpp"
 #include "Nexus/MoldUdp64/MoldUdp64Packet.hpp"
@@ -627,22 +628,23 @@ namespace AsxTradeItchDetails {
   /** Concept satisfied by callables accepting an ITCH message type. */
   template<typename F>
   concept IsAsxTradeItchVisitor =
-    std::invocable<F, const AsxTradeItchMessage&> ||
-    std::invocable<F, AsxTradeItchSeconds> ||
-    std::invocable<F, AsxTradeItchOrderBookDirectory> ||
-    std::invocable<F, AsxTradeItchCombinationOrderBookDirectory> ||
-    std::invocable<F, AsxTradeItchTickSize> ||
-    std::invocable<F, AsxTradeItchSystemEvent> ||
-    std::invocable<F, AsxTradeItchOrderBookState> ||
-    std::invocable<F, AsxTradeItchAddOrder> ||
-    std::invocable<F, AsxTradeItchAddOrderWithParticipant> ||
-    std::invocable<F, AsxTradeItchOrderExecuted> ||
-    std::invocable<F, AsxTradeItchOrderExecutedAtPrice> ||
-    std::invocable<F, AsxTradeItchOrderReplace> ||
-    std::invocable<F, AsxTradeItchOrderDelete> ||
-    std::invocable<F, AsxTradeItchTrade> ||
-    std::invocable<F, AsxTradeItchEquilibriumPriceUpdate> ||
-    std::invocable<F, AsxTradeItchEndOfSnapshot>;
+    !std::is_member_pointer_v<std::remove_cvref_t<F>> && (
+      std::invocable<F, const AsxTradeItchMessage&> ||
+      std::invocable<F, AsxTradeItchSeconds> ||
+      std::invocable<F, AsxTradeItchOrderBookDirectory> ||
+      std::invocable<F, AsxTradeItchCombinationOrderBookDirectory> ||
+      std::invocable<F, AsxTradeItchTickSize> ||
+      std::invocable<F, AsxTradeItchSystemEvent> ||
+      std::invocable<F, AsxTradeItchOrderBookState> ||
+      std::invocable<F, AsxTradeItchAddOrder> ||
+      std::invocable<F, AsxTradeItchAddOrderWithParticipant> ||
+      std::invocable<F, AsxTradeItchOrderExecuted> ||
+      std::invocable<F, AsxTradeItchOrderExecutedAtPrice> ||
+      std::invocable<F, AsxTradeItchOrderReplace> ||
+      std::invocable<F, AsxTradeItchOrderDelete> ||
+      std::invocable<F, AsxTradeItchTrade> ||
+      std::invocable<F, AsxTradeItchEquilibriumPriceUpdate> ||
+      std::invocable<F, AsxTradeItchEndOfSnapshot>);
 
   /**
    * Passes a parsed message to the first callable able to receive its type.
@@ -1010,7 +1012,7 @@ namespace AsxTradeItchDetails {
 
   inline AsxTradeItchEquilibriumPriceUpdate
       AsxTradeItchEquilibriumPriceUpdate::parse(
-      const AsxTradeItchMessage& message) {
+        const AsxTradeItchMessage& message) {
     if(message.m_type != TYPE || message.m_length < LENGTH) {
       boost::throw_with_location(
         AsxTradeItchParserException("Invalid ITCH message type or length."));

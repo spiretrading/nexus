@@ -73,10 +73,10 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<T>>
   template<Beam::Initializes<C> CF, Beam::Initializes<T> TF>
   AsxTradeItchGlimpseClient<C, T>::AsxTradeItchGlimpseClient(
-      std::string_view username, std::string_view password,
-      CF&& channel, TF&& timer)
-      : m_client(username, password,
-          std::forward<CF>(channel), std::forward<TF>(timer)) {
+      std::string_view username, std::string_view password, CF&& channel,
+      TF&& timer)
+      : m_client(username, password, std::forward<CF>(channel),
+          std::forward<TF>(timer)) {
     if(m_client.get_sequence_number() != 1) {
       boost::throw_with_location(
         Beam::ConnectException("Glimpse must start at sequence one."));

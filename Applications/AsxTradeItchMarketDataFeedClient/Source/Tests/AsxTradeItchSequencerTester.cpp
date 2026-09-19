@@ -37,7 +37,7 @@ namespace {
     Fixture()
       : m_session("SESSION123"),
         m_timestamp(time_from_string("2026-09-18 10:00:00")),
-        m_sequencer(3, duration_from_string("00:00:03")) {}
+        m_sequencer(3, seconds(3)) {}
 
     void add(int feed, std::uint64_t sequence,
         const std::vector<std::string_view>& messages) {
@@ -97,8 +97,7 @@ TEST_SUITE("AsxTradeItchSequencer") {
       add(1, start, {"one", "two", "three", "four", "five", "six", "seven"});
     }
     SUBCASE("recovery") {
-      recover(start,
-        {"one", "two", "three", "four", "five", "six", "seven"});
+      recover(start, {"one", "two", "three", "four", "five", "six", "seven"});
     }
     for(auto message : {"two", "three", "four", "five", "six", "seven"}) {
       require_message(message);
@@ -173,17 +172,17 @@ TEST_SUITE("AsxTradeItchSequencer") {
       sequence = 1;
     }
     for(auto i = 0; i != 3; ++i) {
-      m_timestamp += duration_from_string("00:00:01");
+      m_timestamp += seconds(1);
       add(0, 4, {});
       add(1, sequence, replay);
       REQUIRE(!m_sequencer.get_gap());
     }
-    m_timestamp += duration_from_string("00:00:01");
+    m_timestamp += seconds(1);
     add(0, 4, {});
     add(1, sequence, replay);
     require_gap(2, 1);
     REQUIRE(m_sequencer.get_position() == 4);
-    m_timestamp += duration_from_string("00:00:04");
+    m_timestamp += seconds(4);
     m_sequencer.update(m_timestamp);
     require_gap(2, 1);
     REQUIRE(m_sequencer.get_position() == 4);
@@ -200,7 +199,7 @@ TEST_SUITE("AsxTradeItchSequencer") {
     add(1, 1, {"one"});
     require_message("one");
     for(auto i = 0; i != 5; ++i) {
-      m_timestamp += duration_from_string("00:00:01");
+      m_timestamp += seconds(1);
       add(0, 2, {});
       add(1, 2, {});
       REQUIRE(!m_sequencer.get_gap());
@@ -242,7 +241,7 @@ TEST_SUITE("AsxTradeItchSequencer") {
       REQUIRE(!m_sequencer.is_end_of_session());
       require_message("three");
       REQUIRE(m_sequencer.is_end_of_session());
-      m_timestamp += duration_from_string("00:00:04");
+      m_timestamp += seconds(4);
       m_sequencer.add(0, packet, m_timestamp);
       REQUIRE(!m_sequencer.read());
     }

@@ -184,20 +184,19 @@ namespace {
     Client m_client;
 
     Fixture()
-      : m_operations(std::make_shared<FeedClient::Queue>()),
-        m_feed_client(m_operations),
-        m_client([] {
-          auto config = AsxTradeItchConfiguration();
-          config.m_primary_venue = Venues::ASX;
-          config.m_disseminating_venue = Venues::ASX;
-          config.m_mpid = "ASX";
-          return config;
-        }(), &m_feed_client, &m_itch_client) {
+        : m_operations(std::make_shared<FeedClient::Queue>()),
+          m_feed_client(m_operations),
+          m_client([] {
+            auto config = AsxTradeItchConfiguration();
+            config.m_primary_venue = Venues::ASX;
+            config.m_disseminating_venue = Venues::ASX;
+            config.m_mpid = "ASX";
+            return config;
+          }(), &m_feed_client, &m_itch_client) {
       publish(AsxTradeItchSeconds(1700000000));
     }
 
     ~Fixture() {
-      m_feed_client.close();
       m_client.close();
     }
 
@@ -409,7 +408,7 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
     REQUIRE(update->m_timestamp == TIMESTAMP);
     require_size(260);
     auto sale = fixture.take<FeedClient::PublishTimeAndSaleOperation>();
-    REQUIRE(sale->m_time_and_sale.get_index() == Ticker("BHP", Venues::ASX));
+    REQUIRE(sale->m_time_and_sale.get_index() == parse_ticker("BHP.ASX"));
     REQUIRE(sale->m_time_and_sale->m_price == 10 * Money::CENT);
     REQUIRE(sale->m_time_and_sale->m_size == 40);
     REQUIRE(sale->m_time_and_sale->m_timestamp == TIMESTAMP);
@@ -470,7 +469,7 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
     REQUIRE(sale->m_time_and_sale == TickerTimeAndSale(
       TimeAndSale(TIMESTAMP, parse_money("0.1125"), 20,
         TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-        "ASX", "", ""), Ticker("BHP", Venues::ASX)));
+        "ASX", "", ""), parse_ticker("BHP.ASX")));
     fixture.require_empty();
     fixture.publish(AsxTradeItchOrderBookState(NANOSECONDS, 1, "CSPA"));
     trade.m_occurred_at_cross = 'Y';
@@ -501,9 +500,8 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
       fixture.publish(message);
       auto operation =
         fixture.take<FeedClient::PublishOrderImbalanceOperation>();
-      REQUIRE(operation->m_imbalance == VenueOrderImbalance(
-        OrderImbalance(
-          Ticker("BHP", Venues::ASX), side, size, price, TIMESTAMP),
+      REQUIRE(operation->m_imbalance == VenueOrderImbalance(OrderImbalance(
+        parse_ticker("BHP.ASX"), side, size, price, TIMESTAMP),
         Venues::ASX));
       fixture.require_empty();
     };
@@ -534,7 +532,7 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
     }
     fixture.publish(directory);
     REQUIRE(fixture.take<FeedClient::AddOperation>()->m_info ==
-      TickerInfo(Ticker("COMBO", Venues::ASX), "COMBINATION", "", 1));
+      TickerInfo(parse_ticker("COMBO.ASX"), "COMBINATION", "", 1));
     auto id = fixture.add(1, 1, "COMBO", Side::BID, -1000, 100);
     fixture.require_bbo(
       "COMBO", make_bid(-10 * Money::CENT, 100), make_ask(Money(), 0));
@@ -551,8 +549,8 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
       "COMBO", make_bid(-1 * Money::CENT, 100), make_ask(Money(), 0));
     fixture.directory(2, "BHP");
     fixture.publish(AsxTradeItchSeconds(1700000001));
-    fixture.publish(AsxTradeItchAddOrder(
-      NANOSECONDS, 1, 2, Side::ASK, 1, 50, 1234, 0, 2));
+    fixture.publish(
+      AsxTradeItchAddOrder(NANOSECONDS, 1, 2, Side::ASK, 1, 50, 1234, 0, 2));
     order = fixture.take<FeedClient::AddOrderOperation>();
     auto timestamp = time_from_string("2023-11-14 22:13:21.123456");
     REQUIRE(order->m_timestamp == timestamp);
@@ -565,10 +563,10 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
     REQUIRE(fixture.take<FeedClient::RemoveOrderOperation>()->m_id == id);
     fixture.require_bbo("COMBO", make_bid(Money(), 0), make_ask(Money(), 0));
     REQUIRE(fixture.take<FeedClient::AddOperation>()->m_info.m_ticker ==
-      Ticker("NEW", Venues::ASX));
+      parse_ticker("NEW.ASX"));
     fixture.publish(AsxTradeItchSystemEvent(NANOSECONDS, 'O'));
-    REQUIRE(fixture.take<FeedClient::RemoveOrderOperation>()->m_id ==
-      order->m_id);
+    REQUIRE(
+      fixture.take<FeedClient::RemoveOrderOperation>()->m_id == order->m_id);
     fixture.require_bbo("BHP", make_bid(Money(), 0), make_ask(Money(), 0));
     fixture.require_empty();
   }
@@ -593,15 +591,20 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
       REQUIRE_THROWS_AS(std::rethrow_exception(error), IOException);
     }
     SUBCASE("publication_failure") {
+      auto failure =
+        std::make_exception_ptr(IOException("Publication failed."));
+      SUBCASE("io_error") {}
+      SUBCASE("end_of_file") {
+        failure = std::make_exception_ptr(EndOfFileException());
+      }
       fixture.directory(1, "BHP");
-      fixture.publish(AsxTradeItchAddOrder(
-        NANOSECONDS, 1, 1, Side::BID, 1, 100, 1000, 0, 2));
+      fixture.publish(
+        AsxTradeItchAddOrder(NANOSECONDS, 1, 1, Side::BID, 1, 100, 1000, 0, 2));
       flush_pending_routines();
       auto operation = fixture.m_operations->try_pop();
       REQUIRE(operation.has_value());
-      std::visit([] (auto& operation) {
-        operation.m_result.set(
-          std::make_exception_ptr(IOException("Publication failed.")));
+      std::visit([&] (auto& operation) {
+        operation.m_result.set(failure);
       }, **operation);
       flush_pending_routines();
       REQUIRE(fixture.m_client.is_finished());
@@ -611,8 +614,8 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
       REQUIRE(!fixture.m_operations->try_pop());
     }
     SUBCASE("missing_directory") {
-      fixture.publish(AsxTradeItchAddOrder(
-        NANOSECONDS, 1, 1, Side::BID, 1, 100, 1000, 0, 2));
+      fixture.publish(
+        AsxTradeItchAddOrder(NANOSECONDS, 1, 1, Side::BID, 1, 100, 1000, 0, 2));
       flush_pending_routines();
       REQUIRE(fixture.m_client.is_finished());
       auto error = fixture.m_client.get_exception();
@@ -634,20 +637,43 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
       REQUIRE(fixture.m_client.is_finished());
       REQUIRE(!fixture.m_client.get_exception());
     }
+    SUBCASE("close_during_publication") {
+      fixture.directory(1, "BHP");
+      fixture.publish(
+        AsxTradeItchAddOrder(NANOSECONDS, 1, 1, Side::BID, 1, 100, 1000, 0, 2));
+      flush_pending_routines();
+      auto operation = fixture.m_operations->try_pop();
+      REQUIRE(operation.has_value());
+      fixture.publish(
+        AsxTradeItchAddOrder(NANOSECONDS, 2, 1, Side::ASK, 1, 200, 1100, 0, 2));
+      auto is_closed = std::atomic_bool(false);
+      auto closer = RoutineHandler(spawn([&] {
+        fixture.m_client.close();
+        is_closed = true;
+      }));
+      flush_pending_routines();
+      auto was_closed = bool(is_closed);
+      fixture.m_feed_client.close();
+      closer.wait();
+      REQUIRE(was_closed);
+      REQUIRE(fixture.m_client.is_finished());
+      REQUIRE(!fixture.m_client.get_exception());
+      REQUIRE(!fixture.m_operations->try_pop());
+    }
   }
 
 
   TEST_CASE("price_units") {
     auto fixture = Fixture();
     fixture.directory(1, "BHP");
-    fixture.publish(AsxTradeItchAddOrder(
-      NANOSECONDS, 1, 1, Side::BID, 1, 100, 55000, 0, 2));
+    fixture.publish(
+      AsxTradeItchAddOrder(NANOSECONDS, 1, 1, Side::BID, 1, 100, 55000, 0, 2));
     auto order = fixture.take<FeedClient::AddOrderOperation>();
     REQUIRE(order->m_price == parse_money("5.50"));
     fixture.require_bbo(
       "BHP", make_bid(parse_money("5.50"), 100), make_ask(Money(), 0));
-    fixture.publish(AsxTradeItchOrderReplace(
-      NANOSECONDS, 1, 1, Side::BID, 1, 90, 55100, 0));
+    fixture.publish(
+      AsxTradeItchOrderReplace(NANOSECONDS, 1, 1, Side::BID, 1, 90, 55100, 0));
     order = fixture.take<FeedClient::AddOrderOperation>();
     REQUIRE(order->m_price == parse_money("5.51"));
     fixture.require_bbo(

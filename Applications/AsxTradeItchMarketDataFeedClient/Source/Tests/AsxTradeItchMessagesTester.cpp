@@ -107,6 +107,8 @@ TEST_SUITE("AsxTradeItchMessages") {
     REQUIRE(!accepts([] {}));
     REQUIRE(!accepts(unrelated, seconds));
     REQUIRE(!accepts(seconds, unrelated));
+    REQUIRE(!IsAsxTradeItchVisitor<decltype(&AsxTradeItchMessage::get_cursor)>);
+    REQUIRE(!IsAsxTradeItchVisitor<decltype(&AsxTradeItchSeconds::m_seconds)>);
   }
 
   TEST_CASE("visit") {
@@ -402,19 +404,42 @@ TEST_SUITE("AsxTradeItchMessages") {
   }
 
   TEST_CASE("equilibrium_price_update") {
-    auto source = EQUILIBRIUM_PRICE_UPDATE;
-    REQUIRE(source.size() == AsxTradeItchEquilibriumPriceUpdate::LENGTH);
-    auto message = AsxTradeItchMessage::parse(source);
-    auto value = AsxTradeItchEquilibriumPriceUpdate::parse(message);
-    REQUIRE(value.m_nanoseconds == 408258000);
-    REQUIRE(value.m_order_book_id == 70639);
-    REQUIRE(value.m_bid_quantity == 66);
-    REQUIRE(value.m_ask_quantity == 53);
-    REQUIRE(value.m_equilibrium_price == 26100);
-    REQUIRE(value.m_best_bid_price == 26100);
-    REQUIRE(value.m_best_ask_price == 26100);
-    REQUIRE(value.m_best_bid_quantity == 66);
-    REQUIRE(value.m_best_ask_quantity == 53);
+    SUBCASE("specification") {
+      auto source = EQUILIBRIUM_PRICE_UPDATE;
+      REQUIRE(source.size() == AsxTradeItchEquilibriumPriceUpdate::LENGTH);
+      auto message = AsxTradeItchMessage::parse(source);
+      auto value = AsxTradeItchEquilibriumPriceUpdate::parse(message);
+      REQUIRE(value.m_nanoseconds == 408258000);
+      REQUIRE(value.m_order_book_id == 70639);
+      REQUIRE(value.m_bid_quantity == 66);
+      REQUIRE(value.m_ask_quantity == 53);
+      REQUIRE(value.m_equilibrium_price == 26100);
+      REQUIRE(value.m_best_bid_price == 26100);
+      REQUIRE(value.m_best_ask_price == 26100);
+      REQUIRE(value.m_best_bid_quantity == 66);
+      REQUIRE(value.m_best_ask_quantity == 53);
+    }
+    SUBCASE("distinct_fields") {
+      auto source =
+        "Z\x00\x00\x00\x01\x00\x00\x00\x02"
+        "\x00\x00\x00\x00\x00\x00\x03\xE8"
+        "\x00\x00\x00\x00\x00\x00\x03\x84"
+        "\x00\x00\x30\x39\x00\x00\x30\x34\x00\x00\x30\x3E"
+        "\x00\x00\x00\x00\x00\x00\x00\x64"
+        "\x00\x00\x00\x00\x00\x00\x00\x32"sv;
+      REQUIRE(source.size() == AsxTradeItchEquilibriumPriceUpdate::LENGTH);
+      auto value = AsxTradeItchEquilibriumPriceUpdate::parse(
+        AsxTradeItchMessage::parse(source));
+      REQUIRE(value.m_nanoseconds == 1);
+      REQUIRE(value.m_order_book_id == 2);
+      REQUIRE(value.m_bid_quantity == 1000);
+      REQUIRE(value.m_ask_quantity == 900);
+      REQUIRE(value.m_equilibrium_price == 12345);
+      REQUIRE(value.m_best_bid_price == 12340);
+      REQUIRE(value.m_best_ask_price == 12350);
+      REQUIRE(value.m_best_bid_quantity == 100);
+      REQUIRE(value.m_best_ask_quantity == 50);
+    }
   }
 
   TEST_CASE("end_of_snapshot") {

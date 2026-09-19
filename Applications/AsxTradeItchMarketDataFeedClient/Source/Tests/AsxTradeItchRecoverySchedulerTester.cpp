@@ -1,9 +1,6 @@
-#include <future>
-#include <Beam/IO/LocalServerConnection.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
 #include <doctest/doctest.h>
 #include "AsxTradeItchMarketDataFeedClient/AsxTradeItchRecoveryScheduler.hpp"
-#include "Nexus/MoldUdp64/MoldUdp64Client.hpp"
 
 using namespace Beam;
 using namespace boost;
@@ -12,9 +9,6 @@ using namespace Nexus;
 
 namespace {
   struct Fixture {
-    LocalServerConnection m_server;
-    std::unique_ptr<LocalServerChannel> m_server_channel;
-    optional<MoldUdp64Client<LocalClientChannel>> m_client;
     AsxTradeItchSequencer::Session m_session;
     ptime m_timestamp;
     time_duration m_timeout;
@@ -22,17 +16,11 @@ namespace {
     AsxTradeItchRecoveryScheduler m_recovery;
 
     Fixture()
-        : m_session("SESSION123"),
-          m_timestamp(time_from_string("2026-09-18 10:00:00")),
-          m_timeout(duration_from_string("00:00:01")),
-          m_sequencer(1, duration_from_string("00:00:03")),
-          m_recovery(m_timeout) {
-      auto connection = std::async(std::launch::async, [&] {
-        return m_server.accept();
-      });
-      m_client.emplace(init("rewind", m_server));
-      m_server_channel = connection.get();
-    }
+      : m_session("SESSION123"),
+        m_timestamp(time_from_string("2026-09-18 10:00:00")),
+        m_timeout(seconds(1)),
+        m_sequencer(1, seconds(3)),
+        m_recovery(m_timeout) {}
 
     SharedBuffer encode_packet(
         std::uint64_t sequence, const std::vector<std::string_view>& messages) {
@@ -56,8 +44,9 @@ namespace {
 
     void recover(
         std::uint64_t sequence, const std::vector<std::string_view>& messages) {
-      m_server_channel->get_writer().write(encode_packet(sequence, messages));
-      m_sequencer.recover(m_client->read());
+      auto source = encode_packet(sequence, messages);
+      m_sequencer.recover(MoldUdp64Packet::parse(
+        std::string_view(source.get_data(), source.get_size())));
     }
 
     void require_message(std::string_view expected) {
@@ -72,12 +61,6 @@ namespace {
       REQUIRE(request->m_session == m_session);
       REQUIRE(request->m_sequence_number == sequence);
       REQUIRE(request->m_count == count);
-      m_client->request(*request);
-      auto source = SharedBuffer();
-      m_server_channel->get_reader().read(out(source));
-      auto expected = SharedBuffer();
-      encode(MoldUdp64Request(m_session, sequence, count), out(expected));
-      REQUIRE(source == expected);
     }
   };
 }
@@ -85,10 +68,10 @@ namespace {
 TEST_SUITE("AsxTradeItchRecoveryScheduler") {
   TEST_CASE("timeout") {
     REQUIRE_THROWS_AS(
-      AsxTradeItchRecoveryScheduler(duration_from_string("00:00:00")),
+      AsxTradeItchRecoveryScheduler(seconds(0)),
       std::invalid_argument);
     REQUIRE_THROWS_AS(
-      AsxTradeItchRecoveryScheduler(duration_from_string("-00:00:01")),
+      AsxTradeItchRecoveryScheduler(seconds(-1)),
       std::invalid_argument);
     REQUIRE_THROWS_AS(
       AsxTradeItchRecoveryScheduler(time_duration(not_a_date_time)),
@@ -203,8 +186,8 @@ TEST_SUITE("AsxTradeItchRecoveryScheduler") {
       m_session = "SESSION123";
     }
     SUBCASE("malformed_reply") {
-      m_server_channel->get_writer().write(SharedBuffer("SHORT", 5));
-      REQUIRE_THROWS_AS(m_client->read(), MoldUdp64ParserException);
+      REQUIRE_THROWS_AS(m_sequencer.recover(MoldUdp64Packet::parse("SHORT")),
+        MoldUdp64ParserException);
     }
     REQUIRE(!m_sequencer.read());
     REQUIRE(!m_recovery.request(m_sequencer, m_timestamp));

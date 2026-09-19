@@ -11,8 +11,8 @@ TEST_SUITE("AsxTradeItchMessage") {
       auto message = AsxTradeItchMessage::parse(source);
       REQUIRE(message.m_length == source.size());
       REQUIRE(message.m_type == 'T');
-      REQUIRE(message.m_payload == source.data() +
-        AsxTradeItchMessage::HEADER_LENGTH);
+      REQUIRE(message.m_payload ==
+        source.data() + AsxTradeItchMessage::HEADER_LENGTH);
       auto cursor = message.get_cursor();
       REQUIRE(cursor.read_uint32() == 0x01020304);
       REQUIRE_THROWS_AS(cursor.read_char(), AsxTradeItchParserException);

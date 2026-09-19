@@ -9,6 +9,7 @@
 
 using namespace Beam;
 using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
 using namespace std::literals;
 
@@ -84,10 +85,10 @@ TEST_SUITE("AsxTradeItchGlimpseClient") {
     REQUIRE(snapshot.m_sequence == 123);
     REQUIRE(snapshot.m_messages.size() == count);
     if(count != 0) {
-      REQUIRE(snapshot.m_messages[0] == SharedBuffer(
-        "T\x00\x00\x00\x01", AsxTradeItchSeconds::LENGTH));
-      REQUIRE(snapshot.m_messages[1] == SharedBuffer(
-        "T\x00\x00\x00\x02", AsxTradeItchSeconds::LENGTH));
+      REQUIRE(snapshot.m_messages[0] ==
+        SharedBuffer("T\x00\x00\x00\x01", AsxTradeItchSeconds::LENGTH));
+      REQUIRE(snapshot.m_messages[1] ==
+        SharedBuffer("T\x00\x00\x00\x02", AsxTradeItchSeconds::LENGTH));
     }
     auto payload = SharedBuffer();
     REQUIRE_THROWS_AS(
@@ -128,27 +129,29 @@ TEST_SUITE("AsxTradeItchGlimpseClient") {
 
   TEST_CASE_FIXTURE(Fixture, "close") {
     log_in(1);
-    auto snapshot = std::async(std::launch::async, [&] {
+    auto snapshot = std::packaged_task([&] {
       return m_client->load_snapshot();
     });
+    auto result = snapshot.get_future();
+    auto routine = RoutineHandler(spawn(std::move(snapshot)));
+    flush_pending_routines();
     m_client->close();
-    REQUIRE_THROWS_AS(snapshot.get(), IOException);
+    REQUIRE_THROWS_AS(result.get(), IOException);
   }
 
   TEST_CASE_FIXTURE(Fixture, "multicast_handoff") {
-    auto sequencer = AsxTradeItchSequencer(
-      1, posix_time::duration_from_string("00:00:03"));
+    auto sequencer = AsxTradeItchSequencer(1, seconds(3));
     auto source = SharedBuffer();
     encode(MoldUdp64Request("SESSION123", 122, 3), out(source));
     for(auto message : {"T\x00\x00\x00\x01"sv, "T\x00\x00\x00\x02"sv,
         "T\x00\x00\x00\x03"sv}) {
-      append(source, endian::native_to_big(
-        static_cast<std::uint16_t>(message.size())));
+      append(source,
+        endian::native_to_big(static_cast<std::uint16_t>(message.size())));
       append(source, message);
     }
     sequencer.add(0, MoldUdp64Packet::parse(
       std::string_view(source.get_data(), source.get_size())),
-      posix_time::time_from_string("2026-09-19 10:00:00"));
+      time_from_string("2026-09-19 10:00:00"));
     log_in(1);
     finish(123);
     auto snapshot = m_client->load_snapshot();

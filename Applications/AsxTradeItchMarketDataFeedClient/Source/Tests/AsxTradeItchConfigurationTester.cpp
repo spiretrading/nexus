@@ -1,7 +1,6 @@
 #include <boost/date_time/posix_time/time_parsers.hpp>
 #include <doctest/doctest.h>
 #include "AsxTradeItchMarketDataFeedClient/AsxTradeItchConfiguration.hpp"
-#include "Nexus/Definitions/StandardVenues.hpp"
 
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -44,11 +43,10 @@ TEST_SUITE("AsxTradeItchConfiguration") {
       REQUIRE(config.m_primary_venue == Venues::ASX);
       REQUIRE(config.m_disseminating_venue == Venues::ASX);
       REQUIRE(config.m_mpid == "ASX");
-      REQUIRE(config.m_sampling == duration_from_string("00:00:00.1"));
-      REQUIRE(config.m_feed_timeout == duration_from_string("00:00:03"));
-      REQUIRE(config.m_request_timeout == duration_from_string("00:00:01"));
-      REQUIRE(
-        config.get_timer_interval() == duration_from_string("00:00:00.1"));
+      REQUIRE(config.m_sampling == milliseconds(100));
+      REQUIRE(config.m_feed_timeout == seconds(3));
+      REQUIRE(config.m_request_timeout == seconds(1));
+      REQUIRE(config.get_timer_interval() == milliseconds(100));
       REQUIRE(config.m_feeds.size() == 1);
       REQUIRE(config.m_feeds[0].m_name == "A");
       REQUIRE(config.m_feeds[0].m_address.get_host() == "233.71.185.129");
@@ -84,11 +82,10 @@ interface: "10.0.0.2:21101"
       REQUIRE(config.m_partition == 4);
       REQUIRE(config.m_is_logging_messages);
       REQUIRE(config.m_mpid == "XASX");
-      REQUIRE(config.m_sampling == duration_from_string("00:00:00.25"));
-      REQUIRE(config.m_feed_timeout == duration_from_string("00:00:00.05"));
-      REQUIRE(config.m_request_timeout == duration_from_string("00:00:00.02"));
-      REQUIRE(
-        config.get_timer_interval() == duration_from_string("00:00:00.02"));
+      REQUIRE(config.m_sampling == milliseconds(250));
+      REQUIRE(config.m_feed_timeout == milliseconds(50));
+      REQUIRE(config.m_request_timeout == milliseconds(20));
+      REQUIRE(config.get_timer_interval() == milliseconds(20));
       REQUIRE(config.m_socket_options.m_receive_buffer_size == 1048576);
       REQUIRE(config.m_socket_options.m_max_datagram_size == 9000);
       REQUIRE(config.m_feeds.size() == 2);
@@ -103,7 +100,7 @@ interface: "10.0.0.2:21101"
       REQUIRE(config.m_glimpse->m_interface.get_port() == 0);
       REQUIRE(config.m_glimpse->m_username == "TEST01");
       REQUIRE(config.m_glimpse->m_password == "TESTSECRET");
-      config.m_request_timeout = duration_from_string("00:00:01");
+      config.m_request_timeout = seconds(1);
       REQUIRE(config.get_timer_interval() == config.m_feed_timeout);
     }
   }

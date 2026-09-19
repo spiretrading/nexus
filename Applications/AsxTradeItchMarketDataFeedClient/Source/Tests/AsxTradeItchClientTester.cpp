@@ -75,8 +75,8 @@ namespace {
     struct WithSnapshot {};
     struct WithoutSnapshot {};
 
-    inline static const auto FEED_TIMEOUT = duration_from_string("00:00:03");
-    inline static const auto REQUEST_TIMEOUT = duration_from_string("00:00:01");
+    inline static const auto FEED_TIMEOUT = seconds(3);
+    inline static const auto REQUEST_TIMEOUT = seconds(1);
     std::vector<std::unique_ptr<StubProtocolClient>> m_feeds;
     StubRecoveryClient m_recovery;
     optional<StubGlimpseClient> m_glimpse;
@@ -223,11 +223,14 @@ TEST_SUITE("AsxTradeItchClient") {
       fixture.publish(0, 1, {ONE});
       REQUIRE(fixture.m_glimpse->m_loads.pop());
     }
-    auto read = std::async(std::launch::async, [&] {
+    auto read = std::packaged_task([&] {
       return fixture.m_client->read();
     });
+    auto result = read.get_future();
+    auto routine = RoutineHandler(spawn(std::move(read)));
+    flush_pending_routines();
     fixture.m_client->close();
-    REQUIRE_THROWS_AS(read.get(), EndOfFileException);
+    REQUIRE_THROWS_AS(result.get(), EndOfFileException);
   }
 
   TEST_CASE("failure") {
@@ -323,7 +326,7 @@ TEST_SUITE("AsxTradeItchClient") {
       fixture.publish(0, 3, {THREE});
     }
     REQUIRE(!fixture.m_recovery.m_requests.try_pop());
-    fixture.advance(Fixture::FEED_TIMEOUT + microseconds(1));
+    fixture.advance(Fixture::FEED_TIMEOUT + time_duration::unit());
     fixture.require_request(2, 1);
     fixture.recover(2, {TWO});
     fixture.require_message(2);

@@ -50,7 +50,6 @@ namespace Nexus {
       /** Returns the exception that stopped message reception, if any. */
       std::exception_ptr get_exception() const;
 
-      /** Closes the feed. */
       void close();
 
     private:
@@ -85,13 +84,13 @@ namespace Nexus {
       Beam::RoutineHandler m_read_loop;
       Beam::OpenState m_open_state;
 
+      static Money get_price(const Book& book, std::int32_t price);
+      static void offset(
+        BookSide& side, Side direction, std::int32_t price, Quantity delta);
       AsxTradeItchMarketDataFeedClient(
         const AsxTradeItchMarketDataFeedClient&) = delete;
       AsxTradeItchMarketDataFeedClient& operator =(
         const AsxTradeItchMarketDataFeedClient&) = delete;
-      static Money get_price(const Book& book, std::int32_t price);
-      static void offset(
-        BookSide& side, Side direction, std::int32_t price, Quantity delta);
       boost::posix_time::ptime get_timestamp(std::uint32_t nanoseconds) const;
       Book& get_book(std::uint32_t id);
       void publish(Book& book, boost::posix_time::ptime timestamp);
@@ -171,8 +170,8 @@ namespace Nexus {
       return;
     }
     m_client->close();
-    m_read_loop.wait();
     m_feed_client->close();
+    m_read_loop.wait();
     m_open_state.close();
   }
 
@@ -447,13 +446,18 @@ namespace Nexus {
       return;
     }
     auto& order = entry->second;
-    offset(side, message.m_side, order.m_price, -Quantity(order.m_quantity));
+    if(order.m_price == message.m_price) {
+      offset(side, message.m_side, order.m_price,
+        Quantity(message.m_quantity) - Quantity(order.m_quantity));
+    } else {
+      offset(side, message.m_side, order.m_price, -Quantity(order.m_quantity));
+      offset(side, message.m_side, message.m_price, message.m_quantity);
+    }
     if(order.m_quantity != 0 && message.m_quantity == 0) {
       m_feed_client->remove_order(order.m_id, timestamp);
     }
     order.m_price = message.m_price;
     order.m_quantity = message.m_quantity;
-    offset(side, message.m_side, order.m_price, order.m_quantity);
     submit(book, order, message.m_side, timestamp);
     publish(book, timestamp);
   }
@@ -568,8 +572,16 @@ namespace Nexus {
       IsAsxTradeItchClient<Beam::dereference_t<C>>
   void AsxTradeItchMarketDataFeedClient<M, C>::read_loop() {
     try {
-      while(true) {
-        auto message = m_client->read();
+      while(m_open_state.is_open()) {
+        auto message = AsxTradeItchMessage();
+        try {
+          message = m_client->read();
+        } catch(const Beam::EndOfFileException&) {
+          break;
+        }
+        if(!m_open_state.is_open()) {
+          break;
+        }
         if(m_config.m_is_logging_messages) {
           auto out = std::stringstream();
           out << "(message " << static_cast<char>(message.m_type) << ' ' <<
@@ -584,7 +596,6 @@ namespace Nexus {
         }
         dispatch(message);
       }
-    } catch(const Beam::EndOfFileException&) {
     } catch(const std::exception&) {
       if(m_open_state.is_open()) {
         m_exception = std::current_exception();
