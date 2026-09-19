@@ -1,20 +1,17 @@
-#include <atomic>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
 #include <thread>
 #include <Beam/IO/QueuedReader.hpp>
 #include <Beam/IO/WrapperChannel.hpp>
 #include <Beam/Network/MulticastSocketChannel.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
+#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/TimeService/LiveTimer.hpp>
 #include <Beam/TimeService/LocalTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/ReportException.hpp>
-#include "AsxTradeItchMarketDataFeedClient/AsxTradeItchClient.hpp"
-#include "AsxTradeItchMarketDataFeedClient/AsxTradeItchConfiguration.hpp"
-#include "Nexus/Definitions/StandardVenues.hpp"
+#include "AsxTradeItchMarketDataFeedClient/AsxTradeItchMarketDataFeedClient.hpp"
+#include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
+#include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
@@ -52,19 +49,6 @@ namespace {
     queued_reader.poll();
     return client;
   }
-
-  void log(const AsxTradeItchMessage& message) {
-    auto out = std::stringstream();
-    out << "(message " << static_cast<char>(message.m_type) << ' ' <<
-      std::hex << std::setfill('0');
-    for(auto i = std::size_t(0);
-        i != message.m_length - AsxTradeItchMessage::HEADER_LENGTH; ++i) {
-      out << std::setw(2) << static_cast<unsigned int>(
-        static_cast<unsigned char>(message.m_payload[i]));
-    }
-    out << ")\n";
-    std::cout << out.str() << std::flush;
-  }
 }
 
 int main(int argc, const char** argv) {
@@ -72,6 +56,11 @@ int main(int argc, const char** argv) {
     auto config = parse_command_line(argc, argv,
       "1.0-r" ASX_TRADE_ITCH_MARKET_DATA_FEED_CLIENT_VERSION
       "\nCopyright (C) 2026 Spire Trading Inc.");
+    auto service_locator_client = ApplicationServiceLocatorClient(
+      ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
+    auto definitions_client =
+      ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
     auto configuration = AsxTradeItchConfiguration::parse(config);
     auto feed_clients =
       std::vector<std::unique_ptr<ApplicationProtocolClient>>();
@@ -104,30 +93,19 @@ int main(int argc, const char** argv) {
       std::move(recovery_client), std::move(glimpse_client),
       std::make_unique<LocalTimeClient>(),
       std::make_unique<LiveTimer>(configuration.get_timer_interval()));
-    auto exception = std::exception_ptr();
-    auto is_finished = std::atomic_bool(false);
-    auto reader = RoutineHandler(spawn([&] {
-      try {
-        while(true) {
-          auto message = client.read();
-          if(configuration.m_is_logging_messages) {
-            log(message);
-          }
-        }
-      } catch(const EndOfFileException&) {
-      } catch(const std::exception&) {
-        exception = std::current_exception();
-      }
-      is_finished = true;
-    }));
-    while(!is_finished && !received_kill_event()) {
+    auto market_data_feed_client = ApplicationMarketDataFeedClient(
+      Ref(service_locator_client), configuration.m_sampling,
+      configuration.m_country);
+    auto feed_client = AsxTradeItchMarketDataFeedClient(
+      configuration, &market_data_feed_client, &client);
+    while(!feed_client.is_finished() && !received_kill_event()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
-    client.close();
-    reader.wait();
-    if(exception) {
+    feed_client.close();
+    if(auto exception = feed_client.get_exception()) {
       std::rethrow_exception(exception);
     }
+    service_locator_client.close();
   } catch(...) {
     report_current_exception();
     return -1;

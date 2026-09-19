@@ -15,6 +15,13 @@
 
 namespace Nexus {
 
+  /** Concept satisfied by clients delivering ordered ASX Trade ITCH data. */
+  template<typename T>
+  concept IsAsxTradeItchClient = requires(T& client) {
+    { client.read() } -> std::same_as<AsxTradeItchMessage>;
+    { client.close() } -> std::same_as<void>;
+  };
+
   /**
    * Delivers one partition's snapshot followed by its ordered ITCH stream.
    * Follows one MoldUDP64 session through its end-of-session marker.
