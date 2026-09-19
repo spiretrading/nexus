@@ -13,7 +13,6 @@ main() {
   create_forwarding_scripts
   local targets=(
     "Applications/AdministrationServer"
-    "Applications/AsxItchMarketDataFeedClient"
     "Applications/ChartingServer"
     "Applications/ComplianceServer"
     "Applications/CseMarketDataFeedClient"

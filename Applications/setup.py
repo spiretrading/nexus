@@ -93,10 +93,6 @@ def main():
     help='MySQL password.', required=False)
   parser.add_argument('-ms', '--mysql_schema', type=str, help='MySQL schema.',
     required=False)
-  parser.add_argument('-gu', '--glimpse_username', type=str,
-    help='ASX Glimpse username.', default='')
-  parser.add_argument('-gp', '--glimpse_password', type=str,
-    help='ASX Glimpse password.', default='')
   parser.add_argument('-cru', '--cxa_retrans_username', type=str,
     help='CXA retransmission username.', default='')
   parser.add_argument('-crp', '--cxa_retrans_password', type=str,

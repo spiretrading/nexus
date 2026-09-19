@@ -17,7 +17,6 @@ IF !EXIT_STATUS! NEQ 0 EXIT /B !EXIT_STATUS!
 SET "NEXUS_SETUP_DIRECTORY=!DEPENDENCIES!"
 CALL :Configure WebApi %*
 CALL :Configure Applications\AdministrationServer %*
-CALL :Configure Applications\AsxItchMarketDataFeedClient %*
 CALL :Configure Applications\ChartingServer %*
 CALL :Configure Applications\ComplianceServer %*
 CALL :Configure Applications\CseMarketDataFeedClient %*

@@ -38,8 +38,6 @@ Applications/WebPortal/WebApp/library/library/
 ## Ignore executable files on Linux.
 Applications/AdministrationServer/AdministrationServer
 Applications/AdministrationServer/Application/AdministrationServer
-Applications/AsxItchMarketDataFeedClient/Application/AsxItchMarketDataFeedClient
-Applications/AsxItchMarketDataFeedClient/AsxItchMarketDataFeedClient
 Applications/ChartingServer/Application/ChartingServer
 Applications/ChartingServer/ChartingServer
 Applications/ComplianceServer/Application/ComplianceServer
