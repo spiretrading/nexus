@@ -466,6 +466,30 @@ TEST_SUITE("CxaPitchMessages") {
     REQUIRE(!get_timestamp(CxaPitchBlock::parse(heartbeat)));
   }
 
+  TEST_CASE("visitor_constraints") {
+    auto accepts = []<typename... F> (F&&...) {
+      return requires {
+        visit(std::declval<const CxaPitchMessage&>(), std::declval<F>()...);
+      };
+    };
+    auto add_order = [] (const CxaPitchAddOrder&) {};
+    auto unit_clear = [] (CxaPitchUnitClear&&) {};
+    auto fallback = [] (const CxaPitchMessage&) {};
+    auto generic = [] (const auto&) {};
+    auto unrelated = [] (int) {};
+    REQUIRE(accepts(add_order));
+    REQUIRE(accepts(unit_clear));
+    REQUIRE(accepts(fallback));
+    REQUIRE(accepts(generic));
+    REQUIRE(accepts(add_order, unit_clear, fallback));
+    REQUIRE(!accepts());
+    REQUIRE(!accepts(0));
+    REQUIRE(!accepts(unrelated));
+    REQUIRE(!accepts([] {}));
+    REQUIRE(!accepts(unrelated, add_order));
+    REQUIRE(!accepts(add_order, unrelated));
+  }
+
   TEST_CASE("visit_known_message") {
     auto source = std::string_view(
       "\x12\x3c"

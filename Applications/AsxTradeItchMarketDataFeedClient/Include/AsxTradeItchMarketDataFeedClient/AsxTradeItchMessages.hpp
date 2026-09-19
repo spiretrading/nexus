@@ -2,6 +2,8 @@
 #define ASX_TRADE_ITCH_MESSAGES_HPP
 #include <array>
 #include <charconv>
+#include <concepts>
+#include <utility>
 #include "AsxTradeItchMarketDataFeedClient/AsxTradeItchMessage.hpp"
 
 namespace Nexus {
@@ -12,6 +14,11 @@ namespace AsxTradeItchDetails {
   constexpr auto CURRENCY_LENGTH = 3;
   constexpr auto PARTICIPANT_ID_LENGTH = 7;
   constexpr auto NANOSECONDS_PER_SECOND = 1000000000;
+
+  template<typename F, typename... T>
+  constexpr auto is_void_invocable = (requires(F&& f) {
+    { std::forward<F>(f)(std::declval<T>()) } -> std::same_as<void>;
+  } || ...);
 }
 
   /**
@@ -616,6 +623,45 @@ namespace AsxTradeItchDetails {
     static AsxTradeItchEndOfSnapshot parse(const AsxTradeItchMessage& message);
   };
 
+  /** Concept satisfied by callables accepting an ITCH message type. */
+  template<typename F>
+  concept IsAsxTradeItchVisitor =
+    std::invocable<F, const AsxTradeItchMessage&> ||
+    std::invocable<F, AsxTradeItchSeconds> ||
+    std::invocable<F, AsxTradeItchOrderBookDirectory> ||
+    std::invocable<F, AsxTradeItchCombinationOrderBookDirectory> ||
+    std::invocable<F, AsxTradeItchTickSize> ||
+    std::invocable<F, AsxTradeItchSystemEvent> ||
+    std::invocable<F, AsxTradeItchOrderBookState> ||
+    std::invocable<F, AsxTradeItchAddOrder> ||
+    std::invocable<F, AsxTradeItchAddOrderWithParticipant> ||
+    std::invocable<F, AsxTradeItchOrderExecuted> ||
+    std::invocable<F, AsxTradeItchOrderExecutedAtPrice> ||
+    std::invocable<F, AsxTradeItchOrderReplace> ||
+    std::invocable<F, AsxTradeItchOrderDelete> ||
+    std::invocable<F, AsxTradeItchTrade> ||
+    std::invocable<F, AsxTradeItchEquilibriumPriceUpdate> ||
+    std::invocable<F, AsxTradeItchEndOfSnapshot>;
+
+  /**
+   * Passes a parsed message to the first callable able to receive its type.
+   * Unknown types are passed as AsxTradeItchMessage.
+   * @param message The message to parse.
+   * @param f The callable to try first.
+   * @param g The remaining callables.
+   * @return The selected callable's return value. Unhandled messages are
+   *         ignored for void visitors and throw for value-returning visitors.
+   */
+  template<IsAsxTradeItchVisitor F, IsAsxTradeItchVisitor... G>
+  decltype(auto) visit(const AsxTradeItchMessage& message, F&& f, G&&... g);
+
+  /**
+   * Validates a known ITCH message's length and fields.
+   * @param message The message to validate.
+   * @throws AsxTradeItchParserException If a known message is malformed.
+   */
+  inline void validate(const AsxTradeItchMessage& message);
+
   inline AsxTradeItchSeconds AsxTradeItchSeconds::parse(
       const AsxTradeItchMessage& message) {
     if(message.m_type != TYPE || message.m_length < LENGTH) {
@@ -1002,6 +1048,111 @@ namespace AsxTradeItchDetails {
         AsxTradeItchParserException("Invalid snapshot sequence."));
     }
     return value;
+  }
+
+  template<IsAsxTradeItchVisitor F, IsAsxTradeItchVisitor... G>
+  decltype(auto) visit(const AsxTradeItchMessage& message, F&& f, G&&... g) {
+    if constexpr(std::invocable<F, AsxTradeItchSeconds>) {
+      if(message.m_type == AsxTradeItchSeconds::TYPE) {
+        return std::forward<F>(f)(AsxTradeItchSeconds::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, AsxTradeItchOrderBookDirectory>) {
+      if(message.m_type == AsxTradeItchOrderBookDirectory::TYPE) {
+        return std::forward<F>(f)(
+          AsxTradeItchOrderBookDirectory::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, AsxTradeItchCombinationOrderBookDirectory>) {
+      if(message.m_type == AsxTradeItchCombinationOrderBookDirectory::TYPE) {
+        return std::forward<F>(f)(
+          AsxTradeItchCombinationOrderBookDirectory::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, AsxTradeItchTickSize>) {
+      if(message.m_type == AsxTradeItchTickSize::TYPE) {
+        return std::forward<F>(f)(AsxTradeItchTickSize::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, AsxTradeItchSystemEvent>) {
+      if(message.m_type == AsxTradeItchSystemEvent::TYPE) {
+        return std::forward<F>(f)(AsxTradeItchSystemEvent::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, AsxTradeItchOrderBookState>) {
+      if(message.m_type == AsxTradeItchOrderBookState::TYPE) {
+        return std::forward<F>(f)(AsxTradeItchOrderBookState::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, AsxTradeItchAddOrder>) {
+      if(message.m_type == AsxTradeItchAddOrder::TYPE) {
+        return std::forward<F>(f)(AsxTradeItchAddOrder::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, AsxTradeItchAddOrderWithParticipant>) {
+      if(message.m_type == AsxTradeItchAddOrderWithParticipant::TYPE) {
+        return std::forward<F>(f)(
+          AsxTradeItchAddOrderWithParticipant::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, AsxTradeItchOrderExecuted>) {
+      if(message.m_type == AsxTradeItchOrderExecuted::TYPE) {
+        return std::forward<F>(f)(AsxTradeItchOrderExecuted::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, AsxTradeItchOrderExecutedAtPrice>) {
+      if(message.m_type == AsxTradeItchOrderExecutedAtPrice::TYPE) {
+        return std::forward<F>(f)(
+          AsxTradeItchOrderExecutedAtPrice::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, AsxTradeItchOrderReplace>) {
+      if(message.m_type == AsxTradeItchOrderReplace::TYPE) {
+        return std::forward<F>(f)(AsxTradeItchOrderReplace::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, AsxTradeItchOrderDelete>) {
+      if(message.m_type == AsxTradeItchOrderDelete::TYPE) {
+        return std::forward<F>(f)(AsxTradeItchOrderDelete::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, AsxTradeItchTrade>) {
+      if(message.m_type == AsxTradeItchTrade::TYPE) {
+        return std::forward<F>(f)(AsxTradeItchTrade::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, AsxTradeItchEquilibriumPriceUpdate>) {
+      if(message.m_type == AsxTradeItchEquilibriumPriceUpdate::TYPE) {
+        return std::forward<F>(f)(
+          AsxTradeItchEquilibriumPriceUpdate::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, AsxTradeItchEndOfSnapshot>) {
+      if(message.m_type == AsxTradeItchEndOfSnapshot::TYPE) {
+        return std::forward<F>(f)(AsxTradeItchEndOfSnapshot::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, const AsxTradeItchMessage&>) {
+      return std::forward<F>(f)(message);
+    } else if constexpr(sizeof...(G) != 0) {
+      return visit(message, std::forward<G>(g)...);
+    } else if constexpr(AsxTradeItchDetails::is_void_invocable<F,
+        AsxTradeItchSeconds, AsxTradeItchOrderBookDirectory,
+        AsxTradeItchCombinationOrderBookDirectory, AsxTradeItchTickSize,
+        AsxTradeItchSystemEvent, AsxTradeItchOrderBookState,
+        AsxTradeItchAddOrder, AsxTradeItchAddOrderWithParticipant,
+        AsxTradeItchOrderExecuted, AsxTradeItchOrderExecutedAtPrice,
+        AsxTradeItchOrderReplace, AsxTradeItchOrderDelete, AsxTradeItchTrade,
+        AsxTradeItchEquilibriumPriceUpdate, AsxTradeItchEndOfSnapshot>) {
+      return;
+    } else {
+      boost::throw_with_location(
+        AsxTradeItchParserException("Unhandled ITCH message type."));
+    }
+  }
+
+  inline void validate(const AsxTradeItchMessage& message) {
+    visit(message, [] (const auto&) {});
   }
 }
 

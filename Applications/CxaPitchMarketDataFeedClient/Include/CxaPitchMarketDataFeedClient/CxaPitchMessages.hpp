@@ -526,23 +526,23 @@ namespace Details {
     }
   }
 
-  /** Concept satisfied by callables able to receive any PITCH message. */
+  /** Concept satisfied by callables accepting a PITCH message type. */
   template<typename F>
   concept IsCxaPitchVisitor =
-    std::invocable<F, const CxaPitchMessage&> &&
-    std::invocable<F, CxaPitchUnitClear> &&
-    std::invocable<F, CxaPitchTradingStatus> &&
-    std::invocable<F, CxaPitchAddOrder> &&
-    std::invocable<F, CxaPitchOrderExecuted> &&
-    std::invocable<F, CxaPitchOrderExecutedAtPrice> &&
-    std::invocable<F, CxaPitchReduceSize> &&
-    std::invocable<F, CxaPitchModifyOrder> &&
-    std::invocable<F, CxaPitchDeleteOrder> &&
-    std::invocable<F, CxaPitchTrade> &&
-    std::invocable<F, CxaPitchTradeBreak> &&
-    std::invocable<F, CxaPitchCalculatedValue> &&
-    std::invocable<F, CxaPitchEndOfSession> &&
-    std::invocable<F, CxaPitchAuctionUpdate> &&
+    std::invocable<F, const CxaPitchMessage&> ||
+    std::invocable<F, CxaPitchUnitClear> ||
+    std::invocable<F, CxaPitchTradingStatus> ||
+    std::invocable<F, CxaPitchAddOrder> ||
+    std::invocable<F, CxaPitchOrderExecuted> ||
+    std::invocable<F, CxaPitchOrderExecutedAtPrice> ||
+    std::invocable<F, CxaPitchReduceSize> ||
+    std::invocable<F, CxaPitchModifyOrder> ||
+    std::invocable<F, CxaPitchDeleteOrder> ||
+    std::invocable<F, CxaPitchTrade> ||
+    std::invocable<F, CxaPitchTradeBreak> ||
+    std::invocable<F, CxaPitchCalculatedValue> ||
+    std::invocable<F, CxaPitchEndOfSession> ||
+    std::invocable<F, CxaPitchAuctionUpdate> ||
     std::invocable<F, CxaPitchAuctionSummary>;
 
   /**
@@ -554,7 +554,7 @@ namespace Details {
    *        type.
    * @return The value returned by the callable that received the message.
    */
-  template<typename F, typename... G>
+  template<IsCxaPitchVisitor F, IsCxaPitchVisitor... G>
   decltype(auto) visit(const CxaPitchMessage& message, F&& f, G&&... g) {
     if constexpr(std::invocable<F, CxaPitchUnitClear>) {
       if(message.m_type == CxaPitchUnitClear::TYPE) {

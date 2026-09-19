@@ -84,6 +84,117 @@ namespace {
 }
 
 TEST_SUITE("AsxTradeItchMessages") {
+  TEST_CASE("visitor_constraints") {
+    auto accepts = []<typename... F> (F&&...) {
+      return requires {
+        visit(std::declval<const AsxTradeItchMessage&>(),
+          std::declval<F>()...);
+      };
+    };
+    auto seconds = [] (const AsxTradeItchSeconds&) {};
+    auto snapshot = [] (AsxTradeItchEndOfSnapshot&&) {};
+    auto fallback = [] (const AsxTradeItchMessage&) {};
+    auto generic = [] (const auto&) {};
+    auto unrelated = [] (int) {};
+    REQUIRE(accepts(seconds));
+    REQUIRE(accepts(snapshot));
+    REQUIRE(accepts(fallback));
+    REQUIRE(accepts(generic));
+    REQUIRE(accepts(seconds, snapshot, fallback));
+    REQUIRE(!accepts());
+    REQUIRE(!accepts(0));
+    REQUIRE(!accepts(unrelated));
+    REQUIRE(!accepts([] {}));
+    REQUIRE(!accepts(unrelated, seconds));
+    REQUIRE(!accepts(seconds, unrelated));
+  }
+
+  TEST_CASE("visit") {
+    SUBCASE("message_types") {
+      for(auto source : {SECONDS, ORDER_BOOK_DIRECTORY,
+          COMBINATION_ORDER_BOOK_DIRECTORY, TICK_SIZE, SYSTEM_EVENT,
+          ORDER_BOOK_STATE, ADD_ORDER, ADD_ORDER_WITH_PARTICIPANT,
+          ORDER_EXECUTED, ORDER_EXECUTED_AT_PRICE, ORDER_REPLACE,
+          ORDER_DELETE, TRADE, EQUILIBRIUM_PRICE_UPDATE, END_OF_SNAPSHOT}) {
+        auto message = AsxTradeItchMessage::parse(source);
+        auto type = visit(message, []<typename T> (const T&) {
+          if constexpr(std::same_as<T, AsxTradeItchMessage>) {
+            return std::uint8_t(0);
+          } else {
+            return T::TYPE;
+          }
+        });
+        REQUIRE(type == message.m_type);
+      }
+    }
+    SUBCASE("first_matching_callable") {
+      auto message = AsxTradeItchMessage::parse(SECONDS);
+      auto seconds = visit(message,
+        [] (const AsxTradeItchAddOrder&) { return std::uint32_t(0); },
+        [] (const AsxTradeItchSeconds& message) { return message.m_seconds; },
+        [] (const auto&) { return std::uint32_t(1); });
+      REQUIRE(seconds == 1700000000);
+    }
+    SUBCASE("unknown_message") {
+      auto message = AsxTradeItchMessage::parse("?payload");
+      auto type = visit(message,
+        [] (const AsxTradeItchSeconds&) { return std::uint8_t(0); },
+        [] (const AsxTradeItchMessage& message) { return message.m_type; });
+      REQUIRE(type == '?');
+    }
+    SUBCASE("unhandled_void_message") {
+      auto count = 0;
+      visit(AsxTradeItchMessage::parse(SECONDS),
+        [&] (const AsxTradeItchAddOrder&) { ++count; });
+      REQUIRE(count == 0);
+    }
+    SUBCASE("unhandled_value_message") {
+      REQUIRE_THROWS_AS(visit(AsxTradeItchMessage::parse(SECONDS),
+        [] (const AsxTradeItchAddOrder&) { return 0; }),
+        AsxTradeItchParserException);
+    }
+  }
+
+  TEST_CASE("validate") {
+    SUBCASE("message_lengths") {
+      for(auto source : {SECONDS, ORDER_BOOK_DIRECTORY,
+          COMBINATION_ORDER_BOOK_DIRECTORY, TICK_SIZE, SYSTEM_EVENT,
+          ORDER_BOOK_STATE, ADD_ORDER, ADD_ORDER_WITH_PARTICIPANT,
+          ORDER_EXECUTED, ORDER_EXECUTED_AT_PRICE, ORDER_REPLACE,
+          ORDER_DELETE, TRADE, EQUILIBRIUM_PRICE_UPDATE, END_OF_SNAPSHOT}) {
+        REQUIRE_NOTHROW(validate(AsxTradeItchMessage::parse(source)));
+        for(auto size = std::size_t(1); size < source.size(); ++size) {
+          REQUIRE_THROWS_AS(validate(AsxTradeItchMessage::parse(
+            source.substr(0, size))), AsxTradeItchParserException);
+        }
+      }
+    }
+    SUBCASE("invalid_side") {
+      constexpr auto SIDE_OFFSET = AsxTradeItchMessage::HEADER_LENGTH +
+        sizeof(std::uint32_t) + sizeof(std::uint64_t) + sizeof(std::uint32_t);
+      auto source = std::string(ADD_ORDER);
+      source[SIDE_OFFSET] = '?';
+      REQUIRE_THROWS_AS(validate(AsxTradeItchMessage::parse(source)),
+        AsxTradeItchParserException);
+    }
+    SUBCASE("invalid_nanoseconds") {
+      auto source = std::string(SYSTEM_EVENT);
+      source.replace(AsxTradeItchMessage::HEADER_LENGTH,
+        sizeof(std::uint32_t), "\x3B\x9A\xCA\x00"sv);
+      REQUIRE_THROWS_AS(validate(AsxTradeItchMessage::parse(source)),
+        AsxTradeItchParserException);
+    }
+    SUBCASE("invalid_snapshot_sequence") {
+      auto source = std::string(END_OF_SNAPSHOT);
+      source.back() = '?';
+      REQUIRE_THROWS_AS(validate(AsxTradeItchMessage::parse(source)),
+        AsxTradeItchParserException);
+    }
+    SUBCASE("unknown_message") {
+      REQUIRE_NOTHROW(validate(AsxTradeItchMessage::parse("?")));
+    }
+  }
+
   TEST_CASE("seconds") {
     auto source = SECONDS;
     REQUIRE(source.size() == AsxTradeItchSeconds::LENGTH);
