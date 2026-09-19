@@ -31,6 +31,7 @@ IF !PARALLEL! EQU 1 (
   MD "!BUILD_TEMP!" || GOTO BuildError
 )
 CALL :BuildApp Applications\AdministrationServer %*
+CALL :BuildApp Applications\AsxTradeItchMarketDataFeedClient %*
 CALL :BuildApp Applications\ChartingServer %*
 CALL :BuildApp Applications\ComplianceServer %*
 CALL :BuildApp Applications\CseMarketDataFeedClient %*

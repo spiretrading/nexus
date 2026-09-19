@@ -1,0 +1,20 @@
+---
+service_locator:
+  address: "$service_locator_address"
+  username: "$username"
+  password: "$admin_password"
+
+sampling: 100ms
+enable_logging: false
+partition: 1
+venue: ASX
+disseminating_venue: ASX
+mpid: ASX
+feeds:
+  - name: A
+    address: "233.71.185.129:21001"
+    interface: "$local_interface:21001"
+  - name: B
+    address: "233.71.185.145:21101"
+    interface: "$local_interface:21101"
+...

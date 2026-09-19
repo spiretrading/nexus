@@ -11,6 +11,7 @@ services=(
   "SimulationOrderExecutionServer"
   "RiskServer"
   "WebPortal"
+  "AsxTradeItchMarketDataFeedClient"
   "CseMarketDataFeedClient"
   "CxaPitchMarketDataFeedClient"
   "NeoeMarketDataFeedClient"

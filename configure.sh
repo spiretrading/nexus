@@ -17,6 +17,7 @@ main() {
   local targets=(
     "WebApi"
     "Applications/AdministrationServer"
+    "Applications/AsxTradeItchMarketDataFeedClient"
     "Applications/ChartingServer"
     "Applications/ComplianceServer"
     "Applications/CseMarketDataFeedClient"
