@@ -192,6 +192,12 @@ interface: "10.0.0.2:21101"
           REQUIRE_THROWS_AS(
             AsxTradeItchConfiguration::parse(source), std::runtime_error);
         }
+        source["glimpse"] = make_glimpse();
+        REQUIRE_NOTHROW(AsxTradeItchConfiguration::parse(source));
+        source["glimpse"][name] =
+          source["glimpse"][name].as<std::string>() + 'X';
+        REQUIRE_THROWS_AS(
+          AsxTradeItchConfiguration::parse(source), std::runtime_error);
       }
     }
   }

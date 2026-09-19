@@ -678,6 +678,12 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
     REQUIRE(order->m_price == parse_money("5.51"));
     fixture.require_bbo(
       "BHP", make_bid(parse_money("5.51"), 90), make_ask(Money(), 0));
+    fixture.publish(
+      AsxTradeItchOrderReplace(NANOSECONDS, 1, 1, Side::BID, 1, 80, 410, 0));
+    order = fixture.take<FeedClient::AddOrderOperation>();
+    REQUIRE(order->m_price == parse_money("0.041"));
+    fixture.require_bbo(
+      "BHP", make_bid(parse_money("0.041"), 80), make_ask(Money(), 0));
     fixture.require_empty();
   }
 

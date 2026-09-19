@@ -180,7 +180,9 @@ namespace Nexus {
       IsAsxTradeItchClient<Beam::dereference_t<C>>
   Money AsxTradeItchMarketDataFeedClient<M, C>::get_price(
       const Book& book, std::int32_t price) {
-    return (price / book.m_price_scale) * Money::CENT;
+    return Money(Quantity::from_representation(
+      price * static_cast<Quantity>(Money::CENT).get_representation() /
+        book.m_price_scale));
   }
 
   template<typename M, typename C> requires
