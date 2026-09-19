@@ -5,6 +5,7 @@
 #include <concepts>
 #include <utility>
 #include "AsxTradeItchMarketDataFeedClient/AsxTradeItchMessage.hpp"
+#include "Nexus/MoldUdp64/MoldUdp64Packet.hpp"
 
 namespace Nexus {
 namespace AsxTradeItchDetails {
@@ -662,6 +663,13 @@ namespace AsxTradeItchDetails {
    */
   inline void validate(const AsxTradeItchMessage& message);
 
+  /**
+   * Validates every ITCH message in a MoldUDP64 packet.
+   * @param packet The packet to validate.
+   * @throws AsxTradeItchParserException If a known message is malformed.
+   */
+  inline void validate(const MoldUdp64Packet& packet);
+
   inline AsxTradeItchSeconds AsxTradeItchSeconds::parse(
       const AsxTradeItchMessage& message) {
     if(message.m_type != TYPE || message.m_length < LENGTH) {
@@ -1153,6 +1161,12 @@ namespace AsxTradeItchDetails {
 
   inline void validate(const AsxTradeItchMessage& message) {
     visit(message, [] (const auto&) {});
+  }
+
+  inline void validate(const MoldUdp64Packet& packet) {
+    for(auto& message : packet) {
+      validate(AsxTradeItchMessage::parse(message.get_payload()));
+    }
   }
 }
 

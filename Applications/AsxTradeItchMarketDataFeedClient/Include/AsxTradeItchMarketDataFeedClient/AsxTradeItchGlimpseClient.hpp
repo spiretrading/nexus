@@ -16,6 +16,13 @@ namespace Nexus {
     std::vector<Beam::SharedBuffer> m_messages;
   };
 
+  /** Concept satisfied by clients loading a partition's Glimpse image. */
+  template<typename T>
+  concept IsAsxTradeItchGlimpseClient = requires(T& client) {
+    { client.load_snapshot() } -> std::same_as<AsxTradeItchSnapshot>;
+    { client.close() } -> std::same_as<void>;
+  };
+
   /**
    * Loads a partition's Glimpse snapshot over SoupBinTCP.
    * @tparam C The channel connected to the Glimpse server.

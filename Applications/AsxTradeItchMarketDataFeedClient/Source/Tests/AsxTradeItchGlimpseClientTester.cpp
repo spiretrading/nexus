@@ -18,6 +18,7 @@ namespace {
     std::unique_ptr<LocalClientChannel> m_channel;
     std::unique_ptr<LocalServerChannel> m_server_channel;
     TriggerTimer m_timer;
+    SharedBuffer m_login;
     optional<AsxTradeItchGlimpseClient<LocalClientChannel*, TriggerTimer*>>
       m_client;
 
@@ -43,6 +44,7 @@ namespace {
       send('A', "SESSION123" + std::string(
         LoginAcceptedPacket::SEQUENCE_LENGTH - value.size(), ' ') + value);
       m_client.emplace("user", "pass", m_channel.get(), &m_timer);
+      m_server_channel->get_reader().read(out(m_login));
     }
 
     void finish(std::uint64_t sequence) {
@@ -57,11 +59,9 @@ TEST_SUITE("AsxTradeItchGlimpseClient") {
   TEST_CASE_FIXTURE(Fixture, "login") {
     SUBCASE("initial_sequence") {
       log_in(1);
-      auto login = SharedBuffer();
-      m_server_channel->get_reader().read(out(login));
       auto expected = SharedBuffer();
       make_login_request_packet("user", "pass", "", 1, out(expected));
-      REQUIRE(login == expected);
+      REQUIRE(m_login == expected);
     }
     SUBCASE("incomplete_image") {
       REQUIRE_THROWS_AS(log_in(2), ConnectException);
@@ -89,10 +89,9 @@ TEST_SUITE("AsxTradeItchGlimpseClient") {
       REQUIRE(snapshot.m_messages[1] == SharedBuffer(
         "T\x00\x00\x00\x02", AsxTradeItchSeconds::LENGTH));
     }
-    auto login = SharedBuffer();
-    m_server_channel->get_reader().read(out(login));
+    auto payload = SharedBuffer();
     REQUIRE_THROWS_AS(
-      m_server_channel->get_reader().read(out(login)), IOException);
+      m_server_channel->get_reader().read(out(payload)), IOException);
   }
 
   TEST_CASE_FIXTURE(Fixture, "interrupted_snapshot") {
