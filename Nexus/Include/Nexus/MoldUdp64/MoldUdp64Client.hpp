@@ -11,6 +11,20 @@
 
 namespace Nexus {
 
+  /** Concept satisfied by clients receiving MoldUDP64 packets. */
+  template<typename T>
+  concept IsMoldUdp64Reader = requires(T& client) {
+    { client.read() } -> std::same_as<MoldUdp64Packet>;
+    { client.close() } -> std::same_as<void>;
+  };
+
+  /** Concept satisfied by clients reading packets and requesting recovery. */
+  template<typename T>
+  concept IsMoldUdp64Client = IsMoldUdp64Reader<T> && requires(T& client) {
+    { client.request(std::declval<const MoldUdp64Request&>()) } ->
+      std::same_as<void>;
+  };
+
   /**
    * Reads MoldUDP64 packets and sends retransmission requests.
    * @tparam C The type of Channel delivering one complete datagram per read.
