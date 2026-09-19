@@ -194,6 +194,23 @@ TEST_SUITE("AsxTradeItchSequencer") {
     REQUIRE(!m_sequencer.get_gap());
   }
 
+  TEST_CASE_FIXTURE(Fixture, "clock_rollback") {
+    add(0, 1, {"one"});
+    add(1, 1, {"one"});
+    require_message("one");
+    m_timestamp -= seconds(30);
+    add(0, 3, {"three"});
+    require_gap(2, 1);
+    recover(2, {"two"});
+    require_message("two");
+    require_message("three");
+    add(1, 4, {});
+    add(0, 5, {"five"});
+    REQUIRE(!m_sequencer.get_gap());
+    add(1, 5, {});
+    require_gap(4, 1);
+  }
+
   TEST_CASE_FIXTURE(Fixture, "idle_heartbeat") {
     add(0, 1, {"one"});
     add(1, 1, {"one"});

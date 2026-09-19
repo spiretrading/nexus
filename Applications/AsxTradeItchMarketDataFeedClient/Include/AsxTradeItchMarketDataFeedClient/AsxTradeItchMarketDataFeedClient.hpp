@@ -373,18 +373,17 @@ namespace Nexus {
     auto id = std::to_string(message.m_order_book_id) + ':' +
       std::to_string(static_cast<int>(message.m_side)) + ':' +
       std::to_string(message.m_order_id);
-    auto order = side.m_orders.find(message.m_order_id);
-    if(order != side.m_orders.end()) {
+    auto [order, is_inserted] = side.m_orders.try_emplace(message.m_order_id);
+    if(!is_inserted) {
       offset(side, message.m_side, order->second.m_price,
         -Quantity(order->second.m_quantity));
       if(order->second.m_quantity != 0 && message.m_quantity == 0) {
         m_feed_client->remove_order(id, timestamp);
       }
     }
-    auto entry = side.m_orders.insert_or_assign(message.m_order_id,
-      Order(std::move(id), message.m_price, message.m_quantity)).first;
+    order->second = Order(std::move(id), message.m_price, message.m_quantity);
     offset(side, message.m_side, message.m_price, message.m_quantity);
-    submit(book, entry->second, message.m_side, timestamp);
+    submit(book, order->second, message.m_side, timestamp);
     publish(book, timestamp);
   }
 
