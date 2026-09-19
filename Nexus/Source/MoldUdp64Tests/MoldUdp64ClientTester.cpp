@@ -1,7 +1,5 @@
 #include <future>
 #include <Beam/IO/LocalServerConnection.hpp>
-#include <Beam/Queues/Queue.hpp>
-#include <Beam/Routines/RoutineHandler.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/MoldUdp64/MoldUdp64Client.hpp"
 
@@ -55,10 +53,10 @@ TEST_SUITE("MoldUdp64Client") {
 
   TEST_CASE("control_packets") {
     auto fixture = Fixture();
-    fixture.m_server_channel->get_writer().write(SharedBuffer("ABCDEFGHIJ"
-      "\x00\x00\x00\x00\x00\x00\x00\x2A\x00\x00", 20));
-    fixture.m_server_channel->get_writer().write(SharedBuffer("ABCDEFGHIJ"
-      "\x00\x00\x00\x00\x00\x00\x00\x2A\xFF\xFF", 20));
+    fixture.m_server_channel->get_writer().write(SharedBuffer(
+      "ABCDEFGHIJ" "\x00\x00\x00\x00\x00\x00\x00\x2A\x00\x00", 20));
+    fixture.m_server_channel->get_writer().write(SharedBuffer(
+      "ABCDEFGHIJ" "\x00\x00\x00\x00\x00\x00\x00\x2A\xFF\xFF", 20));
     fixture.m_server_channel->get_writer().write(SharedBuffer("ABCDEFGHIJ"
       "\x00\x00\x00\x00\x00\x00\x00\x29\x00\x01"
       "\x00\x00", 22));
@@ -100,39 +98,48 @@ TEST_SUITE("MoldUdp64Client") {
   TEST_CASE("read_failure") {
     auto fixture = Fixture();
     fixture.m_server_channel->get_writer().close(EndOfFileException());
-    auto error = std::exception_ptr();
-    try {
-      fixture.m_client->read();
-    } catch(const std::exception&) {
-      error = std::current_exception();
-    }
-    REQUIRE(error);
-    try {
-      std::rethrow_exception(error);
-    } catch(const IOException& e) {
-      REQUIRE_THROWS_AS(std::rethrow_if_nested(e), EndOfFileException);
-    }
+    REQUIRE_THROWS_AS(fixture.m_client->read(), IOException);
+  }
+
+  TEST_CASE("request") {
+    auto fixture = Fixture();
+    fixture.m_client->request(MoldUdp64Request("ABCDEFGHIJ", 42, 100));
+    auto buffer = SharedBuffer();
+    fixture.m_server_channel->get_reader().read(out(buffer));
+    REQUIRE(buffer == std::string_view("ABCDEFGHIJ"
+      "\x00\x00\x00\x00\x00\x00\x00\x2A\x00\x64", 20));
+    fixture.m_server_channel->get_writer().write(SharedBuffer("ABCDEFGHIJ"
+      "\x00\x00\x00\x00\x00\x00\x00\x2A\x00\x02"
+      "\x00\x03ONE\x00\x03TWO", 30));
+    auto packet = fixture.m_client->read();
+    REQUIRE(packet.m_session == "ABCDEFGHIJ");
+    REQUIRE(packet.m_sequence_number == 42);
+    REQUIRE(packet.m_count == 2);
+    REQUIRE(packet.begin()->get_payload() == "ONE");
+    fixture.m_client->request(MoldUdp64Request("ABCDEFGHIJ", 44, 98));
+    reset(buffer);
+    fixture.m_server_channel->get_reader().read(out(buffer));
+    REQUIRE(buffer == std::string_view("ABCDEFGHIJ"
+      "\x00\x00\x00\x00\x00\x00\x00\x2C\x00\x62", 20));
+    REQUIRE(packet.begin()->get_payload() == "ONE");
+  }
+
+  TEST_CASE("request_failure") {
+    auto fixture = Fixture();
+    fixture.m_channel->get_writer().close(EndOfFileException());
+    REQUIRE_THROWS_AS(
+      fixture.m_client->request(MoldUdp64Request("ABCDEFGHIJ", 42, 100)),
+      IOException);
   }
 
   TEST_CASE("close") {
     auto fixture = Fixture();
     SUBCASE("pending_read") {
-      auto results = Queue<std::exception_ptr>();
-      auto reader = RoutineHandler(spawn([&] {
-        auto error = std::exception_ptr();
-        try {
-          fixture.m_client->read();
-        } catch(const std::exception&) {
-          error = std::current_exception();
-        }
-        results.push(error);
-      }));
-      flush_pending_routines();
+      auto reader = std::async(std::launch::async, [&] {
+        return fixture.m_client->read();
+      });
       fixture.m_client->close();
-      reader.wait();
-      auto error = results.pop();
-      REQUIRE(error);
-      REQUIRE_THROWS_AS(std::rethrow_exception(error), IOException);
+      REQUIRE_THROWS_AS(reader.get(), IOException);
       REQUIRE_NOTHROW(fixture.m_client->close());
     }
     SUBCASE("destruction") {
