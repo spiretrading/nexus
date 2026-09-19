@@ -1,3 +1,4 @@
+#include <initializer_list>
 #include <vector>
 #include <Beam/IO/IOException.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
@@ -66,9 +67,9 @@ namespace {
   };
 
   const auto TIMESTAMP = time_from_string("2026-09-09 10:00:00");
-  const auto SECOND = duration_from_string("00:00:01");
-  const auto MINUTE = duration_from_string("00:01:00");
-  const auto DAY = duration_from_string("24:00:00");
+  const auto SECOND = seconds(1);
+  const auto MINUTE = minutes(1);
+  const auto DAY = hours(24);
   constexpr auto REQUESTS_PER_SECOND = 100;
 
   using GapClient =
@@ -223,14 +224,15 @@ TEST_SUITE("CxaPitchGapClient") {
       total += fixture.m_client.request(1, CxaPitchGap(1, 1), 1);
     }
     REQUIRE(total == GapClient::MINUTE_LIMIT);
-    fixture.m_time_client.set(TIMESTAMP + duration_from_string("00:00:30"));
+    fixture.m_time_client.set(TIMESTAMP + seconds(30));
     REQUIRE(fixture.m_client.request(1, CxaPitchGap(1, 1), 1) == 0);
     fixture.m_time_client.set(TIMESTAMP + MINUTE);
     REQUIRE(fixture.m_client.request(1, CxaPitchGap(1, 1), 1) == 1);
   }
 
   TEST_CASE("request_clock_boundary") {
-    for(auto duration : {SECOND, MINUTE, DAY}) {
+    for(auto duration :
+        std::initializer_list<time_duration>{SECOND, MINUTE, DAY}) {
       auto fixture = Fixture();
       fixture.m_session->m_on_write = [&] {
         fixture.m_time_client.set(TIMESTAMP + duration);
@@ -265,7 +267,7 @@ TEST_SUITE("CxaPitchGapClient") {
       total += fixture.m_client.request(1, CxaPitchGap(1, 1), 1);
     }
     REQUIRE(total == GapClient::DAY_LIMIT);
-    fixture.m_time_client.set(TIMESTAMP + duration_from_string("02:00:00"));
+    fixture.m_time_client.set(TIMESTAMP + hours(2));
     REQUIRE(fixture.m_client.request(1, CxaPitchGap(1, 1), 1) == 0);
     fixture.m_time_client.set(TIMESTAMP + DAY);
     REQUIRE(fixture.m_client.request(1, CxaPitchGap(1, 1), 1) == 1);

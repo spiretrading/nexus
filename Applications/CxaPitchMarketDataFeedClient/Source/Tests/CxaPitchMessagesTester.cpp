@@ -467,6 +467,8 @@ TEST_SUITE("CxaPitchMessages") {
   }
 
   TEST_CASE("visitor_constraints") {
+    REQUIRE(!IsCxaPitchVisitor<decltype(&CxaPitchAddOrder::m_price)>);
+    REQUIRE(!IsCxaPitchVisitor<decltype(&CxaPitchMessage::get_cursor)>);
     auto accepts = []<typename... F> (F&&...) {
       return requires {
         visit(std::declval<const CxaPitchMessage&>(), std::declval<F>()...);

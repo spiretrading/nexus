@@ -7,7 +7,6 @@
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Queues/StateQueue.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
-#include <Beam/Threading/Mutex.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
 #include "AsxTradeItchMarketDataFeedClient/AsxTradeItchGlimpseClient.hpp"
@@ -98,7 +97,7 @@ namespace Nexus {
       boost::optional<Beam::local_ptr_t<S>> m_glimpse_client;
       Beam::local_ptr_t<R> m_time_client;
       Beam::local_ptr_t<T> m_timer;
-      Beam::Sync<State, Beam::Mutex> m_state;
+      Beam::Sync<State> m_state;
       Beam::Queue<Beam::SharedBuffer> m_messages;
       Beam::StateQueue<bool> m_requests;
       Beam::Queue<bool> m_snapshot_start;

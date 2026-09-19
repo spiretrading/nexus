@@ -68,24 +68,8 @@ namespace {
     }
   };
 
-  struct StubTimeClient : FixedTimeClient {
-    Queue<bool> m_gate;
-    std::atomic_bool m_is_blocked;
-
-    using FixedTimeClient::FixedTimeClient;
-
-    ptime get_time() {
-      auto timestamp = FixedTimeClient::get_time();
-      auto is_blocked = m_is_blocked.exchange(false);
-      if(is_blocked) {
-        m_gate.pop();
-      }
-      return timestamp;
-    }
-  };
-
   using Client = AsxTradeItchClient<StubProtocolClient*, StubRecoveryClient*,
-    StubGlimpseClient*, StubTimeClient*, TriggerTimer*>;
+    StubGlimpseClient*, FixedTimeClient*, TriggerTimer*>;
 
   struct Fixture {
     struct WithSnapshot {};
@@ -96,7 +80,7 @@ namespace {
     std::vector<std::unique_ptr<StubProtocolClient>> m_feeds;
     StubRecoveryClient m_recovery;
     optional<StubGlimpseClient> m_glimpse;
-    StubTimeClient m_time_client;
+    FixedTimeClient m_time_client;
     TriggerTimer m_timer;
     optional<Client> m_client;
 
@@ -349,7 +333,7 @@ TEST_SUITE("AsxTradeItchClient") {
     fixture.require_message(3);
   }
 
-  TEST_CASE("timestamp_order") {
+  TEST_CASE("timestamp_progression") {
     auto fixture = Fixture(2);
     fixture.publish(0, 1, {ONE});
     fixture.publish(1, 1, {ONE});
@@ -360,7 +344,6 @@ TEST_SUITE("AsxTradeItchClient") {
     SUBCASE("timer") {
       is_timer = true;
     }
-    fixture.m_time_client.m_is_blocked = true;
     if(is_timer) {
       fixture.m_timer.trigger();
       flush_pending_routines();
@@ -372,8 +355,6 @@ TEST_SUITE("AsxTradeItchClient") {
     if(is_timer) {
       fixture.publish(0, 3, {THREE});
     }
-    fixture.m_time_client.m_gate.push(true);
-    flush_pending_routines();
     REQUIRE(!fixture.m_recovery.m_requests.try_pop());
     fixture.publish(1, 2, {TWO, THREE});
     fixture.require_message(2);

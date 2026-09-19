@@ -54,8 +54,28 @@ namespace {
 }
 
 TEST_SUITE("CxaPitchSequencer") {
+  TEST_CASE("clock_rollback") {
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
+    auto timestamp = time_from_string("2026-09-09 10:00:00");
+    auto first = encode_block(1, {0x11});
+    sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
+    sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
+    REQUIRE(read(sequencer) == 0x11);
+    timestamp -= seconds(30);
+    auto third = encode_block(3, {0x13});
+    sequencer.add(0, CxaPitchBlock::parse(third), timestamp);
+    auto gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_sequence == 2);
+    REQUIRE(gap->m_count == 1);
+    auto second = encode_block(2, {0x12});
+    sequencer.recover(CxaPitchBlock::parse(second));
+    REQUIRE(read(sequencer) == 0x12);
+    REQUIRE(read(sequencer) == 0x13);
+  }
+
   TEST_CASE("unit_clear") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(100, {0x11});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
@@ -87,7 +107,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("lower_sequences") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_delete_order_block(100);
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
@@ -110,7 +130,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("shared_block_storage") {
-    auto sequencer = CxaPitchSequencer(1, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(1, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto source = encode_block(100, {0x11, 0x12, 0x13});
     auto expected = source.substr(CxaPitchHeader::LENGTH);
@@ -128,7 +148,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("duplicate_block") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(100, {0x11});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
@@ -148,7 +168,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("duplicate_unit_clear") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto clear = encode_block(100, {CxaPitchUnitClear::TYPE});
     for(auto feed = 0; feed != 2; ++feed) {
@@ -177,7 +197,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("untimestamped_replay") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto replay = std::string();
     SUBCASE("delayed_heartbeat") {
@@ -200,7 +220,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("leading_feed_position") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     sequencer.add(0, CxaPitchBlock::parse(encode_block(1, {0x11})), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(encode_block(1, {0x11})), timestamp);
@@ -212,7 +232,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("message_order") {
-    auto sequencer = CxaPitchSequencer(1, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(1, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto data = encode_block(1, {0x11, 0x12, 0x13});
     sequencer.add(0, CxaPitchBlock::parse(data), timestamp);
@@ -224,7 +244,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("message_arbitration") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11, 0x12});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
@@ -244,7 +264,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("overlapping_blocks") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11, 0x12});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
@@ -267,7 +287,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("three_feed_quorum") {
-    auto sequencer = CxaPitchSequencer(3, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(3, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11});
     for(auto feed = 0; feed != 3; ++feed) {
@@ -286,7 +306,7 @@ TEST_SUITE("CxaPitchSequencer") {
     }
     sequencer.add(
       slowest, CxaPitchBlock::parse(encode_block(4, {})), timestamp);
-    auto later = timestamp + duration_from_string("00:00:02");
+    auto later = timestamp + seconds(2);
     sequencer.add((slowest + 1) % 3,
       CxaPitchBlock::parse(encode_block(6, {})), later);
     sequencer.add((slowest + 2) % 3,
@@ -296,7 +316,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(gap.has_value());
     REQUIRE(gap->m_sequence == 2);
     REQUIRE(gap->m_count == 2);
-    later = timestamp + duration_from_string("00:00:04");
+    later = timestamp + seconds(4);
     sequencer.update(later);
     REQUIRE(sequencer.get_position() == 6);
     gap = sequencer.get_gap();
@@ -314,7 +334,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("heartbeat_gap") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11, 0x12});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
@@ -333,7 +353,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("unsequenced_heartbeat") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11, 0x12});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
@@ -348,7 +368,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("feed_timeout") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11, 0x12});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
@@ -360,9 +380,9 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(!sequencer.get_gap());
     auto fifth = encode_block(5, {0x15});
     sequencer.add(0, CxaPitchBlock::parse(fifth),
-      timestamp + duration_from_string("00:00:02"));
+      timestamp + seconds(2));
     REQUIRE(!sequencer.get_gap());
-    auto later = timestamp + duration_from_string("00:00:04");
+    auto later = timestamp + seconds(4);
     sequencer.update(later);
     auto gap = sequencer.get_gap();
     REQUIRE(gap.has_value());
@@ -379,7 +399,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("every_feed_timed_out") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
@@ -397,7 +417,7 @@ TEST_SUITE("CxaPitchSequencer") {
     SUBCASE("leading_feed") {
       REQUIRE(!sequencer.get_gap());
     }
-    sequencer.update(timestamp + duration_from_string("00:00:04"));
+    sequencer.update(timestamp + seconds(4));
     REQUIRE(sequencer.get_position() == 4);
     auto gap = sequencer.get_gap();
     REQUIRE(gap.has_value());
@@ -413,13 +433,13 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("stalled_feed_replay") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(first), timestamp);
     REQUIRE(read(sequencer) == 0x11);
-    auto later = timestamp + duration_from_string("00:00:04");
+    auto later = timestamp + seconds(4);
     auto fifth = encode_block(5, {0x15});
     sequencer.add(0, CxaPitchBlock::parse(fifth), later);
     REQUIRE(sequencer.get_gap().has_value());
@@ -432,7 +452,7 @@ TEST_SUITE("CxaPitchSequencer") {
       REQUIRE(gap->m_sequence == 2);
       REQUIRE(gap->m_count == 3);
       REQUIRE(read(sequencer) == 0);
-      later += duration_from_string("00:00:01");
+      later += seconds(1);
     }
     auto second = encode_block(2, {0x12});
     sequencer.add(1, CxaPitchBlock::parse(second), later);
@@ -442,7 +462,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("idle_feed_heartbeat") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
@@ -450,7 +470,7 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(read(sequencer) == 0x11);
     auto heartbeat = encode_block(2, {});
     for(auto i = 0; i != 4; ++i) {
-      timestamp += duration_from_string("00:00:01");
+      timestamp += seconds(1);
       sequencer.add(0, CxaPitchBlock::parse(heartbeat), timestamp);
       sequencer.add(1, CxaPitchBlock::parse(heartbeat), timestamp);
       REQUIRE(!sequencer.get_gap());
@@ -467,7 +487,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("stalled_feed_heartbeat") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
@@ -487,12 +507,12 @@ TEST_SUITE("CxaPitchSequencer") {
     REQUIRE(!sequencer.get_gap());
     auto heartbeat = encode_block(4, {});
     for(auto i = 0; i != 3; ++i) {
-      timestamp += duration_from_string("00:00:01");
+      timestamp += seconds(1);
       sequencer.add(0, CxaPitchBlock::parse(heartbeat), timestamp);
       sequencer.add(1, CxaPitchBlock::parse(stalled), timestamp);
       REQUIRE(!sequencer.get_gap());
     }
-    timestamp += duration_from_string("00:00:01");
+    timestamp += seconds(1);
     sequencer.add(0, CxaPitchBlock::parse(heartbeat), timestamp);
     sequencer.add(1, CxaPitchBlock::parse(stalled), timestamp);
     auto gap = sequencer.get_gap();
@@ -505,7 +525,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("single_feed_gap") {
-    auto sequencer = CxaPitchSequencer(1, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(1, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11, 0x12});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
@@ -520,7 +540,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("sequence_reset") {
-    auto sequencer = CxaPitchSequencer(1, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(1, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto data = encode_block(1, {0x11, 0x12, 0x13});
     sequencer.add(0, CxaPitchBlock::parse(data), timestamp);
@@ -538,7 +558,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("skipped_gap_recovery") {
-    auto sequencer = CxaPitchSequencer(1, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(1, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
@@ -573,7 +593,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("gap_recovery") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
@@ -597,7 +617,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("recovery_quorum") {
-    auto sequencer = CxaPitchSequencer(2, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(2, seconds(3));
     auto timestamp = time_from_string("2026-09-08 10:00:00");
     auto first = encode_block(1, {0x11});
     sequencer.add(0, CxaPitchBlock::parse(first), timestamp);
@@ -610,7 +630,7 @@ TEST_SUITE("CxaPitchSequencer") {
   }
 
   TEST_CASE("uninitialized_recovery") {
-    auto sequencer = CxaPitchSequencer(1, duration_from_string("00:00:03"));
+    auto sequencer = CxaPitchSequencer(1, seconds(3));
     REQUIRE(!sequencer.get_sequence());
     REQUIRE(sequencer.get_position() == 0);
     REQUIRE(!sequencer.get_gap());

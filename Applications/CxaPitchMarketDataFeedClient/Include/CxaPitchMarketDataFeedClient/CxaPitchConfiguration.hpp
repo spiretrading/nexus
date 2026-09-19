@@ -137,6 +137,15 @@ namespace Nexus {
       Beam::extract<std::string>(config, "session_sub_id");
     session.m_username = Beam::extract<std::string>(config, "username");
     session.m_password = Beam::extract<std::string>(config, "password");
+    constexpr auto SESSION_SUB_ID_LENGTH = 4;
+    constexpr auto USERNAME_LENGTH = 4;
+    constexpr auto PASSWORD_LENGTH = 10;
+    if(session.m_session_sub_id.size() > SESSION_SUB_ID_LENGTH ||
+        session.m_username.size() > USERNAME_LENGTH ||
+        session.m_password.size() > PASSWORD_LENGTH) {
+      boost::throw_with_location(std::runtime_error(
+        "CXA PITCH session credentials exceed their field lengths."));
+    }
     return session;
   }
 

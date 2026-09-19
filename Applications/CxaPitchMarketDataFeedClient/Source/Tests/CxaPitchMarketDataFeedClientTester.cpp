@@ -1,3 +1,4 @@
+#include <atomic>
 #include <tuple>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -130,7 +131,7 @@ namespace {
         m_client(CONFIGURATION, &m_feed_client, &m_pitch_client) {}
 
     ~Fixture() {
-      m_feed_client.close();
+      m_client.close();
     }
 
     void publish(const std::string& message) {
@@ -191,6 +192,51 @@ namespace {
 }
 
 TEST_SUITE("CxaPitchMarketDataFeedClient") {
+  TEST_CASE("close_during_publication") {
+    auto fixture = Fixture();
+    fixture.publish(ADD_ORDER);
+    auto operation = fixture.pop_operation<FeedClient::AddOrderOperation>();
+    fixture.publish(DELETE_ORDER);
+    auto is_closed = std::atomic_bool(false);
+    auto closer = RoutineHandler(spawn([&] {
+      fixture.m_client.close();
+      is_closed = true;
+    }));
+    flush_pending_routines();
+    auto was_closed = bool(is_closed);
+    fixture.m_feed_client.close();
+    closer.wait();
+    REQUIRE(was_closed);
+    REQUIRE(!fixture.m_client.get_exception());
+    REQUIRE(!fixture.m_operations->try_pop());
+  }
+
+  TEST_CASE("publication_failure") {
+    auto fixture = Fixture();
+    auto failure = std::make_exception_ptr(IOException("Publication failed."));
+    SUBCASE("io_error") {}
+    SUBCASE("end_of_file") {
+      failure = std::make_exception_ptr(EndOfFileException());
+    }
+    fixture.publish(ADD_ORDER);
+    auto operation = fixture.pop_operation<FeedClient::AddOrderOperation>();
+    fixture.publish(DELETE_ORDER);
+    operation->m_result.set(failure);
+    flush_pending_routines();
+    auto error = fixture.m_client.get_exception();
+    REQUIRE(error);
+    REQUIRE_THROWS_AS(std::rethrow_exception(error), IOException);
+    REQUIRE(!fixture.m_operations->try_pop());
+  }
+
+  TEST_CASE("malformed_message") {
+    auto fixture = Fixture();
+    fixture.publish(std::string("\x02\x37", 2));
+    fixture.add_order();
+    flush_pending_routines();
+    REQUIRE(!fixture.m_client.get_exception());
+  }
+
   TEST_CASE("read_failure") {
     auto fixture = Fixture();
     REQUIRE(!fixture.m_client.get_exception());

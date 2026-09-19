@@ -1,6 +1,7 @@
 #ifndef CXA_PITCH_MESSAGES_HPP
 #define CXA_PITCH_MESSAGES_HPP
 #include <concepts>
+#include <type_traits>
 #include <utility>
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include <boost/optional/optional.hpp>
@@ -529,21 +530,22 @@ namespace Details {
   /** Concept satisfied by callables accepting a PITCH message type. */
   template<typename F>
   concept IsCxaPitchVisitor =
-    std::invocable<F, const CxaPitchMessage&> ||
-    std::invocable<F, CxaPitchUnitClear> ||
-    std::invocable<F, CxaPitchTradingStatus> ||
-    std::invocable<F, CxaPitchAddOrder> ||
-    std::invocable<F, CxaPitchOrderExecuted> ||
-    std::invocable<F, CxaPitchOrderExecutedAtPrice> ||
-    std::invocable<F, CxaPitchReduceSize> ||
-    std::invocable<F, CxaPitchModifyOrder> ||
-    std::invocable<F, CxaPitchDeleteOrder> ||
-    std::invocable<F, CxaPitchTrade> ||
-    std::invocable<F, CxaPitchTradeBreak> ||
-    std::invocable<F, CxaPitchCalculatedValue> ||
-    std::invocable<F, CxaPitchEndOfSession> ||
-    std::invocable<F, CxaPitchAuctionUpdate> ||
-    std::invocable<F, CxaPitchAuctionSummary>;
+    !std::is_member_pointer_v<std::remove_cvref_t<F>> && (
+      std::invocable<F, const CxaPitchMessage&> ||
+      std::invocable<F, CxaPitchUnitClear> ||
+      std::invocable<F, CxaPitchTradingStatus> ||
+      std::invocable<F, CxaPitchAddOrder> ||
+      std::invocable<F, CxaPitchOrderExecuted> ||
+      std::invocable<F, CxaPitchOrderExecutedAtPrice> ||
+      std::invocable<F, CxaPitchReduceSize> ||
+      std::invocable<F, CxaPitchModifyOrder> ||
+      std::invocable<F, CxaPitchDeleteOrder> ||
+      std::invocable<F, CxaPitchTrade> ||
+      std::invocable<F, CxaPitchTradeBreak> ||
+      std::invocable<F, CxaPitchCalculatedValue> ||
+      std::invocable<F, CxaPitchEndOfSession> ||
+      std::invocable<F, CxaPitchAuctionUpdate> ||
+      std::invocable<F, CxaPitchAuctionSummary>);
 
   /**
    * Passes a message to the first callable able to receive its type,

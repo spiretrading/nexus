@@ -49,7 +49,6 @@ namespace Nexus {
       /** Returns the exception that stopped message reception, if any. */
       std::exception_ptr get_exception() const;
 
-      /** Closes the feed. */
       void close();
 
     private:
@@ -136,8 +135,8 @@ namespace Nexus {
       return;
     }
     m_client->close();
-    m_read_loop.wait();
     m_feed_client->close();
+    m_read_loop.wait();
     m_open_state.close();
   }
 
@@ -367,7 +366,7 @@ namespace Nexus {
     IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsCxaPitchClient<Beam::dereference_t<C>>
   void CxaPitchMarketDataFeedClient<M, C>::read_loop() {
-    while(true) {
+    while(m_open_state.is_open()) {
       auto message = CxaPitchMessage();
       try {
         message = m_client->read();
@@ -375,6 +374,9 @@ namespace Nexus {
         if(m_open_state.is_open()) {
           m_exception = std::current_exception();
         }
+        break;
+      }
+      if(!m_open_state.is_open()) {
         break;
       }
       try {
@@ -386,10 +388,18 @@ namespace Nexus {
           });
         }
         dispatch(message);
-      } catch(const std::exception& e) {
+      } catch(const CxaPitchParserException& e) {
+        if(!m_open_state.is_open()) {
+          break;
+        }
         print([&] (auto& out) {
           out << "(bad_message " << e.what() << ')';
         });
+      } catch(const std::exception&) {
+        if(m_open_state.is_open()) {
+          m_exception = std::current_exception();
+        }
+        break;
       }
     }
   }

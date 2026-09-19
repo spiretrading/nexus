@@ -427,6 +427,10 @@ namespace Nexus {
         drop(sequencer, *gap, timestamp, "unrecoverable");
         return boost::none;
       }
+      if(timestamp < m_gap_timestamp) {
+        drop(sequencer, *gap, timestamp, "clock_rollback");
+        return boost::none;
+      }
       if(timestamp - m_gap_timestamp > m_gap_timeout) {
         if(m_gap_client) {
           drop(sequencer, *gap, timestamp, "timeout");
@@ -452,7 +456,7 @@ namespace Nexus {
   bool CxaPitchClient<P, G, S, R, T>::expire_snapshot_offer(
       boost::posix_time::ptime timestamp) {
     if(m_snapshot_state != SnapshotState::WAITING ||
-        timestamp - m_start <= m_gap_timeout) {
+        timestamp >= m_start && timestamp - m_start <= m_gap_timeout) {
       return false;
     }
     print([&] (auto& out) {
@@ -477,9 +481,9 @@ namespace Nexus {
           continue;
         }
         validate(block);
-        auto timestamp = m_time_client->get_time();
         auto [is_expired, recovery_position] = Beam::with(m_sequencer,
           [&] (auto& sequencer) {
+            auto timestamp = m_time_client->get_time();
             sequencer.add(index, block, timestamp);
             auto is_expired = expire_snapshot_offer(timestamp);
             return std::pair(
@@ -516,8 +520,8 @@ namespace Nexus {
           continue;
         }
         validate(block);
-        auto timestamp = m_time_client->get_time();
         Beam::with(m_sequencer, [&] (auto& sequencer) {
+          auto timestamp = m_time_client->get_time();
           sequencer.recover(block);
           flush(sequencer);
           skip(sequencer, timestamp);
@@ -618,8 +622,8 @@ namespace Nexus {
         if(response.m_status == CxaPitchGapResponse::ACCEPTED) {
           continue;
         }
-        auto timestamp = m_time_client->get_time();
         Beam::with(m_sequencer, [&] (auto& sequencer) {
+          auto timestamp = m_time_client->get_time();
           if(response.m_status == CxaPitchGapResponse::MINUTE_EXHAUSTED ||
               response.m_status == CxaPitchGapResponse::SECOND_EXHAUSTED) {
             retry(CxaPitchGap(response.m_sequence, response.m_count));
@@ -711,9 +715,9 @@ namespace Nexus {
       return;
     }
     try {
-      auto timestamp = m_time_client->get_time();
       auto [is_expired, recovery_position] = Beam::with(m_sequencer,
         [&] (auto& sequencer) {
+          auto timestamp = m_time_client->get_time();
           auto is_expired = expire_snapshot_offer(timestamp);
           sequencer.update(timestamp);
           m_is_request_deferred = false;

@@ -3,7 +3,6 @@
 #include <boost/date_time/posix_time/time_parsers.hpp>
 #include <doctest/doctest.h>
 #include "CxaPitchMarketDataFeedClient/CxaPitchConfiguration.hpp"
-#include "Nexus/Definitions/StandardVenues.hpp"
 
 using namespace boost::posix_time;
 using namespace Nexus;
@@ -60,8 +59,8 @@ password: ABCD01
     REQUIRE(config.m_primary_venue == Venues::ASX);
     REQUIRE(config.m_disseminating_venue == Venues::CXA);
     REQUIRE(config.m_mpid == "XCXA");
-    REQUIRE(config.m_feed_timeout == duration_from_string("00:00:05"));
-    REQUIRE(config.m_gap_timeout == duration_from_string("00:00:02"));
+    REQUIRE(config.m_feed_timeout == seconds(5));
+    REQUIRE(config.m_gap_timeout == seconds(2));
     REQUIRE(config.m_feeds.size() == 2);
     REQUIRE(config.m_feeds[0].m_name == "A");
     REQUIRE(config.m_feeds[0].m_address.get_host() == "233.218.133.80");
@@ -102,8 +101,8 @@ password: ABCD01
     REQUIRE(!config.m_is_logging_messages);
     REQUIRE(config.m_unit == 2);
     REQUIRE(config.m_mpid == "CXA");
-    REQUIRE(config.m_feed_timeout == duration_from_string("00:00:03"));
-    REQUIRE(config.m_gap_timeout == duration_from_string("00:00:05"));
+    REQUIRE(config.m_feed_timeout == seconds(3));
+    REQUIRE(config.m_gap_timeout == seconds(5));
     REQUIRE(config.m_feeds.size() == 1);
     REQUIRE(config.m_feeds[0].m_interface.get_host() == "10.0.0.1");
     REQUIRE(!config.m_feeds[0].m_gap_address);
@@ -179,10 +178,10 @@ password: ABCD01
     auto source = make_config();
     SUBCASE("valid") {
       auto config = CxaPitchConfiguration::parse(source);
-      REQUIRE(config.m_sampling == duration_from_string("00:00:00.100000"));
+      REQUIRE(config.m_sampling == milliseconds(100));
       source["sampling"] = "1us";
       config = CxaPitchConfiguration::parse(source);
-      REQUIRE(config.m_sampling == duration_from_string("00:00:00.000001"));
+      REQUIRE(config.m_sampling == microseconds(1));
     }
     SUBCASE("missing") {
       source.remove("sampling");
@@ -221,25 +220,25 @@ password: ABCD01
       source["feed_timeout"] = "1us";
       source["gap_timeout"] = "0s";
       auto config = CxaPitchConfiguration::parse(source);
-      REQUIRE(config.m_feed_timeout == duration_from_string("00:00:00.000001"));
-      REQUIRE(config.m_gap_timeout == duration_from_string("00:00:00"));
+      REQUIRE(config.m_feed_timeout == microseconds(1));
+      REQUIRE(config.m_gap_timeout == seconds(0));
     }
   }
 
   TEST_CASE("timer_interval") {
     auto source = make_config();
-    auto expected = duration_from_string("00:00:00.100000");
+    auto expected = milliseconds(100);
     SUBCASE("defaults") {}
     SUBCASE("long_feed_timeout") {
       source["feed_timeout"] = "30s";
     }
     SUBCASE("short_feed_timeout") {
       source["feed_timeout"] = "50ms";
-      expected = duration_from_string("00:00:00.050000");
+      expected = milliseconds(50);
     }
     SUBCASE("short_gap_timeout") {
       source["gap_timeout"] = "10ms";
-      expected = duration_from_string("00:00:00.010000");
+      expected = milliseconds(10);
     }
     SUBCASE("zero_gap_timeout") {
       source["gap_timeout"] = "0s";
@@ -285,6 +284,27 @@ password: ABCD01
           REQUIRE_THROWS_AS(
             CxaPitchConfiguration::parse(source), std::runtime_error);
         }
+      }
+    }
+  }
+
+  TEST_CASE("session_credential_lengths") {
+    for(auto name : {"retransmission", "spin"}) {
+      for(auto field : {"session_sub_id", "username", "password"}) {
+        CAPTURE(name);
+        CAPTURE(field);
+        auto source = make_config();
+        source["feeds"][0]["gap_address"] = "233.218.133.81:30501";
+        source[name] = make_session();
+        auto length = std::size_t(4);
+        if(std::string_view(field) == "password") {
+          length = 10;
+        }
+        source[name][field] = std::string(length, 'X');
+        REQUIRE_NOTHROW(CxaPitchConfiguration::parse(source));
+        source[name][field] = std::string(length + 1, 'X');
+        REQUIRE_THROWS_AS(
+          CxaPitchConfiguration::parse(source), std::runtime_error);
       }
     }
   }

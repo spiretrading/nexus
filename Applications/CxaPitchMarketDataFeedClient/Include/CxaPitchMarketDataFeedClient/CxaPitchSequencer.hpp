@@ -135,7 +135,8 @@ namespace Nexus {
   inline void CxaPitchSequencer::update(boost::posix_time::ptime timestamp) {
     for(auto& source : m_feeds) {
       if(source.m_is_active &&
-          timestamp - source.m_timestamp > m_feed_timeout) {
+          (timestamp < source.m_timestamp ||
+            timestamp - source.m_timestamp > m_feed_timeout)) {
         source.m_is_active = false;
       }
     }

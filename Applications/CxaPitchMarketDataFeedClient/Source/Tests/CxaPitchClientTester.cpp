@@ -76,8 +76,8 @@ namespace {
     struct WithSpin {};
     struct WithoutGap {};
 
-    inline static const auto FEED_TIMEOUT = duration_from_string("00:00:03");
-    inline static const auto GAP_TIMEOUT = duration_from_string("00:00:05");
+    inline static const auto FEED_TIMEOUT = seconds(3);
+    inline static const auto GAP_TIMEOUT = seconds(5);
     std::vector<std::unique_ptr<StubProtocolClient>> m_feed_clients;
     std::vector<std::unique_ptr<StubProtocolClient>> m_recovery_clients;
     std::shared_ptr<TestCxaPitchGapClient::Queue> m_gap_operations;
@@ -230,6 +230,37 @@ namespace {
 }
 
 TEST_SUITE("CxaPitchClient") {
+  TEST_CASE("timestamp_progression") {
+    auto fixture = Fixture(2);
+    fixture.publish(encode_block(1, {0x11}));
+    REQUIRE(fixture.m_client->read().m_type == 0x11);
+    flush_pending_routines();
+    auto is_timer = false;
+    SUBCASE("feed") {}
+    SUBCASE("timer") {
+      is_timer = true;
+    }
+    if(is_timer) {
+      fixture.m_timer.trigger();
+    } else {
+      fixture.m_feed_clients[0]->m_blocks.push(encode_block(3, {0x13}));
+    }
+    flush_pending_routines();
+    fixture.m_time_client.set(TIMESTAMP + time_duration::unit());
+    fixture.m_feed_clients[1]->m_blocks.push(encode_block(2, {}));
+    flush_pending_routines();
+    if(is_timer) {
+      fixture.m_feed_clients[0]->m_blocks.push(encode_block(3, {0x13}));
+      flush_pending_routines();
+    }
+    REQUIRE(!fixture.m_gap_operations->try_pop());
+    fixture.m_feed_clients[1]->m_blocks.push(encode_block(2, {0x12, 0x13}));
+    flush_pending_routines();
+    REQUIRE(fixture.m_client->read().m_type == 0x12);
+    REQUIRE(fixture.m_client->read().m_type == 0x13);
+    REQUIRE(!fixture.m_gap_operations->try_pop());
+  }
+
   TEST_CASE("message_sequence") {
     auto fixture = Fixture(1);
     fixture.publish(encode_block(1, {0x11, 0x12}));
@@ -724,6 +755,25 @@ TEST_SUITE("CxaPitchClient") {
     REQUIRE(!reader.m_types.try_pop());
   }
 
+  TEST_CASE("gap_clock_rollback") {
+    auto fixture = Fixture(1);
+    auto reader = MessageReader(*fixture.m_client);
+    fixture.publish(encode_block(1, {0x11}));
+    REQUIRE(reader.m_types.pop() == 0x11);
+    fixture.publish(encode_block(3, {0x13}));
+    auto request = fixture.require_recovery_request(CxaPitchGap(2, 1), 4);
+    request->m_result.set(1);
+    flush_pending_routines();
+    fixture.m_time_client.set(TIMESTAMP - seconds(30));
+    fixture.m_timer.trigger();
+    auto recoverable = fixture.require_operation<
+      TestCxaPitchGapClient::IsRecoverableOperation>(CxaPitchGap(2, 1), 4);
+    recoverable->m_result.set(true);
+    flush_pending_routines();
+    REQUIRE(reader.m_types.try_pop() == 0x13);
+    REQUIRE(!fixture.m_gap_operations->try_pop());
+  }
+
   TEST_CASE("missing_snapshot_offer") {
     auto fixture = Fixture(1, 1, 0, Fixture::WithSpin());
     auto reader = MessageReader(*fixture.m_client);
@@ -741,6 +791,10 @@ TEST_SUITE("CxaPitchClient") {
     SUBCASE("feed") {
       fixture.publish(encode_block(2, {0x12}));
       types.push_back(0x12);
+    }
+    SUBCASE("clock_rollback") {
+      fixture.m_time_client.set(TIMESTAMP - seconds(30));
+      fixture.m_timer.trigger();
     }
     SUBCASE("timer") {
       fixture.m_timer.trigger();
