@@ -1,23 +1,139 @@
 ---
 trading_schedules:
-  - venues: [XASX, CHIA]
+  - venues: [XASX, CHIA, XATS, CHIC, XCNQ, CSE2, XCXD, XCX2, LYNX, MATN,
+             NEOE, OMGA, PURE, XTSE, XTSX]
     time:
       weekdays: [Sat, Sun]
   - venues: [XASX, CHIA]
-    dates: [2020-01-01, 2020-01-27, 2020-04-10, 2020-04-13, 2020-04-25,
-            2020-06-08, 2020-12-25, 2020-12-28]
-  - venues: XASX
+    dates: [2026-01-01, 2026-01-26, 2026-04-03, 2026-04-06, 2026-06-08,
+            2026-12-25, 2026-12-28, 2027-01-01, 2027-01-26, 2027-03-26,
+            2027-03-29, 2027-06-14, 2027-12-27, 2027-12-28]
+  - venues: [XATS, CHIC, XCNQ, CSE2, XCXD, XCX2, LYNX, MATN, NEOE, OMGA,
+             PURE, XTSE, XTSX]
+    dates: [2026-01-01, 2026-02-16, 2026-04-03, 2026-05-18, 2026-07-01,
+            2026-08-03, 2026-09-07, 2026-10-12, 2026-12-25, 2026-12-28,
+            2027-01-01, 2027-02-15, 2027-03-26, 2027-05-24, 2027-07-01,
+            2027-08-02, 2027-09-06, 2027-10-11, 2027-12-27, 2027-12-28]
+  - venues: [XTSE, XTSX]
+    dates: [2026-12-24, 2027-12-24]
     events:
-      - type: PRE_OPEN
-        time: 7:00
-      - type: OPEN
-        time: 10:00
-      - type: CLOSE
-        time: 16:00
-  - venues: CHIA
+      - code: PRE_OPEN
+        time: "07:00:00"
+      - code: OPEN
+        time: "09:30:00"
+      - code: CLOSE
+        time: "13:00:00"
+  - venues: [XATS]
+    dates: [2026-12-24, 2027-12-24]
     events:
-      - type: OPEN
-        time: 10:00
-      - type: CLOSE
-        time: 16:13
+      - code: PRE_OPEN
+        time: "07:00:00"
+      - code: OPEN
+        time: "08:00:00"
+      - code: CLOSE
+        time: "13:30:00"
+  - venues: [CHIC, XCX2]
+    dates: [2026-12-24, 2027-12-24]
+    events:
+      - code: OPEN
+        time: "08:00:00"
+      - code: CLOSE
+        time: "13:30:00"
+  - venues: [XCXD]
+    dates: [2026-12-24, 2027-12-24]
+    events:
+      - code: OPEN
+        time: "09:30:00"
+      - code: CLOSE
+        time: "13:30:00"
+  - venues: [XASX]
+    dates: [2026-12-24, 2026-12-31, 2027-12-24, 2027-12-31]
+    events:
+      - code: PRE_OPEN
+        time: "07:00:00"
+      - code: OPEN
+        time: "09:59:45"
+      - code: CLOSE
+        time: "14:00:00"
+  - venues: [CHIA]
+    dates: [2026-12-24, 2026-12-31, 2027-12-24, 2027-12-31]
+    events:
+      - code: OPEN
+        time: "10:00:00"
+      - code: CLOSE
+        time: "14:13:00"
+  - venues: [XCNQ, NEOE, MATN]
+    dates: [2026-12-24, 2027-12-24]
+    events:
+      - code: PRE_OPEN
+        time: "07:00:00"
+      - code: OPEN
+        time: "09:30:00"
+      - code: CLOSE
+        time: "13:00:00"
+  - venues: [LYNX]
+    dates: [2026-12-24, 2027-12-24]
+    events:
+      - code: OPEN
+        time: "09:30:00"
+      - code: CLOSE
+        time: "13:00:00"
+  - venues: [PURE]
+    dates: [2026-12-24, 2027-12-24]
+    events:
+      - code: PRE_OPEN
+        time: "07:00:00"
+      - code: OPEN
+        time: "08:00:00"
+      - code: CLOSE
+        time: "13:30:00"
+  - venues: [CSE2, OMGA]
+    dates: [2026-12-24, 2027-12-24]
+    events:
+      - code: OPEN
+        time: "08:00:00"
+      - code: CLOSE
+        time: "13:30:00"
+  - venues: [XTSE, XTSX, XCNQ, NEOE, MATN]
+    events:
+      - code: PRE_OPEN
+        time: "07:00:00"
+      - code: OPEN
+        time: "09:30:00"
+      - code: CLOSE
+        time: "16:00:00"
+  - venues: [XATS, PURE]
+    events:
+      - code: PRE_OPEN
+        time: "07:00:00"
+      - code: OPEN
+        time: "08:00:00"
+      - code: CLOSE
+        time: "17:00:00"
+  - venues: [CHIC, XCX2, CSE2, OMGA]
+    events:
+      - code: OPEN
+        time: "08:00:00"
+      - code: CLOSE
+        time: "17:00:00"
+  - venues: [XCXD, LYNX]
+    events:
+      - code: OPEN
+        time: "09:30:00"
+      - code: CLOSE
+        time: "16:00:00"
+  - venues: [XASX]
+    events:
+      - code: PRE_OPEN
+        time: "07:00:00"
+      - code: OPEN
+        time: "09:59:45"
+      - code: CLOSE
+        time: "16:00:00"
+  - venues: [CHIA]
+    events:
+      - code: OPEN
+        time: "10:00:00"
+      - code: CLOSE
+        time: "16:13:00"
 ...

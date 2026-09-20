@@ -631,14 +631,16 @@ void Nexus::Python::export_time_in_force(module& module) {
 void Nexus::Python::export_trading_schedule(module& module) {
   auto outer = class_<TradingSchedule>(module, "TradingSchedule").
     def(init<std::vector<TradingSchedule::Rule>>()).
-    def("find", [] (const TradingSchedule& self, date date, Venue venue) {
-      return self.find(date, venue);
+    def("find", [] (const TradingSchedule& self, ptime timestamp, Venue venue) {
+      return self.find(timestamp, venue);
     }).
     def("find", [] (
-        const TradingSchedule& self, date date, Venue venue, const object& f) {
-      return self.find(date, venue, [&] (const TradingSchedule::Event& event) {
-        return f(cast(event)).cast<bool>();
-      });
+        const TradingSchedule& self, ptime timestamp, Venue venue,
+        const object& f) {
+      return self.find(timestamp, venue,
+        [&] (const TradingSchedule::Event& event) {
+          return f(cast(event)).cast<bool>();
+        });
     });
   export_default_methods(class_<TradingSchedule::Event>(outer, "Event")).
     def_readwrite("code", &TradingSchedule::Event::m_code).
