@@ -49,8 +49,6 @@ CALL :BuildApp Applications\Scratch %*
 CALL :BuildApp Applications\SimulationMarketDataFeedClient %*
 CALL :BuildApp Applications\SimulationOrderExecutionServer %*
 CALL :BuildApp Applications\Spire %*
-CALL :BuildApp Applications\TmxIpMarketDataFeedClient %*
-CALL :BuildApp Applications\TmxTl1MarketDataFeedClient %*
 CALL :BuildApp Applications\WebPortal\WebApp %*
 CALL :BuildApp Applications\WebPortal %*
 IF !PARALLEL! EQU 0 (

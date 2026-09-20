@@ -17,8 +17,6 @@ services=(
   "CseMarketDataFeedClient"
   "CxaPitchMarketDataFeedClient"
   "NeoeMarketDataFeedClient"
-  "TmxTl1MarketDataFeedClient"
-  "TmxIpMarketDataFeedClient"
   "OtcLinkMarketDataFeedClient"
 )
 

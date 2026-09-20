@@ -5,8 +5,6 @@ services=(
   "CseMarketDataFeedClient"
   "CxaPitchMarketDataFeedClient"
   "NeoeMarketDataFeedClient"
-  "TmxTl1MarketDataFeedClient"
-  "TmxIpMarketDataFeedClient"
   "WebPortal"
   "RiskServer"
   "SimulationOrderExecutionServer"

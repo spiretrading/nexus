@@ -1,3 +1,0 @@
-@ECHO OFF
-CALL "%~dp0..\..\Nexus\version.bat" TMX_IP_MARKET_DATA_FEED_CLIENT
-EXIT /B %ERRORLEVEL%
