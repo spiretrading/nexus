@@ -13,7 +13,7 @@ main() {
   mkdir -p "$CACHE_DIRECTORY" || return 1
   add_repo "Beam" \
     "https://www.github.com/spiretrading/beam" \
-    "c71140e2573028b9af98cd1dd5232fdd9ded5b47" 1 \
+    "9b917381ecaa3ebfaadebf4dad872d39ca9a3171" 1 \
     "build_beam"
   add_dependency "lua-5.5.0" \
     "https://www.lua.org/ftp/lua-5.5.0.tar.gz" \
