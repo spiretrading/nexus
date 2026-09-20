@@ -4,7 +4,7 @@
 #include <deque>
 #include <utility>
 #include <Beam/IO/SharedBuffer.hpp>
-#include "TmxIpMarketDataFeedClient/TmxIpPacket.hpp"
+#include "TmxIpMarketDataFeedClient/TmxIpHeartbeat.hpp"
 
 namespace Nexus {
 
@@ -28,7 +28,7 @@ namespace Nexus {
 
       /**
        * Adds a parsed live or recovered packet from the selected stream.
-       * The first sequenced packet establishes the initial position.
+       * The first packet or heartbeat establishes the initial position.
        * @param packet The received packet; its contents are copied.
        */
       void add(const TmxIpPacket& packet);
@@ -42,7 +42,7 @@ namespace Nexus {
       /** Returns the sequence of the next packet to return. */
       boost::optional<std::uint32_t> get_sequence() const;
 
-      /** Returns the missing range preceding the next buffered packet. */
+      /** Returns the next missing range known from packets or heartbeats. */
       boost::optional<TmxIpGap> get_gap() const;
 
       /** Discards pending packets and waits for a new initial position. */
@@ -61,6 +61,7 @@ namespace Nexus {
         Beam::SharedBuffer m_payload;
       };
       boost::optional<std::uint32_t> m_expected_sequence;
+      boost::optional<std::uint32_t> m_last_sequence;
       std::deque<Entry> m_packets;
       Beam::SharedBuffer m_payload;
 
@@ -70,6 +71,23 @@ namespace Nexus {
   inline void TmxIpSequencer::add(const TmxIpPacket& packet) {
     auto& header = packet.m_header;
     if(is_heartbeat(header)) {
+      auto heartbeat = TmxIpHeartbeat::parse(packet);
+      if(!m_expected_sequence) {
+        if(heartbeat.m_last_sequence == MAXIMUM_SEQUENCE) {
+          m_expected_sequence = 1;
+        } else {
+          m_expected_sequence = heartbeat.m_last_sequence + 1;
+        }
+        return;
+      }
+      if(heartbeat.m_last_sequence == 0) {
+        return;
+      }
+      auto offset = distance(*m_expected_sequence, heartbeat.m_last_sequence);
+      if(offset <= MAXIMUM_SEQUENCE / 2 && (!m_last_sequence ||
+          offset > distance(*m_expected_sequence, *m_last_sequence))) {
+        m_last_sequence = heartbeat.m_last_sequence;
+      }
       return;
     }
     auto sequence = *header.m_sequence;
@@ -111,6 +129,9 @@ namespace Nexus {
     auto header = m_packets.front().m_header;
     m_payload = std::move(m_packets.front().m_payload);
     m_packets.pop_front();
+    if(m_expected_sequence == m_last_sequence) {
+      m_last_sequence = boost::none;
+    }
     if(*m_expected_sequence == MAXIMUM_SEQUENCE) {
       m_expected_sequence = 1;
     } else {
@@ -126,11 +147,19 @@ namespace Nexus {
   }
 
   inline boost::optional<TmxIpGap> TmxIpSequencer::get_gap() const {
-    if(m_packets.empty()) {
+    if(!m_expected_sequence) {
       return boost::none;
     }
-    auto count = distance(
-      *m_expected_sequence, *m_packets.front().m_header.m_sequence);
+    auto count = [&] {
+      if(!m_packets.empty()) {
+        return distance(
+          *m_expected_sequence, *m_packets.front().m_header.m_sequence);
+      }
+      if(m_last_sequence) {
+        return distance(*m_expected_sequence, *m_last_sequence) + 1;
+      }
+      return std::uint32_t(0);
+    }();
     if(count == 0) {
       return boost::none;
     }
@@ -141,6 +170,7 @@ namespace Nexus {
   inline void TmxIpSequencer::reset() {
     m_packets.clear();
     m_expected_sequence = boost::none;
+    m_last_sequence = boost::none;
   }
 
   inline void TmxIpSequencer::reset(std::uint32_t sequence) {

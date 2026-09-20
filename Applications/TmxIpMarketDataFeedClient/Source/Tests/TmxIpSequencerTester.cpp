@@ -13,6 +13,17 @@ namespace {
       TmxIpHeader::LENGTH + payload.size(), sequence, payload,
       TmxIpPacket::END);
   }
+
+  std::string encode_heartbeat(std::uint32_t sequence) {
+    auto payload = std::format(
+      "[HEARTBEAT 2012-10-10 03:25:02-001349853902.844623]"
+      "[LAST SENT {:09}-03:05:03-001349852703.441869]"
+      "[LAST HB   {:09}-03:24:02-001349853842.845443]"
+      "OCSA-CDF-1           ATDOTDR  00.1", sequence, sequence);
+    return std::format("{}{:04}         CDF00V T {}{}", TmxIpPacket::START,
+      TmxIpHeader::LENGTH + payload.size(), payload, TmxIpPacket::END);
+  }
+
 }
 
 TEST_SUITE("TmxIpSequencer") {
@@ -160,10 +171,10 @@ TEST_SUITE("TmxIpSequencer") {
 
   TEST_CASE("heartbeat") {
     auto sequencer = TmxIpSequencer();
-    auto heartbeat =
-      TmxIpPacket::parse("\x02" "0031         CDF00V T HEARTBEAT\x03");
+    auto source = encode_heartbeat(99);
+    auto heartbeat = TmxIpPacket::parse(source);
     sequencer.add(heartbeat);
-    REQUIRE(!sequencer.get_sequence().has_value());
+    REQUIRE(sequencer.get_sequence() == std::uint32_t(100));
     REQUIRE(!sequencer.get_gap().has_value());
     REQUIRE(!sequencer.read().has_value());
     sequencer.reset(100);
@@ -245,5 +256,119 @@ TEST_SUITE("TmxIpSequencer") {
     REQUIRE(field->m_value == "ABX");
     REQUIRE(!sequencer.read().has_value());
     REQUIRE(!sequencer.get_gap().has_value());
+  }
+
+  TEST_CASE("heartbeat_gap") {
+    auto sequencer = TmxIpSequencer();
+    sequencer.reset(100);
+    sequencer.add(TmxIpPacket::parse(encode_heartbeat(102)));
+    auto gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_sequence == 100);
+    REQUIRE(gap->m_count == 3);
+    REQUIRE(!sequencer.read().has_value());
+    sequencer.add(TmxIpPacket::parse(encode_packet(100, "first")));
+    REQUIRE(sequencer.read().has_value());
+    gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_sequence == 101);
+    REQUIRE(gap->m_count == 2);
+    sequencer.add(TmxIpPacket::parse(encode_packet(102, "last")));
+    gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_count == 1);
+    sequencer.add(TmxIpPacket::parse(encode_packet(101, "second")));
+    for(auto sequence : {101, 102}) {
+      auto packet = sequencer.read();
+      REQUIRE(packet.has_value());
+      REQUIRE(packet->m_header.m_sequence == std::uint32_t(sequence));
+    }
+    REQUIRE(!sequencer.get_gap().has_value());
+  }
+
+  TEST_CASE("stale_heartbeat") {
+    auto sequencer = TmxIpSequencer();
+    sequencer.reset(100);
+    for(auto sequence : {102, 105, 103, 99, 0}) {
+      sequencer.add(TmxIpPacket::parse(encode_heartbeat(sequence)));
+    }
+    auto gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_sequence == 100);
+    REQUIRE(gap->m_count == 6);
+    for(auto sequence = 100; sequence <= 105; ++sequence) {
+      sequencer.add(TmxIpPacket::parse(encode_packet(sequence, "recovered")));
+      auto packet = sequencer.read();
+      REQUIRE(packet.has_value());
+      REQUIRE(packet->m_header.m_sequence == std::uint32_t(sequence));
+    }
+    sequencer.add(TmxIpPacket::parse(encode_heartbeat(105)));
+    REQUIRE(!sequencer.get_gap().has_value());
+    REQUIRE(!sequencer.read().has_value());
+    sequencer.add(TmxIpPacket::parse(encode_heartbeat(107)));
+    gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_count == 2);
+    sequencer.reset();
+    REQUIRE(!sequencer.get_gap().has_value());
+    sequencer.reset(1);
+    REQUIRE(!sequencer.get_gap().has_value());
+  }
+
+  TEST_CASE("heartbeat_wrap") {
+    constexpr auto MAXIMUM_SEQUENCE = std::uint32_t(999999999);
+    auto sequencer = TmxIpSequencer();
+    sequencer.reset(MAXIMUM_SEQUENCE - 1);
+    sequencer.add(TmxIpPacket::parse(encode_heartbeat(1)));
+    auto gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_sequence == MAXIMUM_SEQUENCE - 1);
+    REQUIRE(gap->m_count == 2);
+    sequencer.add(TmxIpPacket::parse(encode_heartbeat(MAXIMUM_SEQUENCE)));
+    for(auto sequence : {MAXIMUM_SEQUENCE - 1, MAXIMUM_SEQUENCE}) {
+      sequencer.add(TmxIpPacket::parse(encode_packet(sequence, "recovered")));
+      REQUIRE(sequencer.read().has_value());
+    }
+    gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_sequence == 1);
+    REQUIRE(gap->m_count == 1);
+    sequencer.add(TmxIpPacket::parse(encode_packet(1, "wrapped")));
+    REQUIRE(sequencer.read().has_value());
+    REQUIRE(!sequencer.get_gap().has_value());
+  }
+
+  TEST_CASE("initial_heartbeat") {
+    auto sequencer = TmxIpSequencer();
+    auto sequence = std::uint32_t(0);
+    SUBCASE("before_first_packet") {}
+    SUBCASE("wrap") {
+      sequence = 999999999;
+    }
+    sequencer.add(TmxIpPacket::parse(encode_heartbeat(sequence)));
+    REQUIRE(sequencer.get_sequence() == std::uint32_t(1));
+    REQUIRE(!sequencer.get_gap().has_value());
+    REQUIRE(!sequencer.read().has_value());
+    sequencer.add(TmxIpPacket::parse(encode_packet(1, "first")));
+    auto packet = sequencer.read();
+    REQUIRE(packet.has_value());
+    REQUIRE(packet->m_payload == "first");
+  }
+
+  TEST_CASE("malformed_heartbeat") {
+    auto sequencer = TmxIpSequencer();
+    auto source = encode_heartbeat(105);
+    source[source.find("LAST SENT")] = 'X';
+    auto heartbeat = TmxIpPacket::parse(source);
+    REQUIRE_THROWS_AS(sequencer.add(heartbeat), TmxIpParserException);
+    REQUIRE(!sequencer.get_sequence().has_value());
+    sequencer.reset(100);
+    sequencer.add(TmxIpPacket::parse(encode_heartbeat(102)));
+    REQUIRE_THROWS_AS(sequencer.add(heartbeat), TmxIpParserException);
+    REQUIRE(sequencer.get_sequence() == std::uint32_t(100));
+    auto gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_sequence == 100);
+    REQUIRE(gap->m_count == 3);
   }
 }
