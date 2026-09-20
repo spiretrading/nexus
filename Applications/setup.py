@@ -106,6 +106,8 @@ def main():
       'MarketDataRelayServer', 'ReplayMarketDataFeedClient',
       'SimulationMarketDataFeedClient', 'WebPortal']:
     setup_server(server, arg_vars)
+  setup_application('TmxIpMarketDataFeedClient', arg_vars,
+    'local', 'address', 'password')
 
 
 if __name__ == '__main__':

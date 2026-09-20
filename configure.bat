@@ -33,6 +33,7 @@ CALL :Configure Applications\Scratch %*
 CALL :Configure Applications\SimulationMarketDataFeedClient %*
 CALL :Configure Applications\SimulationOrderExecutionServer %*
 CALL :Configure Applications\Spire %*
+CALL :Configure Applications\TmxIpMarketDataFeedClient %*
 CALL :Configure Applications\WebPortal\WebApp %*
 CALL :Configure Applications\WebPortal %*
 EXIT /B !EXIT_STATUS!

@@ -27,6 +27,7 @@ main() {
     "Applications/Scratch"
     "Applications/SimulationMarketDataFeedClient"
     "Applications/SimulationOrderExecutionServer"
+    "Applications/TmxIpMarketDataFeedClient"
     "Applications/WebPortal/WebApp"
     "Applications/WebPortal"
   )

@@ -16,6 +16,7 @@ services=(
   "AsxTradeItchMarketDataFeedClient"
   "CxaPitchMarketDataFeedClient"
   "OtcLinkMarketDataFeedClient"
+  "TmxIpMarketDataFeedClient"
 )
 
 status=0
