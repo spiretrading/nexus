@@ -13,6 +13,9 @@
     "build": "npm run compile",
     "test": "node --preserve-symlinks --preserve-symlinks-main --import tsx --test-reporter dot --test-timeout 60000 --test \"tests/**/*_tester.ts\""
   },
+  "allowScripts": {
+    "esbuild": true
+  },
   "devDependencies": {
     "@types/node": "24.13.3",
     "tsx": "4.22.4",

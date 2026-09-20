@@ -5,7 +5,7 @@
 namespace Nexus::Python {
 
   /**
-   * Exports STAMP fields and messages.
+   * Exports STAMP fields, messages, and field readers.
    * @param module The module to export to.
    */
   void export_stamp(pybind11::module& module);
@@ -21,6 +21,12 @@ namespace Nexus::Python {
    * @param module The module to export to.
    */
   void export_stamp_message(pybind11::module& module);
+
+  /**
+   * Exports a STAMP field reader.
+   * @param module The module to export to.
+   */
+  void export_stamp_field_reader(pybind11::module& module);
 }
 
 #endif

@@ -15,10 +15,10 @@ get_job_count() {
     cores=$(sysctl -n hw.ncpu 2>/dev/null || echo 4)
   fi
   if [[ -f /proc/meminfo ]]; then
-    mem=$(awk '/MemTotal/ {print int($2 / 4194304)}' /proc/meminfo)
+    mem=$(awk '/MemTotal/ {print int($2 / 16777216)}' /proc/meminfo)
   else
     mem=$(sysctl -n hw.memsize 2>/dev/null |
-      awk '{print int($1 / 4294967296)}' || echo 4)
+      awk '{print int($1 / 17179869184)}' || echo 4)
   fi
   cores=$((cores - 2))
   [[ $cores -lt 1 ]] && cores=1
