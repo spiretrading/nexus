@@ -131,6 +131,20 @@ namespace {
       return quote;
     }
 
+    template<typename T>
+    std::shared_ptr<T> operation() {
+      flush_pending_routines();
+      auto operation = m_feed_operations->try_pop();
+      REQUIRE(operation.has_value());
+      auto actual = std::get_if<T>(&**operation);
+      REQUIRE(actual);
+      auto result = std::shared_ptr<T>(*operation, actual);
+      actual->m_result.set();
+      flush_pending_routines();
+      REQUIRE_FALSE(m_client.get_exception());
+      return result;
+    }
+
     void require_empty() {
       flush_pending_routines();
       REQUIRE_FALSE(m_client.is_finished());
@@ -142,6 +156,33 @@ namespace {
 }
 
 TEST_SUITE("TmxIpMarketDataFeedClient") {
+  TEST_CASE("book_updates") {
+    auto fixture = Fixture();
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=TSE"
+      "|57=20260921090000000|40=123|70=79|196=25.50|64=350");
+    auto order = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(order->m_ticker == parse_ticker("ABX.TSX"));
+    REQUIRE(order->m_venue == Venues::TSX);
+    REQUIRE(order->m_mpid == "TSE");
+    REQUIRE_FALSE(order->m_is_primary_mpid);
+    REQUIRE(order->m_side == Side::BID);
+    REQUIRE(order->m_price == Money(25.50));
+    REQUIRE(order->m_size == 300);
+    REQUIRE(order->m_timestamp == time_from_string("2026-09-21 13:00:00"));
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=TSE"
+      "|57=20260921090001000|40=123|70=79|196=25.51|64=200");
+    auto update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id == order->m_id);
+    REQUIRE(update->m_price == Money(25.51));
+    REQUIRE(update->m_size == 200);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Cancelled|55=ABX|247=TSE"
+      "|57=20260921090002000|40=123|70=79|196=25.51|64=200");
+    auto removal = fixture.operation<FeedClient::RemoveOrderOperation>();
+    REQUIRE(removal->m_id == order->m_id);
+    REQUIRE(removal->m_timestamp == time_from_string("2026-09-21 13:00:02"));
+    fixture.require_empty();
+  }
+
   TEST_CASE("close") {
     auto fixture = Fixture();
     auto& source = fixture.m_source;
