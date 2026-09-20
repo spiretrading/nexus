@@ -4,6 +4,61 @@ import nexus
 
 
 class TestStamp(unittest.TestCase):
+    def test_field_reader(self):
+        source = (b'\x01\x1e1=HEADER\x1c\x1e70.1=002\x1e55=ABX'
+            b'\x1e70=001\x1e64=100\x1e41=\x1e40.9=ORDER')
+        message = nexus.StampMessage.parse(source)
+        section = message.business_content
+        reader = nexus.StampFieldReader(section)
+        del source, message, section
+        gc.collect()
+        self.assertEqual(reader.read(55, str), 'ABX')
+        self.assertEqual(reader.read(64, int), 100)
+        self.assertEqual(reader.read(70, 0, int), 1)
+        self.assertEqual(reader.read(70, 1, int), 2)
+        self.assertEqual(reader.read_optional(55, str), 'ABX')
+        self.assertEqual(reader.read_optional(70, 1, int), 2)
+        calls = []
+
+        def parser(value):
+            calls.append(value)
+            return 'default'
+
+        self.assertIsNone(reader.read_optional(9999, parser))
+        self.assertIsNone(reader.read_optional(70, 2, parser))
+        self.assertEqual(calls, [])
+        self.assertEqual(reader.read_optional(41, parser), 'default')
+        self.assertEqual(calls, [''])
+        self.assertIsNone(reader.read(55, lambda value: None))
+        self.assertEqual(reader.get_count([]), 0)
+        self.assertEqual(reader.get_count([9999]), 0)
+        self.assertEqual(reader.get_count([55]), 1)
+        self.assertEqual(reader.get_count([55, 70]), 2)
+        self.assertEqual(reader.get_count([40, 70]), 10)
+        for read, arguments in (
+                (reader.read, (9999, str)),
+                (reader.read, (70, 2, str)),
+                (reader.read, (70, str)),
+                (reader.read_optional, (70, str))):
+            with self.subTest(arguments=arguments):
+                with self.assertRaises(nexus.StampParserException):
+                    read(*arguments)
+
+        def invalid(value):
+            raise LookupError(value)
+
+        for read in (reader.read, reader.read_optional):
+            with self.subTest(read=read):
+                with self.assertRaises(LookupError):
+                    read(55, invalid)
+        for duplicate in (b'55=ABX\x1e55=XYZ', b'55=ABX\x1e55.0=XYZ',
+                b'70.1=001\x1e70.1=002'):
+            with self.subTest(duplicate=duplicate):
+                message = nexus.StampMessage.parse(
+                    b'\x01\x1e1=HEADER\x1c\x1e' + duplicate)
+                with self.assertRaises(nexus.StampParserException):
+                    nexus.StampFieldReader(message.business_content)
+
     def test_field(self):
         for source, identifier, index, value in (
                 (b'\x1e55=ABX', 55, 0, 'ABX'),
