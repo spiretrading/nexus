@@ -68,14 +68,14 @@ Options:
   -p   Check a specific PID for the specified service
 
 Arguments:
-  service   Check only the specified service (without prefix)
-            If omitted, checks all ${PREFIX}_* services
+  service   Check only the specified service (tmx_ip)
+            If omitted, checks $PREFIX
 EOF
 }
 
 check_application() (
   dir=$1
-  APPLICATION="${dir#"${PREFIX}_"}_${PREFIX}"
+  APPLICATION="$dir"
   cd "$dir" || exit 1
   if [[ -z "$existing_pid" && -f "$PID_FILE" ]]; then
     existing_pid=$(<"$PID_FILE")
@@ -119,7 +119,7 @@ if [[ $# -gt 1 || "$1" == */* ]]; then
   exit 1
 fi
 if [[ -n "$1" ]]; then
-  target_dir="${PREFIX}_$1"
+  target_dir="$1"
   if [[ ! -d "$target_dir" ]]; then
     echo "Error: Directory $target_dir does not exist." >&2
     exit 1
@@ -127,7 +127,7 @@ if [[ -n "$1" ]]; then
   check_application "$target_dir"
 else
   status=0
-  for dir in "${PREFIX}"_*; do
+  for dir in "$PREFIX"; do
     if [[ -d "$dir" ]]; then
       result=0
       check_application "$dir" || result=$?

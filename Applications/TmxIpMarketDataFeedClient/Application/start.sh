@@ -4,8 +4,8 @@ PREFIX="tmx_ip"
 
 start_application() (
   dir=$1
-  feed_name="${dir#"${PREFIX}_"}"
-  APPLICATION="${feed_name}_${PREFIX}"
+  feed_name="$dir"
+  APPLICATION="$feed_name"
   cd "$dir" || exit 1
   if [[ ! -e "$APPLICATION" && ! -L "$APPLICATION" ]]; then
     ln -s "../$TARGET" "$APPLICATION" || exit 1
@@ -108,7 +108,7 @@ if [[ $# -gt 1 || "$1" == */* ]]; then
   exit 1
 fi
 if [[ -n "$1" ]]; then
-  target_dir="${PREFIX}_$1"
+  target_dir="$1"
   if [[ ! -d "$target_dir" ]]; then
     echo "Error: Directory $target_dir does not exist." >&2
     exit 1
@@ -116,7 +116,7 @@ if [[ -n "$1" ]]; then
   start_application "$target_dir"
 else
   status=0
-  for dir in "${PREFIX}"_*; do
+  for dir in "$PREFIX"; do
     if [[ -d "$dir" ]]; then
       result=0
       start_application "$dir" || result=$?

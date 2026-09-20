@@ -30,7 +30,7 @@ add_custom_command(TARGET Tests POST_BUILD COMMAND Tests)
 install(FILES Application/setup.py
   ../Python/setup_utils.py DESTINATION "${PROJECT_BINARY_DIR}/Application")
 file(GLOB configuration_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/Application"
-  Application/tmx_ip_*/config.default.yml)
+  Application/tmx_ip/config.default.yml)
 foreach(configuration IN LISTS configuration_files)
   get_filename_component(directory "${configuration}" DIRECTORY)
   install(FILES "Application/${configuration}"
