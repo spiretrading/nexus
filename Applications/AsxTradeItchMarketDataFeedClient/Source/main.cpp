@@ -6,7 +6,7 @@
 #include <Beam/Network/UdpSocketChannel.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/TimeService/LiveTimer.hpp>
-#include <Beam/TimeService/LocalTimeClient.hpp>
+#include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/ReportException.hpp>
 #include "AsxTradeItchMarketDataFeedClient/AsxTradeItchMarketDataFeedClient.hpp"
@@ -97,7 +97,7 @@ int main(int argc, const char** argv) {
       configuration.m_gap_timeout, configuration.m_request_timeout,
       std::move(feed_clients), std::move(recovery_client),
       std::move(glimpse_client),
-      std::make_unique<LocalTimeClient>(),
+      make_live_ntp_time_client(service_locator_client),
       std::make_unique<LiveTimer>(configuration.get_timer_interval()));
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
       Ref(service_locator_client), configuration.m_sampling,

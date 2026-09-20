@@ -558,7 +558,62 @@ namespace Nexus {
     static TmxIpOpeningAuction parse(const StampMessage& message);
   };
 
-  /** Concept satisfied by visitors accepting a supported CDF message. */
+  /** One side of a consolidated CBBO quote. */
+  struct TmxIpCbboQuoteSide {
+
+    /** CBBO public price (tag 196). */
+    Money m_price;
+
+    /** Aggregate quantity in shares, not board lots (tag 64). */
+    std::uint64_t m_quantity;
+
+    /** The time-priority venue attribution, when supplied (tag 247). */
+    boost::optional<std::string_view> m_exchange;
+  };
+
+  /**
+   * A complete two-sided CBBO Quote message, not a sparse update.
+   * Standard CBBO uses transport service CB1 and exchange code Q; the caller
+   * selects the stream before parsing its STAMP content.
+   * Text views remain valid while the source STAMP buffer is unchanged.
+   */
+  struct TmxIpCbboQuote {
+
+    /** The CBBO business class and action. */
+    static constexpr auto TYPE = std::string_view("Quote");
+
+    /** CBBO symbol (tag 55). */
+    std::string_view m_symbol;
+
+    /** The originating STAMP address (control tag 54). */
+    std::string_view m_source_address;
+
+    /** The destination STAMP address (control tag 17). */
+    std::string_view m_destination_address;
+
+    /** The STAMP sequence number, distinct from transport (control tag 50). */
+    std::uint64_t m_sequence;
+
+    /** CDF publication time in source local milliseconds (control tag 501). */
+    boost::optional<boost::posix_time::ptime> m_publication_timestamp;
+
+    /** CDF receipt time in source local milliseconds (control tag 502). */
+    boost::optional<boost::posix_time::ptime> m_receipt_timestamp;
+
+    /** Consolidation inbound time in local milliseconds (control tag 515). */
+    boost::optional<boost::posix_time::ptime> m_inbound_timestamp;
+
+    /** Consolidation outbound time in local milliseconds (control tag 514). */
+    boost::optional<boost::posix_time::ptime> m_outbound_timestamp;
+
+    /** Required bid at index zero and ask at index one, including zeros. */
+    std::array<TmxIpCbboQuoteSide, 2> m_sides;
+
+    /** Parses a complete quote, preserving absent optional fields. */
+    static TmxIpCbboQuote parse(const StampMessage& message);
+  };
+
+  /** Concept satisfied by visitors accepting a supported TMX IP message. */
   template<typename F>
   concept IsTmxIpVisitor =
     std::invocable<F, TmxIpSymbolStatus> ||
@@ -570,13 +625,14 @@ namespace Nexus {
     std::invocable<F, TmxIpMarketStateChange> ||
     std::invocable<F, TmxIpMbxMessage> ||
     std::invocable<F, TmxIpOpeningAuction> ||
+    std::invocable<F, TmxIpCbboQuote> ||
     std::invocable<F, const StampMessage&>;
 
   /** Calls the first matching visitor; unknown classes use the raw fallback. */
   template<IsTmxIpVisitor F, IsTmxIpVisitor... G>
   decltype(auto) visit(const StampMessage& message, F&& f, G&&... g);
 
-  /** Validates supported CDF trading messages; unknown classes are ignored. */
+  /** Validates supported TMX IP messages; unknown classes are ignored. */
   void validate(const StampMessage& message);
 
 
@@ -1055,6 +1111,51 @@ namespace TmxIpDetails {
     return value;
   }
 
+  inline TmxIpCbboQuote TmxIpCbboQuote::parse(const StampMessage& message) {
+    using namespace TmxIpDetails;
+    auto fields = StampFieldReader(message.m_business_content);
+    if(fields.read(6, text<35>) != TYPE || fields.read(5, text<35>) != TYPE) {
+      boost::throw_with_location(
+        TmxIpParserException("Unexpected CBBO business class or action."));
+    }
+    auto value = TmxIpCbboQuote();
+    value.m_symbol = fields.read(55, text<17>);
+    if(fields.get_count({196, 64, 247}) > value.m_sides.size()) {
+      boost::throw_with_location(
+        TmxIpParserException("Unexpected CBBO quote side."));
+    }
+    for(auto i = std::uint16_t(0); i != value.m_sides.size(); ++i) {
+      auto& side = value.m_sides[i];
+      side.m_price = fields.read(196, i, numeric_price);
+      side.m_quantity = fields.read(64, i, number<10>);
+      side.m_exchange = fields.read_optional(247, i, text<3>);
+    }
+    auto control = StampFieldReader(message.m_control_header);
+    value.m_source_address = control.read(54, [] (std::string_view source) {
+      if(source.size() != 8 || source == "00000000" ||
+          source.find_first_not_of("0123456789abcdefABCDEF") !=
+            std::string_view::npos) {
+        boost::throw_with_location(
+          TmxIpParserException("Invalid CBBO source address."));
+      }
+      return source;
+    });
+    value.m_destination_address = control.read(17, text<8>);
+    value.m_sequence = control.read(50, number<9>);
+    auto milliseconds = [] (std::string_view source) {
+      if(source.size() != 17) {
+        boost::throw_with_location(
+          TmxIpParserException("Invalid CBBO timestamp length."));
+      }
+      return timestamp(source);
+    };
+    value.m_publication_timestamp = control.read_optional(501, milliseconds);
+    value.m_receipt_timestamp = control.read_optional(502, milliseconds);
+    value.m_inbound_timestamp = control.read_optional(515, milliseconds);
+    value.m_outbound_timestamp = control.read_optional(514, milliseconds);
+    return value;
+  }
+
   template<IsTmxIpVisitor F, IsTmxIpVisitor... G>
   decltype(auto) visit(const StampMessage& message, F&& f, G&&... g) {
     auto field = message.m_business_content.find(6);
@@ -1107,6 +1208,11 @@ namespace TmxIpDetails {
         return std::forward<F>(f)(TmxIpOpeningAuction::parse(message));
       }
     }
+    if constexpr(std::invocable<F, TmxIpCbboQuote>) {
+      if(field->m_value == TmxIpCbboQuote::TYPE) {
+        return std::forward<F>(f)(TmxIpCbboQuote::parse(message));
+      }
+    }
     if constexpr(std::invocable<F, const StampMessage&>) {
       return std::forward<F>(f)(message);
     } else if constexpr(sizeof...(G) != 0) {
@@ -1120,7 +1226,8 @@ namespace TmxIpDetails {
         TmxIpDetails::is_void_invocable<F, TmxIpStockStatus> &&
         TmxIpDetails::is_void_invocable<F, TmxIpMarketStateChange> &&
         TmxIpDetails::is_void_invocable<F, TmxIpMbxMessage> &&
-        TmxIpDetails::is_void_invocable<F, TmxIpOpeningAuction>) {
+        TmxIpDetails::is_void_invocable<F, TmxIpOpeningAuction> &&
+        TmxIpDetails::is_void_invocable<F, TmxIpCbboQuote>) {
       return;
     } else {
       boost::throw_with_location(

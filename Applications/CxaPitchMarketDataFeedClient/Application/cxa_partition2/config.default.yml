@@ -12,12 +12,10 @@ disseminating_venue: CXA
 mpid: CXA
 feed_timeout: 3s
 feeds:
-  - name: A
-    address: "233.218.133.80:30502"
+  - address: "233.218.133.80:30502"
     gap_address: "233.218.133.81:30502"
     interface: "$local_interface:30502"
-  - name: B
-    address: "233.218.133.96:30502"
+  - address: "233.218.133.96:30502"
     gap_address: "233.218.133.97:30502"
     interface: "$local_interface:30502"
 retransmission:

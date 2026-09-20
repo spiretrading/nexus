@@ -4,21 +4,20 @@ service_locator:
   username: "$username"
   password: "$admin_password"
 
+sampling: 100ms
 enable_logging: false
+country: CA
 feed_timeout: 1s
 gap_timeout: 1s
 retry_interval: 1s
-receive_buffer: 134217728
-
 feeds:
   - address: "233.102.209.157:61204"
-    interface: "$local_interface"
+    interface: "$local_interface:61204"
   - address: "233.102.209.29:61212"
-    interface: "$local_interface"
-
+    interface: "$local_interface:61212"
 recovery:
   address: "142.201.149.36:61224"
-  interface: "$local_interface"
+  interface: "$local_interface:0"
   delivery_address: "$local_interface:61234"
   timeout: 30s
 ...

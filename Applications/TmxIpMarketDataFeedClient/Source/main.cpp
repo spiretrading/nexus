@@ -5,10 +5,13 @@
 #include <Beam/Network/MulticastSocketChannel.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
+#include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/TimeService/LiveTimer.hpp>
-#include <Beam/TimeService/LocalTimeClient.hpp>
+#include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/ReportException.hpp>
+#include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
+#include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "TmxIpMarketDataFeedClient/TmxIpMarketDataFeedClient.hpp"
 #include "Version.hpp"
 
@@ -35,7 +38,19 @@ int main(int argc, const char** argv) {
     auto config = parse_command_line(argc, argv,
       "1.0-r" TMX_IP_MARKET_DATA_FEED_CLIENT_VERSION
       "\nCopyright (C) 2026 Spire Trading Inc.");
+    auto service_locator_client = ApplicationServiceLocatorClient(
+      ServiceLocatorClientConfig::parse(get_node(config, "service_locator")));
+    auto definitions_client =
+      ApplicationDefinitionsClient(Ref(service_locator_client));
+    load_definitions(definitions_client);
+    auto schedule = definitions_client.load_trading_schedule();
+    auto market_data_client =
+      ApplicationMarketDataClient(Ref(service_locator_client));
     auto configuration = TmxIpConfiguration::parse(config);
+    auto market_data_feed_client = ApplicationMarketDataFeedClient(
+      Ref(service_locator_client), configuration.m_sampling,
+      configuration.m_country);
+    auto time_client = make_live_ntp_time_client(service_locator_client);
     auto feed_clients =
       std::vector<std::unique_ptr<ApplicationProtocolClient>>();
     for(auto& feed : configuration.m_feeds) {
@@ -72,10 +87,12 @@ int main(int argc, const char** argv) {
     }
     auto client = TmxIpClient(configuration.m_feed_timeout,
       configuration.m_gap_timeout, std::move(feed_clients),
-      std::move(recovery_client), std::make_unique<LocalTimeClient>(),
+      std::move(recovery_client), time_client.get(),
       std::make_unique<LiveTimer>(std::min({configuration.m_retry_interval,
         configuration.m_feed_timeout, configuration.m_gap_timeout})));
-    auto feed_client = TmxIpMarketDataFeedClient(configuration, &client);
+    auto feed_client = TmxIpMarketDataFeedClient(configuration,
+      std::move(schedule), &client, &market_data_client, time_client.get(),
+      &market_data_feed_client);
     while(!feed_client.is_finished() && !received_kill_event()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }

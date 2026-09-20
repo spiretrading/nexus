@@ -23,6 +23,8 @@ TEST_SUITE("TmxIpConfiguration") {
     auto source = make_config();
     SUBCASE("defaults") {
       auto config = TmxIpConfiguration::parse(source);
+      REQUIRE(config.m_country == Countries::CA);
+      REQUIRE(config.m_sampling == milliseconds(100));
       REQUIRE(!config.m_is_logging_messages);
       REQUIRE(config.m_feeds.size() == 1);
       REQUIRE(config.m_recovery.has_value());
@@ -47,12 +49,16 @@ TEST_SUITE("TmxIpConfiguration") {
         std::numeric_limits<std::uint16_t>::max());
     }
     SUBCASE("overrides") {
+      source["country"] = "AU";
+      source["sampling"] = "250ms";
       source["enable_logging"] = true;
       source["receive_buffer"] = 1048576;
       source["retry_interval"] = "250ms";
       source["gap_timeout"] = "10s";
       source["recovery"]["timeout"] = "15s";
       auto config = TmxIpConfiguration::parse(source);
+      REQUIRE(config.m_country == Countries::AU);
+      REQUIRE(config.m_sampling == milliseconds(250));
       REQUIRE(config.m_is_logging_messages);
       REQUIRE(config.m_socket_options.m_receive_buffer_size == 1048576);
       REQUIRE(config.m_retry_interval == milliseconds(250));
@@ -117,6 +123,9 @@ TEST_SUITE("TmxIpConfiguration") {
     auto section = source;
     auto key = std::string("retry_interval");
     SUBCASE("retry_interval") {}
+    SUBCASE("sampling") {
+      key = "sampling";
+    }
     SUBCASE("feed_timeout") {
       key = "feed_timeout";
     }
@@ -157,6 +166,13 @@ TEST_SUITE("TmxIpConfiguration") {
           REQUIRE_THROWS_AS(
             TmxIpConfiguration::parse(source), std::runtime_error);
         }
+      }
+    }
+    SUBCASE("country") {
+      for(auto country : {"", "ZZ", "INVALID"}) {
+        source["country"] = country;
+        REQUIRE_THROWS_AS(
+          TmxIpConfiguration::parse(source), std::runtime_error);
       }
     }
     SUBCASE("logging") {

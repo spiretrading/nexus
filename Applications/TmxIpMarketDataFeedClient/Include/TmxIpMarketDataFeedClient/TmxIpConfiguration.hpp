@@ -8,6 +8,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
+#include "Nexus/Definitions/StandardCountries.hpp"
 
 namespace Nexus {
 
@@ -49,11 +50,17 @@ namespace Nexus {
     /** Whether to log complete STAMP messages. */
     bool m_is_logging_messages;
 
+    /** The country whose market data registry receives published updates. */
+    CountryCode m_country;
+
     /** Identically sequenced copies of the live stream. */
     std::vector<TmxIpFeed> m_feeds;
 
-    /** The recovery endpoints for the live feed. */
-    boost::optional<TmxIpRecoveryConfiguration> m_recovery;
+    /** The socket options for live and recovered packets. */
+    Beam::MulticastSocketOptions m_socket_options;
+
+    /** The interval between publishing buffered market data updates. */
+    boost::posix_time::time_duration m_sampling;
 
     /** How long a stalled feed participates in gap confirmation. */
     boost::posix_time::time_duration m_feed_timeout;
@@ -64,8 +71,8 @@ namespace Nexus {
     /** The interval between opportunities to retry or continue recovery. */
     boost::posix_time::time_duration m_retry_interval;
 
-    /** The socket options for live and recovered packets. */
-    Beam::MulticastSocketOptions m_socket_options;
+    /** The recovery endpoints for the live feed. */
+    boost::optional<TmxIpRecoveryConfiguration> m_recovery;
 
     /** Parses the application's configuration. */
     static TmxIpConfiguration parse(const YAML::Node& config);
@@ -136,6 +143,12 @@ namespace Details {
       auto configuration = TmxIpConfiguration();
       configuration.m_is_logging_messages =
         Beam::extract<bool>(config, "enable_logging", false);
+      configuration.m_country =
+        parse_country_code(Beam::extract<std::string>(config, "country", "CA"));
+      if(!configuration.m_country) {
+        boost::throw_with_location(
+          std::runtime_error("Invalid market data country."));
+      }
       auto feeds = Beam::get_node(config, "feeds");
       if(!feeds.IsSequence() || feeds.size() == 0) {
         boost::throw_with_location(
@@ -144,34 +157,38 @@ namespace Details {
       for(auto feed : feeds) {
         configuration.m_feeds.push_back(TmxIpFeed::parse(feed));
       }
-      if(auto recovery = config["recovery"]) {
-        configuration.m_recovery = TmxIpRecoveryConfiguration::parse(recovery);
-      }
-      static const auto MAXIMUM_DURATION =
-        boost::posix_time::time_duration(boost::date_time::max_date_time);
-      configuration.m_feed_timeout =
-        Beam::extract<boost::posix_time::time_duration>(config,
-          "feed_timeout", boost::posix_time::seconds(1),
-          boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
-      configuration.m_retry_interval =
-        Beam::extract<boost::posix_time::time_duration>(config,
-          "retry_interval", boost::posix_time::seconds(1),
-          boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
-      configuration.m_gap_timeout =
-        Beam::extract<boost::posix_time::time_duration>(config,
-          "gap_timeout", boost::posix_time::seconds(1),
-          boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
       static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE =
         std::size_t(128 * 1024 * 1024);
       configuration.m_socket_options.m_receive_buffer_size =
-        Beam::extract<std::size_t>(config, "receive_buffer",
-          DEFAULT_RECEIVE_BUFFER_SIZE, std::size_t(1),
+        Beam::extract<std::size_t>(
+          config, "receive_buffer", DEFAULT_RECEIVE_BUFFER_SIZE, std::size_t(1),
           std::size_t(std::numeric_limits<int>::max()));
       configuration.m_socket_options.m_enable_loopback = false;
       static constexpr auto MAXIMUM_DATAGRAM_SIZE =
         std::size_t(std::numeric_limits<std::uint16_t>::max());
       configuration.m_socket_options.m_max_datagram_size =
         MAXIMUM_DATAGRAM_SIZE;
+      static const auto MAXIMUM_DURATION =
+        boost::posix_time::time_duration(boost::date_time::max_date_time);
+      configuration.m_sampling =
+        Beam::extract<boost::posix_time::time_duration>(
+          config, "sampling", boost::posix_time::milliseconds(100),
+          boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
+      configuration.m_feed_timeout =
+        Beam::extract<boost::posix_time::time_duration>(
+          config, "feed_timeout", boost::posix_time::seconds(1),
+          boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
+      configuration.m_gap_timeout =
+        Beam::extract<boost::posix_time::time_duration>(
+          config, "gap_timeout", boost::posix_time::seconds(1),
+          boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
+      configuration.m_retry_interval =
+        Beam::extract<boost::posix_time::time_duration>(
+          config, "retry_interval", boost::posix_time::seconds(1),
+          boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
+      if(auto recovery = config["recovery"]) {
+        configuration.m_recovery = TmxIpRecoveryConfiguration::parse(recovery);
+      }
       return configuration;
     }, std::runtime_error("Unable to parse the TMX IP configuration."));
   }
