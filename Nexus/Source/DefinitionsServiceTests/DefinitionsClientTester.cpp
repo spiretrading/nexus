@@ -241,8 +241,10 @@ TEST_SUITE("DefinitionsClient") {
         return client.load_trading_schedule();
       }, schedule,
       [&] (const auto& result) {
-        auto e1 = schedule.find(date(2025, 7, 1), ASX);
-        REQUIRE(e1 == events);
+        auto events = result.find(time_from_string("2025-07-01 00:00:00"), ASX);
+        REQUIRE(events == std::vector<TradingSchedule::Event>({
+          TradingSchedule::Event(
+            "O", time_from_string("2025-06-30 15:30:00"))}));
       });
   }
 }
