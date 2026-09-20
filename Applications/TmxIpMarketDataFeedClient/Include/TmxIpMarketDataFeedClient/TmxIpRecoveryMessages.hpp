@@ -4,6 +4,7 @@
 #include <charconv>
 #include <format>
 #include <Beam/IO/Buffer.hpp>
+#include <boost/date_time/posix_time/posix_time.hpp>
 #include "TmxIpMarketDataFeedClient/TmxIpPacket.hpp"
 
 namespace Nexus {
@@ -137,6 +138,31 @@ namespace Nexus {
 
     /** Parses a complete retransmission error control packet. */
     static TmxIpRecoveryError parse(const TmxIpPacket& packet);
+  };
+
+  /** Advertises the recovery server's availability and request limit. */
+  struct TmxIpRecoveryHeartbeat {
+
+    /** The control message's type code. */
+    static constexpr auto TYPE = std::string_view("HBEAT");
+
+    /** The control payload length. */
+    static constexpr auto LENGTH = std::size_t(77);
+
+    /** The UTC time the heartbeat was sent. */
+    boost::posix_time::ptime m_timestamp;
+
+    /** The hostname, referencing the packet's payload. */
+    std::string_view m_host;
+
+    /** The service version, referencing the packet's payload. */
+    std::string_view m_version;
+
+    /** The maximum number of packets permitted in a request. */
+    std::uint32_t m_maximum_count;
+
+    /** Parses a recovery server heartbeat. */
+    static TmxIpRecoveryHeartbeat parse(const TmxIpPacket& packet);
   };
 
   namespace Details {
@@ -292,6 +318,59 @@ namespace Nexus {
     error.m_description = Details::parse_tmx_ip_recovery_text(source);
     return error;
   }
+  inline TmxIpRecoveryHeartbeat TmxIpRecoveryHeartbeat::parse(
+      const TmxIpPacket& packet) {
+    auto source = Details::parse_tmx_ip_control_payload(packet, TYPE, LENGTH);
+    auto is_invalid = !source.starts_with("[HEARTBEAT ") ||
+      source[15] != '-' || source[18] != '-' || source[21] != ' ' ||
+      source[24] != ':' || source[27] != ':' || source[30] != '-' ||
+      source[43] != '.' || source[50] != ']';
+    if(is_invalid) {
+      boost::throw_with_location(
+        TmxIpParserException("Invalid TMX IP recovery heartbeat."));
+    }
+    auto year = Details::parse_tmx_ip_recovery_number(source.substr(11, 4));
+    auto month = Details::parse_tmx_ip_recovery_number(source.substr(16, 2));
+    auto day = Details::parse_tmx_ip_recovery_number(source.substr(19, 2));
+    auto hour = Details::parse_tmx_ip_recovery_number(source.substr(22, 2));
+    auto minute = Details::parse_tmx_ip_recovery_number(source.substr(25, 2));
+    auto second = Details::parse_tmx_ip_recovery_number(source.substr(28, 2));
+    try {
+      boost::gregorian::date(year, month, day);
+    } catch(const std::exception&) {
+      boost::throw_with_location(
+        TmxIpParserException("Invalid TMX IP recovery heartbeat date."));
+    }
+    if(hour > 23 || minute > 59 || second > 59) {
+      boost::throw_with_location(
+        TmxIpParserException("Invalid TMX IP recovery heartbeat time."));
+    }
+    auto seconds = std::uint64_t();
+    auto text = source.substr(31, 12);
+    auto [end, error] =
+      std::from_chars(text.data(), text.data() + text.size(), seconds);
+    constexpr auto MAXIMUM_SECONDS = std::uint64_t(253402300799);
+    if(error != std::errc() || end != text.data() + text.size() ||
+        seconds > MAXIMUM_SECONDS) {
+      boost::throw_with_location(
+        TmxIpParserException("Invalid TMX IP recovery heartbeat timestamp."));
+    }
+    auto microseconds =
+      Details::parse_tmx_ip_recovery_number(source.substr(44, 6));
+    static const auto EPOCH =
+      boost::posix_time::ptime(boost::gregorian::date(1970, 1, 1));
+    auto heartbeat = TmxIpRecoveryHeartbeat();
+    heartbeat.m_timestamp = EPOCH + boost::posix_time::seconds(seconds) +
+      boost::posix_time::microseconds(microseconds);
+    heartbeat.m_host =
+      Details::parse_tmx_ip_recovery_text(source.substr(51, 8));
+    heartbeat.m_version =
+      Details::parse_tmx_ip_recovery_text(source.substr(59, 4));
+    heartbeat.m_maximum_count =
+      Details::parse_tmx_ip_recovery_number(source.substr(63, 9));
+    return heartbeat;
+  }
+
 }
 
 #endif

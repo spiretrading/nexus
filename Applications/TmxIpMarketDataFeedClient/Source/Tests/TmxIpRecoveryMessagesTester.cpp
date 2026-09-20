@@ -238,4 +238,44 @@ TEST_SUITE("TmxIpRecoveryMessages") {
     REQUIRE(std::string_view(message->get_data(), message->get_size()) ==
       "\x01\x1e" "1=H\x1c\x1e" "55=ABX\x1d");
   }
+  TEST_CASE("recovery_heartbeat") {
+    auto source = encode_control(
+      "HBEAT[HEARTBEAT 2012-10-10 03:25:02-001349853902.844623]"
+      "TDOTDR  00.1000010000");
+    auto heartbeat = TmxIpRecoveryHeartbeat::parse(TmxIpPacket::parse(source));
+    REQUIRE(heartbeat.m_timestamp ==
+      boost::posix_time::time_from_string("2012-10-10 07:25:02.844623"));
+    REQUIRE(heartbeat.m_host == "TDOTDR");
+    REQUIRE(heartbeat.m_version == "00.1");
+    REQUIRE(heartbeat.m_maximum_count == 10000);
+  }
+
+  TEST_CASE("malformed_recovery_heartbeat") {
+    auto payload = std::string(
+      "HBEAT[HEARTBEAT 2012-10-10 03:25:02-001349853902.844623]"
+      "TDOTDR  00.1000010000");
+    constexpr auto PREFIX_SIZE = TmxIpRecoveryHeartbeat::TYPE.size();
+    SUBCASE("truncated") {
+      payload.pop_back();
+    }
+    SUBCASE("delimiter") {
+      payload[PREFIX_SIZE + 30] = ' ';
+    }
+    SUBCASE("date") {
+      payload.replace(PREFIX_SIZE + 16, 2, "00");
+    }
+    SUBCASE("time") {
+      payload.replace(PREFIX_SIZE + 22, 2, "99");
+    }
+    SUBCASE("epoch") {
+      payload.replace(PREFIX_SIZE + 31, 12, "999999999999");
+    }
+    SUBCASE("limit") {
+      payload.back() = 'x';
+    }
+    auto source = encode_control(payload);
+    REQUIRE_THROWS_AS(TmxIpRecoveryHeartbeat::parse(TmxIpPacket::parse(source)),
+      TmxIpParserException);
+  }
+
 }
