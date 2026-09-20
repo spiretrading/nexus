@@ -33,6 +33,37 @@ password: TESTSECRET
 }
 
 TEST_SUITE("AsxTradeItchConfiguration") {
+  TEST_CASE("gap_timeout") {
+    auto source = make_config();
+    REQUIRE(AsxTradeItchConfiguration::parse(source).m_gap_timeout ==
+      seconds(5));
+    source["gap_timeout"] = "20ms";
+    auto config = AsxTradeItchConfiguration::parse(source);
+    REQUIRE(config.m_gap_timeout == milliseconds(20));
+    REQUIRE(config.get_timer_interval() == milliseconds(20));
+    for(auto value : {"0s", "-1s", "infinity", "not-a-date-time"}) {
+      source["gap_timeout"] = value;
+      REQUIRE_THROWS_AS(
+        AsxTradeItchConfiguration::parse(source), std::runtime_error);
+    }
+  }
+
+  TEST_CASE("optional_recovery") {
+    auto source = make_config();
+    source.remove("rewind");
+    SUBCASE("without_snapshot") {
+      auto config = AsxTradeItchConfiguration::parse(source);
+      REQUIRE_FALSE(config.m_rewind.has_value());
+      REQUIRE_FALSE(config.m_glimpse.has_value());
+    }
+    SUBCASE("with_snapshot") {
+      source["glimpse"] = make_glimpse();
+      auto config = AsxTradeItchConfiguration::parse(source);
+      REQUIRE_FALSE(config.m_rewind.has_value());
+      REQUIRE(config.m_glimpse.has_value());
+    }
+  }
+
   TEST_CASE("parse") {
     auto source = make_config();
     SUBCASE("defaults") {
@@ -53,10 +84,10 @@ TEST_SUITE("AsxTradeItchConfiguration") {
       REQUIRE(config.m_feeds[0].m_address.get_port() == 21001);
       REQUIRE(config.m_feeds[0].m_interface.get_host() == "10.0.0.1");
       REQUIRE(config.m_feeds[0].m_interface.get_port() == 21001);
-      REQUIRE(config.m_rewind.m_address.get_host() == "203.6.253.126");
-      REQUIRE(config.m_rewind.m_address.get_port() == 24001);
-      REQUIRE(config.m_rewind.m_interface.get_host() == "10.0.0.1");
-      REQUIRE(config.m_rewind.m_interface.get_port() == 0);
+      REQUIRE(config.m_rewind->m_address.get_host() == "203.6.253.126");
+      REQUIRE(config.m_rewind->m_address.get_port() == 24001);
+      REQUIRE(config.m_rewind->m_interface.get_host() == "10.0.0.1");
+      REQUIRE(config.m_rewind->m_interface.get_port() == 0);
       REQUIRE(!config.m_glimpse);
       REQUIRE(
         config.m_socket_options.m_receive_buffer_size == 128 * 1024 * 1024);
@@ -150,7 +181,7 @@ interface: "10.0.0.2:21101"
     }
     SUBCASE("missing_field") {
       for(auto name : {"partition", "sampling", "venue",
-          "disseminating_venue", "feeds", "rewind"}) {
+          "disseminating_venue", "feeds"}) {
         source = make_config();
         source.remove(name);
         REQUIRE_THROWS_AS(

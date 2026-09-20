@@ -68,15 +68,20 @@ int main(int argc, const char** argv) {
       feed_clients.push_back(
         make_protocol_client(feed, configuration.m_socket_options));
     }
-    auto recovery_client = try_or_nest([&] {
-      auto channel = std::make_unique<UdpSocketChannel>(
-        configuration.m_rewind.m_address, configuration.m_rewind.m_interface,
-        configuration.m_socket_options);
-      auto reader = &channel->get_reader();
-      return std::make_unique<ApplicationRecoveryClient>(
-        std::make_unique<ApplicationRecoveryChannel>(
-          std::move(channel), reader));
-    }, std::runtime_error("Unable to open the ASX Trade ITCH rewind socket."));
+    auto recovery_client =
+      optional<std::unique_ptr<ApplicationRecoveryClient>>();
+    if(auto rewind = configuration.m_rewind) {
+      recovery_client = try_or_nest([&] {
+        auto channel = std::make_unique<UdpSocketChannel>(
+          rewind->m_address, rewind->m_interface,
+          configuration.m_socket_options);
+        auto reader = &channel->get_reader();
+        return std::make_unique<ApplicationRecoveryClient>(
+          std::make_unique<ApplicationRecoveryChannel>(
+            std::move(channel), reader));
+      }, std::runtime_error(
+        "Unable to open the ASX Trade ITCH rewind socket."));
+    }
     auto glimpse_client =
       optional<std::unique_ptr<ApplicationGlimpseClient>>();
     if(configuration.m_glimpse) {
@@ -89,8 +94,9 @@ int main(int argc, const char** argv) {
       }, std::runtime_error("Unable to log in to ASX Trade ITCH Glimpse."));
     }
     auto client = AsxTradeItchClient(configuration.m_feed_timeout,
-      configuration.m_request_timeout, std::move(feed_clients),
-      std::move(recovery_client), std::move(glimpse_client),
+      configuration.m_gap_timeout, configuration.m_request_timeout,
+      std::move(feed_clients), std::move(recovery_client),
+      std::move(glimpse_client),
       std::make_unique<LocalTimeClient>(),
       std::make_unique<LiveTimer>(configuration.get_timer_interval()));
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
