@@ -1,7 +1,3 @@
-#include <atomic>
-#include <iomanip>
-#include <iostream>
-#include <sstream>
 #include <thread>
 #include <Beam/IO/QueuedReader.hpp>
 #include <Beam/IO/WrapperChannel.hpp>
@@ -12,8 +8,7 @@
 #include <Beam/TimeService/LocalTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/ReportException.hpp>
-#include "TmxIpMarketDataFeedClient/TmxIpClient.hpp"
-#include "TmxIpMarketDataFeedClient/TmxIpConfiguration.hpp"
+#include "TmxIpMarketDataFeedClient/TmxIpMarketDataFeedClient.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
@@ -32,24 +27,6 @@ namespace {
     TmxIpProtocolClient<std::unique_ptr<ApplicationRecoveryChannel>>;
   using ApplicationRecoveryClient = TmxIpRecoveryClient<TcpSocketChannel,
     std::unique_ptr<ApplicationRecoveryProtocolClient>, LiveTimer>;
-
-  void log(const StampMessage& message) {
-    auto out = std::stringstream();
-    auto write_section = [&] (
-        std::string_view name, const StampMessage::Section& section) {
-      out << " (" << name;
-      for(auto& field : section) {
-        out << " (" << field.m_identifier << ' ' << field.m_index << ' ' <<
-          std::quoted(field.m_value) << ')';
-      }
-      out << ')';
-    };
-    out << "(stamp";
-    write_section("control", message.m_control_header);
-    write_section("business", message.m_business_content);
-    out << ")\n";
-    std::cout << out.str() << std::flush;
-  }
 }
 
 int main(int argc, const char** argv) {
@@ -96,27 +73,13 @@ int main(int argc, const char** argv) {
       std::move(feed_clients), std::move(recovery_client),
       std::make_unique<LocalTimeClient>(),
       std::make_unique<LiveTimer>(configuration.m_retry_interval));
-    auto exception = std::exception_ptr();
-    auto is_finished = std::atomic_bool(false);
-    auto reader = RoutineHandler(spawn([&] {
-      try {
-        while(true) {
-          auto message = client.read();
-          if(configuration.m_is_logging_messages) {
-            log(message);
-          }
-        }
-      } catch(const std::exception&) {
-        exception = std::current_exception();
-      }
-      is_finished = true;
-    }));
-    while(!is_finished && !received_kill_event()) {
+    auto feed_client = TmxIpMarketDataFeedClient(configuration, &client);
+    while(!feed_client.is_finished() && !received_kill_event()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));
     }
     auto is_interrupted = received_kill_event();
-    client.close();
-    reader.wait();
+    feed_client.close();
+    auto exception = feed_client.get_exception();
     if(!is_interrupted && exception) {
       std::rethrow_exception(exception);
     }

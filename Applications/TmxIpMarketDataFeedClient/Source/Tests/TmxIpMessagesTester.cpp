@@ -392,8 +392,7 @@ TEST_SUITE("TmxIpMessages") {
     REQUIRE(result == 2);
     REQUIRE_NOTHROW(validate(message));
     source = encode_message("5=NoClass");
-    REQUIRE_THROWS_AS(validate(StampMessage::parse(source)),
-      TmxIpParserException);
+    REQUIRE_THROWS_AS(
+      validate(StampMessage::parse(source)), TmxIpParserException);
   }
-
 }
