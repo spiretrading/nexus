@@ -1,0 +1,359 @@
+#include <format>
+#include <Beam/TimeService/TriggerTimer.hpp>
+#include <doctest/doctest.h>
+#include "TmxIpMarketDataFeedClient/TmxIpClient.hpp"
+
+using namespace Beam;
+using namespace Nexus;
+
+namespace {
+  struct ProtocolClient {
+    Queue<std::string> m_packets;
+    std::string m_packet;
+
+    TmxIpPacket read() {
+      m_packet = m_packets.pop();
+      return TmxIpPacket::parse(m_packet);
+    }
+
+    void close() {
+      m_packets.close(std::make_exception_ptr(EndOfFileException()));
+    }
+  };
+
+  struct RecoveryClient {
+    ProtocolClient m_protocol_client;
+    Queue<TmxIpRecoveryRequest> m_requests;
+    Queue<TmxIpRecoveryResult> m_results;
+    std::atomic_uint32_t m_maximum_count = 10000;
+
+    std::uint32_t get_maximum_count() const {
+      return m_maximum_count;
+    }
+
+    TmxIpRecoveryResult request(const TmxIpRecoveryRequest& request) {
+      m_requests.push(request);
+      return m_results.pop();
+    }
+
+    TmxIpPacket read() {
+      return m_protocol_client.read();
+    }
+
+    void close() {
+      m_protocol_client.close();
+      m_requests.close();
+      m_results.close();
+    }
+  };
+
+  struct Fixture {
+    ProtocolClient m_protocol_client;
+    RecoveryClient m_recovery_client;
+    TriggerTimer m_timer;
+    TmxIpClient<ProtocolClient*, RecoveryClient*, TriggerTimer*> m_client;
+
+    Fixture()
+      : m_client(&m_protocol_client, &m_recovery_client, &m_timer) {}
+
+    void publish(std::uint32_t sequence, std::string_view payload,
+        TmxIpHeader::Continuation continuation, ProtocolClient& client) {
+      client.m_packets.push(std::format("{}{:04}{:09}CDF0{}  T {}{}",
+        TmxIpPacket::START, TmxIpHeader::LENGTH + payload.size(), sequence,
+        static_cast<int>(continuation), payload, TmxIpPacket::END));
+    }
+
+    void publish(std::uint32_t sequence, std::string_view symbol,
+        ProtocolClient& client) {
+      publish(sequence, std::format("\x01\x1e" "1=H\x1c\x1e" "55={}\x1d",
+        symbol), TmxIpHeader::Continuation::NONE, client);
+    }
+
+    void publish(std::uint32_t sequence, std::string_view symbol) {
+      publish(sequence, symbol, m_protocol_client);
+    }
+
+    void heartbeat(std::uint32_t sequence) {
+      auto payload = std::format(
+        "[HEARTBEAT 2012-10-10 03:25:02-001349853902.844623]"
+        "[LAST SENT {:09}-03:05:03-001349852703.441869]"
+        "[LAST HB   {:09}-03:24:02-001349853842.845443]"
+        "OCSA-CDF-1           ATDOTDR  00.1", sequence, sequence);
+      m_protocol_client.m_packets.push(std::format(
+        "{}{:04}         CDF00V T {}{}", TmxIpPacket::START,
+        TmxIpHeader::LENGTH + payload.size(), payload, TmxIpPacket::END));
+    }
+
+    void recover(std::uint32_t sequence, std::string_view symbol) {
+      publish(sequence, symbol, m_recovery_client.m_protocol_client);
+    }
+
+    void complete(const TmxIpRecoveryRequest& request) {
+      auto count = request.m_end_sequence - request.m_start_sequence + 1;
+      m_recovery_client.m_results.push(TmxIpRecoveryResult(true,
+        TmxIpRecoveryResponse::Status::ACCEPTED, request.m_start_sequence,
+        request.m_end_sequence, count, count, ""));
+      flush_pending_routines();
+    }
+
+    TmxIpRecoveryRequest require_request(
+        std::uint32_t start, std::uint32_t end) {
+      auto request = m_recovery_client.m_requests.pop();
+      REQUIRE(request.m_start_sequence == start);
+      REQUIRE(request.m_end_sequence == end);
+      return request;
+    }
+
+    void require_symbol(std::string_view expected) {
+      auto message = m_client.read();
+      auto symbol = message.m_business_content.find(55);
+      REQUIRE(symbol.has_value());
+      REQUIRE(symbol->m_value == expected);
+    }
+  };
+}
+
+TEST_SUITE("TmxIpClient") {
+  TEST_CASE("message_sequence") {
+    auto fixture = Fixture();
+    fixture.publish(1, "ABX");
+    auto message = fixture.m_client.read();
+    fixture.publish(1, "DUPLICATE");
+    fixture.publish(2, "XYZ");
+    flush_pending_routines();
+    auto symbol = message.m_business_content.find(55);
+    REQUIRE(symbol.has_value());
+    REQUIRE(symbol->m_value == "ABX");
+    fixture.require_symbol("XYZ");
+    REQUIRE(!fixture.m_recovery_client.m_requests.try_pop());
+  }
+
+  TEST_CASE("gap_recovery") {
+    auto fixture = Fixture();
+    fixture.publish(1, "ONE");
+    fixture.require_symbol("ONE");
+    fixture.publish(4, "FOUR");
+    auto request = fixture.require_request(2, 3);
+    fixture.publish(5, "FIVE");
+    fixture.recover(3, "THREE");
+    fixture.recover(2, "TWO");
+    fixture.require_symbol("TWO");
+    fixture.require_symbol("THREE");
+    fixture.require_symbol("FOUR");
+    fixture.require_symbol("FIVE");
+    fixture.publish(6, "SIX");
+    fixture.require_symbol("SIX");
+    fixture.complete(request);
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    REQUIRE(!fixture.m_recovery_client.m_requests.try_pop());
+  }
+
+
+  TEST_CASE("partial_recovery") {
+    auto fixture = Fixture();
+    fixture.m_recovery_client.m_maximum_count = 2;
+    fixture.publish(1, "ONE");
+    fixture.require_symbol("ONE");
+    fixture.publish(6, "SIX");
+    auto request = fixture.require_request(2, 3);
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    REQUIRE(!fixture.m_recovery_client.m_requests.try_pop());
+    fixture.recover(2, "TWO");
+    fixture.require_symbol("TWO");
+    fixture.complete(request);
+    fixture.publish(7, "SEVEN");
+    flush_pending_routines();
+    REQUIRE(!fixture.m_recovery_client.m_requests.try_pop());
+    fixture.m_timer.trigger();
+    request = fixture.require_request(3, 4);
+    fixture.recover(4, "FOUR");
+    fixture.recover(3, "THREE");
+    fixture.require_symbol("THREE");
+    fixture.require_symbol("FOUR");
+    fixture.complete(request);
+    fixture.m_timer.trigger();
+    request = fixture.require_request(5, 5);
+    fixture.recover(5, "FIVE");
+    fixture.require_symbol("FIVE");
+    fixture.require_symbol("SIX");
+    fixture.require_symbol("SEVEN");
+    fixture.complete(request);
+  }
+
+
+  TEST_CASE("fragment_recovery") {
+    auto fixture = Fixture();
+    auto first = std::uint32_t(1);
+    auto middle = std::uint32_t(2);
+    auto last = std::uint32_t(3);
+    SUBCASE("consecutive") {}
+    SUBCASE("sequence_wrap") {
+      first = 999999998;
+      middle = 999999999;
+      last = 1;
+    }
+    fixture.publish(first, "\x01\x1e" "1=H",
+      TmxIpHeader::Continuation::FIRST, fixture.m_protocol_client);
+    fixture.publish(last, "X\x1d", TmxIpHeader::Continuation::LAST,
+      fixture.m_protocol_client);
+    auto request = fixture.require_request(middle, middle);
+    fixture.publish(middle, "\x1c\x1e" "55=AB",
+      TmxIpHeader::Continuation::MIDDLE,
+      fixture.m_recovery_client.m_protocol_client);
+    fixture.require_symbol("ABX");
+    fixture.complete(request);
+    fixture.publish(last + 1, "XYZ");
+    fixture.require_symbol("XYZ");
+  }
+
+
+  TEST_CASE("heartbeat_gap") {
+    auto fixture = Fixture();
+    fixture.heartbeat(0);
+    flush_pending_routines();
+    REQUIRE(!fixture.m_recovery_client.m_requests.try_pop());
+    fixture.heartbeat(2);
+    auto request = fixture.require_request(1, 2);
+    fixture.recover(2, "TWO");
+    fixture.recover(1, "ONE");
+    fixture.require_symbol("ONE");
+    fixture.require_symbol("TWO");
+    fixture.complete(request);
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    REQUIRE(!fixture.m_recovery_client.m_requests.try_pop());
+  }
+
+
+  TEST_CASE("recovery_failure") {
+    auto fixture = Fixture();
+    fixture.publish(1, "ONE");
+    fixture.require_symbol("ONE");
+    fixture.publish(3, "THREE");
+    fixture.require_request(2, 2);
+    SUBCASE("rejection") {
+      fixture.m_recovery_client.m_results.push(TmxIpRecoveryResult(false,
+        TmxIpRecoveryResponse::Status::REJECTED, 2, 2, 0, 0, "Rejected"));
+    }
+    SUBCASE("no_history") {
+      fixture.m_recovery_client.m_results.push(TmxIpRecoveryResult(true,
+        TmxIpRecoveryResponse::Status::ACCEPTED, 0, 0, 0, 0, "No history"));
+    }
+    SUBCASE("request_error") {
+      fixture.m_recovery_client.m_results.close(
+        std::make_exception_ptr(IOException("Request failed.")));
+    }
+    REQUIRE_THROWS_AS(fixture.m_client.read(), IOException);
+    fixture.publish(4, "FOUR");
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    REQUIRE_THROWS_AS(fixture.m_client.read(), IOException);
+    REQUIRE(!fixture.m_recovery_client.m_requests.try_pop());
+  }
+
+
+  TEST_CASE("transport_failure") {
+    auto fixture = Fixture();
+    fixture.publish(1, "ONE");
+    fixture.require_symbol("ONE");
+    auto error = std::make_exception_ptr(IOException("Connection failed."));
+    SUBCASE("live_feed") {
+      fixture.m_protocol_client.m_packets.close(error);
+    }
+    SUBCASE("recovery_feed") {
+      fixture.m_recovery_client.m_protocol_client.m_packets.close(error);
+    }
+    SUBCASE("timer") {
+      fixture.m_timer.fail();
+    }
+    REQUIRE_THROWS_AS(fixture.m_client.read(), IOException);
+  }
+
+
+  TEST_CASE("malformed_message") {
+    auto fixture = Fixture();
+    fixture.publish(1, "ONE");
+    fixture.require_symbol("ONE");
+    SUBCASE("live") {
+      fixture.publish(2, "not STAMP", TmxIpHeader::Continuation::NONE,
+        fixture.m_protocol_client);
+    }
+    SUBCASE("recovery") {
+      fixture.publish(3, "THREE");
+      fixture.require_request(2, 2);
+      fixture.publish(2, "not STAMP", TmxIpHeader::Continuation::NONE,
+        fixture.m_recovery_client.m_protocol_client);
+    }
+    SUBCASE("assembly") {
+      fixture.publish(2, "\x01\x1e" "1=H", TmxIpHeader::Continuation::FIRST,
+        fixture.m_protocol_client);
+      fixture.publish(3, "missing delimiter", TmxIpHeader::Continuation::LAST,
+        fixture.m_protocol_client);
+    }
+    REQUIRE_THROWS_AS(fixture.m_client.read(), StampParserException);
+    fixture.publish(4, "FOUR");
+    flush_pending_routines();
+    REQUIRE_THROWS_AS(fixture.m_client.read(), StampParserException);
+  }
+
+
+  TEST_CASE("malformed_packet") {
+    auto fixture = Fixture();
+    fixture.publish(1, "ONE");
+    fixture.require_symbol("ONE");
+    SUBCASE("framing") {
+      fixture.m_protocol_client.m_packets.push("not a packet");
+    }
+    SUBCASE("heartbeat") {
+      fixture.m_protocol_client.m_packets.push(
+        "\x02" "0022         CDF00V T \x03");
+    }
+    fixture.publish(3, "THREE");
+    auto request = fixture.require_request(2, 2);
+    fixture.recover(2, "TWO");
+    fixture.require_symbol("TWO");
+    fixture.require_symbol("THREE");
+    fixture.complete(request);
+  }
+
+
+  TEST_CASE("close") {
+    auto fixture = Fixture();
+    SUBCASE("idle") {}
+    SUBCASE("request") {
+      fixture.publish(1, "ONE");
+      fixture.require_symbol("ONE");
+      fixture.publish(3, "THREE");
+      fixture.require_request(2, 2);
+    }
+    SUBCASE("retry") {
+      fixture.publish(1, "ONE");
+      fixture.require_symbol("ONE");
+      fixture.publish(3, "THREE");
+      fixture.complete(fixture.require_request(2, 2));
+    }
+    fixture.m_client.close();
+    REQUIRE_THROWS_AS(fixture.m_client.read(), EndOfFileException);
+  }
+
+
+  TEST_CASE("zero_request_limit") {
+    auto fixture = Fixture();
+    fixture.m_recovery_client.m_maximum_count = 0;
+    fixture.publish(1, "ONE");
+    fixture.require_symbol("ONE");
+    fixture.publish(3, "THREE");
+    flush_pending_routines();
+    REQUIRE(!fixture.m_recovery_client.m_requests.try_pop());
+    fixture.m_recovery_client.m_maximum_count = 1;
+    fixture.m_timer.trigger();
+    auto request = fixture.require_request(2, 2);
+    fixture.recover(2, "TWO");
+    fixture.require_symbol("TWO");
+    fixture.require_symbol("THREE");
+    fixture.complete(request);
+  }
+
+}
