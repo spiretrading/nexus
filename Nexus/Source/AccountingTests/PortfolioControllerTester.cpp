@@ -202,6 +202,12 @@ TEST_SUITE("PortfolioController") {
     auto order_queue = std::make_shared<Queue<std::shared_ptr<Order>>>();
     auto controller = PortfolioController(
       &portfolio, fixture.m_market_data_client, order_queue);
+    auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
+    controller.get_publisher().monitor(updates);
+    auto update1 = updates->pop();
+    REQUIRE(update1.m_inventory.m_position.m_ticker == TST);
+    REQUIRE(update1.m_inventory.m_position.m_quantity == 50);
+    REQUIRE(update1.m_inventory.m_position.m_cost_basis == 50 * Money::CENT);
     auto fields =
       make_limit_order_fields(TST, CAD, Side::BID, "TSX", 100, Money::ONE);
     auto info = OrderInfo(fields, 1, false, timestamp);
@@ -210,12 +216,6 @@ TEST_SUITE("PortfolioController") {
     fill(*order, 100, timestamp + seconds(2));
     order_queue->push(order);
     order_queue->close();
-    auto updates = std::make_shared<Queue<PortfolioUpdateEntry>>();
-    controller.get_publisher().monitor(updates);
-    auto update1 = updates->pop();
-    REQUIRE(update1.m_inventory.m_position.m_ticker == TST);
-    REQUIRE(update1.m_inventory.m_position.m_quantity == 50);
-    REQUIRE(update1.m_inventory.m_position.m_cost_basis == 50 * Money::CENT);
     auto update2 = updates->pop();
     REQUIRE(update2.m_inventory.m_position.m_ticker == TST);
     REQUIRE(update2.m_inventory.m_position.m_quantity == 150);

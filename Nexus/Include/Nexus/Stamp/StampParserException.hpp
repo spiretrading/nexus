@@ -4,7 +4,7 @@
 
 namespace Nexus {
 
-  /** Exception used to indicate that a parsing operation failed. */
+  /** Indicates that parsing a STAMP message failed. */
   class StampParserException : public std::runtime_error {
     public:
       using std::runtime_error::runtime_error;
@@ -14,7 +14,7 @@ namespace Nexus {
   };
 
   inline StampParserException::StampParserException()
-    : StampParserException("Operation failed") {}
+    : StampParserException("Invalid STAMP message.") {}
 }
 
 #endif

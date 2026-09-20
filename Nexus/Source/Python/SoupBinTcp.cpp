@@ -10,6 +10,14 @@ using namespace pybind11;
 void Nexus::Python::export_soup_bin_tcp(module& module) {
   register_exception<SoupBinTcpParserException>(
     module, "SoupBinTcpParserException", PyExc_ValueError);
+  export_soup_bin_tcp_packet(module);
+  export_login_accepted_packet(module);
+  export_login_rejected_packet(module);
+  export_login_request_packet(module);
+  export_soup_bin_tcp_client(module);
+}
+
+void Nexus::Python::export_soup_bin_tcp_packet(module& module) {
   class_<ToPythonSoupBinTcpPacket>(module, "SoupBinTcpPacket",
       "An owned SoupBinTCP packet with an independent bytes payload.").
     def_static("parse", [] (bytes source) {
@@ -25,19 +33,33 @@ void Nexus::Python::export_soup_bin_tcp(module& module) {
       auto payload = self.get().get_payload();
       return bytes(payload.data(), payload.size());
     });
+  module.def("make_client_heartbeat_packet", [] {
+    auto buffer = SharedBuffer();
+    make_client_heartbeat_packet(out(buffer));
+    return bytes(buffer.get_data(), buffer.get_size());
+  });
+}
+
+void Nexus::Python::export_login_accepted_packet(module& module) {
   class_<LoginAcceptedPacket>(module, "LoginAcceptedPacket").
     def_readonly("session", &LoginAcceptedPacket::m_session).
     def_readonly("sequence_number", &LoginAcceptedPacket::m_sequence_number);
-  class_<LoginRejectedPacket>(module, "LoginRejectedPacket").
-    def_readonly("reason", &LoginRejectedPacket::m_reason);
   module.def("parse_login_accepted_packet",
     [] (const ToPythonSoupBinTcpPacket& packet) {
       return parse_login_accepted_packet(packet.get());
     }, arg("packet"));
+}
+
+void Nexus::Python::export_login_rejected_packet(module& module) {
+  class_<LoginRejectedPacket>(module, "LoginRejectedPacket").
+    def_readonly("reason", &LoginRejectedPacket::m_reason);
   module.def("parse_login_rejected_packet",
     [] (const ToPythonSoupBinTcpPacket& packet) {
       return parse_login_rejected_packet(packet.get());
     }, arg("packet"));
+}
+
+void Nexus::Python::export_login_request_packet(module& module) {
   module.def("make_login_request_packet", [] (std::string_view username,
       std::string_view password, std::string_view session,
       std::uint64_t sequence_number) {
@@ -46,11 +68,9 @@ void Nexus::Python::export_soup_bin_tcp(module& module) {
       username, password, session, sequence_number, out(buffer));
     return bytes(buffer.get_data(), buffer.get_size());
   }, arg("username"), arg("password"), arg("session"), arg("sequence_number"));
-  module.def("make_client_heartbeat_packet", [] {
-    auto buffer = SharedBuffer();
-    make_client_heartbeat_packet(out(buffer));
-    return bytes(buffer.get_data(), buffer.get_size());
-  });
+}
+
+void Nexus::Python::export_soup_bin_tcp_client(module& module) {
   using Client =
     ToPythonSoupBinTcpClient<SoupBinTcpClient<Channel, std::shared_ptr<Timer>>>;
   export_soup_bin_tcp_client<Client>(module, "SoupBinTcpClient").
