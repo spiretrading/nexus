@@ -35,7 +35,7 @@ namespace Nexus {
   inline boost::optional<Beam::SharedBuffer> TmxIpMessageBuilder::add(
       const TmxIpPacket& packet) {
     auto& header = packet.m_header;
-    if(is_heartbeat(header)) {
+    if(!header.m_sequence) {
       return boost::none;
     }
     if(header.m_continuation == TmxIpHeader::Continuation::NONE) {

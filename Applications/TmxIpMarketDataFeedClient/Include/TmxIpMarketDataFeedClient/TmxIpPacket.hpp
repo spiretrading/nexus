@@ -28,7 +28,14 @@ namespace Nexus {
   };
 
   /** Parses a standalone business packet's STAMP message. */
-  inline StampMessage parse_message(const TmxIpPacket& packet);
+  inline StampMessage parse_message(const TmxIpPacket& packet) {
+    if(!packet.m_header.m_sequence ||
+        packet.m_header.m_continuation != TmxIpHeader::Continuation::NONE) {
+      boost::throw_with_location(
+        TmxIpParserException("Packet is not a complete STAMP message."));
+    }
+    return StampMessage::parse(packet.m_payload);
+  }
 
   inline TmxIpPacket TmxIpPacket::parse(std::string_view source) {
     constexpr auto FRAMING_LENGTH = sizeof(START) + sizeof(END);
@@ -48,15 +55,6 @@ namespace Nexus {
         TmxIpParserException("TMX IP packet length does not match header."));
     }
     return TmxIpPacket(header, source.substr(TmxIpHeader::LENGTH));
-  }
-
-  inline StampMessage parse_message(const TmxIpPacket& packet) {
-    if(is_heartbeat(packet.m_header) ||
-        packet.m_header.m_continuation != TmxIpHeader::Continuation::NONE) {
-      boost::throw_with_location(
-        TmxIpParserException("Packet is not a complete STAMP message."));
-    }
-    return StampMessage::parse(packet.m_payload);
   }
 }
 

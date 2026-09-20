@@ -35,7 +35,7 @@ namespace Nexus {
     /** The header and payload length, excluding STX and ETX. */
     std::uint16_t m_length;
 
-    /** The packet sequence number, absent for heartbeats. */
+    /** The packet sequence number. */
     boost::optional<std::uint32_t> m_sequence;
 
     /** The three-character service identifier. */
@@ -62,7 +62,14 @@ namespace Nexus {
   };
 
   /** Returns whether a header identifies a heartbeat. */
-  inline bool is_heartbeat(const TmxIpHeader& header);
+  inline bool is_heartbeat(const TmxIpHeader& header) {
+    return header.m_type == 'V';
+  }
+
+  /** Returns whether a header identifies a retransmission control packet. */
+  inline bool is_recovery_control(const TmxIpHeader& header) {
+    return !header.m_sequence && !is_heartbeat(header);
+  }
 
   inline TmxIpHeader TmxIpHeader::parse(std::string_view source) {
     if(source.size() < LENGTH) {
@@ -127,13 +134,18 @@ namespace Nexus {
         TmxIpParserException("Invalid TMX IP message type."));
     }
     header.m_type = type.front();
-    if(is_heartbeat(header) == header.m_sequence.has_value()) {
+    if(is_heartbeat(header) && header.m_sequence) {
       boost::throw_with_location(
         TmxIpParserException("TMX IP sequence does not match message type."));
     }
-    auto is_valid_retransmission = header.m_retransmission == '0' ||
-      header.m_retransmission == '1' ||
-      (is_heartbeat(header) && header.m_retransmission == ' ');
+    auto is_valid_retransmission = [&] {
+      if(is_recovery_control(header)) {
+        return header.m_retransmission == ' ';
+      }
+      return header.m_retransmission == '0' ||
+        header.m_retransmission == '1' ||
+        (is_heartbeat(header) && header.m_retransmission == ' ');
+    }();
     if(!is_valid_retransmission) {
       boost::throw_with_location(
         TmxIpParserException("Invalid TMX IP retransmission identifier."));
@@ -147,10 +159,6 @@ namespace Nexus {
     }
     header.m_exchange = exchange.front();
     return header;
-  }
-
-  inline bool is_heartbeat(const TmxIpHeader& header) {
-    return header.m_type == 'V';
   }
 }
 

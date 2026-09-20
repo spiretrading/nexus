@@ -90,6 +90,9 @@ namespace Nexus {
       }
       return;
     }
+    if(!header.m_sequence) {
+      return;
+    }
     auto sequence = *header.m_sequence;
     if(!m_expected_sequence) {
       m_expected_sequence = sequence;

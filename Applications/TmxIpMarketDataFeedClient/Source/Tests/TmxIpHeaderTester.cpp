@@ -71,4 +71,14 @@ TEST_SUITE("TmxIpHeader") {
       REQUIRE_THROWS_AS(TmxIpHeader::parse(source), TmxIpParserException);
     }
   }
+
+  TEST_CASE("recovery_control") {
+    auto header = TmxIpHeader::parse("0045         CDF 0  T ");
+    REQUIRE(!header.m_sequence.has_value());
+    REQUIRE(header.m_retransmission == ' ');
+    REQUIRE(header.m_type == ' ');
+    REQUIRE(header.m_service == "CDF");
+    REQUIRE(header.m_exchange == 'T');
+    REQUIRE(!is_heartbeat(header));
+  }
 }
