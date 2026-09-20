@@ -88,7 +88,7 @@ if [[ -n "$1" ]]; then
   stop_application "$target_dir"
 else
   status=0
-  for dir in "$PREFIX"; do
+  for dir in "${PREFIX}_"*; do
     if [[ -d "$dir" ]]; then
       result=0
       stop_application "$dir" || result=$?

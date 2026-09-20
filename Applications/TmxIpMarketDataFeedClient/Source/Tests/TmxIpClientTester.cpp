@@ -64,7 +64,7 @@ namespace {
   struct WithoutRecovery {};
 
   struct Fixture {
-    inline static const auto GAP_TIMEOUT = seconds(30);
+    inline static const auto GAP_TIMEOUT = seconds(1);
     std::vector<std::unique_ptr<ProtocolClient>> m_feed_clients;
     RecoveryClient m_recovery_client;
     FixedTimeClient m_time_client;
@@ -305,7 +305,7 @@ TEST_SUITE("TmxIpClient") {
     fixture.require_symbol("FOUR");
     fixture.require_symbol("FIVE");
     REQUIRE(log.m_output.str() ==
-      "(dropped 2026-Sep-20 12:00:30.000001 2 2 timeout)\n");
+      "(dropped 2026-Sep-20 12:00:01.000001 2 2 timeout)\n");
   }
 
   TEST_CASE("recovery_failure") {

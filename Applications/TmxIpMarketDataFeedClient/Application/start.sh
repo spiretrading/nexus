@@ -116,7 +116,7 @@ if [[ -n "$1" ]]; then
   start_application "$target_dir"
 else
   status=0
-  for dir in "$PREFIX"; do
+  for dir in "${PREFIX}_"*; do
     if [[ -d "$dir" ]]; then
       result=0
       start_application "$dir" || result=$?

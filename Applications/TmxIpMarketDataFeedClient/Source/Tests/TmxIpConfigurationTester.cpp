@@ -26,8 +26,8 @@ TEST_SUITE("TmxIpConfiguration") {
       REQUIRE(!config.m_is_logging_messages);
       REQUIRE(config.m_feeds.size() == 1);
       REQUIRE(config.m_recovery.has_value());
-      REQUIRE(config.m_feed_timeout == seconds(60));
-      REQUIRE(config.m_gap_timeout == seconds(30));
+      REQUIRE(config.m_feed_timeout == seconds(1));
+      REQUIRE(config.m_gap_timeout == seconds(1));
       REQUIRE(config.m_feeds.front().m_address.get_host() == "233.102.209.224");
       REQUIRE(config.m_feeds.front().m_address.get_port() == 60000);
       REQUIRE(config.m_feeds.front().m_interface.get_host() == "192.0.2.1");
@@ -67,8 +67,8 @@ TEST_SUITE("TmxIpConfiguration") {
       for(auto name : {"feeds"}) {
         source = make_config();
         source.remove(name);
-        REQUIRE_THROWS_AS(TmxIpConfiguration::parse(source),
-          std::runtime_error);
+        REQUIRE_THROWS_AS(
+          TmxIpConfiguration::parse(source), std::runtime_error);
       }
     }
     SUBCASE("addresses") {

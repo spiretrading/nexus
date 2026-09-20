@@ -68,8 +68,8 @@ Options:
   -p   Check a specific PID for the specified service
 
 Arguments:
-  service   Check only the specified service (tmx_ip)
-            If omitted, checks $PREFIX
+  service   Check only the specified service (for example, tmx_ip_cbbo_a1)
+            If omitted, checks ${PREFIX}_*
 EOF
 }
 
@@ -127,7 +127,7 @@ if [[ -n "$1" ]]; then
   check_application "$target_dir"
 else
   status=0
-  for dir in "$PREFIX"; do
+  for dir in "${PREFIX}_"*; do
     if [[ -d "$dir" ]]; then
       result=0
       check_application "$dir" || result=$?

@@ -151,7 +151,7 @@ namespace Details {
         boost::posix_time::time_duration(boost::date_time::max_date_time);
       configuration.m_feed_timeout =
         Beam::extract<boost::posix_time::time_duration>(config,
-          "feed_timeout", boost::posix_time::seconds(60),
+          "feed_timeout", boost::posix_time::seconds(1),
           boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
       configuration.m_retry_interval =
         Beam::extract<boost::posix_time::time_duration>(config,
@@ -159,7 +159,7 @@ namespace Details {
           boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
       configuration.m_gap_timeout =
         Beam::extract<boost::posix_time::time_duration>(config,
-          "gap_timeout", boost::posix_time::seconds(30),
+          "gap_timeout", boost::posix_time::seconds(1),
           boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
       static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE =
         std::size_t(128 * 1024 * 1024);

@@ -32,7 +32,7 @@ def main():
     args.address
   variables['username'] = args.username
   variables['admin_password'] = args.password
-  for folder in sorted(directory.glob('tmx_ip')):
+  for folder in sorted(directory.glob('tmx_ip_*')):
     default_path = folder / 'config.default.yml'
     if not default_path.is_file():
       continue
