@@ -12,6 +12,24 @@ namespace Nexus::Python {
   void export_mold_udp64(pybind11::module& module);
 
   /**
+   * Exports MoldUDP64 retransmission requests.
+   * @param module The module to export to.
+   */
+  void export_mold_udp64_request(pybind11::module& module);
+
+  /**
+   * Exports MoldUDP64 packets.
+   * @param module The module to export to.
+   */
+  void export_mold_udp64_packet(pybind11::module& module);
+
+  /**
+   * Exports the MoldUDP64 client using Beam channels.
+   * @param module The module to export to.
+   */
+  void export_mold_udp64_client(pybind11::module& module);
+
+  /**
    * Exports a MoldUdp64Client class.
    * @tparam T The type of client to export.
    * @param module The module to export to.

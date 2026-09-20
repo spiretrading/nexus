@@ -10,6 +10,12 @@ using namespace pybind11;
 void Nexus::Python::export_mold_udp64(module& module) {
   register_exception<MoldUdp64ParserException>(
     module, "MoldUdp64ParserException", PyExc_ValueError);
+  export_mold_udp64_request(module);
+  export_mold_udp64_packet(module);
+  export_mold_udp64_client(module);
+}
+
+void Nexus::Python::export_mold_udp64_request(module& module) {
   class_<MoldUdp64Request>(module, "MoldUdp64Request").
     def(init([] (bytes session, std::uint64_t sequence, std::uint16_t count) {
       auto value = static_cast<std::string_view>(session);
@@ -29,6 +35,9 @@ void Nexus::Python::export_mold_udp64(module& module) {
       encode(self, out(buffer));
       return bytes(buffer.get_data(), buffer.get_size());
     });
+}
+
+void Nexus::Python::export_mold_udp64_packet(module& module) {
   class_<ToPythonMoldUdp64Packet>(module, "MoldUdp64Packet",
       "An owned MoldUDP64 packet with independent bytes payloads.").
     def_static("parse", [] (bytes source) {
@@ -60,6 +69,9 @@ void Nexus::Python::export_mold_udp64(module& module) {
       }
       return payloads.attr("__iter__")();
     });
+}
+
+void Nexus::Python::export_mold_udp64_client(module& module) {
   using Client = ToPythonMoldUdp64Client<MoldUdp64Client<Channel>>;
   export_mold_udp64_client<Client>(module, "MoldUdp64Client").
     def(init<Channel>(), arg("channel"), keep_alive<1, 2>(),

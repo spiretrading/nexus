@@ -15,6 +15,7 @@
 #include "Nexus/Python/Queries.hpp"
 #include "Nexus/Python/RiskService.hpp"
 #include "Nexus/Python/SoupBinTcp.hpp"
+#include "Nexus/Python/Stamp.hpp"
 #include "Nexus/Python/TechnicalAnalysis.hpp"
 #include "Nexus/Python/TestEnvironment.hpp"
 

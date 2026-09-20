@@ -20,6 +20,7 @@ PYBIND11_MODULE(nexus, m) {
   export_order_execution_service(m);
   export_risk_service(m);
   export_soup_bin_tcp(m);
+  export_stamp(m);
   export_service_clients(m);
   export_backtester(m);
   export_test_environment(m);
