@@ -1,3 +1,4 @@
+#include <algorithm>
 #include <thread>
 #include <Beam/IO/QueuedReader.hpp>
 #include <Beam/IO/WrapperChannel.hpp>
@@ -70,9 +71,10 @@ int main(int argc, const char** argv) {
         }, std::move(protocol_client), init(recovery->m_timeout));
     }
     auto client = TmxIpClient(configuration.m_feed_timeout,
-      std::move(feed_clients), std::move(recovery_client),
-      std::make_unique<LocalTimeClient>(),
-      std::make_unique<LiveTimer>(configuration.m_retry_interval));
+      configuration.m_gap_timeout, std::move(feed_clients),
+      std::move(recovery_client), std::make_unique<LocalTimeClient>(),
+      std::make_unique<LiveTimer>(std::min({configuration.m_retry_interval,
+        configuration.m_feed_timeout, configuration.m_gap_timeout})));
     auto feed_client = TmxIpMarketDataFeedClient(configuration, &client);
     while(!feed_client.is_finished() && !received_kill_event()) {
       std::this_thread::sleep_for(std::chrono::milliseconds(100));

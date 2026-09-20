@@ -27,6 +27,7 @@ TEST_SUITE("TmxIpConfiguration") {
       REQUIRE(config.m_feeds.size() == 1);
       REQUIRE(config.m_recovery.has_value());
       REQUIRE(config.m_feed_timeout == seconds(60));
+      REQUIRE(config.m_gap_timeout == seconds(30));
       REQUIRE(config.m_feeds.front().m_address.get_host() == "233.102.209.224");
       REQUIRE(config.m_feeds.front().m_address.get_port() == 60000);
       REQUIRE(config.m_feeds.front().m_interface.get_host() == "192.0.2.1");
@@ -49,11 +50,13 @@ TEST_SUITE("TmxIpConfiguration") {
       source["enable_logging"] = true;
       source["receive_buffer"] = 1048576;
       source["retry_interval"] = "250ms";
+      source["gap_timeout"] = "10s";
       source["recovery"]["timeout"] = "15s";
       auto config = TmxIpConfiguration::parse(source);
       REQUIRE(config.m_is_logging_messages);
       REQUIRE(config.m_socket_options.m_receive_buffer_size == 1048576);
       REQUIRE(config.m_retry_interval == milliseconds(250));
+      REQUIRE(config.m_gap_timeout == seconds(10));
       REQUIRE(config.m_recovery->m_timeout == seconds(15));
     }
   }
@@ -116,6 +119,9 @@ TEST_SUITE("TmxIpConfiguration") {
     SUBCASE("retry_interval") {}
     SUBCASE("feed_timeout") {
       key = "feed_timeout";
+    }
+    SUBCASE("gap_timeout") {
+      key = "gap_timeout";
     }
     SUBCASE("recovery_timeout") {
       section.reset(source["recovery"]);

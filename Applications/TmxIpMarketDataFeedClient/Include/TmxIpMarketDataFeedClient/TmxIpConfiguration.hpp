@@ -58,6 +58,9 @@ namespace Nexus {
     /** How long a stalled feed participates in gap confirmation. */
     boost::posix_time::time_duration m_feed_timeout;
 
+    /** How long to wait before logging and skipping an unrecovered gap. */
+    boost::posix_time::time_duration m_gap_timeout;
+
     /** The interval between opportunities to retry or continue recovery. */
     boost::posix_time::time_duration m_retry_interval;
 
@@ -153,6 +156,10 @@ namespace Details {
       configuration.m_retry_interval =
         Beam::extract<boost::posix_time::time_duration>(config,
           "retry_interval", boost::posix_time::seconds(1),
+          boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
+      configuration.m_gap_timeout =
+        Beam::extract<boost::posix_time::time_duration>(config,
+          "gap_timeout", boost::posix_time::seconds(30),
           boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
       static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE =
         std::size_t(128 * 1024 * 1024);

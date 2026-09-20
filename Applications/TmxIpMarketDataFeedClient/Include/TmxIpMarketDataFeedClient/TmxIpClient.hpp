@@ -29,7 +29,7 @@ namespace Nexus {
    * @tparam P The live protocol client type.
    * @tparam G The recovery client type.
    * @tparam R The time client type.
-   * @tparam T The timer driving feed expiry and recovery retries.
+   * @tparam T The timer driving feed expiry, gap deadlines and retries.
    */
   template<typename P, typename G, typename R, typename T> requires
     IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
@@ -48,20 +48,22 @@ namespace Nexus {
       /** The source of the current time. */
       using TimeClient = Beam::dereference_t<R>;
 
-      /** The timer driving feed expiry and recovery retries. */
+      /** The timer driving feed expiry, gap deadlines and retries. */
       using Timer = Beam::dereference_t<T>;
 
       /**
        * Constructs a TMX IP client.
        * @param feed_timeout How long a stalled feed delays gap confirmation.
+       * @param gap_timeout How long to wait before abandoning recovery.
        * @param feed_clients Receives copies of the live stream.
        * @param recovery_client Requests and receives missing packets, if set.
        * @param time_client Supplies the current time.
-       * @param timer Drives feed expiry and recovery retries.
+       * @param timer Drives feed expiry, gap deadlines and recovery retries.
        */
       template<Beam::Initializes<P> PF, Beam::Initializes<G> GF,
         Beam::Initializes<R> RF, Beam::Initializes<T> TF>
       TmxIpClient(boost::posix_time::time_duration feed_timeout,
+        boost::posix_time::time_duration gap_timeout,
         std::vector<PF> feed_clients, boost::optional<GF> recovery_client,
         RF&& time_client, TF&& timer);
 
@@ -70,8 +72,7 @@ namespace Nexus {
       /**
        * Reads the next complete STAMP message.
        * The returned views remain valid until the next read or destruction.
-       * Throws when all live feeds fail, recovery fails, or a message is
-       * malformed.
+       * Throws when all live feeds fail or a message is malformed.
        */
       StampMessage read();
 
@@ -93,10 +94,14 @@ namespace Nexus {
         TmxIpSequencer m_sequencer;
         TmxIpMessageBuilder m_builder;
         std::vector<Feed> m_feeds;
+        std::string m_recovery_error;
+        boost::optional<std::uint32_t> m_gap_sequence;
+        boost::posix_time::ptime m_gap_timestamp;
         RequestState m_request_state = RequestState::READY;
         bool m_is_finished = false;
       };
       boost::posix_time::time_duration m_feed_timeout;
+      boost::posix_time::time_duration m_gap_timeout;
       std::vector<Beam::local_ptr_t<P>> m_feed_clients;
       boost::optional<Beam::local_ptr_t<G>> m_recovery_client;
       Beam::local_ptr_t<R> m_time_client;
@@ -114,6 +119,7 @@ namespace Nexus {
       static std::uint32_t distance(std::uint32_t first, std::uint32_t last);
       void add(State& state, const TmxIpPacket& packet);
       void flush(State& state);
+      void drop(State& state, const TmxIpGap& gap, std::string_view reason);
       void update(State& state, std::size_t feed, const TmxIpPacket& packet);
       boost::optional<TmxIpGap> get_gap(const State& state) const;
       void request(State& state);
@@ -125,7 +131,8 @@ namespace Nexus {
   };
 
   template<typename PF, typename GF, typename RF, typename TF>
-  TmxIpClient(boost::posix_time::time_duration, std::vector<PF>,
+  TmxIpClient(boost::posix_time::time_duration,
+    boost::posix_time::time_duration, std::vector<PF>,
     boost::optional<GF>, RF&&, TF&&) -> TmxIpClient<PF, GF,
       std::remove_cvref_t<RF>, std::remove_cvref_t<TF>>;
 
@@ -138,14 +145,18 @@ namespace Nexus {
     Beam::Initializes<R> RF, Beam::Initializes<T> TF>
   TmxIpClient<P, G, R, T>::TmxIpClient(
       boost::posix_time::time_duration feed_timeout,
+      boost::posix_time::time_duration gap_timeout,
       std::vector<PF> feed_clients, boost::optional<GF> recovery_client,
       RF&& time_client, TF&& timer)
       : m_feed_timeout(feed_timeout),
+        m_gap_timeout(gap_timeout),
         m_time_client(std::forward<RF>(time_client)),
         m_timer(std::forward<TF>(timer)) {
     try {
       if(feed_clients.empty() || feed_timeout.is_special() ||
-          feed_timeout <= boost::posix_time::seconds(0)) {
+          feed_timeout <= boost::posix_time::seconds(0) ||
+          gap_timeout.is_special() ||
+          gap_timeout <= boost::posix_time::seconds(0)) {
         boost::throw_with_location(
           std::invalid_argument("Invalid TMX IP feed configuration."));
       }
@@ -278,6 +289,23 @@ namespace Nexus {
       IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
       Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
+  void TmxIpClient<P, G, R, T>::drop(
+      State& state, const TmxIpGap& gap, std::string_view reason) {
+    auto out = std::stringstream();
+    out << "(dropped " << m_time_client->get_time() << ' ' <<
+      gap.m_sequence << ' ' << gap.m_count << ' ' << reason << ")\n";
+    std::cout << out.str() << std::flush;
+    state.m_builder.reset();
+    state.m_sequencer.skip(gap.m_count);
+    state.m_gap_sequence = boost::none;
+    flush(state);
+  }
+
+  template<typename P, typename G, typename R, typename T> requires
+    IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
   void TmxIpClient<P, G, R, T>::update(
       State& state, std::size_t feed, const TmxIpPacket& packet) {
     auto sequence = packet.m_header.m_sequence;
@@ -350,20 +378,38 @@ namespace Nexus {
     if(state.m_is_finished) {
       return;
     }
-    if(!m_recovery_client) {
-      while(auto gap = get_gap(state)) {
-        auto out = std::stringstream();
-        out << "(dropped " << m_time_client->get_time() << ' ' <<
-          gap->m_sequence << ' ' << gap->m_count << " disabled)\n";
-        std::cout << out.str() << std::flush;
-        state.m_builder.reset();
-        state.m_sequencer.skip(gap->m_count);
-        flush(state);
+    auto timestamp = m_time_client->get_time();
+    while(auto gap = get_gap(state)) {
+      if(state.m_gap_sequence != gap->m_sequence) {
+        state.m_gap_sequence = gap->m_sequence;
+        state.m_gap_timestamp = timestamp;
       }
-    } else if(state.m_request_state == RequestState::READY && get_gap(state)) {
-      state.m_request_state = RequestState::PENDING;
-      m_requests.push(true);
+      auto reason = [&] () -> std::string_view {
+        if(!m_recovery_client) {
+          return "disabled";
+        }
+        if(!state.m_recovery_error.empty()) {
+          return state.m_recovery_error;
+        }
+        if(timestamp < state.m_gap_timestamp) {
+          return "clock_rollback";
+        }
+        if(timestamp - state.m_gap_timestamp > m_gap_timeout) {
+          return "timeout";
+        }
+        return {};
+      }();
+      if(!reason.empty()) {
+        drop(state, *gap, reason);
+        continue;
+      }
+      if(state.m_request_state == RequestState::READY) {
+        state.m_request_state = RequestState::PENDING;
+        m_requests.push(true);
+      }
+      return;
     }
+    state.m_gap_sequence = boost::none;
   }
 
   template<typename P, typename G, typename R, typename T> requires
@@ -437,9 +483,32 @@ namespace Nexus {
   void TmxIpClient<P, G, R, T>::recovery_loop() {
     try {
       while(m_open_state.is_open()) {
-        auto packet = (*m_recovery_client)->read();
+        auto packet = [&] () -> boost::optional<TmxIpPacket> {
+          try {
+            return (*m_recovery_client)->read();
+          } catch(const TmxIpParserException&) {
+            return {};
+          } catch(const std::exception& e) {
+            Beam::with(m_state, [&] (auto& state) {
+              state.m_recovery_error =
+                "recovery_failed " + std::string(e.what());
+              request(state);
+            });
+            (*m_recovery_client)->close();
+            return {};
+          }
+        }();
+        if(!packet) {
+          auto is_disabled = Beam::with(m_state, [] (const auto& state) {
+            return !state.m_recovery_error.empty();
+          });
+          if(is_disabled) {
+            return;
+          }
+          continue;
+        }
         Beam::with(m_state, [&] (auto& state) {
-          add(state, packet);
+          add(state, *packet);
         });
       }
     } catch(const std::exception&) {
@@ -458,7 +527,7 @@ namespace Nexus {
         auto maximum_count = (*m_recovery_client)->get_maximum_count();
         auto range = Beam::with(m_state,
           [&] (auto& state) -> boost::optional<TmxIpRecoveryRequest> {
-            if(state.m_is_finished) {
+            if(state.m_is_finished || !state.m_recovery_error.empty()) {
               return {};
             }
             auto gap = get_gap(state);
@@ -477,15 +546,33 @@ namespace Nexus {
         if(!range) {
           continue;
         }
-        auto result = (*m_recovery_client)->request(*range);
-        if(!result.m_is_acknowledged ||
-            result.m_status != TmxIpRecoveryResponse::Status::ACCEPTED ||
-            result.m_start_sequence == 0) {
-          boost::throw_with_location(Beam::IOException(
-            "TMX IP recovery failed: " + result.m_description));
-        }
+        auto error = [&] () -> std::string {
+          try {
+            auto result = (*m_recovery_client)->request(*range);
+            if(!result.m_is_acknowledged ||
+                result.m_status != TmxIpRecoveryResponse::Status::ACCEPTED ||
+                result.m_start_sequence == 0) {
+              return "rejected " + result.m_description;
+            }
+            return {};
+          } catch(const std::exception& e) {
+            return "recovery_failed " + std::string(e.what());
+          }
+        }();
         Beam::with(m_state, [&] (auto& state) {
           state.m_request_state = RequestState::DEFERRED;
+          if(state.m_is_finished || error.empty()) {
+            return;
+          }
+          while(auto gap = get_gap(state)) {
+            if(gap->m_sequence < range->m_start_sequence ||
+                gap->m_sequence > range->m_end_sequence) {
+              break;
+            }
+            gap->m_count = std::min(gap->m_count,
+              range->m_end_sequence - gap->m_sequence + 1);
+            drop(state, *gap, error);
+          }
         });
       }
     } catch(const std::exception&) {

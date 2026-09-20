@@ -9,6 +9,18 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
+  struct Log {
+    std::stringstream m_output;
+    std::streambuf* m_buffer;
+
+    Log()
+      : m_buffer(std::cout.rdbuf(m_output.rdbuf())) {}
+
+    ~Log() {
+      std::cout.rdbuf(m_buffer);
+    }
+  };
+
   struct ProtocolClient {
     Queue<std::string> m_packets;
     std::string m_packet;
@@ -52,6 +64,7 @@ namespace {
   struct WithoutRecovery {};
 
   struct Fixture {
+    inline static const auto GAP_TIMEOUT = seconds(30);
     std::vector<std::unique_ptr<ProtocolClient>> m_feed_clients;
     RecoveryClient m_recovery_client;
     FixedTimeClient m_time_client;
@@ -70,7 +83,7 @@ namespace {
 
     Fixture(std::size_t feeds, boost::optional<RecoveryClient*> recovery)
         : m_time_client(time_from_string("2026-09-20 12:00:00")),
-          m_client(seconds(3), [&] {
+          m_client(seconds(3), GAP_TIMEOUT, [&] {
             auto clients = std::vector<ProtocolClient*>();
             for(auto i = std::size_t(0); i != feeds; ++i) {
               m_feed_clients.push_back(std::make_unique<ProtocolClient>());
@@ -254,32 +267,109 @@ TEST_SUITE("TmxIpClient") {
   }
 
 
+  TEST_CASE("gap_timeout") {
+    auto log = Log();
+    auto fixture = Fixture();
+    auto is_limited = false;
+    auto is_complete = false;
+    SUBCASE("pending_request") {}
+    SUBCASE("completed_request") {
+      is_complete = true;
+    }
+    SUBCASE("zero_request_limit") {
+      is_limited = true;
+      fixture.m_recovery_client.m_maximum_count = 0;
+    }
+    fixture.publish(1, "ONE");
+    fixture.require_symbol("ONE");
+    fixture.publish(4, "FOUR");
+    if(!is_limited) {
+      auto request = fixture.require_request(2, 3);
+      if(is_complete) {
+        fixture.complete(request);
+      }
+    }
+    flush_pending_routines();
+    auto timestamp = fixture.m_time_client.get_time();
+    fixture.m_time_client.set(timestamp + Fixture::GAP_TIMEOUT);
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    REQUIRE(log.m_output.str().empty());
+    fixture.m_time_client.set(
+      fixture.m_time_client.get_time() + time_duration::unit());
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    fixture.publish(5, "FIVE");
+    flush_pending_routines();
+    fixture.m_client.close();
+    fixture.require_symbol("FOUR");
+    fixture.require_symbol("FIVE");
+    REQUIRE(log.m_output.str() ==
+      "(dropped 2026-Sep-20 12:00:30.000001 2 2 timeout)\n");
+  }
+
   TEST_CASE("recovery_failure") {
+    auto log = Log();
     auto fixture = Fixture();
     fixture.publish(1, "ONE");
     fixture.require_symbol("ONE");
     fixture.publish(3, "THREE");
     fixture.require_request(2, 2);
+    auto reason = std::string("rejected Rejected");
     SUBCASE("rejection") {
       fixture.m_recovery_client.m_results.push(TmxIpRecoveryResult(false,
         TmxIpRecoveryResponse::Status::REJECTED, 2, 2, 0, 0, "Rejected"));
     }
     SUBCASE("no_history") {
+      reason = "rejected No history";
       fixture.m_recovery_client.m_results.push(TmxIpRecoveryResult(true,
         TmxIpRecoveryResponse::Status::ACCEPTED, 0, 0, 0, 0, "No history"));
     }
     SUBCASE("request_error") {
+      reason = "recovery_failed Request failed.";
       fixture.m_recovery_client.m_results.close(
         std::make_exception_ptr(IOException("Request failed.")));
     }
-    REQUIRE_THROWS_AS(fixture.m_client.read(), IOException);
-    fixture.publish(4, "FOUR");
-    fixture.m_timer.trigger();
+    SUBCASE("recovery_feed") {
+      reason = "recovery_failed Recovery feed failed.";
+      fixture.m_recovery_client.m_protocol_client.m_packets.close(
+        std::make_exception_ptr(IOException("Recovery feed failed.")));
+    }
     flush_pending_routines();
-    REQUIRE_THROWS_AS(fixture.m_client.read(), IOException);
-    REQUIRE(!fixture.m_recovery_client.m_requests.try_pop());
+    fixture.publish(4, "FOUR");
+    flush_pending_routines();
+    fixture.m_client.close();
+    fixture.require_symbol("THREE");
+    fixture.require_symbol("FOUR");
+    REQUIRE(log.m_output.str() ==
+      "(dropped 2026-Sep-20 12:00:00 2 1 " + reason + ")\n");
   }
 
+  TEST_CASE("failed_recovery_range") {
+    auto log = Log();
+    auto fixture = Fixture();
+    fixture.m_recovery_client.m_maximum_count = 2;
+    fixture.publish(1, "ONE");
+    fixture.require_symbol("ONE");
+    fixture.publish(6, "SIX");
+    fixture.require_request(2, 3);
+    fixture.recover(2, "TWO");
+    fixture.require_symbol("TWO");
+    fixture.publish(4, "FOUR");
+    flush_pending_routines();
+    fixture.m_recovery_client.m_results.push(TmxIpRecoveryResult(false,
+      TmxIpRecoveryResponse::Status::REJECTED, 2, 3, 0, 0, "Rejected"));
+    fixture.require_symbol("FOUR");
+    flush_pending_routines();
+    REQUIRE(log.m_output.str() ==
+      "(dropped 2026-Sep-20 12:00:00 3 1 rejected Rejected)\n");
+    fixture.m_timer.trigger();
+    auto request = fixture.require_request(5, 5);
+    fixture.recover(5, "FIVE");
+    fixture.require_symbol("FIVE");
+    fixture.require_symbol("SIX");
+    fixture.complete(request);
+  }
 
   TEST_CASE("transport_failure") {
     auto fixture = Fixture();
@@ -289,9 +379,7 @@ TEST_SUITE("TmxIpClient") {
     SUBCASE("live_feed") {
       fixture.m_feed_clients.front()->m_packets.close(error);
     }
-    SUBCASE("recovery_feed") {
-      fixture.m_recovery_client.m_protocol_client.m_packets.close(error);
-    }
+
     SUBCASE("timer") {
       fixture.m_timer.fail();
     }
@@ -533,6 +621,35 @@ TEST_SUITE("TmxIpClient") {
     fixture.publish(last + 3, "X\x1d", TmxIpHeader::Continuation::LAST,
       *fixture.m_feed_clients.front());
     fixture.require_symbol("ABX");
+  }
+
+  TEST_CASE("fragment_recovery_failure") {
+    auto log = Log();
+    auto fixture = Fixture();
+    auto first = std::uint32_t(1);
+    auto middle = std::uint32_t(2);
+    auto last = std::uint32_t(3);
+    SUBCASE("consecutive") {}
+    SUBCASE("wrap") {
+      first = 999999998;
+      middle = 999999999;
+      last = 1;
+    }
+    fixture.publish(first, "\x01\x1e" "1=H",
+      TmxIpHeader::Continuation::FIRST, *fixture.m_feed_clients.front());
+    fixture.publish(last, "X\x1d", TmxIpHeader::Continuation::LAST,
+      *fixture.m_feed_clients.front());
+    fixture.require_request(middle, middle);
+    fixture.m_recovery_client.m_results.push(TmxIpRecoveryResult(false,
+      TmxIpRecoveryResponse::Status::REJECTED, middle, middle, 0, 0,
+      "Rejected"));
+    flush_pending_routines();
+    fixture.publish(last + 1, "NEXT");
+    flush_pending_routines();
+    fixture.m_client.close();
+    fixture.require_symbol("NEXT");
+    REQUIRE(log.m_output.str() == std::format(
+      "(dropped 2026-Sep-20 12:00:00 {} 1 rejected Rejected)\n", middle));
   }
 
   TEST_CASE("feed_failure") {

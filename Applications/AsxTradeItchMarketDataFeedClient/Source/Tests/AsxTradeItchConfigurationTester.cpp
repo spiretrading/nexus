@@ -35,8 +35,8 @@ password: TESTSECRET
 TEST_SUITE("AsxTradeItchConfiguration") {
   TEST_CASE("gap_timeout") {
     auto source = make_config();
-    REQUIRE(AsxTradeItchConfiguration::parse(source).m_gap_timeout ==
-      seconds(5));
+    REQUIRE(
+      AsxTradeItchConfiguration::parse(source).m_gap_timeout == seconds(5));
     source["gap_timeout"] = "20ms";
     auto config = AsxTradeItchConfiguration::parse(source);
     REQUIRE(config.m_gap_timeout == milliseconds(20));

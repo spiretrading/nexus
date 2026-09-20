@@ -6,6 +6,7 @@ service_locator:
 
 enable_logging: false
 feed_timeout: 60s
+gap_timeout: 30s
 retry_interval: 1s
 receive_buffer: 134217728
 
