@@ -34,13 +34,11 @@ CALL :BuildApp Applications\AdministrationServer %*
 CALL :BuildApp Applications\AsxTradeItchMarketDataFeedClient %*
 CALL :BuildApp Applications\ChartingServer %*
 CALL :BuildApp Applications\ComplianceServer %*
-CALL :BuildApp Applications\CseMarketDataFeedClient %*
 CALL :BuildApp Applications\CxaPitchMarketDataFeedClient %*
 CALL :BuildApp Applications\DefinitionsServer %*
 CALL :BuildApp Applications\Lollipop %*
 CALL :BuildApp Applications\MarketDataRelayServer %*
 CALL :BuildApp Applications\MarketDataServer %*
-CALL :BuildApp Applications\NeoeMarketDataFeedClient %*
 CALL :BuildApp Applications\OasisOrderExecutionServer %*
 CALL :BuildApp Applications\OtcLinkMarketDataFeedClient %*
 CALL :BuildApp Applications\ReplayMarketDataFeedClient %*

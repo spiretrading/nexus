@@ -2,9 +2,7 @@
 services=(
   "OtcLinkMarketDataFeedClient"
   "AsxTradeItchMarketDataFeedClient"
-  "CseMarketDataFeedClient"
   "CxaPitchMarketDataFeedClient"
-  "NeoeMarketDataFeedClient"
   "WebPortal"
   "RiskServer"
   "SimulationOrderExecutionServer"
