@@ -12,6 +12,36 @@ namespace Nexus::Python {
   void export_soup_bin_tcp(pybind11::module& module);
 
   /**
+   * Exports SoupBinTCP packets and heartbeat construction.
+   * @param module The module to export to.
+   */
+  void export_soup_bin_tcp_packet(pybind11::module& module);
+
+  /**
+   * Exports login acceptance packets and parsing.
+   * @param module The module to export to.
+   */
+  void export_login_accepted_packet(pybind11::module& module);
+
+  /**
+   * Exports login rejection packets and parsing.
+   * @param module The module to export to.
+   */
+  void export_login_rejected_packet(pybind11::module& module);
+
+  /**
+   * Exports login request construction.
+   * @param module The module to export to.
+   */
+  void export_login_request_packet(pybind11::module& module);
+
+  /**
+   * Exports the SoupBinTCP client using Beam channels and timers.
+   * @param module The module to export to.
+   */
+  void export_soup_bin_tcp_client(pybind11::module& module);
+
+  /**
    * Exports a SoupBinTcpClient class.
    * @tparam T The type of client to export.
    * @param module The module to export to.
