@@ -45,6 +45,9 @@ namespace Nexus {
       /** Returns the next missing range known from packets or heartbeats. */
       boost::optional<TmxIpGap> get_gap() const;
 
+      /** Skips a prefix of the current gap, retaining buffered packets. */
+      void skip(std::uint32_t count);
+
       /** Discards pending packets and waits for a new initial position. */
       void reset();
 
@@ -168,6 +171,20 @@ namespace Nexus {
     }
     count = std::min(count, MAXIMUM_SEQUENCE - *m_expected_sequence + 1);
     return TmxIpGap(*m_expected_sequence, count);
+  }
+
+  inline void TmxIpSequencer::skip(std::uint32_t count) {
+    auto gap = get_gap();
+    if(!gap || count == 0 || count > gap->m_count) {
+      boost::throw_with_location(
+        TmxIpParserException("Invalid TMX IP gap skip."));
+    }
+    if(m_last_sequence &&
+        distance(*m_expected_sequence, *m_last_sequence) < count) {
+      m_last_sequence = boost::none;
+    }
+    m_expected_sequence =
+      (*m_expected_sequence - 1 + count) % MAXIMUM_SEQUENCE + 1;
   }
 
   inline void TmxIpSequencer::reset() {

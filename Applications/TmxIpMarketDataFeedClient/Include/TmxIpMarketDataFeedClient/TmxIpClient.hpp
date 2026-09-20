@@ -1,12 +1,16 @@
 #ifndef TMX_IP_CLIENT_HPP
 #define TMX_IP_CLIENT_HPP
 #include <algorithm>
+#include <iostream>
+#include <sstream>
+#include <vector>
 #include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Queues/RoutineTaskQueue.hpp>
 #include <Beam/Routines/RoutineHandlerGroup.hpp>
 #include <Beam/Threading/Sync.hpp>
+#include <Beam/TimeService/TimeClient.hpp>
 #include "TmxIpMarketDataFeedClient/TmxIpMessageBuilder.hpp"
 #include "TmxIpMarketDataFeedClient/TmxIpRecoveryClient.hpp"
 #include "TmxIpMarketDataFeedClient/TmxIpSequencer.hpp"
@@ -22,15 +26,15 @@ namespace Nexus {
 
   /**
    * Delivers complete, ordered messages from one TMX IP stream.
-   * Both clients must receive the same service from the same site.
-   * Starts at the first live packet or heartbeat; recreate for a new day.
    * @tparam P The live protocol client type.
-   * @tparam R The recovery client type.
-   * @tparam T The timer pacing subsequent recovery requests.
+   * @tparam G The recovery client type.
+   * @tparam R The time client type.
+   * @tparam T The timer driving feed expiry and recovery retries.
    */
-  template<typename P, typename R, typename T> requires
+  template<typename P, typename G, typename R, typename T> requires
     IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
-      IsTmxIpRecoveryClient<Beam::dereference_t<R>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
   class TmxIpClient {
     public:
@@ -39,31 +43,38 @@ namespace Nexus {
       using ProtocolClient = Beam::dereference_t<P>;
 
       /** The recovery client type. */
-      using RecoveryClient = Beam::dereference_t<R>;
+      using RecoveryClient = Beam::dereference_t<G>;
 
-      /** The timer pacing subsequent recovery requests. */
+      /** The source of the current time. */
+      using TimeClient = Beam::dereference_t<R>;
+
+      /** The timer driving feed expiry and recovery retries. */
       using Timer = Beam::dereference_t<T>;
 
       /**
        * Constructs a TMX IP client.
-       * @param protocol_client Receives live packets.
-       * @param recovery_client Requests and receives missing packets.
-       * @param timer Drives retries and remaining recovery chunks.
+       * @param feed_timeout How long a stalled feed delays gap confirmation.
+       * @param feed_clients Receives copies of the live stream.
+       * @param recovery_client Requests and receives missing packets, if set.
+       * @param time_client Supplies the current time.
+       * @param timer Drives feed expiry and recovery retries.
        */
-      template<Beam::Initializes<P> PF, Beam::Initializes<R> RF,
-        Beam::Initializes<T> TF>
-      TmxIpClient(PF&& protocol_client, RF&& recovery_client, TF&& timer);
+      template<Beam::Initializes<P> PF, Beam::Initializes<G> GF,
+        Beam::Initializes<R> RF, Beam::Initializes<T> TF>
+      TmxIpClient(boost::posix_time::time_duration feed_timeout,
+        std::vector<PF> feed_clients, boost::optional<GF> recovery_client,
+        RF&& time_client, TF&& timer);
 
       ~TmxIpClient();
 
       /**
        * Reads the next complete STAMP message.
        * The returned views remain valid until the next read or destruction.
-       * Throws on transport failures, failed recovery, or malformed messages.
+       * Throws when all live feeds fail, recovery fails, or a message is
+       * malformed.
        */
       StampMessage read();
 
-      /** Closes both clients and interrupts pending reads and requests. */
       void close();
 
     private:
@@ -72,14 +83,23 @@ namespace Nexus {
         PENDING,
         DEFERRED
       };
+      static constexpr auto MAXIMUM_SEQUENCE = std::uint32_t(999999999);
+      struct Feed {
+        boost::optional<std::uint32_t> m_position;
+        boost::posix_time::ptime m_timestamp;
+        bool m_is_closed = false;
+      };
       struct State {
         TmxIpSequencer m_sequencer;
         TmxIpMessageBuilder m_builder;
+        std::vector<Feed> m_feeds;
         RequestState m_request_state = RequestState::READY;
         bool m_is_finished = false;
       };
-      Beam::local_ptr_t<P> m_protocol_client;
-      Beam::local_ptr_t<R> m_recovery_client;
+      boost::posix_time::time_duration m_feed_timeout;
+      std::vector<Beam::local_ptr_t<P>> m_feed_clients;
+      boost::optional<Beam::local_ptr_t<G>> m_recovery_client;
+      Beam::local_ptr_t<R> m_time_client;
       Beam::local_ptr_t<T> m_timer;
       Beam::Sync<State> m_state;
       Beam::Queue<Beam::SharedBuffer> m_messages;
@@ -91,72 +111,108 @@ namespace Nexus {
 
       TmxIpClient(const TmxIpClient&) = delete;
       TmxIpClient& operator =(const TmxIpClient&) = delete;
-      void add(const TmxIpPacket& packet);
+      static std::uint32_t distance(std::uint32_t first, std::uint32_t last);
+      void add(State& state, const TmxIpPacket& packet);
+      void flush(State& state);
+      void update(State& state, std::size_t feed, const TmxIpPacket& packet);
+      boost::optional<TmxIpGap> get_gap(const State& state) const;
       void request(State& state);
       void fail(const std::exception_ptr& error);
-      void feed_loop();
+      void feed_loop(std::size_t feed);
       void recovery_loop();
       void request_loop();
       void on_timer(typename Timer::Result result);
   };
 
-  template<typename PF, typename RF, typename TF>
-  TmxIpClient(PF&&, RF&&, TF&&) -> TmxIpClient<
-    std::remove_cvref_t<PF>, std::remove_cvref_t<RF>, std::remove_cvref_t<TF>>;
+  template<typename PF, typename GF, typename RF, typename TF>
+  TmxIpClient(boost::posix_time::time_duration, std::vector<PF>,
+    boost::optional<GF>, RF&&, TF&&) -> TmxIpClient<PF, GF,
+      std::remove_cvref_t<RF>, std::remove_cvref_t<TF>>;
 
-  template<typename P, typename R, typename T> requires
+  template<typename P, typename G, typename R, typename T> requires
     IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
-      IsTmxIpRecoveryClient<Beam::dereference_t<R>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  template<Beam::Initializes<P> PF, Beam::Initializes<R> RF,
-    Beam::Initializes<T> TF>
-  TmxIpClient<P, R, T>::TmxIpClient(
-      PF&& protocol_client, RF&& recovery_client, TF&& timer)
-      : m_protocol_client(std::forward<PF>(protocol_client)),
-        m_recovery_client(std::forward<RF>(recovery_client)),
+  template<Beam::Initializes<P> PF, Beam::Initializes<G> GF,
+    Beam::Initializes<R> RF, Beam::Initializes<T> TF>
+  TmxIpClient<P, G, R, T>::TmxIpClient(
+      boost::posix_time::time_duration feed_timeout,
+      std::vector<PF> feed_clients, boost::optional<GF> recovery_client,
+      RF&& time_client, TF&& timer)
+      : m_feed_timeout(feed_timeout),
+        m_time_client(std::forward<RF>(time_client)),
         m_timer(std::forward<TF>(timer)) {
     try {
+      if(feed_clients.empty() || feed_timeout.is_special() ||
+          feed_timeout <= boost::posix_time::seconds(0)) {
+        boost::throw_with_location(
+          std::invalid_argument("Invalid TMX IP feed configuration."));
+      }
+      for(auto& client : feed_clients) {
+        m_feed_clients.emplace_back(std::move(client));
+      }
+      if(recovery_client) {
+        m_recovery_client.emplace(std::move(*recovery_client));
+      }
+      Beam::with(m_state, [&] (auto& state) {
+        state.m_feeds.resize(m_feed_clients.size());
+        for(auto& feed : state.m_feeds) {
+          feed.m_timestamp = m_time_client->get_time();
+        }
+      });
       m_timer->get_publisher().monitor(m_tasks.get_slot<typename Timer::Result>(
         std::bind_front(&TmxIpClient::on_timer, this)));
       m_timer->start();
-      m_routines.spawn(std::bind_front(&TmxIpClient::feed_loop, this));
-      m_routines.spawn(std::bind_front(&TmxIpClient::recovery_loop, this));
-      m_routines.spawn(std::bind_front(&TmxIpClient::request_loop, this));
+      for(auto i = std::size_t(0); i != m_feed_clients.size(); ++i) {
+        m_routines.spawn(std::bind_front(&TmxIpClient::feed_loop, this, i));
+      }
+      if(m_recovery_client) {
+        m_routines.spawn(std::bind_front(&TmxIpClient::recovery_loop, this));
+        m_routines.spawn(std::bind_front(&TmxIpClient::request_loop, this));
+      }
     } catch(const std::exception&) {
       close();
       throw;
     }
   }
 
-  template<typename P, typename R, typename T> requires
+  template<typename P, typename G, typename R, typename T> requires
     IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
-      IsTmxIpRecoveryClient<Beam::dereference_t<R>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  TmxIpClient<P, R, T>::~TmxIpClient() {
+  TmxIpClient<P, G, R, T>::~TmxIpClient() {
     close();
   }
 
-  template<typename P, typename R, typename T> requires
+  template<typename P, typename G, typename R, typename T> requires
     IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
-      IsTmxIpRecoveryClient<Beam::dereference_t<R>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  StampMessage TmxIpClient<P, R, T>::read() {
+  StampMessage TmxIpClient<P, G, R, T>::read() {
     m_payload = m_messages.pop();
     return StampMessage::parse(
       std::string_view(m_payload.get_data(), m_payload.get_size()));
   }
 
-  template<typename P, typename R, typename T> requires
+  template<typename P, typename G, typename R, typename T> requires
     IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
-      IsTmxIpRecoveryClient<Beam::dereference_t<R>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  void TmxIpClient<P, R, T>::close() {
+  void TmxIpClient<P, G, R, T>::close() {
     if(m_open_state.set_closing()) {
       return;
     }
     fail(std::make_exception_ptr(Beam::EndOfFileException()));
-    m_protocol_client->close();
-    m_recovery_client->close();
+    for(auto& client : m_feed_clients) {
+      client->close();
+    }
+    if(m_recovery_client) {
+      (*m_recovery_client)->close();
+    }
     m_tasks.close();
     m_tasks.wait();
     m_timer->cancel();
@@ -164,49 +220,158 @@ namespace Nexus {
     m_open_state.close();
   }
 
-  template<typename P, typename R, typename T> requires
+  template<typename P, typename G, typename R, typename T> requires
     IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
-      IsTmxIpRecoveryClient<Beam::dereference_t<R>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  void TmxIpClient<P, R, T>::add(const TmxIpPacket& packet) {
-    Beam::with(m_state, [&] (auto& state) {
-      if(state.m_is_finished) {
-        return;
-      }
-      try {
-        state.m_sequencer.add(packet);
-        while(auto packet = state.m_sequencer.read()) {
-          if(auto payload = state.m_builder.add(*packet)) {
-            StampMessage::parse(
-              std::string_view(payload->get_data(), payload->get_size()));
-            m_messages.push(std::move(*payload));
-          }
-        }
-        request(state);
-      } catch(const std::exception&) {
-        state.m_is_finished = true;
-        throw;
-      }
-    });
+  std::uint32_t TmxIpClient<P, G, R, T>::distance(
+      std::uint32_t first, std::uint32_t last) {
+    if(last >= first) {
+      return last - first;
+    }
+    return MAXIMUM_SEQUENCE - first + last;
   }
 
-  template<typename P, typename R, typename T> requires
+  template<typename P, typename G, typename R, typename T> requires
     IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
-      IsTmxIpRecoveryClient<Beam::dereference_t<R>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  void TmxIpClient<P, R, T>::request(State& state) {
-    if(!state.m_is_finished && state.m_request_state == RequestState::READY &&
-        state.m_sequencer.get_gap()) {
+  void TmxIpClient<P, G, R, T>::add(
+      State& state, const TmxIpPacket& packet) {
+    if(state.m_is_finished) {
+      return;
+    }
+    try {
+      state.m_sequencer.add(packet);
+      flush(state);
+      request(state);
+    } catch(const std::exception&) {
+      state.m_is_finished = true;
+      throw;
+    }
+  }
+
+  template<typename P, typename G, typename R, typename T> requires
+    IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void TmxIpClient<P, G, R, T>::flush(State& state) {
+    try {
+      while(auto packet = state.m_sequencer.read()) {
+        if(auto payload = state.m_builder.add(*packet)) {
+          StampMessage::parse(
+            std::string_view(payload->get_data(), payload->get_size()));
+          m_messages.push(std::move(*payload));
+        }
+      }
+    } catch(const std::exception&) {
+      state.m_is_finished = true;
+      throw;
+    }
+  }
+
+  template<typename P, typename G, typename R, typename T> requires
+    IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void TmxIpClient<P, G, R, T>::update(
+      State& state, std::size_t feed, const TmxIpPacket& packet) {
+    auto sequence = packet.m_header.m_sequence;
+    auto is_idle = is_heartbeat(packet.m_header);
+    if(is_idle) {
+      sequence = TmxIpHeartbeat::parse(packet).m_last_sequence;
+    }
+    if(!sequence) {
+      return;
+    }
+    auto position = *sequence % MAXIMUM_SEQUENCE + 1;
+    auto& source = state.m_feeds[feed];
+    auto is_advancing = [&] {
+      if(!source.m_position) {
+        return true;
+      }
+      auto offset = distance(*source.m_position, position);
+      return offset != 0 && offset <= MAXIMUM_SEQUENCE / 2;
+    };
+    auto is_current_heartbeat = [&] {
+      return is_idle && source.m_position == position &&
+        std::ranges::none_of(state.m_feeds, [&] (const auto& other) {
+          if(other.m_is_closed || !other.m_position) {
+            return false;
+          }
+          auto offset = distance(position, *other.m_position);
+          return offset != 0 && offset <= MAXIMUM_SEQUENCE / 2;
+        });
+    };
+    if(is_advancing() || is_current_heartbeat()) {
+      source.m_position = position;
+      source.m_timestamp = m_time_client->get_time();
+    }
+  }
+
+  template<typename P, typename G, typename R, typename T> requires
+    IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  boost::optional<TmxIpGap> TmxIpClient<P, G, R, T>::get_gap(
+      const State& state) const {
+    auto gap = state.m_sequencer.get_gap();
+    if(!gap) {
+      return {};
+    }
+    auto timestamp = m_time_client->get_time();
+    for(auto& feed : state.m_feeds) {
+      if(feed.m_is_closed || timestamp - feed.m_timestamp > m_feed_timeout) {
+        continue;
+      }
+      if(!feed.m_position) {
+        return {};
+      }
+      auto count = distance(gap->m_sequence, *feed.m_position);
+      if(count == 0 || count > MAXIMUM_SEQUENCE / 2) {
+        return {};
+      }
+      gap->m_count = std::min(gap->m_count, count);
+    }
+    return gap;
+  }
+
+  template<typename P, typename G, typename R, typename T> requires
+    IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void TmxIpClient<P, G, R, T>::request(State& state) {
+    if(state.m_is_finished) {
+      return;
+    }
+    if(!m_recovery_client) {
+      while(auto gap = get_gap(state)) {
+        auto out = std::stringstream();
+        out << "(dropped " << m_time_client->get_time() << ' ' <<
+          gap->m_sequence << ' ' << gap->m_count << " disabled)\n";
+        std::cout << out.str() << std::flush;
+        state.m_builder.reset();
+        state.m_sequencer.skip(gap->m_count);
+        flush(state);
+      }
+    } else if(state.m_request_state == RequestState::READY && get_gap(state)) {
       state.m_request_state = RequestState::PENDING;
       m_requests.push(true);
     }
   }
 
-  template<typename P, typename R, typename T> requires
+  template<typename P, typename G, typename R, typename T> requires
     IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
-      IsTmxIpRecoveryClient<Beam::dereference_t<R>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  void TmxIpClient<P, R, T>::fail(const std::exception_ptr& error) {
+  void TmxIpClient<P, G, R, T>::fail(const std::exception_ptr& error) {
     Beam::with(m_state, [&] (auto& state) {
       state.m_is_finished = true;
       m_messages.close(error);
@@ -214,16 +379,17 @@ namespace Nexus {
     });
   }
 
-  template<typename P, typename R, typename T> requires
+  template<typename P, typename G, typename R, typename T> requires
     IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
-      IsTmxIpRecoveryClient<Beam::dereference_t<R>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  void TmxIpClient<P, R, T>::feed_loop() {
+  void TmxIpClient<P, G, R, T>::feed_loop(std::size_t feed) {
     try {
       while(m_open_state.is_open()) {
         auto packet = [&] () -> boost::optional<TmxIpPacket> {
           try {
-            return m_protocol_client->read();
+            return m_feed_clients[feed]->read();
           } catch(const TmxIpParserException&) {
             return {};
           }
@@ -236,42 +402,66 @@ namespace Nexus {
               continue;
             }
           }
-          add(*packet);
+          Beam::with(m_state, [&] (auto& state) {
+            update(state, feed, *packet);
+            add(state, *packet);
+          });
         }
       }
     } catch(const std::exception&) {
-      fail(std::current_exception());
+      auto error = std::current_exception();
+      try {
+        auto is_finished = Beam::with(m_state, [&] (auto& state) {
+          state.m_feeds[feed].m_is_closed = true;
+          if(state.m_is_finished || std::ranges::all_of(state.m_feeds,
+              [] (const auto& source) { return source.m_is_closed; })) {
+            return true;
+          }
+          request(state);
+          return false;
+        });
+        if(is_finished) {
+          fail(error);
+        }
+      } catch(const std::exception&) {
+        fail(std::current_exception());
+      }
     }
   }
 
-  template<typename P, typename R, typename T> requires
+  template<typename P, typename G, typename R, typename T> requires
     IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
-      IsTmxIpRecoveryClient<Beam::dereference_t<R>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  void TmxIpClient<P, R, T>::recovery_loop() {
+  void TmxIpClient<P, G, R, T>::recovery_loop() {
     try {
       while(m_open_state.is_open()) {
-        add(m_recovery_client->read());
+        auto packet = (*m_recovery_client)->read();
+        Beam::with(m_state, [&] (auto& state) {
+          add(state, packet);
+        });
       }
     } catch(const std::exception&) {
       fail(std::current_exception());
     }
   }
 
-  template<typename P, typename R, typename T> requires
+  template<typename P, typename G, typename R, typename T> requires
     IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
-      IsTmxIpRecoveryClient<Beam::dereference_t<R>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  void TmxIpClient<P, R, T>::request_loop() {
+  void TmxIpClient<P, G, R, T>::request_loop() {
     try {
       while(m_requests.pop()) {
-        auto maximum_count = m_recovery_client->get_maximum_count();
+        auto maximum_count = (*m_recovery_client)->get_maximum_count();
         auto range = Beam::with(m_state,
           [&] (auto& state) -> boost::optional<TmxIpRecoveryRequest> {
             if(state.m_is_finished) {
               return {};
             }
-            auto gap = state.m_sequencer.get_gap();
+            auto gap = get_gap(state);
             if(!gap) {
               state.m_request_state = RequestState::READY;
               return {};
@@ -287,7 +477,7 @@ namespace Nexus {
         if(!range) {
           continue;
         }
-        auto result = m_recovery_client->request(*range);
+        auto result = (*m_recovery_client)->request(*range);
         if(!result.m_is_acknowledged ||
             result.m_status != TmxIpRecoveryResponse::Status::ACCEPTED ||
             result.m_start_sequence == 0) {
@@ -303,18 +493,19 @@ namespace Nexus {
     }
   }
 
-  template<typename P, typename R, typename T> requires
+  template<typename P, typename G, typename R, typename T> requires
     IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
-      IsTmxIpRecoveryClient<Beam::dereference_t<R>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  void TmxIpClient<P, R, T>::on_timer(typename Timer::Result result) {
+  void TmxIpClient<P, G, R, T>::on_timer(typename Timer::Result result) {
     try {
       if(result == Timer::Result::CANCELED) {
         return;
       }
       if(result == Timer::Result::FAIL) {
         boost::throw_with_location(
-          Beam::IOException("TMX IP recovery retry timer failed."));
+          Beam::IOException("TMX IP client timer failed."));
       }
       auto is_finished = Beam::with(m_state, [&] (auto& state) {
         if(state.m_request_state == RequestState::DEFERRED) {

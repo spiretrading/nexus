@@ -1,9 +1,11 @@
 #include <format>
+#include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
 #include "TmxIpMarketDataFeedClient/TmxIpClient.hpp"
 
 using namespace Beam;
+using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
@@ -47,14 +49,35 @@ namespace {
     }
   };
 
+  struct WithoutRecovery {};
+
   struct Fixture {
-    ProtocolClient m_protocol_client;
+    std::vector<std::unique_ptr<ProtocolClient>> m_feed_clients;
     RecoveryClient m_recovery_client;
+    FixedTimeClient m_time_client;
     TriggerTimer m_timer;
-    TmxIpClient<ProtocolClient*, RecoveryClient*, TriggerTimer*> m_client;
+    TmxIpClient<ProtocolClient*, RecoveryClient*, FixedTimeClient*,
+      TriggerTimer*> m_client;
 
     Fixture()
-      : m_client(&m_protocol_client, &m_recovery_client, &m_timer) {}
+      : Fixture(1) {}
+
+    explicit Fixture(std::size_t feeds)
+      : Fixture(feeds, &m_recovery_client) {}
+
+    Fixture(std::size_t feeds, WithoutRecovery)
+      : Fixture(feeds, boost::none) {}
+
+    Fixture(std::size_t feeds, boost::optional<RecoveryClient*> recovery)
+        : m_time_client(time_from_string("2026-09-20 12:00:00")),
+          m_client(seconds(3), [&] {
+            auto clients = std::vector<ProtocolClient*>();
+            for(auto i = std::size_t(0); i != feeds; ++i) {
+              m_feed_clients.push_back(std::make_unique<ProtocolClient>());
+              clients.push_back(m_feed_clients.back().get());
+            }
+            return clients;
+          }(), recovery, &m_time_client, &m_timer) {}
 
     void publish(std::uint32_t sequence, std::string_view payload,
         TmxIpHeader::Continuation continuation, ProtocolClient& client) {
@@ -70,16 +93,20 @@ namespace {
     }
 
     void publish(std::uint32_t sequence, std::string_view symbol) {
-      publish(sequence, symbol, m_protocol_client);
+      publish(sequence, symbol, *m_feed_clients.front());
     }
 
     void heartbeat(std::uint32_t sequence) {
+      heartbeat(sequence, *m_feed_clients.front());
+    }
+
+    void heartbeat(std::uint32_t sequence, ProtocolClient& client) {
       auto payload = std::format(
         "[HEARTBEAT 2012-10-10 03:25:02-001349853902.844623]"
         "[LAST SENT {:09}-03:05:03-001349852703.441869]"
         "[LAST HB   {:09}-03:24:02-001349853842.845443]"
         "OCSA-CDF-1           ATDOTDR  00.1", sequence, sequence);
-      m_protocol_client.m_packets.push(std::format(
+      client.m_packets.push(std::format(
         "{}{:04}         CDF00V T {}{}", TmxIpPacket::START,
         TmxIpHeader::LENGTH + payload.size(), payload, TmxIpPacket::END));
     }
@@ -195,9 +222,9 @@ TEST_SUITE("TmxIpClient") {
       last = 1;
     }
     fixture.publish(first, "\x01\x1e" "1=H",
-      TmxIpHeader::Continuation::FIRST, fixture.m_protocol_client);
+      TmxIpHeader::Continuation::FIRST, *fixture.m_feed_clients.front());
     fixture.publish(last, "X\x1d", TmxIpHeader::Continuation::LAST,
-      fixture.m_protocol_client);
+      *fixture.m_feed_clients.front());
     auto request = fixture.require_request(middle, middle);
     fixture.publish(middle, "\x1c\x1e" "55=AB",
       TmxIpHeader::Continuation::MIDDLE,
@@ -260,7 +287,7 @@ TEST_SUITE("TmxIpClient") {
     fixture.require_symbol("ONE");
     auto error = std::make_exception_ptr(IOException("Connection failed."));
     SUBCASE("live_feed") {
-      fixture.m_protocol_client.m_packets.close(error);
+      fixture.m_feed_clients.front()->m_packets.close(error);
     }
     SUBCASE("recovery_feed") {
       fixture.m_recovery_client.m_protocol_client.m_packets.close(error);
@@ -278,7 +305,7 @@ TEST_SUITE("TmxIpClient") {
     fixture.require_symbol("ONE");
     SUBCASE("live") {
       fixture.publish(2, "not STAMP", TmxIpHeader::Continuation::NONE,
-        fixture.m_protocol_client);
+        *fixture.m_feed_clients.front());
     }
     SUBCASE("recovery") {
       fixture.publish(3, "THREE");
@@ -288,9 +315,9 @@ TEST_SUITE("TmxIpClient") {
     }
     SUBCASE("assembly") {
       fixture.publish(2, "\x01\x1e" "1=H", TmxIpHeader::Continuation::FIRST,
-        fixture.m_protocol_client);
+        *fixture.m_feed_clients.front());
       fixture.publish(3, "missing delimiter", TmxIpHeader::Continuation::LAST,
-        fixture.m_protocol_client);
+        *fixture.m_feed_clients.front());
     }
     REQUIRE_THROWS_AS(fixture.m_client.read(), StampParserException);
     fixture.publish(4, "FOUR");
@@ -304,10 +331,10 @@ TEST_SUITE("TmxIpClient") {
     fixture.publish(1, "ONE");
     fixture.require_symbol("ONE");
     SUBCASE("framing") {
-      fixture.m_protocol_client.m_packets.push("not a packet");
+      fixture.m_feed_clients.front()->m_packets.push("not a packet");
     }
     SUBCASE("heartbeat") {
-      fixture.m_protocol_client.m_packets.push(
+      fixture.m_feed_clients.front()->m_packets.push(
         "\x02" "0022         CDF00V T \x03");
     }
     fixture.publish(3, "THREE");
@@ -354,6 +381,177 @@ TEST_SUITE("TmxIpClient") {
     fixture.require_symbol("TWO");
     fixture.require_symbol("THREE");
     fixture.complete(request);
+  }
+
+  TEST_CASE("feed_arbitration") {
+    auto fixture = Fixture(2);
+    auto first = std::uint32_t(1);
+    SUBCASE("consecutive") {}
+    SUBCASE("wrap") {
+      first = 999999999;
+    }
+    auto second = first % 999999999 + 1;
+    auto third = second + 1;
+    fixture.publish(first, "ONE");
+    fixture.require_symbol("ONE");
+    auto& other = *fixture.m_feed_clients[1];
+    fixture.publish(first, "ONE", other);
+    fixture.publish(third, "THREE");
+    flush_pending_routines();
+    REQUIRE(!fixture.m_recovery_client.m_requests.try_pop());
+    fixture.publish(second, "TWO", other);
+    fixture.require_symbol("TWO");
+    fixture.require_symbol("THREE");
+    fixture.publish(third, "THREE", other);
+    fixture.publish(third + 1, "FOUR", other);
+    fixture.require_symbol("FOUR");
+    REQUIRE(!fixture.m_recovery_client.m_requests.try_pop());
+  }
+
+  TEST_CASE("gap_confirmation") {
+    auto fixture = Fixture(2);
+    fixture.publish(1, "ONE");
+    fixture.require_symbol("ONE");
+    auto& other = *fixture.m_feed_clients[1];
+    fixture.publish(1, "ONE", other);
+    fixture.publish(4, "FOUR");
+    flush_pending_routines();
+    REQUIRE(!fixture.m_recovery_client.m_requests.try_pop());
+    auto end = std::uint32_t(3);
+    SUBCASE("data") {
+      fixture.publish(4, "FOUR", other);
+    }
+    SUBCASE("heartbeat") {
+      fixture.heartbeat(3, other);
+    }
+    SUBCASE("confirmed_prefix") {
+      fixture.heartbeat(2, other);
+      end = 2;
+    }
+    auto request = fixture.require_request(2, end);
+    fixture.recover(2, "TWO");
+    if(end == 2) {
+      fixture.publish(3, "THREE", other);
+    } else {
+      fixture.recover(3, "THREE");
+    }
+    fixture.require_symbol("TWO");
+    fixture.require_symbol("THREE");
+    fixture.require_symbol("FOUR");
+    fixture.complete(request);
+  }
+
+  TEST_CASE("stalled_feed") {
+    auto fixture = Fixture(2);
+    fixture.publish(1, "ONE");
+    fixture.require_symbol("ONE");
+    auto& other = *fixture.m_feed_clients[1];
+    auto timestamp = fixture.m_time_client.get_time();
+    SUBCASE("unseen") {}
+    SUBCASE("replayed_data") {
+      fixture.publish(1, "ONE", other);
+      flush_pending_routines();
+      fixture.m_time_client.set(timestamp + seconds(2));
+      fixture.publish(1, "ONE", other);
+    }
+    SUBCASE("stale_heartbeat") {
+      fixture.heartbeat(1, other);
+      flush_pending_routines();
+      fixture.publish(4, "FOUR");
+      flush_pending_routines();
+      fixture.m_time_client.set(timestamp + seconds(2));
+      fixture.heartbeat(1, other);
+    }
+    fixture.publish(4, "FOUR");
+    flush_pending_routines();
+    fixture.m_time_client.set(timestamp + seconds(3));
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    REQUIRE(!fixture.m_recovery_client.m_requests.try_pop());
+    fixture.m_time_client.set(
+      fixture.m_time_client.get_time() + time_duration::unit());
+    fixture.m_timer.trigger();
+    auto request = fixture.require_request(2, 3);
+    fixture.recover(2, "TWO");
+    fixture.recover(3, "THREE");
+    fixture.require_symbol("TWO");
+    fixture.require_symbol("THREE");
+    fixture.require_symbol("FOUR");
+    fixture.complete(request);
+    fixture.publish(5, "FIVE", other);
+    fixture.require_symbol("FIVE");
+  }
+
+  TEST_CASE("optional_recovery") {
+    auto fixture = Fixture(2, WithoutRecovery());
+    auto& other = *fixture.m_feed_clients[1];
+    fixture.publish(1, "ONE");
+    fixture.require_symbol("ONE");
+    fixture.publish(1, "ONE", other);
+    fixture.publish(3, "THREE");
+    flush_pending_routines();
+    SUBCASE("redundant_copy") {
+      fixture.publish(2, "TWO", other);
+      fixture.require_symbol("TWO");
+      fixture.require_symbol("THREE");
+    }
+    SUBCASE("loss") {
+      fixture.publish(3, "THREE", other);
+      fixture.require_symbol("THREE");
+      fixture.publish(2, "STALE", other);
+      fixture.publish(4, "FOUR");
+      fixture.require_symbol("FOUR");
+    }
+    SUBCASE("stalled_feed") {
+      fixture.m_time_client.set(
+        fixture.m_time_client.get_time() + seconds(4));
+      fixture.m_timer.trigger();
+      fixture.require_symbol("THREE");
+    }
+    REQUIRE(!fixture.m_recovery_client.m_requests.try_pop());
+    fixture.m_client.close();
+    REQUIRE_THROWS_AS(fixture.m_client.read(), EndOfFileException);
+  }
+
+  TEST_CASE("fragment_loss") {
+    auto fixture = Fixture(1, WithoutRecovery());
+    auto first = std::uint32_t(1);
+    auto last = std::uint32_t(3);
+    SUBCASE("consecutive") {}
+    SUBCASE("wrap") {
+      first = 999999998;
+      last = 1;
+    }
+    fixture.publish(first, "\x01\x1e" "1=H",
+      TmxIpHeader::Continuation::FIRST, *fixture.m_feed_clients.front());
+    fixture.publish(last, "X\x1d", TmxIpHeader::Continuation::LAST,
+      *fixture.m_feed_clients.front());
+    fixture.publish(last + 1, "NEXT");
+    fixture.require_symbol("NEXT");
+    fixture.publish(last + 2, "\x01\x1e" "1=H\x1c\x1e" "55=AB",
+      TmxIpHeader::Continuation::FIRST, *fixture.m_feed_clients.front());
+    fixture.publish(last + 3, "X\x1d", TmxIpHeader::Continuation::LAST,
+      *fixture.m_feed_clients.front());
+    fixture.require_symbol("ABX");
+  }
+
+  TEST_CASE("feed_failure") {
+    auto fixture = Fixture(2);
+    fixture.publish(1, "ONE");
+    fixture.require_symbol("ONE");
+    fixture.publish(3, "THREE");
+    flush_pending_routines();
+    REQUIRE(!fixture.m_recovery_client.m_requests.try_pop());
+    fixture.m_feed_clients[1]->close();
+    auto request = fixture.require_request(2, 2);
+    fixture.recover(2, "TWO");
+    fixture.require_symbol("TWO");
+    fixture.require_symbol("THREE");
+    fixture.complete(request);
+    fixture.publish(4, "FOUR");
+    fixture.require_symbol("FOUR");
+    fixture.m_feed_clients.front()->close();
+    REQUIRE_THROWS_AS(fixture.m_client.read(), EndOfFileException);
   }
 
 }
