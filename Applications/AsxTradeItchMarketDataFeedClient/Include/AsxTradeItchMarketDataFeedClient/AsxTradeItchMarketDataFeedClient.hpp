@@ -84,6 +84,7 @@ namespace Nexus {
       Beam::RoutineHandler m_read_loop;
       Beam::OpenState m_open_state;
 
+      static void log(const AsxTradeItchMessage& message);
       static Money get_price(const Book& book, std::int32_t price);
       static void offset(
         BookSide& side, Side direction, std::int32_t price, Quantity delta);
@@ -173,6 +174,23 @@ namespace Nexus {
     m_feed_client->close();
     m_read_loop.wait();
     m_open_state.close();
+  }
+
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+      IsAsxTradeItchClient<Beam::dereference_t<C>>
+  void AsxTradeItchMarketDataFeedClient<M, C>::log(
+      const AsxTradeItchMessage& message) {
+    auto out = std::stringstream();
+    out << "(message " << static_cast<char>(message.m_type) << ' ' <<
+      std::hex << std::setfill('0');
+    for(auto i = std::size_t(0);
+        i != message.m_length - AsxTradeItchMessage::HEADER_LENGTH; ++i) {
+      out << std::setw(2) << static_cast<unsigned int>(
+        static_cast<unsigned char>(message.m_payload[i]));
+    }
+    out << ")\n";
+    std::cout << out.str() << std::flush;
   }
 
   template<typename M, typename C> requires
@@ -584,18 +602,16 @@ namespace Nexus {
           break;
         }
         if(m_config.m_is_logging_messages) {
-          auto out = std::stringstream();
-          out << "(message " << static_cast<char>(message.m_type) << ' ' <<
-            std::hex << std::setfill('0');
-          for(auto i = std::size_t(0);
-              i != message.m_length - AsxTradeItchMessage::HEADER_LENGTH; ++i) {
-            out << std::setw(2) << static_cast<unsigned int>(
-              static_cast<unsigned char>(message.m_payload[i]));
-          }
-          out << ")\n";
-          std::cout << out.str() << std::flush;
+          log(message);
         }
-        dispatch(message);
+        try {
+          dispatch(message);
+        } catch(const std::exception&) {
+          if(!m_config.m_is_logging_messages) {
+            log(message);
+          }
+          throw;
+        }
       }
     } catch(const std::exception&) {
       if(m_open_state.is_open()) {

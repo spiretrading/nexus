@@ -1,6 +1,7 @@
 #ifndef CXA_PITCH_MARKET_DATA_FEED_CLIENT_HPP
 #define CXA_PITCH_MARKET_DATA_FEED_CLIENT_HPP
 #include <functional>
+#include <iomanip>
 #include <tuple>
 #include <Beam/IO/ConnectException.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -68,6 +69,7 @@ namespace Nexus {
       Beam::RoutineHandler m_read_loop;
       Beam::OpenState m_open_state;
 
+      static void log(const CxaPitchMessage& message);
       CxaPitchMarketDataFeedClient(
         const CxaPitchMarketDataFeedClient&) = delete;
       CxaPitchMarketDataFeedClient& operator =(
@@ -138,6 +140,23 @@ namespace Nexus {
     m_feed_client->close();
     m_read_loop.wait();
     m_open_state.close();
+  }
+
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+      IsCxaPitchClient<Beam::dereference_t<C>>
+  void CxaPitchMarketDataFeedClient<M, C>::log(
+      const CxaPitchMessage& message) {
+    print([&] (auto& out) {
+      out << "(message 0x" << std::hex << std::setfill('0') << std::setw(2) <<
+        static_cast<unsigned int>(message.m_type) << ' ';
+      for(auto i = std::size_t(0);
+          i != message.m_length - CxaPitchMessage::HEADER_LENGTH; ++i) {
+        out << std::setw(2) << static_cast<unsigned int>(
+          static_cast<unsigned char>(message.m_payload[i]));
+      }
+      out << ')';
+    });
   }
 
   template<typename M, typename C> requires
@@ -392,11 +411,13 @@ namespace Nexus {
         if(!m_open_state.is_open()) {
           break;
         }
+        log(message);
         print([&] (auto& out) {
           out << "(bad_message " << e.what() << ')';
         });
       } catch(const std::exception&) {
         if(m_open_state.is_open()) {
+          log(message);
           m_exception = std::current_exception();
         }
         break;

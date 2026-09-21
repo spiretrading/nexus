@@ -1,3 +1,5 @@
+#include <iostream>
+#include <sstream>
 #include <boost/date_time/posix_time/time_parsers.hpp>
 #include <boost/endian/conversion.hpp>
 #include <doctest/doctest.h>
@@ -10,6 +12,18 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
+  struct Log {
+    std::stringstream m_output;
+    std::streambuf* m_buffer;
+
+    Log()
+      : m_buffer(std::cout.rdbuf(m_output.rdbuf())) {}
+
+    ~Log() {
+      std::cout.rdbuf(m_buffer);
+    }
+  };
+
   using FeedClient = Nexus::Tests::TestMarketDataFeedClient;
   const auto TIMESTAMP = time_from_string("2023-11-14 22:13:20.123456");
   constexpr auto NANOSECONDS = std::uint32_t(123456789);
@@ -624,13 +638,15 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
       REQUIRE(!fixture.m_operations->try_pop());
     }
     SUBCASE("malformed_message") {
-      fixture.m_itch_client.m_messages.push(SharedBuffer("A", 1));
+      auto log = Log();
+      fixture.m_itch_client.m_messages.push(SharedBuffer("A\x7f", 2));
       flush_pending_routines();
       REQUIRE(fixture.m_client.is_finished());
       auto error = fixture.m_client.get_exception();
       REQUIRE(error);
       REQUIRE_THROWS_AS(
         std::rethrow_exception(error), AsxTradeItchParserException);
+      REQUIRE(log.m_output.str() == "(message A 7f)\n");
     }
     SUBCASE("close") {
       fixture.m_client.close();

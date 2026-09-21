@@ -1,4 +1,6 @@
 #include <atomic>
+#include <iostream>
+#include <sstream>
 #include <tuple>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <boost/date_time/posix_time/posix_time.hpp>
@@ -12,6 +14,18 @@ using namespace Nexus;
 using namespace std::string_view_literals;
 
 namespace {
+  struct Log {
+    std::stringstream m_output;
+    std::streambuf* m_buffer;
+
+    Log()
+      : m_buffer(std::cout.rdbuf(m_output.rdbuf())) {}
+
+    ~Log() {
+      std::cout.rdbuf(m_buffer);
+    }
+  };
+
   struct TestPitchClient {
     Queue<std::string> m_messages;
     std::string m_payload;
@@ -230,11 +244,13 @@ TEST_SUITE("CxaPitchMarketDataFeedClient") {
   }
 
   TEST_CASE("malformed_message") {
+    auto log = Log();
     auto fixture = Fixture();
-    fixture.publish(std::string("\x02\x37", 2));
+    fixture.publish(std::string("\x03\x37\xaa", 3));
     fixture.add_order();
     flush_pending_routines();
     REQUIRE(!fixture.m_client.get_exception());
+    REQUIRE(log.m_output.str().starts_with("(message 0x37 aa)\n"));
   }
 
   TEST_CASE("read_failure") {
