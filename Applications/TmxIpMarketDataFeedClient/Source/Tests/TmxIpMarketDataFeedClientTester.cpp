@@ -163,7 +163,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     auto order = fixture.operation<FeedClient::AddOrderOperation>();
     REQUIRE(order->m_ticker == parse_ticker("ABX.TSX"));
     REQUIRE(order->m_venue == Venues::TSX);
-    REQUIRE(order->m_mpid == "TSE");
+    REQUIRE(order->m_mpid == "TSX");
     REQUIRE_FALSE(order->m_is_primary_mpid);
     REQUIRE(order->m_side == Side::BID);
     REQUIRE(order->m_price == Money(25.50));
@@ -181,6 +181,360 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     REQUIRE(removal->m_id == order->m_id);
     REQUIRE(removal->m_timestamp == time_from_string("2026-09-21 13:00:02"));
     fixture.require_empty();
+  }
+
+  TEST_CASE("book_venues") {
+    struct Entry {
+      std::string m_source;
+      Venue m_venue;
+      std::string m_mpid;
+    };
+    auto entries = std::vector<Entry>{
+      {"TSE", Venues::TSX, "TSX"}, {"CDX", Venues::TSXV, "TSXV"},
+      {"ALP", Venues::XATS, "ALP"}, {"ALX", Venues::ALX, "ALX"},
+      {"CHI", Venues::CHIC, "CHIC"}, {"CHT", Venues::XCX2, "CX2"},
+      {"CNQ", Venues::CSE, "CSE"}, {"PUR", Venues::PURE, "PURE"},
+      {"CS2", Venues::CSE2, "CSE2"}, {"OMG", Venues::OMGA, "OMG"},
+      {"LYX", Venues::LYNX, "LYNX"}, {"AQL", Venues::NEOE, "NEOL"},
+      {"AQN", Venues::NEON, "NEON"}};
+    auto fixture = Fixture();
+    auto ids = std::vector<std::string>();
+    for(auto& entry : entries) {
+      CAPTURE(entry.m_source);
+      fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=" +
+        entry.m_source + "|57=20260921090000000|40=123|70=79"
+        "|196=25.50|64=300");
+      auto order = fixture.operation<FeedClient::AddOrderOperation>();
+      REQUIRE(order->m_ticker == parse_ticker("ABX.TSX"));
+      REQUIRE(order->m_venue == entry.m_venue);
+      REQUIRE(order->m_mpid == entry.m_mpid);
+      REQUIRE(std::ranges::find(ids, order->m_id) == ids.end());
+      ids.push_back(order->m_id);
+    }
+    fixture.require_empty();
+  }
+
+  TEST_CASE("partial_cancellation") {
+    for(auto source : std::array<std::string_view, 4>{
+        "CHI", "CHT", "OMG", "LYX"}) {
+      CAPTURE(source);
+      auto fixture = Fixture();
+      fixture.publish("|6=OrderCancelResp|5=Sell|16=Booked|55=ABX|247=" +
+        std::string(source) + "|57=20260921090000000|40=123"
+        "|196=25.50|64=550");
+      auto order = fixture.operation<FeedClient::AddOrderOperation>();
+      REQUIRE(order->m_size == 500);
+      fixture.publish("|6=OrderCancelResp|5=Sell|16=Cancelled|55=ABX|247=" +
+        std::string(source) + "|57=20260921090001000|40=123"
+        "|196=25.50|64=100");
+      auto update = fixture.operation<FeedClient::AddOrderOperation>();
+      REQUIRE(update->m_id == order->m_id);
+      REQUIRE(update->m_side == Side::ASK);
+      REQUIRE(update->m_price == order->m_price);
+      if(source == "OMG" || source == "LYX") {
+        REQUIRE(update->m_size == 400);
+      } else {
+        REQUIRE(update->m_size == 100);
+      }
+      fixture.publish("|6=OrderCancelResp|5=Sell|16=Cancelled|55=ABX|247=" +
+        std::string(source) + "|57=20260921090002000|40=123"
+        "|196=25.50|64=0");
+      REQUIRE(fixture.operation<FeedClient::RemoveOrderOperation>()->m_id ==
+        order->m_id);
+      fixture.require_empty();
+    }
+  }
+
+  TEST_CASE("order_replacement") {
+    auto fixture = Fixture();
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=OMG"
+      "|57=20260921090000000|40=OLD|196=25.50|64=400");
+    auto order = fixture.operation<FeedClient::AddOrderOperation>();
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=OMG"
+      "|57=20260921090001000|40=NEW|11=OLD|196=25.51|64=600");
+    REQUIRE(fixture.operation<FeedClient::RemoveOrderOperation>()->m_id ==
+      order->m_id);
+    auto replacement = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(replacement->m_id != order->m_id);
+    REQUIRE(replacement->m_price == Money(25.51));
+    REQUIRE(replacement->m_size == 600);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=OMG"
+      "|57=20260921090002000|40=NEW|11=NEW|196=25.52|64=500");
+    auto update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id == replacement->m_id);
+    REQUIRE(update->m_price == Money(25.52));
+    REQUIRE(update->m_size == 500);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=PriceAssigned|55=ABX"
+      "|247=OMG|57=20260921090003000|40=NEW|196=25.53|64=0");
+    update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id == replacement->m_id);
+    REQUIRE(update->m_price == Money(25.53));
+    REQUIRE(update->m_size == 500);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=AssignTimePriority|55=ABX"
+      "|247=OMG|57=20260921090004000|40=NEW|196=25.53|64=500");
+    fixture.require_empty();
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Killed|55=ABX|247=OMG"
+      "|57=20260921090005000|40=NEW|196=25.53|64=500");
+    REQUIRE(fixture.operation<FeedClient::RemoveOrderOperation>()->m_id ==
+      replacement->m_id);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Cancelled|55=ABX|247=OMG"
+      "|57=20260921090006000|40=OLD|196=25.50|64=0");
+    fixture.require_empty();
+  }
+
+  TEST_CASE("initial_book") {
+    auto fixture = Fixture({
+      TickerInfo(parse_ticker("ABX.TSX"), "", "", 100),
+      TickerInfo(parse_ticker("BBD.TSX"), "", "", 100)});
+    fixture.publish("|6=OrderInfo|5=OrderBook|247=TSE"
+      "|57=20260921070000000|55=ABX|40=123|70=1|197=Buy|64=300|196=25.50"
+      "|55.1=ABX|40.1=123|70.1=2|197.1=Buy|64.1=200|41.1=25.51"
+      "|55.2=ABX|40.2=123|70.2=1|197.2=Sell|64.2=100|196.2=25.52"
+      "|55.3=BBD|40.3=123|70.3=1|197.3=Buy|64.3=400|196.3=30|113=Y");
+    auto ids = std::vector<std::string>();
+    for(auto price : {Money(25.50), Money(25.51), Money(25.52), Money(30)}) {
+      auto order = fixture.operation<FeedClient::AddOrderOperation>();
+      REQUIRE(order->m_price == price);
+      REQUIRE(order->m_timestamp == time_from_string("2026-09-21 11:00:00"));
+      REQUIRE(std::ranges::find(ids, order->m_id) == ids.end());
+      ids.push_back(order->m_id);
+    }
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=ALP"
+      "|57=20260921090000000|40=123|70=1|196=25.50|64=500");
+    auto alpha = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(std::ranges::find(ids, alpha->m_id) == ids.end());
+    fixture.publish("|6=ClearOrderInfo|5=ClearOrderBook|55=ABX|247=TSE"
+      "|57=20260921090001000");
+    auto removals = std::vector<std::string>();
+    for(auto i = 0; i != 3; ++i) {
+      auto removal = fixture.operation<FeedClient::RemoveOrderOperation>();
+      REQUIRE(removal->m_timestamp ==
+        time_from_string("2026-09-21 13:00:01"));
+      removals.push_back(removal->m_id);
+    }
+    auto expected = std::vector(ids.begin(), ids.begin() + 3);
+    std::ranges::sort(expected);
+    std::ranges::sort(removals);
+    REQUIRE(removals == expected);
+    fixture.publish("|6=ClearOrderInfo|5=ClearOrderBook|55=ABX|247=TSE"
+      "|57=20260921090002000");
+    fixture.require_empty();
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Cancelled|55=BBD|247=TSE"
+      "|57=20260921090003000|40=123|70=1|196=30|64=400");
+    REQUIRE(fixture.operation<FeedClient::RemoveOrderOperation>()->m_id ==
+      ids.back());
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Cancelled|55=ABX|247=ALP"
+      "|57=20260921090004000|40=123|70=1|196=25.50|64=500");
+    REQUIRE(fixture.operation<FeedClient::RemoveOrderOperation>()->m_id ==
+      alpha->m_id);
+    fixture.require_empty();
+  }
+
+  TEST_CASE("book_trades") {
+    auto source = std::string("TSE");
+    auto action = std::string("Trade");
+    auto display = std::string("|150=800|150.1=0");
+    SUBCASE("display_quantity") {}
+    SUBCASE("trade_quantity") {
+      source = "CHI";
+      display.clear();
+    }
+    SUBCASE("auction_trade") {
+      source = "AQL";
+      action = "AuctionTradeIndividual";
+      display.clear();
+    }
+    auto fixture = Fixture();
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=" +
+      source + "|57=20260921090000000|40=123|70=79|196=25.50|64=600");
+    auto bid = fixture.operation<FeedClient::AddOrderOperation>();
+    fixture.publish("|6=OrderCancelResp|5=Sell|16=Booked|55=ABX|247=" +
+      source + "|57=20260921090000000|40=123|70=79|196=25.51|64=500");
+    auto ask = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(bid->m_id != ask->m_id);
+    auto trade = "|6=TradeReport|55=ABX|247=" + source +
+      "|57=20260921090001000|40=123|70=79|40.1=123|70.1=79"
+      "|41=25.50|64=100";
+    fixture.publish(trade + "|5=Cancelled");
+    fixture.publish(trade + "|5=Trade|183=Y");
+    fixture.require_empty();
+    fixture.publish(trade + "|5=" + action + display);
+    auto update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id == bid->m_id);
+    REQUIRE(update->m_price == bid->m_price);
+    REQUIRE(update->m_timestamp == time_from_string("2026-09-21 13:00:01"));
+    if(display.empty()) {
+      REQUIRE(update->m_size == 500);
+      update = fixture.operation<FeedClient::AddOrderOperation>();
+      REQUIRE(update->m_id == ask->m_id);
+      REQUIRE(update->m_price == ask->m_price);
+      REQUIRE(update->m_size == 400);
+    } else {
+      REQUIRE(update->m_size == 800);
+      REQUIRE(fixture.operation<FeedClient::RemoveOrderOperation>()->m_id ==
+        ask->m_id);
+    }
+    fixture.require_empty();
+    fixture.publish("|6=TradeReport|5=Trade|55=ABX|247=" + source +
+      "|57=20260921090002000|40=123|70=79|41=25.50|64=800|150=0");
+    REQUIRE(fixture.operation<FeedClient::RemoveOrderOperation>()->m_id ==
+      bid->m_id);
+    fixture.publish("|6=TradeReport|5=Trade|55=ABX|247=" + source +
+      "|57=20260921090003000|40=UNKNOWN|70=79|41=25.50|64=100");
+    fixture.require_empty();
+  }
+
+  TEST_CASE("price_levels") {
+    auto fixture = Fixture();
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=AQN"
+      "|636=AQN|57=20260921090000000|196=25.50|64=600");
+    auto bid = fixture.operation<FeedClient::AddOrderOperation>();
+    fixture.publish("|6=OrderCancelResp|5=Sell|16=Booked|55=ABX|247=AQN"
+      "|636=AQN|57=20260921090000000|196=25.50|64=500");
+    auto ask = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(bid->m_id != ask->m_id);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=AQN"
+      "|636=AQN|57=20260921090001000|196=25.50000|64=700");
+    auto update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id == bid->m_id);
+    REQUIRE(update->m_size == 700);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=AQN"
+      "|636=AQN|57=20260921090002000|642=25.50|196=25.51|64=400");
+    REQUIRE(fixture.operation<FeedClient::RemoveOrderOperation>()->m_id ==
+      bid->m_id);
+    update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id != bid->m_id);
+    REQUIRE(update->m_price == Money(25.51));
+    REQUIRE(update->m_size == 400);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Cancelled|55=ABX|247=AQN"
+      "|636=AQN|57=20260921090003000|196=25.51|64=400");
+    REQUIRE(fixture.operation<FeedClient::RemoveOrderOperation>()->m_id ==
+      update->m_id);
+    fixture.publish("|6=ClearOrderInfo|5=ClearOrderBook|55=ABX|247=AQN"
+      "|636=AQN|57=20260921090004000");
+    REQUIRE(fixture.operation<FeedClient::RemoveOrderOperation>()->m_id ==
+      ask->m_id);
+    fixture.require_empty();
+  }
+
+  TEST_CASE("order_repricing") {
+    auto fixture = Fixture();
+    fixture.m_time.set(time_from_string("2026-09-21 16:00:00"));
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=TSE"
+      "|57=20260921090000000|40=123|70=79|196=OPG|64=500");
+    fixture.require_empty();
+    fixture.publish("|6=OrderCancelResp|5=Sell|16=Booked|55=ABX|247=TSE"
+      "|57=20260921090000000|40=124|70=79|196=26|64=200");
+    auto ask = fixture.operation<FeedClient::AddOrderOperation>();
+    fixture.m_source.m_messages.push("\x01\x1e" "56=20260921090001000\x1c"
+      "\x1e" "6=MBXMessage\x1e" "5=AssignCOP\x1e" "55=ABX"
+      "\x1e" "247=TSE\x1e" "57=20260921090001000\x1e" "191=25.50"
+      "\x1e" "192=079|123\x1e" "192.1=079|124");
+    auto bid = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(bid->m_side == Side::BID);
+    REQUIRE(bid->m_price == Money(25.50));
+    REQUIRE(bid->m_size == 500);
+    auto update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id == ask->m_id);
+    REQUIRE(update->m_price == Money(25.50));
+    REQUIRE(update->m_size == 200);
+    fixture.m_source.m_messages.push("\x01\x1e" "56=20260921090002000\x1c"
+      "\x1e" "6=MBXMessage\x1e" "5=AssignLimit\x1e" "55=ABX"
+      "\x1e" "247=TSE\x1e" "57=20260921090002000\x1e" "191=25.50"
+      "\x1e" "192=079|123\x1e" "41=25\x1e" "192.1=079|124"
+      "\x1e" "41.1=26");
+    update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id == bid->m_id);
+    REQUIRE(update->m_price == Money(25));
+    REQUIRE(update->m_size == 500);
+    update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id == ask->m_id);
+    REQUIRE(update->m_price == Money(26));
+    REQUIRE(update->m_size == 200);
+    fixture.require_empty();
+  }
+
+  TEST_CASE("market_order_repricing") {
+    auto fixture = Fixture();
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=AQL"
+      "|57=20260921090000000|40=MARKET|196=0|64=500");
+    fixture.require_empty();
+    fixture.publish("|6=OrderCancelResp|5=Sell|16=Booked|55=ABX|247=AQL"
+      "|57=20260921090000000|40=LIMIT|196=26|64=200");
+    auto limit = fixture.operation<FeedClient::AddOrderOperation>();
+    fixture.publish("|6=MBXMessage|5=AssignCOP|55=ABX|247=AQL|191=25.50"
+      "|57=20260921090001000");
+    auto market = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(market->m_id != limit->m_id);
+    REQUIRE(market->m_price == Money(25.50));
+    REQUIRE(market->m_size == 500);
+    fixture.require_empty();
+    fixture.publish("|6=MBXMessage|5=AssignCOP|55=ABX|247=AQL|191=25.60"
+      "|57=20260921090002000");
+    auto update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id == market->m_id);
+    REQUIRE(update->m_price == Money(25.60));
+    fixture.require_empty();
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=PriceAssigned|55=ABX"
+      "|247=AQL|57=20260921090003000|40=MARKET|196=0|64=500");
+    REQUIRE(fixture.operation<FeedClient::RemoveOrderOperation>()->m_id ==
+      market->m_id);
+    fixture.publish("|6=MBXMessage|5=AssignCOP|55=ABX|247=AQL|191=25.70"
+      "|57=20260921090004000");
+    update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id == market->m_id);
+    REQUIRE(update->m_price == Money(25.70));
+    REQUIRE(update->m_size == 500);
+    fixture.require_empty();
+  }
+
+  TEST_CASE("regular_book") {
+    auto price = std::string("25.50");
+    auto quantity = std::string("300");
+    auto terms = std::string();
+    SUBCASE("odd_lot") {
+      quantity = "99";
+    }
+    SUBCASE("market_order") {
+      price = "MKT";
+    }
+    SUBCASE("zero_price") {
+      price = "0";
+    }
+    SUBCASE("nonresident") {
+      terms = "|168=Y";
+    }
+    SUBCASE("settlement_terms") {
+      terms = "|53=Cash";
+    }
+    SUBCASE("other_book") {
+      terms = "|636=AQD";
+    }
+    for(auto is_initial : {false, true}) {
+      CAPTURE(is_initial);
+      auto fixture = Fixture();
+      auto fields = std::string();
+      if(is_initial) {
+        fields = "|6=OrderInfo|5=OrderBook|197=Buy";
+      } else {
+        fields = "|6=OrderCancelResp|5=Buy|16=Booked";
+      }
+      fixture.publish(fields + "|55=ABX|247=AQL|57=20260921090000000"
+        "|40=123|70=79|196=" + price + "|64=" + quantity + terms);
+      fixture.require_empty();
+      fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=AQL"
+        "|57=20260921090001000|40=123|196=25.50|64=300");
+      auto order = fixture.operation<FeedClient::AddOrderOperation>();
+      REQUIRE(order->m_size == 300);
+      fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=AQL"
+        "|57=20260921090002000|40=123|196=25.50|64=350");
+      fixture.require_empty();
+      fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=AQL"
+        "|57=20260921090003000|40=123|196=25.50|64=99");
+      REQUIRE(fixture.operation<FeedClient::RemoveOrderOperation>()->m_id ==
+        order->m_id);
+      fixture.require_empty();
+    }
   }
 
   TEST_CASE("close") {

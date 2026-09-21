@@ -85,6 +85,7 @@ namespace Nexus {
         Ticker m_ticker;
         Venue m_venue;
         std::string m_source;
+        std::string m_mpid;
         std::string m_prefix;
         Quantity m_board_lot;
         std::unordered_map<std::string, OrderEntry> m_orders;
@@ -316,6 +317,15 @@ namespace Nexus {
       i->second.m_ticker = info->m_ticker;
       i->second.m_venue = venue;
       i->second.m_source = source;
+      i->second.m_mpid = [&] () -> std::string {
+        if(source == "ALP" || source == "OMG") {
+          return std::string(source);
+        }
+        if(source == "AQL") {
+          return "NEOL";
+        }
+        return VENUES.from(venue).m_display_name;
+      }();
       i->second.m_prefix = std::move(prefix);
       i->second.m_board_lot = info->m_board_lot;
     }
@@ -354,7 +364,7 @@ namespace Nexus {
     if(quantity == 0) {
       m_feed_client->remove_order(id, timestamp);
     } else {
-      m_feed_client->add_order(book.m_ticker, book.m_venue, book.m_source,
+      m_feed_client->add_order(book.m_ticker, book.m_venue, book.m_mpid,
         false, id, order.m_side, order.m_price.m_value, quantity, timestamp);
     }
   }
@@ -457,7 +467,16 @@ namespace Nexus {
       auto i = book->m_orders.find(key);
       if(i != book->m_orders.end()) {
         auto order = i->second;
-        order.m_quantity = message.m_quantity;
+        if(book->m_source == "OMG" || book->m_source == "LYX") {
+          if(message.m_quantity == 0) {
+            order.m_quantity = 0;
+          } else {
+            order.m_quantity = std::max(
+              Quantity(0), order.m_quantity - Quantity(message.m_quantity));
+          }
+        } else {
+          order.m_quantity = message.m_quantity;
+        }
         update(*book, key, order, timestamp);
       }
     } else if(message.m_confirmation == "Cancelled" ||
@@ -468,7 +487,8 @@ namespace Nexus {
       if(i != book->m_orders.end()) {
         auto order = i->second;
         order.m_price = message.m_public_price;
-        order.m_is_market = order.m_price.m_type != TmxIpPrice::Type::LIMIT;
+        order.m_is_market = order.m_price.m_type != TmxIpPrice::Type::LIMIT ||
+          order.m_price.m_value == Money::ZERO;
         update(*book, key, order, timestamp);
       }
     }
@@ -504,7 +524,8 @@ namespace Nexus {
     if((message.m_action != "Trade" &&
         message.m_action != "AuctionTradeIndividual") ||
         message.m_is_correction.value_or(false) ||
-        message.m_settlement_terms || message.m_is_nonresident.value_or(false)) {
+        message.m_settlement_terms ||
+        message.m_is_nonresident.value_or(false)) {
       return;
     }
     auto book = find_book(message.m_symbol, message.m_header);
