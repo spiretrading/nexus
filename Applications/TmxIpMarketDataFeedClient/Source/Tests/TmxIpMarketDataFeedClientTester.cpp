@@ -223,16 +223,43 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     auto fixture = Fixture(Venue());
     for(auto [fields, type, code] : {
         std::tuple("", Type::REGULAR, "@"),
-        {"|574=O", Type::OPEN, "O"}, {"|574=R", Type::NONE, "R"},
+        {"|574=O", Type::OPEN, "O"}, {"|574=R", Type::REOPEN, "R"},
         {"|494=Y", Type::CLOSE, "C"},
         {"|390=Regular", Type::REGULAR, "@"},
-        {"|390=VWAP", Type::NONE, "CrossType=VWAP"},
-        {"|53=20260924", Type::NONE, "SettlementTerms=20260924"},
-        {"|76=Y|503=Y|168=Y", Type::NONE,
-          "ExtendedHours;ByPass;NonResident"},
+        {"|390=Basis", Type::NONE, "BA"},
+        {"|390=Contgt", Type::NONE, "CG"},
+        {"|390=Intrnl", Type::NONE, "I"},
+        {"|390=NAV", Type::NONE, "NV"},
+        {"|390=STS", Type::NONE, "ST"},
+        {"|390=VWAP", Type::NONE, "V"},
+        {"|390=NC", Type::NONE, "NC"},
+        {"|390=Intentional", Type::NONE, "IC"},
+        {"|390=Derivative", Type::NONE, "DR"},
+        {"|390=CCP-Closing Price", Type::NONE, "CP"},
+        {"|390=CPP", Type::NONE, "PP"},
+        {"|390=Unknown", Type::NONE, "CX"},
+        {"|53=Cash", Type::NONE, "CA"},
+        {"|53=CT", Type::NONE, "CT"},
+        {"|53=MS", Type::NONE, "MS"},
+        {"|53=NN", Type::NONE, "NN"},
+        {"|53=Future", Type::NONE, "F"},
+        {"|53=ND", Type::NONE, "ND"},
+        {"|53=20260924", Type::NONE, "DD"},
+        {"|53=Unknown", Type::NONE, "S"},
+        {"|76=Y", Type::NONE, "E"},
+        {"|503=Y", Type::NONE, "B"},
+        {"|168=Y", Type::NONE, "N"},
+        {"|617=Y", Type::NONE, "D"},
+        {"|684=Y", Type::NONE, "M"},
+        {"|688=Y", Type::NONE, "CO"},
+        {"|689=L", Type::NONE, "L"},
+        {"|703=P", Type::NONE, "P"},
+        {"|76=N|503=N|168=N|617=N|684=N|688=N", Type::REGULAR, "@"},
+        {"|76=Y|503=Y|168=Y", Type::NONE, "E;B;N"},
         {"|617=Y|684=Y|688=Y|689=L|703=P", Type::NONE,
-          "Dark;MidOnly;Conditional;M-ELO=L;Purestream=P"},
-        {"|574=O|390=Intrnl", Type::OPEN, "O;CrossType=Intrnl"}}) {
+          "D;M;CO;L;P"},
+        {"|574=O|390=Intrnl", Type::OPEN, "O;I"},
+        {"|574=R|390=VWAP", Type::REOPEN, "R;V"}}) {
       CAPTURE(fields);
       fixture.publish(std::string(
         "|6=TradeReport|5=Trade|55=ABX|41=10|64=37"
@@ -247,15 +274,18 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
   }
 
   TEST_CASE("cls_corrections") {
+    using Type = TimeAndSale::Condition::Type;
     auto fixture = Fixture(Venue());
-    for(auto [fields, code] : {
-        std::pair("|5=Cancelled", "Cancelled"),
-        {"|5=Cancelled|183=Y|506=ORIGINAL|574=O", "Cancelled"},
-        {"|5=Trade|183=Y|506=ORIGINAL", "Correction"},
-        {"|5=Trade|506=ORIGINAL", "Correction"},
-        {"|5=Trade|183=Y|494=Y", "Correction"},
-        {"|5=AuctionTradeIndividual|183=Y|220=TRADE", "Correction"},
-        {"|5=AuctionTradeIndividual|183=Y|220=TRADE", "Correction"}}) {
+    for(auto [fields, type, code] : {
+        std::tuple("|5=Cancelled", Type::CANCELLATION, "X"),
+        {"|5=Cancelled|183=Y|506=ORIGINAL|574=O", Type::CANCELLATION, "X"},
+        {"|5=Cancelled|76=Y", Type::CANCELLATION, "X;E"},
+        {"|5=Trade|183=Y|506=ORIGINAL", Type::CORRECTION, "U"},
+        {"|5=Trade|506=ORIGINAL", Type::CORRECTION, "U"},
+        {"|5=Trade|183=Y|494=Y", Type::CORRECTION, "U"},
+        {"|5=Trade|183=Y|390=VWAP", Type::CORRECTION, "U;V"},
+        {"|5=AuctionTradeIndividual|183=Y|220=TRADE", Type::CORRECTION, "U"},
+        {"|5=AuctionTradeIndividual|183=Y|220=TRADE", Type::CORRECTION, "U"}}) {
       CAPTURE(fields);
       fixture.publish(std::string(
         "|6=TradeReport|55=ABX|41=10|64=100|57=20260921100000000"
@@ -263,7 +293,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
       auto operation =
         fixture.operation<FeedClient::PublishTimeAndSaleOperation>();
       REQUIRE(operation->m_time_and_sale->m_condition ==
-        TimeAndSale::Condition(TimeAndSale::Condition::Type::NONE, code));
+        TimeAndSale::Condition(type, code));
       REQUIRE(operation->m_time_and_sale->m_price == parse_money("10"));
       REQUIRE(operation->m_time_and_sale->m_size == 100);
       fixture.require_empty();
@@ -280,8 +310,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
         time_from_string("2026-09-21 13:30:00.123"));
       REQUIRE(operation->m_time_and_sale->m_size == 100);
       REQUIRE(operation->m_time_and_sale->m_condition ==
-        TimeAndSale::Condition(
-          TimeAndSale::Condition::Type::NONE, "Correction"));
+        TimeAndSale::Condition(Type::CORRECTION, "U"));
     }
     fixture.publish("|6=TradeReport|5=Trade|55=ABX|41=10|64=100|183=Y"
       "|57=20261221100000000|247=TSE");
@@ -306,7 +335,8 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
         auto operation =
           fixture.operation<FeedClient::PublishTimeAndSaleOperation>();
         REQUIRE(operation->m_time_and_sale->m_size == 100);
-        REQUIRE(operation->m_time_and_sale->m_condition.m_code == "AUCTION");
+        REQUIRE(operation->m_time_and_sale->m_condition ==
+          TimeAndSale::Condition(TimeAndSale::Condition::Type::AUCTION, "A"));
         fixture.publish(fields);
         fixture.require_empty();
       }

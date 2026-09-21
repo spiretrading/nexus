@@ -259,52 +259,82 @@ namespace Nexus {
       }
       condition.m_code += code;
     };
+    auto append_mapped = [&] (
+        std::string_view value, const auto& codes, std::string_view fallback) {
+      for(auto& [name, code] : codes) {
+        if(value == name) {
+          append(code);
+          return;
+        }
+      }
+      append(fallback);
+    };
     if(message.m_action == "Cancelled") {
-      append("Cancelled");
+      condition.m_type = TimeAndSale::Condition::Type::CANCELLATION;
+      append("X");
     } else if(message.m_is_correction.value_or(false) ||
         message.m_original_trade_id) {
-      append("Correction");
+      condition.m_type = TimeAndSale::Condition::Type::CORRECTION;
+      append("U");
     } else if(message.m_opening_auction == std::string_view("O") ||
         message.m_market_state == std::string_view("Opening Trade")) {
       condition.m_type = TimeAndSale::Condition::Type::OPEN;
       append("O");
     } else if(message.m_opening_auction == std::string_view("R")) {
+      condition.m_type = TimeAndSale::Condition::Type::REOPEN;
       append("R");
     } else if(message.m_is_market_on_close.value_or(false)) {
       condition.m_type = TimeAndSale::Condition::Type::CLOSE;
       append("C");
     } else if(message.m_action == "AuctionTradeIndividual") {
-      append("AUCTION");
+      condition.m_type = TimeAndSale::Condition::Type::AUCTION;
+      append("A");
     }
     if(message.m_cross_type && *message.m_cross_type != "Regular") {
-      append("CrossType=" + std::string(*message.m_cross_type));
+      static constexpr auto CODES =
+        std::to_array<std::pair<std::string_view, std::string_view>>({
+          {"Basis", "BA"}, {"Contgt", "CG"}, {"Intrnl", "I"}, {"NAV", "NV"},
+          {"STS", "ST"}, {"VWAP", "V"}, {"NC", "NC"}, {"Intentional", "IC"},
+          {"Derivative", "DR"}, {"CCP-Closing Price", "CP"}, {"CPP", "PP"}});
+      append_mapped(*message.m_cross_type, CODES, "CX");
     }
     if(message.m_settlement_terms) {
-      append("SettlementTerms=" + std::string(*message.m_settlement_terms));
+      static constexpr auto CODES =
+        std::to_array<std::pair<std::string_view, std::string_view>>({
+          {"Cash", "CA"}, {"CT", "CT"}, {"MS", "MS"}, {"NN", "NN"},
+          {"Future", "F"}, {"ND", "ND"}});
+      auto is_date = message.m_settlement_terms->size() == 8 &&
+        std::ranges::all_of(*message.m_settlement_terms,
+          [] (auto c) { return c >= '0' && c <= '9'; });
+      if(is_date) {
+        append("DD");
+      } else {
+        append_mapped(*message.m_settlement_terms, CODES, "S");
+      }
     }
     if(message.m_is_extended_hours.value_or(false)) {
-      append("ExtendedHours");
+      append("E");
     }
     if(message.m_is_bypass.value_or(false)) {
-      append("ByPass");
+      append("B");
     }
     if(message.m_is_nonresident.value_or(false)) {
-      append("NonResident");
+      append("N");
     }
     if(message.m_is_dark.value_or(false)) {
-      append("Dark");
+      append("D");
     }
     if(message.m_is_mid_only.value_or(false)) {
-      append("MidOnly");
+      append("M");
     }
     if(message.m_is_conditional.value_or(false)) {
-      append("Conditional");
+      append("CO");
     }
     if(message.m_melo) {
-      append("M-ELO=" + std::string(*message.m_melo));
+      append("L");
     }
     if(message.m_purestream) {
-      append("Purestream=" + std::string(*message.m_purestream));
+      append("P");
     }
     if(condition.m_code.empty()) {
       condition.m_type = TimeAndSale::Condition::Type::REGULAR;
