@@ -354,27 +354,37 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     auto fixture = Fixture(Venue(), {
       TickerInfo(parse_ticker("ABX.TSX"), "Barrick", "", 100),
       TickerInfo(parse_ticker("FOO.CSE"), "Foo", "", 100)});
-    for(auto date : {"20260921", "20260922"}) {
+    auto next_date = std::string("20260922");
+    auto next_session = std::uint64_t(0);
+    SUBCASE("next_day") {}
+    SUBCASE("source_session") {
+      next_date = "20260921";
+      next_session = 1;
+    }
+    for(auto& [date, session] : {
+        std::pair(std::string("20260921"), std::uint64_t(0)),
+        {next_date, next_session}}) {
       for(auto symbol : {"ABX", "FOO"}) {
         auto fields = std::string(
           "|6=TradeReport|5=AuctionTradeIndividual|55=") + symbol +
           "|41=10|64=100|247=AQL|636=AQL|220=TRADE|57=" + date +
           "093000000";
-        fixture.publish(fields);
+        fixture.publish(fields, session);
         auto operation =
           fixture.operation<FeedClient::PublishTimeAndSaleOperation>();
         REQUIRE(operation->m_time_and_sale->m_size == 100);
         REQUIRE(operation->m_time_and_sale->m_condition ==
           TimeAndSale::Condition(TimeAndSale::Condition::Type::AUCTION, "A"));
-        fixture.publish(fields);
+        fixture.publish(fields, session);
         fixture.require_empty();
       }
     }
     fixture.publish("|6=TradeReport|5=AuctionTradeIndividual|55=ABX"
-      "|41=10|64=100|247=AQL|636=AQL|57=20260922093000000");
+      "|41=10|64=100|247=AQL|636=AQL|57=" + next_date + "093000000",
+      next_session);
     fixture.require_empty();
     fixture.publish("|6=TradeReport|5=Trade|55=ABX|41=10|64=100"
-      "|247=AQL|220=TRADE|57=20260922093100000");
+      "|247=AQL|220=TRADE|57=" + next_date + "093100000", next_session);
     auto operation =
       fixture.operation<FeedClient::PublishTimeAndSaleOperation>();
     REQUIRE(operation->m_time_and_sale->m_condition.m_code == "@");
@@ -1103,6 +1113,19 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
       auto quote = fixture.quote();
       REQUIRE(quote->m_bid.m_size == 0);
       REQUIRE(quote->m_ask.m_size == 0);
+    }
+    SUBCASE("source_session") {
+      fixture.publish("|6=OpeningAuction|5=OddlotImbalance|55=ABX|247=TSE"
+        "|572=Sellside|573=40|57=20260921090002000");
+      auto quote = fixture.quote();
+      REQUIRE(quote->m_bid.m_size == 1200);
+      REQUIRE(quote->m_ask.m_size == 1240);
+      fixture.publish("|6=MBXMessage|5=AssignCOP|55=ABX|247=TSE|191=25.50"
+        "|57=20260921090003000", 1);
+      quote = fixture.quote();
+      REQUIRE(quote->m_bid == make_bid(Money(25.50), 0));
+      REQUIRE(quote->m_ask == make_ask(Money(25.50), 0));
+      fixture.require_empty();
     }
   }
 

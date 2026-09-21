@@ -310,13 +310,13 @@ TEST_SUITE("TmxIpRecoveryClient") {
     server->get_writer().write(from<SharedBuffer>(response.substr(0, 17)));
     server->get_writer().write(from<SharedBuffer>(response.substr(17)));
     auto first = fixture.m_client->read();
-    auto first_payload = std::string(first.m_payload);
     fixture.publish("second", 11);
     fixture.publish(std::format("TLR  000000002000000002{:100}", ""), 0);
     auto result = fixture.m_result.get();
     REQUIRE(request == "SEQN000000010000000011");
     REQUIRE(first.m_header.m_sequence == std::uint32_t(10));
-    REQUIRE(first_payload == "first");
+    REQUIRE(first.m_header.m_service == "CDF");
+    REQUIRE(first.m_payload == "first");
     auto second = fixture.m_client->read();
     REQUIRE(second.m_header.m_sequence == std::uint32_t(11));
     REQUIRE(second.m_header.m_service == "CDF");
