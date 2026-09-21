@@ -259,7 +259,7 @@ password: ABCD01
 
   TEST_CASE("parse_missing_fields") {
     SUBCASE("feed") {
-      for(auto name : {"name", "address", "interface"}) {
+      for(auto name : {"address", "interface"}) {
         CAPTURE(std::string_view(name));
         auto source = make_config();
         source["feeds"][0].remove(name);

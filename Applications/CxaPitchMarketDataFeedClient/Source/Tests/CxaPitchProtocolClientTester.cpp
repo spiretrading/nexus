@@ -2,7 +2,9 @@
 #include <vector>
 #include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
+#include <Beam/IO/QueuedReader.hpp>
 #include <Beam/IO/SharedBuffer.hpp>
+#include <Beam/IO/WrapperChannel.hpp>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <doctest/doctest.h>
@@ -18,9 +20,12 @@ namespace {
   constexpr auto OTHER_UNKNOWN_TYPE = std::uint8_t(0xFE);
 
   struct Fixture {
+    using Channel = WrapperChannel<LocalClientChannel*,
+      QueuedReader<LocalClientChannel::Reader*>>;
     LocalServerConnection m_server;
     optional<LocalClientChannel> m_channel;
-    optional<CxaPitchProtocolClient<LocalClientChannel*>> m_client;
+    optional<Channel> m_buffered_channel;
+    optional<CxaPitchProtocolClient<Channel*>> m_client;
     std::unique_ptr<LocalServerChannel> m_server_channel;
 
     Fixture() {
@@ -28,7 +33,8 @@ namespace {
         return m_server.accept();
       });
       m_channel.emplace("cxa", m_server);
-      m_client.emplace(&*m_channel);
+      m_buffered_channel.emplace(&*m_channel, &m_channel->get_reader());
+      m_client.emplace(&*m_buffered_channel);
       m_server_channel = server_channel.get();
     }
   };
@@ -53,6 +59,24 @@ namespace {
 }
 
 TEST_SUITE("CxaPitchProtocolClient") {
+  TEST_CASE("buffered_blocks") {
+    auto fixture = Fixture();
+    fixture.m_server_channel->get_writer().write(
+      encode_block(1, {UNKNOWN_TYPE}));
+    auto first = fixture.m_client->read();
+    fixture.m_server_channel->get_writer().write(
+      encode_block(2, {OTHER_UNKNOWN_TYPE}));
+    fixture.m_server_channel->get_writer().close(EndOfFileException());
+    flush_pending_routines();
+    REQUIRE(first.get_header().m_sequence == 1);
+    REQUIRE(first.begin()->m_type == UNKNOWN_TYPE);
+    REQUIRE(first.begin()->get_cursor().read_uint32() == 1);
+    auto second = fixture.m_client->read();
+    REQUIRE(second.get_header().m_sequence == 2);
+    REQUIRE(second.begin()->m_type == OTHER_UNKNOWN_TYPE);
+    REQUIRE_THROWS_AS(fixture.m_client->read(), IOException);
+  }
+
   TEST_CASE("read_block") {
     auto fixture = Fixture();
     fixture.m_server_channel->get_writer().write(

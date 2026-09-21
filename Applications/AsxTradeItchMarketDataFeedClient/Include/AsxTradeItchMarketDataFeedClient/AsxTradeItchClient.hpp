@@ -98,6 +98,7 @@ namespace Nexus {
         boost::optional<std::uint64_t> m_gap_sequence;
         boost::posix_time::ptime m_gap_timestamp;
         std::string m_recovery_error;
+        bool m_is_recovery_finished;
       };
       boost::posix_time::time_duration m_gap_timeout;
       std::vector<Beam::local_ptr_t<P>> m_feed_clients;
@@ -250,7 +251,6 @@ namespace Nexus {
     if(!state.m_is_ready || state.m_is_finished) {
       return;
     }
-    auto timestamp = m_time_client->get_time();
     while(true) {
       while(auto payload = state.m_sequencer.read()) {
         m_messages.push(std::move(*payload));
@@ -266,12 +266,13 @@ namespace Nexus {
         state.m_gap_sequence = boost::none;
         return;
       }
+      auto timestamp = m_time_client->get_time();
       if(state.m_gap_sequence != gap->m_sequence) {
         state.m_gap_sequence = gap->m_sequence;
         state.m_gap_timestamp = timestamp;
       }
       auto reason = [&] () -> std::string_view {
-        if(!state.m_recovery_error.empty()) {
+        if(state.m_is_recovery_finished) {
           return state.m_recovery_error;
         }
         if(timestamp < state.m_gap_timestamp) {
@@ -286,7 +287,7 @@ namespace Nexus {
         return "disabled";
       }();
       if(reason.empty()) {
-        if(m_recovery_client) {
+        if(m_recovery_client && state.m_recovery_error.empty()) {
           m_requests.push(true);
         }
         return;
@@ -326,10 +327,13 @@ namespace Nexus {
   void AsxTradeItchClient<P, G, S, R, T>::disable_recovery(
       std::string_view reason) {
     Beam::with(m_state, [&] (auto& state) {
-      if(state.m_is_finished || !state.m_recovery_error.empty()) {
+      if(state.m_is_finished || state.m_is_recovery_finished) {
         return;
       }
-      state.m_recovery_error = "recovery_failed " + std::string(reason);
+      state.m_is_recovery_finished = true;
+      if(state.m_recovery_error.empty()) {
+        state.m_recovery_error = "recovery_failed " + std::string(reason);
+      }
       flush(state);
     });
     (*m_recovery_client)->close();
@@ -436,7 +440,12 @@ namespace Nexus {
       }
     } catch(const std::exception& e) {
       if(m_open_state.is_open()) {
-        disable_recovery(e.what());
+        Beam::with(m_state, [&] (auto& state) {
+          if(state.m_recovery_error.empty()) {
+            state.m_recovery_error = "recovery_failed " + std::string(e.what());
+          }
+        });
+        (*m_recovery_client)->close();
       }
     }
   }

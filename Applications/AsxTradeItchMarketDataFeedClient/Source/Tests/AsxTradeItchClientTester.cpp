@@ -3,6 +3,8 @@
 #include <iostream>
 #include <sstream>
 #include <Beam/IO/LocalServerConnection.hpp>
+#include <Beam/IO/QueuedReader.hpp>
+#include <Beam/IO/WrapperChannel.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
@@ -52,6 +54,16 @@ namespace {
     Queue<MoldUdp64Request> m_requests;
     Queue<bool> m_gate;
     std::atomic_bool m_is_blocked;
+    Queue<bool> m_read_gate;
+    std::atomic_bool m_is_read_blocked;
+
+    MoldUdp64Packet read() {
+      auto packet = StubProtocolClient::read();
+      if(m_is_read_blocked) {
+        m_read_gate.pop();
+      }
+      return packet;
+    }
 
     void request(const MoldUdp64Request& request) {
       m_requests.push(request);
@@ -183,6 +195,39 @@ namespace {
 }
 
 TEST_SUITE("AsxTradeItchClient") {
+  TEST_CASE("buffered_packets") {
+    auto server = LocalServerConnection();
+    auto connection = std::async(std::launch::async, [&] {
+      return server.accept();
+    });
+    auto source = LocalClientChannel("itch", server);
+    auto channel = WrapperChannel<LocalClientChannel*,
+      QueuedReader<LocalClientChannel::Reader*>>(
+        &source, &source.get_reader());
+    auto client = MoldUdp64Client(&channel);
+    auto server_channel = connection.get();
+    auto send = [&] (std::uint64_t sequence, std::string_view message) {
+      auto buffer = SharedBuffer();
+      encode(MoldUdp64Request("SESSION123", sequence, 1), out(buffer));
+      append(buffer,
+        endian::native_to_big(static_cast<std::uint16_t>(message.size())));
+      append(buffer, message);
+      server_channel->get_writer().write(buffer);
+    };
+    send(1, ONE);
+    auto first = client.read();
+    send(2, TWO);
+    server_channel->get_writer().close(EndOfFileException());
+    flush_pending_routines();
+    REQUIRE(first.m_session == "SESSION123");
+    REQUIRE(first.m_sequence_number == 1);
+    REQUIRE(first.begin()->get_payload() == ONE);
+    auto second = client.read();
+    REQUIRE(second.m_sequence_number == 2);
+    REQUIRE(second.begin()->get_payload() == TWO);
+    REQUIRE_THROWS_AS(client.read(), IOException);
+  }
+
   TEST_CASE("recovery_failure") {
     auto log = Log();
     auto fixture = Fixture(1, Fixture::WithSnapshot());
@@ -329,6 +374,29 @@ TEST_SUITE("AsxTradeItchClient") {
     fixture.require_message(4);
     REQUIRE(log.m_output.str() ==
       "(dropped 2026-Sep-19 10:00:00 2 1 recovery_failed Request failed.)\n");
+  }
+
+  TEST_CASE("buffered_recovery_failure") {
+    auto log = Log();
+    auto fixture = Fixture();
+    fixture.publish(0, 1, {ONE});
+    fixture.require_message(1);
+    fixture.m_recovery.m_is_blocked = true;
+    fixture.publish(0, 3, {THREE});
+    fixture.require_request(2, 1);
+    fixture.m_recovery.m_is_read_blocked = true;
+    fixture.recover(2, {TWO});
+    fixture.m_recovery.m_gate.close(
+      std::make_exception_ptr(IOException("Request failed.")));
+    flush_pending_routines();
+    fixture.publish(0, 4, {FOUR});
+    fixture.m_recovery.m_read_gate.push(true);
+    flush_pending_routines();
+    fixture.m_client->close();
+    fixture.require_message(2);
+    fixture.require_message(3);
+    fixture.require_message(4);
+    REQUIRE(log.m_output.str().empty());
   }
 
   TEST_CASE("close") {
