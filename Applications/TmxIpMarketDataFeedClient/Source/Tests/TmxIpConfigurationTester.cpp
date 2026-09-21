@@ -49,10 +49,25 @@ TEST_SUITE("TmxIpConfiguration") {
     }
   }
 
+  TEST_CASE("rollover_time") {
+    auto source = make_config();
+    auto value = std::string("00:00:00");
+    auto expected = time_duration();
+    SUBCASE("midnight") {}
+    SUBCASE("fractional") {
+      value = "23:59:59.999";
+      expected = duration_from_string(value);
+    }
+    source["rollover_time"] = value;
+    REQUIRE(TmxIpConfiguration::parse(source).m_rollover_time == expected);
+  }
+
   TEST_CASE("invalid_rollover_time") {
     auto source = make_config();
     for(auto value :
-        {"-00:00:01", "24:00:00", "infinity", "not-a-date-time"}) {
+        {"-00:00:01", "24:00:00", "infinity", "not-a-date-time", ":",
+          "00::30", "00:30:", "00:30:00:01", "00:60:00", "00:00:60",
+          "00:30:00.", "00:30:00.extra"}) {
       source["rollover_time"] = value;
       REQUIRE_THROWS_AS(TmxIpConfiguration::parse(source), std::runtime_error);
     }

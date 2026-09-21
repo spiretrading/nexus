@@ -682,9 +682,9 @@ namespace Nexus {
     try {
       while(m_open_state.is_open()) {
         auto session = std::uint64_t();
-        auto packet = [&] () -> boost::optional<TmxIpPacket> {
+        auto event = [&] () -> boost::optional<TmxIpRecoveryEvent> {
           try {
-            return (*m_recovery_client)->read(Beam::out(session));
+            return (*m_recovery_client)->read_event(Beam::out(session));
           } catch(const TmxIpParserException&) {
             return {};
           } catch(const std::exception& e) {
@@ -697,7 +697,7 @@ namespace Nexus {
             return {};
           }
         }();
-        if(!packet) {
+        if(!event) {
           auto is_disabled = Beam::with(m_state, [] (const auto& state) {
             return !state.m_recovery_error.empty();
           });
@@ -708,8 +708,22 @@ namespace Nexus {
         }
         Beam::with(m_state, [&] (auto& state) {
           update_session(state);
-          if(session == state.m_session) {
+          if(session != state.m_session || state.m_is_finished) {
+            return;
+          }
+          if(auto packet = std::get_if<TmxIpPacket>(&*event)) {
             add(state, *packet);
+            return;
+          }
+          auto& failure = std::get<TmxIpRecoveryFailure>(*event);
+          while(auto gap = get_gap(state)) {
+            if(gap->m_sequence < failure.m_request.m_start_sequence ||
+                gap->m_sequence > failure.m_request.m_end_sequence) {
+              break;
+            }
+            gap->m_count = std::min(gap->m_count,
+              failure.m_request.m_end_sequence - gap->m_sequence + 1);
+            drop(state, *gap, failure.m_reason);
           }
         });
       }
@@ -751,37 +765,15 @@ namespace Nexus {
         if(!range) {
           continue;
         }
-        auto error = [&] () -> std::string {
-          try {
-            auto result = (*m_recovery_client)->request(*range, session);
-            if(!result.m_is_acknowledged ||
-                result.m_status != TmxIpRecoveryResponse::Status::ACCEPTED ||
-                result.m_start_sequence == 0) {
-              return "rejected " + result.m_description;
-            }
-            return {};
-          } catch(const std::exception& e) {
-            return "recovery_failed " + std::string(e.what());
-          }
-        }();
+        try {
+          (*m_recovery_client)->request(*range, session);
+        } catch(const std::exception&) {}
         Beam::with(m_state, [&] (auto& state) {
           update_session(state);
           if(session != state.m_session) {
             return;
           }
           state.m_request_state = RequestState::DEFERRED;
-          if(state.m_is_finished || error.empty()) {
-            return;
-          }
-          while(auto gap = get_gap(state)) {
-            if(gap->m_sequence < range->m_start_sequence ||
-                gap->m_sequence > range->m_end_sequence) {
-              break;
-            }
-            gap->m_count = std::min(gap->m_count,
-              range->m_end_sequence - gap->m_sequence + 1);
-            drop(state, *gap, error);
-          }
         });
       }
     } catch(const std::exception&) {

@@ -640,7 +640,7 @@ namespace Nexus {
       return;
     }
     auto book = find_book(message.m_symbol, message.m_header);
-    if(!book || book->m_venue == Venues::NEON) {
+    if(!book) {
       return;
     }
     auto timestamp = venue_to_utc(book->m_venue,
@@ -648,15 +648,19 @@ namespace Nexus {
         message.m_header.m_timestamp));
     for(auto i = std::size_t(0); i != message.m_sides.size(); ++i) {
       auto& record = message.m_sides[i];
-      if(!record.m_order_id) {
-        continue;
-      }
       auto side = Side::BID;
       if(i == 1) {
         side = Side::ASK;
       }
-      auto key = get_order_key(*book, side, record.m_broker,
-        *record.m_order_id);
+      auto id = std::string();
+      if(book->m_venue == Venues::NEON) {
+        id = boost::lexical_cast<std::string>(message.m_price.m_value);
+      } else if(record.m_order_id) {
+        id = *record.m_order_id;
+      } else {
+        continue;
+      }
+      auto key = get_order_key(*book, side, record.m_broker, id);
       auto j = book->m_orders.find(key);
       if(j == book->m_orders.end()) {
         continue;

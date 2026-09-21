@@ -15,8 +15,6 @@ retry_interval: 1s
 feeds:
   - address: "233.102.209.236:61004"
     interface: "$local_interface:61004"
-  - address: "233.102.209.108:61005"
-    interface: "$local_interface:61005"
 recovery:
   address: "142.201.149.36:61021"
   interface: "$local_interface:0"

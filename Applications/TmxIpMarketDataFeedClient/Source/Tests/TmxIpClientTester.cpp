@@ -26,6 +26,8 @@ namespace {
     struct Packet {
       std::string m_payload;
       ptime m_timestamp;
+      std::uint64_t m_session = 0;
+      boost::optional<TmxIpRecoveryFailure> m_failure;
     };
     Queue<Packet> m_packets;
     std::string m_packet;
@@ -51,7 +53,7 @@ namespace {
     ProtocolClient m_protocol_client;
     Queue<TmxIpRecoveryRequest> m_requests;
     Queue<TmxIpRecoveryResult> m_results;
-    Queue<std::uint64_t> m_sessions;
+    Queue<bool>* m_read_gate = nullptr;
     std::atomic_uint32_t m_maximum_count = 10000;
     std::atomic_uint64_t m_session = 0;
 
@@ -60,8 +62,7 @@ namespace {
     }
 
     TmxIpRecoveryResult request(const TmxIpRecoveryRequest& request) {
-      m_requests.push(request);
-      return m_results.pop();
+      return this->request(request, m_session);
     }
 
     TmxIpPacket read() {
@@ -70,16 +71,50 @@ namespace {
 
     TmxIpRecoveryResult request(
         const TmxIpRecoveryRequest& request, std::uint64_t session) {
-      if(session != m_session) {
-        throw IOException("Expired session.");
+      try {
+        if(session != m_session) {
+          throw IOException("Expired session.");
+        }
+        m_requests.push(request);
+        auto result = m_results.pop();
+        if(!result.m_is_acknowledged ||
+            result.m_status != TmxIpRecoveryResponse::Status::ACCEPTED ||
+            result.m_start_sequence == 0) {
+          m_protocol_client.m_packets.push(ProtocolClient::Packet("", ptime(),
+            session, TmxIpRecoveryFailure(
+              request, session, "rejected " + result.m_description)));
+        }
+        return result;
+      } catch(const std::exception& e) {
+        try {
+          m_protocol_client.m_packets.push(ProtocolClient::Packet("", ptime(),
+            session, TmxIpRecoveryFailure(request, session,
+              "recovery_failed " + std::string(e.what()))));
+        } catch(const std::exception&) {}
+        throw;
       }
-      return this->request(request);
     }
 
     TmxIpPacket read(Out<std::uint64_t> session) {
-      auto packet = read();
-      *session = m_sessions.pop();
-      return packet;
+      while(true) {
+        auto event = read_event(session);
+        if(auto packet = std::get_if<TmxIpPacket>(&event)) {
+          return *packet;
+        }
+      }
+    }
+
+    TmxIpRecoveryEvent read_event(Out<std::uint64_t> session) {
+      auto packet = m_protocol_client.m_packets.pop();
+      *session = packet.m_session;
+      if(packet.m_failure) {
+        return std::move(*packet.m_failure);
+      }
+      if(m_read_gate) {
+        m_read_gate->pop();
+      }
+      m_protocol_client.m_packet = std::move(packet.m_payload);
+      return TmxIpPacket::parse(m_protocol_client.m_packet);
     }
 
     void reset(std::uint64_t session) {
@@ -87,10 +122,12 @@ namespace {
     }
 
     void close() {
+      if(m_read_gate) {
+        m_read_gate->close();
+      }
       m_protocol_client.close();
       m_requests.close();
       m_results.close();
-      m_sessions.close();
     }
   };
 
@@ -150,14 +187,11 @@ namespace {
     void publish(std::uint32_t sequence, std::string_view payload,
         TmxIpHeader::Continuation continuation, ProtocolClient& client,
         std::uint64_t session) {
-      if(&client == &m_recovery_client.m_protocol_client) {
-        m_recovery_client.m_sessions.push(session);
-      }
       client.m_packets.push(ProtocolClient::Packet(
         std::format("{}{:04}{:09}CDF0{}  T {}{}",
         TmxIpPacket::START, TmxIpHeader::LENGTH + payload.size(), sequence,
         static_cast<int>(continuation), payload, TmxIpPacket::END),
-        m_time_client.get_time()));
+        m_time_client.get_time(), session));
     }
 
     void publish(std::uint32_t sequence, std::string_view symbol,
@@ -626,6 +660,26 @@ TEST_SUITE("TmxIpClient") {
     fixture.require_symbol("FOUR");
     REQUIRE(log.m_output.str() ==
       "(dropped 2026-Sep-20 12:00:00 2 1 " + reason + ")\n");
+  }
+
+  TEST_CASE("queued_recovery_failure") {
+    auto gate = Queue<bool>();
+    auto fixture = Fixture();
+    auto log = Log();
+    fixture.publish(1, "FIRST");
+    fixture.require_symbol("FIRST");
+    fixture.publish(4, "LAST");
+    fixture.require_request(2, 3);
+    fixture.m_recovery_client.m_read_gate = &gate;
+    fixture.recover(2, "RECOVERED");
+    flush_pending_routines();
+    fixture.m_recovery_client.m_results.close(IOException("Failed request."));
+    flush_pending_routines();
+    gate.push(true);
+    fixture.require_symbol("RECOVERED");
+    fixture.require_symbol("LAST");
+    REQUIRE(log.m_output.str() ==
+      "(dropped 2026-Sep-20 12:00:00 3 1 recovery_failed Failed request.)\n");
   }
 
   TEST_CASE("failed_recovery_range") {

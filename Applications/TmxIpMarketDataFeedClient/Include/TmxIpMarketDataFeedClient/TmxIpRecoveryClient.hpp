@@ -5,6 +5,7 @@
 #include <memory>
 #include <mutex>
 #include <stop_token>
+#include <variant>
 #include <vector>
 #include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -48,6 +49,22 @@ namespace Nexus {
     std::string m_description;
   };
 
+  /** A failed request, delivered after its recovered packets. */
+  struct TmxIpRecoveryFailure {
+
+    /** The requested range. */
+    TmxIpRecoveryRequest m_request;
+
+    /** The request's local session identifier. */
+    std::uint64_t m_session;
+
+    /** The reason recovery failed. */
+    std::string m_reason;
+  };
+
+  /** A recovered packet or an ordered request failure. */
+  using TmxIpRecoveryEvent = std::variant<TmxIpPacket, TmxIpRecoveryFailure>;
+
   /** Concept satisfied by clients recovering a TMX IP stream. */
   template<typename T>
   concept IsTmxIpRecoveryClient = requires(T& t) {
@@ -59,6 +76,8 @@ namespace Nexus {
         std::uint64_t()) } -> std::same_as<TmxIpRecoveryResult>;
     { t.read(std::declval<Beam::Out<std::uint64_t>>()) } ->
       std::same_as<TmxIpPacket>;
+    { t.read_event(std::declval<Beam::Out<std::uint64_t>>()) } ->
+      std::same_as<TmxIpRecoveryEvent>;
     { t.reset(std::uint64_t()) } -> std::same_as<void>;
     { t.close() } -> std::same_as<void>;
   };
@@ -121,6 +140,12 @@ namespace Nexus {
        */
       TmxIpPacket read(Beam::Out<std::uint64_t> session);
 
+      /**
+       * Reads packets and failures in delivery order with their local session.
+       * Packet storage remains valid until the next read or destruction.
+       */
+      TmxIpRecoveryEvent read_event(Beam::Out<std::uint64_t> session);
+
       /** Starts a local session and asynchronously cancels active recovery. */
       void reset(std::uint64_t session);
 
@@ -157,7 +182,7 @@ namespace Nexus {
       Beam::local_ptr_t<T> m_timer;
       std::atomic_uint32_t m_maximum_count;
       Beam::Sync<State> m_state;
-      Beam::Queue<Entry> m_packets;
+      Beam::Queue<std::variant<Entry, TmxIpRecoveryFailure>> m_packets;
       Entry m_packet;
       Beam::RoutineTaskQueue m_tasks;
       Beam::RoutineHandler m_read_loop;
@@ -170,10 +195,12 @@ namespace Nexus {
       static void check(const Operation& operation);
       TmxIpRecoveryClient(const TmxIpRecoveryClient&) = delete;
       TmxIpRecoveryClient& operator =(const TmxIpRecoveryClient&) = delete;
+      TmxIpRecoveryResult execute(
+        const TmxIpRecoveryRequest& request, std::uint64_t session);
       TmxIpRecoveryResult send_request(Operation& operation,
         const Beam::StaticBuffer<TmxIpRecoveryRequest::LENGTH>& request);
       void receive_recovery(
-        Operation& operation, TmxIpRecoveryResult& result);
+        Operation& operation, std::uint32_t count, TmxIpRecoveryResult& result);
       void finish(Operation& operation,
         Beam::QueueWriter<typename Timer::Result>& slot);
       void read_loop();
@@ -235,59 +262,20 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<T>>
   TmxIpRecoveryResult TmxIpRecoveryClient<C, P, T>::request(
       const TmxIpRecoveryRequest& request, std::uint64_t session) {
-    auto buffer = Beam::StaticBuffer<TmxIpRecoveryRequest::LENGTH>();
-    request.encode(Beam::out(buffer));
-    auto operation = std::make_shared<Operation>();
-    operation->m_session = session;
-    auto slot = Beam::callback<typename Timer::Result>(
-      [=, this] (const auto& result) {
-        if(result != Timer::Result::CANCELED) {
-          m_tasks.push([=] {
-            cancel(operation, std::make_exception_ptr(Beam::IOException(
-              "TMX IP recovery deadline failed or expired.")));
-          });
-        }
-      });
-    auto lock = std::lock_guard(m_mutex);
-    if(request.m_end_sequence - request.m_start_sequence + 1 >
-        get_maximum_count()) {
-      boost::throw_with_location(
-        Beam::IOException("TMX IP recovery request exceeds the limit."));
-    }
-    Beam::with(m_state, [&] (auto& state) {
-      if(state.m_exception) {
-        std::rethrow_exception(state.m_exception);
-      }
-      if(!m_open_state.is_open()) {
-        boost::throw_with_location(Beam::EndOfFileException());
-      }
-      if(session != state.m_session) {
-        boost::throw_with_location(
-          Beam::IOException("TMX IP recovery session expired."));
-      }
-      for(auto& range : state.m_quarantined_ranges) {
-        if(request.m_start_sequence <= range.m_end_sequence &&
-            request.m_end_sequence >= range.m_start_sequence) {
-          boost::throw_with_location(Beam::IOException(
-            "TMX IP recovery request overlaps a quarantined range."));
-        }
-      }
-      add(state.m_ranges, request);
-      state.m_operation = operation;
-    });
     try {
-      m_timer->get_publisher().monitor(slot);
-      m_timer->start();
-      auto result = send_request(*operation, buffer);
-      receive_recovery(*operation, result);
-      finish(*operation, *slot);
-      check(*operation);
+      auto result = execute(request, session);
+      if(!result.m_is_acknowledged ||
+          result.m_status != TmxIpRecoveryResponse::Status::ACCEPTED ||
+          result.m_start_sequence == 0) {
+        m_packets.push(TmxIpRecoveryFailure(
+          request, session, "rejected " + result.m_description));
+      }
       return result;
-    } catch(const std::exception&) {
-      Beam::with(m_state, [&] (auto& state) {
-        add(state.m_quarantined_ranges, request);
-      });
-      finish(*operation, *slot);
+    } catch(const std::exception& e) {
+      try {
+        m_packets.push(TmxIpRecoveryFailure(request, session,
+          "recovery_failed " + std::string(e.what())));
+      } catch(const std::exception&) {}
       throw;
     }
   }
@@ -305,7 +293,25 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<T>>
   TmxIpPacket TmxIpRecoveryClient<C, P, T>::read(
       Beam::Out<std::uint64_t> session) {
-    m_packet = m_packets.pop();
+    while(true) {
+      auto event = read_event(session);
+      if(auto packet = std::get_if<TmxIpPacket>(&event)) {
+        return *packet;
+      }
+    }
+  }
+
+  template<Beam::IsChannel C, typename P, typename T> requires
+    IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  TmxIpRecoveryEvent TmxIpRecoveryClient<C, P, T>::read_event(
+      Beam::Out<std::uint64_t> session) {
+    auto event = m_packets.pop();
+    if(auto failure = std::get_if<TmxIpRecoveryFailure>(&event)) {
+      *session = failure->m_session;
+      return std::move(*failure);
+    }
+    m_packet = std::move(std::get<Entry>(event));
     *session = m_packet.m_session;
     return TmxIpPacket(m_packet.m_header,
       std::string_view(m_packet.m_buffer.get_data() +
@@ -408,6 +414,69 @@ namespace Nexus {
   template<Beam::IsChannel C, typename P, typename T> requires
     IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
+  TmxIpRecoveryResult TmxIpRecoveryClient<C, P, T>::execute(
+      const TmxIpRecoveryRequest& request, std::uint64_t session) {
+    auto buffer = Beam::StaticBuffer<TmxIpRecoveryRequest::LENGTH>();
+    request.encode(Beam::out(buffer));
+    auto operation = std::make_shared<Operation>();
+    operation->m_session = session;
+    auto slot = Beam::callback<typename Timer::Result>(
+      [=, this] (const auto& result) {
+        if(result != Timer::Result::CANCELED) {
+          m_tasks.push([=] {
+            cancel(operation, std::make_exception_ptr(Beam::IOException(
+              "TMX IP recovery deadline failed or expired.")));
+          });
+        }
+      });
+    auto lock = std::lock_guard(m_mutex);
+    if(request.m_end_sequence - request.m_start_sequence + 1 >
+        get_maximum_count()) {
+      boost::throw_with_location(
+        Beam::IOException("TMX IP recovery request exceeds the limit."));
+    }
+    Beam::with(m_state, [&] (auto& state) {
+      if(state.m_exception) {
+        std::rethrow_exception(state.m_exception);
+      }
+      if(!m_open_state.is_open()) {
+        boost::throw_with_location(Beam::EndOfFileException());
+      }
+      if(session != state.m_session) {
+        boost::throw_with_location(
+          Beam::IOException("TMX IP recovery session expired."));
+      }
+      for(auto& range : state.m_quarantined_ranges) {
+        if(request.m_start_sequence <= range.m_end_sequence &&
+            request.m_end_sequence >= range.m_start_sequence) {
+          boost::throw_with_location(Beam::IOException(
+            "TMX IP recovery request overlaps a quarantined range."));
+        }
+      }
+      add(state.m_ranges, request);
+      state.m_operation = operation;
+    });
+    try {
+      m_timer->get_publisher().monitor(slot);
+      m_timer->start();
+      auto result = send_request(*operation, buffer);
+      receive_recovery(*operation,
+        request.m_end_sequence - request.m_start_sequence + 1, result);
+      finish(*operation, *slot);
+      check(*operation);
+      return result;
+    } catch(const std::exception&) {
+      Beam::with(m_state, [&] (auto& state) {
+        add(state.m_quarantined_ranges, request);
+      });
+      finish(*operation, *slot);
+      throw;
+    }
+  }
+
+  template<Beam::IsChannel C, typename P, typename T> requires
+    IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
   TmxIpRecoveryResult TmxIpRecoveryClient<C, P, T>::send_request(
       Operation& operation,
       const Beam::StaticBuffer<TmxIpRecoveryRequest::LENGTH>& request) {
@@ -440,7 +509,7 @@ namespace Nexus {
     IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
   void TmxIpRecoveryClient<C, P, T>::receive_recovery(
-      Operation& operation, TmxIpRecoveryResult& result) {
+      Operation& operation, std::uint32_t count, TmxIpRecoveryResult& result) {
     if(!result.m_is_acknowledged ||
         result.m_status != TmxIpRecoveryResponse::Status::ACCEPTED ||
         result.m_start_sequence == 0) {
@@ -465,8 +534,7 @@ namespace Nexus {
           start.m_end_sequence == result.m_end_sequence;
       } else if(packet.m_payload.starts_with(TmxIpRecoveryEnd::TYPE)) {
         auto end = TmxIpRecoveryEnd::parse(packet);
-        if(!is_current || end.m_requested_count !=
-            result.m_end_sequence - result.m_start_sequence + 1) {
+        if(!is_current || end.m_requested_count != count) {
           continue;
         }
         result.m_requested_count = end.m_requested_count;

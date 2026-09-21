@@ -86,6 +86,31 @@ TEST_SUITE("TmxIpSequencer") {
     REQUIRE(!sequencer.read().has_value());
   }
 
+  TEST_CASE("heartbeat_wrap_skip") {
+    auto sequencer = TmxIpSequencer();
+    sequencer.reset(999999998);
+    sequencer.add(TmxIpPacket::parse(encode_heartbeat(1)));
+    sequencer.add(TmxIpPacket::parse(encode_packet(2, "next")));
+    auto gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_sequence == 999999998);
+    REQUIRE(gap->m_count == 2);
+    sequencer.skip(2);
+    gap = sequencer.get_gap();
+    REQUIRE(gap.has_value());
+    REQUIRE(gap->m_sequence == 1);
+    REQUIRE(gap->m_count == 1);
+    sequencer.add(TmxIpPacket::parse(encode_packet(999999999, "late")));
+    REQUIRE_FALSE(sequencer.read().has_value());
+    sequencer.skip(1);
+    auto packet = sequencer.read();
+    REQUIRE(packet.has_value());
+    REQUIRE(packet->m_header.m_sequence == std::uint32_t(2));
+    REQUIRE(packet->m_payload == "next");
+    REQUIRE_FALSE(sequencer.get_gap().has_value());
+    REQUIRE_FALSE(sequencer.read().has_value());
+  }
+
   TEST_CASE("duplicates") {
     auto sequencer = TmxIpSequencer();
     sequencer.add(TmxIpPacket::parse(encode_packet(100, "original")));

@@ -824,6 +824,28 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     fixture.require_empty();
   }
 
+  TEST_CASE("price_level_trades") {
+    auto fixture = Fixture(Venues::NEON);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=AQN"
+      "|636=AQN|57=20260921090000000|196=25.50|64=600");
+    auto bid = fixture.operation<FeedClient::AddOrderOperation>();
+    fixture.publish("|6=TradeReport|5=Trade|55=ABX|247=AQN"
+      "|57=20260921090001000|41=25.50|64=200");
+    auto update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id == bid->m_id);
+    REQUIRE(update->m_size == 400);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=AQN"
+      "|636=AQN|57=20260921090002000|196=25.50|64=300");
+    update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id == bid->m_id);
+    REQUIRE(update->m_size == 300);
+    fixture.publish("|6=TradeReport|5=Trade|55=ABX|247=AQN"
+      "|57=20260921090003000|41=25.50|64=300");
+    REQUIRE(fixture.operation<FeedClient::RemoveOrderOperation>()->m_id ==
+      bid->m_id);
+    fixture.require_empty();
+  }
+
   TEST_CASE("order_repricing") {
     auto fixture = Fixture();
     fixture.m_time.set(time_from_string("2026-09-21 16:00:00"));

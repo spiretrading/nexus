@@ -181,8 +181,31 @@ namespace Details {
         boost::throw_with_location(
           std::runtime_error("Invalid TMX IP time zone: " + time_zone));
       }
-      configuration.m_rollover_time = boost::posix_time::duration_from_string(
-        Beam::extract<std::string>(config, "rollover_time", "00:30:00"));
+      auto rollover =
+        Beam::extract<std::string>(config, "rollover_time", "00:30:00");
+      auto is_valid_rollover = [&] {
+        if(rollover.size() < 8 || rollover[2] != ':' || rollover[5] != ':') {
+          return false;
+        }
+        if(rollover.size() != 8 && (rollover.size() < 10 ||
+            rollover[8] != '.' || rollover.size() > 9 +
+              boost::posix_time::time_duration::num_fractional_digits())) {
+          return false;
+        }
+        for(auto i = std::size_t(0); i != rollover.size(); ++i) {
+          if(i != 2 && i != 5 && i != 8 &&
+              (rollover[i] < '0' || rollover[i] > '9')) {
+            return false;
+          }
+        }
+        return rollover[3] < '6' && rollover[6] < '6';
+      };
+      if(!is_valid_rollover()) {
+        boost::throw_with_location(
+          std::runtime_error("Invalid TMX IP rollover time."));
+      }
+      configuration.m_rollover_time =
+        boost::posix_time::duration_from_string(rollover);
       if(configuration.m_rollover_time.is_special() ||
           configuration.m_rollover_time < boost::posix_time::seconds(0) ||
           configuration.m_rollover_time >= boost::posix_time::hours(24)) {

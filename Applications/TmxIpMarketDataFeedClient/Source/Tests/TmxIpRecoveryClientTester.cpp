@@ -130,6 +130,33 @@ TEST_SUITE("TmxIpRecoveryClient") {
     REQUIRE(session == 1);
   }
 
+  TEST_CASE("ordered_recovery_failure") {
+    auto fixture = Fixture();
+    fixture.m_client->reset(1);
+    auto server = fixture.start(TmxIpRecoveryRequest(10, 11));
+    server->get_writer().write(from<SharedBuffer>(acknowledgement(10, 11)));
+    fixture.publish("HDR  000000010000000011", 0);
+    fixture.publish("recovered", 10);
+    fixture.publish(std::format("ERRORCANCELED{:100}", "canceled"), 0);
+    REQUIRE_THROWS_AS(fixture.m_result.get(), IOException);
+    auto session = std::uint64_t();
+    auto event = fixture.m_client->read_event(out(session));
+    auto packet = std::get_if<TmxIpPacket>(&event);
+    REQUIRE(packet);
+    REQUIRE(packet->m_header.m_sequence == std::uint32_t(10));
+    REQUIRE(packet->m_payload == "recovered");
+    REQUIRE(session == 1);
+    event = fixture.m_client->read_event(out(session));
+    auto failure = std::get_if<TmxIpRecoveryFailure>(&event);
+    REQUIRE(failure);
+    REQUIRE(failure->m_request.m_start_sequence == 10);
+    REQUIRE(failure->m_request.m_end_sequence == 11);
+    REQUIRE(failure->m_session == 1);
+    REQUIRE(failure->m_reason ==
+      "recovery_failed TMX IP recovery error: canceled");
+    REQUIRE(session == 1);
+  }
+
   TEST_CASE("queued_session_packets") {
     auto fixture = Fixture();
     auto first = fixture.start(TmxIpRecoveryRequest(1, 1));
@@ -206,8 +233,12 @@ TEST_SUITE("TmxIpRecoveryClient") {
     SUBCASE("partial") {
       first->get_writer().write(from<SharedBuffer>(acknowledgement(11, 12)));
       fixture.publish("HDR  000000011000000012", 0);
-      fixture.publish(std::format("TLR  000000002000000001{:100}", ""), 0);
-      REQUIRE(fixture.m_result.get().m_sent_count == 1);
+      fixture.publish(std::format("TLR  000000003000000001{:100}", ""), 0);
+      REQUIRE(fixture.m_result.wait_for(std::chrono::seconds(1)) ==
+        std::future_status::ready);
+      auto result = fixture.m_result.get();
+      REQUIRE(result.m_requested_count == 3);
+      REQUIRE(result.m_sent_count == 1);
       fixture.m_client->reset(1);
     }
     SUBCASE("deadline") {
