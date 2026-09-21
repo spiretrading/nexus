@@ -308,7 +308,7 @@ namespace Nexus {
   };
 
   /**
-   * Public trading fields from a CDF TradeReport message.
+   * Public trading fields from a CDF or CLS TradeReport message.
    * Text views remain valid while the source STAMP buffer is unchanged.
    */
   struct TmxIpTradeReport {
@@ -961,7 +961,7 @@ namespace TmxIpDetails {
     value.m_original_trade_id = fields.read_optional(506, text<64>);
     value.m_previous_order_id = fields.read_optional(11, text<18>);
     value.m_cross_type = fields.read_optional(390, text<32>);
-    value.m_settlement_terms = fields.read_optional(53, text<6>);
+    value.m_settlement_terms = fields.read_optional(53, text<8>);
     value.m_opening_auction = fields.read_optional(574, text<1>);
     value.m_market_state = fields.read_optional(159, text<64>);
     value.m_last_sale = fields.read_optional(114, numeric_price);

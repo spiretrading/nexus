@@ -5,6 +5,7 @@
 #include <iostream>
 #include <sstream>
 #include <unordered_map>
+#include <unordered_set>
 #include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
@@ -93,7 +94,7 @@ namespace Nexus {
         boost::gregorian::date m_date;
         boost::optional<Money> m_price;
         Quantity m_paired_quantity;
-        Side m_imbalance_side = Side::NONE;
+        Side m_imbalance_side;
         Quantity m_imbalance_quantity;
       };
       TmxIpConfiguration m_config;
@@ -105,12 +106,16 @@ namespace Nexus {
       std::unordered_map<std::string, boost::optional<TickerInfo>> m_tickers;
       std::unordered_map<Ticker, OpeningQuote> m_opening_quotes;
       std::unordered_map<std::string, Book> m_books;
+      boost::gregorian::date m_auction_date;
+      std::unordered_set<std::string> m_auction_trades;
       Beam::Sync<std::exception_ptr> m_exception;
       std::atomic_bool m_is_finished;
       Beam::RoutineHandler m_read_loop;
       Beam::OpenState m_open_state;
 
       static void log(const StampMessage& message);
+      static TimeAndSale::Condition get_condition(
+        const TmxIpTradeReport& message);
       Venue get_venue(
         const Ticker& ticker, const TmxIpMessageHeader& header) const;
       TmxIpMarketDataFeedClient(const TmxIpMarketDataFeedClient&) = delete;
@@ -129,6 +134,7 @@ namespace Nexus {
       void publish(const TmxIpOrderCancelReport& message);
       void publish(const TmxIpClearOrderBook& message);
       void publish(const TmxIpTradeReport& message);
+      void publish_trade(const TmxIpTradeReport& message);
       void update_orders(const TmxIpMbxMessage& message);
       void load_tickers();
       const TickerInfo* find_ticker(std::string_view symbol);
@@ -244,6 +250,74 @@ namespace Nexus {
       IsMarketDataClient<Beam::dereference_t<D>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>> &&
       IsMarketDataFeedClient<Beam::dereference_t<M>>
+  TimeAndSale::Condition TmxIpMarketDataFeedClient<C, D, T, M>::get_condition(
+      const TmxIpTradeReport& message) {
+    auto condition = TimeAndSale::Condition();
+    auto append = [&] (std::string_view code) {
+      if(!condition.m_code.empty()) {
+        condition.m_code += ';';
+      }
+      condition.m_code += code;
+    };
+    if(message.m_action == "Cancelled") {
+      append("Cancelled");
+    } else if(message.m_is_correction.value_or(false) ||
+        message.m_original_trade_id) {
+      append("Correction");
+    } else if(message.m_opening_auction == std::string_view("O") ||
+        message.m_market_state == std::string_view("Opening Trade")) {
+      condition.m_type = TimeAndSale::Condition::Type::OPEN;
+      append("O");
+    } else if(message.m_opening_auction == std::string_view("R")) {
+      append("R");
+    } else if(message.m_is_market_on_close.value_or(false)) {
+      condition.m_type = TimeAndSale::Condition::Type::CLOSE;
+      append("C");
+    } else if(message.m_action == "AuctionTradeIndividual") {
+      append("AUCTION");
+    }
+    if(message.m_cross_type && *message.m_cross_type != "Regular") {
+      append("CrossType=" + std::string(*message.m_cross_type));
+    }
+    if(message.m_settlement_terms) {
+      append("SettlementTerms=" + std::string(*message.m_settlement_terms));
+    }
+    if(message.m_is_extended_hours.value_or(false)) {
+      append("ExtendedHours");
+    }
+    if(message.m_is_bypass.value_or(false)) {
+      append("ByPass");
+    }
+    if(message.m_is_nonresident.value_or(false)) {
+      append("NonResident");
+    }
+    if(message.m_is_dark.value_or(false)) {
+      append("Dark");
+    }
+    if(message.m_is_mid_only.value_or(false)) {
+      append("MidOnly");
+    }
+    if(message.m_is_conditional.value_or(false)) {
+      append("Conditional");
+    }
+    if(message.m_melo) {
+      append("M-ELO=" + std::string(*message.m_melo));
+    }
+    if(message.m_purestream) {
+      append("Purestream=" + std::string(*message.m_purestream));
+    }
+    if(condition.m_code.empty()) {
+      condition.m_type = TimeAndSale::Condition::Type::REGULAR;
+      condition.m_code = "@";
+    }
+    return condition;
+  }
+
+  template<typename C, typename D, typename T, typename M> requires
+    IsTmxIpClient<Beam::dereference_t<C>> &&
+      IsMarketDataClient<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+      IsMarketDataFeedClient<Beam::dereference_t<M>>
   Venue TmxIpMarketDataFeedClient<C, D, T, M>::get_venue(
       const Ticker& ticker, const TmxIpMessageHeader& header) const {
     auto venue = m_config.m_venue;
@@ -321,15 +395,7 @@ namespace Nexus {
     if(is_inserted) {
       i->second.m_ticker = info->m_ticker;
       i->second.m_venue = venue;
-      i->second.m_mpid = [&] () -> std::string {
-        if(source == "ALP" || source == "OMG") {
-          return std::string(source);
-        }
-        if(source == "AQL") {
-          return "NEOL";
-        }
-        return VENUES.from(venue).m_display_name;
-      }();
+      i->second.m_mpid = VENUES.from(venue).m_display_name;
       i->second.m_prefix = std::move(prefix);
       i->second.m_board_lot = info->m_board_lot;
     }
@@ -525,6 +591,10 @@ namespace Nexus {
       IsMarketDataFeedClient<Beam::dereference_t<M>>
   void TmxIpMarketDataFeedClient<C, D, T, M>::publish(
       const TmxIpTradeReport& message) {
+    if(!m_config.m_venue) {
+      publish_trade(message);
+      return;
+    }
     if((message.m_action != "Trade" &&
         message.m_action != "AuctionTradeIndividual") ||
         message.m_is_correction.value_or(false) ||
@@ -563,6 +633,85 @@ namespace Nexus {
       }
       update(*book, key, order, timestamp);
     }
+  }
+
+  template<typename C, typename D, typename T, typename M> requires
+    IsTmxIpClient<Beam::dereference_t<C>> &&
+      IsMarketDataClient<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+      IsMarketDataFeedClient<Beam::dereference_t<M>>
+  void TmxIpMarketDataFeedClient<C, D, T, M>::publish_trade(
+      const TmxIpTradeReport& message) {
+    if((message.m_action != "Trade" &&
+        message.m_action != "Cancelled" &&
+        message.m_action != "AuctionTradeIndividual") ||
+        message.m_quantity == 0 ||
+        message.m_price.m_type != TmxIpPrice::Type::LIMIT ||
+        !message.m_header.m_exchange) {
+      return;
+    }
+    auto venue = from_market_center(*message.m_header.m_exchange).m_venue;
+    if(!venue) {
+      return;
+    }
+    if((venue == Venues::NEOE || venue == Venues::NEON) &&
+        message.m_header.m_book_type) {
+      auto book = *message.m_header.m_book_type;
+      if(book == "AQN") {
+        venue = Venues::NEON;
+      } else if(book == "AQL" || book == "AQD" || book == "AQS" ||
+          book == "AQC") {
+        venue = Venues::NEOE;
+      } else {
+        return;
+      }
+    }
+    auto info = find_ticker(message.m_symbol);
+    if(!info || !m_open_state.is_open()) {
+      return;
+    }
+    if(message.m_action == "AuctionTradeIndividual" &&
+        !message.m_is_correction.value_or(false) &&
+        !message.m_original_trade_id) {
+      auto is_lit = venue == Venues::NEOE &&
+        (!message.m_header.m_book_type ||
+          *message.m_header.m_book_type == "AQL");
+      if(!is_lit || !message.m_trade_id) {
+        return;
+      }
+      auto date = message.m_header.m_trading_timestamp->date();
+      if(date != m_auction_date) {
+        m_auction_date = date;
+        m_auction_trades.clear();
+      }
+      auto key = std::string(message.m_symbol) + ':' +
+        std::string(*message.m_trade_id);
+      if(!m_auction_trades.insert(std::move(key)).second) {
+        return;
+      }
+    }
+    auto broker = [] (const auto& side) {
+      if(side.m_broker) {
+        return std::to_string(*side.m_broker);
+      }
+      return std::string();
+    };
+    auto timestamp = *message.m_header.m_trading_timestamp;
+    auto trade_timestamp = boost::optional<boost::posix_time::ptime>();
+    for(auto& side : message.m_sides) {
+      if(side.m_trade_timestamp &&
+          (!trade_timestamp || *side.m_trade_timestamp < *trade_timestamp)) {
+        trade_timestamp = side.m_trade_timestamp;
+      }
+    }
+    if(trade_timestamp) {
+      timestamp = *trade_timestamp;
+    }
+    timestamp = venue_to_utc(venue, timestamp);
+    m_feed_client->publish(TickerTimeAndSale(TimeAndSale(timestamp,
+      message.m_price.m_value, message.m_quantity, get_condition(message),
+      VENUES.from(venue).m_display_name, broker(message.m_sides[0]),
+      broker(message.m_sides[1])), info->m_ticker));
   }
 
   template<typename C, typename D, typename T, typename M> requires

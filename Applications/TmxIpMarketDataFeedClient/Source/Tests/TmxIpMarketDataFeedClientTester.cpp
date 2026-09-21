@@ -1,3 +1,4 @@
+#include <tuple>
 #include <Beam/Queues/Queue.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <doctest/doctest.h>
@@ -164,6 +165,190 @@ namespace {
 }
 
 TEST_SUITE("TmxIpMarketDataFeedClient") {
+  TEST_CASE("cls_trade") {
+    auto fixture = Fixture(Venue());
+    fixture.publish("|6=TradeReport|5=Trade|55=ABX|41=23.10|64=125"
+      "|57=20260921100100123|247=CHI|70=001|70.1=002");
+    auto operation =
+      fixture.operation<FeedClient::PublishTimeAndSaleOperation>();
+    REQUIRE(operation->m_time_and_sale == TickerTimeAndSale(TimeAndSale(
+      time_from_string("2026-09-21 14:01:00.123"), parse_money("23.10"), 125,
+      TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
+      "CHIC", "1", "2"), parse_ticker("ABX.TSX")));
+    fixture.require_empty();
+  }
+
+  TEST_CASE("cls_venues") {
+    auto fixture = Fixture(Venue());
+    for(auto [exchange, book, venue] : {
+        std::tuple("TSE", "", Venues::TSX), {"CDX", "", Venues::TSXV},
+        {"ALP", "", Venues::XATS}, {"ALX", "", Venues::ALX},
+        {"ALD", "", Venues::ALD}, {"CHI", "", Venues::CHIC},
+        {"CHT", "", Venues::XCX2}, {"CHD", "", Venues::CXD},
+        {"CNQ", "", Venues::CSE}, {"PUR", "", Venues::PURE},
+        {"CS2", "", Venues::CSE2}, {"ICX", "", Venues::ICX},
+        {"LIQ", "", Venues::LIQ}, {"LYX", "", Venues::LYNX},
+        {"OMG", "", Venues::OMGA}, {"TCM", "", Venues::MATN},
+        {"AQL", "", Venues::NEOE}, {"AQN", "", Venues::NEON},
+        {"AQL", "AQL", Venues::NEOE}, {"AQL", "AQN", Venues::NEON},
+        {"AQL", "AQD", Venues::NEOE}, {"AQL", "AQS", Venues::NEOE},
+        {"AQL", "AQC", Venues::NEOE}}) {
+      CAPTURE(exchange);
+      CAPTURE(book);
+      auto fields = std::string(
+        "|6=TradeReport|5=Trade|55=ABX|41=10|64=1"
+        "|57=20260921100000000|247=") + exchange;
+      if(!std::string_view(book).empty()) {
+        fields += std::string("|636=") + book;
+      }
+      fixture.publish(fields);
+      auto operation =
+        fixture.operation<FeedClient::PublishTimeAndSaleOperation>();
+      auto& trade = operation->m_time_and_sale;
+      REQUIRE(trade.get_index() == parse_ticker("ABX.TSX"));
+      REQUIRE(trade->m_market_center == VENUES.from(venue).m_display_name);
+      REQUIRE(trade->m_buyer_mpid.empty());
+      REQUIRE(trade->m_seller_mpid.empty());
+    }
+    for(auto fields : {"", "|247=BAD", "|247=AQL|636=BAD"}) {
+      fixture.publish(std::string(
+        "|6=TradeReport|5=Trade|55=ABX|41=10|64=1"
+        "|57=20260921100000000") + fields);
+      fixture.require_empty();
+    }
+  }
+
+  TEST_CASE("cls_conditions") {
+    using Type = TimeAndSale::Condition::Type;
+    auto fixture = Fixture(Venue());
+    for(auto [fields, type, code] : {
+        std::tuple("", Type::REGULAR, "@"),
+        {"|574=O", Type::OPEN, "O"}, {"|574=R", Type::NONE, "R"},
+        {"|494=Y", Type::CLOSE, "C"},
+        {"|390=Regular", Type::REGULAR, "@"},
+        {"|390=VWAP", Type::NONE, "CrossType=VWAP"},
+        {"|53=20260924", Type::NONE, "SettlementTerms=20260924"},
+        {"|76=Y|503=Y|168=Y", Type::NONE,
+          "ExtendedHours;ByPass;NonResident"},
+        {"|617=Y|684=Y|688=Y|689=L|703=P", Type::NONE,
+          "Dark;MidOnly;Conditional;M-ELO=L;Purestream=P"},
+        {"|574=O|390=Intrnl", Type::OPEN, "O;CrossType=Intrnl"}}) {
+      CAPTURE(fields);
+      fixture.publish(std::string(
+        "|6=TradeReport|5=Trade|55=ABX|41=10|64=37"
+        "|57=20260921100000000|247=TSE") + fields);
+      auto operation =
+        fixture.operation<FeedClient::PublishTimeAndSaleOperation>();
+      REQUIRE(operation->m_time_and_sale->m_condition ==
+        TimeAndSale::Condition(type, code));
+      REQUIRE(operation->m_time_and_sale->m_size == 37);
+    }
+    fixture.require_empty();
+  }
+
+  TEST_CASE("cls_corrections") {
+    auto fixture = Fixture(Venue());
+    for(auto [fields, code] : {
+        std::pair("|5=Cancelled", "Cancelled"),
+        {"|5=Cancelled|183=Y|506=ORIGINAL|574=O", "Cancelled"},
+        {"|5=Trade|183=Y|506=ORIGINAL", "Correction"},
+        {"|5=Trade|506=ORIGINAL", "Correction"},
+        {"|5=Trade|183=Y|494=Y", "Correction"},
+        {"|5=AuctionTradeIndividual|183=Y|220=TRADE", "Correction"},
+        {"|5=AuctionTradeIndividual|183=Y|220=TRADE", "Correction"}}) {
+      CAPTURE(fields);
+      fixture.publish(std::string(
+        "|6=TradeReport|55=ABX|41=10|64=100|57=20260921100000000"
+        "|247=AQL") + fields);
+      auto operation =
+        fixture.operation<FeedClient::PublishTimeAndSaleOperation>();
+      REQUIRE(operation->m_time_and_sale->m_condition ==
+        TimeAndSale::Condition(TimeAndSale::Condition::Type::NONE, code));
+      REQUIRE(operation->m_time_and_sale->m_price == parse_money("10"));
+      REQUIRE(operation->m_time_and_sale->m_size == 100);
+      fixture.require_empty();
+    }
+    for(auto fields : {"|264=20260921093000123",
+        "|264.1=20260921093000123",
+        "|264=20260921093000123|264.1=20260921093000123"}) {
+      fixture.publish(std::string(
+        "|6=TradeReport|5=Trade|55=ABX|41=10|64=100|183=Y"
+        "|57=20260921100000000|247=TSE") + fields);
+      auto operation =
+        fixture.operation<FeedClient::PublishTimeAndSaleOperation>();
+      REQUIRE(operation->m_time_and_sale->m_timestamp ==
+        time_from_string("2026-09-21 13:30:00.123"));
+      REQUIRE(operation->m_time_and_sale->m_size == 100);
+      REQUIRE(operation->m_time_and_sale->m_condition ==
+        TimeAndSale::Condition(
+          TimeAndSale::Condition::Type::NONE, "Correction"));
+    }
+    fixture.publish("|6=TradeReport|5=Trade|55=ABX|41=10|64=100|183=Y"
+      "|57=20261221100000000|247=TSE");
+    auto operation =
+      fixture.operation<FeedClient::PublishTimeAndSaleOperation>();
+    REQUIRE(operation->m_time_and_sale->m_timestamp ==
+      time_from_string("2026-12-21 15:00:00"));
+    fixture.require_empty();
+  }
+
+  TEST_CASE("cls_auction") {
+    auto fixture = Fixture(Venue(), {
+      TickerInfo(parse_ticker("ABX.TSX"), "Barrick", "", 100),
+      TickerInfo(parse_ticker("FOO.CSE"), "Foo", "", 100)});
+    for(auto date : {"20260921", "20260922"}) {
+      for(auto symbol : {"ABX", "FOO"}) {
+        auto fields = std::string(
+          "|6=TradeReport|5=AuctionTradeIndividual|55=") + symbol +
+          "|41=10|64=100|247=AQL|636=AQL|220=TRADE|57=" + date +
+          "093000000";
+        fixture.publish(fields);
+        auto operation =
+          fixture.operation<FeedClient::PublishTimeAndSaleOperation>();
+        REQUIRE(operation->m_time_and_sale->m_size == 100);
+        REQUIRE(operation->m_time_and_sale->m_condition.m_code == "AUCTION");
+        fixture.publish(fields);
+        fixture.require_empty();
+      }
+    }
+    fixture.publish("|6=TradeReport|5=AuctionTradeIndividual|55=ABX"
+      "|41=10|64=100|247=AQL|636=AQL|57=20260922093000000");
+    fixture.require_empty();
+    fixture.publish("|6=TradeReport|5=Trade|55=ABX|41=10|64=100"
+      "|247=AQL|220=TRADE|57=20260922093100000");
+    auto operation =
+      fixture.operation<FeedClient::PublishTimeAndSaleOperation>();
+    REQUIRE(operation->m_time_and_sale->m_condition.m_code == "@");
+    fixture.require_empty();
+  }
+
+  TEST_CASE("cls_ticker") {
+    auto fixture = Fixture(Venue(), {});
+    fixture.publish("|6=TradeReport|5=Trade|55=ABX|41=10|64=1"
+      "|57=20260921100000000|247=CHI");
+    auto query = fixture.query();
+    auto tickers = std::vector<TickerInfo>();
+    SUBCASE("found") {
+      tickers.emplace_back(parse_ticker("ABX.TSX"), "Barrick", "", 100);
+    }
+    SUBCASE("missing") {}
+    query->m_result.set(tickers);
+    for(auto i = 0; i != 2; ++i) {
+      if(!tickers.empty()) {
+        auto operation =
+          fixture.operation<FeedClient::PublishTimeAndSaleOperation>();
+        REQUIRE(operation->m_time_and_sale.get_index() ==
+          parse_ticker("ABX.TSX"));
+      }
+      fixture.require_empty();
+      REQUIRE_FALSE(fixture.m_data_operations->try_pop().has_value());
+      if(i == 0) {
+        fixture.publish("|6=TradeReport|5=Trade|55=ABX|41=10|64=1"
+          "|57=20260921100000000|247=CHI");
+      }
+    }
+  }
+
   TEST_CASE("configured_venue") {
     auto fixture = Fixture();
     auto exchange = std::string();
@@ -259,32 +444,23 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
   }
 
   TEST_CASE("book_venues") {
-    struct Entry {
-      Venue m_venue;
-      std::string m_mpid;
-    };
-    auto entries = std::vector<Entry>{
-      {Venues::TSX, "TSX"}, {Venues::TSXV, "TSXV"},
-      {Venues::XATS, "ALP"}, {Venues::ALX, "ALX"},
-      {Venues::CHIC, "CHIC"}, {Venues::XCX2, "CX2"},
-      {Venues::CSE, "CSE"}, {Venues::PURE, "PURE"},
-      {Venues::CSE2, "CSE2"}, {Venues::OMGA, "OMG"},
-      {Venues::LYNX, "LYNX"}, {Venues::NEOE, "NEOL"},
-      {Venues::NEON, "NEON"}};
+    auto venues = {Venues::TSX, Venues::TSXV, Venues::XATS, Venues::ALX,
+      Venues::CHIC, Venues::XCX2, Venues::CSE, Venues::PURE, Venues::CSE2,
+      Venues::OMGA, Venues::LYNX, Venues::NEOE, Venues::NEON};
     auto ids = std::vector<std::string>();
-    for(auto& entry : entries) {
-      CAPTURE(entry.m_venue);
+    for(auto venue : venues) {
+      CAPTURE(venue);
       auto ticker = parse_ticker("ABX.TSX");
-      if(entry.m_venue == Venues::CSE) {
+      if(venue == Venues::CSE) {
         ticker = parse_ticker("ABX.CSE");
       }
-      auto fixture = Fixture(entry.m_venue, {TickerInfo(ticker, "", "", 100)});
+      auto fixture = Fixture(venue, {TickerInfo(ticker, "", "", 100)});
       fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX"
         "|57=20260921090000000|40=123|70=79|196=25.50|64=300");
       auto order = fixture.operation<FeedClient::AddOrderOperation>();
       REQUIRE(order->m_ticker == ticker);
-      REQUIRE(order->m_venue == entry.m_venue);
-      REQUIRE(order->m_mpid == entry.m_mpid);
+      REQUIRE(order->m_venue == venue);
+      REQUIRE(order->m_mpid == VENUES.from(venue).m_display_name);
       REQUIRE(std::ranges::find(ids, order->m_id) == ids.end());
       ids.push_back(order->m_id);
       fixture.require_empty();

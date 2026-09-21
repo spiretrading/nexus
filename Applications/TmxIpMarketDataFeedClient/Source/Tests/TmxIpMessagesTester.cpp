@@ -355,6 +355,28 @@ TEST_SUITE("TmxIpMessages") {
     REQUIRE(!message.m_header.m_exchange);
   }
 
+  TEST_CASE("cls_trade_report") {
+    auto source = encode_message(
+      "56=20260921150000000;17=FFFFFFFF;50=1;54=0123abcd;"
+      "501=20260921150000100;502=20260921150000050",
+      "6=TradeReport;5=Trade;55=ABX;41=12.34567;64=999999999;"
+      "57=20260921100000123;247=AQL;636=AQD;53=20260924;"
+      "264=20260921093000123;70=001;70.1=099;183=Y");
+    auto message = TmxIpTradeReport::parse(StampMessage::parse(source));
+    REQUIRE(message.m_header.m_exchange.value() == "AQL");
+    REQUIRE(message.m_header.m_book_type.value() == "AQD");
+    REQUIRE(message.m_settlement_terms.value() == "20260924");
+    REQUIRE(message.m_quantity == 999999999);
+    REQUIRE(message.m_price.m_value == parse_money("12.34567"));
+    REQUIRE(message.m_header.m_trading_timestamp.value() ==
+      time_from_string("2026-09-21 10:00:00.123"));
+    REQUIRE(message.m_sides[0].m_trade_timestamp.value() ==
+      time_from_string("2026-09-21 09:30:00.123"));
+    REQUIRE(message.m_sides[0].m_broker.value() == 1);
+    REQUIRE(message.m_sides[1].m_broker.value() == 99);
+    REQUIRE_NOTHROW(validate(StampMessage::parse(source)));
+  }
+
   TEST_CASE("calculated_opening_price") {
     for(auto action : {"AssignCOP", "AssignLimit"}) {
       auto source = encode_message(std::string("6=MBXMessage;5=") + action +
