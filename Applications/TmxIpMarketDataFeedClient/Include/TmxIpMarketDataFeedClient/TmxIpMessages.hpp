@@ -654,6 +654,12 @@ namespace Nexus {
     };
     constexpr auto WHOLE_DIGITS = std::size_t(6);
     constexpr auto FRACTION_DIGITS = std::size_t(5);
+    if(separator != std::string_view::npos) {
+      while(source.size() > separator + 1 + FRACTION_DIGITS &&
+          source.back() == '0') {
+        source.remove_suffix(1);
+      }
+    }
     auto is_valid = digits(whole, WHOLE_DIGITS) &&
       (separator == std::string_view::npos ||
         digits(source.substr(separator + 1), FRACTION_DIGITS));
@@ -1207,12 +1213,6 @@ namespace TmxIpDetails {
     }
     auto control = StampFieldReader(message.m_control_header);
     auto address = [] (std::string_view source) {
-      if(source.size() != 8 || source == "00000000" ||
-          source.find_first_not_of("0123456789abcdefABCDEF") !=
-            std::string_view::npos) {
-        boost::throw_with_location(
-          TmxIpParserException("Invalid CBBO address."));
-      }
       return source;
     };
     value.m_source_address = control.read(54, address);

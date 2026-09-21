@@ -163,6 +163,27 @@ TEST_SUITE("TmxIpMessages") {
       TmxIpParserException);
   }
 
+  TEST_CASE("cbbo_live_quote") {
+    auto source = encode_message(
+      "514=20260921190457364;515=20260921150457364;"
+      "502=20260921150457364;501=20260921150457364;"
+      "54=000000;17=000000;50=78823845",
+      "55=HBA;196=29.9200;64=1100;247=TSE;196.1=30.0500;"
+      "64.1=1900;247.1=CHI;6=Quote;5=Quote");
+    auto message = TmxIpCbboQuote::parse(StampMessage::parse(source));
+    REQUIRE(message.m_source_address == "000000");
+    REQUIRE(message.m_destination_address == "000000");
+    REQUIRE(message.m_symbol == "HBA");
+    REQUIRE(message.m_sequence == 78823845);
+    REQUIRE(message.m_sides[0].m_price == parse_money("29.92"));
+    REQUIRE(message.m_sides[0].m_quantity == 1100);
+    REQUIRE(message.m_sides[0].m_exchange.value() == "TSE");
+    REQUIRE(message.m_sides[1].m_price == parse_money("30.05"));
+    REQUIRE(message.m_sides[1].m_quantity == 1900);
+    REQUIRE(message.m_sides[1].m_exchange.value() == "CHI");
+    REQUIRE_NOTHROW(validate(StampMessage::parse(source)));
+  }
+
   TEST_CASE("cbbo_control_fields") {
     auto fields = std::string(
       "6=Quote;5=Quote;55=ABX;196=1;196.1=2;64=100;64.1=200");
@@ -173,7 +194,8 @@ TEST_SUITE("TmxIpMessages") {
       REQUIRE_THROWS_AS(validate(StampMessage::parse(source)),
         TmxIpParserException);
     }
-    for(auto address : {"", "123abcd", "00123abcd", "0123abcg", "00000000"}) {
+    for(auto address : {"", "123abcd", "00123abcd", "0123abcg", "000000",
+        "00000000", "FFFFFFFF", "0123abcd", "00000001"}) {
       for(auto name : {"17", "54"}) {
         auto control = std::string("17=FFFFFFFF;50=1;54=0123abcd");
         auto start = control.find(std::string(name) + '=') + 3;
@@ -181,15 +203,13 @@ TEST_SUITE("TmxIpMessages") {
         auto source = encode_message(control, fields);
         CAPTURE(address);
         CAPTURE(name);
-        REQUIRE_THROWS_AS(validate(StampMessage::parse(source)),
-          TmxIpParserException);
+        auto message = TmxIpCbboQuote::parse(StampMessage::parse(source));
+        if(std::string_view(name) == "54") {
+          REQUIRE(message.m_source_address == address);
+        } else {
+          REQUIRE(message.m_destination_address == address);
+        }
       }
-    }
-    for(auto address : {"FFFFFFFF", "0123abcd", "00000001"}) {
-      auto source = encode_message(
-        std::string("54=0123abcd;50=1;17=") + address, fields);
-      REQUIRE(TmxIpCbboQuote::parse(StampMessage::parse(source)).
-        m_destination_address == address);
     }
     for(auto extra : {"17=FFFFFFFF", "17.1=FFFFFFFF", "50.0=2", "50.1=2",
         "54=0123abcd", "54.1=0123abcd", "501.1=20260920093000123",
@@ -244,12 +264,20 @@ TEST_SUITE("TmxIpMessages") {
       REQUIRE(price.m_type == TmxIpPrice::Type::LIMIT);
       REQUIRE(price.m_value == parse_money(source));
     }
+    for(auto source : {"0.00000", "9.51000", "12.34567", "999999.99999"}) {
+      for(auto padding : {"0", "0000000000"}) {
+        auto price = TmxIpPrice::parse(std::string(source) + padding);
+        REQUIRE(price.m_type == TmxIpPrice::Type::LIMIT);
+        REQUIRE(price.m_value == parse_money(source));
+      }
+    }
     REQUIRE(TmxIpPrice::parse("").m_type == TmxIpPrice::Type::MARKET);
     REQUIRE(TmxIpPrice::parse("MKT").m_type == TmxIpPrice::Type::MARKET);
     REQUIRE(TmxIpPrice::parse("OPG").m_type == TmxIpPrice::Type::OPENING);
     REQUIRE(TmxIpPrice::parse("MBF").m_type ==
       TmxIpPrice::Type::MUST_BE_FILLED);
     for(auto source : {"-1", "+1", ".5", "1.", "1.000001", "1000000",
+        "1.0000010", "1.0000001", "1.00000x0", "1.00000.0",
         "1e2", "NaN", " 1", "1 ", "MOC", "1.2.3"}) {
       REQUIRE_THROWS_AS(TmxIpPrice::parse(source), TmxIpParserException);
     }
@@ -385,6 +413,25 @@ TEST_SUITE("TmxIpMessages") {
       time_from_string("2026-09-21 09:30:00.123"));
     REQUIRE(message.m_sides[0].m_broker.value() == 1);
     REQUIRE(message.m_sides[1].m_broker.value() == 99);
+    REQUIRE_NOTHROW(validate(StampMessage::parse(source)));
+  }
+
+  TEST_CASE("cls_live_trade_report") {
+    auto source = encode_message(
+      "514=20260921002200000;515=20260921150622022;"
+      "56=20260921150622021938;513=TRI:BC[6]:BA[8]:SEQ[104179];"
+      "502=20260921150622022;501=20260921150622022;"
+      "54=000000;17=000000;50=1055594",
+      "55=ADBE;64=40;5=Trade;247=TCM;57=20260921150622021938;"
+      "688=N;220=010004EMC;70=80;70.1=80;41=9.510000;6=TradeReport");
+    auto message = TmxIpTradeReport::parse(StampMessage::parse(source));
+    REQUIRE(message.m_symbol == "ADBE");
+    REQUIRE(message.m_header.m_exchange.value() == "TCM");
+    REQUIRE(message.m_price.m_type == TmxIpPrice::Type::LIMIT);
+    REQUIRE(message.m_price.m_value == parse_money("9.51"));
+    REQUIRE(message.m_quantity == 40);
+    REQUIRE(message.m_sides[0].m_broker.value() == 80);
+    REQUIRE(message.m_sides[1].m_broker.value() == 80);
     REQUIRE_NOTHROW(validate(StampMessage::parse(source)));
   }
 
