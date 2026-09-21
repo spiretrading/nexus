@@ -1,10 +1,10 @@
 #!/bin/bash
-PREFIX="tmxip"
+PREFIX="tmx_ip"
 
 stop_application() (
   dir=$1
-  feed_name="${dir#*_}"
-  APPLICATION="${feed_name}_${PREFIX}"
+  feed_name="$dir"
+  APPLICATION="$feed_name"
   cd "$dir" || exit 1
 
   check_running() (
@@ -80,7 +80,7 @@ if [[ $# -gt 1 || "$1" == */* ]]; then
   exit 1
 fi
 if [[ -n "$1" ]]; then
-  target_dir="${PREFIX}_$1"
+  target_dir="$1"
   if [[ ! -d "$target_dir" ]]; then
     echo "Error: Directory $target_dir does not exist." >&2
     exit 1
@@ -88,7 +88,7 @@ if [[ -n "$1" ]]; then
   stop_application "$target_dir"
 else
   status=0
-  for dir in "${PREFIX}"_*; do
+  for dir in "${PREFIX}_"*; do
     if [[ -d "$dir" ]]; then
       result=0
       stop_application "$dir" || result=$?

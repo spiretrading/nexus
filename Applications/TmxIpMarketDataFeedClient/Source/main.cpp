@@ -1,96 +1,30 @@
-#include <unordered_map>
-#include <Beam/IO/QueuedReader.hpp>
-#include <Beam/IO/SharedBuffer.hpp>
-#include <Beam/IO/WrapperChannel.hpp>
-#include <Beam/Network/IpAddress.hpp>
+#include <algorithm>
+#include <thread>
 #include <Beam/Network/MulticastSocketChannel.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
 #include <Beam/TimeService/LiveTimer.hpp>
-#include <Beam/TimeService/ToLocalTime.hpp>
 #include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
-#include <Beam/Utilities/Expect.hpp>
-#include <Beam/Utilities/YamlConfig.hpp>
-#include <boost/throw_exception.hpp>
-#include "Nexus/Definitions/StandardTimeZones.hpp"
+#include <Beam/Utilities/ReportException.hpp>
 #include "Nexus/DefinitionsService/ApplicationDefinitions.hpp"
 #include "Nexus/MarketDataService/ApplicationDefinitions.hpp"
 #include "TmxIpMarketDataFeedClient/TmxIpMarketDataFeedClient.hpp"
-#include "TmxIpMarketDataFeedClient/TmxIpServiceAccessClient.hpp"
 #include "Version.hpp"
 
 using namespace Beam;
-using namespace boost;
-using namespace boost::local_time;
-using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
-  using ApplicationFeedChannel = WrapperChannel<
-    MulticastSocketChannel*, QueuedReader<MulticastSocketChannel::Reader*>>;
-  using ApplicationRetransmissionServerChannel = UdpSocketChannel;
-  using ApplicationTmxIpServiceAccessClient = TmxIpServiceAccessClient<
-    ApplicationFeedChannel*, TcpSocketChannel,
-    ApplicationRetransmissionServerChannel>;
-  using ApplicationTmxIpMarketDataFeedClient = TmxIpMarketDataFeedClient<
-    ApplicationMarketDataFeedClient*, ApplicationTmxIpServiceAccessClient*,
-    LiveNtpTimeClient*>;
-
-  static constexpr auto DEFAULT_RECEIVE_BUFFER_SIZE = std::size_t(134217728);
-
-  std::unordered_map<std::string, std::string> load_mpid_mappings(
-      const YAML::Node& config) {
-    return try_or_nest([&] {
-      auto mappings = std::unordered_map<std::string, std::string>();
-      for(auto& node : config) {
-        auto source = extract<std::string>(node, "source");
-        auto name = extract<std::string>(node, "name");
-        mappings.insert(std::pair(source, name));
-      }
-      return mappings;
-    }, std::runtime_error("Error parsing MPID mappings."));
-  }
-
-  time_duration get_utc_offset(const tz_database& tz_database,
-      const std::string& time_zone) {
-    auto tz = tz_database.time_zone_from_region(time_zone);
-    if(!tz) {
-      throw_with_location(std::runtime_error(
-        "Time zone '" + time_zone + "' not found in database."));
-    }
-    auto current_time = second_clock::universal_time();
-    auto local_time = local_date_time(current_time, tz);
-    return local_time.local_time() - local_time.utc_time();
-  }
-
-  TmxIpConfiguration parse_configuration(const YAML::Node& config) {
-    return try_or_nest([&] {
-      auto time_zone =
-        extract<std::string>(config, "time_zone", "America/Toronto");
-      auto tmx_ip_config = TmxIpConfiguration();
-      tmx_ip_config.m_is_logging_messages =
-        extract<bool>(config, "enable_logging", false);
-      tmx_ip_config.m_time_offset = -get_utc_offset(TIME_ZONES, time_zone);
-      tmx_ip_config.m_is_time_and_sale_feed =
-        extract<bool>(config, "is_time_and_sale", false);
-      auto& venue =
-        VENUES.from(parse_venue(extract<std::string>(config, "venue")));
-      tmx_ip_config.m_venue = venue.m_venue;
-      tmx_ip_config.m_country = venue.m_country_code;
-      tmx_ip_config.m_use_broker_number_as_key =
-        extract<bool>(config, "use_broker_number", false);
-      tmx_ip_config.m_default_mpid = extract<std::string>(config, "mpid", "");
-      tmx_ip_config.m_consolidate_mpids =
-        extract<bool>(config, "consolidate_mpids", false);
-      if(auto mpidMappings = config["mpid_mappings"]) {
-        tmx_ip_config.m_mpid_mappings = load_mpid_mappings(mpidMappings);
-      }
-      tmx_ip_config.m_is_neo_book = venue.m_venue == Venues::NEOE;
-      return tmx_ip_config;
-    }, std::runtime_error("Failed to parse TMX IP configuration."));
-  }
+  using ApplicationFeedChannel = MulticastSocketChannel;
+  using ApplicationProtocolClient = TmxIpProtocolClient<
+    std::unique_ptr<ApplicationFeedChannel>, LiveNtpTimeClient*>;
+  using ApplicationRecoveryChannel = UdpSocketChannel;
+  using ApplicationRecoveryProtocolClient = TmxIpProtocolClient<
+    std::unique_ptr<ApplicationRecoveryChannel>, LiveNtpTimeClient*>;
+  using ApplicationRecoveryClient = TmxIpRecoveryClient<TcpSocketChannel,
+    std::unique_ptr<ApplicationRecoveryProtocolClient>, LiveTimer>;
 }
 
 int main(int argc, const char** argv) {
@@ -103,46 +37,63 @@ int main(int argc, const char** argv) {
     auto definitions_client =
       ApplicationDefinitionsClient(Ref(service_locator_client));
     load_definitions(definitions_client);
-    auto time_client = make_live_ntp_time_client(service_locator_client);
-    auto sampling_time = extract<time_duration>(config, "sampling");
+    auto schedule = definitions_client.load_trading_schedule();
+    auto configuration = TmxIpConfiguration::parse(config);
+    auto market_data_client =
+      ApplicationMarketDataClient(Ref(service_locator_client));
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
-      Ref(service_locator_client), sampling_time, Countries::CA);
-    auto host = extract<IpAddress>(config, "host");
-    auto interface = extract<IpAddress>(config, "interface");
-    auto options = MulticastSocketOptions();
-    options.m_receive_buffer_size =
-      extract<int>(config, "receive_buffer", DEFAULT_RECEIVE_BUFFER_SIZE);
-    options.m_max_datagram_size =
-      extract<int>(config, "mtu", options.m_max_datagram_size);
-    auto multicast_socket_channel = try_or_nest([&] {
-      return MulticastSocketChannel(host, interface, options);
-    }, std::runtime_error("Unable to join TMX IP multicast group."));
-    auto feed_channel = ApplicationFeedChannel(
-      &multicast_socket_channel, &multicast_socket_channel.get_reader());
-    auto retransmission_client_address =
-      extract<IpAddress>(config, "retransmission_request_address");
-    auto retransmission_server_address =
-      extract<IpAddress>(config, "retransmission_response_address");
-    auto retransmission_client_channel_builder =
-      [=] (Out<std::optional<TcpSocketChannel>> channel) {
-        channel->emplace(retransmission_client_address);
-      };
-    auto service_access_config = TmxIpServiceAccessConfiguration();
-    service_access_config.m_enable_retransmission =
-      extract<bool>(config, "enable_retransmission", false);
-    service_access_config.m_max_retransmission_count =
-      extract<int>(config, "max_retransmissions", 10);
-    service_access_config.m_max_retransmission_block =
-      extract<int>(config, "retransmission_block_size", 20000);
-    auto tmx_ip_config = parse_configuration(config);
-    auto service_access_client = ApplicationTmxIpServiceAccessClient(
-      service_access_config, &feed_channel,
-      retransmission_client_channel_builder, init(retransmission_server_address,
-        IpAddress("0.0.0.0", retransmission_server_address.get_port())));
-    auto feed_client = ApplicationTmxIpMarketDataFeedClient(tmx_ip_config,
-      &market_data_feed_client, &service_access_client, time_client.get());
-    wait_for_kill_event();
-    service_locator_client.close();
+      Ref(service_locator_client), configuration.m_sampling,
+      configuration.m_country);
+    auto time_client = make_live_ntp_time_client(service_locator_client);
+    auto feed_clients =
+      std::vector<std::unique_ptr<ApplicationProtocolClient>>();
+    for(auto& feed : configuration.m_feeds) {
+      feed_clients.push_back(try_or_nest([&] {
+        auto channel = std::make_unique<MulticastSocketChannel>(
+          feed.m_address, feed.m_interface, configuration.m_socket_options);
+        return std::make_unique<ApplicationProtocolClient>(
+          std::move(channel), time_client.get());
+      }, std::runtime_error("Unable to join a TMX IP multicast group.")));
+    }
+    auto recovery_client =
+      boost::optional<std::unique_ptr<ApplicationRecoveryClient>>();
+    if(auto recovery = configuration.m_recovery) {
+      auto protocol_client = try_or_nest([&] {
+        auto channel = std::make_unique<UdpSocketChannel>(
+          recovery->m_address, recovery->m_delivery_address,
+          configuration.m_socket_options);
+        return std::make_unique<ApplicationRecoveryProtocolClient>(
+          std::move(channel), time_client.get());
+      }, std::runtime_error(
+        "Unable to open the TMX IP recovery delivery socket."));
+      recovery_client = std::make_unique<ApplicationRecoveryClient>(
+        [=] (std::stop_token token) {
+          if(token.stop_requested()) {
+            boost::throw_with_location(
+              IOException("TMX IP recovery connection canceled."));
+          }
+          return std::make_shared<TcpSocketChannel>(
+            recovery->m_address, recovery->m_interface);
+        }, std::move(protocol_client), init(recovery->m_timeout));
+    }
+    auto client = TmxIpClient(configuration.m_time_zone,
+      configuration.m_rollover_time, configuration.m_feed_timeout,
+      configuration.m_gap_timeout, std::move(feed_clients),
+      std::move(recovery_client), time_client.get(),
+      std::make_unique<LiveTimer>(std::min({configuration.m_retry_interval,
+        configuration.m_feed_timeout, configuration.m_gap_timeout})));
+    auto feed_client = TmxIpMarketDataFeedClient(configuration,
+      std::move(schedule), &client, &market_data_client, time_client.get(),
+      &market_data_feed_client);
+    while(!feed_client.is_finished() && !received_kill_event()) {
+      std::this_thread::sleep_for(std::chrono::milliseconds(100));
+    }
+    auto is_interrupted = received_kill_event();
+    feed_client.close();
+    auto exception = feed_client.get_exception();
+    if(!is_interrupted && exception) {
+      std::rethrow_exception(exception);
+    }
   } catch(...) {
     report_current_exception();
     return -1;

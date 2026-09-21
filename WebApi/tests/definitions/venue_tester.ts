@@ -2,6 +2,10 @@ import { describe, it } from 'node:test';
 import * as assert from 'node:assert';
 import { CountryCode } from '../../source/definitions/country';
 import { Currency } from '../../source/definitions/currency';
+import { Countries } from '../../source/definitions/standard_countries';
+import { Currencies } from '../../source/definitions/standard_currencies';
+import { buildVenueDatabase, Venues } from
+  '../../source/definitions/standard_venues';
 import { Venue, VenueDatabase } from '../../source/definitions/venue';
 
 describe('Venue', () => {
@@ -55,6 +59,25 @@ function makeEntry(code: string, displayName: string): VenueDatabase.Entry {
 }
 
 describe('VenueDatabase', () => {
+  it('canadian_market_centers', () => {
+    const database = buildVenueDatabase();
+    for(const [center, mic, name] of [
+        ['ALX', 'XATX', 'ALX'], ['ALD', 'ADRK', 'ALD'],
+        ['ICX', 'XICX', 'ICX'], ['LIQ', 'LICA', 'LIQ'],
+        ['AQN', 'NEON', 'NEON']]) {
+      const venue = new Venue(mic);
+      const entry = database.fromVenue(venue);
+      assert.ok(entry.venue.equals(venue));
+      assert.strictEqual(entry.marketCenter, center);
+      assert.strictEqual(entry.displayName, name);
+      assert.ok(entry.countryCode.equals(Countries.CA));
+      assert.ok(entry.currency.equals(Currencies.CAD));
+      assert.strictEqual(entry.timeZone, 'America/Toronto');
+      assert.ok(VenueDatabase.Entry.parse(name, database).venue.equals(venue));
+      assert.deepStrictEqual(Reflect.get(Venues, name), venue);
+    }
+  });
+
   it('none_entry', () => {
     const none = VenueDatabase.Entry.NONE;
     assert.ok(none.venue.equals(Venue.NONE));

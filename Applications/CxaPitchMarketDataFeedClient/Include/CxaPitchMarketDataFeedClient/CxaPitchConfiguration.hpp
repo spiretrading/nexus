@@ -14,9 +14,6 @@ namespace Nexus {
   /** Stores the addresses that a CXA PITCH feed is received on. */
   struct CxaPitchFeed {
 
-    /** The name of the feed. */
-    std::string m_name;
-
     /** The feed's real-time multicast group. */
     Beam::IpAddress m_address;
 
@@ -112,7 +109,6 @@ namespace Nexus {
 
   inline CxaPitchFeed CxaPitchFeed::parse(const YAML::Node& config) {
     auto feed = CxaPitchFeed();
-    feed.m_name = Beam::extract<std::string>(config, "name");
     feed.m_address = Beam::extract<Beam::IpAddress>(config, "address");
     if(feed.m_address.get_port() == 0) {
       boost::throw_with_location(std::runtime_error(

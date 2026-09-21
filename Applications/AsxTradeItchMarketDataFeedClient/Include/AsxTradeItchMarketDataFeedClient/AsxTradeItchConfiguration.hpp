@@ -92,11 +92,14 @@ namespace Nexus {
     /** How long a feed may remain silent or stalled. */
     boost::posix_time::time_duration m_feed_timeout;
 
+    /** How long to wait before logging and skipping an unrecovered gap. */
+    boost::posix_time::time_duration m_gap_timeout;
+
     /** How long to wait before retrying a rewind request. */
     boost::posix_time::time_duration m_request_timeout;
 
-    /** The server to request missing messages from. */
-    AsxTradeItchRewindServer m_rewind;
+    /** The optional server to request missing messages from. */
+    boost::optional<AsxTradeItchRewindServer> m_rewind;
 
     /** The optional server to load the startup snapshot from. */
     boost::optional<AsxTradeItchGlimpseServer> m_glimpse;
@@ -104,7 +107,7 @@ namespace Nexus {
     /** Parses the partition's configuration. */
     static AsxTradeItchConfiguration parse(const YAML::Node& config);
 
-    /** Returns the polling interval for feed expiry and recovery retries. */
+    /** Returns the interval for feed expiry, gap deadlines and retries. */
     boost::posix_time::time_duration get_timer_interval() const;
   };
 
@@ -207,12 +210,17 @@ namespace Nexus {
         Beam::extract<boost::posix_time::time_duration>(
           config, "feed_timeout", boost::posix_time::seconds(3),
           boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
+      configuration.m_gap_timeout =
+        Beam::extract<boost::posix_time::time_duration>(
+          config, "gap_timeout", boost::posix_time::seconds(5),
+          boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
       configuration.m_request_timeout =
         Beam::extract<boost::posix_time::time_duration>(
           config, "request_timeout", boost::posix_time::seconds(1),
           boost::posix_time::time_duration::unit(), MAXIMUM_DURATION);
-      configuration.m_rewind = AsxTradeItchRewindServer::parse(
-        Beam::get_node(config, "rewind"));
+      if(auto rewind = config["rewind"]) {
+        configuration.m_rewind = AsxTradeItchRewindServer::parse(rewind);
+      }
       if(config["glimpse"]) {
         configuration.m_glimpse = AsxTradeItchGlimpseServer::parse(
           Beam::get_node(config, "glimpse"));
@@ -225,7 +233,7 @@ namespace Nexus {
       AsxTradeItchConfiguration::get_timer_interval() const {
     return std::min({boost::posix_time::time_duration(
       boost::posix_time::milliseconds(100)), m_feed_timeout,
-      m_request_timeout});
+      m_gap_timeout, m_request_timeout});
   }
 }
 

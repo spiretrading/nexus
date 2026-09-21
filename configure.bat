@@ -20,13 +20,11 @@ CALL :Configure Applications\AdministrationServer %*
 CALL :Configure Applications\AsxTradeItchMarketDataFeedClient %*
 CALL :Configure Applications\ChartingServer %*
 CALL :Configure Applications\ComplianceServer %*
-CALL :Configure Applications\CseMarketDataFeedClient %*
 CALL :Configure Applications\CxaPitchMarketDataFeedClient %*
 CALL :Configure Applications\DefinitionsServer %*
 CALL :Configure Applications\Lollipop %*
 CALL :Configure Applications\MarketDataRelayServer %*
 CALL :Configure Applications\MarketDataServer %*
-CALL :Configure Applications\NeoeMarketDataFeedClient %*
 CALL :Configure Applications\OasisOrderExecutionServer %*
 CALL :Configure Applications\OtcLinkMarketDataFeedClient %*
 CALL :Configure Applications\ReplayMarketDataFeedClient %*
@@ -36,7 +34,6 @@ CALL :Configure Applications\SimulationMarketDataFeedClient %*
 CALL :Configure Applications\SimulationOrderExecutionServer %*
 CALL :Configure Applications\Spire %*
 CALL :Configure Applications\TmxIpMarketDataFeedClient %*
-CALL :Configure Applications\TmxTl1MarketDataFeedClient %*
 CALL :Configure Applications\WebPortal\WebApp %*
 CALL :Configure Applications\WebPortal %*
 EXIT /B !EXIT_STATUS!

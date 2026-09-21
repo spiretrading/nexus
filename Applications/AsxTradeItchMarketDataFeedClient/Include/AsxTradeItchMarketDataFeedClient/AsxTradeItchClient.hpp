@@ -1,6 +1,8 @@
 #ifndef ASX_TRADE_ITCH_CLIENT_HPP
 #define ASX_TRADE_ITCH_CLIENT_HPP
+#include <iostream>
 #include <iterator>
+#include <sstream>
 #include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/Queues/Queue.hpp>
@@ -29,7 +31,7 @@ namespace Nexus {
    * @tparam G The client requesting and receiving retransmissions.
    * @tparam S The client loading the optional startup snapshot.
    * @tparam R The client supplying the current local time.
-   * @tparam T The timer driving feed expiry and recovery retries.
+   * @tparam T The timer driving feed expiry, gap deadlines and retries.
    */
   template<typename P, typename G, typename S, typename R, typename T> requires
     IsMoldUdp64Reader<Beam::dereference_t<P>> &&
@@ -52,25 +54,27 @@ namespace Nexus {
       /** The client supplying the current local time. */
       using TimeClient = Beam::dereference_t<R>;
 
-      /** The timer driving feed expiry and recovery retries. */
+      /** The timer driving feed expiry, gap deadlines and retries. */
       using Timer = Beam::dereference_t<T>;
 
       /**
        * Constructs an AsxTradeItchClient.
        * @param feed_timeout How long a feed may remain silent or stalled.
+       * @param gap_timeout How long to wait before abandoning a missing range.
        * @param request_timeout How long to wait before retrying recovery.
        * @param feed_clients The clients receiving redundant multicast feeds.
-       * @param recovery_client The partition's rewind client.
+       * @param recovery_client The optional partition rewind client.
        * @param glimpse_client The optional startup snapshot client.
        * @param time_client The client supplying local time.
-       * @param timer The timer driving feed expiry and recovery retries.
+       * @param timer The timer driving feed expiry, gap deadlines and retries.
        */
       template<Beam::Initializes<P> PF, Beam::Initializes<G> GF,
         Beam::Initializes<S> SF, Beam::Initializes<R> RF,
         Beam::Initializes<T> TF>
       AsxTradeItchClient(boost::posix_time::time_duration feed_timeout,
+        boost::posix_time::time_duration gap_timeout,
         boost::posix_time::time_duration request_timeout,
-        std::vector<PF> feed_clients, GF&& recovery_client,
+        std::vector<PF> feed_clients, boost::optional<GF> recovery_client,
         boost::optional<SF> glimpse_client, RF&& time_client, TF&& timer);
 
       ~AsxTradeItchClient();
@@ -91,9 +95,14 @@ namespace Nexus {
         int m_feed_count;
         bool m_is_ready;
         bool m_is_finished;
+        boost::optional<std::uint64_t> m_gap_sequence;
+        boost::posix_time::ptime m_gap_timestamp;
+        std::string m_recovery_error;
+        bool m_is_recovery_finished;
       };
+      boost::posix_time::time_duration m_gap_timeout;
       std::vector<Beam::local_ptr_t<P>> m_feed_clients;
-      Beam::local_ptr_t<G> m_recovery_client;
+      boost::optional<Beam::local_ptr_t<G>> m_recovery_client;
       boost::optional<Beam::local_ptr_t<S>> m_glimpse_client;
       Beam::local_ptr_t<R> m_time_client;
       Beam::local_ptr_t<T> m_timer;
@@ -110,6 +119,7 @@ namespace Nexus {
       AsxTradeItchClient& operator =(const AsxTradeItchClient&) = delete;
       void flush(State& state);
       void fail(const std::exception_ptr& error);
+      void disable_recovery(std::string_view reason);
       void feed_loop(int index);
       void recovery_loop();
       void request_loop();
@@ -119,10 +129,10 @@ namespace Nexus {
 
   template<typename P, typename G, typename S, typename R, typename T>
   AsxTradeItchClient(boost::posix_time::time_duration,
-    boost::posix_time::time_duration, std::vector<P>, G&&,
-    boost::optional<S>, R&&, T&&) ->
-      AsxTradeItchClient<P, std::remove_cvref_t<G>, S,
-        std::remove_cvref_t<R>, std::remove_cvref_t<T>>;
+    boost::posix_time::time_duration, boost::posix_time::time_duration,
+    std::vector<P>, boost::optional<G>, boost::optional<S>, R&&, T&&) ->
+      AsxTradeItchClient<
+        P, G, S, std::remove_cvref_t<R>, std::remove_cvref_t<T>>;
 
   template<typename P, typename G, typename S, typename R, typename T> requires
     IsMoldUdp64Reader<Beam::dereference_t<P>> &&
@@ -134,12 +144,14 @@ namespace Nexus {
     Beam::Initializes<S> SF, Beam::Initializes<R> RF, Beam::Initializes<T> TF>
   AsxTradeItchClient<P, G, S, R, T>::AsxTradeItchClient(
       boost::posix_time::time_duration feed_timeout,
+      boost::posix_time::time_duration gap_timeout,
       boost::posix_time::time_duration request_timeout,
-      std::vector<PF> feed_clients, GF&& recovery_client,
+      std::vector<PF> feed_clients, boost::optional<GF> recovery_client,
       boost::optional<SF> glimpse_client, RF&& time_client, TF&& timer)
-      : m_feed_clients(std::make_move_iterator(feed_clients.begin()),
+      : m_gap_timeout(gap_timeout),
+        m_feed_clients(std::make_move_iterator(feed_clients.begin()),
           std::make_move_iterator(feed_clients.end())),
-        m_recovery_client(std::forward<GF>(recovery_client)),
+        m_recovery_client(std::move(recovery_client)),
         m_glimpse_client(std::move(glimpse_client)),
         m_time_client(std::forward<RF>(time_client)),
         m_timer(std::forward<TF>(timer)),
@@ -149,7 +161,9 @@ namespace Nexus {
           static_cast<int>(m_feed_clients.size()), !m_glimpse_client, false) {
     try {
       if(m_feed_clients.empty() || feed_timeout.is_special() ||
-          feed_timeout <= boost::posix_time::seconds(0)) {
+          feed_timeout <= boost::posix_time::seconds(0) ||
+          gap_timeout.is_special() ||
+          gap_timeout <= boost::posix_time::seconds(0)) {
         boost::throw_with_location(
           std::invalid_argument("A feed and a positive timeout are required."));
       }
@@ -157,10 +171,12 @@ namespace Nexus {
         m_routines.spawn(std::bind_front(
           &AsxTradeItchClient::feed_loop, this, static_cast<int>(i)));
       }
-      m_routines.spawn(
-        std::bind_front(&AsxTradeItchClient::recovery_loop, this));
-      m_routines.spawn(
-        std::bind_front(&AsxTradeItchClient::request_loop, this));
+      if(m_recovery_client) {
+        m_routines.spawn(
+          std::bind_front(&AsxTradeItchClient::recovery_loop, this));
+        m_routines.spawn(
+          std::bind_front(&AsxTradeItchClient::request_loop, this));
+      }
       if(m_glimpse_client) {
         m_routines.spawn(
           std::bind_front(&AsxTradeItchClient::snapshot_loop, this));
@@ -212,7 +228,9 @@ namespace Nexus {
     if(m_glimpse_client) {
       (*m_glimpse_client)->close();
     }
-    m_recovery_client->close();
+    if(m_recovery_client) {
+      (*m_recovery_client)->close();
+    }
     for(auto& client : m_feed_clients) {
       client->close();
     }
@@ -233,15 +251,54 @@ namespace Nexus {
     if(!state.m_is_ready || state.m_is_finished) {
       return;
     }
-    while(auto payload = state.m_sequencer.read()) {
-      m_messages.push(std::move(*payload));
-    }
-    if(state.m_sequencer.is_end_of_session()) {
-      state.m_is_finished = true;
-      m_messages.close(std::make_exception_ptr(Beam::EndOfFileException()));
-      m_requests.close();
-    } else if(state.m_sequencer.get_gap()) {
-      m_requests.push(true);
+    while(true) {
+      while(auto payload = state.m_sequencer.read()) {
+        m_messages.push(std::move(*payload));
+      }
+      if(state.m_sequencer.is_end_of_session()) {
+        state.m_is_finished = true;
+        m_messages.close(std::make_exception_ptr(Beam::EndOfFileException()));
+        m_requests.close();
+        return;
+      }
+      auto gap = state.m_sequencer.get_gap();
+      if(!gap) {
+        state.m_gap_sequence = boost::none;
+        return;
+      }
+      auto timestamp = m_time_client->get_time();
+      if(state.m_gap_sequence != gap->m_sequence) {
+        state.m_gap_sequence = gap->m_sequence;
+        state.m_gap_timestamp = timestamp;
+      }
+      auto reason = [&] () -> std::string_view {
+        if(state.m_is_recovery_finished) {
+          return state.m_recovery_error;
+        }
+        if(timestamp < state.m_gap_timestamp) {
+          return "clock_rollback";
+        }
+        if(timestamp - state.m_gap_timestamp <= m_gap_timeout) {
+          return {};
+        }
+        if(m_recovery_client) {
+          return "timeout";
+        }
+        return "disabled";
+      }();
+      if(reason.empty()) {
+        if(m_recovery_client && state.m_recovery_error.empty()) {
+          m_requests.push(true);
+        }
+        return;
+      }
+      auto out = std::stringstream();
+      out << "(dropped " << timestamp << ' ' << gap->m_sequence << ' ' <<
+        gap->m_count << ' ' << reason << ")\n";
+      std::cout << out.str() << std::flush;
+      state.m_sequencer.reset(gap->m_sequence + gap->m_count);
+      state.m_recovery.reset();
+      state.m_gap_sequence = boost::none;
     }
   }
 
@@ -259,6 +316,27 @@ namespace Nexus {
       m_requests.close(error);
       m_snapshot_start.close(error);
     });
+  }
+
+  template<typename P, typename G, typename S, typename R, typename T> requires
+    IsMoldUdp64Reader<Beam::dereference_t<P>> &&
+      IsMoldUdp64Client<Beam::dereference_t<G>> &&
+      IsAsxTradeItchGlimpseClient<Beam::dereference_t<S>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void AsxTradeItchClient<P, G, S, R, T>::disable_recovery(
+      std::string_view reason) {
+    Beam::with(m_state, [&] (auto& state) {
+      if(state.m_is_finished || state.m_is_recovery_finished) {
+        return;
+      }
+      state.m_is_recovery_finished = true;
+      if(state.m_recovery_error.empty()) {
+        state.m_recovery_error = "recovery_failed " + std::string(reason);
+      }
+      flush(state);
+    });
+    (*m_recovery_client)->close();
   }
 
   template<typename P, typename G, typename S, typename R, typename T> requires
@@ -313,7 +391,7 @@ namespace Nexus {
   void AsxTradeItchClient<P, G, S, R, T>::recovery_loop() {
     while(m_open_state.is_open()) {
       try {
-        auto packet = m_recovery_client->read();
+        auto packet = (*m_recovery_client)->read();
         validate(packet);
         auto is_finished = Beam::with(m_state, [&] (auto& state) {
           if(state.m_is_finished) {
@@ -328,9 +406,9 @@ namespace Nexus {
         }
       } catch(const MoldUdp64ParserException&) {
       } catch(const AsxTradeItchParserException&) {
-      } catch(const std::exception&) {
+      } catch(const std::exception& e) {
         if(m_open_state.is_open()) {
-          fail(std::current_exception());
+          disable_recovery(e.what());
         }
         return;
       }
@@ -350,18 +428,24 @@ namespace Nexus {
         auto timestamp = m_time_client->get_time();
         auto request = Beam::with(m_state,
           [&] (auto& state) -> boost::optional<MoldUdp64Request> {
-            if(state.m_is_finished || !state.m_is_ready) {
+            if(state.m_is_finished || !state.m_is_ready ||
+                !state.m_recovery_error.empty()) {
               return boost::none;
             }
             return state.m_recovery.request(state.m_sequencer, timestamp);
           });
         if(request) {
-          m_recovery_client->request(*request);
+          (*m_recovery_client)->request(*request);
         }
       }
-    } catch(const std::exception&) {
+    } catch(const std::exception& e) {
       if(m_open_state.is_open()) {
-        fail(std::current_exception());
+        Beam::with(m_state, [&] (auto& state) {
+          if(state.m_recovery_error.empty()) {
+            state.m_recovery_error = "recovery_failed " + std::string(e.what());
+          }
+        });
+        (*m_recovery_client)->close();
       }
     }
   }

@@ -1,12 +1,9 @@
 #!/bin/bash
 services=(
   "OtcLinkMarketDataFeedClient"
-  "AsxTradeItchMarketDataFeedClient"
-  "CseMarketDataFeedClient"
-  "CxaPitchMarketDataFeedClient"
-  "NeoeMarketDataFeedClient"
-  "TmxTl1MarketDataFeedClient"
   "TmxIpMarketDataFeedClient"
+  "AsxTradeItchMarketDataFeedClient"
+  "CxaPitchMarketDataFeedClient"
   "WebPortal"
   "RiskServer"
   "SimulationOrderExecutionServer"

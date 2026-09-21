@@ -40,7 +40,7 @@ def main():
   with open('config.yml', 'w', encoding='utf-8') as file:
     file.write(source)
   for file in ['countries.yml', 'currencies.yml', 'date_time_zonespec.csv',
-      'destinations.yml', 'venues.yml']:
+      'destinations.yml', 'trading_schedules.yml', 'venues.yml']:
     if not os.path.exists(file):
       base, ext = os.path.splitext(file)
       shutil.copy(directory / (base + '.default' + ext), file)

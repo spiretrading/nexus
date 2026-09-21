@@ -15,8 +15,7 @@ sampling: 100ms
 venue: ASX
 disseminating_venue: CXA
 feeds:
-  - name: A
-    address: "233.218.133.80:30501"
+  - address: "233.218.133.80:30501"
     interface: "10.0.0.1:30501"
 )");
   }
@@ -40,7 +39,6 @@ TEST_SUITE("CxaPitchConfiguration") {
     source["gap_timeout"] = "2s";
     source["feeds"][0]["gap_address"] = "233.218.133.81:30501";
     source["feeds"].push_back(YAML::Load(R"(
-name: B
 address: "233.218.133.96:30501"
 gap_address: "233.218.133.97:30501"
 interface: "10.0.0.2:30501"
@@ -62,7 +60,6 @@ password: ABCD01
     REQUIRE(config.m_feed_timeout == seconds(5));
     REQUIRE(config.m_gap_timeout == seconds(2));
     REQUIRE(config.m_feeds.size() == 2);
-    REQUIRE(config.m_feeds[0].m_name == "A");
     REQUIRE(config.m_feeds[0].m_address.get_host() == "233.218.133.80");
     REQUIRE(config.m_feeds[0].m_address.get_port() == 30501);
     REQUIRE(config.m_feeds[0].m_gap_address.has_value());
@@ -70,7 +67,6 @@ password: ABCD01
     REQUIRE(config.m_feeds[0].m_gap_address->get_port() == 30501);
     REQUIRE(config.m_feeds[0].m_interface.get_host() == "10.0.0.1");
     REQUIRE(config.m_feeds[0].m_interface.get_port() == 30501);
-    REQUIRE(config.m_feeds[1].m_name == "B");
     REQUIRE(config.m_feeds[1].m_address.get_host() == "233.218.133.96");
     REQUIRE(config.m_feeds[1].m_address.get_port() == 30501);
     REQUIRE(config.m_feeds[1].m_gap_address.has_value());
@@ -263,7 +259,7 @@ password: ABCD01
 
   TEST_CASE("parse_missing_fields") {
     SUBCASE("feed") {
-      for(auto name : {"name", "address", "interface"}) {
+      for(auto name : {"address", "interface"}) {
         CAPTURE(std::string_view(name));
         auto source = make_config();
         source["feeds"][0].remove(name);
@@ -312,7 +308,6 @@ password: ABCD01
   TEST_CASE("parse_retransmission") {
     auto source = make_config();
     source["feeds"].push_back(YAML::Load(R"(
-name: B
 address: "233.218.133.96:30501"
 interface: "10.0.0.2:30501"
 )"));

@@ -1,6 +1,8 @@
 #include "Nexus/Python/Stamp.hpp"
+#include <algorithm>
 #include "Nexus/Python/ToPythonStampField.hpp"
 #include "Nexus/Python/ToPythonStampMessage.hpp"
+#include "Nexus/Stamp/StampFieldReader.hpp"
 
 using namespace Nexus;
 using namespace Nexus::Python;
@@ -11,6 +13,7 @@ void Nexus::Python::export_stamp(module& module) {
     module, "StampParserException", PyExc_ValueError);
   export_stamp_field(module);
   export_stamp_message(module);
+  export_stamp_field_reader(module);
 }
 
 void Nexus::Python::export_stamp_field(module& module) {
@@ -65,4 +68,48 @@ void Nexus::Python::export_stamp_message(module& module) {
       }
       return fields.attr("__iter__")();
     });
+}
+
+void Nexus::Python::export_stamp_field_reader(module& module) {
+  class_<StampFieldReader>(module, "StampFieldReader").
+    def(
+      init<const StampMessage::Section&>(), arg("section"), keep_alive<1, 2>()).
+    def("read", [] (const StampFieldReader& self,
+        std::uint16_t identifier, function parser) {
+      return self.read(identifier, [&] (auto value) {
+        return parser(value);
+      });
+    }, arg("identifier"), arg("parser")).
+    def("read", [] (const StampFieldReader& self,
+        std::uint16_t identifier, std::uint16_t index, function parser) {
+      return self.read(identifier, index, [&] (auto value) {
+        return parser(value);
+      });
+    }, arg("identifier"), arg("index"), arg("parser")).
+    def("read_optional", [] (const StampFieldReader& self,
+        std::uint16_t identifier, function parser) -> object {
+      if(auto value = self.read_optional(identifier, [&] (auto value) {
+          return parser(value);
+        })) {
+        return *value;
+      }
+      return none();
+    }, arg("identifier"), arg("parser")).
+    def("read_optional", [] (const StampFieldReader& self,
+        std::uint16_t identifier, std::uint16_t index, function parser) ->
+        object {
+      if(auto value = self.read_optional(identifier, index,
+          [&] (auto value) { return parser(value); })) {
+        return *value;
+      }
+      return none();
+    }, arg("identifier"), arg("index"), arg("parser")).
+    def("get_count", [] (const StampFieldReader& self, iterable identifiers) {
+      auto count = std::uint16_t(0);
+      for(auto identifier : identifiers) {
+        count = std::max(count,
+          self.get_count({cast<std::uint16_t>(identifier)}));
+      }
+      return count;
+    }, arg("identifiers"));
 }

@@ -5,7 +5,7 @@
 #include <Beam/IO/WrapperChannel.hpp>
 #include <Beam/Network/MulticastSocketChannel.hpp>
 #include <Beam/ServiceLocator/ApplicationDefinitions.hpp>
-#include <Beam/TimeService/LocalTimeClient.hpp>
+#include <Beam/TimeService/NtpTimeClient.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
 #include <Beam/Utilities/Expect.hpp>
 #include <Beam/Utilities/ReportException.hpp>
@@ -32,8 +32,8 @@ namespace {
       AsyncWriter<TcpSocketChannel::Writer*>>;
   using ApplicationSessionClient = CxaPitchSessionClient<
     std::unique_ptr<ApplicationSessionChannel>, LiveTimer>;
-  using ApplicationGapClient = CxaPitchGapClient<ApplicationSessionClient,
-    LiveTimer, std::unique_ptr<LocalTimeClient>>;
+  using ApplicationGapClient =
+    CxaPitchGapClient<ApplicationSessionClient, LiveTimer, LiveNtpTimeClient*>;
   using ApplicationSpinClient =
     CxaPitchSpinClient<std::shared_ptr<ApplicationSessionClient>>;
 
@@ -60,6 +60,7 @@ int main(int argc, const char** argv) {
     auto definitions_client =
       ApplicationDefinitionsClient(Ref(service_locator_client));
     load_definitions(definitions_client);
+    auto time_client = make_live_ntp_time_client(service_locator_client);
     auto feed_configuration = CxaPitchConfiguration::parse(config);
     auto make_session = [] (
         const CxaPitchSession& session, std::stop_token stop_token) {
@@ -81,7 +82,7 @@ int main(int argc, const char** argv) {
         return std::make_unique<ApplicationGapClient>(
           [=] (std::stop_token stop_token) {
             return make_session(session, stop_token);
-          }, init(RECONNECT), std::make_unique<LocalTimeClient>());
+          }, init(RECONNECT), time_client.get());
       }, std::runtime_error(
         "Unable to connect to the CXA PITCH gap request proxy."));
     }
@@ -107,8 +108,7 @@ int main(int argc, const char** argv) {
     auto client = CxaPitchClient(feed_configuration.m_unit,
       feed_configuration.m_feed_timeout, feed_configuration.m_gap_timeout,
       std::move(feed_clients), std::move(recovery_clients),
-      std::move(gap_client), std::move(spin_client),
-      std::make_unique<LocalTimeClient>(),
+      std::move(gap_client), std::move(spin_client), time_client.get(),
       std::make_unique<LiveTimer>(feed_configuration.get_timer_interval()));
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
       Ref(service_locator_client), feed_configuration.m_sampling,

@@ -1,6 +1,10 @@
 #include <atomic>
 #include <future>
+#include <iostream>
+#include <sstream>
 #include <Beam/IO/LocalServerConnection.hpp>
+#include <Beam/IO/QueuedReader.hpp>
+#include <Beam/IO/WrapperChannel.hpp>
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
@@ -13,6 +17,18 @@ using namespace Nexus;
 using namespace std::literals;
 
 namespace {
+  struct Log {
+    std::stringstream m_output;
+    std::streambuf* m_buffer;
+
+    Log()
+      : m_buffer(std::cout.rdbuf(m_output.rdbuf())) {}
+
+    ~Log() {
+      std::cout.rdbuf(m_buffer);
+    }
+  };
+
   constexpr auto ONE = "T\x00\x00\x00\x01"sv;
   constexpr auto TWO = "T\x00\x00\x00\x02"sv;
   constexpr auto THREE = "T\x00\x00\x00\x03"sv;
@@ -38,6 +54,16 @@ namespace {
     Queue<MoldUdp64Request> m_requests;
     Queue<bool> m_gate;
     std::atomic_bool m_is_blocked;
+    Queue<bool> m_read_gate;
+    std::atomic_bool m_is_read_blocked;
+
+    MoldUdp64Packet read() {
+      auto packet = StubProtocolClient::read();
+      if(m_is_read_blocked) {
+        m_read_gate.pop();
+      }
+      return packet;
+    }
 
     void request(const MoldUdp64Request& request) {
       m_requests.push(request);
@@ -74,8 +100,11 @@ namespace {
   struct Fixture {
     struct WithSnapshot {};
     struct WithoutSnapshot {};
+    struct WithRecovery {};
+    struct WithoutRecovery {};
 
     inline static const auto FEED_TIMEOUT = seconds(3);
+    inline static const auto GAP_TIMEOUT = seconds(5);
     inline static const auto REQUEST_TIMEOUT = seconds(1);
     std::vector<std::unique_ptr<StubProtocolClient>> m_feeds;
     StubRecoveryClient m_recovery;
@@ -92,7 +121,13 @@ namespace {
 
     template<typename S> requires
       std::same_as<S, WithSnapshot> || std::same_as<S, WithoutSnapshot>
-    Fixture(int feeds, S)
+    Fixture(int feeds, S snapshot)
+      : Fixture(feeds, snapshot, WithRecovery()) {}
+
+    template<typename S, typename G> requires
+      (std::same_as<S, WithSnapshot> || std::same_as<S, WithoutSnapshot>) &&
+        (std::same_as<G, WithRecovery> || std::same_as<G, WithoutRecovery>)
+    Fixture(int feeds, S, G)
         : m_time_client(time_from_string("2026-09-19 10:00:00")) {
       auto clients = std::vector<StubProtocolClient*>();
       for(auto i = 0; i != feeds; ++i) {
@@ -104,7 +139,12 @@ namespace {
         m_glimpse.emplace();
         glimpse = &*m_glimpse;
       }
-      m_client.emplace(FEED_TIMEOUT, REQUEST_TIMEOUT, clients, &m_recovery,
+      auto recovery = optional<StubRecoveryClient*>();
+      if constexpr(std::same_as<G, WithRecovery>) {
+        recovery = &m_recovery;
+      }
+      m_client.emplace(FEED_TIMEOUT, GAP_TIMEOUT, REQUEST_TIMEOUT, clients,
+        recovery,
         glimpse, &m_time_client, &m_timer);
       flush_pending_routines();
     }
@@ -155,6 +195,119 @@ namespace {
 }
 
 TEST_SUITE("AsxTradeItchClient") {
+  TEST_CASE("buffered_packets") {
+    auto server = LocalServerConnection();
+    auto connection = std::async(std::launch::async, [&] {
+      return server.accept();
+    });
+    auto source = LocalClientChannel("itch", server);
+    auto channel = WrapperChannel<LocalClientChannel*,
+      QueuedReader<LocalClientChannel::Reader*>>(
+        &source, &source.get_reader());
+    auto client = MoldUdp64Client(&channel);
+    auto server_channel = connection.get();
+    auto send = [&] (std::uint64_t sequence, std::string_view message) {
+      auto buffer = SharedBuffer();
+      encode(MoldUdp64Request("SESSION123", sequence, 1), out(buffer));
+      append(buffer,
+        endian::native_to_big(static_cast<std::uint16_t>(message.size())));
+      append(buffer, message);
+      server_channel->get_writer().write(buffer);
+    };
+    send(1, ONE);
+    auto first = client.read();
+    send(2, TWO);
+    server_channel->get_writer().close(EndOfFileException());
+    flush_pending_routines();
+    REQUIRE(first.m_session == "SESSION123");
+    REQUIRE(first.m_sequence_number == 1);
+    REQUIRE(first.begin()->get_payload() == ONE);
+    auto second = client.read();
+    REQUIRE(second.m_sequence_number == 2);
+    REQUIRE(second.begin()->get_payload() == TWO);
+    REQUIRE_THROWS_AS(client.read(), IOException);
+  }
+
+  TEST_CASE("recovery_failure") {
+    auto log = Log();
+    auto fixture = Fixture(1, Fixture::WithSnapshot());
+    fixture.publish(0, 1, {ONE});
+    REQUIRE(fixture.m_glimpse->m_loads.pop());
+    auto is_pending = false;
+    SUBCASE("pending_snapshot") {
+      is_pending = true;
+    }
+    SUBCASE("completed_snapshot") {}
+    auto snapshot = AsxTradeItchSnapshot();
+    snapshot.m_sequence = 1;
+    if(!is_pending) {
+      fixture.m_glimpse->m_snapshots.push(snapshot);
+      flush_pending_routines();
+    }
+    fixture.publish(0, 3, {THREE});
+    if(!is_pending) {
+      fixture.require_request(2, 1);
+    }
+    fixture.m_recovery.m_packets.close(
+      std::make_exception_ptr(IOException("Rewind failed.")));
+    flush_pending_routines();
+    if(is_pending) {
+      fixture.m_glimpse->m_snapshots.push(snapshot);
+      flush_pending_routines();
+    }
+    fixture.publish(0, 5, {FIVE});
+    fixture.m_client->close();
+    fixture.require_message(1);
+    fixture.require_message(3);
+    fixture.require_message(5);
+    REQUIRE(log.m_output.str() ==
+      "(dropped 2026-Sep-19 10:00:00 2 1 recovery_failed Rewind failed.)\n"
+      "(dropped 2026-Sep-19 10:00:00 4 1 recovery_failed Rewind failed.)\n");
+  }
+
+  TEST_CASE("optional_recovery") {
+    auto log = Log();
+    auto fixture = Fixture(
+      2, Fixture::WithoutSnapshot(), Fixture::WithoutRecovery());
+    fixture.publish(0, 1, {ONE});
+    fixture.publish(1, 1, {ONE});
+    fixture.require_message(1);
+    fixture.publish(0, 3, {THREE});
+    fixture.publish(1, 2, {TWO, THREE});
+    fixture.require_message(2);
+    fixture.require_message(3);
+    REQUIRE(log.m_output.str().empty());
+    fixture.publish(0, 5, {FIVE});
+    fixture.publish(1, 5, {FIVE});
+    fixture.advance(Fixture::GAP_TIMEOUT + seconds(1));
+    fixture.m_client->close();
+    fixture.require_message(5);
+    REQUIRE(log.m_output.str() ==
+      "(dropped 2026-Sep-19 10:00:06 4 1 disabled)\n");
+  }
+
+  TEST_CASE("gap_timeout") {
+    auto log = Log();
+    auto fixture = Fixture();
+    SUBCASE("request_completed") {}
+    SUBCASE("request_pending") {
+      fixture.m_recovery.m_is_blocked = true;
+    }
+    fixture.publish(0, 1, {ONE});
+    fixture.require_message(1);
+    fixture.publish(0, 4, {FOUR});
+    fixture.require_request(2, 2);
+    fixture.advance(Fixture::GAP_TIMEOUT);
+    REQUIRE(log.m_output.str().empty());
+    fixture.advance(seconds(1));
+    fixture.publish(0, 5, {FIVE});
+    fixture.m_client->close();
+    fixture.require_message(4);
+    fixture.require_message(5);
+    REQUIRE(log.m_output.str() ==
+      "(dropped 2026-Sep-19 10:00:06 2 2 timeout)\n");
+  }
+
   TEST_CASE("local_channels") {
     auto server = LocalServerConnection();
     auto connect = [&] {
@@ -187,7 +340,8 @@ TEST_SUITE("AsxTradeItchClient") {
       time_from_string("2026-09-19 10:00:00"));
     auto timer = TriggerTimer();
     auto client = AsxTradeItchClient(Fixture::FEED_TIMEOUT,
-      Fixture::REQUEST_TIMEOUT, std::vector{&feed}, &recovery,
+      Fixture::GAP_TIMEOUT, Fixture::REQUEST_TIMEOUT, std::vector{&feed},
+      optional(&recovery),
       optional(&glimpse), &time_client, &timer);
     auto packet = SharedBuffer();
     encode(MoldUdp64Request("SESSION123", 10, 1), out(packet));
@@ -204,6 +358,7 @@ TEST_SUITE("AsxTradeItchClient") {
   }
 
   TEST_CASE("request_failure") {
+    auto log = Log();
     auto fixture = Fixture();
     fixture.publish(0, 1, {ONE});
     fixture.require_message(1);
@@ -213,7 +368,35 @@ TEST_SUITE("AsxTradeItchClient") {
     fixture.m_recovery.m_gate.close(
       std::make_exception_ptr(IOException("Request failed.")));
     flush_pending_routines();
-    REQUIRE_THROWS_AS(fixture.m_client->read(), IOException);
+    fixture.publish(0, 4, {FOUR});
+    fixture.m_client->close();
+    fixture.require_message(3);
+    fixture.require_message(4);
+    REQUIRE(log.m_output.str() ==
+      "(dropped 2026-Sep-19 10:00:00 2 1 recovery_failed Request failed.)\n");
+  }
+
+  TEST_CASE("buffered_recovery_failure") {
+    auto log = Log();
+    auto fixture = Fixture();
+    fixture.publish(0, 1, {ONE});
+    fixture.require_message(1);
+    fixture.m_recovery.m_is_blocked = true;
+    fixture.publish(0, 3, {THREE});
+    fixture.require_request(2, 1);
+    fixture.m_recovery.m_is_read_blocked = true;
+    fixture.recover(2, {TWO});
+    fixture.m_recovery.m_gate.close(
+      std::make_exception_ptr(IOException("Request failed.")));
+    flush_pending_routines();
+    fixture.publish(0, 4, {FOUR});
+    fixture.m_recovery.m_read_gate.push(true);
+    flush_pending_routines();
+    fixture.m_client->close();
+    fixture.require_message(2);
+    fixture.require_message(3);
+    fixture.require_message(4);
+    REQUIRE(log.m_output.str().empty());
   }
 
   TEST_CASE("close") {
@@ -240,9 +423,6 @@ TEST_SUITE("AsxTradeItchClient") {
     auto error = std::make_exception_ptr(IOException("Connection failed."));
     SUBCASE("feed") {
       fixture.m_feeds[0]->m_packets.close(error);
-    }
-    SUBCASE("recovery") {
-      fixture.m_recovery.m_packets.close(error);
     }
     SUBCASE("snapshot") {
       fixture.m_glimpse->m_snapshots.close(error);

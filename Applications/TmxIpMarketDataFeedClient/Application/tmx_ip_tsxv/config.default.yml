@@ -1,0 +1,25 @@
+---
+service_locator:
+  address: "$service_locator_address"
+  username: "$username"
+  password: "$admin_password"
+
+sampling: 100ms
+enable_logging: false
+country: CA
+venue: TSXV
+rollover_time: "00:30:00"
+feed_timeout: 1s
+gap_timeout: 1s
+retry_interval: 1s
+feeds:
+  - address: "233.102.209.234:61000"
+    interface: "$local_interface:61000"
+  - address: "233.102.209.106:61001"
+    interface: "$local_interface:61001"
+recovery:
+  address: "142.201.149.44:60030"
+  interface: "$local_interface:0"
+  delivery_address: "$local_interface:60071"
+  timeout: 30s
+...

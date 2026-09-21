@@ -15,7 +15,7 @@ spec.loader.exec_module(setup_utils)
 
 def main():
   parser = argparse.ArgumentParser(
-    description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
+    description='v1.0 Copyright (C) 2026 Spire Trading Inc.')
   parser.add_argument('-l', '--local', type=str, help='Local interface.',
     default=setup_utils.get_ip())
   parser.add_argument('-a', '--address', type=str, help='Spire address.',
@@ -32,7 +32,7 @@ def main():
     args.address
   variables['username'] = args.username
   variables['admin_password'] = args.password
-  for folder in sorted(directory.glob('tmxip_*')):
+  for folder in sorted(directory.glob('tmx_ip_*')):
     default_path = folder / 'config.default.yml'
     if not default_path.is_file():
       continue

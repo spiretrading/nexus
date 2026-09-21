@@ -6,27 +6,38 @@ include("${beam_configuration}/targets.cmake")
 include_directories(${NEXUS_INCLUDE_PATH})
 link_directories(${BOOST_DEBUG_PATH})
 link_directories(${BOOST_OPTIMIZED_PATH})
-include_directories(Include)
-include_directories(${PROJECT_BINARY_DIR})
-file(GLOB_RECURSE header_files Include/TmxIpMarketDataFeedClient/*.hpp)
-list(APPEND header_files "${PROJECT_BINARY_DIR}/Version.hpp")
-file(GLOB_RECURSE source_files Source/*.cpp)
-add_executable(TmxIpMarketDataFeedClient ${header_files} ${source_files})
-beam_configure_target(TmxIpMarketDataFeedClient DEPENDENCIES
+file(GLOB_RECURSE library_header_files Include/*.hpp)
+add_library(Library INTERFACE)
+target_sources(Library
+  INTERFACE FILE_SET HEADERS BASE_DIRS Include FILES ${library_header_files})
+target_include_directories(
+  Library INTERFACE "${CMAKE_CURRENT_SOURCE_DIR}/Include")
+add_executable(Application Source/main.cpp "${PROJECT_BINARY_DIR}/Version.hpp")
+set_target_properties(
+  Application PROPERTIES OUTPUT_NAME TmxIpMarketDataFeedClient)
+target_include_directories(Application PRIVATE "${PROJECT_BINARY_DIR}")
+beam_configure_target(Application DEPENDENCIES
   BEAM BOOST CRYPTOPP OPEN_SSL OPEN_SSL_BASE TCLAP YAML ZLIB)
-target_link_libraries(TmxIpMarketDataFeedClient PUBLIC BeamRoutines)
-target_compile_definitions(
-  TmxIpMarketDataFeedClient PRIVATE YAML_CPP_STATIC_DEFINE)
-set_source_files_properties(${header_files} PROPERTIES HEADER_FILE_ONLY TRUE)
+target_compile_definitions(Application PRIVATE YAML_CPP_STATIC_DEFINE)
+target_link_libraries(Application PRIVATE Library BeamRoutines)
 if(WIN32)
-  target_link_libraries(TmxIpMarketDataFeedClient PUBLIC Crypt32.lib)
+  target_link_libraries(Application PRIVATE Crypt32.lib)
 endif()
-beam_install_target(
-  TmxIpMarketDataFeedClient "${PROJECT_BINARY_DIR}/Application")
+beam_install_target(Application "${PROJECT_BINARY_DIR}/Application")
+file(GLOB test_source_files Source/Tests/*.cpp)
+add_executable(Tests ${test_source_files})
+set_target_properties(
+  Tests PROPERTIES OUTPUT_NAME TmxIpMarketDataFeedClientTester)
+beam_configure_target(Tests DEPENDENCIES
+  BEAM BOOST CRYPTOPP DOCTEST OPEN_SSL OPEN_SSL_BASE TCLAP YAML ZLIB)
+target_compile_definitions(Tests PRIVATE YAML_CPP_STATIC_DEFINE)
+target_link_libraries(Tests PRIVATE Library BeamRoutines)
+beam_install_target(Tests "${PROJECT_BINARY_DIR}/Tests")
+add_custom_command(TARGET Tests POST_BUILD COMMAND Tests)
 install(FILES Application/setup.py
   ../Python/setup_utils.py DESTINATION "${PROJECT_BINARY_DIR}/Application")
 file(GLOB configuration_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/Application"
-  Application/tmxip_*/config.default.yml)
+  Application/tmx_ip_*/config.default.yml)
 foreach(configuration IN LISTS configuration_files)
   get_filename_component(directory "${configuration}" DIRECTORY)
   install(FILES "Application/${configuration}"
