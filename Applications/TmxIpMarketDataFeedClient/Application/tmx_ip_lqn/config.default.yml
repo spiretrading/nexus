@@ -22,4 +22,140 @@ recovery:
   interface: "$local_interface:0"
   delivery_address: "$local_interface:60062"
   timeout: 30s
+
+mpid_mappings:
+  - source: 1
+    name: ANON
+  - source: 2
+    name: RBCC
+  - source: 3
+    name: ATBC
+  - source: 4
+    name: CANT
+  - source: 5
+    name: CITA
+  - source: 6
+    name: IFOR
+  - source: 7
+    name: TDSI
+  - source: 9
+    name: BMON
+  - source: 10
+    name: STAV
+  - source: 11
+    name: JEFF
+  - source: 13
+    name: INST
+  - source: 14
+    name: VIRT
+  - source: 15
+    name: UBSC
+  - source: 16
+    name: PARA
+  - source: 17
+    name: IWSL
+  - source: 19
+    name: DESJ
+  - source: 21
+    name: PGMG
+  - source: 22
+    name: FIDC
+  - source: 23
+    name: SSGM
+  - source: 24
+    name: CLAR
+  - source: 25
+    name: ODLU
+  - source: 26
+    name: WFSC
+  - source: 27
+    name: CLST
+  - source: 28
+    name: CIIS
+  - source: 33
+    name: CANA
+  - source: 34
+    name: MAIS
+  - source: 35
+    name: FRIE
+  - source: 36
+    name: WDLC
+  - source: 38
+    name: LIQD
+  - source: 39
+    name: MLCI
+  - source: 43
+    name: CALD
+  - source: 48
+    name: LAUR
+  - source: 53
+    name: MSCL
+  - source: 55
+    name: VELO
+  - source: 56
+    name: EDJO
+  - source: 57
+    name: IBCI
+  - source: 59
+    name: VENT
+  - source: 62
+    name: HAYS
+  - source: 65
+    name: GSCO
+  - source: 68
+    name: LEED
+  - source: 76
+    name: IAPW
+  - source: 77
+    name: PETE
+  - source: 79
+    name: CIBC
+  - source: 80
+    name: NBFI
+  - source: 82
+    name: STIF
+  - source: 83
+    name: RESE
+  - source: 84
+    name: INDE
+  - source: 85
+    name: SCOT
+  - source: 86
+    name: PCLP
+  - source: 87
+    name: BEAC
+  - source: 88
+    name: AVIS
+  - source: 89
+    name: RAYJ
+  - source: 90
+    name: BARC
+  - source: 91
+    name: JONE
+  - source: 92
+    name: POLL
+  - source: 94
+    name: HAMP
+  - source: 98
+    name: RCLD
+  - source: 101
+    name: SGCC
+  - source: 123
+    name: CITI
+  - source: 124
+    name: QUES
+  - source: 150
+    name: GIAC
+  - source: 200
+    name: ACFP
+  - source: 205
+    name: LYRC
+  - source: 206
+    name: MOOM
+  - source: 208
+    name: KING
+  - source: 222
+    name: JPMS
+  - source: 300
+    name: CSEB
 ...

@@ -81,6 +81,7 @@ namespace Nexus {
         TmxIpPrice m_price;
         Quantity m_quantity;
         bool m_is_market;
+        boost::optional<std::uint64_t> m_broker;
       };
       struct Book {
         Ticker m_ticker;
@@ -133,6 +134,8 @@ namespace Nexus {
         const Ticker& ticker, const TmxIpMessageHeader& header) const;
       Book* find_book(
         std::string_view symbol, const TmxIpMessageHeader& header);
+      std::string get_mpid(
+        const Book& book, boost::optional<std::uint64_t> broker) const;
       void update(Book& book, const std::string& key, OrderEntry order,
         boost::posix_time::ptime timestamp);
       void remove(Book& book, const std::string& key,
@@ -443,6 +446,24 @@ namespace Nexus {
       IsMarketDataClient<Beam::dereference_t<D>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>> &&
       IsMarketDataFeedClient<Beam::dereference_t<M>>
+  std::string TmxIpMarketDataFeedClient<C, D, T, M>::get_mpid(
+      const Book& book, boost::optional<std::uint64_t> broker) const {
+    if(book.m_venue != book.m_ticker.get_venue() || !broker) {
+      return book.m_mpid;
+    }
+    auto i = m_config.m_mpid_mappings.find(*broker);
+    if(i != m_config.m_mpid_mappings.end()) {
+      return i->second;
+    }
+    auto code = std::to_string(*broker);
+    return std::string(3 - code.size(), '0') + code;
+  }
+
+  template<typename C, typename D, typename T, typename M> requires
+    IsTmxIpClient<Beam::dereference_t<C>> &&
+      IsMarketDataClient<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+      IsMarketDataFeedClient<Beam::dereference_t<M>>
   void TmxIpMarketDataFeedClient<C, D, T, M>::update(Book& book,
       const std::string& key, OrderEntry order,
       boost::posix_time::ptime timestamp) {
@@ -453,7 +474,13 @@ namespace Nexus {
     auto i = book.m_orders.find(key);
     auto previous_quantity = Quantity(0);
     auto previous_price = Money();
+    auto is_broker_changed = false;
     if(i != book.m_orders.end()) {
+      if(!order.m_broker) {
+        order.m_broker = i->second.m_broker;
+      }
+      is_broker_changed = book.m_venue == book.m_ticker.get_venue() &&
+        order.m_broker != i->second.m_broker;
       previous_quantity = get_quantity(book, i->second);
       previous_price = i->second.m_price.m_value;
     }
@@ -466,7 +493,7 @@ namespace Nexus {
     } else {
       book.m_orders.emplace(key, order);
     }
-    if(quantity == previous_quantity &&
+    if(!is_broker_changed && quantity == previous_quantity &&
         (quantity == 0 || order.m_price.m_value == previous_price)) {
       return;
     }
@@ -474,8 +501,9 @@ namespace Nexus {
     if(quantity == 0) {
       m_feed_client->remove_order(id, timestamp);
     } else {
-      m_feed_client->add_order(book.m_ticker, book.m_venue, book.m_mpid,
-        false, id, order.m_side, order.m_price.m_value, quantity, timestamp);
+      m_feed_client->add_order(book.m_ticker, book.m_venue,
+        get_mpid(book, order.m_broker), false, id, order.m_side,
+        order.m_price.m_value, quantity, timestamp);
     }
   }
 
@@ -521,7 +549,7 @@ namespace Nexus {
           message.m_header.m_timestamp));
       update(*book, key, OrderEntry(record.m_side, price, record.m_quantity,
         price.m_type != TmxIpPrice::Type::LIMIT ||
-          price.m_value == Money::ZERO), timestamp);
+          price.m_value == Money::ZERO, record.m_broker), timestamp);
     }
   }
 
@@ -570,7 +598,8 @@ namespace Nexus {
       update(*book, key, OrderEntry(side, message.m_public_price,
         message.m_quantity,
         message.m_public_price.m_type != TmxIpPrice::Type::LIMIT ||
-          message.m_public_price.m_value == Money::ZERO), timestamp);
+          message.m_public_price.m_value == Money::ZERO, message.m_broker),
+        timestamp);
     } else if(message.m_confirmation == "Cancelled" &&
         (book->m_venue == Venues::CHIC || book->m_venue == Venues::XCX2 ||
           book->m_venue == Venues::OMGA || book->m_venue == Venues::LYNX)) {

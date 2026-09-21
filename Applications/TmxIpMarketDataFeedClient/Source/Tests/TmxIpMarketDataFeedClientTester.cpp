@@ -76,6 +76,10 @@ namespace {
       : Fixture(Venues::TSX, std::move(tickers)) {}
 
     Fixture(Venue venue, std::vector<TickerInfo> tickers)
+      : Fixture(venue, std::move(tickers), {}) {}
+
+    Fixture(Venue venue, std::vector<TickerInfo> tickers,
+        std::unordered_map<std::uint64_t, std::string> mappings)
         : m_feed_operations(std::make_shared<FeedClient::Queue>()),
           m_data_operations(std::make_shared<DataClient::Queue>()),
           m_feed(m_feed_operations),
@@ -85,6 +89,7 @@ namespace {
             auto config = TmxIpConfiguration();
             config.m_country = Countries::CA;
             config.m_venue = venue;
+            config.m_mpid_mappings = std::move(mappings);
             return config;
           }(), parse_trading_schedule(YAML::Load(R"(
 - venues: [XTSE, XTSX, XCNQ, NEOE]
@@ -194,6 +199,93 @@ namespace {
 }
 
 TEST_SUITE("TmxIpMarketDataFeedClient") {
+  TEST_CASE("broker_mpids") {
+    auto venue = Venues::TSX;
+    auto ticker = parse_ticker("ABX.TSX");
+    auto expected = std::string("CIBC");
+    auto broker = std::string("|70=079");
+    SUBCASE("tsx") {}
+    SUBCASE("tsxv") {
+      venue = Venues::TSXV;
+      ticker = parse_ticker("ABX.TSXV");
+    }
+    SUBCASE("cse") {
+      venue = Venues::CSE;
+      ticker = parse_ticker("ABX.CSE");
+    }
+    SUBCASE("neo") {
+      venue = Venues::NEOE;
+      ticker = Ticker("ABX", venue);
+    }
+    SUBCASE("secondary") {
+      venue = Venues::XATS;
+      expected = VENUES.from(venue).m_display_name;
+    }
+    SUBCASE("unknown") {
+      broker = "|70=049";
+      expected = "049";
+    }
+    SUBCASE("absent") {
+      venue = Venues::CSE;
+      ticker = parse_ticker("ABX.CSE");
+      broker.clear();
+      expected = "CSE";
+    }
+    auto fixture = Fixture(venue, {TickerInfo(ticker, "", "", 100)},
+      {{79, "CIBC"}, {1, "ANON"}});
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX"
+      "|57=20260921090000000|40=123|196=25.50|64=300" + broker);
+    auto order = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(order->m_mpid == expected);
+    fixture.publish("|6=TradeReport|5=Trade|55=ABX|41=25.50|64=100"
+      "|57=20260921090001000|40=123" + broker);
+    auto update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id == order->m_id);
+    REQUIRE(update->m_mpid == expected);
+    REQUIRE(update->m_size == 200);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Cancelled|55=ABX"
+      "|57=20260921090002000|40=123|196=25.50|64=200" + broker);
+    REQUIRE(fixture.operation<FeedClient::RemoveOrderOperation>()->m_id ==
+      order->m_id);
+    fixture.require_empty();
+  }
+
+  TEST_CASE("broker_changes") {
+    auto fixture = Fixture(Venues::NEOE,
+      {TickerInfo(parse_ticker("ABX.NEOE"), "", "", 100)},
+      {{79, "CIBC"}, {2, "RBCC"}});
+    fixture.publish("|6=OrderInfo|5=OrderBook"
+      "|57=20260921070000000|55=ABX|40=123|70=79|197=Buy|64=300|196=25.50"
+      "|55.1=ABX|40.1=456|70.1=2|197.1=Buy|64.1=200|196.1=25.50"
+      "|55.2=ABX|40.2=789|70.2=79|197.2=Buy|64.2=100|196.2=25.50");
+    auto order = fixture.operation<FeedClient::AddOrderOperation>();
+    auto second = fixture.operation<FeedClient::AddOrderOperation>();
+    auto third = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(order->m_mpid == "CIBC");
+    REQUIRE(second->m_mpid == "RBCC");
+    REQUIRE(third->m_mpid == order->m_mpid);
+    REQUIRE(order->m_id != second->m_id);
+    REQUIRE(order->m_id != third->m_id);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX"
+      "|57=20260921090000000|40=123|70=2|196=25.50|64=300");
+    auto update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id == order->m_id);
+    REQUIRE(update->m_mpid == "RBCC");
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX"
+      "|57=20260921090001000|40=123|196=25.50|64=200");
+    update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id == order->m_id);
+    REQUIRE(update->m_mpid == "RBCC");
+    REQUIRE(update->m_size == 200);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=PriceAssigned|55=ABX"
+      "|57=20260921090002000|40=123|196=25.51|64=0");
+    update = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(update->m_id == order->m_id);
+    REQUIRE(update->m_mpid == "RBCC");
+    REQUIRE(update->m_price == Money(25.51));
+    fixture.require_empty();
+  }
+
   TEST_CASE("cls_trade") {
     auto fixture = Fixture(Venue());
     fixture.publish("|6=TradeReport|5=Trade|55=ABX|41=23.10|64=125"
@@ -430,7 +522,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     auto order = fixture.operation<FeedClient::AddOrderOperation>();
     REQUIRE(order->m_ticker == parse_ticker("ABX.TSX"));
     REQUIRE(order->m_venue == Venues::TSX);
-    REQUIRE(order->m_mpid == "TSX");
+    REQUIRE(order->m_mpid == "079");
     fixture.publish("|6=OrderCancelResp|5=Buy|16=Cancelled|55=ABX"
       "|57=20260921090001000|40=123|70=79|196=25.50|64=300");
     REQUIRE(fixture.operation<FeedClient::RemoveOrderOperation>()->m_id ==
@@ -492,7 +584,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     auto order = fixture.operation<FeedClient::AddOrderOperation>();
     REQUIRE(order->m_ticker == parse_ticker("ABX.TSX"));
     REQUIRE(order->m_venue == Venues::TSX);
-    REQUIRE(order->m_mpid == "TSX");
+    REQUIRE(order->m_mpid == "079");
     REQUIRE_FALSE(order->m_is_primary_mpid);
     REQUIRE(order->m_side == Side::BID);
     REQUIRE(order->m_price == Money(25.50));
@@ -529,7 +621,11 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
       auto order = fixture.operation<FeedClient::AddOrderOperation>();
       REQUIRE(order->m_ticker == ticker);
       REQUIRE(order->m_venue == venue);
-      REQUIRE(order->m_mpid == VENUES.from(venue).m_display_name);
+      if(venue == ticker.get_venue()) {
+        REQUIRE(order->m_mpid == "079");
+      } else {
+        REQUIRE(order->m_mpid == VENUES.from(venue).m_display_name);
+      }
       REQUIRE(std::ranges::find(ids, order->m_id) == ids.end());
       ids.push_back(order->m_id);
       fixture.require_empty();
