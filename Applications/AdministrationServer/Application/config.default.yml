@@ -14,34 +14,179 @@ service_locator:
   username: administration_service
   password: $admin_password
 
+organization: "Oasis World Trading Inc."
+
 entitlements:
-  - name: Demo Entitlements
-    price: 0.00
-    currency: USD
-    group: demo_entitlements
+  - name: ASX Total
+    price: 123.00
+    currency: AUD
+    group: asx_total
     applicability:
-      - source: CHIC
-        messages: [BBO, BOOK, TAS, IMB]
-      - source: LYNX
-        messages: [BBO, BOOK, TAS, IMB]
-      - source: NEOE
-        messages: [BBO, BOOK, TAS, IMB]
-      - source: OMGA
-        messages: [BBO, BOOK, TAS, IMB]
-      - source: PURE
-        messages: [BBO, BOOK, TAS, IMB]
-      - source: XATS
-        messages: [BBO, BOOK, TAS, IMB]
       - source: XASX
         messages: [BBO, BOOK, TAS, IMB]
+  - name: CHI-X (ASX)
+    price: 87.00
+    currency: AUD
+    group: chix_asx
+    applicability:
+      - venue: XASX
+        source: CHIA
+        messages: [TAS, BOOK]
+  - name: Aequitas NEO Exchange
+    price: 0.00
+    currency: CAD
+    group: neoe
+    applicability:
+      - source: NEOE
+        messages: [BBO, BOOK, TAS, IMB]
+  - name: TSX CEG
+    price: 65.90
+    currency: USD
+    group: tsx_ceg
+    applicability:
+      - source: XTSE
+        messages: [BBO, TAS, IMB]
+      - source: XTSX
+        messages: [BBO, TAS, IMB]
+  - name: TSX TL1
+    price: 39.00
+    currency: CAD
+    group: tsx_level_one
+    applicability:
+      - source: XTSE
+        messages: [BBO, TAS, IMB]
+  - name: TSX TL2
+    price: 50.00
+    currency: USD
+    group: tsx_level_two
+    applicability:
+      - source: XTSE
+        messages: [BOOK]
+  - name: TSX Venture CL1
+    price: 29.50
+    currency: CAD
+    group: tsx_venture_level_one
+    applicability:
+      - source: XTSX
+        messages: [BBO, TAS, IMB]
+  - name: TSX Venture CL2
+    price: 24.00
+    currency: USD
+    group: tsx_venture_level_two
+    applicability:
+      - source: XTSX
+        messages: [BOOK]
+  - name: Alpha APD (TSX)
+    price: 43.80
+    currency: USD
+    group: alpha_apd_tsx
+    applicability:
+      - venue: XTSE
+        source: XATS
+        messages: [TAS, BOOK]
+  - name: Alpha APD (TSX Venture)
+    price: 24.50
+    currency: USD
+    group: alpha_apd_tsxv
+    applicability:
+      - venue: XTSX
+        source: XATS
+        messages: [TAS, BOOK]
+  - name: CHI-X (TSX)
+    price: 40.00
+    currency: CAD
+    group: chix_tsx
+    applicability:
+      - venue: XTSE
+        source: CHIC
+        messages: [TAS, BOOK]
+  - name: CHI-X (TSX Venture)
+    price: 4.30
+    currency: CAD
+    group: chix_tsxv
+    applicability:
+      - venue: XTSX
+        source: CHIC
+        messages: [TAS, BOOK]
+  - name: CHI-X (CSE)
+    price: 0.00
+    currency: CAD
+    group: chix_cse
+    applicability:
+      - venue: XCNQ
+        source: CHIC
+        messages: [TAS, BOOK]
+  - name: CX2
+    price: 20.00
+    currency: CAD
+    group: cx2_tsx
+    applicability:
+      - source: XCX2
+        messages: [TAS, BOOK]
+  - name: Lynx
+    price: 0.00
+    currency: CAD
+    group: lynx
+    applicability:
+      - source: LYNX
+        messages: [TAS, BOOK]
+  - name: Aequitas NEO (TSX)
+    price: 10.00
+    currency: CAD
+    group: neoe_tsx
+    applicability:
+      - venue: XTSE
+        source: NEOE
+        messages: [TAS, BOOK]
+  - name: Aequitas NEO (TSX Venture)
+    price: 5.00
+    currency: CAD
+    group: neoe_tsxv
+    applicability:
+      - venue: XTSX
+        source: NEOE
+        messages: [TAS, BOOK]
+  - name: Aequitas NEO (CSE)
+    price: 0.00
+    currency: CAD
+    group: neoe_cse
+    applicability:
+      - venue: XCNQ
+        source: NEOE
+        messages: [TAS, BOOK]
+  - name: Pure
+    price: 0.00
+    currency: CAD
+    group: pure
+    applicability:
+      - source: PURE
+        messages: [TAS, BOOK]
+  - name: Omega
+    price: 21.00
+    currency: CAD
+    group: omega
+    applicability:
+      - source: OMGA
+        messages: [TAS, BOOK]
+  - name: CSE
+    price: 0.00
+    currency: CAD
+    group: cse
+    applicability:
       - source: XCNQ
         messages: [BBO, BOOK, TAS, IMB]
-      - source: XCX2
-        messages: [BBO, BOOK, TAS, IMB]
-      - source: XTSE
-        messages: [BBO, BOOK, TAS, IMB]
-      - source: XTSX
-        messages: [BBO, BOOK, TAS, IMB]
+  - name: CSE2
+    price: 0.00
+    currency: CAD
+    group: cse2
+    applicability:
+      - source: CSE2
+        messages: [BOOK, TAS]
+  - name: OTC Markets
+    price: 100.00
+    currency: USD
+    group: otcm
+    applicability:
       - source: OTCM
         messages: [BBO, BOOK, TAS, IMB]
 ...
