@@ -75,7 +75,7 @@ venues:
     time_zone: America/Toronto
     currency: CAD
     description: Cboe Canada - NEO-L
-    display_name: NEOE
+    display_name: NEOL
     market_center: AQL
   - venue: OMGA
     country_code: CA

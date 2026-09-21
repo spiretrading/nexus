@@ -125,7 +125,7 @@ namespace Details {
         entry.m_time_zone = "America/Toronto";
         entry.m_currency = Currencies::CAD;
         entry.m_description = "Cboe Canada - NEO-L";
-        entry.m_display_name = "NEOE";
+        entry.m_display_name = "NEOL";
         database.add(entry);
       }
       {
