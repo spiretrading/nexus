@@ -1141,15 +1141,22 @@ namespace Nexus {
         if(m_config.m_is_logging_messages) {
           log(message);
         }
-        visit(message,
-          [&] (const TmxIpOrderBook& message) { publish(message); },
-          [&] (const TmxIpOrderCancelReport& message) { publish(message); },
-          [&] (const TmxIpClearOrderBook& message) { publish(message); },
-          [&] (const TmxIpTradeReport& message) { publish(message); },
-          [&] (const TmxIpMbxMessage& message) { publish(message); },
-          [&] (const TmxIpOpeningAuction& message) { publish(message); },
-          [&] (const TmxIpCbboQuote& message) { publish(message); },
-          [] (const auto&) {});
+        try {
+          visit(message,
+            [&] (const TmxIpOrderBook& message) { publish(message); },
+            [&] (const TmxIpOrderCancelReport& message) { publish(message); },
+            [&] (const TmxIpClearOrderBook& message) { publish(message); },
+            [&] (const TmxIpTradeReport& message) { publish(message); },
+            [&] (const TmxIpMbxMessage& message) { publish(message); },
+            [&] (const TmxIpOpeningAuction& message) { publish(message); },
+            [&] (const TmxIpCbboQuote& message) { publish(message); },
+            [] (const auto&) {});
+        } catch(const std::exception&) {
+          if(!m_config.m_is_logging_messages) {
+            log(message);
+          }
+          throw;
+        }
       }
     } catch(const std::exception&) {
       if(m_open_state.is_open()) {

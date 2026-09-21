@@ -11,6 +11,18 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
+  struct Log {
+    std::stringstream m_output;
+    std::streambuf* m_buffer;
+
+    Log()
+      : m_buffer(std::cout.rdbuf(m_output.rdbuf())) {}
+
+    ~Log() {
+      std::cout.rdbuf(m_buffer);
+    }
+  };
+
   struct MessageClient {
     struct Message {
       std::string m_payload;
@@ -1129,9 +1141,11 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
   }
 
   TEST_CASE("parse_error") {
+    auto log = Log();
     auto fixture = Fixture();
     auto& source = fixture.m_source;
     auto& client = fixture.m_client;
+    auto expected = std::string();
     SUBCASE("stamp_framing") {
       source.push("not a STAMP message");
     }
@@ -1139,11 +1153,18 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
       source.push("\x01\x1e" "56=20260920090000000\x1c"
         "\x1e" "6=MBXMessage\x1e" "5=AssignCOP\x1e" "191=25.50"
         "\x1e" "57=20260920090000000");
+      expected = "(stamp (control (56 0 \"20260920090000000\"))"
+        " (business (6 0 \"MBXMessage\") (5 0 \"AssignCOP\")"
+        " (191 0 \"25.50\") (57 0 \"20260920090000000\")))\n";
     }
     SUBCASE("price") {
       source.push("\x01\x1e" "56=20260920090000000\x1c"
         "\x1e" "6=MBXMessage\x1e" "5=AssignCOP\x1e" "55=ABX"
         "\x1e" "191=invalid\x1e" "57=20260920090000000");
+      expected = "(stamp (control (56 0 \"20260920090000000\"))"
+        " (business (6 0 \"MBXMessage\") (5 0 \"AssignCOP\")"
+        " (55 0 \"ABX\") (191 0 \"invalid\")"
+        " (57 0 \"20260920090000000\")))\n";
     }
     source.push("\x01\x1e" "56=20260920090000000\x1c"
       "\x1e" "6=FutureMessage");
@@ -1153,6 +1174,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     auto exception = client.get_exception();
     REQUIRE(exception);
     REQUIRE_THROWS_AS(std::rethrow_exception(exception), std::runtime_error);
+    REQUIRE(log.m_output.str() == expected);
   }
 
   TEST_CASE("reception") {
