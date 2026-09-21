@@ -67,6 +67,26 @@ TEST_SUITE("TmxIpConfiguration") {
     }
   }
 
+  TEST_CASE("venue") {
+    auto source = make_config();
+    SUBCASE("configured") {
+      source["venue"] = "TSX";
+      REQUIRE(TmxIpConfiguration::parse(source).m_venue == Venues::TSX);
+      source["venue"] = "NEON";
+      REQUIRE(TmxIpConfiguration::parse(source).m_venue == Venues::NEON);
+    }
+    SUBCASE("consolidated") {
+      REQUIRE_FALSE(TmxIpConfiguration::parse(source).m_venue);
+    }
+    SUBCASE("invalid") {
+      for(auto value : {"", "UNKNOWN"}) {
+        source["venue"] = value;
+        REQUIRE_THROWS_AS(
+          TmxIpConfiguration::parse(source), std::runtime_error);
+      }
+    }
+  }
+
   TEST_CASE("required_fields") {
     auto source = make_config();
     SUBCASE("sections") {

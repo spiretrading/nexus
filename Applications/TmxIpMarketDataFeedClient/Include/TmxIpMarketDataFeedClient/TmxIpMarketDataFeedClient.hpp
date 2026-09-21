@@ -84,7 +84,6 @@ namespace Nexus {
       struct Book {
         Ticker m_ticker;
         Venue m_venue;
-        std::string m_source;
         std::string m_mpid;
         std::string m_prefix;
         Quantity m_board_lot;
@@ -112,7 +111,8 @@ namespace Nexus {
       Beam::OpenState m_open_state;
 
       static void log(const StampMessage& message);
-      static Venue get_venue(std::string_view exchange);
+      Venue get_venue(
+        const Ticker& ticker, const TmxIpMessageHeader& header) const;
       TmxIpMarketDataFeedClient(const TmxIpMarketDataFeedClient&) = delete;
       TmxIpMarketDataFeedClient& operator =(
         const TmxIpMarketDataFeedClient&) = delete;
@@ -245,8 +245,16 @@ namespace Nexus {
       Beam::IsTimeClient<Beam::dereference_t<T>> &&
       IsMarketDataFeedClient<Beam::dereference_t<M>>
   Venue TmxIpMarketDataFeedClient<C, D, T, M>::get_venue(
-      std::string_view exchange) {
-    return from_market_center(exchange).m_venue;
+      const Ticker& ticker, const TmxIpMessageHeader& header) const {
+    auto venue = m_config.m_venue;
+    if(venue == Venues::CSE && ticker.get_venue() != Venues::CSE) {
+      venue = Venues::PURE;
+    }
+    if(header.m_book_type &&
+        *header.m_book_type != VENUES.from(venue).m_market_center) {
+      return {};
+    }
+    return venue;
   }
 
   template<typename C, typename D, typename T, typename M> requires
@@ -263,8 +271,8 @@ namespace Nexus {
     } else {
       key = "S:";
     }
-    if(book.m_source == "TSE" || book.m_source == "CDX" ||
-        book.m_source == "ALP" || book.m_source == "ALX") {
+    if(book.m_venue == Venues::TSX || book.m_venue == Venues::TSXV ||
+        book.m_venue == Venues::XATS || book.m_venue == Venues::ALX) {
       if(!broker) {
         return {};
       }
@@ -296,27 +304,23 @@ namespace Nexus {
   typename TmxIpMarketDataFeedClient<C, D, T, M>::Book*
       TmxIpMarketDataFeedClient<C, D, T, M>::find_book(
         std::string_view symbol, const TmxIpMessageHeader& header) {
-    if(!header.m_exchange) {
-      return nullptr;
-    }
-    auto source = *header.m_exchange;
-    if(header.m_book_type && *header.m_book_type != source) {
-      return nullptr;
-    }
-    auto venue = get_venue(source);
-    if(!venue) {
+    if(!m_config.m_venue) {
       return nullptr;
     }
     auto info = find_ticker(symbol);
     if(!info || info->m_board_lot <= 0 || !m_open_state.is_open()) {
       return nullptr;
     }
+    auto venue = get_venue(info->m_ticker, header);
+    if(!venue) {
+      return nullptr;
+    }
+    auto& source = VENUES.from(venue).m_market_center;
     auto prefix = std::string(source) + ':' + std::string(symbol) + ':';
     auto [i, is_inserted] = m_books.try_emplace(prefix);
     if(is_inserted) {
       i->second.m_ticker = info->m_ticker;
       i->second.m_venue = venue;
-      i->second.m_source = source;
       i->second.m_mpid = [&] () -> std::string {
         if(source == "ALP" || source == "OMG") {
           return std::string(source);
@@ -434,7 +438,7 @@ namespace Nexus {
       side = Side::ASK;
     }
     auto id = std::string();
-    if(book->m_source == "AQN") {
+    if(book->m_venue == Venues::NEON) {
       id = boost::lexical_cast<std::string>(message.m_public_price.m_value);
     } else if(message.m_order_id) {
       id = *message.m_order_id;
@@ -451,7 +455,7 @@ namespace Nexus {
         remove(*book, get_order_key(*book, side, message.m_broker,
           *message.m_previous_order_id), timestamp);
       }
-      if(book->m_source == "AQN" && message.m_previous_price &&
+      if(book->m_venue == Venues::NEON && message.m_previous_price &&
           message.m_previous_price->m_value != message.m_public_price.m_value) {
         remove(*book, get_order_key(*book, side, message.m_broker,
           boost::lexical_cast<std::string>(
@@ -462,12 +466,12 @@ namespace Nexus {
         message.m_public_price.m_type != TmxIpPrice::Type::LIMIT ||
           message.m_public_price.m_value == Money::ZERO), timestamp);
     } else if(message.m_confirmation == "Cancelled" &&
-        (book->m_source == "CHI" || book->m_source == "CHT" ||
-          book->m_source == "OMG" || book->m_source == "LYX")) {
+        (book->m_venue == Venues::CHIC || book->m_venue == Venues::XCX2 ||
+          book->m_venue == Venues::OMGA || book->m_venue == Venues::LYNX)) {
       auto i = book->m_orders.find(key);
       if(i != book->m_orders.end()) {
         auto order = i->second;
-        if(book->m_source == "OMG" || book->m_source == "LYX") {
+        if(book->m_venue == Venues::OMGA || book->m_venue == Venues::LYNX) {
           if(message.m_quantity == 0) {
             order.m_quantity = 0;
           } else {
@@ -529,7 +533,7 @@ namespace Nexus {
       return;
     }
     auto book = find_book(message.m_symbol, message.m_header);
-    if(!book || book->m_source == "AQN") {
+    if(!book || book->m_venue == Venues::NEON) {
       return;
     }
     auto timestamp = venue_to_utc(book->m_venue,
@@ -575,7 +579,7 @@ namespace Nexus {
     auto timestamp = venue_to_utc(book->m_venue,
       message.m_header.m_trading_timestamp.value_or(
         message.m_header.m_timestamp));
-    if(book->m_source == "AQL" && message.m_action == "AssignCOP") {
+    if(book->m_venue == Venues::NEOE && message.m_action == "AssignCOP") {
       for(auto& [key, entry] : book->m_orders) {
         if(entry.m_is_market) {
           auto order = entry;
@@ -583,7 +587,7 @@ namespace Nexus {
           update(*book, key, order, timestamp);
         }
       }
-    } else if(book->m_source == "TSE" || book->m_source == "CDX") {
+    } else if(book->m_venue == Venues::TSX || book->m_venue == Venues::TSXV) {
       for(auto& record : message.m_orders) {
         if(!record.m_key) {
           continue;
@@ -714,8 +718,8 @@ namespace Nexus {
       TmxIpMarketDataFeedClient<C, D, T, M>::find_opening_quote(
         std::string_view symbol, const TmxIpMessageHeader& header) {
     auto info = find_ticker(symbol);
-    if(!info || !header.m_exchange ||
-        get_venue(*header.m_exchange) != info->m_ticker.get_venue()) {
+    if(!info || get_venue(info->m_ticker, header) !=
+        info->m_ticker.get_venue()) {
       return nullptr;
     }
     auto now = m_time_client->get_time();

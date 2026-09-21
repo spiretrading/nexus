@@ -7,6 +7,7 @@ service_locator:
 sampling: 100ms
 enable_logging: false
 country: CA
+venue: ICX
 feed_timeout: 1s
 gap_timeout: 1s
 retry_interval: 1s

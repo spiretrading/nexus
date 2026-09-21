@@ -8,7 +8,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
-#include "Nexus/Definitions/StandardCountries.hpp"
+#include "Nexus/Definitions/StandardVenues.hpp"
 
 namespace Nexus {
 
@@ -52,6 +52,9 @@ namespace Nexus {
 
     /** The country whose market data registry receives published updates. */
     CountryCode m_country;
+
+    /** The CDF venue; unspecified for consolidated services. */
+    Venue m_venue;
 
     /** Identically sequenced copies of the live stream. */
     std::vector<TmxIpFeed> m_feeds;
@@ -148,6 +151,14 @@ namespace Details {
       if(!configuration.m_country) {
         boost::throw_with_location(
           std::runtime_error("Invalid market data country."));
+      }
+      if(config["venue"]) {
+        configuration.m_venue =
+          parse_venue(Beam::extract<std::string>(config, "venue"));
+        if(!configuration.m_venue) {
+          boost::throw_with_location(
+            std::runtime_error("Invalid market data venue."));
+        }
       }
       auto feeds = Beam::get_node(config, "feeds");
       if(!feeds.IsSequence() || feeds.size() == 0) {
