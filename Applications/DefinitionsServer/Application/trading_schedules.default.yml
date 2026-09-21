@@ -1,7 +1,7 @@
 ---
 trading_schedules:
   - venues: [XASX, CHIA, XATS, CHIC, XCNQ, CSE2, XCXD, XCX2, LYNX, MATN,
-             NEOE, OMGA, PURE, XTSE, XTSX]
+             NEOE, OMGA, PURE, XTSE, XTSX, XATX, ADRK, XICX, LICA, NEON]
     time:
       weekdays: [Sat, Sun]
   - venues: [XASX, CHIA]
@@ -9,7 +9,7 @@ trading_schedules:
             2026-12-25, 2026-12-28, 2027-01-01, 2027-01-26, 2027-03-26,
             2027-03-29, 2027-06-14, 2027-12-27, 2027-12-28]
   - venues: [XATS, CHIC, XCNQ, CSE2, XCXD, XCX2, LYNX, MATN, NEOE, OMGA,
-             PURE, XTSE, XTSX]
+             PURE, XTSE, XTSX, XATX, ADRK, XICX, LICA, NEON]
     dates: [2026-01-01, 2026-02-16, 2026-04-03, 2026-05-18, 2026-07-01,
             2026-08-03, 2026-09-07, 2026-10-12, 2026-12-25, 2026-12-28,
             2027-01-01, 2027-02-15, 2027-03-26, 2027-05-24, 2027-07-01,
@@ -23,7 +23,14 @@ trading_schedules:
         time: "09:30:00"
       - code: CLOSE
         time: "13:00:00"
-  - venues: [XATS]
+  - venues: [LICA, NEON]
+    dates: [2026-12-24, 2027-12-24]
+    events:
+      - code: OPEN
+        time: "08:00:00"
+      - code: CLOSE
+        time: "13:00:00"
+  - venues: [XATS, XATX, ADRK]
     dates: [2026-12-24, 2027-12-24]
     events:
       - code: PRE_OPEN
@@ -71,7 +78,7 @@ trading_schedules:
         time: "09:30:00"
       - code: CLOSE
         time: "13:00:00"
-  - venues: [LYNX]
+  - venues: [LYNX, XICX]
     dates: [2026-12-24, 2027-12-24]
     events:
       - code: OPEN
@@ -102,7 +109,7 @@ trading_schedules:
         time: "09:30:00"
       - code: CLOSE
         time: "16:00:00"
-  - venues: [XATS, PURE]
+  - venues: [XATS, XATX, ADRK, PURE]
     events:
       - code: PRE_OPEN
         time: "07:00:00"
@@ -110,13 +117,13 @@ trading_schedules:
         time: "08:00:00"
       - code: CLOSE
         time: "17:00:00"
-  - venues: [CHIC, XCX2, CSE2, OMGA]
+  - venues: [CHIC, XCX2, CSE2, OMGA, LICA, NEON]
     events:
       - code: OPEN
         time: "08:00:00"
       - code: CLOSE
         time: "17:00:00"
-  - venues: [XCXD, LYNX]
+  - venues: [XCXD, LYNX, XICX]
     events:
       - code: OPEN
         time: "09:30:00"

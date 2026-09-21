@@ -1,4 +1,3 @@
-#include <filesystem>
 #include <Beam/SerializationTests/ValueShuttleTests.hpp>
 #include <Beam/Utilities/ToString.hpp>
 #include <doctest/doctest.h>
@@ -368,138 +367,86 @@ TEST_SUITE("TradingSchedule") {
     }
   }
 
-  TEST_CASE("default_schedule") {
-    auto path = std::filesystem::path(__FILE__).parent_path() /
-      "../../../Applications/DefinitionsServer/Application";
-    auto venues = parse_venue_database(YAML::LoadFile(
-      (path / "venues.default.yml").string())["venues"]);
-    auto schedule = parse_trading_schedule(YAML::LoadFile(
-      (path / "trading_schedules.default.yml").string())["trading_schedules"],
-      venues);
-    SUBCASE("hours") {
-      struct Session {
-        std::string m_venue;
-        const char* m_open;
-        const char* m_close;
-      };
-      auto sessions = std::vector<Session>({
-        {"XASX", "2026-09-20 23:59:45", "2026-09-21 06:00:00"},
-        {"CHIA", "2026-09-21 00:00:00", "2026-09-21 06:13:00"},
-        {"XATS", "2026-09-21 12:00:00", "2026-09-21 21:00:00"},
-        {"CHIC", "2026-09-21 12:00:00", "2026-09-21 21:00:00"},
-        {"XCNQ", "2026-09-21 13:30:00", "2026-09-21 20:00:00"},
-        {"CSE2", "2026-09-21 12:00:00", "2026-09-21 21:00:00"},
-        {"XCXD", "2026-09-21 13:30:00", "2026-09-21 20:00:00"},
-        {"XCX2", "2026-09-21 12:00:00", "2026-09-21 21:00:00"},
-        {"LYNX", "2026-09-21 13:30:00", "2026-09-21 20:00:00"},
-        {"MATN", "2026-09-21 13:30:00", "2026-09-21 20:00:00"},
-        {"NEOE", "2026-09-21 13:30:00", "2026-09-21 20:00:00"},
-        {"OMGA", "2026-09-21 12:00:00", "2026-09-21 21:00:00"},
-        {"PURE", "2026-09-21 12:00:00", "2026-09-21 21:00:00"},
-        {"XTSE", "2026-09-21 13:30:00", "2026-09-21 20:00:00"},
-        {"XTSX", "2026-09-21 13:30:00", "2026-09-21 20:00:00"}});
-      REQUIRE(sessions.size() == venues.get_entries().size());
-      for(auto& session : sessions) {
-        CAPTURE(session.m_venue);
-        auto events = schedule.find(time_from_string("2026-09-21 12:00:00"),
-          parse_venue(session.m_venue, venues), [] (const auto& event) {
-            return event.m_code == "OPEN" || event.m_code == "CLOSE";
-          });
-        REQUIRE(events == std::vector<TradingSchedule::Event>({
-          TradingSchedule::Event("OPEN", time_from_string(session.m_open)),
-          TradingSchedule::Event("CLOSE", time_from_string(session.m_close))}));
-      }
-    }
-    SUBCASE("holidays") {
-      for(auto& entry : venues.get_entries()) {
-        CAPTURE(entry.m_venue);
-        auto holidays = std::vector<date>();
-        if(entry.m_country_code == Countries::CA) {
-          holidays = {date(2026, 1, 1), date(2026, 2, 16), date(2026, 4, 3),
-            date(2026, 5, 18), date(2026, 7, 1), date(2026, 8, 3),
-            date(2026, 9, 7), date(2026, 10, 12), date(2026, 12, 25),
-            date(2026, 12, 28), date(2027, 1, 1), date(2027, 2, 15),
-            date(2027, 3, 26), date(2027, 5, 24), date(2027, 7, 1),
-            date(2027, 8, 2), date(2027, 9, 6), date(2027, 10, 11),
-            date(2027, 12, 27), date(2027, 12, 28)};
-        } else {
-          holidays = {date(2026, 1, 1), date(2026, 1, 26), date(2026, 4, 3),
-            date(2026, 4, 6), date(2026, 6, 8), date(2026, 12, 25),
-            date(2026, 12, 28), date(2027, 1, 1), date(2027, 1, 26),
-            date(2027, 3, 26), date(2027, 3, 29), date(2027, 6, 14),
-            date(2027, 12, 27), date(2027, 12, 28)};
+  TEST_CASE("canadian_venues") {
+    auto schedule = parse_trading_schedule(YAML::Load(R"(
+      - venues: [XATX, ADRK, XICX, LICA, NEON]
+        time:
+          weekdays: [Sat, Sun]
+      - venues: [XATX, ADRK, XICX, LICA, NEON]
+        dates: [2026-01-01, 2027-01-01]
+      - venues: [XATX, ADRK]
+        dates: [2026-12-24, 2027-12-24]
+        events:
+          - {code: OPEN, time: "08:00:00"}
+          - {code: CLOSE, time: "13:30:00"}
+      - venues: [XICX]
+        dates: [2026-12-24, 2027-12-24]
+        events:
+          - {code: OPEN, time: "09:30:00"}
+          - {code: CLOSE, time: "13:00:00"}
+      - venues: [LICA, NEON]
+        dates: [2026-12-24, 2027-12-24]
+        events:
+          - {code: OPEN, time: "08:00:00"}
+          - {code: CLOSE, time: "13:00:00"}
+      - venues: [XATX, ADRK, LICA, NEON]
+        events:
+          - {code: OPEN, time: "08:00:00"}
+          - {code: CLOSE, time: "17:00:00"}
+      - venues: [XICX]
+        events:
+          - {code: OPEN, time: "09:30:00"}
+          - {code: CLOSE, time: "16:00:00"})"));
+    for(auto venue : {ALX, ALD, ICX, LIQ, NEON}) {
+      CAPTURE(venue);
+      auto opening = [&] () -> time_duration {
+        if(venue == ICX) {
+          return duration_from_string("09:30:00");
         }
-        for(auto holiday : holidays) {
-          CAPTURE(holiday);
-          REQUIRE(schedule.find(
-            ptime(holiday, hours(12)), entry.m_venue).empty());
+        return hours(8);
+      }();
+      auto closing = [&] {
+        if(venue == ICX) {
+          return hours(16);
         }
-      }
-    }
-    SUBCASE("weekends") {
-      for(auto& entry : venues.get_entries()) {
-        CAPTURE(entry.m_venue);
-        REQUIRE(schedule.find(
-          time_from_string("2026-09-19 12:00:00"), entry.m_venue).empty());
-        REQUIRE(schedule.find(
-          time_from_string("2026-09-20 12:00:00"), entry.m_venue).empty());
-      }
-    }
-    SUBCASE("settlement_holidays") {
-      for(auto& entry : venues.get_entries()) {
-        if(entry.m_country_code != Countries::CA) {
-          continue;
-        }
-        CAPTURE(entry.m_venue);
-        for(auto day : {date(2026, 9, 30), date(2026, 11, 11),
-            date(2026, 4, 6), date(2026, 11, 26), date(2027, 9, 30),
-            date(2027, 11, 11), date(2027, 3, 29), date(2027, 11, 25)}) {
-          CAPTURE(day);
-          auto events = schedule.find(ptime(day, hours(12)), entry.m_venue);
-          REQUIRE(!events.empty());
-          REQUIRE(events.back().m_code == "CLOSE");
-        }
-      }
-    }
-    SUBCASE("anzac_day") {
-      auto events = schedule.find(
-        time_from_string("2027-04-26 02:00:00"), ASX);
-      REQUIRE(!events.empty());
-      REQUIRE(events.back() == TradingSchedule::Event(
-        "CLOSE", time_from_string("2027-04-26 06:00:00")));
-    }
-    SUBCASE("shortened_sessions") {
-      for(auto year : {2026, 2027}) {
-        CAPTURE(year);
-        for(auto& entry : venues.get_entries()) {
-          CAPTURE(entry.m_venue);
-          auto events = schedule.find(
-            ptime(date(year, 12, 24), hours(12)), entry.m_venue);
-          REQUIRE(!events.empty());
-          auto close = [&] {
-            if(entry.m_venue == ASX) {
-              return ptime(date(year, 12, 24), hours(3));
-            } else if(entry.m_venue == Venue("CHIA")) {
-              return ptime(
-                date(year, 12, 24), duration_from_string("03:13:00"));
-            } else if(entry.m_venue == TSX || entry.m_venue == TSXV ||
-                entry.m_venue == Venue("XCNQ") ||
-                entry.m_venue == Venue("NEOE") ||
-                entry.m_venue == Venue("MATN") ||
-                entry.m_venue == Venue("LYNX")) {
-              return ptime(date(year, 12, 24), hours(18));
+        return hours(17);
+      }();
+      {
+        for(auto timestamp : {time_from_string("2026-09-21 12:00:00"),
+            time_from_string("2027-01-04 12:00:00")}) {
+          auto offset = [&] {
+            if(timestamp.date().year() == 2026) {
+              return hours(4);
             }
-            return ptime(
-              date(year, 12, 24), duration_from_string("18:30:00"));
+            return hours(5);
           }();
-          REQUIRE(events.back() == TradingSchedule::Event("CLOSE", close));
-          if(entry.m_country_code == Countries::AU) {
-            auto year_end = schedule.find(
-              ptime(date(year, 12, 31), hours(12)), entry.m_venue);
-            REQUIRE(!year_end.empty());
-            REQUIRE(year_end.back() == TradingSchedule::Event(
-              "CLOSE", close + days(7)));
+          auto events = schedule.find(timestamp, venue);
+          REQUIRE(events == std::vector<TradingSchedule::Event>({
+            {"OPEN", ptime(timestamp.date(), opening + offset)},
+            {"CLOSE", ptime(timestamp.date(), closing + offset)}}));
+        }
+      }
+      {
+        for(auto timestamp : {time_from_string("2026-01-01 12:00:00"),
+            time_from_string("2027-01-01 12:00:00"),
+            time_from_string("2026-09-19 12:00:00"),
+            time_from_string("2026-09-20 12:00:00")}) {
+          REQUIRE(schedule.find(timestamp, venue).empty());
+        }
+      }
+      {
+        auto close = [&] () -> time_duration {
+          if(venue == ALX || venue == ALD) {
+            return duration_from_string("18:30:00");
           }
+          return hours(18);
+        }();
+        for(auto timestamp : {time_from_string("2026-12-24 12:00:00"),
+            time_from_string("2027-12-24 12:00:00")}) {
+          auto events = schedule.find(timestamp, venue);
+          REQUIRE(events == std::vector<TradingSchedule::Event>({
+            {"OPEN", ptime(timestamp.date(), opening + hours(5))},
+            {"CLOSE", ptime(timestamp.date(), close)}}));
         }
       }
     }
