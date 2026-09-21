@@ -14,17 +14,17 @@ feed_timeout: 3s
 gap_timeout: 5s
 request_timeout: 1s
 feeds:
-  - name: A
-    address: "233.71.185.129:21001"
-    interface: "$local_interface:21001"
-  - name: B
-    address: "233.71.185.145:21101"
-    interface: "$local_interface:21101"
+  - name: D
+    address: "233.71.185.137:21301"
+    interface: "$local_interface:21301"
+  - name: E
+    address: "233.71.185.225:21401"
+    interface: "$local_interface:21401"
 rewind:
-  address: "203.6.253.126:24001"
+  address: "203.6.253.125:24001"
   interface: "$local_interface:0"
 glimpse:
-  address: "203.6.253.126:21801"
+  address: "203.6.253.125:21801"
   interface: "$local_interface:0"
   username: "$glimpse_username"
   password: "$glimpse_password"

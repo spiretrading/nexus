@@ -18,170 +18,162 @@ organization: "Oasis World Trading Inc."
 
 entitlements:
   - name: ASX Total
-    price: 123.00
+    price: 142.00
     currency: AUD
     group: asx_total
     applicability:
       - source: XASX
         messages: [BBO, BOOK, TAS, IMB]
-  - name: CHI-X (ASX)
-    price: 87.00
-    currency: AUD
+  - name: CXA (TMX Australia)
+    price: 68.50
+    currency: USD
     group: chix_asx
     applicability:
-      - venue: XASX
-        source: CHIA
-        messages: [TAS, BOOK]
-  - name: Aequitas NEO Exchange
-    price: 0.00
+      - source: CHIA
+        messages: [BOOK, TAS, IMB]
+  - name: Cboe Canada NEO Consolidated Level 1
+    price: 22.10
     currency: CAD
     group: neoe
     applicability:
       - source: NEOE
-        messages: [BBO, BOOK, TAS, IMB]
-  - name: TSX CEG
-    price: 65.90
-    currency: USD
-    group: tsx_ceg
+        messages: [BBO, TAS]
+  - name: Cboe Canada NEO-L Depth
+    price: 32.90
+    currency: CAD
+    group: neoe_level_two
     applicability:
-      - source: XTSE
-        messages: [BBO, TAS, IMB]
-      - source: XTSX
-        messages: [BBO, TAS, IMB]
-  - name: TSX TL1
-    price: 39.00
+      - source: NEOE
+        messages: [BOOK]
+  - name: TSX Consolidated Level 1
+    price: 107.55
     currency: CAD
     group: tsx_level_one
     applicability:
       - source: XTSE
-        messages: [BBO, TAS, IMB]
+        messages: [BBO, TAS]
   - name: TSX TL2
-    price: 50.00
-    currency: USD
+    price: 49.80
+    currency: CAD
     group: tsx_level_two
     applicability:
       - source: XTSE
         messages: [BOOK]
-  - name: TSX Venture CL1
-    price: 29.50
+  - name: TSXV Consolidated Level 1
+    price: 76.50
     currency: CAD
     group: tsx_venture_level_one
     applicability:
       - source: XTSX
-        messages: [BBO, TAS, IMB]
+        messages: [BBO, TAS]
   - name: TSX Venture CL2
     price: 24.00
-    currency: USD
+    currency: CAD
     group: tsx_venture_level_two
     applicability:
       - source: XTSX
         messages: [BOOK]
   - name: Alpha APD (TSX)
-    price: 43.80
-    currency: USD
+    price: 20.40
+    currency: CAD
     group: alpha_apd_tsx
     applicability:
       - venue: XTSE
         source: XATS
-        messages: [TAS, BOOK]
+        messages: [BOOK]
   - name: Alpha APD (TSX Venture)
-    price: 24.50
-    currency: USD
+    price: 3.80
+    currency: CAD
     group: alpha_apd_tsxv
     applicability:
       - venue: XTSX
         source: XATS
-        messages: [TAS, BOOK]
-  - name: CHI-X (TSX)
-    price: 40.00
+        messages: [BOOK]
+  - name: Alpha-X Depth
+    price: 0.00
+    currency: CAD
+    group: alpha_x
+    applicability:
+      - source: XATX
+        messages: [BOOK]
+  - name: Nasdaq Canada CXC (TSX)
+    price: 35.25
     currency: CAD
     group: chix_tsx
     applicability:
       - venue: XTSE
         source: CHIC
-        messages: [TAS, BOOK]
-  - name: CHI-X (TSX Venture)
+        messages: [BOOK]
+  - name: Nasdaq Canada CXC (TSX Venture)
     price: 4.30
     currency: CAD
     group: chix_tsxv
     applicability:
       - venue: XTSX
         source: CHIC
-        messages: [TAS, BOOK]
-  - name: CHI-X (CSE)
+        messages: [BOOK]
+  - name: Nasdaq Canada CXC (CSE)
     price: 0.00
     currency: CAD
     group: chix_cse
     applicability:
       - venue: XCNQ
         source: CHIC
-        messages: [TAS, BOOK]
-  - name: CX2
-    price: 20.00
+        messages: [BOOK]
+  - name: Nasdaq Canada CXC (NEO)
+    price: 0.00
+    currency: CAD
+    group: chix_neoe
+    applicability:
+      - venue: NEOE
+        source: CHIC
+        messages: [BOOK]
+  - name: Nasdaq Canada CX2 Depth
+    price: 21.95
     currency: CAD
     group: cx2_tsx
     applicability:
       - source: XCX2
-        messages: [TAS, BOOK]
+        messages: [BOOK]
   - name: Lynx
     price: 0.00
     currency: CAD
     group: lynx
     applicability:
       - source: LYNX
-        messages: [TAS, BOOK]
-  - name: Aequitas NEO (TSX)
-    price: 10.00
+        messages: [BOOK]
+  - name: Cboe Canada NEO-N Depth
+    price: 26.20
     currency: CAD
-    group: neoe_tsx
+    group: neon
     applicability:
-      - venue: XTSE
-        source: NEOE
-        messages: [TAS, BOOK]
-  - name: Aequitas NEO (TSX Venture)
-    price: 5.00
-    currency: CAD
-    group: neoe_tsxv
-    applicability:
-      - venue: XTSX
-        source: NEOE
-        messages: [TAS, BOOK]
-  - name: Aequitas NEO (CSE)
-    price: 0.00
-    currency: CAD
-    group: neoe_cse
-    applicability:
-      - venue: XCNQ
-        source: NEOE
-        messages: [TAS, BOOK]
-  - name: Pure
-    price: 0.00
-    currency: CAD
-    group: pure
-    applicability:
-      - source: PURE
-        messages: [TAS, BOOK]
+      - source: NEON
+        messages: [BOOK]
   - name: Omega
     price: 21.00
     currency: CAD
     group: omega
     applicability:
       - source: OMGA
-        messages: [TAS, BOOK]
-  - name: CSE
-    price: 0.00
+        messages: [BOOK]
+  - name: CSE Consolidated Level 1
+    price: 39.80
     currency: CAD
     group: cse
     applicability:
       - source: XCNQ
-        messages: [BBO, BOOK, TAS, IMB]
-  - name: CSE2
-    price: 0.00
+        messages: [BBO, TAS]
+  - name: CSE, PURE and CSE2 Depth
+    price: 25.50
     currency: CAD
-    group: cse2
+    group: cse_level_two
     applicability:
+      - source: XCNQ
+        messages: [BOOK]
+      - source: PURE
+        messages: [BOOK]
       - source: CSE2
-        messages: [BOOK, TAS]
+        messages: [BOOK]
   - name: OTC Markets
     price: 100.00
     currency: USD
