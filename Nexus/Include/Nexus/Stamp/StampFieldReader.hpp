@@ -30,7 +30,7 @@ namespace Nexus {
        * @param parser Converts the field's text to a value.
        */
       template<typename F> requires std::invocable<F&, std::string_view> &&
-        !std::is_void_v<std::invoke_result_t<F&, std::string_view>>
+        (!std::is_void_v<std::invoke_result_t<F&, std::string_view>>)
       auto read(std::uint16_t identifier, F parser) const;
 
       /**
@@ -40,7 +40,7 @@ namespace Nexus {
        * @param parser Converts the field's text to a value.
        */
       template<typename F> requires std::invocable<F&, std::string_view> &&
-        !std::is_void_v<std::invoke_result_t<F&, std::string_view>>
+        (!std::is_void_v<std::invoke_result_t<F&, std::string_view>>)
       auto read(std::uint16_t identifier, std::uint16_t index, F parser) const;
 
       /**
@@ -50,7 +50,7 @@ namespace Nexus {
        *   text. Not invoked when the field is absent.
        */
       template<typename F> requires std::invocable<F&, std::string_view> &&
-        !std::is_void_v<std::invoke_result_t<F&, std::string_view>>
+        (!std::is_void_v<std::invoke_result_t<F&, std::string_view>>)
       auto read_optional(std::uint16_t identifier, F parser) const;
 
       /**
@@ -61,7 +61,7 @@ namespace Nexus {
        *        text. Not invoked when the field is absent.
        */
       template<typename F> requires std::invocable<F&, std::string_view> &&
-        !std::is_void_v<std::invoke_result_t<F&, std::string_view>>
+        (!std::is_void_v<std::invoke_result_t<F&, std::string_view>>)
       auto read_optional(
         std::uint16_t identifier, std::uint16_t index, F parser) const;
 
@@ -93,7 +93,7 @@ namespace Nexus {
   }
 
   template<typename F> requires std::invocable<F&, std::string_view> &&
-      !std::is_void_v<std::invoke_result_t<F&, std::string_view>>
+      (!std::is_void_v<std::invoke_result_t<F&, std::string_view>>)
   auto StampFieldReader::read(std::uint16_t identifier, F parser) const {
     if(get_count({identifier}) > 1) {
       boost::throw_with_location(
@@ -103,7 +103,7 @@ namespace Nexus {
   }
 
   template<typename F> requires std::invocable<F&, std::string_view> &&
-      !std::is_void_v<std::invoke_result_t<F&, std::string_view>>
+      (!std::is_void_v<std::invoke_result_t<F&, std::string_view>>)
   auto StampFieldReader::read(
       std::uint16_t identifier, std::uint16_t index, F parser) const {
     if(auto value = read_optional(identifier, index, parser)) {
@@ -113,7 +113,7 @@ namespace Nexus {
   }
 
   template<typename F> requires std::invocable<F&, std::string_view> &&
-      !std::is_void_v<std::invoke_result_t<F&, std::string_view>>
+      (!std::is_void_v<std::invoke_result_t<F&, std::string_view>>)
   auto StampFieldReader::read_optional(
       std::uint16_t identifier, F parser) const {
     if(get_count({identifier}) > 1) {
@@ -124,7 +124,7 @@ namespace Nexus {
   }
 
   template<typename F> requires std::invocable<F&, std::string_view> &&
-      !std::is_void_v<std::invoke_result_t<F&, std::string_view>>
+      (!std::is_void_v<std::invoke_result_t<F&, std::string_view>>)
   auto StampFieldReader::read_optional(
       std::uint16_t identifier, std::uint16_t index, F parser) const {
     using Value = std::invoke_result_t<F&, std::string_view>;
