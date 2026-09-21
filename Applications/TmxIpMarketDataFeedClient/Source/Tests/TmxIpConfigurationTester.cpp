@@ -19,6 +19,41 @@ recovery:
 }
 
 TEST_SUITE("TmxIpConfiguration") {
+  TEST_CASE("mpid_mappings") {
+    auto source = make_config();
+    SUBCASE("absent") {
+      REQUIRE(TmxIpConfiguration::parse(source).m_mpid_mappings.empty());
+    }
+    SUBCASE("configured") {
+      source["mpid_mappings"] = YAML::Load(R"(
+- source: 1
+  name: ANON
+- source: 79
+  name: CIBC
+- source: 69
+  name: CITI
+- source: 123
+  name: CITI
+)");
+      auto config = TmxIpConfiguration::parse(source);
+      REQUIRE(config.m_mpid_mappings.size() == 4);
+      REQUIRE(config.m_mpid_mappings.at(1) == "ANON");
+      REQUIRE(config.m_mpid_mappings.at(79) == "CIBC");
+      REQUIRE(config.m_mpid_mappings.at(69) == "CITI");
+      REQUIRE(config.m_mpid_mappings.at(123) == "CITI");
+    }
+    SUBCASE("invalid") {
+      for(auto value : {"{}", "[{source: -1, name: ANON}]",
+          "[{source: 1000, name: ANON}]", "[{source: 1, name: ' '}]",
+          "[{source: 1}]", "[{name: ANON}]",
+          "[{source: 1, name: ANON}, {source: 1, name: CIBC}]"}) {
+        source["mpid_mappings"] = YAML::Load(value);
+        REQUIRE_THROWS_AS(TmxIpConfiguration::parse(source),
+          std::runtime_error);
+      }
+    }
+  }
+
   TEST_CASE("time_zone") {
     auto source = make_config();
     auto offset = hours(-5);

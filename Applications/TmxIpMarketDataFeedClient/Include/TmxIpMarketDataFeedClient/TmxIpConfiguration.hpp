@@ -1,6 +1,7 @@
 #ifndef TMX_IP_CONFIGURATION_HPP
 #define TMX_IP_CONFIGURATION_HPP
 #include <limits>
+#include <unordered_map>
 #include <vector>
 #include <Beam/Network/MulticastSocketOptions.hpp>
 #include <Beam/Utilities/Expect.hpp>
@@ -56,6 +57,9 @@ namespace Nexus {
 
     /** The CDF venue; unspecified for consolidated services. */
     Venue m_venue;
+
+    /** Broker codes and their displayed MPIDs for the listing venue's book. */
+    std::unordered_map<std::uint64_t, std::string> m_mpid_mappings;
 
     /** The configured time zone, otherwise the venue's zone or Toronto. */
     boost::local_time::time_zone_ptr m_time_zone;
@@ -165,6 +169,27 @@ namespace Details {
         if(!configuration.m_venue) {
           boost::throw_with_location(
             std::runtime_error("Invalid market data venue."));
+        }
+      }
+      if(auto mappings = config["mpid_mappings"]) {
+        if(!mappings.IsSequence()) {
+          boost::throw_with_location(
+            std::runtime_error("MPID mappings must be a sequence."));
+        }
+        for(auto mapping : mappings) {
+          auto source = Beam::extract<int>(mapping, "source", 0, 999);
+          auto name = Beam::extract<std::string>(mapping, "name");
+          boost::trim(name);
+          if(name.empty()) {
+            boost::throw_with_location(
+              std::runtime_error("An MPID name cannot be empty."));
+          }
+          auto is_inserted = configuration.m_mpid_mappings.emplace(
+            source, std::move(name)).second;
+          if(!is_inserted) {
+            boost::throw_with_location(
+              std::runtime_error("Duplicate MPID broker code."));
+          }
         }
       }
       auto time_zone = [&] {
