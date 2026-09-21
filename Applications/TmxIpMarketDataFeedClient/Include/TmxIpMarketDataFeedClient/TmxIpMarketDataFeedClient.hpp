@@ -136,6 +136,7 @@ namespace Nexus {
         std::string_view symbol, const TmxIpMessageHeader& header);
       std::string get_mpid(
         const Book& book, boost::optional<std::uint64_t> broker) const;
+      std::string get_broker_name(boost::optional<std::uint64_t> broker) const;
       void update(Book& book, const std::string& key, OrderEntry order,
         boost::posix_time::ptime timestamp);
       void remove(Book& book, const std::string& key,
@@ -451,6 +452,19 @@ namespace Nexus {
     if(book.m_venue != book.m_ticker.get_venue() || !broker) {
       return book.m_mpid;
     }
+    return get_broker_name(broker);
+  }
+
+  template<typename C, typename D, typename T, typename M> requires
+    IsTmxIpClient<Beam::dereference_t<C>> &&
+      IsMarketDataClient<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+      IsMarketDataFeedClient<Beam::dereference_t<M>>
+  std::string TmxIpMarketDataFeedClient<C, D, T, M>::get_broker_name(
+      boost::optional<std::uint64_t> broker) const {
+    if(!broker) {
+      return {};
+    }
     auto i = m_config.m_mpid_mappings.find(*broker);
     if(i != m_config.m_mpid_mappings.end()) {
       return i->second;
@@ -764,12 +778,6 @@ namespace Nexus {
         return;
       }
     }
-    auto broker = [] (const auto& side) {
-      if(side.m_broker) {
-        return std::to_string(*side.m_broker);
-      }
-      return std::string();
-    };
     auto timestamp = *message.m_header.m_trading_timestamp;
     auto trade_timestamp = boost::optional<boost::posix_time::ptime>();
     for(auto& side : message.m_sides) {
@@ -784,8 +792,9 @@ namespace Nexus {
     timestamp = venue_to_utc(venue, timestamp);
     m_feed_client->publish(TickerTimeAndSale(TimeAndSale(timestamp,
       message.m_price.m_value, message.m_quantity, get_condition(message),
-      VENUES.from(venue).m_display_name, broker(message.m_sides[0]),
-      broker(message.m_sides[1])), info->m_ticker));
+      VENUES.from(venue).m_display_name,
+      get_broker_name(message.m_sides[0].m_broker),
+      get_broker_name(message.m_sides[1].m_broker)), info->m_ticker));
   }
 
   template<typename C, typename D, typename T, typename M> requires

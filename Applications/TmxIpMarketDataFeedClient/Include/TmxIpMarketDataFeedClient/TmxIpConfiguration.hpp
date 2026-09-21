@@ -58,7 +58,7 @@ namespace Nexus {
     /** The CDF venue; unspecified for consolidated services. */
     Venue m_venue;
 
-    /** Broker codes and their displayed MPIDs for the listing venue's book. */
+    /** Broker codes and their displayed MPIDs for books and trades. */
     std::unordered_map<std::uint64_t, std::string> m_mpid_mappings;
 
     /** The configured time zone, otherwise the venue's zone or Toronto. */

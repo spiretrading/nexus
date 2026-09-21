@@ -287,15 +287,40 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
   }
 
   TEST_CASE("cls_trade") {
-    auto fixture = Fixture(Venue());
+    auto exchange = std::string("CHI");
+    auto venue = std::string("CHIC");
+    auto brokers = std::string("|70=001|70.1=002");
+    auto buyer = std::string("ANON");
+    auto seller = std::string("RBCC");
+    SUBCASE("primary_venue") {
+      exchange = "TSE";
+      venue = "TSX";
+    }
+    SUBCASE("secondary_venue") {}
+    SUBCASE("unknown_brokers") {
+      brokers = "|70=49|70.1=999";
+      buyer = "049";
+      seller = "999";
+    }
+    SUBCASE("missing_buyer") {
+      brokers = "|70.1=002";
+      buyer.clear();
+    }
+    SUBCASE("missing_seller") {
+      brokers = "|70=001";
+      seller.clear();
+    }
+    auto fixture = Fixture(Venue(),
+      {TickerInfo(parse_ticker("ABX.TSX"), "Barrick", "", 100)},
+      {{1, "ANON"}, {2, "RBCC"}});
     fixture.publish("|6=TradeReport|5=Trade|55=ABX|41=23.10|64=125"
-      "|57=20260921100100123|247=CHI|70=001|70.1=002");
+      "|57=20260921100100123|247=" + exchange + brokers);
     auto operation =
       fixture.operation<FeedClient::PublishTimeAndSaleOperation>();
     REQUIRE(operation->m_time_and_sale == TickerTimeAndSale(TimeAndSale(
       time_from_string("2026-09-21 14:01:00.123"), parse_money("23.10"), 125,
       TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-      "CHIC", "1", "2"), parse_ticker("ABX.TSX")));
+      venue, buyer, seller), parse_ticker("ABX.TSX")));
     fixture.require_empty();
   }
 
