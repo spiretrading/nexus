@@ -1190,14 +1190,14 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
       time_from_string("2026-09-21 13:00:01")), parse_ticker("ABX.TSX")));
     SUBCASE("buy_imbalance") {
       fixture.publish("|6=OpeningAuction|5=OddlotImbalance|55=ABX|247=TSE"
-        "|572=Buyside|573=30|57=20260921090002000");
+        "|572=BuySide|573=30|57=20260921090002000");
       auto quote = fixture.quote();
       REQUIRE(quote->m_bid == make_bid(Money(25.50), 1230));
       REQUIRE(quote->m_ask == make_ask(Money(25.50), 1200));
     }
     SUBCASE("sell_imbalance") {
       fixture.publish("|6=OpeningAuction|5=OddlotImbalance|55=ABX|247=TSE"
-        "|572=Sellside|573=40|57=20260921090002000");
+        "|572=SellSide|573=40|57=20260921090002000");
       auto quote = fixture.quote();
       REQUIRE(quote->m_bid == make_bid(Money(25.50), 1200));
       REQUIRE(quote->m_ask == make_ask(Money(25.50), 1240));
@@ -1209,7 +1209,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     }
     SUBCASE("new_price") {
       fixture.publish("|6=OpeningAuction|5=OddlotImbalance|55=ABX|247=TSE"
-        "|572=Sellside|573=40|57=20260921090002000");
+        "|572=SellSide|573=40|57=20260921090002000");
       fixture.quote();
       SUBCASE("cop") {
         fixture.publish("|6=MBXMessage|5=AssignCOP|55=ABX|247=TSE|191=25.60"
@@ -1221,7 +1221,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
       }
       SUBCASE("imbalance") {
         fixture.publish("|6=OpeningAuction|5=OddlotImbalance|55=ABX|247=TSE"
-          "|191=25.60|572=Sellside|573=40|57=20260921090003000");
+          "|191=25.60|572=SellSide|573=40|57=20260921090003000");
       }
       auto quote = fixture.quote();
       REQUIRE(quote->m_bid == make_bid(Money(25.60), 1200));
@@ -1237,7 +1237,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     }
     SUBCASE("source_session") {
       fixture.publish("|6=OpeningAuction|5=OddlotImbalance|55=ABX|247=TSE"
-        "|572=Sellside|573=40|57=20260921090002000");
+        "|572=SellSide|573=40|57=20260921090002000");
       auto quote = fixture.quote();
       REQUIRE(quote->m_bid.m_size == 1200);
       REQUIRE(quote->m_ask.m_size == 1240);

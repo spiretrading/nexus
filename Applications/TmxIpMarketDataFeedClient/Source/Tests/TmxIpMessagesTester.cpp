@@ -482,7 +482,7 @@ TEST_SUITE("TmxIpMessages") {
     REQUIRE(paired.m_calculated_opening_price->m_value == parse_money("25.50"));
     REQUIRE(paired.m_paired_quantity.value() == 999999999);
     REQUIRE(!paired.m_imbalance_side);
-    for(auto side : {"Buyside", "Sellside", "NA"}) {
+    for(auto side : {"BuySide", "SellSide", "NA"}) {
       source = encode_message(std::string(
         "6=OpeningAuction;5=OddlotImbalance;573=0;572=") + side);
       auto imbalance = TmxIpOpeningAuction::parse(StampMessage::parse(source));
@@ -491,9 +491,9 @@ TEST_SUITE("TmxIpMessages") {
       REQUIRE(!imbalance.m_calculated_opening_price);
       REQUIRE(!imbalance.m_symbol);
       REQUIRE(!imbalance.m_header.m_trading_timestamp);
-      if(std::string_view(side) == "Buyside") {
+      if(std::string_view(side) == "BuySide") {
         REQUIRE(imbalance.m_imbalance_side.value() == Side::BID);
-      } else if(std::string_view(side) == "Sellside") {
+      } else if(std::string_view(side) == "SellSide") {
         REQUIRE(imbalance.m_imbalance_side.value() == Side::ASK);
       } else {
         REQUIRE(imbalance.m_imbalance_side.value() == Side::NONE);
@@ -618,7 +618,8 @@ TEST_SUITE("TmxIpMessages") {
         "6=OrderCancelResp;5=Sideways;55=ABX;196=10;64=100;16=Booked",
         "6=OrderInfo;5=OrderBook;55=ABX;40=X;70=1;64=100;197=Neither",
         "6=MBXMessage;5=AssignCOP;55=ABX;191=1;192.1=001|ORDER",
-        "6=OpeningAuction;5=OddlotImbalance;572=BuySide",
+        "6=OpeningAuction;5=OddlotImbalance;572=Buyside",
+        "6=OpeningAuction;5=OddlotImbalance;572=Sellside",
         "6=OpeningAuction;5=PairedVolume;578=1000000000"}) {
       auto source = encode_message(std::string(fields) +
         ";57=20260920090000123");

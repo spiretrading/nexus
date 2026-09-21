@@ -727,9 +727,9 @@ namespace TmxIpDetails {
   }
 
   inline Side opening_side(std::string_view source) {
-    if(source == "Buyside") {
+    if(source == "BuySide") {
       return Side::BID;
-    } else if(source == "Sellside") {
+    } else if(source == "SellSide") {
       return Side::ASK;
     } else if(source == "NA") {
       return Side::NONE;
