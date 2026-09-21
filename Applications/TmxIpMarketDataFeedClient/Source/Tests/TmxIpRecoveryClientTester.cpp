@@ -354,6 +354,15 @@ TEST_SUITE("TmxIpRecoveryClient") {
     REQUIRE(result.m_requested_count == 0);
     REQUIRE(result.m_sent_count == 0);
     REQUIRE(result.m_description == description);
+    auto session = std::uint64_t(99);
+    auto event = fixture.m_client->read_event(out(session));
+    auto failure = std::get_if<TmxIpRecoveryFailure>(&event);
+    REQUIRE(failure);
+    REQUIRE(failure->m_request.m_start_sequence == 10);
+    REQUIRE(failure->m_request.m_end_sequence == 11);
+    REQUIRE(failure->m_session == 0);
+    REQUIRE(failure->m_reason == "rejected " + description);
+    REQUIRE(session == 0);
     auto next = fixture.start(TmxIpRecoveryRequest(12, 12));
     next->get_writer().write(from<SharedBuffer>(acknowledgement(0, 0)));
     REQUIRE(fixture.m_result.get().m_is_acknowledged);

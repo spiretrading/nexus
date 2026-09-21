@@ -432,7 +432,7 @@ TEST_SUITE("TmxIpClient") {
     fixture.m_timer.trigger();
     flush_pending_routines();
     fixture.publish(101, "BEFORE");
-    fixture.require_symbol("BEFORE");
+    flush_pending_routines();
     fixture.m_time_client.set(rollover);
     SUBCASE("timer") {
       fixture.m_timer.trigger();
@@ -442,8 +442,15 @@ TEST_SUITE("TmxIpClient") {
     fixture.publish(1, "NEW");
     fixture.publish(2, "AFTER");
     flush_pending_routines();
-    fixture.require_symbol("NEW");
-    fixture.require_symbol("AFTER");
+    for(auto& [symbol, expected_session] : {std::pair("BEFORE", 0),
+        std::pair("NEW", 1), std::pair("AFTER", 1)}) {
+      auto session = std::uint64_t(99);
+      auto message = fixture.m_client.read(out(session));
+      auto field = message.m_business_content.find(55);
+      REQUIRE(field.has_value());
+      REQUIRE(field->m_value == symbol);
+      REQUIRE(session == expected_session);
+    }
     fixture.m_client.close();
     REQUIRE_THROWS_AS(fixture.m_client.read(), EndOfFileException);
   }

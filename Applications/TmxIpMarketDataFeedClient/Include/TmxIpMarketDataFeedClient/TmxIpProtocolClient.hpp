@@ -77,8 +77,7 @@ namespace Nexus {
       Beam::RoutineHandler m_read_loop;
 
       TmxIpProtocolClient(const TmxIpProtocolClient&) = delete;
-      TmxIpProtocolClient& operator =(
-        const TmxIpProtocolClient&) = delete;
+      TmxIpProtocolClient& operator =(const TmxIpProtocolClient&) = delete;
       void read_loop();
   };
 

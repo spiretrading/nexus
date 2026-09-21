@@ -8,8 +8,8 @@ using namespace Nexus;
 namespace {
   constexpr auto HEARTBEAT = "\x02" "0207         CDF00V T "
     "[HEARTBEAT 2012-10-10 03:25:02-001349853902.844623]"
-    "[LAST SENT 000001345-03:05:03-001349852703.441869]"
-    "[LAST HB   000001345-03:24:02-001349853842.845443]"
+    "[LAST SENT 000001345-03:24:30-001349853870.441869]"
+    "[LAST HB   000001344-03:24:02-001349853842.845443]"
     "OCSA-CDF-1           ATDOTDR  00.1\x03";
 }
 
@@ -21,8 +21,8 @@ TEST_SUITE("TmxIpHeartbeat") {
       time_from_string("2012-10-10 07:25:02.844623"));
     REQUIRE(heartbeat.m_last_sequence == 1345);
     REQUIRE(heartbeat.m_last_timestamp ==
-      time_from_string("2012-10-10 07:05:03.441869"));
-    REQUIRE(heartbeat.m_previous_sequence == 1345);
+      time_from_string("2012-10-10 07:24:30.441869"));
+    REQUIRE(heartbeat.m_previous_sequence == 1344);
     REQUIRE(heartbeat.m_previous_timestamp ==
       time_from_string("2012-10-10 07:24:02.845443"));
     REQUIRE(heartbeat.m_host == "TDOTDR");
@@ -56,7 +56,7 @@ TEST_SUITE("TmxIpHeartbeat") {
         "00000134X");
     }
     SUBCASE("previous_sequence") {
-      payload[payload.rfind("000001345")] = ' ';
+      payload[payload.find("000001344")] = ' ';
     }
     SUBCASE("epoch") {
       payload[payload.find("001349853902")] = 'X';

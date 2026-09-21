@@ -183,7 +183,7 @@ namespace Nexus {
 
     inline std::string_view parse_tmx_ip_recovery_text(
         std::string_view source) {
-      auto is_invalid = std::ranges::any_of(source, [] (auto character) {
+    auto is_invalid = std::ranges::any_of(source, [] (auto character) {
         return character < ' ' || character > '~';
       });
       if(is_invalid) {

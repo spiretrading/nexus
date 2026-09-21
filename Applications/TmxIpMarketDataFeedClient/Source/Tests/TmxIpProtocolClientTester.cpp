@@ -62,9 +62,10 @@ TEST_SUITE("TmxIpProtocolClient") {
     fixture.m_server_channel->get_writer().write(from<SharedBuffer>(
       "\x02" "0036000000001CDF00  T "
       "\x01\x1e" "1=H\x1c\x1e" "55=ABX\x1d\x03"));
+    auto first = fixture.m_client->read();
     fixture.m_server_channel->get_writer().write(
       from<SharedBuffer>("\x02" "0029000000002CDF00  T payload\x03"));
-    auto first = fixture.m_client->read();
+    flush_pending_routines();
     REQUIRE(first.m_header.m_sequence == std::uint32_t(1));
     REQUIRE(first.m_header.m_service == "CDF");
     REQUIRE(first.m_header.m_exchange == 'T');

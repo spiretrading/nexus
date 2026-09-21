@@ -563,8 +563,8 @@ namespace Nexus {
     if(state.m_is_finished) {
       return;
     }
-    auto timestamp = m_time_client->get_time();
     while(auto gap = get_gap(state)) {
+      auto timestamp = m_time_client->get_time();
       if(!state.m_gap || state.m_gap->m_sequence != gap->m_sequence) {
         state.m_gap = gap;
         state.m_gap_timestamp = timestamp;

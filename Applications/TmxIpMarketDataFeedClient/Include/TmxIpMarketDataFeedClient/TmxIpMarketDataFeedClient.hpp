@@ -461,7 +461,11 @@ namespace Nexus {
       remove(book, key, timestamp);
       return;
     }
-    book.m_orders.insert_or_assign(key, order);
+    if(i != book.m_orders.end()) {
+      i->second = order;
+    } else {
+      book.m_orders.emplace(key, order);
+    }
     if(quantity == previous_quantity &&
         (quantity == 0 || order.m_price.m_value == previous_price)) {
       return;
@@ -948,11 +952,6 @@ namespace Nexus {
       return;
     }
     auto price = message.m_calculated_opening_price.m_value;
-    if(quote->m_price && quote->m_price != price) {
-      quote->m_paired_quantity = 0;
-      quote->m_imbalance_side = Side::NONE;
-      quote->m_imbalance_quantity = 0;
-    }
     quote->m_price = price;
     if(message.m_paired_quantity) {
       quote->m_paired_quantity = *message.m_paired_quantity;
@@ -992,11 +991,6 @@ namespace Nexus {
     }
     if(message.m_calculated_opening_price) {
       auto price = message.m_calculated_opening_price->m_value;
-      if(quote->m_price && quote->m_price != price) {
-        quote->m_paired_quantity = 0;
-        quote->m_imbalance_side = Side::NONE;
-        quote->m_imbalance_quantity = 0;
-      }
       quote->m_price = price;
     }
     if(message.m_action == "PairedVolume" && message.m_paired_quantity) {

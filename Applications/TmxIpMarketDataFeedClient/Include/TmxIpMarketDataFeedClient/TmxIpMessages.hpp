@@ -784,6 +784,81 @@ namespace TmxIpDetails {
     }
     return true;
   }();
+
+  template<IsTmxIpVisitor F, IsTmxIpVisitor... G>
+  decltype(auto) visit(std::string_view business_class,
+      const StampMessage& message, F&& f, G&&... g) {
+    if constexpr(std::invocable<F, TmxIpSymbolStatus>) {
+      if(business_class == TmxIpSymbolStatus::TYPE) {
+        return std::forward<F>(f)(TmxIpSymbolStatus::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, TmxIpOrderBook>) {
+      if(business_class == TmxIpOrderBook::TYPE) {
+        return std::forward<F>(f)(TmxIpOrderBook::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, TmxIpClearOrderBook>) {
+      if(business_class == TmxIpClearOrderBook::TYPE) {
+        return std::forward<F>(f)(TmxIpClearOrderBook::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, TmxIpOrderCancelReport>) {
+      if(business_class == TmxIpOrderCancelReport::TYPE) {
+        return std::forward<F>(f)(TmxIpOrderCancelReport::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, TmxIpTradeReport>) {
+      if(business_class == TmxIpTradeReport::TYPE) {
+        return std::forward<F>(f)(TmxIpTradeReport::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, TmxIpStockStatus>) {
+      if(business_class == TmxIpStockStatus::TYPE) {
+        return std::forward<F>(f)(TmxIpStockStatus::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, TmxIpMarketStateChange>) {
+      if(business_class == TmxIpMarketStateChange::TYPE) {
+        return std::forward<F>(f)(TmxIpMarketStateChange::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, TmxIpMbxMessage>) {
+      if(business_class == TmxIpMbxMessage::TYPE) {
+        return std::forward<F>(f)(TmxIpMbxMessage::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, TmxIpOpeningAuction>) {
+      if(business_class == TmxIpOpeningAuction::TYPE) {
+        return std::forward<F>(f)(TmxIpOpeningAuction::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, TmxIpCbboQuote>) {
+      if(business_class == TmxIpCbboQuote::TYPE) {
+        return std::forward<F>(f)(TmxIpCbboQuote::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, const StampMessage&>) {
+      return std::forward<F>(f)(message);
+    } else if constexpr(sizeof...(G) != 0) {
+      return visit(business_class, message, std::forward<G>(g)...);
+    } else if constexpr(
+        is_void_invocable<F, TmxIpSymbolStatus> &&
+        is_void_invocable<F, TmxIpOrderBook> &&
+        is_void_invocable<F, TmxIpClearOrderBook> &&
+        is_void_invocable<F, TmxIpOrderCancelReport> &&
+        is_void_invocable<F, TmxIpTradeReport> &&
+        is_void_invocable<F, TmxIpStockStatus> &&
+        is_void_invocable<F, TmxIpMarketStateChange> &&
+        is_void_invocable<F, TmxIpMbxMessage> &&
+        is_void_invocable<F, TmxIpOpeningAuction> &&
+        is_void_invocable<F, TmxIpCbboQuote>) {
+      return;
+    } else {
+      boost::throw_with_location(
+        TmxIpParserException("Unhandled CDF business class."));
+    }
+  }
 }
 
   inline TmxIpSymbolStatus TmxIpSymbolStatus::parse(
@@ -1164,76 +1239,8 @@ namespace TmxIpDetails {
       boost::throw_with_location(
         TmxIpParserException("Missing CDF business class."));
     }
-    if constexpr(std::invocable<F, TmxIpSymbolStatus>) {
-      if(field->m_value == TmxIpSymbolStatus::TYPE) {
-        return std::forward<F>(f)(TmxIpSymbolStatus::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, TmxIpOrderBook>) {
-      if(field->m_value == TmxIpOrderBook::TYPE) {
-        return std::forward<F>(f)(TmxIpOrderBook::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, TmxIpClearOrderBook>) {
-      if(field->m_value == TmxIpClearOrderBook::TYPE) {
-        return std::forward<F>(f)(TmxIpClearOrderBook::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, TmxIpOrderCancelReport>) {
-      if(field->m_value == TmxIpOrderCancelReport::TYPE) {
-        return std::forward<F>(f)(TmxIpOrderCancelReport::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, TmxIpTradeReport>) {
-      if(field->m_value == TmxIpTradeReport::TYPE) {
-        return std::forward<F>(f)(TmxIpTradeReport::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, TmxIpStockStatus>) {
-      if(field->m_value == TmxIpStockStatus::TYPE) {
-        return std::forward<F>(f)(TmxIpStockStatus::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, TmxIpMarketStateChange>) {
-      if(field->m_value == TmxIpMarketStateChange::TYPE) {
-        return std::forward<F>(f)(TmxIpMarketStateChange::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, TmxIpMbxMessage>) {
-      if(field->m_value == TmxIpMbxMessage::TYPE) {
-        return std::forward<F>(f)(TmxIpMbxMessage::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, TmxIpOpeningAuction>) {
-      if(field->m_value == TmxIpOpeningAuction::TYPE) {
-        return std::forward<F>(f)(TmxIpOpeningAuction::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, TmxIpCbboQuote>) {
-      if(field->m_value == TmxIpCbboQuote::TYPE) {
-        return std::forward<F>(f)(TmxIpCbboQuote::parse(message));
-      }
-    }
-    if constexpr(std::invocable<F, const StampMessage&>) {
-      return std::forward<F>(f)(message);
-    } else if constexpr(sizeof...(G) != 0) {
-      return visit(message, std::forward<G>(g)...);
-    } else if constexpr(
-        TmxIpDetails::is_void_invocable<F, TmxIpSymbolStatus> &&
-        TmxIpDetails::is_void_invocable<F, TmxIpOrderBook> &&
-        TmxIpDetails::is_void_invocable<F, TmxIpClearOrderBook> &&
-        TmxIpDetails::is_void_invocable<F, TmxIpOrderCancelReport> &&
-        TmxIpDetails::is_void_invocable<F, TmxIpTradeReport> &&
-        TmxIpDetails::is_void_invocable<F, TmxIpStockStatus> &&
-        TmxIpDetails::is_void_invocable<F, TmxIpMarketStateChange> &&
-        TmxIpDetails::is_void_invocable<F, TmxIpMbxMessage> &&
-        TmxIpDetails::is_void_invocable<F, TmxIpOpeningAuction> &&
-        TmxIpDetails::is_void_invocable<F, TmxIpCbboQuote>) {
-      return;
-    } else {
-      boost::throw_with_location(
-        TmxIpParserException("Unhandled CDF business class."));
-    }
+    return TmxIpDetails::visit(
+      field->m_value, message, std::forward<F>(f), std::forward<G>(g)...);
   }
 
   inline void validate(const StampMessage& message) {
