@@ -23,11 +23,22 @@ namespace {
   };
 
   struct ProtocolClient {
-    Queue<std::string> m_packets;
+    struct Packet {
+      std::string m_payload;
+      ptime m_timestamp;
+    };
+    Queue<Packet> m_packets;
     std::string m_packet;
 
     TmxIpPacket read() {
-      m_packet = m_packets.pop();
+      auto timestamp = ptime();
+      return read(out(timestamp));
+    }
+
+    TmxIpPacket read(Out<ptime> timestamp) {
+      auto packet = m_packets.pop();
+      *timestamp = packet.m_timestamp;
+      m_packet = std::move(packet.m_payload);
       return TmxIpPacket::parse(m_packet);
     }
 
@@ -103,6 +114,9 @@ namespace {
     explicit Fixture(ptime timestamp)
       : Fixture(1, &m_recovery_client, timestamp) {}
 
+    Fixture(std::size_t feeds, ptime timestamp)
+      : Fixture(feeds, &m_recovery_client, timestamp) {}
+
     Fixture(std::size_t feeds, WithoutRecovery)
       : Fixture(feeds, boost::none) {}
 
@@ -139,9 +153,11 @@ namespace {
       if(&client == &m_recovery_client.m_protocol_client) {
         m_recovery_client.m_sessions.push(session);
       }
-      client.m_packets.push(std::format("{}{:04}{:09}CDF0{}  T {}{}",
+      client.m_packets.push(ProtocolClient::Packet(
+        std::format("{}{:04}{:09}CDF0{}  T {}{}",
         TmxIpPacket::START, TmxIpHeader::LENGTH + payload.size(), sequence,
-        static_cast<int>(continuation), payload, TmxIpPacket::END));
+        static_cast<int>(continuation), payload, TmxIpPacket::END),
+        m_time_client.get_time()));
     }
 
     void publish(std::uint32_t sequence, std::string_view symbol,
@@ -159,14 +175,23 @@ namespace {
     }
 
     void heartbeat(std::uint32_t sequence, ProtocolClient& client) {
+      heartbeat(sequence, client, m_time_client.get_time());
+    }
+
+    void heartbeat(std::uint32_t sequence, ProtocolClient& client,
+        ptime timestamp) {
+      auto epoch = time_from_string("1970-01-01 00:00:00");
+      auto seconds = (timestamp - epoch).total_seconds();
       auto payload = std::format(
-        "[HEARTBEAT 2012-10-10 03:25:02-001349853902.844623]"
-        "[LAST SENT {:09}-03:05:03-001349852703.441869]"
-        "[LAST HB   {:09}-03:24:02-001349853842.845443]"
-        "OCSA-CDF-1           ATDOTDR  00.1", sequence, sequence);
-      client.m_packets.push(std::format(
+        "[HEARTBEAT 2026-09-20 12:00:00-{:012}.000000]"
+        "[LAST SENT {:09}-12:00:00-{:012}.000000]"
+        "[LAST HB   {:09}-12:00:00-{:012}.000000]"
+        "OCSA-CDF-1           ATDOTDR  00.1", seconds, sequence, seconds,
+        sequence, seconds);
+      client.m_packets.push(ProtocolClient::Packet(std::format(
         "{}{:04}         CDF00V T {}{}", TmxIpPacket::START,
-        TmxIpHeader::LENGTH + payload.size(), payload, TmxIpPacket::END));
+        TmxIpHeader::LENGTH + payload.size(), payload, TmxIpPacket::END),
+        m_time_client.get_time()));
     }
 
     void recover(std::uint32_t sequence, std::string_view symbol) {
@@ -206,6 +231,102 @@ namespace {
 }
 
 TEST_SUITE("TmxIpClient") {
+  TEST_CASE("rollover_loss") {
+    auto rollover = time_from_string("2026-09-21 04:30:00");
+    auto fixture = Fixture(2, rollover - minutes(1));
+    fixture.publish(100, "OLD");
+    fixture.publish(100, "OLD", *fixture.m_feed_clients.back());
+    fixture.require_symbol("OLD");
+    auto expected = std::string();
+    SUBCASE("clean") {}
+    SUBCASE("unconfirmed_gap") {
+      fixture.publish(102, "BUFFERED");
+      expected = "(dropped 2026-Sep-21 04:30:00 101 2 session_reset)\n";
+    }
+    SUBCASE("confirmed_gap") {
+      fixture.publish(102, "BUFFERED");
+      fixture.publish(102, "BUFFERED", *fixture.m_feed_clients.back());
+      fixture.require_request(101, 101);
+      expected = "(dropped 2026-Sep-21 04:30:00 101 2 session_reset)\n";
+    }
+    SUBCASE("incomplete_message") {
+      fixture.publish(101, "\x01\x1e" "1=H\x1c\x1e" "55=OLD",
+        TmxIpHeader::Continuation::FIRST, *fixture.m_feed_clients.front());
+      expected =
+        "(dropped 2026-Sep-21 04:30:00 incomplete_message session_reset)\n";
+    }
+    flush_pending_routines();
+    auto log = Log();
+    fixture.m_time_client.set(rollover);
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    fixture.m_client.close();
+    REQUIRE(log.m_output.str() == expected);
+  }
+
+  TEST_CASE("stale_live_session") {
+    auto rollover = time_from_string("2026-09-21 04:30:00");
+    auto fixture = Fixture(1, boost::none, rollover - minutes(1));
+    fixture.publish(100, "OLD");
+    fixture.require_symbol("OLD");
+    auto log = Log();
+    auto expected = std::string();
+    fixture.m_time_client.set(rollover);
+    SUBCASE("buffered_packet") {
+      auto payload = std::string("\x01\x1e" "1=H\x1c\x1e" "55=STALE\x1d");
+      fixture.m_feed_clients.front()->m_packets.push(ProtocolClient::Packet(
+        std::format("{}{:04}{:09}CDF00  T {}{}", TmxIpPacket::START,
+          TmxIpHeader::LENGTH + payload.size(), 101, payload, TmxIpPacket::END),
+        rollover - time_duration::unit()));
+      expected = "(dropped 2026-Sep-21 04:30:00 101 1 session_reset)\n";
+    }
+    SUBCASE("duplicate_packet") {
+      auto payload = std::string("\x01\x1e" "1=H\x1c\x1e" "55=OLD\x1d");
+      fixture.m_feed_clients.front()->m_packets.push(ProtocolClient::Packet(
+        std::format("{}{:04}{:09}CDF00  T {}{}", TmxIpPacket::START,
+          TmxIpHeader::LENGTH + payload.size(), 100, payload, TmxIpPacket::END),
+        rollover - time_duration::unit()));
+    }
+    SUBCASE("old_heartbeat") {
+      fixture.heartbeat(100, *fixture.m_feed_clients.front(),
+        rollover - time_duration::unit());
+    }
+    fixture.publish(1, "NEW");
+    flush_pending_routines();
+    fixture.m_client.close();
+    fixture.require_symbol("NEW");
+    REQUIRE_THROWS_AS(fixture.m_client.read(), EndOfFileException);
+    REQUIRE(log.m_output.str() == expected);
+  }
+
+  TEST_CASE("daylight_saving_rollover") {
+    auto rollover = time_from_string("2026-11-01 05:30:00");
+    auto local_time = minutes(90);
+    SUBCASE("repeated_hour") {}
+    SUBCASE("missing_hour") {
+      rollover = time_from_string("2026-03-08 07:30:00");
+      local_time = minutes(150);
+    }
+    auto fixture = Fixture(1, boost::none, rollover - hours(24),
+      TIME_ZONES.time_zone_from_region("America/Toronto"), local_time);
+    fixture.publish(100, "OLD");
+    fixture.require_symbol("OLD");
+    fixture.m_time_client.set(rollover);
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    fixture.publish(1, "NEW");
+    flush_pending_routines();
+    fixture.m_time_client.set(rollover + hours(1));
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    fixture.publish(2, "NEXT");
+    flush_pending_routines();
+    fixture.m_client.close();
+    fixture.require_symbol("NEW");
+    fixture.require_symbol("NEXT");
+    REQUIRE_THROWS_AS(fixture.m_client.read(), EndOfFileException);
+  }
+
   TEST_CASE("configured_rollover") {
     auto rollover = time_from_string("2026-09-20 20:00:00");
     auto fixture = Fixture(1, boost::none, rollover - minutes(1),
@@ -581,11 +702,12 @@ TEST_SUITE("TmxIpClient") {
     fixture.publish(1, "ONE");
     fixture.require_symbol("ONE");
     SUBCASE("framing") {
-      fixture.m_feed_clients.front()->m_packets.push("not a packet");
+      fixture.m_feed_clients.front()->m_packets.push(ProtocolClient::Packet(
+        "not a packet", fixture.m_time_client.get_time()));
     }
     SUBCASE("heartbeat") {
-      fixture.m_feed_clients.front()->m_packets.push(
-        "\x02" "0022         CDF00V T \x03");
+      fixture.m_feed_clients.front()->m_packets.push(ProtocolClient::Packet(
+        "\x02" "0022         CDF00V T \x03", fixture.m_time_client.get_time()));
     }
     fixture.publish(3, "THREE");
     auto request = fixture.require_request(2, 2);

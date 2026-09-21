@@ -2,7 +2,9 @@
 #define TMX_IP_CLIENT_HPP
 #include <algorithm>
 #include <iostream>
+#include <map>
 #include <sstream>
+#include <utility>
 #include <vector>
 #include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/IO/OpenState.hpp>
@@ -22,6 +24,8 @@ namespace Nexus {
   template<typename T>
   concept IsTmxIpClient = requires(T& t) {
     { t.read() } -> std::same_as<StampMessage>;
+    { t.read(std::declval<Beam::Out<std::uint64_t>>()) } ->
+      std::same_as<StampMessage>;
     { t.close() } -> std::same_as<void>;
   };
 
@@ -81,6 +85,9 @@ namespace Nexus {
        */
       StampMessage read();
 
+      /** Reads a message and its transport session identifier. */
+      StampMessage read(Beam::Out<std::uint64_t> session);
+
       void close();
 
     private:
@@ -99,6 +106,8 @@ namespace Nexus {
         TmxIpSequencer m_sequencer;
         TmxIpMessageBuilder m_builder;
         std::vector<Feed> m_feeds;
+        std::map<boost::posix_time::ptime, boost::optional<std::uint32_t>>
+          m_retired_sessions;
         std::string m_recovery_error;
         boost::optional<TmxIpGap> m_gap;
         boost::posix_time::ptime m_gap_timestamp;
@@ -109,11 +118,13 @@ namespace Nexus {
       struct Message {
         Beam::SharedBuffer m_buffer;
         StampMessage m_message;
+        std::uint64_t m_session;
       };
       boost::local_time::time_zone_ptr m_time_zone;
       boost::posix_time::time_duration m_rollover_time;
       boost::posix_time::time_duration m_feed_timeout;
       boost::posix_time::time_duration m_gap_timeout;
+      boost::posix_time::ptime m_session_start;
       boost::posix_time::ptime m_session_end;
       std::vector<Beam::local_ptr_t<P>> m_feed_clients;
       boost::optional<Beam::local_ptr_t<G>> m_recovery_client;
@@ -130,9 +141,11 @@ namespace Nexus {
       TmxIpClient(const TmxIpClient&) = delete;
       TmxIpClient& operator =(const TmxIpClient&) = delete;
       static std::uint32_t distance(std::uint32_t first, std::uint32_t last);
-      boost::posix_time::ptime get_session_end(
+      std::pair<boost::posix_time::ptime, boost::posix_time::ptime> get_session(
         boost::posix_time::ptime timestamp) const;
       void update_session(State& state);
+      void discard(State& state, const TmxIpPacket& packet,
+        boost::posix_time::ptime timestamp);
       void add(State& state, const TmxIpPacket& packet);
       void flush(State& state);
       void drop(State& state, const TmxIpGap& gap, std::string_view reason);
@@ -190,7 +203,9 @@ namespace Nexus {
       if(recovery_client) {
         m_recovery_client.emplace(std::move(*recovery_client));
       }
-      m_session_end = get_session_end(m_time_client->get_time());
+      auto session = get_session(m_time_client->get_time());
+      m_session_start = session.first;
+      m_session_end = session.second;
       Beam::with(m_state, [&] (auto& state) {
         state.m_feeds.resize(m_feed_clients.size());
         for(auto& feed : state.m_feeds) {
@@ -228,7 +243,19 @@ namespace Nexus {
       Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
   StampMessage TmxIpClient<P, G, R, T>::read() {
+    auto session = std::uint64_t();
+    return read(Beam::out(session));
+  }
+
+  template<typename P, typename G, typename R, typename T> requires
+    IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  StampMessage TmxIpClient<P, G, R, T>::read(
+      Beam::Out<std::uint64_t> session) {
     auto message = m_messages.pop();
+    *session = message.m_session;
     m_payload = std::move(message.m_buffer);
     return message.m_message;
   }
@@ -274,17 +301,41 @@ namespace Nexus {
       IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
       Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
-  boost::posix_time::ptime TmxIpClient<P, G, R, T>::get_session_end(
-      boost::posix_time::ptime timestamp) const {
+  std::pair<boost::posix_time::ptime, boost::posix_time::ptime>
+      TmxIpClient<P, G, R, T>::get_session(
+        boost::posix_time::ptime timestamp) const {
     auto local =
       boost::local_time::local_date_time(timestamp, m_time_zone).local_time();
+    auto resolve = [&] (boost::gregorian::date date) {
+      auto candidate = boost::posix_time::ptime(date, m_rollover_time) -
+        m_time_zone->base_utc_offset();
+      if(!m_time_zone->has_dst()) {
+        return candidate;
+      }
+      auto daylight = candidate - m_time_zone->dst_offset();
+      auto daylight_local = boost::local_time::local_date_time(
+        daylight, m_time_zone).local_time();
+      auto standard_local = boost::local_time::local_date_time(
+        candidate, m_time_zone).local_time();
+      auto expected = boost::posix_time::ptime(date, m_rollover_time);
+      if(daylight_local == expected && standard_local == expected) {
+        return std::min(candidate, daylight);
+      }
+      if(daylight_local == expected) {
+        return daylight;
+      }
+      if(standard_local == expected) {
+        return candidate;
+      }
+      return std::max(candidate, daylight);
+    };
     auto date = local.date();
-    if(local.time_of_day() >= m_rollover_time) {
-      date += boost::gregorian::days(1);
+    auto start = resolve(date);
+    if(start > timestamp) {
+      date -= boost::gregorian::days(1);
+      start = resolve(date);
     }
-    return boost::local_time::local_date_time(date, m_rollover_time,
-      m_time_zone, boost::local_time::local_date_time::EXCEPTION_ON_ERROR).
-      utc_time();
+    return std::pair(start, resolve(date + boost::gregorian::days(1)));
   }
 
   template<typename P, typename G, typename R, typename T> requires
@@ -297,7 +348,34 @@ namespace Nexus {
     if(state.m_is_finished || timestamp < m_session_end) {
       return;
     }
-    m_session_end = get_session_end(timestamp);
+    auto sequence = state.m_sequencer.get_sequence();
+    auto count = std::uint64_t();
+    while(true) {
+      if(state.m_sequencer.read()) {
+        ++count;
+      } else if(auto gap = state.m_sequencer.get_gap()) {
+        count += gap->m_count;
+        state.m_sequencer.skip(gap->m_count);
+      } else {
+        break;
+      }
+    }
+    auto out = std::stringstream();
+    if(count != 0) {
+      out << "(dropped " << timestamp << ' ' << *sequence << ' ' << count <<
+        " session_reset)\n";
+    }
+    if(state.m_builder.has_pending_message()) {
+      out << "(dropped " << timestamp << " incomplete_message session_reset)\n";
+    }
+    if(!out.str().empty()) {
+      std::cout << out.str() << std::flush;
+    }
+    state.m_retired_sessions[m_session_start] =
+      state.m_sequencer.get_sequence();
+    auto session = get_session(timestamp);
+    m_session_start = session.first;
+    m_session_end = session.second;
     ++state.m_session;
     state.m_sequencer.reset(1);
     state.m_builder.reset();
@@ -310,6 +388,38 @@ namespace Nexus {
     if(m_recovery_client) {
       (*m_recovery_client)->reset(state.m_session);
     }
+  }
+
+  template<typename P, typename G, typename R, typename T> requires
+    IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
+      IsTmxIpRecoveryClient<Beam::dereference_t<G>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void TmxIpClient<P, G, R, T>::discard(State& state, const TmxIpPacket& packet,
+      boost::posix_time::ptime timestamp) {
+    auto sequence = packet.m_header.m_sequence;
+    if(is_heartbeat(packet.m_header)) {
+      sequence = TmxIpHeartbeat::parse(packet).m_last_sequence;
+    }
+    if(!sequence || *sequence == 0) {
+      return;
+    }
+    auto& expected = state.m_retired_sessions[get_session(timestamp).first];
+    if(!expected) {
+      if(!packet.m_header.m_sequence) {
+        return;
+      }
+      expected = sequence;
+    }
+    auto offset = distance(*expected, *sequence);
+    if(offset > MAXIMUM_SEQUENCE / 2) {
+      return;
+    }
+    auto out = std::stringstream();
+    out << "(dropped " << m_time_client->get_time() << ' ' << *expected <<
+      ' ' << offset + 1 << " session_reset)\n";
+    std::cout << out.str() << std::flush;
+    expected = *sequence % MAXIMUM_SEQUENCE + 1;
   }
 
   template<typename P, typename G, typename R, typename T> requires
@@ -342,7 +452,8 @@ namespace Nexus {
         if(auto payload = state.m_builder.add(*packet)) {
           auto message = StampMessage::parse(
             std::string_view(payload->get_data(), payload->get_size()));
-          m_messages.push(Message(std::move(*payload), message));
+          m_messages.push(
+            Message(std::move(*payload), message, state.m_session));
         }
       }
     } catch(const std::exception&) {
@@ -507,23 +618,35 @@ namespace Nexus {
   void TmxIpClient<P, G, R, T>::feed_loop(std::size_t feed) {
     try {
       while(m_open_state.is_open()) {
+        auto timestamp = boost::posix_time::ptime();
         auto packet = [&] () -> boost::optional<TmxIpPacket> {
           try {
-            return m_feed_clients[feed]->read();
+            return m_feed_clients[feed]->read(Beam::out(timestamp));
           } catch(const TmxIpParserException&) {
             return {};
           }
         }();
         if(packet) {
+          auto heartbeat_timestamp =
+            boost::optional<boost::posix_time::ptime>();
           if(is_heartbeat(packet->m_header)) {
             try {
-              TmxIpHeartbeat::parse(*packet);
+              heartbeat_timestamp = TmxIpHeartbeat::parse(*packet).m_timestamp;
             } catch(const TmxIpParserException&) {
               continue;
             }
           }
           Beam::with(m_state, [&] (auto& state) {
             update_session(state);
+            auto is_stale = timestamp < m_session_start ||
+              (heartbeat_timestamp && *heartbeat_timestamp < m_session_start);
+            if(is_stale) {
+              if(heartbeat_timestamp) {
+                timestamp = std::min(timestamp, *heartbeat_timestamp);
+              }
+              discard(state, *packet, timestamp);
+              return;
+            }
             update(state, feed, *packet);
             add(state, *packet);
           });

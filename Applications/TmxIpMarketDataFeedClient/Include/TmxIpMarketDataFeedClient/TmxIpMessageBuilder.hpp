@@ -18,6 +18,9 @@ namespace Nexus {
        */
       boost::optional<Beam::SharedBuffer> add(const TmxIpPacket& packet);
 
+      /** Returns whether a message is awaiting continuation packets. */
+      bool has_pending_message() const;
+
       /** Discards an incomplete message. */
       void reset();
 
@@ -73,6 +76,10 @@ namespace Nexus {
     auto payload = std::move(m_assembly->m_payload);
     reset();
     return payload;
+  }
+
+  inline bool TmxIpMessageBuilder::has_pending_message() const {
+    return m_assembly.has_value();
   }
 
   inline void TmxIpMessageBuilder::reset() {

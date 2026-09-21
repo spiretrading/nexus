@@ -12,15 +12,34 @@ using namespace Nexus;
 
 namespace {
   struct MessageClient {
-    Queue<std::string> m_messages;
+    struct Message {
+      std::string m_payload;
+      std::uint64_t m_session;
+    };
+    Queue<Message> m_messages;
     std::string m_payload;
     std::atomic_int m_count = 0;
     bool m_is_closed = false;
 
     StampMessage read() {
-      m_payload = m_messages.pop();
+      auto session = std::uint64_t();
+      return read(out(session));
+    }
+
+    StampMessage read(Out<std::uint64_t> session) {
+      auto message = m_messages.pop();
+      m_payload = std::move(message.m_payload);
+      *session = message.m_session;
       ++m_count;
       return StampMessage::parse(m_payload);
+    }
+
+    void push(std::string payload) {
+      push(std::move(payload), 0);
+    }
+
+    void push(std::string payload, std::uint64_t session) {
+      m_messages.push(Message(std::move(payload), session));
     }
 
     int get_count() const {
@@ -111,14 +130,24 @@ namespace {
     }
 
     void publish(std::string_view fields) {
-      publish(fields, "|56=20260921090000000|17=FFFFFFFF|54=0123abcd|50=1");
+      publish(fields, 0);
+    }
+
+    void publish(std::string_view fields, std::uint64_t session) {
+      publish(fields, "|56=20260921090000000|17=FFFFFFFF|54=0123abcd|50=1",
+        session);
     }
 
     void publish(std::string_view fields, std::string_view control) {
+      publish(fields, control, 0);
+    }
+
+    void publish(std::string_view fields, std::string_view control,
+        std::uint64_t session) {
       auto message = std::string("") + std::string(control) + '' +
         std::string(fields);
       std::ranges::replace(message, '|', '');
-      m_source.m_messages.push(std::move(message));
+      m_source.push(std::move(message), session);
     }
 
     void publish_cbbo() {
@@ -615,6 +644,67 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     fixture.require_empty();
   }
 
+  TEST_CASE("source_session") {
+    auto fixture = Fixture(Venues::NEOE, {
+      TickerInfo(parse_ticker("ABX.TSX"), "", "", 100),
+      TickerInfo(parse_ticker("BBD.TSX"), "", "", 100)});
+    auto bid = std::string(
+      "|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=AQL"
+      "|57=20260921090000000|40=123|196=25.50|64=600");
+    fixture.publish(bid, 0);
+    fixture.publish("|6=OrderCancelResp|5=Sell|16=Booked|55=ABX|247=AQL"
+      "|57=20260921090000000|40=123|196=25.51|64=400", 0);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=BBD|247=AQL"
+      "|57=20260921090000000|40=123|196=30|64=200", 0);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=BBD|247=AQL"
+      "|57=20260921090000000|40=MARKET|196=0|64=500", 0);
+    fixture.publish(bid, 0);
+    fixture.publish(bid, 1);
+    auto ids = std::vector<std::string>();
+    for(auto i = 0; i != 3; ++i) {
+      auto order = fixture.operation<FeedClient::AddOrderOperation>();
+      ids.push_back(order->m_id);
+    }
+    auto removals = std::vector<std::string>();
+    for(auto i = 0; i != 3; ++i) {
+      flush_pending_routines();
+      auto operation = fixture.m_feed_operations->try_pop();
+      REQUIRE(operation.has_value());
+      std::visit([] (auto& operation) { operation.m_result.set(); },
+        **operation);
+      auto removal = std::get_if<FeedClient::RemoveOrderOperation>(
+        &**operation);
+      REQUIRE(removal);
+      REQUIRE(removal->m_timestamp == fixture.m_time.get_time());
+      removals.push_back(removal->m_id);
+    }
+    auto id = ids.front();
+    std::ranges::sort(ids);
+    std::ranges::sort(removals);
+    REQUIRE(removals == ids);
+    auto order = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(order->m_id == id);
+    REQUIRE(order->m_size == 600);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=PriceAssigned|55=BBD"
+      "|247=AQL|57=20260921090001000|40=123|196=31|64=0", 1);
+    fixture.publish("|6=MBXMessage|5=AssignCOP|55=BBD|247=AQL|191=32"
+      "|57=20260921090002000", 1);
+    fixture.publish(bid, 1);
+    fixture.require_empty();
+    fixture.publish(bid, 2);
+    flush_pending_routines();
+    auto operation = fixture.m_feed_operations->try_pop();
+    REQUIRE(operation.has_value());
+    std::visit([] (auto& operation) { operation.m_result.set(); }, **operation);
+    auto removal = std::get_if<FeedClient::RemoveOrderOperation>(&**operation);
+    REQUIRE(removal);
+    REQUIRE(removal->m_id == id);
+    order = fixture.operation<FeedClient::AddOrderOperation>();
+    REQUIRE(order->m_id == id);
+    REQUIRE(order->m_size == 600);
+    fixture.require_empty();
+  }
+
   TEST_CASE("auction_sides") {
     auto fixture = Fixture(Venues::NEOE);
     fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=AQL"
@@ -669,6 +759,12 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     fixture.publish(trade + "|5=Cancelled");
     fixture.publish(trade + "|5=Trade|183=Y");
     fixture.require_empty();
+    for(auto correction : {"", "|183=N"}) {
+      CAPTURE(correction);
+      fixture.publish(trade + "|5=" + action + display +
+        "|506=ORIGINAL" + correction);
+      fixture.require_empty();
+    }
     fixture.publish(trade + "|5=" + action + display);
     auto update = fixture.operation<FeedClient::AddOrderOperation>();
     REQUIRE(update->m_id == bid->m_id);
@@ -737,7 +833,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     fixture.publish("|6=OrderCancelResp|5=Sell|16=Booked|55=ABX|247=TSE"
       "|57=20260921090000000|40=124|70=79|196=26|64=200");
     auto ask = fixture.operation<FeedClient::AddOrderOperation>();
-    fixture.m_source.m_messages.push("\x01\x1e" "56=20260921090001000\x1c"
+    fixture.m_source.push("\x01\x1e" "56=20260921090001000\x1c"
       "\x1e" "6=MBXMessage\x1e" "5=AssignCOP\x1e" "55=ABX"
       "\x1e" "247=TSE\x1e" "57=20260921090001000\x1e" "191=25.50"
       "\x1e" "192=079|123\x1e" "192.1=079|124");
@@ -749,7 +845,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     REQUIRE(update->m_id == ask->m_id);
     REQUIRE(update->m_price == Money(25.50));
     REQUIRE(update->m_size == 200);
-    fixture.m_source.m_messages.push("\x01\x1e" "56=20260921090002000\x1c"
+    fixture.m_source.push("\x01\x1e" "56=20260921090002000\x1c"
       "\x1e" "6=MBXMessage\x1e" "5=AssignLimit\x1e" "55=ABX"
       "\x1e" "247=TSE\x1e" "57=20260921090002000\x1e" "191=25.50"
       "\x1e" "192=079|123\x1e" "41=25\x1e" "192.1=079|124"
@@ -884,19 +980,19 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     auto& source = fixture.m_source;
     auto& client = fixture.m_client;
     SUBCASE("stamp_framing") {
-      source.m_messages.push("not a STAMP message");
+      source.push("not a STAMP message");
     }
     SUBCASE("required_field") {
-      source.m_messages.push("\x01\x1e" "56=20260920090000000\x1c"
+      source.push("\x01\x1e" "56=20260920090000000\x1c"
         "\x1e" "6=MBXMessage\x1e" "5=AssignCOP\x1e" "191=25.50"
         "\x1e" "57=20260920090000000");
     }
     SUBCASE("price") {
-      source.m_messages.push("\x01\x1e" "56=20260920090000000\x1c"
+      source.push("\x01\x1e" "56=20260920090000000\x1c"
         "\x1e" "6=MBXMessage\x1e" "5=AssignCOP\x1e" "55=ABX"
         "\x1e" "191=invalid\x1e" "57=20260920090000000");
     }
-    source.m_messages.push("\x01\x1e" "56=20260920090000000\x1c"
+    source.push("\x01\x1e" "56=20260920090000000\x1c"
       "\x1e" "6=FutureMessage");
     flush_pending_routines();
     REQUIRE(client.is_finished());
@@ -910,12 +1006,12 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     auto fixture = Fixture();
     auto& source = fixture.m_source;
     auto& client = fixture.m_client;
-    source.m_messages.push("\x01\x1e" "56=20260920090000000\x1c"
+    source.push("\x01\x1e" "56=20260920090000000\x1c"
       "\x1e" "6=StockStatus\x1e" "57=20260920090000000");
-    source.m_messages.push("\x01\x1e" "56=20260920090000000\x1c"
+    source.push("\x01\x1e" "56=20260920090000000\x1c"
       "\x1e" "6=MBXMessage\x1e" "5=AssignCOP\x1e" "55=ABX"
       "\x1e" "191=25.50\x1e" "57=20260920090000000");
-    source.m_messages.push("\x01\x1e" "56=20260920090000000\x1c"
+    source.push("\x01\x1e" "56=20260920090000000\x1c"
       "\x1e" "6=FutureMessage");
     flush_pending_routines();
     REQUIRE(source.get_count() == 3);

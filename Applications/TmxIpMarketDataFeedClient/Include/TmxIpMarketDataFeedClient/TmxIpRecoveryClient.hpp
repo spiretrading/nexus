@@ -5,6 +5,7 @@
 #include <memory>
 #include <mutex>
 #include <stop_token>
+#include <vector>
 #include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/IO/OpenState.hpp>
 #include <Beam/IO/Reader.hpp>
@@ -101,11 +102,7 @@ namespace Nexus {
       /** Returns the advertised request limit, or 10,000 before a heartbeat. */
       std::uint32_t get_maximum_count() const;
 
-      /**
-       * Requests an inclusive range.
-       * Recovered packets become available through read while this waits.
-       * Throws on recovery errors, transport failures, and expired deadlines.
-       */
+      /** Requests an inclusive range. */
       TmxIpRecoveryResult request(const TmxIpRecoveryRequest& request);
 
       /** Requests a range for a local session, rejecting expired sessions. */
@@ -124,11 +121,7 @@ namespace Nexus {
        */
       TmxIpPacket read(Beam::Out<std::uint64_t> session);
 
-      /**
-       * Starts a local session and asynchronously cancels active recovery.
-       * Keeps the delivery channel open. Already queued packets retain their
-       * original session identifiers.
-       */
+      /** Starts a local session and asynchronously cancels active recovery. */
       void reset(std::uint64_t session);
 
       /** Cancels recovery and closes the protocol client. */
@@ -153,6 +146,8 @@ namespace Nexus {
       struct State {
         std::shared_ptr<Operation> m_operation;
         std::exception_ptr m_exception;
+        std::vector<TmxIpRecoveryRequest> m_ranges;
+        std::vector<TmxIpRecoveryRequest> m_quarantined_ranges;
         std::uint64_t m_session = 0;
       };
       mutable Beam::Mutex m_mutex;
@@ -168,6 +163,8 @@ namespace Nexus {
       Beam::RoutineHandler m_read_loop;
       Beam::OpenState m_open_state;
 
+      static void add(
+        std::vector<TmxIpRecoveryRequest>& ranges, TmxIpRecoveryRequest range);
       static void cancel(const std::shared_ptr<Operation>& operation,
         const std::exception_ptr& exception);
       static void check(const Operation& operation);
@@ -268,6 +265,14 @@ namespace Nexus {
         boost::throw_with_location(
           Beam::IOException("TMX IP recovery session expired."));
       }
+      for(auto& range : state.m_quarantined_ranges) {
+        if(request.m_start_sequence <= range.m_end_sequence &&
+            request.m_end_sequence >= range.m_start_sequence) {
+          boost::throw_with_location(Beam::IOException(
+            "TMX IP recovery request overlaps a quarantined range."));
+        }
+      }
+      add(state.m_ranges, request);
       state.m_operation = operation;
     });
     try {
@@ -279,6 +284,9 @@ namespace Nexus {
       check(*operation);
       return result;
     } catch(const std::exception&) {
+      Beam::with(m_state, [&] (auto& state) {
+        add(state.m_quarantined_ranges, request);
+      });
       finish(*operation, *slot);
       throw;
     }
@@ -310,6 +318,10 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<T>>
   void TmxIpRecoveryClient<C, P, T>::reset(std::uint64_t session) {
     Beam::with(m_state, [&] (auto& state) {
+      for(auto& range : state.m_ranges) {
+        add(state.m_quarantined_ranges, range);
+      }
+      state.m_ranges.clear();
       state.m_session = session;
       if(auto operation = state.m_operation) {
         m_tasks.push([=] {
@@ -340,6 +352,27 @@ namespace Nexus {
     m_tasks.close();
     m_tasks.wait();
     m_open_state.close();
+  }
+
+  template<Beam::IsChannel C, typename P, typename T> requires
+    IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void TmxIpRecoveryClient<C, P, T>::add(
+      std::vector<TmxIpRecoveryRequest>& ranges, TmxIpRecoveryRequest range) {
+    auto i = ranges.begin();
+    while(i != ranges.end()) {
+      if(range.m_start_sequence <= i->m_end_sequence + 1 &&
+          range.m_end_sequence + 1 >= i->m_start_sequence) {
+        range.m_start_sequence =
+          std::min(range.m_start_sequence, i->m_start_sequence);
+        range.m_end_sequence =
+          std::max(range.m_end_sequence, i->m_end_sequence);
+        i = ranges.erase(i);
+      } else {
+        ++i;
+      }
+    }
+    ranges.push_back(range);
   }
 
   template<Beam::IsChannel C, typename P, typename T> requires
@@ -422,7 +455,7 @@ namespace Nexus {
           entry.m_header.m_service.size(), entry.m_buffer.get_size() -
           entry.m_header.m_service.size()));
       if(auto sequence = packet.m_header.m_sequence) {
-        if(*sequence >= result.m_start_sequence &&
+        if(is_current && *sequence >= result.m_start_sequence &&
             *sequence <= result.m_end_sequence) {
           m_packets.push(std::move(entry));
         }

@@ -1,7 +1,5 @@
 #include <algorithm>
 #include <thread>
-#include <Beam/IO/QueuedReader.hpp>
-#include <Beam/IO/WrapperChannel.hpp>
 #include <Beam/Network/MulticastSocketChannel.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
@@ -19,16 +17,12 @@ using namespace Beam;
 using namespace Nexus;
 
 namespace {
-  using ApplicationFeedChannel =
-    WrapperChannel<std::unique_ptr<MulticastSocketChannel>,
-      QueuedReader<MulticastSocketChannel::Reader*>>;
-  using ApplicationProtocolClient =
-    TmxIpProtocolClient<std::unique_ptr<ApplicationFeedChannel>>;
-  using ApplicationRecoveryChannel =
-    WrapperChannel<std::unique_ptr<UdpSocketChannel>,
-      QueuedReader<UdpSocketChannel::Reader*>>;
-  using ApplicationRecoveryProtocolClient =
-    TmxIpProtocolClient<std::unique_ptr<ApplicationRecoveryChannel>>;
+  using ApplicationFeedChannel = MulticastSocketChannel;
+  using ApplicationProtocolClient = TmxIpProtocolClient<
+    std::unique_ptr<ApplicationFeedChannel>, LiveNtpTimeClient*>;
+  using ApplicationRecoveryChannel = UdpSocketChannel;
+  using ApplicationRecoveryProtocolClient = TmxIpProtocolClient<
+    std::unique_ptr<ApplicationRecoveryChannel>, LiveNtpTimeClient*>;
   using ApplicationRecoveryClient = TmxIpRecoveryClient<TcpSocketChannel,
     std::unique_ptr<ApplicationRecoveryProtocolClient>, LiveTimer>;
 }
@@ -57,9 +51,8 @@ int main(int argc, const char** argv) {
       feed_clients.push_back(try_or_nest([&] {
         auto channel = std::make_unique<MulticastSocketChannel>(
           feed.m_address, feed.m_interface, configuration.m_socket_options);
-        auto reader = &channel->get_reader();
         return std::make_unique<ApplicationProtocolClient>(
-          std::make_unique<ApplicationFeedChannel>(std::move(channel), reader));
+          std::move(channel), time_client.get());
       }, std::runtime_error("Unable to join a TMX IP multicast group.")));
     }
     auto recovery_client =
@@ -69,10 +62,8 @@ int main(int argc, const char** argv) {
         auto channel = std::make_unique<UdpSocketChannel>(
           recovery->m_address, recovery->m_delivery_address,
           configuration.m_socket_options);
-        auto reader = &channel->get_reader();
         return std::make_unique<ApplicationRecoveryProtocolClient>(
-          std::make_unique<ApplicationRecoveryChannel>(
-            std::move(channel), reader));
+          std::move(channel), time_client.get());
       }, std::runtime_error(
         "Unable to open the TMX IP recovery delivery socket."));
       recovery_client = std::make_unique<ApplicationRecoveryClient>(

@@ -6,8 +6,8 @@
 #include <sstream>
 #include <unordered_map>
 #include <unordered_set>
-#include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <Beam/IO/OpenState.hpp>
+#include <Beam/Queries/StandardFunctionExpressions.hpp>
 #include <Beam/Routines/RoutineHandler.hpp>
 #include <Beam/Threading/Sync.hpp>
 #include <Beam/TimeService/TimeClient.hpp>
@@ -122,14 +122,15 @@ namespace Nexus {
       static void log(const StampMessage& message);
       static TimeAndSale::Condition get_condition(
         const TmxIpTradeReport& message);
-      Venue get_venue(
-        const Ticker& ticker, const TmxIpMessageHeader& header) const;
-      TmxIpMarketDataFeedClient(const TmxIpMarketDataFeedClient&) = delete;
-      TmxIpMarketDataFeedClient& operator =(
-        const TmxIpMarketDataFeedClient&) = delete;
       static std::string get_order_key(const Book& book, Side side,
         boost::optional<std::uint64_t> broker, std::string_view id);
       static Quantity get_quantity(const Book& book, const OrderEntry& order);
+      TmxIpMarketDataFeedClient(const TmxIpMarketDataFeedClient&) = delete;
+
+      TmxIpMarketDataFeedClient& operator =(
+        const TmxIpMarketDataFeedClient&) = delete;
+      Venue get_venue(
+        const Ticker& ticker, const TmxIpMessageHeader& header) const;
       Book* find_book(
         std::string_view symbol, const TmxIpMessageHeader& header);
       void update(Book& book, const std::string& key, OrderEntry order,
@@ -250,7 +251,6 @@ namespace Nexus {
     std::cout << out.str() << std::flush;
   }
 
-
   template<typename C, typename D, typename T, typename M> requires
     IsTmxIpClient<Beam::dereference_t<C>> &&
       IsMarketDataClient<Beam::dereference_t<D>> &&
@@ -354,24 +354,6 @@ namespace Nexus {
       IsMarketDataClient<Beam::dereference_t<D>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>> &&
       IsMarketDataFeedClient<Beam::dereference_t<M>>
-  Venue TmxIpMarketDataFeedClient<C, D, T, M>::get_venue(
-      const Ticker& ticker, const TmxIpMessageHeader& header) const {
-    auto venue = m_config.m_venue;
-    if(venue == Venues::CSE && ticker.get_venue() != Venues::CSE) {
-      venue = Venues::PURE;
-    }
-    if(header.m_book_type &&
-        *header.m_book_type != VENUES.from(venue).m_market_center) {
-      return {};
-    }
-    return venue;
-  }
-
-  template<typename C, typename D, typename T, typename M> requires
-    IsTmxIpClient<Beam::dereference_t<C>> &&
-      IsMarketDataClient<Beam::dereference_t<D>> &&
-      Beam::IsTimeClient<Beam::dereference_t<T>> &&
-      IsMarketDataFeedClient<Beam::dereference_t<M>>
   std::string TmxIpMarketDataFeedClient<C, D, T, M>::get_order_key(
       const Book& book, Side side, boost::optional<std::uint64_t> broker,
       std::string_view id) {
@@ -404,6 +386,24 @@ namespace Nexus {
       return 0;
     }
     return floor_to(order.m_quantity, book.m_board_lot);
+  }
+
+  template<typename C, typename D, typename T, typename M> requires
+    IsTmxIpClient<Beam::dereference_t<C>> &&
+      IsMarketDataClient<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+      IsMarketDataFeedClient<Beam::dereference_t<M>>
+  Venue TmxIpMarketDataFeedClient<C, D, T, M>::get_venue(
+      const Ticker& ticker, const TmxIpMessageHeader& header) const {
+    auto venue = m_config.m_venue;
+    if(venue == Venues::CSE && ticker.get_venue() != Venues::CSE) {
+      venue = Venues::PURE;
+    }
+    if(header.m_book_type &&
+        *header.m_book_type != VENUES.from(venue).m_market_center) {
+      return {};
+    }
+    return venue;
   }
 
   template<typename C, typename D, typename T, typename M> requires
@@ -634,6 +634,7 @@ namespace Nexus {
     if((message.m_action != "Trade" &&
         message.m_action != "AuctionTradeIndividual") ||
         message.m_is_correction.value_or(false) ||
+        message.m_original_trade_id ||
         message.m_settlement_terms ||
         message.m_is_nonresident.value_or(false)) {
       return;
@@ -1080,10 +1081,26 @@ namespace Nexus {
   void TmxIpMarketDataFeedClient<C, D, T, M>::read_loop() {
     try {
       load_tickers();
+      auto session = std::uint64_t();
       while(m_open_state.is_open()) {
-        auto message = m_tmx_ip_client->read();
+        auto next_session = std::uint64_t();
+        auto message = m_tmx_ip_client->read(Beam::out(next_session));
         if(!m_open_state.is_open()) {
           break;
+        }
+        if(next_session != session) {
+          auto timestamp = m_time_client->get_time();
+          for(auto& [key, book] : m_books) {
+            while(!book.m_orders.empty()) {
+              auto id = book.m_orders.begin()->first;
+              remove(book, id, timestamp);
+            }
+          }
+          m_books.clear();
+          m_opening_quotes.clear();
+          m_auction_date = boost::gregorian::date();
+          m_auction_trades.clear();
+          session = next_session;
         }
         if(m_config.m_is_logging_messages) {
           log(message);

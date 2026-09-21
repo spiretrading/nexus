@@ -1,35 +1,62 @@
 #include <future>
 #include <Beam/IO/EndOfFileException.hpp>
 #include <Beam/IO/LocalServerConnection.hpp>
-#include <Beam/Queues/Queue.hpp>
-#include <Beam/Routines/RoutineHandler.hpp>
+#include <Beam/TimeService/FixedTimeClient.hpp>
 #include <boost/optional/optional_io.hpp>
 #include <doctest/doctest.h>
 #include "TmxIpMarketDataFeedClient/TmxIpProtocolClient.hpp"
 
 using namespace Beam;
 using namespace boost;
+using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
   struct Fixture {
     LocalServerConnection m_server;
     optional<LocalClientChannel> m_channel;
-    optional<TmxIpProtocolClient<LocalClientChannel*>> m_client;
+    FixedTimeClient m_time_client;
+    optional<TmxIpProtocolClient<LocalClientChannel*, FixedTimeClient*>>
+      m_client;
     std::unique_ptr<LocalServerChannel> m_server_channel;
 
-    Fixture() {
+    Fixture()
+        : m_time_client(time_from_string("2026-09-20 23:59:59.900")) {
       auto server_channel = std::async(std::launch::async, [&] {
         return m_server.accept();
       });
       m_channel.emplace("tmx_ip", m_server);
-      m_client.emplace(&*m_channel);
+      m_client.emplace(&*m_channel, &m_time_client);
       m_server_channel = server_channel.get();
     }
   };
 }
 
 TEST_SUITE("TmxIpProtocolClient") {
+  TEST_CASE("ingress_timestamp") {
+    auto fixture = Fixture();
+    flush_pending_routines();
+    auto ingress = fixture.m_time_client.get_time();
+    fixture.m_server_channel->get_writer().write(
+      from<SharedBuffer>("\x02" "0029000000001CDF00  T payload\x03"));
+    flush_pending_routines();
+    auto next_ingress = ingress + milliseconds(200);
+    fixture.m_time_client.set(next_ingress);
+    fixture.m_server_channel->get_writer().write(
+      from<SharedBuffer>("\x02" "0026000000002CDF00  T next\x03"));
+    flush_pending_routines();
+    fixture.m_time_client.set(next_ingress + seconds(5));
+    auto timestamp = ptime();
+    auto first = fixture.m_client->read(out(timestamp));
+    REQUIRE(timestamp == ingress);
+    REQUIRE(first.m_header.m_sequence == std::uint32_t(1));
+    REQUIRE(first.m_payload == "payload");
+    auto second = fixture.m_client->read(out(timestamp));
+    REQUIRE(timestamp == next_ingress);
+    REQUIRE(second.m_header.m_sequence == std::uint32_t(2));
+    REQUIRE(second.m_payload == "next");
+  }
+
   TEST_CASE("read_packet") {
     auto fixture = Fixture();
     fixture.m_server_channel->get_writer().write(from<SharedBuffer>(
@@ -82,28 +109,55 @@ TEST_SUITE("TmxIpProtocolClient") {
       auto duplicate = malformed;
       append(malformed, duplicate);
     }
+    auto ingress = fixture.m_time_client.get_time();
     fixture.m_server_channel->get_writer().write(malformed);
+    flush_pending_routines();
+    auto next_ingress = ingress + milliseconds(200);
+    fixture.m_time_client.set(next_ingress);
     fixture.m_server_channel->get_writer().write(
       from<SharedBuffer>("\x02" "0026000000002CDF00  T next\x03"));
-    REQUIRE_THROWS_AS(fixture.m_client->read(), TmxIpParserException);
-    auto packet = fixture.m_client->read();
+    flush_pending_routines();
+    fixture.m_time_client.set(next_ingress + seconds(5));
+    auto timestamp = ptime();
+    REQUIRE_THROWS_AS(
+      fixture.m_client->read(out(timestamp)), TmxIpParserException);
+    REQUIRE(timestamp == ingress);
+    auto packet = fixture.m_client->read(out(timestamp));
+    REQUIRE(timestamp == next_ingress);
     REQUIRE(packet.m_header.m_sequence == std::uint32_t(2));
     REQUIRE(packet.m_payload == "next");
   }
 
   TEST_CASE("read_failure") {
     auto fixture = Fixture();
-    fixture.m_server_channel->get_writer().close(EndOfFileException());
+    SUBCASE("channel") {
+      fixture.m_server_channel->get_writer().close(EndOfFileException());
+    }
+    SUBCASE("time_client") {
+      fixture.m_time_client.close();
+      fixture.m_server_channel->get_writer().write(
+        from<SharedBuffer>("\x02" "0026000000001CDF00  T next\x03"));
+    }
     REQUIRE_THROWS_AS(fixture.m_client->read(), IOException);
   }
 
   TEST_CASE("close_pending_read") {
     auto fixture = Fixture();
+    auto read_timestamp = false;
+    SUBCASE("plain") {}
+    SUBCASE("timestamp") {
+      read_timestamp = true;
+    }
     auto results = Queue<std::exception_ptr>();
     auto reader = RoutineHandler(spawn([&] {
       auto error = std::exception_ptr();
       try {
-        fixture.m_client->read();
+        if(read_timestamp) {
+          auto timestamp = ptime();
+          fixture.m_client->read(out(timestamp));
+        } else {
+          fixture.m_client->read();
+        }
       } catch(const std::exception&) {
         error = std::current_exception();
       }
@@ -121,5 +175,9 @@ TEST_SUITE("TmxIpProtocolClient") {
     REQUIRE(*after);
     REQUIRE_THROWS_AS(std::rethrow_exception(*after), IOException);
     REQUIRE_NOTHROW(fixture.m_client->close());
+    REQUIRE_THROWS_AS(fixture.m_client->read(), IOException);
+    auto timestamp = ptime();
+    REQUIRE_THROWS_AS(fixture.m_client->read(out(timestamp)), IOException);
+    REQUIRE_NOTHROW(fixture.m_time_client.get_time());
   }
 }
