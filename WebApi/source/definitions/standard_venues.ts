@@ -29,7 +29,7 @@ export function buildVenueDatabase(): VenueDatabase {
   database.add(new VenueDatabase.Entry(new Venue('MATN'), Countries.CA, 'TCM',
     'America/Toronto', Currencies.CAD, 'Cboe Canada - MATCHNow', 'MATN'));
   database.add(new VenueDatabase.Entry(new Venue('NEOE'), Countries.CA, 'AQL',
-    'America/Toronto', Currencies.CAD, 'Cboe Canada - NEO-L', 'NEOE'));
+    'America/Toronto', Currencies.CAD, 'Cboe Canada - NEO-L', 'NEOL'));
   database.add(new VenueDatabase.Entry(new Venue('OMGA'), Countries.CA, 'OMG',
     'America/Toronto', Currencies.CAD, 'Omega ATS', 'OMGA'));
   database.add(new VenueDatabase.Entry(new Venue('PURE'), Countries.CA, 'PUR',
