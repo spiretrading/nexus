@@ -1131,16 +1131,17 @@ namespace TmxIpDetails {
       side.m_exchange = fields.read_optional(247, i, text<3>);
     }
     auto control = StampFieldReader(message.m_control_header);
-    value.m_source_address = control.read(54, [] (std::string_view source) {
+    auto address = [] (std::string_view source) {
       if(source.size() != 8 || source == "00000000" ||
           source.find_first_not_of("0123456789abcdefABCDEF") !=
             std::string_view::npos) {
         boost::throw_with_location(
-          TmxIpParserException("Invalid CBBO source address."));
+          TmxIpParserException("Invalid CBBO address."));
       }
       return source;
-    });
-    value.m_destination_address = control.read(17, text<8>);
+    };
+    value.m_source_address = control.read(54, address);
+    value.m_destination_address = control.read(17, address);
     value.m_sequence = control.read(50, number<9>);
     auto milliseconds = [] (std::string_view source) {
       if(source.size() != 17) {

@@ -615,6 +615,32 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     fixture.require_empty();
   }
 
+  TEST_CASE("auction_sides") {
+    auto fixture = Fixture(Venues::NEOE);
+    fixture.publish("|6=OrderCancelResp|5=Buy|16=Booked|55=ABX|247=AQL"
+      "|57=20260921090000000|40=123|70=79|196=25.50|64=600");
+    auto bid = fixture.operation<FeedClient::AddOrderOperation>();
+    fixture.publish("|6=OrderCancelResp|5=Sell|16=Booked|55=ABX|247=AQL"
+      "|57=20260921090000000|40=123|70=79|196=25.51|64=500");
+    auto ask = fixture.operation<FeedClient::AddOrderOperation>();
+    auto reports = std::vector{
+      std::tuple("|40=123|70=79", bid->m_id, 500),
+      std::tuple("|40.1=123|70.1=79", ask->m_id, 400)};
+    SUBCASE("buyer_first") {}
+    SUBCASE("seller_first") {
+      std::ranges::reverse(reports);
+    }
+    for(auto& [fields, id, quantity] : reports) {
+      fixture.publish(std::string(
+        "|6=TradeReport|5=AuctionTradeIndividual|55=ABX|247=AQL"
+        "|57=20260921090001000|220=AUCTION|41=25.50|64=100") + fields);
+      auto update = fixture.operation<FeedClient::AddOrderOperation>();
+      REQUIRE(update->m_id == id);
+      REQUIRE(update->m_size == quantity);
+      fixture.require_empty();
+    }
+  }
+
   TEST_CASE("book_trades") {
     auto source = std::string("TSE");
     auto action = std::string("Trade");
@@ -1048,6 +1074,21 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     REQUIRE_FALSE(fixture.m_data_operations->try_pop().has_value());
   }
 
+  TEST_CASE("publication_shutdown") {
+    auto fixture = Fixture();
+    fixture.publish("|6=MBXMessage|5=AssignCOP|55=ABX|247=TSE|191=25.50"
+      "|57=20260921090000000");
+    flush_pending_routines();
+    auto operation = fixture.m_feed_operations->try_pop();
+    REQUIRE(operation.has_value());
+    REQUIRE(std::holds_alternative<FeedClient::PublishBboQuoteOperation>(
+      **operation));
+    REQUIRE_FALSE(fixture.m_client.is_finished());
+    fixture.m_client.close();
+    REQUIRE(fixture.m_client.is_finished());
+    REQUIRE_FALSE(fixture.m_client.get_exception());
+  }
+
   TEST_CASE("lookup_shutdown") {
     auto fixture = Fixture(std::vector<TickerInfo>());
     fixture.publish("|6=MBXMessage|5=AssignCOP|55=ABX|247=TSE|191=25.50"
@@ -1057,6 +1098,32 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     REQUIRE(fixture.m_client.is_finished());
     REQUIRE_FALSE(fixture.m_client.get_exception());
     REQUIRE_FALSE(fixture.m_feed_operations->try_pop().has_value());
+  }
+
+  TEST_CASE("quote_sessions") {
+    auto fixture = Fixture({
+      TickerInfo(parse_ticker("ABX.TSX"), "Barrick", "", 100),
+      TickerInfo(parse_ticker("XYZ.TSXV"), "Venture", "", 100)});
+    for(auto [timestamp, tsx, venture] : {
+        std::tuple("2026-12-24 17:59:59", true, true),
+        {"2026-12-24 18:00:00", false, true},
+        {"2026-12-25 15:00:00", false, false},
+        {"2026-12-28 14:29:59", false, false},
+        {"2026-12-28 14:30:00", true, true},
+        {"2027-03-15 13:29:59", false, false},
+        {"2027-03-15 13:30:00", true, true}}) {
+      fixture.m_time.set(time_from_string(timestamp));
+      for(auto [symbol, venue, is_publishing] : {
+          std::tuple("ABX", Venues::TSX, tsx),
+          {"XYZ", Venues::TSXV, venture}}) {
+        fixture.publish(std::string("|6=Quote|5=Quote|55=") + symbol +
+          "|196=25.50|196.1=25.51|64=123|64.1=456");
+        if(is_publishing) {
+          REQUIRE(fixture.quote().get_index() == Ticker(symbol, venue));
+        }
+        fixture.require_empty();
+      }
+    }
   }
 
   TEST_CASE("cbbo_session") {

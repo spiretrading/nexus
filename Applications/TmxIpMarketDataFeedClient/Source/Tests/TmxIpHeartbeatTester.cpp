@@ -51,6 +51,10 @@ TEST_SUITE("TmxIpHeartbeat") {
     SUBCASE("sequence") {
       payload[payload.find("000001345")] = '-';
     }
+    SUBCASE("sequence_suffix") {
+      payload.replace(payload.find("000001345"), sizeof("000001345") - 1,
+        "00000134X");
+    }
     SUBCASE("previous_sequence") {
       payload[payload.rfind("000001345")] = ' ';
     }

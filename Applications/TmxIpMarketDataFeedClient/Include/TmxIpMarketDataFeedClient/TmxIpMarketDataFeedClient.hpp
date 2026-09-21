@@ -97,6 +97,11 @@ namespace Nexus {
         Side m_imbalance_side;
         Quantity m_imbalance_quantity;
       };
+      struct Session {
+        boost::gregorian::date m_date;
+        boost::optional<boost::posix_time::ptime> m_opening;
+        boost::optional<boost::posix_time::ptime> m_closing;
+      };
       TmxIpConfiguration m_config;
       TradingSchedule m_schedule;
       Beam::local_ptr_t<C> m_tmx_ip_client;
@@ -105,6 +110,7 @@ namespace Nexus {
       Beam::local_ptr_t<M> m_feed_client;
       std::unordered_map<std::string, boost::optional<TickerInfo>> m_tickers;
       std::unordered_map<Ticker, OpeningQuote> m_opening_quotes;
+      std::unordered_map<Venue, Session> m_sessions;
       std::unordered_map<std::string, Book> m_books;
       boost::gregorian::date m_auction_date;
       std::unordered_set<std::string> m_auction_trades;
@@ -139,7 +145,7 @@ namespace Nexus {
       void load_tickers();
       const TickerInfo* find_ticker(std::string_view symbol);
       bool is_eligible(Venue venue, bool is_opening,
-        boost::posix_time::ptime timestamp) const;
+        boost::posix_time::ptime timestamp);
       OpeningQuote* find_opening_quote(
         std::string_view symbol, const TmxIpMessageHeader& header);
       void publish(const TmxIpMbxMessage& message);
@@ -869,23 +875,27 @@ namespace Nexus {
       Beam::IsTimeClient<Beam::dereference_t<T>> &&
       IsMarketDataFeedClient<Beam::dereference_t<M>>
   bool TmxIpMarketDataFeedClient<C, D, T, M>::is_eligible(
-      Venue venue, bool is_opening, boost::posix_time::ptime timestamp) const {
-    auto opening = boost::optional<boost::posix_time::ptime>();
-    auto closing = boost::optional<boost::posix_time::ptime>();
-    for(auto& event : m_schedule.find(timestamp, venue)) {
-      if(event.m_code == "OPEN") {
-        opening = event.m_timestamp;
-      } else if(event.m_code == "CLOSE") {
-        closing = event.m_timestamp;
+      Venue venue, bool is_opening, boost::posix_time::ptime timestamp) {
+    auto date = utc_to_venue(venue, timestamp).date();
+    auto& session = m_sessions[venue];
+    if(session.m_date != date) {
+      session = Session();
+      session.m_date = date;
+      for(auto& event : m_schedule.find(timestamp, venue)) {
+        if(event.m_code == "OPEN") {
+          session.m_opening = event.m_timestamp;
+        } else if(event.m_code == "CLOSE") {
+          session.m_closing = event.m_timestamp;
+        }
       }
     }
-    if(!opening || !closing) {
+    if(!session.m_opening || !session.m_closing) {
       return false;
     }
     if(is_opening) {
-      return timestamp < *opening;
+      return timestamp < *session.m_opening;
     }
-    return timestamp >= *opening && timestamp < *closing;
+    return timestamp >= *session.m_opening && timestamp < *session.m_closing;
   }
 
   template<typename C, typename D, typename T, typename M> requires

@@ -371,6 +371,20 @@ TEST_SUITE("TmxIpSequencer") {
     REQUIRE(gap->m_sequence == 100);
     REQUIRE(gap->m_count == 3);
   }
+
+  TEST_CASE("heartbeat_skip") {
+    auto sequencer = TmxIpSequencer();
+    sequencer.reset(100);
+    sequencer.add(TmxIpPacket::parse(encode_heartbeat(102)));
+    sequencer.add(TmxIpPacket::parse(encode_packet(105, "tail")));
+    sequencer.skip(5);
+    auto packet = sequencer.read();
+    REQUIRE(packet.has_value());
+    REQUIRE(packet->m_payload == "tail");
+    REQUIRE(sequencer.get_sequence() == std::uint32_t(106));
+    REQUIRE_FALSE(sequencer.get_gap().has_value());
+  }
+
   TEST_CASE("skip") {
     auto sequencer = TmxIpSequencer();
     auto sequence = std::uint32_t(2);

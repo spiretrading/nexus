@@ -8,6 +8,7 @@
 #include <boost/algorithm/string/trim.hpp>
 #include <boost/lexical_cast.hpp>
 #include <boost/optional/optional.hpp>
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "Nexus/Definitions/StandardVenues.hpp"
 
 namespace Nexus {
@@ -55,6 +56,12 @@ namespace Nexus {
 
     /** The CDF venue; unspecified for consolidated services. */
     Venue m_venue;
+
+    /** The configured time zone, otherwise the venue's zone or Toronto. */
+    boost::local_time::time_zone_ptr m_time_zone;
+
+    /** The daily session rollover time in the transport's local time zone. */
+    boost::posix_time::time_duration m_rollover_time;
 
     /** Identically sequenced copies of the live stream. */
     std::vector<TmxIpFeed> m_feeds;
@@ -159,6 +166,28 @@ namespace Details {
           boost::throw_with_location(
             std::runtime_error("Invalid market data venue."));
         }
+      }
+      auto time_zone = [&] {
+        if(config["time_zone"]) {
+          return Beam::extract<std::string>(config, "time_zone");
+        }
+        if(configuration.m_venue) {
+          return VENUES.from(configuration.m_venue).m_time_zone;
+        }
+        return std::string("America/Toronto");
+      }();
+      configuration.m_time_zone = TIME_ZONES.time_zone_from_region(time_zone);
+      if(!configuration.m_time_zone) {
+        boost::throw_with_location(
+          std::runtime_error("Invalid TMX IP time zone: " + time_zone));
+      }
+      configuration.m_rollover_time = boost::posix_time::duration_from_string(
+        Beam::extract<std::string>(config, "rollover_time", "00:30:00"));
+      if(configuration.m_rollover_time.is_special() ||
+          configuration.m_rollover_time < boost::posix_time::seconds(0) ||
+          configuration.m_rollover_time >= boost::posix_time::hours(24)) {
+        boost::throw_with_location(
+          std::runtime_error("Invalid TMX IP rollover time."));
       }
       auto feeds = Beam::get_node(config, "feeds");
       if(!feeds.IsSequence() || feeds.size() == 0) {

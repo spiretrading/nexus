@@ -19,12 +19,52 @@ recovery:
 }
 
 TEST_SUITE("TmxIpConfiguration") {
+  TEST_CASE("time_zone") {
+    auto source = make_config();
+    auto offset = hours(-5);
+    SUBCASE("default") {}
+    SUBCASE("venue") {
+      source["venue"] = "ASX";
+      offset = hours(10);
+    }
+    SUBCASE("configured") {
+      source["time_zone"] = "Asia/Tokyo";
+      offset = hours(9);
+    }
+    SUBCASE("configured_precedence") {
+      source["venue"] = "ASX";
+      source["time_zone"] = "Asia/Tokyo";
+      offset = hours(9);
+    }
+    auto config = TmxIpConfiguration::parse(source);
+    REQUIRE(config.m_time_zone);
+    REQUIRE(config.m_time_zone->base_utc_offset() == offset);
+  }
+
+  TEST_CASE("invalid_time_zone") {
+    auto source = make_config();
+    for(auto value : {"", "Unknown/Zone"}) {
+      source["time_zone"] = value;
+      REQUIRE_THROWS_AS(TmxIpConfiguration::parse(source), std::runtime_error);
+    }
+  }
+
+  TEST_CASE("invalid_rollover_time") {
+    auto source = make_config();
+    for(auto value :
+        {"-00:00:01", "24:00:00", "infinity", "not-a-date-time"}) {
+      source["rollover_time"] = value;
+      REQUIRE_THROWS_AS(TmxIpConfiguration::parse(source), std::runtime_error);
+    }
+  }
+
   TEST_CASE("parse") {
     auto source = make_config();
     SUBCASE("defaults") {
       auto config = TmxIpConfiguration::parse(source);
       REQUIRE(config.m_country == Countries::CA);
       REQUIRE(config.m_sampling == milliseconds(100));
+      REQUIRE(config.m_rollover_time == minutes(30));
       REQUIRE(!config.m_is_logging_messages);
       REQUIRE(config.m_feeds.size() == 1);
       REQUIRE(config.m_recovery.has_value());
@@ -50,18 +90,22 @@ TEST_SUITE("TmxIpConfiguration") {
     }
     SUBCASE("overrides") {
       source["country"] = "AU";
+      source["rollover_time"] = "06:00:00";
       source["sampling"] = "250ms";
       source["enable_logging"] = true;
       source["receive_buffer"] = 1048576;
       source["retry_interval"] = "250ms";
+      source["feed_timeout"] = "2s";
       source["gap_timeout"] = "10s";
       source["recovery"]["timeout"] = "15s";
       auto config = TmxIpConfiguration::parse(source);
       REQUIRE(config.m_country == Countries::AU);
+      REQUIRE(config.m_rollover_time == hours(6));
       REQUIRE(config.m_sampling == milliseconds(250));
       REQUIRE(config.m_is_logging_messages);
       REQUIRE(config.m_socket_options.m_receive_buffer_size == 1048576);
       REQUIRE(config.m_retry_interval == milliseconds(250));
+      REQUIRE(config.m_feed_timeout == seconds(2));
       REQUIRE(config.m_gap_timeout == seconds(10));
       REQUIRE(config.m_recovery->m_timeout == seconds(15));
     }

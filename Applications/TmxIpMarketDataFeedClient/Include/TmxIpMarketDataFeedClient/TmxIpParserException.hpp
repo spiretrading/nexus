@@ -9,7 +9,6 @@ namespace Nexus {
     public:
       using std::runtime_error::runtime_error;
 
-      /** Constructs a TmxIpParserException. */
       TmxIpParserException();
   };
 

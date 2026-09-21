@@ -2,6 +2,7 @@
 #include <Beam/TimeService/FixedTimeClient.hpp>
 #include <Beam/TimeService/TriggerTimer.hpp>
 #include <doctest/doctest.h>
+#include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "TmxIpMarketDataFeedClient/TmxIpClient.hpp"
 
 using namespace Beam;
@@ -39,7 +40,9 @@ namespace {
     ProtocolClient m_protocol_client;
     Queue<TmxIpRecoveryRequest> m_requests;
     Queue<TmxIpRecoveryResult> m_results;
+    Queue<std::uint64_t> m_sessions;
     std::atomic_uint32_t m_maximum_count = 10000;
+    std::atomic_uint64_t m_session = 0;
 
     std::uint32_t get_maximum_count() const {
       return m_maximum_count;
@@ -54,10 +57,29 @@ namespace {
       return m_protocol_client.read();
     }
 
+    TmxIpRecoveryResult request(
+        const TmxIpRecoveryRequest& request, std::uint64_t session) {
+      if(session != m_session) {
+        throw IOException("Expired session.");
+      }
+      return this->request(request);
+    }
+
+    TmxIpPacket read(Out<std::uint64_t> session) {
+      auto packet = read();
+      *session = m_sessions.pop();
+      return packet;
+    }
+
+    void reset(std::uint64_t session) {
+      m_session = session;
+    }
+
     void close() {
       m_protocol_client.close();
       m_requests.close();
       m_results.close();
+      m_sessions.close();
     }
   };
 
@@ -78,12 +100,25 @@ namespace {
     explicit Fixture(std::size_t feeds)
       : Fixture(feeds, &m_recovery_client) {}
 
+    explicit Fixture(ptime timestamp)
+      : Fixture(1, &m_recovery_client, timestamp) {}
+
     Fixture(std::size_t feeds, WithoutRecovery)
       : Fixture(feeds, boost::none) {}
 
     Fixture(std::size_t feeds, boost::optional<RecoveryClient*> recovery)
-        : m_time_client(time_from_string("2026-09-20 12:00:00")),
-          m_client(seconds(3), GAP_TIMEOUT, [&] {
+      : Fixture(feeds, recovery, time_from_string("2026-09-20 12:00:00")) {}
+
+    Fixture(std::size_t feeds, boost::optional<RecoveryClient*> recovery,
+        ptime timestamp)
+      : Fixture(feeds, recovery, timestamp,
+          TIME_ZONES.time_zone_from_region("America/Toronto"), minutes(30)) {}
+
+    Fixture(std::size_t feeds, boost::optional<RecoveryClient*> recovery,
+        ptime timestamp, boost::local_time::time_zone_ptr time_zone,
+        time_duration rollover_time)
+        : m_time_client(timestamp),
+          m_client(time_zone, rollover_time, seconds(3), GAP_TIMEOUT, [&] {
             auto clients = std::vector<ProtocolClient*>();
             for(auto i = std::size_t(0); i != feeds; ++i) {
               m_feed_clients.push_back(std::make_unique<ProtocolClient>());
@@ -94,6 +129,16 @@ namespace {
 
     void publish(std::uint32_t sequence, std::string_view payload,
         TmxIpHeader::Continuation continuation, ProtocolClient& client) {
+      publish(sequence, payload, continuation, client,
+        m_recovery_client.m_session);
+    }
+
+    void publish(std::uint32_t sequence, std::string_view payload,
+        TmxIpHeader::Continuation continuation, ProtocolClient& client,
+        std::uint64_t session) {
+      if(&client == &m_recovery_client.m_protocol_client) {
+        m_recovery_client.m_sessions.push(session);
+      }
       client.m_packets.push(std::format("{}{:04}{:09}CDF0{}  T {}{}",
         TmxIpPacket::START, TmxIpHeader::LENGTH + payload.size(), sequence,
         static_cast<int>(continuation), payload, TmxIpPacket::END));
@@ -128,6 +173,13 @@ namespace {
       publish(sequence, symbol, m_recovery_client.m_protocol_client);
     }
 
+    void recover(std::uint32_t sequence, std::string_view symbol,
+        std::uint64_t session) {
+      publish(sequence, std::format("\x01\x1e" "1=H\x1c\x1e" "55={}\x1d",
+        symbol), TmxIpHeader::Continuation::NONE,
+        m_recovery_client.m_protocol_client, session);
+    }
+
     void complete(const TmxIpRecoveryRequest& request) {
       auto count = request.m_end_sequence - request.m_start_sequence + 1;
       m_recovery_client.m_results.push(TmxIpRecoveryResult(true,
@@ -154,6 +206,116 @@ namespace {
 }
 
 TEST_SUITE("TmxIpClient") {
+  TEST_CASE("configured_rollover") {
+    auto rollover = time_from_string("2026-09-20 20:00:00");
+    auto fixture = Fixture(1, boost::none, rollover - minutes(1),
+      TIME_ZONES.time_zone_from_region("Australia/Sydney"), hours(6));
+    fixture.publish(100, "OLD");
+    fixture.require_symbol("OLD");
+    fixture.m_time_client.set(rollover - time_duration::unit());
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    fixture.publish(101, "BEFORE");
+    fixture.require_symbol("BEFORE");
+    fixture.m_time_client.set(rollover);
+    fixture.publish(1, "NEW");
+    flush_pending_routines();
+    fixture.m_time_client.set(rollover + hours(24));
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    fixture.publish(1, "NEXT");
+    flush_pending_routines();
+    fixture.m_client.close();
+    fixture.require_symbol("NEW");
+    fixture.require_symbol("NEXT");
+    REQUIRE_THROWS_AS(fixture.m_client.read(), EndOfFileException);
+  }
+
+  TEST_CASE("session_initial_gap") {
+    auto rollover = time_from_string("2026-09-21 04:30:00");
+    auto fixture = Fixture(rollover - minutes(1));
+    fixture.publish(100, "OLD");
+    fixture.require_symbol("OLD");
+    fixture.m_time_client.set(rollover);
+    fixture.publish(2, "TWO");
+    auto request = fixture.require_request(1, 1);
+    fixture.recover(1, "ONE");
+    fixture.require_symbol("ONE");
+    fixture.require_symbol("TWO");
+    fixture.complete(request);
+  }
+
+  TEST_CASE("session_fragments") {
+    auto rollover = time_from_string("2026-09-21 04:30:00");
+    auto fixture = Fixture(2, boost::none, rollover - minutes(1));
+    fixture.publish(100, "OLD");
+    fixture.require_symbol("OLD");
+    fixture.publish(101, "\x01\x1e" "1=H\x1c\x1e" "55=OLD",
+      TmxIpHeader::Continuation::FIRST, *fixture.m_feed_clients.front());
+    flush_pending_routines();
+    fixture.m_time_client.set(rollover);
+    fixture.publish(1, "NEW", *fixture.m_feed_clients.back());
+    fixture.publish(1, "NEW");
+    fixture.publish(2, "NEXT");
+    fixture.require_symbol("NEW");
+    fixture.require_symbol("NEXT");
+    flush_pending_routines();
+    fixture.m_client.close();
+    REQUIRE_THROWS_AS(fixture.m_client.read(), EndOfFileException);
+  }
+
+  TEST_CASE("session_rollover") {
+    auto rollover = time_from_string("2026-09-21 04:30:00");
+    SUBCASE("summer") {}
+    SUBCASE("winter") {
+      rollover = time_from_string("2026-12-22 05:30:00");
+    }
+    auto fixture = Fixture(rollover - hours(1));
+    fixture.publish(100, "OLD");
+    fixture.require_symbol("OLD");
+    fixture.m_time_client.set(rollover - time_duration::unit());
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    fixture.publish(101, "BEFORE");
+    fixture.require_symbol("BEFORE");
+    fixture.m_time_client.set(rollover);
+    SUBCASE("timer") {
+      fixture.m_timer.trigger();
+      flush_pending_routines();
+    }
+    SUBCASE("packet") {}
+    fixture.publish(1, "NEW");
+    fixture.publish(2, "AFTER");
+    flush_pending_routines();
+    fixture.require_symbol("NEW");
+    fixture.require_symbol("AFTER");
+    fixture.m_client.close();
+    REQUIRE_THROWS_AS(fixture.m_client.read(), EndOfFileException);
+  }
+
+  TEST_CASE("session_recovery") {
+    auto rollover = time_from_string("2026-09-21 04:30:00");
+    auto fixture = Fixture(rollover - minutes(1));
+    fixture.publish(1, "OLD");
+    fixture.require_symbol("OLD");
+    fixture.publish(3, "BUFFERED");
+    fixture.require_request(2, 2);
+    fixture.m_time_client.set(rollover);
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    fixture.publish(1, "NEW");
+    fixture.require_symbol("NEW");
+    fixture.publish(3, "THREE");
+    fixture.recover(2, "STALE", 0);
+    fixture.m_recovery_client.m_results.push(TmxIpRecoveryResult(false,
+      TmxIpRecoveryResponse::Status::REJECTED, 2, 2, 0, 0, "old"));
+    auto request = fixture.require_request(2, 2);
+    fixture.recover(2, "TWO");
+    fixture.require_symbol("TWO");
+    fixture.require_symbol("THREE");
+    fixture.complete(request);
+  }
+
   TEST_CASE("message_sequence") {
     auto fixture = Fixture();
     fixture.publish(1, "ABX");
@@ -527,6 +689,28 @@ TEST_SUITE("TmxIpClient") {
     fixture.require_symbol("THREE");
     fixture.require_symbol("FOUR");
     fixture.complete(request);
+  }
+
+  TEST_CASE("clock_rollback") {
+    auto log = Log();
+    auto fixture = Fixture(2);
+    fixture.publish(1, "ONE");
+    fixture.require_symbol("ONE");
+    fixture.publish(1, "ONE", *fixture.m_feed_clients[1]);
+    fixture.publish(3, "THREE");
+    flush_pending_routines();
+    auto timestamp = fixture.m_time_client.get_time();
+    fixture.m_time_client.set(timestamp + seconds(4));
+    fixture.m_timer.trigger();
+    auto request = fixture.require_request(2, 2);
+    fixture.m_time_client.set(timestamp + seconds(1));
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    fixture.complete(request);
+    fixture.m_client.close();
+    fixture.require_symbol("THREE");
+    REQUIRE(log.m_output.str() ==
+      "(dropped 2026-Sep-20 12:00:01 2 1 clock_rollback)\n");
   }
 
   TEST_CASE("stalled_feed") {

@@ -44,9 +44,9 @@ int main(int argc, const char** argv) {
       ApplicationDefinitionsClient(Ref(service_locator_client));
     load_definitions(definitions_client);
     auto schedule = definitions_client.load_trading_schedule();
+    auto configuration = TmxIpConfiguration::parse(config);
     auto market_data_client =
       ApplicationMarketDataClient(Ref(service_locator_client));
-    auto configuration = TmxIpConfiguration::parse(config);
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
       Ref(service_locator_client), configuration.m_sampling,
       configuration.m_country);
@@ -85,7 +85,8 @@ int main(int argc, const char** argv) {
             recovery->m_address, recovery->m_interface);
         }, std::move(protocol_client), init(recovery->m_timeout));
     }
-    auto client = TmxIpClient(configuration.m_feed_timeout,
+    auto client = TmxIpClient(configuration.m_time_zone,
+      configuration.m_rollover_time, configuration.m_feed_timeout,
       configuration.m_gap_timeout, std::move(feed_clients),
       std::move(recovery_client), time_client.get(),
       std::make_unique<LiveTimer>(std::min({configuration.m_retry_interval,

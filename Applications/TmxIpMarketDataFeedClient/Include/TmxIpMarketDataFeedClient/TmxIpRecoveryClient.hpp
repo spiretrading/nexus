@@ -54,6 +54,11 @@ namespace Nexus {
     { t.request(std::declval<const TmxIpRecoveryRequest&>()) } ->
       std::same_as<TmxIpRecoveryResult>;
     { t.read() } -> std::same_as<TmxIpPacket>;
+    { t.request(std::declval<const TmxIpRecoveryRequest&>(),
+        std::uint64_t()) } -> std::same_as<TmxIpRecoveryResult>;
+    { t.read(std::declval<Beam::Out<std::uint64_t>>()) } ->
+      std::same_as<TmxIpPacket>;
+    { t.reset(std::uint64_t()) } -> std::same_as<void>;
     { t.close() } -> std::same_as<void>;
   };
 
@@ -103,11 +108,28 @@ namespace Nexus {
        */
       TmxIpRecoveryResult request(const TmxIpRecoveryRequest& request);
 
+      /** Requests a range for a local session, rejecting expired sessions. */
+      TmxIpRecoveryResult request(
+        const TmxIpRecoveryRequest& request, std::uint64_t session);
+
       /**
        * Reads a recovered packet, valid until the next read or destruction.
        * A completed request does not close this stream.
        */
       TmxIpPacket read();
+
+      /**
+       * Reads a recovered packet and its request's local session identifier.
+       * The packet remains valid until the next read or destruction.
+       */
+      TmxIpPacket read(Beam::Out<std::uint64_t> session);
+
+      /**
+       * Starts a local session and asynchronously cancels active recovery.
+       * Keeps the delivery channel open. Already queued packets retain their
+       * original session identifiers.
+       */
+      void reset(std::uint64_t session);
 
       /** Cancels recovery and closes the protocol client. */
       void close();
@@ -116,6 +138,7 @@ namespace Nexus {
       struct Entry {
         TmxIpHeader m_header;
         Beam::SharedBuffer m_buffer;
+        std::uint64_t m_session = 0;
       };
       struct Operation {
         struct State {
@@ -125,10 +148,12 @@ namespace Nexus {
         Beam::Sync<State> m_state;
         std::stop_source m_stop_source;
         Beam::Queue<Entry> m_packets;
+        std::uint64_t m_session = 0;
       };
       struct State {
         std::shared_ptr<Operation> m_operation;
         std::exception_ptr m_exception;
+        std::uint64_t m_session = 0;
       };
       mutable Beam::Mutex m_mutex;
       std::function<std::shared_ptr<Channel> (std::stop_token)>
@@ -202,9 +227,21 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<T>>
   TmxIpRecoveryResult TmxIpRecoveryClient<C, P, T>::request(
       const TmxIpRecoveryRequest& request) {
+    auto session = Beam::with(m_state, [] (const auto& state) {
+      return state.m_session;
+    });
+    return this->request(request, session);
+  }
+
+  template<Beam::IsChannel C, typename P, typename T> requires
+    IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  TmxIpRecoveryResult TmxIpRecoveryClient<C, P, T>::request(
+      const TmxIpRecoveryRequest& request, std::uint64_t session) {
     auto buffer = Beam::StaticBuffer<TmxIpRecoveryRequest::LENGTH>();
     request.encode(Beam::out(buffer));
     auto operation = std::make_shared<Operation>();
+    operation->m_session = session;
     auto slot = Beam::callback<typename Timer::Result>(
       [=, this] (const auto& result) {
         if(result != Timer::Result::CANCELED) {
@@ -227,6 +264,10 @@ namespace Nexus {
       if(!m_open_state.is_open()) {
         boost::throw_with_location(Beam::EndOfFileException());
       }
+      if(session != state.m_session) {
+        boost::throw_with_location(
+          Beam::IOException("TMX IP recovery session expired."));
+      }
       state.m_operation = operation;
     });
     try {
@@ -247,11 +288,36 @@ namespace Nexus {
     IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
   TmxIpPacket TmxIpRecoveryClient<C, P, T>::read() {
+    auto session = std::uint64_t();
+    return read(Beam::out(session));
+  }
+
+  template<Beam::IsChannel C, typename P, typename T> requires
+    IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  TmxIpPacket TmxIpRecoveryClient<C, P, T>::read(
+      Beam::Out<std::uint64_t> session) {
     m_packet = m_packets.pop();
+    *session = m_packet.m_session;
     return TmxIpPacket(m_packet.m_header,
       std::string_view(m_packet.m_buffer.get_data() +
         m_packet.m_header.m_service.size(), m_packet.m_buffer.get_size() -
         m_packet.m_header.m_service.size()));
+  }
+
+  template<Beam::IsChannel C, typename P, typename T> requires
+    IsTmxIpProtocolClient<Beam::dereference_t<P>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void TmxIpRecoveryClient<C, P, T>::reset(std::uint64_t session) {
+    Beam::with(m_state, [&] (auto& state) {
+      state.m_session = session;
+      if(auto operation = state.m_operation) {
+        m_tasks.push([=] {
+          cancel(operation, std::make_exception_ptr(
+            Beam::IOException("TMX IP recovery session expired.")));
+        });
+      }
+    });
   }
 
   template<Beam::IsChannel C, typename P, typename T> requires
@@ -347,6 +413,7 @@ namespace Nexus {
         result.m_start_sequence == 0) {
       return;
     }
+    auto is_current = false;
     while(true) {
       auto entry = operation.m_packets.pop();
       check(operation);
@@ -360,15 +427,24 @@ namespace Nexus {
           m_packets.push(std::move(entry));
         }
       } else if(packet.m_payload.starts_with(TmxIpRecoveryStart::TYPE)) {
-        TmxIpRecoveryStart::parse(packet);
+        auto start = TmxIpRecoveryStart::parse(packet);
+        is_current = start.m_start_sequence == result.m_start_sequence &&
+          start.m_end_sequence == result.m_end_sequence;
       } else if(packet.m_payload.starts_with(TmxIpRecoveryEnd::TYPE)) {
         auto end = TmxIpRecoveryEnd::parse(packet);
+        if(!is_current || end.m_requested_count !=
+            result.m_end_sequence - result.m_start_sequence + 1) {
+          continue;
+        }
         result.m_requested_count = end.m_requested_count;
         result.m_sent_count = end.m_sent_count;
         result.m_description = end.m_status;
         break;
       } else if(packet.m_payload.starts_with(TmxIpRecoveryError::TYPE)) {
         auto error = TmxIpRecoveryError::parse(packet);
+        if(!is_current) {
+          continue;
+        }
         boost::throw_with_location(Beam::IOException(std::format(
           "TMX IP recovery error: {}", error.m_description)));
       }
@@ -421,7 +497,8 @@ namespace Nexus {
             continue;
           }
           auto entry = Entry(packet.m_header, Beam::SharedBuffer(
-            packet.m_header.m_service.size() + packet.m_payload.size()));
+            packet.m_header.m_service.size() + packet.m_payload.size()),
+            operation->m_session);
           entry.m_buffer.write(0, packet.m_header.m_service.data(),
             packet.m_header.m_service.size());
           entry.m_buffer.write(packet.m_header.m_service.size(),

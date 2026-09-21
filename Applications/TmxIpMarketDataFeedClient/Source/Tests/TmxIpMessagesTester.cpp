@@ -174,11 +174,22 @@ TEST_SUITE("TmxIpMessages") {
         TmxIpParserException);
     }
     for(auto address : {"", "123abcd", "00123abcd", "0123abcg", "00000000"}) {
+      for(auto name : {"17", "54"}) {
+        auto control = std::string("17=FFFFFFFF;50=1;54=0123abcd");
+        auto start = control.find(std::string(name) + '=') + 3;
+        control.replace(start, 8, address);
+        auto source = encode_message(control, fields);
+        CAPTURE(address);
+        CAPTURE(name);
+        REQUIRE_THROWS_AS(validate(StampMessage::parse(source)),
+          TmxIpParserException);
+      }
+    }
+    for(auto address : {"FFFFFFFF", "0123abcd", "00000001"}) {
       auto source = encode_message(
-        std::string("17=FFFFFFFF;50=1;54=") + address, fields);
-      CAPTURE(address);
-      REQUIRE_THROWS_AS(validate(StampMessage::parse(source)),
-        TmxIpParserException);
+        std::string("54=0123abcd;50=1;17=") + address, fields);
+      REQUIRE(TmxIpCbboQuote::parse(StampMessage::parse(source)).
+        m_destination_address == address);
     }
     for(auto extra : {"17=FFFFFFFF", "17.1=FFFFFFFF", "50.0=2", "50.1=2",
         "54=0123abcd", "54.1=0123abcd", "501.1=20260920093000123",

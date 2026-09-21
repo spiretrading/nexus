@@ -81,6 +81,78 @@ namespace {
 }
 
 TEST_SUITE("TmxIpRecoveryClient") {
+  TEST_CASE("queued_session_packets") {
+    auto fixture = Fixture();
+    auto first = fixture.start(TmxIpRecoveryRequest(1, 1));
+    first->get_writer().write(from<SharedBuffer>(acknowledgement(1, 1)));
+    fixture.publish("HDR  000000001000000001", 0);
+    fixture.publish("old", 1);
+    fixture.publish(std::format("TLR  000000001000000001{:100}", ""), 0);
+    REQUIRE(fixture.m_result.get().m_sent_count == 1);
+    fixture.m_client->reset(1);
+    auto next = fixture.start(TmxIpRecoveryRequest(1, 1));
+    next->get_writer().write(from<SharedBuffer>(acknowledgement(1, 1)));
+    fixture.publish("HDR  000000001000000001", 0);
+    fixture.publish("new", 1);
+    fixture.publish(std::format("TLR  000000001000000001{:100}", ""), 0);
+    REQUIRE(fixture.m_result.get().m_sent_count == 1);
+    auto session = std::uint64_t(99);
+    REQUIRE(fixture.m_client->read(out(session)).m_payload == "old");
+    REQUIRE(session == 0);
+    REQUIRE(fixture.m_client->read(out(session)).m_payload == "new");
+    REQUIRE(session == 1);
+  }
+
+  TEST_CASE("session_reset") {
+    auto fixture = Fixture();
+    auto first = fixture.start(TmxIpRecoveryRequest(1, 2));
+    auto buffer = SharedBuffer();
+    read_exact(first->get_reader(), out(buffer), TmxIpRecoveryRequest::LENGTH);
+    SUBCASE("acknowledgement_pending") {}
+    SUBCASE("delivery_pending") {
+      first->get_writer().write(from<SharedBuffer>(acknowledgement(1, 2)));
+      fixture.publish("HDR  000000001000000002", 0);
+      fixture.publish("old", 1);
+      auto session = std::uint64_t(99);
+      REQUIRE(fixture.m_client->read(out(session)).m_payload == "old");
+      REQUIRE(session == 0);
+    }
+    fixture.m_client->reset(1);
+    REQUIRE_THROWS_AS(fixture.m_result.get(), IOException);
+    REQUIRE_THROWS_AS(
+      fixture.m_client->request(TmxIpRecoveryRequest(1, 1), 0), IOException);
+    auto next = fixture.start(TmxIpRecoveryRequest(1, 1));
+    next->get_writer().write(from<SharedBuffer>(acknowledgement(1, 1)));
+    fixture.publish("HDR  000000001000000001", 0);
+    fixture.publish("new", 1);
+    fixture.publish(std::format("TLR  000000001000000001{:100}", ""), 0);
+    REQUIRE(fixture.m_result.get().m_sent_count == 1);
+    auto session = std::uint64_t();
+    REQUIRE(fixture.m_client->read(out(session)).m_payload == "new");
+    REQUIRE(session == 1);
+  }
+
+  TEST_CASE("stale_transmission") {
+    auto fixture = Fixture();
+    auto first = fixture.start(TmxIpRecoveryRequest(10, 11));
+    auto buffer = SharedBuffer();
+    read_exact(first->get_reader(), out(buffer), TmxIpRecoveryRequest::LENGTH);
+    fixture.m_timer.trigger();
+    REQUIRE_THROWS_AS(fixture.m_result.get(), IOException);
+    auto next = fixture.start(TmxIpRecoveryRequest(12, 12));
+    next->get_writer().write(from<SharedBuffer>(acknowledgement(12, 12)));
+    fixture.publish("HDR  000000010000000011", 0);
+    fixture.publish(std::format("TLR  000000002000000002{:100}", "old"), 0);
+    fixture.publish("HDR  000000012000000012", 0);
+    fixture.publish("current", 12);
+    fixture.publish(std::format("TLR  000000001000000001{:100}", "new"), 0);
+    auto result = fixture.m_result.get();
+    REQUIRE(result.m_description == "new");
+    REQUIRE(result.m_requested_count == 1);
+    REQUIRE(result.m_sent_count == 1);
+    REQUIRE(fixture.m_client->read().m_payload == "current");
+  }
+
   TEST_CASE("recovery") {
     auto fixture = Fixture();
     auto server = fixture.start(TmxIpRecoveryRequest(10, 11));
@@ -190,6 +262,7 @@ TEST_SUITE("TmxIpRecoveryClient") {
     auto fixture = Fixture();
     auto server = fixture.start(TmxIpRecoveryRequest(10, 11));
     server->get_writer().write(from<SharedBuffer>(acknowledgement(10, 11)));
+    fixture.publish("HDR  000000010000000011", 0);
     SUBCASE("partial") {
       fixture.publish("outside", 9);
       fixture.publish("first", 10);
@@ -247,6 +320,7 @@ TEST_SUITE("TmxIpRecoveryClient") {
     auto first = fixture.start(TmxIpRecoveryRequest(10, 10));
     fixture.m_connections.pop();
     first->get_writer().write(from<SharedBuffer>(acknowledgement(10, 10)));
+    fixture.publish("HDR  000000010000000010", 0);
     fixture.publish("first", 10);
     fixture.m_client->read();
     auto results = Queue<TmxIpRecoveryResult>();
@@ -275,6 +349,7 @@ TEST_SUITE("TmxIpRecoveryClient") {
     auto server = fixture.start(TmxIpRecoveryRequest(1, 1));
     fixture.m_connections.pop();
     server->get_writer().write(from<SharedBuffer>(acknowledgement(1, 1)));
+    fixture.publish("HDR  000000001000000001", 0);
     fixture.publish("first", 1);
     fixture.m_client->read();
     auto results = Queue<TmxIpRecoveryResult>();
@@ -338,11 +413,42 @@ TEST_SUITE("TmxIpRecoveryClient") {
     auto fixture = Fixture();
     auto server = fixture.start(TmxIpRecoveryRequest(10, 10));
     server->get_writer().write(from<SharedBuffer>(acknowledgement(10, 10)));
+    fixture.publish("HDR  000000010000000010", 0);
     fixture.m_udp_sender->get_writer().write(from<SharedBuffer>("invalid"));
     fixture.publish("first", 10);
     fixture.publish(std::format("TLR  000000001000000001{:100}", ""), 0);
     REQUIRE(fixture.m_result.get().m_sent_count == 1);
     REQUIRE(fixture.m_client->read().m_payload == "first");
+  }
+
+  TEST_CASE("late_connection") {
+    auto server = LocalServerConnection();
+    auto gate = Queue<bool>();
+    auto connected = Queue<bool>();
+    auto fixture = Fixture([&] (std::stop_token) {
+      auto channel = std::make_shared<LocalClientChannel>("request", server);
+      connected.push(true);
+      gate.pop();
+      return channel;
+    });
+    fixture.m_result = std::async(std::launch::async, [&] {
+      return fixture.m_client->request(TmxIpRecoveryRequest(1, 1));
+    });
+    auto channel = server.accept();
+    connected.pop();
+    fixture.m_timer.trigger();
+    flush_pending_routines();
+    gate.push(true);
+    REQUIRE_THROWS_AS(fixture.m_result.get(), IOException);
+    auto buffer = SharedBuffer();
+    REQUIRE_THROWS_AS(channel->get_reader().read(out(buffer)), IOException);
+    fixture.m_result = std::async(std::launch::async, [&] {
+      return fixture.m_client->request(TmxIpRecoveryRequest(2, 2));
+    });
+    auto next = server.accept();
+    gate.push(true);
+    next->get_writer().write(from<SharedBuffer>(acknowledgement(0, 0)));
+    REQUIRE(fixture.m_result.get().m_is_acknowledged);
   }
 
   TEST_CASE("connection_cancellation") {
@@ -430,6 +536,7 @@ TEST_SUITE("TmxIpRecoveryClient") {
     }
     auto server = fixture.start(TmxIpRecoveryRequest(3, 3));
     server->get_writer().write(from<SharedBuffer>(acknowledgement(3, 3)));
+    fixture.publish("HDR  000000003000000003", 0);
     fixture.publish("recovered", 3);
     fixture.publish(std::format("TLR  000000001000000001{:100}", ""), 0);
     REQUIRE(fixture.m_result.get().m_sent_count == 1);

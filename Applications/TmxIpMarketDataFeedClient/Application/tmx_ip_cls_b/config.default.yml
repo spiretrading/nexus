@@ -7,6 +7,8 @@ service_locator:
 sampling: 100ms
 enable_logging: false
 country: CA
+time_zone: America/Toronto
+rollover_time: "00:30:00"
 feed_timeout: 1s
 gap_timeout: 1s
 retry_interval: 1s
