@@ -603,7 +603,11 @@ void Nexus::Python::export_time_and_sale(module& module) {
     value("NONE", TimeAndSale::Condition::Type::NONE).
     value("REGULAR", TimeAndSale::Condition::Type::REGULAR).
     value("OPEN", TimeAndSale::Condition::Type::OPEN).
-    value("CLOSE", TimeAndSale::Condition::Type::CLOSE);
+    value("CLOSE", TimeAndSale::Condition::Type::CLOSE).
+    value("REOPEN", TimeAndSale::Condition::Type::REOPEN).
+    value("AUCTION", TimeAndSale::Condition::Type::AUCTION).
+    value("CORRECTION", TimeAndSale::Condition::Type::CORRECTION).
+    value("CANCELLATION", TimeAndSale::Condition::Type::CANCELLATION);
   export_queue_suite<TimeAndSale>(module, "TimeAndSale");
   export_queue_suite<SequencedTimeAndSale>(module, "SequencedTimeAndSale");
 }
@@ -660,6 +664,7 @@ void Nexus::Python::export_trading_schedule(module& module) {
 }
 
 void Nexus::Python::export_venue(module& module) {
+  module.attr("TIME_ZONES") = cast(TIME_ZONES, return_value_policy::reference);
   export_default_methods(class_<Venue>(module, "Venue")).
     def(init<Venue::Code>()).
     def_property_readonly("code", &Venue::get_code);
