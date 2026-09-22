@@ -52,7 +52,7 @@ def main():
   variables['admin_password'] = args.password
   variables['glimpse_username'] = args.glimpse_username
   variables['glimpse_password'] = args.glimpse_password
-  for folder in sorted(directory.glob('partition*')):
+  for folder in sorted(directory.glob('asx_partition*')):
     default_path = folder / 'config.default.yml'
     if not default_path.is_file():
       continue

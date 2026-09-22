@@ -109,6 +109,9 @@ if [[ $# -gt 1 || "$1" == */* ]]; then
 fi
 if [[ -n "$1" ]]; then
   target_dir="$1"
+  if [[ "$target_dir" != "${PREFIX}_"* ]]; then
+    target_dir="${PREFIX}_$target_dir"
+  fi
   if [[ ! -d "$target_dir" ]]; then
     echo "Error: Directory $target_dir does not exist." >&2
     exit 1

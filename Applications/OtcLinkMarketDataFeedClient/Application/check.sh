@@ -68,7 +68,7 @@ Options:
   -p   Check a specific PID for the specified service
 
 Arguments:
-  service   Check only the specified service (without prefix)
+  service   Check only the specified service (with or without its prefix)
             If omitted, checks all ${PREFIX}_* services
 EOF
 }
@@ -119,7 +119,10 @@ if [[ $# -gt 1 || "$1" == */* ]]; then
   exit 1
 fi
 if [[ -n "$1" ]]; then
-  target_dir="${PREFIX}_$1"
+  target_dir="$1"
+  if [[ "$target_dir" != "${PREFIX}_"* ]]; then
+    target_dir="${PREFIX}_$target_dir"
+  fi
   if [[ ! -d "$target_dir" ]]; then
     echo "Error: Directory $target_dir does not exist." >&2
     exit 1

@@ -3,13 +3,13 @@ PREFIX="asx_trade_itch"
 
 stop_application() (
   dir=$1
-  feed_name="$dir"
+  feed_name="${dir#asx_}"
   APPLICATION="${feed_name}_${PREFIX}"
   cd "$dir" || exit 1
 
   check_running() (
     cd .. || exit 1
-    ./check.sh "$@" "$feed_name"
+    ./check.sh "$@" "$dir"
   )
 
   PID_FILE="pid.lock"
@@ -81,6 +81,9 @@ if [[ $# -gt 1 || "$1" == */* ]]; then
 fi
 if [[ -n "$1" ]]; then
   target_dir="$1"
+  if [[ "$target_dir" != "asx_"* ]]; then
+    target_dir="asx_$target_dir"
+  fi
   if [[ ! -d "$target_dir" ]]; then
     echo "Error: Directory $target_dir does not exist." >&2
     exit 1
@@ -88,7 +91,7 @@ if [[ -n "$1" ]]; then
   stop_application "$target_dir"
 else
   status=0
-  for dir in partition*; do
+  for dir in asx_partition*; do
     if [[ -d "$dir" ]]; then
       result=0
       stop_application "$dir" || result=$?

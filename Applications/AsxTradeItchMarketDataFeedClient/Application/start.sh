@@ -4,7 +4,7 @@ PREFIX="asx_trade_itch"
 
 start_application() (
   dir=$1
-  feed_name="$dir"
+  feed_name="${dir#asx_}"
   APPLICATION="${feed_name}_${PREFIX}"
   cd "$dir" || exit 1
   if [[ ! -e "$APPLICATION" && ! -L "$APPLICATION" ]]; then
@@ -13,7 +13,7 @@ start_application() (
 
   check_running() (
     cd .. || exit 1
-    ./check.sh "$@" "$feed_name"
+    ./check.sh "$@" "$dir"
   )
 
   CONFIG_FILE="config.yml"
@@ -109,6 +109,9 @@ if [[ $# -gt 1 || "$1" == */* ]]; then
 fi
 if [[ -n "$1" ]]; then
   target_dir="$1"
+  if [[ "$target_dir" != "asx_"* ]]; then
+    target_dir="asx_$target_dir"
+  fi
   if [[ ! -d "$target_dir" ]]; then
     echo "Error: Directory $target_dir does not exist." >&2
     exit 1
@@ -116,7 +119,7 @@ if [[ -n "$1" ]]; then
   start_application "$target_dir"
 else
   status=0
-  for dir in partition*; do
+  for dir in asx_partition*; do
     if [[ -d "$dir" ]]; then
       result=0
       start_application "$dir" || result=$?

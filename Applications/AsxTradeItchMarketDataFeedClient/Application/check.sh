@@ -68,14 +68,14 @@ Options:
   -p   Check a specific PID for the specified service
 
 Arguments:
-  service   Check only the specified partition (for example partition1)
-            If omitted, checks all partition* services
+  service   Check only the specified service (with or without its prefix)
+            If omitted, checks all asx_partition* services
 EOF
 }
 
 check_application() (
   dir=$1
-  APPLICATION="${dir}_${PREFIX}"
+  APPLICATION="${dir#asx_}_${PREFIX}"
   cd "$dir" || exit 1
   if [[ -z "$existing_pid" && -f "$PID_FILE" ]]; then
     existing_pid=$(<"$PID_FILE")
@@ -120,6 +120,9 @@ if [[ $# -gt 1 || "$1" == */* ]]; then
 fi
 if [[ -n "$1" ]]; then
   target_dir="$1"
+  if [[ "$target_dir" != "asx_"* ]]; then
+    target_dir="asx_$target_dir"
+  fi
   if [[ ! -d "$target_dir" ]]; then
     echo "Error: Directory $target_dir does not exist." >&2
     exit 1
@@ -127,7 +130,7 @@ if [[ -n "$1" ]]; then
   check_application "$target_dir"
 else
   status=0
-  for dir in partition*; do
+  for dir in asx_partition*; do
     if [[ -d "$dir" ]]; then
       result=0
       check_application "$dir" || result=$?
