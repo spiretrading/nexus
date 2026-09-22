@@ -17,10 +17,10 @@ using namespace Beam;
 using namespace Nexus;
 
 namespace {
-  using ApplicationFeedChannel = MulticastSocketChannel;
+  using ApplicationFeedChannel = BufferedMulticastSocketChannel;
   using ApplicationProtocolClient = TmxIpProtocolClient<
     std::unique_ptr<ApplicationFeedChannel>, LiveNtpTimeClient*>;
-  using ApplicationRecoveryChannel = UdpSocketChannel;
+  using ApplicationRecoveryChannel = BufferedUdpSocketChannel;
   using ApplicationRecoveryProtocolClient = TmxIpProtocolClient<
     std::unique_ptr<ApplicationRecoveryChannel>, LiveNtpTimeClient*>;
   using ApplicationRecoveryClient = TmxIpRecoveryClient<TcpSocketChannel,
@@ -49,7 +49,7 @@ int main(int argc, const char** argv) {
       std::vector<std::unique_ptr<ApplicationProtocolClient>>();
     for(auto& feed : configuration.m_feeds) {
       feed_clients.push_back(try_or_nest([&] {
-        auto channel = std::make_unique<MulticastSocketChannel>(
+        auto channel = std::make_unique<ApplicationFeedChannel>(
           feed.m_address, feed.m_interface, configuration.m_socket_options);
         return std::make_unique<ApplicationProtocolClient>(
           std::move(channel), time_client.get());
@@ -59,7 +59,7 @@ int main(int argc, const char** argv) {
       boost::optional<std::unique_ptr<ApplicationRecoveryClient>>();
     if(auto recovery = configuration.m_recovery) {
       auto protocol_client = try_or_nest([&] {
-        auto channel = std::make_unique<UdpSocketChannel>(
+        auto channel = std::make_unique<ApplicationRecoveryChannel>(
           recovery->m_address, recovery->m_delivery_address,
           configuration.m_socket_options);
         return std::make_unique<ApplicationRecoveryProtocolClient>(

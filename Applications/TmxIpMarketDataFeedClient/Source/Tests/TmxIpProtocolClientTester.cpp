@@ -75,6 +75,27 @@ TEST_SUITE("TmxIpProtocolClient") {
     REQUIRE(second.m_payload == "payload");
   }
 
+  TEST_CASE("packet_buffer") {
+    auto fixture = Fixture();
+    auto first_buffer =
+      from<SharedBuffer>("\x02" "0029000000001CDF00  T payload\x03");
+    auto second_buffer =
+      from<SharedBuffer>("\x02" "0026000000002CDF00  T next\x03");
+    fixture.m_server_channel->get_writer().write(first_buffer);
+    fixture.m_server_channel->get_writer().write(second_buffer);
+    flush_pending_routines();
+    auto first = fixture.m_client->read();
+    REQUIRE(first.m_payload == "payload");
+    REQUIRE(first.m_payload.data() ==
+      first_buffer.get_data() + sizeof(TmxIpPacket::START) +
+        TmxIpHeader::LENGTH);
+    auto second = fixture.m_client->read();
+    REQUIRE(second.m_payload == "next");
+    REQUIRE(second.m_payload.data() ==
+      second_buffer.get_data() + sizeof(TmxIpPacket::START) +
+        TmxIpHeader::LENGTH);
+  }
+
   TEST_CASE("heartbeat_and_fragments") {
     auto fixture = Fixture();
     fixture.m_server_channel->get_writer().write(

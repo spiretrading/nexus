@@ -155,13 +155,11 @@ namespace Nexus {
       Beam::IsTimeClient<Beam::dereference_t<R>>
   void TmxIpProtocolClient<C, R>::read_loop() {
     try {
-      auto buffer = Beam::SharedBuffer();
       while(true) {
-        reset(buffer);
+        auto buffer = Beam::SharedBuffer();
         m_channel->get_reader().read(Beam::out(buffer));
         auto timestamp = m_time_client->get_time();
-        m_packets.push(Entry(
-          Beam::SharedBuffer(buffer.get_data(), buffer.get_size()), timestamp));
+        m_packets.push(Entry(std::move(buffer), timestamp));
       }
     } catch(const std::exception&) {
       m_packets.close(std::current_exception());

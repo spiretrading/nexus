@@ -1,6 +1,4 @@
 #include <thread>
-#include <Beam/IO/QueuedReader.hpp>
-#include <Beam/IO/WrapperChannel.hpp>
 #include <Beam/Network/MulticastSocketChannel.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Network/UdpSocketChannel.hpp>
@@ -20,14 +18,10 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
-  using ApplicationFeedChannel =
-    WrapperChannel<std::unique_ptr<MulticastSocketChannel>,
-      QueuedReader<MulticastSocketChannel::Reader*>>;
+  using ApplicationFeedChannel = BufferedMulticastSocketChannel;
   using ApplicationProtocolClient =
     MoldUdp64Client<std::unique_ptr<ApplicationFeedChannel>>;
-  using ApplicationRecoveryChannel =
-    WrapperChannel<std::unique_ptr<UdpSocketChannel>,
-      QueuedReader<UdpSocketChannel::Reader*>>;
+  using ApplicationRecoveryChannel = BufferedUdpSocketChannel;
   using ApplicationRecoveryClient =
     MoldUdp64Client<std::unique_ptr<ApplicationRecoveryChannel>>;
   using ApplicationGlimpseClient =
@@ -35,19 +29,13 @@ namespace {
 
   std::unique_ptr<ApplicationProtocolClient> make_protocol_client(
       const AsxTradeItchFeed& feed, const MulticastSocketOptions& options) {
-    auto socket = try_or_nest([&] {
-      return std::make_unique<MulticastSocketChannel>(
+    auto channel = try_or_nest([&] {
+      return std::make_unique<ApplicationFeedChannel>(
         feed.m_address, feed.m_interface, options);
     }, std::runtime_error(
       "Unable to join ASX Trade ITCH feed " + feed.m_name + '.'));
-    auto reader = &socket->get_reader();
-    auto channel =
-      std::make_unique<ApplicationFeedChannel>(std::move(socket), reader);
-    auto& queued_reader = channel->get_reader();
-    auto client =
-      std::make_unique<ApplicationProtocolClient>(std::move(channel));
-    queued_reader.poll();
-    return client;
+    channel->get_reader().poll();
+    return std::make_unique<ApplicationProtocolClient>(std::move(channel));
   }
 }
 
@@ -72,13 +60,10 @@ int main(int argc, const char** argv) {
       optional<std::unique_ptr<ApplicationRecoveryClient>>();
     if(auto rewind = configuration.m_rewind) {
       recovery_client = try_or_nest([&] {
-        auto channel = std::make_unique<UdpSocketChannel>(
+        auto channel = std::make_unique<ApplicationRecoveryChannel>(
           rewind->m_address, rewind->m_interface,
           configuration.m_socket_options);
-        auto reader = &channel->get_reader();
-        return std::make_unique<ApplicationRecoveryClient>(
-          std::make_unique<ApplicationRecoveryChannel>(
-            std::move(channel), reader));
+        return std::make_unique<ApplicationRecoveryClient>(std::move(channel));
       }, std::runtime_error(
         "Unable to open the ASX Trade ITCH rewind socket."));
     }

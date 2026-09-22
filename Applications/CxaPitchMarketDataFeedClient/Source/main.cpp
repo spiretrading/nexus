@@ -21,9 +21,7 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
-  using ApplicationFeedChannel =
-    WrapperChannel<std::unique_ptr<MulticastSocketChannel>,
-      QueuedReader<MulticastSocketChannel::Reader*>>;
+  using ApplicationFeedChannel = BufferedMulticastSocketChannel;
   using ApplicationProtocolClient =
     CxaPitchProtocolClient<std::unique_ptr<ApplicationFeedChannel>>;
   using ApplicationSessionChannel =
@@ -41,12 +39,10 @@ namespace {
       const IpAddress& address, const IpAddress& interface,
       const MulticastSocketOptions& options) {
     auto channel = try_or_nest([&] {
-      return std::make_unique<MulticastSocketChannel>(
+      return std::make_unique<ApplicationFeedChannel>(
         address, interface, options);
     }, std::runtime_error("Unable to join the CXA PITCH multicast group."));
-    auto reader = &channel->get_reader();
-    return std::make_unique<ApplicationProtocolClient>(
-      std::make_unique<ApplicationFeedChannel>(std::move(channel), reader));
+    return std::make_unique<ApplicationProtocolClient>(std::move(channel));
   }
 }
 

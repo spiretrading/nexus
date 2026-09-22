@@ -1,5 +1,3 @@
-#include <Beam/IO/QueuedReader.hpp>
-#include <Beam/IO/WrapperChannel.hpp>
 #include <Beam/Network/MulticastSocketChannel.hpp>
 #include <Beam/Network/TcpSocketChannel.hpp>
 #include <Beam/Utilities/ApplicationInterrupt.hpp>
@@ -16,14 +14,10 @@ using namespace boost::posix_time;
 using namespace Nexus;
 
 namespace {
-  using ApplicationFeedChannel = WrapperChannel<
-    MulticastSocketChannel*, QueuedReader<MulticastSocketChannel::Reader*>>;
-  using ApplicationRecoveryFeedChannel =
-    WrapperChannel<std::unique_ptr<MulticastSocketChannel>,
-      QueuedReader<MulticastSocketChannel::Reader*>>;
+  using ApplicationFeedChannel = BufferedMulticastSocketChannel;
   using ApplicationOtcLinkClient = OtcLinkClient<ApplicationFeedChannel*>;
   using ApplicationRecoveryOtcLinkClient =
-    OtcLinkClient<std::unique_ptr<ApplicationRecoveryFeedChannel>>;
+    OtcLinkClient<std::unique_ptr<ApplicationFeedChannel>>;
   using ApplicationOtcLinkRecoveryClient =
     OtcLinkRecoveryClient<std::unique_ptr<TcpSocketChannel>>;
   using ApplicationOtcLinkMarketDataFeedClient = OtcLinkMarketDataFeedClient<
@@ -56,7 +50,7 @@ namespace {
     }, std::runtime_error("Unable to parse OTC Link configuration."));
   }
 
-  MulticastSocketChannel make_multicast_channel(const YAML::Node& config) {
+  ApplicationFeedChannel make_multicast_channel(const YAML::Node& config) {
     auto host = extract<IpAddress>(config, "host");
     auto interface = extract<IpAddress>(config, "interface");
     auto options = MulticastSocketOptions();
@@ -65,7 +59,7 @@ namespace {
     options.m_max_datagram_size =
       extract<int>(config, "mtu", options.m_max_datagram_size);
     return try_or_nest([&] {
-      return MulticastSocketChannel(host, interface, options);
+      return ApplicationFeedChannel(host, interface, options);
     }, std::runtime_error("Unable to join OTC Link multicast group."));
   }
 
@@ -88,15 +82,12 @@ namespace {
       extract<int>(config, "recovery_mtu", options.m_max_datagram_size);
     return [=] {
       auto channel = try_or_nest([&] {
-        return std::make_unique<MulticastSocketChannel>(
+        return std::make_unique<ApplicationFeedChannel>(
           host, interface, options);
       }, std::runtime_error(
         "Unable to join recovery OTC Link multicast group."));
-      auto reader = &channel->get_reader();
-      auto feed_channel = std::make_unique<ApplicationRecoveryFeedChannel>(
-        std::move(channel), reader);
       return std::make_unique<ApplicationRecoveryOtcLinkClient>(
-        std::move(feed_channel));
+        std::move(channel));
     };
   }
 }
@@ -114,9 +105,7 @@ int main(int argc, const char** argv) {
     auto sampling_time = extract<time_duration>(config, "sampling");
     auto market_data_feed_client = ApplicationMarketDataFeedClient(
       Ref(service_locator_client), sampling_time, Countries::US);
-    auto multicast_socket_channel = make_multicast_channel(config);
-    auto feed_channel = ApplicationFeedChannel(
-      &multicast_socket_channel, &multicast_socket_channel.get_reader());
+    auto feed_channel = make_multicast_channel(config);
     auto otc_link_client = ApplicationOtcLinkClient(&feed_channel);
     auto recovery_client = make_recovery_client(config);
     auto snapshot_client_builder = make_snapshot_client_builder(config);
