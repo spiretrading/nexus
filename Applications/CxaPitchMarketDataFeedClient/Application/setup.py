@@ -57,6 +57,13 @@ def main():
     help='CXA spin server username.', default='')
   parser.add_argument('-sp', '--spin_password', type=str,
     help='CXA spin server password.', default='')
+  for section in ['retransmission', 'spin']:
+    for field in ['address', 'session_sub_id', 'username', 'password']:
+      if section == 'spin' and field == 'address':
+        continue
+      for unit in [1, 2]:
+        parser.add_argument(f'--{section}_{field}{unit}',
+          help=f'CXA unit {unit} {section} {field.replace("_", " ")}.')
   args = parser.parse_args()
   variables = {}
   variables['local_interface'] = args.local
@@ -65,29 +72,23 @@ def main():
     args.address
   variables['username'] = args.username
   variables['admin_password'] = args.password
-  variables['retransmission_address'] = args.retransmission_address
-  variables['retransmission_session_sub_id'] = \
-    args.retransmission_session_sub_id
-  variables['retransmission_username'] = args.retransmission_username
-  variables['retransmission_password'] = args.retransmission_password
-  variables['spin_session_sub_id'] = args.spin_session_sub_id
-  variables['spin_username'] = args.spin_username
-  variables['spin_password'] = args.spin_password
-  spin_addresses = {
-    'cxa_partition1': args.spin_address1,
-    'cxa_partition2': args.spin_address2
-  }
   for folder in sorted(directory.glob('cxa_*')):
     default_path = folder / 'config.default.yml'
     if not default_path.is_file():
       continue
     with open(default_path, encoding='utf-8') as file:
       source = file.read()
-    if not args.retransmission_address or not args.retransmission_password:
-      source = remove_section(source, 'retransmission')
-    variables['spin_address'] = spin_addresses.get(folder.name, '')
-    if not variables['spin_address'] or not args.spin_password:
-      source = remove_section(source, 'spin')
+    unit = folder.name.removeprefix('cxa_partition')
+    for section in ['retransmission', 'spin']:
+      for field in ['address', 'session_sub_id', 'username', 'password']:
+        key = section + '_' + field
+        value = getattr(args, key + unit, None)
+        if value is None:
+          value = getattr(args, key, '')
+        variables[key] = value
+      if not variables[section + '_address'] or \
+          not variables[section + '_password']:
+        source = remove_section(source, section)
     source = setup_utils.translate(source, variables)
     output_directory = Path(folder.name)
     output_directory.mkdir(exist_ok=True)

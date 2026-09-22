@@ -28,7 +28,8 @@ beam_install_target(
 install(FILES Application/config.default.yml Application/fee_table.default.yml
   Application/asx.default.cfg Application/serenity.default.cfg
   Application/pure_designated_parser.py Application/tsx_etfs_parser.py
-  Application/tsx_interlisted_parser.py
+  Application/tsx_interlisted_parser.py Application/setup.py
+  ../Python/setup_utils.py
   DESTINATION "${PROJECT_BINARY_DIR}/Application")
 if(UNIX)
   install(PROGRAMS Application/check.sh Application/start.sh Application/stop.sh
