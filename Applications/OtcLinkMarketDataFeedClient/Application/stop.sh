@@ -4,7 +4,7 @@ PREFIX="otcm"
 stop_application() (
   dir=$1
   feed_name="${dir#*_}"
-  APPLICATION="${feed_name}_${PREFIX}"
+  APPLICATION="${PREFIX}_${feed_name}"
   cd "$dir" || exit 1
 
   check_running() (

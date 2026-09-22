@@ -4,7 +4,7 @@ PREFIX="asx_trade_itch"
 stop_application() (
   dir=$1
   feed_name="${dir#asx_}"
-  APPLICATION="${feed_name}_${PREFIX}"
+  APPLICATION="${PREFIX}_${feed_name}"
   cd "$dir" || exit 1
 
   check_running() (
@@ -81,7 +81,9 @@ if [[ $# -gt 1 || "$1" == */* ]]; then
 fi
 if [[ -n "$1" ]]; then
   target_dir="$1"
-  if [[ "$target_dir" != "asx_"* ]]; then
+  if [[ "$target_dir" == "${PREFIX}_"* ]]; then
+    target_dir="asx_${target_dir#${PREFIX}_}"
+  elif [[ "$target_dir" != "asx_"* ]]; then
     target_dir="asx_$target_dir"
   fi
   if [[ ! -d "$target_dir" ]]; then

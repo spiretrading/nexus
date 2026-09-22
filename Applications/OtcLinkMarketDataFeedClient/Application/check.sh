@@ -1,4 +1,5 @@
 #!/bin/bash
+TARGET="OtcLinkMarketDataFeedClient"
 PREFIX="otcm"
 PID_FILE="pid.lock"
 SHOW_RUNNING=false
@@ -22,7 +23,7 @@ is_process_running() {
     local directory
     directory=$(readlink "/proc/$pid/cwd" 2> /dev/null) || return 1
     local target
-    target=$(readlink -f "$APPLICATION" 2> /dev/null) || return 2
+    target=$(readlink -f "../$TARGET" 2> /dev/null) || return 2
     [[ "${executable% (deleted)}" == "$target" &&
       "$directory" == "$(pwd -P)" ]]
   else
@@ -46,8 +47,8 @@ is_process_running() {
           if [[ "$descriptor" == "cwd" && "${field#n}" -ef . ]]; then
             has_directory=true
           elif [[ "$descriptor" == "txt" ]] &&
-              [[ "${field#n}" -ef "$APPLICATION" ||
-                "${field#n}" == "$(pwd -P)/$APPLICATION" ]]; then
+              [[ "${field#n}" -ef "../$TARGET" ||
+                "${field#n}" == "$(cd .. && pwd -P)/$TARGET" ]]; then
             has_executable=true
           fi
           ;;
@@ -75,7 +76,7 @@ EOF
 
 check_application() (
   dir=$1
-  APPLICATION="${dir#*_}_${PREFIX}"
+  APPLICATION="${PREFIX}_${dir#*_}"
   cd "$dir" || exit 1
   if [[ -z "$existing_pid" && -f "$PID_FILE" ]]; then
     existing_pid=$(<"$PID_FILE")
