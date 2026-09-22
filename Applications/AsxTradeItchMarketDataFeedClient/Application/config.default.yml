@@ -1,0 +1,17 @@
+---
+service_locator:
+  address: "$service_locator_address"
+  username: "$username"
+  password: "$admin_password"
+
+sampling: 100ms
+enable_logging: false
+venue: ASX
+disseminating_venue: ASX
+feed_timeout: 3s
+gap_timeout: 5s
+request_timeout: 1s
+glimpse:
+  username: "$glimpse_username"
+  password: "$glimpse_password"
+...

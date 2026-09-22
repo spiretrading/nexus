@@ -1,17 +1,7 @@
 ---
-service_locator:
-  address: "$service_locator_address"
-  username: "$username"
-  password: "$admin_password"
+<<: !include "$common_config"
 
-sampling: 100ms
-enable_logging: false
 partition: 2
-venue: ASX
-disseminating_venue: ASX
-feed_timeout: 3s
-gap_timeout: 5s
-request_timeout: 1s
 feeds:
   - name: D
     address: "233.71.185.138:21302"
@@ -25,6 +15,4 @@ rewind:
 glimpse:
   address: "203.6.253.125:21802"
   interface: "$local_interface:0"
-  username: "$glimpse_username"
-  password: "$glimpse_password"
 ...
