@@ -1,16 +1,7 @@
 ---
-service_locator:
-  address: "$service_locator_address"
-  username: "$username"
-  password: "$admin_password"
+<<: !include "$common_config"
 
-sampling: 100ms
-enable_logging: false
 unit: 2
-venue: ASX
-disseminating_venue: CXA
-mpid: CXA
-feed_timeout: 3s
 feeds:
   - address: "233.218.133.80:30502"
     gap_address: "233.218.133.81:30502"
