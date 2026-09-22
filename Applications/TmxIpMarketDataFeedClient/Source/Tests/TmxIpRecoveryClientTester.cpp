@@ -226,19 +226,27 @@ TEST_SUITE("TmxIpRecoveryClient") {
     SUBCASE("completed") {
       first->get_writer().write(from<SharedBuffer>(acknowledgement(10, 12)));
       fixture.publish("HDR  000000010000000012", 0);
+      fixture.publish("first", 10);
+      fixture.publish("second", 11);
+      fixture.publish("third", 12);
       fixture.publish(std::format("TLR  000000003000000003{:100}", ""), 0);
       REQUIRE(fixture.m_result.get().m_sent_count == 3);
+      REQUIRE(fixture.m_client->read().m_payload == "first");
+      REQUIRE(fixture.m_client->read().m_payload == "second");
+      REQUIRE(fixture.m_client->read().m_payload == "third");
       fixture.m_client->reset(1);
     }
     SUBCASE("partial") {
       first->get_writer().write(from<SharedBuffer>(acknowledgement(11, 12)));
       fixture.publish("HDR  000000011000000012", 0);
+      fixture.publish("partial", 11);
       fixture.publish(std::format("TLR  000000003000000001{:100}", ""), 0);
       REQUIRE(fixture.m_result.wait_for(std::chrono::seconds(1)) ==
         std::future_status::ready);
       auto result = fixture.m_result.get();
       REQUIRE(result.m_requested_count == 3);
       REQUIRE(result.m_sent_count == 1);
+      REQUIRE(fixture.m_client->read().m_payload == "partial");
       fixture.m_client->reset(1);
     }
     SUBCASE("deadline") {
@@ -431,10 +439,24 @@ TEST_SUITE("TmxIpRecoveryClient") {
       REQUIRE(fixture.m_client->read().m_payload == "first");
     }
     SUBCASE("empty") {
-      fixture.publish(std::format("TLR  000000002000000000{:100}", "empty"), 0);
-      auto result = fixture.m_result.get();
-      REQUIRE(result.m_requested_count == 2);
-      REQUIRE(result.m_sent_count == 0);
+      auto sent_count = std::uint32_t();
+      SUBCASE("none_sent") {}
+      SUBCASE("none_received") {
+        sent_count = 2;
+      }
+      fixture.publish("outside", 9);
+      fixture.publish("outside", 12);
+      fixture.publish(std::format(
+        "TLR  000000002{:09}{:100}", sent_count, "empty"), 0);
+      REQUIRE_THROWS_AS(fixture.m_result.get(), IOException);
+      auto session = std::uint64_t();
+      auto event = fixture.m_client->read_event(out(session));
+      auto failure = std::get_if<TmxIpRecoveryFailure>(&event);
+      REQUIRE(failure);
+      REQUIRE(failure->m_request.m_start_sequence == 10);
+      REQUIRE(failure->m_request.m_end_sequence == 11);
+      REQUIRE(session == 0);
+      fixture.reject(TmxIpRecoveryRequest(10, 11));
     }
     SUBCASE("canceled") {
       fixture.publish(std::format("ERRORCANCELED{:100}", "canceled"), 0);

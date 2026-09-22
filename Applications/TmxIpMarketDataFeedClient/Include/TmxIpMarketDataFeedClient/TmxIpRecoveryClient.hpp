@@ -516,6 +516,7 @@ namespace Nexus {
       return;
     }
     auto is_current = false;
+    auto has_packets = false;
     while(true) {
       auto entry = operation.m_packets.pop();
       check(operation);
@@ -527,6 +528,7 @@ namespace Nexus {
         if(is_current && *sequence >= result.m_start_sequence &&
             *sequence <= result.m_end_sequence) {
           m_packets.push(std::move(entry));
+          has_packets = true;
         }
       } else if(packet.m_payload.starts_with(TmxIpRecoveryStart::TYPE)) {
         auto start = TmxIpRecoveryStart::parse(packet);
@@ -536,6 +538,10 @@ namespace Nexus {
         auto end = TmxIpRecoveryEnd::parse(packet);
         if(!is_current || end.m_requested_count != count) {
           continue;
+        }
+        if(!has_packets) {
+          boost::throw_with_location(
+            Beam::IOException("TMX IP recovery received no packets."));
         }
         result.m_requested_count = end.m_requested_count;
         result.m_sent_count = end.m_sent_count;
