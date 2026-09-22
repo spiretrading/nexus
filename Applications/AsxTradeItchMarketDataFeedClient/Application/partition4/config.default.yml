@@ -9,7 +9,6 @@ enable_logging: false
 partition: 4
 venue: ASX
 disseminating_venue: ASX
-mpid: ASX
 feed_timeout: 3s
 gap_timeout: 5s
 request_timeout: 1s

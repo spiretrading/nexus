@@ -73,7 +73,6 @@ TEST_SUITE("AsxTradeItchConfiguration") {
       REQUIRE(config.m_country == Countries::AU);
       REQUIRE(config.m_primary_venue == Venues::ASX);
       REQUIRE(config.m_disseminating_venue == Venues::ASX);
-      REQUIRE(config.m_mpid == "ASX");
       REQUIRE(config.m_sampling == milliseconds(100));
       REQUIRE(config.m_feed_timeout == seconds(3));
       REQUIRE(config.m_request_timeout == seconds(1));
@@ -96,7 +95,6 @@ TEST_SUITE("AsxTradeItchConfiguration") {
     }
     SUBCASE("overrides") {
       source["partition"] = 4;
-      source["mpid"] = "XASX";
       source["enable_logging"] = true;
       source["sampling"] = "250ms";
       source["feed_timeout"] = "50ms";
@@ -112,7 +110,6 @@ interface: "10.0.0.2:21101"
       auto config = AsxTradeItchConfiguration::parse(source);
       REQUIRE(config.m_partition == 4);
       REQUIRE(config.m_is_logging_messages);
-      REQUIRE(config.m_mpid == "XASX");
       REQUIRE(config.m_sampling == milliseconds(250));
       REQUIRE(config.m_feed_timeout == milliseconds(50));
       REQUIRE(config.m_request_timeout == milliseconds(20));

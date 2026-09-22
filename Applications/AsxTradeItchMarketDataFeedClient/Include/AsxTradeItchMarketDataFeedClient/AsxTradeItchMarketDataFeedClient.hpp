@@ -55,6 +55,7 @@ namespace Nexus {
     private:
       struct Order {
         std::string m_id;
+        std::string m_mpid;
         std::int32_t m_price;
         std::uint64_t m_quantity;
       };
@@ -281,8 +282,8 @@ namespace Nexus {
     IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsAsxTradeItchClient<Beam::dereference_t<C>>
   void AsxTradeItchMarketDataFeedClient<M, C>::publish(const Book& book,
-      Side side, Money price, std::uint64_t quantity,
-      const std::string& owner, const std::string& counterparty, bool is_cross,
+      Side side, Money price, std::uint64_t quantity, const std::string& owner,
+      const std::string& counterparty, bool is_cross,
       boost::posix_time::ptime timestamp) {
     if(quantity == 0) {
       return;
@@ -309,9 +310,16 @@ namespace Nexus {
       buyer = counterparty;
       seller = owner;
     }
-    m_feed_client->publish(TickerTimeAndSale(TimeAndSale(timestamp, price,
-      quantity, std::move(condition), m_config.m_mpid, std::move(buyer),
-      std::move(seller)), book.m_ticker));
+    if(buyer.empty()) {
+      buyer = "AU000";
+    }
+    if(seller.empty()) {
+      seller = "AU000";
+    }
+    m_feed_client->publish(TickerTimeAndSale(
+      TimeAndSale(timestamp, price, quantity, std::move(condition),
+        VENUES.from(m_config.m_disseminating_venue).m_display_name,
+        std::move(buyer), std::move(seller)), book.m_ticker));
   }
 
   template<typename M, typename C> requires
@@ -338,8 +346,8 @@ namespace Nexus {
       const Order& order, Side side, boost::posix_time::ptime timestamp) {
     if(order.m_quantity != 0) {
       m_feed_client->add_order(book.m_ticker, m_config.m_disseminating_venue,
-        m_config.m_mpid, false, order.m_id, side,
-        get_price(book, order.m_price), order.m_quantity, timestamp);
+        order.m_mpid, false, order.m_id, side, get_price(book, order.m_price),
+        order.m_quantity, timestamp);
     }
   }
 
@@ -399,7 +407,16 @@ namespace Nexus {
         m_feed_client->remove_order(id, timestamp);
       }
     }
-    order->second = Order(std::move(id), message.m_price, message.m_quantity);
+    auto mpid = [&] {
+      if constexpr(std::same_as<A, AsxTradeItchAddOrderWithParticipant>) {
+        if(!message.m_participant_id.empty()) {
+          return message.m_participant_id;
+        }
+      }
+      return std::string("AU000");
+    }();
+    order->second = Order(
+      std::move(id), std::move(mpid), message.m_price, message.m_quantity);
     offset(side, message.m_side, message.m_price, message.m_quantity);
     submit(book, order->second, message.m_side, timestamp);
     publish(book, timestamp);

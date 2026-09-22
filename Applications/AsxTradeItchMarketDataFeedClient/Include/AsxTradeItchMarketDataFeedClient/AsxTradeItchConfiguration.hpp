@@ -77,9 +77,6 @@ namespace Nexus {
     /** The venue disseminating the data. */
     Venue m_disseminating_venue;
 
-    /** The MPID to display. */
-    std::string m_mpid;
-
     /** The redundant multicast feeds to receive. */
     std::vector<AsxTradeItchFeed> m_feeds;
 
@@ -180,8 +177,6 @@ namespace Nexus {
           std::runtime_error("Unknown disseminating venue specified."));
       }
       configuration.m_disseminating_venue = disseminating_venue.m_venue;
-      configuration.m_mpid = Beam::extract<std::string>(
-        config, "mpid", disseminating_venue.m_display_name);
       auto feeds = Beam::get_node(config, "feeds");
       if(!feeds.IsSequence() || feeds.size() == 0) {
         boost::throw_with_location(
