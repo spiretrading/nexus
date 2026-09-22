@@ -34,7 +34,7 @@ target_compile_definitions(Tests PRIVATE YAML_CPP_STATIC_DEFINE)
 target_link_libraries(Tests PRIVATE Library BeamRoutines)
 beam_install_target(Tests "${PROJECT_BINARY_DIR}/Tests")
 add_custom_command(TARGET Tests POST_BUILD COMMAND Tests)
-install(FILES Application/setup.py
+install(FILES Application/setup.py Application/config.default.yml
   ../Python/setup_utils.py DESTINATION "${PROJECT_BINARY_DIR}/Application")
 file(GLOB configuration_files RELATIVE "${CMAKE_CURRENT_SOURCE_DIR}/Application"
   Application/tmx_ip_*/config.default.yml)
