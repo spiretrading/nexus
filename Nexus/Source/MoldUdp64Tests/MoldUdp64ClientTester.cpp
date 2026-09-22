@@ -1,106 +1,153 @@
 #include <future>
 #include <Beam/IO/LocalServerConnection.hpp>
-#include <Beam/IO/SharedBuffer.hpp>
 #include <doctest/doctest.h>
 #include "Nexus/MoldUdp64/MoldUdp64Client.hpp"
 
 using namespace Beam;
 using namespace boost;
-using namespace boost::endian;
 using namespace Nexus;
 
 namespace {
   struct Fixture {
     LocalServerConnection m_server;
-    optional<LocalClientChannel> m_client_channel;
+    optional<LocalClientChannel> m_channel;
     optional<MoldUdp64Client<LocalClientChannel*>> m_client;
     std::unique_ptr<LocalServerChannel> m_server_channel;
 
     Fixture() {
-      auto server_channel_async = std::async(std::launch::async, [&] {
+      auto server_channel = std::async(std::launch::async, [&] {
         return m_server.accept();
       });
-      m_client_channel.emplace("mold_udp", m_server);
-      m_client.emplace(&*m_client_channel);
-      m_server_channel = server_channel_async.get();
+      m_channel.emplace("mold_udp", m_server);
+      m_client.emplace(&*m_channel);
+      m_server_channel = server_channel.get();
     }
   };
-
-  auto make_message_buffer(std::uint8_t type, const std::string& data) {
-    auto message_length = std::uint16_t(1 + data.size());
-    auto buffer = SharedBuffer();
-    auto message_length_be = native_to_big(message_length);
-    append(buffer, message_length_be);
-    append(buffer, type);
-    append(buffer, data.c_str(), data.size());
-    return buffer;
-  }
-
-  auto make_packet_buffer(const std::string& session,
-      std::uint64_t sequence_number,
-      const std::vector<SharedBuffer>& messages) {
-    auto count = std::uint16_t(messages.size());
-    auto buffer = SharedBuffer();
-    append(buffer, session.c_str(), std::min<std::size_t>(session.size(), 10));
-    for(auto i = session.size(); i < 10; ++i) {
-      append(buffer, std::uint8_t(0));
-    }
-    auto sequence_number_be = native_to_big(sequence_number);
-    append(buffer, sequence_number_be);
-    auto count_be = native_to_big(count);
-    append(buffer, count_be);
-    for(const auto& message : messages) {
-      append(buffer, message);
-    }
-    return buffer;
-  }
-
-  auto is_equal(const char* data, const char* expected) {
-    return std::memcmp(data, expected, std::strlen(expected)) == 0;
-  }
 }
 
 TEST_SUITE("MoldUdp64Client") {
-  TEST_CASE("read_single_packet_single_message") {
+  TEST_CASE("read") {
     auto fixture = Fixture();
-    auto packet =
-      make_packet_buffer("SESSION01", 42, {make_message_buffer(0xAB, "DATA")});
-    fixture.m_server_channel->get_writer().write(packet);
-    auto expected_sequence = std::uint64_t(0);
-    auto message = fixture.m_client->read(out(expected_sequence));
-    REQUIRE(message.m_message_type == 0xAB);
-    REQUIRE(expected_sequence == 42);
-    REQUIRE(is_equal(message.m_data, "DATA"));
+    fixture.m_server_channel->get_writer().write(SharedBuffer("ABCDEFGHIJ"
+      "\x00\x00\x00\x00\x00\x00\x00\x2A\x00\x02"
+      "\x00\x03ONE\x00\x03TWO", 30));
+    fixture.m_server_channel->get_writer().write(SharedBuffer("KLMNOPQRST"
+      "\x00\x00\x00\x00\x00\x00\x00\x01\x00\x01"
+      "\x00\x01X", 23));
+    auto first = fixture.m_client->read();
+    REQUIRE(first.m_session == "ABCDEFGHIJ");
+    REQUIRE(first.m_sequence_number == 42);
+    REQUIRE(first.m_count == 2);
+    auto message = first.begin();
+    REQUIRE(message->get_payload() == "ONE");
+    ++message;
+    REQUIRE(message->get_payload() == "TWO");
+    ++message;
+    REQUIRE(message == first.end());
+    auto second = fixture.m_client->read();
+    REQUIRE(second.m_session == "KLMNOPQRST");
+    REQUIRE(second.m_sequence_number == 1);
+    REQUIRE(second.m_count == 1);
+    REQUIRE(second.begin()->get_payload() == "X");
   }
 
-  TEST_CASE("read_single_packet_multiple_messages") {
+  TEST_CASE("control_packets") {
     auto fixture = Fixture();
-    auto packet = make_packet_buffer("SESSION02", 100,
-      {make_message_buffer(0xC1, "ONE"), make_message_buffer(0xC2, "TWO")});
-    fixture.m_server_channel->get_writer().write(packet);
-    auto expected_sequence1 = std::uint64_t(0);
-    auto message1 = fixture.m_client->read(out(expected_sequence1));
-    REQUIRE(message1.m_message_type == 0xC1);
-    REQUIRE(expected_sequence1 == 100);
-    REQUIRE(is_equal(message1.m_data, "ONE"));
-    auto expected_sequence2 = std::uint64_t(0);
-    auto message2 = fixture.m_client->read(out(expected_sequence2));
-    REQUIRE(message2.m_message_type == 0xC2);
-    REQUIRE(expected_sequence2 == 101);
-    REQUIRE(is_equal(message2.m_data, "TWO"));
+    fixture.m_server_channel->get_writer().write(SharedBuffer(
+      "ABCDEFGHIJ" "\x00\x00\x00\x00\x00\x00\x00\x2A\x00\x00", 20));
+    fixture.m_server_channel->get_writer().write(SharedBuffer(
+      "ABCDEFGHIJ" "\x00\x00\x00\x00\x00\x00\x00\x2A\xFF\xFF", 20));
+    fixture.m_server_channel->get_writer().write(SharedBuffer("ABCDEFGHIJ"
+      "\x00\x00\x00\x00\x00\x00\x00\x29\x00\x01"
+      "\x00\x00", 22));
+    fixture.m_server_channel->get_connection().close();
+    auto heartbeat = fixture.m_client->read();
+    REQUIRE(heartbeat.is_heartbeat());
+    REQUIRE(heartbeat.m_sequence_number == 42);
+    REQUIRE(heartbeat.begin() == heartbeat.end());
+    auto end = fixture.m_client->read();
+    REQUIRE(end.is_end_of_session());
+    REQUIRE(end.m_sequence_number == 42);
+    REQUIRE(end.begin() == end.end());
+    auto recovery = fixture.m_client->read();
+    REQUIRE(recovery.m_sequence_number == 41);
+    REQUIRE(recovery.m_count == 1);
+    REQUIRE(recovery.begin()->get_payload().empty());
   }
 
-  TEST_CASE("read_empty_packet") {
+  TEST_CASE("malformed_packet") {
     auto fixture = Fixture();
-    auto empty_packet = make_packet_buffer("SESSION00", 200, {});
-    auto packet =
-      make_packet_buffer("SESSION01", 201, {make_message_buffer(0xD1, "REAL")});
-    fixture.m_server_channel->get_writer().write(empty_packet);
-    fixture.m_server_channel->get_writer().write(packet);
-    auto expected_sequence = std::uint64_t(0);
-    auto message = fixture.m_client->read(out(expected_sequence));
-    REQUIRE(message.m_message_type == 0xD1);
-    REQUIRE(expected_sequence == 201);
-    REQUIRE(is_equal(message.m_data, "REAL"));
+    SUBCASE("header") {
+      fixture.m_server_channel->get_writer().write(SharedBuffer("SHORT", 5));
+    }
+    SUBCASE("message") {
+      fixture.m_server_channel->get_writer().write(SharedBuffer("ABCDEFGHIJ"
+        "\x00\x00\x00\x00\x00\x00\x00\x2A\x00\x02"
+        "\x00\x01X\x00\x03Y", 26));
+    }
+    fixture.m_server_channel->get_writer().write(SharedBuffer("ABCDEFGHIJ"
+      "\x00\x00\x00\x00\x00\x00\x00\x2A\x00\x01"
+      "\x00\x01Z", 23));
+    REQUIRE_THROWS_AS(fixture.m_client->read(), MoldUdp64ParserException);
+    auto packet = fixture.m_client->read();
+    REQUIRE(packet.m_sequence_number == 42);
+    REQUIRE(packet.m_count == 1);
+    REQUIRE(packet.begin()->get_payload() == "Z");
+  }
+
+  TEST_CASE("read_failure") {
+    auto fixture = Fixture();
+    fixture.m_server_channel->get_writer().close(EndOfFileException());
+    REQUIRE_THROWS_AS(fixture.m_client->read(), IOException);
+  }
+
+  TEST_CASE("request") {
+    auto fixture = Fixture();
+    fixture.m_client->request(MoldUdp64Request("ABCDEFGHIJ", 42, 100));
+    auto buffer = SharedBuffer();
+    fixture.m_server_channel->get_reader().read(out(buffer));
+    REQUIRE(buffer == std::string_view("ABCDEFGHIJ"
+      "\x00\x00\x00\x00\x00\x00\x00\x2A\x00\x64", 20));
+    fixture.m_server_channel->get_writer().write(SharedBuffer("ABCDEFGHIJ"
+      "\x00\x00\x00\x00\x00\x00\x00\x2A\x00\x02"
+      "\x00\x03ONE\x00\x03TWO", 30));
+    auto packet = fixture.m_client->read();
+    REQUIRE(packet.m_session == "ABCDEFGHIJ");
+    REQUIRE(packet.m_sequence_number == 42);
+    REQUIRE(packet.m_count == 2);
+    REQUIRE(packet.begin()->get_payload() == "ONE");
+    fixture.m_client->request(MoldUdp64Request("ABCDEFGHIJ", 44, 98));
+    reset(buffer);
+    fixture.m_server_channel->get_reader().read(out(buffer));
+    REQUIRE(buffer == std::string_view("ABCDEFGHIJ"
+      "\x00\x00\x00\x00\x00\x00\x00\x2C\x00\x62", 20));
+    REQUIRE(packet.begin()->get_payload() == "ONE");
+  }
+
+  TEST_CASE("request_failure") {
+    auto fixture = Fixture();
+    fixture.m_channel->get_writer().close(EndOfFileException());
+    REQUIRE_THROWS_AS(
+      fixture.m_client->request(MoldUdp64Request("ABCDEFGHIJ", 42, 100)),
+      IOException);
+  }
+
+  TEST_CASE("close") {
+    auto fixture = Fixture();
+    SUBCASE("pending_read") {
+      auto reader = std::async(std::launch::async, [&] {
+        return fixture.m_client->read();
+      });
+      fixture.m_client->close();
+      REQUIRE_THROWS_AS(reader.get(), IOException);
+      REQUIRE_NOTHROW(fixture.m_client->close());
+    }
+    SUBCASE("destruction") {
+      fixture.m_client.reset();
+      auto buffer = SharedBuffer();
+      REQUIRE_THROWS_AS(
+        fixture.m_server_channel->get_reader().read(out(buffer)),
+        EndOfFileException);
+    }
   }
 }

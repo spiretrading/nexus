@@ -1,7 +1,7 @@
 #ifndef NEXUS_SOUP_BIN_TCP_PACKET_HPP
 #define NEXUS_SOUP_BIN_TCP_PACKET_HPP
 #include <cstdint>
-#include <string>
+#include <string_view>
 #include <Beam/IO/Buffer.hpp>
 #include <Beam/IO/Reader.hpp>
 #include <Beam/Pointers/Out.hpp>
@@ -20,9 +20,16 @@ namespace Nexus {
     /** The type of packet. */
     std::uint8_t m_type;
 
-    /** The payload. */
+    /** The payload owned by the buffer supplied to read_packet. */
     const char* m_payload;
+
+    /** Returns the payload bytes. */
+    std::string_view get_payload() const;
   };
+
+  inline std::string_view SoupBinTcpPacket::get_payload() const {
+    return std::string_view(m_payload, m_length - sizeof(m_type));
+  }
 
   /**
    * Appends an alphanumeric value to a SoupBinTcpPacket.
@@ -45,18 +52,23 @@ namespace Nexus {
   /**
    * Reads a logical packet from a Reader.
    * @param reader The Reader to read the logical packet from.
-   * @param payload The Buffer used to store the payload.
+   * @param buffer The Buffer to append the packet type and payload to.
    * @return The logical packet read from the <i>reader</i>.
+   *         The payload remains valid until the buffer is modified or destroyed.
    */
   template<Beam::IsReader R, Beam::IsBuffer B>
-  SoupBinTcpPacket read_packet(R& reader, Beam::Out<B> payload) {
+  SoupBinTcpPacket read_packet(R& reader, Beam::Out<B> buffer) {
     auto packet = SoupBinTcpPacket();
     read(reader, Beam::out(packet.m_length));
     packet.m_length = boost::endian::big_to_native(packet.m_length);
-    read(reader, Beam::out(packet.m_type));
-    packet.m_type = boost::endian::big_to_native(packet.m_type);
-    read_exact(reader, Beam::out(payload), packet.m_length - 1);
-    packet.m_payload = payload->get_data();
+    if(packet.m_length == 0) {
+      boost::throw_with_location(
+        SoupBinTcpParserException("SoupBinTCP packet length is zero."));
+    }
+    auto offset = buffer->get_size();
+    read_exact(reader, Beam::out(buffer), packet.m_length);
+    packet.m_type = static_cast<std::uint8_t>(buffer->get_data()[offset]);
+    packet.m_payload = buffer->get_data() + offset + sizeof(packet.m_type);
     return packet;
   }
 }

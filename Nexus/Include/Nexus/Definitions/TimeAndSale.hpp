@@ -20,7 +20,19 @@ namespace Details {
     OPEN,
 
     /** A closing print. */
-    CLOSE);
+    CLOSE,
+
+    /** A reopening auction print following a trading halt. */
+    REOPEN,
+
+    /** An auction print without a more specific auction classification. */
+    AUCTION,
+
+    /** A correction to a previously reported trade. */
+    CORRECTION,
+
+    /** A cancellation of a previously reported trade. */
+    CANCELLATION);
 
   inline std::ostream& operator <<(
       std::ostream& out, ConditionTypeDefinition::Type value) {
@@ -30,6 +42,14 @@ namespace Details {
       return out << "OPEN";
     } else if(value == ConditionTypeDefinition::CLOSE) {
       return out << "CLOSE";
+    } else if(value == ConditionTypeDefinition::REOPEN) {
+      return out << "REOPEN";
+    } else if(value == ConditionTypeDefinition::AUCTION) {
+      return out << "AUCTION";
+    } else if(value == ConditionTypeDefinition::CORRECTION) {
+      return out << "CORRECTION";
+    } else if(value == ConditionTypeDefinition::CANCELLATION) {
+      return out << "CANCELLATION";
     }
     return out << "NONE";
   }

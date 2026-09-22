@@ -603,7 +603,11 @@ void Nexus::Python::export_time_and_sale(module& module) {
     value("NONE", TimeAndSale::Condition::Type::NONE).
     value("REGULAR", TimeAndSale::Condition::Type::REGULAR).
     value("OPEN", TimeAndSale::Condition::Type::OPEN).
-    value("CLOSE", TimeAndSale::Condition::Type::CLOSE);
+    value("CLOSE", TimeAndSale::Condition::Type::CLOSE).
+    value("REOPEN", TimeAndSale::Condition::Type::REOPEN).
+    value("AUCTION", TimeAndSale::Condition::Type::AUCTION).
+    value("CORRECTION", TimeAndSale::Condition::Type::CORRECTION).
+    value("CANCELLATION", TimeAndSale::Condition::Type::CANCELLATION);
   export_queue_suite<TimeAndSale>(module, "TimeAndSale");
   export_queue_suite<SequencedTimeAndSale>(module, "SequencedTimeAndSale");
 }
@@ -631,14 +635,16 @@ void Nexus::Python::export_time_in_force(module& module) {
 void Nexus::Python::export_trading_schedule(module& module) {
   auto outer = class_<TradingSchedule>(module, "TradingSchedule").
     def(init<std::vector<TradingSchedule::Rule>>()).
-    def("find", [] (const TradingSchedule& self, date date, Venue venue) {
-      return self.find(date, venue);
+    def("find", [] (const TradingSchedule& self, ptime timestamp, Venue venue) {
+      return self.find(timestamp, venue);
     }).
     def("find", [] (
-        const TradingSchedule& self, date date, Venue venue, const object& f) {
-      return self.find(date, venue, [&] (const TradingSchedule::Event& event) {
-        return f(cast(event)).cast<bool>();
-      });
+        const TradingSchedule& self, ptime timestamp, Venue venue,
+        const object& f) {
+      return self.find(timestamp, venue,
+        [&] (const TradingSchedule::Event& event) {
+          return f(cast(event)).cast<bool>();
+        });
     });
   export_default_methods(class_<TradingSchedule::Event>(outer, "Event")).
     def_readwrite("code", &TradingSchedule::Event::m_code).
@@ -658,6 +664,7 @@ void Nexus::Python::export_trading_schedule(module& module) {
 }
 
 void Nexus::Python::export_venue(module& module) {
+  module.attr("TIME_ZONES") = cast(TIME_ZONES, return_value_policy::reference);
   export_default_methods(class_<Venue>(module, "Venue")).
     def(init<Venue::Code>()).
     def_property_readonly("code", &Venue::get_code);
@@ -734,15 +741,20 @@ void Nexus::Python::export_venues(module& module) {
     set_venues(database);
   });
   auto submodule = module.def_submodule("venues");
+  submodule.add_object("ALD", cast(Venues::ALD));
+  submodule.add_object("ALX", cast(Venues::ALX));
   submodule.add_object("ASX", cast(Venues::ASX));
-  submodule.add_object("CXA", cast(Venues::CXA));
+  submodule.add_object("CHIC", cast(Venues::CHIC));
   submodule.add_object("CSE", cast(Venues::CSE));
   submodule.add_object("CSE2", cast(Venues::CSE2));
-  submodule.add_object("CHIC", cast(Venues::CHIC));
+  submodule.add_object("CXA", cast(Venues::CXA));
   submodule.add_object("CXD", cast(Venues::CXD));
+  submodule.add_object("ICX", cast(Venues::ICX));
+  submodule.add_object("LIQ", cast(Venues::LIQ));
   submodule.add_object("LYNX", cast(Venues::LYNX));
   submodule.add_object("MATN", cast(Venues::MATN));
   submodule.add_object("NEOE", cast(Venues::NEOE));
+  submodule.add_object("NEON", cast(Venues::NEON));
   submodule.add_object("OMGA", cast(Venues::OMGA));
   submodule.add_object("PURE", cast(Venues::PURE));
   submodule.add_object("TSX", cast(Venues::TSX));

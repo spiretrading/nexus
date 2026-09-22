@@ -36,6 +36,7 @@ if(WIN32)
   target_link_libraries(Python PUBLIC bcrypt crypt32 Secur32 shlwapi Ws2_32)
 endif()
 beam_install_target(Python "${LIB_INSTALL_DIRECTORY}/$<CONFIG>")
+set(python_modules "$<TARGET_FILE:Python>")
 foreach(dependency ASPEN BEAM)
   string(CONCAT library
     "$<$<CONFIG:Debug>:${${dependency}_PYTHON_LIBRARY_DEBUG_PATH}>"
@@ -43,7 +44,18 @@ foreach(dependency ASPEN BEAM)
   if(WIN32)
     set(library "$<PATH:REPLACE_EXTENSION,LAST_ONLY,${library},.pyd>")
   endif()
+  list(APPEND python_modules "${library}")
   install(FILES "${library}" DESTINATION "${LIB_INSTALL_DIRECTORY}/$<CONFIG>")
   set_property(GLOBAL APPEND PROPERTY BEAM_INSTALLED_OUTPUTS
     "${LIB_INSTALL_DIRECTORY}/$<CONFIG>/$<PATH:GET_FILENAME,${library}>")
 endforeach()
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+add_custom_command(TARGET Python POST_BUILD
+  COMMAND "${CMAKE_COMMAND}" -E make_directory
+    "${LIB_INSTALL_DIRECTORY}/$<CONFIG>"
+  COMMAND "${CMAKE_COMMAND}" -E copy_if_different ${python_modules}
+    "${LIB_INSTALL_DIRECTORY}/$<CONFIG>"
+  COMMAND "${Python3_EXECUTABLE}" "${PROJECT_SOURCE_DIR}/tester.py"
+    --config "$<CONFIG>"
+  WORKING_DIRECTORY "${PROJECT_BINARY_DIR}"
+  VERBATIM)
