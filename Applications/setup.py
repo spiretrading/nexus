@@ -24,59 +24,58 @@ def make_sub_args(arg_vars, *args):
   sub_args = []
   for arg in args:
     if arg_vars[arg] is not None:
-      sub_args.append('--' + arg + '=' + arg_vars[arg])
+      sub_args.append('--' + arg + '=' + str(arg_vars[arg]))
   return sub_args
 
 
-def setup_application(application, arg_vars, *args):
+def find_application(root, application):
+  path = root / application / 'Application'
+  if not (path / 'setup.py').is_file():
+    path = root / application
+  return path
+
+
+def setup_application(root, application, arg_vars, *args):
   root_path = os.getcwd()
   try:
-    try:
-      os.chdir(os.path.join(application, 'Application'))
-    except FileNotFoundError:
-      os.chdir(os.path.join(application))
+    os.chdir(find_application(root, application))
+    print('Setting up ' + application, flush=True)
     setup_utils.run_subscript('setup.py', make_sub_args(arg_vars, *args))
   finally:
     os.chdir(root_path)
 
 
-def setup_application_with_mysql(server, arg_vars):
-  if arg_vars['mysql_password'] is None:
-    arg_vars = arg_vars.copy()
-    arg_vars['mysql_password'] = arg_vars['password']
-  setup_application(server, arg_vars, 'mysql_address', 'mysql_username',
+def setup_server(root, server, arg_vars):
+  setup_application(root, server, arg_vars,
+    'local', 'world', 'address', 'password')
+
+
+def setup_server_with_mysql(root, server, arg_vars):
+  setup_application(root, server, arg_vars,
+    'local', 'world', 'address', 'password', 'mysql_address', 'mysql_username',
     'mysql_password', 'mysql_schema')
 
 
-def setup_server(server, arg_vars):
-  setup_application(server, arg_vars, 'local', 'world', 'address', 'password')
-
-
-def setup_server_with_mysql(server, arg_vars):
-  setup_application(server, arg_vars, 'local', 'world', 'address', 'password',
+def setup_service_locator(root, arg_vars):
+  setup_application(root, 'ServiceLocator', arg_vars, 'local', 'world',
     'mysql_address', 'mysql_username', 'mysql_password', 'mysql_schema')
 
 
-def setup_service_locator(arg_vars):
-  if arg_vars['mysql_password'] is None:
-    arg_vars = arg_vars.copy()
-    arg_vars['mysql_password'] = arg_vars['password']
-  setup_application('ServiceLocator', arg_vars, 'local', 'world',
-    'mysql_address', 'mysql_username', 'mysql_password', 'mysql_schema')
-
-
-def setup_beam(arg_vars):
+def setup_beam(root, dependencies):
   for beam_service in ['ServiceLocator', 'UidServer']:
-    if not os.path.exists(beam_service):
-      create_symlink(beam_service, os.path.join('..', 'Nexus', 'Dependencies',
-        'Beam', 'Applications', beam_service))
-  setup_service_locator(arg_vars)
-  setup_server_with_mysql('UidServer', arg_vars)
+    path = root / beam_service
+    if not os.path.lexists(path):
+      create_symlink(str(path),
+        str(dependencies / 'Beam' / 'Applications' / beam_service))
 
 
 def main():
   parser = argparse.ArgumentParser(
-    description='v1.0 Copyright (C) 2020 Spire Trading Inc.')
+    description='Set up Nexus application configurations.')
+  parser.add_argument('--directory', type=Path, default=directory,
+    help='Applications directory to configure (defaults to this script).')
+  parser.add_argument('--dependencies', type=Path,
+    help='Dependencies directory containing Beam.')
   parser.add_argument('-l', '--local', type=str, help='Local interface.',
     required=False)
   parser.add_argument('-w', '--world', type=str, help='Global interface.',
@@ -84,7 +83,7 @@ def main():
   parser.add_argument('-a', '--address', type=str, help='Spire address.',
     required=False)
   parser.add_argument('-p', '--password', type=str, help='Password.',
-    required=False)
+    required=True)
   parser.add_argument('-ma', '--mysql_address', type=str,
     help='MySQL address.', required=False)
   parser.add_argument('-mu', '--mysql_username', type=str,
@@ -94,14 +93,32 @@ def main():
   parser.add_argument('-ms', '--mysql_schema', type=str, help='MySQL schema.',
     required=False)
   arg_vars = vars(parser.parse_args())
-  setup_beam(arg_vars)
-  for server in ['AdministrationServer', 'ComplianceServer',
-      'MarketDataServer', 'RiskServer', 'SimulationOrderExecutionServer']:
-    setup_server_with_mysql(server, arg_vars)
-  for server in ['ChartingServer', 'DefinitionsServer',
-      'MarketDataRelayServer', 'ReplayMarketDataFeedClient',
-      'SimulationMarketDataFeedClient', 'WebPortal']:
-    setup_server(server, arg_vars)
+  root = arg_vars['directory'].resolve()
+  dependencies = arg_vars['dependencies']
+  if dependencies is None:
+    dependencies = root.parent / 'Nexus' / 'Dependencies'
+  dependencies = dependencies.resolve()
+  if arg_vars['mysql_password'] is None:
+    arg_vars['mysql_password'] = arg_vars['password']
+  mysql_servers = ['UidServer', 'AdministrationServer', 'ComplianceServer',
+    'MarketDataServer', 'RiskServer', 'SimulationOrderExecutionServer']
+  servers = ['ChartingServer', 'DefinitionsServer', 'MarketDataRelayServer',
+    'ReplayMarketDataFeedClient', 'SimulationMarketDataFeedClient', 'WebPortal']
+  for application in ['ServiceLocator'] + mysql_servers + servers:
+    path = find_application(root, application)
+    if application in ['ServiceLocator', 'UidServer'] and \
+        not os.path.lexists(root / application):
+      path = find_application(dependencies / 'Beam' / 'Applications',
+        application)
+    if not (path / 'setup.py').is_file():
+      parser.error(
+        'Missing application setup script: ' + str(path / 'setup.py'))
+  setup_beam(root, dependencies)
+  setup_service_locator(root, arg_vars)
+  for server in mysql_servers:
+    setup_server_with_mysql(root, server, arg_vars)
+  for server in servers:
+    setup_server(root, server, arg_vars)
 
 
 if __name__ == '__main__':
