@@ -738,7 +738,8 @@ namespace Nexus {
         !message.m_header.m_exchange) {
       return;
     }
-    auto venue = from_market_center(*message.m_header.m_exchange).m_venue;
+    auto market_center = std::string(*message.m_header.m_exchange);
+    auto venue = from_market_center(market_center).m_venue;
     if(!venue) {
       return;
     }
@@ -753,6 +754,7 @@ namespace Nexus {
       } else {
         return;
       }
+      market_center = book;
     }
     auto info = find_ticker(message.m_symbol);
     if(!info || !m_open_state.is_open()) {
@@ -792,8 +794,7 @@ namespace Nexus {
     timestamp = venue_to_utc(venue, timestamp);
     m_feed_client->publish(TickerTimeAndSale(TimeAndSale(timestamp,
       message.m_price.m_value, message.m_quantity, get_condition(message),
-      VENUES.from(venue).m_display_name,
-      get_broker_name(message.m_sides[0].m_broker),
+      market_center, get_broker_name(message.m_sides[0].m_broker),
       get_broker_name(message.m_sides[1].m_broker)), info->m_ticker));
   }
 

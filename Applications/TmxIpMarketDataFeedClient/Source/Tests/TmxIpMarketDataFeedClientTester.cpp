@@ -300,13 +300,11 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
 
   TEST_CASE("cls_trade") {
     auto exchange = std::string("CHI");
-    auto venue = std::string("CHIC");
     auto brokers = std::string("|70=001|70.1=002");
     auto buyer = std::string("ANON");
     auto seller = std::string("RBCC");
     SUBCASE("primary_venue") {
       exchange = "TSE";
-      venue = "TSX";
     }
     SUBCASE("secondary_venue") {}
     SUBCASE("unknown_brokers") {
@@ -332,25 +330,25 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     REQUIRE(operation->m_time_and_sale == TickerTimeAndSale(TimeAndSale(
       time_from_string("2026-09-21 14:01:00.123"), parse_money("23.10"), 125,
       TimeAndSale::Condition(TimeAndSale::Condition::Type::REGULAR, "@"),
-      venue, buyer, seller), parse_ticker("ABX.TSX")));
+      exchange, buyer, seller), parse_ticker("ABX.TSX")));
     fixture.require_empty();
   }
 
   TEST_CASE("cls_venues") {
     auto fixture = Fixture(Venue());
-    for(auto [exchange, book, venue] : {
-        std::tuple("TSE", "", Venues::TSX), {"CDX", "", Venues::TSXV},
-        {"ALP", "", Venues::XATS}, {"ALX", "", Venues::ALX},
-        {"ALD", "", Venues::ALD}, {"CHI", "", Venues::CHIC},
-        {"CHT", "", Venues::XCX2}, {"CHD", "", Venues::CXD},
-        {"CNQ", "", Venues::CSE}, {"PUR", "", Venues::PURE},
-        {"CS2", "", Venues::CSE2}, {"ICX", "", Venues::ICX},
-        {"LIQ", "", Venues::LIQ}, {"LYX", "", Venues::LYNX},
-        {"OMG", "", Venues::OMGA}, {"TCM", "", Venues::MATN},
-        {"AQL", "", Venues::NEOE}, {"AQN", "", Venues::NEON},
-        {"AQL", "AQL", Venues::NEOE}, {"AQL", "AQN", Venues::NEON},
-        {"AQL", "AQD", Venues::NEOE}, {"AQL", "AQS", Venues::NEOE},
-        {"AQL", "AQC", Venues::NEOE}}) {
+    for(auto [exchange, book, market_center] : {
+        std::tuple("TSE", "", "TSE"), {"CDX", "", "CDX"},
+        {"ALP", "", "ALP"}, {"ALX", "", "ALX"},
+        {"ALD", "", "ALD"}, {"CHI", "", "CHI"},
+        {"CHT", "", "CHT"}, {"CHD", "", "CHD"},
+        {"CNQ", "", "CNQ"}, {"PUR", "", "PUR"},
+        {"CS2", "", "CS2"}, {"ICX", "", "ICX"},
+        {"LIQ", "", "LIQ"}, {"LYX", "", "LYX"},
+        {"OMG", "", "OMG"}, {"TCM", "", "TCM"},
+        {"AQL", "", "AQL"}, {"AQN", "", "AQN"},
+        {"AQL", "AQL", "AQL"}, {"AQL", "AQN", "AQN"},
+        {"AQL", "AQD", "AQD"}, {"AQL", "AQS", "AQS"},
+        {"AQL", "AQC", "AQC"}}) {
       CAPTURE(exchange);
       CAPTURE(book);
       auto fields = std::string(
@@ -364,7 +362,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
         fixture.operation<FeedClient::PublishTimeAndSaleOperation>();
       auto& trade = operation->m_time_and_sale;
       REQUIRE(trade.get_index() == parse_ticker("ABX.TSX"));
-      REQUIRE(trade->m_market_center == VENUES.from(venue).m_display_name);
+      REQUIRE(trade->m_market_center == market_center);
       REQUIRE(trade->m_buyer_mpid.empty());
       REQUIRE(trade->m_seller_mpid.empty());
     }
