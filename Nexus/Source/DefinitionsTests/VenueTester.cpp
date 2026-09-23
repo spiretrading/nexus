@@ -43,7 +43,8 @@ TEST_SUITE("Venue") {
     auto markets = std::vector<Market>({
       {"ALX", "XATX", "ALX"}, {"ALD", "ADRK", "ALD"},
       {"ICX", "XICX", "ICX"}, {"LIQ", "LICA", "LIQ"},
-      {"AQN", "NEON", "NEON"}});
+      {"AQN", "NEON", "NEON"}, {"ASP", "ASPC", "ASPC"},
+      {"ASV", "ASPV", "ASPV"}, {"INC", "INCC", "INCC"}});
     for(auto& market : markets) {
       CAPTURE(market.m_center);
       auto& entry = from_market_center(market.m_center);

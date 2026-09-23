@@ -64,7 +64,8 @@ describe('VenueDatabase', () => {
     for(const [center, mic, name] of [
         ['ALX', 'XATX', 'ALX'], ['ALD', 'ADRK', 'ALD'],
         ['ICX', 'XICX', 'ICX'], ['LIQ', 'LICA', 'LIQ'],
-        ['AQN', 'NEON', 'NEON']]) {
+        ['AQN', 'NEON', 'NEON'], ['ASP', 'ASPC', 'ASPC'],
+        ['ASV', 'ASPV', 'ASPV'], ['INC', 'INCC', 'INCC']]) {
       const venue = new Venue(mic);
       const entry = database.fromVenue(venue);
       assert.ok(entry.venue.equals(venue));
