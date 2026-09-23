@@ -203,23 +203,20 @@ namespace Spire {
     if(!any) {
       return nullptr;
     }
-    if constexpr(std::is_same_v<std::remove_cvref_t<T>, AnyRef>) {
-      if(any->is_const() && !std::is_const_v<T> ||
-          any->is_volatile() != std::is_volatile_v<T>) {
-        return nullptr;
-      }
-      return any;
-    }
-    if(any->get_type() != typeid(std::remove_cv_t<T>) ||
-        any->is_const() && !std::is_const_v<T> ||
+    if(any->is_const() && !std::is_const_v<T> ||
         any->is_volatile() != std::is_volatile_v<T>) {
       return nullptr;
     }
+    if constexpr(std::is_same_v<std::remove_cvref_t<T>, AnyRef>) {
+      return any;
+    }
     if(any->m_type == &AnyRef::AnyTypeInfo::get()) {
       return std::any_cast<T>(static_cast<std::any*>(any->m_ptr));
-    } else {
-      return static_cast<T*>(any->m_ptr);
     }
+    if(any->get_type() != typeid(std::remove_cv_t<T>)) {
+      return nullptr;
+    }
+    return static_cast<T*>(any->m_ptr);
   }
 
   /**
@@ -236,7 +233,14 @@ namespace Spire {
   template<typename T> requires(!std::is_lvalue_reference_v<T> &&
     !std::is_same_v<std::remove_cvref_t<T>, AnyRef>)
   AnyRef::AnyRef(T&& value)
-    : AnyRef(std::move(value), by_value) {}
+    : AnyRef(new std::decay_t<T>(std::forward<T>(value)),
+        [] () -> const BaseTypeInfo& {
+          if constexpr(std::is_same_v<std::decay_t<T>, std::any>) {
+            return AnyTypeInfo::get();
+          } else {
+            return TypeInfo<std::decay_t<T>>::get();
+          }
+        }(), Qualifiers::OWNED) {}
 
   template<typename T>
   AnyRef::AnyRef(T& ref) noexcept

@@ -22,6 +22,18 @@ namespace {
       ~Indestructible() = default;
   };
 
+  struct MoveCounter {
+    int* m_count;
+
+    explicit MoveCounter(int& count) noexcept
+      : m_count(&count) {}
+    MoveCounter(const MoveCounter&) noexcept = default;
+    MoveCounter(MoveCounter&& value) noexcept
+        : m_count(value.m_count) {
+      ++*m_count;
+    }
+  };
+
   struct Addressable {
     auto operator &(this auto& self) {
       return static_cast<decltype(std::addressof(self))>(nullptr);
@@ -222,6 +234,23 @@ TEST_SUITE("AnyRef") {
     }
   }
 
+  TEST_CASE("rvalue_constructor_moves") {
+    auto count = 0;
+    auto value = MoveCounter(count);
+    auto any = AnyRef();
+    SUBCASE("mutable") {
+      any = AnyRef(std::move(value));
+      REQUIRE(count == 1);
+    }
+    SUBCASE("const") {
+      any = AnyRef(std::move(std::as_const(value)));
+      REQUIRE(count == 0);
+    }
+    REQUIRE(any.get_type() == typeid(MoveCounter));
+    REQUIRE(any.is_const());
+    REQUIRE(any_cast<const MoveCounter>(any).m_count == &count);
+  }
+
   TEST_CASE("const_rvalue_constructor") {
     const auto source = AnyRef(123);
     auto copy = AnyRef(std::move(source));
@@ -379,5 +408,15 @@ TEST_SUITE("AnyRef") {
     auto ref = AnyRef(value);
     REQUIRE(ref.get_type() == typeid(int));
     REQUIRE(any_cast<int>(ref) == 123);
+    REQUIRE(any_cast<int>(&ref) == std::any_cast<int>(&value));
+    REQUIRE(!any_cast<double>(&ref));
+    REQUIRE(!any_cast<volatile int>(&ref));
+    auto constant = AnyRef(std::as_const(value));
+    REQUIRE(!any_cast<int>(&constant));
+    REQUIRE(any_cast<const int>(&constant) == std::any_cast<int>(&value));
+    REQUIRE(!any_cast<volatile int>(&constant));
+    value.reset();
+    REQUIRE(!any_cast<int>(&ref));
+    REQUIRE(!any_cast<const int>(&constant));
   }
 }
