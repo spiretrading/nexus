@@ -742,15 +742,15 @@ void Nexus::Python::export_venues(module& module) {
     set_venues(database);
   });
   auto submodule = module.def_submodule("venues");
+  submodule.add_object("ASX", cast(Venues::ASX));
+  submodule.add_object("CXA", cast(Venues::CXA));
   submodule.add_object("ALD", cast(Venues::ALD));
   submodule.add_object("ALX", cast(Venues::ALX));
   submodule.add_object("ASPC", cast(Venues::ASPC));
   submodule.add_object("ASPV", cast(Venues::ASPV));
-  submodule.add_object("ASX", cast(Venues::ASX));
   submodule.add_object("CHIC", cast(Venues::CHIC));
   submodule.add_object("CSE", cast(Venues::CSE));
   submodule.add_object("CSE2", cast(Venues::CSE2));
-  submodule.add_object("CXA", cast(Venues::CXA));
   submodule.add_object("CXD", cast(Venues::CXD));
   submodule.add_object("ICX", cast(Venues::ICX));
   submodule.add_object("INCC", cast(Venues::INCC));
@@ -765,5 +765,13 @@ void Nexus::Python::export_venues(module& module) {
   submodule.add_object("TSXV", cast(Venues::TSXV));
   submodule.add_object("XATS", cast(Venues::XATS));
   submodule.add_object("XCX2", cast(Venues::XCX2));
+  submodule.add_object("EXPM", cast(Venues::EXPM));
+  submodule.add_object("OTCB", cast(Venues::OTCB));
+  submodule.add_object("OTCD", cast(Venues::OTCD));
+  submodule.add_object("OTCI", cast(Venues::OTCI));
   submodule.add_object("OTCM", cast(Venues::OTCM));
+  submodule.add_object("OTCN", cast(Venues::OTCN));
+  submodule.add_object("OTCQ", cast(Venues::OTCQ));
+  submodule.add_object("PINL", cast(Venues::PINL));
+  submodule.add_object("PSGM", cast(Venues::PSGM));
 }

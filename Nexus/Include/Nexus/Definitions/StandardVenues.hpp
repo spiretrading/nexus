@@ -174,17 +174,6 @@ namespace Details {
       }
       {
         auto entry = VenueDatabase::Entry();
-        entry.m_venue = Venue("OTCM");
-        entry.m_country_code = Countries::US;
-        entry.m_market_center = "OTCM";
-        entry.m_time_zone = "America/New_York";
-        entry.m_currency = Currencies::USD;
-        entry.m_description = "OTC Markets Group Inc.";
-        entry.m_display_name = "OTCM";
-        database.add(entry);
-      }
-      {
-        auto entry = VenueDatabase::Entry();
         entry.m_venue = Venue("XATX");
         entry.m_country_code = Countries::CA;
         entry.m_market_center = "ALX";
@@ -271,6 +260,105 @@ namespace Details {
         entry.m_display_name = "INCC";
         database.add(entry);
       }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("OTCM");
+        entry.m_country_code = Countries::US;
+        entry.m_market_center = "ATS";
+        entry.m_time_zone = "America/New_York";
+        entry.m_currency = Currencies::USD;
+        entry.m_description = "OTC Markets - OTC Link ATS";
+        entry.m_display_name = "OTCM";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("OTCQ");
+        entry.m_country_code = Countries::US;
+        entry.m_market_center = "OTCQ";
+        entry.m_time_zone = "America/New_York";
+        entry.m_currency = Currencies::USD;
+        entry.m_description = "OTCQX";
+        entry.m_display_name = "OTCQ";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("OTCB");
+        entry.m_country_code = Countries::US;
+        entry.m_market_center = "OTCB";
+        entry.m_time_zone = "America/New_York";
+        entry.m_currency = Currencies::USD;
+        entry.m_description = "OTCQB";
+        entry.m_display_name = "OTCB";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("OTCD");
+        entry.m_country_code = Countries::US;
+        entry.m_market_center = "OTCD";
+        entry.m_time_zone = "America/New_York";
+        entry.m_currency = Currencies::USD;
+        entry.m_description = "OTCID";
+        entry.m_display_name = "OTCD";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("PINL");
+        entry.m_country_code = Countries::US;
+        entry.m_market_center = "PINL";
+        entry.m_time_zone = "America/New_York";
+        entry.m_currency = Currencies::USD;
+        entry.m_description = "Pink Limited";
+        entry.m_display_name = "PINL";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("EXPM");
+        entry.m_country_code = Countries::US;
+        entry.m_market_center = "EXPM";
+        entry.m_time_zone = "America/New_York";
+        entry.m_currency = Currencies::USD;
+        entry.m_description = "Expert Market";
+        entry.m_display_name = "EXPM";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("PSGM");
+        entry.m_country_code = Countries::US;
+        entry.m_market_center = "PSGM";
+        entry.m_time_zone = "America/New_York";
+        entry.m_currency = Currencies::USD;
+        entry.m_description = "OTC Grey Market";
+        entry.m_display_name = "PSGM";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("OTCN");
+        entry.m_country_code = Countries::US;
+        entry.m_market_center = "ECN";
+        entry.m_time_zone = "America/New_York";
+        entry.m_currency = Currencies::USD;
+        entry.m_description = "OTC Link ECN";
+        entry.m_display_name = "OTCN";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("OTCI");
+        entry.m_country_code = Countries::US;
+        entry.m_market_center = "NQB";
+        entry.m_time_zone = "America/New_York";
+        entry.m_currency = Currencies::USD;
+        entry.m_description = "OTC Link NQB";
+        entry.m_display_name = "OTCI";
+        database.add(entry);
+      }
       return database;
     }();
     return database;
@@ -288,15 +376,15 @@ namespace Details {
   }
 
   namespace Venues {
+    inline const auto ASX = VENUES.from("XASX").m_venue;
+    inline const auto CXA = VENUES.from("CHIA").m_venue;
     inline const auto ALD = VENUES.from("ADRK").m_venue;
     inline const auto ALX = VENUES.from("XATX").m_venue;
     inline const auto ASPC = VENUES.from("ASPC").m_venue;
     inline const auto ASPV = VENUES.from("ASPV").m_venue;
-    inline const auto ASX = VENUES.from("XASX").m_venue;
     inline const auto CHIC = VENUES.from("CHIC").m_venue;
     inline const auto CSE = VENUES.from("XCNQ").m_venue;
     inline const auto CSE2 = VENUES.from("CSE2").m_venue;
-    inline const auto CXA = VENUES.from("CHIA").m_venue;
     inline const auto CXD = VENUES.from("XCXD").m_venue;
     inline const auto ICX = VENUES.from("XICX").m_venue;
     inline const auto INCC = VENUES.from("INCC").m_venue;
@@ -306,12 +394,20 @@ namespace Details {
     inline const auto NEOE = VENUES.from("NEOE").m_venue;
     inline const auto NEON = VENUES.from("NEON").m_venue;
     inline const auto OMGA = VENUES.from("OMGA").m_venue;
-    inline const auto OTCM = VENUES.from("OTCM").m_venue;
     inline const auto PURE = VENUES.from("PURE").m_venue;
     inline const auto TSX = VENUES.from("XTSE").m_venue;
     inline const auto TSXV = VENUES.from("XTSX").m_venue;
     inline const auto XATS = VENUES.from("XATS").m_venue;
     inline const auto XCX2 = VENUES.from("XCX2").m_venue;
+    inline const auto EXPM = VENUES.from("EXPM").m_venue;
+    inline const auto OTCB = VENUES.from("OTCB").m_venue;
+    inline const auto OTCD = VENUES.from("OTCD").m_venue;
+    inline const auto OTCI = VENUES.from("OTCI").m_venue;
+    inline const auto OTCM = VENUES.from("OTCM").m_venue;
+    inline const auto OTCN = VENUES.from("OTCN").m_venue;
+    inline const auto OTCQ = VENUES.from("OTCQ").m_venue;
+    inline const auto PINL = VENUES.from("PINL").m_venue;
+    inline const auto PSGM = VENUES.from("PSGM").m_venue;
   }
 }
 

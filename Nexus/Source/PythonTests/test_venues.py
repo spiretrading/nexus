@@ -237,13 +237,16 @@ class TestVenues(unittest.TestCase):
 
     def test_constants(self):
         for name, mic in (
-                ('ALD', 'ADRK'), ('ALX', 'XATX'), ('ASX', 'XASX'),
-                ('CHIC', 'CHIC'), ('CSE', 'XCNQ'), ('CSE2', 'CSE2'),
-                ('CXA', 'CHIA'), ('CXD', 'XCXD'), ('ICX', 'XICX'),
-                ('LIQ', 'LICA'), ('LYNX', 'LYNX'), ('MATN', 'MATN'),
-                ('NEOE', 'NEOE'), ('NEON', 'NEON'), ('OMGA', 'OMGA'),
-                ('PURE', 'PURE'), ('TSX', 'XTSE'), ('TSXV', 'XTSX'),
-                ('XATS', 'XATS'), ('XCX2', 'XCX2')):
+                ('ASX', 'XASX'), ('CXA', 'CHIA'),
+                ('ALD', 'ADRK'), ('ALX', 'XATX'), ('CHIC', 'CHIC'),
+                ('CSE', 'XCNQ'), ('CSE2', 'CSE2'), ('CXD', 'XCXD'),
+                ('ICX', 'XICX'), ('LIQ', 'LICA'), ('LYNX', 'LYNX'),
+                ('MATN', 'MATN'), ('NEOE', 'NEOE'), ('NEON', 'NEON'),
+                ('OMGA', 'OMGA'), ('PURE', 'PURE'), ('TSX', 'XTSE'),
+                ('TSXV', 'XTSX'), ('XATS', 'XATS'), ('XCX2', 'XCX2'),
+                ('EXPM', 'EXPM'), ('OTCB', 'OTCB'), ('OTCD', 'OTCD'),
+                ('OTCI', 'OTCI'), ('OTCM', 'OTCM'), ('OTCN', 'OTCN'),
+                ('OTCQ', 'OTCQ'), ('PINL', 'PINL'), ('PSGM', 'PSGM')):
             with self.subTest(name=name):
                 venue = getattr(nexus.venues, name)
                 self.assertEqual(venue.code, mic)

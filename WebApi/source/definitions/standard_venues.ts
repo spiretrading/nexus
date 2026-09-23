@@ -39,8 +39,6 @@ export function buildVenueDatabase(): VenueDatabase {
     'America/Toronto', Currencies.CAD, 'Toronto Stock Exchange', 'TSX'));
   database.add(new VenueDatabase.Entry(new Venue('XTSX'), Countries.CA, 'CDX',
     'America/Toronto', Currencies.CAD, 'TSX Venture Exchange', 'TSXV'));
-  database.add(new VenueDatabase.Entry(new Venue('OTCM'), Countries.US, 'OTCM',
-    'America/New_York', Currencies.USD, 'OTC Markets Group Inc.', 'OTCM'));
   database.add(new VenueDatabase.Entry(new Venue('XATX'), Countries.CA, 'ALX',
     'America/Toronto', Currencies.CAD, 'Alpha-X', 'ALX'));
   database.add(new VenueDatabase.Entry(new Venue('ADRK'), Countries.CA, 'ALD',
@@ -57,6 +55,24 @@ export function buildVenueDatabase(): VenueDatabase {
     'America/Toronto', Currencies.CAD, 'CIX ASPEN VERT', 'ASPV'));
   database.add(new VenueDatabase.Entry(new Venue('INCC'), Countries.CA, 'INC',
     'America/Toronto', Currencies.CAD, 'CIX MIDPOINT', 'INCC'));
+  database.add(new VenueDatabase.Entry(new Venue('OTCM'), Countries.US, 'ATS',
+    'America/New_York', Currencies.USD, 'OTC Markets - OTC Link ATS', 'OTCM'));
+  database.add(new VenueDatabase.Entry(new Venue('OTCQ'), Countries.US, 'OTCQ',
+    'America/New_York', Currencies.USD, 'OTCQX', 'OTCQ'));
+  database.add(new VenueDatabase.Entry(new Venue('OTCB'), Countries.US, 'OTCB',
+    'America/New_York', Currencies.USD, 'OTCQB', 'OTCB'));
+  database.add(new VenueDatabase.Entry(new Venue('OTCD'), Countries.US, 'OTCD',
+    'America/New_York', Currencies.USD, 'OTCID', 'OTCD'));
+  database.add(new VenueDatabase.Entry(new Venue('PINL'), Countries.US, 'PINL',
+    'America/New_York', Currencies.USD, 'Pink Limited', 'PINL'));
+  database.add(new VenueDatabase.Entry(new Venue('EXPM'), Countries.US, 'EXPM',
+    'America/New_York', Currencies.USD, 'Expert Market', 'EXPM'));
+  database.add(new VenueDatabase.Entry(new Venue('PSGM'), Countries.US, 'PSGM',
+    'America/New_York', Currencies.USD, 'OTC Grey Market', 'PSGM'));
+  database.add(new VenueDatabase.Entry(new Venue('OTCN'), Countries.US, 'ECN',
+    'America/New_York', Currencies.USD, 'OTC Link ECN', 'OTCN'));
+  database.add(new VenueDatabase.Entry(new Venue('OTCI'), Countries.US, 'NQB',
+    'America/New_York', Currencies.USD, 'OTC Link NQB', 'OTCI'));
   return database;
 }
 
@@ -81,10 +97,18 @@ export namespace Venues {
   export const NEOE = new Venue('NEOE');
   export const NEON = new Venue('NEON');
   export const OMGA = new Venue('OMGA');
-  export const OTCM = new Venue('OTCM');
   export const PURE = new Venue('PURE');
   export const TSX = new Venue('XTSE');
   export const TSXV = new Venue('XTSX');
   export const XATS = new Venue('XATS');
   export const XCX2 = new Venue('XCX2');
+  export const EXPM = new Venue('EXPM');
+  export const OTCB = new Venue('OTCB');
+  export const OTCD = new Venue('OTCD');
+  export const OTCI = new Venue('OTCI');
+  export const OTCM = new Venue('OTCM');
+  export const OTCN = new Venue('OTCN');
+  export const OTCQ = new Venue('OTCQ');
+  export const PINL = new Venue('PINL');
+  export const PSGM = new Venue('PSGM');
 }

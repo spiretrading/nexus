@@ -105,13 +105,6 @@ venues:
     description: TSX Venture Exchange
     display_name: TSXV
     market_center: CDX
-  - venue: OTCM
-    country_code: US
-    time_zone: America/New_York
-    currency: USD
-    description: OTC Markets Group Inc.
-    display_name: OTCM
-    market_center: OTCM
   - venue: XATX
     country_code: CA
     time_zone: America/Toronto
@@ -168,4 +161,67 @@ venues:
     description: CIX MIDPOINT
     display_name: INCC
     market_center: INC
+  - venue: OTCM
+    country_code: US
+    time_zone: America/New_York
+    currency: USD
+    description: OTC Markets - OTC Link ATS
+    display_name: OTCM
+    market_center: ATS
+  - venue: OTCQ
+    country_code: US
+    time_zone: America/New_York
+    currency: USD
+    description: OTCQX
+    display_name: OTCQ
+    market_center: OTCQ
+  - venue: OTCB
+    country_code: US
+    time_zone: America/New_York
+    currency: USD
+    description: OTCQB
+    display_name: OTCB
+    market_center: OTCB
+  - venue: OTCD
+    country_code: US
+    time_zone: America/New_York
+    currency: USD
+    description: OTCID
+    display_name: OTCD
+    market_center: OTCD
+  - venue: PINL
+    country_code: US
+    time_zone: America/New_York
+    currency: USD
+    description: Pink Limited
+    display_name: PINL
+    market_center: PINL
+  - venue: EXPM
+    country_code: US
+    time_zone: America/New_York
+    currency: USD
+    description: Expert Market
+    display_name: EXPM
+    market_center: EXPM
+  - venue: PSGM
+    country_code: US
+    time_zone: America/New_York
+    currency: USD
+    description: OTC Grey Market
+    display_name: PSGM
+    market_center: PSGM
+  - venue: OTCN
+    country_code: US
+    time_zone: America/New_York
+    currency: USD
+    description: OTC Link ECN
+    display_name: OTCN
+    market_center: ECN
+  - venue: OTCI
+    country_code: US
+    time_zone: America/New_York
+    currency: USD
+    description: OTC Link NQB
+    display_name: OTCI
+    market_center: NQB
 ...
