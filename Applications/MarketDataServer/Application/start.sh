@@ -72,6 +72,10 @@ if [[ -z "$pid" ]]; then
   mkdir -p "$LOG_DIR" || exit 1
   for existing_log in srv_*.log; do
     if [[ -f "$existing_log" ]]; then
+      if [[ ! -s "$existing_log" ]]; then
+        rm "$existing_log" || exit 1
+        continue
+      fi
       archive="$LOG_DIR/${existing_log##*/}"
       if [[ -e "$archive" ]]; then
         archive=$(mktemp "$archive.XXXXXX") || exit 1
