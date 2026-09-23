@@ -2,7 +2,6 @@
 #define SPIRE_ANY_REF_HPP
 #include <any>
 #include <memory>
-#include <typeindex>
 #include "Spire/Spire/Spire.hpp"
 
 namespace Spire {
@@ -136,8 +135,8 @@ namespace Spire {
         const std::type_info& get_type(void* ptr) const noexcept override;
         std::any to_any(void* ptr) const override;
         void assign(void* ptr, const std::any& value) const override;
-        void* copy(const void* ptr) const;
-        void drop(const void* ptr) const noexcept;
+        void* copy(const void* ptr) const override;
+        void drop(const void* ptr) const noexcept override;
       };
       void* m_ptr;
       const BaseTypeInfo* m_type;

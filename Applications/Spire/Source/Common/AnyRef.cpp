@@ -37,8 +37,7 @@ AnyRef::AnyRef(std::nullptr_t) noexcept
   : AnyRef(nullptr, TypeInfo<void>::get(), Qualifiers::NONE) {}
 
 AnyRef::AnyRef(std::any& value) noexcept
-  : AnyRef(
-      &const_cast<std::any&>(value), AnyTypeInfo::get(), Qualifiers::NONE) {}
+  : AnyRef(&value, AnyTypeInfo::get(), Qualifiers::NONE) {}
 
 AnyRef::AnyRef(const std::any& value) noexcept
   : AnyRef(&const_cast<std::any&>(value), AnyTypeInfo::get(),
@@ -58,15 +57,8 @@ AnyRef::AnyRef(const AnyRef& any) {
   m_qualifiers = any.m_qualifiers;
 }
 
-AnyRef::AnyRef(AnyRef& any) {
-  if(any.m_qualifiers == Qualifiers::OWNED) {
-    m_ptr = any.m_type->copy(any.m_ptr);
-  } else {
-    m_ptr = any.m_ptr;
-  }
-  m_type = any.m_type;
-  m_qualifiers = any.m_qualifiers;
-}
+AnyRef::AnyRef(AnyRef& any)
+  : AnyRef(std::as_const(any)) {}
 
 AnyRef::AnyRef(AnyRef&& any) noexcept
   : AnyRef(std::exchange(any.m_ptr, nullptr),
