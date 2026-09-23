@@ -79,7 +79,7 @@ namespace Nexus {
     Side m_side;
 
     /** CDF quantity (tag 64). */
-    std::uint64_t m_quantity;
+    Quantity m_quantity;
 
     /** CDF public price (tag 196). */
     boost::optional<TmxIpPrice> m_public_price;
@@ -110,7 +110,7 @@ namespace Nexus {
     boost::optional<std::uint64_t> m_broker;
 
     /** CDF display quantity (tag 150). */
-    boost::optional<std::uint64_t> m_display_quantity;
+    boost::optional<Quantity> m_display_quantity;
 
     /** CDF priority timestamp (tag 178). */
     boost::optional<boost::posix_time::ptime> m_priority_timestamp;
@@ -274,19 +274,19 @@ namespace Nexus {
     TmxIpPrice m_public_price;
 
     /** CDF quantity (tag 64). */
-    std::uint64_t m_quantity;
+    Quantity m_quantity;
 
     /** CDF priority timestamp (tag 178). */
     boost::optional<boost::posix_time::ptime> m_priority_timestamp;
 
     /** CDF priority quantity (tag 68). */
-    boost::optional<std::uint64_t> m_priority_quantity;
+    boost::optional<Quantity> m_priority_quantity;
 
     /** CDF minimum fill quantity (tag 31). */
-    boost::optional<std::uint64_t> m_minimum_fill_quantity;
+    boost::optional<Quantity> m_minimum_fill_quantity;
 
     /** CDF lots of (tag 74). */
-    boost::optional<std::uint64_t> m_lots_of;
+    boost::optional<Quantity> m_lots_of;
 
     /** CDF settlement terms (tag 53). */
     boost::optional<std::string_view> m_settlement_terms;
@@ -329,7 +329,7 @@ namespace Nexus {
     TmxIpPrice m_price;
 
     /** CDF quantity (tag 64). */
-    std::uint64_t m_quantity;
+    Quantity m_quantity;
 
     /** CDF trade id (tag 220). */
     boost::optional<std::string_view> m_trade_id;
@@ -653,7 +653,7 @@ namespace Nexus {
         });
     };
     constexpr auto WHOLE_DIGITS = std::size_t(6);
-    constexpr auto FRACTION_DIGITS = std::size_t(5);
+    constexpr auto FRACTION_DIGITS = std::size_t(6);
     if(separator != std::string_view::npos) {
       while(source.size() > separator + 1 + FRACTION_DIGITS &&
           source.back() == '0') {
@@ -682,6 +682,24 @@ namespace TmxIpDetails {
       boost::throw_with_location(TmxIpParserException("Invalid CDF number."));
     }
     return value;
+  }
+
+  inline Quantity volume(std::string_view source) {
+    constexpr auto DIGITS = std::size_t(20);
+    auto is_valid = !source.empty() && source.size() <= DIGITS &&
+      std::ranges::all_of(source, [] (auto character) {
+        return character >= '0' && character <= '9';
+      });
+    if(!is_valid) {
+      boost::throw_with_location(TmxIpParserException("Invalid CDF volume."));
+    }
+    auto value = double();
+    auto [end, error] =
+      std::from_chars(source.data(), source.data() + source.size(), value);
+    if(error != std::errc() || end != source.data() + source.size()) {
+      boost::throw_with_location(TmxIpParserException("Invalid CDF volume."));
+    }
+    return Quantity(value);
   }
 
   template<std::size_t N>
@@ -935,7 +953,7 @@ namespace TmxIpDetails {
       record.m_order_id = fields.read(40, i, text<18>);
       record.m_broker = fields.read(70, i, number<3>);
       record.m_side = fields.read(197, i, side);
-      record.m_quantity = fields.read(64, i, number<10>);
+      record.m_quantity = fields.read(64, i, volume);
       record.m_public_price = fields.read_optional(196, i, TmxIpPrice::parse);
       record.m_price = fields.read_optional(41, i, TmxIpPrice::parse);
       record.m_priority_timestamp = fields.read_optional(178, i, timestamp);
@@ -994,11 +1012,11 @@ namespace TmxIpDetails {
     value.m_previous_order_id = fields.read_optional(11, text<18>);
     value.m_broker = fields.read_optional(70, number<3>);
     value.m_public_price = fields.read(196, TmxIpPrice::parse);
-    value.m_quantity = fields.read(64, number<10>);
+    value.m_quantity = fields.read(64, volume);
     value.m_priority_timestamp = fields.read_optional(178, timestamp);
-    value.m_priority_quantity = fields.read_optional(68, number<10>);
-    value.m_minimum_fill_quantity = fields.read_optional(31, number<10>);
-    value.m_lots_of = fields.read_optional(74, number<10>);
+    value.m_priority_quantity = fields.read_optional(68, volume);
+    value.m_minimum_fill_quantity = fields.read_optional(31, volume);
+    value.m_lots_of = fields.read_optional(74, volume);
     value.m_settlement_terms = fields.read_optional(53, text<6>);
     value.m_priority_status = fields.read_optional(639, text<32>);
     value.m_previous_price = fields.read_optional(642, TmxIpPrice::parse);
@@ -1037,7 +1055,7 @@ namespace TmxIpDetails {
     }
     value.m_symbol = fields.read(55, text<17>);
     value.m_price = fields.read(41, TmxIpPrice::parse);
-    value.m_quantity = fields.read(64, number<10>);
+    value.m_quantity = fields.read(64, volume);
     value.m_trade_id = fields.read_optional(220, text<18>);
     value.m_original_trade_id = fields.read_optional(506, text<64>);
     value.m_previous_order_id = fields.read_optional(11, text<18>);
@@ -1065,7 +1083,7 @@ namespace TmxIpDetails {
       auto& record = value.m_sides[i];
       record.m_order_id = fields.read_optional(40, i, text<18>);
       record.m_broker = fields.read_optional(70, i, number<3>);
-      record.m_display_quantity = fields.read_optional(150, i, number<10>);
+      record.m_display_quantity = fields.read_optional(150, i, volume);
       record.m_priority_timestamp = fields.read_optional(178, i, timestamp);
       record.m_trade_timestamp = fields.read_optional(264, i, timestamp);
     }
