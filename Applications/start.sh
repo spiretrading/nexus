@@ -13,6 +13,7 @@ services=(
   "WebPortal"
   "AsxTradeItchMarketDataFeedClient"
   "CxaPitchMarketDataFeedClient"
+  "OtcLinkMarketDataFeedClient"
   "TmxIpMarketDataFeedClient"
 )
 

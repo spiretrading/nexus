@@ -40,6 +40,7 @@ CALL :BuildApp Applications\Lollipop %*
 CALL :BuildApp Applications\MarketDataRelayServer %*
 CALL :BuildApp Applications\MarketDataServer %*
 CALL :BuildApp Applications\OasisOrderExecutionServer %*
+CALL :BuildApp Applications\OtcLinkMarketDataFeedClient %*
 CALL :BuildApp Applications\ReplayMarketDataFeedClient %*
 CALL :BuildApp Applications\RiskServer %*
 CALL :BuildApp Applications\Scratch %*

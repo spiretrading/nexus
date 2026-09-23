@@ -1,0 +1,3 @@
+@ECHO OFF
+CALL "%~dp0..\..\Nexus\version.bat" OTC_LINK_MARKET_DATA_FEED_CLIENT
+EXIT /B %ERRORLEVEL%
