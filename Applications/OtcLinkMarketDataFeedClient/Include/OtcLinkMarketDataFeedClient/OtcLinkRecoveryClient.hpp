@@ -60,6 +60,9 @@ namespace Nexus {
       std::vector<Beam::SharedBuffer> request(std::uint32_t sequence,
         std::uint32_t count, std::stop_token stop_token);
 
+      /** Requests a multicast snapshot and waits for its acknowledgement. */
+      void request_snapshot(std::stop_token stop_token);
+
       /** Cancels the active request and closes the client. */
       void close();
 
@@ -88,6 +91,8 @@ namespace Nexus {
       static OtcLinkRecoveryResponse read_response(Channel& channel);
       OtcLinkRecoveryClient(const OtcLinkRecoveryClient&) = delete;
       OtcLinkRecoveryClient& operator =(const OtcLinkRecoveryClient&) = delete;
+      std::vector<Beam::SharedBuffer> request(
+        OtcLinkRecoveryRequest request, std::stop_token stop_token);
       std::vector<Beam::SharedBuffer> execute(Operation& operation,
         const OtcLinkRecoveryRequest& request, const std::string& encoded);
       void finish(Operation& operation);
@@ -124,43 +129,16 @@ namespace Nexus {
     Beam::IsTimer<Beam::dereference_t<T>>
   std::vector<Beam::SharedBuffer> OtcLinkRecoveryClient<C, T>::request(
       std::uint32_t sequence, std::uint32_t count, std::stop_token stop_token) {
-    auto lock = std::lock_guard(m_mutex);
-    auto request = OtcLinkRecoveryRequest(
-      m_sender, m_next_id++, m_channel, sequence, count);
-    auto encoded = request.encode();
-    auto operation = std::make_shared<Operation>();
-    Beam::with(m_operation, [&] (auto& current) {
-      if(!m_open_state.is_open() || stop_token.stop_requested()) {
-        boost::throw_with_location(Beam::EndOfFileException());
-      }
-      current = operation;
-    });
-    auto stop = std::stop_callback(stop_token, [=, this] {
-      m_tasks.push([=] { cancel(operation); });
-    });
-    auto slot = Beam::callback<typename Timer::Result>(
-      [=, this] (const auto& result) {
-        if(result != Timer::Result::CANCELED) {
-          m_tasks.push([=] { cancel(operation); });
-        }
-      });
-    auto messages = std::vector<Beam::SharedBuffer>();
-    try {
-      m_timer->get_publisher().monitor(slot);
-      m_timer->start();
-      messages = execute(*operation, request, encoded);
-    } catch(const std::exception&) {
-      slot->close();
-      finish(*operation);
-      throw;
-    }
-    slot->close();
-    finish(*operation);
-    check(*operation);
-    if(stop_token.stop_requested()) {
-      boost::throw_with_location(Beam::EndOfFileException());
-    }
-    return messages;
+    return request(OtcLinkRecoveryRequest(
+      m_sender, 0, m_channel, sequence, count), stop_token);
+  }
+
+  template<Beam::IsChannel C, typename T> requires
+    Beam::IsTimer<Beam::dereference_t<T>>
+  void OtcLinkRecoveryClient<C, T>::request_snapshot(
+      std::stop_token stop_token) {
+    request(OtcLinkRecoveryRequest(m_sender, 0, m_channel, 0, 0,
+      OtcLinkRecoveryRequest::Type::SNAPSHOT), stop_token);
   }
 
   template<Beam::IsChannel C, typename T> requires
@@ -228,6 +206,48 @@ namespace Nexus {
 
   template<Beam::IsChannel C, typename T> requires
     Beam::IsTimer<Beam::dereference_t<T>>
+  std::vector<Beam::SharedBuffer> OtcLinkRecoveryClient<C, T>::request(
+      OtcLinkRecoveryRequest request, std::stop_token stop_token) {
+    auto lock = std::lock_guard(m_mutex);
+    request.m_id = m_next_id++;
+    auto encoded = request.encode();
+    auto operation = std::make_shared<Operation>();
+    Beam::with(m_operation, [&] (auto& current) {
+      if(!m_open_state.is_open() || stop_token.stop_requested()) {
+        boost::throw_with_location(Beam::EndOfFileException());
+      }
+      current = operation;
+    });
+    auto stop = std::stop_callback(stop_token, [=, this] {
+      m_tasks.push([=] { cancel(operation); });
+    });
+    auto slot = Beam::callback<typename Timer::Result>(
+      [=, this] (const auto& result) {
+        if(result != Timer::Result::CANCELED) {
+          m_tasks.push([=] { cancel(operation); });
+        }
+      });
+    auto messages = std::vector<Beam::SharedBuffer>();
+    try {
+      m_timer->get_publisher().monitor(slot);
+      m_timer->start();
+      messages = execute(*operation, request, encoded);
+    } catch(const std::exception&) {
+      slot->close();
+      finish(*operation);
+      throw;
+    }
+    slot->close();
+    finish(*operation);
+    check(*operation);
+    if(stop_token.stop_requested()) {
+      boost::throw_with_location(Beam::EndOfFileException());
+    }
+    return messages;
+  }
+
+  template<Beam::IsChannel C, typename T> requires
+    Beam::IsTimer<Beam::dereference_t<T>>
   std::vector<Beam::SharedBuffer> OtcLinkRecoveryClient<C, T>::execute(
       Operation& operation, const OtcLinkRecoveryRequest& request,
       const std::string& encoded) {
@@ -257,6 +277,9 @@ namespace Nexus {
       boost::throw_with_location(Beam::IOException(std::format(
         "OTC Link recovery rejected ({}): {}",
         static_cast<int>(response.m_status), response.m_text)));
+    }
+    if(request.m_type == OtcLinkRecoveryRequest::Type::SNAPSHOT) {
+      return {};
     }
     if(response.m_first_sequence != request.m_sequence ||
         response.m_last_sequence != request.m_sequence + request.m_count - 1) {

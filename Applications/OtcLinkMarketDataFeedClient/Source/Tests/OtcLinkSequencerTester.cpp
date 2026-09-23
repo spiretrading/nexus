@@ -87,6 +87,27 @@ namespace {
 }
 
 TEST_SUITE("OtcLinkSequencer") {
+  TEST_CASE("resume") {
+    auto fixture = Fixture(1);
+    fixture.add(0, {100, 101, 102, 104});
+    fixture.m_sequencer.resume(102);
+    fixture.require_message(102);
+    fixture.require_gap(103, 1);
+    fixture.recover({103});
+    fixture.require_message(103);
+    fixture.require_message(104);
+    fixture.m_sequencer.resume(200);
+    fixture.add(0, {199, 200});
+    fixture.require_message(200);
+    fixture.m_sequencer.resume(std::uint64_t(UINT32_MAX) + 1);
+    REQUIRE(!fixture.m_sequencer.read());
+    REQUIRE(!fixture.m_sequencer.get_gap());
+    REQUIRE_THROWS_AS(fixture.m_sequencer.resume(0), std::invalid_argument);
+    REQUIRE_THROWS_AS(
+      fixture.m_sequencer.resume(std::uint64_t(UINT32_MAX) + 2),
+      std::invalid_argument);
+  }
+
   TEST_CASE("recovery_message") {
     auto fixture = Fixture(1);
     auto packet = make_packet({2}, 1, 0);

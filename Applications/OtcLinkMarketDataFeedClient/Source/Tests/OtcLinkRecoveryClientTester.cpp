@@ -67,6 +67,24 @@ namespace {
 }
 
 TEST_SUITE("OtcLinkRecoveryClient") {
+  TEST_CASE("snapshot_request") {
+    auto fixture = Fixture();
+    auto task = std::packaged_task([&] {
+      fixture.m_client.request_snapshot({});
+    });
+    auto future = task.get_future();
+    fixture.m_routine = spawn(std::move(task));
+    auto server = fixture.accept(OtcLinkRecoveryRequest("SPIRE", 1, 11,
+      0, 0, OtcLinkRecoveryRequest::Type::SNAPSHOT));
+    auto response = fixture.response("35=BX\x01" "59=SPIRE\x01"
+      "1346=1\x01" "1355=11\x01" "1348=0\x01");
+    server->get_writer().write(SharedBuffer(response.data(), response.size()));
+    REQUIRE_NOTHROW(future.get());
+    auto buffer = SharedBuffer();
+    REQUIRE_THROWS_AS(server->get_reader().read(out(buffer)),
+      EndOfFileException);
+  }
+
   TEST_CASE("request_after_timeout") {
     auto fixture = Fixture();
     auto first = fixture.request(100, 1, {});

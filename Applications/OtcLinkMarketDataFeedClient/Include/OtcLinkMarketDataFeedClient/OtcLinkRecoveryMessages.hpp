@@ -13,11 +13,21 @@
 
 namespace Nexus {
 
-  /** A request to replay a range of messages from a live OTC Link channel. */
+  /** A request for OTC Link gap recovery or a channel snapshot. */
   struct OtcLinkRecoveryRequest {
 
     /** The maximum number of messages allowed in one request. */
     static constexpr auto MAXIMUM_COUNT = std::uint32_t(2000);
+
+    /** The kind of replay requested. */
+    enum class Type {
+
+      /** Replay missing live messages. */
+      GAP_FILL,
+
+      /** Publish a snapshot on the dedicated multicast channel. */
+      SNAPSHOT
+    };
 
     /** The subscriber's assigned SenderCompID. */
     std::string m_sender;
@@ -33,6 +43,9 @@ namespace Nexus {
 
     /** The number of messages to replay. */
     std::uint32_t m_count;
+
+    /** The kind of replay requested. */
+    Type m_type = Type::GAP_FILL;
 
     /** Returns the encoded request, including its checksum. */
     std::string encode() const;
@@ -75,10 +88,10 @@ namespace Nexus {
     /** Additional detail supplied by the server. */
     std::string m_text;
 
-    /** The first replayed sequence, present on acceptance. */
+    /** The first replayed sequence, when supplied by the server. */
     boost::optional<std::uint32_t> m_first_sequence;
 
-    /** The last replayed sequence, present on acceptance. */
+    /** The last replayed sequence, when supplied by the server. */
     boost::optional<std::uint32_t> m_last_sequence;
 
     /** Parses a complete acknowledgement and validates its checksum. */
@@ -87,15 +100,31 @@ namespace Nexus {
 
   inline std::string OtcLinkRecoveryRequest::encode() const {
     if(m_sender.empty() || m_sender.find('\x01') != std::string::npos ||
-        m_channel == 0 || m_sequence == 0 || m_count == 0 ||
-        m_count > MAXIMUM_COUNT ||
-        m_count - 1 > std::numeric_limits<std::uint32_t>::max() - m_sequence) {
+        m_channel == 0) {
       boost::throw_with_location(
         OtcLinkParserException("Invalid OTC Link recovery request."));
     }
-    auto result = std::format("35=BW\x01" "49={}\x01" "1346={}\x01"
-      "1347=0\x01" "1355={}\x01" "1182={}\x01" "1183={}\x01",
-      m_sender, m_id, m_channel, m_sequence, m_sequence + m_count - 1);
+    auto result = std::format("35=BW\x01" "49={}\x01" "1346={}\x01",
+      m_sender, m_id);
+    if(m_type == Type::GAP_FILL) {
+      if(m_sequence == 0 || m_count == 0 || m_count > MAXIMUM_COUNT ||
+          m_count - 1 > std::numeric_limits<std::uint32_t>::max() -
+            m_sequence) {
+        boost::throw_with_location(
+          OtcLinkParserException("Invalid OTC Link recovery range."));
+      }
+      result += std::format("1347=0\x01" "1355={}\x01" "1182={}\x01"
+        "1183={}\x01", m_channel, m_sequence, m_sequence + m_count - 1);
+    } else if(m_type == Type::SNAPSHOT) {
+      if(m_channel == 1 || m_channel == 49) {
+        boost::throw_with_location(
+          OtcLinkParserException("OTC Link trades have no snapshots."));
+      }
+      result += std::format("1347=1\x01" "1355={}\x01", m_channel);
+    } else {
+      boost::throw_with_location(
+        OtcLinkParserException("Invalid OTC Link replay type."));
+    }
     auto checksum = 0U;
     for(auto byte : result) {
       checksum += static_cast<unsigned char>(byte);
@@ -194,9 +223,10 @@ namespace Nexus {
       response.m_last_sequence = sequence;
     }
     if(response.m_status == Status::ACCEPTED &&
-        (!response.m_first_sequence || !response.m_last_sequence ||
-          *response.m_first_sequence == 0 ||
-          *response.m_last_sequence < *response.m_first_sequence)) {
+        (response.m_first_sequence.has_value() !=
+            response.m_last_sequence.has_value() ||
+          (response.m_first_sequence &&
+            *response.m_last_sequence < *response.m_first_sequence))) {
       fail();
     }
     return response;

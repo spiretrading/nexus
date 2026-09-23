@@ -52,6 +52,10 @@ namespace {
       : Fixture(feeds, {}) {}
 
     Fixture(int feeds, Client::RecoveryFunction recovery)
+      : Fixture(feeds, std::move(recovery), {}) {}
+
+    Fixture(int feeds, Client::RecoveryFunction recovery,
+        Client::SnapshotFunction snapshot)
         : m_time_client(time_from_string("2026-09-23 14:00:00")) {
       auto clients = std::vector<ProtocolClient*>();
       for(auto i = 0; i < feeds; ++i) {
@@ -68,7 +72,7 @@ namespace {
       }
       m_client.emplace(
         FEED_TIMEOUT, GAP_TIMEOUT, clients, &m_time_client, &m_timer,
-        std::move(recovery));
+        std::move(recovery), std::move(snapshot));
       flush_pending_routines();
     }
 
@@ -122,6 +126,121 @@ namespace {
 }
 
 TEST_SUITE("OtcLinkClient") {
+  TEST_CASE("snapshot_before_feed") {
+    auto is_failure = false;
+    SUBCASE("success") {}
+    SUBCASE("failure") {
+      is_failure = true;
+    }
+    auto fixture = Fixture(1, {}, [&] (std::stop_token) {
+      if(is_failure) {
+        throw IOException("Unavailable.");
+      }
+      return OtcLinkSnapshot(101);
+    });
+    fixture.publish(0, {101, 102});
+    fixture.require_message(101, 0);
+    fixture.require_message(102, 0);
+    REQUIRE(fixture.m_log.m_output.str().find("dropped") ==
+      std::string::npos);
+  }
+
+  TEST_CASE("snapshot_redundancy") {
+    auto completion = Async<OtcLinkSnapshot>();
+    auto fixture = Fixture(2, {}, [&] (std::stop_token token) {
+      auto stop = std::stop_callback(token, [&] {
+        completion.get_eval().set_exception(EndOfFileException());
+      });
+      return completion.get();
+    });
+    fixture.publish(0, {103});
+    fixture.publish(1, {101, 102, 103});
+    completion.get_eval().set(OtcLinkSnapshot(101));
+    flush_pending_routines();
+    fixture.m_client->close();
+    fixture.require_message(101, 0);
+    fixture.require_message(102, 0);
+    fixture.require_message(103, 0);
+  }
+
+  TEST_CASE("snapshot_failure") {
+    auto action = 0;
+    SUBCASE("request_failure") {}
+    SUBCASE("session_reset") {
+      action = 1;
+    }
+    SUBCASE("close") {
+      action = 2;
+    }
+    SUBCASE("invalid_snapshot") {
+      action = 3;
+    }
+    auto completion = Async<OtcLinkSnapshot>();
+    auto fixture = Fixture(1, {}, [&] (std::stop_token token) {
+      auto stop = std::stop_callback(token, [&] {
+        completion.get_eval().set_exception(EndOfFileException());
+      });
+      return completion.get();
+    });
+    fixture.publish(0, {100, 101});
+    if(action == 0) {
+      completion.get_eval().set_exception(IOException("Unavailable."));
+    } else if(action == 1) {
+      fixture.publish(0, OtcLinkHeader::Flag::SEQUENCE_RESET);
+      fixture.publish(0, {1});
+    } else if(action == 2) {
+      fixture.m_client->close();
+    } else {
+      completion.get_eval().set(OtcLinkSnapshot(0));
+    }
+    flush_pending_routines();
+    if(action == 0 || action == 3) {
+      fixture.require_message(100, 0);
+      fixture.require_message(101, 0);
+      REQUIRE(fixture.m_log.m_output.str().find("snapshot_failed") !=
+        std::string::npos);
+    } else if(action == 1) {
+      fixture.require_message(1, 1);
+      REQUIRE(fixture.m_log.m_output.str().find("session_reset") !=
+        std::string::npos);
+      REQUIRE(fixture.m_log.m_output.str().find("dropped") ==
+        std::string::npos);
+    }
+    fixture.m_client->close();
+    REQUIRE_THROWS_AS(fixture.m_client->read(), EndOfFileException);
+  }
+
+  TEST_CASE("snapshot_handoff") {
+    auto completion = Async<OtcLinkSnapshot>();
+    auto fixture = Fixture(2, {}, [&] (std::stop_token token) {
+      auto stop = std::stop_callback(token, [&] {
+        completion.get_eval().set_exception(EndOfFileException());
+      });
+      return completion.get();
+    });
+    fixture.publish(0, {100, 101, 102});
+    fixture.publish(1, {100, 101, 102});
+    fixture.advance(Fixture::GAP_TIMEOUT + time_duration::unit());
+    auto packet = fixture.make_packet({90, 91}, 0);
+    auto parsed = OtcLinkPacket::parse(
+      std::string_view(packet.get_data(), packet.get_size()));
+    auto snapshot = OtcLinkSnapshot(102);
+    auto offset = OtcLinkHeader::LENGTH;
+    for(auto& message : parsed) {
+      snapshot.m_messages.push_back(packet.slice(offset, message.m_length));
+      offset += message.m_length;
+    }
+    completion.get_eval().set(std::move(snapshot));
+    fixture.require_message(90, 0);
+    fixture.require_message(91, 0);
+    fixture.require_message(102, 0);
+    fixture.publish(0, {102, 103});
+    fixture.require_message(103, 0);
+    fixture.m_client->close();
+    REQUIRE_THROWS_AS(fixture.m_client->read(), EndOfFileException);
+    REQUIRE(fixture.m_log.m_output.str().empty());
+  }
+
   TEST_CASE("lagging_feed_during_recovery") {
     auto completion = Async<void>();
     auto requests = 0;

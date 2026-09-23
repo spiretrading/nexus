@@ -15,6 +15,22 @@ namespace {
 }
 
 TEST_SUITE("OtcLinkRecoveryMessages") {
+  TEST_CASE("snapshot_request") {
+    auto request = OtcLinkRecoveryRequest("SPIRE", 7, 11, 0, 0,
+      OtcLinkRecoveryRequest::Type::SNAPSHOT);
+    REQUIRE(request.encode() == checksum("35=BW\x01" "49=SPIRE\x01"
+      "1346=7\x01" "1347=1\x01" "1355=11\x01"));
+    auto response = OtcLinkRecoveryResponse::parse(checksum("35=BX\x01"
+      "59=SPIRE\x01" "1346=7\x01" "1355=11\x01" "1348=0\x01"));
+    REQUIRE(response.m_status == OtcLinkRecoveryResponse::Status::ACCEPTED);
+    REQUIRE(!response.m_first_sequence);
+    REQUIRE(!response.m_last_sequence);
+    for(auto channel : {1, 49}) {
+      request.m_channel = static_cast<std::uint16_t>(channel);
+      REQUIRE_THROWS_AS(request.encode(), OtcLinkParserException);
+    }
+  }
+
   TEST_CASE("response") {
     auto body = std::string("35=BX\x01" "59=SPIRE\x01" "1346=7\x01"
       "1355=11\x01" "1348=0\x01" "1182=100\x01" "1183=101\x01");
@@ -54,7 +70,8 @@ TEST_SUITE("OtcLinkRecoveryMessages") {
           OtcLinkRecoveryResponse::parse(checksum(body + field)),
           OtcLinkParserException);
       }
-      for(auto fields : {"1348=0\x01", "1348=5\x01", "1348=-1\x01",
+      for(auto fields : {"1348=0\x01" "1182=100\x01", "1348=5\x01",
+          "1348=-1\x01",
           "1348=0\x01" "1182=100\x01" "1183=99\x01",
           "1348=0\x01" "1182=100\x01" "1183=4294967296\x01"}) {
         auto source = checksum(std::string("35=BX\x01" "59=SPIRE\x01"

@@ -19,6 +19,7 @@
 #include "OtcLinkMarketDataFeedClient/OtcLinkProtocolClient.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkRecoveryMessages.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkSequencer.hpp"
+#include "OtcLinkMarketDataFeedClient/OtcLinkSnapshot.hpp"
 
 namespace Nexus {
 
@@ -59,6 +60,10 @@ namespace Nexus {
       using RecoveryFunction = std::function<std::vector<Beam::SharedBuffer> (
         std::uint32_t, std::uint32_t, std::stop_token)>;
 
+      /** Loads a complete snapshot once, honoring the cancellation token. */
+      using SnapshotFunction =
+        std::function<OtcLinkSnapshot (std::stop_token)>;
+
       /**
        * Constructs an OtcLinkClient.
        * @param feed_timeout How long a silent or stalled feed delays a gap.
@@ -90,6 +95,25 @@ namespace Nexus {
         boost::posix_time::time_duration gap_timeout,
         std::vector<PF> feed_clients, RF&& time_client, TF&& timer,
         RecoveryFunction recovery);
+
+      /**
+       * Constructs a client with optional recovery and an initial snapshot.
+       * @param feed_timeout How long a silent feed delays a gap.
+       * @param gap_timeout The deadline for a gap or recovery attempt.
+       * @param feed_clients The redundant live feeds for one channel.
+       * @param time_client The source of the current time.
+       * @param timer The timer driving feed expiry and gap deadlines.
+       * @param recovery Recovers a range, or is empty to disable recovery.
+       * @param snapshot Loads a snapshot, or is empty for live-only delivery.
+       *        Captured clients must outlive this client. A failed snapshot
+       *        is logged and delivery continues from the buffered live feed.
+       */
+      template<Beam::Initializes<P> PF, Beam::Initializes<R> RF,
+        Beam::Initializes<T> TF>
+      OtcLinkClient(boost::posix_time::time_duration feed_timeout,
+        boost::posix_time::time_duration gap_timeout,
+        std::vector<PF> feed_clients, RF&& time_client, TF&& timer,
+        RecoveryFunction recovery, SnapshotFunction snapshot);
 
       ~OtcLinkClient();
 
@@ -126,6 +150,7 @@ namespace Nexus {
         boost::optional<std::uint64_t> m_gap_sequence;
         boost::posix_time::ptime m_gap_timestamp;
         bool m_is_finished = false;
+        bool m_is_loading_snapshot = false;
         std::shared_ptr<Request> m_request;
       };
       struct Message {
@@ -137,6 +162,8 @@ namespace Nexus {
       Beam::local_ptr_t<R> m_time_client;
       Beam::local_ptr_t<T> m_timer;
       RecoveryFunction m_recovery;
+      SnapshotFunction m_snapshot;
+      std::stop_source m_snapshot_stop_source;
       Beam::Sync<State> m_state;
       Beam::Queue<std::shared_ptr<Request>> m_requests;
       Beam::Queue<Message> m_messages;
@@ -157,6 +184,7 @@ namespace Nexus {
         boost::posix_time::ptime timestamp, std::string_view reason);
       void fail(const std::exception_ptr& error);
       void recovery_loop();
+      void snapshot_loop();
       void feed_loop(int feed);
       void on_timer(typename Timer::Result result);
   };
@@ -169,6 +197,11 @@ namespace Nexus {
   template<typename P, typename R, typename T, typename F>
   OtcLinkClient(boost::posix_time::time_duration,
     boost::posix_time::time_duration, std::vector<P>, R&&, T&&, F) ->
+      OtcLinkClient<P, std::remove_cvref_t<R>, std::remove_cvref_t<T>>;
+
+  template<typename P, typename R, typename T, typename F, typename S>
+  OtcLinkClient(boost::posix_time::time_duration,
+    boost::posix_time::time_duration, std::vector<P>, R&&, T&&, F, S) ->
       OtcLinkClient<P, std::remove_cvref_t<R>, std::remove_cvref_t<T>>;
 
   template<typename P, typename R, typename T> requires
@@ -195,12 +228,28 @@ namespace Nexus {
       boost::posix_time::time_duration gap_timeout,
       std::vector<PF> feed_clients, RF&& time_client, TF&& timer,
       RecoveryFunction recovery)
+      : OtcLinkClient(feed_timeout, gap_timeout, std::move(feed_clients),
+          std::forward<RF>(time_client), std::forward<TF>(timer),
+          std::move(recovery), {}) {}
+
+  template<typename P, typename R, typename T> requires
+    IsOtcLinkProtocolClient<Beam::dereference_t<P>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  template<Beam::Initializes<P> PF, Beam::Initializes<R> RF,
+    Beam::Initializes<T> TF>
+  OtcLinkClient<P, R, T>::OtcLinkClient(
+      boost::posix_time::time_duration feed_timeout,
+      boost::posix_time::time_duration gap_timeout,
+      std::vector<PF> feed_clients, RF&& time_client, TF&& timer,
+      RecoveryFunction recovery, SnapshotFunction snapshot)
       : m_gap_timeout(gap_timeout),
         m_feed_clients(std::make_move_iterator(feed_clients.begin()),
           std::make_move_iterator(feed_clients.end())),
         m_time_client(std::forward<RF>(time_client)),
         m_timer(std::forward<TF>(timer)),
         m_recovery(std::move(recovery)),
+        m_snapshot(std::move(snapshot)),
         m_state(OtcLinkSequencer(
             static_cast<int>(m_feed_clients.size()), feed_timeout),
           std::vector<Feed>(m_feed_clients.size())) {
@@ -210,11 +259,20 @@ namespace Nexus {
         boost::throw_with_location(std::invalid_argument(
           "A positive OTC Link gap timeout is required."));
       }
+      Beam::with(m_state, [&] (auto& state) {
+        state.m_is_loading_snapshot = static_cast<bool>(m_snapshot);
+        if(state.m_is_loading_snapshot) {
+          state.m_sequencer.reset(1);
+        }
+      });
       if(m_recovery) {
         m_routines.spawn(std::bind_front(&OtcLinkClient::recovery_loop, this));
       }
       for(auto i = 0; i < static_cast<int>(m_feed_clients.size()); ++i) {
         m_routines.spawn(std::bind_front(&OtcLinkClient::feed_loop, this, i));
+      }
+      if(m_snapshot) {
+        m_routines.spawn(std::bind_front(&OtcLinkClient::snapshot_loop, this));
       }
       m_timer->get_publisher().monitor(m_tasks.get_slot<typename Timer::Result>(
         std::bind_front(&OtcLinkClient::on_timer, this)));
@@ -316,12 +374,20 @@ namespace Nexus {
     if(source.m_session <= state.m_session) {
       return;
     }
-    if(auto gap = state.m_sequencer.get_gap()) {
-      std::osyncstream(std::cout) << "(dropped " << timestamp << ' ' <<
-        gap->m_sequence << ' ' << gap->m_count << " session_reset)" <<
-        std::endl;
+    if(!state.m_is_loading_snapshot) {
+      if(auto gap = state.m_sequencer.get_gap()) {
+        std::osyncstream(std::cout) << "(dropped " << timestamp << ' ' <<
+          gap->m_sequence << ' ' << gap->m_count << " session_reset)" <<
+          std::endl;
+      }
     }
     cancel(state);
+    if(state.m_is_loading_snapshot) {
+      state.m_is_loading_snapshot = false;
+      m_tasks.push([&] { m_snapshot_stop_source.request_stop(); });
+      std::osyncstream(std::cout) << "(snapshot_failed " << timestamp <<
+        " session_reset)" << std::endl;
+    }
     state.m_session = source.m_session;
     state.m_sequencer.reset(1);
     state.m_gap_sequence = boost::none;
@@ -334,6 +400,9 @@ namespace Nexus {
   void OtcLinkClient<P, R, T>::flush(
       State& state, boost::posix_time::ptime timestamp) {
     state.m_sequencer.update(timestamp);
+    if(state.m_is_loading_snapshot) {
+      return;
+    }
     while(true) {
       while(auto payload = state.m_sequencer.read()) {
         m_messages.push(Message(std::move(*payload), state.m_session));
@@ -427,6 +496,9 @@ namespace Nexus {
       Beam::IsTimer<Beam::dereference_t<T>>
   void OtcLinkClient<P, R, T>::fail(const std::exception_ptr& error) {
     Beam::with(m_state, [&] (auto& state) {
+      if(!state.m_is_finished && state.m_is_loading_snapshot) {
+        m_tasks.push([&] { m_snapshot_stop_source.request_stop(); });
+      }
       state.m_is_finished = true;
       cancel(state);
       m_requests.close();
@@ -501,6 +573,62 @@ namespace Nexus {
     IsOtcLinkProtocolClient<Beam::dereference_t<P>> &&
       Beam::IsTimeClient<Beam::dereference_t<R>> &&
       Beam::IsTimer<Beam::dereference_t<T>>
+  void OtcLinkClient<P, R, T>::snapshot_loop() {
+    try {
+      auto is_current = Beam::with(m_state, [] (const auto& state) {
+        return !state.m_is_finished && state.m_is_loading_snapshot;
+      });
+      if(!is_current) {
+        return;
+      }
+      auto snapshot = OtcLinkSnapshot();
+      auto failure = std::string();
+      try {
+        snapshot = m_snapshot(m_snapshot_stop_source.get_token());
+        if(snapshot.m_sequence == 0 ||
+            snapshot.m_sequence > std::uint64_t(UINT32_MAX) + 1) {
+          boost::throw_with_location(
+            OtcLinkParserException("Invalid OTC Link snapshot sequence."));
+        }
+        for(auto& buffer : snapshot.m_messages) {
+          auto message = OtcLinkMessage::parse(
+            std::string_view(buffer.get_data(), buffer.get_size()));
+          if(message.m_length != buffer.get_size()) {
+            boost::throw_with_location(
+              OtcLinkParserException("Invalid OTC Link snapshot message."));
+          }
+          message.get_cursor().read_uint32();
+        }
+      } catch(const std::exception& error) {
+        failure = error.what();
+      }
+      auto timestamp = m_time_client->get_time();
+      Beam::with(m_state, [&] (auto& state) {
+        if(state.m_is_finished || !state.m_is_loading_snapshot) {
+          return;
+        }
+        state.m_is_loading_snapshot = false;
+        if(failure.empty()) {
+          state.m_sequencer.resume(snapshot.m_sequence);
+          for(auto& message : snapshot.m_messages) {
+            m_messages.push(Message(std::move(message), state.m_session));
+          }
+        } else {
+          state.m_sequencer.resume();
+          std::osyncstream(std::cout) << "(snapshot_failed " << timestamp <<
+            ' ' << failure << ')' << std::endl;
+        }
+        flush(state, timestamp);
+      });
+    } catch(const std::exception&) {
+      fail(std::current_exception());
+    }
+  }
+
+  template<typename P, typename R, typename T> requires
+    IsOtcLinkProtocolClient<Beam::dereference_t<P>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
   void OtcLinkClient<P, R, T>::feed_loop(int feed) {
     while(m_open_state.is_open()) {
       try {
@@ -548,6 +676,9 @@ namespace Nexus {
           if(std::ranges::all_of(state.m_feeds, [] (const auto& feed) {
               return feed.m_is_closed;
             })) {
+            if(state.m_is_loading_snapshot) {
+              m_tasks.push([&] { m_snapshot_stop_source.request_stop(); });
+            }
             state.m_is_finished = true;
             cancel(state);
             m_requests.close();

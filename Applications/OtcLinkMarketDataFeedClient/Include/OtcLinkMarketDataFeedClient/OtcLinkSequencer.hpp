@@ -73,6 +73,12 @@ namespace Nexus {
       /** Skips a positive number of messages within the current gap. */
       void skip(std::uint64_t count);
 
+      /** Resumes at the first buffered live message after a failed snapshot. */
+      void resume();
+
+      /** Resumes after a snapshot, preserving later buffered live messages. */
+      void resume(std::uint64_t sequence);
+
       /** Discards channel state and waits for the first live message. */
       void reset();
 
@@ -249,6 +255,25 @@ namespace Nexus {
         std::invalid_argument("Invalid OTC Link gap skip."));
     }
     *m_expected_sequence += count;
+  }
+
+  inline void OtcLinkSequencer::resume() {
+    if(m_messages.empty()) {
+      m_expected_sequence = boost::none;
+    } else {
+      m_expected_sequence = m_messages.front().m_sequence;
+    }
+  }
+
+  inline void OtcLinkSequencer::resume(std::uint64_t sequence) {
+    if(sequence == 0 || sequence > std::uint64_t(UINT32_MAX) + 1) {
+      boost::throw_with_location(
+        std::invalid_argument("Invalid OTC Link snapshot sequence."));
+    }
+    m_expected_sequence = sequence;
+    while(!m_messages.empty() && m_messages.front().m_sequence < sequence) {
+      m_messages.pop_front();
+    }
   }
 
   inline void OtcLinkSequencer::reset() {
