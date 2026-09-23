@@ -4,6 +4,9 @@
 #include <utility>
 #include "OtcLinkMarketDataFeedClient/OtcLinkPacket.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkSnapshot.hpp"
+#ifdef DELETE
+  #undef DELETE
+#endif
 
 namespace Nexus {
 
