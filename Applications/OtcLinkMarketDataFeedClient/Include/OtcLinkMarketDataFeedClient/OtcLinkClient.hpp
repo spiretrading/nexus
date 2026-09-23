@@ -4,6 +4,8 @@
 #include <functional>
 #include <iostream>
 #include <iterator>
+#include <memory>
+#include <stop_token>
 #include <syncstream>
 #include <vector>
 #include <Beam/IO/EndOfFileException.hpp>
@@ -15,6 +17,7 @@
 #include <boost/date_time/posix_time/posix_time_io.hpp>
 #include "Nexus/Definitions/StandardTimeZones.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkProtocolClient.hpp"
+#include "OtcLinkMarketDataFeedClient/OtcLinkRecoveryMessages.hpp"
 #include "OtcLinkMarketDataFeedClient/OtcLinkSequencer.hpp"
 
 namespace Nexus {
@@ -52,6 +55,10 @@ namespace Nexus {
       /** The timer driving feed expiry and gap deadlines. */
       using Timer = Beam::dereference_t<T>;
 
+      /** Recovers a complete range once, honoring the cancellation token. */
+      using RecoveryFunction = std::function<std::vector<Beam::SharedBuffer> (
+        std::uint32_t, std::uint32_t, std::stop_token)>;
+
       /**
        * Constructs an OtcLinkClient.
        * @param feed_timeout How long a silent or stalled feed delays a gap.
@@ -65,6 +72,24 @@ namespace Nexus {
       OtcLinkClient(boost::posix_time::time_duration feed_timeout,
         boost::posix_time::time_duration gap_timeout,
         std::vector<PF> feed_clients, RF&& time_client, TF&& timer);
+
+      /**
+       * Constructs a client with optional gap recovery.
+       * @param feed_timeout How long a silent or stalled feed delays a gap.
+       * @param gap_timeout How long to wait first for live messages, then for
+       *        recovery, before logging and skipping a gap.
+       * @param feed_clients The redundant live feeds for one channel.
+       * @param time_client The source of the current time.
+       * @param timer The timer driving feed expiry and gap deadlines.
+       * @param recovery Recovers a range, or is empty to disable recovery.
+       *        Captured clients must outlive this client.
+       */
+      template<Beam::Initializes<P> PF, Beam::Initializes<R> RF,
+        Beam::Initializes<T> TF>
+      OtcLinkClient(boost::posix_time::time_duration feed_timeout,
+        boost::posix_time::time_duration gap_timeout,
+        std::vector<PF> feed_clients, RF&& time_client, TF&& timer,
+        RecoveryFunction recovery);
 
       ~OtcLinkClient();
 
@@ -87,6 +112,13 @@ namespace Nexus {
         boost::optional<boost::posix_time::ptime> m_reset;
         bool m_is_closed = false;
       };
+      struct Request {
+        OtcLinkGap m_gap;
+        std::uint64_t m_session;
+        boost::posix_time::ptime m_timestamp;
+        std::stop_source m_stop_source;
+        std::string m_failure;
+      };
       struct State {
         OtcLinkSequencer m_sequencer;
         std::vector<Feed> m_feeds;
@@ -94,6 +126,7 @@ namespace Nexus {
         boost::optional<std::uint64_t> m_gap_sequence;
         boost::posix_time::ptime m_gap_timestamp;
         bool m_is_finished = false;
+        std::shared_ptr<Request> m_request;
       };
       struct Message {
         Beam::SharedBuffer m_payload;
@@ -103,7 +136,9 @@ namespace Nexus {
       std::vector<Beam::local_ptr_t<P>> m_feed_clients;
       Beam::local_ptr_t<R> m_time_client;
       Beam::local_ptr_t<T> m_timer;
+      RecoveryFunction m_recovery;
       Beam::Sync<State> m_state;
+      Beam::Queue<std::shared_ptr<Request>> m_requests;
       Beam::Queue<Message> m_messages;
       Beam::SharedBuffer m_payload;
       Beam::RoutineTaskQueue m_tasks;
@@ -117,7 +152,11 @@ namespace Nexus {
       void reset(State& state, int feed, const OtcLinkHeader& header,
         boost::posix_time::ptime timestamp);
       void flush(State& state, boost::posix_time::ptime timestamp);
+      void cancel(State& state);
+      void drop(State& state, std::uint64_t end,
+        boost::posix_time::ptime timestamp, std::string_view reason);
       void fail(const std::exception_ptr& error);
+      void recovery_loop();
       void feed_loop(int feed);
       void on_timer(typename Timer::Result result);
   };
@@ -125,6 +164,11 @@ namespace Nexus {
   template<typename P, typename R, typename T>
   OtcLinkClient(boost::posix_time::time_duration,
     boost::posix_time::time_duration, std::vector<P>, R&&, T&&) ->
+      OtcLinkClient<P, std::remove_cvref_t<R>, std::remove_cvref_t<T>>;
+
+  template<typename P, typename R, typename T, typename F>
+  OtcLinkClient(boost::posix_time::time_duration,
+    boost::posix_time::time_duration, std::vector<P>, R&&, T&&, F) ->
       OtcLinkClient<P, std::remove_cvref_t<R>, std::remove_cvref_t<T>>;
 
   template<typename P, typename R, typename T> requires
@@ -137,11 +181,26 @@ namespace Nexus {
       boost::posix_time::time_duration feed_timeout,
       boost::posix_time::time_duration gap_timeout,
       std::vector<PF> feed_clients, RF&& time_client, TF&& timer)
+      : OtcLinkClient(feed_timeout, gap_timeout, std::move(feed_clients),
+          std::forward<RF>(time_client), std::forward<TF>(timer), {}) {}
+
+  template<typename P, typename R, typename T> requires
+    IsOtcLinkProtocolClient<Beam::dereference_t<P>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  template<Beam::Initializes<P> PF, Beam::Initializes<R> RF,
+    Beam::Initializes<T> TF>
+  OtcLinkClient<P, R, T>::OtcLinkClient(
+      boost::posix_time::time_duration feed_timeout,
+      boost::posix_time::time_duration gap_timeout,
+      std::vector<PF> feed_clients, RF&& time_client, TF&& timer,
+      RecoveryFunction recovery)
       : m_gap_timeout(gap_timeout),
         m_feed_clients(std::make_move_iterator(feed_clients.begin()),
           std::make_move_iterator(feed_clients.end())),
         m_time_client(std::forward<RF>(time_client)),
         m_timer(std::forward<TF>(timer)),
+        m_recovery(std::move(recovery)),
         m_state(OtcLinkSequencer(
             static_cast<int>(m_feed_clients.size()), feed_timeout),
           std::vector<Feed>(m_feed_clients.size())) {
@@ -150,6 +209,9 @@ namespace Nexus {
           gap_timeout <= boost::posix_time::seconds(0)) {
         boost::throw_with_location(std::invalid_argument(
           "A positive OTC Link gap timeout is required."));
+      }
+      if(m_recovery) {
+        m_routines.spawn(std::bind_front(&OtcLinkClient::recovery_loop, this));
       }
       for(auto i = 0; i < static_cast<int>(m_feed_clients.size()); ++i) {
         m_routines.spawn(std::bind_front(&OtcLinkClient::feed_loop, this, i));
@@ -259,6 +321,7 @@ namespace Nexus {
         gap->m_sequence << ' ' << gap->m_count << " session_reset)" <<
         std::endl;
     }
+    cancel(state);
     state.m_session = source.m_session;
     state.m_sequencer.reset(1);
     state.m_gap_sequence = boost::none;
@@ -275,6 +338,18 @@ namespace Nexus {
       while(auto payload = state.m_sequencer.read()) {
         m_messages.push(Message(std::move(*payload), state.m_session));
       }
+      if(auto request = state.m_request) {
+        auto end = request->m_gap.m_sequence + request->m_gap.m_count;
+        auto sequence = state.m_sequencer.get_sequence();
+        if(sequence && *sequence >= end) {
+          cancel(state);
+        } else if(request->m_failure.empty() &&
+            (timestamp < request->m_timestamp ||
+              timestamp - request->m_timestamp > m_gap_timeout)) {
+          request->m_failure = "recovery_timeout";
+          m_tasks.push([=] { request->m_stop_source.request_stop(); });
+        }
+      }
       auto gap = state.m_sequencer.get_gap();
       if(!gap) {
         state.m_gap_sequence = boost::none;
@@ -284,16 +359,66 @@ namespace Nexus {
         state.m_gap_sequence = gap->m_sequence;
         state.m_gap_timestamp = timestamp;
       }
+      if(auto request = state.m_request) {
+        if(!request->m_failure.empty()) {
+          auto end = request->m_gap.m_sequence + request->m_gap.m_count;
+          drop(state, end, timestamp, request->m_failure);
+          auto sequence = state.m_sequencer.get_sequence();
+          if(sequence && *sequence >= end) {
+            cancel(state);
+            continue;
+          }
+        }
+        return;
+      }
       if(timestamp >= state.m_gap_timestamp &&
           timestamp - state.m_gap_timestamp <= m_gap_timeout) {
         return;
       }
-      std::osyncstream(std::cout) << "(dropped " << timestamp << ' ' <<
-        gap->m_sequence << ' ' << gap->m_count << " recovery_disabled)" <<
-        std::endl;
-      state.m_sequencer.skip(gap->m_count);
-      state.m_gap_sequence = boost::none;
+      if(m_recovery) {
+        gap->m_count = std::min(
+          gap->m_count, std::uint64_t(OtcLinkRecoveryRequest::MAXIMUM_COUNT));
+        auto request =
+          std::make_shared<Request>(*gap, state.m_session, timestamp);
+        state.m_request = request;
+        m_requests.push(std::move(request));
+        return;
+      }
+      drop(
+        state, gap->m_sequence + gap->m_count, timestamp, "recovery_disabled");
     }
+  }
+
+  template<typename P, typename R, typename T> requires
+    IsOtcLinkProtocolClient<Beam::dereference_t<P>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void OtcLinkClient<P, R, T>::cancel(State& state) {
+    if(auto request = std::exchange(state.m_request, {})) {
+      m_tasks.push([=] { request->m_stop_source.request_stop(); });
+    }
+  }
+
+  template<typename P, typename R, typename T> requires
+    IsOtcLinkProtocolClient<Beam::dereference_t<P>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void OtcLinkClient<P, R, T>::drop(State& state, std::uint64_t end,
+      boost::posix_time::ptime timestamp, std::string_view reason) {
+    while(true) {
+      while(auto payload = state.m_sequencer.read()) {
+        m_messages.push(Message(std::move(*payload), state.m_session));
+      }
+      auto gap = state.m_sequencer.get_gap();
+      if(!gap || gap->m_sequence >= end) {
+        break;
+      }
+      auto count = std::min(gap->m_count, end - gap->m_sequence);
+      std::osyncstream(std::cout) << "(dropped " << timestamp << ' ' <<
+        gap->m_sequence << ' ' << count << ' ' << reason << ')' << std::endl;
+      state.m_sequencer.skip(count);
+    }
+    state.m_gap_sequence = boost::none;
   }
 
   template<typename P, typename R, typename T> requires
@@ -303,8 +428,73 @@ namespace Nexus {
   void OtcLinkClient<P, R, T>::fail(const std::exception_ptr& error) {
     Beam::with(m_state, [&] (auto& state) {
       state.m_is_finished = true;
+      cancel(state);
+      m_requests.close();
       m_messages.close(error);
     });
+  }
+
+  template<typename P, typename R, typename T> requires
+    IsOtcLinkProtocolClient<Beam::dereference_t<P>> &&
+      Beam::IsTimeClient<Beam::dereference_t<R>> &&
+      Beam::IsTimer<Beam::dereference_t<T>>
+  void OtcLinkClient<P, R, T>::recovery_loop() {
+    try {
+      while(true) {
+        auto request = m_requests.pop();
+        auto is_current = Beam::with(m_state, [&] (const auto& state) {
+          return !state.m_is_finished && state.m_request == request;
+        });
+        if(!is_current) {
+          continue;
+        }
+        auto messages = std::vector<Beam::SharedBuffer>();
+        auto failure = std::string();
+        try {
+          messages = m_recovery(
+            static_cast<std::uint32_t>(request->m_gap.m_sequence),
+            static_cast<std::uint32_t>(request->m_gap.m_count),
+            request->m_stop_source.get_token());
+          if(messages.size() != request->m_gap.m_count) {
+            boost::throw_with_location(
+              OtcLinkParserException("Incomplete OTC Link recovery."));
+          }
+          for(auto i = std::size_t(0); i < messages.size(); ++i) {
+            auto& buffer = messages[i];
+            auto message = OtcLinkMessage::parse(
+              std::string_view(buffer.get_data(), buffer.get_size()));
+            if(message.m_length != buffer.get_size() ||
+                message.get_cursor().read_uint32() !=
+                  request->m_gap.m_sequence + i) {
+              boost::throw_with_location(
+                OtcLinkParserException("Invalid OTC Link recovery range."));
+            }
+          }
+        } catch(const std::exception& error) {
+          failure = "recovery_failed " + std::string(error.what());
+        }
+        auto timestamp = m_time_client->get_time();
+        Beam::with(m_state, [&] (auto& state) {
+          if(state.m_is_finished || state.m_request != request ||
+              state.m_session != request->m_session ||
+              !request->m_failure.empty()) {
+            return;
+          }
+          if(failure.empty()) {
+            state.m_request.reset();
+            for(auto& message : messages) {
+              state.m_sequencer.recover(std::move(message));
+            }
+          } else {
+            request->m_failure = std::move(failure);
+          }
+          flush(state, timestamp);
+        });
+      }
+    } catch(const Beam::EndOfFileException&) {
+    } catch(const std::exception&) {
+      fail(std::current_exception());
+    }
   }
 
   template<typename P, typename R, typename T> requires
@@ -359,6 +549,8 @@ namespace Nexus {
               return feed.m_is_closed;
             })) {
             state.m_is_finished = true;
+            cancel(state);
+            m_requests.close();
             m_messages.close(exception);
           }
         });

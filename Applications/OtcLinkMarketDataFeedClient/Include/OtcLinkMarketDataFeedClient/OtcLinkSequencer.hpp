@@ -49,6 +49,9 @@ namespace Nexus {
       /** Adds recovered messages without advancing live-feed positions. */
       void recover(const OtcLinkPacket& packet);
 
+      /** Adds one complete encoded recovery message in owned storage. */
+      void recover(Beam::SharedBuffer message);
+
       /** Excludes silent or stalled feeds at the specified time. */
       void update(boost::posix_time::ptime timestamp);
 
@@ -162,6 +165,24 @@ namespace Nexus {
     auto range = get_range(packet);
     if(range && range->second > *m_expected_sequence) {
       store(packet);
+    }
+  }
+
+  inline void OtcLinkSequencer::recover(Beam::SharedBuffer message) {
+    auto source = std::string_view(message.get_data(), message.get_size());
+    auto parsed = OtcLinkMessage::parse(source);
+    if(parsed.m_length != source.size()) {
+      boost::throw_with_location(
+        OtcLinkParserException("OTC Link recovery message length mismatch."));
+    }
+    auto sequence = parsed.get_cursor().read_uint32();
+    if(!m_expected_sequence || sequence < *m_expected_sequence) {
+      return;
+    }
+    auto i = std::ranges::lower_bound(
+      m_messages, sequence, {}, &Entry::m_sequence);
+    if(i == m_messages.end() || i->m_sequence != sequence) {
+      m_messages.insert(i, Entry(sequence, std::move(message)));
     }
   }
 

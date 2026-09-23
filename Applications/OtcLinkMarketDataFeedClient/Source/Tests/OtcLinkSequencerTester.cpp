@@ -87,6 +87,26 @@ namespace {
 }
 
 TEST_SUITE("OtcLinkSequencer") {
+  TEST_CASE("recovery_message") {
+    auto fixture = Fixture(1);
+    auto packet = make_packet({2}, 1, 0);
+    auto source = OtcLinkPacket::parse(packet).get_payload();
+    auto message = SharedBuffer(source.data(), source.size());
+    fixture.m_sequencer.recover(message);
+    REQUIRE(!fixture.m_sequencer.get_sequence());
+    fixture.add(0, {1, 3});
+    fixture.require_message(1);
+    fixture.m_sequencer.recover(message);
+    fixture.m_sequencer.recover(message);
+    fixture.require_message(2);
+    fixture.require_message(3);
+    fixture.m_sequencer.recover(message);
+    REQUIRE(!fixture.m_sequencer.read());
+    append(message, char());
+    REQUIRE_THROWS_AS(
+      fixture.m_sequencer.recover(message), OtcLinkParserException);
+  }
+
   TEST_CASE("sequence_limits") {
     auto fixture = Fixture(1);
     auto maximum = std::numeric_limits<std::uint32_t>::max();
