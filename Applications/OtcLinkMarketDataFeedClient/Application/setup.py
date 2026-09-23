@@ -29,7 +29,14 @@ def main():
     help='Password. Prompts when omitted unless --common-config is supplied.')
   parser.add_argument('--common-config', type=Path,
     help='Existing shared configuration to include without modifying it.')
+  parser.add_argument('--sender', help='OTC-assigned SenderCompID.')
+  parser.add_argument('--recovery', action='store_true',
+    help='Enable gap recovery; requires --sender.')
+  parser.add_argument('--snapshot', action='store_true',
+    help='Load an initial snapshot; requires --sender.')
   args = parser.parse_args()
+  if (args.recovery or args.snapshot) and not args.sender:
+    parser.error('--sender is required for recovery or snapshots.')
   if args.common_config is not None:
     common_path = args.common_config.resolve()
     if not common_path.is_file():
@@ -51,6 +58,7 @@ def main():
     args.address
   variables['username'] = args.username
   variables['admin_password'] = args.password
+  variables['sender'] = args.sender or ''
   if args.common_config is None:
     with open(directory / 'config.default.yml', encoding='utf-8') as file:
       source = setup_utils.translate(file.read(), variables)
@@ -68,7 +76,17 @@ def main():
     except ValueError:
       common_reference = common_path
     variables['common_config'] = common_reference.as_posix()
-    source = setup_utils.translate(source, variables)
+    lines = []
+    is_enabled = False
+    for line in source.splitlines(keepends=True):
+      if line.startswith('# recovery:'):
+        is_enabled = args.recovery
+      elif line.startswith('# snapshot:'):
+        is_enabled = args.snapshot
+      if is_enabled and line.startswith('# '):
+        line = line[2:]
+      lines.append(line)
+    source = setup_utils.translate(''.join(lines), variables)
     output_directory.mkdir(exist_ok=True)
     with open(output_directory / 'config.yml', 'w', encoding='utf-8') as file:
       file.write(source)

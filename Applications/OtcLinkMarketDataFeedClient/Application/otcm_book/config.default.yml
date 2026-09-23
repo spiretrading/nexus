@@ -1,0 +1,26 @@
+---
+<<: !include "$common_config"
+
+service: book
+feeds:
+  - address: "224.0.23.210:21000"
+    interface: "$local_interface:21000"
+  - address: "224.0.23.227:21000"
+    interface: "$local_interface:21000"
+
+# recovery:
+#   address: "192.26.98.86:21100"
+#   interface: "$local_interface:0"
+#   sender: "$sender"
+#   timeout: 1s
+
+# snapshot:
+#   address: "224.0.23.210:21001"
+#   interface: "$local_interface:21001"
+#   timeout: 30s
+#   server:
+#     address: "192.26.98.86:21100"
+#     interface: "$local_interface:0"
+#     sender: "$sender"
+#     timeout: 1s
+...
