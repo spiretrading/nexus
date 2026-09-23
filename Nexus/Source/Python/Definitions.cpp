@@ -743,6 +743,8 @@ void Nexus::Python::export_venues(module& module) {
   auto submodule = module.def_submodule("venues");
   submodule.add_object("ALD", cast(Venues::ALD));
   submodule.add_object("ALX", cast(Venues::ALX));
+  submodule.add_object("ASPC", cast(Venues::ASPC));
+  submodule.add_object("ASPV", cast(Venues::ASPV));
   submodule.add_object("ASX", cast(Venues::ASX));
   submodule.add_object("CHIC", cast(Venues::CHIC));
   submodule.add_object("CSE", cast(Venues::CSE));
@@ -750,6 +752,7 @@ void Nexus::Python::export_venues(module& module) {
   submodule.add_object("CXA", cast(Venues::CXA));
   submodule.add_object("CXD", cast(Venues::CXD));
   submodule.add_object("ICX", cast(Venues::ICX));
+  submodule.add_object("INCC", cast(Venues::INCC));
   submodule.add_object("LIQ", cast(Venues::LIQ));
   submodule.add_object("LYNX", cast(Venues::LYNX));
   submodule.add_object("MATN", cast(Venues::MATN));

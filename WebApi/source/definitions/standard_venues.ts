@@ -49,6 +49,12 @@ export function buildVenueDatabase(): VenueDatabase {
     'America/Toronto', Currencies.CAD, 'Liquidnet Canada', 'LIQ'));
   database.add(new VenueDatabase.Entry(new Venue('NEON'), Countries.CA, 'AQN',
     'America/Toronto', Currencies.CAD, 'Cboe Canada - NEO-N', 'NEON'));
+  database.add(new VenueDatabase.Entry(new Venue('ASPC'), Countries.CA, 'ASP',
+    'America/Toronto', Currencies.CAD, 'CIX ASPEN', 'ASPC'));
+  database.add(new VenueDatabase.Entry(new Venue('ASPV'), Countries.CA, 'ASV',
+    'America/Toronto', Currencies.CAD, 'CIX ASPEN VERT', 'ASPV'));
+  database.add(new VenueDatabase.Entry(new Venue('INCC'), Countries.CA, 'INC',
+    'America/Toronto', Currencies.CAD, 'CIX MIDPOINT', 'INCC'));
   return database;
 }
 
@@ -57,6 +63,8 @@ export const venueDatabase = buildVenueDatabase();
 export namespace Venues {
   export const ALD = new Venue('ADRK');
   export const ALX = new Venue('XATX');
+  export const ASPC = new Venue('ASPC');
+  export const ASPV = new Venue('ASPV');
   export const ASX = new Venue('XASX');
   export const CXA = new Venue('CHIA');
   export const CSE = new Venue('XCNQ');
@@ -64,6 +72,7 @@ export namespace Venues {
   export const CHIC = new Venue('CHIC');
   export const CXD = new Venue('XCXD');
   export const ICX = new Venue('XICX');
+  export const INCC = new Venue('INCC');
   export const LIQ = new Venue('LICA');
   export const LYNX = new Venue('LYNX');
   export const MATN = new Venue('MATN');

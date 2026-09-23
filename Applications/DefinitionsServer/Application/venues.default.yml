@@ -140,4 +140,25 @@ venues:
     description: Cboe Canada - NEO-N
     display_name: NEON
     market_center: AQN
+  - venue: ASPC
+    country_code: CA
+    time_zone: America/Toronto
+    currency: CAD
+    description: CIX ASPEN
+    display_name: ASPC
+    market_center: ASP
+  - venue: ASPV
+    country_code: CA
+    time_zone: America/Toronto
+    currency: CAD
+    description: CIX ASPEN VERT
+    display_name: ASPV
+    market_center: ASV
+  - venue: INCC
+    country_code: CA
+    time_zone: America/Toronto
+    currency: CAD
+    description: CIX MIDPOINT
+    display_name: INCC
+    market_center: INC
 ...
