@@ -42,6 +42,36 @@ namespace {
     return payload;
   }
 
+  std::string make_inside(std::uint8_t type) {
+    auto payload = std::string("\x01\x02\x03\x04\x05\x06\x07\x08", 8) +
+      std::string("\x02\xda\x10\x20\x30\x40", 6) +
+      std::string("\x00\x00\x00\x01\x02\x03\x04\x05", 8);
+    if(type == OtcLinkFractionalInside::TYPE) {
+      payload += std::string("\x00\x00\x00\x02", 4);
+    }
+    payload += std::string("\x10\x20\x30\x40", 4) +
+      std::string("\x00\x00\x01\x8c\x12\x34\x56\x78", 8) +
+      std::string("\x00\x00\x00\x01\x01\x02\x03\x04", 8);
+    if(type == OtcLinkFractionalInside::TYPE) {
+      payload += std::string("\x00\x00\x00\x03", 4);
+    }
+    payload += std::string("\x50\x60\x70\x80", 4) +
+      std::string("\x00\x00\x01\x8c\x11\x22\x33\x44", 8) +
+      std::string("\x07\xff", 2);
+    return payload;
+  }
+
+  std::string make_inside_update(std::uint8_t type) {
+    auto payload = std::string("\x01\x02\x03\x04\x05\x06\x07\x08\x99", 9) +
+      std::string("\x00\x00\x00\x01\x02\x03\x04\x05", 8);
+    if(type == OtcLinkFractionalInsideUpdate::TYPE) {
+      payload += std::string("\x00\x00\x00\x05", 4);
+    }
+    payload += std::string("\x01\x02\x03\x04", 4) +
+      std::string("\x00\x00\x01\x8c\x12\x34\x56\x78\x07", 9);
+    return payload;
+  }
+
   OtcLinkMessage make_message(std::uint8_t type, std::string_view payload) {
     return OtcLinkMessage(static_cast<std::uint16_t>(
       OtcLinkMessage::HEADER_LENGTH + payload.size()), type, payload);
@@ -49,6 +79,121 @@ namespace {
 }
 
 TEST_SUITE("OtcLinkMessages") {
+  TEST_CASE_TEMPLATE(
+      "inside_update", T, OtcLinkInsideUpdate, OtcLinkFractionalInsideUpdate) {
+    auto payload = make_inside_update(T::TYPE);
+    auto message = make_message(T::TYPE, payload);
+    auto inside = T::parse(message);
+    REQUIRE(message.m_length == T::LENGTH);
+    REQUIRE(inside.m_sequence == 0x01020304);
+    REQUIRE(inside.m_inside == 0x05060708);
+    REQUIRE(inside.m_flags == 0x99);
+    REQUIRE(inside.has_flag(T::Flag::UPDATE_ASK));
+    REQUIRE(!inside.has_flag(T::Flag::OPEN));
+    REQUIRE(inside.has_flag(T::Flag::ASK_PRICED));
+    REQUIRE(!inside.has_flag(T::Flag::BID_PRICED));
+    REQUIRE(inside.has_flag(T::Flag::ASK_SIZE_OVERFLOW));
+    REQUIRE(inside.has_flag(T::Flag::BID_SIZE_OVERFLOW));
+    REQUIRE(inside.m_price == 0x0000000102030405);
+    if constexpr(std::same_as<T, OtcLinkInsideUpdate>) {
+      REQUIRE(inside.m_size == 0x01020304);
+    } else {
+      REQUIRE(inside.m_size == 0x0000000501020304);
+    }
+    REQUIRE(inside.m_timestamp == 0x0000018c12345678);
+    REQUIRE(inside.m_participants == 7);
+    for(auto i = std::size_t(0); i < payload.size(); ++i) {
+      REQUIRE_THROWS_AS(T::parse(make_message(T::TYPE,
+        std::string_view(payload).substr(0, i))), OtcLinkParserException);
+    }
+    message.m_type = OtcLinkQuoteUpdate::TYPE;
+    REQUIRE_THROWS_AS(T::parse(message), OtcLinkParserException);
+    constexpr auto FLAGS_OFFSET = 2 * sizeof(std::uint32_t);
+    payload[FLAGS_OFFSET] = 0x66;
+    payload += "extension";
+    inside = T::parse(make_message(T::TYPE, payload));
+    REQUIRE(inside.m_flags == 0x66);
+    REQUIRE(!inside.has_flag(T::Flag::UPDATE_ASK));
+    REQUIRE(inside.has_flag(T::Flag::OPEN));
+    REQUIRE(!inside.has_flag(T::Flag::ASK_PRICED));
+    REQUIRE(inside.has_flag(T::Flag::BID_PRICED));
+    REQUIRE(!inside.has_flag(T::Flag::ASK_SIZE_OVERFLOW));
+    REQUIRE(!inside.has_flag(T::Flag::BID_SIZE_OVERFLOW));
+    REQUIRE(inside.m_participants == 7);
+    payload.assign(T::LENGTH - OtcLinkMessage::HEADER_LENGTH, '\0');
+    inside = T::parse(make_message(T::TYPE, payload));
+    REQUIRE(inside.m_flags == 0);
+    REQUIRE(inside.m_price == 0);
+    REQUIRE(inside.m_size == 0);
+    REQUIRE(inside.m_timestamp == 0);
+    REQUIRE(inside.m_participants == 0);
+  }
+
+  TEST_CASE_TEMPLATE("inside", T, OtcLinkInside, OtcLinkFractionalInside) {
+    auto payload = make_inside(T::TYPE);
+    auto message = make_message(T::TYPE, payload);
+    auto inside = T::parse(message);
+    REQUIRE(message.m_length == T::LENGTH);
+    REQUIRE(inside.m_sequence == 0x01020304);
+    REQUIRE(inside.m_inside == 0x05060708);
+    REQUIRE(inside.m_action == OtcLinkInsideAction::ADD);
+    REQUIRE(inside.m_security == 0x10203040);
+    REQUIRE(inside.m_flags == 0xda);
+    REQUIRE(inside.has_flag(T::Flag::OPEN));
+    REQUIRE(inside.has_flag(T::Flag::ASK_PRICED));
+    REQUIRE(inside.has_flag(T::Flag::BID_PRICED));
+    REQUIRE(inside.has_flag(T::Flag::ASK_SIZE_OVERFLOW));
+    REQUIRE(inside.has_flag(T::Flag::BID_SIZE_OVERFLOW));
+    REQUIRE(inside.m_ask_price == 0x0000000102030405);
+    REQUIRE(inside.m_bid_price == 0x0000000101020304);
+    if constexpr(std::same_as<T, OtcLinkInside>) {
+      REQUIRE(inside.m_ask_size == 0x10203040);
+      REQUIRE(inside.m_bid_size == 0x50607080);
+    } else {
+      REQUIRE(inside.m_ask_size == 0x0000000210203040);
+      REQUIRE(inside.m_bid_size == 0x0000000350607080);
+    }
+    REQUIRE(inside.m_ask_timestamp == 0x0000018c12345678);
+    REQUIRE(inside.m_bid_timestamp == 0x0000018c11223344);
+    REQUIRE(inside.m_ask_participants == 7);
+    REQUIRE(inside.m_bid_participants == 255);
+    for(auto i = std::size_t(0); i < payload.size(); ++i) {
+      REQUIRE_THROWS_AS(T::parse(make_message(T::TYPE,
+        std::string_view(payload).substr(0, i))), OtcLinkParserException);
+    }
+    message.m_type = OtcLinkQuote::TYPE;
+    REQUIRE_THROWS_AS(T::parse(message), OtcLinkParserException);
+    constexpr auto ACTION_OFFSET = 2 * sizeof(std::uint32_t);
+    for(auto action :
+        {OtcLinkInsideAction::DELETE, OtcLinkInsideAction::SPIN}) {
+      payload[ACTION_OFFSET] = static_cast<char>(action);
+      REQUIRE(T::parse(make_message(T::TYPE, payload)).m_action == action);
+    }
+    for(auto action : {0, 1, 5, 255}) {
+      payload[ACTION_OFFSET] = static_cast<char>(action);
+      REQUIRE_THROWS_AS(
+        T::parse(make_message(T::TYPE, payload)), OtcLinkParserException);
+    }
+    payload.assign(T::LENGTH - OtcLinkMessage::HEADER_LENGTH, '\0');
+    payload[ACTION_OFFSET] = static_cast<char>(OtcLinkInsideAction::SPIN);
+    constexpr auto FLAGS_OFFSET = ACTION_OFFSET + sizeof(std::uint8_t);
+    payload[FLAGS_OFFSET] = 0x24;
+    payload += "extension";
+    inside = T::parse(make_message(T::TYPE, payload));
+    REQUIRE(inside.m_flags == 0x24);
+    REQUIRE(!inside.has_flag(T::Flag::OPEN));
+    REQUIRE(!inside.has_flag(T::Flag::ASK_PRICED));
+    REQUIRE(!inside.has_flag(T::Flag::BID_PRICED));
+    REQUIRE(!inside.has_flag(T::Flag::ASK_SIZE_OVERFLOW));
+    REQUIRE(!inside.has_flag(T::Flag::BID_SIZE_OVERFLOW));
+    REQUIRE(inside.m_ask_price == 0);
+    REQUIRE(inside.m_bid_price == 0);
+    REQUIRE(inside.m_ask_size == 0);
+    REQUIRE(inside.m_bid_size == 0);
+    REQUIRE(inside.m_ask_participants == 0);
+    REQUIRE(inside.m_bid_participants == 0);
+  }
+
   TEST_CASE_TEMPLATE(
       "quote_update", T, OtcLinkQuoteUpdate, OtcLinkFractionalQuoteUpdate) {
     auto payload = make_quote_update(T::TYPE);
@@ -193,7 +338,14 @@ TEST_SUITE("OtcLinkMessages") {
       {OtcLinkQuoteUpdate::TYPE, make_quote_update(OtcLinkQuoteUpdate::TYPE)},
       {OtcLinkFractionalQuote::TYPE, make_quote(OtcLinkFractionalQuote::TYPE)},
       {OtcLinkFractionalQuoteUpdate::TYPE,
-        make_quote_update(OtcLinkFractionalQuoteUpdate::TYPE)}};
+        make_quote_update(OtcLinkFractionalQuoteUpdate::TYPE)},
+      {OtcLinkInside::TYPE, make_inside(OtcLinkInside::TYPE)},
+      {OtcLinkInsideUpdate::TYPE,
+        make_inside_update(OtcLinkInsideUpdate::TYPE)},
+      {OtcLinkFractionalInside::TYPE,
+        make_inside(OtcLinkFractionalInside::TYPE)},
+      {OtcLinkFractionalInsideUpdate::TYPE,
+        make_inside_update(OtcLinkFractionalInsideUpdate::TYPE)}};
     auto type = [] (const auto& message) -> std::uint8_t {
       using Message = std::remove_cvref_t<decltype(message)>;
       if constexpr(std::same_as<Message, OtcLinkMessage>) {
@@ -210,6 +362,17 @@ TEST_SUITE("OtcLinkMessages") {
       REQUIRE_THROWS_AS(visit(message, type), OtcLinkParserException);
       REQUIRE_THROWS_AS(validate(message), OtcLinkParserException);
     }
+    auto inside_payload = make_inside(OtcLinkInside::TYPE);
+    auto inside_message = make_message(OtcLinkInside::TYPE, inside_payload);
+    REQUIRE(visit(inside_message, [] (const OtcLinkInside& inside) {
+      return inside.m_inside;
+    }) == 0x05060708);
+    auto inside_calls = 0;
+    visit(inside_message, [&] (const OtcLinkInside&) { ++inside_calls; });
+    REQUIRE(inside_calls == 1);
+    inside_message.m_type = 0xff;
+    visit(inside_message, [&] (const OtcLinkInside&) { ++inside_calls; });
+    REQUIRE(inside_calls == 1);
     auto payload = make_security();
     auto message = make_message(OtcLinkSecurity::TYPE, payload);
     auto calls = 0;

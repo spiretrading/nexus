@@ -482,6 +482,235 @@ namespace Nexus {
     static OtcLinkFractionalQuoteUpdate parse(const OtcLinkMessage& message);
   };
 
+  /** Identifies an inside entry change. */
+  enum class OtcLinkInsideAction : std::uint8_t {
+
+    /** Introduces an inside entry. */
+    ADD = 2,
+
+    /** Removes an inside entry. */
+    DELETE = 3,
+
+    /** Supplies an inside entry in a snapshot. */
+    SPIN = 4
+  };
+
+  /** Attributes shared by inside quotes and inside updates. */
+  struct OtcLinkInsideAttributes {
+
+    /** Identifies inside state and pricing attributes. */
+    enum class Flag : std::uint8_t {
+
+      /** An update changes the ask; when clear, it changes the bid. */
+      UPDATE_ASK = 0x01,
+
+      /** The inside is open. */
+      OPEN = 0x02,
+
+      /** The ask has an actual price. */
+      ASK_PRICED = 0x08,
+
+      /** The aggregated ask size exceeds two billion shares. */
+      ASK_SIZE_OVERFLOW = 0x10,
+
+      /** The bid has an actual price. */
+      BID_PRICED = 0x40,
+
+      /** The aggregated bid size exceeds two billion shares. */
+      BID_SIZE_OVERFLOW = 0x80
+    };
+
+    /** The inside state and pricing bits, including reserved bits. */
+    std::uint8_t m_flags;
+
+    /** Returns whether an inside attribute is set. */
+    bool has_flag(Flag flag) const;
+  };
+
+  /** The best bid and ask aggregated across market participants. */
+  struct OtcLinkInside : OtcLinkInsideAttributes {
+
+    /** The wire message type. */
+    static constexpr auto TYPE = std::uint8_t(3);
+
+    /** The minimum message length, including its header. */
+    static constexpr auto LENGTH = OtcLinkMessage::HEADER_LENGTH + 56;
+
+    /** The number of price units per currency unit. */
+    static constexpr auto PRICE_SCALE = std::uint64_t(1000000);
+
+    /** The number of size units per share. */
+    static constexpr auto SIZE_SCALE = std::uint64_t(1);
+
+    /** The channel message sequence. */
+    std::uint32_t m_sequence;
+
+    /** The identifier of the inside entry. */
+    std::uint32_t m_inside;
+
+    /** The change to the inside entry. */
+    OtcLinkInsideAction m_action;
+
+    /** The OTC Markets security identifier. */
+    std::uint32_t m_security;
+
+    /** The ask price in PRICE_SCALE units. */
+    std::uint64_t m_ask_price;
+
+    /** The aggregated ask size in SIZE_SCALE units. */
+    std::uint32_t m_ask_size;
+
+    /** The ask time in milliseconds since the UTC epoch. */
+    std::uint64_t m_ask_timestamp;
+
+    /** The bid price in PRICE_SCALE units. */
+    std::uint64_t m_bid_price;
+
+    /** The aggregated bid size in SIZE_SCALE units. */
+    std::uint32_t m_bid_size;
+
+    /** The bid time in milliseconds since the UTC epoch. */
+    std::uint64_t m_bid_timestamp;
+
+    /** The number of participants at the best ask. */
+    std::uint8_t m_ask_participants;
+
+    /** The number of participants at the best bid. */
+    std::uint8_t m_bid_participants;
+
+    /** Parses the inside message. */
+    static OtcLinkInside parse(const OtcLinkMessage& message);
+  };
+
+  /** A change to one side of the inside quote. */
+  struct OtcLinkInsideUpdate : OtcLinkInsideAttributes {
+
+    /** The wire message type. */
+    static constexpr auto TYPE = std::uint8_t(4);
+
+    /** The minimum message length, including its header. */
+    static constexpr auto LENGTH = OtcLinkMessage::HEADER_LENGTH + 30;
+
+    /** The number of price units per currency unit. */
+    static constexpr auto PRICE_SCALE = std::uint64_t(1000000);
+
+    /** The number of size units per share. */
+    static constexpr auto SIZE_SCALE = std::uint64_t(1);
+
+    /** The channel message sequence. */
+    std::uint32_t m_sequence;
+
+    /** The identifier of the inside entry. */
+    std::uint32_t m_inside;
+
+    /** The updated price in PRICE_SCALE units. */
+    std::uint64_t m_price;
+
+    /** The updated size in SIZE_SCALE units. */
+    std::uint32_t m_size;
+
+    /** The inside time in milliseconds since the UTC epoch. */
+    std::uint64_t m_timestamp;
+
+    /** The number of participants at the updated price. */
+    std::uint8_t m_participants;
+
+    /** Parses the inside message. */
+    static OtcLinkInsideUpdate parse(const OtcLinkMessage& message);
+  };
+
+  /** The fractional best bid and ask aggregated across participants. */
+  struct OtcLinkFractionalInside : OtcLinkInsideAttributes {
+
+    /** The wire message type. */
+    static constexpr auto TYPE = std::uint8_t(21);
+
+    /** The minimum message length, including its header. */
+    static constexpr auto LENGTH = OtcLinkMessage::HEADER_LENGTH + 64;
+
+    /** The number of price units per currency unit. */
+    static constexpr auto PRICE_SCALE = std::uint64_t(100000000);
+
+    /** The number of size units per share. */
+    static constexpr auto SIZE_SCALE = std::uint64_t(100000000);
+
+    /** The channel message sequence. */
+    std::uint32_t m_sequence;
+
+    /** The identifier of the inside entry. */
+    std::uint32_t m_inside;
+
+    /** The change to the inside entry. */
+    OtcLinkInsideAction m_action;
+
+    /** The OTC Markets security identifier. */
+    std::uint32_t m_security;
+
+    /** The ask price in PRICE_SCALE units. */
+    std::uint64_t m_ask_price;
+
+    /** The aggregated ask size in SIZE_SCALE units. */
+    std::uint64_t m_ask_size;
+
+    /** The ask time in milliseconds since the UTC epoch. */
+    std::uint64_t m_ask_timestamp;
+
+    /** The bid price in PRICE_SCALE units. */
+    std::uint64_t m_bid_price;
+
+    /** The aggregated bid size in SIZE_SCALE units. */
+    std::uint64_t m_bid_size;
+
+    /** The bid time in milliseconds since the UTC epoch. */
+    std::uint64_t m_bid_timestamp;
+
+    /** The number of participants at the best ask. */
+    std::uint8_t m_ask_participants;
+
+    /** The number of participants at the best bid. */
+    std::uint8_t m_bid_participants;
+
+    /** Parses the inside message. */
+    static OtcLinkFractionalInside parse(const OtcLinkMessage& message);
+  };
+
+  /** A change to one side of the fractional inside quote. */
+  struct OtcLinkFractionalInsideUpdate : OtcLinkInsideAttributes {
+
+    /** The wire message type. */
+    static constexpr auto TYPE = std::uint8_t(22);
+
+    /** The minimum message length, including its header. */
+    static constexpr auto LENGTH = OtcLinkMessage::HEADER_LENGTH + 34;
+
+    /** The number of price units per currency unit. */
+    static constexpr auto PRICE_SCALE = std::uint64_t(100000000);
+
+    /** The number of size units per share. */
+    static constexpr auto SIZE_SCALE = std::uint64_t(100000000);
+
+    /** The channel message sequence. */
+    std::uint32_t m_sequence;
+
+    /** The identifier of the inside entry. */
+    std::uint32_t m_inside;
+
+    /** The updated price in PRICE_SCALE units. */
+    std::uint64_t m_price;
+
+    /** The updated size in SIZE_SCALE units. */
+    std::uint64_t m_size;
+
+    /** The inside time in milliseconds since the UTC epoch. */
+    std::uint64_t m_timestamp;
+
+    /** The number of participants at the updated price. */
+    std::uint8_t m_participants;
+
+    /** Parses the inside message. */
+    static OtcLinkFractionalInsideUpdate parse(const OtcLinkMessage& message);
+  };
+
   /** Concept satisfied by callables accepting an OTC Link message type. */
   template<typename F>
   concept IsOtcLinkVisitor =
@@ -491,6 +720,10 @@ namespace Nexus {
       std::invocable<F, OtcLinkQuoteUpdate> ||
       std::invocable<F, OtcLinkFractionalQuote> ||
       std::invocable<F, OtcLinkFractionalQuoteUpdate> ||
+      std::invocable<F, OtcLinkInside> ||
+      std::invocable<F, OtcLinkInsideUpdate> ||
+      std::invocable<F, OtcLinkFractionalInside> ||
+      std::invocable<F, OtcLinkFractionalInsideUpdate> ||
       std::invocable<F, OtcLinkSecurity> ||
       std::invocable<F, OtcLinkFractionalSecurity> ||
       std::invocable<F, OtcLinkMarketOpen> ||
@@ -614,6 +847,57 @@ namespace OtcLinkDetails {
     quote.m_extended_flags = cursor.read_uint8();
     return quote;
   }
+
+  template<typename T> requires
+    std::same_as<T, OtcLinkInside> || std::same_as<T, OtcLinkFractionalInside>
+  T parse_inside(OtcLinkCursor& cursor) {
+    auto inside = T();
+    inside.m_sequence = cursor.read_uint32();
+    inside.m_inside = cursor.read_uint32();
+    auto action = cursor.read_uint8();
+    if(action < static_cast<std::uint8_t>(OtcLinkInsideAction::ADD) ||
+        action > static_cast<std::uint8_t>(OtcLinkInsideAction::SPIN)) {
+      boost::throw_with_location(
+        OtcLinkParserException("Invalid OTC Link inside action."));
+    }
+    inside.m_action = static_cast<OtcLinkInsideAction>(action);
+    inside.m_flags = cursor.read_uint8();
+    inside.m_security = cursor.read_uint32();
+    auto read_size = [&] {
+      if constexpr(std::same_as<T, OtcLinkInside>) {
+        return cursor.read_uint32();
+      } else {
+        return cursor.read_uint64();
+      }
+    };
+    inside.m_ask_price = cursor.read_uint64();
+    inside.m_ask_size = read_size();
+    inside.m_ask_timestamp = cursor.read_uint64();
+    inside.m_bid_price = cursor.read_uint64();
+    inside.m_bid_size = read_size();
+    inside.m_bid_timestamp = cursor.read_uint64();
+    inside.m_ask_participants = cursor.read_uint8();
+    inside.m_bid_participants = cursor.read_uint8();
+    return inside;
+  }
+
+  template<typename T> requires std::same_as<T, OtcLinkInsideUpdate> ||
+    std::same_as<T, OtcLinkFractionalInsideUpdate>
+  T parse_inside_update(OtcLinkCursor& cursor) {
+    auto inside = T();
+    inside.m_sequence = cursor.read_uint32();
+    inside.m_inside = cursor.read_uint32();
+    inside.m_flags = cursor.read_uint8();
+    inside.m_price = cursor.read_uint64();
+    if constexpr(std::same_as<T, OtcLinkInsideUpdate>) {
+      inside.m_size = cursor.read_uint32();
+    } else {
+      inside.m_size = cursor.read_uint64();
+    }
+    inside.m_timestamp = cursor.read_uint64();
+    inside.m_participants = cursor.read_uint8();
+    return inside;
+  }
 }
 
   inline OtcLinkSecurity OtcLinkSecurity::parse(const OtcLinkMessage& message) {
@@ -688,6 +972,35 @@ namespace OtcLinkDetails {
       cursor);
   }
 
+  inline bool OtcLinkInsideAttributes::has_flag(Flag flag) const {
+    return (m_flags & static_cast<std::uint8_t>(flag)) != 0;
+  }
+
+  inline OtcLinkInside OtcLinkInside::parse(
+      const OtcLinkMessage& message) {
+    auto cursor = OtcLinkDetails::get_cursor(message, TYPE);
+    return OtcLinkDetails::parse_inside<OtcLinkInside>(cursor);
+  }
+
+  inline OtcLinkInsideUpdate OtcLinkInsideUpdate::parse(
+      const OtcLinkMessage& message) {
+    auto cursor = OtcLinkDetails::get_cursor(message, TYPE);
+    return OtcLinkDetails::parse_inside_update<OtcLinkInsideUpdate>(cursor);
+  }
+
+  inline OtcLinkFractionalInside OtcLinkFractionalInside::parse(
+      const OtcLinkMessage& message) {
+    auto cursor = OtcLinkDetails::get_cursor(message, TYPE);
+    return OtcLinkDetails::parse_inside<OtcLinkFractionalInside>(cursor);
+  }
+
+  inline OtcLinkFractionalInsideUpdate OtcLinkFractionalInsideUpdate::parse(
+      const OtcLinkMessage& message) {
+    auto cursor = OtcLinkDetails::get_cursor(message, TYPE);
+    return OtcLinkDetails::parse_inside_update<OtcLinkFractionalInsideUpdate>(
+      cursor);
+  }
+
   template<IsOtcLinkVisitor F, IsOtcLinkVisitor... G>
   decltype(auto) visit(const OtcLinkMessage& message, F&& f, G&&... g) {
     if constexpr(std::invocable<F, OtcLinkSecurity>) {
@@ -740,6 +1053,27 @@ namespace OtcLinkDetails {
         return std::forward<F>(f)(OtcLinkFractionalQuoteUpdate::parse(message));
       }
     }
+    if constexpr(std::invocable<F, OtcLinkInside>) {
+      if(message.m_type == OtcLinkInside::TYPE) {
+        return std::forward<F>(f)(OtcLinkInside::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, OtcLinkInsideUpdate>) {
+      if(message.m_type == OtcLinkInsideUpdate::TYPE) {
+        return std::forward<F>(f)(OtcLinkInsideUpdate::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, OtcLinkFractionalInside>) {
+      if(message.m_type == OtcLinkFractionalInside::TYPE) {
+        return std::forward<F>(f)(OtcLinkFractionalInside::parse(message));
+      }
+    }
+    if constexpr(std::invocable<F, OtcLinkFractionalInsideUpdate>) {
+      if(message.m_type == OtcLinkFractionalInsideUpdate::TYPE) {
+        return std::forward<F>(f)(
+          OtcLinkFractionalInsideUpdate::parse(message));
+      }
+    }
     if constexpr(std::invocable<F, const OtcLinkMessage&>) {
       return std::forward<F>(f)(message);
     } else if constexpr(sizeof...(G) != 0) {
@@ -748,7 +1082,8 @@ namespace OtcLinkDetails {
         OtcLinkSecurity, OtcLinkFractionalSecurity, OtcLinkMarketOpen,
         OtcLinkMarketClose, OtcLinkSpinStart, OtcLinkSpinEnd, OtcLinkQuote,
         OtcLinkQuoteUpdate, OtcLinkFractionalQuote,
-        OtcLinkFractionalQuoteUpdate>) {
+        OtcLinkFractionalQuoteUpdate, OtcLinkInside, OtcLinkInsideUpdate,
+        OtcLinkFractionalInside, OtcLinkFractionalInsideUpdate>) {
       return;
     } else {
       boost::throw_with_location(
