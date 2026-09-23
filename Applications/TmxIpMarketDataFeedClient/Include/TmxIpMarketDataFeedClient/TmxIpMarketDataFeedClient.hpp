@@ -158,6 +158,8 @@ namespace Nexus {
       void publish(const TmxIpCbboQuote& message);
       void publish_opening_quote(
         std::string_view symbol, const TmxIpMessageHeader& header);
+      void log_error(
+        const StampMessage& message, const std::exception& error);
       void read_loop();
   };
 
@@ -1115,6 +1117,22 @@ namespace Nexus {
       IsMarketDataClient<Beam::dereference_t<D>> &&
       Beam::IsTimeClient<Beam::dereference_t<T>> &&
       IsMarketDataFeedClient<Beam::dereference_t<M>>
+  void TmxIpMarketDataFeedClient<C, D, T, M>::log_error(
+      const StampMessage& message, const std::exception& error) {
+    if(!m_config.m_is_logging_messages) {
+      log(message);
+    }
+    auto out = std::stringstream();
+    out << "(bad_message " << m_time_client->get_time() << ' ' <<
+      error.what() << ")\n";
+    std::cout << out.str() << std::flush;
+  }
+
+  template<typename C, typename D, typename T, typename M> requires
+    IsTmxIpClient<Beam::dereference_t<C>> &&
+      IsMarketDataClient<Beam::dereference_t<D>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>> &&
+      IsMarketDataFeedClient<Beam::dereference_t<M>>
   void TmxIpMarketDataFeedClient<C, D, T, M>::read_loop() {
     try {
       load_tickers();
@@ -1152,6 +1170,10 @@ namespace Nexus {
             [&] (const TmxIpOpeningAuction& message) { publish(message); },
             [&] (const TmxIpCbboQuote& message) { publish(message); },
             [] (const auto&) {});
+        } catch(const TmxIpParserException& e) {
+          log_error(message, e);
+        } catch(const StampParserException& e) {
+          log_error(message, e);
         } catch(const std::exception&) {
           if(!m_config.m_is_logging_messages) {
             log(message);

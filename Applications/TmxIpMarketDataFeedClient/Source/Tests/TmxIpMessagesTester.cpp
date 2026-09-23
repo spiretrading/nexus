@@ -548,6 +548,38 @@ TEST_SUITE("TmxIpMessages") {
     REQUIRE_NOTHROW(validate(StampMessage::parse(source)));
   }
 
+  TEST_CASE("symbol_name") {
+    for(auto name : {
+        "LONGPOINT ETF CORP MEGASHORT -3X CDN GOLD MINERS DAILY LEVERAGED "
+          "ALTERNATIVE ETF SHS NEW",
+        "LONGPOINT ETF CORP MEGASHORT -3X US SEMICONDUCTORS DAILY LEVERAGED "
+          "ALTERNATIVE ETF SHS NEW",
+        "TRANSALTA CORP MTN CUMULATIVE REDEEMABLE FLOATING RATE FIRST "
+          "PREFERRED SHARES, SERIES D"}) {
+      CAPTURE(name);
+      auto source = encode_message(
+        std::string("6=SymbolInfo;5=SymbolStatus;55=ABX;") +
+          "57=20260923041202414702000;177=" + name);
+      auto message = TmxIpSymbolStatus::parse(StampMessage::parse(source));
+      REQUIRE(message.m_name.has_value());
+      REQUIRE(*message.m_name == name);
+    }
+    auto source = encode_message("6=SymbolInfo;5=SymbolStatus;55=ABX;"
+      "57=20260923041202414702000;177=");
+    REQUIRE_THROWS_AS(TmxIpSymbolStatus::parse(StampMessage::parse(source)),
+      TmxIpParserException);
+    auto name = std::string(256, 'A');
+    source = encode_message(std::string("6=SymbolInfo;5=SymbolStatus;55=ABX;") +
+      "57=20260923041202414702000;177=" + name);
+    auto message = TmxIpSymbolStatus::parse(StampMessage::parse(source));
+    REQUIRE(message.m_name.has_value());
+    REQUIRE(*message.m_name == name);
+    source = encode_message(std::string("6=SymbolInfo;5=SymbolStatus;55=ABX;") +
+      "57=20260923041202414702000;177=" + name + 'A');
+    REQUIRE_THROWS_AS(TmxIpSymbolStatus::parse(StampMessage::parse(source)),
+      TmxIpParserException);
+  }
+
   TEST_CASE("trading_status") {
     auto source = std::string();
     SUBCASE("symbol") {

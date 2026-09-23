@@ -11,6 +11,7 @@
 #include "Nexus/Definitions/Money.hpp"
 #include "Nexus/Definitions/Side.hpp"
 #include "Nexus/Stamp/StampFieldReader.hpp"
+#include "TmxIpMarketDataFeedClient/TmxIpFields.hpp"
 #include "TmxIpMarketDataFeedClient/TmxIpParserException.hpp"
 
 namespace Nexus {
@@ -796,9 +797,11 @@ namespace TmxIpDetails {
   inline TmxIpMessageHeader header(
       const StampMessage& message, const StampFieldReader& fields) {
     return TmxIpMessageHeader(
-      StampFieldReader(message.m_control_header).read(56, timestamp),
-      fields.read_optional(57, timestamp),
-      fields.read_optional(247, text<3>), fields.read_optional(636, text<32>));
+      StampFieldReader(message.m_control_header).read(
+        TmxIpFields::TIMESTAMP, timestamp),
+      fields.read_optional(TmxIpFields::TRADING_SYS_TIMESTAMP, timestamp),
+      fields.read_optional(TmxIpFields::EXCHANGE_ID, text<3>),
+      fields.read_optional(TmxIpFields::BOOK_TYPE, text<32>));
   }
 
   template<typename F, typename T>
@@ -889,7 +892,7 @@ namespace TmxIpDetails {
       const StampMessage& message) {
     using namespace TmxIpDetails;
     auto fields = StampFieldReader(message.m_business_content);
-    if(fields.read(6, text<35>) != TYPE) {
+    if(fields.read(TmxIpFields::BUSINESS_CLASS, text<35>) != TYPE) {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CDF business class."));
     }
@@ -899,23 +902,33 @@ namespace TmxIpDetails {
       boost::throw_with_location(
         TmxIpParserException("Missing CDF trading timestamp."));
     }
-    value.m_action = fields.read(5, text<35>);
+    value.m_action = fields.read(TmxIpFields::BUSINESS_ACTION, text<35>);
     if(value.m_action != "SymbolStatus") {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CDF business action."));
     }
-    value.m_symbol = fields.read(55, text<17>);
-    value.m_listing_market = fields.read_optional(554, text<3>);
-    value.m_currency = fields.read_optional(58, text<3>);
-    value.m_board_lot = fields.read_optional(115, number<10>);
-    value.m_stock_group = fields.read_optional(282, number<2>);
-    value.m_stock_state = fields.read_optional(161, text<64>);
-    value.m_name = fields.read_optional(177, text<80>);
-    value.m_product_type = fields.read_optional(105, text<64>);
-    value.m_is_test_symbol = fields.read_optional(665, default_flag);
-    value.m_is_last_message = fields.read_optional(113, flag);
-    value.m_number_of_messages = fields.read_optional(111, number<8>);
-    value.m_total_messages = fields.read_optional(112, number<8>);
+    value.m_symbol = fields.read(TmxIpFields::SYMBOL, text<17>);
+    value.m_listing_market =
+      fields.read_optional(TmxIpFields::LISTING_MARKET, text<3>);
+    value.m_currency = fields.read_optional(TmxIpFields::CURRENCY, text<3>);
+    value.m_board_lot =
+      fields.read_optional(TmxIpFields::BOARD_LOT, number<10>);
+    value.m_stock_group =
+      fields.read_optional(TmxIpFields::STOCK_GROUP, number<2>);
+    value.m_stock_state =
+      fields.read_optional(TmxIpFields::STOCK_STATE, text<64>);
+    value.m_name =
+      fields.read_optional(TmxIpFields::SYMBOL_FULL_NAME, text<256>);
+    value.m_product_type =
+      fields.read_optional(TmxIpFields::PRODUCT_TYPE, text<64>);
+    value.m_is_test_symbol =
+      fields.read_optional(TmxIpFields::TEST_SYMBOL, default_flag);
+    value.m_is_last_message =
+      fields.read_optional(TmxIpFields::LAST_MESSAGE, flag);
+    value.m_number_of_messages =
+      fields.read_optional(TmxIpFields::NUMBER_OF_MESSAGES, number<8>);
+    value.m_total_messages =
+      fields.read_optional(TmxIpFields::TOTAL_NUM_MESSAGES, number<8>);
     return value;
   }
 
@@ -923,7 +936,7 @@ namespace TmxIpDetails {
       const StampMessage& message) {
     using namespace TmxIpDetails;
     auto fields = StampFieldReader(message.m_business_content);
-    if(fields.read(6, text<35>) != TYPE) {
+    if(fields.read(TmxIpFields::BUSINESS_CLASS, text<35>) != TYPE) {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CDF business class."));
     }
@@ -933,15 +946,23 @@ namespace TmxIpDetails {
       boost::throw_with_location(
         TmxIpParserException("Missing CDF trading timestamp."));
     }
-    value.m_action = fields.read(5, text<35>);
+    value.m_action = fields.read(TmxIpFields::BUSINESS_ACTION, text<35>);
     if(value.m_action != "OrderBook") {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CDF business action."));
     }
-    value.m_is_last_message = fields.read_optional(113, flag);
-    value.m_number_of_messages = fields.read_optional(111, number<8>);
-    value.m_total_messages = fields.read_optional(112, number<8>);
-    auto count = fields.get_count({55, 40, 70, 197, 64, 196, 41, 178, 53, 168});
+    value.m_is_last_message =
+      fields.read_optional(TmxIpFields::LAST_MESSAGE, flag);
+    value.m_number_of_messages =
+      fields.read_optional(TmxIpFields::NUMBER_OF_MESSAGES, number<8>);
+    value.m_total_messages =
+      fields.read_optional(TmxIpFields::TOTAL_NUM_MESSAGES, number<8>);
+    auto count = fields.get_count({
+      TmxIpFields::SYMBOL, TmxIpFields::ORDER_NUMBER,
+      TmxIpFields::BROKER_NUMBER, TmxIpFields::MARKET_SIDE, TmxIpFields::VOLUME,
+      TmxIpFields::PUBLIC_PRICE, TmxIpFields::PRICE,
+      TmxIpFields::PRIORITY_TIMESTAMP, TmxIpFields::SETTLEMENT_TERMS,
+      TmxIpFields::NON_RESIDENT});
     value.m_orders.reserve(count);
     if(count == 0) {
       boost::throw_with_location(
@@ -949,16 +970,21 @@ namespace TmxIpDetails {
     }
     for(auto i = std::uint16_t(0); i != count; ++i) {
       auto record = TmxIpBookOrder();
-      record.m_symbol = fields.read(55, i, text<17>);
-      record.m_order_id = fields.read(40, i, text<18>);
-      record.m_broker = fields.read(70, i, number<3>);
-      record.m_side = fields.read(197, i, side);
-      record.m_quantity = fields.read(64, i, volume);
-      record.m_public_price = fields.read_optional(196, i, TmxIpPrice::parse);
-      record.m_price = fields.read_optional(41, i, TmxIpPrice::parse);
-      record.m_priority_timestamp = fields.read_optional(178, i, timestamp);
-      record.m_settlement_terms = fields.read_optional(53, i, text<6>);
-      record.m_is_nonresident = fields.read_optional(168, i, flag);
+      record.m_symbol = fields.read(TmxIpFields::SYMBOL, i, text<17>);
+      record.m_order_id = fields.read(TmxIpFields::ORDER_NUMBER, i, text<18>);
+      record.m_broker = fields.read(TmxIpFields::BROKER_NUMBER, i, number<3>);
+      record.m_side = fields.read(TmxIpFields::MARKET_SIDE, i, side);
+      record.m_quantity = fields.read(TmxIpFields::VOLUME, i, volume);
+      record.m_public_price =
+        fields.read_optional(TmxIpFields::PUBLIC_PRICE, i, TmxIpPrice::parse);
+      record.m_price =
+        fields.read_optional(TmxIpFields::PRICE, i, TmxIpPrice::parse);
+      record.m_priority_timestamp =
+        fields.read_optional(TmxIpFields::PRIORITY_TIMESTAMP, i, timestamp);
+      record.m_settlement_terms =
+        fields.read_optional(TmxIpFields::SETTLEMENT_TERMS, i, text<6>);
+      record.m_is_nonresident =
+        fields.read_optional(TmxIpFields::NON_RESIDENT, i, flag);
       value.m_orders.push_back(record);
     }
     return value;
@@ -968,7 +994,7 @@ namespace TmxIpDetails {
       const StampMessage& message) {
     using namespace TmxIpDetails;
     auto fields = StampFieldReader(message.m_business_content);
-    if(fields.read(6, text<35>) != TYPE) {
+    if(fields.read(TmxIpFields::BUSINESS_CLASS, text<35>) != TYPE) {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CDF business class."));
     }
@@ -978,12 +1004,12 @@ namespace TmxIpDetails {
       boost::throw_with_location(
         TmxIpParserException("Missing CDF trading timestamp."));
     }
-    value.m_action = fields.read(5, text<35>);
+    value.m_action = fields.read(TmxIpFields::BUSINESS_ACTION, text<35>);
     if(value.m_action != "ClearOrderBook") {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CDF business action."));
     }
-    value.m_symbol = fields.read(55, text<17>);
+    value.m_symbol = fields.read(TmxIpFields::SYMBOL, text<17>);
     return value;
   }
 
@@ -991,7 +1017,7 @@ namespace TmxIpDetails {
       const StampMessage& message) {
     using namespace TmxIpDetails;
     auto fields = StampFieldReader(message.m_business_content);
-    if(fields.read(6, text<35>) != TYPE) {
+    if(fields.read(TmxIpFields::BUSINESS_CLASS, text<35>) != TYPE) {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CDF business class."));
     }
@@ -1001,27 +1027,39 @@ namespace TmxIpDetails {
       boost::throw_with_location(
         TmxIpParserException("Missing CDF trading timestamp."));
     }
-    value.m_action = fields.read(5, text<35>);
+    value.m_action = fields.read(TmxIpFields::BUSINESS_ACTION, text<35>);
     if(value.m_action != "Buy" && value.m_action != "Sell") {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CDF business action."));
     }
-    value.m_symbol = fields.read(55, text<17>);
-    value.m_confirmation = fields.read(16, text<18>);
-    value.m_order_id = fields.read_optional(40, text<18>);
-    value.m_previous_order_id = fields.read_optional(11, text<18>);
-    value.m_broker = fields.read_optional(70, number<3>);
-    value.m_public_price = fields.read(196, TmxIpPrice::parse);
-    value.m_quantity = fields.read(64, volume);
-    value.m_priority_timestamp = fields.read_optional(178, timestamp);
-    value.m_priority_quantity = fields.read_optional(68, volume);
-    value.m_minimum_fill_quantity = fields.read_optional(31, volume);
-    value.m_lots_of = fields.read_optional(74, volume);
-    value.m_settlement_terms = fields.read_optional(53, text<6>);
-    value.m_priority_status = fields.read_optional(639, text<32>);
-    value.m_previous_price = fields.read_optional(642, TmxIpPrice::parse);
-    value.m_is_bypass = fields.read_optional(503, flag);
-    value.m_is_nonresident = fields.read_optional(168, flag);
+    value.m_symbol = fields.read(TmxIpFields::SYMBOL, text<17>);
+    value.m_confirmation =
+      fields.read(TmxIpFields::CONFIRMATION_TYPE, text<18>);
+    value.m_order_id =
+      fields.read_optional(TmxIpFields::ORDER_NUMBER, text<18>);
+    value.m_previous_order_id =
+      fields.read_optional(TmxIpFields::CFOD_ORDER_NUMBER, text<18>);
+    value.m_broker =
+      fields.read_optional(TmxIpFields::BROKER_NUMBER, number<3>);
+    value.m_public_price =
+      fields.read(TmxIpFields::PUBLIC_PRICE, TmxIpPrice::parse);
+    value.m_quantity = fields.read(TmxIpFields::VOLUME, volume);
+    value.m_priority_timestamp =
+      fields.read_optional(TmxIpFields::PRIORITY_TIMESTAMP, timestamp);
+    value.m_priority_quantity =
+      fields.read_optional(TmxIpFields::PRIORITY_VOLUME, volume);
+    value.m_minimum_fill_quantity =
+      fields.read_optional(TmxIpFields::MINIMUM_FILL_VOLUME, volume);
+    value.m_lots_of = fields.read_optional(TmxIpFields::LOTS_OF, volume);
+    value.m_settlement_terms =
+      fields.read_optional(TmxIpFields::SETTLEMENT_TERMS, text<6>);
+    value.m_priority_status =
+      fields.read_optional(TmxIpFields::PRIORITY_STATUS, text<32>);
+    value.m_previous_price =
+      fields.read_optional(TmxIpFields::PREVIOUS_PRICE, TmxIpPrice::parse);
+    value.m_is_bypass = fields.read_optional(TmxIpFields::BYPASS, flag);
+    value.m_is_nonresident =
+      fields.read_optional(TmxIpFields::NON_RESIDENT, flag);
     auto confirmation = value.m_confirmation;
     if(confirmation != "AssignTimePriority" && confirmation != "Booked" &&
         confirmation != "Cancelled" && confirmation != "PriceAssigned" &&
@@ -1036,7 +1074,7 @@ namespace TmxIpDetails {
       const StampMessage& message) {
     using namespace TmxIpDetails;
     auto fields = StampFieldReader(message.m_business_content);
-    if(fields.read(6, text<35>) != TYPE) {
+    if(fields.read(TmxIpFields::BUSINESS_CLASS, text<35>) != TYPE) {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CDF business class."));
     }
@@ -1046,46 +1084,66 @@ namespace TmxIpDetails {
       boost::throw_with_location(
         TmxIpParserException("Missing CDF trading timestamp."));
     }
-    value.m_action = fields.read(5, text<35>);
+    value.m_action = fields.read(TmxIpFields::BUSINESS_ACTION, text<35>);
     if(value.m_action != "Trade" &&
         value.m_action != "Cancelled" &&
         value.m_action != "AuctionTradeIndividual") {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CDF business action."));
     }
-    value.m_symbol = fields.read(55, text<17>);
-    value.m_price = fields.read(41, TmxIpPrice::parse);
-    value.m_quantity = fields.read(64, volume);
-    value.m_trade_id = fields.read_optional(220, text<18>);
-    value.m_original_trade_id = fields.read_optional(506, text<64>);
-    value.m_previous_order_id = fields.read_optional(11, text<18>);
-    value.m_cross_type = fields.read_optional(390, text<32>);
-    value.m_settlement_terms = fields.read_optional(53, text<8>);
-    value.m_opening_auction = fields.read_optional(574, text<1>);
-    value.m_market_state = fields.read_optional(159, text<64>);
-    value.m_last_sale = fields.read_optional(114, numeric_price);
-    value.m_is_correction = fields.read_optional(183, flag);
-    value.m_is_extended_hours = fields.read_optional(76, flag);
-    value.m_is_bypass = fields.read_optional(503, flag);
-    value.m_is_nonresident = fields.read_optional(168, flag);
-    value.m_is_dark = fields.read_optional(617, default_flag);
-    value.m_is_mid_only = fields.read_optional(684, default_flag);
-    value.m_is_conditional = fields.read_optional(688, flag);
-    value.m_is_market_on_close = fields.read_optional(494, flag);
-    value.m_melo = fields.read_optional(689, text<1>);
-    value.m_purestream = fields.read_optional(703, text<1>);
-    auto count = fields.get_count({40, 70, 150, 178, 264});
+    value.m_symbol = fields.read(TmxIpFields::SYMBOL, text<17>);
+    value.m_price = fields.read(TmxIpFields::PRICE, TmxIpPrice::parse);
+    value.m_quantity = fields.read(TmxIpFields::VOLUME, volume);
+    value.m_trade_id =
+      fields.read_optional(TmxIpFields::TRADE_NUMBER, text<18>);
+    value.m_original_trade_id =
+      fields.read_optional(TmxIpFields::ORIG_TRADE_ID, text<64>);
+    value.m_previous_order_id =
+      fields.read_optional(TmxIpFields::CFOD_ORDER_NUMBER, text<18>);
+    value.m_cross_type =
+      fields.read_optional(TmxIpFields::CROSS_TYPE, text<32>);
+    value.m_settlement_terms =
+      fields.read_optional(TmxIpFields::SETTLEMENT_TERMS, text<8>);
+    value.m_opening_auction =
+      fields.read_optional(TmxIpFields::OPENING_AUCTION, text<1>);
+    value.m_market_state =
+      fields.read_optional(TmxIpFields::MARKET_STATE, text<64>);
+    value.m_last_sale =
+      fields.read_optional(TmxIpFields::LAST_SALE, numeric_price);
+    value.m_is_correction =
+      fields.read_optional(TmxIpFields::TRADE_CORRECTION, flag);
+    value.m_is_extended_hours =
+      fields.read_optional(TmxIpFields::EXTENDED_HOURS, flag);
+    value.m_is_bypass = fields.read_optional(TmxIpFields::BYPASS, flag);
+    value.m_is_nonresident =
+      fields.read_optional(TmxIpFields::NON_RESIDENT, flag);
+    value.m_is_dark = fields.read_optional(TmxIpFields::IS_DARK, default_flag);
+    value.m_is_mid_only =
+      fields.read_optional(TmxIpFields::IS_MID_ONLY, default_flag);
+    value.m_is_conditional =
+      fields.read_optional(TmxIpFields::CONDITIONAL, flag);
+    value.m_is_market_on_close = fields.read_optional(TmxIpFields::MOC, flag);
+    value.m_melo = fields.read_optional(TmxIpFields::M_ELO, text<1>);
+    value.m_purestream = fields.read_optional(TmxIpFields::PURESTREAM, text<1>);
+    auto count = fields.get_count({TmxIpFields::ORDER_NUMBER,
+      TmxIpFields::BROKER_NUMBER, TmxIpFields::DISPLAY_VOLUME,
+      TmxIpFields::PRIORITY_TIMESTAMP, TmxIpFields::TRADE_TIMESTAMP});
     if(count > value.m_sides.size()) {
       boost::throw_with_location(
         TmxIpParserException("Invalid CDF trade side index."));
     }
     for(auto i = std::uint16_t(0); i != count; ++i) {
       auto& record = value.m_sides[i];
-      record.m_order_id = fields.read_optional(40, i, text<18>);
-      record.m_broker = fields.read_optional(70, i, number<3>);
-      record.m_display_quantity = fields.read_optional(150, i, volume);
-      record.m_priority_timestamp = fields.read_optional(178, i, timestamp);
-      record.m_trade_timestamp = fields.read_optional(264, i, timestamp);
+      record.m_order_id =
+        fields.read_optional(TmxIpFields::ORDER_NUMBER, i, text<18>);
+      record.m_broker =
+        fields.read_optional(TmxIpFields::BROKER_NUMBER, i, number<3>);
+      record.m_display_quantity =
+        fields.read_optional(TmxIpFields::DISPLAY_VOLUME, i, volume);
+      record.m_priority_timestamp =
+        fields.read_optional(TmxIpFields::PRIORITY_TIMESTAMP, i, timestamp);
+      record.m_trade_timestamp =
+        fields.read_optional(TmxIpFields::TRADE_TIMESTAMP, i, timestamp);
     }
     return value;
   }
@@ -1094,7 +1152,7 @@ namespace TmxIpDetails {
       const StampMessage& message) {
     using namespace TmxIpDetails;
     auto fields = StampFieldReader(message.m_business_content);
-    if(fields.read(6, text<35>) != TYPE) {
+    if(fields.read(TmxIpFields::BUSINESS_CLASS, text<35>) != TYPE) {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CDF business class."));
     }
@@ -1104,22 +1162,33 @@ namespace TmxIpDetails {
       boost::throw_with_location(
         TmxIpParserException("Missing CDF trading timestamp."));
     }
-    value.m_symbol = fields.read_optional(55, text<17>);
-    value.m_stock_state = fields.read_optional(161, text<64>);
-    value.m_sub_stock_state = fields.read_optional(361, text<64>);
-    value.m_stock_group = fields.read_optional(282, number<2>);
-    value.m_listing_market = fields.read_optional(554, text<3>);
-    value.m_listing_tier = fields.read_optional(690, text<16>);
-    value.m_currency = fields.read_optional(58, text<3>);
-    value.m_comment = fields.read_optional(173, text<70>);
-    value.m_calculated_closing_price =
-      fields.read_optional(491, TmxIpPrice::parse);
-    value.m_moc_vwap = fields.read_optional(495, TmxIpPrice::parse);
-    value.m_is_moc_eligible = fields.read_optional(496, flag);
-    value.m_accepts_anonymous = fields.read_optional(110, flag);
-    value.m_accepts_undisplayed = fields.read_optional(605, flag);
-    value.m_settlement_terms = fields.read_optional(53, text<6>);
-    value.m_is_nonresident = fields.read_optional(168, flag);
+    value.m_symbol = fields.read_optional(TmxIpFields::SYMBOL, text<17>);
+    value.m_stock_state =
+      fields.read_optional(TmxIpFields::STOCK_STATE, text<64>);
+    value.m_sub_stock_state =
+      fields.read_optional(TmxIpFields::SUB_STOCK_STATE, text<64>);
+    value.m_stock_group =
+      fields.read_optional(TmxIpFields::STOCK_GROUP, number<2>);
+    value.m_listing_market =
+      fields.read_optional(TmxIpFields::LISTING_MARKET, text<3>);
+    value.m_listing_tier =
+      fields.read_optional(TmxIpFields::LISTING_TIER, text<16>);
+    value.m_currency = fields.read_optional(TmxIpFields::CURRENCY, text<3>);
+    value.m_comment = fields.read_optional(TmxIpFields::COMMENT, text<70>);
+    value.m_calculated_closing_price = fields.read_optional(
+      TmxIpFields::CALCULATED_CLOSING_PRICE, TmxIpPrice::parse);
+    value.m_moc_vwap =
+      fields.read_optional(TmxIpFields::MOC_VWAP, TmxIpPrice::parse);
+    value.m_is_moc_eligible =
+      fields.read_optional(TmxIpFields::MOC_ELIGIBLE, flag);
+    value.m_accepts_anonymous =
+      fields.read_optional(TmxIpFields::ACCEPT_ANONYMOUS, flag);
+    value.m_accepts_undisplayed =
+      fields.read_optional(TmxIpFields::ACCEPT_UNDISPLAYED, flag);
+    value.m_settlement_terms =
+      fields.read_optional(TmxIpFields::SETTLEMENT_TERMS, text<6>);
+    value.m_is_nonresident =
+      fields.read_optional(TmxIpFields::NON_RESIDENT, flag);
     return value;
   }
 
@@ -1127,7 +1196,7 @@ namespace TmxIpDetails {
       const StampMessage& message) {
     using namespace TmxIpDetails;
     auto fields = StampFieldReader(message.m_business_content);
-    if(fields.read(6, text<35>) != TYPE) {
+    if(fields.read(TmxIpFields::BUSINESS_CLASS, text<35>) != TYPE) {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CDF business class."));
     }
@@ -1137,8 +1206,10 @@ namespace TmxIpDetails {
       boost::throw_with_location(
         TmxIpParserException("Missing CDF trading timestamp."));
     }
-    value.m_market_state = fields.read_optional(159, text<64>);
-    value.m_stock_group = fields.read_optional(282, number<2>);
+    value.m_market_state =
+      fields.read_optional(TmxIpFields::MARKET_STATE, text<64>);
+    value.m_stock_group =
+      fields.read_optional(TmxIpFields::STOCK_GROUP, number<2>);
     return value;
   }
 
@@ -1146,7 +1217,7 @@ namespace TmxIpDetails {
       const StampMessage& message) {
     using namespace TmxIpDetails;
     auto fields = StampFieldReader(message.m_business_content);
-    if(fields.read(6, text<35>) != TYPE) {
+    if(fields.read(TmxIpFields::BUSINESS_CLASS, text<35>) != TYPE) {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CDF business class."));
     }
@@ -1156,26 +1227,35 @@ namespace TmxIpDetails {
       boost::throw_with_location(
         TmxIpParserException("Missing CDF trading timestamp."));
     }
-    value.m_action = fields.read(5, text<35>);
+    value.m_action = fields.read(TmxIpFields::BUSINESS_ACTION, text<35>);
     if(value.m_action != "AssignCOP" && value.m_action != "AssignLimit") {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CDF business action."));
     }
-    value.m_symbol = fields.read(55, text<17>);
-    value.m_calculated_opening_price = fields.read(191, TmxIpPrice::parse);
-    value.m_part_number = fields.read_optional(194, number<9>);
-    value.m_total_parts = fields.read_optional(195, number<9>);
-    value.m_market_state = fields.read_optional(159, text<64>);
-    value.m_imbalance_side = fields.read_optional(492, text<32>);
-    value.m_imbalance_quantity = fields.read_optional(493, number<9>);
-    value.m_theoretical_opening_quantity = fields.read_optional(654, number<8>);
-    value.m_paired_quantity = fields.read_optional(698, number<9>);
-    auto count = fields.get_count({192, 41});
+    value.m_symbol = fields.read(TmxIpFields::SYMBOL, text<17>);
+    value.m_calculated_opening_price =
+      fields.read(TmxIpFields::CALCULATED_OPENING_PRICE, TmxIpPrice::parse);
+    value.m_part_number =
+      fields.read_optional(TmxIpFields::MBX_PART_NUMBER, number<9>);
+    value.m_total_parts =
+      fields.read_optional(TmxIpFields::MBX_TOTAL_PARTS, number<9>);
+    value.m_market_state =
+      fields.read_optional(TmxIpFields::MARKET_STATE, text<64>);
+    value.m_imbalance_side =
+      fields.read_optional(TmxIpFields::IMBALANCE_SIDE, text<32>);
+    value.m_imbalance_quantity =
+      fields.read_optional(TmxIpFields::IMBALANCE_VOLUME, number<9>);
+    value.m_theoretical_opening_quantity =
+      fields.read_optional(TmxIpFields::THEORETICAL_OPENING_VOLUME, number<8>);
+    value.m_paired_quantity =
+      fields.read_optional(TmxIpFields::PAIRED_VOLUME, number<9>);
+    auto count = fields.get_count({TmxIpFields::ORDER_KEY, TmxIpFields::PRICE});
     value.m_orders.reserve(count);
     for(auto i = std::uint16_t(0); i != count; ++i) {
       auto record = TmxIpOrderPrice();
-      record.m_key = fields.read_optional(192, i, text<22>);
-      record.m_price = fields.read_optional(41, i, TmxIpPrice::parse);
+      record.m_key = fields.read_optional(TmxIpFields::ORDER_KEY, i, text<22>);
+      record.m_price =
+        fields.read_optional(TmxIpFields::PRICE, i, TmxIpPrice::parse);
       if(!record.m_key && !record.m_price) {
         boost::throw_with_location(
           TmxIpParserException("Missing CDF MBX record."));
@@ -1189,53 +1269,60 @@ namespace TmxIpDetails {
       const StampMessage& message) {
     using namespace TmxIpDetails;
     auto fields = StampFieldReader(message.m_business_content);
-    if(fields.read(6, text<35>) != TYPE) {
+    if(fields.read(TmxIpFields::BUSINESS_CLASS, text<35>) != TYPE) {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CDF business class."));
     }
     auto value = TmxIpOpeningAuction();
     value.m_header = header(message, fields);
-    value.m_action = fields.read(5, text<35>);
+    value.m_action = fields.read(TmxIpFields::BUSINESS_ACTION, text<35>);
     if(value.m_action != "PairedVolume" &&
         value.m_action != "OddlotImbalance") {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CDF business action."));
     }
-    value.m_symbol = fields.read_optional(55, text<17>);
-    value.m_calculated_opening_price =
-      fields.read_optional(191, TmxIpPrice::parse);
-    value.m_paired_quantity = fields.read_optional(578, number<9>);
-    value.m_imbalance_side = fields.read_optional(572, opening_side);
-    value.m_imbalance_quantity = fields.read_optional(573, number<9>);
+    value.m_symbol = fields.read_optional(TmxIpFields::SYMBOL, text<17>);
+    value.m_calculated_opening_price = fields.read_optional(
+      TmxIpFields::CALCULATED_OPENING_PRICE, TmxIpPrice::parse);
+    value.m_paired_quantity =
+      fields.read_optional(TmxIpFields::OPENING_PAIRED_VOLUME, number<9>);
+    value.m_imbalance_side =
+      fields.read_optional(TmxIpFields::OPENING_IMBALANCE_SIDE, opening_side);
+    value.m_imbalance_quantity =
+      fields.read_optional(TmxIpFields::OPENING_IMBALANCE_VOLUME, number<9>);
     return value;
   }
 
   inline TmxIpCbboQuote TmxIpCbboQuote::parse(const StampMessage& message) {
     using namespace TmxIpDetails;
     auto fields = StampFieldReader(message.m_business_content);
-    if(fields.read(6, text<35>) != TYPE || fields.read(5, text<35>) != TYPE) {
+    if(fields.read(TmxIpFields::BUSINESS_CLASS, text<35>) != TYPE ||
+        fields.read(TmxIpFields::BUSINESS_ACTION, text<35>) != TYPE) {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CBBO business class or action."));
     }
     auto value = TmxIpCbboQuote();
-    value.m_symbol = fields.read(55, text<17>);
-    if(fields.get_count({196, 64, 247}) > value.m_sides.size()) {
+    value.m_symbol = fields.read(TmxIpFields::SYMBOL, text<17>);
+    if(fields.get_count({TmxIpFields::PUBLIC_PRICE, TmxIpFields::VOLUME,
+        TmxIpFields::EXCHANGE_ID}) > value.m_sides.size()) {
       boost::throw_with_location(
         TmxIpParserException("Unexpected CBBO quote side."));
     }
     for(auto i = std::uint16_t(0); i != value.m_sides.size(); ++i) {
       auto& side = value.m_sides[i];
-      side.m_price = fields.read(196, i, numeric_price);
-      side.m_quantity = fields.read(64, i, number<10>);
-      side.m_exchange = fields.read_optional(247, i, text<3>);
+      side.m_price = fields.read(TmxIpFields::PUBLIC_PRICE, i, numeric_price);
+      side.m_quantity = fields.read(TmxIpFields::VOLUME, i, number<10>);
+      side.m_exchange =
+        fields.read_optional(TmxIpFields::EXCHANGE_ID, i, text<3>);
     }
     auto control = StampFieldReader(message.m_control_header);
     auto address = [] (std::string_view source) {
       return source;
     };
-    value.m_source_address = control.read(54, address);
-    value.m_destination_address = control.read(17, address);
-    value.m_sequence = control.read(50, number<9>);
+    value.m_source_address = control.read(TmxIpFields::SOURCE_ADDRESS, address);
+    value.m_destination_address =
+      control.read(TmxIpFields::DEST_ADDRESS, address);
+    value.m_sequence = control.read(TmxIpFields::SEQUENCE_NUMBER, number<9>);
     auto milliseconds = [] (std::string_view source) {
       if(source.size() != 17) {
         boost::throw_with_location(
@@ -1243,16 +1330,20 @@ namespace TmxIpDetails {
       }
       return timestamp(source);
     };
-    value.m_publication_timestamp = control.read_optional(501, milliseconds);
-    value.m_receipt_timestamp = control.read_optional(502, milliseconds);
-    value.m_inbound_timestamp = control.read_optional(515, milliseconds);
-    value.m_outbound_timestamp = control.read_optional(514, milliseconds);
+    value.m_publication_timestamp =
+      control.read_optional(TmxIpFields::CDF_PUB_TIMESTAMP, milliseconds);
+    value.m_receipt_timestamp =
+      control.read_optional(TmxIpFields::CDF_RCV_TIMESTAMP, milliseconds);
+    value.m_inbound_timestamp =
+      control.read_optional(TmxIpFields::CDF_INBOUND_TIMESTAMP, milliseconds);
+    value.m_outbound_timestamp =
+      control.read_optional(TmxIpFields::CDF_OUTBOUND_TIMESTAMP, milliseconds);
     return value;
   }
 
   template<IsTmxIpVisitor F, IsTmxIpVisitor... G>
   decltype(auto) visit(const StampMessage& message, F&& f, G&&... g) {
-    auto field = message.m_business_content.find(6);
+    auto field = message.m_business_content.find(TmxIpFields::BUSINESS_CLASS);
     if(!field || field->m_value.empty()) {
       boost::throw_with_location(
         TmxIpParserException("Missing CDF business class."));

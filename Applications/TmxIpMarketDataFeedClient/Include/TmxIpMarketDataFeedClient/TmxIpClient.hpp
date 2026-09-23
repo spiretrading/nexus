@@ -1,6 +1,7 @@
 #ifndef TMX_IP_CLIENT_HPP
 #define TMX_IP_CLIENT_HPP
 #include <algorithm>
+#include <iomanip>
 #include <iostream>
 #include <map>
 #include <sstream>
@@ -450,10 +451,23 @@ namespace Nexus {
     try {
       while(auto packet = state.m_sequencer.read()) {
         if(auto payload = state.m_builder.add(*packet)) {
-          auto message = StampMessage::parse(
-            std::string_view(payload->get_data(), payload->get_size()));
-          m_messages.push(
-            Message(std::move(*payload), message, state.m_session));
+          try {
+            auto message = StampMessage::parse(
+              std::string_view(payload->get_data(), payload->get_size()));
+            m_messages.push(
+              Message(std::move(*payload), message, state.m_session));
+          } catch(const StampParserException& e) {
+            auto out = std::stringstream();
+            out << "(bad_message " << m_time_client->get_time() << ' ' <<
+              *packet->m_header.m_sequence << ' ' << e.what() << ' ' <<
+              std::hex << std::setfill('0');
+            for(auto i = std::size_t(0); i != payload->get_size(); ++i) {
+              out << std::setw(2) << static_cast<unsigned int>(
+                static_cast<unsigned char>(payload->get_data()[i]));
+            }
+            out << ")\n";
+            std::cout << out.str() << std::flush;
+          }
         }
       }
     } catch(const std::exception&) {

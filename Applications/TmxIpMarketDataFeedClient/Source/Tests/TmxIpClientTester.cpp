@@ -732,31 +732,39 @@ TEST_SUITE("TmxIpClient") {
 
 
   TEST_CASE("malformed_message") {
+    auto log = Log();
     auto fixture = Fixture();
     fixture.publish(1, "ONE");
     fixture.require_symbol("ONE");
+    auto sequence = std::uint32_t(3);
+    auto expected = std::string("(bad_message 2026-Sep-20 12:00:00 2 "
+      "Missing STAMP control header. 6e6f74205354414d50)\n");
     SUBCASE("live") {
       fixture.publish(2, "not STAMP", TmxIpHeader::Continuation::NONE,
         *fixture.m_feed_clients.front());
     }
     SUBCASE("recovery") {
-      fixture.publish(3, "THREE");
+      fixture.publish(3, "NEXT");
       fixture.require_request(2, 2);
       fixture.publish(2, "not STAMP", TmxIpHeader::Continuation::NONE,
         fixture.m_recovery_client.m_protocol_client);
     }
     SUBCASE("assembly") {
+      sequence = 4;
       fixture.publish(2, "\x01\x1e" "1=H", TmxIpHeader::Continuation::FIRST,
         *fixture.m_feed_clients.front());
       fixture.publish(3, "missing delimiter", TmxIpHeader::Continuation::LAST,
         *fixture.m_feed_clients.front());
+      expected = "(bad_message 2026-Sep-20 12:00:00 3 "
+        "Missing STAMP business content. "
+        "011e313d486d697373696e672064656c696d69746572)\n";
     }
-    REQUIRE_THROWS_AS(fixture.m_client.read(), StampParserException);
-    fixture.publish(4, "FOUR");
-    flush_pending_routines();
-    REQUIRE_THROWS_AS(fixture.m_client.read(), StampParserException);
+    fixture.publish(sequence, "NEXT");
+    fixture.require_symbol("NEXT");
+    fixture.publish(sequence + 1, "AFTER");
+    fixture.require_symbol("AFTER");
+    REQUIRE(log.m_output.str() == expected);
   }
-
 
   TEST_CASE("malformed_packet") {
     auto fixture = Fixture();

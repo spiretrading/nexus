@@ -1138,16 +1138,35 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
     REQUIRE(client.get_exception() == exception);
   }
 
+  TEST_CASE("publication_error") {
+    auto log = Log();
+    auto fixture = Fixture();
+    fixture.publish("|6=MBXMessage|5=AssignCOP|55=ABX|191=25.50"
+      "|57=20260921090000000");
+    flush_pending_routines();
+    auto operation = fixture.m_feed_operations->try_pop();
+    REQUIRE(operation.has_value());
+    auto quote = std::get_if<FeedClient::PublishBboQuoteOperation>(
+      &**operation);
+    REQUIRE(quote);
+    quote->m_result.set(
+      std::make_exception_ptr(IOException("Publication failed.")));
+    flush_pending_routines();
+    REQUIRE(fixture.m_client.is_finished());
+    auto exception = fixture.m_client.get_exception();
+    REQUIRE(exception);
+    REQUIRE_THROWS_AS(std::rethrow_exception(exception), IOException);
+  }
+
   TEST_CASE("parse_error") {
     auto log = Log();
     auto fixture = Fixture();
     auto& source = fixture.m_source;
     auto& client = fixture.m_client;
     auto expected = std::string();
-    SUBCASE("stamp_framing") {
-      source.push("not a STAMP message");
-    }
+    auto reason = std::string();
     SUBCASE("required_field") {
+      reason = "Missing STAMP field.";
       source.push("\x01\x1e" "56=20260920090000000\x1c"
         "\x1e" "6=MBXMessage\x1e" "5=AssignCOP\x1e" "191=25.50"
         "\x1e" "57=20260920090000000");
@@ -1156,6 +1175,7 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
         " (191 0 \"25.50\") (57 0 \"20260920090000000\")))\n";
     }
     SUBCASE("price") {
+      reason = "Invalid CDF price.";
       source.push("\x01\x1e" "56=20260920090000000\x1c"
         "\x1e" "6=MBXMessage\x1e" "5=AssignCOP\x1e" "55=ABX"
         "\x1e" "191=invalid\x1e" "57=20260920090000000");
@@ -1164,15 +1184,15 @@ TEST_SUITE("TmxIpMarketDataFeedClient") {
         " (55 0 \"ABX\") (191 0 \"invalid\")"
         " (57 0 \"20260920090000000\")))\n";
     }
-    source.push("\x01\x1e" "56=20260920090000000\x1c"
-      "\x1e" "6=FutureMessage");
-    flush_pending_routines();
-    REQUIRE(client.is_finished());
-    REQUIRE(source.get_count() == 1);
-    auto exception = client.get_exception();
-    REQUIRE(exception);
-    REQUIRE_THROWS_AS(std::rethrow_exception(exception), std::runtime_error);
-    REQUIRE(log.m_output.str() == expected);
+    fixture.publish("|6=MBXMessage|5=AssignCOP|55=ABX|191=25.50"
+      "|57=20260921090000000");
+    REQUIRE(fixture.quote() == TickerBboQuote(BboQuote(
+      make_bid(Money(25.50), 0), make_ask(Money(25.50), 0),
+      time_from_string("2026-09-21 13:00:00")), parse_ticker("ABX.TSX")));
+    REQUIRE_FALSE(client.is_finished());
+    REQUIRE(source.get_count() == 2);
+    REQUIRE(log.m_output.str() == expected +
+      "(bad_message 2026-Sep-21 13:00:00 " + reason + ")\n");
   }
 
   TEST_CASE("reception") {
