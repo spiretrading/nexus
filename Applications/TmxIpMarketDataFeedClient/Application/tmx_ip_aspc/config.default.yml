@@ -1,0 +1,13 @@
+---
+<<: !include "$common_config"
+
+venue: ASPC
+feeds:
+  - address: "233.102.209.162:61221"
+    interface: "$local_interface:61221"
+  - address: "233.102.209.34:61227"
+    interface: "$local_interface:61227"
+recovery:
+  address: "142.201.149.36:61229"
+  delivery_address: "$local_interface:61247"
+...

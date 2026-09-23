@@ -1,0 +1,13 @@
+---
+<<: !include "$common_config"
+
+venue: INCC
+feeds:
+  - address: "233.102.209.166:61225"
+    interface: "$local_interface:61225"
+  - address: "233.102.209.38:61231"
+    interface: "$local_interface:61231"
+recovery:
+  address: "142.201.149.36:61233"
+  delivery_address: "$local_interface:61251"
+...
