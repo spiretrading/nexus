@@ -227,6 +227,39 @@ namespace Details {
         entry.m_display_name = "NEON";
         database.add(entry);
       }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("ASPC");
+        entry.m_country_code = Countries::CA;
+        entry.m_market_center = "ASP";
+        entry.m_time_zone = "America/Toronto";
+        entry.m_currency = Currencies::CAD;
+        entry.m_description = "CIX ASPEN";
+        entry.m_display_name = "ASPC";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("ASPV");
+        entry.m_country_code = Countries::CA;
+        entry.m_market_center = "ASV";
+        entry.m_time_zone = "America/Toronto";
+        entry.m_currency = Currencies::CAD;
+        entry.m_description = "CIX ASPEN VERT";
+        entry.m_display_name = "ASPV";
+        database.add(entry);
+      }
+      {
+        auto entry = VenueDatabase::Entry();
+        entry.m_venue = Venue("INCC");
+        entry.m_country_code = Countries::CA;
+        entry.m_market_center = "INC";
+        entry.m_time_zone = "America/Toronto";
+        entry.m_currency = Currencies::CAD;
+        entry.m_description = "CIX MIDPOINT";
+        entry.m_display_name = "INCC";
+        database.add(entry);
+      }
       return database;
     }();
     return database;
@@ -246,6 +279,8 @@ namespace Details {
   namespace Venues {
     inline const auto ALD = VENUES.from("ADRK").m_venue;
     inline const auto ALX = VENUES.from("XATX").m_venue;
+    inline const auto ASPC = VENUES.from("ASPC").m_venue;
+    inline const auto ASPV = VENUES.from("ASPV").m_venue;
     inline const auto ASX = VENUES.from("XASX").m_venue;
     inline const auto CHIC = VENUES.from("CHIC").m_venue;
     inline const auto CSE = VENUES.from("XCNQ").m_venue;
@@ -253,6 +288,7 @@ namespace Details {
     inline const auto CXA = VENUES.from("CHIA").m_venue;
     inline const auto CXD = VENUES.from("XCXD").m_venue;
     inline const auto ICX = VENUES.from("XICX").m_venue;
+    inline const auto INCC = VENUES.from("INCC").m_venue;
     inline const auto LIQ = VENUES.from("LICA").m_venue;
     inline const auto LYNX = VENUES.from("LYNX").m_venue;
     inline const auto MATN = VENUES.from("MATN").m_venue;

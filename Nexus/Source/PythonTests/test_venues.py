@@ -256,7 +256,8 @@ class TestVenues(unittest.TestCase):
         for center, mic, name in (
                 ('ALX', 'XATX', 'ALX'), ('ALD', 'ADRK', 'ALD'),
                 ('ICX', 'XICX', 'ICX'), ('LIQ', 'LICA', 'LIQ'),
-                ('AQN', 'NEON', 'NEON')):
+                ('AQN', 'NEON', 'NEON'), ('ASP', 'ASPC', 'ASPC'),
+                ('ASV', 'ASPV', 'ASPV'), ('INC', 'INCC', 'INCC')):
             with self.subTest(center=center):
                 venue = nexus.Venue(mic)
                 self.assertEqual(getattr(nexus.venues, name), venue)
