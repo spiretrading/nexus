@@ -11,6 +11,37 @@ namespace {
       std::string("\x02\x01\x10\x20\x30\x40\xa3\x0a", 8) + "FA";
   }
 
+  std::string make_quote(std::uint8_t type) {
+    auto payload = std::string("\x01\x02\x03\x04\x05\x06\x07\x08", 8) +
+      std::string("\x02\x6e\x10\x20\x30\x40", 6) + "CDEL" +
+      std::string("\x00\x00\x00\x01\x02\x03\x04\x05", 8);
+    if(type == OtcLinkFractionalQuote::TYPE) {
+      payload += std::string("\x00\x00\x00\x02", 4);
+    }
+    payload += std::string("\x10\x20\x30\x40\xe2", 5) +
+      std::string("\x00\x00\x01\x8c\x12\x34\x56\x78", 8) +
+      std::string("\x00\x00\x00\x01\x01\x02\x03\x04", 8);
+    if(type == OtcLinkFractionalQuote::TYPE) {
+      payload += std::string("\x00\x00\x00\x03", 4);
+    }
+    payload += std::string("\x50\x60\x70\x80\x1e", 5) +
+      std::string("\x00\x00\x01\x8c\x11\x22\x33\x44", 8) +
+      std::string("\xfd\xe7\x1f", 3);
+    return payload;
+  }
+
+  std::string make_quote_update(std::uint8_t type) {
+    auto payload = std::string("\x01\x02\x03\x04\x05\x06\x07\x08\x89", 9) +
+      std::string("\x00\x00\x00\x01\x02\x03\x04\x05", 8);
+    if(type == OtcLinkFractionalQuoteUpdate::TYPE) {
+      payload += std::string("\x00\x00\x00\x05", 4);
+    }
+    payload += std::string("\x01\x02\x03\x04\xff", 5) +
+      std::string("\x00\x00\x01\x8c\x12\x34\x56\x78", 8) +
+      std::string("\xfd\xe7\x15", 3);
+    return payload;
+  }
+
   OtcLinkMessage make_message(std::uint8_t type, std::string_view payload) {
     return OtcLinkMessage(static_cast<std::uint16_t>(
       OtcLinkMessage::HEADER_LENGTH + payload.size()), type, payload);
@@ -18,6 +49,100 @@ namespace {
 }
 
 TEST_SUITE("OtcLinkMessages") {
+  TEST_CASE_TEMPLATE(
+      "quote_update", T, OtcLinkQuoteUpdate, OtcLinkFractionalQuoteUpdate) {
+    auto payload = make_quote_update(T::TYPE);
+    auto message = make_message(T::TYPE, payload);
+    auto quote = T::parse(message);
+    REQUIRE(message.m_length == T::LENGTH);
+    REQUIRE(quote.m_sequence == 0x01020304);
+    REQUIRE(quote.m_quote == 0x05060708);
+    REQUIRE(quote.m_flags == 0x89);
+    REQUIRE(quote.has_flag(T::Flag::UPDATE_ASK));
+    REQUIRE(!quote.has_flag(T::Flag::OPEN));
+    REQUIRE(quote.has_flag(T::Flag::ASK_PRICED));
+    REQUIRE(quote.has_flag(T::Flag::BID_OFFER_WANTED));
+    REQUIRE(quote.m_price == 0x0000000102030405);
+    if constexpr(std::same_as<T, OtcLinkQuoteUpdate>) {
+      REQUIRE(quote.m_size == 0x01020304);
+    } else {
+      REQUIRE(quote.m_size == 0x0000000501020304);
+    }
+    REQUIRE(quote.m_adjustment == -1);
+    REQUIRE(quote.m_timestamp == 0x0000018c12345678);
+    REQUIRE(quote.m_reference == 64999);
+    REQUIRE(quote.m_extended_flags == 0x15);
+    REQUIRE(quote.has_flag(T::ExtendedFlag::SATURATED));
+    REQUIRE(quote.has_flag(T::ExtendedFlag::ASK_AUTO_EXECUTION));
+    REQUIRE(!quote.has_flag(T::ExtendedFlag::BID_AUTO_EXECUTION));
+    REQUIRE(!quote.has_flag(T::ExtendedFlag::NMS_CONDITIONAL));
+    REQUIRE(quote.has_flag(T::ExtendedFlag::ACCEPTS_FRACTIONAL_TRADES));
+    for(auto i = std::size_t(0); i < payload.size(); ++i) {
+      REQUIRE_THROWS_AS(T::parse(make_message(T::TYPE,
+        std::string_view(payload).substr(0, i))), OtcLinkParserException);
+    }
+    message.m_type = OtcLinkSecurity::TYPE;
+    REQUIRE_THROWS_AS(T::parse(message), OtcLinkParserException);
+    constexpr auto FLAGS_OFFSET = 2 * sizeof(std::uint32_t);
+    payload[FLAGS_OFFSET] = 0x12;
+    payload.back() = static_cast<char>(0xe0);
+    payload += "extension";
+    quote = T::parse(make_message(T::TYPE, payload));
+    REQUIRE(!quote.has_flag(T::Flag::UPDATE_ASK));
+    REQUIRE(quote.has_flag(T::Flag::OPEN));
+    REQUIRE(quote.has_flag(T::Flag::ASK_BID_WANTED));
+    REQUIRE(quote.m_extended_flags == 0xe0);
+  }
+
+  TEST_CASE_TEMPLATE("quote", T, OtcLinkQuote, OtcLinkFractionalQuote) {
+    auto payload = make_quote(T::TYPE);
+    auto message = make_message(T::TYPE, payload);
+    auto quote = T::parse(message);
+    REQUIRE(message.m_length == T::LENGTH);
+    REQUIRE(quote.m_sequence == 0x01020304);
+    REQUIRE(quote.m_quote == 0x05060708);
+    REQUIRE(quote.m_action == OtcLinkQuoteAction::ADD);
+    REQUIRE(quote.m_security == 0x10203040);
+    REQUIRE(quote.m_mpid == "CDEL");
+    REQUIRE(quote.m_flags == 0x6e);
+    REQUIRE(quote.has_flag(T::Flag::OPEN));
+    REQUIRE(quote.has_flag(T::Flag::ASK_PRICED));
+    REQUIRE(quote.has_flag(T::Flag::BID_PRICED));
+    REQUIRE(quote.m_ask_price == 0x0000000102030405);
+    REQUIRE(quote.m_bid_price == 0x0000000101020304);
+    if constexpr(std::same_as<T, OtcLinkQuote>) {
+      REQUIRE(quote.m_ask_size == 0x10203040);
+      REQUIRE(quote.m_bid_size == 0x50607080);
+    } else {
+      REQUIRE(quote.m_ask_size == 0x0000000210203040);
+      REQUIRE(quote.m_bid_size == 0x0000000350607080);
+    }
+    REQUIRE(quote.m_ask_adjustment == -30);
+    REQUIRE(quote.m_bid_adjustment == 30);
+    REQUIRE(quote.m_ask_timestamp == 0x0000018c12345678);
+    REQUIRE(quote.m_bid_timestamp == 0x0000018c11223344);
+    REQUIRE(quote.m_reference == 64999);
+    REQUIRE(quote.m_extended_flags == 0x1f);
+    REQUIRE(quote.has_flag(T::ExtendedFlag::SATURATED));
+    REQUIRE(quote.has_flag(T::ExtendedFlag::ACCEPTS_FRACTIONAL_TRADES));
+    for(auto i = std::size_t(0); i < payload.size(); ++i) {
+      REQUIRE_THROWS_AS(T::parse(make_message(T::TYPE,
+        std::string_view(payload).substr(0, i))), OtcLinkParserException);
+    }
+    message.m_type = OtcLinkSecurity::TYPE;
+    REQUIRE_THROWS_AS(T::parse(message), OtcLinkParserException);
+    constexpr auto ACTION_OFFSET = 2 * sizeof(std::uint32_t);
+    for(auto action : {OtcLinkQuoteAction::DELETE, OtcLinkQuoteAction::SPIN}) {
+      payload[ACTION_OFFSET] = static_cast<char>(action);
+      REQUIRE(T::parse(make_message(T::TYPE, payload)).m_action == action);
+    }
+    for(auto action : {0, 1, 5, 255}) {
+      payload[ACTION_OFFSET] = static_cast<char>(action);
+      REQUIRE_THROWS_AS(
+        T::parse(make_message(T::TYPE, payload)), OtcLinkParserException);
+    }
+  }
+
   TEST_CASE("packet_validation") {
     auto append = [] (std::string& buffer, auto value) {
       value = boost::endian::native_to_big(value);
@@ -63,7 +188,12 @@ TEST_SUITE("OtcLinkMessages") {
       {OtcLinkMarketOpen::TYPE, std::string(20, '\0')},
       {OtcLinkMarketClose::TYPE, std::string(16, '\0')},
       {OtcLinkSpinStart::TYPE, spin_start},
-      {OtcLinkSpinEnd::TYPE, spin_end}};
+      {OtcLinkSpinEnd::TYPE, spin_end},
+      {OtcLinkQuote::TYPE, make_quote(OtcLinkQuote::TYPE)},
+      {OtcLinkQuoteUpdate::TYPE, make_quote_update(OtcLinkQuoteUpdate::TYPE)},
+      {OtcLinkFractionalQuote::TYPE, make_quote(OtcLinkFractionalQuote::TYPE)},
+      {OtcLinkFractionalQuoteUpdate::TYPE,
+        make_quote_update(OtcLinkFractionalQuoteUpdate::TYPE)}};
     auto type = [] (const auto& message) -> std::uint8_t {
       using Message = std::remove_cvref_t<decltype(message)>;
       if constexpr(std::same_as<Message, OtcLinkMessage>) {
