@@ -8,6 +8,7 @@
 #include <iostream>
 #include <limits>
 #include <sstream>
+#include <unordered_set>
 #include <Beam/Utilities/Expect.hpp>
 #include "AsxTradeItchMarketDataFeedClient/AsxTradeItchClient.hpp"
 #include "AsxTradeItchMarketDataFeedClient/AsxTradeItchConfiguration.hpp"
@@ -79,6 +80,7 @@ namespace Nexus {
       Beam::local_ptr_t<M> m_feed_client;
       Beam::local_ptr_t<C> m_client;
       std::unordered_map<std::uint32_t, Book> m_books;
+      std::unordered_set<std::uint32_t> m_excluded_books;
       boost::posix_time::ptime m_seconds;
       Beam::Sync<std::exception_ptr> m_exception;
       std::atomic_bool m_is_finished;
@@ -94,7 +96,7 @@ namespace Nexus {
       AsxTradeItchMarketDataFeedClient& operator =(
         const AsxTradeItchMarketDataFeedClient&) = delete;
       boost::posix_time::ptime get_timestamp(std::uint32_t nanoseconds) const;
-      Book& get_book(std::uint32_t id);
+      Book* find_book(std::uint32_t id);
       void publish(Book& book, boost::posix_time::ptime timestamp);
       void publish(const Book& book, Side side, Money price,
         std::uint64_t quantity, const std::string& owner,
@@ -246,15 +248,18 @@ namespace Nexus {
   template<typename M, typename C> requires
     IsMarketDataFeedClient<Beam::dereference_t<M>> &&
       IsAsxTradeItchClient<Beam::dereference_t<C>>
-  typename AsxTradeItchMarketDataFeedClient<M, C>::Book&
-      AsxTradeItchMarketDataFeedClient<M, C>::get_book(std::uint32_t id) {
+  typename AsxTradeItchMarketDataFeedClient<M, C>::Book*
+      AsxTradeItchMarketDataFeedClient<M, C>::find_book(std::uint32_t id) {
     auto book = m_books.find(id);
     if(book == m_books.end()) {
+      if(m_excluded_books.contains(id)) {
+        return nullptr;
+      }
       boost::throw_with_location(Beam::IOException(
         "Unknown ITCH book " + std::to_string(id) +
         ". Start with a Glimpse snapshot."));
     }
-    return book->second;
+    return &book->second;
   }
 
   template<typename M, typename C> requires
@@ -359,6 +364,17 @@ namespace Nexus {
       std::same_as<D, AsxTradeItchCombinationOrderBookDirectory>
   void AsxTradeItchMarketDataFeedClient<M, C>::add(const D& message) {
     auto timestamp = get_timestamp(message.m_nanoseconds);
+    static constexpr auto EQUITY = std::uint8_t(5);
+    if(message.m_financial_product != EQUITY) {
+      auto i = m_books.find(message.m_order_book_id);
+      if(i != m_books.end()) {
+        clear(i->second, timestamp);
+        m_books.erase(i);
+      }
+      m_excluded_books.insert(message.m_order_book_id);
+      return;
+    }
+    m_excluded_books.erase(message.m_order_book_id);
     auto scale = std::pow(10.0, message.m_price_decimals);
     if(!std::isfinite(scale)) {
       boost::throw_with_location(
@@ -394,7 +410,11 @@ namespace Nexus {
       std::same_as<A, AsxTradeItchAddOrderWithParticipant>
   void AsxTradeItchMarketDataFeedClient<M, C>::add(const A& message) {
     auto timestamp = get_timestamp(message.m_nanoseconds);
-    auto& book = get_book(message.m_order_book_id);
+    auto entry = find_book(message.m_order_book_id);
+    if(!entry) {
+      return;
+    }
+    auto& book = *entry;
     auto& side = pick(message.m_side, book.m_asks, book.m_bids);
     auto id = std::to_string(message.m_order_book_id) + ':' +
       std::to_string(static_cast<int>(message.m_side)) + ':' +
@@ -430,7 +450,11 @@ namespace Nexus {
       std::same_as<E, AsxTradeItchOrderExecutedAtPrice>
   void AsxTradeItchMarketDataFeedClient<M, C>::execute(const E& message) {
     auto timestamp = get_timestamp(message.m_nanoseconds);
-    auto& book = get_book(message.m_order_book_id);
+    auto entry = find_book(message.m_order_book_id);
+    if(!entry) {
+      return;
+    }
+    auto& book = *entry;
     auto& side = pick(message.m_side, book.m_asks, book.m_bids);
     auto order = side.m_orders.find(message.m_order_id);
     auto price = Money();
@@ -475,13 +499,17 @@ namespace Nexus {
   void AsxTradeItchMarketDataFeedClient<M, C>::replace(
       const AsxTradeItchOrderReplace& message) {
     auto timestamp = get_timestamp(message.m_nanoseconds);
-    auto& book = get_book(message.m_order_book_id);
-    auto& side = pick(message.m_side, book.m_asks, book.m_bids);
-    auto entry = side.m_orders.find(message.m_order_id);
-    if(entry == side.m_orders.end()) {
+    auto entry = find_book(message.m_order_book_id);
+    if(!entry) {
       return;
     }
-    auto& order = entry->second;
+    auto& book = *entry;
+    auto& side = pick(message.m_side, book.m_asks, book.m_bids);
+    auto i = side.m_orders.find(message.m_order_id);
+    if(i == side.m_orders.end()) {
+      return;
+    }
+    auto& order = i->second;
     if(order.m_price == message.m_price) {
       offset(side, message.m_side, order.m_price,
         Quantity(message.m_quantity) - Quantity(order.m_quantity));
@@ -504,18 +532,22 @@ namespace Nexus {
   void AsxTradeItchMarketDataFeedClient<M, C>::remove(
       const AsxTradeItchOrderDelete& message) {
     auto timestamp = get_timestamp(message.m_nanoseconds);
-    auto& book = get_book(message.m_order_book_id);
-    auto& side = pick(message.m_side, book.m_asks, book.m_bids);
-    auto entry = side.m_orders.find(message.m_order_id);
-    if(entry == side.m_orders.end()) {
+    auto entry = find_book(message.m_order_book_id);
+    if(!entry) {
       return;
     }
-    auto& order = entry->second;
+    auto& book = *entry;
+    auto& side = pick(message.m_side, book.m_asks, book.m_bids);
+    auto i = side.m_orders.find(message.m_order_id);
+    if(i == side.m_orders.end()) {
+      return;
+    }
+    auto& order = i->second;
     offset(side, message.m_side, order.m_price, -Quantity(order.m_quantity));
     if(order.m_quantity != 0) {
       m_feed_client->remove_order(order.m_id, timestamp);
     }
-    side.m_orders.erase(entry);
+    side.m_orders.erase(i);
     publish(book, timestamp);
   }
 
@@ -528,7 +560,11 @@ namespace Nexus {
       return;
     }
     auto timestamp = get_timestamp(message.m_nanoseconds);
-    auto& book = get_book(message.m_order_book_id);
+    auto entry = find_book(message.m_order_book_id);
+    if(!entry) {
+      return;
+    }
+    auto& book = *entry;
     publish(book, message.m_side, get_price(book, message.m_price),
       message.m_quantity, message.m_owner, message.m_counterparty,
       message.m_occurred_at_cross == 'Y', timestamp);
@@ -540,7 +576,11 @@ namespace Nexus {
   void AsxTradeItchMarketDataFeedClient<M, C>::report(
       const AsxTradeItchEquilibriumPriceUpdate& message) {
     auto timestamp = get_timestamp(message.m_nanoseconds);
-    auto& book = get_book(message.m_order_book_id);
+    auto entry = find_book(message.m_order_book_id);
+    if(!entry) {
+      return;
+    }
+    auto& book = *entry;
     auto side = Side(Side::NONE);
     auto size = std::uint64_t(0);
     if(message.m_bid_quantity > message.m_ask_quantity) {
@@ -590,7 +630,9 @@ namespace Nexus {
         report(message);
       },
       [&] (const AsxTradeItchOrderBookState& message) {
-        get_book(message.m_order_book_id).m_state = message.m_state;
+        if(auto book = find_book(message.m_order_book_id)) {
+          book->m_state = message.m_state;
+        }
       },
       [&] (const AsxTradeItchSystemEvent& message) {
         if(message.m_event_code == 'O') {
@@ -599,6 +641,7 @@ namespace Nexus {
             clear(book, timestamp);
           }
           m_books.clear();
+          m_excluded_books.clear();
         }
       });
   }

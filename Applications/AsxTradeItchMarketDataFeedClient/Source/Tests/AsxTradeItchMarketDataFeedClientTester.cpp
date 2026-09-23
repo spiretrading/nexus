@@ -279,6 +279,79 @@ namespace {
 }
 
 TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
+  TEST_CASE("excluded_product") {
+    auto fixture = Fixture();
+    auto directory = AsxTradeItchOrderBookDirectory();
+    directory.m_nanoseconds = NANOSECONDS;
+    directory.m_order_book_id = 1;
+    directory.m_symbol = "BHP";
+    directory.m_currency = "AUD";
+    directory.m_price_decimals = 2;
+    SUBCASE("option") {
+      directory.m_financial_product = 1;
+    }
+    SUBCASE("future") {
+      directory.m_financial_product = 3;
+    }
+    SUBCASE("combination") {
+      directory.m_financial_product = 11;
+    }
+    SUBCASE("combination_directory") {
+      auto combination = AsxTradeItchCombinationOrderBookDirectory();
+      combination.m_nanoseconds = NANOSECONDS;
+      combination.m_order_book_id = 1;
+      combination.m_symbol = "BHP";
+      combination.m_financial_product = 11;
+      combination.m_currency = "AUD";
+      combination.m_price_decimals = 2;
+      for(auto& leg : combination.m_legs) {
+        leg.m_side = '?';
+      }
+      fixture.publish(combination);
+      fixture.require_empty();
+      directory.m_financial_product = 11;
+    }
+    SUBCASE("unknown") {
+      directory.m_financial_product = 255;
+    }
+    fixture.publish(directory);
+    fixture.require_empty();
+    fixture.publish(AsxTradeItchOrderBookState(NANOSECONDS, 1, "OPEN"));
+    fixture.publish(AsxTradeItchAddOrder(
+      NANOSECONDS, 1, 1, Side::BID, 1, 100, 1000, 0, 2));
+    fixture.publish(AsxTradeItchAddOrderWithParticipant(
+      NANOSECONDS, 2, 1, Side::ASK, 1, 100, 1100, 0, 2, "AU123"));
+    fixture.publish(AsxTradeItchOrderExecuted(
+      NANOSECONDS, 1, 1, Side::BID, 20, {}, "AU123", "AU456"));
+    fixture.publish(AsxTradeItchOrderExecutedAtPrice(
+      NANOSECONDS, 1, 1, Side::BID, 20, {}, "AU123", "AU456",
+      1000, 'N', 'Y'));
+    fixture.publish(AsxTradeItchOrderReplace(
+      NANOSECONDS, 1, 1, Side::BID, 1, 50, 1050, 0));
+    fixture.publish(AsxTradeItchOrderDelete(NANOSECONDS, 1, 1, Side::BID));
+    fixture.publish(AsxTradeItchTrade(
+      NANOSECONDS, {}, Side::BID, 20, 1, 1000, "AU123", "AU456", 'Y', 'N'));
+    auto imbalance = AsxTradeItchEquilibriumPriceUpdate();
+    imbalance.m_nanoseconds = NANOSECONDS;
+    imbalance.m_order_book_id = 1;
+    fixture.publish(imbalance);
+    fixture.require_empty();
+    fixture.directory(1, "BHP");
+    auto id = fixture.add(1, 1, "BHP", Side::BID, 1000, 100);
+    fixture.require_bbo(
+      "BHP", make_bid(10 * Money::CENT, 100), make_ask(Money(), 0));
+    fixture.publish(directory);
+    REQUIRE(fixture.take<FeedClient::RemoveOrderOperation>()->m_id == id);
+    fixture.require_bbo("BHP", make_bid(Money(), 0), make_ask(Money(), 0));
+    fixture.publish(AsxTradeItchOrderDelete(NANOSECONDS, 1, 1, Side::BID));
+    fixture.require_empty();
+    fixture.directory(2, "CBA");
+    fixture.add(1, 2, "CBA", Side::BID, 1000, 100);
+    fixture.require_bbo(
+      "CBA", make_bid(10 * Money::CENT, 100), make_ask(Money(), 0));
+    fixture.require_empty();
+  }
+
   TEST_CASE("order_mpid") {
     auto fixture = Fixture();
     fixture.directory(1, "BHP");
@@ -308,6 +381,7 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
     directory.m_nanoseconds = NANOSECONDS;
     directory.m_order_book_id = 1;
     directory.m_symbol = "BHP";
+    directory.m_financial_product = 5;
     directory.m_price_decimals = 3;
     fixture.publish(directory);
     fixture.take<FeedClient::AddOperation>();
@@ -615,7 +689,7 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
 
   TEST_CASE("directory") {
     auto fixture = Fixture();
-    auto directory = AsxTradeItchCombinationOrderBookDirectory();
+    auto directory = AsxTradeItchOrderBookDirectory();
     directory.m_nanoseconds = NANOSECONDS;
     directory.m_order_book_id = 1;
     directory.m_symbol = "COMBO";
@@ -623,9 +697,7 @@ TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
     directory.m_currency = "AUD";
     directory.m_price_decimals = 2;
     directory.m_round_lot_size = 1;
-    for(auto& leg : directory.m_legs) {
-      leg.m_side = '?';
-    }
+    directory.m_financial_product = 5;
     fixture.publish(directory);
     REQUIRE(fixture.take<FeedClient::AddOperation>()->m_info ==
       TickerInfo(parse_ticker("COMBO.ASX"), "COMBINATION", "", 1));
