@@ -26,7 +26,6 @@ CALL :Configure Applications\Lollipop %*
 CALL :Configure Applications\MarketDataRelayServer %*
 CALL :Configure Applications\MarketDataServer %*
 CALL :Configure Applications\OasisOrderExecutionServer %*
-CALL :Configure Applications\OtcLinkMarketDataFeedClient %*
 CALL :Configure Applications\ReplayMarketDataFeedClient %*
 CALL :Configure Applications\RiskServer %*
 CALL :Configure Applications\Scratch %*

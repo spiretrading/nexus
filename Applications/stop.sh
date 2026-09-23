@@ -1,6 +1,5 @@
 #!/bin/bash
 services=(
-  "OtcLinkMarketDataFeedClient"
   "TmxIpMarketDataFeedClient"
   "AsxTradeItchMarketDataFeedClient"
   "CxaPitchMarketDataFeedClient"

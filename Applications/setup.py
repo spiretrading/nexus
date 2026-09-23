@@ -116,7 +116,6 @@ def main():
   feeds = {
     'AsxTradeItchMarketDataFeedClient': ('asx_', asx_options),
     'CxaPitchMarketDataFeedClient': ('cxa_', cxa_options),
-    'OtcLinkMarketDataFeedClient': ('', []),
     'TmxIpMarketDataFeedClient': ('', [])
   }
   for prefix, options in feeds.values():

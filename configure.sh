@@ -25,7 +25,6 @@ main() {
     "Applications/MarketDataRelayServer"
     "Applications/MarketDataServer"
     "Applications/OasisOrderExecutionServer"
-    "Applications/OtcLinkMarketDataFeedClient"
     "Applications/ReplayMarketDataFeedClient"
     "Applications/RiskServer"
     "Applications/Scratch"
