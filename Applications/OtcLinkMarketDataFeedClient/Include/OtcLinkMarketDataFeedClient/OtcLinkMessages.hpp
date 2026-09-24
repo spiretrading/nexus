@@ -1,5 +1,6 @@
 #ifndef OTC_LINK_MESSAGES_HPP
 #define OTC_LINK_MESSAGES_HPP
+#include <iomanip>
 #include <type_traits>
 #include <utility>
 #include "OtcLinkMarketDataFeedClient/OtcLinkPacket.hpp"
@@ -1188,6 +1189,136 @@ namespace OtcLinkDetails {
     for(auto& message : packet) {
       validate(message);
     }
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const OtcLinkSecurity& message) {
+    return out << "(security " << message.m_sequence << ' ' <<
+      std::quoted(message.m_symbol) << ' ' << message.m_timestamp << ' ' <<
+      static_cast<int>(message.m_action) << ' ' <<
+      static_cast<int>(message.m_asset_class) << ' ' << message.m_security <<
+      ' ' << static_cast<int>(message.m_flags) << ' ' <<
+      static_cast<int>(message.m_tier) << ' ' << message.m_reporting_status <<
+      ' ' << message.m_status << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const OtcLinkFractionalSecurity& message) {
+    return out << "(fractional_security " << message.m_sequence << ' ' <<
+      std::quoted(message.m_symbol) << ' ' << message.m_timestamp << ' ' <<
+      static_cast<int>(message.m_action) << ' ' <<
+      static_cast<int>(message.m_asset_class) << ' ' << message.m_security <<
+      ' ' << static_cast<int>(message.m_flags) << ' ' <<
+      static_cast<int>(message.m_tier) << ' ' << message.m_reporting_status <<
+      ' ' << message.m_status << ' ' << message.m_minimum_notional_value <<
+      ' ' << message.m_minimum_quote_size << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const OtcLinkMarketOpen& message) {
+    return out << "(market_open " << message.m_sequence << ' ' <<
+      message.m_timestamp << ' ' << message.m_close << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const OtcLinkMarketClose& message) {
+    return out << "(market_close " << message.m_sequence << ' ' <<
+      message.m_timestamp << ' ' << message.m_count << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const OtcLinkQuote& message) {
+    return out << "(quote " << static_cast<int>(message.m_flags) << ' ' <<
+      static_cast<int>(message.m_extended_flags) << ' ' << message.m_sequence <<
+      ' ' << message.m_quote << ' ' << static_cast<int>(message.m_action) <<
+      ' ' << message.m_security << ' ' << std::quoted(message.m_mpid) << ' ' <<
+      message.m_ask_price << ' ' << message.m_ask_size << ' ' <<
+      static_cast<int>(message.m_ask_adjustment) << ' ' <<
+      message.m_ask_timestamp << ' ' << message.m_bid_price << ' ' <<
+      message.m_bid_size << ' ' << static_cast<int>(message.m_bid_adjustment) <<
+      ' ' << message.m_bid_timestamp << ' ' << message.m_reference << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const OtcLinkQuoteUpdate& message) {
+    return out << "(quote_update " << static_cast<int>(message.m_flags) <<
+      ' ' << static_cast<int>(message.m_extended_flags) << ' ' <<
+      message.m_sequence << ' ' << message.m_quote << ' ' << message.m_price <<
+      ' ' << message.m_size << ' ' << static_cast<int>(message.m_adjustment) <<
+      ' ' << message.m_timestamp << ' ' << message.m_reference << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const OtcLinkFractionalQuote& message) {
+    return out << "(fractional_quote " << static_cast<int>(message.m_flags) <<
+      ' ' << static_cast<int>(message.m_extended_flags) << ' ' <<
+      message.m_sequence << ' ' << message.m_quote << ' ' <<
+      static_cast<int>(message.m_action) << ' ' << message.m_security << ' ' <<
+      std::quoted(message.m_mpid) << ' ' << message.m_ask_price << ' ' <<
+      message.m_ask_size << ' ' << static_cast<int>(message.m_ask_adjustment) <<
+      ' ' << message.m_ask_timestamp << ' ' << message.m_bid_price << ' ' <<
+      message.m_bid_size << ' ' << static_cast<int>(message.m_bid_adjustment) <<
+      ' ' << message.m_bid_timestamp << ' ' << message.m_reference << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const OtcLinkFractionalQuoteUpdate& message) {
+    return out << "(fractional_quote_update " <<
+      static_cast<int>(message.m_flags) << ' ' <<
+      static_cast<int>(message.m_extended_flags) << ' ' << message.m_sequence <<
+      ' ' << message.m_quote << ' ' << message.m_price << ' ' <<
+      message.m_size << ' ' << static_cast<int>(message.m_adjustment) << ' ' <<
+      message.m_timestamp << ' ' << message.m_reference << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const OtcLinkInside& message) {
+    return out << "(inside " << static_cast<int>(message.m_flags) << ' ' <<
+      message.m_sequence << ' ' << message.m_inside << ' ' <<
+      static_cast<int>(message.m_action) << ' ' << message.m_security << ' ' <<
+      message.m_ask_price << ' ' << message.m_ask_size << ' ' <<
+      message.m_ask_timestamp << ' ' << message.m_bid_price << ' ' <<
+      message.m_bid_size << ' ' << message.m_bid_timestamp << ' ' <<
+      static_cast<int>(message.m_ask_participants) << ' ' <<
+      static_cast<int>(message.m_bid_participants) << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const OtcLinkInsideUpdate& message) {
+    return out << "(inside_update " << static_cast<int>(message.m_flags) <<
+      ' ' << message.m_sequence << ' ' << message.m_inside << ' ' <<
+      message.m_price << ' ' << message.m_size << ' ' << message.m_timestamp <<
+      ' ' << static_cast<int>(message.m_participants) << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const OtcLinkFractionalInside& message) {
+    return out << "(fractional_inside " << static_cast<int>(message.m_flags) <<
+      ' ' << message.m_sequence << ' ' << message.m_inside << ' ' <<
+      static_cast<int>(message.m_action) << ' ' << message.m_security << ' ' <<
+      message.m_ask_price << ' ' << message.m_ask_size << ' ' <<
+      message.m_ask_timestamp << ' ' << message.m_bid_price << ' ' <<
+      message.m_bid_size << ' ' << message.m_bid_timestamp << ' ' <<
+      static_cast<int>(message.m_ask_participants) << ' ' <<
+      static_cast<int>(message.m_bid_participants) << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const OtcLinkFractionalInsideUpdate& message) {
+    return out << "(fractional_inside_update " <<
+      static_cast<int>(message.m_flags) << ' ' << message.m_sequence << ' ' <<
+      message.m_inside << ' ' << message.m_price << ' ' << message.m_size <<
+      ' ' << message.m_timestamp << ' ' <<
+      static_cast<int>(message.m_participants) << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const OtcLinkTrade& message) {
+    return out << "(trade " << message.m_sequence << ' ' << message.m_trade <<
+      ' ' << static_cast<int>(message.m_flags) << ' ' << message.m_security <<
+      ' ' << static_cast<int>(message.m_status) << ' ' <<
+      std::quoted(message.m_venue) << ' ' << message.m_price << ' ' <<
+      message.m_size << ' ' << message.m_timestamp << ')';
   }
 }
 

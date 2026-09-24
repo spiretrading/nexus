@@ -118,6 +118,7 @@ namespace Nexus {
       static boost::posix_time::ptime get_timestamp(std::uint64_t timestamp);
       static Quantity convert(std::uint64_t value, std::uint64_t scale);
       static void log(const OtcLinkMessage& message);
+      static void log_raw(const OtcLinkMessage& message);
       OtcLinkMarketDataFeedClient(const OtcLinkMarketDataFeedClient&) = delete;
       OtcLinkMarketDataFeedClient& operator =(
         const OtcLinkMarketDataFeedClient&) = delete;
@@ -306,6 +307,22 @@ namespace Nexus {
       Beam::IsTimeClient<Beam::dereference_t<T>>
   void OtcLinkMarketDataFeedClient<M, C, T>::log(
       const OtcLinkMessage& message) {
+    visit(message, [] (const auto& message) {
+      using Message = std::remove_cvref_t<decltype(message)>;
+      if constexpr(std::same_as<Message, OtcLinkMessage>) {
+        log_raw(message);
+      } else {
+        std::osyncstream(std::cout) << message << '\n';
+      }
+    });
+  }
+
+  template<typename M, typename C, typename T> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+      IsOtcLinkClient<Beam::dereference_t<C>> &&
+      Beam::IsTimeClient<Beam::dereference_t<T>>
+  void OtcLinkMarketDataFeedClient<M, C, T>::log_raw(
+      const OtcLinkMessage& message) {
     auto out = std::osyncstream(std::cout);
     out << "(message " << static_cast<unsigned int>(message.m_type) << ' ' <<
       std::hex << std::setfill('0');
@@ -322,9 +339,7 @@ namespace Nexus {
       Beam::IsTimeClient<Beam::dereference_t<T>>
   void OtcLinkMarketDataFeedClient<M, C, T>::log(
       const OtcLinkMessage& message, const std::exception& exception) const {
-    if(!m_is_logging_messages) {
-      log(message);
-    }
+    log_raw(message);
     std::osyncstream(std::cout) << "(bad_message " <<
       static_cast<unsigned int>(message.m_type) << ' ' <<
       exception.what() << ')' << std::endl;
@@ -744,16 +759,16 @@ namespace Nexus {
           }
           auto message = OtcLinkMessage::parse(
             std::string_view(payload.get_data(), payload.get_size()));
-          if(m_is_logging_messages) {
-            log(message);
-          }
-          if(message.m_type == OtcLinkSecurity::TYPE ||
-              message.m_type == OtcLinkFractionalSecurity::TYPE) {
-            try {
-              dispatch(message);
-            } catch(const OtcLinkParserException& exception) {
-              log(message, exception);
+          try {
+            if(m_is_logging_messages) {
+              log(message);
             }
+            if(message.m_type == OtcLinkSecurity::TYPE ||
+                message.m_type == OtcLinkFractionalSecurity::TYPE) {
+              dispatch(message);
+            }
+          } catch(const OtcLinkParserException& exception) {
+            log(message, exception);
           }
         }
         reference = boost::none;
@@ -769,18 +784,18 @@ namespace Nexus {
         if(!m_open_state.is_open()) {
           break;
         }
-        if(m_is_logging_messages) {
-          log(message);
-        }
-        if(is_trade && message.m_type != OtcLinkTrade::TYPE) {
-          continue;
-        }
-        if(!is_trade && session != m_session) {
-          clear(m_time_client->get_time());
-          m_session = session;
-          m_is_market_open = true;
-        }
         try {
+          if(m_is_logging_messages) {
+            log(message);
+          }
+          if(is_trade && message.m_type != OtcLinkTrade::TYPE) {
+            continue;
+          }
+          if(!is_trade && session != m_session) {
+            clear(m_time_client->get_time());
+            m_session = session;
+            m_is_market_open = true;
+          }
           dispatch(message);
         } catch(const OtcLinkParserException& exception) {
           log(message, exception);

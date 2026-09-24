@@ -1,5 +1,6 @@
 #ifndef OTC_LINK_SNAPSHOT_HPP
 #define OTC_LINK_SNAPSHOT_HPP
+#include <ostream>
 #include <vector>
 #include <Beam/IO/SharedBuffer.hpp>
 #include "OtcLinkMarketDataFeedClient/OtcLinkMessage.hpp"
@@ -110,6 +111,20 @@ namespace Nexus {
     result.m_timestamp = cursor.read_uint64();
     result.m_last_sequence = cursor.read_uint32();
     return result;
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const OtcLinkSpinStart& message) {
+    return out << "(spin_start " << message.m_sequence << ' ' <<
+      static_cast<int>(message.m_type) << ' ' << message.m_timestamp << ' ' <<
+      message.m_last_sequence << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const OtcLinkSpinEnd& message) {
+    return out << "(spin_end " << message.m_sequence << ' ' <<
+      static_cast<int>(message.m_type) << ' ' << message.m_count << ' ' <<
+      message.m_timestamp << ' ' << message.m_last_sequence << ')';
   }
 }
 

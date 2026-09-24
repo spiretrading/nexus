@@ -1,3 +1,4 @@
+#include <sstream>
 #include <limits>
 #include <doctest/doctest.h>
 #include "AsxTradeItchMarketDataFeedClient/AsxTradeItchMessages.hpp"
@@ -84,6 +85,215 @@ namespace {
 }
 
 TEST_SUITE("AsxTradeItchMessages") {
+  TEST_CASE("stream") {
+    auto out = std::ostringstream();
+    SUBCASE("combination_leg") {
+      auto message = AsxTradeItchCombinationLeg();
+      message.m_symbol = "text 1";
+      message.m_side = 'A';
+      message.m_ratio = 3;
+      out << message;
+      REQUIRE(out.str() == "(combination_leg \"text 1\" A 3)");
+    }
+    SUBCASE("seconds") {
+      auto message = AsxTradeItchSeconds();
+      message.m_seconds = 1;
+      out << message;
+      REQUIRE(out.str() == "(seconds 1)");
+    }
+    SUBCASE("order_book_directory") {
+      auto message = AsxTradeItchOrderBookDirectory();
+      message.m_nanoseconds = 1;
+      message.m_order_book_id = 2;
+      message.m_symbol = "text 3";
+      message.m_long_name = "text 4";
+      message.m_isin = "text 5";
+      message.m_financial_product = 6;
+      message.m_currency = "text 7";
+      message.m_price_decimals = 8;
+      message.m_nominal_value_decimals = 9;
+      message.m_odd_lot_size = 10;
+      message.m_round_lot_size = 11;
+      message.m_block_lot_size = 12;
+      message.m_nominal_value = 13;
+      out << message;
+      REQUIRE(out.str() ==
+        "(order_book_directory 1 2 \"text 3\" \"text 4\" \"text 5\" 6 \"text "
+        "7\" 8 9 10 11 12 13)");
+    }
+    SUBCASE("combination_order_book_directory") {
+      auto message = AsxTradeItchCombinationOrderBookDirectory();
+      message.m_nanoseconds = 1;
+      message.m_order_book_id = 2;
+      message.m_symbol = "text 3";
+      message.m_long_name = "text 4";
+      message.m_isin = "text 5";
+      message.m_financial_product = 6;
+      message.m_currency = "text 7";
+      message.m_price_decimals = 8;
+      message.m_nominal_value_decimals = 9;
+      message.m_odd_lot_size = 10;
+      message.m_round_lot_size = 11;
+      message.m_block_lot_size = 12;
+      message.m_nominal_value = 13;
+      message.m_legs[0] = AsxTradeItchCombinationLeg("LEG0", 'B', 1);
+      message.m_legs[1] = AsxTradeItchCombinationLeg("LEG1", 'B', 2);
+      message.m_legs[2] = AsxTradeItchCombinationLeg("LEG2", 'B', 3);
+      message.m_legs[3] = AsxTradeItchCombinationLeg("LEG3", 'B', 4);
+      out << message;
+      REQUIRE(out.str() ==
+        "(combination_order_book_directory 1 2 \"text 3\" \"text 4\" \"text "
+        "5\" 6 \"text 7\" 8 9 10 11 12 13 ((combination_leg \"LEG0\" B 1) "
+        "(combination_leg \"LEG1\" B 2) (combination_leg \"LEG2\" B 3) "
+        "(combination_leg \"LEG3\" B 4)))");
+    }
+    SUBCASE("tick_size") {
+      auto message = AsxTradeItchTickSize();
+      message.m_nanoseconds = 1;
+      message.m_order_book_id = 2;
+      message.m_tick_size = 3;
+      message.m_price_from = -4;
+      message.m_price_to = -5;
+      out << message;
+      REQUIRE(out.str() == "(tick_size 1 2 3 -4 -5)");
+    }
+    SUBCASE("system_event") {
+      auto message = AsxTradeItchSystemEvent();
+      message.m_nanoseconds = 1;
+      message.m_event_code = 'A';
+      out << message;
+      REQUIRE(out.str() == "(system_event 1 A)");
+    }
+    SUBCASE("order_book_state") {
+      auto message = AsxTradeItchOrderBookState();
+      message.m_nanoseconds = 1;
+      message.m_order_book_id = 2;
+      message.m_state = "text 3";
+      out << message;
+      REQUIRE(out.str() == "(order_book_state 1 2 \"text 3\")");
+    }
+    SUBCASE("add_order") {
+      auto message = AsxTradeItchAddOrder();
+      message.m_nanoseconds = 1;
+      message.m_order_id = 2;
+      message.m_order_book_id = 3;
+      message.m_side = Side::BID;
+      message.m_order_book_position = 5;
+      message.m_quantity = 6;
+      message.m_price = -7;
+      message.m_exchange_order_type = 8;
+      message.m_lot_type = 9;
+      out << message;
+      REQUIRE(out.str() == "(add_order 1 2 3 BID 5 6 -7 8 9)");
+    }
+    SUBCASE("add_order_with_participant") {
+      auto message = AsxTradeItchAddOrderWithParticipant();
+      message.m_nanoseconds = 1;
+      message.m_order_id = 2;
+      message.m_order_book_id = 3;
+      message.m_side = Side::BID;
+      message.m_order_book_position = 5;
+      message.m_quantity = 6;
+      message.m_price = -7;
+      message.m_exchange_order_type = 8;
+      message.m_lot_type = 9;
+      message.m_participant_id = "text 10";
+      out << message;
+      REQUIRE(out.str() ==
+        "(add_order_with_participant 1 2 3 BID 5 6 -7 8 9 \"text 10\")");
+    }
+    SUBCASE("order_executed") {
+      auto message = AsxTradeItchOrderExecuted();
+      message.m_nanoseconds = 1;
+      message.m_order_id = 2;
+      message.m_order_book_id = 3;
+      message.m_side = Side::BID;
+      message.m_executed_quantity = 5;
+      message.m_match_id = {11, 22, 33};
+      message.m_owner = "text 7";
+      message.m_counterparty = "text 8";
+      out << message;
+      REQUIRE(out.str() ==
+        "(order_executed 1 2 3 BID 5 (11 22 33) \"text 7\" \"text 8\")");
+    }
+    SUBCASE("order_executed_at_price") {
+      auto message = AsxTradeItchOrderExecutedAtPrice();
+      message.m_nanoseconds = 1;
+      message.m_order_id = 2;
+      message.m_order_book_id = 3;
+      message.m_side = Side::BID;
+      message.m_executed_quantity = 5;
+      message.m_match_id = {11, 22, 33};
+      message.m_owner = "text 7";
+      message.m_counterparty = "text 8";
+      message.m_price = -9;
+      message.m_occurred_at_cross = 'A';
+      message.m_printable = 'A';
+      out << message;
+      REQUIRE(out.str() ==
+        "(order_executed_at_price 1 2 3 BID 5 (11 22 33) \"text 7\" \"text 8\" "
+        "-9 A A)");
+    }
+    SUBCASE("order_replace") {
+      auto message = AsxTradeItchOrderReplace();
+      message.m_nanoseconds = 1;
+      message.m_order_id = 2;
+      message.m_order_book_id = 3;
+      message.m_side = Side::BID;
+      message.m_order_book_position = 5;
+      message.m_quantity = 6;
+      message.m_price = -7;
+      message.m_exchange_order_type = 8;
+      out << message;
+      REQUIRE(out.str() == "(order_replace 1 2 3 BID 5 6 -7 8)");
+    }
+    SUBCASE("order_delete") {
+      auto message = AsxTradeItchOrderDelete();
+      message.m_nanoseconds = 1;
+      message.m_order_id = 2;
+      message.m_order_book_id = 3;
+      message.m_side = Side::BID;
+      out << message;
+      REQUIRE(out.str() == "(order_delete 1 2 3 BID)");
+    }
+    SUBCASE("trade") {
+      auto message = AsxTradeItchTrade();
+      message.m_nanoseconds = 1;
+      message.m_match_id = {11, 22, 33};
+      message.m_side = Side::BID;
+      message.m_quantity = 4;
+      message.m_order_book_id = 5;
+      message.m_price = -6;
+      message.m_owner = "text 7";
+      message.m_counterparty = "text 8";
+      message.m_printable = 'A';
+      message.m_occurred_at_cross = 'A';
+      out << message;
+      REQUIRE(out.str() ==
+        "(trade 1 (11 22 33) BID 4 5 -6 \"text 7\" \"text 8\" A A)");
+    }
+    SUBCASE("equilibrium_price_update") {
+      auto message = AsxTradeItchEquilibriumPriceUpdate();
+      message.m_nanoseconds = 1;
+      message.m_order_book_id = 2;
+      message.m_bid_quantity = 3;
+      message.m_ask_quantity = 4;
+      message.m_equilibrium_price = -5;
+      message.m_best_bid_price = -6;
+      message.m_best_ask_price = -7;
+      message.m_best_bid_quantity = 8;
+      message.m_best_ask_quantity = 9;
+      out << message;
+      REQUIRE(out.str() == "(equilibrium_price_update 1 2 3 4 -5 -6 -7 8 9)");
+    }
+    SUBCASE("end_of_snapshot") {
+      auto message = AsxTradeItchEndOfSnapshot();
+      message.m_sequence = 1;
+      out << message;
+      REQUIRE(out.str() == "(end_of_snapshot 1)");
+    }
+  }
+
   TEST_CASE("visitor_constraints") {
     auto accepts = []<typename... F> (F&&...) {
       return requires {

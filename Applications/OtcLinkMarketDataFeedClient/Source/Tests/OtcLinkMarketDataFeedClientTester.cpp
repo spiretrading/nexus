@@ -321,6 +321,39 @@ TEST_SUITE("OtcLinkMarketDataFeedClient") {
     }
   }
 
+  TEST_CASE("parsed_message_logging") {
+    auto log = Log();
+    auto is_logging = false;
+    SUBCASE("disabled") {}
+    SUBCASE("enabled") {
+      is_logging = true;
+    }
+    auto reference = OtcLinkSnapshot(100,
+      {encode(OtcLinkMarketOpen(1, 2, 3))});
+    auto fixture = Fixture(reference, is_logging);
+    fixture.send(OtcLinkMarketClose(4, 5, 6));
+    fixture.require_empty();
+    if(is_logging) {
+      REQUIRE(log.m_output.str() ==
+        "(market_open 1 2 3)\n(market_close 4 5 6)\n");
+    } else {
+      REQUIRE(log.m_output.str().empty());
+    }
+  }
+
+  TEST_CASE("malformed_reference_logging") {
+    auto log = Log();
+    auto payload = Encoder().finish(OtcLinkSecurity::TYPE);
+    auto reference = OtcLinkSnapshot(100,
+      {payload, encode(OtcLinkMarketOpen(1, 2, 3))});
+    auto fixture = Fixture(reference, true);
+    fixture.require_empty();
+    REQUIRE(!fixture.m_client.is_finished());
+    auto output = log.m_output.str();
+    REQUIRE(output.starts_with("(message 9 )\n(bad_message 9 "));
+    REQUIRE(output.ends_with("(market_open 1 2 3)\n"));
+  }
+
   TEST_CASE("malformed_message_logging") {
     auto log = Log();
     auto is_logging = false;

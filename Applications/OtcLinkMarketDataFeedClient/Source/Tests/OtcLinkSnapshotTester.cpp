@@ -1,3 +1,4 @@
+#include <sstream>
 #include <doctest/doctest.h>
 #include "OtcLinkMarketDataFeedClient/OtcLinkSnapshot.hpp"
 
@@ -6,6 +7,29 @@ using namespace boost;
 using namespace Nexus;
 
 TEST_SUITE("OtcLinkSnapshot") {
+  TEST_CASE("stream") {
+    auto out = std::ostringstream();
+    SUBCASE("spin_start") {
+      auto message = OtcLinkSpinStart();
+      message.m_sequence = 1;
+      message.m_type = OtcLinkSpinType::MARKET_DATA;
+      message.m_timestamp = 3;
+      message.m_last_sequence = 4;
+      out << message;
+      REQUIRE(out.str() == "(spin_start 1 2 3 4)");
+    }
+    SUBCASE("spin_end") {
+      auto message = OtcLinkSpinEnd();
+      message.m_sequence = 1;
+      message.m_type = OtcLinkSpinType::MARKET_DATA;
+      message.m_count = 3;
+      message.m_timestamp = 4;
+      message.m_last_sequence = 5;
+      out << message;
+      REQUIRE(out.str() == "(spin_end 1 2 3 4 5)");
+    }
+  }
+
   TEST_CASE("spin_messages") {
     auto make = [] (bool is_end) {
       auto payload = SharedBuffer();

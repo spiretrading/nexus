@@ -1,5 +1,7 @@
 #ifndef ASX_TRADE_ITCH_MESSAGES_HPP
 #define ASX_TRADE_ITCH_MESSAGES_HPP
+#include <iomanip>
+#include <ostream>
 #include <array>
 #include <charconv>
 #include <concepts>
@@ -1169,6 +1171,147 @@ namespace AsxTradeItchDetails {
     for(auto& message : packet) {
       validate(AsxTradeItchMessage::parse(message.get_payload()));
     }
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AsxTradeItchCombinationLeg& message) {
+    return out << "(combination_leg " << std::quoted(message.m_symbol) << ' ' <<
+      message.m_side << ' ' << message.m_ratio << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AsxTradeItchSeconds& message) {
+    return out << "(seconds " << message.m_seconds << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AsxTradeItchOrderBookDirectory& message) {
+    return out << "(order_book_directory " << message.m_nanoseconds << ' ' <<
+      message.m_order_book_id << ' ' << std::quoted(message.m_symbol) << ' ' <<
+      std::quoted(message.m_long_name) << ' ' << std::quoted(message.m_isin) <<
+      ' ' << static_cast<int>(message.m_financial_product) << ' ' <<
+      std::quoted(message.m_currency) << ' ' << message.m_price_decimals <<
+      ' ' << message.m_nominal_value_decimals << ' ' <<
+      message.m_odd_lot_size << ' ' << message.m_round_lot_size << ' ' <<
+      message.m_block_lot_size << ' ' << message.m_nominal_value << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out,
+      const AsxTradeItchCombinationOrderBookDirectory& message) {
+    return out << "(combination_order_book_directory " <<
+      message.m_nanoseconds << ' ' << message.m_order_book_id << ' ' <<
+      std::quoted(message.m_symbol) << ' ' <<
+      std::quoted(message.m_long_name) << ' ' << std::quoted(message.m_isin) <<
+      ' ' << static_cast<int>(message.m_financial_product) << ' ' <<
+      std::quoted(message.m_currency) << ' ' << message.m_price_decimals <<
+      ' ' << message.m_nominal_value_decimals << ' ' <<
+      message.m_odd_lot_size << ' ' << message.m_round_lot_size << ' ' <<
+      message.m_block_lot_size << ' ' << message.m_nominal_value << ' ' <<
+      '(' << message.m_legs[0] << ' ' << message.m_legs[1] << ' ' <<
+      message.m_legs[2] << ' ' << message.m_legs[3] << ')' << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AsxTradeItchTickSize& message) {
+    return out << "(tick_size " << message.m_nanoseconds << ' ' <<
+      message.m_order_book_id << ' ' << message.m_tick_size << ' ' <<
+      message.m_price_from << ' ' << message.m_price_to << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AsxTradeItchSystemEvent& message) {
+    return out << "(system_event " << message.m_nanoseconds << ' ' <<
+      message.m_event_code << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AsxTradeItchOrderBookState& message) {
+    return out << "(order_book_state " << message.m_nanoseconds << ' ' <<
+      message.m_order_book_id << ' ' << std::quoted(message.m_state) << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AsxTradeItchAddOrder& message) {
+    return out << "(add_order " << message.m_nanoseconds << ' ' <<
+      message.m_order_id << ' ' << message.m_order_book_id << ' ' <<
+      message.m_side << ' ' << message.m_order_book_position << ' ' <<
+      message.m_quantity << ' ' << message.m_price << ' ' <<
+      message.m_exchange_order_type << ' ' <<
+      static_cast<int>(message.m_lot_type) << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AsxTradeItchAddOrderWithParticipant& message) {
+    return out << "(add_order_with_participant " << message.m_nanoseconds <<
+      ' ' << message.m_order_id << ' ' << message.m_order_book_id << ' ' <<
+      message.m_side << ' ' << message.m_order_book_position << ' ' <<
+      message.m_quantity << ' ' << message.m_price << ' ' <<
+      message.m_exchange_order_type << ' ' <<
+      static_cast<int>(message.m_lot_type) << ' ' <<
+      std::quoted(message.m_participant_id) << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AsxTradeItchOrderExecuted& message) {
+    return out << "(order_executed " << message.m_nanoseconds << ' ' <<
+      message.m_order_id << ' ' << message.m_order_book_id << ' ' <<
+      message.m_side << ' ' << message.m_executed_quantity << ' ' << '(' <<
+      message.m_match_id[0] << ' ' << message.m_match_id[1] << ' ' <<
+      message.m_match_id[2] << ')' << ' ' << std::quoted(message.m_owner) <<
+      ' ' << std::quoted(message.m_counterparty) << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AsxTradeItchOrderExecutedAtPrice& message) {
+    return out << "(order_executed_at_price " << message.m_nanoseconds << ' ' <<
+      message.m_order_id << ' ' << message.m_order_book_id << ' ' <<
+      message.m_side << ' ' << message.m_executed_quantity << ' ' << '(' <<
+      message.m_match_id[0] << ' ' << message.m_match_id[1] << ' ' <<
+      message.m_match_id[2] << ')' << ' ' << std::quoted(message.m_owner) <<
+      ' ' << std::quoted(message.m_counterparty) << ' ' << message.m_price <<
+      ' ' << message.m_occurred_at_cross << ' ' << message.m_printable << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AsxTradeItchOrderReplace& message) {
+    return out << "(order_replace " << message.m_nanoseconds << ' ' <<
+      message.m_order_id << ' ' << message.m_order_book_id << ' ' <<
+      message.m_side << ' ' << message.m_order_book_position << ' ' <<
+      message.m_quantity << ' ' << message.m_price << ' ' <<
+      message.m_exchange_order_type << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AsxTradeItchOrderDelete& message) {
+    return out << "(order_delete " << message.m_nanoseconds << ' ' <<
+      message.m_order_id << ' ' << message.m_order_book_id << ' ' <<
+      message.m_side << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AsxTradeItchTrade& message) {
+    return out << "(trade " << message.m_nanoseconds << ' ' << '(' <<
+      message.m_match_id[0] << ' ' << message.m_match_id[1] << ' ' <<
+      message.m_match_id[2] << ')' << ' ' << message.m_side << ' ' <<
+      message.m_quantity << ' ' << message.m_order_book_id << ' ' <<
+      message.m_price << ' ' << std::quoted(message.m_owner) << ' ' <<
+      std::quoted(message.m_counterparty) << ' ' << message.m_printable <<
+      ' ' << message.m_occurred_at_cross << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AsxTradeItchEquilibriumPriceUpdate& message) {
+    return out << "(equilibrium_price_update " << message.m_nanoseconds <<
+      ' ' << message.m_order_book_id << ' ' << message.m_bid_quantity << ' ' <<
+      message.m_ask_quantity << ' ' << message.m_equilibrium_price << ' ' <<
+      message.m_best_bid_price << ' ' << message.m_best_ask_price << ' ' <<
+      message.m_best_bid_quantity << ' ' << message.m_best_ask_quantity << ')';
+  }
+
+  inline std::ostream& operator <<(
+      std::ostream& out, const AsxTradeItchEndOfSnapshot& message) {
+    return out << "(end_of_snapshot " << message.m_sequence << ')';
   }
 }
 

@@ -7,7 +7,7 @@
 #include <iomanip>
 #include <iostream>
 #include <limits>
-#include <sstream>
+#include <syncstream>
 #include <unordered_set>
 #include <Beam/Utilities/Expect.hpp>
 #include "AsxTradeItchMarketDataFeedClient/AsxTradeItchClient.hpp"
@@ -88,6 +88,7 @@ namespace Nexus {
       Beam::OpenState m_open_state;
 
       static void log(const AsxTradeItchMessage& message);
+      static void log_raw(const AsxTradeItchMessage& message);
       static Money get_price(const Book& book, std::int32_t price);
       static void offset(
         BookSide& side, Side direction, std::int32_t price, Quantity delta);
@@ -184,7 +185,22 @@ namespace Nexus {
       IsAsxTradeItchClient<Beam::dereference_t<C>>
   void AsxTradeItchMarketDataFeedClient<M, C>::log(
       const AsxTradeItchMessage& message) {
-    auto out = std::stringstream();
+    visit(message, [] (const auto& message) {
+      using Message = std::remove_cvref_t<decltype(message)>;
+      if constexpr(std::same_as<Message, AsxTradeItchMessage>) {
+        log_raw(message);
+      } else {
+        std::osyncstream(std::cout) << message << '\n';
+      }
+    });
+  }
+
+  template<typename M, typename C> requires
+    IsMarketDataFeedClient<Beam::dereference_t<M>> &&
+      IsAsxTradeItchClient<Beam::dereference_t<C>>
+  void AsxTradeItchMarketDataFeedClient<M, C>::log_raw(
+      const AsxTradeItchMessage& message) {
+    auto out = std::osyncstream(std::cout);
     out << "(message " << static_cast<char>(message.m_type) << ' ' <<
       std::hex << std::setfill('0');
     for(auto i = std::size_t(0);
@@ -193,7 +209,6 @@ namespace Nexus {
         static_cast<unsigned char>(message.m_payload[i]));
     }
     out << ")\n";
-    std::cout << out.str();
   }
 
   template<typename M, typename C> requires
@@ -661,15 +676,13 @@ namespace Nexus {
         if(!m_open_state.is_open()) {
           break;
         }
-        if(m_config.m_is_logging_messages) {
-          log(message);
-        }
         try {
-          dispatch(message);
-        } catch(const std::exception&) {
-          if(!m_config.m_is_logging_messages) {
+          if(m_config.m_is_logging_messages) {
             log(message);
           }
+          dispatch(message);
+        } catch(const std::exception&) {
+          log_raw(message);
           std::cout << std::flush;
           throw;
         }

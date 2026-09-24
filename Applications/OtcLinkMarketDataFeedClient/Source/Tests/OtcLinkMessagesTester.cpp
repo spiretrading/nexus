@@ -1,3 +1,4 @@
+#include <sstream>
 #include <string>
 #include <doctest/doctest.h>
 #include "OtcLinkMarketDataFeedClient/OtcLinkMessages.hpp"
@@ -79,6 +80,219 @@ namespace {
 }
 
 TEST_SUITE("OtcLinkMessages") {
+  TEST_CASE("blank_trade_venue") {
+    auto payload = std::string(
+      "\x00\x00\xe4\x85\x00\x53\x06\x4c\x02\x00\x00\x01\xf0\x1d\x00"
+      "        \x00\x00\x00\x00\x00\x85\x83\xb0\x00\x00\x00\xf0"
+      "\x00\x00\x01\xa0\xd4\x03\x2f\x50", 43);
+    auto out = std::ostringstream();
+    visit(make_message(OtcLinkTrade::TYPE, payload),
+      [&] (const OtcLinkTrade& message) {
+        out << message;
+      });
+    REQUIRE(out.str() ==
+      "(trade 58501 5441100 0 127005 0 \"   \" 8750000 240 1790263373648)");
+  }
+
+  TEST_CASE("stream") {
+    auto out = std::ostringstream();
+    SUBCASE("security") {
+      auto message = OtcLinkSecurity();
+      message.m_sequence = 1;
+      message.m_symbol = "text 2";
+      message.m_timestamp = 3;
+      message.m_action = OtcLinkSecurityAction::ADD;
+      message.m_asset_class = OtcLinkAssetClass::EQUITY;
+      message.m_security = 6;
+      message.m_flags = 7;
+      message.m_tier = OtcLinkTier::OTCQB;
+      message.m_reporting_status = 'A';
+      message.m_status = 'A';
+      out << message;
+      REQUIRE(out.str() == "(security 1 \"text 2\" 3 2 1 6 7 10 A A)");
+    }
+    SUBCASE("fractional_security") {
+      auto message = OtcLinkFractionalSecurity();
+      message.m_sequence = 1;
+      message.m_symbol = "text 2";
+      message.m_timestamp = 3;
+      message.m_action = OtcLinkSecurityAction::ADD;
+      message.m_asset_class = OtcLinkAssetClass::EQUITY;
+      message.m_security = 6;
+      message.m_flags = 7;
+      message.m_tier = OtcLinkTier::OTCQB;
+      message.m_reporting_status = 'A';
+      message.m_status = 'A';
+      message.m_minimum_notional_value = 11;
+      message.m_minimum_quote_size = 12;
+      out << message;
+      REQUIRE(out.str() ==
+        "(fractional_security 1 \"text 2\" 3 2 1 6 7 10 A A 11 12)");
+    }
+    SUBCASE("market_open") {
+      auto message = OtcLinkMarketOpen();
+      message.m_sequence = 1;
+      message.m_timestamp = 2;
+      message.m_close = 3;
+      out << message;
+      REQUIRE(out.str() == "(market_open 1 2 3)");
+    }
+    SUBCASE("market_close") {
+      auto message = OtcLinkMarketClose();
+      message.m_sequence = 1;
+      message.m_timestamp = 2;
+      message.m_count = 3;
+      out << message;
+      REQUIRE(out.str() == "(market_close 1 2 3)");
+    }
+    SUBCASE("quote") {
+      auto message = OtcLinkQuote();
+      message.m_flags = 1;
+      message.m_extended_flags = 2;
+      message.m_sequence = 3;
+      message.m_quote = 4;
+      message.m_action = OtcLinkQuoteAction::ADD;
+      message.m_security = 6;
+      message.m_mpid = "text 7";
+      message.m_ask_price = 8;
+      message.m_ask_size = 9;
+      message.m_ask_adjustment = -10;
+      message.m_ask_timestamp = 11;
+      message.m_bid_price = 12;
+      message.m_bid_size = 13;
+      message.m_bid_adjustment = -14;
+      message.m_bid_timestamp = 15;
+      message.m_reference = 16;
+      out << message;
+      REQUIRE(out.str() ==
+        "(quote 1 2 3 4 2 6 \"text 7\" 8 9 -10 11 12 13 -14 15 16)");
+    }
+    SUBCASE("quote_update") {
+      auto message = OtcLinkQuoteUpdate();
+      message.m_flags = 1;
+      message.m_extended_flags = 2;
+      message.m_sequence = 3;
+      message.m_quote = 4;
+      message.m_price = 5;
+      message.m_size = 6;
+      message.m_adjustment = -7;
+      message.m_timestamp = 8;
+      message.m_reference = 9;
+      out << message;
+      REQUIRE(out.str() == "(quote_update 1 2 3 4 5 6 -7 8 9)");
+    }
+    SUBCASE("fractional_quote") {
+      auto message = OtcLinkFractionalQuote();
+      message.m_flags = 1;
+      message.m_extended_flags = 2;
+      message.m_sequence = 3;
+      message.m_quote = 4;
+      message.m_action = OtcLinkQuoteAction::ADD;
+      message.m_security = 6;
+      message.m_mpid = "text 7";
+      message.m_ask_price = 8;
+      message.m_ask_size = 9;
+      message.m_ask_adjustment = -10;
+      message.m_ask_timestamp = 11;
+      message.m_bid_price = 12;
+      message.m_bid_size = 13;
+      message.m_bid_adjustment = -14;
+      message.m_bid_timestamp = 15;
+      message.m_reference = 16;
+      out << message;
+      REQUIRE(out.str() ==
+        "(fractional_quote 1 2 3 4 2 6 \"text 7\" 8 9 -10 11 12 13 -14 15 16)");
+    }
+    SUBCASE("fractional_quote_update") {
+      auto message = OtcLinkFractionalQuoteUpdate();
+      message.m_flags = 1;
+      message.m_extended_flags = 2;
+      message.m_sequence = 3;
+      message.m_quote = 4;
+      message.m_price = 5;
+      message.m_size = 6;
+      message.m_adjustment = -7;
+      message.m_timestamp = 8;
+      message.m_reference = 9;
+      out << message;
+      REQUIRE(out.str() == "(fractional_quote_update 1 2 3 4 5 6 -7 8 9)");
+    }
+    SUBCASE("inside") {
+      auto message = OtcLinkInside();
+      message.m_flags = 1;
+      message.m_sequence = 2;
+      message.m_inside = 3;
+      message.m_action = OtcLinkInsideAction::ADD;
+      message.m_security = 5;
+      message.m_ask_price = 6;
+      message.m_ask_size = 7;
+      message.m_ask_timestamp = 8;
+      message.m_bid_price = 9;
+      message.m_bid_size = 10;
+      message.m_bid_timestamp = 11;
+      message.m_ask_participants = 12;
+      message.m_bid_participants = 13;
+      out << message;
+      REQUIRE(out.str() == "(inside 1 2 3 2 5 6 7 8 9 10 11 12 13)");
+    }
+    SUBCASE("inside_update") {
+      auto message = OtcLinkInsideUpdate();
+      message.m_flags = 1;
+      message.m_sequence = 2;
+      message.m_inside = 3;
+      message.m_price = 4;
+      message.m_size = 5;
+      message.m_timestamp = 6;
+      message.m_participants = 7;
+      out << message;
+      REQUIRE(out.str() == "(inside_update 1 2 3 4 5 6 7)");
+    }
+    SUBCASE("fractional_inside") {
+      auto message = OtcLinkFractionalInside();
+      message.m_flags = 1;
+      message.m_sequence = 2;
+      message.m_inside = 3;
+      message.m_action = OtcLinkInsideAction::ADD;
+      message.m_security = 5;
+      message.m_ask_price = 6;
+      message.m_ask_size = 7;
+      message.m_ask_timestamp = 8;
+      message.m_bid_price = 9;
+      message.m_bid_size = 10;
+      message.m_bid_timestamp = 11;
+      message.m_ask_participants = 12;
+      message.m_bid_participants = 13;
+      out << message;
+      REQUIRE(out.str() == "(fractional_inside 1 2 3 2 5 6 7 8 9 10 11 12 13)");
+    }
+    SUBCASE("fractional_inside_update") {
+      auto message = OtcLinkFractionalInsideUpdate();
+      message.m_flags = 1;
+      message.m_sequence = 2;
+      message.m_inside = 3;
+      message.m_price = 4;
+      message.m_size = 5;
+      message.m_timestamp = 6;
+      message.m_participants = 7;
+      out << message;
+      REQUIRE(out.str() == "(fractional_inside_update 1 2 3 4 5 6 7)");
+    }
+    SUBCASE("trade") {
+      auto message = OtcLinkTrade();
+      message.m_sequence = 1;
+      message.m_trade = 2;
+      message.m_flags = 3;
+      message.m_security = 4;
+      message.m_status = 5;
+      message.m_venue = "text 6";
+      message.m_price = 7;
+      message.m_size = 8;
+      message.m_timestamp = 9;
+      out << message;
+      REQUIRE(out.str() == "(trade 1 2 3 4 5 \"text 6\" 7 8 9)");
+    }
+  }
+
   TEST_CASE("trade") {
     auto payload = std::string("\x01\x02\x03\x04\x05\x06\x07\x08", 8) +
       std::string("\x02\xfe\x10\x20\x30\x40\x81", 7) + "ATS     " +

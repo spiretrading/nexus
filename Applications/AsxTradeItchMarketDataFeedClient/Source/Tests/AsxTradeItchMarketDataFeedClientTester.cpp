@@ -198,10 +198,14 @@ namespace {
     Client m_client;
 
     Fixture()
+      : Fixture(false) {}
+
+    explicit Fixture(bool is_logging_messages)
         : m_operations(std::make_shared<FeedClient::Queue>()),
           m_feed_client(m_operations),
-          m_client([] {
+          m_client([&] {
             auto config = AsxTradeItchConfiguration();
+            config.m_is_logging_messages = is_logging_messages;
             config.m_primary_venue = Venues::ASX;
             config.m_disseminating_venue = Venues::ASX;
             return config;
@@ -279,6 +283,30 @@ namespace {
 }
 
 TEST_SUITE("AsxTradeItchMarketDataFeedClient") {
+  TEST_CASE("message_logging") {
+    auto log = Log();
+    auto is_logging = false;
+    SUBCASE("disabled") {}
+    SUBCASE("enabled") {
+      is_logging = true;
+    }
+    auto fixture = Fixture(is_logging);
+    fixture.m_itch_client.m_messages.push(SharedBuffer("?\x7f", 2));
+    fixture.require_empty();
+    if(is_logging) {
+      REQUIRE(log.m_output.str() ==
+        "(seconds 1700000000)\n(message ? 7f)\n");
+    } else {
+      REQUIRE(log.m_output.str().empty());
+    }
+    log.m_output.str("");
+    fixture.m_itch_client.m_messages.push(SharedBuffer("A\x7f", 2));
+    flush_pending_routines();
+    REQUIRE(fixture.m_client.is_finished());
+    REQUIRE(fixture.m_client.get_exception());
+    REQUIRE(log.m_output.str() == "(message A 7f)\n");
+  }
+
   TEST_CASE("excluded_product") {
     auto fixture = Fixture();
     auto directory = AsxTradeItchOrderBookDirectory();
